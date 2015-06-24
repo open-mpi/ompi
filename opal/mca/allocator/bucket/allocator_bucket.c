@@ -6,7 +6,7 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -14,9 +14,9 @@
  * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
  *                         reseved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -24,12 +24,12 @@
 #include "opal/mca/allocator/allocator.h"
 #include "opal/constants.h"
 #include "opal/mca/allocator/bucket/allocator_bucket_alloc.h"
-#include "opal/mca/mpool/mpool.h" 
+#include "opal/mca/mpool/mpool.h"
 
 struct mca_allocator_base_module_t* mca_allocator_bucket_module_init(
     bool enable_mpi_threads,
     mca_allocator_base_component_segment_alloc_fn_t segment_alloc,
-    mca_allocator_base_component_segment_free_fn_t segment_free, 
+    mca_allocator_base_component_segment_free_fn_t segment_free,
     struct mca_mpool_base_module_t* mpool
     );
 
@@ -39,7 +39,7 @@ int mca_allocator_bucket_module_close(void);
 
 void * mca_allocator_bucket_alloc_wrapper(
     struct mca_allocator_base_module_t* allocator,
-    size_t size, size_t align, 
+    size_t size, size_t align,
     mca_mpool_base_registration_t** registration);
 
 static int mca_allocator_num_buckets;
@@ -65,7 +65,7 @@ int mca_allocator_bucket_finalize(struct mca_allocator_base_module_t* allocator)
 struct mca_allocator_base_module_t* mca_allocator_bucket_module_init(
     bool enable_mpi_threads,
     mca_allocator_base_component_segment_alloc_fn_t segment_alloc,
-    mca_allocator_base_component_segment_free_fn_t segment_free, 
+    mca_allocator_base_component_segment_free_fn_t segment_free,
     struct mca_mpool_base_module_t* mpool)
 {
     size_t alloc_size = sizeof(mca_allocator_bucket_t);
@@ -74,9 +74,9 @@ struct mca_allocator_base_module_t* mca_allocator_bucket_module_init(
     if(NULL == allocator) {
         return NULL;
     }
-    retval = mca_allocator_bucket_init((mca_allocator_base_module_t *) allocator, 
-        mca_allocator_num_buckets, 
-        segment_alloc, 
+    retval = mca_allocator_bucket_init((mca_allocator_base_module_t *) allocator,
+        mca_allocator_num_buckets,
+        segment_alloc,
         segment_free);
     if(NULL == retval) {
         free(allocator);
@@ -110,18 +110,18 @@ int mca_allocator_bucket_module_close(void) {
 
 void * mca_allocator_bucket_alloc_wrapper(
     struct mca_allocator_base_module_t* allocator,
-    size_t size, 
-    size_t align, 
+    size_t size,
+    size_t align,
     mca_mpool_base_registration_t** registration)
 {
     if(0 == align){
         return mca_allocator_bucket_alloc(allocator, size, registration);
     }
     return mca_allocator_bucket_alloc_align(allocator, size, align, registration);
-}    
+}
 
 
-mca_allocator_base_component_t mca_allocator_bucket_component = { 
+mca_allocator_base_component_t mca_allocator_bucket_component = {
 
   /* First, the mca_base_module_t struct containing meta information
      about the module itself */

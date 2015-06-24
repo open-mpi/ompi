@@ -234,7 +234,7 @@ static int ugni_reg_rdma_mem (void *reg_data, void *base, size_t size,
     if (ugni_module->reg_count >= ugni_module->reg_max) {
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
- 
+
     OPAL_THREAD_LOCK(&ugni_module->device->dev_lock);
     rc = GNI_MemRegister (ugni_module->device->dev_handle, (uint64_t) base,
                           size, NULL, GNI_MEM_READWRITE | GNI_MEM_RELAXED_PI_ORDERING,

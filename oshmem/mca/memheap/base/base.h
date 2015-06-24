@@ -2,9 +2,9 @@
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 /**
@@ -34,7 +34,7 @@ OSHMEM_DECLSPEC extern struct mca_memheap_base_module_t* mca_memheap_base_module
 
 /* only used within base -- no need to DECLSPEC */
 #define MEMHEAP_BASE_MIN_ORDER         3                                /* forces 64 bit alignment */
-#define MEMHEAP_BASE_PAGE_ORDER        21   
+#define MEMHEAP_BASE_PAGE_ORDER        21
 #define MEMHEAP_BASE_PRIVATE_SIZE      (1ULL << MEMHEAP_BASE_PAGE_ORDER) /* should be at least the same as a huge page size */
 #define MEMHEAP_BASE_MIN_SIZE          (1ULL << MEMHEAP_BASE_PAGE_ORDER)    /* must fit into at least one huge page */
 
@@ -47,7 +47,7 @@ extern int mca_memheap_base_key_exchange;
 #define HEAP_SEG_INDEX  0
 #define SYMB_SEG_INDEX  1
 
-typedef struct mca_memheap_map {  
+typedef struct mca_memheap_map {
     map_segment_t   mem_segs[MCA_MEMHEAP_MAX_SEGMENTS]; /* TODO: change into pointer array */
     int             n_segments;
     int             num_transports;

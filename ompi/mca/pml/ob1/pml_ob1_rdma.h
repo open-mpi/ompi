@@ -18,7 +18,7 @@
 /**
  *  @file
  */
-                                                                                                                           
+
 #ifndef MCA_PML_OB1_RDMA_H
 #define MCA_PML_OB1_RDMA_H
 

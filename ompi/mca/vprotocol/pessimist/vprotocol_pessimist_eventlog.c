@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2011 The Trustees of the University of Tennessee.
  *                         All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights
- *                         reserved. 
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -27,7 +27,7 @@ int vprotocol_pessimist_event_logger_connect(int el_rank, ompi_communicator_t **
     char name[MPI_MAX_PORT_NAME];
     int rank;
     vprotocol_pessimist_clock_t connect_info[2];
-    
+
     snprintf(name, MPI_MAX_PORT_NAME, VPROTOCOL_EVENT_LOGGER_NAME_FMT, el_rank);
     port = ompi_pubsub.lookup(name, MPI_INFO_NULL);
     if(NULL == port)
@@ -35,7 +35,7 @@ int vprotocol_pessimist_event_logger_connect(int el_rank, ompi_communicator_t **
         return OMPI_ERR_NOT_FOUND;
     }
     V_OUTPUT_VERBOSE(45, "Found port < %s >", port);
-    
+
     /* separate the string into the HNP and RML URI and tag */
     if (OMPI_SUCCESS != (rc = ompi_dpm.parse_port(port, &hnp_uri, &rml_uri, &el_tag))) {
         OMPI_ERROR_LOG(rc);
@@ -54,8 +54,8 @@ int vprotocol_pessimist_event_logger_connect(int el_rank, ompi_communicator_t **
         return rc;
     }
     free(rml_uri); free(hnp_uri);
-    
-    /* Send an rml message to tell the remote end to wake up and jump into 
+
+    /* Send an rml message to tell the remote end to wake up and jump into
      * connect/accept */
     buffer = OBJ_NEW(opal_buffer_t);
     ompi_rte_send_buffer_nb(&el_proc, buffer, el_tag+1, NULL, NULL);
@@ -64,23 +64,23 @@ int vprotocol_pessimist_event_logger_connect(int el_rank, ompi_communicator_t **
     if(OMPI_SUCCESS != rc) {
         OMPI_ERROR_LOG(rc);
     }
-    
+
     /* Send Rank, receive max buffer size and max_clock back */
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    rc = mca_pml_v.host_pml.pml_send(&rank, 1, MPI_INTEGER, 0, 
+    rc = mca_pml_v.host_pml.pml_send(&rank, 1, MPI_INTEGER, 0,
                                      VPROTOCOL_PESSIMIST_EVENTLOG_NEW_CLIENT_CMD,
-                                     MCA_PML_BASE_SEND_STANDARD, 
+                                     MCA_PML_BASE_SEND_STANDARD,
                                      mca_vprotocol_pessimist.el_comm);
     if(OPAL_UNLIKELY(MPI_SUCCESS != rc))
         OMPI_ERRHANDLER_INVOKE(mca_vprotocol_pessimist.el_comm, rc,
                                __FILE__ ": failed sending event logger handshake");
-    rc = mca_pml_v.host_pml.pml_recv(&connect_info, 2, MPI_UNSIGNED_LONG_LONG, 
+    rc = mca_pml_v.host_pml.pml_recv(&connect_info, 2, MPI_UNSIGNED_LONG_LONG,
                                      0, VPROTOCOL_PESSIMIST_EVENTLOG_NEW_CLIENT_CMD,
                                      mca_vprotocol_pessimist.el_comm, MPI_STATUS_IGNORE);
     if(OPAL_UNLIKELY(MPI_SUCCESS != rc))                                  \
         OMPI_ERRHANDLER_INVOKE(mca_vprotocol_pessimist.el_comm, rc,       \
-                               __FILE__ ": failed receiving event logger handshake");   
-    
+                               __FILE__ ": failed receiving event logger handshake");
+
     return rc;
 }
 
@@ -102,21 +102,21 @@ void vprotocol_pessimist_matching_replay(int *src) {
         event = (mca_vprotocol_pessimist_event_t *) opal_list_get_next(event))
     {
         vprotocol_pessimist_matching_event_t *mevent;
-        
-        if(VPROTOCOL_PESSIMIST_EVENT_TYPE_MATCHING != event->type) continue;        
+
+        if(VPROTOCOL_PESSIMIST_EVENT_TYPE_MATCHING != event->type) continue;
         mevent = &(event->u_event.e_matching);
         if(mevent->reqid == mca_vprotocol_pessimist.clock)
         {
             /* this is the event to replay */
             V_OUTPUT_VERBOSE(70, "pessimist: replay\tmatch\t%"PRIpclock"\trecv is forced from %d", mevent->reqid, mevent->src);
             (*src) = mevent->src;
-            opal_list_remove_item(&mca_vprotocol_pessimist.replay_events, 
+            opal_list_remove_item(&mca_vprotocol_pessimist.replay_events,
                                   (opal_list_item_t *) event);
             VPESSIMIST_EVENT_RETURN(event);
-        }   
+        }
 #if OPAL_ENABLE_DEBUG
-        else if(mevent->reqid > max) 
-            max = mevent->reqid;                         
+        else if(mevent->reqid > max)
+            max = mevent->reqid;
     }
     /* not forcing a ANY SOURCE event whose recieve clock is lower than max
      * is a bug indicating we have missed an event during logging ! */
@@ -127,7 +127,7 @@ void vprotocol_pessimist_matching_replay(int *src) {
 }
 
 void vprotocol_pessimist_delivery_replay(size_t n, ompi_request_t **reqs,
-                                         int *outcount, int *index, 
+                                         int *outcount, int *index,
                                          ompi_status_public_t *status) {
     mca_vprotocol_pessimist_event_t *event;
 
@@ -135,7 +135,7 @@ void vprotocol_pessimist_delivery_replay(size_t n, ompi_request_t **reqs,
         event != (mca_vprotocol_pessimist_event_t *) opal_list_get_end(&mca_vprotocol_pessimist.replay_events);
         event = (mca_vprotocol_pessimist_event_t *) opal_list_get_next(event))
     {
-        vprotocol_pessimist_delivery_event_t *devent; 
+        vprotocol_pessimist_delivery_event_t *devent;
 
         if(VPROTOCOL_PESSIMIST_EVENT_TYPE_DELIVERY != event->type) continue;
         devent = &(event->u_event.e_delivery);

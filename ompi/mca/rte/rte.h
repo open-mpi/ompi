@@ -6,7 +6,7 @@
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
  *
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
  */
 
@@ -34,7 +34,7 @@
  *        is desired.
  *     3. OMPI_NAME_PRINT - a macro that prints a process name when given
  *        a pointer to ompi_process_name_t. The output format is to be
- *        a single string representing the name.  This function should 
+ *        a single string representing the name.  This function should
  *        be thread-safe for multiple threads to call simultaneously.
  *     4. OMPI_PROC_MY_NAME - a pointer to a global variable containing
  *        the ompi_process_name_t for this process. Typically, this is
@@ -55,7 +55,7 @@
  *           d. OMPI_RTE_CMP_ALL
  *      7. uint64_t ompi_rte_hash_name(name) - return a string hash uniquely
  *         representing the ompi_process_name passed in.
- *      8. OMPI_NAME - an Opal DSS constant for a handler already registered 
+ *      8. OMPI_NAME - an Opal DSS constant for a handler already registered
  *         to serialize/deserialize an ompi_process_name_t structure.
  *
  * (b) Collective objects and operations
@@ -64,7 +64,7 @@
  *        following fields:
  *           a. id (ORTE type: int32_t)
  *           b. bool active
- *              flag that user can poll on to know when collective 
+ *              flag that user can poll on to know when collective
  *              has completed - set to false just prior to
  *              calling user callback function, if provided
  *     2. ompi_rte_modex - a function that performs an exchange of endpoint information
@@ -86,7 +86,7 @@
  *           a. app_num -
  *           b. pid - this process's pid.  Should be same as getpid().
  *           c. num_procs - Number of processes in this job (ie, MCW)
- *           d. my_node_rank - relative rank on local node to other peers this run-time 
+ *           d. my_node_rank - relative rank on local node to other peers this run-time
  *                    instance knows about.  If doing dynamics, this may be something
  *                    different than my_local_rank, but will be my_local_rank in a
  *                    static job.
@@ -96,19 +96,19 @@
  *           g. peer_modex - a collective id for the modex operation
  *           h. peer_init_barrier - a collective id for the barrier during MPI_Init
  *           i. peer_fini_barrier - a collective id for the barrier during MPI_Finalize
- *           j. job_session_dir - 
+ *           j. job_session_dir -
  *           k. proc_session_dir -
  *           l. nodename - a string representation for the name of the node this
  *              process is on
  *           m. cpuset -
  *     2. ompi_process_info - a global instance of the ompi_process_t structure.
- *     3. ompi_rte_proc_is_bound - global boolean that will be true if the runtime bound 
+ *     3. ompi_rte_proc_is_bound - global boolean that will be true if the runtime bound
  *        the process to a particular core or set of cores and is false otherwise.
  *
  * (d) Error handling objects and operations
- *     1. void ompi_rte_abort(int err_code, char *fmt, ...) - Abort the current 
+ *     1. void ompi_rte_abort(int err_code, char *fmt, ...) - Abort the current
  *        process with the specified error code and message.
- *     2. int ompi_rte_abort_peers(ompi_process_name_t *procs, size_t nprocs) - 
+ *     2. int ompi_rte_abort_peers(ompi_process_name_t *procs, size_t nprocs) -
  *        Abort the specified list of peers
  *     3. OMPI_ERROR_LOG(rc) - print error message regarding the given return code
  *     4. ompi_rte_register_errhandler - register a callback function for the RTE
@@ -136,17 +136,17 @@
  *        The implementation of this function must store a COPY of the data
  *        provided - the data is NOT guaranteed to be valid after return
  *        from the call.
- *     3. ompi_rte_db_fetch - 
- *        NOTE: Fetch accepts an 'ompi_proc_t'. 
+ *     3. ompi_rte_db_fetch -
+ *        NOTE: Fetch accepts an 'ompi_proc_t'.
  *        int ompi_rte_db_fetch(const struct ompi_proc_t *proc,
  *                              const char *key,
- *                              void **data, 
+ *                              void **data,
  *                              opal_data_type_t type);
  *     4. ompi_rte_db_fetch_pointer -
- *        NOTE: Fetch accepts an 'ompi_proc_t'. 
+ *        NOTE: Fetch accepts an 'ompi_proc_t'.
  *        int ompi_rte_db_fetch_pointer(const struct ompi_proc_t *proc,
  *                                      const char *key,
- *                                      void **data, 
+ *                                      void **data,
  *                                      opal_data_type_t type);
  *     5. Pre-defined db keys (with associated values after rte_init)
  *        a. OMPI_DB_HOSTNAME

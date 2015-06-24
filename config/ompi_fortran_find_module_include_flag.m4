@@ -6,15 +6,15 @@ dnl                         Corporation.  All rights reserved.
 dnl Copyright (c) 2004-2005 The University of Tennessee and The University
 dnl                         of Tennessee Research Foundation.  All rights
 dnl                         reserved.
-dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2010-2012 Cisco Systems, Inc.  All rights reserved.
 dnl $COPYRIGHT$
-dnl 
+dnl
 dnl Additional copyrights may follow
-dnl 
+dnl
 dnl $HEADER$
 dnl
 
@@ -24,9 +24,9 @@ dnl
 # OMPI_FORTRAN_FIND_MODULE_INCLUDE_FLAG([action if found], [action if not found]
 AC_DEFUN([OMPI_FORTRAN_FIND_MODULE_INCLUDE_FLAG],[
     AS_VAR_PUSHDEF([fortran_inc_var], [ompi_cv_fortran_module_include_flag])
-    
+
     OMPI_FC_MODULE_FLAG=
-    AC_CACHE_CHECK([for Fortran compiler module include flag], 
+    AC_CACHE_CHECK([for Fortran compiler module include flag],
        fortran_inc_var,
        [ofi_possible_flags="-I -p -M"
         mkdir conftest.$$
@@ -43,7 +43,7 @@ module OMPI_MOD_FLAG
 end module OMPI_MOD_FLAG
 EOF
 
-        OPAL_LOG_COMMAND([$FC $FCFLAGS $FCFLAGS_f90 -c conftest-module.f90 $LDFLAGS $LIBS], , 
+        OPAL_LOG_COMMAND([$FC $FCFLAGS $FCFLAGS_f90 -c conftest-module.f90 $LDFLAGS $LIBS], ,
             [cd  ..
              rm -rf conftest.$$
              AC_MSG_RESULT([Whoops!])

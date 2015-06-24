@@ -3,16 +3,16 @@
 # Currently, we implement only the directory option
 # The following features have been requested for
 #
-# 1. Get the name of the directory and produce a 
+# 1. Get the name of the directory and produce a
 #    statistic for all the files which have been touched
-#    in all the subdirectories starting from that 
+#    in all the subdirectories starting from that
 #    directory
 #
 # 2. Since gcov spits out a statistic for all the header
-#    files included by all the source files, we need to 
+#    files included by all the source files, we need to
 #    aggregate them somehow into a single file. This might
 #    have to be done manually by going through all the lines
-#    which have been executed in that file since a header 
+#    which have been executed in that file since a header
 #    file may have multiple inclusions meaning that they
 #    might have multiple .gcov files in different directories
 #
@@ -54,25 +54,25 @@ if (0 == ($num_args % 2)) {
 # process the arguments
 while($num_args > 0) {
     switch ($ARGV[$index]) {
-        case "-d" { 
+        case "-d" {
            print DIR_FILE $ARGV[$index+1];
            $index += 2;
-           $num_args -= 2;   
+           $num_args -= 2;
            $dir_list_given = 1;
         }
-        case "-f" { 
+        case "-f" {
            my $filename = `find . -name $ARGV[$index+1]`;
            print REQ_FILE $filename;
            $index += 2;
-           $num_args -= 2;   
+           $num_args -= 2;
            $req_list_given = 1;
         }
-        case "-p" { 
+        case "-p" {
            $percentage = $ARGV[$index];
            $index += 2;
-           $num_args -= 2;   
+           $num_args -= 2;
         }
-        else { 
+        else {
             print "ERROR: Incorrect command line option\n";
             exit(3);
         }
@@ -95,14 +95,14 @@ if (1 == $dir_list_given) {
     get_file_list("./dir_list.txt",
                   "touched_files.txt",
                   "untouched_files.txt");
-                  
+
     generate_stats("touched_files.txt", # file_list
                    "coverage_stats.txt",# generic coverage numbers
                    "percent_stats.txt", # files below a certain %
                    $percentage,         # percentage below which we report
                    1);                  # 1 to report
 }
-               
+
 if (1 == $req_list_given) {
     generate_stats("req_list.txt", # file_list
                    "req_stats.txt",# generic coverage
@@ -118,7 +118,7 @@ sub get_file_list {
         print "ERROR: could not open directory listing\n";
         exit(3);
     }
- 
+
     while(<DIRFILES>) {
         chomp();
         my $c_files = `find $_ -name \"*.c\"`;
@@ -128,7 +128,7 @@ sub get_file_list {
         $c_files =~ s/\.c//g;
         $c_files = $c_files . $cc_files;
         my @C_FILES = split(/\n/, $c_files);
-        
+
         my $da_files = `find $_ -name \"*.da\" -o -name \"*.gcda\"`;
         $da_files =~ s/\.gcda//g;
         $da_files =~ s/\.da//g;
@@ -140,12 +140,12 @@ sub get_file_list {
         print TEMP2 $da_files;
         close(TEMP1);
         close(TEMP2);
- 
-        # Now do the manual diff 
+
+        # Now do the manual diff
         open(TEMP1, "< temp1");
         open(UNTOUCHED_FILES, ">> $untouched");
         open(TOUCHED_FILES, ">> $touched");
- 
+
         while(<TEMP1>) {
             my $c_file = $_;
             my $found = 0;
@@ -183,7 +183,7 @@ sub get_file_list {
     system("sort $touched -o temp; uniq temp $touched");
     system("sort $untouched -o temp; uniq temp $untouched");
 }
-    
+
 
 # This is the function which generates the statistics and dumps it out
 # to a file. Details are pretty straightforward at this point
@@ -192,7 +192,7 @@ sub generate_stats {
     my $k = 0;
     my $l = 0;
 
-    open (INPUT, "< $input_file"); 
+    open (INPUT, "< $input_file");
     open (COVERAGE, "> $coverage_file");
     if ($calculate == 1) {
         open (PERCENT, "> percent_coverage.txt");
@@ -200,7 +200,7 @@ sub generate_stats {
 
     print COVERAGE "#Index                             Directory                          Filename                 Usage(%)\n";
     print COVERAGE "#======================================================================================================\n";
-    
+
     if ($calculate == 1) {
         print PERCENT "#Index                             Directory                          Filename                 Usage(%)\n";
         print PERCENT "#======================================================================================================\n";
@@ -216,7 +216,7 @@ sub generate_stats {
         #1. Get the directory name and filename seperately
         #2. Invoke gcov on the file
         #3. Print the statistic onto a file
-    
+
         chomp();
         my $full_name = $_;
         my $dir_name;
@@ -229,7 +229,7 @@ sub generate_stats {
 
         open(RESULT, "cd $dir_name; gcov $file_gcda -o .libs 2> /dev/null | ");
         while (<RESULT>) {
-            if (/Creating/) { $found_file = 0; } 
+            if (/Creating/) { $found_file = 0; }
             else  {
                 # print "check: ", $_;
                 # Do not check including the file_extension; might be .c or .cc or .C
@@ -242,12 +242,12 @@ sub generate_stats {
                 if (/^Lines/ && $found_file == 1) {
                     # print "Found Lines:\n", $_;
                     s/([\s,0-9]*\.[0-9]+\%)\.*/$1/;
-                    my $val = $1; 
+                    my $val = $1;
                     $average += $val;
                     $k++;
                     my $print_string = sprintf("%4d   %40s %40s       %3.2f\n", $k, $dir_name, $file_name, $val);
                     if ($calculate == 1) {
-                        if ($val <= $percentage) { 
+                        if ($val <= $percentage) {
                             $l++;
                             my $zero_string = sprintf("%4d   %40s %40s       %3.2f\n", $l, $dir_name, $file_name, $val);
                             print PERCENT $zero_string;
@@ -258,7 +258,7 @@ sub generate_stats {
                     # Need to detect the next round
                     $found_file = 0;
                 }
-            } 
+            }
         }
         close(RESULT);
     }

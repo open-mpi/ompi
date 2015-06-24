@@ -41,7 +41,7 @@ signal_cb(int fd, short event, void *arg)
 
 	if (called >= 2)
 		opal_event.del(signal);
-	
+
 	called++;
 }
 
@@ -49,7 +49,7 @@ int
 main (int argc, char **argv)
 {
     opal_event_t signal_int, signal_term;
- 
+
 	/* Initalize the event library */
 	opal_init();
 

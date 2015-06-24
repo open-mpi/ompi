@@ -45,9 +45,9 @@ int MPI_Dist_graph_neighbors_count(MPI_Comm comm, int *inneighbors,
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         if (ompi_comm_invalid(comm)) {
-            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, 
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM,
                                           FUNC_NAME);
-        } else if (NULL == inneighbors || NULL == outneighbors || 
+        } else if (NULL == inneighbors || NULL == outneighbors ||
                    NULL == weighted) {
             return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
         }

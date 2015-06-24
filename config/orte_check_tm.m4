@@ -114,7 +114,7 @@ AC_DEFUN([ORTE_CHECK_TM],[
 
     AS_IF([test "$orte_check_tm_found" = "no"],
           [AS_IF([test "$orte_check_tm_happy" = "yes"],
-                 [_OPAL_CHECK_PACKAGE_HEADER([$1], 
+                 [_OPAL_CHECK_PACKAGE_HEADER([$1],
                        [tm.h],
                        [$orte_check_tm_dir],
                        [orte_check_tm_found="yes"],

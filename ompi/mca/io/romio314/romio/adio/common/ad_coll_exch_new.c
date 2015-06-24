@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -42,7 +42,7 @@ void ADIOI_Print_flatlist_node(ADIOI_Flatlist_node *flatlist_node_p)
 	fprintf(stderr, "print flatlist node of NULL ptr\n");
 	return;
     }
-    fprintf(stderr, "print flatlist node count = %d (idx,blocklen)\n", 
+    fprintf(stderr, "print flatlist node count = %d (idx,blocklen)\n",
 	    (int)flatlist_node_p->count);
     for (i = 0; i < flatlist_node_p->count; i++)
     {
@@ -64,7 +64,7 @@ ADIOI_Flatlist_node * ADIOI_Add_contig_flattened(MPI_Datatype contig_type)
 {
     MPI_Count contig_type_sz = -1;
     ADIOI_Flatlist_node *flat_node_p = ADIOI_Flatlist;
-    
+
     /* Add contig type to the end of the list if it doesn't already
      * exist. */
     while (flat_node_p->next)
@@ -88,7 +88,7 @@ ADIOI_Flatlist_node * ADIOI_Add_contig_flattened(MPI_Datatype contig_type)
     {
 	fprintf(stderr, "ADIOI_Flatlist_node: malloc blocklens failed\n");
     }
-    if ((flat_node_p->indices = (ADIO_Offset *) 
+    if ((flat_node_p->indices = (ADIO_Offset *)
 	 ADIOI_Malloc(sizeof(ADIO_Offset))) == NULL)
     {
 	fprintf(stderr, "ADIOI_Flatlist_node: malloc indices failed\n");
@@ -167,7 +167,7 @@ void ADIOI_Exch_file_views(int myrank, int nprocs, int file_ptr_type,
     else {
         flat_file_p = ADIOI_Flatlist;
         while (flat_file_p->type != fd->filetype)
-            flat_file_p = flat_file_p->next; 
+            flat_file_p = flat_file_p->next;
     }
 
     disp_off_sz_ext_typesz[0] = fd->fp_ind;
@@ -186,14 +186,14 @@ void ADIOI_Exch_file_views(int myrank, int nprocs, int file_ptr_type,
 
         /* only aggregators receive data */
         if (fd->is_agg) {
-	    recv_count_arr = ADIOI_Calloc(nprocs, 
+	    recv_count_arr = ADIOI_Calloc(nprocs,
 			    sizeof(amount_and_extra_data_t));
 	    recv_req_arr = ADIOI_Malloc (nprocs * sizeof(MPI_Request));
 	    for (i=0; i < nprocs; i++)
 	        MPI_Irecv (&recv_count_arr[i], sizeof(amount_and_extra_data_t),
 		       MPI_BYTE, i, COUNT_EXCH, fd->comm, &recv_req_arr[i]);
         }
-    
+
         /* only send data to aggregators */
         send_req_arr = ADIOI_Calloc (fd->hints->cb_nodes, sizeof(MPI_Request));
         for (i=0; i < fd->hints->cb_nodes; i++) {
@@ -210,7 +210,7 @@ void ADIOI_Exch_file_views(int myrank, int nprocs, int file_ptr_type,
         }
     }
 
- 
+
     /* Every client has to build mem and file view_states for each aggregator.
      * We initialize their values here.  and we also initialize
      * send_count_arr */
@@ -241,7 +241,7 @@ void ADIOI_Exch_file_views(int myrank, int nprocs, int file_ptr_type,
 			1,
 			&(my_mem_view_state_arr[tmp_agg_idx]),
 			REAL_OFF);
-	
+
 	memset(&(agg_file_view_state_arr[tmp_agg_idx]), 0, sizeof(view_state));
 	agg_file_view_state_arr[tmp_agg_idx].fp_ind    =
 	    disp_off_sz_ext_typesz[0];
@@ -283,10 +283,10 @@ void ADIOI_Exch_file_views(int myrank, int nprocs, int file_ptr_type,
     fprintf(stderr, "my own flattened filetype: ");
     ADIOI_Print_flatlist_node(flat_file_p);
 #endif
-	
+
     if (fd->hints->cb_alltoall != ADIOI_HINT_DISABLE) {
         ret = MPI_Alltoall(send_count_arr, sizeof(amount_and_extra_data_t),
-		       MPI_BYTE, 
+		       MPI_BYTE,
 		       recv_count_arr, sizeof(amount_and_extra_data_t),
 		       MPI_BYTE, fd->comm);
         if (ret != MPI_SUCCESS)
@@ -353,22 +353,22 @@ void ADIOI_Exch_file_views(int myrank, int nprocs, int file_ptr_type,
 	if (fd->is_agg) {
 	    if (recv_count_arr[i].count > 0)
 	    {
-		if ((client_file_view_state_arr[i].flat_type_p = 
+		if ((client_file_view_state_arr[i].flat_type_p =
 		     (ADIOI_Flatlist_node *) ADIOI_Malloc(
 			 sizeof(ADIOI_Flatlist_node))) == NULL)
 		{
 		    fprintf(stderr, "ADIOI_Exchange_file_views: malloc "
 			    "flat_type_p failed\n");
 		}
-		client_file_view_state_arr[i].flat_type_p->count = 
+		client_file_view_state_arr[i].flat_type_p->count =
 		    recv_count_arr[i].count;
-		client_file_view_state_arr[i].flat_type_p->indices = 
-		    (ADIO_Offset *) ADIOI_Calloc(recv_count_arr[i].count, 
+		client_file_view_state_arr[i].flat_type_p->indices =
+		    (ADIO_Offset *) ADIOI_Calloc(recv_count_arr[i].count,
 						 sizeof(ADIO_Offset));
 		client_file_view_state_arr[i].flat_type_p->blocklens =
-		    (ADIO_Offset *) ADIOI_Calloc(recv_count_arr[i].count, 
+		    (ADIO_Offset *) ADIOI_Calloc(recv_count_arr[i].count,
 				    sizeof(ADIO_Offset));
-		
+
 		/* Copy the extra data out of the stuff we Alltoall'd */
 		memcpy (&client_file_view_state_arr[i].fp_ind,
 			&recv_count_arr[i].fp_ind,
@@ -379,11 +379,11 @@ void ADIOI_Exch_file_views(int myrank, int nprocs, int file_ptr_type,
 	}
     }
 
-    /* Since ADIOI_Calloc may do other things we add the +1 
+    /* Since ADIOI_Calloc may do other things we add the +1
      * to avoid a 0-size malloc */
     send_req_arr = (MPI_Request *) ADIOI_Calloc(2*(send_req_arr_sz)+1,
 						sizeof(MPI_Request));
-    
+
     j = 0;
     if (recv_req_arr_sz > 0) {
 	assert (fd->is_agg);
@@ -392,7 +392,7 @@ void ADIOI_Exch_file_views(int myrank, int nprocs, int file_ptr_type,
     	for (i = 0; i < nprocs; i++) {
 	    if (recv_count_arr[i].count > 0) {
 		MPI_Irecv(client_file_view_state_arr[i].flat_type_p->indices,
-			  recv_count_arr[i].count, ADIO_OFFSET, i, 
+			  recv_count_arr[i].count, ADIO_OFFSET, i,
 			  INDICES, fd->comm, &recv_req_arr[j]);
 		j++;
 		MPI_Irecv(client_file_view_state_arr[i].flat_type_p->blocklens,
@@ -411,7 +411,7 @@ void ADIOI_Exch_file_views(int myrank, int nprocs, int file_ptr_type,
 		      send_count_arr[i].count, ADIO_OFFSET, i,
                       INDICES, fd->comm, &send_req_arr[j]);
 	        j++;
-	        MPI_Isend(flat_file_p->blocklens,         
+	        MPI_Isend(flat_file_p->blocklens,
 		      send_count_arr[i].count, ADIO_OFFSET, i,
                       BLOCK_LENS, fd->comm, &send_req_arr[j]);
 	        j++;
@@ -426,7 +426,7 @@ void ADIOI_Exch_file_views(int myrank, int nprocs, int file_ptr_type,
 		      fd->hints->ranklist[i], INDICES, fd->comm,
 		      &send_req_arr[j]);
 	        j++;
-	        MPI_Isend(flat_file_p->blocklens,         
+	        MPI_Isend(flat_file_p->blocklens,
 		      send_count_arr[i].count, ADIO_OFFSET,
 		      fd->hints->ranklist[i], BLOCK_LENS, fd->comm,
 		      &send_req_arr[j]);
@@ -435,9 +435,9 @@ void ADIOI_Exch_file_views(int myrank, int nprocs, int file_ptr_type,
         }
     }
 
-    /* Since ADIOI_Malloc may do other things we add the +1 
-     * to avoid a 0-size malloc */    
-    statuses = (MPI_Status *) 
+    /* Since ADIOI_Malloc may do other things we add the +1
+     * to avoid a 0-size malloc */
+    statuses = (MPI_Status *)
 	ADIOI_Malloc(1 + 2 * ADIOI_MAX(send_req_arr_sz,recv_req_arr_sz)
 		     * sizeof(MPI_Status));
 
@@ -479,19 +479,19 @@ void ADIOI_Exch_file_views(int myrank, int nprocs, int file_ptr_type,
 		    client_file_view_state_arr[i].sz,
 		    client_file_view_state_arr[i].ext);
 	}
-	
-	while (fr_node_p->type != 
+
+	while (fr_node_p->type !=
 	       fd->file_realm_types[fd->my_cb_nodes_index])
 	    fr_node_p = fr_node_p->next;
 	assert(fr_node_p != NULL);
-	
-	fprintf(stderr, "my file realm (idx=%d,st_off=%Ld) ", 
+
+	fprintf(stderr, "my file realm (idx=%d,st_off=%Ld) ",
 		fd->my_cb_nodes_index,
 		fd->file_realm_st_offs[fd->my_cb_nodes_index]);
 	ADIOI_Print_flatlist_node(fr_node_p);
     }
 #endif
-    
+
 #ifdef DEBUG2
     if (fd->is_agg == 1)
     {

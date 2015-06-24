@@ -5,15 +5,15 @@
  * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2015 University of Houston. All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  *
  * These symbols are in a file by themselves to provide nice linker
@@ -71,9 +71,9 @@ static mca_fbtl_base_module_1_0_0_t posix =  {
 int mca_fbtl_posix_component_init_query(bool enable_progress_threads,
                                       bool enable_mpi_threads) {
     /* Nothing to do */
-   
+
    return OMPI_SUCCESS;
-}      
+}
 
 struct mca_fbtl_base_module_1_0_0_t *
 mca_fbtl_posix_component_file_query (mca_io_ompio_file_t *fh, int *priority) {
@@ -88,16 +88,16 @@ mca_fbtl_posix_component_file_query (mca_io_ompio_file_t *fh, int *priority) {
    return &posix;
 }
 
-int mca_fbtl_posix_component_file_unquery (mca_io_ompio_file_t *file) {    
+int mca_fbtl_posix_component_file_unquery (mca_io_ompio_file_t *file) {
    /* This function might be needed for some purposes later. for now it
-    * does not have anything to do since there are no steps which need 
+    * does not have anything to do since there are no steps which need
     * to be undone if this module is not selected */
 
    return OMPI_SUCCESS;
 }
 
 int mca_fbtl_posix_module_init (mca_io_ompio_file_t *file) {
-    
+
 #if defined (FBTL_POSIX_HAVE_AIO)
     long val = sysconf(_SC_AIO_MAX);
     if ( -1 != val ) {
@@ -107,7 +107,7 @@ int mca_fbtl_posix_module_init (mca_io_ompio_file_t *file) {
     return OMPI_SUCCESS;
 }
 
-   
+
 int mca_fbtl_posix_module_finalize (mca_io_ompio_file_t *file) {
     return OMPI_SUCCESS;
 }
@@ -125,9 +125,9 @@ bool mca_fbtl_posix_progress ( mca_ompio_request_t *req)
 	    if ( 0 == data->aio_req_status[i]){
 		data->aio_open_reqs--;
 		lcount++;
-		/* assuming right now that aio_return will return 
+		/* assuming right now that aio_return will return
 		** the number of bytes written/read and not an error code,
-		** since aio_error should have returned an error in that 
+		** since aio_error should have returned an error in that
 		** case and not 0 ( which means request is complete)
 		*/
 		data->aio_total_len += aio_return (&data->aio_reqs[i]);
@@ -137,7 +137,7 @@ bool mca_fbtl_posix_progress ( mca_ompio_request_t *req)
 		continue;
 	    }
 	    else {
-		/* an error occured. Mark the request done, but 
+		/* an error occured. Mark the request done, but
 		   set an error code in the status */
 		req->req_ompi.req_status.MPI_ERROR = OMPI_ERROR;
 		req->req_ompi.req_status._ucount = data->aio_total_len;
@@ -161,7 +161,7 @@ bool mca_fbtl_posix_progress ( mca_ompio_request_t *req)
 	}
 	else {
 	    data->aio_last_active_req = data->aio_req_count;
-	}	
+	}
 	for ( i=data->aio_first_active_req; i< data->aio_last_active_req; i++ ) {
 	    if ( FBTL_POSIX_READ == data->aio_req_type ) {
 		if (-1 == aio_read(&data->aio_reqs[i])) {
@@ -180,7 +180,7 @@ bool mca_fbtl_posix_progress ( mca_ompio_request_t *req)
 	printf("posting new batch: first=%d last=%d\n", data->aio_first_active_req, data->aio_last_active_req );
 #endif
     }
-	    
+
     if ( 0 == data->aio_open_reqs ) {
 	/* all pending operations are finished for this request */
 	req->req_ompi.req_status.MPI_ERROR = OMPI_SUCCESS;

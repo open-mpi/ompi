@@ -1,7 +1,7 @@
-/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- 
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*-
  *   vim: ts=8 sts=4 sw=4 noexpandtab
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -118,7 +118,7 @@ int ADIOI_PVFS2_WriteStridedListIO(ADIO_File fd, const void *buf, int count,
 
 int ADIOI_PVFS2_WriteStridedDtypeIO(ADIO_File fd, const void *buf, int count,
 				    MPI_Datatype datatype, int file_ptr_type,
-				    ADIO_Offset offset, ADIO_Status *status, 
+				    ADIO_Offset offset, ADIO_Status *status,
 				    int *error_code)
 {
     return ADIOI_PVFS2_StridedDtypeIO(fd, (void *)buf, count,
@@ -139,7 +139,7 @@ void ADIOI_PVFS2_WriteStrided(ADIO_File fd, const void *buf, int count,
      * - new List I/O (from avery)
      * - classic List I/O  (the one that's always been in ROMIO)
      * I imagine we'll keep Datatype as an optional optimization, and afer a
-     * release or two promote it to the default 
+     * release or two promote it to the default
      */
 
     /* a lot of near-duplication from ADIOI_PVFS2_ReadStrided: for
@@ -170,7 +170,7 @@ void ADIOI_PVFS2_WriteStrided(ADIO_File fd, const void *buf, int count,
     }
     /* Use list I/O in the base case */
     if (fd->hints->fs_hints.pvfs2.listio_write == ADIOI_HINT_ENABLE) {
-	ret = ADIOI_PVFS2_WriteStridedListIO(fd, buf, count, datatype, 
+	ret = ADIOI_PVFS2_WriteStridedListIO(fd, buf, count, datatype,
 			file_ptr_type, offset, status, error_code);
 	return;
     }

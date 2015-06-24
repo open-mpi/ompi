@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -122,7 +122,7 @@ void ADIOI_GEN_WriteStrided(ADIO_File fd, const void *buf, int count,
     ADIO_Offset num, size, n_filetypes, etype_in_filetype, st_n_filetypes;
     ADIO_Offset n_etypes_in_filetype, abs_off_in_filetype=0;
     MPI_Count filetype_size, etype_size, buftype_size;
-    MPI_Aint filetype_extent, buftype_extent; 
+    MPI_Aint filetype_extent, buftype_extent;
     int buf_count, buftype_is_contig, filetype_is_contig;
     ADIO_Offset userbuf_off;
     ADIO_Offset off, req_off, disp, end_offset=0, writebuf_off, start_off;
@@ -138,7 +138,7 @@ void ADIOI_GEN_WriteStrided(ADIO_File fd, const void *buf, int count,
 	 * approach instead.
 	 */
 
-	ADIOI_GEN_WriteStrided_naive(fd, 
+	ADIOI_GEN_WriteStrided_naive(fd,
 				    buf,
 				    count,
 				    datatype,
@@ -160,7 +160,7 @@ void ADIOI_GEN_WriteStrided(ADIO_File fd, const void *buf, int count,
 #ifdef HAVE_STATUS_SET_BYTES
 	MPIR_Status_set_bytes(status, datatype, 0);
 #endif
-	*error_code = MPI_SUCCESS; 
+	*error_code = MPI_SUCCESS;
 	return;
     }
 
@@ -184,7 +184,7 @@ void ADIOI_GEN_WriteStrided(ADIO_File fd, const void *buf, int count,
 	flat_buf = ADIOI_Flatlist;
 	while (flat_buf->type != datatype) flat_buf = flat_buf->next;
 
-        off = (file_ptr_type == ADIO_INDIVIDUAL) ? fd->fp_ind : 
+        off = (file_ptr_type == ADIO_INDIVIDUAL) ? fd->fp_ind :
                  fd->disp + (ADIO_Offset)etype_size * offset;
 
 	start_off = off;
@@ -194,10 +194,10 @@ void ADIOI_GEN_WriteStrided(ADIO_File fd, const void *buf, int count,
         writebuf_len = (unsigned) (ADIOI_MIN(max_bufsize, end_offset-writebuf_off+1));
 
 /* if atomicity is true, lock the region to be accessed */
-	if (fd->atomicity) 
+	if (fd->atomicity)
 	    ADIOI_WRITE_LOCK(fd, start_off, SEEK_SET, end_offset-start_off+1);
 
-        for (j=0; j<count; j++) 
+        for (j=0; j<count; j++)
         {
               for (i=0; i<flat_buf->count; i++) {
                   userbuf_off = (ADIO_Offset)j*(ADIO_Offset)buftype_extent + flat_buf->indices[i];
@@ -212,7 +212,7 @@ void ADIOI_GEN_WriteStrided(ADIO_File fd, const void *buf, int count,
         ADIO_WriteContig(fd, writebuf, writebuf_len, MPI_BYTE, ADIO_EXPLICIT_OFFSET,
 			writebuf_off, &status1, error_code);
 
-	if (fd->atomicity) 
+	if (fd->atomicity)
 	    ADIOI_UNLOCK(fd, start_off, SEEK_SET, end_offset-start_off+1);
 
 	if (*error_code != MPI_SUCCESS) goto fn_exit;
@@ -259,7 +259,7 @@ void ADIOI_GEN_WriteStrided(ADIO_File fd, const void *buf, int count,
 	    n_filetypes = offset / n_etypes_in_filetype;
 	    etype_in_filetype = offset % n_etypes_in_filetype;
 	    size_in_filetype = etype_in_filetype * etype_size;
- 
+
 	    sum = 0;
 	    for (i=0; i<flat_file->count; i++) {
 		sum += flat_file->blocklens[i];
@@ -273,7 +273,7 @@ void ADIOI_GEN_WriteStrided(ADIO_File fd, const void *buf, int count,
 	    }
 
 	    /* abs. offset in bytes in the file */
-	    offset = disp + (ADIO_Offset) n_filetypes*filetype_extent + 
+	    offset = disp + (ADIO_Offset) n_filetypes*filetype_extent +
 		    abs_off_in_filetype;
 	}
 
@@ -293,7 +293,7 @@ void ADIOI_GEN_WriteStrided(ADIO_File fd, const void *buf, int count,
                              offset, status, error_code);
 
 	    if (file_ptr_type == ADIO_INDIVIDUAL) {
-                /* update MPI-IO file pointer to point to the first byte 
+                /* update MPI-IO file pointer to point to the first byte
 		 * that can be accessed in the fileview. */
                 fd->fp_ind = offset + bufsize;
                 if (bufsize == fwr_size) {
@@ -308,10 +308,10 @@ void ADIOI_GEN_WriteStrided(ADIO_File fd, const void *buf, int count,
                                + (ADIO_Offset)n_filetypes*filetype_extent;
                 }
             }
-	    fd->fp_sys_posn = -1;   /* set it to null. */ 
+	    fd->fp_sys_posn = -1;   /* set it to null. */
 #ifdef HAVE_STATUS_SET_BYTES
 	    MPIR_Status_set_bytes(status, datatype, bufsize);
-#endif 
+#endif
             goto fn_exit;
         }
 
@@ -335,13 +335,13 @@ void ADIOI_GEN_WriteStrided(ADIO_File fd, const void *buf, int count,
                 n_filetypes += (j == 0) ? 1 : 0;
             }
 
-	    off = disp + flat_file->indices[j] + 
+	    off = disp + flat_file->indices[j] +
 		    n_filetypes*(ADIO_Offset)filetype_extent;
 	    fwr_size = ADIOI_MIN(flat_file->blocklens[j], bufsize-i_offset);
 	}
 
 /* if atomicity is true, lock the region to be accessed */
-	if (fd->atomicity) 
+	if (fd->atomicity)
 	    ADIOI_WRITE_LOCK(fd, start_off, SEEK_SET, end_offset-start_off+1);
 
         writebuf_off = 0;
@@ -360,9 +360,9 @@ void ADIOI_GEN_WriteStrided(ADIO_File fd, const void *buf, int count,
 	    n_filetypes = st_n_filetypes;
 	    fwr_size = ADIOI_MIN(st_fwr_size, bufsize);
 	    while (i_offset < bufsize) {
-                if (fwr_size) { 
-                    /* TYPE_UB and TYPE_LB can result in 
-                       fwr_size = 0. save system call in such cases */ 
+                if (fwr_size) {
+                    /* TYPE_UB and TYPE_LB can result in
+                       fwr_size = 0. save system call in such cases */
 		    /* lseek(fd->fd_sys, off, SEEK_SET);
 		    err = write(fd->fd_sys, ((char *) buf) + i_offset, fwr_size);*/
 
@@ -385,9 +385,9 @@ void ADIOI_GEN_WriteStrided(ADIO_File fd, const void *buf, int count,
                         j = (j+1) % flat_file->count;
                         n_filetypes += (j == 0) ? 1 : 0;
                     }
-		    off = disp + flat_file->indices[j] + 
+		    off = disp + flat_file->indices[j] +
                                     n_filetypes*(ADIO_Offset)filetype_extent;
-		    fwr_size = ADIOI_MIN(flat_file->blocklens[j], 
+		    fwr_size = ADIOI_MIN(flat_file->blocklens[j],
 				    bufsize-i_offset);
 		}
 	    }
@@ -431,7 +431,7 @@ void ADIOI_GEN_WriteStrided(ADIO_File fd, const void *buf, int count,
  			n_filetypes += (j == 0) ? 1 : 0;
 		    }
 
-		    off = disp + flat_file->indices[j] + 
+		    off = disp + flat_file->indices[j] +
                                       n_filetypes*(ADIO_Offset)filetype_extent;
 
 		    new_fwr_size = flat_file->blocklens[j];
@@ -447,7 +447,7 @@ void ADIOI_GEN_WriteStrided(ADIO_File fd, const void *buf, int count,
 		    k = (k + 1)%flat_buf->count;
 		    buf_count++;
 		    i_offset = (ADIO_Offset)buftype_extent*(ADIO_Offset)(buf_count/flat_buf->count) +
-			flat_buf->indices[k]; 
+			flat_buf->indices[k];
 		    new_bwr_size = flat_buf->blocklens[k];
 		    if (size != fwr_size) {
 			off += size;
@@ -460,15 +460,15 @@ void ADIOI_GEN_WriteStrided(ADIO_File fd, const void *buf, int count,
 	    }
 	}
 
-        /* write the buffer out finally */	
+        /* write the buffer out finally */
 	if (writebuf_len) {
 	    ADIO_WriteContig(fd, writebuf, writebuf_len, MPI_BYTE, ADIO_EXPLICIT_OFFSET,
 			writebuf_off, &status1, error_code);
-	    if (!(fd->atomicity)) 
+	    if (!(fd->atomicity))
 		ADIOI_UNLOCK(fd, writebuf_off, SEEK_SET, writebuf_len);
 	    if (*error_code != MPI_SUCCESS) goto fn_exit;
 	}
-	if (fd->atomicity) 
+	if (fd->atomicity)
 	    ADIOI_UNLOCK(fd, start_off, SEEK_SET, end_offset-start_off+1);
 
 	if (file_ptr_type == ADIO_INDIVIDUAL) fd->fp_ind = off;
@@ -479,7 +479,7 @@ void ADIOI_GEN_WriteStrided(ADIO_File fd, const void *buf, int count,
 #ifdef HAVE_STATUS_SET_BYTES
     /* datatypes returning negagive values, probably related to tt 1893 */
     MPIR_Status_set_bytes(status, datatype, bufsize);
-/* This is a temporary way of filling in status. The right way is to 
+/* This is a temporary way of filling in status. The right way is to
    keep track of how much data was actually written by ADIOI_BUFFERED_WRITE. */
 #endif
 

@@ -46,7 +46,7 @@ MPI_IALLTOALL(\fISENDBUF, SENDCOUNT, SENDTYPE, RECVBUF, RECVCOUNT,
 .nf
 #include <mpi.h>
 void MPI::Comm::Alltoall(const void* \fIsendbuf\fP, int \fIsendcount\fP,
-	const MPI::Datatype& \fIsendtype\fP, void* \fIrecvbuf\fP, 
+	const MPI::Datatype& \fIsendtype\fP, void* \fIrecvbuf\fP,
 	int \fIrecvcount\fP, const MPI::Datatype& \fIrecvtype\fP)
 
 .fi
@@ -82,7 +82,7 @@ Request (handle, non-blocking only).
 .ft R
 .TP 1.2i
 IERROR
-Fortran only: Error status (integer). 
+Fortran only: Error status (integer).
 
 .SH DESCRIPTION
 .ft R
@@ -108,7 +108,7 @@ amount of data received, pairwise, between every pair of processes.
 
 WHEN COMMUNICATOR IS AN INTER-COMMUNICATOR
 .sp
-When the communicator is an inter-communicator, the gather operation occurs in two phases.  The data is gathered from all the members of the first group and received by all the members of the second group.  Then the data is gathered from all the members of the second group and received by all the members of the first.  The operation exhibits a symmetric, full-duplex behavior.  
+When the communicator is an inter-communicator, the gather operation occurs in two phases.  The data is gathered from all the members of the first group and received by all the members of the second group.  Then the data is gathered from all the members of the second group and received by all the members of the first.  The operation exhibits a symmetric, full-duplex behavior.
 .sp
 The first group defines the root process.  The root process uses MPI_ROOT as the value of \fIroot\fR.  All other processes in the first group use MPI_PROC_NULL as the value of \fIroot\fR.  All processes in the second group use the rank of the root process in the first group as the value of \fIroot\fR.
 .sp
@@ -117,7 +117,7 @@ When the communicator is an intra-communicator, these groups are the same, and t
 .SH USE OF IN-PLACE OPTION
 When the communicator is an intracommunicator, you can perform an all-to-all operation in-place (the output buffer is used as the input buffer).  Use the variable MPI_IN_PLACE as the value of \fIsendbuf\fR.  In this case, \fIsendcount\fR and \fIsendtype\fR are ignored.  The input data of each process is assumed to be in the area where that process would receive its own contribution to the receive buffer.
 
-.sp  
+.sp
 .SH NOTES
 .sp
 All arguments on all processes are significant. The \fIcomm\fP argument,
@@ -143,7 +143,7 @@ called. By default, this error handler aborts the MPI job, except for
 I/O function errors. The error handler may be changed with
 MPI_Comm_set_errhandler; the predefined error handler MPI_ERRORS_RETURN
 may be used to cause error values to be returned. Note that MPI does not
-guarantee that an MPI program can continue past an error. 
+guarantee that an MPI program can continue past an error.
 
 .SH SEE ALSO
 .ft R

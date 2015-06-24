@@ -46,7 +46,7 @@ int MPI_T_enum_get_item(MPI_T_enum enumtype, int index, int *value, char *name,
         }
 
         rc = enumtype->get_value(enumtype, index, value, &tmp);
-        if (OPAL_SUCCESS != rc) { 
+        if (OPAL_SUCCESS != rc) {
             rc = MPI_ERR_OTHER;
             break;
         }

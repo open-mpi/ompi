@@ -6,15 +6,15 @@ dnl                         Corporation.  All rights reserved.
 dnl Copyright (c) 2004-2005 The University of Tennessee and The University
 dnl                         of Tennessee Research Foundation.  All rights
 dnl                         reserved.
-dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2010-2012 Cisco Systems, Inc.  All rights reserved.
 dnl $COPYRIGHT$
-dnl 
+dnl
 dnl Additional copyrights may follow
-dnl 
+dnl
 dnl $HEADER$
 dnl
 
@@ -102,7 +102,7 @@ void $ompi_ac_align_fn(char *w, char *x, char *y, char *z)
     else if (! ((aw%8)||(ax%8)||(ay%8)||(az%8))) fprintf(f, "%d\n", 8);
     else if (! ((aw%4)||(ax%4)||(ay%4)||(az%4))) fprintf(f, "%d\n", 4);
     else if (! ((aw%2)||(ax%2)||(ay%2)||(az%2))) fprintf(f, "%d\n", 2);
-    else fprintf(f, "%d\n", 1); 
+    else fprintf(f, "%d\n", 1);
     fclose(f);
 }
 #ifdef __cplusplus

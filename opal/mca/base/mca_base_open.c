@@ -6,7 +6,7 @@
  * Copyright (c) 2004-2008 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -14,9 +14,9 @@
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -60,7 +60,7 @@ static void parse_verbose(char *e, opal_output_stream_t *lds);
 
 
 /*
- * Main MCA initialization.  
+ * Main MCA initialization.
  */
 int mca_base_open(void)
 {
@@ -78,7 +78,7 @@ int mca_base_open(void)
     mca_base_system_default_path = strdup(opal_install_dirs.opallibdir);
     asprintf(&mca_base_user_default_path, "%s"OPAL_PATH_SEP".openmpi"OPAL_PATH_SEP"components", opal_home_directory());
 #else
-    asprintf(&mca_base_system_default_path, "%s", opal_install_dirs.opallibdir); 
+    asprintf(&mca_base_system_default_path, "%s", opal_install_dirs.opallibdir);
 #endif
 
     /* see if the user wants to override the defaults */
@@ -225,7 +225,7 @@ static void parse_verbose(char *e, opal_output_stream_t *lds)
             lds->lds_want_file = true;
             lds->lds_want_file_append = 1;
             have_output = true;
-        } 
+        }
 
         else if (strncasecmp(ptr, "level", 5) == 0) {
             lds->lds_verbose_level = 0;

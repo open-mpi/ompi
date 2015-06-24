@@ -96,7 +96,7 @@ AC_DEFUN([ORTE_CHECK_LSF],[
           [orte_check_lsf_happy="yes"])
 
     # test function of liblsb LSF package
-    AS_IF([test "$orte_check_lsf_happy" = "yes"], 
+    AS_IF([test "$orte_check_lsf_happy" = "yes"],
           [AC_MSG_CHECKING([for LSF dir])
            AC_MSG_RESULT([$orte_check_lsf_dir_msg])
            AC_MSG_CHECKING([for LSF library dir])

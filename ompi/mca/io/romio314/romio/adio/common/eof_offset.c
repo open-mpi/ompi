@@ -1,14 +1,14 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
 #include "adio.h"
 #include "adio_extern.h"
 
-/* return the current end of file in etype units relative to the 
+/* return the current end of file in etype units relative to the
    current view */
 
 void ADIOI_Get_eof_offset(ADIO_File fd, ADIO_Offset *eof_offset)
@@ -26,24 +26,24 @@ void ADIOI_Get_eof_offset(ADIO_File fd, ADIO_Offset *eof_offset)
     ADIO_Fcntl(fd, ADIO_FCNTL_GET_FSIZE, fcntl_struct, &error_code);
     fsize = fcntl_struct->fsize;
     ADIOI_Free(fcntl_struct);
-	
+
     /* Find the offset in etype units corresponding to eof.
-       The eof could lie in a hole in the current view, or in the 
+       The eof could lie in a hole in the current view, or in the
        middle of an etype. In that case the offset will be the offset
        corresponding to the start of the next etype in the current view.*/
 
     ADIOI_Datatype_iscontig(fd->filetype, &filetype_is_contig);
     etype_size = fd->etype_size;
 
-    if (filetype_is_contig) 
+    if (filetype_is_contig)
 	*eof_offset = (fsize - fd->disp + etype_size - 1)/etype_size;
     /* ceiling division in case fsize is not a multiple of etype_size;*/
     else {
 	/* filetype already flattened in ADIO_Open */
 	flat_file = ADIOI_Flatlist;
-	while (flat_file->type != fd->filetype) 
+	while (flat_file->type != fd->filetype)
 	    flat_file = flat_file->next;
-	
+
 	MPI_Type_size_x(fd->filetype, &filetype_size);
 	MPI_Type_extent(fd->filetype, &filetype_extent);
 
@@ -55,14 +55,14 @@ void ADIOI_Get_eof_offset(ADIO_File fd, ADIO_Offset *eof_offset)
 	    n_filetypes++;
 	    for (i=0; i<flat_file->count; i++) {
 		sum += flat_file->blocklens[i];
-		if (disp + flat_file->indices[i] + 
-		    n_filetypes* ADIOI_AINT_CAST_TO_OFFSET filetype_extent + 
+		if (disp + flat_file->indices[i] +
+		    n_filetypes* ADIOI_AINT_CAST_TO_OFFSET filetype_extent +
 		       flat_file->blocklens[i] >= fsize) {
-		    if (disp + flat_file->indices[i] + 
+		    if (disp + flat_file->indices[i] +
 			   n_filetypes * ADIOI_AINT_CAST_TO_OFFSET filetype_extent >= fsize)
 			sum -= flat_file->blocklens[i];
 		    else {
-			rem = (disp + flat_file->indices[i] + 
+			rem = (disp + flat_file->indices[i] +
 				n_filetypes* ADIOI_AINT_CAST_TO_OFFSET filetype_extent
 				+ flat_file->blocklens[i] - fsize);
 			sum -= rem;

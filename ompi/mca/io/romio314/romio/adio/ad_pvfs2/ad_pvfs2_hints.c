@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -44,15 +44,15 @@ void ADIOI_PVFS2_SetInfo(ADIO_File fd, MPI_Info users_info, int *error_code)
         fd->hints->fs_hints.pvfs2.listio_read = ADIOI_HINT_DISABLE;
         fd->hints->fs_hints.pvfs2.listio_write = ADIOI_HINT_DISABLE;
 
-	
+
 	/* any user-provided hints? */
 	if (users_info != MPI_INFO_NULL) {
 	    value = (char *) ADIOI_Malloc( (MPI_MAX_INFO_VAL+1)*sizeof(char));
 	    /* pvfs2 debugging */
-	    ADIOI_Info_get(users_info, "romio_pvfs2_debugmask", 
+	    ADIOI_Info_get(users_info, "romio_pvfs2_debugmask",
 		    MPI_MAX_INFO_VAL, value, &flag);
 	    if (flag) {
-		tmp_value = fd->hints->fs_hints.pvfs2.debugmask = 
+		tmp_value = fd->hints->fs_hints.pvfs2.debugmask =
 		    PVFS_debug_eventlog_to_mask(value);
 
 		MPI_Bcast(&tmp_value, 1, MPI_INT, 0, fd->comm);
@@ -64,7 +64,7 @@ void ADIOI_PVFS2_SetInfo(ADIO_File fd, MPI_Info users_info, int *error_code)
 		    return;
 		}
 		/* --END ERROR HANDLING-- */
-		
+
 		ADIOI_Info_set(fd->info, "romio_pvfs2_debugmask", value);
 	    }
 

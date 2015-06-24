@@ -379,7 +379,7 @@ opal_generic_simple_unpack_function( opal_convertor_t* pConvertor,
             if( OPAL_DATATYPE_LOOP == pElem->elem.common.type ) {
                 OPAL_PTRDIFF_TYPE local_disp = (OPAL_PTRDIFF_TYPE)conv_ptr;
                 if( pElem->loop.common.flags & OPAL_DATATYPE_FLAG_CONTIGUOUS ) {
-                    UNPACK_CONTIGUOUS_LOOP( pConvertor, pElem, count_desc, 
+                    UNPACK_CONTIGUOUS_LOOP( pConvertor, pElem, count_desc,
                                             iov_ptr, conv_ptr, iov_len_local );
                     if( 0 == count_desc ) {  /* completed */
                         pos_desc += pElem->loop.items + 1;

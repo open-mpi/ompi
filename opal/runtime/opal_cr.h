@@ -5,15 +5,15 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2007 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2007 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -66,7 +66,7 @@ enum opal_cr_ckpt_cmd_state_t {
 };
 typedef enum opal_cr_ckpt_cmd_state_t opal_cr_ckpt_cmd_state_t;
 
-    /* An output handle to be used by the cr runtime 
+    /* An output handle to be used by the cr runtime
      * functionality as an argument to opal_output() */
     OPAL_DECLSPEC extern int    opal_cr_output;
 
@@ -74,7 +74,7 @@ typedef enum opal_cr_ckpt_cmd_state_t opal_cr_ckpt_cmd_state_t;
      * with the opal-checkpoint tool  */
     OPAL_DECLSPEC extern char * opal_cr_pipe_dir;
 
-    /* Signal that opal-checkpoint uses to contact the 
+    /* Signal that opal-checkpoint uses to contact the
      * application process */
     OPAL_DECLSPEC extern int    opal_cr_entry_point_signal;
 
@@ -154,7 +154,7 @@ typedef enum opal_cr_ckpt_cmd_state_t opal_cr_ckpt_cmd_state_t;
      *  elements.
      */
     OPAL_DECLSPEC int opal_cr_finalize(void);
-    
+
     /*************************************************
      * Check to see if a checkpoint has been requested
      *
@@ -175,7 +175,7 @@ typedef enum opal_cr_ckpt_cmd_state_t opal_cr_ckpt_cmd_state_t;
     OPAL_DECLSPEC void opal_cr_test_if_checkpoint_ready(void);
 
     /* If the checkpoint operation should be stalled to
-     * wait for another sevice to complete before 
+     * wait for another sevice to complete before
      * continuing with the checkpoint */
     OPAL_DECLSPEC extern bool opal_cr_stall_check;
     OPAL_DECLSPEC extern bool opal_cr_currently_stalled;
@@ -190,7 +190,7 @@ typedef enum opal_cr_ckpt_cmd_state_t opal_cr_ckpt_cmd_state_t;
     OPAL_DECLSPEC void opal_cr_thread_noop_progress(void);
 #endif /* OPAL_ENABLE_FT_THREAD == 1 */
 
-    /* 
+    /*
      * If not using FT then make the #defines noops
      */
 #if OPAL_ENABLE_FT == 0 || OPAL_ENABLE_FT_CR == 0
@@ -285,11 +285,11 @@ typedef enum opal_cr_ckpt_cmd_state_t opal_cr_ckpt_cmd_state_t;
      * - Call the CRS.checkpoint()
      * - Call Registered INC_Coord(state)
      */
-    OPAL_DECLSPEC int opal_cr_inc_core(pid_t pid, 
+    OPAL_DECLSPEC int opal_cr_inc_core(pid_t pid,
                                        opal_crs_base_snapshot_t *snapshot,
                                        opal_crs_base_ckpt_options_t *options,
                                        int *state);
-    
+
     OPAL_DECLSPEC int opal_cr_inc_core_prep(void);
     OPAL_DECLSPEC int opal_cr_inc_core_ckpt(pid_t pid,
                                             opal_crs_base_snapshot_t *snapshot,
@@ -336,7 +336,7 @@ typedef enum opal_cr_ckpt_cmd_state_t opal_cr_ckpt_cmd_state_t;
     /*******************************
      * Coordination Routines
      *******************************/
-    /** 
+    /**
      * Coordination callback routine signature
      */
     typedef int (*opal_cr_coord_callback_fn_t) (int);

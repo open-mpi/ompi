@@ -5,17 +5,17 @@
  * Copyright (c) 2004-2013 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
- *                         reserved. 
+ *                         reserved.
  * Copyright (c) 2010-2012 Oracle and/or its affiliates.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -42,10 +42,10 @@ int mca_pml_bfo_irecv_init(void *addr,
     MCA_PML_BFO_RECV_REQUEST_INIT(recvreq,
                                    addr,
                                    count, datatype, src, tag, comm, true);
-    
+
     PERUSE_TRACE_COMM_EVENT (PERUSE_COMM_REQ_ACTIVATE,
                              &((recvreq)->req_recv.req_base),
-                             PERUSE_RECV);                              
+                             PERUSE_RECV);
 
     *request = (ompi_request_t *) recvreq;
     return OMPI_SUCCESS;
@@ -127,7 +127,7 @@ mca_pml_bfo_imrecv( void *buf,
     mca_pml_bfo_comm_proc_t* proc;
     mca_pml_bfo_comm_t* bfo_comm;
     uint64_t seq;
-    
+
     /* get the request from the message and the frag from the request
        before we overwrite everything */
     recvreq = (mca_pml_bfo_recv_request_t*) (*message)->req_ptr;
@@ -151,7 +151,7 @@ mca_pml_bfo_imrecv( void *buf,
     recvreq->req_recv.req_base.req_type = MCA_PML_REQUEST_RECV;
     MCA_PML_BFO_RECV_REQUEST_INIT(recvreq,
                                   buf,
-                                  count, datatype, 
+                                  count, datatype,
                                   src, tag, comm, false);
     OBJ_RELEASE(comm);
 
@@ -198,7 +198,7 @@ mca_pml_bfo_imrecv( void *buf,
         assert(0);
     }
     MCA_PML_BFO_RECV_FRAG_RETURN(frag);
-    
+
     ompi_message_return(*message);
     *message = MPI_MESSAGE_NULL;
     *request = (ompi_request_t *) recvreq;
@@ -246,7 +246,7 @@ mca_pml_bfo_mrecv( void *buf,
     recvreq->req_recv.req_base.req_type = MCA_PML_REQUEST_RECV;
     MCA_PML_BFO_RECV_REQUEST_INIT(recvreq,
                                   buf,
-                                  count, datatype, 
+                                  count, datatype,
                                   src, tag, comm, false);
     OBJ_RELEASE(comm);
 
@@ -291,7 +291,7 @@ mca_pml_bfo_mrecv( void *buf,
     default:
         assert(0);
     }
-    
+
     ompi_message_return(*message);
     *message = MPI_MESSAGE_NULL;
     ompi_request_wait_completion(&(recvreq->req_recv.req_base.req_ompi));

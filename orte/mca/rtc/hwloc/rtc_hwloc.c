@@ -1,9 +1,9 @@
 /*
  * Copyright (c) 2014-2015 Intel, Inc. All rights reserved
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -121,7 +121,7 @@ static void set(orte_job_t *jobdat,
                        -- it doesn't return). */
                     orte_rtc_base_send_error_show_help(write_fd, 1, "help-orte-odls-default.txt",
                                                        "binding generic error",
-                                                       orte_process_info.nodename, context->app, msg, 
+                                                       orte_process_info.nodename, context->app, msg,
                                                        __FILE__, __LINE__);
                 } else {
                     orte_rtc_base_send_warn_show_help(write_fd,
@@ -157,8 +157,8 @@ static void set(orte_job_t *jobdat,
                  */
                 orte_rtc_base_send_error_show_help(write_fd, 1, "help-orte-odls-default.txt",
                                                    "binding generic error",
-                                                   orte_process_info.nodename, 
-                                                   context->app, msg, 
+                                                   orte_process_info.nodename,
+                                                   context->app, msg,
                                                    __FILE__, __LINE__);
             } else {
                 orte_rtc_base_send_warn_show_help(write_fd,
@@ -187,7 +187,7 @@ static void set(orte_job_t *jobdat,
                    -- it doesn't return). */
                 orte_rtc_base_send_error_show_help(write_fd, 1, "help-orte-odls-default.txt",
                                                    "binding generic error",
-                                                   orte_process_info.nodename, context->app, msg, 
+                                                   orte_process_info.nodename, context->app, msg,
                                                    __FILE__, __LINE__);
             } else {
                 orte_rtc_base_send_warn_show_help(write_fd,
@@ -210,8 +210,8 @@ static void set(orte_job_t *jobdat,
             hwloc_cpuset_t mycpus;
             /* get the cpus we are bound to */
             mycpus = hwloc_bitmap_alloc();
-            if (hwloc_get_cpubind(opal_hwloc_topology, 
-                                  mycpus, 
+            if (hwloc_get_cpubind(opal_hwloc_topology,
+                                  mycpus,
                                   HWLOC_CPUBIND_PROCESS) < 0) {
                 opal_output(0, "MCW rank %d is not bound",
                             child->name.vpid);
@@ -247,7 +247,7 @@ static void set(orte_job_t *jobdat,
                    -- it doesn't return). */
                 orte_rtc_base_send_error_show_help(write_fd, 1, "help-orte-odls-default.txt",
                                                    "memory binding error",
-                                                   orte_process_info.nodename, context->app, msg, 
+                                                   orte_process_info.nodename, context->app, msg,
                                                    __FILE__, __LINE__);
             } else {
                 orte_rtc_base_send_warn_show_help(write_fd,

@@ -6,7 +6,7 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -14,9 +14,9 @@
  * Copyright (c) 2013-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -152,7 +152,7 @@ libnbc_init_query(bool enable_progress_threads,
  * priority we want to return.
  */
 mca_coll_base_module_t *
-libnbc_comm_query(struct ompi_communicator_t *comm, 
+libnbc_comm_query(struct ompi_communicator_t *comm,
                   int *priority)
 {
     ompi_coll_libnbc_module_t *module;
@@ -272,7 +272,7 @@ libnbc_module_destruct(ompi_coll_libnbc_module_t *module)
 
     /* if we ever were used for a collective op, do the progress cleanup. */
     if (true == module->comm_registered) {
-        int32_t tmp = 
+        int32_t tmp =
             OPAL_THREAD_ADD32(&mca_coll_libnbc_component.active_comms, -1);
         if (0 == tmp) {
             opal_progress_unregister(ompi_coll_libnbc_progress);
@@ -297,7 +297,7 @@ request_cancel(struct ompi_request_t *request, int complete)
 static int
 request_free(struct ompi_request_t **ompi_req)
 {
-    ompi_coll_libnbc_request_t *request = 
+    ompi_coll_libnbc_request_t *request =
         (ompi_coll_libnbc_request_t*) *ompi_req;
 
     if (true != request->super.req_complete) {
@@ -322,7 +322,7 @@ request_construct(ompi_coll_libnbc_request_t *request)
 }
 
 
-OBJ_CLASS_INSTANCE(ompi_coll_libnbc_request_t, 
+OBJ_CLASS_INSTANCE(ompi_coll_libnbc_request_t,
                    ompi_request_t,
                    request_construct,
                    NULL);

@@ -2,16 +2,16 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2009      IBM Corporation.  All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 /**
@@ -59,7 +59,7 @@
 #endif /* PML_BFO */
 
 /**
- * Common hdr attributes - must be first element in each hdr type 
+ * Common hdr attributes - must be first element in each hdr type
  */
 struct mca_pml_bfo_common_hdr_t {
     uint8_t hdr_type;  /**< type of envelope */
@@ -67,11 +67,11 @@ struct mca_pml_bfo_common_hdr_t {
 };
 typedef struct mca_pml_bfo_common_hdr_t mca_pml_bfo_common_hdr_t;
 
-#define MCA_PML_BFO_COMMON_HDR_NTOH(h) 
-#define MCA_PML_BFO_COMMON_HDR_HTON(h) 
+#define MCA_PML_BFO_COMMON_HDR_NTOH(h)
+#define MCA_PML_BFO_COMMON_HDR_HTON(h)
 
 /**
- *  Header definition for the first fragment, contains the 
+ *  Header definition for the first fragment, contains the
  *  attributes required to match the corresponding posted receive.
  */
 struct mca_pml_bfo_match_hdr_t {
@@ -88,7 +88,7 @@ struct mca_pml_bfo_match_hdr_t {
 #define OMPI_PML_BFO_MATCH_HDR_LEN  16
 #else
 #define OMPI_PML_BFO_MATCH_HDR_LEN  14
-#endif 
+#endif
 
 typedef struct mca_pml_bfo_match_hdr_t mca_pml_bfo_match_hdr_t;
 
@@ -119,7 +119,7 @@ do { \
     (h).hdr_src = htonl((h).hdr_src); \
     (h).hdr_tag = htonl((h).hdr_tag); \
     (h).hdr_seq = htons((h).hdr_seq); \
-} while (0) 
+} while (0)
 
 /**
  * Header definition for the first fragment when an acknowledgment
@@ -158,7 +158,7 @@ typedef struct mca_pml_bfo_rendezvous_hdr_t mca_pml_bfo_rendezvous_hdr_t;
         MCA_PML_BFO_MATCH_HDR_HTON((h).hdr_match); \
         MCA_PML_BFO_RNDV_HDR_FILL(h); \
         (h).hdr_msg_length = hton64((h).hdr_msg_length); \
-    } while (0) 
+    } while (0)
 
 /**
  * Header definition for a combined rdma rendezvous/get
@@ -197,7 +197,7 @@ do {                                         \
         MCA_PML_BFO_RNDV_HDR_HTON((h).hdr_rndv); \
         MCA_PML_BFO_RGET_HDR_FILL(h); \
         (h).hdr_seg_cnt = htonl((h).hdr_seg_cnt); \
-    } while (0) 
+    } while (0)
 
 /**
  *  Header for subsequent fragments.
@@ -284,7 +284,7 @@ do {                                \
         MCA_PML_BFO_COMMON_HDR_HTON((h).hdr_common); \
         MCA_PML_BFO_ACK_HDR_FILL(h); \
         (h).hdr_send_offset = hton64((h).hdr_send_offset); \
-    } while (0) 
+    } while (0)
 
 /**
  *  Header used to initiate an RDMA operation.
@@ -301,7 +301,7 @@ struct mca_pml_bfo_rdma_hdr_t {
     opal_ptr_t hdr_dst_req;                   /**< pointer to destination request */
 #endif /* PML_BFO */
     opal_ptr_t hdr_des;                       /**< source descriptor */
-    uint64_t hdr_rdma_offset;                 /**< current offset into user buffer */ 
+    uint64_t hdr_rdma_offset;                 /**< current offset into user buffer */
     mca_btl_base_segment_t hdr_segs[1];       /**< list of segments for rdma */
 };
 typedef struct mca_pml_bfo_rdma_hdr_t mca_pml_bfo_rdma_hdr_t;
@@ -329,7 +329,7 @@ do {                                 \
         MCA_PML_BFO_RDMA_HDR_FILL(h); \
         (h).hdr_seg_cnt = htonl((h).hdr_seg_cnt); \
         (h).hdr_rdma_offset = hton64((h).hdr_rdma_offset); \
-    } while (0) 
+    } while (0)
 
 /**
  *  Header used to complete an RDMA operation.
@@ -372,7 +372,7 @@ do {                                \
         MCA_PML_BFO_COMMON_HDR_HTON((h).hdr_common); \
         MCA_PML_BFO_MATCH_HDR_HTON((h).hdr_match); \
         MCA_PML_BFO_FIN_HDR_FILL(h); \
-    } while (0) 
+    } while (0)
 #else /* PML_BFO */
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT && OPAL_ENABLE_DEBUG
 #define MCA_PML_BFO_FIN_HDR_FILL(h) \
@@ -393,7 +393,7 @@ do {                                \
     do { \
         MCA_PML_BFO_COMMON_HDR_HTON((h).hdr_common); \
         MCA_PML_BFO_FIN_HDR_FILL(h); \
-    } while (0) 
+    } while (0)
 #endif /* PML_BFO */
 
 #if PML_BFO
@@ -431,7 +431,7 @@ typedef struct mca_pml_bfo_restart_hdr_t mca_pml_bfo_restart_hdr_t;
     (h).hdr_dst_rank = htonl((h).hdr_dst_rank); \
     (h).hdr_jobid = htonl((h).hdr_jobid); \
     (h).hdr_vpid = htonl((h).hdr_vpid); \
-    } while (0) 
+    } while (0)
 
 #endif /* PML_BFO */
 /**

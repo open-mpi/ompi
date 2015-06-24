@@ -16,14 +16,14 @@
 /* tree comparison function for schedule cache */
 int NBC_Scan_args_compare(NBC_Scan_args *a, NBC_Scan_args *b, void *param) {
 
-	if( (a->sendbuf == b->sendbuf) && 
+	if( (a->sendbuf == b->sendbuf) &&
       (a->recvbuf == b->recvbuf) &&
-      (a->count == b->count) && 
+      (a->count == b->count) &&
       (a->datatype == b->datatype) &&
       (a->op == b->op) ) {
     return  0;
   }
-	if( a->sendbuf < b->sendbuf ) {	
+	if( a->sendbuf < b->sendbuf ) {
     return -1;
 	}
 	return +1;
@@ -50,9 +50,9 @@ int ompi_coll_libnbc_iscan(void* sendbuf, void* recvbuf, int count, MPI_Datatype
   NBC_Handle *handle;
   ompi_coll_libnbc_request_t **coll_req = (ompi_coll_libnbc_request_t**) request;
   ompi_coll_libnbc_module_t *libnbc_module = (ompi_coll_libnbc_module_t*) module;
-  
+
   NBC_IN_PLACE(sendbuf, recvbuf, inplace);
-  
+
   res = NBC_Init_handle(comm, coll_req, libnbc_module);
   if(res != NBC_OK) { printf("Error in NBC_Init_handle(%i)\n", res); return res; }
   handle = (*coll_req);
@@ -62,7 +62,7 @@ int ompi_coll_libnbc_iscan(void* sendbuf, void* recvbuf, int count, MPI_Datatype
   if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Comm_size() (%i)\n", res); return res; }
   res = MPI_Type_extent(datatype, &ext);
   if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Type_extent() (%i)\n", res); return res; }
-  
+
   handle->tmpbuf = malloc(ext*count);
   if(handle->tmpbuf == NULL) { printf("Error in malloc()\n"); return NBC_OOR; }
 
@@ -129,10 +129,10 @@ int ompi_coll_libnbc_iscan(void* sendbuf, void* recvbuf, int count, MPI_Datatype
     schedule=found->schedule;
   }
 #endif
-  
+
   res = NBC_Start(handle, schedule);
   if (NBC_OK != res) { free(handle->tmpbuf); printf("Error in NBC_Start() (%i)\n", res); return res; }
-  
+
   /* tmpbuf is freed with the handle */
   return NBC_OK;
 }

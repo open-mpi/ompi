@@ -6,18 +6,18 @@
  * Copyright (c) 2004-2013 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.  All rights
- *                         reserved. 
+ *                         reserved.
  * Copyright (c) 2012-2013 Inria.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 #include "ompi_config.h"
@@ -42,7 +42,7 @@ static const char FUNC_NAME[] = "MPI_Graph_map";
 
 
 int MPI_Graph_map(MPI_Comm comm, int nnodes, const int indx[], const int edges[],
-                  int *newrank) 
+                  int *newrank)
 {
     int err = MPI_SUCCESS;
 
@@ -70,7 +70,7 @@ int MPI_Graph_map(MPI_Comm comm, int nnodes, const int indx[], const int edges[]
     OPAL_CR_ENTER_LIBRARY();
 
     if(!OMPI_COMM_IS_GRAPH(comm)) {
-        /* In case the communicator has no topo-module attached to 
+        /* In case the communicator has no topo-module attached to
            it, we just return the "default" value suggested by MPI:
            newrank = rank */
         *newrank = ompi_comm_rank(comm);

@@ -5,14 +5,14 @@
  * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -57,7 +57,7 @@ int main(int argc, char* argv[])
     orte_process_info.my_name->cellid = 0;
     orte_process_info.my_name->jobid = 0;
     orte_process_info.my_name->vpid = 0;
-    
+
     test_init("orte_session_dir_t");
     test_out = fopen( "test_session_dir_out", "w+" );
     if( test_out == NULL ) {
@@ -134,10 +134,10 @@ int main(int argc, char* argv[])
     fprintf(test_out, "completed all tests\n");
 
     fclose(test_out);
-    
+
     /* clean up */
     orte_proc_info_finalize();
-    
+
     test_finalize();
     return 0;
 }
@@ -264,7 +264,7 @@ static bool test6(void)
 
     clear_proc_info();
 
-    /* no enviro variables set, no prefix given 
+    /* no enviro variables set, no prefix given
     * Program should turn to default of /tmp (where "/" is whatever
     * top-level directory is appropriate for given system)
     */
@@ -364,7 +364,7 @@ static bool test8(void)
 
     for (i=0; i < 3; i++) unlink(filenm[i]);
     orte_session_dir_finalize(orte_process_info.my_name);
-    
+
     return true;
 }
 

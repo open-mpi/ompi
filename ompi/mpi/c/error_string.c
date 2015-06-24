@@ -5,15 +5,15 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      University of Houston. All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 #include "ompi_config.h"
@@ -36,7 +36,7 @@
 static const char FUNC_NAME[] = "MPI_Error_string";
 
 
-int MPI_Error_string(int errorcode, char *string, int *resultlen) 
+int MPI_Error_string(int errorcode, char *string, int *resultlen)
 {
     char *tmpstring;
 
@@ -50,10 +50,10 @@ int MPI_Error_string(int errorcode, char *string, int *resultlen)
                                           FUNC_NAME);
         }
     }
- 
+
     tmpstring = ompi_mpi_errnum_get_string (errorcode);
     strncpy(string, tmpstring, MPI_MAX_ERROR_STRING);
     *resultlen = (int)strlen(string);
-    
+
     return MPI_SUCCESS;
 }

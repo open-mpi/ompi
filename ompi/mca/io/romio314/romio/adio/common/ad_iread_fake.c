@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 2004 University of Chicago. 
+ *   Copyright (C) 2004 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -11,10 +11,10 @@
 /* Generic implementation of IreadContig calls the blocking ReadContig
  * immediately.
  */
-void ADIOI_FAKE_IreadContig(ADIO_File fd, void *buf, int count, 
+void ADIOI_FAKE_IreadContig(ADIO_File fd, void *buf, int count,
 			   MPI_Datatype datatype, int file_ptr_type,
 			   ADIO_Offset offset, ADIO_Request *request,
-			   int *error_code)  
+			   int *error_code)
 {
     ADIO_Status status;
     MPI_Count typesize;
@@ -27,8 +27,8 @@ void ADIOI_FAKE_IreadContig(ADIO_File fd, void *buf, int count,
      * if necessary.
      */
     ADIOI_Assert(len == (int) len); /* the count is an int parm */
-    ADIO_ReadContig(fd, buf, (int)len, MPI_BYTE, file_ptr_type, offset, 
-		    &status, error_code);  
+    ADIO_ReadContig(fd, buf, (int)len, MPI_BYTE, file_ptr_type, offset,
+		    &status, error_code);
     if (*error_code != MPI_SUCCESS) {
 	    len=0;
     }
@@ -39,7 +39,7 @@ void ADIOI_FAKE_IreadContig(ADIO_File fd, void *buf, int count,
 /* Generic implementation of IreadStrided calls the blocking ReadStrided
  * immediately.
  */
-void ADIOI_FAKE_IreadStrided(ADIO_File fd, void *buf, int count, 
+void ADIOI_FAKE_IreadStrided(ADIO_File fd, void *buf, int count,
 			    MPI_Datatype datatype, int file_ptr_type,
 			    ADIO_Offset offset, ADIO_Request *request,
 			    int *error_code)
@@ -51,8 +51,8 @@ void ADIOI_FAKE_IreadStrided(ADIO_File fd, void *buf, int count,
     /* Call the blocking function.  It will create an error code
      * if necessary.
      */
-    ADIO_ReadStrided(fd, buf, count, datatype, file_ptr_type, 
-		     offset, &status, error_code);  
+    ADIO_ReadStrided(fd, buf, count, datatype, file_ptr_type,
+		     offset, &status, error_code);
     if (*error_code == MPI_SUCCESS) {
 	MPI_Type_size_x(datatype, &typesize);
 	nbytes = (MPI_Offset)count*(MPI_Offset)typesize;

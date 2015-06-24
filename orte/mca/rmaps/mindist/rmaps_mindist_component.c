@@ -6,15 +6,15 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2013-2015 Los Alamos National Security, LLC.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -41,7 +41,7 @@ static int my_priority = 20;
 orte_rmaps_base_component_t mca_rmaps_mindist_component = {
     .base_version = {
         ORTE_RMAPS_BASE_VERSION_2_0_0,
-        
+
         .mca_component_name = "mindist",
         MCA_BASE_MAKE_VERSION(component, ORTE_MAJOR_VERSION, ORTE_MINOR_VERSION,
                               ORTE_RELEASE_VERSION),
@@ -82,7 +82,7 @@ static int orte_rmaps_mindist_query(mca_base_module_t **module, int *priority)
     /* the RMAPS framework is -only- opened on HNP's,
      * so no need to check for that here
      */
-    
+
     *priority = my_priority;
     *module = (mca_base_module_t *)&orte_rmaps_mindist_module;
     return ORTE_SUCCESS;

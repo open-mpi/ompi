@@ -6,16 +6,16 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -65,7 +65,7 @@ int MPI_File_delete(const char *filename, MPI_Info info)
     /* The io framework is only initialized lazily.  If it hasn't
        already been initialized, do so now (note that MPI_FILE_OPEN
        and MPI_FILE_DELETE are the only two places that it will be
-       initialized). We might want to add a check to see if the 
+       initialized). We might want to add a check to see if the
        framework is open instead of just incrementing the open count. */
 
     if (OMPI_SUCCESS != (rc = mca_base_framework_open(&ompi_io_base_framework, 0))) {

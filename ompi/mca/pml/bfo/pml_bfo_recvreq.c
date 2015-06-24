@@ -6,7 +6,7 @@
  * Copyright (c) 2004-2013 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -15,9 +15,9 @@
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -25,15 +25,15 @@
 
 #include "opal/util/arch.h"
 #include "opal/mca/btl/btl.h"
-#include "opal/mca/mpool/mpool.h" 
+#include "opal/mca/mpool/mpool.h"
 #include "ompi/mca/pml/pml.h"
-#include "ompi/mca/bml/bml.h" 
+#include "ompi/mca/bml/bml.h"
 #include "pml_bfo_comm.h"
 #include "pml_bfo_recvreq.h"
 #include "pml_bfo_recvfrag.h"
 #include "pml_bfo_sendreq.h"
 #include "pml_bfo_rdmafrag.h"
-#include "ompi/mca/bml/base/base.h" 
+#include "ompi/mca/bml/base/base.h"
 #include "ompi/memchecker.h"
 
 #if OPAL_CUDA_SUPPORT
@@ -65,7 +65,7 @@ void mca_pml_bfo_recv_request_process_pending(void)
 
 static int mca_pml_bfo_recv_request_free(struct ompi_request_t** request)
 {
-    mca_pml_bfo_recv_request_t* recvreq = *(mca_pml_bfo_recv_request_t**)request; 
+    mca_pml_bfo_recv_request_t* recvreq = *(mca_pml_bfo_recv_request_t**)request;
 
     assert( false == recvreq->req_recv.req_base.req_free_called );
 
@@ -91,7 +91,7 @@ static int mca_pml_bfo_recv_request_free(struct ompi_request_t** request)
     OPAL_THREAD_UNLOCK(&ompi_request_lock);
     *request = MPI_REQUEST_NULL;
     return OMPI_SUCCESS;
-} 
+}
 
 static int mca_pml_bfo_recv_request_cancel(struct ompi_request_t* ompi_request, int complete)
 {
@@ -129,7 +129,7 @@ static int mca_pml_bfo_recv_request_cancel(struct ompi_request_t* ompi_request, 
        request->req_recv.req_base.req_pml_complete = true;
     }
     OPAL_THREAD_UNLOCK(&comm->matching_lock);
-    
+
     OPAL_THREAD_LOCK(&ompi_request_lock);
     ompi_request->req_status._cancelled = true;
     /* This macro will set the req_complete to true so the MPI Test/Wait* functions
@@ -242,7 +242,7 @@ int mca_pml_bfo_recv_request_ack_send_btl(
                        sizeof(mca_pml_bfo_ack_hdr_t),
                        MCA_BTL_DES_FLAGS_PRIORITY | MCA_BTL_DES_FLAGS_BTL_OWNERSHIP | MCA_BTL_DES_SEND_ALWAYS_CALLBACK);
     if( OPAL_UNLIKELY(NULL == des) ) {
-        return OMPI_ERR_OUT_OF_RESOURCE; 
+        return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
     /* fill out header */
@@ -272,18 +272,18 @@ int mca_pml_bfo_recv_request_ack_send_btl(
         return OMPI_SUCCESS;
     }
     mca_bml_base_free(bml_btl, des);
-    return OMPI_ERR_OUT_OF_RESOURCE; 
+    return OMPI_ERR_OUT_OF_RESOURCE;
 }
 
 static int mca_pml_bfo_recv_request_ack(
     mca_pml_bfo_recv_request_t* recvreq,
-    mca_pml_bfo_rendezvous_hdr_t* hdr, 
+    mca_pml_bfo_rendezvous_hdr_t* hdr,
     size_t bytes_received)
 {
     ompi_proc_t* proc = (ompi_proc_t*)recvreq->req_recv.req_base.req_proc;
     mca_bml_base_endpoint_t* bml_endpoint = NULL;
 
-    bml_endpoint = (mca_bml_base_endpoint_t*) proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML]; 
+    bml_endpoint = (mca_bml_base_endpoint_t*) proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML];
 
     /* by default copy everything */
     recvreq->req_send_offset = bytes_received;
@@ -291,7 +291,7 @@ static int mca_pml_bfo_recv_request_ack(
         size_t rdma_num = mca_bml_base_btl_array_get_size(&bml_endpoint->btl_rdma);
         /*
          * lookup request buffer to determine if memory is already
-         * registered. 
+         * registered.
          */
 
         if(opal_convertor_need_buffers(&recvreq->req_recv.req_base.req_convertor) == 0 &&
@@ -299,7 +299,7 @@ static int mca_pml_bfo_recv_request_ack(
            rdma_num != 0) {
             unsigned char *base;
             opal_convertor_get_current_pointer( &recvreq->req_recv.req_base.req_convertor, (void**)&(base) );
-           
+
             if(hdr->hdr_match.hdr_common.hdr_flags & MCA_PML_BFO_HDR_FLAGS_PIN)
                 recvreq->req_rdma_cnt = mca_pml_bfo_rdma_btls(bml_endpoint,
                         base, recvreq->req_recv.req_bytes_packed,
@@ -313,7 +313,7 @@ static int mca_pml_bfo_recv_request_ack(
                 /* are rdma devices available for long rdma protocol */
             } else if(bml_endpoint->btl_send_limit < hdr->hdr_msg_length) {
                 /* use convertor to figure out the rdma offset for this request */
-                recvreq->req_send_offset = hdr->hdr_msg_length - 
+                recvreq->req_send_offset = hdr->hdr_msg_length -
                     bml_endpoint->btl_pipeline_send_length;
 
                 if(recvreq->req_send_offset < bytes_received)
@@ -382,7 +382,7 @@ static void mca_pml_bfo_rget_completion( mca_btl_base_module_t* btl,
                          recvreq->req_recv.req_base.req_comm->c_contextid,
                          recvreq->req_recv.req_base.req_comm->c_my_rank);
 #else /* PML_BFO */
-                         des->order, 0); 
+                         des->order, 0);
 #endif /* PML_BFO */
 
     /* is receive request complete */
@@ -407,7 +407,7 @@ int mca_pml_bfo_recv_request_get_frag( mca_pml_bfo_rdma_frag_t* frag )
     int rc;
 
     /* prepare descriptor */
-    mca_bml_base_prepare_dst( bml_btl, 
+    mca_bml_base_prepare_dst( bml_btl,
                               NULL,
                               &recvreq->req_recv.req_base.req_convertor,
                               MCA_BTL_NO_ORDER,
@@ -463,7 +463,7 @@ int mca_pml_bfo_recv_request_get_frag( mca_pml_bfo_rdma_frag_t* frag )
 
 /*
  * Update the recv request status to reflect the number of bytes
- * received and actually delivered to the application. 
+ * received and actually delivered to the application.
  */
 
 void mca_pml_bfo_recv_request_progress_frag( mca_pml_bfo_recv_request_t* recvreq,
@@ -503,7 +503,7 @@ void mca_pml_bfo_recv_request_progress_frag( mca_pml_bfo_recv_request_t* recvreq
                                recvreq->req_recv.req_base.req_count,
                                recvreq->req_recv.req_base.req_datatype);
                );
-    
+
     OPAL_THREAD_ADD_SIZE_T(&recvreq->req_bytes_received, bytes_received);
     /* check completion status */
     if(recv_request_pml_complete_check(recvreq) == false &&
@@ -515,7 +515,7 @@ void mca_pml_bfo_recv_request_progress_frag( mca_pml_bfo_recv_request_t* recvreq
 
 /*
  * Update the recv request status to reflect the number of bytes
- * received and actually delivered to the application. 
+ * received and actually delivered to the application.
  */
 
 void mca_pml_bfo_recv_request_progress_rget( mca_pml_bfo_recv_request_t* recvreq,
@@ -534,7 +534,7 @@ void mca_pml_bfo_recv_request_progress_rget( mca_pml_bfo_recv_request_t* recvreq
     recvreq->remote_req_send = hdr->hdr_rndv.hdr_src_req;
 #endif /* PML_BFO */
     MCA_PML_BFO_RECV_REQUEST_MATCHED(recvreq, &hdr->hdr_rndv.hdr_match);
-    
+
     /* if receive buffer is not contiguous we can't just RDMA read into it, so
      * fall back to copy in/out protocol. It is a pity because buffer on the
      * sender side is already registered. We need to be smarter here, perhaps
@@ -550,7 +550,7 @@ void mca_pml_bfo_recv_request_progress_rget( mca_pml_bfo_recv_request_t* recvreq
         return;
 #endif /* OPAL_CUDA_SUPPORT */
     }
-    
+
     MCA_PML_BFO_RDMA_FRAG_ALLOC(frag);
     if( OPAL_UNLIKELY(NULL == frag) ) {
         /* GLB - FIX */
@@ -559,7 +559,7 @@ void mca_pml_bfo_recv_request_progress_rget( mca_pml_bfo_recv_request_t* recvreq
     }
 
     /* lookup bml datastructures */
-    bml_endpoint = (mca_bml_base_endpoint_t*)recvreq->req_recv.req_base.req_proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML]; 
+    bml_endpoint = (mca_bml_base_endpoint_t*)recvreq->req_recv.req_base.req_proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML];
 
     assert (btl->btl_seg_size * hdr->hdr_seg_cnt <= sizeof (frag->rdma_segs));
 
@@ -573,7 +573,7 @@ void mca_pml_bfo_recv_request_progress_rget( mca_pml_bfo_recv_request_t* recvreq
         if ((recvreq->req_recv.req_base.req_proc->super.proc_arch & OPAL_ARCH_ISBIGENDIAN) !=
             (ompi_proc_local()->super.proc_arch & OPAL_ARCH_ISBIGENDIAN)) {
             size += opal_swap_bytes4(seg->seg_len);
-        } else 
+        } else
 #endif
         {
             size += seg->seg_len;
@@ -619,7 +619,7 @@ void mca_pml_bfo_recv_request_progress_rget( mca_pml_bfo_recv_request_t* recvreq
 
 /*
  * Update the recv request status to reflect the number of bytes
- * received and actually delivered to the application. 
+ * received and actually delivered to the application.
  */
 
 void mca_pml_bfo_recv_request_progress_rndv( mca_pml_bfo_recv_request_t* recvreq,
@@ -677,7 +677,7 @@ void mca_pml_bfo_recv_request_progress_rndv( mca_pml_bfo_recv_request_t* recvreq
 
 /*
  * Update the recv request status to reflect the number of bytes
- * received and actually delivered to the application. 
+ * received and actually delivered to the application.
  */
 void mca_pml_bfo_recv_request_progress_match( mca_pml_bfo_recv_request_t* recvreq,
                                               mca_btl_base_module_t* btl,
@@ -692,7 +692,7 @@ void mca_pml_bfo_recv_request_progress_match( mca_pml_bfo_recv_request_t* recvre
                                                               OMPI_PML_BFO_MATCH_HDR_LEN);
 
     recvreq->req_recv.req_bytes_packed = bytes_received;
-    
+
     MCA_PML_BFO_RECV_REQUEST_MATCHED(recvreq, &hdr->hdr_match);
     /*
      *  Make user buffer accessable(defined) before unpacking.
@@ -719,7 +719,7 @@ void mca_pml_bfo_recv_request_progress_match( mca_pml_bfo_recv_request_t* recvre
                                recvreq->req_recv.req_base.req_count,
                                recvreq->req_recv.req_base.req_datatype);
                );
-    
+
     /*
      * No need for atomic here, as we know there is only one fragment
      * for this request.
@@ -770,7 +770,7 @@ void mca_pml_bfo_recv_request_matched_probe( mca_pml_bfo_recv_request_t* recvreq
 int mca_pml_bfo_recv_request_schedule_once( mca_pml_bfo_recv_request_t* recvreq,
                                             mca_bml_base_btl_t *start_bml_btl )
 {
-    mca_bml_base_btl_t* bml_btl; 
+    mca_bml_base_btl_t* bml_btl;
     int num_tries = recvreq->req_rdma_cnt, num_fail = 0;
     size_t i, prev_bytes_remaining = 0;
     size_t bytes_remaining = recvreq->req_send_offset -
@@ -838,7 +838,7 @@ int mca_pml_bfo_recv_request_schedule_once( mca_pml_bfo_recv_request_t* recvreq,
                                      &recvreq->req_rdma_offset );
 
         /* prepare a descriptor for RDMA */
-        mca_bml_base_prepare_dst(bml_btl, reg, 
+        mca_bml_base_prepare_dst(bml_btl, reg,
                                  &recvreq->req_recv.req_base.req_convertor,
                                  MCA_BTL_NO_ORDER, 0, &size, MCA_BTL_DES_FLAGS_BTL_OWNERSHIP |
                                  MCA_BTL_DES_FLAGS_PUT, &dst);
@@ -865,7 +865,7 @@ int mca_pml_bfo_recv_request_schedule_once( mca_pml_bfo_recv_request_t* recvreq,
 #if PML_BFO
         ctl->des_cbdata = recvreq;
 #endif /* PML_BFO */
-        
+
         /* fill in rdma header */
         hdr = (mca_pml_bfo_rdma_hdr_t*)ctl->des_local->seg_addr.pval;
         hdr->hdr_common.hdr_type = MCA_PML_BFO_HDR_TYPE_PUT;
@@ -965,7 +965,7 @@ recv_req_match_specific_proc( const mca_pml_bfo_recv_request_t *req,
              i != opal_list_get_end(unexpected_frags);
              i =  opal_list_get_next(i)) {
             frag = (mca_pml_bfo_recv_frag_t*)i;
-            
+
             if( frag->hdr.hdr_match.hdr_tag >= 0 )
                 return frag;
         }
@@ -974,7 +974,7 @@ recv_req_match_specific_proc( const mca_pml_bfo_recv_request_t *req,
              i != opal_list_get_end(unexpected_frags);
              i =  opal_list_get_next(i)) {
             frag = (mca_pml_bfo_recv_frag_t*)i;
-            
+
             if( frag->hdr.hdr_match.hdr_tag == tag )
                 return frag;
         }
@@ -1016,7 +1016,7 @@ recv_req_match_wild( mca_pml_bfo_recv_request_t* req,
     }
     for (i = 0; i <= comm->last_probed; i++) {
         mca_pml_bfo_recv_frag_t* frag;
-  
+
         /* loop over messages from the current proc */
         if((frag = recv_req_match_specific_proc(req, &proc[i]))) {
             *p = &proc[i];
@@ -1089,7 +1089,7 @@ void mca_pml_bfo_recv_req_start(mca_pml_bfo_recv_request_t *req)
         req->req_recv.req_base.req_proc = proc->ompi_proc;
         frag = recv_req_match_specific_proc(req, proc);
         queue = &proc->specific_receives;
-        /* wild cardrecv will be prepared on match */ 
+        /* wild cardrecv will be prepared on match */
         prepare_recv_req_converter(req);
     }
 
@@ -1119,7 +1119,7 @@ void mca_pml_bfo_recv_req_start(mca_pml_bfo_recv_request_t *req)
             opal_list_remove_item(&proc->unexpected_frags,
                                   (opal_list_item_t*)frag);
             OPAL_THREAD_UNLOCK(&comm->matching_lock);
-            
+
             switch(hdr->hdr_common.hdr_type) {
             case MCA_PML_BFO_HDR_TYPE_MATCH:
                 mca_pml_bfo_recv_request_progress_match(req, frag->btl, frag->segments,
@@ -1136,7 +1136,7 @@ void mca_pml_bfo_recv_req_start(mca_pml_bfo_recv_request_t *req)
             default:
                 assert(0);
             }
-            
+
             MCA_PML_BFO_RECV_FRAG_RETURN(frag);
 
         } else if (OPAL_UNLIKELY(IS_MPROB_REQ(req))) {

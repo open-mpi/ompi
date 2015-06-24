@@ -1,13 +1,13 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved. 
+ * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2014 Los Alamos National Security, Inc.  All rights
  *                         reserved.
  * Copyright (c) 2013-2014 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 /** @file:
@@ -34,7 +34,7 @@
  * DATABASE DESIGN
  *
  * Each API function is treated as blocking.
- * 
+ *
  */
 
 BEGIN_C_DECLS
@@ -50,7 +50,7 @@ OPAL_DECLSPEC extern int opal_dstore_nonpeer;
 /****    DEFINE THE PUBLIC API'S    ****/
 /*
  * Open a database
- * 
+ *
  * Open a database for access. The name field is purely for
  * debug purposes and has no implementation relevance.
  * Just like the standard POSIX file open, the call will return

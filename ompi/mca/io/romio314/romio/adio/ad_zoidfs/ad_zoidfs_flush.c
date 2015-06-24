@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -11,12 +11,12 @@
 /* we want to be a bit clever here:  at scale, if every client sends a
  * flush request, it will stress the file system with redundant
  * commit requests.  Instead, one process should wait for
- * everyone to catch up, do the sync, then broadcast the result.  
+ * everyone to catch up, do the sync, then broadcast the result.
  */
 
-void ADIOI_ZOIDFS_Flush(ADIO_File fd, int *error_code) 
-{ 
-    int ret, rank, dummy=0, dummy_in=0; 
+void ADIOI_ZOIDFS_Flush(ADIO_File fd, int *error_code)
+{
+    int ret, rank, dummy=0, dummy_in=0;
     ADIOI_ZOIDFS_object *zoidfs_obj_ptr;
     static char myname[] = "ADIOI_ZOIDFS_FLUSH";
 
@@ -28,7 +28,7 @@ void ADIOI_ZOIDFS_Flush(ADIO_File fd, int *error_code)
 
     /* collective call to ensure no outstanding write requests. reduce is
      * slightly less expensvie than barrier */
-    MPI_Reduce(&dummy_in, &dummy, 1, MPI_INT, MPI_SUM, 
+    MPI_Reduce(&dummy_in, &dummy, 1, MPI_INT, MPI_SUM,
 	    fd->hints->ranklist[0], fd->comm);
 
     if (rank == fd->hints->ranklist[0]) {
@@ -47,6 +47,6 @@ void ADIOI_ZOIDFS_Flush(ADIO_File fd, int *error_code)
     /* --END ERROR HANDLING-- */
 }
 
-/* 
- * vim: ts=8 sts=4 sw=4 noexpandtab 
+/*
+ * vim: ts=8 sts=4 sw=4 noexpandtab
  */

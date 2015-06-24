@@ -27,7 +27,7 @@ through a set of wrappers - this is done for three reasons:
    support provide erroneous results on some platforms (as determined
    by our empirical testing). OPAL therefore provides enhanced tests
    to correctly assess those environments.
-   
+
 3. Enable greater flexibility in configuring Libevent for the specific
    environment. In particular, OPAL has no need of Libevent's dns,
    http, and rpc events, so configuration options to remove that code

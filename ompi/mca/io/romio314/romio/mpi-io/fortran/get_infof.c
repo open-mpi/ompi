@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -96,7 +96,7 @@ FORTRAN_API void FORT_CALL mpi_file_get_info_(MPI_Fint *fh, MPI_Fint *info_used,
 {
     MPI_File fh_c;
     MPI_Info info_used_c;
-    
+
     fh_c = MPI_File_f2c(*fh);
 
     *ierr = MPI_File_get_info(fh_c, &info_used_c);

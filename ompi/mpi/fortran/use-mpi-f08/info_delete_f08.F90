@@ -16,5 +16,5 @@ subroutine MPI_Info_delete_f08(info,key,ierror)
 
    call ompi_info_delete_f(info%MPI_VAL,key,c_ierror,len(key))
    if (present(ierror)) ierror = c_ierror
-   
+
 end subroutine MPI_Info_delete_f08

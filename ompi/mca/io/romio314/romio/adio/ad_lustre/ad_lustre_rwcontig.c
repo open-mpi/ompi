@@ -94,7 +94,7 @@ static int ADIOI_LUSTRE_Directio(ADIO_File fd, const void *buf, int len,
 	    else nbytes += pwrite(fd->fd_sys, buf, size, offset);
 	}
 	err = nbytes;
-    } else {       
+    } else {
 	if (!(((long) buf) % fd->d_mem)) {
 	    ADIOI_LUSTRE_Aligned_Mem_File_Read(fd, buf, size, offset, &err);
 	    nbytes += err;
@@ -115,11 +115,11 @@ static int ADIOI_LUSTRE_Directio(ADIO_File fd, const void *buf, int len,
 
 static void ADIOI_LUSTRE_IOContig(ADIO_File fd, const void *buf, int count,
                    MPI_Datatype datatype, int file_ptr_type,
-	           ADIO_Offset offset, ADIO_Status *status, 
+	           ADIO_Offset offset, ADIO_Status *status,
 		   int io_mode, int *error_code);
 static void ADIOI_LUSTRE_IOContig(ADIO_File fd, const void *buf, int count,
                    MPI_Datatype datatype, int file_ptr_type,
-	           ADIO_Offset offset, ADIO_Status *status, 
+	           ADIO_Offset offset, ADIO_Status *status,
 		   int io_mode, int *error_code)
 {
     int err=-1;
@@ -138,7 +138,7 @@ static void ADIOI_LUSTRE_IOContig(ADIO_File fd, const void *buf, int count,
 	    err = lseek(fd->fd_sys, offset, SEEK_SET);
 	    if (err == -1) goto ioerr;
 	}
-	
+
 	if (io_mode) {
 #ifdef ADIOI_MPE_LOGGING
         MPE_Log_event(ADIOI_MPE_write_a, 0, NULL);
@@ -164,7 +164,7 @@ static void ADIOI_LUSTRE_IOContig(ADIO_File fd, const void *buf, int count,
     fd->fp_sys_posn = offset + err;
 
     if (file_ptr_type == ADIO_INDIVIDUAL) {
-	fd->fp_ind += err; 
+	fd->fp_ind += err;
     }
 
 #ifdef HAVE_STATUS_SET_BYTES
@@ -194,7 +194,7 @@ void ADIOI_LUSTRE_WriteContig(ADIO_File fd, const void *buf, int count,
 	           offset, status, 1, error_code);
 }
 
-void ADIOI_LUSTRE_ReadContig(ADIO_File fd, void *buf, int count, 
+void ADIOI_LUSTRE_ReadContig(ADIO_File fd, void *buf, int count,
                    MPI_Datatype datatype, int file_ptr_type,
 	           ADIO_Offset offset, ADIO_Status *status, int *error_code)
 {

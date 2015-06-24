@@ -3,9 +3,9 @@
  *                         All rights reserved.
  * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -36,7 +36,7 @@ SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
         shmem_collect4_,
         shmem_collect4__,
         shmem_collect4_f,
-        (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *nlong, MPI_Fint *PE_start, MPI_Fint * logPE_stride, MPI_Fint *PE_size, FORTRAN_POINTER_T pSync), 
+        (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *nlong, MPI_Fint *PE_start, MPI_Fint * logPE_stride, MPI_Fint *PE_size, FORTRAN_POINTER_T pSync),
         (target,source,nlong,PE_start,logPE_stride,PE_size,pSync) )
 
 SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
@@ -44,7 +44,7 @@ SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
         shmem_collect8_,
         shmem_collect8__,
         shmem_collect8_f,
-        (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *nlong, MPI_Fint *PE_start, MPI_Fint * logPE_stride, MPI_Fint *PE_size, FORTRAN_POINTER_T pSync), 
+        (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *nlong, MPI_Fint *PE_start, MPI_Fint * logPE_stride, MPI_Fint *PE_size, FORTRAN_POINTER_T pSync),
         (target,source,nlong,PE_start,logPE_stride,PE_size,pSync) )
 
 SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
@@ -52,7 +52,7 @@ SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
         shmem_collect32_,
         shmem_collect32__,
         shmem_collect32_f,
-        (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *nlong, MPI_Fint *PE_start, MPI_Fint * logPE_stride, MPI_Fint *PE_size, FORTRAN_POINTER_T pSync), 
+        (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *nlong, MPI_Fint *PE_start, MPI_Fint * logPE_stride, MPI_Fint *PE_size, FORTRAN_POINTER_T pSync),
         (target,source,nlong,PE_start,logPE_stride,PE_size,pSync) )
 
 SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
@@ -60,7 +60,7 @@ SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
         shmem_collect64_,
         shmem_collect64__,
         shmem_collect64_f,
-        (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *nlong, MPI_Fint *PE_start, MPI_Fint * logPE_stride, MPI_Fint *PE_size, FORTRAN_POINTER_T pSync), 
+        (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *nlong, MPI_Fint *PE_start, MPI_Fint * logPE_stride, MPI_Fint *PE_size, FORTRAN_POINTER_T pSync),
         (target,source,nlong,PE_start,logPE_stride,PE_size,pSync) )
 
 SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
@@ -68,7 +68,7 @@ SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
         shmem_fcollect4_,
         shmem_fcollect4__,
         shmem_fcollect4_f,
-        (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *nlong, MPI_Fint *PE_start, MPI_Fint * logPE_stride, MPI_Fint *PE_size, FORTRAN_POINTER_T pSync), 
+        (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *nlong, MPI_Fint *PE_start, MPI_Fint * logPE_stride, MPI_Fint *PE_size, FORTRAN_POINTER_T pSync),
         (target,source,nlong,PE_start,logPE_stride,PE_size,pSync) )
 
 SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
@@ -76,7 +76,7 @@ SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
         shmem_fcollect8_,
         shmem_fcollect8__,
         shmem_fcollect8_f,
-        (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *nlong, MPI_Fint *PE_start, MPI_Fint * logPE_stride, MPI_Fint *PE_size, FORTRAN_POINTER_T pSync), 
+        (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *nlong, MPI_Fint *PE_start, MPI_Fint * logPE_stride, MPI_Fint *PE_size, FORTRAN_POINTER_T pSync),
         (target,source,nlong,PE_start,logPE_stride,PE_size,pSync) )
 
 SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
@@ -84,7 +84,7 @@ SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
         shmem_fcollect32_,
         shmem_fcollect32__,
         shmem_fcollect32_f,
-        (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *nlong, MPI_Fint *PE_start, MPI_Fint * logPE_stride, MPI_Fint *PE_size, FORTRAN_POINTER_T pSync), 
+        (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *nlong, MPI_Fint *PE_start, MPI_Fint * logPE_stride, MPI_Fint *PE_size, FORTRAN_POINTER_T pSync),
         (target,source,nlong,PE_start,logPE_stride,PE_size,pSync) )
 
 SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
@@ -92,7 +92,7 @@ SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
         shmem_fcollect64_,
         shmem_fcollect64__,
         shmem_fcollect64_f,
-        (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *nlong, MPI_Fint *PE_start, MPI_Fint * logPE_stride, MPI_Fint *PE_size, FORTRAN_POINTER_T pSync), 
+        (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *nlong, MPI_Fint *PE_start, MPI_Fint * logPE_stride, MPI_Fint *PE_size, FORTRAN_POINTER_T pSync),
         (target,source,nlong,PE_start,logPE_stride,PE_size,pSync) )
 
 #define SHMEM_COLLECT(F_NAME, T_NAME, OSHMEM_GROUP_CACHE_ENABLED) void F_NAME(FORTRAN_POINTER_T target, \

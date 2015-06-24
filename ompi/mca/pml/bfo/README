@@ -33,7 +33,7 @@ BTL for everything to work properly.
 
 The bfo only fails over between openib BTLs.  It cannot failover from
 an openib BTL to TCP, for example.
- 
+
 3. GENERAL DESIGN
 The bfo (Btl FailOver) PML was designed to work in clusters that have
 multiple openib BTLs.  It was designed to be lightweight so as to
@@ -226,7 +226,7 @@ having to create macros for the names of header files as well.  To
 help illustrate the name shifting issue, here is what the file might
 look like in the bfo directory.
 
-/* Need macros for the header files as they are different in the 
+/* Need macros for the header files as they are different in the
  * different PMLs */
 #define PML "bfo"
 #define PML_OB1_H "pml_bfo.h"
@@ -241,7 +241,7 @@ look like in the bfo directory.
 
 /* Name shifting of functions from ob1 to bfo (incomplete list) */
 #define mca_pml_ob1 mca_pml_bfo
-#define mca_pml_ob1_t mca_pml_bfo_t 
+#define mca_pml_ob1_t mca_pml_bfo_t
 #define mca_pml_ob1_component mca_pml_bfo_component
 #define mca_pml_ob1_add_procs mca_pml_bfo_add_procs
 #define mca_pml_ob1_del_procs mca_pml_bfo_del_procs
@@ -336,5 +336,5 @@ sender >->->-> RNDV  >->->-> receiver
 
 RMA GET
 sender >->->-> RGET  >->->-> receiver
-       <-<-<-< read  <-<-<-< 
-       <-<-<-<  FIN  <-<-<-< 
+       <-<-<-< read  <-<-<-<
+       <-<-<-<  FIN  <-<-<-<

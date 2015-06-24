@@ -369,7 +369,7 @@ OPAL_DECLSPEC int mca_base_pvar_find_by_name (const char *full_name, int *index)
  * @param[out] count Number of registered performance variables.
  *
  * This function can be called before mca_base_pvar_init() and after
- * mca_base_pvar_finalize(). 
+ * mca_base_pvar_finalize().
  */
 OPAL_DECLSPEC int mca_base_pvar_get_count (int *count);
 

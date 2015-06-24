@@ -1950,7 +1950,7 @@ evhttp_get_body(struct evhttp_connection *evcon, struct evhttp_request *req)
 				   now, just optimistically tell the client to
 				   send their message body. */
 				if (req->ntoread > 0) {
-					/* ntoread is ev_int64_t, max_body_size is ev_uint64_t */ 
+					/* ntoread is ev_int64_t, max_body_size is ev_uint64_t */
 					if ((req->evcon->max_body_size <= EV_INT64_MAX) && (ev_uint64_t)req->ntoread > req->evcon->max_body_size) {
 						evhttp_send_error(req, HTTP_ENTITYTOOLARGE, NULL);
 						return;

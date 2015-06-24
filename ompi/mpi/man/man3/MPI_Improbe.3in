@@ -13,7 +13,7 @@
 .SH C Syntax
 .nf
 #include <mpi.h>
-int MPI_Improbe(int \fIsource\fP, int\fI tag\fP, MPI_Comm\fI comm\fP, 
+int MPI_Improbe(int \fIsource\fP, int\fI tag\fP, MPI_Comm\fI comm\fP,
 	int\fI *flag\fP, MPI_Message\fI *message\fP, MPI_Status\fI *status\fP)
 
 .fi
@@ -23,7 +23,7 @@ INCLUDE 'mpif.h'
 MPI_IMPROBE(\fISOURCE, TAG, COMM, FLAG, MESSAGE, STATUS, IERROR\fP)
 	LOGICAL	\fIFLAG\fP
 	INTEGER	\fISOURCE, TAG, COMM, MESSAGE\fP
-	INTEGER	\fISTATUS(MPI_STATUS_SIZE), IERROR\fP 
+	INTEGER	\fISTATUS(MPI_STATUS_SIZE), IERROR\fP
 
 .fi
 .SH C++ Syntax
@@ -59,7 +59,7 @@ Status object (status).
 .ft R
 .TP 1i
 IERROR
-Fortran only: Error status (integer). 
+Fortran only: Error status (integer).
 
 .SH DESCRIPTION
 .ft R
@@ -88,7 +88,7 @@ This is an MPI-3 function and has no C++ binding.
 .SH ERRORS
 Almost all MPI routines return an error value; C routines as the value
 of the function and Fortran routines in the last argument. C++
-functions do not return errors. 
+functions do not return errors.
 .sp
 Before the error value is returned, the current MPI error handler is
 called. By default, this error handler aborts the MPI job, except for

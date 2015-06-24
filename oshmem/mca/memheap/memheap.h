@@ -5,9 +5,9 @@
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -68,7 +68,7 @@ typedef uint64_t (*mca_memheap_base_module_find_offset_fn_t)(int pe,
 
 /**
  * @return mkey suitable to access pe via given transport id. rva is set to virtual address mapping of (va)
- * on remote pe. 
+ * on remote pe.
  */
 typedef sshmem_mkey_t * (*mca_memheap_base_module_get_cached_mkey_fn_t)(int pe,
                                                                           void* va,
@@ -87,9 +87,9 @@ typedef int (*mca_memheap_base_is_memheap_addr_fn_t)(const void* va);
 /* get mkeys from all ranks */
 typedef void (*mca_memheap_base_mkey_exchange_fn_t)(void);
 
-/* 
- * memheap component descriptor. Contains component version, information and 
- * init functions 
+/*
+ * memheap component descriptor. Contains component version, information and
+ * init functions
  */
 struct mca_memheap_base_component_2_0_0_t {
     mca_base_component_t memheap_version; /**< version */
@@ -110,7 +110,7 @@ struct mca_memheap_base_module_t {
     mca_memheap_base_module_realloc_fn_t            memheap_realloc;
     mca_memheap_base_module_free_fn_t               memheap_free;
 
-    /* 
+    /*
      * alloc/free that should be used for internal allocation.
      * Internal memory does not count towards
      *  symmetric heap memory

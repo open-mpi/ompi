@@ -34,7 +34,7 @@ sources = \
         bcol_basesmuma_gather.c \
         bcol_basesmuma_allgather.c \
         bcol_basesmuma_smcm.h \
-        bcol_basesmuma_smcm.c 
+        bcol_basesmuma_smcm.c
 
 # Make the output library in this directory, and name it either
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la

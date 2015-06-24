@@ -63,7 +63,7 @@ enum {
 
 /** In ompi_mpi_init: the lists of Fortran 90 mathing datatypes.
  * We need these lists and hashtables in order to satisfy the new
- * requirements introduced in MPI 2-1 Sect. 10.2.5, 
+ * requirements introduced in MPI 2-1 Sect. 10.2.5,
  * MPI_TYPE_CREATE_F90_xxxx, page 295, line 47.
  */
 extern opal_hash_table_t ompi_mpi_f90_integer_hashtable;
@@ -103,7 +103,7 @@ int oshmem_shmem_init(int argc, char **argv, int requested, int *provided);
 int oshmem_shmem_finalize(void);
 
 /**
- * Abort SHMEM processes 
+ * Abort SHMEM processes
  */
 OSHMEM_DECLSPEC int oshmem_shmem_abort(int errcode);
 
@@ -192,7 +192,7 @@ OSHMEM_DECLSPEC int oshmem_shmem_register_params(void);
 #define RUNTIME_CHECK_INIT()
 #define RUNTIME_CHECK_PE(x)
 #define RUNTIME_CHECK_ADDR(x)
-#define RUNTIME_CHECK_WITH_MEMHEAP_SIZE(x) 
+#define RUNTIME_CHECK_WITH_MEMHEAP_SIZE(x)
 
 #endif  /* OSHMEM_PARAM_CHECK */
 

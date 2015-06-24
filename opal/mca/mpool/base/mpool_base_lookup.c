@@ -6,7 +6,7 @@
  * Copyright (c) 2004-2013 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -14,9 +14,9 @@
  * Copyright (c) 2008-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -44,9 +44,9 @@ mca_mpool_base_component_t* mca_mpool_base_component_lookup(const char* name)
     for (item = opal_list_get_first(&opal_mpool_base_framework.framework_components);
          item != opal_list_get_end(&opal_mpool_base_framework.framework_components);
          item = opal_list_get_next(item)) {
-         mca_base_component_list_item_t *cli = 
+         mca_base_component_list_item_t *cli =
            (mca_base_component_list_item_t *) item;
-         mca_mpool_base_component_t* component = 
+         mca_mpool_base_component_t* component =
            (mca_mpool_base_component_t *) cli->cli_component;
          if(strcmp(component->mpool_version.mca_component_name, name) == 0) {
              return component;
@@ -54,15 +54,15 @@ mca_mpool_base_component_t* mca_mpool_base_component_lookup(const char* name)
     }
     return NULL;
 }
- 
+
 
 mca_mpool_base_module_t* mca_mpool_base_module_create(
-    const char* name, 
+    const char* name,
     void* user_data,
-    struct mca_mpool_base_resources_t* resources) 
+    struct mca_mpool_base_resources_t* resources)
 {
-    mca_mpool_base_component_t* component = NULL; 
-    mca_mpool_base_module_t* module = NULL; 
+    mca_mpool_base_component_t* component = NULL;
+    mca_mpool_base_module_t* module = NULL;
     mca_base_component_list_item_t *cli;
     mca_mpool_base_selected_module_t *sm;
 
@@ -77,15 +77,15 @@ mca_mpool_base_module_t* mca_mpool_base_module_create(
     if ( NULL == module ) {
         return NULL;
     }
-    sm = OBJ_NEW(mca_mpool_base_selected_module_t); 
-    sm->mpool_component = component; 
-    sm->mpool_module = module; 
+    sm = OBJ_NEW(mca_mpool_base_selected_module_t);
+    sm->mpool_component = component;
+    sm->mpool_module = module;
     sm->user_data = user_data;
     sm->mpool_resources = resources;
-    opal_list_append(&mca_mpool_base_modules, (opal_list_item_t*) sm); 
+    opal_list_append(&mca_mpool_base_modules, (opal_list_item_t*) sm);
     /* on the very first creation of a module we init the memory
        callback */
-    if (opal_list_get_size(&mca_mpool_base_modules) == 1) { 
+    if (opal_list_get_size(&mca_mpool_base_modules) == 1) {
         /* Default to not using memory hooks */
         int use_mem_hooks = 0;
 
@@ -102,7 +102,7 @@ mca_mpool_base_module_t* mca_mpool_base_module_create(
 
         if (use_mem_hooks) {
             if ((OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT) ==
-                ((OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT) & 
+                ((OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT) &
                  opal_mem_hooks_support_level())) {
                 opal_mem_hooks_register_release(mca_mpool_base_mem_cb, NULL);
             } else {
@@ -117,7 +117,7 @@ mca_mpool_base_module_t* mca_mpool_base_module_create(
             mca_mpool_base_used_mem_hooks = 1;
         }
     }
-    return module; 
+    return module;
 }
 
 

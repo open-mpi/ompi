@@ -4,7 +4,7 @@
 .\"                         Corporation.  All rights reserved.
 .\"
 .\" Man page for ORTE's SStore Functionality
-.\" 
+.\"
 .\" .TH name     section center-footer   left-footer  center-header
 .TH ORTE_SSTORE 7 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .\" **************************
@@ -12,7 +12,7 @@
 .\" **************************
 .SH NAME
 .
-Open RTE MCA File Management (SStore) Framework \- Overview of Open RTE's SStore 
+Open RTE MCA File Management (SStore) Framework \- Overview of Open RTE's SStore
 framework, and selected modules.  #PACKAGE_NAME# #PACKAGE_VERSION#
 .
 .\" **************************

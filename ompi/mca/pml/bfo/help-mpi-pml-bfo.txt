@@ -2,9 +2,9 @@
 #
 # Copyright (c) 2009-2010 Oracle and/or its affiliates.  All rights reserved.
 # $COPYRIGHT$
-# 
+#
 # Additional copyrights may follow
-# 
+#
 # $HEADER$
 #
 [eager_limit_too_small]
@@ -17,4 +17,4 @@ name and its corresponding minimum value is shown below.
   BTL name:                %s
   BTL eager limit value:   %d (set via btl_%s_eager_limit)
   BTL eager limit minimum: %d
-  MCA parameter name:      btl_%s_eager_limit 
+  MCA parameter name:      btl_%s_eager_limit

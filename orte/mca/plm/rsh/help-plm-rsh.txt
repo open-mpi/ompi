@@ -6,14 +6,14 @@
 # Copyright (c) 2004-2005 The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
-# Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+# Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # $COPYRIGHT$
-# 
+#
 # Additional copyrights may follow
-# 
+#
 # $HEADER$
 #
 # This is the US/English general help file for Open RTE's orterun.
@@ -47,7 +47,7 @@ the prefix to be set overriding:
 The value of the MCA parameter "pls_rsh_num_concurrent" is less than
 or equal to zero (%d).  This parameter is used to determine how many
 remote agents (typically rsh or ssh) to invoke concurrently while
-launching parallel jobs.  
+launching parallel jobs.
 
 This value has automatically be reset to 1; processing will continue.
 

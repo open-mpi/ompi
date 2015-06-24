@@ -20,13 +20,13 @@ int MPI_Waitany(int \fIcount\fP, MPI_Request\fI array_of_requests[]\fP,
 INCLUDE 'mpif.h'
 MPI_WAITANY(\fICOUNT, ARRAY_OF_REQUESTS, INDEX, STATUS, IERROR\fP)
 	INTEGER	\fICOUNT, ARRAY_OF_REQUESTS(*), INDEX\fP
-	INTEGER	\fISTATUS(MPI_STATUS_SIZE), IERROR\fP 
+	INTEGER	\fISTATUS(MPI_STATUS_SIZE), IERROR\fP
 
 .fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
-static int Request::Waitany(int \fIcount\fP, Request 
+static int Request::Waitany(int \fIcount\fP, Request
 	\fIarray_of_requests\fP[], Status& \fIstatus\fP)
 
 static int Request::Waitany(int \fIcount\fP, Request \fIarray_of_requests\fP[])
@@ -35,7 +35,7 @@ static int Request::Waitany(int \fIcount\fP, Request \fIarray_of_requests\fP[])
 .SH INPUT PARAMETERS
 .ft R
 .TP 1i
-count      
+count
 List length (integer).
 .TP 1i
 array_of_requests
@@ -45,50 +45,50 @@ Array of requests (array of handles).
 .SH OUTPUT PARAMETERS
 .ft R
 .TP 1i
-index      
+index
 Index of handle for operation that completed (integer). In the range 0 to
 count-1.  In Fortran, the range is 1 to count.
 .TP 1i
-status      
+status
 Status object (status).
 .sp
 .ft R
 .TP 1i
 IERROR
-Fortran only: Error status (integer). 
+Fortran only: Error status (integer).
 
 .SH DESCRIPTION
 .ft R
-A call to MPI_Waitany can be used to wait for the completion of one out of several requests. 
+A call to MPI_Waitany can be used to wait for the completion of one out of several requests.
 .sp
-The array_of_requests list may contain null or inactive handles. If the list contains no active handles (list has length zero or all entries are null or inactive), then the call returns immediately with index = MPI_UNDEFINED, and an empty status. 
+The array_of_requests list may contain null or inactive handles. If the list contains no active handles (list has length zero or all entries are null or inactive), then the call returns immediately with index = MPI_UNDEFINED, and an empty status.
 .sp
 The execution of MPI_Waitany(count, array_of_requests, index, status) has the same effect as the execution of MPI_Wait(&array_of_requests[i], status), where i is the value returned by index (unless the value of index is MPI_UNDEFINED). MPI_Waitany with an array containing one active entry is equivalent to MPI_Wait.
 .sp
-If your application does not need to examine the \fIstatus\fP field, you can save resources by using the predefined constant MPI_STATUS_IGNORE as a special value for the \fIstatus\fP argument. 
+If your application does not need to examine the \fIstatus\fP field, you can save resources by using the predefined constant MPI_STATUS_IGNORE as a special value for the \fIstatus\fP argument.
 .sp
-\fBExample:\fR Client-server code (starvation can occur). 
+\fBExample:\fR Client-server code (starvation can occur).
 .sp
 .nf
-    CALL MPI_COMM_SIZE(comm, size, ierr) 
-    CALL MPI_COMM_RANK(comm, rank, ierr) 
-    IF(rank .GT 0) THEN         ! client code 
-        DO WHILE(.TRUE.) 
-           CALL MPI_ISEND(a, n, MPI_REAL, 0, tag, comm, request, ierr) 
-           CALL MPI_WAIT(request, status, ierr) 
-        END DO 
-    ELSE         ! rank=0 -- server code 
-           DO i=1, size-1 
-              CALL MPI_IRECV(a(1,i), n, MPI_REAL, i tag, 
-                       comm, request_list(i), ierr) 
-           END DO 
-           DO WHILE(.TRUE.) 
-              CALL MPI_WAITANY(size-1, request_list, index, status, ierr) 
-              CALL DO_SERVICE(a(1,index))  ! handle one message 
-              CALL MPI_IRECV(a(1, index), n, MPI_REAL, index, tag, 
-                        comm, request_list(index), ierr) 
-           END DO 
-    END IF 
+    CALL MPI_COMM_SIZE(comm, size, ierr)
+    CALL MPI_COMM_RANK(comm, rank, ierr)
+    IF(rank .GT 0) THEN         ! client code
+        DO WHILE(.TRUE.)
+           CALL MPI_ISEND(a, n, MPI_REAL, 0, tag, comm, request, ierr)
+           CALL MPI_WAIT(request, status, ierr)
+        END DO
+    ELSE         ! rank=0 -- server code
+           DO i=1, size-1
+              CALL MPI_IRECV(a(1,i), n, MPI_REAL, i tag,
+                       comm, request_list(i), ierr)
+           END DO
+           DO WHILE(.TRUE.)
+              CALL MPI_WAITANY(size-1, request_list, index, status, ierr)
+              CALL DO_SERVICE(a(1,index))  ! handle one message
+              CALL MPI_IRECV(a(1, index), n, MPI_REAL, index, tag,
+                        comm, request_list(index), ierr)
+           END DO
+    END IF
 .fi
 .sp
 

@@ -1,5 +1,5 @@
 dnl
-dnl This files contains additional macros for using autoconf to 
+dnl This files contains additional macros for using autoconf to
 dnl build configure scripts.
 dnl
 dnl Almost all of this file is taken from the aclocal.m4 of MPICH
@@ -19,21 +19,21 @@ AC_DEFUN([PAC_GET_FORTNAMES],[
 EOF
    $F77 $FFLAGS -c confftest.f > /dev/null 2>&1
    if test ! -s confftest.$OBJEXT ; then
-	AC_MSG_WARN([Unable to test Fortran compiler.  Compiling a test 
+	AC_MSG_WARN([Unable to test Fortran compiler.  Compiling a test
 program failed to produce an object file])
 	NOF77=1
    elif test -z "$FORTRANNAMES" ; then
      # MAC OS X (and probably FreeBSD need strings - (not strings -a)
      # Cray doesn't accept -a ...
      allstrings="-a"
-     if test $arch_CRAY ; then 
-	allstrings="" 
+     if test $arch_CRAY ; then
+	allstrings=""
      elif strings - confftest.$OBJEXT < /dev/null >/dev/null 2>&1 ; then
          allstrings="-"
      elif strings -a confftest.$OBJEXT < /dev/null >/dev/null 2>&1 ; then
          allstrings="-a"
      fi
-    
+
      nameform1=`strings $allstrings confftest.$OBJEXT | grep mpir_init_fop_  | head -1`
      nameform2=`strings $allstrings confftest.$OBJEXT | grep MPIR_INIT_FOP   | head -1`
      nameform3=`strings $allstrings confftest.$OBJEXT | grep mpir_init_fop   | head -1`
@@ -47,8 +47,8 @@ program failed to produce an object file])
         echo "Fortran externals have a trailing underscore and are lowercase"
 	FORTRANNAMES="FORTRANUNDERSCORE"
     elif test -n "$nameform2" ; then
-	echo "Fortran externals are uppercase"     
-	FORTRANNAMES="FORTRANCAPS" 
+	echo "Fortran externals are uppercase"
+	FORTRANNAMES="FORTRANCAPS"
     elif test -n "$nameform3" ; then
 	echo "Fortran externals are lower case"
 	FORTRANNAMES="FORTRANNOUNDERSCORE"
@@ -76,7 +76,7 @@ if test -n "$arch_IRIX"; then
    dnl  For example
    dnl  IRIX_5_4400 (IRIX 5.x, using MIPS 4400)
    osversion=`uname -r | sed 's/\..*//'`
-   dnl Note that we need to allow brackets here, so we briefly turn off 
+   dnl Note that we need to allow brackets here, so we briefly turn off
    dnl the macro quotes
    changequote(,)dnl
    dnl Get the second field (looking for 6.1)
@@ -111,7 +111,7 @@ if test -n "$arch_IRIX"; then
    fi
    AC_MSG_RESULT($cputype)
    dnl echo "checking for osversion and cputype"
-   dnl cputype may contain R4400, R2000A/R3000, or something else.  
+   dnl cputype may contain R4400, R2000A/R3000, or something else.
    dnl We may eventually need to look at it.
    if test -z "$osversion" ; then
         AC_MSG_RESULT([Could not determine OS version.  Please send])
@@ -123,9 +123,9 @@ if test -n "$arch_IRIX"; then
         true
    elif test $osversion = 6 ; then
         true
-   else 
+   else
        AC_MSG_RESULT([Could not recognize the version of IRIX (got $osversion).
-ROMIO knows about versions 4, 5 and 6; the version being returned from 
+ROMIO knows about versions 4, 5 and 6; the version being returned from
 uname -r is $osversion.  Please send])
        uname -a 2>&1
        hinv 2>&1
@@ -138,7 +138,7 @@ uname -r is $osversion.  Please send])
    changequote(,)dnl
    cputype=`echo $cputype | sed -e 's%.*/%%' -e 's/R//' | tr -d "[A-Z]"`
    changequote([,])dnl
-   case $cputype in 
+   case $cputype in
         3000) ;;
         4000) ;;
         4400) ;;
@@ -150,7 +150,7 @@ uname -r is $osversion.  Please send])
         *)
 	AC_MSG_WARN([Unexpected IRIX/MIPS chipset $cputype.  Please send the output])
         uname -a 2>&1
-        hinv 2>&1 
+        hinv 2>&1
         AC_MSG_WARN([to romio-maint@mcs.anl.gov
 ROMIO will continue and assume that the cputype is
 compatible with a MIPS 4400 processor.])
@@ -172,7 +172,7 @@ define(PAC_TEST_MPI,[
      main(int argc, char **argv)
      {
          MPI_Init(&argc,&argv);
-         MPI_Finalize(); 
+         MPI_Finalize();
      }
 EOF
   rm -f conftest$EXEEXT
@@ -225,10 +225,10 @@ define(PAC_MPI_LONG_LONG_INT,[
 #include "mpi.h"
      main(int argc, char **argv)
      {
-         long long i;   
+         long long i;
          MPI_Init(&argc,&argv);
          MPI_Send(&i, 1, MPI_LONG_LONG_INT, 0, 0, MPI_COMM_WORLD);
-         MPI_Finalize(); 
+         MPI_Finalize();
      }
 EOF
   rm -f conftest$EXEEXT
@@ -247,7 +247,7 @@ dnl
 define(PAC_LONG_LONG_64,[
 if test -n "$longlongsize" ; then
     if test "$longlongsize" = 8 ; then
-       echo "defining MPI_Offset as long long in C and integer*8 in Fortran" 
+       echo "defining MPI_Offset as long long in C and integer*8 in Fortran"
        AC_DEFINE(HAVE_LONG_LONG_64,,[Define if long long is 64 bits])
        DEFINE_MPI_OFFSET="typedef long long MPI_Offset;"
        FORTRAN_MPI_OFFSET="integer*8"
@@ -260,8 +260,8 @@ if test -n "$longlongsize" ; then
        LL="\%d"
        MPI_OFFSET_KIND1="!"
        MPI_OFFSET_KIND2="!"
-    else 
-       echo "defining MPI_Offset as long in C and integer in Fortran" 
+    else
+       echo "defining MPI_Offset as long in C and integer in Fortran"
        DEFINE_MPI_OFFSET="typedef long MPI_Offset;"
        FORTRAN_MPI_OFFSET="integer"
        LL="\%ld"
@@ -274,14 +274,14 @@ else
       if test "$longlongsize" = 8 ; then
          PAC_TEST_LONG_LONG()
       else
-         echo "defining MPI_Offset as long in C and integer in Fortran" 
+         echo "defining MPI_Offset as long in C and integer in Fortran"
          DEFINE_MPI_OFFSET="typedef long MPI_Offset;"
          FORTRAN_MPI_OFFSET="integer"
          LL="\%ld"
          MPI_OFFSET_KIND1="!"
          MPI_OFFSET_KIND2="!"
       fi
-   else 
+   else
 dnl   check if longlong is not supported or only its size cannot be determined
 dnl   because the program cannot be run.
       rm -f ltest.c
@@ -297,14 +297,14 @@ EOF
       if test -x conftest$EXEEXT ; then
          echo "assuming size of long long is 8bytes; use '-longlongsize' to indicate otherwise"
          rm -f conftest$EXEEXT ltest.c
-         echo "defining MPI_Offset as long long in C and integer*8 in Fortran" 
+         echo "defining MPI_Offset as long long in C and integer*8 in Fortran"
          AC_DEFINE(HAVE_LONG_LONG_64,,[Define if long long is 64 bits])
          DEFINE_MPI_OFFSET="typedef long long MPI_Offset;"
          FORTRAN_MPI_OFFSET="integer*8"
          LL="\%lld"
-      else 
+      else
          echo "assuming long long is not available; use '-longlongsize' to indicate otherwise"
-         echo "defining MPI_Offset as long in C and integer in Fortran" 
+         echo "defining MPI_Offset as long in C and integer in Fortran"
          DEFINE_MPI_OFFSET="typedef long MPI_Offset;"
          FORTRAN_MPI_OFFSET="integer"
          LL="\%ld"
@@ -326,7 +326,7 @@ define(PAC_MPI_INFO,[
          MPI_Info info;
          MPI_Init(&argc,&argv);
          MPI_Info_create(&info);
-         MPI_Finalize(); 
+         MPI_Finalize();
      }
 EOF
   rm -f conftest$EXEEXT
@@ -363,7 +363,7 @@ define(PAC_MPI_DARRAY_SUBARRAY,[
          MPI_Init(&argc,&argv);
          MPI_Type_create_darray(i, i, i, &i, &i, &i, &i, i, MPI_INT, &t);
          MPI_Type_create_subarray(i, &i, &i, &i, i, MPI_INT, &t);
-         MPI_Finalize(); 
+         MPI_Finalize();
      }
 EOF
   rm -f conftest$EXEEXT
@@ -480,7 +480,7 @@ define(PAC_TEST_MPI_SGI_type_is_contig,[
 
          MPI_Init(&argc,&argv);
          i = MPI_SGI_type_is_contig(type);
-         MPI_Finalize(); 
+         MPI_Finalize();
      }
 EOF
   rm -f conftest$EXEEXT
@@ -507,7 +507,7 @@ define(PAC_TEST_MPI_COMBINERS,[
 
          MPI_Init(&argc,&argv);
          i = MPI_COMBINER_STRUCT;
-         MPI_Finalize(); 
+         MPI_Finalize();
      }
 EOF
   rm -f conftest$EXEEXT
@@ -581,7 +581,7 @@ fi
 KINDVAL=""
 if $FC -o conftest$EXEEXT conftest.$ac_f90ext >/dev/null 2>&1 ; then
     ./conftest$EXEEXT >/dev/null 2>&1
-    if test -s conftest.out ; then 
+    if test -s conftest.out ; then
         KINDVAL=`cat conftest.out`
     fi
 fi
@@ -624,7 +624,7 @@ EOF
 dnl
 dnl
 dnl PAC_GET_XFS_MEMALIGN
-dnl 
+dnl
 dnl
 define(PAC_GET_XFS_MEMALIGN,
 [AC_MSG_CHECKING([for memory alignment needed for direct I/O])
@@ -634,7 +634,7 @@ AC_TEST_PROGRAM([#include <stdio.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <stdio.h>
-main() { 
+main() {
   struct dioattr st;
   int fd = open("/tmp/romio_tmp.bin", O_RDWR | O_CREAT, 0644);
   FILE *f=fopen("memalignval","w");
@@ -704,7 +704,7 @@ fi
 KINDVAL=""
 if $FC -o kind$EXEEXT kind.f >/dev/null 2>&1 ; then
     ./kind >/dev/null 2>&1
-    if test -s k.out ; then 
+    if test -s k.out ; then
         KINDVAL=`cat k.out`
     fi
 fi
@@ -773,7 +773,7 @@ define(PAC_TEST_MPIR_STATUS_SET_BYTES,[
 
          MPI_Init(&argc,&argv);
          MPIR_Status_set_bytes(status,type,err);
-         MPI_Finalize(); 
+         MPI_Finalize();
      }
 EOF
   rm -f conftest$EXEEXT

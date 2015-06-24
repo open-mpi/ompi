@@ -1,12 +1,12 @@
 dnl -*- shell-script -*-
 dnl
-dnl Copyright (c) 2004-2006 High Performance Computing Center Stuttgart, 
+dnl Copyright (c) 2004-2006 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
 dnl $COPYRIGHT$
-dnl 
+dnl
 dnl Additional copyrights may follow
-dnl 
+dnl
 dnl $HEADER$
 dnl
 

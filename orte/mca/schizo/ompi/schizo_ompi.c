@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2013 Los Alamos National Security, LLC. 
+ * Copyright (c) 2006-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
@@ -82,7 +82,7 @@ static int parse_cli(char *personality,
         "routed",
         NULL
     };
-    
+
     for (i = 0; i < (argc-start); ++i) {
         if (0 == strcmp("-mca",  argv[i]) ||
             0 == strcmp("--mca", argv[i]) ) {
@@ -163,7 +163,7 @@ static int parse_env(char *personality,
     char *value;
     char *env_set_flag;
     char **vars;
-    
+
     for (i = 0; NULL != srcenv[i]; ++i) {
         if (0 == strncmp("OMPI_", srcenv[i], 5)) {
             /* check for duplicate in app->env - this
@@ -180,7 +180,7 @@ static int parse_env(char *personality,
             free(param);
         }
     }
-    
+
     /* add the ompi-server, if provided */
     if (NULL != ompi_server) {
         opal_setenv("OMPI_MCA_pubsub_orte_server", ompi_server, true, dstenv);
@@ -288,7 +288,7 @@ static int setup_fork(orte_job_t *jdata,
     char **envcpy, **nps, **firstranks;
     char *npstring, *firstrankstring;
     char *num_app_ctx;
-    
+
     /* see if the mapper thinks we are oversubscribed */
     oversubscribed = false;
     if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, ORTE_PROC_MY_NAME->vpid))) {
@@ -312,7 +312,7 @@ static int setup_fork(orte_job_t *jdata,
         envcpy = opal_argv_copy(orte_launch_environ);
     }
     app->env = envcpy;
-    
+
     /* special case handling for --prefix: this is somewhat icky,
        but at least some users do this.  :-\ It is possible that
        when using --prefix, the user will also "-x PATH" and/or
@@ -327,14 +327,14 @@ static int setup_fork(orte_job_t *jdata,
     orte_get_attribute(&app->attributes, ORTE_APP_PREFIX_DIR, (void**)&param, OPAL_STRING);
     for (i = 0; NULL != param && NULL != app->env && NULL != app->env[i]; ++i) {
         char *newenv;
-        
+
         /* Reset PATH */
         if (0 == strncmp("PATH=", app->env[i], 5)) {
             asprintf(&newenv, "%s/bin:%s", param, app->env[i] + 5);
             opal_setenv("PATH", newenv, true, &app->env);
             free(newenv);
         }
-        
+
         /* Reset LD_LIBRARY_PATH */
         else if (0 == strncmp("LD_LIBRARY_PATH=", app->env[i], 16)) {
             asprintf(&newenv, "%s/lib:%s", param, app->env[i] + 16);
@@ -348,26 +348,26 @@ static int setup_fork(orte_job_t *jdata,
 
     /* pass my contact info to the local proc so we can talk */
     opal_setenv("OMPI_MCA_orte_local_daemon_uri", orte_process_info.my_daemon_uri, true, &app->env);
-    
+
     /* pass the hnp's contact info to the local proc in case it
      * needs it
      */
     if (NULL != orte_process_info.my_hnp_uri) {
         opal_setenv("OMPI_MCA_orte_hnp_uri", orte_process_info.my_hnp_uri, true, &app->env);
     }
-    
+
     /* setup yield schedule - do not override any user-supplied directive! */
     if (oversubscribed) {
         opal_setenv("OMPI_MCA_mpi_yield_when_idle", "1", false, &app->env);
     } else {
         opal_setenv("OMPI_MCA_mpi_yield_when_idle", "0", false, &app->env);
     }
-    
+
     /* set the app_context number into the environment */
     asprintf(&param, "%ld", (long)app->idx);
     opal_setenv("OMPI_MCA_orte_app_num", param, true, &app->env);
     free(param);
-    
+
     /* although the total_slots_alloc is the universe size, users
      * would appreciate being given a public environmental variable
      * that also represents this value - something MPI specific - so
@@ -379,7 +379,7 @@ static int setup_fork(orte_job_t *jdata,
     asprintf(&param, "%ld", (long)jdata->total_slots_alloc);
     opal_setenv("OMPI_UNIVERSE_SIZE", param, true, &app->env);
     free(param);
-    
+
     /* pass the number of nodes involved in this job */
     asprintf(&param, "%ld", (long)(jdata->map->num_nodes));
     opal_setenv("OMPI_MCA_orte_num_nodes", param, true, &app->env);
@@ -424,7 +424,7 @@ static int setup_fork(orte_job_t *jdata,
         opal_setenv("OMPI_MCA_shmem_RUNTIME_QUERY_hint", param, true, &app->env);
         free(param);
     }
-    
+
     /* Set an info MCA param that tells the launched processes that
      * any binding policy was applied by us (e.g., so that
      * MPI_INIT doesn't try to bind itself)
@@ -465,7 +465,7 @@ static int setup_fork(orte_job_t *jdata,
     asprintf(&param, "%ld", (long)jdata->num_local_procs);
     opal_setenv("OMPI_COMM_WORLD_LOCAL_SIZE", param, true, &app->env);
     free(param);
-        
+
     /* forcibly set the local tmpdir base to match ours */
     opal_setenv("OMPI_MCA_orte_tmpdir_base", orte_process_info.tmpdir_base, true, &app->env);
 
@@ -534,7 +534,7 @@ static int setup_child(orte_job_t *jdata,
      */
     opal_setenv("OMPI_COMM_WORLD_RANK", value, true, &app->env);
     free(value);  /* done with this now */
-    
+
     /* users would appreciate being given a public environmental variable
      * that also represents the local rank value - something MPI specific - so
      * do that here.
@@ -550,7 +550,7 @@ static int setup_child(orte_job_t *jdata,
     asprintf(&value, "%lu", (unsigned long) child->local_rank);
     opal_setenv("OMPI_COMM_WORLD_LOCAL_RANK", value, true, &app->env);
     free(value);
-    
+
     /* users would appreciate being given a public environmental variable
      * that also represents the node rank value - something MPI specific - so
      * do that here.
@@ -588,13 +588,13 @@ static int setup_child(orte_job_t *jdata,
         opal_setenv("OMPI_MCA_orte_num_restarts", value, true, &app->env);
         free(value);
     }
-    
+
     /* if the proc should not barrier in orte_init, tell it */
     if (orte_get_attribute(&child->attributes, ORTE_PROC_NOBARRIER, NULL, OPAL_BOOL)
         || 0 < nrestarts) {
         opal_setenv("OMPI_MCA_orte_do_not_barrier", "1", true, &app->env);
     }
-    
+
     /* if we are using staged execution, tell it */
     if (orte_staged_execution) {
         opal_setenv("OMPI_MCA_orte_staged_execution", "1", true, &app->env);

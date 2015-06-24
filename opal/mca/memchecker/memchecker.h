@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2004-2007 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2007 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2008 The Trustees of Indiana University.
  *                         All rights reserved.
@@ -8,9 +8,9 @@
  *                         reserved.
  *
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -162,10 +162,10 @@ struct opal_memchecker_base_module_1_0_0_t {
 
     /** Module function to check for any leaks */
     opal_memchecker_base_module_leakcheck_fn_t leakcheck;
-    
+
     /** Module function to get vbits */
     opal_memchecker_base_module_get_vbits_fn_t get_vbits;
-    
+
     /** Module function to set vbits */
     opal_memchecker_base_module_set_vbits_fn_t set_vbits;
 };

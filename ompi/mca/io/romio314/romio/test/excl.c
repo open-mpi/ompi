@@ -1,5 +1,5 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/*  
+/*
  *  (C) 2001 by Argonne National Laboratory.
  *      See COPYRIGHT in top-level directory.
  */
@@ -20,7 +20,7 @@ int main(int argc, char **argv)
     MPI_Init(&argc,&argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-/* process 0 takes the file name as a command-line argument and 
+/* process 0 takes the file name as a command-line argument and
    broadcasts it to other processes */
     if (!rank) {
         i = 1;
@@ -44,13 +44,13 @@ int main(int argc, char **argv)
         filename = (char *) malloc(len+10);
         MPI_Bcast(filename, len+10, MPI_CHAR, 0, MPI_COMM_WORLD);
     }
-    
+
 
     if (!rank) MPI_File_delete(filename, MPI_INFO_NULL);
     MPI_Barrier(MPI_COMM_WORLD);
 
     /* this open should succeed */
-    err = MPI_File_open(MPI_COMM_WORLD, filename, 
+    err = MPI_File_open(MPI_COMM_WORLD, filename,
          MPI_MODE_CREATE | MPI_MODE_EXCL | MPI_MODE_RDWR, MPI_INFO_NULL , &fh);
     if (err != MPI_SUCCESS) {
 	errs++;
@@ -61,7 +61,7 @@ int main(int argc, char **argv)
     MPI_Barrier(MPI_COMM_WORLD);
 
     /* this open should fail */
-    err = MPI_File_open(MPI_COMM_WORLD, filename, 
+    err = MPI_File_open(MPI_COMM_WORLD, filename,
          MPI_MODE_CREATE | MPI_MODE_EXCL | MPI_MODE_RDWR, MPI_INFO_NULL , &fh);
     if (err == MPI_SUCCESS) {
 	errs++;
@@ -80,5 +80,5 @@ int main(int argc, char **argv)
 
     free(filename);
     MPI_Finalize();
-    return 0; 
+    return 0;
 }

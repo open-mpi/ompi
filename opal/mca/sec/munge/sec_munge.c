@@ -3,9 +3,9 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  *
  */
@@ -49,14 +49,14 @@ static bool refresh = false;
 static int init(void)
 {
     int rc;
-    
+
     opal_output_verbose(2, opal_sec_base_framework.framework_output,
                         "sec: munge init");
-    
+
     /* attempt to get a credential as a way of checking that
      * the munge server is available - cache the credential
      * for later use */
-    
+
     if (EMUNGE_SUCCESS != (rc = munge_encode(&my_cred.credential, NULL, NULL, 0))) {
         opal_output_verbose(2, opal_sec_base_framework.framework_output,
                             "sec: munge failed to create credential: %s",
@@ -66,7 +66,7 @@ static int init(void)
     /* include the '\0' termination string character */
     my_cred.size = strlen(my_cred.credential)+1;
     initialized = true;
-    
+
     return OPAL_SUCCESS;
 }
 
@@ -82,7 +82,7 @@ static int get_my_cred(int dstorehandle,
                        opal_sec_cred_t *cred)
 {
     int rc;
-    
+
     if (initialized) {
         if (!refresh) {
             refresh = true;
@@ -104,14 +104,14 @@ static int get_my_cred(int dstorehandle,
     } else {
         rc = OPAL_ERROR;
     }
-    
+
     return OPAL_SUCCESS;
 }
 
 static int authenticate(opal_sec_cred_t *cred)
 {
     munge_err_t rc;
-    
+
     opal_output_verbose(2, opal_sec_base_framework.framework_output,
                         "sec: munge validate_cred %s", cred->credential);
 

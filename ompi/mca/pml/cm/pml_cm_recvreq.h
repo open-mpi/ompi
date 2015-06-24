@@ -6,7 +6,7 @@
  * Copyright (c) 2004-2013 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
@@ -44,7 +44,7 @@ struct mca_pml_cm_hvy_recv_request_t {
     size_t req_bytes_packed;              /**< packed size of a message given the datatype and count */
     bool req_blocking;
     mca_mtl_request_t req_mtl;            /**< the mtl specific memory. This field should be the last in the struct */
-}; 
+};
 typedef struct mca_pml_cm_hvy_recv_request_t mca_pml_cm_hvy_recv_request_t;
 
 OBJ_CLASS_DECLARATION(mca_pml_cm_hvy_recv_request_t);
@@ -297,7 +297,7 @@ do {                                                                    \
 do {                                                                    \
     ompi_request_complete(  &(recvreq->req_base.req_ompi), true );      \
  } while (0)
-    
+
 
 /**
  *  Return a recv request to the modules free list.

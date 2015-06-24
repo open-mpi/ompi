@@ -1,14 +1,14 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
 #include "ad_pfs.h"
 
 int ADIOI_PFS_ReadDone(ADIO_Request *request, ADIO_Status *status,
-		       int *error_code)  
+		       int *error_code)
 {
     int done=0;
     static char myname[] = "ADIOI_PFS_READDONE";
@@ -20,7 +20,7 @@ int ADIOI_PFS_ReadDone(ADIO_Request *request, ADIO_Status *status,
 
     if ((*request)->queued)
 	done = _iodone(*((long *) (*request)->handle));
-    else done = 1; /* ADIOI_Complete_Async completed this request, 
+    else done = 1; /* ADIOI_Complete_Async completed this request,
                       but request object was not freed. */
 
 #ifdef HAVE_STATUS_SET_BYTES
@@ -38,7 +38,7 @@ int ADIOI_PFS_ReadDone(ADIO_Request *request, ADIO_Status *status,
         ADIOI_Free_request((ADIOI_Req_node *) (*request));
         *request = ADIO_REQUEST_NULL;
     }
-    
+
     if (done == -1 && errno != 0) {
 	*error_code = MPIO_Err_create_code(MPI_SUCCESS, MPIR_ERR_RECOVERABLE,
 					   myname, __LINE__, MPI_ERR_IO,
@@ -54,4 +54,4 @@ int ADIOI_PFS_WriteDone(ADIO_Request *request, ADIO_Status *status,
 			int *error_code)
 {
     return ADIOI_PFS_ReadDone(request, status, error_code);
-} 
+}

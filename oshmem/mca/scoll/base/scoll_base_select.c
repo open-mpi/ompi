@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2013      Mellanox Technologies, Inc.
- *                         All rights reserved. 
+ *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -146,13 +146,13 @@ static OBJ_CLASS_INSTANCE(avail_com_t, opal_list_item_t, NULL, NULL);
 
 int mca_scoll_base_group_unselect(struct oshmem_group_t * group)
 {
-    /* 
+    /*
      * scoll close() is called before group destructors, so
      * do close group collectives if scoll modules are no longer
      * valid
      *
      * there is a memory leak here, because not doing close means
-     * that we leaving object with dangling ref counts 
+     * that we leaving object with dangling ref counts
      */
     SCOLL_VERBOSE(10, "scoll:base:group_unselect: group: %d", group->id);
 

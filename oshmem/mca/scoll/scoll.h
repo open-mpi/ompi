@@ -1,13 +1,13 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2013      Mellanox Technologies, Inc.
- *                         All rights reserved. 
+ *                         All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -79,7 +79,7 @@ typedef struct mca_scoll_base_component_1_0_0_t mca_scoll_base_component_t;
  * reference counted based on the number of functions from the module
  * used on the commuicator.  There is at most one module per component
  * on a given communicator, and there can be many component modules on
- * a given communicator.  
+ * a given communicator.
  *
  * @note The collective framework and the
  * communicator functionality only stores a pointer to the module
@@ -172,7 +172,7 @@ OSHMEM_DECLSPEC OBJ_CLASS_DECLARATION(mca_scoll_base_module_t);
  * Collectives group cache structure
  *
  * Collectives gorup cache structure, used to find functions to
- * implement collective algorithms and their associated modules. 
+ * implement collective algorithms and their associated modules.
  */
 struct mca_scoll_base_group_scoll_t {
     mca_scoll_base_module_barrier_fn_t scoll_barrier;

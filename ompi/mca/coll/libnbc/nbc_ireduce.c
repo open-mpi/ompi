@@ -24,7 +24,7 @@ static inline int red_sched_linear(int rank, int rsize, int root, void *sendbuf,
 int NBC_Reduce_args_compare(NBC_Reduce_args *a, NBC_Reduce_args *b, void *param) {
   if( (a->sendbuf == b->sendbuf) &&
       (a->recvbuf == b->recvbuf) &&
-      (a->count == b->count) && 
+      (a->count == b->count) &&
       (a->datatype == b->datatype) &&
       (a->op == b->op) &&
       (a->root == b->root) ) {
@@ -52,9 +52,9 @@ int ompi_coll_libnbc_ireduce(void* sendbuf, void* recvbuf, int count, MPI_Dataty
   NBC_Handle *handle;
   ompi_coll_libnbc_request_t **coll_req = (ompi_coll_libnbc_request_t**) request;
   ompi_coll_libnbc_module_t *libnbc_module = (ompi_coll_libnbc_module_t*) module;
-  
+
   NBC_IN_PLACE(sendbuf, recvbuf, inplace);
-  
+
   res = NBC_Init_handle(comm, coll_req, libnbc_module);
   if(res != NBC_OK) { printf("Error in NBC_Init_handle(%i)\n", res); return res; }
   handle = (*coll_req);
@@ -66,13 +66,13 @@ int ompi_coll_libnbc_ireduce(void* sendbuf, void* recvbuf, int count, MPI_Dataty
   if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Type_extent() (%i)\n", res); return res; }
   res = MPI_Type_size(datatype, &size);
   if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Type_size() (%i)\n", res); return res; }
-  
+
   /* only one node -> copy data */
   if((p == 1) && !inplace) {
     res = NBC_Copy(sendbuf, count, datatype, recvbuf, count, datatype, comm);
     if (NBC_OK != res) { printf("Error in NBC_Copy() (%i)\n", res); return res; }
   }
-  
+
   /* algorithm selection */
   if(p > 4 || size*count < 65536) {
     alg = NBC_RED_BINOMIAL;
@@ -117,7 +117,7 @@ int ompi_coll_libnbc_ireduce(void* sendbuf, void* recvbuf, int count, MPI_Dataty
         break;
     }
     if (NBC_OK != res) { printf("Error in Schedule creation() (%i)\n", res); return res; }
-    
+
     res = NBC_Sched_commit(schedule);
     if (NBC_OK != res) { free(handle->tmpbuf); printf("Error in NBC_Sched_commit() (%i)\n", res); return res; }
 #ifdef NBC_CACHE_SCHEDULE
@@ -141,10 +141,10 @@ int ompi_coll_libnbc_ireduce(void* sendbuf, void* recvbuf, int count, MPI_Dataty
     schedule=found->schedule;
   }
 #endif
-  
+
   res = NBC_Start(handle, schedule);
   if (NBC_OK != res) { free(handle->tmpbuf); printf("Error in NBC_Start() (%i)\n", res); return res; }
-  
+
   /* tmpbuf is freed with the handle */
   return NBC_OK;
 }
@@ -196,19 +196,19 @@ int ompi_coll_libnbc_ireduce_inter(void* sendbuf, void* recvbuf, int count, MPI_
 /* binomial reduce
  * working principle:
  * - each node gets a virtual rank vrank
- * - the 'root' node get vrank 0 
+ * - the 'root' node get vrank 0
  * - node 0 gets the vrank of the 'root'
  * - all other ranks stay identical (they do not matter)
  *
  * Algorithm:
  * pairwise exchange
- * round r: 
+ * round r:
  *  grp = rank % 2^r
  *  if grp == 0: receive from rank + 2^(r-1) if it exists and reduce value
  *  if grp == 1: send to rank - 2^(r-1) and exit function
- *  
+ *
  * do this for R=log_2(p) rounds
- *    
+ *
  */
 #define RANK2VRANK(rank, vrank, root) \
 { \
@@ -243,11 +243,11 @@ static inline int red_sched_binomial(int rank, int p, int root, void *sendbuf, v
         /* perform the reduce in my local buffer */
         if(firstred) {
           if(rank == root) {
-            /* root is the only one who reduces in the receivebuffer 
+            /* root is the only one who reduces in the receivebuffer
              * take data from sendbuf in first round - save copy */
             res = NBC_Sched_op(recvbuf, false, sendbuf, false, 0, true, count, datatype, op, schedule);
           } else {
-            /* all others may not have a receive buffer 
+            /* all others may not have a receive buffer
              * take data from sendbuf in first round - save copy */
             res = NBC_Sched_op((char *)redbuf-(unsigned long)handle->tmpbuf, true, sendbuf, false, 0, true, count, datatype, op, schedule);
           }
@@ -286,17 +286,17 @@ static inline int red_sched_binomial(int rank, int p, int root, void *sendbuf, v
   return NBC_OK;
 }
 
-/* chain send ... */ 
+/* chain send ... */
 static inline int red_sched_chain(int rank, int p, int root, void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, int ext, int size, NBC_Schedule *schedule, NBC_Handle *handle, int fragsize) {
   int res, vrank, rpeer, speer, numfrag, fragnum, fragcount, thiscount;
   long offset;
-  
+
   RANK2VRANK(rank, vrank, root);
   VRANK2RANK(rpeer, vrank+1, root);
   VRANK2RANK(speer, vrank-1, root);
-  
+
   if(count == 0) return NBC_OK;
-  
+
   numfrag = count*size/fragsize;
   if((count*size)%fragsize != 0) numfrag++;
   fragcount = count/numfrag;

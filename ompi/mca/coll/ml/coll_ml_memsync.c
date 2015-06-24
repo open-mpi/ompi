@@ -33,7 +33,7 @@ static int mca_coll_ml_memsync_recycle_memory(mca_coll_ml_collective_operation_p
     int rc;
     bool have_resources = true;
 
-    assert(bank >= 0 || 
+    assert(bank >= 0 ||
            bank < (int)ml_memblock->num_banks ||
            ML_MEMSYNC == coll_op->fragment_data.current_coll_op);
 
@@ -53,7 +53,7 @@ static int mca_coll_ml_memsync_recycle_memory(mca_coll_ml_collective_operation_p
         assert(pending_op->pending & REQ_OUT_OF_MEMORY);
         rc = pending_op->fragment_data.message_descriptor->fragment_launcher(pending_op);
         switch (rc) {
-            case OMPI_SUCCESS: 
+            case OMPI_SUCCESS:
                 ML_VERBOSE(10, ("Pending fragment was started %p", pending_op));
                 pending_op->pending ^= REQ_OUT_OF_MEMORY;
                 opal_list_remove_item(&ml_module->waiting_for_memory_list,
@@ -63,7 +63,7 @@ static int mca_coll_ml_memsync_recycle_memory(mca_coll_ml_collective_operation_p
                     CHECK_AND_RECYCLE(pending_op);
                 }
                 break;
-            case OMPI_ERR_TEMP_OUT_OF_RESOURCE: 
+            case OMPI_ERR_TEMP_OUT_OF_RESOURCE:
                 ML_VERBOSE(10, ("Already on the list %p", pending_op));
                 have_resources = false;
                 break;
@@ -100,7 +100,7 @@ static inline __opal_attribute_always_inline__ int mca_coll_ml_memsync_launch(mc
     ML_VERBOSE(10, ("Get coll request %p", coll_op));
 
     coll_op->fragment_data.buffer_desc = NULL;
-    
+
     /* Caching bank index for future memory recycling callback */
     coll_op->full_message.bank_index_to_recycle = bank_index;
 
@@ -140,12 +140,12 @@ int mca_coll_ml_memsync_intra(mca_coll_ml_module_t *ml_module, int bank_index)
         /* Josh's change: In the case where only p2p is active, we have no way
          * to reset the bank release counters to zero, I am doing that here since it
          * would actually be "correct" to do it outside of this conditional, however
-         * I suspect that reseting the value to zero elsewhere would result in corrupted 
+         * I suspect that reseting the value to zero elsewhere would result in corrupted
          * flow for non-contiguous data types
          */
-        
-        /* nasty hack to ensure that resources are released in the single level 
-         * ptp case. 
+
+        /* nasty hack to ensure that resources are released in the single level
+         * ptp case.
          */
         mca_coll_ml_collective_operation_progress_t dummy_coll;
 
@@ -158,7 +158,7 @@ int mca_coll_ml_memsync_intra(mca_coll_ml_module_t *ml_module, int bank_index)
         if(OPAL_UNLIKELY(rc != OMPI_SUCCESS)){
             ML_ERROR(("Failed to flush the list."));
             return rc;
-        } 
+        }
     } else {
         /* retain the communicator until the operation is finished. the communicator
          * will be released by CHECK_AND_RECYCLE */

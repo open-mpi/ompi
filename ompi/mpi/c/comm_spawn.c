@@ -6,7 +6,7 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -15,9 +15,9 @@
  * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 #include "ompi_config.h"
@@ -51,16 +51,16 @@ int MPI_Comm_spawn(const char *command, char *argv[], int maxprocs, MPI_Info inf
     ompi_communicator_t *newcomp=NULL;
     char port_name[MPI_MAX_PORT_NAME];
     bool non_mpi = false;
-    
+
     MEMCHECKER(
         memchecker_comm(comm);
     );
- 
+
     if ( MPI_PARAM_CHECK ) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 
         if ( ompi_comm_invalid (comm)) {
-            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, 
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM,
                                           FUNC_NAME);
         }
         if ( OMPI_COMM_IS_INTER(comm)) {
@@ -68,7 +68,7 @@ int MPI_Comm_spawn(const char *command, char *argv[], int maxprocs, MPI_Info inf
                                           FUNC_NAME);
         }
         if ( (0 > root) || (ompi_comm_size(comm) <= root) ) {
-            return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, 
+            return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG,
                                           FUNC_NAME);
         }
         if ( NULL == intercomm ) {
@@ -76,7 +76,7 @@ int MPI_Comm_spawn(const char *command, char *argv[], int maxprocs, MPI_Info inf
                                           FUNC_NAME);
         }
     }
-   
+
     rank = ompi_comm_rank ( comm );
     if ( MPI_PARAM_CHECK ) {
         if ( rank == root ) {
@@ -97,7 +97,7 @@ int MPI_Comm_spawn(const char *command, char *argv[], int maxprocs, MPI_Info inf
 
     /* initialize the port name to avoid problems */
     memset(port_name, 0, MPI_MAX_PORT_NAME);
-    
+
     /* See if the info key "ompi_non_mpi" was set to true */
     if (rank == root) {
         ompi_info_get_bool(info, "ompi_non_mpi", &non_mpi, &flag);
@@ -117,7 +117,7 @@ int MPI_Comm_spawn(const char *command, char *argv[], int maxprocs, MPI_Info inf
             rc = OMPI_ERR_NOT_SUPPORTED;
             goto error;
         }
-        if (OMPI_SUCCESS != (rc = ompi_dpm.spawn (1, &command, &argv, &maxprocs, 
+        if (OMPI_SUCCESS != (rc = ompi_dpm.spawn (1, &command, &argv, &maxprocs,
                                                   &info, port_name))) {
             goto error;
         }
@@ -136,7 +136,7 @@ error:
     if (rank == root && !non_mpi) {
         ompi_dpm.close_port(port_name);
     }
-    
+
     /* set error codes */
     if (MPI_ERRCODES_IGNORE != array_of_errcodes) {
         for ( i=0; i < maxprocs; i++ ) {

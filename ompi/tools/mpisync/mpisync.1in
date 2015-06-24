@@ -25,14 +25,14 @@ The name of output file where offsets related to HNP will be written
 Print help information
 .PP
 .BR ompi_timing_post
-takes the timing output file as input parameter. The events are sorted by the timestamps. Next, the timestamps are replaced with time offsets relative to the 
+takes the timing output file as input parameter. The events are sorted by the timestamps. Next, the timestamps are replaced with time offsets relative to the
 .BR first
 :
 .BR previous
 event.
 .PP
-.BR mpirun_prof 
-is a wrapper around 
+.BR mpirun_prof
+is a wrapper around
 .BR mpirun
 that performs clock synchronisation and post-processing of the timing output file.
 

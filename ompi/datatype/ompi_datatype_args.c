@@ -791,7 +791,7 @@ ompi_datatype_t* ompi_datatype_get_single_predefined_type_from_args( ompi_dataty
     ompi_datatype_t *predef = NULL, *current_type, *current_predef;
     ompi_datatype_args_t* args = (ompi_datatype_args_t*)type->args;
     int i;
-    
+
     if( ompi_datatype_is_predefined(type) )
         return type;
 

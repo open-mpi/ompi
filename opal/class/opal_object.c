@@ -5,20 +5,20 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2007 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2007 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
 /**
  * @file
- * 
+ *
  * Implementation of opal_object_t, the base opal foundation class
  */
 
@@ -118,7 +118,7 @@ void opal_class_initialize(opal_class_t *cls)
      * plus for each a NULL-sentinel
      */
 
-    cls->cls_construct_array = 
+    cls->cls_construct_array =
         (void (**)(opal_object_t*))malloc((cls_construct_array_count +
                                            cls_destruct_array_count + 2) *
                                           sizeof(opal_construct_t) );
@@ -169,8 +169,8 @@ int opal_class_finalize(void)
 
     if (NULL != classes) {
         for (i = 0; i < num_classes; ++i) {
-            if (NULL != classes[i]) { 
-                free(classes[i]); 
+            if (NULL != classes[i]) {
+                free(classes[i]);
             }
         }
         free(classes);

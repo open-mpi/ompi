@@ -1,5 +1,5 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/*  
+/*
  *  (C) 2001 by Argonne National Laboratory.
  *      See COPYRIGHT in top-level directory.
  */
@@ -8,15 +8,15 @@
 #include <string.h>
 #include <stdlib.h>
 
-/* Writes a 4-Gbyte distributed array, reads it back, and then deletes the 
+/* Writes a 4-Gbyte distributed array, reads it back, and then deletes the
    file. Uses collective I/O. */
 /* The file name is taken as a command-line argument. */
 /* Run it only on a machine with sufficient memory and a file system
    on which ROMIO supports large files, i.e., PIOFS, XFS, SFS, and HFS */
 
-/* This program will work only if the MPI implementation defines MPI_Aint 
+/* This program will work only if the MPI implementation defines MPI_Aint
    as a 64-bit integer. */
-   
+
 int main(int argc, char **argv)
 {
     MPI_Datatype newtype;
@@ -35,7 +35,7 @@ int main(int argc, char **argv)
     MPI_Comm_rank(MPI_COMM_WORLD, &mynod);
     MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
 
-/* process 0 takes the file name as a command-line argument and 
+/* process 0 takes the file name as a command-line argument and
    broadcasts it to other processes */
     if (!mynod) {
 	i = 1;
@@ -78,7 +78,7 @@ int main(int argc, char **argv)
     for (i=0; i<ndims; i++) array_of_psizes[i] = 0;
     MPI_Dims_create(nprocs, ndims, array_of_psizes);
 
-/* check if MPI_Aint is large enough for size of global array. 
+/* check if MPI_Aint is large enough for size of global array.
    if not, complain. */
 
     size_with_aint = sizeof(int);
@@ -90,7 +90,7 @@ int main(int argc, char **argv)
         MPI_Abort(MPI_COMM_WORLD, 1);
     }
 
-    MPI_Type_create_darray(nprocs, mynod, ndims, array_of_gsizes, 
+    MPI_Type_create_darray(nprocs, mynod, ndims, array_of_gsizes,
 			   array_of_distribs, array_of_dargs,
 			   array_of_psizes, order, MPI_INT, &newtype);
     MPI_Type_commit(&newtype);
@@ -104,7 +104,7 @@ int main(int argc, char **argv)
     for (i=0; i<bufcount; i++) writebuf[i] = mynod*1024 + i;
 
     /* write the array to the file */
-    MPI_File_open(MPI_COMM_WORLD, filename, MPI_MODE_CREATE | MPI_MODE_RDWR, 
+    MPI_File_open(MPI_COMM_WORLD, filename, MPI_MODE_CREATE | MPI_MODE_RDWR,
                   MPI_INFO_NULL, &fh);
     MPI_File_set_view(fh, 0, MPI_INT, newtype, "native", MPI_INFO_NULL);
     MPI_File_write_all(fh, writebuf, bufcount, MPI_INT, &status);
@@ -116,7 +116,7 @@ int main(int argc, char **argv)
     readbuf = (int *) calloc(bufcount, sizeof(int));
     if (!readbuf) fprintf(stderr, "Process %d, not enough memory for readbuf\n", mynod);
 
-    MPI_File_open(MPI_COMM_WORLD, filename, MPI_MODE_CREATE | MPI_MODE_RDWR, 
+    MPI_File_open(MPI_COMM_WORLD, filename, MPI_MODE_CREATE | MPI_MODE_RDWR,
                   MPI_INFO_NULL, &fh);
     MPI_File_set_view(fh, 0, MPI_INT, newtype, "native", MPI_INFO_NULL);
     MPI_File_read_all(fh, readbuf, bufcount, MPI_INT, &status);
@@ -124,7 +124,7 @@ int main(int argc, char **argv)
 
     /* check the data read */
     flag = 0;
-    for (i=0; i<bufcount; i++) 
+    for (i=0; i<bufcount; i++)
 	if (readbuf[i] != mynod*1024 + i) {
 	    fprintf(stderr, "Process %d, readbuf=%d, writebuf=%d\n", mynod, readbuf[i], mynod*1024 + i);
             flag = 1;

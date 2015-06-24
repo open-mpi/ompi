@@ -5,15 +5,15 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -175,7 +175,7 @@ OMPI_GENERATE_F77_BINDINGS( MPI_WIN_DUP_FN,
  * Note that in this file, we invoke OMPI_C_<function> rather than
  * <function>, where <function> is MPI_DUP_FN (and all the rest).
  * Specifically:
- * 
+ *
  *   MPI_NULL_DELETE_FN -> OMPI_C_MPI_NULL_DELETE_FN
  *   MPI_NULL_COPY_FN -> OMPI_C_MPI_NULL_COPY_FN
  *   MPI_DUP_FN -> OMPI_C_MPI_DUP_FN
@@ -195,15 +195,15 @@ OMPI_GENERATE_F77_BINDINGS( MPI_WIN_DUP_FN,
  * The reason why is discussed in a lengthy comment in mpi.h.
  */
 void ompi_type_null_delete_fn_f(MPI_Fint* type, MPI_Fint* type_keyval,
-                                MPI_Aint* attribute_val_out, 
+                                MPI_Aint* attribute_val_out,
                                 MPI_Aint* extra_state, MPI_Fint* ierr)
 {
     *ierr = OMPI_INT_2_FINT(MPI_SUCCESS);
 }
 
-void ompi_type_null_copy_fn_f(MPI_Fint* type, MPI_Fint* type_keyval, 
+void ompi_type_null_copy_fn_f(MPI_Fint* type, MPI_Fint* type_keyval,
                               MPI_Aint* extra_state,
-                              MPI_Aint* attribute_val_in, 
+                              MPI_Aint* attribute_val_in,
                               MPI_Aint* attribute_val_out,
                               ompi_fortran_logical_t* flag, MPI_Fint* ierr)
 {
@@ -211,10 +211,10 @@ void ompi_type_null_copy_fn_f(MPI_Fint* type, MPI_Fint* type_keyval,
     *ierr = OMPI_INT_2_FINT(MPI_SUCCESS);
 }
 
-void ompi_type_dup_fn_f(MPI_Fint* type, MPI_Fint* type_keyval, 
+void ompi_type_dup_fn_f(MPI_Fint* type, MPI_Fint* type_keyval,
                         MPI_Aint* extra_state,
-                        MPI_Aint* attribute_val_in, 
-                        MPI_Aint* attribute_val_out, 
+                        MPI_Aint* attribute_val_in,
+                        MPI_Aint* attribute_val_out,
                         ompi_fortran_logical_t* flag, MPI_Fint* ierr )
 {
     *flag = (ompi_fortran_logical_t) 1;
@@ -223,26 +223,26 @@ void ompi_type_dup_fn_f(MPI_Fint* type, MPI_Fint* type_keyval,
 }
 
 void ompi_comm_null_delete_fn_f(MPI_Fint* comm, MPI_Fint* comm_keyval,
-                                MPI_Aint* attribute_val_out, 
+                                MPI_Aint* attribute_val_out,
                                 MPI_Aint* extra_state, MPI_Fint* ierr)
 {
     *ierr = OMPI_INT_2_FINT(MPI_SUCCESS);
 }
 
-void ompi_comm_null_copy_fn_f(MPI_Fint* comm, MPI_Fint* comm_keyval, 
+void ompi_comm_null_copy_fn_f(MPI_Fint* comm, MPI_Fint* comm_keyval,
                               MPI_Aint* extra_state,
-                              MPI_Aint* attribute_val_in, 
-                              MPI_Aint* attribute_val_out, 
+                              MPI_Aint* attribute_val_in,
+                              MPI_Aint* attribute_val_out,
                               ompi_fortran_logical_t* flag, MPI_Fint* ierr)
 {
     *flag = (ompi_fortran_logical_t) 0;
     *ierr = OMPI_INT_2_FINT(MPI_SUCCESS);
 }
 
-void ompi_comm_dup_fn_f(MPI_Fint* comm, MPI_Fint* comm_keyval, 
+void ompi_comm_dup_fn_f(MPI_Fint* comm, MPI_Fint* comm_keyval,
                         MPI_Aint* extra_state,
-                        MPI_Aint* attribute_val_in, 
-                        MPI_Aint* attribute_val_out, 
+                        MPI_Aint* attribute_val_in,
+                        MPI_Aint* attribute_val_out,
                         ompi_fortran_logical_t* flag, MPI_Fint* ierr)
 {
     *flag = (ompi_fortran_logical_t) 1;
@@ -251,16 +251,16 @@ void ompi_comm_dup_fn_f(MPI_Fint* comm, MPI_Fint* comm_keyval,
 }
 
 void ompi_null_delete_fn_f(MPI_Fint* comm, MPI_Fint* comm_keyval,
-                           MPI_Fint* attribute_val_out, 
+                           MPI_Fint* attribute_val_out,
                            MPI_Fint* extra_state, MPI_Fint* ierr)
 {
     *ierr = OMPI_INT_2_FINT(MPI_SUCCESS);
 }
 
-void ompi_null_copy_fn_f(MPI_Fint* comm, MPI_Fint* comm_keyval, 
+void ompi_null_copy_fn_f(MPI_Fint* comm, MPI_Fint* comm_keyval,
                          MPI_Fint* extra_state,
-                         MPI_Fint* attribute_val_in, 
-                         MPI_Fint* attribute_val_out, 
+                         MPI_Fint* attribute_val_in,
+                         MPI_Fint* attribute_val_out,
                          ompi_fortran_logical_t* flag, MPI_Fint* ierr)
 {
     *flag = (ompi_fortran_logical_t) 0;
@@ -268,10 +268,10 @@ void ompi_null_copy_fn_f(MPI_Fint* comm, MPI_Fint* comm_keyval,
 }
 
 
-void ompi_dup_fn_f(MPI_Fint* comm, MPI_Fint* comm_keyval, 
+void ompi_dup_fn_f(MPI_Fint* comm, MPI_Fint* comm_keyval,
                    MPI_Fint* extra_state,
-                   MPI_Fint* attribute_val_in, 
-                   MPI_Fint* attribute_val_out, 
+                   MPI_Fint* attribute_val_in,
+                   MPI_Fint* attribute_val_out,
                    ompi_fortran_logical_t* flag, MPI_Fint* ierr)
 {
     *flag = (ompi_fortran_logical_t) 1;
@@ -280,26 +280,26 @@ void ompi_dup_fn_f(MPI_Fint* comm, MPI_Fint* comm_keyval,
 }
 
 void ompi_win_null_delete_fn_f(MPI_Fint* window, MPI_Fint* win_keyval,
-                               MPI_Aint* attribute_val_out, 
+                               MPI_Aint* attribute_val_out,
                                MPI_Aint* extra_state, MPI_Fint* ierr)
 {
     *ierr = OMPI_INT_2_FINT(MPI_SUCCESS);
 }
 
-void ompi_win_null_copy_fn_f(MPI_Fint* window, MPI_Fint* win_keyval, 
+void ompi_win_null_copy_fn_f(MPI_Fint* window, MPI_Fint* win_keyval,
                              MPI_Aint* extra_state,
-                             MPI_Aint* attribute_val_in, 
-                             MPI_Aint* attribute_val_out, 
+                             MPI_Aint* attribute_val_in,
+                             MPI_Aint* attribute_val_out,
                              ompi_fortran_logical_t* flag, MPI_Fint* ierr)
 {
     *flag = (ompi_fortran_logical_t) 0;
     *ierr = OMPI_INT_2_FINT(MPI_SUCCESS);
 }
 
-void ompi_win_dup_fn_f(MPI_Fint* window, MPI_Fint* win_keyval, 
+void ompi_win_dup_fn_f(MPI_Fint* window, MPI_Fint* win_keyval,
                        MPI_Aint* extra_state,
-                       MPI_Aint* attribute_val_in, 
-                       MPI_Aint* attribute_val_out, 
+                       MPI_Aint* attribute_val_in,
+                       MPI_Aint* attribute_val_out,
                        ompi_fortran_logical_t* flag, MPI_Fint* ierr)
 {
     *flag = (ompi_fortran_logical_t) 1;

@@ -213,14 +213,14 @@ known_filesystems="m4_join([ ],known_filesystems_m4)"
 # Defaults
 AC_ARG_ENABLE(aio,[
 --enable-aio - Request use of asynchronous I/O routines (default)],
-[ 
+[
   if test "x$enableval" = "xno" ; then
     disable_aio=yes
   else
     disable_aio=no
   fi
 ], disable_aio=no)
-AC_ARG_ENABLE(echo, 
+AC_ARG_ENABLE(echo,
 [--enable-echo  - Turn on strong echoing. The default is enable=no.] ,set -x)
 AC_ARG_ENABLE(f77,
 [--enable-f77 - Turn on support for Fortran 77 (default)],,enable_f77=yes)
@@ -274,9 +274,9 @@ if test -z "$ARCH" -a -x $srcdir/util/tarch ; then
     ARCH=`$srcdir/util/tarch | sed s/-/_/g`
     if test -z "$ARCH" ; then
        AC_MSG_RESULT([Unknown!])
-       AC_MSG_ERROR([Error: Could not guess target architecture, you must 
-set an architecture type with the environment variable ARCH]) 
-    fi 
+       AC_MSG_ERROR([Error: Could not guess target architecture, you must
+set an architecture type with the environment variable ARCH])
+    fi
     eval "arch_$ARCH=1"
     AC_MSG_RESULT($ARCH)
 fi
@@ -291,7 +291,7 @@ fi
 #
 #
 # Find the home directory if not specified
-if test "X$srcdir" != "X." -a -s $srcdir/mpi-io/Makefile.in ; then 
+if test "X$srcdir" != "X." -a -s $srcdir/mpi-io/Makefile.in ; then
     ROMIO_HOME_TRIAL=$srcdir
 else
     # Take advantage of autoconf2 features
@@ -327,7 +327,7 @@ AC_SUBST(mandir)
 if test -z "$docdir" ; then docdir='${prefix}/doc' ; fi
 AC_SUBST(docdir)
 if test -z "$htmldir" ; then htmldir='${prefix}/www' ; fi
-AC_SUBST(htmldir) 
+AC_SUBST(htmldir)
 
 
 # If we are building within a known MPI implementation, we must avoid the
@@ -375,7 +375,7 @@ if test $WITHIN_KNOWN_MPI_IMPL = no ; then
 #     compile command. Some compilers complain if it's only -I
       MPI_INCLUDE_DIR=.
    fi
-else 
+else
    MPI_INCLUDE_DIR=.
 fi
 #
@@ -397,22 +397,22 @@ else
     USER_FFLAGS="$FFLAGS -O"
 fi
 #
-# Here begin the architecture-specific tests.  
+# Here begin the architecture-specific tests.
 # --------------------------------------------------------------------------
-# We must first select the C and Fortran compilers.  Because of the 
+# We must first select the C and Fortran compilers.  Because of the
 # way that the PROG_CC autoconf macro works (and all of the macros that
 # require it, including CHECK_HEADERS), that macro must occur exactly
-# once in the configure.ac file, at least as of autoconf 2.57 .  
+# once in the configure.ac file, at least as of autoconf 2.57 .
 # Unfortunately, this requirement is not enforced.  To handle this,
 # we first case on the architecture; then use PROG_CC, then case on the
 # architecture again for any arch-specific features.  We also set the
 # C_DEBUG_FLAG and F77_DEBUG_FLAG in case debugging is selected.
-# 
+#
 # For the MPICH and MPICH configures, the compilers will already be
 # selected, so most of the compiler-selection code will be bypassed.
 # --------------------------------------------------------------------------
 # For historical reasons
-if test -z "$FC" ; then 
+if test -z "$FC" ; then
     FC=$F77
 fi
 #
@@ -467,7 +467,7 @@ PAC_GET_SPECIAL_SYSTEM_INFO
 AC_HAVE_FUNCS(memalign)
 
 #
-# Question: Should ROMIO under MPICH ignore the Fortran tests, since 
+# Question: Should ROMIO under MPICH ignore the Fortran tests, since
 # MPICH provides all of the Fortran interface routines?
 #
 if test $NOF77 = 0 ; then
@@ -483,7 +483,7 @@ if test $NOF77 = 0 ; then
         if test ! -d test ; then mkdir test ; fi
         ln -s $MPI_INCLUDE_DIR/mpif.h test
     fi
-else 
+else
     F77=":"
 fi
 #
@@ -557,7 +557,7 @@ if test "$ac_cv_sizeof_long_long" != 0 ; then
        MPI_OFFSET_KIND1="!"
        MPI_OFFSET_KIND2="!"
     else
-       echo "defining MPI_Offset as long in C and integer in Fortran" 
+       echo "defining MPI_Offset as long in C and integer in Fortran"
        MPI_OFFSET_TYPE="long"
        DEFINE_MPI_OFFSET="typedef long MPI_Offset;"
        FORTRAN_MPI_OFFSET="integer"
@@ -566,7 +566,7 @@ if test "$ac_cv_sizeof_long_long" != 0 ; then
        MPI_OFFSET_KIND2="!"
     fi
 else
-    echo "defining MPI_Offset as long in C and integer in Fortran" 
+    echo "defining MPI_Offset as long in C and integer in Fortran"
     MPI_OFFSET_TYPE="long"
     DEFINE_MPI_OFFSET="typedef long MPI_Offset;"
     FORTRAN_MPI_OFFSET="integer"
@@ -585,7 +585,7 @@ if test -n "$ac_cv_sizeof_long_long"; then
    fi
 fi
 #
-if test -n "$OFFSET_KIND" -a "A$MPI_OFFSET_KIND1" = "A!" ; then 
+if test -n "$OFFSET_KIND" -a "A$MPI_OFFSET_KIND1" = "A!" ; then
   MPI_OFFSET_KIND1="        INTEGER MPI_OFFSET_KIND"
   MPI_OFFSET_KIND2="        PARAMETER (MPI_OFFSET_KIND=$OFFSET_KIND)"
   MPI_OFFSET_KIND_VAL=$OFFSET_KIND
@@ -650,7 +650,7 @@ else
    MPI_FINFO2="!"
    MPI_FINFO3="!"
    MPI_FINFO4="!"
-fi   
+fi
 #
 if test -n "$mpi_sgi"; then
 dnl   if test -z "$HAVE_MPI_INFO" ; then
@@ -661,8 +661,8 @@ dnl   fi
    PAC_TEST_MPI_HAVE_OFFSET_KIND
 fi
 #
-# check if darray and subarray constructors are defined in the MPI 
-# implementation 
+# check if darray and subarray constructors are defined in the MPI
+# implementation
 if test $WITHIN_KNOWN_MPI_IMPL = no ; then
    PAC_MPI_DARRAY_SUBARRAY
 fi
@@ -680,7 +680,7 @@ if test $FROM_MPICH = yes ; then
    MPI_FARRAY5="!"
    MPI_FARRAY6="!"
    MPI_FARRAY7="!"
-fi   
+fi
 
 # Check to see if weak symbols work correctly
 if test "$enable_weak_symbols" = "yes" ; then
@@ -729,7 +729,7 @@ AC_MSG_CHECKING([whether struct flock compatible with MPI_Offset])
 AC_TRY_COMPILE([#include <fcntl.h>],
 [struct flock l;
  $MPI_OFFSET_TYPE a=1;
- l.l_start = a; 
+ l.l_start = a;
  l.l_len   = a;
 ],pac_cv_struct_flock_and_mpi_offset=yes,pac_cv_struct_flock_and_mpi_offset=no)
 AC_MSG_RESULT($pac_cv_struct_flock_and_mpi_offset)
@@ -740,7 +740,7 @@ if test "$pac_cv_struct_flock_and_mpi_offset" = no ; then
     AC_TRY_COMPILE([#include <fcntl.h>],
 [struct flock l;
  int a=1;
- l.l_start = a; 
+ l.l_start = a;
  l.l_len   = a;
 ],pac_cv_struct_flock_and_int=yes,pac_cv_struct_flock_and_int=no)
     AC_MSG_RESULT($pac_cv_struct_flock_and_int)
@@ -766,15 +766,15 @@ if test -n "$FILE_SYSTEM" ; then
    # if multiple filesystems are passed in, they are '+'-delimited
    # we could set the IFS to tokenize FILE_SYSTEM, but the FILE_SYSTEM env var
    # is used in multiple places in the build system: get rid of the '+'s so we
-   # can use the 'for x in $FILE_SYSTEM ...' idiom 
+   # can use the 'for x in $FILE_SYSTEM ...' idiom
    FILE_SYSTEM=`echo $FILE_SYSTEM|sed -e 's/\+/ /g'`
    for x in $FILE_SYSTEM
    do
       found=no
       # We could also do test -d "ad_$y" to test for known file systems
-      # based on having access to the adio code.  Then adding a file 
+      # based on having access to the adio code.  Then adding a file
       # system would not require changing configure to change known_filesystems
-      for y in $known_filesystems ; do 
+      for y in $known_filesystems ; do
           if test $x = $y ; then
 	      found=yes
 	      eval "file_system_`echo $x`=1"
@@ -905,7 +905,7 @@ fi
 if test -n "$file_system_lustre"; then
     AC_CHECK_HEADERS(lustre/lustre_user.h,
         AC_DEFINE(ROMIO_LUSTRE,1,[Define for ROMIO with LUSTRE]),
-        AC_MSG_ERROR([LUSTRE support requested but cannot find lustre/lustre_user.h header file])                                        
+        AC_MSG_ERROR([LUSTRE support requested but cannot find lustre/lustre_user.h header file])
     )
 fi
 
@@ -922,7 +922,7 @@ if test -n "$file_system_xfs"; then
 #include <unistd.h>
 #include <fcntl.h>
 #include <stdio.h>
-int main(int argc, char **argv) { 
+int main(int argc, char **argv) {
 	struct dioattr st;
 	int fd = open("/tmp/romio_tmp.bin", O_RDWR | O_CREAT, 0644);
 	FILE *f=fopen("confmemalignval","w");
@@ -1006,7 +1006,7 @@ if test -n "$file_system_pvfs2"; then
     AC_CHECK_HEADERS(pvfs2.h,
 	AC_DEFINE(ROMIO_PVFS2,1,[Define for ROMIO with PVFS2])
 	AC_DEFINE(HAVE_PVFS2_SUPER_MAGIC, 1, [Define if PVFS2_SUPER_MAGIC defined.]),
-        AC_MSG_ERROR([PVFS2 support requested but cannot find pvfs2.h header file])                                        
+        AC_MSG_ERROR([PVFS2 support requested but cannot find pvfs2.h header file])
     )
 fi
 
@@ -1016,13 +1016,13 @@ if test -n "$file_system_pvfs2"; then
         AC_LANG_SOURCE([
 #include <stdlib.h>
 #include "pvfs2.h"
-          int main(int argc, char **argv) { 
+          int main(int argc, char **argv) {
 	      PVFS_object_ref ref;
 	      PVFS_sys_attr attr;
-	      PVFS_sys_create(NULL, ref, attr, NULL, NULL, NULL, NULL); 
+	      PVFS_sys_create(NULL, ref, attr, NULL, NULL, NULL, NULL);
 	  return 0; }
        ])],
-       , AC_DEFINE(HAVE_PVFS2_CREATE_WITHOUT_LAYOUT, 1, 
+       , AC_DEFINE(HAVE_PVFS2_CREATE_WITHOUT_LAYOUT, 1,
        		[Define if PVFS_sys_create does not have layout parameter])
        )
 fi
@@ -1094,14 +1094,14 @@ if test "$have_aio_h" = "yes" -o "$have_sys_aio_h" = "yes" -o "x$disable_aio" = 
 
     # Check that aio is available (many systems appear to have aio
     # either installed improperly or turned off).
-    # The test is the following: if not cross compiling, try to run a 
+    # The test is the following: if not cross compiling, try to run a
     # program that includes a *reference* to aio_write but does not call it
     # If the libraries are not set up correctly, then this will fail.
 
     AC_MSG_CHECKING([whether aio routines can be used])
-    # Include aio.h and the aiocb struct (since we'll need these to 
-    # actually use the aio_write interface).  Note that this will 
-    # fail for some pre-POSIX implementations of the aio interface 
+    # Include aio.h and the aiocb struct (since we'll need these to
+    # actually use the aio_write interface).  Note that this will
+    # fail for some pre-POSIX implementations of the aio interface
     # (an old IBM interface needs an fd argument as well)
     AC_TRY_RUN([
 #include <sys/types.h>
@@ -1131,7 +1131,7 @@ if test "$have_aio_h" = "yes" -o "$have_sys_aio_h" = "yes" -o "x$disable_aio" = 
     if test "$aio_runs" != "no" ; then
 	AC_DEFINE(ROMIO_HAVE_WORKING_AIO, 1, Define if AIO calls seem to work)
     fi
-    
+
     # now about that old IBM interface...
     # modern AIO interfaces have the file descriptor in the aiocb structure,
     # and will set ROMIO_HAVE_STRUCT_AIOCB_WITH_AIO_FILDES.  Old IBM
@@ -1164,7 +1164,7 @@ if test "$have_aio_h" = "yes" -o "$have_sys_aio_h" = "yes" -o "x$disable_aio" = 
 	],
 	aio_two_arg_write=yes
 	AC_MSG_RESULT(yes),
-	aio_two_arg_write=no 
+	aio_two_arg_write=no
 	AC_MSG_RESULT(no),
 	aio_two_arg_write=no
 	AC_MSG_RESULT(no: cannot test when cross-compiling)
@@ -1196,7 +1196,7 @@ if test "$have_aio_h" = "yes" -o "$have_sys_aio_h" = "yes" -o "x$disable_aio" = 
 	],
 	aio_two_arg_suspend=yes
 	AC_MSG_RESULT(yes),
-	aio_two_arg_suspend=no 
+	aio_two_arg_suspend=no
 	AC_MSG_RESULT(no),
 	aio_two_arg_suspend=no
 	AC_MSG_RESULT(no: cannot test when cross compiling)
@@ -1298,7 +1298,7 @@ if test "$have_aio_h" = "yes" -o "$have_sys_aio_h" = "yes" -o "x$disable_aio" = 
 	AC_MSG_RESULT(yes)
 	AC_DEFINE(ROMIO_HAVE_STRUCT_AIOCB_WITH_AIO_REQPRIO, 1, [Define if aiocb has aio_reqprio member]),
 	AC_MSG_RESULT(no)
-    )	
+    )
     AC_MSG_CHECKING(for aio_sigevent member of aiocb structure)
     AC_TRY_COMPILE([
 #ifdef HAVE_SIGNAL_H
@@ -1322,7 +1322,7 @@ if test "$have_aio_h" = "yes" -o "$have_sys_aio_h" = "yes" -o "x$disable_aio" = 
 	AC_DEFINE(ROMIO_HAVE_STRUCT_AIOCB_WITH_AIO_SIGEVENT, 1, [Define if aiocb has aio_sigevent member]),
 	AC_MSG_RESULT(no)
     )
-	
+
 fi
 
 # End of aio-related tests
@@ -1352,14 +1352,14 @@ AC_TRY_COMPILE([
     pac_cv_have_statfs=yes,pac_cv_have_statfs=no
 )
 AC_MSG_RESULT($pac_cv_have_statfs)
-# At this point, we could check for whether defining 
+# At this point, we could check for whether defining
 # __SWORD_TYPE as sizet_t or int/long (size of pointer)
 # would help.  FIXME
 
 if test "$pac_cv_have_statfs" = yes ; then
     AC_DEFINE(HAVE_STRUCT_STATFS,1,[Define if struct statfs can be compiled])
 fi
-	  
+
 AC_MSG_CHECKING([for f_fstypename member of statfs structure])
 AC_TRY_COMPILE([
 #include <sys/param.h>
@@ -1446,7 +1446,7 @@ AC_CHECK_TYPE([blksize_t],[],[AC_DEFINE_UNQUOTED([blksize_t],[__blksize_t],[Prov
 	       #endif]] )
 
 #
-# Check for large file support.  Make sure that we can use the off64_t 
+# Check for large file support.  Make sure that we can use the off64_t
 # type (in some cases, it is an array, and the ROMIO code isn't prepared for
 # that).
 #
@@ -1524,7 +1524,7 @@ AC_ARG_VAR([master_top_srcdir],[set by the MPICH configure to indicate the MPICH
 AC_ARG_VAR([master_top_builddir],[set by the MPICH configure to indicate the MPICH build root])
 
 # The master_top_srcdir is the location of the source for the building
-# package.  This is used only as part of the MPICH build, including 
+# package.  This is used only as part of the MPICH build, including
 # the documentation targets mandoc, htmldoc, and latexdoc
 if test -z "$master_top_srcdir" ; then
     if test "$FROM_MPICH" = yes ; then
@@ -1557,7 +1557,7 @@ if test "$FROM_MPICH" = no ; then
         LIBNAME="$top_build_dir/lib/libmpio.a"
     fi
     #
-    if test ! -d $top_build_dir/lib ; then 
+    if test ! -d $top_build_dir/lib ; then
         mkdir $top_build_dir/lib
     fi
 else
@@ -1589,7 +1589,7 @@ AC_SUBST(DOCTEXT)
 if test $NOF77 = 1 ; then
    F77=":"
 else
-   FORTRAN_TEST="fperf fcoll_test fmisc pfcoll_test" 
+   FORTRAN_TEST="fperf fcoll_test fmisc pfcoll_test"
 fi
 #
 if test $WITHIN_KNOWN_MPI_IMPL = no ; then
@@ -1601,7 +1601,7 @@ fi
 #
 if test "$MPI_INCLUDE_DIR" = "." ; then
    ROMIO_INCLUDE="-I../include"
-else 
+else
    ROMIO_INCLUDE="-I../include -I$MPI_INCLUDE_DIR"
 fi
 #
@@ -1634,11 +1634,11 @@ if test $FROM_OMPI = yes ; then
 elif test $FROM_LAM = yes ; then
    # LAM does have the status set bytes functionality
    AC_DEFINE(HAVE_STATUS_SET_BYTES,1,[Define if have MPIR_Status_set_bytes])
-        
+
    # Used in the tests/ subdirectory for after ROMIO is built
    TEST_CC=mpicc
    TEST_F77=mpifort
-   MPIRUN=mpirun 
+   MPIRUN=mpirun
    MPI_LIB=
    ROMIO_INCLUDE=
    USER_CFLAGS=
@@ -1656,7 +1656,7 @@ elif test $FROM_MPICH = yes ; then
    # CC="$CC -I${use_top_srcdir}/src/include -I${top_build_dir}/src/include"
    # TEST_CC="$CC"
    # MPI_LIB="$LIBNAME"
-   # To allow ROMIO to work with the LIBTOOL scripts, we want to 
+   # To allow ROMIO to work with the LIBTOOL scripts, we want to
    # work directly with the CC, not the mpicc, compiler.
    # Note that in the "FROM_MPICH" case, the CPPFLAGS and INCLUDES are already
    # properly set
@@ -1794,7 +1794,7 @@ CFLAGS="$CFLAGS -DHAVE_ROMIOCONF_H"
 
 if test -n "$MPIOF_H_INCLUDED"; then
    F77MPIOINC=""
-else 
+else
    F77MPIOINC="include 'mpiof.h'"
 fi
 
@@ -1928,7 +1928,7 @@ AC_SUBST(FORTRAN_TEST)
 #if test ! -d mpi-io ; then mkdir mpi-io ; fi
 #if test ! -d mpi-io/glue ; then mkdir mpi-io/glue ; fi
 
-# Create makefiles for all of the adio devices.  Only the ones that 
+# Create makefiles for all of the adio devices.  Only the ones that
 # are active will be called by the top level ROMIO make
 AC_OUTPUT_COMMANDS([chmod 755 util/romioinstall test/runtests])
 AC_CONFIG_FILES([

@@ -1,13 +1,13 @@
 // -*- c++ -*-
-// 
+//
 // Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
-//                         reserved. 
+//                         reserved.
 // Copyright (c) 2007-2008 Sun Microsystems, Inc.  All rights reserved.
 // Copyright (c) 2007-2008 Cisco Systems, Inc.  All rights reserved.
 // $COPYRIGHT$
-// 
+//
 // Additional copyrights may follow
-// 
+//
 // $HEADER$
 //
 
@@ -42,7 +42,7 @@ MPI::Datatype::do_create_keyval(MPI_Type_copy_attr_function* c_copy_fn,
     // If both the callbacks are C, then do the simple thing -- no
     // need for all the C++ machinery.
     if (NULL != c_copy_fn && NULL != c_delete_fn) {
-        copy_fn.attr_datatype_copy_fn = 
+        copy_fn.attr_datatype_copy_fn =
             (MPI_Type_internal_copy_attr_function*) c_copy_fn;
         delete_fn.attr_datatype_delete_fn = c_delete_fn;
         ret = ompi_attr_create_keyval(COMM_ATTR, copy_fn, delete_fn,
@@ -60,10 +60,10 @@ MPI::Datatype::do_create_keyval(MPI_Type_copy_attr_function* c_copy_fn,
     // extra_state for the delete callback), we have to use the C++
     // callbacks for both (and therefore translate the C++-special
     // extra_state into the user's original extra_state).
-    cxx_extra_state = (keyval_intercept_data_t*) 
+    cxx_extra_state = (keyval_intercept_data_t*)
         malloc(sizeof(keyval_intercept_data_t));
     if (NULL == cxx_extra_state) {
-        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_NO_MEM, 
+        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_NO_MEM,
                                       "MPI::Datatype::Create_keyval");
     }
     cxx_extra_state->c_copy_fn = c_copy_fn;
@@ -87,7 +87,7 @@ MPI::Datatype::do_create_keyval(MPI_Type_copy_attr_function* c_copy_fn,
     }
     if (2 != count) {
         free(cxx_extra_state);
-        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, 
+        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,
                                       "MPI::Datatype::Create_keyval");
     }
 
@@ -102,7 +102,7 @@ MPI::Datatype::do_create_keyval(MPI_Type_copy_attr_function* c_copy_fn,
     // created).
 
     copy_fn.attr_datatype_copy_fn =
-        (MPI_Type_internal_copy_attr_function*) 
+        (MPI_Type_internal_copy_attr_function*)
         ompi_mpi_cxx_type_copy_attr_intercept;
     delete_fn.attr_datatype_delete_fn =
         ompi_mpi_cxx_type_delete_attr_intercept;

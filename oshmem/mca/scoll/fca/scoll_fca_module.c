@@ -86,7 +86,7 @@ static int _internal_barrier(mca_scoll_fca_module_t *fca_module)
     return rc;
 #else
     long pSync = _SHMEM_SYNC_VALUE;
-    /*we use 4th algorithm for barrier from scoll/basic.  It does not use pSync, 
+    /*we use 4th algorithm for barrier from scoll/basic.  It does not use pSync,
      * so we pass to that function just regular long value in order to meet function defenition requirements*/
     return fca_module->previous_barrier(fca_module->comm,
             &pSync,
@@ -427,7 +427,7 @@ static int mca_scoll_fca_module_enable(mca_scoll_base_module_t *module,
 
     exit_fatal:
     /* it is possible that other pe(s) succesfully enabled fca.
-     * So differnt frameworks will be used for collective ops 
+     * So differnt frameworks will be used for collective ops
      */
     FCA_ERROR("FCA module enable failed - aborting to prevent inconsistent application state");
     oshmem_shmem_abort(-1);
@@ -547,7 +547,7 @@ mca_scoll_fca_comm_query(struct oshmem_group_t *comm, int *priority)
 
     exit_fatal:
     /* it is possible that other pe(s) succesfully initialized fca.
-     * So differnt frameworks will be used for collective ops 
+     * So differnt frameworks will be used for collective ops
      */
     FCA_ERROR("FCA module query failed - aborting");
     oshmem_shmem_abort(-1);

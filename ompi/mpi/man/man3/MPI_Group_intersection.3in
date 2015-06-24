@@ -20,7 +20,7 @@ int MPI_Group_intersection(MPI_Group \fIgroup1\fP, MPI_Group\fI group2\fP,
 .nf
 INCLUDE 'mpif.h'
 MPI_GROUP_INTERSECTION(\fIGROUP1, GROUP2, NEWGROUP, IERROR\fP)
-	INTEGER	\fIGROUP1, GROUP2, NEWGROUP, IERROR\fP 
+	INTEGER	\fIGROUP1, GROUP2, NEWGROUP, IERROR\fP
 
 .fi
 .SH C++ Syntax
@@ -46,7 +46,7 @@ Intersection group (handle).
 .ft R
 .TP 1i
 IERROR
-Fortran only: Error status (integer). 
+Fortran only: Error status (integer).
 
 .SH DESCRIPTION
 .ft R
@@ -61,9 +61,9 @@ intersect -- all elements of the first group that are also in the second
 group, ordered as in first group.
 .TP
   o
-difference -- all elements of the first group that are not in the second group, ordered as in the first group.  
+difference -- all elements of the first group that are not in the second group, ordered as in the first group.
 .LP
-Note that for these operations the order of processes in the output group is determined primarily by order in the first group (if possible) and then, if necessary, by order in the second group. Neither union nor intersection are commutative, but both are associative. 
+Note that for these operations the order of processes in the output group is determined primarily by order in the first group (if possible) and then, if necessary, by order in the second group. Neither union nor intersection are commutative, but both are associative.
 .sp
 The new group can be empty, that is, equal to MPI_GROUP_EMPTY.
 
@@ -71,7 +71,7 @@ The new group can be empty, that is, equal to MPI_GROUP_EMPTY.
 Almost all MPI routines return an error value; C routines as the value of the function and Fortran routines in the last argument. C++ functions do not return errors. If the default error handler is set to MPI::ERRORS_THROW_EXCEPTIONS, then on error the C++ exception mechanism will be used to throw an MPI::Exception object.
 .sp
 Before the error value is returned, the current MPI error handler is
-called. By default, this error handler aborts the MPI job, except for I/O function errors. The error handler may be changed with MPI_Comm_set_errhandler; the predefined error handler MPI_ERRORS_RETURN may be used to cause error values to be returned. Note that MPI does not guarantee that an MPI program can continue past an error.  
+called. By default, this error handler aborts the MPI job, except for I/O function errors. The error handler may be changed with MPI_Comm_set_errhandler; the predefined error handler MPI_ERRORS_RETURN may be used to cause error values to be returned. Note that MPI does not guarantee that an MPI program can continue past an error.
 
 .SH SEE ALSO
 MPI_Group_free

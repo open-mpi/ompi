@@ -5,20 +5,20 @@
  * Copyright (c) 2004-2014 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
- *                         reserved. 
+ *                         reserved.
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2009      University of Houston.  All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -128,7 +128,7 @@ OMPI_DECLSPEC extern opal_list_t ompi_registered_datareps;
 
 /** In ompi_mpi_init: the lists of Fortran 90 mathing datatypes.
  * We need these lists and hashtables in order to satisfy the new
- * requirements introduced in MPI 2-1 Sect. 10.2.5, 
+ * requirements introduced in MPI 2-1 Sect. 10.2.5,
  * MPI_TYPE_CREATE_F90_xxxx, page 295, line 47.
  */
 extern opal_hash_table_t ompi_mpi_f90_integer_hashtable;

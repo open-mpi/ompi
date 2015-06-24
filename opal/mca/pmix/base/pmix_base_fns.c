@@ -1,14 +1,14 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2012-2015 Los Alamos National Security, LLC.  All rights
- *                         reserved. 
+ *                         reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  *
  */
@@ -578,7 +578,7 @@ static inline int pmi_base64_decode_block (const char in[4], unsigned char out[3
 
 
 /* PMI only supports strings. For now, do a simple base64. */
-static char *pmi_encode(const void *val, size_t vallen) 
+static char *pmi_encode(const void *val, size_t vallen)
 {
     char *outdata, *tmp;
     size_t i;
@@ -597,7 +597,7 @@ static char *pmi_encode(const void *val, size_t vallen)
     return outdata;
 }
 
-static uint8_t *pmi_decode (const char *data, size_t *retlen) 
+static uint8_t *pmi_decode (const char *data, size_t *retlen)
 {
     size_t input_len = (strlen (data) - 1) / 4;
     unsigned char *ret;

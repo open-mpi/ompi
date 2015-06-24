@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
- *   Copyright (C) 1997 University of Chicago. 
+/*
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -155,7 +155,7 @@ int MPIOI_File_read(MPI_File fh,
 	}
 
 	ADIO_ReadContig(adio_fh, xbuf, count, datatype, file_ptr_type,
-			off, status, &error_code); 
+			off, status, &error_code);
 
         if ((adio_fh->atomicity) && ADIO_Feature(adio_fh, ADIO_LOCKS)) {
             ADIOI_UNLOCK(adio_fh, off, SEEK_SET, bufsize);

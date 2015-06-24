@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -10,24 +10,24 @@
 void ADIOI_PVFS_SetInfo(ADIO_File fd, MPI_Info users_info, int *error_code)
 {
     char *value;
-    int flag, tmp_val, str_factor=-1, str_unit=-1, start_iodev=-1; 
+    int flag, tmp_val, str_factor=-1, str_unit=-1, start_iodev=-1;
     static char myname[] = "ADIOI_PVFS_SETINFO";
 
     if ((fd->info) == MPI_INFO_NULL) {
-	/* This must be part of the open call. can set striping parameters 
-           if necessary. */ 
+	/* This must be part of the open call. can set striping parameters
+           if necessary. */
 	MPI_Info_create(&(fd->info));
 	ADIOI_Info_set(fd->info, "romio_pvfs_listio_read", "disable");
 	ADIOI_Info_set(fd->info, "romio_pvfs_listio_write", "disable");
 	fd->hints->fs_hints.pvfs.listio_read = ADIOI_HINT_DISABLE;
 	fd->hints->fs_hints.pvfs.listio_write = ADIOI_HINT_DISABLE;
-	
+
 	/* has user specified any pvfs-specific hints (striping params, listio)
            and do they have the same value on all processes? */
 	if (users_info != MPI_INFO_NULL) {
 	    value = (char *) ADIOI_Malloc((MPI_MAX_INFO_VAL+1)*sizeof(char));
 
-	    ADIOI_Info_get(users_info, "striping_factor", MPI_MAX_INFO_VAL, 
+	    ADIOI_Info_get(users_info, "striping_factor", MPI_MAX_INFO_VAL,
 			 value, &flag);
 	    if (flag) {
 		str_factor=atoi(value);
@@ -44,7 +44,7 @@ void ADIOI_PVFS_SetInfo(ADIO_File fd, MPI_Info users_info, int *error_code)
 		else ADIOI_Info_set(fd->info, "striping_factor", value);
 	    }
 
-	    ADIOI_Info_get(users_info, "striping_unit", MPI_MAX_INFO_VAL, 
+	    ADIOI_Info_get(users_info, "striping_unit", MPI_MAX_INFO_VAL,
 			 value, &flag);
 	    if (flag) {
 		str_unit=atoi(value);
@@ -61,7 +61,7 @@ void ADIOI_PVFS_SetInfo(ADIO_File fd, MPI_Info users_info, int *error_code)
 		else ADIOI_Info_set(fd->info, "striping_unit", value);
 	    }
 
-	    ADIOI_Info_get(users_info, "start_iodevice", MPI_MAX_INFO_VAL, 
+	    ADIOI_Info_get(users_info, "start_iodevice", MPI_MAX_INFO_VAL,
 			 value, &flag);
 	    if (flag) {
 		start_iodev=atoi(value);
@@ -82,16 +82,16 @@ void ADIOI_PVFS_SetInfo(ADIO_File fd, MPI_Info users_info, int *error_code)
 			 MPI_MAX_INFO_VAL,
 			 value, &flag);
 	    if (flag) {
-		if ( !strcmp(value, "enable") || !strcmp(value, "ENABLE")) 
+		if ( !strcmp(value, "enable") || !strcmp(value, "ENABLE"))
 		{
 		    ADIOI_Info_set(fd->info, "romio_pvfs_listio_read", value);
 		    fd->hints->fs_hints.pvfs.listio_read = ADIOI_HINT_ENABLE;
-		} else if ( !strcmp(value, "disable") || !strcmp(value, "DISABLE")) 
+		} else if ( !strcmp(value, "disable") || !strcmp(value, "DISABLE"))
 		{
 		    ADIOI_Info_set(fd->info , "romio_pvfs_listio_read", value);
 		    fd->hints->fs_hints.pvfs.listio_read = ADIOI_HINT_DISABLE;
 		}
-		else if ( !strcmp(value, "automatic") || !strcmp(value, "AUTOMATIC")) 
+		else if ( !strcmp(value, "automatic") || !strcmp(value, "AUTOMATIC"))
 		{
 		    ADIOI_Info_set(fd->info, "romio_pvfs_listio_read", value);
 		    fd->hints->fs_hints.pvfs.listio_read = ADIOI_HINT_AUTO;
@@ -110,16 +110,16 @@ void ADIOI_PVFS_SetInfo(ADIO_File fd, MPI_Info users_info, int *error_code)
 	    ADIOI_Info_get(users_info, "romio_pvfs_listio_write", MPI_MAX_INFO_VAL,
 			 value, &flag);
 	    if (flag) {
-		if ( !strcmp(value, "enable") || !strcmp(value, "ENABLE")) 
+		if ( !strcmp(value, "enable") || !strcmp(value, "ENABLE"))
 		{
 		    ADIOI_Info_set(fd->info, "romio_pvfs_listio_write", value);
 		    fd->hints->fs_hints.pvfs.listio_write = ADIOI_HINT_ENABLE;
-		} else if ( !strcmp(value, "disable") || !strcmp(value, "DISABLE")) 
+		} else if ( !strcmp(value, "disable") || !strcmp(value, "DISABLE"))
 		{
 		    ADIOI_Info_set(fd->info, "romio_pvfs_listio_write", value);
 		    fd->hints->fs_hints.pvfs.listio_write = ADIOI_HINT_DISABLE;
 		}
-		else if ( !strcmp(value, "automatic") || !strcmp(value, "AUTOMATIC")) 
+		else if ( !strcmp(value, "automatic") || !strcmp(value, "AUTOMATIC"))
 		{
 		    ADIOI_Info_set(fd->info, "romio_pvfs_listio_write", value);
 		    fd->hints->fs_hints.pvfs.listio_write = ADIOI_HINT_AUTO;
@@ -134,10 +134,10 @@ void ADIOI_PVFS_SetInfo(ADIO_File fd, MPI_Info users_info, int *error_code)
 		    return;
 		    /* --END ERROR HANDLING-- */
 		}
-	    }		    
+	    }
 	    ADIOI_Free(value);
 	}
-    }	
+    }
 
     /* set the values for collective I/O and data sieving parameters */
     ADIOI_GEN_SetInfo(fd, users_info, error_code);

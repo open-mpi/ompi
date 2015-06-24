@@ -2,9 +2,9 @@
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -17,7 +17,7 @@
 #include "opal/runtime/opal_cr.h"
 #include "opal/util/output.h"
 
-#include "oshmem/constants.h" 
+#include "oshmem/constants.h"
 #include "oshmem/include/shmem.h"
 #include "oshmem/runtime/params.h"
 #include "oshmem/runtime/runtime.h"

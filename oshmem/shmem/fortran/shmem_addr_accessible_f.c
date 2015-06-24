@@ -3,9 +3,9 @@
  *                         All rights reserved.
  * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -26,7 +26,7 @@ SHMEM_GENERATE_FORTRAN_BINDINGS_FUNCTION (MPI_Fint,
         shmem_addr_accessible_,
         shmem_addr_accessible__,
         shmem_addr_accessible_f,
-        (FORTRAN_POINTER_T addr, MPI_Fint *pe), 
+        (FORTRAN_POINTER_T addr, MPI_Fint *pe),
         (addr,pe) )
 
 MPI_Fint shmem_addr_accessible_f(FORTRAN_POINTER_T addr, MPI_Fint *pe)

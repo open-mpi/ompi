@@ -1,5 +1,5 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
  *   Copyright (C) 2007 UChicago/Argonne LLC
  *   See COPYRIGHT notice in top-level directory.
@@ -12,7 +12,7 @@
  * as NFS where a create from one client might not be immediately
  * visible on another */
 
-void ADIOI_FAILSAFE_OpenColl(ADIO_File fd, int rank, 
+void ADIOI_FAILSAFE_OpenColl(ADIO_File fd, int rank,
 	int access_mode, int *error_code)
 {
     int orig_amode_excl, orig_amode_wronly;
@@ -22,7 +22,7 @@ void ADIOI_FAILSAFE_OpenColl(ADIO_File fd, int rank,
 	/* the open should fail if the file exists. Only *1* process
 	 * should check this. Otherwise, if all processes try to check
 	 * and the file does not exist, one process will create the file
-	 * and others who reach later will return error. */ 
+	 * and others who reach later will return error. */
 	if(rank == fd->hints->ranklist[0]) {
 	    fd->access_mode = access_mode;
 	    (*(fd->fns->ADIOI_xxx_Open))(fd, error_code);
@@ -52,7 +52,7 @@ void ADIOI_FAILSAFE_OpenColl(ADIO_File fd, int rank,
 	return;
     }
 
-/* For writing with data sieving, a read-modify-write is needed. If 
+/* For writing with data sieving, a read-modify-write is needed. If
    the file is opened for write_only, the read will fail. Therefore,
    if write_only, open the file as read_write, but record it as write_only
    in fd, so that get_amode returns the right answer. */
@@ -66,10 +66,10 @@ void ADIOI_FAILSAFE_OpenColl(ADIO_File fd, int rank,
 
     (*(fd->fns->ADIOI_xxx_Open))(fd, error_code);
 
-    /* if error, may be it was due to the change in amode above. 
-       therefore, reopen with access mode provided by the user.*/ 
-    fd->access_mode = orig_amode_wronly;  
-    if (*error_code != MPI_SUCCESS) 
+    /* if error, may be it was due to the change in amode above.
+       therefore, reopen with access mode provided by the user.*/
+    fd->access_mode = orig_amode_wronly;
+    if (*error_code != MPI_SUCCESS)
         (*(fd->fns->ADIOI_xxx_Open))(fd, error_code);
 
     if(*error_code != MPI_SUCCESS) return;
@@ -83,6 +83,6 @@ void ADIOI_FAILSAFE_OpenColl(ADIO_File fd, int rank,
 
 
 
-/* 
- * vim: ts=8 sts=4 sw=4 noexpandtab 
+/*
+ * vim: ts=8 sts=4 sw=4 noexpandtab
  */

@@ -5,21 +5,21 @@
  * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2013 Los Alamos National Security, LLC. 
+ * Copyright (c) 2006-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2013-2015 Intel, Inc.  All rights reserved. 
+ * Copyright (c) 2013-2015 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -85,7 +85,7 @@ int pmix_server_send_connect_ack(pmix_server_peer_t* peer)
     size_t sdsize;
     char *cred;
     size_t credsize;
-    
+
     opal_output_verbose(2, pmix_server_output,
                         "%s SEND CONNECT ACK", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
 
@@ -146,7 +146,7 @@ void pmix_server_peer_event_init(pmix_server_peer_t* peer)
             opal_event_del(&peer->recv_event);
             peer->recv_ev_active = false;
         }
-        
+
         opal_event_set(orte_event_base,
                        &peer->send_event,
                        peer->sd,
@@ -337,7 +337,7 @@ int pmix_server_recv_connect_ack(pmix_server_peer_t* pr, int sd,
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
     memset(msg, 0, hdr.nbytes);
-    
+
     if (!usock_peer_recv_blocking(peer, sd, msg, hdr.nbytes)) {
         /* unable to complete the recv */
         opal_output_verbose(2, pmix_server_output,
@@ -468,8 +468,8 @@ static bool usock_peer_recv_blocking(pmix_server_peer_t* peer,
 
         /* socket is non-blocking so handle errors */
         if (retval < 0) {
-            if (opal_socket_errno != EINTR && 
-                opal_socket_errno != EAGAIN && 
+            if (opal_socket_errno != EINTR &&
+                opal_socket_errno != EAGAIN &&
                 opal_socket_errno != EWOULDBLOCK) {
                 if (peer->state == PMIX_SERVER_CONNECT_ACK) {
                     /* If we overflow the listen backlog, it's
@@ -493,7 +493,7 @@ static bool usock_peer_recv_blocking(pmix_server_peer_t* peer,
                                         (NULL == peer) ? "UNKNOWN" : ORTE_NAME_PRINT(&(peer->name)));
                     return false;
                 } else {
-                    opal_output(0, 
+                    opal_output(0,
                                 "%s usock_peer_recv_blocking: "
                                 "recv() failed for %s: %s (%d)\n",
                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),

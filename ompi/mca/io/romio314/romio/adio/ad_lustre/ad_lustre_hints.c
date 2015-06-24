@@ -154,7 +154,7 @@ void ADIOI_LUSTRE_SetInfo(ADIO_File fd, MPI_Info users_info, int *error_code)
     if (users_info != MPI_INFO_NULL) {
         /* CO: IO Clients/OST,
          * to keep the load balancing between clients and OSTs */
-	ADIOI_Info_check_and_install_int(fd, users_info, "romio_lustre_co_ratio", 
+	ADIOI_Info_check_and_install_int(fd, users_info, "romio_lustre_co_ratio",
 		&(fd->hints->fs_hints.lustre.co_ratio), myname, error_code );
 
         /* coll_threshold:

@@ -4,9 +4,9 @@
  *                         reserved.
  *
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -20,7 +20,7 @@
 /*
  * Public string for version number
  */
-const char *orte_state_staged_orted_component_version_string = 
+const char *orte_state_staged_orted_component_version_string =
     "ORTE STATE staged_orted MCA component version " ORTE_VERSION;
 
 /*
@@ -36,7 +36,7 @@ static int state_staged_orted_component_query(mca_base_module_t **module, int *p
  */
 orte_state_base_component_t mca_state_staged_orted_component =
 {
-    /* Handle the general mca_component_t struct containing 
+    /* Handle the general mca_component_t struct containing
      *  meta information about the component
      */
     .base_version = {
@@ -57,7 +57,7 @@ orte_state_base_component_t mca_state_staged_orted_component =
     },
 };
 
-static int state_staged_orted_open(void) 
+static int state_staged_orted_open(void)
 {
     return ORTE_SUCCESS;
 }
@@ -73,9 +73,9 @@ static int state_staged_orted_component_query(mca_base_module_t **module, int *p
         /* set our priority high */
         *priority = 1000;
         *module = (mca_base_module_t *)&orte_state_staged_orted_module;
-        return ORTE_SUCCESS;        
+        return ORTE_SUCCESS;
     }
-   
+
     *priority = -1;
     *module = NULL;
     return ORTE_ERROR;

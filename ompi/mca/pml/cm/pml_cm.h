@@ -36,11 +36,11 @@ BEGIN_C_DECLS
 
 struct mca_mtl_request_t;
 
-/* Array of send completion callback - one per send type  
- * These are called internally by the library when the send 
- * is completed from its perspective. 
+/* Array of send completion callback - one per send type
+ * These are called internally by the library when the send
+ * is completed from its perspective.
  */
-extern void (*send_completion_callbacks[])    
+extern void (*send_completion_callbacks[])
     (struct mca_mtl_request_t *mtl_request);
 
 struct ompi_pml_cm_t {
@@ -77,13 +77,13 @@ mca_pml_cm_irecv_init(void *addr,
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
     ompi_proc_t* ompi_proc;
 #endif
-    
+
     MCA_PML_CM_HVY_RECV_REQUEST_ALLOC(recvreq);
     if( OPAL_UNLIKELY(NULL == recvreq) ) return OMPI_ERR_OUT_OF_RESOURCE;
-    
-    MCA_PML_CM_HVY_RECV_REQUEST_INIT(recvreq, ompi_proc, comm, tag, src, 
-                                     datatype, addr, count, true); 
-    
+
+    MCA_PML_CM_HVY_RECV_REQUEST_INIT(recvreq, ompi_proc, comm, tag, src,
+                                     datatype, addr, count, true);
+
     *request = (ompi_request_t*) recvreq;
 
     return OMPI_SUCCESS;
@@ -106,7 +106,7 @@ mca_pml_cm_irecv(void *addr,
 
     MCA_PML_CM_THIN_RECV_REQUEST_ALLOC(recvreq);
     if( OPAL_UNLIKELY(NULL == recvreq) ) return OMPI_ERR_OUT_OF_RESOURCE;
-    
+
     MCA_PML_CM_THIN_RECV_REQUEST_INIT(recvreq,
                                       ompi_proc,
                                       comm,
@@ -114,7 +114,7 @@ mca_pml_cm_irecv(void *addr,
                                       datatype,
                                       addr,
                                       count);
-    
+
     MCA_PML_CM_THIN_RECV_REQUEST_START(recvreq, comm, tag, src, ret);
 
     if( OPAL_LIKELY(OMPI_SUCCESS == ret) ) *request = (ompi_request_t*) recvreq;
@@ -122,7 +122,7 @@ mca_pml_cm_irecv(void *addr,
     return ret;
 }
 
-__opal_attribute_always_inline__ static inline void 
+__opal_attribute_always_inline__ static inline void
 mca_pml_cm_recv_fast_completion(struct mca_mtl_request_t *mtl_request)
 {
     // Do nothing!
@@ -220,13 +220,13 @@ mca_pml_cm_isend_init(void* buf,
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
     ompi_proc_t* ompi_proc;
 #endif
-    
+
     MCA_PML_CM_HVY_SEND_REQUEST_ALLOC(sendreq, comm, dst, ompi_proc);
     if (OPAL_UNLIKELY(NULL == sendreq)) return OMPI_ERR_OUT_OF_RESOURCE;
-    
-    MCA_PML_CM_HVY_SEND_REQUEST_INIT(sendreq, ompi_proc, comm, tag, dst, 
+
+    MCA_PML_CM_HVY_SEND_REQUEST_INIT(sendreq, ompi_proc, comm, tag, dst,
                                      datatype, sendmode, true, false, buf, count);
-    
+
     *request = (ompi_request_t*) sendreq;
 
     return OMPI_SUCCESS;
@@ -243,63 +243,63 @@ mca_pml_cm_isend(void* buf,
                    ompi_request_t** request)
 {
     int ret;
-  
-    if(sendmode == MCA_PML_BASE_SEND_BUFFERED ) { 
+
+    if(sendmode == MCA_PML_BASE_SEND_BUFFERED ) {
         mca_pml_cm_hvy_send_request_t* sendreq;
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
         ompi_proc_t* ompi_proc = NULL;
 #endif
-        
+
         MCA_PML_CM_HVY_SEND_REQUEST_ALLOC(sendreq, comm, dst, ompi_proc);
         if (OPAL_UNLIKELY(NULL == sendreq)) return OMPI_ERR_OUT_OF_RESOURCE;
-        
-        MCA_PML_CM_HVY_SEND_REQUEST_INIT(sendreq, 
-                                         ompi_proc, 
-                                         comm, 
-                                         tag, 
-                                         dst, 
+
+        MCA_PML_CM_HVY_SEND_REQUEST_INIT(sendreq,
+                                         ompi_proc,
+                                         comm,
+                                         tag,
+                                         dst,
                                          datatype,
                                          sendmode,
                                          false,
                                          false,
-                                         buf, 
+                                         buf,
                                          count);
-        
+
         MCA_PML_CM_HVY_SEND_REQUEST_START( sendreq, ret);
-        
+
         if (OPAL_LIKELY(OMPI_SUCCESS == ret)) *request = (ompi_request_t*) sendreq;
 
-    } else { 
+    } else {
         mca_pml_cm_thin_send_request_t* sendreq;
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
         ompi_proc_t* ompi_proc = NULL;
 #endif
         MCA_PML_CM_THIN_SEND_REQUEST_ALLOC(sendreq, comm, dst, ompi_proc);
         if (OPAL_UNLIKELY(NULL == sendreq)) return OMPI_ERR_OUT_OF_RESOURCE;
-        
-        MCA_PML_CM_THIN_SEND_REQUEST_INIT(sendreq, 
-                                          ompi_proc, 
-                                          comm, 
-                                          tag, 
-                                          dst, 
+
+        MCA_PML_CM_THIN_SEND_REQUEST_INIT(sendreq,
+                                          ompi_proc,
+                                          comm,
+                                          tag,
+                                          dst,
                                           datatype,
                                           sendmode,
-                                          buf, 
+                                          buf,
                                           count);
-        
+
         MCA_PML_CM_THIN_SEND_REQUEST_START(
-                                           sendreq, 
+                                           sendreq,
                                            comm,
                                            tag,
                                            dst,
                                            sendmode,
-                                           false, 
+                                           false,
                                            ret);
-        
+
         if (OPAL_LIKELY(OMPI_SUCCESS == ret)) *request = (ompi_request_t*) sendreq;
-        
+
     }
-       
+
     return ret;
 }
 
@@ -315,17 +315,17 @@ mca_pml_cm_send(void *buf,
     int ret = OMPI_ERROR;
     ompi_proc_t * ompi_proc;
 
-    if(sendmode == MCA_PML_BASE_SEND_BUFFERED) { 
+    if(sendmode == MCA_PML_BASE_SEND_BUFFERED) {
         mca_pml_cm_hvy_send_request_t *sendreq;
 
         MCA_PML_CM_HVY_SEND_REQUEST_ALLOC(sendreq, comm, dst, ompi_proc);
         if (OPAL_UNLIKELY(NULL == sendreq)) return OMPI_ERR_OUT_OF_RESOURCE;
-        
+
         MCA_PML_CM_HVY_SEND_REQUEST_INIT(sendreq,
                                          ompi_proc,
                                          comm,
                                          tag,
-                                         dst, 
+                                         dst,
                                          datatype,
                                          sendmode,
                                          false,
@@ -337,18 +337,18 @@ mca_pml_cm_send(void *buf,
             MCA_PML_CM_HVY_SEND_REQUEST_RETURN(sendreq);
             return ret;
         }
-        
+
         ompi_request_free( (ompi_request_t**)&sendreq );
-    } else { 
+    } else {
         opal_convertor_t convertor;
 	OBJ_CONSTRUCT(&convertor, opal_convertor_t);
 #if !(OPAL_ENABLE_HETEROGENEOUS_SUPPORT)
 	if (opal_datatype_is_contiguous_memory_layout(&datatype->super, count)) {
-		
+
 		convertor.remoteArch = ompi_mpi_local_convertor->remoteArch;
 		convertor.flags      = ompi_mpi_local_convertor->flags;
 		convertor.master     = ompi_mpi_local_convertor->master;
-		
+
 		convertor.local_size = count * datatype->super.size;
 		convertor.pBaseBuf   = (unsigned char*)buf + datatype->super.true_lb;
 		convertor.count      = count;
@@ -362,16 +362,16 @@ mca_pml_cm_send(void *buf,
 			&datatype->super, count, buf, 0,
 			&convertor);
 	}
-    
-        ret = OMPI_MTL_CALL(send(ompi_mtl,                             
-                                 comm, 
-                                 dst, 
-                                 tag,  
+
+        ret = OMPI_MTL_CALL(send(ompi_mtl,
+                                 comm,
+                                 dst,
+                                 tag,
                                  &convertor,
                                  sendmode));
 	OBJ_DESTRUCT(&convertor);
     }
-    
+
     return ret;
 }
 
@@ -456,7 +456,7 @@ mca_pml_cm_imrecv(void *buf,
 
     MCA_PML_CM_THIN_RECV_REQUEST_ALLOC(recvreq);
     if( OPAL_UNLIKELY(NULL == recvreq) ) return OMPI_ERR_OUT_OF_RESOURCE;
-    
+
     MCA_PML_CM_THIN_RECV_REQUEST_INIT(recvreq,
                                       ompi_proc,
                                       comm,
@@ -464,7 +464,7 @@ mca_pml_cm_imrecv(void *buf,
                                       datatype,
                                       buf,
                                       count);
-    
+
     MCA_PML_CM_THIN_RECV_REQUEST_MATCHED_START(recvreq, message, ret);
 
     if( OPAL_LIKELY(OMPI_SUCCESS == ret) ) *request = (ompi_request_t*) recvreq;
@@ -491,13 +491,13 @@ mca_pml_cm_mrecv(void *buf,
 
     MCA_PML_CM_THIN_RECV_REQUEST_INIT(recvreq,
                                       ompi_proc,
-                                      comm, 
+                                      comm,
                                       (*message)->peer,
                                       datatype,
                                       buf,
                                       count);
-    
-    MCA_PML_CM_THIN_RECV_REQUEST_MATCHED_START(recvreq, 
+
+    MCA_PML_CM_THIN_RECV_REQUEST_MATCHED_START(recvreq,
                                                message, ret);
     if( OPAL_UNLIKELY(OMPI_SUCCESS != ret) ) {
         MCA_PML_CM_THIN_RECV_REQUEST_RETURN(recvreq);

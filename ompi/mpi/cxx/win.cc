@@ -1,13 +1,13 @@
 // -*- c++ -*-
-// 
+//
 // Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
-//                         reserved. 
+//                         reserved.
 // Copyright (c) 2007-2008 Sun Microsystems, Inc.  All rights reserved.
 // Copyright (c) 2007-2009 Cisco Systems, Inc.  All rights reserved.
 // $COPYRIGHT$
-// 
+//
 // Additional copyrights may follow
-// 
+//
 // $HEADER$
 //
 
@@ -20,22 +20,22 @@
 #include "ompi/attribute/attribute.h"
 #include "ompi/errhandler/errhandler.h"
 
-void 
+void
 MPI::Win::Free()
 {
     (void) MPI_Win_free(&mpi_win);
 }
- 
+
 
 // This function needs some internal OMPI types, so it's not inlined
 MPI::Errhandler
 MPI::Win::Create_errhandler(MPI::Win::Errhandler_function* function)
 {
-    MPI_Errhandler c_errhandler = 
+    MPI_Errhandler c_errhandler =
         ompi_errhandler_create(OMPI_ERRHANDLER_TYPE_WIN,
                                (ompi_errhandler_generic_handler_fn_t*) function,
                                OMPI_ERRHANDLER_LANG_CXX);
-    c_errhandler->eh_cxx_dispatch_fn = 
+    c_errhandler->eh_cxx_dispatch_fn =
         (ompi_errhandler_cxx_dispatch_fn_t*)
         ompi_mpi_cxx_win_errhandler_invoke;
     return c_errhandler;
@@ -57,7 +57,7 @@ MPI::Win::do_create_keyval(MPI_Win_copy_attr_function* c_copy_fn,
     // If both the callbacks are C, then do the simple thing -- no
     // need for all the C++ machinery.
     if (NULL != c_copy_fn && NULL != c_delete_fn) {
-        copy_fn.attr_win_copy_fn = 
+        copy_fn.attr_win_copy_fn =
             (MPI_Win_internal_copy_attr_function*) c_copy_fn;
         delete_fn.attr_win_delete_fn = c_delete_fn;
         ret = ompi_attr_create_keyval(COMM_ATTR, copy_fn, delete_fn,
@@ -75,10 +75,10 @@ MPI::Win::do_create_keyval(MPI_Win_copy_attr_function* c_copy_fn,
     // extra_state for the delete callback), we have to use the C++
     // callbacks for both (and therefore translate the C++-special
     // extra_state into the user's original extra_state).
-    cxx_extra_state = (keyval_intercept_data_t*) 
+    cxx_extra_state = (keyval_intercept_data_t*)
         malloc(sizeof(keyval_intercept_data_t));
     if (NULL == cxx_extra_state) {
-        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_NO_MEM, 
+        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_NO_MEM,
                                       "MPI::Win::Create_keyval");
     }
     cxx_extra_state->c_copy_fn = c_copy_fn;
@@ -102,7 +102,7 @@ MPI::Win::do_create_keyval(MPI_Win_copy_attr_function* c_copy_fn,
     }
     if (2 != count) {
         free(cxx_extra_state);
-        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, 
+        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,
                                       "MPI::Win::Create_keyval");
     }
 
@@ -117,7 +117,7 @@ MPI::Win::do_create_keyval(MPI_Win_copy_attr_function* c_copy_fn,
     // created).
 
     copy_fn.attr_win_copy_fn =
-        (MPI_Win_internal_copy_attr_function*) 
+        (MPI_Win_internal_copy_attr_function*)
         ompi_mpi_cxx_win_copy_attr_intercept;
     delete_fn.attr_win_delete_fn =
         ompi_mpi_cxx_win_delete_attr_intercept;

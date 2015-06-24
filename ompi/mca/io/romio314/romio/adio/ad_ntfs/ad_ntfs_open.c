@@ -1,8 +1,8 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -57,12 +57,12 @@ void ADIOI_NTFS_Open(ADIO_File fd, int *error_code)
 	attrib = attrib | FILE_FLAG_RANDOM_ACCESS;
     }
 
-    fd->fd_sys = CreateFile(fd->filename, 
+    fd->fd_sys = CreateFile(fd->filename,
 	amode,
-	FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, 
-	NULL, 
-	cmode, 
-	attrib, 
+	FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+	NULL,
+	cmode,
+	attrib,
 	NULL);
     fd->fd_direct = -1;
 

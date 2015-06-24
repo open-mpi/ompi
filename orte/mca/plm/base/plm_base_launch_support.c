@@ -82,7 +82,7 @@
 void orte_plm_base_daemons_reported(int fd, short args, void *cbdata)
 {
     orte_state_caddy_t *caddy = (orte_state_caddy_t*)cbdata;
-    
+
 #if OPAL_HAVE_HWLOC
     {
         hwloc_topology_t t;
@@ -295,7 +295,7 @@ void orte_plm_base_setup_job(int fd, short args, void *cbdata)
          */
         opal_pointer_array_set_item(orte_job_data, ORTE_LOCAL_JOBID(caddy->jdata->jobid), caddy->jdata);
     }
-    
+
     /* if job recovery is not enabled, set it to default */
     if (!ORTE_FLAG_TEST(caddy->jdata, ORTE_JOB_FLAG_RECOVERABLE) &&
         orte_enable_recovery) {
@@ -390,7 +390,7 @@ void orte_plm_base_complete_setup(int fd, short args, void *cbdata)
 
     /* ensure our routing plan is up-to-date */
     orte_routed.update_routing_plan();
-    
+
     /* If this job is being started by me, then there is nothing
      * further we need to do as any user directives (e.g., to tie
      * off IO to /dev/null) will have been included in the launch
@@ -405,7 +405,7 @@ void orte_plm_base_complete_setup(int fd, short args, void *cbdata)
         /* the tool will PUSH its stdin, so nothing we need to do here
          * about stdin */
     }
-    
+
 #if OPAL_ENABLE_FT_CR == 1
     /*
      * Notify the Global SnapC component regarding new job (even if it was restarted)
@@ -539,7 +539,7 @@ void orte_plm_base_launch_apps(int fd, short args, void *cbdata)
         OBJ_RELEASE(caddy);
         return;
     }
-    
+
     /* goes to all daemons */
     sig = OBJ_NEW(orte_grpcomm_signature_t);
     sig->signature = (orte_process_name_t*)malloc(sizeof(orte_process_name_t));
@@ -620,11 +620,11 @@ void orte_plm_base_post_launch(int fd, short args, void *cbdata)
                          "%s plm:base:launch wiring up iof for job %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_JOBID_PRINT(jdata->jobid)));
-    
+
     /* push stdin - the IOF will know what to do with the specified target */
     name.jobid = jdata->jobid;
     name.vpid = jdata->stdin_target;
-    
+
     if (ORTE_SUCCESS != (rc = orte_iof.push(&name, ORTE_IOF_STDIN, 0))) {
         ORTE_ERROR_LOG(rc);
         ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
@@ -726,7 +726,7 @@ void orte_plm_base_daemon_callback(int status, orte_process_name_t* sender,
     orte_job_t *jdata;
     orte_process_name_t dname;
     opal_buffer_t *relay;
-    
+
     /* get the daemon job, if necessary */
     if (NULL == jdatorted) {
         jdatorted = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid);
@@ -742,7 +742,7 @@ void orte_plm_base_daemon_callback(int status, orte_process_name_t* sender,
             orted_failed_launch = true;
             goto CLEANUP;
         }
-        
+
         /* set the contact info into the hash table */
         orte_rml.set_contact_info(rml_uri);
 
@@ -750,7 +750,7 @@ void orte_plm_base_daemon_callback(int status, orte_process_name_t* sender,
                              "%s plm:base:orted_report_launch from daemon %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_NAME_PRINT(&dname)));
-        
+
         /* update state and record for this daemon contact info */
         if (NULL == (daemon = (orte_proc_t*)opal_pointer_array_get_item(jdatorted->procs, dname.vpid))) {
             ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
@@ -778,12 +778,12 @@ void orte_plm_base_daemon_callback(int status, orte_process_name_t* sender,
                 nodename = ptr;
             }
         }
-        
+
         OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
                              "%s plm:base:orted_report_launch from daemon %s on node %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_NAME_PRINT(&daemon->name), nodename));
-        
+
         /* look this node up, if necessary */
         if (!orte_plm_globals.daemon_nodes_assigned_at_launch) {
             OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
@@ -837,7 +837,7 @@ void orte_plm_base_daemon_callback(int status, orte_process_name_t* sender,
             orted_failed_launch = true;
             goto CLEANUP;
         }
-        
+
         /* mark the daemon as launched */
         ORTE_FLAG_SET(node, ORTE_NODE_FLAG_DAEMON_LAUNCHED);
 
@@ -957,7 +957,7 @@ void orte_plm_base_daemon_callback(int status, orte_process_name_t* sender,
                     }
                 }
             }
-        
+
             /* unpack any coprocessors */
             idx=1;
             if (OPAL_SUCCESS != (rc = opal_dss.unpack(buffer, &coprocessors, &idx, OPAL_STRING))) {
@@ -1016,7 +1016,7 @@ void orte_plm_base_daemon_callback(int status, orte_process_name_t* sender,
                              orted_failed_launch ? "failed" : "completed",
                              ORTE_NAME_PRINT(&dname),
                              (NULL == daemon) ? "UNKNOWN" : daemon->rml_uri));
-        
+
         if (orted_failed_launch) {
             ORTE_ACTIVATE_JOB_STATE(jdatorted, ORTE_JOB_STATE_FAILED_TO_START);
             return;
@@ -1119,7 +1119,7 @@ int orte_plm_base_setup_orted_cmd(int *argc, char ***argv)
 {
     int i, loc;
     char **tmpv;
-    
+
     /* set default location to be 0, indicating that
      * only a single word is in the cmd
      */
@@ -1133,7 +1133,7 @@ int orte_plm_base_setup_orted_cmd(int *argc, char ***argv)
         opal_argv_append(argc, argv, tmpv[i]);
     }
     opal_argv_free(tmpv);
-    
+
     return loc;
 }
 
@@ -1196,7 +1196,7 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
         opal_argv_append(argc, argv, "1");
     }
 #endif
-    
+
     if (orte_map_reduce) {
         opal_argv_append(argc, argv, "--mapreduce");
     }
@@ -1219,14 +1219,14 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
         opal_argv_append(argc, argv, param);
         free(param);
     }
-    
+
     /* tell the orted what ESS component to use */
     if (NULL != ess) {
         opal_argv_append(argc, argv, "-"OPAL_MCA_CMD_LINE_ID);
         opal_argv_append(argc, argv, "ess");
         opal_argv_append(argc, argv, ess);
     }
-    
+
     /* pass the daemon jobid */
     opal_argv_append(argc, argv, "-"OPAL_MCA_CMD_LINE_ID);
     opal_argv_append(argc, argv, "orte_ess_jobid");
@@ -1236,7 +1236,7 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
     }
     opal_argv_append(argc, argv, param);
     free(param);
-    
+
     /* setup to pass the vpid */
     if (NULL != proc_vpid_index) {
         opal_argv_append(argc, argv, "-"OPAL_MCA_CMD_LINE_ID);
@@ -1244,7 +1244,7 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
         *proc_vpid_index = *argc;
         opal_argv_append(argc, argv, "<template>");
     }
-    
+
     /* pass the total number of daemons that will be in the system */
     if (ORTE_PROC_IS_HNP) {
         jdata = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid);
@@ -1257,7 +1257,7 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
     asprintf(&param, "%lu", num_procs);
     opal_argv_append(argc, argv, param);
     free(param);
-    
+
     /* pass the uri of the hnp */
     if (ORTE_PROC_IS_HNP) {
         rml_uri = orte_rml.get_contact_info();
@@ -1267,7 +1267,7 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
         opal_argv_append(argc, argv, "orte_parent_uri");
         opal_argv_append(argc, argv, rml_uri);
         free(rml_uri);
-    
+
         rml_uri = strdup(orte_process_info.my_hnp_uri);
     }
     opal_argv_append(argc, argv, "-"OPAL_MCA_CMD_LINE_ID);
@@ -1287,7 +1287,7 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
         opal_argv_append(argc, argv, param);
         free(param);
     }
-    
+
     /* warn the daemons if we are using a tree spawn pattern so they
      * know they shouldn't do a rollup on their callback
      */
@@ -1301,15 +1301,15 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
         opal_argv_append(argc, argv, "orte_output_filename");
         opal_argv_append(argc, argv, orte_output_filename);
     }
-    
+
     /* if --xterm was specified, pass that along */
     if (NULL != orte_xterm) {
         opal_argv_append(argc, argv, "-"OPAL_MCA_CMD_LINE_ID);
         opal_argv_append(argc, argv, "orte_xterm");
         opal_argv_append(argc, argv, orte_xterm);
     }
-    
-    /* 
+
+    /*
      * Pass along the Aggregate MCA Parameter Sets
      */
     /* Add the 'prefix' param */
@@ -1367,7 +1367,7 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
             opal_argv_append(argc, argv, "mca_base_param_file_path");
             opal_argv_append(argc, argv, tmp_value[0]);
         }
-    
+
         /* Add the 'path' param */
         opal_argv_append(argc, argv, "-"OPAL_MCA_CMD_LINE_ID);
         opal_argv_append(argc, argv, "mca_base_param_file_path_force");
@@ -1404,7 +1404,7 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
      * on backend nodes and ignoring all duplicates
      */
     if (ORTE_PROC_IS_HNP || ORTE_PROC_IS_DAEMON) {
-        cnt = opal_argv_count(orted_cmd_line);    
+        cnt = opal_argv_count(orted_cmd_line);
         for (i=0; i < cnt; i+=3) {
             /* if the specified option is more than one word, we don't
              * have a generic way of passing it as some environments ignore
@@ -1625,7 +1625,7 @@ int orte_plm_base_setup_virtual_machine(orte_job_t *jdata)
         OBJ_RETAIN(node);
     }
     map = daemons->map;
-    
+
     /* zero-out the number of new daemons as we will compute this
      * each time we are called
      */
@@ -1976,7 +1976,7 @@ int orte_plm_base_setup_virtual_machine(orte_job_t *jdata)
             }
         }
     }
-    
+
     if (orte_process_info.num_procs != daemons->num_procs) {
         /* more daemons are being launched - update the routing tree to
          * ensure that the HNP knows how to route messages via
@@ -2007,6 +2007,6 @@ int orte_plm_base_setup_virtual_machine(orte_job_t *jdata)
             return rc;
         }
     }
-    
+
     return ORTE_SUCCESS;
 }

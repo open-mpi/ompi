@@ -5,17 +5,17 @@
  * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2011 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2012-2013 Los Alamos National Security, LLC. 
+ * Copyright (c) 2012-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 #include "orte_config.h"
@@ -45,7 +45,7 @@ bool orte_help_want_aggregate = false;
 
 /*
  * Local variable to know whether aggregated show_help is available or
- * not 
+ * not
  */
 static bool ready = false;
 
@@ -118,7 +118,7 @@ static void tuple_list_item_destructor(tuple_list_item_t *obj)
     if (NULL != obj->tli_topic) {
         free(obj->tli_topic);
     }
-    for (item = opal_list_get_first(&(obj->tli_processes)); 
+    for (item = opal_list_get_first(&(obj->tli_processes));
          opal_list_get_end(&(obj->tli_processes)) != item;
          item = next) {
         next = opal_list_get_next(item);
@@ -136,7 +136,7 @@ static char* xml_format(unsigned char *input)
     char *starttag="<stderr>";
     int endtaglen, starttaglen;
     bool endtagged = false;
-    
+
     len = strlen((char*)input);
     /* add some arbitrary size padding */
     output = (char*)malloc((len+1024)*sizeof(char));
@@ -148,14 +148,14 @@ static char* xml_format(unsigned char *input)
     outlen = len+1023;
     endtaglen = strlen(endtag);
     starttaglen = strlen(starttag);
-    
+
     /* start at the beginning */
     k=0;
-    
+
     /* start with the tag */
     for (j=0; j < starttaglen && k < outlen; j++) {
         output[k++] = starttag[j];
-    }        
+    }
 
     for (i=0; i < len; i++) {
         if ('&' == input[i]) {
@@ -215,7 +215,7 @@ static char* xml_format(unsigned char *input)
             }
         } else {
             output[k++] = input[i];
-        }    
+        }
     }
 
     if (!endtagged) {
@@ -225,9 +225,9 @@ static char* xml_format(unsigned char *input)
         }
         output[k++] = '\n';
     }
-    
+
     return output;
-    
+
 error:
     /* if we couldn't complete the processing for
      * some reason, return the unprocessed input
@@ -305,7 +305,7 @@ static int get_tli(const char *filename, const char *topic,
     opal_list_item_t *item;
 
     /* Search the list for a duplicate. */
-    for (item = opal_list_get_first(&abd_tuples); 
+    for (item = opal_list_get_first(&abd_tuples);
          opal_list_get_end(&abd_tuples) != item;
          item = opal_list_get_next(item)) {
         (*tli) = (tuple_list_item_t*) item;
@@ -337,11 +337,11 @@ static void show_accumulated_duplicates(int fd, short event, void *context)
     /* Loop through all the messages we've displayed and see if any
        processes have sent duplicates that have not yet been displayed
        yet */
-    for (item = opal_list_get_first(&abd_tuples); 
+    for (item = opal_list_get_first(&abd_tuples);
          opal_list_get_end(&abd_tuples) != item;
          item = opal_list_get_next(item)) {
         tli = (tuple_list_item_t*) item;
-        if (tli->tli_display && 
+        if (tli->tli_display &&
             tli->tli_count_since_last_display > 0) {
             static bool first = true;
             if (orte_xml_output) {
@@ -426,7 +426,7 @@ static int show_help(const char *filename, const char *topic,
              - else if a timer was not set, set the timer for T+5
              - else if a timer was set, do nothing (just wait)
            - set T=now when the timer expires
-        */           
+        */
         ++tli->tli_count_since_last_display;
         if (now > show_help_time_last_displayed + 5 && !show_help_timer_set) {
             show_accumulated_duplicates(0, 0, NULL);
@@ -436,7 +436,7 @@ static int show_help(const char *filename, const char *topic,
             opal_event_evtimer_add(&show_help_timer_event, &show_help_interval);
             show_help_timer_set = true;
         }
-    } 
+    }
     /* Not already displayed */
     else if (ORTE_ERR_NOT_FOUND == rc) {
         if (orte_xml_output) {
@@ -485,12 +485,12 @@ void orte_show_help_recv(int status, orte_process_name_t* sender,
     int32_t n;
     int8_t have_output;
     int rc;
-    
+
     OPAL_OUTPUT_VERBOSE((5, orte_debug_output,
                          "%s got show_help from %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(sender)));
-    
+
     /* unpack the filename of the show_help text file */
     n = 1;
     if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &filename, &n, OPAL_STRING))) {
@@ -509,7 +509,7 @@ void orte_show_help_recv(int status, orte_process_name_t* sender,
         ORTE_ERROR_LOG(rc);
         goto cleanup;
     }
-    
+
     /* If we have an output string, unpack it */
     if (have_output) {
         n = 1;
@@ -518,10 +518,10 @@ void orte_show_help_recv(int status, orte_process_name_t* sender,
             goto cleanup;
         }
     }
-    
+
     /* Send it to show_help */
     rc = show_help(filename, topic, output, sender);
-    
+
 cleanup:
     if (NULL != output) {
         free(output);
@@ -544,7 +544,7 @@ int orte_show_help_init(void)
     }
 
     OBJ_CONSTRUCT(&abd_tuples, opal_list_t);
-    
+
     save_help = opal_show_help;
     opal_show_help = orte_show_help;
     ready = true;
@@ -569,26 +569,26 @@ void orte_show_help_finalize(void)
         if (show_help_timer_set) {
             opal_event_evtimer_del(&show_help_timer_event);
         }
-        
+
         /* cancel the recv */
         orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_SHOW_HELP);
         return;
     }
 }
 
-int orte_show_help(const char *filename, const char *topic, 
+int orte_show_help(const char *filename, const char *topic,
                    bool want_error_header, ...)
 {
     int rc = ORTE_SUCCESS;
     va_list arglist;
     char *output;
-    
+
     if (orte_execute_quiet) {
         return ORTE_SUCCESS;
     }
-    
+
     va_start(arglist, want_error_header);
-    output = opal_show_help_vstring(filename, topic, want_error_header, 
+    output = opal_show_help_vstring(filename, topic, want_error_header,
                                     arglist);
     va_end(arglist);
 
@@ -602,7 +602,7 @@ int orte_show_help(const char *filename, const char *topic,
     return rc;
 }
 
-int orte_show_help_norender(const char *filename, const char *topic, 
+int orte_show_help_norender(const char *filename, const char *topic,
                             bool want_error_header, const char *output)
 {
     int rc = ORTE_SUCCESS;
@@ -621,7 +621,7 @@ int orte_show_help_norender(const char *filename, const char *topic,
         fprintf(stderr, "%s", output);
         goto CLEANUP;
     }
-    
+
     /* if we are the HNP, or the RML has not yet been setup,
      * or ROUTED has not been setup,
      * or we weren't given an HNP, or we are running in standalone
@@ -634,7 +634,7 @@ int orte_show_help_norender(const char *filename, const char *topic,
         NULL == orte_process_info.my_hnp_uri) {
         rc = show_help(filename, topic, output, ORTE_PROC_MY_NAME);
     }
-    
+
     /* otherwise, we relay the output message to
      * the HNP for processing
      */
@@ -650,7 +650,7 @@ int orte_show_help_norender(const char *filename, const char *topic,
             rc = show_help(filename, topic, output, ORTE_PROC_MY_NAME);
         } else {
             am_inside = true;
-        
+
             /* build the message to the HNP */
             buf = OBJ_NEW(opal_buffer_t);
             /* pack the filename of the show_help text file */
@@ -675,7 +675,7 @@ int orte_show_help_norender(const char *filename, const char *topic,
             am_inside = false;
         }
     }
-    
+
 CLEANUP:
     return rc;
 }
@@ -684,17 +684,17 @@ int orte_show_help_suppress(const char *filename, const char *topic)
 {
     int rc = ORTE_SUCCESS;
     int8_t have_output = 0;
-    
+
     if (orte_execute_quiet) {
         return ORTE_SUCCESS;
     }
-    
+
     if (!ready) {
         /* If we are finalizing, then we have no way to process this
            through the orte_show_help system - just drop it. */
         return ORTE_SUCCESS;
     }
-    
+
     /* If we are the HNP, or the RML has not yet been setup, or ROUTED
        has not been setup, or we weren't given an HNP, then all we can
        do is process this locally. */
@@ -704,7 +704,7 @@ int orte_show_help_suppress(const char *filename, const char *topic)
         NULL == orte_process_info.my_hnp_uri) {
         rc = show_help(filename, topic, NULL, ORTE_PROC_MY_NAME);
     }
-    
+
     /* otherwise, we relay the output message to
      * the HNP for processing
      */
@@ -720,7 +720,7 @@ int orte_show_help_suppress(const char *filename, const char *topic)
             rc = show_help(filename, topic, NULL, ORTE_PROC_MY_NAME);
         } else {
             am_inside = true;
-        
+
             /* build the message to the HNP */
             buf = OBJ_NEW(opal_buffer_t);
             /* pack the filename of the show_help text file */
@@ -741,6 +741,6 @@ int orte_show_help_suppress(const char *filename, const char *topic)
             am_inside = false;
         }
     }
-    
+
     return ORTE_SUCCESS;
 }

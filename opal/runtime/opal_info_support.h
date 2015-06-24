@@ -3,9 +3,9 @@
  *                         All rights reserved.
 * Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
 * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -75,7 +75,7 @@ OPAL_DECLSPEC void opal_info_show_path(const char *type, const char *value);
 OPAL_DECLSPEC void opal_info_do_path(bool want_all, opal_cmd_line_t *cmd_line);
 
 OPAL_DECLSPEC void opal_info_show_mca_params(const char *type,
-                                             const char *component, 
+                                             const char *component,
                                              mca_base_var_info_lvl_t max_level,
                                              bool want_internal);
 
@@ -84,7 +84,7 @@ OPAL_DECLSPEC void opal_info_show_mca_version(const mca_base_component_t *compon
 
 OPAL_DECLSPEC void opal_info_show_component_version(opal_pointer_array_t *mca_types,
                                                     opal_pointer_array_t *component_map,
-                                                    const char *type_name, 
+                                                    const char *type_name,
                                                     const char *component_name,
                                                     const char *scope, const char *ver_type);
 
@@ -103,8 +103,8 @@ OPAL_DECLSPEC void opal_info_do_type(opal_cmd_line_t *opal_info_cmd_line);
 
 OPAL_DECLSPEC void opal_info_out(const char *pretty_message, const char *plain_message, const char *value);
 
-OPAL_DECLSPEC void opal_info_out_int(const char *pretty_message, 
-                                     const char *plain_message, 
+OPAL_DECLSPEC void opal_info_out_int(const char *pretty_message,
+                                     const char *plain_message,
                                      int value);
 
 OPAL_DECLSPEC int opal_info_register_project_frameworks (const char *project_name,

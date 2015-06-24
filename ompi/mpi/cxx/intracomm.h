@@ -6,15 +6,15 @@
 // Copyright (c) 2004-2005 The University of Tennessee and The University
 //                         of Tennessee Research Foundation.  All rights
 //                         reserved.
-// Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+// Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 //                         University of Stuttgart.  All rights reserved.
 // Copyright (c) 2004-2005 The Regents of the University of California.
 //                         All rights reserved.
 // Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
 // $COPYRIGHT$
-// 
+//
 // Additional copyrights may follow
-// 
+//
 // $HEADER$
 //
 
@@ -37,14 +37,14 @@ public:
   Intracomm(const Intracomm& data) : Comm(data), pmpi_comm(data) { }
 
   Intracomm(MPI_Comm data) : Comm(data), pmpi_comm(data) { }
-  
-  Intracomm(const PMPI::Intracomm& data) 
+
+  Intracomm(const PMPI::Intracomm& data)
     : Comm((const PMPI::Comm&)data), pmpi_comm(data) { }
 
   // assignment
   Intracomm& operator=(const Intracomm& data) {
     Comm::operator=(data);
-    pmpi_comm = data.pmpi_comm; 
+    pmpi_comm = data.pmpi_comm;
     return *this;
   }
   Intracomm& operator=(const Comm_Null& data) {
@@ -74,10 +74,10 @@ public:
 
   // inter-language operability
   Intracomm& operator=(const MPI_Comm& data) {
-    mpi_comm = data; return *this; } 
+    mpi_comm = data; return *this; }
 
 #endif
-  
+
   //
   // Collective Communication
   //
@@ -85,7 +85,7 @@ public:
   // in intercomm's, so they're down here in Intracomm.
   //
   virtual void
-  Scan(const void *sendbuf, void *recvbuf, int count, 
+  Scan(const void *sendbuf, void *recvbuf, int count,
        const Datatype & datatype, const Op & op) const;
 
   virtual void
@@ -97,23 +97,23 @@ public:
   //
 
   Intracomm Dup() const;
-  
+
   virtual Intracomm& Clone() const;
 
   virtual Intracomm
   Create(const Group& group) const;
-  
+
   virtual Intracomm
   Split(int color, int key) const;
 
   virtual Intercomm
   Create_intercomm(int local_leader, const Comm& peer_comm,
 		   int remote_leader, int tag) const;
-  
+
   virtual Cartcomm
   Create_cart(int ndims, const int dims[],
 	      const bool periods[], bool reorder) const;
-  
+
   virtual Graphcomm
   Create_graph(int nnodes, const int index[],
 	       const int edges[], bool reorder) const;
@@ -122,7 +122,7 @@ public:
   //
   // Process Creation and Management
   //
- 
+
   virtual Intercomm Accept(const char* port_name, const Info& info, int root)
     const;
 
@@ -161,6 +161,6 @@ protected:
   // Convert an array of p_nbr Info object into an array of MPI_Info.
   // A pointer to the allocated array is returned and must be
   // eventually deleted.
-  static inline MPI_Info *convert_info_to_mpi_info(int p_nbr, 
+  static inline MPI_Info *convert_info_to_mpi_info(int p_nbr,
                                                    const Info p_info_tbl[]);
 };

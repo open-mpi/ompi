@@ -5,9 +5,9 @@
 
 /** @file
  *
- * Cross Memory Attach syscall definitions. 
+ * Cross Memory Attach syscall definitions.
  *
- * These are only needed temporarily until these new syscalls 
+ * These are only needed temporarily until these new syscalls
  * are incorporated into glibc
  */
 
@@ -51,8 +51,8 @@
 
 
 static inline ssize_t
-process_vm_readv(pid_t pid, 
-                 const struct iovec  *lvec, 
+process_vm_readv(pid_t pid,
+                 const struct iovec  *lvec,
                  unsigned long liovcnt,
                  const struct iovec *rvec,
                  unsigned long riovcnt,
@@ -62,8 +62,8 @@ process_vm_readv(pid_t pid,
 }
 
 static inline ssize_t
-process_vm_writev(pid_t pid, 
-                  const struct iovec  *lvec, 
+process_vm_writev(pid_t pid,
+                  const struct iovec  *lvec,
                   unsigned long liovcnt,
                   const struct iovec *rvec,
                   unsigned long riovcnt,

@@ -6,15 +6,15 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -81,7 +81,7 @@ static int opal_memory_base_open(mca_base_open_flag_t flags)
     /* can only be zero or one */
     if (opal_list_get_size(&opal_memory_base_framework.framework_components) == 1) {
         mca_base_component_list_item_t *item;
-        item = (mca_base_component_list_item_t*) 
+        item = (mca_base_component_list_item_t*)
             opal_list_get_first(&opal_memory_base_framework.framework_components);
         opal_memory = (opal_memory_base_component_2_0_0_t*)
             item->cli_component;

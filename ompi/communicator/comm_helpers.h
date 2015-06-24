@@ -37,5 +37,5 @@ int ompi_comm_neighbors(MPI_Comm comm, int maxindegree, int sources[], int sourc
 #ifdef __cplusplus
 }
 #endif
- 
+
 #endif

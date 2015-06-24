@@ -6,7 +6,7 @@
  * Copyright (c) 2004-2013 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -21,9 +21,9 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -46,9 +46,9 @@
 ** Table for Fortran <-> C communicator handle conversion
 ** Also used by P2P code to lookup communicator based
 ** on cid.
-** 
+**
 */
-opal_pointer_array_t ompi_mpi_communicators = {{0}}; 
+opal_pointer_array_t ompi_mpi_communicators = {{0}};
 opal_pointer_array_t ompi_comm_f_to_c_table = {{0}};
 
 ompi_predefined_communicator_t  ompi_mpi_comm_world = {{{0}}};
@@ -56,7 +56,7 @@ ompi_predefined_communicator_t  ompi_mpi_comm_self = {{{0}}};
 ompi_predefined_communicator_t  ompi_mpi_comm_null = {{{0}}};
 ompi_communicator_t  *ompi_mpi_comm_parent = NULL;
 
-ompi_predefined_communicator_t *ompi_mpi_comm_world_addr = 
+ompi_predefined_communicator_t *ompi_mpi_comm_world_addr =
     &ompi_mpi_comm_world;
 ompi_predefined_communicator_t *ompi_mpi_comm_self_addr =
     &ompi_mpi_comm_self;
@@ -71,7 +71,7 @@ OBJ_CLASS_INSTANCE(ompi_communicator_t, opal_object_t,
                    ompi_comm_destruct);
 
 /* This is the counter for the number of communicators, which contain
-   process with more than one jobid. This counter is a usefull 
+   process with more than one jobid. This counter is a usefull
    shortcut for finalize and abort. */
 int ompi_comm_num_dyncomm=0;
 
@@ -84,7 +84,7 @@ int ompi_comm_init(void)
     size_t size;
 
     /* Setup communicator array */
-    OBJ_CONSTRUCT(&ompi_mpi_communicators, opal_pointer_array_t); 
+    OBJ_CONSTRUCT(&ompi_mpi_communicators, opal_pointer_array_t);
     if( OPAL_SUCCESS != opal_pointer_array_init(&ompi_mpi_communicators, 0,
                                                 OMPI_FORTRAN_HANDLE_MAX, 64) ) {
         return OMPI_ERROR;
@@ -170,7 +170,7 @@ int ompi_comm_init(void)
     assert(ompi_mpi_comm_null.comm.c_f_to_c_index == 2);
     ompi_mpi_comm_null.comm.c_local_group  = &ompi_mpi_group_null.group;
     ompi_mpi_comm_null.comm.c_remote_group = &ompi_mpi_group_null.group;
-    OBJ_RETAIN(&ompi_mpi_group_null.group); 
+    OBJ_RETAIN(&ompi_mpi_group_null.group);
     OBJ_RETAIN(&ompi_mpi_group_null.group);
 
     ompi_mpi_comm_null.comm.c_contextid    = 2;
@@ -213,9 +213,9 @@ ompi_communicator_t *ompi_comm_allocate ( int local_size, int remote_size )
         new_comm->c_remote_group = ompi_group_allocate (remote_size);
         new_comm->c_flags |= OMPI_COMM_INTER;
     } else {
-        /* 
-         * simplifies some operations (e.g. p2p), if 
-         * we can always use the remote group 
+        /*
+         * simplifies some operations (e.g. p2p), if
+         * we can always use the remote group
          */
         new_comm->c_remote_group = new_comm->c_local_group;
         OBJ_RETAIN(new_comm->c_remote_group);
@@ -227,7 +227,7 @@ ompi_communicator_t *ompi_comm_allocate ( int local_size, int remote_size )
     return new_comm;
 }
 
-int ompi_comm_finalize(void) 
+int ompi_comm_finalize(void)
 {
     int max, i;
     ompi_communicator_t *comm;
@@ -261,22 +261,22 @@ int ompi_comm_finalize(void)
         OBJ_DESTRUCT (ompi_mpi_comm_parent);
 
         /* Please note, that the we did increase the reference count
-           for ompi_mpi_comm_null, ompi_mpi_group_null, and 
-           ompi_mpi_errors_are_fatal in ompi_comm_init because of 
-           ompi_mpi_comm_parent.  In case a 
+           for ompi_mpi_comm_null, ompi_mpi_group_null, and
+           ompi_mpi_errors_are_fatal in ompi_comm_init because of
+           ompi_mpi_comm_parent.  In case a
            parent communicator is really created, the ref. counters
-           for these objects are decreased again by one. However, in a 
+           for these objects are decreased again by one. However, in a
            static scenario, we should ideally decrease the ref. counter
-           for these objects by one here. The problem just is, that 
+           for these objects by one here. The problem just is, that
            if the app had a parent_comm, and this has been freed/disconnected,
-           ompi_comm_parent points again to ompi_comm_null, the reference count 
+           ompi_comm_parent points again to ompi_comm_null, the reference count
            for these objects has not been increased again.
            So the point is, if ompi_mpi_comm_parent == &ompi_mpi_comm_null
            we do not know whether we have to decrease the ref count for
            those three objects or not. Since this is a constant, non-increasing
-           amount of memory, we stick with the current solution for now, 
+           amount of memory, we stick with the current solution for now,
            namely don't do anything.
-        */  
+        */
     }
 
     /* Shut down MPI_COMM_NULL */
@@ -442,7 +442,7 @@ static void ompi_comm_destruct(ompi_communicator_t* comm)
     }
 
     /* reset the ompi_comm_f_to_c_table entry */
-    if ( MPI_UNDEFINED != comm->c_f_to_c_index && 
+    if ( MPI_UNDEFINED != comm->c_f_to_c_index &&
          NULL != opal_pointer_array_get_item(&ompi_comm_f_to_c_table,
                                              comm->c_f_to_c_index)) {
         opal_pointer_array_set_item ( &ompi_comm_f_to_c_table,

@@ -6,7 +6,7 @@
  * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -17,9 +17,9 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -94,7 +94,7 @@ ompi_group_t *ompi_group_allocate(int group_size)
     /* initialize our rank to MPI_UNDEFINED */
     new_group->grp_my_rank = MPI_UNDEFINED;
     OMPI_GROUP_SET_DENSE(new_group);
-    
+
  error_exit:
     /* return */
     return new_group;
@@ -119,10 +119,10 @@ ompi_group_t *ompi_group_allocate_sporadic(int group_size)
     }
     /* allocate array of (grp_sporadic_list )'s */
     if (0 < group_size) {
-        new_group->sparse_data.grp_sporadic.grp_sporadic_list = 
+        new_group->sparse_data.grp_sporadic.grp_sporadic_list =
             (struct ompi_group_sporadic_list_t *)malloc
             (sizeof(struct ompi_group_sporadic_list_t ) * group_size);
-        
+
         /* non-empty group */
         if ( NULL == new_group->sparse_data.grp_sporadic.grp_sporadic_list) {
             /* sporadic list allocation failed */
@@ -131,16 +131,16 @@ ompi_group_t *ompi_group_allocate_sporadic(int group_size)
             goto error_exit;
         }
     }
-    
+
     /* set the group size */
-    new_group->grp_proc_count = group_size; /* actually it's the number of 
+    new_group->grp_proc_count = group_size; /* actually it's the number of
                                                elements in the sporadic list*/
-    
+
     /* initialize our rank to MPI_UNDEFINED */
     new_group->grp_my_rank       = MPI_UNDEFINED;
     new_group->grp_proc_pointers = NULL;
-    OMPI_GROUP_SET_SPORADIC(new_group);    
-        
+    OMPI_GROUP_SET_SPORADIC(new_group);
+
  error_exit:
     return new_group;
 }
@@ -187,19 +187,19 @@ ompi_group_t *ompi_group_allocate_bmap(int orig_group_size , int group_size)
         goto error_exit;
     }
     /* allocate the unsigned char list */
-    new_group->sparse_data.grp_bitmap.grp_bitmap_array = (unsigned char *)malloc 
+    new_group->sparse_data.grp_bitmap.grp_bitmap_array = (unsigned char *)malloc
         (sizeof(unsigned char) * ompi_group_div_ceil(orig_group_size,BSIZE));
-    
-    new_group->sparse_data.grp_bitmap.grp_bitmap_array_len = 
+
+    new_group->sparse_data.grp_bitmap.grp_bitmap_array_len =
         ompi_group_div_ceil(orig_group_size,BSIZE);
-    
+
     new_group->grp_proc_count = group_size;
 
     /* initialize our rank to MPI_UNDEFINED */
     new_group->grp_my_rank    = MPI_UNDEFINED;
     new_group->grp_proc_pointers     = NULL;
     OMPI_GROUP_SET_BITMAP(new_group);
-    
+
  error_exit:
     /* return */
     return new_group;
@@ -255,7 +255,7 @@ static void ompi_group_construct(ompi_group_t *new_group)
 
     /* default the sparse values for groups */
     new_group->grp_parent_group_ptr = NULL;
-    
+
     /* return */
     return;
 }
@@ -317,7 +317,7 @@ int ompi_group_init(void)
                                                 OMPI_FORTRAN_HANDLE_MAX, 64) ) {
         return OMPI_ERROR;
     }
-    
+
     /* add MPI_GROUP_NULL to table */
     OBJ_CONSTRUCT(&ompi_mpi_group_null, ompi_group_t);
     ompi_mpi_group_null.group.grp_proc_count        = 0;
@@ -325,7 +325,7 @@ int ompi_group_init(void)
     ompi_mpi_group_null.group.grp_proc_pointers     = NULL;
     ompi_mpi_group_null.group.grp_flags            |= OMPI_GROUP_DENSE;
     ompi_mpi_group_null.group.grp_flags            |= OMPI_GROUP_INTRINSIC;
-        
+
     /* add MPI_GROUP_EMPTY to table */
     OBJ_CONSTRUCT(&ompi_mpi_group_empty, ompi_group_t);
     ompi_mpi_group_empty.group.grp_proc_count        = 0;
@@ -333,7 +333,7 @@ int ompi_group_init(void)
     ompi_mpi_group_empty.group.grp_proc_pointers     = NULL;
     ompi_mpi_group_empty.group.grp_flags            |= OMPI_GROUP_DENSE;
     ompi_mpi_group_empty.group.grp_flags            |= OMPI_GROUP_INTRINSIC;
-        
+
     return OMPI_SUCCESS;
 }
 
@@ -350,6 +350,6 @@ int ompi_group_finalize(void)
     OBJ_DESTRUCT(&ompi_mpi_group_empty);
 
     OBJ_DESTRUCT(&ompi_group_f_to_c_table);
-    
+
     return OMPI_SUCCESS;
 }

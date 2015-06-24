@@ -67,7 +67,7 @@ static void mca_pml_bfo_error_pending_packets(mca_btl_base_module_t* btl,
  * make sure this is not a rollover case.  We do that by adding the
  * maxnum to the expected.
  * @param proc Pointer to proc from where message came
- * @param hdr Pointer to header of message 
+ * @param hdr Pointer to header of message
  */
 bool mca_pml_bfo_is_duplicate_msg(mca_pml_bfo_comm_proc_t* proc,
                                   mca_pml_bfo_match_hdr_t *hdr)
@@ -410,7 +410,7 @@ void mca_pml_bfo_recv_frag_callback_rndvrestartnotify(mca_btl_base_module_t* btl
                             hdr->hdr_restart.hdr_restartseq,
                             recvreq->remote_req_send.pval, (void *)recvreq,
                             recvreq->req_recv.req_base.req_ompi.req_status.MPI_SOURCE,
-                            hdr->hdr_restart.hdr_jobid, hdr->hdr_restart.hdr_vpid, 
+                            hdr->hdr_restart.hdr_jobid, hdr->hdr_restart.hdr_vpid,
                             (NULL == ompi_proc->super.proc_hostname) ? "unknown" : ompi_proc->super.proc_hostname);
         mca_pml_bfo_recv_request_rndvrestartnack(des, ompi_proc, false);
         return;
@@ -505,7 +505,7 @@ void mca_pml_bfo_recv_frag_callback_rndvrestartack(mca_btl_base_module_t* btl,
                             "RNDVRESTARTACK received: waiting for RNDVRESTARTNOTIFY completion "
                             "PML=%d, RQS=%d, src_req=%p, dst_req=%p, peer=%d",
                             hdr->hdr_match.hdr_seq, hdr->hdr_restart.hdr_restartseq,
-                            (void *)sendreq, sendreq->req_recv.pval,    
+                            (void *)sendreq, sendreq->req_recv.pval,
                             sendreq->req_send.req_base.req_peer);
     }
     return;
@@ -684,8 +684,8 @@ void mca_pml_bfo_send_request_rndvrestartnotify(mca_pml_bfo_send_request_t* send
      * error sooner if this side has not seen it yet. */
     bml_btl = mca_bml_base_btl_array_get_next(&bml_endpoint->btl_eager);
     if (bml_btl->btl == btl) {
-        /* If there is more than one BTL left, then we will get a 
-         * different one.  If there is only one, we will just get 
+        /* If there is more than one BTL left, then we will get a
+         * different one.  If there is only one, we will just get
          * the same one back again.  That is OK. */
         bml_btl = mca_bml_base_btl_array_get_next(&bml_endpoint->btl_eager);
     }
@@ -786,7 +786,7 @@ void mca_pml_bfo_send_request_restart(mca_pml_bfo_send_request_t* sendreq,
         mca_pml_base_bsend_request_fini((ompi_request_t*)sendreq);
     }
 
-    /* Clear out any unsent send ranges.  Recreate the functionality 
+    /* Clear out any unsent send ranges.  Recreate the functionality
      * from the get_send_range() and get_next_send_range() functions. */
     OPAL_THREAD_LOCK(&sendreq->req_send_range_lock);
     first_item = opal_list_get_begin(&sendreq->req_send_ranges);
@@ -1128,8 +1128,8 @@ void mca_pml_bfo_recv_request_rndvrestartack(mca_pml_bfo_recv_request_t* recvreq
      * received on.  This may potentially tickle the error sooner if
      * this side has not seen it yet. */
     if (bml_btl->btl == btl) {
-        /* If there is more than one BTL left, then we will get a 
-         * different one.  If there is only one, we will just get 
+        /* If there is more than one BTL left, then we will get a
+         * different one.  If there is only one, we will just get
          * the same one back again.  That is OK. */
         bml_btl = mca_bml_base_btl_array_get_next(&bml_endpoint->btl_eager);
     }
@@ -1437,9 +1437,9 @@ void mca_pml_bfo_map_out_btl(struct mca_btl_base_module_t* btl,
 
 void mca_pml_bfo_failover_error_handler(struct mca_btl_base_module_t* btl,
                     int32_t flags, ompi_proc_t *errproc, char *btlname)
-{ 
-    ompi_proc_t** procs; 
-    size_t p, num_procs; 
+{
+    ompi_proc_t** procs;
+    size_t p, num_procs;
 
     /* If we are in here, we know that the we were called
      * with the flags == MCA_BTL_ERROR_FLAGS_NONFATAL so no
@@ -1768,7 +1768,7 @@ void mca_pml_bfo_check_recv_ctl_completion_status(mca_btl_base_module_t* btl,
         switch (common->hdr_type) {
         case MCA_PML_BFO_HDR_TYPE_ACK:
             recvreq = des->des_cbdata;
-                
+
             /* Record the error.  Send RECVERRNOTIFY if necessary. */
             if (recvreq->req_errstate) {
                 opal_output_verbose(30, mca_pml_bfo_output,
@@ -1940,7 +1940,7 @@ void mca_pml_bfo_update_rndv_fields(mca_pml_bfo_hdr_t* hdr,
  * by the callback function.  This means that the bml_btl array has
  * been shuffled and the bml_btl matching the btl has to be found
  * back.  If it cannot be found, then just find a different one to
- * use.  
+ * use.
  */
 void mca_pml_bfo_update_eager_bml_btl_recv_ctl(mca_bml_base_btl_t** bml_btl,
                                                mca_btl_base_module_t* btl,
@@ -2142,7 +2142,7 @@ void mca_pml_bfo_completion_sendreq_has_error(mca_pml_bfo_send_request_t* sendre
     if (0 == sendreq->req_events) {
         mca_pml_bfo_send_request_rndvrestartnotify(sendreq, false,
                                                    type, status, btl);
-    } 
+    }
 }
 
 /* If we get an error on the RGET message, then first make sure that

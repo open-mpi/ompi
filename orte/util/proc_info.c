@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -14,9 +14,9 @@
  *                         All rights reserved.
  * Copyright (c) 2014-2015 Intel, Inc. All rights reserved
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -98,14 +98,14 @@ static char *orte_strip_prefix;
 
 int orte_proc_info(void)
 {
-    
+
     int idx, i;
     char *ptr;
     char hostname[ORTE_MAX_HOSTNAME_SIZE];
     char **prefixes;
     bool match;
     struct in_addr buf;
-    
+
     if (init) {
         return ORTE_SUCCESS;
     }
@@ -128,7 +128,7 @@ int orte_proc_info(void)
         * the value if passed on the command line. We must remove those
         * to have a correct uri string
         */
-        if ('"' == ptr[0]) { 
+        if ('"' == ptr[0]) {
             /* if the first char is a quote, then so will the last one be */
             ptr[strlen(ptr)-1] = '\0';
             memmove (ptr, ptr + 1, strlen (ptr));
@@ -165,7 +165,7 @@ int orte_proc_info(void)
                                   OPAL_INFO_LVL_9,
                                   MCA_BASE_VAR_SCOPE_READONLY,
                                   &orte_process_info.app_num);
-    
+
     /* get the process id */
     orte_process_info.pid = getpid();
 
@@ -173,7 +173,7 @@ int orte_proc_info(void)
     gethostname(hostname, ORTE_MAX_HOSTNAME_SIZE);
     /* add this to our list of aliases */
     opal_argv_append_nosize(&orte_process_info.aliases, hostname);
-    
+
     if (!orte_keep_fqdn_hostnames) {
         /* if the nodename is an IP address, do not mess with it! */
         if (0 == inet_pton(AF_INET, hostname, &buf) &&
@@ -272,10 +272,10 @@ int orte_proc_info(void)
                                   MCA_BASE_VAR_SCOPE_CONSTANT,
                                   &orte_ess_node_rank);
     orte_process_info.my_node_rank = (orte_node_rank_t) orte_ess_node_rank;
-    
+
     /* setup the sync buffer */
     orte_process_info.sync_buf = OBJ_NEW(opal_buffer_t);
-    
+
     return ORTE_SUCCESS;
 }
 
@@ -285,27 +285,27 @@ int orte_proc_info_finalize(void)
     if (!init) {
         return ORTE_SUCCESS;
     }
-    
+
     if (NULL != orte_process_info.tmpdir_base) {
         free(orte_process_info.tmpdir_base);
         orte_process_info.tmpdir_base = NULL;
     }
-    
+
     if (NULL != orte_process_info.top_session_dir) {
         free(orte_process_info.top_session_dir);
         orte_process_info.top_session_dir = NULL;
     }
- 
+
     if (NULL != orte_process_info.job_session_dir) {
         free(orte_process_info.job_session_dir);
         orte_process_info.job_session_dir = NULL;
     }
-    
+
     if (NULL != orte_process_info.proc_session_dir) {
         free(orte_process_info.proc_session_dir);
         orte_process_info.proc_session_dir = NULL;
     }
-    
+
     if (NULL != orte_process_info.nodename) {
         free(orte_process_info.nodename);
         orte_process_info.nodename = NULL;
@@ -315,26 +315,26 @@ int orte_proc_info_finalize(void)
         free(orte_process_info.sock_stdin);
         orte_process_info.sock_stdin = NULL;
     }
-    
+
     if (NULL != orte_process_info.sock_stdout) {
         free(orte_process_info.sock_stdout);
         orte_process_info.sock_stdout = NULL;
     }
-    
+
     if (NULL != orte_process_info.sock_stderr) {
         free(orte_process_info.sock_stderr);
         orte_process_info.sock_stderr = NULL;
     }
 
     orte_process_info.proc_type = ORTE_PROC_TYPE_NONE;
-    
+
     OBJ_RELEASE(orte_process_info.sync_buf);
     orte_process_info.sync_buf = NULL;
 
     OBJ_DESTRUCT(&orte_process_info.super);
 
     opal_argv_free(orte_process_info.aliases);
-    
+
     init = false;
     return ORTE_SUCCESS;
 }
@@ -342,7 +342,7 @@ int orte_proc_info_finalize(void)
 bool orte_ifislocal(const char *hostname)
 {
     int i;
-    
+
     /* see if it matches any of our known aliases */
     if (NULL != orte_process_info.aliases) {
         for (i=0; NULL != orte_process_info.aliases[i]; i++) {

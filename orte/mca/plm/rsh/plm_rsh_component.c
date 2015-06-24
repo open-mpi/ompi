@@ -6,22 +6,22 @@
  * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2015 Los Alamos National Security, LLC.  All rights
- *                         reserved. 
+ *                         reserved.
  * Copyright (c) 2008-2009 Sun Microsystems, Inc.  All rights reserved.
- * Copyright (c) 2010      Oracle and/or its affiliates.  All rights 
+ * Copyright (c) 2010      Oracle and/or its affiliates.  All rights
  *                         reserved.
  * Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      IBM Corporation.  All rights reserved.
  * Copyright (c) 2015      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  *
  * These symbols are in a file by themselves to provide nice linker
@@ -253,7 +253,7 @@ static int rsh_component_open(void)
 static int rsh_component_query(mca_base_module_t **module, int *priority)
 {
     char *tmp;
-    
+
     /* Check if we are under Grid Engine parallel environment by looking at several
      * environment variables.  If so, setup the path and argv[0]. */
     if (!mca_plm_rsh_component.disable_qrsh &&
@@ -266,7 +266,7 @@ static int rsh_component_query(mca_base_module_t **module, int *priority)
             /* can't be SGE */
              opal_output_verbose(1, orte_plm_base_framework.framework_output,
                                 "%s plm:rsh: unable to be used: SGE indicated but cannot find path "
-                                "or execution permissions not set for launching agent qrsh", 
+                                "or execution permissions not set for launching agent qrsh",
                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
              free(tmp);
              *module = NULL;
@@ -276,9 +276,9 @@ static int rsh_component_query(mca_base_module_t **module, int *priority)
         mca_plm_rsh_component.using_qrsh = true;
         /* no tree spawn allowed under qrsh */
         mca_plm_rsh_component.no_tree_spawn = true;
-        goto success; 
+        goto success;
     } else if (!mca_plm_rsh_component.disable_llspawn &&
-               NULL != getenv("LOADL_STEP_ID")) { 
+               NULL != getenv("LOADL_STEP_ID")) {
 	/* We are running  as a LOADLEVELER job.
 	   Search for llspawn in the users PATH */
         if (ORTE_SUCCESS != rsh_launch_agent_lookup("llspawn", NULL)) {
@@ -293,21 +293,21 @@ static int rsh_component_query(mca_base_module_t **module, int *priority)
         mca_plm_rsh_component.using_llspawn = true;
         goto success;
     }
-    
-    /* if this isn't an Grid Engine or LoadLeveler environment, 
+
+    /* if this isn't an Grid Engine or LoadLeveler environment,
        see if MCA-specified agent (default: ssh:rsh) is available */
-    
+
     if (ORTE_SUCCESS != rsh_launch_agent_lookup(NULL, NULL)) {
         /* this isn't an error - we just cannot be selected */
         OPAL_OUTPUT_VERBOSE((1, orte_plm_base_framework.framework_output,
                              "%s plm:rsh: unable to be used: cannot find path "
-                             "for launching agent \"%s\"\n", 
+                             "for launching agent \"%s\"\n",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              mca_plm_rsh_component.agent));
         *module = NULL;
         return ORTE_ERROR;
     }
-success: 
+success:
     /* we are good - make ourselves available */
     *priority = mca_plm_rsh_component.priority;
     *module = (mca_base_module_t *) &orte_plm_rsh_module;
@@ -331,7 +331,7 @@ char **orte_plm_rsh_search(const char* agent_list, const char *path)
     char *line, **lines;
     char **tokens, *tmp;
     char cwd[OPAL_PATH_MAX];
-    
+
     if (NULL == path) {
         getcwd(cwd, OPAL_PATH_MAX);
     } else {
@@ -345,7 +345,7 @@ char **orte_plm_rsh_search(const char* agent_list, const char *path)
     }
     for (i = 0; NULL != lines[i]; ++i) {
         line = lines[i];
-        
+
         /* Trim whitespace at the beginning and end of the line */
         for (j = 0; '\0' != line[j] && isspace(line[j]); ++line) {
             continue;
@@ -356,10 +356,10 @@ char **orte_plm_rsh_search(const char* agent_list, const char *path)
         if (strlen(line) <= 0) {
             continue;
         }
-        
+
         /* Split it */
         tokens = opal_argv_split(line, ' ');
-        
+
         /* Look for the first token in the PATH */
         tmp = opal_path_findv(tokens[0], X_OK, environ, cwd);
         if (NULL != tmp) {
@@ -368,11 +368,11 @@ char **orte_plm_rsh_search(const char* agent_list, const char *path)
             opal_argv_free(lines);
             return tokens;
         }
-        
+
         /* Didn't find it */
         opal_argv_free(tokens);
     }
-    
+
     /* Doh -- didn't find anything */
     opal_argv_free(lines);
     return NULL;

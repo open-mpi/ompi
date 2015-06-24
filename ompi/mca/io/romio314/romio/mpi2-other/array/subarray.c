@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
- *   Copyright (C) 1997 University of Chicago. 
+/*
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -38,9 +38,9 @@ Output Parameters:
 
 .N fortran
 @*/
-int MPI_Type_create_subarray(int ndims, int *array_of_sizes, 
+int MPI_Type_create_subarray(int ndims, int *array_of_sizes,
                              int *array_of_subsizes, int *array_of_starts,
-                             int order, MPI_Datatype oldtype, 
+                             int order, MPI_Datatype oldtype,
                              MPI_Datatype *newtype)
 {
     MPI_Aint extent, size_with_aint;
@@ -130,7 +130,7 @@ int MPI_Type_create_subarray(int ndims, int *array_of_sizes,
 
     MPI_Type_extent(oldtype, &extent);
 
-/* check if MPI_Aint is large enough for size of global array. 
+/* check if MPI_Aint is large enough for size of global array.
    if not, complain. */
 
     size_with_aint = extent;

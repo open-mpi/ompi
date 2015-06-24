@@ -76,7 +76,7 @@ AC_DEFUN([OPAL_CHECK_PMI_LIB],
                         [opal_check_$3_lib_happy=no])],
           [opal_check_$3_lib_happy=no
            AC_MSG_RESULT([not found])])
-	   
+
     # check for presence of lib64 directory - if found, see if the
     # desired library is present and matches our build requirements
     files=`ls $2/lib64/lib$3.* 2> /dev/null | wc -l`

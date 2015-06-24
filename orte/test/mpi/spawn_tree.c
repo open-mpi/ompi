@@ -45,11 +45,11 @@ int main(int argc, char ** argv){
         MPI_Comm_spawn(argv[0], &argv[1], 1, MPI_INFO_NULL, 0,
                        MPI_COMM_SELF, &intercomm1, &erro);
         printf("(%d) After create rank %d\n", rank, child_rank);
-           
+
         MPI_Send(&child_rank, 1, MPI_INT, 0, 0, intercomm1);
-           
+
         //sleep(1);
-           
+
         child_rank = child_rank + 1;
         printf("(%d) Before create rank %d\n", rank, child_rank);
         MPI_Comm_spawn(argv[0], &argv[1], 1, MPI_INFO_NULL, 0,

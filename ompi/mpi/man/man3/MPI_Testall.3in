@@ -29,8 +29,8 @@ MPI_TESTALL(\fICOUNT, ARRAY_OF_REQUESTS, FLAG, ARRAY_OF_STATUSES,
 .SH C++ Syntax
 .nf
 #include <mpi.h>
-static bool Request::Testall(int \fIcount\fP, Request 
-	\fIarray_of_requests\fP[], Status \fIarray_of_statuses\fP[]) 
+static bool Request::Testall(int \fIcount\fP, Request
+	\fIarray_of_requests\fP[], Status \fIarray_of_statuses\fP[])
 
 static bool Request::Testall(int \fIcount\fP, Request \fIarray_of_requests\fP[])
 
@@ -55,7 +55,7 @@ Array of status objects (array of status).
 .ft R
 .TP 1i
 IERROR
-Fortran only: Error status (integer). 
+Fortran only: Error status (integer).
 
 .SH DESCRIPTION
 .ft R
@@ -63,7 +63,7 @@ Returns \fIflag\fP = true if all communications associated with active handles i
 .sp
 Otherwise, \fIflag\fP = false is returned, no request is modified and the values of the status entries are undefined. This is a local operation.
 .sp
-If your application does not need to examine the \fIarray_of_statuses\fP field, you can save resources by using the predefined constant MPI_STATUSES_IGNORE can be used as a special value for the \fIarray_of_statuses\fP argument. 
+If your application does not need to examine the \fIarray_of_statuses\fP field, you can save resources by using the predefined constant MPI_STATUSES_IGNORE can be used as a special value for the \fIarray_of_statuses\fP argument.
 .sp
 Errors that occurred during the execution of MPI_Testall are handled in the same manner as errors in MPI_Waitall.
 

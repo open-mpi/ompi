@@ -40,7 +40,7 @@
  * 2. mpool_rgpusm_leave_pinned=0, cache_size=limited
  * 3. mpool_rgpusm_leave_pinned=1, cache_size=unlimited (default)
  * 4. mpool_rgpusm_leave_pinned=1, cache_size=limited.
- * 
+ *
  * Case 1: The cache is unused and remote memory is registered and
  * unregistered for each transaction.  The amount of outstanding
  * registered memory is unlimited.
@@ -58,7 +58,7 @@
  * registrations is stored so that it can be used to evict
  * registrations from the cache.  In addition, these registrations are
  * deregistered.
- * 
+ *
  * I also want to capture how we can run into the case where we do not
  * find something in the cache, but when we try to register it, we get
  * an error back from the CUDA library saying the memory is in use.
@@ -160,7 +160,7 @@ void mca_mpool_rgpusm_module_init(mca_mpool_rgpusm_module_t* mpool)
     OBJ_CONSTRUCT(&mpool->reg_list, opal_free_list_t);
     opal_free_list_init (&mpool->reg_list, mpool->resources.sizeof_reg,
             opal_cache_line_size,
-            OBJ_CLASS(mca_mpool_base_registration_t), 
+            OBJ_CLASS(mca_mpool_base_registration_t),
             0,opal_cache_line_size,
             0, -1, 32, NULL, 0, NULL, NULL, NULL);
     OBJ_CONSTRUCT(&mpool->lru_list, opal_list_t);
@@ -581,7 +581,7 @@ void mca_mpool_rgpusm_finalize(struct mca_mpool_base_module_t *mpool)
         opal_output(0, "%s rgpusm: stats "
                 "(hit/valid/invalid/miss/evicted): %d/%d/%d/%d/%d\n",
                 OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
-                mpool_rgpusm->stat_cache_hit, mpool_rgpusm->stat_cache_valid, 
+                mpool_rgpusm->stat_cache_hit, mpool_rgpusm->stat_cache_valid,
                 mpool_rgpusm->stat_cache_invalid, mpool_rgpusm->stat_cache_miss,
                 mpool_rgpusm->stat_evicted);
     }

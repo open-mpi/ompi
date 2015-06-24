@@ -3,9 +3,9 @@
  *                         All rights reserved.
  * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -25,7 +25,7 @@ SHMEM_GENERATE_FORTRAN_BINDINGS_FUNCTION (MPI_Fint,
         my_pe_,
         my_pe__,
         my_pe_f,
-        (void), 
+        (void),
         () )
 
 MPI_Fint _my_pe_(void)

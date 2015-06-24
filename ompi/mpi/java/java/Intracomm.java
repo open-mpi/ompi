@@ -5,14 +5,14 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 /*
@@ -45,12 +45,12 @@
 
 /*
  * IMPLEMENTATION DETAILS
- * 
+ *
  * All methods with buffers that can be direct or non direct have
  * a companion argument 'db' which is true if the buffer is direct.
  * For example, if the buffer argument is recvBuf, the companion
  * argument will be 'rdb', meaning if the receive buffer is direct.
- * 
+ *
  * Checking if a buffer is direct is faster in Java than C.
  */
 package mpi;
@@ -219,7 +219,7 @@ private native long createGraph(
  * @param info         hints on optimization and interpretation of weights
  * @param reorder      the process may be reordered (true) or not (false)
  * @return communicator with distributed graph topology
- * @throws MPIException 
+ * @throws MPIException
  */
 public final GraphComm createDistGraph(
         int[] sources, int[] degrees, int[] destinations,
@@ -245,7 +245,7 @@ public final GraphComm createDistGraph(
  * @param info         hints on optimization and interpretation of weights
  * @param reorder      the process may be reordered (true) or not (false)
  * @return communicator with distributed graph topology
- * @throws MPIException 
+ * @throws MPIException
  */
 public final GraphComm createDistGraph(
         int[] sources, int[] degrees, int[] destinations,
@@ -280,7 +280,7 @@ private native long createDistGraph(
  * @param info          hints on optimization and interpretation of weights
  * @param reorder       the process may be reordered (true) or not (false)
  * @return communicator with distributed graph topology
- * @throws MPIException 
+ * @throws MPIException
  */
 public final GraphComm createDistGraphAdjacent(
         int[] sources, int[] sourceWeights,
@@ -308,7 +308,7 @@ public final GraphComm createDistGraphAdjacent(
  * @param info         hints on optimization and interpretation of weights
  * @param reorder      the process may be reordered (true) or not (false)
  * @return communicator with distributed graph topology
- * @throws MPIException 
+ * @throws MPIException
  */
 public final GraphComm createDistGraphAdjacent(
         int[] sources, int[] destinations, Info info, boolean reorder)
@@ -775,7 +775,7 @@ private native static String lookupName(String service, long info)
  * @param errcodes one code per process; if this parameter is null,
  *                 {@code MPI_ERRCODES_IGNORE} will be used.
  * @return intercommunicator between original group and the newly spawned group
- * @throws MPIException 
+ * @throws MPIException
  */
 public final Intercomm spawn(String command, String[] argv, int maxprocs,
                              Info info, int root, int[] errcodes)
@@ -804,7 +804,7 @@ private native long spawn(long comm, String command, String[] argv,
  * @param errcodes one code per process; if this parameter is null,
  *                 {@code MPI_ERRCODES_IGNORE} will be used.
  * @return intercommunicator between original group and the newly spawned group
- * @throws MPIException 
+ * @throws MPIException
  */
 public final Intercomm spawnMultiple(
         String[] commands, String[][] argv, int[] maxprocs,
@@ -812,9 +812,9 @@ public final Intercomm spawnMultiple(
     throws MPIException
 {
     MPI.check();
-    
+
     long hInfo[] = new long[info.length];
-    
+
     for(int i = 0; i < info.length; i++)
         hInfo[i] = info[i].handle;
 

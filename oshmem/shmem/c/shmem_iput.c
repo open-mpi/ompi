@@ -2,9 +2,9 @@
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 #include "oshmem_config.h"
@@ -17,7 +17,7 @@
 #include "oshmem/mca/spml/spml.h"
 
 /*
- * These routines copy strided data from the local PE to a strided data object on the destination PE. 
+ * These routines copy strided data from the local PE to a strided data object on the destination PE.
  * The shmem_iput() routines read the elements of a local array (source) and write them to
  * a remote array (target) on the PE indicated by pe. These routines return when the data has
  * been copied out of the source array on the local PE but not necessarily before the data has

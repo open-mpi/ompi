@@ -26,12 +26,12 @@
 /*
  * Initialize nonblocking barrier.  This is code specific for handling
  * the recycling of data, and uses only a single set of control buffers.
- * It also assumes that for a given process, only a single outstanding 
- * barrier operation will occur for a given control structure, 
+ * It also assumes that for a given process, only a single outstanding
+ * barrier operation will occur for a given control structure,
  * with the sequence number being used for potential overlap in time
  * between succesive barrier calls on different processes.
  */
-int bcol_basesmuma_rd_nb_barrier_init_admin( 
+int bcol_basesmuma_rd_nb_barrier_init_admin(
         sm_nbbar_desc_t *sm_desc)
 
 {
@@ -55,7 +55,7 @@ int bcol_basesmuma_rd_nb_barrier_init_admin(
     ctl_structs=(mca_bcol_basesmuma_ctl_struct_t **)
         sm_desc->coll_buff->ctl_buffs+idx;
     bank_genaration= sm_desc->coll_buff->ctl_buffs_mgmt[pool_index].bank_gen_counter;
-    
+
 	my_exchange_node=&(bcol_module->recursive_doubling_tree);
     my_rank=bcol_module->super.sbgp_partner_module->my_index;
     my_ctl=ctl_structs[my_rank];
@@ -92,7 +92,7 @@ int bcol_basesmuma_rd_nb_barrier_init_admin(
             /* spin n iterations until partner registers */
             loop_cnt=0;
             found=false;
-            while( loop_cnt < bcol_module->super.n_poll_loops ) 
+            while( loop_cnt < bcol_module->super.n_poll_loops )
             {
                 if( *partner_sn >= bank_genaration ) {
                     found=true;
@@ -122,7 +122,7 @@ int bcol_basesmuma_rd_nb_barrier_init_admin(
         partner_ctl=ctl_structs[pair_rank];
         partner_sn=(volatile int64_t *)&(partner_ctl->sequence_number);
         partner_flag=(volatile int *)&(partner_ctl->flag);
-		
+
         /* signal that I am at iteration exchange of the algorithm */
         my_ctl->flag = exchange;
 
@@ -131,17 +131,17 @@ int bcol_basesmuma_rd_nb_barrier_init_admin(
         /* spin n iterations until partner registers */
         loop_cnt=0;
         found=false;
-        while( loop_cnt < bcol_module->super.n_poll_loops ) 
+        while( loop_cnt < bcol_module->super.n_poll_loops )
         {
             if( (*partner_sn > bank_genaration) ||
-                    ( *partner_sn == bank_genaration && 
+                    ( *partner_sn == bank_genaration &&
                       *partner_flag >= exchange ) ) {
                 found=true;
                 break;
             }
-			
+
              loop_cnt++;
-        	
+
 		}
         if( !found ) {
             /* set restart parameters */
@@ -157,7 +157,7 @@ int bcol_basesmuma_rd_nb_barrier_init_admin(
             volatile int64_t *partner_sn;
             volatile int *partner_flag;
 
-            /* I will not participate in the exchange - 
+            /* I will not participate in the exchange -
              *   wait for signal from extra partner */
             extra_rank = my_exchange_node->rank_extra_source;
             partner_ctl=ctl_structs[extra_rank];
@@ -167,10 +167,10 @@ int bcol_basesmuma_rd_nb_barrier_init_admin(
             /* spin n iterations until partner registers */
             loop_cnt=0;
             found=false;
-            while( loop_cnt < bcol_module->super.n_poll_loops ) 
+            while( loop_cnt < bcol_module->super.n_poll_loops )
             {
                 if( (*partner_sn > bank_genaration) ||
-                        ( (*partner_sn == bank_genaration) && 
+                        ( (*partner_sn == bank_genaration) &&
                         (*partner_flag == (my_exchange_node->log_2)) ) ) {
                     found=true;
                     break;
@@ -200,7 +200,7 @@ int bcol_basesmuma_rd_nb_barrier_init_admin(
 }
 
 /* admin nonblocking barrier - progress function */
-int bcol_basesmuma_rd_nb_barrier_progress_admin( 
+int bcol_basesmuma_rd_nb_barrier_progress_admin(
         sm_nbbar_desc_t *sm_desc)
 
 {
@@ -231,7 +231,7 @@ int bcol_basesmuma_rd_nb_barrier_progress_admin(
 
     /* check to make sure that this should be progressed */
     if( ( sm_desc->collective_phase == NB_BARRIER_INACTIVE ) ||
-        ( sm_desc->collective_phase == NB_BARRIER_DONE ) ) 
+        ( sm_desc->collective_phase == NB_BARRIER_DONE ) )
     {
         return OMPI_SUCCESS;
     }
@@ -258,7 +258,7 @@ int bcol_basesmuma_rd_nb_barrier_progress_admin(
 
             /* spin n iterations until partner registers */
             loop_cnt=0;
-            while( loop_cnt < bcol_module->super.n_poll_loops ) 
+            while( loop_cnt < bcol_module->super.n_poll_loops )
             {
                 found=false;
                 if( *partner_sn >= bank_genaration ) {
@@ -281,7 +281,7 @@ int bcol_basesmuma_rd_nb_barrier_progress_admin(
 
 Exchange_phase:
 
-    for(exchange = start_index; 
+    for(exchange = start_index;
         exchange < my_exchange_node->n_exchanges; exchange++) {
 
         volatile int64_t *partner_sn;
@@ -301,10 +301,10 @@ Exchange_phase:
         /* spin n iterations until partner registers */
         loop_cnt=0;
         found=false;
-        while( loop_cnt < bcol_module->super.n_poll_loops ) 
+        while( loop_cnt < bcol_module->super.n_poll_loops )
         {
             if( (*partner_sn > bank_genaration) ||
-                    ( (*partner_sn == bank_genaration) && 
+                    ( (*partner_sn == bank_genaration) &&
                       (*partner_flag >= exchange) ) ) {
                 found=true;
                 break;
@@ -326,7 +326,7 @@ Post_phase:
             volatile int64_t *partner_sn;
             volatile int *partner_flag;
 
-            /* I will not participate in the exchange - 
+            /* I will not participate in the exchange -
              *   wait for signal from extra partner */
             extra_rank = my_exchange_node->rank_extra_source;
             partner_ctl=ctl_structs[extra_rank];
@@ -336,10 +336,10 @@ Post_phase:
             /* spin n iterations until partner registers */
             loop_cnt=0;
             found=false;
-            while( loop_cnt < bcol_module->super.n_poll_loops ) 
+            while( loop_cnt < bcol_module->super.n_poll_loops )
             {
                 if( (*partner_sn > bank_genaration) ||
-                        ( *partner_sn == bank_genaration && 
+                        ( *partner_sn == bank_genaration &&
                         *partner_flag == (my_exchange_node->log_2) ) ) {
                     found=true;
                     break;
@@ -385,12 +385,12 @@ static int bcol_basesmuma_memsync(bcol_function_args_t *input_args,
     printf("XXX SYNC call\n");
     */
 
-    rc = bcol_basesmuma_rd_nb_barrier_init_admin( 
+    rc = bcol_basesmuma_rd_nb_barrier_init_admin(
             sm_desc);
     if (OMPI_SUCCESS != rc) {
         return rc;
     }
-    
+
     if (NB_BARRIER_DONE != sm_desc->collective_phase) {
         mca_bcol_basesmuma_component_t *cs = &mca_bcol_basesmuma_component;
         opal_list_t *list=&(cs->nb_admin_barriers);
@@ -424,7 +424,7 @@ static int bcol_basesmuma_memsync_progress(bcol_function_args_t *input_args,
     sm_buffer_mgmt *buff_block = &(bcol_module->colls_with_user_data);
     sm_nbbar_desc_t *sm_desc = &(buff_block->ctl_buffs_mgmt[memory_bank].nb_barrier_desc);
 
-    /* I do not have to do anything, since the 
+    /* I do not have to do anything, since the
        progress done by basesmuma progress engine */
 
     if (NB_BARRIER_DONE != sm_desc->collective_phase) {

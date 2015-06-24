@@ -25,7 +25,7 @@ int MPI_Add_error_string(int \fIerrorcode\fP, const char *\fIstring\fP)
 INCLUDE 'mpif.h'
 MPI_ADD_ERROR_STRING(\fIERRORCODE, STRING, IERROR\fP)
 	INTEGER		\fIERRORCODE, IERROR\fP
-	CHARACTER*(*)	\fISTRING\fP 
+	CHARACTER*(*)	\fISTRING\fP
 
 .fi
 .SH C++ Syntax
@@ -48,7 +48,7 @@ Text that corresponds to the error code or class (string).
 .ft R
 .TP 1.4i
 IERROR
-Fortran only: Error status (integer). 
+Fortran only: Error status (integer).
 
 .SH DESCRIPTION
 .ft R
@@ -73,7 +73,7 @@ called. By default, this error handler aborts the MPI job, except for
 I/O function errors. The error handler may be changed with
 MPI_Comm_set_errhandler; the predefined error handler MPI_ERRORS_RETURN
 may be used to cause error values to be returned. Note that MPI does not
-guarantee that an MPI program can continue past an error. 
+guarantee that an MPI program can continue past an error.
 
 .SH SEE ALSO
 .ft R

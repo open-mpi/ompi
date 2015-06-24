@@ -3,9 +3,9 @@
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -118,7 +118,7 @@ static char *orte_getline(FILE *fp)
         buff = strdup(input);
         return buff;
     }
-    
+
     return NULL;
 }
 
@@ -154,7 +154,7 @@ static int init(void)
      * For each directory
      */
     while (NULL != (entry = readdir(cur_dirp))) {
-        
+
         /*
          * Skip the obvious
          */
@@ -183,7 +183,7 @@ static int init(void)
         }
         trk->core = strtoul(&entry->d_name[k], NULL, 10);
         trk->directory = opal_os_path(false, "/sys/devices/system/cpu", entry->d_name, "cpufreq", NULL);
-        
+
         /* read/save the current settings */
         filename = opal_os_path(false, trk->directory, "scaling_governor", NULL);
         if (NULL == (fp = fopen(filename, "rw"))) {

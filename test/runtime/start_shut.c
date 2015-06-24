@@ -5,14 +5,14 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -43,13 +43,13 @@ int main (int argc, char* argv[])
 
     test_init("orte_start_shut");
     test_out = stderr;
-    
+
     fprintf(test_out, "initialize the system\n");
     if (ORTE_SUCCESS != (rc = orte_init(true))) {
         fprintf(test_out, "couldn't complete init - error code %d\n", rc);
         exit(1);
     }
-    
+
     for (i=0; i < NUM_ITERS; i++) {
         if (ORTE_SUCCESS != (rc = orte_finalize())) {
             fprintf(test_out, "iter %d: couldn't complete orte system finalize - error %d\n", i, rc);
@@ -61,7 +61,7 @@ int main (int argc, char* argv[])
             exit(1);
         }
     }
-    
+
     fprintf(test_out, "shut system down\n");
     if (ORTE_SUCCESS != (rc = orte_finalize())) {
         fprintf(test_out, "couldn't complete finalize - error code %d\n", rc);
@@ -69,7 +69,7 @@ int main (int argc, char* argv[])
     }
 
     fprintf(test_out, "orte_start_shut: successful\n");
-    
+
     rc = test_finalize();
     fclose(test_out);
     return rc;

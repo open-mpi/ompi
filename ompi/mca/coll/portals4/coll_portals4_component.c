@@ -180,7 +180,7 @@ mca_coll_portals4_component_t mca_coll_portals4_component = {
         /* Initialization / querying functions */
         .collm_init_query = portals4_init_query,
         .collm_comm_query = portals4_comm_query,
-    }, 
+    },
 };
 
 int

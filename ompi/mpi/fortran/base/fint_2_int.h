@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2009 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -14,9 +14,9 @@
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -27,7 +27,7 @@
 
 #include <stdlib.h>
 
-/* 
+/*
  * Define MACROS to take account of different size of MPI_Fint from int
  */
 
@@ -40,9 +40,9 @@
   #define OMPI_INT_2_FINT(a) a
   #define OMPI_FINT_2_INT(a) a
   #define OMPI_PFINT_2_PINT(a) a
-  #define OMPI_ARRAY_FINT_2_INT_ALLOC(in, n) 
+  #define OMPI_ARRAY_FINT_2_INT_ALLOC(in, n)
   #define OMPI_ARRAY_FINT_2_INT(in, n)
-  #define OMPI_2_DIM_ARRAY_FINT_2_INT(in, n, dim2) 
+  #define OMPI_2_DIM_ARRAY_FINT_2_INT(in, n, dim2)
   #define OMPI_ARRAY_FINT_2_INT_CLEANUP(in)
   #define OMPI_SINGLE_FINT_2_INT(in)
   #define OMPI_SINGLE_INT_2_FINT(in)

@@ -6,7 +6,7 @@
 // Copyright (c) 2004-2005 The University of Tennessee and The University
 //                         of Tennessee Research Foundation.  All rights
 //                         reserved.
-// Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+// Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 //                         University of Stuttgart.  All rights reserved.
 // Copyright (c) 2004-2005 The Regents of the University of California.
 //                         All rights reserved.
@@ -14,9 +14,9 @@
 // Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
 // Copyright (c) 2011      FUJITSU LIMITED.  All rights reserved.
 // $COPYRIGHT$
-// 
+//
 // Additional copyrights may follow
-// 
+//
 // $HEADER$
 //
 
@@ -39,7 +39,7 @@ public:
   inline Datatype(const Datatype& dt) : pmpi_datatype(dt.pmpi_datatype) { }
 
   inline Datatype(const PMPI::Datatype& dt) : pmpi_datatype(dt) { }
-  
+
   inline virtual ~Datatype() {}
 
   inline Datatype& operator=(const Datatype& dt) {
@@ -53,7 +53,7 @@ public:
     { return (bool) !(*this == a); }
 
   // inter-language operability
-  inline Datatype& operator= (const MPI_Datatype &i) 
+  inline Datatype& operator= (const MPI_Datatype &i)
     { pmpi_datatype = i; return *this; }
 
   inline operator MPI_Datatype() const { return (MPI_Datatype)pmpi_datatype; }
@@ -84,7 +84,7 @@ public:
     { return (bool) !(*this == a); }
 
   // inter-language operability
-  inline Datatype& operator= (const MPI_Datatype &i) 
+  inline Datatype& operator= (const MPI_Datatype &i)
     { mpi_datatype = i; return *this; }
 
   inline operator MPI_Datatype () const { return mpi_datatype; }
@@ -92,7 +92,7 @@ public:
 
 #endif
 
-  // 
+  //
   // User Defined Functions
   //
   typedef int Copy_attr_function(const Datatype& oldtype,
@@ -101,27 +101,27 @@ public:
 						const void* attribute_val_in,
 						void* attribute_val_out,
 						bool& flag);
-  
-  typedef int Delete_attr_function(Datatype& type, int type_keyval, 
+
+  typedef int Delete_attr_function(Datatype& type, int type_keyval,
 				   void* attribute_val, void* extra_state);
-  
+
   //
   // Point-to-Point Communication
   //
-  
+
   virtual Datatype Create_contiguous(int count) const;
-  
+
   virtual Datatype Create_vector(int count, int blocklength,
 				 int stride) const;
-  
+
   virtual Datatype Create_indexed(int count,
-				  const int array_of_blocklengths[], 
+				  const int array_of_blocklengths[],
 				  const int array_of_displacements[]) const;
 
   static Datatype Create_struct(int count, const int array_of_blocklengths[],
 				const Aint array_of_displacements[],
 				const Datatype array_if_types[]);
-  
+
   virtual Datatype Create_hindexed(int count, const int array_of_blocklengths[],
 				   const Aint array_of_displacements[]) const;
 
@@ -138,10 +138,10 @@ public:
   virtual void Get_true_extent(Aint&, Aint&) const;
 
   virtual void Commit();
-  
+
   virtual void Free();
 
-  virtual void Pack(const void* inbuf, int incount, void *outbuf, 
+  virtual void Pack(const void* inbuf, int incount, void *outbuf,
 		    int outsize, int& position, const Comm &comm) const;
 
   virtual void Unpack(const void* inbuf, int insize, void *outbuf, int outcount,
@@ -161,9 +161,9 @@ public:
   // Miscellany
   //
   virtual Datatype Create_subarray(int ndims, const int array_of_sizes[],
-				   const int array_of_subsizes[], 
-				   const int array_of_starts[], int order) 
-    const;   
+				   const int array_of_subsizes[],
+				   const int array_of_starts[], int order)
+    const;
 
   virtual Datatype Create_darray(int size, int rank, int ndims,
                    const int array_of_gsizes[], const int array_of_distribs[],

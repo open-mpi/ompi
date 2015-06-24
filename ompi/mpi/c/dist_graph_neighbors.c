@@ -45,11 +45,11 @@ int MPI_Dist_graph_neighbors(MPI_Comm comm, int maxindegree,
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         if (ompi_comm_invalid(comm)) {
-            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, 
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM,
                                           FUNC_NAME);
         } else if (maxindegree < 0 || maxoutdegree < 0 ||
-                   (maxindegree > 0 && 
-                    (NULL == sources || NULL == sourceweights)) || 
+                   (maxindegree > 0 &&
+                    (NULL == sources || NULL == sourceweights)) ||
                    (maxoutdegree > 0 &&
                     (NULL == destinations || NULL == destweights))) {
             return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);

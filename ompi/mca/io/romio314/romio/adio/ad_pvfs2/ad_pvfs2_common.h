@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*-
  * vim: ts=8 sts=4 sw=4 noexpandtab
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -28,7 +28,7 @@ void ADIOI_PVFS2_Init(int *error_code );
 void ADIOI_PVFS2_makeattribs(PVFS_sys_attr * attribs);
 void ADIOI_PVFS2_makecredentials(PVFS_credentials * credentials);
 void ADIOI_PVFS2_End(int *error_code);
-int ADIOI_PVFS2_End_call(MPI_Comm comm, int keyval, 
+int ADIOI_PVFS2_End_call(MPI_Comm comm, int keyval,
 	void *attribute_val, void *extra_state);
 int ADIOI_PVFS2_error_convert(int pvfs_error);
 

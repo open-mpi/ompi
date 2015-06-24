@@ -6,16 +6,16 @@
  * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  *
  * These symbols are in a file by themselves to provide nice linker
@@ -79,7 +79,7 @@ int orte_odls_default_component_query(mca_base_module_t **module, int *priority)
     /* the base open/select logic protects us against operation when
      * we are NOT in a daemon, so we don't have to check that here
      */
-    
+
     /* we have built some logic into the configure.m4 file that checks
      * to see if we have "fork" support and only builds this component
      * if we do. Hence, we only get here if we CAN build - in which

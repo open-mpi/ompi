@@ -127,7 +127,7 @@ int mca_sharedfp_addproc_read_ordered (mca_io_ompio_file_t *fh,
     }
 
     ret = sh->comm->c_coll.coll_gather( &sendBuff, 1, OMPI_OFFSET_DATATYPE,
-					buff, 1, OMPI_OFFSET_DATATYPE, 0, sh->comm, 
+					buff, 1, OMPI_OFFSET_DATATYPE, 0, sh->comm,
 					sh->comm->c_coll.coll_gather_module);
     if ( OMPI_SUCCESS != ret ) {
 	goto exit;

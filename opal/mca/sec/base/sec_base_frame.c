@@ -3,9 +3,9 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -38,7 +38,7 @@ opal_list_t opal_sec_base_actives = {{0}};
 static int opal_sec_base_close(void)
 {
     opal_sec_handle_t *hdl;
-    
+
     /* let the selected modules finalize */
     OPAL_LIST_FOREACH(hdl, &opal_sec_base_actives, opal_sec_handle_t) {
         if (NULL != hdl->module->finalize) {
@@ -47,14 +47,14 @@ static int opal_sec_base_close(void)
     }
 
     OPAL_LIST_DESTRUCT(&opal_sec_base_actives);
-    
+
     return mca_base_framework_components_close(&opal_sec_base_framework, NULL);
 }
 
 static int opal_sec_base_open(mca_base_open_flag_t flags)
 {
     OBJ_CONSTRUCT(&opal_sec_base_actives, opal_list_t);
-    
+
     /* Open up all available components */
     return mca_base_framework_components_open(&opal_sec_base_framework, flags);
 }

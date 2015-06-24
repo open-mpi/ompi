@@ -5,8 +5,8 @@
 /* Struct CFI_dim_t for triples of bound, extent and stride information */
 
 typedef struct {
-         intptr_t  lower_bound, 
-                   extent,  
+         intptr_t  lower_bound,
+                   extent,
                    sm;
 } CFI_dim_t;
 
@@ -16,20 +16,20 @@ typedef struct {
                   stride;
 }  CFI_bounds_t;
 
- 
+
 /* Maximum rank supported by the companion Fortran processor */
 
 /* Changed from 15 to F2003 value of 7 (CER) */
 #define CFI_MAX_RANK  7
 
-/* Struct CFI_cdesc_t for holding all the information about a 
+/* Struct CFI_cdesc_t for holding all the information about a
    descriptor-based Fortran object */
 
 typedef struct {
   void *        base_addr;          /* base address of object                      */
   size_t        elem_len;           /* length of one element, in bytes             */
   int           rank;               /* object rank, 0 .. CF_MAX_RANK               */
-  int           type;               /* identifier for type of object               */ 
+  int           type;               /* identifier for type of object               */
   int           attribute;          /* object attribute: 0..2, or -1               */
   int           state;              /* allocation/association state: 0 or 1        */
 //Removed (CER)

@@ -20,7 +20,7 @@
 
 BEGIN_C_DECLS
 
-/** Prepare for using the sender based storage 
+/** Prepare for using the sender based storage
   */
 int vprotocol_pessimist_sender_based_init(const char *mmapfile, size_t size);
 
@@ -28,7 +28,7 @@ int vprotocol_pessimist_sender_based_init(const char *mmapfile, size_t size);
   */
 void vprotocol_pessimist_sender_based_finalize(void);
 
-/** Manage mmap floating window, allocating enough memory for the message to be 
+/** Manage mmap floating window, allocating enough memory for the message to be
   * asynchronously copied to disk.
   */
 void vprotocol_pessimist_sender_based_alloc(size_t len);
@@ -92,7 +92,7 @@ int32_t vprotocol_pessimist_sender_based_convertor_advance(opal_convertor_t*,
  * progress method
  */
 #elif defined(SB_USE_PROGRESS_METHOD)
-static inline void __SENDER_BASED_METHOD_COPY(mca_pml_base_send_request_t *req) 
+static inline void __SENDER_BASED_METHOD_COPY(mca_pml_base_send_request_t *req)
 {
     if(req->req_bytes_packed)
     {
@@ -103,12 +103,12 @@ static inline void __SENDER_BASED_METHOD_COPY(mca_pml_base_send_request_t *req)
     }
 }
 
-static inline int vprotocol_pessimist_sb_progress_req(mca_pml_base_send_request_t *req) 
+static inline int vprotocol_pessimist_sb_progress_req(mca_pml_base_send_request_t *req)
 {
     mca_vprotocol_pessimist_request_t *ftreq = VPESSIMIST_SEND_FTREQ(req);
     size_t max_data = 0;
-    
-    if(ftreq->sb.bytes_progressed < req->req_bytes_packed) 
+
+    if(ftreq->sb.bytes_progressed < req->req_bytes_packed)
     {
         opal_convertor_t conv;
         unsigned int iov_count = 1;
@@ -117,11 +117,11 @@ static inline int vprotocol_pessimist_sb_progress_req(mca_pml_base_send_request_
         max_data = req->req_bytes_packed - ftreq->sb.bytes_progressed;
         iov.iov_len = max_data;
         iov.iov_base = (IOVBASE_TYPE *) (ftreq->sb.cursor + position);
-        
+
         V_OUTPUT_VERBOSE(80, "pessimist:\tsb\tprgress\t%"PRIpclock"\tsize %lu from position %lu", ftreq->reqid, max_data, position);
         opal_convertor_clone_with_position(&req->req_base.req_convertor,
                                            &conv, 0, &position );
-        opal_convertor_pack(&conv, &iov, &iov_count, &max_data); 
+        opal_convertor_pack(&conv, &iov, &iov_count, &max_data);
         ftreq->sb.bytes_progressed += max_data;
     }
     return max_data;
@@ -130,15 +130,15 @@ static inline int vprotocol_pessimist_sb_progress_req(mca_pml_base_send_request_
 static inline int vprotocol_pessimist_sb_progress_all_reqs(void)
 {
     int ret = 0;
-    
+
     /* progress any waiting Sender Based copy */
     if(!opal_list_is_empty(&mca_vprotocol_pessimist.sender_based.sb_sendreq))
     {
-        mca_vprotocol_pessimist_request_t *ftreq = (mca_vprotocol_pessimist_request_t *) 
+        mca_vprotocol_pessimist_request_t *ftreq = (mca_vprotocol_pessimist_request_t *)
             opal_list_remove_first(&mca_vprotocol_pessimist.sender_based.sb_sendreq);
         if(vprotocol_pessimist_sb_progress_req(VPROTOCOL_SEND_REQ(ftreq)))
             ret = 1;
-        opal_list_append(&mca_vprotocol_pessimist.sender_based.sb_sendreq, 
+        opal_list_append(&mca_vprotocol_pessimist.sender_based.sb_sendreq,
                          &ftreq->list_item);
     }
     return ret;
@@ -163,7 +163,7 @@ static inline void __SENDER_BASED_METHOD_FLUSH(ompi_request_t *req)
 #endif /* SB_USE_*_METHOD */
 
 
-/** Copy data associated to a pml_base_send_request_t to the sender based 
+/** Copy data associated to a pml_base_send_request_t to the sender based
  * message payload buffer
  */
 static inline void vprotocol_pessimist_sender_based_copy_start(ompi_request_t *req)
@@ -171,24 +171,24 @@ static inline void vprotocol_pessimist_sender_based_copy_start(ompi_request_t *r
     vprotocol_pessimist_sender_based_header_t *sbhdr;
     mca_vprotocol_pessimist_request_t *ftreq = VPESSIMIST_SEND_FTREQ(req);
     mca_pml_base_send_request_t *pmlreq = (mca_pml_base_send_request_t *) req;
-    
+
     /* Allocate enough sender-based space to hold the message */
-    if(mca_vprotocol_pessimist.sender_based.sb_available < 
-            pmlreq->req_bytes_packed + 
+    if(mca_vprotocol_pessimist.sender_based.sb_available <
+            pmlreq->req_bytes_packed +
             sizeof(vprotocol_pessimist_sender_based_header_t))
     {
         vprotocol_pessimist_sender_based_alloc(pmlreq->req_bytes_packed);
     }
-    
+
     /* Copy message header to the sender-based space */
     /* /!\ This is NOT thread safe */
     ftreq->sb.cursor = mca_vprotocol_pessimist.sender_based.sb_cursor;
 #if 1
     mca_vprotocol_pessimist.sender_based.sb_cursor +=
-        sizeof(vprotocol_pessimist_sender_based_header_t) + 
+        sizeof(vprotocol_pessimist_sender_based_header_t) +
         pmlreq->req_bytes_packed;
-    mca_vprotocol_pessimist.sender_based.sb_available -= 
-        sizeof(vprotocol_pessimist_sender_based_header_t) + 
+    mca_vprotocol_pessimist.sender_based.sb_available -=
+        sizeof(vprotocol_pessimist_sender_based_header_t) +
         pmlreq->req_bytes_packed;
 #endif
     sbhdr = (vprotocol_pessimist_sender_based_header_t *) ftreq->sb.cursor;
@@ -199,13 +199,13 @@ static inline void vprotocol_pessimist_sender_based_copy_start(ompi_request_t *r
     sbhdr->sequence = pmlreq->req_base.req_sequence;
     ftreq->sb.cursor += sizeof(vprotocol_pessimist_sender_based_header_t);
     V_OUTPUT_VERBOSE(70, "pessimist:\tsb\tsend\t%"PRIpclock"\tsize %lu (+%lu header)", VPESSIMIST_FTREQ(req)->reqid, (long unsigned)pmlreq->req_bytes_packed, (long unsigned)sizeof(vprotocol_pessimist_sender_based_header_t));
-    
+
     /* Use one of the previous data copy method */
     __SENDER_BASED_METHOD_COPY(pmlreq);
 }
 
 /** Ensure sender based is finished before allowing user to touch send buffer
- */ 
+ */
 #define vprotocol_pessimist_sender_based_flush(REQ) __SENDER_BASED_METHOD_FLUSH(REQ)
 
 END_C_DECLS

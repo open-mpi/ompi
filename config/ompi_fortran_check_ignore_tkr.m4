@@ -6,18 +6,18 @@ dnl                         Corporation.  All rights reserved.
 dnl Copyright (c) 2004-2005 The University of Tennessee and The University
 dnl                         of Tennessee Research Foundation.  All rights
 dnl                         reserved.
-dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
-dnl                         reserved. 
+dnl                         reserved.
 dnl Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
 dnl Copyright (c) 2009-2014 Cisco Systems, Inc.  All rights reserved.
 dnl $COPYRIGHT$
-dnl 
+dnl
 dnl Additional copyrights may follow
-dnl 
+dnl
 dnl $HEADER$
 
 # Does this compiler support (void*)-like functionality for MPI choice
@@ -28,7 +28,7 @@ AC_DEFUN([OMPI_FORTRAN_CHECK_IGNORE_TKR], [
     OMPI_FORTRAN_IGNORE_TKR_PREDECL=
     OMPI_FORTRAN_IGNORE_TKR_TYPE=
 
-    AS_VAR_PUSHDEF([fortran_ignore_tkr_data], 
+    AS_VAR_PUSHDEF([fortran_ignore_tkr_data],
                    [ompi_cv_fortran_ignore_tkr_data])
 
     # Note that we can only cache 1 value at a time, but this test
@@ -89,7 +89,7 @@ AC_DEFUN([_OMPI_FORTRAN_CHECK_IGNORE_TKR], [
               [!DEC\$ ATTRIBUTES NO_ARG_CHECK],
               [happy=1], [happy=0])])
     # Solaris Studio compilers
-    # Note that due to a compiler bug, we have been advised by Oracle to 
+    # Note that due to a compiler bug, we have been advised by Oracle to
     # use the "character(*)" type
     AS_IF([test $happy -eq 0],
           [OMPI_FORTRAN_CHECK_IGNORE_TKR_SUB(
@@ -109,7 +109,7 @@ AC_DEFUN([_OMPI_FORTRAN_CHECK_IGNORE_TKR], [
               [!IBM* IGNORE_TKR],
               [happy=1], [happy=0])])
 
-    AS_VAR_SET(fortran_ignore_tkr_data, 
+    AS_VAR_SET(fortran_ignore_tkr_data,
                [${happy}:${ompi_fortran_ignore_tkr_type}:${ompi_fortran_ignore_tkr_predecl}])
 
     # Now put the orignal CACHE_CHECK MSG_CHECKING back so that it can
@@ -156,7 +156,7 @@ AC_DEFUN([OMPI_FORTRAN_CHECK_IGNORE_TKR_SUB], [
   complex :: buffer3(4,4)
   complex, pointer, dimension(:,:) :: ptr
   target :: buffer3
-  ptr => buffer3  
+  ptr => buffer3
 
 ! Set some known values (somewhat irrelevant for this test, but just be
 ! sure that the values are initialized)
@@ -173,7 +173,7 @@ AC_DEFUN([OMPI_FORTRAN_CHECK_IGNORE_TKR_SUB], [
 ! Force us through an assumed shape
   call force_assumed_shape(buffer3, count)
 ! Force a pointer call through an assumed shape (!)
-  ptr => buffer3  
+  ptr => buffer3
 
   end program
 
@@ -183,7 +183,7 @@ AC_DEFUN([OMPI_FORTRAN_CHECK_IGNORE_TKR_SUB], [
     call foo(a, count)
   end subroutine force_assumed_shape
 
-! Autoconf puts "end" after the last line  
+! Autoconf puts "end" after the last line
   subroutine bogus
 ]]),
                     [msg=yes

@@ -5,15 +5,15 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -80,7 +80,7 @@ void ompi_igatherv_f(char *sendbuf, MPI_Fint *sendcount, MPI_Fint *sendtype,
     c_comm = MPI_Comm_f2c(*comm);
     c_sendtype = MPI_Type_f2c(*sendtype);
     c_recvtype = MPI_Type_f2c(*recvtype);
-    
+
     MPI_Comm_size(c_comm, &size);
     OMPI_ARRAY_FINT_2_INT(recvcounts, size);
     OMPI_ARRAY_FINT_2_INT(displs, size);
@@ -93,7 +93,7 @@ void ompi_igatherv_f(char *sendbuf, MPI_Fint *sendcount, MPI_Fint *sendtype,
                          c_sendtype, recvbuf,
                          OMPI_ARRAY_NAME_CONVERT(recvcounts),
                          OMPI_ARRAY_NAME_CONVERT(displs),
-                         c_recvtype, 
+                         c_recvtype,
                          OMPI_FINT_2_INT(*root),
                           c_comm, &c_request);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);

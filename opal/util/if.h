@@ -5,18 +5,18 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
- *                         reserved. 
+ *                         reserved.
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -51,32 +51,32 @@ BEGIN_C_DECLS
     (((n1) << 24) & 0xFF000000) |                   \
     (((n2) << 16) & 0x00FF0000) |                   \
     (((n3) <<  8) & 0x0000FF00) |                   \
-    ( (n4)        & 0x000000FF)        
-        
+    ( (n4)        & 0x000000FF)
+
 /**
  *  Lookup an interface by name and return its primary address.
- *  
+ *
  *  @param if_name (IN)   Interface name
  *  @param if_addr (OUT)  Interface address buffer
  *  @param size    (IN)   Interface address buffer size
  */
-OPAL_DECLSPEC int opal_ifnametoaddr(const char* if_name, 
+OPAL_DECLSPEC int opal_ifnametoaddr(const char* if_name,
                                     struct sockaddr* if_addr,
                                     int size);
 
 /**
  *  Lookup an interface by address and return its name.
- *  
+ *
  *  @param if_addr (IN)   Interface address (hostname or dotted-quad)
  *  @param if_name (OUT)  Interface name buffer
  *  @param size    (IN)   Interface name buffer size
  */
-OPAL_DECLSPEC int opal_ifaddrtoname(const char* if_addr, 
+OPAL_DECLSPEC int opal_ifaddrtoname(const char* if_addr,
                                     char* if_name, int size);
 
 /**
  *  Lookup an interface by name and return its opal_list index.
- *  
+ *
  *  @param if_name (IN)  Interface name
  *  @return              Interface opal_list index
  */
@@ -84,7 +84,7 @@ OPAL_DECLSPEC int opal_ifnametoindex(const char* if_name);
 
 /**
  *  Lookup an interface by name and return its kernel index.
- *  
+ *
  *  @param if_name (IN)  Interface name
  *  @return              Interface kernel index
  */
@@ -99,7 +99,7 @@ OPAL_DECLSPEC int16_t opal_ifaddrtokindex(const char* if_addr);
 
 /**
  *  Lookup an interface by opal_list index and return its kernel index.
- *  
+ *
  *  @param if_name (IN)  Interface opal_list index
  *  @return              Interface kernel index
  */
@@ -113,13 +113,13 @@ OPAL_DECLSPEC int opal_ifcount(void);
 /**
  *  Returns the index of the first available interface.
  */
-OPAL_DECLSPEC int opal_ifbegin(void); 
+OPAL_DECLSPEC int opal_ifbegin(void);
 
 /**
  *  Lookup the current position in the interface list by
  *  index and return the next available index (if it exists).
  *
- *  @param if_index   Returns the next available index from the 
+ *  @param if_index   Returns the next available index from the
  *                    current position.
  */
 OPAL_DECLSPEC int opal_ifnext(int if_index);

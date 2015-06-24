@@ -133,8 +133,8 @@ int mca_sharedfp_lockedfile_write_ordered (mca_io_ompio_file_t *fh,
 	}
     }
 
-    ret = sh->comm->c_coll.coll_gather ( &sendBuff, sendcnt, OMPI_OFFSET_DATATYPE, buff, recvcnt, 
-					 OMPI_OFFSET_DATATYPE, 0, sh->comm, 
+    ret = sh->comm->c_coll.coll_gather ( &sendBuff, sendcnt, OMPI_OFFSET_DATATYPE, buff, recvcnt,
+					 OMPI_OFFSET_DATATYPE, 0, sh->comm,
 					 sh->comm->c_coll.coll_gather_module );
     if ( OMPI_SUCCESS != ret ) {
 	goto exit;

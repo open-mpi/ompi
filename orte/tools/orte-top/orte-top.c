@@ -110,56 +110,56 @@ static bool p_found = false;
 
 opal_cmd_line_init_t cmd_line_opts[] = {
     { NULL,
-      'h', NULL, "help", 
+      'h', NULL, "help",
       0,
       &help, OPAL_CMD_LINE_TYPE_BOOL,
       "This help message" },
 
     { NULL,
-      '\0', "pid", "pid", 
+      '\0', "pid", "pid",
       1,
       &hnppidstr, OPAL_CMD_LINE_TYPE_STRING,
       "The pid of the mpirun that you wish to query/monitor" },
 
     { NULL,
-      '\0', "uri", "uri", 
+      '\0', "uri", "uri",
       1,
       &hnpuristr, OPAL_CMD_LINE_TYPE_STRING,
       "The uri of the mpirun that you wish to query/monitor" },
-    
+
     { NULL,
-      '\0', "rank", "rank", 
+      '\0', "rank", "rank",
       1,
       &ranks, OPAL_CMD_LINE_TYPE_STRING,
       "Rank whose resource usage is to be displayed/monitored" },
 
     { NULL,
-      '\0', "update-rate", "update-rate", 
+      '\0', "update-rate", "update-rate",
       1,
       &update_rate, OPAL_CMD_LINE_TYPE_INT,
       "Number of seconds between updates" },
-    
+
     { NULL,
-      '\0', "timestamp", "timestamp", 
+      '\0', "timestamp", "timestamp",
       0,
       &timestamp, OPAL_CMD_LINE_TYPE_BOOL,
       "Time stamp each sample" },
-    
+
     { NULL,
-      '\0', "log-file", "log-file", 
+      '\0', "log-file", "log-file",
       1,
       &logfile, OPAL_CMD_LINE_TYPE_STRING,
       "Output file for returned statistics" },
- 
+
     { NULL,
-      '\0', "bynode", "bynode", 
+      '\0', "bynode", "bynode",
       0,
       &bynode, OPAL_CMD_LINE_TYPE_BOOL,
       "Group statistics by node, sorted by rank within each node" },
 
     /* End of list */
     { NULL,
-      '\0', NULL, NULL, 
+      '\0', NULL, NULL,
       0,
       NULL, OPAL_CMD_LINE_TYPE_NULL,
       NULL }
@@ -206,11 +206,11 @@ main(int argc, char *argv[])
     int i;
     orte_vpid_t vstart, vend;
     int vint;
-    
+
     /***************
      * Initialize
      ***************/
-    
+
     /*
      * Make sure to init util before parse_args
      * to ensure installdirs is setup properly
@@ -219,7 +219,7 @@ main(int argc, char *argv[])
     if( ORTE_SUCCESS != (ret = opal_init_util(&argc, &argv)) ) {
         return ret;
     }
-    
+
     /* initialize the globals */
     help = false;
     hnppidstr = NULL;
@@ -228,10 +228,10 @@ main(int argc, char *argv[])
     update_rate = -1;
     timestamp = false;
     logfile = NULL;
-    
+
     /* Parse the command line options */
     opal_cmd_line_create(&cmd_line, cmd_line_opts);
-    
+
     mca_base_open();
     mca_base_cmd_line_setup(&cmd_line);
     ret = opal_cmd_line_parse(&cmd_line, false, argc, argv);
@@ -242,14 +242,14 @@ main(int argc, char *argv[])
         }
         return 1;
     }
-    
+
     /**
      * Now start parsing our specific arguments
      */
     if (help) {
         char *str, *args = NULL;
         args = opal_cmd_line_get_usage_msg(&cmd_line);
-        str = opal_show_help_string("help-orte-top.txt", "orte-top:usage", 
+        str = opal_show_help_string("help-orte-top.txt", "orte-top:usage",
                                     true, "orte-top", args);
         if (NULL != str) {
             printf("%s", str);
@@ -259,11 +259,11 @@ main(int argc, char *argv[])
         /* If we show the help message, that should be all we do */
         return 0;
     }
-    
+
     /* we are never allowed to operate as a distributed tool,
      * so insist on the ess/tool component */
     opal_setenv("OMPI_MCA_ess", "tool", true, &environ);
-    
+
     /***************************
      * We need all of OPAL and the TOOL portion of ORTE
      ***************************/
@@ -271,10 +271,10 @@ main(int argc, char *argv[])
         orte_finalize();
         return 1;
     }
-    
+
    /* setup the list for recvd stats */
     OBJ_CONSTRUCT(&recvd_stats, opal_list_t);
-    
+
     /** setup callbacks for abort signals - from this point
      * forward, we need to abort in a manner that allows us
      * to cleanup
@@ -285,7 +285,7 @@ main(int argc, char *argv[])
     opal_event_signal_set(orte_event_base, &int_handler, SIGINT,
                           abort_exit_callback, &int_handler);
     opal_event_signal_add(&int_handler, NULL);
-    
+
     /*
      * Must specify the mpirun pid
      */
@@ -294,7 +294,7 @@ main(int argc, char *argv[])
             0 == strncmp(hnppidstr, "FILE", strlen("FILE"))) {
             char input[1024], *filename;
             FILE *fp;
-            
+
             /* it is a file - get the filename */
             filename = strchr(hnppidstr, ':');
             if (NULL == filename) {
@@ -304,14 +304,14 @@ main(int argc, char *argv[])
                 exit(1);
             }
             ++filename; /* space past the : */
-            
+
             if (0 >= strlen(filename)) {
                 /* they forgot to give us the name! */
                 orte_show_help("help-orte-top.txt", "orte-top:hnp-filename-bad", true, "pid", hnppidstr);
                 orte_finalize();
                 exit(1);
             }
-            
+
             /* open the file and extract the pid */
             fp = fopen(filename, "r");
             if (NULL == fp) { /* can't find or read file! */
@@ -344,7 +344,7 @@ main(int argc, char *argv[])
             orte_finalize();
             exit(1);
         }
-        
+
         /*
          * For each hnp in the listing
          */
@@ -359,7 +359,7 @@ main(int argc, char *argv[])
             OBJ_RELEASE(hnp);
         }
         OBJ_DESTRUCT(&hnp_list);
-        
+
         /* if we get here without finding the one we wanted, then abort */
         if (NULL == target_hnp) {
             orte_show_help("help-orte-top.txt", "orte-top:pid-not-found", true, hnppid);
@@ -371,7 +371,7 @@ main(int argc, char *argv[])
             0 == strncmp(hnpuristr, "FILE", strlen("FILE"))) {
             char input[1024], *filename;
             FILE *fp;
-            
+
             /* it is a file - get the filename */
             filename = strchr(hnpuristr, ':');
             if (NULL == filename) {
@@ -381,14 +381,14 @@ main(int argc, char *argv[])
                 exit(1);
             }
             ++filename; /* space past the : */
-            
+
             if (0 >= strlen(filename)) {
                 /* they forgot to give us the name! */
                 orte_show_help("help-orte-top.txt", "orte-top:hnp-filename-bad", true, "uri", hnpuristr);
                 orte_finalize();
                 exit(1);
             }
-            
+
             /* open the file and extract the uri */
             fp = fopen(filename, "r");
             if (NULL == fp) { /* can't find or read file! */
@@ -432,10 +432,10 @@ main(int argc, char *argv[])
         orte_finalize();
         exit(1);
     }
-    
+
     /* set the target hnp as our lifeline so we will terminate if it exits */
     orte_routed.set_lifeline(&target_hnp->name);
-    
+
     /* if an output file was specified, open it */
     if (NULL != logfile) {
         fp = fopen(logfile, "w");
@@ -447,15 +447,15 @@ main(int argc, char *argv[])
     } else {
         fp = stdout;
     }
-    
+
     /* setup a non-blocking recv to get answers - we don't know how
      * many daemons are going to send replies, so we just have to
      * accept whatever comes back
      */
     orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_TOOL,
                             ORTE_RML_NON_PERSISTENT, recv_stats, NULL);
-    
-    
+
+
     /* setup the command to get the resource usage */
     OBJ_CONSTRUCT(&cmdbuf, opal_buffer_t);
     command = ORTE_DAEMON_TOP_CMD;
@@ -463,7 +463,7 @@ main(int argc, char *argv[])
         ORTE_ERROR_LOG(ret);
         goto cleanup;
     }
-    
+
     proc.jobid = ORTE_PROC_MY_NAME->jobid+1;  /* only support initial launch at this time */
 
     /* parse the rank list - this can be a comma-separated list of ranks,
@@ -479,7 +479,7 @@ main(int argc, char *argv[])
         }
         goto SEND;
     }
-    
+
     /* split on commas */
     r1 = opal_argv_split(ranks, ',');
     /* for each resulting element, check for range */
@@ -514,7 +514,7 @@ main(int argc, char *argv[])
         }
         opal_argv_free(r2);
     }
-    
+
 SEND:
     if (NULL != r1) {
         opal_argv_free(r1);
@@ -543,20 +543,20 @@ cleanup:
         fclose(fp);
     }
     orte_finalize();
-    
+
     return ret;
 }
 
 static void abort_exit_callback(int fd, short ign, void *arg)
 {
     opal_list_item_t *item;
-    
+
     /* Remove the TERM and INT signal handlers */
     opal_event_signal_del(&term_handler);
     OBJ_DESTRUCT(&term_handler);
     opal_event_signal_del(&int_handler);
     OBJ_DESTRUCT(&int_handler);
-    
+
     while (NULL != (item  = opal_list_remove_first(&recvd_stats))) {
         OBJ_RELEASE(item);
     }
@@ -593,7 +593,7 @@ static void recv_stats(int status, orte_process_name_t* sender,
             goto cleanup;
         }
     }
-    
+
     n = 1;
     while (ORTE_SUCCESS == opal_dss.unpack(buffer, &proc, &n, ORTE_NAME)) {
         n = 1;
@@ -605,31 +605,31 @@ static void recv_stats(int status, orte_process_name_t* sender,
         if (!fields_set) {
             int tmp;
             char *ctmp;
-            
+
             tmp = strlen(stats->node);
             if (nodefield < tmp) {
                 nodefield = tmp;
             }
-            
+
             asprintf(&ctmp, "%d", stats->rank);
             tmp = strlen(ctmp);
             free(ctmp);
             if (rankfield < tmp) {
                 rankfield = tmp;
             }
-            
+
             asprintf(&ctmp, "%lu", (unsigned long)stats->pid);
             tmp = strlen(ctmp);
             free(ctmp);
             if (pidfield < tmp) {
                 pidfield = tmp;
             }
-            
+
             tmp = strlen(stats->cmd);
             if (cmdfield < tmp) {
                 cmdfield = tmp;
             }
-            
+
             if (0 <= stats->priority) {
                 pri_found = true;
                 asprintf(&ctmp, "%d", stats->priority);
@@ -639,7 +639,7 @@ static void recv_stats(int status, orte_process_name_t* sender,
                     prifield = tmp;
                 }
             }
-            
+
             if (0 <= stats->num_threads) {
                 thr_found = true;
                 asprintf(&ctmp, "%d", stats->num_threads);
@@ -649,7 +649,7 @@ static void recv_stats(int status, orte_process_name_t* sender,
                     thrfield = tmp;
                 }
             }
-            
+
             if (0 < stats->vsize) {
                 vsize_found = true;
                 asprintf(&ctmp, "%8.2f", stats->vsize);
@@ -659,7 +659,7 @@ static void recv_stats(int status, orte_process_name_t* sender,
                     vsizefield = tmp;
                 }
             }
-            
+
             if (0 < stats->rss) {
                 rss_found = true;
                 asprintf(&ctmp, "%8.2f", stats->rss);
@@ -669,7 +669,7 @@ static void recv_stats(int status, orte_process_name_t* sender,
                     rssfield = tmp;
                 }
             }
-            
+
             if (0 < stats->peak_vsize) {
                 pkv_found = true;
                 asprintf(&ctmp, "%8.2f", stats->peak_vsize);
@@ -679,7 +679,7 @@ static void recv_stats(int status, orte_process_name_t* sender,
                     pkvfield = tmp;
                 }
             }
-            
+
             if (0 <= stats->processor) {
                 p_found = true;
                 asprintf(&ctmp, "%d", stats->processor);
@@ -694,13 +694,13 @@ static void recv_stats(int status, orte_process_name_t* sender,
         opal_list_append(&recvd_stats, &stats->super);
     }
 
- cleanup:    
+ cleanup:
     /* check for completion */
     num_recvd++;
     if (num_replies <= num_recvd) {
         /* flag that field sizes are set */
         fields_set = true;
-    
+
         /* pretty-print what we got */
         pretty_print();
 
@@ -756,14 +756,14 @@ static void print_ranks(opal_list_t *statlist)
         }
         memset(pretty_time, 0, sizeof(pretty_time));
         if (pstats->time.tv_sec >= 3600) {
-            snprintf(pretty_time, sizeof(pretty_time), "%5.1fH", 
+            snprintf(pretty_time, sizeof(pretty_time), "%5.1fH",
                      (double)pstats->time.tv_sec / (double)(3600));
         } else {
             snprintf(pretty_time, sizeof(pretty_time), "%3ld:%02ld",
                      (unsigned long)pstats->time.tv_sec/60,
                      (unsigned long)pstats->time.tv_sec % 60);
         }
-        
+
         if (bynode) {
             /* print blanks in the nodename field */
             for (i=0; i < lennode; i++) {
@@ -811,7 +811,7 @@ static void pretty_print(void)
     opal_pstats_t *stats;
     opal_list_t tmplist;
     char *node;
-    
+
     if (bynode) {
         if (need_header) {
             print_headers();
@@ -862,10 +862,10 @@ static void pretty_print(void)
         }
         print_ranks(&recvd_stats);
     }
-    
+
     /* provide some separation between iterations */
     fprintf(fp, "\n");
-    
+
     /* if we have printed more than MAX_LINES since the last header,
      * flag that we need to print the header next time
      */
@@ -881,13 +881,13 @@ static void print_headers(void)
     int num_fields = 0;
     int i;
     int linelen;
-    
+
     lennode = strlen("Nodename");
     if (nodefield > lennode) {
         lennode = nodefield;
     }
     num_fields++;
-    
+
     lenrank = strlen("Rank");
     if (rankfield > lenrank) {
         lenrank = rankfield;
@@ -922,7 +922,7 @@ static void print_headers(void)
         }
         num_fields++;
     }
-    
+
     if (thr_found) {
         lenthr = strlen("#threads");
         if (thrfield > lenthr) {
@@ -930,7 +930,7 @@ static void print_headers(void)
         }
         num_fields++;
     }
-    
+
     if (vsize_found) {
         lenvsize = strlen("Vsize");
         if (vsizefield > lenvsize) {
@@ -938,7 +938,7 @@ static void print_headers(void)
         }
         num_fields++;
     }
-    
+
     if (rss_found) {
         lenrss = strlen("RSS");
         if (rssfield > lenrss) {
@@ -946,7 +946,7 @@ static void print_headers(void)
         }
         num_fields++;
     }
-    
+
     if (pkv_found) {
         lenpkv = strlen("Peak Vsize");
         if (pkvfield > lenpkv) {
@@ -962,17 +962,17 @@ static void print_headers(void)
         }
         num_fields++;
     }
-    
+
     linelen = lennode + lenrank + lenpid + lencmd + lenstate + lentime + lenpri + lenthr + lenvsize + lenrss + lenpkv + lensh + lenp;
     /* add spacing */
     linelen += num_fields * 3;
-    
+
     /* print the rip line */
     for(i = 0; i < linelen; ++i) {
         fprintf(fp, "=");
     }
     fprintf(fp, "\n");
-    
+
     /* print the header */
     if (bynode) {
         fprintf(fp, "%*s | ", lennode   , "Nodename");
@@ -1004,11 +1004,11 @@ static void print_headers(void)
         fprintf(fp, "%*s | ", lenp   , "Processor");
     }
     fprintf(fp, "\n");
-    
+
     /* print the separator */
     for(i = 0; i < linelen; ++i) {
         fprintf(fp, "-");
     }
     fprintf(fp, "\n");
-    
+
 }

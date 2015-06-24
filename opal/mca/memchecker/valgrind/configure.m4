@@ -1,12 +1,12 @@
 # -*- shell-script -*-
 #
-# Copyright (c) 2004-2008 High Performance Computing Center Stuttgart, 
+# Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2008-2014 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
-# 
+#
 # Additional copyrights may follow
-# 
+#
 # $HEADER$
 #
 
@@ -40,7 +40,7 @@ AC_DEFUN([MCA_opal_memchecker_valgrind_CONFIG],[
                   # We need this -I to stay in CPPFLAGS when we're done
                   CPPFLAGS="$CPPFLAGS -I$with_valgrind/include"
                   opal_memchecker_valgrind_save_CPPFLAGS=$CPPFLAGS])
-           AC_CHECK_HEADERS([valgrind/valgrind.h], 
+           AC_CHECK_HEADERS([valgrind/valgrind.h],
                  [AC_MSG_CHECKING([for VALGRIND_CHECK_MEM_IS_ADDRESSABLE])
                   AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
 #include "valgrind/memcheck.h"

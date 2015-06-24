@@ -1,11 +1,11 @@
 /*
  * Copyright (c) 2011-2013 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights reserved. 
+ * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights reserved.
  *
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  *
  * When this component is used, this file is included in the rest of
@@ -80,7 +80,7 @@ OPAL_DECLSPEC opal_event_t* opal_event_alloc(void);
 #define opal_event_free(x) event_free((x))
 
 /* Timer APIs */
-#define opal_event_evtimer_new(b, cb, arg) opal_event_new((b), -1, 0, (cb), (arg)) 
+#define opal_event_evtimer_new(b, cb, arg) opal_event_new((b), -1, 0, (cb), (arg))
 
 #define opal_event_evtimer_add(x, tv) opal_event_add((x), (tv))
 

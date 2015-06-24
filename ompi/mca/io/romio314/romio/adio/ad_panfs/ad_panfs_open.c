@@ -1,5 +1,5 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *   ad_panfs_open.c
  *
  *   Copyright (C) 2001 University of Chicago.
@@ -30,7 +30,7 @@ void ADIOI_PANFS_Open(ADIO_File fd, int *error_code)
         pan_fs_client_layout_agg_type_t layout_type = PAN_FS_CLIENT_LAYOUT_TYPE__DEFAULT;
         unsigned long int layout_stripe_unit = 0;
         unsigned long int layout_parity_stripe_width = 0;
-        unsigned long int layout_parity_stripe_depth = 0; 
+        unsigned long int layout_parity_stripe_depth = 0;
         unsigned long int layout_total_num_comps = 0;
         pan_fs_client_layout_visit_t layout_visit_policy  = PAN_FS_CLIENT_LAYOUT_VISIT__ROUND_ROBIN;
         int myrank;
@@ -39,32 +39,32 @@ void ADIOI_PANFS_Open(ADIO_File fd, int *error_code)
 
         *error_code = MPI_SUCCESS;
         value = (char *) ADIOI_Malloc((MPI_MAX_INFO_VAL+1)*sizeof(char));
-        ADIOI_Info_get(fd->info, "panfs_layout_type", MPI_MAX_INFO_VAL, 
+        ADIOI_Info_get(fd->info, "panfs_layout_type", MPI_MAX_INFO_VAL,
                  value, &flag);
         if (flag) {
             layout_type = strtoul(value,NULL,10);
         }
-        ADIOI_Info_get(fd->info, "panfs_layout_stripe_unit", MPI_MAX_INFO_VAL, 
+        ADIOI_Info_get(fd->info, "panfs_layout_stripe_unit", MPI_MAX_INFO_VAL,
                  value, &flag);
         if (flag) {
             layout_stripe_unit = strtoul(value,NULL,10);
         }
-        ADIOI_Info_get(fd->info, "panfs_layout_total_num_comps", MPI_MAX_INFO_VAL, 
+        ADIOI_Info_get(fd->info, "panfs_layout_total_num_comps", MPI_MAX_INFO_VAL,
                  value, &flag);
         if (flag) {
             layout_total_num_comps = strtoul(value,NULL,10);
         }
-        ADIOI_Info_get(fd->info, "panfs_layout_parity_stripe_width", MPI_MAX_INFO_VAL, 
+        ADIOI_Info_get(fd->info, "panfs_layout_parity_stripe_width", MPI_MAX_INFO_VAL,
                  value, &flag);
         if (flag) {
             layout_parity_stripe_width = strtoul(value,NULL,10);
         }
-        ADIOI_Info_get(fd->info, "panfs_layout_parity_stripe_depth", MPI_MAX_INFO_VAL, 
+        ADIOI_Info_get(fd->info, "panfs_layout_parity_stripe_depth", MPI_MAX_INFO_VAL,
                  value, &flag);
         if (flag) {
             layout_parity_stripe_depth = strtoul(value,NULL,10);
         }
-        ADIOI_Info_get(fd->info, "panfs_layout_visit_policy", MPI_MAX_INFO_VAL, 
+        ADIOI_Info_get(fd->info, "panfs_layout_visit_policy", MPI_MAX_INFO_VAL,
                  value, &flag);
         if (flag) {
             layout_visit_policy = strtoul(value,NULL,10);
@@ -145,13 +145,13 @@ void ADIOI_PANFS_Open(ADIO_File fd, int *error_code)
                 MPI_Abort(MPI_COMM_WORLD, 1);
             }
         }
-        /* Create the file via ioctl() or open(). ADIOI_PANFS_Open's caller 
+        /* Create the file via ioctl() or open(). ADIOI_PANFS_Open's caller
          * already optimizes performance by only calling this function with
-         * ADIO_CREATE on rank 0.  Therefore, we don't need to worry about 
+         * ADIO_CREATE on rank 0.  Therefore, we don't need to worry about
          * implementing that optimization here. */
-        if((layout_type == PAN_FS_CLIENT_LAYOUT_TYPE__RAID0) || (layout_type == PAN_FS_CLIENT_LAYOUT_TYPE__RAID1_5_PARITY_STRIPE) 
+        if((layout_type == PAN_FS_CLIENT_LAYOUT_TYPE__RAID0) || (layout_type == PAN_FS_CLIENT_LAYOUT_TYPE__RAID1_5_PARITY_STRIPE)
                 || (layout_type == PAN_FS_CLIENT_LAYOUT_TYPE__RAID10)) {
-            pan_fs_client_layout_create_args_t file_create_args;    
+            pan_fs_client_layout_create_args_t file_create_args;
             int fd_dir;
             char* slash;
             struct stat stat_buf;
@@ -185,7 +185,7 @@ void ADIOI_PANFS_Open(ADIO_File fd, int *error_code)
                 if (!slash)
                     ADIOI_Strncpy(path, ".", 2);
                 else {
-                    if (slash == path) 
+                    if (slash == path)
                         *(path + 1) = '\0';
                     else *slash = '\0';
                 }
@@ -210,7 +210,7 @@ void ADIOI_PANFS_Open(ADIO_File fd, int *error_code)
                     file_create_args.mode = perm;
                     file_create_args.version = PAN_FS_CLIENT_LAYOUT_VERSION;
                     file_create_args.flags = PAN_FS_CLIENT_LAYOUT_CREATE_F__NONE;
-                    ADIOI_Strncpy(file_create_args.filename, file_name_ptr, strlen(fd->filename)+1); 
+                    ADIOI_Strncpy(file_create_args.filename, file_name_ptr, strlen(fd->filename)+1);
                     file_create_args.layout.agg_type = layout_type;
                     file_create_args.layout.layout_is_valid = 1;
                     if(layout_type == PAN_FS_CLIENT_LAYOUT_TYPE__RAID1_5_PARITY_STRIPE)
@@ -266,7 +266,7 @@ void ADIOI_PANFS_Open(ADIO_File fd, int *error_code)
 	amode = amode | O_EXCL;
 
 	value = (char *) ADIOI_Malloc((MPI_MAX_INFO_VAL+1)*sizeof(char));
-	ADIOI_Info_get(fd->info, "panfs_concurrent_write", MPI_MAX_INFO_VAL, 
+	ADIOI_Info_get(fd->info, "panfs_concurrent_write", MPI_MAX_INFO_VAL,
 		     value, &flag);
 	if (flag) {
         unsigned long int concurrent_write = strtoul(value,NULL,10);
@@ -293,7 +293,7 @@ void ADIOI_PANFS_Open(ADIO_File fd, int *error_code)
             /* Error - set layout type to unknown */
 	        ADIOI_Info_set(fd->info, "panfs_layout_type", "PAN_FS_CLIENT_LAYOUT_TYPE__INVALID");
         }
-        else 
+        else
         {
             ADIOI_Snprintf(temp_buffer,TEMP_BUFFER_SIZE,"%u",file_query_args.layout.agg_type);
             ADIOI_Info_set(fd->info, "panfs_layout_type", temp_buffer);

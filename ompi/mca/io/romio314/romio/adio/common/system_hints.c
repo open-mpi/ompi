@@ -1,7 +1,7 @@
-/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- 
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*-
  * vim: ts=8 sts=4 sw=4 noexpandtab
  *
- *   Copyright (C) 2007 UChicago/Argonne LLC. 
+ *   Copyright (C) 2007 UChicago/Argonne LLC.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -62,7 +62,7 @@ static int find_file(void)
 {
     int fd=-1;
     char * hintfile;
-    
+
     hintfile = getenv(ROMIO_HINT_ENV_VAR);
     if(hintfile)
     fd = open(hintfile, O_RDONLY);
@@ -74,11 +74,11 @@ static int find_file(void)
 
 /* parse the file-of-hints.  Format is zero or more lines of "<key> <value>\n".
  * A # in collumn zero is a comment and the line will be ignored.  Do our best
- * to ignore badly formed lines too. 
+ * to ignore badly formed lines too.
  *
  * The caller provides an 'info' object.  Each key-value pair found by the
  * parser will get added to the info object.  any keys already set will be left
- * alone on the assumption that the caller knows best. 
+ * alone on the assumption that the caller knows best.
  *
  * because MPI-IO hints are optional, we can get away with limited error
  * reporting.
@@ -110,19 +110,19 @@ static int file_to_info_all(int fd, MPI_Info info, int rank, MPI_Comm comm)
     if (token == NULL)
 	goto fn_exit;
     do {
-	if ( (key = strtok_r(token, " \t", &pos2)) == NULL) 
+	if ( (key = strtok_r(token, " \t", &pos2)) == NULL)
 	    /* malformed line: found no items */
 	    continue;
-	if (token[0] == '#') 
+	if (token[0] == '#')
 	    /* ignore '#'-delimited comments */
 	    continue;
-	if ( (val = strtok_r(NULL, " \t", &pos2))  == NULL) 
+	if ( (val = strtok_r(NULL, " \t", &pos2))  == NULL)
 	    /* malformed line: found key without value */
 	    continue;
-	if ( (garbage = strtok_r(NULL, " \t", &pos2)) != NULL) 
+	if ( (garbage = strtok_r(NULL, " \t", &pos2)) != NULL)
 	    /* malformed line: more than two items */
 	    continue;
-	    
+
 #ifdef SYSHINT_DEBUG
 	printf("found: key=%s val=%s\n", key, val);
 #endif
@@ -155,9 +155,9 @@ void ADIOI_process_system_hints(ADIO_File fd, MPI_Info info)
 
 /* given 'info', incorporate any hints in 'sysinfo' that are not already set
  * into 'new_info'.  Caller must free 'new_info' later. */
-void ADIOI_incorporate_system_hints(MPI_Info info, 
-	MPI_Info sysinfo, 
-	MPI_Info *new_info) 
+void ADIOI_incorporate_system_hints(MPI_Info info,
+	MPI_Info sysinfo,
+	MPI_Info *new_info)
 {
     int i, nkeys_sysinfo, flag=0; /* must initialize flag to 0 */
 
@@ -174,7 +174,7 @@ void ADIOI_incorporate_system_hints(MPI_Info info,
 	return;
     }
 
-    if (info == MPI_INFO_NULL) 
+    if (info == MPI_INFO_NULL)
 	MPI_Info_create(new_info);
     else
 	MPI_Info_dup(info, new_info);
@@ -182,7 +182,7 @@ void ADIOI_incorporate_system_hints(MPI_Info info,
     for (i=0; i<nkeys_sysinfo; i++) {
 	MPI_Info_get_nthkey(sysinfo, i, key);
 	/* don't care about the value, just want to know if hint set already*/
-	if (info != MPI_INFO_NULL) ADIOI_Info_get(info, key, 1, val, &flag); 
+	if (info != MPI_INFO_NULL) ADIOI_Info_get(info, key, 1, val, &flag);
 	if (flag == 1) continue;  /* skip any hints already set by user */
 	ADIOI_Info_get(sysinfo, key, MPI_MAX_INFO_VAL-1, val, &flag);
 	ADIOI_Info_set(*new_info, key, val);

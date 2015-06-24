@@ -6,22 +6,22 @@
  * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006-2014 Los Alamos National Security, LLC.  All rights
- *                         reserved. 
+ *                         reserved.
  * Copyright (c) 2006      University of Houston. All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
  *
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -157,7 +157,7 @@ int ompi_mpi_finalize(void)
     /* NOTE: MPI-2.1 requires that MPI_FINALIZE is "collective" across
        *all* connected processes.  This only means that all processes
        have to call it.  It does *not* mean that all connected
-       processes need to synchronize (either directly or indirectly).  
+       processes need to synchronize (either directly or indirectly).
 
        For example, it is quite easy to construct complicated
        scenarios where one job is "connected" to another job via
@@ -291,8 +291,8 @@ int ompi_mpi_finalize(void)
     MCA_PML_CALL(del_procs(procs, nprocs));
     free(procs);
 
-    /* free pml resource */ 
-    if(OMPI_SUCCESS != (ret = mca_pml_base_finalize())) { 
+    /* free pml resource */
+    if(OMPI_SUCCESS != (ret = mca_pml_base_finalize())) {
       return ret;
     }
 
@@ -347,17 +347,17 @@ int ompi_mpi_finalize(void)
     if (OMPI_SUCCESS != (ret = mca_base_framework_close(&ompi_pubsub_base_framework) ) ) {
         return ret;
     }
-    
+
     /* finalize the DPM framework */
     if ( OMPI_SUCCESS != (ret = mca_base_framework_close(&ompi_dpm_base_framework))) {
         return ret;
     }
-    
+
     /* free internal error resources */
     if (OMPI_SUCCESS != (ret = ompi_errcode_intern_finalize())) {
         return ret;
     }
-     
+
     /* free error code resources */
     if (OMPI_SUCCESS != (ret = ompi_mpi_errcode_finalize())) {
         return ret;

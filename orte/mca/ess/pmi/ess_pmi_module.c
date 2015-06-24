@@ -5,18 +5,18 @@
  * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.
- *                         All rights reserved. 
+ *                         All rights reserved.
  * Copyright (c) 2013-2014 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  *
  */
@@ -95,7 +95,7 @@ static int rte_init(void)
         error = "orte_ess_base_std_prolog";
         goto error;
     }
-    
+
     /* we don't have to call pmix.init because the pmix select did it */
 
     /****   THE FOLLOWING ARE REQUIRED VALUES   ***/
@@ -252,7 +252,7 @@ static int rte_init(void)
         free(rmluri);
     }
     OPAL_LIST_DESTRUCT(&vals);
-    
+
     /* push our hostname so others can find us, if they need to */
     OBJ_CONSTRUCT(&kvn, opal_value_t);
     kvn.key = strdup(OPAL_DSTORE_HOSTNAME);
@@ -347,13 +347,13 @@ static int rte_finalize(void)
         ORTE_ERROR_LOG(ret);
         return ret;
     }
-    
+
     /* mark us as finalized */
     if (NULL != opal_pmix.finalize) {
         opal_pmix.finalize();
         (void) mca_base_framework_close(&opal_pmix_base_framework);
     }
-        
+
     return ORTE_SUCCESS;
 }
 

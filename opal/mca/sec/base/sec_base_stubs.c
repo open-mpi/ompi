@@ -4,9 +4,9 @@
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -46,7 +46,7 @@ int opal_sec_base_get_cred(char *method,
     opal_sec_cred_t cred;
     opal_buffer_t buf;
     int rc;
-    
+
     opal_output_verbose(5, opal_sec_base_framework.framework_output,
                         "Requesting credential from source %s",
                         (NULL == method) ? "ANY" : method);
@@ -105,14 +105,14 @@ int opal_sec_base_validate(char *payload, size_t size, char **method)
     opal_buffer_t buf;
     int cnt, rc;
     opal_sec_cred_t cred = {.method = NULL, .credential = NULL};
-    
+
     opal_output_verbose(5, opal_sec_base_framework.framework_output,
                         "opal_sec: Received credential of size %lu",
                         (unsigned long)size);
-    
+
     OBJ_CONSTRUCT(&buf, opal_buffer_t);
     opal_dss.load(&buf, payload, size);
-    
+
     cnt = 1;
     while (OPAL_SUCCESS == (rc = opal_dss.unpack(&buf, &cred.method, &cnt, OPAL_STRING))) {
         opal_output_verbose(5, opal_sec_base_framework.framework_output,
@@ -159,7 +159,7 @@ int opal_sec_base_validate(char *payload, size_t size, char **method)
     }
     /* if we get here, then nothing authenticated */
     rc = OPAL_ERR_AUTHENTICATION_FAILED;
-    
+
  done:
     buf.base_ptr = NULL;
     OBJ_DESTRUCT(&buf);

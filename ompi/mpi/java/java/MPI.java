@@ -5,14 +5,14 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 /*
@@ -73,7 +73,7 @@ public static final Op MAX, MIN, SUM, PROD, LAND, BAND,
 /**
  * Global minimum operator.
  * <p>{@code MINLOC} and {@link #MAXLOC} can be used with each of the following
- * datatypes: {@link #INT2}, {@link #SHORT_INT}, {@link #LONG_INT}, 
+ * datatypes: {@link #INT2}, {@link #SHORT_INT}, {@link #LONG_INT},
  * {@link #FLOAT_INT} and {@link #DOUBLE_INT}.
  */
 public static final Op MINLOC;
@@ -451,7 +451,7 @@ private static native String [] Init_jni(String[] args);
  * @param args     arguments to the {@code main} method.
  * @param required desired level of thread support
  * @return provided level of thread support
- * @throws MPIException 
+ * @throws MPIException
  */
 public static int InitThread(String[] args, int required) throws MPIException
 {
@@ -469,7 +469,7 @@ private static native int InitThread_jni(String[] args, int required)
 /**
  * Java binding of the MPI operation {@code MPI_QUERY_THREAD}.
  * @return provided level of thread support
- * @throws MPIException 
+ * @throws MPIException
  */
 public static int queryThread() throws MPIException
 {
@@ -482,7 +482,7 @@ private static native int queryThread_jni() throws MPIException;
 /**
  * Java binding of the MPI operation {@code MPI_IS_THREAD_MAIN}.
  * @return true if it is the main thread
- * @throws MPIException 
+ * @throws MPIException
  */
 public static boolean isThreadMain() throws MPIException
 {
@@ -769,7 +769,7 @@ protected static void assertDirectBuffer(Buffer buf)
 /**
  * Asserts that buffers are direct.
  * @param sendbuf
- * @param recvbuf 
+ * @param recvbuf
  */
 protected static void assertDirectBuffer(Buffer sendbuf, Buffer recvbuf)
 {

@@ -277,7 +277,7 @@ predefined datatypes, and applications can create their own datatypes.
           creally created with MPI_TYPE_STRUCT, even though they're
           effectively equivalent).
     - <MPI_>TYPE_HINDEXED, TYPE_INDEXED, TYPE_HVECTOR, TYPE_VECTOR,
-      TYPE_STRUCT, TYPE_CONTIGUOUS, 
+      TYPE_STRUCT, TYPE_CONTIGUOUS,
 
   JMS: with the type map provided by MPI, a debugger can show "holes"
        in a datatype (potentially indicating missed optimizations by

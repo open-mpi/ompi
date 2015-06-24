@@ -5,16 +5,16 @@
  * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -103,8 +103,8 @@ typedef struct opal_atomic_lock_t opal_atomic_lock_t;
 /**********************************************************************
  *
  * Set or unset these macros in the architecture-specific atomic.h
- * files if we need to specify them as inline or non-inline 
- * 
+ * files if we need to specify them as inline or non-inline
+ *
  *********************************************************************/
 #if !OPAL_GCC_INLINE_ASSEMBLY
 #define OPAL_HAVE_INLINE_ATOMIC_MEM_BARRIER 0
@@ -133,9 +133,9 @@ typedef struct opal_atomic_lock_t opal_atomic_lock_t;
  * Load the appropriate architecture files and set some reasonable
  * default values for our support
  *
- *********************************************************************/ 
+ *********************************************************************/
 #if defined(DOXYGEN)
-/* don't include system-level gorp when generating doxygen files */ 
+/* don't include system-level gorp when generating doxygen files */
 #elif OPAL_ASSEMBLY_BUILTIN == OPAL_BUILTIN_SYNC
 #include "opal/sys/sync_builtin/atomic.h"
 #elif OPAL_ASSEMBLY_BUILTIN == OPAL_BUILTIN_OSX
@@ -206,7 +206,7 @@ typedef struct opal_atomic_lock_t opal_atomic_lock_t;
  */
 
 #if OPAL_HAVE_INLINE_ATOMIC_MEM_BARRIER
-static inline 
+static inline
 #endif
 void opal_atomic_mb(void);
 
@@ -221,7 +221,7 @@ void opal_atomic_mb(void);
  */
 
 #if OPAL_HAVE_INLINE_ATOMIC_MEM_BARRIER
-static inline 
+static inline
 #endif
 void opal_atomic_rmb(void);
 
@@ -236,7 +236,7 @@ void opal_atomic_rmb(void);
  */
 
 #if OPAL_HAVE_INLINE_ATOMIC_MEM_BARRIER
-static inline 
+static inline
 #endif
 void opal_atomic_wmb(void);
 
@@ -273,7 +273,7 @@ enum {
  * @param value        Initial value to set lock to
  */
 #if OPAL_HAVE_ATOMIC_SPINLOCKS == 0
-static inline 
+static inline
 #endif
 void opal_atomic_init(opal_atomic_lock_t* lock, int32_t value);
 
@@ -332,19 +332,19 @@ void opal_atomic_unlock(opal_atomic_lock_t *lock);
 #if defined(DOXYGEN) || OPAL_HAVE_ATOMIC_CMPSET_32
 
 #if OPAL_HAVE_INLINE_ATOMIC_CMPSET_32
-static inline 
+static inline
 #endif
 int opal_atomic_cmpset_32(volatile int32_t *addr, int32_t oldval,
                           int32_t newval);
 
 #if OPAL_HAVE_INLINE_ATOMIC_CMPSET_32
-static inline 
+static inline
 #endif
 int opal_atomic_cmpset_acq_32(volatile int32_t *addr, int32_t oldval,
                               int32_t newval);
 
 #if OPAL_HAVE_INLINE_ATOMIC_CMPSET_32
-static inline 
+static inline
 #endif
 int opal_atomic_cmpset_rel_32(volatile int32_t *addr, int32_t oldval,
                               int32_t newval);
@@ -357,19 +357,19 @@ int opal_atomic_cmpset_rel_32(volatile int32_t *addr, int32_t oldval,
 #if defined(DOXYGEN) || OPAL_HAVE_ATOMIC_CMPSET_64
 
 #if OPAL_HAVE_INLINE_ATOMIC_CMPSET_64
-static inline 
+static inline
 #endif
 int opal_atomic_cmpset_64(volatile int64_t *addr, int64_t oldval,
                           int64_t newval);
 
 #if OPAL_HAVE_INLINE_ATOMIC_CMPSET_64
-static inline 
+static inline
 #endif
 int opal_atomic_cmpset_acq_64(volatile int64_t *addr, int64_t oldval,
                               int64_t newval);
 
 #if OPAL_HAVE_INLINE_ATOMIC_CMPSET_64
-static inline 
+static inline
 #endif
 int opal_atomic_cmpset_rel_64(volatile int64_t *addr, int64_t oldval,
                               int64_t newval);
@@ -483,27 +483,27 @@ opal_atomic_sub_size_t(volatile size_t *addr, int delta)
    static inline */
 static inline int opal_atomic_cmpset_xx(volatile void* addr, int64_t oldval,
                                         int64_t newval, size_t length);
-static inline int opal_atomic_cmpset_acq_xx(volatile void* addr, 
-                                            int64_t oldval,  int64_t newval, 
+static inline int opal_atomic_cmpset_acq_xx(volatile void* addr,
+                                            int64_t oldval,  int64_t newval,
                                             size_t length);
-static inline int opal_atomic_cmpset_rel_xx(volatile void* addr, 
-                                            int64_t oldval, int64_t newval, 
+static inline int opal_atomic_cmpset_rel_xx(volatile void* addr,
+                                            int64_t oldval, int64_t newval,
                                             size_t length);
 
-static inline int opal_atomic_cmpset_ptr(volatile void* addr, 
-                                         void* oldval, 
+static inline int opal_atomic_cmpset_ptr(volatile void* addr,
+                                         void* oldval,
                                          void* newval);
-static inline int opal_atomic_cmpset_acq_ptr(volatile void* addr, 
-                                             void* oldval, 
+static inline int opal_atomic_cmpset_acq_ptr(volatile void* addr,
+                                             void* oldval,
                                              void* newval);
-static inline int opal_atomic_cmpset_rel_ptr(volatile void* addr, 
-                                             void* oldval, 
+static inline int opal_atomic_cmpset_rel_ptr(volatile void* addr,
+                                             void* oldval,
                                              void* newval);
 
 /**
  * Atomic compare and set of pointer with relaxed semantics. This
  * macro detect at compile time the type of the first argument and
- * choose the correct function to be called.  
+ * choose the correct function to be called.
  *
  * \note This macro should only be used for integer types.
  *
@@ -519,7 +519,7 @@ static inline int opal_atomic_cmpset_rel_ptr(volatile void* addr,
 
 /**
  * Atomic compare and set of pointer with acquire semantics. This
- * macro detect at compile time the type of the first argument 
+ * macro detect at compile time the type of the first argument
  * and choose the correct function to be called.
  *
  * \note This macro should only be used for integer types.
@@ -537,7 +537,7 @@ static inline int opal_atomic_cmpset_rel_ptr(volatile void* addr,
 
 /**
  * Atomic compare and set of pointer with release semantics. This
- * macro detect at compile time the type of the first argument 
+ * macro detect at compile time the type of the first argument
  * and choose the correct function to b
  *
  * \note This macro should only be used for integer types.
@@ -556,9 +556,9 @@ static inline int opal_atomic_cmpset_rel_ptr(volatile void* addr,
 
 #if defined(DOXYGEN) || (OPAL_HAVE_ATOMIC_MATH_32 || OPAL_HAVE_ATOMIC_MATH_64)
 
-static inline void opal_atomic_add_xx(volatile void* addr, 
+static inline void opal_atomic_add_xx(volatile void* addr,
                                       int32_t value, size_t length);
-static inline void opal_atomic_sub_xx(volatile void* addr, 
+static inline void opal_atomic_sub_xx(volatile void* addr,
                                       int32_t value, size_t length);
 #if SIZEOF_VOID_P == 4 && OPAL_HAVE_ATOMIC_CMPSET_32
 static inline int32_t opal_atomic_add_ptr( volatile void* addr, void* delta );
@@ -572,7 +572,7 @@ static inline int64_t opal_atomic_sub_ptr( volatile void* addr, void* delta );
 
 /**
  * Atomically increment the content depending on the type. This
- * macro detect at compile time the type of the first argument 
+ * macro detect at compile time the type of the first argument
  * and choose the correct function to be called.
  *
  * \note This macro should only be used for integer types.
@@ -586,7 +586,7 @@ static inline int64_t opal_atomic_sub_ptr( volatile void* addr, void* delta );
 
 /**
  * Atomically decrement the content depending on the type. This
- * macro detect at compile time the type of the first argument 
+ * macro detect at compile time the type of the first argument
  * and choose the correct function to be called.
  *
  * \note This macro should only be used for integer types.

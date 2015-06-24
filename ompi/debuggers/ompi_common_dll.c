@@ -12,9 +12,9 @@
  * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -369,16 +369,16 @@ int ompi_fill_in_type_info(mqs_image *image, char **message)
             goto type_missing;
         }
         ompi_field_offset(i_info->mca_topo_base_module_t.offset.mtc_cart.ndims,
-                          cart_type, mca_topo_base_comm_cart_2_2_0_t, 
+                          cart_type, mca_topo_base_comm_cart_2_2_0_t,
                           ndims);
         ompi_field_offset(i_info->mca_topo_base_module_t.offset.mtc_cart.dims,
-                          cart_type, mca_topo_base_comm_cart_2_2_0_t, 
+                          cart_type, mca_topo_base_comm_cart_2_2_0_t,
                           dims);
         ompi_field_offset(i_info->mca_topo_base_module_t.offset.mtc_cart.periods,
-                          cart_type, mca_topo_base_comm_cart_2_2_0_t, 
+                          cart_type, mca_topo_base_comm_cart_2_2_0_t,
                           periods);
         ompi_field_offset(i_info->mca_topo_base_module_t.offset.mtc_cart.coords,
-                          cart_type, mca_topo_base_comm_cart_2_2_0_t, 
+                          cart_type, mca_topo_base_comm_cart_2_2_0_t,
                           coords);
         i_info->mca_topo_base_module_t.offset.mtc_cart.ndims   += offset;
         i_info->mca_topo_base_module_t.offset.mtc_cart.dims    += offset;
@@ -392,13 +392,13 @@ int ompi_fill_in_type_info(mqs_image *image, char **message)
             goto type_missing;
         }
         ompi_field_offset(i_info->mca_topo_base_module_t.offset.mtc_graph.nnodes,
-                          graph_type, mca_topo_base_comm_graph_2_2_0_t, 
+                          graph_type, mca_topo_base_comm_graph_2_2_0_t,
                           nnodes);
         ompi_field_offset(i_info->mca_topo_base_module_t.offset.mtc_graph.index,
-                          graph_type, mca_topo_base_comm_graph_2_2_0_t, 
+                          graph_type, mca_topo_base_comm_graph_2_2_0_t,
                           index);
         ompi_field_offset(i_info->mca_topo_base_module_t.offset.mtc_graph.edges,
-                          graph_type, mca_topo_base_comm_graph_2_2_0_t, 
+                          graph_type, mca_topo_base_comm_graph_2_2_0_t,
                           edges);
         i_info->mca_topo_base_module_t.offset.mtc_graph.nnodes += offset;
         i_info->mca_topo_base_module_t.offset.mtc_graph.index  += offset;
@@ -482,7 +482,7 @@ int ompi_fill_in_type_info(mqs_image *image, char **message)
         /* get ompi_datatype_t super.size which requires the offset
          * of super and then the offset of size in opal_datatype_t.
          */
-        { 
+        {
             int super_offset = 0;
 
             ompi_field_offset(super_offset,
@@ -519,7 +519,7 @@ int ompi_fill_in_type_info(mqs_image *image, char **message)
  * Functions to access the image memory. They are specialized based    *
  * on the type we want to access and the debugged process architecture *
  ***********************************************************************/
-mqs_taddr_t ompi_fetch_pointer (mqs_process *proc, mqs_taddr_t addr, 
+mqs_taddr_t ompi_fetch_pointer (mqs_process *proc, mqs_taddr_t addr,
                                 mpi_process_info *p_info)
 {
     int isize = p_info->sizes.pointer_size;
@@ -527,15 +527,15 @@ mqs_taddr_t ompi_fetch_pointer (mqs_process *proc, mqs_taddr_t addr,
     mqs_taddr_t res = 0;
 
     if (mqs_ok == mqs_fetch_data (proc, addr, isize, buffer))
-        mqs_target_to_host (proc, buffer, 
-                            ((char *)&res) + (host_is_big_endian ? sizeof(mqs_taddr_t)-isize : 0), 
+        mqs_target_to_host (proc, buffer,
+                            ((char *)&res) + (host_is_big_endian ? sizeof(mqs_taddr_t)-isize : 0),
                             isize);
 
     return res;
 } /* fetch_pointer */
 
 /***********************************************************************/
-mqs_tword_t ompi_fetch_int (mqs_process *proc, mqs_taddr_t addr, 
+mqs_tword_t ompi_fetch_int (mqs_process *proc, mqs_taddr_t addr,
                             mpi_process_info *p_info)
 {
     int isize = p_info->sizes.int_size;
@@ -543,15 +543,15 @@ mqs_tword_t ompi_fetch_int (mqs_process *proc, mqs_taddr_t addr,
     mqs_tword_t res = 0;
 
     if (mqs_ok == mqs_fetch_data (proc, addr, isize, buffer)) {
-        mqs_target_to_host (proc, buffer, 
-                            ((char *)&res) + (host_is_big_endian ? sizeof(mqs_tword_t)-isize : 0), 
+        mqs_target_to_host (proc, buffer,
+                            ((char *)&res) + (host_is_big_endian ? sizeof(mqs_tword_t)-isize : 0),
                             isize);
     }
     return res;
 } /* fetch_int */
 
 /***********************************************************************/
-mqs_tword_t ompi_fetch_bool(mqs_process *proc, mqs_taddr_t addr, 
+mqs_tword_t ompi_fetch_bool(mqs_process *proc, mqs_taddr_t addr,
                             mpi_process_info *p_info)
 {
     int isize = p_info->sizes.bool_size;
@@ -562,7 +562,7 @@ mqs_tword_t ompi_fetch_bool(mqs_process *proc, mqs_taddr_t addr,
 } /* fetch_bool */
 
 /***********************************************************************/
-mqs_taddr_t ompi_fetch_size_t(mqs_process *proc, mqs_taddr_t addr, 
+mqs_taddr_t ompi_fetch_size_t(mqs_process *proc, mqs_taddr_t addr,
                               mpi_process_info *p_info)
 {
     int isize = p_info->sizes.size_t_size;
@@ -570,30 +570,30 @@ mqs_taddr_t ompi_fetch_size_t(mqs_process *proc, mqs_taddr_t addr,
     mqs_taddr_t res = 0;
 
     if (mqs_ok == mqs_fetch_data (proc, addr, isize, buffer))
-        mqs_target_to_host (proc, buffer, 
-                            ((char *)&res) + (host_is_big_endian ? sizeof(mqs_taddr_t)-isize : 0), 
+        mqs_target_to_host (proc, buffer,
+                            ((char *)&res) + (host_is_big_endian ? sizeof(mqs_taddr_t)-isize : 0),
                             isize);
-  
+
     return res;
 } /* fetch_size_t */
 
 /***********************************************************************/
 
-int ompi_fetch_opal_pointer_array_info(mqs_process *proc, mqs_taddr_t addr, 
+int ompi_fetch_opal_pointer_array_info(mqs_process *proc, mqs_taddr_t addr,
                                        mpi_process_info *p_info,
-                                       int *size, int *lowest_free, 
+                                       int *size, int *lowest_free,
                                        int *number_free)
 {
     mqs_image *image = mqs_get_image(proc);
     mpi_image_info *i_info = (mpi_image_info *) mqs_get_image_info(image);
 
-    *size = ompi_fetch_int(proc, 
+    *size = ompi_fetch_int(proc,
                            addr + i_info->opal_pointer_array_t.offset.size,
                            p_info);
-    *lowest_free = ompi_fetch_int(proc, 
+    *lowest_free = ompi_fetch_int(proc,
                                   addr + i_info->opal_pointer_array_t.offset.lowest_free,
                                   p_info);
-    *number_free = ompi_fetch_int(proc, 
+    *number_free = ompi_fetch_int(proc,
                                   addr + i_info->opal_pointer_array_t.offset.number_free,
                                   p_info);
     return mqs_ok;
@@ -601,7 +601,7 @@ int ompi_fetch_opal_pointer_array_info(mqs_process *proc, mqs_taddr_t addr,
 
 /***********************************************************************/
 
-int ompi_fetch_opal_pointer_array_item(mqs_process *proc, mqs_taddr_t addr, 
+int ompi_fetch_opal_pointer_array_item(mqs_process *proc, mqs_taddr_t addr,
                                        mpi_process_info *p_info, int index,
                                        mqs_taddr_t *item)
 {
@@ -614,13 +614,13 @@ int ompi_fetch_opal_pointer_array_item(mqs_process *proc, mqs_taddr_t addr,
         return mqs_no_information;
     }
 
-    ompi_fetch_opal_pointer_array_info(proc, addr, p_info, &size, 
+    ompi_fetch_opal_pointer_array_info(proc, addr, p_info, &size,
                                        &lowest_free, &number_free);
     if (index >= size) {
         return mqs_no_information;
     }
 
-    base = ompi_fetch_pointer(proc, 
+    base = ompi_fetch_pointer(proc,
                               addr + i_info->opal_pointer_array_t.offset.addr,
                               p_info);
     *item = ompi_fetch_pointer(proc,

@@ -6,7 +6,7 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -15,9 +15,9 @@
  * Copyright (c) 2014      Los Alamos National Security, LLC. All right
  *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 #include "ompi_config.h"
@@ -47,7 +47,7 @@ static const char FUNC_NAME[] = "MPI_Rget_accumulate";
 int MPI_Rget_accumulate(const void *origin_addr, int origin_count, MPI_Datatype origin_datatype,
                         void *result_addr, int result_count, MPI_Datatype result_datatype,
                         int target_rank, MPI_Aint target_disp, int target_count,
-                        MPI_Datatype target_datatype, MPI_Op op, MPI_Win win, MPI_Request *request) 
+                        MPI_Datatype target_datatype, MPI_Op op, MPI_Win win, MPI_Request *request)
 {
     int rc;
     ompi_win_t *ompi_win = (ompi_win_t*) win;
@@ -142,10 +142,10 @@ int MPI_Rget_accumulate(const void *origin_addr, int origin_count, MPI_Datatype 
                                                     result_addr,
                                                     result_count,
                                                     result_datatype,
-                                                    target_rank, 
-                                                    target_disp, 
+                                                    target_rank,
+                                                    target_disp,
                                                     target_count,
-                                                    target_datatype, 
+                                                    target_datatype,
                                                      op, win, request);
     OMPI_ERRHANDLER_RETURN(rc, win, rc, FUNC_NAME);
 }

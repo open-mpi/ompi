@@ -11,7 +11,7 @@
 
 /*
  *  Return closet power of K that is either greater than
- *  or equal to the group size. 
+ *  or equal to the group size.
  */
 int pow_sm_k(int k, int number, int *pow_k)
 {
@@ -33,22 +33,22 @@ int pow_sm_k(int k, int number, int *pow_k)
         *pow_k = n/k;
     }
 
-    
+
     return (power-1);
 }
 
 
 
-int get_k_nomial_src_list(int group_size, 
-                          int radix, int my_index, 
-                          int *src_list) { 
+int get_k_nomial_src_list(int group_size,
+                          int radix, int my_index,
+                          int *src_list) {
 
     /* local variables */
     int radix_power;
     int offset;
     int kount = 0;
     int src_temp;
-    
+
     radix_power = 1;
     offset = 1;
     while(offset < group_size) {
@@ -89,15 +89,15 @@ int get_k_nomial_dst_size(int group_size, int radix, int my_index)
     }
 	radix_mask /= radix;
 
-	while(radix_mask > 0) {                                                                
-        /* For each level of tree, do sends */                                             
-        for (k = 1;                                                                        
-                k < radix && my_index + radix_mask * k < group_size;              
-                ++k) {                                                                     
-            dst_count +=  1 ;                                                                
-        }                                                                            
-        radix_mask /= radix;                                                               
-    }                                                                                
+	while(radix_mask > 0) {
+        /* For each level of tree, do sends */
+        for (k = 1;
+                k < radix && my_index + radix_mask * k < group_size;
+                ++k) {
+            dst_count +=  1 ;
+        }
+        radix_mask /= radix;
+    }
 
 	return dst_count;
 }

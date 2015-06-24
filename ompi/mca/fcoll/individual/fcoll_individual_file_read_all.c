@@ -32,10 +32,10 @@
 /* this component just directly calls the individual I/O operations */
 
 int
-mca_fcoll_individual_file_read_all (mca_io_ompio_file_t *fh, 
-                                    void *buf, 
-                                    int count, 
-                                    struct ompi_datatype_t *datatype, 
+mca_fcoll_individual_file_read_all (mca_io_ompio_file_t *fh,
+                                    void *buf,
+                                    int count,
+                                    struct ompi_datatype_t *datatype,
                                     ompi_status_public_t *status)
 {
     return fh->f_fh->f_io_selected_module.v2_0_0.

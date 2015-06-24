@@ -20,7 +20,7 @@
 # $HEADER$
 #
 
-# MCA_opal_common_verbs_CONFIG([action-if-can-compile], 
+# MCA_opal_common_verbs_CONFIG([action-if-can-compile],
 #                      [action-if-cant-compile])
 # ------------------------------------------------
 AC_DEFUN([MCA_opal_common_verbs_CONFIG],[

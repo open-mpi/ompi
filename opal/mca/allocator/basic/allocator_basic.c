@@ -6,7 +6,7 @@
  * Copyright (c) 2004-2013 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -16,9 +16,9 @@
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -29,13 +29,13 @@
 
 
 mca_allocator_base_component_t mca_allocator_basic_component = {
-                                                                                                         
+
   /* First, the mca_base_module_t struct containing meta information
      about the module itself */
-                                                                                                         
+
   {
     MCA_ALLOCATOR_BASE_VERSION_2_0_0,
-                                                                                                         
+
     "basic", /* MCA module name */
     OPAL_MAJOR_VERSION,
     OPAL_MINOR_VERSION,
@@ -77,7 +77,7 @@ int mca_allocator_basic_component_close(void)
 mca_allocator_base_module_t* mca_allocator_basic_component_init(
     bool enable_mpi_threads,
     mca_allocator_base_component_segment_alloc_fn_t segment_alloc,
-    mca_allocator_base_component_segment_free_fn_t segment_free, 
+    mca_allocator_base_component_segment_free_fn_t segment_free,
     struct mca_mpool_base_module_t* mpool)
 {
     mca_allocator_basic_module_t *module = (mca_allocator_basic_module_t *)
@@ -97,7 +97,7 @@ mca_allocator_base_module_t* mca_allocator_basic_component_init(
     OBJ_CONSTRUCT(&module->seg_list, opal_list_t);
     OBJ_CONSTRUCT(&module->seg_lock, opal_mutex_t);
     OBJ_CONSTRUCT(&module->seg_descriptors, opal_free_list_t);
- 
+
     opal_free_list_init (&module->seg_descriptors,
         sizeof(mca_allocator_basic_segment_t),
         opal_cache_line_size,
@@ -110,13 +110,13 @@ mca_allocator_base_module_t* mca_allocator_basic_component_init(
 
     return &module->super;
 }
-                                                                                                         
+
 /**
   * Combine adjacent segments together.
  */
 
 static void mca_allocator_basic_combine_prev(
-    mca_allocator_basic_module_t* module, 
+    mca_allocator_basic_module_t* module,
     mca_allocator_basic_segment_t* seg)
 {
     opal_list_item_t* item = opal_list_get_prev(seg);
@@ -132,7 +132,7 @@ static void mca_allocator_basic_combine_prev(
 }
 
 static void mca_allocator_basic_combine_next(
-    mca_allocator_basic_module_t* module, 
+    mca_allocator_basic_module_t* module,
     mca_allocator_basic_segment_t* seg)
 {
     opal_list_item_t *item = opal_list_get_next(seg);
@@ -161,9 +161,9 @@ static void mca_allocator_basic_combine_next(
   */
 
 void *mca_allocator_basic_alloc(
-    mca_allocator_base_module_t * base, 
+    mca_allocator_base_module_t * base,
     size_t size,
-    size_t align, 
+    size_t align,
     mca_mpool_base_registration_t** registration)
 {
     mca_allocator_basic_module_t* module = (mca_allocator_basic_module_t*)base;
@@ -237,9 +237,9 @@ void *mca_allocator_basic_alloc(
   */
 
 void * mca_allocator_basic_realloc(
-    mca_allocator_base_module_t * base, 
-    void * ptr, 
-    size_t size, 
+    mca_allocator_base_module_t * base,
+    void * ptr,
+    size_t size,
     mca_mpool_base_registration_t** registration)
 {
     unsigned char* addr = ((unsigned char*)ptr) - sizeof(size_t);
@@ -285,7 +285,7 @@ void mca_allocator_basic_free(
                 mca_allocator_basic_combine_next(module, seg);
                 OPAL_THREAD_UNLOCK(&module->seg_lock);
                 return;
-            } 
+            }
             /* otherwise continue to check next larger entry */
 
         } else  {

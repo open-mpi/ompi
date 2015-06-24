@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 2003 University of Chicago. 
+ *   Copyright (C) 2003 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -31,7 +31,7 @@
 int MPIO_Testall(int count, MPIO_Request requests[], int *flag,
 		 MPI_Status statuses[])
 {
-    int done, i, err; 
+    int done, i, err;
     MPIU_THREADPRIV_DECL;
 
     MPIU_THREAD_CS_ENTER(ALLFUNC,);
@@ -40,10 +40,10 @@ int MPIO_Testall(int count, MPIO_Request requests[], int *flag,
 	    goto fn_exit;
     }
 
-    /* This is actually very difficult to do.  We can't use MPIO_Test, 
+    /* This is actually very difficult to do.  We can't use MPIO_Test,
        since we must change the requests only if *ALL* requests are complete
     */
-    /* FIXME: THIS IS NOT CORRECT (see above).  But most applications won't 
+    /* FIXME: THIS IS NOT CORRECT (see above).  But most applications won't
      care */
     done = 1;
     for (i=0; i<count; i++) {
@@ -66,7 +66,7 @@ int MPIO_Testall(int count, MPIO_Request requests[], int *flag,
 #endif
       }
     }
-    
+
     *flag = done;
 
     err = MPI_SUCCESS;

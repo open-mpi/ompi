@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2014 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -13,9 +13,9 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -63,9 +63,9 @@ atomic_math_test_th(int count, int thr_count)
     int tid;
 
     th = (pthread_t *) malloc(thr_count * sizeof(pthread_t));
-    if (!th) { 
-        perror("malloc"); 
-        exit(EXIT_FAILURE); 
+    if (!th) {
+        perror("malloc");
+        exit(EXIT_FAILURE);
     }
 
     /* Ok to use a single instance of ip_union_t from the stack here
@@ -75,7 +75,7 @@ atomic_math_test_th(int count, int thr_count)
        disappearing before the threads start. */
     value = count;
     for (tid = 0; tid < thr_count; tid++) {
-        if (pthread_create(&th[tid], NULL, atomic_math_test, 
+        if (pthread_create(&th[tid], NULL, atomic_math_test,
                            (void*) &value) != 0) {
             perror("pthread_create");
             exit(EXIT_FAILURE);

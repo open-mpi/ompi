@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 2003 University of Chicago, Ohio Supercomputer Center. 
+ *   Copyright (C) 2003 University of Chicago, Ohio Supercomputer Center.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -26,7 +26,7 @@ void fcntl_size_cb(void *myargs, globus_ftp_client_handle_t *handle,
     globus_mutex_unlock(&fcntl_size_lock);
 }
 
-void ADIOI_GRIDFTP_Fcntl(ADIO_File fd, int flag, ADIO_Fcntl_t *fcntl_struct, 
+void ADIOI_GRIDFTP_Fcntl(ADIO_File fd, int flag, ADIO_Fcntl_t *fcntl_struct,
 			int *error_code)
 {
     MPI_Datatype copy_etype, copy_filetype;
@@ -46,7 +46,7 @@ void ADIOI_GRIDFTP_Fcntl(ADIO_File fd, int flag, ADIO_Fcntl_t *fcntl_struct,
 	{
 	    globus_result_t result;
 	    globus_off_t fsize=0;
-	    
+
 	    globus_mutex_init(&fcntl_size_lock,GLOBUS_NULL);
 	    globus_cond_init(&fcntl_size_cond,GLOBUS_NULL);
 	    fcntl_size_done=GLOBUS_FALSE;
@@ -61,7 +61,7 @@ void ADIOI_GRIDFTP_Fcntl(ADIO_File fd, int flag, ADIO_Fcntl_t *fcntl_struct,
 		    *error_code = MPIO_Err_create_code(MPI_SUCCESS,
 				    MPIR_ERR_RECOVERABLE,
                                     myname, __LINE__, MPI_ERR_IO,
-				    "**io", "**io %s", 
+				    "**io", "**io %s",
 				    globus_object_printable_to_string(globus_error_get(result)));
 		    return;
 		}

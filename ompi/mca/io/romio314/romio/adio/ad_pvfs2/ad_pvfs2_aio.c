@@ -1,7 +1,7 @@
-/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- 
- *     vim: ts=8 sts=4 sw=4 noexpandtab 
- * 
- *   Copyright (C) 1997 University of Chicago. 
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*-
+ *     vim: ts=8 sts=4 sw=4 noexpandtab
+ *
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -20,10 +20,10 @@
 static int ADIOI_PVFS2_greq_class = 0;
 int ADIOI_PVFS2_aio_free_fn(void *extra_state);
 int ADIOI_PVFS2_aio_poll_fn(void *extra_state, MPI_Status *status);
-int ADIOI_PVFS2_aio_wait_fn(int count, void ** array_of_states, 
+int ADIOI_PVFS2_aio_wait_fn(int count, void ** array_of_states,
 		double timeout, MPI_Status *status);
 
-void ADIOI_PVFS2_IReadContig(ADIO_File fd, void *buf, int count, 
+void ADIOI_PVFS2_IReadContig(ADIO_File fd, void *buf, int count,
 			    MPI_Datatype datatype, int file_ptr_type,
 			    ADIO_Offset offset, MPI_Request *request,
 			    int *error_code)
@@ -41,7 +41,7 @@ void ADIOI_PVFS2_IWriteContig(ADIO_File fd, const void *buf, int count,
 	    offset, request, WRITE, error_code);
 }
 
-void ADIOI_PVFS2_AIO_contig(ADIO_File fd, void *buf, int count, 
+void ADIOI_PVFS2_AIO_contig(ADIO_File fd, void *buf, int count,
 			    MPI_Datatype datatype, int file_ptr_type,
 			    ADIO_Offset offset, MPI_Request *request,
 			    int flag, int *error_code)
@@ -87,13 +87,13 @@ void ADIOI_PVFS2_AIO_contig(ADIO_File fd, void *buf, int count,
     if (file_ptr_type == ADIO_INDIVIDUAL) {
 	/* copy individual file pointer into offset variable, continue */
 	offset = fd->fp_ind;
-    } 
+    }
     if (flag == READ) {
 #ifdef ADIOI_MPE_LOGGING
 	MPE_Log_event( ADIOI_MPE_iread_a, 0, NULL );
 #endif
-	ret = PVFS_isys_read(pvfs_fs->object_ref, aio_req->file_req, offset, 
-		buf, aio_req->mem_req, &(pvfs_fs->credentials), 
+	ret = PVFS_isys_read(pvfs_fs->object_ref, aio_req->file_req, offset,
+		buf, aio_req->mem_req, &(pvfs_fs->credentials),
 		&(aio_req->resp_io), &(aio_req->op_id), NULL);
 #ifdef ADIOI_MPE_LOGGING
 	MPE_Log_event( ADIOI_MPE_iread_b, 0, NULL );
@@ -102,13 +102,13 @@ void ADIOI_PVFS2_AIO_contig(ADIO_File fd, void *buf, int count,
 #ifdef ADIOI_MPE_LOGGING
 	MPE_Log_event( ADIOI_MPE_iwrite_a, 0, NULL );
 #endif
-	ret = PVFS_isys_write(pvfs_fs->object_ref, aio_req->file_req, offset, 
-		buf, aio_req->mem_req, &(pvfs_fs->credentials), 
+	ret = PVFS_isys_write(pvfs_fs->object_ref, aio_req->file_req, offset,
+		buf, aio_req->mem_req, &(pvfs_fs->credentials),
 		&(aio_req->resp_io), &(aio_req->op_id), NULL);
 #ifdef ADIOI_MPE_LOGGING
 	MPE_Log_event( ADIOI_MPE_iwrite_b, 0, NULL );
-#endif 
-    } 
+#endif
+    }
 
     /* --BEGIN ERROR HANDLING-- */
     if (ret < 0 ) {
@@ -123,9 +123,9 @@ void ADIOI_PVFS2_AIO_contig(ADIO_File fd, void *buf, int count,
 
 #ifdef HAVE_MPI_GREQUEST_EXTENSIONS
     /* posted. defered completion */
-    if (ret == 0) { 
+    if (ret == 0) {
 	if (ADIOI_PVFS2_greq_class == 0) {
-	    MPIX_Grequest_class_create(ADIOI_GEN_aio_query_fn, 
+	    MPIX_Grequest_class_create(ADIOI_GEN_aio_query_fn,
 		    ADIOI_PVFS2_aio_free_fn, MPIU_Greq_cancel_fn,
 		    ADIOI_PVFS2_aio_poll_fn, ADIOI_PVFS2_aio_wait_fn,
 		    &ADIOI_PVFS2_greq_class);
@@ -188,7 +188,7 @@ int ADIOI_PVFS2_aio_poll_fn(void *extra_state, MPI_Status *status)
 }
 
 /* wait for multiple requests to complete */
-int ADIOI_PVFS2_aio_wait_fn(int count, void ** array_of_states, 
+int ADIOI_PVFS2_aio_wait_fn(int count, void ** array_of_states,
 		double timeout, MPI_Status *status)
 {
 
@@ -214,7 +214,7 @@ int ADIOI_PVFS2_aio_wait_fn(int count, void ** array_of_states,
 	for (i=0; i< count; i++) {
 	    for (j=0; j<greq_count; j++) {
 		if (op_id_array[i] == aio_reqlist[j]->op_id) {
-		    aio_reqlist[j]->nbytes = 
+		    aio_reqlist[j]->nbytes =
 			aio_reqlist[j]->resp_io.total_completed;
 		    MPI_Grequest_complete(aio_reqlist[j]->req);
 		}
@@ -226,5 +226,5 @@ int ADIOI_PVFS2_aio_wait_fn(int count, void ** array_of_states,
 
 
 /*
- * vim: ts=8 sts=4 sw=4 noexpandtab 
+ * vim: ts=8 sts=4 sw=4 noexpandtab
  */

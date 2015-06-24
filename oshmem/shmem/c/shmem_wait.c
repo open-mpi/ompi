@@ -2,9 +2,9 @@
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 #include "oshmem_config.h"
@@ -17,7 +17,7 @@
 #include "oshmem/mca/spml/spml.h"
 
 /*
- * These routines force the calling PE to wait until var is no longer equal to value. 
+ * These routines force the calling PE to wait until var is no longer equal to value.
  * A call to any shmem_wait() routine does not return until some other processor makes the
  * value at address var not equal to value.
  */

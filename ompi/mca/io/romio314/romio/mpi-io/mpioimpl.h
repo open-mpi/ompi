@@ -1,13 +1,13 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
 
 /* header file for MPI-IO implementation. not intended to be
-   user-visible */ 
+   user-visible */
 
 #ifndef MPIOIMPL_INCLUDE
 #define MPIOIMPL_INCLUDE
@@ -31,8 +31,8 @@
 
 #else /* not ROMIO_INSIDE_MPICH */
 /* Any MPI implementation that wishes to follow the thread-safety and
-   error reporting features provided by MPICH must implement these 
-   four functions.  Defining these as empty should not change the behavior 
+   error reporting features provided by MPICH must implement these
+   four functions.  Defining these as empty should not change the behavior
    of correct programs */
 #define MPIU_THREAD_CS_ENTER(x,y)
 #define MPIU_THREAD_CS_EXIT(x,y)

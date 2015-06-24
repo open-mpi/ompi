@@ -6,16 +6,16 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  *
  * These symbols are in a file by themselves to provide nice linker
@@ -67,12 +67,12 @@ orte_plm_alps_component_t mca_plm_alps_component = {
 
         .base_version = {
             ORTE_PLM_BASE_VERSION_2_0_0,
-            
+
             /* Component name and version */
             .mca_component_name = "alps",
             MCA_BASE_MAKE_VERSION(component, ORTE_MAJOR_VERSION, ORTE_MINOR_VERSION,
                                   ORTE_RELEASE_VERSION),
-            
+
             /* Component open and close functions */
             .mca_open_component = plm_alps_open,
             .mca_close_component = plm_alps_close,

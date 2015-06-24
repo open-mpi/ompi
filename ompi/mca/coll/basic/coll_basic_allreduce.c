@@ -5,14 +5,14 @@
  * Copyright (c) 2004-2014 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -161,7 +161,7 @@ mca_coll_basic_allreduce_inter(void *sbuf, void *rbuf, int count,
 
     /* now we have on one process the result of the remote group. To distribute
      * the data to all processes in the local group, we exchange the data between
-     * the two root processes. They then send it to every other process in the 
+     * the two root processes. They then send it to every other process in the
      * remote group. */
     /***************************************************************************/
     if (rank == root) {
@@ -187,8 +187,8 @@ mca_coll_basic_allreduce_inter(void *sbuf, void *rbuf, int count,
 
         /* distribute the data to other processes in remote group.
          * Note that we start from 1 (not from zero), since zero
-         * has already the correct data AND we avoid a potential 
-         * deadlock here. 
+         * has already the correct data AND we avoid a potential
+         * deadlock here.
          */
         if (rsize > 1) {
             for (i = 1; i < rsize; i++) {

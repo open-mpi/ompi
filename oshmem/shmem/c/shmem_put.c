@@ -2,9 +2,9 @@
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 #include "oshmem_config.h"
@@ -17,7 +17,7 @@
 #include "oshmem/mca/spml/spml.h"
 
 /*
- * These routines copy contiguous data from a local object to an object on the destination PE. 
+ * These routines copy contiguous data from a local object to an object on the destination PE.
  * These routines transfer nelems elements of the data object at address source on the calling
  * PE, to the data object at address target on the remote PE pe. These routines start the
  * remote transfer and may return before the data is delivered to the remote PE. The delivery

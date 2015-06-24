@@ -1,5 +1,5 @@
 #
-# Input file for script ompi_branch_check_revisions.sh 
+# Input file for script ompi_branch_check_revisions.sh
 # here for the v1.5 branch
 #
 # Contains optional notes for revisions, about:

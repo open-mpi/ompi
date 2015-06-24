@@ -5,14 +5,14 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -54,7 +54,7 @@ private native static long getNull();
  * Java binding of the MPI operation {@code MPI_INFO_SET}.
  * @param key   key
  * @param value value
- * @throws MPIException 
+ * @throws MPIException
  */
 public void set(String key, String value) throws MPIException
 {
@@ -69,7 +69,7 @@ private native void set(long handle, String key, String value)
  * Java binding of the MPI operation {@code MPI_INFO_SET}.
  * @param key key
  * @return value or {@code null} if key is not defined
- * @throws MPIException 
+ * @throws MPIException
  */
 public String get(String key) throws MPIException
 {
@@ -82,7 +82,7 @@ private native String get(long handle, String key) throws MPIException;
 /**
  * Java binding of the MPI operation {@code MPI_INFO_SET}.
  * @param key key
- * @throws MPIException 
+ * @throws MPIException
  */
 public void delete(String key) throws MPIException
 {
@@ -95,7 +95,7 @@ private native void delete(long handle, String key) throws MPIException;
 /**
  * Java binding of the MPI operation {@code MPI_INFO_GET_NKEYS}.
  * @return number of defined keys
- * @throws MPIException 
+ * @throws MPIException
  */
 public int size() throws MPIException
 {
@@ -109,7 +109,7 @@ private native int size(long handle) throws MPIException;
  * Java binding of the MPI operation {@code MPI_INFO_GET_NTHKEY}.
  * @param i key number
  * @return key
- * @throws MPIException 
+ * @throws MPIException
  */
 public String getKey(int i) throws MPIException
 {
@@ -152,7 +152,7 @@ private native long dup(long handle) throws MPIException;
 
 /**
  * Java binding of the MPI operation {@code MPI_INFO_FREE}.
- * @throws MPIException 
+ * @throws MPIException
  */
 @Override public void free() throws MPIException
 {

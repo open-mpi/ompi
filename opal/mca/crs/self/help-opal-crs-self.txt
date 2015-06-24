@@ -31,7 +31,7 @@ Error: We were unable to find one of the following callbacks:
 
        If you have a custom prefix for your functions you may specify
        them with the 'crs_self_prefix' mca parameter. For example,
-         $ prog -mca crs_self_prefix my_prefix 
+         $ prog -mca crs_self_prefix my_prefix
        This will then look for the following functions:
          int my_prefix_checkpoint(void)
          int my_prefix_continue(void)

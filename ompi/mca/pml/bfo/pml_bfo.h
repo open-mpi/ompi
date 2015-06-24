@@ -6,19 +6,19 @@
  * Copyright (c) 2004-2013 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 /**
- *  @file 
+ *  @file
  */
 
 #ifndef MCA_PML_BFO_H
@@ -44,7 +44,7 @@ BEGIN_C_DECLS
  */
 
 struct mca_pml_bfo_t {
-    mca_pml_base_module_t super; 
+    mca_pml_base_module_t super;
 
     int priority;
     int free_list_num;      /* initial size of free list */
@@ -55,9 +55,9 @@ struct mca_pml_bfo_t {
     unsigned int rdma_put_retries_limit;
     int max_rdma_per_request;
     int max_send_per_range;
-    bool leave_pinned; 
+    bool leave_pinned;
     int leave_pinned_pipeline;
-    
+
     /* lock queue access */
     opal_mutex_t lock;
 
@@ -75,12 +75,12 @@ struct mca_pml_bfo_t {
     opal_list_t rdma_pending;
     /* List of pending fragments without a matching communicator */
     opal_list_t non_existing_communicator_pending;
-    bool enabled; 
+    bool enabled;
     char* allocator_name;
-    mca_allocator_base_module_t* allocator; 
+    mca_allocator_base_module_t* allocator;
     unsigned int unexpected_limit;
 };
-typedef struct mca_pml_bfo_t mca_pml_bfo_t; 
+typedef struct mca_pml_bfo_t mca_pml_bfo_t;
 
 extern mca_pml_bfo_t mca_pml_bfo;
 extern int mca_pml_bfo_output;
@@ -249,7 +249,7 @@ do {                                                            \
     } while(0)
 
 
-int mca_pml_bfo_send_fin(ompi_proc_t* proc, mca_bml_base_btl_t* bml_btl, 
+int mca_pml_bfo_send_fin(ompi_proc_t* proc, mca_bml_base_btl_t* bml_btl,
 #if PML_BFO
         opal_ptr_t hdr_des, uint8_t order, uint32_t status,
         uint16_t seq, uint8_t reqseq, uint16_t ctx, uint32_t src);

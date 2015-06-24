@@ -4,9 +4,9 @@
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -364,7 +364,7 @@ typedef int (*opal_pmix_base_module_lookup_fn_t)(const char service_name[],
 
 /* Unpublish - the "info" parameter
  * consists of a list of pmix_info_t objects */
-typedef int (*opal_pmix_base_module_unpublish_fn_t)(const char service_name[], 
+typedef int (*opal_pmix_base_module_unpublish_fn_t)(const char service_name[],
                                                     opal_list_t *info);
 
 /* Get attribute

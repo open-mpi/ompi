@@ -11,7 +11,7 @@
  *                         reserved.
  * Copyright (c) 2012-2013 Inria.  All rights reserved.
  *
- * Author(s): Torsten Hoefler 
+ * Author(s): Torsten Hoefler
  *
  */
 
@@ -91,7 +91,7 @@ int MPI_Dist_graph_create_adjacent(MPI_Comm comm_old,
     /* Ensure there is a topo attached to this communicator */
     if(OMPI_SUCCESS != (err = mca_topo_base_comm_select(comm_old, NULL,
                                                         &topo, OMPI_COMM_DIST_GRAPH))) {
-        return OMPI_ERRHANDLER_INVOKE(comm_old, err, FUNC_NAME);      
+        return OMPI_ERRHANDLER_INVOKE(comm_old, err, FUNC_NAME);
     }
 
     /* XXX -- CONST -- do not cast away const -- update mca/topo */

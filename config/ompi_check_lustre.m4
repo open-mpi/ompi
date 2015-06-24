@@ -23,7 +23,7 @@ dnl
 
 # OMPI_CHECK_LUSTRE(prefix, [action-if-found], [action-if-not-found])
 # --------------------------------------------------------
-# check if LUSTRE support can be found.  sets prefix_{CPPFLAGS, 
+# check if LUSTRE support can be found.  sets prefix_{CPPFLAGS,
 # LDFLAGS, LIBS} as needed and runs action-if-found if there is
 # support, otherwise executes action-if-not-found
 AC_DEFUN([OMPI_CHECK_LUSTRE],[
@@ -32,7 +32,7 @@ AC_DEFUN([OMPI_CHECK_LUSTRE],[
     check_lustre_LDFLAGS=
     check_lustre_LIBS=
 
-    check_lustre_save_LIBS="$LIBS" 
+    check_lustre_save_LIBS="$LIBS"
     check_lustre_save_LDFLAGS="$LDFLAGS"
     check_lustre_save_CPPFLAGS="$CPPFLAGS"
 

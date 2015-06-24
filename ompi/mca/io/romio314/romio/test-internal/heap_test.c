@@ -49,7 +49,7 @@ int main(int argc, char **argv) {
     int test_type = RANDOM;
     test_params_t predefined_tests[PREDEF_TESTS];
     test_params_t test;
-    
+
     /* parse args */
     adding_elements = 0;
     curr_add_idx = 0;
@@ -260,10 +260,10 @@ int run_test(test_params_t *test) {
     int i, j, k, err_flag = 0;
     int curr_insert_idx  = 0;
     int curr_extract_idx = 0;
-    
+
     create_heap(&myheap, test->heap_size);
     myheap.size = 0;
-    
+
     extracted = (ADIO_Offset *) malloc(test->heap_size * sizeof(ADIO_Offset));
     for (i=0; i < test->action_arr_sz; i++) {
 	for (j=0; j<test->action_count_arr[i]; j++) {
@@ -275,7 +275,7 @@ int run_test(test_params_t *test) {
 			myheap.nodes[k].offset   = test->offsets[k];
 			myheap.nodes[k].proc = k;
 		    }
-		    build_heap(&myheap);		    
+		    build_heap(&myheap);
 		    break;
 		case INSERT:
 		    ADIOI_Heap_insert(&myheap, test->offsets[curr_insert_idx],
@@ -341,7 +341,7 @@ void init_predefined_test(test_params_t *params, int index) {
 	    strcpy(params->name, "TEST 1");
 	    params->heap_size = 15;
 	    params->action_arr_sz = 3;
-	    
+
 	    /* allocate space */
 	    params->action_arr =
 		(int *) malloc (params->action_arr_sz*sizeof(int));
@@ -399,7 +399,7 @@ void init_predefined_test(test_params_t *params, int index) {
 	    strcpy(params->name, "TEST 1");
 	    params->heap_size = 15;
 	    params->action_arr_sz = 3;
-	    
+
 	    /* allocate space */
 	    params->action_arr =
 		(int *) malloc (params->action_arr_sz*sizeof(int));
@@ -409,7 +409,7 @@ void init_predefined_test(test_params_t *params, int index) {
 	    if (params->verify)
 		params->correct_order =
 		    (ADIO_Offset *) malloc(params->heap_size*sizeof(ADIO_Offset));
-	    
+
 	    /* Set values */
 	    params->offsets[0]  = 65;
 	    params->offsets[1]  = 53;

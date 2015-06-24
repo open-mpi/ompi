@@ -5,9 +5,9 @@
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2012 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -36,7 +36,7 @@ int OMPI_Example_global = 42;
  * Just to make the extension "interesting", we pass in an integer and
  * an MPI handle.
  */
-int OMPI_Progress(int count, MPI_Comm comm) 
+int OMPI_Progress(int count, MPI_Comm comm)
 {
     char name[MPI_MAX_OBJECT_NAME];
     int len;

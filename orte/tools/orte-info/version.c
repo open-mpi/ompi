@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -14,9 +14,9 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -62,7 +62,7 @@ static void show_mca_version(const mca_base_component_t *component,
                              const char *scope, const char *ver_type);
 static char *make_version_str(const char *scope,
                               int major, int minor, int release,
-                              const char *greek, 
+                              const char *greek,
                               bool want_repo, const char *repo);
 
 /*
@@ -70,7 +70,7 @@ static char *make_version_str(const char *scope,
  *
  * Determines the version information related to the orte components
  * being used.
- * Accepts: 
+ * Accepts:
  *	- want_all: True if all components' info is required.
  *	- cmd_line: The constructed command line argument
  */
@@ -81,9 +81,9 @@ void orte_info_do_version(bool want_all, opal_cmd_line_t *cmd_line)
     char *arg1, *scope, *type, *component;
     char *pos;
     int j;
-    
+
     orte_info_components_open();
-    
+
     if (want_all) {
         orte_info_show_orte_version(orte_info_ver_full);
         for (j = 0; j < mca_types.size; ++j) {
@@ -97,27 +97,27 @@ void orte_info_do_version(bool want_all, opal_cmd_line_t *cmd_line)
         for (i = 0; i < count; ++i) {
             arg1 = opal_cmd_line_get_param(cmd_line, "version", (int)i, 0);
             scope = opal_cmd_line_get_param(cmd_line, "version", (int)i, 1);
-            
+
             /* Version of Open MPI */
-            
+
             if (0 == strcmp(orte_info_type_orte, arg1)) {
                 orte_info_show_orte_version(scope);
-            } 
-            
+            }
+
             /* Specific type and component */
-            
+
             else if (NULL != (pos = strchr(arg1, ':'))) {
                 *pos = '\0';
                 type = arg1;
                 pos++;
                 component = pos;
-                
+
                 orte_info_show_component_version(type, component, scope, orte_info_ver_all);
-                
+
             }
-            
+
             /* All components of a specific type */
-            
+
             else {
                 orte_info_show_component_version(arg1, orte_info_component_all, scope, orte_info_ver_all);
             }
@@ -130,7 +130,7 @@ void orte_info_do_version(bool want_all, opal_cmd_line_t *cmd_line)
  * Show all the components of a specific type/component combo (component may be
  * a wildcard)
  */
-void orte_info_show_component_version(const char *type_name, 
+void orte_info_show_component_version(const char *type_name,
                                       const char *component_name,
                                       const char *scope, const char *ver_type)
 {
@@ -143,12 +143,12 @@ void orte_info_show_component_version(const char *type_name,
     int j;
     char *pos;
     orte_info_component_map_t *map;
-    
+
     /* see if all components wanted */
     if (0 == strcmp(orte_info_type_all, component_name)) {
         want_all_components = true;
     }
-    
+
     /* Check to see if the type is valid */
     for (found = false, j = 0; j < mca_types.size; ++j) {
         if (NULL == (pos = (char*)opal_pointer_array_get_item(&mca_types, j))) {
@@ -159,11 +159,11 @@ void orte_info_show_component_version(const char *type_name,
             break;
         }
     }
-    
+
     if (!found) {
         exit(1);
     }
-    
+
     /* Now that we have a valid type, find the right component list */
     components = NULL;
     for (j=0; j < orte_component_map.size; j++) {
@@ -184,7 +184,7 @@ void orte_info_show_component_version(const char *type_name,
                  item = opal_list_get_next(item)) {
                 cli = (mca_base_component_list_item_t *) item;
                 component = cli->cli_component;
-                if (want_all_components || 
+                if (want_all_components ||
                     0 == strcmp(component->mca_component_name, component_name)) {
                     show_mca_version(component, scope, ver_type);
                 }
@@ -209,22 +209,22 @@ static void show_mca_version(const mca_base_component_t* component,
     char *api_version;
     char *component_version;
     char *tmp;
-    
+
     if (0 == strcmp(ver_type, orte_info_ver_all) ||
         0 == strcmp(ver_type, orte_info_ver_mca)) {
         want_mca = true;
     }
-    
+
     if (0 == strcmp(ver_type, orte_info_ver_all) ||
         0 == strcmp(ver_type, orte_info_ver_type)) {
         want_type = true;
     }
-    
+
     if (0 == strcmp(ver_type, orte_info_ver_all) ||
         0 == strcmp(ver_type, orte_info_ver_component)) {
         want_component = true;
     }
-    
+
     mca_version = make_version_str(scope, component->mca_major_version,
                                    component->mca_minor_version,
                                    component->mca_release_version, "",
@@ -235,14 +235,14 @@ static void show_mca_version(const mca_base_component_t* component,
                                    false, "");
     component_version = make_version_str(scope, component->mca_component_major_version,
                                          component->mca_component_minor_version,
-                                         component->mca_component_release_version, 
+                                         component->mca_component_release_version,
                                          "", false, "");
-    
+
     if (orte_info_pretty) {
         asprintf(&message, "MCA %s", component->mca_type_name);
         printed = false;
         asprintf(&content, "%s (", component->mca_component_name);
-        
+
         if (want_mca) {
             asprintf(&tmp, "%sMCA v%s", content, mca_version);
             free(content);
@@ -279,11 +279,11 @@ static void show_mca_version(const mca_base_component_t* component,
         } else {
             asprintf(&tmp, ")");
         }
-        
+
         orte_info_out(message, NULL, tmp);
         free(message);
         free(tmp);
-        
+
     } else {
         asprintf(&message, "mca:%s:%s:version", component->mca_type_name, component->mca_component_name);
         if (want_mca) {
@@ -312,12 +312,12 @@ static void show_mca_version(const mca_base_component_t* component,
 
 static char *make_version_str(const char *scope,
                                int major, int minor, int release,
-                               const char *greek, 
+                               const char *greek,
                                bool want_repo, const char *repo)
 {
     char *str = NULL, *tmp;
     char temp[BUFSIZ];
-    
+
     temp[BUFSIZ - 1] = '\0';
     if (0 == strcmp(scope, orte_info_ver_full) ||
         0 == strcmp(scope, orte_info_ver_all)) {
@@ -350,10 +350,10 @@ static char *make_version_str(const char *scope,
     } else if (0 == strcmp(scope, orte_info_ver_repo)) {
         str = strdup(repo);
     }
-    
+
     if (NULL == str) {
         str = strdup(temp);
     }
-    
+
     return str;
 }

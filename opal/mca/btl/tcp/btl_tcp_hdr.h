@@ -5,14 +5,14 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -22,7 +22,7 @@
 
 #include "opal_config.h"
 #include "opal/mca/btl/base/base.h"
-#include "btl_tcp.h" 
+#include "btl_tcp.h"
 
 BEGIN_C_DECLS
 
@@ -38,9 +38,9 @@ struct mca_btl_tcp_hdr_t {
     mca_btl_base_header_t base;
     uint8_t  type;
     uint16_t count;
-    uint32_t size; 
-}; 
-typedef struct mca_btl_tcp_hdr_t mca_btl_tcp_hdr_t; 
+    uint32_t size;
+};
+typedef struct mca_btl_tcp_hdr_t mca_btl_tcp_hdr_t;
 
 #define MCA_BTL_TCP_HDR_HTON(hdr)     \
     do {                              \

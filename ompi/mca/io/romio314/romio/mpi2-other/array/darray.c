@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -42,11 +42,11 @@ Output Parameters:
 
 .N fortran
 @*/
-int MPI_Type_create_darray(int size, int rank, int ndims, 
-     	                   int *array_of_gsizes, int *array_of_distribs, 
-                           int *array_of_dargs, int *array_of_psizes, 
-                           int order, MPI_Datatype oldtype, 
-                           MPI_Datatype *newtype) 
+int MPI_Type_create_darray(int size, int rank, int ndims,
+     	                   int *array_of_gsizes, int *array_of_distribs,
+                           int *array_of_dargs, int *array_of_psizes,
+                           int order, MPI_Datatype oldtype,
+                           MPI_Datatype *newtype)
 {
     int err, error_code;
     int i;
@@ -108,7 +108,7 @@ int MPI_Type_create_darray(int size, int rank, int ndims,
 
 	/* array_of_distribs checked below */
 
-	if ((array_of_dargs[i] != MPI_DISTRIBUTE_DFLT_DARG) && 
+	if ((array_of_dargs[i] != MPI_DISTRIBUTE_DFLT_DARG) &&
 	    (array_of_dargs[i] <= 0))
 	{
 	    error_code = MPIO_Err_create_code(MPI_SUCCESS,
@@ -161,7 +161,7 @@ int MPI_Type_create_darray(int size, int rank, int ndims,
 
     MPI_Type_extent(oldtype, &orig_extent);
 
-/* check if MPI_Aint is large enough for size of global array. 
+/* check if MPI_Aint is large enough for size of global array.
    if not, complain. */
 
     size_with_aint = orig_extent;

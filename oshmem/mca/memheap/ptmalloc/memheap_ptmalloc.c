@@ -1,9 +1,9 @@
 /* Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -13,14 +13,14 @@
 #include "oshmem/mca/memheap/memheap.h"
 #include "oshmem/mca/memheap/ptmalloc/memheap_ptmalloc.h"
 #include "oshmem/mca/memheap/ptmalloc/memheap_ptmalloc_component.h"
-#include "oshmem/mca/memheap/base/base.h" 
+#include "oshmem/mca/memheap/base/base.h"
 #include "orte/mca/grpcomm/grpcomm.h"
 #include "opal/class/opal_hash_table.h"
 #include "opal/class/opal_object.h"
 #include "orte/util/name_fns.h"
 
 mca_memheap_ptmalloc_module_t memheap_ptmalloc = {
-    { 
+    {
         &mca_memheap_ptmalloc_component,
         mca_memheap_ptmalloc_finalize,
         mca_memheap_ptmalloc_alloc,
@@ -36,15 +36,15 @@ mca_memheap_ptmalloc_module_t memheap_ptmalloc = {
         mca_memheap_base_find_offset,
         mca_memheap_base_is_symmetric_addr,
         mca_memheap_modex_recv_all,
-        
+
         0
     },
-    100   /* priority */ 
+    100   /* priority */
 };
 
 /* Memory Heap Buddy Implementation */
 /**
- * Initialize the Memory Heap 
+ * Initialize the Memory Heap
  */
 int mca_memheap_ptmalloc_module_init(memheap_context_t *context)
 {

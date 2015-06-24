@@ -172,7 +172,7 @@ static inline void do_unregistration_gc(struct mca_mpool_base_module_t *mpool)
 
     /* Remove registration from garbage collection list
        before deregistering it */
-    while (NULL != 
+    while (NULL !=
            (item = opal_list_remove_first(&mpool_grdma->pool->gc_list))) {
         dereg_mem((mca_mpool_base_registration_t *) item);
     }

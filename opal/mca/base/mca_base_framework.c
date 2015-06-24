@@ -99,7 +99,7 @@ int mca_base_framework_register (struct mca_base_framework_t *framework,
                                                MCA_BASE_VAR_FLAG_SETTABLE,
                                                OPAL_INFO_LVL_8,
                                                MCA_BASE_VAR_SCOPE_LOCAL,
-                                               &framework->framework_verbose);                                           
+                                               &framework->framework_verbose);
         free(desc);
         if (0 > ret) {
             return ret;

@@ -4,9 +4,9 @@
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  *
  * These symbols are in a file by themselves to provide nice linker
@@ -48,7 +48,7 @@ opal_pmix_base_component_t mca_pmix_s2_component = {
     .base_version = {
         /* Indicate that we are a pmix v1.1.0 component (which also
            implies a specific MCA version) */
-        
+
         OPAL_PMIX_BASE_VERSION_2_0_0,
 
         /* Component name and version */
@@ -96,7 +96,7 @@ static int pmix_s2_component_query(mca_base_module_t **module, int *priority)
         *module = NULL;
         return OPAL_ERROR;
     }
-    
+
     /* we can be considered */
     *priority = mca_pmix_s2_component.priority;
     *module = (mca_base_module_t *)&opal_pmix_s2_module;

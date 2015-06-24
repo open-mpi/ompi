@@ -5,14 +5,14 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -46,7 +46,7 @@ opal_sys_timer_get_cycles(void)
 
     __asm__ __volatile__("rd %%tick, %0    \n"
                          "srlx %0, 32, %1 " :
-                         "=r"(a), "=r"(b) 
+                         "=r"(a), "=r"(b)
                          );
 
     ret = (0x00000000FFFFFFFF & a) | (((opal_timer_t) b) << 32);

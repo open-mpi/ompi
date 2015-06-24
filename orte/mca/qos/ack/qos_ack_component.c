@@ -535,11 +535,11 @@ void orte_qos_ack_recv_msg_timeout_callback (struct opal_hotel_t *hotel,
 #if 0
     orte_qos_ack_channel_t *ack_chan;
     orte_rml_channel_t *channel;
-    
+
     channel = orte_rml_base_get_channel(msg->channel_num);
     ack_chan = (orte_qos_ack_channel_t*) channel->qos_channel_ptr;
 #endif
-    
+
     OPAL_OUTPUT_VERBOSE((1, orte_qos_base_framework.framework_output,
                          "%s OOPS received msg = %p seq num =%d timed out on ACK Queue\n",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),

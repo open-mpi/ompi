@@ -93,6 +93,6 @@ int mca_pml_example_ft_event(int state) {
     else {
         ;
     }
-    
+
     return OMPI_SUCCESS;
 }

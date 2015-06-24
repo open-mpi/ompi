@@ -13,7 +13,7 @@
  * Copyright (c) 2006-2007 Voltaire. All rights reserved.
  * Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010-2014 Los Alamos National Security, LLC.
- *                         All rights reserved. 
+ *                         All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -150,7 +150,7 @@ static inline mca_btl_vader_hdr_t *vader_fifo_read (vader_fifo_t *fifo, struct m
     }
 
     opal_atomic_wmb ();
-    return hdr; 
+    return hdr;
 }
 
 static inline void vader_fifo_init (vader_fifo_t *fifo)

@@ -2,9 +2,9 @@
  * Copyright (c) 2008 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2008-2009 Sun Microystems, Inc.  All rights reserved
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -12,7 +12,7 @@
 
 /*
  * Include all header files for the datatypes that we care about / use
- * in the DLL code 
+ * in the DLL code
  */
 #include "ompi/mca/topo/topo.h"
 #include "ompi/mca/pml/base/pml_base_request.h"

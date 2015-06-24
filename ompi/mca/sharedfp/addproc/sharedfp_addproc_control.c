@@ -82,7 +82,7 @@ int Check_Request_Offset(int tag_received)
 	return 1;
     }
 
-    
+
     return 0;
 }
 

@@ -28,7 +28,7 @@ all: static_libs tests
 static_libs: $(STATIC_LIBS)
 
 libevent_core.lib: $(CORE_OBJS) $(WIN_OBJS)
-	lib $(LIBFLAGS) $(CORE_OBJS) $(WIN_OBJS) /out:libevent_core.lib 
+	lib $(LIBFLAGS) $(CORE_OBJS) $(WIN_OBJS) /out:libevent_core.lib
 
 libevent_extras.lib: $(EXTRA_OBJS)
 	lib $(LIBFLAGS) $(EXTRA_OBJS) /out:libevent_extras.lib

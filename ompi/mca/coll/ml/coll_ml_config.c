@@ -254,9 +254,9 @@ static int coll_name_to_id(char *name)
     /* Error - collecives name was not matched */
     return ML_UNDEFINED;
 }
-static int set_collective_name(coll_config_t *coll_config) 
+static int set_collective_name(coll_config_t *coll_config)
 {
-    int coll_id = 
+    int coll_id =
         coll_name_to_id(coll_ml_config_yytext);
 
     if (ML_UNDEFINED == coll_id) {
@@ -269,7 +269,7 @@ static int set_collective_name(coll_config_t *coll_config)
     return OMPI_SUCCESS;
 }
 
-static int set_section_name(section_config_t *section_config) 
+static int set_section_name(section_config_t *section_config)
 {
     int section_id;
 
@@ -285,7 +285,7 @@ static int set_section_name(section_config_t *section_config)
     return OMPI_SUCCESS;
 }
 
-void mca_coll_ml_reset_config(per_collective_configuration_t *config) 
+void mca_coll_ml_reset_config(per_collective_configuration_t *config)
 {
     config->topology_id = ML_UNDEFINED;
     config->threshold = ML_UNDEFINED;
@@ -396,7 +396,7 @@ static int save_settings(coll_config_t *coll_config)
     cf = &mca_coll_ml_component.coll_config[coll_config->coll_id][coll_config->section.section_id];
 
     cf->topology_id = coll_config->section.config.topology_id;
-    cf->threshold = coll_config->section.config.threshold; 
+    cf->threshold = coll_config->section.config.threshold;
     cf->algorithm_id = coll_config->section.config.algorithm_id;
     cf->fragmentation_enabled = coll_config->section.config.fragmentation_enabled;
 
@@ -429,8 +429,8 @@ static int parse_line(section_config_t *section)
     /* The first thing we have to see is an "=" */
     val = coll_ml_config_yylex();
     if (coll_ml_config_parse_done || COLL_ML_CONFIG_PARSE_EQUAL != val) {
-        ML_ERROR(("Line %d, expected = before key: %s", 
-                    coll_ml_config_yynewlines, 
+        ML_ERROR(("Line %d, expected = before key: %s",
+                    coll_ml_config_yynewlines,
                     key_buffer));
         return OMPI_ERROR;
     }
@@ -494,7 +494,7 @@ static int parse_line(section_config_t *section)
         ML_ERROR(("Line %d, unknown key %s",
                     coll_ml_config_yynewlines, key_buffer));
     }
-    
+
     /* All done */
 Error:
     if (NULL != value) {
@@ -547,7 +547,7 @@ static int parse_file(char *filename)
                     goto cleanup;
                 }
             }
-            
+
             /* reset collective config */
             reset_collective(&coll_config);
 

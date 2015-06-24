@@ -1,15 +1,15 @@
 # -*- shell-script -*-
-#  
+#
 #
 # Copyright (c) 2013      Mellanox Technologies, Inc.
 #                         All rights reserved.
 # $COPYRIGHT$
-# 
+#
 #  Additional copyrights may follow
-# 
+#
 # $HEADER$
-# 
-# 
+#
+#
 AM_CPPFLAGS = $(coll_fca_CPPFLAGS) -DCOLL_FCA_HOME=\"$(coll_fca_HOME)\" $(coll_fca_extra_CPPFLAGS)
 scoll_fca_sources = \
 					scoll_fca.h \

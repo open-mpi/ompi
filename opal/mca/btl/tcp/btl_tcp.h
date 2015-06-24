@@ -6,7 +6,7 @@
  * Copyright (c) 2004-2012 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -16,9 +16,9 @@
  * Copyright (c) 2014-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 /**
@@ -99,7 +99,7 @@ struct mca_btl_tcp_component_t {
      * that are not found?
      */
     bool report_all_unfound_interfaces;
-}; 
+};
 typedef struct mca_btl_tcp_component_t mca_btl_tcp_component_t;
 
 OPAL_MODULE_DECLSPEC extern mca_btl_tcp_component_t mca_btl_tcp_component;
@@ -122,7 +122,7 @@ struct mca_btl_tcp_module_t {
     size_t tcp_bytes_recv;
     size_t tcp_send_handler;
 #endif
-}; 
+};
 typedef struct mca_btl_tcp_module_t mca_btl_tcp_module_t;
 extern mca_btl_tcp_module_t mca_btl_tcp_module;
 
@@ -130,13 +130,13 @@ extern mca_btl_tcp_module_t mca_btl_tcp_module;
 
 /**
  * TCP component initialization.
- * 
+ *
  * @param num_btl_modules (OUT)           Number of BTLs returned in BTL array.
  * @param allow_multi_user_threads (OUT)  Flag indicating wether BTL supports user threads (TRUE)
  * @param have_hidden_threads (OUT)       Flag indicating wether BTL uses threads (TRUE)
  */
 extern mca_btl_base_module_t** mca_btl_tcp_component_init(
-    int *num_btl_modules, 
+    int *num_btl_modules,
     bool allow_multi_user_threads,
     bool have_hidden_threads
 );
@@ -151,7 +151,7 @@ extern int mca_btl_tcp_component_progress(void);
 
 /**
  * Cleanup any resources held by the BTL.
- * 
+ *
  * @param btl  BTL instance.
  * @return     OPAL_SUCCESS or error status on failure.
  */
@@ -163,14 +163,14 @@ extern int mca_btl_tcp_finalize(
 
 /**
  * PML->BTL notification of change in the process list.
- * 
+ *
  * @param btl (IN)
  * @param nprocs (IN)     Number of processes
  * @param procs (IN)      Set of processes
  * @param peers (OUT)     Set of (optional) peer addressing info.
  * @param peers (IN/OUT)  Set of processes that are reachable via this BTL.
  * @return     OPAL_SUCCESS or error status on failure.
- * 
+ *
  */
 
 extern int mca_btl_tcp_add_procs(
@@ -250,7 +250,7 @@ extern mca_btl_base_descriptor_t* mca_btl_tcp_alloc(
     struct mca_btl_base_endpoint_t* endpoint,
     uint8_t order,
     size_t size,
-    uint32_t flags); 
+    uint32_t flags);
 
 
 /**
@@ -261,9 +261,9 @@ extern mca_btl_base_descriptor_t* mca_btl_tcp_alloc(
  */
 
 extern int mca_btl_tcp_free(
-    struct mca_btl_base_module_t* btl, 
-    mca_btl_base_descriptor_t* des); 
-    
+    struct mca_btl_base_module_t* btl,
+    mca_btl_base_descriptor_t* des);
+
 
 /**
  * Prepare a descriptor for send/rdma using the supplied
@@ -276,7 +276,7 @@ extern int mca_btl_tcp_free(
  * @param endpoint (IN)     BTL peer addressing
  * @param convertor (IN)    Data type convertor
  * @param reserve (IN)      Additional bytes requested by upper layer to precede user data
- * @param size (IN/OUT)     Number of bytes to prepare (IN), number of bytes actually prepared (OUT) 
+ * @param size (IN/OUT)     Number of bytes to prepare (IN), number of bytes actually prepared (OUT)
 */
 
 mca_btl_base_descriptor_t* mca_btl_tcp_prepare_src(

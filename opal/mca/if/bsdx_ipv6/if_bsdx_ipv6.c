@@ -2,9 +2,9 @@
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -108,7 +108,7 @@ static int if_bsdx_ipv6_open(void)
     opal_output_verbose(1, opal_if_base_framework.framework_output,
                         "searching for IPv6 interfaces");
 
-    /* 
+    /*
      * the manpage claims that getifaddrs() allocates the memory,
      * and freeifaddrs() is later used to release the allocated memory.
      * however, without this malloc the call to getifaddrs() segfaults
@@ -123,7 +123,7 @@ static int if_bsdx_ipv6_open(void)
         return OPAL_ERROR;
     }
 
-    for (cur_ifaddrs = *ifadd_list; NULL != cur_ifaddrs; 
+    for (cur_ifaddrs = *ifadd_list; NULL != cur_ifaddrs;
          cur_ifaddrs = cur_ifaddrs->ifa_next) {
         opal_if_t *intf;
         struct in6_addr a6;
@@ -160,21 +160,21 @@ static int if_bsdx_ipv6_open(void)
 
         sin_addr = (struct sockaddr_in6 *) cur_ifaddrs->ifa_addr;
 
-        /* 
+        /*
          * skip IPv6 address starting with fe80:, as this is supposed to be
          * link-local scope. sockaddr_in6->sin6_scope_id doesn't always work
-         * TODO: test whether scope id is set to a sensible value on 
+         * TODO: test whether scope id is set to a sensible value on
          * linux and/or bsd (including osx)
          *
          * MacOSX: fe80::... has a scope of 0, but ifconfig -a shows
-         * a scope of 4 on that particular machine, 
+         * a scope of 4 on that particular machine,
          * so the scope returned by getifaddrs() isn't working properly
          */
 
         if ((IN6_IS_ADDR_LINKLOCAL (&sin_addr->sin6_addr))) {
             opal_output_verbose(1, opal_if_base_framework.framework_output,
                                 "skipping link-local ipv6 address on interface "
-                                "%s with scope %d.\n", 
+                                "%s with scope %d.\n",
                                 cur_ifaddrs->ifa_name, sin_addr->sin6_scope_id);
             continue;
         }
@@ -182,14 +182,14 @@ static int if_bsdx_ipv6_open(void)
         if (0 < opal_output_get_verbosity(opal_if_base_framework.framework_output)) {
             char *addr_name = (char *) malloc(48*sizeof(char));
             inet_ntop(AF_INET6, &sin_addr->sin6_addr, addr_name, 48*sizeof(char));
-            opal_output(0, "ipv6 capable interface %s discovered, address %s.\n", 
+            opal_output(0, "ipv6 capable interface %s discovered, address %s.\n",
                         cur_ifaddrs->ifa_name, addr_name);
             free(addr_name);
         }
 
         /* fill values into the opal_if_t */
         memcpy(&a6, &(sin_addr->sin6_addr), sizeof(struct in6_addr));
-            
+
         intf = OBJ_NEW(opal_if_t);
         if (NULL == intf) {
             opal_output(0, "opal_ifinit: unable to allocate %lu bytes\n",
@@ -217,7 +217,7 @@ static int if_bsdx_ipv6_open(void)
          * (or create our own), getifaddrs() does not contain such
          * data
          */
-        intf->if_kernel_index = 
+        intf->if_kernel_index =
             (uint16_t) if_nametoindex(cur_ifaddrs->ifa_name);
         opal_list_append(&opal_if_list, &(intf->super));
     }   /*  of for loop over ifaddrs list */

@@ -5,9 +5,9 @@
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -110,7 +110,7 @@ static double timer_last  = 0;
 static double get_time(void);
 
 typedef struct {
-    bool help; 
+    bool help;
     int  pid;
     bool verbose;
     int  verbose_level;
@@ -125,44 +125,44 @@ orte_migrate_globals_t orte_migrate_globals;
 
 opal_cmd_line_init_t cmd_line_opts[] = {
     { NULL,
-      'h', NULL, "help", 
+      'h', NULL, "help",
       0,
       &orte_migrate_globals.help, OPAL_CMD_LINE_TYPE_BOOL,
       "This help message" },
 
     { NULL,
-      'v', NULL, "verbose", 
+      'v', NULL, "verbose",
       0,
       &orte_migrate_globals.verbose, OPAL_CMD_LINE_TYPE_BOOL,
       "Be Verbose" },
 
     { NULL,
-      'V', NULL, NULL, 
+      'V', NULL, NULL,
       1,
       &orte_migrate_globals.verbose_level, OPAL_CMD_LINE_TYPE_INT,
       "Set the verbosity level (For additional debugging information)" },
 
     { "hnp-pid",
-      '\0', NULL, "hnp-pid", 
+      '\0', NULL, "hnp-pid",
       1,
       &orte_migrate_globals.pid, OPAL_CMD_LINE_TYPE_INT,
       "This should be the pid of the mpirun whose applications you wish "
       "to migrate." },
 
     { NULL,
-      'x', NULL, "off", 
+      'x', NULL, "off",
       1,
       &orte_migrate_globals.off_nodes, OPAL_CMD_LINE_TYPE_STRING,
       "List of nodes to migrate off of (comma separated)" },
 
     { NULL,
-      'r', NULL, "ranks", 
+      'r', NULL, "ranks",
       1,
       &orte_migrate_globals.off_procs, OPAL_CMD_LINE_TYPE_STRING,
       "List of MPI_COMM_WORLD ranks to migrate (comma separated)" },
 
     { NULL,
-      't', NULL, "onto", 
+      't', NULL, "onto",
       1,
       &orte_migrate_globals.onto_nodes, OPAL_CMD_LINE_TYPE_STRING,
       "List of nodes to migrate onto (comma separated)" },
@@ -275,13 +275,13 @@ static int parse_args(int argc, char *argv[]) {
         goto cleanup;
     }
 #endif
-    
+
     /* Parse the command line options */
     opal_cmd_line_create(&cmd_line, cmd_line_opts);
     mca_base_open();
     mca_base_cmd_line_setup(&cmd_line);
     ret = opal_cmd_line_parse(&cmd_line, false, argc, argv);
-    
+
     if (OPAL_SUCCESS != ret) {
         if (OPAL_ERR_SILENT != ret) {
             fprintf(stderr, "%s: command line error (%s)\n", argv[0],
@@ -305,8 +305,8 @@ static int parse_args(int argc, char *argv[]) {
         exit(0);
     }
 
-    /** 
-     * Put all of the MCA arguments in the environment 
+    /**
+     * Put all of the MCA arguments in the environment
      */
     mca_base_cmd_line_process_args(&cmd_line, &app_env, &global_env);
 
@@ -334,7 +334,7 @@ static int parse_args(int argc, char *argv[]) {
     argv0 = strdup(argv[0]);
     opal_cmd_line_get_tail(&cmd_line, &argc, &argv);
 
-    if (NULL == orte_migrate_globals.off_nodes && 
+    if (NULL == orte_migrate_globals.off_nodes &&
         NULL == orte_migrate_globals.off_procs) {
         fprintf(stderr, "%s: Nothing to do\n", argv0);
         fprintf(stderr, "Type '%s --help' for usage.\n", argv0);
@@ -351,13 +351,13 @@ static int parse_args(int argc, char *argv[]) {
     }
 
     /*
-     * If the user did not supply an hnp jobid, then they must 
+     * If the user did not supply an hnp jobid, then they must
      *  supply the PID of MPIRUN
      */
     if(0 >= argc ) {
         fprintf(stderr, "%s: Nothing to do\n", argv[0]);
         fprintf(stderr, "Type '%s --help' for usage.\n", argv[0]);
-        
+
         exit_status = ORTE_ERROR;
         goto cleanup;
     }
@@ -369,7 +369,7 @@ static int parse_args(int argc, char *argv[]) {
         exit_status = ORTE_ERROR;
         goto cleanup;
     }
-    
+
     if(orte_migrate_globals.verbose) {
         orte_migrate_globals.status = true;
     }
@@ -404,7 +404,7 @@ static int find_hnp(void) {
         exit_status = ret;
         goto cleanup;
     }
-    
+
     /* search the list for the desired hnp */
     while (NULL != (item = opal_list_remove_first(&hnp_list))) {
         hnpcandidate = (orte_hnp_contact_t*)item;
@@ -415,7 +415,7 @@ static int find_hnp(void) {
             goto cleanup;
         }
     }
-    
+
 cleanup:
     while (NULL != (item = opal_list_remove_first(&hnp_list))) {
         OBJ_RELEASE(item);
@@ -464,11 +464,11 @@ static int tool_init(int argc, char *argv[]) {
                 true, &environ);
     free(tmp_env_var);
     tmp_env_var = NULL;
-    
+
     /* we are never allowed to operate as a distributed tool,
      * so insist on the ess/tool component */
     opal_setenv("OMPI_MCA_ess", "tool", true, &environ);
-    
+
     /***************************
      * We need all of OPAL and the TOOLS portion of ORTE - this
      * sets us up so we can talk to any HNP over the wire
@@ -512,7 +512,7 @@ static int tool_finalize(void) {
     if (ORTE_SUCCESS != (ret = orte_finalize())) {
         exit_status = ret;
     }
-    
+
     return exit_status;
 }
 
@@ -558,7 +558,7 @@ static void hnp_receiver(int status,
         ORTE_ERROR_LOG(rc);
         return;
     }
-    
+
     switch (command) {
         case ORTE_ERRMGR_MIGRATE_TOOL_UPDATE_CMD:
             opal_output_verbose(10, orte_migrate_globals.output,
@@ -597,7 +597,7 @@ static void process_ckpt_update_cmd(orte_process_name_t* sender,
      * If the job is not able to be migrateed, then return
      */
     if( ORTE_SNAPC_CKPT_STATE_NO_CKPT == orte_migrate_ckpt_status) {
-        opal_show_help("help-orte-migrate.txt", "non-ckptable", 
+        opal_show_help("help-orte-migrate.txt", "non-ckptable",
                        true,
                        orte_migrate_globals.pid);
         goto cleanup;
@@ -608,7 +608,7 @@ static void process_ckpt_update_cmd(orte_process_name_t* sender,
      * try again later.
      */
     if( ORTE_ERRMGR_MIGRATE_STATE_ERR_INPROGRESS == orte_migrate_ckpt_status) {
-        opal_show_help("help-orte-migrate.txt", "err-inprogress", 
+        opal_show_help("help-orte-migrate.txt", "err-inprogress",
                        true,
                        orte_migrate_globals.pid);
         goto cleanup;
@@ -618,7 +618,7 @@ static void process_ckpt_update_cmd(orte_process_name_t* sender,
      * If there was an error, display a message and exit
      */
     if( ORTE_ERRMGR_MIGRATE_STATE_ERROR == orte_migrate_ckpt_status ) {
-        opal_show_help("help-orte-migrate.txt", "err-other", 
+        opal_show_help("help-orte-migrate.txt", "err-other",
                        true,
                        orte_migrate_globals.pid);
         goto cleanup;
@@ -734,7 +734,7 @@ static int pretty_print_status(void) {
     orte_errmgr_base_migrate_state_str(&state_str, orte_migrate_ckpt_status);
 
     opal_output(0,
-                "[%6.2f / %6.2f] %*s - ...\n", 
+                "[%6.2f / %6.2f] %*s - ...\n",
                 (cur_time - timer_last), (cur_time - timer_start),
                 25, state_str);
 
@@ -787,6 +787,6 @@ static int pretty_print_migration(void)
         printf("\t\"%s\"\n", loc_onto_nodes[i]);
     }
 
-    return ORTE_SUCCESS;    
+    return ORTE_SUCCESS;
 }
 

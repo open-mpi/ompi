@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -58,7 +58,7 @@ int MPI_File_iread(MPI_File fh, void *buf, int count, MPI_Datatype datatype, MPI
 
     error_code = MPIOI_File_iread(fh, (MPI_Offset) 0, ADIO_INDIVIDUAL,
 				  buf, count, datatype, myname, request);
-    
+
     /* --BEGIN ERROR HANDLING-- */
     if (error_code != MPI_SUCCESS)
 	error_code = MPIO_Err_return_file(fh, error_code);
@@ -128,7 +128,7 @@ int MPIOI_File_iread(MPI_File fh, MPI_Offset offset, int file_ptr_type, void *bu
 
         if (!(adio_fh->atomicity))
 	    ADIO_IreadContig(adio_fh, buf, count, datatype, file_ptr_type,
-			off, request, &error_code); 
+			off, request, &error_code);
         else {
             /* to maintain strict atomicity semantics with other concurrent
               operations, lock (exclusive) and call blocking routine */
@@ -151,7 +151,7 @@ int MPIOI_File_iread(MPI_File fh, MPI_Offset offset, int file_ptr_type, void *bu
         }
     }
     else ADIO_IreadStrided(adio_fh, buf, count, datatype, file_ptr_type,
-			   offset, request, &error_code); 
+			   offset, request, &error_code);
 
 fn_exit:
     MPIU_THREAD_CS_EXIT(ALLFUNC,);

@@ -1,5 +1,5 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/*  
+/*
  *  (C) 2004 by Argonne National Laboratory.
  *      See COPYRIGHT in top-level directory.
  */
@@ -9,21 +9,21 @@
 #include <unistd.h>
 
 /*
- * This program tests to see if fcntl returns success when asked to 
+ * This program tests to see if fcntl returns success when asked to
  * establish a file lock.  This test is intended for use on file systems
  * such as NFS that may not implement file locks.  ROMIO makes use
  * of file locks to implement certain operations, and may not work
- * properly if file locks are not available.  
+ * properly if file locks are not available.
  *
  * This is a simple test and has at least two limitations:
- * 
- * 1. Some implementations of NFS are known to return success for 
+ *
+ * 1. Some implementations of NFS are known to return success for
  * setting a file lock when in fact no lock has been set.  This
  * test will not detect such erroneous implementations of NFS
  *
  * 2. Some implementations will hang (enter and wait indefinitately)
  * within the fcntl call.  This program will also hang in that case.
- * Under normal conditions, this program should only take a few seconds to 
+ * Under normal conditions, this program should only take a few seconds to
  * run.
  *
  * The program prints a message showing the success or failure of
@@ -48,7 +48,7 @@ int main( int argc, char *argv[] )
       filename = "conftest.dat";
     }
 
-       
+
     lock.l_type   = F_WRLCK;
     lock.l_start  = 0;
     lock.l_whence = SEEK_SET;

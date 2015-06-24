@@ -78,21 +78,21 @@ OBJ_CLASS_DECLARATION(orte_oob_base_peer_t);
 ORTE_DECLSPEC extern mca_base_framework_t orte_oob_base_framework;
 ORTE_DECLSPEC int orte_oob_base_select(void);
 
-/* Access the OOB internal functions via set of event-based macros 
- * for inserting messages and other commands into the 
- * OOB event base. This ensures that all OOB operations occur 
- * asynchronously in a thread-safe environment. 
- * Note that this doesn't mean that messages will be *sent* 
- * in order as that depends on the specific transport being 
- * used, when that module's event base indicates the transport 
- * is available, etc. 
- */ 
-typedef struct { 
-    opal_object_t super; 
-    opal_event_t ev; 
-    orte_rml_send_t *msg; 
-} orte_oob_send_t; 
-OBJ_CLASS_DECLARATION(orte_oob_send_t); 
+/* Access the OOB internal functions via set of event-based macros
+ * for inserting messages and other commands into the
+ * OOB event base. This ensures that all OOB operations occur
+ * asynchronously in a thread-safe environment.
+ * Note that this doesn't mean that messages will be *sent*
+ * in order as that depends on the specific transport being
+ * used, when that module's event base indicates the transport
+ * is available, etc.
+ */
+typedef struct {
+    opal_object_t super;
+    opal_event_t ev;
+    orte_rml_send_t *msg;
+} orte_oob_send_t;
+OBJ_CLASS_DECLARATION(orte_oob_send_t);
 
 /* All OOB sends are based on iovec's and are async as the RML
  * acts as the initial interface to prepare all communications.
@@ -108,7 +108,7 @@ typedef void (*mca_oob_send_callback_fn_t)(int status,
                                            struct iovec *iov,
                                            int count, void *cbdata);
 
-ORTE_DECLSPEC void orte_oob_base_send_nb(int fd, short args, void *cbdata); 
+ORTE_DECLSPEC void orte_oob_base_send_nb(int fd, short args, void *cbdata);
 #define ORTE_OOB_SEND(m)                                                \
     do {                                                                \
         orte_oob_send_t *cd;                                            \
@@ -161,7 +161,7 @@ ORTE_DECLSPEC void orte_oob_base_get_addr(char **uri);
  * across all oob components/modules, letting each look at the uri and extract
  * info from it if it can.
  */
-typedef struct { 
+typedef struct {
     opal_object_t super;
     opal_event_t ev;
     char *uri;

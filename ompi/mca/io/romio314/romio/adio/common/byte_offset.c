@@ -1,14 +1,14 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
 #include "adio.h"
 #include "adio_extern.h"
 
-/* Returns the absolute byte position in the file corresponding to 
+/* Returns the absolute byte position in the file corresponding to
    "offset" etypes relative to the current view. */
 
 void ADIOI_Get_byte_offset(ADIO_File fd, ADIO_Offset offset, ADIO_Offset *disp)
@@ -34,7 +34,7 @@ void ADIOI_Get_byte_offset(ADIO_File fd, ADIO_Offset offset, ADIO_Offset *disp)
 	n_filetypes = offset / n_etypes_in_filetype;
 	etype_in_filetype = offset % n_etypes_in_filetype;
 	size_in_filetype = etype_in_filetype * etype_size;
- 
+
 	sum = 0;
 	for (i=0; i<flat_file->count; i++) {
 	    sum += flat_file->blocklens[i];

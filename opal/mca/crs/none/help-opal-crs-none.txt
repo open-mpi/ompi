@@ -13,7 +13,7 @@
 #
 [none:select-warning]
 Error: 'none' component selected.
-       Checkpoint/Restart functionality may not work properly. 
+       Checkpoint/Restart functionality may not work properly.
        Make sure that you have configured with and are using a fully functional
        CRS component.
        To disable this warning set the following MCA parmeter:

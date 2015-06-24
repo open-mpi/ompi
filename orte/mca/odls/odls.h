@@ -45,7 +45,7 @@ BEGIN_C_DECLS
 /*
  * odls module functions
  */
-    
+
 /*
  * Construct a buffer for use in adding local processes
  * In order to reuse daemons, we need a way for the HNP to construct a buffer that

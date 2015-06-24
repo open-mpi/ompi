@@ -5,9 +5,9 @@
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -377,7 +377,7 @@ int orte_sstore_central_global_request_global_snapshot_data(orte_sstore_base_han
      */
     snapshot->seq_num   = handle_info->seq_num;
     snapshot->reference = strdup(handle_info->ref_name);
-    snapshot->basedir   = strdup(handle_info->base_location); 
+    snapshot->basedir   = strdup(handle_info->base_location);
     snapshot->metadata_filename = strdup(handle_info->metadata_filename);
 
     /* If this is the current checkpoint, pull data from local cache */

@@ -4,14 +4,14 @@
 .\" $COPYRIGHT$
 .TH MPI_Testany 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
-\fBMPI_Testany\fP \- Tests for completion of any one previously initiated communication in a list. 
+\fBMPI_Testany\fP \- Tests for completion of any one previously initiated communication in a list.
 
 .SH SYNTAX
 .ft R
 .SH C Syntax
 .nf
 #include <mpi.h>
-int MPI_Testany(int \fIcount\fP, MPI_Request\fI array_of_requests[]\fP, 
+int MPI_Testany(int \fIcount\fP, MPI_Request\fI array_of_requests[]\fP,
 	int\fI *index\fP, int\fI *flag\fP, MPI_Status\fI *status\fP)
 
 .fi
@@ -19,19 +19,19 @@ int MPI_Testany(int \fIcount\fP, MPI_Request\fI array_of_requests[]\fP,
 .nf
 INCLUDE 'mpif.h'
 MPI_TESTANY(\fICOUNT, ARRAY_OF_REQUESTS, INDEX, FLAG, STATUS, IERROR\fP)
-	LOGICAL	\fIFLAG\fP 
-	INTEGER	\fICOUNT, ARRAY_OF_REQUESTS(*), INDEX\fP 
-	INTEGER	\fISTATUS(MPI_STATUS_SIZE), IERROR\fP 
+	LOGICAL	\fIFLAG\fP
+	INTEGER	\fICOUNT, ARRAY_OF_REQUESTS(*), INDEX\fP
+	INTEGER	\fISTATUS(MPI_STATUS_SIZE), IERROR\fP
 
 .fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
-static bool Request::Testany(int \fIcount\fP, Request \fIarray_of_requests\fP[], 
-	int& \fIindex\fP, Status& \fIstatus\fP) 
+static bool Request::Testany(int \fIcount\fP, Request \fIarray_of_requests\fP[],
+	int& \fIindex\fP, Status& \fIstatus\fP)
 
-static bool Request::Testany(int \fIcount\fP, Request \fIarray_of_requests\fP[], 
-	int& \fIindex\fP) 
+static bool Request::Testany(int \fIcount\fP, Request \fIarray_of_requests\fP[],
+	int& \fIindex\fP)
 
 .fi
 .SH INPUT PARAMETERS
@@ -58,7 +58,7 @@ Status object (status).
 .ft R
 .TP 1i
 IERROR
-Fortran only: Error status (integer). 
+Fortran only: Error status (integer).
 
 .SH DESCRIPTION
 .ft R
@@ -69,7 +69,7 @@ The array may contain null or inactive handles. If the array contains no active 
 If the array of requests contains active handles then the execution of
 MPI_Testany(count, array_of_requests, index, status) has the same effect as the execution of MPI_Test(&\fIarray_of_requests[i\fP], \fIflag\fP, \fIstatus\fP), for \fIi\fP=0,1,...,count-1, in some arbitrary order, until one call returns \fIflag\fP = true, or all fail. In the former case, \fIindex\fP is set to the last value of \fIi\fP, and in the latter case, it is set to MPI_UNDEFINED. MPI_Testany with an array containing one active entry is equivalent to MPI_Test.
 .sp
-If your application does not need to examine the \fIstatus\fP field, you can save resources by using the predefined constant MPI_STATUS_IGNORE as a special value for the \fIstatus\fP argument. 
+If your application does not need to examine the \fIstatus\fP field, you can save resources by using the predefined constant MPI_STATUS_IGNORE as a special value for the \fIstatus\fP argument.
 
 .SH ERRORS
 Almost all MPI routines return an error value; C routines as the value of the function and Fortran routines in the last argument. C++ functions do not return errors. If the default error handler is set to MPI::ERRORS_THROW_EXCEPTIONS, then on error the C++ exception mechanism will be used to throw an MPI::Exception object.

@@ -5,21 +5,21 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2008 Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2007-2013 Los Alamos National Security, LLC.  All rights
- *                         reserved. 
+ *                         reserved.
  * Copyright (c) 2011-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 #include "orte_config.h"
@@ -92,26 +92,26 @@ orte_clean_globals_t orte_clean_globals = {0};
 
 opal_cmd_line_init_t cmd_line_opts[] = {
     { NULL,
-      'h', NULL, "help", 
+      'h', NULL, "help",
       0,
       &orte_clean_globals.help, OPAL_CMD_LINE_TYPE_BOOL,
       "This help message" },
 
     { NULL,
-      'v', NULL, "verbose", 
+      'v', NULL, "verbose",
       0,
       &orte_clean_globals.verbose, OPAL_CMD_LINE_TYPE_BOOL,
       "Generate verbose output" },
 
     { NULL,
-      'd', NULL, "debug", 
+      'd', NULL, "debug",
       0,
       &orte_clean_globals.debug, OPAL_CMD_LINE_TYPE_BOOL,
       "Extra debug output for developers to ensure that orte-clean is working" },
 
     /* End of list */
     { NULL,
-      '\0', NULL, NULL, 
+      '\0', NULL, NULL,
       0,
       NULL, OPAL_CMD_LINE_TYPE_NULL,
       NULL }
@@ -146,7 +146,7 @@ main(int argc, char *argv[])
      * Note: This must happen before opal_init().
      */
     opal_cr_set_enabled(false);
-    
+
     /* Select the none component, since we don't actually use a checkpointer */
     (void) mca_base_var_env_name("crs", &tmp_env_var);
     opal_setenv(tmp_env_var,
@@ -171,11 +171,11 @@ main(int argc, char *argv[])
      * didn't create one!
      */
     if (orte_clean_globals.verbose) {
-        fprintf(stderr, "orte-clean: cleaning session dir tree %s\n", 
+        fprintf(stderr, "orte-clean: cleaning session dir tree %s\n",
                 orte_process_info.top_session_dir);
     }
     opal_os_dirpath_destroy(orte_process_info.top_session_dir, true, NULL);
-    
+
     /* now kill any lingering procs, if we can */
     kill_procs();
 
@@ -238,7 +238,7 @@ static char *orte_getline(FILE *fp)
     char *ret, *buff;
     char input[1024];
     int i;
-    
+
     ret = fgets(input, 1024, fp);
     if (NULL != ret) {
         /* remove trailing spaces */
@@ -251,12 +251,12 @@ static char *orte_getline(FILE *fp)
         buff = strdup(input);
         return buff;
     }
-    
+
     return NULL;
 }
 
 /*
- * This function makes a call to "ps" to find out the processes that 
+ * This function makes a call to "ps" to find out the processes that
  * are running on this node.  It then attempts to kill off any orteds
  * and orteruns that are not related to this job.
  */
@@ -273,7 +273,7 @@ void kill_procs(void) {
     char *this_user;
     int uid;
     char *separator = " \t";  /* output can be delimited by space or tab */
-    
+
     /*
      * This is the command that is used to get the information about
      * all the processes that are running.  The output looks like the
@@ -307,7 +307,7 @@ void kill_procs(void) {
     /* get the name of the user */
     uid = getuid();
     asprintf(&this_user, "%d", uid);
-    
+
     /*
      * There is a race condition here.  The problem is that we are looking
      * for any processes named orted.  However, one may erroneously find more
@@ -332,9 +332,9 @@ void kill_procs(void) {
         free(this_user);
         pclose(psfile);
         return;
-    } 
+    }
     free(inputline);  /* dump the header line */
-    
+
     while (NULL != (inputline = orte_getline(psfile))) {
 
         /* The three fields are typically seperated by spaces */
@@ -343,7 +343,7 @@ void kill_procs(void) {
         user = strtok(NULL, separator);
 
         if (orte_clean_globals.debug) {
-            fprintf(stdout, "\norte-clean: user(pid)=%s, me=%s\n", 
+            fprintf(stdout, "\norte-clean: user(pid)=%s, me=%s\n",
                     user, this_user);
         }
 
@@ -359,7 +359,7 @@ void kill_procs(void) {
         procpid = atoi(pidstr);
         procname = opal_basename(fullprocname);
         if (orte_clean_globals.debug) {
-            fprintf(stdout, "orte-clean: fullname=%s, basename=%s, pid=%d\n", 
+            fprintf(stdout, "orte-clean: fullname=%s, basename=%s, pid=%d\n",
                     fullprocname, procname, procpid);
         }
 
@@ -378,7 +378,7 @@ void kill_procs(void) {
             if (procpid != ortedpid) {
                 if (orte_clean_globals.verbose) {
                     fprintf(stderr, "orte-clean: found potential rogue orted process"
-                            " (pid=%d,user=%s), sending SIGKILL...\n", 
+                            " (pid=%d,user=%s), sending SIGKILL...\n",
                             procpid, user);
                 }
                 /*
@@ -400,9 +400,9 @@ void kill_procs(void) {
             if (procpid != ortedpid) {
                 if (orte_clean_globals.verbose) {
                     fprintf(stderr, "orte-clean: found potential rogue orterun process"
-                            " (pid=%d,user=%s), sending SIGKILL...\n", 
+                            " (pid=%d,user=%s), sending SIGKILL...\n",
                             procpid, user);
-                    
+
                 }
                 /* if we are a singleton, check the hnp_pid as well */
                 if (ORTE_PROC_IS_SINGLETON) {

@@ -25,13 +25,13 @@
  *
  * Algorithm:
  * pairwise exchange
- * round r: 
+ * round r:
  *  grp = rank % 2^r
  *  if grp == 0: receive from rank + 2^(r-1) if it exists and reduce value
  *  if grp == 1: send to rank - 2^(r-1) and exit function
- *  
+ *
  * do this for R=log_2(p) rounds
- *    
+ *
  */
 
 int ompi_coll_libnbc_ireduce_scatter(void* sendbuf, void* recvbuf, int *recvcounts, MPI_Datatype datatype,
@@ -44,7 +44,7 @@ int ompi_coll_libnbc_ireduce_scatter(void* sendbuf, void* recvbuf, int *recvcoun
   NBC_Handle *handle;
   ompi_coll_libnbc_request_t **coll_req = (ompi_coll_libnbc_request_t**) request;
   ompi_coll_libnbc_module_t *libnbc_module = (ompi_coll_libnbc_module_t*) module;
-  
+
   NBC_IN_PLACE(sendbuf, recvbuf, inplace);
 
   res = NBC_Init_handle(comm, coll_req, libnbc_module);
@@ -72,7 +72,7 @@ int ompi_coll_libnbc_ireduce_scatter(void* sendbuf, void* recvbuf, int *recvcoun
   if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Comm_rank() (%i)\n", res); return res; }
   res = MPI_Type_extent(datatype, &ext);
   if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Type_extent() (%i)\n", res); return res; }
-  
+
   schedule = (NBC_Schedule*)malloc(sizeof(NBC_Schedule));
   if (NULL == schedule) { printf("Error in malloc()\n"); return NBC_OOR; }
 
@@ -83,7 +83,7 @@ int ompi_coll_libnbc_ireduce_scatter(void* sendbuf, void* recvbuf, int *recvcoun
 
   count = 0;
   for(r=0;r<p;r++) count += recvcounts[r];
-  
+
   handle->tmpbuf = malloc(ext*count*2);
   if(handle->tmpbuf == NULL) { printf("Error in malloc()\n"); return NBC_OOR; }
 
@@ -128,7 +128,7 @@ int ompi_coll_libnbc_ireduce_scatter(void* sendbuf, void* recvbuf, int *recvcoun
       break;
     }
   }
-  
+
   res = NBC_Sched_barrier(schedule);
   if (NBC_OK != res) { free(handle->tmpbuf); printf("Error in NBC_Sched_barrier() (%i)\n", res); return res; }
 
@@ -152,13 +152,13 @@ int ompi_coll_libnbc_ireduce_scatter(void* sendbuf, void* recvbuf, int *recvcoun
   }
 
   /*NBC_PRINT_SCHED(*schedule);*/
-  
+
   res = NBC_Sched_commit(schedule);
   if (NBC_OK != res) { free(handle->tmpbuf); printf("Error in NBC_Sched_commit() (%i)\n", res); return res; }
-  
+
   res = NBC_Start(handle, schedule);
   if (NBC_OK != res) { free(handle->tmpbuf); printf("Error in NBC_Start() (%i)\n", res); return res; }
-  
+
   /* tmpbuf is freed with the handle */
   return NBC_OK;
 }

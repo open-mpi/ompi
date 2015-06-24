@@ -6,16 +6,16 @@ dnl                         Corporation.  All rights reserved.
 dnl Copyright (c) 2004-2005 The University of Tennessee and The University
 dnl                         of Tennessee Research Foundation.  All rights
 dnl                         reserved.
-dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2014      Intel, Inc. All rights reserved.
 dnl $COPYRIGHT$
-dnl 
+dnl
 dnl Additional copyrights may follow
-dnl 
+dnl
 dnl $HEADER$
 dnl
 
@@ -32,7 +32,7 @@ AC_DEFUN([OPAL_FIND_TYPE],[
         [ # Loop over all the types handed to us
          oft_real_type=
          AS_IF([test "$oft_target_size" != ""],
-             [m4_foreach(oft_type, [$2], 
+             [m4_foreach(oft_type, [$2],
                   [if test -z "$oft_real_type"; then
                        if test "[$ac_cv_sizeof_]m4_bpatsubst(oft_type, [[^a-zA-Z0-9_]], [_])" = "$oft_target_size" ; then
                            oft_real_type="oft_type"

@@ -5,15 +5,15 @@
  * Copyright (c) 2004-2009 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 #include "ompi_config.h"
@@ -35,7 +35,7 @@
 static const char FUNC_NAME[] = "MPI_Get_library_version";
 
 
-int MPI_Get_library_version(char *version, int *resultlen) 
+int MPI_Get_library_version(char *version, int *resultlen)
 {
     int len_left;
     MPI_Comm null = MPI_COMM_NULL;
@@ -47,7 +47,7 @@ int MPI_Get_library_version(char *version, int *resultlen)
         /* Per MPI-3, this function can be invoked before
            MPI_INIT, so we don't invoke the normal
            MPI_ERR_INIT_FINALIZE() macro here */
-        
+
         if (NULL == version || NULL == resultlen) {
             /* Note that we have to check and see if we have
                previously called MPI_INIT or not.  If so, use the
@@ -74,7 +74,7 @@ int MPI_Get_library_version(char *version, int *resultlen)
     len_left = sizeof(tmp);
     memset(tmp, 0, MPI_MAX_LIBRARY_VERSION_STRING);
 
-    snprintf(tmp, MPI_MAX_LIBRARY_VERSION_STRING, "Open MPI v%d.%d", 
+    snprintf(tmp, MPI_MAX_LIBRARY_VERSION_STRING, "Open MPI v%d.%d",
              OMPI_MAJOR_VERSION, OMPI_MINOR_VERSION);
     ptr += strlen(tmp);
     len_left -= strlen(tmp);
@@ -116,7 +116,7 @@ int MPI_Get_library_version(char *version, int *resultlen)
         snprintf(ptr, len_left, ", %s", OMPI_RELEASE_DATE);
         ptr = tmp + strlen(tmp);
         len_left = MPI_MAX_LIBRARY_VERSION_STRING - strlen(tmp);
-    }    
+    }
 
     memcpy(version, tmp, strlen(tmp) + 1);
     *resultlen = strlen(tmp) + 1;

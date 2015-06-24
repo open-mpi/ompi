@@ -4,16 +4,16 @@
  *                         All rights reserved.
  * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
  *                         All rights reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -28,7 +28,7 @@
 /*
  * Public string for version number
  */
-const char *ompi_crcp_bkmrk_component_version_string = 
+const char *ompi_crcp_bkmrk_component_version_string =
 "OMPI CRCP bkmrk MCA component version " OMPI_VERSION;
 
 bool timing_enabled;
@@ -47,7 +47,7 @@ static int crcp_bkmrk_close(void);
 ompi_crcp_bkmrk_component_t mca_crcp_bkmrk_component = {
     /* First do the base component stuff */
     {
-        /* Handle the general mca_component_t struct containing 
+        /* Handle the general mca_component_t struct containing
          *  meta information about the component
          */
         .base_version = {
@@ -110,7 +110,7 @@ static int crcp_bkmrk_register(void)
 }
 
 static int crcp_bkmrk_open(void)
-{ 
+{
     /* If there is a custom verbose level for this component than use it
      * otherwise take our parents level and output channel
      */
@@ -128,10 +128,10 @@ static int crcp_bkmrk_open(void)
     opal_output_verbose(10, mca_crcp_bkmrk_component.super.output_handle,
                         "crcp:bkmrk: open()");
     opal_output_verbose(20, mca_crcp_bkmrk_component.super.output_handle,
-                        "crcp:bkmrk: open: priority   = %d", 
+                        "crcp:bkmrk: open: priority   = %d",
                         mca_crcp_bkmrk_component.super.priority);
     opal_output_verbose(20, mca_crcp_bkmrk_component.super.output_handle,
-                        "crcp:bkmrk: open: verbosity  = %d", 
+                        "crcp:bkmrk: open: verbosity  = %d",
                         mca_crcp_bkmrk_component.super.verbose);
 
     return OMPI_SUCCESS;

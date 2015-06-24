@@ -5,14 +5,14 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -20,8 +20,8 @@
  *  A generic memory bucket allocator.
  **/
 
-#ifndef ALLOCATOR_BUCKET_ALLOC_H 
-#define ALLOCATOR_BUCKET_ALLOC_H 
+#ifndef ALLOCATOR_BUCKET_ALLOC_H
+#define ALLOCATOR_BUCKET_ALLOC_H
 
 #include "opal_config.h"
 #include <stdlib.h>
@@ -35,7 +35,7 @@ BEGIN_C_DECLS
   * Structure for the header of each memory chunk
   */
 struct mca_allocator_bucket_chunk_header_t {
-    struct mca_allocator_bucket_chunk_header_t * next_in_segment; 
+    struct mca_allocator_bucket_chunk_header_t * next_in_segment;
                /**< The next chunk in the memory segment */
     /**
       * Union which holds either a pointer to the next free chunk
@@ -48,42 +48,42 @@ struct mca_allocator_bucket_chunk_header_t {
       * chunks a list of free elements.
       */
     union u {
-        struct mca_allocator_bucket_chunk_header_t * next_free; 
+        struct mca_allocator_bucket_chunk_header_t * next_free;
         /**< if the chunk is free this will point to the next free chunk in the bucket */
         int bucket;                  /**< the bucket number it belongs to */
     } u; /**< the union */
 };
  /**
    * Typedef so we don't have to use struct
-   */ 
+   */
 typedef struct mca_allocator_bucket_chunk_header_t mca_allocator_bucket_chunk_header_t;
 
 /**
-  * Structure that heads each segment 
+  * Structure that heads each segment
   */
 struct mca_allocator_bucket_segment_head_t {
     struct mca_allocator_bucket_chunk_header_t * first_chunk; /**< the first chunk of the header */
-    struct mca_allocator_bucket_segment_head_t * next_segment; /**< the next segment in the 
+    struct mca_allocator_bucket_segment_head_t * next_segment; /**< the next segment in the
                                                  bucket */
 };
 /**
   * Typedef so we don't have to use struct
   */
 typedef struct mca_allocator_bucket_segment_head_t mca_allocator_bucket_segment_head_t;
-    
+
 /**
   * Structure for each bucket
   */
 struct mca_allocator_bucket_bucket_t {
     mca_allocator_bucket_chunk_header_t * free_chunk; /**< the first free chunk of memory */
-    opal_mutex_t lock;                /**< the lock on the bucket */ 
+    opal_mutex_t lock;                /**< the lock on the bucket */
     mca_allocator_bucket_segment_head_t * segment_head; /**< the list of segment headers */
 };
 /**
   * Typedef so we don't have to use struct
   */
 typedef struct mca_allocator_bucket_bucket_t mca_allocator_bucket_bucket_t;
- 
+
 /**
   * Structure that holds the necessary information for each area of memory
   */
@@ -91,7 +91,7 @@ struct mca_allocator_bucket_t {
     mca_allocator_base_module_t super;          /**< makes this a child of class mca_allocator_t */
     mca_allocator_bucket_bucket_t * buckets; /**< the array of buckets */
     int num_buckets;                         /**< the number of buckets */
-    mca_allocator_base_component_segment_alloc_fn_t get_mem_fn; 
+    mca_allocator_base_component_segment_alloc_fn_t get_mem_fn;
     /**< pointer to the function to get more memory */
     mca_allocator_base_component_segment_free_fn_t free_mem_fn;
     /**< pointer to the function to free memory */
@@ -130,8 +130,8 @@ typedef struct mca_allocator_bucket_t mca_allocator_bucket_t;
    * @retval NULL if the allocation was unsuccessful
    */
     void * mca_allocator_bucket_alloc(
-        mca_allocator_base_module_t * mem, 
-        size_t size, 
+        mca_allocator_base_module_t * mem,
+        size_t size,
         mca_mpool_base_registration_t** registration);
 
 /**
@@ -143,7 +143,7 @@ typedef struct mca_allocator_bucket_t mca_allocator_bucket_t;
    * memory.
    * @param size The size of the requested area of memory
    * @param alignment The requested alignment of the new area of memory. This
-   * MUST be a power of 2. 
+   * MUST be a power of 2.
    *
    * @retval Pointer to the area of memory if the allocation was successful
    * @retval NULL if the allocation was unsuccessful
@@ -151,8 +151,8 @@ typedef struct mca_allocator_bucket_t mca_allocator_bucket_t;
    */
     void * mca_allocator_bucket_alloc_align(
         mca_allocator_base_module_t * mem,
-        size_t size, 
-        size_t alignment, 
+        size_t size,
+        size_t alignment,
         mca_mpool_base_registration_t** registration);
 
 /**
@@ -170,9 +170,9 @@ typedef struct mca_allocator_bucket_t mca_allocator_bucket_t;
    *
    */
     void * mca_allocator_bucket_realloc(
-        mca_allocator_base_module_t * mem, 
-        void * ptr, 
-        size_t size, 
+        mca_allocator_base_module_t * mem,
+        void * ptr,
+        size_t size,
         mca_mpool_base_registration_t** registration);
 
 /**

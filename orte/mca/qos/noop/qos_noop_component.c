@@ -90,7 +90,7 @@ static void* noop_create (opal_list_t *qos_attributes, uint32_t channel_num) {
     int32_t rc, *window, window_val;
     orte_qos_type_t type_val = orte_qos_noop;
     orte_qos_type_t *type;
-    
+
     noop_chan = OBJ_NEW (orte_qos_base_channel_t);
     noop_chan->channel_num = channel_num;
     type = &type_val;

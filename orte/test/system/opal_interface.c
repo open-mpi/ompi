@@ -26,7 +26,7 @@ int main(int argc, char* argv[])
         fprintf(stderr, "opal_interface: couldn't init opal - error code %d\n", rc);
         return rc;
     }
-    
+
     if (OPAL_SUCCESS != mca_base_framework_open(&opal_if_base_framework, 0)) {
         fprintf(stderr, "opal_interface: couldn't get interfaces\n");
         return;
@@ -43,10 +43,10 @@ int main(int argc, char* argv[])
 
     if (2 == argc) {
         rc = opal_iftupletoaddr(argv[1], &netaddr, &netmask);
-    
+
         fprintf(stderr, "netaddr %03d.%03d.%03d.%03d netmask %03d.%03d.%03d.%03d rc %d\n",
                 OPAL_IF_FORMAT_ADDR(netaddr), OPAL_IF_FORMAT_ADDR(netmask), rc);
-    
+
         /* search for a matching interface - take the first one within the returned scope */
         idx = opal_ifbegin();
         while (0 < idx) {

@@ -23,7 +23,7 @@ int main(int argc, char* argv[])
     MPI_Comm_size(MPI_COMM_WORLD, &size);
 
     MPI_Comm_get_parent(&parent);
-    
+
     MPI_Recv(&msg, 1, MPI_INT, 0, 1, parent, MPI_STATUS_IGNORE);
     printf("Slave %d received msg: %d\n", rank, msg);
     MPI_Comm_disconnect(&parent);

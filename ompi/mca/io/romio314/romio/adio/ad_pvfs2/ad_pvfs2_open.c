@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*-
  * vim: ts=8 sts=4 sw=4 noexpandtab
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -14,13 +14,13 @@ struct open_status_s {
     PVFS_object_ref object_ref;
 };
 typedef struct open_status_s open_status;
-    
+
     /* steps for getting a handle:  (it gets a little convoluted, but at least
-     * it's deterministic) 
-     * . lookup the file.  
+     * it's deterministic)
+     * . lookup the file.
      * . if lookup succeeds, but we were passed MPI_MODE_EXCL, that's an error
-     * . if lookup fails, the file might not exist. 
-     *		in that case, create the file if we were passed MPI_MODE_CREATE 
+     * . if lookup fails, the file might not exist.
+     *		in that case, create the file if we were passed MPI_MODE_CREATE
      * . if the create fails, that means someone else created the file between
      *    our call to lookup and our call to create (like if N processors all
      *    open the same file with MPI_COMM_SELF).  Then we can just look up the
@@ -31,7 +31,7 @@ typedef struct open_status_s open_status;
      */
 static void fake_an_open(PVFS_fs_id fs_id, char *pvfs_name, int access_mode,
 	                 int nr_datafiles, PVFS_size strip_size,
-                         ADIOI_PVFS2_fs *pvfs2_fs, 
+                         ADIOI_PVFS2_fs *pvfs2_fs,
 			 open_status *o_status)
 {
     int ret;
@@ -48,7 +48,7 @@ static void fake_an_open(PVFS_fs_id fs_id, char *pvfs_name, int access_mode,
     }
 
     dist = NULL;
-    
+
     memset(&resp_lookup, 0, sizeof(resp_lookup));
     memset(&resp_getparent, 0, sizeof(resp_getparent));
     memset(&resp_create, 0, sizeof(resp_create));
@@ -59,13 +59,13 @@ static void fake_an_open(PVFS_fs_id fs_id, char *pvfs_name, int access_mode,
     if ( ret == (-PVFS_ENOENT)) {
 	if (access_mode & ADIO_CREATE)  {
 	    ret = PVFS_sys_getparent(fs_id, pvfs_name,
-		    &(pvfs2_fs->credentials), &resp_getparent); 
+		    &(pvfs2_fs->credentials), &resp_getparent);
 	    if (ret < 0) {
 		FPRINTF(stderr, "pvfs_sys_getparent returns with %d\n", ret);
 		o_status->error = ret;
 		return;
 	    }
-            
+
             /* Set the distribution strip size if specified */
             if (0 < strip_size) {
                 /* Note that the distribution is hardcoded here */
@@ -83,13 +83,13 @@ static void fake_an_open(PVFS_fs_id fs_id, char *pvfs_name, int access_mode,
 
             /* Perform file creation */
 #ifdef HAVE_PVFS2_CREATE_WITHOUT_LAYOUT
-            ret = PVFS_sys_create(resp_getparent.basename, 
-		    resp_getparent.parent_ref, attribs, 
-		    &(pvfs2_fs->credentials), dist, &resp_create); 
-#else 
-            ret = PVFS_sys_create(resp_getparent.basename, 
-		    resp_getparent.parent_ref, attribs, 
-		    &(pvfs2_fs->credentials), dist, NULL, &resp_create); 
+            ret = PVFS_sys_create(resp_getparent.basename,
+		    resp_getparent.parent_ref, attribs,
+		    &(pvfs2_fs->credentials), dist, &resp_create);
+#else
+            ret = PVFS_sys_create(resp_getparent.basename,
+		    resp_getparent.parent_ref, attribs,
+		    &(pvfs2_fs->credentials), dist, NULL, &resp_create);
 #endif
 
 	    /* if many creates are happening in this directory, the earlier
@@ -99,7 +99,7 @@ static void fake_an_open(PVFS_fs_id fs_id, char *pvfs_name, int access_mode,
 	     * handle */
 	    if (ret == (-PVFS_EEXIST)) {
 		ret = PVFS_sys_lookup(fs_id, pvfs_name,
-			&(pvfs2_fs->credentials), &resp_lookup, 
+			&(pvfs2_fs->credentials), &resp_lookup,
 			PVFS2_LOOKUP_LINK_FOLLOW);
 		if ( ret < 0 ) {
 		    o_status->error = ret;
@@ -130,7 +130,7 @@ static void fake_an_open(PVFS_fs_id fs_id, char *pvfs_name, int access_mode,
 
 /* ADIOI_PVFS2_Open:
  *  one process opens (or creates) the file, then broadcasts the result to the
- *  remaining processors. 
+ *  remaining processors.
  *
  *  ADIO_Open used to perform an optimization when MPI_MODE_CREATE (and before
  * that, MPI_MODE_EXCL) was set.  Because PVFS2 handles file lookup and
@@ -154,7 +154,7 @@ void ADIOI_PVFS2_Open(ADIO_File fd, int *error_code)
     MPI_Datatype types[2] = {MPI_INT, MPI_BYTE};
     int lens[2] = {1, sizeof(PVFS_object_ref)};
     MPI_Aint offsets[2];
-    
+
     pvfs2_fs = (ADIOI_PVFS2_fs *) ADIOI_Malloc(sizeof(ADIOI_PVFS2_fs));
 
     /* --BEGIN ERROR HANDLING-- */
@@ -186,7 +186,7 @@ void ADIOI_PVFS2_Open(ADIO_File fd, int *error_code)
 #endif
     if (rank == fd->hints->ranklist[0] && fd->fs_ptr == NULL) {
 	/* given the filename, figure out which pvfs filesystem it is on */
-	ret = PVFS_util_resolve(fd->filename, &cur_fs, 
+	ret = PVFS_util_resolve(fd->filename, &cur_fs,
 		pvfs_path, PVFS_NAME_MAX);
 	if (ret < 0 ) {
 	    PVFS_perror("PVFS_util_resolve", ret);
@@ -225,7 +225,7 @@ void ADIOI_PVFS2_Open(ADIO_File fd, int *error_code)
 
     /* --BEGIN ERROR HANDLING-- */
     if (o_status.error != 0)
-    { 
+    {
 	ADIOI_Free(pvfs2_fs);
 	fd->fs_ptr = NULL;
 	*error_code = MPIO_Err_create_code(MPI_SUCCESS,

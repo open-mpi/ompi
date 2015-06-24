@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
- *                         reserved. 
+ *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -40,7 +40,7 @@ BEGIN_C_DECLS
  * @retval ORTE_SUCCESS Successfully found contact information
  * @retval ORTE_ERROR   Contact information could not be found or shared
  */
-ORTE_DECLSPEC int orte_rml_base_get_contact_info(orte_jobid_t job, 
+ORTE_DECLSPEC int orte_rml_base_get_contact_info(orte_jobid_t job,
                                                  opal_buffer_t *data);
 
 
@@ -77,7 +77,7 @@ ORTE_DECLSPEC int orte_rml_base_update_contact_info(opal_buffer_t* data);
  * @retval ORTE_ERROR       An unspecified error occurred
  */
 ORTE_DECLSPEC int orte_rml_base_parse_uris(const char* contact_inf,
-                                           orte_process_name_t* peer, 
+                                           orte_process_name_t* peer,
                                            char*** uris);
 
 END_C_DECLS

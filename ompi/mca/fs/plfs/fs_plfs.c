@@ -5,15 +5,15 @@
  * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2015 University of Houston. All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  *
  * These symbols are in a file by themselves to provide nice linker
@@ -30,7 +30,7 @@
 #include "ompi/mca/fs/plfs/fs_plfs.h"
 
 #ifdef HAVE_SYS_STATFS_H
-#include <sys/statfs.h> /* or <sys/vfs.h> */ 
+#include <sys/statfs.h> /* or <sys/vfs.h> */
 #endif
 #ifdef HAVE_SYS_PARAM_H
 #include <sys/param.h>
@@ -71,7 +71,7 @@ int mca_fs_plfs_component_init_query(bool enable_progress_threads,
 {
     /* Nothing to do */
     return OMPI_SUCCESS;
-}      
+}
 
 struct mca_fs_base_module_1_0_0_t *
 mca_fs_plfs_component_file_query (mca_io_ompio_file_t *fh, int *priority)
@@ -83,27 +83,27 @@ mca_fs_plfs_component_file_query (mca_io_ompio_file_t *fh, int *priority)
     char wpath[1024];
 
     /* The code in this function is based on the ADIO FS selection in ROMIO
-     *   Copyright (C) 1997 University of Chicago. 
+     *   Copyright (C) 1997 University of Chicago.
      *   See COPYRIGHT notice in top-level directory.
      */
 
     *priority = mca_fs_plfs_priority;
-    
+
     tmp = strchr (fh->f_filename, ':');
     if (!tmp) {
         if (OMPIO_ROOT == fh->f_rank) {
             do {
                 err = statfs (fh->f_filename, &fsbuf);
             } while (err && (errno == ESTALE));
-            
+
             if (err && (ENOENT == errno)) {
                 mca_fs_base_get_parent_dir (fh->f_filename, &dir);
                 err = statfs (dir, &fsbuf);
                 free (dir);
             }
-  
-	    getcwd( wpath, sizeof(wpath) );  
-	    if(is_plfs_path(wpath) == 1) {  
+
+	    getcwd( wpath, sizeof(wpath) );
+	    if(is_plfs_path(wpath) == 1) {
 	        fh->f_fstype = PLFS;
             }
 	}
@@ -115,12 +115,12 @@ mca_fs_plfs_component_file_query (mca_io_ompio_file_t *fh, int *priority)
 				       fh->f_comm->c_coll.coll_bcast_module);
     }
     else {
-	if (!strncmp(fh->f_filename, "plfs:", 7) || 
+	if (!strncmp(fh->f_filename, "plfs:", 7) ||
 	    !strncmp(fh->f_filename, "PLFS:", 7)) {
             fh->f_fstype = PLFS;
         }
     }
-    
+
     if (PLFS == fh->f_fstype) {
         if (*priority < 50) {
 	    *priority = 50;
@@ -131,9 +131,9 @@ mca_fs_plfs_component_file_query (mca_io_ompio_file_t *fh, int *priority)
 }
 
 int mca_fs_plfs_component_file_unquery (mca_io_ompio_file_t *file)
-{    
+{
    /* This function might be needed for some purposes later. for now it
-    * does not have anything to do since there are no steps which need 
+    * does not have anything to do since there are no steps which need
     * to be undone if this module is not selected */
 
    return OMPI_SUCCESS;
@@ -141,14 +141,14 @@ int mca_fs_plfs_component_file_unquery (mca_io_ompio_file_t *file)
 
 int mca_fs_plfs_module_init (mca_io_ompio_file_t *file)
 {
-    /* Make sure the file type is not overwritten by the last queried 
+    /* Make sure the file type is not overwritten by the last queried
 	 * component */
     file->f_fstype = PLFS;
     return OMPI_SUCCESS;
 }
 
-   
-int mca_fs_plfs_module_finalize (mca_io_ompio_file_t *file) 
+
+int mca_fs_plfs_module_finalize (mca_io_ompio_file_t *file)
 {
     return OMPI_SUCCESS;
 }

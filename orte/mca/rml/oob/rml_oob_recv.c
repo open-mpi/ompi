@@ -6,9 +6,9 @@
  * Copyright (c) 2012      Los Alamos National Security, LLC.
  *                         All rights reserved
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -32,7 +32,7 @@ void orte_rml_oob_recv_nb(orte_process_name_t* peer,
                          ORTE_NAME_PRINT(peer), tag));
 
     req = OBJ_NEW(orte_rml_recv_request_t);
-    req->post->buffer_data = false; 
+    req->post->buffer_data = false;
     req->post->peer.jobid = peer->jobid;
     req->post->peer.vpid = peer->vpid;
     req->post->tag = tag;
@@ -61,7 +61,7 @@ void orte_rml_oob_recv_buffer_nb(orte_process_name_t* peer,
                          ORTE_NAME_PRINT(peer), tag));
 
     req = OBJ_NEW(orte_rml_recv_request_t);
-    req->post->buffer_data = true; 
+    req->post->buffer_data = true;
     req->post->peer.jobid = peer->jobid;
     req->post->peer.vpid = peer->vpid;
     req->post->tag = tag;
@@ -76,7 +76,7 @@ void orte_rml_oob_recv_buffer_nb(orte_process_name_t* peer,
 }
 
 
-void orte_rml_oob_recv_cancel(orte_process_name_t* peer, 
+void orte_rml_oob_recv_cancel(orte_process_name_t* peer,
                               orte_rml_tag_t tag)
 {
     orte_rml_recv_request_t *req;
@@ -87,7 +87,7 @@ void orte_rml_oob_recv_cancel(orte_process_name_t* peer,
                          ORTE_NAME_PRINT(peer), tag));
 
     req = OBJ_NEW(orte_rml_recv_request_t);
-    req->cancel = true; 
+    req->cancel = true;
     req->post->peer.jobid = peer->jobid;
     req->post->peer.vpid = peer->vpid;
     req->post->tag = tag;

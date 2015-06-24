@@ -3,9 +3,9 @@
 # Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
 #
 # $COPYRIGHT$
-# 
+#
 # Additional copyrights may follow
-# 
+#
 # $HEADER$
 #
 
@@ -62,11 +62,11 @@ OMPI_Fortran_binding.lo: OMPI_Fortran_binding.f90 mpi-f08-types.lo
 
 $(mpi_api_files): mpi-f08.lo
 
-mpi-f08.lo: mpi-f08-types.lo 
+mpi-f08.lo: mpi-f08-types.lo
 mpi-f08.lo: OMPI_Fortran_binding.lo
 mpi-f08.lo: mpi-f08-interfaces.lo
 mpi-f08.lo: mpi-f-interfaces-bind.h
-mpi-f08.lo: mpi-f08.f90 
+mpi-f08.lo: mpi-f08.f90
 
 # Install the generated .mod files.  Unfortunately, each F90 compiler
 # may generate different filenames, so we have to use a glob.  :-(

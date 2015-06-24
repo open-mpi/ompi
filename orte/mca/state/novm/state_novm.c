@@ -3,9 +3,9 @@
  *                         All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -230,7 +230,7 @@ static void allocation_complete(int fd, short args, void *cbdata)
         }
     }
 #endif
-    
+
     /* move to the map stage */
     ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_MAP);
 

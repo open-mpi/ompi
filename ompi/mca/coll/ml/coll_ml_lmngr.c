@@ -98,7 +98,7 @@ OBJ_CLASS_INSTANCE(mca_coll_ml_lmngr_t,
         construct_lmngr,
         destruct_lmngr);
 
-int mca_coll_ml_lmngr_tune(mca_coll_ml_lmngr_t *lmngr, 
+int mca_coll_ml_lmngr_tune(mca_coll_ml_lmngr_t *lmngr,
         size_t block_size, size_t list_size, size_t alignment)
 {
     ML_VERBOSE(7, ("Tunning list manager"));
@@ -148,7 +148,7 @@ int mca_coll_ml_lmngr_reg(void)
       cm->lmngr_size;
 
     CHECK(mca_base_component_var_register(&mca_coll_ml_component.super.collm_version,
-                                          "memory_manager_block_size", "Memory manager block size", 
+                                          "memory_manager_block_size", "Memory manager block size",
                                           MCA_BASE_VAR_TYPE_SIZE_T, NULL, 0, 0,
                                           OPAL_INFO_LVL_9,
                                           MCA_BASE_VAR_SCOPE_READONLY,
@@ -171,7 +171,7 @@ static int lmngr_register(mca_coll_ml_lmngr_t *lmngr, bcol_base_network_context_
     int max_nc = lmngr->n_resources;
 
     rc = nc->register_memory_fn(nc->context_data,
-            lmngr->base_addr, 
+            lmngr->base_addr,
             lmngr->list_size * lmngr->list_block_size,
             &lmngr->reg_desc[nc->context_id]);
 
@@ -206,8 +206,8 @@ static int mca_coll_ml_lmngr_init(mca_coll_ml_lmngr_t *lmngr)
     ML_VERBOSE(7, ("List initialization"));
 
 #ifdef HAVE_POSIX_MEMALIGN
-    if((errno = posix_memalign(&lmngr->base_addr, 
-                    lmngr->list_alignment, 
+    if((errno = posix_memalign(&lmngr->base_addr,
+                    lmngr->list_alignment,
                     lmngr->list_size * lmngr->list_block_size)) != 0) {
         ML_ERROR(("Failed to allocate memory: %d [%s]", errno, strerror(errno)));
         return OMPI_ERROR;
@@ -224,7 +224,7 @@ static int mca_coll_ml_lmngr_init(mca_coll_ml_lmngr_t *lmngr)
     lmngr->base_addr = (void*)OPAL_ALIGN((uintptr_t)lmngr->alloc_base,
             lmngr->list_alignment, uintptr_t);
 #endif
-    
+
     assert(lmngr->n_resources < MCA_COLL_ML_MAX_REG_INFO);
 
     for(i= 0 ;i < lmngr->n_resources ;i++) {
@@ -249,7 +249,7 @@ static int mca_coll_ml_lmngr_init(mca_coll_ml_lmngr_t *lmngr)
         addr += lmngr->list_block_size;
     }
 
-    ML_VERBOSE(7, ("List initialization done %d", 
+    ML_VERBOSE(7, ("List initialization done %d",
                 opal_list_get_size(&lmngr->blocks_list)));
     return OMPI_SUCCESS;
 }
@@ -311,7 +311,7 @@ int mca_coll_ml_lmngr_append_nc(mca_coll_ml_lmngr_t *lmngr, bcol_base_network_co
     }
 
     ML_VERBOSE(7, ("Adding new context"));
-    
+
     /* Setting context id */
     nc->context_id = lmngr->n_resources;
     lmngr->net_context[lmngr->n_resources] = nc;

@@ -6,7 +6,7 @@ dnl                         Corporation.  All rights reserved.
 dnl Copyright (c) 2004-2005 The University of Tennessee and The University
 dnl                         of Tennessee Research Foundation.  All rights
 dnl                         reserved.
-dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
@@ -15,9 +15,9 @@ dnl Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
 dnl Copyright (c) 2015      Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
 dnl $COPYRIGHT$
-dnl 
+dnl
 dnl Additional copyrights may follow
-dnl 
+dnl
 dnl $HEADER$
 dnl
 
@@ -69,7 +69,7 @@ AC_DEFUN([OMPI_CONTRIB],[
     OMPI_MPI_CONTRIBS=
 
     # Cycle through each of the software packages and
-    # configure them if not disabled.  
+    # configure them if not disabled.
     m4_foreach(software, [ompi_mpicontrib_list],
               [_OMPI_CONTRIB_CONFIGURE(software)])
 

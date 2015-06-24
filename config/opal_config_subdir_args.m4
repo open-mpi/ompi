@@ -6,16 +6,16 @@ dnl                         Corporation.  All rights reserved.
 dnl Copyright (c) 2004-2005 The University of Tennessee and The University
 dnl                         of Tennessee Research Foundation.  All rights
 dnl                         reserved.
-dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2014      Intel, Inc. All rights reserved.
 dnl Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
 dnl $COPYRIGHT$
-dnl 
+dnl
 dnl Additional copyrights may follow
-dnl 
+dnl
 dnl $HEADER$
 dnl
 
@@ -56,11 +56,11 @@ do
 	    ;;
 	-srcdir=* | --srcdir=*)
 	    ;;
-	*) 
+	*)
 	    case $subdir_arg in
 	    *\'*) subdir_arg=`echo "$subdir_arg" | sed "s/'/'\\\\\\\\''/g"` ;;
 	    esac
-	    subdirs_args="$subdirs_args '$subdirs_arg'" 
+	    subdirs_args="$subdirs_args '$subdirs_arg'"
 	    ;;
 	esac
     fi

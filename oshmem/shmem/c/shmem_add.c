@@ -2,9 +2,9 @@
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 #include "oshmem_config.h"
@@ -17,7 +17,7 @@
 #include "oshmem/mca/atomic/atomic.h"
 
 /*
- * These routines perform an atomic add operation. 
+ * These routines perform an atomic add operation.
  * The atomic add routines add value to the data at address target on PE pe. The operation
  * must be completed without the possibility of another process updating target between the
  * time of the fetch and the update.

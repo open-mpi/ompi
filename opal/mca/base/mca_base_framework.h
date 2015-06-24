@@ -69,7 +69,7 @@ typedef int (*mca_base_framework_register_params_fn_t) (mca_base_register_flag_t
  *
  * This function is invoked during opal_init() and during the
  * initialization of the special case of the ompi_info command.
- * 
+ *
  * This function fills in the components framework value, which
  * is a list of all components that were successfully opened.
  * This variable should \em only be used by other framework base
@@ -130,7 +130,7 @@ typedef struct mca_base_framework_t {
     char                                    *framework_name;
     /** Description of this framework or NULL */
     const char                              *framework_description;
-    /** Framework register function or NULL if the framework 
+    /** Framework register function or NULL if the framework
         and all its components have nothing to register */
     mca_base_framework_register_params_fn_t  framework_register;
     /** Framework open function or NULL */
@@ -143,7 +143,7 @@ typedef struct mca_base_framework_t {
     int                                      framework_refcnt;
     /** List of static components */
     const mca_base_component_t             **framework_static_components;
-    /** Component selection. This will be registered with the MCA 
+    /** Component selection. This will be registered with the MCA
         variable system and should be either NULL (all components) or
         a heap allocated, comma-delimited list of components. */
     char                                    *framework_selection;

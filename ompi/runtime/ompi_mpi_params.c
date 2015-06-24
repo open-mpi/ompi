@@ -6,19 +6,19 @@
  * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2009 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007-2015 Los Alamos National Security, LLC.  All rights
- *                         reserved. 
+ *                         reserved.
  * Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -89,12 +89,12 @@ int ompi_mpi_register_params(void)
                                  MCA_BASE_VAR_SCOPE_READONLY,
                                  &ompi_mpi_param_check);
     if (ompi_mpi_param_check && !MPI_PARAM_CHECK) {
-        opal_show_help("help-mpi-runtime.txt", 
+        opal_show_help("help-mpi-runtime.txt",
                        "mpi-param-check-enabled-but-compiled-out",
                        true);
         ompi_mpi_param_check = false;
     }
-    
+
     /*
      * opal_progress: decide whether to yield and the event library
      * tick rate
@@ -125,7 +125,7 @@ int ompi_mpi_register_params(void)
                                  OPAL_INFO_LVL_9,
                                  MCA_BASE_VAR_SCOPE_READONLY,
                                  &ompi_debug_show_handle_leaks);
-    
+
     /* Whether or not to free MPI handles.  Useless without run-time
        param checking, so implicitly set that to true if we don't want
        to free the handles. */
@@ -167,7 +167,7 @@ int ompi_mpi_register_params(void)
     if (NULL != ompi_mpi_show_mca_params_string) {
         char **args;
         int i;
-        
+
         ompi_mpi_show_mca_params = true;
         args = opal_argv_split(ompi_mpi_show_mca_params_string, ',');
         if (NULL == args) {
@@ -205,7 +205,7 @@ int ompi_mpi_register_params(void)
                                  OPAL_INFO_LVL_9,
                                  MCA_BASE_VAR_SCOPE_READONLY,
                                  &ompi_mpi_show_mca_params_file);
-    
+
     /* User-level process pinning controls */
 
     /* MPI_ABORT controls */
@@ -269,7 +269,7 @@ int ompi_mpi_register_params(void)
                                  ompi_mpi_have_sparse_group_storage ? MCA_BASE_VAR_SCOPE_READONLY : MCA_BASE_VAR_SCOPE_CONSTANT,
                                  &ompi_use_sparse_group_storage);
     if (ompi_use_sparse_group_storage && !ompi_mpi_have_sparse_group_storage) {
-        opal_show_help("help-mpi-runtime.txt", 
+        opal_show_help("help-mpi-runtime.txt",
                        "sparse groups enabled but compiled out",
                        true);
         ompi_use_sparse_group_storage = false;
@@ -305,9 +305,9 @@ int ompi_show_all_mca_params(int32_t rank, int requested, char *nodename) {
     if (rank != 0) {
         return OMPI_SUCCESS;
     }
-    
+
     timestamp = time(NULL);
-    
+
     /* Open the file if one is specified */
     if (0 != strlen(ompi_mpi_show_mca_params_file)) {
         if ( NULL == (fp = fopen(ompi_mpi_show_mca_params_file, "w")) ) {
@@ -331,37 +331,37 @@ int ompi_show_all_mca_params(int32_t rank, int requested, char *nodename) {
         if (MCA_BASE_VAR_FLAG_INTERNAL & var->mbv_flags) {
             continue;
         }
-        
+
         /* is this a default value and we are not displaying
          * defaults, ignore this one
          */
         if (MCA_BASE_VAR_SOURCE_DEFAULT == var->mbv_source && !show_default_mca_params) {
             continue;
         }
-        
+
         /* is this a file value and we are not displaying files,
          * ignore it
          */
         if ((MCA_BASE_VAR_SOURCE_FILE == var->mbv_source ||
-             MCA_BASE_VAR_SOURCE_OVERRIDE == var->mbv_source) && 
+             MCA_BASE_VAR_SOURCE_OVERRIDE == var->mbv_source) &&
             !show_file_mca_params) {
             continue;
         }
-        
+
         /* is this an enviro value and we are not displaying enviros,
          * ignore it
          */
         if (MCA_BASE_VAR_SOURCE_ENV == var->mbv_source && !show_enviro_mca_params) {
             continue;
         }
-        
+
         /* is this an API value and we are not displaying APIs,
          * ignore it
          */
         if (MCA_BASE_VAR_SOURCE_OVERRIDE == var->mbv_source && !show_override_mca_params) {
             continue;
         }
-        
+
         ret = mca_base_var_dump (i, &var_dump, MCA_BASE_VAR_DUMP_SIMPLE);
         if (OPAL_SUCCESS != ret) {
             continue;
@@ -376,11 +376,11 @@ int ompi_show_all_mca_params(int32_t rank, int requested, char *nodename) {
         free (var_dump[0]);
         free (var_dump);
     }
-    
+
     /* Close file, cleanup allocated memory*/
     if (0 != strlen(ompi_mpi_show_mca_params_file)) {
         fclose(fp);
     }
-    
+
     return OMPI_SUCCESS;
 }

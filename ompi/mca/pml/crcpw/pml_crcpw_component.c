@@ -6,7 +6,7 @@
  * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
@@ -14,9 +14,9 @@
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -38,10 +38,10 @@ mca_pml_crcpw_component_t mca_pml_crcpw_component = {
     {
         /* First, the mca_base_component_t struct containing meta
            information about the component itself */
-        
+
         .pmlm_version = {
             MCA_PML_BASE_VERSION_2_0_0,
-    
+
             .mca_component_name = "crcpw",
             MCA_BASE_MAKE_VERSION(component, OMPI_MAJOR_VERSION, OMPI_MINOR_VERSION,
                                   OMPI_RELEASE_VERSION),
@@ -53,7 +53,7 @@ mca_pml_crcpw_component_t mca_pml_crcpw_component = {
             /* The component is checkpoint ready */
             MCA_BASE_METADATA_PARAM_CHECKPOINT
         },
-        
+
         .pmlm_init = mca_pml_crcpw_component_init,
         .pmlm_finalize = mca_pml_crcpw_component_finalize,
     },
@@ -80,7 +80,7 @@ static int mca_pml_crcpw_component_register(void)
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &mca_pml_crcpw_component.priority);
-    
+
     mca_pml_crcpw_component.verbose = 0;
     (void) mca_base_component_var_register(&mca_pml_crcpw_component.super.pmlm_version, "verbose",
                                            "Verbose level for the PML crcpw component",
@@ -102,17 +102,17 @@ int mca_pml_crcpw_component_open(void)
         opal_output_set_verbosity(mca_pml_crcpw_component.output_handle,
                                   mca_pml_crcpw_component.verbose);
     }
-    
+
     /*
      * Debug Output
      */
     opal_output_verbose(10, mca_pml_crcpw_component.output_handle,
                         "pml:crcpw: open()");
     opal_output_verbose(20, mca_pml_crcpw_component.output_handle,
-                        "pml:crcpw: open: priority   = %d", 
+                        "pml:crcpw: open: priority   = %d",
                         mca_pml_crcpw_component.priority);
     opal_output_verbose(20, mca_pml_crcpw_component.output_handle,
-                        "pml:crcpw: open: verbosity  = %d", 
+                        "pml:crcpw: open: verbosity  = %d",
                         mca_pml_crcpw_component.verbose);
 
     return OMPI_SUCCESS;
@@ -128,13 +128,13 @@ int mca_pml_crcpw_component_close(void)
 }
 
 
-mca_pml_base_module_t* mca_pml_crcpw_component_init(int* priority, 
+mca_pml_base_module_t* mca_pml_crcpw_component_init(int* priority,
                                                      bool enable_progress_threads,
                                                      bool enable_mpi_threads)
 {
-    /* We use the PML_SELECT_WRAPPER_PRIORITY to indicate when this 
+    /* We use the PML_SELECT_WRAPPER_PRIORITY to indicate when this
      * component should wrap around what is already selected
-     * If it is not set to this seminal value, then we are doing a 
+     * If it is not set to this seminal value, then we are doing a
      * normal selection operation
      */
     if(*priority == PML_SELECT_WRAPPER_PRIORITY ) {
@@ -148,7 +148,7 @@ mca_pml_base_module_t* mca_pml_crcpw_component_init(int* priority,
 
         opal_output_verbose( 20, mca_pml_crcpw_component.output_handle,
                              "pml:crcpw: component_init: Initalize Wrapper");
-        
+
         OBJ_CONSTRUCT(&pml_state_list, opal_free_list_t);
         opal_free_list_init (&pml_state_list,
                              sizeof(ompi_crcp_base_pml_state_t),

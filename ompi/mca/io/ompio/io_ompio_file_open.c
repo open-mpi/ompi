@@ -5,15 +5,15 @@
  *  Copyright (c) 2004-2005 The University of Tennessee and The University
  *                          of Tennessee Research Foundation.  All rights
  *                          reserved.
- *  Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ *  Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                          University of Stuttgart.  All rights reserved.
  *  Copyright (c) 2004-2005 The Regents of the University of California.
  *                          All rights reserved.
  *  Copyright (c) 2008-2015 University of Houston. All rights reserved.
  *  $COPYRIGHT$
- *  
+ *
  *  Additional copyrights may follow
- *  
+ *
  *  $HEADER$
  */
 
@@ -53,7 +53,7 @@ mca_io_ompio_file_open (ompi_communicator_t *comm,
         return  OMPI_ERR_OUT_OF_RESOURCE;
     }
 
-    
+
 
     ret = ompio_io_ompio_file_open(comm,filename,amode,info,&data->ompio_fh,use_sharedfp);
 
@@ -78,14 +78,14 @@ ompio_io_ompio_file_open (ompi_communicator_t *comm,
 {
     int ret = OMPI_SUCCESS;
     int remote_arch;
-    
+
 
     if ( ((amode&MPI_MODE_RDONLY)?1:0) + ((amode&MPI_MODE_RDWR)?1:0) +
 	 ((amode&MPI_MODE_WRONLY)?1:0) != 1 ) {
 	return MPI_ERR_AMODE;
     }
 
-    if ((amode & MPI_MODE_RDONLY) && 
+    if ((amode & MPI_MODE_RDONLY) &&
         ((amode & MPI_MODE_CREATE) || (amode & MPI_MODE_EXCL))) {
 	return  MPI_ERR_AMODE;
     }
@@ -149,9 +149,9 @@ ompio_io_ompio_file_open (ompi_communicator_t *comm,
     ompio_fh->f_set_aggregator_props=ompi_io_ompio_set_aggregator_props;
 
     ompio_fh->f_full_print_queue=ompi_io_ompio_full_print_queue;
-    ompio_fh->f_register_print_entry=ompi_io_ompio_register_print_entry;   
+    ompio_fh->f_register_print_entry=ompi_io_ompio_register_print_entry;
 
-    /* This fix is needed for data seiving to work with 
+    /* This fix is needed for data seiving to work with
        two-phase collective I/O */
      if ((amode & MPI_MODE_WRONLY)){
        amode -= MPI_MODE_WRONLY;
@@ -183,7 +183,7 @@ ompio_io_ompio_file_open (ompi_communicator_t *comm,
 
     if ( true == use_sharedfp ) {
 	if (OMPI_SUCCESS != (ret = mca_sharedfp_base_file_select (ompio_fh, NULL))) {
-	    opal_output ( ompi_io_base_framework.framework_output, 
+	    opal_output ( ompi_io_base_framework.framework_output,
 			  "mca_sharedfp_base_file_select() failed\n");
 	    ompio_fh->f_sharedfp           = NULL; /*module*/
 	    /* Its ok to not have a shared file pointer module as long as the shared file
@@ -191,20 +191,20 @@ ompio_io_ompio_file_open (ompi_communicator_t *comm,
 	    ** function will return an error code.
 	    */
 	}
-	
+
 	/* open the file once more for the shared file pointer if required.
-	** Per default, the shared file pointer specific actions are however 
+	** Per default, the shared file pointer specific actions are however
 	** only performed on first access of the shared file pointer, except
-	** for the addproc sharedfp component. 
-	** 
+	** for the addproc sharedfp component.
+	**
 	** Lazy open does not work for the addproc sharedfp
 	** component since it starts by spawning a process using MPI_Comm_spawn.
-	** For this, the first operation has to be collective which we can 
+	** For this, the first operation has to be collective which we can
 	** not guarantuee outside of the MPI_File_open operation.
 	*/
-	if ( NULL != ompio_fh->f_sharedfp &&  
-	     true == use_sharedfp && 
-	     (!mca_io_ompio_sharedfp_lazy_open || 
+	if ( NULL != ompio_fh->f_sharedfp &&
+	     true == use_sharedfp &&
+	     (!mca_io_ompio_sharedfp_lazy_open ||
 	      !strcmp (ompio_fh->f_sharedfp_component->mca_component_name,
 		       "addproc")               )) {
 	    ret = ompio_fh->f_sharedfp->sharedfp_file_open(comm,
@@ -212,13 +212,13 @@ ompio_io_ompio_file_open (ompi_communicator_t *comm,
 							   amode,
 							   info,
 							   ompio_fh);
-	    
+
 	    if ( OMPI_SUCCESS != ret ) {
 		goto fn_fail;
 	    }
 	}
     }
-	
+
      /*Determine topology information if set*/
     if (ompio_fh->f_comm->c_flags & OMPI_COMM_CART){
         ret = mca_io_ompio_cart_based_grouping(ompio_fh);
@@ -226,16 +226,16 @@ ompio_io_ompio_file_open (ompi_communicator_t *comm,
 	    ret = MPI_ERR_FILE;
 	}
     }
-    
+
     ret = ompio_fh->f_fs->fs_file_open (comm,
 					filename,
 					amode,
 					info,
 					ompio_fh);
-    
 
-    
-    
+
+
+
     if ( OMPI_SUCCESS != ret ) {
 	ret = MPI_ERR_FILE;
         goto fn_fail;
@@ -251,14 +251,14 @@ ompio_io_ompio_file_open (ompi_communicator_t *comm,
                                           &current_size);
         ompi_io_ompio_set_explicit_offset (ompio_fh, current_size);
     }
-    
+
 
 
     return OMPI_SUCCESS;
 
     fn_fail:
         /* no need to free resources here, since the destructor
-	 * is calling mca_io_ompio_file_close, which actually gets 
+	 * is calling mca_io_ompio_file_close, which actually gets
 	 *rid of all allocated memory items */
 
     return ret;
@@ -360,7 +360,7 @@ ompio_io_ompio_file_close (mca_io_ompio_file_t *ompio_fh)
         ompio_fh->f_datarep = NULL;
     }
 
-  
+
     if (MPI_DATATYPE_NULL != ompio_fh->f_iov_type) {
         ompi_datatype_destroy (&ompio_fh->f_iov_type);
     }
@@ -368,12 +368,12 @@ ompio_io_ompio_file_close (mca_io_ompio_file_t *ompio_fh)
     if (MPI_COMM_NULL != ompio_fh->f_comm && (ompio_fh->f_flags & OMPIO_SHAREDFP_IS_SET) )  {
         ompi_comm_free (&ompio_fh->f_comm);
     }
-    
+
     return ret;
 }
 
 int mca_io_ompio_file_delete (char *filename,
-                              struct ompi_info_t *info) 
+                              struct ompi_info_t *info)
 {
     int ret = OMPI_SUCCESS;
 
@@ -412,14 +412,14 @@ mca_io_ompio_file_preallocate (ompi_file_t *fh,
     }
 
     /* ROMIO explanation
-       On file systems with no preallocation function, we have to 
-       explicitly write to allocate space. Since there could be holes in the file, 
-       we need to read up to the current file size, write it back, 
-       and then write beyond that depending on how much 
+       On file systems with no preallocation function, we have to
+       explicitly write to allocate space. Since there could be holes in the file,
+       we need to read up to the current file size, write it back,
+       and then write beyond that depending on how much
        preallocation is needed.
     */
     if (OMPIO_ROOT == data->ompio_fh.f_rank) {
-        ret = data->ompio_fh.f_fs->fs_file_get_size (&data->ompio_fh, 
+        ret = data->ompio_fh.f_fs->fs_file_get_size (&data->ompio_fh,
                                                      &current_size);
 
         size = diskspace;
@@ -550,7 +550,7 @@ int mca_io_ompio_file_set_info (ompi_file_t *fh,
 				ompi_info_t *info)
 {
     int ret = OMPI_SUCCESS;
-    
+
     if ( MPI_INFO_NULL == fh->f_info ) {
 	/* OBJ_RELEASE(MPI_INFO_NULL); */
     }
@@ -569,7 +569,7 @@ int mca_io_ompio_file_get_info (ompi_file_t *fh,
 {
     int ret = OMPI_SUCCESS;
     ompi_info_t *info=NULL;
-    
+
     if ( MPI_INFO_NULL == fh->f_info  ) {
 	*info_used = MPI_INFO_NULL;
     }
@@ -677,7 +677,7 @@ mca_io_ompio_file_seek (ompi_file_t *fh,
         }
         break;
     case MPI_SEEK_END:
-        ret = data->ompio_fh.f_fs->fs_file_get_size (&data->ompio_fh, 
+        ret = data->ompio_fh.f_fs->fs_file_get_size (&data->ompio_fh,
                                                      &temp_offset);
         offset += temp_offset;
         if (offset < 0 || OMPI_SUCCESS != ret) {
@@ -688,7 +688,7 @@ mca_io_ompio_file_seek (ompi_file_t *fh,
         return OMPI_ERROR;
     }
 
-    ret = ompi_io_ompio_set_explicit_offset (&data->ompio_fh, 
+    ret = ompi_io_ompio_set_explicit_offset (&data->ompio_fh,
                                              offset/data->ompio_fh.f_etype_size);
     return ret;
 }
@@ -700,12 +700,12 @@ mca_io_ompio_file_get_position (ompi_file_t *fd,
     int ret=OMPI_SUCCESS;
     mca_io_ompio_data_t *data=NULL;
     mca_io_ompio_file_t *fh=NULL;
-    
+
     data = (mca_io_ompio_data_t *) fd->f_io_selected_data;
     fh = &data->ompio_fh;
-    
+
     ret = ompio_io_ompio_file_get_position (fh, offset);
-    
+
     return ret;
 }
 
@@ -714,7 +714,7 @@ ompio_io_ompio_file_get_position (mca_io_ompio_file_t *fh,
                                 OMPI_MPI_OFFSET_TYPE *offset)
 {
     OMPI_MPI_OFFSET_TYPE off;
-    
+
     /* No. of copies of the entire file view */
     off = (fh->f_offset - fh->f_disp)/fh->f_view_extent;
 
@@ -742,7 +742,7 @@ mca_io_ompio_file_get_byte_offset (ompi_file_t *fh,
 
     data = (mca_io_ompio_data_t *) fh->f_io_selected_data;
 
-    temp_offset = data->ompio_fh.f_view_extent * 
+    temp_offset = data->ompio_fh.f_view_extent *
         (offset*data->ompio_fh.f_etype_size / data->ompio_fh.f_view_size);
 
     position = 0;
@@ -828,7 +828,7 @@ mca_io_ompio_cart_based_grouping(mca_io_ompio_file_t *ompio_fh)
     int coords_tmp[2] = { 0 };
 
     cart_topo_components cart_topo;
-    
+
     ompio_fh->f_comm->c_topo->topo.cart.cartdim_get(ompio_fh->f_comm, &cart_topo.ndims);
 
     cart_topo.dims = (int*)malloc (cart_topo.ndims * sizeof(int));
@@ -852,7 +852,7 @@ mca_io_ompio_cart_based_grouping(mca_io_ompio_file_t *ompio_fh)
 	                                         cart_topo.dims,
 	                                         cart_topo.periods,
   	                                         cart_topo.coords);
- 
+
     ompio_fh->f_init_procs_per_group = cart_topo.dims[1]; //number of elements per row
     ompio_fh->f_init_num_aggrs = cart_topo.dims[0];  //number of rows
 
@@ -862,7 +862,7 @@ mca_io_ompio_cart_based_grouping(mca_io_ompio_file_t *ompio_fh)
         opal_output (1, "OUT OF MEMORY\n");
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
- 
+
     for(k = 0; k < cart_topo.dims[0]; k++){
         coords_tmp[0] = k;
         coords_tmp[1] = k * cart_topo.dims[1];
@@ -870,7 +870,7 @@ mca_io_ompio_cart_based_grouping(mca_io_ompio_file_t *ompio_fh)
         ompio_fh->f_init_aggr_list[k] = tmp_rank; //change this to use get rank
     }
 
-    //Initial Grouping 
+    //Initial Grouping
     ompio_fh->f_init_procs_in_group = (int*)malloc (ompio_fh->f_init_procs_per_group * sizeof(int));
     if (NULL == ompio_fh->f_init_procs_in_group) {
         opal_output (1, "OUT OF MEMORY\n");
@@ -879,9 +879,9 @@ mca_io_ompio_cart_based_grouping(mca_io_ompio_file_t *ompio_fh)
                                                                                                                                                               for (j=0 ; j< ompio_fh->f_size ; j++) {
         ompio_fh->f_comm->c_topo->topo.cart.cart_coords (ompio_fh->f_comm, j, cart_topo.ndims, coords_tmp);
 	if (coords_tmp[0]  == cart_topo.coords[0]) {
-           if ((coords_tmp[1]/ompio_fh->f_init_procs_per_group) == 
+           if ((coords_tmp[1]/ompio_fh->f_init_procs_per_group) ==
 	       (cart_topo.coords[1]/ompio_fh->f_init_procs_per_group)) {
-	        
+
 	       ompio_fh->f_init_procs_in_group[n] = j;
 	       n++;
 	   }
@@ -907,6 +907,6 @@ mca_io_ompio_cart_based_grouping(mca_io_ompio_file_t *ompio_fh)
        free (cart_topo.coords);
        cart_topo.coords = NULL;
     }
-						                                 
+
     return OMPI_SUCCESS;
 }

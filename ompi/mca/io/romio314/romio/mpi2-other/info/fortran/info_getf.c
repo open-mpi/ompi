@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -84,7 +84,7 @@
 #endif
 #endif
 
-void mpi_info_get_(MPI_Fint *info, char *key, int *valuelen, char *value, 
+void mpi_info_get_(MPI_Fint *info, char *key, int *valuelen, char *value,
         int *flag, int *ierr, int keylen, int valspace)
 {
     MPI_Info info_c;
@@ -98,7 +98,7 @@ void mpi_info_get_(MPI_Fint *info, char *key, int *valuelen, char *value,
 
     /* strip leading and trailing blanks in key */
     lead_blanks = 0;
-    for (i=0; i<keylen; i++) 
+    for (i=0; i<keylen; i++)
         if (key[i] == ' ') lead_blanks++;
         else break;
 
@@ -126,7 +126,7 @@ void mpi_info_get_(MPI_Fint *info, char *key, int *valuelen, char *value,
         FPRINTF(stderr, "MPI_Info_get: valuelen is greater than the amount of memory available in value\n");
         MPI_Abort(MPI_COMM_WORLD, 1);
     }
-    
+
     tmpvalue = (char *) ADIOI_Malloc((*valuelen + 1)*sizeof(char));
 
     info_c = MPI_Info_f2c(*info);
@@ -138,7 +138,7 @@ void mpi_info_get_(MPI_Fint *info, char *key, int *valuelen, char *value,
 	/* blank pad the remaining space */
 	for (i=tmpvaluelen; i<valspace; i++) value[i] = ' ';
     }
-	
+
     ADIOI_Free(newkey);
     ADIOI_Free(tmpvalue);
 }

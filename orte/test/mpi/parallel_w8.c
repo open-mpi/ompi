@@ -50,7 +50,7 @@ main(int argc, char* argv[])
     char rr_blank[] = {"       "};
     char rr_empty[] = {"???????"};
     int  count;
-    
+
     MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &npes);
@@ -91,121 +91,121 @@ main(int argc, char* argv[])
         if (count < MAX_RR_NAME) strncat(&process_name[count],rr_blank,MAX_RR_NAME-count);
         process_name[MAX_RR_NAME] = '\0';
     }
-    
+
     MPI_Barrier(MPI_COMM_WORLD);
-    
+
     MPI_Info_create(&info);
-    
+
     /* allow multiple writers to write to the file concurrently */
-    
+
     /*MPI_Info_set(info,"panfs_concurrent_write","1");*/
-    
+
     /* use data aggregation */
-    
+
     /*MPI_Info_set(info,"romio_cb_write","enable"); */
     /*MPI_Info_set(info,"romio_cb_write","disable");*/
     /*MPI_Info_set(info,"romio_cb_read","enable"); */
     /*MPI_Info_set(info,"romio_cb_read","disable");*/
-    
+
     /* use one aggregator/writer per node */
-    
+
     /*MPI_Info_set(info,"cb_config_list","*:1");*/
-    
+
     /* aggregators/writers per allocation: use this or the above (both work) */
-    
+
     /*i = ((npes-1)/8) + 1;
      sprintf(awpa,"%d",i);
      MPI_Info_set (info,"cb_nodes",awpa);*/
-    
-    
+
+
     for ( i=0; i<ng; i++ ) buf[i] = rank*10000 + (i+1)%1024;
-    
+
     for ( i=0; i<D; i++ )
     {
         periods[i] = 1;  /* true */
     }
-    
+
     reorder = 1;        /* true */
-    
+
     dims[0] = npx;
     dims[1] = npy;
     dims[2] = npz;
-    
+
     MPI_Cart_create(MPI_COMM_WORLD, D, dims, periods, reorder, &new_comm);
-    
+
     for ( i=0; i<D; i++ )
     {
         distrib[i] = MPI_DISTRIBUTE_BLOCK;
         dargs[i]   = MPI_DISTRIBUTE_DFLT_DARG;
         /*   psize[i]   = 0; */
     }
-    
+
     gsize[0] = X;
     gsize[1] = Y;
     gsize[2] = Z;
-    
+
     psize[0] = npx;
     psize[1] = npy;
     psize[2] = npz;
-    
+
     /*
-     MPI_Dims_create(npes, D, psize);  
-     
+     MPI_Dims_create(npes, D, psize);
+
      printf("psize %d %d %d\n",psize[0],psize[1],psize[2]);
      */
-    
+
     MPI_Type_create_darray(npes, rank, D, gsize, distrib, dargs, psize, MPI_ORDER_FORTRAN, MPI_INT, &filetype);
     /*MPI_Type_create_darray(npes, rank, D, gsize, distrib, dargs, psize, MPI_ORDER_C, MPI_INT, &filetype);              don't do this */
-    
+
     MPI_Type_commit(&filetype);
-    
+
     to1 = MPI_Wtime();
     MPI_File_open(new_comm, argv[1], MPI_MODE_WRONLY | MPI_MODE_CREATE, info, &thefile);
     to2 = MPI_Wtime();
-    
+
     MPI_File_set_size(thefile, offset);
-    
+
     MPI_File_set_view(thefile, offset, MPI_INT, filetype, "native", MPI_INFO_NULL);
-    
+
     t1 = MPI_Wtime();
     for ( i=0; i<LOOP; i++)
     {
         MPI_File_write_all(thefile, buf, ng, MPI_INT, &status);
     }
     t2 = MPI_Wtime();
-    
+
     tc1 = MPI_Wtime();
     MPI_File_close(&thefile);
     tc2 = MPI_Wtime();
-    
+
     et  = (t2  - t1)/LOOP;
     eto = (to2 - to1)/LOOP;
     etc = (tc2 - tc1)/LOOP;
-    
+
     mbs = (((double)(LOOP*X*Y*Z)*sizeof(int)))/(1000000.0*(t2-t1));
-    
+
     /*printf(" %s[%3d]    ET  %8.2f  %8.2f  %8.2f         %8.1f mbs\n", process_name, rank, t1, t2, t2-t1, mbs);*/
-    
+
     MPI_Barrier(MPI_COMM_WORLD);
-    
+
     MPI_Reduce(&mbs, &avg_mbs, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     MPI_Reduce(&mbs, &min_mbs, 1, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);
     MPI_Reduce(&mbs, &max_mbs, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
-    
+
     MPI_Reduce(&et, &avg_et, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     MPI_Reduce(&et, &min_et, 1, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);
     MPI_Reduce(&et, &max_et, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
-    
+
     MPI_Reduce(&eto, &avg_eto, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     MPI_Reduce(&eto, &min_eto, 1, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);
     MPI_Reduce(&eto, &max_eto, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
-    
+
     MPI_Reduce(&etc, &avg_etc, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     MPI_Reduce(&etc, &min_etc, 1, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);
     MPI_Reduce(&etc, &max_etc, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
-    
+
     fflush(stdout);
-    
+
     if ( rank == 0 )
     {
         mbs = avg_mbs/npes;
@@ -215,13 +215,13 @@ main(int argc, char* argv[])
         avg_eto = avg_eto/npes;
         avg_et  = avg_et/npes;
         avg_etc = avg_etc/npes;
-        printf("     open time:  %9.3f min %9.3f avg %9.3f max\n",min_eto,avg_eto,max_eto);  
-        printf("     write time: %9.3f min %9.3f avg %9.3f max\n",min_et,avg_et,max_et);  
-        printf("     close time: %9.3f min %9.3f avg %9.3f max\n\n",min_etc,avg_etc,max_etc);  
+        printf("     open time:  %9.3f min %9.3f avg %9.3f max\n",min_eto,avg_eto,max_eto);
+        printf("     write time: %9.3f min %9.3f avg %9.3f max\n",min_et,avg_et,max_et);
+        printf("     close time: %9.3f min %9.3f avg %9.3f max\n\n",min_etc,avg_etc,max_etc);
         fflush(stdout);
     }
-    
+
     MPI_Finalize();
-    
+
     return 0;
 }

@@ -3,9 +3,9 @@
 # Copyright (c) 2012      Los Alamos National Security, LLC.
 #                         All rights reserved.
 # $COPYRIGHT$
-# 
+#
 # Additional copyrights may follow
-# 
+#
 # $HEADER$
 #
 # MCA_rmaps_lama_CONFIG([action-if-found], [action-if-not-found])

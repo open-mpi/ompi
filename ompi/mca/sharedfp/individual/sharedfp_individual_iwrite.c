@@ -69,11 +69,11 @@ int mca_sharedfp_individual_iwrite(mca_io_ompio_file_t *fh,
 
     /*Insert metadata record into a queue*/
     ret = mca_sharedfp_individual_insert_metadata(OMPI_FILE_WRITE_SHARED,totalbytes,sh);
-    
+
 
     /*Write the data into individual file*/
     ret = ompio_io_ompio_file_iwrite_at ( headnode->datafilehandle, headnode->datafile_offset,
-					  buf, count, datatype, request);  
+					  buf, count, datatype, request);
     if ( OMPI_SUCCESS != ret )  {
 	opal_output(0,"sharedfp_individual_iwrite: Error while iwriting the datafile \n");
 	return ret;

@@ -1,14 +1,14 @@
 /*
  * Copyright (c) 2006-2012 Los Alamos National Security, LLC.  All rights
- *                         reserved. 
+ *                         reserved.
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010      Sandia National Laboratories. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  *
  */
@@ -47,7 +47,7 @@ opal_installdirs_base_open(mca_base_open_flag_t flags)
             (const opal_installdirs_base_component_t *) component_item->cli_component;
 
         /* copy over the data, if something isn't already there */
-        CONDITIONAL_COPY(opal_install_dirs, component->install_dirs_data, 
+        CONDITIONAL_COPY(opal_install_dirs, component->install_dirs_data,
                          prefix);
         CONDITIONAL_COPY(opal_install_dirs, component->install_dirs_data,
                          exec_prefix);
@@ -61,62 +61,62 @@ opal_installdirs_base_open(mca_base_open_flag_t flags)
                          datarootdir);
         CONDITIONAL_COPY(opal_install_dirs, component->install_dirs_data,
                          datadir);
-        CONDITIONAL_COPY(opal_install_dirs, component->install_dirs_data, 
+        CONDITIONAL_COPY(opal_install_dirs, component->install_dirs_data,
                          sysconfdir);
-        CONDITIONAL_COPY(opal_install_dirs, component->install_dirs_data, 
+        CONDITIONAL_COPY(opal_install_dirs, component->install_dirs_data,
                          sharedstatedir);
-        CONDITIONAL_COPY(opal_install_dirs, component->install_dirs_data, 
+        CONDITIONAL_COPY(opal_install_dirs, component->install_dirs_data,
                          localstatedir);
-        CONDITIONAL_COPY(opal_install_dirs, component->install_dirs_data, 
+        CONDITIONAL_COPY(opal_install_dirs, component->install_dirs_data,
                          libdir);
-        CONDITIONAL_COPY(opal_install_dirs, component->install_dirs_data, 
+        CONDITIONAL_COPY(opal_install_dirs, component->install_dirs_data,
                          includedir);
-        CONDITIONAL_COPY(opal_install_dirs, component->install_dirs_data, 
+        CONDITIONAL_COPY(opal_install_dirs, component->install_dirs_data,
                          infodir);
-        CONDITIONAL_COPY(opal_install_dirs, component->install_dirs_data, 
+        CONDITIONAL_COPY(opal_install_dirs, component->install_dirs_data,
                          mandir);
         CONDITIONAL_COPY(opal_install_dirs, component->install_dirs_data,
                          opaldatadir);
-        CONDITIONAL_COPY(opal_install_dirs, component->install_dirs_data, 
+        CONDITIONAL_COPY(opal_install_dirs, component->install_dirs_data,
                          opallibdir);
-        CONDITIONAL_COPY(opal_install_dirs, component->install_dirs_data, 
+        CONDITIONAL_COPY(opal_install_dirs, component->install_dirs_data,
                          opalincludedir);
     }
 
     /* expand out all the fields */
-    opal_install_dirs.prefix = 
+    opal_install_dirs.prefix =
         opal_install_dirs_expand_setup(opal_install_dirs.prefix);
-    opal_install_dirs.exec_prefix = 
+    opal_install_dirs.exec_prefix =
         opal_install_dirs_expand_setup(opal_install_dirs.exec_prefix);
-    opal_install_dirs.bindir = 
+    opal_install_dirs.bindir =
         opal_install_dirs_expand_setup(opal_install_dirs.bindir);
-    opal_install_dirs.sbindir = 
+    opal_install_dirs.sbindir =
         opal_install_dirs_expand_setup(opal_install_dirs.sbindir);
-    opal_install_dirs.libexecdir = 
+    opal_install_dirs.libexecdir =
         opal_install_dirs_expand_setup(opal_install_dirs.libexecdir);
-    opal_install_dirs.datarootdir = 
+    opal_install_dirs.datarootdir =
         opal_install_dirs_expand_setup(opal_install_dirs.datarootdir);
-    opal_install_dirs.datadir = 
+    opal_install_dirs.datadir =
         opal_install_dirs_expand_setup(opal_install_dirs.datadir);
-    opal_install_dirs.sysconfdir = 
+    opal_install_dirs.sysconfdir =
         opal_install_dirs_expand_setup(opal_install_dirs.sysconfdir);
-    opal_install_dirs.sharedstatedir = 
+    opal_install_dirs.sharedstatedir =
         opal_install_dirs_expand_setup(opal_install_dirs.sharedstatedir);
-    opal_install_dirs.localstatedir = 
+    opal_install_dirs.localstatedir =
         opal_install_dirs_expand_setup(opal_install_dirs.localstatedir);
-    opal_install_dirs.libdir = 
+    opal_install_dirs.libdir =
         opal_install_dirs_expand_setup(opal_install_dirs.libdir);
-    opal_install_dirs.includedir = 
+    opal_install_dirs.includedir =
         opal_install_dirs_expand_setup(opal_install_dirs.includedir);
-    opal_install_dirs.infodir = 
+    opal_install_dirs.infodir =
         opal_install_dirs_expand_setup(opal_install_dirs.infodir);
-    opal_install_dirs.mandir = 
+    opal_install_dirs.mandir =
         opal_install_dirs_expand_setup(opal_install_dirs.mandir);
-    opal_install_dirs.opaldatadir = 
+    opal_install_dirs.opaldatadir =
         opal_install_dirs_expand_setup(opal_install_dirs.opaldatadir);
-    opal_install_dirs.opallibdir = 
+    opal_install_dirs.opallibdir =
         opal_install_dirs_expand_setup(opal_install_dirs.opallibdir);
-    opal_install_dirs.opalincludedir = 
+    opal_install_dirs.opalincludedir =
         opal_install_dirs_expand_setup(opal_install_dirs.opalincludedir);
 
 #if 0

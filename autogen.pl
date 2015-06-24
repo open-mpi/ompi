@@ -6,9 +6,9 @@
 #                         All rights reserved.
 # Copyright (c) 2013-2014 Intel, Inc.  All rights reserved.
 # $COPYRIGHT$
-# 
+#
 # Additional copyrights may follow
-# 
+#
 # $HEADER$
 #
 
@@ -74,7 +74,7 @@ my $full_hostname;
 my $patch_prog = "patch";
 # Solaris "patch" doesn't understand unified diffs, and will cause
 # autogen.pl to hang with a "File to patch:" prompt. Default to Linux
-# "patch", but use "gpatch" on Solaris. 
+# "patch", but use "gpatch" on Solaris.
 if ($^O eq "solaris") {
     $patch_prog = "gpatch";
 }
@@ -247,7 +247,7 @@ sub mca_process_component {
     $found_component->{"name"} = $component;
 
     # Push the results onto the $mca_found hash array
-    push(@{$mca_found->{$pname}->{$framework}->{"components"}}, 
+    push(@{$mca_found->{$pname}->{$framework}->{"components"}},
          $found_component);
 
     # Is there an autogen.subdirs in here?
@@ -274,7 +274,7 @@ sub ignored {
         $unignore .= $_
             while (<UNIGNORE>);
         close(UNIGNORE);
-        
+
         $ignored = 0
             if ($unignore =~ /^$username$/m ||
                 $unignore =~ /^$username\@$hostname$/m ||
@@ -307,13 +307,13 @@ sub mca_process_framework {
         # Look for component directories in this framework
         if (-d $dir) {
             $mca_found->{$pname}->{$framework}->{found} = 1;
-            opendir(DIR, $dir) || 
+            opendir(DIR, $dir) ||
                 my_die "Can't open $dir directory";
             foreach my $d (readdir(DIR)) {
                 # Skip any non-directory, "base", or any dir that
                 # begins with "."
                 next
-                    if (! -d "$dir/$d" || $d eq "base" || 
+                    if (! -d "$dir/$d" || $d eq "base" ||
                         substr($d, 0, 1) eq ".");
 
                 # Skip any component that doesn't have a configure.m4
@@ -328,7 +328,7 @@ sub mca_process_framework {
 
                 verbose "--- Found $pname / $framework / $d component\n";
 
-                # Skip if specifically excluded 
+                # Skip if specifically excluded
                 if (exists($exclude_list->{$framework}) &&
                     $exclude_list->{$framework}[0] eq $d) {
                     verbose "    => Excluded\n";
@@ -415,7 +415,7 @@ sub mca_process_project {
     # Look for framework directories in this project
     my $dir = "$topdir/$pdir/mca";
     if (-d $dir) {
-        opendir(DIR, $dir) || 
+        opendir(DIR, $dir) ||
             my_die "Can't open $dir directory";
         my @my_dirs = readdir(DIR);
         @my_dirs = sort(@my_dirs);
@@ -493,7 +493,7 @@ dnl MCA information\n";
             # Does this project have a configure.m4 file?
             push(@includes, "$pdir/configure.m4")
                 if (exists($mca_found->{$p}->{"configure.m4"}));
-                           
+
             # Print out project-level info
             my @mykeys = keys(%{$mca_found->{$pname}});
             @mykeys = sort(@mykeys);
@@ -553,7 +553,7 @@ m4_define([mca_${pname}_framework_list], [$frameworks_comma])
                 }
                 $m4_config_component_list =~ s/^, //;
                 $no_config_component_list =~ s/^, //;
-                
+
                 $m4 .= "dnl Components in the $pname / $f framework
 m4_define([mca_${pname}_${f}_m4_config_component_list], [$m4_config_component_list])
 m4_define([mca_${pname}_${f}_no_config_component_list], [$no_config_component_list])
@@ -576,7 +576,7 @@ dnl List of configure.m4 files to include\n";
 
 sub mpiext_process_extension {
     my ($topdir, $ext_prefix, $extdir) = @_;
-    
+
     my $edir = "$topdir/$ext_prefix/$extdir";
     return
         if (! -d $edir);
@@ -602,13 +602,13 @@ sub mpiext_run_global {
     my $topdir = Cwd::cwd();
 
     my $dir = "$topdir/$ext_prefix";
-    opendir(DIR, $dir) || 
+    opendir(DIR, $dir) ||
         my_die "Can't open $dir directory";
     foreach my $d (readdir(DIR)) {
         # Skip any non-directory, "base", or any dir that begins with "."
         next
             if (! -d "$dir/$d" || $d eq "base" || substr($d, 0, 1) eq ".");
-        
+
         # If this directory has a configure.m4, then it's an
         # extension.
         if (-f "$dir/$d/configure.m4") {
@@ -663,7 +663,7 @@ m4_define([ompi_mpiext_list], [$m4_config_ext_list])\n";
 
 sub mpicontrib_process {
     my ($topdir, $contrib_prefix, $contribdir) = @_;
-    
+
     my $cdir = "$topdir/$contrib_prefix/$contribdir";
     return
         if (! -d $cdir);
@@ -689,13 +689,13 @@ sub mpicontrib_run_global {
     my $topdir = Cwd::cwd();
 
     my $dir = "$topdir/$contrib_prefix";
-    opendir(DIR, $dir) || 
+    opendir(DIR, $dir) ||
         my_die "Can't open $dir directory";
     foreach my $d (readdir(DIR)) {
         # Skip any non-directory, "base", or any dir that begins with "."
         next
             if (! -d "$dir/$d" || $d eq "base" || substr($d, 0, 1) eq ".");
-        
+
         # If this directory has a configure.m4, then it's an
         # extension.
         if (-f "$dir/$d/configure.m4") {
@@ -821,7 +821,7 @@ sub find_and_check {
             if ($pn > $mn) {
                 verbose "     ==> ACCEPTED\n";
                 return;
-            } 
+            }
             # If the version is lower, we're done.
             elsif ($pn < $mn ||
                 ($pn == $mn && $pa lt $ma)) {
@@ -931,13 +931,13 @@ sub patch_autotools_output {
     # Similar issue as above -- fix the case statements that handle the Sun
     # Fortran version strings.
     #
-    # Note: we have to use octal escapes to match '*Sun\ F*) and the 
+    # Note: we have to use octal escapes to match '*Sun\ F*) and the
     # four succeeding lines in the bourne shell switch statement.
     #   \ = 134
     #   ) = 051
     #   * = 052
     #
-    # Below is essentially an upstream patch for Libtool which we want 
+    # Below is essentially an upstream patch for Libtool which we want
     # made available to Open MPI users running older versions of Libtool
 
     foreach my $tag (("", "_FC")) {
@@ -1066,7 +1066,7 @@ dnl
 $dnl_line
 dnl This file is automatically created by autogen.pl; it should not
 dnl be edited by hand!!
-dnl 
+dnl
 dnl Generated by $username at " . localtime(time) . "
 dnl on $full_hostname.
 $dnl_line\n\n";
@@ -1269,7 +1269,7 @@ find_and_delete(qw/config.guess config.sub depcomp compile install-sh ltconfig
 # Remove the old m4 file and write the new one
 verbose "==> Writing m4 file with autogen.pl results\n";
 unlink($m4_output_file);
-open(M4, ">$m4_output_file") || 
+open(M4, ">$m4_output_file") ||
     my_die "Can't open $m4_output_file";
 print M4 $m4;
 close(M4);

@@ -3,9 +3,9 @@
  *                         All rights reserved.
  * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -26,7 +26,7 @@ SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
         shpdeallc_,
         shpdeallc__,
         shpdeallc_f,
-        (FORTRAN_POINTER_T *addr, MPI_Fint *errcode, MPI_Fint *abort), 
+        (FORTRAN_POINTER_T *addr, MPI_Fint *errcode, MPI_Fint *abort),
         (addr,errcode,abort) )
 
 

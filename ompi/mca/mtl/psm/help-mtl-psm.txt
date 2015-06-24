@@ -19,7 +19,7 @@ Unable to set PSM debug level.
 #
 [unable to open endpoint]
 PSM was unable to open an endpoint. Please make sure that the network link is
-active on the node and the hardware is functioning. 
+active on the node and the hardware is functioning.
 
   Error: %s
 #

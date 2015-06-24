@@ -536,7 +536,7 @@ static int iboffload_start_device(mca_bcol_iboffload_device_t *device)
                                     j, ibv_get_device_name(device->dev.ib_dev), port, strerror(errno)));
                         continue;
                     }
-					
+
                     pkey = ntohs(pkey) & MCA_BCOL_IBOFFLOAD_PKEY_MASK;
                     if (pkey == cm->pkey_val) {
                         ret = iboffload_init_port(device, &device->ports[pi]);

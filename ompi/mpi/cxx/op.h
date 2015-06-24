@@ -6,15 +6,15 @@
 // Copyright (c) 2004-2005 The University of Tennessee and The University
 //                         of Tennessee Research Foundation.  All rights
 //                         reserved.
-// Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+// Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 //                         University of Stuttgart.  All rights reserved.
 // Copyright (c) 2004-2005 The Regents of the University of California.
 //                         All rights reserved.
 // Copyright (c) 2006-2009 Cisco Systems, Inc.  All rights reserved.
 // $COPYRIGHT$
-// 
+//
 // Additional copyrights may follow
-// 
+//
 // $HEADER$
 //
 
@@ -46,8 +46,8 @@ public:
   //JGS took const out
   virtual void Init(User_function *func, bool commute);
   virtual void Free();
- 
-  virtual void Reduce_local(const void *inbuf, void *inoutbuf, int count, 
+
+  virtual void Reduce_local(const void *inbuf, void *inoutbuf, int count,
                             const MPI::Datatype& datatype) const;
   virtual bool Is_commutative(void) const;
 

@@ -6,9 +6,9 @@
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -48,7 +48,7 @@ struct ompi_request_t;
 struct opal_convertor_t;
 
 struct mca_mtl_base_module_t;
-    
+
 struct mca_mtl_request_t {
     /** pointer to associated ompi_request_t */
     struct ompi_request_t *ompi_req;
@@ -75,18 +75,18 @@ typedef struct mca_mtl_request_t mca_mtl_request_t;
  *                  user and the component must be capable of coping
  *                  with threads.  If the component can cope with
  *                  MPI_THREAD_MULTIPLE, enable_mpi_thread_multiple
- *                  should be set to true.  Otherwise, it is assumed 
+ *                  should be set to true.  Otherwise, it is assumed
  *                  that only THREAD_FUNNELLED and THREAD_SERIALIZED
  *                  can be used.
  * @param enable_mpi_thread_multiple (OUT) Component does / does not
  *                  support MPI_THREAD_MULTIPLE.  This variable only
- *                  needs to be set if enable_mpi_threads is true.  
+ *                  needs to be set if enable_mpi_threads is true.
  *                  Otherwise, the return value will be ignored.
  *
  * @retval NULL     component can not operate on the current machine
  * @retval non-NULL component interface function
  */
-typedef struct mca_mtl_base_module_t* 
+typedef struct mca_mtl_base_module_t*
 (*mca_mtl_base_component_init_fn_t)(bool enable_progress_threads,
                                     bool enable_mpi_threads);
 
@@ -101,25 +101,25 @@ typedef struct mca_mtl_base_component_2_0_0_t mca_mtl_base_component_t;
 
 
 /**
- * MCA->MTL Clean up any resources held by MTL module 
- *  
+ * MCA->MTL Clean up any resources held by MTL module
+ *
  * Opposite of module_init.  Called when communication will no longer
  * be necessary.  ussually this is during MPI_FINALIZE, but it can be
  * earlier if the component was not selected to run.  Assuming
  * module_init was called, finalize will always be called before the
  * component_close function is called.
- * 
+ *
  * @param mtl (IN)   MTL module returned from call to initialize
  *
  * @retval OMPI_SUCCESS cleanup finished successfully
  * @retval other        failure during cleanup
- * 
+ *
  */
 typedef int (*mca_mtl_base_module_finalize_fn_t)(struct mca_mtl_base_module_t* mtl);
 
 
 /**
- * PML->MTL notification of change in the process list. 
+ * PML->MTL notification of change in the process list.
  *
  * The mca_mtl_base_module_add_procs_fn_t() is used by the PML to
  * notify the MTL that new processes are connected to the current
@@ -144,7 +144,7 @@ typedef int (*mca_mtl_base_module_finalize_fn_t)(struct mca_mtl_base_module_t* m
  * @retval other failure during setup
  */
 typedef int (*mca_mtl_base_module_add_procs_fn_t)(
-                            struct mca_mtl_base_module_t* mtl, 
+                            struct mca_mtl_base_module_t* mtl,
                             size_t nprocs,
                             struct ompi_proc_t** procs);
 
@@ -166,7 +166,7 @@ typedef int (*mca_mtl_base_module_add_procs_fn_t)(
  * @return             Status indicating if cleanup was successful
  */
 typedef int (*mca_mtl_base_module_del_procs_fn_t)(
-                            struct mca_mtl_base_module_t* mtl, 
+                            struct mca_mtl_base_module_t* mtl,
                             size_t nprocs,
                             struct ompi_proc_t** procs);
 
@@ -185,7 +185,7 @@ typedef int (*mca_mtl_base_module_del_procs_fn_t)(
  * @param comm (IN)      Communicator used for operation
  * @param dest (IN)      Destination rank for send (relative to comm)
  * @param tag (IN)       MPI tag used for sending.  See note below.
- * @param convertor (IN) Datatype convertor describing send datatype.  
+ * @param convertor (IN) Datatype convertor describing send datatype.
  *                       Already prepared for send.
  * @param mode (IN)      Mode for send operation
  *
@@ -202,7 +202,7 @@ typedef int (*mca_mtl_base_module_del_procs_fn_t)(
  * if a negative tag is used.
  */
 typedef int (*mca_mtl_base_module_send_fn_t)(
-                          struct mca_mtl_base_module_t* mtl, 
+                          struct mca_mtl_base_module_t* mtl,
                           struct ompi_communicator_t *comm,
                           int dest,
                           int tag,
@@ -229,11 +229,11 @@ typedef int (*mca_mtl_base_module_send_fn_t)(
  * @param comm (IN)      Communicator used for operation
  * @param dest (IN)      Destination rank for send (relative to comm)
  * @param tag (IN)       MPI tag used for sending.  See note below.
- * @param convertor (IN) Datatype convertor describing send datatype.  
+ * @param convertor (IN) Datatype convertor describing send datatype.
  *                       Already prepared for send.
  * @param mode (IN)      Mode for send operation (see pml.h)
- * @param blocking (IN)  True if the call originated from a blocking 
- *                       call, but the PML decided to use a 
+ * @param blocking (IN)  True if the call originated from a blocking
+ *                       call, but the PML decided to use a
  *                       non-blocking operation, likely for
  *                       internal performance decisions This is an
  *                       optimization flag and is not needed for
@@ -250,7 +250,7 @@ typedef int (*mca_mtl_base_module_send_fn_t)(
  * if a negative tag is used.
  */
 typedef int (*mca_mtl_base_module_isend_fn_t)(
-                          struct mca_mtl_base_module_t* mtl, 
+                          struct mca_mtl_base_module_t* mtl,
                           struct ompi_communicator_t *comm,
                           int dest,
                           int tag,
@@ -277,7 +277,7 @@ typedef int (*mca_mtl_base_module_isend_fn_t)(
  * @param comm (IN)      Communicator used for operation
  * @param src (IN)       Source rank for send (relative to comm)
  * @param tag (IN)       MPI tag used for sending.  See note below.
- * @param convertor (IN) Datatype convertor describing receive datatype.  
+ * @param convertor (IN) Datatype convertor describing receive datatype.
  *                       Already prepared for receive.
  * @param mtl_request (IN) Pointer to mtl_request.  The ompi_req field
  *                       will be populated with an initialized
@@ -310,7 +310,7 @@ typedef int (*mca_mtl_base_module_irecv_fn_t)(
  * @param src (IN)       Source rank for send (relative to comm)
  * @param tag (IN)       MPI tag used for sending.  See note below.
  * @param flag (OUT)     true if message available, false otherwise
- * @param status (OUT)   Status structure for information on 
+ * @param status (OUT)   Status structure for information on
  *                       available message
  *
  * \note While MPI does not allow users to specify negative tags, they
@@ -320,7 +320,7 @@ typedef int (*mca_mtl_base_module_irecv_fn_t)(
  * against negative tags.
  */
 typedef int (*mca_mtl_base_module_iprobe_fn_t)(
-                          struct mca_mtl_base_module_t* mtl, 
+                          struct mca_mtl_base_module_t* mtl,
                           struct ompi_communicator_t *comm,
                           int src,
                           int tag,
@@ -357,7 +357,7 @@ typedef int (*mca_mtl_base_module_improbe_fn_t)(struct mca_mtl_base_module_t *mt
  *
  */
 typedef int (*mca_mtl_base_module_cancel_fn_t)(
-                          struct mca_mtl_base_module_t* mtl, 
+                          struct mca_mtl_base_module_t* mtl,
                           mca_mtl_request_t *mtl_request,
                           int flag);
 

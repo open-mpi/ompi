@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -9,7 +9,7 @@
 
 /* style: allow:sprintf:3 sig:0 */
 
-/* 
+/*
  * Below are the "safe" versions of the various string and printf
  * operations. They are directly taken from MPICH, with MPIU replaced by ADIOI.
  */
@@ -18,7 +18,7 @@
  * ADIOI_Strncpy - Copy at most n character.  Stop once a null is reached.
  *
  * This is different from strncpy, which null pads so that exactly
- * n characters are copied.  The strncpy behavior is correct for many 
+ * n characters are copied.  The strncpy behavior is correct for many
  * applications because it guarantees that the string has no uninitialized
  * data.
  *
@@ -27,7 +27,7 @@
  *
  */
 /*@ ADIOI_Strncpy - Copy a string with a maximum length
-  
+
 Input Parameters:
 +   instr - String to copy
 -   maxlen - Maximum total length of 'outstr'
@@ -36,11 +36,11 @@ Output Parameters:
 .   outstr - String to copy into
 
     Notes:
-    This routine is the routine that you wish 'strncpy' was.  In copying 
-    'instr' to 'outstr', it stops when either the end of 'outstr' (the 
+    This routine is the routine that you wish 'strncpy' was.  In copying
+    'instr' to 'outstr', it stops when either the end of 'outstr' (the
     null character) is seen or the maximum length 'maxlen' is reached.
-    Unlike 'strncpy', it does not add enough nulls to 'outstr' after 
-    copying 'instr' in order to move precisely 'maxlen' characters.  
+    Unlike 'strncpy', it does not add enough nulls to 'outstr' after
+    copying 'instr' in order to move precisely 'maxlen' characters.
     Thus, this routine may be used anywhere 'strcpy' is used, without any
     performance cost related to large values of 'maxlen'.
 
@@ -57,8 +57,8 @@ int ADIOI_Strncpy( char *dest, const char *src, size_t n )
     while (*s_ptr && i-- > 0) {
 	*d_ptr++ = *s_ptr++;
     }
-    
-    if (i > 0) { 
+
+    if (i > 0) {
 	*d_ptr = 0;
 	return 0;
     }
@@ -81,7 +81,7 @@ Output Parameters:
 
     Notes:
     This routine is similar to 'strncat' except that the 'maxlen' argument
-    is the maximum total length of 'outstr', rather than the maximum 
+    is the maximum total length of 'outstr', rather than the maximum
     number of characters to move from 'instr'.  Thus, this routine is
     easier to use when the declared size of 'instr' is known.
 
@@ -106,21 +106,21 @@ int ADIOI_Strnapp( char *dest, const char *src, size_t n )
 
     /* We allow i >= (not just >) here because the first while decrements
        i by one more than there are characters, leaving room for the null */
-    if (i >= 0) { 
+    if (i >= 0) {
 	*d_ptr = 0;
 	return 0;
     }
     else {
 	/* Force the null at the end */
 	*--d_ptr = 0;
-    
+
 	/* We may want to force an error message here, at least in the
 	   debugging version */
 	return 1;
     }
 }
 
-/*@ 
+/*@
   ADIOI_Strdup - Duplicate a string
 
   Synopsis:
@@ -136,7 +136,7 @@ Input Parameters:
   null pointer is returned on error, such as out-of-memory.
 
   Notes:
-  Like 'ADIOI_Malloc' and 'ADIOI_Free', this will often be implemented as a 
+  Like 'ADIOI_Malloc' and 'ADIOI_Free', this will often be implemented as a
   macro but may use 'ADIOI_trstrdup' to provide a tracing version.
 
   Module:
@@ -159,14 +159,14 @@ char *ADIOI_Strdup( const char *str )
 }
 
 
-/* 
+/*
  * We need an snprintf replacement for systems without one
  */
 #ifndef HAVE_SNPRINTF
 #include <ctype.h>
 /* FIXME: Really need a check for varargs.h vs stdarg.h */
 #include <stdarg.h>
-/* 
+/*
  * This is an approximate form which is suitable for most uses within
  * the MPICH code
  */
@@ -209,7 +209,7 @@ int ADIOI_Snprintf( char *str, size_t size, const char *format, ... )
 		while (*p && isdigit(*p)) {
 		    width = 10 * width + (*p++ - '0');
 		}
-		/* When there is no longer a digit, get the format 
+		/* When there is no longer a digit, get the format
 		   character */
 		nc = *p++;
 	    }
@@ -236,7 +236,7 @@ int ADIOI_Snprintf( char *str, size_t size, const char *format, ... )
 		    int tmplen = strlen(tmp);
 		    /* If a width was specified, pad with spaces on the
 		       left (on the right if %-3d given; not implemented yet */
-		    while (size-- > 0 && width-- > tmplen) 
+		    while (size-- > 0 && width-- > tmplen)
 			*out_str++ = ' ';
 		}
 		while (size-- > 0 && *t) {
@@ -257,7 +257,7 @@ int ADIOI_Snprintf( char *str, size_t size, const char *format, ... )
 		    int tmplen = strlen(tmp);
 		    /* If a width was specified, pad with spaces on the
 		       left (on the right if %-3d given; not implemented yet */
-		    while (size-- > 0 && width-- > tmplen) 
+		    while (size-- > 0 && width-- > tmplen)
 			*out_str++ = ' ';
 		}
 		while (size-- > 0 && *t) {
@@ -277,7 +277,7 @@ int ADIOI_Snprintf( char *str, size_t size, const char *format, ... )
 		    int tmplen = strlen(tmp);
 		    /* If a width was specified, pad with spaces on the
 		       left (on the right if %-3d given; not implemented yet */
-		    while (size-- > 0 && width-- > tmplen) 
+		    while (size-- > 0 && width-- > tmplen)
 			*out_str++ = ' ';
 		}
 		while (size-- > 0 && *t) {

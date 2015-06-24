@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2012      Los Alamos National Security, Inc.  All rights reserved. 
+ * Copyright (c) 2012      Los Alamos National Security, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -74,6 +74,6 @@ int opal_dss_register(opal_dss_pack_fn_t pack_fn,
     info->odti_compare_fn = compare_fn;
     info->odti_print_fn = print_fn;
     info->odti_structured = structured;
-    
+
     return opal_pointer_array_set_item(&opal_dss_types, *type, info);
 }

@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -21,7 +21,7 @@ void ADIOI_NOLOCK_WriteStrided(ADIO_File fd, const void *buf, int count,
  * cannot or do not support client-side buffering
  * Does not do data sieving optimization
  * Does contain write-combining optimization for noncontig in memory, contig in
- * file 
+ * file
  */
 
 /* offset is in units of etype relative to the filetype. */
@@ -62,7 +62,7 @@ void ADIOI_NOLOCK_WriteStrided(ADIO_File fd, const void *buf, int count,
 #ifdef HAVE_STATUS_SET_BYTES
 	MPIR_Status_set_bytes(status, datatype, 0);
 #endif
-	*error_code = MPI_SUCCESS; 
+	*error_code = MPI_SUCCESS;
 	return;
     }
 
@@ -75,7 +75,7 @@ void ADIOI_NOLOCK_WriteStrided(ADIO_File fd, const void *buf, int count,
     MPI_Type_size_x(datatype, &buftype_size);
     MPI_Type_extent(datatype, &buftype_extent);
     etype_size = fd->etype_size;
-    
+
     ADIOI_Assert((buftype_size * count) == ((ADIO_Offset)(unsigned)buftype_size * (ADIO_Offset)count));
     bufsize = buftype_size * count;
 
@@ -112,8 +112,8 @@ void ADIOI_NOLOCK_WriteStrided(ADIO_File fd, const void *buf, int count,
 		if (flat_buf->blocklens[i] > combine_buf_remain && combine_buf != combine_buf_ptr) {
 		    /* there is data in the buffer; write out the buffer so far */
 #ifdef IO_DEBUG
-		    printf("[%d/%d] nc mem c file (0) writing loc = %Ld sz = %Ld\n", 
-				    rank, nprocs, off, 
+		    printf("[%d/%d] nc mem c file (0) writing loc = %Ld sz = %Ld\n",
+				    rank, nprocs, off,
 				    fd->hints->ind_wr_buffer_size-combine_buf_remain);
 #endif
 #ifdef ADIOI_MPE_LOGGING
@@ -138,8 +138,8 @@ void ADIOI_NOLOCK_WriteStrided(ADIO_File fd, const void *buf, int count,
 		     * write directly
 		     */
 #ifdef IO_DEBUG
-		    printf("[%d/%d] nc mem c file (1) writing loc = %Ld sz = %d\n", 
-				    rank, nprocs, off, 
+		    printf("[%d/%d] nc mem c file (1) writing loc = %Ld sz = %d\n",
+				    rank, nprocs, off,
 				    flat_buf->blocklens[i]);
 #endif
         ADIOI_Assert(flat_buf->blocklens[i] == (unsigned)flat_buf->blocklens[i]);
@@ -171,8 +171,8 @@ void ADIOI_NOLOCK_WriteStrided(ADIO_File fd, const void *buf, int count,
 	if (combine_buf_ptr != combine_buf) {
 	    /* data left in buffer to write */
 #ifdef IO_DEBUG
-	    printf("[%d/%d] nc mem c file (2) writing loc = %Ld sz = %Ld\n", 
-			    rank, nprocs, off, 
+	    printf("[%d/%d] nc mem c file (2) writing loc = %Ld sz = %Ld\n",
+			    rank, nprocs, off,
 			     fd->hints->ind_wr_buffer_size-combine_buf_remain);
 #endif
 #ifdef ADIOI_MPE_LOGGING
@@ -219,11 +219,11 @@ void ADIOI_NOLOCK_WriteStrided(ADIO_File fd, const void *buf, int count,
                 int i;
                 n_filetypes++;
                 for (i=0; i<flat_file->count; i++) {
-                    if (disp + flat_file->indices[i] + 
-                        n_filetypes*(ADIO_Offset)filetype_extent + flat_file->blocklens[i] 
+                    if (disp + flat_file->indices[i] +
+                        n_filetypes*(ADIO_Offset)filetype_extent + flat_file->blocklens[i]
                             >= offset) {
                         st_index = i;
-                        fwr_size = disp + flat_file->indices[i] + 
+                        fwr_size = disp + flat_file->indices[i] +
                                 n_filetypes*(ADIO_Offset)filetype_extent
                                  + flat_file->blocklens[i] - offset;
                         flag = 1;
@@ -238,7 +238,7 @@ void ADIOI_NOLOCK_WriteStrided(ADIO_File fd, const void *buf, int count,
 	    n_filetypes = offset / n_etypes_in_filetype;
 	    etype_in_filetype = offset % n_etypes_in_filetype;
 	    size_in_filetype = etype_in_filetype * etype_size;
- 
+
 	    sum = 0;
 	    for (i=0; i<flat_file->count; i++) {
 		sum += flat_file->blocklens[i];
@@ -265,14 +265,14 @@ void ADIOI_NOLOCK_WriteStrided(ADIO_File fd, const void *buf, int count,
 	    off = offset;
 	    fwr_size = ADIOI_MIN(fwr_size, bufsize);
 	    while (i_offset < bufsize) {
-                if (fwr_size) { 
-                    /* TYPE_UB and TYPE_LB can result in 
-                       fwr_size = 0. save system call in such cases */ 
+                if (fwr_size) {
+                    /* TYPE_UB and TYPE_LB can result in
+                       fwr_size = 0. save system call in such cases */
 #ifdef ADIOI_MPE_LOGGING
 		    MPE_Log_event(ADIOI_MPE_lseek_a, 0, NULL);
 #endif
 #ifdef IO_DEBUG
-		    printf("[%d/%d] c mem nc file writing loc = %Ld sz = %d\n", 
+		    printf("[%d/%d] c mem nc file writing loc = %Ld sz = %d\n",
 			    rank, nprocs, off, fwr_size);
 #endif
 		    err_lseek = lseek(fd->fd_sys, off, SEEK_SET);
@@ -302,7 +302,7 @@ void ADIOI_NOLOCK_WriteStrided(ADIO_File fd, const void *buf, int count,
 			j = 0;
 			n_filetypes++;
 		    }
-		    off = disp + flat_file->indices[j] + 
+		    off = disp + flat_file->indices[j] +
                                         n_filetypes*(ADIO_Offset)filetype_extent;
 		    fwr_size = ADIOI_MIN(flat_file->blocklens[j], bufsize-i_offset);
 		}
@@ -325,18 +325,18 @@ void ADIOI_NOLOCK_WriteStrided(ADIO_File fd, const void *buf, int count,
 		size = ADIOI_MIN(fwr_size, bwr_size);
 		if (size) {
 #ifdef IO_DEBUG
-		    printf("[%d/%d] nc mem nc file writing loc = %Ld sz = %d\n", 
+		    printf("[%d/%d] nc mem nc file writing loc = %Ld sz = %d\n",
 				    rank, nprocs, off, size);
 #endif
 #ifdef ADIOI_MPE_LOGGING
 		    MPE_Log_event( ADIOI_MPE_lseek_a, 0, NULL );
 #endif
 		    lseek(fd->fd_sys, off, SEEK_SET);
-#ifdef ADIOI_MPE_LOGGING 
+#ifdef ADIOI_MPE_LOGGING
 		    MPE_Log_event( ADIOI_MPE_lseek_b, 0, NULL );
 #endif
 		    if (err == -1) err_flag = 1;
-#ifdef ADIOI_MPE_LOGGING 
+#ifdef ADIOI_MPE_LOGGING
 		    MPE_Log_event( ADIOI_MPE_write_a, 0, NULL );
 #endif
                     ADIOI_Assert(size == (size_t) size);
@@ -359,7 +359,7 @@ void ADIOI_NOLOCK_WriteStrided(ADIO_File fd, const void *buf, int count,
                         n_filetypes++;
                     }
 
-                    off = disp + flat_file->indices[j] + 
+                    off = disp + flat_file->indices[j] +
                                    n_filetypes*(ADIO_Offset)filetype_extent;
 
 		    new_fwr_size = flat_file->blocklens[j];
@@ -375,7 +375,7 @@ void ADIOI_NOLOCK_WriteStrided(ADIO_File fd, const void *buf, int count,
 		    k = (k + 1)%flat_buf->count;
 		    buf_count++;
 		    indx = buftype_extent*(buf_count/flat_buf->count) +
-			flat_buf->indices[k]; 
+			flat_buf->indices[k];
 		    new_bwr_size = flat_buf->blocklens[k];
 		    if (size != fwr_size) {
 			off += size;
@@ -402,7 +402,7 @@ void ADIOI_NOLOCK_WriteStrided(ADIO_File fd, const void *buf, int count,
 
 #ifdef HAVE_STATUS_SET_BYTES
     MPIR_Status_set_bytes(status, datatype, bufsize);
-/* This is a temporary way of filling in status. The right way is to 
+/* This is a temporary way of filling in status. The right way is to
    keep track of how much data was actually written by ADIOI_BUFFERED_WRITE. */
 #endif
 

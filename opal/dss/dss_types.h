@@ -378,7 +378,7 @@ struct opal_buffer_t {
     /** Where the next data will be unpacked from (within the
         allocated memory starting as base_ptr) */
     char *unpack_ptr;
-    
+
     /** Number of bytes allocated (starting at base_ptr) */
     size_t bytes_allocated;
     /** Number of bytes used by the buffer (i.e., amount of data --

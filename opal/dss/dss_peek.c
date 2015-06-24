@@ -40,7 +40,7 @@ int opal_dss_peek(opal_buffer_t *buffer, opal_data_type_t *type,
         *num_vals = 0;
         return OPAL_ERR_UNPACK_READ_PAST_END_OF_BUFFER;
     }
-    
+
     /* if this is NOT a fully described buffer, then that is as much as
      * we can do - there is no way we can tell the caller what type is
      * in the buffer since that info wasn't stored.

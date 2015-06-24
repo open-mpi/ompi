@@ -13,6 +13,6 @@ noinst_HEADERS +=                                                    \
 
 romio_other_sources +=                                               \
     adio/ad_gpfs/bg/ad_bg_aggrs.c                                         \
-    adio/ad_gpfs/bg/ad_bg_pset.c 
+    adio/ad_gpfs/bg/ad_bg_pset.c
 
 endif BUILD_AD_BG

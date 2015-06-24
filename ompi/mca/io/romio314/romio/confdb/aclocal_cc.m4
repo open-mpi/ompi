@@ -27,13 +27,13 @@ dnl
 dnl If no actions are specified, a working value is added to 'COPTIONS'
 dnl
 dnl Notes:
-dnl This is now careful to check that the output is different, since 
+dnl This is now careful to check that the output is different, since
 dnl some compilers are noisy.
-dnl 
+dnl
 dnl We are extra careful to prototype the functions in case compiler options
 dnl that complain about poor code are in effect.
 dnl
-dnl Because this is a long script, we have ensured that you can pass a 
+dnl Because this is a long script, we have ensured that you can pass a
 dnl variable containing the option name as the first argument.
 dnl
 dnl D*/
@@ -68,11 +68,11 @@ AC_MSG_RESULT([$pac_result])
 dnl Delete the conftest created by AC_LANG_CONFTEST.
 rm -f conftest.$ac_ext
 
-# gcc 4.2.4 on 32-bit does not complain about the -Wno-type-limits option 
-# even though it doesn't support it.  However, when another warning is 
-# triggered, it gives an error that the option is not recognized.  So we 
+# gcc 4.2.4 on 32-bit does not complain about the -Wno-type-limits option
+# even though it doesn't support it.  However, when another warning is
+# triggered, it gives an error that the option is not recognized.  So we
 # need to test with a conftest file that will generate warnings.
-# 
+#
 # add an extra switch, pac_c_check_compiler_option_prototest, to
 # disable this test just in case some new compiler does not like it.
 #
@@ -155,13 +155,13 @@ dnl PAC_C_OPTIMIZATION([action if found])
 dnl
 dnl Output Effect:
 dnl Adds options to 'COPTIONS' if no other action is specified
-dnl 
+dnl
 dnl Notes:
 dnl This is a temporary standin for compiler optimization.
 dnl It should try to match known systems to known compilers (checking, of
 dnl course), and then falling back to some common defaults.
 dnl Note that many compilers will complain about -g and aggressive
-dnl optimization.  
+dnl optimization.
 dnl D*/
 AC_DEFUN([PAC_C_OPTIMIZATION],[
     for copt in "-O4 -Ofast" "-Ofast" "-fast" "-O3" "-xO3" "-O" ; do
@@ -221,18 +221,18 @@ return 0;
 }
 ],pac_cv_prog_c_unaligned_doubles="yes",pac_cv_prog_c_unaligned_doubles="no",
 pac_cv_prog_c_unaligned_doubles="unknown")])
-ifelse($1,,,if test "X$pac_cv_prog_c_unaligned_doubles" = "yes" ; then 
+ifelse($1,,,if test "X$pac_cv_prog_c_unaligned_doubles" = "yes" ; then
 $1
 fi)
-ifelse($2,,,if test "X$pac_cv_prog_c_unaligned_doubles" = "no" ; then 
+ifelse($2,,,if test "X$pac_cv_prog_c_unaligned_doubles" = "no" ; then
 $2
 fi)
-ifelse($3,,,if test "X$pac_cv_prog_c_unaligned_doubles" = "unknown" ; then 
+ifelse($3,,,if test "X$pac_cv_prog_c_unaligned_doubles" = "unknown" ; then
 $3
 fi)
 ])
 
-dnl/*D 
+dnl/*D
 dnl PAC_PROG_C_WEAK_SYMBOLS - Test whether C supports weak alias symbols.
 dnl
 dnl Synopsis
@@ -254,7 +254,7 @@ dnl sets the shell variable pac_cv_attr_weak to yes.
 dnl Also checks for __attribute__((weak_import)) which is supported by
 dnl Apple in Mac OSX (at least in Darwin).  Note that this provides only
 dnl weak symbols, not weak aliases
-dnl 
+dnl
 dnl D*/
 AC_DEFUN([PAC_PROG_C_WEAK_SYMBOLS],[
 pragma_extra_message=""
@@ -273,7 +273,7 @@ int Foo(int a) { return a; }
 # only within a single object file!  This tests that case.
 # Note that there is an extern int PFoo declaration before the
 # pragma.  Some compilers require this in order to make the weak symbol
-# externally visible.  
+# externally visible.
 if test "$has_pragma_weak" = yes ; then
     PAC_COMPLINK_IFELSE([
         AC_LANG_SOURCE([
@@ -315,7 +315,7 @@ return Foo(0);}
     ])
 fi
 dnl
-if test -z "$pac_cv_prog_c_weak_symbols" ; then 
+if test -z "$pac_cv_prog_c_weak_symbols" ; then
     AC_TRY_LINK([
 extern int PFoo(int);
 #pragma _HP_SECONDARY_DEF Foo  PFoo
@@ -404,14 +404,14 @@ correctly set error code when a fatal error occurs])
 fi
 ])
 
-dnl/*D 
+dnl/*D
 dnl PAC_PROG_C_MULTIPLE_WEAK_SYMBOLS - Test whether C and the
 dnl linker allow multiple weak symbols.
 dnl
 dnl Synopsis
 dnl PAC_PROG_C_MULTIPLE_WEAK_SYMBOLS(action-if-true,action-if-false)
 dnl
-dnl 
+dnl
 dnl D*/
 AC_DEFUN([PAC_PROG_C_MULTIPLE_WEAK_SYMBOLS],[
 AC_CACHE_CHECK([for multiple weak symbol support],
@@ -451,10 +451,10 @@ dnl pac_cc_strict_flags contains the strict flags.
 dnl
 dnl -std=c89 is used to select the C89 version of the ANSI/ISO C standard.
 dnl As of this writing, many C compilers still accepted only this version,
-dnl not the later C99 version. When all compilers accept C99, this 
+dnl not the later C99 version. When all compilers accept C99, this
 dnl should be changed to the appropriate standard level.  Note that we've
-dnl had trouble with gcc 2.95.3 accepting -std=c89 but then trying to 
-dnl compile program with a invalid set of options 
+dnl had trouble with gcc 2.95.3 accepting -std=c89 but then trying to
+dnl compile program with a invalid set of options
 dnl (-D __STRICT_ANSI__-trigraphs)
 AC_DEFUN([PAC_CC_STRICT],[
 export enable_strict_done
@@ -469,14 +469,14 @@ if test "$enable_strict_done" != "yes" ; then
     #       warning at 256k.
     #
     # These were added to reduce warnings:
-    #   -Wno-missing-field-initializers  -- We want to allow a struct to be 
-    #       initialized to zero using "struct x y = {0};" and not require 
+    #   -Wno-missing-field-initializers  -- We want to allow a struct to be
+    #       initialized to zero using "struct x y = {0};" and not require
     #       each field to be initialized individually.
     #   -Wno-unused-parameter -- For portability, some parameters go unused
-    #	    when we have different implementations of functions for 
+    #	    when we have different implementations of functions for
     #	    different platforms
-    #   -Wno-unused-label -- We add fn_exit: and fn_fail: on all functions, 
-    #	    but fn_fail may not be used if the function doesn't return an 
+    #   -Wno-unused-label -- We add fn_exit: and fn_fail: on all functions,
+    #	    but fn_fail may not be used if the function doesn't return an
     #	    error.
     #   -Wno-sign-compare -- read() and write() return bytes read/written
     #       as a signed value, but we often compare this to size_t (or
@@ -484,10 +484,10 @@ if test "$enable_strict_done" != "yes" ; then
     #   -Wno-format-zero-length -- this warning is irritating and useless, since
     #                              a zero-length format string is very well defined
     # These were removed to reduce warnings:
-    #   -Wcast-qual -- Sometimes we need to cast "volatile char*" to 
+    #   -Wcast-qual -- Sometimes we need to cast "volatile char*" to
     #	    "char*", e.g., for memcpy.
     #   -Wpadded -- We catch struct padding with asserts when we need to
-    #   -Wredundant-decls -- Having redundant declarations is benign and the 
+    #   -Wredundant-decls -- Having redundant declarations is benign and the
     #	    code already has some.
     #   -Waggregate-return -- This seems to be a performance-related warning
     #       aggregate return values are legal in ANSI C, but they may be returned
@@ -498,7 +498,7 @@ if test "$enable_strict_done" != "yes" ; then
     #   -Wdeclaration-after-statement -- This is a C89
     #       requirement. When compiling with C99, this should be
     #       disabled.
-    #   -Wfloat-equal -- There are places in hwloc that set a float var to 0, then 
+    #   -Wfloat-equal -- There are places in hwloc that set a float var to 0, then
     #       compare it to 0 later to see if it was updated.  Also when using strtod()
     #       one needs to compare the return value with 0 to see whether a conversion
     #       was performed.
@@ -519,11 +519,11 @@ if test "$enable_strict_done" != "yes" ; then
     # However, since Intel compiler currently does not include -Wtype-limits
     # in -Wextra, -Wtype-limits was added to handle warnings with the Intel
     # compiler.
-    #   -Wno-type-limits -- There are places where we compare an unsigned to 
-    #	    a constant that happens to be zero e.g., if x is unsigned and 
+    #   -Wno-type-limits -- There are places where we compare an unsigned to
+    #	    a constant that happens to be zero e.g., if x is unsigned and
     #	    MIN_VAL is zero, we'd like to do "MPIU_Assert(x >= MIN_VAL);".
-    #       Note this option is not supported by gcc 4.2.  This needs to be added 
-    #	    after most other warning flags, so that we catch a gcc bug on 32-bit 
+    #       Note this option is not supported by gcc 4.2.  This needs to be added
+    #	    after most other warning flags, so that we catch a gcc bug on 32-bit
     #	    that doesn't give a warning that this is unsupported, unless another
     #	    warning is triggered, and then if gives an error.
     # the embedded newlines in this string are safe because we evaluate each
@@ -660,11 +660,11 @@ fi
 ])
 
 dnl/*D
-dnl PAC_ARG_STRICT - Add --enable-strict to configure.  
+dnl PAC_ARG_STRICT - Add --enable-strict to configure.
 dnl
 dnl Synopsis:
 dnl PAC_ARG_STRICT
-dnl 
+dnl
 dnl Output effects:
 dnl Adds '--enable-strict' to the command line.
 dnl
@@ -685,7 +685,7 @@ dnl	four
 dnl	eight
 dnl
 dnl In addition, a "Could not determine alignment" and a "error!"
-dnl return is possible.  
+dnl return is possible.
 AC_DEFUN([PAC_C_MAX_INTEGER_ALIGN],[
 AC_CACHE_CHECK([for max C struct integer alignment],
 pac_cv_c_max_integer_align,[
@@ -816,7 +816,7 @@ dnl	eight
 dnl     sixteen
 dnl
 dnl In addition, a "Could not determine alignment" and a "error!"
-dnl return is possible.  
+dnl return is possible.
 AC_DEFUN([PAC_C_MAX_FP_ALIGN],[
 AC_CACHE_CHECK([for max C struct floating point alignment],
 pac_cv_c_max_fp_align,[
@@ -930,7 +930,7 @@ dnl	four
 dnl	eight
 dnl
 dnl In addition, a "Could not determine alignment" and a "error!"
-dnl return is possible.  
+dnl return is possible.
 AC_DEFUN([PAC_C_MAX_DOUBLE_FP_ALIGN],[
 AC_CACHE_CHECK([for max C struct alignment of structs with doubles],
 pac_cv_c_max_double_fp_align,[
@@ -1232,7 +1232,7 @@ dnl Synopsis:
 dnl PAC_FUNC_NEEDS_DECL(headerfiles,funcname)
 dnl
 dnl Output Effect:
-dnl Sets 'NEEDS_<funcname>_DECL' if 'funcname' is not declared by the 
+dnl Sets 'NEEDS_<funcname>_DECL' if 'funcname' is not declared by the
 dnl headerfiles.
 dnl
 dnl Approach:
@@ -1269,8 +1269,8 @@ dnl #endif
 dnl If *not*, define __attribute__(a) as null
 dnl
 dnl We start by requiring Gcc.  Some other compilers accept __attribute__
-dnl but generate warning messages, or have different interpretations 
-dnl (which seems to make __attribute__ just as bad as #pragma) 
+dnl but generate warning messages, or have different interpretations
+dnl (which seems to make __attribute__ just as bad as #pragma)
 dnl For example, the Intel icc compiler accepts __attribute__ and
 dnl __attribute__((pure)) but generates warnings for __attribute__((format...))
 dnl
@@ -1308,7 +1308,7 @@ AC_COMPILE_IFELSE([
 ],[
     if ${AR-ar} ${AR_FLAGS-cr} libconftest.a conftest.$OBJEXT >/dev/null 2>&1 ; then
         if ${RANLIB-:} libconftest.a >/dev/null 2>&1 ; then
-            # Anything less than sleep 10, and Mac OS/X (Darwin) 
+            # Anything less than sleep 10, and Mac OS/X (Darwin)
             # will claim that install works because ranlib won't complain
             sleep 10
             libinstall="$INSTALL_DATA"
@@ -1325,7 +1325,7 @@ int main(int argc, char **argv){ return foo(0); }
                     # Success!  Install works
                     ac_cv_prog_install_breaks_libs=no
                 ],[
-                    # Failure!  Does install -p work?        
+                    # Failure!  Does install -p work?
                     rm -f libconftest1.a
                     if ${libinstall} -p libconftest.a libconftest1.a >/dev/null 2>&1 ; then
                         AC_LINK_IFELSE([],[
@@ -1366,7 +1366,7 @@ AC_SUBST(RANLIB_AFTER_INSTALL)
 # These tests check not only that the compiler defines some symbol, such
 # as __FUNCTION__, but that the symbol correctly names the function.
 #
-# Defines 
+# Defines
 #   HAVE__FUNC__      (if __func__ defined)
 #   HAVE_CAP__FUNC__  (if __FUNC__ defined)
 #   HAVE__FUNCTION__  (if __FUNCTION__ defined)

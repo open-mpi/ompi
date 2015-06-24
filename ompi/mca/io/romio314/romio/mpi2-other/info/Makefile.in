@@ -51,7 +51,7 @@ all: $(LIBNAME)
 
 profile: $(MPIO_REAL_POBJECTS)
 	$(AR) $(LIBNAME) $(MPIO_REAL_POBJECTS)
-	$(RANLIB) $(LIBNAME) 
+	$(RANLIB) $(LIBNAME)
 	@if [ "@ENABLE_SHLIB@" != "none" ] ; then \
 	    $(MAKE) P$(SHLIBNAME).la ;\
 	fi
@@ -59,10 +59,10 @@ profile: $(MPIO_REAL_POBJECTS)
 
 $(LIBNAME): $(MPIO_OBJECTS)
 	$(AR) $(LIBNAME) $(MPIO_OBJECTS)
-	$(RANLIB) $(LIBNAME) 
+	$(RANLIB) $(LIBNAME)
 
 MPIO_LOOBJECTS = $(MPIO_OBJECTS:.o=.lo)
-$(SHLIBNAME).la: $(MPIO_LOOBJECTS) 
+$(SHLIBNAME).la: $(MPIO_LOOBJECTS)
 	$(AR) $(SHLIBNAME).la $(MPIO_LOOBJECTS)
 
 # --------------------------------------------------------------------------
@@ -76,7 +76,7 @@ P$(SHLIBNAME).la: $(MPIO_TMP_LOPOBJECTS)
 
 clean:
 	@rm -f *.o *.lo *.gcno *.gcda *.bb *.bbg
-	@rm -f ${srcdir}/*.gcno ${srcdir}/*.gcda 
+	@rm -f ${srcdir}/*.gcno ${srcdir}/*.gcda
 	@rm -f ${srcdir}/*.bb ${srcdir}/*.bbg
 
 

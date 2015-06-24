@@ -4,9 +4,9 @@
  *                         reserved.
  * Copyright (c) 2012      Inria.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -58,7 +58,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_CREATE_HINDEXED_BLOCK,
 #endif
 
 void ompi_type_create_hindexed_block_f(MPI_Fint *count, MPI_Fint *blocklength,
-				     MPI_Aint *array_of_displacements, 
+				     MPI_Aint *array_of_displacements,
 				     MPI_Fint *oldtype, MPI_Fint *newtype,
 				     MPI_Fint *ierr)
 {
@@ -71,7 +71,7 @@ void ompi_type_create_hindexed_block_f(MPI_Fint *count, MPI_Fint *blocklength,
 			array_of_displacements,
                         c_old, &c_new);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
-    
+
     if (MPI_SUCCESS == c_ierr) {
         *newtype = MPI_Type_c2f(c_new);
     }

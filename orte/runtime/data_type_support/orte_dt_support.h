@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -13,9 +13,9 @@
  *                         All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 /** @file:
@@ -63,8 +63,8 @@ int orte_dt_compare_job_state(orte_job_state_t *value1,
                                     orte_job_state_t *value2,
                                     orte_job_state_t type);
 int orte_dt_compare_map(orte_job_map_t *value1, orte_job_map_t *value2, opal_data_type_t type);
-int orte_dt_compare_tags(orte_rml_tag_t *value1, 
-                         orte_rml_tag_t *value2, 
+int orte_dt_compare_tags(orte_rml_tag_t *value1,
+                         orte_rml_tag_t *value2,
                          opal_data_type_t type);
 int orte_dt_compare_daemon_cmd(orte_daemon_cmd_flag_t *value1, orte_daemon_cmd_flag_t *value2, opal_data_type_t type);
 int orte_dt_compare_iof_tag(orte_iof_tag_t *value1, orte_iof_tag_t *value2, opal_data_type_t type);
@@ -82,8 +82,8 @@ int orte_dt_copy_job_state(orte_job_state_t **dest, orte_job_state_t *src, opal_
 int orte_dt_copy_node_state(orte_node_state_t **dest, orte_node_state_t *src, opal_data_type_t type);
 int orte_dt_copy_exit_code(orte_exit_code_t **dest, orte_exit_code_t *src, opal_data_type_t type);
 int orte_dt_copy_map(orte_job_map_t **dest, orte_job_map_t *src, opal_data_type_t type);
-int orte_dt_copy_tag(orte_rml_tag_t **dest, 
-                           orte_rml_tag_t *src, 
+int orte_dt_copy_tag(orte_rml_tag_t **dest,
+                           orte_rml_tag_t *src,
                            opal_data_type_t type);
 int orte_dt_copy_daemon_cmd(orte_daemon_cmd_flag_t **dest, orte_daemon_cmd_flag_t *src, opal_data_type_t type);
 int orte_dt_copy_iof_tag(orte_iof_tag_t **dest, orte_iof_tag_t *src, opal_data_type_t type);
@@ -111,9 +111,9 @@ int orte_dt_pack_job_state(opal_buffer_t *buffer, const void *src,
                                  int32_t num_vals, opal_data_type_t type);
 int orte_dt_pack_map(opal_buffer_t *buffer, const void *src,
                              int32_t num_vals, opal_data_type_t type);
-int orte_dt_pack_tag(opal_buffer_t *buffer, 
+int orte_dt_pack_tag(opal_buffer_t *buffer,
                            const void *src,
-                           int32_t num_vals, 
+                           int32_t num_vals,
                            opal_data_type_t type);
 int orte_dt_pack_daemon_cmd(opal_buffer_t *buffer, const void *src,
                           int32_t num_vals, opal_data_type_t type);

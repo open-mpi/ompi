@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -14,9 +14,9 @@
  *                         All rights reserved.
  * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -64,7 +64,7 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
      * ALLOWED TO CALL RMAPS INDEPENDENTLY. ONLY THE PLM CAN
      * DO SO, AND ALL PLM COMMANDS ARE RELAYED TO HNP
      */
-    
+
     opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                         "mca:rmaps: mapping job %s",
                         ORTE_JOBID_PRINT(jdata->jobid));
@@ -76,7 +76,7 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
      * NULL MAP FIELD
      * LONE EXCEPTION - WE COPY DISPLAY MAP ACROSS IF THEY
      * DIDN'T SET IT
-     */        
+     */
     if (NULL == jdata->map) {
         opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                             "mca:rmaps: creating new map for job %s",
@@ -298,7 +298,7 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
             }
         }
     }
-    
+
     /* if we are not going to launch, then we need to set any
      * undefined topologies to match our own so the mapper
      * can operate
@@ -379,7 +379,7 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
         OBJ_RELEASE(caddy);
         return;
     }
-    
+
 #if OPAL_HAVE_HWLOC
     /* compute and save bindings */
     if (ORTE_SUCCESS != (rc = orte_rmaps_base_compute_bindings(jdata))) {
@@ -389,7 +389,7 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
         return;
     }
 #endif
-    
+
     /* set the offset so shared memory components can potentially
      * connect to any spawned jobs
      */
@@ -466,7 +466,7 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
                 opal_output(orte_clean_output, "\t</host>");
                 fflush(stderr);
             }
-            
+
 #if OPAL_HAVE_HWLOC
             {
                 opal_hwloc_locality_t locality;

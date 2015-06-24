@@ -10,11 +10,11 @@
 .
 .SH OPTIONS
 .TP
---showme 
+--showme
 This option comes in several different variants (see below).  None of
 the variants invokes the underlying compiler; they all provide
 information on how the underlying compiler would have been invoked had
-.I --showme 
+.I --showme
 not been used.
 The basic
 .I --showme
@@ -132,7 +132,7 @@ underlying Fortran compiler,
 .IR -qfixed
 may be necessary to compile fixed-format Fortran source files.
 .
-.PP 
+.PP
 Finally, note that
 .I mpifort
 will be inoperative and will return an error on use if Fortran support
@@ -210,11 +210,11 @@ line.
 .
 .
 .SH ENVIRONMENT VARIABLES
-.PP 
+.PP
 By default, the wrappers use the compilers that were selected when
 #PROJECT# was configured.  These compilers were either found
 automatically by Open MPI's "configure" script, or were selected by
-the user in the CC, CXX, F77, and/or FC environment variables 
+the user in the CC, CXX, F77, and/or FC environment variables
 before "configure" was invoked.  Additionally, other arguments
 specific to the compiler may have been selected by configure.
 .

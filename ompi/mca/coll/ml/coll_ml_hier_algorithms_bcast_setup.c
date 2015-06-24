@@ -104,7 +104,7 @@ int mca_coll_ml_setup_scratch_vals(mca_coll_ml_compound_functions_t *func_list,
                     constant_group_data.bcol_module) {
                 func_list[j_hier].constant_group_data.
                     index_of_this_type_in_collective = cnt;
-                
+
                 cnt++;
             }
         }
@@ -367,7 +367,7 @@ static int mca_coll_ml_build_bcast_sequential_schedule_no_attributes(
     /* Set dependencies equal to number of hierarchies */
     schedule->n_fns = n_hiers;
     schedule->topo_info = topo_info;
-    schedule->progress_type = 0; /* Pasha: Not really defined, puting zero 
+    schedule->progress_type = 0; /* Pasha: Not really defined, puting zero
                                   * Josh: would be nice to define it as "sequential"
                                   * or "concurrent"
                                   */
@@ -408,7 +408,7 @@ static int mca_coll_ml_build_bcast_sequential_schedule_no_attributes(
         /* initialize the coll_fn_started flag to false */
         /*comp_fn->coll_fn_started = false;*/
         /* debug print */
-        
+
         /*
         if(comp_fn->coll_fn_started){
             fprintf(stderr,"this statement is true\n");
@@ -416,7 +416,7 @@ static int mca_coll_ml_build_bcast_sequential_schedule_no_attributes(
             fprintf(stderr,"done setting to false \n");
         }
         */
-       
+
         comp_fn->task_comp_fn = mca_coll_ml_task_comp_dynamic_root_small_message;
         /* assert(NULL != comp_fn->bcol_function); */
         /* Constants */
@@ -460,7 +460,7 @@ static int mca_coll_ml_build_bcast_sequential_schedule_no_attributes(
         comp_fns_temp = (struct mca_coll_ml_compound_functions_t *)
             calloc(n_hiers, sizeof(struct mca_coll_ml_compound_functions_t));
         /* else we need to build the schedule */
-       
+
         for(j_hier = 0; j_hier < n_hiers; j_hier++) {
             /* put the i_hier-th function first in the list */
             if( 0 == j_hier ) {
@@ -477,9 +477,9 @@ static int mca_coll_ml_build_bcast_sequential_schedule_no_attributes(
     }
 
 
-#if 1 
-    /* I'm going to just loop over each schedule and 
-     * set up the scratch indices, scratch numbers 
+#if 1
+    /* I'm going to just loop over each schedule and
+     * set up the scratch indices, scratch numbers
      * and other constant data
      */
     for( i_hier = 1; i_hier < n_hiers; i_hier++) {
@@ -492,7 +492,7 @@ static int mca_coll_ml_build_bcast_sequential_schedule_no_attributes(
         }
 
     }
-#endif  
+#endif
 
     MCA_COLL_ML_SET_SCHEDULE_ORDER_INFO(schedule);
 

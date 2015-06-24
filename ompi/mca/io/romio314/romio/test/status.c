@@ -1,5 +1,5 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/*  
+/*
  *  (C) 2001 by Argonne National Laboratory.
  *      See COPYRIGHT in top-level directory.
  */
@@ -10,7 +10,7 @@
 
 #define SIZE (65536)
 
-/* Checks if the status objects is filled correctly by I/O functions */ 
+/* Checks if the status objects is filled correctly by I/O functions */
 
 int main(int argc, char **argv)
 {
@@ -23,7 +23,7 @@ int main(int argc, char **argv)
     MPI_Init(&argc,&argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-/* process 0 takes the file name as a command-line argument and 
+/* process 0 takes the file name as a command-line argument and
    broadcasts it to other processes */
     if (!rank) {
 	i = 1;
@@ -47,7 +47,7 @@ int main(int argc, char **argv)
 	filename = (char *) malloc(len+10);
 	MPI_Bcast(filename, len+10, MPI_CHAR, 0, MPI_COMM_WORLD);
     }
-    
+
     buf = (int *) malloc(SIZE);
     nints = SIZE/sizeof(int);
 
@@ -89,5 +89,5 @@ int main(int argc, char **argv)
     free(tmp);
 
     MPI_Finalize();
-    return 0; 
+    return 0;
 }

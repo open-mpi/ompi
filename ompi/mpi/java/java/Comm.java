@@ -5,14 +5,14 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 /*
@@ -45,12 +45,12 @@
 
 /*
  * IMPLEMENTATION DETAILS
- * 
+ *
  * All methods with buffers that can be direct or non direct have
  * a companion argument 'db' which is true if the buffer is direct.
  * For example, if the buffer argument is recvBuf, the companion
  * argument will be 'rdb', meaning if the receive buffer is direct.
- * 
+ *
  * Checking if a buffer is direct is faster in Java than C.
  */
 package mpi;
@@ -138,7 +138,7 @@ protected final native long dup(long comm) throws MPIException;
  * <p>The new communicator can't be used before the operation completes.
  * The request object must be obtained calling {@link #getRequest}.
  * @return copy of this communicator
- * @throws MPIException 
+ * @throws MPIException
  */
 public Comm iDup() throws MPIException
 {
@@ -234,7 +234,7 @@ public final boolean isNull()
 /**
  * Java binding of {@code MPI_COMM_SET_INFO}.
  * @param info info object
- * @throws MPIException 
+ * @throws MPIException
  */
 public final void setInfo(Info info) throws MPIException
 {
@@ -247,7 +247,7 @@ private native void setInfo(long fh, long info) throws MPIException;
 /**
  * Java binding of {@code MPI_COMM_GET_INFO}.
  * @return new info object
- * @throws MPIException 
+ * @throws MPIException
  */
 public final Info getInfo() throws MPIException
 {
@@ -259,7 +259,7 @@ private native long getInfo(long fh) throws MPIException;
 
 /**
  * Java binding of the MPI operation {@code MPI_COMM_DISCONNECT}.
- * @throws MPIException 
+ * @throws MPIException
  */
 public final void disconnect() throws MPIException
 {
@@ -428,7 +428,7 @@ public final Status sendRecv(
 
     int sendoff = 0,
         recvoff = 0;
-    
+
     boolean sdb = false,
             rdb = false;
 
@@ -1393,7 +1393,7 @@ public final void gatherv(Object sendbuf, int sendcount, Datatype sendtype,
 
     int sendoff = 0,
         recvoff = 0;
-    
+
     boolean sdb = false,
             rdb = false;
 
@@ -2310,7 +2310,7 @@ private native long iAllToAllv(long comm,
  * @param recvbuf   receive buffer
  * @param recvcount number of items to receive
  * @param recvtype  datatype of each item in receive buffer
- * @throws MPIException 
+ * @throws MPIException
  */
 public final void neighborAllGather(
         Object sendbuf, int sendcount, Datatype sendtype,
@@ -2569,7 +2569,7 @@ public final void neighborAllToAllv(
         recvoff = recvtype.getOffset(recvbuf);
         recvbuf = ((Buffer)recvbuf).array();
     }
-    
+
     neighborAllToAllv(handle,
             sendbuf, sdb, sendoff, sendcount, sdispls,
             sendtype.handle, sendtype.baseType,

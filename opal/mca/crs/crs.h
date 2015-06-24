@@ -6,7 +6,7 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -16,25 +16,25 @@
  *                         reserved.
  *
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 /**
  * @file
  *
  * Checkpoint and Restart Service (CRS) Interface
- * 
+ *
  * General Description:
  *
  * The OPAL Checkpoint and Restart Service (CRS) has been created to create an
- * abstract notion of a single process checkpointer for upper levels to 
+ * abstract notion of a single process checkpointer for upper levels to
  * incorporate checkpoint/restart calls genericly into their code. This keeps
- * the upper levels from becoming too tied to a specfic checkpoint and restart 
+ * the upper levels from becoming too tied to a specfic checkpoint and restart
  * implementation.
  *
- * This interface will change in the future to allow for some additional 
+ * This interface will change in the future to allow for some additional
  * specialized functionality such as memory inclusion/exclusion, explicit
  * restarting while running, and others.
  *
@@ -123,8 +123,8 @@ struct opal_crs_base_snapshot_1_0_0_t {
     /** Absolute path the the snapshot directory */
     char * snapshot_directory;
 
-    /** Cold Start: 
-     * If we are restarting cold, then we need to recreate this structure 
+    /** Cold Start:
+     * If we are restarting cold, then we need to recreate this structure
      *  opal_restart would set this, and let the component do the heavy lifting
      *  of recreating the structure, sicne it doesn't know exactly how to.
      */
@@ -157,14 +157,14 @@ typedef int (*opal_crs_base_module_finalize_fn_t)
  *   pid    = PID of the process to checkpoint, or 0 if checkpointing self.
  *   fname  = the filename where the checkpoint has been written.
  *   state = The state at which the checkpoint is exiting
- *     - OPAL_CRS_CONTINUE 
+ *     - OPAL_CRS_CONTINUE
  *       Continuing after a checkpoint has been taken
  *     - OPAL_CRS_RESTART
  *       Restarting from a checkpoint
  *     - OPAL_CRS_ERROR
  *       Checkpoint was not successful.
  *
- * The 'fname' string is owned by the caller: if appropriate, it must be eventually 
+ * The 'fname' string is owned by the caller: if appropriate, it must be eventually
  * freed by the caller.
  */
 typedef int (*opal_crs_base_module_checkpoint_fn_t)
@@ -181,10 +181,10 @@ typedef int (*opal_crs_base_module_checkpoint_fn_t)
  *  fname = Checkpoint filename
  *  spawn_child  = true if the restarted process should be forked as a new process,
  *                      in which case 'child_pid' will be returned.
- *                 false if the restarted process should overwrite the current 
+ *                 false if the restarted process should overwrite the current
  *                       process space.
  *  child_pid = PID of the child that was started, if applicable
- * 
+ *
  */
 typedef int (*opal_crs_base_module_restart_fn_t)
      (opal_crs_base_snapshot_t *snapshot,
@@ -230,8 +230,8 @@ typedef int (*opal_crs_base_module_enable_checkpoint_fn_t)
 typedef int (*opal_crs_base_module_prelaunch_fn_t)
          (int32_t rank,
           char *base_snapshot_dir,
-          char **app, 
-          char **cwd, 
+          char **app,
+          char **cwd,
           char ***argv,
           char ***env);
 

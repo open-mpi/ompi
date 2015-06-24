@@ -100,7 +100,7 @@ OBJ_CLASS_DECLARATION(orte_notifier_request_t);
 
 /* initialize the selected module */
 typedef int (*orte_notifier_base_module_init_fn_t)(void);
-    
+
 /* finalize the selected module */
 typedef void (*orte_notifier_base_module_finalize_fn_t)(void);
 

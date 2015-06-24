@@ -40,24 +40,24 @@ Buffer size, in bytes (integer).
 .ft R
 .TP 1i
 IERROR
-Fortran only: Error status (integer). 
+Fortran only: Error status (integer).
 
 .SH DESCRIPTION
 .ft R
-Detach the buffer currently associated with MPI. The call returns the address and the size of the detached buffer. This operation will block until all messages currently in the buffer have been transmitted. Upon return of this function, the user may reuse or deallocate the space taken by the buffer. 
+Detach the buffer currently associated with MPI. The call returns the address and the size of the detached buffer. This operation will block until all messages currently in the buffer have been transmitted. Upon return of this function, the user may reuse or deallocate the space taken by the buffer.
 .sp
 \fBExample:\fP Calls to attach and detach buffers.
 .sp
 .nf
-    #define BUFFSIZE 10000 
-    int size 
-    char *buff; 
-    MPI_Buffer_attach( malloc(BUFFSIZE), BUFFSIZE); 
-    /* a buffer of 10000 bytes can now be used by MPI_Bsend */ 
-    MPI_Buffer_detach( &buff, &size); 
-    /* Buffer size reduced to zero */ 
-    MPI_Buffer_attach( buff, size); 
-    /* Buffer of 10000 bytes available again */ 
+    #define BUFFSIZE 10000
+    int size
+    char *buff;
+    MPI_Buffer_attach( malloc(BUFFSIZE), BUFFSIZE);
+    /* a buffer of 10000 bytes can now be used by MPI_Bsend */
+    MPI_Buffer_detach( &buff, &size);
+    /* Buffer size reduced to zero */
+    MPI_Buffer_attach( buff, size);
+    /* Buffer of 10000 bytes available again */
 .fi
 
 .SH NOTES
@@ -89,7 +89,7 @@ MPI_Buffer_detach both have a first argument of type void*, these arguments are 
 Almost all MPI routines return an error value; C routines as the value of the function and Fortran routines in the last argument. C++ functions do not return errors. If the default error handler is set to MPI::ERRORS_THROW_EXCEPTIONS, then on error the C++ exception mechanism will be used to throw an MPI::Exception object.
 .sp
 Before the error value is returned, the current MPI error handler is
-called. By default, this error handler aborts the MPI job, except for I/O function errors. The error handler may be changed with MPI_Comm_set_errhandler; the predefined error handler MPI_ERRORS_RETURN may be used to cause error values to be returned. Note that MPI does not guarantee that an MPI program can continue past an error.  
+called. By default, this error handler aborts the MPI job, except for I/O function errors. The error handler may be changed with MPI_Comm_set_errhandler; the predefined error handler MPI_ERRORS_RETURN may be used to cause error values to be returned. Note that MPI does not guarantee that an MPI program can continue past an error.
 
 .SH SEE ALSO
 .ft R

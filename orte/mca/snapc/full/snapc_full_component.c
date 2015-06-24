@@ -4,16 +4,16 @@
  *                         All rights reserved.
  * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
  *                         All rights reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -27,7 +27,7 @@
 /*
  * Public string for version number
  */
-const char *orte_snapc_full_component_version_string = 
+const char *orte_snapc_full_component_version_string =
 "ORTE SNAPC full MCA component version " ORTE_VERSION;
 
 /*
@@ -49,7 +49,7 @@ int orte_snapc_full_max_wait_time = 20;
 orte_snapc_full_component_t mca_snapc_full_component = {
     /* First do the base component stuff */
     {
-        /* Handle the general mca_component_t struct containing 
+        /* Handle the general mca_component_t struct containing
          *  meta information about the component itfull
          */
         .base_version = {
@@ -58,7 +58,7 @@ orte_snapc_full_component_t mca_snapc_full_component = {
             .mca_component_name = "full",
             MCA_BASE_MAKE_VERSION(component, ORTE_MAJOR_VERSION, ORTE_MINOR_VERSION,
                                   ORTE_RELEASE_VERSION),
-            
+
             /* Component open and close functions */
             .mca_open_component = snapc_full_open,
             .mca_close_component = snapc_full_close,
@@ -135,7 +135,7 @@ static int snapc_full_register (void)
     return ORTE_SUCCESS;
 }
 
-static int snapc_full_open(void) 
+static int snapc_full_open(void)
 {
     /* If there is a custom verbose level for this component than use it
      * otherwise take our parents level and output channel
@@ -157,16 +157,16 @@ static int snapc_full_open(void)
     opal_output_verbose(10, mca_snapc_full_component.super.output_handle,
                         "snapc:full: open()");
     opal_output_verbose(20, mca_snapc_full_component.super.output_handle,
-                        "snapc:full: open: priority    = %d", 
+                        "snapc:full: open: priority    = %d",
                         mca_snapc_full_component.super.priority);
     opal_output_verbose(20, mca_snapc_full_component.super.output_handle,
-                        "snapc:full: open: verbosity   = %d", 
+                        "snapc:full: open: verbosity   = %d",
                         mca_snapc_full_component.super.verbose);
     opal_output_verbose(20, mca_snapc_full_component.super.output_handle,
-                        "snapc:full: open: max_wait_time  = %d", 
+                        "snapc:full: open: max_wait_time  = %d",
                         orte_snapc_full_max_wait_time);
     opal_output_verbose(20, mca_snapc_full_component.super.output_handle,
-                        "snapc:full: open: progress_meter = %d", 
+                        "snapc:full: open: progress_meter = %d",
                         orte_snapc_full_progress_meter);
 
     return ORTE_SUCCESS;

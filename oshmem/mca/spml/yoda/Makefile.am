@@ -3,9 +3,9 @@
 #                         All rights reserved.
 #
 # $COPYRIGHT$
-# 
+#
 # Additional copyrights may follow
-# 
+#
 # $HEADER$
 #
 
@@ -25,11 +25,11 @@ yoda_sources  = \
 	spml_yoda_putreq.c \
 	spml_yoda_putreq.h \
 	spml_yoda_getreq.c \
-	spml_yoda_getreq.h 
- 
+	spml_yoda_getreq.h
+
 if MCA_BUILD_ompi_pml_ob1_DSO
 component_noinst =
-component_install = mca_spml_yoda.la 
+component_install = mca_spml_yoda.la
 else
 component_noinst = libmca_spml_yoda.la
 component_install =

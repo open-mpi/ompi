@@ -1,5 +1,5 @@
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
-/*  
+/*
  *  (C) 2001 by Argonne National Laboratory.
  *      See COPYRIGHT in top-level directory.
  */
@@ -8,12 +8,12 @@
 #include <string.h>
 #include <stdio.h>
 
-/* writes a file of size 4 Gbytes and reads it back. 
+/* writes a file of size 4 Gbytes and reads it back.
    should be run on one process only*/
 /* The file name is taken as a command-line argument. */
-/* Can be used only on file systems on which ROMIO supports large files, 
+/* Can be used only on file systems on which ROMIO supports large files,
    i.e., PIOFS, XFS, SFS, and HFS. */
-   
+
 #define SIZE 1048576*4     /* no. of long longs in each write/read */
 #define NTIMES 128         /* no. of writes/reads */
 
@@ -63,7 +63,7 @@ int main(int argc, char **argv)
     for (i=0; i<NTIMES; i++) {
 	for (j=0; j<SIZE; j++)
 	    buf[j] = i*SIZE + j;
-	
+
 	err = MPI_File_write(fh, buf, SIZE, MPI_DOUBLE, &status);
         /* MPI_DOUBLE because not all MPI implementations define
            MPI_LONG_LONG_INT, even though the C compiler supports long long. */
@@ -89,9 +89,9 @@ int main(int argc, char **argv)
 	    fprintf(stderr, "MPI_File_write returned error\n");
 	    MPI_Abort(MPI_COMM_WORLD, 1);
 	}
-	for (j=0; j<SIZE; j++) 
+	for (j=0; j<SIZE; j++)
 	    if (buf[j] != i*SIZE + j) {
-		fprintf(stderr, "error: buf %d is %@LL@, should be %@LL@ \n", j, buf[j], 
+		fprintf(stderr, "error: buf %d is %@LL@, should be %@LL@ \n", j, buf[j],
                                  i*SIZE + j);
 		flag = 1;
 	    }
@@ -102,6 +102,6 @@ int main(int argc, char **argv)
 
     free(buf);
     free(filename);
-    MPI_Finalize(); 
+    MPI_Finalize();
     return 0;
 }

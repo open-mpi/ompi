@@ -3,9 +3,9 @@
  *                         All rights reserved.
  * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -27,14 +27,14 @@ SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
         shpclmove_,
         shpclmove__,
         shpclmove_f,
-        (FORTRAN_POINTER_T *addr, MPI_Fint *length, MPI_Fint *status, MPI_Fint *abort), 
+        (FORTRAN_POINTER_T *addr, MPI_Fint *length, MPI_Fint *status, MPI_Fint *abort),
         (addr,length,status,abort) )
 
 
 void shpclmove_f(FORTRAN_POINTER_T *addr, MPI_Fint *length, MPI_Fint *status, MPI_Fint *abort)
 {
     FORTRAN_POINTER_T prev_addr = *addr;
-   
+
     *status = 0;
     if (*length <= 0)
     {
@@ -58,7 +58,7 @@ void shpclmove_f(FORTRAN_POINTER_T *addr, MPI_Fint *length, MPI_Fint *status, MP
 Exit:
     if (*status < 0)
     {
-        if (*abort) 
+        if (*abort)
         {
             oshmem_shmem_abort(-1);
         }

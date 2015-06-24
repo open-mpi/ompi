@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2013 Los Alamos National Security, LLC. 
+ * Copyright (c) 2006-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
@@ -273,7 +273,7 @@ static void pmix_usock_try_connect(int fd, short args, void *cbdata)
     opal_output_verbose(2, opal_pmix_base_framework.framework_output,
                         "%s sock_peer_try_connect: Connection across to server succeeded",
                         OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
- 
+
     /* setup event callbacks */
     opal_event_set(mca_pmix_native_component.evbase,
                    &mca_pmix_native_component.recv_event,
@@ -314,7 +314,7 @@ static void pmix_usock_try_connect(int fd, short args, void *cbdata)
     if (OPAL_SUCCESS == (rc = usock_send_connect_ack())) {
         mca_pmix_native_component.state = PMIX_USOCK_CONNECT_ACK;
     } else {
-        opal_output(0, 
+        opal_output(0,
                     "%s usock_peer_try_connect: "
                     "usock_send_connect_ack to server failed: %s (%d)",
                     OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
@@ -333,7 +333,7 @@ int usock_send_connect_ack(void)
     size_t sdsize;
     char *cred;
     size_t credsize;
-    
+
     opal_output_verbose(2, opal_pmix_base_framework.framework_output,
                         "%s SEND CONNECT ACK",
                         OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
@@ -428,12 +428,12 @@ void pmix_usock_dump(const char* msg)
                     strerror(opal_socket_errno),
                     opal_socket_errno);
     }
-                                                                                                            
+
 #if defined(USOCK_NODELAY)
     optlen = sizeof(nodelay);
     if (getsockopt(mca_pmix_native_component.sd, IPPROTO_USOCK, USOCK_NODELAY, (char *)&nodelay, &optlen) < 0) {
         opal_output(0, "%s usock_peer_dump: USOCK_NODELAY option: %s (%d)\n",
-                    OPAL_NAME_PRINT(OPAL_PROC_MY_NAME), 
+                    OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
                     strerror(opal_socket_errno),
                     opal_socket_errno);
     }

@@ -12,12 +12,12 @@
 #include "../pml_v.h"
 #include "vprotocol_example.h"
 
-int mca_vprotocol_example_isend_init(void *addr,                           
-                      size_t count,                         
-                      struct ompi_datatype_t *datatype,              
+int mca_vprotocol_example_isend_init(void *addr,
+                      size_t count,
+                      struct ompi_datatype_t *datatype,
                       int dst,
-                      int tag, 
-                      mca_pml_base_send_mode_t sendmode,                               
+                      int tag,
+                      mca_pml_base_send_mode_t sendmode,
                       struct ompi_communicator_t* comm,
                       struct ompi_request_t **request )
 {
@@ -25,12 +25,12 @@ int mca_vprotocol_example_isend_init(void *addr,
   return mca_pml_v.host_pml.pml_isend_init(addr, count, datatype, dst, tag, sendmode, comm, request);
 }
 
-int mca_vprotocol_example_isend(void *addr, 
+int mca_vprotocol_example_isend(void *addr,
                      size_t count,
                      ompi_datatype_t * datatype,
                      int dst,
                      int tag,
-                     mca_pml_base_send_mode_t sendmode, 
+                     mca_pml_base_send_mode_t sendmode,
                      struct ompi_communicator_t *comm,
                      struct ompi_request_t **request)
 {

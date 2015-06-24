@@ -1,5 +1,5 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/*  
+/*
  *  (C) 2001 by Argonne National Laboratory.
  *      See COPYRIGHT in top-level directory.
  */
@@ -32,7 +32,7 @@ int main(int argc, char **argv)
         MPI_Abort(MPI_COMM_WORLD, 1);
     }
 
-/* process 0 takes the file name as a command-line argument and 
+/* process 0 takes the file name as a command-line argument and
    broadcasts it to other processes */
     if (!mynod) {
 	i = 1;
@@ -99,24 +99,24 @@ int main(int argc, char **argv)
 	if (!mynod) {
 	    if ((i%2) && (buf[i] != -1)) {
 		errs++;
-		fprintf(stderr, "Process %d: buf %d is %d, should be -1\n", 
+		fprintf(stderr, "Process %d: buf %d is %d, should be -1\n",
 			mynod, i, buf[i]);
 	    }
 	    if (!(i%2) && (buf[i] != i)) {
 		errs++;
-		fprintf(stderr, "Process %d: buf %d is %d, should be %d\n", 
+		fprintf(stderr, "Process %d: buf %d is %d, should be %d\n",
 			mynod, i, buf[i], i);
 	    }
 	}
 	else {
 	    if ((i%2) && (buf[i] != i + mynod*SIZE)) {
 		errs++;
-		fprintf(stderr, "Process %d: buf %d is %d, should be %d\n", 
+		fprintf(stderr, "Process %d: buf %d is %d, should be %d\n",
 			mynod, i, buf[i], i + mynod*SIZE);
 	    }
 	    if (!(i%2) && (buf[i] != -1)) {
 		errs++;
-		fprintf(stderr, "Process %d: buf %d is %d, should be -1\n", 
+		fprintf(stderr, "Process %d: buf %d is %d, should be -1\n",
 			mynod, i, buf[i]);
 	    }
 	}
@@ -150,24 +150,24 @@ int main(int argc, char **argv)
 	if (!mynod) {
 	    if ((i%2) && (buf[i] != -1)) {
 		errs++;
-		fprintf(stderr, "Process %d: buf %d is %d, should be -1\n", 
+		fprintf(stderr, "Process %d: buf %d is %d, should be -1\n",
 			mynod, i, buf[i]);
 	    }
 	    if (!(i%2) && (buf[i] != i)) {
 		errs++;
-		fprintf(stderr, "Process %d: buf %d is %d, should be %d\n", 
+		fprintf(stderr, "Process %d: buf %d is %d, should be %d\n",
 			mynod, i, buf[i], i);
 	    }
 	}
 	else {
 	    if ((i%2) && (buf[i] != i + mynod*SIZE)) {
 		errs++;
-		fprintf(stderr, "Process %d: buf %d is %d, should be %d\n", 
+		fprintf(stderr, "Process %d: buf %d is %d, should be %d\n",
 			mynod, i, buf[i], i + mynod*SIZE);
 	    }
 	    if (!(i%2) && (buf[i] != -1)) {
 		errs++;
-		fprintf(stderr, "Process %d: buf %d is %d, should be -1\n", 
+		fprintf(stderr, "Process %d: buf %d is %d, should be -1\n",
 			mynod, i, buf[i]);
 	    }
 	}
@@ -203,14 +203,14 @@ int main(int argc, char **argv)
 	if (!mynod) {
 	    if (buf[i] != i) {
 		errs++;
-		fprintf(stderr, "Process %d: buf %d is %d, should be %d\n", 
+		fprintf(stderr, "Process %d: buf %d is %d, should be %d\n",
 			mynod, i, buf[i], i);
 	    }
 	}
 	else {
 	    if (buf[i] != i + mynod*SIZE) {
 		errs++;
-		fprintf(stderr, "Process %d: buf %d is %d, should be %d\n", 
+		fprintf(stderr, "Process %d: buf %d is %d, should be %d\n",
 			mynod, i, buf[i], i + mynod*SIZE);
 	    }
 	}

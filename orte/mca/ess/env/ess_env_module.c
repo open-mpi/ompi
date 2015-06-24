@@ -5,16 +5,16 @@
  * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013-2014 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  *
  */
@@ -105,7 +105,7 @@ static int rte_init(void)
         error = "orte_ess_base_std_prolog";
         goto error;
     }
-    
+
     /* Start by getting a unique name from the enviro */
     env_set_name();
 
@@ -152,7 +152,7 @@ static int env_set_name(void)
     int rc;
     orte_jobid_t jobid;
     orte_vpid_t vpid;
-    
+
     if (NULL == orte_ess_base_jobid) {
         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
         return ORTE_ERR_NOT_FOUND;
@@ -173,10 +173,10 @@ static int env_set_name(void)
 
     ORTE_PROC_MY_NAME->jobid = jobid;
     ORTE_PROC_MY_NAME->vpid = vpid;
-    
+
     OPAL_OUTPUT_VERBOSE((1, orte_ess_base_framework.framework_output,
                          "ess:env set name to %s", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-    
+
     /* get the non-name common environmental variables */
     if (ORTE_SUCCESS != (rc = orte_ess_env_get())) {
         ORTE_ERROR_LOG(rc);
@@ -371,7 +371,7 @@ static int rte_ft_event(int state)
                                                         ORTE_PROC_MY_NAME))) {
                 exit_status = ret;
             }
-            
+
             opal_output_set_output_file_info(orte_process_info.proc_session_dir,
                                              "output-", NULL, NULL);
         }

@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -20,7 +20,7 @@ void ADIOI_Get_position(ADIO_File fd, ADIO_Offset *offset)
     int filetype_is_contig;
     MPI_Aint filetype_extent;
     ADIO_Offset disp, byte_offset, sum=0, size_in_file, n_filetypes, frd_size;
-    
+
     ADIOI_Datatype_iscontig(fd->filetype, &filetype_is_contig);
     etype_size = fd->etype_size;
 
@@ -42,10 +42,10 @@ void ADIOI_Get_position(ADIO_File fd, ADIO_Offset *offset)
 	    n_filetypes++;
 	    for (i=0; i<flat_file->count; i++) {
 		sum += flat_file->blocklens[i];
-		if (disp + flat_file->indices[i] + 
-	     	    n_filetypes* ADIOI_AINT_CAST_TO_OFFSET filetype_extent + flat_file->blocklens[i] 
+		if (disp + flat_file->indices[i] +
+	     	    n_filetypes* ADIOI_AINT_CAST_TO_OFFSET filetype_extent + flat_file->blocklens[i]
 		    >= byte_offset) {
-		    frd_size = disp + flat_file->indices[i] + 
+		    frd_size = disp + flat_file->indices[i] +
 			n_filetypes * ADIOI_AINT_CAST_TO_OFFSET filetype_extent
 			+ flat_file->blocklens[i] - byte_offset;
 		    sum -= frd_size;

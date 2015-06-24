@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
- *   Copyright (C) 1997 University of Chicago. 
+/*
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -12,7 +12,7 @@
 
 static MPIX_Grequest_class ADIOI_NTFS_greq_class = 0;
 
-/* Fills the input buffer, errMsg, with the error message 
+/* Fills the input buffer, errMsg, with the error message
    corresponding to error code, error */
 void ADIOI_NTFS_Strerror(int error, char *errMsg, int errMsgLen)
 {
@@ -44,20 +44,20 @@ int ADIOI_NTFS_aio_poll_fn(void *extra_state, MPI_Status *status)
     ADIOI_AIO_Request *aio_req;
     int mpi_errno = MPI_SUCCESS;
 
-    /* FIXME: Validate the args -- has it already been done by the 
+    /* FIXME: Validate the args -- has it already been done by the
        caller ? */
 
     aio_req = (ADIOI_AIO_Request *)extra_state;
-    
+
     /* XXX: test for AIO completion here */
-    if(!GetOverlappedResult( aio_req->fd, aio_req->lpOvl, 
+    if(!GetOverlappedResult( aio_req->fd, aio_req->lpOvl,
                             &(aio_req->nbytes), FALSE)){
         if(GetLastError() == ERROR_IO_INCOMPLETE){
         /* IO in progress */
 	    /* TODO: need to diddle with status somehow */
         }else{
         /* Error occured */
-        /* TODO: unsure how to handle this */    
+        /* TODO: unsure how to handle this */
         }
     }else{
         mpi_errno = MPI_Grequest_complete(aio_req->req);
@@ -82,7 +82,7 @@ int ADIOI_NTFS_aio_wait_fn(int count, void **array_of_states,
     LPHANDLE lpHandles;
     DWORD retObject=0;
 
-    /* FIXME: Validate the args -- has it already been done by the 
+    /* FIXME: Validate the args -- has it already been done by the
        caller ? */
 	aio_reqlist = (ADIOI_AIO_Request **)array_of_states;
     lpHandles = (LPHANDLE) ADIOI_Calloc(count, sizeof(HANDLE));
@@ -101,12 +101,12 @@ int ADIOI_NTFS_aio_wait_fn(int count, void **array_of_states,
 	/* XXX: wait for one request to complete */
     /* FIXME: Is the timeout in seconds ? */
     timeout = (timeout <= 0) ? INFINITE : (timeout * 1000);
-    
+
     if((retObject = WaitForMultipleObjects(count, lpHandles,
                     FALSE, timeout)) != WAIT_FAILED){
         retObject = retObject - WAIT_OBJECT_0;
-        if(GetOverlappedResult( aio_reqlist[retObject]->fd, 
-                aio_reqlist[retObject]->lpOvl, &(aio_reqlist[retObject]->nbytes), 
+        if(GetOverlappedResult( aio_reqlist[retObject]->fd,
+                aio_reqlist[retObject]->lpOvl, &(aio_reqlist[retObject]->nbytes),
                 FALSE)){
         	/* XXX: mark completed requests as 'done'*/
             mpi_errno = MPI_Grequest_complete(aio_reqlist[retObject]->req);
@@ -123,7 +123,7 @@ int ADIOI_NTFS_aio_wait_fn(int count, void **array_of_states,
 	        /* TODO: need to diddle with status somehow */
             }else{
             /* Error occured */
-            /* TODO: not sure how to handle this */    
+            /* TODO: not sure how to handle this */
             }
         }
     }else{
@@ -133,43 +133,43 @@ int ADIOI_NTFS_aio_wait_fn(int count, void **array_of_states,
 	return mpi_errno;
 }
 
-int ADIOI_NTFS_aio_query_fn(void *extra_state, MPI_Status *status) 
+int ADIOI_NTFS_aio_query_fn(void *extra_state, MPI_Status *status)
 {
 	ADIOI_AIO_Request *aio_req;
 
 	aio_req = (ADIOI_AIO_Request *)extra_state;
 
 
-	MPI_Status_set_elements(status, MPI_BYTE, aio_req->nbytes); 
+	MPI_Status_set_elements(status, MPI_BYTE, aio_req->nbytes);
 
-	/* can never cancel so always true */ 
-	MPI_Status_set_cancelled(status, 0); 
+	/* can never cancel so always true */
+	MPI_Status_set_cancelled(status, 0);
 
-	/* choose not to return a value for this */ 
-	status->MPI_SOURCE = MPI_UNDEFINED; 
-	/* tag has no meaning for this generalized request */ 
-	status->MPI_TAG = MPI_UNDEFINED; 
-	/* this generalized request never fails */ 
-	return MPI_SUCCESS; 
+	/* choose not to return a value for this */
+	status->MPI_SOURCE = MPI_UNDEFINED;
+	/* tag has no meaning for this generalized request */
+	status->MPI_TAG = MPI_UNDEFINED;
+	/* this generalized request never fails */
+	return MPI_SUCCESS;
 }
 
 
 int ADIOI_NTFS_aio_free_fn(void *extra_state)
 {
 	ADIOI_AIO_Request *aio_req;
-    /* FIXME: Validate the args -- has it already been done by the 
+    /* FIXME: Validate the args -- has it already been done by the
        caller ? */
 	aio_req = (ADIOI_AIO_Request*)extra_state;
     CloseHandle(aio_req->lpOvl->hEvent);
     ADIOI_Free(aio_req->lpOvl);
     ADIOI_Free(aio_req);
-	return MPI_SUCCESS;    
+	return MPI_SUCCESS;
 }
 
-void ADIOI_NTFS_IwriteContig(ADIO_File fd, void *buf, int count, 
+void ADIOI_NTFS_IwriteContig(ADIO_File fd, void *buf, int count,
 			     MPI_Datatype datatype, int file_ptr_type,
 			     ADIO_Offset offset, ADIO_Request *request,
-			     int *error_code)  
+			     int *error_code)
 {
     MPI_Count len, typesize;
     int err;
@@ -255,7 +255,7 @@ int ADIOI_NTFS_aio(ADIO_File fd, void *buf, int len, ADIO_Offset offset,
     aio_req->lpOvl->Offset = DWORDLOW(offset);
     aio_req->lpOvl->OffsetHigh = DWORDHIGH(offset);
     aio_req->fd = fd_sys;
-    
+
     /* XXX: initiate async I/O  */
     if (wr)
     {
@@ -267,7 +267,7 @@ int ADIOI_NTFS_aio(ADIO_File fd, void *buf, int len, ADIO_Offset offset,
     }
 
     /* --BEGIN ERROR HANDLING-- */
-    if (ret_val == FALSE) 
+    if (ret_val == FALSE)
     {
 	mpi_errno = GetLastError();
 	if (mpi_errno != ERROR_IO_PENDING)

@@ -15,37 +15,37 @@ error handler assigned to a communicator
 .SH C Syntax
 .nf
 #include <mpi.h>
-int MPI_Comm_call_errhandler(MPI_Comm \fIcomm\fP, int \fIerrorcode\fP) 
+int MPI_Comm_call_errhandler(MPI_Comm \fIcomm\fP, int \fIerrorcode\fP)
 
 .fi
 .SH Fortran Syntax
 .nf
 INCLUDE 'mpif.h'
 MPI_COMM_CALL_ERRHANDLER(\fICOMM, ERRORCODE, IERROR\fP)
-	INTEGER	\fICOMM, ERRORCODE, IERROR\fP 
+	INTEGER	\fICOMM, ERRORCODE, IERROR\fP
 
 .fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
-void MPI::Comm::Call_errhandler(int \fIerrorcode\fP) const 
+void MPI::Comm::Call_errhandler(int \fIerrorcode\fP) const
 
 .fi
 .SH INPUT PARAMETER
 .ft R
 .TP 1.4i
-comm 
+comm
 communicator with error handler (handle).
 .ft R
 .TP 1.4i
-errorcode 
+errorcode
 error code (integer).
 
 .SH OUTPUT PARAMETERS
 .ft R
 .TP 1.4i
 IERROR
-Fortran only: Error status (integer). 
+Fortran only: Error status (integer).
 
 .SH DESCRIPTION
 .ft R

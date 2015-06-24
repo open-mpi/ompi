@@ -44,29 +44,29 @@ File handle (handle).
 .SH OUTPUT PARAMETERS
 .ft R
 .TP 1i
-disp  
+disp
 Displacement (integer).
 .TP 1i
-etype 
-Elementary data type (handle). 
+etype
+Elementary data type (handle).
 .TP 1i
 filetype
 File type (handle). See Restrictions, below.
 .TP 1i
 datarep
-Data representation (string). 
+Data representation (string).
 .TP 1i
 IERROR
-Fortran only: Error status (integer). 
+Fortran only: Error status (integer).
 
 .SH DESCRIPTION
 .ft R
 The MPI_File_get_view routine returns the process's view of the data
 in the file. The current values of the displacement, etype, and
-filetype are returned in 
+filetype are returned in
 .I disp,
 .I etype,
-and 
+and
 .I filetype,
 respectively.
 .sp
@@ -89,5 +89,5 @@ and gives the length of the declared integer in bytes.
 Almost all MPI routines return an error value; C routines as the value of the function and Fortran routines in the last argument. C++ functions do not return errors. If the default error handler is set to MPI::ERRORS_THROW_EXCEPTIONS, then on error the C++ exception mechanism will be used to throw an MPI::Exception object.
 .sp
 Before the error value is returned, the current MPI error handler is
-called. For MPI I/O function errors, the default error handler is set to MPI_ERRORS_RETURN. The error handler may be changed with MPI_File_set_errhandler; the predefined error handler MPI_ERRORS_ARE_FATAL may be used to make I/O errors fatal. Note that MPI does not guarantee that an MPI program can continue past an error.  
+called. For MPI I/O function errors, the default error handler is set to MPI_ERRORS_RETURN. The error handler may be changed with MPI_File_set_errhandler; the predefined error handler MPI_ERRORS_ARE_FATAL may be used to make I/O errors fatal. Note that MPI does not guarantee that an MPI program can continue past an error.
 

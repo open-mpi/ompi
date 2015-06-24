@@ -5,15 +5,15 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2014 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -67,7 +67,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_CREATE_HINDEXED,
 
 void ompi_type_create_hindexed_f(MPI_Fint *count,
 				MPI_Fint *array_of_blocklengths,
-				MPI_Aint *array_of_displacements, 
+				MPI_Aint *array_of_displacements,
 				MPI_Fint *oldtype, MPI_Fint *newtype,
 				MPI_Fint *ierr)
 {
@@ -76,17 +76,17 @@ void ompi_type_create_hindexed_f(MPI_Fint *count,
     MPI_Datatype c_new = MPI_Type_f2c(*newtype);
     OMPI_ARRAY_NAME_DECL(array_of_blocklengths);
 
-    OMPI_ARRAY_FINT_2_INT(array_of_blocklengths, *count); 
+    OMPI_ARRAY_FINT_2_INT(array_of_blocklengths, *count);
 
     c_ierr = MPI_Type_create_hindexed(OMPI_FINT_2_INT(*count),
-                                OMPI_ARRAY_NAME_CONVERT(array_of_blocklengths), 
+                                OMPI_ARRAY_NAME_CONVERT(array_of_blocklengths),
                                 array_of_displacements, c_old,
                                 &c_new);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
-    
+
     if (MPI_SUCCESS == c_ierr) {
         *newtype = MPI_Type_c2f(c_new);
     }
-    
+
     OMPI_ARRAY_FINT_2_INT_CLEANUP(array_of_blocklengths);
 }

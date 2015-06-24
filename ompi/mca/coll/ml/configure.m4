@@ -2,9 +2,9 @@
 #
 # Copyright (c) 2014      Intel, Inc. All rights reserved.
 # $COPYRIGHT$
-# 
+#
 # Additional copyrights may follow
-# 
+#
 # $HEADER$
 #
 # MCA_coll_ml_CONFIG([action-if-found], [action-if-not-found])

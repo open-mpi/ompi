@@ -5,14 +5,14 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -44,10 +44,10 @@ int
 main(int argc, char *argv[])
 {
     int i;
-    int errors[] = { OPAL_SUCCESS, 
-                     OPAL_ERROR, 
+    int errors[] = { OPAL_SUCCESS,
+                     OPAL_ERROR,
                      OPAL_ERR_OUT_OF_RESOURCE,
-                     OPAL_ERR_NOT_FOUND, 
+                     OPAL_ERR_NOT_FOUND,
                      OPAL_ERR_BAD_PARAM,
                      OPAL_ERR_MAX + 10, /* bad value */
                      1 }; /* sentinal */
@@ -68,7 +68,7 @@ main(int argc, char *argv[])
     opal_perror(OPAL_ERR_IN_ERRNO, "perror test");
     errno = EINVAL;
     printf("strerror test: %s\n", opal_strerror(OPAL_ERR_IN_ERRNO));
-    errno = EINVAL; 
+    errno = EINVAL;
     opal_strerror_r(OPAL_ERR_IN_ERRNO, buf, sizeof(buf));
     printf("strerror_r test: %s\n", buf);
 

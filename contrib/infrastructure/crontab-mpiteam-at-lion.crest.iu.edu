@@ -1,7 +1,7 @@
 #########################
 # Update the OSL FT webpage
 #
-# Everyday @ 1:00 am  
+# Everyday @ 1:00 am
 #
 0 1 * * * (cd /l/osl/www/www.osl.iu.edu/research/ft && svn up ) 1> /dev/null 2> /dev/null
 #########################

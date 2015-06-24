@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -15,9 +15,9 @@
  *                         All rights reserved.
  * Copyright (c) 2014      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -108,10 +108,10 @@ bool opal_path_is_absolute( const char *path )
  */
 char *opal_path_find(char *fname, char **pathv, int mode, char **envv)
 {
-    char *fullpath;  
-    char *delimit;  
-    char *env;     
-    char *pfix;   
+    char *fullpath;
+    char *delimit;
+    char *env;
+    char *pfix;
     int i;
 
     /* If absolute path is given, return it without searching. */
@@ -167,10 +167,10 @@ char *opal_path_find(char *fname, char **pathv, int mode, char **envv)
  */
 char *opal_path_findv(char *fname, int mode, char **envv, char *wrkdir)
 {
-    char **dirv;     
-    char *fullpath; 
-    char *path;    
-    int dirc;    
+    char **dirv;
+    char *fullpath;
+    char *path;
+    int dirc;
     int i;
     bool found_dot = false;
 
@@ -185,7 +185,7 @@ char *opal_path_findv(char *fname, int mode, char **envv, char *wrkdir)
 
     /* Replace the "." path by the working directory. */
 
-    if (NULL != wrkdir) { 
+    if (NULL != wrkdir) {
         for (i = 0; i < dirc; ++i) {
             if (0 == strcmp(dirv[i], ".")) {
                 found_dot = true;
@@ -216,10 +216,10 @@ char *opal_path_findv(char *fname, int mode, char **envv, char *wrkdir)
 /**
  *  Forms a complete pathname and checks it for existance and
  *  permissions
- *            
+ *
  *  Accepts:
  *      -fname File name
- *      -path  Path prefix 
+ *      -path  Path prefix
  *      -mode  Target permissions which must be satisfied
  *
  *  Returns:
@@ -230,7 +230,7 @@ char *opal_path_access(char *fname, char *path, int mode)
 {
     char *fullpath = NULL;
     struct stat buf;
-    
+
     /* Allocate space for the full pathname. */
     if (NULL == path) {
         fullpath = opal_os_path(false, fname, NULL);
@@ -239,7 +239,7 @@ char *opal_path_access(char *fname, char *path, int mode)
     }
     if (NULL == fullpath)
         return NULL;
-    
+
     /* first check to see - is this a file or a directory? We
      * only want files
      */
@@ -250,16 +250,16 @@ char *opal_path_access(char *fname, char *path, int mode)
         free(fullpath);
         return NULL;
     }
-    
+
     if (!(S_IFREG & buf.st_mode) &&
         !(S_IFLNK & buf.st_mode)) {
         /* this isn't a regular file or a symbolic link, so
-         * ignore it 
+         * ignore it
          */
         free(fullpath);
         return NULL;
     }
-    
+
     /* check the permissions */
     if ((X_OK & mode) && !(S_IXUSR & buf.st_mode)) {
         /* if they asked us to check executable permission,
@@ -282,7 +282,7 @@ char *opal_path_access(char *fname, char *path, int mode)
         free(fullpath);
         return NULL;
     }
-    
+
     /* must have met all criteria! */
     return fullpath;
 }
@@ -395,7 +395,7 @@ char* opal_find_absolute_path( char* app_name )
         /* Otherwise try to search for the application in the PATH ... */
         abs_app_name = opal_path_findv( app_name, X_OK, NULL, NULL );
     }
-    
+
     if( NULL != abs_app_name ) {
         char* resolved_path = (char*)malloc(OPAL_PATH_MAX);
         realpath( abs_app_name, resolved_path );
@@ -511,7 +511,7 @@ bool opal_path_nfs(char *fname)
     struct statvfs vfsbuf;
 #endif
     /*
-     * Be sure to update the test (test/util/opal_path_nfs.c) 
+     * Be sure to update the test (test/util/opal_path_nfs.c)
      * while adding a new Network/Cluster Filesystem here
      */
     static struct fs_types_t {
@@ -560,9 +560,9 @@ again:
 
         last_sep = strrchr(file, OPAL_PATH_SEP[0]);
         /* Stop the search, when we have searched past root '/' */
-        if (NULL == last_sep || (1 == strlen(last_sep) && 
+        if (NULL == last_sep || (1 == strlen(last_sep) &&
             OPAL_PATH_SEP[0] == *last_sep)) {
-            free (file); 
+            free (file);
             return false;
         }
         *last_sep = '\0';
@@ -576,7 +576,7 @@ again:
         /* These are uses of struct statfs */
 #    if defined(HAVE_STRUCT_STATFS_F_FSTYPENAME)
         if (0 == fsrc &&
-            0 == strncasecmp(fs_types[i].f_fsname, fsbuf.f_fstypename, 
+            0 == strncasecmp(fs_types[i].f_fsname, fsbuf.f_fstypename,
                              sizeof(fsbuf.f_fstypename))) {
             goto found;
         }

@@ -13,9 +13,9 @@
 # Copyright (c) 2009-2014 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2012      NVIDIA Corporation.  All rights reserved.
 # $COPYRIGHT$
-# 
+#
 # Additional copyrights may follow
-# 
+#
 # $HEADER$
 #
 
@@ -46,7 +46,7 @@ ob1_sources  = \
 	pml_ob1_recvreq.h \
 	pml_ob1_sendreq.c \
 	pml_ob1_sendreq.h \
-	pml_ob1_start.c 
+	pml_ob1_start.c
 
 # If we have CUDA support requested, build the CUDA file also
 if OPAL_cuda_support

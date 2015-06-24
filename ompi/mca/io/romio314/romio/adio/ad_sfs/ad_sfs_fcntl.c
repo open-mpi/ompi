@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -21,17 +21,17 @@ void ADIOI_SFS_Fcntl(ADIO_File fd, int flag, ADIO_Fcntl_t *fcntl_struct, int *er
     switch(flag) {
     case ADIO_FCNTL_GET_FSIZE:
         /* On SFS, I find that a write from one process, which changes
-           the file size, does not automatically make the new file size 
-           visible to other processes. Therefore, a sync-barrier-sync is 
-           needed. (Other processes are able to read the data written 
+           the file size, does not automatically make the new file size
+           visible to other processes. Therefore, a sync-barrier-sync is
+           needed. (Other processes are able to read the data written
            though; only file size is returned incorrectly.) */
 
 	fsync(fd->fd_sys);
 	MPI_Barrier(fd->comm);
 	fsync(fd->fd_sys);
-	
+
 	fcntl_struct->fsize = llseek(fd->fd_sys, 0, SEEK_END);
-	if (fd->fp_sys_posn != -1) 
+	if (fd->fp_sys_posn != -1)
 	     llseek(fd->fd_sys, fd->fp_sys_posn, SEEK_SET);
 	if (fcntl_struct->fsize == -1) {
 #ifdef MPICH
@@ -42,7 +42,7 @@ void ADIOI_SFS_Fcntl(ADIO_File fd, int flag, ADIO_Fcntl_t *fcntl_struct, int *er
 #else /* MPICH-1 */
 	    *error_code = MPIR_Err_setmsg(MPI_ERR_IO, MPIR_ADIO_ERROR,
 			      myname, "I/O Error", "%s", strerror(errno));
-	    ADIOI_Error(fd, *error_code, myname);	    
+	    ADIOI_Error(fd, *error_code, myname);
 #endif
 	}
 	else *error_code = MPI_SUCCESS;

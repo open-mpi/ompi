@@ -50,7 +50,7 @@ int bcol_basesmuma_progress(void)
                     int index=
                         item_ptr->pool_index;
                     /* old way - ctl_struct specific */
-                    /* 
+                    /*
                        volatile uint64_t *cntr= (volatile uint64_t *)
                        &(item_ptr->sm_module->colls_no_user_data.
                        ctl_buffs_mgmt[index].bank_gen_counter);

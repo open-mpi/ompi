@@ -28,7 +28,7 @@ int MPI_Iexscan(const void *\fIsendbuf\fP, void *\fIrecvbuf\fP, int \fIcount\fP,
 INCLUDE 'mpif.h'
 MPI_EXSCAN(\fISENDBUF, RECVBUF, COUNT, DATATYPE, OP, COMM, IERROR\fP)
 	<type>	\fISENDBUF(*), RECVBUF(*)\fP
-	INTEGER	\fICOUNT, DATATYPE, OP, COMM, IERROR\fP 
+	INTEGER	\fICOUNT, DATATYPE, OP, COMM, IERROR\fP
 
 MPI_IEXSCAN(\fISENDBUF, RECVBUF, COUNT, DATATYPE, OP, COMM, REQUEST, IERROR\fP)
 	<type>	\fISENDBUF(*), RECVBUF(*)\fP
@@ -72,7 +72,7 @@ Request (handle, non-blocking only).
 .ft R
 .TP 1i
 IERROR
-Fortran only: Error status (integer). 
+Fortran only: Error status (integer).
 
 .SH DESCRIPTION
 .ft R
@@ -132,7 +132,7 @@ called. By default, this error handler aborts the MPI job, except for
 I/O function errors. The error handler may be changed with
 MPI_Comm_set_errhandler; the predefined error handler MPI_ERRORS_RETURN
 may be used to cause error values to be returned. Note that MPI does not
-guarantee that an MPI program can continue past an error. 
+guarantee that an MPI program can continue past an error.
 .sp
 See the MPI man page for a full list of MPI error codes.
 

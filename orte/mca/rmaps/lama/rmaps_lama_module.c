@@ -6,9 +6,9 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -107,7 +107,7 @@ static void rmaps_lama_hwloc_user_destruct(rmaps_lama_hwloc_user_t *item);
 OBJ_CLASS_INSTANCE(rmaps_lama_hwloc_user_t,
                    opal_object_t,
                    rmaps_lama_hwloc_user_construct,
-                   rmaps_lama_hwloc_user_destruct);                   
+                   rmaps_lama_hwloc_user_destruct);
 
 
 /*********************************
@@ -1274,7 +1274,7 @@ static int rmaps_lama_ordering_sequential(orte_job_t *jdata)
 
     /*
      * Fix the job structure ordering - Sort by new vpid
-     * 
+     *
      * If we do not do this then the remote daemons assign the incorrect
      * ranks to the processes since they use the relative ordering in the
      * jdata->procs structure to determine vpids locally.
@@ -1705,7 +1705,7 @@ static char * get_native_slot_list(orte_node_t *cur_node, hwloc_obj_t *pu_obj, i
 
         /*
          * Accumulate the bitmask
-         * 
+         *
          * JJH: TODO: Add resource offline check (?)
          */
         hwloc_bitmap_zero(scratch_cpuset);

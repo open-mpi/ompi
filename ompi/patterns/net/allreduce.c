@@ -4,9 +4,9 @@
  * Copyright (c) 2012      Los Alamos National Security, LLC.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 /** @file */
@@ -20,7 +20,7 @@
 #include "ompi/communicator/communicator.h"
 #include "ompi/mca/rte/rte.h"
 
-void send_completion(nt status, struct ompi_process_name_t* peer, struct iovec* msg, 
+void send_completion(nt status, struct ompi_process_name_t* peer, struct iovec* msg,
                      int count, ompi_rml_tag_t tag, void* cbdata)
 {
     /* set send completion flag */
@@ -28,7 +28,7 @@ void send_completion(nt status, struct ompi_process_name_t* peer, struct iovec* 
 }
 
 
-void recv_completion(nt status, struct ompi_process_name_t* peer, struct iovec* msg, 
+void recv_completion(nt status, struct ompi_process_name_t* peer, struct iovec* msg,
                      int count, ompi_rml_tag_t tag, void* cbdata)
 {
     /* set receive completion flag */
@@ -48,7 +48,7 @@ static void op_reduce(int op_type,(void *)src_dest_buf,(void *) src_buf, int cou
 
         case OP_SUM:
 
-            
+
             switch (data_type) {
                 case TYPE_INT4:
                     int *int_src_ptr=(int *)src_ptr;
@@ -76,7 +76,7 @@ Error:
  * All-reduce for contigous primitive types
  */
 static
-comm_allreduce(void *sbuf, void *rbuf, int count, opal_datatype_t *dtype, 
+comm_allreduce(void *sbuf, void *rbuf, int count, opal_datatype_t *dtype,
         int op_type, opal_list_t *peers)
 {
     /* local variables */
@@ -157,7 +157,7 @@ comm_allreduce(void *sbuf, void *rbuf, int count, opal_datatype_t *dtype,
         return ret;
     }
 
-    /* setup flags for non-blocking communications */    
+    /* setup flags for non-blocking communications */
     recv_done=&recv_completion_flag;
     send_done=&send_completion_flag;
 
@@ -185,11 +185,11 @@ comm_allreduce(void *sbuf, void *rbuf, int count, opal_datatype_t *dtype,
         if(0 < my_exchange_node->n_extra_sources)  {
 
             if ( EXCHANGE_NODE == my_exchange_node->node_type ) {
-                
+
                 /*
                 ** Receive data from extra node
                 */
-                
+
                 extra_rank=my_exchange_node.rank_extra_source;
                 recv_iov.iov_base=scratch_bufers[recv_buffer];
                 recv_iov.iov_len=count_this_stripe*dt_size;
@@ -207,7 +207,7 @@ comm_allreduce(void *sbuf, void *rbuf, int count, opal_datatype_t *dtype,
 
 
             } else {
-        
+
                 /*
                 ** Send data to "partner" node
                 */
@@ -240,7 +240,7 @@ comm_allreduce(void *sbuf, void *rbuf, int count, opal_datatype_t *dtype,
         /* loop over data exchanges */
         for(exchange=0 ; exchange < my_exchange_node->n_exchanges ; exchange++) {
 
-            /* debug 
+            /* debug
             t4=opal_sys_timer_get_cycles();
              end debug */
 
@@ -251,7 +251,7 @@ comm_allreduce(void *sbuf, void *rbuf, int count, opal_datatype_t *dtype,
             /* is the remote data read */
             pair_rank=my_exchange_node->rank_exchanges[exchange];
 
-            *recv_done=0; 
+            *recv_done=0;
             *send_done=0;
             MB();
 
@@ -271,14 +271,14 @@ comm_allreduce(void *sbuf, void *rbuf, int count, opal_datatype_t *dtype,
             while(!(*recv_done) ) {
                 opal_progress();
             }
-                
+
             /* reduce the data */
             if( 0 < count_this_stripe ) {
                 op_reduce(op_type,(void *)scratch_bufers[recv_buffer],
                         (void *)scratch_bufers[send_buffer], n_my_count,TYPE_INT4);
             }
 
-            
+
             /* get ready for next step */
             index_read=(exchange&1);
             index_write=((exchange+1)&1);
@@ -287,15 +287,15 @@ comm_allreduce(void *sbuf, void *rbuf, int count, opal_datatype_t *dtype,
             while(!(*send_done) ) {
                 opal_progress();
             }
-                
+
         }
 
         /* copy data in from the "extra" source, if need be */
         if(0 < my_exchange_node->n_extra_sources)  {
 
             if ( EXTRA_NODE == my_exchange_node->node_type ) {
-                /* 
-                ** receive the data 
+                /*
+                ** receive the data
                 ** */
                 extra_rank=my_exchange_node->rank_extra_source;
 
@@ -334,7 +334,7 @@ comm_allreduce(void *sbuf, void *rbuf, int count, opal_datatype_t *dtype,
         /* copy data from the temp buffer into the output buffer */
         rbuf_current=(char *)rbuf+count_processed*dt_size;
         memcopy(scratch_bufers[recv_buffer],rbuf_current,count_this_stripe*dt_size);
-    
+
         /* update the count of elements processed */
         count_processed+=count_this_stripe;
     }
