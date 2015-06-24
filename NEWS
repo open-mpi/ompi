@@ -72,6 +72,8 @@ Master (not on release branches yet)
 1.8.6
 -----
 
+- Fixed incorrect declaration for MPI_T_pvar_get_index and added
+  missing return code MPI_T_INVALID_NAME.
 - Fixed memory leak on Mac OS-X exposed by TCP keepalive
 - Fixed keepalive support to ensure that daemon/node failure
   results in complete job cleanup
