@@ -26,7 +26,8 @@ dnl
 AC_DEFUN([OPAL_C_GET_ALIGNMENT],[
     AC_CACHE_CHECK([alignment of $1],
                    [AS_TR_SH([opal_cv_c_align_$1])],
-		   [AC_RUN_IFELSE([AC_LANG_PROGRAM([AC_INCLUDES_DEFAULT],
+		   [AC_RUN_IFELSE([AC_LANG_PROGRAM([AC_INCLUDES_DEFAULT
+                                                    #include <stdbool.h> ],
 [[
     struct foo { char c; $1 x; };
     struct foo *p = (struct foo *) malloc(sizeof(struct foo));

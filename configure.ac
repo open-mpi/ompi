@@ -419,7 +419,7 @@ AC_CHECK_SIZEOF(pid_t)
 # Check for type alignments
 #
 
-OPAL_C_GET_ALIGNMENT(_Bool, OPAL_ALIGNMENT_BOOL)
+OPAL_C_GET_ALIGNMENT(bool, OPAL_ALIGNMENT_BOOL)
 OPAL_C_GET_ALIGNMENT(int8_t, OPAL_ALIGNMENT_INT8)
 OPAL_C_GET_ALIGNMENT(int16_t, OPAL_ALIGNMENT_INT16)
 OPAL_C_GET_ALIGNMENT(int32_t, OPAL_ALIGNMENT_INT32)
@@ -459,23 +459,6 @@ fi
 
 OPAL_C_GET_ALIGNMENT(void *, OPAL_ALIGNMENT_VOID_P)
 OPAL_C_GET_ALIGNMENT(size_t, OPAL_ALIGNMENT_SIZE_T)
-
-#
-# Does the C compiler native support "bool"? (i.e., without
-# <stdbool.h> or any other help)
-#
-
-OPAL_VAR_SCOPE_PUSH([MSG])
-AC_MSG_CHECKING(for C bool type)
-AC_COMPILE_IFELSE([AC_LANG_PROGRAM([
-AC_INCLUDES_DEFAULT],
-[[bool bar, foo = true; bar = foo;]])],
-[OPAL_NEED_C_BOOL=0 MSG=yes],[OPAL_NEED_C_BOOL=1 MSG=no])
-AC_DEFINE_UNQUOTED(OPAL_NEED_C_BOOL, $OPAL_NEED_C_BOOL,
-    [Whether the C compiler supports "bool" without any other help (such as <stdbool.h>)])
-AC_MSG_RESULT([$MSG])
-AC_CHECK_SIZEOF(_Bool)
-OPAL_VAR_SCOPE_POP
 
 #
 # Check for other compiler characteristics
@@ -635,37 +618,6 @@ AC_CHECK_HEADERS([net/if.h], [], [],
 # include <sys/socket.h>
 #endif
 ])
-
-# Note that sometimes we have <stdbool.h>, but it doesn't work (e.g.,
-# have both Portland and GNU installed; using pgcc will find GNU's
-# <stdbool.h>, which all it does -- by standard -- is define "bool" to
-# "_Bool" [see
-# http://www.opengroup.org/onlinepubs/009695399/basedefs/stdbool.h.html],
-# and Portland has no idea what to do with _Bool).
-
-# So first figure out if we have <stdbool.h> (i.e., check the value of
-# the macro HAVE_STDBOOL_H from the result of AC_CHECK_HEADERS,
-# above).  If we do have it, then check to see if it actually works.
-# Define OPAL_USE_STDBOOL_H as approrpaite.
-AC_CHECK_HEADERS([stdbool.h], [have_stdbool_h=1], [have_stdbool_h=0])
-OPAL_VAR_SCOPE_PUSH([MSG])
-AC_MSG_CHECKING([if <stdbool.h> works])
-if test "$have_stdbool_h" = "1"; then
-    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([
-AC_INCLUDES_DEFAULT[
-#if HAVE_STDBOOL_H
-#include <stdbool.h>
-#endif]],
-[[bool bar, foo = true; bar = foo;]])],
-[OPAL_USE_STDBOOL_H=1 MSG=yes],[OPAL_USE_STDBOOL_H=0 MSG=no])
-else
-    OPAL_USE_STDBOOL_H=0
-    MSG="no (do not have <stdbool.h>)"
-fi
-AC_DEFINE_UNQUOTED(OPAL_USE_STDBOOL_H, $OPAL_USE_STDBOOL_H,
-    [Whether to use <stdbool.h> or not])
-AC_MSG_RESULT([$MSG])
-OPAL_VAR_SCOPE_POP
 
 # checkpoint results
 AC_CACHE_SAVE
