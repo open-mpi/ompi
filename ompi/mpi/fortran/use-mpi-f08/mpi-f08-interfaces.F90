@@ -1,7 +1,7 @@
 ! -*- f90 -*-
 !
 ! Copyright (c) 2009-2014 Cisco Systems, Inc.  All rights reserved.
-! Copyright (c) 2009-2013 Los Alamos National Security, LLC.
+! Copyright (c) 2009-2015 Los Alamos National Security, LLC.
 !                         All rights reserved.
 ! Copyright (c) 2012      The University of Tennessee and The University
 !                         of Tennessee Research Foundation.  All rights
@@ -2481,6 +2481,26 @@ function  MPI_Wtime_f08( ) BIND(C,name="MPI_Wtime")
    DOUBLE PRECISION :: MPI_Wtime_f08
 end function MPI_Wtime_f08
 end interface MPI_Wtime
+
+interface MPI_Aint_add
+function  MPI_Aint_add_f08(base,diff)
+   use :: mpi_f08_types, only : MPI_ADDRESS_KIND
+   implicit none
+   INTEGER(MPI_ADDRESS_KIND) :: base
+   INTEGER(MPI_ADDRESS_KIND) :: diff
+   INTEGER(MPI_ADDRESS_KIND) :: MPI_Aint_add_f08
+end function MPI_Aint_add_f08
+end interface MPI_Aint_add
+
+interface MPI_Aint_diff
+function  MPI_Aint_diff_f08(addr1,addr2)
+   use :: mpi_f08_types, only : MPI_ADDRESS_KIND
+   implicit none
+   INTEGER(MPI_ADDRESS_KIND) :: addr1
+   INTEGER(MPI_ADDRESS_KIND) :: addr2
+   INTEGER(MPI_ADDRESS_KIND) :: MPI_Aint_diff_f08
+end function MPI_Aint_diff_f08
+end interface MPI_Aint_diff
 
 interface  MPI_Abort
 subroutine MPI_Abort_f08(comm,errorcode,ierror)

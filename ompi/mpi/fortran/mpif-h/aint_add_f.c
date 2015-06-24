@@ -6,7 +6,7 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -14,9 +14,9 @@
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
- *
+ * 
  * Additional copyrights may follow
- *
+ * 
  * $HEADER$
  */
 
@@ -30,35 +30,35 @@
  * manually.
  */
 #if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
-#pragma weak PMPI_WTICK = ompi_wtick_f
-#pragma weak pmpi_wtick = ompi_wtick_f
-#pragma weak pmpi_wtick_ = ompi_wtick_f
-#pragma weak pmpi_wtick__ = ompi_wtick_f
+#pragma weak PMPI_AINT_ADD = ompi_aint_add_f
+#pragma weak pmpi_aint_add = ompi_aint_add_f
+#pragma weak pmpi_aint_add_ = ompi_aint_add_f
+#pragma weak pmpi_aint_add__ = ompi_aint_add_f
 
-#pragma weak PMPI_Wtick_f = ompi_wtick_f
-#pragma weak PMPI_Wtick_f08 = ompi_wtick_f
+#pragma weak PMPI_Aint_add_f = ompi_aint_add_f
+#pragma weak PMPI_Aint_add_f08 = ompi_aint_add_f
 #elif OMPI_PROFILE_LAYER
-double PMPI_WTICK(void) { return pompi_wtick_f(); }
-double pmpi_wtick(void) { return pompi_wtick_f(); }
-double pmpi_wtick_(void) { return pompi_wtick_f(); }
-double pmpi_wtick__(void) { return pompi_wtick_f(); }
+MPI_Aint PMPI_AINT_ADD(MPI_Aint *base, MPI_Aint *diff) { return pompi_aint_add_f(base, diff); }
+MPI_Aint pmpi_aint_add(MPI_Aint *base, MPI_Aint *diff) { return pompi_aint_add_f(base, diff); }
+MPI_Aint pmpi_aint_add_(MPI_Aint *base, MPI_Aint *diff) { return pompi_aint_add_f(base, diff); }
+MPI_Aint pmpi_aint_add__(MPI_Aint *base, MPI_Aint *diff) { return pompi_aint_add_f(base, diff); }
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_WTICK = ompi_wtick_f
-#pragma weak mpi_wtick = ompi_wtick_f
-#pragma weak mpi_wtick_ = ompi_wtick_f
-#pragma weak mpi_wtick__ = ompi_wtick_f
+#pragma weak MPI_AINT_ADD = ompi_aint_add_f
+#pragma weak mpi_aint_add = ompi_aint_add_f
+#pragma weak mpi_aint_add_ = ompi_aint_add_f
+#pragma weak mpi_aint_add__ = ompi_aint_add_f
 
-#pragma weak MPI_Wtick_f = ompi_wtick_f
-#pragma weak MPI_Wtick_f08 = ompi_wtick_f
+#pragma weak MPI_Aint_add_f = ompi_aint_add_f
+#pragma weak MPI_Aint_add_f08 = ompi_aint_add_f
 #endif
 
 #if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
-double MPI_WTICK(void) { return ompi_wtick_f(); }
-double mpi_wtick(void) { return ompi_wtick_f(); }
-double mpi_wtick_(void) { return ompi_wtick_f(); }
-double mpi_wtick__(void) { return ompi_wtick_f(); }
+MPI_Aint MPI_AINT_ADD(MPI_Aint *base, MPI_Aint *diff) { return ompi_aint_add_f(base, diff); }
+MPI_Aint mpi_aint_add(MPI_Aint *base, MPI_Aint *diff) { return ompi_aint_add_f(base, diff); }
+MPI_Aint mpi_aint_add_(MPI_Aint *base, MPI_Aint *diff) { return ompi_aint_add_f(base, diff); }
+MPI_Aint mpi_aint_add__(MPI_Aint *base, MPI_Aint *diff) { return ompi_aint_add_f(base, diff); }
 #endif
 
 
@@ -66,7 +66,7 @@ double mpi_wtick__(void) { return ompi_wtick_f(); }
 #include "ompi/mpi/fortran/mpif-h/profile/defines.h"
 #endif
 
-double ompi_wtick_f(void)
+MPI_Aint ompi_aint_add_f(MPI_Aint *base, MPI_Aint *diff)
 {
-    return MPI_Wtick();
+    return MPI_Aint_add (*base, *diff);
 }
