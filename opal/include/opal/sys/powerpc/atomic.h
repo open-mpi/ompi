@@ -27,6 +27,7 @@
 #define MB()  __asm__ __volatile__ ("sync" : : : "memory")
 #define RMB() __asm__ __volatile__ ("lwsync" : : : "memory")
 #define WMB() __asm__ __volatile__ ("eieio" : : : "memory")
+#define ISYNC() __asm__ __volatile__ ("isync" : : : "memory")
 #define SMP_SYNC  "sync \n\t"
 #define SMP_ISYNC "\n\tisync"
 
@@ -74,7 +75,13 @@ void opal_atomic_rmb(void)
 static inline
 void opal_atomic_wmb(void)
 {
-    WMB();
+    RMB();
+}
+
+static inline
+void opal_atomic_isync(void)
+{
+    ISYNC();
 }
 
 #elif OPAL_XLC_INLINE_ASSEMBLY /* end OPAL_GCC_INLINE_ASSEMBLY */

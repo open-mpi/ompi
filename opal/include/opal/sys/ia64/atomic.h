@@ -61,6 +61,9 @@ static inline void opal_atomic_wmb(void)
     MB();
 }
 
+static inline void opal_atomic_isync(void)
+{
+}
 
 #endif /* OPAL_GCC_INLINE_ASSEMBLY */
 

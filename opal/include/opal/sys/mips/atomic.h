@@ -74,6 +74,11 @@ void opal_atomic_wmb(void)
     WMB();
 }
 
+static inline
+void opal_atomic_isync(void)
+{
+}
+
 #endif
 
 /**********************************************************************

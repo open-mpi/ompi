@@ -67,6 +67,10 @@ static inline void opal_atomic_wmb(void)
     MB();
 }
 
+static inline void opal_atomic_isync(void)
+{
+}
+
 /**********************************************************************
  *
  * Atomic math operations
