@@ -19,7 +19,7 @@ MPI_Aint MPI_Aint_add(MPI_Aint \fIbase\fP, MPI_Aint \fIdisp\fP)
 MPI_Aint MPI_Aint_diff(MPI_Aint \fIaddr1\fP, MPI_Aint \fIaddr2\fP)
 
 .fi
-.SH Fortran Syntax (see FORTRAN 77 NOTES)
+.SH Fortran Syntax
 .nf
 INCLUDE 'mpif.h'
 INTEGER(KIND=MPI_ADDRESS_KIND) MPI_AINT_ADD(\fIBASE, DISP\fP)
@@ -76,22 +76,6 @@ calculated in a manner that results in the signed difference from
 \fIaddr1\fP to \fIaddr2\fP, as if the process that originally produced
 the addresses had called (char *) \fIaddr1\fP - (char *) \fIaddr2\fP
 on the addresses initially passed to \fBMPI_Get_address\fP.
-
-.SH FORTRAN 77 NOTES
-.ft R
-The MPI standard prescribes portable Fortran syntax for all arguments
-only for Fortran 90.  FORTRAN 77 users may use the non-portable
-syntax:
-.sp
-.nf
-     INTEGER*MPI_ADDRESS_KIND \fIBASE\fP
-     INTEGER*MPI_ADDRESS_KIND \fIDISP\fP
-     INTEGER*MPI_ADDRESS_KIND \fIADDR1\fP
-     INTEGER*MPI_ADDRESS_KIND \fIADDR2\fP
-.fi
-.sp
-where MPI_ADDRESS_KIND is a constant defined in mpif.h
-and gives the length of the declared integer in bytes.
 
 .SH SEE ALSO
 .ft R
