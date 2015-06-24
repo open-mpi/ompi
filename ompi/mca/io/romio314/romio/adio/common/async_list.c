@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -23,7 +23,7 @@ ADIOI_Async_node *ADIOI_Malloc_async_node(void)
 
     if (!ADIOI_Async_avail_head) {
 	ADIOI_Async_avail_head = (ADIOI_Async_node *)
-	              ADIOI_Malloc(NUM*sizeof(ADIOI_Async_node));  
+	              ADIOI_Malloc(NUM*sizeof(ADIOI_Async_node));
 	curr = ADIOI_Async_avail_head;
 	for (i=1; i<NUM; i++) {
 	    curr->next = ADIOI_Async_avail_head+i;
@@ -35,7 +35,7 @@ ADIOI_Async_node *ADIOI_Malloc_async_node(void)
 	/* keep track of malloced area that needs to be freed later */
 	if (!ADIOI_Malloc_async_tail) {
 	    ADIOI_Malloc_async_tail = (ADIOI_Malloc_async *)
-		ADIOI_Malloc(sizeof(ADIOI_Malloc_async)); 
+		ADIOI_Malloc(sizeof(ADIOI_Malloc_async));
 	    ADIOI_Malloc_async_head = ADIOI_Malloc_async_tail;
 	    ADIOI_Malloc_async_head->ptr = ADIOI_Async_avail_head;
 	    ADIOI_Malloc_async_head->next = NULL;
@@ -94,7 +94,7 @@ void ADIOI_Add_req_to_list(ADIO_Request *request)
 	(*request)->ptr_in_async_list = ADIOI_Async_list_tail;
     }
 }
-	
+
 /* Sets error_code to MPI_SUCCESS on success, creates an error code on
  * failure.
  */
@@ -113,7 +113,7 @@ void ADIOI_Complete_async(int *error_code)
     while (ADIOI_Async_list_head) {
 	request = ADIOI_Async_list_head->request;
 	(*request)->queued = -1; /* ugly internal hack that prevents
-                  ADIOI_xxxComplete from freeing the request object. 
+                  ADIOI_xxxComplete from freeing the request object.
                   This is required, because the user will call MPI_Wait
                   later, which would require status to be filled. */
 	switch ((*request)->optype) {
@@ -152,7 +152,7 @@ void ADIOI_Del_req_from_list(ADIO_Request *request)
 {
 /* Delete a request that has already been completed from the async
    list and move it to the list of available nodes. Typically called
-   from within an ADIO_Test/ADIO_Wait. */ 
+   from within an ADIO_Test/ADIO_Wait. */
 
     ADIOI_Async_node *curr, *prev, *next;
 

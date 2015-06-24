@@ -4,9 +4,9 @@
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -58,7 +58,7 @@
  *
  * Aug  5 2002 CLG: Tiny fix to 64 bit taddr_t definition on sun.
  * Oct  6 2000 JHC: Add all of the MPI-2 relevant types and functions.
- *              This does need a compatibility number change to 
+ *              This does need a compatibility number change to
  *              ensure new libraries can't get loaded into old debuggers.
  *              New debuggers can continue to use old libraries, though.
  *              New functions under control of FOR_MPI2
@@ -72,7 +72,7 @@
  * Mar 17 2000 JHC: Add FORCE_32BIT_MPI conditional compilation flag.
  * Mar  3 2000 JHC: Widen the tword_t and taddr_t on AIX, now that IBM
  *              has 64 bit machines. Increment the version compatibility
- *              number on AIX (only) since this is an incompatible change in 
+ *              number on AIX (only) since this is an incompatible change in
  *              the interface.
  * Oct  1 1998 JHC: Change MQS_INVALID_PROCESS to -1, TV would never generate
  *              the old value anyway.
@@ -92,9 +92,9 @@
  *
  * The interface is specified at the C level, to avoid C++ compiler issues.
  *
- * The interface allows code in the DLL to 
+ * The interface allows code in the DLL to
  * 1) find named types from the debugger's type system and look up fields in them
- * 2) find the address of named external variables 
+ * 2) find the address of named external variables
  * 3) access objects at absolute addresses in the target process.
  * 4) convert objects from target format to host format.
  *
@@ -110,7 +110,7 @@
  * this provides type checking while maintaining information hiding.
  *
  * All named entities in here start with the prefix "mqs_" (for
- * Message Queue Support), all the debugger callbacks are made via 
+ * Message Queue Support), all the debugger callbacks are made via
  * callback tables, so the real (linkage) names of the functions are
  * not visible to the DLL.
  */
@@ -127,7 +127,7 @@
 BEGIN_C_DECLS
 
 /***********************************************************************
- * Version of the interface this header represents 
+ * Version of the interface this header represents
  */
 enum
 {
@@ -210,10 +210,10 @@ typedef struct
     int bool_size;      /* sizeof(bool) */
     int size_t_size;    /* sizeof(size_t) */
 } mqs_target_type_sizes;
-  
-/* Result codes. 
- * mqs_ok is returned for success. 
- * Anything else implies a failure of some sort. 
+
+/* Result codes.
+ * mqs_ok is returned for success.
+ * Anything else implies a failure of some sort.
  *
  * Most of the functions actually return one of these, however to avoid
  * any potential issues with different compilers implementing enums as
@@ -254,8 +254,8 @@ typedef enum {
 /* Which queue are we interested in ? */
 typedef enum
 {
-  mqs_pending_sends, 
-  mqs_pending_receives, 
+  mqs_pending_sends,
+  mqs_pending_receives,
   mqs_unexpected_messages
 } mqs_op_class;
 
@@ -265,7 +265,7 @@ enum
   MQS_INVALID_PROCESS = -1
 };
 
-enum mqs_status 
+enum mqs_status
 {
   mqs_st_pending, mqs_st_matched, mqs_st_complete
 };
@@ -335,7 +335,7 @@ enum {
 /* A structure to represent a communicator */
 typedef struct
 {
-  mqs_taddr_t unique_id;			/* A unique tag for the communicator */ 
+  mqs_taddr_t unique_id;			/* A unique tag for the communicator */
   mqs_tword_t local_rank;			/* The rank of this process Comm_rank */
   mqs_tword_t size;				/* Comm_size  */
   char    name[64];				/* the name if it has one */
@@ -361,12 +361,12 @@ typedef struct
   /* Fields valid if status >= matched or it's a send */
   mqs_tword_t actual_local_rank;		/* Actual local rank */
   mqs_tword_t actual_global_rank;		/* As above but in COMM_WORLD */
-  mqs_tword_t actual_tag;				
+  mqs_tword_t actual_tag;
   mqs_tword_t actual_length;
-  
+
   /* Additional strings which can be filled in if the DLL has more
    * info.  (Uninterpreted by the debugger, simply displayed to the
-   * user).  
+   * user).
    *
    * Can be used to give the name of the function causing this request,
    * for instance.
@@ -427,10 +427,10 @@ typedef void * (*mqs_malloc_ft) (size_t);
 typedef void   (*mqs_free_ft)   (void *);
 
 /***********************************************************************
- * Type access functions 
+ * Type access functions
  */
 
-/* Given an executable image look up a named type in it.  
+/* Given an executable image look up a named type in it.
  * Returns a type handle, or the null pointer if the type could not be
  * found.  Since the debugger may load debug information lazily, the
  * MPI run time library should ensure that the type definitions
@@ -441,7 +441,7 @@ typedef void   (*mqs_free_ft)   (void *);
 typedef mqs_type * (*mqs_find_type_ft)(mqs_image *, char *, mqs_lang_code);
 
 /* Given the handle for a type (assumed to be a structure) return the
- * byte offset of the named field. If the field cannot be found 
+ * byte offset of the named field. If the field cannot be found
  * the result will be -1.
  */
 typedef int (*mqs_field_offset_ft) (mqs_type *, char *);
@@ -459,7 +459,7 @@ typedef void (*mqs_get_type_sizes_ft) (mqs_process *, mqs_target_type_sizes *);
  */
 
 /* Fetch data from the process into a buffer into a specified buffer.
- * N.B. 
+ * N.B.
  * The data is the same as that in the target process when accessed
  * as a byte array. You *must* use mqs_target_to_host to do any
  * necessary byte flipping if you want to look at it at larger
@@ -484,7 +484,7 @@ typedef char * (*mqs_errorstring_ft) (int);
 typedef struct mqs_basic_callbacks
 {
   mqs_malloc_ft           mqs_malloc_fp;
-  mqs_free_ft             mqs_free_fp;             
+  mqs_free_ft             mqs_free_fp;
   mqs_dprints_ft          mqs_dprints_fp;
   mqs_errorstring_ft      mqs_errorstring_fp;
   mqs_put_image_info_ft   mqs_put_image_info_fp;
@@ -599,15 +599,15 @@ extern int mqs_destroy_job_info (mqs_job_info *);
 #endif
 
 /***********************************************************************
- * Calls related to a specific process. These will only be called if the 
- * image which this is an instance of passes the has_message_queues tests. 
+ * Calls related to a specific process. These will only be called if the
+ * image which this is an instance of passes the has_message_queues tests.
  *
  * If you can't tell whether the process will have valid message queues
- * just by looking at the image, then you should return mqs_ok from 
+ * just by looking at the image, then you should return mqs_ok from
  * mqs_image_has_queues and let mqs_process_has_queues handle it.
  */
 
-/* Set up whatever process specific information we need. 
+/* Set up whatever process specific information we need.
  * For instance addresses of global variables should be handled here,
  * rather than in the image information if anything is a dynamic library
  * which could end up mapped differently in different processes.
@@ -619,7 +619,7 @@ OMPI_DECLSPEC extern void mqs_destroy_process_info (mqs_process_info *);
  * if the image claims to have message queues. This lets you actually
  * delve inside the process to look at variables before deciding if
  * the process really can support message queue extraction.
- */  
+ */
 OMPI_DECLSPEC extern int mqs_process_has_queues (mqs_process *, char **);
 
 /***********************************************************************
@@ -627,7 +627,7 @@ OMPI_DECLSPEC extern int mqs_process_has_queues (mqs_process *, char **);
  *
  * The model here is that the debugger calls down to the library to initialise
  * an iteration over a specific class of things, and then keeps calling
- * the "next" function until it returns mqs_false. 
+ * the "next" function until it returns mqs_false.
  *
  * For communicators we separate stepping from extracting information,
  * because we want to use the state of the communicator iterator to qualify
@@ -688,7 +688,7 @@ extern int mqs_next_new_process (mqs_process *, mqs_process_location *);
 /* Once the debugger has attached to a newly created process it will
  * set it up in the normal way, and then set its identity.
  */
-extern int mqs_set_process_identity (mqs_process *, int); 
+extern int mqs_set_process_identity (mqs_process *, int);
 #endif
 
 END_C_DECLS

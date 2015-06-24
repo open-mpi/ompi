@@ -126,7 +126,7 @@
    obj:*libatiadl*
 }
 
-# 
+#
 {
    libpciaccess_device_name_leak
    Memcheck:Leak

@@ -5,16 +5,16 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012      Sandia National Laboratories. All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -39,7 +39,7 @@
 static const char FUNC_NAME[] = "MPI_Comm_split_type";
 
 
-int MPI_Comm_split_type(MPI_Comm comm, int split_type, int key, 
+int MPI_Comm_split_type(MPI_Comm comm, int split_type, int key,
                         MPI_Info info, MPI_Comm *newcomm) {
 
     int rc;
@@ -52,7 +52,7 @@ int MPI_Comm_split_type(MPI_Comm comm, int split_type, int key,
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 
         if ( ompi_comm_invalid ( comm )) {
-            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, 
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM,
                                           FUNC_NAME);
         }
 
@@ -62,25 +62,25 @@ int MPI_Comm_split_type(MPI_Comm comm, int split_type, int key,
         }
 
         if ( MPI_COMM_TYPE_SHARED != split_type && // Same as OMPI_COMM_TYPE_NODE
-	     OMPI_COMM_TYPE_CLUSTER != split_type &&  
-	     OMPI_COMM_TYPE_CU != split_type &&  
-	     OMPI_COMM_TYPE_HOST != split_type &&  
-	     OMPI_COMM_TYPE_BOARD != split_type &&  
+	     OMPI_COMM_TYPE_CLUSTER != split_type &&
+	     OMPI_COMM_TYPE_CU != split_type &&
+	     OMPI_COMM_TYPE_HOST != split_type &&
+	     OMPI_COMM_TYPE_BOARD != split_type &&
 	     OMPI_COMM_TYPE_NODE != split_type && // Same as MPI_COMM_TYPE_SHARED
-	     OMPI_COMM_TYPE_NUMA != split_type &&  
-	     OMPI_COMM_TYPE_SOCKET != split_type && 
-	     OMPI_COMM_TYPE_L3CACHE != split_type && 
-	     OMPI_COMM_TYPE_L2CACHE != split_type && 
-	     OMPI_COMM_TYPE_L1CACHE != split_type && 
-	     OMPI_COMM_TYPE_CORE != split_type && 
-	     OMPI_COMM_TYPE_HWTHREAD != split_type && 
+	     OMPI_COMM_TYPE_NUMA != split_type &&
+	     OMPI_COMM_TYPE_SOCKET != split_type &&
+	     OMPI_COMM_TYPE_L3CACHE != split_type &&
+	     OMPI_COMM_TYPE_L2CACHE != split_type &&
+	     OMPI_COMM_TYPE_L1CACHE != split_type &&
+	     OMPI_COMM_TYPE_CORE != split_type &&
+	     OMPI_COMM_TYPE_HWTHREAD != split_type &&
              MPI_UNDEFINED != split_type ) {
-            return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, 
+            return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG,
                                           FUNC_NAME);
         }
-        
+
         if ( NULL == newcomm ) {
-            return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, 
+            return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG,
                                           FUNC_NAME);
         }
     }
@@ -91,7 +91,7 @@ int MPI_Comm_split_type(MPI_Comm comm, int split_type, int key,
         *newcomm = MPI_COMM_NULL;
         rc = MPI_SUCCESS;
     } else {
-        rc = ompi_comm_split_type( (ompi_communicator_t*)comm, split_type, key, info, 
+        rc = ompi_comm_split_type( (ompi_communicator_t*)comm, split_type, key, info,
                                    (ompi_communicator_t**)newcomm);
     }
     OMPI_ERRHANDLER_RETURN ( rc, comm, rc, FUNC_NAME);

@@ -14,7 +14,7 @@
 #include "ompi/mca/topo/base/base.h"
 
 
-int mca_topo_base_dist_graph_neighbors_count(ompi_communicator_t *comm, 
+int mca_topo_base_dist_graph_neighbors_count(ompi_communicator_t *comm,
                                              int *inneighbors,
                                              int *outneighbors, int *weighted)
 {

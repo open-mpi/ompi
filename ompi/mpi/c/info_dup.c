@@ -5,14 +5,14 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -56,10 +56,10 @@ int MPI_Info_dup(MPI_Info info, MPI_Info *newinfo) {
     /**
      * Here we need to do 2 things
      * 1. Create a newinfo object using MPI_Info_create
-     * 2. Fetch all the values from info and copy them to 
+     * 2. Fetch all the values from info and copy them to
      *    newinfo using MPI_Info_set
      * The new implementation facilitates traversal in many ways.
-     * I have chosen to get the number of elements on the list 
+     * I have chosen to get the number of elements on the list
      * and copy them to newinfo one by one
      */
 

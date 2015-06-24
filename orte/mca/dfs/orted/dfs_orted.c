@@ -6,9 +6,9 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -406,7 +406,7 @@ static void process_opens(int fd, short args, void *cbdata)
         opal_list_remove_item(&requests, &dfs->super);
         goto complete;
     }
-    
+
     opal_output_verbose(1, orte_dfs_base_framework.framework_output,
                         "%s sending open file request to %s file %s",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -520,7 +520,7 @@ static void process_close(int fd, short args, void *cbdata)
         ORTE_ERROR_LOG(rc);
         goto complete;
     }
-    
+
     opal_output_verbose(1, orte_dfs_base_framework.framework_output,
                         "%s sending close file request to %s for fd %d",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -883,7 +883,7 @@ static void process_reads(int fd, short args, void *cbdata)
         ORTE_ERROR_LOG(rc);
         goto complete;
     }
-    
+
     opal_output_verbose(1, orte_dfs_base_framework.framework_output,
                         "%s sending read file request to %s for fd %d",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),

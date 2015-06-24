@@ -6,7 +6,7 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -15,9 +15,9 @@
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 /**
@@ -80,7 +80,7 @@ static int orte_ras_gridengine_register(void)
                                             MCA_BASE_VAR_SCOPE_READONLY, &mca_ras_gridengine_component.priority);
 
     orte_ras_gridengine_verbose = 0;
-    (void) mca_base_component_var_register (c, "verbose", 
+    (void) mca_base_component_var_register (c, "verbose",
                                             "Enable verbose output for the gridengine ras component",
                                             MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_9,
                                             MCA_BASE_VAR_SCOPE_LOCAL, &orte_ras_gridengine_verbose);
@@ -111,7 +111,7 @@ static int orte_ras_gridengine_component_query(mca_base_module_t **module, int *
 {
     *priority = mca_ras_gridengine_component.priority;
 
-    if (NULL != getenv("SGE_ROOT") && NULL != getenv("ARC") && 
+    if (NULL != getenv("SGE_ROOT") && NULL != getenv("ARC") &&
         NULL != getenv("PE_HOSTFILE") && NULL != getenv("JOB_ID")) {
         OPAL_OUTPUT_VERBOSE((2, orte_ras_base_framework.framework_output,
                              "%s ras:gridengine: available for selection",

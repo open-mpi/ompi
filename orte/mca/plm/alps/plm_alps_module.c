@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2011 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007-2015 Los Alamos National Security, LLC.  All rights
- *                         reserved. 
+ *                         reserved.
  * Copyright (c) 2014      Intel Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -119,7 +119,7 @@ static void launch_daemons(int fd, short args, void *cbdata);
 static int plm_alps_init(void)
 {
     int rc;
-    
+
     if (ORTE_SUCCESS != (rc = orte_plm_base_comm_start())) {
         ORTE_ERROR_LOG(rc);
         return rc;
@@ -256,7 +256,7 @@ static void launch_daemons(int fd, short args, void *cbdata)
         OBJ_RELEASE(state);
         return;
     }
-    
+
     /* need integer value for command line parameter */
     orte_util_convert_jobid_to_string(&jobid_string, daemons->jobid);
 
@@ -308,7 +308,7 @@ static void launch_daemons(int fd, short args, void *cbdata)
         if (ORTE_FLAG_TEST(node, ORTE_NODE_FLAG_DAEMON_LAUNCHED)) {
             continue;
         }
-        
+
         /* otherwise, add it to the list of nodes upon which
          * we need to launch a daemon
          */
@@ -337,7 +337,7 @@ static void launch_daemons(int fd, short args, void *cbdata)
 
     /* add the daemon command (as specified by user) */
     orte_plm_base_setup_orted_cmd(&argc, &argv);
-    
+
     /* Add basic orted command line options, including debug flags */
     orte_plm_base_orted_append_basic_args(&argc, &argv,
                                           NULL,
@@ -408,7 +408,7 @@ static void launch_daemons(int fd, short args, void *cbdata)
 
     /* setup environment */
     env = opal_argv_copy(orte_launch_environ);
-    
+
     if (0 < opal_output_get_verbosity(orte_plm_base_framework.framework_output)) {
         param = opal_argv_join(argv, ' ');
         OPAL_OUTPUT_VERBOSE((1, orte_plm_base_framework.framework_output,
@@ -417,13 +417,13 @@ static void launch_daemons(int fd, short args, void *cbdata)
                              (NULL == param) ? "NULL" : param));
         if (NULL != param) free(param);
     }
-        
+
     /* exec the daemon(s) */
     if (ORTE_SUCCESS != (rc = plm_alps_start_proc(argc, argv, env, cur_prefix))) {
         ORTE_ERROR_LOG(rc);
         goto cleanup;
     }
-    
+
     /* indicate that the daemons for this job were launched */
     state->jdata->state = ORTE_JOB_STATE_DAEMONS_LAUNCHED;
     daemons->state = ORTE_JOB_STATE_DAEMONS_LAUNCHED;
@@ -438,11 +438,11 @@ static void launch_daemons(int fd, short args, void *cbdata)
     if (NULL != env) {
         opal_argv_free(env);
     }
-    
+
     if(NULL != jobid_string) {
         free(jobid_string);
     }
-    
+
     /* cleanup the caddy */
     OBJ_RELEASE(state);
 
@@ -461,7 +461,7 @@ static int plm_alps_terminate_orteds(void)
 {
     int rc;
     orte_job_t *jdata;
-    
+
     OPAL_OUTPUT_VERBOSE((10, orte_plm_base_framework.framework_output,
                             "%s plm:alps: terminating orteds",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
@@ -479,7 +479,7 @@ static int plm_alps_terminate_orteds(void)
     if (ORTE_SUCCESS != (rc = orte_plm_base_orted_exit(ORTE_DAEMON_EXIT_CMD))) {
         ORTE_ERROR_LOG(rc);
     }
-    
+
     jdata = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid);
     ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_DAEMONS_TERMINATED);
 
@@ -505,7 +505,7 @@ static int plm_alps_signal_job(orte_jobid_t jobid, int32_t signal)
 static int plm_alps_finalize(void)
 {
     int rc;
-    
+
     if (NULL != alpsrun) {
         OBJ_RELEASE(alpsrun);
     }
@@ -514,7 +514,7 @@ static int plm_alps_finalize(void)
     if (ORTE_SUCCESS != (rc = orte_plm_base_comm_stop())) {
         ORTE_ERROR_LOG(rc);
     }
-    
+
     return ORTE_SUCCESS;
 }
 
@@ -527,7 +527,7 @@ static void alps_wait_cb(orte_proc_t *proc, void* cbdata){
        necessarily mean that alps failed - it could be that an orted returned
        a non-zero exit status. Of course, that means the orted failed(!), so
        the end result is the same - the job didn't start.
-    
+
        As a result, we really can't do much with the exit status itself - it
        could be something in errno (if alps itself failed), or it could be
        something returned by an orted, or it could be something returned by
@@ -538,13 +538,13 @@ static void alps_wait_cb(orte_proc_t *proc, void* cbdata){
        wakes up - otherwise, do nothing!
     */
     jdata = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid);
-    
+
     if (0 != proc->exit_code) {
         if (failed_launch) {
             /* report that the daemon has failed so we break out of the daemon
              * callback receive and exit
              */
-            ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_FAILED_TO_START);            
+            ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_FAILED_TO_START);
         } else {
             /* an orted must have died unexpectedly after launch - report
              * that the daemon has failed so we exit
@@ -571,7 +571,7 @@ static int plm_alps_start_proc(int argc, char **argv, char **env,
         ORTE_ERROR_LOG(ORTE_ERR_SYS_LIMITS_CHILDREN);
         return ORTE_ERR_SYS_LIMITS_CHILDREN;
     }
-    
+
     alpsrun = OBJ_NEW(orte_proc_t);
     alpsrun->pid = alps_pid;
     /* be sure to mark it as alive so we don't instantly fire */
@@ -649,8 +649,8 @@ static int plm_alps_start_proc(int argc, char **argv, char **env,
            signals sent from the shell (like those resulting from
            cntl-c) don't get sent to alps */
         setpgid(0, 0);
-         
-        
+
+
         execve(exec_argv, argv, env);
 
         opal_output(0, "plm:alps:start_proc: exec failed");
@@ -662,7 +662,7 @@ static int plm_alps_start_proc(int argc, char **argv, char **env,
         process group any more.  Stevens says always do this on both
         sides of the fork... */
         setpgid(alps_pid, alps_pid);
-        
+
         free(exec_argv);
     }
 

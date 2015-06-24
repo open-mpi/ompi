@@ -16,5 +16,5 @@ subroutine PMPI_Get_library_version_f08(version,resultlen,ierror)
 
    call ompi_get_library_version_f(version,resultlen,c_ierror,len(version))
    if (present(ierror)) ierror = c_ierror
-  
+
 end subroutine PMPI_Get_library_version_f08

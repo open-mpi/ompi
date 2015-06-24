@@ -94,7 +94,7 @@ static size_t opal_datatype_memop_block_size = 128 * 1024;
         }                                                           \
     } while(0)
 #else
-#define SET_CUDA_COPY_FCT(cuda_device_bufs, fct, copy_function) 
+#define SET_CUDA_COPY_FCT(cuda_device_bufs, fct, copy_function)
 #endif
 
 int32_t opal_datatype_copy_content_same_ddt( const opal_datatype_t* datatype, int32_t count,

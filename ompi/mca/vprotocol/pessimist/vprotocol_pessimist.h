@@ -41,10 +41,10 @@ typedef struct mca_vprotocol_pessimist_module_t {
 
     /* space for allocating events */
     opal_free_list_t events_pool;
-  
+
     /* Sender Based repository */
     vprotocol_pessimist_sender_based_t sender_based;
-    
+
     /* replay mode variables */
     bool replay;
     opal_list_t replay_events;

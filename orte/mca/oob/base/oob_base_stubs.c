@@ -2,11 +2,11 @@
 /*
  * Copyright (c) 2012-2014 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2013-2014 Intel, Inc.  All rights reserved. 
+ * Copyright (c) 2013-2014 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -31,7 +31,7 @@ static void process_uri(char *uri);
 
 void orte_oob_base_send_nb(int fd, short args, void *cbdata)
 {
-    orte_oob_send_t *cd = (orte_oob_send_t*)cbdata; 
+    orte_oob_send_t *cd = (orte_oob_send_t*)cbdata;
     orte_rml_send_t *msg = cd->msg;
     mca_base_component_list_item_t *cli;
     orte_oob_base_peer_t *pr;
@@ -278,19 +278,19 @@ void orte_oob_base_get_addr(char **uri)
  * info from it if it can. An error is to be returned if NO component
  * can successfully extract a contact.
  */
-static void req_cons(mca_oob_uri_req_t *ptr) 
-{ 
-    ptr->uri = NULL; 
-} 
-static void req_des(mca_oob_uri_req_t *ptr) 
-{ 
-    if (NULL != ptr->uri) { 
-        free(ptr->uri); 
-    } 
-} 
-OBJ_CLASS_INSTANCE(mca_oob_uri_req_t, 
-                   opal_object_t, 
-                   req_cons, req_des); 
+static void req_cons(mca_oob_uri_req_t *ptr)
+{
+    ptr->uri = NULL;
+}
+static void req_des(mca_oob_uri_req_t *ptr)
+{
+    if (NULL != ptr->uri) {
+        free(ptr->uri);
+    }
+}
+OBJ_CLASS_INSTANCE(mca_oob_uri_req_t,
+                   opal_object_t,
+                   req_cons, req_des);
 
 void orte_oob_base_set_addr(int fd, short args, void *cbdata)
 {

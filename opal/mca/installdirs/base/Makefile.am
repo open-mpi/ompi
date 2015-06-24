@@ -1,10 +1,10 @@
 #
 # Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
-#                         reserved. 
+#                         reserved.
 # $COPYRIGHT$
-# 
+#
 # Additional copyrights may follow
-# 
+#
 # $HEADER$
 #
 

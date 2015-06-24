@@ -285,7 +285,7 @@ Error:
 
 int ml_coll_hier_allreduce_setup(mca_coll_ml_module_t *ml_module)
 {
-    int topo_index = 
+    int topo_index =
         ml_module->collectives_topology_map[ML_ALLREDUCE][ML_SMALL_DATA_ALLREDUCE];
     int ret = ml_coll_up_and_down_hier_setup(ml_module,
                                              &ml_module->topo_list[topo_index],

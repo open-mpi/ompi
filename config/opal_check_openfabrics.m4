@@ -6,7 +6,7 @@
 # Copyright (c) 2004-2005 The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
-# Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+# Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
@@ -20,15 +20,15 @@
 # Copyright (c) 2014-2015 Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
-# 
+#
 # Additional copyrights may follow
-# 
+#
 # $HEADER$
 #
 
 # OPAL_CHECK_OPENFABRICS(prefix, [action-if-found], [action-if-not-found])
 # --------------------------------------------------------
-# check if OPENIB support can be found.  sets prefix_{CPPFLAGS, 
+# check if OPENIB support can be found.  sets prefix_{CPPFLAGS,
 # LDFLAGS, LIBS} as needed and runs action-if-found if there is
 # support, otherwise executes action-if-not-found
 AC_DEFUN([OPAL_CHECK_OPENFABRICS],[
@@ -54,7 +54,7 @@ AC_DEFUN([OPAL_CHECK_OPENFABRICS],[
     else
         #
         # Enable padding for SPARC platforms by default  because the
-        # btl will segv otherwise.  Keep padding disabled for other 
+        # btl will segv otherwise.  Keep padding disabled for other
         # platforms since there are some performance implications with
         #  padding on for those plaforms.
         #
@@ -80,14 +80,14 @@ AC_DEFUN([OPAL_CHECK_OPENFABRICS],[
     ompi_check_openib_$1_save_LDFLAGS="$LDFLAGS"
     ompi_check_openib_$1_save_LIBS="$LIBS"
 
-    AS_IF([test "$ompi_check_openib_happy" = "yes"], 
+    AS_IF([test "$ompi_check_openib_happy" = "yes"],
             [AC_CHECK_HEADERS(
                 fcntl.h sys/poll.h,
                     [],
                     [AC_MSG_WARN([fcntl.h sys/poll.h not found.  Can not build component.])
-                    ompi_check_openib_happy="no"])]) 
+                    ompi_check_openib_happy="no"])])
 
-    AS_IF([test "$ompi_check_openib_happy" = "yes"], 
+    AS_IF([test "$ompi_check_openib_happy" = "yes"],
           [OPAL_CHECK_PACKAGE([$1],
                               [infiniband/verbs.h],
                               [ibverbs],
@@ -215,7 +215,7 @@ AC_DEFUN([OPAL_CHECK_OPENFABRICS],[
     # will not print the big scary warning*.  See
     # http://lists.gnu.org/archive/html/autoconf/2008-10/msg00143.html.
     AS_IF([test "$ompi_check_openib_happy" = "yes"],
-          [AC_CHECK_HEADERS([infiniband/driver.h], [], [], 
+          [AC_CHECK_HEADERS([infiniband/driver.h], [], [],
                             [AC_INCLUDES_DEFAULT])])
 
     AC_MSG_CHECKING([if ConnectX XRC support is enabled])
@@ -279,7 +279,7 @@ AC_DEFUN([OPAL_CHECK_OPENFABRICS_CM_ARGS],[
     #
     AC_ARG_ENABLE([openib-udcm],
         [AC_HELP_STRING([--enable-openib-udcm],
-                        [Enable datagram connection support in openib BTL (default: enabled)])], 
+                        [Enable datagram connection support in openib BTL (default: enabled)])],
                         [enable_openib_udcm="$enableval"], [enable_openib_udcm="yes"])
     # Per discussion with Ralph and Nathan, disable UDCM for now.
     # It's borked and needs some surgery to get back on its feet.
@@ -322,7 +322,7 @@ AC_DEFUN([OPAL_CHECK_OPENFABRICS_CM],[
                          $1_msg=no
                          AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include "rdma/rdma_cma.h"
                                  ]], [[void *ret = (void*) rdma_get_peer_addr((struct rdma_cm_id*)0);]])],
-                             [$1_have_rdmacm=1 
+                             [$1_have_rdmacm=1
                              $1_msg=yes])
                          AC_MSG_RESULT([$$1_msg])])])
 
@@ -370,7 +370,7 @@ AC_DEFUN([OPAL_CHECK_MLNX_OPENFABRICS],[
      $1_have_mverbs=0
      $1_have_mqe=0
 
-    AS_IF([test "$ompi_check_openib_happy" = "yes"], 
+    AS_IF([test "$ompi_check_openib_happy" = "yes"],
            [OPAL_CHECK_PACKAGE([$1],
                                [infiniband/mverbs.h],
                                [mverbs],
@@ -381,7 +381,7 @@ AC_DEFUN([OPAL_CHECK_MLNX_OPENFABRICS],[
                                [$1_have_mverbs=1],
                                [])])
 
-    AS_IF([test "$ompi_check_openib_happy" = "yes"], 
+    AS_IF([test "$ompi_check_openib_happy" = "yes"],
            [OPAL_CHECK_PACKAGE([$1],
                                [infiniband/mqe.h],
                                [mqe],
@@ -410,11 +410,11 @@ AC_DEFUN([OPAL_CHECK_MLNX_OPENFABRICS],[
     fi
 
     AS_IF([test "1" = "$$1_have_mverbs"],
-          [AC_CHECK_DECLS([IBV_M_WR_CALC_RDMA_WRITE_WITH_IMM], 
+          [AC_CHECK_DECLS([IBV_M_WR_CALC_RDMA_WRITE_WITH_IMM],
                           [AC_DEFINE_UNQUOTED([OPAL_HAVE_IBOFFLOAD_CALC_RDMA], [1],
-                                              [Whether IBV_M_WR_CALC_SEND is defined or not])], 
+                                              [Whether IBV_M_WR_CALC_SEND is defined or not])],
                           [AC_DEFINE_UNQUOTED([OPAL_HAVE_IBOFFLOAD_CALC_RDMA], [0],
-                                              [Whether IBV_M_WR_CALC_SEND is defined or not])], 
+                                              [Whether IBV_M_WR_CALC_SEND is defined or not])],
                           [#include <infiniband/mverbs.h>])])
 
     # restoring the CPPFLAGS

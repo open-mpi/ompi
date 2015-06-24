@@ -5,9 +5,9 @@
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -31,18 +31,18 @@ SHMEM_GENERATE_FORTRAN_BINDINGS_FUNCTION (ompi_fortran_integer4_t,
         shmem_int4_cswap_,
         shmem_int4_cswap__,
         shmem_int4_cswap_f,
-        (FORTRAN_POINTER_T target, MPI_Fint *cond, FORTRAN_POINTER_T value, MPI_Fint *pe), 
+        (FORTRAN_POINTER_T target, MPI_Fint *cond, FORTRAN_POINTER_T value, MPI_Fint *pe),
         (target,cond,value,pe) )
 
 ompi_fortran_integer4_t shmem_int4_cswap_f(FORTRAN_POINTER_T target, MPI_Fint *cond, FORTRAN_POINTER_T value, MPI_Fint *pe)
 {
     ompi_fortran_integer4_t out_value = 0;
 
-    MCA_ATOMIC_CALL(cswap(FPTR_2_VOID_PTR(target), 
-        (void *)&out_value, 
-        (const void*)(OMPI_PFINT_2_PINT(cond)), 
-        FPTR_2_VOID_PTR(value), 
-        sizeof(out_value), 
+    MCA_ATOMIC_CALL(cswap(FPTR_2_VOID_PTR(target),
+        (void *)&out_value,
+        (const void*)(OMPI_PFINT_2_PINT(cond)),
+        FPTR_2_VOID_PTR(value),
+        sizeof(out_value),
         OMPI_FINT_2_INT(*pe)));
 
     return out_value;

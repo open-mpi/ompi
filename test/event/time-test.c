@@ -51,7 +51,7 @@ main (int argc, char **argv)
 {
 	opal_event_t timeout;
 	struct timeval tv;
- 
+
 	/* Initalize the event library */
 	opal_event_init();
 
@@ -63,7 +63,7 @@ main (int argc, char **argv)
 	opal_event_add(&timeout, &tv);
 
 	lasttime = time(NULL);
-	
+
 	opal_event_dispatch();
 
 	return (0);

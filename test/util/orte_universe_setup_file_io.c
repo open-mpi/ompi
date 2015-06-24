@@ -5,14 +5,14 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -49,7 +49,7 @@ int main(int argc, char* argv[])
     orte_universe_info.seed_uri = strdup("0.0.0;tcp://128.165.148.81:52424");
     orte_universe_info.console_connected = false;
     orte_universe_info.scriptfile = NULL;
-    
+
     if (test1()) {
         test_success();
     }
@@ -72,14 +72,14 @@ int main(int argc, char* argv[])
 static bool test1(void)
 {
     int rc;
-    
+
     /* Test write */
 
     if (ORTE_SUCCESS != (rc = orte_write_universe_setup_file("test-file", &orte_universe_info))) {
         fprintf(stderr, "universe_setup_file_io: failed write with code %d\n", rc);
         return false;
     }
-    
+
     return true;
 }
 
@@ -88,14 +88,14 @@ static bool test2(void)
 {
     int rc;
     orte_universe_t univ;
-    
+
     /* Test read */
 
     if (ORTE_SUCCESS != (rc = orte_read_universe_setup_file("test-file", &univ))) {
         fprintf(stderr, "universe_setup_file_io: failed read with code %d\n", rc);
         return false;
     }
-    
+
     if (0 != strcmp(orte_universe_info.name, univ.name) ||
         0 != strcmp(orte_universe_info.host, univ.host) ||
         0 != strcmp(orte_universe_info.uid, univ.uid) ||
@@ -108,6 +108,6 @@ static bool test2(void)
         fprintf(stderr, "universe_setup_file_io: read mismatch\n");
         return false;
     }
-    
+
     return true;
 }

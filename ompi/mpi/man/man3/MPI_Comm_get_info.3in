@@ -35,16 +35,16 @@ info_used
 New info object returned with all active hints on this communicator.
 .TP 1i
 IERROR
-Fortran only: Error status (integer). 
+Fortran only: Error status (integer).
 .
 .SH DESCRIPTION
 .ft R
 MPI_Comm_get_info returns a new info object containing the hints of
-the communicator associated with 
-.IR comm . 
+the communicator associated with
+.IR comm .
 The current setting of all hints actually used by the system related
-to this communicator is returned in 
-.IR info_used . 
+to this communicator is returned in
+.IR info_used .
 If no such hints exist, a handle to a newly created info object is
 returned that contains no key/value pair. The user is responsible for
 freeing info_used via MPI_Info_free.

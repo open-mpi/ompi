@@ -5,15 +5,15 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2010      Sandia National Laboratories.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -37,7 +37,7 @@ static int
 ompi_mtl_portals4_recv_block_progress(ptl_event_t *ev,
                                      ompi_mtl_portals4_base_request_t* ptl_base_request)
 {
-    ompi_mtl_portals4_recv_short_request_t *ptl_request = 
+    ompi_mtl_portals4_recv_short_request_t *ptl_request =
         (ompi_mtl_portals4_recv_short_request_t*) ptl_base_request;
     ompi_mtl_portals4_recv_short_block_t *block = ptl_request->block;
 
@@ -154,7 +154,7 @@ ompi_mtl_portals4_recv_block_progress(ptl_event_t *ev,
 }
 
 
-static ompi_mtl_portals4_recv_short_block_t* 
+static ompi_mtl_portals4_recv_short_block_t*
 ompi_mtl_portals4_recv_short_block_alloc(bool release_on_free)
 {
     ompi_mtl_portals4_recv_short_block_t *block;
@@ -208,9 +208,9 @@ ompi_mtl_portals4_activate_block(ompi_mtl_portals4_recv_short_block_t *block)
     me.ct_handle = PTL_CT_NONE;
     me.min_free = ompi_mtl_portals4.eager_limit;
     me.uid = ompi_mtl_portals4.uid;
-    me.options = 
-        PTL_ME_OP_PUT | 
-        PTL_ME_MANAGE_LOCAL | 
+    me.options =
+        PTL_ME_OP_PUT |
+        PTL_ME_MANAGE_LOCAL |
         PTL_ME_MAY_ALIGN;
     if (ompi_mtl_portals4.use_logical) {
         me.match_id.rank = PTL_RANK_ANY;
@@ -251,7 +251,7 @@ ompi_mtl_portals4_recv_short_init(void)
 
     /* create the recv blocks */
     for (i = 0 ; i < ompi_mtl_portals4.recv_short_num ; ++i) {
-        ompi_mtl_portals4_recv_short_block_t *block = 
+        ompi_mtl_portals4_recv_short_block_t *block =
             ompi_mtl_portals4_recv_short_block_alloc(false);
         if (OPAL_UNLIKELY(NULL == block)) {
             return OMPI_ERR_OUT_OF_RESOURCE;
@@ -272,7 +272,7 @@ ompi_mtl_portals4_recv_short_fini(void)
 
     OPAL_THREAD_LOCK(&ompi_mtl_portals4.short_block_mutex);
     while (NULL !=  (item = opal_list_remove_first(&ompi_mtl_portals4.recv_short_blocks))) {
-        ompi_mtl_portals4_recv_short_block_t *block = 
+        ompi_mtl_portals4_recv_short_block_t *block =
             (ompi_mtl_portals4_recv_short_block_t*) item;
         ompi_mtl_portals4_recv_short_block_free(block);
     }
@@ -290,7 +290,7 @@ ompi_mtl_portals4_recv_short_link(int count)
 
     if (active < count) {
         for (i = 0 ; i < (count - active) ; ++i) {
-            ompi_mtl_portals4_recv_short_block_t *block = 
+            ompi_mtl_portals4_recv_short_block_t *block =
                 ompi_mtl_portals4_recv_short_block_alloc(false);
             if (NULL == block) {
                 return OMPI_ERR_OUT_OF_RESOURCE;
@@ -298,6 +298,6 @@ ompi_mtl_portals4_recv_short_link(int count)
             ompi_mtl_portals4_activate_block(block);
         }
     }
-    
+
     return OMPI_SUCCESS;
 }

@@ -15,7 +15,7 @@
 # ])
 
 
-# MCA_ompi_bcol_iboffload_CONFIG([action-if-can-compile], 
+# MCA_ompi_bcol_iboffload_CONFIG([action-if-can-compile],
 #                      [action-if-cant-compile])
 # ------------------------------------------------
 AC_DEFUN([MCA_ompi_bcol_iboffload_CONFIG],[

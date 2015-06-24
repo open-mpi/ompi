@@ -37,7 +37,7 @@ endif
 mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_sbgp_ibnet_la_SOURCES = $(sources)
-mca_sbgp_ibnet_la_LDFLAGS = -module -avoid-version $(sbgp_ibnet_LDFLAGS) $(btl_openib_LDFLAGS) 
+mca_sbgp_ibnet_la_LDFLAGS = -module -avoid-version $(sbgp_ibnet_LDFLAGS) $(btl_openib_LDFLAGS)
 mca_sbgp_ibnet_la_LIBADD = $(sbgp_ibnet_LIBS) $(btl_openib_LIBS) \
     $(OMPI_TOP_BUILDDIR)/ompi/mca/common/verbs/libmca_common_verbs.la \
     $(OMPI_TOP_BUILDDIR)/ompi/mca/common/ofacm/libmca_common_ofacm.la

@@ -76,7 +76,7 @@ int mca_btl_ugni_spawn_progress_thread(struct mca_btl_base_module_t *btl)
         goto fn_exit;
     }
 
-    rc = pthread_create(&mca_btl_ugni_progress_thread_id, 
+    rc = pthread_create(&mca_btl_ugni_progress_thread_id,
                         &attr, mca_btl_ugni_prog_thread_fn, (void *)btl);
     if (0 != rc) {
         BTL_ERROR(("btl/ugni pthread_create returned %s ",strerror(rc)));

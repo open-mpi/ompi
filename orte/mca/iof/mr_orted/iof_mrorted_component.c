@@ -4,9 +4,9 @@
  *                         reserved.
  *
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -76,7 +76,7 @@ static int mr_orted_query(mca_base_module_t **module, int *priority)
         *module = (mca_base_module_t *) &orte_iof_mrorted_module;
         return ORTE_SUCCESS;
     }
-        
+
     *priority = -1;
     *module = NULL;
     return ORTE_ERROR;

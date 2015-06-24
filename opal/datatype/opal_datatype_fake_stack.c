@@ -176,7 +176,7 @@ int opal_convertor_create_stack_with_pos_general( opal_convertor_t* pConvertor,
                 int32_t cnt = (int32_t)(resting_place / basic_type->size);
                 loop_length += (cnt * basic_type->size);
                 resting_place -= (cnt * basic_type->size);
-                PUSH_STACK( pStack, pConvertor->stack_pos, pos_desc, pElems->elem.common.type, 
+                PUSH_STACK( pStack, pConvertor->stack_pos, pos_desc, pElems->elem.common.type,
                             pElems->elem.count - cnt,
                             pElems->elem.disp + cnt * pElems->elem.extent );
                 pConvertor->bConverted = starting_point - resting_place;

@@ -11,21 +11,21 @@ dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2006 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2006-2012 Los Alamos National Security, LLC.  All rights
-dnl                         reserved. 
+dnl                         reserved.
 dnl Copyright (c) 2007-2012 Oracle and/or its affiliates.  All rights reserved.
 dnl Copyright (c) 2008-2013 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2015      Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
 dnl $COPYRIGHT$
-dnl 
+dnl
 dnl Additional copyrights may follow
-dnl 
+dnl
 dnl $HEADER$
 dnl
 
 # This macro is necessary to get the title to be displayed first.  :-)
 AC_DEFUN([ORTE_SETUP_JAVA_BANNER],[
-    opal_show_subtitle "Java compiler" 
+    opal_show_subtitle "Java compiler"
 ])
 
 # ORTE_SETUP_JAVA()
@@ -99,7 +99,7 @@ AC_DEFUN([ORTE_SETUP_JAVA],[
                AS_IF([test -d $dir],
                      [AC_MSG_RESULT([found])
                       found=1
-                      with_jdk_headers=$dir 
+                      with_jdk_headers=$dir
                       with_jdk_bindir=/usr/bin],
                      [AC_MSG_RESULT([not found])])
 
@@ -112,7 +112,7 @@ AC_DEFUN([ORTE_SETUP_JAVA],[
                    fi
                    jnih=`ls $dir/jni.h 2>/dev/null | head -n 1`
                    AC_MSG_CHECKING([Linux locations])
-                   AS_IF([test -r "$jnih"], 
+                   AS_IF([test -r "$jnih"],
                          [with_jdk_headers=`dirname $jnih`
                           OPAL_WHICH([javac], [with_jdk_bindir])
                           AS_IF([test -n "$with_jdk_bindir"],
@@ -122,7 +122,7 @@ AC_DEFUN([ORTE_SETUP_JAVA],[
                                 [with_jdk_headers=])],
                          [dir='/usr/lib/jvm/default-java/include/'
                           jnih=`ls $dir/jni.h 2>/dev/null | head -n 1`
-                          AS_IF([test -r "$jnih"], 
+                          AS_IF([test -r "$jnih"],
                                 [with_jdk_headers=`dirname $jnih`
                                  OPAL_WHICH([javac], [with_jdk_bindir])
                                  AS_IF([test -n "$with_jdk_bindir"],
@@ -187,7 +187,7 @@ AC_DEFUN([ORTE_SETUP_JAVA],[
                                 [ORTE_JDK_CPPFLAGS="$ORTE_JDK_CPPFLAGS -I$with_jdk_headers/solaris"])
 
                           CPPFLAGS="$CPPFLAGS $ORTE_JDK_CPPFLAGS"])
-                   AC_CHECK_HEADER([jni.h], [], 
+                   AC_CHECK_HEADER([jni.h], [],
                                    [orte_java_happy=no])
                    CPPFLAGS=$CPPFLAGS_save
                   ])

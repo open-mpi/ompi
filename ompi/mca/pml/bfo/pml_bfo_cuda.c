@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2008 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -13,9 +13,9 @@
  * Copyright (c) 2010-2012 Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2012      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -23,7 +23,7 @@
 #include "ompi_config.h"
 #include "opal/prefetch.h"
 #include "opal/mca/btl/btl.h"
-#include "opal/mca/mpool/mpool.h" 
+#include "opal/mca/mpool/mpool.h"
 #include "ompi/constants.h"
 #include "ompi/mca/pml/pml.h"
 #include "pml_bfo.h"
@@ -88,7 +88,7 @@ int mca_pml_bfo_send_request_start_cuda(mca_pml_bfo_send_request_t* sendreq,
     return rc;
 }
 
-    
+
 
 size_t mca_pml_bfo_rdma_cuda_btls(
     mca_bml_base_endpoint_t* bml_endpoint,
@@ -105,7 +105,7 @@ size_t mca_pml_bfo_rdma_cuda_btls(
         return 0;
     }
 
-    /* check to see if memory is registered */        
+    /* check to see if memory is registered */
     for(n = 0; n < num_btls && num_btls_used < mca_pml_bfo.max_rdma_per_request;
             n++) {
         mca_bml_base_btl_t* bml_btl =
@@ -143,7 +143,7 @@ size_t mca_pml_bfo_rdma_cuda_btls(
 }
 
 int mca_pml_bfo_cuda_need_buffers(void * rreq,
-                                  mca_btl_base_module_t* btl) 
+                                  mca_btl_base_module_t* btl)
 {
     mca_pml_bfo_recv_request_t* recvreq = (mca_pml_bfo_recv_request_t*)rreq;
     if ((recvreq->req_recv.req_base.req_convertor.flags & CONVERTOR_CUDA) &&

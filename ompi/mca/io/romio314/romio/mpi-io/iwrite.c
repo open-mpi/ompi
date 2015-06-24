@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -118,7 +118,7 @@ int MPIOI_File_iwrite(MPI_File fh,
 
     ADIOI_Datatype_iscontig(datatype, &buftype_is_contig);
     ADIOI_Datatype_iscontig(adio_fh->filetype, &filetype_is_contig);
-    
+
     ADIOI_TEST_DEFERRED(adio_fh, myname, &error_code);
 
     if (buftype_is_contig && filetype_is_contig) {
@@ -144,7 +144,7 @@ int MPIOI_File_iwrite(MPI_File fh,
 	    }
 
             ADIO_WriteContig(adio_fh, buf, count, datatype, file_ptr_type, off,
-			     &status, &error_code);  
+			     &status, &error_code);
 
 	    if (ADIO_Feature(adio_fh, ADIO_LOCKS) )
 	    {
@@ -153,7 +153,7 @@ int MPIOI_File_iwrite(MPI_File fh,
 	    if (error_code == MPI_SUCCESS) {
 		nbytes = count * datatype_size;
 	    }
-	    
+
 	    MPIO_Completed_request_create(&adio_fh, nbytes, &error_code, request);
 	}
     }

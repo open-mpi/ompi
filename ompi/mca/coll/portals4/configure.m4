@@ -2,9 +2,9 @@
 #
 # Copyright (c) 2013      Sandia National Laboratories.  All rights reserved.
 # $COPYRIGHT$
-# 
+#
 # Additional copyrights may follow
-# 
+#
 # $HEADER$
 #
 
@@ -15,7 +15,7 @@ AC_DEFUN([MCA_ompi_coll_portals4_POST_CONFIG], [
     AS_IF([test "$1" = "1"], [OMPI_REQUIRE_ENDPOINT_TAG([PORTALS4])])
 ])dnl
 
-# MCA_coll_portals4_CONFIG(action-if-can-compile, 
+# MCA_coll_portals4_CONFIG(action-if-can-compile,
 #                        [action-if-cant-compile])
 # ------------------------------------------------
 AC_DEFUN([MCA_ompi_coll_portals4_CONFIG],[

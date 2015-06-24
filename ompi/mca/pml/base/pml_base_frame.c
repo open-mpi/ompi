@@ -6,7 +6,7 @@
  * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2007 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2007 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -16,9 +16,9 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -50,7 +50,7 @@
 
 #include "ompi/mca/pml/base/static-components.h"
 
-int mca_pml_base_progress(void) 
+int mca_pml_base_progress(void)
 {
     return OMPI_SUCCESS;
 }
@@ -125,7 +125,7 @@ int mca_pml_base_finalize(void) {
   return OMPI_SUCCESS;
 }
 
-     
+
 static int mca_pml_base_close(void)
 {
     int i, j;
@@ -148,7 +148,7 @@ static int mca_pml_base_close(void)
     OBJ_DESTRUCT(&mca_pml_base_recv_requests);
 
     mca_pml.pml_progress = mca_pml_base_progress;
-    
+
     /* Free all the strings in the array */
     j = opal_pointer_array_get_size(&mca_pml_base_pml);
     for (i = 0; i < j; ++i) {
@@ -182,7 +182,7 @@ static int mca_pml_base_open(mca_base_open_flag_t flags)
 
     /* Open up all available components */
 
-    if (OPAL_SUCCESS != 
+    if (OPAL_SUCCESS !=
         mca_base_framework_components_open(&ompi_pml_base_framework, flags)) {
         return OMPI_ERROR;
     }
@@ -196,7 +196,7 @@ static int mca_pml_base_open(mca_base_open_flag_t flags)
      * Right now our selection of BTLs is completely broken. If we have
      * multiple PMLs that use BTLs than we will open all BTLs several times, leading to
      * undefined behaviors. The simplest solution, at least until we
-     * figure out the correct way to do it, is to force a default PML that 
+     * figure out the correct way to do it, is to force a default PML that
      * uses BTLs and any other PMLs that do not in the mca_pml_base_pml array.
      */
 
@@ -213,7 +213,7 @@ static int mca_pml_base_open(mca_base_open_flag_t flags)
 
         if( (NULL == default_pml || NULL == default_pml[0] ||
              0 == strlen(default_pml[0])) || (default_pml[0][0] == '^') ) {
-            opal_pointer_array_add(&mca_pml_base_pml, strdup("ob1")); 
+            opal_pointer_array_add(&mca_pml_base_pml, strdup("ob1"));
             opal_pointer_array_add(&mca_pml_base_pml, strdup("yalla"));
             opal_pointer_array_add(&mca_pml_base_pml, strdup("cm"));
         } else {
@@ -221,7 +221,7 @@ static int mca_pml_base_open(mca_base_open_flag_t flags)
         }
     }
 #if OPAL_ENABLE_FT_CR == 1
-    /* 
+    /*
      * Which PML Wrapper component to use, if any
      *  - NULL or "" = No wrapper
      *  - ow. select that specific wrapper component

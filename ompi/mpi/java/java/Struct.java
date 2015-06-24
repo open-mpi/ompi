@@ -5,14 +5,14 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -64,7 +64,7 @@ private void createStruct() throws MPIException
 /**
  * Returns the extent of the struct data type.
  * @return Extent of the struct data type.
- * @throws MPIException 
+ * @throws MPIException
  */
 public final int getExtent() throws MPIException
 {
@@ -75,7 +75,7 @@ public final int getExtent() throws MPIException
 /**
  * Returns the data type of the struct.
  * @return The data type of the struct.
- * @throws MPIException 
+ * @throws MPIException
  */
 public final Datatype getType() throws MPIException
 {
@@ -102,7 +102,7 @@ private <T extends Data> T newData(ByteBuffer buffer, int offset)
  * Gets a Data object in order to access to the buffer.
  * @param buffer the Data object will read/write on this buffer.
  * @return Data object
- * @throws MPIException 
+ * @throws MPIException
  */
 public final <T extends Data> T getData(ByteBuffer buffer) throws MPIException
 {
@@ -116,7 +116,7 @@ public final <T extends Data> T getData(ByteBuffer buffer) throws MPIException
  * @param buffer The Data object will read/write on this buffer.
  * @param index  Index of the struct in the buffer.
  * @return Data object.
- * @throws MPIException 
+ * @throws MPIException
  */
 public final <T extends Data> T getData(ByteBuffer buffer, int index)
     throws MPIException
@@ -129,7 +129,7 @@ public final <T extends Data> T getData(ByteBuffer buffer, int index)
  * Gets a Data object in order to access to the byte array.
  * @param array The Data object will read/write on this byte array.
  * @return Data object.
- * @throws MPIException 
+ * @throws MPIException
  */
 public final <T extends Data> T getData(byte[] array) throws MPIException
 {
@@ -144,7 +144,7 @@ public final <T extends Data> T getData(byte[] array) throws MPIException
  * @param array The Data object will read/write on this byte array.
  * @param index Index of the struct in the array.
  * @return Data object.
- * @throws MPIException 
+ * @throws MPIException
  */
 public final <T extends Data> T getData(byte[] array, int index)
     throws MPIException
@@ -335,7 +335,7 @@ public final int addStruct(Struct struct) throws MPIException
  * @param struct Type of the array.
  * @param length Length of the array.
  * @return Offset of the new field.
- * @throws MPIException 
+ * @throws MPIException
  */
 public final int addStruct(Struct struct, int length) throws MPIException
 {
@@ -347,7 +347,7 @@ public final int addStruct(Struct struct, int length) throws MPIException
  * Adds a field of the specified data type.
  * @param type Data type.
  * @return Offset of the new field.
- * @throws MPIException 
+ * @throws MPIException
  */
 public final int addData(Datatype type) throws MPIException
 {
@@ -359,7 +359,7 @@ public final int addData(Datatype type) throws MPIException
  * @param type Data type.
  * @param length Length of the array.
  * @return Offset of the new field.
- * @throws MPIException 
+ * @throws MPIException
  */
 public final int addData(Datatype type, int length) throws MPIException
 {
@@ -745,7 +745,7 @@ public abstract class Data
      * @param struct Struct type.
      * @param field  Offset of the struct array.
      * @param index  Index of the struct in the array.
-     * @return Struct data. 
+     * @return Struct data.
      */
     protected final <S extends Struct, D extends Struct.Data>
             D getData(S struct, int field, int index)
@@ -776,7 +776,7 @@ public abstract class Data
      * @param field Offset of the buffer array.
      * @param index Index of the buffer in the array.
      * @return Buffer object.
-     * @throws MPIException 
+     * @throws MPIException
      */
     protected final ByteBuffer getBuffer(Datatype type, int field, int index)
         throws MPIException

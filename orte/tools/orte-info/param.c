@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -14,9 +14,9 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -80,9 +80,9 @@ void orte_info_do_params(bool want_all_in, bool want_internal)
     bool found;
     int i;
     bool want_all = false;
-    
+
     orte_info_components_open();
-    
+
     if (want_all_in) {
         want_all = true;
     } else {
@@ -98,8 +98,8 @@ void orte_info_do_params(bool want_all_in, bool want_internal)
             }
         }
     }
-    
-    /* Show the params */    
+
+    /* Show the params */
     if (want_all) {
         for (i = 0; i < mca_types.size; ++i) {
             if (NULL == (type = (char *)opal_pointer_array_get_item(&mca_types, i))) {
@@ -111,7 +111,7 @@ void orte_info_do_params(bool want_all_in, bool want_internal)
         for (i = 0; i < count; ++i) {
             type = opal_cmd_line_get_param(orte_info_cmd_line, "param", (int)i, 0);
             component = opal_cmd_line_get_param(orte_info_cmd_line, "param", (int)i, 1);
-            
+
             for (found = false, i = 0; i < mca_types.size; ++i) {
                 if (NULL == (str = (char *)opal_pointer_array_get_item(&mca_types, i))) {
                     continue;
@@ -121,14 +121,14 @@ void orte_info_do_params(bool want_all_in, bool want_internal)
                     break;
                 }
             }
-            
+
             if (!found) {
                 char *usage = opal_cmd_line_get_usage_msg(orte_info_cmd_line);
                 orte_show_help("help-orte-info.txt", "not-found", true, type);
                 free(usage);
                 exit(1);
             }
-            
+
             orte_info_show_mca_params(type, component, want_internal);
         }
     }
@@ -184,7 +184,7 @@ static void orte_info_show_mca_group_params(const mca_base_var_group_t *group, b
     }
 }
 
-void orte_info_show_mca_params(const char *type, const char *component, 
+void orte_info_show_mca_params(const char *type, const char *component,
                                bool want_internal)
 {
     const mca_base_var_group_t *group;
@@ -214,7 +214,7 @@ void orte_info_do_path(bool want_all, opal_cmd_line_t *cmd_line)
 {
     int i, count;
     char *scope;
-    
+
     /* Check bozo case */
     count = opal_cmd_line_get_ninsts(cmd_line, "path");
     for (i = 0; i < count; ++i) {
@@ -224,7 +224,7 @@ void orte_info_do_path(bool want_all, opal_cmd_line_t *cmd_line)
             break;
         }
     }
-    
+
     if (want_all) {
         orte_info_show_path(orte_info_path_prefix, opal_install_dirs.prefix);
         orte_info_show_path(orte_info_path_exec_prefix, opal_install_dirs.exec_prefix);
@@ -248,7 +248,7 @@ void orte_info_do_path(bool want_all, opal_cmd_line_t *cmd_line)
         count = opal_cmd_line_get_ninsts(cmd_line, "path");
         for (i = 0; i < count; ++i) {
             scope = opal_cmd_line_get_param(cmd_line, "path", i, 0);
-            
+
             if (0 == strcmp(orte_info_path_prefix, scope)) {
                 orte_info_show_path(orte_info_path_prefix, opal_install_dirs.prefix);
             } else if (0 == strcmp(orte_info_path_bindir, scope)) {
@@ -297,10 +297,10 @@ void orte_info_do_path(bool want_all, opal_cmd_line_t *cmd_line)
 void orte_info_show_path(const char *type, const char *value)
 {
     char *pretty, *path;
-    
+
     pretty = strdup(type);
     pretty[0] = toupper(pretty[0]);
-    
+
     asprintf(&path, "path:%s", type);
     orte_info_out(pretty, path, value);
     free(pretty);
@@ -327,8 +327,8 @@ void orte_info_do_hostname()
  *				  FALSE -> display selected options
  *
  * This function displays all the options with which the current
- * installation of orte was configured. There are many options here 
- * that are carried forward from OMPI-7 and are not mca parameters 
+ * installation of orte was configured. There are many options here
+ * that are carried forward from OMPI-7 and are not mca parameters
  * in OMPI-10. I have to dig through the invalid options and replace
  * them with OMPI-10 options.
  */
@@ -344,7 +344,7 @@ void orte_info_do_config(bool want_all)
     char *wtime_support;
     char *symbol_visibility;
     char *ft_support;
-    
+
     /* setup the strings that don't require allocations*/
     heterogeneous = OPAL_ENABLE_HETEROGENEOUS_SUPPORT ? "yes" : "no";
     memprofile = OPAL_ENABLE_MEM_PROFILE ? "yes" : "no";
@@ -354,20 +354,20 @@ void orte_info_do_config(bool want_all)
     orterun_prefix_by_default = ORTE_WANT_ORTERUN_PREFIX_BY_DEFAULT ? "yes" : "no";
     wtime_support = OPAL_TIMER_USEC_NATIVE ? "native" : "gettimeofday";
     symbol_visibility = OPAL_C_HAVE_VISIBILITY ? "yes" : "no";
-    
-    /* setup strings that require allocation */    
-    asprintf(&threads, "%s (OPAL: %s, ORTE progress: yes, Event lib: yes)", 
+
+    /* setup strings that require allocation */
+    asprintf(&threads, "%s (OPAL: %s, ORTE progress: yes, Event lib: yes)",
              "posix",
              OPAL_ENABLE_MULTI_THREADS ? "yes" : "no");
-    
-    asprintf(&ft_support, "%s (checkpoint thread: %s)", 
+
+    asprintf(&ft_support, "%s (checkpoint thread: %s)",
              OPAL_ENABLE_FT ? "yes" : "no", OPAL_ENABLE_FT_THREAD ? "yes" : "no");;
-    
+
     /* output values */
     orte_info_out("Configured by", "config:user", OPAL_CONFIGURE_USER);
     orte_info_out("Configured on", "config:timestamp", OPAL_CONFIGURE_DATE);
     orte_info_out("Configure host", "config:host", OPAL_CONFIGURE_HOST);
-    
+
     orte_info_out("Built by", "build:user", OMPI_BUILD_USER);
     orte_info_out("Built on", "build:timestamp", OMPI_BUILD_DATE);
     orte_info_out("Built host", "build:host", OMPI_BUILD_HOST);
@@ -376,7 +376,7 @@ void orte_info_do_config(bool want_all)
     orte_info_out("C compiler absolute", "compiler:c:absolute", OPAL_CC_ABSOLUTE);
     orte_info_out("C compiler family name", "compiler:c:familyname", _STRINGIFY(OPAL_BUILD_PLATFORM_COMPILER_FAMILYNAME));
     orte_info_out("C compiler version", "compiler:c:version", _STRINGIFY(OPAL_BUILD_PLATFORM_COMPILER_VERSION_STR));
-    
+
     if (want_all) {
         orte_info_out_int("C char size", "compiler:c:sizeof:char", sizeof(char));
         /* JMS: should be fixed in MPI-2.2 to differentiate between C
@@ -399,36 +399,36 @@ void orte_info_do_config(bool want_all)
         orte_info_out_int("C float align", "compiler:c:align:float", OPAL_ALIGNMENT_FLOAT);
         orte_info_out_int("C double align", "compiler:c:align:double", OPAL_ALIGNMENT_DOUBLE);
     }
-    
+
     orte_info_out("Thread support", "option:threads", threads);
 
     if (want_all) {
-        
-        
+
+
         orte_info_out("Build CFLAGS", "option:build:cflags", OMPI_BUILD_CFLAGS);
         orte_info_out("Build LDFLAGS", "option:build:ldflags", OMPI_BUILD_LDFLAGS);
         orte_info_out("Build LIBS", "option:build:libs", OMPI_BUILD_LIBS);
-        
-        orte_info_out("Wrapper extra CFLAGS", "option:wrapper:extra_cflags", 
+
+        orte_info_out("Wrapper extra CFLAGS", "option:wrapper:extra_cflags",
                       WRAPPER_EXTRA_CFLAGS);
-        orte_info_out("Wrapper extra LDFLAGS", "option:wrapper:extra_ldflags", 
+        orte_info_out("Wrapper extra LDFLAGS", "option:wrapper:extra_ldflags",
                       WRAPPER_EXTRA_LDFLAGS);
         orte_info_out("Wrapper extra LIBS", "option:wrapper:extra_libs",
                       WRAPPER_EXTRA_LIBS);
     }
     free(threads);
-    
+
     orte_info_out("Internal debug support", "option:debug", debug);
     orte_info_out("Memory profiling support", "option:mem-profile", memprofile);
     orte_info_out("Memory debugging support", "option:mem-debug", memdebug);
     orte_info_out("dl support", "option:dlopen", have_dl);
     orte_info_out("Heterogeneous support", "options:heterogeneous", heterogeneous);
-    orte_info_out("orterun default --prefix", "orterun:prefix_by_default", 
+    orte_info_out("orterun default --prefix", "orterun:prefix_by_default",
                   orterun_prefix_by_default);
     orte_info_out("MPI_WTIME support", "options:mpi-wtime", wtime_support);
     orte_info_out("Symbol vis. support", "options:visibility", symbol_visibility);
-    
+
     orte_info_out("FT Checkpoint support", "options:ft_support", ft_support);
     free(ft_support);
-    
+
 }

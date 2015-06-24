@@ -3,9 +3,9 @@
 #			  Use is subject to license terms.
 #
 # $COPYRIGHT$
-# 
+#
 # Additional copyrights may follow
-# 
+#
 # $HEADER$
 #
 

@@ -5,15 +5,15 @@
  * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2015 University of Houston. All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -45,23 +45,23 @@ OMPI_MODULE_DECLSPEC extern mca_fs_base_component_2_0_0_t mca_fs_lustre_componen
  * ******************************************************************
  * ********* functions which are implemented in this module *********
  * ******************************************************************
- */ 
+ */
 
-int mca_fs_lustre_file_open (struct ompi_communicator_t *comm, 
-                             char *filename, 
+int mca_fs_lustre_file_open (struct ompi_communicator_t *comm,
+                             char *filename,
                              int amode,
-                             struct ompi_info_t *info, 
+                             struct ompi_info_t *info,
                              mca_io_ompio_file_t *fh);
 
 int mca_fs_lustre_file_close (mca_io_ompio_file_t *fh);
-    
+
 int mca_fs_lustre_file_delete (char *filename,
                                struct ompi_info_t *info);
 
 int mca_fs_lustre_file_set_size (mca_io_ompio_file_t *fh,
                                  OMPI_MPI_OFFSET_TYPE size);
 
-int mca_fs_lustre_file_get_size (mca_io_ompio_file_t *fh, 
+int mca_fs_lustre_file_get_size (mca_io_ompio_file_t *fh,
                                  OMPI_MPI_OFFSET_TYPE *size);
 
 int mca_fs_lustre_file_sync (mca_io_ompio_file_t *fh);
@@ -73,8 +73,8 @@ int mca_fs_lustre_file_seek (mca_io_ompio_file_t *fh,
  * ******************************************************************
  * ************ functions implemented in this module end ************
  * ******************************************************************
- */ 
-                                     
+ */
+
 END_C_DECLS
 
 #endif /* MCA_FS_LUSTRE_H */

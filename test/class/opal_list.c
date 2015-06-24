@@ -5,15 +5,15 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2014 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -253,7 +253,7 @@ int main(int argc, char **argv)
         indx=1;
     assert(2 <= size_elements);
     ele = (test_data_t *)NULL;
-    ele = (test_data_t *) 
+    ele = (test_data_t *)
         opal_list_remove_item(&list,(opal_list_item_t *)(elements+indx));
     assert(ele);
     if( (indx-1) == ele->data ) {
@@ -315,7 +315,7 @@ int main(int argc, char **argv)
 
     /* test the splice and join functions  */
     list_size = opal_list_get_size(&list);
-    for (i = 0, item = opal_list_get_first(&list) ; 
+    for (i = 0, item = opal_list_get_first(&list) ;
          i < list_size / 2 ; ++i, item = opal_list_get_next(item)) {
     }
     opal_list_splice(&x, opal_list_get_end(&x),

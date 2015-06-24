@@ -7,8 +7,8 @@
  */
 
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
-/* 
- *   Copyright (C) 1997-2001 University of Chicago. 
+/*
+ *   Copyright (C) 1997-2001 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -46,14 +46,14 @@
  *
  * The last three of these were originally in ad_read_coll.c, but they are
  * also shared with ad_write_coll.c.  I felt that they were better kept with
- * the rest of the shared aggregation code.  
+ * the rest of the shared aggregation code.
  */
 
 /* Discussion of values available from above:
  *
  * ADIO_Offset st_offsets[0..nprocs-1]
  * ADIO_Offset end_offsets[0..nprocs-1]
- *    These contain a list of start and end offsets for each process in 
+ *    These contain a list of start and end offsets for each process in
  *    the communicator.  For example, an access at loc 10, size 10 would
  *    have a start offset of 10 and end offset of 19.
  * int nprocs
@@ -63,26 +63,26 @@
  *    starting location of "file domain"; region that a given process will
  *    perform aggregation for (i.e. actually do I/O)
  * ADIO_Offset fd_end[0..nprocs_for_coll-1]
- *    start + size - 1 roughly, but it can be less, or 0, in the case of 
+ *    start + size - 1 roughly, but it can be less, or 0, in the case of
  *    uneven distributions
  */
 
 /* forward declaration */
-static void 
-ADIOI_BG_compute_agg_ranklist_serial ( ADIO_File fd, 
-					const ADIOI_BG_ConfInfo_t *confInfo, 
+static void
+ADIOI_BG_compute_agg_ranklist_serial ( ADIO_File fd,
+					const ADIOI_BG_ConfInfo_t *confInfo,
 					ADIOI_BG_ProcInfo_t *all_procInfo);
 
 /*
  * Compute the aggregator-related parameters that are required in 2-phase collective IO of ADIO.
- * The parameters are 
+ * The parameters are
  * 	. the number of aggregators (proxies) : fd->hints->cb_nodes
  *	. the ranks of the aggregators :        fd->hints->ranklist
- * By compute these two parameters in a BG-PSET-aware way, the default 2-phase collective IO of 
+ * By compute these two parameters in a BG-PSET-aware way, the default 2-phase collective IO of
  *	ADIO can work more efficiently.
  */
-int 
-ADIOI_BG_gen_agg_ranklist(ADIO_File fd, int n_aggrs_per_pset) 
+int
+ADIOI_BG_gen_agg_ranklist(ADIO_File fd, int n_aggrs_per_pset)
 {
     int r, s;
     ADIOI_BG_ProcInfo_t  *procInfo, *all_procInfo;
@@ -101,13 +101,13 @@ ADIOI_BG_gen_agg_ranklist(ADIO_File fd, int n_aggrs_per_pset)
     /* if (r == 0) */
     all_procInfo  = ADIOI_BG_ProcInfo_new_n  (s);
 
-    MPI_Gather( (void *)procInfo,     sizeof(ADIOI_BG_ProcInfo_t), MPI_BYTE, 
-		(void *)all_procInfo, sizeof(ADIOI_BG_ProcInfo_t), MPI_BYTE, 
-		0, 
+    MPI_Gather( (void *)procInfo,     sizeof(ADIOI_BG_ProcInfo_t), MPI_BYTE,
+		(void *)all_procInfo, sizeof(ADIOI_BG_ProcInfo_t), MPI_BYTE,
+		0,
 		fd->comm );
 
   /* Compute a list of the ranks of chosen IO proxy CN on process 0 */
-    if (r == 0) { 
+    if (r == 0) {
 	ADIOI_BG_compute_agg_ranklist_serial (fd, confInfo, all_procInfo);
 	/* ADIOI_BG_ProcInfo_free (all_procInfo);*/
     }
@@ -156,7 +156,7 @@ ADIOI_BG_gen_agg_ranklist(ADIO_File fd, int n_aggrs_per_pset)
 /* Maybe find which bridge node is closer (manhattan distance) and try to
  * distribute evenly.
  */
-/* 
+/*
  * Pick IO aggregators based on the under PSET organization and stores the ranks of the proxy CNs in tmp_ranklist.
  * The first order of tmp_ranklist is : PSET number
  * The secondary order of the list is determined in ADIOI_BG_select_agg_in_pset() and thus adjustable.
@@ -181,9 +181,9 @@ static int intsort(const void *p1, const void *p2)
    return(i1->bridge - i2->bridge);
 }
 
-static int 
-ADIOI_BG_compute_agg_ranklist_serial_do (const ADIOI_BG_ConfInfo_t *confInfo, 
-					  ADIOI_BG_ProcInfo_t       *all_procInfo, 
+static int
+ADIOI_BG_compute_agg_ranklist_serial_do (const ADIOI_BG_ConfInfo_t *confInfo,
+					  ADIOI_BG_ProcInfo_t       *all_procInfo,
 					  int *tmp_ranklist)
 {
     TRACE_ERR("Entering ADIOI_BG_compute_agg_ranklist_serial_do\n");
@@ -313,7 +313,7 @@ ADIOI_BG_compute_agg_ranklist_serial_do (const ADIOI_BG_ConfInfo_t *confInfo,
       bridgelist[i].rank = i;
       TRACE_ERR("bridgelist[%d].bridge: %d .rank: %d\n", i, bridgelist[i].bridge, i);
    }
-   
+
    /* This list contains rank->bridge info. Now, we need to sort this list. */
    qsort(bridgelist, confInfo->nProcs, sizeof(sortstruct), intsort);
 
@@ -324,7 +324,7 @@ ADIOI_BG_compute_agg_ranklist_serial_do (const ADIOI_BG_ConfInfo_t *confInfo,
    if(numAggs == 1)
       aggTotal = 1;
    else
-   /* the number of aggregators is (numAggs per bridgenode) plus each 
+   /* the number of aggregators is (numAggs per bridgenode) plus each
     * bridge node is an aggregator */
       aggTotal = confInfo->numBridgeRanks * (numAggs+1);
 
@@ -350,7 +350,7 @@ ADIOI_BG_compute_agg_ranklist_serial_do (const ADIOI_BG_ConfInfo_t *confInfo,
        if(lastBridge == bridgelist[procIndex].bridge)
        {
          psetSize++;
-         if(procIndex) continue; 
+         if(procIndex) continue;
          else procIndex--;/* procIndex == 0 */
        }
        /* Sets up a list of nodes which will act as aggregators. numAggs
@@ -377,7 +377,7 @@ ADIOI_BG_compute_agg_ranklist_serial_do (const ADIOI_BG_ConfInfo_t *confInfo,
            aggList[nextAggr] = bridgelist[procIndex+j*distance+1].rank;
            TRACE_ERR("agglist[%d] -> bridgelist[%d] = %d\n", nextAggr, procIndex+j*distance+1,aggList[nextAggr]);
            if(aggList[nextAggr]==lastBridge) /* can't have bridge in the list twice */
-           {  
+           {
              aggList[nextAggr] = bridgelist[procIndex+psetSize].rank; /* take the last one in the pset */
              TRACE_ERR("replacement agglist[%d] -> bridgelist[%d] = %d\n", nextAggr, procIndex+psetSize,aggList[nextAggr]);
            }
@@ -409,17 +409,17 @@ ADIOI_BG_compute_agg_ranklist_serial_do (const ADIOI_BG_ConfInfo_t *confInfo,
 
 }
 
-/* 
+/*
  * compute aggregators ranklist and put it into fd->hints struct
- */ 
-static void 
-ADIOI_BG_compute_agg_ranklist_serial ( ADIO_File fd, 
-					const ADIOI_BG_ConfInfo_t *confInfo, 
+ */
+static void
+ADIOI_BG_compute_agg_ranklist_serial ( ADIO_File fd,
+					const ADIOI_BG_ConfInfo_t *confInfo,
 					ADIOI_BG_ProcInfo_t *all_procInfo)
 {
     TRACE_ERR("Entering ADIOI_BG_compute_agg_ranklist_serial\n");
-    int i; 
-    int naggs; 
+    int i;
+    int naggs;
     int size;
     int *tmp_ranklist;
 
@@ -432,12 +432,12 @@ ADIOI_BG_compute_agg_ranklist_serial ( ADIO_File fd,
     }
 #   endif
 
-    naggs= 
+    naggs=
     ADIOI_BG_compute_agg_ranklist_serial_do (confInfo, all_procInfo, tmp_ranklist);
 
 #   define VERIFY 1
 #   if VERIFY
-    DBG_FPRINTF(stderr, "\tconfInfo = min: %3d, max: %3d, naggrs: %3d, bridge: %3d, nprocs: %3d, vpset: %3d, tsize: %3d, ratio: %.4f; naggs = %d\n", 
+    DBG_FPRINTF(stderr, "\tconfInfo = min: %3d, max: %3d, naggrs: %3d, bridge: %3d, nprocs: %3d, vpset: %3d, tsize: %3d, ratio: %.4f; naggs = %d\n",
 	    confInfo->ioMinSize        ,
 	    confInfo->ioMaxSize        ,
 	    confInfo->nAggrs           ,
@@ -462,7 +462,7 @@ ADIOI_BG_compute_agg_ranklist_serial ( ADIO_File fd,
          tmp_ranklist[i] = 0;
       }
    }
-         
+
 #   if AGG_DEBUG
     for (i=0; i<naggs; i++) {
       DBG_FPRINTF(stderr, "\taggr %-4d = %6d\n", i, tmp_ranklist[i] );

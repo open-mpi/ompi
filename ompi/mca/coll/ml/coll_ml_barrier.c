@@ -41,7 +41,7 @@ static int mca_coll_ml_barrier_launch(mca_coll_ml_module_t *ml_module,
     opal_free_list_item_t *item;
     mca_coll_ml_collective_operation_progress_t *coll_op;
     mca_bcol_base_payload_buffer_desc_t *src_buffer_desc = NULL;
-    
+
     /* allocate an ml buffer for signaling purposes */
     src_buffer_desc = mca_coll_ml_alloc_buffer(ml_module);
 
@@ -50,7 +50,7 @@ static int mca_coll_ml_barrier_launch(mca_coll_ml_module_t *ml_module,
         src_buffer_desc = mca_coll_ml_alloc_buffer(ml_module);
     }
 
-    
+
     /* Blocking call on fragment allocation (Maybe we want to make it non blocking ?) */
     item = opal_free_list_wait (&(ml_module->coll_ml_collective_descriptors));
 

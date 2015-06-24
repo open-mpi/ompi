@@ -20,13 +20,13 @@ int main(int argc, char *argv[])
     unsigned int bytes = 0;
     int reader = 0;
     char *junk;
-    
+
     if (2 == argc) {
         /* a reader was specified */
         reader = strtol(argv[1], NULL, 10);
         fprintf(stderr, "reading from %d\n", reader);
     }
-    
+
     MPI_Init(NULL, NULL);
     MPI_Comm_rank(MPI_COMM_WORLD, &self);
     MPI_Comm_size(MPI_COMM_WORLD, &size);

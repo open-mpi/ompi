@@ -6,9 +6,9 @@
  *                         reserved.
  *                         Corporation.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 /**
@@ -200,7 +200,7 @@ typedef int (*orte_sstore_base_module_finalize_fn_t)
  * @param handle Checkpoint storage handle
  * @param key Key to use as an identifier
  * @param value Value of the key specified
- * 
+ *
  * @return ORTE_SUCCESS on success
  * @return ORTE_ERROR on failure
  */
@@ -214,7 +214,7 @@ typedef int (*orte_sstore_base_request_checkpoint_handle_fn_t)
  * If they key is NULL, then the latest entry will be used.
  *
  * @param handle Restart storage handle
- * 
+ *
  * @return ORTE_SUCCESS on success
  * @return ORTE_ERROR on failure
  */
@@ -228,7 +228,7 @@ typedef int (*orte_sstore_base_request_restart_handle_fn_t)
  * If they key is NULL, then the latest entry will be used.
  *
  * @param handle Restart storage handle
- * 
+ *
  * @return ORTE_SUCCESS on success
  * @return ORTE_ERROR on failure
  */
@@ -240,7 +240,7 @@ typedef int (*orte_sstore_base_request_global_snapshot_data_fn_t)
  * Register access to a handle.
  *
  * @param handle Storage handle
- * 
+ *
  * @return ORTE_SUCCESS on success
  * @return ORTE_ERROR on failure
  */
@@ -266,7 +266,7 @@ typedef int (*orte_sstore_base_get_attribute_fn_t)
  * @param handle Storage handle
  * @param key Key to set
  * @param value Value of the key.
- * 
+ *
  * @return ORTE_SUCCESS on success
  * @return ORTE_ERROR on failure
  */
@@ -277,7 +277,7 @@ typedef int (*orte_sstore_base_set_attribute_fn_t)
  * Synchronize the handle
  *
  * @param handle Storage handle
- * 
+ *
  * @return ORTE_SUCCESS on success
  * @return ORTE_ERROR on failure
  */
@@ -288,7 +288,7 @@ typedef int (*orte_sstore_base_sync_fn_t)
  * Remove data associated with the handle
  *
  * @param handle Storage handle
- * 
+ *
  * @return ORTE_SUCCESS on success
  * @return ORTE_ERROR on failure
  */
@@ -302,7 +302,7 @@ typedef int (*orte_sstore_base_remove_fn_t)
  * @param peer Peer to which this is being sent (or NULL if to all peers)
  * @param buffer Buffer to pack the data into
  * @param handle Storage handle
- * 
+ *
  * @return ORTE_SUCCESS on success
  * @return ORTE_ERROR on failure
  */
@@ -316,7 +316,7 @@ typedef int (*orte_sstore_base_pack_fn_t)
  * @param peer Peer from which this was received
  * @param buffer Buffer to unpack the data
  * @param handle Storage handle
- * 
+ *
  * @return ORTE_SUCCESS on success
  * @return ORTE_ERROR on failure
  */
@@ -327,7 +327,7 @@ typedef int (*orte_sstore_base_unpack_fn_t)
  * Fetch application context dependencies before local launch
  *
  * @param app Application context
- * 
+ *
  * @return ORTE_SUCCESS on success
  * @return ORTE_ERROR on failure
  */

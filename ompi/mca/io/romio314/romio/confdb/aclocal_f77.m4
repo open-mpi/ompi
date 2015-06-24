@@ -13,7 +13,7 @@ PAC_POP_FLAG([FFLAGS])
 dnl
 dnl/*D
 dnl PAC_PROG_F77_NAME_MANGLE - Determine how the Fortran compiler mangles
-dnl names 
+dnl names
 dnl
 dnl Synopsis:
 dnl PAC_PROG_F77_NAME_MANGLE([action])
@@ -31,20 +31,20 @@ dnl   mixed -> mixed_                 F77_NAME_MIXED_USCORE
 dnl   mixed -> UPPER@STACK_SIZE       F77_NAME_UPPER_STDCALL
 dnl.ve
 dnl If an action is specified, it is executed instead.
-dnl 
+dnl
 dnl Notes:
 dnl We assume that if lower -> lower (any underscore), upper -> upper with the
-dnl same underscore behavior.  Previous versions did this by 
-dnl compiling a Fortran program and running strings -a over it.  Depending on 
-dnl strings is a bad idea, so instead we try compiling and linking with a 
+dnl same underscore behavior.  Previous versions did this by
+dnl compiling a Fortran program and running strings -a over it.  Depending on
+dnl strings is a bad idea, so instead we try compiling and linking with a
 dnl C program, since that is why we are doing this anyway.  A similar approach
-dnl is used by FFTW, though without some of the cases we check (specifically, 
+dnl is used by FFTW, though without some of the cases we check (specifically,
 dnl mixed name mangling).  STD_CALL not only specifies a particular name
 dnl mangling convention (adding the size of the calling stack into the function
 dnl name, but also the stack management convention (callee cleans the stack,
 dnl and arguments are pushed onto the stack from right to left)
 dnl
-dnl One additional problem is that some Fortran implementations include 
+dnl One additional problem is that some Fortran implementations include
 dnl references to the runtime (like pgf90_compiled for the pgf90 compiler
 dnl used as the "Fortran 77" compiler).  This is not yet solved.
 dnl
@@ -104,7 +104,7 @@ if test  "$pac_found" != "yes" ; then
                     AC_LANG_PROGRAM([],[      call my_name(0)])
                 ],[
                     pac_found=yes
-                ]) 
+                ])
                 AC_LANG_POP([Fortran 77])
                 LIBS="$saved_LIBS"
                 rm -f cconftest.$OBJEXT
@@ -163,7 +163,7 @@ name_scheme="`echo $pac_cv_prog_f77_name_mangle | sed 's% %_%g'`"
 # Turn lowercase into uppercase.
 name_scheme="`echo $name_scheme | sed -e 'y%abcdefghijklmnopqrstuvwxyz%ABCDEFGHIJKLMNOPQRSTUVWXYZ%'`"
 F77_NAME_MANGLE="F77_NAME_${name_scheme}"
-AC_DEFINE_UNQUOTED([$F77_NAME_MANGLE]) 
+AC_DEFINE_UNQUOTED([$F77_NAME_MANGLE])
 AC_SUBST(F77_NAME_MANGLE)
 if test "X$pac_cv_prog_f77_name_mangle" = "X" ; then
     AC_MSG_WARN([Unknown Fortran naming scheme])
@@ -208,11 +208,11 @@ dnl Sets SIZEOF_F77_uctype to the size if bytes of type.
 dnl If type is unknown, the size is set to 0.
 dnl If cross-compiling, the value cross-size is used (it may be a variable)
 dnl For example 'PAC_PROG_F77_CHECK_SIZEOF(real)' defines
-dnl 'SIZEOF_F77_REAL' to 4 on most systems.  The variable 
+dnl 'SIZEOF_F77_REAL' to 4 on most systems.  The variable
 dnl 'pac_cv_sizeof_f77_<type>' (e.g., 'pac_cv_sizeof_f77_real') is also set to
-dnl the size of the type. 
+dnl the size of the type.
 dnl If the corresponding variable is already set, that value is used.
-dnl If the name has an '*' in it (e.g., 'integer*4'), the defined name 
+dnl If the name has an '*' in it (e.g., 'integer*4'), the defined name
 dnl replaces that with an underscore (e.g., 'SIZEOF_F77_INTEGER_4').
 dnl
 dnl Notes:
@@ -263,7 +263,7 @@ static int isize_val=0;
 void cisize_(char *,char*);
 void isize_(void);
 void cisize_(char *i1p, char *i2p)
-{ 
+{
    isize_val = (int)(i2p - i1p);
 }
         ],[
@@ -398,7 +398,7 @@ dnl Notes:
 dnl Check whether '!' may be used to begin comments in Fortran.
 dnl
 dnl This macro requires a version of autoconf `after` 2.13; the 'acgeneral.m4'
-dnl file contains an error in the handling of Fortran programs in 
+dnl file contains an error in the handling of Fortran programs in
 dnl 'AC_TRY_COMPILE' (fixed in our local version).
 dnl
 dnl D*/
@@ -434,13 +434,13 @@ dnl
 dnl If no actions are specified, a working value is added to 'FOPTIONS'
 dnl
 dnl Notes:
-dnl This is now careful to check that the output is different, since 
+dnl This is now careful to check that the output is different, since
 dnl some compilers are noisy.
-dnl 
+dnl
 dnl We are extra careful to prototype the functions in case compiler options
 dnl that complain about poor code are in effect.
 dnl
-dnl Because this is a long script, we have ensured that you can pass a 
+dnl Because this is a long script, we have ensured that you can pass a
 dnl variable containing the option name as the first argument.
 dnl D*/
 AC_DEFUN([PAC_F77_CHECK_COMPILER_OPTION],[
@@ -519,10 +519,10 @@ dnl PAC_PROG_F77_LIBRARY_DIR_FLAG - Determine the flag used to indicate
 dnl the directories to find libraries in
 dnl
 dnl Notes:
-dnl Many compilers accept '-Ldir' just like most C compilers.  
-dnl Unfortunately, some (such as some HPUX Fortran compilers) do not, 
+dnl Many compilers accept '-Ldir' just like most C compilers.
+dnl Unfortunately, some (such as some HPUX Fortran compilers) do not,
 dnl and require instead either '-Wl,-L,dir' or something else.  This
-dnl command attempts to determine what is accepted.  The flag is 
+dnl command attempts to determine what is accepted.  The flag is
 dnl placed into 'F77_LIBDIR_LEADER'.
 dnl
 dnl D*/
@@ -574,19 +574,19 @@ if test "X$pac_cv_prog_f77_library_dir_flag" != "Xnone" ; then
 fi
 ])
 dnl
-dnl/*D 
+dnl/*D
 dnl PAC_PROG_F77_HAS_INCDIR - Check whether Fortran accepts -Idir flag
 dnl
 dnl Syntax:
 dnl   PAC_PROG_F77_HAS_INCDIR(directory,action-if-true,action-if-false)
 dnl
 dnl Output Effect:
-dnl  Sets 'F77_INCDIR' to the flag used to choose the directory.  
+dnl  Sets 'F77_INCDIR' to the flag used to choose the directory.
 dnl
 dnl Notes:
 dnl This refers to the handling of the common Fortran include extension,
 dnl not to the use of '#include' with the C preprocessor.
-dnl If directory does not exist, it will be created.  In that case, the 
+dnl If directory does not exist, it will be created.  In that case, the
 dnl directory should be a direct descendant of the current directory.
 dnl
 dnl D*/
@@ -628,7 +628,7 @@ fi
 dnl
 dnl/*D
 dnl PAC_PROG_F77_ALLOWS_UNUSED_EXTERNALS - Check whether the Fortran compiler
-dnl allows unused and undefined functions to be listed in an external 
+dnl allows unused and undefined functions to be listed in an external
 dnl statement
 dnl
 dnl Syntax:
@@ -659,12 +659,12 @@ else
    ifelse([$2],[],[:],[$2])
 fi
 ])
-dnl PAC_PROG_F77_RUN_PROC_FROM_C( c main program, fortran routine, 
-dnl                               [action-if-works], [action-if-fails], 
+dnl PAC_PROG_F77_RUN_PROC_FROM_C( c main program, fortran routine,
+dnl                               [action-if-works], [action-if-fails],
 dnl                               [cross-action] )
 dnl Fortran routine MUST be named ftest unless you include code
 dnl to select the appropriate Fortran name.
-dnl 
+dnl
 AC_DEFUN([PAC_PROG_F77_RUN_PROC_FROM_C],[
 AC_REQUIRE([AC_HEADER_STDC])
 AC_REQUIRE([AC_F77_LIBRARY_LDFLAGS])
@@ -706,18 +706,18 @@ AC_LANG_POP([Fortran 77])
 ])
 dnl PAC_PROG_F77_IN_C_LIBS
 dnl
-dnl Find the essential libraries that are needed to use the C linker to 
-dnl create a program that includes a trival Fortran code.  
+dnl Find the essential libraries that are needed to use the C linker to
+dnl create a program that includes a trival Fortran code.
 dnl
 dnl For example, all pgf90 compiled objects include a reference to the
 dnl symbol pgf90_compiled, found in libpgf90 .
 dnl
-dnl There is an additional problem.  To *run* programs, we may need 
+dnl There is an additional problem.  To *run* programs, we may need
 dnl additional arguments; e.g., if shared libraries are used.  Even
 dnl with autoconf 2.52, the autoconf macro to find the library arguments
 dnl doesn't handle this, either by detecting the use of -rpath or
 dnl by trying to *run* a trivial program.  It only checks for *linking*.
-dnl 
+dnl
 dnl
 AC_DEFUN([PAC_PROG_F77_IN_C_LIBS],[
 AC_REQUIRE([AC_HEADER_STDC])
@@ -788,7 +788,7 @@ fi
 ])
 dnl
 dnl Test to see if we should use C or Fortran to link programs whose
-dnl main program is in Fortran.  We may find that neither work because 
+dnl main program is in Fortran.  We may find that neither work because
 dnl we need special libraries in each case.
 dnl
 AC_DEFUN([PAC_PROG_F77_LINKER_WITH_C],[
@@ -905,7 +905,7 @@ AC_LINK_IFELSE([],[
     pac_libs=""
     pac_other=""
     for name in $FLIBS ; do
-        case $name in 
+        case $name in
         -l*) pac_libs="$pac_libs $name"   ;;
         -L*) pac_ldirs="$pac_ldirs $name" ;;
           *) pac_other="$pac_other $name" ;;
@@ -927,7 +927,7 @@ AC_LANG_PUSH([C])
 ])
 dnl
 dnl Test for extra libraries needed when linking C routines that use
-dnl stdio with Fortran.  This test was created for OSX, which 
+dnl stdio with Fortran.  This test was created for OSX, which
 dnl sometimes requires -lSystemStubs.  If another library is needed,
 dnl add it to F77_OTHER_LIBS
 dnl
@@ -991,7 +991,7 @@ dnl Endof ac_cache_check
 if test "$pac_cv_prog_f77_and_c_stdio_libs" != "none" \
      -a "$pac_cv_prog_f77_and_c_stdio_libs" != "unknown" ; then
     F77_OTHER_LIBS="$F77_OTHER_LIBS $pac_cv_prog_f77_and_c_stdio_libs"
-fi    
+fi
 ])
 dnl
 dnl Check that the FLIBS determined by AC_F77_LIBRARY_LDFLAGS is valid.
@@ -1205,7 +1205,7 @@ AC_LANG_POP([Fortran 77])
 AC_MSG_RESULT([$pac_cv_f77_accepts_F])
 ])
 dnl
-dnl /*D 
+dnl /*D
 dnl PAC_PROG_F77_CRAY_POINTER - Check if Fortran 77 supports Cray-style pointer.
 dnl                             If so, set pac_cv_prog_f77_has_pointer to yes
 dnl                             and find out if any extra compiler flag is
@@ -1325,16 +1325,16 @@ dnl PAC_F77_LOGICALS_IN_C(MPI_FINT)
 dnl
 dnl where MPI_FINT is the C type for Fortran integer.
 dnl
-dnl Use a Fortran main program.  This simplifies some steps, 
-dnl since getting all of the Fortran libraries (including shared 
-dnl libraries that are not in the default library search path) can 
-dnl be tricky.  Specifically, The PROG_F77_RUN_PROC_FROM_C failed with 
+dnl Use a Fortran main program.  This simplifies some steps,
+dnl since getting all of the Fortran libraries (including shared
+dnl libraries that are not in the default library search path) can
+dnl be tricky.  Specifically, The PROG_F77_RUN_PROC_FROM_C failed with
 dnl some installations of the Portland group compiler.
 dnl
 dnl We'd also like to check other values for .TRUE. and .FALSE. to see
 dnl if the compiler allows (or uses) more than one value (some DEC compilers,
-dnl for example, used the high (sign) bit to indicate true and false; the 
-dnl rest of the bits were ignored.  For now, we'll assume that there are 
+dnl for example, used the high (sign) bit to indicate true and false; the
+dnl rest of the bits were ignored.  For now, we'll assume that there are
 dnl unique true and false values.
 dnl
 AC_DEFUN([PAC_F77_LOGICALS_IN_C],[
@@ -1416,14 +1416,14 @@ if test -n "$true_val" -a -n "$false_val" ; then
 fi
 ])
 dnl/*D
-dnl PAC_PROG_F77_MISMATCHED_ARGS([option],[AllOnly]) - Determine whether the 
-dnl Fortran compiler allows routines to be called with different 
-dnl argument types.  If not, attempts to determine a command-line argument 
-dnl that permits such use 
+dnl PAC_PROG_F77_MISMATCHED_ARGS([option],[AllOnly]) - Determine whether the
+dnl Fortran compiler allows routines to be called with different
+dnl argument types.  If not, attempts to determine a command-line argument
+dnl that permits such use
 dnl (The Fortran standard prohibits this usage)
 dnl
 dnl option is set to the compiler option to use.
-dnl if AllOnly is yes (literal, not variable with value), then only consider 
+dnl if AllOnly is yes (literal, not variable with value), then only consider
 dnl options that turn off checking
 dnl for all routines
 dnl
@@ -1470,7 +1470,7 @@ if test "X$pac_cv_prog_f77_mismatched_args" = X ; then
             FFLAGS="$save_FFLAGS"
             if test "$testok" = yes ; then break ; fi
         done
-        if test "$testok" = yes ; then 
+        if test "$testok" = yes ; then
 	    pac_cv_prog_f77_mismatched_args_parm="$flags"
             pac_cv_prog_f77_mismatched_args="yes, with $pac_cv_prog_f77_mismatched_args_parm"
         fi
@@ -1479,7 +1479,7 @@ if test "X$pac_cv_prog_f77_mismatched_args" = X ; then
 fi
 AC_MSG_RESULT($pac_cv_prog_f77_mismatched_args)
 if test "$pac_cv_prog_f77_mismatched_args" = no ; then
-    AC_MSG_ERROR([The Fortran compiler $F77 will not compile files that call 
+    AC_MSG_ERROR([The Fortran compiler $F77 will not compile files that call
 the same routine with arguments of different types.])
 fi
 

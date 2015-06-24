@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2013 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -16,18 +16,18 @@
  * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
 #ifndef OMPI_C_PROFILE_DEFINES_H
 #define OMPI_C_PROFILE_DEFINES_H
 /*
- * This file is included in the top directory only if 
+ * This file is included in the top directory only if
  * profiling is required. Once profiling is required,
- * this file will replace all MPI_* symbols with 
+ * this file will replace all MPI_* symbols with
  * PMPI_* symbols
  */
 #define MPI_Abort PMPI_Abort
@@ -115,7 +115,7 @@
 #define MPI_Dims_create PMPI_Dims_create
 #define MPI_Errhandler_c2f PMPI_Errhandler_c2f
 #define MPI_Errhandler_f2c PMPI_Errhandler_f2c
-#define MPI_Errhandler_create PMPI_Errhandler_create 
+#define MPI_Errhandler_create PMPI_Errhandler_create
 #define MPI_Errhandler_free PMPI_Errhandler_free
 #define MPI_Errhandler_get PMPI_Errhandler_get
 #define MPI_Errhandler_set PMPI_Errhandler_set
@@ -200,10 +200,10 @@
 #define MPI_Graph_create PMPI_Graph_create
 #define MPI_Graph_get PMPI_Graph_get
 #define MPI_Graph_map PMPI_Graph_map
-#define MPI_Graph_neighbors_count PMPI_Graph_neighbors_count 
-#define MPI_Graph_neighbors PMPI_Graph_neighbors 
+#define MPI_Graph_neighbors_count PMPI_Graph_neighbors_count
+#define MPI_Graph_neighbors PMPI_Graph_neighbors
 #define MPI_Graphdims_get PMPI_Graphdims_get
-#define MPI_Grequest_complete PMPI_Grequest_complete 
+#define MPI_Grequest_complete PMPI_Grequest_complete
 #define MPI_Grequest_start PMPI_Grequest_start
 #define MPI_Group_c2f PMPI_Group_c2f
 #define MPI_Group_compare PMPI_Group_compare
@@ -216,9 +216,9 @@
 #define MPI_Group_range_excl PMPI_Group_range_excl
 #define MPI_Group_range_incl PMPI_Group_range_incl
 #define MPI_Group_rank PMPI_Group_rank
-#define MPI_Group_size PMPI_Group_size 
+#define MPI_Group_size PMPI_Group_size
 #define MPI_Group_translate_ranks PMPI_Group_translate_ranks
-#define MPI_Group_union PMPI_Group_union 
+#define MPI_Group_union PMPI_Group_union
 #define MPI_Free_mem PMPI_Free_mem
 #define MPI_Ibsend PMPI_Ibsend
 #define MPI_Message_c2f PMPI_Message_c2f
@@ -247,8 +247,8 @@
 #define MPI_Is_thread_main PMPI_Is_thread_main
 #define MPI_Isend PMPI_Isend
 #define MPI_Issend PMPI_Issend
-#define MPI_Keyval_create PMPI_Keyval_create 
-#define MPI_Keyval_free PMPI_Keyval_free 
+#define MPI_Keyval_create PMPI_Keyval_create
+#define MPI_Keyval_free PMPI_Keyval_free
 #define MPI_Lookup_name PMPI_Lookup_name
 #define MPI_Mprobe PMPI_Mprobe
 #define MPI_Mrecv PMPI_Mrecv
@@ -263,24 +263,24 @@
 #define MPI_Ineighbor_alltoallv PMPI_Ineighbor_alltoallv
 #define MPI_Neighbor_alltoallw PMPI_Neighbor_alltoallw
 #define MPI_Ineighbor_alltoallw PMPI_Ineighbor_alltoallw
-#define MPI_Op_c2f PMPI_Op_c2f 
-#define MPI_Op_commutative PMPI_Op_commutative 
-#define MPI_Op_create PMPI_Op_create 
-#define MPI_Op_f2c PMPI_Op_f2c 
+#define MPI_Op_c2f PMPI_Op_c2f
+#define MPI_Op_commutative PMPI_Op_commutative
+#define MPI_Op_create PMPI_Op_create
+#define MPI_Op_f2c PMPI_Op_f2c
 #define MPI_Op_free PMPI_Op_free
 #define MPI_Open_port PMPI_Open_port
-#define MPI_Pack_external PMPI_Pack_external 
-#define MPI_Pack_external_size PMPI_Pack_external_size 
-#define MPI_Pack PMPI_Pack 
-#define MPI_Pack_size PMPI_Pack_size 
-#define MPI_Pcontrol PMPI_Pcontrol 
+#define MPI_Pack_external PMPI_Pack_external
+#define MPI_Pack_external_size PMPI_Pack_external_size
+#define MPI_Pack PMPI_Pack
+#define MPI_Pack_size PMPI_Pack_size
+#define MPI_Pcontrol PMPI_Pcontrol
 #define MPI_Probe PMPI_Probe
-#define MPI_Publish_name PMPI_Publish_name 
+#define MPI_Publish_name PMPI_Publish_name
 #define MPI_Put PMPI_Put
 #define MPI_Query_thread PMPI_Query_thread
 #define MPI_Raccumulate PMPI_Raccumulate
-#define MPI_Recv_init PMPI_Recv_init 
-#define MPI_Recv PMPI_Recv 
+#define MPI_Recv_init PMPI_Recv_init
+#define MPI_Recv PMPI_Recv
 #define MPI_Reduce PMPI_Reduce
 #define MPI_Ireduce PMPI_Ireduce
 #define MPI_Reduce_local PMPI_Reduce_local
@@ -292,21 +292,21 @@
 #define MPI_Request_c2f PMPI_Request_c2f
 #define MPI_Request_f2c PMPI_Request_f2c
 #define MPI_Request_free PMPI_Request_free
-#define MPI_Request_get_status PMPI_Request_get_status 
+#define MPI_Request_get_status PMPI_Request_get_status
 #define MPI_Rget PMPI_Rget
 #define MPI_Rget_accumulate PMPI_Rget_accumulate
 #define MPI_Rput PMPI_Rput
-#define MPI_Rsend_init PMPI_Rsend_init 
-#define MPI_Rsend PMPI_Rsend 
+#define MPI_Rsend_init PMPI_Rsend_init
+#define MPI_Rsend PMPI_Rsend
 #define MPI_Scan PMPI_Scan
 #define MPI_Iscan PMPI_Iscan
 #define MPI_Scatter PMPI_Scatter
 #define MPI_Iscatter PMPI_Iscatter
 #define MPI_Scatterv PMPI_Scatterv
 #define MPI_Iscatterv PMPI_Iscatterv
-#define MPI_Send_init PMPI_Send_init 
-#define MPI_Send PMPI_Send 
-#define MPI_Sendrecv PMPI_Sendrecv 
+#define MPI_Send_init PMPI_Send_init
+#define MPI_Send PMPI_Send
+#define MPI_Sendrecv PMPI_Sendrecv
 #define MPI_Sendrecv_replace PMPI_Sendrecv_replace
 #define MPI_Ssend_init PMPI_Ssend_init
 #define MPI_Ssend PMPI_Ssend
@@ -314,7 +314,7 @@
 #define MPI_Startall PMPI_Startall
 #define MPI_Status_c2f PMPI_Status_c2f
 #define MPI_Status_f2c PMPI_Status_f2c
-#define MPI_Status_set_cancelled PMPI_Status_set_cancelled 
+#define MPI_Status_set_cancelled PMPI_Status_set_cancelled
 #define MPI_Status_set_elements PMPI_Status_set_elements
 #define MPI_Status_set_elements_x PMPI_Status_set_elements_x
 #define MPI_Test_cancelled PMPI_Test_cancelled
@@ -366,7 +366,7 @@
 #define MPI_Type_vector PMPI_Type_vector
 #define MPI_Unpack_external PMPI_Unpack_external
 #define MPI_Unpack PMPI_Unpack
-#define MPI_Unpublish_name PMPI_Unpublish_name 
+#define MPI_Unpublish_name PMPI_Unpublish_name
 #define MPI_Wait PMPI_Wait
 #define MPI_Waitall PMPI_Waitall
 #define MPI_Waitany PMPI_Waitany
@@ -374,14 +374,14 @@
 #define MPI_Win_allocate PMPI_Win_allocate
 #define MPI_Win_allocate_shared PMPI_Win_allocate_shared
 #define MPI_Win_attach PMPI_Win_attach
-#define MPI_Win_c2f PMPI_Win_c2f 
-#define MPI_Win_call_errhandler PMPI_Win_call_errhandler 
+#define MPI_Win_c2f PMPI_Win_c2f
+#define MPI_Win_call_errhandler PMPI_Win_call_errhandler
 #define MPI_Win_complete PMPI_Win_complete
-#define MPI_Win_create_errhandler PMPI_Win_create_errhandler 
+#define MPI_Win_create_errhandler PMPI_Win_create_errhandler
 #define MPI_Win_create_keyval PMPI_Win_create_keyval
 #define MPI_Win_create PMPI_Win_create
 #define MPI_Win_create_dynamic PMPI_Win_create_dynamic
-#define MPI_Win_delete_attr PMPI_Win_delete_attr 
+#define MPI_Win_delete_attr PMPI_Win_delete_attr
 #define MPI_Win_detach PMPI_Win_detach
 #define MPI_Win_f2c PMPI_Win_f2c
 #define MPI_Win_fence PMPI_Win_fence
@@ -389,20 +389,20 @@
 #define MPI_Win_flush_all PMPI_Win_flush_all
 #define MPI_Win_flush_local PMPI_Win_flush_local
 #define MPI_Win_flush_local_all PMPI_Win_flush_local_all
-#define MPI_Win_free_keyval PMPI_Win_free_keyval 
-#define MPI_Win_free PMPI_Win_free 
-#define MPI_Win_get_attr PMPI_Win_get_attr 
+#define MPI_Win_free_keyval PMPI_Win_free_keyval
+#define MPI_Win_free PMPI_Win_free
+#define MPI_Win_get_attr PMPI_Win_get_attr
 #define MPI_Win_get_errhandler PMPI_Win_get_errhandler
 #define MPI_Win_get_group PMPI_Win_get_group
 #define MPI_Win_get_info PMPI_Win_get_info
 #define MPI_Win_get_name PMPI_Win_get_name
 #define MPI_Win_lock PMPI_Win_lock
 #define MPI_Win_lock_all PMPI_Win_lock_all
-#define MPI_Win_post PMPI_Win_post 
+#define MPI_Win_post PMPI_Win_post
 #define MPI_Win_set_attr PMPI_Win_set_attr
-#define MPI_Win_set_errhandler PMPI_Win_set_errhandler 
-#define MPI_Win_set_info PMPI_Win_set_info 
-#define MPI_Win_set_name PMPI_Win_set_name 
+#define MPI_Win_set_errhandler PMPI_Win_set_errhandler
+#define MPI_Win_set_info PMPI_Win_set_info
+#define MPI_Win_set_name PMPI_Win_set_name
 #define MPI_Win_shared_query PMPI_Win_shared_query
 #define MPI_Win_start PMPI_Win_start
 #define MPI_Win_sync PMPI_Win_sync
@@ -410,6 +410,6 @@
 #define MPI_Win_unlock PMPI_Win_unlock
 #define MPI_Win_unlock_all PMPI_Win_unlock_all
 #define MPI_Win_wait PMPI_Win_wait
-#define MPI_Wtick PMPI_Wtick 
+#define MPI_Wtick PMPI_Wtick
 #define MPI_Wtime PMPI_Wtime
 #endif /* OMPI_C_PROFILE_DEFINES_H */

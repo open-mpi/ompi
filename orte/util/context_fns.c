@@ -58,14 +58,14 @@ int orte_util_check_context_cwd(orte_app_context_t *context,
 {
     bool good = true;
     const char *tmp;
-    
+
     /* If we want to chdir and the chdir fails (for any reason -- such
        as if the dir doesn't exist, it isn't a dir, we don't have
        permissions, etc.), then set good to false. */
     if (want_chdir && 0 != chdir(context->cwd)) {
         good = false;
     }
-    
+
     /* If either of the above failed, go into this block */
     if (!good) {
         /* See if the directory was a user-specified directory.  If it
@@ -75,7 +75,7 @@ int orte_util_check_context_cwd(orte_app_context_t *context,
                                NULL, OPAL_BOOL)) {
             return ORTE_ERR_WDIR_NOT_FOUND;
         }
-        
+
         /* If the user didn't specifically ask for it, then it
         was a system-supplied default directory, so it's ok
         to not go there.  Try to go to the $HOME directory
@@ -90,18 +90,18 @@ int orte_util_check_context_cwd(orte_app_context_t *context,
             if (!good) {
                 return ORTE_ERR_WDIR_NOT_FOUND;
             }
-            
+
             /* Reset the pwd in this local copy of the
                 context */
             if (NULL != context->cwd) free(context->cwd);
             context->cwd = strdup(tmp);
         }
-        
+
         /* If we couldn't find $HOME, then just take whatever
             the default directory is -- assumedly there *is*
         one, or we wouldn't be running... */
     }
-    
+
     /* All happy */
     return ORTE_SUCCESS;
 }
@@ -109,27 +109,27 @@ int orte_util_check_context_cwd(orte_app_context_t *context,
 int orte_util_check_context_app(orte_app_context_t *context, char **env)
 {
     char *tmp;
-    
+
     /* If the app is a naked filename, we need to do a path search for
         it.  orterun will send in whatever the user specified (e.g.,
         "orterun -np 2 uptime"), so in some cases, we need to search
         the path to verify that we can find it.  Here's the
         possibilities:
-        
+
         1. The user specified an absolute pathname for the executable.
         We simply need to verify that it exists and we can run it.
-        
+
         2. The user specified a relative pathname for the executable.
         Ditto with #1 -- based on the cwd, we need to verify that it
         exists and we can run it.
-        
+
         3. The user specified a naked filename.  We need to search the
         path, find a match, and verify that we can run it.
-        
+
         Note that in some cases, we won't be doing this work here --
         bproc, for example, does not use the fork pls for launching, so
         it does this same work over there. */
-    
+
     tmp = opal_basename(context->argv[0]);
     if (strlen(tmp) == strlen(context->argv[0])) {
         /* If this is a naked executable -- no relative or absolute
@@ -147,7 +147,7 @@ int orte_util_check_context_app(orte_app_context_t *context, char **env)
             return ORTE_ERR_EXE_NOT_ACCESSIBLE;
         }
     }
-    
+
     /* All was good */
     return ORTE_SUCCESS;
 }

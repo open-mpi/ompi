@@ -60,7 +60,7 @@ size_t numElements(CFI_cdesc_t * desc)
 {
    int r;
    size_t num = 1;
-   
+
    /* TODO - can have 0 size arrays? */
 
    for (r = 0; r < desc->rank; r++) {
@@ -79,7 +79,7 @@ void * copyToContiguous(CFI_cdesc_t * desc, void * cont_buf, size_t offset, int 
 {
    size_t b, e, num_copied;
    char * next_out;
-   
+
    char * in  = (char *) desc->base_addr + offset;
    char * out = (char *) cont_buf;
 
@@ -112,7 +112,7 @@ void * copyFromContiguous(CFI_cdesc_t * desc, void * cont_buf, size_t offset, in
 {
    size_t b, e, num_copied;
    char * next_out;
-   
+
    char * out = (char *) desc->base_addr + offset;
    char * in  = (char *) cont_buf;
 
@@ -137,12 +137,12 @@ void * copyFromContiguous(CFI_cdesc_t * desc, void * cont_buf, size_t offset, in
 
 /* From ../mpif-h/send_f.c
  */
-void ompi_recv_f(char *buf, MPI_Fint *count, MPI_Fint *datatype, 
-                 MPI_Fint *source, MPI_Fint *tag, MPI_Fint *comm, 
+void ompi_recv_f(char *buf, MPI_Fint *count, MPI_Fint *datatype,
+                 MPI_Fint *source, MPI_Fint *tag, MPI_Fint *comm,
                  MPI_Fint *status, MPI_Fint *ierr);
 
-void ompi_recv_f08_desc_f(CFI_cdesc_t *desc, MPI_Fint *count, MPI_Fint *datatype, 
-                          MPI_Fint *source, MPI_Fint *tag, MPI_Fint *comm, 
+void ompi_recv_f08_desc_f(CFI_cdesc_t *desc, MPI_Fint *count, MPI_Fint *datatype,
+                          MPI_Fint *source, MPI_Fint *tag, MPI_Fint *comm,
                           MPI_Fint *status, MPI_Fint *ierr)
 {
    size_t num_bytes = 0;
@@ -167,10 +167,10 @@ void ompi_recv_f08_desc_f(CFI_cdesc_t *desc, MPI_Fint *count, MPI_Fint *datatype
 
 /* From ../mpif-h/send_f.c
  */
-void ompi_send_f(char *buf, MPI_Fint *count, MPI_Fint *datatype, 
+void ompi_send_f(char *buf, MPI_Fint *count, MPI_Fint *datatype,
                  MPI_Fint *dest, MPI_Fint *tag, MPI_Fint *comm, MPI_Fint *ierr);
 
-void ompi_send_f08_desc_f(CFI_cdesc_t *desc, MPI_Fint *count, MPI_Fint *datatype, 
+void ompi_send_f08_desc_f(CFI_cdesc_t *desc, MPI_Fint *count, MPI_Fint *datatype,
                           MPI_Fint *dest, MPI_Fint *tag, MPI_Fint *comm, MPI_Fint *ierr)
 {
    size_t num_bytes = 0;

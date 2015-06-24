@@ -2,9 +2,9 @@
  * Copyright (C) 2014      Artem Polyakov <artpol84@gmail.com>
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -35,7 +35,7 @@ int parse_opts(int rank, int argc, char **argv)
 {
     while (1) {
         int option_index = 0;
-        static struct option long_options[] = { 
+        static struct option long_options[] = {
             {"output", required_argument, 0, 'o' },
             {"help",   required_argument, 0, 'h' },
             { 0,       0,                 0, 0   } };

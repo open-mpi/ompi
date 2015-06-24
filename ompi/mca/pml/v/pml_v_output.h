@@ -32,7 +32,7 @@ static inline void V_OUTPUT_ERR(const char *fmt, ... )
     assert(-1 != ret);
     opal_output(0, "%s", str);
     free(str);
-    va_end(list);    
+    va_end(list);
 }
 
 /* Tricky stuff to define V_OUTPUT and V_OUTPUT_VERBOSE with variadic arguments
@@ -48,7 +48,7 @@ static inline void V_OUTPUT_ERR(const char *fmt, ... )
         OPAL_OUTPUT((pml_v_output, ARGS))
 #   define V_OUTPUT_VERBOSE(V, ARGS...)                                        \
         OPAL_OUTPUT_VERBOSE((V, mca_pml_v.output, ARGS))
-            
+
 #elif OPAL_ENABLE_DEBUG
     /* No variadic macros available... So sad */
 static inline void V_OUTPUT(const char* fmt, ... ) __opal_attribute_format__(__printf__, 1, 2);

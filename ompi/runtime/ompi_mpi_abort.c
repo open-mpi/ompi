@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2014 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -14,9 +14,9 @@
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -140,7 +140,7 @@ ompi_mpi_abort(struct ompi_communicator_t* comm,
 
         if (OMPI_SUCCESS == opal_backtrace_buffer(&messages, &len)) {
             for (i = 0; i < len; ++i) {
-                fprintf(stderr, "[%s:%d] [%d] func:%s\n", host, (int) pid, 
+                fprintf(stderr, "[%s:%d] [%d] func:%s\n", host, (int) pid,
                         i, messages[i]);
                 fflush(stderr);
             }
@@ -156,9 +156,9 @@ ompi_mpi_abort(struct ompi_communicator_t* comm,
     /* Notify the debugger that we're about to abort */
 
     if (errcode < 0 ||
-        asprintf(&msg, "[%s:%d] aborting with MPI error %s%s", 
-                 host, (int) pid, ompi_mpi_errnum_get_string(errcode), 
-                 ompi_mpi_abort_print_stack ? 
+        asprintf(&msg, "[%s:%d] aborting with MPI error %s%s",
+                 host, (int) pid, ompi_mpi_errnum_get_string(errcode),
+                 ompi_mpi_abort_print_stack ?
                  " (stack trace available on stderr)" : "") < 0) {
         msg = NULL;
     }
@@ -174,8 +174,8 @@ ompi_mpi_abort(struct ompi_communicator_t* comm,
             fprintf(stderr ,"[%s:%d] Looping forever (MCA parameter mpi_abort_delay is < 0)\n",
                     host, (int) pid);
             fflush(stderr);
-            while (1) { 
-                sleep(5); 
+            while (1) {
+                sleep(5);
             }
         } else {
             fprintf(stderr, "[%s:%d] Delaying for %d seconds before aborting\n",
@@ -190,7 +190,7 @@ ompi_mpi_abort(struct ompi_communicator_t* comm,
        killing everyone.  Sorry, Charlie... */
     if (!ompi_rte_initialized) {
         fprintf(stderr, "[%s:%d] Local abort %s completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!\n",
-                host, (int) pid, ompi_mpi_finalized ? 
+                host, (int) pid, ompi_mpi_finalized ?
                 "after MPI_FINALIZE started" : "before MPI_INIT completed");
         exit(errcode == 0 ? 1 : errcode);
     }

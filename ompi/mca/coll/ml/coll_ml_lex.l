@@ -105,7 +105,7 @@ NAME_CHAR   [A-Za-z0-9_\-\.\\\/]
 int coll_ml_config_yylex_destroy(void)
 {
     if (NULL != YY_CURRENT_BUFFER) {
-        yy_delete_buffer(YY_CURRENT_BUFFER); 
+        yy_delete_buffer(YY_CURRENT_BUFFER);
 #if defined(YY_CURRENT_BUFFER_LVALUE)
         YY_CURRENT_BUFFER_LVALUE = NULL;
 #else

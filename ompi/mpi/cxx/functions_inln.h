@@ -1,21 +1,21 @@
 // -*- c++ -*-
-// 
+//
 // Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
 //                         University Research and Technology
 //                         Corporation.  All rights reserved.
 // Copyright (c) 2004-2005 The University of Tennessee and The University
 //                         of Tennessee Research Foundation.  All rights
 //                         reserved.
-// Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+// Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 //                         University of Stuttgart.  All rights reserved.
 // Copyright (c) 2004-2005 The Regents of the University of California.
 //                         All rights reserved.
 // Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
 // Copyright (c) 2011      FUJITSU LIMITED.  All rights reserved.
 // $COPYRIGHT$
-// 
+//
 // Additional copyrights may follow
-// 
+//
 // $HEADER$
 //
 
@@ -25,13 +25,13 @@
 // Point-to-Point Communication
 //
 
-inline void 
+inline void
 MPI::Attach_buffer(void* buffer, int size)
 {
   (void)MPI_Buffer_attach(buffer, size);
 }
 
-inline int 
+inline int
 MPI::Detach_buffer(void*& buffer)
 {
   int size;
@@ -76,7 +76,7 @@ MPI::Add_error_string(int errorcode, const char* string)
     (void)MPI_Add_error_string(errorcode, const_cast<char *>(string));
 }
 
-inline void 
+inline void
 MPI::Get_processor_name(char* name, int& resultlen)
 {
   (void)MPI_Get_processor_name(name, &resultlen);
@@ -88,21 +88,21 @@ MPI::Get_error_string(int errorcode, char* string, int& resultlen)
   (void)MPI_Error_string(errorcode, string, &resultlen);
 }
 
-inline int 
-MPI::Get_error_class(int errorcode) 
+inline int
+MPI::Get_error_class(int errorcode)
 {
   int errorclass;
   (void)MPI_Error_class(errorcode, &errorclass);
   return errorclass;
 }
 
-inline double 
+inline double
 MPI::Wtime()
 {
   return (MPI_Wtime());
 }
 
-inline double 
+inline double
 MPI::Wtick()
 {
   return (MPI_Wtick());
@@ -200,7 +200,7 @@ MPI::Query_thread()
 
 
 inline void*
-MPI::Alloc_mem(MPI::Aint size, const MPI::Info& info) 
+MPI::Alloc_mem(MPI::Aint size, const MPI::Info& info)
 {
   void* baseptr;
   (void) MPI_Alloc_mem(size, info, &baseptr);
@@ -221,14 +221,14 @@ MPI::Free_mem(void* base)
 
 
 inline void
-MPI::Close_port(const char* port_name) 
+MPI::Close_port(const char* port_name)
 {
   (void) MPI_Close_port(const_cast<char *>(port_name));
 }
 
 
 inline void
-MPI::Lookup_name(const char * service_name, 
+MPI::Lookup_name(const char * service_name,
 			const MPI::Info& info,
 			char* port_name)
 {
@@ -244,7 +244,7 @@ MPI::Open_port(const MPI::Info& info, char* port_name)
 
 
 inline void
-MPI::Publish_name(const char* service_name, 
+MPI::Publish_name(const char* service_name,
 			 const MPI::Info& info,
 			 const char* port_name)
 {
@@ -254,7 +254,7 @@ MPI::Publish_name(const char* service_name,
 
 
 inline void
-MPI::Unpublish_name(const char* service_name, 
+MPI::Unpublish_name(const char* service_name,
 			   const MPI::Info& info,
 			   const char* port_name)
 {
@@ -273,7 +273,7 @@ MPI::Pcontrol(const int level, ...)
 {
   va_list ap;
   va_start(ap, level);
- 
+
   (void)MPI_Pcontrol(level, ap);
   va_end(ap);
 }

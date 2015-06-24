@@ -14,8 +14,8 @@
 .nf
 #include <mpi.h>
 int MPI_Accumulate(const void *\fIorigin_addr\fP, int \fIorigin_count\fP,
-	MPI_Datatype \fIorigin_datatype\fP, int \fItarget_rank\fP, 
-	MPI_Aint \fItarget_disp\fP, int \fItarget_count\fP, 
+	MPI_Datatype \fIorigin_datatype\fP, int \fItarget_rank\fP,
+	MPI_Aint \fItarget_disp\fP, int \fItarget_count\fP,
 	MPI_Datatype \fItarget_datatype\fP, MPI_Op \fIop\fP, MPI_Win \fIwin\fP)
 
 int MPI_Raccumulate(const void *\fIorigin_addr\fP, int \fIorigin_count\fP,
@@ -28,11 +28,11 @@ int MPI_Raccumulate(const void *\fIorigin_addr\fP, int \fIorigin_count\fP,
 .SH Fortran Syntax (see FORTRAN 77 NOTES)
 .nf
 INCLUDE 'mpif.h'
-MPI_ACCUMULATE(\fIORIGIN_ADDR, ORIGIN_COUNT, ORIGIN_DATATYPE, TARGET_RANK, 
-	TARGET_DISP, TARGET_COUNT, TARGET_DATATYPE, OP, WIN, IERROR\fP) 
-	<type> \fIORIGIN_ADDR\fP(*) 
-	INTEGER(KIND=MPI_ADDRESS_KIND) \fITARGET_DISP\fP 
-	INTEGER \fIORIGIN_COUNT, ORIGIN_DATATYPE, TARGET_RANK, TARGET_COUNT, 
+MPI_ACCUMULATE(\fIORIGIN_ADDR, ORIGIN_COUNT, ORIGIN_DATATYPE, TARGET_RANK,
+	TARGET_DISP, TARGET_COUNT, TARGET_DATATYPE, OP, WIN, IERROR\fP)
+	<type> \fIORIGIN_ADDR\fP(*)
+	INTEGER(KIND=MPI_ADDRESS_KIND) \fITARGET_DISP\fP
+	INTEGER \fIORIGIN_COUNT, ORIGIN_DATATYPE, TARGET_RANK, TARGET_COUNT,
 	TARGET_DATATYPE, OP, WIN, IERROR \fP
 
 MPI_RACCUMULATE(\fIORIGIN_ADDR, ORIGIN_COUNT, ORIGIN_DATATYPE, TARGET_RANK,
@@ -46,10 +46,10 @@ MPI_RACCUMULATE(\fIORIGIN_ADDR, ORIGIN_COUNT, ORIGIN_DATATYPE, TARGET_RANK,
 .SH C++ Syntax
 .nf
 #include <mpi.h>
-void MPI::Win::Accumulate(const void* \fIorigin_addr\fP, int \fIorigin_count\fP, 
-	const MPI::Datatype& \fIorigin_datatype\fP, int \fItarget_rank\fP, 
-	MPI::Aint \fItarget_disp\fP, int \fItarget_count\fP, const MPI::Datatype& 
-	\fItarget_datatype\fP, const MPI::Op& \fIop\fP) const 
+void MPI::Win::Accumulate(const void* \fIorigin_addr\fP, int \fIorigin_count\fP,
+	const MPI::Datatype& \fIorigin_datatype\fP, int \fItarget_rank\fP,
+	MPI::Aint \fItarget_disp\fP, int \fItarget_count\fP, const MPI::Datatype&
+	\fItarget_datatype\fP, const MPI::Op& \fIop\fP) const
 
 .fi
 .SH INPUT PARAMETERS
@@ -72,11 +72,11 @@ Rank of target (nonnegative integer).
 .ft R
 .TP 1i
 target_disp
-Displacement from start of window to beginning of target buffer (nonnegative integer). 
+Displacement from start of window to beginning of target buffer (nonnegative integer).
 .ft R
 .TP 1i
 target_count
-Number of entries in target buffer (nonnegative integer). 
+Number of entries in target buffer (nonnegative integer).
 .ft R
 .TP 1i
 target_datatype
@@ -84,11 +84,11 @@ Data type of each entry in target buffer (handle).
 .ft R
 .TP 1i
 op
-Reduce operation (handle). 
+Reduce operation (handle).
 .ft R
 .TP 1i
 win
-Window object (handle). 
+Window object (handle).
 
 .SH OUTPUT PARAMETER
 .ft R
@@ -96,17 +96,17 @@ Window object (handle).
 MPI_Raccumulate: RMA request
 .TP 1i
 IERROR
-Fortran only: Error status (integer). 
+Fortran only: Error status (integer).
 
 .SH DESCRIPTION
 .ft R
 \fBMPI_Accumulate\fP is a function used for one-sided MPI communication that adds the contents of the origin buffer (as defined by \fIorigin_addr\fP, \fIorigin_count\fP, and \fIorigin_datatype\fP) to the buffer specified by the arguments \fItarget_count\fP and \fItarget_datatype\fP, at offset \fItarget_disp\fP, in the target window specified by \fItarget_rank\fP and \fIwin\fP, using the operation \fIop\fP. The target window can only be accessed by processes within the same node. This is similar to MPI_Put, except that data is combined into the target area instead of overwriting it.
 .sp
-Any of the predefined operations for MPI_Reduce can be used. User-defined functions cannot be used. For example, if \fIop\fP is MPI_SUM, each element of the origin buffer is added to the corresponding element in the target, replacing the former value in the target. 
+Any of the predefined operations for MPI_Reduce can be used. User-defined functions cannot be used. For example, if \fIop\fP is MPI_SUM, each element of the origin buffer is added to the corresponding element in the target, replacing the former value in the target.
 .sp
-Each datatype argument must be a predefined data type or a derived data type, where all basic components are of the same predefined data type. Both datatype arguments must be constructed from the same predefined data type. The operation \fIop\fP applies to elements of that predefined type. The \fItarget_datatype\fP argument must not specify overlapping entries, and the target buffer must fit in the target window. 
+Each datatype argument must be a predefined data type or a derived data type, where all basic components are of the same predefined data type. Both datatype arguments must be constructed from the same predefined data type. The operation \fIop\fP applies to elements of that predefined type. The \fItarget_datatype\fP argument must not specify overlapping entries, and the target buffer must fit in the target window.
 .sp
-A new predefined operation, MPI_REPLACE, is defined. It corresponds to the associative function f(a, b) =b; that is, the current value in the target memory is replaced by the value supplied by the origin. 
+A new predefined operation, MPI_REPLACE, is defined. It corresponds to the associative function f(a, b) =b; that is, the current value in the target memory is replaced by the value supplied by the origin.
 .sp
 \fBMPI_Raccumulate\fP is similar to \fBMPI_Accumulate\fP, except that it allocates a communication request object and associates it with the request handle (the argument \fIrequest\fP) that can be used to wait or test for completion. The completion of an \fBMPI_Raccumulate\fP operation indicates that the \fIorigin_addr\fP buffer is free to be updated. It does not indicate that the operation has completed at the target window.
 
@@ -136,11 +136,11 @@ Almost all MPI routines return an error value; C routines as the value of the fu
 .sp
 Before the error value is returned, the current MPI error handler is
 called. By default, this error handler aborts the MPI job, except for I/O function errors. The error handler
-may be changed with MPI_Comm_set_errhandler; the predefined error handler MPI_ERRORS_RETURN may be used to cause error values to be returned. Note that MPI does not guarantee that an MPI program can continue past an error. 
+may be changed with MPI_Comm_set_errhandler; the predefined error handler MPI_ERRORS_RETURN may be used to cause error values to be returned. Note that MPI does not guarantee that an MPI program can continue past an error.
 
 .SH SEE ALSO
 .ft R
 .sp
-MPI_Put 
+MPI_Put
 MPI_Get_accumulate
 MPI_Reduce

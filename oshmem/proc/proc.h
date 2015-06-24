@@ -36,7 +36,7 @@ struct oshmem_group_t;
 
 /**
  * Remote Open SHMEM process structure
- * 
+ *
  * Remote Open SHMEM process structure.  Each process contains exactly
  * one oshmem_proc_t structure for each remote process it knows about.
  */
@@ -44,12 +44,12 @@ struct oshmem_proc_t {
     opal_proc_t                    super;
     /* endpoint data */
     void *proc_endpoints[OMPI_PROC_ENDPOINT_TAG_MAX];
-    /* 
-     * All transport channels are globally ordered. 
+    /*
+     * All transport channels are globally ordered.
      * pe(s) can talk to each other via subset of transports
      * these holds indexes of each transport into global array
      *  proc -> id, where id can be btl id in yoda or mxm ptl id
-     *  in ikrit 
+     *  in ikrit
      *  spml is supposed to fill this during add_procs()
      **/
     int                             num_transports;
@@ -61,7 +61,7 @@ OBJ_CLASS_DECLARATION(oshmem_proc_t);
 
 /**
  * Group of Open SHMEM processes structure
- * 
+ *
  * Set of processes used in collective operations.
  */
 struct oshmem_group_t {
@@ -219,7 +219,7 @@ static inline oshmem_proc_t* oshmem_proc_local(void)
 }
 
 /**
- * Returns the proc instance for a given name 
+ * Returns the proc instance for a given name
  *
  * Returns the proc instance for the specified process name.  The
  * reference count for the proc instance is not incremented by this
@@ -241,10 +241,10 @@ OSHMEM_DECLSPEC oshmem_proc_t * oshmem_proc_find(const orte_process_name_t* name
  * maintained.  The buffer is packed to be sent to a remote node with
  * different architecture (endian or word size).  The buffer can be
  * dss unloaded to be sent using SHMEM or send using rml_send_packed().
- * 
+ *
  * @param[in] proclist     List of process pointers
  * @param[in] proclistsize Length of the proclist array
- * @param[in,out] buf      An orte_buffer containing the packed names.  
+ * @param[in,out] buf      An orte_buffer containing the packed names.
  *                         The buffer must be constructed but empty when
  *                         passed to this function
  * @retval OSHMEM_SUCCESS    Success
@@ -345,7 +345,7 @@ OSHMEM_DECLSPEC int oshmem_proc_group_finalize(void);
  * Returns the list of known proc instances located in this group.
  *
  * @param[in] pe_start     The lowest PE in the active set.
- * @param[in] pe_stride    The log (base 2) of the stride between consecutive 
+ * @param[in] pe_stride    The log (base 2) of the stride between consecutive
  *                         PEs in the active set.
  * @param[in] pe_size      The number of PEs in the active set.
  *

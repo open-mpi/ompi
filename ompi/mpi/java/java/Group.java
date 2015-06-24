@@ -5,14 +5,14 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 /*
@@ -70,7 +70,7 @@ protected Group(long handle)
 /**
  * Java binding of the MPI operation {@code MPI_GROUP_SIZE}.
  * @return number of processes in the group
- * @throws MPIException 
+ * @throws MPIException
  */
 public int getSize() throws MPIException
 {
@@ -123,7 +123,7 @@ public boolean isNull()
  * @param ranks1 array of valid ranks in group1
  * @param group2 another group
  * @return array of corresponding ranks in group2
- * @throws MPIException 
+ * @throws MPIException
  */
 public static int[] translateRanks(Group group1, int[] ranks1, Group group2)
     throws MPIException
@@ -143,7 +143,7 @@ private static native int[] translateRanks(
  * @return {@code MPI.IDENT} if the group members and group order are exactly
  *         the same in both groups, {@code MPI.SIMILAR} if the group members are
  *         the same but the order is different, {@code MPI.UNEQUAL} otherwise.
- * @throws MPIException 
+ * @throws MPIException
  */
 public static int compare(Group group1, Group group2) throws MPIException
 {
@@ -159,7 +159,7 @@ private static native int compare(long group1, long group2) throws MPIException;
  * @param group1 first group
  * @param group2 second group
  * @return union group
- * @throws MPIException 
+ * @throws MPIException
  */
 public static Group union(Group group1, Group group2) throws MPIException
 {
@@ -175,7 +175,7 @@ private static native long union(long group1, long group2);
  * @param group1 first group
  * @param group2 second group
  * @return intersection group
- * @throws MPIException 
+ * @throws MPIException
  */
 public static Group intersection(Group group1, Group group2) throws MPIException
 {
@@ -191,7 +191,7 @@ private static native long intersection(long group1, long group2);
  * @param group1 first group
  * @param group2 second group
  * @return difference group
- * @throws MPIException 
+ * @throws MPIException
  */
 public static Group difference(Group group1, Group group2) throws MPIException
 {
@@ -206,7 +206,7 @@ private static native long difference(long group1, long group2);
  * <p>Java binding of the MPI operation {@code MPI_GROUP_INCL}.
  * @param ranks ranks from this group to appear in new group
  * @return new group
- * @throws MPIException 
+ * @throws MPIException
  */
 public Group incl(int[] ranks) throws MPIException
 {
@@ -221,7 +221,7 @@ private native long incl(long group, int[] ranks);
  * <p>Java binding of the MPI operation {@code MPI_GROUP_EXCL}.
  * @param ranks ranks from this group <em>not</em> to appear in new group
  * @return new group
- * @throws MPIException 
+ * @throws MPIException
  */
 public Group excl(int[] ranks) throws MPIException
 {
@@ -241,7 +241,7 @@ private native long excl(long group, int[] ranks);
  * of triplets.  The size of the second dimension is 3.
  * @param ranges array of integer triplets
  * @return new group
- * @throws MPIException 
+ * @throws MPIException
  */
 public Group rangeIncl(int[][] ranges) throws MPIException
 {
@@ -259,7 +259,7 @@ private native long rangeIncl(long group, int[][] ranges);
  * indicating ranks in this group to be excluded from the new group.
  * @param ranges array of integer triplets
  * @return new group
- * @throws MPIException 
+ * @throws MPIException
  */
 public Group rangeExcl(int[][] ranges) throws MPIException
 {

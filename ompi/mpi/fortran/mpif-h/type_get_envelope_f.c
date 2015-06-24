@@ -5,15 +5,15 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -65,7 +65,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_GET_ENVELOPE,
 #endif
 
 void ompi_type_get_envelope_f(MPI_Fint *type, MPI_Fint *num_integers,
-			     MPI_Fint *num_addresses, 
+			     MPI_Fint *num_addresses,
 			     MPI_Fint *num_datatypes, MPI_Fint *combiner,
 			     MPI_Fint *ierr)
 {
@@ -77,9 +77,9 @@ void ompi_type_get_envelope_f(MPI_Fint *type, MPI_Fint *num_integers,
     OMPI_SINGLE_NAME_DECL(combiner);
 
     c_ierr = MPI_Type_get_envelope(c_type,
-                                   OMPI_SINGLE_NAME_CONVERT(num_integers), 
-                                   OMPI_SINGLE_NAME_CONVERT(num_addresses), 
-                                   OMPI_SINGLE_NAME_CONVERT(num_datatypes), 
+                                   OMPI_SINGLE_NAME_CONVERT(num_integers),
+                                   OMPI_SINGLE_NAME_CONVERT(num_addresses),
+                                   OMPI_SINGLE_NAME_CONVERT(num_datatypes),
                                    OMPI_SINGLE_NAME_CONVERT(combiner));
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 

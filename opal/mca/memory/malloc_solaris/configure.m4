@@ -6,16 +6,16 @@
 # Copyright (c) 2004-2005 The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
-# Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+# Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2007-2011 Oracle and/or its affiliates.  All rights reserved.
 # Copyright (c) 2010-2011 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
-# 
+#
 # Additional copyrights may follow
-# 
+#
 # $HEADER$
 #
 AC_DEFUN([MCA_opal_memory_malloc_solaris_PRIORITY], [0])
@@ -26,7 +26,7 @@ AC_DEFUN([MCA_opal_memory_malloc_solaris_COMPILE_MODE], [
     AC_MSG_RESULT([$$4])
 ])
 
-# MCA_memory_malloc_solaris_CONFIG(action-if-can-compile, 
+# MCA_memory_malloc_solaris_CONFIG(action-if-can-compile,
 #                        [action-if-cant-compile])
 # ------------------------------------------------
 AC_DEFUN([MCA_opal_memory_malloc_solaris_CONFIG],[
@@ -50,14 +50,14 @@ AC_DEFUN([MCA_opal_memory_malloc_solaris_CONFIG],[
                       [memory_malloc_solaris_happy="no"])])
 
         AS_IF([test "$memory_malloc_solaris_happy" = "yes"],
-              [AC_CHECK_HEADER([malloc.h], [], 
+              [AC_CHECK_HEADER([malloc.h], [],
               [memory_malloc_solaris_happy="no"])])
 
         AS_IF([test "$memory_malloc_solaris_happy" = "yes"],
               [memory_malloc_solaris_munmap=0
 
-              AC_CHECK_HEADER([sys/syscall.h], 
-                              [AC_CHECK_FUNCS([syscall], 
+              AC_CHECK_HEADER([sys/syscall.h],
+                              [AC_CHECK_FUNCS([syscall],
                                               [memory_malloc_solaris_munmap=1])])
 
               AC_CHECK_FUNCS([__munmap], [memory_malloc_solaris_munmap=1])
@@ -76,7 +76,7 @@ AC_DEFUN([MCA_opal_memory_malloc_solaris_CONFIG],[
               AS_IF([test "$memory_malloc_solaris_munmap" = "0"],
                     [memory_malloc_solaris_happy="no"])])
 
-        # There is a difference in the munmap prototypes for different 
+        # There is a difference in the munmap prototypes for different
         # Solaris versions.  So determine whether we are to use Legacy
         # S10 or later prototypes.
         memory_alloc_solaris_legacy=0
@@ -106,7 +106,7 @@ AC_DEFUN([MCA_opal_memory_malloc_solaris_CONFIG],[
               [memory_malloc_solaris_happy="no"
                 memory_malloc_solaris_should_use=0])
     ;;
-    esac 
+    esac
 
     AS_IF([test "$memory_malloc_solaris_happy" = "yes"],
           [memory_base_found=1

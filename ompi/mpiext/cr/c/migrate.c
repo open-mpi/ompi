@@ -4,9 +4,9 @@
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2012 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 #include "ompi_config.h"
@@ -104,7 +104,7 @@ int OMPI_CR_Migrate(MPI_Comm comm, char *hostname, int rank, MPI_Info *info)
     OPAL_CR_ENTER_LIBRARY();
     ret = orte_snapc.request_op(datum);
     if( OMPI_SUCCESS != ret ) {
-        OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_OTHER, 
+        OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_OTHER,
                                FUNC_NAME);
     }
     OPAL_CR_EXIT_LIBRARY();

@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2007 The Trustees of the University of Tennessee.
  *                         All rights reserved.
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2012-2013 Los Alamos National Security, Inc.  All rights reserved. 
+ * Copyright (c) 2012-2013 Los Alamos National Security, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -21,9 +21,9 @@
 char *mca_vprotocol_base_include_list = NULL;
 mca_pml_v_t mca_pml_v = {-1, 0, 0};
 
-/* Load any vprotocol MCA component and call open function of all those 
+/* Load any vprotocol MCA component and call open function of all those
  * components.
- * 
+ *
  * Also fill the mca_vprotocol_base_include_list with components that exists
  */
 

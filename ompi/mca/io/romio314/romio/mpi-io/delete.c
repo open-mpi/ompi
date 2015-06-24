@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -41,7 +41,7 @@ int MPI_File_delete(ROMIO_CONST char *filename, MPI_Info info)
     ADIOI_Fns *fsops;
 #ifdef MPI_hpux
     int fl_xmpi;
-  
+
     HPMP_IO_START(fl_xmpi, BLKMPIFILEDELETE, TRDTBLOCK,
                 MPI_FILE_NULL, MPI_DATATYPE_NULL, -1);
 #endif /* MPI_hpux */
@@ -54,14 +54,14 @@ int MPI_File_delete(ROMIO_CONST char *filename, MPI_Info info)
     if (error_code != MPI_SUCCESS) goto fn_exit;
 
     /* resolve file system type from file name; this is a collective call */
-    ADIO_ResolveFileType(MPI_COMM_SELF, filename, &file_system, &fsops, 
+    ADIO_ResolveFileType(MPI_COMM_SELF, filename, &file_system, &fsops,
 			 &error_code);
 
     /* --BEGIN ERROR HANDLING-- */
     if (error_code != MPI_SUCCESS)
     {
 	/* ADIO_ResolveFileType() will print as informative a message as it
-	 * possibly can or call MPIR_Err_setmsg.  We just need to propagate 
+	 * possibly can or call MPIR_Err_setmsg.  We just need to propagate
 	 * the error up.  In the PRINT_ERR_MSG case MPI_Abort has already
 	 * been called as well, so we probably didn't even make it this far.
 	 */
@@ -84,7 +84,7 @@ int MPI_File_delete(ROMIO_CONST char *filename, MPI_Info info)
     if (error_code != MPI_SUCCESS)
 	error_code = MPIO_Err_return_file(MPI_FILE_NULL, error_code);
     /* --END ERROR HANDLING-- */
-	
+
 #ifdef MPI_hpux
     HPMP_IO_END(fl_xmpi, MPI_FILE_NULL, MPI_DATATYPE_NULL, -1);
 #endif /* MPI_hpux */

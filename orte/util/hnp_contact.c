@@ -1,25 +1,25 @@
 /*
- * 
+ *
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  *
  * $Id: orte_universe_setup_file I/O functions $
- * 
+ *
  */
 #include "orte_config.h"
 #include "orte/constants.h"
@@ -134,14 +134,14 @@ int orte_read_hnp_contact_file(char *filename, orte_hnp_contact_t *hnp, bool con
     if (connect) {
         /* set the contact info into the comm hash tables*/
         orte_rml.set_contact_info(hnp_uri);
-        
+
         /* extract the HNP's name and store it */
         if (ORTE_SUCCESS != (rc = orte_rml_base_parse_uris(hnp_uri, &hnp->name, NULL))) {
             ORTE_ERROR_LOG(rc);
             free(hnp_uri);
             return rc;
         }
-        
+
         /* set the route to be direct */
         if (ORTE_SUCCESS != (rc = orte_routed.update_route(&hnp->name, &hnp->name))) {
             ORTE_ERROR_LOG(rc);
@@ -150,7 +150,7 @@ int orte_read_hnp_contact_file(char *filename, orte_hnp_contact_t *hnp, bool con
         }
     }
     hnp->rml_uri = hnp_uri;
-    
+
     return ORTE_SUCCESS;
 }
 
@@ -165,7 +165,7 @@ static char *orte_getline(FILE *fp)
 	   buff = strdup(input);
 	   return buff;
     }
-    
+
     return NULL;
 }
 
@@ -178,12 +178,12 @@ int orte_list_local_hnps(opal_list_t *hnps, bool connect)
     char *contact_filename = NULL;
     orte_hnp_contact_t *hnp;
     char *headdir;
-    
+
     /*
      * Check to make sure we have access to the top-level directory
      */
     headdir = opal_os_path(false, orte_process_info.tmpdir_base, orte_process_info.top_session_dir, NULL);
-    
+
     if( ORTE_SUCCESS != (ret = opal_os_dirpath_access(headdir, 0) )) {
         /* it is okay not to find this as there may not be any
          * HNP's present, and we don't write our own session dir
@@ -193,7 +193,7 @@ int orte_list_local_hnps(opal_list_t *hnps, bool connect)
         }
         goto cleanup;
     }
-    
+
     /*
      * Open up the base directory so we can get a listing
      */
@@ -204,7 +204,7 @@ int orte_list_local_hnps(opal_list_t *hnps, bool connect)
      * For each directory
      */
     while( NULL != (dir_entry = readdir(cur_dirp)) ) {
-        
+
         /*
          * Skip the obvious
          */
@@ -212,13 +212,13 @@ int orte_list_local_hnps(opal_list_t *hnps, bool connect)
             0 == strncmp(dir_entry->d_name, "..", strlen("..")) ) {
             continue;
         }
-        
+
         /*
          * See if a contact file exists in this directory and read it
          */
         contact_filename = opal_os_path( false, headdir,
                                          dir_entry->d_name, "contact.txt", NULL );
-        
+
         hnp = OBJ_NEW(orte_hnp_contact_t);
         if (ORTE_SUCCESS == (ret = orte_read_hnp_contact_file(contact_filename, hnp, connect))) {
             opal_list_append(hnps, &(hnp->super));
@@ -227,11 +227,11 @@ int orte_list_local_hnps(opal_list_t *hnps, bool connect)
         }
         free(contact_filename);
      }
-    
+
 cleanup:
     if( NULL != cur_dirp )
         closedir(cur_dirp);
     free(headdir);
-    
+
     return (opal_list_is_empty(hnps) ? ORTE_ERR_NOT_FOUND : ORTE_SUCCESS);
 }

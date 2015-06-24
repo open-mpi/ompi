@@ -9,7 +9,7 @@
  * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -17,9 +17,9 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 #include "orte_config.h"
@@ -61,11 +61,11 @@ WHITE       [\f\t\v ]
 
 %%
 
-{WHITE}*\n         { orte_util_hostfile_line++; 
+{WHITE}*\n         { orte_util_hostfile_line++;
                      return ORTE_HOSTFILE_NEWLINE; }
-#.*\n              { orte_util_hostfile_line++; 
+#.*\n              { orte_util_hostfile_line++;
                      return ORTE_HOSTFILE_NEWLINE; }
-"//".*\n           { orte_util_hostfile_line++; 
+"//".*\n           { orte_util_hostfile_line++;
                      return ORTE_HOSTFILE_NEWLINE; }
 
 "/*"               { BEGIN(comment);
@@ -73,51 +73,51 @@ WHITE       [\f\t\v ]
 <comment>[^*\n]*       ; /* Eat up non '*'s */
 <comment>"*"+[^*/\n]*  ; /* Eat '*'s not followed by a '/' */
 <comment>\n        { orte_util_hostfile_line++;
-                     return ORTE_HOSTFILE_NEWLINE; } 
+                     return ORTE_HOSTFILE_NEWLINE; }
 <comment>"*"+"/"   { BEGIN(INITIAL); /* Done with Block Comment */
                      return ORTE_HOSTFILE_NEWLINE; }
 
-\"[^\"]*\"         { orte_util_hostfile_value.sval = yytext; 
+\"[^\"]*\"         { orte_util_hostfile_value.sval = yytext;
                      return ORTE_HOSTFILE_QUOTED_STRING; }
 
 {WHITE}+           ;			/* whitespace */
 
 "="                { return ORTE_HOSTFILE_EQUAL; }
 
-cpu                { orte_util_hostfile_value.sval = yytext; 
+cpu                { orte_util_hostfile_value.sval = yytext;
                      return ORTE_HOSTFILE_CPU; }
-count              { orte_util_hostfile_value.sval = yytext; 
+count              { orte_util_hostfile_value.sval = yytext;
                      return ORTE_HOSTFILE_COUNT; }
-slots              { orte_util_hostfile_value.sval = yytext; 
+slots              { orte_util_hostfile_value.sval = yytext;
                      return ORTE_HOSTFILE_SLOTS; }
-"slots-max"        { orte_util_hostfile_value.sval = yytext; 
+"slots-max"        { orte_util_hostfile_value.sval = yytext;
                      return ORTE_HOSTFILE_SLOTS_MAX; }
-slots_max          { orte_util_hostfile_value.sval = yytext; 
+slots_max          { orte_util_hostfile_value.sval = yytext;
                      return ORTE_HOSTFILE_SLOTS_MAX; }
-"max-slots"        { orte_util_hostfile_value.sval = yytext; 
+"max-slots"        { orte_util_hostfile_value.sval = yytext;
                      return ORTE_HOSTFILE_SLOTS_MAX; }
-max_slots          { orte_util_hostfile_value.sval = yytext; 
+max_slots          { orte_util_hostfile_value.sval = yytext;
                      return ORTE_HOSTFILE_SLOTS_MAX; }
-"cpu-max"          { orte_util_hostfile_value.sval = yytext; 
+"cpu-max"          { orte_util_hostfile_value.sval = yytext;
                      return ORTE_HOSTFILE_SLOTS_MAX; }
-cpu_max            { orte_util_hostfile_value.sval = yytext; 
+cpu_max            { orte_util_hostfile_value.sval = yytext;
                      return ORTE_HOSTFILE_SLOTS_MAX; }
-"max-cpu"          { orte_util_hostfile_value.sval = yytext; 
+"max-cpu"          { orte_util_hostfile_value.sval = yytext;
                      return ORTE_HOSTFILE_SLOTS_MAX; }
-max_cpu            { orte_util_hostfile_value.sval = yytext; 
+max_cpu            { orte_util_hostfile_value.sval = yytext;
                      return ORTE_HOSTFILE_SLOTS_MAX; }
-"count-max"        { orte_util_hostfile_value.sval = yytext; 
+"count-max"        { orte_util_hostfile_value.sval = yytext;
                      return ORTE_HOSTFILE_SLOTS_MAX; }
-count_max          { orte_util_hostfile_value.sval = yytext; 
+count_max          { orte_util_hostfile_value.sval = yytext;
                      return ORTE_HOSTFILE_SLOTS_MAX; }
-"max-count"        { orte_util_hostfile_value.sval = yytext; 
+"max-count"        { orte_util_hostfile_value.sval = yytext;
                      return ORTE_HOSTFILE_SLOTS_MAX; }
-max_count          { orte_util_hostfile_value.sval = yytext; 
+max_count          { orte_util_hostfile_value.sval = yytext;
                      return ORTE_HOSTFILE_SLOTS_MAX; }
 
-rank                { orte_util_hostfile_value.sval = yytext; 
+rank                { orte_util_hostfile_value.sval = yytext;
                      return ORTE_HOSTFILE_RANK; }
-slot               { orte_util_hostfile_value.sval = yytext; 
+slot               { orte_util_hostfile_value.sval = yytext;
                      return ORTE_HOSTFILE_SLOT; }
 
 username           { orte_util_hostfile_value.sval = yytext;
@@ -156,7 +156,7 @@ cores_per_socket   { orte_util_hostfile_value.sval = yytext;
                      return ORTE_HOSTFILE_RELATIVE; }
 
 
-[0-9]+             { orte_util_hostfile_value.ival = atol(yytext); 
+[0-9]+             { orte_util_hostfile_value.ival = atol(yytext);
                      return ORTE_HOSTFILE_INT; }
 %{ /* First detect hosts as standard Strings (but without ".")
     * then username@IPv4 or IPV4, then username@IPv6 or IPv6,
@@ -176,10 +176,10 @@ cores_per_socket   { orte_util_hostfile_value.sval = yytext;
                       return ORTE_HOSTFILE_IPV6; }
 
 (\^?[A-Za-z0-9][A-Za-z0-9_\-]*"@")?[A-Za-z0-9][A-Za-z0-9_\-\.]*  {
-                     orte_util_hostfile_value.sval = yytext; 
+                     orte_util_hostfile_value.sval = yytext;
                      return ORTE_HOSTFILE_HOSTNAME; }
 
-.                  { orte_util_hostfile_value.sval = yytext; 
+.                  { orte_util_hostfile_value.sval = yytext;
                      return ORTE_HOSTFILE_ERROR; }
 
 %%

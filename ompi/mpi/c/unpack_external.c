@@ -6,7 +6,7 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -14,9 +14,9 @@
  * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 #include "ompi_config.h"
@@ -42,7 +42,7 @@ static const char FUNC_NAME[] = "MPI_Unpack_external";
 
 int MPI_Unpack_external (const char datarep[], const void *inbuf, MPI_Aint insize,
                          MPI_Aint *position, void *outbuf, int outcount,
-                         MPI_Datatype datatype) 
+                         MPI_Datatype datatype)
 {
     int rc;
     opal_convertor_t local_convertor;

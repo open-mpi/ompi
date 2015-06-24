@@ -747,7 +747,7 @@ static inline __opal_attribute_always_inline__ int
     return OMPI_SUCCESS;
 }
 
-static inline __opal_attribute_always_inline__  
+static inline __opal_attribute_always_inline__
                                 int lognum(int n) {
     int count = 1, lognum = 0;
 

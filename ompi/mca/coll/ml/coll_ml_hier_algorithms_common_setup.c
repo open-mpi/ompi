@@ -16,7 +16,7 @@
 
 int mca_coll_ml_schedule_init_scratch(mca_coll_ml_topology_t *topo_info,
         mca_coll_ml_schedule_hier_info_t *h_info,
-        int **out_scratch_indx, int **out_scratch_num) 
+        int **out_scratch_indx, int **out_scratch_num)
 {
     bool prev_is_zero;
     int i, cnt;
@@ -25,14 +25,14 @@ int mca_coll_ml_schedule_init_scratch(mca_coll_ml_topology_t *topo_info,
     mca_bcol_base_module_t *prev_bcol = NULL;
     int *scratch_indx, *scratch_num;
 
-    scratch_indx = *out_scratch_indx = 
+    scratch_indx = *out_scratch_indx =
         (int *) calloc(n_hiers * 2, sizeof(int));
     if (NULL == *out_scratch_indx) {
         ML_ERROR(("Can't allocate memory."));
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
-    scratch_num = *out_scratch_num = 
+    scratch_num = *out_scratch_num =
         (int *) calloc(n_hiers * 2, sizeof(int));
     if (NULL == *out_scratch_num) {
         ML_ERROR(("Can't allocate memory."));
@@ -90,7 +90,7 @@ int mca_coll_ml_schedule_init_scratch(mca_coll_ml_topology_t *topo_info,
     return OMPI_SUCCESS;
 }
 
-mca_coll_ml_collective_operation_description_t * 
+mca_coll_ml_collective_operation_description_t *
         mca_coll_ml_schedule_alloc(mca_coll_ml_schedule_hier_info_t *h_info)
 {
     mca_coll_ml_collective_operation_description_t  *schedule = NULL;

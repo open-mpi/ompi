@@ -5,18 +5,18 @@
  * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
- *                         reserved. 
+ *                         reserved.
  * Copyright (c) 2014-2015 Intel Corporation.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -63,7 +63,7 @@ void orte_iof_hnp_recv(int status, orte_process_name_t* sender,
     opal_list_item_t *item, *next;
     int rc;
     bool exclusive;
-    
+
     OPAL_OUTPUT_VERBOSE((1, orte_iof_base_framework.framework_output,
                          "%s received IOF from proc %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -94,14 +94,14 @@ void orte_iof_hnp_recv(int status, orte_process_name_t* sender,
         }
         goto CLEAN_RETURN;
     }
-    
+
     /* get name of the process whose io we are discussing */
     count = 1;
     if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &origin, &count, ORTE_NAME))) {
         ORTE_ERROR_LOG(rc);
         goto CLEAN_RETURN;
     }
-    
+
     OPAL_OUTPUT_VERBOSE((1, orte_iof_base_framework.framework_output,
                          "%s received IOF cmd from sender %s for source %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -116,7 +116,7 @@ void orte_iof_hnp_recv(int status, orte_process_name_t* sender,
             ORTE_ERROR_LOG(rc);
             goto CLEAN_RETURN;
         }
-        
+
         OPAL_OUTPUT_VERBOSE((1, orte_iof_base_framework.framework_output,
                              "%s received pull cmd from remote tool %s for proc %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -154,7 +154,7 @@ void orte_iof_hnp_recv(int status, orte_process_name_t* sender,
         }
         goto CLEAN_RETURN;
     }
-    
+
     if (ORTE_IOF_CLOSE & stream) {
         OPAL_OUTPUT_VERBOSE((1, orte_iof_base_framework.framework_output,
                              "%s received close cmd from remote tool %s for proc %s",
@@ -189,7 +189,7 @@ void orte_iof_hnp_recv(int status, orte_process_name_t* sender,
         }
         goto CLEAN_RETURN;
     }
-    
+
     /* this must have come from a daemon forwarding output - unpack the data */
     numbytes=ORTE_IOF_BASE_MSG_MAX;
     if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, data, &numbytes, OPAL_BYTE))) {
@@ -197,12 +197,12 @@ void orte_iof_hnp_recv(int status, orte_process_name_t* sender,
         goto CLEAN_RETURN;
     }
     /* numbytes will contain the actual #bytes that were sent */
-    
+
     OPAL_OUTPUT_VERBOSE((1, orte_iof_base_framework.framework_output,
                          "%s unpacked %d bytes from remote proc %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), numbytes,
                          ORTE_NAME_PRINT(&origin)));
-    
+
     /* cycle through the endpoints to see if someone else wants a copy */
     exclusive = false;
     for (item = opal_list_get_first(&mca_iof_hnp_component.sinks);
@@ -225,7 +225,7 @@ void orte_iof_hnp_recv(int status, orte_process_name_t* sender,
             }
         }
     }
-    
+
     /* output this to our local output unless one of the sinks was exclusive */
     if (!exclusive) {
         if (ORTE_IOF_STDOUT & stream || orte_xml_output) {
@@ -234,7 +234,7 @@ void orte_iof_hnp_recv(int status, orte_process_name_t* sender,
             orte_iof_base_write_output(&origin, stream, data, numbytes, orte_iof_base.iof_write_stderr->wev);
         }
     }
-        
+
  CLEAN_RETURN:
     return;
 }

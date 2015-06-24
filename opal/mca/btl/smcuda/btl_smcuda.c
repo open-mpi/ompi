@@ -13,7 +13,7 @@
  * Copyright (c) 2006-2007 Voltaire. All rights reserved.
  * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010-2015 Los Alamos National Security, LLC.
- *                         All rights reserved. 
+ *                         All rights reserved.
  * Copyright (c) 2012-2015 NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
@@ -336,7 +336,7 @@ smcuda_btl_first_time_init(mca_btl_smcuda_t *smcuda_btl,
 #if OPAL_CUDA_SUPPORT
     /* Register the entire shared memory region with the CUDA library which will
      * force it to be pinned.  This aproach was chosen as there is no way for this
-     * local process to know which parts of the memory are being utilized by a 
+     * local process to know which parts of the memory are being utilized by a
      * remote process. */
     opal_output_verbose(10, opal_btl_base_framework.framework_output,
                         "btl:smcuda: CUDA cuMemHostRegister address=%p, size=%d",
@@ -432,7 +432,7 @@ smcuda_btl_first_time_init(mca_btl_smcuda_t *smcuda_btl,
                              mca_btl_smcuda_component.sm_free_list_inc,
                              mca_btl_smcuda_component.sm_mpool, 0, NULL, NULL, NULL);
     if ( OPAL_SUCCESS != i )
-	    return i;   
+	    return i;
 
     mca_btl_smcuda_component.num_outstanding_frags = 0;
 
@@ -1059,11 +1059,11 @@ int mca_btl_smcuda_get_cuda (struct mca_btl_base_module_t *btl,
     frag->base.des_cbdata = cbdata;
     frag->base.des_context = cbcontext;
     frag->local_handle = local_handle;
- 
+
     /* Set to 0 for debugging since it is a list item but I am not
      * intializing it properly and it is annoying to see all the
      * garbage in the debugger.  */
-    
+
     memset(&rget_reg, 0, sizeof(rget_reg));
     memcpy(&rget_reg.data.memHandle, remote_handle->reg_data.memHandle,
            sizeof(remote_handle->reg_data.memHandle));
@@ -1105,7 +1105,7 @@ int mca_btl_smcuda_get_cuda (struct mca_btl_base_module_t *btl,
     /* The remote side posted an IPC event to make sure we do not start our
      * copy until IPC event completes.  This is to ensure that the data being sent
      * is available in the sender's GPU buffer.  Therefore, do a stream synchronize
-     * on the IPC event that we received.  Note that we pull it from 
+     * on the IPC event that we received.  Note that we pull it from
      * rget_reg, not reg_ptr, as we do not cache the event. */
     mca_common_wait_stream_synchronize(&rget_reg);
 
@@ -1167,7 +1167,7 @@ static void mca_btl_smcuda_send_cuda_ipc_request(struct mca_btl_base_module_t* b
     if ( mca_btl_smcuda_component.num_outstanding_frags * 2 > (int) mca_btl_smcuda_component.fifo_size ) {
         mca_btl_smcuda_component_progress();
     }
-    
+
     if (0 != (res = mca_common_cuda_get_device(&mydevnum))) {
         opal_output(0, "Cannot determine device.  IPC cannot be set.");
         endpoint->ipcstate = IPC_BAD;
@@ -1222,16 +1222,16 @@ void mca_btl_smcuda_dump(struct mca_btl_base_module_t* btl,
     mca_btl_smcuda_frag_t* frag;
 
     mca_btl_base_err("BTL SM %p endpoint %p [smp_rank %d] [peer_rank %d]\n",
-                     (void*) btl, (void*) endpoint, 
+                     (void*) btl, (void*) endpoint,
                      endpoint->my_smp_rank, endpoint->peer_smp_rank);
     if( NULL != endpoint ) {
         for(item =  opal_list_get_first(&endpoint->pending_sends);
-            item != opal_list_get_end(&endpoint->pending_sends); 
+            item != opal_list_get_end(&endpoint->pending_sends);
             item = opal_list_get_next(item)) {
             frag = (mca_btl_smcuda_frag_t*)item;
             mca_btl_base_err(" |  frag %p size %lu (hdr frag %p len %lu rank %d tag %d)\n",
                              (void*) frag, frag->size, (void*) frag->hdr->frag,
-                             frag->hdr->len, frag->hdr->my_smp_rank, 
+                             frag->hdr->len, frag->hdr->my_smp_rank,
                              frag->hdr->tag);
         }
     }

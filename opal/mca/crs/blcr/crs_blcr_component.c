@@ -4,16 +4,16 @@
  *                         All rights reserved.
  * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
  *                         All rights reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -42,7 +42,7 @@ bool opal_crs_blcr_dev_null = false;
 opal_crs_blcr_component_t mca_crs_blcr_component = {
     /* First do the base component stuff */
     {
-        /* Handle the general mca_component_t struct containing 
+        /* Handle the general mca_component_t struct containing
          *  meta information about the component itself
          */
         .base_version = {
@@ -52,7 +52,7 @@ opal_crs_blcr_component_t mca_crs_blcr_component = {
             .mca_component_name = "blcr",
             MCA_BASE_MAKE_VERSION(component, OPAL_MAJOR_VERSION, OPAL_MINOR_VERSION,
                                   OPAL_RELEASE_VERSION),
-            
+
             /* Component open and close functions */
             .mca_open_component = crs_blcr_open,
             .mca_close_component = crs_blcr_close,
@@ -63,13 +63,13 @@ opal_crs_blcr_component_t mca_crs_blcr_component = {
             /* The component is checkpoint ready */
             MCA_BASE_METADATA_PARAM_CHECKPOINT
         },
-        
+
         .verbose = 0,
         .output_handle = -1,
     }
 };
 
-static int crs_blcr_register (void) 
+static int crs_blcr_register (void)
 {
     int ret;
 
@@ -105,14 +105,14 @@ static int crs_blcr_register (void)
     return (0 > ret) ? ret : OPAL_SUCCESS
 }
 
-static int crs_blcr_open(void) 
+static int crs_blcr_open(void)
 {
     /* If there is a custom verbose level for this component than use it
      * otherwise take our parents level and output channel
      */
     if ( 0 != mca_crs_blcr_component.super.verbose) {
         mca_crs_blcr_component.super.output_handle = opal_output_open(NULL);
-        opal_output_set_verbosity(mca_crs_blcr_component.super.output_handle, 
+        opal_output_set_verbosity(mca_crs_blcr_component.super.output_handle,
                                   mca_crs_blcr_component.super.verbose);
     } else {
         mca_crs_blcr_component.super.output_handle = opal_crs_base_framework.framework_output;
@@ -124,10 +124,10 @@ static int crs_blcr_open(void)
     opal_output_verbose(10, mca_crs_blcr_component.super.output_handle,
                         "crs:blcr: open()");
     opal_output_verbose(20, mca_crs_blcr_component.super.output_handle,
-                        "crs:blcr: open: priority = %d", 
+                        "crs:blcr: open: priority = %d",
                         mca_crs_blcr_component.super.priority);
     opal_output_verbose(20, mca_crs_blcr_component.super.output_handle,
-                        "crs:blcr: open: verbosity = %d", 
+                        "crs:blcr: open: verbosity = %d",
                         mca_crs_blcr_component.super.verbose);
     opal_output_verbose(10, mca_crs_blcr_component.super.output_handle,
                         "crs:blcr: open: dev_null = %s",

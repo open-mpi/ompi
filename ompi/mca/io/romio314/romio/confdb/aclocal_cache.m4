@@ -1,20 +1,20 @@
 dnl
 dnl/*D
-dnl AC_CACHE_LOAD - Replacement for autoconf cache load 
+dnl AC_CACHE_LOAD - Replacement for autoconf cache load
 dnl
 dnl Notes:
-dnl Caching in autoconf is broken (at least through version 2.13).  
+dnl Caching in autoconf is broken (at least through version 2.13).
 dnl The problem is that the cache is read
 dnl without any check for whether it makes any sense to read it.
-dnl A common problem is a build on a shared file system; connecting to 
+dnl A common problem is a build on a shared file system; connecting to
 dnl a different computer and then building within the same directory will
 dnl lead to at best error messages from configure and at worse a build that
 dnl is wrong but fails only at run time (e.g., wrong datatype sizes used).
 dnl Later versions of autoconf do include some checks for changes in the
 dnl environment that impact the choices, but still misses problems with
 dnl multiple different systems.
-dnl 
-dnl This fixes that by requiring the user to explicitly enable caching 
+dnl
+dnl This fixes that by requiring the user to explicitly enable caching
 dnl before the cache file will be loaded.
 dnl
 dnl To use this version of 'AC_CACHE_LOAD', you need to include
@@ -26,7 +26,7 @@ dnl command causes configure to keep track of the system being configured
 dnl in a config.system file; if the current system matches the value stored
 dnl in that file (or there is neither a config.cache nor config.system file),
 dnl configure will enable caching.  In order to ensure that the configure
-dnl tests make sense, the values of CC, F77, F90, and CXX are also included 
+dnl tests make sense, the values of CC, F77, F90, and CXX are also included
 dnl in the config.system file.  In addition, the value of PATH is included
 dnl to ensure that changes in the PATH that might select a different version
 dnl of a program with the same name (such as a native make versus gnumake)
@@ -34,7 +34,7 @@ dnl are detected.
 dnl
 dnl Bugs:
 dnl This does not work with the Cygnus configure because the enable arguments
-dnl are processed *after* AC_CACHE_LOAD (!).  To address this, we avoid 
+dnl are processed *after* AC_CACHE_LOAD (!).  To address this, we avoid
 dnl changing the value of enable_cache, and use real_enable_cache, duplicating
 dnl the "notgiven" value.
 dnl
@@ -46,14 +46,14 @@ dnl See Also:
 dnl PAC_ARG_CACHING
 dnl D*/
 define([AC_CACHE_LOAD],
-[if test "$CONFIGURE_DEBUG_CACHE" = yes ; then 
+[if test "$CONFIGURE_DEBUG_CACHE" = yes ; then
     oldopts="$-"
     clearMinusX=no
-    set -x 
-    if test "$oldopts" != "$-" ; then 
+    set -x
+    if test "$oldopts" != "$-" ; then
         clearMinusX=yes
     fi
-fi 
+fi
 if test "X$cache_system" = "X" ; then
     # A default file name, just in case
     cache_system="config.system"
@@ -66,13 +66,13 @@ if test "X$cache_system" = "X" ; then
         test "x$cache_system" = "x$cache_file" && cache_system="config.system"
 #    else
 #        We must *not* set enable_cache to no because we need to know if
-#        enable_cache was not set.  
+#        enable_cache was not set.
 #        enable_cache=no
     fi
 fi
 dnl
 dnl The "action-if-not-given" part of AC_ARG_ENABLE is not executed until
-dnl after the AC_CACHE_LOAD is executed (!).  Thus, the value of 
+dnl after the AC_CACHE_LOAD is executed (!).  Thus, the value of
 dnl enable_cache if neither --enable-cache or --disable-cache is selected
 dnl is null.  Just in case autoconf ever fixes this, we test both cases.
 dnl
@@ -81,12 +81,12 @@ dnl change which versions of programs are found (such as vendor make
 dnl or GNU make).
 dnl
 #
-# Get a test value and flag whether we should remove/replace the 
+# Get a test value and flag whether we should remove/replace the
 # cache_system file (do so unless cache_system_ok is yes)
 # FC and F77 should be synonyms.  Save both in case
 # We include the xxxFLAGS in case the user is using the flags to change
-# the language (either input or output) of the compiler.  E.g., 
-# using -xarch=v9 on Solaris to select 64 bit output or using -D_BSD_SOURCE 
+# the language (either input or output) of the compiler.  E.g.,
+# using -xarch=v9 on Solaris to select 64 bit output or using -D_BSD_SOURCE
 # with gcc to get different header files on input.
 cleanargs=`echo "$CC $F77 $FC $CXX $F90 $CFLAGS $FFLAGS $CXXFLAGS $F90FLAGS $PATH" | tr '"' ' '`
 if uname -srm >/dev/null 2>&1 ; then
@@ -112,7 +112,7 @@ if test "X$real_enable_cache" = "Xnotgiven" ; then
         elif test ! -f "$cache_system" -a -n "$cache_system_text" ; then
 	    # remove the cache file because it may not correspond to our
 	    # system
-	    if test "$cache_file" != "/dev/null" ; then 
+	    if test "$cache_file" != "/dev/null" ; then
 	        rm -f $cache_file
 	    fi
 	    real_enable_cache="yes"
@@ -157,7 +157,7 @@ if test "$clearMinusX" = yes ; then
 fi
 ])
 dnl
-dnl/*D 
+dnl/*D
 dnl PAC_ARG_CACHING - Enable caching of results from a configure execution
 dnl
 dnl Synopsis:
@@ -165,7 +165,7 @@ dnl PAC_ARG_CACHING
 dnl
 dnl Output Effects:
 dnl Adds '--enable-cache' and '--disable-cache' to the command line arguments
-dnl accepted by 'configure'.  
+dnl accepted by 'configure'.
 dnl
 dnl See Also:
 dnl AC_CACHE_LOAD
@@ -194,7 +194,7 @@ AC_DEFUN([PAC_CACHE_CLEAN],[
         else
             echo "not updating unwritable cache $cache_file"
         fi
-    fi	
+    fi
     rm -f confcache
     if test "$DEBUG_AUTOCONF_CACHE" = "yes" ; then
         echo "Results of cleaned cache file:"
@@ -207,20 +207,20 @@ AC_DEFUN([PAC_CACHE_CLEAN],[
 dnl/*D
 dnl PAC_SUBDIR_CACHE - Create a cache file before ac_output for subdirectory
 dnl configures.
-dnl 
+dnl
 dnl Synopsis:
 dnl PAC_SUBDIR_CACHE(when)
 dnl
 dnl Input Parameter:
 dnl . when - Indicates when the cache should be created (optional)
 dnl          If 'always', create a new cache file.  This option
-dnl          should be used if any of the cache parameters (such as 
+dnl          should be used if any of the cache parameters (such as
 dnl          CFLAGS or LDFLAGS) may have changed.
 dnl
 dnl Output Effects:
-dnl 	
+dnl
 dnl Create a cache file before ac_output so that subdir configures don't
-dnl make mistakes. 
+dnl make mistakes.
 dnl We can't use OUTPUT_COMMANDS to remove the cache file, because those
 dnl commands are executed *before* the subdir configures.
 dnl
@@ -232,9 +232,9 @@ if test "x$1" = "xalways" -o \( "$cache_file" = "/dev/null" -a "X$real_enable_ca
     # lost
     cache_file=`pwd`/$$conf.cache
     touch $cache_file
-    dnl 
+    dnl
     dnl For Autoconf 2.52+, we should ensure that the environment is set
-    dnl for the cache.  Make sure that we get the values and set the 
+    dnl for the cache.  Make sure that we get the values and set the
     dnl xxx_set variables properly
     ac_cv_env_CC_set=set
     ac_cv_env_CC_value=$CC
@@ -320,7 +320,7 @@ fi
 ])
 dnl
 dnl The following three macros support the sharing of configure results
-dnl by configure scripts, including ones that are not run with 
+dnl by configure scripts, including ones that are not run with
 dnl AC_CONFIG_SUBDIRS (the cachefiles managed by --enable-cache can
 dnl only be used with AC_CONFIG_SUBDIRS; creating a autoconf-style
 dnl cachefile before the the end of the autoconf process will often
@@ -335,7 +335,7 @@ AC_ARG_ENABLE(base-cache,
 if test "$enable_base_cache" = "default" ; then
     if test "$CONF_USE_CACHEFILE" = yes ; then
         enable_base_cache=yes
-    else 
+    else
         enable_base_cache=no
     fi
 fi

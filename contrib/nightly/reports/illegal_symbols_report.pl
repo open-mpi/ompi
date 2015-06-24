@@ -6,14 +6,14 @@
 # Copyright (c) 2004-2005 The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
-# Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+# Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # $COPYRIGHT$
-# 
+#
 # Additional copyrights may follow
-# 
+#
 # $HEADER$
 #
 # Look for public symbols in Open MPI libraries and components that
@@ -130,7 +130,7 @@ sub check_files {
             # Only look for symbols that are a) global [i.e.,
             # uppercase scope], b) not U, V, or W
 
-            if ($scope =~ /[A-Z]/ && 
+            if ($scope =~ /[A-Z]/ &&
                 $scope !~ /[UVW]/ &&
                 $symbol !~ /^_/) {
 
@@ -206,7 +206,7 @@ sub mail_symbols {
                     print $mail "  --> $symbol->{symbol}\n";
                 }
             }
-            
+
         }
         print $mail "\n";
     }
@@ -309,7 +309,7 @@ if ($$bad_compsymbols || $$bad_libsymbols) {
     if ($$bad_libsymbols) {
         mail_symbols($bad_libsymbols, *MAIL{IO});
     }
-   
+
     print MAIL "\nYour friendly server,\nCyrador\n";
     close MAIL;
 }

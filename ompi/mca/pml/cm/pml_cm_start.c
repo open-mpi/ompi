@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
@@ -39,7 +39,7 @@ mca_pml_cm_start(size_t count, ompi_request_t** requests)
         if (OMPI_REQUEST_PML != requests[i]->req_type) {
             continue;
         }
-        if (NULL == pml_request) { 
+        if (NULL == pml_request) {
             continue;
         }
         /* If the persistent request is currebtly active - obtain the
@@ -52,11 +52,11 @@ mca_pml_cm_start(size_t count, ompi_request_t** requests)
         case OMPI_REQUEST_INACTIVE:
             if (pml_request->req_pml_complete == true)
                 break;
-            
+
         case OMPI_REQUEST_ACTIVE: {
             /* otherwise fall through */
             ompi_request_t *request;
-            
+
             OPAL_THREAD_LOCK(&ompi_request_lock);
             if (pml_request->req_pml_complete == false) {
                 /* free request after it completes */
@@ -66,7 +66,7 @@ mca_pml_cm_start(size_t count, ompi_request_t** requests)
                 OPAL_THREAD_UNLOCK(&ompi_request_lock);
                 break;
             }
-            
+
             /* allocate a new request */
             switch (pml_request->req_pml_type) {
             case MCA_PML_CM_REQUEST_SEND_HEAVY: {
@@ -106,7 +106,7 @@ mca_pml_cm_start(size_t count, ompi_request_t** requests)
         default:
             return OMPI_ERR_REQUEST;
         }
-        
+
         /* start the request */
         switch (pml_request->req_pml_type) {
         case MCA_PML_CM_REQUEST_SEND_HEAVY:

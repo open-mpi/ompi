@@ -4,9 +4,9 @@
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -153,14 +153,14 @@ create_indexed_gap_optimized_ddt( void )
     int bLength[3];
     MPI_Datatype types[3];
     MPI_Aint displ[3];
-   
+
     MPI_Type_contiguous( 40, MPI_BYTE, &dt1 );
     MPI_Type_create_resized( dt1, 0, 44, &dt2 );
-   
+
     bLength[0] = 4;
     bLength[1] = 9;
     bLength[2] = 36;
-   
+
     types[0] = MPI_BYTE;
     types[1] = dt2;
     types[2] = MPI_BYTE;
@@ -168,9 +168,9 @@ create_indexed_gap_optimized_ddt( void )
     displ[0] = 0;
     displ[1] = 8;
     displ[2] = 44 * 9 + 8;
-   
+
     MPI_Type_create_struct( 3, bLength, displ, types, &dt3 );
-   
+
     MPI_Type_free( &dt1 );
     MPI_Type_free( &dt2 );
     MPI_DDT_DUMP( dt3 );
@@ -195,7 +195,7 @@ static int isend_recv( int cycles,
     MPI_Status status;
     MPI_Request req;
     double tstart, tend;
-   
+
     MPI_Type_size( sdt, &slength );
     slength *= scount;
     MPI_Type_size( rdt, &rlength );
@@ -229,7 +229,7 @@ static int irecv_send( int cycles,
     MPI_Request req;
     MPI_Status status;
     double tstart, tend;
-   
+
     MPI_Type_size( sdt, &slength );
     slength *= scount;
     MPI_Type_size( rdt, &rlength );
@@ -263,7 +263,7 @@ static int isend_irecv_wait( int cycles,
     MPI_Request sreq, rreq;
     MPI_Status status;
     double tstart, tend;
-   
+
     MPI_Type_size( sdt, &slength );
     slength *= scount;
     MPI_Type_size( rdt, &rlength );
@@ -301,7 +301,7 @@ static int irecv_isend_wait( int cycles,
     MPI_Request sreq, rreq;
     MPI_Status status;
     double tstart, tend;
-   
+
     MPI_Type_size( sdt, &slength );
     slength *= scount;
     MPI_Type_size( rdt, &rlength );

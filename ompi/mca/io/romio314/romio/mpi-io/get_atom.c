@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -41,7 +41,7 @@ int MPI_File_get_atomicity(MPI_File fh, int *flag)
     int error_code;
     ADIO_File adio_fh;
     static char myname[] = "MPI_FILE_GET_ATOMICITY";
-    
+
     adio_fh = MPIO_File_resolve(fh);
 
     /* --BEGIN ERROR HANDLING-- */

@@ -6,7 +6,7 @@
   * Copyright (c) 2004-2007 The University of Tennessee and The University
   *                         of Tennessee Research Foundation.  All rights
   *                         reserved.
-  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
   *                         University of Stuttgart.  All rights reserved.
   * Copyright (c) 2004-2005 The Regents of the University of California.
   *                         All rights reserved.
@@ -16,9 +16,9 @@
   *
   * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
   * $COPYRIGHT$
-  * 
+  *
   * Additional copyrights may follow
-  * 
+  *
   * $HEADER$
   */
 /**
@@ -62,7 +62,7 @@ OBJ_CLASS_DECLARATION(mca_rcache_vma_t);
 /*
  * initialize the vma tree
  */
-int mca_rcache_vma_tree_init(mca_rcache_vma_module_t* rcache); 
+int mca_rcache_vma_tree_init(mca_rcache_vma_module_t* rcache);
 
 /*
  * clean up the vma tree
@@ -70,10 +70,10 @@ int mca_rcache_vma_tree_init(mca_rcache_vma_module_t* rcache);
 void mca_rcache_vma_tree_finalize(mca_rcache_vma_module_t* rcache);
 
 /**
- *  Returns the item in the vma tree  
+ *  Returns the item in the vma tree
  */
 mca_mpool_base_registration_t* mca_rcache_vma_tree_find(
-                                           mca_rcache_vma_module_t* rcache, 
+                                           mca_rcache_vma_module_t* rcache,
                                            unsigned char* base,
                                            unsigned char *bound
                                            );
@@ -85,23 +85,23 @@ int mca_rcache_vma_tree_find_all(
         unsigned char *bound, mca_mpool_base_registration_t **regs,
         int reg_cnt);
 
-/* 
- * insert an item in the vma tree 
- */ 
+/*
+ * insert an item in the vma tree
+ */
 int mca_rcache_vma_tree_insert(mca_rcache_vma_module_t* rcache,
         mca_mpool_base_registration_t* reg, size_t limit);
 
-/* 
- * remove an item from the vma tree 
+/*
+ * remove an item from the vma tree
  */
-int mca_rcache_vma_tree_delete( 
-                              mca_rcache_vma_module_t* rcache, 
+int mca_rcache_vma_tree_delete(
+                              mca_rcache_vma_module_t* rcache,
                               mca_mpool_base_registration_t* reg
-                              ); 
+                              );
 
-/* 
+/*
  * Destroy a vma
- * Do not call this function with rcache lock as it can deadlock 
+ * Do not call this function with rcache lock as it can deadlock
  */
 void mca_rcache_vma_destroy(mca_rcache_vma_t *vma);
 

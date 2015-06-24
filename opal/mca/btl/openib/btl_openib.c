@@ -1257,7 +1257,7 @@ mca_btl_base_descriptor_t* mca_btl_openib_alloc(
         to_com_frag(sfrag)->sg_entry.addr = (uint64_t)(uintptr_t)sfrag->hdr;
     }
 
-    cfrag->hdr = (mca_btl_openib_header_coalesced_t*)((unsigned char*)(sfrag->hdr + 1) + 
+    cfrag->hdr = (mca_btl_openib_header_coalesced_t*)((unsigned char*)(sfrag->hdr + 1) +
                   sfrag->coalesced_length +
                   to_base_frag(sfrag)->segment.seg_len);
     cfrag->hdr = (mca_btl_openib_header_coalesced_t*)BTL_OPENIB_ALIGN_COALESCE_HDR(cfrag->hdr);

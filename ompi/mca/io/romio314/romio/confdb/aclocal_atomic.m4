@@ -16,11 +16,11 @@ dnl . HAVE__INTERLOCKEDEXCHANGE - _InterlockedExchange intrinsic is available
 dnl    (IA64)
 dnl . HAVE_GCC_ASM_SPARC_MEMBAR - gcc __asm__ will issue SPARC architecture
 dnl    memory barrier instruction
-dnl . HAVE_SOLARIS_ASM_SPARC_MEMBAR - Solaris asm() will issue SPARC 
+dnl . HAVE_SOLARIS_ASM_SPARC_MEMBAR - Solaris asm() will issue SPARC
 dnl    architecture memory barrier instruction
 dnl . HAVE_GCC_ASM_SPARC_STBAR - gcc __asm__ will issue stbar
 dnl - HAVE_SOLARIS_ASM_SPARC_STBAR - Solaris __asm() will issue stbar
-dnl 
+dnl
 dnl D*/
 AC_DEFUN([PAC_C_MEMATOMIC],[
 AC_CACHE_CHECK([for x86 mfence instruction using __asm__],
@@ -114,9 +114,9 @@ if test "$lac_cv_have___asm_and_x86_lfence" = "yes" ; then
     AC_DEFINE(HAVE___ASM_AND_X86_LFENCE, 1, [Define if using __asm on a x86 system with the lfence instruction])
 fi
 
-dnl 
+dnl
 dnl Some compilers, such as pgcc, may require additional arguments.
-dnl pgcc may need -Masmkeyword flag.  We may want to try this with and 
+dnl pgcc may need -Masmkeyword flag.  We may want to try this with and
 dnl without adding -Masmkeyword to CFLAGS
 
 AC_CACHE_CHECK([for x86 mfence instruction using asm()],

@@ -4,9 +4,9 @@
 # Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
 #
 # $COPYRIGHT$
-# 
+#
 # Additional copyrights may follow
-# 
+#
 # $HEADER$
 #
 # This is the US/English general help file for LAMA Mapper.
@@ -28,7 +28,7 @@ RMaps LAMA detected that there are not enough resources to map the
 remainder of the job. Check the command line options, and the number of
 nodes allocated to this job.
  Application Context : %d
- # of Processes Successfully Mapped: %d 
+ # of Processes Successfully Mapped: %d
  # of Processes Requested          : %d
  Mapping  : %s
  Binding  : %s

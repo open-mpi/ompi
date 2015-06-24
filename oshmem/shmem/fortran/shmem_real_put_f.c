@@ -3,10 +3,10 @@
  *                         All rights reserved.
  * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
- * $HEADER$	
+ *
+ * $HEADER$
  */
 
 #include "oshmem_config.h"
@@ -29,7 +29,7 @@ SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
         shmem_real_put_,
         shmem_real_put__,
         shmem_real_put_f,
-        (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *length, MPI_Fint *pe), 
+        (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *length, MPI_Fint *pe),
         (target,source,length,pe) )
 
 void shmem_real_put_f(FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *length, MPI_Fint *pe)
@@ -37,9 +37,9 @@ void shmem_real_put_f(FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fi
     size_t real_type_size = 0;
     ompi_datatype_type_size(&ompi_mpi_real.dt, &real_type_size);
 
-    MCA_SPML_CALL(put(FPTR_2_VOID_PTR(target), 
-        OMPI_FINT_2_INT(*length) * real_type_size, 
-        FPTR_2_VOID_PTR(source), 
+    MCA_SPML_CALL(put(FPTR_2_VOID_PTR(target),
+        OMPI_FINT_2_INT(*length) * real_type_size,
+        FPTR_2_VOID_PTR(source),
         OMPI_FINT_2_INT(*pe)));
 }
 

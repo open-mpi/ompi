@@ -5,11 +5,11 @@
  * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2013 Los Alamos National Security, LLC. 
+ * Copyright (c) 2006-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
@@ -17,9 +17,9 @@
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -90,7 +90,7 @@ static int send_bytes(pmix_usock_send_t *msg)
             }
             /* we hit an error and cannot progress this message */
             opal_output(0, "%s pmix_usock_msg_send_bytes: write failed: %s (%d) [sd = %d]",
-                        OPAL_NAME_PRINT(OPAL_PROC_MY_NAME), 
+                        OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
                         strerror(opal_socket_errno),
                         opal_socket_errno,
                         mca_pmix_native_component.sd);
@@ -278,7 +278,7 @@ static int read_bytes(pmix_usock_recv_t* recv)
              */
             opal_output_verbose(2, opal_pmix_base_framework.framework_output,
                                 "%s pmix_usock_msg_recv: readv failed: %s (%d)",
-                                OPAL_NAME_PRINT(OPAL_PROC_MY_NAME), 
+                                OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
                                 strerror(opal_socket_errno),
                                 opal_socket_errno);
             return OPAL_ERR_COMM_FAILURE;
@@ -463,9 +463,9 @@ void pmix_usock_recv_handler(int sd, short flags, void *cbdata)
             }
         }
         break;
-    default: 
+    default:
         opal_output(0, "%s usock_peer_recv_handler: invalid socket state(%d)",
-                    OPAL_NAME_PRINT(OPAL_PROC_MY_NAME), 
+                    OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
                     mca_pmix_native_component.state);
         CLOSE_THE_SOCKET(mca_pmix_native_component.sd);
         PMIX_NATIVE_ABNORMAL_TERM;  // report the error upstream
@@ -501,8 +501,8 @@ static bool usock_recv_blocking(char *data, size_t size)
 
         /* socket is non-blocking so handle errors */
         if (retval < 0) {
-            if (opal_socket_errno != EINTR && 
-                opal_socket_errno != EAGAIN && 
+            if (opal_socket_errno != EINTR &&
+                opal_socket_errno != EAGAIN &&
                 opal_socket_errno != EWOULDBLOCK) {
                 if (mca_pmix_native_component.state == PMIX_USOCK_CONNECT_ACK) {
                     /* If we overflow the listen backlog, it's
@@ -525,7 +525,7 @@ static bool usock_recv_blocking(char *data, size_t size)
                                         strerror(opal_socket_errno));
                     return false;
                 } else {
-                    opal_output(0, 
+                    opal_output(0,
                                 "%s usock_recv_blocking: "
                                 "recv() failed for server: %s (%d)\n",
                                 OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
@@ -697,7 +697,7 @@ static void usock_complete_connect(void)
     /* check connect completion status */
     if (getsockopt(mca_pmix_native_component.sd, SOL_SOCKET, SO_ERROR, (char *)&so_error, &so_length) < 0) {
         opal_output(0, "%s usock_peer_complete_connect: getsockopt() to server failed: %s (%d)\n",
-                    OPAL_NAME_PRINT(OPAL_PROC_MY_NAME), 
+                    OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
                     strerror(opal_socket_errno),
                     opal_socket_errno);
         mca_pmix_native_component.state = PMIX_USOCK_FAILED;
@@ -743,7 +743,7 @@ static void usock_complete_connect(void)
         opal_output_verbose(2, opal_pmix_base_framework.framework_output,
                             "%s usock_peer_complete_connect: setting read event on connection to server",
                             OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
-        
+
         if (!mca_pmix_native_component.recv_ev_active) {
             opal_event_add(&mca_pmix_native_component.recv_event, 0);
             mca_pmix_native_component.recv_ev_active = true;

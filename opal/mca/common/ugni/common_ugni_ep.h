@@ -25,7 +25,7 @@ typedef struct opal_common_ugni_endpoint_t opal_common_ugni_endpoint_t;
 
 OBJ_CLASS_DECLARATION(opal_common_ugni_endpoint_t);
 
-/* 
+/*
  * Get (and retain) a reference to an endpoint to peer_proc. This endpoint
  * needs to be returned with opal_common_ugni_endpoint_return.
  *

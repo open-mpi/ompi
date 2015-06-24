@@ -4,9 +4,9 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -38,7 +38,7 @@ static memheap_context_t* _memheap_create(void);
 
 /**
  * Choose to init one component with the highest priority.
- * If the include list if it is not empty choose a component that appear in the list. 
+ * If the include list if it is not empty choose a component that appear in the list.
  * O/W choose the highest priority component not in the exclude list.
  * Include and exclude lists may be given in the shmem launcher command line.
  */

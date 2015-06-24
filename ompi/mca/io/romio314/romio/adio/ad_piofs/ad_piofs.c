@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 2001 University of Chicago. 
+ *   Copyright (C) 2001 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -33,5 +33,5 @@ struct ADIOI_Fns_struct ADIO_PIOFS_operations = {
     ADIOI_GEN_Flush, /* Flush */
     ADIOI_GEN_Resize, /* Resize */
     ADIOI_GEN_Delete, /* Delete */
-    ADIOI_PIOFS_Feature, 
+    ADIOI_PIOFS_Feature,
 };

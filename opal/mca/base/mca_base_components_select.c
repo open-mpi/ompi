@@ -3,9 +3,9 @@
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -84,7 +84,7 @@ int mca_base_select(const char *type_name, int output_id,
          * Determine if this is the best module we have seen by looking the priority
          */
         opal_output_verbose(5, output_id,
-                            "mca:base:select:(%5s) Query of component [%s] set priority to %d", 
+                            "mca:base:select:(%5s) Query of component [%s] set priority to %d",
                             type_name, component->mca_component_name, priority);
         if (priority > best_priority) {
             best_priority  = priority;

@@ -2,9 +2,9 @@
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 #include "oshmem_config.h"
@@ -18,7 +18,7 @@
 
 /*
  * These routines provide a low latency mechanism to write basic types (short,
- * int, float, double, long) to symmetric data objects on remote PEs. 
+ * int, float, double, long) to symmetric data objects on remote PEs.
  * The shmem_TYPE_p() routines write value to a symmetric array element or scalar
  * data object of the remote PE indicated by the parameter pe. These routines start the remote
  * transfer and may return before the data is delivered to the remote PE.

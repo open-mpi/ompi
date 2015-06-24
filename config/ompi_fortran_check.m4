@@ -6,7 +6,7 @@ dnl                         Corporation.  All rights reserved.
 dnl Copyright (c) 2004-2005 The University of Tennessee and The University
 dnl                         of Tennessee Research Foundation.  All rights
 dnl                         reserved.
-dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
@@ -14,14 +14,14 @@ dnl Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2015      Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
 dnl $COPYRIGHT$
-dnl 
+dnl
 dnl Additional copyrights may follow
-dnl 
+dnl
 dnl $HEADER$
 dnl
 
 
-# OMPI_FORTRAN_CHECK(Fortran type, c type required, types to search, 
+# OMPI_FORTRAN_CHECK(Fortran type, c type required, types to search,
 #                    expected size, define ompi_fortran_<foo>_t or not))
 #----------------------------------------------------------
 # Check Fortran type, including:
@@ -55,7 +55,7 @@ AC_DEFUN([OMPI_FORTRAN_CHECK], [
     fi
 
     if test "$ofc_have_type" = "1"; then
-        # What is the size of this type?  
+        # What is the size of this type?
 
         # NOTE: Some Fortran compilers actually will return that a
         # type exists even if it doesn't support it -- the compiler
@@ -166,20 +166,20 @@ AC_DEFUN([OMPI_FORTRAN_CHECK], [
     # AC_DEFINE_UNQUOTED), autoheader won't put them in the
     # AC_CONFIG_HEADER (or AM_CONFIG_HEADER, in our case).
     AC_DEFINE_UNQUOTED([OMPI_HAVE_FORTRAN_]m4_translit(m4_bpatsubst(m4_bpatsubst([$1], [*], []), [[^a-zA-Z0-9_]], [_]), [a-z], [A-Z]),
-                       [$ofc_have_type], 
+                       [$ofc_have_type],
                        [Whether we have Fortran $1 or not])
     AC_DEFINE_UNQUOTED([OMPI_SIZEOF_FORTRAN_]m4_translit(m4_bpatsubst(m4_bpatsubst([$1], [*], []), [[^a-zA-Z0-9_]], [_]), [a-z], [A-Z]),
-                       [$ofc_type_size], 
+                       [$ofc_type_size],
                        [Size of Fortran $1])
     AC_DEFINE_UNQUOTED([OMPI_ALIGNMENT_FORTRAN_]m4_translit(m4_bpatsubst(m4_bpatsubst([$1], [*], []), [[^a-zA-Z0-9_]], [_]), [a-z], [A-Z]),
-                       [$ofc_type_alignment], 
+                       [$ofc_type_alignment],
                        [Alignment of Fortran $1])
     AC_DEFINE_UNQUOTED([OMPI_KIND_FORTRAN_]m4_translit(m4_bpatsubst(m4_bpatsubst([$1], [*], []), [[^a-zA-Z0-9_]], [_]), [a-z], [A-Z]),
-                       [$ofc_type_kind], 
+                       [$ofc_type_kind],
                        [Fortrn KIND number for $1])
     if test "$3" != "" && test "$ofc_define_type" = "yes"; then
         AC_DEFINE_UNQUOTED([ompi_fortran_]m4_translit(m4_bpatsubst(m4_bpatsubst([$1], [*], []), [[^a-zA-Z0-9_]], [_]), [A-Z], [a-z])[_t],
-                           [$ofc_c_type], 
+                           [$ofc_c_type],
                            [C type corresponding to Fortran $1])
     fi
 

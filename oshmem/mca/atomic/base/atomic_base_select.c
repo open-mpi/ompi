@@ -1,12 +1,12 @@
 /*
  * Copyright (c) 2013      Mellanox Technologies, Inc.
- *                         All rights reserved. 
+ *                         All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -65,7 +65,7 @@ static int query_1_0_0(const mca_atomic_base_component_1_0_0_t * atomic_componen
 static OBJ_CLASS_INSTANCE(avail_com_t, opal_list_item_t, NULL, NULL);
 
 /*
- * This function is called at the initialization.  
+ * This function is called at the initialization.
  * It is used to select which atomic component will be
  * active for a given group.
  */

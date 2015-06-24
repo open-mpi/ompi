@@ -6,16 +6,16 @@
  * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 #include "ompi_config.h"
@@ -40,7 +40,7 @@ static const char FUNC_NAME[] = "MPI_Win_get_attr";
 
 
 int MPI_Win_get_attr(MPI_Win win, int win_keyval,
-                     void *attribute_val, int *flag) 
+                     void *attribute_val, int *flag)
 {
     int ret;
 
@@ -62,8 +62,8 @@ int MPI_Win_get_attr(MPI_Win win, int win_keyval,
        src/attribute/attribute.c for a lengthy comment explaining Open
        MPI attribute behavior. */
 
-    ret = ompi_attr_get_c(win->w_keyhash, win_keyval, 
+    ret = ompi_attr_get_c(win->w_keyhash, win_keyval,
                           (void**)attribute_val, flag);
 
-    OMPI_ERRHANDLER_RETURN(ret, win, MPI_ERR_OTHER, FUNC_NAME);  
+    OMPI_ERRHANDLER_RETURN(ret, win, MPI_ERR_OTHER, FUNC_NAME);
 }

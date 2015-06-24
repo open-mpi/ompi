@@ -22,7 +22,7 @@
 # $HEADER$
 #
 
-# MCA_orte_common_alps_CONFIG([action-if-can-compile], 
+# MCA_orte_common_alps_CONFIG([action-if-can-compile],
 #                      [action-if-cant-compile])
 # ------------------------------------------------
 AC_DEFUN([MCA_orte_common_alps_CONFIG],[

@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -69,7 +69,7 @@ int MPI_File_sync(MPI_File fh)
 #ifdef MPI_hpux
     HPMP_IO_END(fl_xmpi, adio_fh, MPI_DATATYPE_NULL, -1);
 #endif /* MPI_hpux */
- 
+
 fn_exit:
     MPIU_THREAD_CS_EXIT(ALLFUNC,);
     return error_code;

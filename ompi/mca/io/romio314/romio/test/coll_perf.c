@@ -1,5 +1,5 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/*  
+/*
  *  (C) 2001 by Argonne National Laboratory.
  *      See COPYRIGHT in top-level directory.
  */
@@ -14,7 +14,7 @@
    block-distributed array to a file corresponding to the global array
    in row-major (C) order.
    Note that the file access pattern is noncontiguous.
-  
+
    Array size 128^3. For other array sizes, change array_of_gsizes below.*/
 
 
@@ -35,7 +35,7 @@ int main(int argc, char **argv)
     MPI_Comm_rank(MPI_COMM_WORLD, &mynod);
     MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
 
-/* process 0 takes the file name as a command-line argument and 
+/* process 0 takes the file name as a command-line argument and
    broadcasts it to other processes */
     if (!mynod) {
 	i = 1;
@@ -91,7 +91,7 @@ int main(int argc, char **argv)
 /* to eliminate paging effects, do the operations once but don't time
    them */
 
-    MPI_File_open(MPI_COMM_WORLD, filename, MPI_MODE_CREATE | MPI_MODE_RDWR, 
+    MPI_File_open(MPI_COMM_WORLD, filename, MPI_MODE_CREATE | MPI_MODE_RDWR,
                   MPI_INFO_NULL, &fh);
     MPI_File_set_view(fh, 0, MPI_INT, newtype, "native", MPI_INFO_NULL);
     MPI_File_write_all(fh, buf, bufcount, MPI_INT, &status);
@@ -102,7 +102,7 @@ int main(int argc, char **argv)
     MPI_Barrier(MPI_COMM_WORLD);
 /* now time write_all */
 
-    MPI_File_open(MPI_COMM_WORLD, filename, MPI_MODE_CREATE | MPI_MODE_RDWR, 
+    MPI_File_open(MPI_COMM_WORLD, filename, MPI_MODE_CREATE | MPI_MODE_RDWR,
                   MPI_INFO_NULL, &fh);
     MPI_File_set_view(fh, 0, MPI_INT, newtype, "native", MPI_INFO_NULL);
 
@@ -124,8 +124,8 @@ int main(int argc, char **argv)
     MPI_Barrier(MPI_COMM_WORLD);
 /* now time read_all */
 
-    MPI_File_open(MPI_COMM_WORLD, filename, MPI_MODE_CREATE | MPI_MODE_RDWR, 
-                  MPI_INFO_NULL, &fh); 
+    MPI_File_open(MPI_COMM_WORLD, filename, MPI_MODE_CREATE | MPI_MODE_RDWR,
+                  MPI_INFO_NULL, &fh);
     MPI_File_set_view(fh, 0, MPI_INT, newtype, "native", MPI_INFO_NULL);
 
     MPI_Barrier(MPI_COMM_WORLD);

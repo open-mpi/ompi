@@ -27,14 +27,14 @@ int kill(pid_t pid, int sig) {
    /* XXX fill this in */
    /* Need to connect to the child process
       Then raise the signal since Windows doesn;t
-      have the ability to 'send a signal' to a 
+      have the ability to 'send a signal' to a
       process, a la the kill command in UNIX
-      
+
       MSVC functions to look at:
        - OpenProcess
        - TerminateProcess
        - raise
    */
-   
+
    return 0;
 }

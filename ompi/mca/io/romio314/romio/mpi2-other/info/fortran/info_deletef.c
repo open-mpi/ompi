@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -97,7 +97,7 @@ void mpi_info_delete_(MPI_Fint *info, char *key, int *ierr, int keylen)
 
     /* strip leading and trailing blanks in key */
     lead_blanks = 0;
-    for (i=0; i<keylen; i++) 
+    for (i=0; i<keylen; i++)
         if (key[i] == ' ') lead_blanks++;
         else break;
 

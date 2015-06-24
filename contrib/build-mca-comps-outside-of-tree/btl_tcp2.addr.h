@@ -5,15 +5,15 @@
  * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 /**
@@ -54,13 +54,13 @@ struct mca_btl_tcp2_addr_t {
                 uint32_t _pad[3];
             } _addr__inet;
         } _union_inet;
-    } addr_inet; 
+    } addr_inet;
 #endif
     in_port_t      addr_port;     /**< listen port */
     uint16_t       addr_ifkindex; /**< remote interface index assigned with
                                     this address */
     unsigned short addr_inuse;    /**< local meaning only */
-    uint8_t        addr_family;   /**< AF_INET or AF_INET6 */ 
+    uint8_t        addr_family;   /**< AF_INET or AF_INET6 */
 };
 typedef struct mca_btl_tcp2_addr_t mca_btl_tcp2_addr_t;
 

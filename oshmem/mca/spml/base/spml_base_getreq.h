@@ -2,9 +2,9 @@
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 /**
@@ -39,7 +39,7 @@ OSHMEM_DECLSPEC OBJ_CLASS_DECLARATION(mca_spml_base_get_request_t);
  * @param peer (IN)            rank w/in the communicator where the data is read from.
  * @param mode (IN)            Get Mode.
  * @param persistent (IN)      Is this a persistent request.
- * @param convertor_flags(IN) 
+ * @param convertor_flags(IN)
  */
 #define MCA_SPML_BASE_GET_REQUEST_INIT( request,                          \
           addr,                             \
@@ -56,7 +56,7 @@ OSHMEM_DECLSPEC OBJ_CLASS_DECLARATION(mca_spml_base_get_request_t);
      (request)->req_base.req_free_called = false;                          \
      (request)->req_base.req_oshmem.req_status._cancelled = 0;             \
      (request)->req_bytes_packed = 0;                                      \
-}                                                                         
+}
 
 /**
  *
@@ -75,7 +75,7 @@ OSHMEM_DECLSPEC OBJ_CLASS_DECLARATION(mca_spml_base_get_request_t);
         (request)->req_oshmem.req_state = OSHMEM_REQUEST_ACTIVE;                    \
     } while (0)
 
-/** 
+/**
  *  Return a Get request. Handle the release of the communicator and the
  *  attached datatype.
  *

@@ -17,7 +17,7 @@ AC_PATH_PROGS_FEATURE_CHECK(NM_G, nm, [
     # Tru64's nm complains that /dev/null is an invalid object file
     #
     # AIX's sed does not accept \+, 1) instead of doing 's|a\+||', do 's|aa*||'
-    # or 2) instead of 's|A \+B|AB|g', do 's|A  *B|AB|g' 
+    # or 2) instead of 's|A \+B|AB|g', do 's|A  *B|AB|g'
 
     # Check if nm accepts -g
     case `${ac_path_NM_G} -g /dev/null 2>&1 | sed '1q'` in
@@ -108,7 +108,7 @@ mpif_cmblk_t MPIFCMB;
 
 /*
    Do the test in this file instead in the file
-   where __attribute__((alias)) is used. 
+   where __attribute__((alias)) is used.
    This is needed for pgcc since pgcc seems to
    define aliased symbols if they are in the same file.
 */
@@ -171,7 +171,7 @@ if test "$pac_c_attr_alias_other" = "yes" ; then
 #if defined(HAVE_STDIO_H) || defined(STDC_HEADERS)
 #include <stdio.h>
 #endif
- 
+
 struct mpif_cmblk_t_ { int imember; };
 typedef struct mpif_cmblk_t_ mpif_cmblk_t;
 
@@ -239,7 +239,7 @@ if test "$pac_c_attr_alias_main" = "yes" ; then
                 cmp_addr=${addr}
             fi
         done
-        
+
         if test "$diff_addrs" != "yes" ; then
             dnl echo "Same addresses. Multiple aliases support"
             AC_MSG_RESULT([${NM_G} says yes])
@@ -348,7 +348,7 @@ dnl the following weird behavour
 dnl pgf77 -o ftest ftest.f         => when $?=0 with zero stderr output
 dnl pgf77 -o ftest ftest.f dummy.o => when $?=0 with non-zero stderr output.
 dnl                                   stderr has "ftest.f:".
-dnl 
+dnl
 # First create a fortran CONFTEST which will be used repeatedly.
 AC_LANG_PUSH([Fortran]) dnl AC_LANG_PUSH([Fortran 77])
 AC_LANG_CONFTEST([
@@ -385,7 +385,7 @@ AC_COMPILE_IFELSE([AC_LANG_SOURCE([])],[
         pac_f2c_alignedn_diffbase=no
     ])
     # Be sure NOT to remove the conftest.f which is still needed for later use.
-    # rm -f conftest.$ac_ext 
+    # rm -f conftest.$ac_ext
     # Restore everything in autoconf that has been overwritten
     PAC_POP_FLAG([ac_link])
     # restore previously pushed LIBS

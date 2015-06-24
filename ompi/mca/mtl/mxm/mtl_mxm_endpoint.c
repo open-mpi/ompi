@@ -14,7 +14,7 @@
 
 #include "mtl_mxm.h"
 #include "mtl_mxm_types.h"
-#include "mtl_mxm_endpoint.h" 
+#include "mtl_mxm_endpoint.h"
 
 /*
  * Initialize state of the endpoint instance.

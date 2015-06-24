@@ -5,15 +5,15 @@
  *  Copyright (c) 2004-2005 The University of Tennessee and The University
  *                          of Tennessee Research Foundation.  All rights
  *                          reserved.
- *  Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ *  Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                          University of Stuttgart.  All rights reserved.
  *  Copyright (c) 2004-2005 The Regents of the University of California.
  *                          All rights reserved.
  *  Copyright (c) 2008-2015 University of Houston. All rights reserved.
  *  $COPYRIGHT$
- *  
+ *
  *  Additional copyrights may follow
- *  
+ *
  *  $HEADER$
  */
 
@@ -34,13 +34,13 @@
 #include "math.h"
 #include <unistd.h>
 
-/* Read and write routines are split into two interfaces. 
-**   The 
-**   mca_io_ompio_file_read/write[_at] 
-**  
+/* Read and write routines are split into two interfaces.
+**   The
+**   mca_io_ompio_file_read/write[_at]
+**
 ** routines are the ones registered with the ompio modules.
 ** The
-** 
+**
 ** ompio_io_ompio_file_read/write[_at]
 **
 ** routesin are used e.g. from the shared file pointer modules.
@@ -98,12 +98,12 @@ int ompio_io_ompio_file_read (mca_io_ompio_file_t *fh,
       return ret;
     }
 
-    ompi_io_ompio_decode_datatype (fh, 
-                                   datatype, 
-                                   count, 
-                                   buf, 
-                                   &max_data, 
-                                   &decoded_iov, 
+    ompi_io_ompio_decode_datatype (fh,
+                                   datatype,
+                                   count,
+                                   buf,
+                                   &max_data,
+                                   &decoded_iov,
                                    &iov_count);
 
     bytes_per_cycle = mca_io_ompio_cycle_buffer_size;
@@ -117,17 +117,17 @@ int ompio_io_ompio_file_read (mca_io_ompio_file_t *fh,
 
     for (index = 0; index < cycles; index++) {
 
-	mca_io_ompio_build_io_array ( fh, 
-				      index, 
-				      cycles, 
-				      bytes_per_cycle, 
-				      max_data, 
-				      iov_count, 
-				      decoded_iov, 
-				      &i, 
-				      &j, 
+	mca_io_ompio_build_io_array ( fh,
+				      index,
+				      cycles,
+				      bytes_per_cycle,
+				      max_data,
+				      iov_count,
+				      decoded_iov,
+				      &i,
+				      &j,
 				      &total_bytes_read);
-	
+
         if (fh->f_num_of_io_entries) {
             ret_code = fh->f_fbtl->fbtl_preadv (fh);
 	    if ( 0<= ret_code ) {
@@ -179,7 +179,7 @@ int ompio_io_ompio_file_read_at (mca_io_ompio_file_t *fh,
 {
     int ret = OMPI_SUCCESS;
     OMPI_MPI_OFFSET_TYPE prev_offset;
-    
+
     ompio_io_ompio_file_get_position (fh, &prev_offset );
 
     ompi_io_ompio_set_explicit_offset (fh, offset);
@@ -239,33 +239,33 @@ int ompio_io_ompio_file_iread (mca_io_ompio_file_t *fh,
 	size_t total_bytes_read = 0;       /* total bytes that have been read*/
 	uint32_t iov_count = 0;
 	struct iovec *decoded_iov = NULL;
-	
-	size_t max_data = 0; 
+
+	size_t max_data = 0;
 	int i = 0; /* index into the decoded iovec of the buffer */
 	int j = 0; /* index into the file vie iovec */
-	
-	ompi_io_ompio_decode_datatype (fh, 
-				       datatype, 
-				       count, 
-				       buf, 
-				       &max_data, 
-				       &decoded_iov, 
+
+	ompi_io_ompio_decode_datatype (fh,
+				       datatype,
+				       count,
+				       buf,
+				       &max_data,
+				       &decoded_iov,
 				       &iov_count);
-	
+
 	// Non-blocking operations have to occur in a single cycle
 	j = fh->f_index_in_file_view;
-	
-	mca_io_ompio_build_io_array ( fh, 
-				      0,         // index 
-				      1,         // no. of cyces 
-				      max_data,  // setting bytes per cycle to match data 
-				      max_data, 
-				      iov_count, 
-				      decoded_iov, 
-				      &i, 
-				      &j, 
+
+	mca_io_ompio_build_io_array ( fh,
+				      0,         // index
+				      1,         // no. of cyces
+				      max_data,  // setting bytes per cycle to match data
+				      max_data,
+				      iov_count,
+				      decoded_iov,
+				      &i,
+				      &j,
 				      &total_bytes_read);
-	    
+
 	if (fh->f_num_of_io_entries) {
 	  fh->f_fbtl->fbtl_ipreadv (fh, (ompi_request_t *) ompio_req);
 	}
@@ -339,9 +339,9 @@ int ompio_io_ompio_file_iread_at (mca_io_ompio_file_t *fh,
     /* An explicit offset file operation is not suppsed to modify
     ** the internal file pointer. So reset the pointer
     ** to the previous value
-    ** It is OK to reset the position already here, althgouth 
+    ** It is OK to reset the position already here, althgouth
     ** the operation might still be pending/ongoing, since
-    ** the entire array of <offset, length, memaddress> have 
+    ** the entire array of <offset, length, memaddress> have
     ** already been constructed in the file_iread operation
     */
     ompi_io_ompio_set_explicit_offset (fh, prev_offset);
@@ -364,9 +364,9 @@ int mca_io_ompio_file_read_all (ompi_file_t *fh,
     data = (mca_io_ompio_data_t *) fh->f_io_selected_data;
 
     ret = data->ompio_fh.
-        f_fcoll->fcoll_file_read_all (&data->ompio_fh, 
-                                     buf, 
-                                     count, 
+        f_fcoll->fcoll_file_read_all (&data->ompio_fh,
+                                     buf,
+                                     count,
                                      datatype,
                                      status);
     if ( MPI_STATUS_IGNORE != status ) {
@@ -393,15 +393,15 @@ int mca_io_ompio_file_iread_all (ompi_file_t *fh,
     fp = &data->ompio_fh;
 
     if ( NULL != fp->f_fcoll->fcoll_file_iread_all ) {
-	ret = fp->f_fcoll->fcoll_file_iread_all (&data->ompio_fh, 
-						 buf, 
-						 count, 
+	ret = fp->f_fcoll->fcoll_file_iread_all (&data->ompio_fh,
+						 buf,
+						 count,
 						 datatype,
 						 request);
     }
     else {
-	/* this fcoll component does not support non-blocking 
-	   collective I/O operations. WE fake it with 
+	/* this fcoll component does not support non-blocking
+	   collective I/O operations. WE fake it with
 	   individual non-blocking I/O operations. */
 	ret = ompio_io_ompio_file_iread ( fp, buf, count, datatype, request );
     }
@@ -466,15 +466,15 @@ int mca_io_ompio_file_iread_at_all (ompi_file_t *fh,
     ompi_io_ompio_set_explicit_offset (fp, offset);
 
     if ( NULL != fp->f_fcoll->fcoll_file_iread_all ) {
-	ret = fp->f_fcoll->fcoll_file_iread_all (&data->ompio_fh, 
-						 buf, 
-						 count, 
+	ret = fp->f_fcoll->fcoll_file_iread_all (&data->ompio_fh,
+						 buf,
+						 count,
 						 datatype,
 						 request);
     }
     else {
-	/* this fcoll component does not support non-blocking 
-	   collective I/O operations. WE fake it with 
+	/* this fcoll component does not support non-blocking
+	   collective I/O operations. WE fake it with
 	   individual non-blocking I/O operations. */
 	ret = ompio_io_ompio_file_iread ( fp, buf, count, datatype, request );
     }
@@ -484,7 +484,7 @@ int mca_io_ompio_file_iread_at_all (ompi_file_t *fh,
     return ret;
 }
 
-/* Infrastructure for shared file pointer operations 
+/* Infrastructure for shared file pointer operations
 ** (individual and ordered)*/
 /******************************************************/
 int mca_io_ompio_file_read_shared (ompi_file_t *fp,

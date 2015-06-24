@@ -5,20 +5,20 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
- *                         reserved. 
+ *                         reserved.
  * Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013      Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -167,7 +167,7 @@ opal_net_init(void)
             if( (a > 255) || (b > 255) || (c > 255) ||
                 (d > 255) || (bits > 32) ) {
                 if (0 == found_bad) {
-                    opal_show_help("help-opal-util.txt", 
+                    opal_show_help("help-opal-util.txt",
                                    "malformed net_private_ipv4",
                                    true, args[i]);
                     found_bad = 1;
@@ -247,7 +247,7 @@ opal_net_islocalhost(const struct sockaddr *addr)
 
 
 bool
-opal_net_samenetwork(const struct sockaddr *addr1, 
+opal_net_samenetwork(const struct sockaddr *addr1,
                      const struct sockaddr *addr2,
                      uint32_t plen)
 {
@@ -256,7 +256,7 @@ opal_net_samenetwork(const struct sockaddr *addr1,
     if(addr1->sa_family != addr2->sa_family) {
         return false; /* address families must be equal */
     }
-    
+
     switch (addr1->sa_family) {
     case AF_INET:
         {
@@ -336,17 +336,17 @@ opal_net_addr_isipv4public(const struct sockaddr *addr)
             {
                 const struct sockaddr_in *inaddr = (struct sockaddr_in*) addr;
                 int i;
-                
+
                 if( NULL == private_ipv4 ) {
                     return true;
                 }
-                
+
                 for( i = 0; private_ipv4[i].addr != 0; i++ ) {
                     if( private_ipv4[i].addr == (inaddr->sin_addr.s_addr &
                                                  opal_net_prefix2netmask(private_ipv4[i].netmask_bits)) )
                         return false;
                 }
-                
+
             }
             return true;
         default:
@@ -354,7 +354,7 @@ opal_net_addr_isipv4public(const struct sockaddr *addr)
                          "unhandled sa_family %d passed to opal_net_addr_isipv4public\n",
                          addr->sa_family);
     }
-    
+
     return false;
 }
 
@@ -379,7 +379,7 @@ opal_net_get_hostname(const struct sockaddr *addr)
         addrlen = sizeof (struct sockaddr_in);
         break;
     case AF_INET6:
-#if defined( __NetBSD__)         
+#if defined( __NetBSD__)
         /* hotfix for netbsd: on my netbsd machine, getnameinfo
            returns an unkown error code. */
         if(NULL == inet_ntop(AF_INET6, &((struct sockaddr_in6*) addr)->sin6_addr,
@@ -468,7 +468,7 @@ opal_net_islocalhost(const struct sockaddr *addr)
 
 
 bool
-opal_net_samenetwork(const struct sockaddr *addr1, 
+opal_net_samenetwork(const struct sockaddr *addr1,
                      const struct sockaddr *addr2,
                      uint32_t prefixlen)
 {

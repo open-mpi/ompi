@@ -30,7 +30,7 @@ following format:
 e.g. openmpi-btl-mvapi-1.2a1r10877Mmvapi_4.1.0-1.x86_64.rpm
 
 
-Package Description File 
+Package Description File
 ========================
 
 Package description files a simple INI files with the suffix
@@ -57,7 +57,7 @@ This summary will be the summary of the RPM.
 -- description
 The description will become the description of the RPM.
 
--- type 
+-- type
 Specified the type of the package
 
 -- license
@@ -66,7 +66,7 @@ The license of the RPM. (default : BSD)
 -- group
 The group where this package belongs to. (default = Development/Libraries)
 
--- version 
+-- version
 The version field specifies a command that is executed during the RPM
 build process to obtain the version number of the package. This
 command is executed after the source code has been configured,

@@ -1,9 +1,9 @@
 /*
  * Copyright (c) 2014      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 /** @file:
@@ -68,7 +68,7 @@ ORTE_DECLSPEC void orte_rtc_base_get_avail_vals(opal_list_t *vals);
 
 /* Called from the child to send a warning show_help message up the
    pipe to the waiting parent. */
-ORTE_DECLSPEC int orte_rtc_base_send_warn_show_help(int fd, const char *file, 
+ORTE_DECLSPEC int orte_rtc_base_send_warn_show_help(int fd, const char *file,
                                                     const char *topic, ...);
 
 /* Called from the child to send an error message up the pipe to the

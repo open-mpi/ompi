@@ -78,12 +78,12 @@ int orte_ras_base_node_insert(opal_list_t* nodes, orte_job_t *jdata)
     if (0 == num_nodes) {
         return ORTE_SUCCESS;  /* nothing to do */
     }
-    
+
     OPAL_OUTPUT_VERBOSE((5, orte_ras_base_framework.framework_output,
                          "%s ras:base:node_insert inserting %ld nodes",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          (long)num_nodes));
-    
+
     /* set the size of the global array - this helps minimize time
      * spent doing realloc's
      */
@@ -91,14 +91,14 @@ int orte_ras_base_node_insert(opal_list_t* nodes, orte_job_t *jdata)
         ORTE_ERROR_LOG(rc);
         return rc;
     }
-    
+
     /* get the hnp node's info */
     hnp_node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, 0);
 
     /* cycle through the list */
     while (NULL != (item = opal_list_remove_first(nodes))) {
         node = (orte_node_t*)item;
-        
+
         /* the HNP had to already enter its node on the array - that entry is in the
          * first position since it is the first one entered. We need to check to see
          * if this node is the same as the HNP's node so we don't double-enter it
@@ -201,6 +201,6 @@ int orte_ras_base_node_insert(opal_list_t* nodes, orte_job_t *jdata)
             *ptr = '\0';
         }
     }
-    
+
     return ORTE_SUCCESS;
 }

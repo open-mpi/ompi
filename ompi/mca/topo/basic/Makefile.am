@@ -5,9 +5,9 @@
 # Copyright (c) 2011-2013 INRIA.  All rights reserved.
 # Copyright (c) 2011-2013 Université Bordeaux 1
 # $COPYRIGHT$
-# 
+#
 # Additional copyrights may follow
-# 
+#
 # $HEADER$
 #
 
@@ -23,7 +23,7 @@ sources = \
 
 if MCA_BUILD_ompi_topo_basic_DSO
 lib =
-lib_sources = 
+lib_sources =
 component = mca_topo_basic.la
 component_sources = $(sources)
 else

@@ -3,9 +3,9 @@
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 #ifndef OSHMEM_REQUEST_DBG_H
@@ -13,7 +13,7 @@
 
 /*
  * This file contains definitions used by both OSHMEM and debugger plugins.
- * For more information on why we do this see the Notice to developers 
+ * For more information on why we do this see the Notice to developers
  * comment at the top of the ompi_msgq_dll.c file.
  */
 

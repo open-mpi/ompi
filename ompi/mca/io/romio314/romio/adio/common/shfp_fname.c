@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -17,8 +17,8 @@
 #ifdef HAVE_TIME_H
 #include <time.h>
 #endif
-/* The following function selects the name of the file to be used to 
-   store the shared file pointer. The shared-file-pointer file is a 
+/* The following function selects the name of the file to be used to
+   store the shared file pointer. The shared-file-pointer file is a
    hidden file in the same directory as the real file being accessed.
    If the real file is /tmp/thakur/testfile, the shared-file-pointer
    file will be /tmp/thakur/.testfile.shfp.yyy.xxxx, where yyy
@@ -42,13 +42,13 @@ void ADIOI_Shfp_fname(ADIO_File fd, int rank, int *error_code)
         srand(time(NULL));
         i = rand();
 	pid = (int)getpid();
-	
+
 	if (ADIOI_Strncpy(fd->shared_fp_fname, fd->filename, PATH_MAX)) {
 	    *error_code = ADIOI_Err_create_code("ADIOI_Shfp_fname",
 		    fd->filename, ENAMETOOLONG);
 	    return;
 	}
-	
+
 #ifdef ROMIO_NTFS
 	slash = strrchr(fd->filename, '\\');
 #else
@@ -86,11 +86,11 @@ void ADIOI_Shfp_fname(ADIO_File fd, int rank, int *error_code)
 		return;
 	    }
 	}
-	    
+
 	ADIOI_Snprintf(tmp, 128, ".shfp.%d.%d", pid, i);
 	/* ADIOI_Strnapp will return non-zero if truncated.  That's ok */
 	ADIOI_Strnapp(fd->shared_fp_fname, tmp, PATH_MAX);
-	
+
 	len = (int)strlen(fd->shared_fp_fname);
 	MPI_Bcast(&len, 1, MPI_INT, 0, fd->comm);
 	MPI_Bcast(fd->shared_fp_fname, len+1, MPI_CHAR, 0, fd->comm);

@@ -7,7 +7,7 @@
  *
  * $HEADER$
  */
- 
+
 #include "../pml_v.h"
 #include "vprotocol_example.h"
 

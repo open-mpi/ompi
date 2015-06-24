@@ -1,18 +1,18 @@
 # -*- shell-script -*-
 #
-# Copyright (c) 2006-2007 Los Alamos National Security, LLC.  
-# All rights reserved. 
+# Copyright (c) 2006-2007 Los Alamos National Security, LLC.
+# All rights reserved.
 # Copyright (c) 2012 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
-# 
+#
 # Additional copyrights may follow
-# 
+#
 # $HEADER$
 #
 
 # MCA_ompi_io_CONFIG(project_name, framework_name)
 # -------------------------------------------
-AC_DEFUN([MCA_ompi_io_CONFIG], 
+AC_DEFUN([MCA_ompi_io_CONFIG],
 [
     AC_ARG_ENABLE([mpi-io],
         [AC_HELP_STRING([--disable-mpi-io],

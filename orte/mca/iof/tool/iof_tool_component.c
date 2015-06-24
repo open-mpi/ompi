@@ -6,7 +6,7 @@
  * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -14,9 +14,9 @@
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -51,7 +51,7 @@ orte_iof_tool_component_t mca_iof_tool_component = {
     {
         .iof_version = {
             ORTE_IOF_BASE_VERSION_2_0_0,
-            
+
             .mca_component_name = "tool",
             MCA_BASE_MAKE_VERSION(component, ORTE_MAJOR_VERSION, ORTE_MINOR_VERSION,
                                   ORTE_RELEASE_VERSION),
@@ -94,7 +94,7 @@ static int orte_iof_tool_query(mca_base_module_t **module, int *priority)
 
     *priority = 100;
     *module = (mca_base_module_t *) &orte_iof_tool_module;
-    
+
     return ORTE_SUCCESS;
 }
 

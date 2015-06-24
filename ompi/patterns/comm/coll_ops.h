@@ -27,7 +27,7 @@ BEGIN_C_DECLS
 
 
 OMPI_DECLSPEC int comm_allgather_pml(void *src_buf, void *dest_buf, int count,
-        ompi_datatype_t *dtype, int my_rank_in_group, int n_peers, 
+        ompi_datatype_t *dtype, int my_rank_in_group, int n_peers,
         int *ranks_in_comm,ompi_communicator_t *comm);
 OMPI_DECLSPEC int comm_allreduce_pml(void *sbuf, void *rbuf, int count,
         ompi_datatype_t *dtype, int my_rank_in_group,

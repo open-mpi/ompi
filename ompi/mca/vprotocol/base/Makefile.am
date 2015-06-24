@@ -3,9 +3,9 @@
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
 # $COPYRIGHT$
-# 
+#
 # Additional copyrights may follow
-# 
+#
 # $HEADER$
 #
 
@@ -17,4 +17,4 @@ libmca_vprotocol_la_SOURCES += \
         base/vprotocol_base.c \
         base/vprotocol_base_select.c \
         base/vprotocol_base_parasite.c \
-        base/vprotocol_base_request.c  
+        base/vprotocol_base_request.c

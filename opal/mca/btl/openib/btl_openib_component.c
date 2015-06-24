@@ -47,7 +47,7 @@
  * The include of malloc.h below breaks abstractions in OMPI (by
  * directly including a header file from another component), but has
  * been ruled "ok" because the openib component is only supported on
- * Linux.  
+ * Linux.
  *
  * The malloc hooks in newer glibc were deprecated, including stock
  * malloc.h causes compilation warnings.  Instead, we use the internal
@@ -187,7 +187,7 @@ static int btl_openib_component_register(void)
         mca_btl_openib_module.super.btl_eager_limit;
 
     /* if_include and if_exclude need to be mutually exclusive */
-    if (OPAL_SUCCESS != 
+    if (OPAL_SUCCESS !=
         mca_base_var_check_exclusive("ompi",
         mca_btl_openib_component.super.btl_version.mca_type_name,
         mca_btl_openib_component.super.btl_version.mca_component_name,
@@ -272,7 +272,7 @@ static int btl_openib_component_close(void)
     if (NULL != mca_btl_openib_component.default_recv_qps) {
         free(mca_btl_openib_component.default_recv_qps);
     }
-    
+
 #if BTL_OPENIB_MALLOC_HOOKS_ENABLED
     /* Must check to see whether the malloc hook was set before
        assigning it back because ompi_info will call _register() and
@@ -1617,7 +1617,7 @@ static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
     }
 
     /* Find out if this device supports RC QPs */
-    if (OPAL_SUCCESS != opal_common_verbs_qp_test(dev_context, 
+    if (OPAL_SUCCESS != opal_common_verbs_qp_test(dev_context,
                                                   OPAL_COMMON_VERBS_FLAGS_RC)) {
         ibv_close_device(dev_context);
         BTL_VERBOSE(("openib: RC QPs not supported -- skipping %s",
@@ -2128,7 +2128,7 @@ static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
             index = mca_base_var_find("opal","btl","openib","receive_queues");
             if (index >= 0) {
                 if (OPAL_SUCCESS != (ret = mca_base_var_get_value(index, NULL, &source, NULL))) {
-                    BTL_ERROR(("mca_base_var_get_value failed to get value for receive_queues: %s:%d", 
+                    BTL_ERROR(("mca_base_var_get_value failed to get value for receive_queues: %s:%d",
                                __FILE__, __LINE__));
                     goto error;
                 } else {
@@ -2291,8 +2291,8 @@ static int finish_btl_init(mca_btl_openib_module_t *openib_btl)
             openib_btl->super.btl_eager_limit,
             mca_btl_openib_component.buffer_alignment, size_t);
 
-    opal_output_verbose(1, opal_btl_base_framework.framework_output, 
-                        "[rank=%d] openib: using port %s:%d", 
+    opal_output_verbose(1, opal_btl_base_framework.framework_output,
+                        "[rank=%d] openib: using port %s:%d",
                         OPAL_PROC_MY_NAME.vpid,
                         ibv_get_device_name(openib_btl->device->ib_dev),
                         openib_btl->port_num);
@@ -2340,8 +2340,8 @@ static float get_ib_dev_distance(struct ibv_device *dev)
     static const struct hwloc_distances_s *hwloc_distances = NULL;
 
     if (NULL == hwloc_distances) {
-        hwloc_distances = 
-            hwloc_get_whole_distance_matrix_by_type(opal_hwloc_topology, 
+        hwloc_distances =
+            hwloc_get_whole_distance_matrix_by_type(opal_hwloc_topology,
                                                     HWLOC_OBJ_NODE);
     }
 
@@ -2375,7 +2375,7 @@ static float get_ib_dev_distance(struct ibv_device *dev)
         }
         break;
 
-    default: 
+    default:
         /* If it's above a NUMA node, then I don't know how to compute
            the distance... */
         ibv_obj = NULL;
@@ -2416,32 +2416,32 @@ static float get_ib_dev_distance(struct ibv_device *dev)
             /* Distance may be asymetrical, so calculate both of them
                and take the max */
             a = hwloc_distances->latency[my_obj->logical_index +
-                                         (ibv_obj->logical_index * 
+                                         (ibv_obj->logical_index *
                                           hwloc_distances->nbobjs)];
             b = hwloc_distances->latency[ibv_obj->logical_index +
-                                         (my_obj->logical_index * 
+                                         (my_obj->logical_index *
                                           hwloc_distances->nbobjs)];
             distance = (a > b) ? a : b;
         }
         break;
 
-    default: 
+    default:
         /* If the obj is above a NUMA node, then we're bound to more than
            one NUMA node.  Find the max distance. */
         i = 0;
         for (node_obj = hwloc_get_obj_inside_cpuset_by_type(opal_hwloc_topology,
-                                                            ibv_obj->cpuset, 
+                                                            ibv_obj->cpuset,
                                                             HWLOC_OBJ_NODE, i);
-             NULL != node_obj; 
+             NULL != node_obj;
              node_obj = hwloc_get_obj_inside_cpuset_by_type(opal_hwloc_topology,
-                                                            ibv_obj->cpuset, 
+                                                            ibv_obj->cpuset,
                                                             HWLOC_OBJ_NODE, ++i)) {
 
             a = hwloc_distances->latency[node_obj->logical_index +
-                                         (ibv_obj->logical_index * 
+                                         (ibv_obj->logical_index *
                                           hwloc_distances->nbobjs)];
             b = hwloc_distances->latency[ibv_obj->logical_index +
-                                         (node_obj->logical_index * 
+                                         (node_obj->logical_index *
                                           hwloc_distances->nbobjs)];
             a = (a > b) ? a : b;
             distance = (a > distance) ? a : distance;
@@ -2742,8 +2742,8 @@ btl_openib_component_init(int *num_btl_modules,
                 mca_btl_openib_component.ib_max_btls); i++) {
         if (0 != mca_btl_openib_component.ib_num_btls &&
             (dev_sorted[i].distance - distance) > EPS) {
-            opal_output_verbose(1, opal_btl_base_framework.framework_output, 
-                                "[rank=%d] openib: skipping device %s; it is too far away", 
+            opal_output_verbose(1, opal_btl_base_framework.framework_output,
+                                "[rank=%d] openib: skipping device %s; it is too far away",
                                 OPAL_PROC_MY_NAME.vpid,
                                 ibv_get_device_name(dev_sorted[i].ib_dev));
             break;
@@ -2820,7 +2820,7 @@ btl_openib_component_init(int *num_btl_modules,
            ignored, warn about it */
         if (num_devices_intentionally_ignored < num_devs) {
             opal_show_help("help-mpi-btl-openib.txt",
-                           "no active ports found", true, 
+                           "no active ports found", true,
                            opal_process_info.nodename);
         }
         goto no_btls;
@@ -3110,8 +3110,8 @@ static int btl_openib_handle_incoming(mca_btl_openib_module_t *openib_btl,
         reg = mca_btl_base_active_message_trigger + hdr->tag;
         reg->cbfunc( &openib_btl->super, hdr->tag, des, reg->cbdata );
 #if OPAL_CUDA_SUPPORT /* CUDA_ASYNC_RECV */
-        if (des->des_flags & MCA_BTL_DES_FLAGS_CUDA_COPY_ASYNC) { 
-            /* Since ASYNC flag is set, we know this descriptor is being used 
+        if (des->des_flags & MCA_BTL_DES_FLAGS_CUDA_COPY_ASYNC) {
+            /* Since ASYNC flag is set, we know this descriptor is being used
              * for asynchronous copy and cannot be freed yet. Therefore, set
              * up callback for PML to call when complete, add argument into
              * descriptor and return. */
@@ -3807,7 +3807,7 @@ static int btl_openib_component_progress(void)
      * The only thing that gets completed here are asynchronous copies
      * so there is no need to free anything.
      */
-    {   
+    {
         int local_count = 0;
         mca_btl_base_descriptor_t *frag;
         while (local_count < 10 && (1 == progress_one_cuda_dtoh_event(&frag))) {

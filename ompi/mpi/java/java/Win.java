@@ -5,14 +5,14 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -34,7 +34,7 @@ private long handle;
  * @param dispUnit local unit size for displacements (buffer elements)
  * @param info     info object
  * @param comm     communicator
- * @throws MPIException 
+ * @throws MPIException
  */
 public Win(Buffer base, int size, int dispUnit, Info info, Comm comm)
     throws MPIException
@@ -82,7 +82,7 @@ private int getBaseType(Datatype orgType, Datatype targetType)
 /**
  * Java binding of the MPI operation {@code MPI_GET_GROUP}.
  * @return group of processes which share access to the window
- * @throws MPIException 
+ * @throws MPIException
  */
 public Group getGroup() throws MPIException
 {
@@ -200,7 +200,7 @@ private native void fence(long win, int assertion) throws MPIException;
  * Java binding of the MPI operation {@code MPI_WIN_START}.
  * @param group     group of target processes
  * @param assertion program assertion
- * @throws MPIException 
+ * @throws MPIException
  */
 public void start(Group group, int assertion) throws MPIException
 {
@@ -213,7 +213,7 @@ private native void start(long win, long group, int assertion)
 
 /**
  * Java binding of the MPI operation {@code MPI_WIN_COMPLETE}.
- * @throws MPIException 
+ * @throws MPIException
  */
 public void complete() throws MPIException
 {
@@ -227,7 +227,7 @@ private native void complete(long win) throws MPIException;
  * Java binding of the MPI operation {@code MPI_WIN_POST}.
  * @param group     group of origin processes
  * @param assertion program assertion
- * @throws MPIException 
+ * @throws MPIException
  */
 public void post(Group group, int assertion) throws MPIException
 {
@@ -240,7 +240,7 @@ private native void post(long win, long group, int assertion)
 
 /**
  * Java binding of the MPI operation {@code MPI_WIN_WAIT}.
- * @throws MPIException 
+ * @throws MPIException
  */
 public void waitFor() throws MPIException
 {
@@ -253,7 +253,7 @@ private native void waitFor(long win) throws MPIException;
 /**
  * Java binding of the MPI operation {@code MPI_WIN_TEST}.
  * @return true if success
- * @throws MPIException 
+ * @throws MPIException
  */
 public boolean test() throws MPIException
 {
@@ -268,7 +268,7 @@ private native boolean test(long win) throws MPIException;
  * @param lockType  either MPI.LOCK_EXCLUSIVE or MPI.LOCK_SHARED
  * @param rank      rank of locked window
  * @param assertion program assertion
- * @throws MPIException 
+ * @throws MPIException
  */
 public void lock(int lockType, int rank, int assertion) throws MPIException
 {
@@ -282,7 +282,7 @@ private native void lock(long win, int lockType, int rank, int assertion)
 /**
  * Java binding of the MPI operation {@code MPI_WIN_UNLOCK}.
  * @param rank rank of window
- * @throws MPIException 
+ * @throws MPIException
  */
 public void unlock(int rank) throws MPIException
 {
@@ -309,7 +309,7 @@ private native void setErrhandler(long win, long errhandler)
 /**
  * Java binding of the MPI operation {@code MPI_WIN_CALL_ERRHANDLER}.
  * @param errorCode error code
- * @throws MPIException 
+ * @throws MPIException
  */
 public void callErrhandler(int errorCode) throws MPIException
 {
@@ -395,7 +395,7 @@ private native void deleteAttr(long win, int keyval) throws MPIException;
 
 /**
  * Java binding of {@code MPI_WIN_FREE}.
- * @throws MPIException 
+ * @throws MPIException
  */
 @Override public void free() throws MPIException
 {

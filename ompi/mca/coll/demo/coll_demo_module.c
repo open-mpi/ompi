@@ -5,14 +5,14 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -103,7 +103,7 @@ int mca_coll_demo_init_query(bool enable_progress_threads,
                              bool enable_mpi_threads)
 {
     /* Nothing to do */
-  
+
     return OMPI_SUCCESS;
 }
 
@@ -184,22 +184,22 @@ mca_coll_demo_module_enable(mca_coll_base_module_t *module,
     }
 
     /* save the old pointers */
-    COPY(comm, demo_module, allgather); 
-    COPY(comm, demo_module, allgatherv); 
-    COPY(comm, demo_module, allreduce); 
-    COPY(comm, demo_module, alltoall); 
-    COPY(comm, demo_module, alltoallv); 
-    COPY(comm, demo_module, alltoallw); 
-    COPY(comm, demo_module, barrier); 
-    COPY(comm, demo_module, bcast); 
-    COPY(comm, demo_module, exscan); 
-    COPY(comm, demo_module, gather); 
-    COPY(comm, demo_module, gatherv); 
-    COPY(comm, demo_module, reduce); 
-    COPY(comm, demo_module, reduce_scatter); 
-    COPY(comm, demo_module, scan); 
-    COPY(comm, demo_module, scatter); 
-    COPY(comm, demo_module, scatterv); 
+    COPY(comm, demo_module, allgather);
+    COPY(comm, demo_module, allgatherv);
+    COPY(comm, demo_module, allreduce);
+    COPY(comm, demo_module, alltoall);
+    COPY(comm, demo_module, alltoallv);
+    COPY(comm, demo_module, alltoallw);
+    COPY(comm, demo_module, barrier);
+    COPY(comm, demo_module, bcast);
+    COPY(comm, demo_module, exscan);
+    COPY(comm, demo_module, gather);
+    COPY(comm, demo_module, gatherv);
+    COPY(comm, demo_module, reduce);
+    COPY(comm, demo_module, reduce_scatter);
+    COPY(comm, demo_module, scan);
+    COPY(comm, demo_module, scatter);
+    COPY(comm, demo_module, scatterv);
 
     return OMPI_SUCCESS;
 }

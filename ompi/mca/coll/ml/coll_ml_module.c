@@ -2064,7 +2064,7 @@ static int mca_coll_ml_tree_hierarchy_discovery(mca_coll_ml_module_t *ml_module,
 
     /* If I was not done, it means that we skipped all subgroups and no hierarchy was build */
     if (0 == i_am_done) {
-        
+
         if (NULL != include_sbgp_name || NULL != exclude_sbgp_name) {
             /* User explicitly asked for specific type of topology, which generates empty group */
             opal_show_help("help-mpi-coll-ml.txt",
@@ -2248,7 +2248,7 @@ int mca_coll_ml_allreduce_hierarchy_discovery(mca_coll_ml_module_t *ml_module,
             ML_VERBOSE(10, ("Topology build: sbgp %s will be excluded.",
                             sbgp_component->sbgp_version.mca_component_name));
 
-                  
+
             /* If there isn't additional component supports all types => print warning */
             if (1 == opal_list_get_size(&mca_bcol_base_components_in_use) ||
                 (opal_list_item_t *) bcol_cli_next ==

@@ -5,14 +5,14 @@
  * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -59,7 +59,7 @@ int mca_bml_base_btl_array_reserve(mca_bml_base_btl_array_t* array, size_t size)
     size_t new_len = sizeof(mca_bml_base_btl_t)*size;
     if(old_len >= new_len)
         return OMPI_SUCCESS;
-    
+
     array->bml_btls = (mca_bml_base_btl_t*)realloc(array->bml_btls, new_len);
     if(NULL == array->bml_btls)
         return OMPI_ERR_OUT_OF_RESOURCE;
@@ -99,15 +99,15 @@ static void mca_bml_base_completion(
     des->des_cbfunc(btl,ep,des,status);
 }
 
-int mca_bml_base_send( mca_bml_base_btl_t* bml_btl, 
-                       mca_btl_base_descriptor_t* des, 
-                       mca_btl_base_tag_t tag ) 
-{ 
-    des->des_context = (void*)bml_btl; 
+int mca_bml_base_send( mca_bml_base_btl_t* bml_btl,
+                       mca_btl_base_descriptor_t* des,
+                       mca_btl_base_tag_t tag )
+{
+    des->des_context = (void*)bml_btl;
     if(mca_bml_base_error_count <= 0 && mca_bml_base_error_rate_ceiling > 0) {
-      mca_bml_base_error_count = (int) (((double) mca_bml_base_error_rate_ceiling * 
+      mca_bml_base_error_count = (int) (((double) mca_bml_base_error_rate_ceiling *
                   opal_rand(&mca_bml_base_rand_buff))/(UINT32_MAX+1.0));
-        if(mca_bml_base_error_count < (double) mca_bml_base_error_rate_floor) { 
+        if(mca_bml_base_error_count < (double) mca_bml_base_error_rate_floor) {
           mca_bml_base_error_count = (double) mca_bml_base_error_rate_floor;
         }
         if(mca_bml_base_error_count % 2) {
@@ -117,7 +117,7 @@ int mca_bml_base_send( mca_bml_base_btl_t* bml_btl,
             return OMPI_SUCCESS;
         } else {
             /* corrupt data */
-            mca_bml_base_context_t* ctx = (mca_bml_base_context_t*) 
+            mca_bml_base_context_t* ctx = (mca_bml_base_context_t*)
                 malloc(sizeof(mca_bml_base_context_t));
             if(NULL != ctx) {
                 opal_output(0, "%s:%d: corrupting data\n", __FILE__, __LINE__);
@@ -133,7 +133,7 @@ int mca_bml_base_send( mca_bml_base_btl_t* bml_btl,
     }
     mca_bml_base_error_count--;
     return bml_btl->btl_send( bml_btl->btl,
-                              bml_btl->btl_endpoint, 
+                              bml_btl->btl_endpoint,
                               des, tag );
 }
 

@@ -6,7 +6,7 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -14,13 +14,13 @@
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
-/** 
- * @file 
+/**
+ * @file
  *
  * Top-level interface for \em all MCA components.
  *
@@ -43,7 +43,7 @@
  *   the change).  If we need to add more space to the struct, we'll
  *   increment the major version number.
  * - The MCA base component struct now has a version number in it
- *   (starting with Open MPI v1.3, it is 2.0.0). 
+ *   (starting with Open MPI v1.3, it is 2.0.0).
  * - As was an unstated assumption in prior versions of Open MPI, the
  *   unversioned versions of struct names (both in the MCA base and in
  *   individual framework bases) are intended for components who want
@@ -53,7 +53,7 @@
  *   struct version name.  Please note, however, the Open MPI
  *   developers may not generally provide older versions of framework
  *   interface structs unless they know if someone outside of the Open
- *   MPI community needs it.  
+ *   MPI community needs it.
  *
  *   ***IF YOU NEED BACKWARDS SOURCE OR BINARY COMPATIBILITY, you must
  *   let us know!***
@@ -124,7 +124,7 @@ typedef struct mca_base_module_2_0_0_t mca_base_module_2_0_0_t;
  * be unloaded from the process).
  *
  * All MCA components can have an "open" function that is invoked once
- * per process, when the component is located and loaded.  
+ * per process, when the component is located and loaded.
  *
  * This function should avoid registering MCA parameters (use the
  * component "register" function for that; i.e.,
@@ -151,7 +151,7 @@ typedef struct mca_base_module_2_0_0_t mca_base_module_2_0_0_t;
  */
 typedef int (*mca_base_open_component_1_0_0_fn_t)(void);
 
-/** 
+/**
  * MCA component close function.
  *
  * @retval OPAL_SUCCESS The component successfully shut down.
@@ -174,7 +174,7 @@ typedef int (*mca_base_open_component_1_0_0_fn_t)(void);
  */
 typedef int (*mca_base_close_component_1_0_0_fn_t)(void);
 
-/** 
+/**
  * MCA component query function.
  *
  * @retval OPAL_SUCCESS The component successfully queried.
@@ -199,7 +199,7 @@ typedef int (*mca_base_query_component_2_0_0_fn_t)(mca_base_module_2_0_0_t **mod
  * @retval OPAL_SUCCESS This component successfully registered its
  * parameters and can be used in this process.
  * @retval OPAL_ERR_BAD_PARAM Indicates that the register function
- * failed because an MCA parameter got an invalid/incorrect value.  
+ * failed because an MCA parameter got an invalid/incorrect value.
  *
  * @retval anything_else The MCA will ignore this component for the
  * duration of the process.
@@ -266,7 +266,7 @@ typedef int (*mca_base_register_component_params_2_0_0_fn_t)(void);
  */
 struct mca_base_component_2_1_0_t {
 
-  int mca_major_version; 
+  int mca_major_version;
   /**< Major number of the MCA. */
   int mca_minor_version;
   /**< Minor number of the MCA. */
@@ -305,7 +305,7 @@ struct mca_base_component_2_1_0_t {
   /**< This component's minor version number. */
   int mca_component_release_version;
   /**< This component's release version number. */
-  
+
   mca_base_open_component_1_0_0_fn_t mca_open_component;
   /**< Method for opening this component. */
   mca_base_close_component_1_0_0_fn_t mca_close_component;
@@ -351,7 +351,7 @@ typedef struct mca_base_component_data_2_0_0_t mca_base_component_data_t;
 typedef struct mca_base_component_data_2_0_0_t mca_base_component_data_2_0_0_t;
 
 /**
- * Macro for framework author convenience.  
+ * Macro for framework author convenience.
  *
  * This macro is used by frameworks defining their component types,
  * indicating that they subscribe to the MCA version 2.0.0.  See

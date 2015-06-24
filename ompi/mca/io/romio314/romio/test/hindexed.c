@@ -39,7 +39,7 @@ char compare_buf[XLEN*4][YLEN*4] = {
 };
 
 
-/* set this if you want a dump of the global array 
+/* set this if you want a dump of the global array
 #define VERBOSE 1
 */
 
@@ -109,29 +109,29 @@ int main(int argc, char **argv) {
 
    P0's 's layout                               P1's layout
    [ 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9] | [ 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9]
-[ 0] 0 1 2     3 4 5                          |                       D E F     G H I    
-[ 1]                                          |                                          
-[ 2] 6 7 8     9 : ;                          |                       J K L     M N O    
-[ 3]                                          |                                          
-[ 4]                                          |                                          
-[ 5]                                          |                                          
-[ 6]                                          |                                          
-[ 7]                                          |                                          
-[ 8]                                          |                                          
-[ 9]                                          |                                          
+[ 0] 0 1 2     3 4 5                          |                       D E F     G H I
+[ 1]                                          |
+[ 2] 6 7 8     9 : ;                          |                       J K L     M N O
+[ 3]                                          |
+[ 4]                                          |
+[ 5]                                          |
+[ 6]                                          |
+[ 7]                                          |
+[ 8]                                          |
+[ 9]                                          |
 
    P2's 's layout                               P3's layout
    [ 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9] | [ 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9]
-[ 0]                                          |                                          
-[ 1]                                          |                                          
-[ 2]                                          |                                          
-[ 3]                                          |                                          
-[ 4]                                          |                                          
-[ 5] X Y Z     [ \ ]                          |                       l m n     o p q    
-[ 6]                                          |                                          
-[ 7] ^ _ `     a b c                          |                       r s t     u v w    
-[ 8]                                          |                                          
-[ 9]                                          |                                          
+[ 0]                                          |
+[ 1]                                          |
+[ 2]                                          |
+[ 3]                                          |
+[ 4]                                          |
+[ 5] X Y Z     [ \ ]                          |                       l m n     o p q
+[ 6]                                          |
+[ 7] ^ _ `     a b c                          |                       r s t     u v w
+[ 8]                                          |
+[ 9]                                          |
 */
 
     /* initialize the write buffer */
@@ -182,7 +182,7 @@ int main(int argc, char **argv) {
             printf(" ");
         }
         printf("]\n\n");
-	
+
 
         ptr = rd_buf;
         for (k=0; k<num_io; k++) {
@@ -205,7 +205,7 @@ int main(int argc, char **argv) {
         for(i=0; i<2*YLEN*num_io; i++) {
 	    for(j=0; j<2*XLEN; j++) {
 		if( *ptr != compare_buf[i][j]) {
-			fprintf(stderr, "expected %d got %d at [%d][%d]\n", 
+			fprintf(stderr, "expected %d got %d at [%d][%d]\n",
 					*ptr, compare_buf[i][j], i, j);
 			nr_errors++;
 		}
@@ -214,7 +214,7 @@ int main(int argc, char **argv) {
 	}
         free(rd_buf);
 
-        if (nr_errors == 0) 
+        if (nr_errors == 0)
 	    fprintf(stdout, " No Errors\n");
         else
 	    fprintf(stderr, "Found %d errors\n", nr_errors);
@@ -234,27 +234,27 @@ int main(int argc, char **argv) {
 -------------------------------------------------------
    [ 0 1 2 3 4 5 6 7 8 9  0 1 2 3 4 5 6 7 8 9 ]
 
-[ 0] 0 1 2     3 4 5      D E F     G H I    
-[ 1]                                         
-[ 2] 6 7 8     9 : ;      J K L     M N O    
-[ 3]                                         
-[ 4]                                         
-[ 5] X Y Z     [ \ ]      l m n     o p q    
-[ 6]                                         
-[ 7] ^ _ `     a b c      r s t     u v w    
-[ 8]                                         
-[ 9]                                         
+[ 0] 0 1 2     3 4 5      D E F     G H I
+[ 1]
+[ 2] 6 7 8     9 : ;      J K L     M N O
+[ 3]
+[ 4]
+[ 5] X Y Z     [ \ ]      l m n     o p q
+[ 6]
+[ 7] ^ _ `     a b c      r s t     u v w
+[ 8]
+[ 9]
 
-[10] 0 1 2     3 4 5      D E F     G H I    
-[11]                                         
-[12] 6 7 8     9 : ;      J K L     M N O    
-[13]                                         
-[14]                                         
-[15] X Y Z     [ \ ]      l m n     o p q    
-[16]                                         
-[17] ^ _ `     a b c      r s t     u v w    
-[18]                                         
-[19]                                         
+[10] 0 1 2     3 4 5      D E F     G H I
+[11]
+[12] 6 7 8     9 : ;      J K L     M N O
+[13]
+[14]
+[15] X Y Z     [ \ ]      l m n     o p q
+[16]
+[17] ^ _ `     a b c      r s t     u v w
+[18]
+[19]
 
 */
 

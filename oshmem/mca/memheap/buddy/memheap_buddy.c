@@ -1,9 +1,9 @@
 /* Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -13,7 +13,7 @@
 #include "oshmem/mca/memheap/memheap.h"
 #include "oshmem/mca/memheap/buddy/memheap_buddy.h"
 #include "oshmem/mca/memheap/buddy/memheap_buddy_component.h"
-#include "oshmem/mca/memheap/base/base.h" 
+#include "oshmem/mca/memheap/base/base.h"
 #include "orte/mca/grpcomm/grpcomm.h"
 #include "opal/class/opal_hash_table.h"
 #include "opal/class/opal_object.h"
@@ -22,7 +22,7 @@
 static int buddy_init(mca_memheap_buddy_module_t* buddy);
 
 mca_memheap_buddy_module_t memheap_buddy = {
-    { 
+    {
         &mca_memheap_buddy_component,
         mca_memheap_buddy_finalize,
         mca_memheap_buddy_alloc,
@@ -38,10 +38,10 @@ mca_memheap_buddy_module_t memheap_buddy = {
         mca_memheap_base_find_offset,
         mca_memheap_base_is_symmetric_addr,
         mca_memheap_modex_recv_all,
-        
+
         0
     },
-    1   /* priority */ 
+    1   /* priority */
 };
 
 /* Memory Heap Buddy Implementation */
@@ -134,7 +134,7 @@ static inline unsigned memheap_buddy_find_order(unsigned long size)
     return order;
 }
 
-/* 
+/*
  * find the first set bit in a memory region
  * @addr: The address to base the search on
  * @offset: The bitnumber to start searching at
@@ -180,7 +180,7 @@ static inline unsigned long find_next_bit(const unsigned long *addr,
 }
 
 /**
- * Initialize the Memory Heap 
+ * Initialize the Memory Heap
  */
 int mca_memheap_buddy_module_init(memheap_context_t *context)
 {

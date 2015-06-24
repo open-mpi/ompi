@@ -40,10 +40,10 @@
 /*
  * use the Alps placement file to obtain
  * the global rank of the "first" local rank
- * on the node.  
+ * on the node.
  */
 
-int 
+int
 orte_ess_alps_get_first_rank_on_node(int *first_rank)
 {
     int alps_status = 0;

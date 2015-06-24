@@ -8,9 +8,9 @@
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -95,9 +95,9 @@ static void opal_tree_construct(opal_tree_t *tree)
     tree->opal_tree_sentinel.opal_tree_parent = &tree->opal_tree_sentinel;
     tree->opal_tree_sentinel.opal_tree_num_ancestors = -1;
 
-    tree->opal_tree_sentinel.opal_tree_next_sibling = 
+    tree->opal_tree_sentinel.opal_tree_next_sibling =
         &tree->opal_tree_sentinel;
-    tree->opal_tree_sentinel.opal_tree_prev_sibling = 
+    tree->opal_tree_sentinel.opal_tree_prev_sibling =
         &tree->opal_tree_sentinel;
 
     tree->opal_tree_sentinel.opal_tree_first_child = &tree->opal_tree_sentinel;
@@ -122,7 +122,7 @@ static void opal_tree_destruct(opal_tree_t *tree)
 /*
  * initialize tree container
  */
-void opal_tree_init(opal_tree_t *tree, opal_tree_comp_fn_t comp, 
+void opal_tree_init(opal_tree_t *tree, opal_tree_comp_fn_t comp,
                     opal_tree_item_serialize_fn_t serialize,
                     opal_tree_item_deserialize_fn_t deserialize,
                     opal_tree_get_key_fn_t get_key)
@@ -139,7 +139,7 @@ void opal_tree_init(opal_tree_t *tree, opal_tree_comp_fn_t comp,
 static int count_descendants(opal_tree_item_t* item)
 {
     int current_count = 0;
-    
+
     /* loop over all siblings for descendants to count */
     while (item) {
         current_count += count_descendants(opal_tree_get_first_child(item));
@@ -157,7 +157,7 @@ size_t opal_tree_get_size(opal_tree_t* tree)
 #if OPAL_ENABLE_DEBUG
     /* not sure if we really want this running in devel, as it does
      * slow things down.  Wanted for development of splice / join to
-     * make sure length was reset properly 
+     * make sure length was reset properly
      */
     size_t check_len = 0;
     opal_tree_item_t *root;
@@ -167,7 +167,7 @@ size_t opal_tree_get_size(opal_tree_t* tree)
         root = opal_tree_get_root(tree);
         check_len = count_descendants(root);
     }
-    
+
     if (check_len != tree->opal_tree_num_items) {
         fprintf(stderr," Error :: opal_tree_get_size - opal_tree_num_items does not match actual tree length\n");
         fflush(stderr);
@@ -175,13 +175,13 @@ size_t opal_tree_get_size(opal_tree_t* tree)
     }
 #endif
 
-    return tree->opal_tree_num_items;   
+    return tree->opal_tree_num_items;
 }
 
 /*
  * add item to parent's child list
  */
-void opal_tree_add_child(opal_tree_item_t *parent_item, 
+void opal_tree_add_child(opal_tree_item_t *parent_item,
                          opal_tree_item_t *new_item)
 {
 #if OPAL_ENABLE_DEBUG
@@ -200,7 +200,7 @@ void opal_tree_add_child(opal_tree_item_t *parent_item,
     } else {
         /* no children existing on parent */
         parent_item->opal_tree_first_child = new_item;
-    }   
+    }
     parent_item->opal_tree_last_child = new_item;
     parent_item->opal_tree_num_children++;
     new_item->opal_tree_container = parent_item->opal_tree_container;
@@ -216,7 +216,7 @@ void opal_tree_add_child(opal_tree_item_t *parent_item,
 #endif
 }
 
-/* 
+/*
  * check to see if item is in tree
  */
 #if OPAL_ENABLE_DEBUG
@@ -277,7 +277,7 @@ opal_tree_item_t *opal_tree_remove_subtree(opal_tree_item_t *item)
            - If I have no children, then my immediate sibling */
         if (item->opal_tree_parent->opal_tree_first_child == item) {
             if (item->opal_tree_num_children > 0) {
-                parent_item->opal_tree_first_child = 
+                parent_item->opal_tree_first_child =
                     item->opal_tree_next_sibling;
             } else {
                 parent_item->opal_tree_first_child =
@@ -285,7 +285,7 @@ opal_tree_item_t *opal_tree_remove_subtree(opal_tree_item_t *item)
             }
         } else if (parent_item->opal_tree_last_child == item) {
             if (item->opal_tree_num_children > 0) {
-                parent_item->opal_tree_last_child = 
+                parent_item->opal_tree_last_child =
                     item->opal_tree_last_child;
             } else {
                 parent_item->opal_tree_last_child =
@@ -364,11 +364,11 @@ int opal_tree_remove_item(opal_tree_t *tree,
     } else {
         /* There were multiple children.  If I was the first or last,
            then ensure the parent gets a valid first or last child:
-           - If I have children, then my first/last 
+           - If I have children, then my first/last
            - If I have no childen, then my immediate sibling */
         if (parent_item->opal_tree_first_child == item) {
             if (item->opal_tree_num_children > 0) {
-                parent_item->opal_tree_first_child = 
+                parent_item->opal_tree_first_child =
                     item->opal_tree_first_child;
             } else {
                 parent_item->opal_tree_first_child =
@@ -376,7 +376,7 @@ int opal_tree_remove_item(opal_tree_t *tree,
             }
         } else if (parent_item->opal_tree_last_child == item) {
             if (item->opal_tree_num_children > 0) {
-                parent_item->opal_tree_last_child = 
+                parent_item->opal_tree_last_child =
                     item->opal_tree_last_child;
             } else {
                 parent_item->opal_tree_last_child =
@@ -395,12 +395,12 @@ static char *end_lvl = "]";
 static char *end_stream = "E";
 
 /*
- * add item to opal buffer that represents all items of a sub-tree from the 
+ * add item to opal buffer that represents all items of a sub-tree from the
  * item passed in on down.  We exit out of converting tree items once we've
  * done the last child of the tree_item and we are at depth 1.
  */
-static int add_tree_item2buf(opal_tree_item_t *tree_item, 
-                             opal_buffer_t *buf, 
+static int add_tree_item2buf(opal_tree_item_t *tree_item,
+                             opal_buffer_t *buf,
                              opal_tree_item_serialize_fn_t fn,
                              int depth
                              )
@@ -410,7 +410,7 @@ static int add_tree_item2buf(opal_tree_item_t *tree_item,
 
     do {
         /* add start delim to buffer */
-        if (OPAL_SUCCESS != 
+        if (OPAL_SUCCESS !=
             (rc = opal_dss.pack(buf, &start_lvl, 1, OPAL_STRING))){
             return(rc);
         }
@@ -419,30 +419,30 @@ static int add_tree_item2buf(opal_tree_item_t *tree_item,
 
         if ((first_child = opal_tree_get_first_child(tree_item))) {
             /* add items for our children */
-            if (OPAL_SUCCESS != 
+            if (OPAL_SUCCESS !=
                 (rc = add_tree_item2buf(first_child, buf, fn, depth+1))){
                 return(rc);
             }
-            if (OPAL_SUCCESS != 
+            if (OPAL_SUCCESS !=
                 (rc = opal_dss.pack(buf, &end_lvl, 1, OPAL_STRING))){
                 return(rc);
             }
         } else {
             /* end item entry */
-            if (OPAL_SUCCESS != 
+            if (OPAL_SUCCESS !=
                 (rc = opal_dss.pack(buf, &end_lvl, 1, OPAL_STRING))){
                 return(rc);
             }
         }
 
-        /* advance to next sibling, if none we'll drop out of 
+        /* advance to next sibling, if none we'll drop out of
          * loop and return to our parent
          */
         tree_item = opal_tree_get_next_sibling(tree_item);
     } while (tree_item && 1 < depth);
-	
+
     return(OPAL_SUCCESS);
-}    
+}
 
 /*
  * serialize tree data
@@ -452,19 +452,19 @@ int opal_tree_serialize(opal_tree_item_t *start_item, opal_buffer_t *buffer)
     int rc;
 
     if (OPAL_SUCCESS !=
-        (rc = add_tree_item2buf(start_item, buffer, 
+        (rc = add_tree_item2buf(start_item, buffer,
                                 start_item->opal_tree_container->serialize,
                                 1))){
         return(rc);
     }
-    if (OPAL_SUCCESS != 
+    if (OPAL_SUCCESS !=
         (rc = opal_dss.pack(buffer, &end_stream, 1, OPAL_STRING))){
         return(rc);
-    } 
+    }
     return(OPAL_SUCCESS);
 }
 
-static int deserialize_add_tree_item(opal_buffer_t *data, 
+static int deserialize_add_tree_item(opal_buffer_t *data,
                                      opal_tree_item_t *parent_item,
                                      opal_tree_item_deserialize_fn_t deserialize,
                                      char **curr_delim,
@@ -513,15 +513,15 @@ static int deserialize_add_tree_item(opal_buffer_t *data,
     }
     return(OPAL_SUCCESS);
 }
-    
+
 /*
  * deserialize tree data
  */
-int opal_tree_deserialize(opal_buffer_t *serialized_data, 
+int opal_tree_deserialize(opal_buffer_t *serialized_data,
                           opal_tree_item_t *start_item)
 {
     char * null = NULL;
-    deserialize_add_tree_item(serialized_data, 
+    deserialize_add_tree_item(serialized_data,
                               start_item,
                               start_item->opal_tree_container->deserialize,
                               &null,
@@ -655,7 +655,7 @@ static opal_tree_item_t *find_in_descendants(opal_tree_item_t* item, void *key)
 
     while (!result && item) {
         /* check for item match */
-        result = (item->opal_tree_container->comp(item, key) == 0) ? 
+        result = (item->opal_tree_container->comp(item, key) == 0) ?
             item : NULL;
         if (!result && (first_child = opal_tree_get_first_child(item))) {
             /* search descendants for match */
@@ -675,7 +675,7 @@ static opal_tree_item_t *find_in_descendants(opal_tree_item_t* item, void *key)
 opal_tree_item_t *opal_tree_find_with(opal_tree_item_t *item, void *key)
 {
     opal_tree_item_t *curr_item = item, *result = NULL;
-    
+
     if (!opal_tree_is_empty(item->opal_tree_container)) {
         /* check my descendant for a match */
         result = find_in_descendants(opal_tree_get_first_child(item), key);
@@ -686,12 +686,12 @@ opal_tree_item_t *opal_tree_find_with(opal_tree_item_t *item, void *key)
                 result = find_in_descendants(curr_item, key);
             }
         }
-            
+
         /* check my ancestors (uncles) for match */
         curr_item = item;
         while (!result && curr_item && curr_item->opal_tree_num_ancestors > 0){
             curr_item = opal_tree_get_next_sibling(item->opal_tree_parent);
-            while (NULL == curr_item && 
+            while (NULL == curr_item &&
                    item->opal_tree_parent->opal_tree_num_ancestors > 0) {
                 item = item->opal_tree_parent;
                 curr_item = opal_tree_get_next_sibling(item->opal_tree_parent);
@@ -701,7 +701,7 @@ opal_tree_item_t *opal_tree_find_with(opal_tree_item_t *item, void *key)
                 result = find_in_descendants(curr_item, key);
             }
         }
-    } 
+    }
 
     return(result);
 }

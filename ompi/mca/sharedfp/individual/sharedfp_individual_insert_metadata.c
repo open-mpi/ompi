@@ -51,7 +51,7 @@ int mca_sharedfp_individual_insert_metadata(int functype,long recordlength,struc
     if (headnode->numofrecords == MAX_METADATA_RECORDS) {
 	/* Entire linked list is now deleted and a new file*/
 	ret = mca_sharedfp_individual_write_metadata_file(sh);
-	headnode->next = NULL; 	  
+	headnode->next = NULL;
     }
 
     /* Allocate a new Node */
@@ -70,13 +70,13 @@ int mca_sharedfp_individual_insert_metadata(int functype,long recordlength,struc
     newnode->localposition      = headnode->datafile_offset;	        /* Datafile offset*/
     newnode->recordlength       = recordlength;
     newnode->next               = NULL;
-    
 
-    if ( headnode->next == NULL) {	
+
+    if ( headnode->next == NULL) {
 	/*headnode allocated but no further metadata node is allocated*/
         headnode->next = newnode;
     }
-    else {	
+    else {
 	/*We need to append the new node*/
         tempnode = headnode->next;
 

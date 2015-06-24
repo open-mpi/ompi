@@ -6,7 +6,7 @@
  * Copyright (c) 2004-2012 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -14,9 +14,9 @@
  * Copyright (c) 2011-2015 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -74,24 +74,24 @@ static int register_components(mca_base_framework_t *framework)
     mca_base_component_t *component;
     mca_base_component_list_item_t *cli, *next;
     int output_id = framework->framework_output;
-    
+
     /* Announce */
     opal_output_verbose(10, output_id,
                         "mca: base: components_register: registering framework %s components",
                         framework->framework_name);
-    
+
     /* Traverse the list of found components */
-    
+
     OPAL_LIST_FOREACH_SAFE(cli, next, &framework->framework_components, mca_base_component_list_item_t) {
         component = (mca_base_component_t *)cli->cli_component;
 
-        opal_output_verbose(10, output_id, 
+        opal_output_verbose(10, output_id,
                             "mca: base: components_register: found loaded component %s",
                             component->mca_component_name);
 
         /* Call the component's MCA parameter registration function (or open if register doesn't exist) */
         if (NULL == component->mca_register_component_params) {
-            opal_output_verbose(10, output_id, 
+            opal_output_verbose(10, output_id,
                                 "mca: base: components_register: "
                                 "component %s has no register or open function",
                                 component->mca_component_name);
@@ -105,14 +105,14 @@ static int register_components(mca_base_framework_t *framework)
                 /* If the component returns OPAL_ERR_NOT_AVAILABLE,
                    it's a cue to "silently ignore me" -- it's not a
                    failure, it's just a way for the component to say
-                   "nope!".  
- 
+                   "nope!".
+
                    Otherwise, however, display an error.  We may end
                    up displaying this twice, but it may go to separate
                    streams.  So better to be redundant than to not
                    display the error in the stream where it was
                    expected. */
-                
+
                 if (mca_base_component_show_load_errors) {
                     opal_output(0, "mca: base: components_register: "
                                 "component %s / %s register function failed",
@@ -120,7 +120,7 @@ static int register_components(mca_base_framework_t *framework)
                                 component->mca_component_name);
                 }
 
-                opal_output_verbose(10, output_id, 
+                opal_output_verbose(10, output_id,
                                     "mca: base: components_register: "
                                     "component %s register function failed",
                                     component->mca_component_name);
@@ -153,8 +153,8 @@ static int register_components(mca_base_framework_t *framework)
                                          OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_CONSTANT,
                                          &component->mca_component_release_version);
     }
-    
+
     /* All done */
-    
+
     return OPAL_SUCCESS;
 }

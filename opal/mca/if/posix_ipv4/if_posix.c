@@ -6,9 +6,9 @@
  *                         reserved.
  * Copyright (c) 2015      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -81,19 +81,19 @@ static int if_posix_open(void)
        using AF_UNSPEC or AF_INET6 will cause everything to
        fail. */
     if ((sd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
-        opal_output(0, "opal_ifinit: socket() failed with errno=%d\n", 
+        opal_output(0, "opal_ifinit: socket() failed with errno=%d\n",
                     errno);
         return OPAL_ERROR;
     }
 
     /*
-     * Get Network Interface configuration 
+     * Get Network Interface configuration
      *
      * Some notes on the behavior of ioctl(..., SIOCGIFCONF,...)
      * when not enough space is allocated for all the entries.
      *
      * - Solaris returns -1, errno EINVAL if there is not enough
-     *   space 
+     *   space
      * - OS X returns 0, sets .ifc_len to the space used by the
      *   by the entries that did fit.
      * - Linux returns 0, sets .ifc_len to the space required to
@@ -112,20 +112,20 @@ static int if_posix_open(void)
             close(sd);
             return OPAL_ERROR;
         }
-            
+
         /* initialize the memory so valgrind and purify won't
          * complain.  Since this isn't performance critical, just
          * always memset.
          */
         memset(ifconf.ifc_req, 0, ifconf.ifc_len);
-            
+
         if (ioctl(sd, SIOCGIFCONF, &ifconf) < 0) {
             /* if we got an einval, we probably don't have enough
                space.  so we'll fall down and try to expand our
                space */
             if (errno != EINVAL && lastlen != 0) {
                 opal_output(0, "opal_ifinit: ioctl(SIOCGIFCONF) \
-                            failed with errno=%d", 
+                            failed with errno=%d",
                             errno);
                 free(ifconf.ifc_req);
                 close(sd);
@@ -142,7 +142,7 @@ static int if_posix_open(void)
             }
             lastlen = ifconf.ifc_len;
         }
-            
+
         /* Yes, we overflowed (or had an EINVAL on the ioctl).
            Loop back around and try again with a bigger buffer */
         free(ifconf.ifc_req);
@@ -153,9 +153,9 @@ static int if_posix_open(void)
         close(sd);
         return OPAL_ERR_FATAL;
     }
-        
-    /* 
-     * Setup indexes 
+
+    /*
+     * Setup indexes
      */
     ptr = (char*) ifconf.ifc_req;
     rem = ifconf.ifc_len;
@@ -169,24 +169,24 @@ static int if_posix_open(void)
         /* compute offset for entries */
 #ifdef HAVE_STRUCT_SOCKADDR_SA_LEN
         length = sizeof(struct sockaddr);
-            
+
         if (ifr->ifr_addr.sa_len > length) {
             length = ifr->ifr_addr.sa_len;
         }
-            
+
         length += sizeof(ifr->ifr_name);
 #else
         length = sizeof(struct ifreq);
 #endif
-            
+
         rem -= length;
         ptr += length;
-            
+
         /* see if we like this entry */
         if (AF_INET != ifr->ifr_addr.sa_family) {
             continue;
         }
-            
+
         if (ioctl(sd, SIOCGIFFLAGS, ifr) < 0) {
             opal_output(0, "opal_ifinit: ioctl(SIOCGIFFLAGS) failed with errno=%d", errno);
             continue;
@@ -206,7 +206,7 @@ static int if_posix_open(void)
             continue;
         }
 #endif
-            
+
         intf = OBJ_NEW(opal_if_t);
         if (NULL == intf) {
             opal_output(0, "opal_ifinit: unable to allocated %lu bytes\n", (unsigned long)sizeof(opal_if_t));
@@ -220,13 +220,13 @@ static int if_posix_open(void)
         memset(intf->if_name, 0, sizeof(intf->if_name));
         strncpy(intf->if_name, ifr->ifr_name, sizeof(intf->if_name) - 1);
         intf->if_flags = ifr->ifr_flags;
-            
+
         /* every new address gets its own internal if_index */
         intf->if_index = opal_list_get_size(&opal_if_list)+1;
 
         opal_output_verbose(1, opal_if_base_framework.framework_output,
                             "found interface %s", intf->if_name);
-        
+
         /* assign the kernel index to distinguish different NICs */
 #ifndef SIOCGIFINDEX
         intf->if_kernel_index = intf->if_index;
@@ -244,7 +244,7 @@ static int if_posix_open(void)
         intf->if_kernel_index = -1;
 #endif
 #endif /* SIOCGIFINDEX */
-            
+
         /* This call returns IPv4 addresses only. Use SIOCGLIFADDR
            instead */
         if (ioctl(sd, SIOCGIFADDR, ifr) < 0) {
@@ -256,19 +256,19 @@ static int if_posix_open(void)
             OBJ_RELEASE(intf);
             continue;
         }
-            
+
         /* based on above, we know this is an IPv4 address... */
         memcpy(&intf->if_addr, &ifr->ifr_addr, sizeof(struct sockaddr_in));
-            
+
         if (ioctl(sd, SIOCGIFNETMASK, ifr) < 0) {
             opal_output(0, "opal_ifinit: ioctl(SIOCGIFNETMASK) failed with errno=%d", errno);
             OBJ_RELEASE(intf);
             continue;
         }
-            
+
         /* generate CIDR and assign to netmask */
         intf->if_mask = prefix(((struct sockaddr_in*) &ifr->ifr_addr)->sin_addr.s_addr);
-            
+
 #if defined(SIOCGIFHWADDR) && defined(HAVE_STRUCT_IFREQ_IFR_HWADDR)
         /* get the MAC address */
         if (ioctl(sd, SIOCGIFHWADDR, ifr) < 0) {

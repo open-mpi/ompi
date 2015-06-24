@@ -51,9 +51,9 @@ OMPI_DECLSPEC int netpatterns_setup_multinomial_tree(int tree_order, int num_nod
     /*  cummulative count of ranks */
     while( 0 < result ) {
         result-=cnt;
-        cnt*=tree_order; 
+        cnt*=tree_order;
         n_lvls_in_tree++;
-    };  
+    };
 
     /* loop over tree levels */
     n_nodes_in_this_level=1;
@@ -65,7 +65,7 @@ OMPI_DECLSPEC int netpatterns_setup_multinomial_tree(int tree_order, int num_nod
         for ( node=0 ; node < n_nodes_in_this_level ; node++ ) {
             /* get node index */
             node_index++;
-            
+
             /* break if reach group size */
             if( node_index == num_nodes) {
                 break;

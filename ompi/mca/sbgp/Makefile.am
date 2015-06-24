@@ -33,4 +33,4 @@ endif
 include base/Makefile.am
 
 distclean-local:
-	rm -f base/static-components.h 
+	rm -f base/static-components.h

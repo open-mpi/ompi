@@ -13,7 +13,7 @@
  * Copyright (c) 2006-2007 Voltaire. All rights reserved.
  * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010-2015 Los Alamos National Security, LLC.
- *                         All rights reserved. 
+ *                         All rights reserved.
  * Copyright (c) 2010-2012 IBM Corporation.  All rights reserved.
  * Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2013      Intel, Inc. All rights reserved.
@@ -404,7 +404,7 @@ sm_btl_first_time_init(mca_btl_sm_t *sm_btl,
                              mca_btl_sm_component.sm_free_list_inc,
                              mca_btl_sm_component.sm_mpool, 0, NULL, NULL, NULL);
     if ( OPAL_SUCCESS != i )
-        return i;   
+        return i;
 
     mca_btl_sm_component.num_outstanding_frags = 0;
 
@@ -1085,7 +1085,7 @@ int mca_btl_sm_get_sync (mca_btl_base_module_t *btl, struct mca_btl_base_endpoin
     if (OPAL_LIKELY(mca_btl_sm_component.use_knem)) {
         struct knem_cmd_inline_copy icopy;
         struct knem_cmd_param_iovec recv_iovec;
-    
+
         /* Fill in the ioctl data fields.  There's no async completion, so
            we don't need to worry about getting a slot, etc. */
         recv_iovec.base = (uintptr_t) local_address;
@@ -1167,7 +1167,7 @@ int mca_btl_sm_get_async (mca_btl_base_module_t *btl, struct mca_btl_base_endpoi
     mca_btl_sm_frag_t* frag;
     struct knem_cmd_inline_copy icopy;
     struct knem_cmd_param_iovec recv_iovec;
-    
+
     /* If we have no knem slots available, fall back to synchronous */
     if (sm_btl->knem_status_num_used >=
         mca_btl_sm_component.knem_max_simultaneous) {
@@ -1197,7 +1197,7 @@ int mca_btl_sm_get_async (mca_btl_base_module_t *btl, struct mca_btl_base_endpoi
     icopy.local_iovec_nr = 1;
     icopy.write = 0;
     icopy.async_status_index = sm_btl->knem_status_first_avail++;
-    if (sm_btl->knem_status_first_avail >= 
+    if (sm_btl->knem_status_first_avail >=
         mca_btl_sm_component.knem_max_simultaneous) {
         sm_btl->knem_status_first_avail = 0;
     }
@@ -1213,7 +1213,7 @@ int mca_btl_sm_get_async (mca_btl_base_module_t *btl, struct mca_btl_base_endpoi
     }
 
     sm_btl->knem_frag_array[icopy.async_status_index] = frag;
-    if (OPAL_LIKELY(0 == ioctl(sm_btl->knem_fd, 
+    if (OPAL_LIKELY(0 == ioctl(sm_btl->knem_fd,
                                KNEM_CMD_INLINE_COPY, &icopy))) {
         if (icopy.current_status != KNEM_STATUS_PENDING) {
             MCA_BTL_SM_FRAG_RETURN(frag);
@@ -1248,15 +1248,15 @@ void mca_btl_sm_dump(struct mca_btl_base_module_t* btl,
 
     if( NULL != endpoint ) {
         mca_btl_base_err("BTL SM %p endpoint %p [smp_rank %d] [peer_rank %d]\n",
-                         (void*) btl, (void*) endpoint, 
+                         (void*) btl, (void*) endpoint,
                          endpoint->my_smp_rank, endpoint->peer_smp_rank);
         for(item =  opal_list_get_first(&endpoint->pending_sends);
-            item != opal_list_get_end(&endpoint->pending_sends); 
+            item != opal_list_get_end(&endpoint->pending_sends);
             item = opal_list_get_next(item)) {
             frag = (mca_btl_sm_frag_t*)item;
             mca_btl_base_err(" |  frag %p size %lu (hdr frag %p len %lu rank %d tag %d)\n",
                              (void*) frag, frag->size, (void*) frag->hdr->frag,
-                             frag->hdr->len, frag->hdr->my_smp_rank, 
+                             frag->hdr->len, frag->hdr->my_smp_rank,
                              frag->hdr->tag);
         }
     }

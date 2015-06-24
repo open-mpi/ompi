@@ -23,11 +23,11 @@ Major Changes in this version:
 
   PanFS allows users to specify the layout of a file at file-creation time.
   Layout information includes the number of StorageBlades (SB)
-  across which the data is stored, the number of SBs across which a 
-  parity stripe is written, and the number of consecutive stripes that 
-  are placed on the same set of SBs.   The panfs_layout_* hints are only 
+  across which the data is stored, the number of SBs across which a
+  parity stripe is written, and the number of consecutive stripes that
+  are placed on the same set of SBs.   The panfs_layout_* hints are only
   used if supplied at file-creation time.
- 
+
   panfs_layout_type - Specifies the layout of a file:
                       2 = RAID0
                       3 = RAID5 Parity Stripes
@@ -35,37 +35,37 @@ Major Changes in this version:
   panfs_layout_total_num_comps - The total number of StorageBlades a file
                                  is striped across.
   panfs_layout_parity_stripe_width - If the layout type is RAID5 Parity
-                                     Stripes, this hint specifies the 
+                                     Stripes, this hint specifies the
                                      number of StorageBlades in a parity
                                      stripe.
   panfs_layout_parity_stripe_depth - If the layout type is RAID5 Parity
                                      Stripes, this hint specifies the
-                                     number of contiguous parity stripes written 
+                                     number of contiguous parity stripes written
                                      across the same set of SBs.
-  panfs_layout_visit_policy - If the layout type is RAID5 Parity Stripes, 
-                              the policy used to determine the parity 
+  panfs_layout_visit_policy - If the layout type is RAID5 Parity Stripes,
+                              the policy used to determine the parity
                               stripe a given file offset is written to:
                               1 = Round Robin
 
-  PanFS supports the "concurrent write" (CW) mode, where groups of cooperating 
-  clients can disable the PanFS consistency mechanisms and use their own 
-  consistency protocol.  Clients participating in concurrent write mode use 
-  application specific information to improve performance while maintaining 
-  file consistency.  All clients accessing the file(s) must enable concurrent 
-  write mode.  If any client does not enable concurrent write mode, then the 
-  PanFS consistency protocol will be invoked.  Once a file is opened in CW mode 
-  on a machine, attempts to open a file in non-CW mode will fail with 
-  EACCES.  If a file is already opened in non-CW mode, attempts to open 
-  the file in CW mode will fail with EACCES.  The following hint is 
+  PanFS supports the "concurrent write" (CW) mode, where groups of cooperating
+  clients can disable the PanFS consistency mechanisms and use their own
+  consistency protocol.  Clients participating in concurrent write mode use
+  application specific information to improve performance while maintaining
+  file consistency.  All clients accessing the file(s) must enable concurrent
+  write mode.  If any client does not enable concurrent write mode, then the
+  PanFS consistency protocol will be invoked.  Once a file is opened in CW mode
+  on a machine, attempts to open a file in non-CW mode will fail with
+  EACCES.  If a file is already opened in non-CW mode, attempts to open
+  the file in CW mode will fail with EACCES.  The following hint is
   used to enable concurrent write mode.
 
-  panfs_concurrent_write - If set to 1 at file open time, the file 
-                           is opened using the PanFS concurrent write 
+  panfs_concurrent_write - If set to 1 at file open time, the file
+                           is opened using the PanFS concurrent write
                            mode flag.  Concurrent write mode is not a
                            persistent attribute of the file.
 
   Below is an example PanFS layout using the following parameters:
- 
+
   - panfs_layout_type                = 3
   - panfs_layout_total_num_comps     = 100
   - panfs_layout_parity_stripe_width = 10
@@ -89,7 +89,7 @@ Major Changes in this version:
    ...
 
 * Initial support for the Globus GridFTP filesystem.  Work contributed by Troy
-  Baer (troy@osc.edu).  
+  Baer (troy@osc.edu).
 
 Major Changes in Version 1.2.5:
 ------------------------------
@@ -108,7 +108,7 @@ Major Changes in Version 1.2.5:
 
 Major Changes in Version 1.2.4:
 ------------------------------
-* Added section describing ROMIO MPI_FILE_SYNC and MPI_FILE_CLOSE behavior to 
+* Added section describing ROMIO MPI_FILE_SYNC and MPI_FILE_CLOSE behavior to
   User's Guide
 
 * Bug removed from PVFS ADIO implementation regarding resize operations
@@ -136,7 +136,7 @@ Major Changes in Version 1.2.3:
 Major Changes in Version 1.0.3:
 -------------------------------
 
-* When used with MPICH 1.2.1, the MPI-IO functions return proper error codes 
+* When used with MPICH 1.2.1, the MPI-IO functions return proper error codes
   and classes, and the status object is filled in.
 
 * On SGI's XFS file system, ROMIO can use direct I/O even if the
@@ -144,12 +144,12 @@ Major Changes in Version 1.0.3:
   direct I/O. ROMIO does this by doing part of the request with
   buffered I/O (until all the restrictions are met) and doing the rest
   with direct I/O. (This feature hasn't been tested rigorously. Please
-  check for errors.) 
+  check for errors.)
 
   By default, ROMIO will use only buffered I/O. Direct I/O can be
   enabled either by setting the environment variables MPIO_DIRECT_READ
   and/or MPIO_DIRECT_WRITE to TRUE, or on a per-file basis by using
-  the info keys "direct_read" and "direct_write". 
+  the info keys "direct_read" and "direct_write".
 
   Direct I/O will result in higher performance only if you are
   accessing a high-bandwidth disk system. Otherwise, buffered I/O is
@@ -166,51 +166,51 @@ Major Changes Version 1.0.2:
    components of the MPI I/O chapter not yet implemented are
   file interoperability and error handling.
 
-* Added support for using "direct I/O" on SGI's XFS file system. 
+* Added support for using "direct I/O" on SGI's XFS file system.
   Direct I/O is an optional feature of XFS in which data is moved
-  directly between the user's buffer and the storage devices, bypassing 
-  the file-system cache. This can improve performance significantly on 
+  directly between the user's buffer and the storage devices, bypassing
+  the file-system cache. This can improve performance significantly on
   systems with high disk bandwidth. Without high disk bandwidth,
   regular I/O (that uses the file-system cache) perfoms better.
   ROMIO, therefore, does not use direct I/O by default. The user can
   turn on direct I/O (separately for reading and writing) either by
-  using environment variables or by using MPI's hints mechanism (info). 
+  using environment variables or by using MPI's hints mechanism (info).
   To use the environment-variables method, do
        setenv MPIO_DIRECT_READ TRUE
        setenv MPIO_DIRECT_WRITE TRUE
-  To use the hints method, the two keys are "direct_read" and "direct_write". 
-  By default their values are "false". To turn on direct I/O, set the values 
+  To use the hints method, the two keys are "direct_read" and "direct_write".
+  By default their values are "false". To turn on direct I/O, set the values
   to "true". The environment variables have priority over the info keys.
   In other words, if the environment variables are set to TRUE, direct I/O
-  will be used even if the info keys say "false", and vice versa. 
-  Note that direct I/O must be turned on separately for reading 
+  will be used even if the info keys say "false", and vice versa.
+  Note that direct I/O must be turned on separately for reading
   and writing.
   The environment-variables method assumes that the environment
   variables can be read by each process in the MPI job. This is
   not guaranteed by the MPI Standard, but it works with SGI's MPI
   and the ch_shmem device of MPICH.
 
-* Added support (new ADIO device, ad_pvfs) for the PVFS parallel 
+* Added support (new ADIO device, ad_pvfs) for the PVFS parallel
   file system for Linux clusters, developed at Clemson University
   (see http://www.parl.clemson.edu/pvfs ). To use it, you must first install
-  PVFS and then when configuring ROMIO, specify "-file_system=pvfs" in 
+  PVFS and then when configuring ROMIO, specify "-file_system=pvfs" in
   addition to any other options to "configure". (As usual, you can configure
-  for multiple file systems by using "+"; for example, 
-  "-file_system=pvfs+ufs+nfs".)  You will need to specify the path 
-  to the PVFS include files via the "-cflags" option to configure, 
+  for multiple file systems by using "+"; for example,
+  "-file_system=pvfs+ufs+nfs".)  You will need to specify the path
+  to the PVFS include files via the "-cflags" option to configure,
   for example, "configure -cflags=-I/usr/pvfs/include". You
   will also need to specify the full path name of the PVFS library.
-  The best way to do this is via the "-lib" option to MPICH's 
-  configure script (assuming you are using ROMIO from within MPICH). 
+  The best way to do this is via the "-lib" option to MPICH's
+  configure script (assuming you are using ROMIO from within MPICH).
 
 * Uses weak symbols (where available) for building the profiling version,
   i.e., the PMPI routines. As a result, the size of the library is reduced
-  considerably. 
+  considerably.
 
 * The Makefiles use "virtual paths" if supported by the make utility. GNU make
   supports it, for example. This feature allows you to untar the
   distribution in some directory, say a slow NFS directory,
-  and compile the library (the .o files) in another 
+  and compile the library (the .o files) in another
   directory, say on a faster local disk. For example, if the tar file
   has been untarred in an NFS directory called /home/thakur/romio,
   one can compile it in a different directory, say /tmp/thakur, as follows:
@@ -228,8 +228,8 @@ Major Changes Version 1.0.2:
 
 * This version is included in MPICH 1.2.0. If you are using MPICH, you
   need not download ROMIO separately; it gets built as part of MPICH.
-  The previous version of ROMIO is included in LAM, HP MPI, SGI MPI, and 
-  NEC MPI. NEC has also implemented the MPI-IO functions missing 
+  The previous version of ROMIO is included in LAM, HP MPI, SGI MPI, and
+  NEC MPI. NEC has also implemented the MPI-IO functions missing
   in ROMIO, and therefore NEC MPI has a complete implementation
   of MPI-IO.
 
@@ -242,10 +242,10 @@ Major Changes in Version 1.0.1:
 * Added support for NEC SX-4 and created a new device ad_sfs for
   NEC SFS file system.
 
-* New devices ad_hfs for HP/Convex HFS file system and ad_xfs for 
+* New devices ad_hfs for HP/Convex HFS file system and ad_xfs for
   SGI XFS file system.
 
-* Users no longer need to prefix the filename with the type of 
+* Users no longer need to prefix the filename with the type of
   file system; ROMIO determines the file-system type on its own.
 
 * Added support for 64-bit file sizes on IBM PIOFS, SGI XFS,
@@ -254,27 +254,27 @@ Major Changes in Version 1.0.1:
 * MPI_Offset is an 8-byte integer on machines that support 8-byte integers.
   It is of type "long long" in C and "integer*8" in Fortran.
   With a Fortran 90 compiler, you can use either integer*8 or
-  integer(kind=MPI_OFFSET_KIND). 
-  If you printf an MPI_Offset in C, remember to use %lld 
-  or %ld as required by your compiler. (See what is used in the test 
+  integer(kind=MPI_OFFSET_KIND).
+  If you printf an MPI_Offset in C, remember to use %lld
+  or %ld as required by your compiler. (See what is used in the test
   program romio/test/misc.c.)
 
-* On some machines, ROMIO detects at configure time that "long long" is 
+* On some machines, ROMIO detects at configure time that "long long" is
   either not supported by the C compiler or it doesn't work properly.
   In such cases, configure sets MPI_Offset to long in C and integer in
   Fortran. This happens on Intel Paragon, Sun4, and FreeBSD.
 
-* Added support for passing hints to the implementation via the MPI_Info 
+* Added support for passing hints to the implementation via the MPI_Info
   parameter. ROMIO understands the following hints (keys in MPI_Info object):
 
-  /* on all file systems */ 
+  /* on all file systems */
      cb_buffer_size - buffer size for collective I/O
      cb_nodes - no. of processes that actually perform I/O in collective I/O
      ind_rd_buffer_size - buffer size for data sieving in independent reads
 
   /* on all file systems except IBM PIOFS */
      ind_wr_buffer_size - buffer size for data sieving in independent writes
-      /* ind_wr_buffer_size is ignored on PIOFS because data sieving 
+      /* ind_wr_buffer_size is ignored on PIOFS because data sieving
          cannot be done for writes since PIOFS doesn't support file locking */
 
   /* on Intel PFS and IBM PIOFS only. These hints are understood only if
@@ -285,16 +285,16 @@ Major Changes in Version 1.0.1:
                       striping (between 0 and (striping_factor-1))
 
   /* on Intel PFS only. */
-     pfs_svr_buf - turn on or off PFS server buffering by setting the value 
+     pfs_svr_buf - turn on or off PFS server buffering by setting the value
                to "true" or "false", case-sensitive.
-      
+
   If ROMIO doesn't understand a hint, or if the value is invalid, the hint
-  will be ignored. The values of hints being used by ROMIO at any time 
+  will be ignored. The values of hints being used by ROMIO at any time
   can be obtained via MPI_File_get_info.
 
 
 
-General Information 
+General Information
 -------------------
 
 ROMIO is a high-performance, portable implementation of MPI-IO (the
@@ -311,7 +311,7 @@ accessing arrays stored in files. The functions MPI_File_f2c and
 MPI_File_c2f (Sec. 4.12.4) are also implemented.
 
 C, Fortran, and profiling interfaces are provided for all functions
-that have been implemented. 
+that have been implemented.
 
 Please read the limitations of this version of ROMIO that are listed
 below (e.g., MPIO_Request object, restriction to homogeneous
@@ -326,7 +326,7 @@ SFS, PVFS, NFS, and any Unix file system (UFS).
 
 This version of ROMIO is included in MPICH 1.2.3; an earlier version
 is included in at least the following MPI implementations: LAM, HP
-MPI, SGI MPI, and NEC MPI.  
+MPI, SGI MPI, and NEC MPI.
 
 Note that proper I/O error codes and classes are returned and the
 status variable is filled only when used with MPICH 1.2.1 or later.
@@ -358,16 +358,16 @@ performance, but it is necessary for correct behavior.
 
 The following are some instructions we received from Ian Wells of HP
 for setting the noac option on NFS. We have not tried them
-ourselves. We are including them here because you may find 
+ourselves. We are including them here because you may find
 them useful. Note that some of the steps may be specific to HP
 systems, and you may need root permission to execute some of the
-commands. 
-   
+commands.
+
    >1. first confirm you are running nfs version 3
    >
    >rpcnfo -p `hostname` | grep nfs
    >
-   >ie 
+   >ie
    >    goedel >rpcinfo -p goedel | grep nfs
    >    100003    2   udp   2049  nfs
    >    100003    3   udp   2049  nfs
@@ -379,11 +379,11 @@ commands.
    >    Here is an example of a correct fstab entry for /epm1:
    >
    >   ie grep epm1 /etc/fstab
-   > 
+   >
    >      ROOOOT 11>grep epm1 /etc/fstab
    >      gershwin:/epm1 /rmt/gershwin/epm1 nfs bg,intr,noac 0 0
    >
-   >   if the noac option is not present, add it 
+   >   if the noac option is not present, add it
    >   and then remount this directory
    >   on each of the machines that will be used to share MPIO files
    >
@@ -394,7 +394,7 @@ commands.
    >
    >3. Confirm that the directory is mounted noac:
    >
-   >ROOOOT >grep gershwin /etc/mnttab 
+   >ROOOOT >grep gershwin /etc/mnttab
    >gershwin:/epm1 /rmt/gershwin/epm1 nfs
    >noac,acregmin=0,acregmax=0,acdirmin=0,acdirmax=0 0 0 899911504
 
@@ -424,8 +424,8 @@ THEN
     make
 
 Some example programs and a Makefile are provided in the romio/test directory.
-Run the examples the way you would run any MPI program. Each program takes 
-the filename as a command-line argument "-fname filename".  
+Run the examples the way you would run any MPI program. Each program takes
+the filename as a command-line argument "-fname filename".
 
 The configure script by default configures ROMIO for the file systems
 most likely to be used on the given machine. If you wish, you can
@@ -440,7 +440,7 @@ For the entire list of options to configure do
     ./configure -h | more
 
 After building a specific version as above, you can install it in a
-particular directory with 
+particular directory with
 
     make install PREFIX=/usr/local/romio    (or whatever directory you like)
 
@@ -448,14 +448,14 @@ or just
 
     make install           (if you used -prefix at configure time)
 
-If you intend to leave ROMIO where you built it, you should NOT install it 
-(install is used only to move the necessary parts of a built ROMIO to 
+If you intend to leave ROMIO where you built it, you should NOT install it
+(install is used only to move the necessary parts of a built ROMIO to
 another location). The installed copy will have the include files,
 libraries, man pages, and a few other odds and ends, but not the whole
 source tree.  It will have a test directory for testing the
 installation and a location-independent Makefile built during
 installation, which users can copy and modify to compile and link
-against the installed copy. 
+against the installed copy.
 
 To rebuild ROMIO with a different set of configure options, do
 
@@ -471,7 +471,7 @@ Testing ROMIO
 
 To test if the installation works, do
 
-     make testing 
+     make testing
 
 in the romio/test directory. This calls a script that runs the test
 programs and compares the results with what they should be. By
@@ -489,15 +489,15 @@ Compiling and Running MPI-IO Programs
 
 If ROMIO is not already included in the MPI implementation, you need
 to include the file mpio.h for C or mpiof.h for Fortran in your MPI-IO
-program.  
+program.
 
 Note that on HP machines running HPUX and on NEC SX-4, you need to
 compile Fortran programs with mpifort, because the f77 compilers on
-these machines don't support 8-byte integers. 
+these machines don't support 8-byte integers.
 
-With MPICH, HP MPI, or NEC MPI, you can compile MPI-IO programs as 
+With MPICH, HP MPI, or NEC MPI, you can compile MPI-IO programs as
    mpicc foo.c
-or 
+or
    mpif77 foo.f
 or
    mpifort foo.f
@@ -505,14 +505,14 @@ or
 As mentioned above, mpifort is preferred over mpif77 on HPUX and NEC
 because the f77 compilers on those machines do not support 8-byte integers.
 
-With SGI MPI, you can compile MPI-IO programs as 
+With SGI MPI, you can compile MPI-IO programs as
    cc foo.c -lmpi
 or
    f77 foo.f -lmpi
 or
    f90 foo.f -lmpi
 
-With LAM, you can compile MPI-IO programs as 
+With LAM, you can compile MPI-IO programs as
    hcc foo.c -lmpi
 or
    hf77 foo.f -lmpi
@@ -530,7 +530,7 @@ an SGI machine, make sure that you use MPICH's mpirun and not SGI's
 mpirun.
 
 The Makefile in the romio/test directory illustrates how to compile
-and link MPI-IO programs. 
+and link MPI-IO programs.
 
 
 
@@ -552,7 +552,7 @@ int MPIO_Test(MPIO_Request *request, int *flag, MPI_Status *status);
 int MPIO_Wait(MPIO_Request *request, MPI_Status *status);
 
 The usual functions MPI_Test, MPI_Wait, MPI_Testany, etc., will not
-work for nonblocking I/O. 
+work for nonblocking I/O.
 
 * This version works only on a homogeneous cluster of machines,
 and only the "native" file data representation is supported.
@@ -582,11 +582,11 @@ message from SGI MPI: ``MPI has run out of internal datatype
 entries. Please set the environment variable MPI_TYPE_MAX for
 additional space.'' If you get this error message, add this line to
 your .cshrc file:
-    setenv MPI_TYPE_MAX 65536 
+    setenv MPI_TYPE_MAX 65536
 Use a larger number if you still get the error message.
 
 * If a Fortran program uses a file handle created using ROMIO's C
-interface, or vice-versa, you must use the functions MPI_File_c2f 
+interface, or vice-versa, you must use the functions MPI_File_c2f
 or MPI_File_f2c. Such a situation occurs,
 for example, if a Fortran program uses an I/O library written in C
 with MPI-IO calls. Similar functions MPIO_Request_f2c and
@@ -595,12 +595,12 @@ MPIO_Request_c2f are also provided.
 * For Fortran programs on the Intel Paragon, you may need
 to provide the complete path to mpif.h in the include statement, e.g.,
         include '/usr/local/mpich/include/mpif.h'
-instead of 
+instead of
         include 'mpif.h'
 This is because the -I option to the Paragon Fortran compiler if77
-doesn't work correctly. It always looks in the default directories first 
+doesn't work correctly. It always looks in the default directories first
 and, therefore, picks up Intel's mpif.h, which is actually the
-mpif.h of an older version of MPICH. 
+mpif.h of an older version of MPICH.
 
 
 

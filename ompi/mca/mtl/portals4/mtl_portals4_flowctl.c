@@ -93,8 +93,8 @@ ompi_mtl_portals4_flowctl_init(void)
     }
     me.ignore_bits = 0;
 
-    me.options = PTL_ME_OP_PUT | 
-        PTL_ME_ACK_DISABLE | 
+    me.options = PTL_ME_OP_PUT |
+        PTL_ME_ACK_DISABLE |
         PTL_ME_EVENT_LINK_DISABLE |
         PTL_ME_EVENT_UNLINK_DISABLE |
         PTL_ME_EVENT_COMM_DISABLE |
@@ -125,8 +125,8 @@ ompi_mtl_portals4_flowctl_init(void)
                             __FILE__, __LINE__, ret);
         goto error;
     }
-    me.options = PTL_ME_OP_PUT | 
-        PTL_ME_ACK_DISABLE | 
+    me.options = PTL_ME_OP_PUT |
+        PTL_ME_ACK_DISABLE |
         PTL_ME_EVENT_LINK_DISABLE |
         PTL_ME_EVENT_UNLINK_DISABLE |
         PTL_ME_EVENT_CT_COMM;
@@ -154,8 +154,8 @@ ompi_mtl_portals4_flowctl_init(void)
                             __FILE__, __LINE__, ret);
         goto error;
     }
-    me.options = PTL_ME_OP_PUT | 
-        PTL_ME_ACK_DISABLE | 
+    me.options = PTL_ME_OP_PUT |
+        PTL_ME_ACK_DISABLE |
         PTL_ME_EVENT_COMM_DISABLE |
         PTL_ME_EVENT_LINK_DISABLE |
         PTL_ME_EVENT_UNLINK_DISABLE |
@@ -184,8 +184,8 @@ ompi_mtl_portals4_flowctl_init(void)
                             __FILE__, __LINE__, ret);
         goto error;
     }
-    me.options = PTL_ME_OP_PUT | 
-        PTL_ME_ACK_DISABLE | 
+    me.options = PTL_ME_OP_PUT |
+        PTL_ME_ACK_DISABLE |
         PTL_ME_EVENT_LINK_DISABLE |
         PTL_ME_EVENT_UNLINK_DISABLE |
         PTL_ME_EVENT_CT_COMM;
@@ -219,15 +219,15 @@ ompi_mtl_portals4_flowctl_init(void)
 int
 ompi_mtl_portals4_flowctl_fini(void)
 {
-    PtlPTFree(ompi_mtl_portals4.ni_h, ompi_mtl_portals4.flowctl_idx); 
-    PtlCTFree(ompi_mtl_portals4.flowctl.trigger_ct_h); 
-    PtlMEUnlink(ompi_mtl_portals4.flowctl.trigger_me_h); 
-    PtlCTFree(ompi_mtl_portals4.flowctl.alert_ct_h); 
-    PtlMEUnlink(ompi_mtl_portals4.flowctl.alert_me_h); 
-    PtlCTFree(ompi_mtl_portals4.flowctl.fanin_ct_h); 
-    PtlMEUnlink(ompi_mtl_portals4.flowctl.fanin_me_h); 
-    PtlCTFree(ompi_mtl_portals4.flowctl.fanout_ct_h); 
-    PtlMEUnlink(ompi_mtl_portals4.flowctl.fanout_me_h); 
+    PtlPTFree(ompi_mtl_portals4.ni_h, ompi_mtl_portals4.flowctl_idx);
+    PtlCTFree(ompi_mtl_portals4.flowctl.trigger_ct_h);
+    PtlMEUnlink(ompi_mtl_portals4.flowctl.trigger_me_h);
+    PtlCTFree(ompi_mtl_portals4.flowctl.alert_ct_h);
+    PtlMEUnlink(ompi_mtl_portals4.flowctl.alert_me_h);
+    PtlCTFree(ompi_mtl_portals4.flowctl.fanin_ct_h);
+    PtlMEUnlink(ompi_mtl_portals4.flowctl.fanin_me_h);
+    PtlCTFree(ompi_mtl_portals4.flowctl.fanout_ct_h);
+    PtlMEUnlink(ompi_mtl_portals4.flowctl.fanout_me_h);
 
     return OMPI_SUCCESS;
 }
@@ -263,7 +263,7 @@ ompi_mtl_portals4_flowctl_add_procs(size_t me,
         ompi_mtl_portals4.flowctl.root =
             *((ptl_process_t*) procs[0]->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_PORTALS4]);
         if (false == ompi_mtl_portals4.flowctl.i_am_root) {
-            ompi_mtl_portals4.flowctl.parent = 
+            ompi_mtl_portals4.flowctl.parent =
                 *((ptl_process_t*) procs[(me - 1) / 2]->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_PORTALS4]);
         }
         ompi_mtl_portals4.flowctl.me =
@@ -276,7 +276,7 @@ ompi_mtl_portals4_flowctl_add_procs(size_t me,
             ompi_mtl_portals4.flowctl.num_children++;
             if (ompi_mtl_portals4.use_logical)
                 ompi_mtl_portals4.flowctl.children[i].rank = tmp;
-            else ompi_mtl_portals4.flowctl.children[i] = 
+            else ompi_mtl_portals4.flowctl.children[i] =
                     *((ptl_process_t*) procs[tmp]->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_PORTALS4]);
         }
     }
@@ -319,9 +319,9 @@ ompi_mtl_portals4_flowctl_trigger(void)
 static int
 seqnum_compare(opal_list_item_t **ap, opal_list_item_t **bp)
 {
-    ompi_mtl_portals4_pending_request_t *a = 
+    ompi_mtl_portals4_pending_request_t *a =
         (ompi_mtl_portals4_pending_request_t*) *ap;
-    ompi_mtl_portals4_pending_request_t *b = 
+    ompi_mtl_portals4_pending_request_t *b =
         (ompi_mtl_portals4_pending_request_t*) *bp;
 
     if (a->ptl_request->opcount > b->ptl_request->opcount) {
@@ -365,7 +365,7 @@ start_recover(void)
     }
 
     /* drain all pending sends */
-    while (ompi_mtl_portals4.flowctl.send_slots != 
+    while (ompi_mtl_portals4.flowctl.send_slots !=
            ompi_mtl_portals4.flowctl.max_send_slots) {
         opal_progress();
     }
@@ -473,7 +473,7 @@ setup_alarm(uint32_t epoch)
             goto cleanup;
         }
     }
-    
+
  cleanup:
     return ret;
 }
@@ -490,7 +490,7 @@ setup_barrier(uint32_t epoch)
         ct.success = ompi_mtl_portals4.flowctl.epoch_counter *
             ompi_mtl_portals4.flowctl.num_procs;
         ct.failure = 0;
-        ret = PtlTriggeredCTSet(ompi_mtl_portals4.flowctl.trigger_ct_h, 
+        ret = PtlTriggeredCTSet(ompi_mtl_portals4.flowctl.trigger_ct_h,
                                 ct,
                                 ompi_mtl_portals4.flowctl.fanin_ct_h,
                                 epoch * (ompi_mtl_portals4.flowctl.num_children + 1));
@@ -591,15 +591,15 @@ flowctl_fanout_callback(ptl_event_t *ev,
     }
 
     gettimeofday(&tv, NULL);
-    if (((tv.tv_sec * 1000000 + tv.tv_usec) - 
-         (ompi_mtl_portals4.flowctl.tv.tv_sec * 1000000 + ompi_mtl_portals4.flowctl.tv.tv_usec)) 
+    if (((tv.tv_sec * 1000000 + tv.tv_usec) -
+         (ompi_mtl_portals4.flowctl.tv.tv_sec * 1000000 + ompi_mtl_portals4.flowctl.tv.tv_usec))
         < 1000000 * ompi_mtl_portals4.flowctl.backoff_count) {
         usleep(++ompi_mtl_portals4.flowctl.backoff_count);
     } else {
         ompi_mtl_portals4.flowctl.backoff_count = 0;
     }
     ompi_mtl_portals4.flowctl.tv = tv;
-         
+
     ompi_mtl_portals4_pending_list_progress();
 
     OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_framework.framework_output,

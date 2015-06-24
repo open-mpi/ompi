@@ -67,7 +67,7 @@ do {                                                \
       pml_state = (ompi_crcp_base_pml_state_t*)     \
         opal_free_list_wait (&pml_state_list);      \
   }                                                 \
-} while(0); 
+} while(0);
 
 #define PML_CRCP_STATE_RETURN(pml_state)    \
 do {                                        \
@@ -105,7 +105,7 @@ int mca_pml_crcpw_enable(bool enable)
             return ret;
         }
     }
-    
+
     pml_state->state = OMPI_CRCP_PML_POST;
     pml_state = ompi_crcp.pml_enable(enable, pml_state);
     if( OMPI_SUCCESS != pml_state->error_code) {
@@ -174,7 +174,7 @@ int mca_pml_crcpw_del_comm(ompi_communicator_t* comm)
     if( NULL == pml_state ) {
         return mca_pml_crcpw_module.wrapped_pml_module.pml_del_comm(comm);
     }
-        
+
     pml_state->wrapped_pml_component = &(mca_pml_crcpw_module.wrapped_pml_component);
     pml_state->wrapped_pml_module    = &(mca_pml_crcpw_module.wrapped_pml_module);
 
@@ -368,7 +368,7 @@ int mca_pml_crcpw_probe( int dst, int tag, struct ompi_communicator_t* comm, omp
     return OMPI_SUCCESS;
 }
 
-int mca_pml_crcpw_isend_init( void *buf, size_t count, ompi_datatype_t *datatype, int dst, int tag, 
+int mca_pml_crcpw_isend_init( void *buf, size_t count, ompi_datatype_t *datatype, int dst, int tag,
                               mca_pml_base_send_mode_t mode, struct ompi_communicator_t* comm, struct ompi_request_t **request )
 {
     int ret;

@@ -20,7 +20,7 @@
 
 BEGIN_C_DECLS
 
-/* Make sure -Wformat is happy... */ 
+/* Make sure -Wformat is happy... */
 typedef uint64_t vprotocol_pessimist_clock_t;
 #define PRIpclock PRIx64
 

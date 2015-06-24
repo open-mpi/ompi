@@ -39,7 +39,7 @@ typedef struct opal_common_ugni_modex_t opal_common_ugni_modex_t;
 
 struct opal_common_ugni_device_t {
     opal_object_t    super;
- 
+
     gni_nic_handle_t dev_handle;
 
     /* Minor number of the Gemini NIC */

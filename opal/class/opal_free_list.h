@@ -6,7 +6,7 @@
  * Copyright (c) 2004-2013 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -15,9 +15,9 @@
  * Copyright (c) 2014-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -96,12 +96,12 @@ OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_free_list_t);
 
 struct mca_mpool_base_registration_t;
 struct opal_free_list_item_t
-{ 
-    opal_list_item_t super; 
+{
+    opal_list_item_t super;
     struct mca_mpool_base_registration_t *registration;
     void *ptr;
-}; 
-typedef struct opal_free_list_item_t opal_free_list_item_t; 
+};
+typedef struct opal_free_list_item_t opal_free_list_item_t;
 OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_free_list_item_t);
 
 
@@ -123,7 +123,7 @@ OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_free_list_item_t);
  * @param item_init                (IN)  Optional item initialization function
  * @param ctx                      (IN)  Initialization function context.
  */
- 
+
 OPAL_DECLSPEC int opal_free_list_init (opal_free_list_t *free_list,
                                        size_t frag_size,
                                        size_t frag_alignment,
@@ -174,13 +174,13 @@ OPAL_DECLSPEC int opal_free_list_resize_mt (opal_free_list_t *flist, size_t size
 
 
 /**
- * Attemp to obtain an item from a free list. 
+ * Attemp to obtain an item from a free list.
  *
  * @param fl (IN)        Free list.
  * @param item (OUT)     Allocated item.
  *
- * If the requested item is not available the free list is grown to 
- * accomodate the request - unless the max number of allocations has 
+ * If the requested item is not available the free list is grown to
+ * accomodate the request - unless the max number of allocations has
  * been reached.  If this is the case - a NULL pointer is returned
  * to the caller. This function comes in three flavor: thread safe
  * (opal_free_list_get_mt), single threaded (opal_free_list_get_st),
@@ -233,8 +233,8 @@ static inline opal_free_list_item_t *opal_free_list_get (opal_free_list_t *flist
  * @param fl (IN)        Free list.
  * @param item (OUT)     Allocated item.
  *
- * If the requested item is not available the free list is grown to 
- * accomodate the request - unless the max number of allocations has 
+ * If the requested item is not available the free list is grown to
+ * accomodate the request - unless the max number of allocations has
  * been reached. In this case the caller is blocked until an item
  * is returned to the list.
  */
@@ -306,7 +306,7 @@ static inline opal_free_list_item_t *opal_free_list_wait (opal_free_list_t *fl)
 }
 
 /**
- * Return an item to a free list. 
+ * Return an item to a free list.
  *
  * @param fl (IN)        Free list.
  * @param item (OUT)     Allocated item.
@@ -361,5 +361,5 @@ static inline void opal_free_list_return (opal_free_list_t *flist,
     opal_free_list_return (fl, item)
 
 END_C_DECLS
-#endif 
+#endif
 

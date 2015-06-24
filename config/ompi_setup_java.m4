@@ -11,21 +11,21 @@ dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2006 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2006-2012 Los Alamos National Security, LLC.  All rights
-dnl                         reserved. 
+dnl                         reserved.
 dnl Copyright (c) 2007-2012 Oracle and/or its affiliates.  All rights reserved.
 dnl Copyright (c) 2008-2012 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2015      Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
 dnl $COPYRIGHT$
-dnl 
+dnl
 dnl Additional copyrights may follow
-dnl 
+dnl
 dnl $HEADER$
 dnl
 
 # This macro is necessary to get the title to be displayed first.  :-)
 AC_DEFUN([OMPI_SETUP_JAVA_BINDINGS_BANNER],[
-    opal_show_subtitle "Java MPI bindings" 
+    opal_show_subtitle "Java MPI bindings"
 ])
 
 # OMPI_SETUP_JAVA_BINDINGS()

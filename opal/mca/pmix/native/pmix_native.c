@@ -745,7 +745,7 @@ static int native_get(const opal_process_name_t *id,
     opal_list_t vals;
     opal_value_t *kp;
     bool found;
-    
+
     opal_output_verbose(2, opal_pmix_base_framework.framework_output,
                         "%s pmix:native getting value for proc %s key %s",
                         OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),

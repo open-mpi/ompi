@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2013 Los Alamos National Security, LLC. 
+ * Copyright (c) 2006-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
@@ -25,7 +25,7 @@
  * In windows, many of the socket functions return an EWOULDBLOCK
  * instead of things like EAGAIN, EINPROGRESS, etc. It has been
  * verified that this will not conflict with other error codes that
- * are returned by these functions under UNIX/Linux environments 
+ * are returned by these functions under UNIX/Linux environments
  */
 
 #include "orte_config.h"
@@ -113,7 +113,7 @@ int orte_register_listener(struct sockaddr* address, opal_socklen_t addrlen,
         listen_thread_tv.tv_usec = 0;
         initialized = true;
     }
-    
+
     /* create a listen socket for incoming connection attempts */
     sd = socket(PF_UNIX, SOCK_STREAM, 0);
     if (sd < 0) {
@@ -142,25 +142,25 @@ int orte_register_listener(struct sockaddr* address, opal_socklen_t addrlen,
         CLOSE_THE_SOCKET(sd);
         return ORTE_ERROR;
     }
-    
+
     /* setup listen backlog to maximum allowed by kernel */
     if (listen(sd, SOMAXCONN) < 0) {
-        opal_output(0, "orte_listener: listen() failed: %s (%d)", 
+        opal_output(0, "orte_listener: listen() failed: %s (%d)",
                     strerror(opal_socket_errno), opal_socket_errno);
         CLOSE_THE_SOCKET(sd);
         return ORTE_ERROR;
     }
-        
+
     /* set socket up to be non-blocking, otherwise accept could block */
     if ((flags = fcntl(sd, F_GETFL, 0)) < 0) {
-        opal_output(0, "orte_listener: fcntl(F_GETFL) failed: %s (%d)", 
+        opal_output(0, "orte_listener: fcntl(F_GETFL) failed: %s (%d)",
                     strerror(opal_socket_errno), opal_socket_errno);
         CLOSE_THE_SOCKET(sd);
         return ORTE_ERROR;
     }
     flags |= O_NONBLOCK;
     if (fcntl(sd, F_SETFL, flags) < 0) {
-        opal_output(0, "orte_listener: fcntl(F_SETFL) failed: %s (%d)", 
+        opal_output(0, "orte_listener: fcntl(F_SETFL) failed: %s (%d)",
                     strerror(opal_socket_errno), opal_socket_errno);
         CLOSE_THE_SOCKET(sd);
         return ORTE_ERROR;
@@ -212,11 +212,11 @@ int orte_start_listening(void)
 void orte_stop_listening(void)
 {
     int i=0;
-    
+
     if (!listen_thread_active) {
         return;
     }
-    
+
     listen_thread_active = false;
     /* tell the thread to exit */
     write(stop_thread[1], &i, sizeof(int));

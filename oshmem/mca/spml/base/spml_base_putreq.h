@@ -2,9 +2,9 @@
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 /**
@@ -16,12 +16,12 @@
 #include "oshmem_config.h"
 #include "oshmem/mca/spml/spml.h"
 #include "oshmem/mca/spml/base/spml_base_request.h"
-#include "ompi/peruse/peruse-internal.h" 
+#include "ompi/peruse/peruse-internal.h"
 
 BEGIN_C_DECLS
 
 /**
- * Base type for send requests 
+ * Base type for send requests
  */
 struct mca_spml_base_put_request_t {
     mca_spml_base_request_t req_base; /**< base request type - common data structure for use by wait/test */
@@ -64,7 +64,7 @@ OSHMEM_DECLSPEC OBJ_CLASS_DECLARATION( mca_spml_base_put_request_t);
       (request)->req_base.req_oshmem.req_status._cancelled = 0;             \
       (request)->req_bytes_packed = 0;                                    \
                                                                           \
-   }                                                                      
+   }
 
 /**
  * Mark the request as started from the SPML base point of view.

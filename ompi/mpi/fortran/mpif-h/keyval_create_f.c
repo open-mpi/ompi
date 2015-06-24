@@ -5,15 +5,15 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -69,7 +69,7 @@ static const char FUNC_NAME[] = "MPI_keyval_create_f";
 
 void ompi_keyval_create_f(ompi_mpi1_fortran_copy_attr_function* copy_attr_fn,
                          ompi_mpi1_fortran_delete_attr_function* delete_attr_fn,
-                         MPI_Fint *keyval, MPI_Fint *extra_state, 
+                         MPI_Fint *keyval, MPI_Fint *extra_state,
                          MPI_Fint *ierr)
 {
     int ret, c_ierr;

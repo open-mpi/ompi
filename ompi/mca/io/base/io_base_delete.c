@@ -5,15 +5,15 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -49,7 +49,7 @@ typedef struct avail_io_t avail_io_t;
 /*
  * Local functions
  */
-static opal_list_t *check_components(opal_list_t *components, 
+static opal_list_t *check_components(opal_list_t *components,
                                      char *filename, struct ompi_info_t *info,
                                      char **names, int num_names);
 static avail_io_t *check_one_component(const mca_base_component_t *component,
@@ -57,7 +57,7 @@ static avail_io_t *check_one_component(const mca_base_component_t *component,
 
 static avail_io_t *query(const mca_base_component_t *component,
                          char *filename, struct ompi_info_t *info);
-static avail_io_t *query_2_0_0(const mca_io_base_component_2_0_0_t *io_component, 
+static avail_io_t *query_2_0_0(const mca_io_base_component_2_0_0_t *io_component,
                                char *filename, struct ompi_info_t *info);
 
 static void unquery(avail_io_t *avail, char *filename, struct ompi_info_t *info);
@@ -83,9 +83,9 @@ int mca_io_base_delete(char *filename, struct ompi_info_t *info)
     /* Announce */
 
     opal_output_verbose(10, ompi_io_base_framework.framework_output,
-                        "io:base:delete: deleting file: %s", 
+                        "io:base:delete: deleting file: %s",
                         filename);
-  
+
     /* See if a set of component was requested by the MCA parameter.
        Don't check for error. */
 
@@ -98,7 +98,7 @@ int mca_io_base_delete(char *filename, struct ompi_info_t *info)
        and check them all */
 
     err = OMPI_ERROR;
-    opal_output_verbose(10, ompi_io_base_framework.framework_output, 
+    opal_output_verbose(10, ompi_io_base_framework.framework_output,
                         "io:base:delete: Checking all available modules");
     selectable = check_components(&ompi_io_base_framework.framework_components,
                                   filename, info, NULL, 0);
@@ -145,11 +145,11 @@ int mca_io_base_delete(char *filename, struct ompi_info_t *info)
     }
 
     /* Announce the winner */
-  
+
     opal_output_verbose(10, ompi_io_base_framework.framework_output,
-                        "io:base:delete: Selected io component %s", 
+                        "io:base:delete: Selected io component %s",
                         selected.ai_component.v2_0_0.io_version.mca_component_name);
-  
+
     return OMPI_SUCCESS;
 }
 
@@ -177,7 +177,7 @@ static int avail_io_compare (opal_list_item_t **itema,
  * be only those who returned that they want to run, and put them in
  * priority order.
  */
-static opal_list_t *check_components(opal_list_t *components, 
+static opal_list_t *check_components(opal_list_t *components,
                                      char *filename, struct ompi_info_t *info,
                                      char **names, int num_names)
 {
@@ -227,9 +227,9 @@ static opal_list_t *check_components(opal_list_t *components,
             }
         }
     }
-    
+
     /* If we didn't find any available components, return an error */
-    
+
     if (0 == opal_list_get_size(selectable)) {
         OBJ_RELEASE(selectable);
         return NULL;
@@ -253,20 +253,20 @@ static avail_io_t *check_one_component(const mca_base_component_t *component,
 
     avail = query(component, filename, info);
     if (NULL != avail) {
-        avail->ai_priority = (avail->ai_priority < 100) ? 
+        avail->ai_priority = (avail->ai_priority < 100) ?
             avail->ai_priority : 100;
         avail->ai_priority = (avail->ai_priority < 0) ?
             0 : avail->ai_priority;
-        opal_output_verbose(10, ompi_io_base_framework.framework_output, 
-                            "io:base:delete: component available: %s, priority: %d", 
-                            component->mca_component_name, 
+        opal_output_verbose(10, ompi_io_base_framework.framework_output,
+                            "io:base:delete: component available: %s, priority: %d",
+                            component->mca_component_name,
                             avail->ai_priority);
     } else {
-        opal_output_verbose(10, ompi_io_base_framework.framework_output, 
+        opal_output_verbose(10, ompi_io_base_framework.framework_output,
                             "io:base:delete: component not available: %s",
                             component->mca_component_name);
     }
-    
+
     return avail;
 }
 
@@ -279,7 +279,7 @@ static avail_io_t *check_one_component(const mca_base_component_t *component,
  * Take any version of a io module, query it, and return the right
  * module struct
  */
-static avail_io_t *query(const mca_base_component_t *component, 
+static avail_io_t *query(const mca_base_component_t *component,
                          char *filename, struct ompi_info_t *info)
 {
     const mca_io_base_component_2_0_0_t *ioc_200;
@@ -290,7 +290,7 @@ static avail_io_t *query(const mca_base_component_t *component,
         0 == component->mca_minor_version &&
         0 == component->mca_release_version) {
         ioc_200 = (mca_io_base_component_2_0_0_t *) component;
-        
+
         return query_2_0_0(ioc_200, filename, info);
     }
 
@@ -313,7 +313,7 @@ static avail_io_t *query_2_0_0(const mca_io_base_component_2_0_0_t *component,
     avail = NULL;
     private_data = NULL;
     usable = false;
-    ret = component->io_delete_query(filename, info, &private_data, &usable, 
+    ret = component->io_delete_query(filename, info, &private_data, &usable,
                                      &priority);
     if (OMPI_SUCCESS == ret && usable) {
         avail = OBJ_NEW(avail_io_t);

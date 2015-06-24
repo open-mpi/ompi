@@ -5,9 +5,9 @@
  *                         and Technology (RIST). All rights reserved.
  *
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 /**
@@ -268,13 +268,13 @@ static int rmaps_lama_convert_hwloc_tree_to_opal_tree(opal_tree_t *opal_tree, hw
 
     topo_root = hwloc_get_root_obj(*hwloc_topo);
 
-    rmaps_lama_convert_hwloc_subtree(topo_root, 
+    rmaps_lama_convert_hwloc_subtree(topo_root,
                                      opal_tree_get_root(opal_tree));
 
     return ORTE_SUCCESS;
 }
 
-static int rmaps_lama_convert_hwloc_subtree(hwloc_obj_t obj, 
+static int rmaps_lama_convert_hwloc_subtree(hwloc_obj_t obj,
                                             opal_tree_item_t *parent_item)
 {
     rmaps_lama_max_tree_item_t *max_tree_item = NULL;
@@ -290,7 +290,7 @@ static int rmaps_lama_convert_hwloc_subtree(hwloc_obj_t obj,
         /*
          * Convert the HWLOC object to the LAMA key
          */
-        rmaps_lama_convert_hwloc_key_to_lama_key(obj->type, 
+        rmaps_lama_convert_hwloc_key_to_lama_key(obj->type,
                                                  obj->attr->cache.depth,
                                                  &(max_tree_item->type));
 
@@ -300,7 +300,7 @@ static int rmaps_lama_convert_hwloc_subtree(hwloc_obj_t obj,
          * of hwloc can differentiate from the obj->attr->cache.type.
          */
         if( NULL != obj->parent &&
-            obj->parent->type == obj->type && 
+            obj->parent->type == obj->type &&
             obj->parent->attr->cache.depth == obj->attr->cache.depth ) {
             key_child_str  = lama_type_enum_to_str(max_tree_item->type);
             key_parent_str = lama_type_enum_to_str(((rmaps_lama_max_tree_item_t*)parent_item)->type);
@@ -315,7 +315,7 @@ static int rmaps_lama_convert_hwloc_subtree(hwloc_obj_t obj,
              * Add descendants if they exist
              */
             if (obj->first_child) {
-                rmaps_lama_convert_hwloc_subtree(obj->first_child, 
+                rmaps_lama_convert_hwloc_subtree(obj->first_child,
                                                  parent_item);
             }
         } else {
@@ -325,7 +325,7 @@ static int rmaps_lama_convert_hwloc_subtree(hwloc_obj_t obj,
              * Add descendants if they exist
              */
             if (obj->first_child) {
-                rmaps_lama_convert_hwloc_subtree(obj->first_child, 
+                rmaps_lama_convert_hwloc_subtree(obj->first_child,
                                                  &max_tree_item->tree_element);
             }
         }
@@ -762,7 +762,7 @@ static int rmaps_lama_merge_trees(opal_tree_t *src_tree, opal_tree_t *max_tree,
      *
      * Note: Only need to add the children to the 'left-most' branch of the
      * 'max' tree since that is the only branch that is searched during mapping.
-     * But do the whole thing for good measure. 
+     * But do the whole thing for good measure.
      */
     for( child_item  = opal_tree_get_first_child(src_parent),
          max_child_item  = opal_tree_get_first_child(max_parent);
@@ -1039,7 +1039,7 @@ opal_tree_t * rmaps_lama_create_empty_max_tree(void)
     tmp_tree = OBJ_NEW(opal_tree_t);
     opal_tree_init(tmp_tree,
                    &lama_max_tree_comp,
-                   &lama_max_tree_serialize, 
+                   &lama_max_tree_serialize,
                    &lama_max_tree_deserialize,
                    &lama_max_tree_get_key);
 

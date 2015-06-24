@@ -6,7 +6,7 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -14,9 +14,9 @@
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -44,9 +44,9 @@ struct mca_fcoll_request_t;
  * This framework provides the abstraction for the collective file
  * read and write operations of MPI I/O. The interfaces include
  * blocking collective operations using the individual file pointer,
- * blocking collective operations using explicit offsets and 
+ * blocking collective operations using explicit offsets and
  * the split collective operations defined in MPI/O for the same.
- * 
+ *
  * These are the component function prototypes. These function pointers
  * go into the component structure. These functions (query() and finalize()
  * are called during fcoll_base_select(). Each component is query() ied
@@ -69,11 +69,11 @@ struct mca_fcoll_request_t;
  * **************** component struct *******************************
  */
 
-typedef int (*mca_fcoll_base_component_init_query_1_0_0_fn_t) 
-    (bool enable_progress_threads, 
+typedef int (*mca_fcoll_base_component_init_query_1_0_0_fn_t)
+    (bool enable_progress_threads,
      bool enable_mpi_threads);
 
-typedef struct mca_fcoll_base_module_1_0_0_t * 
+typedef struct mca_fcoll_base_module_1_0_0_t *
 (*mca_fcoll_base_component_file_query_1_0_0_fn_t) (struct mca_io_ompio_file_t *file,
                                                    int *priority);
 
@@ -88,7 +88,7 @@ typedef int (*mca_fcoll_base_component_file_unquery_1_0_0_fn_t)
 struct mca_fcoll_base_component_2_0_0_t {
     mca_base_component_t fcollm_version;
     mca_base_component_data_t fcollm_data;
-    
+
     mca_fcoll_base_component_init_query_1_0_0_fn_t fcollm_init_query;
     mca_fcoll_base_component_file_query_1_0_0_fn_t fcollm_file_query;
     mca_fcoll_base_component_file_unquery_1_0_0_fn_t fcollm_file_unquery;
@@ -157,7 +157,7 @@ struct mca_fcoll_base_module_1_0_0_t {
      */
     mca_fcoll_base_module_init_1_0_0_fn_t fcoll_module_init;
     mca_fcoll_base_module_finalize_1_0_0_fn_t fcoll_module_finalize;
-    
+
     /* FCOLL function pointers */
     mca_fcoll_base_module_file_read_all_fn_t           fcoll_file_read_all;
     mca_fcoll_base_module_file_iread_all_fn_t          fcoll_file_iread_all;
@@ -165,7 +165,7 @@ struct mca_fcoll_base_module_1_0_0_t {
     mca_fcoll_base_module_file_iwrite_all_fn_t         fcoll_file_iwrite_all;
     mca_fcoll_base_module_progress_fn_t                fcoll_progress;
     mca_fcoll_base_module_request_free_fn_t            fcoll_request_free;
-    
+
 };
 typedef struct mca_fcoll_base_module_1_0_0_t mca_fcoll_base_module_1_0_0_t;
 typedef mca_fcoll_base_module_1_0_0_t mca_fcoll_base_module_t;

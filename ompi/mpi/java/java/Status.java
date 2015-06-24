@@ -5,14 +5,14 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 /*
@@ -72,7 +72,7 @@ protected Status()
  * <p>Java binding of the MPI operation {@code MPI_GET_COUNT}.
  * @param datatype datatype of each item in receive buffer
  * @return number of received entries
- * @throws MPIException 
+ * @throws MPIException
  */
 public int getCount(Datatype datatype) throws MPIException
 {
@@ -94,7 +94,7 @@ private native int getCount(
  * Tests if the communication was cancelled.
  * <p>Java binding of the MPI operation {@code MPI_TEST_CANCELLED}.
  * @return true if the operation was succesfully cancelled, false otherwise
- * @throws MPIException 
+ * @throws MPIException
  */
 public boolean isCancelled() throws MPIException
 {
@@ -117,7 +117,7 @@ private native boolean isCancelled(
  * <p>Java binding of the MPI operation {@code MPI_GET_ELEMENTS}.
  * @param datatype datatype used by receive operation
  * @return number of received basic elements
- * @throws MPIException 
+ * @throws MPIException
  */
 public int getElements(Datatype datatype) throws MPIException
 {

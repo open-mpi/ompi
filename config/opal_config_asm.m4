@@ -5,7 +5,7 @@ dnl                         Corporation.  All rights reserved.
 dnl Copyright (c) 2004-2005 The University of Tennessee and The University
 dnl                         of Tennessee Research Foundation.  All rights
 dnl                         reserved.
-dnl Copyright (c) 2004-2006 High Performance Computing Center Stuttgart, 
+dnl Copyright (c) 2004-2006 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
@@ -14,9 +14,9 @@ dnl Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
 dnl Copyright (c) 2015      Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
 dnl $COPYRIGHT$
-dnl 
+dnl
 dnl Additional copyrights may follow
-dnl 
+dnl
 dnl $HEADER$
 dnl
 
@@ -86,7 +86,7 @@ AC_DEFUN([OPAL_CHECK_SYNC_BUILTIN_CSWAP_INT128], [
 AC_DEFUN([OPAL_CHECK_SYNC_BUILTINS], [
   AC_MSG_CHECKING([for __sync builtin atomics])
 
-  AC_TRY_COMPILE([], [__sync_synchronize()], 
+  AC_TRY_COMPILE([], [__sync_synchronize()],
     [AC_MSG_RESULT([yes])
      $1],
     [AC_MSG_RESULT([no])
@@ -181,7 +181,7 @@ AC_DEFUN([_OPAL_CHECK_ASM_LSYM],[
         echo "configure: trying $sym" >&AC_FD_CC
         OPAL_TRY_ASSEMBLE([foobar$opal_cv_asm_label_suffix
 ${sym}mytestlabel$opal_cv_asm_label_suffix],
-            [# ok, we succeeded at assembling.  see if we can nm, 
+            [# ok, we succeeded at assembling.  see if we can nm,
              # throwing the results in a file
             if $NM conftest.$OBJEXT > conftest.out 2>&AC_FD_CC ; then
                 if test "`$GREP mytestlabel conftest.out`" = "" ; then
@@ -326,7 +326,7 @@ $opal_cv_asm_endproc ${sym}gsym_test_func
                  echo "configure: failed C program was: " >&AC_FD_CC
                  cat conftest.c >&AC_FD_CC
                  asm_result=0
-             fi], 
+             fi],
             [asm_result=0])
         if test "$asm_result" = "1" ; then
             opal_cv_asm_gsym="$sym"
@@ -367,7 +367,7 @@ dnl #################################################################
 dnl
 dnl OPAL_CHECK_ASM_ALIGN_LOG
 dnl
-dnl Sets OPAL_ASM_ALIGN_LOG to 1 if align is specified 
+dnl Sets OPAL_ASM_ALIGN_LOG to 1 if align is specified
 dnl logarithmically, 0 otherwise
 dnl
 dnl #################################################################
@@ -383,7 +383,7 @@ AC_DEFUN([OPAL_CHECK_ASM_ALIGN_LOG],[
         .byte 1
         .align 4
 foo$opal_cv_asm_label_suffix
-        .byte 2], 
+        .byte 2],
         [opal_asm_addr=[`$NM conftest.$OBJEXT | $GREP foo | sed -e 's/.*\([0-9a-fA-F][0-9a-fA-F]\).*foo.*/\1/'`]],
         [opal_asm_addr=""])
     # test for both 16 and 10 (decimal and hex notations)
@@ -412,7 +412,7 @@ dnl #################################################################
 dnl
 dnl OPAL_CHECK_ASM_TYPE
 dnl
-dnl Sets OPAL_ASM_TYPE to the prefix for the function type to 
+dnl Sets OPAL_ASM_TYPE to the prefix for the function type to
 dnl set a symbol's type as function (needed on ELF for shared
 dnl libaries).  If no .type directive is needed, sets OPAL_ASM_TYPE
 dnl to an empty string
@@ -715,8 +715,8 @@ dnl assembly.  Some compilers emit a warning and ignore the inline
 dnl assembly (xlc on OS X) and compile without error.  Therefore,
 dnl the test attempts to run the emited code to check that the
 dnl assembly is actually run.  To run this test, one argument to
-dnl the macro must be an assembly instruction in gcc format to move 
-dnl the value 0 into the register containing the variable ret.  
+dnl the macro must be an assembly instruction in gcc format to move
+dnl the value 0 into the register containing the variable ret.
 dnl For PowerPC, this would be:
 dnl
 dnl   "li %0,0" : "=&r"(ret)
@@ -750,7 +750,7 @@ AC_INCLUDES_DEFAULT],
 int negone = -1;
 __asm__ __volatile__ ($assembly);
 return ret;]])],
-            [asm_result="yes"], [asm_result="no"], 
+            [asm_result="yes"], [asm_result="no"],
             [asm_result="unknown"])
         else
             assembly="test skipped - assuming no"
@@ -880,7 +880,7 @@ AC_DEFUN([OPAL_CONFIG_ASM],[
 	   AC_CHECK_HEADER([libkern/OSAtomic.h],[opal_cv_asm_builtin="BUILTIN_OSX"],
 	    [AC_MSG_ERROR([OSX builtin atomics requested but not found.])])
     else
-       opal_cv_asm_builtin="BUILTIN_NO" 
+       opal_cv_asm_builtin="BUILTIN_NO"
     fi
 
         OPAL_CHECK_ASM_PROC
@@ -982,7 +982,7 @@ AC_DEFUN([OPAL_CONFIG_ASM],[
         sparc*-*)
             # SPARC v9 (and above) are the only ones with 64bit support
             # if compiling 32 bit, see if we are v9 (aka v8plus) or
-            # earlier (casa is v8+/v9). 
+            # earlier (casa is v8+/v9).
             if test "$ac_cv_sizeof_long" = "4" ; then
                 have_v8plus=0
                 OPAL_CHECK_SPARCV8PLUS([have_v8plus=1])

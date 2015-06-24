@@ -130,7 +130,7 @@ int mca_sharedfp_lockedfile_read_ordered (mca_io_ompio_file_t *fh,
             return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
-    ret = sh->comm->c_coll.coll_gather ( &sendBuff, sendcnt, OMPI_OFFSET_DATATYPE, 
+    ret = sh->comm->c_coll.coll_gather ( &sendBuff, sendcnt, OMPI_OFFSET_DATATYPE,
 					 buff, recvcnt, OMPI_OFFSET_DATATYPE, 0,
 					 sh->comm, sh->comm->c_coll.coll_gather_module );
     if ( OMPI_SUCCESS != ret ) {

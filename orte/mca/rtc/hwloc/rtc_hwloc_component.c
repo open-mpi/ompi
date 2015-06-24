@@ -4,9 +4,9 @@
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -29,7 +29,7 @@ static int my_priority;
 orte_rtc_base_component_t mca_rtc_hwloc_component = {
     .base_version = {
         ORTE_RTC_BASE_VERSION_1_0_0,
-        
+
         .mca_component_name = "hwloc",
         MCA_BASE_MAKE_VERSION(component, ORTE_MAJOR_VERSION, ORTE_MINOR_VERSION,
                               ORTE_RELEASE_VERSION),

@@ -2,9 +2,9 @@
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -300,7 +300,7 @@ static int _algorithm_tournament(struct oshmem_group_t *group,
         } else {
             peer_pe = oshmem_proc_pe(group->proc_array[peer_id]);
 
-#if 1 /* It is ugly implementation of compare and swap operation 
+#if 1 /* It is ugly implementation of compare and swap operation
          Usage of this hack does not give performance improvement but
          it is expected that shmem_long_cswap() will make it faster.
        */
@@ -477,7 +477,7 @@ static int _algorithm_recursive_doubling(struct oshmem_group_t *group,
 
             peer_pe = oshmem_proc_pe(group->proc_array[peer_id]);
 
-#if 1 /* It is ugly implementation of compare and swap operation 
+#if 1 /* It is ugly implementation of compare and swap operation
          Usage of this hack does not give performance improvement but
          it is expected that shmem_long_cswap() will make it faster.
        */

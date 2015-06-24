@@ -14,7 +14,7 @@ struct per_collective_configuration_t {
     int algorithm_id;
     int fragmentation_enabled;
 };
-typedef struct per_collective_configuration_t per_collective_configuration_t; 
+typedef struct per_collective_configuration_t per_collective_configuration_t;
 
 void mca_coll_ml_reset_config(per_collective_configuration_t *config);
 int mca_coll_ml_config_file_init(void);

@@ -7,21 +7,21 @@
  *                         reserved.
  *
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 /**
  * @file
  *
  * Compression Framework
- * 
+ *
  * General Description:
  *
  * The OPAL Compress framework has been created to provide an abstract interface
  * to the compression agent library on the host machine. This fromework is useful
- * when distributing files that can be compressed before sending to dimish the 
+ * when distributing files that can be compressed before sending to dimish the
  * load on the network.
  *
  */

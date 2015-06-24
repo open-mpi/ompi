@@ -114,7 +114,7 @@ if (basename($0) eq "mpicc") {
     $comp_flags = $extra_cxxflags;
     $comp_flags_prefix = $extra_cxxflags_prefix;
     $libs = $cxx_lib . " " . $libs;
-} 
+}
 # mpifort is now preferred; mpif77/mpif90 are legacy names
 elsif (basename($0) eq "mpifort" ||
          basename($0) eq "mpif77" || basename($0) eq "mpif90") {

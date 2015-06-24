@@ -5,15 +5,15 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -71,12 +71,12 @@ void ompi_file_iwrite_f(MPI_Fint *fh, char *buf, MPI_Fint *count, MPI_Fint *data
    MPI_File c_fh = MPI_File_f2c(*fh);
    MPI_Datatype c_type = MPI_Type_f2c(*datatype);
    MPI_Request c_request;
-   
+
    c_ierr = MPI_File_iwrite(c_fh, OMPI_F2C_BOTTOM(buf),
                             OMPI_FINT_2_INT(*count),
                             c_type, &c_request);
    if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
-   
+
    if (MPI_SUCCESS == c_ierr) {
       *request = MPI_Request_c2f(c_request);
    }

@@ -1,9 +1,9 @@
 /*
  * Copyright (c) 2009 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -38,7 +38,7 @@ BEGIN_C_DECLS
  *
  * See opal/mca/memory/memory.h for a description of the parameters.
  */
-OPAL_DECLSPEC int opal_memory_base_component_register_empty(void *start, 
+OPAL_DECLSPEC int opal_memory_base_component_register_empty(void *start,
                                                             size_t len,
                                                             uint64_t cookie);
 
@@ -47,7 +47,7 @@ OPAL_DECLSPEC int opal_memory_base_component_register_empty(void *start,
  *
  * See opal/mca/memory/memory.h for a description of the parameters.
  */
-OPAL_DECLSPEC int opal_memory_base_component_deregister_empty(void *start, 
+OPAL_DECLSPEC int opal_memory_base_component_deregister_empty(void *start,
                                                               size_t len,
                                                               uint64_t cookie);
 

@@ -6,7 +6,7 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -14,9 +14,9 @@
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -86,7 +86,7 @@ typedef int (*opal_memory_base_component_process_fn_t)(void);
  * can use the value opal_memory_base_register_empty (an empty
  * implementation of this function).
  */
-typedef int (*opal_memory_base_component_register_fn_t)(void *base, 
+typedef int (*opal_memory_base_component_register_fn_t)(void *base,
                                                         size_t len,
                                                         uint64_t cookie);
 
@@ -106,7 +106,7 @@ typedef int (*opal_memory_base_component_register_fn_t)(void *base,
  * can use the value opal_memory_base_deregister_empty (an empty
  * implementation of this function).
  */
-typedef int (*opal_memory_base_component_deregister_fn_t)(void *base, 
+typedef int (*opal_memory_base_component_deregister_fn_t)(void *base,
                                                           size_t len,
                                                           uint64_t cookie);
 

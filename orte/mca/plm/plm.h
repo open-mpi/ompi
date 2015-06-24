@@ -91,7 +91,7 @@ typedef int (*orte_plm_base_module_terminate_orteds_fn_t)(void);
  * Terminate an array of specific procs
  */
 typedef int (*orte_plm_base_module_terminate_procs_fn_t)(opal_pointer_array_t *procs);
-    
+
     /**
  * Signal any processes launched for the respective jobid by
  * this component.

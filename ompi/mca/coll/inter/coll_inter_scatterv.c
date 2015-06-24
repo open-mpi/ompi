@@ -5,15 +5,15 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2010 University of Houston. All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -80,7 +80,7 @@ mca_coll_inter_scatterv_inter(void *sbuf, int *scounts,
 		incr = incr + extent*counts[i];
 	    }
 	    if ( incr > 0 ) {
-		ptmp = (char*)malloc(incr); 
+		ptmp = (char*)malloc(incr);
 		if (NULL == ptmp) {
 		    return OMPI_ERR_OUT_OF_RESOURCE;
 		}
@@ -103,8 +103,8 @@ mca_coll_inter_scatterv_inter(void *sbuf, int *scounts,
 	    }
 	}
 	/* perform the scatterv locally */
-	err = comm->c_local_comm->c_coll.coll_scatterv(ptmp, counts, displace, 
-						       rdtype, rbuf, rcount, 
+	err = comm->c_local_comm->c_coll.coll_scatterv(ptmp, counts, displace,
+						       rdtype, rbuf, rcount,
 						       rdtype, 0, comm->c_local_comm,
                                                        comm->c_local_comm->c_coll.coll_scatterv_module);
 	if (OMPI_SUCCESS != err) {
@@ -131,7 +131,7 @@ mca_coll_inter_scatterv_inter(void *sbuf, int *scounts,
 
 	ompi_datatype_create_indexed(size,scounts,disps,sdtype,&ndtype);
 	ompi_datatype_commit(&ndtype);
-	
+
 	err = MCA_PML_CALL(send(sbuf, 1, ndtype, 0,
 				MCA_COLL_BASE_TAG_SCATTERV,
 				MCA_PML_BASE_SEND_STANDARD, comm));

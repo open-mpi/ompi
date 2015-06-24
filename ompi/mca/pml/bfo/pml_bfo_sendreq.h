@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2014 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -13,9 +13,9 @@
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -30,7 +30,7 @@
 #include "pml_bfo_hdr.h"
 #include "pml_bfo_rdma.h"
 #include "pml_bfo_rdmafrag.h"
-#include "ompi/mca/bml/bml.h" 
+#include "ompi/mca/bml/bml.h"
 
 BEGIN_C_DECLS
 
@@ -55,11 +55,11 @@ struct mca_pml_bfo_send_request_t {
     bool req_throttle_sends;
     size_t req_pipeline_depth;
     size_t req_bytes_delivered;
-    uint32_t req_rdma_cnt; 
+    uint32_t req_rdma_cnt;
     mca_pml_bfo_send_pending_t req_pending;
-    opal_mutex_t req_send_range_lock; 
+    opal_mutex_t req_send_range_lock;
     opal_list_t req_send_ranges;
-    mca_pml_bfo_com_btl_t req_rdma[1]; 
+    mca_pml_bfo_com_btl_t req_rdma[1];
 };
 typedef struct mca_pml_bfo_send_request_t mca_pml_bfo_send_request_t;
 
@@ -176,7 +176,7 @@ static inline void mca_pml_bfo_free_rdma_resources(mca_pml_bfo_send_request_t* s
 
 
 /**
- * Start a send request. 
+ * Start a send request.
  */
 
 #define MCA_PML_BFO_SEND_REQUEST_START(sendreq, rc)       \
@@ -286,12 +286,12 @@ send_request_pml_complete_check(mca_pml_bfo_send_request_t *sendreq)
 }
 
 /**
- *  Schedule additional fragments 
+ *  Schedule additional fragments
  */
 int
 mca_pml_bfo_send_request_schedule_once(mca_pml_bfo_send_request_t*);
 
-static inline int 
+static inline int
 mca_pml_bfo_send_request_schedule_exclusive(mca_pml_bfo_send_request_t* sendreq)
 {
     int rc;
@@ -325,7 +325,7 @@ mca_pml_bfo_send_request_schedule(mca_pml_bfo_send_request_t* sendreq)
 
 #if OPAL_CUDA_SUPPORT
 int mca_pml_bfo_send_request_start_cuda(
-    mca_pml_bfo_send_request_t* sendreq, 
+    mca_pml_bfo_send_request_t* sendreq,
     mca_bml_base_btl_t* bml_btl,
     size_t size);
 #endif /* OPAL_CUDA_SUPPORT */
@@ -398,7 +398,7 @@ mca_pml_bfo_send_request_start_btl( mca_pml_bfo_send_request_t* sendreq,
                 (opal_convertor_need_buffers(&sendreq->req_send.req_base.req_convertor) == false) {
             unsigned char *base;
             opal_convertor_get_current_pointer( &sendreq->req_send.req_base.req_convertor, (void**)&base );
-            
+
             if( 0 != (sendreq->req_rdma_cnt = (uint32_t)mca_pml_bfo_rdma_btls(
                                                                               sendreq->req_endpoint,
                                                                               base,
@@ -428,7 +428,7 @@ mca_pml_bfo_send_request_start_btl( mca_pml_bfo_send_request_t* sendreq,
 
 static inline int
 mca_pml_bfo_send_request_start( mca_pml_bfo_send_request_t* sendreq )
-{   
+{
     mca_pml_bfo_comm_t* comm = sendreq->req_send.req_base.req_comm->c_pml_comm;
     mca_bml_base_endpoint_t* endpoint = (mca_bml_base_endpoint_t*)
                                         sendreq->req_send.req_base.req_proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML];

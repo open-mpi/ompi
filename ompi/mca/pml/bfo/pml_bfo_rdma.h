@@ -19,7 +19,7 @@
 /**
  *  @file
  */
-                                                                                                                           
+
 #ifndef MCA_PML_BFO_RDMA_H
 #define MCA_PML_BFO_RDMA_H
 

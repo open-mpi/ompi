@@ -431,7 +431,7 @@ static int tcp_component_register(void)
                                           OPAL_INFO_LVL_5,
                                           MCA_BASE_VAR_SCOPE_READONLY,
                                           &mca_oob_tcp_component.keepalive_probes);
-    
+
     mca_oob_tcp_component.retry_delay = 0;
     (void)mca_base_component_var_register(component, "retry_delay",
                                           "Time (in sec) to wait before trying to connect to peer again",

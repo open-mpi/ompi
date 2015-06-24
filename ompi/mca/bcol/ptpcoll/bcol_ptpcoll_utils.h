@@ -30,7 +30,7 @@ int pow_k_calc(int k, int number, int *out_number);
 int get_group_index_for_k_nomial(int my_group_index, int comm_source, int radix, int group_size, int *group_array);
 
 /* the same like above, just more information on return */
-int get_group_index_and_distance_for_k_nomial(int my_group_index, int comm_source, int radix, 
+int get_group_index_and_distance_for_k_nomial(int my_group_index, int comm_source, int radix,
         int group_size, int *group_array, int *pow_distance);
 
 int get_group_index_and_distance_for_binomial(int my_group_index, int comm_source,

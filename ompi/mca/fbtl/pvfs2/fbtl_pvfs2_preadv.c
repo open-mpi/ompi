@@ -5,20 +5,20 @@
  * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2014 University of Houston. All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
 /* This code is based on the PVFS2 ADIO module in ROMIO
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -53,8 +53,8 @@ ssize_t  mca_fbtl_pvfs2_preadv (mca_io_ompio_file_t *fh)
 
     for (i=0 ; i<fh->f_num_of_io_entries ; i++) {
 	if (fh->f_num_of_io_entries != i+1) {
-	    if (((OMPI_MPI_OFFSET_TYPE)fh->f_io_array[i].offset + 
-		 (OPAL_PTRDIFF_TYPE)fh->f_io_array[i].length) == 
+	    if (((OMPI_MPI_OFFSET_TYPE)fh->f_io_array[i].offset +
+		 (OPAL_PTRDIFF_TYPE)fh->f_io_array[i].length) ==
 		(OMPI_MPI_OFFSET_TYPE)fh->f_io_array[i+1].offset) {
 		if (!merge) {
 		    merge_offset = (OMPI_MPI_OFFSET_TYPE)
@@ -68,27 +68,27 @@ ssize_t  mca_fbtl_pvfs2_preadv (mca_io_ompio_file_t *fh)
 	}
 	if (merge) {
 	    merge_buf = malloc (merge_length);
-	    
-	    ret = PVFS_Request_contiguous (merge_length, 
-					   PVFS_BYTE, 
+
+	    ret = PVFS_Request_contiguous (merge_length,
+					   PVFS_BYTE,
 					   &mem_req);
 	    if (ret != 0) {
 		perror("PVFS_Request_contiguous() error");
 		return OMPI_ERROR;
 	    }
-	    ret = PVFS_Request_contiguous (merge_length, 
-					   PVFS_BYTE, 
+	    ret = PVFS_Request_contiguous (merge_length,
+					   PVFS_BYTE,
 					   &file_req);
 	    if (ret != 0) {
 		perror("PVFS_Request_contiguous() error");
 		return OMPI_ERROR;
 	    }
-	    ret = PVFS_sys_read (pvfs2_fs->object_ref, 
+	    ret = PVFS_sys_read (pvfs2_fs->object_ref,
 				 file_req,
 				 merge_offset,
-				 merge_buf, 
+				 merge_buf,
 				 mem_req,
-				 &(pvfs2_fs->credentials), 
+				 &(pvfs2_fs->credentials),
 				 &resp_io);
 	    if (ret != 0) {
 		perror("PVFS_sys_write() error");
@@ -99,7 +99,7 @@ ssize_t  mca_fbtl_pvfs2_preadv (mca_io_ompio_file_t *fh)
 	    k = 0;
 	    while (merge >= 0) {
 		memcpy (fh->f_io_array[i-merge].memory_address,
-			merge_buf + k, 
+			merge_buf + k,
 			fh->f_io_array[i-merge].length);
 		k += fh->f_io_array[i-merge].length;
 		merge --;
@@ -113,27 +113,27 @@ ssize_t  mca_fbtl_pvfs2_preadv (mca_io_ompio_file_t *fh)
 	    }
 	}
 	else {
-	    ret = PVFS_Request_contiguous (fh->f_io_array[i].length, 
-					   PVFS_BYTE, 
+	    ret = PVFS_Request_contiguous (fh->f_io_array[i].length,
+					   PVFS_BYTE,
 					   &mem_req);
 	    if (ret != 0) {
 		perror("PVFS_Request_contiguous() error");
 		return OMPI_ERROR;
 	    }
-	    ret = PVFS_Request_contiguous (fh->f_io_array[i].length, 
-					   PVFS_BYTE, 
+	    ret = PVFS_Request_contiguous (fh->f_io_array[i].length,
+					   PVFS_BYTE,
 					   &file_req);
 	    if (ret != 0) {
 		perror("PVFS_Request_contiguous() error");
 		return OMPI_ERROR;
 	    }
-	    ret = PVFS_sys_read (pvfs2_fs->object_ref, 
+	    ret = PVFS_sys_read (pvfs2_fs->object_ref,
 				 file_req,
 				 (OMPI_MPI_OFFSET_TYPE)
 				 fh ->f_io_array[i].offset,
-				 fh->f_io_array[i].memory_address, 
+				 fh->f_io_array[i].memory_address,
 				 mem_req,
-				 &(pvfs2_fs->credentials), 
+				 &(pvfs2_fs->credentials),
 				 &resp_io);
 	    if (ret != 0) {
 		perror("PVFS_sys_write() error");

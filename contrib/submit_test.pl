@@ -6,14 +6,14 @@
 # Copyright (c) 2004-2005 The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
-# Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+# Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # $COPYRIGHT$
-# 
+#
 # Additional copyrights may follow
-# 
+#
 # $HEADER$
 #
 
@@ -42,7 +42,7 @@ sub download {
     my $req = HTTP::Request->new(GET => $uri);
     my $res = $ua->request($req);
     if ($res->is_success()) {
-        open(FILE, ">$file") || 
+        open(FILE, ">$file") ||
             die("ERROR: Could not write to $file");
         print FILE $res->content;
         close(FILE);
@@ -50,7 +50,7 @@ sub download {
         print "Error retrieving URL: $uri\n";
         die $res->message;
     }
-    
+
     # Find the fields and prompts in the config files
 
     my @prompts;
@@ -83,7 +83,7 @@ sub download {
     while (<CONFIG>) {
         my $line = $_;
         chomp($line);
-        if (length($line) > 0 && 
+        if (length($line) > 0 &&
             ! ($line =~ /^[ \t]+$/) &&
             ! ($line =~ /^[ \t]*#/)) {
             my @vals = split(/:/, $line);
@@ -142,7 +142,7 @@ sub do_menu {
                     printf("%d. %s\n", $j + 1, $keys[$j]);
                 }
                 print "\n$$prompts[$i] (1-" . ($#keys + 1) . "): ";
-                
+
                 my $input = <STDIN>;
                 print "\n";
                 chomp($input);
@@ -150,7 +150,7 @@ sub do_menu {
                     print "Please enter a valid selection\n";
                     next;
                 }
-            
+
                 push(@config, $keys[$input - 1]);
                 $level = $level->{$keys[$input - 1]};
             }
@@ -189,7 +189,7 @@ sub do_question {
 
 sub do_yn {
     my ($q, $default) = @_;
-    my $input = do_question($q, $default, 
+    my $input = do_question($q, $default,
                 sub { my ($line) = @_; lc($line) eq "y" || lc($line) eq "n"; });
     lc($input);
 }
@@ -198,7 +198,7 @@ sub do_yn {
 
 sub do_int {
     my ($q, $default) = @_;
-    do_question($q, $default, 
+    do_question($q, $default,
                 sub { my ($line) = @_; $line >= 0; });
 }
 

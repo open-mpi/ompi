@@ -7,9 +7,9 @@
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -63,7 +63,7 @@ int opal_crs_none_checkpoint(pid_t pid,
                              opal_crs_state_type_t *state)
 {
     *state = OPAL_CRS_CONTINUE;
-    
+
     snapshot->component_name  = strdup("none");
     snapshot->cold_start      = false;
 
@@ -158,7 +158,7 @@ int opal_crs_none_restart(opal_crs_base_snapshot_t *base_snapshot, bool spawn_ch
     }
 
     fclose(base_snapshot->metadata);
-    
+
     return exit_status;
 }
 

@@ -5,14 +5,14 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -39,13 +39,13 @@ int orte_ess_base_std_prolog(void)
 {
     int ret;
     char *error = NULL;
-    
+
     /* Initialize the ORTE data type support */
     if (ORTE_SUCCESS != (ret = orte_dt_init())) {
         error = "orte_dt_init";
         goto error;
     }
-    
+
     if (!ORTE_PROC_IS_APP) {
         /*
          * Setup the waitpid/sigchld system
@@ -56,9 +56,9 @@ int orte_ess_base_std_prolog(void)
             goto error;
         }
     }
-    
+
     return ORTE_SUCCESS;
-    
+
  error:
     orte_show_help("help-orte-runtime",
                    "orte_init:startup:internal-failure",

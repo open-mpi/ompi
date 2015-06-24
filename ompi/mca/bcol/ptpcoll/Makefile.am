@@ -50,7 +50,7 @@ mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_bcol_ptpcoll_la_SOURCES = $(sources)
 mca_bcol_ptpcoll_la_LDFLAGS = -module -avoid-version
-mca_bcol_ptpcoll_la_LIBADD = 
+mca_bcol_ptpcoll_la_LIBADD =
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_bcol_ptpcoll_la_SOURCES =$(sources)

@@ -39,7 +39,7 @@ struct mca_btl_openib_header_t {
     mca_btl_base_tag_t tag;
     uint8_t cm_seen;
     uint16_t credits;
-#if OPAL_OPENIB_PAD_HDR 
+#if OPAL_OPENIB_PAD_HDR
     uint8_t padding[4];
 #endif
 };
@@ -81,19 +81,19 @@ typedef struct mca_btl_openib_header_coalesced_t {
 
 #if OPAL_OPENIB_PAD_HDR
 /* BTL_OPENIB_FTR_PADDING
- * This macro is used to keep the pointer to openib footers aligned for 
- * systems like SPARC64 that take a big performance hit when addresses 
- * are not aligned (and by default sigbus instead of coercing the type on 
+ * This macro is used to keep the pointer to openib footers aligned for
+ * systems like SPARC64 that take a big performance hit when addresses
+ * are not aligned (and by default sigbus instead of coercing the type on
  * an unaligned address).
  *
- * We assure alignment of a packet's structures when OPAL_OPENIB_PAD_HDR 
+ * We assure alignment of a packet's structures when OPAL_OPENIB_PAD_HDR
  * is set to 1.  When this is the case then several structures are padded
  * to assure alignment and the mca_btl_openib_footer_t structure itself
- * will uses the BTL_OPENIB_FTR_PADDING macro to shift the location of the 
+ * will uses the BTL_OPENIB_FTR_PADDING macro to shift the location of the
  * pointer to assure proper alignment after the PML Header and data.
- * For example sending a 1 byte data packet the memory layout without 
+ * For example sending a 1 byte data packet the memory layout without
  * footer alignment would look something like the following:
- * 
+ *
  * 0x00   : mca_btl_openib_coalesced_header_t (12 bytes + 4 byte pad)
  * 0x10   : mca_btl_openib_control_header_t (1 byte + 7 byte pad)
  * 0x18   : mca_btl_openib_header_t (4 bytes + 4 byte pad)
@@ -102,9 +102,9 @@ typedef struct mca_btl_openib_header_coalesced_t {
  * 0x31   : end of packet
  *
  * By applying the BTL_OPENIB_FTR_PADDING() in the progress_one_device
- * and post_send routines we adjust the pointer to mca_btl_openib_footer_t 
- * from 0x29 to 0x2C thus correctly aligning the start of the 
- * footer pointer.  This adjustment will cause the padding field of  
+ * and post_send routines we adjust the pointer to mca_btl_openib_footer_t
+ * from 0x29 to 0x2C thus correctly aligning the start of the
+ * footer pointer.  This adjustment will cause the padding field of
  * mca_btl_openib_footer_t to overlap with the neighboring memory but since
  * we never use the padding we do not end up inadvertently overwriting
  * memory that does not belong to the fragment.
@@ -113,15 +113,15 @@ typedef struct mca_btl_openib_header_coalesced_t {
     OPAL_ALIGN_PAD_AMOUNT(size, sizeof(uint64_t))
 
 /* BTL_OPENIB_ALIGN_COALESCE_HDR
- * This macro is used in btl_openib.c, while creating a coalesce fragment, 
+ * This macro is used in btl_openib.c, while creating a coalesce fragment,
  * to align the coalesce headers.
  */
 #define BTL_OPENIB_ALIGN_COALESCE_HDR(ptr) \
   OPAL_ALIGN_PTR(ptr, sizeof(uint32_t), unsigned char*)
 
 /* BTL_OPENIB_COALESCE_HDR_PADDING
- * This macro is used in btl_openib_component.c, while parsing an incoming 
- * coalesce fragment, to determine the padding amount used to align the 
+ * This macro is used in btl_openib_component.c, while parsing an incoming
+ * coalesce fragment, to determine the padding amount used to align the
  * mca_btl_openib_coalesce_hdr_t.
  */
 #define BTL_OPENIB_COALESCE_HDR_PADDING(ptr) \
@@ -143,12 +143,12 @@ struct mca_btl_openib_footer_t {
 #if OPAL_OPENIB_PAD_HDR
 #if OPAL_ENABLE_DEBUG
     /* this footer needs to be of a 8-byte multiple so by adding the
-     * seq field you throw this off and you cannot just remove the 
+     * seq field you throw this off and you cannot just remove the
      * padding because the padding is needed in order to adjust the alignment
      * and not overwrite other packets.
      */
     uint8_t padding[12];
-#else 
+#else
     uint8_t padding[8];
 #endif
 #endif

@@ -34,7 +34,7 @@ with the OB1 PML and uses flags that it sends in the BML layer.
 
 OTHER CONSIDERATIONS
 CUDA IPC is not necessarily supported by all GPUs on a node.  In NUMA
-nodes, CUDA IPC may only work between GPUs that are not connected 
+nodes, CUDA IPC may only work between GPUs that are not connected
 over the IOH.  In addition, we want to check for CUDA IPC support lazily,
 when the first GPU access occurs, rather than during MPI_Init() time.
 This complicates the design.

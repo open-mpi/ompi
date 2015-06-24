@@ -46,13 +46,13 @@ int mca_coll_ml_pack_reorder_contiguous_data(mca_coll_ml_collective_operation_pr
 
     /* figure out how much data per-proc to copy */
     bytes_per_proc=coll_op->fragment_data.per_rank_fragment_size;
-    
+
     /* loop over all the ranks in the communicator */
     for( i=0 ; i < ompi_comm_size(ml_module->comm) ; i++ ) {
 
         /* look up the rank of the i'th element in the sorted list */
         rank = topo_info->sort_list[i];
-    
+
         /* get the pointer to user data */
         user_buf=coll_op->full_message.src_user_addr;
         /* compute offset into the user buffer */
@@ -98,13 +98,13 @@ int mca_coll_ml_pack_reorder_noncontiguous_data(mca_coll_ml_collective_operation
 
     /* figure out how much data per-proc to copy */
     bytes_per_proc = coll_op->fragment_data.per_rank_fragment_size;
-    
+
     /* loop over all the ranks in the communicator */
     for(i = 0; i < ompi_comm_size(ml_module->comm); i++ ) {
 
         /* look up the rank of the i'th element in the sorted list */
         rank = topo_info->sort_list[i];
-    
+
         /* get the pointer to user data */
         user_buf=coll_op->full_message.src_user_addr;
         /* compute offset into the user buffer */

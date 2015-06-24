@@ -26,7 +26,7 @@ BEGIN_C_DECLS
 /* ******************************************************************** */
 
 /**
- * Corresponding to the types that we can reduce over. 
+ * Corresponding to the types that we can reduce over.
  */
 enum {
     OSHMEM_OP_TYPE_SHORT,       /** C integer: short */
@@ -36,11 +36,11 @@ enum {
     OSHMEM_OP_TYPE_INT16_T,     /** C integer: int16_t */
     OSHMEM_OP_TYPE_INT32_T,     /** C integer: int32_t */
     OSHMEM_OP_TYPE_INT64_T,     /** C integer: int64_t */
-    
+
     OSHMEM_OP_TYPE_FLOAT,       /** Floating point: float */
     OSHMEM_OP_TYPE_DOUBLE,      /** Floating point: double */
     OSHMEM_OP_TYPE_LDOUBLE,     /** Floating point: long double */
-    
+
     OSHMEM_OP_TYPE_FCOMPLEX,    /** Complex: float */
     OSHMEM_OP_TYPE_DCOMPLEX,    /** Complex: double */
 
@@ -58,7 +58,7 @@ enum {
 /**
  * Supported reduce operations.
  */
-enum {  
+enum {
     OSHMEM_OP_AND,      /** AND */
     OSHMEM_OP_OR,       /** OR */
     OSHMEM_OP_XOR,      /** XOR */

@@ -1,13 +1,13 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
 #include "ad_pfs.h"
 
-void ADIOI_PFS_ReadContig(ADIO_File fd, void *buf, int count, 
+void ADIOI_PFS_ReadContig(ADIO_File fd, void *buf, int count,
                      MPI_Datatype datatype, int file_ptr_type,
 		     ADIO_Offset offset, ADIO_Status *status, int *error_code)
 {
@@ -23,16 +23,16 @@ void ADIOI_PFS_ReadContig(ADIO_File fd, void *buf, int count,
 	}
 	err = _cread(fd->fd_sys, buf, len);
         fd->fp_sys_posn = offset + err;
-	/* individual file pointer not updated */        
+	/* individual file pointer not updated */
     }
     else {  /* read from curr. location of ind. file pointer */
         if (fd->fp_sys_posn != fd->fp_ind) {
 	    lseek(fd->fd_sys, fd->fp_ind, SEEK_SET);
 	}
 	err = _cread(fd->fd_sys, buf, len);
-	fd->fp_ind += err; 
+	fd->fp_ind += err;
         fd->fp_sys_posn = fd->fp_ind;
-    }         
+    }
 
 #ifdef HAVE_STATUS_SET_BYTES
     if (err != -1) MPIR_Status_set_bytes(status, datatype, err);

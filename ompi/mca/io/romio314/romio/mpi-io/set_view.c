@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -58,7 +58,7 @@ int MPI_File_set_view(MPI_File fh, MPI_Offset disp, MPI_Datatype etype,
     if ((disp < 0) && (disp != MPI_DISPLACEMENT_CURRENT))
     {
 	error_code = MPIO_Err_create_code(MPI_SUCCESS, MPIR_ERR_RECOVERABLE,
-					  myname, __LINE__, MPI_ERR_ARG, 
+					  myname, __LINE__, MPI_ERR_ARG,
 					  "**iobaddisp", 0);
 	error_code = MPIO_Err_return_file(adio_fh, error_code);
 	goto fn_exit;
@@ -95,7 +95,7 @@ int MPI_File_set_view(MPI_File fh, MPI_Offset disp, MPI_Datatype etype,
 	(disp != MPI_DISPLACEMENT_CURRENT))
     {
 	error_code = MPIO_Err_create_code(MPI_SUCCESS, MPIR_ERR_RECOVERABLE,
-					  myname, __LINE__, MPI_ERR_ARG, 
+					  myname, __LINE__, MPI_ERR_ARG,
 					  "**iodispifseq", 0);
 	error_code = MPIO_Err_return_file(adio_fh, error_code);
 	goto fn_exit;
@@ -105,7 +105,7 @@ int MPI_File_set_view(MPI_File fh, MPI_Offset disp, MPI_Datatype etype,
 	!(adio_fh->access_mode & MPI_MODE_SEQUENTIAL))
     {
 	error_code = MPIO_Err_create_code(MPI_SUCCESS, MPIR_ERR_RECOVERABLE,
-					  myname, __LINE__, MPI_ERR_ARG, 
+					  myname, __LINE__, MPI_ERR_ARG,
 					  "**iodispifseq", 0);
 	error_code = MPIO_Err_return_file(adio_fh, error_code);
 	goto fn_exit;
@@ -135,7 +135,7 @@ int MPI_File_set_view(MPI_File fh, MPI_Offset disp, MPI_Datatype etype,
     {
 	error_code = MPIO_Err_create_code(MPI_SUCCESS, MPIR_ERR_RECOVERABLE,
 					  myname, __LINE__,
-					  MPI_ERR_UNSUPPORTED_DATAREP, 
+					  MPI_ERR_UNSUPPORTED_DATAREP,
 					  "**unsupporteddatarep",0);
 	error_code = MPIO_Err_return_file(adio_fh, error_code);
 	goto fn_exit;
@@ -167,11 +167,11 @@ int MPI_File_set_view(MPI_File fh, MPI_Offset disp, MPI_Datatype etype,
     if (ADIO_Feature(adio_fh, ADIO_SHARED_FP) &&
         (adio_fh->shared_fp_fd != ADIO_FILE_NULL))
     {
-	/* only one process needs to set it to zero, but I don't want to 
-	   create the shared-file-pointer file if shared file pointers have 
-	   not been used so far. Therefore, every process that has already 
-	   opened the shared-file-pointer file sets the shared file pointer 
-	   to zero. If the file was not opened, the value is automatically 
+	/* only one process needs to set it to zero, but I don't want to
+	   create the shared-file-pointer file if shared file pointers have
+	   not been used so far. Therefore, every process that has already
+	   opened the shared-file-pointer file sets the shared file pointer
+	   to zero. If the file was not opened, the value is automatically
 	   zero. Note that shared file pointer is stored as no. of etypes
 	   relative to the current view, whereas indiv. file pointer is
 	   stored in bytes. */

@@ -3,21 +3,21 @@
  *                         All rights reserved.
  * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
  *                         All rights reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
 /**
  * @file
- * 
+ *
  * Hoke CRCP component
  *
  */
@@ -42,78 +42,78 @@ BEGIN_C_DECLS
     ( bool enable, ompi_crcp_base_pml_state_t* pml_state );
 
     ompi_crcp_base_pml_state_t* ompi_crcp_bkmrk_pml_add_comm
-    ( struct ompi_communicator_t* comm, 
+    ( struct ompi_communicator_t* comm,
       ompi_crcp_base_pml_state_t* pml_state );
     ompi_crcp_base_pml_state_t* ompi_crcp_bkmrk_pml_del_comm
-    ( struct ompi_communicator_t* comm, 
+    ( struct ompi_communicator_t* comm,
       ompi_crcp_base_pml_state_t* pml_state );
 
     ompi_crcp_base_pml_state_t* ompi_crcp_bkmrk_pml_add_procs
-    ( struct ompi_proc_t **procs, size_t nprocs, 
+    ( struct ompi_proc_t **procs, size_t nprocs,
       ompi_crcp_base_pml_state_t* pml_state );
     ompi_crcp_base_pml_state_t* ompi_crcp_bkmrk_pml_del_procs
-    ( struct ompi_proc_t **procs, size_t nprocs, 
+    ( struct ompi_proc_t **procs, size_t nprocs,
       ompi_crcp_base_pml_state_t* pml_state );
 
     ompi_crcp_base_pml_state_t* ompi_crcp_bkmrk_pml_progress
     (ompi_crcp_base_pml_state_t* pml_state);
-    
+
     ompi_crcp_base_pml_state_t* ompi_crcp_bkmrk_pml_iprobe
-    (int dst, int tag, struct ompi_communicator_t* comm, 
-     int *matched, ompi_status_public_t* status, 
+    (int dst, int tag, struct ompi_communicator_t* comm,
+     int *matched, ompi_status_public_t* status,
      ompi_crcp_base_pml_state_t* pml_state );
 
     ompi_crcp_base_pml_state_t* ompi_crcp_bkmrk_pml_probe
-    ( int dst, int tag, struct ompi_communicator_t* comm, 
-      ompi_status_public_t* status, 
+    ( int dst, int tag, struct ompi_communicator_t* comm,
+      ompi_status_public_t* status,
       ompi_crcp_base_pml_state_t* pml_state );
-    
+
     ompi_crcp_base_pml_state_t* ompi_crcp_bkmrk_pml_isend_init
-    ( void *buf, size_t count, ompi_datatype_t *datatype, 
-      int dst, int tag, mca_pml_base_send_mode_t mode, 
-      struct ompi_communicator_t* comm, 
-      struct ompi_request_t **request, 
+    ( void *buf, size_t count, ompi_datatype_t *datatype,
+      int dst, int tag, mca_pml_base_send_mode_t mode,
+      struct ompi_communicator_t* comm,
+      struct ompi_request_t **request,
       ompi_crcp_base_pml_state_t* pml_state );
-    
+
     ompi_crcp_base_pml_state_t* ompi_crcp_bkmrk_pml_isend
-    ( void *buf, size_t count, ompi_datatype_t *datatype, 
-      int dst, int tag, mca_pml_base_send_mode_t mode, 
-      struct ompi_communicator_t* comm, 
-      struct ompi_request_t **request, 
+    ( void *buf, size_t count, ompi_datatype_t *datatype,
+      int dst, int tag, mca_pml_base_send_mode_t mode,
+      struct ompi_communicator_t* comm,
+      struct ompi_request_t **request,
       ompi_crcp_base_pml_state_t* pml_state );
-    
+
     ompi_crcp_base_pml_state_t* ompi_crcp_bkmrk_pml_send
-    (  void *buf, size_t count, ompi_datatype_t *datatype, 
-       int dst, int tag, mca_pml_base_send_mode_t mode, 
-       struct ompi_communicator_t* comm, 
+    (  void *buf, size_t count, ompi_datatype_t *datatype,
+       int dst, int tag, mca_pml_base_send_mode_t mode,
+       struct ompi_communicator_t* comm,
        ompi_crcp_base_pml_state_t* pml_state );
-    
+
     ompi_crcp_base_pml_state_t* ompi_crcp_bkmrk_pml_irecv_init
-    ( void *buf, size_t count, ompi_datatype_t *datatype, 
+    ( void *buf, size_t count, ompi_datatype_t *datatype,
       int src, int tag, struct ompi_communicator_t* comm,
-      struct ompi_request_t **request, 
+      struct ompi_request_t **request,
       ompi_crcp_base_pml_state_t* pml_state);
-    
+
     ompi_crcp_base_pml_state_t* ompi_crcp_bkmrk_pml_irecv
-    ( void *buf, size_t count, ompi_datatype_t *datatype, 
-      int src, int tag, struct ompi_communicator_t* comm, 
-      struct ompi_request_t **request, 
+    ( void *buf, size_t count, ompi_datatype_t *datatype,
+      int src, int tag, struct ompi_communicator_t* comm,
+      struct ompi_request_t **request,
       ompi_crcp_base_pml_state_t* pml_state );
-    
+
     ompi_crcp_base_pml_state_t* ompi_crcp_bkmrk_pml_recv
-    (  void *buf, size_t count, ompi_datatype_t *datatype, 
-       int src, int tag, struct ompi_communicator_t* comm,  
-       ompi_status_public_t* status, 
+    (  void *buf, size_t count, ompi_datatype_t *datatype,
+       int src, int tag, struct ompi_communicator_t* comm,
+       ompi_status_public_t* status,
        ompi_crcp_base_pml_state_t* pml_state);
-    
+
     ompi_crcp_base_pml_state_t* ompi_crcp_bkmrk_pml_dump
-    ( struct ompi_communicator_t* comm, int verbose, 
+    ( struct ompi_communicator_t* comm, int verbose,
       ompi_crcp_base_pml_state_t* pml_state );
-    
+
     ompi_crcp_base_pml_state_t* ompi_crcp_bkmrk_pml_start
-    ( size_t count, ompi_request_t** requests, 
+    ( size_t count, ompi_request_t** requests,
       ompi_crcp_base_pml_state_t* pml_state );
-    
+
     ompi_crcp_base_pml_state_t* ompi_crcp_bkmrk_pml_ft_event
     (int state, ompi_crcp_base_pml_state_t* pml_state);
 
@@ -255,7 +255,7 @@ BEGIN_C_DECLS
 
     };
     typedef struct ompi_crcp_bkmrk_pml_drain_message_ref_t ompi_crcp_bkmrk_pml_drain_message_ref_t;
-    
+
     OBJ_CLASS_DECLARATION(ompi_crcp_bkmrk_pml_drain_message_ref_t);
     void ompi_crcp_bkmrk_pml_drain_message_ref_construct(ompi_crcp_bkmrk_pml_drain_message_ref_t *msg_ref);
     void ompi_crcp_bkmrk_pml_drain_message_ref_destruct( ompi_crcp_bkmrk_pml_drain_message_ref_t *msg_ref);
@@ -362,7 +362,7 @@ BEGIN_C_DECLS
         int active_drain;
     };
     typedef struct ompi_crcp_bkmrk_pml_traffic_message_ref_t ompi_crcp_bkmrk_pml_traffic_message_ref_t;
-    
+
     OBJ_CLASS_DECLARATION(ompi_crcp_bkmrk_pml_traffic_message_ref_t);
     void ompi_crcp_bkmrk_pml_traffic_message_ref_construct(ompi_crcp_bkmrk_pml_traffic_message_ref_t *msg_ref);
     void ompi_crcp_bkmrk_pml_traffic_message_ref_destruct( ompi_crcp_bkmrk_pml_traffic_message_ref_t *msg_ref);
@@ -394,7 +394,7 @@ BEGIN_C_DECLS
         /** List of messages drained from this peer */
         opal_list_t drained_list;
 
-        /* 
+        /*
          * These are totals over all communicators provided for convenience.
          *
          * If we are P_n and this structure represent P_m then:
@@ -414,7 +414,7 @@ BEGIN_C_DECLS
         /** Total Number of messages sent */
         uint32_t  total_msgs_sent;
         uint32_t  matched_msgs_sent;
-        
+
         /** Total Number of messages received */
         uint32_t  total_msgs_recvd;
         uint32_t  matched_msgs_recvd;
@@ -426,7 +426,7 @@ BEGIN_C_DECLS
         bool ack_required;
     };
     typedef struct ompi_crcp_bkmrk_pml_peer_ref_t ompi_crcp_bkmrk_pml_peer_ref_t;
-    
+
     OBJ_CLASS_DECLARATION(ompi_crcp_bkmrk_pml_peer_ref_t);
     void ompi_crcp_bkmrk_pml_peer_ref_construct(ompi_crcp_bkmrk_pml_peer_ref_t *bkm_proc);
     void ompi_crcp_bkmrk_pml_peer_ref_destruct( ompi_crcp_bkmrk_pml_peer_ref_t *bkm_proc);

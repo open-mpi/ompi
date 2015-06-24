@@ -6,15 +6,15 @@
  * Copyright (c) 2004-2009 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 /**
@@ -39,7 +39,7 @@
 #include "ompi/class/ompi_free_list.h"
 #include "ompi/mca/btl/btl.h"
 #include "ompi/mca/btl/base/base.h"
-#include "ompi/mca/mpool/mpool.h" 
+#include "ompi/mca/mpool/mpool.h"
 #include "ompi/mca/btl/btl.h"
 #include "opal/class/opal_hash_table.h"
 
@@ -52,7 +52,7 @@ BEGIN_C_DECLS
  */
 
 struct mca_btl_tcp2_component_t {
-    mca_btl_base_component_2_0_0_t super;   /**< base BTL component */ 
+    mca_btl_base_component_2_0_0_t super;   /**< base BTL component */
     uint32_t tcp_addr_count;                /**< total number of addresses */
     uint32_t tcp_num_btls;                  /**< number of hcas available to the TCP component */
     uint32_t tcp_num_links;                 /**< number of logical links per physical device */
@@ -93,7 +93,7 @@ struct mca_btl_tcp2_component_t {
 
     /* Do we want to use TCP_NODELAY? */
     int    tcp_use_nodelay;
-}; 
+};
 typedef struct mca_btl_tcp2_component_t mca_btl_tcp2_component_t;
 
 OMPI_MODULE_DECLSPEC extern mca_btl_tcp2_component_t mca_btl_tcp2_component;
@@ -115,7 +115,7 @@ struct mca_btl_tcp2_module_t {
     size_t tcp_bytes_recv;
     size_t tcp_send_handler;
 #endif
-}; 
+};
 typedef struct mca_btl_tcp2_module_t mca_btl_tcp2_module_t;
 extern mca_btl_tcp2_module_t mca_btl_tcp2_module;
 
@@ -133,13 +133,13 @@ extern int mca_btl_tcp2_component_close(void);
 
 /**
  * TCP component initialization.
- * 
+ *
  * @param num_btl_modules (OUT)           Number of BTLs returned in BTL array.
  * @param allow_multi_user_threads (OUT)  Flag indicating wether BTL supports user threads (TRUE)
  * @param have_hidden_threads (OUT)       Flag indicating wether BTL uses threads (TRUE)
  */
 extern mca_btl_base_module_t** mca_btl_tcp2_component_init(
-    int *num_btl_modules, 
+    int *num_btl_modules,
     bool allow_multi_user_threads,
     bool have_hidden_threads
 );
@@ -148,8 +148,8 @@ extern mca_btl_base_module_t** mca_btl_tcp2_component_init(
  * TCP component control.
  */
 int mca_btl_tcp2_component_control(
-    int param, 
-    void* value, 
+    int param,
+    void* value,
     size_t size
 );
 
@@ -163,7 +163,7 @@ extern int mca_btl_tcp2_component_progress(void);
 
 /**
  * Cleanup any resources held by the BTL.
- * 
+ *
  * @param btl  BTL instance.
  * @return     OMPI_SUCCESS or error status on failure.
  */
@@ -175,14 +175,14 @@ extern int mca_btl_tcp2_finalize(
 
 /**
  * PML->BTL notification of change in the process list.
- * 
+ *
  * @param btl (IN)
  * @param nprocs (IN)     Number of processes
  * @param procs (IN)      Set of processes
  * @param peers (OUT)     Set of (optional) peer addressing info.
  * @param peers (IN/OUT)  Set of processes that are reachable via this BTL.
  * @return     OMPI_SUCCESS or error status on failure.
- * 
+ *
  */
 
 extern int mca_btl_tcp2_add_procs(
@@ -272,7 +272,7 @@ extern mca_btl_base_descriptor_t* mca_btl_tcp2_alloc(
     struct mca_btl_base_endpoint_t* endpoint,
     uint8_t order,
     size_t size,
-    uint32_t flags); 
+    uint32_t flags);
 
 
 /**
@@ -283,9 +283,9 @@ extern mca_btl_base_descriptor_t* mca_btl_tcp2_alloc(
  */
 
 extern int mca_btl_tcp2_free(
-    struct mca_btl_base_module_t* btl, 
-    mca_btl_base_descriptor_t* des); 
-    
+    struct mca_btl_base_module_t* btl,
+    mca_btl_base_descriptor_t* des);
+
 
 /**
  * Prepare a descriptor for send/rdma using the supplied
@@ -298,7 +298,7 @@ extern int mca_btl_tcp2_free(
  * @param endpoint (IN)     BTL peer addressing
  * @param convertor (IN)    Data type convertor
  * @param reserve (IN)      Additional bytes requested by upper layer to precede user data
- * @param size (IN/OUT)     Number of bytes to prepare (IN), number of bytes actually prepared (OUT) 
+ * @param size (IN/OUT)     Number of bytes to prepare (IN), number of bytes actually prepared (OUT)
 */
 
 mca_btl_base_descriptor_t* mca_btl_tcp2_prepare_src(
@@ -312,15 +312,15 @@ mca_btl_base_descriptor_t* mca_btl_tcp2_prepare_src(
     uint32_t flags
 );
 
-extern mca_btl_base_descriptor_t* mca_btl_tcp2_prepare_dst( 
-    struct mca_btl_base_module_t* btl, 
+extern mca_btl_base_descriptor_t* mca_btl_tcp2_prepare_dst(
+    struct mca_btl_base_module_t* btl,
     struct mca_btl_base_endpoint_t* peer,
     struct mca_mpool_base_registration_t*,
     struct opal_convertor_t* convertor,
     uint8_t order,
     size_t reserve,
     size_t* size,
-    uint32_t flags); 
+    uint32_t flags);
 
 
 /**

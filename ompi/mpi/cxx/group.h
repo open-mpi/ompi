@@ -6,15 +6,15 @@
 // Copyright (c) 2004-2005 The University of Tennessee and The University
 //                         of Tennessee Research Foundation.  All rights
 //                         reserved.
-// Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+// Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 //                         University of Stuttgart.  All rights reserved.
 // Copyright (c) 2004-2005 The Regents of the University of California.
 //                         All rights reserved.
 // Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
 // $COPYRIGHT$
-// 
+//
 // Additional copyrights may follow
-// 
+//
 // $HEADER$
 //
 
@@ -44,10 +44,10 @@ public:
   inline bool operator== (const Group &a) {
     return (bool)(pmpi_group == a.pmpi_group);
   }
-  inline bool operator!= (const Group &a) { 
+  inline bool operator!= (const Group &a) {
     return (bool)!(*this == a);
   }
- 
+
   // inter-language operability
   Group& operator= (const MPI_Group &i) { pmpi_group = i; return *this; }
   inline operator MPI_Group () const { return pmpi_group.mpi(); }
@@ -71,7 +71,7 @@ public:
   // comparison
   inline bool operator== (const Group &a) { return (bool)(mpi_group == a.mpi_group); }
   inline bool operator!= (const Group &a) { return (bool)!(*this == a); }
- 
+
   // inter-language operability
   inline Group& operator= (const MPI_Group &i) { mpi_group = i; return *this; }
   inline operator MPI_Group () const { return mpi_group; }
@@ -86,28 +86,28 @@ public:
   //
 
   virtual int Get_size() const;
-  
+
   virtual int Get_rank() const;
-  
-  static void Translate_ranks (const Group& group1, int n, const int ranks1[], 
+
+  static void Translate_ranks (const Group& group1, int n, const int ranks1[],
 			       const Group& group2, int ranks2[]);
-  
+
   static int Compare(const Group& group1, const Group& group2);
-  
+
   static Group Union(const Group &group1, const Group &group2);
-  
+
   static Group Intersect(const Group &group1, const Group &group2);
-  
+
   static Group Difference(const Group &group1, const Group &group2);
-  
+
   virtual Group Incl(int n, const int ranks[]) const;
-  
+
   virtual Group Excl(int n, const int ranks[]) const;
-  
+
   virtual Group Range_incl(int n, const int ranges[][3]) const;
-  
+
   virtual Group Range_excl(int n, const int ranges[][3]) const;
-  
+
   virtual void Free();
 
 protected:

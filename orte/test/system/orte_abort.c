@@ -45,7 +45,7 @@ int main(int argc, char* argv[])
         i++;
         pi = i / 3.14159256;
         if (i > 10000) i = 0;
-        if ((ORTE_PROC_MY_NAME->vpid == 3 || 
+        if ((ORTE_PROC_MY_NAME->vpid == 3 ||
              (orte_process_info.num_procs <= 3 && ORTE_PROC_MY_NAME->vpid == 0))
             && i == 9995) {
             orte_errmgr.abort(rc, NULL);

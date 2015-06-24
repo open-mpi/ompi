@@ -36,7 +36,7 @@
 /*Used for loading file-offsets per aggregator*/
 typedef struct local_io_array{
   OMPI_MPI_OFFSET_TYPE offset;
-  MPI_Aint             length;  
+  MPI_Aint             length;
   int                  process_id;
 }local_io_array;
 
@@ -84,20 +84,20 @@ mca_fcoll_dynamic_file_write_all (mca_io_ompio_file_t *fh,
 
     char *global_buf = NULL;
     MPI_Aint global_count = 0;
-    
-    
+
+
     /* array that contains the sorted indices of the global_iov */
     int *sorted = NULL, *sorted_file_offsets=NULL;
     int *displs = NULL;
     int dynamic_num_io_procs;
-    size_t max_data = 0, datatype_size = 0; 
+    size_t max_data = 0, datatype_size = 0;
     int **blocklen_per_process=NULL;
     MPI_Aint **displs_per_process=NULL, *memory_displacements=NULL;
     ompi_datatype_t **recvtype = NULL;
     MPI_Aint *total_bytes_per_process = NULL;
     MPI_Request *send_req=NULL, *recv_req=NULL;
     int recv_req_count=0;
-    
+
 
 #if TIME_BREAKDOWN
     double write_time = 0.0, start_write_time = 0.0, end_write_time = 0.0;
@@ -133,12 +133,12 @@ mca_fcoll_dynamic_file_write_all (mca_io_ompio_file_t *fh,
     if ( MPI_STATUS_IGNORE != status ) {
 	status->_ucount = max_data;
     }
-	
+
     fh->f_get_num_aggregators ( &dynamic_num_io_procs );
-    ret = fh->f_set_aggregator_props ((struct mca_io_ompio_file_t *) fh, 
+    ret = fh->f_set_aggregator_props ((struct mca_io_ompio_file_t *) fh,
 				      dynamic_num_io_procs,
 				      max_data);
-    
+
     if (OMPI_SUCCESS != ret){
 	goto exit;
     }
@@ -162,7 +162,7 @@ mca_fcoll_dynamic_file_write_all (mca_io_ompio_file_t *fh,
 				 fh->f_procs_in_group,
 				 fh->f_procs_per_group,
 				 fh->f_comm);
-    
+
     if( OMPI_SUCCESS != ret){
 	goto exit;
     }
@@ -174,7 +174,7 @@ mca_fcoll_dynamic_file_write_all (mca_io_ompio_file_t *fh,
         free (total_bytes_per_process);
         total_bytes_per_process = NULL;
     }
-    
+
     /*********************************************************************
      *** Generate the File offsets/lengths corresponding to this write ***
      ********************************************************************/
@@ -186,16 +186,16 @@ mca_fcoll_dynamic_file_write_all (mca_io_ompio_file_t *fh,
 	goto exit;
     }
 
-#if DEBUG_ON    
+#if DEBUG_ON
     for (i=0 ; i<local_count ; i++) {
-   
+
       printf("%d: OFFSET: %d   LENGTH: %ld\n",
 	     fh->f_rank,
 	     local_iov_array[i].iov_base,
 	     local_iov_array[i].iov_len);
 
     }
-#endif   
+#endif
 
     /*************************************************************
      *** ALLGather the File View information at all processes ***
@@ -218,7 +218,7 @@ mca_fcoll_dynamic_file_write_all (mca_io_ompio_file_t *fh,
 				 fh->f_procs_in_group,
 				 fh->f_procs_per_group,
 				 fh->f_comm);
-    
+
     if( OMPI_SUCCESS != ret){
 	goto exit;
     }
@@ -236,7 +236,7 @@ mca_fcoll_dynamic_file_write_all (mca_io_ompio_file_t *fh,
         total_fview_count += fview_count[i];
         displs[i] = displs[i-1] + fview_count[i-1];
     }
-    
+
 #if DEBUG_ON
     printf("total_fview_count : %d\n", total_fview_count);
     if (fh->f_procs_in_group[fh->f_aggregator_index] == fh->f_rank) {
@@ -249,7 +249,7 @@ mca_fcoll_dynamic_file_write_all (mca_io_ompio_file_t *fh,
         }
     }
 #endif
-    
+
     /* allocate the global iovec  */
 
     if (0 != total_fview_count) {
@@ -262,7 +262,7 @@ mca_fcoll_dynamic_file_write_all (mca_io_ompio_file_t *fh,
       }
 
     }
-    
+
     ret = fh->f_allgatherv_array (local_iov_array,
 				  local_count,
 				  fh->f_iov_type,
@@ -298,8 +298,8 @@ mca_fcoll_dynamic_file_write_all (mca_io_ompio_file_t *fh,
 	free(displs);
 	displs=NULL;
     }
-    
-    
+
+
 #if DEBUG_ON
     if (fh->f_procs_in_group[fh->f_aggregator_index] == fh->f_rank) {
       uint32_t tv=0;
@@ -311,7 +311,7 @@ mca_fcoll_dynamic_file_write_all (mca_io_ompio_file_t *fh,
       }
     }
 #endif
-    
+
     if (fh->f_procs_in_group[fh->f_aggregator_index] == fh->f_rank) {
         disp_index = (int *)malloc (fh->f_procs_per_group * sizeof (int));
         if (NULL == disp_index) {
@@ -339,13 +339,13 @@ mca_fcoll_dynamic_file_write_all (mca_io_ompio_file_t *fh,
 	  displs_per_process[i] = NULL;
 	}
     }
-    
+
 
     fh->f_get_bytes_per_agg ( (int *)&bytes_per_cycle );
     cycles = ceil((double)total_bytes/bytes_per_cycle);
 
 
-    n = 0; 
+    n = 0;
     bytes_remaining = 0;
     current_index = 0;
 
@@ -355,15 +355,15 @@ mca_fcoll_dynamic_file_write_all (mca_io_ompio_file_t *fh,
 #if TIME_BREAKDOWN
       start_exch = MPI_Wtime();
 #endif
-    
+
     for (index = 0; index < cycles; index++) {
 
-      /* Getting ready for next cycle 
+      /* Getting ready for next cycle
 	 Initializing and freeing buffers*/
       if (fh->f_procs_in_group[fh->f_aggregator_index] == fh->f_rank) {
-	
+
 	if (NULL == recvtype){
-	  recvtype = (ompi_datatype_t **) 
+	  recvtype = (ompi_datatype_t **)
 	    malloc (fh->f_procs_per_group  * sizeof(ompi_datatype_t *));
 	    if (NULL == recvtype) {
 	      opal_output (1, "OUT OF MEMORY\n");
@@ -371,10 +371,10 @@ mca_fcoll_dynamic_file_write_all (mca_io_ompio_file_t *fh,
 	      goto exit;
 	    }
 	}
-	
+
 	for(l=0;l<fh->f_procs_per_group;l++){
 	  disp_index[l] =  1;
-	 
+
 	  if (NULL != blocklen_per_process[l]){
 	    free(blocklen_per_process[l]);
 	    blocklen_per_process[l] = NULL;
@@ -390,50 +390,50 @@ mca_fcoll_dynamic_file_write_all (mca_io_ompio_file_t *fh,
 	    goto exit;
 	  }
 	  displs_per_process[l] = (MPI_Aint *) calloc (1, sizeof(MPI_Aint));
-	  if (NULL == displs_per_process[l]){      
+	  if (NULL == displs_per_process[l]){
 	      opal_output (1, "OUT OF MEMORY for displs\n");
 	      ret = OMPI_ERR_OUT_OF_RESOURCE;
 	      goto exit;
 	  }
 	}
-	
+
 	if (NULL != sorted_file_offsets){
 	  free(sorted_file_offsets);
 	  sorted_file_offsets = NULL;
 	}
-	
+
 	if(NULL != file_offsets_for_agg){
 	  free(file_offsets_for_agg);
 	  file_offsets_for_agg = NULL;
 	}
-	
+
 	if (NULL != memory_displacements){
 	  free(memory_displacements);
 	  memory_displacements = NULL;
 	}
-	
+
       }
-      
+
       if (cycles-1 == index) {
 	bytes_to_write_in_cycle = total_bytes - bytes_per_cycle*index;
       }
       else {
 	bytes_to_write_in_cycle = bytes_per_cycle;
       }
-      
+
 #if DEBUG_ON
       if (fh->f_procs_in_group[fh->f_aggregator_index] == fh->f_rank) {
 	printf ("****%d: CYCLE %d   Bytes %lld**********\n",
 		fh->f_rank,
-		index, 
+		index,
 		bytes_to_write_in_cycle);
       }
 #endif
       /**********************************************************
        **Gather the Data from all the processes at the writers **
        *********************************************************/
-      
-      /* Calculate how much data will be contributed in this cycle 
+
+      /* Calculate how much data will be contributed in this cycle
 	 by each process*/
       bytes_sent = 0;
 #if DEBUG_ON
@@ -444,7 +444,7 @@ mca_fcoll_dynamic_file_write_all (mca_io_ompio_file_t *fh,
 
 
       while (bytes_to_write_in_cycle) {
-	
+
 	blocks = fview_count[0];
 	for (j=0 ; j<fh->f_procs_per_group ; j++) {
 	  if (sorted[current_index] < blocks) {
@@ -455,18 +455,18 @@ mca_fcoll_dynamic_file_write_all (mca_io_ompio_file_t *fh,
 	    blocks += fview_count[j+1];
 	  }
 	}
-	
+
 	if (bytes_remaining) {
 	  if (bytes_remaining <= bytes_to_write_in_cycle) {
 
-	    if (fh->f_procs_in_group[fh->f_aggregator_index] == 
+	    if (fh->f_procs_in_group[fh->f_aggregator_index] ==
 		fh->f_rank) {
 	      blocklen_per_process[n][disp_index[n] - 1] = bytes_remaining;
-	      displs_per_process[n][disp_index[n] - 1] = 
-		(OPAL_PTRDIFF_TYPE)global_iov_array[sorted[current_index]].iov_base + 
+	      displs_per_process[n][disp_index[n] - 1] =
+		(OPAL_PTRDIFF_TYPE)global_iov_array[sorted[current_index]].iov_base +
 		(global_iov_array[sorted[current_index]].iov_len
 		 - bytes_remaining);
-	      
+
 	    }
 	    if (fh->f_procs_in_group[n] == fh->f_rank) {
 	      bytes_sent += bytes_remaining;
@@ -474,11 +474,11 @@ mca_fcoll_dynamic_file_write_all (mca_io_ompio_file_t *fh,
 	    current_index ++;
 	    bytes_to_write_in_cycle -= bytes_remaining;
 	    bytes_remaining = 0;
-	    if (fh->f_procs_in_group[fh->f_aggregator_index] == 
-		fh->f_rank) {		
+	    if (fh->f_procs_in_group[fh->f_aggregator_index] ==
+		fh->f_rank) {
 	    /* In this cases the length is consumed so allocating for
 	       next displacement and blocklength*/
-     
+
 	      blocklen_per_process[n] = (int *) realloc
 		((void *)blocklen_per_process[n], (disp_index[n]+1)*sizeof(int));
 	      displs_per_process[n] = (MPI_Aint *) realloc
@@ -490,15 +490,15 @@ mca_fcoll_dynamic_file_write_all (mca_io_ompio_file_t *fh,
 	    continue;
 	  }
 	  else {
-	    if (fh->f_procs_in_group[fh->f_aggregator_index] == 
+	    if (fh->f_procs_in_group[fh->f_aggregator_index] ==
 		fh->f_rank) {
 	      blocklen_per_process[n][disp_index[n] - 1] = bytes_to_write_in_cycle;
-	      displs_per_process[n][disp_index[n] - 1] = 
+	      displs_per_process[n][disp_index[n] - 1] =
 		(OPAL_PTRDIFF_TYPE)global_iov_array[sorted[current_index]].iov_base +
                 (global_iov_array[sorted[current_index]].iov_len
                  - bytes_remaining);
 	    }
-	    
+
 	    if (fh->f_procs_in_group[n] == fh->f_rank) {
 	      bytes_sent += bytes_to_write_in_cycle;
 	    }
@@ -508,56 +508,56 @@ mca_fcoll_dynamic_file_write_all (mca_io_ompio_file_t *fh,
 	  }
 	}
 	else {
-	  if (bytes_to_write_in_cycle < 
+	  if (bytes_to_write_in_cycle <
 	      (MPI_Aint) global_iov_array[sorted[current_index]].iov_len) {
-	    if (fh->f_procs_in_group[fh->f_aggregator_index] == 
+	    if (fh->f_procs_in_group[fh->f_aggregator_index] ==
 		fh->f_rank) {
 
 	      blocklen_per_process[n][disp_index[n] - 1] = bytes_to_write_in_cycle;
-	      displs_per_process[n][disp_index[n] - 1] = 
+	      displs_per_process[n][disp_index[n] - 1] =
 		(OPAL_PTRDIFF_TYPE)global_iov_array[sorted[current_index]].iov_base ;
 
 
 	    }
 	    if (fh->f_procs_in_group[n] == fh->f_rank) {
 	      bytes_sent += bytes_to_write_in_cycle;
-	      
+
 	    }
-	    bytes_remaining = global_iov_array[sorted[current_index]].iov_len - 
+	    bytes_remaining = global_iov_array[sorted[current_index]].iov_len -
 	      bytes_to_write_in_cycle;
 	    bytes_to_write_in_cycle = 0;
 	    break;
 	  }
 	  else {
-	    if (fh->f_procs_in_group[fh->f_aggregator_index] == 
+	    if (fh->f_procs_in_group[fh->f_aggregator_index] ==
 		fh->f_rank) {
 	      blocklen_per_process[n][disp_index[n] - 1] =
 		global_iov_array[sorted[current_index]].iov_len;
 	      displs_per_process[n][disp_index[n] - 1] = (OPAL_PTRDIFF_TYPE)
 		global_iov_array[sorted[current_index]].iov_base;
-	      
-	      blocklen_per_process[n] = 
+
+	      blocklen_per_process[n] =
 		(int *) realloc ((void *)blocklen_per_process[n], (disp_index[n]+1)*sizeof(int));
 	      displs_per_process[n] = (MPI_Aint *)realloc
 		((void *)displs_per_process[n], (disp_index[n]+1)*sizeof(MPI_Aint));
 	      blocklen_per_process[n][disp_index[n]] = 0;
 	      displs_per_process[n][disp_index[n]] = 0;
 	      disp_index[n] += 1;
-	      /*realloc for next blocklength 
+	      /*realloc for next blocklength
 		and assign this displacement and check for next displs as
 	      the total length of this entry has been consumed!*/
 	    }
 	    if (fh->f_procs_in_group[n] == fh->f_rank) {
 	      bytes_sent += global_iov_array[sorted[current_index]].iov_len;
 	    }
-	    bytes_to_write_in_cycle -= 
+	    bytes_to_write_in_cycle -=
 	      global_iov_array[sorted[current_index]].iov_len;
 	    current_index ++;
 	    continue;
 	  }
 	}
       }
-      
+
 
       /* Calculate the displacement on where to put the data and allocate
 	 the recieve buffer (global_buf) */
@@ -565,7 +565,7 @@ mca_fcoll_dynamic_file_write_all (mca_io_ompio_file_t *fh,
 	entries_per_aggregator=0;
 	for (i=0;i<fh->f_procs_per_group; i++){
 	  for (j=0;j<disp_index[i];j++){
-	    if (blocklen_per_process[i][j] > 0) 
+	    if (blocklen_per_process[i][j] > 0)
 	      entries_per_aggregator++ ;
 	  }
 	}
@@ -575,7 +575,7 @@ mca_fcoll_dynamic_file_write_all (mca_io_ompio_file_t *fh,
 		 bytes_sent);
 	printf("%d : Entries per aggregator : %d\n",fh->f_rank,entries_per_aggregator);
 #endif
-	
+
 	if (entries_per_aggregator > 0){
 	  file_offsets_for_agg = (local_io_array *)
 	    malloc(entries_per_aggregator*sizeof(local_io_array));
@@ -584,7 +584,7 @@ mca_fcoll_dynamic_file_write_all (mca_io_ompio_file_t *fh,
 	    ret = OMPI_ERR_OUT_OF_RESOURCE;
 	    goto exit;
 	  }
-	  
+
 	  sorted_file_offsets = (int *)
 	    malloc (entries_per_aggregator*sizeof(int));
 	  if (NULL == sorted_file_offsets){
@@ -592,24 +592,24 @@ mca_fcoll_dynamic_file_write_all (mca_io_ompio_file_t *fh,
 	    ret =  OMPI_ERR_OUT_OF_RESOURCE;
 	    goto exit;
 	  }
-	  
+
 	  /*Moving file offsets to an IO array!*/
 	  temp_index = 0;
-	 	  
+
 	  for (i=0;i<fh->f_procs_per_group; i++){
 	    for(j=0;j<disp_index[i];j++){
 	      if (blocklen_per_process[i][j] > 0){
 		file_offsets_for_agg[temp_index].length =
 		  blocklen_per_process[i][j];
 		file_offsets_for_agg[temp_index].process_id = i;
-		file_offsets_for_agg[temp_index].offset = 
+		file_offsets_for_agg[temp_index].offset =
 		  displs_per_process[i][j];
 		temp_index++;
- 
+
 #if DEBUG_ON
-		printf("************Cycle: %d,  Aggregator: %d ***************\n", 
+		printf("************Cycle: %d,  Aggregator: %d ***************\n",
 		       index+1,fh->f_rank);
-		
+
 		printf("%d sends blocklen[%d]: %d, disp[%d]: %ld to %d\n",
 		       fh->f_procs_in_group[i],j,
 		     blocklen_per_process[i][j],j,
@@ -626,28 +626,28 @@ mca_fcoll_dynamic_file_write_all (mca_io_ompio_file_t *fh,
 	/* Sort the displacements for each aggregator*/
 	local_heap_sort (file_offsets_for_agg,
 			 entries_per_aggregator,
-			 sorted_file_offsets); 
-	
-	/*create contiguous memory displacements 
+			 sorted_file_offsets);
+
+	/*create contiguous memory displacements
 	  based on blocklens on the same displs array
-	  and map it to this aggregator's actual 
+	  and map it to this aggregator's actual
 	  file-displacements (this is in the io-array created above)*/
-	memory_displacements = (MPI_Aint *) malloc 
+	memory_displacements = (MPI_Aint *) malloc
 	    (entries_per_aggregator * sizeof(MPI_Aint));
-	
+
 	memory_displacements[sorted_file_offsets[0]] = 0;
 	for (i=1; i<entries_per_aggregator; i++){
-	  memory_displacements[sorted_file_offsets[i]] = 
-	    memory_displacements[sorted_file_offsets[i-1]] + 
+	  memory_displacements[sorted_file_offsets[i]] =
+	    memory_displacements[sorted_file_offsets[i-1]] +
 	    file_offsets_for_agg[sorted_file_offsets[i-1]].length;
 	}
-	
+
 	temp_disp_index = (int *)calloc (1, fh->f_procs_per_group * sizeof (int));
 	if (NULL == temp_disp_index) {
 	  opal_output (1, "OUT OF MEMORY\n");
 	  return OMPI_ERR_OUT_OF_RESOURCE;
 	}
-	
+
 	/*Now update the displacements array  with memory offsets*/
 	global_count = 0;
 	for (i=0;i<entries_per_aggregator;i++){
@@ -662,10 +662,10 @@ mca_fcoll_dynamic_file_write_all (mca_io_ompio_file_t *fh,
 		   temp_pindex, temp_disp_index[temp_pindex],
 		   temp_pindex, disp_index[temp_pindex]);
 	  }
-	  global_count += 
+	  global_count +=
 	    file_offsets_for_agg[sorted_file_offsets[i]].length;
 	}
-	  
+
 	if (NULL != temp_disp_index){
 	  free(temp_disp_index);
 	    temp_disp_index = NULL;
@@ -673,7 +673,7 @@ mca_fcoll_dynamic_file_write_all (mca_io_ompio_file_t *fh,
 
 #if DEBUG_ON
 
-	printf("************Cycle: %d,  Aggregator: %d ***************\n", 
+	printf("************Cycle: %d,  Aggregator: %d ***************\n",
 	       index+1,fh->f_rank);
 	for (i=0;i<fh->f_procs_per_group; i++){
 	  for(j=0;j<disp_index[i];j++){
@@ -683,11 +683,11 @@ mca_fcoll_dynamic_file_write_all (mca_io_ompio_file_t *fh,
 		     blocklen_per_process[i][j],j,
 		     displs_per_process[i][j],
 		     fh->f_rank);
-	      
+
 	    }
 	  }
 	}
-	printf("************Cycle: %d,  Aggregator: %d ***************\n", 
+	printf("************Cycle: %d,  Aggregator: %d ***************\n",
 	       index+1,fh->f_rank);
 	for (i=0; i<entries_per_aggregator;i++){
 	  printf("%d: OFFSET: %lld   LENGTH: %ld, Mem-offset: %ld\n",
@@ -703,7 +703,7 @@ mca_fcoll_dynamic_file_write_all (mca_io_ompio_file_t *fh,
 	  start_comm_time = MPI_Wtime();
 #endif
 
-	
+
 	global_buf  = (char *) malloc (global_count);
 	if (NULL == global_buf){
 	    opal_output(1, "OUT OF MEMORY");
@@ -713,22 +713,22 @@ mca_fcoll_dynamic_file_write_all (mca_io_ompio_file_t *fh,
 
 	recv_req_count = 0;
 	for (i=0;i<fh->f_procs_per_group; i++){
-	    
+
 	  ompi_datatype_create_hindexed(disp_index[i],
 					blocklen_per_process[i],
 					displs_per_process[i],
 					MPI_BYTE,
 					&recvtype[i]);
-	  ompi_datatype_commit(&recvtype[i]); 
-	  
-	  opal_datatype_type_size(&recvtype[i]->super, 
+	  ompi_datatype_commit(&recvtype[i]);
+
+	  opal_datatype_type_size(&recvtype[i]->super,
 				  &datatype_size);
-	  
+
 	  if (datatype_size){
-	    
-	    recv_req = (MPI_Request *)realloc 
+
+	    recv_req = (MPI_Request *)realloc
 			((void *)recv_req, (recv_req_count + 1)*sizeof(MPI_Request));
-	    
+
 	    ret = MCA_PML_CALL(irecv(global_buf,
 				     1,
 				     recvtype[i],
@@ -737,16 +737,16 @@ mca_fcoll_dynamic_file_write_all (mca_io_ompio_file_t *fh,
 				     fh->f_comm,
 				     &recv_req[recv_req_count]));
 	    recv_req_count++;
-	    
+
 	    if (OMPI_SUCCESS != ret){
 	      goto exit;
 	    }
 	  }
 	}
-	
+
       }
-      
-      
+
+
 
       if (fh->f_flags & OMPIO_CONTIGUOUS_MEMORY) {
 	send_buf = &((char*)buf)[total_bytes_written];
@@ -758,25 +758,25 @@ mca_fcoll_dynamic_file_write_all (mca_io_ompio_file_t *fh,
 	OPAL_PTRDIFF_TYPE mem_address;
 	size_t remaining = 0;
 	size_t temp_position = 0;
-	
+
 	send_buf = malloc (bytes_sent);
 	if (NULL == send_buf) {
 	  opal_output (1, "OUT OF MEMORY\n");
 	  return OMPI_ERR_OUT_OF_RESOURCE;
 	}
-	
+
 	remaining = bytes_sent;
-	  
+
 	while (remaining) {
 	  mem_address = (OPAL_PTRDIFF_TYPE)
 	    (decoded_iov[iov_index].iov_base) + current_position;
-	  
-	    if (remaining >= 
+
+	    if (remaining >=
 		(decoded_iov[iov_index].iov_len - current_position)) {
 	      memcpy (send_buf+temp_position,
 		      (IOVBASE_TYPE *)mem_address,
 		      decoded_iov[iov_index].iov_len - current_position);
-	      remaining = remaining - 
+	      remaining = remaining -
 		(decoded_iov[iov_index].iov_len - current_position);
 	      temp_position = temp_position +
 		(decoded_iov[iov_index].iov_len - current_position);
@@ -794,9 +794,9 @@ mca_fcoll_dynamic_file_write_all (mca_io_ompio_file_t *fh,
 	}
 	total_bytes_written += bytes_sent;
 
-	/* Gather the sendbuf from each process in appropritate locations in 
+	/* Gather the sendbuf from each process in appropritate locations in
 	 aggregators*/
-	
+
 	send_req = (MPI_Request *) malloc (sizeof(MPI_Request));
 	if (NULL == send_req){
 	  opal_output (1, "OUT OF MEMORY\n");
@@ -804,7 +804,7 @@ mca_fcoll_dynamic_file_write_all (mca_io_ompio_file_t *fh,
 	  goto exit;
 	}
 
-	
+
 	if (bytes_sent){
 
 	  ret = MCA_PML_CALL(isend(send_buf,
@@ -812,11 +812,11 @@ mca_fcoll_dynamic_file_write_all (mca_io_ompio_file_t *fh,
 				   MPI_BYTE,
 				   fh->f_procs_in_group[fh->f_aggregator_index],
 				   123,
-				   MCA_PML_BASE_SEND_STANDARD, 
+				   MCA_PML_BASE_SEND_STANDARD,
 				   fh->f_comm,
-				   send_req));	
+				   send_req));
 
-	    
+
 	    if ( OMPI_SUCCESS != ret ){
 		goto exit;
 	    }
@@ -825,19 +825,19 @@ mca_fcoll_dynamic_file_write_all (mca_io_ompio_file_t *fh,
 	    if (OMPI_SUCCESS != ret){
 		goto exit;
 	    }
-	} 
-	if (fh->f_procs_in_group[fh->f_aggregator_index] == fh->f_rank) {       
+	}
+	if (fh->f_procs_in_group[fh->f_aggregator_index] == fh->f_rank) {
 	  ret = ompi_request_wait_all (recv_req_count,
 				       recv_req,
 				       MPI_STATUS_IGNORE);
-	  
+
 	  if (OMPI_SUCCESS != ret){
 	    goto exit;
 	  }
 	}
 #if DEBUG_ON
 	if (fh->f_procs_in_group[fh->f_aggregator_index] == fh->f_rank){
-	  printf("************Cycle: %d,  Aggregator: %d ***************\n", 
+	  printf("************Cycle: %d,  Aggregator: %d ***************\n",
 		 index+1,fh->f_rank);
 	  for (i=0 ; i<global_count/4 ; i++)
 	    printf (" RECV %d \n",((int *)global_buf)[i]);
@@ -847,7 +847,7 @@ mca_fcoll_dynamic_file_write_all (mca_io_ompio_file_t *fh,
 
 
 
-    
+
     if (! (fh->f_flags & OMPIO_CONTIGUOUS_MEMORY)) {
 	if (NULL != send_buf) {
 	    free (send_buf);
@@ -864,7 +864,7 @@ mca_fcoll_dynamic_file_write_all (mca_io_ompio_file_t *fh,
     /**********************************************************
      **************** DONE GATHERING OF DATA ******************
      *********************************************************/
-    
+
         /**********************************************************
          ******* Create the io array, and pass it to fbtl *********
          *********************************************************/
@@ -874,46 +874,46 @@ mca_fcoll_dynamic_file_write_all (mca_io_ompio_file_t *fh,
 #if TIME_BREAKDOWN
 	    start_write_time = MPI_Wtime();
 #endif
-	  
-	  fh->f_io_array = (mca_io_ompio_io_array_t *) malloc 
+
+	  fh->f_io_array = (mca_io_ompio_io_array_t *) malloc
 	    (entries_per_aggregator * sizeof (mca_io_ompio_io_array_t));
 	  if (NULL == fh->f_io_array) {
 	    opal_output(1, "OUT OF MEMORY\n");
 	    ret = OMPI_ERR_OUT_OF_RESOURCE;
             goto exit;
 	  }
-	  
+
 	  fh->f_num_of_io_entries = 0;
 	  /*First entry for every aggregator*/
-	  fh->f_io_array[fh->f_num_of_io_entries].offset = 
+	  fh->f_io_array[fh->f_num_of_io_entries].offset =
 	    (IOVBASE_TYPE *)(intptr_t)file_offsets_for_agg[sorted_file_offsets[0]].offset;
-	  fh->f_io_array[fh->f_num_of_io_entries].length = 
+	  fh->f_io_array[fh->f_num_of_io_entries].length =
 	    file_offsets_for_agg[sorted_file_offsets[0]].length;
-	  fh->f_io_array[fh->f_num_of_io_entries].memory_address = 
+	  fh->f_io_array[fh->f_num_of_io_entries].memory_address =
 	    global_buf+memory_displacements[sorted_file_offsets[0]];
 	  fh->f_num_of_io_entries++;
 
 	  for (i=1;i<entries_per_aggregator;i++){
 	    /* If the enrties are contiguous merge them,
 	       else make a new entry */
-	    if (file_offsets_for_agg[sorted_file_offsets[i-1]].offset + 
+	    if (file_offsets_for_agg[sorted_file_offsets[i-1]].offset +
 		file_offsets_for_agg[sorted_file_offsets[i-1]].length ==
 		file_offsets_for_agg[sorted_file_offsets[i]].offset){
 	      fh->f_io_array[fh->f_num_of_io_entries - 1].length +=
-		file_offsets_for_agg[sorted_file_offsets[i]].length;	
+		file_offsets_for_agg[sorted_file_offsets[i]].length;
 	    }
 	    else {
-	      fh->f_io_array[fh->f_num_of_io_entries].offset = 
+	      fh->f_io_array[fh->f_num_of_io_entries].offset =
 		(IOVBASE_TYPE *)(intptr_t)file_offsets_for_agg[sorted_file_offsets[i]].offset;
-	      fh->f_io_array[fh->f_num_of_io_entries].length = 
+	      fh->f_io_array[fh->f_num_of_io_entries].length =
 		file_offsets_for_agg[sorted_file_offsets[i]].length;
-	      fh->f_io_array[fh->f_num_of_io_entries].memory_address = 
+	      fh->f_io_array[fh->f_num_of_io_entries].memory_address =
 		global_buf+memory_displacements[sorted_file_offsets[i]];
 	      fh->f_num_of_io_entries++;
 	    }
-	    
+
 	  }
-	 
+
 #if DEBUG_ON
 	  printf("*************************** %d\n", fh->f_num_of_io_entries);
 	  for (i=0 ; i<fh->f_num_of_io_entries ; i++) {
@@ -922,7 +922,7 @@ mca_fcoll_dynamic_file_write_all (mca_io_ompio_file_t *fh,
 		   (OPAL_PTRDIFF_TYPE)fh->f_io_array[i].offset,
 		   fh->f_io_array[i].length);
 	  }
-	  
+
 #endif
 
 
@@ -936,24 +936,24 @@ mca_fcoll_dynamic_file_write_all (mca_io_ompio_file_t *fh,
 #if TIME_BREAKDOWN
 	  end_write_time = MPI_Wtime();
 	  write_time += end_write_time - start_write_time;
-#endif	  
+#endif
 
 
 	}
-	
-	
+
+
 	if (NULL != send_req){
 	  free(send_req);
 	  send_req = NULL;
 	}
-	
+
         if (fh->f_procs_in_group[fh->f_aggregator_index] == fh->f_rank) {
 	  fh->f_num_of_io_entries = 0;
 	  if (NULL != fh->f_io_array) {
 	    free (fh->f_io_array);
 	    fh->f_io_array = NULL;
 	  }
-	  for (i =0; i< fh->f_procs_per_group; i++) 
+	  for (i =0; i< fh->f_procs_per_group; i++)
 	    ompi_datatype_destroy(recvtype+i);
 	  if (NULL != recvtype){
 	      free(recvtype);
@@ -962,15 +962,15 @@ mca_fcoll_dynamic_file_write_all (mca_io_ompio_file_t *fh,
 	  if (NULL != recv_req){
 	    free(recv_req);
 	    recv_req = NULL;
-	    
+
 	  }
 	  if (NULL != global_buf) {
 	    free (global_buf);
 	    global_buf = NULL;
 	  }
-	  
+
 	}
-	
+
     }
 
 #if TIME_BREAKDOWN
@@ -987,7 +987,7 @@ mca_fcoll_dynamic_file_write_all (mca_io_ompio_file_t *fh,
       if (!fh->f_full_print_queue(WRITE_PRINT_QUEUE)){
 	  fh->f_register_print_entry(WRITE_PRINT_QUEUE,
 				     nentry);
-      } 
+      }
 #endif
 
 
@@ -1033,7 +1033,7 @@ mca_fcoll_dynamic_file_write_all (mca_io_ompio_file_t *fh,
       }
 
     }
-    
+
     if (NULL != sorted) {
         free (sorted);
         sorted = NULL;
@@ -1050,7 +1050,7 @@ mca_fcoll_dynamic_file_write_all (mca_io_ompio_file_t *fh,
         free (decoded_iov);
         decoded_iov = NULL;
     }
-    
+
     if (NULL != send_req){
       free(send_req);
       send_req = NULL;
@@ -1092,15 +1092,15 @@ static int local_heap_sort (local_io_array *io_array,
         while (!done) {
             left = j*2+1;
             right = j*2+2;
-            if ((left <= heap_size) && 
+            if ((left <= heap_size) &&
                 (io_array[temp_arr[left]].offset > io_array[temp_arr[j]].offset)) {
                 largest = left;
             }
             else {
                 largest = j;
             }
-            if ((right <= heap_size) && 
-                (io_array[temp_arr[right]].offset > 
+            if ((right <= heap_size) &&
+                (io_array[temp_arr[right]].offset >
                  io_array[temp_arr[largest]].offset)) {
                 largest = right;
             }
@@ -1119,8 +1119,8 @@ static int local_heap_sort (local_io_array *io_array,
     for (i = num_entries-1; i >=1; --i) {
         temp = temp_arr[0];
         temp_arr[0] = temp_arr[i];
-        temp_arr[i] = temp;            
-        heap_size--;            
+        temp_arr[i] = temp;
+        heap_size--;
         done = 0;
         j = 0;
         largest = j;
@@ -1128,17 +1128,17 @@ static int local_heap_sort (local_io_array *io_array,
         while (!done) {
             left =  j*2+1;
             right = j*2+2;
-            
-            if ((left <= heap_size) && 
-                (io_array[temp_arr[left]].offset > 
+
+            if ((left <= heap_size) &&
+                (io_array[temp_arr[left]].offset >
                  io_array[temp_arr[j]].offset)) {
                 largest = left;
             }
             else {
                 largest = j;
             }
-            if ((right <= heap_size) && 
-                (io_array[temp_arr[right]].offset > 
+            if ((right <= heap_size) &&
+                (io_array[temp_arr[right]].offset >
                  io_array[temp_arr[largest]].offset)) {
                 largest = right;
             }

@@ -6,16 +6,16 @@
  * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2014-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -26,12 +26,12 @@
 #include "ompi/constants.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/bml/bml.h"
-#include "opal/mca/mpool/mpool.h" 
+#include "opal/mca/mpool/mpool.h"
 #include "pml_ob1.h"
 #include "pml_ob1_rdma.h"
 
 /*
- * Check to see if memory is registered or can be registered. Build a 
+ * Check to see if memory is registered or can be registered. Build a
  * set of registrations on the request.
  */
 
@@ -50,7 +50,7 @@ size_t mca_pml_ob1_rdma_btls(
         return 0;
     }
 
-    /* check to see if memory is registered */        
+    /* check to see if memory is registered */
     for (int n = 0; n < num_btls && num_btls_used < mca_pml_ob1.max_rdma_per_request; n++) {
         mca_bml_base_btl_t* bml_btl =
             mca_bml_base_btl_array_get_index(&bml_endpoint->btl_rdma,

@@ -4,9 +4,9 @@
  *                         reserved.
  *
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -20,7 +20,7 @@
 /*
  * Public string for version number
  */
-const char *orte_state_novm_component_version_string = 
+const char *orte_state_novm_component_version_string =
     "ORTE STATE novm MCA component version " ORTE_VERSION;
 
 /*
@@ -37,7 +37,7 @@ static int state_novm_component_query(mca_base_module_t **module, int *priority)
  */
 orte_state_base_component_t mca_state_novm_component =
 {
-    /* Handle the general mca_component_t struct containing 
+    /* Handle the general mca_component_t struct containing
      *  meta information about the component
      */
     .base_version = {
@@ -46,7 +46,7 @@ orte_state_base_component_t mca_state_novm_component =
         .mca_component_name = "novm",
         MCA_BASE_MAKE_VERSION(component, ORTE_MAJOR_VERSION, ORTE_MINOR_VERSION,
                               ORTE_RELEASE_VERSION),
-        
+
         /* Component open and close functions */
         .mca_open_component = state_novm_open,
         .mca_close_component = state_novm_close,
@@ -76,7 +76,7 @@ static int state_novm_register (void)
     return (0 > ret) ? ret : ORTE_SUCCESS;
 }
 
-static int state_novm_open(void) 
+static int state_novm_open(void)
 {
     return ORTE_SUCCESS;
 }
@@ -92,9 +92,9 @@ static int state_novm_component_query(mca_base_module_t **module, int *priority)
         /* set our priority high so we'll be selected if user desires */
         *priority = 1000;
         *module = (mca_base_module_t *)&orte_state_novm_module;
-        return ORTE_SUCCESS;        
+        return ORTE_SUCCESS;
     }
-    
+
     *priority = -1;
     *module = NULL;
     return ORTE_ERROR;

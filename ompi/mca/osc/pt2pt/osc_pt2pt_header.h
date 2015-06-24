@@ -217,7 +217,7 @@ typedef union ompi_osc_pt2pt_header_t ompi_osc_pt2pt_header_t;
     (h).source = htonl((h).source);             \
     (h).num_ops = htonl((h).num_ops);           \
     (h).pad = htonl((h).pad);
- 
+
 #define MCA_OSC_PT2PT_PUT_HDR_NTOH(h)        \
     (h).tag = ntohs((h).tag);                   \
     (h).count = ntohl((h).count);               \

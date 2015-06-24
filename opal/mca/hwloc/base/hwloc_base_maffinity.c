@@ -1,9 +1,9 @@
 /*
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -42,21 +42,21 @@ int opal_hwloc_base_set_process_membind_policy(void)
         policy = HWLOC_MEMBIND_BIND;
         flags = HWLOC_MEMBIND_STRICT;
         break;
-        
+
     case OPAL_HWLOC_BASE_MAP_NONE:
     default:
         policy = HWLOC_MEMBIND_DEFAULT;
         flags = 0;
         break;
     }
-    
+
     cpuset = hwloc_bitmap_alloc();
     if (NULL == cpuset) {
         rc = OPAL_ERR_OUT_OF_RESOURCE;
     } else {
         int e;
         hwloc_get_cpubind(opal_hwloc_topology, cpuset, 0);
-        rc = hwloc_set_membind(opal_hwloc_topology, 
+        rc = hwloc_set_membind(opal_hwloc_topology,
                                cpuset, policy, flags);
         e = errno;
         hwloc_bitmap_free(cpuset);
@@ -69,7 +69,7 @@ int opal_hwloc_base_set_process_membind_policy(void)
             rc = 0;
         }
     }
-    
+
     return (0 == rc) ? OPAL_SUCCESS : OPAL_ERROR;
 }
 
@@ -99,10 +99,10 @@ int opal_hwloc_base_memory_set(opal_hwloc_base_memory_segment_t *segments,
     }
     hwloc_get_cpubind(opal_hwloc_topology, cpuset, 0);
     for (i = 0; i < num_segments; ++i) {
-        if (0 != hwloc_set_area_membind(opal_hwloc_topology, 
+        if (0 != hwloc_set_area_membind(opal_hwloc_topology,
                                         segments[i].mbs_start_addr,
                                         segments[i].mbs_len, cpuset,
-                                        HWLOC_MEMBIND_BIND, 
+                                        HWLOC_MEMBIND_BIND,
                                         HWLOC_MEMBIND_STRICT)) {
             rc = OPAL_ERROR;
             msg = "hwloc_set_area_membind() failure";
@@ -151,10 +151,10 @@ int opal_hwloc_base_membind(opal_hwloc_base_memory_segment_t *segs,
     }
     hwloc_bitmap_set(cpuset, node_id);
     for(i = 0; i < count; i++) {
-        if (0 != hwloc_set_area_membind(opal_hwloc_topology, 
+        if (0 != hwloc_set_area_membind(opal_hwloc_topology,
                                         segs[i].mbs_start_addr,
                                         segs[i].mbs_len, cpuset,
-                                        HWLOC_MEMBIND_BIND, 
+                                        HWLOC_MEMBIND_BIND,
                                         HWLOC_MEMBIND_STRICT)) {
             rc = OPAL_ERROR;
             msg = "hwloc_set_area_membind() failure";

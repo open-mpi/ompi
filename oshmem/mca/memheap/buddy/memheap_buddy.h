@@ -2,9 +2,9 @@
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 /**
@@ -16,7 +16,7 @@
 
 #include "oshmem_config.h"
 #include "oshmem/mca/mca.h"
-#include "opal/class/opal_list.h" 
+#include "opal/class/opal_list.h"
 #include "opal/threads/mutex.h"
 #include "oshmem/mca/memheap/memheap.h"
 #include "oshmem/mca/memheap/base/base.h"
@@ -65,8 +65,8 @@ typedef struct mca_memheap_buddy_module_t mca_memheap_buddy_module_t;
 OSHMEM_DECLSPEC extern mca_memheap_buddy_module_t memheap_buddy;
 
 /*
- * Buddy interface. 
- * Please pay attention to the new differences in the interface. 
+ * Buddy interface.
+ * Please pay attention to the new differences in the interface.
  */
 OSHMEM_DECLSPEC extern int mca_memheap_buddy_module_init(memheap_context_t *);
 OSHMEM_DECLSPEC extern int mca_memheap_buddy_alloc(size_t, void**);
@@ -80,7 +80,7 @@ OSHMEM_DECLSPEC extern int mca_memheap_buddy_private_alloc(size_t, void**);
 OSHMEM_DECLSPEC extern int mca_memheap_buddy_private_free(void*);
 
 /**
- * static/global variables support. Consider making it a separate component 
+ * static/global variables support. Consider making it a separate component
  */
 
 END_C_DECLS

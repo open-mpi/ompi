@@ -15,6 +15,6 @@ subroutine PMPI_Get_processor_name_f08(name,resultlen,ierror)
 
    call ompi_get_processor_name_f(name,resultlen,c_ierror,len(name))
    if (present(ierror)) ierror = c_ierror
-  
+
 
 end subroutine PMPI_Get_processor_name_f08

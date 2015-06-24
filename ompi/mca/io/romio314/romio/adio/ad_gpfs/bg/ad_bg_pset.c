@@ -3,12 +3,12 @@
 /* ---------------------------------------------------------------- */
 /**
  * \file ad_bg_pset.c
- * \brief Definition of functions associated to structs ADIOI_BG_ProcInfo_t and ADIOI_BG_ConfInfo_t 
+ * \brief Definition of functions associated to structs ADIOI_BG_ProcInfo_t and ADIOI_BG_ConfInfo_t
  */
 
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
-/* 
- *   Copyright (C) 1997 University of Chicago. 
+/*
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -112,9 +112,9 @@ static unsigned procManhattanDistance(unsigned *aggCoords, unsigned *bridgeCoord
 }
 
 
-void 
-ADIOI_BG_persInfo_init(ADIOI_BG_ConfInfo_t *conf, 
-			ADIOI_BG_ProcInfo_t *proc, 
+void
+ADIOI_BG_persInfo_init(ADIOI_BG_ConfInfo_t *conf,
+			ADIOI_BG_ProcInfo_t *proc,
 			int size, int rank, int n_aggrs, MPI_Comm comm)
 {
    int i, iambridge=0, bridgerank = -1, bridgeIndex;
@@ -191,19 +191,19 @@ ADIOI_BG_persInfo_init(ADIOI_BG_ConfInfo_t *conf,
    /* Find the nearest bridge node coords.  We don't know the
       rank in our comm so we will collective find/pick a bridge
       rank later.
-   */ 
+   */
    int32_t bridgeCoords;
-   bridgeCoords = pers.Network_Config.cnBridge_A << 24 | 
-                  pers.Network_Config.cnBridge_B << 18 | 
-                  pers.Network_Config.cnBridge_C << 12 | 
-                  pers.Network_Config.cnBridge_D << 6 | 
+   bridgeCoords = pers.Network_Config.cnBridge_A << 24 |
+                  pers.Network_Config.cnBridge_B << 18 |
+                  pers.Network_Config.cnBridge_C << 12 |
+                  pers.Network_Config.cnBridge_D << 6 |
                   pers.Network_Config.cnBridge_E << 2;
    ADIOI_Assert((bridgeCoords >= 0)); /* A dim is < 6 bits or sorting won't work */
 
-   if((hw.Coords[0] == pers.Network_Config.cnBridge_A) && 
-      (hw.Coords[1] == pers.Network_Config.cnBridge_B) && 
-      (hw.Coords[2] == pers.Network_Config.cnBridge_C) && 
-      (hw.Coords[3] == pers.Network_Config.cnBridge_D) && 
+   if((hw.Coords[0] == pers.Network_Config.cnBridge_A) &&
+      (hw.Coords[1] == pers.Network_Config.cnBridge_B) &&
+      (hw.Coords[2] == pers.Network_Config.cnBridge_C) &&
+      (hw.Coords[3] == pers.Network_Config.cnBridge_D) &&
       (hw.Coords[4] == pers.Network_Config.cnBridge_E)) {
       iambridge = 1;      /* I am bridge */
       if (gpfsmpio_bridgeringagg > 0) {
@@ -238,16 +238,16 @@ ADIOI_BG_persInfo_init(ADIOI_BG_ConfInfo_t *conf,
    bridges = (sortstruct *) ADIOI_Malloc(sizeof(sortstruct) * size);
 
    /* We're going to sort this structure by bridgeCoord:
-    
+
    typedef struct
    {
       int rank;
       int bridgeCoord;
-   } sortstruct; 
-    
-   and I want the rank that IS the bridge to sort first, so 
-   OR in '1' on non-bridge ranks that use a bridge coord. 
-   */ 
+   } sortstruct;
+
+   and I want the rank that IS the bridge to sort first, so
+   OR in '1' on non-bridge ranks that use a bridge coord.
+   */
 
    /* My input to the collective */
    bridges[rank].rank = rank;
@@ -268,18 +268,18 @@ ADIOI_BG_persInfo_init(ADIOI_BG_ConfInfo_t *conf,
    tempRank   = bridges[0].rank;
 
    countPset=1;
-   bridgeIndex = 0; 
+   bridgeIndex = 0;
    mincompute = size+1;
    maxcompute = 1;
 
    for(i=1; i<size; i++)
    {
-      if((bridges[i].bridgeCoord  & ~1) == tempCoords) 
+      if((bridges[i].bridgeCoord  & ~1) == tempCoords)
             countPset++; /* same bridge (pset), count it */
       else /* new bridge found */
       {
 #ifdef TRACE_ON
-         if(rank == 0) 
+         if(rank == 0)
             TRACE_ERR("Bridge set %u, bridge rank %d (%#8.8X) has %d ranks\n",
                       bridgeIndex, tempRank, tempCoords, countPset);
 #endif
@@ -294,7 +294,7 @@ ADIOI_BG_persInfo_init(ADIOI_BG_ConfInfo_t *conf,
             /* Am I the bridge rank? */
             if(tempRank == rank)
                iambridge = 1;
-            else 
+            else
                iambridge = 0; /* Another rank on my node may have taken over */
             TRACE_ERR("Rank %u, bridge set %u, bridge rank %d (%#8.8X) has %d ranks, iambridge %u\n",
                       rank, bridgeIndex, tempRank, tempCoords, countPset,iambridge);
@@ -312,7 +312,7 @@ ADIOI_BG_persInfo_init(ADIOI_BG_ConfInfo_t *conf,
    /* Process last bridge */
 
 #ifdef TRACE_ON
-   if(rank == 0) 
+   if(rank == 0)
       TRACE_ERR("Bridge set %u, bridge rank %d (%#8.8X) has %d ranks\n",
                 bridgeIndex, tempRank, tempCoords, countPset);
 #endif
@@ -327,15 +327,15 @@ ADIOI_BG_persInfo_init(ADIOI_BG_ConfInfo_t *conf,
       /* Am I the bridge rank? */
       if(tempRank == rank)
          iambridge = 1;
-      else 
+      else
          iambridge = 0; /* Another rank on my node may have taken over */
       bridgerank = tempRank;
       proc->myIOSize = countPset;
       proc->ioNodeIndex = bridgeIndex;
    }
-   
-   
-   if(rank == 0) 
+
+
+   if(rank == 0)
    {
       /* Only rank 0 has a conf structure, fill in stuff as appropriate */
       conf->ioMinSize = mincompute;
@@ -344,15 +344,15 @@ ADIOI_BG_persInfo_init(ADIOI_BG_ConfInfo_t *conf,
       conf->nProcs = size;
       conf->cpuIDsize = hw.ppn;
       /*conf->virtualPsetSize = maxcompute * conf->cpuIDsize;*/
-            
+
       conf->nAggrs = n_aggrs;
       /*    First pass gets nAggrs = -1 */
       if(conf->nAggrs <=0)
          conf->nAggrs = gpfsmpio_bg_nagg_pset;
       if(conf->ioMinSize <= conf->nAggrs)
         conf->nAggrs = ADIOI_MAX(1,conf->ioMinSize-1); /* not including bridge itself */
-/*      if(conf->nAggrs > conf->numBridgeRanks) 
-         conf->nAggrs = conf->numBridgeRanks; 
+/*      if(conf->nAggrs > conf->numBridgeRanks)
+         conf->nAggrs = conf->numBridgeRanks;
 */
       conf->aggRatio = 1. * conf->nAggrs / conf->ioMinSize /*virtualPsetSize*/;
 /*    if(conf->aggRatio > 1) conf->aggRatio = 1.; */
@@ -369,7 +369,7 @@ ADIOI_BG_persInfo_init(ADIOI_BG_ConfInfo_t *conf,
 
 }
 
-void 
+void
 ADIOI_BG_persInfo_free( ADIOI_BG_ConfInfo_t *conf, ADIOI_BG_ProcInfo_t *proc )
 {
     ADIOI_BG_ConfInfo_free( conf );

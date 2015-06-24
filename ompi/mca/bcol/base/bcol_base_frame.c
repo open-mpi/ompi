@@ -359,12 +359,12 @@ OBJ_CLASS_INSTANCE(mca_bcol_base_coll_fn_desc_t,
                    mca_bcol_base_coll_fn_desc_constructor,
                    mca_bcol_base_coll_fn_desc_destructor);
 
-static void lmngr_block_constructor(mca_bcol_base_lmngr_block_t *item) 
+static void lmngr_block_constructor(mca_bcol_base_lmngr_block_t *item)
 {
     item->base_addr = NULL;
 }
 
-static void lnmgr_block_destructor(mca_bcol_base_lmngr_block_t *item) 
+static void lnmgr_block_destructor(mca_bcol_base_lmngr_block_t *item)
 {
     /* I have nothing to do here */
 }

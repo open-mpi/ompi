@@ -158,7 +158,7 @@ verbs_runtime_query(mca_base_module_t **module,
         struct ibv_mr *ib_mr = NULL;
         uint64_t access_flag = IBV_ACCESS_LOCAL_WRITE |
                           IBV_ACCESS_REMOTE_WRITE |
-                          IBV_ACCESS_REMOTE_READ; 
+                          IBV_ACCESS_REMOTE_READ;
         uint64_t exp_access_flag = 0;
 
         OBJ_CONSTRUCT(&device->ib_mr_array, opal_value_array_t);
@@ -167,7 +167,7 @@ verbs_runtime_query(mca_base_module_t **module,
 #if (MPAGE_ENABLE > 0)
         exp_access_flag = IBV_EXP_ACCESS_ALLOCATE_MR  |
                           IBV_EXP_ACCESS_SHARED_MR_USER_READ |
-                          IBV_EXP_ACCESS_SHARED_MR_USER_WRITE; 
+                          IBV_EXP_ACCESS_SHARED_MR_USER_WRITE;
 #endif /* MPAGE_ENABLE */
 
         struct ibv_exp_reg_mr_in in = {device->ib_pd, addr, size, access_flag|exp_access_flag, 0};

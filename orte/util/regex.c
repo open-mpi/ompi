@@ -5,15 +5,15 @@
  * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 #include "orte_config.h"
@@ -232,7 +232,7 @@ int orte_regex_create(char *nodelist, char **regexp)
     /* begin constructing the regular expression */
     while (NULL != (item = opal_list_remove_first(&nodeids))) {
         ndreg = (orte_regex_node_t*)item;
-        
+
         /* if no ranges, then just add the name */
         if (0 == opal_list_get_size(&ndreg->ranges)) {
             if (NULL != ndreg->prefix) {
@@ -274,7 +274,7 @@ int orte_regex_create(char *nodelist, char **regexp)
         free(tmp);
         OBJ_RELEASE(ndreg);
     }
-    
+
     /* assemble final result */
     *regexp = opal_argv_join(regexargs, ',');
     /* cleanup */
@@ -299,18 +299,18 @@ int orte_regex_extract_node_names(char *regexp, char ***names)
         *names = NULL;
         return ORTE_SUCCESS;
     }
-    
+
     orig = base = strdup(regexp);
     if (NULL == base) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
-    
+
     OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
                          "%s regex:extract:nodenames: checking nodelist: %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          regexp));
-    
+
     do {
         /* Find the base */
         len = strlen(base);
@@ -341,7 +341,7 @@ int orte_regex_extract_node_names(char *regexp, char ***names)
             free(orig);
             return ORTE_ERR_BAD_PARAM;
         }
-        
+
         if (found_range) {
             /* If we found a range, get the number of digits in the numbers */
             i++;  /* step over the [ */
@@ -420,9 +420,9 @@ int orte_regex_extract_node_names(char *regexp, char ***names)
             base = &base[i];
         }
     } while(more_to_come);
-    
+
     free(orig);
-    
+
     /* All done */
     return ret;
 }
@@ -433,16 +433,16 @@ int orte_regex_extract_node_names(char *regexp, char ***names)
  *
  * @param base     The base text of the node name
  * @param *ranges  A pointer to a range. This can contain multiple ranges
- *                 (i.e. "1-3,10" or "5" or "9,0100-0130,250") 
+ *                 (i.e. "1-3,10" or "5" or "9,0100-0130,250")
  * @param ***names An argv array to add the newly discovered nodes to
  */
 static int regex_parse_node_ranges(char *base, char *ranges, int num_digits, char *suffix, char ***names)
 {
     int i, len, ret;
     char *start, *orig;
-    
+
     /* Look for commas, the separator between ranges */
-    
+
     len = strlen(ranges);
     for (orig = start = ranges, i = 0; i < len; ++i) {
         if (',' == ranges[i]) {
@@ -455,22 +455,22 @@ static int regex_parse_node_ranges(char *base, char *ranges, int num_digits, cha
             start = ranges + i + 1;
         }
     }
-    
+
     /* Pick up the last range, if it exists */
-    
+
     if (start < orig + len) {
-        
+
         OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
                              "%s regex:parse:ranges: parse range %s (2)",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), start));
-        
+
         ret = regex_parse_node_range(base, start, num_digits, suffix, names);
         if (ORTE_SUCCESS != ret) {
             ORTE_ERROR_LOG(ret);
             return ret;
         }
     }
-    
+
     /* All done */
     return ORTE_SUCCESS;
 }
@@ -481,7 +481,7 @@ static int regex_parse_node_ranges(char *base, char *ranges, int num_digits, cha
  * found to the names argv
  *
  * @param base     The base text of the node name
- * @param *ranges  A pointer to a single range. (i.e. "1-3" or "5") 
+ * @param *ranges  A pointer to a single range. (i.e. "1-3" or "5")
  * @param ***names An argv array to add the newly discovered nodes to
  */
 static int regex_parse_node_range(char *base, char *range, int num_digits, char *suffix, char ***names)
@@ -491,7 +491,7 @@ static int regex_parse_node_range(char *base, char *range, int num_digits, char 
     size_t base_len, len;
     bool found;
     int ret;
-    
+
     if (NULL == base || NULL == range) {
         return ORTE_ERROR;
     }
@@ -501,9 +501,9 @@ static int regex_parse_node_range(char *base, char *range, int num_digits, char 
     /* Silence compiler warnings; start and end are always assigned
      properly, below */
     start = end = 0;
-    
+
     /* Look for the beginning of the first number */
-    
+
     for (found = false, i = 0; i < len; ++i) {
         if (isdigit((int) range[i])) {
             if (!found) {
@@ -517,17 +517,17 @@ static int regex_parse_node_range(char *base, char *range, int num_digits, char 
         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
         return ORTE_ERR_NOT_FOUND;
     }
-    
+
     /* Look for the end of the first number */
-    
+
     for (found = false; i < len; ++i) {
         if (!isdigit(range[i])) {
             break;
         }
     }
-    
+
     /* Was there no range, just a single number? */
-    
+
     if (i >= len) {
         end = start;
         found = true;
@@ -547,9 +547,9 @@ static int regex_parse_node_range(char *base, char *range, int num_digits, char 
         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
         return ORTE_ERR_NOT_FOUND;
     }
-    
+
     /* Make strings for all values in the range */
-    
+
     len = base_len + num_digits + 32;
     if (NULL != suffix) {
         len += strlen(suffix);
@@ -583,7 +583,7 @@ static int regex_parse_node_range(char *base, char *range, int num_digits, char 
         }
     }
     free(str);
-    
+
     /* All done */
     return ORTE_SUCCESS;
 }
@@ -598,24 +598,24 @@ int orte_regex_extract_ppn(int num_nodes, char *regexp, int **ppn)
     int *tmp;
     char *begptr, *endptr, *orig;
     int i, j, count, reps;
-    
+
     /* init null answer */
     *ppn = NULL;
-    
+
     tmp = (int *) malloc(sizeof(int) * num_nodes);
     if (NULL == tmp) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
     memset(tmp, 0, sizeof(int) * num_nodes);
-    
+
     orig = begptr = strdup(regexp);
     if (NULL == begptr) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         free(tmp);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
-    
+
     j = 0;
     while (begptr) {
         count = strtol(begptr, &endptr, 10);
@@ -627,11 +627,11 @@ int orte_regex_extract_ppn(int num_nodes, char *regexp, int **ppn)
         } else {
             reps = 1;
         }
-        
+
         for (i = 0; i < reps && j < num_nodes; i++) {
             tmp[j++] = count;
         }
-        
+
         if (*endptr == ',') {
             begptr = endptr + 1;
         } else if (*endptr == '\0' || j >= num_nodes) {
@@ -644,12 +644,12 @@ int orte_regex_extract_ppn(int num_nodes, char *regexp, int **ppn)
             return ORTE_ERR_BAD_PARAM;
         }
     }
-    
+
     free(orig);
-    
+
     /* return values */
     *ppn = tmp;
-    
+
     return ORTE_SUCCESS;
 }
 

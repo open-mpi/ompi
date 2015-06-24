@@ -6,16 +6,16 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  *
  * These symbols are in a file by themselves to provide nice linker
@@ -98,7 +98,7 @@ orte_ess_singleton_component_open(void)
 int orte_ess_singleton_component_query(mca_base_module_t **module, int *priority)
 {
     int ret;
-    
+
     /* if we are an HNP, daemon, or tool, then we
      * are definitely not a singleton!
      */
@@ -108,7 +108,7 @@ int orte_ess_singleton_component_query(mca_base_module_t **module, int *priority
         *module = NULL;
         return ORTE_ERROR;
     }
-    
+
     /* okay, we still could be a singleton or
      * an application process. If we have been
      * given an HNP URI, then we are definitely
@@ -118,7 +118,7 @@ int orte_ess_singleton_component_query(mca_base_module_t **module, int *priority
         *module = NULL;
         return ORTE_ERROR;
     }
-    
+
     /* open and setup pmix */
     if (NULL == opal_pmix.initialized) {
         if (OPAL_SUCCESS != (ret = mca_base_framework_open(&opal_pmix_base_framework, 0))) {

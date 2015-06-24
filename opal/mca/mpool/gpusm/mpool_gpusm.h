@@ -35,14 +35,14 @@ BEGIN_C_DECLS
 
 #define MEMHANDLE_SIZE 8
 #define EVTHANDLE_SIZE 8
-struct mca_mpool_gpusm_registration_t { 
+struct mca_mpool_gpusm_registration_t {
     mca_mpool_base_registration_t base;
     uint64_t memHandle[MEMHANDLE_SIZE]; /* CUipcMemHandle */
     uint64_t evtHandle[EVTHANDLE_SIZE]; /* CUipcEventHandle */
     uintptr_t event;                    /* CUevent */
-};  
-typedef struct mca_mpool_gpusm_registration_t mca_mpool_gpusm_registration_t; 
-OPAL_DECLSPEC OBJ_CLASS_DECLARATION(mca_mpool_gpusm_registration_t); 
+};
+typedef struct mca_mpool_gpusm_registration_t mca_mpool_gpusm_registration_t;
+OPAL_DECLSPEC OBJ_CLASS_DECLARATION(mca_mpool_gpusm_registration_t);
 
 struct mca_mpool_gpusm_component_t {
     mca_mpool_base_component_t super;

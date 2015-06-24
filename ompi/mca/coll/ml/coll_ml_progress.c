@@ -77,8 +77,8 @@ int coll_ml_progress_individual_message(mca_coll_ml_fragment_t *frag_descriptor)
    n_frags_complete = OPAL_THREAD_ADD_SIZE_T(
        &(frag_descriptor->full_msg_descriptor->frags_complete), 1);
 
-   /* 
-    * release resrouces 
+   /*
+    * release resrouces
     */
 
    /* fragment resources */
@@ -86,14 +86,14 @@ int coll_ml_progress_individual_message(mca_coll_ml_fragment_t *frag_descriptor)
    /* full message resources */
    if ( n_frags_complete == frag_descriptor->full_msg_descriptor->n_fragments)
    {
-       /* free any fragments that still need to be freed 
+       /* free any fragments that still need to be freed
         * NOTE: at this level we do not handle any resrouces
         * aside from the pre-registered buffers, all these
         * are handled in the bcol level */
 
        /* return the buffers to the ml free list */
 
-       /* mark as complete - so MPI can complete 
+       /* mark as complete - so MPI can complete
         * the message descriptor will be freed by a call
         * to mpi_test/mpi_wait/... as the message descriptor
         * also holds the mpi request object */

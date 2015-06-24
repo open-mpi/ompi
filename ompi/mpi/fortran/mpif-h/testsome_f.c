@@ -5,15 +5,15 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -70,7 +70,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TESTSOME,
 static const char FUNC_NAME[] = "MPI_TESTSOME";
 
 
-void ompi_testsome_f(MPI_Fint *incount, MPI_Fint *array_of_requests, 
+void ompi_testsome_f(MPI_Fint *incount, MPI_Fint *array_of_requests,
 		    MPI_Fint *outcount, MPI_Fint *array_of_indices,
 		    MPI_Fint *array_of_statuses, MPI_Fint *ierr)
 {
@@ -104,9 +104,9 @@ void ompi_testsome_f(MPI_Fint *incount, MPI_Fint *array_of_requests,
     }
 
     OMPI_ARRAY_FINT_2_INT_ALLOC(array_of_indices, OMPI_FINT_2_INT(*incount));
-    c_ierr = MPI_Testsome(OMPI_FINT_2_INT(*incount), c_req, 
-                          OMPI_SINGLE_NAME_CONVERT(outcount), 
-                          OMPI_ARRAY_NAME_CONVERT(array_of_indices), 
+    c_ierr = MPI_Testsome(OMPI_FINT_2_INT(*incount), c_req,
+                          OMPI_SINGLE_NAME_CONVERT(outcount),
+                          OMPI_ARRAY_NAME_CONVERT(array_of_indices),
                           c_status);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 

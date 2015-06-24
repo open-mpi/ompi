@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -16,16 +16,16 @@ void ADIOI_PIOFS_SetInfo(ADIO_File fd, MPI_Info users_info, int *error_code)
     int err, myrank, perm, old_mask, nioservers;
 
     if ((fd->info) == MPI_INFO_NULL) {
-	/* This must be part of the open call. can set striping parameters 
-           if necessary. */ 
+	/* This must be part of the open call. can set striping parameters
+           if necessary. */
 	MPI_Info_create(&(fd->info));
-	
-	/* has user specified striping parameters 
+
+	/* has user specified striping parameters
            and do they have the same value on all processes? */
 	if (users_info != MPI_INFO_NULL) {
 	    value = (char *) ADIOI_Malloc((MPI_MAX_INFO_VAL+1)*sizeof(char));
 
-	    ADIOI_Info_get(users_info, "striping_factor", MPI_MAX_INFO_VAL, 
+	    ADIOI_Info_get(users_info, "striping_factor", MPI_MAX_INFO_VAL,
 			 value, &flag);
 	    if (flag) {
 		str_factor=atoi(value);
@@ -37,7 +37,7 @@ void ADIOI_PIOFS_SetInfo(ADIO_File fd, MPI_Info users_info, int *error_code)
 		}
 	    }
 
-	    ADIOI_Info_get(users_info, "striping_unit", MPI_MAX_INFO_VAL, 
+	    ADIOI_Info_get(users_info, "striping_unit", MPI_MAX_INFO_VAL,
 			 value, &flag);
 	    if (flag) {
 		str_unit=atoi(value);
@@ -49,7 +49,7 @@ void ADIOI_PIOFS_SetInfo(ADIO_File fd, MPI_Info users_info, int *error_code)
 		}
 	    }
 
-	    ADIOI_Info_get(users_info, "start_iodevice", MPI_MAX_INFO_VAL, 
+	    ADIOI_Info_get(users_info, "start_iodevice", MPI_MAX_INFO_VAL,
 			 value, &flag);
 	    if (flag) {
 		start_iodev=atoi(value);
@@ -100,7 +100,7 @@ void ADIOI_PIOFS_SetInfo(ADIO_File fd, MPI_Info users_info, int *error_code)
 		    piofs_create.bsu = (str_unit > 0) ? str_unit : -1;
 		    piofs_create.cells = (str_factor > 0) ? str_factor : -1;
 		    piofs_create.permissions = perm;
-		    piofs_create.base_node = (start_iodev >= 0) ? 
+		    piofs_create.base_node = (start_iodev >= 0) ?
                                                      start_iodev : -1;
 		    piofs_create.flags = 0;
 
@@ -109,8 +109,8 @@ void ADIOI_PIOFS_SetInfo(ADIO_File fd, MPI_Info users_info, int *error_code)
 		MPI_Barrier(fd->comm);
 	    }
 	}
-    }	
-	
+    }
+
     /* set the values for collective I/O and data sieving parameters */
     ADIOI_GEN_SetInfo(fd, users_info, error_code);
 

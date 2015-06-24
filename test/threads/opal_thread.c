@@ -65,7 +65,7 @@ int main(int argc, char** argv)
 
     rc = opal_thread_start(&thr2);
     test_verify_int(OPAL_SUCCESS, rc);
-   
+
     rc = opal_thread_join(&thr1, NULL);
     test_verify_int(OPAL_SUCCESS, rc);
 

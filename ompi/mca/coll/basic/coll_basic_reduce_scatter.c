@@ -6,7 +6,7 @@
  * Copyright (c) 2004-2014 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -17,9 +17,9 @@
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -52,7 +52,7 @@
  *   Cummutative, reasonable sized messages
  *     recursive halving algorithm
  *   Others:
- *     reduce and scatterv (needs to be cleaned 
+ *     reduce and scatterv (needs to be cleaned
  *     up at some point)
  *
  * NOTE: that the recursive halving algorithm should be faster than
@@ -137,7 +137,7 @@ mca_coll_basic_reduce_scatter_intra(void *sbuf, void *rbuf, int *rcounts,
            two procs to do the rest of the algorithm */
         if (rank < 2 * remain) {
             if ((rank & 1) == 0) {
-                err = MCA_PML_CALL(send(result_buf, count, dtype, rank + 1, 
+                err = MCA_PML_CALL(send(result_buf, count, dtype, rank + 1,
                                         MCA_COLL_BASE_TAG_REDUCE_SCATTER,
                                         MCA_PML_BASE_SEND_STANDARD,
                                         comm));
@@ -243,11 +243,11 @@ mca_coll_basic_reduce_scatter_intra(void *sbuf, void *rbuf, int *rcounts,
                         free(tmp_rcounts);
                         free(tmp_disps);
                         goto cleanup;
-                    }                                             
+                    }
                 }
                 if (send_count > 0) {
                     err = MCA_PML_CALL(send(result_buf + tmp_disps[send_index] * extent,
-                                            send_count, dtype, peer, 
+                                            send_count, dtype, peer,
                                             MCA_COLL_BASE_TAG_REDUCE_SCATTER,
                                             MCA_PML_BASE_SEND_STANDARD,
                                             comm));
@@ -255,7 +255,7 @@ mca_coll_basic_reduce_scatter_intra(void *sbuf, void *rbuf, int *rcounts,
                         free(tmp_rcounts);
                         free(tmp_disps);
                         goto cleanup;
-                    }                                             
+                    }
                 }
 
                 /* if we received something on this step, push it into
@@ -266,10 +266,10 @@ mca_coll_basic_reduce_scatter_intra(void *sbuf, void *rbuf, int *rcounts,
                         free(tmp_rcounts);
                         free(tmp_disps);
                         goto cleanup;
-                    }                                             
+                    }
 
-                    ompi_op_reduce(op, 
-                                   recv_buf + tmp_disps[recv_index] * extent, 
+                    ompi_op_reduce(op,
+                                   recv_buf + tmp_disps[recv_index] * extent,
                                    result_buf + tmp_disps[recv_index] * extent,
                                    recv_count, dtype);
                 }
@@ -283,13 +283,13 @@ mca_coll_basic_reduce_scatter_intra(void *sbuf, void *rbuf, int *rcounts,
             /* copy local results from results buffer into real receive buffer */
             if (0 != rcounts[rank]) {
                 err = ompi_datatype_sndrcv(result_buf + disps[rank] * extent,
-                                      rcounts[rank], dtype, 
+                                      rcounts[rank], dtype,
                                       rbuf, rcounts[rank], dtype);
                 if (OMPI_SUCCESS != err) {
                     free(tmp_rcounts);
                     free(tmp_disps);
                     goto cleanup;
-                }                                             
+                }
             }
 
             free(tmp_rcounts);
@@ -315,7 +315,7 @@ mca_coll_basic_reduce_scatter_intra(void *sbuf, void *rbuf, int *rcounts,
                                             comm));
                     if (OMPI_SUCCESS != err) goto cleanup;
                 }
-            }            
+            }
         }
 
     } else {
@@ -382,7 +382,7 @@ mca_coll_basic_reduce_scatter_inter(void *sbuf, void *rbuf, int *rcounts,
         totalcounts += rcounts[i];
     }
 
-    /* 
+    /*
      * The following code basically does an interreduce followed by a
      * intrascatterv.  This is implemented by having the roots of each
      * group exchange their sbuf.  Then, the roots receive the data
@@ -444,8 +444,8 @@ mca_coll_basic_reduce_scatter_inter(void *sbuf, void *rbuf, int *rcounts,
 
 
         /* Loop receiving and calling reduction function (C or Fortran)
-         * The result of this reduction operations is then in 
-         * tmpbuf2. 
+         * The result of this reduction operations is then in
+         * tmpbuf2.
          */
         for (i = 1; i < rsize; i++) {
             err = MCA_PML_CALL(recv(tmpbuf, totalcounts, dtype, i,

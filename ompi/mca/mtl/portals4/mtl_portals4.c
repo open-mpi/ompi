@@ -85,8 +85,8 @@ portals4_init_interface(void)
 
     /* Create send and long message (read) portal table entries */
     ret = PtlPTAlloc(ompi_mtl_portals4.ni_h,
-                     PTL_PT_ONLY_USE_ONCE | 
-                     PTL_PT_ONLY_TRUNCATE | 
+                     PTL_PT_ONLY_USE_ONCE |
+                     PTL_PT_ONLY_TRUNCATE |
                      PTL_PT_FLOWCTRL,
                      ompi_mtl_portals4.recv_eq_h,
                      REQ_RECV_TABLE_ID,
@@ -132,7 +132,7 @@ portals4_init_interface(void)
 
     ret = PtlMDBind(ompi_mtl_portals4.ni_h,
                     &md,
-                    &ompi_mtl_portals4.zero_md_h); 
+                    &ompi_mtl_portals4.zero_md_h);
     if (PTL_OK != ret) {
         opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                             "%s:%d: PtlMDBind failed: %d\n",
@@ -163,9 +163,9 @@ portals4_init_interface(void)
     me.ct_handle = PTL_CT_NONE;
     me.min_free = 0;
     me.uid = ompi_mtl_portals4.uid;
-    me.options = PTL_ME_OP_PUT | 
+    me.options = PTL_ME_OP_PUT |
         PTL_ME_EVENT_LINK_DISABLE |
-        PTL_ME_EVENT_COMM_DISABLE | 
+        PTL_ME_EVENT_COMM_DISABLE |
         PTL_ME_EVENT_UNLINK_DISABLE;
     if (ompi_mtl_portals4.use_logical) {
         me.match_id.rank = PTL_RANK_ANY;
@@ -174,8 +174,8 @@ portals4_init_interface(void)
         me.match_id.phys.pid = PTL_PID_ANY;
     }
     me.match_bits = MTL_PORTALS4_LONG_MSG;
-    me.ignore_bits = MTL_PORTALS4_CONTEXT_MASK | 
-        MTL_PORTALS4_SOURCE_MASK | 
+    me.ignore_bits = MTL_PORTALS4_CONTEXT_MASK |
+        MTL_PORTALS4_SOURCE_MASK |
         MTL_PORTALS4_TAG_MASK;
     ret = PtlMEAppend(ompi_mtl_portals4.ni_h,
                       ompi_mtl_portals4.recv_idx,
@@ -275,7 +275,7 @@ ompi_mtl_portals4_add_procs(struct mca_mtl_base_module_t *mtl,
                                 "Portals 4 MTL does not support heterogeneous operations.");
             opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                                 "Proc %s architecture %x, mine %x.",
-                                OMPI_NAME_PRINT(&procs[i]->super.proc_name), 
+                                OMPI_NAME_PRINT(&procs[i]->super.proc_name),
                                 procs[i]->super.proc_arch, ompi_proc_local()->super.proc_arch);
             return OMPI_ERR_NOT_SUPPORTED;
         }
@@ -382,7 +382,7 @@ ompi_mtl_portals4_add_procs(struct mca_mtl_base_module_t *mtl,
 int
 ompi_mtl_portals4_del_procs(struct mca_mtl_base_module_t *mtl,
                             size_t nprocs,
-                            struct ompi_proc_t** procs) 
+                            struct ompi_proc_t** procs)
 {
     size_t i;
 

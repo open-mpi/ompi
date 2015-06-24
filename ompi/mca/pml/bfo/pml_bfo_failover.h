@@ -1,9 +1,9 @@
 /*
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -11,7 +11,7 @@
  * @file
  * Functions that implement failover capabilities.
  */
-                                                                                                                                                 
+
 #ifndef MCA_PML_BFO_FAILOVER_H
 #define MCA_PML_BFO_FAILOVER_H
 
@@ -277,7 +277,7 @@ extern void mca_pml_bfo_recv_frag_callback_recverrnotify( mca_btl_base_module_t 
         return;                                                                             \
     }
 
-/** 
+/**
  * This macro is called within the frag completion function in two
  * places.  It is called to see if any errors occur prior to the
  * completion event on the frag.  It is then called a second time
@@ -336,7 +336,7 @@ extern void mca_pml_bfo_recv_frag_callback_recverrnotify( mca_btl_base_module_t 
         ompi_proc_t *proc = (ompi_proc_t*) des->des_cbdata;                                \
         mca_bml_base_endpoint_t* bml_endpoint = (mca_bml_base_endpoint_t*) proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML]; \
         bml_btl = mca_bml_base_btl_array_find(&bml_endpoint->btl_eager, btl);              \
-    }                  
+    }
 #define MCA_PML_BFO_CHECK_SENDREQ_EAGER_BML_BTL(bml_btl, btl, sendreq, type)   \
     if (bml_btl->btl != btl) {                                                 \
         mca_pml_bfo_find_sendreq_eager_bml_btl(&bml_btl, btl, sendreq, type);  \

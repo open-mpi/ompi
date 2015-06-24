@@ -788,7 +788,7 @@ consider_reading(struct bufferevent_openssl *bev_ssl)
 
 		if (bev_ssl->bev.read_suspended)
 			break;
-        
+
 		/* Read all pending data.  This won't hit the network
 		 * again, and will (most importantly) put us in a state
 		 * where we don't need to read anything else until the

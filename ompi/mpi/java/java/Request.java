@@ -5,14 +5,14 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 /*
@@ -123,7 +123,7 @@ public final boolean isNull()
  * <p>Java binding of the MPI operation {@code MPI_WAIT}.
  * <p>After the call returns, the request object becomes inactive.
  * @return status object
- * @throws MPIException 
+ * @throws MPIException
  */
 public final Status waitStatus() throws MPIException
 {
@@ -139,7 +139,7 @@ private native long waitStatus(long request, long[] stat) throws MPIException;
  * Blocks until the operation identified by the request is complete.
  * <p>Java binding of the MPI operation {@code MPI_WAIT}.
  * <p>After the call returns, the request object becomes inactive.
- * @throws MPIException 
+ * @throws MPIException
  */
 public final void waitFor() throws MPIException
 {
@@ -156,7 +156,7 @@ private native long waitFor(long request) throws MPIException;
  * <p>After the call, if the operation is complete (ie, if the return
  * value is non-null), the request object becomes inactive.
  * @return status object
- * @throws MPIException 
+ * @throws MPIException
  */
 public final Status testStatus() throws MPIException
 {
@@ -173,7 +173,7 @@ private native Status testStatus(long request) throws MPIException;
  * <p>After the call, if the operation is complete (ie, if the return
  * value is true), the request object becomes inactive.
  * @return true if the operation identified by the request, false otherwise
- * @throws MPIException 
+ * @throws MPIException
  */
 public final boolean test() throws MPIException
 {
@@ -193,7 +193,7 @@ private native boolean test(long handle) throws MPIException;
  * of array of {@code requests} becomes inactive.
  * @param requests array of requests
  * @return status object
- * @throws MPIException 
+ * @throws MPIException
  */
 public static Status waitAnyStatus(Request[] requests) throws MPIException
 {
@@ -217,7 +217,7 @@ private static native void waitAnyStatus(long[] requests, long[] status)
  * @return The index in array of {@code requests} for the request that
  * completed. If all of the requests are MPI_REQUEST_NULL, then index
  * is returned as {@code MPI.UNDEFINED}.
- * @throws MPIException 
+ * @throws MPIException
  */
 public static int waitAny(Request[] requests) throws MPIException
 {
@@ -240,7 +240,7 @@ private static native int waitAny(long[] requests) throws MPIException;
  * If no request completed, {testAny} returns {@code null}.
  * @param requests array of requests
  * @return status object if one request completed, {@code null} otherwise.
- * @throws MPIException 
+ * @throws MPIException
  */
 public static Status testAnyStatus(Request[] requests) throws MPIException
 {
@@ -261,7 +261,7 @@ private static native Status testAnyStatus(long[] requests) throws MPIException;
  * @param requests array of requests
  * @return index of operation that completed, or {@code MPI.UNDEFINED}
  * if none completed.
- * @throws MPIException 
+ * @throws MPIException
  */
 public static int testAny(Request[] requests) throws MPIException
 {
@@ -283,7 +283,7 @@ private static native int testAny(long[] requests) throws MPIException;
  * elements of the status array will contain null status references.
  * @param requests array of requests
  * @return array of statuses
- * @throws MPIException 
+ * @throws MPIException
  */
 public static Status[] waitAllStatus(Request[] requests) throws MPIException
 {
@@ -302,7 +302,7 @@ private static native Status[] waitAllStatus(long[] requests)
  * requests in the array have completed.
  * <p>Java binding of the MPI operation {@code MPI_WAITALL}.
  * @param requests array of requests
- * @throws MPIException 
+ * @throws MPIException
  */
 public static void waitAll(Request[] requests) throws MPIException
 {
@@ -323,7 +323,7 @@ private static native void waitAll(long[] requests) throws MPIException;
  * @param requests array of requests
  * @return array of statuses if all operations have completed,
  *         {@code null} otherwise.
- * @throws MPIException 
+ * @throws MPIException
  */
 public static Status[] testAllStatus(Request[] requests) throws MPIException
 {
@@ -344,7 +344,7 @@ private static native Status[] testAllStatus(long[] requests)
  * @param requests array of requests
  * @return {@code true} if all operations have completed,
  *         {@code false} otherwise.
- * @throws MPIException 
+ * @throws MPIException
  */
 public static boolean testAll(Request[] requests) throws MPIException
 {
@@ -393,7 +393,7 @@ private static native Status[] waitSomeStatus(long[] requests)
  * @param requests array of requests
  * @return array of indexes of {@code requests} that completed or {@code null}
  *         if the number of operations completed is {@code MPI_UNDEFINED}.
- * @throws MPIException 
+ * @throws MPIException
  */
 public static int[] waitSome(Request[] requests) throws MPIException
 {
@@ -413,7 +413,7 @@ private static native int[] waitSome(long[] requests) throws MPIException;
  * length zero, otherwise the return value are as for {@code waitSome}.
  * @param requests array of requests
  * @return array of statuses
- * @throws MPIException 
+ * @throws MPIException
  */
 public static Status[] testSomeStatus(Request[] requests) throws MPIException
 {
@@ -434,7 +434,7 @@ private static native Status[] testSomeStatus(long[] requests)
  * length zero, otherwise the return value are as for {@code waitSome}.
  * @param requests array of requests
  * @return array of indexes of {@code requests} that completed.
- * @throws MPIException 
+ * @throws MPIException
  */
 public static int[] testSome(Request[] requests) throws MPIException
 {
@@ -450,7 +450,7 @@ private static native int[] testSome(long[] requests) throws MPIException;
 protected static long[] getHandles(Request[] r)
 {
     long[] h = new long[r.length];
-    
+
     for(int i = 0; i < r.length; i++)
         h[i] = r[i].handle;
 

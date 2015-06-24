@@ -5,14 +5,14 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 /*
@@ -56,7 +56,7 @@ public abstract class UserFunction
  * User-defined function for a new {@code Op}.
  * @param inVec    array of values to combine with {@code inoutvec} elements
  * @param inOutVec in-out array of accumulator locations
- * @param count    number of items in arrays 
+ * @param count    number of items in arrays
  * @param datatype type of each item
  */
 public void call(Object inVec, Object inOutVec, int count, Datatype datatype)
@@ -102,7 +102,7 @@ public void call(ByteBuffer in, ByteBuffer inOut, int count, Datatype datatype)
             vCall(in, inOut, count, datatype);
             break;
         default:
-            throw new IllegalArgumentException("Unsupported datatype.");    
+            throw new IllegalArgumentException("Unsupported datatype.");
     }
 }
 

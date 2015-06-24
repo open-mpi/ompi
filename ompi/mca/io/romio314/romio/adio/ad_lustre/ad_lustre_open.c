@@ -86,7 +86,7 @@ void ADIOI_LUSTRE_Open(ADIO_File fd, int *error_code)
 
         if (fd->access_mode & ADIO_APPEND)
             fd->fp_ind = fd->fp_sys_posn = lseek(fd->fd_sys, 0, SEEK_END);
-    } 
+    }
 
     if ((fd->fd_sys != -1) && (fd->access_mode & ADIO_APPEND))
 	fd->fp_ind = fd->fp_sys_posn = lseek(fd->fd_sys, 0, SEEK_END);
@@ -103,7 +103,7 @@ void ADIOI_LUSTRE_Open(ADIO_File fd, int *error_code)
     }
 
     /* --BEGIN ERROR HANDLING-- */
-    if (fd->fd_sys == -1 || ((fd->fd_direct == -1) && 
+    if (fd->fd_sys == -1 || ((fd->fd_direct == -1) &&
 		(fd->direct_write || fd->direct_read))) {
 	*error_code = ADIOI_Err_create_code(myname, fd->filename, errno);
     }

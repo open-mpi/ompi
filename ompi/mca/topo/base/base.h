@@ -5,20 +5,20 @@
  * Copyright (c) 2004-2013 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2012-2013 Los Alamos National Security, Inc.  All rights reserved. 
+ * Copyright (c) 2012-2013 Los Alamos National Security, Inc.  All rights reserved.
  * Copyright (c) 2012-2013 Inria.  All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -67,7 +67,7 @@ mca_topo_base_find_available(bool enable_progress_threads,
  * cart_map() for their topology components.  But they can implement
  * these glue functions if they want.
  *
- * These glue functions 
+ * These glue functions
  */
 OMPI_DECLSPEC int
 mca_topo_base_cart_create(mca_topo_base_module_t *topo_module,
@@ -79,20 +79,20 @@ mca_topo_base_cart_create(mca_topo_base_module_t *topo_module,
                           ompi_communicator_t** comm_topo);
 
 OMPI_DECLSPEC int
-mca_topo_base_cart_coords(ompi_communicator_t *comm, 
-                          int rank, 
+mca_topo_base_cart_coords(ompi_communicator_t *comm,
+                          int rank,
                           int maxdims,
                           int *coords);
 
 OMPI_DECLSPEC int
-mca_topo_base_cartdim_get(ompi_communicator_t *comm, 
+mca_topo_base_cartdim_get(ompi_communicator_t *comm,
                           int *ndims);
 
 OMPI_DECLSPEC int
-mca_topo_base_cart_get(ompi_communicator_t *comm, 
-                       int maxdims, 
+mca_topo_base_cart_get(ompi_communicator_t *comm,
+                       int maxdims,
                        int *dims,
-                       int *periods, 
+                       int *periods,
                        int *coords);
 
 OMPI_DECLSPEC int
@@ -101,27 +101,27 @@ mca_topo_base_cart_map(ompi_communicator_t * comm,
                        int *dims, int *periods, int *newrank);
 
 OMPI_DECLSPEC int
-mca_topo_base_cart_rank(ompi_communicator_t *comm, 
-                        int *coords, 
+mca_topo_base_cart_rank(ompi_communicator_t *comm,
+                        int *coords,
                         int *rank);
 
 OMPI_DECLSPEC int
-mca_topo_base_cart_shift(ompi_communicator_t *comm, 
-                         int direction, 
+mca_topo_base_cart_shift(ompi_communicator_t *comm,
+                         int direction,
                          int disp,
-                         int *rank_source, 
+                         int *rank_source,
                          int *rank_dest);
-  
+
 OMPI_DECLSPEC int
-mca_topo_base_cart_sub(ompi_communicator_t *comm, 
+mca_topo_base_cart_sub(ompi_communicator_t *comm,
                        int *remain_dims,
                        ompi_communicator_t **new_comm);
-  
+
 OMPI_DECLSPEC int
-mca_topo_base_graphdims_get(ompi_communicator_t *comm, 
+mca_topo_base_graphdims_get(ompi_communicator_t *comm,
                             int *nodes,
                             int *nedges);
-  
+
 OMPI_DECLSPEC int
 mca_topo_base_graph_create(mca_topo_base_module_t *topo_module,
                            ompi_communicator_t* old_comm,
@@ -132,10 +132,10 @@ mca_topo_base_graph_create(mca_topo_base_module_t *topo_module,
                            ompi_communicator_t** new_comm);
 
 OMPI_DECLSPEC int
-mca_topo_base_graph_get(ompi_communicator_t *comm, 
-                        int maxindex, 
-                        int maxedges, 
-                        int *index, 
+mca_topo_base_graph_get(ompi_communicator_t *comm,
+                        int maxindex,
+                        int maxedges,
+                        int *index,
                         int *edges);
 
 OMPI_DECLSPEC int
@@ -144,13 +144,13 @@ mca_topo_base_graph_map(ompi_communicator_t * comm,
                         int *index, int *edges, int *newrank);
 
 OMPI_DECLSPEC int
-mca_topo_base_graph_neighbors(ompi_communicator_t *comm, 
+mca_topo_base_graph_neighbors(ompi_communicator_t *comm,
                               int rank,
-                              int maxneighbors, 
+                              int maxneighbors,
                               int *neighbors);
 
 OMPI_DECLSPEC int
-mca_topo_base_graph_neighbors_count(ompi_communicator_t *comm, 
+mca_topo_base_graph_neighbors_count(ompi_communicator_t *comm,
                                     int rank,
                                     int *nneighbors);
 
@@ -160,18 +160,18 @@ mca_topo_base_graph_neighbors_count(ompi_communicator_t *comm,
  */
 OMPI_DECLSPEC int
 mca_topo_base_dist_graph_distribute(mca_topo_base_module_t* module,
-                                    ompi_communicator_t *comm, 
+                                    ompi_communicator_t *comm,
                                     int n, int nodes[],
-                                    int degrees[], int targets[], 
+                                    int degrees[], int targets[],
                                     int weights[],
                                     mca_topo_base_comm_dist_graph_2_2_0_t** ptopo);
 
 OMPI_DECLSPEC int
 mca_topo_base_dist_graph_create(mca_topo_base_module_t* module,
-                                ompi_communicator_t *old_comm, 
+                                ompi_communicator_t *old_comm,
                                 int n, int nodes[],
                                 int degrees[], int targets[], int weights[],
-                                ompi_info_t *info, int reorder, 
+                                ompi_info_t *info, int reorder,
                                 ompi_communicator_t **new_comm);
 
 OMPI_DECLSPEC int
@@ -189,7 +189,7 @@ mca_topo_base_dist_graph_neighbors(ompi_communicator_t *comm,
                                    int sources[], int sourceweights[],
                                    int maxoutdegree, int destinations[],
                                    int destweights[]);
-    
+
 OMPI_DECLSPEC int
 mca_topo_base_dist_graph_neighbors_count(ompi_communicator_t *comm,
                                          int *inneighbors, int *outneighbors, int *weighted);

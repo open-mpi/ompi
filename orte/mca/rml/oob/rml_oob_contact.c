@@ -7,11 +7,11 @@
  *                         reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2013      Intel, Inc.  All rights reserved. 
+ * Copyright (c) 2013      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -70,7 +70,7 @@ void orte_rml_oob_purge(orte_process_name_t *peer)
         } else if (OPAL_EQUAL == orte_util_compare_name_fields(mask, &step, &hdr->destination)) {
             opal_list_remove_item(&orte_rml_oob_module.queued_routing_messages, item);
             OBJ_RELEASE(item);
-        }            
+        }
         item = next;
     }
 #endif

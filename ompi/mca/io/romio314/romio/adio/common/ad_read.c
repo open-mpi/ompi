@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -20,7 +20,7 @@
 #include <limits.h>
 #endif
 
-void ADIOI_GEN_ReadContig(ADIO_File fd, void *buf, int count, 
+void ADIOI_GEN_ReadContig(ADIO_File fd, void *buf, int count,
 			  MPI_Datatype datatype, int file_ptr_type,
 			  ADIO_Offset offset, ADIO_Status *status,
 			  int *error_code)
@@ -96,7 +96,7 @@ void ADIOI_GEN_ReadContig(ADIO_File fd, void *buf, int count,
     fd->fp_sys_posn = offset + bytes_xfered;
 
     if (file_ptr_type == ADIO_INDIVIDUAL) {
-	fd->fp_ind += bytes_xfered; 
+	fd->fp_ind += bytes_xfered;
     }
 
 #ifdef HAVE_STATUS_SET_BYTES

@@ -20,7 +20,7 @@ ompi_mtl_portals4_cancel(struct mca_mtl_base_module_t* mtl,
                          mca_mtl_request_t *mtl_request,
                          int flag)
 {
-    ompi_mtl_portals4_base_request_t *base_request = 
+    ompi_mtl_portals4_base_request_t *base_request =
         (ompi_mtl_portals4_base_request_t*) mtl_request;
     int ret;
 
@@ -31,7 +31,7 @@ ompi_mtl_portals4_cancel(struct mca_mtl_base_module_t* mtl,
 
     case portals4_req_recv:
         {
-            ompi_mtl_portals4_recv_request_t *recvreq = 
+            ompi_mtl_portals4_recv_request_t *recvreq =
                 (ompi_mtl_portals4_recv_request_t*) base_request;
 
             /* Cancel receive requests if not yet matched (otherwise,

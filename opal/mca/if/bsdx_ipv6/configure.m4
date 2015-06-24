@@ -1,10 +1,10 @@
 # -*- shell-script -*-
 #
-# Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved. 
+# Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
-# 
+#
 # Additional copyrights may follow
-# 
+#
 # $HEADER$
 #
 
@@ -14,7 +14,7 @@ AC_DEFUN([MCA_opal_if_bsdx_ipv6_COMPILE_MODE], [
     AC_MSG_RESULT([$$4])
 ])
 
-# MCA_if_config_CONFIG(action-if-can-compile, 
+# MCA_if_config_CONFIG(action-if-can-compile,
 #                        [action-if-cant-compile])
 # ------------------------------------------------
 AC_DEFUN([MCA_opal_if_bsdx_ipv6_CONFIG], [
@@ -25,7 +25,7 @@ AC_DEFUN([MCA_opal_if_bsdx_ipv6_CONFIG], [
     # If we found struct sockaddr and we're on any of the BSDs, we're
     # happy.  I.e., this:
     #if defined( __NetBSD__) || defined(__OpenBSD__) || defined(__FreeBSD__) || \
-    #             defined(__386BSD__) || defined(__bsdi__) || defined(__APPLE__) 
+    #             defined(__386BSD__) || defined(__bsdi__) || defined(__APPLE__)
     AC_MSG_CHECKING([struct sockaddr])
     AS_IF([test "$opal_found_sockaddr" = "yes"],
           [AC_MSG_RESULT([yes (cached)])

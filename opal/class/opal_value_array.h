@@ -5,14 +5,14 @@
  * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -51,7 +51,7 @@ typedef struct opal_value_array_t opal_value_array_t;
 OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_value_array_t);
 
 /**
- *  Initialize the array to hold items by value. This routine must 
+ *  Initialize the array to hold items by value. This routine must
  *  be called prior to using the array.
  *
  *  @param   array       The array to initialize (IN).
@@ -66,7 +66,7 @@ OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_value_array_t);
 static inline int opal_value_array_init(opal_value_array_t *array, size_t item_sizeof)
 {
     array->array_item_sizeof = item_sizeof;
-    array->array_alloc_size = 1; 
+    array->array_alloc_size = 1;
     array->array_size = 0;
     array->array_items = (unsigned char*)realloc(array->array_items, item_sizeof * array->array_alloc_size);
     return (NULL != array->array_items) ? OPAL_SUCCESS : OPAL_ERR_OUT_OF_RESOURCE;
@@ -121,15 +121,15 @@ static inline size_t opal_value_array_get_size(opal_value_array_t* array)
  *  Note that resizing the array to a smaller size may not change
  *  the underlying memory allocated by the array. However, setting
  *  the size larger than the current allocation will grow it. In either
- *  case, if the routine is successful, opal_value_array_get_size() will 
+ *  case, if the routine is successful, opal_value_array_get_size() will
  *  return the new size.
  */
 
 OPAL_DECLSPEC int opal_value_array_set_size(opal_value_array_t* array, size_t size);
 
 
-/** 
- *  Macro to retrieve an item from the array by value. 
+/**
+ *  Macro to retrieve an item from the array by value.
  *
  *  @param  array       The input array (IN).
  *  @param  item_type   The C datatype of the array item (IN).
@@ -137,8 +137,8 @@ OPAL_DECLSPEC int opal_value_array_set_size(opal_value_array_t* array, size_t si
  *
  *  @returns item       The requested item.
  *
- *  Note that this does not change the size of the array - this macro is 
- *  strictly for performance - the user assumes the responsibility of 
+ *  Note that this does not change the size of the array - this macro is
+ *  strictly for performance - the user assumes the responsibility of
  *  ensuring the array index is valid (0 <= item index < array size).
  */
 
@@ -164,7 +164,7 @@ static inline void* opal_value_array_get_item(opal_value_array_t *array, size_t 
     return array->array_items + (item_index * array->array_item_sizeof);
 }
 
-/** 
+/**
  *  Macro to set an array element by value.
  *
  *  @param  array       The input array (IN).
@@ -172,8 +172,8 @@ static inline void* opal_value_array_get_item(opal_value_array_t *array, size_t 
  *  @param  item_index  The array index (IN).
  *  @param  item_value  The new value for the specified index (IN).
  *
- *  Note that this does not change the size of the array - this macro is 
- *  strictly for performance - the user assumes the responsibility of 
+ *  Note that this does not change the size of the array - this macro is
+ *  strictly for performance - the user assumes the responsibility of
  *  ensuring the array index is valid (0 <= item index < array size).
  *
  * It is safe to free the item after returning from this call; it is
@@ -183,12 +183,12 @@ static inline void* opal_value_array_get_item(opal_value_array_t *array, size_t 
 #define OPAL_VALUE_ARRAY_SET_ITEM(array, item_type, item_index, item_value) \
     (((item_type*)((array)->array_items))[item_index] = item_value)
 
-/** 
+/**
  *  Set an array element by value.
  *
  *  @param   array       The input array (IN).
  *  @param   item_index  The array index (IN).
- *  @param   item_value  A pointer to the item, which is copied into 
+ *  @param   item_value  A pointer to the item, which is copied into
  *                       the array.
  *
  *  @return  OPAL error code.
@@ -200,7 +200,7 @@ static inline void* opal_value_array_get_item(opal_value_array_t *array, size_t 
 static inline int opal_value_array_set_item(opal_value_array_t *array, size_t item_index, const void* item)
 {
     int rc;
-    if(item_index >= array->array_size && 
+    if(item_index >= array->array_size &&
        (rc = opal_value_array_set_size(array, item_index+1)) != OPAL_SUCCESS)
         return rc;
     memcpy(array->array_items + (item_index * array->array_item_sizeof), item, array->array_item_sizeof);
@@ -209,13 +209,13 @@ static inline int opal_value_array_set_item(opal_value_array_t *array, size_t it
 
 
 /**
- *  Appends an item to the end of the array. 
+ *  Appends an item to the end of the array.
  *
  *  @param   array    The input array (IN).
- *  @param   item     A pointer to the item to append, which is copied 
+ *  @param   item     A pointer to the item to append, which is copied
  *                    into the array.
  *
- *  @return  OPAL error code 
+ *  @return  OPAL error code
  *
  * This will grow the array if it is not large enough to contain the
  * item.  It is safe to free the item after returning from this call;
@@ -229,7 +229,7 @@ static inline int opal_value_array_append_item(opal_value_array_t *array, const 
 
 
 /**
- *  Remove a specific item from the array. 
+ *  Remove a specific item from the array.
  *
  *  @param   array       The input array (IN).
  *  @param   item_index  The index to remove, which must be less than
@@ -247,8 +247,8 @@ static inline int opal_value_array_remove_item(opal_value_array_t *array, size_t
         opal_output(0, "opal_value_array_remove_item: invalid index %lu\n", (unsigned long)item_index);
         return OPAL_ERR_BAD_PARAM;
     }
-#endif   
-    memmove(array->array_items+(array->array_item_sizeof * item_index), 
+#endif
+    memmove(array->array_items+(array->array_item_sizeof * item_index),
             array->array_items+(array->array_item_sizeof * (item_index+1)),
             array->array_item_sizeof * (array->array_size - item_index - 1));
     array->array_size--;
@@ -257,7 +257,7 @@ static inline int opal_value_array_remove_item(opal_value_array_t *array, size_t
 
 /**
  * Get the base pointer of the underlying array.
- * 
+ *
  * @param array The input array (IN).
  * @param array_type The C datatype of the array (IN).
  *

@@ -3,9 +3,9 @@
 #                         All rights reserved
 # Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
-# 
+#
 # Additional copyrights may follow
-# 
+#
 # $HEADER$
 #
 
@@ -13,7 +13,7 @@ include $(top_srcdir)/Makefile.ompi-rules
 
 #
 # OSHMEM_PROFILING flag is enabled when we want our shmem_* symbols
-# to be replaced by pshmem_*. In other words, this flag decides 
+# to be replaced by pshmem_*. In other words, this flag decides
 # whether "profile/defines.h" is included or not. "profile/defines.h"
 # replaces all shmem_* symbols with pshmem_* symbols. In this directory
 # we definately need it to be 1.

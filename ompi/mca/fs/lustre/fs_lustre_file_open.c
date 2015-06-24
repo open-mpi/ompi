@@ -5,15 +5,15 @@
  * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2011 University of Houston. All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -41,7 +41,7 @@
  *	Returns:	- Success if new file handle
  */
 int
-mca_fs_lustre_file_open (struct ompi_communicator_t *comm, 
+mca_fs_lustre_file_open (struct ompi_communicator_t *comm,
                      char* filename,
                      int access_mode,
                      struct ompi_info_t *info,
@@ -77,7 +77,7 @@ mca_fs_lustre_file_open (struct ompi_communicator_t *comm,
     if ((mca_fs_lustre_stripe_size || mca_fs_lustre_stripe_width) &&
         (amode&O_CREAT) && (amode&O_RDWR)) {
         if (0 == fh->f_rank) {
-            llapi_file_create(filename, 
+            llapi_file_create(filename,
                               mca_fs_lustre_stripe_size,
                               -1, /* MSC need to change that */
                               mca_fs_lustre_stripe_width,
@@ -85,13 +85,13 @@ mca_fs_lustre_file_open (struct ompi_communicator_t *comm,
 
             fh->fd = open(filename, O_CREAT | O_RDWR | O_LOV_DELAY_CREATE, perm);
             if (fh->fd < 0) {
-                fprintf(stderr, "Can't open %s file: %d (%s)\n", 
+                fprintf(stderr, "Can't open %s file: %d (%s)\n",
                         filename, errno, strerror(errno));
                 return OMPI_ERROR;
             }
             close (fh->fd);
         }
-        fh->f_comm->c_coll.coll_barrier (fh->f_comm, 
+        fh->f_comm->c_coll.coll_barrier (fh->f_comm,
                                          fh->f_comm->c_coll.coll_barrier_module);
     }
 

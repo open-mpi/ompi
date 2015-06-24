@@ -6,9 +6,9 @@
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 /** @file */
@@ -28,9 +28,9 @@
 /**
  * All-reduce for contigous primitive types
  */
-OMPI_DECLSPEC int comm_allreduce_pml(void *sbuf, void *rbuf, int count, 
+OMPI_DECLSPEC int comm_allreduce_pml(void *sbuf, void *rbuf, int count,
         ompi_datatype_t *dtype, int my_rank_in_group,
-        struct ompi_op_t *op, int n_peers,int *ranks_in_comm, 
+        struct ompi_op_t *op, int n_peers,int *ranks_in_comm,
         ompi_communicator_t *comm)
 {
     /* local variables */
@@ -55,7 +55,7 @@ OMPI_DECLSPEC int comm_allreduce_pml(void *sbuf, void *rbuf, int count,
     if( OMPI_SUCCESS != rc ) {
         goto Error;
     }
-    
+
     /* 1 process special case */
     if(1 == n_peers) {
         /* place my data in the correct destination buffer */
@@ -108,7 +108,7 @@ OMPI_DECLSPEC int comm_allreduce_pml(void *sbuf, void *rbuf, int count,
         if(0 < my_exchange_node.n_extra_sources)  {
 
             if ( EXCHANGE_NODE == my_exchange_node.node_type ) {
-                
+
                 /*
                 ** Receive data from extra node
                 */
@@ -134,7 +134,7 @@ OMPI_DECLSPEC int comm_allreduce_pml(void *sbuf, void *rbuf, int count,
 
 
             } else {
-        
+
                 /*
                 ** Send data to "partner" node
                 */
@@ -208,8 +208,8 @@ OMPI_DECLSPEC int comm_allreduce_pml(void *sbuf, void *rbuf, int count,
         if(0 < my_exchange_node.n_extra_sources)  {
 
             if ( EXTRA_NODE == my_exchange_node.node_type ) {
-                /* 
-                ** receive the data 
+                /*
+                ** receive the data
                 ** */
                 extra_rank=my_exchange_node.rank_extra_source;
                 rc=MCA_PML_CALL(recv(scratch_bufers[recv_buffer],
@@ -245,7 +245,7 @@ OMPI_DECLSPEC int comm_allreduce_pml(void *sbuf, void *rbuf, int count,
         /* copy data from the temp buffer into the output buffer */
         rbuf_current = (char *) rbuf + count_processed * dt_size;
         memcpy(rbuf_current,scratch_bufers[send_buffer], count_this_stripe*dt_size);
-    
+
         /* update the count of elements processed */
         count_processed += count_this_stripe;
     }

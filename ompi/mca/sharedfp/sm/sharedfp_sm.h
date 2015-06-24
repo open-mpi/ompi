@@ -47,7 +47,7 @@ OMPI_MODULE_DECLSPEC extern mca_sharedfp_base_component_2_0_0_t mca_sharedfp_sm_
  * ******************************************************************
  */
 /*IMPORANT: Update here when implementing functions from sharedfp API*/
-int mca_sharedfp_sm_seek (mca_io_ompio_file_t *fh, 
+int mca_sharedfp_sm_seek (mca_io_ompio_file_t *fh,
                                   OMPI_MPI_OFFSET_TYPE offset, int whence);
 int mca_sharedfp_sm_get_position (mca_io_ompio_file_t *fh,
                                           OMPI_MPI_OFFSET_TYPE * offset);

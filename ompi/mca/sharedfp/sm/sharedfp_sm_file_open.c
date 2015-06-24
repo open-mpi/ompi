@@ -94,7 +94,7 @@ int mca_sharedfp_sm_file_open (struct ompi_communicator_t *comm,
 	printf( "mca_sharedfp_sm_file_open: allocatge shared memory segment.\n");
     }
 
-    
+
     sm_data = (struct mca_sharedfp_sm_data*) malloc ( sizeof(struct mca_sharedfp_sm_data));
     if ( NULL == sm_data ){
         opal_output(0, "mca_sharedfp_sm_file_open: Error, unable to malloc sm_data struct\n");
@@ -132,25 +132,25 @@ int mca_sharedfp_sm_file_open (struct ompi_communicator_t *comm,
         free(sm_data);
         free(sh);
         free(shfileHandle);
-        return OMPI_ERROR;	
+        return OMPI_ERROR;
     }
 
         free(sm_filename);
     sm_data->sm_filename = sm_filename;
-    
+
     /*TODO: is it necessary to write to the file first?*/
     if( 0 == rank ){
 	memset ( &sm_offset, 0, sizeof (struct sm_offset ));
 	write ( sm_fd, &sm_offset, sizeof(struct sm_offset));
     }
     comm->c_coll.coll_barrier (comm, comm->c_coll.coll_barrier_module );
-    
+
     /*the file has been written to, now we can map*/
     sm_offset_ptr = mmap(NULL, sizeof(struct sm_offset), PROT_READ | PROT_WRITE,
 			 MAP_SHARED, sm_fd, 0);
-    
+
     close(sm_fd);
-    
+
     if ( sm_offset_ptr==MAP_FAILED){
 	err = OMPI_ERROR;
 	printf("mca_sharedfp_sm_file_open: Error, unable to mmap file: %s\n",sm_filename);
@@ -159,7 +159,7 @@ int mca_sharedfp_sm_file_open (struct ompi_communicator_t *comm,
         free(sm_data);
         free(sh);
         free(shfileHandle);
-        return OMPI_ERROR;	
+        return OMPI_ERROR;
     }
 
     /* Initialize semaphore so that is shared between processes.           */
@@ -180,7 +180,7 @@ int mca_sharedfp_sm_file_open (struct ompi_communicator_t *comm,
 	sh->selected_module_data   = sm_data;
 	/*remember the shared file handle*/
 	fh->f_sharedfp_data = sh;
-	
+
 	/*write initial zero*/
 	if(rank==0){
 	    MPI_Offset position=0;

@@ -6,22 +6,22 @@ dnl                         Corporation.  All rights reserved.
 dnl Copyright (c) 2004-2005 The University of Tennessee and The University
 dnl                         of Tennessee Research Foundation.  All rights
 dnl                         reserved.
-dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2010-2014 Cisco Systems, Inc.  All rights reserved.
 dnl $COPYRIGHT$
-dnl 
+dnl
 dnl Additional copyrights may follow
-dnl 
+dnl
 dnl $HEADER$
 dnl
 
 # Check whether or not the Fortran compiler supports the "procedure"
 # keyword in derived types or not.
 
-# OMPI_FORTRAN_CHECK_PROCEDURE([action if found], 
+# OMPI_FORTRAN_CHECK_PROCEDURE([action if found],
 #                            [action if not found])
 # ----------------------------------------------------
 AC_DEFUN([OMPI_FORTRAN_CHECK_PROCEDURE],[

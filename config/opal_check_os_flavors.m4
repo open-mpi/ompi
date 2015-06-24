@@ -59,9 +59,9 @@ AC_DEFUN([OPAL_CHECK_OS_FLAVORS],
 
     # check for sockaddr_in (a good sign we have TCP)
     AC_CHECK_HEADERS([netdb.h netinet/in.h netinet/tcp.h])
-    AC_CHECK_TYPES([struct sockaddr_in], 
+    AC_CHECK_TYPES([struct sockaddr_in],
                    [opal_found_sockaddr=yes],
-                   [opal_found_sockaddr=no], 
+                   [opal_found_sockaddr=no],
                    [AC_INCLUDES_DEFAULT
 #ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>

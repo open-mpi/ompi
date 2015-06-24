@@ -1,9 +1,9 @@
 /*
- * Copyright (c) 2014      Intel, Inc.  All rights reserved. 
+ * Copyright (c) 2014      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -102,7 +102,7 @@ static int write_help_msg(int fd, orte_odls_pipe_err_msg_t *msg, const char *fil
     return ret;
 }
 
-int orte_rtc_base_send_warn_show_help(int fd, const char *file, 
+int orte_rtc_base_send_warn_show_help(int fd, const char *file,
                                       const char *topic, ...)
 {
     int ret;

@@ -6,9 +6,9 @@
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -118,7 +118,7 @@ static int testcase(ompi_datatype_t * newtype, size_t arr[10][2]) {
             bar[j].d[2] != pbar[j].d[1]) {
             if(0 == errors) {
                 fprintf(stderr, "ERROR ! count=%d, position=%d, ptr = %p"
-                        " got (%d,%d,%d,%g,%g,%g) expected (%d,%d,%d,%g,%g,%g)\n", 
+                        " got (%d,%d,%d,%g,%g,%g) expected (%d,%d,%d,%g,%g,%g)\n",
                         N, j, (void*)&bar[j],
                         bar[j].i[0],
                         bar[j].i[1],
@@ -254,7 +254,7 @@ static int unpack_ooo(void)
         fprintf(stderr, "could not create struct\n");
         return 1;
     }
-    
+
     pbar = (struct pfoo_t *)malloc (N * sizeof(struct pfoo_t));
     if (NULL == pbar) {
         fprintf(stderr, "could not malloc pbar\n");

@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2007 University of Houston. All rights reserved.
  * Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
- *                         reserved. 
+ *                         reserved.
  * Copyright (c) 2007-2013 Cisco Systems, Inc.  All rights reserved.
  *
  * $COPYRIGHT$
@@ -55,7 +55,7 @@ char* ompi_dpm_base_dyn_init (void)
         }
         port_name = strdup(ptr);
     }
-    
+
     return port_name;
 }
 

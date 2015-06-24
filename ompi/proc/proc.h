@@ -5,18 +5,18 @@
  * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007-2012 Los Alamos National Security, LLC.  All rights
- *                         reserved. 
+ *                         reserved.
  * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -47,7 +47,7 @@ BEGIN_C_DECLS
 
 /**
  * Remote Open MPI process structure
- * 
+ *
  * Remote Open MPI process structure.  Each process contains exactly
  * one ompi_proc_t structure for each remote process it knows about.
  *
@@ -59,7 +59,7 @@ BEGIN_C_DECLS
  * should call OMPI_REQUIRE_ENDPOINT_TAG(<name>).  Requests which
  * share the same name will have the same value, allowing
  * cross-component sharing of endpoint data.  The tag may be referenced
- * by the pre-processor define OMPI_PROC_ENDPOINT_TAG_<name>.  Adding 
+ * by the pre-processor define OMPI_PROC_ENDPOINT_TAG_<name>.  Adding
  * a tag increases the memory consumed by Open MPI, so should only be done
  * if unavoidable.
  */
@@ -200,14 +200,14 @@ OMPI_DECLSPEC ompi_proc_t** ompi_proc_self(size_t* size);
  *
  * @return Pointer to the local process structure
  */
-static inline ompi_proc_t* ompi_proc_local(void) 
-{   
+static inline ompi_proc_t* ompi_proc_local(void)
+{
     return ompi_proc_local_proc;
 }
 
 
 /**
- * Returns the proc instance for a given name 
+ * Returns the proc instance for a given name
  *
  * Returns the proc instance for the specified process name.  The
  * reference count for the proc instance is not incremented by this
@@ -228,10 +228,10 @@ OMPI_DECLSPEC ompi_proc_t * ompi_proc_find ( const ompi_process_name_t* name );
  * process name, the architecture, and the hostname.  Ordering is
  * maintained.  The buffer is packed to be sent to a remote node with
  * different architecture (endian or word size).
- * 
+ *
  * @param[in] proclist     List of process pointers
  * @param[in] proclistsize Length of the proclist array
- * @param[in,out] buf      An opal_buffer containing the packed names.  
+ * @param[in,out] buf      An opal_buffer containing the packed names.
  *                         The buffer must be constructed but empty when
  *                         passed to this function
  * @retval OMPI_SUCCESS    Success
@@ -281,7 +281,7 @@ OMPI_DECLSPEC int ompi_proc_pack(ompi_proc_t **proclist, int proclistsize,
  *   OMPI_SUCCESS               on success
  *   OMPI_ERROR                 else
  */
-OMPI_DECLSPEC int ompi_proc_unpack(opal_buffer_t *buf, 
+OMPI_DECLSPEC int ompi_proc_unpack(opal_buffer_t *buf,
                                    int proclistsize, ompi_proc_t ***proclist,
                                    bool full_info,
                                    int *newproclistsize, ompi_proc_t ***newproclist);

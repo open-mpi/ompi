@@ -6,7 +6,7 @@
  * Copyright (c) 2004-2009 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -17,9 +17,9 @@
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -35,7 +35,7 @@
 #include "pml_bfo_recvreq.h"
 #include "pml_bfo_rdmafrag.h"
 #include "pml_bfo_recvfrag.h"
-#include "ompi/mca/bml/base/base.h" 
+#include "ompi/mca/bml/base/base.h"
 #include "pml_bfo_component.h"
 #include "opal/mca/allocator/base/base.h"
 #include "opal/runtime/opal_params.h"
@@ -82,7 +82,7 @@ mca_pml_base_component_2_0_0_t mca_pml_bfo_component = {
 void *mca_pml_bfo_seg_alloc( struct mca_mpool_base_module_t* mpool,
                              size_t* size,
                              mca_mpool_base_registration_t** registration);
- 
+
 void mca_pml_bfo_seg_free( struct mca_mpool_base_module_t* mpool,
                            void* segment );
 
@@ -154,8 +154,8 @@ static int mca_pml_bfo_component_open(void)
     mca_pml_bfo_output = opal_output_open(NULL);
     opal_output_set_verbosity(mca_pml_bfo_output, mca_pml_bfo_verbose);
 
-    mca_pml_bfo.enabled = false; 
-    return mca_base_framework_open(&ompi_bml_base_framework, 0); 
+    mca_pml_bfo.enabled = false;
+    return mca_base_framework_open(&ompi_bml_base_framework, 0);
 }
 
 
@@ -173,7 +173,7 @@ static int mca_pml_bfo_component_close(void)
 
 
 static mca_pml_base_module_t*
-mca_pml_bfo_component_init( int* priority, 
+mca_pml_bfo_component_init( int* priority,
                             bool enable_progress_threads,
                             bool enable_mpi_threads )
 {
@@ -182,7 +182,7 @@ mca_pml_bfo_component_init( int* priority,
     opal_output_verbose( 10, mca_pml_bfo_output,
                          "in bfo, my priority is %d\n", mca_pml_bfo.priority);
 
-    if((*priority) > mca_pml_bfo.priority) { 
+    if((*priority) > mca_pml_bfo.priority) {
         *priority = mca_pml_bfo.priority;
         return NULL;
     }
@@ -203,7 +203,7 @@ mca_pml_bfo_component_init( int* priority,
     }
 
 
-    if(OMPI_SUCCESS != mca_bml_base_init( enable_progress_threads, 
+    if(OMPI_SUCCESS != mca_bml_base_init( enable_progress_threads,
                                           enable_mpi_threads)) {
         return NULL;
     }
@@ -226,7 +226,7 @@ int mca_pml_bfo_component_fini(void)
         return rc;
 
     if(!mca_pml_bfo.enabled)
-        return OMPI_SUCCESS; /* never selected.. return success.. */  
+        return OMPI_SUCCESS; /* never selected.. return success.. */
     mca_pml_bfo.enabled = false;  /* not anymore */
 
     OBJ_DESTRUCT(&mca_pml_bfo.rdma_pending);
@@ -264,11 +264,11 @@ int mca_pml_bfo_component_fini(void)
 
 void *mca_pml_bfo_seg_alloc( struct mca_mpool_base_module_t* mpool,
                              size_t* size,
-                             mca_mpool_base_registration_t** registration) { 
+                             mca_mpool_base_registration_t** registration) {
     return malloc(*size);
 }
 
 void mca_pml_bfo_seg_free( struct mca_mpool_base_module_t* mpool,
-                           void* segment ) { 
+                           void* segment ) {
     free(segment);
 }

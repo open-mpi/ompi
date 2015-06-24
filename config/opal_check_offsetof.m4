@@ -3,9 +3,9 @@
 # Copyright (c) 2009      IBM Corporation.  All rights reserved.
 # Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
-# 
+#
 # Additional copyrights may follow
-# 
+#
 # $HEADER$
 #
 

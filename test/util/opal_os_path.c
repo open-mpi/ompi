@@ -5,14 +5,14 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -43,7 +43,7 @@ int main(int argc, char* argv[])
     opal_init(&argc, &argv);
 
     test_init("opal_os_path_t");
-    
+
     if (test1()) {
         test_success();
     }
@@ -108,7 +108,7 @@ static bool test2(void)
     char out[1024];
     char *tmp;
     char *a[] = { "aaa", "bbb", "ccc", NULL };
- 
+
     if (NULL == path_sep) {
         printf("test2 cannot be run\n");
         return(false);

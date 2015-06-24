@@ -2,9 +2,9 @@
  * Copyright (c)      2010 The Trustees of Indiana University.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -537,7 +537,7 @@ static int pull_handle_info(orte_sstore_central_app_snapshot_info_t *handle_info
                          "sstore:central:(app): pull() from %s -> %s (%d, %d, %s)",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(ORTE_PROC_MY_DAEMON),
-                         handle_info->id, 
+                         handle_info->id,
                          handle_info->seq_num,
                          handle_info->global_ref_name
                          ));

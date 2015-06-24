@@ -45,7 +45,7 @@ OMPI_DECLSPEC int netpatterns_setup_recursive_knomial_allgather_tree_node(
     int k_temp2;
     int myid, reindex_myid = 0;
     int base, peer_base,base_temp;
-    int peer; 
+    int peer;
     int *prev_data = NULL;
     int *current_data = NULL;
     int *group_info = NULL;
@@ -64,8 +64,8 @@ OMPI_DECLSPEC int netpatterns_setup_recursive_knomial_allgather_tree_node(
     /* k-nomial radix */
     exchange_node->tree_order = tree_order;
 
-    /* Calculate the number of levels in the tree for 
-     * the largest power of tree_order less than or 
+    /* Calculate the number of levels in the tree for
+     * the largest power of tree_order less than or
      * equal to the group size
      */
     n_levels = 0;
@@ -74,8 +74,8 @@ OMPI_DECLSPEC int netpatterns_setup_recursive_knomial_allgather_tree_node(
         cnt *= tree_order;
         n_levels++;
     }
-    /* this is the actual number of recusive k-ing steps 
-     * we will perform, the last step may not be a full 
+    /* this is the actual number of recusive k-ing steps
+     * we will perform, the last step may not be a full
      * step depending on the outcome of the next conditional
      */
     pow_k = n_levels;
@@ -91,7 +91,7 @@ OMPI_DECLSPEC int netpatterns_setup_recursive_knomial_allgather_tree_node(
     exchange_node->log_tree_order = pow_k;
     exchange_node->n_largest_pow_tree_order = cnt;
 
-    
+
     /* find the number of complete groups of size tree_order, tree_order^2, tree_order^3,...,tree_order^pow_k */
     /* I don't think we need to cache this info this group_info array */
     group_info = (int *) calloc(pow_k , sizeof(int));
@@ -110,11 +110,11 @@ OMPI_DECLSPEC int netpatterns_setup_recursive_knomial_allgather_tree_node(
     }
     knt--;
     /*fprintf(stderr,"Maximal power of k is %d and the number of incomplete groups is %d \n", knt+1 ,tree_order - group_info[knt] );*/
-    
+
     /* k_temp is a synonym for cnt which is the largest full power of k group */
-    /* now, start the calculation to find the first stray rank aka "extra" rank */ 
+    /* now, start the calculation to find the first stray rank aka "extra" rank */
     stray = 0;
-    /*fprintf(stderr,"Maximal power of k %d, first stragler rank is %d and the number of straglers is %d\n",cnt, 
+    /*fprintf(stderr,"Maximal power of k %d, first stragler rank is %d and the number of straglers is %d\n",cnt,
                                                                            cnt*group_info[knt],
                                                                            num_nodes - cnt*group_info[knt]);*/
 
@@ -212,9 +212,9 @@ OMPI_DECLSPEC int netpatterns_setup_recursive_knomial_allgather_tree_node(
         }
 
     }
-    /* intialize the payload array 
-       This is the money struct, just need to initialize this with 
-       the subgroup information */ 
+    /* intialize the payload array
+       This is the money struct, just need to initialize this with
+       the subgroup information */
     /*
     for(i = 0; i < num_nodes; i++){
         prev_data[i] = 1;
@@ -227,8 +227,8 @@ OMPI_DECLSPEC int netpatterns_setup_recursive_knomial_allgather_tree_node(
         current_data[i] = hier_ranks[i];
     }
 
-    /* everyone will need to do this loop over all ranks 
-     * Phase I calculate the contribution from the extra ranks 
+    /* everyone will need to do this loop over all ranks
+     * Phase I calculate the contribution from the extra ranks
      */
     for( myid = 0; myid < num_nodes; myid++) {
         /* get my new rank */
@@ -268,7 +268,7 @@ OMPI_DECLSPEC int netpatterns_setup_recursive_knomial_allgather_tree_node(
                     break;
                 }
             }
-            if( reindex_myid < stray ) { 
+            if( reindex_myid < stray ) {
                 /* now start the actual algorithm */
                 FIND_BASE(base,reindex_myid,i+1,tree_order);
                 for( j = 0; j < ( tree_order - 1 ); j ++ ) {
@@ -280,19 +280,19 @@ OMPI_DECLSPEC int netpatterns_setup_recursive_knomial_allgather_tree_node(
                             exchange_node->payload_info[i][j].r_len = prev_data[exchange_node->reindex_map[peer]];
                             /*fprintf(stderr,"exchange_node->payload_info[%d][%d].r_len %d\n",i,j,prev_data[exchange_node->reindex_map[peer]]);*/
                             if( i > 0 ) {
-                                
+
                                 /* find my len and offset */
                                 FIND_BASE(peer_base,peer,i,tree_order);
                                 /* I do not want to mess with this, but it seems that I have no choice */
                                ex_node = exchange_node->reindex_map[peer_base];
                                /* now, find out how far down the line this guy really is */
                                knt2 =0;
-                               for(kk = 0; kk < ex_node; kk++){ 
+                               for(kk = 0; kk < ex_node; kk++){
                                    knt2 += hier_ranks[kk];
                                }
-                                exchange_node->payload_info[i][j].r_offset = knt2; 
+                                exchange_node->payload_info[i][j].r_offset = knt2;
                                 /*fprintf(stderr,"exchange_node->payload_info[%d][%d].r_offset %d\n",i,j,exchange_node->payload_info[i][j].r_offset);*/
-                                
+
                                 FIND_BASE(base_temp,reindex_myid,i,tree_order);
                                 ex_node = exchange_node->reindex_map[base_temp];
                                 knt2 = 0;
@@ -315,7 +315,7 @@ OMPI_DECLSPEC int netpatterns_setup_recursive_knomial_allgather_tree_node(
                                 for(kk = 0; kk < myid; kk++){
                                     knt2 += hier_ranks[kk];
                                 }
-                                exchange_node->payload_info[i][j].s_offset = knt2; 
+                                exchange_node->payload_info[i][j].s_offset = knt2;
                                 /*fprintf(stderr,"exchange_node->payload_info[%d][%d].s_offset %d\n",i,j, exchange_node->payload_info[i][j].s_offset);*/
                             }
                             /* how much I am to receive from this peer on this level */
@@ -345,7 +345,7 @@ OMPI_DECLSPEC int netpatterns_setup_recursive_knomial_allgather_tree_node(
             prev_data[j] = current_data[j];
         }
        /* fprintf(stderr,"\n");*/
-        
+
     }
 
 
@@ -368,7 +368,7 @@ OMPI_DECLSPEC int netpatterns_setup_recursive_knomial_allgather_tree_node(
         exchange_node->n_extra_sources = 0;
         for( i = stray; i < num_nodes; i++) {
             if(exchange_node->reindex_myid == ( i - cnt )) {
-                /* then I am a proxy rank and there is only a 
+                /* then I am a proxy rank and there is only a
                  * single extra source
                  */
                 exchange_node->n_extra_sources = 1;
@@ -407,7 +407,7 @@ OMPI_DECLSPEC int netpatterns_setup_recursive_knomial_allgather_tree_node(
         /* initialize this */
         exchange_node->n_actual_exchanges = 0;
         /* Allocate 2 dimension array thak keeps
-         rank exchange information for each step*/ 
+         rank exchange information for each step*/
         exchange_node->rank_exchanges = (int **) malloc
             (exchange_node->n_exchanges * sizeof(int *));
         if(NULL == exchange_node->rank_exchanges) {
@@ -434,12 +434,12 @@ OMPI_DECLSPEC int netpatterns_setup_recursive_knomial_allgather_tree_node(
                 if ( peer < stray ) {
                     exchange_node->rank_exchanges[i][j] = exchange_node->reindex_map[peer];
                     /* an actual exchange occurs, bump the counter */
-                   
+
                 } else {
                     /* out of range, skip it - do not bump the n_actual_exchanges counter */
                     exchange_node->rank_exchanges[i][j] = -1;
                 }
-            
+
             }
             k_temp1 *= tree_order;
             k_temp2 *= tree_order;
@@ -465,7 +465,7 @@ OMPI_DECLSPEC int netpatterns_setup_recursive_knomial_allgather_tree_node(
      */
     /* do we need this one */
     exchange_node->n_tags = tree_order * n_levels + 1;
-    
+
     free(prev_data);
     free(current_data);
     free(group_info);
@@ -538,7 +538,7 @@ OMPI_DECLSPEC int netpatterns_setup_recursive_knomial_tree_node(
     /* local variables */
     int i, j, tmp, cnt;
     int n_levels;
-    int k_base, kpow_num, peer; 
+    int k_base, kpow_num, peer;
 
     NETPATTERNS_VERBOSE(
             ("Enter netpatterns_setup_recursive_knomial_tree_node(num_nodes=%d, node_rank=%d, tree_order=%d)",
@@ -624,7 +624,7 @@ OMPI_DECLSPEC int netpatterns_setup_recursive_knomial_tree_node(
     if (EXCHANGE_NODE == exchange_node->node_type) {
         exchange_node->n_exchanges = n_levels;
         /* Allocate 2 dimension array thak keeps
-         rank exchange information for each step*/ 
+         rank exchange information for each step*/
         exchange_node->rank_exchanges = (int **) malloc
             (exchange_node->n_exchanges * sizeof(int *));
         if(NULL == exchange_node->rank_exchanges) {
@@ -638,18 +638,18 @@ OMPI_DECLSPEC int netpatterns_setup_recursive_knomial_tree_node(
             }
         }
         /* fill in exchange partners */
-        for(i = 0, kpow_num = 1; i < exchange_node->n_exchanges; 
+        for(i = 0, kpow_num = 1; i < exchange_node->n_exchanges;
                                       i++, kpow_num *= tree_order) {
             k_base = node_rank / (kpow_num * tree_order);
             for(j = 1; j < tree_order; j++) {
                 peer = node_rank + kpow_num * j;
                 if (k_base != peer/(kpow_num * tree_order)) {
                     /* Wraparound the number */
-                    peer = k_base * (kpow_num * tree_order)  + 
+                    peer = k_base * (kpow_num * tree_order)  +
                         peer % (kpow_num * tree_order);
                 }
                 exchange_node->rank_exchanges[i][j - 1] = peer;
-                NETPATTERNS_VERBOSE(("rank_exchanges#(%d,%d)/%d = %d", 
+                NETPATTERNS_VERBOSE(("rank_exchanges#(%d,%d)/%d = %d",
                             i, j, tree_order, peer));
             }
         }
@@ -696,7 +696,7 @@ OMPI_DECLSPEC void netpatterns_cleanup_recursive_knomial_tree_node(
     }
 }
 
-#if 1 
+#if 1
 OMPI_DECLSPEC int netpatterns_setup_recursive_doubling_n_tree_node(int num_nodes, int node_rank, int tree_order,
         netpatterns_pair_exchange_node_t *exchange_node)
 {
@@ -858,7 +858,7 @@ OMPI_DECLSPEC int netpatterns_setup_recursive_doubling_tree_node(int num_nodes, 
     return netpatterns_setup_recursive_doubling_n_tree_node(num_nodes, node_rank, 2, exchange_node);
 }
 
-#if 0 
+#if 0
 /*OMPI_DECLSPEC int old_netpatterns_setup_recursive_doubling_tree_node(int num_nodes, int node_rank,*/
 OMPI_DECLSPEC int netpatterns_setup_recursive_doubling_n_tree_node(int num_nodes, int node_rank,int tree_order,
         netpatterns_pair_exchange_node_t *exchange_node)

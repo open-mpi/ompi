@@ -19,7 +19,7 @@ main(int argc, char *argv[]){
     double maxpower;
     unsigned char chr;
     bool readstdin;
-    
+
     /*
      * Init
      */
@@ -33,14 +33,14 @@ main(int argc, char *argv[]){
     } else {
         count = MAX_COUNT;
     }
-    
+
     if (argc == 3) {
         /* read from stdin */
         readstdin = true;
     } else {
         readstdin = false;
     }
-    
+
     if (0 == ORTE_PROC_MY_NAME->vpid && readstdin) {
         while (0 != (msgsize = read(0, msg, ORTE_IOF_BASE_MSG_MAX))) {
             if (msgsize > 0) {
@@ -49,9 +49,9 @@ main(int argc, char *argv[]){
             }
         }
     }
-    
+
     for (j=1; j < count+1; j++) {
-        
+
 #if 0
         maxpower = (double)(j%7);
 #endif
@@ -60,9 +60,9 @@ main(int argc, char *argv[]){
         memset(msg, chr, ORTE_IOF_BASE_MSG_MAX);
         msgsize = 10;
         msg[msgsize-1] = '\n';
-        
+
         write(1, msg, msgsize);
-        
+
     }
 
     orte_finalize();

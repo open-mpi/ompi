@@ -5,14 +5,14 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 /*
@@ -129,7 +129,7 @@ JNIEXPORT jlong JNICALL Java_mpi_Intracomm_createDistGraph(
 {
     MPI_Comm graph;
     int nnodes = (*env)->GetArrayLength(env, sources);
-    
+
     jint *jSources, *jDegrees, *jDestins, *jWeights = NULL;
     int  *cSources, *cDegrees, *cDestins, *cWeights = MPI_UNWEIGHTED;
     ompi_java_getIntArray(env, sources, &jSources, &cSources);
@@ -163,12 +163,12 @@ JNIEXPORT jlong JNICALL Java_mpi_Intracomm_createDistGraphAdjacent(
 
     int inDegree  = (*env)->GetArrayLength(env, sources),
         outDegree = (*env)->GetArrayLength(env, destins);
-    
+
     jint *jSources, *jDestins, *jSrcWeights, *jDesWeights;
     int  *cSources, *cDestins, *cSrcWeights, *cDesWeights;
     ompi_java_getIntArray(env, sources, &jSources, &cSources);
     ompi_java_getIntArray(env, destins, &jDestins, &cDestins);
-    
+
     if(weighted)
     {
         ompi_java_getIntArray(env, srcWeights, &jSrcWeights, &cSrcWeights);
@@ -179,7 +179,7 @@ JNIEXPORT jlong JNICALL Java_mpi_Intracomm_createDistGraphAdjacent(
         jSrcWeights = jDesWeights = NULL;
         cSrcWeights = cDesWeights = MPI_UNWEIGHTED;
     }
-    
+
     int rc = MPI_Dist_graph_create_adjacent((MPI_Comm)comm,
              inDegree, cSources, cSrcWeights, outDegree, cDestins,
              cDesWeights, (MPI_Info)info, reorder, &graph);
@@ -219,14 +219,14 @@ JNIEXPORT void JNICALL Java_mpi_Intracomm_scan(
         ompi_java_getReadPtr(&sPtr,&sItem,env,sBuf,sdb,sOff,count,type,bType);
         ompi_java_getWritePtr(&rPtr, &rItem, env, rBuf, rdb, count, type);
     }
-    
+
     MPI_Op op = ompi_java_op_getHandle(env, jOp, hOp, bType);
     int rc = MPI_Scan(sPtr, rPtr, count, type, op, comm);
     ompi_java_exceptionCheck(env, rc);
 
     if(sBuf != NULL)
         ompi_java_releaseReadPtr(sPtr, sItem, sBuf, sdb);
-    
+
     ompi_java_releaseWritePtr(rPtr,rItem,env,rBuf,rdb,rOff,count,type,bType);
 }
 
@@ -340,7 +340,7 @@ JNIEXPORT jlong JNICALL Java_mpi_Intracomm_accept(
                              root, (MPI_Comm)comm, &newComm);
 
     ompi_java_exceptionCheck(env, rc);
-    
+
     if(jport != NULL)
         (*env)->ReleaseStringUTFChars(env, jport, port);
 

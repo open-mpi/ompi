@@ -114,7 +114,7 @@ static int orte_notifier_base_register(mca_base_register_flag_t flags)
                                  &orte_notifier_base.default_actions);
 
     if (NULL == orte_notifier_base.default_actions) {
-        orte_notifier_base.default_actions = strdup(ORTE_NOTIFIER_DEFAULT_MODULE); 
+        orte_notifier_base.default_actions = strdup(ORTE_NOTIFIER_DEFAULT_MODULE);
     }
     /* let the user define a action for emergency events */
     orte_notifier_base.emerg_actions = NULL;
@@ -189,7 +189,7 @@ static int orte_notifier_base_register(mca_base_register_flag_t flags)
                                  &orte_notifier_base.error_actions);
 
     return ORTE_SUCCESS;
-}    
+}
 
 static int orte_notifier_base_close(void)
 {
@@ -206,7 +206,7 @@ static int orte_notifier_base_close(void)
         }
     }
     OPAL_LIST_DESTRUCT(&orte_notifier_base.modules);
-    
+
     /* close all remaining available components */
     return mca_base_framework_components_close(&orte_notifier_base_framework, NULL);
 }
@@ -218,14 +218,14 @@ static int orte_notifier_base_close(void)
 static int orte_notifier_base_open(mca_base_open_flag_t flags)
 {
     int rc;
-    
+
     /* construct the array of modules */
     OBJ_CONSTRUCT(&orte_notifier_base.modules, opal_list_t);
 
     /* if requested, create our own event base */
     if (use_progress_thread) {
         orte_notifier_base.ev_base_active = true;
-        if (NULL == (orte_notifier_base.ev_base = 
+        if (NULL == (orte_notifier_base.ev_base =
                      opal_start_progress_thread("notifier", true))) {
             orte_notifier_base.ev_base_active = false;
             return ORTE_ERROR;

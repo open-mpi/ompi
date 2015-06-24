@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
- *   Copyright (C) 1997 University of Chicago. 
+/*
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -16,9 +16,9 @@
 static MPIX_Grequest_class ADIOI_GEN_greq_class = 0;
 /* this routine is nearly identical to ADIOI_GEN_IwriteContig, except we lock
  * around I/O */
-void ADIOI_NFS_IwriteContig(ADIO_File fd, void *buf, int count, 
+void ADIOI_NFS_IwriteContig(ADIO_File fd, void *buf, int count,
                 MPI_Datatype datatype, int file_ptr_type,
-                ADIO_Offset offset, ADIO_Request *request, int *error_code)  
+                ADIO_Offset offset, ADIO_Request *request, int *error_code)
 {
     MPI_Count len, typesize;
     int aio_errno = 0;
@@ -118,9 +118,9 @@ int ADIOI_NFS_aio(ADIO_File fd, void *buf, int len, ADIO_Offset offset,
     }
     aio_req->aiocbp = aiocbp;
     if (ADIOI_GEN_greq_class == 0) {
-	    MPIX_Grequest_class_create(ADIOI_GEN_aio_query_fn, 
-			    ADIOI_GEN_aio_free_fn, MPIU_Greq_cancel_fn, 
-			    ADIOI_GEN_aio_poll_fn, ADIOI_GEN_aio_wait_fn, 
+	    MPIX_Grequest_class_create(ADIOI_GEN_aio_query_fn,
+			    ADIOI_GEN_aio_free_fn, MPIU_Greq_cancel_fn,
+			    ADIOI_GEN_aio_poll_fn, ADIOI_GEN_aio_wait_fn,
 			    &ADIOI_GEN_greq_class);
     }
     MPIX_Grequest_class_allocate(ADIOI_GEN_greq_class, aio_req, request);

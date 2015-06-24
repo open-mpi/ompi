@@ -5,16 +5,16 @@
  * Copyright (c) 2004-2013 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008      UT-Battelle, LLC. All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 /**
@@ -56,7 +56,7 @@ do {                                                            \
     frag = (mca_pml_bfo_recv_frag_t*)item;                      \
 } while(0)
 
-    
+
 #define MCA_PML_BFO_RECV_FRAG_INIT(frag, hdr, segs, cnt, btl )          \
 do {                                                                    \
     size_t i, _size;                                                    \
@@ -110,16 +110,16 @@ do {                                                                    \
  *  Callback from BTL on receipt of a recv_frag (match).
  */
 
-extern void mca_pml_bfo_recv_frag_callback_match( mca_btl_base_module_t *btl, 
+extern void mca_pml_bfo_recv_frag_callback_match( mca_btl_base_module_t *btl,
                                                   mca_btl_base_tag_t tag,
                                                   mca_btl_base_descriptor_t* descriptor,
                                                   void* cbdata );
-                                                                 
+
 /**
  *  Callback from BTL on receipt of a recv_frag (rndv).
  */
 
-extern void mca_pml_bfo_recv_frag_callback_rndv( mca_btl_base_module_t *btl, 
+extern void mca_pml_bfo_recv_frag_callback_rndv( mca_btl_base_module_t *btl,
                                                  mca_btl_base_tag_t tag,
                                                  mca_btl_base_descriptor_t* descriptor,
                                                  void* cbdata );
@@ -127,7 +127,7 @@ extern void mca_pml_bfo_recv_frag_callback_rndv( mca_btl_base_module_t *btl,
  *  Callback from BTL on receipt of a recv_frag (rget).
  */
 
-extern void mca_pml_bfo_recv_frag_callback_rget( mca_btl_base_module_t *btl, 
+extern void mca_pml_bfo_recv_frag_callback_rget( mca_btl_base_module_t *btl,
                                                  mca_btl_base_tag_t tag,
                                                  mca_btl_base_descriptor_t* descriptor,
                                                  void* cbdata );
@@ -136,7 +136,7 @@ extern void mca_pml_bfo_recv_frag_callback_rget( mca_btl_base_module_t *btl,
  *  Callback from BTL on receipt of a recv_frag (ack).
  */
 
-extern void mca_pml_bfo_recv_frag_callback_ack( mca_btl_base_module_t *btl, 
+extern void mca_pml_bfo_recv_frag_callback_ack( mca_btl_base_module_t *btl,
                                                 mca_btl_base_tag_t tag,
                                                 mca_btl_base_descriptor_t* descriptor,
                                                 void* cbdata );
@@ -144,7 +144,7 @@ extern void mca_pml_bfo_recv_frag_callback_ack( mca_btl_base_module_t *btl,
  *  Callback from BTL on receipt of a recv_frag (frag).
  */
 
-extern void mca_pml_bfo_recv_frag_callback_frag( mca_btl_base_module_t *btl, 
+extern void mca_pml_bfo_recv_frag_callback_frag( mca_btl_base_module_t *btl,
                                                  mca_btl_base_tag_t tag,
                                                  mca_btl_base_descriptor_t* descriptor,
                                                  void* cbdata );
@@ -152,7 +152,7 @@ extern void mca_pml_bfo_recv_frag_callback_frag( mca_btl_base_module_t *btl,
  *  Callback from BTL on receipt of a recv_frag (put).
  */
 
-extern void mca_pml_bfo_recv_frag_callback_put( mca_btl_base_module_t *btl, 
+extern void mca_pml_bfo_recv_frag_callback_put( mca_btl_base_module_t *btl,
                                                 mca_btl_base_tag_t tag,
                                                 mca_btl_base_descriptor_t* descriptor,
                                                 void* cbdata );
@@ -160,12 +160,12 @@ extern void mca_pml_bfo_recv_frag_callback_put( mca_btl_base_module_t *btl,
  *  Callback from BTL on receipt of a recv_frag (fin).
  */
 
-extern void mca_pml_bfo_recv_frag_callback_fin( mca_btl_base_module_t *btl, 
+extern void mca_pml_bfo_recv_frag_callback_fin( mca_btl_base_module_t *btl,
                                                 mca_btl_base_tag_t tag,
                                                 mca_btl_base_descriptor_t* descriptor,
                                                 void* cbdata );
 
-                                              
+
 END_C_DECLS
 
 #endif

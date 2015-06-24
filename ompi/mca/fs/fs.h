@@ -6,7 +6,7 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -14,9 +14,9 @@
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -41,8 +41,8 @@ struct mca_io_ompio_file_t;
 /*
  * This framework provides the abstraction for file management operations
  * of the MPI I/O chapter in MPI-2. The operations defined by this
- * framework are mostly collective in nature. 
- * 
+ * framework are mostly collective in nature.
+ *
  * These are the component function prototypes. These function pointers
  * go into the component structure. These functions (query() and finalize()
  * are called during fs_base_select(). Each component is query() ied
@@ -65,11 +65,11 @@ struct mca_io_ompio_file_t;
  * **************** component struct *******************************
  */
 
-typedef int (*mca_fs_base_component_init_query_1_0_0_fn_t) 
-    (bool enable_progress_threads, 
+typedef int (*mca_fs_base_component_init_query_1_0_0_fn_t)
+    (bool enable_progress_threads,
      bool enable_mpi_threads);
 
-typedef struct mca_fs_base_module_1_0_0_t * 
+typedef struct mca_fs_base_module_1_0_0_t *
 (*mca_fs_base_component_file_query_1_0_0_fn_t) (struct mca_io_ompio_file_t *file,
                                                 int *priority);
 
@@ -84,7 +84,7 @@ typedef int (*mca_fs_base_component_file_unquery_1_0_0_fn_t)
 struct mca_fs_base_component_2_0_0_t {
     mca_base_component_t fsm_version;
     mca_base_component_data_t fsm_data;
-    
+
     mca_fs_base_component_init_query_1_0_0_fn_t fsm_init_query;
     mca_fs_base_component_file_query_1_0_0_fn_t fsm_file_query;
     mca_fs_base_component_file_unquery_1_0_0_fn_t fsm_file_unquery;
@@ -132,7 +132,7 @@ struct mca_fs_base_module_1_0_0_t {
      */
     mca_fs_base_module_init_1_0_0_fn_t fs_module_init;
     mca_fs_base_module_finalize_1_0_0_fn_t fs_module_finalize;
-    
+
     /* FS function pointers */
     mca_fs_base_module_file_open_fn_t        fs_file_open;
     mca_fs_base_module_file_close_fn_t       fs_file_close;

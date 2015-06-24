@@ -5,15 +5,15 @@
  * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -24,7 +24,7 @@
 #include "ompi/constants.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/bml/bml.h"
-#include "opal/mca/mpool/mpool.h" 
+#include "opal/mca/mpool/mpool.h"
 #include "pml_bfo.h"
 #include "pml_bfo_rdma.h"
 
@@ -34,7 +34,7 @@
 static mca_mpool_base_registration_t pml_bfo_dummy_reg;
 
 /*
- * Check to see if memory is registered or can be registered. Build a 
+ * Check to see if memory is registered or can be registered. Build a
  * set of registrations on the request.
  */
 
@@ -53,12 +53,12 @@ size_t mca_pml_bfo_rdma_btls(
         return 0;
     }
 
-    /* check to see if memory is registered */        
+    /* check to see if memory is registered */
     for(n = 0; n < num_btls && num_btls_used < mca_pml_bfo.max_rdma_per_request;
             n++) {
         mca_bml_base_btl_t* bml_btl =
             mca_bml_base_btl_array_get_index(&bml_endpoint->btl_rdma,
-                    (bml_endpoint->btl_rdma_index + n) % num_btls); 
+                    (bml_endpoint->btl_rdma_index + n) % num_btls);
         mca_mpool_base_registration_t* reg = &pml_bfo_dummy_reg;
         mca_mpool_base_module_t *btl_mpool = bml_btl->btl->btl_mpool;
 

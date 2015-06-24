@@ -1,5 +1,5 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *   Copyright (C) 2003 University of Chicago, Ohio Supercomputer Center.
  *   See COPYRIGHT notice in top-level directory.
  */
@@ -12,7 +12,7 @@ static globus_cond_t cond;
 
 static globus_bool_t file_exists,exists_done;
 static void exists_cb(void *myargs, globus_ftp_client_handle_t *handle, globus_object_t *error)
-{    
+{
     if (error)
 	{
 	    FPRINTF(stderr, "%s\n", globus_object_printable_to_string(error));
@@ -77,7 +77,7 @@ void ADIOI_GRIDFTP_Open(ADIO_File fd, int *error_code)
     result=globus_ftp_client_handleattr_init(&hattr);
     if ( result != GLOBUS_SUCCESS )
 	{
-	    
+
 
 	    globus_err_handler("globus_ftp_client_handleattr_init",
 			       myname,result);
@@ -114,41 +114,41 @@ void ADIOI_GRIDFTP_Open(ADIO_File fd, int *error_code)
 
     /* Since we're (almost by definition) doing things that FTP S (stream)
        control mode can't handle, default to E (extended block) control mode
-       for gsiftp:// URLs.  ftp:// URLs use standard stream control mode 
+       for gsiftp:// URLs.  ftp:// URLs use standard stream control mode
        by default.  This behavior can be overridden by the ftp_control_mode
        hint. */
 
     /*
-    if ( !strncmp(fd->filename,"gsiftp:",7) && 
+    if ( !strncmp(fd->filename,"gsiftp:",7) &&
 	 (result=globus_ftp_client_operationattr_set_mode(&(oattr[fd->fd_sys]),GLOBUS_FTP_CONTROL_MODE_EXTENDED_BLOCK))!=GLOBUS_SUCCESS )
 	globus_err_handler("globus_ftp_client_operationattr_set_mode",myname,result);
-    else if ( !strncmp(fd->filename,"ftp:",4) && 
+    else if ( !strncmp(fd->filename,"ftp:",4) &&
 	      (result=globus_ftp_client_operationattr_set_mode(&(oattr[fd->fd_sys]),GLOBUS_FTP_CONTROL_MODE_STREAM))!=GLOBUS_SUCCESS )
 	globus_err_handler("globus_ftp_client_operationattr_set_mode",myname,result);
     */
 
     /* Set append mode if necessary */
-    if ( (fd->access_mode&ADIO_APPEND) && 
+    if ( (fd->access_mode&ADIO_APPEND) &&
 	 ((result=globus_ftp_client_operationattr_set_append(&(oattr[fd->fd_sys]),GLOBUS_TRUE))!=GLOBUS_SUCCESS) )
 	globus_err_handler("globus_ftp_client_operationattr_set_append",myname,result);
 
-    /* Other hint and amode processing that would affect hattr and/or 
+    /* Other hint and amode processing that would affect hattr and/or
        oattr[] (eg. parallelism, striping, etc.) goes here */
     if ( fd->info!=MPI_INFO_NULL )
 	{
 	    ADIOI_Info_get(fd->info,"ftp_control_mode",MPI_MAX_INFO_VAL,hintval,&keyfound);
 	    if ( keyfound )
 		{
-		    if ( ( !strcmp(hintval,"extended") || !strcmp(hintval,"extended_block") ) && 
+		    if ( ( !strcmp(hintval,"extended") || !strcmp(hintval,"extended_block") ) &&
 			 (result=globus_ftp_client_operationattr_set_mode(&(oattr[fd->fd_sys]),GLOBUS_FTP_CONTROL_MODE_EXTENDED_BLOCK))!=GLOBUS_SUCCESS )
 			globus_err_handler("globus_ftp_client_operationattr_set_mode",myname,result);
-		    else if ( !strcmp(hintval,"block") && 
+		    else if ( !strcmp(hintval,"block") &&
 			      (result=globus_ftp_client_operationattr_set_mode(&(oattr[fd->fd_sys]),GLOBUS_FTP_CONTROL_MODE_BLOCK))!=GLOBUS_SUCCESS )
 			globus_err_handler("globus_ftp_client_operationattr_set_mode",myname,result);
-		    else if ( !strcmp(hintval,"compressed") && 
+		    else if ( !strcmp(hintval,"compressed") &&
 			      (result=globus_ftp_client_operationattr_set_mode(&(oattr[fd->fd_sys]),GLOBUS_FTP_CONTROL_MODE_COMPRESSED))!=GLOBUS_SUCCESS )
 			globus_err_handler("globus_ftp_client_operationattr_set_mode",myname,result);
-		    else if ( !strcmp(hintval,"stream") && 
+		    else if ( !strcmp(hintval,"stream") &&
 			      (result=globus_ftp_client_operationattr_set_mode(&(oattr[fd->fd_sys]),GLOBUS_FTP_CONTROL_MODE_STREAM))!=GLOBUS_SUCCESS )
 			globus_err_handler("globus_ftp_client_operationattr_set_mode",myname,result);
 		}
@@ -157,7 +157,7 @@ void ADIOI_GRIDFTP_Open(ADIO_File fd, int *error_code)
 	    if ( keyfound )
 		{
 		    int nftpthreads;
-		    
+
 		    if ( sscanf(hintval,"%d",&nftpthreads)==1 )
 			{
 			    globus_ftp_control_parallelism_t parallelism;
@@ -261,10 +261,10 @@ void ADIOI_GRIDFTP_Open(ADIO_File fd, int *error_code)
 						  GLOBUS_NULL))!=GLOBUS_SUCCESS )
 		{
 		    globus_err_handler("globus_ftp_client_exists",myname,result);
-		    fd->fd_sys = -1; 
+		    fd->fd_sys = -1;
 		    *error_code = MPIO_Err_create_code(MPI_SUCCESS, MPIR_ERR_RECOVERABLE,
 				    myname, __LINE__, MPI_ERR_IO,
-				    "**io", "**io %s", 
+				    "**io", "**io %s",
 				    globus_object_printable_to_string(globus_error_get(result)));
 		    return;
 		}
@@ -295,10 +295,10 @@ void ADIOI_GRIDFTP_Open(ADIO_File fd, int *error_code)
 			{
 			    globus_err_handler("globus_ftp_client_put",myname,result);
 			    fd->fd_sys = -1;
-			    *error_code = MPIO_Err_create_code(MPI_SUCCESS, 
+			    *error_code = MPIO_Err_create_code(MPI_SUCCESS,
 				MPIR_ERR_RECOVERABLE,
 				myname, __LINE__, MPI_ERR_IO,
-				"**io", "**io %s", 
+				"**io", "**io %s",
 				globus_object_printable_to_string(globus_error_get(result)));
 			    return;
 			}
@@ -310,10 +310,10 @@ void ADIOI_GRIDFTP_Open(ADIO_File fd, int *error_code)
 		    if ( result != GLOBUS_SUCCESS )
 			{
 			    globus_err_handler("globus_ftp_client_register_write",myname,result);
-			    *error_code = MPIO_Err_create_code(MPI_SUCCESS, 
+			    *error_code = MPIO_Err_create_code(MPI_SUCCESS,
 				MPIR_ERR_RECOVERABLE,
 				myname, __LINE__, MPI_ERR_IO,
-				"**io", "**io %s", 
+				"**io", "**io %s",
 				globus_object_printable_to_string(globus_error_get(result)));
 			    return;
 			}
@@ -328,7 +328,7 @@ void ADIOI_GRIDFTP_Open(ADIO_File fd, int *error_code)
 	{
 	    fd->fd_sys = -1;
 	    *error_code = MPIO_Err_create_code(MPI_SUCCESS, MPIR_ERR_RECOVERABLE,
-			    myname, __LINE__, MPI_ERR_IO, 
+			    myname, __LINE__, MPI_ERR_IO,
 			    "**io", 0);
 	    return;
 	}

@@ -21,7 +21,7 @@ int MPI_Init(int *\fIargc\fP, char ***\fIargv\fP)
 .nf
 INCLUDE 'mpif.h'
 MPI_INIT(\fIIERROR\fP)
-	INTEGER	\fIIERROR\fP 
+	INTEGER	\fIIERROR\fP
 
 .fi
 .SH C++ Syntax
@@ -44,7 +44,7 @@ C/C++ only: Argument vector.
 .ft R
 .TP 1i
 IERROR
-Fortran only: Error status (integer). 
+Fortran only: Error status (integer).
 
 .SH DESCRIPTION
 .ft R
@@ -63,7 +63,7 @@ them:
 		/* declare variables */
 		MPI_Init(&argc, &argv);
 		/* parse arguments */
-		/* main program */ 
+		/* main program */
 		MPI_Finalize();
 	}
 .fi
@@ -92,7 +92,7 @@ called. By default, this error handler aborts the MPI job, except for
 I/O function errors. The error handler may be changed with
 MPI_Comm_set_errhandler; the predefined error handler MPI_ERRORS_RETURN
 may be used to cause error values to be returned. Note that MPI does not
-guarantee that an MPI program can continue past an error. 
+guarantee that an MPI program can continue past an error.
 .sp
 See the MPI man page for a full list of MPI error codes.
 

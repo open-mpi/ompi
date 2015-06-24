@@ -27,17 +27,17 @@ int down_search(int me, int num_procs,
     int i, peer, Sum, NInLevel, rc;
     orte_routed_tree_t *child;
     opal_bitmap_t *relations;
-    
+
     /* compute how many procs are at my level */
     Sum=1;
     NInLevel=1;
-    
+
     while ( Sum < (me+1) ) {
         NInLevel *= Radix;
         Sum += NInLevel;
     }
    /* printf("\trank %d inlevel %d\n", me, NInLevel); */
-    
+
     /* our children start at our rank + num_in_level */
     peer = me + NInLevel;
     for (i = 0; i < Radix; i++) {
@@ -80,41 +80,41 @@ main(int argc, char **argv)
     int NProcs;
     int Level,Sum,NInLevel,Ii;
     int Parent,NInPrevLevel;
-    
-    
+
+
     if (3 != argc) {
         printf("usage: radix r x, where r=radix and x=number of procs\n");
         exit(1);
     }
-    
+
     orte_init(&argc, &argv, ORTE_PROC_NON_MPI);
-    
+
     Radix = atoi(argv[1]);
     NProcs = atoi(argv[2]);
-    
+
     for(Ii = 0 ; Ii < NProcs ; Ii++) {
         OBJ_CONSTRUCT(&children, opal_list_t);
         num_children = 0;
         Level=0;
         Sum=1;
         NInLevel=1;
-        
+
         while ( Sum < (Ii+1) ) {
             Level++;
             NInLevel*=Radix;
             Sum+=NInLevel;
         }
         Sum-=NInLevel;
-        
+
         NInPrevLevel=NInLevel/Radix;
-        
+
         if( 0 == Ii ) {
             Parent=-1;
         }  else {
             Parent=(Ii-Sum) % NInPrevLevel;
             Parent+=(Sum - NInPrevLevel);
         }
-        
+
         fprintf(stderr," I am %d: Parent %d\n",
                 Ii,Parent);
 
@@ -132,6 +132,6 @@ main(int argc, char **argv)
         }
         OBJ_DESTRUCT(&children);
     }
-    
+
     orte_finalize();
 }

@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -25,20 +25,20 @@ void ADIOI_HFS_Fcntl(ADIO_File fd, int flag, ADIO_Fcntl_t *fcntl_struct, int *er
     case ADIO_FCNTL_GET_FSIZE:
 	fcntl_struct->fsize = lseek64(fd->fd_sys, 0, SEEK_END);
 #ifdef HPUX
-	if (fd->fp_sys_posn != -1) 
+	if (fd->fp_sys_posn != -1)
 	     lseek64(fd->fd_sys, fd->fp_sys_posn, SEEK_SET);
 /* not required in SPPUX since there we use pread/pwrite */
 #endif
 	if (fcntl_struct->fsize == -1) {
 #ifdef MPICH
-	    *error_code = MPIR_Err_create_code(MPI_SUCCESS, MPIR_ERR_RECOVERABLE, myname, __LINE__, MPI_ERR_IO, "**io", 
+	    *error_code = MPIR_Err_create_code(MPI_SUCCESS, MPIR_ERR_RECOVERABLE, myname, __LINE__, MPI_ERR_IO, "**io",
 		"**io %s", strerror(errno));
 #elif defined(PRINT_ERR_MSG)
 		*error_code = MPI_ERR_UNKNOWN;
 #else /* MPICH-1 */
 		*error_code = MPIR_Err_setmsg(MPI_ERR_IO, MPIR_ADIO_ERROR,
 				myname, "I/O Error", "%s", strerror(errno));
-		ADIOI_Error(fd, *error_code, myname);	    
+		ADIOI_Error(fd, *error_code, myname);
 #endif
 	}
 	else *error_code = MPI_SUCCESS;
@@ -52,7 +52,7 @@ void ADIOI_HFS_Fcntl(ADIO_File fd, int flag, ADIO_Fcntl_t *fcntl_struct, int *er
 	/* prealloc64 works only if file is of zero length */
 	if (err && (errno != ENOTEMPTY)) {
 #ifdef MPICH
-	    *error_code = MPIR_Err_create_code(MPI_SUCCESS, MPIR_ERR_RECOVERABLE, myname, __LINE__, MPI_ERR_IO, "**io", 
+	    *error_code = MPIR_Err_create_code(MPI_SUCCESS, MPIR_ERR_RECOVERABLE, myname, __LINE__, MPI_ERR_IO, "**io",
 		"**io %s", strerror(errno));
 #elif defined(PRINT_ERR_MSG)
 	    *error_code = MPI_ERR_UNKNOWN;
@@ -84,16 +84,16 @@ void ADIOI_HFS_Fcntl(ADIO_File fd, int flag, ADIO_Fcntl_t *fcntl_struct, int *er
 #endif
 	        return;
 	    }
-	}    
+	}
 
-	if ((fcntl_struct->diskspace > 2147483647) || 
+	if ((fcntl_struct->diskspace > 2147483647) ||
 	    (err && (errno == ENOTEMPTY))) {
 #endif
 		ADIOI_GEN_Prealloc(fd,fcntl_struct->diskspace, error_code);
 	    }
 	    ADIOI_Free(buf);
 #ifdef HPUX
-	    if (fd->fp_sys_posn != -1) 
+	    if (fd->fp_sys_posn != -1)
 		lseek64(fd->fd_sys, fd->fp_sys_posn, SEEK_SET);
 	    /* not required in SPPUX since there we use pread/pwrite */
 #endif

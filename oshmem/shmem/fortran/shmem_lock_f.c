@@ -3,9 +3,9 @@
  *                         All rights reserved.
  * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -29,7 +29,7 @@ SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
         shmem_set_lock_,
         shmem_set_lock__,
         shmem_set_lock_f,
-        (FORTRAN_POINTER_T lock), 
+        (FORTRAN_POINTER_T lock),
         (lock))
 
 SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
@@ -37,7 +37,7 @@ SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
         shmem_clear_lock_,
         shmem_clear_lock__,
         shmem_clear_lock_f,
-        (FORTRAN_POINTER_T lock), 
+        (FORTRAN_POINTER_T lock),
         (lock))
 
 SHMEM_GENERATE_FORTRAN_BINDINGS_FUNCTION (MPI_Fint,
@@ -45,7 +45,7 @@ SHMEM_GENERATE_FORTRAN_BINDINGS_FUNCTION (MPI_Fint,
         shmem_test_lock_,
         shmem_test_lock__,
         shmem_test_lock_f,
-        (FORTRAN_POINTER_T lock), 
+        (FORTRAN_POINTER_T lock),
         (lock))
 
 void shmem_set_lock_f(FORTRAN_POINTER_T lock)

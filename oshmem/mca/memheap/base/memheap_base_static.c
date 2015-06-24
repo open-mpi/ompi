@@ -99,7 +99,7 @@ static int _check_address(struct map_segment_desc *seg)
     void* data_end = &_end;
 
     /**
-     * SGI shmem only supports globals&static in main program. 
+     * SGI shmem only supports globals&static in main program.
      * It does not support them in shared objects or in dlopen()
      * (Clarified on PGAS 2011 tutorial)
      *

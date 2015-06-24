@@ -26,7 +26,7 @@ main(int argc, char **argv)
         fprintf(stderr, "usage: regex <comma-separated list of nodes>\n");
         return 1;
     }
-    
+
     orte_init(&argc, &argv, ORTE_PROC_NON_MPI);
 
     if (NULL != strchr(argv[1], '[')) {

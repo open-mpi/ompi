@@ -1,9 +1,9 @@
 # Here are names that at least at one point were used within ROMIO.
-# We should look at these and decide which we wish to allow and which 
+# We should look at these and decide which we wish to allow and which
 # should be replaced with something more ROMIO-specific.
-%romioDefines = ( 'ROMIO_[A-Za-z0-9_]+' => romio, 
-	'PROFILE' => romio, 
-	'PRINT_ERR_MSG' => romio, 
+%romioDefines = ( 'ROMIO_[A-Za-z0-9_]+' => romio,
+	'PROFILE' => romio,
+	'PRINT_ERR_MSG' => romio,
 	'HPUX' => romio,
 	'SPPUX'=> romio,
 	'SX4'=> romio,
@@ -51,5 +51,5 @@
 if (defined(&PushDefinesNames)) {
    &PushDefinesNames( "romioDefines", "tree", "add" );
 }
-	
+
 1;

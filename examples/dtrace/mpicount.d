@@ -1,13 +1,13 @@
 /*
  * Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
-/* 
+/*
  * This script will count the number of times MPI APIs are called.  It
  * will print out its results every 10 seconds and then a final count
  * at the end.  This script can be used to see that an MPI application

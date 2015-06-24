@@ -6,14 +6,14 @@ import os
 import optparse
 import ConfigParser
 
-        
+
 ######################################################################
 # global stuff
 ######################################################################
 configext   = ".package"   # the name of the configurations files
 configfiles = []           # list with all found config files
 params      = 0            # contains the cmd line options
-packages    = {}           # directory for packages 
+packages    = {}           # directory for packages
 options     = ["name", "type", "license", "summary", "files", "version", "description", "group", "vendor", "requires"]
 shell_cmds  = {}
 compilers   = { "default" : {"compiler":"default",
@@ -69,7 +69,7 @@ for entry in %(files)s; do
         fi
     done
 done
-if [ $BUILD_PACKAGE == 1 ] ; then 
+if [ $BUILD_PACKAGE == 1 ] ; then
 eval export OMPI_PACKAGE_VERSION=`%(version)s`
 rpmbuild %(mode)s --define \'_topdir %%_topdir\'  --define \'build_%(name)s 1\' --define \'build_default 0\' --define \"ompi_package_version $OMPI_PACKAGE_VERSION\" %%{ompi_specfile}
 fi
@@ -95,7 +95,7 @@ global_template = """
 
 
 #
-# fix configure 
+# fix configure
 #
 %%define _prefix %%{ompi_prefix}
 %%define _sysconfdir %%{_prefix}/etc
@@ -154,10 +154,10 @@ make -j4
 
 %%clean
 
-%%files 
+%%files
 %%defattr(-,root,root,-)
 
-%%endif 
+%%endif
 
 """
 
@@ -169,7 +169,7 @@ install_template = """
 #
 ######################################################################
 %%if %%{build_install}
-Summary: Install a already compiled tree 
+Summary: Install a already compiled tree
 Name: %%{ompi_name_prefix}%%{ompi_name}
 Version: %%{ompi_version}
 Release: %%{ompi_release}
@@ -196,7 +196,7 @@ make DESTDIR=$RPM_BUILD_ROOT install
 #
 # create a module file on request
 #
-if [ %(modulefile_condition)s ] ; then 
+if [ %(modulefile_condition)s ] ; then
 %%{__mkdir_p} $RPM_BUILD_ROOT/%(modulefile_path)s/%%{ompi_name}/
 cat <<EOF >$RPM_BUILD_ROOT/%(modulefile_path)s/%%{ompi_name}/%%{ompi_version}
 #%%Module
@@ -270,10 +270,10 @@ fi
 
 %%clean
 
-%%files 
+%%files
 %%defattr(-,root,root,-)
 
-%%endif 
+%%endif
 
 """
 
@@ -329,11 +329,11 @@ rm %(name)s.files
 default_template = """
 ######################################################################
 #
-# default  
+# default
 #
 ######################################################################
 %%if %%{build_default}
-Summary: Open MPI 
+Summary: Open MPI
 Name: %%{ompi_name_prefix}%%{ompi_name}
 Version: %%{ompi_version}%%{ompi_extra_version}
 Release: %%{ompi_release}
@@ -454,13 +454,13 @@ class Package:
                     name_prefix = params.ompi_name_prefix
                 self.options[option] = name_prefix + params.ompi_name + " >= " + params.ompi_version
             else:
-                self.options[option] = None            
+                self.options[option] = None
 
     def getOption(self, option):
         if option in self.options.keys():
             return self.options[option]
         else:
-            return None        
+            return None
 
     def setOption(self, option, value):
         if ( option == "files" ):
@@ -497,11 +497,11 @@ def get_package(name):
     if not (name in packages.keys()):
         packages[name] = Package(name)
     return packages[name]
-    
+
 
 ######################################################################
 #
-# verbose output 
+# verbose output
 #
 ######################################################################
 def verbose(msg):
@@ -511,7 +511,7 @@ def verbose(msg):
 
 ######################################################################
 #
-# debug output 
+# debug output
 #
 ######################################################################
 def debug(msg):
@@ -521,7 +521,7 @@ def debug(msg):
 
 ######################################################################
 #
-# error output 
+# error output
 #
 ######################################################################
 def error(msg):
@@ -530,7 +530,7 @@ def error(msg):
 
 ######################################################################
 #
-# error output 
+# error output
 #
 ######################################################################
 def  get_compiler(name):
@@ -667,7 +667,7 @@ def write_specfile(build_packages):
         specfile.write(package_template % package_params);
         # create build command
         build_cmds += build_command_template % {"files":package_params["installed_files"], "default":"0", "name":package_params["name"], "mode":"-bb", "version":package_params["version"]}
-        
+
     verbose("     Create build section")
     specfile.write(build_template % {"ompi_prefix":params.ompi_prefix})
 
@@ -686,11 +686,11 @@ def write_specfile(build_packages):
     else:
         inst_params["profile_condition"] = "1 == 0"
     specfile.write(install_template % inst_params)
-    
+
     verbose("     Create default section")
     default_params = { "build_cmds": build_cmds, "version":params.ompi_version}
     specfile.write(default_template % default_params)
-    
+
     verbose("     Write changelog")
     specfile.write(changelog)
 
@@ -777,11 +777,11 @@ def main():
     if params.interactive:
         shell()
         return
-                    
+
     # filter packages
     print "--> Select packages"
     build_packages = []
-    # filter packages 
+    # filter packages
     if params.packages != None:
         verbose("     Apply user profided packages list : " + params.packages);
         user_packages = params.packages.split(',')
@@ -807,7 +807,7 @@ def main():
 
     # done
     print "--> Finished."
-    
+
 
 if ("__main__" == __name__):
     main()

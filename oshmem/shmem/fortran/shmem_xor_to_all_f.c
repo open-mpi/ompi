@@ -3,9 +3,9 @@
  *                         All rights reserved.
  * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -33,7 +33,7 @@ SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
         shmem_int2_xor_to_all_,
         shmem_int2_xor_to_all__,
         shmem_int2_xor_to_all_f,
-        (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *nreduce, MPI_Fint *PE_start, MPI_Fint * logPE_stride, MPI_Fint *PE_size, FORTRAN_POINTER_T *pWrk, FORTRAN_POINTER_T pSync), 
+        (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *nreduce, MPI_Fint *PE_start, MPI_Fint * logPE_stride, MPI_Fint *PE_size, FORTRAN_POINTER_T *pWrk, FORTRAN_POINTER_T pSync),
         (target,source,nreduce,PE_start,logPE_stride,PE_size,pWrk,pSync) )
 
 SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
@@ -41,7 +41,7 @@ SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
         shmem_int4_xor_to_all_,
         shmem_int4_xor_to_all__,
         shmem_int4_xor_to_all_f,
-        (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *nreduce, MPI_Fint *PE_start, MPI_Fint * logPE_stride, MPI_Fint *PE_size, FORTRAN_POINTER_T *pWrk, FORTRAN_POINTER_T pSync), 
+        (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *nreduce, MPI_Fint *PE_start, MPI_Fint * logPE_stride, MPI_Fint *PE_size, FORTRAN_POINTER_T *pWrk, FORTRAN_POINTER_T pSync),
         (target,source,nreduce,PE_start,logPE_stride,PE_size,pWrk,pSync) )
 
 SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
@@ -49,7 +49,7 @@ SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
         shmem_int8_xor_to_all_,
         shmem_int8_xor_to_all__,
         shmem_int8_xor_to_all_f,
-        (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *nreduce, MPI_Fint *PE_start, MPI_Fint * logPE_stride, MPI_Fint *PE_size, FORTRAN_POINTER_T *pWrk, FORTRAN_POINTER_T pSync), 
+        (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *nreduce, MPI_Fint *PE_start, MPI_Fint * logPE_stride, MPI_Fint *PE_size, FORTRAN_POINTER_T *pWrk, FORTRAN_POINTER_T pSync),
         (target,source,nreduce,PE_start,logPE_stride,PE_size,pWrk,pSync) )
 
 SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
@@ -57,7 +57,7 @@ SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
         shmem_comp4_xor_to_all_,
         shmem_comp4_xor_to_all__,
         shmem_comp4_xor_to_all_f,
-        (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *nreduce, MPI_Fint *PE_start, MPI_Fint * logPE_stride, MPI_Fint *PE_size, FORTRAN_POINTER_T *pWrk, FORTRAN_POINTER_T pSync), 
+        (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *nreduce, MPI_Fint *PE_start, MPI_Fint * logPE_stride, MPI_Fint *PE_size, FORTRAN_POINTER_T *pWrk, FORTRAN_POINTER_T pSync),
         (target,source,nreduce,PE_start,logPE_stride,PE_size,pWrk,pSync) )
 
 SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
@@ -65,7 +65,7 @@ SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
         shmem_comp8_xor_to_all_,
         shmem_comp8_xor_to_all__,
         shmem_comp8_xor_to_all_f,
-        (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *nreduce, MPI_Fint *PE_start, MPI_Fint * logPE_stride, MPI_Fint *PE_size, FORTRAN_POINTER_T *pWrk, FORTRAN_POINTER_T pSync), 
+        (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *nreduce, MPI_Fint *PE_start, MPI_Fint * logPE_stride, MPI_Fint *PE_size, FORTRAN_POINTER_T *pWrk, FORTRAN_POINTER_T pSync),
         (target,source,nreduce,PE_start,logPE_stride,PE_size,pWrk,pSync) )
 
 #define SHMEM_XOR_TO_ALL(F_NAME, T_NAME, OSHMEM_GROUP_CACHE_ENABLED) void F_NAME(FORTRAN_POINTER_T target, \

@@ -2,7 +2,7 @@
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  *
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
  */
 
@@ -168,7 +168,7 @@ int opal_hwloc_compare(const hwloc_topology_t topo1,
     char *x1=NULL, *x2=NULL;
     int l1, l2;
     int s;
-    
+
     /* stop stupid compiler warnings */
     t1 = (hwloc_topology_t)topo1;
     t2 = (hwloc_topology_t)topo2;
@@ -181,7 +181,7 @@ int opal_hwloc_compare(const hwloc_topology_t topo1,
     } else if (d2 > d1) {
         return OPAL_VALUE2_GREATER;
     }
-    
+
 
     /* do the comparison the "cheat" way - get an xml representation
      * of each tree, and strcmp! This will work fine for inventory
@@ -205,7 +205,7 @@ int opal_hwloc_compare(const hwloc_topology_t topo1,
     } else if (s < 0) {
         return OPAL_VALUE2_GREATER;
     }
-    
+
     /* compare the available support - hwloc unfortunately does
      * not include this info in its xml support!
      */

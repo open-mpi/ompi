@@ -34,18 +34,18 @@ static int bcol_basesmuma_fanin_new(bcol_function_args_t *input_args,
     mca_bcol_basesmuma_module_t* bcol_module =
         (mca_bcol_basesmuma_module_t *) c_input_args->bcol_module;
 
-    int i, child_rank, idx, n_children, probe, 
+    int i, child_rank, idx, n_children, probe,
         my_rank = bcol_module->super.sbgp_partner_module->my_index,
         leading_dim = bcol_module->colls_no_user_data.size_of_group;
     int8_t  ready_flag;
     int8_t bcol_id = (int8_t) bcol_module->super.bcol_id;
     int buff_index = input_args->buffer_index;
-    int *active_requests = 
+    int *active_requests =
         &(bcol_module->ml_mem.nb_coll_desc[buff_index].active_requests);
     mca_bcol_basesmuma_component_t *cm = &mca_bcol_basesmuma_component;
-    int matched = 0; 
+    int matched = 0;
 
-    
+
     volatile mca_bcol_basesmuma_payload_t *ctl_structs;
 
     /* control structures */
@@ -65,7 +65,7 @@ static int bcol_basesmuma_fanin_new(bcol_function_args_t *input_args,
 
     /* Init the header */
     BASESMUMA_HEADER_INIT(my_ctl, ready_flag, sequence_number, bcol_id);
-    
+
     /* Cache num of children value in a local variable */
     n_children = my_tree_node->n_children;
 
@@ -91,10 +91,10 @@ static int bcol_basesmuma_fanin_new(bcol_function_args_t *input_args,
             }
         }
     }
-    
+
     if(0 == *active_requests ) {
         if(ROOT_NODE != my_tree_node->my_node_type){
-            /* I have no more active requests, 
+            /* I have no more active requests,
                signal my parent */
             my_ctl->flags[BARRIER_FANIN_FLAG][bcol_id] = ready_flag;
         }
@@ -116,18 +116,18 @@ static int bcol_basesmuma_fanin_new_progress(bcol_function_args_t *input_args,
     mca_bcol_basesmuma_module_t* bcol_module =
         (mca_bcol_basesmuma_module_t *) c_input_args->bcol_module;
 
-    int i, child_rank, flag_offset, idx, n_children, probe, 
+    int i, child_rank, flag_offset, idx, n_children, probe,
         my_rank = bcol_module->super.sbgp_partner_module->my_index,
         leading_dim = bcol_module->colls_no_user_data.size_of_group;
     int8_t  ready_flag;
     int8_t bcol_id = (int8_t) bcol_module->super.bcol_id;
     int buff_index = input_args->buffer_index;
-    int *active_requests = 
+    int *active_requests =
         &(bcol_module->ml_mem.nb_coll_desc[buff_index].active_requests);
     mca_bcol_basesmuma_component_t *cm = &mca_bcol_basesmuma_component;
-    int matched = 0; 
+    int matched = 0;
 
-    
+
     volatile mca_bcol_basesmuma_payload_t *ctl_structs;
 
     /* control structures */
@@ -151,7 +151,7 @@ static int bcol_basesmuma_fanin_new_progress(bcol_function_args_t *input_args,
 
     /* Cache num of children value in a local variable */
     n_children = my_tree_node->n_children;
-    
+
 
     /* Wait until my childeren arrive */
     for (i = 0; i < n_children; ++i) {
@@ -171,8 +171,8 @@ static int bcol_basesmuma_fanin_new_progress(bcol_function_args_t *input_args,
         }
     }
     if(0 == *active_requests ){
-        if(ROOT_NODE != my_tree_node->my_node_type){ 
-            /* If I am not the root of the fanin tree, 
+        if(ROOT_NODE != my_tree_node->my_node_type){
+            /* If I am not the root of the fanin tree,
                then signal my parent */
             my_ctl->flags[BARRIER_FANIN_FLAG][bcol_id] = ready_flag;
         }

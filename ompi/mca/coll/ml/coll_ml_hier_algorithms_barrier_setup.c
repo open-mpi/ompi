@@ -96,7 +96,7 @@ static int mca_coll_ml_build_barrier_schedule(
             /* Each function call with index K is depended of all K-1 previous indices -
                in simple words we will do sequential Fan-In calls */
             comp_fn->num_dependencies = (0 == i_fn) ? 0 : 1;
-            comp_fn->num_dependent_tasks = 1; 
+            comp_fn->num_dependent_tasks = 1;
             /* Init component function */
             strcpy(comp_fn->fn_name, "FANIN");
             /* On the highest level */
@@ -157,7 +157,7 @@ static int mca_coll_ml_build_barrier_schedule(
         } else {
                 comp_fn->dependent_task_indices = NULL;
         }
-            
+
 
         /* No need completion func for Barrier */
         comp_fn->task_comp_fn = NULL;

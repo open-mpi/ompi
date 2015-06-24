@@ -151,7 +151,7 @@ static int rank_span(orte_job_t *jdata,
                         app->first_rank = proc->name.vpid;
                     }
                     cnt++;
-                        
+
                     /* insert the proc into the jdata array - no harm if already there */
                     if (ORTE_SUCCESS != (rc = opal_pointer_array_set_item(jdata->procs, proc->name.vpid, proc))) {
                         ORTE_ERROR_LOG(rc);
@@ -264,7 +264,7 @@ static int rank_fill(orte_job_t *jdata,
                     app->first_rank = proc->name.vpid;
                 }
                 cnt++;
-                        
+
                 /* insert the proc into the jdata array - no harm if already there */
                 if (ORTE_SUCCESS != (rc = opal_pointer_array_set_item(jdata->procs, proc->name.vpid, proc))) {
                     ORTE_ERROR_LOG(rc);
@@ -601,7 +601,7 @@ int orte_rmaps_base_compute_vpids(orte_job_t *jdata,
                      */
                     jdata->bookmark = node;
                     break;  /* move on to next node */
-                }                
+                }
             }
         }
         if (cnt < app->num_procs) {
@@ -656,7 +656,7 @@ int orte_rmaps_base_compute_vpids(orte_job_t *jdata,
         }
         return ORTE_SUCCESS;
     }
-    
+
     return ORTE_ERR_NOT_IMPLEMENTED;
 }
 
@@ -677,7 +677,7 @@ int orte_rmaps_base_compute_local_ranks(orte_job_t *jdata)
 
     /* point to map */
     map = jdata->map;
-    
+
     /* for each node in the map... */
     for (i=0; i < map->nodes->size; i++) {
         /* cycle through the array of procs on this node, setting
@@ -687,10 +687,10 @@ int orte_rmaps_base_compute_local_ranks(orte_job_t *jdata)
         if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(map->nodes, i))) {
             continue;
         }
-        
+
         /* init search values */
         local_rank = 0;
-        
+
         /* the proc map may have holes in it, so cycle
          * all the way through and avoid the holes
          */
@@ -774,7 +774,7 @@ void orte_rmaps_base_update_local_ranks(orte_job_t *jdata, orte_node_t *oldnode,
     orte_node_rank_t node_rank;
     orte_local_rank_t local_rank;
     orte_proc_t *proc;
-    
+
     OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base_framework.framework_output,
                          "%s rmaps:base:update_usage",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
@@ -785,7 +785,7 @@ void orte_rmaps_base_update_local_ranks(orte_job_t *jdata, orte_node_t *oldnode,
     if (oldnode == newnode) {
         return;
     }
-    
+
     /* if the node has changed, then search the new node for the
      * lowest unused local and node rank
      */
@@ -802,7 +802,7 @@ retry_nr:
         }
     }
     newproc->node_rank = node_rank;
-    
+
     local_rank = 0;
 retry_lr:
     for (k=0; k < newnode->procs->size; k++) {

@@ -6,7 +6,7 @@
  * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -14,9 +14,9 @@
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -132,7 +132,7 @@ static int example_component_register(void)
        containing the major.minor.release version number from the
        libfoo support library (see configure.m4 for how we got these C
        macros). */
-    asprintf(&str, "%s.%s.%s", 
+    asprintf(&str, "%s.%s.%s",
              OP_EXAMPLE_LIBFOO_VERSION_MAJOR,
              OP_EXAMPLE_LIBFOO_VERSION_MINOR,
              OP_EXAMPLE_LIBFOO_VERSION_RELEASE);

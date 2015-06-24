@@ -9,7 +9,7 @@
 #
 [unable to create endpoint]
 MXM was unable to create an endpoint. Please make sure that the network link is
-active on the node and the hardware is functioning. 
+active on the node and the hardware is functioning.
 
   Error: %s
 #

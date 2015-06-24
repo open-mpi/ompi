@@ -23,15 +23,15 @@ static inline int a2a_sched_diss(int rank, int p, MPI_Aint sndext, MPI_Aint rcve
 /* tree comparison function for schedule cache */
 int NBC_Alltoall_args_compare(NBC_Alltoall_args *a, NBC_Alltoall_args *b, void *param) {
 
-	if( (a->sendbuf == b->sendbuf) && 
-      (a->sendcount == b->sendcount) && 
+	if( (a->sendbuf == b->sendbuf) &&
+      (a->sendcount == b->sendcount) &&
       (a->sendtype == b->sendtype) &&
       (a->recvbuf == b->recvbuf) &&
       (a->recvcount == b->recvcount) &&
       (a->recvtype == b->recvtype) ) {
     return  0;
   }
-	if( a->sendbuf < b->sendbuf ) {	
+	if( a->sendbuf < b->sendbuf ) {
     return -1;
 	}
 	return +1;
@@ -39,7 +39,7 @@ int NBC_Alltoall_args_compare(NBC_Alltoall_args *a, NBC_Alltoall_args *b, void *
 #endif
 
 /* simple linear MPI_Ialltoall the (simple) algorithm just sends to all nodes */
-int ompi_coll_libnbc_ialltoall(void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int recvcount, 
+int ompi_coll_libnbc_ialltoall(void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int recvcount,
                                MPI_Datatype recvtype, struct ompi_communicator_t *comm, ompi_request_t ** request,
                                struct mca_coll_base_module_2_1_0_t *module)
 {
@@ -56,7 +56,7 @@ int ompi_coll_libnbc_ialltoall(void* sendbuf, int sendcount, MPI_Datatype sendty
   ompi_coll_libnbc_module_t *libnbc_module = (ompi_coll_libnbc_module_t*) module;
 
   NBC_IN_PLACE(sendbuf, recvbuf, inplace);
-  
+
   res = NBC_Init_handle(comm, coll_req, libnbc_module);
   if(res != NBC_OK) { printf("Error in NBC_Init_handle(%i)\n", res); return res; }
   handle = (*coll_req);
@@ -152,9 +152,9 @@ int ompi_coll_libnbc_ialltoall(void* sendbuf, int sendcount, MPI_Datatype sendty
 
     res = NBC_Sched_create(schedule);
     if(res != NBC_OK) { printf("Error in NBC_Sched_create (%i)\n", res); return res; }
-    
+
     switch(alg) {
-      case NBC_A2A_LINEAR: 
+      case NBC_A2A_LINEAR:
         res = a2a_sched_linear(rank, p, sndext, rcvext, schedule, sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm);
         break;
       case NBC_A2A_DISS:
@@ -164,12 +164,12 @@ int ompi_coll_libnbc_ialltoall(void* sendbuf, int sendcount, MPI_Datatype sendty
         res = a2a_sched_pairwise(rank, p, sndext, rcvext, schedule, sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm);
         break;
     }
-    
+
     if (NBC_OK != res) { return res; }
 
     res = NBC_Sched_commit(schedule);
     if (NBC_OK != res) { printf("Error in NBC_Sched_commit() (%i)\n", res); return res; }
- 
+
 #ifdef NBC_CACHE_SCHEDULE
     /* save schedule to tree */
     args = (NBC_Alltoall_args*)malloc(sizeof(NBC_Alltoall_args));
@@ -196,7 +196,7 @@ int ompi_coll_libnbc_ialltoall(void* sendbuf, int sendcount, MPI_Datatype sendty
 
   res = NBC_Start(handle, schedule);
   if (NBC_OK != res) { printf("Error in NBC_Start() (%i)\n", res); return res; }
- 
+
   return NBC_OK;
 }
 
@@ -261,19 +261,19 @@ static inline int a2a_sched_pairwise(int rank, int p, MPI_Aint sndext, MPI_Aint 
 
   res = NBC_OK;
   if(p < 2) return res;
-  
+
   for(r=1;r<p;r++) {
-    
+
     sndpeer = (rank+r)%p;
     rcvpeer = (rank-r+p)%p;
-    
+
     rbuf = ((char *) recvbuf) + (rcvpeer*recvcount*rcvext);
     res = NBC_Sched_recv(rbuf, false, recvcount, recvtype, rcvpeer, schedule);
     if (NBC_OK != res) { printf("Error in NBC_Sched_recv() (%i)\n", res); return res; }
     sbuf = ((char *) sendbuf) + (sndpeer*sendcount*sndext);
     res = NBC_Sched_send(sbuf, false, sendcount, sendtype, sndpeer, schedule);
     if (NBC_OK != res) { printf("Error in NBC_Sched_send() (%i)\n", res); return res; }
-    
+
     if (r < p) {
       res = NBC_Sched_barrier(schedule);
       if (NBC_OK != res) { printf("Error in NBC_Sched_barr() (%i)\n", res); return res; }
@@ -309,14 +309,14 @@ static inline int a2a_sched_diss(int rank, int p, MPI_Aint sndext, MPI_Aint rcve
 
   res = NBC_OK;
   if(p < 2) return res;
- 
+
   if(NBC_Type_intrinsic(sendtype)) {
     datasize = sndext*sendcount;
   } else {
     res = MPI_Pack_size(sendcount, sendtype, comm, &datasize);
     if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Pack_size() (%i)\n", res); return res; }
   }
- 
+
   /* allocate temporary buffers */
   if(p % 2 == 0) {
     rtmpbuf = (char*)handle->tmpbuf+datasize*p;
@@ -341,22 +341,22 @@ static inline int a2a_sched_diss(int rank, int p, MPI_Aint sndext, MPI_Aint rcve
         offset += datasize;
       }
     }
- 
+
     speer = ( rank + r) % p;
     /* add p because modulo does not work with negative values */
     rpeer = ((rank - r)+p) % p;
- 
+
     /*printf("[%i] receiving %i bytes from host %i into rbuf %lu\n", rank, offset, rpeer, (unsigned long)rtmpbuf);*/
     res = NBC_Sched_recv(rtmpbuf-(unsigned long)handle->tmpbuf, true, offset, MPI_BYTE, rpeer, schedule);
     if (NBC_OK != res) { printf("Error in NBC_Sched_recv() (%i)\n", res); return res; }
- 
+
     /*printf("[%i] sending %i bytes to host %i from sbuf %lu\n", rank, offset, speer, (unsigned long)stmpbuf);*/
     res = NBC_Sched_send(stmpbuf-(unsigned long)handle->tmpbuf, true, offset, MPI_BYTE, speer, schedule);
     if (NBC_OK != res) { printf("Error in NBC_Sched_send() (%i)\n", res); return res; }
 
     res = NBC_Sched_barrier(schedule);
     if (NBC_OK != res) { printf("Error in NBC_Sched_barrier() (%i)\n", res); return res; }
-    
+
     /* unpack from buffer */
     offset = 0;
     for(i=1; i<p; i++) {
@@ -376,7 +376,7 @@ static inline int a2a_sched_diss(int rank, int p, MPI_Aint sndext, MPI_Aint rcve
     res = NBC_Sched_unpack((void*)(long)(i*datasize), true, recvcount, recvtype, rbuf, false, schedule);
     if (NBC_OK != res) { printf("MPI Error in NBC_Sched_pack() (%i)\n", res); return res; }
   }
-    
+
   return NBC_OK;
 }
 

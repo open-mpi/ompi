@@ -70,7 +70,7 @@ int mca_sharedfp_lockedfile_component_init_query(bool enable_progress_threads,
     /* Nothing to do */
 
     return OMPI_SUCCESS;
-}      
+}
 
 struct mca_sharedfp_base_module_1_0_0_t * mca_sharedfp_lockedfile_component_file_query(mca_io_ompio_file_t *fh, int *priority) {
     struct flock lock;
@@ -132,11 +132,11 @@ struct mca_sharedfp_base_module_1_0_0_t * mca_sharedfp_lockedfile_component_file
         err = fcntl(fd, F_SETLKW, &lock);
 	opal_output(ompi_sharedfp_base_framework.framework_output,
 		    "mca_sharedfp_lockedfile_component_file_query: returned err=%d, for fd=%d\n",err,fd);
-	
+
         if (err) {
-            opal_output(ompi_sharedfp_base_framework.framework_output, 
+            opal_output(ompi_sharedfp_base_framework.framework_output,
 			"mca_sharedfp_lockedfile_component_file_query: Failed to set a file lock on %s %s\n", filename, strerror(errno) );
-            opal_output(ompi_sharedfp_base_framework.framework_output, 
+            opal_output(ompi_sharedfp_base_framework.framework_output,
 			"err=%d, errno=%d, EOPNOTSUPP=%d, EINVAL=%d, ENOSYS=%d, EACCES=%d, EAGAIN=%d, EBADF=%d\n",
                         err, errno, EOPNOTSUPP, EINVAL, ENOSYS, EACCES, EAGAIN, EBADF);
 
@@ -147,7 +147,7 @@ struct mca_sharedfp_base_module_1_0_0_t * mca_sharedfp_lockedfile_component_file
 
         }
         else {
-	    opal_output(ompi_sharedfp_base_framework.framework_output, 
+	    opal_output(ompi_sharedfp_base_framework.framework_output,
 			"mca_sharedfp_lockedfile_component_file_query: fcntl claims success in setting a file lock on %s\n", filename );
 
             has_file_lock_support=true;
@@ -170,7 +170,7 @@ struct mca_sharedfp_base_module_1_0_0_t * mca_sharedfp_lockedfile_component_file
 }
 
 int mca_sharedfp_lockedfile_component_file_unquery (mca_io_ompio_file_t *file)
-{    
+{
     /* This function might be needed for some purposes later. for now it
     * does not have anything to do since there are no steps which need
     * to be undone if this module is not selected */

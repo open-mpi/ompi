@@ -5,15 +5,15 @@
  * Copyright (c) 2004-2014 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2007 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2007 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Voltaire All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -114,11 +114,11 @@ bool opal_list_insert(opal_list_t *list, opal_list_item_t *item, long long idx)
     /* Adds item to list at index and retains item. */
     int     i;
     volatile opal_list_item_t *ptr, *next;
-    
+
     if ( idx >= (long long)list->opal_list_length ) {
         return false;
     }
-    
+
     if ( 0 == idx )
     {
         opal_list_prepend(list, item);
@@ -188,7 +188,7 @@ opal_list_transfer(opal_list_item_t *pos, opal_list_item_t *begin,
 
 
 void
-opal_list_join(opal_list_t *thislist, opal_list_item_t *pos, 
+opal_list_join(opal_list_t *thislist, opal_list_item_t *pos,
                opal_list_t *xlist)
 {
     if (0 != opal_list_get_size(xlist)) {
@@ -206,14 +206,14 @@ void
 opal_list_splice(opal_list_t *thislist, opal_list_item_t *pos,
                  opal_list_t *xlist, opal_list_item_t *first,
                  opal_list_item_t *last)
-{ 
+{
     size_t change = 0;
     opal_list_item_t *tmp;
 
     if (first != last) {
         /* figure out how many things we are going to move (have to do
          * first, since last might be end and then we wouldn't be able
-         * to run the loop) 
+         * to run the loop)
          */
         for (tmp = first ; tmp != last ; tmp = opal_list_get_next(tmp)) {
             change++;
@@ -237,7 +237,7 @@ int opal_list_sort(opal_list_t* list, opal_list_item_compare_fn_t compare)
     if (0 == list->opal_list_length) {
         return OPAL_SUCCESS;
     }
-    items = (opal_list_item_t**)malloc(sizeof(opal_list_item_t*) * 
+    items = (opal_list_item_t**)malloc(sizeof(opal_list_item_t*) *
                                        list->opal_list_length);
 
     if (NULL == items) {
@@ -247,8 +247,8 @@ int opal_list_sort(opal_list_t* list, opal_list_item_compare_fn_t compare)
     while(NULL != (item = opal_list_remove_first(list))) {
         items[index++] = item;
     }
-    
-    qsort(items, index, sizeof(opal_list_item_t*), 
+
+    qsort(items, index, sizeof(opal_list_item_t*),
           (int(*)(const void*,const void*))compare);
     for (i=0; i<index; i++) {
         opal_list_append(list,items[i]);

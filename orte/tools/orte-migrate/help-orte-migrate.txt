@@ -8,9 +8,9 @@
 # Copyright (c) 2014      Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
-# 
+#
 # Additional copyrights may follow
-# 
+#
 # $HEADER$
 #
 # This is the US/English help file for Open MPI migrate tool
@@ -32,7 +32,7 @@ ompi-migrate PID_OF_MPIRUN
 %s
 #
 [invalid_pid]
-Error: The PID (%d) is invalid because either you have not provided a PID 
+Error: The PID (%d) is invalid because either you have not provided a PID
        or provided an invalid PID.
        Please see --help for usage.
 #
@@ -46,7 +46,7 @@ Error: Unable to find the contact information for PID %d.
          %s
 #
 [unable_to_connect]
-Error: Unable to connect to the Head Node Process to initiate the 
+Error: Unable to connect to the Head Node Process to initiate the
        migration of the application.
        This could be due to one of the following:
         - The PID is not that of an active MPIRUN.
