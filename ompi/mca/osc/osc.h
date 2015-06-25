@@ -32,9 +32,7 @@
 
 #include "opal_config.h"
 
-#ifdef HAVE_STDDEF_H
 #include <stddef.h>
-#endif
 
 #include "ompi/mca/mca.h"
 

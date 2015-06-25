@@ -20,9 +20,7 @@
 #include "ompi_config.h"
 
 #include <stddef.h>
-#ifdef HAVE_STRING_H
 #include <string.h>
-#endif
 
 #include "opal/class/opal_pointer_array.h"
 #include "ompi/datatype/ompi_datatype.h"

@@ -16,9 +16,7 @@
 #include "opal_config.h"
 
 #include <stddef.h>
-#ifdef HAVE_STDINT_H
 #include <stdint.h>
-#endif
 
 #include "opal/util/arch.h"
 

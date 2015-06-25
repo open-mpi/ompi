@@ -27,13 +27,9 @@
 #include "orte_config.h"
 #include "orte/constants.h"
 
-#ifdef HAVE_STRING_H
 #include <string.h>
-#endif
 #include <stdio.h>
-#ifdef HAVE_STDLIB_H
 #include <stdlib.h>
-#endif  /* HAVE_STDLIB_H */
 #ifdef HAVE_STRINGS_H
 #include <strings.h>
 #endif  /* HAVE_STRINGS_H */

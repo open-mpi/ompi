@@ -20,9 +20,7 @@
 
 #include "ompi_config.h"
 
-#ifdef HAVE_STRING_H
 #include <string.h>
-#endif
 
 #include "ompi/mca/topo/base/base.h"
 #include "ompi/communicator/communicator.h"

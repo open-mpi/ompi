@@ -19,9 +19,7 @@
 
 #include "ompi_config.h"
 
-#ifdef HAVE_STRING_H
 #include <string.h>
-#endif
 
 #include "opal/datatype/opal_convertor.h"
 #include "opal/sys/atomic.h"

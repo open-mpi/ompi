@@ -71,9 +71,7 @@
 # include <unistd.h>
 #endif
 #include <stdio.h>
-#ifdef HAVE_STRING_H
 # include <string.h>
-#endif
 #ifdef HAVE_GRP_H
 #include <grp.h>
 #endif

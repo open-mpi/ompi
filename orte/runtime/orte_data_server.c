@@ -23,9 +23,7 @@
 #include "orte/constants.h"
 #include "orte/types.h"
 
-#ifdef HAVE_STRING_H
 #include <string.h>
-#endif
 
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>

@@ -41,9 +41,7 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
-#ifdef HAVE_SIGNAL_H
 #include <signal.h>
-#endif
 
 #include "opal/class/opal_list.h"
 #include "opal/class/opal_bitmap.h"

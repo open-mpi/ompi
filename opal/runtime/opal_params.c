@@ -29,9 +29,7 @@
 #include "opal_config.h"
 
 #include <time.h>
-#ifdef HAVE_SIGNAL_H
 #include <signal.h>
-#endif
 
 #include "opal/constants.h"
 #include "opal/runtime/opal.h"

@@ -40,9 +40,7 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <signal.h>
-#ifdef HAVE_TIME_H
 #include <time.h>
-#endif
 
 
 #include "opal/mca/event/event.h"
