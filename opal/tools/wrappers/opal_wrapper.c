@@ -252,7 +252,8 @@ data_callback(const char *key, const char *value)
     } else if (0 == strcmp(key, "language")) {
         if (NULL != value) options_data[parse_options_idx].language = strdup(value);
     } else if (0 == strcmp(key, "compiler")) {
-        if (NULL != value) options_data[parse_options_idx].compiler = strdup(value);
+        if (NULL != value) options_data[parse_options_idx].compiler =
+            opal_install_dirs_expand(value);
     } else if (0 == strcmp(key, "project")) {
         if (NULL != value) options_data[parse_options_idx].project = strdup(value);
     } else if (0 == strcmp(key, "version")) {
