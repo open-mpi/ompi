@@ -28,7 +28,7 @@ noinst_LTLIBRARIES = libmpiext_cuda.la
 ompidir = $(ompiincludedir)/ompi/mpiext/cuda/c
 
 # This is the header file that is installed.
-ompi_HEADERS = mpiext_cuda.h
+ompi_HEADERS = mpiext_cuda_c.h
 
 # Sources for the convenience libtool library.  Other than the one
 # header file, all source files in the extension have no file naming
