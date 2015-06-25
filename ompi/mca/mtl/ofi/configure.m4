@@ -23,7 +23,10 @@ AC_DEFUN([MCA_ompi_mtl_ofi_POST_CONFIG], [
 AC_DEFUN([MCA_ompi_mtl_ofi_CONFIG],[
     AC_CONFIG_FILES([ompi/mca/mtl/ofi/Makefile])
 
-    OPAL_CHECK_LIBFABRIC([ompi_mtl_ofi],
+    # ensure we already ran the common libfabric config
+    AC_REQUIRE([MCA_opal_common_libfabric_CONFIG])
+    
+    AS_IF([test "$opal_common_libfabric_happy" = "yes"],
           [$1],
           [$2])
 ])dnl
