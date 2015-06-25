@@ -66,7 +66,7 @@ static void set(orte_job_t *jobdat,
     hwloc_obj_t root;
     opal_hwloc_topo_data_t *sum;
     orte_app_context_t *context;
-    int rc;
+    int rc=ORTE_ERROR;
     char *msg, *param;
     char *cpu_bitmap;
 
