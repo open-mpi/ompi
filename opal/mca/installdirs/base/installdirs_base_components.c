@@ -21,7 +21,92 @@
 #include "opal/mca/installdirs/base/base.h"
 #include "opal/mca/installdirs/base/static-components.h"
 
+#if defined(__FreeBSD__) || defined(__linux__) || defined(__sun)
+#include <sys/stat.h>
+#include <unistd.h>
+#endif
+
 opal_install_dirs_t opal_install_dirs = {0};
+
+static int
+get_executable_path(char *path, unsigned size)
+{
+#if defined(__FreeBSD__)
+    int path_mib[4] = { CTL_KERN, KERN_PROC, KERN_PROC_PATHNAME, -1 };
+    int rval = size;
+
+    if (sysctl(path_mib, 4, path, &rval, NULL, 0) != 0) {
+        rval = -1;
+    }
+
+#elif defined(__linux__)
+    int rval = readlink("/proc/self/exe", path, size);
+
+    if (rval <= 0) {
+        return rval;
+    }
+
+    /* truncate path */
+    if ((unsigned)rval >= size) {
+        rval = size - 1;
+    }
+
+    path[rval] = '\0';
+
+#elif defined(__sun)
+    const char *exename = getexecname();
+    int rval;
+
+    if (exename == NULL) {
+        return -1;
+    }
+
+    strncpy(path, exename, size - 1);
+
+    /* ensure that path is terminated with a null */
+    path[size - 1] = '\0';
+
+    rval = strlen(path);
+
+#elif defined(BUILD_OS_DARWIN)
+    uint32_t path_size = size;
+    int rval;
+
+    if (_NSGetExecutablePath(path, &path_size) < 0 || path_size < 1) {
+        return -1;
+    }
+
+    rval = (int)path_size - 1;
+
+#else
+    int rval = -1;
+#endif
+
+    return rval;
+}
+
+
+static void
+directory_path(char *p)
+{
+    char *s = strrchr(p, '/');
+    if (s == 0)
+        return;
+
+    *s = 0;
+}
+
+
+static int
+get_executable_dir_path(char *buf, unsigned size)
+{
+    int res = get_executable_path(buf, size);
+    if (res >= 0)
+        directory_path(buf);
+
+    return res;
+}
+
 
 #define CONDITIONAL_COPY(target, origin, field)                 \
     do {                                                        \
@@ -81,6 +166,18 @@ opal_installdirs_base_open(mca_base_open_flag_t flags)
                          opallibdir);
         CONDITIONAL_COPY(opal_install_dirs, component->install_dirs_data,
                          opalincludedir);
+    }
+
+    /* if prefix path does not exist then use path relative to executable */
+    {
+        struct stat s;
+        if (stat(opal_install_dirs.prefix, &s) != 0 || !S_ISDIR(s.st_mode)) {
+            char exe_path[255];
+            int res = get_executable_dir_path(exe_path, sizeof(exe_path));
+            if (res >= 0) {
+                asprintf(&opal_install_dirs.prefix, "%s/..", exe_path);
+            }
+        }
     }
 
     /* expand out all the fields */
