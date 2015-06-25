@@ -19,7 +19,7 @@
 # $HEADER$
 #
 
-AM_CPPFLAGS = -DBTL_IN_OPAL=1 $(opal_btl_usnic_CPPFLAGS)
+AM_CPPFLAGS = -DBTL_IN_OPAL=1 $(opal_common_libfabric_CPPFLAGS)
 
 EXTRA_DIST = README.txt README.test
 
@@ -91,12 +91,12 @@ mca_btl_usnic_la_SOURCES = $(component_sources)
 mca_btl_usnic_la_LDFLAGS = \
         $(opal_btl_usnic_LDFLAGS) \
         -module -avoid-version
-mca_btl_usnic_la_LIBADD = $(opal_btl_usnic_LIBS)
+mca_btl_usnic_la_LIBADD = \
+        $(OPAL_TOP_BUILDDIR)/opal/mca/common/libfabric/lib@OPAL_LIB_PREFIX@mca_common_libfabric.la
 
 noinst_LTLIBRARIES = $(lib)
 libmca_btl_usnic_la_SOURCES = $(lib_sources)
 libmca_btl_usnic_la_LDFLAGS = -module -avoid-version $(opal_btl_usnic_LDFLAGS)
-libmca_btl_usnic_la_LIBADD  =  $(opal_btl_usnic_LIBS)
 
 if OPAL_BTL_USNIC_BUILD_UNIT_TESTS
 usnic_btl_run_tests_CPPFLAGS = \
