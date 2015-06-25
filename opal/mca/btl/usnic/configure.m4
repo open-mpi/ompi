@@ -94,15 +94,15 @@ AC_DEFUN([_OPAL_BTL_USNIC_DO_CONFIG],[
           ])
 
     # The usnic BTL requires libfabric support.
-    AS_IF([test "$opal_btl_usnic_happy" = "yes"],
-          [OPAL_CHECK_LIBFABRIC([opal_btl_usnic],
-              [opal_btl_usnic_happy=yes],
-              [opal_btl_usnic_happy=no])])
+    AS_IF([test "$opal_btl_usnic_happy" = "yes" && \
+           test "$opal_common_libfabric_happy" = "yes"],
+          [opal_btl_usnic_happy=yes],
+          [opal_btl_usnic_happy=no])
 
     # Make sure we can find the libfabric usnic extensions header
     AS_IF([test "$opal_btl_usnic_happy" = "yes" ],
           [opal_btl_usnic_CPPFLAGS_save=$CPPFLAGS
-           CPPFLAGS="$opal_btl_usnic_CPPFLAGS $CPPFLAGS"
+           CPPFLAGS="$opal_common_libfabric_CPPFLAGS $CPPFLAGS"
            AC_CHECK_HEADER([rdma/fi_ext_usnic.h],
                             [],
                             [opal_btl_usnic_happy=no])
