@@ -45,8 +45,11 @@ AC_DEFUN([OMPI_EXT],[
     AC_MSG_RESULT([ompi_mpiext_list])
 
     AC_MSG_CHECKING([which MPI extension should be enabled])
-    if test "$enable_mpi_ext" = "yes" || test "$enable_mpi_ext" = "all"; then
-        msg="All Extensions"
+    if test "$enable_mpi_ext" = "" || \
+       test "$enable_mpi_ext" = "yes" || \
+       test "$enable_mpi_ext" = "all"; then
+        enable_mpi_ext=all
+        msg="All Available Extensions"
         str="`echo ENABLE_EXT_ALL=1`"
         eval $str
     else
