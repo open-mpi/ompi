@@ -20,6 +20,9 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "opal/constants.h"
+#include "ompi/mpiext/cuda/c/mpiext_cuda_c.h"
+
 int MPIx_CUDA_SUPPORT(void)
 {
     return OPAL_ERR_NOT_SUPPORTED;
