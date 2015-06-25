@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2010      Cisco Systems, Inc. All rights reserved.
+ * Copyright (c) 2010-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
@@ -73,9 +73,6 @@ int mca_bml_r2_component_open(void)
 
 int mca_bml_r2_component_close(void)
 {
-
-    /* OBJ_DESTRUCT(&mca_bml_r2.lock); */
-
     return OMPI_SUCCESS;
 }
 

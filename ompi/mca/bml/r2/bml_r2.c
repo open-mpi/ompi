@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2014 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2008-2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013      Intel, Inc. All rights reserved
  * Copyright (c) 2014      NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
@@ -829,22 +829,21 @@ static int mca_bml_r2_register_error( mca_btl_base_module_error_cb_fn_t  cbfunc)
 
 int mca_bml_r2_component_fini(void)
 {
-    /* FIX */
     return OMPI_SUCCESS;
 }
 
 mca_bml_r2_module_t mca_bml_r2 = {
-    {
-        &mca_bml_r2_component,
-        mca_bml_r2_add_procs,
-        mca_bml_r2_del_procs,
-        mca_bml_r2_add_btl,
-        mca_bml_r2_del_btl,
-        mca_bml_r2_del_proc_btl,
-        mca_bml_r2_register,
-        mca_bml_r2_register_error,
-        mca_bml_r2_finalize,
-        mca_bml_r2_ft_event
+    .super = {
+        .bml_component = &mca_bml_r2_component,
+        .bml_add_procs = mca_bml_r2_add_procs,
+        .bml_del_procs = mca_bml_r2_del_procs,
+        .bml_add_btl = mca_bml_r2_add_btl,
+        .bml_del_btl = mca_bml_r2_del_btl,
+        .bml_del_proc_btl = mca_bml_r2_del_proc_btl,
+        .bml_register = mca_bml_r2_register,
+        .bml_register_error = mca_bml_r2_register_error,
+        .bml_finalize = mca_bml_r2_finalize,
+        .bml_ft_event = mca_bml_r2_ft_event
     }
 
 };
