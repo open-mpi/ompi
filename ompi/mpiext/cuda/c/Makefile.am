@@ -21,7 +21,7 @@ AM_CPPFLAGS = -DOMPI_PROFILE_LAYER=0 -DOMPI_COMPILING_FORTRAN_WRAPPERS=1
 include $(top_srcdir)/Makefile.ompi-rules
 
 # Convenience libtool library that will be slurped up into libmpi.la.
-noinst_LTLIBRARIES = libmpiext_cuda.la
+noinst_LTLIBRARIES = libmpiext_cuda_c.la
 
 # This is where the top-level header file (that is included in
 # <mpi-ext.h>) must be installed.
@@ -33,10 +33,10 @@ ompi_HEADERS = mpiext_cuda_c.h
 # Sources for the convenience libtool library.  Other than the one
 # header file, all source files in the extension have no file naming
 # conventions.
-libmpiext_cuda_la_SOURCES = \
+libmpiext_cuda_c_la_SOURCES = \
         $(ompi_HEADERS) \
         mpiext_cuda.c
-libmpiext_cuda_la_LDFLAGS = -module -avoid-version
+libmpiext_cuda_c_la_LDFLAGS = -module -avoid-version
 
 # Man page installation
 nodist_man_MANS = MPIx_CUDA_SUPPORT.3
