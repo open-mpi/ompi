@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -10,6 +11,8 @@
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      QLogic Corporation. All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -42,7 +45,7 @@ ompi_mtl_psm_send(struct mca_mtl_base_module_t* mtl,
     int ret;
     size_t length;
     ompi_proc_t* ompi_proc = ompi_comm_peer_lookup( comm, dest );
-    mca_mtl_psm_endpoint_t* psm_endpoint = (mca_mtl_psm_endpoint_t*) ompi_proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_MTL];
+    mca_mtl_psm_endpoint_t* psm_endpoint = ompi_mtl_psm_get_endpoint (mtl, ompi_proc);
 
     assert(mtl == &ompi_mtl_psm.super);
 
@@ -94,7 +97,7 @@ ompi_mtl_psm_isend(struct mca_mtl_base_module_t* mtl,
     mca_mtl_psm_request_t * mtl_psm_request = (mca_mtl_psm_request_t*) mtl_request;
     size_t length;
     ompi_proc_t* ompi_proc = ompi_comm_peer_lookup( comm, dest );
-    mca_mtl_psm_endpoint_t* psm_endpoint = (mca_mtl_psm_endpoint_t*)ompi_proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_MTL];
+    mca_mtl_psm_endpoint_t* psm_endpoint = ompi_mtl_psm_get_endpoint (mtl, ompi_proc);
 
     assert(mtl == &ompi_mtl_psm.super);
 
