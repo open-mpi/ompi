@@ -4,4 +4,4 @@
 # status: e.g. active, maintenance, unmaintained
 #
 owner: project
-status:active
+status: unmaintained
