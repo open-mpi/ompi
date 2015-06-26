@@ -43,3 +43,6 @@ nodist_man_MANS = MPIx_CUDA_SUPPORT.3
 
 # Man page sources
 EXTRA_DIST = $(nodist_man_MANS:.3=.3in)
+
+distclean-local:
+	rm -f $(nodist_man_MANS)
