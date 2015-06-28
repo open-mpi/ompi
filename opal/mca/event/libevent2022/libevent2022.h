@@ -67,7 +67,8 @@ BEGIN_C_DECLS
 typedef struct event_base opal_event_base_t;
 typedef struct event opal_event_t;
 
-OPAL_DECLSPEC extern opal_event_base_t *opal_event_base;
+OPAL_DECLSPEC extern opal_event_base_t *opal_async_event_base;
+OPAL_DECLSPEC extern opal_event_base_t *opal_sync_event_base;
 
 #define OPAL_EV_TIMEOUT EV_TIMEOUT
 #define OPAL_EV_READ    EV_READ
@@ -82,7 +83,12 @@ OPAL_DECLSPEC extern opal_event_base_t *opal_event_base;
 /* Global function to create and release an event base */
 OPAL_DECLSPEC opal_event_base_t* opal_event_base_create(void);
 
-#define opal_event_base_free(x) event_base_free(x)
+#define opal_event_base_free(x) \
+    do {                                                                     \
+        OPAL_OUTPUT_VERBOSE((5, opal_event_base_framework.framework_output,  \
+                            "event_base_free[%s:%d]", __FILE__, __LINE__));  \
+        event_base_free(x);                                                  \
+    } while(0);
 
 OPAL_DECLSPEC int opal_event_init(void);
 
@@ -107,9 +113,19 @@ OPAL_DECLSPEC int opal_event_init(void);
 
 #define opal_event_set(b, x, fd, fg, cb, arg) event_assign((x), (b), (fd), (fg), (event_callback_fn) (cb), (arg))
 
-#define opal_event_add(ev, tv) event_add((ev), (tv))
+#define opal_event_add(ev, tv)                                          \
+    do {                                                                \
+        OPAL_OUTPUT_VERBOSE((5, opal_event_base_framework.framework_output, \
+                            "event_add[%s:%d]", __FILE__, __LINE__));   \
+        event_add((ev), (tv));                                          \
+    } while(0);
 
-#define opal_event_del(ev) event_del((ev))
+#define opal_event_del(ev)                                              \
+    do {                                                                \
+        OPAL_OUTPUT_VERBOSE((5, opal_event_base_framework.framework_output, \
+                             "event_del[%s:%d]", __FILE__, __LINE__));  \
+        event_del((ev));                                                \
+    } while(0);
 
 #define opal_event_active(x, y, z) event_active((x), (y), (z))
 

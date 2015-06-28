@@ -428,7 +428,6 @@ int ompi_mpi_finalize(void)
     }
 
     /* Leave the RTE */
-
     if (OMPI_SUCCESS != (ret = ompi_rte_finalize())) {
         return ret;
     }
@@ -439,6 +438,9 @@ int ompi_mpi_finalize(void)
         OMPI_ERROR_LOG(ret);
         return ret;
     }
+
+    /* cleanup the progress engine */
+    opal_progress_finalize();
 
     if (OPAL_SUCCESS != (ret = opal_finalize_util())) {
         return ret;

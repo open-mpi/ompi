@@ -111,6 +111,8 @@ typedef struct opal_hotel_t {
     /* Max number of rooms in the hotel */
     int num_rooms;
 
+    /* event base for this hotel */
+    opal_event_base_t *evbase;
     struct timeval eviction_timeout;
     opal_hotel_eviction_callback_fn_t evict_callback_fn;
 
@@ -133,6 +135,7 @@ OBJ_CLASS_DECLARATION(opal_hotel_t);
  *
  * @param hotel Pointer to a hotel (IN)
  * @param num_rooms The total number of rooms in the hotel (IN)
+ * @param evbase Pointer to the event base for timer events
  * @param eviction_timeout Max length of a stay at the hotel before
  * the eviction callback is invoked (in microseconds)
  * @param eviction_event_priority Event lib priority for the eviction timeout
@@ -147,6 +150,7 @@ OBJ_CLASS_DECLARATION(opal_hotel_t);
  *  the error indicate what went wrong in the function.
  */
 OPAL_DECLSPEC int opal_hotel_init(opal_hotel_t *hotel, int num_rooms,
+                                  opal_event_base_t *evbase,
                                   uint32_t eviction_timeout,
                                   int eviction_event_priority,
                                   opal_hotel_eviction_callback_fn_t evict_callback_fn);
@@ -199,8 +203,8 @@ static inline int opal_hotel_checkin(opal_hotel_t *hotel,
  * caller *knows* that there is a room available.
  */
 static inline void opal_hotel_checkin_with_res(opal_hotel_t *hotel,
-                                     void *occupant,
-                                     int *room_num)
+                                               void *occupant,
+                                               int *room_num)
 {
     opal_hotel_room_t *room;
 

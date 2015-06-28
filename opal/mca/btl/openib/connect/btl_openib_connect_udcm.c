@@ -7,7 +7,7 @@
  *                         reserved.
  * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
  * Copyright (c) 2014      Bull SAS.  All rights reserved.
  *
  * $COPYRIGHT$
@@ -2212,7 +2212,7 @@ static void udcm_sent_message_constructor (udcm_message_sent_t *message)
 {
     memset ((char *)message + sizeof (message->super), 0,
             sizeof (*message) - sizeof (message->super));
-    opal_event_evtimer_set(opal_event_base, &message->event, udcm_send_timeout, message);
+    opal_event_evtimer_set(opal_sync_event_base, &message->event, udcm_send_timeout, message);
 }
 
 static void udcm_sent_message_destructor (udcm_message_sent_t *message)

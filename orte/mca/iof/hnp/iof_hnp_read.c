@@ -107,7 +107,6 @@ void orte_iof_hnp_read_local_handler(int fd, short event, void *cbdata)
 
         /* non-blocking, retry */
         if (EAGAIN == errno || EINTR == errno) {
-            opal_event_add(rev->ev, 0);
             return;
         }
 
@@ -321,9 +320,6 @@ void orte_iof_hnp_read_local_handler(int fd, short event, void *cbdata)
             }
         }
     }
-
-    /* re-add the event */
-    opal_event_add(rev->ev, 0);
 
     return;
 }

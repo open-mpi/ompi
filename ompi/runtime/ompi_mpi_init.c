@@ -17,7 +17,7 @@
  * Copyright (c) 2008-2009 Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
  * Copyright (c) 2012-2013 Inria.  All rights reserved.
- * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
  * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  *
@@ -482,6 +482,16 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
 
     /* check for timing request - get stop time and report elapsed time if so */
     OPAL_TIMING_MNEXT((&tm,"time from completion of rte_init to modex"));
+
+    /*
+     * Initialize the general progress engine
+     */
+    if (OPAL_SUCCESS != (ret = opal_progress_init())) {
+        error = "opal_progress_init";
+        goto error;
+    }
+    /* we want to tick the event library whenever possible */
+    opal_progress_event_users_increment();
 
 #if OPAL_HAVE_HWLOC
     /* if hwloc is available but didn't get setup for some

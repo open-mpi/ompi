@@ -86,7 +86,6 @@ static void orte_state_caddy_construct(orte_state_caddy_t *caddy)
 }
 static void orte_state_caddy_destruct(orte_state_caddy_t *caddy)
 {
-    opal_event_del(&caddy->ev);
     if (NULL != caddy->jdata) {
         OBJ_RELEASE(caddy->jdata);
     }

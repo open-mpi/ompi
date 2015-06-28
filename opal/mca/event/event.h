@@ -36,13 +36,15 @@ BEGIN_C_DECLS
 #define OPAL_EVENT_NUM_PRI   8
 
 #define OPAL_EV_ERROR_PRI         0
-#define OPAL_EV_MSG_HI_PRI        1
-#define OPAL_EV_SYS_HI_PRI        2
-#define OPAL_EV_MSG_LO_PRI        3
-#define OPAL_EV_SYS_LO_PRI        4
-#define OPAL_EV_INFO_HI_PRI       5
-#define OPAL_EV_INFO_LO_PRI       6
-#define OPAL_EV_LOWEST_PRI        7
+
+#define OPAL_EV_BTL_RED_PRI       1
+#define OPAL_EV_BTL_YEL_PRI       2
+#define OPAL_EV_BTL_GRN_PRI       3
+#define OPAL_EV_BTL_BLU_PRI       4
+
+#define OPAL_EV_RTE_HI_PRI        5
+#define OPAL_EV_RTE_MED_PRI       6
+#define OPAL_EV_RTE_LO_PRI        7
 
 #define OPAL_EVENT_SIGNAL(ev)	opal_event_get_signal(ev)
 

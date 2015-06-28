@@ -175,11 +175,13 @@ void opal_stop_progress_thread(char *name, bool cleanup)
              * case the thread is blocked in a call to select for
              * a long time */
             if (trk->block_active) {
+                trk->block_active = false;
                 i=1;
                 write(trk->pipe[1], &i, sizeof(int));
             }
             /* wait for thread to exit */
             opal_thread_join(&trk->engine, NULL);
+            /* mark the block as inactive */
             /* cleanup, if they indicated they are done with this event base */
             if (cleanup) {
                 opal_list_remove_item(&tracking, &trk->super);

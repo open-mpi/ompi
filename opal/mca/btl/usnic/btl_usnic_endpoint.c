@@ -86,6 +86,7 @@ static void endpoint_construct(mca_btl_base_endpoint_t* endpoint)
     OBJ_CONSTRUCT(&endpoint->endpoint_hotel, opal_hotel_t);
     opal_hotel_init(&endpoint->endpoint_hotel,
                     WINDOW_SIZE,
+                    opal_sync_event_base,
                     mca_btl_usnic_component.retrans_timeout,
                     0,
                     opal_btl_usnic_ack_timeout);

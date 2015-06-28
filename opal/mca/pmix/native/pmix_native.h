@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2015 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -44,8 +44,10 @@ typedef enum {
 /* define a macro for abnormal termination */
 #define PMIX_NATIVE_ABNORMAL_TERM                               \
     do {                                                        \
+        opal_proc_t *me;                                        \
+        me = opal_proc_local_get();                             \
         mca_pmix_native_component.state = PMIX_USOCK_FAILED;    \
-        opal_pmix_base_errhandler(OPAL_ERR_COMM_FAILURE);       \
+        opal_pmix_base_errhandler(OPAL_ERR_COMM_FAILURE, me);   \
     } while(0);
 
 /* define a command type for communicating to the
@@ -140,7 +142,6 @@ typedef struct {
     opal_buffer_t *cache_local;
     opal_buffer_t *cache_remote;
     opal_buffer_t *cache_global;
-    opal_event_base_t *evbase;
     opal_process_name_t id;
     opal_process_name_t server;
     char *uri;
@@ -190,9 +191,9 @@ OPAL_MODULE_DECLSPEC int usock_send_connect_ack(void);
         ms->bfr = (b);                                                  \
         ms->cbfunc = (cb);                                              \
         ms->cbdata = (d);                                               \
-        opal_event_set(mca_pmix_native_component.evbase, &((ms)->ev), -1, \
-                       OPAL_EV_WRITE, pmix_usock_send_recv, (ms));   \
-        opal_event_set_priority(&((ms)->ev), OPAL_EV_MSG_LO_PRI);       \
+        opal_event_set(opal_async_event_base, &((ms)->ev), -1,                \
+                       OPAL_EV_WRITE, pmix_usock_send_recv, (ms));      \
+        opal_event_set_priority(&((ms)->ev), OPAL_EV_RTE_HI_PRI);       \
         opal_event_active(&((ms)->ev), OPAL_EV_WRITE, 1);               \
     } while(0);
 
@@ -202,10 +203,10 @@ OPAL_MODULE_DECLSPEC int usock_send_connect_ack(void);
                             "%s [%s:%d] post msg",                      \
                             OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),         \
                             __FILE__, __LINE__);                        \
-        opal_event_set(mca_pmix_native_component.evbase, &ms->ev, -1,   \
+        opal_event_set(opal_async_event_base, &ms->ev, -1,                    \
                        OPAL_EV_WRITE,                                   \
                        pmix_usock_process_msg, ms);                     \
-        opal_event_set_priority(&ms->ev, OPAL_EV_MSG_LO_PRI);           \
+        opal_event_set_priority(&ms->ev, OPAL_EV_RTE_HI_PRI);           \
         opal_event_active(&ms->ev, OPAL_EV_WRITE, 1);                   \
     } while(0);
 

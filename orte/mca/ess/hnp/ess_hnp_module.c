@@ -838,6 +838,7 @@ static int rte_finalize(void)
             fclose(orte_xml_fp);
         }
     }
+    orte_wait_finalize();
     return ORTE_SUCCESS;
 }
 

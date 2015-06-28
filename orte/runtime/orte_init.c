@@ -41,6 +41,7 @@
 #include "opal/util/timings.h"
 #include "opal/runtime/opal.h"
 #include "opal/threads/threads.h"
+#include "opal/runtime/opal_progress_threads.h"
 
 #include "orte/util/show_help.h"
 #include "orte/mca/ess/base/base.h"
@@ -209,6 +210,24 @@ int orte_init(int* pargc, char*** pargv, orte_proc_type_t flags)
         pmix_server_register();
     }
 
+    if (ORTE_PROC_IS_APP) {
+        /* create an asynchronously progressed event base using
+         * the progress thread support - the utility automatically
+         * blocks the thread in an event */
+        if (NULL == (opal_async_event_base = opal_start_progress_thread("opal", true))) {
+            return OPAL_ERROR;
+        }
+        orte_event_base = opal_async_event_base;
+    } else {
+        /* ORTE tools "block" in their own loop over the event
+         * base, so no progress thread is required */
+        orte_event_base = opal_sync_event_base;
+    }
+    /* set the number of priorities */
+    if (0 < OPAL_EVENT_NUM_PRI) {
+        opal_event_base_priority_init(orte_event_base, OPAL_EVENT_NUM_PRI);
+    }
+
     /* open the ESS and select the correct module for this environment */
     if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_ess_base_framework, 0))) {
         ORTE_ERROR_LOG(ret);
@@ -218,15 +237,6 @@ int orte_init(int* pargc, char*** pargv, orte_proc_type_t flags)
     if (ORTE_SUCCESS != (ret = orte_ess_base_select())) {
         error = "orte_ess_base_select";
         goto error;
-    }
-
-    if (!ORTE_PROC_IS_APP) {
-        /* ORTE tools "block" in their own loop over the event
-         * base, so no progress thread is required - apps will
-         * start their progress thread in ess_base_std_app.c
-         * at the appropriate point
-         */
-        orte_event_base = opal_event_base;
     }
 
     /* initialize the RTE for this environment */

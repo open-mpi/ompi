@@ -33,7 +33,7 @@ OPAL_DECLSPEC extern bool opal_pmix_base_allow_delayed_server;
 
 OPAL_DECLSPEC void opal_pmix_base_register_handler(opal_pmix_errhandler_fn_t err);
 OPAL_DECLSPEC void opal_pmix_base_deregister_handler(void);
-OPAL_DECLSPEC void opal_pmix_base_errhandler(int error);
+OPAL_DECLSPEC void opal_pmix_base_errhandler(int error, opal_proc_t *proc);
 
 
 END_C_DECLS

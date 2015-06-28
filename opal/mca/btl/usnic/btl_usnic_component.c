@@ -15,7 +15,7 @@
  * Copyright (c) 2008-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2014 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -972,7 +972,7 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
     }
 
     /* start timer to guarantee synthetic clock advances */
-    opal_event_set(opal_event_base, &usnic_clock_timer_event,
+    opal_event_set(opal_sync_event_base, &usnic_clock_timer_event,
                    -1, 0, usnic_clock_callback,
                    &usnic_clock_timeout);
     usnic_clock_timer_event_set = true;

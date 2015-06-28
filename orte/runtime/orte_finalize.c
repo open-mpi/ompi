@@ -26,6 +26,7 @@
 #include "orte/constants.h"
 
 #include "opal/runtime/opal.h"
+#include "opal/runtime/opal_progress_threads.h"
 #include "opal/util/output.h"
 
 #include "orte/mca/ess/ess.h"
@@ -82,7 +83,13 @@ int orte_finalize(void)
     /* Close the general debug stream */
     opal_output_close(orte_debug_output);
 
-    /* finalize the opal utilities */
+    /* shutdown the async progress thread, if we have one */
+    if (ORTE_PROC_IS_APP) {
+        opal_stop_progress_thread("opal", true);
+        opal_event_base_free(opal_sync_event_base);
+   }
+
+   /* finalize the opal utilities */
     rc = opal_finalize();
 
     return rc;
