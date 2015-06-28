@@ -120,9 +120,9 @@ public void attach(Buffer base, int size) throws MPIException
     else
         throw new AssertionError();
 
-    int sizeBytes = size * baseSize,
+    int sizeBytes = size * baseSize;
 
-    attach(handle, base, size);
+    attach(handle, base, sizeBytes);
 }
 
 private native void attach(long win, Buffer base, int size) throws MPIException;
