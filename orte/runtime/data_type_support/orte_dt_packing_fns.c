@@ -570,7 +570,11 @@ int orte_dt_pack_map(opal_buffer_t *buffer, const void *src,
             ORTE_ERROR_LOG(rc);
             return rc;
         }
-
+        /* pack the cpus/rank */
+        if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer, &(maps[i]->cpus_per_rank), 1, OPAL_INT16))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
         /* pack the display map flag */
         if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer, &(maps[i]->display_map), 1, OPAL_BOOL))) {
             ORTE_ERROR_LOG(rc);
