@@ -375,6 +375,11 @@ AC_CHECK_TYPES(ptrdiff_t)
 # Check for type sizes
 #
 
+# need the C++ language real quick to get the sizeof_bool
+AC_LANG_PUSH(C++)
+AC_CHECK_SIZEOF(bool)
+AC_LANG_POP(C++)
+
 AC_CHECK_SIZEOF(char)
 AC_CHECK_SIZEOF(short)
 AC_CHECK_SIZEOF(int)
