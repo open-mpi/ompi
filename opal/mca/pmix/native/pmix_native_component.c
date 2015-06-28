@@ -82,7 +82,6 @@ static int pmix_native_open(void)
     mca_pmix_native_component.cache_local = NULL;
     mca_pmix_native_component.cache_remote = NULL;
     mca_pmix_native_component.cache_global = NULL;
-    mca_pmix_native_component.evbase = NULL;
     mca_pmix_native_component.id = opal_name_invalid;
     mca_pmix_native_component.server = opal_name_invalid;
     mca_pmix_native_component.uri = NULL;

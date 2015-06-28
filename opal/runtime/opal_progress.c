@@ -14,6 +14,7 @@
  *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015      Intel, Inc. All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -96,6 +97,14 @@ opal_progress_init(void)
     /* reentrant issues */
     opal_atomic_init(&progress_lock, OPAL_ATOMIC_UNLOCKED);
 
+    /* setup the event base that will be progressed only
+     * when explicitly called */
+    if (NULL == opal_progress_event_base) {
+        if (NULL == (opal_progress_event_base = opal_event_base_create())) {
+            return OPAL_ERROR;
+        }
+    }
+
     /* set the event tick rate */
     opal_progress_set_event_poll_rate(10000);
 
@@ -131,6 +140,10 @@ opal_progress_finalize(void)
         callbacks = NULL;
     }
 
+    if (NULL != opal_progress_event_base) {
+        opal_event_base_free(opal_progress_event_base);
+        opal_progress_event_base = NULL;
+    }
     opal_atomic_unlock(&progress_lock);
 
     return OPAL_SUCCESS;
@@ -168,7 +181,7 @@ opal_progress(void)
                 event_progress_last_time = (num_event_users > 0) ?
                     now - event_progress_delta : now;
 
-                events += opal_event_loop(opal_event_base, opal_progress_event_flag);
+                events += opal_event_loop(opal_progress_event_base, opal_progress_event_flag);
         }
 
 #else /* OPAL_PROGRESS_USE_TIMERS */
@@ -177,7 +190,7 @@ opal_progress(void)
         if (OPAL_THREAD_ADD32(&event_progress_counter, -1) <= 0 ) {
                 event_progress_counter =
                     (num_event_users > 0) ? 0 : event_progress_delta;
-                events += opal_event_loop(opal_event_base, opal_progress_event_flag);
+                events += opal_event_loop(opal_progress_event_base, opal_progress_event_flag);
         }
 #endif /* OPAL_PROGRESS_USE_TIMERS */
 
