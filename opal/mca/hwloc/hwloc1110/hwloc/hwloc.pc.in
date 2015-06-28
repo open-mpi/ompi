@@ -5,7 +5,7 @@ includedir=@includedir@
 
 Name: hwloc
 Description: Hardware locality detection and management library
-Version: @VERSION@
+Version: @HWLOC_VERSION@
 Requires.private: @HWLOC_REQUIRES@
 Cflags: -I${includedir}
 Libs: -L${libdir} -lhwloc
