@@ -641,7 +641,13 @@ int orte_dt_unpack_map(opal_buffer_t *buffer, void *dest,
             ORTE_ERROR_LOG(rc);
             return rc;
         }
-
+        /* unpack the cpus/rank */
+        n = 1;
+        if (ORTE_SUCCESS != (rc = opal_dss_unpack_buffer(buffer,
+                                                         &(maps[i]->cpus_per_rank), &n, OPAL_INT16))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
         /* unpack the display map flag */
         n = 1;
         if (ORTE_SUCCESS != (rc = opal_dss_unpack_buffer(buffer,
