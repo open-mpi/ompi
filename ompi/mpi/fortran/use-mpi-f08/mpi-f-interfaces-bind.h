@@ -189,8 +189,9 @@ end subroutine ompi_buffer_attach_f
 
 subroutine ompi_buffer_detach_f(buffer_addr,size,ierror) &
    BIND(C, name="ompi_buffer_detach_f")
+   USE, INTRINSIC ::  ISO_C_BINDING, ONLY : C_PTR
    implicit none
-   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: buffer_addr
+   TYPE(C_PTR), INTENT(OUT) ::  buffer_addr
    INTEGER, INTENT(OUT) :: size
    INTEGER, INTENT(OUT) :: ierror
 end subroutine ompi_buffer_detach_f
