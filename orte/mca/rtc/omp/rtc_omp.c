@@ -68,14 +68,14 @@ static void set(orte_job_t *jobdat,
     int i, start, end;
     
     opal_output_verbose(2, orte_rtc_base_framework.framework_output,
-                        "%s hwloc:set on child %s",
+                        "%s omp:set envars on child %s",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                         (NULL == child) ? "NULL" : ORTE_NAME_PRINT(&child->name));
 
     if (NULL == jobdat || NULL == child) {
         /* nothing for us to do */
         opal_output_verbose(2, orte_rtc_base_framework.framework_output,
-                            "%s hwloc:set jobdat %s child %s - nothing to do",
+                            "%s omp:set jobdat %s child %s - nothing to do",
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                             (NULL == jobdat) ? "NULL" : ORTE_JOBID_PRINT(jobdat->jobid),
                             (NULL == child) ? "NULL" : ORTE_NAME_PRINT(&child->name));
@@ -87,9 +87,15 @@ static void set(orte_job_t *jobdat,
     if (!orte_get_attribute(&child->attributes, ORTE_PROC_CPU_BITMAP, (void**)&cpu_bitmap, OPAL_STRING) ||
         NULL == cpu_bitmap || 0 == strlen(cpu_bitmap)) {
         /* we are not bound, so indicate that by setting OMP_PROC_BIND = false */
+        opal_output_verbose(2, orte_rtc_base_framework.framework_output,
+                            "%s omp:set not bound - set OMP_PROC_BIND=0",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
         opal_setenv("OMP_PROC_BIND", "0", true, environ_copy);
     } else {
         /* we are bound to something, so indicate that by setting OMP_PROC_BIND = true */
+        opal_output_verbose(2, orte_rtc_base_framework.framework_output,
+                            "%s omp:set not bound - set OMP_PROC_BIND=1",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
         opal_setenv("OMP_PROC_BIND", "1", true, environ_copy);
         /* compose OMP_PLACES to indicate where we are bound - sadly, the OMP folks
          * use a different syntax than HWLOC, an so we can't just provide the bitmap
