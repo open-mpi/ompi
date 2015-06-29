@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      University of Houston. All rights reserved.
- * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * $COPYRIGHT$
@@ -98,7 +98,7 @@ static inline int ompi_mpi_errnum_is_class ( int errnum )
 {
     ompi_mpi_errcode_t *err;
 
-    if (errno < 0) {
+    if (errnum < 0) {
         return false;
     }
 
