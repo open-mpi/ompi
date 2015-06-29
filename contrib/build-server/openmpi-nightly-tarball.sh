@@ -27,7 +27,7 @@ script_dir=/u/mpiteam/scripts
 # The tarballs to make
 if [ $# -eq 0 ] ; then
     # We're no longer ever checking the 1.0 - 1.6 branches anymore
-    branches="master v1.8 v1.10 2.x"
+    branches="master v1.8 v1.10 v2.x"
 else
     branches=$@
 fi
