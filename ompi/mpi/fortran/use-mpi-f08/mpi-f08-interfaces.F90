@@ -1,6 +1,6 @@
 ! -*- f90 -*-
 !
-! Copyright (c) 2009-2014 Cisco Systems, Inc.  All rights reserved.
+! Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
 ! Copyright (c) 2009-2015 Los Alamos National Security, LLC.
 !                         All rights reserved.
 ! Copyright (c) 2012      The University of Tennessee and The University
@@ -71,13 +71,9 @@ end interface  MPI_Buffer_attach
 
 interface  MPI_Buffer_detach
 subroutine MPI_Buffer_detach_f08(buffer_addr,size,ierror)
+   USE, INTRINSIC ::  ISO_C_BINDING, ONLY : C_PTR
    implicit none
-   !DEC$ ATTRIBUTES NO_ARG_CHECK :: buffer_addr
-   !GCC$ ATTRIBUTES NO_ARG_CHECK :: buffer_addr
-   !$PRAGMA IGNORE_TKR buffer_addr
-   !DIR$ IGNORE_TKR buffer_addr
-   !IBM* IGNORE_TKR buffer_addr
-   OMPI_FORTRAN_IGNORE_TKR_TYPE :: buffer_addr
+   TYPE(C_PTR), INTENT(OUT) ::  buffer_addr
    INTEGER, INTENT(OUT) :: size
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 end subroutine MPI_Buffer_detach_f08
