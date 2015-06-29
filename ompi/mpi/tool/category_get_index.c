@@ -36,6 +36,9 @@ int MPI_T_category_get_index (const char *name, int *category_index)
     mpit_lock ();
     ret = mca_base_var_group_find_by_name (name, category_index);
     mpit_unlock ();
+    if (OPAL_SUCCESS != ret) {
+        return MPI_T_ERR_INVALID_NAME;
+    }
 
-    return ompit_opal_to_mpit_error (ret);
+    return MPI_SUCCESS;
 }

@@ -12,7 +12,7 @@ Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
 Copyright (c) 2006      Voltaire, Inc. All rights reserved.
 Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
                         Use is subject to license terms.
-Copyright (c) 2006-2014 Los Alamos National Security, LLC.  All rights
+Copyright (c) 2006-2015 Los Alamos National Security, LLC.  All rights
                         reserved.
 Copyright (c) 2010-2012 IBM Corporation.  All rights reserved.
 Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
@@ -67,6 +67,8 @@ Master (not on release branches yet)
   Please consider Score-P (score-p.org) as an external replacement.
 - usNIC BTL updated to use libfabric.
 - OFI MTL.
+- Fixed incorrect declaration for MPI_T_pvar_get_index and added
+  missing return code MPI_T_INVALID_NAME.
 
 
 1.8.6
