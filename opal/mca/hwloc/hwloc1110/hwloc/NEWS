@@ -63,8 +63,10 @@ Version 1.11.0
     - Automatically scales graphical box width to the inner text in Cairo,
       ASCII and Windows outputs.
     - Add --rect to lstopo to force rectangular layout even for NUMA nodes.
-    - Objects may have a Type info attribute to specific a better type name
+    - Add --restrict-flags to configure the behavior of --restrict.
+    - Objects may have a "Type" info attribute to specify a better type name
       and display it in lstopo.
+    - Really export all verbose information to the given output file.
   + hwloc-annotate
     - May now operate on all types of objects, including I/O.
     - May now insert Misc objects in the topology.
@@ -75,12 +77,15 @@ Version 1.11.0
     thanks to Imre Kerr for reporting the problem.
   + Fix PCI Bridge-specific depth attribute.
   + Fix hwloc_bitmap_intersect() for two infinite bitmaps.
+  + Fix some corner cases in the building of levels on large NUMA machines
+    with non-uniform NUMA groups and I/Os.
   + Improve the performance of object insertion by cpuset for large
     topologies.
   + Prefix verbose XML import errors with the source name.
   + Improve pkg-config checks and error messages.
   + Fix excluding after a component with an argument in the HWLOC_COMPONENTS
     environment variable.
+* Documentation
   + Fix the recommended way in documentation and examples to allocate memory
     on some node, it should use HWLOC_MEMBIND_BIND.
     Thanks to Nicolas Bouzat for reporting the issue.
