@@ -234,18 +234,6 @@ public final boolean isNull()
 }
 
 /**
- * Java binding of {@code MPI_COMM_GET_INFO}.
- * @throws MPIException 
- */
-public final Info getInfo() throws MPIException
-{
-    MPI.check();
-    return getInfo(handle);
-}
-
-private native void getInfo(long handle, long info) throws MPIException;
-
-/**
  * Java binding of {@code MPI_COMM_SET_INFO}.
  * @param info info object
  * @throws MPIException

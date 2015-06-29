@@ -76,10 +76,10 @@ private native long createWin(
 public Win(Info info, Comm comm)
     throws MPIException
 {
-    handle = createWinDynamic(info.handle, comm.handle);
+    handle = createDynamicWin(info.handle, comm.handle);
 }
 
-private native long createWinDynamic(
+private native long createDynamicWin(
         long info, long comm)
         throws MPIException;
 
@@ -99,7 +99,8 @@ private int getBaseType(Datatype orgType, Datatype targetType)
 
 /**
  * Java binding of {@code MPI_WIN_ATTACH}.
- * @param assertion program assertion
+ * @param base     initial address of window
+ * @param size     size of window (buffer elements)
  */
 public void attach(Buffer base, int size) throws MPIException
 {
@@ -129,7 +130,7 @@ private native void attach(long win, Buffer base, int size) throws MPIException;
 
 /**
  * Java binding of {@code MPI_WIN_DETACH}.
- * @param assertion program assertion
+ * @param base     initial address of window
  */
 public void detach(Buffer base) throws MPIException
 {
@@ -475,10 +476,10 @@ private native long free(long win) throws MPIException;
 public Info getInfo() throws MPIException
 {
     MPI.check();
-    return getInfo(handle);
+    return new Info(getInfo(handle));
 }
 
-private native Info getInfo(long win)
+private native long getInfo(long win)
         throws MPIException;
 
 /**
@@ -489,10 +490,10 @@ private native Info getInfo(long win)
 public void setInfo(Info info) throws MPIException
 {
     MPI.check();
-    setInfo(handle, info);
+    setInfo(handle, info.handle);
 }
 
-private native void setInfo(long win, Info info)
+private native void setInfo(long win, long info)
         throws MPIException;
 
 } // Win

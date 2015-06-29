@@ -43,7 +43,8 @@ JNIEXPORT jlong JNICALL Java_mpi_Win_createWin(
     return (jlong)win;
 }
 
-JNIEXPORT jlong JNICALL Java_mpi_Win_create_dynamicWin(
+JNIEXPORT jlong JNICALL Java_mpi_Win_createDynamicWin(
+        JNIEnv *env, jobject jthis,
         jlong info, jlong comm)
 {
     MPI_Win win;
@@ -56,24 +57,22 @@ JNIEXPORT jlong JNICALL Java_mpi_Win_create_dynamicWin(
 }
 
 JNIEXPORT void JNICALL Java_mpi_Win_attach(
-        JNIEnv *env, jobject jthis, jobject jBase,
+        JNIEnv *env, jobject jthis, jlong win, jobject jBase,
         jint size)
 {
     void *base = (*env)->GetDirectBufferAddress(env, jBase);
-    MPI_Win win;
 
-    int rc = MPI_Win_attach(win, base, (MPI_Aint)size);
+    int rc = MPI_Win_attach((MPI_Win)win, base, (MPI_Aint)size);
 
     ompi_java_exceptionCheck(env, rc);
 }
 
 JNIEXPORT void JNICALL Java_mpi_Win_detach(
-        JNIEnv *env, jobject jthis, jobject jBase)
+        JNIEnv *env, jobject jthis, jlong win, jobject jBase)
 {
     void *base = (*env)->GetDirectBufferAddress(env, jBase);
-    MPI_Win win;
 
-    int rc = MPI_Win_detach(win, base);
+    int rc = MPI_Win_detach((MPI_Win)win, base);
 
     ompi_java_exceptionCheck(env, rc);
 }
