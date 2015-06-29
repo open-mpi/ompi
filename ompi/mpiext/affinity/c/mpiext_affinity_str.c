@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2009 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2010-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2010-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
@@ -38,41 +38,69 @@ static const char FUNC_NAME[] = "OMPI_Affinity";
 static const char ompi_nobind_str[] = "Open MPI did not bind this process";
 static const char not_bound_str[] = "Not bound (i.e., bound to all processors)";
 
+/**************************************************************************
+ * Utility routine
+ **************************************************************************/
+
+static no_hwloc_support(char ompi_bound[OMPI_AFFINITY_STRING_MAX],
+                        char current_binding[OMPI_AFFINITY_STRING_MAX],
+                        char exists[OMPI_AFFINITY_STRING_MAX])
+{
+    strncpy(ompi_bound, "Not supported", OMPI_AFFINITY_STRING_MAX);
+    strncpy(current_binding, "Not supported", OMPI_AFFINITY_STRING_MAX);
+    strncpy(exists, "Not supported", OMPI_AFFINITY_STRING_MAX);
+}
+
+/**************************************************************************
+ * If we have no hwloc support compiled in, do almost nothing.
+ **************************************************************************/
+
+#if !OPAL_HAVE_HWLOC
+/*
+ * If hwloc support was not compiled in, then just return "Not
+ * supported".
+ */
+int OMPI_Affinity_str(ompi_affinity_fmt_t fmt_type,
+                      char ompi_bound[OMPI_AFFINITY_STRING_MAX],
+                      char current_binding[OMPI_AFFINITY_STRING_MAX],
+                      char exists[OMPI_AFFINITY_STRING_MAX])
+{
+    no_hwloc_support(ompi_bound, current_binding, exists);
+    return MPI_SUCCESS;
+}
+#endif // !OPAL_HAVE_HWLOC
+
+/**************************************************************************
+ * If we have hwloc support compiled in, do the actual work.
+ **************************************************************************/
+
 #if OPAL_HAVE_HWLOC
+
 static int get_rsrc_ompi_bound(char str[OMPI_AFFINITY_STRING_MAX]);
 static int get_rsrc_current_binding(char str[OMPI_AFFINITY_STRING_MAX]);
 static int get_rsrc_exists(char str[OMPI_AFFINITY_STRING_MAX]);
 static int get_layout_ompi_bound(char str[OMPI_AFFINITY_STRING_MAX]);
 static int get_layout_current_binding(char str[OMPI_AFFINITY_STRING_MAX]);
 static int get_layout_exists(char str[OMPI_AFFINITY_STRING_MAX]);
-#endif /* OPAL_HAVE_HWLOC */
 
-/*---------------------------------------------------------------------------*/
 
 int OMPI_Affinity_str(ompi_affinity_fmt_t fmt_type,
-		      char ompi_bound[OMPI_AFFINITY_STRING_MAX],
+                      char ompi_bound[OMPI_AFFINITY_STRING_MAX],
                       char current_binding[OMPI_AFFINITY_STRING_MAX],
                       char exists[OMPI_AFFINITY_STRING_MAX])
 {
-#if OPAL_HAVE_HWLOC
     int ret;
-#endif /* OPAL_HAVE_HWLOC */
 
     memset(ompi_bound, 0, OMPI_AFFINITY_STRING_MAX);
     memset(current_binding, 0, OMPI_AFFINITY_STRING_MAX);
 
     /* If we have no hwloc support, return nothing */
-#if OPAL_HAVE_HWLOC
-    if (NULL == opal_hwloc_topology)
-#endif /* OPAL_HAVE_HWLOC */
-   {
-        strncpy(ompi_bound, "Not supported", OMPI_AFFINITY_STRING_MAX);
-        strncpy(current_binding, "Not supported", OMPI_AFFINITY_STRING_MAX);
-        strncpy(exists, "Not supported", OMPI_AFFINITY_STRING_MAX);
+    if (NULL == opal_hwloc_topology) {
+        no_hwloc_support(ompi_bound, current_binding, exists);
+
         return MPI_SUCCESS;
     }
 
-#if OPAL_HAVE_HWLOC
     /* Otherwise, return useful information */
     switch (fmt_type) {
     case OMPI_AFFINITY_RSRC_STRING_FMT:
@@ -94,10 +122,8 @@ int OMPI_Affinity_str(ompi_affinity_fmt_t fmt_type,
     }
 
     return MPI_SUCCESS;
-#endif /* OPAL_HAVE_HWLOC */
 }
 
-#if OPAL_HAVE_HWLOC
 /*---------------------------------------------------------------------------*/
 
 /*
