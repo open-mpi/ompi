@@ -149,7 +149,7 @@ static int modex(orte_grpcomm_collective_t *coll)
     orte_process_name_t name;
     orte_vpid_t v;
     bool local;
-    int rc, i;
+    int rc=ORTE_SUCCESS, i;
 
     OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_framework.framework_output,
                          "%s grpcomm:pmi: modex entered",
