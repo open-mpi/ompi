@@ -48,3 +48,6 @@ nodist_man_MANS = OMPI_Affinity_str.3
 
 # Man page sources
 EXTRA_DIST = $(nodist_man_MANS:.3=.3in) example.c
+
+distclean-local:
+	rm -f $(nodist_man_MANS)
