@@ -329,6 +329,7 @@ mpi_api_files = \
         type_set_attr_f08.F90 \
         type_set_name_f08.F90 \
         type_size_f08.F90 \
+        type_size_x_f08.F90 \
         type_vector_f08.F90 \
         unpack_external_f08.F90 \
         unpack_f08.F90 \
@@ -529,6 +530,7 @@ pmpi_api_files = \
         profile/pget_elements_f08.F90 \
         profile/pget_elements_x_f08.F90 \
         profile/pget_f08.F90 \
+        profile/pget_library_version_f08.F90 \
         profile/pget_processor_name_f08.F90 \
         profile/pget_version_f08.F90 \
         profile/pgraph_create_f08.F90 \
@@ -693,12 +695,15 @@ pmpi_api_files = \
         profile/pwaitsome_f08.F90 \
         profile/pwin_allocate_f08.F90 \
         profile/pwin_allocate_shared_f08.F90 \
+        profile/pwin_attach_f08.F90 \
         profile/pwin_call_errhandler_f08.F90 \
         profile/pwin_complete_f08.F90 \
+        profile/pwin_create_dynamic_f08.F90 \
         profile/pwin_create_errhandler_f08.F90 \
         profile/pwin_create_f08.F90 \
         profile/pwin_create_keyval_f08.F90 \
         profile/pwin_delete_attr_f08.F90 \
+        profile/pwin_detach_f08.F90 \
         profile/pwin_fence_f08.F90 \
         profile/pwin_flush_f08.F90 \
         profile/pwin_flush_all_f08.F90 \
@@ -709,12 +714,14 @@ pmpi_api_files = \
         profile/pwin_get_attr_f08.F90 \
         profile/pwin_get_errhandler_f08.F90 \
         profile/pwin_get_group_f08.F90 \
+        profile/pwin_get_info_f08.F90 \
         profile/pwin_get_name_f08.F90 \
         profile/pwin_lock_f08.F90 \
         profile/pwin_lock_all_f08.F90 \
         profile/pwin_post_f08.F90 \
         profile/pwin_set_attr_f08.F90 \
         profile/pwin_set_errhandler_f08.F90 \
+        profile/pwin_set_info_f08.F90 \
         profile/pwin_set_name_f08.F90 \
         profile/pwin_shared_query_f08.F90 \
         profile/pwin_start_f08.F90 \
