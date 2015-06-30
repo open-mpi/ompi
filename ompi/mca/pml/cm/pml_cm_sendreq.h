@@ -131,7 +131,7 @@ do {                                                                    \
     (req_send)->req_base.req_comm = comm;                               \
     (req_send)->req_base.req_datatype = datatype;                       \
     opal_convertor_copy_and_prepare_for_send(                           \
-                                             ompi_proc->super.proc_convertor, \
+                                             ompi_proc->proc_convertor, \
                                              &(datatype->super),        \
                                              count,                     \
                                              buf,                       \
