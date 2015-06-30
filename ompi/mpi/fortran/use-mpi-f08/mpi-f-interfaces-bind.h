@@ -2147,7 +2147,8 @@ end subroutine ompi_comm_spawn_f
 ! TODO - FIXME to use arrays of strings and pass strlen
 subroutine ompi_comm_spawn_multiple_f(count,array_of_commands, &
                                       array_of_argv, array_of_maxprocs,array_of_info,root, &
-                                      comm,intercomm,array_of_errcodes,ierror) &
+                                      comm,intercomm,array_of_errcodes,ierror, &
+                                      cmd_len, argv_len) &
    BIND(C, name="ompi_comm_spawn_multiple_f")
    use, intrinsic :: ISO_C_BINDING, only : C_CHAR
    implicit none
@@ -2159,6 +2160,7 @@ subroutine ompi_comm_spawn_multiple_f(count,array_of_commands, &
    INTEGER, INTENT(OUT) :: intercomm
    INTEGER, INTENT(OUT) :: array_of_errcodes(*)
    INTEGER, INTENT(OUT) :: ierror
+   INTEGER, VALUE, INTENT(IN) :: cmd_len, argv_len
 end subroutine ompi_comm_spawn_multiple_f
 
 subroutine ompi_lookup_name_f(service_name,info,port_name,ierror, &
