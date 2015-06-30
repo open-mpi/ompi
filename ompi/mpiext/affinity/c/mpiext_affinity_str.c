@@ -2,10 +2,12 @@
  * Copyright (c) 2004-2009 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2010-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2010-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights
- *                         reserved. 
+ *                         reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -38,6 +40,44 @@ static const char FUNC_NAME[] = "OMPI_Affinity";
 static const char ompi_nobind_str[] = "Open MPI did not bind this process";
 static const char not_bound_str[] = "Not bound (i.e., bound to all processors)";
 
+/**************************************************************************
+ * Utility routine
+ **************************************************************************/
+
+static void no_hwloc_support(char ompi_bound[OMPI_AFFINITY_STRING_MAX],
+                             char current_binding[OMPI_AFFINITY_STRING_MAX],
+                             char exists[OMPI_AFFINITY_STRING_MAX])
+{
+    strncpy(ompi_bound, "Not supported", OMPI_AFFINITY_STRING_MAX);
+    strncpy(current_binding, "Not supported", OMPI_AFFINITY_STRING_MAX);
+    strncpy(exists, "Not supported", OMPI_AFFINITY_STRING_MAX);
+}
+
+/**************************************************************************
+ * If we have no hwloc support compiled in, do almost nothing.
+ **************************************************************************/
+
+#if !OPAL_HAVE_HWLOC
+/*
+ * If hwloc support was not compiled in, then just return "Not
+ * supported".
+ */
+int OMPI_Affinity_str(ompi_affinity_fmt_t fmt_type,
+                      char ompi_bound[OMPI_AFFINITY_STRING_MAX],
+                      char current_binding[OMPI_AFFINITY_STRING_MAX],
+                      char exists[OMPI_AFFINITY_STRING_MAX])
+{
+    no_hwloc_support(ompi_bound, current_binding, exists);
+    return MPI_SUCCESS;
+}
+#endif // !OPAL_HAVE_HWLOC
+
+/**************************************************************************
+ * If we have hwloc support compiled in, do the actual work.
+ **************************************************************************/
+
+#if OPAL_HAVE_HWLOC
+
 static int get_rsrc_ompi_bound(char str[OMPI_AFFINITY_STRING_MAX]);
 static int get_rsrc_current_binding(char str[OMPI_AFFINITY_STRING_MAX]);
 static int get_rsrc_exists(char str[OMPI_AFFINITY_STRING_MAX]);
@@ -45,10 +85,9 @@ static int get_layout_ompi_bound(char str[OMPI_AFFINITY_STRING_MAX]);
 static int get_layout_current_binding(char str[OMPI_AFFINITY_STRING_MAX]);
 static int get_layout_exists(char str[OMPI_AFFINITY_STRING_MAX]);
 
-/*---------------------------------------------------------------------------*/
 
 int OMPI_Affinity_str(ompi_affinity_fmt_t fmt_type,
-		      char ompi_bound[OMPI_AFFINITY_STRING_MAX],
+                      char ompi_bound[OMPI_AFFINITY_STRING_MAX],
                       char current_binding[OMPI_AFFINITY_STRING_MAX],
                       char exists[OMPI_AFFINITY_STRING_MAX])
 {
@@ -59,9 +98,8 @@ int OMPI_Affinity_str(ompi_affinity_fmt_t fmt_type,
 
     /* If we have no hwloc support, return nothing */
     if (NULL == opal_hwloc_topology) {
-        strncpy(ompi_bound, "Not supported", OMPI_AFFINITY_STRING_MAX);
-        strncpy(current_binding, "Not supported", OMPI_AFFINITY_STRING_MAX);
-        strncpy(exists, "Not supported", OMPI_AFFINITY_STRING_MAX);
+        no_hwloc_support(ompi_bound, current_binding, exists);
+
         return MPI_SUCCESS;
     }
 
@@ -275,7 +313,7 @@ static int get_rsrc_exists(char str[OMPI_AFFINITY_STRING_MAX])
                 }
             }
         }
-    }
+    } 
 
     return OMPI_SUCCESS;
 }
@@ -418,3 +456,4 @@ static int get_layout_exists(char str[OMPI_AFFINITY_STRING_MAX])
 
     return OMPI_SUCCESS;
 }
+#endif /* OPAL_HAVE_HWLOC */
