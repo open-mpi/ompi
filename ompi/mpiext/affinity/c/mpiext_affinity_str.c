@@ -6,6 +6,8 @@
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights
  *                         reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -42,9 +44,9 @@ static const char not_bound_str[] = "Not bound (i.e., bound to all processors)";
  * Utility routine
  **************************************************************************/
 
-static no_hwloc_support(char ompi_bound[OMPI_AFFINITY_STRING_MAX],
-                        char current_binding[OMPI_AFFINITY_STRING_MAX],
-                        char exists[OMPI_AFFINITY_STRING_MAX])
+static void no_hwloc_support(char ompi_bound[OMPI_AFFINITY_STRING_MAX],
+                             char current_binding[OMPI_AFFINITY_STRING_MAX],
+                             char exists[OMPI_AFFINITY_STRING_MAX])
 {
     strncpy(ompi_bound, "Not supported", OMPI_AFFINITY_STRING_MAX);
     strncpy(current_binding, "Not supported", OMPI_AFFINITY_STRING_MAX);
