@@ -64,8 +64,8 @@ static void set(orte_job_t *jobdat,
 {
     char *param;
     char *cpu_bitmap;
-    char **ranges, *ptr, *tmp, **newrange, **results;
-    int i, start, end;
+    char **ranges, *ptr, *tmp, **results;
+    int i, n, start, end;
     
     opal_output_verbose(2, orte_rtc_base_framework.framework_output,
                         "%s omp:set envars on child %s",
@@ -88,54 +88,38 @@ static void set(orte_job_t *jobdat,
         NULL == cpu_bitmap || 0 == strlen(cpu_bitmap)) {
         /* we are not bound, so indicate that by setting OMP_PROC_BIND = false */
         opal_output_verbose(2, orte_rtc_base_framework.framework_output,
-                            "%s omp:set not bound - set OMP_PROC_BIND=0",
+                            "%s omp:set not bound - set OMP_PROC_BIND=FALSE",
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-        opal_setenv("OMP_PROC_BIND", "0", true, environ_copy);
+        opal_setenv("OMP_PROC_BIND", "FALSE", true, environ_copy);
     } else {
         /* we are bound to something, so indicate that by setting OMP_PROC_BIND = true */
         opal_output_verbose(2, orte_rtc_base_framework.framework_output,
-                            "%s omp:set not bound - set OMP_PROC_BIND=1",
+                            "%s omp:set not bound - set OMP_PROC_BIND=SPREAD",
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-        opal_setenv("OMP_PROC_BIND", "1", true, environ_copy);
+        opal_setenv("OMP_PROC_BIND", "SPREAD", true, environ_copy);
         /* compose OMP_PLACES to indicate where we are bound - sadly, the OMP folks
          * use a different syntax than HWLOC, an so we can't just provide the bitmap
          * string. So we will traverse the bitmap and convert as required */
         ranges = opal_argv_split(cpu_bitmap, ',');
-        newrange = NULL;
         results = NULL;
         for (i=0; NULL != ranges[i]; i++) {
             if (NULL == (ptr = strchr(ranges[i], '-'))) {
-                opal_argv_append_nosize(&newrange, ranges[i]);
+                asprintf(&tmp, "{%s}", ranges[i]);
+                opal_argv_append_nosize(&results, tmp);
+                free(tmp);
             } else {
-                /* terminate any existing range */
-                if (NULL != newrange) {
-                    param = opal_argv_join(newrange, ',');
-                    asprintf(&tmp, "{%s}", param);
-                    opal_argv_append_nosize(&results, tmp);
-                    free(tmp);
-                    free(param);
-                    opal_argv_free(newrange);
-                    newrange = NULL;
-                }
                 *ptr = '\0';
                 ++ptr;
                 start = strtol(ranges[i], NULL, 10);
                 end = strtol(ptr, NULL, 10);
-                asprintf(&tmp, "{%d:%d}", start, end - start + 1);
-                opal_argv_append_nosize(&results, tmp);
-                free(tmp);
+                for (n=start; n <= end; n++) {
+                    asprintf(&tmp, "{%d}", n);
+                    opal_argv_append_nosize(&results, tmp);
+                    free(tmp);
+                }
             }
         }
         opal_argv_free(ranges);
-        if (NULL != newrange) {
-            param = opal_argv_join(newrange, ',');
-            asprintf(&tmp, "{%s}", param);
-            opal_argv_append_nosize(&results, tmp);
-            free(tmp);
-            free(param);
-            opal_argv_free(newrange);
-            newrange = NULL;
-        }
         param = opal_argv_join(results, ',');
         opal_argv_free(results);
         opal_setenv("OMP_PLACES", param, true, environ_copy);
