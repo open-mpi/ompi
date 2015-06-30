@@ -7,6 +7,8 @@
 !                         of Tennessee Research Foundation.  All rights
 !                         reserved.
 ! Copyright (c) 2012      Inria.  All rights reserved.
+! Copyright (c) 2015      Research Organization for Information Science
+!                         and Technology (RIST). All rights reserved.
 ! $COPYRIGHT$
 !
 ! This file provides the interface specifications for the MPI Fortran
@@ -1989,7 +1991,8 @@ end subroutine pompi_comm_spawn_f
 ! TODO - FIXME to use arrays of strings and pass strlen
 subroutine pompi_comm_spawn_multiple_f(count,array_of_commands, &
                                       array_of_argv, array_of_maxprocs,array_of_info,root, &
-                                      comm,intercomm,array_of_errcodes,ierror) &
+                                      comm,intercomm,array_of_errcodes,ierror, &
+                                      cmd_len, argv_len) &
    BIND(C, name="pompi_comm_spawn_multiple_f")
    use, intrinsic :: ISO_C_BINDING, only : C_CHAR
    implicit none
@@ -2001,6 +2004,7 @@ subroutine pompi_comm_spawn_multiple_f(count,array_of_commands, &
    INTEGER, INTENT(OUT) :: intercomm
    INTEGER, INTENT(OUT) :: array_of_errcodes(*)
    INTEGER, INTENT(OUT) :: ierror
+   INTEGER, INTENT(IN) :: cmd_len, argv_len
 end subroutine pompi_comm_spawn_multiple_f
 
 subroutine pompi_lookup_name_f(service_name,info,port_name,ierror, &
