@@ -11,7 +11,7 @@ subroutine PMPI_Win_detach_f08(win,base,ierror)
    use :: mpi_f08, only : ompi_win_detach_f
    implicit none
    OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: base
-   TYPE(MPI_Win), INTENT(OUT) :: win
+   TYPE(MPI_Win), INTENT(IN) :: win
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
    integer :: c_ierror
 

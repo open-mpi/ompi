@@ -2408,7 +2408,7 @@ subroutine ompi_win_attach_f(win,base,size,ierror) &
    implicit none
    OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: base
    INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: size
-   INTEGER, INTENT(OUT) :: win
+   INTEGER, INTENT(IN) :: win
    INTEGER, INTENT(OUT) :: ierror
 end subroutine ompi_win_attach_f
 
@@ -2417,7 +2417,7 @@ subroutine ompi_win_detach_f(win,base,ierror) &
    use :: mpi_f08_types, only : MPI_ADDRESS_KIND
    implicit none
    OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: base
-   INTEGER, INTENT(OUT) :: win
+   INTEGER, INTENT(IN) :: win
    INTEGER, INTENT(OUT) :: ierror
 end subroutine ompi_win_detach_f
 
