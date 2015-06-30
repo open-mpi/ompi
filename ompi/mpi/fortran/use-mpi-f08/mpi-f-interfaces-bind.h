@@ -1948,9 +1948,8 @@ end subroutine ompi_finalize_f
 
 subroutine ompi_free_mem_f(base,ierror) &
    BIND(C, name="ompi_free_mem_f")
-   use :: mpi_f08_types, only : MPI_ADDRESS_KIND
    implicit none
-   INTEGER(MPI_ADDRESS_KIND), DIMENSION(*) OMPI_ASYNCHRONOUS :: base
+   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: base
    INTEGER, INTENT(OUT) :: ierror
 end subroutine ompi_free_mem_f
 
