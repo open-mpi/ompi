@@ -29,25 +29,9 @@
 #include "opal/threads/condition.h"
 #include "opal/sys/atomic.h"
 
-
-#if !OPAL_ENABLE_MULTI_THREADS
-
-/* If we don't have thread support, there's no point in running this
-   test */
-
-int main(int argc, char *argv[])
-{
-    printf("OMPI was compiled without thread support -- skipping this test\n");
-    return 77;
-}
-
-#else
-
-/* Only have the body of this test if we have thread support */
-
-opal_mutex_t mutex = {};
-opal_condition_t thr1_cond = {};
-opal_condition_t thr2_cond = {};
+static opal_mutex_t mutex;
+static opal_condition_t thr1_cond;
+static opal_condition_t thr2_cond;
 
 static volatile int thr1_count = 0;
 static volatile int thr2_count = 0;
@@ -134,5 +118,3 @@ int main(int argc, char** argv)
 
     return test_finalize();
 }
-
-#endif /* OPAL_ENABLE_MULTI_THREADS */
