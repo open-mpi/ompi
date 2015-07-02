@@ -173,7 +173,7 @@ static int smcuda_register(void)
 #endif /* OPAL_CUDA_SUPPORT */
     mca_btl_smcuda.super.btl_eager_limit = 4*1024;
     mca_btl_smcuda.super.btl_rndv_eager_limit = 4*1024;
-    mca_btl_smcuda.super.btl_max_send_size = 128*1024;
+    mca_btl_smcuda.super.btl_max_send_size = 32*1024;
     mca_btl_smcuda.super.btl_rdma_pipeline_send_length = 64*1024;
     mca_btl_smcuda.super.btl_rdma_pipeline_frag_size = 64*1024;
     mca_btl_smcuda.super.btl_min_rdma_pipeline_size = 64*1024;
@@ -185,7 +185,12 @@ static int smcuda_register(void)
     /* Call the BTL based to register its MCA params */
     mca_btl_base_param_register(&mca_btl_smcuda_component.super.btl_version,
                                 &mca_btl_smcuda.super);
-
+#if OPAL_CUDA_SUPPORT
+    /* If user has not set the value, then set to the defalt */
+    if (0 == mca_btl_smcuda.super.btl_cuda_max_send_size) {
+        mca_btl_smcuda.super.btl_cuda_max_send_size = 128*1024;
+    }
+#endif /* OPAL_CUDA_SUPPORT */
     return mca_btl_smcuda_component_verify();
 }
 
@@ -213,6 +218,17 @@ static int mca_btl_smcuda_component_open(void)
 
     mca_btl_smcuda_component.max_frag_size = mca_btl_smcuda.super.btl_max_send_size;
     mca_btl_smcuda_component.eager_limit = mca_btl_smcuda.super.btl_eager_limit;
+
+#if OPAL_CUDA_SUPPORT
+    /* Possibly adjust max_frag_size if the cuda size is bigger */
+    if (mca_btl_smcuda.super.btl_cuda_max_send_size > mca_btl_smcuda.super.btl_max_send_size) {
+        mca_btl_smcuda_component.max_frag_size = mca_btl_smcuda.super.btl_cuda_max_send_size;
+    }
+    opal_output_verbose(10, opal_btl_base_framework.framework_output,
+                        "btl: smcuda: cuda_max_send_size=%d, max_send_size=%d, max_frag_size=%d",
+                        (int)mca_btl_smcuda.super.btl_cuda_max_send_size, (int)mca_btl_smcuda.super.btl_max_send_size,
+                        (int)mca_btl_smcuda_component.max_frag_size);
+#endif /* OPAL_CUDA_SUPPORT */
 
     /* initialize objects */
     OBJ_CONSTRUCT(&mca_btl_smcuda_component.sm_lock, opal_mutex_t);
