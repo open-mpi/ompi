@@ -135,6 +135,14 @@ int mca_btl_base_param_register(mca_base_component_t *version,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &module->btl_cuda_rdma_limit);
 #endif /* OPAL_CUDA_GDR_SUPPORT */
+#if OPAL_CUDA_SUPPORT
+    module->btl_cuda_max_send_size = 0;
+    (void) mca_base_component_var_register(version, "cuda_max_send_size", "Maximum size (in bytes) of a single GPU \"phase 2\" fragment of a long message when using the pipeline protocol (must be >= 1) (only valid on smcuda btl)",
+                                           MCA_BASE_VAR_TYPE_SIZE_T, NULL, 0, 0,
+                                           OPAL_INFO_LVL_4,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &module->btl_cuda_max_send_size);
+#endif /* OPAL_CUDA_SUPPORT */
 
     (void) mca_base_component_var_register(version, "max_send_size", "Maximum size (in bytes) of a single \"phase 2\" fragment of a long message when using the pipeline protocol (must be >= 1)",
                                            MCA_BASE_VAR_TYPE_SIZE_T, NULL, 0, 0,
