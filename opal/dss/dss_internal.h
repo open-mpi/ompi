@@ -14,6 +14,7 @@
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -73,13 +74,13 @@ BEGIN_C_DECLS
  * Internal type corresponding to bool.  Do not use this in interface
  * calls - use OPAL_BOOL instead.
  */
-#if SIZEOF_BOOL == 1
+#if SIZEOF__BOOL == 1
 #define DSS_TYPE_BOOL OPAL_UINT8
-#elif SIZEOF_BOOL == 2
+#elif SIZEOF__BOOL == 2
 #define DSS_TYPE_BOOL OPAL_UINT16
-#elif SIZEOF_BOOL == 4
+#elif SIZEOF__BOOL == 4
 #define DSS_TYPE_BOOL OPAL_UINT32
-#elif SIZEOF_BOOL == 8
+#elif SIZEOF__BOOL == 8
 #define DSS_TYPE_BOOL OPAL_UINT64
 #else
 #error Unsupported bool size!

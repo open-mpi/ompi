@@ -6,6 +6,7 @@
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -224,13 +225,13 @@ COPY_TYPE ( long_double_complex, long double _Complex, 1)
 #define copy_long_double_complex NULL
 #endif
 
-#if SIZEOF_BOOL == SIZEOF_CHAR
+#if SIZEOF__BOOL == SIZEOF_CHAR
 COPY_TYPE (bool, char, 1)
-#elif SIZEOF_BOOL == SIZEOF_SHORT
+#elif SIZEOF__BOOL == SIZEOF_SHORT
 COPY_TYPE (bool, short, 1)
-#elif SIZEOF_BOOL == SIZEOF_INT
+#elif SIZEOF__BOOL == SIZEOF_INT
 COPY_TYPE (bool, int, 1)
-#elif SIZEOF_BOOL == SIZEOF_LONG
+#elif SIZEOF__BOOL == SIZEOF_LONG
 COPY_TYPE (bool, long, 1)
 #else
 #error No basic type for copy function for opal_datatype_bool found
