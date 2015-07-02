@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2014 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2010-2012 Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
@@ -28,9 +28,6 @@
 #include "pml_ob1_recvfrag.h"
 #include "ompi/peruse/peruse-internal.h"
 #include "ompi/message/message.h"
-#if HAVE_ALLOCA_H
-#include <alloca.h>
-#endif  /* HAVE_ALLOCA_H */
 
 mca_pml_ob1_recv_request_t *mca_pml_ob1_recvreq = NULL;
 
@@ -97,19 +94,18 @@ int mca_pml_ob1_recv(void *addr,
     mca_pml_ob1_recv_request_t *recvreq = NULL;
     int rc;
 
-#if !OPAL_ENABLE_MULTI_THREADS
+#if !OMPI_ENABLE_THREAD_MULTIPLE
     recvreq = mca_pml_ob1_recvreq;
     if( OPAL_UNLIKELY(NULL == recvreq) )
-#endif  /* !OPAL_ENABLE_MULTI_THREADS */
+#endif  /* !OMPI_ENABLE_THREAD_MULTIPLE */
         {
             MCA_PML_OB1_RECV_REQUEST_ALLOC(recvreq);
             if (NULL == recvreq)
                 return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
-#if !OPAL_ENABLE_MULTI_THREADS
+#if !OMPI_ENABLE_THREAD_MULTIPLE
             mca_pml_ob1_recvreq = recvreq;
-#endif  /* !OPAL_ENABLE_MULTI_THREADS */
+#endif  /* !OMPI_ENABLE_THREAD_MULTIPLE */
         }
-    OBJ_CONSTRUCT(recvreq, mca_pml_ob1_recv_request_t);
 
     MCA_PML_OB1_RECV_REQUEST_INIT(recvreq, addr, count, datatype,
                                   src, tag, comm, false);
@@ -126,8 +122,12 @@ int mca_pml_ob1_recv(void *addr,
     }
 
     rc = recvreq->req_recv.req_base.req_ompi.req_status.MPI_ERROR;
-    MCA_PML_BASE_RECV_REQUEST_FINI(&recvreq->req_recv);
-    OBJ_DESTRUCT(recvreq);
+
+#if OMPI_ENABLE_THREAD_MULTIPLE
+    MCA_PML_OB1_RECV_REQUEST_RETURN(recvreq);
+#else
+    mca_pml_ob1_recv_request_fini (recvreq);
+#endif
 
     return rc;
 }

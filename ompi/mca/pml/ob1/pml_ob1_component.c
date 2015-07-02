@@ -294,6 +294,18 @@ int mca_pml_ob1_component_fini(void)
         return OMPI_SUCCESS; /* never selected.. return success.. */  
     mca_pml_ob1.enabled = false;  /* not anymore */
 
+    /* return the static receive/send requests to the respective free list and
+     * let the free list handle destruction. */
+    if( NULL != mca_pml_ob1_recvreq ) {
+        OMPI_FREE_LIST_RETURN_MT (&mca_pml_base_recv_requests, (ompi_free_list_item_t *) mca_pml_ob1_recvreq);
+        mca_pml_ob1_recvreq = NULL;
+    }
+
+    if( NULL != mca_pml_ob1_sendreq ) {
+        OMPI_FREE_LIST_RETURN_MT (&mca_pml_base_send_requests, (ompi_free_list_item_t *) mca_pml_ob1_sendreq);
+        mca_pml_ob1_sendreq = NULL;
+    }
+
     OBJ_DESTRUCT(&mca_pml_ob1.rdma_pending);
     OBJ_DESTRUCT(&mca_pml_ob1.pckt_pending);
     OBJ_DESTRUCT(&mca_pml_ob1.recv_pending);
@@ -305,15 +317,6 @@ int mca_pml_ob1_component_fini(void)
     OBJ_DESTRUCT(&mca_pml_ob1.rdma_frags);
     OBJ_DESTRUCT(&mca_pml_ob1.lock);
     OBJ_DESTRUCT(&mca_pml_ob1.send_ranges);
-
-    if( NULL != mca_pml_ob1_recvreq ) {
-        OBJ_DESTRUCT(mca_pml_ob1_recvreq);
-        mca_pml_ob1_recvreq = NULL;
-    }
-    if( NULL != mca_pml_ob1_sendreq ) {
-        OBJ_DESTRUCT(mca_pml_ob1_sendreq);
-        mca_pml_ob1_sendreq = NULL;
-    }
 
     if( NULL != mca_pml_ob1.allocator ) {
         (void)mca_pml_ob1.allocator->alc_finalize(mca_pml_ob1.allocator);
