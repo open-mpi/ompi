@@ -815,6 +815,11 @@ int btl_openib_verify_mca_params (void)
         }
     }
 #endif /* Workaround */
+    if (0 != mca_btl_openib_module.super.btl_cuda_max_send_size) {
+        opal_show_help("help-mpi-btl-openib.txt", "do_not_set_openib_value",
+                       true, opal_process_info.nodename);
+        mca_btl_openib_module.super.btl_cuda_max_send_size = 0;
+    }
 #endif
 
 #if BTL_OPENIB_MALLOC_HOOKS_ENABLED

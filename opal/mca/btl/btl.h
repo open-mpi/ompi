@@ -1170,6 +1170,9 @@ struct mca_btl_base_module_t {
     size_t      btl_cuda_eager_limit;  /**< switch from eager to RDMA */
     size_t      btl_cuda_rdma_limit;   /**< switch from RDMA to rndv pipeline */
 #endif /* OPAL_CUDA_GDR_SUPPORT */
+#if OPAL_CUDA_SUPPORT
+    size_t      btl_cuda_max_send_size;   /**< set if CUDA max send_size is different from host max send size */
+#endif /* OPAL_CUDA_SUPPORT */
 };
 typedef struct mca_btl_base_module_t mca_btl_base_module_t;
 
