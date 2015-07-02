@@ -280,14 +280,8 @@ typedef void (*opal_pmix_cbfunc_t)(int status, opal_value_t *kv, void *cbdata);
  * that takes into account directives and availability of
  * non-blocking operations
  */
-#define OPAL_FENCE(p, s, cf, cd)                                        \
-    do {                                                                \
-        if (opal_pmix_use_collective || NULL == opal_pmix.fence_nb) {   \
-            opal_pmix.fence((p), (s));                                  \
-        } else {                                                        \
-            opal_pmix.fence_nb((p), (s), (cf), (cd));                   \
-        }                                                               \
-    } while(0);
+#define OPAL_FENCE(p, s, cf, cd)        \
+        opal_pmix.fence((p), (s));
 
 /* callback handler for errors */
 typedef void (*opal_pmix_errhandler_fn_t)(int error);
