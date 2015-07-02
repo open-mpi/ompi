@@ -111,7 +111,9 @@ AC_DEFUN([_OMPI_BTL_USNIC_DO_CONFIG],[
 
     # All done
     AS_IF([test "$ompi_btl_usnic_happy" = "yes"],
-          [$1],
+          [$1
+           btl_usnic_WRAPPER_EXTRA_LDFLAGS=$ompi_btl_usnic_LDFLAGS
+           btl_usnic_WRAPPER_EXTRA_LIBS=$ompi_btl_usnic_LIBS],
           [AS_IF([test "$with_usnic" = "yes"],
                  [AC_MSG_WARN([--with-usnic was specified, but Cisco usNIC support cannot be built])
                   AC_MSG_ERROR([Cannot continue])],
