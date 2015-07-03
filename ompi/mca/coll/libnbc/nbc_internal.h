@@ -9,6 +9,8 @@
  *
  * Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2014      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  *
  */
 #ifndef __NBC_INTERNAL_H__
@@ -501,7 +503,10 @@ static inline int NBC_Copy(void *src, int srccount, MPI_Datatype srctype, void *
   } else {
     /* we have to pack and unpack */
     res = MPI_Pack_size(srccount, srctype, comm, &size);
-    if (MPI_SUCCESS != res || 0 == size) { printf("MPI Error in MPI_Pack_size() (%i:%i)\n", res, size); return (MPI_SUCCESS == res) ? MPI_ERR_SIZE : res;}
+    if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Pack_size() (%i:%i)\n", res, size); return (MPI_SUCCESS == res) ? MPI_ERR_SIZE : res; }
+    if (0 == size) {
+        return NBC_OK;
+    }
     packbuf = malloc(size);
     if (NULL == packbuf) { printf("Error in malloc()\n"); return res; }
     pos=0;
