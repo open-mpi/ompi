@@ -1109,6 +1109,9 @@ static int usnic_handle_completion(
     seg = (opal_btl_usnic_segment_t*)completion->op_context;
     rseg = (opal_btl_usnic_recv_segment_t*)seg;
 
+    /* Make the completion be Valgrind-defined */
+    opal_memchecker_base_mem_defined(seg, sizeof(*seg));
+
     /* Handle work completions */
     switch(seg->us_type) {
 
