@@ -12,6 +12,8 @@
  *                         reserved. 
  * Copyright (c) 2010      IBM Corporation.  All rights reserved.
  * Copyright (c) 2012-2013 Sandia National Laboratories.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -216,15 +218,16 @@ ompi_osc_rdma_start(ompi_group_t *group,
                          "ompi_osc_rdma_start entering with group size %d...",
                          group_size));
 
-    ranks = get_comm_ranks(module, module->sc_group);
-    if (NULL == ranks) return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
+    if (0 != group_size) {
+        ranks = get_comm_ranks(module, module->sc_group);
+        if (NULL == ranks) return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
 
-    for (int i = 0 ; i < group_size ; ++i) {
-        /* when the post comes in we will be in an access epoch with this proc */
-        module->peers[ranks[i]].access_epoch = true;
+        for (int i = 0 ; i < group_size ; ++i) {
+            /* when the post comes in we will be in an access epoch with this proc */
+            module->peers[ranks[i]].access_epoch = true;
+        }
+        free (ranks);
     }
-
-    free (ranks);
 
     OPAL_LIST_FOREACH_SAFE(pending_post, next, &module->pending_posts, ompi_osc_rdma_pending_post_t) {
         ompi_proc_t *pending_proc = ompi_comm_peer_lookup (module->comm, pending_post->rank);
@@ -276,6 +279,7 @@ ompi_osc_rdma_complete(ompi_win_t *win)
     int *ranks = NULL;
     ompi_group_t *group;
     int my_rank = ompi_comm_rank (module->comm);
+    int group_size;
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
                          "ompi_osc_rdma_complete entering..."));
@@ -283,9 +287,6 @@ ompi_osc_rdma_complete(ompi_win_t *win)
     if (NULL == module->sc_group) {
         return OMPI_ERR_RMA_SYNC;
     }
-
-    ranks = get_comm_ranks(module, module->sc_group);
-    if (NULL == ranks) return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
 
     OPAL_THREAD_LOCK(&module->lock);
 
@@ -307,27 +308,38 @@ ompi_osc_rdma_complete(ompi_win_t *win)
        At the same time, clean out the outgoing count for the next
        round. */
     OPAL_THREAD_UNLOCK(&module->lock);
-    for (i = 0 ; i < ompi_group_size(module->sc_group) ; ++i) {
-        if (my_rank == ranks[i]) {
-            /* shortcut for self */
-            OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output, "ompi_osc_rdma_complete self complete"));
-            module->num_complete_msgs++;
-            continue;
+
+    group_size = ompi_group_size(module->sc_group);
+    if (0 != group_size) {
+        ranks = get_comm_ranks(module, module->sc_group);
+        if (NULL == ranks) return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
+
+        for (i = 0 ; i < group_size ; ++i) {
+            if (my_rank == ranks[i]) {
+                /* shortcut for self */
+                OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output, "ompi_osc_rdma_complete self complete"));
+                module->num_complete_msgs++;
+                continue;
+            }
+
+            complete_req.base.type = OMPI_OSC_RDMA_HDR_TYPE_COMPLETE;
+            complete_req.base.flags = OMPI_OSC_RDMA_HDR_FLAG_VALID;
+            complete_req.frag_count = module->epoch_outgoing_frag_count[ranks[i]];
+
+            peer = module->peers + ranks[i];
+
+            peer->access_epoch = false;
+
+            ret = ompi_osc_rdma_control_send(module, 
+                                             ranks[i],
+                                             &complete_req,
+                                             sizeof(ompi_osc_rdma_header_complete_t));
+            if (OMPI_SUCCESS != ret) {
+                free (ranks);
+                return ret;
+            }
         }
-
-        complete_req.base.type = OMPI_OSC_RDMA_HDR_TYPE_COMPLETE;
-        complete_req.base.flags = OMPI_OSC_RDMA_HDR_FLAG_VALID;
-        complete_req.frag_count = module->epoch_outgoing_frag_count[ranks[i]];
-
-        peer = module->peers + ranks[i];
-
-        peer->access_epoch = false;
-
-        ret = ompi_osc_rdma_control_send(module, 
-                                         ranks[i],
-                                         &complete_req,
-                                         sizeof(ompi_osc_rdma_header_complete_t));
-        if (OMPI_SUCCESS != ret) goto cleanup;
+        free (ranks);
     }
     OPAL_THREAD_LOCK(&module->lock);
 
@@ -336,7 +348,7 @@ ompi_osc_rdma_complete(ompi_win_t *win)
     if (OMPI_SUCCESS != ret) goto cleanup;
 
     /* zero the fragment counts here to ensure they are zerod */
-    for (i = 0 ; i < ompi_group_size(module->sc_group) ; ++i) {
+    for (i = 0 ; i < group_size ; ++i) {
         module->epoch_outgoing_frag_count[ranks[i]] = 0;
     }
 
@@ -359,13 +371,10 @@ ompi_osc_rdma_complete(ompi_win_t *win)
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
                          "ompi_osc_rdma_complete complete"));
-    free (ranks);
 
     return OMPI_SUCCESS;
 
  cleanup:
-    if (NULL != ranks) free(ranks);
-
     OPAL_THREAD_UNLOCK(&(module->lock));
 
     return ret;
@@ -382,15 +391,18 @@ ompi_osc_rdma_post(ompi_group_t *group,
     ompi_osc_rdma_module_t *module = GET_MODULE(win);
     ompi_osc_rdma_header_post_t post_req;
     int my_rank = ompi_comm_rank(module->comm);
+    int group_size;
 
     /* can't check for all access epoch here due to fence */
     if (module->pw_group) {
         return OMPI_ERR_RMA_SYNC;
     }
 
+    group_size = ompi_group_size(group);
+
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
                          "ompi_osc_rdma_post entering with group size %d...",
-                         ompi_group_size (group)));
+                         group_size));
 
     /* save the group */
     OBJ_RETAIN(group);
@@ -408,12 +420,16 @@ ompi_osc_rdma_post(ompi_group_t *group,
     /* Update completion counter.  Can't have received any completion
        messages yet; complete won't send a completion header until
        we've sent a post header. */
-    module->num_complete_msgs = -ompi_group_size(module->pw_group);
+    module->num_complete_msgs = -group_size;
 
     OPAL_THREAD_UNLOCK(&(module->lock));
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
                          "sending post messages"));
+
+    if (0 == group_size) {
+        return ret;
+    }
 
     ranks = get_comm_ranks(module, module->pw_group);
     if (NULL == ranks) {
@@ -421,7 +437,7 @@ ompi_osc_rdma_post(ompi_group_t *group,
     }
 
     /* send a hello counter to everyone in group */
-    for (int i = 0 ; i < ompi_group_size(module->pw_group) ; ++i) {
+    for (int i = 0 ; i < group_size ; ++i) {
         OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output, "Sending post message to rank %d", ranks[i]));
 
         /* shortcut for self */
