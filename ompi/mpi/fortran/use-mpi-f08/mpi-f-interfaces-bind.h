@@ -189,8 +189,11 @@ subroutine ompi_buffer_attach_f(buffer,size,ierror) &
    INTEGER, INTENT(OUT) :: ierror
 end subroutine ompi_buffer_attach_f
 
+! Note that we have an F08-specific C implementation function for
+! MPI_BUFFER_DETACH (i.e., it is different than the mpif.h / mpi
+! module C implementation function).
 subroutine ompi_buffer_detach_f(buffer_addr,size,ierror) &
-   BIND(C, name="ompi_buffer_detach_f")
+   BIND(C, name="ompi_buffer_detach_f08")
    USE, INTRINSIC ::  ISO_C_BINDING, ONLY : C_PTR
    implicit none
    TYPE(C_PTR), INTENT(OUT) ::  buffer_addr
