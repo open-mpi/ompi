@@ -213,6 +213,13 @@ typedef struct opal_btl_usnic_component_t {
     /* Prefix for the connectivity map filename (map will be output if
        the prefix is non-NULL) */
     char *connectivity_map_prefix;
+
+    /** Expected return value from fi_cq_readerr() upon success.  In
+        libfabric v1.0.0 / API v1.0, the usnic provider returned
+        sizeof(fi_cq_err_entry) upon success.  In libfabric >=v1.1 /
+        API >=v1.1, the usnic provider returned 1 upon success. */
+    ssize_t cq_readerr_success_value;
+    ssize_t cq_readerr_try_again_value;
 } opal_btl_usnic_component_t;
 
 OPAL_MODULE_DECLSPEC extern opal_btl_usnic_component_t mca_btl_usnic_component;

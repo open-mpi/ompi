@@ -664,6 +664,28 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
     opal_output_verbose(5, USNIC_OUT,
                         "btl:usnic: usNIC fabrics found");
 
+    /* Due to ambiguities in documentation, in libfabric v1.0.0 (i.e.,
+       API v1.0) the usnic provider returned sizeof(struct
+       fi_cq_err_entry) from fi_cq_readerr() upon success.
+
+       The ambiguities were clarified in libfabric v1.1.0 (i.e., API
+       v1.1); the usnic provider returned 1 from fi_cq_readerr() upon
+       success.
+     */
+    uint32_t libfabric_api;
+    libfabric_api = fi_version();
+    if (1 == FI_MAJOR(libfabric_api) &&
+        0 == FI_MINOR(libfabric_api)) {
+        // Old fi_cq_readerr() behavior: success=sizeof(...), try again=0
+        mca_btl_usnic_component.cq_readerr_success_value =
+            sizeof(struct fi_cq_err_entry);
+        mca_btl_usnic_component.cq_readerr_try_again_value = 0;
+    } else {
+        // New fi_cq_readerr() behavior: success=1, try again=-FI_EAGAIN
+        mca_btl_usnic_component.cq_readerr_success_value = 1;
+        mca_btl_usnic_component.cq_readerr_try_again_value = -FI_EAGAIN;
+    }
+
     /* libnl initialization */
     opal_proc_t *me = opal_proc_local_get();
     opal_process_name_t *name = &(me->proc_name);
@@ -1145,17 +1167,27 @@ usnic_handle_cq_error(opal_btl_usnic_module_t* module,
     }
 
     rc = fi_cq_readerr(channel->cq, &err_entry, 0);
-    if (rc != sizeof(err_entry)) {
-        BTL_ERROR(("%s: cq_readerr ret = %d",
-               module->fabric_info->fabric_attr->name, rc));
+    if (rc == mca_btl_usnic_component.cq_readerr_try_again_value) {
+        return;
+    } else if (rc != mca_btl_usnic_component.cq_readerr_success_value) {
+        BTL_ERROR(("%s: cq_readerr ret = %d (expected %d)",
+                   module->fabric_info->fabric_attr->name, rc,
+                   (int) mca_btl_usnic_component.cq_readerr_success_value));
         channel->chan_error = true;
-    } else if (err_entry.prov_errno == 1) {
+    }
+
+    /* Silently count CRC errors.  Truncation errors are usually a
+       different symptom of a CRC error. */
+    else if (FI_ECRC == err_entry.prov_errno ||
+             FI_ETRUNC == err_entry.prov_errno) {
 #if MSGDEBUG1
         static int once = 0;
         if (once++ == 0) {
-            BTL_ERROR(("%s: Channel %d, CRC error",
-                   module->fabric_info->fabric_attr->name,
-                   channel->chan_index));
+            BTL_ERROR(("%s: Channel %d, %s",
+                       module->fabric_info->fabric_attr->name,
+                       channel->chan_index,
+                       FI_ECRC == err_entry.prov_errno ?
+                       "CRC error" : "message truncation"));
         }
 #endif
 
@@ -1171,23 +1203,10 @@ usnic_handle_cq_error(opal_btl_usnic_module_t* module,
             rseg->rs_next = channel->repost_recv_head;
             channel->repost_recv_head = rseg;
         }
-    } else if (FI_ETRUNC == err_entry.prov_errno) {
-        /* This error is usually a different symptom of a CRC error */
-#if MSGDEBUG1
-        static int once = 0;
-        if (once++ == 0) {
-            BTL_ERROR(("%s: Channel %d, message truncation",
-                   module->fabric_info->fabric_attr->name,
-                   channel->chan_index));
-        }
-#endif
-
-        /* silently count CRC errors */
-        ++module->stats.num_crc_errors;
     } else {
         BTL_ERROR(("%s: CQ[%d] prov_err = %d",
                module->fabric_info->fabric_attr->name, channel->chan_index,
-               err_entry.prov_errno));
+                   err_entry.prov_errno));
         channel->chan_error = true;
     }
 }
