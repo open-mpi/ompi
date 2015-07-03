@@ -91,8 +91,16 @@ subroutine pompi_buffer_attach_f(buffer,size,ierror) &
    INTEGER, INTENT(OUT) :: ierror
 end subroutine pompi_buffer_attach_f
 
+! Note that we have an F08-specific C implementation function for
+! PMPI_BUFFER_DETACH (i.e., it is different than the mpif.h / mpi
+! module C implementation function).
+!
+! Note, too, we don't need a "p" version of the C implementation
+! function -- Fortran's interfaces provide MPI_ and PMPI_ names for
+! us; they can just both be bound to the same back-end
+! ompi_buffer_detach_f08 C function.
 subroutine pompi_buffer_detach_f(buffer_addr,size,ierror) &
-   BIND(C, name="pompi_buffer_detach_f")
+   BIND(C, name="ompi_buffer_detach_f08")
    implicit none
    OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: buffer_addr
    INTEGER, INTENT(OUT) :: size
