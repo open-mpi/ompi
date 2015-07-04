@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Inria.  All rights reserved.
  * Copyright (c) 2011-2013 Universite Bordeaux 1
  * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
@@ -451,6 +451,12 @@ PN2(void, MPI_Dup_fn, mpi_dup_fn, MPI_DUP_FN, (MPI_Fint* comm, MPI_Fint* comm_ke
 PN2(void, MPI_Comm_null_delete_fn, mpi_comm_null_delete_fn, MPI_COMM_NULL_DELETE_FN, (MPI_Fint* comm, MPI_Fint* comm_keyval, MPI_Aint* attribute_val_out, MPI_Aint* extra_state, MPI_Fint* ierr));
 PN2(void, MPI_Comm_null_copy_fn, mpi_comm_null_copy_fn, MPI_COMM_NULL_COPY_FN, (MPI_Fint* comm, MPI_Fint* comm_keyval, MPI_Aint* extra_state, MPI_Aint* attribute_val_in, MPI_Aint* attribute_val_out, ompi_fortran_logical_t * flag, MPI_Fint* ierr));
 PN2(void, MPI_Comm_dup_fn, mpi_comm_dup_fn, MPI_COMM_DUP_FN, (MPI_Fint* comm, MPI_Fint* comm_keyval, MPI_Aint* extra_state, MPI_Aint* attribute_val_in, MPI_Aint* attribute_val_out, ompi_fortran_logical_t * flag, MPI_Fint* ierr));
+
+/*
+ * The following is an mpi_f08-module-specific function that does not
+ * fit in to the normal/templated prototypes, above.
+ */
+void ompi_buffer_detach_f08(char *buffer, MPI_Fint *size, MPI_Fint *ierr);
 
 END_C_DECLS
 

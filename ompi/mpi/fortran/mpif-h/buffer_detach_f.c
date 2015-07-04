@@ -79,6 +79,7 @@ void ompi_buffer_detach_f(char *buffer, MPI_Fint *size, MPI_Fint *ierr)
     int c_ierr;
     void *dummy;
     OMPI_SINGLE_NAME_DECL(size);
+
     c_ierr = MPI_Buffer_detach(&dummy, OMPI_SINGLE_NAME_CONVERT(size));
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
@@ -96,15 +97,13 @@ void ompi_buffer_detach_f08(char *buffer, MPI_Fint *size, MPI_Fint *ierr)
 {
     int c_ierr;
     void *dummy;
-
     OMPI_SINGLE_NAME_DECL(size);
+
     c_ierr = MPI_Buffer_detach(&dummy, OMPI_SINGLE_NAME_CONVERT(size));
-    if (NULL != ierr) {
-        *(void **)buffer = dummy;
-        *ierr = OMPI_INT_2_FINT(c_ierr);
-    }
+    if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {
+        *(void **)buffer = dummy;
         OMPI_SINGLE_INT_2_FINT(size);
     }
 }
