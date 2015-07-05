@@ -310,7 +310,7 @@ static opal_cmd_line_init_t cmd_line_init[] = {
       &myglobals.run_as_root, OPAL_CMD_LINE_TYPE_BOOL,
       "Allow execution as root (STRONGLY DISCOURAGED)" },
 
-/* End of list */
+    /* End of list */
     { NULL, '\0', NULL, NULL, 0,
       NULL, OPAL_CMD_LINE_TYPE_NULL, NULL }
 };
@@ -401,8 +401,8 @@ int main(int argc, char *argv[])
         fprintf(stderr, "--------------------------------------------------------------------------\n");
         exit(1);
     }
-
-    /*
+ 
+     /*
      * Since this process can now handle MCA/GMCA parameters, make sure to
      * process them.
      */
@@ -426,7 +426,33 @@ int main(int argc, char *argv[])
     if (OPAL_SUCCESS != opal_init(&argc, &argv)) {
         exit(1);
     }
-    
+
+    /* Check for help request */
+    if (myglobals.help) {
+        char *str, *args = NULL;
+        char *project_name = NULL;
+        opal_output(0, "GETTING HELP");
+        if (0 == strcmp(myglobals.basename, "mpirun")) {
+            project_name = "Open MPI";
+        } else {
+            project_name = "OpenRTE";
+        }
+        args = opal_cmd_line_get_usage_msg(&cmd_line);
+        opal_output(0, "CMD LINE %s", args);
+        str = opal_show_help_string("help-orterun.txt", "orterun:usage", false,
+                                    myglobals.basename, project_name, OPAL_VERSION,
+                                    myglobals.basename, args,
+                                    PACKAGE_BUGREPORT);
+        if (NULL != str) {
+            printf("%s", str);
+            free(str);
+        }
+        free(args);
+
+        /* If someone asks for help, that should be all we do */
+        exit(0);
+    }
+
     /* Check for some "global" command line params */
     parse_globals(argc, argv, &cmd_line);
     
@@ -665,12 +691,16 @@ int main(int argc, char *argv[])
     orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, req, ORTE_RML_TAG_DAEMON, orte_rml_send_callback, NULL);
     
     // wait for response and unpack the status, jobid
-    ORTE_WAIT_FOR_COMPLETION(myspawn);
+    while (myspawn) {
+      opal_event_loop(orte_event_base, OPAL_EVLOOP_ONCE);
+    }
     opal_output(0, "Job %s has launched", ORTE_JOBID_PRINT(jdata->jobid));
     
  waiting:
-    ORTE_WAIT_FOR_COMPLETION(mywait);
-
+    while (mywait) {
+      opal_event_loop(orte_event_base, OPAL_EVLOOP_ONCE);
+    }
+ 
  DONE:
     /* cleanup and leave */
     orte_finalize();

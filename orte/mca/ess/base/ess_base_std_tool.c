@@ -58,16 +58,6 @@ int orte_ess_base_tool_setup(void)
     int ret;
     char *error = NULL;
 
-    if (NULL != orte_process_info.my_hnp_uri) {
-        /* if we were given an HNP, then we were launched
-         * by mpirun in some fashion - in this case, we want
-         * to look like an application as well as being a tool.
-         * Need to do this before opening the routed framework
-         * so it will do the right things.
-         */
-        orte_process_info.proc_type |= ORTE_PROC_NON_MPI;
-    }
-    
     /* open and setup the state machine */
     if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_state_base_framework, 0))) {
         ORTE_ERROR_LOG(ret);
