@@ -77,18 +77,6 @@ int orte_ess_base_tool_setup(void)
     orte_process_info.super.proc_arch = opal_local_arch;
     opal_proc_local_set(&orte_process_info.super);
 
-    if (NULL != orte_process_info.my_hnp_uri) {
-        /* if we were given an HNP, then we want
-         * to look like an application as well as being a tool.
-         * Need to do this before opening the routed framework
-         * so it will do the right things.
-         */
-        orte_process_info.proc_type |= ORTE_PROC_NON_MPI;
-        /* get a separate orte event base */
-        orte_event_base = opal_start_progress_thread("orte", true);
-        progress_thread_running = true;
-        orte_event_base_active = true;
-    }
     /* open and setup the state machine */
     if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_state_base_framework, 0))) {
         ORTE_ERROR_LOG(ret);
