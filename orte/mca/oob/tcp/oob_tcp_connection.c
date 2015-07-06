@@ -972,7 +972,11 @@ static bool tcp_peer_recv_blocking(mca_oob_tcp_peer_t* peer, int sd,
             if (opal_socket_errno != EINTR && 
                 opal_socket_errno != EAGAIN && 
                 opal_socket_errno != EWOULDBLOCK) {
-                if (peer->state == MCA_OOB_TCP_CONNECT_ACK) {
+                if (NULL == peer) {
+                    /* protect against things like port scanners */
+                    CLOSE_THE_SOCKET(sd);
+                    return false;
+                } else if (peer->state == MCA_OOB_TCP_CONNECT_ACK) {
                     /* If we overflow the listen backlog, it's
                        possible that even though we finished the three
                        way handshake, the remote host was unable to
@@ -1001,12 +1005,8 @@ static bool tcp_peer_recv_blocking(mca_oob_tcp_peer_t* peer, int sd,
                                 (NULL == peer) ? "UNKNOWN" : ORTE_NAME_PRINT(&(peer->name)),
                                 strerror(opal_socket_errno),
                                 opal_socket_errno);
-                    if (NULL != peer) {
-                        peer->state = MCA_OOB_TCP_FAILED;
-                        mca_oob_tcp_peer_close(peer);
-                    } else {
-                        CLOSE_THE_SOCKET(sd);
-                    }
+                    peer->state = MCA_OOB_TCP_FAILED;
+                    mca_oob_tcp_peer_close(peer);
                     return false;
                 }
             }
