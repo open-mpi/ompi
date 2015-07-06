@@ -496,4 +496,66 @@ public void setInfo(Info info) throws MPIException
 private native void setInfo(long win, long info)
         throws MPIException;
 
+/**
+ * <p>Java binding of the MPI operation {@code MPI_RPUT}.
+ * @param origin_addr   	initial address of origin buffer
+ * @param origin_count 		number of entries in origin buffer
+ * @param origin_datatype  	datatype of each entry in origin buffer
+ * @param target_rank		rank of target
+ * @param target_disp		displacement from start of window to target buffer
+ * @param target_count		number of entries in target buffer
+ * @param target_datatype	datatype of each entry in target buffer
+ * @return RMA request
+ * @throws MPIException
+ */
+public final Request rPut(Buffer origin_addr, int origin_count,
+                          Datatype origin_datatype, int target_rank, int target_disp,
+                          int target_count, Datatype target_datatype)
+    throws MPIException
+{
+	if(!origin_addr.isDirect())
+        	throw new IllegalArgumentException("The origin must be direct buffer.");
+	
+    return new Request(rPut(handle, origin_addr, origin_count,
+            origin_datatype.handle, target_rank, target_disp,
+            target_count, target_datatype.handle, getBaseType(origin_datatype, target_datatype)));
+}
+
+private native long rPut(long win, Buffer origin_addr, int origin_count,
+        					long origin_datatype, int target_rank, int target_disp,
+        					int target_count, long target_datatype, int baseType)
+        throws MPIException;
+
+/**
+ * Java binding of {@code MPI_RGET}.
+ * @param origin      	origin buffer
+ * @param orgCount    	number of entries in origin buffer
+ * @param orgType     	datatype of each entry in origin buffer
+ * @param targetRank  	rank of target
+ * @param targetDisp  	displacement from start of window to target buffer
+ * @param targetCount 	number of entries in target buffer
+ * @param targetType  	datatype of each entry in target buffer
+ * @return RMA request
+ * @throws MPIException
+ */
+public final Request rGet(Buffer origin, int orgCount, Datatype orgType,
+                int targetRank, int targetDisp, int targetCount,
+                Datatype targetType)
+    throws MPIException
+{
+    MPI.check();
+
+    if(!origin.isDirect())
+        throw new IllegalArgumentException("The origin must be direct buffer.");
+
+    return new Request(rGet(handle, origin, orgCount, orgType.handle,
+        targetRank, targetDisp, targetCount, targetType.handle,
+        getBaseType(orgType, targetType)));
+}
+
+private native long rGet(
+        long win, Buffer origin, int orgCount, long orgType,
+        int targetRank, int targetDisp, int targetCount, long targetType,
+        int baseType) throws MPIException;
+
 } // Win
