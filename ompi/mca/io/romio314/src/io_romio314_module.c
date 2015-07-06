@@ -59,6 +59,8 @@ mca_io_base_module_2_0_0_t mca_io_romio314_module = {
     mca_io_romio314_file_write_at_all,
     mca_io_romio314_file_iread_at,
     mca_io_romio314_file_iwrite_at,
+    NULL, /* iread_at_all */
+    NULL, /* iwrite_at_all */
 
     /* non-indexed IO operations */
     mca_io_romio314_file_read,
@@ -67,6 +69,8 @@ mca_io_base_module_2_0_0_t mca_io_romio314_module = {
     mca_io_romio314_file_write_all,
     mca_io_romio314_file_iread,
     mca_io_romio314_file_iwrite,
+    NULL, /* iread_all */
+    NULL, /* iwrite_all */
 
     mca_io_romio314_file_seek,
     mca_io_romio314_file_get_position,
