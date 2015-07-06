@@ -409,7 +409,7 @@ int main(int argc, char *argv[])
         fprintf(stderr, "--------------------------------------------------------------------------\n");
         exit(1);
     }
- 
+
      /*
      * Since this process can now handle MCA/GMCA parameters, make sure to
      * process them.
@@ -718,13 +718,13 @@ int main(int argc, char *argv[])
 
     // wait for response and unpack the status, jobid
     while (myspawn) {
-      opal_event_loop(orte_event_base, OPAL_EVLOOP_ONCE);
+        opal_event_loop(orte_event_base, OPAL_EVLOOP_ONCE);
     }
     opal_output(0, "Job %s has launched", ORTE_JOBID_PRINT(jdata->jobid));
 
  waiting:
     while (mywait) {
-      opal_event_loop(orte_event_base, OPAL_EVLOOP_ONCE);
+        opal_event_loop(orte_event_base, OPAL_EVLOOP_ONCE);
     }
  
  DONE:
