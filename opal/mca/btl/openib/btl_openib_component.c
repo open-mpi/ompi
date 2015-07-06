@@ -3376,12 +3376,15 @@ progress_pending_frags_wqe(mca_btl_base_endpoint_t *ep, const int qpn)
             frag = opal_list_remove_first(&ep->qps[qpn].no_wqe_pending_frags[i]);
             if(NULL == frag)
                 break;
+            assert(0 == frag->opal_list_item_refcount);
             tmp_ep = to_com_frag(frag)->endpoint;
             ret = mca_btl_openib_endpoint_post_send(tmp_ep, to_send_frag(frag));
             if (OPAL_SUCCESS != ret) {
                 /* NTH: this handles retrying if we are out of credits but other errors are not
                  * handled (maybe abort?). */
-                opal_list_prepend (&ep->qps[qpn].no_wqe_pending_frags[i], (opal_list_item_t *) frag);
+                if (OPAL_ERR_RESOURCE_BUSY != ret) {
+                    opal_list_prepend (&ep->qps[qpn].no_wqe_pending_frags[i], (opal_list_item_t *) frag);
+                }
                 break;
             }
        }
