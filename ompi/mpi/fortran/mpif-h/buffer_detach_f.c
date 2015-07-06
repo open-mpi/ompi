@@ -29,7 +29,6 @@
 #pragma weak pmpi_buffer_detach__ = ompi_buffer_detach_f
 
 #pragma weak PMPI_Buffer_detach_f = ompi_buffer_detach_f
-#pragma weak PMPI_Buffer_detach_f08 = ompi_buffer_detach_f
 #elif OMPI_PROFILE_LAYER
 OMPI_GENERATE_F77_BINDINGS (PMPI_BUFFER_DETACH,
                            pmpi_buffer_detach,
@@ -47,7 +46,6 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_BUFFER_DETACH,
 #pragma weak mpi_buffer_detach__ = ompi_buffer_detach_f
 
 #pragma weak MPI_Buffer_detach_f = ompi_buffer_detach_f
-#pragma weak MPI_Buffer_detach_f08 = ompi_buffer_detach_f
 #endif
 
 #if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
@@ -92,7 +90,12 @@ void ompi_buffer_detach_f(char *buffer, MPI_Fint *size, MPI_Fint *ierr)
  * Per above, this is the mpi_f08 module implementation of
  * MPI_BUFFER_DETACH.  It handles the buffer arugment just like the C
  * binding.
+ *
+ * Note that we only need to build this function once -- not for both
+ * profiling and non-profiling.  So protect it with an appropriate
+ * #if.
  */
+#if !OMPI_PROFILE_LAYER
 void ompi_buffer_detach_f08(char *buffer, MPI_Fint *size, MPI_Fint *ierr)
 {
     int c_ierr;
@@ -107,3 +110,4 @@ void ompi_buffer_detach_f08(char *buffer, MPI_Fint *size, MPI_Fint *ierr)
         OMPI_SINGLE_INT_2_FINT(size);
     }
 }
+#endif // !OMPI_PROFILE_LAYER
