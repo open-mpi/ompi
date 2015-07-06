@@ -779,10 +779,7 @@ static int mca_spml_ikrit_get_helper(mxm_send_req_t *sreq,
     /**
      * Get the address to the remote rkey.
      **/
-    r_mkey = mca_memheap.memheap_get_cached_mkey(src,
-                                                 src_addr,
-                                                 ptl_id,
-                                                 &rva);
+    r_mkey = mca_memheap_base_get_cached_mkey(src, src_addr, ptl_id, &rva);
     if (!r_mkey) {
         SPML_ERROR("pe=%d: %p is not address of shared variable",
                    src, src_addr);
@@ -829,10 +826,7 @@ static inline int mca_spml_ikrit_get_shm(void *src_addr,
     if (ptl_id != MXM_PTL_SHM)
         return OSHMEM_ERROR;
 
-    r_mkey = mca_memheap.memheap_get_cached_mkey(src,
-                                                 src_addr,
-                                                 ptl_id,
-                                                 &rva);
+    r_mkey = mca_memheap_base_get_cached_mkey(src, src_addr, ptl_id, &rva);
     if (!r_mkey) {
         SPML_ERROR("pe=%d: %p is not address of shared variable",
                    src, src_addr);
@@ -1067,10 +1061,7 @@ static inline int mca_spml_ikrit_put_internal(void* dst_addr,
 
     ptl_id = get_ptl_id(dst);
     /* Get rkey of remote PE (dst proc) which must be on memheap  */
-    r_mkey = mca_memheap.memheap_get_cached_mkey(dst,
-                                                 dst_addr,
-                                                 ptl_id,
-                                                 &rva);
+    r_mkey = mca_memheap_base_get_cached_mkey(dst, dst_addr, ptl_id, &rva);
     if (!r_mkey) {
         SPML_ERROR("pe=%d: %p is not address of shared variable",
                    dst, dst_addr);
@@ -1094,10 +1085,7 @@ static inline int mca_spml_ikrit_put_internal(void* dst_addr,
         }
         /* segment not mapped - fallback to rmda */
         ptl_id = MXM_PTL_RDMA;
-        r_mkey = mca_memheap.memheap_get_cached_mkey(dst,
-                                                     dst_addr,
-                                                     ptl_id,
-                                                     &rva);
+        r_mkey = mca_memheap_base_get_cached_mkey(dst, dst_addr, ptl_id, &rva);
         if (!r_mkey) {
             SPML_ERROR("pe=%d: %p is not address of shared variable",
                        dst, dst_addr);
@@ -1209,11 +1197,7 @@ int mca_spml_ikrit_put_simple(void* dst_addr,
 
     ptl_id = get_ptl_id(dst);
     /* Get rkey of remote PE (dst proc) which must be on memheap  */
-    r_mkey = mca_memheap.memheap_get_cached_mkey(dst,
-                                                 //(unsigned long) dst_addr,
-                                                 dst_addr,
-                                                 ptl_id,
-                                                 &rva);
+    r_mkey = mca_memheap_base_get_cached_mkey(dst, dst_addr, ptl_id, &rva);
     if (!r_mkey) {
         SPML_ERROR("pe=%d: %p is not address of shared variable",
                    dst, dst_addr);
@@ -1236,7 +1220,7 @@ int mca_spml_ikrit_put_simple(void* dst_addr,
         }
         /* segment not mapped - fallback to rmda */
         ptl_id = MXM_PTL_RDMA;
-        r_mkey = mca_memheap.memheap_get_cached_mkey(dst,
+        r_mkey = mca_memheap_base_get_cached_mkey(dst,
                                                      //(unsigned long) dst_addr,
                                                      dst_addr,
                                                      ptl_id,

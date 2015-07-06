@@ -761,10 +761,7 @@ static inline int mca_spml_yoda_put_internal(void *dst_addr,
     put_via_send = !(bml_btl->btl->btl_flags & MCA_BTL_FLAGS_PUT);
 
     /* Get rkey of remote PE (dst proc) which must be on memheap*/
-    r_mkey = mca_memheap.memheap_get_cached_mkey(dst,
-                                                 dst_addr,
-                                                 btl_id,
-                                                 &rva);
+    r_mkey = mca_memheap_base_get_cached_mkey(dst, dst_addr, btl_id, &rva);
     if (!r_mkey) {
         SPML_ERROR("pe=%d: %p is not address of shared variable",
                    dst, dst_addr);
@@ -1035,10 +1032,7 @@ int mca_spml_yoda_get(void* src_addr, size_t size, void* dst_addr, int src)
                        (bml_btl->btl->btl_flags & (MCA_BTL_FLAGS_PUT)) );
 
     /* Get rkey of remote PE (src proc) which must be on memheap*/
-    r_mkey = mca_memheap.memheap_get_cached_mkey(src,
-                                                 src_addr,
-                                                 btl_id,
-                                                 &rva);
+    r_mkey = mca_memheap_base_get_cached_mkey(src, src_addr, btl_id, &rva);
     if (!r_mkey) {
         SPML_ERROR("pe=%d: %p is not address of shared variable",
                    src, src_addr);
