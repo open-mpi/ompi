@@ -1153,7 +1153,7 @@ end subroutine MPI_Comm_dup
 
 end interface
 
-interface MPI_Comm_dup
+interface MPI_Comm_dup_with_info
 
 subroutine MPI_Comm_dup_with_info(comm, info, newcomm, ierror)
   integer, intent(in) :: comm
@@ -1627,7 +1627,7 @@ end subroutine PMPI_Comm_split
 end interface
 
 
-interface MPI_Comm_split
+interface MPI_Comm_split_type
 
 subroutine MPI_Comm_split_type(comm, split_type, key, info, newcomm, ierror)
   integer, intent(in) :: comm
@@ -1640,7 +1640,7 @@ end subroutine MPI_Comm_split_type
 
 end interface
 
-interface PMPI_Comm_split
+interface PMPI_Comm_split_type
 
 subroutine PMPI_Comm_split_type(comm, split_type, key, info, newcomm, ierror)
   integer, intent(in) :: comm

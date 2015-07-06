@@ -3312,14 +3312,14 @@ subroutine PMPI_Win_flush_local_f08(rank,win,ierror)
 end subroutine PMPI_Win_flush_local_f08
 end interface  PMPI_Win_flush_local
 
-interface  PMPI_Win_flush_all_local
-subroutine PMPI_Win_flush_all_local_f08(win,ierror)
+interface  PMPI_Win_flush_local_all
+subroutine PMPI_Win_flush_local_all_f08(win,ierror)
    use :: mpi_f08_types, only : MPI_Win
    implicit none
    TYPE(MPI_Win), INTENT(IN) :: win
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-end subroutine PMPI_Win_flush_all_local_f08
-end interface  PMPI_Win_flush_all_local
+end subroutine PMPI_Win_flush_local_all_f08
+end interface  PMPI_Win_flush_local_all
 
 interface  PMPI_Win_flush_all
 subroutine PMPI_Win_flush_all_f08(win,ierror)
