@@ -1,6 +1,6 @@
 ! -*- f90 -*-
 !
-! Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
+! Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
 ! Copyright (c) 2009-2012 Los Alamos National Security, LLC.
 !                         All rights reserved.
 ! $COPYRIGHT$
@@ -8,9 +8,10 @@
 #include "ompi/mpi/fortran/configure-fortran-output.h"
 
 subroutine PMPI_Buffer_detach_f08(buffer_addr,size,ierror)
+   USE, INTRINSIC ::  ISO_C_BINDING, ONLY : C_PTR
    use :: mpi_f08, only : ompi_buffer_detach_f
    implicit none
-   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: buffer_addr
+   TYPE(C_PTR), INTENT(OUT) ::  buffer_addr
    INTEGER, INTENT(OUT) :: size
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
    integer :: c_ierror
