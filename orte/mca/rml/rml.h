@@ -13,6 +13,8 @@
  * Copyright (c) 2011-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -442,8 +444,8 @@ typedef void (*orte_rml_module_purge_fn_t)(orte_process_name_t *peer);
 /********* NEW RML QOS MESSAGING APIS *****************/
 /***** Questions *****/
 /*
-1 : Should we provide a func for the user to get qos attributes of a channel? (do we allow for sets??)
-2: Should open channel - have a channel error callback function?
+1 : Should we provide a func for the user to get qos attributes of a channel? (do we allow for sets?? )
+2 : Should open channel - have a channel error callback function?
 */
 typedef void (*orte_rml_channel_callback_fn_t) (int status,
                                                 orte_rml_channel_num_t channel_num,
