@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2013-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -75,7 +75,7 @@ int mca_base_pvar_find (const char *project, const char *framework, const char *
         return OPAL_ERROR;
     }
 
-    ret = mca_base_pvar_find_by_name (full_name, &index);
+    ret = mca_base_pvar_find_by_name (full_name, MCA_BASE_PVAR_CLASS_ANY, &index);
     free (full_name);
 
     /* NTH: should we verify the name components match the returned variable? */
@@ -83,8 +83,9 @@ int mca_base_pvar_find (const char *project, const char *framework, const char *
     return (OPAL_SUCCESS != ret) ? ret : index;
 }
 
-int mca_base_pvar_find_by_name (const char *full_name, int *index)
+int mca_base_pvar_find_by_name (const char *full_name, int var_class, int *index)
 {
+    mca_base_pvar_t *pvar;
     void *tmp;
     int rc;
 
@@ -92,6 +93,15 @@ int mca_base_pvar_find_by_name (const char *full_name, int *index)
                                         &tmp);
     if (OPAL_SUCCESS != rc) {
         return rc;
+    }
+
+    rc = mca_base_pvar_get_internal ((int)(uintptr_t) tmp, &pvar, false);
+    if (OPAL_SUCCESS != rc) {
+        return rc;
+    }
+
+    if (MCA_BASE_PVAR_CLASS_ANY != var_class && pvar->var_class != var_class) {
+        return OPAL_ERR_NOT_FOUND;
     }
 
     *index = (int)(uintptr_t) tmp;

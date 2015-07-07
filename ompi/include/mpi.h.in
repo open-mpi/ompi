@@ -602,6 +602,11 @@ enum {
 #define MPI_ERR_RMA_FLAVOR            70
 #define MPI_ERR_RMA_SHARED            71
 
+/* for 1.8 these intentially overlap other error codes because MPI_ERR_LASTCODE
+   can not be changed in a release series*/
+#define MPI_T_ERR_INVALID             70
+#define MPI_T_ERR_INVALID_NAME        71
+
 /* Per MPI-3 p349 47, MPI_ERR_LASTCODE must be >= the last predefined
    MPI_ERR_<foo> code.  So just set it equal to the last code --
    MPI_ERR_RMA_SHARED, in this case. */
@@ -2577,7 +2582,7 @@ OMPI_DECLSPEC  int PMPI_T_pvar_get_info(int pvar_index, char *name, int *name_le
                                         int *verbosity, int *var_class, MPI_Datatype *datatype,
                                         MPI_T_enum *enumtype, char *desc, int *desc_len, int *bind,
                                         int *readonly, int *continuous, int *atomic);
-OMPI_DECLSPEC  int PMPI_T_pvar_get_index (const char *name, int *pvar_index);
+OMPI_DECLSPEC  int PMPI_T_pvar_get_index (const char *name, int var_class, int *pvar_index);
 OMPI_DECLSPEC  int PMPI_T_pvar_session_create(MPI_T_pvar_session *session);
 OMPI_DECLSPEC  int PMPI_T_pvar_session_free(MPI_T_pvar_session *session);
 OMPI_DECLSPEC  int PMPI_T_pvar_handle_alloc(MPI_T_pvar_session session, int pvar_index,
@@ -2627,7 +2632,7 @@ OMPI_DECLSPEC  int MPI_T_pvar_get_info(int pvar_index, char *name, int *name_len
                                        int *verbosity, int *var_class, MPI_Datatype *datatype,
                                        MPI_T_enum *enumtype, char *desc, int *desc_len, int *bind,
                                        int *readonly, int *continuous, int *atomic);
-OMPI_DECLSPEC  int MPI_T_pvar_get_index (const char *name, int *pvar_index);
+OMPI_DECLSPEC  int MPI_T_pvar_get_index (const char *name, int var_class, int *pvar_index);
 OMPI_DECLSPEC  int MPI_T_pvar_session_create(MPI_T_pvar_session *session);
 OMPI_DECLSPEC  int MPI_T_pvar_session_free(MPI_T_pvar_session *session);
 OMPI_DECLSPEC  int MPI_T_pvar_handle_alloc(MPI_T_pvar_session session, int pvar_index,

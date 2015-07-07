@@ -53,6 +53,13 @@ included in the vX.Y.Z section and be denoted as:
    (** also appeared: A.B.C)  -- indicating that this item was previously
                                  included in release version vA.B.C.
 
+1.8.7
+----
+
+- Fixed incorrect declaration for MPI_T_pvar_get_index and added
+  missing return code MPI_T_INVALID_NAME.
+
+
 1.8.6
 -----
 

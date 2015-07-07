@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2013-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  *
  * Additional copyrights may follow
@@ -90,6 +90,8 @@ enum {
     /** Variable doesn't fit any other class */
     MCA_BASE_PVAR_CLASS_GENERIC
 };
+
+#define MCA_BASE_PVAR_CLASS_ANY -1
 
 /*
  * Reserved bindings; passed when registering a new pvar. OMPI will
@@ -356,7 +358,7 @@ OPAL_DECLSPEC int mca_base_pvar_find (const char *project, const char *framework
  *
  * See mca_base_pvar_find().
  */
-OPAL_DECLSPEC int mca_base_pvar_find_by_name (const char *full_name, int *index);
+OPAL_DECLSPEC int mca_base_pvar_find_by_name (const char *full_name, int var_class, int *index);
 
 /****************************************************************************
  * The following functions are the back-end to the MPI_T API functions

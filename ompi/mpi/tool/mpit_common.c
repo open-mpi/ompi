@@ -32,6 +32,10 @@ void mpit_unlock (void)
 
 int ompit_var_type_to_datatype (mca_base_var_type_t type, MPI_Datatype *datatype)
 {
+    if (!datatype) {
+        return OMPI_SUCCESS;
+    }
+
     switch (type) {
     case MCA_BASE_VAR_TYPE_INT:
         *datatype = MPI_INT;
