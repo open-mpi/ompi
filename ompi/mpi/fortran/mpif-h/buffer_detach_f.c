@@ -65,17 +65,25 @@ OMPI_GENERATE_F77_BINDINGS (MPI_BUFFER_DETACH,
 #include "ompi/mpi/fortran/mpif-h/profile/defines.h"
 #endif
 
+/* (this comment is repeated in ompi/mpi/fortran/use-mpi-f08/buffer_detach.c)
+ *
+ * MPI-3.1 section 3.6, page 45, states that the mpif.h and mpi module
+ * interfaces for MPI_BUFFER_DETACH ignore the buffer argument.
+ * Therefore, for the mpif.h and mpi module interfaces, we use a dummy
+ * variable and leave the value handed in alone.
+ *
+ * The mpi_f08 implementation for MPI_BUFFER_DETACH therefore is a
+ * separate routine in the use-mpi-f08 directory (it's not built in
+ * the mpif-h directory because of all the different combinations of
+ * supporting weak symbols (or not), building the profiling layer (or
+ * not), etc.).
+ */
 void ompi_buffer_detach_f(char *buffer, MPI_Fint *size, MPI_Fint *ierr)
 {
-    /* 
-     * It does not make sense in fortran to return a pointer
-     * here as the user may get a behavior that is unexpected.
-     * Therefore, we use a dummy variable and leave the value
-     * handed in alone.
-     */
     int c_ierr;
     void *dummy;
     OMPI_SINGLE_NAME_DECL(size);
+
     c_ierr = MPI_Buffer_detach(&dummy, OMPI_SINGLE_NAME_CONVERT(size));
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
