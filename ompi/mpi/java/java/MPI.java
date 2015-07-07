@@ -68,7 +68,7 @@ public static final int GRAPH, DIST_GRAPH, CART;
 public static final int ANY_SOURCE, ANY_TAG;
 
 public static final Op MAX, MIN, SUM, PROD, LAND, BAND,
-                       LOR, BOR, LXOR, BXOR;
+                       LOR, BOR, LXOR, BXOR, REPLACE, NO_OP;
 
 /**
  * Global minimum operator.
@@ -241,6 +241,8 @@ static
     BXOR   = new Op(10);
     MINLOC = new Op(11);
     MAXLOC = new Op(12);
+    REPLACE = new Op(13);
+    NO_OP = new Op(14);
 
     GROUP_EMPTY  = new Group(Group.getEmpty());
     REQUEST_NULL = new Request(Request.getNull());

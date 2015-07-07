@@ -69,7 +69,7 @@ JNIEXPORT void JNICALL Java_mpi_Op_getOp(JNIEnv *env, jobject jthis, jint type)
     static MPI_Op Ops[] = {
         MPI_OP_NULL, MPI_MAX, MPI_MIN, MPI_SUM,
         MPI_PROD, MPI_LAND, MPI_BAND, MPI_LOR, MPI_BOR, MPI_LXOR,
-        MPI_BXOR, MPI_MINLOC, MPI_MAXLOC
+        MPI_BXOR, MPI_MINLOC, MPI_MAXLOC, MPI_REPLACE, MPI_NO_OP
     };
     (*env)->SetLongField(env,jthis, ompi_java.OpHandle, (jlong)Ops[type]);
 }
