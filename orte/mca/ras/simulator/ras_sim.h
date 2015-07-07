@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -22,6 +23,7 @@ struct orte_ras_sim_component_t {
     char * slots;
     char * slots_max;
     char *topofiles;
+    char *topologies;
     bool have_cpubind;
     bool have_membind;
 };

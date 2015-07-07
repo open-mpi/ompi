@@ -495,7 +495,7 @@ int orte_dt_print_proc(char **output, char *prefix, orte_proc_t *src, opal_data_
 
         if (NULL != src->locale) {
             if (OPAL_ERR_NOT_BOUND == opal_hwloc_base_cset2mapstr(locale, sizeof(locale), src->node->topology, src->locale->cpuset)) {
-                strcpy(locale, "UNKNOWN");
+                strcpy(locale, "NODE");
             }
         } else {
             strcpy(locale, "UNKNOWN");

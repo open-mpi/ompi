@@ -1712,26 +1712,23 @@ static char *bitmap2rangestr(int bitmap)
 static int build_map(int *num_sockets_arg, int *num_cores_arg, 
                      hwloc_cpuset_t cpuset, int ***map, hwloc_topology_t topo)
 {
-    static int num_sockets = -1, num_cores = -1;
+    int num_sockets, num_cores;
     int socket_index, core_index, pu_index;
     hwloc_obj_t socket, core, pu;
     int **data;
 
-    /* Find out how many sockets we have (cached so that we don't have
-       to look this up every time) */
-    if (num_sockets < 0) {
-        num_sockets = hwloc_get_nbobjs_by_type(topo, HWLOC_OBJ_SOCKET);
-        /* some systems (like the iMac) only have one
-         * socket and so don't report a socket
-         */
-        if (0 == num_sockets) {
-            num_sockets = 1;
-        }
-        /* Lazy: take the total number of cores that we have in the
-           topology; that'll be more than the max number of cores
-           under any given socket */
-        num_cores = hwloc_get_nbobjs_by_type(topo, HWLOC_OBJ_CORE);
+    /* Find out how many sockets we have */
+    num_sockets = hwloc_get_nbobjs_by_type(topo, HWLOC_OBJ_SOCKET);
+    /* some systems (like the iMac) only have one
+     * socket and so don't report a socket
+     */
+    if (0 == num_sockets) {
+        num_sockets = 1;
     }
+    /* Lazy: take the total number of cores that we have in the
+       topology; that'll be more than the max number of cores
+       under any given socket */
+    num_cores = hwloc_get_nbobjs_by_type(topo, HWLOC_OBJ_CORE);
     *num_sockets_arg = num_sockets;
     *num_cores_arg = num_cores;
 
@@ -1800,7 +1797,7 @@ int opal_hwloc_base_cset2str(char *str, int len,
     int ret, socket_index, core_index;
     char tmp[BUFSIZ];
     const int stmp = sizeof(tmp) - 1;
-    int **map;
+    int **map=NULL;
     hwloc_obj_t root;
     opal_hwloc_topo_data_t *sum;
 
@@ -1827,7 +1824,6 @@ int opal_hwloc_base_cset2str(char *str, int len,
     if (OPAL_SUCCESS != (ret = build_map(&num_sockets, &num_cores, cpuset, &map, topo))) {
         return ret;
     }
-
     /* Iterate over the data matrix and build up the string */
     first = true;
     for (socket_index = 0; socket_index < num_sockets; ++socket_index) {
@@ -1845,8 +1841,12 @@ int opal_hwloc_base_cset2str(char *str, int len,
             }
         }
     }
-    free(map[0]);
-    free(map);
+    if (NULL != map) {
+        if (NULL != map[0]) {
+            free(map[0]);
+        }
+        free(map);
+    }
 
     return OPAL_SUCCESS;
 }
