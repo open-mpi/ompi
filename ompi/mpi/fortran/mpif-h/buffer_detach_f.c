@@ -63,14 +63,18 @@ OMPI_GENERATE_F77_BINDINGS (MPI_BUFFER_DETACH,
 #include "ompi/mpi/fortran/mpif-h/profile/defines.h"
 #endif
 
-/*
+/* (this comment is repeated in ompi/mpi/fortran/use-mpi-f08/buffer_detach.c)
+ *
  * MPI-3.1 section 3.6, page 45, states that the mpif.h and mpi module
  * interfaces for MPI_BUFFER_DETACH ignore the buffer argument.
  * Therefore, for the mpif.h and mpi module interfaces, we use a dummy
  * variable and leave the value handed in alone.
  *
- * The mpi_f08 implementation for MPI_BUFFER_DETACH is a separate
- * routine -- see below.
+ * The mpi_f08 implementation for MPI_BUFFER_DETACH therefore is a
+ * separate routine in the use-mpi-f08 directory (it's not built in
+ * the mpif-h directory because of all the different combinations of
+ * supporting weak symbols (or not), building the profiling layer (or
+ * not), etc.).
  */
 void ompi_buffer_detach_f(char *buffer, MPI_Fint *size, MPI_Fint *ierr)
 {
@@ -85,29 +89,3 @@ void ompi_buffer_detach_f(char *buffer, MPI_Fint *size, MPI_Fint *ierr)
         OMPI_SINGLE_INT_2_FINT(size);
     }
 }
-
-/*
- * Per above, this is the mpi_f08 module implementation of
- * MPI_BUFFER_DETACH.  It handles the buffer arugment just like the C
- * binding.
- *
- * Note that we only need to build this function once -- not for both
- * profiling and non-profiling.  So protect it with an appropriate
- * #if.
- */
-#if !OMPI_PROFILE_LAYER
-void ompi_buffer_detach_f08(char *buffer, MPI_Fint *size, MPI_Fint *ierr)
-{
-    int c_ierr;
-    void *dummy;
-    OMPI_SINGLE_NAME_DECL(size);
-
-    c_ierr = MPI_Buffer_detach(&dummy, OMPI_SINGLE_NAME_CONVERT(size));
-    if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
-
-    if (MPI_SUCCESS == c_ierr) {
-        *(void **)buffer = dummy;
-        OMPI_SINGLE_INT_2_FINT(size);
-    }
-}
-#endif // !OMPI_PROFILE_LAYER
