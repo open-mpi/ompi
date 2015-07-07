@@ -558,4 +558,235 @@ private native long rGet(
         int targetRank, int targetDisp, int targetCount, long targetType,
         int baseType) throws MPIException;
 
+/**
+ * Java binding of {@code MPI_RACCUMULATE}.
+ * @param origin      origin buffer
+ * @param orgCount    number of entries in origin buffer
+ * @param orgType     datatype of each entry in origin buffer
+ * @param targetRank  rank of target
+ * @param targetDisp  displacement from start of window to target buffer
+ * @param targetCount number of entries in target buffer
+ * @param targetType  datatype of each entry in target buffer
+ * @param op          reduce operation
+ * @return RMA request
+ * @throws MPIException
+ */
+public Request rAccumulate(Buffer origin, int orgCount, Datatype orgType,
+                       int targetRank, int targetDisp, int targetCount,
+                       Datatype targetType, Op op)
+    throws MPIException
+{
+    MPI.check();
+
+    if(!origin.isDirect())
+        throw new IllegalArgumentException("The origin must be direct buffer.");
+
+    return new Request(rAccumulate(handle, origin, orgCount, orgType.handle,
+               targetRank, targetDisp, targetCount, targetType.handle,
+               op, op.handle, getBaseType(orgType, targetType)));
+}
+
+private native long rAccumulate(
+        long win, Buffer origin, int orgCount, long orgType,
+        int targetRank, int targetDisp, int targetCount, long targetType,
+        Op jOp, long hOp, int baseType) throws MPIException;
+
+/**
+ * Java binding of {@code MPI_GET_ACCUMULATE}.
+ * @param origin      	origin buffer
+ * @param orgCount    	number of entries in origin buffer
+ * @param orgType		datatype of each entry in origin buffer
+ * @param resultAddr   	result buffer
+ * @param resultCount	number of entries in result buffer
+ * @param resultType   	datatype of each entry in result buffer
+ * @param targetRank  	rank of target
+ * @param targetDisp  	displacement from start of window to target buffer
+ * @param targetCount 	number of entries in target buffer
+ * @param targetType  	datatype of each entry in target buffer
+ * @param op          	reduce operation
+ * @throws MPIException
+ */
+
+public void getAccumulate(Buffer origin, int orgCount, Datatype orgType,
+					Buffer resultAddr, int resultCount, Datatype resultType,
+                    int targetRank, int targetDisp, int targetCount,
+                    Datatype targetType, Op op)
+    throws MPIException
+{
+	MPI.check();
+
+    if(!origin.isDirect())
+        throw new IllegalArgumentException("The origin must be direct buffer.");
+
+    getAccumulate(handle, origin, orgCount, orgType.handle,
+    			resultAddr, resultCount, resultType.handle,
+               	targetRank, targetDisp, targetCount, targetType.handle,
+               	op, op.handle, getBaseType(orgType, targetType));
+}
+
+private native void getAccumulate(
+        long win, Buffer origin, int orgCount, long orgType,
+        Buffer resultAddr, int resultCount, long resultType,
+        int targetRank, int targetDisp, int targetCount, long targetType,
+        Op jOp, long hOp, int baseType) throws MPIException;
+
+/**
+ * Java binding of {@code MPI_RGET_ACCUMULATE}.
+ * @param origin      	origin buffer
+ * @param orgCount    	number of entries in origin buffer
+ * @param orgType		datatype of each entry in origin buffer
+ * @param resultAddr   	result buffer
+ * @param resultCount	number of entries in result buffer
+ * @param resultType   	datatype of each entry in result buffer
+ * @param targetRank  	rank of target
+ * @param targetDisp  	displacement from start of window to target buffer
+ * @param targetCount 	number of entries in target buffer
+ * @param targetType  	datatype of each entry in target buffer
+ * @param op          	reduce operation
+ * @return RMA request
+ * @throws MPIException
+ */
+
+public Request rGetAccumulate(Buffer origin, int orgCount, Datatype orgType,
+					Buffer resultAddr, int resultCount, Datatype resultType,
+                    int targetRank, int targetDisp, int targetCount,
+                    Datatype targetType, Op op)
+    throws MPIException
+{
+	MPI.check();
+
+    if(!origin.isDirect())
+        throw new IllegalArgumentException("The origin must be direct buffer.");
+
+    return new Request(rGetAccumulate(handle, origin, orgCount, orgType.handle,
+    			resultAddr, resultCount, resultType.handle,
+               	targetRank, targetDisp, targetCount, targetType.handle,
+               	op, op.handle, getBaseType(orgType, targetType)));
+}
+
+private native long rGetAccumulate(
+        long win, Buffer origin, int orgCount, long orgType,
+        Buffer resultAddr, int resultCount, long resultType,
+        int targetRank, int targetDisp, int targetCount, long targetType,
+        Op jOp, long hOp, int baseType) throws MPIException;
+
+/**
+ * Java binding of the MPI operation {@code MPI_WIN_LOCK_ALL}.
+ * @param assertion program assertion
+ * @throws MPIException 
+ */
+public void lockAll(int assertion) throws MPIException
+{
+    MPI.check();
+    lockAll(handle, assertion);
+}
+
+private native void lockAll(long win, int assertion)
+        throws MPIException;
+
+/**
+ * Java binding of the MPI operation {@code MPI_WIN_UNLOCK_ALL}.
+ * @throws MPIException 
+ */
+public void unlockAll() throws MPIException
+{
+    MPI.check();
+    unlockAll(handle);
+}
+
+private native void unlockAll(long win) throws MPIException;
+
+/**
+ * Java binding of the MPI operation {@code MPI_WIN_SYNC}.
+ * @throws MPIException 
+ */
+public void sync() throws MPIException
+{
+    MPI.check();
+    sync(handle);
+}
+
+private native void sync(long win) throws MPIException;
+
+/**
+ * Java binding of the MPI operation {@code MPI_WIN_FLUSH}.
+ * @param targetRank	rank of target window
+ * @throws MPIException 
+ */
+public void flush(int targetRank) throws MPIException
+{
+    MPI.check();
+    flush(handle, targetRank);
+}
+
+private native void flush(long win, int targetRank) throws MPIException;
+
+/**
+ * Java binding of the MPI operation {@code MPI_WIN_FLUSH_ALL}.
+ * @throws MPIException 
+ */
+public void flushAll() throws MPIException
+{
+    MPI.check();
+    flushAll(handle);
+}
+
+private native void flushAll(long win) throws MPIException;
+
+/**
+ * Java binding of {@code MPI_COMPARE_AND_SWAP}.
+ * @param origin      	origin buffer
+ * @param compareAddr   compare buffer
+ * @param resultAddr   	result buffer
+ * @param targetType  	datatype of each entry in target buffer
+ * @param targetRank  	rank of target
+ * @param targetDisp  	displacement from start of window to target buffer
+ * @throws MPIException
+ */
+
+public void compareAndSwap(Buffer origin, Buffer compareAddr, Buffer resultAddr,
+					Datatype targetType, int targetRank, int targetDisp)
+    throws MPIException
+{
+	MPI.check();
+
+    if(!origin.isDirect())
+        throw new IllegalArgumentException("The origin must be direct buffer.");
+
+    compareAndSwap(handle, origin, compareAddr, resultAddr,
+			targetType.handle, targetRank, targetDisp);
+}
+
+private native void compareAndSwap(
+        long win, Buffer origin, Buffer compareAddr, Buffer resultAddr,
+        long targetType, int targetRank, int targetDisp) throws MPIException;
+
+/**
+ * Java binding of {@code MPI_FETCH_AND_OP}.
+ * @param origin      	origin buffer
+ * @param resultAddr   	result buffer
+ * @param dataType  	datatype of entry in origin, result, and target buffers
+ * @param targetRank  	rank of target
+ * @param targetDisp  	displacement from start of window to target buffer
+ * @param op          	reduce operation
+ * @throws MPIException
+ */
+
+public void fetchAndOp(Buffer origin, Buffer resultAddr, Datatype dataType, 
+					int targetRank, int targetDisp, Op op)
+    throws MPIException
+{
+	MPI.check();
+
+    if(!origin.isDirect())
+        throw new IllegalArgumentException("The origin must be direct buffer.");
+
+    fetchAndOp(handle, origin, resultAddr, dataType.handle, targetRank, 
+    		targetDisp, op, op.handle, getBaseType(dataType, dataType));  //neccessary?
+}
+
+private native void fetchAndOp(
+        long win, Buffer origin, Buffer resultAddr, long targetType, int targetRank, 
+        int targetDisp, Op jOp, long hOp, int baseType) throws MPIException;
+
 } // Win
