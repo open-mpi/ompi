@@ -4,7 +4,7 @@
 .\" Copyright (c) 2015 NVIDIA, Inc. All rights reserved.
 .TH MPIx_CUDA_SUPPORT 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
-\fBMPIx_CUDA_SUPPORT\fP \- Obtain prettyprint strings of processor affinity information for this process
+\fBMPIX_Query_cuda_support\fP \- Returns 1 if there is CUDA aware support and 0 if there is not.
 
 .SH SYNTAX
 .ft R
@@ -13,7 +13,7 @@
 #include <mpi.h>
 #include <mpi-ext.h>
 
-int MPIx_CUDA_SUPPORT(void)
+int MPIX_Query_cuda_support(void)
 .fi
 .SH Fortran Syntax
 There is no Fortran binding for this function.
@@ -21,13 +21,6 @@ There is no Fortran binding for this function.
 .SH C++ Syntax
 There is no C++ binding for this function.
 .
-.SH INPUT PARAMETERS
-.ft R
-.
-.SH OUTPUT PARAMETERS
-.ft R
-.TP 1i
-
 .SH DESCRIPTION
 .ft R
 
@@ -37,5 +30,5 @@ There is no C++ binding for this function.
 .SH See Also
 .ft R
 .nf
-JeffIsAToad(1)
+
 .fi

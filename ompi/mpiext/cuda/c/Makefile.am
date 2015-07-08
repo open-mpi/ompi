@@ -39,7 +39,7 @@ libmpiext_cuda_c_la_SOURCES = \
 libmpiext_cuda_c_la_LDFLAGS = -module -avoid-version
 
 # Man page installation
-nodist_man_MANS = MPIx_CUDA_SUPPORT.3
+nodist_man_MANS = MPIX_Query_cuda_support.3
 
 # Man page sources
 EXTRA_DIST = $(nodist_man_MANS:.3=.3in)
