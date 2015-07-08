@@ -470,16 +470,6 @@ opal_init(int* pargc, char*** pargv)
         goto return_error;
     }
 
-    /*
-     * Initialize the general progress engine
-     */
-    if (OPAL_SUCCESS != (ret = opal_progress_init())) {
-        error = "opal_progress_init";
-        goto return_error;
-    }
-    /* we want to tick the event library whenever possible */
-    opal_progress_event_users_increment();
-
     /* setup the shmem framework */
     if (OPAL_SUCCESS != (ret = mca_base_framework_open(&opal_shmem_base_framework, 0))) {
         error = "opal_shmem_base_open";

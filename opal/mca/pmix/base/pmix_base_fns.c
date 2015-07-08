@@ -2,7 +2,7 @@
 /*
  * Copyright (c) 2012-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
  * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -41,10 +41,10 @@ void opal_pmix_base_register_handler(opal_pmix_errhandler_fn_t err)
     errhandler = err;
 }
 
-void opal_pmix_base_errhandler(int error)
+void opal_pmix_base_errhandler(int error, opal_proc_t *proc)
 {
     if (NULL != errhandler) {
-        errhandler(error);
+        errhandler(error, proc);
     }
 }
 

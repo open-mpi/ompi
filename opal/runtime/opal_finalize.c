@@ -47,6 +47,7 @@
 #include "opal/mca/hwloc/base/base.h"
 #include "opal/mca/event/base/base.h"
 #include "opal/runtime/opal_progress.h"
+#include "opal/runtime/opal_progress_threads.h"
 #include "opal/mca/shmem/base/base.h"
 #if OPAL_ENABLE_FT_CR    == 1
 #include "opal/mca/compress/base/base.h"
@@ -133,9 +134,7 @@ opal_finalize(void)
         }
         return OPAL_SUCCESS;
     }
-
-    opal_progress_finalize();
-
+    
     /* close the checkpoint and restart service */
     opal_cr_finalize();
 

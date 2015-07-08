@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -15,6 +15,7 @@
 #include "opal/util/output.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
+#include "opal/runtime/opal_progress_threads.h"
 
 #include "opal/mca/event/event.h"
 #include "opal/mca/event/base/base.h"
@@ -65,6 +66,7 @@ static int opal_event_base_close(void)
  * Globals
  */
 opal_event_base_t *opal_event_base=NULL;
+opal_event_base_t *opal_progress_event_base=NULL;
 
 static int opal_event_base_open(mca_base_open_flag_t flags)
 {
@@ -83,15 +85,5 @@ static int opal_event_base_open(mca_base_open_flag_t flags)
     /* Declare our intent to use threads */
     opal_event_use_threads();
 
-    /* get our event base */
-    if (NULL == (opal_event_base = opal_event_base_create())) {
-        return OPAL_ERROR;
-    }
-
-    /* set the number of priorities */
-    if (0 < OPAL_EVENT_NUM_PRI) {
-        opal_event_base_priority_init(opal_event_base, OPAL_EVENT_NUM_PRI);
-    }
-
-    return rc;
+    return OPAL_SUCCESS;
 }

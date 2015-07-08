@@ -24,6 +24,7 @@
 #endif
 
 #include "opal/dss/dss.h"
+#include "opal/errhandler/opal_errhandler.h"
 #include "opal/mca/event/event.h"
 #include "opal/mca/hwloc/base/base.h"
 #include "opal/runtime/opal.h"
@@ -189,13 +190,11 @@ static int native_init(void)
                  sizeof(mca_pmix_native_component.address.sun_path)-1,
                  "%s", uri[1]);
         opal_argv_free(uri);
-
-        /* create an event base and progress thread for us */
-        if (NULL == (mca_pmix_native_component.evbase = opal_start_progress_thread("pmix_native", true))) {
-            return OPAL_ERROR;
-        }
     }
 
+    /* register our errhandler to point to opal_errhandler */
+    opal_pmix_base_register_handler(opal_invoke_errhandler);
+    
     /* we will connect on first send */
 
     return OPAL_SUCCESS;
@@ -250,11 +249,6 @@ static int native_fini(void)
         /* wait for the ack to return */
         PMIX_WAIT_FOR_COMPLETION(cb->active);
         OBJ_RELEASE(cb);
-    }
-
-    if (NULL != mca_pmix_native_component.evbase) {
-        opal_stop_progress_thread("pmix_native", true);
-        mca_pmix_native_component.evbase = NULL;
     }
 
     if (0 <= mca_pmix_native_component.sd) {
@@ -327,8 +321,7 @@ static int native_abort(int flag, const char msg[])
         /* push a timeout event to wake us up just in case this
          * message cannot get thru - e.g., someone else may have
          * detected the failure of the server and ordered an abort */
-        opal_event_evtimer_set(mca_pmix_native_component.evbase,
-                               &ev, timeout, cb);
+        opal_event_evtimer_set(opal_event_base, &ev, timeout, cb);
         opal_event_evtimer_add(&ev, &tv);
 
         /* push the message into our event base to send to the server */
