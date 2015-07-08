@@ -1,106 +1,103 @@
+/* -*- Mode: C; c-basic-offset:2 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2006 The Trustees of Indiana University and Indiana
  *                    University Research and Technology
  *                    Corporation.  All rights reserved.
  * Copyright (c) 2006 The Technical University of Chemnitz. All
  *                    rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
+ *                         reserved.
  *
  * Author(s): Torsten Hoefler <htor@cs.indiana.edu>
  *
  */
+
 #include "nbc_internal.h"
+#include "ompi/mca/topo/base/base.h"
 
-int NBC_Comm_neighbors_count(MPI_Comm comm, int *indegree, int *outdegree, int *weighted) {
-  int topo, res;
+int NBC_Comm_neighbors_count (ompi_communicator_t *comm, int *indegree, int *outdegree) {
+  if (OMPI_COMM_IS_CART(comm)) {
+    /* cartesian */
+    /* outdegree is always 2*ndims because we need to iterate over empty buffers for MPI_PROC_NULL */
+    *outdegree = *indegree = 2 * comm->c_topo->mtc.cart->ndims;
+  } else if (OMPI_COMM_IS_GRAPH(comm)) {
+    /* graph */
+    int rank, nneighbors;
 
-  res = MPI_Topo_test(comm, &topo);
-  if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Topo_test() (%i)\n", res); return res; }
+    rank = ompi_comm_rank (comm);
+    mca_topo_base_graph_neighbors_count (comm, rank, &nneighbors);
 
-  switch(topo) {
-    case MPI_CART: /* cartesian */
-      {
-        int ndims;
-        res = MPI_Cartdim_get(comm, &ndims)  ;
-        if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Cartdim_get() (%i)\n", res); return res; }
-        /* outdegree is always 2*ndims because we need to iterate over empty buffers for MPI_PROC_NULL */
-        *outdegree = *indegree = 2*ndims;
-        *weighted = 0;
-      }
-      break;
-    case MPI_GRAPH: /* graph */
-      {
-        int rank, nneighbors;
-        MPI_Comm_rank(comm, &rank);
-        res = MPI_Graph_neighbors_count(comm, rank, &nneighbors);
-        if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Graph_neighbors_count() (%i)\n", res); return res; }
-        *outdegree = *indegree = nneighbors;
-        *weighted = 0;
-      }
-      break;
-    case MPI_DIST_GRAPH: /* graph */
-      {
-        res = MPI_Dist_graph_neighbors_count(comm, indegree, outdegree, weighted);
-        if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Dist_graph_neighbors_count() (%i)\n", res); return res; }
-      }
-      break;
-    case MPI_UNDEFINED:
-      return NBC_INVALID_TOPOLOGY_COMM;
-      break;
-    default:
-      return NBC_INVALID_PARAM;
-      break;
+    *outdegree = *indegree = nneighbors;
+  } else if (OMPI_COMM_IS_DIST_GRAPH(comm)) {
+    /* graph */
+    *indegree = comm->c_topo->mtc.dist_graph->indegree;
+    *outdegree = comm->c_topo->mtc.dist_graph->outdegree;
+  } else {
+    return OMPI_ERR_BAD_PARAM;
   }
-  return NBC_OK;
+
+  return OMPI_SUCCESS;
 }
 
-int NBC_Comm_neighbors(MPI_Comm comm, int maxindegree, int sources[], int sourceweights[], int maxoutdegree, int destinations[], int destweights[]) {
-  int topo, res;
-  int index = 0;
+int NBC_Comm_neighbors (ompi_communicator_t *comm, int **sources, int *source_count, int **destinations, int *dest_count) {
+  int res, indeg, outdeg;
 
-  int indeg, outdeg, wgtd;
-  res = NBC_Comm_neighbors_count(comm, &indeg, &outdeg, &wgtd);
-  if(indeg > maxindegree && outdeg > maxoutdegree) return NBC_INVALID_PARAM; /* we want to return *all* neighbors */
+  *sources = *destinations = NULL;
 
-  res = MPI_Topo_test(comm, &topo);
-  if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Topo_test() (%i)\n", res); return res; }
-
-  switch(topo) {
-    case MPI_CART: /* cartesian */
-      {
-        int ndims, i, rpeer, speer;
-        res = MPI_Cartdim_get(comm, &ndims);
-        if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Cartdim_get() (%i)\n", res); return res; }
-
-        for(i = 0; i<ndims; i++) {
-          res = MPI_Cart_shift(comm, i, 1, &rpeer, &speer);
-          if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Cart_shift() (%i)\n", res); return res; }
-          sources[index] = destinations[index] = rpeer; index++;
-          sources[index] = destinations[index] = speer; index++;
-        }
-      }
-      break;
-    case MPI_GRAPH: /* graph */
-      {
-        int rank;
-        MPI_Comm_rank(comm, &rank);
-        res = MPI_Graph_neighbors(comm, rank, maxindegree, sources);
-        if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Graph_neighbors_count() (%i)\n", res); return res; }
-        for(int i=0; i<maxindegree; i++) destinations[i] = sources[i];
-      }
-      break;
-    case MPI_DIST_GRAPH: /* dist graph */
-      {
-        res = MPI_Dist_graph_neighbors(comm, maxindegree, sources, sourceweights, maxoutdegree, destinations, destweights);
-        if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Graph_neighbors_count() (%i)\n", res); return res; }
-      }
-      break;
-    case MPI_UNDEFINED:
-      return NBC_INVALID_TOPOLOGY_COMM;
-      break;
-    default:
-      return NBC_INVALID_PARAM;
-      break;
+  res = NBC_Comm_neighbors_count(comm, &indeg, &outdeg);
+  if (OMPI_SUCCESS != res) {
+    return res;
   }
 
-  return NBC_OK;
+  *source_count = indeg;
+  *dest_count = outdeg;
+
+  if (indeg) {
+    *sources = malloc (sizeof (int) * indeg);
+    if (OPAL_UNLIKELY(NULL == *sources)) {
+      return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+  } else {
+    *sources = NULL;
+  }
+
+  if (outdeg) {
+    *destinations = malloc (sizeof (int) * outdeg);
+    if (OPAL_UNLIKELY(NULL == *destinations)) {
+      free (*sources);
+      *sources = NULL;
+      return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+  } else {
+    *destinations = NULL;
+  }
+
+  /* silence clang static analyzer warning about NULL-dereference */
+  if (0 == indeg && 0 == outdeg) {
+    return OMPI_SUCCESS;
+  }
+
+  if (OMPI_COMM_IS_CART(comm)) {
+    /* cartesian */
+    int rpeer, speer;
+
+    /* silence clang static analyzer warning */
+    assert (indeg == outdeg);
+
+    for (int dim = 0, i = 0 ; dim < comm->c_topo->mtc.cart->ndims ; ++dim) {
+      mca_topo_base_cart_shift (comm, dim, 1, &rpeer, &speer);
+      sources[0][i] = destinations[0][i] = rpeer; i++;
+      sources[0][i] = destinations[0][i] = speer; i++;
+    }
+  } else if (OMPI_COMM_IS_GRAPH(comm)) {
+    /* graph */
+    mca_topo_base_graph_neighbors (comm, ompi_comm_rank (comm), indeg, sources[0]);
+    memcpy (destinations[0], sources[0], indeg * sizeof (int));
+  } else if (OMPI_COMM_IS_DIST_GRAPH(comm)) {
+    /* dist graph */
+    mca_topo_base_dist_graph_neighbors (comm, indeg, sources[0], MPI_UNWEIGHTED, outdeg, destinations[0],
+                                         MPI_UNWEIGHTED);
+  }
+
+  return OMPI_SUCCESS;
 }
