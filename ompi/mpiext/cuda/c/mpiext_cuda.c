@@ -27,5 +27,5 @@
    support.  We may expand on this API to return more features in the future. */
 int MPIX_Query_cuda_support(void)
 {
-    return OMPI_SUCCESS;
+    return OPAL_SUCCESS;
 }
