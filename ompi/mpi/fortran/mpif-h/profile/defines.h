@@ -126,12 +126,16 @@
 #define ompi_file_write_at_f pompi_file_write_at_f
 #define ompi_file_write_at_all_f pompi_file_write_at_all_f
 #define ompi_file_iread_at_f pompi_file_iread_at_f
+#define ompi_file_iwrite_at_all_f pompi_file_iwrite_at_all_f
+#define ompi_file_iread_at_all_f pompi_file_iread_at_all_f
 #define ompi_file_iwrite_at_f pompi_file_iwrite_at_f
 #define ompi_file_read_f pompi_file_read_f
 #define ompi_file_read_all_f pompi_file_read_all_f
 #define ompi_file_write_f pompi_file_write_f
 #define ompi_file_write_all_f pompi_file_write_all_f
 #define ompi_file_iread_f pompi_file_iread_f
+#define ompi_file_iwrite_all_f pompi_file_iwrite_all_f
+#define ompi_file_iread_all_f pompi_file_iread_all_f
 #define ompi_file_iwrite_f pompi_file_iwrite_f
 #define ompi_file_seek_f pompi_file_seek_f
 #define ompi_file_get_position_f pompi_file_get_position_f
