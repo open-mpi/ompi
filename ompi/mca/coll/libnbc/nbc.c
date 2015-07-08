@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:2 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2006      The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -7,6 +8,8 @@
  *                         reserved.
  * Copyright (c) 2006      The Technical University of Chemnitz. All
  *                         rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
+ *                         reserved.
  *
  * Author(s): Torsten Hoefler <htor@cs.indiana.edu>
  *
@@ -33,275 +36,255 @@ void NBC_Print_times(double div) {
 }
 #endif
 
-/* allocates a new schedule array */
-int NBC_Sched_create(NBC_Schedule* schedule) {
-  int *ptr;
+static void nbc_schedule_constructor (NBC_Schedule *schedule) {
+  /* initial total size of the schedule */
+  schedule->size = sizeof (int);
+  schedule->current_round_offset = 0;
+  schedule->data = calloc (1, schedule->size);
+}
 
-  *schedule=malloc(2*sizeof(int));
-  if(*schedule == NULL) { return NBC_OOR; }
+static void nbc_schedule_destructor (NBC_Schedule *schedule) {
+  free (schedule->data);
+  schedule->data = NULL;
+}
 
-  /* initialize the schedule */
-  ptr = (int*) *schedule;
-  ptr[0] = 2 * sizeof(int);  /* initial total size of the schedule */
-  ptr[1] = 0;                /* initial round-schedule has num=(int)0 and no actions */
-  /* The schedule's final end=(char)0 delimiter won't be added until NBC_Sched_commit(). */
+OBJ_CLASS_INSTANCE(NBC_Schedule, opal_object_t, nbc_schedule_constructor,
+                   nbc_schedule_destructor);
 
-  return NBC_OK;
+static int nbc_schedule_grow (NBC_Schedule *schedule, int additional) {
+  void *tmp;
+  int size;
+
+  /* get current size of schedule */
+  size = nbc_schedule_get_size (schedule);
+
+  tmp = realloc (schedule->data, size + additional);
+  if (NULL == tmp) {
+    NBC_Error ("Could not increase the size of NBC schedule");
+    return OMPI_ERR_OUT_OF_RESOURCE;
+  }
+
+  schedule->data = tmp;
+  return OMPI_SUCCESS;
+}
+
+static int nbc_schedule_round_append (NBC_Schedule *schedule, void *data, int data_size, bool barrier) {
+  int ret, size = nbc_schedule_get_size (schedule);
+
+  if (barrier) {
+    ret = nbc_schedule_grow (schedule, data_size + 1 + sizeof (int));
+  } else {
+    ret = nbc_schedule_grow (schedule, data_size);
+  }
+  if (OMPI_SUCCESS != ret) {
+    return ret;
+  }
+
+  /* append to the round-schedule */
+  if (data_size) {
+    memcpy (schedule->data + size, data, data_size);
+
+    /* increase number of elements in round-schedule */
+    nbc_schedule_inc_round (schedule);
+
+    /* increase size of schedule */
+    nbc_schedule_inc_size (schedule, data_size);
+  }
+
+  if (barrier) {
+    /* add the barrier */
+    schedule->data[size + data_size] = 1;
+    /* set next round counter to 0 */
+    memset (schedule->data + size + data_size + 1, 0, sizeof (int));
+
+    NBC_DEBUG(10, "ended round at byte %i\n", size + data_size + 1);
+
+    schedule->current_round_offset = size + data_size + 1;
+
+    /* increase size of schedule */
+    nbc_schedule_inc_size (schedule, sizeof (int) + 1);
+  }
+
+  return OMPI_SUCCESS;
 }
 
 /* this function puts a send into the schedule */
-int NBC_Sched_send(void* buf, char tmpbuf, int count, MPI_Datatype datatype, int dest, NBC_Schedule *schedule) {
-  int size;
-  char* ptr;
-  NBC_Fn_type type = SEND;
+int NBC_Sched_send (void* buf, char tmpbuf, int count, MPI_Datatype datatype, int dest, NBC_Schedule *schedule, bool barrier) {
   NBC_Args_send send_args;
-
-  /* get size of actual schedule */
-  NBC_GET_SIZE(*schedule, size);
-  /*printf("schedule is %i bytes\n", size);*/
-  *schedule = (NBC_Schedule)realloc(*schedule, size+sizeof(NBC_Fn_type)+sizeof(NBC_Args_send));
-  if(*schedule == NULL) { printf("Error in realloc()\n"); return NBC_OOR; }
+  int ret;
 
   /* store the passed arguments */
-  send_args.buf=buf;
-  send_args.tmpbuf=tmpbuf;
-  send_args.count=count;
-  send_args.datatype=datatype;
-  send_args.dest=dest;
+  send_args.type = SEND;
+  send_args.buf = buf;
+  send_args.tmpbuf = tmpbuf;
+  send_args.count = count;
+  send_args.datatype = datatype;
+  send_args.dest = dest;
 
   /* append to the round-schedule */
-  ptr = (char*)*schedule + size;
-  NBC_PUT_BYTES(ptr,type);
-  NBC_PUT_BYTES(ptr,send_args);
+  ret = nbc_schedule_round_append (schedule, &send_args, sizeof (send_args), barrier);
+  if (OMPI_SUCCESS != ret) {
+    return ret;
+  }
 
-  /* increase number of elements in round-schedule */
-  NBC_INC_NUM_ROUND(*schedule);
-  NBC_DEBUG(10, "adding send - ends at byte %i\n", (int)(size+sizeof(NBC_Fn_type)+sizeof(NBC_Args_send)));
+  NBC_DEBUG(10, "added send - ends at byte %i\n", nbc_schedule_get_size (schedule));
 
-  /* increase size of schedule */
-  NBC_INC_SIZE(*schedule, sizeof(NBC_Fn_type)+sizeof(NBC_Args_send));
-
-  return NBC_OK;
+  return OMPI_SUCCESS;
 }
 
 /* this function puts a receive into the schedule */
-int NBC_Sched_recv(void* buf, char tmpbuf, int count, MPI_Datatype datatype, int source, NBC_Schedule *schedule) {
-  int size;
-  char* ptr;
-  NBC_Fn_type type = RECV;
+int NBC_Sched_recv (void* buf, char tmpbuf, int count, MPI_Datatype datatype, int source, NBC_Schedule *schedule, bool barrier) {
   NBC_Args_recv recv_args;
-
-  /* get size of actual schedule */
-  NBC_GET_SIZE(*schedule, size);
-  /*printf("schedule is %i bytes\n", size);*/
-  *schedule = (NBC_Schedule)realloc(*schedule, size+sizeof(NBC_Fn_type)+sizeof(NBC_Args_recv));
-  if(*schedule == NULL) { printf("Error in realloc()\n"); return NBC_OOR; }
+  int ret;
 
   /* store the passed arguments */
-  recv_args.buf=buf;
-  recv_args.tmpbuf=tmpbuf;
-  recv_args.count=count;
-  recv_args.datatype=datatype;
-  recv_args.source=source;
+  recv_args.type = RECV;
+  recv_args.buf = buf;
+  recv_args.tmpbuf = tmpbuf;
+  recv_args.count = count;
+  recv_args.datatype = datatype;
+  recv_args.source = source;
 
   /* append to the round-schedule */
-  ptr = (char*)*schedule + size;
-  NBC_PUT_BYTES(ptr,type);
-  NBC_PUT_BYTES(ptr,recv_args);
+  ret = nbc_schedule_round_append (schedule, &recv_args, sizeof (recv_args), barrier);
+  if (OMPI_SUCCESS != ret) {
+    return ret;
+  }
 
-  /* increase number of elements in round-schedule */
-  NBC_INC_NUM_ROUND(*schedule);
-  NBC_DEBUG(10, "adding receive - ends at byte %i\n", (int)(size+sizeof(NBC_Fn_type)+sizeof(NBC_Args_recv)));
+  NBC_DEBUG(10, "added receive - ends at byte %d\n", nbc_schedule_get_size (schedule));
 
-  /* increase size of schedule */
-  NBC_INC_SIZE(*schedule, sizeof(NBC_Fn_type)+sizeof(NBC_Args_recv));
-
-  return NBC_OK;
+  return OMPI_SUCCESS;
 }
 
 /* this function puts an operation into the schedule */
-int NBC_Sched_op(void *buf3, char tmpbuf3, void* buf1, char tmpbuf1, void* buf2, char tmpbuf2, int count, MPI_Datatype datatype, MPI_Op op, NBC_Schedule *schedule) {
-  int size;
-  char* ptr;
-  NBC_Fn_type type = OP;
+int NBC_Sched_op (void *buf3, char tmpbuf3, void* buf1, char tmpbuf1, void* buf2, char tmpbuf2, int count, MPI_Datatype datatype,
+                  MPI_Op op, NBC_Schedule *schedule, bool barrier) {
   NBC_Args_op op_args;
-
-  /* get size of actual schedule */
-  NBC_GET_SIZE(*schedule, size);
-  /*printf("schedule is %i bytes\n", size);*/
-  *schedule = (NBC_Schedule)realloc(*schedule, size+sizeof(NBC_Fn_type)+sizeof(NBC_Args_op));
-  if(*schedule == NULL) { printf("Error in realloc()\n"); return NBC_OOR; }
+  int ret;
 
   /* store the passed arguments */
-  op_args.buf1=buf1;
-  op_args.buf2=buf2;
-  op_args.buf3=buf3;
-  op_args.tmpbuf1=tmpbuf1;
-  op_args.tmpbuf2=tmpbuf2;
-  op_args.tmpbuf3=tmpbuf3;
-  op_args.count=count;
-  op_args.op=op;
-  op_args.datatype=datatype;
+  op_args.type = OP;
+  op_args.buf1 = buf1;
+  op_args.buf2 = buf2;
+  op_args.buf3 = buf3;
+  op_args.tmpbuf1 = tmpbuf1;
+  op_args.tmpbuf2 = tmpbuf2;
+  op_args.tmpbuf3 = tmpbuf3;
+  op_args.count = count;
+  op_args.op = op;
+  op_args.datatype = datatype;
 
   /* append to the round-schedule */
-  ptr = (char*)*schedule + size;
-  NBC_PUT_BYTES(ptr,type);
-  NBC_PUT_BYTES(ptr,op_args);
+  ret = nbc_schedule_round_append (schedule, &op_args, sizeof (op_args), barrier);
+  if (OMPI_SUCCESS != ret) {
+    return ret;
+  }
 
-  /* increase number of elements in round-schedule */
-  NBC_INC_NUM_ROUND(*schedule);
-  NBC_DEBUG(10, "adding op - ends at byte %i\n", (int)(size+sizeof(NBC_Fn_type)+sizeof(NBC_Args_op)));
+  NBC_DEBUG(10, "added op - ends at byte %i\n", nbc_schedule_get_size (schedule));
 
-  /* increase size of schedule */
-  NBC_INC_SIZE(*schedule, sizeof(NBC_Fn_type)+sizeof(NBC_Args_op));
-
-  return NBC_OK;
+  return OMPI_SUCCESS;
 }
 
 /* this function puts a copy into the schedule */
-int NBC_Sched_copy(void *src, char tmpsrc, int srccount, MPI_Datatype srctype, void *tgt, char tmptgt, int tgtcount, MPI_Datatype tgttype, NBC_Schedule *schedule) {
-  int size;
-  char* ptr;
-  NBC_Fn_type type = COPY;
+int NBC_Sched_copy (void *src, char tmpsrc, int srccount, MPI_Datatype srctype, void *tgt, char tmptgt, int tgtcount,
+                    MPI_Datatype tgttype, NBC_Schedule *schedule, bool barrier) {
   NBC_Args_copy copy_args;
-
-  /* get size of actual schedule */
-  NBC_GET_SIZE(*schedule, size);
-  /*printf("schedule is %i bytes\n", size);*/
-  *schedule = (NBC_Schedule)realloc(*schedule, size+sizeof(NBC_Fn_type)+sizeof(NBC_Args_copy));
-  if(*schedule == NULL) { printf("Error in realloc()\n"); return NBC_OOR; }
+  int ret;
 
   /* store the passed arguments */
-  copy_args.src=src;
-  copy_args.tmpsrc=tmpsrc;
-  copy_args.srccount=srccount;
-  copy_args.srctype=srctype;
-  copy_args.tgt=tgt;
-  copy_args.tmptgt=tmptgt;
-  copy_args.tgtcount=tgtcount;
-  copy_args.tgttype=tgttype;
+  copy_args.type = COPY;
+  copy_args.src = src;
+  copy_args.tmpsrc = tmpsrc;
+  copy_args.srccount = srccount;
+  copy_args.srctype = srctype;
+  copy_args.tgt = tgt;
+  copy_args.tmptgt = tmptgt;
+  copy_args.tgtcount = tgtcount;
+  copy_args.tgttype = tgttype;
 
   /* append to the round-schedule */
-  ptr = (char*)*schedule + size;
-  NBC_PUT_BYTES(ptr,type);
-  NBC_PUT_BYTES(ptr,copy_args);
+  ret = nbc_schedule_round_append (schedule, &copy_args, sizeof (copy_args), barrier);
+  if (OMPI_SUCCESS != ret) {
+    return ret;
+  }
 
-  /* increase number of elements in round-schedule */
-  NBC_INC_NUM_ROUND(*schedule);
-  NBC_DEBUG(10, "adding copy - ends at byte %i\n", (int)(size+sizeof(NBC_Fn_type)+sizeof(NBC_Args_copy)));
+  NBC_DEBUG(10, "added copy - ends at byte %i\n", nbc_schedule_get_size (schedule));
 
-  /* increase size of schedule */
-  NBC_INC_SIZE(*schedule, sizeof(NBC_Fn_type)+sizeof(NBC_Args_copy));
-
-  return NBC_OK;
+  return OMPI_SUCCESS;
 }
 
 /* this function puts a unpack into the schedule */
-int NBC_Sched_unpack(void *inbuf, char tmpinbuf, int count, MPI_Datatype datatype, void *outbuf, char tmpoutbuf, NBC_Schedule *schedule) {
-  int size;
-  char* ptr;
-  NBC_Fn_type type = UNPACK;
+int NBC_Sched_unpack (void *inbuf, char tmpinbuf, int count, MPI_Datatype datatype, void *outbuf, char tmpoutbuf,
+                      NBC_Schedule *schedule, bool barrier) {
   NBC_Args_unpack unpack_args;
-
-  /* get size of actual schedule */
-  NBC_GET_SIZE(*schedule, size);
-  /*printf("schedule is %i bytes\n", size);*/
-  *schedule = (NBC_Schedule)realloc(*schedule, size+sizeof(NBC_Fn_type)+sizeof(NBC_Args_unpack));
-  if(*schedule == NULL) { printf("Error in realloc()\n"); return NBC_OOR; }
+  int ret;
 
   /* store the passed arguments */
-  unpack_args.inbuf=inbuf;
-  unpack_args.tmpinbuf=tmpinbuf;
-  unpack_args.count=count;
-  unpack_args.datatype=datatype;
-  unpack_args.outbuf=outbuf;
-  unpack_args.tmpoutbuf=tmpoutbuf;
+  unpack_args.type = UNPACK;
+  unpack_args.inbuf = inbuf;
+  unpack_args.tmpinbuf = tmpinbuf;
+  unpack_args.count = count;
+  unpack_args.datatype = datatype;
+  unpack_args.outbuf = outbuf;
+  unpack_args.tmpoutbuf = tmpoutbuf;
 
   /* append to the round-schedule */
-  ptr = (char*)*schedule + size;
-  NBC_PUT_BYTES(ptr,type);
-  NBC_PUT_BYTES(ptr,unpack_args);
+  ret = nbc_schedule_round_append (schedule, &unpack_args, sizeof (unpack_args), barrier);
+  if (OMPI_SUCCESS != ret) {
+    return ret;
+  }
 
-  /* increase number of elements in round-schedule */
-  NBC_INC_NUM_ROUND(*schedule);
-  NBC_DEBUG(10, "adding unpack - ends at byte %i\n", (int)(size+sizeof(NBC_Fn_type)+sizeof(NBC_Args_unpack)));
+  NBC_DEBUG(10, "added unpack - ends at byte %i\n", nbc_schedule_get_size (schedule));
 
-  /* increase size of schedule */
-  NBC_INC_SIZE(*schedule, sizeof(NBC_Fn_type)+sizeof(NBC_Args_unpack));
-
-  return NBC_OK;
+  return OMPI_SUCCESS;
 }
 
 /* this function ends a round of a schedule */
-int NBC_Sched_barrier(NBC_Schedule *schedule) {
-  int size, num = 0;
-  char *ptr;
-  char delimiter = 1;
-
-  /* get size of actual schedule */
-  NBC_GET_SIZE(*schedule, size);
-  /*printf("round terminated at %i bytes\n", size);*/
-  *schedule = (NBC_Schedule)realloc(*schedule, size+sizeof(char)+sizeof(int));
-  if(*schedule == NULL) { printf("Error in realloc()\n"); return NBC_OOR; }
-
-  ptr = (char*)*schedule + size;
-  NBC_PUT_BYTES(ptr,delimiter);  /* round-schedule delimiter */
-  NBC_PUT_BYTES(ptr,num);        /* initialize num=0 for next round-schedule */
-
-  NBC_DEBUG(10, "ending round at byte %i\n", (int)(size+sizeof(char)+sizeof(int)));
-
-  /* increase size of schedule */
-  NBC_INC_SIZE(*schedule, sizeof(char)+sizeof(int));
-
-  return NBC_OK;
+int NBC_Sched_barrier (NBC_Schedule *schedule) {
+  return nbc_schedule_round_append (schedule, NULL, 0, true);
 }
 
 /* this function ends a schedule */
 int NBC_Sched_commit(NBC_Schedule *schedule) {
-  int size;
+  int size = nbc_schedule_get_size (schedule);
+  char *ptr;
+  int ret;
 
-  /* get size of actual schedule */
-  NBC_GET_SIZE(*schedule, size);
-  /*printf("schedule terminated at %i bytes\n", size);*/
-  *schedule = (NBC_Schedule)realloc(*schedule, size+sizeof(char));
-  if(*schedule == NULL) { printf("Error in realloc()\n"); return NBC_OOR; }
+  ret = nbc_schedule_grow (schedule, 1);
+  if (OMPI_SUCCESS != ret) {
+    return ret;
+  }
 
   /* add the barrier char (0) because this is the last round */
-  *(char*)((char*)*schedule+size)=0;
-  NBC_DEBUG(10, "closing schedule %p at byte %i\n", *schedule, (int)(size+sizeof(char)));
+  ptr = schedule->data + size;
+  *((char *) ptr) = 0;
 
   /* increase size of schedule */
-  NBC_INC_SIZE(*schedule, sizeof(char));
+  nbc_schedule_inc_size (schedule, 1);
 
-  return NBC_OK;
+  NBC_DEBUG(10, "closed schedule %p at byte %i\n", schedule, (int)(size + 1));
+
+  return OMPI_SUCCESS;
 }
 
 /* finishes a request
  *
  * to be called *only* from the progress thread !!! */
-static inline int NBC_Free(NBC_Handle* handle) {
+static inline void NBC_Free (NBC_Handle* handle) {
 
-#ifdef NBC_CACHE_SCHEDULE
-  /* do not free schedule because it is in the cache */
-  handle->schedule = NULL;
-#else
-  if(handle->schedule != NULL) {
-    /* free schedule */
-    free((void*)*(handle->schedule));
-    free((void*)handle->schedule);
+  if (NULL != handle->schedule) {
+    /* release schedule */
+    OBJ_RELEASE (handle->schedule);
     handle->schedule = NULL;
   }
-#endif
 
   /* if the nbc_I<collective> attached some data */
   /* problems with schedule cache here, see comment (TODO) in
    * nbc_internal.h */
-  if(NULL != handle->tmpbuf) {
+  if (NULL != handle->tmpbuf) {
     free((void*)handle->tmpbuf);
     handle->tmpbuf = NULL;
   }
-
-  return NBC_OK;
 }
 
 /* progresses a request
@@ -309,98 +292,103 @@ static inline int NBC_Free(NBC_Handle* handle) {
  * to be called *only* from the progress thread !!! */
 int NBC_Progress(NBC_Handle *handle) {
   int flag, res, ret=NBC_CONTINUE;
-  long size;
+  unsigned long size;
   char *delim;
 
   /* the handle is done if there is no schedule attached */
-  if(handle->schedule != NULL) {
-
-    if((handle->req_count > 0) && (handle->req_array != NULL)) {
-      NBC_DEBUG(50, "NBC_Progress: testing for %i requests\n", handle->req_count);
-#ifdef NBC_TIMING
-      Test_time -= MPI_Wtime();
-#endif
-      res = ompi_request_test_all(handle->req_count, handle->req_array, &flag, MPI_STATUSES_IGNORE);
-      if(res != OMPI_SUCCESS) { printf("MPI Error in MPI_Testall() (%i)\n", res); ret=res; goto error; }
-#ifdef NBC_TIMING
-      Test_time += MPI_Wtime();
-#endif
-    } else {
-      flag = 1; /* we had no open requests -> proceed to next round */
-    }
-
-    /* a round is finished */
-    if(flag) {
-      /* adjust delim to start of current round */
-      NBC_DEBUG(5, "NBC_Progress: going in schedule %p to row-offset: %li\n", *handle->schedule, handle->row_offset);
-      delim = (char*)*handle->schedule + handle->row_offset;
-      NBC_DEBUG(10, "delim: %p\n", delim);
-      NBC_GET_ROUND_SIZE(delim, size);
-      NBC_DEBUG(10, "size: %li\n", size);
-      /* adjust delim to end of current round -> delimiter */
-      delim = delim + size;
-
-      if(handle->req_array != NULL) {
-        /* free request array */
-        free((void*)handle->req_array);
-        handle->req_array = NULL;
-      }
-      handle->req_count = 0;
-
-      if(*delim == 0) {
-        /* this was the last round - we're done */
-        NBC_DEBUG(5, "NBC_Progress last round finished - we're done\n");
-
-        res = NBC_Free(handle);
-        if((NBC_OK != res)) { printf("Error in NBC_Free() (%i)\n", res); ret=res; goto error; }
-
-        return NBC_OK;
-      } else {
-        NBC_DEBUG(5, "NBC_Progress round finished - goto next round\n");
-        /* move delim to start of next round */
-        delim = delim+1;
-        /* initializing handle for new virgin round */
-        handle->row_offset = (long)delim - (long)*handle->schedule;
-        /* kick it off */
-        res = NBC_Start_round(handle);
-        if(NBC_OK != res) { printf("Error in NBC_Start_round() (%i)\n", res); ret=res; goto error; }
-      }
-    }
-  } else {
-    ret= NBC_OK;
+  if (NULL == handle->schedule) {
+    return NBC_OK;
   }
 
-error:
+  if ((handle->req_count > 0) && (handle->req_array != NULL)) {
+    NBC_DEBUG(50, "NBC_Progress: testing for %i requests\n", handle->req_count);
+#ifdef NBC_TIMING
+    Test_time -= MPI_Wtime();
+#endif
+    res = ompi_request_test_all(handle->req_count, handle->req_array, &flag, MPI_STATUSES_IGNORE);
+    if(res != OMPI_SUCCESS) {
+      NBC_Error ("MPI Error in MPI_Testall() (%i)", res);
+      return res;
+    }
+#ifdef NBC_TIMING
+    Test_time += MPI_Wtime();
+#endif
+  } else {
+    flag = 1; /* we had no open requests -> proceed to next round */
+  }
+
+  /* a round is finished */
+  if (flag) {
+    /* adjust delim to start of current round */
+    NBC_DEBUG(5, "NBC_Progress: going in schedule %p to row-offset: %li\n", handle->schedule, handle->row_offset);
+    delim = handle->schedule->data + handle->row_offset;
+    NBC_DEBUG(10, "delim: %p\n", delim);
+    nbc_get_round_size(delim, &size);
+    NBC_DEBUG(10, "size: %li\n", size);
+    /* adjust delim to end of current round -> delimiter */
+    delim = delim + size;
+
+    if (NULL != handle->req_array) {
+      /* free request array */
+      free (handle->req_array);
+      handle->req_array = NULL;
+    }
+
+    handle->req_count = 0;
+
+    if (*delim == 0) {
+      /* this was the last round - we're done */
+      NBC_DEBUG(5, "NBC_Progress last round finished - we're done\n");
+
+      NBC_Free(handle);
+
+      return NBC_OK;
+    }
+
+    NBC_DEBUG(5, "NBC_Progress round finished - goto next round\n");
+    /* move delim to start of next round */
+    /* initializing handle for new virgin round */
+    handle->row_offset = (intptr_t) (delim + 1) - (intptr_t) handle->schedule->data;
+    /* kick it off */
+    res = NBC_Start_round(handle);
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+      NBC_Error ("Error in NBC_Start_round() (%i)", res);
+      return res;
+    }
+  }
+
   return ret;
 }
 
 static inline int NBC_Start_round(NBC_Handle *handle) {
   int num; /* number of operations */
-  int i, res, ret=NBC_OK;
+  int res;
   char* ptr;
+  MPI_Request *tmp;
   NBC_Fn_type type;
   NBC_Args_send     sendargs;
   NBC_Args_recv     recvargs;
   NBC_Args_op         opargs;
   NBC_Args_copy     copyargs;
   NBC_Args_unpack unpackargs;
-  NBC_Schedule myschedule;
   void *buf1, *buf2, *buf3;
 
   /* get round-schedule address */
-  myschedule = (NBC_Schedule*)((char*)*handle->schedule + handle->row_offset);
-  ptr = (char*) myschedule;
+  ptr = handle->schedule->data + handle->row_offset;
 
   NBC_GET_BYTES(ptr,num);
-  NBC_DEBUG(10, "start_round round at address %p : posting %i operations\n", myschedule, num);
+  NBC_DEBUG(10, "start_round round at offset %d : posting %i operations\n", handle->row_offset, num);
 
-  for (i=0; i<num; i++) {
-    NBC_GET_BYTES(ptr,type);
+  for (int i = 0 ; i < num ; ++i) {
+    int offset = (intptr_t)(ptr - handle->schedule->data);
+
+    memcpy (&type, ptr, sizeof (type));
     switch(type) {
       case SEND:
-        NBC_DEBUG(5,"  SEND (offset %li) ", (long)ptr-(long)myschedule);
+        NBC_DEBUG(5,"  SEND (offset %li) ", offset);
         NBC_GET_BYTES(ptr,sendargs);
-        NBC_DEBUG(5,"*buf: %p, count: %i, type: %lu, dest: %i, tag: %i)\n", sendargs.buf, sendargs.count, (unsigned long)sendargs.datatype, sendargs.dest, handle->tag);
+        NBC_DEBUG(5,"*buf: %p, count: %i, type: %p, dest: %i, tag: %i)\n", sendargs.buf,
+                  sendargs.count, sendargs.datatype, sendargs.dest, handle->tag);
         /* get an additional request */
         handle->req_count++;
         /* get buffer */
@@ -412,18 +400,30 @@ static inline int NBC_Start_round(NBC_Handle *handle) {
 #ifdef NBC_TIMING
         Isend_time -= MPI_Wtime();
 #endif
-        handle->req_array = (MPI_Request*)realloc((void*)handle->req_array, (handle->req_count)*sizeof(MPI_Request));
-        NBC_CHECK_NULL(handle->req_array);
-        res = MCA_PML_CALL(isend(buf1, sendargs.count, sendargs.datatype, sendargs.dest, handle->tag, MCA_PML_BASE_SEND_STANDARD, handle->comm, handle->req_array+handle->req_count-1));
-        if(OMPI_SUCCESS != res) { printf("Error in MPI_Isend(%lu, %i, %lu, %i, %i, %lu) (%i)\n", (unsigned long)buf1, sendargs.count, (unsigned long)sendargs.datatype, sendargs.dest, handle->tag, (unsigned long)handle->comm, res); ret=res; goto error; }
+        tmp = (MPI_Request *) realloc ((void *) handle->req_array, handle->req_count * sizeof (MPI_Request));
+        if (NULL == tmp) {
+          return OMPI_ERR_OUT_OF_RESOURCE;
+        }
+
+        handle->req_array = tmp;
+
+        res = MCA_PML_CALL(isend(buf1, sendargs.count, sendargs.datatype, sendargs.dest, handle->tag,
+                                 MCA_PML_BASE_SEND_STANDARD, handle->comm,
+                                 handle->req_array+handle->req_count - 1));
+        if (OMPI_SUCCESS != res) {
+          NBC_Error ("Error in MPI_Isend(%lu, %i, %p, %i, %i, %lu) (%i)", (unsigned long)buf1, sendargs.count,
+                     sendargs.datatype, sendargs.dest, handle->tag, (unsigned long)handle->comm, res);
+          return res;
+        }
 #ifdef NBC_TIMING
         Isend_time += MPI_Wtime();
 #endif
         break;
       case RECV:
-        NBC_DEBUG(5, "  RECV (offset %li) ", (long)ptr-(long)myschedule);
+        NBC_DEBUG(5, "  RECV (offset %li) ", offset);
         NBC_GET_BYTES(ptr,recvargs);
-        NBC_DEBUG(5, "*buf: %p, count: %i, type: %lu, source: %i, tag: %i)\n", recvargs.buf, recvargs.count, (unsigned long)recvargs.datatype, recvargs.source, handle->tag);
+        NBC_DEBUG(5, "*buf: %p, count: %i, type: %p, source: %i, tag: %i)\n", recvargs.buf, recvargs.count,
+                  recvargs.datatype, recvargs.source, handle->tag);
         /* get an additional request - TODO: req_count NOT thread safe */
         handle->req_count++;
         /* get buffer */
@@ -435,18 +435,29 @@ static inline int NBC_Start_round(NBC_Handle *handle) {
 #ifdef NBC_TIMING
         Irecv_time -= MPI_Wtime();
 #endif
-        handle->req_array = (MPI_Request*)realloc((void*)handle->req_array, (handle->req_count)*sizeof(MPI_Request));
-        NBC_CHECK_NULL(handle->req_array);
-        res = MCA_PML_CALL(irecv(buf1, recvargs.count, recvargs.datatype, recvargs.source, handle->tag, handle->comm, handle->req_array+handle->req_count-1));
-        if(OMPI_SUCCESS != res) { printf("Error in MPI_Irecv(%lu, %i, %lu, %i, %i, %lu) (%i)\n", (unsigned long)buf1, recvargs.count, (unsigned long)recvargs.datatype, recvargs.source, handle->tag, (unsigned long)handle->comm, res); ret=res; goto error; }
+        tmp = (MPI_Request *) realloc ((void *) handle->req_array, handle->req_count * sizeof (MPI_Request));
+        if (NULL == tmp) {
+          return OMPI_ERR_OUT_OF_RESOURCE;
+        }
+
+        handle->req_array = tmp;
+
+        res = MCA_PML_CALL(irecv(buf1, recvargs.count, recvargs.datatype, recvargs.source, handle->tag, handle->comm,
+                                 handle->req_array+handle->req_count-1));
+        if (OMPI_SUCCESS != res) {
+          NBC_Error("Error in MPI_Irecv(%lu, %i, %p, %i, %i, %lu) (%i)", (unsigned long)buf1, recvargs.count,
+                    recvargs.datatype, recvargs.source, handle->tag, (unsigned long)handle->comm, res);
+          return res;
+        }
 #ifdef NBC_TIMING
         Irecv_time += MPI_Wtime();
 #endif
         break;
       case OP:
-        NBC_DEBUG(5, "  OP   (offset %li) ", (long)ptr-(long)myschedule);
+        NBC_DEBUG(5, "  OP   (offset %li) ", offset);
         NBC_GET_BYTES(ptr,opargs);
-        NBC_DEBUG(5, "*buf1: %p, buf2: %p, buf3: %p, count: %i, type: %lu)\n", opargs.buf1, opargs.buf2, opargs.buf3, opargs.count, (unsigned long)opargs.datatype);
+        NBC_DEBUG(5, "*buf1: %p, buf2: %p, buf3: %p, count: %i, type: %p)\n", opargs.buf1, opargs.buf2,
+                  opargs.buf3, opargs.count, opargs.datatype);
         /* get buffers */
         if(opargs.tmpbuf1) {
           buf1=(char*)handle->tmpbuf+(long)opargs.buf1;
@@ -466,9 +477,11 @@ static inline int NBC_Start_round(NBC_Handle *handle) {
         ompi_3buff_op_reduce(opargs.op, buf1, buf2, buf3, opargs.count, opargs.datatype);
         break;
       case COPY:
-        NBC_DEBUG(5, "  COPY   (offset %li) ", (long)ptr-(long)myschedule);
+        NBC_DEBUG(5, "  COPY   (offset %li) ", offset);
         NBC_GET_BYTES(ptr,copyargs);
-        NBC_DEBUG(5, "*src: %lu, srccount: %i, srctype: %lu, *tgt: %lu, tgtcount: %i, tgttype: %lu)\n", (unsigned long)copyargs.src, copyargs.srccount, (unsigned long)copyargs.srctype, (unsigned long)copyargs.tgt, copyargs.tgtcount, (unsigned long)copyargs.tgttype);
+        NBC_DEBUG(5, "*src: %lu, srccount: %i, srctype: %p, *tgt: %lu, tgtcount: %i, tgttype: %p)\n",
+                  (unsigned long) copyargs.src, copyargs.srccount, copyargs.srctype,
+                  (unsigned long) copyargs.tgt, copyargs.tgtcount, copyargs.tgttype);
         /* get buffers */
         if(copyargs.tmpsrc) {
           buf1=(char*)handle->tmpbuf+(long)copyargs.src;
@@ -480,13 +493,17 @@ static inline int NBC_Start_round(NBC_Handle *handle) {
         } else {
           buf2=copyargs.tgt;
         }
-        res = NBC_Copy(buf1, copyargs.srccount, copyargs.srctype, buf2, copyargs.tgtcount, copyargs.tgttype, handle->comm);
-        if(res != NBC_OK) { printf("NBC_Copy() failed (code: %i)\n", res); ret=res; goto error; }
+        res = NBC_Copy (buf1, copyargs.srccount, copyargs.srctype, buf2, copyargs.tgtcount, copyargs.tgttype,
+                        handle->comm);
+        if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+          return res;
+        }
         break;
       case UNPACK:
-        NBC_DEBUG(5, "  UNPACK   (offset %li) ", (long)ptr-(long)myschedule);
+        NBC_DEBUG(5, "  UNPACK   (offset %li) ", offset);
         NBC_GET_BYTES(ptr,unpackargs);
-        NBC_DEBUG(5, "*src: %lu, srccount: %i, srctype: %lu, *tgt: %lu\n", (unsigned long)unpackargs.inbuf, unpackargs.count, (unsigned long)unpackargs.datatype, (unsigned long)unpackargs.outbuf);
+        NBC_DEBUG(5, "*src: %lu, srccount: %i, srctype: %p, *tgt: %lu\n", (unsigned long) unpackargs.inbuf,
+                  unpackargs.count, unpackargs.datatype, (unsigned long) unpackargs.outbuf);
         /* get buffers */
         if(unpackargs.tmpinbuf) {
           buf1=(char*)handle->tmpbuf+(long)unpackargs.inbuf;
@@ -498,13 +515,16 @@ static inline int NBC_Start_round(NBC_Handle *handle) {
         } else {
           buf2=unpackargs.outbuf;
         }
-        res = NBC_Unpack(buf1, unpackargs.count, unpackargs.datatype, buf2, handle->comm);
-        if(res != NBC_OK) { printf("NBC_Unpack() failed (code: %i)\n", res); ret=res; goto error; }
+        res = NBC_Unpack (buf1, unpackargs.count, unpackargs.datatype, buf2, handle->comm);
+        if (OMPI_SUCCESS != res) {
+          NBC_Error ("NBC_Unpack() failed (code: %i)", res);
+          return res;
+        }
+
         break;
       default:
-        printf("NBC_Start_round: bad type %li at offset %li\n", (long)type, (long)ptr-(long)myschedule);
-        ret=NBC_BAD_SCHED;
-        goto error;
+        NBC_Error ("NBC_Start_round: bad type %li at offset %li", (long)type, offset);
+        return OMPI_ERROR;
     }
   }
 
@@ -513,13 +533,14 @@ static inline int NBC_Start_round(NBC_Handle *handle) {
    *
    * threaded case: calling progress in the first round can lead to a
    * deadlock if NBC_Free is called in this round :-( */
-  if(handle->row_offset != sizeof(int)) {
+  if (handle->row_offset) {
     res = NBC_Progress(handle);
-    if((NBC_OK != res) && (NBC_CONTINUE != res)) { printf("Error in NBC_Progress() (%i)\n", res); ret=res; goto error; }
+    if ((NBC_OK != res) && (NBC_CONTINUE != res)) {
+      return OMPI_ERROR;
+    }
   }
 
-error:
-  return ret;
+  return OMPI_SUCCESS;
 }
 
 int NBC_Init_handle(struct ompi_communicator_t *comm, ompi_coll_libnbc_request_t **request, ompi_coll_libnbc_module_t *comminfo)
@@ -537,8 +558,7 @@ int NBC_Init_handle(struct ompi_communicator_t *comm, ompi_coll_libnbc_request_t
   handle->req_array = NULL;
   handle->comm = comm;
   handle->schedule = NULL;
-  /* first int is the schedule size */
-  handle->row_offset = sizeof(int);
+  handle->row_offset = 0;
 
   /******************** Do the tag and shadow comm administration ...  ***************/
 
@@ -555,7 +575,7 @@ int NBC_Init_handle(struct ompi_communicator_t *comm, ompi_coll_libnbc_request_t
   }
   OPAL_THREAD_UNLOCK(&comminfo->mutex);
 
-  handle->tag=comminfo->tag;
+  handle->tag = tmp_tag;
 
   /* register progress */
   if (need_register) {
@@ -574,7 +594,12 @@ int NBC_Init_handle(struct ompi_communicator_t *comm, ompi_coll_libnbc_request_t
 
   NBC_DEBUG(3, "got tag %i\n", handle->tag);
 
-  return NBC_OK;
+  return OMPI_SUCCESS;
+}
+
+void NBC_Return_handle(ompi_coll_libnbc_request_t *request) {
+  NBC_Free (request);
+  OMPI_COLL_LIBNBC_REQUEST_RETURN(request);
 }
 
 int  NBC_Init_comm(MPI_Comm comm, NBC_Comminfo *comminfo) {
@@ -636,11 +661,12 @@ int NBC_Start(NBC_Handle *handle, NBC_Schedule *schedule) {
 
   /* kick off first round */
   res = NBC_Start_round(handle);
-  if((NBC_OK != res)) { printf("Error in NBC_Start_round() (%i)\n", res); return res; }
-
+  if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+    return res;
+  }
   opal_list_append(&mca_coll_libnbc_component.active_requests, &(handle->super.super.super));
 
-  return NBC_OK;
+  return OMPI_SUCCESS;
 }
 
 #ifdef NBC_CACHE_SCHEDULE
@@ -650,13 +676,8 @@ void NBC_SchedCache_args_delete_key_dummy(void *k) {
 }
 
 void NBC_SchedCache_args_delete(void *entry) {
-  struct NBC_dummyarg *tmp;
-
-  tmp = (struct NBC_dummyarg*)entry;
-  /* free taglistentry */
-  free((void*)*(tmp->schedule));
-  /* the schedule pointer itself is also malloc'd */
-  free((void*)tmp->schedule);
-  free((void*)tmp);
+  struct NBC_dummyarg *tmp = (struct NBC_dummyarg*)entry;
+  OBJ_RELEASE(tmp->schedule);
+  free(entry);
 }
 #endif
