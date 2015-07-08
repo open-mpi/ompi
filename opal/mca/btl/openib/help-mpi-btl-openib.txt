@@ -700,3 +700,9 @@ with CUDA GPU Direct RDMA. Either disable GPU Direct RDMA support or
 enable "leave pinned" support. Deactivating the openib BTL.
 
   Local host:              %s
+#
+[do_not_set_openib_value]
+Open MPI has detected that you have attempted to set the btl_openib_cuda_max_send_size
+value. This is not supported. Setting back to default value of 0.
+
+  Local host:              %s

@@ -965,9 +965,17 @@ cannot_pack:
 
         /* makes sure that we don't exceed BTL max send size */
         if(bml_btl->btl->btl_max_send_size != 0) {
+#if OPAL_CUDA_SUPPORT
+            size_t max_send_size;
+            if ((sendreq->req_send.req_base.req_convertor.flags & CONVERTOR_CUDA) && (bml_btl->btl->btl_cuda_max_send_size != 0)) {
+                max_send_size = bml_btl->btl->btl_cuda_max_send_size - sizeof(mca_pml_ob1_frag_hdr_t);
+            } else {
+                max_send_size = bml_btl->btl->btl_max_send_size - sizeof(mca_pml_ob1_frag_hdr_t);
+            }
+#else /* OPAL_CUDA_SUPPORT */
             size_t max_send_size = bml_btl->btl->btl_max_send_size -
                 sizeof(mca_pml_ob1_frag_hdr_t);
-
+#endif /* OPAL_CUDA_SUPPORT */
             if (size > max_send_size) {
                 size = max_send_size;
             }
