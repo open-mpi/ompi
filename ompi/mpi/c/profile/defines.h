@@ -143,9 +143,13 @@
 #define MPI_File_get_view PMPI_File_get_view
 #define MPI_File_iread_at PMPI_File_iread_at
 #define MPI_File_iread PMPI_File_iread
+#define MPI_File_iread_at_all PMPI_File_iread_at_all
+#define MPI_File_iread_all PMPI_File_iread_all
 #define MPI_File_iread_shared PMPI_File_iread_shared
 #define MPI_File_iwrite_at PMPI_File_iwrite_at
 #define MPI_File_iwrite PMPI_File_iwrite
+#define MPI_File_iwrite_at_all PMPI_File_iwrite_at_all
+#define MPI_File_iwrite_all PMPI_File_iwrite_all
 #define MPI_File_iwrite_shared PMPI_File_iwrite_shared
 #define MPI_File_open PMPI_File_open
 #define MPI_File_preallocate PMPI_File_preallocate

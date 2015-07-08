@@ -450,9 +450,13 @@ libmpi_mpifh_la_SOURCES += \
         file_get_view_f.c \
         file_iread_at_f.c \
         file_iread_f.c \
+        file_iread_at_all_f.c \
+        file_iread_all_f.c \
         file_iread_shared_f.c \
         file_iwrite_at_f.c \
         file_iwrite_f.c \
+        file_iwrite_at_all_f.c \
+        file_iwrite_all_f.c \
         file_iwrite_shared_f.c \
         file_open_f.c \
         file_preallocate_f.c \

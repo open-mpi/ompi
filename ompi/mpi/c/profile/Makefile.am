@@ -391,9 +391,13 @@ nodist_libmpi_c_pmpi_la_SOURCES += \
         pfile_get_view.c \
         pfile_iread_at.c \
         pfile_iread.c \
+        pfile_iread_at_all.c \
+        pfile_iread_all.c \
         pfile_iread_shared.c \
         pfile_iwrite_at.c \
         pfile_iwrite.c \
+        pfile_iwrite_at_all.c \
+        pfile_iwrite_all.c \
         pfile_iwrite_shared.c \
         pfile_open.c \
         pfile_preallocate.c \
