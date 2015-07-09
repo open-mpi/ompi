@@ -1450,12 +1450,13 @@ static int create_ep(opal_btl_usnic_module_t* module,
         sa = (struct sockaddr *)channel->info->src_addr;
         assert(AF_INET == sa->sa_family);
     }
+#endif
+
     sin = (struct sockaddr_in *)channel->info->src_addr;
     assert(sizeof(struct sockaddr_in) == channel->info->src_addrlen);
 
     /* no matter the version of libfabric, this should hold */
     assert(0 == sin->sin_port);
-#endif
 
     rc = fi_endpoint(module->domain, channel->info, &channel->ep, NULL);
     if (0 != rc || NULL == channel->ep) {
