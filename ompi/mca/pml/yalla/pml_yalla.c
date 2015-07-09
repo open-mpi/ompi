@@ -117,7 +117,7 @@ int mca_pml_yalla_open(void)
 
     /* Read options */
     error = mxm_config_read_opts(&ompi_pml_yalla.ctx_opts, &ompi_pml_yalla.ep_opts,
-                                 "PML", NULL, 0);
+                                 "MPI", NULL, 0);
     if (MXM_OK != error) {
         return OMPI_ERROR;
     }
