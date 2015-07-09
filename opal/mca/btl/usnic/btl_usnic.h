@@ -220,6 +220,12 @@ typedef struct opal_btl_usnic_component_t {
         API >=v1.1, the usnic provider returned 1 upon success. */
     ssize_t cq_readerr_success_value;
     ssize_t cq_readerr_try_again_value;
+
+    /** Offset into the send buffer where the payload will go.  For
+        libfabric v1.0.0 / API v1.0, this is 0.  For libfabric >=v1.1
+        / API >=v1.1, this is the endpoint.msg_prefix_size (i.e.,
+        component.transport_header_len). */
+    uint32_t prefix_send_offset;
 } opal_btl_usnic_component_t;
 
 OPAL_MODULE_DECLSPEC extern opal_btl_usnic_component_t mca_btl_usnic_component;
