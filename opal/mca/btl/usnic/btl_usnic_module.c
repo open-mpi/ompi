@@ -2338,7 +2338,6 @@ opal_btl_usnic_module_t opal_btl_usnic_module_template = {
         .btl_exclusivity = MCA_BTL_EXCLUSIVITY_DEFAULT,
         .btl_flags =
             MCA_BTL_FLAGS_SEND |
-            MCA_BTL_FLAGS_PUT |
             MCA_BTL_FLAGS_SEND_INPLACE,
 
         .btl_add_procs = usnic_add_procs,
