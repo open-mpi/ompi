@@ -2125,7 +2125,7 @@ static void init_random_objects(opal_btl_usnic_module_t *module)
 
 static void init_freelists(opal_btl_usnic_module_t *module)
 {
-    int rc;
+    int rc __opal_attribute_unused__;
     uint32_t segsize;
 
     segsize = (module->local_modex.max_msg_size +

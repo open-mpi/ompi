@@ -175,12 +175,13 @@ send_frag_constructor(opal_btl_usnic_send_frag_t *frag)
 static void
 send_frag_destructor(opal_btl_usnic_send_frag_t *frag)
 {
-    mca_btl_base_descriptor_t *desc;
-
+#if OPAL_ENABLE_DEBUG
     /* make sure nobody twiddled these values after the constructor */
+    mca_btl_base_descriptor_t *desc;
     desc = &frag->sf_base.uf_base;
     assert(desc->USNIC_SEND_LOCAL == frag->sf_base.uf_local_seg);
     assert(0 == frag->sf_base.uf_local_seg[0].seg_len);
+#endif
 
     /* PML may change desc->des_remote to point elsewhere, cannot assert that it
      * still points to our embedded segment */
