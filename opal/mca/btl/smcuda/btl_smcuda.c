@@ -885,6 +885,13 @@ int mca_btl_smcuda_sendi( struct mca_btl_base_module_t* btl,
     if (mca_common_cuda_enabled && (IPC_INIT == endpoint->ipcstate) && mca_btl_smcuda_component.use_cuda_ipc) {
         mca_btl_smcuda_send_cuda_ipc_request(btl, endpoint);
     }
+    /* We do not want to use this path when we have CUDA IPC support */
+    if ((convertor->flags & CONVERTOR_CUDA) && (IPC_ACKED == endpoint->ipcstate)) {
+        if (NULL != descriptor) {
+            *descriptor = mca_btl_smcuda_alloc(btl, endpoint, order, payload_size+header_size, flags);
+        }
+        return OPAL_ERR_RESOURCE_BUSY;
+    }
 #endif /* OPAL_CUDA_SUPPORT */
 
     /* this check should be unnecessary... turn into an assertion? */
