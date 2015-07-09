@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -138,6 +140,24 @@ public final Intracomm split(int colour, int key) throws MPIException
 }
 
 private native long split(long comm, int colour, int key) throws MPIException;
+
+/**
+ * Partition the group associated with this communicator and create
+ * a new communicator within each subgroup.
+ * <p>Java binding of the MPI operation {@code MPI_COMM_SPLIT_TYPE}.
+ * @param splitType	type of processes to be grouped together
+ * @param key	    control of rank assignment
+ * @param info		info argument
+ * @return new communicator
+ * @throws MPIException
+ */
+public final Intracomm splitType(int splitType, int key, Info info) throws MPIException
+{
+    MPI.check();
+    return new Intracomm(splitType(handle, splitType, key, info.handle));
+}
+
+private native long splitType(long comm, int colour, int key, long info) throws MPIException;
 
 /**
  * Create a new communicator.
