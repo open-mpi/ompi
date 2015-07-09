@@ -163,6 +163,7 @@ static int usnic_component_open(void)
     mca_btl_usnic_component.usnic_all_modules = NULL;
     mca_btl_usnic_component.usnic_active_modules = NULL;
     mca_btl_usnic_component.transport_header_len = -1;
+    mca_btl_usnic_component.prefix_send_offset = 0;
 
     /* initialize objects */
     OBJ_CONSTRUCT(&mca_btl_usnic_component.usnic_procs, opal_list_t);
@@ -630,7 +631,29 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
     hints.ep_attr = &ep_attr;
     hints.fabric_attr = &fabric_attr;
 
-    ret = fi_getinfo(FI_VERSION(1, 0), NULL, 0, 0, &hints, &info_list);
+    /* This code understands libfabric API v1.0 and v1.1.  Even if we
+       were compiled with libfabric API v1.0, we still want to request
+       v1.1 -- here's why:
+
+       - In libfabric v1.0.0 (i.e., API v1.0), the usnic provider did
+         not check the value of the "version" parameter passed into
+         fi_getinfo()
+
+       - If you pass FI_VERSION(1,0) to libfabric v1.1.0 (i.e., API
+         v1.1), the usnic provider will disable FI_MSG_PREFIX support
+         (on the assumption that the application will not handle
+         FI_MSG_PREFIX properly).  This can happen if you compile OMPI
+         against libfabric v1.0.0 (i.e., API v1.0) and run OMPI
+         against libfabric v1.1.0 (i.e., API v1.1).
+
+       So never request API v1.0 -- always request a minimum of
+       v1.1. */
+    uint32_t libfabric_api;
+    libfabric_api = FI_VERSION(FI_MAJOR_VERSION, FI_MINOR_VERSION);
+    if (libfabric_api == FI_VERSION(1, 0)) {
+        libfabric_api = FI_VERSION(1, 1);
+    }
+    ret = fi_getinfo(libfabric_api, NULL, 0, 0, &hints, &info_list);
     if (0 != ret) {
         opal_output_verbose(5, USNIC_OUT,
                             "btl:usnic: disqualifiying myself due to fi_getinfo failure: %s (%d)", strerror(-ret), ret);
@@ -671,8 +694,9 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
        The ambiguities were clarified in libfabric v1.1.0 (i.e., API
        v1.1); the usnic provider returned 1 from fi_cq_readerr() upon
        success.
-     */
-    uint32_t libfabric_api;
+
+       So query to see what version of the libfabric API we are
+       running with, and adapt accordingly. */
     libfabric_api = fi_version();
     if (1 == FI_MAJOR(libfabric_api) &&
         0 == FI_MINOR(libfabric_api)) {
