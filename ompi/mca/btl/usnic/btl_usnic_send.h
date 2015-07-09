@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013-2015 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -79,7 +79,7 @@ opal_btl_usnic_post_segment(
     /* Send the segment */
     ret = fi_send(channel->ep,
             sseg->ss_ptr,
-            sseg->ss_len,
+            sseg->ss_len + mca_btl_usnic_component.prefix_send_offset,
             NULL,
             endpoint->endpoint_remote_addrs[channel_id],
             sseg);
@@ -128,7 +128,7 @@ opal_btl_usnic_post_ack(
 
     ret = fi_send(channel->ep,
             sseg->ss_ptr,
-            sseg->ss_len,
+            sseg->ss_len + mca_btl_usnic_component.prefix_send_offset,
             NULL,
             endpoint->endpoint_remote_addrs[channel_id],
             sseg);
