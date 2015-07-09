@@ -3679,6 +3679,43 @@ subroutine MPI_File_iread_at_f08(fh,offset,buf,count,datatype,request,ierror)
 end subroutine MPI_File_iread_at_f08
 end interface  MPI_File_iread_at
 
+interface  MPI_File_iread_all
+subroutine MPI_File_iread_all_f08(fh,buf,count,datatype,request,ierror)
+   use :: mpi_f08_types, only : MPI_File, MPI_Datatype, MPI_Request
+   implicit none
+   TYPE(MPI_File), INTENT(IN) :: fh
+   !DEC$ ATTRIBUTES NO_ARG_CHECK :: buf
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: buf
+   !$PRAGMA IGNORE_TKR buf
+   !DIR$ IGNORE_TKR buf
+   !IBM* IGNORE_TKR buf
+   OMPI_FORTRAN_IGNORE_TKR_TYPE :: buf
+   INTEGER, INTENT(IN) :: count
+   TYPE(MPI_Datatype), INTENT(IN) :: datatype
+   TYPE(MPI_Request), INTENT(OUT) :: request
+   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+end subroutine MPI_File_iread_all_f08
+end interface  MPI_File_iread_all
+
+interface  MPI_File_iread_at_all
+subroutine MPI_File_iread_at_all_f08(fh,offset,buf,count,datatype,request,ierror)
+   use :: mpi_f08_types, only : MPI_File, MPI_Datatype, MPI_Request, MPI_OFFSET_KIND
+   implicit none
+   TYPE(MPI_File), INTENT(IN) :: fh
+   INTEGER(MPI_OFFSET_KIND), INTENT(IN) :: offset
+   !DEC$ ATTRIBUTES NO_ARG_CHECK :: buf
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: buf
+   !$PRAGMA IGNORE_TKR buf
+   !DIR$ IGNORE_TKR buf
+   !IBM* IGNORE_TKR buf
+   OMPI_FORTRAN_IGNORE_TKR_TYPE :: buf
+   INTEGER, INTENT(IN) :: count
+   TYPE(MPI_Datatype), INTENT(IN) :: datatype
+   TYPE(MPI_Request), INTENT(OUT) :: request
+   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+end subroutine MPI_File_iread_at_all_f08
+end interface  MPI_File_iread_at_all
+
 interface  MPI_File_iread_shared
 subroutine MPI_File_iread_shared_f08(fh,buf,count,datatype,request,ierror)
    use :: mpi_f08_types, only : MPI_File, MPI_Datatype, MPI_Request
@@ -3733,6 +3770,43 @@ subroutine MPI_File_iwrite_at_f08(fh,offset,buf,count,datatype,request,ierror)
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 end subroutine MPI_File_iwrite_at_f08
 end interface  MPI_File_iwrite_at
+
+interface  MPI_File_iwrite_all
+subroutine MPI_File_iwrite_all_f08(fh,buf,count,datatype,request,ierror)
+   use :: mpi_f08_types, only : MPI_File, MPI_Datatype, MPI_Request
+   implicit none
+   TYPE(MPI_File), INTENT(IN) :: fh
+   !DEC$ ATTRIBUTES NO_ARG_CHECK :: buf
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: buf
+   !$PRAGMA IGNORE_TKR buf
+   !DIR$ IGNORE_TKR buf
+   !IBM* IGNORE_TKR buf
+   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: buf
+   INTEGER, INTENT(IN) :: count
+   TYPE(MPI_Datatype), INTENT(IN) :: datatype
+   TYPE(MPI_Request), INTENT(OUT) :: request
+   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+end subroutine MPI_File_iwrite_all_f08
+end interface  MPI_File_iwrite_all
+
+interface  MPI_File_iwrite_at_all
+subroutine MPI_File_iwrite_at_all_f08(fh,offset,buf,count,datatype,request,ierror)
+   use :: mpi_f08_types, only : MPI_File, MPI_Datatype, MPI_Request, MPI_OFFSET_KIND
+   implicit none
+   TYPE(MPI_File), INTENT(IN) :: fh
+   INTEGER(MPI_OFFSET_KIND), INTENT(IN) :: offset
+   !DEC$ ATTRIBUTES NO_ARG_CHECK :: buf
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: buf
+   !$PRAGMA IGNORE_TKR buf
+   !DIR$ IGNORE_TKR buf
+   !IBM* IGNORE_TKR buf
+   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: buf
+   INTEGER, INTENT(IN) :: count
+   TYPE(MPI_Datatype), INTENT(IN) :: datatype
+   TYPE(MPI_Request), INTENT(OUT) :: request
+   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+end subroutine MPI_File_iwrite_at_all_f08
+end interface  MPI_File_iwrite_at_all
 
 interface  MPI_File_iwrite_shared
 subroutine MPI_File_iwrite_shared_f08(fh,buf,count,datatype,request,ierror)
