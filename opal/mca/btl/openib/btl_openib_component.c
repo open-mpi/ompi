@@ -16,7 +16,7 @@
  *                         reserved.
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
  * Copyright (c) 2009-2012 Oracle and/or its affiliates.  All rights reserved.
- * Copyright (c) 2011-2014 NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2011-2015 NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2012      Oak Ridge National Laboratory.  All rights reserved
  * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
  * Copyright (c) 2014-2015 Research Organization for Information Science
@@ -199,6 +199,10 @@ static int btl_openib_component_register(void)
            "open" failing is not printed */
         return OPAL_ERR_NOT_AVAILABLE;
     }
+
+#if OPAL_CUDA_SUPPORT
+    mca_common_cuda_register_mca_variables();
+#endif
 
     return OPAL_SUCCESS;
 }

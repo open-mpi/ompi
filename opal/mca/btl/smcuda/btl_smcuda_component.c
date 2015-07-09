@@ -195,6 +195,7 @@ static int smcuda_register(void)
     if (0 == mca_btl_smcuda.super.btl_cuda_eager_limit) {
         mca_btl_smcuda.super.btl_cuda_eager_limit = SIZE_MAX; /* magic number */
     }
+    mca_common_cuda_register_mca_variables();
 #endif /* OPAL_CUDA_SUPPORT */
     return mca_btl_smcuda_component_verify();
 }

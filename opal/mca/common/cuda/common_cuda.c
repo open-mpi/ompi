@@ -115,6 +115,7 @@ cudaFunctionTable_t cuFunc;
 static int stage_one_init_ref_count = 0;
 static bool stage_three_init_complete = false;
 static bool common_cuda_initialized = false;
+static bool common_cuda_mca_parames_registered = false;
 static int mca_common_cuda_verbose;
 static int mca_common_cuda_output = 0;
 bool mca_common_cuda_enabled = false;
@@ -223,42 +224,14 @@ static void cuda_dump_memhandle(int, void *, char *) __opal_attribute_unused__ ;
 
 #endif /* OPAL_CUDA_SUPPORT_41 */
 
-
-/**
- * This is the first stage of initialization.  This function is
- * called explicitly by any BTLs that can support CUDA-aware.
- * It is called during the component open phase of initialization.
- * This function will register some mca variables and then open
- * and load the symbols needed from the CUDA driver library. Look for
- * the SONAME of the library which is libcuda.so.1.  In most cases,
- * this will result in the library found.  However, there are some
- * setups that require the extra steps for searching.  Any failure
- * will result in this initialization failing and status will be set
- * showing that.
- */
-int mca_common_cuda_stage_one_init(void)
+/* This is a seperate function so we can see these variables with ompi_info and
+ * also set them with the tools interface */
+void mca_common_cuda_register_mca_variables(void)
 {
-    int retval, i, j;
-    char *cudalibs[] = {"libcuda.so.1", "libcuda.dylib", NULL};
-    char *searchpaths[] = {"", "/usr/lib64", NULL};
-    char **errmsgs = NULL;
-    char *errmsg = NULL;
-    int errsize;
-    bool stage_one_init_passed = false;
 
-    stage_one_init_ref_count++;
-    if (stage_one_init_ref_count > 1) {
-        opal_output_verbose(10, mca_common_cuda_output,
-                            "CUDA: stage_one_init_ref_count is now %d, no need to init",
-                            stage_one_init_ref_count);
-        return OPAL_SUCCESS;
+    if (false == common_cuda_mca_parames_registered) {
+        common_cuda_mca_parames_registered = true;
     }
-
-    OBJ_CONSTRUCT(&common_cuda_init_lock, opal_mutex_t);
-    OBJ_CONSTRUCT(&common_cuda_htod_lock, opal_mutex_t);
-    OBJ_CONSTRUCT(&common_cuda_dtoh_lock, opal_mutex_t);
-    OBJ_CONSTRUCT(&common_cuda_ipc_lock, opal_mutex_t);
-
     /* Set different levels of verbosity in the cuda related code. */
     mca_common_cuda_verbose = 0;
     (void) mca_base_var_register("ompi", "mpi", "common_cuda", "verbose",
@@ -327,6 +300,43 @@ int mca_common_cuda_stage_one_init(void)
                                  MCA_BASE_VAR_SCOPE_READONLY,
                                  &mca_common_cuda_cumemcpy_timing);
 #endif /* OPAL_ENABLE_DEBUG */
+}
+
+/**
+ * This is the first stage of initialization.  This function is called
+ * explicitly by any BTLs that can support CUDA-aware. It is called during
+ * the component open phase of initialization. This fuction will look for
+ * the SONAME of the library which is libcuda.so.1. In most cases, this will
+ * result in the library found.  However, there are some setups that require
+ * the extra steps for searching. This function will then load the symbols
+ * needed from the CUDA driver library. Any failure will result in this
+ * initialization failing and status will be set showing that.
+ */
+int mca_common_cuda_stage_one_init(void)
+{
+    int retval, i, j;
+    char *cudalibs[] = {"libcuda.so.1", "libcuda.dylib", NULL};
+    char *searchpaths[] = {"", "/usr/lib64", NULL};
+    char **errmsgs = NULL;
+    char *errmsg = NULL;
+    int errsize;
+    bool stage_one_init_passed = false;
+
+    stage_one_init_ref_count++;
+    if (stage_one_init_ref_count > 1) {
+        opal_output_verbose(10, mca_common_cuda_output,
+                            "CUDA: stage_one_init_ref_count is now %d, no need to init",
+                            stage_one_init_ref_count);
+        return OPAL_SUCCESS;
+    }
+
+    /* This is a no-op in most cases as the parameters were registered earlier */
+    mca_common_cuda_register_mca_variables();
+
+    OBJ_CONSTRUCT(&common_cuda_init_lock, opal_mutex_t);
+    OBJ_CONSTRUCT(&common_cuda_htod_lock, opal_mutex_t);
+    OBJ_CONSTRUCT(&common_cuda_dtoh_lock, opal_mutex_t);
+    OBJ_CONSTRUCT(&common_cuda_ipc_lock, opal_mutex_t);
 
     mca_common_cuda_output = opal_output_open(NULL);
     opal_output_set_verbosity(mca_common_cuda_output, mca_common_cuda_verbose);
