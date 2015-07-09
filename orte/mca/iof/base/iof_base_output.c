@@ -44,7 +44,7 @@
 #include "orte/mca/iof/base/base.h"
 
 int orte_iof_base_write_output(orte_process_name_t *name, orte_iof_tag_t stream,
-                                unsigned char *data, int numbytes,
+                               unsigned char *data, int numbytes,
                                orte_iof_write_event_t *channel)
 {
     char starttag[ORTE_IOF_BASE_TAG_MAX], endtag[ORTE_IOF_BASE_TAG_MAX], *suffix;
@@ -285,8 +285,8 @@ void orte_iof_base_write_handler(int fd, short event, void *cbdata)
         output = (orte_iof_write_output_t*)item;
         if (0 == output->numbytes) {
             /* indicates we are to close this stream */
-            OBJ_RELEASE(sink);
-            return;
+            OBJ_RELEASE(output);
+            goto ABORT;
         }
         num_written = write(wev->fd, output->data, output->numbytes);
         if (num_written < 0) {
@@ -332,5 +332,4 @@ void orte_iof_base_write_handler(int fd, short event, void *cbdata)
 ABORT:
     opal_event_del(wev->ev);
     wev->pending = false;
-
 }

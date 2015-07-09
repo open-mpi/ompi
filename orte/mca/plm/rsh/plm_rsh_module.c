@@ -1292,8 +1292,7 @@ static int rsh_finalize(void)
     orte_proc_t *proc;
     pid_t ret;
 
-    /* remove launch event */
-    opal_event_del(&launch_event);
+    /* cleanup launch list */
     OPAL_LIST_DESTRUCT(&launch_list);
 
     /* cleanup any pending recvs */

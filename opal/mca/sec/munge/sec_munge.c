@@ -40,7 +40,7 @@ opal_sec_base_module_t opal_sec_munge_module = {
     authenticate
 };
 
-static opal_sec_cred_t my_cred;
+static opal_sec_cred_t my_cred = {NULL, NULL, 0};
 static bool initialized = false;
 static bool refresh = false;
 
@@ -70,9 +70,15 @@ static int init(void)
 
 static void finalize(void)
 {
-    if (initialized) {
+    if (NULL != my_cred.credential) {
         free(my_cred.credential);
+        my_cred.credential = NULL;
     }
+    if (NULL != my_cred.method) {
+        free(my_cred.method);
+        my_cred.method = NULL;
+    }
+    my_cred.size = 0;
 }
 
 static int get_my_cred(int dstorehandle,

@@ -125,9 +125,9 @@ ORTE_DECLSPEC extern int orte_exit_status;
  * that overrides the need to process MPI messages
  */
 #define ORTE_ERROR_PRI  OPAL_EV_ERROR_PRI
-#define ORTE_MSG_PRI    OPAL_EV_MSG_LO_PRI
-#define ORTE_SYS_PRI    OPAL_EV_SYS_LO_PRI
-#define ORTE_INFO_PRI   OPAL_EV_INFO_LO_PRI
+#define ORTE_MSG_PRI    OPAL_EV_RTE_HI_PRI
+#define ORTE_SYS_PRI    OPAL_EV_RTE_MED_PRI
+#define ORTE_INFO_PRI   OPAL_EV_RTE_LO_PRI
 
 /* define some common keys used in ORTE */
 #define ORTE_DB_DAEMON_VPID  "orte.daemon.vpid"

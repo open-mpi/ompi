@@ -148,7 +148,7 @@ static int tcp_component_open(void)
     mca_oob_tcp_component.ipv6conns = NULL;
     mca_oob_tcp_component.ipv6ports = NULL;
 #endif
-
+    
     /* if_include and if_exclude need to be mutually exclusive */
     if (OPAL_SUCCESS !=
         mca_base_var_check_exclusive("orte",

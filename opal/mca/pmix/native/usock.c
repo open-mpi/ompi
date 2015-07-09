@@ -68,14 +68,14 @@ static OBJ_CLASS_INSTANCE(pmix_usock_op_t,
                           opal_object_t,
                           NULL, NULL);
 
-#define PMIX_ACTIVATE_USOCK_STATE(cbfunc)                               \
-    do {                                                                \
-        pmix_usock_op_t *op;                                            \
-        op = OBJ_NEW(pmix_usock_op_t);                                  \
-        opal_event_set(mca_pmix_native_component.evbase, &op->ev, -1,   \
-                       OPAL_EV_WRITE, (cbfunc), op);                    \
-        opal_event_set_priority(&op->ev, OPAL_EV_MSG_LO_PRI);           \
-        opal_event_active(&op->ev, OPAL_EV_WRITE, 1);                    \
+#define PMIX_ACTIVATE_USOCK_STATE(cbfunc)                       \
+    do {                                                        \
+        pmix_usock_op_t *op;                                    \
+        op = OBJ_NEW(pmix_usock_op_t);                          \
+        opal_event_set(opal_async_event_base, &op->ev, -1,            \
+                       OPAL_EV_WRITE, (cbfunc), op);            \
+        opal_event_set_priority(&op->ev, OPAL_EV_RTE_HI_PRI);   \
+        opal_event_active(&op->ev, OPAL_EV_WRITE, 1);           \
     } while(0);
 
 void pmix_usock_send_recv(int fd, short args, void *cbdata)
@@ -275,20 +275,20 @@ static void pmix_usock_try_connect(int fd, short args, void *cbdata)
                         OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
 
     /* setup event callbacks */
-    opal_event_set(mca_pmix_native_component.evbase,
+    opal_event_set(opal_async_event_base,
                    &mca_pmix_native_component.recv_event,
                    mca_pmix_native_component.sd,
                    OPAL_EV_READ|OPAL_EV_PERSIST,
                    pmix_usock_recv_handler, NULL);
-    opal_event_set_priority(&mca_pmix_native_component.recv_event, OPAL_EV_MSG_LO_PRI);
+    opal_event_set_priority(&mca_pmix_native_component.recv_event, OPAL_EV_RTE_HI_PRI);
     mca_pmix_native_component.recv_ev_active = false;
 
-    opal_event_set(mca_pmix_native_component.evbase,
+    opal_event_set(opal_async_event_base,
                    &mca_pmix_native_component.send_event,
                    mca_pmix_native_component.sd,
                    OPAL_EV_WRITE|OPAL_EV_PERSIST,
                    pmix_usock_send_handler, NULL);
-    opal_event_set_priority(&mca_pmix_native_component.send_event, OPAL_EV_MSG_LO_PRI);
+    opal_event_set_priority(&mca_pmix_native_component.send_event, OPAL_EV_RTE_HI_PRI);
     mca_pmix_native_component.send_ev_active = false;
 
     /* setup the socket as non-blocking */

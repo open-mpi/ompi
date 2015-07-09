@@ -458,6 +458,13 @@ static int finalize(void)
 
     orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_IOF_HNP);
 
+    /* clear all the posted events */
+    OPAL_LIST_DESTRUCT(&mca_iof_hnp_component.procs);
+    OPAL_LIST_DESTRUCT(&mca_iof_hnp_component.sinks);
+
+    if (mca_iof_hnp_component.stdinev->active) {
+        opal_event_del(mca_iof_hnp_component.stdinev->ev);
+    }
     return ORTE_SUCCESS;
 }
 

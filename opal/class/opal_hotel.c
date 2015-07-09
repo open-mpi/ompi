@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2012      Cisco Systems, Inc. All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, LLC. All rights reserved
+ * Copyright (c) 2015      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -33,6 +34,7 @@ static void local_eviction_callback(int fd, short flags, void *arg)
 
 
 int opal_hotel_init(opal_hotel_t *h, int num_rooms,
+                    opal_event_base_t *evbase,
                     uint32_t eviction_timeout,
                     int eviction_event_priority,
                     opal_hotel_eviction_callback_fn_t evict_callback_fn)
@@ -46,6 +48,7 @@ int opal_hotel_init(opal_hotel_t *h, int num_rooms,
     }
 
     h->num_rooms = num_rooms;
+    h->evbase = evbase;
     h->eviction_timeout.tv_usec = eviction_timeout % 1000000;
     h->eviction_timeout.tv_sec = eviction_timeout / 1000000;
     h->evict_callback_fn = evict_callback_fn;
@@ -69,7 +72,7 @@ int opal_hotel_init(opal_hotel_t *h, int num_rooms,
         h->eviction_args[i].room_num = i;
 
         /* Create this room's event (but don't add it) */
-        opal_event_set(opal_event_base,
+        opal_event_set(h->evbase,
                        &(h->rooms[i].eviction_timer_event),
                        -1, 0, local_eviction_callback,
                        &(h->eviction_args[i]));

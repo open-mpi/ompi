@@ -127,7 +127,10 @@ static void orte_iof_base_read_event_construct(orte_iof_read_event_t* rev)
 }
 static void orte_iof_base_read_event_destruct(orte_iof_read_event_t* rev)
 {
-    opal_event_free(rev->ev);
+    if (rev->active) {
+        opal_event_del(rev->ev);
+    }
+   opal_event_free(rev->ev);
     if (0 <= rev->fd) {
         OPAL_OUTPUT_VERBOSE((20, orte_iof_base_framework.framework_output,
                              "%s iof: closing fd %d for process %s",
@@ -151,6 +154,9 @@ static void orte_iof_base_write_event_construct(orte_iof_write_event_t* wev)
 }
 static void orte_iof_base_write_event_destruct(orte_iof_write_event_t* wev)
 {
+    if (wev->pending) {
+        opal_event_del(wev->ev);
+    }
     opal_event_free(wev->ev);
     if (ORTE_PROC_IS_HNP && NULL != orte_xml_fp) {
         int xmlfd = fileno(orte_xml_fp);

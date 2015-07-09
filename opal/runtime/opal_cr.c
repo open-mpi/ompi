@@ -15,6 +15,7 @@
  * Copyright (c) 2012-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -811,7 +812,7 @@ int opal_cr_coord(int state)
          * Otherwise it may/will use stale file descriptors which will disrupt
          * the intended users of the soon-to-be newly assigned file descriptors.
          */
-        opal_event_reinit(opal_event_base);
+        opal_event_reinit(opal_sync_event_base);
 
         /*
          * Flush if() functionality, since it caches system specific info.

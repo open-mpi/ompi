@@ -75,8 +75,6 @@
 
 #include "orte/mca/ess/base/base.h"
 
-static bool progress_thread_running = false;
-
 int orte_ess_base_app_setup(bool db_restrict_local)
 {
     int ret;
@@ -114,9 +112,6 @@ int orte_ess_base_app_setup(bool db_restrict_local)
         opal_proc_local_set(&orte_process_info.super);
     }
 
-    /* get a separate orte event base */
-    orte_event_base = opal_start_progress_thread("orte", true);
-    progress_thread_running = true;
     /* open and setup the state machine */
     if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_state_base_framework, 0))) {
         ORTE_ERROR_LOG(ret);
@@ -321,12 +316,6 @@ int orte_ess_base_app_setup(bool db_restrict_local)
     }
     return ORTE_SUCCESS;
  error:
-    if (!progress_thread_running) {
-        /* can't send the help message, so ensure it
-         * comes out locally
-         */
-        orte_show_help_finalize();
-    }
     orte_show_help("help-orte-runtime.txt",
                    "orte_init:startup:internal-failure",
                    true, error, ORTE_ERROR_NAME(ret), ret);
@@ -336,13 +325,6 @@ int orte_ess_base_app_setup(bool db_restrict_local)
 int orte_ess_base_app_finalize(void)
 {
     orte_cr_finalize();
-
-    /* release the event base so we stop all potential
-     * race conditions in the messaging teardown */
-    if (progress_thread_running) {
-        opal_stop_progress_thread("orte", false);
-        progress_thread_running = false;
-    }
 
 #if OPAL_ENABLE_FT_CR == 1
     (void) mca_base_framework_close(&orte_snapc_base_framework);

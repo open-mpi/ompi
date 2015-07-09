@@ -181,7 +181,7 @@ typedef struct orte_iof_base_t orte_iof_base_t;
         *(rv) = rev;                                                \
         opal_event_set(orte_event_base,                             \
                        rev->ev, (fid),                              \
-                       OPAL_EV_READ,                                \
+                       OPAL_EV_READ | OPAL_EV_PERSIST,              \
                        (cbfunc), rev);                              \
         opal_event_set_priority(rev->ev, ORTE_MSG_PRI);             \
         if ((actv)) {                                               \

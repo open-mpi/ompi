@@ -15,7 +15,7 @@
  * Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2014      Intel, Inc. All rights reserved
+ * Copyright (c) 2014-2015 Intel, Inc. All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -2068,7 +2068,7 @@ static void init_async_event(opal_btl_usnic_module_t *module)
     }
 
     /* Get the fd to receive events on this device */
-    opal_event_set(opal_event_base, &(module->device_async_event), fd,
+    opal_event_set(opal_sync_event_base, &(module->device_async_event), fd,
                    OPAL_EV_READ | OPAL_EV_PERSIST,
                    module_async_event_callback, module);
     opal_event_add(&(module->device_async_event), NULL);
