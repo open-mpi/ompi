@@ -715,6 +715,25 @@ opal_btl_usnic_put(struct mca_btl_base_module_t *base_module,
     sfrag->sf_size = size;
     sfrag->sf_ack_bytes_left = size;
 
+
+
+    /* JMS NOTE: This is currently broken, and is deactivated by
+       removing the MCA_BTL_FLAGS_PUT from .btl_flags in btl_module.c.
+
+       Overwriting the uf_local_seg values is not a good idea, and
+       doesn't do anything to actually send the data in the
+       progression past finish_put_or_send().
+
+       The proper fix is to change the plumbing here to eventually
+       call fi_sendv() with an iov[0] = the internal buffer that's
+       already allocated, and iov[1] = the user's buffer.  The usnic
+       provider in fi_sendv() will be smart enough to figure out which
+       is more performance: memcpy'ing the 2 buffers together and
+       doing a single xfer down to the hardware, or actually doing a
+       SG list down to the hardware. */
+
+
+
     opal_btl_usnic_frag_t *frag;
     frag = &sfrag->sf_base;
     frag->uf_local_seg[0].seg_len = size;
