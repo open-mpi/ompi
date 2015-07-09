@@ -171,7 +171,7 @@ AC_DEFUN([OMPI_CHECK_OPENFABRICS],[
                AC_CHECK_FUNCS([ibv_create_xrc_rcv_qp ibv_cmd_open_xrcd],
                               [], [$1_have_xrc=0])
                AC_CHECK_DECLS([IBV_SRQT_XRC],
-                              [], [$1_have_xrc=0])
+                              [], [$1_have_xrc=0],
                               [#include <infiniband/verbs.h>])
            fi
            if test "$enable_connectx_xrc" = "yes" \
