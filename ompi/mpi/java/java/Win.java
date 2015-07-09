@@ -30,6 +30,9 @@ import java.nio.*;
 public final class Win implements Freeable
 {
 private long handle;
+public static final int WIN_NULL = 0;
+public static final int FLAVOR_PRIVATE = 0;
+public static final int FLAVOR_SHARED = 1;
 
 /**
  * Java binding of {@code MPI_WIN_CREATE}.
@@ -67,6 +70,53 @@ public Win(Buffer base, int size, int dispUnit, Info info, Comm comm)
 
 private native long createWin(
         Buffer base, int size, int dispUnit, long info, long comm)
+        throws MPIException;
+
+/**
+ * Java binding of {@code MPI_WIN_ALLOCATE} and {@code MPI_WIN_ALLOCATE_SHARED}.
+ * @param size     size of window (buffer elements)
+ * @param dispUnit 	local unit size for displacements (buffer elements)
+ * @param info     	info object
+ * @param comm     	communicator
+ * @param base     	initial address of window
+ * @param flavor	FLAVOR_PRIVATE or FLAVOR_SHARED
+ * @throws MPIException
+ */
+public Win(int size, int dispUnit, Info info, Comm comm, Buffer base, int flavor)
+    throws MPIException
+{
+    if(!base.isDirect())
+        throw new IllegalArgumentException("The buffer must be direct.");
+
+    int baseSize;
+
+    if(base instanceof ByteBuffer)
+        baseSize = 1;
+    else if(base instanceof CharBuffer || base instanceof ShortBuffer)
+        baseSize = 2;
+    else if(base instanceof IntBuffer || base instanceof FloatBuffer)
+        baseSize = 4;
+    else if(base instanceof LongBuffer || base instanceof DoubleBuffer)
+        baseSize = 8;
+    else
+        throw new AssertionError();
+
+    int sizeBytes = size * baseSize,
+        dispBytes = dispUnit * baseSize;
+    
+    if(flavor == 0) {
+    	handle = allocateWin(sizeBytes, dispBytes, info.handle, comm.handle, base);
+    } else if(flavor == 1) {
+    	handle = allocateSharedWin(sizeBytes, dispBytes, info.handle, comm.handle, base);
+    }
+}
+
+private native long allocateWin(
+        int size, int dispUnit, long info, long comm, Buffer base)
+        throws MPIException;
+
+private native long allocateSharedWin(
+        int size, int dispUnit, long info, long comm, Buffer base)
         throws MPIException;
 
 /**
@@ -784,11 +834,38 @@ public void fetchAndOp(Buffer origin, Buffer resultAddr, Datatype dataType,
         throw new IllegalArgumentException("The origin must be direct buffer.");
 
     fetchAndOp(handle, origin, resultAddr, dataType.handle, targetRank, 
-    		targetDisp, op, op.handle, getBaseType(dataType, dataType));  //neccessary?
+    		targetDisp, op, op.handle, getBaseType(dataType, dataType));
 }
 
 private native void fetchAndOp(
         long win, Buffer origin, Buffer resultAddr, long targetType, int targetRank, 
         int targetDisp, Op jOp, long hOp, int baseType) throws MPIException;
+
+/**
+ * Java binding of the MPI operation {@code MPI_WIN_FLUSH_LOCAL}.
+ * @param targetRank	rank of target window
+ * @throws MPIException 
+ */
+
+public void flushLocal(int targetRank) throws MPIException
+{
+    MPI.check();
+    flushLocal(handle, targetRank);
+}
+
+private native void flushLocal(long win, int targetRank) throws MPIException;
+
+/**
+ * Java binding of the MPI operation {@code MPI_WIN_FLUSH_LOCAL_ALL}.
+ * @throws MPIException 
+ */
+
+public void flushLocalAll() throws MPIException
+{
+    MPI.check();
+    flushLocalAll(handle);
+}
+
+private native void flushLocalAll(long win) throws MPIException;
 
 } // Win

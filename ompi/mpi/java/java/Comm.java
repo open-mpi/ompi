@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -65,6 +67,7 @@ import static mpi.MPI.assertDirectBuffer;
  */
 public class Comm implements Freeable
 {
+public final static int TYPE_SHARED = 0;
 protected final static int SELF  = 1;
 protected final static int WORLD = 2;
 protected long handle;
