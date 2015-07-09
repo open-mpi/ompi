@@ -101,6 +101,7 @@ mpi_api_files = \
         bcast_f08.F90 \
         bsend_f08.F90 \
         bsend_init_f08.F90 \
+        buffer_detach.c \
         buffer_attach_f08.F90 \
         buffer_detach_f08.F90 \
         cancel_f08.F90 \
