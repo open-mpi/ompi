@@ -4,6 +4,7 @@
 #                         All rights reserved.
 # Copyright (c) 2012-2015 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2015      Intel, Inc. All rights reserved.
+# Copyright (c) 2015      NVIDIA, Inc.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -19,7 +20,7 @@ AC_DEFUN([OMPI_MPIEXT_cuda_CONFIG],[
 
     OPAL_VAR_SCOPE_PUSH([ompi_mpi_ext_cuda_happy])
 
-    # If we don't want FT, don't compile this extention
+    # If we don't want CUDA, don't compile this extention
     AS_IF([test "$ENABLE_cuda" = "1" || \
            test "$ENABLE_EXT_ALL" = "1"],
           [ompi_mpi_ext_cuda_happy=1],
