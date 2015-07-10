@@ -98,6 +98,7 @@ private <T extends Data> T newData(ByteBuffer buffer, int offset)
     return (T)d;
 }
 
+@SuppressWarnings("javadoc")
 /**
  * Gets a Data object in order to access to the buffer.
  * @param buffer the Data object will read/write on this buffer.
@@ -110,6 +111,7 @@ public final <T extends Data> T getData(ByteBuffer buffer) throws MPIException
     return newData(buffer, 0);
 }
 
+@SuppressWarnings("javadoc")
 /**
  * Gets a Data object in order to access to the struct at the
  * specified position of a struct array stored in a Buffer.
@@ -125,6 +127,7 @@ public final <T extends Data> T getData(ByteBuffer buffer, int index)
     return newData(buffer, index * extent);
 }
 
+@SuppressWarnings("javadoc")
 /**
  * Gets a Data object in order to access to the byte array.
  * @param array The Data object will read/write on this byte array.
@@ -138,6 +141,7 @@ public final <T extends Data> T getData(byte[] array) throws MPIException
     return getData(buffer);
 }
 
+@SuppressWarnings("javadoc")
 /**
  * Gets a Data object in order to access to the struct at the
  * specified position of a struct array stored in a byte array.
@@ -725,7 +729,8 @@ public abstract class Data
         assert validType(field, index, MPI.DOUBLE) : typeMismatch;
         buffer.putDouble(offset + field + index * 8, v);
     }
-
+    
+    @SuppressWarnings("javadoc")
     /**
      * Gets the struct data of a field.
      * @param struct Struct type.
@@ -740,6 +745,7 @@ public abstract class Data
         return s.newData(buffer, offset + field);
     }
 
+    @SuppressWarnings("javadoc")
     /**
      * Gets the struct data at the specified position of a struct array.
      * @param struct Struct type.
