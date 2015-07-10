@@ -118,7 +118,7 @@ public boolean isCommutative()
 
 /**
  * Java binding of the MPI operation {@code MPI_OP_FREE}.
- * @throws MPIException
+ * @throws MPIException Signals that an MPI exception of some sort has occurred.
  */
 @Override public native void free() throws MPIException;
 
