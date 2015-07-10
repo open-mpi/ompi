@@ -2,9 +2,10 @@
 
 $COPYRIGHT$
 
-Rolf Vandervart
+Rolf vandeVaart
 
 
-This extension provides a blah blah blah
+This extension provides a macro for compile time check of CUDA aware support. 
+It also provides a function for runtime check of CUDA aware support.
 
-See MPIx_CUDA_SUPPORT(3) for more details.
+See MPIX_Query_cuda_support(3) for more details.
