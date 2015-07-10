@@ -54,10 +54,11 @@ public abstract class UserFunction
 {
 /**
  * User-defined function for a new {@code Op}.
- * @param inVec    array of values to combine with {@code inoutvec} elements
- * @param inOutVec in-out array of accumulator locations
- * @param count    number of items in arrays
- * @param datatype type of each item
+ * @param inVec    		array of values to combine with {@code inoutvec} elements
+ * @param inOutVec 		in-out array of accumulator locations
+ * @param count    		number of items in arrays
+ * @param datatype 		type of each item
+ * @throws MPIException Signals that an MPI exception of some sort has occurred.
  */
 public void call(Object inVec, Object inOutVec, int count, Datatype datatype)
         throws MPIException
@@ -67,10 +68,11 @@ public void call(Object inVec, Object inOutVec, int count, Datatype datatype)
 
 /**
  * User-defined function for a new {@code Op}.
- * @param in       direct byte buffer to combine with {@code inOut} buffer
- * @param inOut    in-out direct byte buffer of accumulator locations
- * @param count    number of items in buffers
- * @param datatype type of each item
+ * @param in       		direct byte buffer to combine with {@code inOut} buffer
+ * @param inOut   		in-out direct byte buffer of accumulator locations
+ * @param count    		number of items in buffers
+ * @param datatype 		type of each item
+ * @throws MPIException Signals that an MPI exception of some sort has occurred.
  */
 public void call(ByteBuffer in, ByteBuffer inOut, int count, Datatype datatype)
         throws MPIException
