@@ -71,6 +71,27 @@ Master (not on release branches yet)
   missing return code MPI_T_INVALID_NAME.
 
 
+1.8.7
+----
+** NOTE: v1.8.7 technically breaks ABI with prior versions
+** in the 1.8 series because it repairs two incorrect API
+** signatures. However, users will only need to recompile
+** if they were using those functions - which they couldn't
+** have been, because the signatures were wrong :-)
+
+- Plugged a memory leak that impacted blocking sends
+- Fixed incorrect declaration for MPI_T_pvar_get_index and added
+  missing return code MPI_T_INVALID_NAME.
+- Fixed an uninitialized variable in PMI2 support
+- Added new vendor part id for Mellanox ConnectX4-LX
+- Fixed NBC_Copy for legitimate zero-size messages
+- Fixed MPI_Win_post and MPI_Win_start for zero-size messages
+- Protect the OOB ports from segfaulting when accessed by port scanners
+- Fixed several Fortran typos
+- Fixed configure detection of XRC support
+- Fixed support for highly heterogeneous systems to avoid
+  memory corruption when printing out the bindings
+
 1.8.6
 -----
 
