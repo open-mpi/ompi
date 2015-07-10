@@ -66,6 +66,8 @@ opal_btl_usnic_frag_send_complete(opal_btl_usnic_module_t *module,
 
     /* see if this endpoint needs to be made ready-to-send */
     opal_btl_usnic_check_rts(frag->sf_endpoint);
+
+    ++module->mod_channels[sseg->ss_channel].credits;
 }
 
 /*
@@ -97,6 +99,8 @@ opal_btl_usnic_chunk_send_complete(opal_btl_usnic_module_t *module,
 
     /* see if this endpoint needs to be made ready-to-send */
     opal_btl_usnic_check_rts(frag->sf_endpoint);
+
+    ++module->mod_channels[sseg->ss_channel].credits;
 }
 
 /* Responsible for completing non-fastpath parts of a put or send operation,

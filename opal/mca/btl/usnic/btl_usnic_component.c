@@ -1143,27 +1143,18 @@ static int usnic_handle_completion(
     case OPAL_BTL_USNIC_SEG_ACK:
         opal_btl_usnic_ack_complete(module,
                 (opal_btl_usnic_ack_segment_t *)seg);
-{ opal_btl_usnic_send_segment_t *sseg = (opal_btl_usnic_send_segment_t *)seg;
-++module->mod_channels[sseg->ss_channel].credits;
-}
         break;
 
     /**** Send of frag segment completion ****/
     case OPAL_BTL_USNIC_SEG_FRAG:
         opal_btl_usnic_frag_send_complete(module,
                 (opal_btl_usnic_frag_segment_t*)seg);
-{ opal_btl_usnic_send_segment_t *sseg = (opal_btl_usnic_send_segment_t *)seg;
-++module->mod_channels[sseg->ss_channel].credits;
-}
         break;
 
     /**** Send of chunk segment completion ****/
     case OPAL_BTL_USNIC_SEG_CHUNK:
         opal_btl_usnic_chunk_send_complete(module,
                 (opal_btl_usnic_chunk_segment_t*)seg);
-{ opal_btl_usnic_send_segment_t *sseg = (opal_btl_usnic_send_segment_t *)seg;
-++module->mod_channels[sseg->ss_channel].credits;
-}
         break;
 
     /**** Receive completions ****/

@@ -93,7 +93,7 @@ extern opal_rng_buff_t opal_btl_usnic_rand_buff;
 
 /* Set to >0 to randomly drop received frags.  The higher the number,
    the more frequent the drops. */
-#define WANT_RECV_FRAG_DROPS 0
+#define WANT_RECV_DROPS 0
 /* Set to >0 to randomly fail to send an ACK, mimicing a lost ACK.
    The higher the number, the more frequent the failed-to-send-ACK. */
 #define WANT_FAIL_TO_SEND_ACK 0
@@ -102,10 +102,10 @@ extern opal_rng_buff_t opal_btl_usnic_rand_buff;
    the failed-to-resend-frag. */
 #define WANT_FAIL_TO_RESEND_FRAG 0
 
-#if WANT_RECV_FRAG_DROPS > 0
-#define FAKE_RECV_FRAG_DROP (opal_rand(&opal_btl_usnic_rand_buff) < WANT_RECV_FRAG_DROPS)
+#if WANT_RECV_DROPS > 0
+#define FAKE_RECV_DROP (opal_rand(&opal_btl_usnic_rand_buff) < WANT_RECV_DROPS)
 #else
-#define FAKE_RECV_FRAG_DROP 0
+#define FAKE_RECV_DROP 0
 #endif
 
 #if WANT_FAIL_TO_SEND_ACK > 0

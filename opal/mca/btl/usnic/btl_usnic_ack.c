@@ -252,6 +252,7 @@ opal_btl_usnic_ack_complete(opal_btl_usnic_module_t *module,
                                    opal_btl_usnic_ack_segment_t *ack)
 {
     opal_btl_usnic_ack_segment_return(module, ack);
+    ++module->mod_channels[ack->ss_channel].credits;
 }
 
 /*****************************************************************************/
