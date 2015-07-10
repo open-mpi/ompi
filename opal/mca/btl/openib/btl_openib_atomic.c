@@ -73,7 +73,12 @@ static int mca_btl_openib_atomic_internal (struct mca_btl_base_module_t *btl, st
 
 #if HAVE_XRC
     if (MCA_BTL_XRC_ENABLED && BTL_OPENIB_QP_TYPE_XRC(qp)) {
-        frag->sr_desc.xrc_remote_srq_num=endpoint->rem_info.rem_srqs[qp].rem_srq_num;
+#if OPAL_HAVE_CONNECTX_XRC_DOMAINS
+        frag->sr_desc.qp_type.xrc.remote_srqn = endpoint->rem_info.rem_srqs[qp].rem_srq_num;
+#else
+        frag->sr_desc.xrc_remote_srq_num = endpoint->rem_info.rem_srqs[qp].rem_srq_num;
+#endif
+
     }
 #endif
 

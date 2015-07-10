@@ -154,13 +154,17 @@ AC_DEFUN([OPAL_CHECK_OPENFABRICS],[
                $1_have_xrc=1
                AC_CHECK_FUNCS([ibv_create_xrc_rcv_qp],
                               [], [$1_have_xrc=0])
-               AC_CHECK_DECLS([IBV_SRQT_XRC],
-                              [], [$1_have_xrc=0],
-                              [#include <infiniband/verbs.h>])
-           fi
-           if test "$enable_connectx_xrc" = "yes" \
-               && test $$1_have_xrc -eq 1; then
-               AC_CHECK_FUNCS([ibv_cmd_open_xrcd], [$1_have_xrc_domains=1])
+               $1_have_xrc_domains=1
+               AC_CHECK_FUNCS([ibv_cmd_open_xrcd],
+                              [AC_CHECK_DECLS([IBV_SRQT_XRC],
+                                              [], [$1_have_xrc_domains=0],
+                                              [#include <infiniband/verbs.h>])],
+                              [$1_have_xrc_domains=0])
+               # XRC and XRC Domains should be considered as exclusive
+               if test "$$1_have_xrc" -eq 1 && \
+                  test "$$1_have_xrc_domains" -eq 1; then
+                      $1_have_xrc=0
+               fi
            fi
 
 
