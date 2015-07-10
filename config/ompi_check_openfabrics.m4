@@ -168,7 +168,7 @@ AC_DEFUN([OMPI_CHECK_OPENFABRICS],[
            # ibv_cmd_open_xrcd (aka XRC Domains) was added in  OFED 3.12
            if test "$enable_connectx_xrc" = "yes"; then
                $1_have_xrc=1
-               AC_CHECK_FUNCS([ibv_create_xrc_rcv_qp ibv_cmd_open_xrcd],
+               AC_CHECK_FUNCS([ibv_create_xrc_rcv_qp],
                               [], [$1_have_xrc=0])
                AC_CHECK_DECLS([IBV_SRQT_XRC],
                               [], [$1_have_xrc=0],
