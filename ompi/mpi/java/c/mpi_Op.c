@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -69,7 +71,7 @@ JNIEXPORT void JNICALL Java_mpi_Op_getOp(JNIEnv *env, jobject jthis, jint type)
     static MPI_Op Ops[] = {
         MPI_OP_NULL, MPI_MAX, MPI_MIN, MPI_SUM,
         MPI_PROD, MPI_LAND, MPI_BAND, MPI_LOR, MPI_BOR, MPI_LXOR,
-        MPI_BXOR, MPI_MINLOC, MPI_MAXLOC
+        MPI_BXOR, MPI_MINLOC, MPI_MAXLOC, MPI_REPLACE, MPI_NO_OP
     };
     (*env)->SetLongField(env,jthis, ompi_java.OpHandle, (jlong)Ops[type]);
 }
