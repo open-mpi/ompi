@@ -73,9 +73,7 @@ const opal_pmix_base_module_t opal_pmix_s1_module = {
     NULL,
     s1_spawn,
     s1_job_connect,
-    s1_job_disconnect,
-    NULL,
-    NULL
+    s1_job_disconnect
 };
 
 // usage accounting
