@@ -543,6 +543,7 @@ orte_ras_alps_read_appinfo_file(opal_list_t *nodes, char *filename,
                 node->slots_inuse = 0;
                 node->slots_max = 0;
                 node->slots = 1;
+                node->state = ORTE_NODE_STATE_UP;
                 /* need to order these node ids so the regex generator
                  * can properly function
                  */
@@ -579,6 +580,7 @@ orte_ras_alps_read_appinfo_file(opal_list_t *nodes, char *filename,
             node->slots_inuse = 0;
             node->slots_max = 0;
             node->slots = apNodes[ix].numPEs;
+            node->state = ORTE_NODE_STATE_UP;
             /* need to order these node ids so the regex generator
              * can properly function
              */
