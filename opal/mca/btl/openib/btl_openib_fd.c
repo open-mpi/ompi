@@ -175,7 +175,7 @@ static int service_pipe_cmd_add_fd(bool use_libevent, cmd_t *cmd)
     if (use_libevent) {
         /* Make an event for this fd */
         ri->ri_event_used = true;
-        opal_event_set(opal_event_base, &ri->ri_event, ri->ri_fd,
+        opal_event_set(opal_sync_event_base, &ri->ri_event, ri->ri_fd,
                        ri->ri_flags | OPAL_EV_PERSIST, service_fd_callback,
                        ri);
         opal_event_add(&ri->ri_event, 0);
@@ -501,7 +501,7 @@ int opal_btl_openib_fd_init(void)
 
         /* Create a libevent event that is used in the main thread
            to watch its pipe */
-        opal_event_set(opal_event_base, &main_thread_event, pipe_to_main_thread[0],
+        opal_event_set(opal_sync_event_base, &main_thread_event, pipe_to_main_thread[0],
                        OPAL_EV_READ | OPAL_EV_PERSIST,
                        main_thread_event_callback, NULL);
         opal_event_add(&main_thread_event, 0);

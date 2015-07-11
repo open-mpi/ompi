@@ -212,7 +212,7 @@ int opal_btl_usnic_stats_init(opal_btl_usnic_module_t *module)
         module->stats.timeout.tv_sec = mca_btl_usnic_component.stats_frequency;
         module->stats.timeout.tv_usec = 0;
 
-        opal_event_set(opal_event_base, &(module->stats.timer_event),
+        opal_event_set(opal_sync_event_base, &(module->stats.timer_event),
                        -1, EV_TIMEOUT | EV_PERSIST,
                        &usnic_stats_callback, module);
         opal_event_add(&(module->stats.timer_event),

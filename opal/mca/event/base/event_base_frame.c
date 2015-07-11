@@ -64,7 +64,7 @@ static int opal_event_base_close(void)
 /*
  * Globals
  */
-opal_event_base_t *opal_event_base=NULL;
+opal_event_base_t *opal_sync_event_base=NULL;
 
 static int opal_event_base_open(mca_base_open_flag_t flags)
 {
@@ -84,13 +84,13 @@ static int opal_event_base_open(mca_base_open_flag_t flags)
     opal_event_use_threads();
 
     /* get our event base */
-    if (NULL == (opal_event_base = opal_event_base_create())) {
+    if (NULL == (opal_sync_event_base = opal_event_base_create())) {
         return OPAL_ERROR;
     }
 
     /* set the number of priorities */
     if (0 < OPAL_EVENT_NUM_PRI) {
-        opal_event_base_priority_init(opal_event_base, OPAL_EVENT_NUM_PRI);
+        opal_event_base_priority_init(opal_sync_event_base, OPAL_EVENT_NUM_PRI);
     }
 
     return rc;
