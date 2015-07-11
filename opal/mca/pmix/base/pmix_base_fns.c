@@ -2,7 +2,7 @@
 /*
  * Copyright (c) 2012-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
  * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -33,25 +33,6 @@
 #include "opal/mca/pmix/base/pmix_base_fns.h"
 
 #define OPAL_PMI_PAD  10
-
-static opal_pmix_errhandler_fn_t errhandler = NULL;
-
-void opal_pmix_base_register_handler(opal_pmix_errhandler_fn_t err)
-{
-    errhandler = err;
-}
-
-void opal_pmix_base_errhandler(int error)
-{
-    if (NULL != errhandler) {
-        errhandler(error);
-    }
-}
-
-void opal_pmix_base_deregister_handler(void)
-{
-    errhandler = NULL;
-}
 
 static char* setup_key(const opal_process_name_t* name, const char *key, int pmix_keylen_max);
 static char *pmi_encode(const void *val, size_t vallen);

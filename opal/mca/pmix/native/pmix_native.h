@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2015 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -21,6 +21,7 @@
 
 #include "opal/mca/mca.h"
 #include "opal/mca/event/event.h"
+#include "opal/errhandler/opal_errhandler.h"
 #include "opal/util/proc.h"
 
 #include "opal/mca/pmix/base/base.h"
@@ -45,7 +46,7 @@ typedef enum {
 #define PMIX_NATIVE_ABNORMAL_TERM                               \
     do {                                                        \
         mca_pmix_native_component.state = PMIX_USOCK_FAILED;    \
-        opal_pmix_base_errhandler(OPAL_ERR_COMM_FAILURE);       \
+        opal_invoke_errhandler(OPAL_ERR_COMM_FAILURE, NULL);    \
     } while(0);
 
 /* define a command type for communicating to the

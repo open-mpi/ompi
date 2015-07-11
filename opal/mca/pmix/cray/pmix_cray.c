@@ -79,9 +79,7 @@ const opal_pmix_base_module_t opal_pmix_cray_module = {
     NULL,
     cray_spawn,
     cray_job_connect,
-    cray_job_disconnect,
-    NULL,
-    NULL
+    cray_job_disconnect
 };
 
 // usage accounting

@@ -93,9 +93,7 @@ const opal_pmix_base_module_t opal_pmix_native_module = {
     native_get_attr_nb,
     native_spawn,
     native_job_connect,
-    native_job_disconnect,
-    opal_pmix_base_register_handler,
-    opal_pmix_base_deregister_handler
+    native_job_disconnect
 };
 
 // local variables
@@ -196,7 +194,7 @@ static int native_init(void)
         }
     }
 
-    /* we will connect on first send */
+     /* we will connect on first send */
 
     return OPAL_SUCCESS;
 }
