@@ -24,7 +24,7 @@ AC_DEFUN([MCA_opal_mpool_memkind_CONFIG],[
 	        opal_check_memkind_dir=$with_memkind
 	    fi
 
-	    OPAL_CHECK_PACKAGE([mpool_memkind], [memkind.h], [memkind], [memkind_malloc], [-ljemalloc, -lnuma],
+	    OPAL_CHECK_PACKAGE([mpool_memkind], [memkind.h], [memkind], [memkind_malloc], [ -lnuma],
 	        [$opal_check_memkind_dir], [], [opal_mpool_memkind_happy="yes"], [])
 
 	    if test "$opal_mpool_memkind_happy" != "yes" -a -n "$with_memkind" ; then
