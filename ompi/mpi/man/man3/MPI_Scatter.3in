@@ -144,7 +144,7 @@ sets of 100 ints from the root to each process in the group.
 .fi
 
 .SH USE OF IN-PLACE OPTION
-When the communicator is an intracommunicator, you can perform a gather operation in-place (the output buffer is used as the input buffer).  Use the variable MPI_IN_PLACE as the value of the root process \fIrecvbuf\fR.  In this case, \fIrecvcount\fR and \fIrecvtype\fR are ignored, and the root process sends no data to itself.    
+When the communicator is an intracommunicator, you can perform a scatter operation in-place (the output buffer is used as the input buffer).  Use the variable MPI_IN_PLACE as the value of the root process \fIrecvbuf\fR.  In this case, \fIrecvcount\fR and \fIrecvtype\fR are ignored, and the root process sends no data to itself.    
 .sp
 Note that MPI_IN_PLACE is a special kind of value; it has the same restrictions on its use as MPI_BOTTOM.
 .sp
