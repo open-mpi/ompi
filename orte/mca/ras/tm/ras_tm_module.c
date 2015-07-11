@@ -212,6 +212,7 @@ static int discover(opal_list_t* nodelist, char *pbs_jobid)
             node->slots_inuse = 0;
             node->slots_max = 0;
             node->slots = ppn;
+            node->state = ORTE_NODE_STATE_UP;
             opal_list_append(nodelist, &node->super);
         } else {
 
