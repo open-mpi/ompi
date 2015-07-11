@@ -188,7 +188,7 @@ static int ack_open (void *qos_channel, opal_buffer_t * buf)  {
     eviction_timeout = (ack_chan->timeout_secs + QOS_ACK_WINDOW_TIMEOUT_IN_SECS) * 100000;
     /* init outstanding msg hotel */
     opal_hotel_init (&ack_chan->outstanding_msgs, QOS_ACK_MAX_OUTSTANDING_MSGS,
-                       eviction_timeout, 0,
+                       orte_event_base, eviction_timeout, 0,
                        orte_qos_ack_msg_ack_timeout_callback);
     OPAL_OUTPUT_VERBOSE((1, orte_qos_base_framework.framework_output,
                          "%s ack_open channel = %p init hotel timeout =%d",
@@ -466,7 +466,7 @@ static int ack_init_recv (void *channel, opal_list_t *attributes) {
     eviction_timeout = (ack_chan->timeout_secs + QOS_ACK_WINDOW_TIMEOUT_IN_SECS) * 100000;
     /* init outstanding msg hotel */
     opal_hotel_init (&ack_chan->outstanding_msgs, QOS_ACK_MAX_OUTSTANDING_MSGS,
-                     eviction_timeout, 0,
+                     orte_event_base, eviction_timeout, 0,
                      orte_qos_ack_recv_msg_timeout_callback);
     OPAL_OUTPUT_VERBOSE((1, orte_qos_base_framework.framework_output,
                          "%s ack_open channel = %p init hotel timeout =%d",
