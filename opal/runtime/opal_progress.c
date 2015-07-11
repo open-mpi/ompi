@@ -168,7 +168,7 @@ opal_progress(void)
                 event_progress_last_time = (num_event_users > 0) ?
                     now - event_progress_delta : now;
 
-                events += opal_event_loop(opal_event_base, opal_progress_event_flag);
+                events += opal_event_loop(opal_sync_event_base, opal_progress_event_flag);
         }
 
 #else /* OPAL_PROGRESS_USE_TIMERS */
@@ -177,7 +177,7 @@ opal_progress(void)
         if (OPAL_THREAD_ADD32(&event_progress_counter, -1) <= 0 ) {
                 event_progress_counter =
                     (num_event_users > 0) ? 0 : event_progress_delta;
-                events += opal_event_loop(opal_event_base, opal_progress_event_flag);
+                events += opal_event_loop(opal_sync_event_base, opal_progress_event_flag);
         }
 #endif /* OPAL_PROGRESS_USE_TIMERS */
 

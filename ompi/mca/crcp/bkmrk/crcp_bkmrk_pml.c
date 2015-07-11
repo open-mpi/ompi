@@ -8,6 +8,7 @@
  * Copyright (c) 2010-2012 Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2015      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -32,7 +33,6 @@
 
 #include "opal/util/opal_environ.h"
 #include "ompi/mca/mca.h"
-#include "opal/mca/base/base.h"
 #include "opal/mca/pmix/pmix.h"
 
 #include "ompi/request/request.h"
@@ -4440,7 +4440,7 @@ static int ft_event_exchange_bookmarks(void)
     /* Wait for all bookmarks to arrive */
     START_TIMER(CRCP_TIMER_CKPT_EX_WAIT);
     while( total_recv_bookmarks > 0 ) {
-        opal_event_loop(opal_event_base, OPAL_EVLOOP_NONBLOCK);
+        opal_event_loop(opal_sync_event_base, OPAL_EVLOOP_NONBLOCK);
     }
     total_recv_bookmarks = 0;
     END_TIMER(CRCP_TIMER_CKPT_EX_WAIT);
@@ -5227,7 +5227,7 @@ static int wait_quiesce_drain_ack(void)
             }
         }
 
-        opal_event_loop(opal_event_base, OPAL_EVLOOP_NONBLOCK);
+        opal_event_loop(opal_sync_event_base, OPAL_EVLOOP_NONBLOCK);
     }
 
     /* Clear the ack queue if it isn't already clear (it should already be) */

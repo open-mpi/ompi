@@ -2212,7 +2212,7 @@ static void udcm_sent_message_constructor (udcm_message_sent_t *message)
 {
     memset ((char *)message + sizeof (message->super), 0,
             sizeof (*message) - sizeof (message->super));
-    opal_event_evtimer_set(opal_event_base, &message->event, udcm_send_timeout, message);
+    opal_event_evtimer_set(opal_sync_event_base, &message->event, udcm_send_timeout, message);
 }
 
 static void udcm_sent_message_destructor (udcm_message_sent_t *message)

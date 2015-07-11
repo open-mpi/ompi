@@ -226,7 +226,7 @@ int orte_init(int* pargc, char*** pargv, orte_proc_type_t flags)
          * start their progress thread in ess_base_std_app.c
          * at the appropriate point
          */
-        orte_event_base = opal_event_base;
+        orte_event_base = opal_sync_event_base;
     }
 
     /* initialize the RTE for this environment */
