@@ -92,6 +92,7 @@ static int allocate(orte_job_t *jdata, opal_list_t *nodes)
         node->slots_inuse = 0;
         node->slots_max = 0;
         node->slots = 1;
+        node->state = ORTE_NODE_STATE_UP;
         opal_list_append(nodes, &node->super);
     }
         
