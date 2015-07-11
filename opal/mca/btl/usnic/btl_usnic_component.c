@@ -1018,7 +1018,7 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
     }
 
     /* start timer to guarantee synthetic clock advances */
-    opal_event_set(opal_event_base, &usnic_clock_timer_event,
+    opal_event_set(opal_sync_event_base, &usnic_clock_timer_event,
                    -1, 0, usnic_clock_callback,
                    &usnic_clock_timeout);
     usnic_clock_timer_event_set = true;
