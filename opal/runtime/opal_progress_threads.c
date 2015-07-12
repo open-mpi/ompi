@@ -25,6 +25,7 @@
 /* create a tracking object for progress threads */
 typedef struct {
     opal_list_item_t super;
+    int refcount;
     char *name;
     opal_event_base_t *ev_base;
     volatile bool ev_active;
@@ -36,6 +37,7 @@ typedef struct {
 } opal_progress_tracker_t;
 static void trkcon(opal_progress_tracker_t *p)
 {
+    p->refcount = 1;  // start at one since someone created it
     p->name = NULL;
     p->ev_base = NULL;
     p->ev_active = true;
@@ -97,6 +99,21 @@ opal_event_base_t *opal_start_progress_thread(char *name,
     opal_progress_tracker_t *trk;
     int rc;
 
+    if (!inited) {
+        OBJ_CONSTRUCT(&tracking, opal_list_t);
+        inited = true;
+    }
+
+    /* check if we already have this thread */
+    OPAL_LIST_FOREACH(trk, &tracking, opal_progress_tracker_t) {
+        if (0 == strcmp(name, trk->name)) {
+            /* we do, so up the refcount on it */
+            ++trk->refcount;
+            /* return the existing base */
+            return trk->ev_base;
+        }
+    }
+
     trk = OBJ_NEW(opal_progress_tracker_t);
     trk->name = strdup(name);
     if (NULL == (trk->ev_base = opal_event_base_create())) {
@@ -136,10 +153,6 @@ opal_event_base_t *opal_start_progress_thread(char *name,
         OBJ_RELEASE(trk);
         return NULL;
     }
-    if (!inited) {
-        OBJ_CONSTRUCT(&tracking, opal_list_t);
-        inited = true;
-    }
     opal_list_append(&tracking, &trk->super);
     return trk->ev_base;
 }
@@ -164,6 +177,12 @@ void opal_stop_progress_thread(char *name, bool cleanup)
                     opal_list_remove_item(&tracking, &trk->super);
                     OBJ_RELEASE(trk);
                 }
+                return;
+            }
+            /* decrement the refcount */
+            --trk->refcount;
+            /* if we have reached zero, then it's time to stop it */
+            if (0 < trk->refcount) {
                 return;
             }
             /* mark it as inactive */
@@ -207,6 +226,8 @@ int opal_restart_progress_thread(char *name)
                 OPAL_ERROR_LOG(OPAL_ERR_NOT_SUPPORTED);
                 return OPAL_ERR_NOT_SUPPORTED;
             }
+            /* up the refcount */
+            ++trk->refcount;
             /* ensure the block is set, if requested */
             if (0 <= trk->pipe[0] && !trk->block_active) {
                 opal_event_add(&trk->block, 0);
