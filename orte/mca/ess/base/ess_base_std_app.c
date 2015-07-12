@@ -114,8 +114,9 @@ int orte_ess_base_app_setup(bool db_restrict_local)
         opal_proc_local_set(&orte_process_info.super);
     }
 
-    /* get a separate orte event base */
-    orte_event_base = opal_start_progress_thread("orte", true);
+    /* get an async event base - we use the opal_async one so
+     * we don't startup extra threads if not needed */
+    orte_event_base = opal_start_progress_thread("opal_async", true);
     progress_thread_running = true;
     /* open and setup the state machine */
     if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_state_base_framework, 0))) {
@@ -337,13 +338,6 @@ int orte_ess_base_app_finalize(void)
 {
     orte_cr_finalize();
 
-    /* release the event base so we stop all potential
-     * race conditions in the messaging teardown */
-    if (progress_thread_running) {
-        opal_stop_progress_thread("orte", false);
-        progress_thread_running = false;
-    }
-
 #if OPAL_ENABLE_FT_CR == 1
     (void) mca_base_framework_close(&orte_snapc_base_framework);
     (void) mca_base_framework_close(&orte_sstore_base_framework);
@@ -365,8 +359,12 @@ int orte_ess_base_app_finalize(void)
 
     orte_session_dir_finalize(ORTE_PROC_MY_NAME);
 
-    /* free the event base to cleanup memory */
-    opal_stop_progress_thread("orte", true);
+    /* release the event base */
+    if (progress_thread_running) {
+        opal_stop_progress_thread("opal_async", true);
+        progress_thread_running = false;
+    }
+
     return ORTE_SUCCESS;
 }
 

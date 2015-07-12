@@ -189,7 +189,7 @@ static int native_init(void)
         opal_argv_free(uri);
 
         /* create an event base and progress thread for us */
-        if (NULL == (mca_pmix_native_component.evbase = opal_start_progress_thread("pmix_native", true))) {
+        if (NULL == (mca_pmix_native_component.evbase = opal_start_progress_thread("opal_async", true))) {
             return OPAL_ERROR;
         }
     }
@@ -251,7 +251,7 @@ static int native_fini(void)
     }
 
     if (NULL != mca_pmix_native_component.evbase) {
-        opal_stop_progress_thread("pmix_native", true);
+        opal_stop_progress_thread("opal_async", true);
         mca_pmix_native_component.evbase = NULL;
     }
 
