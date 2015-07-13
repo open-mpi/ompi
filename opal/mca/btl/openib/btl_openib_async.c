@@ -122,7 +122,7 @@ static mca_btl_openib_endpoint_t * qp2endpoint(struct ibv_qp *qp, mca_btl_openib
     return NULL;
 }
 
-#if HAVE_XRC && !OPAL_HAVE_CONNECTX_XRC_DOMAINS
+#if OPAL_HAVE_CONNECTX_XRC
 /* XRC recive QP to endpoint */
 static mca_btl_openib_endpoint_t * xrc_qp2endpoint(uint32_t qp_num, mca_btl_openib_device_t *device)
 {
@@ -352,10 +352,8 @@ static int btl_openib_async_deviceh(struct mca_btl_openib_async_poll *devices_po
         }
 
         event_type = event.event_type;
-#if HAVE_XRC
+#if OPAL_HAVE_CONNECTX_XRC
         /* is it XRC event ?*/
-#if OPAL_HAVE_CONNECTX_XRC_DOMAINS
-#else
         bool xrc_event = false;
         if (IBV_XRC_QP_EVENT_FLAG & event.event_type) {
             xrc_event = true;
@@ -363,13 +361,12 @@ static int btl_openib_async_deviceh(struct mca_btl_openib_async_poll *devices_po
             event_type ^= IBV_XRC_QP_EVENT_FLAG;
         }
 #endif
-#endif
         switch(event_type) {
             case IBV_EVENT_PATH_MIG:
                 BTL_ERROR(("Alternative path migration event reported"));
                 if (APM_ENABLED) {
                     BTL_ERROR(("Trying to find additional path..."));
-#if HAVE_XRC && !OPAL_HAVE_CONNECTX_XRC_DOMAINS
+#if OPAL_HAVE_CONNECTX_XRC
                     if (xrc_event)
                         mca_btl_openib_load_apm_xrc_rcv(event.element.xrc_qp_num,
                                 xrc_qp2endpoint(event.element.xrc_qp_num, device));
@@ -653,7 +650,7 @@ void mca_btl_openib_load_apm(struct ibv_qp *qp, mca_btl_openib_endpoint_t *ep)
                    qp->qp_num, strerror(errno), errno));
 }
 
-#if HAVE_XRC && ! OPAL_HAVE_CONNECTX_XRC_DOMAINS
+#if OPAL_HAVE_CONNECTX_XRC
 void mca_btl_openib_load_apm_xrc_rcv(uint32_t qp_num, mca_btl_openib_endpoint_t *ep)
 {
     struct ibv_qp_init_attr qp_init_attr;
