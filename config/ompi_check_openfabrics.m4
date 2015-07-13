@@ -164,22 +164,67 @@ AC_DEFUN([OMPI_CHECK_OPENFABRICS],[
            AC_CHECK_MEMBERS([struct ibv_device.transport_type], [], [],
                             [#include <infiniband/verbs.h>])
 
+           # We have to check functions both exits *and* are declared
+           # since some distro ship broken ibverbs devel headers
+           # IBV_DEVICE_XRC is common to all OFED versions
            # ibv_create_xrc_rcv_qp was added in OFED 1.3
            # ibv_cmd_open_xrcd (aka XRC Domains) was added in  OFED 3.12
            if test "$enable_connectx_xrc" = "yes"; then
-               $1_have_xrc=1
-               AC_CHECK_FUNCS([ibv_create_xrc_rcv_qp ibv_cmd_open_xrcd],
-                              [], [$1_have_xrc=0])
-               AC_CHECK_DECLS([IBV_SRQT_XRC],
-                              [], [$1_have_xrc=0],
+               AC_CHECK_DECLS([IBV_DEVICE_XRC],
+                              [$1_have_xrc=1
+                               $1_have_xrc_domains=1],
+                              [],
                               [#include <infiniband/verbs.h>])
            fi
            if test "$enable_connectx_xrc" = "yes" \
                && test $$1_have_xrc -eq 1; then
-               AC_CHECK_FUNCS([ibv_cmd_open_xrcd], [$1_have_xrc_domains=1])
+               AC_CHECK_DECLS([ibv_create_xrc_rcv_qp],
+                              [AC_CHECK_FUNCS([ibv_create_xrc_rcv_qp],
+                                              [], [$1_have_xrc=0])],
+                              [$1_have_xrc=0],
+                              [#include <infiniband/driver.h>])
+           fi
+           if test "$enable_connectx_xrc" = "yes" \
+               && test $$1_have_xrc_domains -eq 1; then
+               AC_CHECK_DECLS([ibv_cmd_open_xrcd],
+                              [AC_CHECK_DECLS([IBV_SRQT_XRC],
+                                              [AC_CHECK_FUNCS([ibv_cmd_open_xrcd],
+                                                              [], [$1_have_xrc_domains=0])],
+                                              [$1_have_xrc_domains=0],
+                                              [#include <infiniband/verbs.h>])],
+                              [$1_have_xrc_domains=0],
+                              [#include <infiniband/driver.h>])
+               # XRC and XRC Domains should be considered as exclusive
+               if test "$$1_have_xrc" -eq 1 && \
+                  test "$$1_have_xrc_domains" -eq 1; then
+                      $1_have_xrc=0
+               fi
            fi
 
-
+           if test "no" != "$enable_openib_dynamic_sl"; then
+               # We need ib_types.h file, which is installed with opensm-devel
+               # package. However, ib_types.h has a bad include directive,
+               # which will cause AC_CHECK_HEADER to fail.
+               # So instead, we will look for another file that is also
+               # installed as part of opensm-devel package and included in
+               # ib_types.h, but it doesn't include any other IB-related files.
+               AC_CHECK_HEADER([infiniband/complib/cl_types_osd.h],
+                               [AC_CHECK_LIB([osmcomp], [cl_map_init],
+                                             [$1_have_opensm_devel=1],[])],
+                               [],
+                               [])
+               # Abort if dynamic SL support was explicitly requested but opensm-devel
+               # package wasn't found. Otherwise, OMPI will be built w/o dynamic SL.
+               AC_MSG_CHECKING([if can use dynamic SL support])
+               AS_IF([test "$$1_have_opensm_devel" = "1"],
+                     [AC_MSG_RESULT([yes])],
+                     [AC_MSG_RESULT([no])
+                      AS_IF([test "$enable_openib_dynamic_sl" = "yes"],
+                            [AC_MSG_WARN([--enable-openib-dynamic-sl was specified but the])
+                             AC_MSG_WARN([appropriate header/library files could not be found])
+                             AC_MSG_WARN([Please install opensm-devel if you need dynamic SL support])
+                             AC_MSG_ERROR([Cannot continue])])])
+           fi
            if test "no" != "$enable_openib_dynamic_sl"; then
                # We need ib_types.h file, which is installed with opensm-devel
                # package. However, ib_types.h has a bad include directive,
