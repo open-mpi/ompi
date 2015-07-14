@@ -83,67 +83,6 @@ static bool tcp_peer_recv_blocking(mca_oob_tcp_peer_t* peer, int sd,
                                    void* data, size_t size);
 static void tcp_peer_connected(mca_oob_tcp_peer_t* peer);
 
-static int tcp_peer_create_socket(mca_oob_tcp_peer_t* peer)
-{
-    int flags;
-
-    if (peer->sd >= 0) {
-        return ORTE_SUCCESS;
-    }
-
-    OPAL_OUTPUT_VERBOSE((1, orte_oob_base_framework.framework_output,
-                         "%s oob:tcp:peer creating socket to %s",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(&(peer->name))));
-    
-    peer->sd = socket(AF_INET, SOCK_STREAM, 0);
-    /* Set this fd to be close-on-exec so that any subsequent children don't see it */
-    if (opal_fd_set_cloexec(peer->sd) != OPAL_SUCCESS) {
-        opal_output(0, "%s unable to set socket to CLOEXEC",
-                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-        close(peer->sd);
-        peer->sd = -1;
-        return ORTE_ERROR;
-    }
-
-    if (peer->sd < 0) {
-        opal_output(0, "%s-%s tcp_peer_create_socket: socket() failed: %s (%d)\n",
-                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                    ORTE_NAME_PRINT(&(peer->name)),
-                    strerror(opal_socket_errno),
-                    opal_socket_errno);
-        return ORTE_ERR_UNREACH;
-    }
-
-    /* setup socket options */
-    orte_oob_tcp_set_socket_options(peer->sd);
-
-    /* setup event callbacks */
-    tcp_peer_event_init(peer);
-
-    /* setup the socket as non-blocking */
-    if (peer->sd >= 0) {
-        if((flags = fcntl(peer->sd, F_GETFL, 0)) < 0) {
-            opal_output(0, "%s-%s tcp_peer_connect: fcntl(F_GETFL) failed: %s (%d)\n", 
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                        ORTE_NAME_PRINT(&(peer->name)),
-                        strerror(opal_socket_errno),
-                        opal_socket_errno);
-        } else {
-            flags |= O_NONBLOCK;
-            if(fcntl(peer->sd, F_SETFL, flags) < 0)
-                opal_output(0, "%s-%s tcp_peer_connect: fcntl(F_SETFL) failed: %s (%d)\n", 
-                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                            ORTE_NAME_PRINT(&(peer->name)),
-                            strerror(opal_socket_errno),
-                            opal_socket_errno);
-        }
-    }
-
-    return ORTE_SUCCESS;
-}
-
-
 /*
  * Try connecting to a peer - cycle across all known addresses
  * until one succeeds. 
@@ -157,36 +96,13 @@ void mca_oob_tcp_peer_try_connect(int fd, short args, void *cbdata)
     mca_oob_tcp_addr_t *addr;
     char *host;
     mca_oob_tcp_send_t *snd;
-    bool connected = false;
-    
+    int flags;
+
     opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
                         "%s orte_tcp_peer_try_connect: "
                         "attempting to connect to proc %s",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                         ORTE_NAME_PRINT(&(peer->name)));
-
-    rc = tcp_peer_create_socket(peer);
-    if (ORTE_SUCCESS != rc) {
-        /* FIXME: we cannot create a TCP socket - this spans
-         * all interfaces, so all we can do is report
-         * back to the component that this peer is
-         * unreachable so it can remove the peer
-         * from its list and report back to the base
-         * NOTE: this could be a reconnect attempt,
-         * so we also need to mark any queued messages
-         * and return them as "unreachable"
-         */
-        opal_output(0, "%s CANNOT CREATE SOCKET", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-        ORTE_FORCED_TERMINATE(1);
-        OBJ_RELEASE(op);
-        return;
-    }
-
-    opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
-                        "%s orte_tcp_peer_try_connect: "
-                        "attempting to connect to proc %s on socket %d",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                        ORTE_NAME_PRINT(&(peer->name)), peer->sd);
 
     addrlen = sizeof(struct sockaddr_in);
     OPAL_LIST_FOREACH(addr, &peer->addrs, mca_oob_tcp_addr_t) {
@@ -215,99 +131,92 @@ void mca_oob_tcp_peer_try_connect(int fd, short args, void *cbdata)
             continue;
         }
         peer->active_addr = addr;  // record the one we are using
-    retry_connect:
-        addr->retries++;
-        if (connect(peer->sd, (struct sockaddr*)&addr->addr, addrlen) < 0) {
-            /* non-blocking so wait for completion */
-            if (opal_socket_errno == EINPROGRESS || opal_socket_errno == EWOULDBLOCK) {
-                opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
-                                    "%s waiting for connect completion to %s - activating send event",
-                                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                    ORTE_NAME_PRINT(&peer->name));
-                /* just ensure the send_event is active */
-                if (!peer->send_ev_active) {
-                    opal_event_add(&peer->send_event, 0);
-                    peer->send_ev_active = true;
-                }
-                OBJ_RELEASE(op);
-                return;
+
+        while (addr->retries < mca_oob_tcp_component.max_retries) {
+            addr->retries++;
+            /* Create the new socket */
+            peer->sd = socket(AF_INET, SOCK_STREAM, 0);
+            /* Set this fd to be close-on-exec so that any subsequent children don't see it */
+            if (opal_fd_set_cloexec(peer->sd) != OPAL_SUCCESS) {
+                opal_output(0, "%s unable to set socket to CLOEXEC",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+                close(peer->sd);
+                peer->sd = -1;
+                continue;
             }
 
+            if (connect(peer->sd, (struct sockaddr*)&addr->addr, addrlen) < 0) {
+                if (opal_socket_errno == ETIMEDOUT) {
+                /* The server may be too busy to accept new connections */
+                    opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
+                                        "%s timeout connecting to %s",
+                                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                        ORTE_NAME_PRINT(&peer->name));
+                    CLOSE_THE_SOCKET(peer->sd);
+                    continue;
+                }
+            }
             /* Some kernels (Linux 2.6) will automatically software
              * abort a connection that was ECONNREFUSED on the last
              * attempt, without even trying to establish the
              * connection.  Handle that case in a semi-rational
              * way by trying twice before giving up */
-            if (ECONNABORTED == opal_socket_errno) {
-                if (addr->retries < mca_oob_tcp_component.max_retries) {
-                    opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
-                                        "%s connection aborted by OS to %s - retrying",
-                                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                        ORTE_NAME_PRINT(&peer->name));
-                    goto retry_connect;
-                } else {
-                    /* We were unsuccessful in establishing this connection, and are
-                     * not likely to suddenly become successful, so rotate to next option */
-                    addr->state = MCA_OOB_TCP_FAILED;
-                    continue;
-                }
+             if (ECONNABORTED == opal_socket_errno) {
+                opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
+                                    "%s connection to %s aborted by OS - retrying",
+                                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                    ORTE_NAME_PRINT(&peer->name));
+                CLOSE_THE_SOCKET(peer->sd);
+                continue;
             }
-        } else {
             /* connection succeeded */
             addr->retries = 0;
-            connected = true;
-            break;
+            goto connected;
         }
     }
 
-    if (!connected) {
-        /* no address succeeded, so we cannot reach this peer */
-        peer->state = MCA_OOB_TCP_FAILED;
-        host = orte_get_proc_hostname(&(peer->name));
-        if (NULL == host) {
-            host = opal_net_get_hostname((struct sockaddr*)&(peer->active_addr->addr));
-        }
-        /* use an opal_output here instead of show_help as we may well
-         * not be connected to the HNP at this point */
-        opal_output(orte_clean_output,
-                    "------------------------------------------------------------\n"
-                    "A process or daemon was unable to complete a TCP connection\n"
-                    "to another process:\n"
-                    "  Local host:    %s\n"
-                    "  Remote host:   %s\n"
-                    "This is usually caused by a firewall on the remote host. Please\n"
-                    "check that any firewall (e.g., iptables) has been disabled and\n"
-                    "try again.\n"
-                    "------------------------------------------------------------",
-                    orte_process_info.nodename, (NULL == host) ? "NULL" : host);
-        /* let the TCP component know that this module failed to make
-         * the connection so it can do some bookkeeping and fail back
-         * to the OOB level so another component can try. This will activate
-         * an event in the component event base, and so it will fire async
-         * from us if we are in our own progress thread
-         */
-        ORTE_ACTIVATE_TCP_CMP_OP(&peer->name, mca_oob_tcp_component_failed_to_connect);
-        /* FIXME: post any messages in the send queue back to the OOB
-         * level for reassignment
-         */
-        if (NULL != peer->send_msg) {
-        }
-        while (NULL != (snd = (mca_oob_tcp_send_t*)opal_list_remove_first(&peer->send_queue))) {
-        }
-        goto cleanup;
+    /* no address succeeded, so we cannot reach this peer */
+    peer->state = MCA_OOB_TCP_FAILED;
+    host = orte_get_proc_hostname(&(peer->name));
+    if (NULL == host) {
+        host = opal_net_get_hostname((struct sockaddr*)&(peer->active_addr->addr));
     }
+    /* use an opal_output here instead of show_help as we may well
+     * not be connected to the HNP at this point */
+    opal_output(orte_clean_output,
+                "------------------------------------------------------------\n"
+                "A process or daemon was unable to complete a TCP connection\n"
+                "to another process:\n"
+                "  Local host:    %s\n"
+                "  Remote host:   %s\n"
+                "This is usually caused by a firewall on the remote host. Please\n"
+                "check that any firewall (e.g., iptables) has been disabled and\n"
+                "try again.\n"
+                "------------------------------------------------------------",
+                orte_process_info.nodename, (NULL == host) ? "NULL" : host);
+    /* let the TCP component know that this module failed to make
+     * the connection so it can do some bookkeeping and fail back
+     * to the OOB level so another component can try. This will activate
+     * an event in the component event base, and so it will fire async
+     * from us if we are in our own progress thread
+     */
+    ORTE_ACTIVATE_TCP_CMP_OP(&peer->name, mca_oob_tcp_component_failed_to_connect);
+    /* FIXME: post any messages in the send queue back to the OOB
+     * level for reassignment
+     */
+    if (NULL != peer->send_msg) {
+    }
+    while (NULL != (snd = (mca_oob_tcp_send_t*)opal_list_remove_first(&peer->send_queue))) {
+    }
+    goto cleanup;
 
+
+  connected:
     opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
                         "%s orte_tcp_peer_try_connect: "
                         "Connection to proc %s succeeded",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                         ORTE_NAME_PRINT(&peer->name));
- 
-    /* setup our recv to catch the return ack call */
-    if (!peer->recv_ev_active) {
-        opal_event_add(&peer->recv_event, 0);
-        peer->recv_ev_active = true;
-    }
 
     /* send our globally unique process identifier to the peer */
     if (ORTE_SUCCESS == (rc = tcp_peer_send_connect_ack(peer))) {
@@ -317,14 +226,14 @@ void mca_oob_tcp_peer_try_connect(int fd, short args, void *cbdata)
          * we and the peer are trying to connect at the same time. If I
          * am the higher vpid, then retry the connection - otherwise,
          * step aside for now */
-        int cmpval = orte_util_compare_name_fields(ORTE_NS_CMP_ALL, ORTE_PROC_MY_NAME, &peer->name);
-        if (OPAL_VALUE1_GREATER == cmpval) {
+         int cmpval = orte_util_compare_name_fields(ORTE_NS_CMP_ALL, ORTE_PROC_MY_NAME, &peer->name);
+         if (OPAL_VALUE1_GREATER == cmpval) {
             peer->state = MCA_OOB_TCP_CONNECTING;
             ORTE_ACTIVATE_TCP_CONN_STATE(peer, mca_oob_tcp_peer_try_connect);
         } else {
             peer->state = MCA_OOB_TCP_UNCONNECTED;
         } 
-        return;
+        goto cleanup;
     } else {
         opal_output(0, 
                     "%s orte_tcp_peer_try_connect: "
@@ -338,7 +247,67 @@ void mca_oob_tcp_peer_try_connect(int fd, short args, void *cbdata)
         ORTE_FORCED_TERMINATE(1);
     }
 
- cleanup:
+    /* setup event callbacks */
+    tcp_peer_event_init(peer);
+
+    /* receive the return handshake */
+    if (ORTE_SUCCESS == (rc = mca_oob_tcp_peer_recv_connect_ack(peer, peer->sd, NULL))) {
+        opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
+                            "%s:tcp:connection complete - starting send/recv events",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+        /* update our state */
+        peer->state = MCA_OOB_TCP_CONNECTED;
+
+        /* setup socket options */
+        orte_oob_tcp_set_socket_options(peer->sd);
+
+        /* setup the socket as non-blocking */
+        if ((flags = fcntl(peer->sd, F_GETFL, 0)) < 0) {
+            opal_output(0, "%s-%s tcp_peer_connect: fcntl(F_GETFL) failed: %s (%d)\n", 
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                        ORTE_NAME_PRINT(&(peer->name)),
+                        strerror(opal_socket_errno),
+                        opal_socket_errno);
+        } else {
+            flags |= O_NONBLOCK;
+            if (fcntl(peer->sd, F_SETFL, flags) < 0) {
+                opal_output(0, "%s-%s tcp_peer_connect: fcntl(F_SETFL) failed: %s (%d)\n", 
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                            ORTE_NAME_PRINT(&(peer->name)),
+                            strerror(opal_socket_errno),
+                            opal_socket_errno);
+            }
+        }
+        /* start the send/recv events */
+        if (!peer->recv_ev_active) {
+            opal_event_add(&peer->recv_event, 0);
+            peer->recv_ev_active = true;
+        }
+        if (peer->timer_ev_active) {
+            opal_event_del(&peer->timer_event);
+            peer->timer_ev_active = false;
+        }
+        /* if there is a message waiting to be sent, queue it */
+        if (NULL == peer->send_msg) {
+            peer->send_msg = (mca_oob_tcp_send_t*)opal_list_remove_first(&peer->send_queue);
+        }
+        if (NULL != peer->send_msg && !peer->send_ev_active) {
+            opal_event_add(&peer->send_event, 0);
+            peer->send_ev_active = true;
+        }
+    } else if (ORTE_ERR_UNREACH != rc) {
+        /* we get an unreachable error returned if a connection
+         * completes but is rejected - otherwise, we don't want
+         * to terminate as we might be retrying the connection */
+        opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
+                            "%s UNABLE TO COMPLETE CONNECT ACK WITH %s",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                            ORTE_NAME_PRINT(&peer->name));
+        opal_event_del(&peer->recv_event);
+        ORTE_FORCED_TERMINATE(1);
+    }
+ 
+  cleanup:
     OBJ_RELEASE(op);
 }
 
