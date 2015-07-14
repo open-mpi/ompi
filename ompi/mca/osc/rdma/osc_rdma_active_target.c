@@ -339,17 +339,21 @@ ompi_osc_rdma_complete(ompi_win_t *win)
                 return ret;
             }
         }
-        free (ranks);
     }
+
     OPAL_THREAD_LOCK(&module->lock);
 
     /* start all requests */
     ret = ompi_osc_rdma_frag_flush_all(module);
     if (OMPI_SUCCESS != ret) goto cleanup;
 
-    /* zero the fragment counts here to ensure they are zerod */
-    for (i = 0 ; i < group_size ; ++i) {
-        module->epoch_outgoing_frag_count[ranks[i]] = 0;
+    if (0 != group_size) {
+        /* zero the fragment counts here to ensure they are zerod */
+        for (i = 0 ; i < group_size ; ++i) {
+            module->epoch_outgoing_frag_count[ranks[i]] = 0;
+        }
+        free (ranks);
+        ranks = NULL;
     }
 
     /* wait for outgoing requests to complete.  Don't wait for incoming, as
@@ -376,6 +380,7 @@ ompi_osc_rdma_complete(ompi_win_t *win)
 
  cleanup:
     OPAL_THREAD_UNLOCK(&(module->lock));
+    free (ranks);
 
     return ret;
 }
