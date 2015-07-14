@@ -216,6 +216,27 @@ static inline opal_list_item_t *opal_fifo_pop_atomic (opal_fifo_t *fifo)
 {
     opal_list_item_t *item, *next;
 
+#if OPAL_HAVE_ATOMIC_LLSC_PTR
+    /* use load-linked store-conditional to avoid ABA issues */
+    do {
+        item = opal_atomic_ll_ptr (&fifo->opal_fifo_head.data.item);
+        if (&fifo->opal_fifo_ghost == item) {
+            if (&fifo->opal_fifo_ghost == fifo->opal_fifo_tail.data.item) {
+                return NULL;
+            }
+
+            /* fifo does not appear empty. wait for the fifo to be made
+             * consistent by conflicting thread. */
+            continue;
+        }
+
+        next = (opal_list_item_t *) item->opal_list_next;
+        if (opal_atomic_sc_ptr (&fifo->opal_fifo_head.data.item, next)) {
+            break;
+        }
+    } while (1);
+#else
+    /* protect against ABA issues by "locking" the head */
     do {
         if (opal_atomic_cmpset_32 ((int32_t *) &fifo->opal_fifo_head.data.counter, 0, 1)) {
             break;
@@ -234,6 +255,7 @@ static inline opal_list_item_t *opal_fifo_pop_atomic (opal_fifo_t *fifo)
 
     next = (opal_list_item_t *) item->opal_list_next;
     fifo->opal_fifo_head.data.item = next;
+#endif
 
     if (&fifo->opal_fifo_ghost == next) {
         if (!opal_atomic_cmpset_ptr (&fifo->opal_fifo_tail.data.item, item, &fifo->opal_fifo_ghost)) {
