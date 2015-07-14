@@ -2537,6 +2537,30 @@ subroutine pompi_file_iread_at_f(fh,offset,buf,count,datatype,request,ierror) &
    INTEGER, INTENT(OUT) :: ierror
 end subroutine pompi_file_iread_at_f
 
+subroutine pompi_file_iread_all_f(fh,buf,count,datatype,request,ierror) &
+   BIND(C, name="pompi_file_iread_all_f")
+   implicit none
+   INTEGER, INTENT(IN) :: fh
+   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: buf
+   INTEGER, INTENT(IN) :: count
+   INTEGER, INTENT(IN) :: datatype
+   INTEGER, INTENT(OUT) :: request
+   INTEGER, INTENT(OUT) :: ierror
+end subroutine pompi_file_iread_all_f
+
+subroutine pompi_file_iread_at_all_f(fh,offset,buf,count,datatype,request,ierror) &
+   BIND(C, name="pompi_file_iread_at_all_f")
+   use :: mpi_f08_types, only : MPI_OFFSET_KIND
+   implicit none
+   INTEGER, INTENT(IN) :: fh
+   INTEGER(MPI_OFFSET_KIND), INTENT(IN) :: offset
+   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: buf
+   INTEGER, INTENT(IN) :: count
+   INTEGER, INTENT(IN) :: datatype
+   INTEGER, INTENT(OUT) :: request
+   INTEGER, INTENT(OUT) :: ierror
+end subroutine pompi_file_iread_at_all_f
+
 subroutine pompi_file_iread_shared_f(fh,buf,count,datatype,request,ierror) &
    BIND(C, name="pompi_file_iread_shared_f")
    implicit none
@@ -2571,6 +2595,30 @@ subroutine pompi_file_iwrite_at_f(fh,offset,buf,count,datatype,request,ierror) &
    INTEGER, INTENT(OUT) :: request
    INTEGER, INTENT(OUT) :: ierror
 end subroutine pompi_file_iwrite_at_f
+
+subroutine pompi_file_iwrite_all_f(fh,buf,count,datatype,request,ierror) &
+   BIND(C, name="pompi_file_iwrite_all_f")
+   implicit none
+   INTEGER, INTENT(IN) :: fh
+   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: buf
+   INTEGER, INTENT(IN) :: count
+   INTEGER, INTENT(IN) :: datatype
+   INTEGER, INTENT(OUT) :: request
+   INTEGER, INTENT(OUT) :: ierror
+end subroutine pompi_file_iwrite_all_f
+
+subroutine pompi_file_iwrite_at_all_f(fh,offset,buf,count,datatype,request,ierror) &
+   BIND(C, name="pompi_file_iwrite_at_all_f")
+   use :: mpi_f08_types, only : MPI_OFFSET_KIND
+   implicit none
+   INTEGER, INTENT(IN) :: fh
+   INTEGER(MPI_OFFSET_KIND), INTENT(IN) :: offset
+   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: buf
+   INTEGER, INTENT(IN) :: count
+   INTEGER, INTENT(IN) :: datatype
+   INTEGER, INTENT(OUT) :: request
+   INTEGER, INTENT(OUT) :: ierror
+end subroutine pompi_file_iwrite_at_all_f
 
 subroutine pompi_file_iwrite_shared_f(fh,buf,count,datatype,request,ierror) &
    BIND(C, name="pompi_file_iwrite_shared_f")

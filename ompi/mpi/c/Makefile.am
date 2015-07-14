@@ -406,10 +406,14 @@ libmpi_c_mpi_la_SOURCES += \
         file_get_type_extent.c \
         file_get_view.c \
         file_iread_at.c \
+        file_iread_at_all.c \
         file_iread.c \
+        file_iread_all.c \
         file_iread_shared.c \
         file_iwrite_at.c \
+        file_iwrite_at_all.c \
         file_iwrite.c \
+        file_iwrite_all.c \
         file_iwrite_shared.c \
         file_open.c \
         file_preallocate.c \

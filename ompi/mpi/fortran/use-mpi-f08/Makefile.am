@@ -396,9 +396,13 @@ mpi_api_files += \
         file_get_view_f08.F90 \
         file_iread_at_f08.F90 \
         file_iread_f08.F90 \
+        file_iread_at_all_f08.F90 \
+        file_iread_all_f08.F90 \
         file_iread_shared_f08.F90 \
         file_iwrite_at_f08.F90 \
         file_iwrite_f08.F90 \
+        file_iwrite_at_all_f08.F90 \
+        file_iwrite_all_f08.F90 \
         file_iwrite_shared_f08.F90 \
         file_open_f08.F90 \
         file_preallocate_f08.F90 \
