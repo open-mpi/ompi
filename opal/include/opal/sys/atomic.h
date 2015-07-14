@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -11,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
- * Copyright (c) 2013-2015 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2011-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -38,7 +39,7 @@
  *  - \c OPAL_HAVE_ATOMIC_MEM_BARRIER atomic memory barriers
  *  - \c OPAL_HAVE_ATOMIC_SPINLOCKS atomic spinlocks
  *  - \c OPAL_HAVE_ATOMIC_MATH_32 if 32 bit add/sub/cmpset can be done "atomicly"
- *  - \c OPAL_HAVE_ATOMIC_MATH_64 if 32 bit add/sub/cmpset can be done "atomicly"
+ *  - \c OPAL_HAVE_ATOMIC_MATH_64 if 64 bit add/sub/cmpset can be done "atomicly"
  *
  * Note that for the Atomic math, atomic add/sub may be implemented as
  * C code using opal_atomic_cmpset.  The appearance of atomic
@@ -176,6 +177,12 @@ typedef struct opal_atomic_lock_t opal_atomic_lock_t;
 #endif
 #ifndef OPAL_HAVE_ATOMIC_CMPSET_128
 #define OPAL_HAVE_ATOMIC_CMPSET_128 0
+#endif
+#ifndef OPAL_HAVE_ATOMIC_LLSC_32
+#define OPAL_HAVE_ATOMIC_LLSC_32 0
+#endif
+#ifndef OPAL_HAVE_ATOMIC_LLSC_64
+#define OPAL_HAVE_ATOMIC_LLSC_64 0
 #endif
 #endif /* DOXYGEN */
 

@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2010-2014 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2012-2014 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -273,6 +273,30 @@ static inline int opal_atomic_cmpset_rel_ptr(volatile void* addr,
 #endif
 
 #endif /* (OPAL_HAVE_ATOMIC_SWAP_32 || OPAL_HAVE_ATOMIC_SWAP_64) */
+
+#if (OPAL_HAVE_ATOMIC_LLSC_32 || OPAL_HAVE_ATOMIC_LLSC_64)
+
+#if SIZEOF_VOID_P == 4 && OPAL_HAVE_ATOMIC_LLSC_32
+
+#define opal_atomic_ll_ptr(addr) (void *) opal_atomic_ll_32((int32_t *) addr)
+#define opal_atomic_sc_ptr(addr, newval) opal_atomic_sc_32((int32_t *) addr, (int32_t) newval)
+
+#define OPAL_HAVE_ATOMIC_LLSC_PTR 1
+
+#elif SIZEOF_VOID_P == 8 && OPAL_HAVE_ATOMIC_LLSC_64
+
+#define opal_atomic_ll_ptr(addr) (void *) opal_atomic_ll_64((int64_t *) addr)
+#define opal_atomic_sc_ptr(addr, newval) opal_atomic_sc_64((int64_t *) addr, (int64_t) newval)
+
+#define OPAL_HAVE_ATOMIC_LLSC_PTR 1
+
+#endif
+
+#endif /* (OPAL_HAVE_ATOMIC_LLSC_32 || OPAL_HAVE_ATOMIC_LLSC_64)*/
+
+#if !defined(OPAL_HAVE_ATOMIC_LLSC_PTR)
+#define OPAL_HAVE_ATOMIC_LLSC_PTR 0
+#endif
 
 #if OPAL_HAVE_ATOMIC_MATH_32 || OPAL_HAVE_ATOMIC_MATH_64
 
