@@ -43,7 +43,7 @@ int mca_fs_lustre_priority = 20;
    to 64KB. MCA parameter
    Can be changed at
    runtime also*/
-int mca_fs_lustre_stripe_size = 1048576;
+int mca_fs_lustre_stripe_size = 0;
 int mca_fs_lustre_stripe_width = 0;
 /*
  * Instantiate the public struct with all of our public information
@@ -81,7 +81,7 @@ lustre_register(void)
                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY, &mca_fs_lustre_priority);
-    mca_fs_lustre_stripe_size = 1048576;
+    mca_fs_lustre_stripe_size = 0;
     (void) mca_base_component_var_register(&mca_fs_lustre_component.fsm_version,
                                            "stripe_size", "stripe size of a file over lustre",
                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
@@ -89,7 +89,7 @@ lustre_register(void)
                                            MCA_BASE_VAR_SCOPE_READONLY, &mca_fs_lustre_stripe_size);
     mca_fs_lustre_stripe_width = 0;
     (void) mca_base_component_var_register(&mca_fs_lustre_component.fsm_version,
-                                           "stripe_width", "stripe width of a file over lustre",
+                                           "stripe_width", "stripe count of a file over lustre",
                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY, &mca_fs_lustre_stripe_width);
