@@ -376,9 +376,13 @@ linked_files += \
         pfile_get_view_f.c \
         pfile_iread_at_f.c \
         pfile_iread_f.c \
+        pfile_iread_at_all_f.c \
+        pfile_iread_all_f.c \
         pfile_iread_shared_f.c \
         pfile_iwrite_at_f.c \
         pfile_iwrite_f.c \
+        pfile_iwrite_at_all_f.c \
+        pfile_iwrite_all_f.c \
         pfile_iwrite_shared_f.c \
         pfile_open_f.c \
         pfile_preallocate_f.c \
