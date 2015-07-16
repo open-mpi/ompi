@@ -91,39 +91,7 @@ void orte_plm_base_daemons_reported(int fd, short args, void *cbdata)
         orte_proc_t *dmn1;
         int i;
 
-        /* if we got back topology info from the first node, then we use
-         * it as the "standard" for all other nodes unless they sent
-         * back their own topology */
-        if (1 < orte_process_info.num_procs) {
-            /* find daemon.vpid = 1 */
-            jdata = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid);
-            if (NULL == (dmn1 = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, 1))) {
-                /* something is wrong */
-                ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-                ORTE_FORCED_TERMINATE(ORTE_ERR_NOT_FOUND);
-                OBJ_RELEASE(caddy);
-                return;
-            }
-            if (NULL == (node = dmn1->node) ||
-                NULL == (t = node->topology)) {
-                /* something is wrong */
-                ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-                ORTE_FORCED_TERMINATE(ORTE_ERR_NOT_FOUND);
-                OBJ_RELEASE(caddy);
-                return;
-            }
-            OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
-                                 "%s plm:base:setting topo to that from node %s",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), node->name));
-            for (i=1; i < orte_node_pool->size; i++) {
-                if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, i))) {
-                    continue;
-                }
-                if (NULL == node->topology) {
-                    node->topology = t;
-                }
-            }
-        } else if (orte_do_not_launch) {
+        if (orte_do_not_launch) {
             node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, 0);
             t = node->topology;
             for (i=1; i < orte_node_pool->size; i++) {
@@ -132,6 +100,40 @@ void orte_plm_base_daemons_reported(int fd, short args, void *cbdata)
                 }
                 if (NULL == node->topology) {
                     node->topology = t;
+                }
+            }
+        } else {
+            /* if we got back topology info from the first node, then we use
+             * it as the "standard" for all other nodes unless they sent
+             * back their own topology */
+            if (1 < orte_process_info.num_procs) {
+                /* find daemon.vpid = 1 */
+                jdata = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid);
+                if (NULL == (dmn1 = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, 1))) {
+                    /* something is wrong */
+                    ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+                    ORTE_FORCED_TERMINATE(ORTE_ERR_NOT_FOUND);
+                    OBJ_RELEASE(caddy);
+                    return;
+                }
+                if (NULL == (node = dmn1->node) ||
+                    NULL == (t = node->topology)) {
+                    /* something is wrong */
+                    ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+                    ORTE_FORCED_TERMINATE(ORTE_ERR_NOT_FOUND);
+                    OBJ_RELEASE(caddy);
+                    return;
+                }
+                OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
+                                    "%s plm:base:setting topo to that from node %s",
+                                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), node->name));
+                for (i=1; i < orte_node_pool->size; i++) {
+                    if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, i))) {
+                        continue;
+                    }
+                    if (NULL == node->topology) {
+                        node->topology = t;
+                    }
                 }
             }
         }
