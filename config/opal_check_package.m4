@@ -44,15 +44,27 @@ AC_DEFUN([_OPAL_CHECK_PACKAGE_HEADER], [
             AC_CHECK_HEADERS([$2], [opal_check_package_header_happy="yes"], [], [$6])
             AS_IF([test "$opal_check_package_header_happy" = "no"],
                   [# no go on the as is - reset the cache and try again
-                   unset opal_Header])],
-           [AS_IF([test "$3" != ""],
-                 AS_IF([test -e $3/$2],
-                       [$1_CPPFLAGS="$$1_CPPFLAGS -I$3"
-                        CPPFLAGS="$CPPFLAGS -I$3"],
-                       AS_IF([test -e $3/include/$2],
-                             [$1_CPPFLAGS="$$1_CPPFLAGS -I$3/include"
-                              CPPFLAGS="$CPPFLAGS -I$3/include"])))
-            AC_CHECK_HEADERS([$2], [opal_check_package_header_happy="yes"], [], [$6])])
+                   unset opal_Header])])
+
+    AS_IF([test "$opal_check_package_header_happy" = "no" && \
+           test "$3" != ""],
+          [$1_CPPFLAGS="$$1_CPPFLAGS -I$3/include"
+           CPPFLAGS="$CPPFLAGS -I$3/include"
+           AC_VERBOSE([looking for header in "$3/include"])
+           AC_CHECK_HEADERS([$2], [opal_check_package_header_happy="yes"], [], [$6])
+           AS_IF([test "$opal_check_package_header_happy" = "no"],
+                 [# still no... - reset the cache and try again
+                  unset opal_Header])])
+
+    AS_IF([test "$opal_check_package_header_happy" = "no" && \
+           test "$3" != ""],
+          [$1_CPPFLAGS="$$1_CPPFLAGS -I$3"
+           CPPFLAGS="$CPPFLAGS -I$3"
+           AC_VERBOSE([looking for header in "$3"])
+           AC_CHECK_HEADERS([$2], [opal_check_package_header_happy="yes"], [], [$6])
+           AS_IF([test "$opal_check_package_header_happy" = "no"],
+                 [# still no...
+                  unset opal_Header])])
 
     AS_IF([test "$opal_check_package_header_happy" = "yes"], [$4], [$5])
 
