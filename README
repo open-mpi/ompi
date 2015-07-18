@@ -176,8 +176,8 @@ Compiler Notes
     pgi-9 : 9.0-4 known GOOD
     pgi-10: 10.0-0 known GOOD
     pgi-11: NO known good version with --enable-debug
-    pgi-12: 12.10 known GOOD (and 12.8 and 12.9 both known BAD with
-            --enable-debug)
+    pgi-12: 12.10 known BAD due to C99 compliance issues, and 12.8
+            and 12.9 both known BAD with --enable-debug
     pgi-13: 13.10 known GOOD
 
 - Similarly, there is a known Fortran PGI compiler issue with long
