@@ -13,6 +13,7 @@
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2015      University of Houston. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -188,6 +189,15 @@ typedef int (*mca_io_base_module_file_iwrite_at_fn_t)
      int count, struct ompi_datatype_t *datatype, 
      struct ompi_request_t **request);
 
+typedef int (*mca_io_base_module_file_iread_at_all_fn_t)
+    (struct ompi_file_t *fh, MPI_Offset offset, void *buf,
+     int count, struct ompi_datatype_t *datatype,
+     struct ompi_request_t **request);
+typedef int (*mca_io_base_module_file_iwrite_at_all_fn_t)
+    (struct ompi_file_t *fh, MPI_Offset offset, void *buf,
+     int count, struct ompi_datatype_t *datatype,
+     struct ompi_request_t **request);
+
 typedef int (*mca_io_base_module_file_read_fn_t)
     (struct ompi_file_t *fh, void *buf, int count, struct ompi_datatype_t *
      datatype, struct ompi_status_public_t *status); 
@@ -206,6 +216,13 @@ typedef int (*mca_io_base_module_file_iread_fn_t)
      struct ompi_datatype_t *datatype, struct ompi_request_t **request); 
 typedef int (*mca_io_base_module_file_iwrite_fn_t)
     (struct ompi_file_t *fh, void *buf, int count, 
+     struct ompi_datatype_t *datatype, struct ompi_request_t **request);
+
+typedef int (*mca_io_base_module_file_iread_all_fn_t)
+    (struct ompi_file_t *fh, void *buf, int count,
+     struct ompi_datatype_t *datatype, struct ompi_request_t **request);
+typedef int (*mca_io_base_module_file_iwrite_all_fn_t)
+    (struct ompi_file_t *fh, void *buf, int count,
      struct ompi_datatype_t *datatype, struct ompi_request_t **request);
 
 typedef int (*mca_io_base_module_file_seek_fn_t)
@@ -300,10 +317,12 @@ struct mca_io_base_module_2_0_0_t {
     mca_io_base_module_file_read_at_all_fn_t io_module_file_read_at_all;
     mca_io_base_module_file_write_at_fn_t    io_module_file_write_at;
     mca_io_base_module_file_write_at_all_fn_t  io_module_file_write_at_all;
-    
-    mca_io_base_module_file_iread_at_fn_t    io_module_file_iread_at;
-    mca_io_base_module_file_iwrite_at_fn_t   io_module_file_iwrite_at;
-    
+
+    mca_io_base_module_file_iread_at_fn_t      io_module_file_iread_at;
+    mca_io_base_module_file_iwrite_at_fn_t     io_module_file_iwrite_at;
+    mca_io_base_module_file_iread_at_all_fn_t  io_module_file_iread_at_all;
+    mca_io_base_module_file_iwrite_at_all_fn_t io_module_file_iwrite_at_all;
+
     mca_io_base_module_file_read_fn_t        io_module_file_read;
     mca_io_base_module_file_read_all_fn_t    io_module_file_read_all;
     mca_io_base_module_file_write_fn_t       io_module_file_write;
@@ -311,7 +330,9 @@ struct mca_io_base_module_2_0_0_t {
     
     mca_io_base_module_file_iread_fn_t       io_module_file_iread;
     mca_io_base_module_file_iwrite_fn_t      io_module_file_iwrite;
-    
+    mca_io_base_module_file_iread_all_fn_t   io_module_file_iread_all;
+    mca_io_base_module_file_iwrite_all_fn_t  io_module_file_iwrite_all;
+
     mca_io_base_module_file_seek_fn_t        io_module_file_seek;
     mca_io_base_module_file_get_position_fn_t io_module_file_get_position;
     mca_io_base_module_file_get_byte_offset_fn_t io_module_file_get_byte_offset;

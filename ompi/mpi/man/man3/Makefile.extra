@@ -124,9 +124,13 @@ mpi_api_man_pages = \
         mpi/man/man3/MPI_File_get_view.3 \
         mpi/man/man3/MPI_File_iread.3 \
         mpi/man/man3/MPI_File_iread_at.3 \
+        mpi/man/man3/MPI_File_iread_all.3 \
+        mpi/man/man3/MPI_File_iread_at_all.3 \
         mpi/man/man3/MPI_File_iread_shared.3 \
         mpi/man/man3/MPI_File_iwrite.3 \
         mpi/man/man3/MPI_File_iwrite_at.3 \
+        mpi/man/man3/MPI_File_iwrite_all.3 \
+        mpi/man/man3/MPI_File_iwrite_at_all.3 \
         mpi/man/man3/MPI_File_iwrite_shared.3 \
         mpi/man/man3/MPI_File_open.3 \
         mpi/man/man3/MPI_File_preallocate.3 \

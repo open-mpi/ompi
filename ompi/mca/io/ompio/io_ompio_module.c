@@ -49,6 +49,8 @@ mca_io_base_module_2_0_0_t mca_io_ompio_module = {
 
     mca_io_ompio_file_iread_at,
     mca_io_ompio_file_iwrite_at,
+    mca_io_ompio_file_iread_at_all,
+    mca_io_ompio_file_iwrite_at_all,
 
     /* non-indexed IO operations */
     mca_io_ompio_file_read,
@@ -58,6 +60,8 @@ mca_io_base_module_2_0_0_t mca_io_ompio_module = {
 
     mca_io_ompio_file_iread,
     mca_io_ompio_file_iwrite,
+    mca_io_ompio_file_iread_all,
+    mca_io_ompio_file_iwrite_all,
 
     mca_io_ompio_file_seek,
     mca_io_ompio_file_get_position,

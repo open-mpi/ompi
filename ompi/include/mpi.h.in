@@ -16,6 +16,7 @@
  * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2011-2013 INRIA.  All rights reserved.
+ * Copyright (c) 2015      University of Houston. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -1385,6 +1386,10 @@ OMPI_DECLSPEC  int MPI_File_iread_at(MPI_File fh, MPI_Offset offset, void *buf,
                                      int count, MPI_Datatype datatype, MPI_Request *request);
 OMPI_DECLSPEC  int MPI_File_iwrite_at(MPI_File fh, MPI_Offset offset, const void *buf,
                                       int count, MPI_Datatype datatype, MPI_Request *request);
+OMPI_DECLSPEC  int MPI_File_iread_at_all(MPI_File fh, MPI_Offset offset, void *buf,
+                                     int count, MPI_Datatype datatype, MPI_Request *request);
+OMPI_DECLSPEC  int MPI_File_iwrite_at_all(MPI_File fh, MPI_Offset offset, const void *buf,
+                                      int count, MPI_Datatype datatype, MPI_Request *request);
 OMPI_DECLSPEC  int MPI_File_read(MPI_File fh, void *buf, int count,
                                  MPI_Datatype datatype, MPI_Status *status);
 OMPI_DECLSPEC  int MPI_File_read_all(MPI_File fh, void *buf, int count,
@@ -1396,6 +1401,10 @@ OMPI_DECLSPEC  int MPI_File_write_all(MPI_File fh, const void *buf, int count,
 OMPI_DECLSPEC  int MPI_File_iread(MPI_File fh, void *buf, int count,
                                   MPI_Datatype datatype, MPI_Request *request);
 OMPI_DECLSPEC  int MPI_File_iwrite(MPI_File fh, const void *buf, int count,
+                                   MPI_Datatype datatype, MPI_Request *request);
+OMPI_DECLSPEC  int MPI_File_iread_all(MPI_File fh, void *buf, int count,
+                                  MPI_Datatype datatype, MPI_Request *request);
+OMPI_DECLSPEC  int MPI_File_iwrite_all(MPI_File fh, const void *buf, int count,
                                    MPI_Datatype datatype, MPI_Request *request);
 OMPI_DECLSPEC  int MPI_File_seek(MPI_File fh, MPI_Offset offset, int whence);
 OMPI_DECLSPEC  int MPI_File_get_position(MPI_File fh, MPI_Offset *offset);
@@ -2077,6 +2086,10 @@ OMPI_DECLSPEC  int PMPI_File_iread_at(MPI_File fh, MPI_Offset offset, void *buf,
                                       int count, MPI_Datatype datatype, MPI_Request *request);
 OMPI_DECLSPEC  int PMPI_File_iwrite_at(MPI_File fh, MPI_Offset offset, const void *buf,
                                        int count, MPI_Datatype datatype, MPI_Request *request);
+OMPI_DECLSPEC  int PMPI_File_iread_at_all(MPI_File fh, MPI_Offset offset, void *buf,
+                                          int count, MPI_Datatype datatype, MPI_Request *request);
+OMPI_DECLSPEC  int PMPI_File_iwrite_at_all(MPI_File fh, MPI_Offset offset, const void *buf,
+                                           int count, MPI_Datatype datatype, MPI_Request *request);
 OMPI_DECLSPEC  int PMPI_File_read(MPI_File fh, void *buf, int count,
                                   MPI_Datatype datatype, MPI_Status *status);
 OMPI_DECLSPEC  int PMPI_File_read_all(MPI_File fh, void *buf, int count,
@@ -2089,6 +2102,10 @@ OMPI_DECLSPEC  int PMPI_File_iread(MPI_File fh, void *buf, int count,
                                    MPI_Datatype datatype, MPI_Request *request);
 OMPI_DECLSPEC  int PMPI_File_iwrite(MPI_File fh, const void *buf, int count,
                                     MPI_Datatype datatype, MPI_Request *request);
+OMPI_DECLSPEC  int PMPI_File_iread_all(MPI_File fh, void *buf, int count,
+                                       MPI_Datatype datatype, MPI_Request *request);
+OMPI_DECLSPEC  int PMPI_File_iwrite_all(MPI_File fh, const void *buf, int count,
+                                        MPI_Datatype datatype, MPI_Request *request);
 OMPI_DECLSPEC  int PMPI_File_seek(MPI_File fh, MPI_Offset offset, int whence);
 OMPI_DECLSPEC  int PMPI_File_get_position(MPI_File fh, MPI_Offset *offset);
 OMPI_DECLSPEC  int PMPI_File_get_byte_offset(MPI_File fh, MPI_Offset offset,
