@@ -40,7 +40,7 @@ orte_state_base_component_t mca_state_dvm_component =
     /* Handle the general mca_component_t struct containing 
      *  meta information about the component
      */
-    .base_version = {
+    {
         ORTE_STATE_BASE_VERSION_1_0_0,
         /* Component name and version */
         .mca_component_name = "dvm",
@@ -49,11 +49,11 @@ orte_state_base_component_t mca_state_dvm_component =
         ORTE_RELEASE_VERSION,
         
         /* Component open and close functions */
-        .mca_open_component = state_dvm_open,
-        .mca_close_component = state_dvm_close,
-        .mca_query_component = state_dvm_component_query,
+        state_dvm_open,
+        state_dvm_close,
+        state_dvm_component_query,
     },
-    .base_data = {
+    {
         /* The component is checkpoint ready */
         MCA_BASE_METADATA_PARAM_CHECKPOINT
     },
