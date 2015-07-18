@@ -63,12 +63,20 @@ Master (not on release branches yet)
   support CUDA IPC.  Earlier versions would get error and abort.
 - Do not build the MPI C++ bindings by default.  They must be enabled
   via --enable-mpi-cxx.
-- Remove embedded VampirTrace.  It is in maintenance mode since 2013.
+- Removed embedded VampirTrace.  It is in maintenance mode since 2013.
   Please consider Score-P (score-p.org) as an external replacement.
+
+
+1.10.0
+------
+
+- Added libfabric support
+- Added Intel OmniPath support via new PSM2 MTL
+- Added "yalla" PML for faster MXM support
+- Added persistent distributed virtual machine (pDVM)
+  support for fast workflow executions
 - usNIC BTL updated to use libfabric.
-- OFI MTL.
-- Fixed incorrect declaration for MPI_T_pvar_get_index and added
-  missing return code MPI_T_INVALID_NAME.
+- Added OFI MTL.
 
 
 1.8.7
