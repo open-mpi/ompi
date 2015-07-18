@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2013      Intel, Inc. All rights reserved.
+# Copyright (c) 2013-2015 Intel, Inc. All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -42,7 +42,7 @@ my $repo_type;
 my $cmd;
 
 sub construct {
-    # don't process directories or links, and dont' recurse down
+    # don't process directories or links, and don't recurse down
     # "special" directories
     if ( -l $_ ) { return; }
     if ( -d $_ ) {
@@ -61,7 +61,15 @@ sub construct {
         $File::Find::prune = true;
         return;
     }
-    if (($_ eq "Makefile") || ($_ eq "Makefile.in") || ($_ eq "config.log") || ($_ eq "config.status")) {
+    if (($_ =~ /\.pc$/i) || ($_ eq "config.h") || ($_ eq "opal_config.h") || ($_ eq "opalcc-wrapper-data.txt") || ($_ eq "opalc++-wrapper-data.txt")) {
+        $File::Find::prune = true;
+        return;
+    }
+    if (($_ eq "stamp-h$")) {
+        $File::Find::prune = true;
+        return;
+    }
+    if (($_ eq "Makefile") || ($_ eq "Makefile.in") || ($_ eq "config.log") || ($_ eq "config.status") || ($_ eq "static-components.h")) {
         $File::Find::prune = true;
         return;
     }
