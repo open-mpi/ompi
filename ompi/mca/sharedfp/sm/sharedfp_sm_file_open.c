@@ -164,13 +164,13 @@ int mca_sharedfp_sm_file_open (struct ompi_communicator_t *comm,
     /* Initialize semaphore so that is shared between processes.           */
     /* the semaphore is shared by keeping it in the shared memory segment  */
 
-#ifdef OMPIO_SHAREDFP_USE_UNNAMED_SEMAPHORES
-    if(sem_init(&sm_offset_ptr->mutex, 1, 1) != -1){
-#else
+#if defined(HAVE_SEM_OPEN)
     sm_data->sem_name = (char*) malloc( sizeof(char) * (strlen(filename_basename)+32) );
     sprintf(sm_data->sem_name,"OMPIO_sharedfp_sem_%s",filename_basename);
 
     if( (sm_data->mutex = sem_open(sm_data->sem_name, O_CREAT, 0644, 1)) != SEM_FAILED ) {
+#elif defined(HAVE_SEM_INIT)
+    if(sem_init(&sm_offset_ptr->mutex, 1, 1) != -1){
 #endif
 	/*If opening was successful*/
 	/*Store the new file handle*/
@@ -184,14 +184,14 @@ int mca_sharedfp_sm_file_open (struct ompi_communicator_t *comm,
 	if(rank==0){
 	    MPI_Offset position=0;
 
-#ifdef OMPIO_SHAREDFP_USE_UNNAMED_SEMAPHORES
-	    sem_wait(sm_offset_ptr->mutex);
-	    sm_offset_ptr->offset=position;
-	    sem_post(sm_offset_ptr->mutex);
-#else
+#if defined(HAVE_SEM_OPEN)
 	    sem_wait(sm_data->mutex);
 	    sm_offset_ptr->offset=position;
 	    sem_post(sm_data->mutex);
+#elif defined(HAVE_SEM)INIT)
+	    sem_wait(sm_offset_ptr->mutex);
+	    sm_offset_ptr->offset=position;
+	    sem_post(sm_offset_ptr->mutex);
 #endif
 	}
     }else{
@@ -235,11 +235,11 @@ int mca_sharedfp_sm_file_close (mca_io_ompio_file_t *fh)
         /*Close sm handle*/
         if (file_data->sm_offset_ptr) {
             /* destroy semaphore */
-#ifdef OMPIO_SHAREDFP_USE_UNNAMED_SEMAPHORES
-	    sem_destroy(file_data->sm_offset_ptr->mutex);
-#else
+#if defined(HAVE_SEM_OPEN)
  	    sem_unlink (file_data->sem_name);
  	    free (file_data->sem_name);
+#elif defined(HAVE_SEM_INIT)
+	    sem_destroy(file_data->sm_offset_ptr->mutex);
 #endif
             /*Release the shared memory segment.*/
             munmap(file_data->sm_offset_ptr,sizeof(struct sm_offset));
