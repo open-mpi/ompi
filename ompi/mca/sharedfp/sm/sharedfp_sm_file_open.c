@@ -188,7 +188,7 @@ int mca_sharedfp_sm_file_open (struct ompi_communicator_t *comm,
 	    sem_wait(sm_data->mutex);
 	    sm_offset_ptr->offset=position;
 	    sem_post(sm_data->mutex);
-#elif defined(HAVE_SEM)INIT)
+#elif defined(HAVE_SEM_INIT)
 	    sem_wait(sm_offset_ptr->mutex);
 	    sm_offset_ptr->offset=position;
 	    sem_post(sm_offset_ptr->mutex);
