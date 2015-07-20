@@ -215,8 +215,9 @@ int ompio_io_ompio_file_iwrite (mca_io_ompio_file_t *fh,
 
     ompio_req = OBJ_NEW(mca_ompio_request_t);
     ompio_req->req_type = MCA_OMPIO_REQUEST_WRITE;
+    ompio_req->req_ompi.req_state = OMPI_REQUEST_ACTIVE;
 
-    if ( 0 == count ) {
+  if ( 0 == count ) {
 	ompi_request_complete (&ompio_req->req_ompi, 0);
 	ompio_req->req_ompi.req_status.MPI_ERROR = OMPI_SUCCESS;
 	ompio_req->req_ompi.req_status._ucount = 0;
@@ -568,17 +569,29 @@ int mca_io_ompio_file_iwrite_at_all (ompi_file_t *fh,
 {
     int ret = OMPI_SUCCESS;
     mca_io_ompio_data_t *data;
-    mca_io_ompio_file_t *fp=NULL;
-    OMPI_MPI_OFFSET_TYPE prev_offset;
 
     data = (mca_io_ompio_data_t *) fh->f_io_selected_data;
-    fp = &data->ompio_fh;
+    ret = ompio_io_ompio_file_iwrite_at_all ( &data->ompio_fh, offset, buf, count, datatype, request );
+    return ret;
+}
+
+int ompio_io_ompio_file_iwrite_at_all (mca_io_ompio_file_t *fp,
+				       OMPI_MPI_OFFSET_TYPE offset,
+				       void *buf,
+				       int count,
+				       struct ompi_datatype_t *datatype,
+				       ompi_request_t **request)
+{
+
+    int ret = OMPI_SUCCESS;
+    OMPI_MPI_OFFSET_TYPE prev_offset;
+
     ompio_io_ompio_file_get_position (fp, &prev_offset );
 
     ompi_io_ompio_set_explicit_offset (fp, offset);
 
     if ( NULL != fp->f_fcoll->fcoll_file_iwrite_all ) {
-	ret = fp->f_fcoll->fcoll_file_iwrite_all (&data->ompio_fh,
+	ret = fp->f_fcoll->fcoll_file_iwrite_all (fp,
 						  buf,
 						  count,
 						  datatype,
@@ -591,10 +604,12 @@ int mca_io_ompio_file_iwrite_at_all (ompi_file_t *fh,
 	ret = ompio_io_ompio_file_iwrite ( fp, buf, count, datatype, request );
     }
 
-
     ompi_io_ompio_set_explicit_offset (fp, prev_offset);
     return ret;
 }
+
+
+
 
 
 /* Infrastructure for shared file pointer operations */
@@ -772,29 +787,22 @@ int mca_io_ompio_file_write_at_all_begin (ompi_file_t *fh,
 					  struct ompi_datatype_t *datatype)
 {
     int ret = OMPI_SUCCESS;
-    mca_io_ompio_data_t *data;
+    mca_io_ompio_data_t *data=NULL;
+    mca_io_ompio_file_t *fp=NULL;
 
     data = (mca_io_ompio_data_t *) fh->f_io_selected_data;
-    ret = ompio_io_ompio_file_write_at_all_begin ( &data->ompio_fh,  offset, buf, count, datatype );
-    return ret;
-}
+    fp = &data->ompio_fh;
 
-int ompio_io_ompio_file_write_at_all_begin (mca_io_ompio_file_t *fh,
-					    OMPI_MPI_OFFSET_TYPE offset,
-					    void *buf,
-					    int count,
-					    struct ompi_datatype_t *datatype)
-{
-    int ret = OMPI_SUCCESS;
-
-    if ( true == fh->f_split_coll_in_use ) {
+    if ( true == fp->f_split_coll_in_use ) {
 	printf("Only one split collective I/O operation allowed per file handle at any given point in time!\n");
 	return MPI_ERR_REQUEST;
     }
-    ret = mca_io_ompio_file_iwrite_at_all ( fh->f_fh, offset, buf, count, datatype, &fh->f_split_coll_req );
-    fh->f_split_coll_in_use = true;
+    ret = ompio_io_ompio_file_iwrite_at_all ( fp, offset, buf, count, datatype, &fp->f_split_coll_req );
+    fp->f_split_coll_in_use = true;
+
     return ret;
 }
+
 
 int mca_io_ompio_file_write_at_all_end (ompi_file_t *fh,
 					void *buf,
@@ -802,21 +810,14 @@ int mca_io_ompio_file_write_at_all_end (ompi_file_t *fh,
 {
     int ret = OMPI_SUCCESS;
     mca_io_ompio_data_t *data;
-
+    mca_io_ompio_file_t *fp=NULL;
+    
     data = (mca_io_ompio_data_t *) fh->f_io_selected_data;
-    ret = ompio_io_ompio_file_read_at_all_end ( &data->ompio_fh, buf, status );
-    return ret;
-}
-
-int ompio_io_ompio_file_write_at_all_end (mca_io_ompio_file_t *fh,
-					  void *buf,
-					  ompi_status_public_t * status)
-{
-    int ret = OMPI_SUCCESS;
-    ret = ompi_request_wait ( &fh->f_split_coll_req, status );
+    fp = &data->ompio_fh;
+    ret = ompi_request_wait ( &fp->f_split_coll_req, status );
 
     /* remove the flag again */
-    fh->f_split_coll_in_use = false;
+    fp->f_split_coll_in_use = false;
+
     return ret;
 }
-
