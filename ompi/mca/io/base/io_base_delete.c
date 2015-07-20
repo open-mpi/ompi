@@ -286,9 +286,9 @@ static avail_io_t *query(const mca_base_component_t *component,
 
     /* io v2.0.0 */
 
-    if (2 == component->mca_major_version &&
-        0 == component->mca_minor_version &&
-        0 == component->mca_release_version) {
+    if (MCA_BASE_VERSION_MAJOR == component->mca_major_version &&
+        MCA_BASE_VERSION_MINOR == component->mca_minor_version &&
+        MCA_BASE_VERSION_RELEASE == component->mca_release_version) {
         ioc_200 = (mca_io_base_component_2_0_0_t *) component;
 
         return query_2_0_0(ioc_200, filename, info);
