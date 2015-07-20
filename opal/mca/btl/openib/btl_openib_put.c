@@ -103,10 +103,13 @@ int mca_btl_openib_put (mca_btl_base_module_t *btl, struct mca_btl_base_endpoint
 
 #if HAVE_XRC
     if (MCA_BTL_XRC_ENABLED && BTL_OPENIB_QP_TYPE_XRC(qp)) {
-#if OPAL_HAVE_CONNECTX_XRC_DOMAINS
+
+#if OPAL_HAVE_CONNECTX_XRC
+        to_out_frag(frag)->sr_desc.xrc_remote_srq_num = ep->rem_info.rem_srqs[qp].rem_srq_num;
+#elif OPAL_HAVE_CONNECTX_XRC_DOMAINS
         to_out_frag(frag)->sr_desc.qp_type.xrc.remote_srqn = ep->rem_info.rem_srqs[qp].rem_srq_num;
 #else
-        to_out_frag(frag)->sr_desc.xrc_remote_srq_num = ep->rem_info.rem_srqs[qp].rem_srq_num;
+#error "that should never happen"
 #endif
     }
 #endif
