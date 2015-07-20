@@ -1749,6 +1749,9 @@ static int mca_common_cuda_is_gpu_buffer(const void *pUserBuf, opal_convertor_t 
     void *attrdata[] = {(void *)&memType, (void *)&ctx, (void *)&isManaged};
 
     res = cuFunc.cuPointerGetAttributes(3, attributes, attrdata, dbuf);
+    OPAL_OUTPUT_VERBOSE((101, mca_common_cuda_output, 
+			"dbuf=%p, memType=%d, ctx=%p, isManaged=%d, res=%d",
+			 (void *)dbuf, (int)memType, (void *)ctx, isManaged, res));
 
     /* Mark unified memory buffers with a flag.  This will allow all unified
      * memory to be forced through host buffers.  Note that this memory can
@@ -1822,6 +1825,26 @@ static int mca_common_cuda_is_gpu_buffer(const void *pUserBuf, opal_convertor_t 
         }
     }
 
+    /* WORKAROUND - They are times when the above code determines a pice of memory
+     * is GPU memory, but it actually is not.  That has been seen on multi-GPU systems
+     * with 6 or 8 GPUs on them. Therefore, we will do this extra check.  Note if we
+     * made it this far, then the assumption at this point is we have GPU memory.
+     * Unfotunately, this extra call is costing us another 100 ns almost doubling
+     * the cost of this entire function. */
+    {
+        CUdeviceptr pbase;
+        size_t psize;
+        res = cuFunc.cuMemGetAddressRange(&pbase, &psize, dbuf);
+        if (CUDA_SUCCESS != res) {
+            opal_output_verbose(5, mca_common_cuda_output, 
+                                "CUDA: cuMemGetAddressRange failed on this pointer: res=%d, buf=%p "
+                                "Overriding check and setting to host pointer. ",
+                              res, (void *)dbuf);
+            /* This cannot be GPU memory if the previous call failed */
+            return 0;
+        }
+    }
+
     /* First access on a device pointer finalizes CUDA support initialization.
      * If initialization fails, disable support. */
     if (!stage_three_init_complete) {
@@ -1829,6 +1852,7 @@ static int mca_common_cuda_is_gpu_buffer(const void *pUserBuf, opal_convertor_t 
             opal_cuda_support = 0;
         }
     }
+
     return 1;
 }
 
