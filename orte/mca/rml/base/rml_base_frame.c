@@ -26,6 +26,7 @@
 
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/state/state.h"
+#include "orte/runtime/orte_wait.h"
 #include "orte/util/name_fns.h"
 
 #include "orte/mca/rml/base/base.h"
@@ -74,14 +75,36 @@ static int orte_rml_base_register(mca_base_register_flag_t flags)
     return ORTE_SUCCESS;
 }
 
+static void cleanup(int sd, short args, void *cbdata)
+{
+    bool *active = (bool*)cbdata;
+
+    OPAL_LIST_DESTRUCT(&orte_rml_base.posted_recvs);
+    if (NULL != active) {
+        *active = false;
+    }
+}
+
 static int orte_rml_base_close(void)
 {
-    opal_list_item_t *item;
+    bool active;
 
-    while (NULL != (item = opal_list_remove_first(&orte_rml_base.posted_recvs))) {
-        OBJ_RELEASE(item);
-    }
-    OBJ_DESTRUCT(&orte_rml_base.posted_recvs);
+    /* because the RML posted recvs list is in a separate
+     * async thread for apps, we can't just destruct it here.
+     * Instead, we push it into that event thread and destruct
+     * it there */
+     if (ORTE_PROC_IS_APP) {
+        opal_event_t ev;
+        active = true;
+        opal_event_set(orte_event_base, &ev, -1,
+                       OPAL_EV_WRITE, cleanup, &active);
+        opal_event_set_priority(&ev, ORTE_ERROR_PRI);
+        opal_event_active(&ev, OPAL_EV_WRITE, 1);
+        ORTE_WAIT_FOR_COMPLETION(active);
+     } else {
+        /* we can call the destruct directly */
+        cleanup(0, 0, NULL);
+     }
 
     OPAL_TIMING_REPORT(orte_rml_base.timing, &tm_rml);
     OBJ_DESTRUCT(&orte_rml_base.open_channels);
