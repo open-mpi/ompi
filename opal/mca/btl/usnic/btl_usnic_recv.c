@@ -77,7 +77,7 @@ void opal_btl_usnic_recv_call(opal_btl_usnic_module_t *module,
 
     /* Find out who sent this segment */
     endpoint = seg->rs_endpoint;
-    if (FAKE_RECV_FRAG_DROP || OPAL_UNLIKELY(NULL == endpoint)) {
+    if (FAKE_RECV_DROP || OPAL_UNLIKELY(NULL == endpoint)) {
         /* No idea who this was from, so drop it */
 #if MSGDEBUG1
         opal_output(0, "=== Unknown sender; dropped: seq %" UDSEQ,
