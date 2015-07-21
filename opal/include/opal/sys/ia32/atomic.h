@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -10,6 +11,10 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2010 Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -155,6 +160,25 @@ static inline int opal_atomic_cmpset_64(volatile int64_t *addr,
 
 #if OMPI_GCC_INLINE_ASSEMBLY
 
+#define OPAL_HAVE_ATOMIC_SWAP_32 1
+
+static inline int32_t opal_atomic_swap_32( volatile int32_t *addr,
+					   int32_t newval)
+{
+    int32_t oldval;
+
+    __asm__ __volatile__("xchg %1, %0" :
+			 "=r" (oldval), "=m" (*addr) :
+			 "0" (newval), "m" (*addr) :
+			 "memory");
+    return oldval;
+}
+
+#endif /* OPAL_GCC_INLINE_ASSEMBLY */
+
+
+#if OPAL_GCC_INLINE_ASSEMBLY
+
 /**
  * atomic_add - add integer to atomic variable
  * @i: integer value to add
@@ -167,8 +191,8 @@ static inline int32_t opal_atomic_add_32(volatile int32_t* v, int i)
     int ret = i;
    __asm__ __volatile__(
                         SMPLOCK "xaddl %1,%0"
-                        :"=m" (*v), "+r" (ret)
-                        :"m" (*v)
+                        :"+m" (*v), "+r" (ret)
+                        :
                         :"memory", "cc"
                         );
    return (ret+i);
@@ -187,8 +211,8 @@ static inline int32_t opal_atomic_sub_32(volatile int32_t* v, int i)
     int ret = -i;
    __asm__ __volatile__(
                         SMPLOCK "xaddl %1,%0"
-                        :"=m" (*v), "+r" (ret)
-                        :"m" (*v)
+                        :"+m" (*v), "+r" (ret)
+                        :
                         :"memory", "cc"
                         );
    return (ret-i);
