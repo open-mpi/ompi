@@ -975,6 +975,30 @@ void ompi_java_forgetIntArray(JNIEnv *env, jintArray array,
     (*env)->ReleaseIntArrayElements(env, array, jptr, JNI_ABORT);
 }
 
+void ompi_java_getDatatypeArray(JNIEnv *env, jlongArray array,
+                           jlong **jptr, MPI_Datatype **cptr)
+{
+    jlong *jLongs = (*env)->GetLongArrayElements(env, array, NULL);
+    *jptr = jLongs;
+
+    int i, length = (*env)->GetArrayLength(env, array);
+    MPI_Datatype *cDatatypes = calloc(length, sizeof(MPI_Datatype));
+
+    for(i = 0; i < length; i++){
+        cDatatypes[i] = (MPI_Datatype)jLongs[i];
+    }
+    *cptr = cDatatypes;
+}
+
+void ompi_java_forgetDatatypeArray(JNIEnv *env, jlongArray array,
+                              jlong *jptr, MPI_Datatype *cptr)
+{
+    if(jptr != cptr)
+        free(cptr);
+
+    (*env)->ReleaseLongArrayElements(env, array, jptr, JNI_ABORT);
+}
+
 void ompi_java_getBooleanArray(JNIEnv *env, jbooleanArray array,
                                jboolean **jptr, int **cptr)
 {
