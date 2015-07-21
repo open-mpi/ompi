@@ -2336,7 +2336,7 @@ public final void allToAllw(
     
     allToAllw(handle, sendBuf, sendCount, sDispls,
     		sendHandles, recvBuf, recvCount, rDispls,
-            recvHandles);
+    		recvHandles);
 }
 
 private native void allToAllw(long comm, 
