@@ -1605,8 +1605,8 @@ JNIEXPORT void JNICALL Java_mpi_Comm_allToAllw(
 	     *rPtr = ompi_java_getDirectBufferAddress(env, recvBuf);
 
 	int rc = MPI_Alltoallw(
-				sPtr, cSCount, cSDispls, cSTypes,
-	            rPtr, cRCount, cRDispls, cRTypes, comm);
+			sPtr, cSCount, cSDispls, cSTypes,
+			rPtr, cRCount, cRDispls, cRTypes, comm);
 
 	ompi_java_exceptionCheck(env, rc);
 	ompi_java_forgetIntArray(env, sCount,  jSCount,  cSCount);
@@ -1643,8 +1643,8 @@ JNIEXPORT jlong JNICALL Java_mpi_Comm_iAllToAllw(
 	MPI_Request request;
 
 	int rc = MPI_Ialltoallw(
-				sPtr, cSCount, cSDispls, cSTypes,
-	            rPtr, cRCount, cRDispls, cRTypes, comm, &request);
+			sPtr, cSCount, cSDispls, cSTypes,
+			rPtr, cRCount, cRDispls, cRTypes, comm, &request);
 
 	ompi_java_exceptionCheck(env, rc);
 	ompi_java_forgetIntArray(env, sCount,  jSCount,  cSCount);

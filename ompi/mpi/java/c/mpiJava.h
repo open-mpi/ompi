@@ -97,7 +97,7 @@ void ompi_java_releaseReadPtr(
 /* Gets a buffer pointer for writing. */
 void ompi_java_getWritePtr(
         void **ptr, ompi_java_buffer_t **item, JNIEnv *env,
-                           jobject buf, jboolean db, int count, MPI_Datatype type);
+        jobject buf, jboolean db, int count, MPI_Datatype type);
 
 /* Gets a buffer pointer for writing.
  * 'size' is the number of processes. */
