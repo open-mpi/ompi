@@ -229,6 +229,7 @@ private native long free(long comm) throws MPIException;
 
 /**
  * Test if communicator object is null (has been freed).
+ * Java binding of {@code MPI_COMM_NULL}.
  * @return true if the comm object is null, false otherwise
  */
 public final boolean isNull()
@@ -2308,6 +2309,79 @@ private native long iAllToAllv(long comm,
         throws MPIException;
 
 /**
+ * Adds flexibility to {@code allToAll}: location of data for send is  //here
+ * specified by {@code sDispls} and location to place data on receive
+ * side is specified by {@code rDispls}.
+ * <p>Java binding of the MPI operation {@code MPI_ALLTOALLW}.
+ * @param sendBuf   send buffer
+ * @param sendCount number of items sent to each buffer
+ * @param sDispls   displacements from which to take outgoing data
+ * @param sendTypes datatypes of send buffer items
+ * @param recvBuf   receive buffer
+ * @param recvCount number of elements received from each process
+ * @param rDispls   displacements at which to place incoming data
+ * @param recvTypes datatype of each item in receive buffer
+ * @throws MPIException Signals that an MPI exception of some sort has occurred.
+ */
+public final void allToAllw(
+        Buffer sendBuf, int[] sendCount, int[] sDispls, Datatype[] sendTypes,
+        Buffer recvBuf, int[] recvCount, int[] rDispls, Datatype[] recvTypes)
+    throws MPIException
+{
+    MPI.check();
+    assertDirectBuffer(sendBuf, recvBuf);
+
+    long[] sendHandles = convertTypeArray(sendTypes);
+    long[] recvHandles = convertTypeArray(recvTypes);
+    
+    allToAllw(handle, sendBuf, sendCount, sDispls,
+    		sendHandles, recvBuf, recvCount, rDispls,
+    		recvHandles);
+}
+
+private native void allToAllw(long comm, 
+		Buffer sendBuf, int[] sendCount, int[] sDispls, long[] sendTypes, 
+		Buffer recvBuf, int[] recvCount, int[] rDispls, long[] recvTypes)
+        throws MPIException;
+
+/**
+ * Adds flexibility to {@code iAllToAll}: location of data for send is
+ * specified by {@code sDispls} and location to place data on receive
+ * side is specified by {@code rDispls}.
+ * <p>Java binding of the MPI operation {@code MPI_IALLTOALLW}.
+ * @param sendBuf   send buffer
+ * @param sendCount number of items sent to each buffer
+ * @param sDispls   displacements from which to take outgoing data
+ * @param sendTypes datatype send buffer items
+ * @param recvBuf   receive buffer
+ * @param recvCount number of elements received from each process
+ * @param rDispls   displacements at which to place incoming data
+ * @param recvTypes datatype of each item in receive buffer
+ * @return communication request
+ * @throws MPIException Signals that an MPI exception of some sort has occurred.
+ */
+public final Request iAllToAllw(
+        Buffer sendBuf, int[] sendCount, int[] sDispls, Datatype[] sendTypes,
+        Buffer recvBuf, int[] recvCount, int[] rDispls, Datatype[] recvTypes)
+    throws MPIException
+{
+    MPI.check();
+    assertDirectBuffer(sendBuf, recvBuf);
+
+    long[] sendHandles = convertTypeArray(sendTypes);
+    long[] recvHandles = convertTypeArray(recvTypes);
+    
+    return new Request(iAllToAllw(
+            handle, sendBuf, sendCount, sDispls, sendHandles,
+            recvBuf, recvCount, rDispls, recvHandles));
+}
+
+private native long iAllToAllw(long comm,
+        Buffer sendBuf, int[] sendCount, int[] sDispls, long[] sendTypes,
+        Buffer recvBuf, int[] recvCount, int[] rDispls, long[] recvTypes)
+        throws MPIException;
+
+/**
  * Java binding of {@code MPI_NEIGHBOR_ALLGATHER}.
  * @param sendbuf   send buffer
  * @param sendcount number of items to send
@@ -3231,5 +3305,22 @@ public final String getName() throws MPIException
 }
 
 private native String getName(long handle) throws MPIException;
+
+/**
+ * A helper method to convert an array of Datatypes to
+ * an array of longs (handles).
+ * @param dArray	Array of Datatypes
+ * @return converted Datatypes
+ */
+private long[] convertTypeArray(Datatype[] dArray) {
+	long[] lArray = new long[dArray.length];
+	
+	for(int i = 0; i < lArray.length; i++) {
+		if(dArray[i] != null) {
+			lArray[i] = dArray[i].handle;
+		}
+	}
+	return lArray;
+}
 
 } // Comm
