@@ -900,24 +900,6 @@ NETWORKING SUPPORT / OPTIONS
   look in <mxm directory>/lib and <mxm directory>/lib64, which covers
   most cases.  This option is only needed for special configurations.
 
---with-usnic
-  Abort configure if Cisco usNIC support cannot be built.
-
---with-verbs=<directory>
-  Specify the directory where the verbs (also know as OpenFabrics, and
-  previously known as OpenIB) libraries and header files are located.
-  This option is generally only necessary if the verbs headers and
-  libraries are not in default compiler/linker search paths.
-
-  "OpenFabrics" refers to operating system bypass networks, such as
-  InfiniBand, usNIC, iWARP, and RoCE (aka "IBoIP").
-
---with-verbs-libdir=<directory>
-  Look in directory for the verbs libraries.  By default, Open
-  MPI will look in <openib directory>/lib and <openib
-  directory>/lib64, which covers most cases.  This option is only
-  needed for special configurations.
-
 --with-openib=<directory>
   DEPRECATED synonym for --with-verbs.
 
@@ -959,6 +941,24 @@ NETWORKING SUPPORT / OPTIONS
 
 --with-scif=<dir>
   Look in directory for Intel SCIF support libraries
+
+--with-usnic
+  Abort configure if Cisco usNIC support cannot be built.
+
+--with-verbs=<directory>
+  Specify the directory where the verbs (also know as OpenFabrics, and
+  previously known as OpenIB) libraries and header files are located.
+  This option is generally only necessary if the verbs headers and
+  libraries are not in default compiler/linker search paths.
+
+  "OpenFabrics" refers to operating system bypass networks, such as
+  InfiniBand, usNIC, iWARP, and RoCE (aka "IBoIP").
+
+--with-verbs-libdir=<directory>
+  Look in directory for the verbs libraries.  By default, Open
+  MPI will look in <openib directory>/lib and <openib
+  directory>/lib64, which covers most cases.  This option is only
+  needed for special configurations.
 
 RUN-TIME SYSTEM SUPPORT
 
