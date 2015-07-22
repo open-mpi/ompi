@@ -1421,7 +1421,7 @@ static int create_ep(opal_btl_usnic_module_t* module,
             opal_process_info.my_local_rank);
     }
 
-    rc = fi_getinfo(FI_VERSION(1, 0), NULL, 0, 0, hint, &channel->info);
+    rc = fi_getinfo(FI_VERSION(1, 1), NULL, 0, 0, hint, &channel->info);
     fi_freeinfo(hint);
     if (0 != rc) {
         opal_show_help("help-mpi-btl-usnic.txt",
@@ -1450,12 +1450,13 @@ static int create_ep(opal_btl_usnic_module_t* module,
         sa = (struct sockaddr *)channel->info->src_addr;
         assert(AF_INET == sa->sa_family);
     }
+#endif
+
     sin = (struct sockaddr_in *)channel->info->src_addr;
     assert(sizeof(struct sockaddr_in) == channel->info->src_addrlen);
 
     /* no matter the version of libfabric, this should hold */
     assert(0 == sin->sin_port);
-#endif
 
     rc = fi_endpoint(module->domain, channel->info, &channel->ep, NULL);
     if (0 != rc || NULL == channel->ep) {
@@ -1634,6 +1635,9 @@ static int init_one_channel(opal_btl_usnic_module_t *module,
         goto error;
     }
 
+    assert(channel->info->ep_attr->msg_prefix_size ==
+           (uint32_t) mca_btl_usnic_component.transport_header_len);
+
     /*
      * Initialize pool of receive segments.  Round MTU up to cache
      * line size so that each segment is guaranteed to start on a
@@ -1777,6 +1781,33 @@ static void init_find_transport_header_len(opal_btl_usnic_module_t *module)
         module->fabric_info->ep_attr->msg_prefix_size;
     mca_btl_usnic_component.transport_protocol =
         module->fabric_info->ep_attr->protocol;
+
+    /* The usnic provider in libfabric v1.0.0 (i.e., API v1.0) treated
+       FI_MSG_PREFIX inconsistently between senders and receivers.  It
+       was corrected in libfabric v1.1.0 (i.e., API v1.1), meaning
+       that FI_MSG_PREFIX is treated consistently between senders and
+       receivers.
+
+       So check what version of the libfabric API we have, and setup
+       to use the "old" (inconsistent) MSG_PREFIX behavior, or the
+       "new" MSG_PREFIX (consistent) behavior.
+
+       NOTE: This is a little redundant; we're setting a
+       component-level attribute during each module's setup.  We do
+       this here (and not earlier, when we check fi_version() during
+       the component setup) because we can't obtain the value of the
+       endpoint msg_prefix_size until we setup the first module.
+       Also, it's safe because each module will set the component
+       attribute to the same value.  So it's ok. */
+    uint32_t libfabric_api;
+    libfabric_api = fi_version();
+    if (1 == FI_MAJOR(libfabric_api) &&
+        0 == FI_MINOR(libfabric_api)) {
+        mca_btl_usnic_component.prefix_send_offset = 0;
+    } else {
+        mca_btl_usnic_component.prefix_send_offset =
+            module->fabric_info->ep_attr->msg_prefix_size;
+    }
 }
 
 /*
@@ -1835,13 +1866,15 @@ static void init_payload_lengths(opal_btl_usnic_module_t *module)
     /* Find the max payload this port can handle */
     module->max_frag_payload =
         module->local_modex.max_msg_size - /* start with the MTU */
-        sizeof(opal_btl_usnic_btl_header_t); /* subtract size of
-                                                the BTL header */
+        sizeof(opal_btl_usnic_btl_header_t) - /* subtract size of
+                                                 the BTL header */
+        mca_btl_usnic_component.prefix_send_offset;
 
     /* same, but use chunk header */
     module->max_chunk_payload =
         module->local_modex.max_msg_size -
-        sizeof(opal_btl_usnic_btl_chunk_header_t);
+        sizeof(opal_btl_usnic_btl_chunk_header_t) -
+        mca_btl_usnic_component.prefix_send_offset;
 
     /* Priorirty queue MTU and max size */
     if (0 == module->max_tiny_msg_size) {
@@ -2093,11 +2126,10 @@ static void init_random_objects(opal_btl_usnic_module_t *module)
 
 static void init_freelists(opal_btl_usnic_module_t *module)
 {
-    int rc;
+    int rc __opal_attribute_unused__;
     uint32_t segsize;
 
     segsize = (module->local_modex.max_msg_size +
-           module->fabric_info->ep_attr->msg_prefix_size +
            opal_cache_line_size - 1) &
         ~(opal_cache_line_size - 1);
 
@@ -2105,7 +2137,7 @@ static void init_freelists(opal_btl_usnic_module_t *module)
     OBJ_CONSTRUCT(&module->small_send_frags, opal_free_list_t);
     rc = usnic_compat_free_list_init(&module->small_send_frags,
                              sizeof(opal_btl_usnic_small_send_frag_t) +
-                             mca_btl_usnic_component.transport_header_len,
+                                 mca_btl_usnic_component.prefix_send_offset,
                              opal_cache_line_size,
                              OBJ_CLASS(opal_btl_usnic_small_send_frag_t),
                              segsize,
@@ -2123,7 +2155,7 @@ static void init_freelists(opal_btl_usnic_module_t *module)
     OBJ_CONSTRUCT(&module->large_send_frags, opal_free_list_t);
     rc = usnic_compat_free_list_init(&module->large_send_frags,
                              sizeof(opal_btl_usnic_large_send_frag_t) +
-                             mca_btl_usnic_component.transport_header_len,
+                                 mca_btl_usnic_component.prefix_send_offset,
                              opal_cache_line_size,
                              OBJ_CLASS(opal_btl_usnic_large_send_frag_t),
                              0,  /* payload size */
@@ -2141,7 +2173,7 @@ static void init_freelists(opal_btl_usnic_module_t *module)
     OBJ_CONSTRUCT(&module->put_dest_frags, opal_free_list_t);
     rc = usnic_compat_free_list_init(&module->put_dest_frags,
                              sizeof(opal_btl_usnic_put_dest_frag_t) +
-                             mca_btl_usnic_component.transport_header_len,
+                                 mca_btl_usnic_component.prefix_send_offset,
                              opal_cache_line_size,
                              OBJ_CLASS(opal_btl_usnic_put_dest_frag_t),
                              0,  /* payload size */
@@ -2160,7 +2192,7 @@ static void init_freelists(opal_btl_usnic_module_t *module)
     OBJ_CONSTRUCT(&module->chunk_segs, opal_free_list_t);
     rc = usnic_compat_free_list_init(&module->chunk_segs,
                              sizeof(opal_btl_usnic_chunk_segment_t) +
-                             mca_btl_usnic_component.transport_header_len,
+                                 mca_btl_usnic_component.prefix_send_offset,
                              opal_cache_line_size,
                              OBJ_CLASS(opal_btl_usnic_chunk_segment_t),
                              segsize,
@@ -2178,12 +2210,11 @@ static void init_freelists(opal_btl_usnic_module_t *module)
     /* ACK segments freelist */
     uint32_t ack_segment_len;
     ack_segment_len = (sizeof(opal_btl_usnic_btl_header_t) +
-           module->fabric_info->ep_attr->msg_prefix_size +
             opal_cache_line_size - 1) & ~(opal_cache_line_size - 1);
     OBJ_CONSTRUCT(&module->ack_segs, opal_free_list_t);
     rc = usnic_compat_free_list_init(&module->ack_segs,
                              sizeof(opal_btl_usnic_ack_segment_t) +
-                             mca_btl_usnic_component.transport_header_len,
+                                 mca_btl_usnic_component.prefix_send_offset,
                              opal_cache_line_size,
                              OBJ_CLASS(opal_btl_usnic_ack_segment_t),
                              ack_segment_len,
@@ -2308,7 +2339,6 @@ opal_btl_usnic_module_t opal_btl_usnic_module_template = {
         .btl_exclusivity = MCA_BTL_EXCLUSIVITY_DEFAULT,
         .btl_flags =
             MCA_BTL_FLAGS_SEND |
-            MCA_BTL_FLAGS_PUT |
             MCA_BTL_FLAGS_SEND_INPLACE,
 
         .btl_add_procs = usnic_add_procs,

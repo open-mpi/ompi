@@ -30,23 +30,22 @@
 #include "btl_usnic_ack.h"
 
 static void
-common_send_seg_helper(
-    opal_btl_usnic_send_segment_t *seg,
-    int offset)
+common_send_seg_helper(opal_btl_usnic_send_segment_t *seg)
 {
     opal_btl_usnic_segment_t *bseg;
 
-    bseg = &seg->ss_base;
-
-    bseg->us_btl_header = (opal_btl_usnic_btl_header_t *)
-        (((char*) bseg->us_list.ptr) + offset);
-    bseg->us_btl_header->sender = mca_btl_usnic_component.my_hashed_rte_name;
-
+    /* send ptr for fi_send().  ss_len will be filled in right before
+       the actual send. */
+    seg->ss_ptr = (uint8_t *) seg->ss_base.us_list.ptr;
     seg->ss_send_posted = 0;
     seg->ss_ack_pending = false;
 
-    /* send ptr, len will be filled in just before send */
-    seg->ss_ptr = (uint8_t *)bseg->us_btl_header;
+    /* Offset the BTL header by (prefix_send_offset) bytes into the
+       raw buffer */
+    bseg = &seg->ss_base;
+    bseg->us_btl_header = (opal_btl_usnic_btl_header_t *)
+        (seg->ss_ptr + mca_btl_usnic_component.prefix_send_offset);
+    bseg->us_btl_header->sender = mca_btl_usnic_component.my_hashed_rte_name;
 }
 
 static void
@@ -59,7 +58,7 @@ chunk_seg_constructor(
     bseg->us_type = OPAL_BTL_USNIC_SEG_CHUNK;
 
     /* some more common initializaiton */
-    common_send_seg_helper(seg, mca_btl_usnic_component.transport_header_len);
+    common_send_seg_helper(seg);
 
     /* payload starts next byte beyond BTL chunk header */
     bseg->us_payload.raw = (uint8_t *)(bseg->us_btl_chunk_header + 1);
@@ -77,7 +76,7 @@ frag_seg_constructor(
     bseg->us_type = OPAL_BTL_USNIC_SEG_FRAG;
 
     /* some more common initializaiton */
-    common_send_seg_helper(seg, mca_btl_usnic_component.transport_header_len);
+    common_send_seg_helper(seg);
 
     /* payload starts next byte beyond BTL header */
     bseg->us_payload.raw = (uint8_t *)(bseg->us_btl_header + 1);
@@ -95,7 +94,7 @@ ack_seg_constructor(
     bseg->us_type = OPAL_BTL_USNIC_SEG_ACK;
 
     /* some more common initializaiton */
-    common_send_seg_helper(ack, mca_btl_usnic_component.transport_header_len);
+    common_send_seg_helper(ack);
 
     /* ACK value embedded in BTL header */
     bseg->us_btl_header->payload_type = OPAL_BTL_USNIC_PAYLOAD_TYPE_ACK;
@@ -176,12 +175,13 @@ send_frag_constructor(opal_btl_usnic_send_frag_t *frag)
 static void
 send_frag_destructor(opal_btl_usnic_send_frag_t *frag)
 {
-    mca_btl_base_descriptor_t *desc;
-
+#if OPAL_ENABLE_DEBUG
     /* make sure nobody twiddled these values after the constructor */
+    mca_btl_base_descriptor_t *desc;
     desc = &frag->sf_base.uf_base;
     assert(desc->USNIC_SEND_LOCAL == frag->sf_base.uf_local_seg);
     assert(0 == frag->sf_base.uf_local_seg[0].seg_len);
+#endif
 
     /* PML may change desc->des_remote to point elsewhere, cannot assert that it
      * still points to our embedded segment */
