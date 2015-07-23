@@ -30,7 +30,7 @@ static void construct(orte_routed_tree_t *rt)
     rt->vpid = ORTE_VPID_INVALID;
     OBJ_CONSTRUCT(&rt->relatives, opal_bitmap_t);
 }
-static destruct(orte_routed_tree_t *rt)
+static void destruct(orte_routed_tree_t *rt)
 {
     OBJ_DESTRUCT(&rt->relatives);
 }
