@@ -609,16 +609,17 @@ Network Support
     used together), but may provide better overall MPI performance:
 
     - Myrinet MX and Open-MX
-    - InfiniPath PSM
+    - QLogic InfiniPath / Intel True Scale PSM
+    - Intel Omni-Path PSM2
     - Mellanox MXM
     - Portals4
-    - OpenFabrics Interfaces ("libfabric")
+    - OpenFabrics Interfaces ("libfabric" tag matching)
 
-    Open MPI will, by default, choose to use "cm" when the InfiniPath
-    PSM or the Mellanox MXM MTL can be used.  Otherwise, "ob1" will be
-    used and the corresponding BTLs will be selected. Users can force
-    the use of ob1 or cm if desired by setting the "pml" MCA parameter
-    at run-time:
+    Open MPI will, by default, choose to use "cm" when one of the
+    above transports can be used.  Otherwise, "ob1" will be used and
+    the corresponding BTLs will be selected. Users can force the use
+    of ob1 or cm if desired by setting the "pml" MCA parameter at
+    run-time:
 
       shell$ mpirun --mca pml ob1 ...
       or
@@ -864,7 +865,7 @@ NETWORKING SUPPORT / OPTIONS
   compiler/linker search paths.
 
   Libfabric is the support library for OpenFabrics Interfaces-based
-  network adapters, such as Cisco usNIC, Intel Omniscale PSM, etc.
+  network adapters, such as Cisco usNIC, Intel True Scale PSM, etc.
 
 --with-libfabric-libdir=<directory>
   Look in directory for the libfabric libraries.  By default, Open MPI
@@ -926,9 +927,9 @@ NETWORKING SUPPORT / OPTIONS
   Set configuration values for Portals 4
 
 --with-psm=<directory>
-  Specify the directory where the InfiniPath PSM library and
-  header files are located.  This option is generally only necessary
-  if the InfiniPath headers and libraries are not in default
+  Specify the directory where the QLogic InfiniPath / Intel True Scale
+  PSM library and header files are located.  This option is generally
+  only necessary if the PSM headers and libraries are not in default
   compiler/linker search paths.
 
   PSM is the support library for QLogic InfiniPath and Intel TrueScale
@@ -938,6 +939,20 @@ NETWORKING SUPPORT / OPTIONS
   Look in directory for the PSM libraries.  By default, Open MPI will
   look in <psm directory>/lib and <psm directory>/lib64, which covers
   most cases.  This option is only needed for special configurations.
+
+--with-psm2=<directory>
+  Specify the directory where the Intel Omni-Path PSM2 library and
+  header files are located.  This option is generally only necessary
+  if the PSM2 headers and libraries are not in default compiler/linker
+  search paths.
+
+  PSM2 is the support library for Intel Omni-Path network adapters.
+
+--with-psm2-libdir=<directory>
+  Look in directory for the PSM2 libraries.  By default, Open MPI will
+  look in <psm2 directory>/lib and <psm2 directory>/lib64, which
+  covers most cases.  This option is only needed for special
+  configurations.
 
 --with-scif=<dir>
   Look in directory for Intel SCIF support libraries
