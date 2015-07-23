@@ -29,7 +29,7 @@ int main(int argc, char* argv[])
 
     if (OPAL_SUCCESS != mca_base_framework_open(&opal_if_base_framework, 0)) {
         fprintf(stderr, "opal_interface: couldn't get interfaces\n");
-        return;
+        return 1;
     }
 
     for (intf =  (opal_if_t*)opal_list_get_first(&opal_if_list);

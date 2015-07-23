@@ -3,8 +3,8 @@
 #include <signal.h>
 #include <stdbool.h>
 
+#include "opal/runtime/opal.h"
 #include "opal/mca/event/event.h"
-
 #include "orte/mca/state/state_types.h"
 
 #define SIGPRI 0
@@ -62,7 +62,7 @@ main(int argc, char **argv)
     opal_event_t ev1, ev2;
     orte_state_caddy_t *caddy;
 
-    opal_init();
+    opal_init(&argc, &argv);
 
     /* assign some signal traps */
     if (opal_event_signal_set(orte_event_base, &ev1, SIGTERM, cbfunc, &ev1) < 0) {
