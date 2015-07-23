@@ -394,6 +394,8 @@ static
     ERR_WIN          = c.ERR_WIN;
     ERR_LASTCODE     = c.ERR_LASTCODE;
     ERR_SYSRESOURCE  = c.ERR_SYSRESOURCE;
+    
+    initVersion();
 }
 
 private static native Int2      newInt2();
@@ -401,6 +403,7 @@ private static native ShortInt  newShortInt();
 private static native LongInt   newLongInt();
 private static native FloatInt  newFloatInt();
 private static native DoubleInt newDoubleInt();
+private static native void initVersion();
 
 private static void initCommon() throws MPIException
 {
@@ -537,6 +540,28 @@ public static double wtick() throws MPIException
 }
 
 private static native double wtick_jni();
+
+/**
+ * Returns a version object representing the version of MPI being used.
+ * <p>Java binding of the MPI operation {@code MPI_GET_VERSION}.
+ * @return A version object representing the version and subversion of MPI being used.
+ */
+public static Version getVersion() {
+	return getVersionJNI();
+}
+
+private static native Version getVersionJNI();
+
+/**
+ * Returns the version of the MPI Library
+ * <p>Java binding of the MPI operation {@code MPI_GET_LIBRARY_VERSION}.
+ * @return A string representation of the MPI Library
+ */
+public static String getLibVersion() {
+	return getLibVersionJNI();
+}
+
+private static native String getLibVersionJNI();
 
 /**
  * Returns the name of the processor on which it is called.

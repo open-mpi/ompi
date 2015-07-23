@@ -31,6 +31,8 @@ typedef struct {
     jmethodID CartParmsInit;
     jclass    ShiftParmsClass;
     jmethodID ShiftParmsInit;
+    jclass    VersionClass;
+    jmethodID VersionInit;
     jclass    GraphParmsClass;
     jmethodID GraphParmsInit;
     jclass    DistGraphNeighborsClass;
