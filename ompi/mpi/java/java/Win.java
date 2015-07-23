@@ -30,6 +30,7 @@ import java.nio.*;
 public final class Win implements Freeable
 {
 private long handle;
+private String name;
 public static final int WIN_NULL = 0;
 public static final int FLAVOR_PRIVATE = 0;
 public static final int FLAVOR_SHARED = 1;
@@ -66,6 +67,7 @@ public Win(Buffer base, int size, int dispUnit, Info info, Comm comm)
         dispBytes = dispUnit * baseSize;
 
     handle = createWin(base, sizeBytes, dispBytes, info.handle, comm.handle);
+    this.name = "";
 }
 
 private native long createWin(
@@ -109,6 +111,7 @@ public Win(int size, int dispUnit, Info info, Comm comm, Buffer base, int flavor
     } else if(flavor == 1) {
     	handle = allocateSharedWin(sizeBytes, dispBytes, info.handle, comm.handle, base);
     }
+    this.name = "";
 }
 
 private native long allocateWin(
@@ -129,6 +132,7 @@ public Win(Info info, Comm comm)
     throws MPIException
 {
     handle = createDynamicWin(info.handle, comm.handle);
+    this.name = "";
 }
 
 private native long createDynamicWin(
@@ -873,5 +877,23 @@ public void flushLocalAll() throws MPIException
 }
 
 private native void flushLocalAll(long win) throws MPIException;
+
+/**
+ * Java binding of the MPI operation {@code MPI_WIN_GET_NAME}.
+ * @return the name associated with this window
+ */
+public synchronized String getName()
+{
+    return this.name;
+}
+
+/**
+ * Java binding of the MPI operation {@code MPI_WIN_SET_NAME}.
+ * @param name	the name to associate with this window
+ */
+public synchronized void setName(String name)
+{
+    this.name = name;
+}
 
 } // Win
