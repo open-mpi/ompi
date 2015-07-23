@@ -65,6 +65,14 @@ cannot be used.
 Check the cuda.h file for what the return value means. Perhaps a reboot
 of the node will clear the problem.
 #
+[cuMemGetAddressRange failed 2]
+The call to cuMemGetAddressRange failed during the GPU RDMA protocol.
+  Host:  %s
+  cuMemGetAddressRange return value:  %d
+  address:  %p
+Check the cuda.h file for what the return value means. This is highly
+unusual and should not happen. The program will probably abort.
+#
 [Out of cuEvent handles]
 The library has exceeded its number of outstanding event handles.
 For better performance, this number should be increased.
