@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2011 University of Houston. All rights reserved.
+ * Copyright (c) 2008-2015 University of Houston. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -50,6 +50,10 @@ mca_fs_lustre_file_open (struct ompi_communicator_t *comm,
     int amode;
     int old_mask, perm;
     int rc;
+    int flag;
+    int fs_lustre_stripe_size = -1;
+    int fs_lustre_stripe_width = -1;
+    char char_stripe[MPI_MAX_INFO_KEY];
 
     struct lov_user_md *lump=NULL;
 
@@ -74,13 +78,33 @@ mca_fs_lustre_file_open (struct ompi_communicator_t *comm,
     if (access_mode & MPI_MODE_EXCL)
         amode = amode | O_EXCL;
 
-    if ((mca_fs_lustre_stripe_size || mca_fs_lustre_stripe_width) &&
+
+    ompi_info_get (info, "stripe_size", MPI_MAX_INFO_VAL, char_stripe, &flag);
+    if ( flag ) {
+        sscanf ( char_stripe, "%d", &fs_lustre_stripe_size );
+    }
+
+    ompi_info_get (info, "stripe_width", MPI_MAX_INFO_VAL, char_stripe, &flag);
+    if ( flag ) {
+        sscanf ( char_stripe, "%d", &fs_lustre_stripe_width );
+    }
+
+    if (fs_lustre_stripe_size < 0) {
+        fs_lustre_stripe_size = mca_fs_lustre_stripe_size;
+    }
+
+    if (fs_lustre_stripe_width < 0) {
+        fs_lustre_stripe_width = mca_fs_lustre_stripe_width;
+    }
+
+
+    if ( (fs_lustre_stripe_size>0 || fs_lustre_stripe_width>0) &&
         (amode&O_CREAT) && (amode&O_RDWR)) {
         if (0 == fh->f_rank) {
-            llapi_file_create(filename, 
-                              mca_fs_lustre_stripe_size,
+            llapi_file_create(filename,
+                              fs_lustre_stripe_size,
                               -1, /* MSC need to change that */
-                              mca_fs_lustre_stripe_width,
+                              fs_lustre_stripe_width,
                               0); /* MSC need to change that */
 
             fh->fd = open(filename, O_CREAT | O_RDWR | O_LOV_DELAY_CREATE, perm);
@@ -106,13 +130,13 @@ mca_fs_lustre_file_open (struct ompi_communicator_t *comm,
     else {
       lump = (struct lov_user_md  *) malloc (sizeof(struct lov_user_md));
       if (NULL == lump ){
-	fprintf(stderr,"Cannot Allocate Lump for extracting stripe size\n");
+	fprintf(stderr,"Cannot allocate memory for extracting stripe size\n");
 	return OMPI_ERROR;
       }
       rc = llapi_file_get_stripe(filename, lump);
       if (rc != 0) {
 	  fprintf(stderr, "get_stripe failed: %d (%s)\n",errno, strerror(errno));
-	  return -1;
+	  return OMPI_ERROR;
       }
       fh->f_stripe_size = lump->lmm_stripe_size;
     }
