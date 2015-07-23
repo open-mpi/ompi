@@ -69,14 +69,37 @@ Master (not on release branches yet)
 
 1.10.0
 ------
+** NOTE: The v1.10.0 release marks the transition to Open MPI's new
+** version numbering scheme.  The v1.10.x release series is based on
+** the v1.8.x series, but with a few new features.  v2.x will be the
+** next series after the v1.10.x series, and complete the transition
+** to the new version numbering scheme.  See README for more details.
 
-- Added libfabric support
-- Added Intel OmniPath support via new PSM2 MTL
-- Added "yalla" PML for faster MXM support
-- Added persistent distributed virtual machine (pDVM)
-  support for fast workflow executions
-- usNIC BTL updated to use libfabric.
-- Added OFI MTL.
+- Added libfabric support (see README for more details):
+  - usNIC BTL updated to use libfabric.
+  - Added OFI MTL (usable with PSM in libfabric v1.1.0).
+- Added Intel Omni-Path support via new PSM2 MTL.
+- Added "yalla" PML for faster MXM support.
+- Added persistent distributed virtual machine (pDVM) support for fast
+  workflow executions.
+- Fix typo in MPI_Scatter(3) man page.  Thanks to Akshay Venkatesh for
+  noticing the mistake.
+- Add rudimentary protection from TCP port scanners.
+- Fix typo in Open MPI error handling.  Thanks to Åke Sandgren for
+  pointing out the error.
+- Increased the performance of the CM PML (i.e., the Portals, PSM,
+  PSM2, MXM, and OFI transports).
+- Restored visibility of blocking send requests in message queue
+  debuggers (e.g., TotalView, DDT).
+- Fixed obscure IPv6-related bug in the TCP BTL.
+- Add support for the "no_locks" MPI_Info key for one-sided
+  functionality.
+- Fixed ibv_fork support for verbs-based networks.
+- Fixed a variety of small bugs in OpenSHMEM.
+- Fixed MXM configure with additional CPPFLAGS and LDFLAGS.  Thanks to
+  David Shrader for the patch.
+- Fixed incorrect memalign threshhold in the openib BTL.  Thanks to
+  Xavier Besseron for pointing out the issue.
 
 
 1.8.7
