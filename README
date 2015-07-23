@@ -711,6 +711,9 @@ Open MPI Extensions
   - cr: Provides routines to access to checkpoint restart routines.
     See ompi/mpiext/cr/mpiext_cr_c.h for a listing of availble
     functions.
+  - cuda: When the library is compiled with CUDA-aware support, it provides
+    two things.  First, a macro MPIX_CUDA_AWARE_SUPPORT. Secondly, the
+    function MPIX_Query_cuda_support that can be used to query for support.
   - example: A non-functional extension; its only purpose is to
     provide an example for how to create other extensions.
 
