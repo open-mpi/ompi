@@ -166,6 +166,10 @@ int opal_pointer_array_set_item(opal_pointer_array_t *table, int index,
 {
     assert(table != NULL);
 
+    if (OPAL_UNLIKELY(0 > index)) {
+        return OPAL_ERROR;
+    }
+
     /* expand table if required to set a specific index */
 
     OPAL_THREAD_LOCK(&(table->lock));

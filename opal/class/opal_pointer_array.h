@@ -33,6 +33,7 @@
 
 #include "opal/threads/mutex.h"
 #include "opal/class/opal_object.h"
+#include "opal/prefetch.h"
 
 BEGIN_C_DECLS
 
@@ -124,7 +125,7 @@ static inline void *opal_pointer_array_get_item(opal_pointer_array_t *table,
 {
     void *p;
 
-    if( table->size <= element_index ) {
+    if( OPAL_UNLIKELY(0 > element_index || table->size <= element_index) ) {
         return NULL;
     }
     OPAL_THREAD_LOCK(&(table->lock));
