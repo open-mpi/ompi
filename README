@@ -97,11 +97,12 @@ General notes
   may not include support for all the devices (etc.) that you expect,
   especially if their support headers / libraries are installed in
   non-standard locations.  Network interconnects are an easy example
-  to discuss -- Myrinet and OpenFabrics networks, for example, both
-  have supplemental headers and libraries that must be found before
-  Open MPI can build support for them.  You must specify where these
-  files are with the appropriate options to configure.  See the
-  listing of configure command-line switches, below, for more details.
+  to discuss -- Myrinet, Libfabric, and OpenFabrics networks, for
+  example, both have supplemental headers and libraries that must be
+  found before Open MPI can build support for them.  You must specify
+  where these files are with the appropriate options to configure.
+  See the listing of configure command-line switches, below, for more
+  details.
 
 - The majority of Open MPI's documentation is here in this file, the
   included man pages, and on the web site FAQ
@@ -611,6 +612,7 @@ Network Support
     - InfiniPath PSM
     - Mellanox MXM
     - Portals4
+    - OpenFabrics Interfaces ("libfabric")
 
     Open MPI will, by default, choose to use "cm" when the InfiniPath
     PSM or the Mellanox MXM MTL can be used.  Otherwise, "ob1" will be
@@ -647,7 +649,7 @@ Network Support
 
 - The usnic BTL is support for Cisco's usNIC device ("userspace NIC")
   on Cisco UCS servers with the Virtualized Interface Card (VIC).
-  Although the usNIC is accessed via the OpenFabrics / Verbs API
+  Although the usNIC is accessed via the OpenFabrics Libfabric API
   stack, this BTL is specific to the Cisco usNIC device.
 
 - uGNI is a Cray library for communicating over the Gemini and Aries
@@ -855,6 +857,21 @@ NETWORKING SUPPORT / OPTIONS
   same server.  See http://runtime.bordeaux.inria.fr/knem/ for
   details.
 
+--with-libfabric=<directory>
+  Specify the directory where the OpenFabrics Interfaces libfabric
+  library and header files are located.  This option is generally only
+  necessary if the libfabric headers and libraries are not in default
+  compiler/linker search paths.
+
+  Libfabric is the support library for OpenFabrics Interfaces-based
+  network adapters, such as Cisco usNIC, Intel Omniscale PSM, etc.
+
+--with-libfabric-libdir=<directory>
+  Look in directory for the libfabric libraries.  By default, Open MPI
+  will look in <libfabric directory>/lib and <libfabric
+  directory>/lib64, which covers most cases.  This option is only
+  needed for special configurations.
+
 --with-mx=<directory>
   Specify the directory where the MX libraries and header files are
   located.  This option is generally only necessary if the MX headers
@@ -882,24 +899,6 @@ NETWORKING SUPPORT / OPTIONS
   Look in directory for the MXM libraries.  By default, Open MPI will
   look in <mxm directory>/lib and <mxm directory>/lib64, which covers
   most cases.  This option is only needed for special configurations.
-
---with-usnic
-  Abort configure if Cisco usNIC support cannot be built.
-
---with-verbs=<directory>
-  Specify the directory where the verbs (also know as OpenFabrics, and
-  previously known as OpenIB) libraries and header files are located.
-  This option is generally only necessary if the verbs headers and
-  libraries are not in default compiler/linker search paths.
-
-  "OpenFabrics" refers to operating system bypass networks, such as
-  InfiniBand, usNIC, iWARP, and RoCE (aka "IBoIP").
-
---with-verbs-libdir=<directory>
-  Look in directory for the verbs libraries.  By default, Open
-  MPI will look in <openib directory>/lib and <openib
-  directory>/lib64, which covers most cases.  This option is only
-  needed for special configurations.
 
 --with-openib=<directory>
   DEPRECATED synonym for --with-verbs.
@@ -942,6 +941,24 @@ NETWORKING SUPPORT / OPTIONS
 
 --with-scif=<dir>
   Look in directory for Intel SCIF support libraries
+
+--with-usnic
+  Abort configure if Cisco usNIC support cannot be built.
+
+--with-verbs=<directory>
+  Specify the directory where the verbs (also know as OpenFabrics, and
+  previously known as OpenIB) libraries and header files are located.
+  This option is generally only necessary if the verbs headers and
+  libraries are not in default compiler/linker search paths.
+
+  "OpenFabrics" refers to operating system bypass networks, such as
+  InfiniBand, usNIC, iWARP, and RoCE (aka "IBoIP").
+
+--with-verbs-libdir=<directory>
+  Look in directory for the verbs libraries.  By default, Open
+  MPI will look in <openib directory>/lib and <openib
+  directory>/lib64, which covers most cases.  This option is only
+  needed for special configurations.
 
 RUN-TIME SYSTEM SUPPORT
 
