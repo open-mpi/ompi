@@ -135,7 +135,6 @@ int mca_sharedfp_sm_file_open (struct ompi_communicator_t *comm,
         return OMPI_ERROR;
     }
 
-        free(sm_filename);
     sm_data->sm_filename = sm_filename;
 
     /*TODO: is it necessary to write to the file first?*/
