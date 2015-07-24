@@ -1,6 +1,8 @@
 # -*- makefile -*-
 #
 # Copyright (c) 2011-2014 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+#                         reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -56,6 +58,7 @@ JAVA_SRC_FILES = \
         Status.java       \
 	Struct.java       \
 	UserFunction.java \
+	Version.java	  \
 	Win.java
 
 EXTRA_DIST = $(JAVA_SRC_FILES)
@@ -88,6 +91,7 @@ JAVA_H = \
         mpi_Request.h      \
         mpi_ShiftParms.h   \
         mpi_Status.h       \
+	mpi_Version.h	   \
 	mpi_Win.h
 
 # A little verbosity magic; see Makefile.ompi-rules for an explanation.
