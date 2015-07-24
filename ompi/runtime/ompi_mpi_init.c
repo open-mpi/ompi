@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2006-2009 University of Houston. All rights reserved.
@@ -279,30 +279,7 @@ MPI_Fint *MPI_F_STATUSES_IGNORE = NULL;
    ompi/include/mpif-common.h.
  */
 
-#define INST(type, upper_case, lower_case, single_u, double_u)   \
-type lower_case; \
-type upper_case; \
-type single_u;  \
-type double_u
-
-INST(int, MPI_FORTRAN_BOTTOM, mpi_fortran_bottom,
-     mpi_fortran_bottom_, mpi_fortran_bottom__);
-INST(int, MPI_FORTRAN_IN_PLACE, mpi_fortran_in_place,
-     mpi_fortran_in_place_, mpi_fortran_in_place__);
-INST(int, MPI_FORTRAN_UNWEIGHTED, mpi_fortran_unweighted,
-     mpi_fortran_unweighted_, mpi_fortran_unweighted__);
-INST(int, MPI_FORTRAN_WEIGHTS_EMPTY, mpi_fortran_weights_empty,
-     mpi_fortran_weights_empty_, mpi_fortran_weights_empty__);
-INST(char *, MPI_FORTRAN_ARGV_NULL, mpi_fortran_argv_null,
-     mpi_fortran_argv_null_, mpi_fortran_argv_null__);
-INST(char *, MPI_FORTRAN_ARGVS_NULL, mpi_fortran_argvs_null,
-     mpi_fortran_argvs_null_, mpi_fortran_argvs_null__);
-INST(int *, MPI_FORTRAN_ERRCODES_IGNORE, mpi_fortran_errcodes_ignore,
-     mpi_fortran_errcodes_ignore_, mpi_fortran_errcodes_ignore__);
-INST(int *, MPI_FORTRAN_STATUS_IGNORE, mpi_fortran_status_ignore,
-     mpi_fortran_status_ignore_, mpi_fortran_status_ignore__);
-INST(int *, MPI_FORTRAN_STATUSES_IGNORE, mpi_fortran_statuses_ignore,
-      mpi_fortran_statuses_ignore_, mpi_fortran_statuses_ignore__);
+#include "mpif-c-constants.h"
 
 /*
  * Hash tables for MPI_Type_create_f90* functions

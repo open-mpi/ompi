@@ -229,9 +229,12 @@ ompi/debuggers/predefined_gap_test
 ompi/include/mpi.h
 ompi/include/mpif-config.h
 ompi/include/mpif.h
+ompi/include/mpif-c-constants-decl.h
+ompi/include/mpif-c-constants.h
 ompi/include/mpif-common.h
 ompi/include/mpi-ext.h
 ompi/include/mpif-ext.h
+ompi/include/mpif-f08-types.h
 ompi/include/mpif-constants.h
 ompi/include/mpif-io-handles.h
 ompi/include/mpif-handles.h

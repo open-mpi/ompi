@@ -95,15 +95,23 @@ AC_DEFUN([OMPI_SETUP_MPI_FORTRAN],[
     AC_DEFINE_UNQUOTED([OMPI_FORTRAN_DOUBLE_UNDERSCORE],
         [$ompi_fortran_double_underscore], 
         [Whether fortran symbols have a trailing double underscore or not])
-    AC_DEFINE_UNQUOTED([OMPI_FORTRAN_SINGLE_UNDERSCORE], 
+    OMPI_FORTRAN_DOUBLE_UNDERSCORE=$ompi_fortran_double_underscore
+    AC_SUBST(OMPI_FORTRAN_DOUBLE_UNDERSCORE)
+    AC_DEFINE_UNQUOTED([OMPI_FORTRAN_SINGLE_UNDERSCORE],
         [$ompi_fortran_single_underscore],
         [Whether fortran symbols have a trailing underscore or not])
+    OMPI_FORTRAN_SINGLE_UNDERSCORE=$ompi_fortran_single_underscore
+    AC_SUBST(OMPI_FORTRAN_SINGLE_UNDERSCORE)
     AC_DEFINE_UNQUOTED([OMPI_FORTRAN_CAPS],
         [$ompi_fortran_caps],
         [Whether fortran symbols are all caps or not])
-    AC_DEFINE_UNQUOTED([OMPI_FORTRAN_PLAIN], 
+    OMPI_FORTRAN_CAPS=$ompi_fortran_caps
+    AC_SUBST(OMPI_FORTRAN_CAPS)
+    AC_DEFINE_UNQUOTED([OMPI_FORTRAN_PLAIN],
         [$ompi_fortran_plain],
         [Whether fortran symbols have no trailing underscore or not])
+    OMPI_FORTRAN_PLAIN=$ompi_fortran_plain
+    AC_SUBST(OMPI_FORTRAN_PLAIN)
 
     # Check to see if any of the MPI Fortran bindings were
     # specifically requested.  If so, and we weren't able to setup the
