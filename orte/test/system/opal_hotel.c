@@ -47,7 +47,8 @@ int main(int argc, char* argv[])
     }
 
     OBJ_CONSTRUCT(&hotel, opal_hotel_t);
-    opal_hotel_init(&hotel, NUM_RMS, 3000000, OPAL_EV_SYS_HI_PRI, evict_cbfunc);
+    opal_hotel_init(&hotel, NUM_RMS, opal_sync_event_base,
+                    3000000, OPAL_EV_SYS_HI_PRI, evict_cbfunc);
 
     /* prep the occupants */
     for (i=0; i < NUM_OCC; i++) {
