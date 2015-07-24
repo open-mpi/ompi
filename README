@@ -921,7 +921,7 @@ NETWORKING SUPPORT / OPTIONS
   if the PSM2 headers and libraries are not in default compiler/linker
   search paths.
 
-  PSM is the support library for Intel Omni-Path network adapters.
+  PSM2 is the support library for Intel Omni-Path network adapters.
 
 --with-psm2-libdir=<directory>
   Look in directory for the PSM2 libraries.  By default, Open MPI will
