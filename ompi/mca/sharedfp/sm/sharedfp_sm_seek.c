@@ -122,7 +122,7 @@ mca_sharedfp_sm_seek (mca_io_ompio_file_t *fh,
         sm_offset_ptr = sm_data->sm_offset_ptr;
 
 #ifdef OMPIO_SHAREDFP_USE_UNNAMED_SEMAPHORES
-	sem_wait(sm_offset_ptr->mutex);
+	sem_wait(&sm_offset_ptr->mutex);
 #else
 	sem_wait(sm_data->mutex);
 #endif
@@ -135,7 +135,7 @@ mca_sharedfp_sm_seek (mca_io_ompio_file_t *fh,
 	    printf("sharedfp_sm_seek: Releasing sm lock...rank=%d",rank); fflush(stdout);
 	}
 #ifdef OMPIO_SHAREDFP_USE_UNNAMED_SEMAPHORES
-    sem_post(sm_offset_ptr->mutex);
+    sem_post(&sm_offset_ptr->mutex);
 #else
     sem_post(sm_data->mutex);
 #endif

@@ -185,9 +185,9 @@ int mca_sharedfp_sm_file_open (struct ompi_communicator_t *comm,
 	    MPI_Offset position=0;
 
 #ifdef OMPIO_SHAREDFP_USE_UNNAMED_SEMAPHORES
-	    sem_wait(sm_offset_ptr->mutex);
+	    sem_wait(&sm_offset_ptr->mutex);
 	    sm_offset_ptr->offset=position;
-	    sem_post(sm_offset_ptr->mutex);
+	    sem_post(&sm_offset_ptr->mutex);
 #else
 	    sem_wait(sm_data->mutex);
 	    sm_offset_ptr->offset=position;
@@ -236,7 +236,7 @@ int mca_sharedfp_sm_file_close (mca_io_ompio_file_t *fh)
         if (file_data->sm_offset_ptr) {
             /* destroy semaphore */
 #ifdef OMPIO_SHAREDFP_USE_UNNAMED_SEMAPHORES
-	    sem_destroy(file_data->sm_offset_ptr->mutex);
+	    sem_destroy(&file_data->sm_offset_ptr->mutex);
 #else
  	    sem_unlink (file_data->sem_name);
  	    free (file_data->sem_name);
