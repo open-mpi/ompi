@@ -115,6 +115,19 @@ public final class CartComm extends Intracomm
 	}
 
 	/**
+	* Duplicates this communicator with the info object used in the call.
+	* <p>Java binding of {@code MPI_COMM_DUP_WITH_INFO}.
+	* @param info	info object to associate with the new communicator
+	* @return copy of this communicator
+	* @throws MPIException Signals that an MPI exception of some sort has occurred.
+	*/
+	@Override public CartComm dupWithInfo(Info info) throws MPIException
+	{
+	    MPI.check();
+	    return new CartComm(dupWithInfo(handle, info.handle));
+	}
+	
+	/**
 	 * Returns cartesian topology information.
 	 * <p>Java binding of the MPI operations {@code MPI_CARTDIM_GET} and
 	 * {@code MPI_CART_GET}.

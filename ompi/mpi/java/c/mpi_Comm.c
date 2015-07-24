@@ -214,6 +214,15 @@ JNIEXPORT jlongArray JNICALL Java_mpi_Comm_iDup(
     return jcr;
 }
 
+JNIEXPORT jlong JNICALL Java_mpi_Comm_dupWithInfo(
+        JNIEnv *env, jobject jthis, jlong comm, jlong info)
+{
+    MPI_Comm newcomm;
+    int rc = MPI_Comm_dup_with_info((MPI_Comm)comm, (MPI_Info)info, &newcomm);
+    ompi_java_exceptionCheck(env, rc);
+    return (jlong)newcomm;
+}
+
 JNIEXPORT jint JNICALL Java_mpi_Comm_getSize(
         JNIEnv *env, jobject jthis, jlong comm)
 {
