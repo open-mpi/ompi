@@ -3,6 +3,8 @@
 ! Copyright (c) 2009 Cisco Systems, Inc.  All rights reserved.
 ! Copyright (c) 2009-2012 Los Alamos National Security, LLC.
 !                         All rights reserved.
+! Copyright (c) 2015      Research Organization for Information Science
+!                         and Technology (RIST). All rights reserved.
 !
 ! This file creates mappings between MPI C types (e.g., MPI_Comm) and
 ! variables (e.g., MPI_COMM_WORLD) and corresponding Fortran names
@@ -151,7 +153,6 @@ module mpi_f08_types
 !
 ! STATUS/STATUSES_IGNORE
 !
-  type(MPI_STATUS), bind(C, name="mpi_fortran_status_ignore")   :: MPI_STATUS_IGNORE
-  type(MPI_STATUS), bind(C, name="mpi_fortran_statuses_ignore") :: MPI_STATUSES_IGNORE(1)
+#include "mpif-f08-types.h"
 
 end module mpi_f08_types
