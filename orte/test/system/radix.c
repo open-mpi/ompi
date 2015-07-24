@@ -70,7 +70,7 @@ int down_search(int me, int num_procs,
     }
 }
 
-main(int argc, char **argv)
+int main(int argc, char **argv)
 {
     opal_list_t children;
     opal_list_item_t *item;
