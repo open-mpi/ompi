@@ -9,9 +9,11 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Inria.  All rights reserved.
  * Copyright (c) 2011-2012 Universite Bordeaux 1
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -24,6 +26,7 @@
 
 #include "ompi_config.h"
 
+#if OMPI_BUILD_FORTRAN_BINDINGS
 /*
  * Several variables are used to link against MPI F77 constants which
  * correspond to addresses, e.g. MPI_BOTTOM, and are implemented via
@@ -85,173 +88,14 @@
  * file.
  */
 
-#define DECL(type, upper_case, lower_case, single_u, double_u)   \
-OMPI_DECLSPEC extern type upper_case; \
-OMPI_DECLSPEC extern type lower_case; \
-OMPI_DECLSPEC extern type single_u; \
-OMPI_DECLSPEC extern type double_u
-
-/* Note that the rationale for the types of each of these variables is
-   discussed in ompi/include/mpif-common.h.  Do not change the types
-   without also changing ompi/runtime/ompi_mpi_init.c and
-   ompi/include/mpif-common.h. */
-
-DECL(int, MPI_FORTRAN_BOTTOM, mpi_fortran_bottom,
-     mpi_fortran_bottom_, mpi_fortran_bottom__);
-DECL(int, MPI_FORTRAN_IN_PLACE, mpi_fortran_in_place,
-     mpi_fortran_in_place_, mpi_fortran_in_place__);
-DECL(int, MPI_FORTRAN_UNWEIGHTED, mpi_fortran_unweighted,
-     mpi_fortran_unweighted_, mpi_fortran_unweighted__);
-DECL(int, MPI_FORTRAN_WEIGHTS_EMPTY, mpi_fortran_weights_empty,
-     mpi_fortran_weights_empty_, mpi_fortran_weights_empty__);
-DECL(char *, MPI_FORTRAN_ARGV_NULL, mpi_fortran_argv_null,
-     mpi_fortran_argv_null_, mpi_fortran_argv_null__);
-DECL(char *, MPI_FORTRAN_ARGVS_NULL, mpi_fortran_argvs_null,
-     mpi_fortran_argvs_null_, mpi_fortran_argvs_null__);
-DECL(int *, MPI_FORTRAN_ERRCODES_IGNORE, mpi_fortran_errcodes_ignore,
-     mpi_fortran_errcodes_ignore_, mpi_fortran_errcodes_ignore__);
-DECL(int *, MPI_FORTRAN_STATUS_IGNORE, mpi_fortran_status_ignore,
-     mpi_fortran_status_ignore_, mpi_fortran_status_ignore__);
-DECL(int *, MPI_FORTRAN_STATUSES_IGNORE, mpi_fortran_statuses_ignore,
-     mpi_fortran_statuses_ignore_, mpi_fortran_statuses_ignore__);
-
-/*
- * Create macros to do the checking.  Only check for all 4 if we have
- * weak symbols.  Otherwise, just check for the one relevant symbol.
- */
-#if OPAL_HAVE_WEAK_SYMBOLS
-#define OMPI_IS_FORTRAN_BOTTOM(addr) \
-  (addr == (void*) &MPI_FORTRAN_BOTTOM || \
-   addr == (void*) &mpi_fortran_bottom || \
-   addr == (void*) &mpi_fortran_bottom_ || \
-   addr == (void*) &mpi_fortran_bottom__)
-#define OMPI_IS_FORTRAN_IN_PLACE(addr) \
-  (addr == (void*) &MPI_FORTRAN_IN_PLACE || \
-   addr == (void*) &mpi_fortran_in_place || \
-   addr == (void*) &mpi_fortran_in_place_ || \
-   addr == (void*) &mpi_fortran_in_place__)
-#define OMPI_IS_FORTRAN_UNWEIGHTED(addr) \
-  (addr == (void*) &MPI_FORTRAN_UNWEIGHTED || \
-   addr == (void*) &mpi_fortran_unweighted || \
-   addr == (void*) &mpi_fortran_unweighted_ || \
-   addr == (void*) &mpi_fortran_unweighted__)
-#define OMPI_IS_FORTRAN_WEIGHTS_EMPTY(addr) \
-  (addr == (void*) &MPI_FORTRAN_WEIGHTS_EMPTY || \
-   addr == (void*) &mpi_fortran_weights_empty || \
-   addr == (void*) &mpi_fortran_weights_empty_ || \
-   addr == (void*) &mpi_fortran_weights_empty__)
-#define OMPI_IS_FORTRAN_ARGV_NULL(addr) \
-  (addr == (void*) &MPI_FORTRAN_ARGV_NULL || \
-   addr == (void*) &mpi_fortran_argv_null || \
-   addr == (void*) &mpi_fortran_argv_null_ || \
-   addr == (void*) &mpi_fortran_argv_null__)
-#define OMPI_IS_FORTRAN_ARGVS_NULL(addr) \
-  (addr == (void*) &MPI_FORTRAN_ARGVS_NULL || \
-   addr == (void*) &mpi_fortran_argvs_null || \
-   addr == (void*) &mpi_fortran_argvs_null_ || \
-   addr == (void*) &mpi_fortran_argvs_null__)
-#define OMPI_IS_FORTRAN_ERRCODES_IGNORE(addr) \
-  (addr == (void*) &MPI_FORTRAN_ERRCODES_IGNORE || \
-   addr == (void*) &mpi_fortran_errcodes_ignore || \
-   addr == (void*) &mpi_fortran_errcodes_ignore_ || \
-   addr == (void*) &mpi_fortran_errcodes_ignore__)
-#define OMPI_IS_FORTRAN_STATUS_IGNORE(addr) \
-  (addr == (void*) &MPI_FORTRAN_STATUS_IGNORE || \
-   addr == (void*) &mpi_fortran_status_ignore || \
-   addr == (void*) &mpi_fortran_status_ignore_ || \
-   addr == (void*) &mpi_fortran_status_ignore__)
-#define OMPI_IS_FORTRAN_STATUSES_IGNORE(addr) \
-  (addr == (void*) &MPI_FORTRAN_STATUSES_IGNORE || \
-   addr == (void*) &mpi_fortran_statuses_ignore || \
-   addr == (void*) &mpi_fortran_statuses_ignore_ || \
-   addr == (void*) &mpi_fortran_statuses_ignore__)
-
-#elif OMPI_FORTRAN_CAPS
-#define OMPI_IS_FORTRAN_BOTTOM(addr) \
-  (addr == (void*) &MPI_FORTRAN_BOTTOM)
-#define OMPI_IS_FORTRAN_IN_PLACE(addr) \
-  (addr == (void*) &MPI_FORTRAN_IN_PLACE)
-#define OMPI_IS_FORTRAN_UNWEIGHTED(addr) \
-  (addr == (void*) &MPI_FORTRAN_UNWEIGHTED)
-#define OMPI_IS_FORTRAN_WEIGHTS_EMPTY(addr) \
-  (addr == (void*) &MPI_FORTRAN_WEIGHTS_EMPTY)
-#define OMPI_IS_FORTRAN_ARGV_NULL(addr) \
-  (addr == (void*) &MPI_FORTRAN_ARGV_NULL)
-#define OMPI_IS_FORTRAN_ARGVS_NULL(addr) \
-  (addr == (void*) &MPI_FORTRAN_ARGVS_NULL)
-#define OMPI_IS_FORTRAN_ERRCODES_IGNORE(addr) \
-  (addr == (void*) &MPI_FORTRAN_ERRCODES_IGNORE)
-#define OMPI_IS_FORTRAN_STATUS_IGNORE(addr) \
-  (addr == (void*) &MPI_FORTRAN_STATUS_IGNORE)
-#define OMPI_IS_FORTRAN_STATUSES_IGNORE(addr) \
-  (addr == (void*) &MPI_FORTRAN_STATUSES_IGNORE)
-
-#elif OMPI_FORTRAN_PLAIN
-#define OMPI_IS_FORTRAN_BOTTOM(addr) \
-   (addr == (void*) &mpi_fortran_bottom)
-#define OMPI_IS_FORTRAN_IN_PLACE(addr) \
-   (addr == (void*) &mpi_fortran_in_place)
-#define OMPI_IS_FORTRAN_UNWEIGHTED(addr) \
-   (addr == (void*) &mpi_fortran_unweighted)
-#define OMPI_IS_FORTRAN_WEIGHTS_EMPTY(addr) \
-   (addr == (void*) &mpi_fortran_weights_empty)
-#define OMPI_IS_FORTRAN_ARGV_NULL(addr) \
-   (addr == (void*) &mpi_fortran_argv_null)
-#define OMPI_IS_FORTRAN_ARGVS_NULL(addr) \
-   (addr == (void*) &mpi_fortran_argvs_null)
-#define OMPI_IS_FORTRAN_ERRCODES_IGNORE(addr) \
-   (addr == (void*) &mpi_fortran_errcodes_ignore)
-#define OMPI_IS_FORTRAN_STATUS_IGNORE(addr) \
-   (addr == (void*) &mpi_fortran_status_ignore)
-#define OMPI_IS_FORTRAN_STATUSES_IGNORE(addr) \
-   (addr == (void*) &mpi_fortran_statuses_ignore)
-
-#elif OMPI_FORTRAN_SINGLE_UNDERSCORE
-#define OMPI_IS_FORTRAN_BOTTOM(addr) \
-   (addr == (void*) &mpi_fortran_bottom_)
-#define OMPI_IS_FORTRAN_IN_PLACE(addr) \
-   (addr == (void*) &mpi_fortran_in_place_)
-#define OMPI_IS_FORTRAN_UNWEIGHTED(addr) \
-   (addr == (void*) &mpi_fortran_unweighted_)
-#define OMPI_IS_FORTRAN_WEIGHTS_EMPTY(addr) \
-   (addr == (void*) &mpi_fortran_weights_empty_)
-#define OMPI_IS_FORTRAN_ARGV_NULL(addr) \
-   (addr == (void*) &mpi_fortran_argv_null_)
-#define OMPI_IS_FORTRAN_ARGVS_NULL(addr) \
-   (addr == (void*) &mpi_fortran_argvs_null_)
-#define OMPI_IS_FORTRAN_ERRCODES_IGNORE(addr) \
-   (addr == (void*) &mpi_fortran_errcodes_ignore_)
-#define OMPI_IS_FORTRAN_STATUS_IGNORE(addr) \
-   (addr == (void*) &mpi_fortran_status_ignore_)
-#define OMPI_IS_FORTRAN_STATUSES_IGNORE(addr) \
-   (addr == (void*) &mpi_fortran_statuses_ignore_)
-
-#else
-#define OMPI_IS_FORTRAN_BOTTOM(addr) \
-   (addr == (void*) &mpi_fortran_bottom__)
-#define OMPI_IS_FORTRAN_IN_PLACE(addr) \
-   (addr == (void*) &mpi_fortran_in_place__)
-#define OMPI_IS_FORTRAN_UNWEIGHTED(addr) \
-   (addr == (void*) &mpi_fortran_unweighted__)
-#define OMPI_IS_FORTRAN_WEIGHTS_EMPTY(addr) \
-   (addr == (void*) &mpi_fortran_weights_empty__)
-#define OMPI_IS_FORTRAN_ARGV_NULL(addr) \
-   (addr == (void*) &mpi_fortran_argv_null__)
-#define OMPI_IS_FORTRAN_ARGVS_NULL(addr) \
-   (addr == (void*) &mpi_fortran_argvs_null__)
-#define OMPI_IS_FORTRAN_ERRCODES_IGNORE(addr) \
-   (addr == (void*) &mpi_fortran_errcodes_ignore__)
-#define OMPI_IS_FORTRAN_STATUS_IGNORE(addr) \
-   (addr == (void*) &mpi_fortran_status_ignore__)
-#define OMPI_IS_FORTRAN_STATUSES_IGNORE(addr) \
-   (addr == (void*) &mpi_fortran_statuses_ignore__)
-
-#endif /* weak / specific symbol type */
+#include "mpif-c-constants-decl.h"
 
 /* Convert between Fortran and C MPI_BOTTOM */
 #define OMPI_F2C_BOTTOM(addr)      (OMPI_IS_FORTRAN_BOTTOM(addr) ? MPI_BOTTOM : (addr))
 #define OMPI_F2C_IN_PLACE(addr)    (OMPI_IS_FORTRAN_IN_PLACE(addr) ? MPI_IN_PLACE : (addr))
 #define OMPI_F2C_UNWEIGHTED(addr)  (OMPI_IS_FORTRAN_UNWEIGHTED(addr) ? MPI_UNWEIGHTED : (addr))
 #define OMPI_F2C_WEIGHTS_EMPTY(addr)  (OMPI_IS_FORTRAN_WEIGHTS_EMPTY(addr) ? MPI_WEIGHTS_EMPTY : (addr))
+
+#endif /* OMPI_BUILD_FORTRAN_BINDINGS */
 
 #endif /* OMPI_FORTRAN_BASE_CONSTANTS_H */
