@@ -36,7 +36,7 @@ int mca_sharedfp_sm_request_position(struct mca_sharedfp_base_data_t * sh,
     OMPI_MPI_OFFSET_TYPE position = 0;
     OMPI_MPI_OFFSET_TYPE old_offset;
     struct mca_sharedfp_sm_data * sm_data = sh->selected_module_data;
-    struct sm_offset * sm_offset_ptr = NULL;
+    struct mca_sharedfp_sm_offset * sm_offset_ptr = NULL;
     int rank = ompi_comm_rank ( sh->comm);
 
     *offset = 0;

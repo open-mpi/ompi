@@ -38,7 +38,7 @@ mca_sharedfp_sm_seek (mca_io_ompio_file_t *fh,
     struct mca_sharedfp_base_data_t *sh = NULL;
     mca_sharedfp_base_module_t * shared_fp_base_module = NULL;
     struct mca_sharedfp_sm_data * sm_data = NULL;
-    struct sm_offset * sm_offset_ptr = NULL;
+    struct mca_sharedfp_sm_offset * sm_offset_ptr = NULL;
 
     if( NULL == fh->f_sharedfp_data ) {
 	if ( mca_sharedfp_sm_verbose ) {

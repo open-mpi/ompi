@@ -100,8 +100,7 @@ int mca_sharedfp_sm_iwrite (mca_io_ompio_file_t *fh,
 /*--------------------------------------------------------------*
  *Structures and definitions only for this component
  *--------------------------------------------------------------*/
-#define  OMPIO_SHAREDFP_USE_UNNAMED_SEMAPHORES 1
-struct sm_offset{
+struct mca_sharedfp_sm_offset{
     sem_t mutex;      /* the mutex: a Posix memory-based unnamed semaphore */
     long long offset;  /* and the shared file pointer offset */
 };
@@ -111,7 +110,7 @@ struct sm_offset{
  */
 struct mca_sharedfp_sm_data
 {
-    struct sm_offset * sm_offset_ptr;
+    struct mca_sharedfp_sm_offset * sm_offset_ptr;
     /*save filename so that we can remove the file on close*/
     char * sm_filename;
     sem_t *mutex;      /* the mutex: a Posix memory-based named semaphore */

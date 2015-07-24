@@ -54,8 +54,8 @@ int mca_sharedfp_sm_file_open (struct ompi_communicator_t *comm,
     mca_io_ompio_file_t * shfileHandle;
     char * filename_basename;
     char * sm_filename;
-    struct sm_offset * sm_offset_ptr;
-    struct sm_offset sm_offset;
+    struct mca_sharedfp_sm_offset * sm_offset_ptr;
+    struct mca_sharedfp_sm_offset sm_offset;
     int sm_fd;
     int rank;
 
@@ -139,13 +139,13 @@ int mca_sharedfp_sm_file_open (struct ompi_communicator_t *comm,
 
     /*TODO: is it necessary to write to the file first?*/
     if( 0 == rank ){
-	memset ( &sm_offset, 0, sizeof (struct sm_offset ));
-	write ( sm_fd, &sm_offset, sizeof(struct sm_offset));
+	memset ( &sm_offset, 0, sizeof (struct mca_sharedfp_sm_offset ));
+	write ( sm_fd, &sm_offset, sizeof(struct mca_sharedfp_sm_offset));
     }
     comm->c_coll.coll_barrier (comm, comm->c_coll.coll_barrier_module );
 
     /*the file has been written to, now we can map*/
-    sm_offset_ptr = mmap(NULL, sizeof(struct sm_offset), PROT_READ | PROT_WRITE,
+    sm_offset_ptr = mmap(NULL, sizeof(struct mca_sharedfp_sm_offset), PROT_READ | PROT_WRITE,
 			 MAP_SHARED, sm_fd, 0);
 
     close(sm_fd);
@@ -199,7 +199,7 @@ int mca_sharedfp_sm_file_open (struct ompi_communicator_t *comm,
 	free(sm_data);
 	free(sh);
 	free(shfileHandle);
-        munmap(sm_offset_ptr, sizeof(struct sm_offset));
+        munmap(sm_offset_ptr, sizeof(struct mca_sharedfp_sm_offset));
 	err = OMPI_ERROR;
     }
 
@@ -242,7 +242,7 @@ int mca_sharedfp_sm_file_close (mca_io_ompio_file_t *fh)
  	    free (file_data->sem_name);
 #endif
             /*Release the shared memory segment.*/
-            munmap(file_data->sm_offset_ptr,sizeof(struct sm_offset));
+            munmap(file_data->sm_offset_ptr,sizeof(struct mca_sharedfp_sm_offset));
             /*Q: Do we need to delete the file? */
             remove(file_data->sm_filename);
         }
