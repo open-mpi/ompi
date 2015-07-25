@@ -170,6 +170,7 @@ int mca_sharedfp_sm_file_open (struct ompi_communicator_t *comm,
 
     if( (sm_data->mutex = sem_open(sm_data->sem_name, O_CREAT, 0644, 1)) != SEM_FAILED ) {
 #elif defined(HAVE_SEM_INIT)
+    sm_data->mutex = &sm_offset_ptr->mutex;
     if(sem_init(&sm_offset_ptr->mutex, 1, 1) != -1){
 #endif
 	/*If opening was successful*/
@@ -184,15 +185,9 @@ int mca_sharedfp_sm_file_open (struct ompi_communicator_t *comm,
 	if(rank==0){
 	    MPI_Offset position=0;
 
-#if defined(HAVE_SEM_OPEN)
 	    sem_wait(sm_data->mutex);
 	    sm_offset_ptr->offset=position;
 	    sem_post(sm_data->mutex);
-#elif defined(HAVE_SEM_INIT)
-	    sem_wait(&sm_offset_ptr->mutex);
-	    sm_offset_ptr->offset=position;
-	    sem_post(&sm_offset_ptr->mutex);
-#endif
 	}
     }else{
         free(sm_filename);
