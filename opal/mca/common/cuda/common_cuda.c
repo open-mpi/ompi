@@ -1749,9 +1749,9 @@ static int mca_common_cuda_is_gpu_buffer(const void *pUserBuf, opal_convertor_t 
     void *attrdata[] = {(void *)&memType, (void *)&ctx, (void *)&isManaged};
 
     res = cuFunc.cuPointerGetAttributes(3, attributes, attrdata, dbuf);
-    OPAL_OUTPUT_VERBOSE((101, mca_common_cuda_output, 
-			"dbuf=%p, memType=%d, ctx=%p, isManaged=%d, res=%d",
-			 (void *)dbuf, (int)memType, (void *)ctx, isManaged, res));
+    OPAL_OUTPUT_VERBOSE((101, mca_common_cuda_output,
+                        "dbuf=%p, memType=%d, ctx=%p, isManaged=%d, res=%d",
+                         (void *)dbuf, (int)memType, (void *)ctx, isManaged, res));
 
     /* Mark unified memory buffers with a flag.  This will allow all unified
      * memory to be forced through host buffers.  Note that this memory can
@@ -1836,7 +1836,7 @@ static int mca_common_cuda_is_gpu_buffer(const void *pUserBuf, opal_convertor_t 
         size_t psize;
         res = cuFunc.cuMemGetAddressRange(&pbase, &psize, dbuf);
         if (CUDA_SUCCESS != res) {
-            opal_output_verbose(5, mca_common_cuda_output, 
+            opal_output_verbose(5, mca_common_cuda_output,
                                 "CUDA: cuMemGetAddressRange failed on this pointer: res=%d, buf=%p "
                                 "Overriding check and setting to host pointer. ",
                               res, (void *)dbuf);
@@ -1994,8 +1994,8 @@ int mca_common_cuda_get_address_range(void *pbase, size_t *psize, void *base)
     CUresult result;
     result = cuFunc.cuMemGetAddressRange((CUdeviceptr *)pbase, psize, (CUdeviceptr)base);
     if (OPAL_UNLIKELY(CUDA_SUCCESS != result)) {
-        opal_show_help("help-mpi-common-cuda.txt", "cuMemGetAddressRange failed",
-                       true, result, base);
+        opal_show_help("help-mpi-common-cuda.txt", "cuMemGetAddressRange failed 2",
+                       true, OPAL_PROC_MY_HOSTNAME, result, base);
         return OPAL_ERROR;
     } else {
         opal_output_verbose(50, mca_common_cuda_output,
@@ -2054,7 +2054,8 @@ void mca_common_cuda_get_buffer_id(mca_mpool_base_registration_t *reg)
     res = cuFunc.cuPointerGetAttribute(&bufID, CU_POINTER_ATTRIBUTE_BUFFER_ID,
                                        (CUdeviceptr)dbuf);
     if (OPAL_UNLIKELY(res != CUDA_SUCCESS)) {
-        opal_show_help("help-mpi-common-cuda.txt", "bufferID failed", true, res);
+        opal_show_help("help-mpi-common-cuda.txt", "bufferID failed",
+                       true, OPAL_PROC_MY_HOSTNAME, res);
     }
     reg->gpu_bufID = bufID;
 
