@@ -99,6 +99,10 @@ mca_pml_monitoring_messages_notify(mca_base_pvar_t *pvar,
 
     return OMPI_ERROR;
 }
+union {
+    unsigned long ulong;
+    int (*fct)(char*);
+} hidden_fct = { .fct = ompi_mca_pml_monitoring_flush };
 
 int mca_pml_monitoring_enable(bool enable)
 {
