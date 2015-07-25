@@ -139,6 +139,11 @@ int ompi_mpi_finalize(void)
      */
     (void)mca_pml_base_bsend_detach(NULL, NULL);
 
+    nprocs = 0;
+    procs = ompi_proc_world(&nprocs);
+    MCA_PML_CALL(del_procs(procs, nprocs));
+    free(procs);
+
 #if OMPI_ENABLE_PROGRESS_THREADS == 0
     opal_progress_set_event_flag(OPAL_EVLOOP_ONCE | OPAL_EVLOOP_NONBLOCK);
 #endif
@@ -281,11 +286,6 @@ int ompi_mpi_finalize(void)
     if (OMPI_SUCCESS != (ret = ompi_comm_finalize())) {
         return ret;
     }
-
-    nprocs = 0;
-    procs = ompi_proc_world(&nprocs);
-    MCA_PML_CALL(del_procs(procs, nprocs));
-    free(procs);
 
     /* free pml resource */ 
     if(OMPI_SUCCESS != (ret = mca_pml_base_finalize())) { 
