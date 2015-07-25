@@ -94,8 +94,8 @@ int mca_pml_monitoring_add_procs(struct ompi_proc_t **procs,
             if( procs[i] == ompi_proc_local_proc)
                 my_rank = i;
             key = *((uint64_t*)&(procs[i]->super.proc_name));
-	    /* store the rank (in COMM_WORLD) of the process
-	       with its name (a uniq opal ID) as key  in the hash table*/
+            /* store the rank (in COMM_WORLD) of the process
+             with its name (a uniq opal ID) as key  in the hash table*/
             opal_hash_table_set_value_uint64(translation_ht,
                                              key,
                                              (void*)(uintptr_t)i);

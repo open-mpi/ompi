@@ -14,10 +14,7 @@ monitoring_sources  = \
 	pml_monitoring.c \
 	pml_monitoring.h \
 	pml_monitoring_comm.c \
-	pml_monitoring_comm.h \
 	pml_monitoring_component.c \
-	pml_monitoring_component.h \
-	pml_monitoring_hdr.h \
 	pml_monitoring_iprobe.c \
 	pml_monitoring_irecv.c \
 	pml_monitoring_isend.c \
@@ -31,7 +28,7 @@ component_noinst = libmca_pml_monitoring.la
 component_install =
 endif
 
-mcacomponentdir = $(pkglibdir)
+mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_pml_monitoring_la_SOURCES = $(monitoring_sources)
 mca_pml_monitoring_la_LDFLAGS = -module -avoid-version

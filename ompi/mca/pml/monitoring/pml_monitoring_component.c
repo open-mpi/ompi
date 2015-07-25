@@ -38,8 +38,11 @@ int filter_monitoring( void )
     else
         return 0;
 }
+union {
+    unsigned long ulong;
+    int (*fct)(char*);
+} hidden_fct = { .fct = ompi_mca_pml_monitoring_flush };
 
-static unsigned long hidden_fct = (unsigned long)((void*)ompi_mca_pml_monitoring_flush);
 int mca_pml_monitoring_enable(bool enable)
 {
     /* If we reach this point we were succesful at hijacking the interface of
@@ -51,7 +54,7 @@ int mca_pml_monitoring_enable(bool enable)
                                     MCA_BASE_VAR_TYPE_UNSIGNED_LONG, NULL, 0, 0,
                                     OPAL_INFO_LVL_1,
                                     MCA_BASE_VAR_SCOPE_CONSTANT,
-                                    &hidden_fct);
+                                    &hidden_fct.ulong);
     return pml_selected_module.pml_enable(enable);
 }
 
@@ -85,9 +88,17 @@ static int mca_pml_monitoring_component_close(void)
             mca_pml_base_selected_component = mca_pml_monitoring_component;
             mca_pml = mca_pml_monitoring;
             mca_pml.pml_progress = pml_selected_module.pml_progress;
+#if 0
+            /**
+             * With the new design of the component infrastructure we lost the capability to
+             * mark components as non removable by increasing their internal reference count.
+             * Until we bring this functionality back, the monitoring PML will only work
+             * if dlclose is acting lazily.
+             */
             /* Bump my ref count up to avoid getting released too early */
             mca_base_component_repository_retain_component(mca_pml_monitoring_component.pmlm_version.mca_type_name,
                                                            mca_pml_monitoring_component.pmlm_version.mca_component_name);
+#endif
             mca_pml_monitoring_active = 1;
         }
     }
