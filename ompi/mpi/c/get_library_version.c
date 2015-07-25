@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2014-2015 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -74,16 +74,11 @@ int MPI_Get_library_version(char *version, int *resultlen)
     len_left = sizeof(tmp);
     memset(tmp, 0, MPI_MAX_LIBRARY_VERSION_STRING);
 
-    snprintf(tmp, MPI_MAX_LIBRARY_VERSION_STRING, "Open MPI v%d.%d",
-             OMPI_MAJOR_VERSION, OMPI_MINOR_VERSION);
+    snprintf(tmp, MPI_MAX_LIBRARY_VERSION_STRING, "Open MPI v%d.%d.%d",
+             OMPI_MAJOR_VERSION, OMPI_MINOR_VERSION, OMPI_RELEASE_VERSION);
     ptr += strlen(tmp);
     len_left -= strlen(tmp);
 
-    if (OMPI_RELEASE_VERSION > 0) {
-        snprintf(ptr, len_left, ".%d", OMPI_RELEASE_VERSION);
-        ptr = tmp + strlen(tmp);
-        len_left = MPI_MAX_LIBRARY_VERSION_STRING - strlen(tmp);
-    }
     if (NULL != OMPI_GREEK_VERSION && strlen(OMPI_GREEK_VERSION) > 0) {
         snprintf(ptr, len_left, "%s", OMPI_GREEK_VERSION);
         ptr = tmp + strlen(tmp);
