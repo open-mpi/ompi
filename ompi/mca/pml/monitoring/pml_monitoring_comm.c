@@ -13,9 +13,6 @@
 #include <ompi_config.h>
 #include <pml_monitoring.h>
 
-extern void output_monitoring( void );
-
-
 int mca_pml_monitoring_add_comm(struct ompi_communicator_t* comm)
 {
     return pml_selected_module.pml_add_comm(comm);

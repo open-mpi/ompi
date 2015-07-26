@@ -22,7 +22,6 @@ typedef struct _transtlator_t{
 
 void initialize_monitoring( void );
 void monitor_send_data(int world_rank, size_t data_size, int tag);
-void output_monitoring( void );
 void finalize_monitoring( void );
 int filter_monitoring( void ); /* returns 1 if we distinguish positive (point-to-point) and negative (collective and meta messages) tags*/
 int ompi_mca_pml_monitoring_flush(char* filename);
@@ -40,9 +39,9 @@ uint64_t* all_messages_count = NULL;
 uint64_t* all_filtered_sent_data = NULL;
 uint64_t* all_filtered_messages_count = NULL;
 
-int init_done = 0;
-int nbprocs = -1;
-int my_rank = -1;
+static int init_done = 0;
+static int nbprocs = -1;
+static int my_rank = -1;
 opal_hash_table_t *translation_ht = NULL;
 
 
@@ -95,7 +94,7 @@ int mca_pml_monitoring_add_procs(struct ompi_proc_t **procs,
                 my_rank = i;
             key = *((uint64_t*)&(procs[i]->super.proc_name));
             /* store the rank (in COMM_WORLD) of the process
-             with its name (a uniq opal ID) as key  in the hash table*/
+               with its name (a uniq opal ID) as key  in the hash table*/
             opal_hash_table_set_value_uint64(translation_ht,
                                              key,
                                              (void*)(uintptr_t)i);
@@ -118,8 +117,8 @@ int mca_pml_monitoring_dump(struct ompi_communicator_t* comm,
 }
 
 
-void finalize_monitoring( void ){
-
+void finalize_monitoring( void )
+{
     if(filter_monitoring()){
         free(filtered_sent_data);
         free(filtered_messages_count);
@@ -131,8 +130,8 @@ void finalize_monitoring( void ){
     free(translation_ht);
 
 }
-void initialize_monitoring( void ){
-
+void initialize_monitoring( void )
+{
     sent_data      = (uint64_t*)calloc(nbprocs, sizeof(uint64_t));
     messages_count = (uint64_t*)   calloc(nbprocs, sizeof(uint64_t));
     all_sent_data      = (uint64_t*)calloc(nbprocs, sizeof(uint64_t));
@@ -150,8 +149,8 @@ void initialize_monitoring( void ){
 
 
 
-void monitor_send_data(int world_rank, size_t data_size, int tag){
-
+void monitor_send_data(int world_rank, size_t data_size, int tag)
+{
     if ( !init_done )
         initialize_monitoring();
 
@@ -176,7 +175,7 @@ int mca_pml_monitoring_get_messages_count (const struct mca_base_pvar_t *pvar, v
     int i;
 
     if(comm != &ompi_mpi_comm_world.comm)
-      return OMPI_ERROR;
+        return OMPI_ERROR;
 
     for (i = 0 ; i < comm_size ; ++i) {
         values[i] = messages_count[i];
@@ -193,7 +192,7 @@ int mca_pml_monitoring_get_messages_size (const struct mca_base_pvar_t *pvar, vo
     int i;
 
     if(comm != &ompi_mpi_comm_world.comm)
-      return OMPI_ERROR;
+        return OMPI_ERROR;
 
     for (i = 0 ; i < comm_size ; ++i) {
         values[i] = sent_data[i];
@@ -202,76 +201,65 @@ int mca_pml_monitoring_get_messages_size (const struct mca_base_pvar_t *pvar, vo
     return OMPI_SUCCESS;
 }
 
-void output_monitoring( void )
+static void output_monitoring( FILE *pf )
 {
     int i;
 
     if ( !init_done ) return;
 
     for (i = 0 ; i < nbprocs ; i++) {
-        all_sent_data[i] += sent_data[i];
-        all_messages_count[i] += messages_count[i];
         if(all_sent_data[i] > 0) {
-            fprintf(stderr, "I\t%d\t%d\t" PRIu64 " bytes\t" PRIu64 " msgs sent\n", my_rank, i, all_sent_data[i], all_messages_count[i]); fflush(stderr);
+            /* aggregate data in general array*/
+            all_sent_data[i] += sent_data[i];
+            all_messages_count[i] += messages_count[i];
+            fprintf(pf, "I\t%d\t%d\t" PRIu64 " bytes\t" PRIu64 " msgs sent\n",
+                    my_rank, i, all_sent_data[i], all_messages_count[i]);
+            fflush(pf);
         }
+        /* reset phase array */
+        sent_data[i] = 0;
+        messages_count[i] = 0;
     }
 
-    if(filter_monitoring()){
-        for (i = 0 ; i < nbprocs ; i++) {
+    if( !filter_monitoring() ) return;
+    
+    for (i = 0 ; i < nbprocs ; i++) {
+        if(all_filtered_sent_data[i] > 0) {
+            /* aggregate data in general array*/
             all_filtered_sent_data[i] += filtered_sent_data[i];
             all_filtered_messages_count[i] += filtered_messages_count[i];
-            if(all_filtered_sent_data[i] > 0) {
-                fprintf(stderr, "E\t%d\t%d\t" PRIu64 " bytes\t" PRIu64 " msgs sent\n", my_rank, i, all_filtered_sent_data[i], all_filtered_messages_count[i]); fflush(stderr);
-            }
+            fprintf(pf, "E\t%d\t%d\t" PRIu64 " bytes\t" PRIu64 " msgs sent\n",
+                    my_rank, i, all_filtered_sent_data[i], all_filtered_messages_count[i]);
+            fflush(pf);
         }
+        /* reset phase array */
+        filtered_sent_data[i] = 0;
+        filtered_messages_count[i] = 0;
     }
 }
 
 
 /*
    Flushes the monitoring into filename
-   Useful for phases (see exmple in test/monitoring)
+   Useful for phases (see example in test/monitoring)
 */
 
-int ompi_mca_pml_monitoring_flush(char* filename) {
-  FILE *pf;
-  int i;
+int ompi_mca_pml_monitoring_flush(char* filename)
+{
+    FILE *pf = stderr;
 
-  if ( !init_done ) return -1;
+    if ( !init_done ) return -1;
 
-  pf = fopen(filename, "w");
+    if( NULL != filename )
+        pf = fopen(filename, "w");
 
-  if(!pf)
-    return -1;
+    if(!pf)
+        return -1;
 
-  fprintf(stderr,"Proc %d flushing monitoring to: %s\n", my_rank, filename);
+    fprintf(stderr, "Proc %d flushing monitoring to: %s\n", my_rank, filename);
+    output_monitoring( pf );
 
-  for (i = 0 ; i < nbprocs ; i++) {
-    if(sent_data[i] > 0) {
-      fprintf(pf, "I\t%d\t%d\t" PRIu64 " bytes\t" PRIu64 " msgs sent\n", my_rank, i, sent_data[i], messages_count[i]); fflush(pf);
-      /* aggregate  data in general array*/
-      all_sent_data[i] += sent_data[i];
-      all_messages_count[i] += messages_count[i];
-      /* reset phase array */
-      messages_count[i] = 0;
-      sent_data[i] = 0;
-    }
-  }
-
-  if(filter_monitoring()){
-    for (i = 0 ; i < nbprocs ; i++) {
-      if(filtered_sent_data[i] > 0) {
-    fprintf(pf, "E\t%d\t%d\t" PRIu64 " bytes\t" PRIu64 " msgs sent\n", my_rank, i, filtered_sent_data[i], filtered_messages_count[i]); fflush(pf);
-      /* aggregate  data in general array*/
-      all_filtered_sent_data[i] += filtered_sent_data[i];
-      all_filtered_messages_count[i] += filtered_messages_count[i];
-      /* reset phase array */
-      filtered_messages_count[i] = 0;
-      filtered_sent_data[i] = 0;
-      }
-    }
-  }
-
-  fclose(pf);
-  return 0;
+    if( NULL != filename )
+        fclose(pf);
+    return 0;
 }

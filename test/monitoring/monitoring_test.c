@@ -75,22 +75,14 @@ I	3	2	860 bytes	24 msgs sent
 #include <stdio.h>
 #include "mpi.h"
 
-/* opal mca header taken from opal/mca/base/mca_base_var.h
-   Required to flush monitoring phases
-*/
-int mca_base_var_find_by_name (const char *full_name, int *vari);
-int mca_base_var_get_value (int vari, const void *value,
-                void *source, /* should be mca_base_var_source_t *source,
-                         but we do not need it
-                         and we do not know what is mca_base_var_source_t */
-                const char **source_file);
+static MPI_T_pvar_handle flush_handle;
+static const char flush_pvar_name[] = "ompi_pml_monitoring_flush";
+static int flush_pvar_idx;
 
-
-int main(argc, argv)
-     int argc;
-     char **argv;
+int main(int argc, char* argv[])
 {
-    int rank, size, n, to, from, tagno;
+    int rank, size, n, to, from, tagno, MPIT_result, provided, count;
+    MPI_T_pvar_session session;
     MPI_Status status;
     MPI_Comm newcomm;
     MPI_Request request;
@@ -109,7 +101,7 @@ int main(argc, argv)
         n=25;
         MPI_Isend(&n,1,MPI_INT,to,tagno,MPI_COMM_WORLD,&request);
     }
-    while (1){
+    while (1) {
         MPI_Irecv(&n,1,MPI_INT,from,tagno,MPI_COMM_WORLD, &request);
         MPI_Wait(&request,&status);
         if (rank == 0) {n--;tagno++;}
@@ -120,51 +112,57 @@ int main(argc, argv)
         }
     }
 
+    MPIT_result = MPI_T_init_thread(MPI_THREAD_SINGLE, &provided);
+    if (MPIT_result != MPI_SUCCESS)
+        MPI_Abort(MPI_COMM_WORLD, MPIT_result);
 
-    /* flush the monitoring of the first phase */
-    int fctidx;
-    void* fct;
-    int (*flush_monitoring)(char*) = NULL;
-    /*
-       Get the function pointer of the flushing function of the monitoring
-       This uses  Opal low level interface
-    */
-    mca_base_var_find_by_name( "pml_monitoring_flush", &fctidx);
-    if(fctidx){
-        mca_base_var_get_value(fctidx, &fct, NULL, NULL);
-        flush_monitoring = *(unsigned long*)fct;
+    MPIT_result = MPI_T_pvar_get_index(flush_pvar_name, MPI_T_BIND_NO_OBJECT, &flush_pvar_idx);
+    if (MPIT_result != MPI_SUCCESS) {
+        printf("cannot find monitoring MPI_T \"%s\" pvar, check that you have monitoring pml\n",
+               flush_pvar_name);
+        MPI_Abort(MPI_COMM_WORLD, MPIT_result);
     }
+
+    MPIT_result = MPI_T_pvar_session_create(&session);
+    if (MPIT_result != MPI_SUCCESS) {
+        printf("cannot create a session for \"%s\" pvar\n", flush_pvar_name);
+        MPI_Abort(MPI_COMM_WORLD, MPIT_result);
+    }
+
+    MPIT_result = MPI_T_pvar_handle_alloc(session, flush_pvar_idx,
+                                          MPI_COMM_WORLD, &flush_handle, &count);
+    if (MPIT_result != MPI_SUCCESS) {
+        printf("failed to create handle on \"%s\" pvar, check that you have monitoring pml\n",
+               flush_pvar_name);
+        MPI_Abort(MPI_COMM_WORLD, MPIT_result);
+    }
+
     /* Build one file per processes
        Evevry thing that has been monitored by each
        process since the last flush will be output in filename*/
 
     /*
-       Requires directory prof to be created.
-       Filename format should display the phase number
-       and the process rank for ease of parsing with
-       aggregate_profile.pl script
-     */
+      Requires directory prof to be created.
+      Filename format should display the phase number
+      and the process rank for ease of parsing with
+      aggregate_profile.pl script
+    */
     sprintf(filename,"./prof/phase_1_%d.prof",rank);
-    if(flush_monitoring){
-        int r = flush_monitoring(filename);
-    if(r == -1){
-      fprintf(stderr, "Process %d cannot save monitoring in %s\n", rank, filename);
-    }
+    if( MPI_SUCCESS != MPI_T_pvar_read(session, flush_handle, filename) ) {
+        fprintf(stderr, "Process %d cannot save monitoring in %s\n", rank, filename);
     }
 
     /*
-       Second phase. Work with different communicators.
-       even ranls will circulate a token
-       while odd ranks wil perform a all_to_all
+      Second phase. Work with different communicators.
+      even ranls will circulate a token
+      while odd ranks wil perform a all_to_all
     */
     MPI_Comm_split(MPI_COMM_WORLD,rank%2,rank,&newcomm);
 
     /* the filename for flushing monitoring now uses 2 as phase number! */
     sprintf(filename,"./prof/phase_2_%d.prof",rank);
 
-
     if(rank%2){ /*even ranks (in COMM_WORD) circulate a token*/
-        int old_rank=rank;
         MPI_Comm_rank(newcomm,&rank);
         MPI_Comm_size(newcomm,&size);
         if( size > 1 ) {
@@ -181,13 +179,10 @@ int main(argc, argv)
                 MPI_Send(&n,1,MPI_INT,to,tagno,newcomm);
                 if (rank != 0) {n--;tagno++;}
                 if (n<0){
-          if(flush_monitoring){
-            int r = flush_monitoring(filename);
-            if(r == -1){
-              fprintf(stderr, "Process %d cannot save monitoring in %s\n", old_rank, filename);
-            }
-          }
-          break;
+                    if( MPI_SUCCESS != MPI_T_pvar_read(session, flush_handle, filename) ) {
+                        fprintf(stderr, "Process %d cannot save monitoring in %s\n", rank, filename);
+                    }
+                    break;
                 }
             }
         }
@@ -199,13 +194,25 @@ int main(argc, argv)
         MPI_Alltoall(send_buff,10240/size, MPI_INT,recv_buff,10240/size,MPI_INT,newcomm);
         MPI_Comm_split(newcomm,rank%2,rank,&newcomm);
         MPI_Barrier(newcomm);
-        if(flush_monitoring){
-      int r = flush_monitoring(filename);
-      if(r == -1){
-        fprintf(stderr, "Process %d cannot save monitoring in %s\n", rank, filename);
-      }
+        if( MPI_SUCCESS != MPI_T_pvar_read(session, flush_handle, filename) ) {
+            fprintf(stderr, "Process %d cannot save monitoring in %s\n", rank, filename);
+        }
     }
+
+    MPIT_result = MPI_T_pvar_handle_free(session, &flush_handle);
+    if (MPIT_result != MPI_SUCCESS) {
+        printf("failed to free handle on \"%s\" pvar, check that you have monitoring pml\n",
+               flush_pvar_name);
+        MPI_Abort(MPI_COMM_WORLD, MPIT_result);
     }
+
+    MPIT_result = MPI_T_pvar_session_free(&session);
+    if (MPIT_result != MPI_SUCCESS) {
+        printf("cannot close a session for \"%s\" pvar\n", flush_pvar_name);
+        MPI_Abort(MPI_COMM_WORLD, MPIT_result);
+    }
+
+    (void)PMPI_T_finalize();
 
     /* Now, in MPI_Finalize(), the pml_monitoring library outputs, in STDERR, the aggregated recorded monitoring of all the phases*/
     MPI_Finalize();

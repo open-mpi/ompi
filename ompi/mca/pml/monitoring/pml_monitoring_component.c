@@ -23,25 +23,25 @@ static int mca_pml_monitoring_active = 0;
 mca_pml_base_component_t pml_selected_component;
 mca_pml_base_module_t pml_selected_module;
 
-extern void output_monitoring( void );
 extern void finalize_monitoring( void );
 extern int  ompi_mca_pml_monitoring_flush(char* filename);
 int filter_monitoring( void );
 
-
-
-/* Return 1 if the the seperation between internal tags and external tags is enabled*/
+/* Return 1 if the the seperation between internal tags and external tags is enabled */
 int filter_monitoring( void )
 {
-    if (mca_pml_monitoring_enabled == 2)
-        return 1;
-    else
-        return 0;
+    return (mca_pml_monitoring_enabled == 2) ? 1 : 0;
 }
-union {
-    unsigned long ulong;
-    int (*fct)(char*);
-} hidden_fct = { .fct = ompi_mca_pml_monitoring_flush };
+
+static int
+mca_pml_monitoring_set_flush(struct mca_base_pvar_t *pvar, const void *value, void *obj)
+{
+    char* filename = (char*)value;
+    int err = ompi_mca_pml_monitoring_flush(filename);
+    if( 0 == err )
+        return OMPI_SUCCESS;
+    return OMPI_ERROR;
+}
 
 int mca_pml_monitoring_enable(bool enable)
 {
@@ -49,12 +49,12 @@ int mca_pml_monitoring_enable(bool enable)
      * the real PML, and we are now correctly interleaved between the upper
      * layer and the real PML.
      */
-    mca_base_component_var_register(&mca_pml_monitoring_component.pmlm_version, "flush",
-                                    "Hidden argument to provide the flush function pointer",
-                                    MCA_BASE_VAR_TYPE_UNSIGNED_LONG, NULL, 0, 0,
-                                    OPAL_INFO_LVL_1,
-                                    MCA_BASE_VAR_SCOPE_CONSTANT,
-                                    &hidden_fct.ulong);
+    (void)mca_base_pvar_register("ompi", "pml", "monitoring", "flush", "Flush the monitoring information"
+                                 "in the provided file", OPAL_INFO_LVL_1, MPI_T_PVAR_CLASS_SIZE,
+                                 MCA_BASE_VAR_TYPE_STRING, NULL, MPI_T_BIND_NO_OBJECT,
+                                 0,
+                                 NULL, mca_pml_monitoring_set_flush, NULL, &mca_pml_monitoring_component);
+
     return pml_selected_module.pml_enable(enable);
 }
 
@@ -67,7 +67,11 @@ static int mca_pml_monitoring_component_open(void)
     return OMPI_SUCCESS;
 }
 
-static int mca_pml_monitoring_comm_size_notify (mca_base_pvar_t *pvar, mca_base_pvar_event_t event, void *obj_handle, int *count)
+static int
+mca_pml_monitoring_comm_size_notify(mca_base_pvar_t *pvar,
+                                    mca_base_pvar_event_t event,
+                                    void *obj_handle,
+                                    int *count)
 {
     if (MCA_BASE_PVAR_HANDLE_BIND == event) {
         /* Return the size of the communicator as the number of values */
@@ -122,7 +126,7 @@ static int mca_pml_monitoring_component_finish(void)
     if( mca_pml_monitoring_enabled && mca_pml_monitoring_active ) {
         /* It is over... Output what has been monitored*/
         if ( mca_pml_monitoring_output_enabled != 0) {
-            output_monitoring();
+            ompi_mca_pml_monitoring_flush(NULL);
         }
         /* Free internal data structure */
         finalize_monitoring();
@@ -154,17 +158,17 @@ static int mca_pml_monitoring_component_register(void)
                                           OPAL_INFO_LVL_9,
                                           MCA_BASE_VAR_SCOPE_READONLY, &mca_pml_monitoring_output_enabled);
 
-    (void) mca_base_pvar_register ("ompi", "pml", "monitoring", "messages_count", "Number of messages "
-                                   "sent to each peer in a communicator", OPAL_INFO_LVL_4, MPI_T_PVAR_CLASS_SIZE,
-                                   MCA_BASE_VAR_TYPE_UNSIGNED_INT, NULL, MPI_T_BIND_MPI_COMM,
-                                   MCA_BASE_PVAR_FLAG_READONLY | MCA_BASE_PVAR_FLAG_CONTINUOUS,
-                                   mca_pml_monitoring_get_messages_count, NULL, mca_pml_monitoring_comm_size_notify, NULL);
+    (void)mca_base_pvar_register("ompi", "pml", "monitoring", "messages_count", "Number of messages "
+                                 "sent to each peer in a communicator", OPAL_INFO_LVL_4, MPI_T_PVAR_CLASS_SIZE,
+                                  MCA_BASE_VAR_TYPE_UNSIGNED_INT, NULL, MPI_T_BIND_MPI_COMM,
+                                  MCA_BASE_PVAR_FLAG_READONLY | MCA_BASE_PVAR_FLAG_CONTINUOUS,
+                                  mca_pml_monitoring_get_messages_count, NULL, mca_pml_monitoring_comm_size_notify, NULL);
 
-    (void) mca_base_pvar_register ("ompi", "pml", "monitoring", "messages_size", "Size of messages "
-                                   "sent to each peer in a communicator", OPAL_INFO_LVL_4, MPI_T_PVAR_CLASS_SIZE,
-                                   MCA_BASE_VAR_TYPE_UNSIGNED_INT, NULL, MPI_T_BIND_MPI_COMM,
-                                   MCA_BASE_PVAR_FLAG_READONLY | MCA_BASE_PVAR_FLAG_CONTINUOUS,
-                                   mca_pml_monitoring_get_messages_size, NULL, mca_pml_monitoring_comm_size_notify, NULL);
+    (void)mca_base_pvar_register("ompi", "pml", "monitoring", "messages_size", "Size of messages "
+                                 "sent to each peer in a communicator", OPAL_INFO_LVL_4, MPI_T_PVAR_CLASS_SIZE,
+                                 MCA_BASE_VAR_TYPE_UNSIGNED_INT, NULL, MPI_T_BIND_MPI_COMM,
+                                 MCA_BASE_PVAR_FLAG_READONLY | MCA_BASE_PVAR_FLAG_CONTINUOUS,
+                                 mca_pml_monitoring_get_messages_size, NULL, mca_pml_monitoring_comm_size_notify, NULL);
     return OMPI_SUCCESS;
 }
 
