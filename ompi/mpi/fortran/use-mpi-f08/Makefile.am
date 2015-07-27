@@ -101,7 +101,6 @@ mpi_api_files = \
         bcast_f08.F90 \
         bsend_f08.F90 \
         bsend_init_f08.F90 \
-        buffer_detach.c \
         buffer_attach_f08.F90 \
         buffer_detach_f08.F90 \
         cancel_f08.F90 \
@@ -784,6 +783,7 @@ libmpi_usempif08_la_SOURCES = \
         mpi-f08.F90 \
         mpi-f-interfaces-bind.h pmpi-f-interfaces-bind.h \
         attr-fn-f08-callback-interfaces.h \
+        buffer_detach.c \
         conversion-fn-null-f08-interface.h \
         constants.h \
         constants.c
