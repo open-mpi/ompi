@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2013 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2012-2014 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -23,6 +23,7 @@
 #include "opal_config.h"
 
 #include "opal/mca/base/mca_base_var_enum.h"
+#include "opal/mca/base/base.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -32,6 +33,10 @@ static void mca_base_var_enum_constructor (mca_base_var_enum_t *enumerator);
 static void mca_base_var_enum_destructor (mca_base_var_enum_t *enumerator);
 OBJ_CLASS_INSTANCE(mca_base_var_enum_t, opal_object_t, mca_base_var_enum_constructor,
                    mca_base_var_enum_destructor);
+
+static int enum_dump (mca_base_var_enum_t *self, char **out);
+static int enum_get_count (mca_base_var_enum_t *self, int *count);
+static int enum_get_value (mca_base_var_enum_t *self, int index, int *value, const char **string_value);
 
 static int mca_base_var_enum_bool_get_count (mca_base_var_enum_t *enumerator, int *count)
 {
@@ -97,12 +102,115 @@ static int mca_base_var_enum_bool_dump (mca_base_var_enum_t *self, char **out)
 
 mca_base_var_enum_t mca_base_var_enum_bool = {
     .super     = OPAL_OBJ_STATIC_INIT(opal_object_t),
+    .enum_is_static = true,
     .enum_name = "boolean",
     .get_count = mca_base_var_enum_bool_get_count,
     .get_value = mca_base_var_enum_bool_get_value,
     .value_from_string = mca_base_var_enum_bool_vfs,
     .string_from_value = mca_base_var_enum_bool_sfv,
     .dump      = mca_base_var_enum_bool_dump
+};
+
+/* verbosity enumerator */
+static mca_base_var_enum_value_t verbose_values[] = {
+    {MCA_BASE_VERBOSE_NONE,      "none"},
+    {MCA_BASE_VERBOSE_ERROR,     "error"},
+    {MCA_BASE_VERBOSE_COMPONENT, "component"},
+    {MCA_BASE_VERBOSE_WARN,      "warn"},
+    {MCA_BASE_VERBOSE_INFO,      "info"},
+    {MCA_BASE_VERBOSE_TRACE,     "trace"},
+    {MCA_BASE_VERBOSE_DEBUG,     "debug"},
+    {MCA_BASE_VERBOSE_MAX,       "max"},
+    {-1, NULL}
+};
+
+static int mca_base_var_enum_verbose_vfs (mca_base_var_enum_t *self, const char *string_value,
+                                          int *value)
+{
+    char *tmp;
+    int v;
+
+    /* skip whitespace */
+    string_value += strspn (string_value, " \t\n\v\f\r");
+
+    v = strtol (string_value, &tmp, 10);
+    if (*tmp != '\0') {
+        for (int i = 0 ; verbose_values[i].string ; ++i) {
+            if (0 == strcmp (verbose_values[i].string, string_value)) {
+                *value = verbose_values[i].value;
+                return OPAL_SUCCESS;
+            }
+        }
+
+        return OPAL_ERR_NOT_FOUND;
+    } else if (v < MCA_BASE_VERBOSE_NONE) {
+        v = MCA_BASE_VERBOSE_NONE;
+    } else if (v > MCA_BASE_VERBOSE_MAX) {
+        v = MCA_BASE_VERBOSE_MAX;
+    }
+
+    *value = v;
+
+    return OPAL_SUCCESS;
+}
+
+static int mca_base_var_enum_verbose_sfv (mca_base_var_enum_t *self, const int value,
+                                          const char **string_value)
+{
+    static char buffer[4];
+
+    if (value < 0 || value > 100) {
+        return OPAL_ERR_VALUE_OUT_OF_BOUNDS;
+    }
+
+    for (int i = 0 ; verbose_values[i].string ; ++i) {
+        if (verbose_values[i].value == value) {
+            *string_value = verbose_values[i].string;
+            return OPAL_SUCCESS;
+        }
+    }
+
+    snprintf (buffer, 4, "%d", value);
+    if (string_value) {
+        *string_value = buffer;
+    }
+
+    return OPAL_SUCCESS;
+}
+
+static int mca_base_var_enum_verbose_dump (mca_base_var_enum_t *self, char **out)
+{
+    char *tmp;
+    int ret;
+
+    ret = enum_dump (self, out);
+    if (OPAL_SUCCESS != ret) {
+        return ret;
+    }
+
+    ret = asprintf (&tmp, "%s, 0 - 100", *out);
+    free (*out);
+    if (0 > ret) {
+        *out = NULL;
+        return OPAL_ERR_OUT_OF_RESOURCE;
+    }
+
+    *out = tmp;
+
+    return OPAL_SUCCESS;
+}
+
+mca_base_var_enum_t mca_base_var_enum_verbose = {
+    .super     = OPAL_OBJ_STATIC_INIT(opal_object_t),
+    .enum_is_static = true,
+    .enum_name = "verbosity",
+    .get_count = enum_get_count,
+    .get_value = enum_get_value,
+    .value_from_string = mca_base_var_enum_verbose_vfs,
+    .string_from_value = mca_base_var_enum_verbose_sfv,
+    .dump      = mca_base_var_enum_verbose_dump,
+    .enum_value_count = 8,
+    .enum_values = verbose_values,
 };
 
 
@@ -264,6 +372,7 @@ static void mca_base_var_enum_constructor (mca_base_var_enum_t *enumerator)
     enumerator->value_from_string = enum_value_from_string;
     enumerator->string_from_value = enum_string_from_value;
     enumerator->dump      = enum_dump;
+    enumerator->enum_is_static = false;
 }
 
 static void mca_base_var_enum_destructor (mca_base_var_enum_t *enumerator)
