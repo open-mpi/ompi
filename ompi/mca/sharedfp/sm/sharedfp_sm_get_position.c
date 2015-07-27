@@ -37,7 +37,7 @@ mca_sharedfp_sm_get_position(mca_io_ompio_file_t *fh,
 
     if(fh->f_sharedfp_data==NULL){
         opal_output(ompi_sharedfp_base_framework.framework_output,
-		    "sharedfp_sm_write - opening the shared file pointer\n");
+                    "sharedfp_sm_write - opening the shared file pointer\n");
         shared_fp_base_module = fh->f_sharedfp;
 
         ret = shared_fp_base_module->sharedfp_file_open(fh->f_comm,
