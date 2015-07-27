@@ -50,7 +50,7 @@ int mca_pml_monitoring_enable(bool enable)
      * layer and the real PML.
      */
     (void)mca_base_pvar_register("ompi", "pml", "monitoring", "flush", "Flush the monitoring information"
-                                 "in the provided file", OPAL_INFO_LVL_1, MPI_T_PVAR_CLASS_SIZE,
+                                 "in the provided file", OPAL_INFO_LVL_1, MCA_BASE_PVAR_CLASS_GENERIC,
                                  MCA_BASE_VAR_TYPE_STRING, NULL, MPI_T_BIND_NO_OBJECT,
                                  0,
                                  NULL, mca_pml_monitoring_set_flush, NULL, &mca_pml_monitoring_component);
@@ -83,29 +83,34 @@ mca_pml_monitoring_comm_size_notify(mca_base_pvar_t *pvar,
 
 static int mca_pml_monitoring_component_close(void)
 {
-    if( mca_pml_monitoring_enabled ) {
-        if( !mca_pml_monitoring_active ) {
-            /* Save a copy of the selected PML */
-            pml_selected_component = mca_pml_base_selected_component;
-            pml_selected_module = mca_pml;
-            /* And now install the interception layer */
-            mca_pml_base_selected_component = mca_pml_monitoring_component;
-            mca_pml = mca_pml_monitoring;
-            mca_pml.pml_progress = pml_selected_module.pml_progress;
-#if 0
-            /**
-             * With the new design of the component infrastructure we lost the capability to
-             * mark components as non removable by increasing their internal reference count.
-             * Until we bring this functionality back, the monitoring PML will only work
-             * if dlclose is acting lazily.
-             */
-            /* Bump my ref count up to avoid getting released too early */
-            mca_base_component_repository_retain_component(mca_pml_monitoring_component.pmlm_version.mca_type_name,
-                                                           mca_pml_monitoring_component.pmlm_version.mca_component_name);
-#endif
-            mca_pml_monitoring_active = 1;
-        }
+    if( !mca_pml_monitoring_enabled )
+        return OMPI_SUCCESS;
+
+    if( mca_pml_monitoring_active ) {  /* Already active, turn off */
+        pml_selected_component.pmlm_version.mca_close_component();
+        memset(&pml_selected_component, 0, sizeof(mca_base_component_t));
+        memset(&pml_selected_module, 0, sizeof(mca_base_component_t));
+        mca_base_component_repository_release((mca_base_component_t*)&mca_pml_monitoring_component);
+        mca_pml_monitoring_active = 0;
+        return OMPI_SUCCESS;
     }
+
+    /* Bump my ref count up to avoid getting released too early */
+    if( OPAL_SUCCESS != mca_base_component_repository_retain_component(mca_pml_monitoring_component.pmlm_version.mca_type_name,
+                                                                       mca_pml_monitoring_component.pmlm_version.mca_component_name) ) {
+        return OMPI_ERROR;
+    }
+
+    /* Save a copy of the selected PML */
+    pml_selected_component = mca_pml_base_selected_component;
+    pml_selected_module = mca_pml;
+    /* And now install the interception layer */
+    mca_pml_base_selected_component = mca_pml_monitoring_component;
+    mca_pml = mca_pml_monitoring;
+    mca_pml.pml_progress = pml_selected_module.pml_progress;
+
+    mca_pml_monitoring_active = 1;
+
     return OMPI_SUCCESS;
 }
 
