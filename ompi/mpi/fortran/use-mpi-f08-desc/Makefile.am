@@ -1,6 +1,8 @@
 # -*- makefile -*-
 #
 # Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2015      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 #
 # $COPYRIGHT$
 # 
@@ -60,7 +62,15 @@ mpi-f08-types.lo: mpi-f08-types.f90
 mpi-f08-interfaces.lo: mpi-f08-interfaces.F90 mpi-f08-types.lo
 OMPI_Fortran_binding.lo: OMPI_Fortran_binding.f90 mpi-f08-types.lo
 
-$(mpi_api_files): mpi-f08.lo
+
+#
+# Automake doesn't do Fortran dependency analysis, so must list them
+# manually here.  Bummer!
+#
+
+mpi_api_lo_files = $(mpi_api_files:.f90=.lo)
+ 
+$(mpi_api_lo_files): mpi-f08.lo
 
 mpi-f08.lo: mpi-f08-types.lo 
 mpi-f08.lo: OMPI_Fortran_binding.lo
