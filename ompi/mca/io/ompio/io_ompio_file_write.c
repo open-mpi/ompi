@@ -215,6 +215,7 @@ int ompio_io_ompio_file_iwrite (mca_io_ompio_file_t *fh,
 
     ompio_req = OBJ_NEW(mca_ompio_request_t);
     ompio_req->req_type = MCA_OMPIO_REQUEST_WRITE;
+    ompio_req->req_ompi.req_state = OMPI_REQUEST_ACTIVE;
 
     if ( 0 == count ) {
 	ompi_request_complete (&ompio_req->req_ompi, 0);
