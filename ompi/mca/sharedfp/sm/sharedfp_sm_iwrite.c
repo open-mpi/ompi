@@ -39,20 +39,20 @@ int mca_sharedfp_sm_iwrite(mca_io_ompio_file_t *fh,
      mca_sharedfp_base_module_t * shared_fp_base_module = NULL;
 
      if( NULL == fh->f_sharedfp_data){
-	 if ( mca_sharedfp_sm_verbose ) {
-	     printf("sharedfp_sm_iwrite - opening the shared file pointer\n");
-	 }
-	 shared_fp_base_module = fh->f_sharedfp;
+         if ( mca_sharedfp_sm_verbose ) {
+             printf("sharedfp_sm_iwrite - opening the shared file pointer\n");
+         }
+         shared_fp_base_module = fh->f_sharedfp;
 
-	 ret = shared_fp_base_module->sharedfp_file_open(fh->f_comm,
-							 fh->f_filename,
-							 fh->f_amode,
-							 fh->f_info,
-							 fh);
-	 if ( OMPI_SUCCESS != ret ) {
-	     opal_output(0,"sharedfp_sm_iwrite - error opening the shared file pointer\n");
-	     return ret;
-	 }
+         ret = shared_fp_base_module->sharedfp_file_open(fh->f_comm,
+                                                         fh->f_filename,
+                                                         fh->f_amode,
+                                                         fh->f_info,
+                                                         fh);
+         if ( OMPI_SUCCESS != ret ) {
+             opal_output(0,"sharedfp_sm_iwrite - error opening the shared file pointer\n");
+             return ret;
+         }
     }
 
     /* Calculate the number of bytes to write */
@@ -63,15 +63,15 @@ int mca_sharedfp_sm_iwrite(mca_io_ompio_file_t *fh,
      sh = fh->f_sharedfp_data;
 
      if ( mca_sharedfp_sm_verbose ) {
-	 printf("sharedfp_sm_iwrite: Bytes Requested is %ld\n",bytesRequested);
+         printf("sharedfp_sm_iwrite: Bytes Requested is %ld\n",bytesRequested);
      }
     /* Request the offset to write bytesRequested bytes */
      ret = mca_sharedfp_sm_request_position(sh,bytesRequested,&offset);
 
     if ( -1 != ret ) {
-	if ( mca_sharedfp_sm_verbose ) {
-	    printf("sharedfp_sm_iwrite: Offset received is %lld\n",offset);
-	}
+        if ( mca_sharedfp_sm_verbose ) {
+            printf("sharedfp_sm_iwrite: Offset received is %lld\n",offset);
+        }
         /* Write to the file */
         ret = ompio_io_ompio_file_iwrite_at(sh->sharedfh,offset,buf,count,datatype,request);
     }
