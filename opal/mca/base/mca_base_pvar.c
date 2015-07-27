@@ -2,7 +2,11 @@
 /*
  * Copyright (c) 2013-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Bull SAS.  All rights reserved.
+ * Copyright (c) 2015      The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -295,6 +299,7 @@ int mca_base_pvar_register (const char *project, const char *framework, const ch
                 break;
             }
 
+            pvar->pvar_index = pvar_count;
             opal_hash_table_set_value_ptr (&mca_base_pvar_index_hash, pvar->name, strlen (pvar->name),
                                            (void *)(uintptr_t) pvar->pvar_index);
 
@@ -329,7 +334,6 @@ int mca_base_pvar_register (const char *project, const char *framework, const ch
     }
 
     pvar->ctx        = ctx;
-    pvar->pvar_index = pvar_count;
 
     return pvar->pvar_index;
 }
