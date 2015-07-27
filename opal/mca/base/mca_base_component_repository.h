@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -10,6 +11,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -50,6 +53,8 @@ struct mca_base_component_repository_item_t {
 
     opal_dl_handle_t *ri_dlhandle;
     const mca_base_component_t *ri_component_struct;
+
+    int ri_refcnt;
 };
 typedef struct mca_base_component_repository_item_t mca_base_component_repository_item_t;
 
@@ -102,7 +107,25 @@ int mca_base_component_repository_open (mca_base_framework_t *framework,
                                         mca_base_component_repository_item_t *ri);
 
 
-void mca_base_component_repository_release(const mca_base_component_t *component);
+/**
+ * @brief Reduce the reference count of a component and dlclose it if necessary
+ */
+void mca_base_component_repository_release (const mca_base_component_t *component);
+
+/**
+ * @brief Increase the reference count of a component
+ *
+ * Each component repository item starts with a reference count of 0. This ensures that
+ * when a framework closes it's components the repository items are all correctly
+ * dlclosed. This function can be used to prevent the dlclose if a component is needed
+ * after its framework has closed the associated component. Users of this function
+ * should call mca_base_component_repository_release() once they are finished with the
+ * component.
+ *
+ * @note all components are automatically unloaded by the
+ * mca_base_component_repository_finalize() call.
+ */
+int mca_base_component_repository_retain_component (const char *type, const char *name);
 
 END_C_DECLS
 
