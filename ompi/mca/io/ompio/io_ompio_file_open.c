@@ -394,8 +394,9 @@ int mca_io_ompio_file_delete (char *filename,
 
     ret = unlink(filename);
 
-    if (0 > ret) {
-        return OMPI_ERROR;
+    if (0 > ret && ENOENT != errno ) {
+	opal_output (1, "errno = %d %s\n", errno, strerror(errno));
+        return MPI_ERR_ACCESS;
     }
 
     return OMPI_SUCCESS;
