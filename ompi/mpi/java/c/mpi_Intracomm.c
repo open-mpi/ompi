@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -64,6 +66,15 @@ JNIEXPORT jlong JNICALL Java_mpi_Intracomm_split(
 {
     MPI_Comm newcomm;
     int rc = MPI_Comm_split((MPI_Comm)comm, colour, key, &newcomm);
+    ompi_java_exceptionCheck(env, rc);
+    return (jlong)newcomm;
+}
+
+JNIEXPORT jlong JNICALL Java_mpi_Intracomm_splitType(
+        JNIEnv *env, jobject jthis, jlong comm, jint splitType, jint key, jlong info)
+{
+    MPI_Comm newcomm;
+    int rc = MPI_Comm_split_type((MPI_Comm)comm, splitType, key, (MPI_Info)info, &newcomm);
     ompi_java_exceptionCheck(env, rc);
     return (jlong)newcomm;
 }
