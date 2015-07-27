@@ -284,7 +284,7 @@ static int mca_bml_r2_add_procs( size_t nprocs,
                     /* skip this btl if the exclusivity is less than the previous only if the btl does not provide full rdma (for one-sided) */
                     if(bml_btl->btl->btl_exclusivity > btl->btl_exclusivity  && ((btl_flags & MCA_BTL_FLAGS_RDMA) != MCA_BTL_FLAGS_RDMA)) {
                         btl->btl_del_procs(btl, 1, (opal_proc_t**)&proc, &btl_endpoints[p]);
-                        opal_output_verbose(20, opal_btl_base_framework.framework_output, 
+                        opal_output_verbose(MCA_BASE_VERBOSE_INFO, ompi_bml_base_framework.framework_output,
                                             "mca: bml: Not using %s btl to %s on node %s "
                                             "because %s btl has higher exclusivity (%d > %d)",
                                             btl->btl_component->btl_version.mca_component_name,
@@ -295,7 +295,7 @@ static int mca_bml_r2_add_procs( size_t nprocs,
                         continue;
                     }
                 }
-                opal_output_verbose(1, opal_btl_base_framework.framework_output, 
+                opal_output_verbose(MCA_BASE_VERBOSE_INFO, ompi_bml_base_framework.framework_output,
                                     "mca: bml: Using %s btl to %s on node %s",
                                     btl->btl_component->btl_version.mca_component_name,
                                     OMPI_NAME_PRINT(&proc->super.proc_name),
