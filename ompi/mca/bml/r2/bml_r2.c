@@ -446,7 +446,11 @@ static int mca_bml_r2_del_procs(size_t nprocs,
 
     for(p = 0; p < nprocs; p++) { 
         ompi_proc_t *proc = procs[p]; 
-        if(((opal_object_t*)proc)->obj_reference_count == 1) { 
+        /* We much check that there are 2 references to the proc (not 1). The
+         * first reference belongs to ompi/proc the second belongs to the bml
+         * since we retained it. We will release that reference at the end of
+         * the loop below. */
+        if(((opal_object_t*)proc)->obj_reference_count == 2) {
             del_procs[n_del_procs++] = proc; 
         }
     }
