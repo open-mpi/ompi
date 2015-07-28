@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2015 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -36,7 +36,7 @@ int
 mca_fs_gpfs_file_get_size (mca_io_ompio_file_t *fh,
                          OMPI_MPI_OFFSET_TYPE *size)
 {
-    printf ("GPFS GET SIZE\n");
+    //DEBUG: fprintf (stderr, "GPFS GET SIZE\n");
     *size = lseek(fh->fd, 0, SEEK_END);
     if (-1 == *size) {
         perror ("lseek");

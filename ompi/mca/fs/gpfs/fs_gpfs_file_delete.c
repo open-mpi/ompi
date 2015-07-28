@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2015 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -27,7 +27,7 @@
 #include "ompi/mca/fs/fs.h"
 
 /*
- *	file_delete_lustre
+ *	file_delete_gpfs
  *
  *	Function:	- deletes a file
  *	Accepts:	- file name & info
@@ -37,7 +37,7 @@ int
 mca_fs_gpfs_file_delete (char *filename,
                               struct ompi_info_t *info)
 {
-	printf("Using mca_fs_gpfs_file_delete to delete a file.\n");
+	//DEBUG: fprintf(stderr, "Using mca_fs_gpfs_file_delete to delete a file.\n");
     int ret = OMPI_SUCCESS;
 
     ret = unlink(filename);

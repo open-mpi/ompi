@@ -6,7 +6,7 @@
  * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2015 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -26,6 +26,7 @@
 #include "ompi/mca/fs/gpfs/fs_gpfs.h"
 
 #ifdef HAVE_SYS_STATFS_H
+/*CN: Check which is prefered, already checked/used in OMPI */
 #include <sys/statfs.h> /* or <sys/vfs.h> */ 
 #endif
 #ifdef HAVE_SYS_PARAM_H

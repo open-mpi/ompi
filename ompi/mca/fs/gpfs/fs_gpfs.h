@@ -6,7 +6,7 @@
  * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2015 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -66,6 +66,7 @@ int mca_fs_gpfs_prefetch_hints(int access_mode,
 int mca_fs_gpfs_io_selection(mca_io_ompio_file_t *fh,
 		struct ompi_info_t *info, struct ompi_info_t *info_selected);
 int mca_fs_gpfs_file_sync(struct ompi_file_t *fh);
+//CN: Is mca_fs_gpfs_file_seek needed at all. Not used anywhere!
 int
 mca_fs_gpfs_file_seek(struct ompi_file_t *fh, OMPI_MPI_OFFSET_TYPE off,
 		int whence);

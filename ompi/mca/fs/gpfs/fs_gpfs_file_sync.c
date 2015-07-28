@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2015 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -20,7 +20,6 @@
 
 #include "ompi_config.h"
 #include "fs_gpfs.h"
-//#include <unistd.h>
 
 #include "mpi.h"
 #include "ompi/constants.h"
@@ -29,9 +28,9 @@
 /*
  *	file_sync_gpfs
  *
- *	Function:	- syn a new file
+ *	Function:	- sync a file
  *	Accepts:	- file handle
- *	Returns:	- Success if file closed
+ *	Returns:	- Success if file synced
  */
 
 //TODO
