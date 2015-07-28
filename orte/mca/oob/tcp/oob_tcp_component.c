@@ -16,6 +16,8 @@
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2013-2015 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -68,6 +70,7 @@
 #include "orte/util/parse_options.h"
 #include "orte/util/show_help.h"
 #include "orte/runtime/orte_globals.h"
+#include "orte/runtime/orte_wait.h"
 
 #include "orte/mca/oob/tcp/oob_tcp.h"
 #include "orte/mca/oob/tcp/oob_tcp_component.h"
@@ -630,10 +633,22 @@ static int component_startup(void)
     return rc;
 }
 
+static void cleanup(int sd, short args, void *cbdata)
+{
+    opal_list_item_t * item;
+    bool *active = (bool*)cbdata;
+    while (NULL != (item = opal_list_remove_first(&mca_oob_tcp_component.listeners))) {
+        OBJ_RELEASE(item);
+    }
+    if (NULL != active) {
+        *active = false;
+    }
+}
+
 static void component_shutdown(void)
 {
     int i = 0;
-    opal_list_item_t *item;
+    bool active;
 
     opal_output_verbose(2, orte_oob_base_framework.framework_output,
                         "%s TCP SHUTDOWN",
@@ -644,16 +659,37 @@ static void component_shutdown(void)
         /* tell the thread to exit */
         write(mca_oob_tcp_component.stop_thread[1], &i, sizeof(int));
         opal_thread_join(&mca_oob_tcp_component.listen_thread, NULL);
+    } else {
+        opal_output_verbose(2, orte_oob_base_framework.framework_output,
+                        "no hnp or not active");
     }
 
-    while (NULL != (item = opal_list_remove_first(&mca_oob_tcp_component.listeners))) {
-        OBJ_RELEASE(item);
-    }
+    /* because the listeners are in a separate
+     * async thread for apps, we can't just release them here.
+     * Instead, we push it into that event thread and release 
+     * them there */
+     if (ORTE_PROC_IS_APP) {
+        opal_event_t ev;
+        active = true;
+        opal_event_set(orte_event_base, &ev, -1,
+                       OPAL_EV_WRITE, cleanup, &active);
+        opal_event_set_priority(&ev, ORTE_ERROR_PRI);
+        opal_event_active(&ev, OPAL_EV_WRITE, 1);
+        ORTE_WAIT_FOR_COMPLETION(active);
+     } else {
+        /* we can call the destruct directly */
+        cleanup(0, 0, NULL);
+     }
+    opal_output_verbose(2, orte_oob_base_framework.framework_output,
+                    "all listeners released");
 
     /* shutdown the module */
     if (NULL != mca_oob_tcp_module.api.finalize) {
         mca_oob_tcp_module.api.finalize();
     }
+    opal_output_verbose(2, orte_oob_base_framework.framework_output,
+                        "%s TCP SHUTDOWN done",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
 }
 
 static int component_send(orte_rml_send_t *msg)
