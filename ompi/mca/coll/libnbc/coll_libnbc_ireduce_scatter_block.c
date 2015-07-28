@@ -1,12 +1,14 @@
 /*
- * Copyright (c) 2006 The Trustees of Indiana University and Indiana
- *                    University Research and Technology
- *                    Corporation.  All rights reserved.
- * Copyright (c) 2006 The Technical University of Chemnitz. All 
- *                    rights reserved.
+ * Copyright (c) 2006      The Trustees of Indiana University and Indiana
+ *                         University Research and Technology
+ *                         Corporation.  All rights reserved.
+ * Copyright (c) 2006      The Technical University of Chemnitz. All 
+ *                         rights reserved.
  * Copyright (c) 2012      Sandia National Laboratories. All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  *
  * Author(s): Torsten Hoefler <htor@cs.indiana.edu>
  *
@@ -61,80 +63,81 @@ int ompi_coll_libnbc_ireduce_scatter_block(void* sendbuf, void* recvbuf, int rec
 
   maxr = (int)ceil((log(p)/LOG2));
 
-  count = 0;
-  for(r=0;r<p;r++) count += recvcount;
+  count = p * recvcount;
   
-  handle->tmpbuf = malloc(ext*count*2);
-  if(handle->tmpbuf == NULL) { printf("Error in malloc()\n"); return NBC_OOR; }
+  if (0 < count) {
+    handle->tmpbuf = malloc(ext*count*2);
+    if(handle->tmpbuf == NULL) { printf("Error in malloc()\n"); return NBC_OOR; }
 
-  redbuf = ((char*)handle->tmpbuf)+(ext*count);
+    redbuf = ((char*)handle->tmpbuf)+(ext*count);
 
-  /* copy data to redbuf if we only have a single node */
-  if((p==1) && !inplace) {
-    res = NBC_Copy(sendbuf, count, datatype, redbuf, count, datatype, comm);
-    if (NBC_OK != res) { printf("Error in NBC_Copy() (%i)\n", res); return res; }
-  }
+    /* copy data to redbuf if we only have a single node */
+    if((p==1) && !inplace) {
+      res = NBC_Copy(sendbuf, count, datatype, redbuf, count, datatype, comm);
+      if (NBC_OK != res) { printf("Error in NBC_Copy() (%i)\n", res); return res; }
+    }
   
-  firstred = 1;
-  for(r=1; r<=maxr; r++) {
-    if((rank % (1<<r)) == 0) {
-      /* we have to receive this round */
-      peer = rank + (1<<(r-1));
-      if(peer<p) {
-        res = NBC_Sched_recv(0, true, count, datatype, peer, schedule);
-        if (NBC_OK != res) { free(handle->tmpbuf); printf("Error in NBC_Sched_recv() (%i)\n", res); return res; }
-        /* we have to wait until we have the data */
-        res = NBC_Sched_barrier(schedule);
-        if (NBC_OK != res) { free(handle->tmpbuf); printf("Error in NBC_Sched_barrier() (%i)\n", res); return res; }
-        if(firstred) {
-          /* take reduce data from the sendbuf in the first round -> save copy */
-          res = NBC_Sched_op(redbuf-(unsigned long)handle->tmpbuf, true, sendbuf, false, 0, true, count, datatype, op, schedule);
-          firstred = 0;
-        } else {
-          /* perform the reduce in my local buffer */
-          res = NBC_Sched_op(redbuf-(unsigned long)handle->tmpbuf, true, redbuf-(unsigned long)handle->tmpbuf, true, 0, true, count, datatype, op, schedule);
+    firstred = 1;
+    for(r=1; r<=maxr; r++) {
+      if((rank % (1<<r)) == 0) {
+        /* we have to receive this round */
+        peer = rank + (1<<(r-1));
+        if(peer<p) {
+          res = NBC_Sched_recv(0, true, count, datatype, peer, schedule);
+          if (NBC_OK != res) { free(handle->tmpbuf); printf("Error in NBC_Sched_recv() (%i)\n", res); return res; }
+          /* we have to wait until we have the data */
+          res = NBC_Sched_barrier(schedule);
+          if (NBC_OK != res) { free(handle->tmpbuf); printf("Error in NBC_Sched_barrier() (%i)\n", res); return res; }
+          if(firstred) {
+            /* take reduce data from the sendbuf in the first round -> save copy */
+            res = NBC_Sched_op(redbuf-(unsigned long)handle->tmpbuf, true, sendbuf, false, 0, true, count, datatype, op, schedule);
+            firstred = 0;
+          } else {
+            /* perform the reduce in my local buffer */
+            res = NBC_Sched_op(redbuf-(unsigned long)handle->tmpbuf, true, redbuf-(unsigned long)handle->tmpbuf, true, 0, true, count, datatype, op, schedule);
+          }
+          if (NBC_OK != res) { free(handle->tmpbuf); printf("Error in NBC_Sched_op() (%i)\n", res); return res; }
+          /* this cannot be done until handle->tmpbuf is unused :-( */
+          res = NBC_Sched_barrier(schedule);
+          if (NBC_OK != res) { free(handle->tmpbuf); printf("Error in NBC_Sched_barrier() (%i)\n", res); return res; }
         }
-        if (NBC_OK != res) { free(handle->tmpbuf); printf("Error in NBC_Sched_op() (%i)\n", res); return res; }
-        /* this cannot be done until handle->tmpbuf is unused :-( */
-        res = NBC_Sched_barrier(schedule);
-        if (NBC_OK != res) { free(handle->tmpbuf); printf("Error in NBC_Sched_barrier() (%i)\n", res); return res; }
-      }
-    } else {
-      /* we have to send this round */
-      peer = rank - (1<<(r-1));
-      if(firstred) {
-        /* we have to send the senbuf */
-        res = NBC_Sched_send(sendbuf, false, count, datatype, peer, schedule);
       } else {
-        /* we send an already reduced value from redbuf */
-        res = NBC_Sched_send(redbuf-(unsigned long)handle->tmpbuf, true, count, datatype, peer, schedule);
+        /* we have to send this round */
+        peer = rank - (1<<(r-1));
+        if(firstred) {
+          /* we have to send the senbuf */
+          res = NBC_Sched_send(sendbuf, false, count, datatype, peer, schedule);
+        } else {
+          /* we send an already reduced value from redbuf */
+          res = NBC_Sched_send(redbuf-(unsigned long)handle->tmpbuf, true, count, datatype, peer, schedule);
+        }
+        if (NBC_OK != res) { free(handle->tmpbuf); printf("Error in NBC_Sched_send() (%i)\n", res); return res; }
+        /* leave the game */
+        break;
       }
-      if (NBC_OK != res) { free(handle->tmpbuf); printf("Error in NBC_Sched_send() (%i)\n", res); return res; }
-      /* leave the game */
-      break;
     }
-  }
+    
+    res = NBC_Sched_barrier(schedule);
+    if (NBC_OK != res) { free(handle->tmpbuf); printf("Error in NBC_Sched_barrier() (%i)\n", res); return res; }
   
-  res = NBC_Sched_barrier(schedule);
-  if (NBC_OK != res) { free(handle->tmpbuf); printf("Error in NBC_Sched_barrier() (%i)\n", res); return res; }
-
-  /* rank 0 is root and sends - all others receive */
-  if(rank != 0) {
-    res = NBC_Sched_recv(recvbuf, false, recvcount, datatype, 0, schedule);
-   if (NBC_OK != res) { free(handle->tmpbuf); printf("Error in NBC_Sched_recv() (%i)\n", res); return res; }
-  }
-
-  if(rank == 0) {
-    offset = 0;
-    for(r=1;r<p;r++) {
-      offset += recvcount;
-      sbuf = ((char *)redbuf) + (offset*ext);
-      /* root sends the right buffer to the right receiver */
-      res = NBC_Sched_send(sbuf-(unsigned long)handle->tmpbuf, true, recvcount, datatype, r, schedule);
-      if (NBC_OK != res) { free(handle->tmpbuf); printf("Error in NBC_Sched_send() (%i)\n", res); return res; }
+    /* rank 0 is root and sends - all others receive */
+    if(rank != 0) {
+      res = NBC_Sched_recv(recvbuf, false, recvcount, datatype, 0, schedule);
+     if (NBC_OK != res) { free(handle->tmpbuf); printf("Error in NBC_Sched_recv() (%i)\n", res); return res; }
     }
-    res = NBC_Sched_copy(redbuf-(unsigned long)handle->tmpbuf, true, recvcount, datatype, recvbuf, false, recvcount, datatype, schedule);
-    if (NBC_OK != res) { free(handle->tmpbuf); printf("Error in NBC_Sched_copy() (%i)\n", res); return res; }
+  
+    if(rank == 0) {
+      offset = 0;
+      for(r=1;r<p;r++) {
+        offset += recvcount;
+        sbuf = ((char *)redbuf) + (offset*ext);
+        /* root sends the right buffer to the right receiver */
+        res = NBC_Sched_send(sbuf-(unsigned long)handle->tmpbuf, true, recvcount, datatype, r, schedule);
+        if (NBC_OK != res) { free(handle->tmpbuf); printf("Error in NBC_Sched_send() (%i)\n", res); return res; }
+      }
+      res = NBC_Sched_copy(redbuf-(unsigned long)handle->tmpbuf, true, recvcount, datatype, recvbuf, false, recvcount, datatype, schedule);
+      if (NBC_OK != res) { free(handle->tmpbuf); printf("Error in NBC_Sched_copy() (%i)\n", res); return res; }
+    }
   }
 
   /*NBC_PRINT_SCHED(*schedule);*/
