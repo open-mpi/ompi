@@ -1,4 +1,4 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2013 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2006-2012 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2006-2014 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2006      University of Houston. All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
@@ -140,7 +140,7 @@ int ompi_mpi_finalize(void)
     (void)mca_pml_base_bsend_detach(NULL, NULL);
 
     nprocs = 0;
-    procs = ompi_proc_all(&nprocs);
+    procs = ompi_proc_world(&nprocs);
     MCA_PML_CALL(del_procs(procs, nprocs));
     free(procs);
 
@@ -281,13 +281,15 @@ int ompi_mpi_finalize(void)
         return ret;
     }
 
+    /* free communicator resources. this MUST come before finalizing the PML
+     * as this will call into the pml */
+    if (OMPI_SUCCESS != (ret = ompi_comm_finalize())) {
+        return ret;
+    }
+
     /* free pml resource */ 
     if(OMPI_SUCCESS != (ret = mca_pml_base_finalize())) { 
       return ret;
-    }
-    /* free communicator resources */
-    if (OMPI_SUCCESS != (ret = ompi_comm_finalize())) {
-        return ret;
     }
 
     /* free requests */
@@ -337,11 +339,6 @@ int ompi_mpi_finalize(void)
         return ret;
     }
 
-    /* free proc resources */
-    if ( OMPI_SUCCESS != (ret = ompi_proc_finalize())) {
-        return ret;
-    }
-    
     /* finalize the pubsub functions */
     if (OMPI_SUCCESS != (ret = mca_base_framework_close(&ompi_pubsub_base_framework) ) ) {
         return ret;
@@ -413,6 +410,11 @@ int ompi_mpi_finalize(void)
         return ret;
     }
     if (OMPI_SUCCESS != (ret = mca_base_framework_close(&ompi_allocator_base_framework))) {
+        return ret;
+    }
+
+    /* free proc resources */
+    if ( OMPI_SUCCESS != (ret = ompi_proc_finalize())) {
         return ret;
     }
 
