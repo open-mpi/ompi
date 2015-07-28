@@ -104,7 +104,7 @@ protected CartComm(long[] commRequest)
  * <p>The new communicator can't be used before the operation completes.
  * The request object must be obtained calling {@link #getRequest}.
  * @return copy of this communicator
- * @throws MPIException Signals that an MPI exception of some sort has occurred. Signals that an MPI exception of some sort has occurred.
+ * @throws MPIException Signals that an MPI exception of some sort has occurred.
  */
 @Override public CartComm iDup() throws MPIException
 {
