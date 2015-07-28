@@ -24,6 +24,7 @@
 #include "mpi.h"
 #include "ompi/constants.h"
 #include "ompi/mca/sharedfp/sharedfp.h"
+#include "ompi/mca/sharedfp/base/base.h"
 
 int mca_sharedfp_sm_iwrite(mca_io_ompio_file_t *fh,
                            void *buf,
@@ -40,7 +41,8 @@ int mca_sharedfp_sm_iwrite(mca_io_ompio_file_t *fh,
 
      if( NULL == fh->f_sharedfp_data){
          if ( mca_sharedfp_sm_verbose ) {
-             printf("sharedfp_sm_iwrite - opening the shared file pointer\n");
+             opal_output(ompi_sharedfp_base_framework.framework_output, 
+			 "sharedfp_sm_iwrite - opening the shared file pointer\n");
          }
          shared_fp_base_module = fh->f_sharedfp;
 
@@ -63,14 +65,16 @@ int mca_sharedfp_sm_iwrite(mca_io_ompio_file_t *fh,
      sh = fh->f_sharedfp_data;
 
      if ( mca_sharedfp_sm_verbose ) {
-         printf("sharedfp_sm_iwrite: Bytes Requested is %ld\n",bytesRequested);
+         opal_output(ompi_sharedfp_base_framework.framework_output, 
+		     "sharedfp_sm_iwrite: Bytes Requested is %ld\n",bytesRequested);
      }
     /* Request the offset to write bytesRequested bytes */
      ret = mca_sharedfp_sm_request_position(sh,bytesRequested,&offset);
 
     if ( -1 != ret ) {
         if ( mca_sharedfp_sm_verbose ) {
-            printf("sharedfp_sm_iwrite: Offset received is %lld\n",offset);
+            opal_output(ompi_sharedfp_base_framework.framework_output, 
+			"sharedfp_sm_iwrite: Offset received is %lld\n",offset);
         }
         /* Write to the file */
         ret = ompio_io_ompio_file_iwrite_at(sh->sharedfh,offset,buf,count,datatype,request);
@@ -100,7 +104,8 @@ int mca_sharedfp_sm_write_ordered_begin(mca_io_ompio_file_t *fh,
 
     if ( NULL == fh->f_sharedfp_data){
  	if ( mca_sharedfp_sm_verbose ) {
-	    printf("sharedfp_sm_write_ordered_begin: opening the shared file pointer\n");
+	    opal_output(ompi_sharedfp_base_framework.framework_output, 
+			"sharedfp_sm_write_ordered_begin: opening the shared file pointer\n");
 	}
         shared_fp_base_module = fh->f_sharedfp;
 
@@ -115,7 +120,7 @@ int mca_sharedfp_sm_write_ordered_begin(mca_io_ompio_file_t *fh,
         }
     }
     if ( true == fh->f_split_coll_in_use ) {
-        printf("Only one split collective I/O operation allowed per file handle at any given point in time!\n");
+        opal_output(0, "Only one split collective I/O operation allowed per file handle at any given point in time!\n");
         return MPI_ERR_REQUEST;
     }
 
@@ -152,8 +157,9 @@ int mca_sharedfp_sm_write_ordered_begin(mca_io_ompio_file_t *fh,
         for (i = 0; i < size ; i ++) {
 	    bytesRequested += buff[i];
 	    if ( mca_sharedfp_sm_verbose ) {
-		printf("mca_sharedfp_sm_write_ordered_begin: Bytes requested are %ld\n",
-		       bytesRequested);
+		opal_output(ompi_sharedfp_base_framework.framework_output, 
+			    "mca_sharedfp_sm_write_ordered_begin: Bytes requested are %ld\n",
+			    bytesRequested);
 	    }
         }
 
@@ -168,7 +174,8 @@ int mca_sharedfp_sm_write_ordered_begin(mca_io_ompio_file_t *fh,
 	    goto exit;
         }
 	if ( mca_sharedfp_sm_verbose ) {
-	    printf("mca_sharedfp_sm_write_ordered_begin: Offset received is %lld\n",offsetReceived);
+	    opal_output(ompi_sharedfp_base_framework.framework_output, 
+			"mca_sharedfp_sm_write_ordered_begin: Offset received is %lld\n",offsetReceived);
 	}
 
         buff[0] += offsetReceived;
@@ -188,7 +195,8 @@ int mca_sharedfp_sm_write_ordered_begin(mca_io_ompio_file_t *fh,
     /*Each process now has its own individual offset in recvBUFF*/
     offset = offsetBuff - sendBuff;
     if ( mca_sharedfp_sm_verbose ) {
-	printf("mca_sharedfp_sm_write_ordered_begin: Offset returned is %lld\n",offset);
+	opal_output(ompi_sharedfp_base_framework.framework_output, 
+		    "mca_sharedfp_sm_write_ordered_begin: Offset returned is %lld\n",offset);
     }
 
     /* read to the file */

@@ -24,6 +24,7 @@
 #include "mpi.h"
 #include "ompi/constants.h"
 #include "ompi/mca/sharedfp/sharedfp.h"
+#include "ompi/mca/sharedfp/base/base.h"
 
 int mca_sharedfp_individual_iwrite(mca_io_ompio_file_t *fh,
                                    void *buf,
@@ -40,7 +41,8 @@ int mca_sharedfp_individual_iwrite(mca_io_ompio_file_t *fh,
 
     if(fh->f_sharedfp_data==NULL){
 	if ( mca_sharedfp_individual_verbose ) {
-	    printf("mca_sharedfp_individual_iwrite: opening the shared file pointer\n");
+	    opal_output(ompi_sharedfp_base_framework.framework_output,
+			"mca_sharedfp_individual_iwrite: opening the shared file pointer\n");
 	}
         shared_fp_base_module = fh->f_sharedfp;
 
@@ -105,7 +107,8 @@ int mca_sharedfp_individual_write_ordered_begin(mca_io_ompio_file_t *fh,
 
     if(fh->f_sharedfp_data==NULL){
 	if ( mca_sharedfp_individual_verbose ) {
-	    printf("sharedfp_individual_write_ordered_begin - opening the shared file pointer\n");
+	    opal_output(ompi_sharedfp_base_framework.framework_output,
+			"sharedfp_individual_write_ordered_begin - opening the shared file pointer\n");
 	}
         shared_fp_base_module = fh->f_sharedfp;
 
@@ -121,7 +124,7 @@ int mca_sharedfp_individual_write_ordered_begin(mca_io_ompio_file_t *fh,
     }
 
     if ( true == fh->f_split_coll_in_use ) {
-        printf("Only one split collective I/O operation allowed per file handle at any given point in time!\n");
+        opal_output(0, "Only one split collective I/O operation allowed per file handle at any given point in time!\n");
         return MPI_ERR_REQUEST;
     }
 
