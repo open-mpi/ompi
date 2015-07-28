@@ -101,6 +101,11 @@ ompi_mtl_ofi_component_close(void)
     return OMPI_SUCCESS;
 }
 
+int
+ompi_mtl_ofi_progress_no_inline(void)
+{
+	ompi_mtl_ofi_progress();
+}
 
 static mca_mtl_base_module_t*
 ompi_mtl_ofi_component_init(bool enable_progress_threads,
@@ -338,7 +343,7 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
     /**
      * Activate progress callback.
      */
-    ret = opal_progress_register(ompi_mtl_ofi_progress);
+    ret = opal_progress_register(ompi_mtl_ofi_progress_no_inline);
     if (OMPI_SUCCESS != ret) {
         opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                             "%s:%d: opal_progress_register failed: %d\n",
@@ -371,6 +376,43 @@ error:
         (void) fi_close((fid_t)ompi_mtl_ofi.fabric);
     }
     return NULL;
+}
+
+int
+ompi_mtl_ofi_finalize(struct mca_mtl_base_module_t *mtl)
+{
+    opal_progress_unregister(ompi_mtl_ofi_progress_no_inline);
+
+    /**
+ *      * Close all the OFI objects
+ *           */
+    if (fi_close((fid_t)ompi_mtl_ofi.ep)) {
+        opal_output(ompi_mtl_base_framework.framework_output,
+                "fi_close failed: %s", strerror(errno));
+        abort();
+    }
+    if (fi_close((fid_t)ompi_mtl_ofi.cq)) {
+        opal_output(ompi_mtl_base_framework.framework_output,
+                "fi_close failed: %s", strerror(errno));
+        abort();
+    }
+    if (fi_close((fid_t)ompi_mtl_ofi.av)) {
+        opal_output(ompi_mtl_base_framework.framework_output,
+                "fi_close failed: %s", strerror(errno));
+        abort();
+    }
+    if (fi_close((fid_t)ompi_mtl_ofi.domain)) {
+        opal_output(ompi_mtl_base_framework.framework_output,
+                "fi_close failed: %s", strerror(errno));
+        abort();
+    }
+    if (fi_close((fid_t)ompi_mtl_ofi.fabric)) {
+        opal_output(ompi_mtl_base_framework.framework_output,
+                "fi_close failed: %s", strerror(errno));
+        abort();
+    }
+
+    return OMPI_SUCCESS;
 }
 
 
