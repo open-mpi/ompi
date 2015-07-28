@@ -93,11 +93,12 @@ static inline int set_mxm_tls()
 {
     char *tls;
 
-    /* disable dci pull for rdma ops. Use single pool.
-     * Pool size is controlled by MXM_DC_QP_LIMIT 
-     * variable
+    /*
+     * Set DC defaults optimized for shmem
      */
-    opal_setenv("MXM_OSHMEM_DC_RNDV_QP_LIMIT", "0", 0, &environ);
+    opal_setenv("MXM_OSHMEM_DC_QP_LIMIT",      "2", 0, &environ);
+    opal_setenv("MXM_OSHMEM_DC_RNDV_QP_LIMIT", "2", 0, &environ);
+    opal_setenv("MXM_OSHMEM_DC_MSS",          "8196", 0, &environ);
 
     tls = getenv("MXM_OSHMEM_TLS");
     if (NULL != tls) {
