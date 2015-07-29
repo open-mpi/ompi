@@ -33,9 +33,21 @@
  *	Returns:	- Success if size is set
  */
 int
-mca_fs_lustre_file_set_size (mca_io_ompio_file_t *file_handle,
+mca_fs_lustre_file_set_size (mca_io_ompio_file_t *fh,
                          OMPI_MPI_OFFSET_TYPE size)
 {
-    printf ("LUSTRE SET SIZE\n");
+    int err = 0;
+
+    err = ftruncate(fh->fd, size);
+
+    fh->f_comm->c_coll.coll_bcast (&err,
+                                   1,
+                                   MPI_INT,
+                                   OMPIO_ROOT,
+                                   fh->f_comm,
+                                   fh->f_comm->c_coll.coll_bcast_module);
+    if (-1 == err) {
+        return OMPI_ERROR;
+    }
     return OMPI_SUCCESS;
 }
