@@ -170,6 +170,23 @@ public class Request implements Freeable
 	private native Status testStatus(long request) throws MPIException;
 
 	/**
+	 * Returns a status object if the operation identified by the request
+	 * is complete, or a null reference otherwise.
+	 * <p>Java binding of the MPI operation {@code MPI_REQUEST_GET_STATUS}.
+	 * <p>After the call, if the operation is complete (ie, if the return
+	 * value is non-null), the request object remains active.
+	 * @return status object
+	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 */
+	public final Status getStatus() throws MPIException
+	{
+		MPI.check();
+		return getStatus(handle);
+	}
+
+	private native Status getStatus(long request) throws MPIException;
+	
+	/**
 	 * Returns true if the operation identified by the request
 	 * is complete, or false otherwise.
 	 * <p>Java binding of the MPI operation {@code MPI_TEST}.
