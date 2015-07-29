@@ -20,7 +20,6 @@
 #define _MCA_PML_BASE_BSEND_H_
 
 #include "ompi_config.h"
-#include "ompi/mca/pml/pml.h"
 #include "ompi/request/request.h"
 
 BEGIN_C_DECLS
