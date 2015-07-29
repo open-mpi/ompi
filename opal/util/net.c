@@ -12,7 +12,7 @@
  * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2013      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2015 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -162,7 +162,7 @@ opal_net_init(void)
         for( i = 0; i < count; i++ ) {
             arg = args[i];
 
-            sscanf( arg, "%u.%u.%u.%u/%u", &a, &b, &c, &d, &bits );
+            (void)sscanf( arg, "%u.%u.%u.%u/%u", &a, &b, &c, &d, &bits );
 
             if( (a > 255) || (b > 255) || (c > 255) ||
                 (d > 255) || (bits > 32) ) {

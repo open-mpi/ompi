@@ -15,7 +15,7 @@
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
+ * Copyright (c) 2013-2015 Intel, Inc. All rights reserved
  * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -1281,7 +1281,7 @@ static int parse_port_name(const char *port_name,
     ptr++;
 
     /* convert the RML tag */
-    sscanf(ptr,"%d", &tag);
+    (void)sscanf(ptr,"%d", &tag);
 
     /* now split out the second field - the uri of the remote proc */
     if (NULL == (ptr = strchr(tmpstring, '+'))) {

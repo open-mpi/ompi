@@ -1032,14 +1032,14 @@ static bool tcp_peer_recv_blocking(mca_oob_tcp_peer_t* peer, int sd,
                                         "%s connect ack received error %s from %s",
                                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                         strerror(opal_socket_errno),
-                                        (NULL == peer) ? "UNKNOWN" : ORTE_NAME_PRINT(&(peer->name)));
+                                        ORTE_NAME_PRINT(&(peer->name)));
                     return false;
                 } else {
                     opal_output(0,
                                 "%s tcp_peer_recv_blocking: "
                                 "recv() failed for %s: %s (%d)\n",
                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                (NULL == peer) ? "UNKNOWN" : ORTE_NAME_PRINT(&(peer->name)),
+                                ORTE_NAME_PRINT(&(peer->name)),
                                 strerror(opal_socket_errno),
                                 opal_socket_errno);
                     peer->state = MCA_OOB_TCP_FAILED;
