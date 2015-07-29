@@ -104,7 +104,7 @@ ompi_mtl_ofi_component_close(void)
 int
 ompi_mtl_ofi_progress_no_inline(void)
 {
-	ompi_mtl_ofi_progress();
+	return ompi_mtl_ofi_progress();
 }
 
 static mca_mtl_base_module_t*
