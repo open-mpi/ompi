@@ -302,7 +302,11 @@ static int allocate(orte_job_t *jdata, opal_list_t *nodes)
     if (NULL != node_cnt) {
         opal_argv_free(node_cnt);
     }
-
+#if OPAL_HAVE_HWLOC
+    if (NULL != topos) {
+        opal_argv_free(topos);
+    }
+#endif
     return ORTE_SUCCESS;
 
 error_silent:
