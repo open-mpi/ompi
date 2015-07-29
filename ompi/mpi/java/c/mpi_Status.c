@@ -109,6 +109,28 @@ JNIEXPORT jint JNICALL Java_mpi_Status_getElements(
     return count;
 }
 
+JNIEXPORT jint JNICALL Java_mpi_Status_setElements(
+        JNIEnv *env, jobject jthis, jint source, jint tag,
+        jint error, jint cancelled, jlong ucount, jlong jType, int count)
+{
+    MPI_Status stat;
+    getStatus(&stat, source, tag, error, cancelled, ucount);
+    MPI_Datatype datatype = (MPI_Datatype)jType;
+    int rc = MPI_Status_set_elements(&stat, datatype, count);
+    ompi_java_exceptionCheck(env, rc);
+    return stat._ucount;
+}
+
+JNIEXPORT void JNICALL Java_mpi_Status_setCancelled(
+        JNIEnv *env, jobject jthis, jint source, jint tag,
+        jint error, jint cancelled, jlong ucount, int flag)
+{
+    MPI_Status stat;
+    getStatus(&stat, source, tag, error, cancelled, ucount);
+    int rc = MPI_Status_set_cancelled(&stat, flag);
+    ompi_java_exceptionCheck(env, rc);
+}
+
 jobject ompi_java_status_new(JNIEnv *env, MPI_Status *status)
 {
     jlongArray jData = (*env)->NewLongArray(env, 6);

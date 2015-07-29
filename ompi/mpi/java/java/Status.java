@@ -138,6 +138,59 @@ public final class Status
 			int cancelled, long ucount, long datatype) throws MPIException;
 
 	/**
+	 * Sets the number of basic elements for this status object.
+	 * <p>Java binding of the MPI operation {@code MPI_STATUS_SET_ELEMENTS}.
+	 * @param datatype 	datatype used by receive operation
+	 * @param count		number of elements to associate with the status
+	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 */
+	public void setElements(Datatype datatype, int count) throws MPIException
+	{
+		MPI.check();
+		int  i = 0;
+		int  source    = (int)data[i++];
+		int  tag       = (int)data[i++];
+		int  error     = (int)data[i++];
+		int  cancelled = (int)data[i++];
+		long ucount    = data[i++];
+		data[4] = setElements(source, tag, error, cancelled, ucount, datatype.handle, count);
+	}
+
+	private native int setElements(
+			int source, int tag, int error,
+			int cancelled, long ucount, long datatype, int count) throws MPIException;
+	
+	/**
+	 * Sets the cancelled flag.
+	 * <p>Java binding of the MPI operation {@code MPI_STATUS_SET_CANCELLED}.
+	 * @param flag	if true indicates request was cancelled
+	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 */
+	public void setCancelled(boolean flag) throws MPIException
+	{
+		MPI.check();
+		int  i = 0;
+		int  source    = (int)data[i++];
+		int  tag       = (int)data[i++];
+		int  error     = (int)data[i++];
+		int  cancelled = (int)data[i++];
+		long ucount    = data[i++];
+		
+		if(flag) {
+			setCancelled(source, tag, error, cancelled, ucount, 1);
+			data[3] = 1;
+		} else {
+			setCancelled(source, tag, error, cancelled, ucount, 0);
+			data[3] = 0;
+		}
+		
+	}
+
+	private native void setCancelled(
+			int source, int tag, int error,
+			int cancelled, long ucount, int flag) throws MPIException;
+	
+	/**
 	 * Returns the "source" of message.
 	 * <p>Java binding of the MPI value {@code MPI_SOURCE}.
 	 * @return source of message
