@@ -40,6 +40,19 @@
  *	Accepts:	- same arguments as MPI_File_open()
  *	Returns:	- Success if new file handle
  */
+static void *alloc_lum()
+{
+  int v1, v3, join;
+
+  v1 = sizeof(struct lov_user_md_v1) +
+    LOV_MAX_STRIPE_COUNT * sizeof(struct lov_user_ost_data_v1);
+  v3 = sizeof(struct lov_user_md_v3) +
+    LOV_MAX_STRIPE_COUNT * sizeof(struct lov_user_ost_data_v1);
+
+  return malloc(MAX(v1, v3));
+}
+
+
 int
 mca_fs_lustre_file_open (struct ompi_communicator_t *comm,
                      char* filename,
@@ -97,7 +110,6 @@ mca_fs_lustre_file_open (struct ompi_communicator_t *comm,
         fs_lustre_stripe_width = mca_fs_lustre_stripe_width;
     }
 
-
     if ( (fs_lustre_stripe_size>0 || fs_lustre_stripe_width>0) &&
         (amode&O_CREAT) && (amode&O_RDWR)) {
         if (0 == fh->f_rank) {
@@ -121,6 +133,7 @@ mca_fs_lustre_file_open (struct ompi_communicator_t *comm,
 
     fh->fd = open (filename, amode, perm);
     if (fh->fd < 0) {
+        opal_output(1, "error opening file %s\n", filename);
         return OMPI_ERROR;
     }
 
@@ -128,17 +141,21 @@ mca_fs_lustre_file_open (struct ompi_communicator_t *comm,
         fh->f_stripe_size = mca_fs_lustre_stripe_size;
     }
     else {
-      lump = (struct lov_user_md  *) malloc (sizeof(struct lov_user_md));
+      lump = alloc_lum();
       if (NULL == lump ){
 	fprintf(stderr,"Cannot allocate memory for extracting stripe size\n");
 	return OMPI_ERROR;
       }
       rc = llapi_file_get_stripe(filename, lump);
       if (rc != 0) {
-	  fprintf(stderr, "get_stripe failed: %d (%s)\n",errno, strerror(errno));
+          opal_output(1, "get_stripe failed: %d (%s)\n", errno, strerror(errno));
 	  return OMPI_ERROR;
       }
       fh->f_stripe_size = lump->lmm_stripe_size;
+
+      //      if ( NULL != lump ) {
+      //	free ( lump );
+      //      }
     }
     return OMPI_SUCCESS;
 }
