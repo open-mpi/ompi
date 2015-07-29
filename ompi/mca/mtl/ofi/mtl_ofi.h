@@ -11,7 +11,6 @@
 #ifndef MTL_OFI_H_HAS_BEEN_INCLUDED
 #define MTL_OFI_H_HAS_BEEN_INCLUDED
 
-#include "ompi/mca/pml/pml.h"
 #include "ompi/mca/mtl/mtl.h"
 #include "ompi/mca/mtl/base/base.h"
 #include "opal/datatype/opal_convertor.h"
