@@ -121,7 +121,7 @@ JNIEXPORT jobject JNICALL Java_mpi_Status_getElementsX(
     ompi_java_exceptionCheck(env, rc);
 
 	return (*env)->NewObject(env, ompi_java.CountClass,
-		                             ompi_java.CountInit, (jlong)count);
+				ompi_java.CountInit, (jlong)count);
 }
 
 JNIEXPORT jint JNICALL Java_mpi_Status_setElements(
