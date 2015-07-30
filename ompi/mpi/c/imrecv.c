@@ -67,5 +67,5 @@ int MPI_Imrecv(void *buf, int count, MPI_Datatype type,
     OPAL_CR_ENTER_LIBRARY();
 
     rc = MCA_PML_CALL(imrecv(buf, count, type, message, request));
-    OMPI_ERRHANDLER_RETURN(rc, (*message)->comm, rc, FUNC_NAME);
+    OMPI_ERRHANDLER_RETURN(rc, comm, rc, FUNC_NAME);
 }
