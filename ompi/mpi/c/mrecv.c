@@ -75,5 +75,5 @@ int MPI_Mrecv(void *buf, int count, MPI_Datatype type,
         opal_memchecker_base_mem_undefined(&status->MPI_ERROR, sizeof(int));
     );
 
-    OMPI_ERRHANDLER_RETURN(rc, (*message)->comm, rc, FUNC_NAME);
+    OMPI_ERRHANDLER_RETURN(rc, comm, rc, FUNC_NAME);
 }
