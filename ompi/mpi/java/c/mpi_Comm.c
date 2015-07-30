@@ -1619,8 +1619,8 @@ JNIEXPORT void JNICALL Java_mpi_Comm_allToAllw(
 
 JNIEXPORT jlong JNICALL Java_mpi_Comm_iAllToAllw(
 		JNIEnv *env, jobject jthis, jlong jComm,
-				jobject sendBuf, jintArray sCount, jintArray sDispls, jlongArray sTypes,
-				jobject recvBuf, jintArray rCount, jintArray rDispls, jlongArray rTypes)
+		jobject sendBuf, jintArray sCount, jintArray sDispls, jlongArray sTypes,
+		jobject recvBuf, jintArray rCount, jintArray rDispls, jlongArray rTypes)
 {
 	MPI_Comm     comm  = (MPI_Comm)jComm;
 
