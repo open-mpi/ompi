@@ -102,7 +102,7 @@ protected Intracomm(long[] commRequest)
  * Duplicates this communicator.
  * <p>Java binding of {@code MPI_COMM_DUP}.
  * @return copy of this communicator
- * @throws MPIException
+ * @throws MPIException Signals that an MPI exception of some sort has occurred.
  */
 @Override public Intracomm dup() throws MPIException
 {
@@ -116,7 +116,7 @@ protected Intracomm(long[] commRequest)
  * <p>The new communicator can't be used before the operation completes.
  * The request object must be obtained calling {@link #getRequest}.
  * @return copy of this communicator
- * @throws MPIException
+ * @throws MPIException Signals that an MPI exception of some sort has occurred.
  */
 @Override public Intracomm iDup() throws MPIException
 {
@@ -131,7 +131,7 @@ protected Intracomm(long[] commRequest)
  * @param colour control of subset assignment
  * @param key    control of rank assignment
  * @return new communicator
- * @throws MPIException
+ * @throws MPIException Signals that an MPI exception of some sort has occurred.
  */
 public final Intracomm split(int colour, int key) throws MPIException
 {
@@ -149,7 +149,7 @@ private native long split(long comm, int colour, int key) throws MPIException;
  * @param key	    control of rank assignment
  * @param info		info argument
  * @return new communicator
- * @throws MPIException
+ * @throws MPIException Signals that an MPI exception of some sort has occurred.
  */
 public final Intracomm splitType(int splitType, int key, Info info) throws MPIException
 {
@@ -164,7 +164,7 @@ private native long splitType(long comm, int colour, int key, long info) throws 
  * <p>Java binding of the MPI operation {@code MPI_COMM_CREATE}.
  * @param group group which is a subset of the group of this communicator
  * @return new communicator
- * @throws MPIException
+ * @throws MPIException Signals that an MPI exception of some sort has occurred.
  */
 public final Intracomm create(Group group) throws MPIException
 {
@@ -191,7 +191,7 @@ private native long create(long comm, long group);
  * @param reorder {@code true}  if ranking may be reordered,
  *                {@code false} if not
  * @return new cartesian topology communicator
- * @throws MPIException
+ * @throws MPIException Signals that an MPI exception of some sort has occurred.
  */
 public final CartComm createCart(int[] dims, boolean[] periods, boolean reorder)
     throws MPIException
@@ -214,7 +214,7 @@ private native long createCart(
  * @param reorder {@code true} if ranking may be reordered,
  *                {@code false} if not
  * @return new graph topology communicator
- * @throws MPIException
+ * @throws MPIException Signals that an MPI exception of some sort has occurred.
  */
 public final GraphComm createGraph(int[] index, int[] edges, boolean reorder)
     throws MPIException
@@ -239,7 +239,7 @@ private native long createGraph(
  * @param info         hints on optimization and interpretation of weights
  * @param reorder      the process may be reordered (true) or not (false)
  * @return communicator with distributed graph topology
- * @throws MPIException 
+ * @throws MPIException Signals that an MPI exception of some sort has occurred.
  */
 public final GraphComm createDistGraph(
         int[] sources, int[] degrees, int[] destinations,
@@ -265,7 +265,7 @@ public final GraphComm createDistGraph(
  * @param info         hints on optimization and interpretation of weights
  * @param reorder      the process may be reordered (true) or not (false)
  * @return communicator with distributed graph topology
- * @throws MPIException 
+ * @throws MPIException Signals that an MPI exception of some sort has occurred.
  */
 public final GraphComm createDistGraph(
         int[] sources, int[] degrees, int[] destinations,
@@ -300,7 +300,7 @@ private native long createDistGraph(
  * @param info          hints on optimization and interpretation of weights
  * @param reorder       the process may be reordered (true) or not (false)
  * @return communicator with distributed graph topology
- * @throws MPIException 
+ * @throws MPIException Signals that an MPI exception of some sort has occurred.
  */
 public final GraphComm createDistGraphAdjacent(
         int[] sources, int[] sourceWeights,
@@ -328,7 +328,7 @@ public final GraphComm createDistGraphAdjacent(
  * @param info         hints on optimization and interpretation of weights
  * @param reorder      the process may be reordered (true) or not (false)
  * @return communicator with distributed graph topology
- * @throws MPIException 
+ * @throws MPIException Signals that an MPI exception of some sort has occurred.
  */
 public final GraphComm createDistGraphAdjacent(
         int[] sources, int[] destinations, Info info, boolean reorder)
@@ -355,7 +355,7 @@ private native long createDistGraphAdjacent(
  * @param count   number of items in input buffer
  * @param type    data type of each item in input buffer
  * @param op      reduce operation
- * @throws MPIException
+ * @throws MPIException Signals that an MPI exception of some sort has occurred.
  */
 public final void scan(Object sendbuf, Object recvbuf,
                        int count, Datatype type, Op op)
@@ -395,7 +395,7 @@ public final void scan(Object sendbuf, Object recvbuf,
  * @param count   number of items in input buffer
  * @param type    data type of each item in input buffer
  * @param op      reduce operation
- * @throws MPIException
+ * @throws MPIException Signals that an MPI exception of some sort has occurred.
  */
 public final void scan(Object recvbuf, int count, Datatype type, Op op)
     throws MPIException
@@ -430,7 +430,7 @@ private native void scan(
  * @param type    data type of each item in input buffer
  * @param op      reduce operation
  * @return communication request
- * @throws MPIException
+ * @throws MPIException Signals that an MPI exception of some sort has occurred.
  */
 public final Request iScan(Buffer sendbuf, Buffer recvbuf,
                            int count, Datatype type, Op op)
@@ -453,7 +453,7 @@ public final Request iScan(Buffer sendbuf, Buffer recvbuf,
  * @param type  data type of each item in buffer
  * @param op    reduce operation
  * @return communication request
- * @throws MPIException
+ * @throws MPIException Signals that an MPI exception of some sort has occurred.
  */
 public final Request iScan(Buffer buf, int count, Datatype type, Op op)
     throws MPIException
@@ -479,7 +479,7 @@ private native long iScan(
  * @param count   number of items in input buffer
  * @param type    data type of each item in input buffer
  * @param op      reduce operation
- * @throws MPIException
+ * @throws MPIException Signals that an MPI exception of some sort has occurred.
  */
 public final void exScan(Object sendbuf, Object recvbuf,
                          int count, Datatype type, Op op)
@@ -519,7 +519,7 @@ public final void exScan(Object sendbuf, Object recvbuf,
  * @param count number of items in input buffer
  * @param type  data type of each item in input buffer
  * @param op    reduce operation
- * @throws MPIException
+ * @throws MPIException Signals that an MPI exception of some sort has occurred.
  */
 public final void exScan(Object buf, int count, Datatype type, Op op)
     throws MPIException
@@ -554,7 +554,7 @@ private native void exScan(
  * @param type    data type of each item in input buffer
  * @param op      reduce operation
  * @return communication request
- * @throws MPIException
+ * @throws MPIException Signals that an MPI exception of some sort has occurred.
  */
 public final Request iExScan(Buffer sendbuf, Buffer recvbuf,
                              int count, Datatype type, Op op)
@@ -577,7 +577,7 @@ public final Request iExScan(Buffer sendbuf, Buffer recvbuf,
  * @param type  data type of each item in input buffer
  * @param op    reduce operation
  * @return communication request
- * @throws MPIException
+ * @throws MPIException Signals that an MPI exception of some sort has occurred.
  */
 public final Request iExScan(Buffer buf, int count, Datatype type, Op op)
     throws MPIException
@@ -598,7 +598,7 @@ private native long iExScan(
 /**
  * Java binding of {@code MPI_OPEN_PORT} using {@code MPI_INFO_NULL}.
  * @return port name
- * @throws MPIException
+ * @throws MPIException Signals that an MPI exception of some sort has occurred.
  */
 public static String openPort() throws MPIException
 {
@@ -610,7 +610,7 @@ public static String openPort() throws MPIException
  * Java binding of {@code MPI_OPEN_PORT}.
  * @param info implementation-specific information
  * @return port name
- * @throws MPIException
+ * @throws MPIException Signals that an MPI exception of some sort has occurred.
  */
 public static String openPort(Info info) throws MPIException
 {
@@ -623,7 +623,7 @@ private native static String openPort(long info) throws MPIException;
 /**
  * Java binding of {@code MPI_CLOSE_PORT}.
  * @param name port name
- * @throws MPIException
+ * @throws MPIException Signals that an MPI exception of some sort has occurred.
  */
 public static void closePort(String name) throws MPIException
 {
@@ -638,6 +638,7 @@ private native static void closePort_jni(String name) throws MPIException;
  * @param port port name
  * @param root rank in comm of root node
  * @return intercommunicator with client as remote group
+ * @throws MPIException Signals that an MPI exception of some sort has occurred.
  */
 public final Intercomm accept(String port, int root) throws MPIException
 {
@@ -651,7 +652,7 @@ public final Intercomm accept(String port, int root) throws MPIException
  * @param info implementation-specific information
  * @param root rank in comm of root node
  * @return intercommunicator with client as remote group
- * @throws MPIException
+ * @throws MPIException Signals that an MPI exception of some sort has occurred.
  */
 public final Intercomm accept(String port, Info info, int root)
     throws MPIException
@@ -668,7 +669,7 @@ private native long accept(long comm, String port, long info, int root)
  * @param port port name
  * @param root rank in comm of root node
  * @return intercommunicator with server as remote group
- * @throws MPIException
+ * @throws MPIException Signals that an MPI exception of some sort has occurred.
  */
 public final Intercomm connect(String port, int root) throws MPIException
 {
@@ -682,7 +683,7 @@ public final Intercomm connect(String port, int root) throws MPIException
  * @param info implementation-specific information
  * @param root rank in comm of root node
  * @return intercommunicator with server as remote group
- * @throws MPIException
+ * @throws MPIException Signals that an MPI exception of some sort has occurred.
  */
 public final Intercomm connect(String port, Info info, int root)
     throws MPIException
@@ -698,7 +699,7 @@ private native long connect(long comm, String port, long info, int root)
  * Java binding of {@code MPI_PUBLISH_NAME} using {@code MPI_INFO_NULL}.
  * @param service service name
  * @param port    port name
- * @throws MPIException
+ * @throws MPIException Signals that an MPI exception of some sort has occurred.
  */
 public static void publishName(String service, String port)
     throws MPIException
@@ -712,7 +713,7 @@ public static void publishName(String service, String port)
  * @param service service name
  * @param info    implementation-specific information
  * @param port    port name
- * @throws MPIException
+ * @throws MPIException Signals that an MPI exception of some sort has occurred.
  */
 public static void publishName(String service, Info info, String port)
     throws MPIException
@@ -728,7 +729,7 @@ private native static void publishName(String service, long info, String port)
  * Java binding of {@code MPI_UNPUBLISH_NAME} using {@code MPI_INFO_NULL}.
  * @param service service name
  * @param port    port name
- * @throws MPIException
+ * @throws MPIException Signals that an MPI exception of some sort has occurred.
  */
 public static void unpublishName(String service, String port)
     throws MPIException
@@ -742,7 +743,7 @@ public static void unpublishName(String service, String port)
  * @param service service name
  * @param info    implementation-specific information
  * @param port    port name
- * @throws MPIException
+ * @throws MPIException Signals that an MPI exception of some sort has occurred.
  */
 public static void unpublishName(String service, Info info, String port)
     throws MPIException
@@ -758,7 +759,7 @@ private native static void unpublishName(String service, long info, String port)
  * Java binding of {@code MPI_LOOKUP_NAME} using {@code MPI_INFO_NULL}.
  * @param service service name
  * @return port name
- * @throws MPIException
+ * @throws MPIException Signals that an MPI exception of some sort has occurred.
  */
 public static String lookupName(String service) throws MPIException
 {
@@ -771,7 +772,7 @@ public static String lookupName(String service) throws MPIException
  * @param service service name
  * @param info    mplementation-specific information
  * @return port name
- * @throws MPIException
+ * @throws MPIException Signals that an MPI exception of some sort has occurred.
  */
 public static String lookupName(String service, Info info) throws MPIException
 {
@@ -795,7 +796,7 @@ private native static String lookupName(String service, long info)
  * @param errcodes one code per process; if this parameter is null,
  *                 {@code MPI_ERRCODES_IGNORE} will be used.
  * @return intercommunicator between original group and the newly spawned group
- * @throws MPIException 
+ * @throws MPIException Signals that an MPI exception of some sort has occurred.
  */
 public final Intercomm spawn(String command, String[] argv, int maxprocs,
                              Info info, int root, int[] errcodes)
@@ -824,7 +825,7 @@ private native long spawn(long comm, String command, String[] argv,
  * @param errcodes one code per process; if this parameter is null,
  *                 {@code MPI_ERRCODES_IGNORE} will be used.
  * @return intercommunicator between original group and the newly spawned group
- * @throws MPIException 
+ * @throws MPIException Signals that an MPI exception of some sort has occurred.
  */
 public final Intercomm spawnMultiple(
         String[] commands, String[][] argv, int[] maxprocs,

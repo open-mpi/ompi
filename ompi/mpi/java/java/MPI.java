@@ -435,7 +435,7 @@ private static void initCommon() throws MPIException
  * <p>Java binding of the MPI operation {@code MPI_INIT}.
  * @param args arguments to the {@code main} method.
  * @return arguments
- * @throws MPIException
+ * @throws MPIException Signals that an MPI exception of some sort has occurred.
  */
 public static String[] Init(String[] args) throws MPIException
 {
@@ -455,7 +455,7 @@ private static native String [] Init_jni(String[] args);
  * @param args     arguments to the {@code main} method.
  * @param required desired level of thread support
  * @return provided level of thread support
- * @throws MPIException 
+ * @throws MPIException Signals that an MPI exception of some sort has occurred.
  */
 public static int InitThread(String[] args, int required) throws MPIException
 {
@@ -473,7 +473,7 @@ private static native int InitThread_jni(String[] args, int required)
 /**
  * Java binding of the MPI operation {@code MPI_QUERY_THREAD}.
  * @return provided level of thread support
- * @throws MPIException 
+ * @throws MPIException Signals that an MPI exception of some sort has occurred.
  */
 public static int queryThread() throws MPIException
 {
@@ -486,7 +486,7 @@ private static native int queryThread_jni() throws MPIException;
 /**
  * Java binding of the MPI operation {@code MPI_IS_THREAD_MAIN}.
  * @return true if it is the main thread
- * @throws MPIException 
+ * @throws MPIException Signals that an MPI exception of some sort has occurred.
  */
 public static boolean isThreadMain() throws MPIException
 {
@@ -499,7 +499,7 @@ private static native boolean isThreadMain_jni() throws MPIException;
 /**
  * Finalize MPI.
  * <p>Java binding of the MPI operation {@code MPI_FINALIZE}.
- * @throws MPIException
+ * @throws MPIException Signals that an MPI exception of some sort has occurred.
  */
 public static void Finalize() throws MPIException
 {
@@ -514,7 +514,7 @@ private static native void Finalize_jni() throws MPIException;
  * Returns an elapsed time on the calling processor.
  * <p>Java binding of the MPI operation {@code MPI_WTIME}.
  * @return time in seconds since an arbitrary time in the past.
- * @throws MPIException
+ * @throws MPIException Signals that an MPI exception of some sort has occurred.
  */
 public static double wtime() throws MPIException
 {
@@ -528,7 +528,7 @@ private static native double wtime_jni();
  * Returns resolution of timer.
  * <p>Java binding of the MPI operation {MPI_WTICK}.
  * @return resolution of {@code wtime} in seconds.
- * @throws MPIException
+ * @throws MPIException Signals that an MPI exception of some sort has occurred.
  */
 public static double wtick() throws MPIException
 {
@@ -542,7 +542,7 @@ private static native double wtick_jni();
  * Returns the name of the processor on which it is called.
  * <p>Java binding of the MPI operation {@code MPI_GET_PROCESSOR_NAME}.
  * @return A unique specifier for the actual node.
- * @throws MPIException
+ * @throws MPIException Signals that an MPI exception of some sort has occurred.
  */
 static public String getProcessorName() throws MPIException
 {
@@ -559,7 +559,7 @@ static private native int getProcessorName(byte[] buf);
  * <p>Java binding of the MPI operation {@code MPI_INITIALIZED}.
  * @return {@code true} if {@code Init} has been called,
  *         {@code false} otherwise.
- * @throws MPIException
+ * @throws MPIException Signals that an MPI exception of some sort has occurred.
  */
 static public native boolean isInitialized() throws MPIException;
 
@@ -568,7 +568,7 @@ static public native boolean isInitialized() throws MPIException;
  * <p>Java binding of the MPI operation {@code MPI_FINALIZED}.
  * @return {@code true} if {@code Finalize} has been called,
  *         {@code false} otherwise.
- * @throws MPIException
+ * @throws MPIException Signals that an MPI exception of some sort has occurred.
  */
 static public native boolean isFinalized() throws MPIException;
 
@@ -576,7 +576,7 @@ static public native boolean isFinalized() throws MPIException;
  * Attaches a user-provided buffer for sending.
  * <p>Java binding of the MPI operation {@code MPI_BUFFER_ATTACH}.
  * @param buffer initial buffer
- * @throws MPIException
+ * @throws MPIException Signals that an MPI exception of some sort has occurred.
  */
 static public void attachBuffer(byte[] buffer) throws MPIException
 {
@@ -591,7 +591,7 @@ static private native void attachBuffer_jni(byte[] buffer);
  * Removes an existing buffer (for use in sending).
  * <p>Java binding of the MPI operation {@code MPI_BUFFER_DETACH}.
  * @return initial buffer
- * @throws MPIException
+ * @throws MPIException Signals that an MPI exception of some sort has occurred.
  */
 static public byte[] detachBuffer() throws MPIException
 {
@@ -618,7 +618,7 @@ public static void pControl(int level, Object obj)
 
 /**
  * Check if MPI has been initialized and hasn't been finalized.
- * @throws MPIException
+ * @throws MPIException Signals that an MPI exception of some sort has occurred.
  */
 protected static void check() throws MPIException
 {
@@ -772,8 +772,8 @@ protected static void assertDirectBuffer(Buffer buf)
 
 /**
  * Asserts that buffers are direct.
- * @param sendbuf
- * @param recvbuf 
+ * @param sendbuf	The send buffer
+ * @param recvbuf	The receive buffer
  */
 protected static void assertDirectBuffer(Buffer sendbuf, Buffer recvbuf)
 {
