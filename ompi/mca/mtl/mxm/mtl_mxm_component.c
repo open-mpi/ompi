@@ -24,8 +24,11 @@
 #include <unistd.h>
 
 static int ompi_mtl_mxm_component_open(void);
+static int ompi_mtl_mxm_component_query(mca_base_module_t **module, int *priority);
 static int ompi_mtl_mxm_component_close(void);
 static int ompi_mtl_mxm_component_register(void);
+
+static int param_priority;
 
 int mca_mtl_mxm_output = -1;
 
@@ -42,14 +45,14 @@ mca_mtl_mxm_component_t mca_mtl_mxm_component = {
      */
     {
         MCA_MTL_BASE_VERSION_2_0_0,
-        "mxm", /* MCA component name */
-        OMPI_MAJOR_VERSION, /* MCA component major version */
-        OMPI_MINOR_VERSION, /* MCA component minor version */
-        OMPI_RELEASE_VERSION, /* MCA component release version */
-        ompi_mtl_mxm_component_open, /* component open */
-        ompi_mtl_mxm_component_close, /* component close */
-        NULL,
-        ompi_mtl_mxm_component_register
+        .mca_component_name = "mxm",
+        .mca_component_major_version = OMPI_MAJOR_VERSION,
+        .mca_component_minor_version = OMPI_MINOR_VERSION,
+        .mca_component_release_version = OMPI_RELEASE_VERSION,
+        .mca_open_component = ompi_mtl_mxm_component_open,
+        .mca_close_component = ompi_mtl_mxm_component_close,
+        .mca_query_component = ompi_mtl_mxm_component_query,
+        .mca_register_component_params = ompi_mtl_mxm_component_register,
     },
     {
         /* The component is not checkpoint ready */
@@ -85,6 +88,15 @@ static int ompi_mtl_mxm_component_register(void)
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &ompi_mtl_mxm.mxm_np);
+
+    param_priority = 100;
+    (void) mca_base_component_var_register (c,
+                                            "priority", "Priority of the MXM MTL component",
+                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                            OPAL_INFO_LVL_9,
+                                            MCA_BASE_VAR_SCOPE_READONLY,
+                                            &param_priority);
+
 
 #if MXM_API >= MXM_VERSION(3,1)
 {
@@ -203,6 +215,18 @@ static int ompi_mtl_mxm_component_open(void)
         return OPAL_ERR_NOT_AVAILABLE;
     }
 
+    return OMPI_SUCCESS;
+}
+
+static int ompi_mtl_mxm_component_query(mca_base_module_t **module, int *priority)
+{
+
+    /*
+     * if we get here it means that mxm is available so give high priority
+     */
+
+    *priority = param_priority;
+    *module = (mca_base_module_t *)&ompi_mtl_mxm.super;
     return OMPI_SUCCESS;
 }
 
