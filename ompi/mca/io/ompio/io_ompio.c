@@ -1053,6 +1053,7 @@ int ompi_io_ompio_set_aggregator_props (struct mca_io_ompio_file_t *fh,
     }
 
     fh->f_aggregator_index = 0;
+    fh->f_final_num_aggrs  = num_aggregators;
 
     return OMPI_SUCCESS;
    }
