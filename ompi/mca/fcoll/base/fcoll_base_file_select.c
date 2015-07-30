@@ -262,6 +262,9 @@ int mca_fcoll_base_query_table (struct mca_io_ompio_file_t *file, char *name)
             file->f_cc_size >= file->f_stripe_size) {
             return 1;
         }
+	if ( 2 >= (int)file->f_size ){
+	    return 1;
+	}
     }
     if (!strcmp (name, "dynamic")) {
         if ((int)file->f_cc_size < file->f_bytes_per_agg &&

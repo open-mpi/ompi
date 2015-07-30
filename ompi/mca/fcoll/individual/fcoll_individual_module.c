@@ -64,6 +64,9 @@ mca_fcoll_individual_component_file_query (mca_io_ompio_file_t *fh, int *priorit
         if (*priority < 50) {
             *priority = 50;
         }
+	if ( 2 >= fh->f_size ) {
+	    *priority = 100;
+	}
     }
 
     return &individual;
