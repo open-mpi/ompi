@@ -80,6 +80,9 @@ ompio_io_ompio_file_open (ompi_communicator_t *comm,
     int remote_arch;
     
 
+    ompio_fh->f_iov_type = MPI_DATATYPE_NULL;
+    ompio_fh->f_comm     = MPI_COMM_NULL;
+
     if ( ((amode&MPI_MODE_RDONLY)?1:0) + ((amode&MPI_MODE_RDWR)?1:0) +
 	 ((amode&MPI_MODE_WRONLY)?1:0) != 1 ) {
 	return MPI_ERR_AMODE;
@@ -94,7 +97,6 @@ ompio_io_ompio_file_open (ompi_communicator_t *comm,
 	return MPI_ERR_AMODE;
     }
 
-    ompio_fh->f_iov_type = MPI_DATATYPE_NULL;
     ompio_fh->f_rank     = ompi_comm_rank (comm);
     ompio_fh->f_size     = ompi_comm_size (comm);
     remote_arch = opal_local_arch;
@@ -319,14 +321,27 @@ ompio_io_ompio_file_close (mca_io_ompio_file_t *ompio_fh)
     if( NULL != ompio_fh->f_sharedfp ){
         ret = ompio_fh->f_sharedfp->sharedfp_file_close(ompio_fh);
     }
-    ret = ompio_fh->f_fs->fs_file_close (ompio_fh);
+    if ( NULL != ompio_fh->f_fs ) {
+	/* The pointer might not be set if file_close() is 
+	** called from the file destructor in case of an error
+	** during file_open() 
+	*/
+	ret = ompio_fh->f_fs->fs_file_close (ompio_fh);
+    }
     if ( delete_flag && 0 == ompio_fh->f_rank ) {
         mca_io_ompio_file_delete ( ompio_fh->f_filename, MPI_INFO_NULL );
     }
 
-    mca_fs_base_file_unselect (ompio_fh);
-    mca_fbtl_base_file_unselect (ompio_fh);
-    mca_fcoll_base_file_unselect (ompio_fh);
+    if ( NULL != ompio_fh->f_fs ) {
+	mca_fs_base_file_unselect (ompio_fh);
+    }
+    if ( NULL != ompio_fh->f_fbtl ) {
+	mca_fbtl_base_file_unselect (ompio_fh);
+    }
+
+    if ( NULL != ompio_fh->f_fcoll ) {
+	mca_fcoll_base_file_unselect (ompio_fh);
+    }
     if ( NULL != ompio_fh->f_sharedfp)  {
 	mca_sharedfp_base_file_unselect (ompio_fh);
     }
@@ -379,8 +394,9 @@ int mca_io_ompio_file_delete (char *filename,
 
     ret = unlink(filename);
 
-    if (0 > ret) {
-        return OMPI_ERROR;
+    if (0 > ret && ENOENT != errno ) {
+	opal_output (1, "errno = %d %s\n", errno, strerror(errno));
+        return MPI_ERR_ACCESS;
     }
 
     return OMPI_SUCCESS;

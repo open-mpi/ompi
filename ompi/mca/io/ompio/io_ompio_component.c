@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2014 University of Houston. All rights reserved.
+ * Copyright (c) 2008-2015 University of Houston. All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
@@ -136,7 +136,7 @@ static int register_component(void)
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &priority_param);
-    delete_priority_param = 10;
+    delete_priority_param = 30;
     (void) mca_base_component_var_register(&mca_io_ompio_component.io_version,
                                            "delete_priority", "Delete priority of the io ompio component",
                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
@@ -257,7 +257,7 @@ file_query(struct ompi_file_t *file,
     /* Allocate a space for this module to hang private data (e.g.,
        the OMPIO file handle) */
 
-    data = malloc(sizeof(mca_io_ompio_data_t));
+    data = calloc(1, sizeof(mca_io_ompio_data_t));
     if (NULL == data) {
         return NULL;
     }
