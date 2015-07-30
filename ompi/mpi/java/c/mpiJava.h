@@ -33,6 +33,8 @@ typedef struct {
     jmethodID ShiftParmsInit;
     jclass    VersionClass;
     jmethodID VersionInit;
+    jclass    CountClass;
+    jmethodID CountInit;
     jclass    GraphParmsClass;
     jmethodID GraphParmsInit;
     jclass    DistGraphNeighborsClass;

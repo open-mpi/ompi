@@ -205,6 +205,7 @@ static void deleteClasses(JNIEnv *env)
     (*env)->DeleteGlobalRef(env, ompi_java.CartParmsClass);
     (*env)->DeleteGlobalRef(env, ompi_java.ShiftParmsClass);
     (*env)->DeleteGlobalRef(env, ompi_java.VersionClass);
+    (*env)->DeleteGlobalRef(env, ompi_java.CountClass);
     (*env)->DeleteGlobalRef(env, ompi_java.GraphParmsClass);
     (*env)->DeleteGlobalRef(env, ompi_java.DistGraphNeighborsClass);
     (*env)->DeleteGlobalRef(env, ompi_java.StatusClass);
