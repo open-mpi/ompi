@@ -3,8 +3,6 @@
 ! Copyright (c) 2009-2014 Cisco Systems, Inc.  All rights reserved.
 ! Copyright (c) 2009-2012 Los Alamos National Security, LLC.
 !                         All rights reserved.
-! Copyright (c) 2015      Research Organization for Information Science
-!                         and Technology (RIST). All rights reserved.
 ! $COPYRIGHT$
 !
 ! This file creates mappings between MPI C types (e.g., MPI_Comm) and
@@ -166,7 +164,15 @@ module mpi_f08_types
 
 !... Special sentinel constants
 !------------------------------
-#include "mpif-f08-types.h"
+  type(MPI_STATUS), bind(C, name="mpi_fortran_status_ignore") :: MPI_STATUS_IGNORE
+  type(MPI_STATUS), bind(C, name="mpi_fortran_statuses_ignore") :: MPI_STATUSES_IGNORE(1)
+  integer, bind(C, name="mpi_fortran_bottom")          :: MPI_BOTTOM
+  integer, bind(C, name="mpi_fortran_in_place")        :: MPI_IN_PLACE
+  integer, bind(C, name="mpi_fortran_argv_null")       :: MPI_ARGV_NULL
+  integer, bind(C, name="mpi_fortran_argvs_null")      :: MPI_ARGVS_NULL
+  integer, bind(C, name="mpi_fortran_errcodes_ignore") :: MPI_ERRCODES_IGNORE
+  integer, bind(C, name="mpi_fortran_unweighted")      :: MPI_UNWEIGHTED
+  integer, bind(C, name="mpi_fortran_weights_empty")   :: MPI_WEIGHTS_EMPTY
 
 !... Interfaces for operators with handles
 !-----------------------------------------
