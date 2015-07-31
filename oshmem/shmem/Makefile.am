@@ -7,6 +7,8 @@
 # $HEADER$
 #
 
+EXTRA_DIST =
+
 headers += shmem/shmem_api_logger.h \
            shmem/shmem_lock.h
 
