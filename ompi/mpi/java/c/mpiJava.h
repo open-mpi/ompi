@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -132,6 +134,11 @@ void ompi_java_releaseIntArray(
         JNIEnv *env, jintArray array, jint *jptr, int *cptr);
 void ompi_java_forgetIntArray(
         JNIEnv *env, jintArray array, jint *jptr, int *cptr);
+
+void ompi_java_getDatatypeArray(
+        JNIEnv *env, jlongArray array, jlong **jptr, MPI_Datatype **cptr);
+void ompi_java_forgetDatatypeArray(
+        JNIEnv *env, jlongArray array, jlong *jptr, MPI_Datatype *cptr);
 
 void ompi_java_getBooleanArray(
         JNIEnv *env, jbooleanArray array, jboolean **jptr, int **cptr);

@@ -1581,6 +1581,82 @@ JNIEXPORT jlong JNICALL Java_mpi_Comm_iAllToAllv(
     return (jlong)request;
 }
 
+JNIEXPORT void JNICALL Java_mpi_Comm_allToAllw(
+		JNIEnv *env, jobject jthis, jlong jComm,
+		jobject sendBuf, jintArray sCount, jintArray sDispls, jlongArray sTypes,
+		jobject recvBuf, jintArray rCount, jintArray rDispls, jlongArray rTypes)
+{
+	MPI_Comm     comm  = (MPI_Comm)jComm;
+
+	jlong* jSTypes, *jRTypes;
+	MPI_Datatype *cSTypes, *cRTypes;
+
+	ompi_java_getDatatypeArray(env, sTypes, &jSTypes, &cSTypes);
+	ompi_java_getDatatypeArray(env, rTypes, &jRTypes, &cRTypes);
+
+	jint *jSCount, *jRCount, *jSDispls, *jRDispls;
+	int  *cSCount, *cRCount, *cSDispls, *cRDispls;
+	ompi_java_getIntArray(env, sCount,  &jSCount,  &cSCount);
+	ompi_java_getIntArray(env, rCount,  &jRCount,  &cRCount);
+	ompi_java_getIntArray(env, sDispls, &jSDispls, &cSDispls);
+	ompi_java_getIntArray(env, rDispls, &jRDispls, &cRDispls);
+
+	void *sPtr = ompi_java_getDirectBufferAddress(env, sendBuf),
+	     *rPtr = ompi_java_getDirectBufferAddress(env, recvBuf);
+
+	int rc = MPI_Alltoallw(
+			sPtr, cSCount, cSDispls, cSTypes,
+			rPtr, cRCount, cRDispls, cRTypes, comm);
+
+	ompi_java_exceptionCheck(env, rc);
+	ompi_java_forgetIntArray(env, sCount,  jSCount,  cSCount);
+	ompi_java_forgetIntArray(env, rCount,  jRCount,  cRCount);
+	ompi_java_forgetIntArray(env, sDispls, jSDispls, cSDispls);
+	ompi_java_forgetIntArray(env, rDispls, jRDispls, cRDispls);
+	ompi_java_forgetDatatypeArray(env, sTypes, jSTypes, cSTypes);
+	ompi_java_forgetDatatypeArray(env, rTypes, jRTypes, cRTypes);
+}
+
+JNIEXPORT jlong JNICALL Java_mpi_Comm_iAllToAllw(
+		JNIEnv *env, jobject jthis, jlong jComm,
+		jobject sendBuf, jintArray sCount, jintArray sDispls, jlongArray sTypes,
+		jobject recvBuf, jintArray rCount, jintArray rDispls, jlongArray rTypes)
+{
+	MPI_Comm     comm  = (MPI_Comm)jComm;
+
+	jlong* jSTypes, *jRTypes;
+	MPI_Datatype *cSTypes, *cRTypes;
+
+	ompi_java_getDatatypeArray(env, sTypes, &jSTypes, &cSTypes);
+	ompi_java_getDatatypeArray(env, rTypes, &jRTypes, &cRTypes);
+
+	jint *jSCount, *jRCount, *jSDispls, *jRDispls;
+	int  *cSCount, *cRCount, *cSDispls, *cRDispls;
+	ompi_java_getIntArray(env, sCount,  &jSCount,  &cSCount);
+	ompi_java_getIntArray(env, rCount,  &jRCount,  &cRCount);
+	ompi_java_getIntArray(env, sDispls, &jSDispls, &cSDispls);
+	ompi_java_getIntArray(env, rDispls, &jRDispls, &cRDispls);
+
+	void *sPtr = ompi_java_getDirectBufferAddress(env, sendBuf),
+	     *rPtr = ompi_java_getDirectBufferAddress(env, recvBuf);
+
+	MPI_Request request;
+
+	int rc = MPI_Ialltoallw(
+			sPtr, cSCount, cSDispls, cSTypes,
+			rPtr, cRCount, cRDispls, cRTypes, comm, &request);
+
+	ompi_java_exceptionCheck(env, rc);
+	ompi_java_forgetIntArray(env, sCount,  jSCount,  cSCount);
+	ompi_java_forgetIntArray(env, rCount,  jRCount,  cRCount);
+	ompi_java_forgetIntArray(env, sDispls, jSDispls, cSDispls);
+	ompi_java_forgetIntArray(env, rDispls, jRDispls, cRDispls);
+	ompi_java_forgetDatatypeArray(env, sTypes, jSTypes, cSTypes);
+	ompi_java_forgetDatatypeArray(env, rTypes, jRTypes, cRTypes);
+
+	return (jlong)request;
+}
+
 JNIEXPORT void JNICALL Java_mpi_Comm_neighborAllGather(
         JNIEnv *env, jobject jthis, jlong jComm,
         jobject sBuf, jboolean sdb, jint sOff,
