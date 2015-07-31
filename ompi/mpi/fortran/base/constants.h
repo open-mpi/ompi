@@ -131,9 +131,9 @@ DECL(int *, MPI_FORTRAN_STATUSES_IGNORE, mpi_fortran_statuses_ignore,
  * Generation 2 / v1.8.x, where x>=8: OMPI_IS_FORTRAN_foo() will
  * *always* check all four symbols.
  *
- * Generation 3 / starting with v1.10.0: OMPI_IS_FORTRAN_foo() will
- * check just the one symbol that is relevant for your
- * compiler/platform (based on what configure figured out).
+ * Generation 3 / starting with v2.x: OMPI_IS_FORTRAN_foo() will check
+ * just the one symbol that is relevant for your compiler/platform
+ * (based on what configure figured out).
  *
  *********
  *
