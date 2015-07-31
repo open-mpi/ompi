@@ -59,6 +59,12 @@ EXTRA_DIST = \
         platform/lanl/cray_xe6/optimized-common \
         platform/lanl/cray_xe6/optimized-lustre \
         platform/lanl/cray_xe6/optimized-lustre.conf \
+        platform/lanl/cray_xc_cle5.2/debug-common \
+        platform/lanl/cray_xc_cle5.2/debug-lustre \
+        platform/lanl/cray_xc_cle5.2/debug-lustre.conf \
+        platform/lanl/cray_xc_cle5.2/optimized-common \
+        platform/lanl/cray_xc_cle5.2/optimized-lustre \
+        platform/lanl/cray_xc_cle5.2/optimized-lustre.conf \
         platform/lanl/toss/debug-common \
         platform/lanl/toss/debug-nopanasas \
         platform/lanl/toss/debug-nopanasas.conf \
