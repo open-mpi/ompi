@@ -292,6 +292,17 @@ static void launch_daemons(int fd, short args, void *cbdata)
     opal_argv_append(&argc, &argv, "1");
     opal_argv_append(&argc, &argv, "-cc");
     opal_argv_append(&argc, &argv, "none");
+    /*
+     * stuff below is necessary in the event that we've sadly configured Open MPI with --disable-dlopen,
+     * which results in the orted's being linked against all kinds of unnecessary cray libraries, including
+     * the cray pmi, which has a ctor that cause bad things if run when using mpirun/orted based launch.
+     *
+     * Code below adds env. variables for aprun to forward which suppresses the action of the Cray PMI ctor.
+     */
+    opal_argv_append(&argc, &argv, "-e");
+    opal_argv_append(&argc, &argv, "PMI_NO_PREINITIALIZE=1");
+    opal_argv_append(&argc, &argv, "-e");
+    opal_argv_append(&argc, &argv, "PMI_NO_FORK=1");
 
     /* create nodelist */
     nodelist_argv = NULL;
