@@ -53,6 +53,16 @@ included in the vX.Y.Z section and be denoted as:
    (** also appeared: A.B.C)  -- indicating that this item was previously
                                  included in release version vA.B.C.
 
+1.8.8
+-----
+
+- Fix a segfault in MPI_Finalize caused by misordering
+  of PML vs comm shutdown
+- Update sentinels-checking Fortran macros
+- Set default values for OSHMEM
+- Fix an invalid memory access in mrecv & imrecv
+
+
 1.8.7
 ----
 ** NOTE: v1.8.7 technically breaks ABI with prior versions
