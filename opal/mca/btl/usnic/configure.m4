@@ -47,7 +47,7 @@ AC_DEFUN([MCA_opal_btl_usnic_CONFIG],[
 ])
 
 AC_DEFUN([_OPAL_BTL_USNIC_DO_CONFIG],[
-    OPAL_VAR_SCOPE_PUSH([unit_tests opal_btl_usnic_CPPFLAGS_save])
+    OPAL_VAR_SCOPE_PUSH([unit_tests])
 
     # see README.test for information about this scheme
     AC_ARG_ENABLE([opal-btl-usnic-unit-tests],
