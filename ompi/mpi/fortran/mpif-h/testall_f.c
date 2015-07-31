@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -107,11 +109,10 @@ void ompi_testall_f(MPI_Fint *count, MPI_Fint *array_of_requests, ompi_fortran_l
 
     /* All Fortran Compilers have FALSE == 0, so just check for any
        nonzero value (because TRUE is not always == 1) */
-    if (MPI_SUCCESS == c_ierr && *flag) {
+    if (MPI_SUCCESS == c_ierr && !OMPI_IS_FORTRAN_STATUSES_IGNORE(array_of_statuses) && *flag) {
         for (i = 0; i < OMPI_FINT_2_INT(*count); ++i) {
             array_of_requests[i] = c_req[i]->req_f_to_c_index;
-            if (!OMPI_IS_FORTRAN_STATUSES_IGNORE(array_of_statuses) &&
-                !OMPI_IS_FORTRAN_STATUS_IGNORE(&array_of_statuses[i])) {
+            if (!OMPI_IS_FORTRAN_STATUS_IGNORE(&array_of_statuses[i])) {
                 MPI_Status_c2f(&c_status[i], &array_of_statuses[i * (sizeof(MPI_Status) / sizeof(int))]);
             }
         }
