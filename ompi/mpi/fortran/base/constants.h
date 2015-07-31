@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Inria.  All rights reserved.
  * Copyright (c) 2011-2012 Universite Bordeaux 1
  * $COPYRIGHT$
@@ -116,10 +116,73 @@ DECL(int *, MPI_FORTRAN_STATUSES_IGNORE, mpi_fortran_statuses_ignore,
      mpi_fortran_statuses_ignore_, mpi_fortran_statuses_ignore__);
 
 /*
- * Create macros to do the checking.  Only check for all 4 if we have
- * weak symbols.  Otherwise, just check for the one relevant symbol.
+ * Create macros to do the checking.
+ *
+ *********
+ *
+ * These macros have had (at least) 3 generations:
+ *
+ * Generation 1 / prior to v1.8.8: if you have weak symbols on your
+ * platform, the OMPI_IS_FORTRAN_foo() macro would check all four
+ * symbols (FOO, foo, foo_, and foo_).  But if you didn't have weak
+ * symbols, we had a different set of macros that would check for the
+ * one symbol that was relevant for your platform.
+ *
+ * Generation 2 / v1.8.x, where x>=8: OMPI_IS_FORTRAN_foo() will
+ * *always* check all four symbols.
+ *
+ * Generation 3 / starting with v2.x: OMPI_IS_FORTRAN_foo() will check
+ * just the one symbol that is relevant for your compiler/platform
+ * (based on what configure figured out).
+ *
+ *********
+ *
+ * The Gen3 change was made as a simplification: OMPI now only
+ * generates a single C symbol corresponding to each Fortran sentinel
+ * value (e.g., MPI_STATUSES_IGNORE) -- instead of always generating 4
+ * C symbols, and *one* of them will correspond to the Fortran
+ * sentinel.  At the expense of a little perl code to generate some
+ * code blocks, other code blocks got simpler and these "always check
+ * four symbol" macros went away.
+ *
+ * The Gen2 change was made because of a bug noticed in the
+ * v1.8.6/v1.8.7 timeframe:
+ * https://github.com/open-mpi/ompi/issues/739.  Basically: when
+ * there's no weak symbols (i.e., either --disable-weak-symbols is
+ * used, or when we compile on OS X, which has no weak symbol
+ * support), the mpif.h interface and mpi module continued to work
+ * fine.  For example, with gfortran 5.x on Linux or OS X, when you
+ * passed MPI_STATUSES_IGNORE from an mpif.h/mpi module subroutine, on
+ * the back end, it showed up as &mpi_fortran_statuses_ignore_, the
+ * OMPI_IS_FORTRAN_STATUSES_IGNORE would correctly identify it as
+ * MPI_STATUSES_IGNORE, and life was good.
  */
-#if OPAL_HAVE_WEAK_SYMBOLS
+/*
+ * However, we had a bug in the use-mpi-f08/mpi-f08-types.E90 file.
+ * Here's an example:
+ *
+ * type(MPI_STATUS), bind(C, name="mpi_fortran_statuses_ignore") :: MPI_STATUSES_IGNORE(1)
+ *
+ * Note that it BIND(C)'s to mpi_fortran_statuses_ignore -- note the
+ * lack of trailing underscore.  Hence, if you pass
+ * MPI_STATUSES_IGNORE from an mpi_f08 subroutine, it'll pass
+ * &mpi_fortran_statuses_ignore to C, and the
+ * OMPI_IS_FORTRAN_STATUSES_IGNORE macro would fail to identify it
+ * correctly.  Bad Things then happened.
+ *
+ * The minimum-distance fix for the v1.8.8 release was to simply
+ * always force comparisons to all four symbols.  Hence, regardless of
+ * whether we have weak symbols or not, we'll always check for all
+ * four symbols, and we'll always correctly identify all the Fortran
+ * sentinel values.
+ *
+ * This minimum-distance fix for v1.8.8 also means that there are no
+ * ABI implications (honestly, there may not have been any ABI
+ * implications with bringing the Gen3 change back to v1.8.8, but a)
+ * my head hurts just trying to think through the corner cases, and b)
+ * the Gen3 change was actually pretty large -- we didn't want such a
+ * large change right before the v1.8.8 release).
+ */
 #define OMPI_IS_FORTRAN_BOTTOM(addr) \
   (addr == (void*) &MPI_FORTRAN_BOTTOM || \
    addr == (void*) &mpi_fortran_bottom || \
@@ -165,88 +228,6 @@ DECL(int *, MPI_FORTRAN_STATUSES_IGNORE, mpi_fortran_statuses_ignore,
    addr == (void*) &mpi_fortran_statuses_ignore || \
    addr == (void*) &mpi_fortran_statuses_ignore_ || \
    addr == (void*) &mpi_fortran_statuses_ignore__)
-
-#elif OMPI_FORTRAN_CAPS
-#define OMPI_IS_FORTRAN_BOTTOM(addr) \
-  (addr == (void*) &MPI_FORTRAN_BOTTOM)
-#define OMPI_IS_FORTRAN_IN_PLACE(addr) \
-  (addr == (void*) &MPI_FORTRAN_IN_PLACE)
-#define OMPI_IS_FORTRAN_UNWEIGHTED(addr) \
-  (addr == (void*) &MPI_FORTRAN_UNWEIGHTED)
-#define OMPI_IS_FORTRAN_WEIGHTS_EMPTY(addr) \
-  (addr == (void*) &MPI_FORTRAN_WEIGHTS_EMPTY)
-#define OMPI_IS_FORTRAN_ARGV_NULL(addr) \
-  (addr == (void*) &MPI_FORTRAN_ARGV_NULL)
-#define OMPI_IS_FORTRAN_ARGVS_NULL(addr) \
-  (addr == (void*) &MPI_FORTRAN_ARGVS_NULL)
-#define OMPI_IS_FORTRAN_ERRCODES_IGNORE(addr) \
-  (addr == (void*) &MPI_FORTRAN_ERRCODES_IGNORE)
-#define OMPI_IS_FORTRAN_STATUS_IGNORE(addr) \
-  (addr == (void*) &MPI_FORTRAN_STATUS_IGNORE)
-#define OMPI_IS_FORTRAN_STATUSES_IGNORE(addr) \
-  (addr == (void*) &MPI_FORTRAN_STATUSES_IGNORE)
-
-#elif OMPI_FORTRAN_PLAIN
-#define OMPI_IS_FORTRAN_BOTTOM(addr) \
-   (addr == (void*) &mpi_fortran_bottom)
-#define OMPI_IS_FORTRAN_IN_PLACE(addr) \
-   (addr == (void*) &mpi_fortran_in_place)
-#define OMPI_IS_FORTRAN_UNWEIGHTED(addr) \
-   (addr == (void*) &mpi_fortran_unweighted)
-#define OMPI_IS_FORTRAN_WEIGHTS_EMPTY(addr) \
-   (addr == (void*) &mpi_fortran_weights_empty)
-#define OMPI_IS_FORTRAN_ARGV_NULL(addr) \
-   (addr == (void*) &mpi_fortran_argv_null)
-#define OMPI_IS_FORTRAN_ARGVS_NULL(addr) \
-   (addr == (void*) &mpi_fortran_argvs_null)
-#define OMPI_IS_FORTRAN_ERRCODES_IGNORE(addr) \
-   (addr == (void*) &mpi_fortran_errcodes_ignore)
-#define OMPI_IS_FORTRAN_STATUS_IGNORE(addr) \
-   (addr == (void*) &mpi_fortran_status_ignore)
-#define OMPI_IS_FORTRAN_STATUSES_IGNORE(addr) \
-   (addr == (void*) &mpi_fortran_statuses_ignore)
-
-#elif OMPI_FORTRAN_SINGLE_UNDERSCORE
-#define OMPI_IS_FORTRAN_BOTTOM(addr) \
-   (addr == (void*) &mpi_fortran_bottom_)
-#define OMPI_IS_FORTRAN_IN_PLACE(addr) \
-   (addr == (void*) &mpi_fortran_in_place_)
-#define OMPI_IS_FORTRAN_UNWEIGHTED(addr) \
-   (addr == (void*) &mpi_fortran_unweighted_)
-#define OMPI_IS_FORTRAN_WEIGHTS_EMPTY(addr) \
-   (addr == (void*) &mpi_fortran_weights_empty_)
-#define OMPI_IS_FORTRAN_ARGV_NULL(addr) \
-   (addr == (void*) &mpi_fortran_argv_null_)
-#define OMPI_IS_FORTRAN_ARGVS_NULL(addr) \
-   (addr == (void*) &mpi_fortran_argvs_null_)
-#define OMPI_IS_FORTRAN_ERRCODES_IGNORE(addr) \
-   (addr == (void*) &mpi_fortran_errcodes_ignore_)
-#define OMPI_IS_FORTRAN_STATUS_IGNORE(addr) \
-   (addr == (void*) &mpi_fortran_status_ignore_)
-#define OMPI_IS_FORTRAN_STATUSES_IGNORE(addr) \
-   (addr == (void*) &mpi_fortran_statuses_ignore_)
-
-#else
-#define OMPI_IS_FORTRAN_BOTTOM(addr) \
-   (addr == (void*) &mpi_fortran_bottom__)
-#define OMPI_IS_FORTRAN_IN_PLACE(addr) \
-   (addr == (void*) &mpi_fortran_in_place__)
-#define OMPI_IS_FORTRAN_UNWEIGHTED(addr) \
-   (addr == (void*) &mpi_fortran_unweighted__)
-#define OMPI_IS_FORTRAN_WEIGHTS_EMPTY(addr) \
-   (addr == (void*) &mpi_fortran_weights_empty__)
-#define OMPI_IS_FORTRAN_ARGV_NULL(addr) \
-   (addr == (void*) &mpi_fortran_argv_null__)
-#define OMPI_IS_FORTRAN_ARGVS_NULL(addr) \
-   (addr == (void*) &mpi_fortran_argvs_null__)
-#define OMPI_IS_FORTRAN_ERRCODES_IGNORE(addr) \
-   (addr == (void*) &mpi_fortran_errcodes_ignore__)
-#define OMPI_IS_FORTRAN_STATUS_IGNORE(addr) \
-   (addr == (void*) &mpi_fortran_status_ignore__)
-#define OMPI_IS_FORTRAN_STATUSES_IGNORE(addr) \
-   (addr == (void*) &mpi_fortran_statuses_ignore__)
-
-#endif /* weak / specific symbol type */
 
 /* Convert between Fortran and C MPI_BOTTOM */
 #define OMPI_F2C_BOTTOM(addr)      (OMPI_IS_FORTRAN_BOTTOM(addr) ? MPI_BOTTOM : (addr))
