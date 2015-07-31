@@ -102,6 +102,16 @@ Master (not on release branches yet)
   Xavier Besseron for pointing out the issue.
 
 
+1.8.8
+-----
+
+- Fix a segfault in MPI_Finalize caused by misordering
+  of PML vs comm shutdown
+- Update sentinels-checking Fortran macros
+- Set default values for OSHMEM
+- Fix an invalid memory access in mrecv & imrecv
+
+
 1.8.7
 ----
 ** NOTE: v1.8.7 technically breaks ABI with prior versions
