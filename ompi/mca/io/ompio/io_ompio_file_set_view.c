@@ -38,6 +38,7 @@
 #include "io_ompio.h"
 
 static OMPI_MPI_OFFSET_TYPE get_contiguous_chunk_size (mca_io_ompio_file_t *);
+extern ompi_datatype_t *mca_io_ompio_default_file_view;
 
 
 int mca_io_ompio_set_view_internal(mca_io_ompio_file_t *fh,
@@ -139,6 +140,23 @@ int mca_io_ompio_file_set_view (ompi_file_t *fp,
     data = (mca_io_ompio_data_t *) fp->f_io_selected_data;
     fh = &data->ompio_fh;
 
+    if ( fh->f_flags & OMPIO_FILE_VIEW_IS_SET ) {
+	if ( MPI_BYTE == etype && MPI_BYTE == filetype ) {
+	    /* this is the default file view that the user provides. If we also have the default file view set
+	    ** dont replace our optimized version  of the default file view with 
+            ** MPI_BYTE/MPI_BYTE, since the performance suffers terribly
+            ** if you do that.  Otherwise, pass the optimized version along, not the trivial version.    
+	    */
+	    if ( mca_io_ompio_default_file_view == fh->f_filetype ) {
+		/* don't do anything */
+		return OMPI_SUCCESS;
+	    }
+	    else {
+		filetype = mca_io_ompio_default_file_view;
+	    }
+	}		     
+    }
+
     if (NULL != fh->f_decoded_iov) {
         free (fh->f_decoded_iov);
         fh->f_decoded_iov = NULL;
@@ -186,7 +204,12 @@ int mca_io_ompio_file_get_view (struct ompi_file_t *fp,
 
     *disp = fh->f_disp;
     ompi_datatype_duplicate (fh->f_etype, etype);
-    ompi_datatype_duplicate (fh->f_filetype, filetype);
+    if ( mca_io_ompio_default_file_view == fh->f_filetype ) {
+	ompi_datatype_duplicate ( &ompi_mpi_byte.dt, filetype);
+    }
+    else {
+	ompi_datatype_duplicate (fh->f_filetype, filetype);
+    }
     strcpy (datarep, fh->f_datarep);
 
     return OMPI_SUCCESS;
