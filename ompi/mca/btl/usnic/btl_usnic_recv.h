@@ -23,12 +23,27 @@ void opal_btl_usnic_recv_call(opal_btl_usnic_module_t *module,
 static inline int
 opal_btl_usnic_post_recv_list(opal_btl_usnic_channel_t *channel)
 {
+    struct iovec iov;
+    struct fi_msg msg;
+    uint64_t flag;
     opal_btl_usnic_recv_segment_t *rseg;
     int rc;
 
+    msg.msg_iov = &iov;
+    msg.iov_count = 1;
     for (rseg = channel->repost_recv_head; NULL != rseg; rseg = rseg->rs_next) {
-        rc = fi_recv(channel->ep, rseg->rs_protocol_header,
-                     rseg->rs_len, NULL, FI_ADDR_UNSPEC, rseg);
+        msg.context = rseg;
+        iov.iov_base = rseg->rs_protocol_header;
+        iov.iov_len = rseg->rs_len;
+
+        ++channel->rx_post_cnt;
+        if (OPAL_UNLIKELY((channel->rx_post_cnt & 15) == 0)) {
+            flag = 0;
+        } else {
+            flag = FI_MORE;
+        }
+
+        rc = fi_recvmsg(channel->ep, &msg, flag);
         if (0 != rc) {
             return rc;
         }
