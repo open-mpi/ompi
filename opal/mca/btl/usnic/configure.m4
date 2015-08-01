@@ -47,7 +47,7 @@ AC_DEFUN([MCA_opal_btl_usnic_CONFIG],[
 ])
 
 AC_DEFUN([_OPAL_BTL_USNIC_DO_CONFIG],[
-    OPAL_VAR_SCOPE_PUSH([unit_tests opal_btl_usnic_CPPFLAGS_save])
+    OPAL_VAR_SCOPE_PUSH([unit_tests])
 
     # see README.test for information about this scheme
     AC_ARG_ENABLE([opal-btl-usnic-unit-tests],
@@ -100,6 +100,26 @@ AC_DEFUN([_OPAL_BTL_USNIC_DO_CONFIG],[
                  [opal_btl_usnic_happy=yes],
                  [opal_btl_usnic_happy=no])
            AC_MSG_RESULT([$opal_btl_usnic_happy])
+          ])
+
+    # The usnic BTL requires at least libfabric v1.1 (there was a
+    # critical bug in libfabric v1.0).
+    AS_IF([test "$opal_btl_usnic_happy" = "yes"],
+          [AC_MSG_CHECKING([whether libfabric is >= v1.1])
+           opal_btl_usnic_CPPFLAGS_save=$CPPFLAGS
+           CPPFLAGS="$opal_common_libfabric_CPPFLAGS $CPPFLAGS"
+           AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <rdma/fabric.h>]],
+[[
+#if !defined(FI_MAJOR_VERSION)
+#error your version of libfabric is too old
+#elif FI_VERSION(FI_MAJOR_VERSION, FI_MINOR_VERSION) < FI_VERSION(1, 1)
+#error your version of libfabric is too old
+#endif
+]])],
+                 [opal_btl_usnic_happy=yes],
+                 [opal_btl_usnic_happy=no])
+           AC_MSG_RESULT([$opal_btl_usnic_happy])
+           CPPFLAGS=$opal_btl_usnic_CPPFLAGS_save
           ])
 
     # Make sure we can find the libfabric usnic extensions header
