@@ -138,6 +138,29 @@ public final class Status
 			int cancelled, long ucount, long datatype) throws MPIException;
 
 	/**
+	 * Retrieves the number of basic elements from status.
+	 * <p>Java binding of the MPI operation {@code MPI_GET_ELEMENTS_X}.
+	 * @param datatype datatype used by receive operation
+	 * @return number of received basic elements
+	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 */
+	public Count getElementsX(Datatype datatype) throws MPIException
+	{
+		MPI.check();
+		int  i = 0;
+		int  source    = (int)data[i++];
+		int  tag       = (int)data[i++];
+		int  error     = (int)data[i++];
+		int  cancelled = (int)data[i++];
+		long ucount    = data[i++];
+		return getElementsX(source, tag, error, cancelled, ucount, datatype.handle);
+	}
+
+	private native Count getElementsX(
+			int source, int tag, int error,
+			int cancelled, long ucount, long datatype) throws MPIException;
+	
+	/**
 	 * Sets the number of basic elements for this status object.
 	 * <p>Java binding of the MPI operation {@code MPI_STATUS_SET_ELEMENTS}.
 	 * @param datatype 	datatype used by receive operation
@@ -159,6 +182,29 @@ public final class Status
 	private native int setElements(
 			int source, int tag, int error,
 			int cancelled, long ucount, long datatype, int count) throws MPIException;
+	
+	/**
+	 * Sets the number of basic elements for this status object.
+	 * <p>Java binding of the MPI operation {@code MPI_STATUS_SET_ELEMENTS_X}.
+	 * @param datatype 	datatype used by receive operation
+	 * @param count		number of elements to associate with the status
+	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
+	 */
+	public void setElementsX(Datatype datatype, Count count) throws MPIException
+	{
+		MPI.check();
+		int  i = 0;
+		int  source    = (int)data[i++];
+		int  tag       = (int)data[i++];
+		int  error     = (int)data[i++];
+		int  cancelled = (int)data[i++];
+		long ucount    = data[i++];
+		data[4] = setElementsX(source, tag, error, cancelled, ucount, datatype.handle, count.getCount());
+	}
+
+	private native long setElementsX(
+			int source, int tag, int error,
+			int cancelled, long ucount, long datatype, long count) throws MPIException;
 	
 	/**
 	 * Sets the cancelled flag.
