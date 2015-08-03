@@ -468,3 +468,25 @@ JNIEXPORT void JNICALL Java_mpi_Win_flushLocalAll(JNIEnv *env, jobject jthis, jl
     int rc = MPI_Win_flush_local_all((MPI_Win)win);
     ompi_java_exceptionCheck(env, rc);
 }
+
+JNIEXPORT void JNICALL Java_mpi_Win_setName(
+        JNIEnv *env, jobject jthis, jlong handle, jstring jname)
+{
+    const char *name = (*env)->GetStringUTFChars(env, jname, NULL);
+    int rc = MPI_Win_set_name((MPI_Comm)handle, (char*)name);
+    ompi_java_exceptionCheck(env, rc);
+    (*env)->ReleaseStringUTFChars(env, jname, name);
+}
+
+JNIEXPORT jstring JNICALL Java_mpi_Win_getName(
+        JNIEnv *env, jobject jthis, jlong handle)
+{
+    char name[MPI_MAX_OBJECT_NAME];
+    int len;
+    int rc = MPI_Win_get_name((MPI_Comm)handle, name, &len);
+
+    if(ompi_java_exceptionCheck(env, rc))
+        return NULL;
+
+    return (*env)->NewStringUTF(env, name);
+}

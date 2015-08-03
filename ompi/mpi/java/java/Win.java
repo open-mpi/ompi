@@ -870,4 +870,30 @@ public void flushLocalAll() throws MPIException
 
 private native void flushLocalAll(long win) throws MPIException;
 
+/**
+ * Java binding of the MPI operation {@code MPI_WIN_GET_NAME}.
+ * @return the name associated with this window
+ * @throws MPIException Signals that an MPI exception of some sort has occurred.
+ */
+public String getName() throws MPIException
+{
+	MPI.check();
+	return getName(handle);
+}
+
+private native String getName(long handle) throws MPIException;
+
+/**
+ * Java binding of the MPI operation {@code MPI_WIN_SET_NAME}.
+ * @param name	the name to associate with this window
+ * @throws MPIException Signals that an MPI exception of some sort has occurred.
+ */
+public void setName(String name) throws MPIException
+{
+	MPI.check();
+	setName(handle, name);
+}
+
+private native void setName(long handle, String name) throws MPIException;
+
 } // Win
