@@ -171,6 +171,18 @@ JNIEXPORT jobject JNICALL Java_mpi_Request_testStatus(
     return flag ? ompi_java_status_new(env, &status) : NULL;
 }
 
+JNIEXPORT jobject JNICALL Java_mpi_Request_getStatus(
+        JNIEnv *env, jobject jthis, jlong handle)
+{
+    MPI_Request req = (MPI_Request)handle;
+    int flag;
+    MPI_Status status;
+    int rc = MPI_Request_get_status(req, &flag, &status);
+    ompi_java_exceptionCheck(env, rc);
+    (*env)->SetLongField(env, jthis, ompi_java.ReqHandle, (jlong)req);
+    return flag ? ompi_java_status_new(env, &status) : NULL;
+}
+
 JNIEXPORT jboolean JNICALL Java_mpi_Request_test(
         JNIEnv *env, jobject jthis, jlong handle)
 {
