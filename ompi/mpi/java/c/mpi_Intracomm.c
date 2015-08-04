@@ -88,6 +88,15 @@ JNIEXPORT jlong JNICALL Java_mpi_Intracomm_create(
     return (jlong)newcomm;
 }
 
+JNIEXPORT jlong JNICALL Java_mpi_Intracomm_createGroup(
+        JNIEnv *env, jobject jthis, jlong comm, jlong group, int tag)
+{
+    MPI_Comm newcomm;
+    int rc = MPI_Comm_create_group((MPI_Comm)comm, (MPI_Group)group, tag, &newcomm);
+    ompi_java_exceptionCheck(env, rc);
+    return (jlong)newcomm;
+}
+
 JNIEXPORT jlong JNICALL Java_mpi_Intracomm_createCart(
         JNIEnv *env, jobject jthis, jlong comm,
         jintArray dims, jbooleanArray periods, jboolean reorder)
