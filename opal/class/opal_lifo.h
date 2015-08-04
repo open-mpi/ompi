@@ -187,20 +187,22 @@ static inline opal_list_item_t *opal_lifo_pop_atomic (opal_lifo_t* lifo)
 {
     opal_list_item_t *item;
     while ((item = (opal_list_item_t *) lifo->opal_lifo_head.data.item) != &lifo->opal_lifo_ghost) {
-        opal_atomic_rmb();
-
         /* ensure it is safe to pop the head */
         if (opal_atomic_swap_32((volatile int32_t *) &item->item_free, 1)) {
             continue;
         }
+
+        opal_atomic_wmb ();
 
         /* try to swap out the head pointer */
         if (opal_atomic_cmpset_ptr (&lifo->opal_lifo_head.data.item, item,
                                    (void *) item->opal_list_next)) {
             break;
         }
+
         /* NTH: don't need another atomic here */
         item->item_free = 0;
+
         /* Do some kind of pause to release the bus */
     }
 
