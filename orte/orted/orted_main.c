@@ -64,6 +64,7 @@
 #include "opal/util/daemon_init.h"
 #include "opal/dss/dss.h"
 #include "opal/mca/hwloc/hwloc.h"
+#include "opal/mca/pmix/pmix.h"
 
 #include "orte/util/show_help.h"
 #include "orte/util/proc_info.h"
@@ -600,7 +601,7 @@ int orte_daemon(int argc, char *argv[])
 
         /* create a string that contains our uri + sysinfo + PMIx server URI */
         orte_util_convert_sysinfo_to_string(&sysinfo, orte_local_cpu_type, orte_local_cpu_model);
-        asprintf(&tmp, "%s[%s]%s", orte_process_info.my_daemon_uri, sysinfo, pmix_server_uri);
+        asprintf(&tmp, "%s[%s]%s", orte_process_info.my_daemon_uri, sysinfo, opal_pmix.server_get_addr());
 	free(sysinfo);
 
         /* pass that info to the singleton */

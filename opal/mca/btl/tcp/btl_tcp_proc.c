@@ -11,10 +11,10 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2010 Oracle and/or its affiliates.  All rights reserved
- * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
+ * Copyright (c) 2013-2015 Intel, Inc. All rights reserved
  * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -133,7 +133,7 @@ mca_btl_tcp_proc_t* mca_btl_tcp_proc_create(opal_proc_t* proc)
 
     /* lookup tcp parameters exported by this proc */
     OPAL_MODEX_RECV(rc, &mca_btl_tcp_component.super.btl_version,
-                    proc, (uint8_t**)&btl_proc->proc_addrs, &size);
+                    &proc->proc_name, (char**)&btl_proc->proc_addrs, &size);
     if(rc != OPAL_SUCCESS) {
         if(OPAL_ERR_NOT_FOUND != rc)
             BTL_ERROR(("opal_modex_recv: failed with return value=%d", rc));

@@ -156,24 +156,6 @@ static int allgather(orte_grpcomm_coll_t *coll,
             OBJ_RELEASE(relay);
             return rc;
         }
-        /* pack the number of procs involved in the collective
-         * so the recipients can unpack any collected data */
-        if (1 == coll->sig->sz) {
-            /* get the job object for this entry */
-            if (NULL == (jdata = orte_get_job_data_object(coll->sig->signature[0].jobid))) {
-                ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-                OBJ_RELEASE(relay);
-                return ORTE_ERR_NOT_FOUND;
-            }
-            nprocs = jdata->num_procs;
-        } else {
-            nprocs = coll->sig->sz;
-        }
-        if (OPAL_SUCCESS != (rc = opal_dss.pack(relay, &nprocs, 1, OPAL_UINT64))) {
-            ORTE_ERROR_LOG(rc);
-            OBJ_RELEASE(relay);
-            return rc;
-        }
         /* pass along the payload */
         opal_dss.copy_payload(relay, buf);
         orte_grpcomm.xcast(coll->sig, ORTE_RML_TAG_COLL_RELEASE, relay);
@@ -252,26 +234,6 @@ static void allgather_recv(int status, orte_process_name_t* sender,
          * would be an error if we timeout instead */
         ret = ORTE_SUCCESS;
         if (OPAL_SUCCESS != (rc = opal_dss.pack(reply, &ret, 1, OPAL_INT))) {
-            ORTE_ERROR_LOG(rc);
-            OBJ_RELEASE(reply);
-            OBJ_RELEASE(sig);
-            return;
-        }
-        /* pack the number of procs involved in the collective
-         * so the recipients can unpack any collected data */
-        if (1 == sig->sz) {
-            /* get the job object for this entry */
-            if (NULL == (jdata = orte_get_job_data_object(sig->signature[0].jobid))) {
-                ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-                OBJ_RELEASE(reply);
-                OBJ_RELEASE(sig);
-                return;
-            }
-            nprocs = jdata->num_procs;
-        } else {
-            nprocs = sig->sz;
-        }
-        if (OPAL_SUCCESS != (rc = opal_dss.pack(reply, &nprocs, 1, OPAL_UINT64))) {
             ORTE_ERROR_LOG(rc);
             OBJ_RELEASE(reply);
             OBJ_RELEASE(sig);
@@ -502,8 +464,8 @@ static void barrier_release(int status, orte_process_name_t* sender,
     orte_grpcomm_coll_t *coll;
 
     OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_framework.framework_output,
-                         "%s grpcomm:direct: barrier release called",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                         "%s grpcomm:direct: barrier release called with %d bytes",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (int)buffer->bytes_used));
 
     /* unpack the signature */
     cnt = 1;

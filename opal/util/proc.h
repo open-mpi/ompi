@@ -97,6 +97,12 @@ typedef struct opal_proc_t {
 } opal_proc_t;
 OBJ_CLASS_DECLARATION(opal_proc_t);
 
+typedef struct {
+    opal_list_item_t super;
+    opal_process_name_t name;
+} opal_namelist_t;
+OBJ_CLASS_DECLARATION(opal_namelist_t);
+
 typedef struct opal_process_info_t {
     char *nodename;                     /**< string name for this node */
     char *job_session_dir;              /**< Session directory for job */
@@ -127,8 +133,12 @@ OPAL_DECLSPEC extern int (*opal_convert_string_to_process_name)(opal_process_nam
                                                                 const char* name_string);
 OPAL_DECLSPEC extern char* (*opal_vpid_print)(const opal_vpid_t);
 OPAL_DECLSPEC extern char* (*opal_jobid_print)(const opal_jobid_t);
+OPAL_DECLSPEC extern char* (*opal_convert_jobid_to_string)(opal_jobid_t jobid);
+OPAL_DECLSPEC extern int (*opal_convert_string_to_jobid)(opal_jobid_t *jobid, const char *jobid_string);
 
 #define OPAL_NAME_PRINT(OPAL_PN)    opal_process_name_print(OPAL_PN)
+#define OPAL_JOBID_PRINT(OPAL_PN)   opal_jobid_print(OPAL_PN)
+#define OPAL_VPID_PRINT(OPAL_PN)    opal_vpid_print(OPAL_PN)
 
 /* provide a safe way to retrieve the hostname of a proc, including
  * our own. This is to be used by all BTLs so we don't retrieve hostnames

@@ -39,7 +39,6 @@
 #include "opal/util/argv.h"
 #include "opal/util/opal_getcwd.h"
 #include "opal/dss/dss.h"
-#include "opal/mca/dstore/dstore.h"
 #include "opal/mca/hwloc/base/base.h"
 #include "opal/mca/pmix/pmix.h"
 
@@ -450,22 +449,15 @@ static int connect_accept(ompi_communicator_t *comm, int root,
                              "%s dpm:orte:connect_accept executing modex",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
-        /* setup the modex */
-        ids = (opal_process_name_t*)malloc(opal_list_get_size(&all_procs) * sizeof(opal_process_name_t));
-        /* copy across the list of participants */
-        i=0;
-        OPAL_LIST_FOREACH(nm, &all_procs, orte_namelist_t) {
-            ids[i++] = nm->name;
-        }
+        /* perform the fence, collecting all data */
+        opal_pmix.fence(&all_procs, true);
         OPAL_LIST_DESTRUCT(&all_procs);
-        /* perform it */
-        opal_pmix.fence(ids, i);
-        free(ids);
 
         OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_framework.framework_output,
                              "%s dpm:orte:connect_accept adding procs",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
+#if 0
         /* set the locality of the new procs - the required info should
          * have been included in the data exchange */
         for (j=0; j < new_proc_len; j++) {
@@ -480,6 +472,7 @@ static int connect_accept(ompi_communicator_t *comm, int root,
             }
             OPAL_LIST_DESTRUCT(&myvals);
         }
+#endif
 
         if (OMPI_SUCCESS != (rc = MCA_PML_CALL(add_procs(new_proc_list, new_proc_len)))) {
             ORTE_ERROR_LOG(rc);
@@ -670,11 +663,10 @@ static int construct_peers(ompi_group_t *group, opal_list_t *peers)
 
 static int disconnect(ompi_communicator_t *comm)
 {
-    int ret, i;
+    int ret;
     ompi_group_t *group;
     opal_list_t coll;
     orte_namelist_t *nm;
-    opal_process_name_t *ids;
 
     /* Note that we explicitly use an RTE-based barrier (vs. an MPI
        barrier).  See a lengthy comment in
@@ -703,19 +695,11 @@ static int disconnect(ompi_communicator_t *comm)
         return ret;
     }
 
-    /* setup the ids */
-    ids = (opal_process_name_t*)malloc(opal_list_get_size(&coll) * sizeof(opal_process_name_t));
-    i=0;
-    OPAL_LIST_FOREACH(nm, &coll, orte_namelist_t) {
-        ids[i++] = nm->name;
-    }
-    OPAL_LIST_DESTRUCT(&coll);
-
     OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_framework.framework_output,
                          "%s dpm:orte:disconnect calling barrier on comm_cid %d with %d participants",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), comm->c_contextid, i));
-    opal_pmix.fence(ids, i);
-    free(ids);
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), comm->c_contextid, (int)opal_list_get_size(&coll)));
+    opal_pmix.fence(&coll, false);
+    OPAL_LIST_DESTRUCT(&coll);
 
     OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_framework.framework_output,
                          "%s dpm:orte:disconnect barrier complete for comm_cid %d",
@@ -1281,7 +1265,7 @@ static int parse_port_name(const char *port_name,
     ptr++;
 
     /* convert the RML tag */
-    (void)sscanf(ptr,"%d", &tag);
+    sscanf(ptr,"%d", &tag);
 
     /* now split out the second field - the uri of the remote proc */
     if (NULL == (ptr = strchr(tmpstring, '+'))) {

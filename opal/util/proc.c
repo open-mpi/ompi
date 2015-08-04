@@ -3,7 +3,7 @@
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2013      Inria.  All rights reserved.
- * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -16,7 +16,6 @@
 #include "proc.h"
 #include "opal/util/proc.h"
 #include "opal/util/arch.h"
-#include "opal/mca/dstore/dstore.h"
 #include "opal/mca/pmix/pmix.h"
 
 opal_process_name_t opal_name_wildcard = {OPAL_JOBID_WILDCARD, OPAL_VPID_WILDCARD};
@@ -62,6 +61,9 @@ static void opal_proc_destruct(opal_proc_t* proc)
 
 OBJ_CLASS_INSTANCE(opal_proc_t, opal_list_item_t,
                    opal_proc_construct, opal_proc_destruct);
+
+OBJ_CLASS_INSTANCE(opal_namelist_t, opal_list_item_t,
+                   NULL, NULL);
 
 static int
 opal_compare_opal_procs(const opal_process_name_t p1,
@@ -145,15 +147,28 @@ static int opal_convert_string_to_process_name_should_never_be_called(opal_proce
     return OPAL_ERR_NOT_SUPPORTED;
 }
 
+static char* opal_convert_jobid_to_string_should_never_be_called(opal_jobid_t jobid)
+{
+    char *str = strdup("My JOBID");
+    return str;
+}
+
+static int opal_convert_string_to_jobid_should_never_be_called(opal_jobid_t *jobid, const char *jobid_string)
+{
+    return OPAL_ERR_NOT_SUPPORTED;
+}
+
 char* (*opal_process_name_print)(const opal_process_name_t) = opal_process_name_print_should_never_be_called;
 char* (*opal_vpid_print)(const opal_vpid_t) = opal_vpid_print_should_never_be_called;
 char* (*opal_jobid_print)(const opal_jobid_t) = opal_jobid_print_should_never_be_called;
 int (*opal_convert_string_to_process_name)(opal_process_name_t *name, const char* name_string) = opal_convert_string_to_process_name_should_never_be_called;
+char* (*opal_convert_jobid_to_string)(opal_jobid_t jobid) = opal_convert_jobid_to_string_should_never_be_called;
+int (*opal_convert_string_to_jobid)(opal_jobid_t *jobid, const char *jobid_string) = opal_convert_string_to_jobid_should_never_be_called;
 
 char* opal_get_proc_hostname(const opal_proc_t *proc)
 {
     int ret;
-
+    
     /* if the proc is NULL, then we can't know */
     if (NULL == proc) {
         return "unknown";
@@ -171,7 +186,7 @@ char* opal_get_proc_hostname(const opal_proc_t *proc)
     }
 
     /* if we don't already have it, then try to get it */
-    OPAL_MODEX_RECV_VALUE(ret, OPAL_DSTORE_HOSTNAME, proc,
+    OPAL_MODEX_RECV_VALUE(ret, OPAL_PMIX_HOSTNAME, &proc->proc_name,
                           (char**)&(proc->proc_hostname), OPAL_STRING);
     if (OPAL_SUCCESS != ret) {
         OPAL_ERROR_LOG(ret);
