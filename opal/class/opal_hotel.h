@@ -292,7 +292,6 @@ static inline void opal_hotel_checkout_and_return_occupant(opal_hotel_t *hotel, 
     else {
         opal_output( 0, " OOPS there is no occupant in room_num %d", room_num);
    }
-
 }
 
 /**
@@ -307,6 +306,33 @@ static inline bool opal_hotel_is_empty (opal_hotel_t *hotel)
         return true;
     else
         return false;
+}
+
+/**
+ * Access the occupant of a room, but leave them checked into their room.
+ *
+ * @param hotel Pointer to hotel (IN)
+ * @param room Room number to checkout (IN)
+ * @param void * occupant (OUT)
+ *
+ * This accessor function is typically used to cycle across the occupants
+ * to check for someone already present that matches a description.
+ */
+static inline void opal_hotel_knock(opal_hotel_t *hotel, int room_num, void **occupant)
+{
+    opal_hotel_room_t *room;
+
+    /* Bozo check */
+    assert(room_num < hotel->num_rooms);
+
+    *occupant = NULL;
+
+    /* If there's an occupant in the room, have them come to the door */
+    room = &(hotel->rooms[room_num]);
+    if (OPAL_LIKELY(NULL != room->occupant)) {
+        opal_output (10, "occupant %p in room num %d responded to knock", room->occupant, room_num);
+        *occupant = room->occupant;
+    }
 }
 
 END_C_DECLS
