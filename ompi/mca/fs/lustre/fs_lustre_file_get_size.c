@@ -33,9 +33,18 @@
  *	Returns:	- Success if size is get
  */
 int
-mca_fs_lustre_file_get_size (mca_io_ompio_file_t *file_handle,
+mca_fs_lustre_file_get_size (mca_io_ompio_file_t *fh,
                          OMPI_MPI_OFFSET_TYPE *size)
 {
-    printf ("LUSTRE GET SIZE\n");
+    *size = lseek(fh->fd, 0, SEEK_END);
+    if (-1 == *size) {
+        perror ("lseek");
+        return OMPI_ERROR;
+    }
+
+    if (-1 == (lseek(fh->fd, fh->f_offset, SEEK_SET))) {
+        perror ("lseek");
+        return OMPI_ERROR;
+    }
     return OMPI_SUCCESS;
 }
