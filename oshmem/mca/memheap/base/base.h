@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
+ * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -133,18 +134,18 @@ OSHMEM_DECLSPEC extern mca_base_framework_t oshmem_memheap_base_framework;
 #ifdef OPAL_ENABLE_DEBUG
 #define MEMHEAP_VERBOSE(level, ...) \
     oshmem_output_verbose(level, oshmem_memheap_base_framework.framework_output, \
-        "%s:%d - %s()", __SPML_FILE__, __LINE__, __FUNCTION__, __VA_ARGS__)
+        "%s:%d - %s()", __SPML_FILE__, __LINE__, __func__, __VA_ARGS__)
 #else
 #define MEMHEAP_VERBOSE(level, ...)
 #endif
 
 #define MEMHEAP_ERROR(...) \
     oshmem_output(oshmem_memheap_base_framework.framework_output, \
-        "Error %s:%d - %s()", __SPML_FILE__, __LINE__, __FUNCTION__, __VA_ARGS__)
+        "Error %s:%d - %s()", __SPML_FILE__, __LINE__, __func__, __VA_ARGS__)
 
 #define MEMHEAP_WARN(...) \
     oshmem_output_verbose(0, oshmem_memheap_base_framework.framework_output, \
-        "Warning %s:%d - %s()", __SPML_FILE__, __LINE__, __FUNCTION__, __VA_ARGS__)
+        "Warning %s:%d - %s()", __SPML_FILE__, __LINE__, __func__, __VA_ARGS__)
 
 END_C_DECLS
 
