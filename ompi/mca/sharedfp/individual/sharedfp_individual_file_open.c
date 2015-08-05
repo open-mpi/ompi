@@ -54,6 +54,7 @@ int mca_sharedfp_individual_file_open (struct ompi_communicator_t *comm,
         opal_output(0, "mca_sharedfp_individual_file_open: Error during file open\n");
         return err;
     }
+    shfileHandle->f_fh = fh->f_fh;
 
     sh = (struct mca_sharedfp_base_data_t*) malloc ( sizeof(struct mca_sharedfp_base_data_t));
     if ( NULL == sh ){
