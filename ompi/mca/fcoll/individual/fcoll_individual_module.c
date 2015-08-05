@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2015 University of Houston. All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -64,7 +66,7 @@ mca_fcoll_individual_component_file_query (mca_io_ompio_file_t *fh, int *priorit
         if (*priority < 50) {
             *priority = 50;
         }
-	if ( 2 >= fh->f_size ) {
+	if ( 2 > fh->f_size ) {
 	    *priority = 100;
 	}
     }
