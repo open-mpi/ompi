@@ -69,7 +69,7 @@ AC_DEFUN([MCA_opal_pmix_pmix1xx_CONFIG],[
     # be found.
     pmix1xx_WRAPPER_EXTRA_CPPFLAGS='-I${includedir}/openmpi/$opal_pmix_pmix1xx_basedir/pmix -I${includedir}/openmpi/$opal_pmix_pmix1xx_basedir/pmix/include'
 
-    CFLAGS="$opal_pmix_pmix1xx_save_cflags -g"
+    CFLAGS="$opal_pmix_pmix1xx_save_CFLAGS -g"
     CPPFLAGS=$opal_pmix_pmix1xx_save_CPPFLAGS
     LDFLAGS=$opal_pmix_pmix1xx_save_LDFLAGS
     LIBS=$opal_pmix_pmix1xx_save_LIBS
