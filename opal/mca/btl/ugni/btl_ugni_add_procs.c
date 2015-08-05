@@ -302,7 +302,7 @@ mca_btl_ugni_setup_mpools (mca_btl_ugni_module_t *ugni_module)
 
     /* determine how many procs are in the job (might want to check universe size here) */
     u32 = &nprocs;
-    OPAL_MODEX_RECV_VALUE(rc, OPAL_PMIX_UNIX_SIZE, &OPAL_PROC_MY_NAME,
+    OPAL_MODEX_RECV_VALUE(rc, OPAL_PMIX_UNIV_SIZE, &OPAL_PROC_MY_NAME,
                           &u32, OPAL_UINT32);
     if (OPAL_SUCCESS != rc) {
         /* take a wild conservative guess */
