@@ -21,14 +21,14 @@
 #if (OPAL_MAJOR_VERSION >= 2)
 
 #include "opal/mca/pmix/pmix.h"
+#include "opal/mca/pmix/pmix_types.h"
 
 #define OFI_COMPAT_MODEX_RECV(ret, mtl_version, proc, ep_name, size) \
-    OPAL_MODEX_RECV((ret), (mtl_version), &(proc)->super, (ep_name), (size));
+    OPAL_MODEX_RECV((ret), (mtl_version), &(proc)->super.proc_name, (ep_name), (size));
 
 #define OFI_COMPAT_MODEX_SEND(ret, mtl_version, ep_name, namelen) \
     OPAL_MODEX_SEND((ret),          \
-                    PMIX_SYNC_REQD, \
-                    PMIX_GLOBAL,    \
+                    OPAL_PMIX_GLOBAL,    \
                     (mtl_version),  \
                     (ep_name)[0],   \
                     (namelen));
