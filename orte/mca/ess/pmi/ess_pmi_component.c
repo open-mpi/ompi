@@ -86,6 +86,14 @@ static int pmi_component_query(mca_base_module_t **module, int *priority)
                 (void) mca_base_framework_close(&opal_pmix_base_framework);
                 return ret;
             }
+            /* initialize the selected module */
+            if (OPAL_SUCCESS != (ret = opal_pmix.init())) {
+                /* cannot run */
+                *priority = -1;
+                *module = NULL;
+                (void) mca_base_framework_close(&opal_pmix_base_framework);
+                return ret;
+            }
         }
         if (!opal_pmix.initialized()) {
             /* we may have everything setup, but we are not

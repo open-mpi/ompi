@@ -20,7 +20,7 @@
  *                         All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -34,9 +34,9 @@
 
 #include "ompi/constants.h"
 #include "opal/mca/hwloc/base/base.h"
-#include "opal/mca/dstore/dstore.h"
 #include "opal/dss/dss.h"
-
+#include "opal/mca/pmix/pmix.h"
+ 
 #include "ompi/proc/proc.h"
 #include "opal/threads/mutex.h"
 #include "opal/util/bit_ops.h"
@@ -1876,22 +1876,16 @@ ompi_proc_t **ompi_comm_get_rprocs ( ompi_communicator_t *local_comm,
 
     /* set the locality of the remote procs */
     for (i=0; i < rsize; i++) {
-        /* get the locality information - do not use modex recv for
-         * this request as that will automatically cause the hostname
-         * to be loaded as well. All RTEs are required to provide this
-         * information at startup for procs on our node. Thus, not
-         * finding the info indicates that the proc is non-local.
-         */
-        OBJ_CONSTRUCT(&myvals, opal_list_t);
-        if (OMPI_SUCCESS != opal_dstore.fetch(opal_dstore_internal,
-                                              &rprocs[i]->super.proc_name,
-                                              OPAL_DSTORE_LOCALITY, &myvals)) {
-            rprocs[i]->super.proc_flags = OPAL_PROC_NON_LOCAL;
+        /* get the locality information - all RTEs are required
+         * to provide this information at startup */
+        uint16_t *u16;
+        OPAL_MODEX_RECV_VALUE(rc, OPAL_PMIX_LOCALITY, &rprocs[i]->super.proc_name, &u16, OPAL_UINT16);
+        if (OPAL_SUCCESS == rc) {
+            rprocs[i]->super.proc_flags = *u16;
+            free(u16);
         } else {
-            kv = (opal_value_t*)opal_list_get_first(&myvals);
-            rprocs[i]->super.proc_flags = kv->data.uint16;
+            rprocs[i]->super.proc_flags = OPAL_PROC_NON_LOCAL;
         }
-        OPAL_LIST_DESTRUCT(&myvals);
     }
 
     /* And now add the information into the database */

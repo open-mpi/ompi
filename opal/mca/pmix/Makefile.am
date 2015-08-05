@@ -17,7 +17,7 @@ libmca_pmix_la_SOURCES =
 dist_opaldata_DATA =
 
 # local files
-headers = pmix.h
+headers = pmix.h pmix_types.h pmix_server.h
 libmca_pmix_la_SOURCES += $(headers)
 
 # Conditionally install the header files

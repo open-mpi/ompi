@@ -38,7 +38,6 @@ static void cleanup_cred(opal_sec_cred_t *cred)
 }
 
 int opal_sec_base_get_cred(char *method,
-                           int dstorehandle,
                            opal_process_name_t *my_id,
                            char **payload, size_t *size)
 {
@@ -56,7 +55,7 @@ int opal_sec_base_get_cred(char *method,
         if (NULL != method && 0 != strcmp(method, hdl->component->mca_component_name)) {
             continue;
         }
-        if (OPAL_SUCCESS == hdl->module->get_my_credential(dstorehandle, my_id, &cred)) {
+        if (OPAL_SUCCESS == hdl->module->get_my_credential(my_id, &cred)) {
             opal_output_verbose(5, opal_sec_base_framework.framework_output,
                                 "Created credential from source %s", hdl->component->mca_component_name);
             /* pack the credential */

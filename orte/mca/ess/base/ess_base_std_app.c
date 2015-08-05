@@ -38,7 +38,7 @@
 #endif
 
 #include "opal/mca/event/event.h"
-#include "opal/mca/dstore/base/base.h"
+#include "opal/mca/pmix/pmix.h"
 #include "opal/util/arch.h"
 #include "opal/util/os_path.h"
 #include "opal/util/output.h"
@@ -157,30 +157,26 @@ int orte_ess_base_app_setup(bool db_restrict_local)
            proc-specific session directory. */
         opal_output_set_output_file_info(orte_process_info.proc_session_dir,
                                          "output-", NULL, NULL);
-        /* store the session directory location in the database */
+        /* store the session directory location */
         OBJ_CONSTRUCT(&kv, opal_value_t);
-        kv.key = strdup(OPAL_DSTORE_JOB_SDIR);
+        kv.key = strdup(OPAL_PMIX_NSDIR);
         kv.type = OPAL_STRING;
         kv.data.string = strdup(orte_process_info.job_session_dir);
-        if (OPAL_SUCCESS != (ret = opal_dstore.store(opal_dstore_internal,
-                                                     ORTE_PROC_MY_NAME,
-                                                     &kv))) {
+        if (OPAL_SUCCESS != (ret = opal_pmix.store_local(ORTE_PROC_MY_NAME, &kv))) {
             ORTE_ERROR_LOG(ret);
             OBJ_DESTRUCT(&kv);
-            error = "opal dstore store";
+            error = "opal pmix put job sessiondir";
             goto error;
         }
         OBJ_DESTRUCT(&kv);
         OBJ_CONSTRUCT(&kv, opal_value_t);
-        kv.key = strdup(OPAL_DSTORE_MY_SDIR);
+        kv.key = strdup(OPAL_PMIX_PROCDIR);
         kv.type = OPAL_STRING;
         kv.data.string = strdup(orte_process_info.proc_session_dir);
-        if (OPAL_SUCCESS != (ret = opal_dstore.store(opal_dstore_internal,
-                                                     ORTE_PROC_MY_NAME,
-                                                     &kv))) {
+        if (OPAL_SUCCESS != (ret = opal_pmix.store_local(ORTE_PROC_MY_NAME, &kv))) {
             ORTE_ERROR_LOG(ret);
             OBJ_DESTRUCT(&kv);
-            error = "opal dstore store";
+            error = "opal pmix put proc sessiondir";
             goto error;
         }
         OBJ_DESTRUCT(&kv);
@@ -349,7 +345,6 @@ int orte_ess_base_app_finalize(void)
 
     /* now can close the rml and its friendly group comm */
     (void) mca_base_framework_close(&orte_grpcomm_base_framework);
-    (void) mca_base_framework_close(&opal_dstore_base_framework);
     (void) mca_base_framework_close(&orte_dfs_base_framework);
     (void) mca_base_framework_close(&orte_routed_base_framework);
 
