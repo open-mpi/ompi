@@ -239,7 +239,7 @@ void partial_aggregate_aff_mat (int nb_args, void **args){
 
   if(nb_args != 6){
     if(verbose_level >= ERROR)
-      fprintf(stderr,"Wrong number of args in %s: %d\n",__FUNCTION__, nb_args);
+      fprintf(stderr,"Wrong number of args in %s: %d\n",__func__, nb_args);
     exit(-1);
   }
 
