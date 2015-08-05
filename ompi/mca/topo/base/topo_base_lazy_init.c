@@ -43,7 +43,7 @@ int mca_topo_base_lazy_init(void)
          * Register and open all available components, giving them a chance to access the MCA parameters.
          */
 
-        err = mca_base_framework_open (&ompi_topo_base_framework, MCA_BASE_REGISTER_DEFAULT);
+        err = mca_base_framework_open (&ompi_topo_base_framework, MCA_BASE_OPEN_DEFAULT);
         if (OMPI_SUCCESS != err) {
             return err;
         }
