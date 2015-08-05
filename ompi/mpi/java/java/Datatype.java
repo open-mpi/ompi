@@ -344,7 +344,7 @@ public final class Datatype implements Freeable
 	 * Identical to {@code createVector} except that the stride is expressed
 	 * directly in terms of the buffer index, rather than the units of
 	 * the old type.
-	 * <p>Java binding of the MPI operation {@code MPI_TYPE_HVECTOR}.
+	 * <p>Java binding of the MPI operation {@code MPI_TYPE_CREATE_HVECTOR}.
 	 * @param count       number of blocks
 	 * @param blockLength number of elements in each
 	 * @param stride      number of bytes between start of each block
@@ -397,7 +397,7 @@ public final class Datatype implements Freeable
 	 * Identical to {@code createIndexed} except that the displacements are
 	 * expressed directly in terms of the buffer index, rather than the
 	 * units of the old type.
-	 * <p>Java binding of the MPI operation {@code MPI_TYPE_HINDEXED}.
+	 * <p>Java binding of the MPI operation {@code MPI_TYPE_CREATE_HINDEXED}.
 	 * @param blockLengths  number of elements per block
 	 * @param displacements byte displacement in buffer for each block
 	 * @param oldType       old datatype
