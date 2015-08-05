@@ -2,6 +2,7 @@
  * Copyright (c) 2015      Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -21,7 +22,6 @@
 #include "opal/util/error.h"
 #include "opal/util/output.h"
 #include "opal/util/show_help.h"
-#include "opal/mca/dstore/dstore.h"
 
 #include "opal/mca/sec/base/base.h"
 #include "sec_munge.h"
