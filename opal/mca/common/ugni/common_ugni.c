@@ -193,7 +193,7 @@ static int opal_common_ugni_send_modex (int my_cdm_id)
      * new ranks started on the same nodes as the spawnee ranks, etc.
      */
 
-    OPAL_MODEX_SEND(rc, PMIX_GLOBAL,
+    OPAL_MODEX_SEND(rc, OPAL_PMIX_GLOBAL,
                     &opal_common_ugni_component,
                     modex_msg, total_msg_size);
 
