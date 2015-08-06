@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2011 University of Houston. All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -262,7 +264,7 @@ int mca_fcoll_base_query_table (struct mca_io_ompio_file_t *file, char *name)
             file->f_cc_size >= file->f_stripe_size) {
             return 1;
         }
-	if ( 2 >= (int)file->f_size ){
+	if ( 2 > (int)file->f_size ){
 	    return 1;
 	}
     }

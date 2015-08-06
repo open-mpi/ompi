@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2013      University of Houston. All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -53,6 +55,7 @@ int mca_sharedfp_lockedfile_file_open (struct ompi_communicator_t *comm,
         opal_output(0, "mca_sharedfp_lockedfile_file_open: Error during file open\n");
         return err;
     }
+    shfileHandle->f_fh = fh->f_fh;
 
     /*Memory is allocated here for the sh structure*/
     sh = (struct mca_sharedfp_base_data_t*)malloc(sizeof(struct mca_sharedfp_base_data_t));
