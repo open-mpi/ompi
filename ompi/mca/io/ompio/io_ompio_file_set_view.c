@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2014 University of Houston. All rights reserved.
+ * Copyright (c) 2008-2015 University of Houston. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  *  $COPYRIGHT$
@@ -135,12 +135,15 @@ int mca_io_ompio_file_set_view (ompi_file_t *fp,
 {
     mca_io_ompio_data_t *data;
     mca_io_ompio_file_t *fh;
+    size_t ftype_size;
+    OPAL_PTRDIFF_TYPE ftype_extent, lb;
 
     data = (mca_io_ompio_data_t *) fp->f_io_selected_data;
     fh = &data->ompio_fh;
 
     ompi_datatype_destroy (&fh->f_etype);
     ompi_datatype_destroy (&fh->f_filetype);
+    ompi_datatype_destroy (&fh->f_orig_filetype);
 
     if (NULL != fh->f_decoded_iov) {
         free (fh->f_decoded_iov);
@@ -157,14 +160,35 @@ int mca_io_ompio_file_set_view (ompi_file_t *fp,
 
     fh->f_flags |= OMPIO_FILE_VIEW_IS_SET;
     fh->f_datarep = strdup (datarep);
+    ompi_datatype_duplicate (filetype, &fh->f_orig_filetype );
+    
+    opal_datatype_get_extent(&filetype->super, &lb, &ftype_extent);
+    opal_datatype_type_size (&filetype->super, &ftype_size);
 
-    mca_io_ompio_set_view_internal (fh,
-				    disp,
-				    etype,
-				    filetype,
-				    datarep,
-				    info);
-
+    if ( etype == filetype && 
+	 ompi_datatype_is_predefined (filetype ) &&
+	 ftype_extent == (OPAL_PTRDIFF_TYPE)ftype_size ){
+	ompi_datatype_t *newfiletype;
+	ompi_datatype_create_contiguous(MCA_IO_DEFAULT_FILE_VIEW_SIZE,
+					&ompi_mpi_byte.dt,
+					&newfiletype);
+	ompi_datatype_commit (&newfiletype);
+	mca_io_ompio_set_view_internal (fh,
+					disp,
+					etype,
+					newfiletype,
+					datarep,
+					info);
+	ompi_datatype_destroy ( &newfiletype );
+    } 
+    else {
+	mca_io_ompio_set_view_internal (fh,
+					disp,
+					etype,
+					filetype,
+					datarep,
+					info);
+    }
 
     if (OMPI_SUCCESS != mca_fcoll_base_file_select (&data->ompio_fh,
                                                     NULL)) {
@@ -189,7 +213,7 @@ int mca_io_ompio_file_get_view (struct ompi_file_t *fp,
 
     *disp = fh->f_disp;
     ompi_datatype_duplicate (fh->f_etype, etype);
-    ompi_datatype_duplicate (fh->f_filetype, filetype);
+    ompi_datatype_duplicate (fh->f_orig_filetype, filetype);
     strcpy (datarep, fh->f_datarep);
 
     return OMPI_SUCCESS;

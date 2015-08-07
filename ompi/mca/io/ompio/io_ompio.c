@@ -102,7 +102,6 @@ static int mca_io_ompio_merge_groups(mca_io_ompio_file_t *fh,
                                      int num_merge_aggrs);
 
 
-
 int ompi_io_ompio_set_file_defaults (mca_io_ompio_file_t *fh)
 {
 
@@ -133,13 +132,14 @@ int ompi_io_ompio_set_file_defaults (mca_io_ompio_file_t *fh)
         fh->f_init_num_aggrs = -1;
         fh->f_init_aggr_list = NULL;
 
-	ompi_datatype_create_contiguous(1048576,
+	ompi_datatype_create_contiguous(MCA_IO_DEFAULT_FILE_VIEW_SIZE,
 					&ompi_mpi_byte.dt,
 					&default_file_view);
 	ompi_datatype_commit (&default_file_view);
 
 	fh->f_etype = &ompi_mpi_byte.dt;
 	fh->f_filetype =  default_file_view;
+	ompi_datatype_duplicate ( &ompi_mpi_byte.dt, &fh->f_orig_filetype );
 
 
         /* Default file View */
