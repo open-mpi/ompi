@@ -69,6 +69,7 @@ int mca_sharedfp_sm_file_open (struct ompi_communicator_t *comm,
         opal_output(0, "mca_sharedfp_sm_file_open: Error during file open\n");
         return err;
     }
+    shfileHandle->f_fh = fh->f_fh;
 
     /*Memory is allocated here for the sh structure*/
     if ( mca_sharedfp_sm_verbose ) {
