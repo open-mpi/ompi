@@ -7,6 +7,7 @@
  *                         All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -189,7 +190,8 @@ static int native_init(void)
         opal_argv_free(uri);
 
         /* create an event base and progress thread for us */
-        if (NULL == (mca_pmix_native_component.evbase = opal_start_progress_thread("opal_async", true))) {
+        if (NULL == (mca_pmix_native_component.evbase =
+                     opal_progress_thread_init(NULL))) {
             return OPAL_ERROR;
         }
     }
@@ -251,7 +253,7 @@ static int native_fini(void)
     }
 
     if (NULL != mca_pmix_native_component.evbase) {
-        opal_stop_progress_thread("opal_async", true);
+        opal_progress_thread_finalize(NULL);
         mca_pmix_native_component.evbase = NULL;
     }
 
