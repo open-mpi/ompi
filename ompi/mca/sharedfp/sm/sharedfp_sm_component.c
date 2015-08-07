@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2013      University of Houston. All rights reserved.
+ * Copyright (c) 2013-2015 University of Houston. All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
@@ -38,7 +38,7 @@ const char *mca_sharedfp_sm_component_version_string =
 /*
  * Global variables
  */
-int mca_sharedfp_sm_priority=10;
+int mca_sharedfp_sm_priority=30;
 int mca_sharedfp_sm_verbose=0;
 
 static int sm_register(void);
@@ -72,7 +72,7 @@ mca_sharedfp_base_component_2_0_0_t mca_sharedfp_sm_component = {
 
 static int sm_register(void)
 {
-    mca_sharedfp_sm_priority = 10;
+    mca_sharedfp_sm_priority = 30;
     (void) mca_base_component_var_register(&mca_sharedfp_sm_component.sharedfpm_version,
                                            "priority", "Priority of the sm sharedfp component",
                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
