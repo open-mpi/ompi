@@ -64,9 +64,14 @@ int mca_sharedfp_sm_file_open (struct ompi_communicator_t *comm,
     /*Open the same file again without shared file pointer*/
     /*----------------------------------------------------*/
     shfileHandle = (mca_io_ompio_file_t *)malloc(sizeof(mca_io_ompio_file_t));
+    if ( NULL == shfileHandle ) {
+        opal_output(0, "mca_sharedfp_sm_file_open: Error during memory allocation\n");
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }	
     err = ompio_io_ompio_file_open(comm,filename,amode,info,shfileHandle,false);
     if ( OMPI_SUCCESS != err) {
         opal_output(0, "mca_sharedfp_sm_file_open: Error during file open\n");
+        free (shfileHandle);
         return err;
     }
 
