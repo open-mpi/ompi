@@ -139,6 +139,9 @@ int mca_io_ompio_file_set_view (ompi_file_t *fp,
     data = (mca_io_ompio_data_t *) fp->f_io_selected_data;
     fh = &data->ompio_fh;
 
+    ompi_datatype_destroy (&fh->f_etype);
+    ompi_datatype_destroy (&fh->f_filetype);
+
     if (NULL != fh->f_decoded_iov) {
         free (fh->f_decoded_iov);
         fh->f_decoded_iov = NULL;
