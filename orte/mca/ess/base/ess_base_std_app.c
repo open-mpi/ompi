@@ -15,6 +15,7 @@
  * Copyright (c) 2013-2015 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -116,7 +117,7 @@ int orte_ess_base_app_setup(bool db_restrict_local)
 
     /* get an async event base - we use the opal_async one so
      * we don't startup extra threads if not needed */
-    orte_event_base = opal_start_progress_thread("opal_async", true);
+    orte_event_base = opal_progress_thread_init(NULL);
     progress_thread_running = true;
     /* open and setup the state machine */
     if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_state_base_framework, 0))) {
@@ -361,7 +362,7 @@ int orte_ess_base_app_finalize(void)
 
     /* release the event base */
     if (progress_thread_running) {
-        opal_stop_progress_thread("opal_async", true);
+        opal_progress_thread_finalize(NULL);
         progress_thread_running = false;
     }
 

@@ -14,6 +14,7 @@
  * Copyright (c) 2013-2015 Intel, Inc. All rights reserved.
  * Copyright (c) 2014      Hochschule Esslingen.  All rights reserved.
  *
+ * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -276,7 +277,7 @@ int orte_ess_base_tool_finalize(void)
 
     /* release the event base */
     if (progress_thread_running) {
-        opal_stop_progress_thread("orte", true);
+        opal_progress_thread_finalize("orte");
         progress_thread_running = false;
     }
     return ORTE_SUCCESS;
