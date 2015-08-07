@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2010-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
@@ -65,7 +65,6 @@ static int opal_event_base_close(void)
  * Globals
  */
 opal_event_base_t *opal_sync_event_base=NULL;
-opal_event_base_t *opal_async_event_base=NULL;
 
 static int opal_event_base_open(mca_base_open_flag_t flags)
 {
