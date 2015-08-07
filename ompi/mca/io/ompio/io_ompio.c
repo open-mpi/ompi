@@ -100,15 +100,14 @@ static int mca_io_ompio_merge_initial_groups(mca_io_ompio_file_t *fh,
 static int mca_io_ompio_merge_groups(mca_io_ompio_file_t *fh,
                                      int *merge_aggrs,
                                      int num_merge_aggrs);
- 
-#define MCA_IO_OMPIO_DEFAULT_FVIEW_SIZE 4*1024*1024
-ompi_datatype_t *mca_io_ompio_default_file_view=NULL;
+
+
 
 int ompi_io_ompio_set_file_defaults (mca_io_ompio_file_t *fh)
 {
 
    if (NULL != fh) {
-        ompi_datatype_t *types[2];
+        ompi_datatype_t *types[2], *default_file_view;
         int blocklen[2] = {1, 1};
         OPAL_PTRDIFF_TYPE d[2], base;
         int i;
@@ -134,13 +133,13 @@ int ompi_io_ompio_set_file_defaults (mca_io_ompio_file_t *fh)
         fh->f_init_num_aggrs = -1;
         fh->f_init_aggr_list = NULL;
 
-	ompi_datatype_create_contiguous(MCA_IO_OMPIO_DEFAULT_FVIEW_SIZE,
+	ompi_datatype_create_contiguous(1048576,
 					&ompi_mpi_byte.dt,
-					&mca_io_ompio_default_file_view);
-	ompi_datatype_commit (&mca_io_ompio_default_file_view);
+					&default_file_view);
+	ompi_datatype_commit (&default_file_view);
 
 	fh->f_etype = &ompi_mpi_byte.dt;
-	fh->f_filetype =  mca_io_ompio_default_file_view;
+	fh->f_filetype =  default_file_view;
 
 
         /* Default file View */
@@ -152,10 +151,9 @@ int ompi_io_ompio_set_file_defaults (mca_io_ompio_file_t *fh)
 	mca_io_ompio_set_view_internal(fh,
 				       0,
 				       &ompi_mpi_byte.dt,
-				       mca_io_ompio_default_file_view,
+				       default_file_view,
 				       "native",
 				       fh->f_info);
-        fh->f_flags |= OMPIO_FILE_VIEW_IS_SET;
 
 
 	/*Create a derived datatype for the created iovec */
