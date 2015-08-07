@@ -106,7 +106,12 @@ int ompio_io_ompio_file_read (mca_io_ompio_file_t *fh,
                                    &decoded_iov,
                                    &iov_count);
 
-    bytes_per_cycle = mca_io_ompio_cycle_buffer_size;
+    if ( -1 == mca_io_ompio_cycle_buffer_size ) {
+	bytes_per_cycle = max_data;
+    }
+    else {
+	bytes_per_cycle = mca_io_ompio_cycle_buffer_size;
+    }
     cycles = ceil((float)max_data/bytes_per_cycle);
 
 #if 0
