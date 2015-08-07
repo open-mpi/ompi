@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013-2015 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -25,7 +25,9 @@ void opal_btl_usnic_exit(opal_btl_usnic_module_t *module)
     if (NULL == module) {
         /* Find the first module with an error callback */
         for (int i = 0; i < mca_btl_usnic_component.num_modules; ++i) {
-            if (NULL != mca_btl_usnic_component.usnic_active_modules[i]->pml_error_callback) {
+            if (NULL != mca_btl_usnic_component.usnic_active_modules &&
+                NULL != mca_btl_usnic_component.usnic_active_modules[i] &&
+                NULL != mca_btl_usnic_component.usnic_active_modules[i]->pml_error_callback) {
                 module = mca_btl_usnic_component.usnic_active_modules[i];
                 break;
             }
