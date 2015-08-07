@@ -107,6 +107,29 @@ ompi_mtl_ofi_progress_no_inline(void)
 	return ompi_mtl_ofi_progress();
 }
 
+static struct fi_info*
+select_ofi_provider(struct fi_info *providers)
+{
+    struct fi_info *prov = providers;
+    /**
+     * Unless explicitly asked by user, ignore the following OFI providers:
+     *     - sockets
+     *     - mxm
+     */
+    if (NULL == ompi_mtl_ofi.provider_name) {
+        while (NULL != prov) {
+            if ((0 == strncmp(prov->fabric_attr->prov_name, "sockets", 7)) ||
+                (0 == strncmp(prov->fabric_attr->prov_name, "mxm", 3))) {
+                prov = prov->next;
+                continue;
+            } else {
+                break;
+            }
+        }
+    }
+    return prov;
+}
+
 static mca_mtl_base_module_t*
 ompi_mtl_ofi_component_init(bool enable_progress_threads,
                             bool enable_mpi_threads)
@@ -181,10 +204,16 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
     }
 
     /**
-     * Here we elect to use the first provider from the list.
-     * Further filtering could be done at this point (e.g. name).
+     * Select a provider from the list returned by fi_getinfo().
      */
-    prov = providers;
+    prov = select_ofi_provider(providers);
+    if (!prov) {
+        opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
+                            "%s:%d: select_ofi_provider: no provider found\n",
+                            __FILE__, __LINE__);
+        goto error;
+    }
+
 
     /**
      * Open fabric
