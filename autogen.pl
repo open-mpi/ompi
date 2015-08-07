@@ -5,6 +5,8 @@
 # Copyright (c) 2013      Mellanox Technologies, Inc.
 #                         All rights reserved.
 # Copyright (c) 2013-2014 Intel, Inc.  All rights reserved.
+# Copyright (c) 2015      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -977,6 +979,12 @@ sub patch_autotools_output {
 
     push(@verbose_out, $indent_str . "Patching configure for IBM xlf libtool bug\n");
     $c =~ s/(\$LD -shared \$libobjs \$deplibs \$)compiler_flags( -soname \$soname)/$1linker_flags$2/g;
+
+    # Fix consequence of broken libtool.m4 from libtool 2.4.3
+    # see http://lists.gnu.org/archive/html/bug-libtool/2015-07/msg00002.html
+    push(@verbose_out, $indent_str . "Patching configure for libtool.m4 bug\n");
+    $c =~ s/test x-L = \"\$p\"/test x-L = \"x\$p\"/g;
+    $c =~ s/test x-R = \"\$p\"/test x-R = \"x\$p\"/g;
 
     # Only write out verbose statements and a new configure if the
     # configure content actually changed
