@@ -43,22 +43,22 @@ OBJ_CLASS_INSTANCE(ib_address_t,
 bool mca_btl_openib_xrc_check_api()
 {
     void *lib = dlopen(NULL, RTLD_NOW); /* current program */
+    void *sym;
     if (!lib) {
         BTL_ERROR(("XRC error: could not find XRC API version"));
         return false;
     }
 
+    sym = dlsym(lib, OPAL_VERSIONNED_XRC_SYMBOL);
+    dlclose(lib);
+    if (NULL != sym) {
 #if OPAL_HAVE_CONNECTX_XRC_DOMAINS
-    if (NULL != dlsym(lib, "ibv_open_xrcd")) {
         BTL_ERROR(("XRC error: bad XRC API (require XRC from OFED 3.12+)"));
-        return false;
-    }
 #else
-    if (NULL != dlsym(lib, "ibv_create_xrc_rcv_qp")) {
         BTL_ERROR(("XRC error: bad XRC API (require XRC from OFED pre 3.12)."));
+#endif
         return false;
     }
-#endif
     return true;
 }
 
