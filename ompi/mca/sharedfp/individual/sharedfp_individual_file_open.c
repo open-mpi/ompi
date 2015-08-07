@@ -60,6 +60,7 @@ int mca_sharedfp_individual_file_open (struct ompi_communicator_t *comm,
     if ( NULL == sh ){
         opal_output(0, "mca_sharedfp_individual_file_open: Error, unable to malloc "
 		    "f_sharedfp_ptr struct\n");
+	free (shfileHandle );
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
@@ -94,6 +95,8 @@ int mca_sharedfp_individual_file_open (struct ompi_communicator_t *comm,
                                    MPI_INFO_NULL, datafilehandle, false);
     if ( OMPI_SUCCESS != err) {
         opal_output(0, "mca_sharedfp_individual_file_open: Error during datafile file open\n");
+        free (shfileHandle );
+        free (sh);
         return err;
     }
 
@@ -107,14 +110,31 @@ int mca_sharedfp_individual_file_open (struct ompi_communicator_t *comm,
 
     /* metadata filename created by appending .metadata.$rank to the original filename*/
     metadatafilename = (char*) malloc ( len );
+    if ( NULL == metadatafilename ) {
+        free (shfileHandle );
+        free (sh);
+        opal_output(0, "mca_sharedfp_individual_file_open: Error during memory allocation\n");
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
     snprintf ( metadatafilename, len, "%s%s%d", filename, ".metadata.",rank);
 
     metadatafilehandle = (mca_io_ompio_file_t *)malloc(sizeof(mca_io_ompio_file_t));
+    if ( NULL == metadatafilehandle ) {
+        free (shfileHandle );
+        free (sh);
+        free (metadatafilename);
+        opal_output(0, "mca_sharedfp_individual_file_open: Error during memory allocation\n");
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
     err = ompio_io_ompio_file_open ( MPI_COMM_SELF,metadatafilename,
                                      MPI_MODE_RDWR | MPI_MODE_CREATE | MPI_MODE_DELETE_ON_CLOSE,
                                      MPI_INFO_NULL, metadatafilehandle, false);
     if ( OMPI_SUCCESS != err) {
         opal_output(0, "mca_sharedfp_individual_file_open: Error during metadatafile file open\n");
+        free (shfileHandle );
+        free (sh);
+        free (metadatafilename);
+        free (metadatafilehandle);
         return err;
     }
 

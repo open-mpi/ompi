@@ -61,6 +61,7 @@ int mca_sharedfp_lockedfile_file_open (struct ompi_communicator_t *comm,
     sh = (struct mca_sharedfp_base_data_t*)malloc(sizeof(struct mca_sharedfp_base_data_t));
     if ( NULL == sh){
         opal_output(0, "mca_sharedfp_lockedfile_file_open: Error, unable to malloc f_sharedfp_ptr struct\n");
+	free ( shfileHandle);
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
     /*Populate the sh file structure based on the implementation*/
@@ -80,6 +81,8 @@ int mca_sharedfp_lockedfile_file_open (struct ompi_communicator_t *comm,
     module_data = (struct mca_sharedfp_lockedfile_data*)malloc(sizeof(struct mca_sharedfp_lockedfile_data));
     if ( NULL == module_data ) {
         printf("mca_sharedfp_lockedfile_file_open: Error, unable to malloc lockedfile_data struct\n");
+	free (shfileHandle);
+	free (sh);
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
@@ -104,6 +107,8 @@ int mca_sharedfp_lockedfile_file_open (struct ompi_communicator_t *comm,
     handle = open ( lockedfilename, O_RDWR, 0644  );
     if ( -1 == handle ) {
         printf("[%d]mca_sharedfp_lockedfile_file_open: Error during file open\n", rank);
+	free (shfileHandle);
+	free (sh);
 	free(module_data);
         return OMPI_ERROR;
     }
