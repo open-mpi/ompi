@@ -52,7 +52,7 @@ import java.nio.*;
 /**
  * The {@code Datatype} class represents {@code MPI_Datatype} handles.
  */
-public final class Datatype implements Freeable
+public final class Datatype implements Freeable, Cloneable
 {
 	protected long handle;
 	protected int baseType;
