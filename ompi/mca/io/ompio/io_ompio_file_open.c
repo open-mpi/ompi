@@ -387,6 +387,10 @@ ompio_io_ompio_file_close (mca_io_ompio_file_t *ompio_fh)
 	ompi_datatype_destroy (&ompio_fh->f_filetype);
     }
 
+    if ( MPI_DATATYPE_NULL != ompio_fh->f_orig_filetype ){
+	ompi_datatype_destroy (&ompio_fh->f_orig_filetype);
+    }
+
 
     if (MPI_COMM_NULL != ompio_fh->f_comm && (ompio_fh->f_flags & OMPIO_SHAREDFP_IS_SET) )  {
         ompi_comm_free (&ompio_fh->f_comm);

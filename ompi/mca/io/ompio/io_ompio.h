@@ -57,7 +57,9 @@ OMPI_DECLSPEC extern int mca_io_ompio_coll_timing_info;
 #define OMPIO_CONTIGUOUS_FVIEW       0x00000010
 #define OMPIO_AGGREGATOR_IS_SET      0x00000020
 #define OMPIO_SHAREDFP_IS_SET        0x00000040
+
 #define QUEUESIZE 2048
+#define MCA_IO_DEFAULT_FILE_VIEW_SIZE 4*1024*1024
 
 #define OMPIO_MIN(a, b) (((a) < (b)) ? (a) : (b))
 #define OMPIO_MAX(a, b) (((a) < (b)) ? (b) : (a))
@@ -320,6 +322,7 @@ struct mca_io_ompio_file_t {
     size_t            f_view_size;
     ompi_datatype_t  *f_etype;
     ompi_datatype_t  *f_filetype;
+    ompi_datatype_t  *f_orig_filetype; /* the fileview passed by the user to us */
     size_t            f_etype_size;
 
     /* contains IO requests that needs to be read/written */
