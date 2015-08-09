@@ -126,10 +126,11 @@ void FREE_tab_child(tree_t *tree)
 
 void FREE_non_constraint_tree(tree_t *tree)
 {
-
-  FREE_list_child(tree);
+  int free_tree = tree->dumb;
   FREE_tab_child(tree);
-  FREE(tree);
+  FREE_list_child(tree);
+  if(free_tree)
+    FREE(tree);
 }
 
 void FREE_constraint_tree(tree_t *tree)
@@ -1456,8 +1457,6 @@ tree_t *build_level_topology(tree_t *tab_node, affinity_mat_t *aff_mat,int arity
   FREE_tab_double(new_aff_mat->mat,new_aff_mat->order);
   FREE(new_aff_mat->sum_row);
   FREE(new_aff_mat);
-  FREE(new_obj_weight);
-
   FREE(new_obj_weight);
 
   return res;

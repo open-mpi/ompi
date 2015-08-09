@@ -272,7 +272,7 @@ int  build_binding_constraints(char *filename, int **ptab)
       n++;
   }
 
-  tab = (int*)MALLOC(n*sizeof(int));
+  tab = (int*)MALLOC((n+1)*sizeof(int));
 
   rewind(pf);
   fgets(line, LINE_SIZE, pf);

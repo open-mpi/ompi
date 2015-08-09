@@ -480,17 +480,15 @@ tree_t *kpartition_build_tree_from_topology(tm_topology_t *topology,double **com
   /* we assume all objects have the same arity*/
   /* assign the root of the tree*/
   root = (tree_t*) MALLOC (sizeof(tree_t));
-
-
+  root->id = 0;
 
   /*build the tree downward from the root*/
   kpartition_build_level_topology(root, &com_mat, N+K,  depth, topology, local_vertices,
-					constraints, nb_constraints, obj_weight, com_speed);
+                                  constraints, nb_constraints, obj_weight, com_speed);
 
   /*print_1D_tab(local_vertices,K+N);*/
   if(verbose_level>=INFO)
     printf("Build (bottom-up) tree done!\n");
-
 
 
   FREE(local_vertices);
