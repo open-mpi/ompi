@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:2 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2006      The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -9,6 +10,8 @@
  *                         reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
+ *                         reserved.
  *
  * Author(s): Torsten Hoefler <htor@cs.indiana.edu>
  *
@@ -24,118 +27,151 @@ int ompi_coll_libnbc_igatherv(void* sendbuf, int sendcount, MPI_Datatype sendtyp
                               void* recvbuf, int *recvcounts, int *displs, MPI_Datatype recvtype,
                               int root, struct ompi_communicator_t *comm, ompi_request_t ** request,
                               struct mca_coll_base_module_2_1_0_t *module) {
-  int rank, p, res, i;
+  int rank, p, res;
   MPI_Aint rcvext = 0;
   NBC_Schedule *schedule;
   char *rbuf, inplace;
   NBC_Handle *handle;
-  ompi_coll_libnbc_request_t **coll_req = (ompi_coll_libnbc_request_t**) request;
   ompi_coll_libnbc_module_t *libnbc_module = (ompi_coll_libnbc_module_t*) module;
 
   NBC_IN_PLACE(sendbuf, recvbuf, inplace);
 
-  res = NBC_Init_handle(comm, coll_req, libnbc_module);
-  if(res != NBC_OK) { printf("Error in NBC_Init_handle(%i)\n", res); return res; }
-  handle = (*coll_req);
-  res = MPI_Comm_rank(comm, &rank);
-  if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Comm_rank() (%i)\n", res); return res; }
-  res = MPI_Comm_size(comm, &p);
-  if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Comm_size() (%i)\n", res); return res; }
+  rank = ompi_comm_rank (comm);
+  p = ompi_comm_size (comm);
+
   if (rank == root) {
     res = MPI_Type_extent(recvtype, &rcvext);
-    if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Type_extent() (%i)\n", res); return res; }
+    if (MPI_SUCCESS != res) {
+      NBC_Error("MPI Error in MPI_Type_extent() (%i)", res);
+      return res;
+    }
   }
-  handle->tmpbuf = NULL;
-  schedule = (NBC_Schedule*)malloc(sizeof(NBC_Schedule));
-  if (NULL == schedule) { printf("Error in malloc() (%i)\n", res); return res; }
 
-  res = NBC_Sched_create(schedule);
-  if(res != NBC_OK) { printf("Error in NBC_Sched_create (%i)\n", res); return res; }
+  schedule = OBJ_NEW(NBC_Schedule);
+  if (OPAL_UNLIKELY(NULL == schedule)) {
+    return OMPI_ERR_OUT_OF_RESOURCE;
+  }
 
   /* send to root */
-  if(rank != root) {
+  if (rank != root) {
     /* send msg to root */
-    res = NBC_Sched_send(sendbuf, false, sendcount, sendtype, root, schedule);
-    if (NBC_OK != res) { printf("Error in NBC_Sched_send() (%i)\n", res); return res; }
+    res = NBC_Sched_send (sendbuf, false, sendcount, sendtype, root, schedule, false);
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+      OBJ_RELEASE(schedule);
+      return res;
+    }
   } else {
-    for(i=0;i<p;i++) {
-      rbuf = ((char *)recvbuf) + (displs[i]*rcvext);
-      if(i == root) {
-        if(!inplace) {
+    for (int i = 0 ; i < p ; ++i) {
+      rbuf = (char *) recvbuf + displs[i] * rcvext;
+      if (i == root) {
+        if (!inplace) {
           /* if I am the root - just copy the message */
-          res = NBC_Copy(sendbuf, sendcount, sendtype, rbuf, recvcounts[i], recvtype, comm);
-          if (NBC_OK != res) { printf("Error in NBC_Copy() (%i)\n", res); return res; }
+          res = NBC_Copy (sendbuf, sendcount, sendtype, rbuf, recvcounts[i], recvtype,
+                          comm);
+          if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+            OBJ_RELEASE(schedule);
+            return res;
+          }
         }
       } else {
         /* root receives message to the right buffer */
-        res = NBC_Sched_recv(rbuf, false, recvcounts[i], recvtype, i, schedule);
-        if (NBC_OK != res) { printf("Error in NBC_Sched_recv() (%i)\n", res); return res; }
+        res = NBC_Sched_recv (rbuf, false, recvcounts[i], recvtype, i, schedule, false);
+        if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+          OBJ_RELEASE(schedule);
+          return res;
+        }
       }
     }
   }
 
-  res = NBC_Sched_commit(schedule);
-  if (NBC_OK != res) { printf("Error in NBC_Sched_commit() (%i)\n", res); return res; }
+  res = NBC_Sched_commit (schedule);
+  if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+    OBJ_RELEASE(schedule);
+    return res;
+  }
 
-  res = NBC_Start(handle, schedule);
-  if (NBC_OK != res) { printf("Error in NBC_Start() (%i)\n", res); return res; }
+  res = NBC_Init_handle (comm, &handle, libnbc_module);
+  if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+    OBJ_RELEASE(schedule);
+    return res;
+  }
 
-  return NBC_OK;
+  res = NBC_Start (handle, schedule);
+  if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+    NBC_Return_handle (handle);
+    return res;
+  }
+
+  *request = (ompi_request_t *) handle;
+
+  return OMPI_SUCCESS;
 }
 
 int ompi_coll_libnbc_igatherv_inter (void* sendbuf, int sendcount, MPI_Datatype sendtype,
 				     void* recvbuf, int *recvcounts, int *displs, MPI_Datatype recvtype,
 				     int root, struct ompi_communicator_t *comm, ompi_request_t ** request,
 				     struct mca_coll_base_module_2_1_0_t *module) {
-  int rank, p, res, i, rsize;
+  int res, rsize;
   MPI_Aint rcvext;
   NBC_Schedule *schedule;
   char *rbuf;
   NBC_Handle *handle;
-  ompi_coll_libnbc_request_t **coll_req = (ompi_coll_libnbc_request_t**) request;
   ompi_coll_libnbc_module_t *libnbc_module = (ompi_coll_libnbc_module_t*) module;
 
-  res = NBC_Init_handle(comm, coll_req, libnbc_module);
-  if(res != NBC_OK) { printf("Error in NBC_Init_handle(%i)\n", res); return res; }
-  handle = (*coll_req);
-  res = MPI_Comm_rank(comm, &rank);
-  if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Comm_rank() (%i)\n", res); return res; }
-  res = MPI_Comm_size(comm, &p);
-  if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Comm_size() (%i)\n", res); return res; }
-  res = MPI_Comm_remote_size (comm, &rsize);
-  if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Comm_remote_size() (%i)\n", res); return res; }
+  rsize = ompi_comm_size (comm);
 
   if (MPI_ROOT == root) {
     res = MPI_Type_extent(recvtype, &rcvext);
-    if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Type_extent() (%i)\n", res); return res; }
+    if (MPI_SUCCESS != res) {
+      NBC_Error("MPI Error in MPI_Type_extent() (%i)", res);
+      return res;
+    }
   }
-  handle->tmpbuf = NULL;
 
-  schedule = (NBC_Schedule*)malloc(sizeof(NBC_Schedule));
-  if (NULL == schedule) { printf("Error in malloc() (%i)\n", res); return res; }
-
-  res = NBC_Sched_create(schedule);
-  if(res != NBC_OK) { printf("Error in NBC_Sched_create (%i)\n", res); return res; }
+  schedule = OBJ_NEW(NBC_Schedule);
+  if (OPAL_UNLIKELY(NULL == schedule)) {
+    return OMPI_ERR_OUT_OF_RESOURCE;
+  }
 
   /* send to root */
   if (MPI_ROOT != root && MPI_PROC_NULL != root) {
     /* send msg to root */
-    res = NBC_Sched_send(sendbuf, false, sendcount, sendtype, root, schedule);
-    if (NBC_OK != res) { printf("Error in NBC_Sched_send() (%i)\n", res); return res; }
+    res = NBC_Sched_send (sendbuf, false, sendcount, sendtype, root, schedule, false);
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+      OBJ_RELEASE(schedule);
+      return res;
+    }
   } else if (MPI_ROOT == root) {
-    for (i = 0 ; i < rsize ; ++i) {
-      rbuf = ((char *)recvbuf) + (displs[i]*rcvext);
+    for (int i = 0 ; i < rsize ; ++i) {
+      rbuf = (char *) recvbuf + displs[i] * rcvext;
       /* root receives message to the right buffer */
-      res = NBC_Sched_recv(rbuf, false, recvcounts[i], recvtype, i, schedule);
-      if (NBC_OK != res) { printf("Error in NBC_Sched_recv() (%i)\n", res); return res; }
+      res = NBC_Sched_recv (rbuf, false, recvcounts[i], recvtype, i, schedule, false);
+      if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+        OBJ_RELEASE(schedule);
+        return res;
+      }
     }
   }
 
-  res = NBC_Sched_commit(schedule);
-  if (NBC_OK != res) { printf("Error in NBC_Sched_commit() (%i)\n", res); return res; }
+  res = NBC_Sched_commit (schedule);
+  if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+    OBJ_RELEASE(schedule);
+    return res;
+  }
 
-  res = NBC_Start(handle, schedule);
-  if (NBC_OK != res) { printf("Error in NBC_Start() (%i)\n", res); return res; }
+  res = NBC_Init_handle (comm, &handle, libnbc_module);
+  if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+    OBJ_RELEASE(schedule);
+    return res;
+  }
 
-  return NBC_OK;
+  res = NBC_Start (handle, schedule);
+  if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+    NBC_Return_handle (handle);
+    return res;
+  }
+
+  *request = (ompi_request_t *) handle;
+
+  return OMPI_SUCCESS;
 }

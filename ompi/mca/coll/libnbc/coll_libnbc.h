@@ -98,9 +98,16 @@ OBJ_CLASS_DECLARATION(ompi_coll_libnbc_module_t);
 
 typedef ompi_coll_libnbc_module_t NBC_Comminfo;
 
-/* a schedule is basically a pointer to some memory location where the
- * schedule array resides */
-typedef void* NBC_Schedule;
+struct NBC_Schedule {
+    opal_object_t super;
+    volatile int size;
+    volatile int current_round_offset;
+    char *data;
+};
+
+typedef struct NBC_Schedule NBC_Schedule;
+
+OBJ_CLASS_DECLARATION(NBC_Schedule);
 
 struct ompi_coll_libnbc_request_t {
     ompi_request_t super;
@@ -110,7 +117,7 @@ struct ompi_coll_libnbc_request_t {
     volatile int req_count;
     ompi_request_t **req_array;
     NBC_Comminfo *comminfo;
-    volatile NBC_Schedule *schedule;
+    NBC_Schedule *schedule;
     void *tmpbuf; /* temporary buffer e.g. used for Reduce */
     /* TODO: we should make a handle pointer to a state later (that the user
      * can move request handles) */
@@ -134,9 +141,9 @@ typedef ompi_coll_libnbc_request_t NBC_Handle;
 
 #define OMPI_COLL_LIBNBC_REQUEST_RETURN(req)                            \
     do {                                                                \
-        OMPI_REQUEST_FINI(&request->super);                             \
+        OMPI_REQUEST_FINI(&(req)->super);                               \
         opal_free_list_return (&mca_coll_libnbc_component.requests,     \
-                               (opal_free_list_item_t*) req);           \
+                               (opal_free_list_item_t*) (req));         \
     } while (0)
 
 int ompi_coll_libnbc_progress(void);
