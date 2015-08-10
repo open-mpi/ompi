@@ -65,7 +65,7 @@ import static mpi.MPI.assertDirectBuffer;
 /**
  * The {@code Comm} class represents communicators.
  */
-public class Comm implements Freeable
+public class Comm implements Freeable, Cloneable
 {
 	public final static int TYPE_SHARED = 0;
 	protected final static int SELF  = 1;
