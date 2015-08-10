@@ -38,6 +38,7 @@ fs_gpfs_sources = \
 		fs_gpfs_file_get_size.c \
 		fs_gpfs_file_open.c \
 		fs_gpfs_file_set_info.c\
+		fs_gpfs_file_get_info.c\
 		fs_gpfs_file_set_size.c \
 		fs_gpfs_file_sync.c \
 		fs_gpfs.c \

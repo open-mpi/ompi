@@ -38,7 +38,7 @@
 int
 mca_fs_gpfs_file_close (mca_io_ompio_file_t *fh)
 {
-	printf("Using mca_fs_gpfs_file_close to close a file.\n");
+	//DEBUG printf("Using mca_fs_gpfs_file_close to close a file.\n");
 
     fh->f_comm->c_coll.coll_barrier (fh->f_comm,
                                      fh->f_comm->c_coll.coll_barrier_module);

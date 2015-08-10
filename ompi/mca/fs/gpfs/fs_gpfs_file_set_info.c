@@ -169,23 +169,6 @@ struct {
 
 int mca_fs_gpfs_file_set_info(mca_io_ompio_file_t *fh, struct ompi_info_t *info) {
     //DEBUG: fprintf(stderr, "GPFS SET INFO\n");
-    int ret;
-    //CN: Why subfunction?
-    ret = mca_fs_gpfs_prefetch_hints(fh->f_amode, fh, info);
-    return ret;
-}
-
-//CN: The functionality of this function translates between siox keys and GPFS structs
-//CN: Would this not be the job of siox - providing a gps hint struct?
-//CN: If we want to do this, we schould do this in a modular way, allowing to exchange siox easiely
-int mca_fs_gpfs_prefetch_hints(int access_mode,
-        mca_io_ompio_file_t *fh, struct ompi_info_t *info) {
-
-    //CN: Is this future proof, no description what gpfs_file_t is exactly
-    //CN: In gpfs.h it seems void* on WINDOWS and int on UNIX
-    //CN: Does this fit fh->fd in all cases?
-    gpfs_file_t gpfs_file_handle = fh->fd;
-
     int rc = 0;
     int flag;
     int valueLen = MPI_MAX_INFO_VAL;
@@ -196,8 +179,9 @@ int mca_fs_gpfs_prefetch_hints(int access_mode,
     int ret = OMPI_SUCCESS;
     ompi_info_t *info_selected;
     info_selected = info;
-
-    strcpy(gpfsHintsKey, "useSIOXLib");
+    gpfs_file_t gpfs_file_handle = fh->fd;
+    
+	strcpy(gpfsHintsKey, "useSIOXLib");
     ompi_info_get(info_selected, gpfsHintsKey, valueLen, value, &flag);
     if (flag) {
         if(strcmp(value, "true") == 0) {
@@ -213,7 +197,7 @@ int mca_fs_gpfs_prefetch_hints(int access_mode,
     }
 
     //Setting GPFS Hint - gpfsAccessRange
-    strcpy(gpfsHintsKey, "sioxAccessRange");
+    strcpy(gpfsHintsKey, "gpfsAccessRange");
     ompi_info_get(info_selected, gpfsHintsKey, valueLen, value, &flag);
     if (flag) {
         printf("GPFS Access Range is set: %s: %s\n", gpfsHintsKey, value);
@@ -235,14 +219,14 @@ int mca_fs_gpfs_prefetch_hints(int access_mode,
         if (rc != 0) {
             rc = errno;
             printf(
-                    "gpfs_hints_1 gpfs_fcntl(file handle: %d): Error number is %d, %s\n",
+                    "gpfs_hint_AccessRange gpfs_fcntl(file handle: %d): Error number is %d, %s\n",
                     gpfs_file_handle, rc, strerror(rc));
             ret = OMPI_ERROR;
         }
     }
 
     //Setting GPFS Hint - gpfsFreeRange
-    strcpy(gpfsHintsKey, "sioxFreeRange");
+    strcpy(gpfsHintsKey, "gpfsFreeRange");
     ompi_info_get(info_selected, gpfsHintsKey, valueLen, value, &flag);
     if (flag) {
         printf("GPFS Free Range is set: %s: %s\n", gpfsHintsKey, value);
@@ -262,7 +246,7 @@ int mca_fs_gpfs_prefetch_hints(int access_mode,
         if (rc != 0) {
             rc = errno;
             printf(
-                    "gpfs_hints_2 gpfs_fcntl(file handle: %d): Error number is %d, %s\n",
+                    "gpfs_hint_FreeRange gpfs_fcntl(file handle: %d): Error number is %d, %s\n",
                     gpfs_file_handle, rc, strerror(rc));
             ret = OMPI_ERROR;
         }
@@ -273,7 +257,7 @@ int mca_fs_gpfs_prefetch_hints(int access_mode,
     //Setting GPFS Hint - gpfsMultipleAccessRange
 
     //Setting GPFS Hint - gpfsClearFileCache
-    strcpy(gpfsHintsKey, "sioxClearFileCache");
+    strcpy(gpfsHintsKey, "gpfsClearFileCache");
     ompi_info_get(info_selected, gpfsHintsKey, valueLen, value, &flag);
     if (flag & strcmp(value, "true") == 0) {
         printf("GPFS Clear File Cache is set: %s: %s\n", gpfsHintsKey, value);
@@ -289,14 +273,14 @@ int mca_fs_gpfs_prefetch_hints(int access_mode,
         if (rc != 0) {
             rc = errno;
             printf(
-                    "gpfs_hints_5 gpfs_fcntl(file handle: %d): Error number is %d, %s\n",
+                    "gpfs_hint_ClearFileCache gpfs_fcntl(file handle: %d): Error number is %d, %s\n",
                     gpfs_file_handle, rc, strerror(rc));
             ret = OMPI_ERROR;
         }
     }
 
     //Setting GPFS Hint - gpfsCancelHints
-    strcpy(gpfsHintsKey, "sioxCancelHints");
+    strcpy(gpfsHintsKey, "gpfsCancelHints");
     ompi_info_get(info_selected, gpfsHintsKey, valueLen, value, &flag);
     if (flag & strcmp(value, "true") == 0) {
         printf("GPFS Cancel Hints is set: %s: %s\n", gpfsHintsKey, value);
@@ -312,14 +296,14 @@ int mca_fs_gpfs_prefetch_hints(int access_mode,
         if (rc != 0) {
             rc = errno;
             printf(
-                    "gpfs_hints_6 gpfs_fcntl(file handle: %d): Error number is %d, %s\n",
+                    "gpfs_hint_CancelHints gpfs_fcntl(file handle: %d): Error number is %d, %s\n",
                     gpfs_file_handle, rc, strerror(rc));
             ret = OMPI_ERROR;
         }
     }
 
     //Setting GPFS Hint - gpfsDataShipStart
-    strcpy(gpfsHintsKey, "sioxDataShipStart");
+    strcpy(gpfsHintsKey, "gpfsDataShipStart");
     ompi_info_get(info_selected, gpfsHintsKey, valueLen, value, &flag);
     if (flag) {
         printf("GPFS Data Ship Start is set: %s: %s\n", gpfsHintsKey, value);
@@ -338,7 +322,7 @@ int mca_fs_gpfs_prefetch_hints(int access_mode,
         if (rc != 0) {
             rc = errno;
             printf(
-                    "gpfs_hints_7 gpfs_fcntl(file handle: %d): Error number is %d, %s\n",
+                    "gpfs_hint_DataShipStart gpfs_fcntl(file handle: %d): Error number is %d, %s\n",
                     gpfs_file_handle, rc, strerror(rc));
             ret = OMPI_ERROR;
         }
@@ -349,7 +333,7 @@ int mca_fs_gpfs_prefetch_hints(int access_mode,
     //Setting GPFS Hint - gpfsDataShipMapVariable
 
     //Setting GPFS Hint - gpfsDataShipStop
-    strcpy(gpfsHintsKey, "sioxDataShipStop");
+    strcpy(gpfsHintsKey, "gpfsDataShipStop");
     ompi_info_get(info_selected, gpfsHintsKey, valueLen, value, &flag);
     if (flag & strcmp(value, "true") == 0) {
         printf("GPFS Data Ship Stop is set: %s: %s\n", gpfsHintsKey, value);
@@ -365,14 +349,14 @@ int mca_fs_gpfs_prefetch_hints(int access_mode,
         if (rc != 0) {
             rc = errno;
             printf(
-                    "gpfs_hints_10 gpfs_fcntl(file handle: %d): Error number is %d, %s\n",
+                    "gpfs_hint_DataShipStop gpfs_fcntl(file handle: %d): Error number is %d, %s\n",
                     gpfs_file_handle, rc, strerror(rc));
             ret = OMPI_ERROR;
         }
     }
 
     //Setting GPFS Hint - gpfsSetReplication
-    strcpy(gpfsHintsKey, "sioxSetReplication");
+    strcpy(gpfsHintsKey, "gpfsSetReplication");
     ompi_info_get(info_selected, gpfsHintsKey, valueLen, value, &flag);
     if (flag) {
         printf("GPFS Set Replication is set: %s: %s\n", gpfsHintsKey, value);
@@ -394,7 +378,7 @@ int mca_fs_gpfs_prefetch_hints(int access_mode,
         if (rc != 0) {
             rc = errno;
             printf(
-                    "gpfs_hints_11 gpfs_fcntl(file handle: %d): Error number is %d, %s\n",
+                    "gpfs_hint_SetReplication gpfs_fcntl(file handle: %d): Error number is %d, %s\n",
                     gpfs_file_handle, rc, strerror(rc));
             ret = OMPI_ERROR;
         }
@@ -404,7 +388,7 @@ int mca_fs_gpfs_prefetch_hints(int access_mode,
     //Setting GPFS Hint - gpfsSetStoragePool
 
     //Setting GPFS Hint - gpfsByteRange
-    strcpy(gpfsHintsKey, "sioxByteRange");
+    strcpy(gpfsHintsKey, "gpfsByteRange");
     ompi_info_get(info_selected, gpfsHintsKey, valueLen, value, &flag);
     if (flag) {
         printf("GPFS Byte Range is set: %s: %s\n", gpfsHintsKey, value);
@@ -421,14 +405,14 @@ int mca_fs_gpfs_prefetch_hints(int access_mode,
         if (rc != 0) {
             rc = errno;
             printf(
-                    "gpfs_hints_13 gpfs_fcntl(file handle: %d): Error number is %d, %s\n",
+                    "gpfs_hint_ByteRange gpfs_fcntl(file handle: %d): Error number is %d, %s\n",
                     gpfs_file_handle, rc, strerror(rc));
             ret = OMPI_ERROR;
         }
     }
 
     //Setting GPFS Hint - gpfsRestripeData
-    strcpy(gpfsHintsKey, "sioxRestripeData");
+    strcpy(gpfsHintsKey, "gpfsRestripeData");
     ompi_info_get(info_selected, gpfsHintsKey, valueLen, value, &flag);
     if (flag) {
         printf("GPFS Restripe Data is set: %s: %s\n", gpfsHintsKey, value);
@@ -448,7 +432,7 @@ int mca_fs_gpfs_prefetch_hints(int access_mode,
         if (rc != 0) {
             rc = errno;
             printf(
-                    "gpfs_hints_14 gpfs_fcntl(file handle: %d): Error number is %d, %s\n",
+                    "gpfs_hint_RestripeData gpfs_fcntl(file handle: %d): Error number is %d, %s\n",
                     gpfs_file_handle, rc, strerror(rc));
             ret = OMPI_ERROR;
         }
@@ -466,8 +450,8 @@ int mca_fs_gpfs_prefetch_hints(int access_mode,
     //Setting GPFS Hint - gpfsGetExpTime
     //Setting GPFS Hint - gpfsSetAppendOnly
     //Setting GPFS Hint - gpfsGetAppendOnly
-
-    return ret;
+	
+	return ret;
 }
 
 //CN: Will this function set info keys with siox prefix?

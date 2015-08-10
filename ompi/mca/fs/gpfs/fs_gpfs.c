@@ -48,7 +48,8 @@ static mca_fs_base_module_1_0_0_t gpfs = { mca_fs_gpfs_module_init, /* initializ
 mca_fs_gpfs_module_finalize, /* close a module on a communicator */
 mca_fs_gpfs_file_open, mca_fs_gpfs_file_close, mca_fs_gpfs_file_delete,
 		mca_fs_gpfs_file_set_size, mca_fs_gpfs_file_get_size,
-		mca_fs_gpfs_file_set_info, mca_fs_gpfs_file_sync };
+		mca_fs_gpfs_file_set_info, mca_fs_gpfs_file_sync,
+		mca_fs_gpfs_file_get_info};
 /*
  * *******************************************************************
  * ************************* structure ends **************************

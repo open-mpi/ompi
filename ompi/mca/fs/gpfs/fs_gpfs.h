@@ -59,8 +59,8 @@ int mca_fs_gpfs_file_get_size(struct mca_io_ompio_file_t *fh,
 int mca_fs_gpfs_file_get_amode(struct ompi_file_t *fh, int *amode);
 int mca_fs_gpfs_file_set_info(struct mca_io_ompio_file_t *fh,
 		struct ompi_info_t *info);
-//int mca_fs_gpfs_file_get_info(struct ompi_file_t *fh,
-				//struct ompi_info_t **info_used);
+int mca_fs_gpfs_file_get_info(struct mca_io_ompio_file_t *fh,
+		struct ompi_info_t **info_used);
 int mca_fs_gpfs_prefetch_hints(int access_mode,
 		mca_io_ompio_file_t *fh, struct ompi_info_t *info);
 int mca_fs_gpfs_io_selection(mca_io_ompio_file_t *fh,
