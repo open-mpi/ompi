@@ -40,6 +40,7 @@ static opal_event_t ipc_event;
 static struct timeval ack_timeout;
 static opal_list_t udp_port_listeners;
 static opal_list_t ipc_listeners;
+static volatile int ipc_accepts = 0;
 /* JMS The pings_pending and ping_results should probably both be hash
    tables for more efficient lookups */
 static opal_list_t pings_pending;
@@ -1019,6 +1020,9 @@ static void agent_thread_accept(int fd, short flags, void *context)
         return;
     }
 
+    /* Remember how many accepts we have successfully completed */
+    ++ipc_accepts;
+
     /* Make a listener object for this peer */
     listener = OBJ_NEW(agent_ipc_listener_t);
     listener->client_fd = client_fd;
@@ -1059,6 +1063,42 @@ static void agent_thread_accept(int fd, short flags, void *context)
  */
 static void agent_thread_finalize(int fd, short flags, void *context)
 {
+    /* Free the event that triggered this call */
+    free(context);
+
+    /* Ensure that all the local IPC clients have connected to me (so
+       that we don't shut down before someone tries to connect to me),
+       or 10 seconds have passed (i.e., if 10 seconds pass and they
+       don't all connect to me, then something else is wrong, and we
+       should just give up). */
+    static bool first = true;
+    static time_t timestamp = 0;
+    if (first) {
+        timestamp = time(NULL);
+        first = false;
+    }
+
+    if (ipc_accepts < opal_process_info.num_local_peers &&
+        time(NULL) < timestamp + 10) {
+        opal_output_verbose(20, USNIC_OUT,
+                            "usNIC connectivity agent delaying shutdown until all clients connect...");
+
+        opal_event_t *ev = calloc(sizeof(*ev), 1);
+        struct timeval finalize_retry = {
+            .tv_sec = 0,
+            .tv_usec = 10000
+        };
+
+        opal_event_set(mca_btl_usnic_component.opal_evbase,
+                       ev, -1, 0, agent_thread_finalize, ev);
+        opal_event_add(ev, &finalize_retry);
+        return;
+    }
+    if (ipc_accepts < opal_process_info.num_local_peers) {
+        opal_output_verbose(20, USNIC_OUT,
+                            "usNIC connectivity agent: only %d of %d clients connected, but timeout has expired -- exiting anyway", ipc_accepts, opal_process_info.num_local_peers);
+    }
+
     /* Remove the agent listening event from the opal async event
        base */
     opal_event_del(&ipc_event);
@@ -1197,10 +1237,10 @@ int opal_btl_usnic_connectivity_agent_finalize(void)
     /* Submit an event to the async thread and tell it to delete all
        the usNIC events.  See the rationale for doing this in the
        comment in the agent_thread_finalize() function. */
-    opal_event_t ev;
+    opal_event_t *ev = calloc(sizeof(*ev), 1);
     opal_event_set(mca_btl_usnic_component.opal_evbase,
-                   &ev, -1, OPAL_EV_WRITE, agent_thread_finalize, NULL);
-    opal_event_active(&ev, OPAL_EV_WRITE, 1);
+                   ev, -1, OPAL_EV_WRITE, agent_thread_finalize, ev);
+    opal_event_active(ev, OPAL_EV_WRITE, 1);
 
     /* Wait for the event to fire and complete */
     while (agent_initialized) {
