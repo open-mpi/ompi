@@ -60,6 +60,7 @@
 #include "opal/mca/memchecker/base/base.h"
 #include "opal/util/show_help.h"
 #include "opal/constants.h"
+#include "opal/runtime/opal_progress_threads.h"
 
 #if BTL_IN_OPAL
 #include "opal/mca/btl/btl.h"
@@ -209,6 +210,9 @@ static int usnic_component_close(void)
     if (mca_btl_usnic_component.connectivity_enabled) {
         opal_btl_usnic_connectivity_client_finalize();
         opal_btl_usnic_connectivity_agent_finalize();
+    }
+    if (mca_btl_usnic_component.opal_evbase) {
+        opal_progress_thread_finalize(NULL);
     }
 
     free(mca_btl_usnic_component.usnic_all_modules);
@@ -907,8 +911,10 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
        checking agent and client. */
     if (mca_btl_usnic_component.num_modules > 0 &&
         mca_btl_usnic_component.connectivity_enabled) {
+        mca_btl_usnic_component.opal_evbase = opal_progress_thread_init(NULL);
         if (OPAL_SUCCESS != opal_btl_usnic_connectivity_agent_init() ||
             OPAL_SUCCESS != opal_btl_usnic_connectivity_client_init()) {
+            opal_progress_thread_finalize(NULL);
             return NULL;
         }
     }
