@@ -24,6 +24,8 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
                             bool enable_mpi_threads);
 
 static int param_priority;
+static char *prov_include;
+static char *prov_exclude;
 
 mca_mtl_ofi_component_t mca_mtl_ofi_component = {
     {
@@ -53,21 +55,32 @@ mca_mtl_ofi_component_t mca_mtl_ofi_component = {
 static int
 ompi_mtl_ofi_component_register(void)
 {
-    ompi_mtl_ofi.provider_name = NULL;
-    (void) mca_base_component_var_register(&mca_mtl_ofi_component.super.mtl_version,
-                                           "provider",
-                                           "Name of OFI provider to use",
-                                           MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
-                                           OPAL_INFO_LVL_4,
-                                           MCA_BASE_VAR_SCOPE_READONLY,
-                                           &ompi_mtl_ofi.provider_name);
     param_priority = 10;   /* for now give a lower priority than the psm mtl */
-    mca_base_component_var_register (&mca_mtl_ofi_component.super.mtl_version,
-                                     "priority", "Priority of the OFI MTL component",
-                                      MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                      OPAL_INFO_LVL_9,
-                                      MCA_BASE_VAR_SCOPE_READONLY,
-                                      &param_priority);
+    mca_base_component_var_register(&mca_mtl_ofi_component.super.mtl_version,
+                                    "priority", "Priority of the OFI MTL component",
+                                    MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                    OPAL_INFO_LVL_9,
+                                    MCA_BASE_VAR_SCOPE_READONLY,
+                                    &param_priority);
+
+    prov_include = NULL;
+    mca_base_component_var_register(&mca_mtl_ofi_component.super.mtl_version,
+                                    "provider_include",
+                                    "Comma-delimited list of OFI providers that are considered for use (e.g., \"psm,sockets\"; an empty value means that all providers will be considered). Mutually exclusive with mtl_ofi_provider_exclude.",
+                                    MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                                    OPAL_INFO_LVL_1,
+                                    MCA_BASE_VAR_SCOPE_READONLY,
+                                    &prov_include);
+
+    prov_exclude = "sockets,mxm";
+    mca_base_component_var_register(&mca_mtl_ofi_component.super.mtl_version,
+                                    "provider_exclude",
+                                    "Comma-delimited list of OFI providers that are not considered for use (default: \"sockets,mxm\"; empty value means that all providers will be considered). Mutually exclusive with mtl_ofi_provider_include.",
+                                    MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                                    OPAL_INFO_LVL_1,
+                                    MCA_BASE_VAR_SCOPE_READONLY,
+                                    &prov_exclude);
+
     return OMPI_SUCCESS;
 }
 
@@ -83,6 +96,21 @@ ompi_mtl_ofi_component_open(void)
     ompi_mtl_ofi.av     =  NULL;
     ompi_mtl_ofi.cq     =  NULL;
     ompi_mtl_ofi.ep     =  NULL;
+
+    /**
+     * Sanity check: provider_include and provider_exclude must be mutually
+     * exclusive
+     */
+    if (OMPI_SUCCESS !=
+        mca_base_var_check_exclusive("ompi",
+            mca_mtl_ofi_component.super.mtl_version.mca_type_name,
+            mca_mtl_ofi_component.super.mtl_version.mca_component_name,
+            "provider_include",
+            mca_mtl_ofi_component.super.mtl_version.mca_type_name,
+            mca_mtl_ofi_component.super.mtl_version.mca_component_name,
+            "provider_exclude")) {
+        return OMPI_ERR_NOT_AVAILABLE;
+    }
 
     return OMPI_SUCCESS;
 }
@@ -107,26 +135,70 @@ ompi_mtl_ofi_progress_no_inline(void)
 	return ompi_mtl_ofi_progress();
 }
 
+static int
+is_in_list(char **list, char *item)
+{
+    int i = 0;
+
+    if ((NULL == list) || (NULL == item)) {
+        return 0;
+    }
+
+    while (NULL != list[i]) {
+        if (0 == strncmp(item, list[i], strlen(item))) {
+            return 1;
+        } else {
+            i++;
+        }
+    }
+
+    return 0;
+}
+
 static struct fi_info*
 select_ofi_provider(struct fi_info *providers)
 {
+    char **include_list = NULL;
+    char **exclude_list = NULL;
     struct fi_info *prov = providers;
-    /**
-     * Unless explicitly asked by user, ignore the following OFI providers:
-     *     - sockets
-     *     - mxm
-     */
-    if (NULL == ompi_mtl_ofi.provider_name) {
-        while (NULL != prov) {
-            if ((0 == strncmp(prov->fabric_attr->prov_name, "sockets", 7)) ||
-                (0 == strncmp(prov->fabric_attr->prov_name, "mxm", 3))) {
-                prov = prov->next;
-                continue;
-            } else {
-                break;
-            }
+
+    opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
+                        "%s:%d: mtl:ofi:provider_include = \"%s\"\n",
+                        __FILE__, __LINE__, prov_include);
+    opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
+                        "%s:%d: mtl:ofi:provider_exclude = \"%s\"\n",
+                        __FILE__, __LINE__, prov_exclude);
+
+    if (NULL != prov_include) {
+        include_list = opal_argv_split(prov_include, ',');
+        while ((NULL != prov) &&
+               (!is_in_list(include_list, prov->fabric_attr->prov_name))) {
+            opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
+                                "%s:%d: mtl:ofi: \"%s\" not in include list\n",
+                                __FILE__, __LINE__,
+                                prov->fabric_attr->prov_name);
+            prov = prov->next;
+        }
+    } else if (NULL != prov_exclude) {
+        exclude_list = opal_argv_split(prov_exclude, ',');
+        while ((NULL != prov) &&
+               (is_in_list(exclude_list, prov->fabric_attr->prov_name))) {
+            opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
+                                "%s:%d: mtl:ofi: \"%s\" in exclude list\n",
+                                __FILE__, __LINE__,
+                                prov->fabric_attr->prov_name);
+            prov = prov->next;
         }
     }
+
+    opal_argv_free(include_list);
+    opal_argv_free(exclude_list);
+
+    opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
+                        "%s:%d: mtl:ofi:prov: %s\n",
+                        __FILE__, __LINE__,
+                        (prov ? prov->fabric_attr->prov_name : "none"));
+
     return prov;
 }
 
@@ -172,11 +244,7 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
      */
     hints->domain_attr->threading        = FI_THREAD_ENDPOINT;
     hints->domain_attr->control_progress = FI_PROGRESS_AUTO;
-    if (NULL != ompi_mtl_ofi.provider_name) {
-        hints->fabric_attr->prov_name = strdup(ompi_mtl_ofi.provider_name);
-    } else {
-        hints->fabric_attr->prov_name = NULL;
-    }
+    hints->fabric_attr->prov_name        = NULL;
 
     /**
      * FI_VERSION provides binary backward and forward compatibility support
