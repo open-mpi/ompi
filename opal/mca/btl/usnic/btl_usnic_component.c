@@ -60,7 +60,6 @@
 #include "opal/mca/memchecker/base/base.h"
 #include "opal/util/show_help.h"
 #include "opal/constants.h"
-#include "opal/runtime/opal_progress_threads.h"
 
 #if BTL_IN_OPAL
 #include "opal/mca/btl/btl.h"
