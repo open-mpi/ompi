@@ -1609,6 +1609,7 @@ static int init_one_channel(opal_btl_usnic_module_t *module,
     channel->fastsend_wqe_thresh = sd_num - 10;
 
     channel->credits = sd_num;
+    channel->rx_post_cnt = 0;
 
     /* We did math up in component_init() to know that there should be
        enough CQs available.  So if create_cq() fails, then either the
