@@ -148,6 +148,61 @@ int usnic_compat_free_list_init(opal_free_list_t *free_list,
                                    mpool);
 }
 
+static volatile bool agent_thread_time_to_exit = false;
+static opal_thread_t agent_thread;
+static opal_event_base_t *agent_evbase = NULL;
+
+/*
+ * Agent progress thread main entry point
+ */
+static void *agent_thread_main(opal_object_t *obj)
+{
+    while (!agent_thread_time_to_exit) {
+        opal_event_loop(agent_evbase, OPAL_EVLOOP_ONCE);
+    }
+
+    return NULL;
+}
+
+opal_event_base_t *opal_progress_thread_init(const char *name)
+{
+    assert(NULL == name);
+
+    /* Create the event base */
+    agent_evbase = opal_event_base_create();
+    if (NULL == agent_evbase) {
+        return NULL;
+    }
+
+    /* Spawn the agent thread event loop */
+    OBJ_CONSTRUCT(&agent_thread, opal_thread_t);
+    agent_thread.t_run = agent_thread_main;
+    agent_thread.t_arg = NULL;
+    int ret;
+    ret = opal_thread_start(&agent_thread);
+    if (OPAL_SUCCESS != ret) {
+        OPAL_ERROR_LOG(ret);
+        ABORT("Failed to start usNIC agent thread");
+        /* Will not return */
+    }
+
+    return agent_evbase;
+}
+
+int opal_progress_thread_finalize(const char *name)
+{
+    assert(NULL == name);
+
+    agent_thread_time_to_exit = true;
+
+    /* break the event loop - this will cause the loop to exit upon
+       completion of any current event */
+    opal_event_base_loopbreak(agent_evbase);
+    opal_thread_join(&agent_thread, NULL);
+
+    return OPAL_SUCCESS;
+}
+
 #endif /* OMPI version */
 
 /************************************************************************/

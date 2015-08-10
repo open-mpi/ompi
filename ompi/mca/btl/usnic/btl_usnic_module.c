@@ -1609,6 +1609,7 @@ static int init_one_channel(opal_btl_usnic_module_t *module,
     channel->fastsend_wqe_thresh = sd_num - 10;
 
     channel->credits = sd_num;
+    channel->rx_post_cnt = 0;
 
     /* We did math up in component_init() to know that there should be
        enough CQs available.  So if create_cq() fails, then either the
@@ -2100,8 +2101,9 @@ static void init_async_event(opal_btl_usnic_module_t *module)
         return;
     }
 
-    /* Get the fd to receive events on this device */
-    opal_event_set(opal_event_base, &(module->device_async_event), fd,
+    /* Get the fd to receive events on this device.  Keep this in the
+       sync event base (not the async event base) */
+    opal_event_set(opal_sync_event_base, &(module->device_async_event), fd,
                    OPAL_EV_READ | OPAL_EV_PERSIST,
                    module_async_event_callback, module);
     opal_event_add(&(module->device_async_event), NULL);

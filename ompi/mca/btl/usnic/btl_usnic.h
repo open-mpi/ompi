@@ -226,6 +226,9 @@ typedef struct opal_btl_usnic_component_t {
         / API >=v1.1, this is the endpoint.msg_prefix_size (i.e.,
         component.transport_header_len). */
     uint32_t prefix_send_offset;
+
+    /* OPAL async progress event base */
+    opal_event_base_t *opal_evbase;
 } opal_btl_usnic_component_t;
 
 OPAL_MODULE_DECLSPEC extern opal_btl_usnic_component_t mca_btl_usnic_component;
