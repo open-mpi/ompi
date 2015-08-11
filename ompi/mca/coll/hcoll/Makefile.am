@@ -3,6 +3,8 @@
 #
 # Copyright (c) 2011 Mellanox Technologies. All rights reserved.
 # Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2015      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -11,7 +13,7 @@
 #
 #
 
-AM_CPPFLAGS = $(coll_hcoll_CPPFLAGS) -DCOLL_HCOLL_HOME=\"$(coll_hcoll_HOME)\" $(coll_hcoll_extra_CPPFLAGS)
+AM_CPPFLAGS = $(coll_hcoll_CPPFLAGS)
 
 coll_hcoll_sources = \
 		coll_hcoll.h \
