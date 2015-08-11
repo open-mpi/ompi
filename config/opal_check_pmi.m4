@@ -41,7 +41,7 @@ AC_DEFUN([OPAL_CHECK_PMI_LIB],
     AC_MSG_CHECKING([for $3.h in $1/include])
     AS_IF([test -f $1/include/$3.h],
           [AC_MSG_RESULT([found])
-           opal_check_$3_mycppflags="-I$3/include"],
+           opal_check_$3_mycppflags="-I$1/include"],
           [AC_MSG_RESULT([not found])
            AC_MSG_CHECKING([for $3.h in $1/include/slurm])
            AS_IF([test -f $1/include/slurm/$3.h],
@@ -195,12 +195,12 @@ AC_DEFUN([OPAL_CHECK_PMI],[
 
            AS_IF([test "$opal_enable_pmi2" = "yes"],
                  [AS_IF([test "$default_pmi_loc" = "no" || test "$slurm_pmi_found" = "yes"],
-		        [opal_pmi2_CPPFLAGS="$pmi_CPPFLAGS"
+		        [opal_pmi2_CPPFLAGS="$pmi2_CPPFLAGS"
                          AC_SUBST(opal_pmi2_CPPFLAGS)])
                   AS_IF([test "$default_pmi_libloc" = "no" || test "$slurm_pmi_found" = "yes"],
-		        [opal_pmi2_LDFLAGS="$pmi_LDFLAGS"
+		        [opal_pmi2_LDFLAGS="$pmi2_LDFLAGS"
                          AC_SUBST(opal_pmi2_LDFLAGS)
-                         opal_pmi2_rpath="$pmi_rpath"
+                         opal_pmi2_rpath="$pmi2_rpath"
                          AC_SUBST(opal_pmi2_rpath)])])
 
            # since support was explicitly requested, then we should error out
