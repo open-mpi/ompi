@@ -1,7 +1,9 @@
 # -*- shell-script -*-
 #
 #
-# Copyright (c) 2011 Mellanox Technologies. All rights reserved.
+# Copyright (c) 2011      Mellanox Technologies. All rights reserved.
+# Copyright (c) 2015      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -23,7 +25,6 @@ AC_DEFUN([MCA_ompi_coll_hcoll_CONFIG],[
     AS_IF([test "$coll_hcoll_happy" = "yes"],
           [coll_hcoll_WRAPPER_EXTRA_LDFLAGS="$coll_hcoll_LDFLAGS"
            coll_hcoll_CPPFLAGS="$coll_hcoll_CPPFLAGS"
-           coll_hcoll_WRAPPER_EXTRA_CPPFLAGS="$coll_hcoll_CPPFLAGS"
            coll_hcoll_WRAPPER_EXTRA_LIBS="$coll_hcoll_LIBS"
            $1],
           [$2])

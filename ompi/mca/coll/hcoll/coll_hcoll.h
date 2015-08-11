@@ -1,5 +1,7 @@
 /**
-  Copyright (c) 2011 Mellanox Technologies. All rights reserved.
+  Copyright (c) 2011      Mellanox Technologies. All rights reserved.
+  Copyright (c) 2015      Research Organization for Information Science
+                          and Technology (RIST). All rights reserved.
   $COPYRIGHT$
 
   Additional copyrights may follow
@@ -25,8 +27,8 @@
 
 #include "orte/runtime/orte_globals.h"
 
-#include "hcoll_api.h"
-#include "hcoll_constants.h"
+#include "hcoll/api/hcoll_api.h"
+#include "hcoll/api/hcoll_constants.h"
 
 
 #include "coll_hcoll_debug.h"

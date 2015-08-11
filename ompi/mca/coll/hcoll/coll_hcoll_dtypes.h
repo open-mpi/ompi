@@ -7,7 +7,7 @@
 
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/mca/op/op.h"
-#include "hcoll_dte.h"
+#include "hcoll/api/hcoll_dte.h"
 
 /*to keep this at hand: Ids of the basic opal_datatypes:
 #define OPAL_DATATYPE_INT1           4
