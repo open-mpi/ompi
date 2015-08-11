@@ -317,7 +317,7 @@ int mca_common_cuda_stage_one_init(void)
 #endif /* OPAL_CUDA_SUPPORT_41 */
 
     /* Use this flag to test cuMemcpyAsync vs cuMemcpy */
-    mca_common_cuda_cumemcpy_async = 0;
+    mca_common_cuda_cumemcpy_async = 1;
     (void) mca_base_var_register("ompi", "mpi", "common_cuda", "cumemcpy_async",
                                  "Set to 0 to force CUDA cuMemcpy instead of cuMemcpyAsync/cuStreamSynchronize",
                                  MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
