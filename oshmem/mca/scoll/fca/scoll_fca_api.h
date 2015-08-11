@@ -1,6 +1,8 @@
 /*
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -9,9 +11,9 @@
  */
 #include "oshmem_config.h"
 
-#include <fca_api.h>
-#include <fca_version.h>
-#include <config/fca_parse_specfile.h>
+#include <fca/fca_api.h>
+#include <fca/fca_version.h>
+#include <fca/config/fca_parse_specfile.h>
 
 #ifndef FCA_API
 #define OSHMEM_FCA_VERSION 12

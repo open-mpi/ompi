@@ -3,6 +3,8 @@
 #
 # Copyright (c) 2013      Mellanox Technologies, Inc.
 #                         All rights reserved.
+# Copyright (c) 2015      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -24,7 +26,6 @@ AC_DEFUN([MCA_oshmem_scoll_fca_CONFIG],[
     AS_IF([test "$scoll_fca_happy" = "yes"],
           [scoll_fca_WRAPPER_EXTRA_LDFLAGS="$scoll_fca_LDFLAGS"
            scoll_fca_CPPFLAGS="$scoll_fca_CPPFLAGS"
-           scoll_fca_WRAPPER_EXTRA_CPPFLAGS="$scoll_fca_CPPFLAGS"
            scoll_fca_WRAPPER_EXTRA_LIBS="$scoll_fca_LIBS"
            $1],
           [$2])
