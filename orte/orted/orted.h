@@ -22,9 +22,7 @@
 #include "orte_config.h"
 #include "orte/types.h"
 
-#ifdef HAVE_TIME_H
 #include <time.h>
-#endif
 
 #include "opal/dss/dss_types.h"
 #include "opal/class/opal_pointer_array.h"

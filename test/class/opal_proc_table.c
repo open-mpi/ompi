@@ -24,9 +24,7 @@
  */
 
 #include "opal_config.h"
-#ifdef HAVE_STDINT_H
 #include <stdint.h>
-#endif
 #include <string.h>
 #include "support.h"
 #include "opal/class/opal_object.h"

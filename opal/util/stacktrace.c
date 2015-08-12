@@ -25,13 +25,8 @@
 #include <unistd.h>
 #endif
 
-#ifdef HAVE_STRING_H
 #include <string.h>
-#endif
-
-#ifdef HAVE_SIGNAL_H
 #include <signal.h>
-#endif
 
 #include "opal/util/stacktrace.h"
 #include "opal/mca/backtrace/backtrace.h"

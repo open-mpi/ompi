@@ -23,9 +23,7 @@
 #include "opal_config.h"
 
 #include <stdlib.h>
-#ifdef HAVE_STRING_H
 #include <string.h>
-#endif  /* HAVE_STRING_H */
 #ifdef HAVE_LIBGEN_H
 #include <libgen.h>
 #endif  /* HAVE_LIBGEN_H */

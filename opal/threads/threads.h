@@ -26,9 +26,7 @@
 #include "opal_config.h"
 
 #include <pthread.h>
-#ifdef HAVE_SIGNAL_H
 #include <signal.h>
-#endif
 
 #include "opal/class/opal_object.h"
 #if OPAL_ENABLE_DEBUG

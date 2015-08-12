@@ -12,9 +12,7 @@
  */
 
 #include "ompi_config.h"
-#ifdef HAVE_STRING_H
 #  include <string.h>
-#endif
 #include "mpi.h"
 #include "ompi/peruse/peruse.h"
 #include "ompi/peruse/peruse-internal.h"

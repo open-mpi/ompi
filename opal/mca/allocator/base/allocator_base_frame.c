@@ -19,9 +19,7 @@
 
 #include "opal_config.h"
 #include <stdio.h>
-#ifdef HAVE_STRING_H
 #include <string.h>
-#endif  /* HAVE_STRING_H */
 
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"

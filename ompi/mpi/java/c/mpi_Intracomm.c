@@ -49,9 +49,7 @@
 #include "ompi_config.h"
 
 #include <stdlib.h>
-#ifdef HAVE_STRING_H
 #include <string.h>
-#endif
 #ifdef HAVE_TARGETCONDITIONALS_H
 #include <TargetConditionals.h>
 #endif

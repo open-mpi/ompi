@@ -22,12 +22,8 @@
  */
 
 #include "opal_config.h"
-#ifdef HAVE_STDINT_H
 #include <stdint.h>
-#endif
-#ifdef HAVE_STRING_H
 #include <string.h>
-#endif  /* HAVE_STRING_H */
 #include "opal/mca/mpool/mpool.h"
 #include "base.h"
 #include "mpool_base_tree.h"

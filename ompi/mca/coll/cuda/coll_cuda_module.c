@@ -12,9 +12,7 @@
 
 #include "ompi_config.h"
 
-#ifdef HAVE_STRING_H
 #include <string.h>
-#endif
 #include <stdio.h>
 
 #include "coll_cuda.h"

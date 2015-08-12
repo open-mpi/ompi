@@ -65,9 +65,7 @@
 
 #include "opal_config.h"
 
-#ifdef HAVE_STDARG_H
 #include <stdarg.h>
-#endif
 
 #include "opal/class/opal_object.h"
 

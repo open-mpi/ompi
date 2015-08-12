@@ -26,16 +26,12 @@
 #include "orte_config.h"
 #include "orte/constants.h"
 
-#ifdef HAVE_STRING_H
 #include <string.h>
-#endif
 #include <stdlib.h>
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
-#ifdef HAVE_TIME_H
 #include <time.h>
-#endif
 #include <errno.h>
 
 #include "opal/util/output.h"

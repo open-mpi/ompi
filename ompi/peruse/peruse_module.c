@@ -13,9 +13,7 @@
  */
 
 #include "ompi_config.h"
-#ifdef HAVE_STDLIB_H
 #  include <stdlib.h>
-#endif
 #include "mpi.h"
 #include "ompi/peruse/peruse.h"
 #include "ompi/peruse/peruse-internal.h"

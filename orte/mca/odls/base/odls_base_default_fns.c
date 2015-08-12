@@ -39,9 +39,7 @@
 #ifdef HAVE_SYS_PARAM_H
 #include <sys/param.h>
 #endif
-#ifdef HAVE_TIME_H
 #include <time.h>
-#endif
 
 #include <signal.h>
 
