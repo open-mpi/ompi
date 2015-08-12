@@ -31,6 +31,12 @@ extern int mca_fs_lustre_stripe_width;
 
 BEGIN_C_DECLS
 
+
+#ifndef LOV_MAX_STRIPE_COUNT
+#define LOV_MAX_STRIPE_COUNT 160
+#endif
+
+
 int mca_fs_lustre_component_init_query(bool enable_progress_threads,
                                         bool enable_mpi_threads);
 struct mca_fs_base_module_1_0_0_t *
