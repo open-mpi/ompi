@@ -153,7 +153,7 @@ int ompi_op_base_op_select(ompi_op_t *op)
         for (i = 0; i < OMPI_OP_BASE_TYPE_MAX; ++i) {
             /* 2-buffer variants */
             if (NULL != avail->ao_module->opm_fns[i]) {
-	        OBJ_RELEASE(op->o_func.intrinsic.modules[i]);
+                OBJ_RELEASE(op->o_func.intrinsic.modules[i]);
                 op->o_func.intrinsic.fns[i] = avail->ao_module->opm_fns[i];
                 op->o_func.intrinsic.modules[i] = avail->ao_module;
                 OBJ_RETAIN(avail->ao_module);
@@ -161,7 +161,7 @@ int ompi_op_base_op_select(ompi_op_t *op)
 
             /* 3-buffer variants */
             if (NULL != avail->ao_module->opm_3buff_fns[i]) {
-	        OBJ_RELEASE(op->o_func.intrinsic.modules[i]);
+                OBJ_RELEASE(op->o_func.intrinsic.modules[i]);
                 op->o_3buff_intrinsic.fns[i] =
                     avail->ao_module->opm_3buff_fns[i];
                 op->o_3buff_intrinsic.modules[i] = avail->ao_module;
@@ -192,8 +192,8 @@ int ompi_op_base_op_select(ompi_op_t *op)
                the "i" index because we're going to return without
                completing the outter loop). */
             for (i = 0; i < OMPI_OP_BASE_TYPE_MAX; ++i) {
-	        OBJ_RELEASE(op->o_func.intrinsic.modules[i]);
-		op->o_func.intrinsic.modules[i] = NULL;
+                OBJ_RELEASE(op->o_func.intrinsic.modules[i]);
+                op->o_func.intrinsic.modules[i] = NULL;
                 op->o_func.intrinsic.fns[i] = NULL;
             }
             return OMPI_ERR_NOT_FOUND;
