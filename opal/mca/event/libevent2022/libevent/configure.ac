@@ -605,7 +605,6 @@ if test "$enable_epoll" != "no" ; then
         # written to.
 
         haveepoll=no
-        AC_MSG_CHECKING([for working epoll library interface])
         AC_RUN_IFELSE([AC_LANG_PROGRAM([
 AC_INCLUDES_DEFAULT
 #include <sys/epoll.h>
@@ -652,6 +651,7 @@ else
     AC_MSG_RESULT([disabled])
 fi
 AM_CONDITIONAL(EPOLL_BACKEND, [test "x$haveepoll" = "xyes" -a "$enable_epoll" != "no"])
+AC_MSG_CHECKING([for working epoll library interface])
 AS_IF([test "$enable_epoll" != "no" && test "x$haveepoll" = "xyes"],
       [AC_DEFINE(HAVE_EPOLL, 1,
                  [Define if your system supports the epoll interface])
