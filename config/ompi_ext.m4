@@ -176,7 +176,7 @@ EOF
     # Make an AM conditional to see whether we're building the mpi_ext
     # module.  Note that we only build it if we support the ignore-tkr
     # mpi module.
-    AS_IF([test $OMPI_BUILD_FORTRAN_USEMPI_BINDINGS -eq 1 && \
+    AS_IF([test $OMPI_BUILD_FORTRAN_BINDINGS -ge $OMPI_FORTRAN_USEMPI_BINDINGS && \
            test $OMPI_FORTRAN_HAVE_IGNORE_TKR -eq 1],
           [OMPI_BUILD_FORTRAN_USEMPI_EXT=1],
           [OMPI_BUILD_FORTRAN_USEMPI_EXT=0])
@@ -213,7 +213,7 @@ EOF
 
     # Only build this mpi_f08_ext module if we're building the "use
     # mpi_f08" module *and* it's the non-descriptor one.
-    AS_IF([test $OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS -eq 1 && \
+    AS_IF([test $OMPI_BUILD_FORTRAN_BINDINGS -ge $OMPI_FORTRAN_USEMPIF08_BINDINGS && \
            test $OMPI_BUILD_FORTRAN_F08_SUBARRAYS -eq 0],
           [OMPI_BUILD_FORTRAN_USEMPIF08_EXT=1],
           [OMPI_BUILD_FORTRAN_USEMPIF08_EXT=0])
