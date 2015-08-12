@@ -132,7 +132,6 @@ static int start_progress_engine(opal_progress_tracker_t *trk)
     int rc = opal_thread_start(&trk->engine);
     if (OPAL_SUCCESS != rc) {
         OPAL_ERROR_LOG(rc);
-        OBJ_RELEASE(trk);
     }
 
     return rc;
