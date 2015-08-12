@@ -242,17 +242,11 @@ int main(int argc, char *argv[])
         exit(0);
     }
 
-    /* flag that I am the HNP */
-    orte_process_info.proc_type = ORTE_PROC_HNP;
-
     /* Setup MCA params */
     orte_register_params();
 
-    /* specify the DVM state machine */
-    opal_setenv("OMPI_MCA_state", "dvm", true, &environ);
-
     /* Intialize our Open RTE environment */
-    if (ORTE_SUCCESS != (rc = orte_init(&argc, &argv, ORTE_PROC_HNP))) {
+    if (ORTE_SUCCESS != (rc = orte_init(&argc, &argv, ORTE_PROC_MASTER))) {
         /* cannot call ORTE_ERROR_LOG as it could be the errmgr
          * never got loaded!
          */

@@ -70,9 +70,14 @@ static int state_dvm_close(void)
 
 static int state_dvm_component_query(mca_base_module_t **module, int *priority)
 {
-    /* we are only used when an envar is set directing it,
-     * so set our priority very low */
+    /* used by DVM masters */
+    if (ORTE_PROC_IS_MASTER) {
+        *priority = 100;
+        *module = (mca_base_module_t *)&orte_state_dvm_module;
+        return ORTE_SUCCESS;
+    }
+
     *priority = 0;
-    *module = (mca_base_module_t *)&orte_state_dvm_module;
-    return ORTE_SUCCESS;
+    *module = NULL;
+    return ORTE_ERR_NOT_AVAILABLE;
 }

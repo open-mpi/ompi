@@ -767,6 +767,18 @@ static int rte_init(void)
                        "orte_init:startup:internal-failure",
                        true, error, ORTE_ERROR_NAME(ret), ret);
     }
+    /* remove my contact info file, if we have session directories */
+    if (NULL != orte_process_info.job_session_dir) {
+        jobfam_dir = opal_dirname(orte_process_info.job_session_dir);
+        contact_path = opal_os_path(false, jobfam_dir, "contact.txt", NULL);
+        free(jobfam_dir);
+        unlink(contact_path);
+        free(contact_path);
+    }
+    /* remove our use of the session directory tree */
+    orte_session_dir_finalize(ORTE_PROC_MY_NAME);
+    /* ensure we scrub the session directory tree */
+    orte_session_dir_cleanup(ORTE_JOBID_WILDCARD);
     return ORTE_ERR_SILENT;
 }
 
@@ -827,6 +839,8 @@ static int rte_finalize(void)
     (void) mca_base_framework_close(&orte_rml_base_framework);
     (void) mca_base_framework_close(&orte_oob_base_framework);
 
+    /* remove our use of the session directory tree */
+    orte_session_dir_finalize(ORTE_PROC_MY_NAME);
     /* ensure we scrub the session directory tree */
     orte_session_dir_cleanup(ORTE_JOBID_WILDCARD);
 

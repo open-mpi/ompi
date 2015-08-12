@@ -608,6 +608,10 @@ int orte_ess_base_orted_setup(char **hosts)
     orte_show_help("help-orte-runtime.txt",
                    "orte_init:startup:internal-failure",
                    true, error, ORTE_ERROR_NAME(ret), ret);
+    /* remove our use of the session directory tree */
+    orte_session_dir_finalize(ORTE_PROC_MY_NAME);
+    /* ensure we scrub the session directory tree */
+    orte_session_dir_cleanup(ORTE_JOBID_WILDCARD);
     return ORTE_ERR_SILENT;
 }
 
@@ -645,7 +649,9 @@ int orte_ess_base_orted_finalize(void)
     (void) mca_base_framework_close(&orte_oob_base_framework);
     (void) mca_base_framework_close(&orte_state_base_framework);
     (void) mca_base_framework_close(&opal_dstore_base_framework);
-    /* cleanup any lingering session directories */
+    /* remove our use of the session directory tree */
+    orte_session_dir_finalize(ORTE_PROC_MY_NAME);
+    /* ensure we scrub the session directory tree */
     orte_session_dir_cleanup(ORTE_JOBID_WILDCARD);
     return ORTE_SUCCESS;
 }

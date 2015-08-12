@@ -178,10 +178,6 @@ opal_cmd_line_init_t orte_cmd_line_opts[] = {
       NULL, OPAL_CMD_LINE_TYPE_STRING,
       "URI for the parent if tree launch is enabled."},
 
-    { NULL, '\0', NULL, "tree-spawn", 0,
-      &orted_globals.tree_spawn, OPAL_CMD_LINE_TYPE_BOOL,
-      "Tree spawn is underway"},
-
     { NULL, '\0', NULL, "set-sid", 0,
       &orted_globals.set_sid, OPAL_CMD_LINE_TYPE_BOOL,
       "Direct the orted to separate from the current session"},
