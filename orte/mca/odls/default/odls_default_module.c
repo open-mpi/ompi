@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2010 Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2007      Evergrid, Inc. All rights reserved.
- * Copyright (c) 2008-2013 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010      IBM Corporation.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved.
@@ -624,7 +624,7 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
                                         char **environ_copy,
                                         orte_job_t *jobdat)
 {
-    orte_iof_base_io_conf_t opts;
+    orte_iof_base_io_conf_t opts = {0};
     int rc, p[2];
     pid_t pid;
 
