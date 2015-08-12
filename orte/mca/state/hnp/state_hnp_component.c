@@ -71,7 +71,7 @@ static int state_hnp_close(void)
 
 static int state_hnp_component_query(mca_base_module_t **module, int *priority)
 {
-    if (ORTE_PROC_IS_HNP) {
+    if (ORTE_PROC_IS_HNP && !ORTE_PROC_IS_MASTER) {
         /* set our priority high as we are the default for hnps */
         *priority = my_priority;
         *module = (mca_base_module_t *)&orte_state_hnp_module;

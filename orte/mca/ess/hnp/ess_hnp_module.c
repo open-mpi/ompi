@@ -602,6 +602,13 @@ static int rte_init(void)
     orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_SHOW_HELP,
                             ORTE_RML_PERSISTENT, orte_show_help_recv, NULL);
 
+    /* setup the data server */
+    if (ORTE_SUCCESS != (ret = orte_data_server_init())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_data_server_init";
+        goto error;
+    }
+
     if (orte_create_session_dirs) {
         /* set the opal_output hnp file location to be in the
          * proc-specific session directory. */
@@ -773,6 +780,8 @@ static int rte_finalize(void)
     /* shutdown the pmix server */
     pmix_server_finalize();
     (void) mca_base_framework_close(&opal_pmix_base_framework);
+    /* cleanup our data server */
+    orte_data_server_finalize();
 
     (void) mca_base_framework_close(&orte_schizo_base_framework);
     (void) mca_base_framework_close(&orte_dfs_base_framework);
