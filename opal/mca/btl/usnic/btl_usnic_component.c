@@ -650,12 +650,23 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
          against libfabric v1.1.0 (i.e., API v1.1).
 
        So never request API v1.0 -- always request a minimum of
-       v1.1. */
+       v1.1.
+
+       NOTE: The configure.m4 in this component will require libfabric
+       >= v1.1.0 (i.e., it won't accept v1.0.0) because of a critical
+       bug in the usnic provider in libfabric v1.0.0.  However, the
+       compatibility code with libfabric v1.0.0 in the usNIC BTL has
+       been retained, for two reasons:
+
+       1. It's not harmful, nor overly complicated.  So the
+          compatibility code was not ripped out.
+       2. At least some versions of Cisco Open MPI are shipping with
+          an embedded (libfabric v1.0.0+critical bug fix).
+
+       Someday, #2 may no longer be true, and we may therefore rip out
+       the libfabric v1.0.0 compatibility code. */
     uint32_t libfabric_api;
-    libfabric_api = FI_VERSION(FI_MAJOR_VERSION, FI_MINOR_VERSION);
-    if (libfabric_api == FI_VERSION(1, 0)) {
-        libfabric_api = FI_VERSION(1, 1);
-    }
+    libfabric_api = FI_VERSION(1, 1);
     ret = fi_getinfo(libfabric_api, NULL, 0, 0, &hints, &info_list);
     if (0 != ret) {
         opal_output_verbose(5, USNIC_OUT,
