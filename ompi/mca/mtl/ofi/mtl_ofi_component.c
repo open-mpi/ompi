@@ -241,7 +241,6 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
      */
     hints->domain_attr->threading        = FI_THREAD_ENDPOINT;
     hints->domain_attr->control_progress = FI_PROGRESS_AUTO;
-    hints->fabric_attr->prov_name        = NULL;
 
     /**
      * FI_VERSION provides binary backward and forward compatibility support
