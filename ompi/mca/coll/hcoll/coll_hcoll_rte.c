@@ -4,6 +4,8 @@
  * Copyright (c) 2013      The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -36,9 +38,9 @@
 #include "ompi/mca/pml/pml.h"
 
 
-#include "hcoll_dte.h"
-#include "hcoll_api.h"
-#include "hcoll_constants.h"
+#include "hcoll/api/hcoll_dte.h"
+#include "hcoll/api/hcoll_api.h"
+#include "hcoll/api/hcoll_constants.h"
 /*
  * Local functions
  */
