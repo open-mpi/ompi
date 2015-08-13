@@ -1,5 +1,7 @@
 #
-# Copyright (C) Mellanox Technologies Ltd. 2001-2014.  ALL RIGHTS RESERVED.
+# Copyright (c) 2001-2014 Mellanox Technologies Ltd. ALL RIGHTS RESERVED.
+# Copyright (c) 2015      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -36,10 +38,10 @@ mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_pml_yalla_la_SOURCES = $(local_sources)
 mca_pml_yalla_la_LIBADD = $(pml_yalla_LIBS)
-mca_pml_yalla_la_LDFLAGS = -module -avoid-version
+mca_pml_yalla_la_LDFLAGS = -module -avoid-version $(pml_yalla_LDFLAGS)
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_pml_yalla_la_SOURCES = $(local_sources)
 libmca_pml_yalla_la_LIBADD = $(pml_yalla_LIBS)
-libmca_pml_yalla_la_LDFLAGS = -module -avoid-version
+libmca_pml_yalla_la_LDFLAGS = -module -avoid-version $(pml_yalla_LDFLAGS)
 
