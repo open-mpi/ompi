@@ -12,8 +12,9 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2007 University of Houston. All rights reserved.
  * Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
- *                         reserved. 
+ *                         reserved.
  * Copyright (c) 2007-2013 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Intel, Inc. All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -55,7 +56,7 @@ char* ompi_dpm_base_dyn_init (void)
         }
         port_name = strdup(ptr);
     }
-    
+
     return port_name;
 }
 
@@ -121,7 +122,7 @@ ompi_dpm_base_disconnect_obj *ompi_dpm_base_disconnect_init ( ompi_communicator_
 
     obj = (ompi_dpm_base_disconnect_obj *) calloc(1,sizeof(ompi_dpm_base_disconnect_obj));
     if ( NULL == obj ) {
-        printf("Could not allocate disconnect object\n");
+        opal_output(0, "Could not allocate disconnect object");
         return NULL;
     }
 
@@ -134,7 +135,7 @@ ompi_dpm_base_disconnect_obj *ompi_dpm_base_disconnect_init ( ompi_communicator_
     obj->comm = comm;
     obj->reqs = (ompi_request_t **) malloc(2*obj->size*sizeof(ompi_request_t *));
     if ( NULL == obj->reqs ) {
-        printf("Could not allocate request array for disconnect object\n");
+        opal_output(0, "Could not allocate request array for disconnect object");
         free (obj);
         return NULL;
     }
@@ -147,7 +148,8 @@ ompi_dpm_base_disconnect_obj *ompi_dpm_base_disconnect_init ( ompi_communicator_
                      &(obj->reqs[2*i])));
 
         if ( OMPI_SUCCESS != ret ) {
-            printf("dpm_base_disconnect_init: error %d in irecv to process %d\n", ret, i);
+            opal_output(0, "%s dpm_base_disconnect_init: error %d in irecv to process %d\n",
+                        OMPI_NAME_PRINT(OMPI_PROC_MY_NAME), ret, i);
             free (obj->reqs);
             free (obj);
             return NULL;
@@ -158,7 +160,8 @@ ompi_dpm_base_disconnect_obj *ompi_dpm_base_disconnect_init ( ompi_communicator_
                      comm, &(obj->reqs[2*i+1])));
 
         if ( OMPI_SUCCESS != ret ) {
-            printf("dpm_base_disconnect_init: error %d in isend to process %d\n", ret, i);
+            opal_output(0, "%s dpm_base_disconnect_init: error %d in isend to process %d\n",
+                        OMPI_NAME_PRINT(OMPI_PROC_MY_NAME), ret, i);
             free (obj->reqs);
             free (obj);
             return NULL;

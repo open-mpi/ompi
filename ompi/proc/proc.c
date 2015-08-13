@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights
- *                         reserved. 
+ *                         reserved.
  * Copyright (c) 2013      Intel, Inc. All rights reserved
  * $COPYRIGHT$
  *
@@ -224,7 +224,7 @@ int ompi_proc_complete_init(void)
          item != opal_list_get_end(&ompi_proc_list);
          item  = opal_list_get_next(item)) {
         proc = (ompi_proc_t*)item;
-        
+
         if (proc->proc_name.vpid != OMPI_PROC_MY_NAME->vpid) {
             /* get the locality information */
             ret = ompi_proc_set_locality(proc);
@@ -519,7 +519,7 @@ int ompi_proc_refresh(void) {
 
     OPAL_THREAD_UNLOCK(&ompi_proc_lock);
 
-    return ret;   
+    return ret;
 }
 
 int
@@ -528,9 +528,9 @@ ompi_proc_pack(ompi_proc_t **proclist, int proclistsize,
                opal_buffer_t* buf)
 {
     int i, rc;
-    
+
     OPAL_THREAD_LOCK(&ompi_proc_lock);
-    
+
     /* cycle through the provided array, packing the OMPI level
      * data for each proc. This data may or may not be included
      * in any subsequent modex operation, so we include it here
@@ -578,7 +578,7 @@ ompi_proc_pack(ompi_proc_t **proclist, int proclistsize,
                 OMPI_ERROR_LOG(rc);
                 break;
             }
-    
+
             /* if there are entries, store them */
             while (NULL != (kv = (opal_value_t*)opal_list_remove_first(&data))) {
                 if (OPAL_SUCCESS != (rc = opal_dss.pack(buf, &kv, 1, OPAL_VALUE))) {
@@ -613,7 +613,7 @@ ompi_proc_find_and_add(const ompi_process_name_t * name, bool* isnew)
 {
     ompi_proc_t *proc, *rproc = NULL;
     ompi_rte_cmp_bitmask_t mask;
-    
+
     /* return the proc-struct which matches this jobid+process id */
     mask = OMPI_RTE_CMP_JOBID | OMPI_RTE_CMP_VPID;
     OPAL_THREAD_LOCK(&ompi_proc_lock);
@@ -626,7 +626,7 @@ ompi_proc_find_and_add(const ompi_process_name_t * name, bool* isnew)
             break;
         }
     }
-    
+
     /* if we didn't find this proc in the list, create a new
      * proc_t and append it to the list
      */
@@ -640,15 +640,15 @@ ompi_proc_find_and_add(const ompi_process_name_t * name, bool* isnew)
         /* caller had better fill in the rest of the proc, or there's
          going to be pain later... */
     }
-    
+
     OPAL_THREAD_UNLOCK(&ompi_proc_lock);
-    
+
     return rproc;
 }
 
 
 int
-ompi_proc_unpack(opal_buffer_t* buf, 
+ompi_proc_unpack(opal_buffer_t* buf,
                  int proclistsize, ompi_proc_t ***proclist,
                  bool full_info,
                  int *newproclistsize, ompi_proc_t ***newproclist)
@@ -749,10 +749,14 @@ ompi_proc_unpack(opal_buffer_t* buf,
                     }
                 }
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
-                rc = opal_db.fetch((opal_identifier_t*)&new_name, "OMPI_ARCH",
-                                   (void**)&new_arch, OPAL_UINT32);
-                if( OPAL_SUCCESS == rc ) {
-                    new_arch = opal_local_arch;
+                {
+                    uint32_t *narch;
+                    narch = &new_arch;
+                    rc = opal_db.fetch((opal_identifier_t*)&new_name, "OMPI_ARCH",
+                                       (void**)&narch, OPAL_UINT32);
+                    if (OPAL_SUCCESS != rc) {
+                        new_arch = opal_local_arch;
+                    }
                 }
 #else
                 new_arch = opal_local_arch;
@@ -781,7 +785,7 @@ ompi_proc_unpack(opal_buffer_t* buf,
 #else
                 opal_show_help("help-mpi-runtime",
                                "heterogeneous-support-unavailable",
-                               true, ompi_process_info.nodename, 
+                               true, ompi_process_info.nodename,
                                new_hostname == NULL ? "<hostname unavailable>" :
                                new_hostname);
                 free(plist);
