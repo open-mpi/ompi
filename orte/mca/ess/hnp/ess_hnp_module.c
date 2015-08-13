@@ -5,19 +5,19 @@
  * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2010-2011 Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2011-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
- *                         reserved. 
- * Copyright (c) 2013-2015 Intel, Inc.  All rights reserved. 
+ *                         reserved.
+ * Copyright (c) 2013-2015 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  *
  */
@@ -261,7 +261,7 @@ static int rte_init(void)
         error = "opal_pstat_base_select";
         goto error;
     }
-  
+
     /* open and setup the state machine */
     if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_state_base_framework, 0))) {
         ORTE_ERROR_LOG(ret);
@@ -291,7 +291,7 @@ static int rte_init(void)
         error = "orte_plm_base_open";
         goto error;
     }
-    
+
     if (ORTE_SUCCESS != (ret = orte_plm_base_select())) {
         ORTE_ERROR_LOG(ret);
         error = "orte_plm_base_select";
@@ -313,7 +313,7 @@ static int rte_init(void)
         }
     }
     /* Setup the communication infrastructure */
-    
+
     /*
      * OOB Layer
      */
@@ -347,7 +347,7 @@ static int rte_init(void)
         error = "orte_errmgr_base_select";
         goto error;
     }
-    
+
     /* setup the global job and node arrays */
     orte_job_data = OBJ_NEW(opal_pointer_array_t);
     if (ORTE_SUCCESS != (ret = opal_pointer_array_init(orte_job_data,
@@ -358,7 +358,7 @@ static int rte_init(void)
         error = "setup job array";
         goto error;
     }
-    
+
     orte_node_pool = OBJ_NEW(opal_pointer_array_t);
     if (ORTE_SUCCESS != (ret = opal_pointer_array_init(orte_node_pool,
                                                        ORTE_GLOBAL_ARRAY_BLOCK_SIZE,
@@ -381,7 +381,7 @@ static int rte_init(void)
     /* init the nidmap - just so we register that verbosity */
     orte_util_nidmap_init(NULL);
 
-    /* Setup the job data object for the daemons */        
+    /* Setup the job data object for the daemons */
     /* create and store the job data object */
     jdata = OBJ_NEW(orte_job_t);
     jdata->jobid = ORTE_PROC_MY_NAME->jobid;
@@ -391,7 +391,7 @@ static int rte_init(void)
      * are running!
      */
     jdata->state = ORTE_JOB_STATE_DAEMONS_REPORTED;
-   
+
     /* every job requires at least one app */
     app = OBJ_NEW(orte_app_context_t);
     opal_pointer_array_set_item(jdata->apps, 0, app);
@@ -416,7 +416,7 @@ static int rte_init(void)
     proc = OBJ_NEW(orte_proc_t);
     proc->name.jobid = ORTE_PROC_MY_NAME->jobid;
     proc->name.vpid = ORTE_PROC_MY_NAME->vpid;
-    
+
     proc->pid = orte_process_info.pid;
     proc->rml_uri = orte_rml.get_contact_info();
     proc->state = ORTE_PROC_STATE_RUNNING;
@@ -425,7 +425,7 @@ static int rte_init(void)
     proc->nodename = node->name;
     opal_pointer_array_set_item(jdata->procs, proc->name.vpid, proc);
 
-    /* record that the daemon (i.e., us) is on this node 
+    /* record that the daemon (i.e., us) is on this node
      * NOTE: we do not add the proc object to the node's
      * proc array because we are not an application proc.
      * Instead, we record it in the daemon field of the
@@ -435,7 +435,7 @@ static int rte_init(void)
     node->daemon = proc;
     node->daemon_launched = true;
     node->state = ORTE_NODE_STATE_UP;
-    
+
     /* if we are to retain aliases, get ours */
     if (orte_retain_aliases) {
         opal_ifgetaliases(&node->alias);
@@ -462,7 +462,7 @@ static int rte_init(void)
         error = "orte_routed_base_select";
         goto error;
     }
-    
+
     /* database */
     if (ORTE_SUCCESS != (ret = mca_base_framework_open(&opal_db_base_framework, 0))) {
         ORTE_ERROR_LOG(ret);
@@ -512,18 +512,18 @@ static int rte_init(void)
         ORTE_ERROR_LOG(ret);
         error = "orte_ras_base_open";
         goto error;
-    }    
+    }
     if (ORTE_SUCCESS != (ret = orte_ras_base_select())) {
         ORTE_ERROR_LOG(ret);
         error = "orte_ras_base_find_available";
         goto error;
     }
-    
+
     if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_rmaps_base_framework, 0))) {
         ORTE_ERROR_LOG(ret);
         error = "orte_rmaps_base_open";
         goto error;
-    }    
+    }
     if (ORTE_SUCCESS != (ret = orte_rmaps_base_select())) {
         ORTE_ERROR_LOG(ret);
         error = "orte_rmaps_base_find_available";
@@ -587,7 +587,7 @@ static int rte_init(void)
         error = "orte_odls_base_select";
         goto error;
     }
-    
+
     /* enable communication with the rml */
     if (ORTE_SUCCESS != (ret = orte_rml.enable_comm())) {
         ORTE_ERROR_LOG(ret);
@@ -601,7 +601,7 @@ static int rte_init(void)
 
     /* we are also officially a daemon, so better update that field too */
     orte_process_info.my_daemon_uri = strdup(orte_process_info.my_hnp_uri);
-    
+
     /* setup the orte_show_help system to recv remote output */
     orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_SHOW_HELP,
                             ORTE_RML_PERSISTENT, orte_show_help_recv, NULL);
@@ -613,7 +613,7 @@ static int rte_init(void)
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              (NULL == orte_process_info.tmpdir_base) ? "UNDEF" : orte_process_info.tmpdir_base,
                              orte_process_info.nodename));
-        
+
         /* take a pass thru the session directory code to fillin the
          * tmpdir names - don't create anything yet
          */
@@ -639,23 +639,23 @@ static int rte_init(void)
             error = "orte_session_dir";
             goto error;
         }
-        
+
         /* Once the session directory location has been established, set
            the opal_output hnp file location to be in the
            proc-specific session directory. */
         opal_output_set_output_file_info(orte_process_info.proc_session_dir,
                                          "output-", NULL, NULL);
-        
+
         /* save my contact info in a file for others to find */
         jobfam_dir = opal_dirname(orte_process_info.job_session_dir);
         contact_path = opal_os_path(false, jobfam_dir, "contact.txt", NULL);
         free(jobfam_dir);
-        
+
         OPAL_OUTPUT_VERBOSE((2, orte_debug_output,
                              "%s writing contact file %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              contact_path));
-        
+
         if (ORTE_SUCCESS != (ret = orte_write_hnp_contact_file(contact_path))) {
             OPAL_OUTPUT_VERBOSE((2, orte_debug_output,
                                  "%s writing contact file failed with error %s",
@@ -670,14 +670,14 @@ static int rte_init(void)
     }
 
     /* setup the routed info - the selected routed component
-     * will know what to do. 
+     * will know what to do.
      */
     if (ORTE_SUCCESS != (ret = orte_routed.init_routes(ORTE_PROC_MY_NAME->jobid, NULL))) {
         ORTE_ERROR_LOG(ret);
         error = "orte_routed.init_routes";
         goto error;
     }
-    
+
     /* setup I/O forwarding system - must come after we init routes */
     if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_iof_base_framework, 0))) {
         ORTE_ERROR_LOG(ret);
@@ -689,7 +689,7 @@ static int rte_init(void)
         error = "orte_iof_base_select";
         goto error;
     }
-    
+
     /* setup the FileM */
     if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_filem_base_framework, 0))) {
         ORTE_ERROR_LOG(ret);
@@ -743,7 +743,7 @@ static int rte_init(void)
         error = "orte_cr_init";
         goto error;
     }
-    
+
     /* setup the SENSOR framework */
     if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_sensor_base_framework, 0))) {
         ORTE_ERROR_LOG(ret);
@@ -757,7 +757,7 @@ static int rte_init(void)
     }
     /* start the local sensors */
     orte_sensor.start(ORTE_PROC_MY_NAME->jobid);
-    
+
     /* setup the dfs framework */
     if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_dfs_base_framework, 0))) {
         ORTE_ERROR_LOG(ret);
@@ -786,7 +786,7 @@ static int rte_init(void)
        it should; but when it *is* doing something, we do not want it
        to be unnecessarily delayed because it voluntarily yielded the
        processor in the middle of its work.
-     
+
        For example: when a message arrives at orterun, we want the
        OS to wake us up in a timely fashion (which most OS's
        seem good about doing) and then we want orterun to process
@@ -808,7 +808,19 @@ static int rte_init(void)
                        "orte_init:startup:internal-failure",
                        true, error, ORTE_ERROR_NAME(ret), ret);
     }
-    
+
+    /* remove my contact info file, if we have session directories */
+    if (NULL != orte_process_info.job_session_dir) {
+        jobfam_dir = opal_dirname(orte_process_info.job_session_dir);
+        contact_path = opal_os_path(false, jobfam_dir, "contact.txt", NULL);
+        free(jobfam_dir);
+        unlink(contact_path);
+        free(contact_path);
+    }
+    /* remove our use of the session directory tree */
+    orte_session_dir_finalize(ORTE_PROC_MY_NAME);
+    /* ensure we scrub the session directory tree */
+    orte_session_dir_cleanup(ORTE_JOBID_WILDCARD);
     return ORTE_ERR_SILENT;
 }
 
@@ -869,9 +881,11 @@ static int rte_finalize(void)
     (void) mca_base_framework_close(&orte_rml_base_framework);
     (void) mca_base_framework_close(&orte_oob_base_framework);
 
+    /* remove our use of the session directory tree */
+    orte_session_dir_finalize(ORTE_PROC_MY_NAME);
     /* ensure we scrub the session directory tree */
     orte_session_dir_cleanup(ORTE_JOBID_WILDCARD);
-    
+
     /* close the xml output file, if open */
     if (orte_xml_output) {
         fprintf(orte_xml_fp, "</mpirun>\n");
@@ -888,24 +902,24 @@ static void rte_abort(int status, bool report)
 {
     /* do NOT do a normal finalize as this will very likely
      * hang the process. We are aborting due to an abnormal condition
-     * that precludes normal cleanup 
+     * that precludes normal cleanup
      *
-     * We do need to do the following bits to make sure we leave a 
+     * We do need to do the following bits to make sure we leave a
      * clean environment. Taken from orte_finalize():
      * - Assume errmgr cleans up child processes before we exit.
      */
-    
+
     /* CRS cleanup since it may have a named pipe and thread active */
     orte_cr_finalize();
-    
+
     /* ensure we scrub the session directory tree */
     orte_session_dir_cleanup(ORTE_JOBID_WILDCARD);
-    
-    /* - Clean out the global structures 
+
+    /* - Clean out the global structures
      * (not really necessary, but good practice)
      */
     orte_proc_info_finalize();
-    
+
     /* just exit */
     exit(status);
 }
@@ -919,13 +933,13 @@ static void clean_abort(int fd, short flags, void *arg)
         if (forcibly_die) {
             /* kill any local procs */
             orte_odls.kill_local_procs(NULL);
-            
+
             /* whack any lingering session directory files from our jobs */
             orte_session_dir_cleanup(ORTE_JOBID_WILDCARD);
-            
+
             /* cleanup our data server */
             orte_data_server_finalize();
-            
+
             /* exit with a non-zero status */
             exit(ORTE_ERROR_DEFAULT_EXIT_CODE);
         }
@@ -945,7 +959,7 @@ static void clean_abort(int fd, short flags, void *arg)
      * so need to tell them that!
      */
     orte_execute_quiet = true;
-    
+
     if (!orte_never_launched) {
         /* cleanup our data server */
         orte_data_server_finalize();
