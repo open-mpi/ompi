@@ -103,14 +103,16 @@ static void set(orte_job_t *jobdat,
             rc = hwloc_set_cpubind(opal_hwloc_topology, sum->available, 0);
             /* if we got an error and this wasn't a default binding policy, then report it */
             if (rc < 0  && OPAL_BINDING_POLICY_IS_SET(jobdat->map->binding)) {
-                char *tmp = NULL;
                 if (errno == ENOSYS) {
                     msg = "hwloc indicates cpu binding not supported";
                 } else if (errno == EXDEV) {
                     msg = "hwloc indicates cpu binding cannot be enforced";
                 } else {
+                    char *tmp;
+                    (void)hwloc_bitmap_list_asprintf(&tmp, sum->available);
                     asprintf(&msg, "hwloc_set_cpubind returned \"%s\" for bitmap \"%s\"",
-                             opal_strerror(rc), sum->available);
+                             opal_strerror(rc), tmp);
+                    free(tmp);
                 }
                 if (OPAL_BINDING_REQUIRED(jobdat->map->binding)) {
                     /* If binding is required, send an error up the pipe (which exits
@@ -124,15 +126,7 @@ static void set(orte_job_t *jobdat,
                                                       "help-orte-odls-default.txt", "not bound",
                                                       orte_process_info.nodename, context->app, msg,
                                                       __FILE__, __LINE__);
-                    if (NULL != tmp) {
-                        free(tmp);
-                        free(msg);
-                    }
                     return;
-                }
-                if (NULL != tmp) {
-                    free(tmp);
-                    free(msg);
                 }
             }
         }
