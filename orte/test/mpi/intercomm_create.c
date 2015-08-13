@@ -123,6 +123,11 @@ do_parent(char *argv[], int rank, int count)
     err = MPI_Barrier(abc_intra);
     printf( "%s: barrier (%d)\n", whoami, err );
 
+    MPI_Comm_free(&abc_intra);
+    MPI_Comm_free(&ab_c_inter);
+    MPI_Comm_free(&ab_intra);
+    MPI_Comm_free(&ac_intra);
+
     MPI_Comm_disconnect(&ab_inter);
     MPI_Comm_disconnect(&ac_inter);
 }
