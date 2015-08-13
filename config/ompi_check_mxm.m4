@@ -18,11 +18,11 @@ dnl
 AC_DEFUN([OMPI_CHECK_MXM],[
     AC_ARG_WITH([mxm],
         [AC_HELP_STRING([--with-mxm(=DIR)],
-             [Build Mellanox Messaging support])])
-    OPAL_CHECK_WITHDIR([mxm], [$with_mxm], [include/mxm/api/mxm_api.h])
+             [Build Mellanox Messaging support, optionally adding
+              DIR/include and DIR/lib or DIR/lib64 to the search path for headers and libraries])])
     AC_ARG_WITH([mxm-libdir],
         [AC_HELP_STRING([--with-mxm-libdir=DIR],
-             [Search for Mellanox Messaging libraries in DIR])])
+             [Search for Mellanox MXM libraries in DIR])])
     OPAL_CHECK_WITHDIR([mxm-libdir], [$with_mxm_libdir], [libmxm.*])
 
     ompi_check_mxm_$1_save_CPPFLAGS="$CPPFLAGS"
@@ -33,18 +33,15 @@ AC_DEFUN([OMPI_CHECK_MXM],[
           [AS_IF([test ! -z "$with_mxm" && test "$with_mxm" != "yes"],
                  [
                     ompi_check_mxm_dir="$with_mxm"
-                    ompi_check_mxm_libdir="$with_mxm/lib"
                  ])
            AS_IF([test ! -z "$with_mxm_libdir" && test "$with_mxm_libdir" != "yes"],
                  [ompi_check_mxm_libdir="$with_mxm_libdir"])
-
-           AS_IF([test ! -z "$ompi_check_mxm_libdir"], [ompi_check_mxm_extra_libs="-L$ompi_check_mxm_libdir"],[])
 
            OPAL_CHECK_PACKAGE([$1],
                               [mxm/api/mxm_api.h],
                               [mxm],
                               [mxm_cleanup],
-                              [$ompi_check_mxm_extra_libs],
+                              [],
                               [$ompi_check_mxm_dir],
                               [$ompi_check_mxm_libdir],
                               [ompi_check_mxm_happy="yes"],
