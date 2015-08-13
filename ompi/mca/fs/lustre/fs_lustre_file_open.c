@@ -30,8 +30,6 @@
 #include "ompi/info/info.h"
 
 #include <sys/ioctl.h>
-#include <lustre/liblustreapi.h>
-#include <lustre/lustre_user.h>
 
 static void *alloc_lum();
 

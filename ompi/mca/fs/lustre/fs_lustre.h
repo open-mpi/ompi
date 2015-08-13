@@ -31,6 +31,8 @@ extern int mca_fs_lustre_stripe_width;
 
 BEGIN_C_DECLS
 
+#include <lustre/liblustreapi.h>
+#include <lustre/lustre_user.h>
 
 #ifndef LOV_MAX_STRIPE_COUNT
 #define LOV_MAX_STRIPE_COUNT 160
