@@ -17,49 +17,43 @@ dnl
 # LDFLAGS, LIBS} as needed and runs action-if-found if there is
 # support, otherwise executes action-if-not-found
 AC_DEFUN([OMPI_CHECK_FCA],[
-    OPAL_VAR_SCOPE_PUSH([ompi_check_fca_libdir ompi_check_fca_incdir ompi_check_fca_libs ompi_check_fca_happy CPPFLAGS_save LDFLAGS_save LIBS_save])
+    OPAL_VAR_SCOPE_PUSH([ompi_check_fca_libs ompi_check_fca_happy CPPFLAGS_save LDFLAGS_save LIBS_save])
 
     AC_ARG_WITH([fca],
         [AC_HELP_STRING([--with-fca(=DIR)],
-             [Build fca (Mellanox Fabric Collective Accelerator) support, searching for libraries in DIR])])
-    OPAL_CHECK_WITHDIR([fca], [$with_fca], [lib/libfca.so])
+             [Build fca (Mellanox Fabric Collective Accelerator) support, optionally adding
+              DIR/include and DIR/lib or DIR/lib64 to the search path for headers and libraries])])
 
     AS_IF([test "$with_fca" != "no"],
-          [AS_IF([test ! -z "$with_fca" && test "$with_fca" != "yes"],
-			  [ompi_check_fca_dir=$with_fca
-			   ompi_check_fca_libdir="$ompi_check_fca_dir/lib"
-			   ompi_check_fca_incdir="$ompi_check_fca_dir/include"
-			   ompi_check_fca_libs=fca
+          [ompi_check_fca_libs=fca
+           AS_IF([test ! -z "$with_fca" && test "$with_fca" != "yes"],
+                 [ompi_check_fca_dir=$with_fca
+                  AC_SUBST([coll_fca_HOME], "$ompi_check_fca_dir")],
+                 [AC_SUBST([coll_fca_HOME], "/")])
 
-			   coll_fca_extra_CPPFLAGS="-I$ompi_check_fca_incdir/fca -I$ompi_check_fca_incdir/fca_core"
-			   AC_SUBST([coll_fca_extra_CPPFLAGS])
-			   AC_SUBST([coll_fca_HOME], "$ompi_check_fca_dir")
-
-			   CPPFLAGS_save=$CPPFLAGS
-			   LDFLAGS_save=$LDFLAGS
-			   LIBS_save=$LIBS
-			   CPPFLAGS="$CPPFLAGS $coll_fca_extra_CPPFLAGS"
+           CPPFLAGS_save=$CPPFLAGS
+           LDFLAGS_save=$LDFLAGS
+           LIBS_save=$LIBS
 
 
-			   OPAL_LOG_MSG([$1_CPPFLAGS : $$1_CPPFLAGS], 1)
-			   OPAL_LOG_MSG([$1_LDFLAGS  : $$1_LDFLAGS], 1)
-			   OPAL_LOG_MSG([$1_LIBS     : $$1_LIBS], 1)
+           OPAL_LOG_MSG([$1_CPPFLAGS : $$1_CPPFLAGS], 1)
+           OPAL_LOG_MSG([$1_LDFLAGS  : $$1_LDFLAGS], 1)
+           OPAL_LOG_MSG([$1_LIBS     : $$1_LIBS], 1)
 
-			   OPAL_CHECK_PACKAGE([$1],
-				   [fca_api.h],
-				   [$ompi_check_fca_libs],
-				   [fca_get_version],
-				   [],
-				   [$ompi_check_fca_dir],
-				   [$ompi_check_fca_libdir],
-				   [ompi_check_fca_happy="yes"],
-				   [ompi_check_fca_happy="no"])
+           OPAL_CHECK_PACKAGE([$1],
+                              [fca/fca_api.h],
+                              [$ompi_check_fca_libs],
+                              [fca_get_version],
+                              [],
+                              [$ompi_check_fca_dir],
+                              [],
+                              [ompi_check_fca_happy="yes"],
+                              [ompi_check_fca_happy="no"])
 
-			   CPPFLAGS=$CPPFLAGS_save
-			   LDFLAGS=$LDFLAGS_save
-			   LIBS=$LIBS_save],
-			   [ompi_check_fca_happy="no"])
-          ])
+           CPPFLAGS=$CPPFLAGS_save
+           LDFLAGS=$LDFLAGS_save
+           LIBS=$LIBS_save],
+          [ompi_check_fca_happy="no"])
 
     AS_IF([test "$ompi_check_fca_happy" = "yes" && test "$enable_progress_threads" = "yes"],
           [AC_MSG_WARN([fca driver does not currently support progress threads.  Disabling FCA.])
