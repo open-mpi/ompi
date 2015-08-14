@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2014 University of Houston. All rights reserved.
+ * Copyright (c) 2008-2015 University of Houston. All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights reserved.
  *
  * $COPYRIGHT$
@@ -33,7 +33,6 @@
 #include <unistd.h>
 
 #define DEBUG_ON 0
-#define TIME_BREAKDOWN 0
 
 
 typedef struct local_io_array {
@@ -96,11 +95,11 @@ mca_fcoll_static_file_read_all (mca_io_ompio_file_t *fh,
   MPI_Request *send_req=NULL, *recv_req=NULL;
   /*  MPI_Request *grecv_req=NULL, *gsend_req=NULL; */
 
-#if TIME_BREAKDOWN
+#if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
   double read_time = 0.0, start_read_time = 0.0, end_read_time = 0.0;
   double rcomm_time = 0.0, start_rcomm_time = 0.0, end_rcomm_time = 0.0;
   double read_exch = 0.0, start_rexch = 0.0, end_rexch = 0.0;
-  print_entry nentry;
+  mca_io_ompio_print_entry nentry;
 #endif
 #if DEBUG_ON 
     MPI_Aint gc_in;
@@ -359,8 +358,7 @@ mca_fcoll_static_file_read_all (mca_io_ompio_file_t *fh,
     }
   }
 #endif
-  
-#if TIME_BREAKDOWN
+#if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
     start_rexch = MPI_Wtime();
 #endif
 
@@ -456,7 +454,7 @@ mca_fcoll_static_file_read_all (mca_io_ompio_file_t *fh,
       goto exit;
     }
 
-#if TIME_BREAKDOWN
+#if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
       start_rcomm_time = MPI_Wtime();
 #endif
     
@@ -471,7 +469,7 @@ mca_fcoll_static_file_read_all (mca_io_ompio_file_t *fh,
       goto exit;
     }
 
-#if TIME_BREAKDOWN
+#if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
       end_rcomm_time = MPI_Wtime();
       rcomm_time  += end_rcomm_time - start_rcomm_time;
 #endif
@@ -708,7 +706,7 @@ mca_fcoll_static_file_read_all (mca_io_ompio_file_t *fh,
 	       fh->f_io_array[i].length);
       }
 #endif
-#if TIME_BREAKDOWN      
+#if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
 	start_read_time = MPI_Wtime();
 #endif
 
@@ -720,7 +718,7 @@ mca_fcoll_static_file_read_all (mca_io_ompio_file_t *fh,
 	}
       }
 
-#if TIME_BREAKDOWN
+#if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
 	end_read_time = MPI_Wtime();
 	read_time += end_read_time - start_read_time;
 #endif
@@ -768,7 +766,7 @@ mca_fcoll_static_file_read_all (mca_io_ompio_file_t *fh,
 	ret = OMPI_ERR_OUT_OF_RESOURCE;
 	goto exit;
       }
-#if TIME_BREAKDOWN
+#if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
 	start_rcomm_time = MPI_Wtime();
 #endif
 
@@ -805,7 +803,7 @@ mca_fcoll_static_file_read_all (mca_io_ompio_file_t *fh,
       goto exit;
     }
 
-#if TIME_BREAKDOWN
+#if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
       end_rcomm_time = MPI_Wtime();
       rcomm_time += end_rcomm_time - start_rcomm_time;
 #endif
@@ -894,7 +892,7 @@ mca_fcoll_static_file_read_all (mca_io_ompio_file_t *fh,
       }
     }
   }
-#if TIME_BREAKDOWN
+#if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
     end_rexch = MPI_Wtime();
     read_exch += end_rexch - start_rexch;
     nentry.time[0] = read_time;

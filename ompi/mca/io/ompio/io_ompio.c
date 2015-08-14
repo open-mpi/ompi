@@ -51,8 +51,8 @@
 #endif
 #include "io_ompio.h"
 
-print_queue *coll_write_time=NULL;
-print_queue *coll_read_time=NULL;
+mca_io_ompio_print_queue *coll_write_time=NULL;
+mca_io_ompio_print_queue *coll_read_time=NULL;
 
 
 static int mca_io_ompio_create_groups(mca_io_ompio_file_t *fh,
@@ -1902,7 +1902,7 @@ void mca_io_ompio_get_bytes_per_agg ( int *bytes_per_agg)
 }
 
 /* Print queue related function implementations */
-int ompi_io_ompio_set_print_queue (print_queue **q, 
+int ompi_io_ompio_set_print_queue (mca_io_ompio_print_queue **q,
 				   int queue_type){
 
     int  ret = OMPI_SUCCESS;
@@ -1925,7 +1925,7 @@ int ompi_io_ompio_set_print_queue (print_queue **q,
 } 
 
 
-int ompi_io_ompio_initialize_print_queue(print_queue *q){
+int ompi_io_ompio_initialize_print_queue(mca_io_ompio_print_queue *q){
 
     int ret = OMPI_SUCCESS;
     q->first = 0;
@@ -1934,10 +1934,10 @@ int ompi_io_ompio_initialize_print_queue(print_queue *q){
     return ret;
 }
 int ompi_io_ompio_register_print_entry (int queue_type,
-					print_entry x){
-    
+					mca_io_ompio_print_entry x){
+
     int ret = OMPI_SUCCESS;
-    print_queue *q=NULL;
+    mca_io_ompio_print_queue *q=NULL;
 
     ret = ompi_io_ompio_set_print_queue(&q, queue_type);
 
@@ -1953,12 +1953,11 @@ int ompi_io_ompio_register_print_entry (int queue_type,
     }
     return ret;
 }
+int  ompi_io_ompio_unregister_print_entry (int queue_type,
+					   mca_io_ompio_print_entry *x){
 
-int  ompi_io_ompio_unregister_print_entry (int queue_type, 
-					   print_entry *x){
-    
     int ret = OMPI_SUCCESS;
-    print_queue *q=NULL;
+    mca_io_ompio_print_queue *q=NULL;
     ret = ompi_io_ompio_set_print_queue(&q, queue_type);
     if (ret != OMPI_ERROR){
 	if (q->count <= 0){
@@ -1976,7 +1975,7 @@ int  ompi_io_ompio_unregister_print_entry (int queue_type,
 int ompi_io_ompio_empty_print_queue(int queue_type){
 
     int ret = OMPI_SUCCESS;
-    print_queue *q=NULL;
+    mca_io_ompio_print_queue *q=NULL;
     ret =  ompi_io_ompio_set_print_queue(&q, queue_type);
     
     assert (ret != OMPI_ERROR);	
@@ -1992,7 +1991,7 @@ int ompi_io_ompio_full_print_queue(int queue_type){
     
 
     int ret = OMPI_SUCCESS;
-    print_queue *q=NULL;
+    mca_io_ompio_print_queue *q=NULL;
     ret =  ompi_io_ompio_set_print_queue(&q, queue_type);
     
     assert ( ret != OMPI_ERROR);	
@@ -2012,8 +2011,8 @@ int ompi_io_ompio_print_time_info(int queue_type,
     double *time_details = NULL, *final_sum = NULL;
     double *final_max = NULL, *final_min = NULL;
     double *final_time_details=NULL;
-    print_queue *q=NULL;
-	
+    mca_io_ompio_print_queue *q=NULL;
+
     ret =  ompi_io_ompio_set_print_queue(&q, queue_type);
  	
     assert (ret != OMPI_ERROR); 	

@@ -33,7 +33,6 @@
 #include <unistd.h>
 
 #define DEBUG_ON 0
-#define TIME_BREAKDOWN 0
 
 /* Two Phase implementation from ROMIO ported to OMPIO infrastructure 
  * This is pretty much the same as ROMIO's two_phase and based on ROMIO's code
@@ -111,7 +110,7 @@ static int two_phase_fill_send_buffer(mca_io_ompio_file_t *fh,
 				      int iter, MPI_Aint buftype_extent,
 				      int striping_unit, 
 				      int num_io_procs, int *aggregator_list);
-#if TIME_BREAKDOWN
+#if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
 static int is_aggregator(int rank,
 			 int nprocs_for_coll,
 			 int *aggregator_list);
@@ -131,7 +130,7 @@ void two_phase_heap_merge(mca_io_ompio_access_array_t *others_req,
 /* local function declarations  ends here!*/
 
 
-#if TIME_BREAKDOWN
+#if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
 double write_time = 0.0, start_write_time = 0.0, end_write_time = 0.0;
 double comm_time = 0.0, start_comm_time = 0.0, end_comm_time = 0.0;
 double exch_write = 0.0, start_exch = 0.0, end_exch = 0.0;
@@ -165,8 +164,8 @@ mca_fcoll_two_phase_file_write_all (mca_io_ompio_file_t *fh,
     Flatlist_node *flat_buf=NULL;
     mca_io_ompio_access_array_t *my_req=NULL, *others_req=NULL;
     MPI_Aint send_buf_addr;
-#if TIME_BREAKDOWN
-    print_entry nentry;
+#if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
+    mca_io_ompio_print_entry nentry;
 #endif
     
     
@@ -498,8 +497,8 @@ mca_fcoll_two_phase_file_write_all (mca_io_ompio_file_t *fh,
 #if DEBUG_ON
     printf("count_other_req_procs : %d\n", count_other_req_procs);
 #endif
-    
-#if TIME_BREAKDOWN
+
+#if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
     start_exch = MPI_Wtime();
 #endif
     
@@ -522,9 +521,9 @@ mca_fcoll_two_phase_file_write_all (mca_io_ompio_file_t *fh,
     if (OMPI_SUCCESS != ret){
 	goto exit;
     }
-    
-    
-#if TIME_BREAKDOWN
+
+
+#if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
     end_exch = MPI_Wtime();
     exch_write += (end_exch - start_exch);
     
@@ -541,7 +540,7 @@ mca_fcoll_two_phase_file_write_all (mca_io_ompio_file_t *fh,
     }
     nentry.nprocs_for_coll = two_phase_num_io_procs;
     if (!fh->f_full_print_queue(WRITE_PRINT_QUEUE)){
-	fh->f_ompio_register_print_entry(WRITE_PRINT_QUEUE,
+	fh->f_register_print_entry(WRITE_PRINT_QUEUE,
 					 nentry);
     }
 #endif
@@ -802,8 +801,8 @@ static int two_phase_exch_and_write(mca_io_ompio_file_t *fh,
 	
 	
 	if (flag){
-	    
-#if TIME_BREAKDOWN	  
+
+#if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
 	    start_write_time = MPI_Wtime();
 #endif
 	    
@@ -843,7 +842,7 @@ static int two_phase_exch_and_write(mca_io_ompio_file_t *fh,
 		    return OMPI_ERROR;
 		}
 	    }
-#if TIME_BREAKDOWN
+#if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
 	    end_write_time = MPI_Wtime();
 	    write_time += (end_write_time - start_write_time);
 #endif
@@ -950,9 +949,9 @@ static int two_phase_exchage_data(mca_io_ompio_file_t *fh,
     MPI_Request *requests=NULL, *send_req=NULL;
     ompi_datatype_t **recv_types=NULL;
     OMPI_MPI_OFFSET_TYPE *srt_off=NULL;
-    char **send_buf = NULL; 
-    
-#if TIME_BREAKDOWN
+    char **send_buf = NULL;
+
+#if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
     start_comm_time = MPI_Wtime();
 #endif
     ret = fh->f_comm->c_coll.coll_alltoall (recv_size,
@@ -1192,8 +1191,8 @@ static int two_phase_exchage_data(mca_io_ompio_file_t *fh,
     if ( NULL != requests ){
 	free(requests);
     }
-    
-#if TIME_BREAKDOWN
+
+#if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
     end_comm_time = MPI_Wtime();
     comm_time += (end_comm_time - start_comm_time);
 #endif
@@ -1494,8 +1493,8 @@ void two_phase_heap_merge( mca_io_ompio_access_array_t *others_req,
     }
     free(a);
 }
-#if TIME_BREAKDOWN
-int is_aggregator(int rank, 
+#if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
+int is_aggregator(int rank,
 		  int nprocs_for_coll,
 		  int *aggregator_list){
   
