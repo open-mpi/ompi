@@ -31,7 +31,6 @@
 #include <unistd.h>
 
 #define DEBUG 0
-#define TIME_BREAKDOWN 0
 
 /* Two Phase implementation from ROMIO ported to OMPIO infrastructure
  * This is pretty much the same as ROMIO's two_phase and based on ROMIO's code
@@ -99,14 +98,14 @@ static void two_phase_fill_user_buffer(mca_io_ompio_file_t *fh,
 				       MPI_Aint buftype_extent,
 				       int striping_unit,
 				       int num_io_procs, int *aggregator_list);
-#if TIME_BREAKDOWN
+#if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
 static int isread_aggregator(int rank,
 			     int nprocs_for_coll,
 			     int *aggregator_list);
 
 #endif
 
-#if TIME_BREAKDOWN
+#if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
 double read_time = 0.0, start_read_time = 0.0, end_read_time = 0.0;
 double rcomm_time = 0.0, start_rcomm_time = 0.0, end_rcomm_time = 0.0;
 double read_exch = 0.0, start_rexch = 0.0, end_rexch = 0.0;
@@ -137,8 +136,8 @@ mca_fcoll_two_phase_file_read_all (mca_io_ompio_file_t *fh,
     OMPI_MPI_OFFSET_TYPE *fd_start=NULL, *fd_end=NULL, min_st_offset = 0;
     Flatlist_node *flat_buf=NULL;
     mca_io_ompio_access_array_t *my_req=NULL, *others_req=NULL;
-#if TIME_BREAKDOWN
-    print_entry nentry;
+#if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
+    mca_io_ompio_print_entry nentry;
 #endif
     if (opal_datatype_is_predefined(&datatype->super)) {
 	fh->f_flags = fh->f_flags |  OMPIO_CONTIGUOUS_MEMORY;
@@ -441,7 +440,7 @@ mca_fcoll_two_phase_file_read_all (mca_io_ompio_file_t *fh,
 	   count_other_req_procs);
 #endif
 
-#if TIME_BREAKDOWN
+#if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
     start_rexch = MPI_Wtime();
 #endif
 
@@ -466,7 +465,7 @@ mca_fcoll_two_phase_file_read_all (mca_io_ompio_file_t *fh,
     if (OMPI_SUCCESS != ret){
 	goto exit;
     }
-#if TIME_BREAKDOWN
+#if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
     end_rexch = MPI_Wtime();
     read_exch += (end_rexch - start_rexch);
     nentry.time[0] = read_time;
@@ -709,7 +708,7 @@ static int two_phase_read_and_exch(mca_io_ompio_file_t *fh,
 
 	if (flag) {
 
-#if TIME_BREAKDOWN
+#if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
 	    start_read_time = MPI_Wtime();
 #endif
 
@@ -751,7 +750,7 @@ static int two_phase_read_and_exch(mca_io_ompio_file_t *fh,
 		fh->f_io_array = NULL;
 	    }
 
-#if TIME_BREAKDOWN
+#if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
 	    end_read_time = MPI_Wtime();
 	    read_time += (end_read_time - start_read_time);
 #endif
@@ -860,7 +859,7 @@ static int two_phase_exchange_data(mca_io_ompio_file_t *fh,
 
 
 
-#if TIME_BREAKDOWN
+#if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
     start_rcomm_time = MPI_Wtime();
 #endif
 
@@ -1016,7 +1015,7 @@ static int two_phase_exchange_data(mca_io_ompio_file_t *fh,
 	free(recv_buf);
     }
 
-#if TIME_BREAKDOWN
+#if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
     end_rcomm_time = MPI_Wtime();
     rcomm_time += (end_rcomm_time - start_rcomm_time);
 #endif
@@ -1183,7 +1182,7 @@ static void two_phase_fill_user_buffer(mca_io_ompio_file_t *fh,
 
 }
 
-#if TIME_BREAKDOWN
+#if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
 int isread_aggregator(int rank,
 		      int nprocs_for_coll,
 		      int *aggregator_list){
