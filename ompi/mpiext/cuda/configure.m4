@@ -17,6 +17,10 @@
 AC_DEFUN([OMPI_MPIEXT_cuda_CONFIG],[
     AC_CONFIG_FILES([ompi/mpiext/cuda/Makefile])
     AC_CONFIG_FILES([ompi/mpiext/cuda/c/Makefile])
+    AC_CONFIG_HEADER([ompi/mpiext/cuda/c/mpiext_cuda_c.h])
+
+    AC_DEFINE_UNQUOTED([MPIX_CUDA_AWARE_SUPPORT],[$CUDA_SUPPORT],
+                       [Macro that is set to 1 when CUDA-aware support is configured in and 0 when it is not])
 
     # We compile this whether CUDA support was requested or not. It allows
     # us to to detect if we have CUDA support.
