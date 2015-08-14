@@ -21,27 +21,39 @@ check_PROGRAMS = $(TESTS) $(MPI_CHECKS)
 
 ddt_test_SOURCES = ddt_test.c ddt_lib.c ddt_lib.h
 ddt_test_LDFLAGS = $(WRAPPER_EXTRA_LDFLAGS)
-ddt_test_LDADD = $(top_builddir)/ompi/libmpi.la
+ddt_test_LDADD = \
+        $(top_builddir)/ompi/libmpi.la \
+        $(top_builddir)/opal/libopen-pal.la
 
 ddt_raw_SOURCES = ddt_raw.c ddt_lib.c ddt_lib.h
 ddt_raw_LDFLAGS = $(WRAPPER_EXTRA_LDFLAGS)
-ddt_raw_LDADD = $(top_builddir)/ompi/libmpi.la
+ddt_raw_LDADD = \
+        $(top_builddir)/ompi/libmpi.la \
+        $(top_builddir)/opal/libopen-pal.la
 
 ddt_pack_SOURCES = ddt_pack.c
 ddt_pack_LDFLAGS = $(WRAPPER_EXTRA_LDFLAGS)
-ddt_pack_LDADD = $(top_builddir)/ompi/libmpi.la
+ddt_pack_LDADD = \
+        $(top_builddir)/ompi/libmpi.la \
+        $(top_builddir)/opal/libopen-pal.la
 
 checksum_SOURCES = checksum.c
 checksum_LDFLAGS = $(WRAPPER_EXTRA_LDFLAGS)
-checksum_LDADD = $(top_builddir)/ompi/libmpi.la
+checksum_LDADD = \
+        $(top_builddir)/ompi/libmpi.la \
+        $(top_builddir)/opal/libopen-pal.la
 
 position_SOURCES = position.c
 position_LDFLAGS = $(WRAPPER_EXTRA_LDFLAGS)
-position_LDADD = $(top_builddir)/ompi/libmpi.la
+position_LDADD = \
+        $(top_builddir)/ompi/libmpi.la \
+        $(top_builddir)/opal/libopen-pal.la
 
 position_noncontig_SOURCES = position_noncontig.c
 position_noncontig_LDFLAGS = $(WRAPPER_EXTRA_LDFLAGS)
-position_noncontig_LDADD = $(top_builddir)/ompi/libmpi.la
+position_noncontig_LDADD = \
+        $(top_builddir)/ompi/libmpi.la \
+        $(top_builddir)/opal/libopen-pal.la
 
 to_self_SOURCES = to_self.c
 to_self_LDFLAGS = $(WRAPPER_EXTRA_LDFLAGS)

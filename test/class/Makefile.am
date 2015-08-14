@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2010-2015 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -75,6 +75,7 @@ opal_value_array_DEPENDENCIES = $(opal_value_array_LDADD)
 ompi_rb_tree_SOURCES = ompi_rb_tree.c
 ompi_rb_tree_LDADD = \
         $(top_builddir)/ompi/libmpi.la \
+        $(top_builddir)/opal/libopen-pal.la \
 	$(top_builddir)/test/support/libsupport.a
 ompi_rb_tree_DEPENDENCIES = $(ompi_rb_tree_LDADD)
 
