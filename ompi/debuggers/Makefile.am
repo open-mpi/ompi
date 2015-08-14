@@ -43,7 +43,9 @@ headers = \
 # Simple checks to ensure that the DSOs are functional
 
 dlopen_test_SOURCES = dlopen_test.c
-dlopen_test_LDADD = $(top_builddir)/ompi/libmpi.la
+dlopen_test_LDADD = \
+        $(top_builddir)/ompi/libmpi.la \
+        $(top_builddir)/opal/lib@OPAL_LIB_PREFIX@open-pal.la
 dlopen_test_DEPENDENCIES = $(ompi_predefined_LDADD)
 
 predefined_gap_test_SOURCES = predefined_gap_test.c
