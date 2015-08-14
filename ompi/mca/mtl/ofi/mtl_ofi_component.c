@@ -222,6 +222,7 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
      * ep_type:  reliable datagram operation
      * caps:     Capabilities required from the provider.
      *           Tag matching is specified to implement MPI semantics.
+     * msg_order: Guarantee that messages with same tag are ordered.
      */
     hints = fi_allocinfo();
     if (!hints) {
@@ -230,9 +231,11 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
                             __FILE__, __LINE__);
         goto error;
     }
-    hints->mode             = FI_CONTEXT;
-    hints->ep_attr->type    = FI_EP_RDM;      /* Reliable datagram         */
-    hints->caps             = FI_TAGGED;      /* Tag matching interface    */
+    hints->mode               = FI_CONTEXT;
+    hints->ep_attr->type      = FI_EP_RDM;      /* Reliable datagram         */
+    hints->caps               = FI_TAGGED;      /* Tag matching interface    */
+    hints->tx_attr->msg_order = FI_ORDER_SAS;
+    hints->rx_attr->msg_order = FI_ORDER_SAS;
 
     /**
      * Refine filter for additional capabilities
