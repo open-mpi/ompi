@@ -50,7 +50,6 @@ void ADIOI_LUSTRE_Open(ADIO_File fd, int *error_code)
 
     amode_direct = amode | O_DIRECT;
 
-    }
     /* odd length here because lov_user_md contains some fixed data and
      * then a list of 'lmm_objects' representing stripe */
     lumlen = sizeof(struct lov_user_md) +
