@@ -456,7 +456,7 @@ AC_DEFUN([EXT_PROCESS_COMPONENT],[
 
     AC_MSG_CHECKING([if MPI Extension $component has C bindings])
 
-    AS_IF([test ! -e "$test_header"],
+    AS_IF([test ! -e "$test_header" && test ! -e "$test_header.in"],
           [ # There *must* be C bindings
            AC_MSG_RESULT([no])
            AC_MSG_WARN([C bindings for MPI extensions are required])
