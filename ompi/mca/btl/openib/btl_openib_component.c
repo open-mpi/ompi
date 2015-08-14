@@ -995,10 +995,6 @@ static void device_destruct(mca_btl_openib_device_t *device)
 
 #if HAVE_XRC
 
-    if (!mca_btl_openib_xrc_check_api()) {
-        return;
-    }
-
     if (MCA_BTL_XRC_ENABLED) {
         if (OMPI_SUCCESS != mca_btl_openib_close_xrc_domain(device)) {
             BTL_VERBOSE(("XRC Internal error. Failed to close xrc domain"));
