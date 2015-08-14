@@ -192,7 +192,7 @@ static void job_errors(int fd, short args, void *cbdata)
                 OBJ_RELEASE(caddy);
                 return;
             }
-            OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
+            OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base_framework.framework_output,
                                  "%s errmgr:hnp sending dyn error release of job %s to %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_JOBID_PRINT(jdata->jobid),
