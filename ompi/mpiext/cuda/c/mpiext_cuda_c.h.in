@@ -12,5 +12,5 @@
  *
  */
 
-#define MPIX_CUDA_AWARE_SUPPORT 1
+#define MPIX_CUDA_AWARE_SUPPORT @MPIX_CUDA_AWARE_SUPPORT@
 OMPI_DECLSPEC int MPIX_Query_cuda_support(void);
