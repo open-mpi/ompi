@@ -130,6 +130,7 @@ int ompi_io_ompio_gatherv_array (void *sbuf,
     int err = OMPI_SUCCESS;
     char *ptmp;
     OPAL_PTRDIFF_TYPE extent, lb;
+    ompi_request_t **reqs=NULL;
 
     rank = ompi_comm_rank (comm);
 
@@ -153,7 +154,10 @@ int ompi_io_ompio_gatherv_array (void *sbuf,
     if (OMPI_SUCCESS != err) {
         return OMPI_ERROR;
     }
-    
+    reqs = (ompi_request_t **) malloc ( procs_per_group *sizeof(ompi_request_t *));
+    if ( NULL == reqs ) {
+	return OMPI_ERR_OUT_OF_RESOURCE;
+    }
     for (i=0; i<procs_per_group; i++) {
         ptmp = ((char *) rbuf) + (extent * disps[i]);
 
@@ -168,26 +172,34 @@ int ompi_io_ompio_gatherv_array (void *sbuf,
                                             rcounts[i],
                                             rdtype);
             }
+	    reqs[i] = MPI_REQUEST_NULL;
         }
         else {
             /* Only receive if there is something to receive */
             if (rcounts[i] > 0) {
-                err = MCA_PML_CALL(recv(ptmp,
-                                        rcounts[i],
-                                        rdtype,
-                                        procs_in_group[i],
-                                        OMPIO_TAG_GATHERV, 
-                                        comm,
-                                        MPI_STATUS_IGNORE));
+                err = MCA_PML_CALL(irecv(ptmp,
+                                         rcounts[i],
+                                         rdtype,
+                                         procs_in_group[i],
+                                         OMPIO_TAG_GATHERV,
+                                         comm,
+                                         &reqs[i]));
             }
+	    else {
+		reqs[i] = MPI_REQUEST_NULL;
+	    }
         }
 
         if (OMPI_SUCCESS != err) {
+	    free ( reqs );
             return err;
         }
     }
     /* All done */
-
+    err = ompi_request_wait_all ( procs_per_group, reqs, MPI_STATUSES_IGNORE );
+    if ( NULL != reqs ) {
+	free ( reqs );
+    }
     return err;
 }
 
@@ -207,6 +219,7 @@ int ompi_io_ompio_scatterv_array (void *sbuf,
     int err = OMPI_SUCCESS;
     char *ptmp;
     OPAL_PTRDIFF_TYPE extent, lb;
+    ompi_request_t ** reqs=NULL;
 
     rank = ompi_comm_rank (comm);
 
@@ -230,7 +243,11 @@ int ompi_io_ompio_scatterv_array (void *sbuf,
     if (OMPI_SUCCESS != err) {
         return OMPI_ERROR;
     }
-    
+    reqs = ( ompi_request_t **) malloc ( procs_per_group * sizeof ( ompi_request_t *));
+    if (NULL == reqs ) {
+	return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+
     for (i=0 ; i<procs_per_group ; ++i) {
         ptmp = ((char *) sbuf) + (extent * disps[i]);
 
@@ -245,25 +262,34 @@ int ompi_io_ompio_scatterv_array (void *sbuf,
                                             rcount,
                                             rdtype);
             }
+	    reqs[i] = MPI_REQUEST_NULL;
         }
         else {
             /* Only receive if there is something to receive */
             if (scounts[i] > 0) {
-                err = MCA_PML_CALL(send(ptmp,
-                                        scounts[i],
-                                        sdtype,
-                                        procs_in_group[i],
-                                        OMPIO_TAG_SCATTERV,
-                                        MCA_PML_BASE_SEND_STANDARD,
-                                        comm));
+                err = MCA_PML_CALL(isend(ptmp,
+                                         scounts[i],
+                                         sdtype,
+                                         procs_in_group[i],
+                                         OMPIO_TAG_SCATTERV,
+                                         MCA_PML_BASE_SEND_STANDARD,
+                                         comm,
+				         &reqs[i]));
+            }
+	    else {
+		reqs[i] = MPI_REQUEST_NULL;
             }
         }
-        if (OMPI_SUCCESS != err) {
+        if (OMPI_SUCCESS != err) { 
+            free ( reqs );	    
             return err;
         }
     }
     /* All done */
-
+    err = ompi_request_wait_all ( procs_per_group, reqs, MPI_STATUSES_IGNORE );
+    if ( NULL != reqs ) {
+	free ( reqs );
+    }
     return err;
 }
 
@@ -337,7 +363,8 @@ int ompi_io_ompio_gather_array (void *sbuf,
     OPAL_PTRDIFF_TYPE incr;
     OPAL_PTRDIFF_TYPE extent, lb;
     int err = OMPI_SUCCESS;
-
+    ompi_request_t ** reqs=NULL;
+    
     rank = ompi_comm_rank (comm);
     
     /* Everyone but the writers sends data and returns. */
@@ -356,8 +383,13 @@ int ompi_io_ompio_gather_array (void *sbuf,
     opal_datatype_get_extent (&rdtype->super, &lb, &extent);
     incr = extent * rcount;
 
-    for (i = 0, ptmp = (char *) rbuf; 
-         i < procs_per_group; 
+    reqs = ( ompi_request_t **) malloc ( procs_per_group * sizeof ( ompi_request_t *));
+    if (NULL == reqs ) {
+	return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+
+    for (i = 0, ptmp = (char *) rbuf;
+         i < procs_per_group;
          ++i, ptmp += incr) {
         if (procs_in_group[i] == rank) {
             if (MPI_IN_PLACE != sbuf) {
@@ -371,15 +403,16 @@ int ompi_io_ompio_gather_array (void *sbuf,
             else {
                 err = OMPI_SUCCESS;
             }
+	    reqs[i] = MPI_REQUEST_NULL;
         }
         else {
-            err = MCA_PML_CALL(recv(ptmp,
-                                    rcount,
-                                    rdtype,
-                                    procs_in_group[i],
-                                    OMPIO_TAG_GATHER, 
-                                    comm,
-                                    MPI_STATUS_IGNORE));
+            err = MCA_PML_CALL(irecv(ptmp,
+                                     rcount,
+                                     rdtype,
+                                     procs_in_group[i],
+                                     OMPIO_TAG_GATHER,
+                                     comm,
+                                     &reqs[i]));
             /*
             for (k=0 ; k<4 ; k++)
                 printf ("RECV %p  %d \n", 
@@ -389,11 +422,16 @@ int ompi_io_ompio_gather_array (void *sbuf,
         }
 
         if (OMPI_SUCCESS != err) {
+	    free ( reqs );
             return err;
         }
     }
 
     /* All done */
+    err = ompi_request_wait_all ( procs_per_group, reqs, MPI_STATUSES_IGNORE );
+    if ( NULL != reqs ) {
+	free ( reqs );
+    }
 
     return err;
 }
@@ -408,7 +446,8 @@ int ompi_io_ompio_bcast_array (void *buff,
 {
     int i, rank;
     int err = OMPI_SUCCESS;
-    
+    ompi_request_t ** reqs=NULL;
+
     rank = ompi_comm_rank (comm);
     
     /* Non-writers receive the data. */
@@ -424,24 +463,33 @@ int ompi_io_ompio_bcast_array (void *buff,
     }
 
     /* Writers sends data to all others. */
-
+    reqs = ( ompi_request_t **) malloc ( procs_per_group * sizeof ( ompi_request_t *));
+    if (NULL == reqs ) {
+	return OMPI_ERR_OUT_OF_RESOURCE;
+    }
 
     for (i=0 ; i<procs_per_group ; i++) {
         if (procs_in_group[i] == rank) {
+	    reqs[i] = MPI_REQUEST_NULL;
             continue;
         }
-        
-        err = MCA_PML_CALL(send(buff, 
-                                count, 
-                                datatype, 
-                                procs_in_group[i],
-                                OMPIO_TAG_BCAST,
-                                MCA_PML_BASE_SEND_STANDARD, 
-                                comm));
+        err = MCA_PML_CALL(isend(buff,
+                                 count,
+                                 datatype,
+                                 procs_in_group[i],
+                                 OMPIO_TAG_BCAST,
+                                 MCA_PML_BASE_SEND_STANDARD,
+                                 comm,
+			         &reqs[i]));
         if (OMPI_SUCCESS != err) {
+	    free ( reqs );
             return err;
         }
     }
-    
+    err = ompi_request_wait_all ( procs_per_group, reqs, MPI_STATUSES_IGNORE );
+    if ( NULL != reqs ) {
+	free ( reqs );
+    }
+
     return err;
 }
