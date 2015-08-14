@@ -52,6 +52,8 @@ extern int ompi_mtl_ofi_del_procs(struct mca_mtl_base_module_t *mtl,
                                   size_t nprocs,
                                   struct ompi_proc_t **procs);
 
+int ompi_mtl_ofi_progress_no_inline(void);
+
 __opal_attribute_always_inline__ static inline int
 ompi_mtl_ofi_progress(void)
 {
@@ -115,42 +117,7 @@ ompi_mtl_ofi_progress(void)
 
 
 /* MTL interface functions */
-__opal_attribute_always_inline__ static inline int
-ompi_mtl_ofi_finalize(struct mca_mtl_base_module_t *mtl)
-{
-    opal_progress_unregister(ompi_mtl_ofi_progress);
-
-    /**
-     * Close all the OFI objects
-     */
-    if (fi_close((fid_t)ompi_mtl_ofi.ep)) {
-        opal_output(ompi_mtl_base_framework.framework_output,
-                "fi_close failed: %s", strerror(errno));
-        abort();
-    }
-    if (fi_close((fid_t)ompi_mtl_ofi.cq)) {
-        opal_output(ompi_mtl_base_framework.framework_output,
-                "fi_close failed: %s", strerror(errno));
-        abort();
-    }
-    if (fi_close((fid_t)ompi_mtl_ofi.av)) {
-        opal_output(ompi_mtl_base_framework.framework_output,
-                "fi_close failed: %s", strerror(errno));
-        abort();
-    }
-    if (fi_close((fid_t)ompi_mtl_ofi.domain)) {
-        opal_output(ompi_mtl_base_framework.framework_output,
-                "fi_close failed: %s", strerror(errno));
-        abort();
-    }
-    if (fi_close((fid_t)ompi_mtl_ofi.fabric)) {
-        opal_output(ompi_mtl_base_framework.framework_output,
-                "fi_close failed: %s", strerror(errno));
-        abort();
-    }
-
-    return OMPI_SUCCESS;
-}
+int ompi_mtl_ofi_finalize(struct mca_mtl_base_module_t *mtl);
 
 __opal_attribute_always_inline__ static inline int
 ompi_mtl_ofi_get_error(int error_num)
