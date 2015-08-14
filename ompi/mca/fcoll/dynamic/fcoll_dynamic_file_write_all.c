@@ -31,7 +31,6 @@
 
 
 #define DEBUG_ON 0
-#define TIME_BREAKDOWN 0
 
 /*Used for loading file-offsets per aggregator*/
 typedef struct local_io_array{
@@ -99,11 +98,11 @@ mca_fcoll_dynamic_file_write_all (mca_io_ompio_file_t *fh,
     int recv_req_count=0;
 
 
-#if TIME_BREAKDOWN
+#if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
     double write_time = 0.0, start_write_time = 0.0, end_write_time = 0.0;
     double comm_time = 0.0, start_comm_time = 0.0, end_comm_time = 0.0;
     double exch_write = 0.0, start_exch = 0.0, end_exch = 0.0;
-    print_entry nentry;
+    mca_io_ompio_print_entry nentry;
 #endif
 
 
@@ -352,7 +351,7 @@ mca_fcoll_dynamic_file_write_all (mca_io_ompio_file_t *fh,
 
 
 
-#if TIME_BREAKDOWN
+#if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
       start_exch = MPI_Wtime();
 #endif
 
@@ -699,7 +698,7 @@ mca_fcoll_dynamic_file_write_all (mca_io_ompio_file_t *fh,
 	printf("%d : global_count : %ld, bytes_sent : %d\n",
 	       fh->f_rank,global_count, bytes_sent);
 #endif
-#if TIME_BREAKDOWN
+#if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
 	  start_comm_time = MPI_Wtime();
 #endif
 
@@ -855,7 +854,7 @@ mca_fcoll_dynamic_file_write_all (mca_io_ompio_file_t *fh,
 	}
     }
 
-#if TIME_BREAKDOWN
+#if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
       end_comm_time = MPI_Wtime();
       comm_time += (end_comm_time - start_comm_time);
 #endif
@@ -871,7 +870,7 @@ mca_fcoll_dynamic_file_write_all (mca_io_ompio_file_t *fh,
 
 	if (fh->f_procs_in_group[fh->f_aggregator_index] == fh->f_rank) {
 
-#if TIME_BREAKDOWN
+#if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
 	    start_write_time = MPI_Wtime();
 #endif
 
@@ -933,7 +932,7 @@ mca_fcoll_dynamic_file_write_all (mca_io_ompio_file_t *fh,
 	      goto exit;
 	    }
 	  }
-#if TIME_BREAKDOWN
+#if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
 	  end_write_time = MPI_Wtime();
 	  write_time += end_write_time - start_write_time;
 #endif
@@ -973,7 +972,7 @@ mca_fcoll_dynamic_file_write_all (mca_io_ompio_file_t *fh,
 
     }
 
-#if TIME_BREAKDOWN
+#if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
       end_exch = MPI_Wtime();
       exch_write += end_exch - start_exch;
       nentry.time[0] = write_time;
