@@ -108,9 +108,9 @@ struct cudaFunctionTable {
 #if OPAL_CUDA_GET_ATTRIBUTES
     int (*cuPointerGetAttributes)(unsigned int, CUpointer_attribute *, void **, CUdeviceptr);
 #endif /* OPAL_CUDA_GET_ATTRIBUTES */
-} cudaFunctionTable;
+};
 typedef struct cudaFunctionTable cudaFunctionTable_t;
-cudaFunctionTable_t cuFunc;
+static cudaFunctionTable_t cuFunc;
 
 static int stage_one_init_ref_count = 0;
 static bool stage_three_init_complete = false;
@@ -175,13 +175,13 @@ struct mca_btl_base_descriptor_t **cuda_event_dtoh_frag_array = NULL;
 struct mca_btl_base_descriptor_t **cuda_event_htod_frag_array = NULL;
 
 /* First free/available location in cuda_event_status_array */
-int cuda_event_ipc_first_avail, cuda_event_dtoh_first_avail, cuda_event_htod_first_avail;
+static int cuda_event_ipc_first_avail, cuda_event_dtoh_first_avail, cuda_event_htod_first_avail;
 
 /* First currently-being used location in the cuda_event_status_array */
-int cuda_event_ipc_first_used, cuda_event_dtoh_first_used, cuda_event_htod_first_used;
+static int cuda_event_ipc_first_used, cuda_event_dtoh_first_used, cuda_event_htod_first_used;
 
 /* Number of status items currently in use */
-int cuda_event_ipc_num_used, cuda_event_dtoh_num_used, cuda_event_htod_num_used;
+static int cuda_event_ipc_num_used, cuda_event_dtoh_num_used, cuda_event_htod_num_used;
 
 /* Size of array holding events */
 int cuda_event_max = 400;
