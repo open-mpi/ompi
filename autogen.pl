@@ -980,11 +980,14 @@ sub patch_autotools_output {
     push(@verbose_out, $indent_str . "Patching configure for IBM xlf libtool bug\n");
     $c =~ s/(\$LD -shared \$libobjs \$deplibs \$)compiler_flags( -soname \$soname)/$1linker_flags$2/g;
 
-    # Fix consequence of broken libtool.m4 from libtool 2.4.3
-    # see http://lists.gnu.org/archive/html/bug-libtool/2015-07/msg00002.html
+    # Fix consequence of broken libtool.m4
+    # see http://lists.gnu.org/archive/html/bug-libtool/2015-07/msg00002.html and
+    # https://github.com/open-mpi/ompi/issues/751
     push(@verbose_out, $indent_str . "Patching configure for libtool.m4 bug\n");
-    $c =~ s/test x-L = \"\$p\"/test x-L = \"x\$p\"/g;
-    $c =~ s/test x-R = \"\$p\"/test x-R = \"x\$p\"/g;
+    # patch for libtool < 2.4.3
+    $c =~ s/# Some compilers place space between "-{L,R}" and the path.\n       # Remove the space.\n       if test \$p = \"-L\" \|\|/# Some compilers place space between "-{L,-l,R}" and the path.\n       # Remove the spaces.\n       if test \$p = \"-L\" \|\|\n          test \$p = \"-l\" \|\|/g;
+    # patch for libtool >= 2.4.3
+    $c =~ s/# Some compilers place space between "-{L,R}" and the path.\n       # Remove the space.\n       if test x-L = \"\$p\" \|\|\n          test x-R = \"\$p\"\; then/# Some compilers place space between "-{L,-l,R}" and the path.\n       # Remove the spaces.\n       if test x-L = \"x\$p\" \|\|\n          test x-l = \"x\$p\" \|\|\n          test x-R = \"x\$p\"\; then/g;
 
     # Only write out verbose statements and a new configure if the
     # configure content actually changed
