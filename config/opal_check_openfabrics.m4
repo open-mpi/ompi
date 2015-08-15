@@ -257,6 +257,46 @@ AC_DEFUN([OPAL_CHECK_OPENFABRICS],[
         AC_MSG_RESULT([no])
     fi
 
+    AS_IF([test "$ompi_check_openib_happy" = "yes"],
+          [AS_IF([test "1" = "$$1_have_xrc"],
+                 [cat > conftest.c << EOF
+#include <infiniband/verbs.h>
+#include <stdio.h>
+
+int main(int argc, char *argv[[]]) {
+    ibv_create_xrc_rcv_qp(NULL,NULL);
+    return 0;
+}
+EOF
+                  OPAL_LOG_COMMAND([$CC $CFLAGS -o conftest conftest.c -libverbs $LDFLAGS $LIBS],
+                                   [$1_versionned_xrc_symbol=`$NM conftest | $GREP ibv_create_xrc_rcv_qp | awk '{print [$]2}'`
+                                    AS_IF([test -z "$$1_versionned_xrc_symbol"],
+                                           [AC_MSG_WARN([could not find the versionned name of ibv_create_xrc_rcv_qp])
+                                            $1_versionned_xrc_symbol=ibv_create_xrc_rcv_qp])],
+                                   [AC_MSG_ERROR([C compiler did not produce exe file])])])
+           AS_IF([test "1" = "$$1_have_xrc_domains"],
+                 [cat > conftest.c << EOF
+#include <infiniband/verbs.h>
+#include <infiniband/driver.h>
+#include <stdio.h>
+
+int main(int argc, char *argv[[]]) {
+    ibv_cmd_open_xrcd(NULL,NULL,0,NULL,NULL,0,NULL,0);
+    return 0;
+}
+EOF
+                  OPAL_LOG_COMMAND([$CC $CFLAGS -o conftest conftest.c -libverbs $LDFLAGS $LIBS],
+                                   [$1_versionned_xrc_symbol=`$NM conftest | $GREP ibv_cmd_open_xrcd | awk '{print [$]2}'`
+                                    AS_IF([test -z "$$1_versionned_xrc_symbol"],
+                                           [AC_MSG_WARN([could not find the versionned name of ibv_cmd_open_xrcd])
+                                            $1_versionned_xrc_symbol=ibv_cmd_open_xrcd])],
+                                   [AC_MSG_ERROR([C compiler did not produce exe file])])])],
+          [$1_versionned_xrc_symbol=none])
+
+    $1_versionned_xrc_symbol=\"$$1_versionned_xrc_symbol\"
+    AC_DEFINE_UNQUOTED([OPAL_VERSIONNED_XRC_SYMBOL], [$$1_versionned_xrc_symbol],
+        [Versionned XRC symbol if any])
+
     AC_MSG_CHECKING([if dynamic SL is enabled])
     AC_DEFINE_UNQUOTED([OPAL_ENABLE_DYNAMIC_SL], [$$1_have_opensm_devel],
         [Enable features required for dynamic SL support])
