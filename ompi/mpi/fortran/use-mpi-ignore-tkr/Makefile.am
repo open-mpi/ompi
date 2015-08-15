@@ -1,6 +1,6 @@
 # -*- makefile -*-
 #
-# Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2015      Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 #
@@ -48,6 +48,13 @@ nodist_libmpi_usempi_ignore_tkr_la_SOURCES += \
         mpi-ignore-tkr-sizeof.f90
 endif
 
+# Note that we invoke some OPAL functions directly in
+# libmpi_usempi_ignore_tkr.la, so we need to link in the OPAL library
+# directly (pulling it in indirectly via libmpi.la does not work on
+# all platforms).
+libmpi_usempi_ignore_tkr_la_LIBADD = \
+        $(OMPI_MPIEXT_USEMPI_LIBS) \
+        $(OMPI_TOP_BUILDDIR)/opal/lib@OPAL_LIB_PREFIX@open-pal.la
 libmpi_usempi_ignore_tkr_la_LDFLAGS = \
         -version-info $(libmpi_usempi_ignore_tkr_so_version) \
         $(OMPI_FORTRAN_EXTRA_SHARED_LIBRARY_FLAGS)
