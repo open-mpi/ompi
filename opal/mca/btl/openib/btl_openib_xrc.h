@@ -51,6 +51,4 @@ int mca_btl_openib_close_xrc_domain(struct mca_btl_openib_device_t *device);
 int mca_btl_openib_ib_address_add_new (uint16_t lid, uint64_t s_id,
         opal_jobid_t ep_jobid, mca_btl_openib_endpoint_t *ep);
 
-bool mca_btl_openib_xrc_check_api(void);
-
 #endif

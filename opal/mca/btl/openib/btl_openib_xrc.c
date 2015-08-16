@@ -39,29 +39,6 @@ OBJ_CLASS_INSTANCE(ib_address_t,
                    ib_address_constructor,
                    ib_address_destructor);
 
-/* run-time check for which libibverbs XRC API we really have underneath */
-bool mca_btl_openib_xrc_check_api()
-{
-    void *lib = dlopen(NULL, RTLD_NOW); /* current program */
-    if (!lib) {
-        BTL_ERROR(("XRC error: could not find XRC API version"));
-        return false;
-    }
-
-#if OPAL_HAVE_CONNECTX_XRC_DOMAINS
-    if (NULL != dlsym(lib, "ibv_open_xrcd")) {
-        BTL_ERROR(("XRC error: bad XRC API (require XRC from OFED 3.12+)"));
-        return false;
-    }
-#else
-    if (NULL != dlsym(lib, "ibv_create_xrc_rcv_qp")) {
-        BTL_ERROR(("XRC error: bad XRC API (require XRC from OFED pre 3.12)."));
-        return false;
-    }
-#endif
-    return true;
-}
-
 /* This func. opens XRC domain */
 int mca_btl_openib_open_xrc_domain(struct mca_btl_openib_device_t *device)
 {
