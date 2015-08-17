@@ -41,6 +41,8 @@ BEGIN_C_DECLS
 #define OMPI_WIN_FREED        0x00000001
 #define OMPI_WIN_INVALID      0x00000002
 #define OMPI_WIN_NO_LOCKS     0x00000004
+#define OMPI_WIN_SAME_DISP    0x00000008
+#define OMPI_WIN_SAME_SIZE    0x00000010
 
 OMPI_DECLSPEC extern opal_pointer_array_t ompi_mpi_windows;
 
