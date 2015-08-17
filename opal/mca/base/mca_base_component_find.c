@@ -14,6 +14,8 @@
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2014-2015 Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -133,7 +135,7 @@ int mca_base_component_find (const char *directory, mca_base_framework_t *framew
         find_dyn_components(directory, framework, (const char**)requested_component_names,
                             include_mode);
     } else {
-        opal_output_verbose(40, 0,
+        opal_output_verbose (MCA_BASE_VERBOSE_INFO, 0,
                             "mca: base: component_find: dso loading for %s MCA components disabled",
                             framework->framework_name);
     }
@@ -193,11 +195,11 @@ int mca_base_components_filter (mca_base_framework_t *framework, uint32_t filter
         if (!can_use || (filter_flags & dummy->data.param_field) != filter_flags) {
             if (can_use && (filter_flags & MCA_BASE_METADATA_PARAM_CHECKPOINT) &&
                 !(MCA_BASE_METADATA_PARAM_CHECKPOINT & dummy->data.param_field)) {
-                opal_output_verbose(10, output_id,
-                                    "mca: base: components_filter: "
-                                    "(%s) Component %s is *NOT* Checkpointable - Disabled",
-                                    component->reserved,
-                                    component->mca_component_name);
+                opal_output_verbose (MCA_BASE_VERBOSE_COMPONENT, output_id,
+                                     "mca: base: components_filter: "
+                                     "(%s) Component %s is *NOT* Checkpointable - Disabled",
+                                     component->reserved,
+                                     component->mca_component_name);
             }
 
             opal_list_remove_item (components, &cli->super);
@@ -206,11 +208,11 @@ int mca_base_components_filter (mca_base_framework_t *framework, uint32_t filter
 
             OBJ_RELEASE(cli);
         } else if (filter_flags & MCA_BASE_METADATA_PARAM_CHECKPOINT) {
-            opal_output_verbose(10, output_id,
-                                "mca: base: components_filter: "
-                                "(%s) Component %s is Checkpointable",
-                                component->reserved,
-                                component->mca_component_name);
+            opal_output_verbose (MCA_BASE_VERBOSE_COMPONENT, output_id,
+                                 "mca: base: components_filter: "
+                                 "(%s) Component %s is Checkpointable",
+                                 component->reserved,
+                                 component->mca_component_name);
         }
     }
 

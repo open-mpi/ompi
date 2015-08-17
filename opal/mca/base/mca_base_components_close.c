@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2013-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -33,9 +33,9 @@ void mca_base_component_unload (const mca_base_component_t *component, int outpu
     int ret;
 
     /* Unload */
-    opal_output_verbose(10, output_id,
-                        "mca: base: close: unloading component %s",
-                        component->mca_component_name);
+    opal_output_verbose (MCA_BASE_VERBOSE_COMPONENT, output_id,
+                         "mca: base: close: unloading component %s",
+                         component->mca_component_name);
 
     ret = mca_base_var_group_find (component->mca_project_name, component->mca_type_name,
                                    component->mca_component_name);
@@ -51,9 +51,9 @@ void mca_base_component_close (const mca_base_component_t *component, int output
     /* Close */
     if (NULL != component->mca_close_component) {
         component->mca_close_component();
-        opal_output_verbose(10, output_id,
-                            "mca: base: close: component %s closed",
-                            component->mca_component_name);
+        opal_output_verbose (MCA_BASE_VERBOSE_COMPONENT, output_id,
+                             "mca: base: close: component %s closed",
+                             component->mca_component_name);
     }
 
     mca_base_component_unload (component, output_id);

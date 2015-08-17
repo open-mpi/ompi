@@ -76,25 +76,25 @@ static int register_components(mca_base_framework_t *framework)
     int output_id = framework->framework_output;
 
     /* Announce */
-    opal_output_verbose(10, output_id,
-                        "mca: base: components_register: registering framework %s components",
-                        framework->framework_name);
+    opal_output_verbose (MCA_BASE_VERBOSE_COMPONENT, output_id,
+                         "mca: base: components_register: registering framework %s components",
+                         framework->framework_name);
 
     /* Traverse the list of found components */
 
     OPAL_LIST_FOREACH_SAFE(cli, next, &framework->framework_components, mca_base_component_list_item_t) {
         component = (mca_base_component_t *)cli->cli_component;
 
-        opal_output_verbose(10, output_id,
+        opal_output_verbose(MCA_BASE_VERBOSE_COMPONENT, output_id,
                             "mca: base: components_register: found loaded component %s",
                             component->mca_component_name);
 
         /* Call the component's MCA parameter registration function (or open if register doesn't exist) */
         if (NULL == component->mca_register_component_params) {
-            opal_output_verbose(10, output_id,
-                                "mca: base: components_register: "
-                                "component %s has no register or open function",
-                                component->mca_component_name);
+            opal_output_verbose (MCA_BASE_VERBOSE_COMPONENT, output_id,
+                                 "mca: base: components_register: "
+                                 "component %s has no register or open function",
+                                 component->mca_component_name);
             ret = OPAL_SUCCESS;
         } else {
             ret = component->mca_register_component_params();
@@ -114,16 +114,17 @@ static int register_components(mca_base_framework_t *framework)
                    expected. */
 
                 if (mca_base_component_show_load_errors) {
-                    opal_output(0, "mca: base: components_register: "
-                                "component %s / %s register function failed",
-                                component->mca_type_name,
-                                component->mca_component_name);
+                    opal_output_verbose (MCA_BASE_VERBOSE_ERROR, output_id,
+                                         "mca: base: components_register: component %s "
+                                         "/ %s register function failed",
+                                         component->mca_type_name,
+                                         component->mca_component_name);
                 }
 
-                opal_output_verbose(10, output_id,
-                                    "mca: base: components_register: "
-                                    "component %s register function failed",
-                                    component->mca_component_name);
+                opal_output_verbose (MCA_BASE_VERBOSE_COMPONENT, output_id,
+                                     "mca: base: components_register: "
+                                     "component %s register function failed",
+                                     component->mca_component_name);
             }
 
             opal_list_remove_item (&framework->framework_components, &cli->super);
@@ -134,7 +135,7 @@ static int register_components(mca_base_framework_t *framework)
         }
 
         if (NULL != component->mca_register_component_params) {
-            opal_output_verbose (10, output_id, "mca: base: components_register: "
+            opal_output_verbose (MCA_BASE_VERBOSE_COMPONENT, output_id, "mca: base: components_register: "
                                  "component %s register function successful",
                                  component->mca_component_name);
         }
