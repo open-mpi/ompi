@@ -76,8 +76,6 @@ libmpi_usempi_la_SOURCES = \
      mpi_waitsome_f90.f90 \
      mpi_wtick_f90.f90 \
      mpi_wtime_f90.f90
-libmpi_usempi_la_LIBADD = \
-     $(top_builddir)/ompi/mpi/fortran/mpif-h/libmpi_mpifh.la
 
 # Don't distribute mpi-tkr-sizeof-*; they're generated.
 
@@ -93,6 +91,7 @@ endif
 # (pulling it in indirectly via libmpi.la does not work on all
 # platforms).
 libmpi_usempi_la_LIBADD = \
+        $(top_builddir)/ompi/mpi/fortran/mpif-h/libmpi_mpifh.la \
         $(OMPI_MPIEXT_USEMPI_LIBS) \
         $(OMPI_TOP_BUILDDIR)/opal/lib@OPAL_LIB_PREFIX@open-pal.la
 # Set the library version
