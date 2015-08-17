@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 201302915 University of Houston. All rights reserved.
+ * Copyright (c) 2013-2015 University of Houston. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -65,7 +65,8 @@ int mca_sharedfp_sm_iread(mca_io_ompio_file_t *fh,
     sh = fh->f_sharedfp_data;
 
     if ( mca_sharedfp_sm_verbose ) {
-        printf("sharedfp_sm_iread: Bytes Requested is %ld\n",bytesRequested);
+        opal_output(ompi_sharedfp_base_framework.framework_output,
+                    "sharedfp_sm_iread: Bytes Requested is %ld\n",bytesRequested);
     }
     /*Request the offset to write bytesRequested bytes*/
     ret = mca_sharedfp_sm_request_position(sh,bytesRequested,&offset);

@@ -78,7 +78,8 @@ int mca_sharedfp_sm_file_open (struct ompi_communicator_t *comm,
 
     /*Memory is allocated here for the sh structure*/
     if ( mca_sharedfp_sm_verbose ) {
-        printf( "mca_sharedfp_sm_file_open: malloc f_sharedfp_ptr struct\n");
+        opal_output(ompi_sharedfp_base_framework.framework_output, 
+                    "mca_sharedfp_sm_file_open: malloc f_sharedfp_ptr struct\n");
     }
 
     sh = (struct mca_sharedfp_base_data_t*)malloc(sizeof(struct mca_sharedfp_base_data_t));
@@ -98,7 +99,8 @@ int mca_sharedfp_sm_file_open (struct ompi_communicator_t *comm,
 
     /*Open a shared memory segment which will hold the shared file pointer*/
     if ( mca_sharedfp_sm_verbose ) {
-        printf( "mca_sharedfp_sm_file_open: allocatge shared memory segment.\n");
+        opal_output(ompi_sharedfp_base_framework.framework_output, 
+                    "mca_sharedfp_sm_file_open: allocatge shared memory segment.\n");
     }
 
 
@@ -134,7 +136,7 @@ int mca_sharedfp_sm_file_open (struct ompi_communicator_t *comm,
                  S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
     if ( sm_fd == -1){
         /*error opening file*/
-        printf("mca_sharedfp_sm_file_open: Error, unable to open file for mmap: %s\n",sm_filename);
+        opal_output(0,"mca_sharedfp_sm_file_open: Error, unable to open file for mmap: %s\n",sm_filename);
         free(sm_filename);
         free(sm_data);
         free(sh);
@@ -159,8 +161,8 @@ int mca_sharedfp_sm_file_open (struct ompi_communicator_t *comm,
 
     if ( sm_offset_ptr==MAP_FAILED){
         err = OMPI_ERROR;
-        printf("mca_sharedfp_sm_file_open: Error, unable to mmap file: %s\n",sm_filename);
-        printf("%s\n", strerror(errno));
+        opal_output(0, "mca_sharedfp_sm_file_open: Error, unable to mmap file: %s\n",sm_filename);
+        opal_output(0, "%s\n", strerror(errno));
         free(sm_filename);
         free(sm_data);
         free(sh);
@@ -220,7 +222,8 @@ int mca_sharedfp_sm_file_close (mca_io_ompio_file_t *fh)
 
     if( NULL == fh->f_sharedfp_data ){
         if ( mca_sharedfp_sm_verbose ) {
-            printf("sharedfp_sm_file_close: shared file pointer structure not initialized\n");
+            opal_output(ompi_sharedfp_base_framework.framework_output,
+                        "sharedfp_sm_file_close: shared file pointer structure not initialized\n");
         }
         return OMPI_SUCCESS;
     }

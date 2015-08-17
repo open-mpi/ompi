@@ -24,6 +24,7 @@
 #include "mpi.h"
 #include "ompi/constants.h"
 #include "ompi/mca/sharedfp/sharedfp.h"
+#include "ompi/mca/sharedfp/base/base.h"
 
 int mca_sharedfp_individual_read ( mca_io_ompio_file_t *fh,
 				   void *buf, int count, MPI_Datatype datatype, MPI_Status *status)

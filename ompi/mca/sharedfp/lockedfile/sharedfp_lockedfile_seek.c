@@ -140,7 +140,8 @@ mca_sharedfp_lockedfile_seek (mca_io_ompio_file_t *fh,
 	 *--------------------
 	 */
 	if ( mca_sharedfp_lockedfile_verbose ) {
-	    printf("sharedfp_lockedfile_seek: Releasing lock...");
+            opal_output(ompi_sharedfp_base_framework.framework_output,
+                        "sharedfp_lockedfile_seek: Releasing lock...");
 	}
 	fl.l_type   = F_UNLCK;  /* set to unlock same region */
         fl.l_whence = SEEK_SET;

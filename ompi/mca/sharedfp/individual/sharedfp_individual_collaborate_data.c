@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2013      University of Houston. All rights reserved.
+ * Copyright (c) 2013-2015 University of Houston. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -24,6 +24,7 @@
 #include "mpi.h"
 #include "ompi/constants.h"
 #include "ompi/mca/sharedfp/sharedfp.h"
+#include "ompi/mca/sharedfp/base/base.h"
 #include "ompi/mca/io/ompio/io_ompio.h"
 
 #include <stdlib.h>
@@ -55,8 +56,8 @@ int mca_sharedfp_individual_collaborate_data(struct mca_sharedfp_base_data_t *sh
 
     headnode = (mca_sharedfp_individual_header_record*)sh->selected_module_data;
     if ( NULL == headnode)  {
-	opal_output(0, "sharedfp_individual_collaborate_data: headnode is NULL but file is open\n");
-	return OMPI_ERROR;
+        opal_output(0, "sharedfp_individual_collaborate_data: headnode is NULL but file is open\n");
+        return OMPI_ERROR;
     }
 
     /* Number of nodes on each process is the sum of records
@@ -65,7 +66,8 @@ int mca_sharedfp_individual_collaborate_data(struct mca_sharedfp_base_data_t *sh
     nodesoneachprocess = headnode->numofrecordsonfile + headnode->numofrecords;
 
     if ( mca_sharedfp_individual_verbose ) {
-	printf("Nodes of each process = %d\n",nodesoneachprocess);
+        opal_output(ompi_sharedfp_base_framework.framework_output,
+                    "Nodes of each process = %d\n",nodesoneachprocess);
     }
 
     countbuff = (int*)malloc(size * sizeof(int));
@@ -93,7 +95,7 @@ int mca_sharedfp_individual_collaborate_data(struct mca_sharedfp_base_data_t *sh
 
     if ( mca_sharedfp_individual_verbose) {
 	for (i = 0; i < size ; i++) {
-	    printf("sharedfp_individual_collaborate_data: Countbuff[%d] = %d\n", i, countbuff[i]);
+            opal_output(ompi_sharedfp_base_framework.framework_output,"sharedfp_individual_collaborate_data: Countbuff[%d] = %d\n", i, countbuff[i]);
 	}
     }
 
@@ -106,8 +108,9 @@ int mca_sharedfp_individual_collaborate_data(struct mca_sharedfp_base_data_t *sh
     for(i = 0; i < size; i++) {
         displ[i]    = totalnodes;
 	if ( mca_sharedfp_individual_verbose ) {
-	    printf("sharedfp_individual_collaborate_data: displ[%d] = %d\n",i,displ[i]);
-	}
+            opal_output(ompi_sharedfp_base_framework.framework_output,
+                        "sharedfp_individual_collaborate_data: displ[%d] = %d\n",i,displ[i]);
+        }
         totalnodes  = totalnodes + countbuff[i];
     }
 
@@ -156,9 +159,10 @@ int mca_sharedfp_individual_collaborate_data(struct mca_sharedfp_base_data_t *sh
 	idx =  mca_sharedfp_individual_getoffset(ind_ts[i],timestampbuff,totalnodes);
 
 	if ( mca_sharedfp_individual_verbose ) {
-	    printf("sharedfp_individual_collaborate_data: Process %d writing %ld bytes to main file \n",
-		   rank,ind_recordlength[i]);
-	}
+            opal_output(ompi_sharedfp_base_framework.framework_output,
+                        "sharedfp_individual_collaborate_data: Process %d writing %ld bytes to main file \n",
+                        rank,ind_recordlength[i]);
+        }
 
 	/*Write into main data file*/
 	ompio_io_ompio_file_write_at( sh->sharedfh, offsetbuff[idx], buff,
@@ -212,7 +216,7 @@ int  mca_sharedfp_individual_get_timestamps_and_reclengths ( double **buff, long
     currnode = headnode->next;
 
     if ( mca_sharedfp_individual_verbose ) {
-	printf("Num is %d\n",num);
+        opal_output(ompi_sharedfp_base_framework.framework_output,"Num is %d\n",num);
     }
 
     if ( 0 == num )   {
@@ -235,8 +239,9 @@ int  mca_sharedfp_individual_get_timestamps_and_reclengths ( double **buff, long
     }
 
     if ( mca_sharedfp_individual_verbose ) {
-	printf("sharedfp_individual_get_timestamps_and_reclengths: Numofrecords on file %d\n",
-	       headnode->numofrecordsonfile);
+        opal_output(ompi_sharedfp_base_framework.framework_output,
+                    "sharedfp_individual_get_timestamps_and_reclengths: Numofrecords on file %d\n",
+                    headnode->numofrecordsonfile);
     }
 
     if (headnode->numofrecordsonfile >  0)  {
@@ -252,9 +257,10 @@ int  mca_sharedfp_individual_get_timestamps_and_reclengths ( double **buff, long
 
             metaoffset = metaoffset +  sizeof(struct  mca_sharedfp_individual_record2);
 
-	    if ( mca_sharedfp_individual_verbose ) {
-		printf("sharedfp_individual_get_timestamps_and_reclengths: Ctr = %d\n",ctr);
-	    }
+            if ( mca_sharedfp_individual_verbose ) {
+                opal_output(ompi_sharedfp_base_framework.framework_output,
+                            "sharedfp_individual_get_timestamps_and_reclengths: Ctr = %d\n",ctr);
+            }
             ctr++;
         }
 
@@ -266,9 +272,9 @@ int  mca_sharedfp_individual_get_timestamps_and_reclengths ( double **buff, long
     /* Add the records from the linked list */
     currnode = headnode->next;
     while (currnode)  {
-	if ( mca_sharedfp_individual_verbose ) {
-	    printf("Ctr = %d\n",ctr);
-	}
+        if ( mca_sharedfp_individual_verbose ) {
+            opal_output(ompi_sharedfp_base_framework.framework_output,"Ctr = %d\n",ctr);
+        }
         /* Some error over here..need to check this code again */
         /*while(headnode->next  != NULL)*/
 
@@ -279,9 +285,10 @@ int  mca_sharedfp_individual_get_timestamps_and_reclengths ( double **buff, long
         ctr = ctr + 1;
 
         headnode->next = currnode->next;
-	if ( mca_sharedfp_individual_verbose ) {
-	    printf("sharedfp_individual_get_timestamps_and_reclengths: node deleted from the metadatalinked list\n");
-	}
+        if ( mca_sharedfp_individual_verbose ) {
+            opal_output(ompi_sharedfp_base_framework.framework_output,
+                        "sharedfp_individual_get_timestamps_and_reclengths: node deleted from the metadatalinked list\n");
+        }
         free(currnode);
         currnode = headnode->next;
 
