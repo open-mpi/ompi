@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2013      University of Houston. All rights reserved.
+ * Copyright (c) 2013-2015 University of Houston. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -24,6 +24,7 @@
 #include "mpi.h"
 #include "ompi/constants.h"
 #include "ompi/mca/sharedfp/sharedfp.h"
+#include "ompi/mca/sharedfp/base/base.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -44,8 +45,9 @@ int mca_sharedfp_individual_insert_metadata(int functype,long recordlength,struc
 
 
     if ( mca_sharedfp_individual_verbose ) {
-	printf("sharedfp_individual_insert_metadata: Headnode->numofrecords = %d\n",
-	       headnode->numofrecords);
+        opal_output(ompi_sharedfp_base_framework.framework_output,
+                    "sharedfp_individual_insert_metadata: Headnode->numofrecords = %d\n",
+                    headnode->numofrecords);
     }
     /* Check if the maximum limit is reached for the records in the linked list*/
     if (headnode->numofrecords == MAX_METADATA_RECORDS) {
@@ -113,12 +115,17 @@ int mca_sharedfp_individual_write_metadata_file(struct mca_sharedfp_base_data_t 
         buff.recordlength = current->recordlength;
 
 	if ( mca_sharedfp_individual_verbose ) {
-	    printf("sharedfp_individual_write_metadata_file: Buff recordid %ld\n",buff.recordid);
-	    printf("sharedfp_individual_write_metadata_file: Buff timestamp %f\n", buff.timestamp);
-	    printf("sharedfp_individual_write_metadata_file: Buff localposition %lld\n",buff.localposition);
-	    printf("sharedfp_individual_write_metadata_file: Buff recordlength %ld\n",buff.recordlength);
-	    printf("sharedfp_individual_write_metadata_file: Size of buff %ld\n",sizeof(buff));
-	}
+            opal_output(ompi_sharedfp_base_framework.framework_output,
+                        "sharedfp_individual_write_metadata_file: Buff recordid %ld\n",buff.recordid);
+            opal_output(ompi_sharedfp_base_framework.framework_output,
+                        "sharedfp_individual_write_metadata_file: Buff timestamp %f\n", buff.timestamp);
+            opal_output(ompi_sharedfp_base_framework.framework_output,
+                        "sharedfp_individual_write_metadata_file: Buff localposition %lld\n",buff.localposition);
+            opal_output(ompi_sharedfp_base_framework.framework_output,
+                        "sharedfp_individual_write_metadata_file: Buff recordlength %ld\n",buff.recordlength);
+            opal_output(ompi_sharedfp_base_framework.framework_output,
+                        "sharedfp_individual_write_metadata_file: Size of buff %ld\n",sizeof(buff));
+        }
 
         headnode->next = current->next;
         free(current);

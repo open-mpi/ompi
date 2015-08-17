@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2013      University of Houston. All rights reserved.
+ * Copyright (c) 2013-2015 University of Houston. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -24,6 +24,7 @@
 #include "mpi.h"
 #include "ompi/constants.h"
 #include "ompi/mca/sharedfp/sharedfp.h"
+#include "ompi/mca/sharedfp/base/base.h"
 
 int mca_sharedfp_sm_read ( mca_io_ompio_file_t *fh,
                            void *buf, int count, MPI_Datatype datatype, MPI_Status *status)
@@ -37,7 +38,8 @@ int mca_sharedfp_sm_read ( mca_io_ompio_file_t *fh,
 
     if( NULL == fh->f_sharedfp_data){
         if ( mca_sharedfp_sm_verbose ) {
-            printf("sharedfp_sm_read - opening the shared file pointer\n");
+            opal_output(ompi_sharedfp_base_framework.framework_output,
+                        "sharedfp_sm_read - opening the shared file pointer\n");
         }
         shared_fp_base_module = fh->f_sharedfp;
 
@@ -60,7 +62,8 @@ int mca_sharedfp_sm_read ( mca_io_ompio_file_t *fh,
     sh = fh->f_sharedfp_data;
 
     if ( mca_sharedfp_sm_verbose ) {
-        printf("sharedfp_sm_read: Bytes Requested is %ld\n",bytesRequested);
+        opal_output(ompi_sharedfp_base_framework.framework_output,
+                    "sharedfp_sm_read: Bytes Requested is %ld\n",bytesRequested);
     }
 
     /*Request the offset to write bytesRequested bytes*/
@@ -68,7 +71,8 @@ int mca_sharedfp_sm_read ( mca_io_ompio_file_t *fh,
 
     if (  -1 != ret ) {
         if ( mca_sharedfp_sm_verbose ) {
-            printf("sharedfp_sm_read: Offset received is %lld\n",offset);
+            opal_output(ompi_sharedfp_base_framework.framework_output,
+                        "sharedfp_sm_read: Offset received is %lld\n",offset);
         }
 
         /* Read the file */
@@ -99,7 +103,8 @@ int mca_sharedfp_sm_read_ordered (mca_io_ompio_file_t *fh,
 
     if ( NULL == fh->f_sharedfp_data){
          if ( mca_sharedfp_sm_verbose ) {
-            printf("sharedfp_sm_read_ordered: opening the shared file pointer\n");
+            opal_output(ompi_sharedfp_base_framework.framework_output,
+                        "sharedfp_sm_read_ordered: opening the shared file pointer\n");
         }
         shared_fp_base_module = fh->f_sharedfp;
 
@@ -145,7 +150,8 @@ int mca_sharedfp_sm_read_ordered (mca_io_ompio_file_t *fh,
         for (i = 0; i < size ; i ++) {
             bytesRequested += buff[i];
             if ( mca_sharedfp_sm_verbose ) {
-                printf("mca_sharedfp_sm_read_ordered: Bytes requested are %ld\n",bytesRequested);
+                opal_output(ompi_sharedfp_base_framework.framework_output,
+                            "mca_sharedfp_sm_read_ordered: Bytes requested are %ld\n",bytesRequested);
             }
         }
 
@@ -160,7 +166,8 @@ int mca_sharedfp_sm_read_ordered (mca_io_ompio_file_t *fh,
             goto exit;
         }
         if ( mca_sharedfp_sm_verbose ) {
-            printf("mca_sharedfp_sm_read_ordered: Offset received is %lld\n",offsetReceived);
+            opal_output(ompi_sharedfp_base_framework.framework_output,
+                        "mca_sharedfp_sm_read_ordered: Offset received is %lld\n",offsetReceived);
         }
 
         buff[0] += offsetReceived;
@@ -180,7 +187,8 @@ int mca_sharedfp_sm_read_ordered (mca_io_ompio_file_t *fh,
     /*Each process now has its own individual offset in recvBUFF*/
     offset = offsetBuff - sendBuff;
     if ( mca_sharedfp_sm_verbose ) {
-        printf("mca_sharedfp_sm_read_ordered: Offset returned is %lld\n",offset);
+        opal_output(ompi_sharedfp_base_framework.framework_output,
+                    "mca_sharedfp_sm_read_ordered: Offset returned is %lld\n",offset);
     }
 
     /* read to the file */

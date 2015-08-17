@@ -25,6 +25,7 @@
 #include "mpi.h"
 #include "ompi/constants.h"
 #include "ompi/mca/sharedfp/sharedfp.h"
+#include "ompi/mca/sharedfp/base/base.h"
 
 /*use a semaphore to lock the shared memory location*/
 #include <semaphore.h>
@@ -43,7 +44,8 @@ mca_sharedfp_sm_seek (mca_io_ompio_file_t *fh,
 
     if( NULL == fh->f_sharedfp_data ) {
         if ( mca_sharedfp_sm_verbose ) {
-            printf("sharedfp_sm_seek: opening the shared file pointer\n");
+            opal_output(ompi_sharedfp_base_framework.framework_output,
+                        "sharedfp_sm_seek: opening the shared file pointer\n");
         }
         shared_fp_base_module = fh->f_sharedfp;
 
@@ -69,19 +71,22 @@ mca_sharedfp_sm_seek (mca_io_ompio_file_t *fh,
                 ret = -1;
             }
             if ( mca_sharedfp_sm_verbose ) {
-                printf("sharedfp_sm_seek: MPI_SEEK_SET new_offset=%lld\n",offset);
+                opal_output(ompi_sharedfp_base_framework.framework_output,
+                            "sharedfp_sm_seek: MPI_SEEK_SET new_offset=%lld\n",offset);
             }
         }
         else if( MPI_SEEK_CUR == whence){
             OMPI_MPI_OFFSET_TYPE current_position;
             ret = mca_sharedfp_sm_get_position ( fh, &current_position);
             if ( mca_sharedfp_sm_verbose ) {
-                printf("sharedfp_sm_seek: MPI_SEEK_CUR: curr=%lld, offset=%lld, call status=%d\n",
-                       current_position,offset,status);
+                opal_output(ompi_sharedfp_base_framework.framework_output,
+                            "sharedfp_sm_seek: MPI_SEEK_CUR: curr=%lld, offset=%lld, call status=%d\n",
+                            current_position,offset,status);
             }
             offset = current_position + offset;
             if ( mca_sharedfp_sm_verbose ) {
-                printf("sharedfp_sm_seek: MPI_SEEK_CUR: new_offset=%lld\n",offset);
+                opal_output(ompi_sharedfp_base_framework.framework_output,
+                            "sharedfp_sm_seek: MPI_SEEK_CUR: new_offset=%lld\n",offset);
             }
             if(offset < 0){
                 opal_output(0,"sharedfp_sm_seek - MPI_SEEK_CURE, offset must be > 0, got offset=%lld.\n",offset);
@@ -94,7 +99,8 @@ mca_sharedfp_sm_seek (mca_io_ompio_file_t *fh,
 
             offset = end_position + offset;
             if ( mca_sharedfp_sm_verbose ) {
-                printf("sharedfp_sm_seek: MPI_SEEK_END: file_get_size=%lld\n",end_position);
+                opal_output(ompi_sharedfp_base_framework.framework_output,
+                            "sharedfp_sm_seek: MPI_SEEK_END: file_get_size=%lld\n",end_position);
             }
             if(offset < 0){
                 opal_output(0,"sharedfp_sm_seek - MPI_SEEK_CUR, offset must be > 0, got offset=%lld.\n",offset);
@@ -116,7 +122,8 @@ mca_sharedfp_sm_seek (mca_io_ompio_file_t *fh,
         /*lock the file  */
         /*--------------------*/
         if ( mca_sharedfp_sm_verbose ) {
-            printf("sharedfp_sm_seek: Aquiring lock, rank=%d...",rank); fflush(stdout);
+            opal_output(ompi_sharedfp_base_framework.framework_output,
+                        "sharedfp_sm_seek: Aquiring lock, rank=%d...",rank); fflush(stdout);
         }
 
         /* Aquire an exclusive lock */
@@ -125,11 +132,13 @@ mca_sharedfp_sm_seek (mca_io_ompio_file_t *fh,
         sem_wait(sm_data->mutex);
 
         if ( mca_sharedfp_sm_verbose ) {
-            printf("sharedfp_sm_seek: Success! Acquired sm lock.for rank=%d\n",rank);
+            opal_output(ompi_sharedfp_base_framework.framework_output,
+                        "sharedfp_sm_seek: Success! Acquired sm lock.for rank=%d\n",rank);
         }
         sm_offset_ptr->offset=offset;
         if ( mca_sharedfp_sm_verbose ) {
-            printf("sharedfp_sm_seek: Releasing sm lock...rank=%d",rank); fflush(stdout);
+            opal_output(ompi_sharedfp_base_framework.framework_output,
+                        "sharedfp_sm_seek: Releasing sm lock...rank=%d",rank); fflush(stdout);
         }
         sem_post(sm_data->mutex);
     }

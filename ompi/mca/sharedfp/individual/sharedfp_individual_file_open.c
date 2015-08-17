@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2013      University of Houston. All rights reserved.
+ * Copyright (c) 2013-2015 University of Houston. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -79,7 +79,8 @@ int mca_sharedfp_individual_file_open (struct ompi_communicator_t *comm,
     /* NOTE: Open the data file without shared file pointer   */
     /*--------------------------------------------------------*/
     if ( mca_sharedfp_individual_verbose ) {
-	printf("mca_sharedfp_individual_file_open: open data file.\n");
+       opal_output(ompi_sharedfp_base_framework.framework_output,
+                "mca_sharedfp_individual_file_open: open data file.\n");
     }
 
     /* data filename created by appending .data.$rank to the original filename*/
@@ -104,7 +105,8 @@ int mca_sharedfp_individual_file_open (struct ompi_communicator_t *comm,
     /* NOTE: Open the meta file without shared file pointer     */
     /*----------------------------------------------------------*/
     if ( mca_sharedfp_individual_verbose ) {
-	printf("mca_sharedfp_individual_file_open: metadata file.\n");
+        opal_output(ompi_sharedfp_base_framework.framework_output,
+                "mca_sharedfp_individual_file_open: metadata file.\n");
     }
 
     /* metadata filename created by appending .metadata.$rank to the original filename*/
@@ -160,7 +162,8 @@ int mca_sharedfp_individual_file_close (mca_io_ompio_file_t *fh)
 
     if ( NULL == fh->f_sharedfp_data ){
 	if ( mca_sharedfp_individual_verbose ) {
-	    printf("sharedfp_inidividual_file_close - shared file pointer structure not initialized\n");
+                opal_output(ompi_sharedfp_base_framework.framework_output,
+                    "sharedfp_inidividual_file_close - shared file pointer structure not initialized\n");
 	}
         return OMPI_SUCCESS;
     }
