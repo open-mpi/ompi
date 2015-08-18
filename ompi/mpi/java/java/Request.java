@@ -63,12 +63,16 @@
 
 package mpi;
 
+import java.util.ArrayList;
+import java.nio.Buffer;
+
 /**
  * Request object.
  */
 public class Request implements Freeable
 {
 	protected long handle;
+	protected ArrayList<Buffer> buffers;
 
 	static
 	{
@@ -113,6 +117,22 @@ public class Request implements Freeable
 	private native void cancel(long request) throws MPIException;
 
 	/**
+	 * Adds a buffer to the buffer array list.  This method should
+	 * be called by the internal api whenever a persistent request
+	 * is created and any time a request object, that has an associated
+	 * buffer, is returned from a non-blocking operation to protect 
+	 * the buffers from being garbage collected prematurely.
+	 * @param buf buffer to add to the array list
+	 */
+	protected final void addBufRef(Buffer buf)
+	{
+		if(this.buffers == null)
+			this.buffers = new ArrayList<Buffer>();
+		
+		this.buffers.add(buf);
+	}
+	
+	/**
 	 * Test if request object is null.
 	 * @return true if the request object is null, false otherwise
 	 */
@@ -120,7 +140,7 @@ public class Request implements Freeable
 	{
 		return handle == 0 || handle == MPI.REQUEST_NULL.handle;
 	}
-
+	
 	/**
 	 * Blocks until the operation identified by the request is complete.
 	 * <p>Java binding of the MPI operation {@code MPI_WAIT}.
