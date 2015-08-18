@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2013      University of Houston. All rights reserved.
+ * Copyright (c) 2013-2015 University of Houston. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -24,6 +24,7 @@
 #include "mpi.h"
 #include "ompi/constants.h"
 #include "ompi/mca/sharedfp/sharedfp.h"
+#include "ompi/mca/sharedfp/base/base.h"
 
 int mca_sharedfp_addproc_write (mca_io_ompio_file_t *fh,
                                 void *buf,
@@ -36,23 +37,10 @@ int mca_sharedfp_addproc_write (mca_io_ompio_file_t *fh,
     long bytesRequested = 0;
     size_t numofBytes;
     struct mca_sharedfp_base_data_t *sh = NULL;
-    mca_sharedfp_base_module_t * shared_fp_base_module = NULL;
 
     if(NULL == fh->f_sharedfp_data){
-	if ( mca_sharedfp_addproc_verbose ) {
-	    printf("sharedfp_addproc_write:  opening the shared file pointer file\n");
-	}
-        shared_fp_base_module = fh->f_sharedfp;
-
-        ret = shared_fp_base_module->sharedfp_file_open(fh->f_comm,
-                                                        fh->f_filename,
-                                                        fh->f_amode,
-                                                        fh->f_info,
-                                                        fh);
-        if ( OMPI_SUCCESS != ret ) {
-            opal_output(0,"sharedfp_addproc_write - error opening the shared file pointer\n");
-            return ret;
-        }
+        opal_output(0, "sharedfp_addproc_write: shared file pointer structure not initialized correctly\n");
+        return OMPI_ERROR;
     }
 
     /* Calculate the number of bytes to write*/
@@ -63,14 +51,17 @@ int mca_sharedfp_addproc_write (mca_io_ompio_file_t *fh,
     sh = fh->f_sharedfp_data;
 
     if ( mca_sharedfp_addproc_verbose ){
-	printf("sharedfp_addproc_write: sharedfp_addproc_write: Bytes Requested is %ld\n",bytesRequested);
+	opal_output(ompi_sharedfp_base_framework.framework_output,
+                    "sharedfp_addproc_write: sharedfp_addproc_write: Bytes Requested is %ld\n",
+                    bytesRequested);
     }
 
     /*Request the offset to write bytesRequested bytes*/
     ret = mca_sharedfp_addproc_request_position( sh, bytesRequested, &offset);
     if ( OMPI_SUCCESS == ret ) {
 	if ( mca_sharedfp_addproc_verbose ){
-	    printf("sharedfp_addproc_write: Offset received is %lld\n",offset);
+	    opal_output(ompi_sharedfp_base_framework.framework_output,
+                        "sharedfp_addproc_write: Offset received is %lld\n",offset);
 	}
         /* Write to the file */
         ret = ompio_io_ompio_file_write_at(sh->sharedfh,offset,buf,count,datatype,status);
@@ -95,23 +86,11 @@ int mca_sharedfp_addproc_write_ordered (mca_io_ompio_file_t *fh,
     size_t numofBytes;
     int rank, size, i;
     struct mca_sharedfp_base_data_t *sh = NULL;
-    mca_sharedfp_base_module_t * shared_fp_base_module = NULL;
 
-    if ( NULL == fh->f_sharedfp_data){
-	if ( mca_sharedfp_addproc_verbose ) {
-	    printf("sharedfp_addproc_write_ordered:  opening the shared file pointer\n");
-	}
-        shared_fp_base_module = fh->f_sharedfp;
-
-        ret = shared_fp_base_module->sharedfp_file_open(fh->f_comm,
-                                                        fh->f_filename,
-                                                        fh->f_amode,
-                                                        fh->f_info,
-                                                        fh);
-        if ( OMPI_SUCCESS != ret ) {
-            opal_output(0,"sharedfp_addproc_write_ordered - error opening the shared file pointer\n");
-            return ret;
-        }
+    if(NULL == fh->f_sharedfp_data){
+        opal_output(0, "sharedfp_addproc_write_ordered: shared file pointer "
+                    "structure not initialized correctly\n");
+        return OMPI_ERROR;
     }
 
     /*Retrieve the shared file pointer structure*/
@@ -126,7 +105,7 @@ int mca_sharedfp_addproc_write_ordered (mca_io_ompio_file_t *fh,
     size = ompi_comm_size ( sh->comm );
 
     if ( 0  == rank ) {
-        buff = (long*)malloc(sizeof(long) * size);
+        buff = (long*)malloc(sizeof(OMPI_MPI_OFFSET_TYPE) * size);
         if ( NULL ==  buff )
             return OMPI_ERR_OUT_OF_RESOURCE;
     }
@@ -146,7 +125,9 @@ int mca_sharedfp_addproc_write_ordered (mca_io_ompio_file_t *fh,
             bytesRequested += buff[i];
 
 	    if ( mca_sharedfp_addproc_verbose ){
-		printf("sharedfp_addproc_write_ordered: Bytes requested are %ld\n",bytesRequested);
+                opal_output(ompi_sharedfp_base_framework.framework_output,
+                            "sharedfp_addproc_write_ordered: Bytes requested are %ld\n",
+                            bytesRequested);
 	    }
 	}
 
@@ -161,7 +142,9 @@ int mca_sharedfp_addproc_write_ordered (mca_io_ompio_file_t *fh,
             goto exit;
         }
 	if ( mca_sharedfp_addproc_verbose ){
-	    printf("sharedfp_addproc_write_ordered: Offset received is %lld\n",offsetReceived);
+	    	opal_output(ompi_sharedfp_base_framework.framework_output,
+                            "sharedfp_addproc_write_ordered: Offset received is %lld\n",
+                            offsetReceived);
 	}
         buff[0] += offsetReceived;
 
@@ -182,7 +165,9 @@ int mca_sharedfp_addproc_write_ordered (mca_io_ompio_file_t *fh,
     offset = offsetBuff - sendBuff;
 
     if ( mca_sharedfp_addproc_verbose ){
-	printf("sharedfp_addproc_write_ordered: Offset returned is %lld\n",offset);
+        opal_output(ompi_sharedfp_base_framework.framework_output,
+                    "sharedfp_addproc_write_ordered: Offset returned is %lld\n",
+                    offset);
     }
 
     /* write to the file */

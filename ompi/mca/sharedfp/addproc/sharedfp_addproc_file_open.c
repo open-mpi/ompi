@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2013      University of Houston. All rights reserved.
+ * Copyright (c) 2013-2015 University of Houston. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -30,6 +30,7 @@
 #include <sys/mman.h>
 #include "ompi/mca/sharedfp/base/base.h"
 
+
 int mca_sharedfp_addproc_file_open (struct ompi_communicator_t *comm,
                                     char* filename,
                                     int amode,
@@ -49,17 +50,19 @@ int mca_sharedfp_addproc_file_open (struct ompi_communicator_t *comm,
     shfileHandle =  (mca_io_ompio_file_t *)malloc(sizeof(mca_io_ompio_file_t));
     ret = ompio_io_ompio_file_open(comm,filename,amode,info,shfileHandle,false);
     if ( OMPI_SUCCESS != ret) {
-        printf( "mca_sharedfp_addproc_file_open: Error during file open\n");
+        opal_output(0, "mca_sharedfp_addproc_file_open: Error during file open\n");
         return ret;
     }
 
     /*Memory is allocated here for the sh structure*/
     if ( mca_sharedfp_addproc_verbose ) {
-	printf( "mca_sharedfp_addproc_file_open: malloc f_sharedfp_ptr struct\n");
+	opal_output(ompi_sharedfp_base_framework.framework_output,
+                    "mca_sharedfp_addproc_file_open: malloc f_sharedfp_ptr struct\n");
     }
     sh = (struct mca_sharedfp_base_data_t*)malloc(sizeof(struct mca_sharedfp_base_data_t));
     if ( NULL == sh ){
-        printf( "mca_sharedfp_addproc_file_open: Error, unable to malloc f_sharedfp_ptr struct\n");
+        opal_output(ompi_sharedfp_base_framework.framework_output,
+                    "mca_sharedfp_addproc_file_open: Error, unable to malloc f_sharedfp_ptr struct\n");
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
@@ -72,23 +75,24 @@ int mca_sharedfp_addproc_file_open (struct ompi_communicator_t *comm,
     rank = ompi_comm_rank ( sh->comm );
 
     if ( mca_sharedfp_addproc_verbose ) {
-	printf( "mca_sharedfp_addproc_file_open: START spawn by rank=%d\n",rank);
+        opal_output(ompi_sharedfp_base_framework.framework_output,
+                    "mca_sharedfp_addproc_file_open: START spawn by rank=%d\n",rank);
     }
 
     /*Spawn a new process which will maintain the offsets for this file open*/
     ret = MPI_Comm_spawn("mca_sharedfp_addproc_control", MPI_ARGV_NULL, 1, MPI_INFO_NULL,
 		   0, sh->comm, &newInterComm, &err);
     if ( OMPI_SUCCESS != ret  ) {
-	printf( "mca_sharedfp_addproc_file_open: error spawning control process ret=%d\n",
-		ret);
+        opal_output(0, "mca_sharedfp_addproc_file_open: error spawning control process ret=%d\n",
+                    ret);
     }
 
     /*If spawning successful*/
     if (newInterComm)    {
         addproc_data = (struct mca_sharedfp_addproc_data*)malloc(sizeof(struct mca_sharedfp_addproc_data));
         if ( NULL == addproc_data ){
-            printf( "mca_sharedfp_addproc_file_open: Error, unable to malloc addproc_data struct\n");
-            return OMPI_ERR_OUT_OF_RESOURCE;
+            opal_output (0,"mca_sharedfp_addproc_file_open: Error, unable to malloc addproc_data struct\n");
+        return OMPI_ERR_OUT_OF_RESOURCE;
         }
 
         /*Store the new Intercommunicator*/
@@ -100,7 +104,8 @@ int mca_sharedfp_addproc_file_open (struct ompi_communicator_t *comm,
         fh->f_sharedfp_data = sh;
     }
     else{
-        printf( "mca_sharedfp_addproc_file_open: DONE spawn by rank=%d, errcode[success=%d, err=%d]=%d\n",
+        opal_output(ompi_sharedfp_base_framework.framework_output,
+                    "mca_sharedfp_addproc_file_open: DONE spawn by rank=%d, errcode[success=%d, err=%d]=%d\n",
 		    rank, MPI_SUCCESS, MPI_ERR_SPAWN, ret);
         ret = OMPI_ERROR;
     }
@@ -120,7 +125,7 @@ int mca_sharedfp_addproc_file_close (mca_io_ompio_file_t *fh)
     if ( NULL == fh->f_sharedfp_data){
 	/* Can happen with lazy initialization of the sharedfp structures */
 	if ( mca_sharedfp_addproc_verbose ) {
-	    printf( "sharedfp_addproc_file_close - shared file pointer structure not initialized\n");
+	    opal_output(0, "sharedfp_addproc_file_close - shared file pointer structure not initialized\n");
 	}
         return OMPI_SUCCESS;
     }
