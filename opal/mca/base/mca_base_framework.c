@@ -92,10 +92,16 @@ int mca_base_framework_register (struct mca_base_framework_t *framework,
         }
 
         /* register a verbosity variable for this framework */
-        asprintf (&desc, "Verbosity level for the %s framework (0 = no verbosity)",
-                  framework->framework_name);
+        ret = asprintf (&desc, "Verbosity level for the %s framework (default: 0)",
+                        framework->framework_name);
+        if (0 > ret) {
+            return OPAL_ERR_OUT_OF_RESOURCE;
+        }
+
+        framework->framework_verbose = MCA_BASE_VERBOSE_ERROR;
         ret = mca_base_framework_var_register (framework, "verbose", desc,
-                                               MCA_BASE_VAR_TYPE_INT, NULL, 0,
+                                               MCA_BASE_VAR_TYPE_INT,
+                                               &mca_base_var_enum_verbose, 0,
                                                MCA_BASE_VAR_FLAG_SETTABLE,
                                                OPAL_INFO_LVL_8,
                                                MCA_BASE_VAR_SCOPE_LOCAL,

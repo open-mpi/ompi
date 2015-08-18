@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2011 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2012-2013 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -106,6 +106,9 @@ typedef struct mca_base_var_enum_value_t mca_base_var_enum_value_t;
 struct mca_base_var_enum_t {
     opal_object_t super;
 
+    /** Is the enumerator statically allocated */
+    bool enum_is_static;
+
     /** Name of this enumerator. This value is duplicated from the argument provided to
         mca_base_var_enum_create() */
     char *enum_name;
@@ -176,5 +179,9 @@ OPAL_DECLSPEC int mca_base_var_enum_create (const char *name, const mca_base_var
  */
 extern mca_base_var_enum_t mca_base_var_enum_bool;
 
+/**
+ * Verbosity level enumerator
+ */
+extern mca_base_var_enum_t mca_base_var_enum_verbose;
 
 #endif /* !defined(MCA_BASE_VAR_ENUM_H) */

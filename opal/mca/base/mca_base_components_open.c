@@ -109,26 +109,26 @@ static int open_components(mca_base_framework_t *framework)
     }
 
     /* Announce */
-    opal_output_verbose(10, output_id, "mca: base: components_open: opening %s components",
-                        framework->framework_name);
+    opal_output_verbose (MCA_BASE_VERBOSE_COMPONENT, output_id, "mca: base: components_open: opening %s components",
+                         framework->framework_name);
 
     /* Traverse the list of components */
     OPAL_LIST_FOREACH_SAFE(cli, next, components, mca_base_component_list_item_t) {
         const mca_base_component_t *component = cli->cli_component;
 
-        opal_output_verbose(10, output_id,
-                            "mca: base: components_open: found loaded component %s",
-                            component->mca_component_name);
+        opal_output_verbose (MCA_BASE_VERBOSE_COMPONENT, output_id,
+                             "mca: base: components_open: found loaded component %s",
+                             component->mca_component_name);
 
 	if (NULL != component->mca_open_component) {
 	    /* Call open if register didn't call it already */
             ret = component->mca_open_component();
 
             if (OPAL_SUCCESS == ret) {
-                opal_output_verbose(10, output_id,
-                                    "mca: base: components_open: "
-                                    "component %s open function successful",
-                                    component->mca_component_name);
+                opal_output_verbose (MCA_BASE_VERBOSE_COMPONENT, output_id,
+                                     "mca: base: components_open: "
+                                     "component %s open function successful",
+                                     component->mca_component_name);
             } else {
 		if (OPAL_ERR_NOT_AVAILABLE != ret) {
 		    /* If the component returns OPAL_ERR_NOT_AVAILABLE,
@@ -143,15 +143,16 @@ static int open_components(mca_base_framework_t *framework)
 		       expected. */
 
 		    if (mca_base_component_show_load_errors) {
-			opal_output(0, "mca: base: components_open: "
-				    "component %s / %s open function failed",
-				    component->mca_type_name,
-				    component->mca_component_name);
+			opal_output_verbose (MCA_BASE_VERBOSE_ERROR, output_id,
+                                             "mca: base: components_open: component %s "
+                                             "/ %s open function failed",
+                                             component->mca_type_name,
+                                             component->mca_component_name);
 		    }
-		    opal_output_verbose(10, output_id,
-					"mca: base: components_open: "
-					"component %s open function failed",
-					component->mca_component_name);
+		    opal_output_verbose (MCA_BASE_VERBOSE_COMPONENT, output_id,
+                                         "mca: base: components_open: "
+                                         "component %s open function failed",
+                                         component->mca_component_name);
 		}
 
                 mca_base_component_close (component, output_id);
