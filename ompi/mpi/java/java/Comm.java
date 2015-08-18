@@ -152,7 +152,7 @@ public class Comm implements Freeable, Cloneable
 	}
 
 	protected final native long[] iDup(long comm) throws MPIException;
-	
+
 	/**
 	 * Duplicates this communicator with the info object used in the call.
 	 * <p>Java binding of {@code MPI_COMM_DUP_WITH_INFO}.
@@ -162,12 +162,12 @@ public class Comm implements Freeable, Cloneable
 	 */
 	public Comm dupWithInfo(Info info) throws MPIException
 	{
-	    MPI.check();
-	    return new Comm(dupWithInfo(handle, info.handle));
+		MPI.check();
+		return new Comm(dupWithInfo(handle, info.handle));
 	}
 
 	protected final native long dupWithInfo(long comm, long info) throws MPIException;
-	
+
 	/**
 	 * Returns the associated request to this communicator if it was
 	 * created using {@link #iDup}.
@@ -641,7 +641,9 @@ public class Comm implements Freeable, Cloneable
 	{
 		MPI.check();
 		assertDirectBuffer(buf);
-		return new Request(iSend(handle, buf, count, type.handle, dest, tag));
+		Request req = new Request(iSend(handle, buf, count, type.handle, dest, tag));
+		req.addSendBufRef(buf);
+		return req;
 	}
 
 	private native long iSend(
@@ -666,7 +668,9 @@ public class Comm implements Freeable, Cloneable
 	{
 		MPI.check();
 		assertDirectBuffer(buf);
-		return new Request(ibSend(handle, buf, count, type.handle, dest, tag));
+		Request req = new Request(ibSend(handle, buf, count, type.handle, dest, tag)); 
+		req.addSendBufRef(buf);
+		return req;
 	}
 
 	private native long ibSend(
@@ -691,7 +695,9 @@ public class Comm implements Freeable, Cloneable
 	{
 		MPI.check();
 		assertDirectBuffer(buf);
-		return new Request(isSend(handle, buf, count, type.handle, dest, tag));
+		Request req = new Request(isSend(handle, buf, count, type.handle, dest, tag));
+		req.addSendBufRef(buf);
+		return req;
 	}
 
 	private native long isSend(
@@ -716,7 +722,9 @@ public class Comm implements Freeable, Cloneable
 	{
 		MPI.check();
 		assertDirectBuffer(buf);
-		return new Request(irSend(handle, buf, count, type.handle, dest, tag));
+		Request req = new Request(irSend(handle, buf, count, type.handle, dest, tag));
+		req.addSendBufRef(buf);
+		return req;
 	}
 
 	private native long irSend(
@@ -741,7 +749,9 @@ public class Comm implements Freeable, Cloneable
 	{
 		MPI.check();
 		assertDirectBuffer(buf);
-		return new Request(iRecv(handle, buf, count, type.handle, source, tag));
+		Request req = new Request(iRecv(handle, buf, count, type.handle, source, tag));
+		req.addRecvBufRef(buf);
+		return req;
 	}
 
 	private native long iRecv(
@@ -769,7 +779,9 @@ public class Comm implements Freeable, Cloneable
 	{
 		MPI.check();
 		assertDirectBuffer(buf);
-		return new Prequest(sendInit(handle, buf, count, type.handle, dest, tag));
+		Prequest preq = new Prequest(sendInit(handle, buf, count, type.handle, dest, tag));
+		preq.addSendBufRef(buf);
+		return preq;
 	}
 
 	private native long sendInit(
@@ -794,7 +806,9 @@ public class Comm implements Freeable, Cloneable
 	{
 		MPI.check();
 		assertDirectBuffer(buf);
-		return new Prequest(bSendInit(handle, buf, count, type.handle, dest, tag));
+		Prequest preq = new Prequest(bSendInit(handle, buf, count, type.handle, dest, tag));
+		preq.addSendBufRef(buf);
+		return preq;
 	}
 
 	private native long bSendInit(
@@ -819,7 +833,9 @@ public class Comm implements Freeable, Cloneable
 	{
 		MPI.check();
 		assertDirectBuffer(buf);
-		return new Prequest(sSendInit(handle, buf, count, type.handle, dest, tag));
+		Prequest preq = new Prequest(sSendInit(handle, buf, count, type.handle, dest, tag));
+		preq.addSendBufRef(buf);
+		return preq;
 	}
 
 	private native long sSendInit(
@@ -844,7 +860,9 @@ public class Comm implements Freeable, Cloneable
 	{
 		MPI.check();
 		assertDirectBuffer(buf);
-		return new Prequest(rSendInit(handle, buf, count, type.handle, dest, tag));
+		Prequest preq = new Prequest(rSendInit(handle, buf, count, type.handle, dest, tag));
+		preq.addSendBufRef(buf);
+		return preq;
 	}
 
 	private native long rSendInit(
@@ -869,7 +887,9 @@ public class Comm implements Freeable, Cloneable
 	{
 		MPI.check();
 		assertDirectBuffer(buf);
-		return new Prequest(recvInit(handle, buf, count, type.handle, source, tag));
+		Prequest preq = new Prequest(recvInit(handle, buf, count, type.handle, source, tag));
+		preq.addRecvBufRef(buf);
+		return preq;
 	}
 
 	private native long recvInit(
@@ -1252,7 +1272,9 @@ public class Comm implements Freeable, Cloneable
 	{
 		MPI.check();
 		assertDirectBuffer(buf);
-		return new Request(iBcast(handle, buf, count, type.handle, root));
+		Request req = new Request(iBcast(handle, buf, count, type.handle, root));
+		req.addSendBufRef(buf);
+		return req;
 	}
 
 	private native long iBcast(
@@ -1358,9 +1380,11 @@ public class Comm implements Freeable, Cloneable
 	{
 		MPI.check();
 		assertDirectBuffer(sendbuf, recvbuf);
-
-		return new Request(iGather(handle, sendbuf, sendcount, sendtype.handle,
+		Request req = new Request(iGather(handle, sendbuf, sendcount, sendtype.handle,
 				recvbuf, recvcount, recvtype.handle, root));
+		req.addSendBufRef(sendbuf);
+		req.addRecvBufRef(recvbuf);
+		return req;
 	}
 
 	/**
@@ -1381,9 +1405,10 @@ public class Comm implements Freeable, Cloneable
 	{
 		MPI.check();
 		assertDirectBuffer(buf);
-
-		return new Request(iGather(handle, null, 0, 0,
+		Request req = new Request(iGather(handle, null, 0, 0,
 				buf, count, type.handle, root));
+		req.addRecvBufRef(buf);
+		return req;
 	}
 
 	private native long iGather(
@@ -1527,10 +1552,11 @@ public class Comm implements Freeable, Cloneable
 	{
 		MPI.check();
 		assertDirectBuffer(sendbuf, recvbuf);
-
-		return new Request(iGatherv(
+		Request req = new Request(iGatherv(
 				handle, sendbuf, sendcount, sendtype.handle,
 				recvbuf, recvcount, displs, recvtype.handle, root));
+		req.addSendBufRef(sendbuf);
+		return req;
 	}
 
 	/**
@@ -1553,9 +1579,10 @@ public class Comm implements Freeable, Cloneable
 	{
 		MPI.check();
 		assertDirectBuffer(recvbuf);
-
-		return new Request(iGatherv(handle, null, 0, 0,
+		Request req = new Request(iGatherv(handle, null, 0, 0,
 				recvbuf, recvcount, displs, recvtype.handle, root));
+		req.addRecvBufRef(recvbuf);
+		return req;
 	}
 
 	/**
@@ -1577,9 +1604,10 @@ public class Comm implements Freeable, Cloneable
 	{
 		MPI.check();
 		assertDirectBuffer(sendbuf);
-
-		return new Request(iGatherv(handle, sendbuf, sendcount, sendtype.handle,
+		Request req = new Request(iGatherv(handle, sendbuf, sendcount, sendtype.handle,
 				null, null, null, 0, root));
+		req.addSendBufRef(sendbuf);
+		return req;
 	}
 
 	private native long iGatherv(
@@ -1686,9 +1714,11 @@ public class Comm implements Freeable, Cloneable
 	{
 		MPI.check();
 		assertDirectBuffer(sendbuf, recvbuf);
-
-		return new Request(iScatter(handle, sendbuf, sendcount, sendtype.handle,
+		Request req = new Request(iScatter(handle, sendbuf, sendcount, sendtype.handle,
 				recvbuf, recvcount, recvtype.handle, root));
+		req.addSendBufRef(sendbuf);
+		req.addRecvBufRef(recvbuf);
+		return req;
 	}
 
 	/**
@@ -1709,9 +1739,10 @@ public class Comm implements Freeable, Cloneable
 	{
 		MPI.check();
 		assertDirectBuffer(buf);
-
-		return new Request(iScatter(handle, buf, count, type.handle,
+		Request req = new Request(iScatter(handle, buf, count, type.handle,
 				null, 0, 0, root));
+		req.addSendBufRef(buf);
+		return req;
 	}
 
 	private native long iScatter(
@@ -1852,10 +1883,12 @@ public class Comm implements Freeable, Cloneable
 	{
 		MPI.check();
 		assertDirectBuffer(sendbuf, recvbuf);
-
-		return new Request(iScatterv(
+		Request req = new Request(iScatterv(
 				handle, sendbuf, sendcount, displs, sendtype.handle,
 				recvbuf, recvcount, recvtype.handle, root));
+		req.addSendBufRef(sendbuf);
+		req.addRecvBufRef(recvbuf);
+		return req;
 	}
 
 	/**
@@ -1877,9 +1910,10 @@ public class Comm implements Freeable, Cloneable
 	{
 		MPI.check();
 		assertDirectBuffer(sendbuf);
-
-		return new Request(iScatterv(handle, sendbuf, sendcount, displs,
+		Request req = new Request(iScatterv(handle, sendbuf, sendcount, displs,
 				sendtype.handle, null, 0, 0, root));
+		req.addSendBufRef(sendbuf);
+		return req;
 	}
 
 	/**
@@ -1900,9 +1934,10 @@ public class Comm implements Freeable, Cloneable
 	{
 		MPI.check();
 		assertDirectBuffer(recvbuf);
-
-		return new Request(iScatterv(handle, null, null, null, 0,
+		Request req = new Request(iScatterv(handle, null, null, null, 0,
 				recvbuf, recvcount, recvtype.handle, root));
+		req.addRecvBufRef(recvbuf);
+		return req;
 	}
 
 	private native long iScatterv(
@@ -2002,9 +2037,11 @@ public class Comm implements Freeable, Cloneable
 	{
 		MPI.check();
 		assertDirectBuffer(sendbuf, recvbuf);
-
-		return new Request(iAllGather(handle, sendbuf, sendcount, sendtype.handle,
+		Request req = new Request(iAllGather(handle, sendbuf, sendcount, sendtype.handle,
 				recvbuf, recvcount, recvtype.handle));
+		req.addSendBufRef(sendbuf);
+		req.addRecvBufRef(recvbuf);
+		return req;
 	}
 
 	/**
@@ -2022,7 +2059,9 @@ public class Comm implements Freeable, Cloneable
 	{
 		MPI.check();
 		assertDirectBuffer(buf);
-		return new Request(iAllGather(handle, null, 0, 0, buf, count, type.handle));
+		Request req = new Request(iAllGather(handle, null, 0, 0, buf, count, type.handle));
+		req.addRecvBufRef(buf);
+		return req;
 	}
 
 	private native long iAllGather(
@@ -2127,10 +2166,12 @@ public class Comm implements Freeable, Cloneable
 	{
 		MPI.check();
 		assertDirectBuffer(sendbuf, recvbuf);
-
-		return new Request(iAllGatherv(
+		Request req = new Request(iAllGatherv(
 				handle, sendbuf, sendcount, sendtype.handle,
 				recvbuf, recvcount, displs, recvtype.handle));
+		req.addSendBufRef(sendbuf);
+		req.addRecvBufRef(recvbuf);
+		return req;
 	}
 
 	/**
@@ -2150,9 +2191,10 @@ public class Comm implements Freeable, Cloneable
 	{
 		MPI.check();
 		assertDirectBuffer(buf);
-
-		return new Request(iAllGatherv(
+		Request req = new Request(iAllGatherv(
 				handle, null, 0, 0, buf, count, displs, type.handle));
+		req.addRecvBufRef(buf);
+		return req;
 	}
 
 	private native long iAllGatherv(
@@ -2227,9 +2269,11 @@ public class Comm implements Freeable, Cloneable
 	{
 		MPI.check();
 		assertDirectBuffer(sendbuf, recvbuf);
-
-		return new Request(iAllToAll(handle, sendbuf, sendcount, sendtype.handle,
+		Request req = new Request(iAllToAll(handle, sendbuf, sendcount, sendtype.handle,
 				recvbuf, recvcount, recvtype.handle));
+		req.addSendBufRef(sendbuf);
+		req.addRecvBufRef(recvbuf);
+		return req;
 	}
 
 	private native long iAllToAll(
@@ -2312,10 +2356,12 @@ public class Comm implements Freeable, Cloneable
 	{
 		MPI.check();
 		assertDirectBuffer(sendbuf, recvbuf);
-
-		return new Request(iAllToAllv(
+		Request req = new Request(iAllToAllv(
 				handle, sendbuf, sendcount, sdispls, sendtype.handle,
 				recvbuf, recvcount, rdispls, recvtype.handle));
+		req.addSendBufRef(sendbuf);
+		req.addRecvBufRef(recvbuf);
+		return req;
 	}
 
 	private native long iAllToAllv(long comm,
@@ -2385,10 +2431,12 @@ public class Comm implements Freeable, Cloneable
 
 		long[] sendHandles = convertTypeArray(sendTypes);
 		long[] recvHandles = convertTypeArray(recvTypes);
-
-		return new Request(iAllToAllw(
+		Request req = new Request(iAllToAllw(
 				handle, sendBuf, sendCount, sDispls, sendHandles,
 				recvBuf, recvCount, rDispls, recvHandles));
+		req.addSendBufRef(sendBuf);
+		req.addRecvBufRef(recvBuf);
+		return req;
 	}
 
 	private native long iAllToAllw(long comm,
@@ -2462,10 +2510,12 @@ public class Comm implements Freeable, Cloneable
 	{
 		MPI.check();
 		assertDirectBuffer(sendbuf, recvbuf);
-
-		return new Request(iNeighborAllGather(
+		Request req = new Request(iNeighborAllGather(
 				handle, sendbuf, sendcount, sendtype.handle,
 				recvbuf, recvcount, recvtype.handle));
+		req.addSendBufRef(sendbuf);
+		req.addRecvBufRef(recvbuf);
+		return req;
 	}
 
 	private native long iNeighborAllGather(
@@ -2540,10 +2590,12 @@ public class Comm implements Freeable, Cloneable
 	{
 		MPI.check();
 		assertDirectBuffer(sendbuf, recvbuf);
-
-		return new Request(iNeighborAllGatherv(
+		Request req = new Request(iNeighborAllGatherv(
 				handle, sendbuf, sendcount, sendtype.handle,
 				recvbuf, recvcount, displs, recvtype.handle));
+		req.addSendBufRef(sendbuf);
+		req.addRecvBufRef(recvbuf);
+		return req;
 	}
 
 	private native long iNeighborAllGatherv(
@@ -2617,10 +2669,12 @@ public class Comm implements Freeable, Cloneable
 	{
 		MPI.check();
 		assertDirectBuffer(sendbuf, recvbuf);
-
-		return new Request(iNeighborAllToAll(
+		Request req = new Request(iNeighborAllToAll(
 				handle, sendbuf, sendcount, sendtype.handle,
 				recvbuf, recvcount, recvtype.handle));
+		req.addSendBufRef(sendbuf);
+		req.addRecvBufRef(recvbuf);
+		return req;
 	}
 
 	private native long iNeighborAllToAll(
@@ -2698,10 +2752,12 @@ public class Comm implements Freeable, Cloneable
 	{
 		MPI.check();
 		assertDirectBuffer(sendbuf, recvbuf);
-
-		return new Request(iNeighborAllToAllv(
+		Request req = new Request(iNeighborAllToAllv(
 				handle, sendbuf, sendcount, sdispls, sendtype.handle,
 				recvbuf, recvcount, rdispls, recvtype.handle));
+		req.addSendBufRef(sendbuf);
+		req.addRecvBufRef(recvbuf);
+		return req;
 	}
 
 	private native long iNeighborAllToAllv(
@@ -2815,10 +2871,12 @@ public class Comm implements Freeable, Cloneable
 		MPI.check();
 		assertDirectBuffer(sendbuf, recvbuf);
 		op.setDatatype(type);
-
-		return new Request(iReduce(
+		Request req = new Request(iReduce(
 				handle, sendbuf, recvbuf, count,
 				type.handle, type.baseType, op, op.handle, root));
+		req.addSendBufRef(sendbuf);
+		req.addRecvBufRef(recvbuf);
+		return req;
 	}
 
 	/**
@@ -2842,10 +2900,11 @@ public class Comm implements Freeable, Cloneable
 		MPI.check();
 		assertDirectBuffer(buf);
 		op.setDatatype(type);
-
-		return new Request(iReduce(
+		Request req = new Request(iReduce(
 				handle, null, buf, count,
 				type.handle, type.baseType, op, op.handle, root));
+		req.addSendBufRef(buf);
+		return req;
 	}
 
 	private native long iReduce(
@@ -2946,9 +3005,11 @@ public class Comm implements Freeable, Cloneable
 		MPI.check();
 		assertDirectBuffer(sendbuf, recvbuf);
 		op.setDatatype(type);
-
-		return new Request(iAllReduce(handle, sendbuf, recvbuf, count,
+		Request req = new Request(iAllReduce(handle, sendbuf, recvbuf, count,
 				type.handle, type.baseType, op, op.handle));
+		req.addSendBufRef(sendbuf);
+		req.addRecvBufRef(recvbuf);
+		return req;
 	}
 
 	/**
@@ -2969,10 +3030,11 @@ public class Comm implements Freeable, Cloneable
 		MPI.check();
 		op.setDatatype(type);
 		assertDirectBuffer(buf);
-
-		return new Request(iAllReduce(
+		Request req = new Request(iAllReduce(
 				handle, null, buf, count,
 				type.handle, type.baseType, op, op.handle));
+		req.addRecvBufRef(buf);
+		return req;
 	}
 
 	private native long iAllReduce(
@@ -3075,10 +3137,12 @@ public class Comm implements Freeable, Cloneable
 		MPI.check();
 		op.setDatatype(type);
 		assertDirectBuffer(sendbuf, recvbuf);
-
-		return new Request(iReduceScatter(
+		Request req = new Request(iReduceScatter(
 				handle, sendbuf, recvbuf, recvcounts,
 				type.handle, type.baseType, op, op.handle));
+		req.addSendBufRef(sendbuf);
+		req.addRecvBufRef(recvbuf);
+		return req;
 	}
 
 	/**
@@ -3101,10 +3165,11 @@ public class Comm implements Freeable, Cloneable
 		MPI.check();
 		op.setDatatype(type);
 		assertDirectBuffer(buf);
-
-		return new Request(iReduceScatter(
+		Request req = new Request(iReduceScatter(
 				handle, null, buf, counts,
 				type.handle, type.baseType, op, op.handle));
+		req.addRecvBufRef(buf);
+		return req;
 	}
 
 	private native long iReduceScatter(
@@ -3202,10 +3267,12 @@ public class Comm implements Freeable, Cloneable
 		MPI.check();
 		op.setDatatype(type);
 		assertDirectBuffer(sendbuf, recvbuf);
-
-		return new Request(iReduceScatterBlock(
+		Request req = new Request(iReduceScatterBlock(
 				handle, sendbuf, recvbuf, recvcount,
 				type.handle, type.baseType, op, op.handle));
+		req.addSendBufRef(sendbuf);
+		req.addRecvBufRef(recvbuf);
+		return req;
 	}
 
 	/**
@@ -3226,10 +3293,11 @@ public class Comm implements Freeable, Cloneable
 		MPI.check();
 		op.setDatatype(type);
 		assertDirectBuffer(buf);
-
-		return new Request(iReduceScatterBlock(
+		Request req = new Request(iReduceScatterBlock(
 				handle, null, buf, count, type.handle,
 				type.baseType, op, op.handle));
+		req.addRecvBufRef(buf);
+		return req;
 	}
 
 	private native long iReduceScatterBlock(
