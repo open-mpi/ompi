@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -47,18 +49,28 @@
 
 package mpi;
 
+import java.nio.Buffer;
+
 /**
  * Persistent request object.
  */
 public final class Prequest extends Request
 {
 	/**
+	 * Buffer used internally by the persistent request
+	 * maintain a pointer to the buffer to ensure it
+	 * cannot be free'd by the garbage collector
+	 */
+	private Buffer buffer;
+
+	/**
 	 * Constructor used by {@code sendInit}, etc.
 	 * @param handle	Handle for the Prequest object
 	 */
-	protected Prequest(long handle)
+	protected Prequest(long handle, Buffer buffer)
 	{
 		super(handle);
+		this.buffer = buffer;
 	}
 
 	/**
