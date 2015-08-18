@@ -5,15 +5,15 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2011 University of Houston. All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 #include "ompi_config.h"
@@ -49,6 +49,8 @@ mca_io_base_module_2_0_0_t mca_io_ompio_module = {
 
     mca_io_ompio_file_iread_at,
     mca_io_ompio_file_iwrite_at,
+    mca_io_ompio_file_iread_at_all,
+    mca_io_ompio_file_iwrite_at_all,
 
     /* non-indexed IO operations */
     mca_io_ompio_file_read,
@@ -58,6 +60,8 @@ mca_io_base_module_2_0_0_t mca_io_ompio_module = {
 
     mca_io_ompio_file_iread,
     mca_io_ompio_file_iwrite,
+    mca_io_ompio_file_iread_all,
+    mca_io_ompio_file_iwrite_all,
 
     mca_io_ompio_file_seek,
     mca_io_ompio_file_get_position,

@@ -4,9 +4,9 @@
  *                         reserved.
  *
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -20,7 +20,7 @@
 /*
  * Public string for version number
  */
-const char *orte_state_hnp_component_version_string = 
+const char *orte_state_hnp_component_version_string =
     "ORTE STATE hnp MCA component version " ORTE_VERSION;
 
 /*
@@ -36,7 +36,7 @@ static int state_hnp_component_query(mca_base_module_t **module, int *priority);
  */
 orte_state_base_component_t mca_state_hnp_component =
 {
-    /* Handle the general mca_component_t struct containing 
+    /* Handle the general mca_component_t struct containing
      *  meta information about the component
      */
     .base_version = {
@@ -59,7 +59,7 @@ orte_state_base_component_t mca_state_hnp_component =
 
 static int my_priority=60;
 
-static int state_hnp_open(void) 
+static int state_hnp_open(void)
 {
     return ORTE_SUCCESS;
 }
@@ -75,9 +75,9 @@ static int state_hnp_component_query(mca_base_module_t **module, int *priority)
         /* set our priority high as we are the default for hnps */
         *priority = my_priority;
         *module = (mca_base_module_t *)&orte_state_hnp_module;
-        return ORTE_SUCCESS;        
+        return ORTE_SUCCESS;
     }
-    
+
     *priority = -1;
     *module = NULL;
     return ORTE_ERROR;

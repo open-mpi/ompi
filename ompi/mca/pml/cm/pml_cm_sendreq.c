@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
@@ -34,7 +34,7 @@ mca_pml_cm_send_request_free(struct ompi_request_t** request)
 {
     mca_pml_cm_send_request_t* sendreq = *(mca_pml_cm_send_request_t**)request;
     assert( false == sendreq->req_base.req_free_called );
-        
+
     OPAL_THREAD_LOCK(&ompi_request_lock);
     sendreq->req_base.req_free_called = true;
     if( true == sendreq->req_base.req_pml_complete ) {
@@ -44,9 +44,9 @@ mca_pml_cm_send_request_free(struct ompi_request_t** request)
             MCA_PML_CM_HVY_SEND_REQUEST_RETURN( ((mca_pml_cm_hvy_send_request_t*)  sendreq) );
         }
     }
-        
+
     OPAL_THREAD_UNLOCK(&ompi_request_lock);
-    
+
     *request = MPI_REQUEST_NULL;
     return OMPI_SUCCESS;
 }
@@ -54,7 +54,7 @@ mca_pml_cm_send_request_free(struct ompi_request_t** request)
 void
 mca_pml_cm_send_request_completion(struct mca_mtl_request_t *mtl_request)
 {
-    mca_pml_cm_send_request_t *base_request = 
+    mca_pml_cm_send_request_t *base_request =
         (mca_pml_cm_send_request_t*) mtl_request->ompi_req;
     if( MCA_PML_CM_REQUEST_SEND_THIN == base_request->req_base.req_pml_type ) {
         MCA_PML_CM_THIN_SEND_REQUEST_PML_COMPLETE(((mca_pml_cm_thin_send_request_t*) base_request));
@@ -70,17 +70,17 @@ static void mca_pml_cm_send_request_construct(mca_pml_cm_hvy_send_request_t* sen
     sendreq->req_send.req_base.req_ompi.req_cancel = mca_pml_cm_cancel;
 }
 
-OBJ_CLASS_INSTANCE(mca_pml_cm_send_request_t, 
-                   mca_pml_cm_request_t, 
+OBJ_CLASS_INSTANCE(mca_pml_cm_send_request_t,
+                   mca_pml_cm_request_t,
                    NULL,
                    NULL);
 
-OBJ_CLASS_INSTANCE(mca_pml_cm_thin_send_request_t, 
-                   mca_pml_cm_send_request_t, 
-                   mca_pml_cm_send_request_construct, 
+OBJ_CLASS_INSTANCE(mca_pml_cm_thin_send_request_t,
+                   mca_pml_cm_send_request_t,
+                   mca_pml_cm_send_request_construct,
                    NULL);
 
-OBJ_CLASS_INSTANCE(mca_pml_cm_hvy_send_request_t, 
+OBJ_CLASS_INSTANCE(mca_pml_cm_hvy_send_request_t,
                    mca_pml_cm_send_request_t,
                    mca_pml_cm_send_request_construct,
                    NULL);

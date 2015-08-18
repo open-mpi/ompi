@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -16,7 +16,7 @@
 static int ADIOI_XFS_Aligned_Mem_File_Write(ADIO_File fd, void *buf,
 						  ADIO_Offset len, ADIO_Offset offset);
 
-void ADIOI_XFS_WriteContig(ADIO_File fd, void *buf, int count, 
+void ADIOI_XFS_WriteContig(ADIO_File fd, void *buf, int count,
                      MPI_Datatype datatype, int file_ptr_type,
 		     ADIO_Offset offset, ADIO_Status *status, int *error_code)
 {
@@ -38,7 +38,7 @@ void ADIOI_XFS_WriteContig(ADIO_File fd, void *buf, int count,
 	if (err < 0) {goto leaving;}
     } else {       /* direct I/O enabled */
 
-	/* (1) if mem_aligned && file_aligned 
+	/* (1) if mem_aligned && file_aligned
                     use direct I/O to write up to correct io_size
                     use buffered I/O for remaining  */
 
@@ -109,7 +109,7 @@ leaving:
 
 
 static int
-ADIOI_XFS_Aligned_Mem_File_Write(ADIO_File fd, void *buf, ADIO_Offset len, 
+ADIOI_XFS_Aligned_Mem_File_Write(ADIO_File fd, void *buf, ADIO_Offset len,
               ADIO_Offset offset)
 {
     unsigned write_chunk_sz = fd->hints->fs_hints.xfs.write_chunk_sz;
@@ -121,7 +121,7 @@ ADIOI_XFS_Aligned_Mem_File_Write(ADIO_File fd, void *buf, ADIO_Offset len,
        use direct I/O to write up to correct io_size,
        use buffered I/O for remaining. */
 
-    if (!(len % fd->d_miniosz) && 
+    if (!(len % fd->d_miniosz) &&
 	 (len >= fd->d_miniosz) && (len <= write_chunk_sz)) {
 	nbytes = pwrite(fd->fd_direct, buf, len, offset);
 	if (nbytes < 0) {return -1;}
@@ -140,19 +140,19 @@ ADIOI_XFS_Aligned_Mem_File_Write(ADIO_File fd, void *buf, ADIO_Offset len,
 	}
 	if (rem) {
 	    if (!(rem % fd->d_miniosz)) {
-		nbytes = pwrite(fd->fd_direct, 
+		nbytes = pwrite(fd->fd_direct,
 		             ((char *)buf) + ntimes * write_chunk_sz, rem, offset);
 		if (nbytes < 0) {return -1;}
 	    } else {
 		newrem = rem % fd->d_miniosz;
 		size = rem - newrem;
 		if (size) {
-		    nbytes = pwrite(fd->fd_direct, 
+		    nbytes = pwrite(fd->fd_direct,
 		            ((char *)buf) + ntimes * write_chunk_sz, size, offset);
 		    offset += size;
 		    if (nbytes < 0) {return -1;}
 		}
-		nbytes = pwrite(fd->fd_sys, 
+		nbytes = pwrite(fd->fd_sys,
 	              ((char *)buf) + ntimes * write_chunk_sz + size, newrem, offset);
 		if (nbytes < 0) {return -1;}
 	    }

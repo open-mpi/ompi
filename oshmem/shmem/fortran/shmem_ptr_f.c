@@ -3,9 +3,9 @@
  *                         All rights reserved.
  * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -26,7 +26,7 @@ SHMEM_GENERATE_FORTRAN_BINDINGS_FUNCTION (FORTRAN_POINTER_T *,
         shmem_ptr_,
         shmem_ptr__,
         shmem_ptr_f,
-        (FORTRAN_POINTER_T target, MPI_Fint *pe), 
+        (FORTRAN_POINTER_T target, MPI_Fint *pe),
         (target,pe) )
 
 FORTRAN_POINTER_T* shmem_ptr_f(FORTRAN_POINTER_T target, MPI_Fint *pe)

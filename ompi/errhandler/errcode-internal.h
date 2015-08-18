@@ -6,18 +6,18 @@
  * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights
- *                         reserved. 
+ *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 /** @file **/
@@ -51,7 +51,7 @@ typedef struct ompi_errcode_intern_t ompi_errcode_intern_t;
 OMPI_DECLSPEC extern opal_pointer_array_t ompi_errcodes_intern;
 OMPI_DECLSPEC extern int ompi_errcode_intern_lastused;
 
-/** 
+/**
  * Return the MPI errcode for a given internal error code. */
 static inline int ompi_errcode_get_mpi_code(int errcode)
 {
@@ -86,7 +86,7 @@ static inline int ompi_errcode_get_mpi_code(int errcode)
  * Invoked from ompi_mpi_init(); sets up all static MPI error codes,
  */
 int ompi_errcode_intern_init(void);
-    
+
 /**
  * Finalize the error codes.
  *
@@ -95,7 +95,7 @@ int ompi_errcode_intern_init(void);
  * Invokes from ompi_mpi_finalize(); tears down the error code array.
  */
 int ompi_errcode_intern_finalize(void);
-        
+
 END_C_DECLS
 
 #endif /* OMPI_ERRCODE_INTERNAL_H */

@@ -4,21 +4,21 @@
  *                         All rights reserved.
  * Copyright (c) 2004-2006 The Trustees of the University of Tennessee.
  *                         All rights reserved.
- * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2015 Los Alamos National Security, LLC.  All rights
- *                         reserved. 
+ *                         reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -43,7 +43,7 @@
 
 int
 ompi_osc_base_get_primitive_type_info(ompi_datatype_t *datatype,
-                                      ompi_datatype_t **prim_datatype, 
+                                      ompi_datatype_t **prim_datatype,
                                       uint32_t *prim_count)
 {
     ompi_datatype_t *primitive_datatype = NULL;

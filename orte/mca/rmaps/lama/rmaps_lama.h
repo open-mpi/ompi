@@ -3,15 +3,15 @@
  *
  * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 /**
  * @file
  *
- * Resource Mapping 
+ * Resource Mapping
  */
 #ifndef ORTE_RMAPS_LAMA_H
 #define ORTE_RMAPS_LAMA_H

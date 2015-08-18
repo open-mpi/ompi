@@ -5,15 +5,15 @@
  * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2014 University of Houston. All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -48,45 +48,29 @@ int mca_fcoll_two_phase_component_file_unquery (mca_io_ompio_file_t *file);
 int mca_fcoll_two_phase_module_init (mca_io_ompio_file_t *file);
 int mca_fcoll_two_phase_module_finalize (mca_io_ompio_file_t *file);
 
-int mca_fcoll_two_phase_file_read_all (mca_io_ompio_file_t *fh, 
-                                     void *buf, 
+int mca_fcoll_two_phase_file_read_all (mca_io_ompio_file_t *fh,
+                                     void *buf,
                                      int count,
-                                     struct ompi_datatype_t *datatype, 
+                                     struct ompi_datatype_t *datatype,
                                      ompi_status_public_t * status);
 
-int mca_fcoll_two_phase_file_read_all_begin (mca_io_ompio_file_t *fh, 
-                                           void *buf, 
-                                           int count, 
-                                           struct ompi_datatype_t *datatype);
 
-int mca_fcoll_two_phase_file_read_all_end (mca_io_ompio_file_t *fh, 
-                                         void *buf, 
-                                         ompi_status_public_t * status);
-
-int mca_fcoll_two_phase_file_write_all (mca_io_ompio_file_t *fh, 
-                                      void *buf, 
+int mca_fcoll_two_phase_file_write_all (mca_io_ompio_file_t *fh,
+                                      void *buf,
                                       int count,
-                                      struct ompi_datatype_t *datatype, 
+                                      struct ompi_datatype_t *datatype,
                                       ompi_status_public_t * status);
 
-int mca_fcoll_two_phase_file_write_all_begin (mca_io_ompio_file_t *fh, 
-                                            void *buf, 
-                                            int count, 
-                                            struct ompi_datatype_t *datatype);
-
-int mca_fcoll_two_phase_file_write_all_end (mca_io_ompio_file_t *fh, 
-                                          void *buf, 
-                                          ompi_status_public_t * status);
 
 int mca_fcoll_two_phase_calc_aggregator (mca_io_ompio_file_t *fh,
-					 OMPI_MPI_OFFSET_TYPE off, 
+					 OMPI_MPI_OFFSET_TYPE off,
 					 OMPI_MPI_OFFSET_TYPE min_off,
 					 OMPI_MPI_OFFSET_TYPE *len,
 					 OMPI_MPI_OFFSET_TYPE fd_size,
 					 OMPI_MPI_OFFSET_TYPE *fd_start,
 					 OMPI_MPI_OFFSET_TYPE *fd_end,
 					 int striping_unit,
-					 int num_aggregators, 
+					 int num_aggregators,
 					 int *aggregator_list);
 
 int mca_fcoll_two_phase_calc_others_requests(mca_io_ompio_file_t *fh,

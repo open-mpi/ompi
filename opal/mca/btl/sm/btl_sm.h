@@ -13,7 +13,7 @@
  * Copyright (c) 2006-2007 Voltaire. All rights reserved.
  * Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010-2015 Los Alamos National Security, LLC.
- *                         All rights reserved. 
+ *                         All rights reserved.
  * Copyright (c) 2010-2012 IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -31,9 +31,7 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
-#ifdef HAVE_STDINT_H
 #include <stdint.h>
-#endif  /* HAVE_STDINT_H */
 #ifdef HAVE_SCHED_H
 #include <sched.h>
 #endif  /* HAVE_SCHED_H */
@@ -87,23 +85,23 @@ BEGIN_C_DECLS
 
 struct sm_fifo_t {
     /* This queue pointer is used only by the heads. */
-    volatile void **queue;           
+    volatile void **queue;
     char pad0[SM_CACHE_LINE_PAD - sizeof(void **)];
     /* This lock is used by the heads. */
-    opal_atomic_lock_t head_lock;    
+    opal_atomic_lock_t head_lock;
     char pad1[SM_CACHE_LINE_PAD - sizeof(opal_atomic_lock_t)];
     /* This index is used by the head holding the head lock. */
-    volatile int head;               
+    volatile int head;
     char pad2[SM_CACHE_LINE_PAD - sizeof(int)];
     /* This mask is used "read only" by all processes. */
-    unsigned int mask;               
+    unsigned int mask;
     char pad3[SM_CACHE_LINE_PAD - sizeof(int)];
     /* The following are used only by the tail. */
     volatile void **queue_recv;
     opal_atomic_lock_t tail_lock;
     volatile int tail;
     int num_to_clear;
-    int lazy_free;                   
+    int lazy_free;
     char pad4[SM_CACHE_LINE_PAD - sizeof(void **) -
               sizeof(opal_atomic_lock_t) -
               sizeof(int) * 3];
@@ -169,7 +167,7 @@ struct mca_btl_sm_component_t {
     int num_pending_sends;             /**< total number on all of my pending-send queues */
     int mem_node;
     int num_mem_nodes;
-    
+
 #if OPAL_ENABLE_PROGRESS_THREADS == 1
     char sm_fifo_path[PATH_MAX];   /**< path to fifo used to signal this process */
     int  sm_fifo_fd;               /**< file descriptor corresponding to opened fifo */

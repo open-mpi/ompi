@@ -33,7 +33,7 @@ int main(int argc, char* argv[])
         fprintf(stderr, "Failed orte_init\n");
         exit(1);
     }
-    
+
     OBJ_CONSTRUCT(&words, opal_list_t);
     while (fgets(text, sizeof(text), stdin)) {
         /* remove trailing newline */

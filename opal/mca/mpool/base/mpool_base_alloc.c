@@ -22,12 +22,8 @@
  */
 
 #include "opal_config.h"
-#ifdef HAVE_STDINT_H
 #include <stdint.h>
-#endif
-#ifdef HAVE_STRING_H
 #include <string.h>
-#endif  /* HAVE_STRING_H */
 #include "opal/mca/mpool/mpool.h"
 #include "base.h"
 #include "mpool_base_tree.h"
@@ -64,7 +60,7 @@ static void mca_mpool_base_registration_constructor( mca_mpool_base_registration
 
 static void mca_mpool_base_registration_destructor( mca_mpool_base_registration_t * reg )
 {
-    
+
 }
 
 OBJ_CLASS_INSTANCE(
@@ -83,10 +79,10 @@ static void unregister_tree_item(mca_mpool_base_tree_item_t *mpool_tree_item)
         mpool = mpool_tree_item->mpools[i];
         reg = mpool_tree_item->regs[i];
         if(mpool && mpool->mpool_deregister) {
-            mpool->mpool_deregister(mpool, reg); 
+            mpool->mpool_deregister(mpool, reg);
         }
     }
-    
+
     mpool = mpool_tree_item->mpools[0];
     reg =  mpool_tree_item->regs[0];
     mpool->mpool_free(mpool, mpool_tree_item->key, reg);
@@ -98,12 +94,12 @@ static void unregister_tree_item(mca_mpool_base_tree_item_t *mpool_tree_item)
  *
  * If the user passes in a valid info structure then the function will
  * try to allocate the memory and register it with every mpool that there is a
- * key for it in the info struct. If it fails at registering the memory with 
- * one of the requested mpools, an error will be returned. Also, if there is a 
+ * key for it in the info struct. If it fails at registering the memory with
+ * one of the requested mpools, an error will be returned. Also, if there is a
  * key in info that does not match any mpool, an error will be returned.
  *
  * If the info parameter is MPI_INFO_NULL, then this function will try to allocate
- * the memory and register it with as many mpools as possible. However, 
+ * the memory and register it with as many mpools as possible. However,
  * if any of the registratons fail the mpool will simply be ignored.
  *
  * @param size the size of the memory area to allocate
@@ -138,7 +134,7 @@ void *mca_mpool_base_alloc(size_t size, opal_info_t *info)
     }
 
     mpool_tree_item = mca_mpool_base_tree_item_get();
-    
+
     if(!mpool_tree_item)
         goto out;
 
@@ -185,10 +181,10 @@ void *mca_mpool_base_alloc(size_t size, opal_info_t *info)
             match_found = false;
             for(item = opal_list_get_first(&mca_mpool_base_modules);
                 item != opal_list_get_end(&mca_mpool_base_modules);
-                item = opal_list_get_next(item)) 
+                item = opal_list_get_next(item))
             {
                 current = ((mca_mpool_base_selected_module_t *)item);
-                if(0 == strcmp(value, 
+                if(0 == strcmp(value,
                        current->mpool_module->mpool_component->mpool_version.mca_component_name))
                 {
                     match_found = true;
@@ -196,7 +192,7 @@ void *mca_mpool_base_alloc(size_t size, opal_info_t *info)
                     {
                         if(NULL != no_reg_function)
                         {
-                           /* there was more than one requested mpool that lacks 
+                           /* there was more than one requested mpool that lacks
                             * a registration function, so return failure */
                             goto out;
                         }
@@ -217,7 +213,7 @@ void *mca_mpool_base_alloc(size_t size, opal_info_t *info)
         }
     }
 #endif  /* defined(TODO_BTL_GB) */
-    
+
     if(NULL == no_reg_function && 0 == reg_module_num)
     {
         if(!mpool_requested)
@@ -228,12 +224,12 @@ void *mca_mpool_base_alloc(size_t size, opal_info_t *info)
             mem = malloc(size);
             goto out;
         }
-        
-        /* the user passed info but we were not able to use any of the mpools 
+
+        /* the user passed info but we were not able to use any of the mpools
          * specified */
         goto out;
     }
-   
+
     for(i = -1; i < reg_module_num; i++) {
         if(-1 == i) {
             if(NULL != no_reg_function)
@@ -305,7 +301,7 @@ int mca_mpool_base_free(void *base)
 
     mpool_tree_item = mca_mpool_base_tree_find(base);
 
-    if(!mpool_tree_item) { 
+    if(!mpool_tree_item) {
         /* nothing in the tree this was just plain old malloc'd memory */
         free(base);
         return OPAL_SUCCESS;
@@ -316,6 +312,6 @@ int mca_mpool_base_free(void *base)
         unregister_tree_item(mpool_tree_item);
         mca_mpool_base_tree_item_put(mpool_tree_item);
     }
-    
+
     return rc;
 }

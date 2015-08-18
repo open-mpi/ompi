@@ -6,7 +6,7 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -14,9 +14,9 @@
  * Copyright (c) 2013-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -32,7 +32,7 @@
    When using ptmalloc2, the goal of this component is to wholly
    replace the underlying allocator with our internal ptmalloc2
    allocator.  See the file README-open-mpi.txt for details of how it
-   works. 
+   works.
 
    When using ummunotify, we can probe to find out when the MMU map
    has been changed (i.e., memory has been released back to the OS). */
@@ -70,12 +70,12 @@ opal_memory_linux_component_t mca_memory_linux_component = {
            information about the component itself */
         .memoryc_version = {
             OPAL_MEMORY_BASE_VERSION_2_0_0,
-            
+
             /* Component name and version */
             .mca_component_name = "linux",
             MCA_BASE_MAKE_VERSION(component, OPAL_MAJOR_VERSION, OPAL_MINOR_VERSION,
                                   OPAL_RELEASE_VERSION),
-            
+
             /* Component open and close functions */
             .mca_open_component = linux_open,
             .mca_close_component = linux_close,

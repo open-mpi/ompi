@@ -55,7 +55,7 @@ for LARCH in $ARCHLIST ; do
    case $LARCH in
        SUPER-UX) FARCH=SX4; break ;;
        AIX|RIOS) FARCH=rs6000; break ;;
-       HP-UX) 
+       HP-UX)
  	if [ -a /dev/kmem ] ; then
  	    FARCH=hpux ;
  	else
@@ -68,9 +68,9 @@ for LARCH in $ARCHLIST ; do
 	    GARCH=$LARCH ;;
        sun4*)
 	Version=`$UNAME -r`
-        # In "improving" SunOS, the useful feature of "substr" was withdrawn 
-        # from expr.  Can't let the users have life too easy, can we?  This 
-        # means that we can't just use 
+        # In "improving" SunOS, the useful feature of "substr" was withdrawn
+        # from expr.  Can't let the users have life too easy, can we?  This
+        # means that we can't just use
         #   set MajorVersion = `expr substr $Version 1 1`
         # because it won't work on Solaris systems.  The following should work
         # on both:
@@ -93,8 +93,8 @@ for LARCH in $ARCHLIST ; do
 	   break ;;
 
        mips|dec-5000)   FARCH=dec5000 ; break ;;
-        next)            FARCH=NeXT ; break ;;	
-	KSR1|KSR2)       FARCH=ksr ; break ;;	
+        next)            FARCH=NeXT ; break ;;
+	KSR1|KSR2)       FARCH=ksr ; break ;;
         FreeBSD)         FARCH=freebsd ; break ;;
         OpenBSD)         FARCH=openbsd ; break ;;
         NetBSD)          FARCH=netbsd ; break ;;

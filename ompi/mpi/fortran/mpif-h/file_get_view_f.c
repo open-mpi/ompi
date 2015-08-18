@@ -5,15 +5,15 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -66,8 +66,8 @@ OMPI_GENERATE_F77_BINDINGS (MPI_FILE_GET_VIEW,
 #include "ompi/mpi/fortran/mpif-h/profile/defines.h"
 #endif
 
-void ompi_file_get_view_f(MPI_Fint *fh, MPI_Offset *disp, 
-			 MPI_Fint *etype, MPI_Fint *filetype, 
+void ompi_file_get_view_f(MPI_Fint *fh, MPI_Offset *disp,
+			 MPI_Fint *etype, MPI_Fint *filetype,
 			 char *datarep, MPI_Fint *ierr, int datarep_len)
 {
     int c_ierr;
@@ -76,7 +76,7 @@ void ompi_file_get_view_f(MPI_Fint *fh, MPI_Offset *disp,
     MPI_Offset c_disp;
     char c_datarep[MPI_MAX_DATAREP_STRING];
 
-    c_ierr = MPI_File_get_view(c_fh, &c_disp, &c_etype, 
+    c_ierr = MPI_File_get_view(c_fh, &c_disp, &c_etype,
                                &c_filetype, c_datarep);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 

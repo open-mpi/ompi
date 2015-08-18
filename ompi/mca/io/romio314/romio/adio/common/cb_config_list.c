@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 2001 University of Chicago. 
+ *   Copyright (C) 2001 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -41,15 +41,15 @@ static char *token_ptr;
 
 /* internal stuff */
 static int get_max_procs(int cb_nodes);
-static int match_procs(char *name, int max_per_proc, char *procnames[], 
+static int match_procs(char *name, int max_per_proc, char *procnames[],
 		       char used_procnames[],
-		       int nr_procnames, int ranks[], int nr_ranks, 
+		       int nr_procnames, int ranks[], int nr_ranks,
 		       int *nr_ranks_allocated);
 static int match_this_proc(char *name, int cur_proc, int max_matches,
 			   char *procnames[], char used_procnames[],
-			   int nr_procnames, int ranks[], 
+			   int nr_procnames, int ranks[],
 			   int nr_ranks, int nr_ranks_allocated);
-static int find_name(char *name, char *procnames[], char used_procnames[], 
+static int find_name(char *name, char *procnames[], char used_procnames[],
 		     int nr_procnames, int start_ind);
 static int cb_config_list_lex(void);
 
@@ -86,7 +86,7 @@ int ADIOI_cb_bcast_rank_map(ADIO_File fd)
                 return error_code;
 	    }
 	}
-	MPI_Bcast(fd->hints->ranklist, fd->hints->cb_nodes, MPI_INT, 0, 
+	MPI_Bcast(fd->hints->ranklist, fd->hints->cb_nodes, MPI_INT, 0,
 		  fd->comm);
     }
     /* TEMPORARY -- REMOVE WHEN NO LONGER UPDATING INFO FOR
@@ -121,7 +121,7 @@ int ADIOI_cb_bcast_rank_map(ADIO_File fd)
  *
  * Returns 0 on success, -1 on failure.
  *
- * NOTE: Needs some work to cleanly handle out of memory cases!  
+ * NOTE: Needs some work to cleanly handle out of memory cases!
  */
 int ADIOI_cb_gather_name_array(MPI_Comm comm,
 			       MPI_Comm dupcomm,
@@ -135,7 +135,7 @@ int ADIOI_cb_gather_name_array(MPI_Comm comm,
 
     if (ADIOI_cb_config_list_keyval == MPI_KEYVAL_INVALID) {
         /* cleaned up by ADIOI_End_call */
-	MPI_Keyval_create((MPI_Copy_function *) ADIOI_cb_copy_name_array, 
+	MPI_Keyval_create((MPI_Copy_function *) ADIOI_cb_copy_name_array,
 			  (MPI_Delete_function *) ADIOI_cb_delete_name_array,
 			  &ADIOI_cb_config_list_keyval, NULL);
     }
@@ -171,7 +171,7 @@ int ADIOI_cb_gather_name_array(MPI_Comm comm,
 	procname = array->names; /* simpler to read */
 
 	procname_len = (int *) ADIOI_Malloc(commsize * sizeof(int));
-	if (procname_len == NULL) { 
+	if (procname_len == NULL) {
 	    return -1;
 	}
     }
@@ -181,7 +181,7 @@ int ADIOI_cb_gather_name_array(MPI_Comm comm,
 	array->names = NULL;
     }
     /* gather lengths first */
-    MPI_Gather(&my_procname_len, 1, MPI_INT, 
+    MPI_Gather(&my_procname_len, 1, MPI_INT,
 	       procname_len, 1, MPI_INT, 0, dupcomm);
 
     if (commrank == 0) {
@@ -195,11 +195,11 @@ int ADIOI_cb_gather_name_array(MPI_Comm comm,
 	for (i=0; i < commsize; i++) {
 	    /* add one to the lengths because we need to count the
 	     * terminator, and we are going to use this list of lengths
-	     * again in the gatherv.  
+	     * again in the gatherv.
 	     */
 	    alloc_size += ++procname_len[i];
 	}
-	
+
 	procname[0] = ADIOI_Malloc(alloc_size);
 	if (procname[0] == NULL) {
 	    return -1;
@@ -208,7 +208,7 @@ int ADIOI_cb_gather_name_array(MPI_Comm comm,
 	for (i=1; i < commsize; i++) {
 	    procname[i] = procname[i-1] + procname_len[i-1];
 	}
-	
+
 	/* create our list of displacements for the gatherv.  we're going
 	 * to do everything relative to the start of the region allocated
 	 * for procname[0]
@@ -223,7 +223,7 @@ int ADIOI_cb_gather_name_array(MPI_Comm comm,
 
     /* now gather strings */
     if (commrank == 0) {
-	MPI_Gatherv(my_procname, my_procname_len + 1, MPI_CHAR, 
+	MPI_Gatherv(my_procname, my_procname_len + 1, MPI_CHAR,
 		    procname[0], procname_len, disp, MPI_CHAR,
 		    0, dupcomm);
     }
@@ -231,7 +231,7 @@ int ADIOI_cb_gather_name_array(MPI_Comm comm,
 	/* if we didn't do this, we would need to allocate procname[]
 	 * on all processes...which seems a little silly.
 	 */
-	MPI_Gatherv(my_procname, my_procname_len + 1, MPI_CHAR, 
+	MPI_Gatherv(my_procname, my_procname_len + 1, MPI_CHAR,
 		    NULL, NULL, NULL, MPI_CHAR, 0, dupcomm);
     }
 
@@ -248,7 +248,7 @@ int ADIOI_cb_gather_name_array(MPI_Comm comm,
     }
 
     /* store the attribute; we want to store SOMETHING on all processes
-     * so that they can all tell if we have gone through this procedure 
+     * so that they can all tell if we have gone through this procedure
      * or not for the given communicator.
      *
      * specifically we put it on both the original comm, so we can find
@@ -262,7 +262,7 @@ int ADIOI_cb_gather_name_array(MPI_Comm comm,
 }
 
 
-/* ADIOI_cb_config_list_parse() - parse the cb_config_list and build the 
+/* ADIOI_cb_config_list_parse() - parse the cb_config_list and build the
  * ranklist
  *
  * Parameters:
@@ -270,9 +270,9 @@ int ADIOI_cb_gather_name_array(MPI_Comm comm,
  *
  * Returns number of ranks allocated in parsing, -1 on error.
  */
-int ADIOI_cb_config_list_parse(char *config_list, 
+int ADIOI_cb_config_list_parse(char *config_list,
 			 ADIO_cb_name_array array,
-			 int ranklist[], 
+			 int ranklist[],
 			 int cb_nodes)
 {
     int token, max_procs, cur_rank = 0, nr_procnames;
@@ -349,7 +349,7 @@ int ADIOI_cb_config_list_parse(char *config_list,
     	    ADIOI_Free(used_procnames);
 	    return cur_rank;
 	}
-	
+
 	if (token == AGG_WILDCARD) {
 	    cur_procname_p = NULL;
 	}
@@ -385,17 +385,17 @@ int ADIOI_cb_config_list_parse(char *config_list,
 
 /* ADIOI_cb_copy_name_array() - attribute copy routine
  */
-int ADIOI_cb_copy_name_array(MPI_Comm comm, 
-		       int keyval, 
-		       void *extra, 
+int ADIOI_cb_copy_name_array(MPI_Comm comm,
+		       int keyval,
+		       void *extra,
 		       void *attr_in,
-		       void **attr_out, 
+		       void **attr_out,
 		       int *flag)
 {
     ADIO_cb_name_array array;
 
     ADIOI_UNREFERENCED_ARG(comm);
-    ADIOI_UNREFERENCED_ARG(keyval); 
+    ADIOI_UNREFERENCED_ARG(keyval);
     ADIOI_UNREFERENCED_ARG(extra);
 
     array = (ADIO_cb_name_array) attr_in;
@@ -403,15 +403,15 @@ int ADIOI_cb_copy_name_array(MPI_Comm comm,
 
     *attr_out = attr_in;
     *flag = 1; /* make a copy in the new communicator */
-    
+
     return MPI_SUCCESS;
 }
 
 /* ADIOI_cb_delete_name_array() - attribute destructor
  */
-int ADIOI_cb_delete_name_array(MPI_Comm comm, 
-			 int keyval, 
-			 void *attr_val, 
+int ADIOI_cb_delete_name_array(MPI_Comm comm,
+			 int keyval,
+			 void *attr_val,
 			 void *extra)
 {
     ADIO_cb_name_array array;
@@ -427,7 +427,7 @@ int ADIOI_cb_delete_name_array(MPI_Comm comm,
 	/* time to free the structures (names, array of ptrs to names, struct)
 	 */
 	if (array->namect) {
-	    /* Note that array->names[i], where i > 0, 
+	    /* Note that array->names[i], where i > 0,
 	     * are just pointers into the allocated region array->names[0]
 	     */
 	    ADIOI_Free(array->names[0]);
@@ -439,7 +439,7 @@ int ADIOI_cb_delete_name_array(MPI_Comm comm,
 }
 
 /* match_procs() - given a name (or NULL for wildcard) and a max. number
- *                 of aggregator processes (per processor name), this 
+ *                 of aggregator processes (per processor name), this
  *                 matches in the procnames[] array and puts appropriate
  *                 ranks in the ranks array.
  *
@@ -456,8 +456,8 @@ int ADIOI_cb_delete_name_array(MPI_Comm comm,
  *
  * Returns number of matches.
  */
-static int match_procs(char *name, 
-		       int max_per_proc, 
+static int match_procs(char *name,
+		       int max_per_proc,
 		       char *procnames[],
 		       char used_procnames[],
 		       int nr_procnames,
@@ -466,7 +466,7 @@ static int match_procs(char *name,
 		       int *nr_ranks_allocated)
 {
     int wildcard_proc, cur_proc, old_nr_allocated, ret;
-    
+
     /* save this so we can report on progress */
     old_nr_allocated = *nr_ranks_allocated;
 
@@ -493,8 +493,8 @@ static int match_procs(char *name,
 
 	while (nr_ranks - *nr_ranks_allocated > 0) {
 	    /* find a name */
-	    while ((wildcard_proc < nr_procnames) && 
-		   (used_procnames[wildcard_proc] != 0)) 
+	    while ((wildcard_proc < nr_procnames) &&
+		   (used_procnames[wildcard_proc] != 0))
 	    {
 		wildcard_proc++;
 	    }
@@ -505,7 +505,7 @@ static int match_procs(char *name,
 	    }
 
 #ifdef CB_CONFIG_LIST_DEBUG
-	    FPRINTF(stderr, "performing wildcard match (*:%d) starting with %s (%d)\n", 
+	    FPRINTF(stderr, "performing wildcard match (*:%d) starting with %s (%d)\n",
 		   max_per_proc, procnames[wildcard_proc], wildcard_proc);
 #endif
 
@@ -521,7 +521,7 @@ static int match_procs(char *name,
 	     * our while loop.
 	     */
 	    ranks[*nr_ranks_allocated] = cur_proc;
-	    *nr_ranks_allocated = *nr_ranks_allocated + 1;	    
+	    *nr_ranks_allocated = *nr_ranks_allocated + 1;
 	    cur_proc++;
 
 	    /* so, to accomplish this we use the match_this_proc() to
@@ -534,7 +534,7 @@ static int match_procs(char *name,
 				  nr_procnames,
 				  ranks, nr_ranks, *nr_ranks_allocated);
 	    if (ret > 0) *nr_ranks_allocated = *nr_ranks_allocated + ret;
-    
+
 	    /* clean up and point wildcard_proc to the next entry, since
 	     * we know that this one is NULL now.
              */
@@ -556,7 +556,7 @@ static int match_procs(char *name,
     return *nr_ranks_allocated - old_nr_allocated;
 }
 
-/* match_this_proc() - find each instance of processor name "name" in 
+/* match_this_proc() - find each instance of processor name "name" in
  *                     the "procnames" array, starting with index "cur_proc"
  *                     and add the first "max_matches" into the "ranks"
  *                     array.  remove all instances of "name" from
@@ -581,8 +581,8 @@ static int match_this_proc(char *name,
 			   int max_matches,
 			   char *procnames[],
 			   char used_procnames[],
-			   int nr_procnames, 
-			   int ranks[], 
+			   int nr_procnames,
+			   int ranks[],
 			   int nr_ranks,
 			   int nr_ranks_allocated)
 {
@@ -592,11 +592,11 @@ static int match_this_proc(char *name,
 
     /* calculate how many ranks we want to allocate */
     ranks_remaining = nr_ranks - nr_ranks_allocated;
-    nr_to_alloc = (max_matches < ranks_remaining) ? 
+    nr_to_alloc = (max_matches < ranks_remaining) ?
 	max_matches : ranks_remaining;
 
     while (nr_to_alloc > 0) {
-	cur_proc = find_name(name, procnames, used_procnames, nr_procnames, 
+	cur_proc = find_name(name, procnames, used_procnames, nr_procnames,
 			     cur_proc);
 	if (cur_proc < 0) {
 	    /* didn't find it */
@@ -612,14 +612,14 @@ static int match_this_proc(char *name,
 	ranks[nr_ranks_allocated] = cur_proc;
 	nr_ranks_allocated++;
 	used_procnames[cur_proc] = 1;
-	    
+
 	cur_proc++;
 	nr_to_alloc--;
     }
-	
+
     /* take all other instances of this host out of the list */
     while (cur_proc >= 0) {
-	cur_proc = find_name(name, procnames, used_procnames, nr_procnames, 
+	cur_proc = find_name(name, procnames, used_procnames, nr_procnames,
 		             cur_proc);
 	if (cur_proc >= 0) {
 #ifdef CB_CONFIG_LIST_DEBUG
@@ -632,17 +632,17 @@ static int match_this_proc(char *name,
     }
     return nr_ranks_allocated - old_nr_allocated;
 }
-  
+
 
 /* find_name() - finds the first entry in procnames[] which matches name,
  *               starting at index start_ind
  *
  * Returns an index [0..nr_procnames-1] on success, -1 if not found.
  */
-static int find_name(char *name, 
-		     char *procnames[], 
+static int find_name(char *name,
+		     char *procnames[],
 		     char used_procnames[],
-		     int nr_procnames, 
+		     int nr_procnames,
 		     int start_ind)
 {
     int i;
@@ -689,7 +689,7 @@ static int get_max_procs(int cb_nodes)
 	/* strip off next comma (if there is one) */
 	token = cb_config_list_lex();
 	if (token != AGG_COMMA && token != AGG_EOS) return -1;
-	
+
 	/* return max_procs */
 	if (max_procs < 0) return -1;
 	else return max_procs;
@@ -708,7 +708,7 @@ static int get_max_procs(int cb_nodes)
 #define COLON ':'
 #define COMMA ';'
 #define DELIMS ":;"
-#else 
+#else
 /* these tokens work for every other platform */
 #define COLON ':'
 #define COMMA ','
@@ -745,7 +745,7 @@ static int cb_config_list_lex(void)
 
     /* it would be a good idea to look at the string and make sure that
      * it doesn't have any illegal characters in it.  in particular we
-     * should ensure that no one tries to use wildcards with strings 
+     * should ensure that no one tries to use wildcards with strings
      * (e.g. "ccn*").
      */
     ADIOI_Strncpy(yylval, token_ptr, slen);

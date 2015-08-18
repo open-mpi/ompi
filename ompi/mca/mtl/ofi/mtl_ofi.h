@@ -11,7 +11,6 @@
 #ifndef MTL_OFI_H_HAS_BEEN_INCLUDED
 #define MTL_OFI_H_HAS_BEEN_INCLUDED
 
-#include "ompi/mca/pml/pml.h"
 #include "ompi/mca/mtl/mtl.h"
 #include "ompi/mca/mtl/base/base.h"
 #include "opal/datatype/opal_convertor.h"
@@ -51,6 +50,8 @@ extern int ompi_mtl_ofi_add_procs(struct mca_mtl_base_module_t *mtl,
 extern int ompi_mtl_ofi_del_procs(struct mca_mtl_base_module_t *mtl,
                                   size_t nprocs,
                                   struct ompi_proc_t **procs);
+
+int ompi_mtl_ofi_progress_no_inline(void);
 
 __opal_attribute_always_inline__ static inline int
 ompi_mtl_ofi_progress(void)
@@ -115,42 +116,7 @@ ompi_mtl_ofi_progress(void)
 
 
 /* MTL interface functions */
-__opal_attribute_always_inline__ static inline int
-ompi_mtl_ofi_finalize(struct mca_mtl_base_module_t *mtl)
-{
-    opal_progress_unregister(ompi_mtl_ofi_progress);
-
-    /**
-     * Close all the OFI objects
-     */
-    if (fi_close((fid_t)ompi_mtl_ofi.ep)) {
-        opal_output(ompi_mtl_base_framework.framework_output,
-                "fi_close failed: %s", strerror(errno));
-        abort();
-    }
-    if (fi_close((fid_t)ompi_mtl_ofi.cq)) {
-        opal_output(ompi_mtl_base_framework.framework_output,
-                "fi_close failed: %s", strerror(errno));
-        abort();
-    }
-    if (fi_close((fid_t)ompi_mtl_ofi.av)) {
-        opal_output(ompi_mtl_base_framework.framework_output,
-                "fi_close failed: %s", strerror(errno));
-        abort();
-    }
-    if (fi_close((fid_t)ompi_mtl_ofi.domain)) {
-        opal_output(ompi_mtl_base_framework.framework_output,
-                "fi_close failed: %s", strerror(errno));
-        abort();
-    }
-    if (fi_close((fid_t)ompi_mtl_ofi.fabric)) {
-        opal_output(ompi_mtl_base_framework.framework_output,
-                "fi_close failed: %s", strerror(errno));
-        abort();
-    }
-
-    return OMPI_SUCCESS;
-}
+int ompi_mtl_ofi_finalize(struct mca_mtl_base_module_t *mtl);
 
 __opal_attribute_always_inline__ static inline int
 ompi_mtl_ofi_get_error(int error_num)
@@ -182,7 +148,7 @@ ompi_mtl_ofi_send_error_callback(struct fi_cq_err_entry *error,
                                  ompi_mtl_ofi_request_t *ofi_req)
 {
     switch(error->err) {
-        case FI_EMSGSIZE:
+        case FI_ETRUNC:
             ofi_req->status.MPI_ERROR = MPI_ERR_TRUNCATE;
             break;
         default:
@@ -524,10 +490,12 @@ ompi_mtl_ofi_recv_error_callback(struct fi_cq_err_entry *error,
     status->MPI_TAG = MTL_OFI_GET_TAG(ofi_req->match_bits);
     status->MPI_SOURCE = MTL_OFI_GET_SOURCE(ofi_req->match_bits);
 
-    /* FIXME: This could be done on a single line... */
     switch (error->err) {
-        case FI_EMSGSIZE:
+        case FI_ETRUNC:
             status->MPI_ERROR = MPI_ERR_TRUNCATE;
+            break;
+        case FI_ECANCELED:
+            status->_cancelled = true;
             break;
         default:
             status->MPI_ERROR = MPI_ERR_INTERN;
@@ -638,10 +606,12 @@ ompi_mtl_ofi_mrecv_error_callback(struct fi_cq_err_entry *error,
     status->MPI_TAG = MTL_OFI_GET_TAG(ofi_req->match_bits);
     status->MPI_SOURCE = MTL_OFI_GET_SOURCE(ofi_req->match_bits);
 
-    /* FIXME: This could be done on a single line... */
     switch (error->err) {
-        case FI_EMSGSIZE:
+        case FI_ETRUNC:
             status->MPI_ERROR = MPI_ERR_TRUNCATE;
+            break;
+        case FI_ECANCELED:
+            status->_cancelled = true;
             break;
         default:
             status->MPI_ERROR = MPI_ERR_INTERN;
@@ -944,10 +914,16 @@ ompi_mtl_ofi_cancel(struct mca_mtl_base_module_t *mtl,
                 ret = fi_cancel((fid_t)ompi_mtl_ofi.ep, &ofi_req->ctx);
                 if (0 == ret) {
                     /**
-                     * The request was successfully cancelled.
+                     * Wait for the request to be cancelled.
                      */
-                    ofi_req->super.ompi_req->req_status._cancelled = true;
-                    ofi_req->super.completion_callback(&ofi_req->super);
+                    while (!ofi_req->super.ompi_req->req_status._cancelled) {
+                        opal_progress();
+                    }
+                } else {
+                    /**
+                     * Could not cancel the request.
+                     */
+                    ofi_req->super.ompi_req->req_status._cancelled = false;
                 }
             }
             break;

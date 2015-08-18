@@ -8,9 +8,9 @@
  *                         reserved.
  *
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -19,9 +19,9 @@
 #include "opal/mca/rcache/rcache.h"
 #include "rcache_vma.h"
 
-static int mca_rcache_vma_component_open(void); 
+static int mca_rcache_vma_component_open(void);
 
-static mca_rcache_base_module_t* mca_rcache_vma_component_init( void ); 
+static mca_rcache_base_module_t* mca_rcache_vma_component_init( void );
 
 mca_rcache_vma_component_t mca_rcache_vma_component = {
     {
@@ -44,14 +44,14 @@ mca_rcache_vma_component_t mca_rcache_vma_component = {
 
 static int mca_rcache_vma_component_open(void)
 {
-    return OPAL_SUCCESS; 
+    return OPAL_SUCCESS;
 }
 
 static mca_rcache_base_module_t* mca_rcache_vma_component_init(void) {
-    mca_rcache_vma_module_t* rcache; 
-    
+    mca_rcache_vma_module_t* rcache;
+
     rcache = (mca_rcache_vma_module_t*) malloc(sizeof(mca_rcache_vma_module_t));
     mca_rcache_vma_module_init(rcache);
 
-    return &rcache->base; 
+    return &rcache->base;
 }

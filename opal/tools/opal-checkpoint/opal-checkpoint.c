@@ -6,17 +6,17 @@
  * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2013 Los Alamos National Security, LLC.  All rights
- *                         reserved. 
+ *                         reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -24,16 +24,14 @@
  * @file
  * OPAL Checkpoint command
  *
- * This command will initiate the checkpoint of a single 
+ * This command will initiate the checkpoint of a single
  * process that has been compiled with OPAL support.
  */
 #include "opal_config.h"
 
 #include <stdio.h>
 #include <errno.h>
-#ifdef HAVE_STDLIB_H
 #include <stdlib.h>
-#endif  /*  HAVE_STDLIB_H */
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif  /* HAVE_UNISTD_H */
@@ -49,12 +47,8 @@
 #ifdef HAVE_SYS_WAIT_H
 #include <sys/wait.h>
 #endif
-#ifdef HAVE_STRING_H
 #include <string.h>
-#endif  /* HAVE_STRING_H */
-#ifdef HAVE_SIGNAL_H
 #include <signal.h>
-#endif
 
 #include "opal/constants.h"
 
@@ -82,7 +76,7 @@
 static int initialize(int argc, char *argv[]);
 static int finalize(void);
 static int parse_args(int argc, char *argv[]);
-static int notify_process_for_checkpoint(pid_t pid, char **fname, int term, 
+static int notify_process_for_checkpoint(pid_t pid, char **fname, int term,
                                          opal_crs_state_type_t *state);
 
 /*****************************************
@@ -102,26 +96,26 @@ typedef struct {
 opal_checkpoint_globals_t opal_checkpoint_globals;
 
 opal_cmd_line_init_t cmd_line_opts[] = {
-    { NULL, 
-      'h', NULL, "help", 
+    { NULL,
+      'h', NULL, "help",
       0,
       &opal_checkpoint_globals.help, OPAL_CMD_LINE_TYPE_BOOL,
       "This help message" },
 
     { NULL,
-      'v', NULL, "verbose", 
+      'v', NULL, "verbose",
       0,
       &opal_checkpoint_globals.verbose, OPAL_CMD_LINE_TYPE_BOOL,
       "Be Verbose" },
 
     { NULL,
-      'q', NULL, "quiet", 
+      'q', NULL, "quiet",
       0,
       &opal_checkpoint_globals.quiet, OPAL_CMD_LINE_TYPE_BOOL,
       "Be Super Quiet" },
 
     { NULL,
-      '\0', NULL, "term", 
+      '\0', NULL, "term",
       0,
       &opal_checkpoint_globals.term, OPAL_CMD_LINE_TYPE_BOOL,
       "Terminate the application after checkpoint" },
@@ -132,8 +126,8 @@ opal_cmd_line_init_t cmd_line_opts[] = {
       &opal_checkpoint_globals.snapshot_name, OPAL_CMD_LINE_TYPE_STRING,
       "Request a specific snapshot reference." },
 
-    { "crs_base_snapshot_dir", 
-      'w', NULL, "where", 
+    { "crs_base_snapshot_dir",
+      'w', NULL, "where",
       1,
       &opal_checkpoint_globals.snapshot_loc, OPAL_CMD_LINE_TYPE_STRING,
       "Where to place the checkpoint files. Note: You must remember this "
@@ -233,15 +227,15 @@ static int initialize(int argc, char *argv[]) {
         opal_checkpoint_globals.output = 0; /* Default=STDOUT */
     }
 
-    /* 
+    /*
      * Disable the checkpoint notification routine for this
      * tool. As we will never need to checkpoint this tool.
      * Note: This must happen before opal_init().
      */
     opal_cr_set_enabled(false);
 
-    /* 
-     * Select the 'none' CRS component, 
+    /*
+     * Select the 'none' CRS component,
      * since we don't actually use a checkpointer
      */
     (void) mca_base_var_env_name("crs", &tmp_env_var);
@@ -284,7 +278,7 @@ static int parse_args(int argc, char *argv[]) {
 
     opal_checkpoint_globals.snapshot_name = NULL;
     opal_checkpoint_globals.snapshot_loc  = NULL;
-    
+
     /* Parse the command line options */
     opal_cmd_line_create(&cmd_line, cmd_line_opts);
     mca_base_open();
@@ -311,9 +305,9 @@ static int parse_args(int argc, char *argv[]) {
         /* If we show the help message, that should be all we do */
         exit(0);
     }
-    
-    /** 
-     * Put all of the MCA arguments in the environment 
+
+    /**
+     * Put all of the MCA arguments in the environment
      */
     mca_base_cmd_line_process_args(&cmd_line, &app_env, &global_env);
 
@@ -366,7 +360,7 @@ static int parse_args(int argc, char *argv[]) {
     return OPAL_SUCCESS;
 }
 
-static int 
+static int
 notify_process_for_checkpoint(pid_t pid, char **fname, int term, opal_crs_state_type_t *cr_state)
 {
     char *prog_named_pipe_r = NULL, *prog_named_pipe_w = NULL;
@@ -426,8 +420,8 @@ notify_process_for_checkpoint(pid_t pid, char **fname, int term, opal_crs_state_
             break;
         }
     }
-    if( s == max_wait_time ) { 
-        /* The file doesn't exist, 
+    if( s == max_wait_time ) {
+        /* The file doesn't exist,
          * This means that the process didn't open up a named pipe for us
          * to access their checkpoint notification routine. Therefore,
          * the application either:
@@ -437,9 +431,9 @@ notify_process_for_checkpoint(pid_t pid, char **fname, int term, opal_crs_state_
          */
         opal_show_help("help-opal-checkpoint.txt", "pid_does_not_exist", true,
                        opal_checkpoint_globals.pid, prog_named_pipe_r, prog_named_pipe_w);
-        
+
         *cr_state = OPAL_CRS_ERROR;
-        
+
         exit_status = OPAL_ERROR;
         goto cleanup;
     }
@@ -447,7 +441,7 @@ notify_process_for_checkpoint(pid_t pid, char **fname, int term, opal_crs_state_
     /* The file does exist, so let's use it */
 
     /*
-     * Open 
+     * Open
      *  - prog_named_write_pipe:
      *    prog makes this file and opens Read Only
      *    this app. opens it Write Only
@@ -458,7 +452,7 @@ notify_process_for_checkpoint(pid_t pid, char **fname, int term, opal_crs_state_
     prog_named_write_pipe_fd = open(prog_named_pipe_w, O_WRONLY);
     if(prog_named_write_pipe_fd < 0) {
         opal_output(opal_checkpoint_globals.output,
-                    "opal_checkpoint: Error: Unable to open name pipe (%s). %d\n", 
+                    "opal_checkpoint: Error: Unable to open name pipe (%s). %d\n",
                     prog_named_pipe_w, prog_named_write_pipe_fd);
         exit_status = OPAL_ERROR;
         goto cleanup;
@@ -479,7 +473,7 @@ notify_process_for_checkpoint(pid_t pid, char **fname, int term, opal_crs_state_
     len = 0;
     if( sizeof(int) != (ret = write(prog_named_write_pipe_fd, &len, sizeof(int))) ) {
         opal_output(opal_checkpoint_globals.output,
-                    "opal_checkpoint: Error: Unable to write handshake to named pipe (%s). %d\n", 
+                    "opal_checkpoint: Error: Unable to write handshake to named pipe (%s). %d\n",
                     prog_named_pipe_w, ret);
         exit_status = OPAL_ERROR;
         goto cleanup;
@@ -487,7 +481,7 @@ notify_process_for_checkpoint(pid_t pid, char **fname, int term, opal_crs_state_
 
     if( sizeof(int) != (ret = read(prog_named_read_pipe_fd, &value, sizeof(int))) ) {
         opal_output(opal_checkpoint_globals.output,
-                    "opal_checkpoint: Error: Unable to read length from named pipe (%s). %d\n", 
+                    "opal_checkpoint: Error: Unable to read length from named pipe (%s). %d\n",
                     prog_named_pipe_r, ret);
         exit_status = OPAL_ERROR;
         goto cleanup;
@@ -496,7 +490,7 @@ notify_process_for_checkpoint(pid_t pid, char **fname, int term, opal_crs_state_
     /* Check the response to make sure we can checkpoint this process */
     if( OPAL_CHECKPOINT_CMD_IN_PROGRESS == value ) {
         opal_show_help("help-opal-checkpoint.txt",
-                       "ckpt:in_progress", 
+                       "ckpt:in_progress",
                        true,
                        opal_checkpoint_globals.pid);
         exit_status = OPAL_ERROR;
@@ -504,7 +498,7 @@ notify_process_for_checkpoint(pid_t pid, char **fname, int term, opal_crs_state_
     }
     else if( OPAL_CHECKPOINT_CMD_NULL == value ) {
         opal_show_help("help-opal-checkpoint.txt",
-                       "ckpt:req_null", 
+                       "ckpt:req_null",
                        true,
                        opal_checkpoint_globals.pid);
         exit_status = OPAL_ERROR;
@@ -512,7 +506,7 @@ notify_process_for_checkpoint(pid_t pid, char **fname, int term, opal_crs_state_
     }
     else if ( OPAL_CHECKPOINT_CMD_ERROR == value ) {
         opal_show_help("help-opal-checkpoint.txt",
-                       "ckpt:req_error", 
+                       "ckpt:req_error",
                        true,
                        opal_checkpoint_globals.pid);
         exit_status = OPAL_ERROR;
@@ -520,14 +514,14 @@ notify_process_for_checkpoint(pid_t pid, char **fname, int term, opal_crs_state_
     }
 
     /*
-     * Write the checkpoint request and information to the 
+     * Write the checkpoint request and information to the
      *  pipe
      */
     cmd = OPAL_CR_CHECKPOINT;
     /* Send the command */
     if( sizeof(cmd) != (ret = write(prog_named_write_pipe_fd, &cmd, sizeof(cmd))) ) {
         opal_output(opal_checkpoint_globals.output,
-                    "opal_checkpoint: Error: Unable to write CHECKPOINT Command to named pipe (%s). %d\n", 
+                    "opal_checkpoint: Error: Unable to write CHECKPOINT Command to named pipe (%s). %d\n",
                     prog_named_pipe_w, ret);
         exit_status = OPAL_ERROR;
         goto cleanup;
@@ -536,7 +530,7 @@ notify_process_for_checkpoint(pid_t pid, char **fname, int term, opal_crs_state_
     /* Send the arguments: {pid, term} */
     if( sizeof(int) != (ret = write(prog_named_write_pipe_fd, &pid, sizeof(int))) ) {
         opal_output(opal_checkpoint_globals.output,
-                    "opal_checkpoint: Error: Unable to write pid (%d) to named pipe (%s). %d\n", 
+                    "opal_checkpoint: Error: Unable to write pid (%d) to named pipe (%s). %d\n",
                     pid, prog_named_pipe_w, ret);
         exit_status = OPAL_ERROR;
         goto cleanup;
@@ -544,7 +538,7 @@ notify_process_for_checkpoint(pid_t pid, char **fname, int term, opal_crs_state_
 
     if( sizeof(int) != (ret = write(prog_named_write_pipe_fd, &term, sizeof(int))) ) {
         opal_output(opal_checkpoint_globals.output,
-                    "opal_checkpoint: Error: Unable to write term (%d) to named pipe (%s), %d\n", 
+                    "opal_checkpoint: Error: Unable to write term (%d) to named pipe (%s), %d\n",
                     term, prog_named_pipe_w, ret);
         exit_status = OPAL_ERROR;
         goto cleanup;
@@ -554,7 +548,7 @@ notify_process_for_checkpoint(pid_t pid, char **fname, int term, opal_crs_state_
     len = strlen(opal_checkpoint_globals.snapshot_name) + 1;
     if( sizeof(int) != (ret = write(prog_named_write_pipe_fd, &len, sizeof(int))) ) {
         opal_output(opal_checkpoint_globals.output,
-                    "opal_checkpoint: Error: Unable to write snapshot name len (%d) to named pipe (%s). %d\n", 
+                    "opal_checkpoint: Error: Unable to write snapshot name len (%d) to named pipe (%s). %d\n",
                     len, prog_named_pipe_w, ret);
         exit_status = OPAL_ERROR;
         goto cleanup;
@@ -563,7 +557,7 @@ notify_process_for_checkpoint(pid_t pid, char **fname, int term, opal_crs_state_
     tmp_size = sizeof(char) * len;
     if( tmp_size != (ret = write(prog_named_write_pipe_fd, (opal_checkpoint_globals.snapshot_name), (sizeof(char) * len))) ) {
         opal_output(opal_checkpoint_globals.output,
-                    "opal_checkpoint: Error: Unable to write snapshot name (%s) to named pipe (%s). %d\n", 
+                    "opal_checkpoint: Error: Unable to write snapshot name (%s) to named pipe (%s). %d\n",
                     opal_checkpoint_globals.snapshot_name, prog_named_pipe_w, ret);
         exit_status = OPAL_ERROR;
         goto cleanup;
@@ -573,7 +567,7 @@ notify_process_for_checkpoint(pid_t pid, char **fname, int term, opal_crs_state_
     len = strlen(opal_checkpoint_globals.snapshot_loc) + 1;
     if( sizeof(int) != (ret = write(prog_named_write_pipe_fd, &len, sizeof(int))) ) {
         opal_output(opal_checkpoint_globals.output,
-                    "opal_checkpoint: Error: Unable to write snapshot location len (%d) to named pipe (%s). %d\n", 
+                    "opal_checkpoint: Error: Unable to write snapshot location len (%d) to named pipe (%s). %d\n",
                     len, prog_named_pipe_w, ret);
         exit_status = OPAL_ERROR;
         goto cleanup;
@@ -582,7 +576,7 @@ notify_process_for_checkpoint(pid_t pid, char **fname, int term, opal_crs_state_
     tmp_size = sizeof(char) * len;
     if( tmp_size != (ret = write(prog_named_write_pipe_fd, (opal_checkpoint_globals.snapshot_loc), (sizeof(char) * len))) ) {
         opal_output(opal_checkpoint_globals.output,
-                    "opal_checkpoint: Error: Unable to write snapshot location (%s) to named pipe (%s). %d\n", 
+                    "opal_checkpoint: Error: Unable to write snapshot location (%s) to named pipe (%s). %d\n",
                     opal_checkpoint_globals.snapshot_loc, prog_named_pipe_w, ret);
         exit_status = OPAL_ERROR;
         goto cleanup;
@@ -594,7 +588,7 @@ notify_process_for_checkpoint(pid_t pid, char **fname, int term, opal_crs_state_
      */
     if( sizeof(int) != (ret = read(prog_named_read_pipe_fd, &len, sizeof(int))) ) {
         opal_output(opal_checkpoint_globals.output,
-                    "opal_checkpoint: Error: Unable to read length from named pipe (%s). %d\n", 
+                    "opal_checkpoint: Error: Unable to read length from named pipe (%s). %d\n",
                     prog_named_pipe_r, ret);
         exit_status = OPAL_ERROR;
         goto cleanup;
@@ -604,7 +598,7 @@ notify_process_for_checkpoint(pid_t pid, char **fname, int term, opal_crs_state_
         loc_fname = (char *) malloc(sizeof(char) * len);
         if( (ssize_t)(sizeof(char) * len) != (ret = read(prog_named_read_pipe_fd, loc_fname, (sizeof(char) * len))) ) {
             opal_output(opal_checkpoint_globals.output,
-                        "opal_checkpoint: Error: Unable to read filename from named pipe (%s). %d\n", 
+                        "opal_checkpoint: Error: Unable to read filename from named pipe (%s). %d\n",
                         prog_named_pipe_w, ret);
             exit_status = OPAL_ERROR;
             goto cleanup;
@@ -620,18 +614,18 @@ notify_process_for_checkpoint(pid_t pid, char **fname, int term, opal_crs_state_
         goto cleanup;
     }
 
- cleanup:    
+ cleanup:
     /*
      * Close the pipes now that we are done with it
      */
     close(prog_named_write_pipe_fd);
     close(prog_named_read_pipe_fd);
 
-    if( NULL != tmp_pid) 
+    if( NULL != tmp_pid)
         free(tmp_pid);
-    if( NULL != prog_named_pipe_r) 
+    if( NULL != prog_named_pipe_r)
         free(prog_named_pipe_r);
-    if( NULL != prog_named_pipe_w) 
+    if( NULL != prog_named_pipe_w)
         free(prog_named_pipe_w);
 
     return exit_status;

@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -16,9 +16,9 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -30,9 +30,7 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif  /* HAVE_UNISTD_H */
-#ifdef HAVE_STRING_H
 #include <string.h>
-#endif  /* HAVE_STRING_H */
 #include <ctype.h>
 
 #include "opal/util/if.h"
@@ -103,7 +101,7 @@ static int orte_rmaps_seq_map(orte_job_t *jdata)
     opal_list_t node_list, *seq_list, sq_list;
     orte_proc_t *proc;
     mca_base_component_t *c = &mca_rmaps_seq_component.base_version;
-    char *hosts, *hstname, *sep, *eptr;
+    char *hosts, *sep, *eptr;
     FILE *fp;
 #if OPAL_HAVE_HWLOC
     opal_hwloc_resource_type_t rtype;
@@ -160,6 +158,7 @@ static int orte_rmaps_seq_map(orte_job_t *jdata)
     /* if there is a default hostfile, go and get its ordered list of nodes */
     OBJ_CONSTRUCT(&default_seq_list, opal_list_t);
     if (NULL != orte_default_hostfile) {
+        char *hstname;
         /* open the file */
         fp = fopen(orte_default_hostfile, "r");
         if (NULL == fp) {
@@ -169,6 +168,7 @@ static int orte_rmaps_seq_map(orte_job_t *jdata)
         }
         while (NULL != (hstname = orte_getline(fp))) {
             if (0 == strlen(hstname)) {
+                free(hstname);
                 /* blank line - ignore */
                 continue;
             }
@@ -184,19 +184,19 @@ static int orte_rmaps_seq_map(orte_job_t *jdata)
                 *(eptr+1) = 0;
                 sq->cpuset = strdup(sep);
             }
-            sq->hostname = strdup(hstname);
+            sq->hostname = hstname;
             opal_list_append(&default_seq_list, &sq->super);
         }
         fclose(fp);
     }
-    
+
     /* start at the beginning... */
     vpid = 0;
     jdata->num_procs = 0;
     if (0 < opal_list_get_size(&default_seq_list)) {
         save = (seq_node_t*)opal_list_get_first(&default_seq_list);
     }
-    
+
 #if OPAL_HAVE_HWLOC
     /* default to LOGICAL processors */
     if (orte_get_attribute(&jdata->attributes, ORTE_JOB_PHYSICAL_CPUIDS, NULL, OPAL_BOOL)) {
@@ -214,15 +214,15 @@ static int orte_rmaps_seq_map(orte_job_t *jdata)
     for (j=0; j < orte_node_pool->size; j++) {
         if (NULL != (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, j))) {
             ORTE_FLAG_UNSET(node, ORTE_NODE_FLAG_MAPPED);
-        } 
+        }
     }
-    
+
     /* cycle through the app_contexts, mapping them sequentially */
     for(i=0; i < jdata->apps->size; i++) {
         if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, i))) {
             continue;
         }
-    
+
         /* dash-host trumps hostfile */
         if (orte_get_attribute(&app->attributes, ORTE_APP_DASH_HOST, (void**)&hosts, OPAL_STRING)) {
             opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
@@ -246,6 +246,7 @@ static int orte_rmaps_seq_map(orte_job_t *jdata)
             OBJ_DESTRUCT(&node_list);
             seq_list = &sq_list;
         } else if (orte_get_attribute(&app->attributes, ORTE_APP_HOSTFILE, (void**)&hosts, OPAL_STRING)) {
+            char *hstname;
             opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                                 "mca:rmaps:seq: using hostfile %s nodes on app %s", hosts, app->app);
             OBJ_CONSTRUCT(&sq_list, opal_list_t);
@@ -287,7 +288,7 @@ static int orte_rmaps_seq_map(orte_job_t *jdata)
                            true);
             return ORTE_ERR_SILENT;
         }
-        
+
         /* check for nolocal and remove the head node, if required */
         if (map->mapping & ORTE_MAPPING_NO_USE_LOCAL) {
             for (item  = opal_list_get_first(seq_list);
@@ -306,7 +307,7 @@ static int orte_rmaps_seq_map(orte_job_t *jdata)
                 }
             }
         }
-            
+
         if (NULL == seq_list || 0 == (num_nodes = (orte_std_cntr_t)opal_list_get_size(seq_list))) {
             orte_show_help("help-orte-rmaps-base.txt",
                            "orte-rmaps-base:no-available-resources",
@@ -340,7 +341,7 @@ static int orte_rmaps_seq_map(orte_job_t *jdata)
             for (j=0; j < orte_node_pool->size; j++) {
                 if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, j))) {
                     continue;
-                } 
+                }
                 if (0 == strcmp(sq->hostname, node->name)) {
                     break;
                 }
@@ -454,7 +455,7 @@ static int orte_rmaps_seq_map(orte_job_t *jdata)
 
         /** track the total number of processes we mapped */
         jdata->num_procs += app->num_procs;
-        
+
         /* cleanup the node list if it came from this app_context */
         if (seq_list != &default_seq_list) {
             OPAL_LIST_DESTRUCT(seq_list);
@@ -481,7 +482,7 @@ static char *orte_getline(FILE *fp)
 	   buff = strdup(input);
 	   return buff;
     }
-    
+
     return NULL;
 }
 

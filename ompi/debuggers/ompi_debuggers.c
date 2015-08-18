@@ -6,7 +6,7 @@
  * Copyright (c) 2004-2008 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -14,9 +14,9 @@
  * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -92,7 +92,7 @@ OMPI_DECLSPEC int MPIR_debug_typedefs_sizeof[] = {
     sizeof(bool),
     sizeof(size_t)
 };
-    
+
 /*
  * Values defined by the standardized interface; do not change these
  * values
@@ -131,16 +131,16 @@ OMPI_DECLSPEC char *MPIR_debug_abort_string = "";
 static char *ompi_debugger_dll_path = NULL;
 
 /* Check for a file in few direct ways for portability */
-static void check(char *dir, char *file, char **locations) 
+static void check(char *dir, char *file, char **locations)
 {
     char *str;
 
     asprintf(&str, "%s/%s.so", dir, file);
-    
+
 #if defined(HAVE_SYS_STAT_H)
     {
         struct stat buf;
-        
+
         /* Use stat() */
         if (0 == stat(str, &buf)) {
             opal_argv_append_nosize(&locations, file);
@@ -149,7 +149,7 @@ static void check(char *dir, char *file, char **locations)
 #else
     {
         FILE *fp;
-        
+
         /* Just try to open the file */
         if (NULL != (fp = fopen(str, "r"))) {
             fclose(fp);
@@ -175,7 +175,7 @@ ompi_debugger_setup_dlls(void)
                                  OPAL_INFO_LVL_9,
                                  MCA_BASE_VAR_SCOPE_READONLY,
                                  &ompi_debugger_dll_path);
-    
+
     /* Search the directory for MPI debugger DLLs */
     if (NULL != ompi_debugger_dll_path) {
         dirs = opal_argv_split(ompi_debugger_dll_path, ':');
@@ -212,10 +212,10 @@ void ompi_debugger_notify_abort(char *reason)
     MPIR_Breakpoint();
 }
 
-/* 
- * Breakpoint function for parallel debuggers.  This function is also 
- * defined in orterun for the starter.  It should never conflict with 
- * this 
+/*
+ * Breakpoint function for parallel debuggers.  This function is also
+ * defined in orterun for the starter.  It should never conflict with
+ * this
  */
 void* MPIR_Breakpoint(void)
 {

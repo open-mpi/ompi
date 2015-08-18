@@ -5,16 +5,16 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2008-2009 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -25,13 +25,8 @@
 #include <unistd.h>
 #endif
 
-#ifdef HAVE_STRING_H
 #include <string.h>
-#endif
-
-#ifdef HAVE_SIGNAL_H
 #include <signal.h>
-#endif
 
 #include "opal/util/stacktrace.h"
 #include "opal/mca/backtrace/backtrace.h"
@@ -58,15 +53,15 @@ static char *unable_to_print_msg = "Unable to print stack trace!\n";
  * Where available, the BSD libexecinfo is used to provide Linux/Glibc
  * compatible backtrace and backtrace_symbols_fd functions.
  *
- *  @param signo with the signal number raised 
+ *  @param signo with the signal number raised
  *  @param info with information regarding the reason/send of the signal
- *  @param p 
+ *  @param p
  *
  * FIXME: Should distinguish for systems, which don't have siginfo...
  */
 #if OPAL_WANT_PRETTY_PRINT_STACKTRACE
 static void show_stackframe (int signo, siginfo_t * info, void * p)
-{   
+{
     char print_buffer[1024];
     char * tmp = print_buffer;
     int size = sizeof (print_buffer);
@@ -84,10 +79,10 @@ static void show_stackframe (int signo, siginfo_t * info, void * p)
     memset (print_buffer, 0, sizeof (print_buffer));
 
 #ifdef HAVE_STRSIGNAL
-    ret = snprintf (tmp, size, HOSTFORMAT "Signal: %s (%d)\n", 
+    ret = snprintf (tmp, size, HOSTFORMAT "Signal: %s (%d)\n",
                     stacktrace_hostname, getpid(), strsignal(signo), signo);
 #else
-    ret = snprintf (tmp, size, HOSTFORMAT "Signal: %d\n", 
+    ret = snprintf (tmp, size, HOSTFORMAT "Signal: %d\n",
                     stacktrace_hostname, getpid(), signo);
 #endif
     size -= ret;
@@ -267,14 +262,14 @@ static void show_stackframe (int signo, siginfo_t * info, void * p)
         /* print signal errno information */
         if (0 != info->si_errno) {
             ret = snprintf(tmp, size, HOSTFORMAT "Associated errno: %s (%d)\n",
-                           stacktrace_hostname, getpid(), 
+                           stacktrace_hostname, getpid(),
                            strerror (info->si_errno), info->si_errno);
             size -= ret;
             tmp += ret;
         }
 
         ret = snprintf(tmp, size, HOSTFORMAT "Signal code: %s (%d)\n",
-                       stacktrace_hostname, getpid(), 
+                       stacktrace_hostname, getpid(),
                        si_code_str, info->si_code);
         size -= ret;
         tmp += ret;
@@ -282,8 +277,8 @@ static void show_stackframe (int signo, siginfo_t * info, void * p)
         switch (signo)
         {
         case SIGILL:
-        case SIGFPE: 
-        case SIGSEGV: 
+        case SIGFPE:
+        case SIGSEGV:
         case SIGBUS:
         {
             ret = snprintf(tmp, size, HOSTFORMAT "Failing at address: %p\n",
@@ -292,10 +287,10 @@ static void show_stackframe (int signo, siginfo_t * info, void * p)
             tmp += ret;
             break;
         }
-        case SIGCHLD: 
+        case SIGCHLD:
         {
             ret = snprintf(tmp, size, HOSTFORMAT "Sending PID: %d, Sending UID: %d, Status: %d\n",
-                           stacktrace_hostname, getpid(), 
+                           stacktrace_hostname, getpid(),
                            info->si_pid, info->si_uid, info->si_status);
             size -= ret;
             tmp += ret;
@@ -340,8 +335,8 @@ static void show_stackframe (int signo, siginfo_t * info, void * p)
 
     /* write out the footer information */
     memset (print_buffer, 0, sizeof (print_buffer));
-    ret = snprintf(print_buffer, sizeof(print_buffer), 
-                   HOSTFORMAT "*** End of error message ***\n", 
+    ret = snprintf(print_buffer, sizeof(print_buffer),
+                   HOSTFORMAT "*** End of error message ***\n",
                    stacktrace_hostname, getpid());
     if (ret > 0) {
         write(fileno(stderr), print_buffer, ret);
@@ -355,7 +350,7 @@ static void show_stackframe (int signo, siginfo_t * info, void * p)
 
 #if OPAL_WANT_PRETTY_PRINT_STACKTRACE
 void opal_stackframe_output(int stream)
-{   
+{
     int traces_size;
     char **traces;
 
@@ -378,12 +373,12 @@ char *opal_stackframe_output_string(void)
     int traces_size, i;
     size_t len;
     char *output, **traces;
-    
+
     len = 0;
     if (OPAL_SUCCESS != opal_backtrace_buffer(&traces, &traces_size)) {
         return NULL;
     }
-    
+
     /* Calculate the space needed for the string */
     for (i = 3; i < traces_size; i++) {
 	    if (NULL == traces[i]) {
@@ -391,12 +386,12 @@ char *opal_stackframe_output_string(void)
         }
         len += strlen(traces[i]) + 1;
     }
-    
+
     output = (char *) malloc(len + 1);
     if (NULL == output) {
         return NULL;
     }
-    
+
     *output = '\0';
     for (i = 3; i < traces_size; i++) {
         if (NULL == traces[i]) {
@@ -420,7 +415,7 @@ char *opal_stackframe_output_string(void)
  *  @returnvalue OPAL_SUCCESS
  *  @returnvalue OPAL_ERR_BAD_PARAM if the value in the signal-list
  *    is not a valid signal-number
- *               
+ *
  */
 int opal_util_register_stackhandlers (void)
 {
@@ -450,8 +445,8 @@ int opal_util_register_stackhandlers (void)
     act.sa_flags |= SA_RESETHAND;
 #endif
 
-    for (tmp = next = opal_signal_string ; 
-	 next != NULL && *next != '\0'; 
+    for (tmp = next = opal_signal_string ;
+	 next != NULL && *next != '\0';
 	 tmp = next + 1)
     {
       int sig;

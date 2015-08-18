@@ -1,5 +1,5 @@
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
-/* 
+/*
  *
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
@@ -14,7 +14,7 @@
 #include "pmi2_pmap_parser.h"
 
 /**
- pmi2 process mapping is returned as a 
+ pmi2 process mapping is returned as a
  comma separated list of tuples:
 ex: (vector,(0,4,4),(0,4,1))
 slurm cyclic distro of 4 ranks over 2 nodes:
@@ -26,7 +26,7 @@ slurm block distro of 4 ranks over 2 nodes:
  Format of each tuple is (base, H, L), where
  H is number of nodes spawned by tuple,
  L is number of ranks per node,
- base is offset from node 0. 
+ base is offset from node 0.
 
  Tuple can be visualized as a rectangle on two
  dimensional (Hosts, Local Ranks) plane:
@@ -38,7 +38,7 @@ slurm block distro of 4 ranks over 2 nodes:
            |           |        | L
            |           +--------+
         Local Ranks
-           V 
+           V
 
 Note that ranks increase by column. Tuple (0,2,3) looks like:
 0 3
@@ -120,13 +120,13 @@ static int *find_lrs(char *map, int my_node, int *nlrs)
 /**
  * @param pmap process map as returned by PMI_process_mapping
  *             attribute
- * @param my_rank 
+ * @param my_rank
  * @param node set to my node id
  * @param nlrs set to the number of local ranks returned
  *
  * @return array that contains ranks local to my_rank or NULL
- * on failure. Array must be freed by the caller. 
- */ 
+ * on failure. Array must be freed by the caller.
+ */
 int *mca_common_pmi2_parse_pmap(char *pmap, int my_rank,
                                   int *node, int *nlrs)
 {
@@ -202,7 +202,7 @@ int main(int argc, char **argv)
     assert(memcmp(lrs, a2, 2) == 0);
     free(lrs);
 
-            
+
     /* cyclic distro which skips node 0 */
     pmap = "(vector,(1,2,1),(1,2,1))";
     me = 0;

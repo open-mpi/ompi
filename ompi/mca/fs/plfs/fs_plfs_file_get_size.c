@@ -5,15 +5,15 @@
  * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2014 University of Houston. All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -42,8 +42,8 @@ mca_fs_plfs_file_get_size (mca_io_ompio_file_t *fh,
     char wpath[1024];
     int size_only = 1;
 
-    getcwd(wpath, sizeof(wpath));           
-    sprintf(wpath,"%s/%s",wpath,fh->f_filename); 
+    getcwd(wpath, sizeof(wpath));
+    sprintf(wpath,"%s/%s",wpath,fh->f_filename);
 
     plfs_ret = plfs_getattr(pfd, wpath, &st, size_only);
     if (PLFS_SUCCESS != plfs_ret) {

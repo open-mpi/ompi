@@ -6,16 +6,16 @@ dnl                         Corporation.  All rights reserved.
 dnl Copyright (c) 2004-2005 The University of Tennessee and The University
 dnl                         of Tennessee Research Foundation.  All rights
 dnl                         reserved.
-dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
 dnl Copyright (c) 2014      Intel, Inc. All rights reserved.
 dnl $COPYRIGHT$
-dnl 
+dnl
 dnl Additional copyrights may follow
-dnl 
+dnl
 dnl $HEADER$
 dnl
 dnl There was some mentioning of broken qsort happened for Solaris that could
@@ -29,7 +29,7 @@ dnl 5.9_sparc #112874-20 or later
 dnl 5.9_x86   #114432-07 or later
 dnl
 dnl For users who could not patch their systems or are convinced that their
-dnl native qsort is broken, they could specify this configure flag to use 
+dnl native qsort is broken, they could specify this configure flag to use
 dnl the opal_qsort instead.
 
 # check for broken qsort

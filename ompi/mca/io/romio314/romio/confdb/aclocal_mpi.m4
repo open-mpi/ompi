@@ -1,5 +1,5 @@
 dnl
-dnl/*D 
+dnl/*D
 dnl PAC_LIB_MPI - Check for MPI library
 dnl
 dnl Synopsis:
@@ -9,7 +9,7 @@ dnl Output Effect:
 dnl
 dnl Notes:
 dnl Currently, only checks for lib mpi and mpi.h.  Later, we will add
-dnl MPI_Pcontrol prototype (const int or not?).  
+dnl MPI_Pcontrol prototype (const int or not?).
 dnl
 dnl Prerequisites:
 dnl autoconf version 2.13 (for AC_SEARCH_LIBS)
@@ -21,7 +21,7 @@ dnl MPI-2 Spawn?
 dnl MPI-2 RMA?
 dnl PAC_LIB_MPI([found text],[not found text])
 AC_DEFUN([PAC_LIB_MPI],[
-dnl Set the prereq to 2.50 to avoid having 
+dnl Set the prereq to 2.50 to avoid having
 AC_PREREQ(2.50)
 if test "X$pac_lib_mpi_is_building" != "Xyes" ; then
   # Use CC if TESTCC is defined
@@ -55,7 +55,7 @@ ifelse($1,,,[$1])
 dnl This should also set MPIRUN.
 dnl
 dnl/*D
-dnl PAC_ARG_MPI_TYPES - Add command-line switches for different MPI 
+dnl PAC_ARG_MPI_TYPES - Add command-line switches for different MPI
 dnl environments
 dnl
 dnl Synopsis:
@@ -73,11 +73,11 @@ dnl is given, that type is used as if '--with-<default>' was given.
 dnl
 dnl Sets 'CC', 'F77', 'TESTCC', 'TESTF77', and 'MPILIBNAME'.  Does `not`
 dnl perform an AC_SUBST for these values.
-dnl Also sets 'MPIBOOT' and 'MPIUNBOOT'.  These are used to specify 
+dnl Also sets 'MPIBOOT' and 'MPIUNBOOT'.  These are used to specify
 dnl programs that may need to be run before and after running MPI programs.
 dnl For example, 'MPIBOOT' may start demons necessary to run MPI programs and
 dnl 'MPIUNBOOT' will stop those demons.
-dnl 
+dnl
 dnl The two forms of the compilers are to allow for tests of the compiler
 dnl when the MPI version of the compiler creates executables that cannot
 dnl be run on the local system (for example, the IBM SP, where executables
@@ -87,21 +87,21 @@ dnl the size of data types).
 dnl
 dnl Historical note:
 dnl Some common autoconf tests, such as AC_CHECK_SIZEOF, used to require
-dnl running a program.  But some MPI compilers (often really compilation 
+dnl running a program.  But some MPI compilers (often really compilation
 dnl scripts) produced programs that could only be run with special commands,
 dnl such as a batch submission system.  To allow these test programs to be
-dnl run, a separate set of compiler variables, TESTCC, TESTF77, etc., 
+dnl run, a separate set of compiler variables, TESTCC, TESTF77, etc.,
 dnl were defined.  However, in later versions of autoconf, it both became
-dnl unnecessary to run programs for tests such as AC_CHECK_SIZEOF and 
+dnl unnecessary to run programs for tests such as AC_CHECK_SIZEOF and
 dnl it became necessary to define CC etc. before invoking AC_PROG_CC (and
 dnl the othe language compilers), because those commands now do much, much
 dnl more than just determining the compiler.
 dnl
 dnl To address the change, we still define the TESTCC etc. compilers where
 dnl possible to allow the use of AC_TRY_RUN when required, but we define
-dnl the CC etc variables and do not define ac_cv_prog_CC etc., as these 
-dnl cause autoconf to skip all of the other initialization code that 
-dnl AC_PROG_CC etc. runs.  Note also that this command must occur before 
+dnl the CC etc variables and do not define ac_cv_prog_CC etc., as these
+dnl cause autoconf to skip all of the other initialization code that
+dnl AC_PROG_CC etc. runs.  Note also that this command must occur before
 dnl AC_PROG_CC (or anything that might cause AC_PROG_CC to be invoked).
 dnl
 dnl See also:
@@ -160,7 +160,7 @@ dnl
 dnl Because autoconf insists on moving code to the beginning of
 dnl certain definitions, it is *not possible* to define a single command
 dnl that selects compilation scripts and also check for other options.
-dnl Thus, this needs to be divided into 
+dnl Thus, this needs to be divided into
 dnl   MPI_FIND_COMPILER_SCRIPTS
 dnl which can fail (i.e., not find a script), and
 dnl   MPI_FIND_COMPILERS
@@ -183,7 +183,7 @@ AC_ARG_VAR([MPIF77],[Name and absolute path of program used to compile MPI progr
 AC_ARG_VAR([MPICXX],[Name and absolute path of program used to compile MPI programs in C++])
 AC_ARG_VAR([MPIF90],[Name and absolute path of program used to compile MPI programs in F90])
 #
-# Check for things that will cause trouble.  For example, 
+# Check for things that will cause trouble.  For example,
 # if MPICC is defined but does not contain a / or \, then PATH_PROG will
 # ignore the value
 if test -n "$MPICC" ; then
@@ -192,7 +192,7 @@ changequote(<<,>>)
     [\\/]* | ?:[\\/]*)
 changequote([,])
     # Ok, PATH_PROG will figure it out
-    ;;  
+    ;;
   *)
     AC_MSG_ERROR([MPICC must be set to an absolute path if it is set])
   esac
@@ -203,7 +203,7 @@ changequote(<<,>>)
     [\\/]* | ?:[\\/]*)
 changequote([,])
     # Ok, PATH_PROG will figure it out
-    ;;  
+    ;;
   *)
     AC_MSG_ERROR([MPICXX must be set to an absolute path if it is set])
   esac
@@ -214,7 +214,7 @@ changequote(<<,>>)
     [\\/]* | ?:[\\/]*)
 changequote([,])
     # Ok, PATH_PROG will figure it out
-    ;;  
+    ;;
   *)
     AC_MSG_ERROR([MPIF77 must be set to an absolute path if it is set])
   esac
@@ -225,7 +225,7 @@ changequote(<<,>>)
     [\\/]* | ?:[\\/]*)
 changequote([,])
     # Ok, PATH_PROG will figure it out
-    ;;  
+    ;;
   *)
     AC_MSG_ERROR([MPIF90 must be set to an absolute path if it is set])
   esac
@@ -233,12 +233,12 @@ fi
 
 case $ac_mpi_type in
 	mpich)
-        dnl 
+        dnl
         dnl This isn't correct.  It should try to get the underlying compiler
         dnl from the mpicc and mpif77 scripts or mpireconfig
         if test "X$pac_lib_mpi_is_building" != "Xyes" ; then
 	    PAC_PUSH_FLAG([PATH])
-            if test "$with_mpich" != "yes" -a "$with_mpich" != "no" ; then 
+            if test "$with_mpich" != "yes" -a "$with_mpich" != "no" ; then
 		# Look for commands; if not found, try adding bin to the
 		# path
 		if test ! -x $with_mpich/mpicc -a -x $with_mpich/bin/mpicc ; then
@@ -249,21 +249,21 @@ case $ac_mpi_type in
             AC_PATH_PROG(MPICC,mpicc)
 	    if test -z "$TESTCC" ; then TESTCC=${CC-cc} ; fi
             CC="$MPICC"
-	    # Note that autoconf may unconditionally change the value of 
+	    # Note that autoconf may unconditionally change the value of
 	    # CC (!) in some other command. Thus, we define CCMASTER
 	    CCMASTER=$CC
 	    # Force autoconf to respect this choice
 	    ac_ct_CC=$CC
 	    # to permit configure codes to recover the correct CC.  This
-	    # is an ugly not-quite-correct workaround for the fact that 
+	    # is an ugly not-quite-correct workaround for the fact that
 	    # does not want you to change the C compiler once you have set it
-	    # (But since it does so unconditionally, it silently creates 
+	    # (But since it does so unconditionally, it silently creates
 	    # bogus output files.)
             AC_PATH_PROG(MPIF77,mpif77)
 	    if test -z "$TESTF77" ; then TESTF77=${F77-f77} ; fi
             F77="$MPIF77"
             AC_PATH_PROG(MPIFC,mpif90)
-	    if test -z "$TESTFC" ; then TESTFC=${FC-f90} ; fi 
+	    if test -z "$TESTFC" ; then TESTFC=${FC-f90} ; fi
             FC="$MPIFC"
             AC_PATH_PROG(MPICXX,mpiCC)
 	    if test -z "$TESTCXX" ; then TESTCXX=${CXX-CC} ; fi
@@ -275,7 +275,7 @@ case $ac_mpi_type in
 	    AC_PATH_PROG(MPIUNBOOT,mpichstop)
 	    PAC_POP_FLAG([PATH])
   	    MPILIBNAME="mpich"
-        else 
+        else
 	    # All of the above should have been passed in the environment!
 	    :
         fi
@@ -289,7 +289,7 @@ case $ac_mpi_type in
         dnl This isn't correct.  It should try to get the underlying compiler
         dnl from the mpicc and mpif77 scripts or mpireconfig
 	PAC_PUSH_FLAG([PATH])
-        if test "$with_mpich" != "yes" -a "$with_mpich" != "no" ; then 
+        if test "$with_mpich" != "yes" -a "$with_mpich" != "no" ; then
 	    # Look for commands; if not found, try adding bin to the path
 		if test ! -x $with_lammpi/mpicc -a -x $with_lammpi/bin/mpicc ; then
 			with_lammpi="$with_lammpi/bin"
@@ -330,7 +330,7 @@ case $ac_mpi_type in
 	if test "$enable_f90" != no ; then
 	    AC_CHECK_PROGS(MPIXLF90,mpxlf90 mpfort)
 	    if test -z "$TESTFC" ; then TESTFC=${FC-xlf90}; fi
-            if test "X$MPIXLF90" != "X" ; then 
+            if test "X$MPIXLF90" != "X" ; then
 	        FC="$MPIXLF90"
 	    else
 	    	FC="$MPXLF -qlanglvl=90ext -qfree=f90"
@@ -405,7 +405,7 @@ esac
 ])
 
 AC_DEFUN([PAC_MPI_FIND_COMPILERS],[
-# Tell autoconf to determine properties of the compilers (these are the 
+# Tell autoconf to determine properties of the compilers (these are the
 # compilers for MPI programs)
 PAC_PROG_CC
 if test "$enable_f77" != no -a "$enable_fortran" != no ; then
@@ -468,14 +468,14 @@ case $ac_mpi_type in
 	AC_CHECK_LIB(mpi,MPI_Init)
 	if test "$ac_cv_lib_mpi_MPI_Init" = "yes" ; then
 	    MPILIBNAME="mpi"
-	fi	
+	fi
 	;;
 
     generic)
 	AC_SEARCH_LIBS(MPI_Init,mpi mpich mpich)
 	if test "$ac_cv_lib_mpi_MPI_Init" = "yes" ; then
 	    MPILIBNAME="mpi"
-	fi	
+	fi
 	;;
 
     *)
@@ -502,8 +502,8 @@ AC_TRY_LINK([#include "mpi.h"],
 [MPI_Request request;MPI_Fint a;a = MPI_Request_c2f(request);],
 pac_cv_mpi_f2c="yes",pac_cv_mpi_f2c="no")
 ])
-if test "$pac_cv_mpi_f2c" = "yes" ; then 
-    AC_DEFINE(HAVE_MPI_F2C,1,[Define if MPI has F2C]) 
+if test "$pac_cv_mpi_f2c" = "yes" ; then
+    AC_DEFINE(HAVE_MPI_F2C,1,[Define if MPI has F2C])
 fi
 ])
 dnl

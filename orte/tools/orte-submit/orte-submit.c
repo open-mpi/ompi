@@ -13,7 +13,7 @@
  * Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007-2009 Sun Microsystems, Inc. All rights reserved.
  * Copyright (c) 2007-2013 Los Alamos National Security, LLC.  All rights
- *                         reserved. 
+ *                         reserved.
  * Copyright (c) 2013-2015 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -27,13 +27,9 @@
 #include "orte_config.h"
 #include "orte/constants.h"
 
-#ifdef HAVE_STRING_H
 #include <string.h>
-#endif
 #include <stdio.h>
-#ifdef HAVE_STDLIB_H
 #include <stdlib.h>
-#endif  /* HAVE_STDLIB_H */
 #ifdef HAVE_STRINGS_H
 #include <strings.h>
 #endif  /* HAVE_STRINGS_H */
@@ -163,12 +159,12 @@ static opal_cmd_line_init_t cmd_line_init[] = {
     { NULL, '\0', "report-pid", "report-pid", 1,
       &myglobals.report_pid, OPAL_CMD_LINE_TYPE_STRING,
       "Printout pid on stdout [-], stderr [+], or a file [anything else]" },
-    
+
     /* select stdin option */
     { NULL, '\0', "stdin", "stdin", 1,
       &myglobals.stdin_target, OPAL_CMD_LINE_TYPE_STRING,
       "Specify procs to receive stdin [rank, all, none] (default: 0, indicating rank 0)" },
-    
+
     /* request that argv[0] be indexed */
     { NULL, '\0', "index-argv-by-rank", "index-argv-by-rank", 0,
       &myglobals.index_argv, OPAL_CMD_LINE_TYPE_BOOL,
@@ -197,17 +193,17 @@ static opal_cmd_line_init_t cmd_line_init[] = {
     { NULL, '\0', "n", "n", 1,
       &myglobals.num_procs, OPAL_CMD_LINE_TYPE_INT,
       "Number of processes to run" },
-    
+
     /* uri of Open MPI HNP, or at least where to get it */
     { NULL, '\0', "hnp", "hnp", 1,
       &myglobals.hnp, OPAL_CMD_LINE_TYPE_STRING,
       "Specify the URI of the Open MPI server, or the name of the file (specified as file:filename) that contains that info" },
-    
+
     /* uri of Open MPI HNP, or at least where to get it */
     { NULL, '\0', "terminate", "terminate", 0,
       &myglobals.terminate, OPAL_CMD_LINE_TYPE_BOOL,
       "Terminate the DVM" },
-    
+
 
     /* Export environment variables; potentially used multiple times,
        so it does not make sense to set into a variable */
@@ -317,12 +313,12 @@ static opal_cmd_line_init_t cmd_line_init[] = {
     { NULL, 'd', "debug-devel", "debug-devel", 0,
       &myglobals.debug, OPAL_CMD_LINE_TYPE_BOOL,
       "Enable debugging of OpenRTE" },
-    
+
     { NULL, '\0', "allow-run-as-root", "allow-run-as-root", 0,
       &myglobals.run_as_root, OPAL_CMD_LINE_TYPE_BOOL,
       "Allow execution as root (STRONGLY DISCOURAGED)" },
 
-/* End of list */
+    /* End of list */
     { NULL, '\0', NULL, NULL, 0,
       NULL, OPAL_CMD_LINE_TYPE_NULL, NULL }
 };
@@ -356,14 +352,14 @@ int main(int argc, char *argv[])
     orte_job_t *jdata=NULL;
     opal_buffer_t *req;
     orte_daemon_cmd_flag_t cmd = ORTE_DAEMON_SPAWN_JOB_CMD;
-    
+
     /* Setup and parse the command line */
     memset(&myglobals, 0, sizeof(myglobals));
     /* find our basename (the name of the executable) so that we can
        use it in pretty-print error messages */
     myglobals.basename = opal_basename(argv[0]);
 
-    
+
     opal_cmd_line_create(&cmd_line, cmd_line_init);
     mca_base_cmd_line_setup(&cmd_line);
     if (OPAL_SUCCESS != (rc = opal_cmd_line_parse(&cmd_line, true,
@@ -379,9 +375,9 @@ int main(int argc, char *argv[])
        that --version --help works as one might expect. */
     if (myglobals.version) {
         char *str;
-        str = opal_info_make_version_str("all", 
-                                         OPAL_MAJOR_VERSION, OPAL_MINOR_VERSION, 
-                                         OPAL_RELEASE_VERSION, 
+        str = opal_info_make_version_str("all",
+                                         OPAL_MAJOR_VERSION, OPAL_MINOR_VERSION,
+                                         OPAL_RELEASE_VERSION,
                                          OPAL_GREEK_VERSION,
                                          OPAL_REPO_REV);
         if (NULL != str) {
@@ -414,14 +410,14 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
-    /*
+     /*
      * Since this process can now handle MCA/GMCA parameters, make sure to
      * process them.
      */
     if (OPAL_SUCCESS != mca_base_cmd_line_process_args(&cmd_line, &environ, &environ)) {
         exit(1);
     }
-    
+
     /* Ensure that enough of OPAL is setup for us to be able to run */
     /*
      * NOTE: (JJH)
@@ -430,7 +426,7 @@ int main(int argc, char *argv[])
      *  line could contain MCA parameters that affect the way opal_init_util()
      *  functions. AMCA parameters are one such option normally received on the
      *  command line that affect the way opal_init_util() behaves.
-     *  It is "safe" to call mca_base_cmd_line_process_args() before 
+     *  It is "safe" to call mca_base_cmd_line_process_args() before
      *  opal_init_util() since mca_base_cmd_line_process_args() does *not*
      *  depend upon opal_init_util() functionality.
      */
@@ -438,10 +434,36 @@ int main(int argc, char *argv[])
     if (OPAL_SUCCESS != opal_init(&argc, &argv)) {
         exit(1);
     }
-    
+
+    /* Check for help request */
+    if (myglobals.help) {
+        char *str, *args = NULL;
+        char *project_name = NULL;
+        opal_output(0, "GETTING HELP");
+        if (0 == strcmp(myglobals.basename, "mpirun")) {
+            project_name = "Open MPI";
+        } else {
+            project_name = "OpenRTE";
+        }
+        args = opal_cmd_line_get_usage_msg(&cmd_line);
+        opal_output(0, "CMD LINE %s", args);
+        str = opal_show_help_string("help-orterun.txt", "orterun:usage", false,
+                                    myglobals.basename, project_name, OPAL_VERSION,
+                                    myglobals.basename, args,
+                                    PACKAGE_BUGREPORT);
+        if (NULL != str) {
+            printf("%s", str);
+            free(str);
+        }
+        free(args);
+
+        /* If someone asks for help, that should be all we do */
+        exit(0);
+    }
+
     /* Check for some "global" command line params */
     parse_globals(argc, argv, &cmd_line);
-    
+
     /* if they didn't point us at an HNP, that's an error */
     if (NULL == myglobals.hnp) {
         fprintf(stderr, "orte-submit: required option --hnp not provided\n");
@@ -452,7 +474,7 @@ int main(int argc, char *argv[])
     if (0 == strncasecmp(myglobals.hnp, "file", strlen("file"))) {
         char input[1024], *filename;
         FILE *fp;
-            
+
         /* it is a file - get the filename */
         filename = strchr(myglobals.hnp, ':');
         if (NULL == filename) {
@@ -461,13 +483,13 @@ int main(int argc, char *argv[])
             exit(1);
         }
         ++filename; /* space past the : */
-            
+
         if (0 >= strlen(filename)) {
             /* they forgot to give us the name! */
             orte_show_help("help-orte-top.txt", "orte-top:hnp-filename-bad", true, "uri", myglobals.hnp);
             exit(1);
         }
-            
+
         /* open the file and extract the uri */
         fp = fopen(filename, "r");
         if (NULL == fp) { /* can't find or read file! */
@@ -498,7 +520,7 @@ int main(int argc, char *argv[])
     /* we are never allowed to operate as a distributed tool,
      * so insist on the ess/tool component */
     opal_setenv("OMPI_MCA_ess", "tool", true, &environ);
-    
+
     if (myglobals.debug) {
         orte_devel_level_output = true;
     }
@@ -525,7 +547,7 @@ int main(int argc, char *argv[])
             fprintf(stderr, "%s\n", environ[i]);
         }
     }
-    
+
     /* set the info in our contact table */
     orte_rml.set_contact_info(orte_process_info.my_hnp_uri);
     /* extract the name */
@@ -539,7 +561,7 @@ int main(int argc, char *argv[])
         orte_finalize();
         exit(1);
     }
-    
+
      /* set the target hnp as our lifeline so we will terminate if it exits */
     orte_routed.set_lifeline(ORTE_PROC_MY_HNP);
 
@@ -548,7 +570,7 @@ int main(int argc, char *argv[])
                             ORTE_RML_PERSISTENT, local_recv, NULL);
 
     /* set a timeout event in case the HNP doesn't answer */
-    
+
     /* if this is the terminate command, just send it */
     if (myglobals.terminate) {
         opal_buffer_t *buf;
@@ -560,7 +582,7 @@ int main(int argc, char *argv[])
                                 orte_rml_send_callback, NULL);
         goto waiting;
     }
-    
+
     /* default our personality to OMPI */
     if (NULL == myglobals.personality) {
         myglobals.personality = strdup("ompi");
@@ -578,7 +600,7 @@ int main(int argc, char *argv[])
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
     jdata->personality = strdup(myglobals.personality);
-    
+
     /* check what user wants us to do with stdin */
     if (NULL != myglobals.stdin_target) {
         if (0 == strcmp(myglobals.stdin_target, "all")) {
@@ -589,7 +611,7 @@ int main(int argc, char *argv[])
             jdata->stdin_target = strtoul(myglobals.stdin_target, NULL, 10);
         }
     }
-    
+
     /* if we want the argv's indexed, indicate that */
     if (myglobals.index_argv) {
         orte_set_attribute(&jdata->attributes, ORTE_JOB_INDEX_ARGV, ORTE_ATTR_GLOBAL, NULL, OPAL_BOOL);
@@ -600,7 +622,7 @@ int main(int argc, char *argv[])
 
     /* create the map object to communicate policies */
     jdata->map = OBJ_NEW(orte_job_map_t);
-    
+
     if (NULL != myglobals.mapping_policy) {
         if (ORTE_SUCCESS != (rc = orte_rmaps_base_set_mapping_policy(&jdata->map->mapping, NULL, myglobals.mapping_policy))) {
             ORTE_ERROR_LOG(rc);
@@ -624,7 +646,7 @@ int main(int argc, char *argv[])
         }
     }
 #endif /* OPAL_HAVE_HWLOC */
-    
+
     /* if they asked for nolocal, mark it so */
     if (myglobals.nolocal) {
         ORTE_SET_MAPPING_DIRECTIVE(jdata->map->mapping, ORTE_MAPPING_NO_USE_LOCAL);
@@ -647,7 +669,7 @@ int main(int argc, char *argv[])
     } else {
         jdata->personality = strdup(myglobals.personality);
     }
-    
+
     if (0 == jdata->num_apps) {
         /* This should never happen -- this case should be caught in
            create_app(), but let's just double check... */
@@ -693,14 +715,18 @@ int main(int argc, char *argv[])
         exit(rc);
     }
     orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, req, ORTE_RML_TAG_DAEMON, orte_rml_send_callback, NULL);
-    
-    // wait for response and unpack the status, jobid
-    ORTE_WAIT_FOR_COMPLETION(myspawn);
-    opal_output(0, "Job %s has launched", ORTE_JOBID_PRINT(jdata->jobid));
-    
- waiting:
-    ORTE_WAIT_FOR_COMPLETION(mywait);
 
+    // wait for response and unpack the status, jobid
+    while (myspawn) {
+        opal_event_loop(orte_event_base, OPAL_EVLOOP_ONCE);
+    }
+    opal_output(0, "Job %s has launched", ORTE_JOBID_PRINT(jdata->jobid));
+
+ waiting:
+    while (mywait) {
+        opal_event_loop(orte_event_base, OPAL_EVLOOP_ONCE);
+    }
+ 
  DONE:
     /* cleanup and leave */
     orte_finalize();
@@ -761,7 +787,7 @@ static int parse_globals(int argc, char* argv[], opal_cmd_line_t *cmd_line)
             fclose(fp);
         }
     }
-    
+
     return ORTE_SUCCESS;
 }
 
@@ -903,7 +929,7 @@ static int parse_locals(orte_job_t *jdata, int argc, char* argv[])
              * So we make a copy of the variable.
              */
             char *s = strdup(env[j]);
-            
+
             if (NULL == s) {
                 return OPAL_ERR_OUT_OF_RESOURCE;
             }
@@ -969,7 +995,7 @@ static int create_app(int argc, char* argv[],
             goto cleanup;
         }
     }
-    
+
     /* Parse application command line options. */
 
     init_globals();
@@ -1014,7 +1040,7 @@ static int create_app(int argc, char* argv[],
                                                     argc, count, argv))) {
         goto cleanup;
     }
-    
+
     /* Grab all OMPI_* environment variables */
 
     app->env = opal_argv_copy(*app_env);
@@ -1024,7 +1050,7 @@ static int create_app(int argc, char* argv[],
                                                     environ, &app->env))) {
         goto cleanup;
     }
-    
+
 
     /* Did the user request a specific wdir? */
 
@@ -1063,7 +1089,7 @@ static int create_app(int argc, char* argv[],
     if (0 == total_num_apps) {
         /* Check to see if the user explicitly wanted to disable automatic
            --prefix behavior */
-        
+
         if (opal_cmd_line_is_taken(&cmd_line, "noprefix")) {
             want_prefix_by_default = false;
         }
@@ -1125,8 +1151,8 @@ static int create_app(int argc, char* argv[],
         }
     }
 
-    /* Did the user specify a hostfile. Need to check for both 
-     * hostfile and machine file. 
+    /* Did the user specify a hostfile. Need to check for both
+     * hostfile and machine file.
      * We can only deal with one hostfile per app context, otherwise give an error.
      */
     if (0 < (j = opal_cmd_line_get_ninsts(&cmd_line, "hostfile"))) {
@@ -1149,7 +1175,7 @@ static int create_app(int argc, char* argv[],
             orte_set_attribute(&app->attributes, ORTE_APP_HOSTFILE, ORTE_ATTR_GLOBAL, value, OPAL_STRING);
         }
     }
- 
+
     /* Did the user specify any hosts? */
     if (0 < (j = opal_cmd_line_get_ninsts(&cmd_line, "host"))) {
         char **targ=NULL, *tval;
@@ -1242,7 +1268,7 @@ static int create_app(int argc, char* argv[],
             opal_argv_insert_element(&app->argv, 1, value);
             free(value);
         }
-        
+
         /* see if we were given a class path */
         found = false;
         for (i=1; NULL != app->argv[i]; i++) {
@@ -1357,7 +1383,7 @@ static int create_app(int argc, char* argv[],
         }
     }
     free(appname);
-    
+
     *app_ptr = app;
     app = NULL;
     *made_app = true;
@@ -1510,7 +1536,6 @@ static int parse_appfile(orte_job_t *jdata, char *filename, char ***env)
             if (NULL != tmp_env) {
                 opal_argv_free(tmp_env);
             }
-            opal_argv_free(argv);
             if (made_app) {
                 app->idx = app_num;
                 ++app_num;
@@ -1518,13 +1543,14 @@ static int parse_appfile(orte_job_t *jdata, char *filename, char ***env)
                 ++jdata->num_apps;
             }
         }
+        opal_argv_free(argv);
     } while (!feof(fp));
     fclose(fp);
 
     /* All done */
 
     free(filename);
-    
+
     return ORTE_SUCCESS;
 }
 

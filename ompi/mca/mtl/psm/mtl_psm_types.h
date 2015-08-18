@@ -27,27 +27,27 @@
 
 #include "ompi/mca/mtl/mtl.h"
 #include "ompi/mca/mtl/base/base.h"
-#include "mtl_psm_endpoint.h" 
+#include "mtl_psm_endpoint.h"
 
 #include "psm.h"
 
 
 BEGIN_C_DECLS
 
-/** 
+/**
  * MTL Module Interface
  */
-struct mca_mtl_psm_module_t { 
+struct mca_mtl_psm_module_t {
     mca_mtl_base_module_t super; /**< base MTL interface */
 
     int32_t      connect_timeout;
-  
+
     int32_t      debug_level;
     int32_t      ib_unit;
     int32_t      ib_port;
     int32_t      ib_service_level;
     uint64_t     ib_pkey;
-  
+
 #if PSM_VERNO >= 0x010d
     unsigned long long ib_service_id;
     /* use int instead of psm_path_res_t so we can register this with
@@ -59,19 +59,19 @@ struct mca_mtl_psm_module_t {
     psm_mq_t	 mq;
     psm_epid_t	 epid;
     psm_epaddr_t epaddr;
-}; 
+};
 
 typedef struct mca_mtl_psm_module_t mca_mtl_psm_module_t;
 
 extern mca_mtl_psm_module_t ompi_mtl_psm;
 
-struct mca_mtl_psm_component_t { 
-    mca_mtl_base_component_2_0_0_t          super;  /**< base MTL component */ 
+struct mca_mtl_psm_component_t {
+    mca_mtl_base_component_2_0_0_t          super;  /**< base MTL component */
 };
 typedef struct mca_mtl_psm_component_t mca_mtl_psm_component_t;
 
 OMPI_DECLSPEC extern mca_mtl_psm_component_t mca_mtl_psm_component;
-    
+
 #define PSM_MAKE_MQTAG(ctxt,rank,utag)		    \
         ( (((ctxt)&0xffffULL)<<48)| (((rank)&0xffffULL)<<32)| \
 	  (((utag)&0xffffffffULL)) )

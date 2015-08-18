@@ -7,6 +7,7 @@
  *                         All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -18,9 +19,7 @@
 #include "opal/constants.h"
 #include "opal/types.h"
 
-#ifdef HAVE_STRING_H
 #include <string.h>
-#endif
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
@@ -95,15 +94,12 @@ const opal_pmix_base_module_t opal_pmix_native_module = {
     native_get_attr_nb,
     native_spawn,
     native_job_connect,
-    native_job_disconnect,
-    opal_pmix_base_register_handler,
-    opal_pmix_base_deregister_handler
+    native_job_disconnect
 };
 
 // local variables
 static int init_cntr = 0;
-opal_process_name_t native_pname = {0};
-
+static opal_process_name_t native_pname = {0};
 
 /* callback for wait completion */
 static void wait_cbfunc(opal_buffer_t *buf, void *cbdata)
@@ -194,12 +190,13 @@ static int native_init(void)
         opal_argv_free(uri);
 
         /* create an event base and progress thread for us */
-        if (NULL == (mca_pmix_native_component.evbase = opal_start_progress_thread("pmix_native", true))) {
+        if (NULL == (mca_pmix_native_component.evbase =
+                     opal_progress_thread_init(NULL))) {
             return OPAL_ERROR;
         }
     }
 
-    /* we will connect on first send */
+     /* we will connect on first send */
 
     return OPAL_SUCCESS;
 }
@@ -213,7 +210,7 @@ static int native_fini(void)
 
     if (1 != init_cntr) {
         --init_cntr;
-       return OPAL_SUCCESS;
+        return OPAL_SUCCESS;
     }
     init_cntr = 0;
 
@@ -256,7 +253,7 @@ static int native_fini(void)
     }
 
     if (NULL != mca_pmix_native_component.evbase) {
-        opal_stop_progress_thread("pmix_native", true);
+        opal_progress_thread_finalize(NULL);
         mca_pmix_native_component.evbase = NULL;
     }
 
@@ -275,12 +272,20 @@ static bool native_initialized(void)
     return false;
 }
 
+static void timeout(int sd, short args, void *cbdata)
+{
+    pmix_cb_t *cb = (pmix_cb_t*)cbdata;
+    cb->active = false;
+}
+
 static int native_abort(int flag, const char msg[])
 {
     opal_buffer_t *bfr;
     pmix_cmd_t cmd = PMIX_ABORT_CMD;
     int rc;
     pmix_cb_t *cb;
+    opal_event_t ev;
+    struct timeval tv = {1, 0};
 
     opal_output_verbose(2, opal_pmix_base_framework.framework_output,
                         "%s pmix:native abort called",
@@ -291,39 +296,48 @@ static int native_abort(int flag, const char msg[])
         return OPAL_SUCCESS;
     }
 
-    /* create a buffer to hold the message */
-    bfr = OBJ_NEW(opal_buffer_t);
-    /* pack the cmd */
-    if (OPAL_SUCCESS != (rc = opal_dss.pack(bfr, &cmd, 1, PMIX_CMD_T))) {
-        OPAL_ERROR_LOG(rc);
-        OBJ_RELEASE(bfr);
-        return rc;
-    }
-    /* pack the status flag */
-    if (OPAL_SUCCESS != (rc = opal_dss.pack(bfr, &flag, 1, OPAL_INT))) {
-        OPAL_ERROR_LOG(rc);
-        OBJ_RELEASE(bfr);
-        return rc;
-    }
-    /* pack the string message - a NULL is okay */
-    if (OPAL_SUCCESS != (rc = opal_dss.pack(bfr, &msg, 1, OPAL_STRING))) {
-        OPAL_ERROR_LOG(rc);
-        OBJ_RELEASE(bfr);
-        return rc;
-    }
+    if (PMIX_USOCK_CONNECTED == mca_pmix_native_component.state) {
+        /* create a buffer to hold the message */
+        bfr = OBJ_NEW(opal_buffer_t);
+        /* pack the cmd */
+        if (OPAL_SUCCESS != (rc = opal_dss.pack(bfr, &cmd, 1, PMIX_CMD_T))) {
+            OPAL_ERROR_LOG(rc);
+            OBJ_RELEASE(bfr);
+            return rc;
+        }
+        /* pack the status flag */
+        if (OPAL_SUCCESS != (rc = opal_dss.pack(bfr, &flag, 1, OPAL_INT))) {
+            OPAL_ERROR_LOG(rc);
+            OBJ_RELEASE(bfr);
+            return rc;
+        }
+        /* pack the string message - a NULL is okay */
+        if (OPAL_SUCCESS != (rc = opal_dss.pack(bfr, &msg, 1, OPAL_STRING))) {
+            OPAL_ERROR_LOG(rc);
+            OBJ_RELEASE(bfr);
+            return rc;
+        }
 
-    /* create a callback object as we need to pass it to the
-     * recv routine so we know which callback to use when
-     * the return message is recvd */
-    cb = OBJ_NEW(pmix_cb_t);
-    cb->active = true;
+        /* create a callback object as we need to pass it to the
+         * recv routine so we know which callback to use when
+         * the return message is recvd */
+        cb = OBJ_NEW(pmix_cb_t);
+        cb->active = true;
 
-    /* push the message into our event base to send to the server */
-    PMIX_ACTIVATE_SEND_RECV(bfr, wait_cbfunc, cb);
+        /* push a timeout event to wake us up just in case this
+         * message cannot get thru - e.g., someone else may have
+         * detected the failure of the server and ordered an abort */
+        opal_event_evtimer_set(mca_pmix_native_component.evbase,
+                               &ev, timeout, cb);
+        opal_event_evtimer_add(&ev, &tv);
 
-    /* wait for the release */
-    PMIX_WAIT_FOR_COMPLETION(cb->active);
-    OBJ_RELEASE(cb);
+        /* push the message into our event base to send to the server */
+        PMIX_ACTIVATE_SEND_RECV(bfr, wait_cbfunc, cb);
+
+        /* wait for the release */
+        PMIX_WAIT_FOR_COMPLETION(cb->active);
+        OBJ_RELEASE(cb);
+    }
     return OPAL_SUCCESS;
 }
 
@@ -729,7 +743,7 @@ static int native_get(const opal_process_name_t *id,
     opal_list_t vals;
     opal_value_t *kp;
     bool found;
-    
+
     opal_output_verbose(2, opal_pmix_base_framework.framework_output,
                         "%s pmix:native getting value for proc %s key %s",
                         OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),

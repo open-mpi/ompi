@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -17,14 +17,14 @@
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  *
  */
 
-/** @file 
+/** @file
  *
  *  A hash table that may be indexed with either fixed length
  *  (e.g. uint32_t/uint64_t) or arbitrary size binary key
@@ -37,16 +37,14 @@
 
 #include "opal_config.h"
 
-#ifdef HAVE_STDINT_H
 #include <stdint.h>
-#endif
 #include "opal/class/opal_list.h"
 #include "opal/util/proc.h"
 
 BEGIN_C_DECLS
 
 OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_hash_table_t);
-                           
+
 struct opal_hash_table_t
 {
     opal_object_t        super;          /**< subclass of opal_object_t */
@@ -60,14 +58,14 @@ struct opal_hash_table_t
 };
 typedef struct opal_hash_table_t opal_hash_table_t;
 
-                           
-    
+
+
 /**
  *  Initializes the table size, must be called before using
  *  the table.
  *
  *  @param   table   The input hash table (IN).
- *  @param   size    The size of the table, which will be rounded up 
+ *  @param   size    The size of the table, which will be rounded up
  *                   (if required) to the next highest power of two (IN).
  *  @return  OPAL error code.
  *
@@ -116,7 +114,7 @@ OPAL_DECLSPEC int opal_hash_table_remove_all(opal_hash_table_t *ht);
  *
  */
 
-OPAL_DECLSPEC int opal_hash_table_get_value_uint32(opal_hash_table_t* table, uint32_t key, 
+OPAL_DECLSPEC int opal_hash_table_get_value_uint32(opal_hash_table_t* table, uint32_t key,
                                                    void** ptr);
 
 /**
@@ -194,7 +192,7 @@ OPAL_DECLSPEC int opal_hash_table_remove_value_uint64(opal_hash_table_t *table, 
  *
  */
 
-OPAL_DECLSPEC int opal_hash_table_get_value_ptr(opal_hash_table_t *table, const void* key, 
+OPAL_DECLSPEC int opal_hash_table_get_value_ptr(opal_hash_table_t *table, const void* key,
                                                 size_t keylen, void **ptr);
 
 /**
@@ -248,11 +246,11 @@ OPAL_DECLSPEC int opal_hash_table_get_first_key_uint32(opal_hash_table_t *table,
 
 
 /**
- *  Get the next 32 bit key from the hash table, knowing the current key 
+ *  Get the next 32 bit key from the hash table, knowing the current key
  *  @param  table    The hash table pointer (IN)
  *  @param  key      The key (OUT)
  *  @param  value    The value corresponding to this key (OUT)
- *  @param  in_node  The node pointer from previous call to either get_first 
+ *  @param  in_node  The node pointer from previous call to either get_first
                      or get_next (IN)
  *  @param  out_node The pointer to the hash table internal node which stores
  *                   the key-value pair (this is required for subsequent calls
@@ -284,11 +282,11 @@ OPAL_DECLSPEC int opal_hash_table_get_first_key_uint64(opal_hash_table_t *table,
 
 
 /**
- *  Get the next 64 bit key from the hash table, knowing the current key 
+ *  Get the next 64 bit key from the hash table, knowing the current key
  *  @param  table    The hash table pointer (IN)
  *  @param  key      The key (OUT)
  *  @param  value    The value corresponding to this key (OUT)
- *  @param  in_node  The node pointer from previous call to either get_first 
+ *  @param  in_node  The node pointer from previous call to either get_first
                      or get_next (IN)
  *  @param  out_node The pointer to the hash table internal node which stores
  *                   the key-value pair (this is required for subsequent calls
@@ -296,7 +294,7 @@ OPAL_DECLSPEC int opal_hash_table_get_first_key_uint64(opal_hash_table_t *table,
  *  @return OPAL error code
  *
  */
-    
+
 OPAL_DECLSPEC int opal_hash_table_get_next_key_uint64(opal_hash_table_t *table, uint64_t *key,
                                        void **value, void *in_node,
                                        void **out_node);
@@ -321,12 +319,12 @@ OPAL_DECLSPEC int opal_hash_table_get_first_key_ptr(opal_hash_table_t *table, vo
 
 
 /**
- *  Get the next ptr bit key from the hash table, knowing the current key 
+ *  Get the next ptr bit key from the hash table, knowing the current key
  *  @param  table    The hash table pointer (IN)
  *  @param  key      The key (OUT)
  *  @param  key_size The key size (OUT)
  *  @param  value    The value corresponding to this key (OUT)
- *  @param  in_node  The node pointer from previous call to either get_first 
+ *  @param  in_node  The node pointer from previous call to either get_first
                      or get_next (IN)
  *  @param  out_node The pointer to the hash table internal node which stores
  *                   the key-value pair (this is required for subsequent calls
@@ -342,7 +340,7 @@ OPAL_DECLSPEC int opal_hash_table_get_next_key_ptr(opal_hash_table_t *table, voi
 
 
 OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_proc_table_t);
-                           
+
 struct opal_proc_table_t
 {
     opal_hash_table_t    super;          /**< subclass of opal_object_t */
@@ -355,16 +353,16 @@ struct opal_proc_table_t
 };
 typedef struct opal_proc_table_t opal_proc_table_t;
 
-                           
-    
+
+
 /**
  *  Initializes the table size, must be called before using
  *  the table.
  *
  *  @param   pt      The input hash table (IN).
- *  @param   jobids  The size of the jobids table, which will be rounded up 
+ *  @param   jobids  The size of the jobids table, which will be rounded up
  *                   (if required) to the next highest power of two (IN).
- *  @param   vpids   The size of the vpids table, which will be rounded up 
+ *  @param   vpids   The size of the vpids table, which will be rounded up
  *                   (if required) to the next highest power of two (IN).
  *  @return  OPAL error code.
  *
@@ -395,7 +393,7 @@ OPAL_DECLSPEC int opal_proc_table_remove_all(opal_proc_table_t *pt);
  *
  */
 
-OPAL_DECLSPEC int opal_proc_table_get_value(opal_proc_table_t* pt, opal_process_name_t key, 
+OPAL_DECLSPEC int opal_proc_table_get_value(opal_proc_table_t* pt, opal_process_name_t key,
                                                    void** ptr);
 
 /**
@@ -443,16 +441,16 @@ OPAL_DECLSPEC int opal_proc_table_get_first_key(opal_proc_table_t *pt, opal_proc
 
 
 /**
- *  Get the next opal_process_name_t key from the hash table, knowing the current key 
+ *  Get the next opal_process_name_t key from the hash table, knowing the current key
  *  @param  pt       The hash table pointer (IN)
  *  @param  key      The key (OUT)
  *  @param  value    The value corresponding to this key (OUT)
- *  @param  in_node1 The first node pointer from previous call to either get_first 
+ *  @param  in_node1 The first node pointer from previous call to either get_first
                      or get_next (IN)
  *  @param  out_node1 The first pointer to the hash table internal node which stores
  *                   the key-value pair (this is required for subsequent calls
  *                   to get_next_key) (OUT)
- *  @param  in_node2 The second node pointer from previous call to either get_first 
+ *  @param  in_node2 The second node pointer from previous call to either get_first
                      or get_next (IN)
  *  @param  out_node2 The second pointer to the hash table internal node which stores
  *                   the key-value pair (this is required for subsequent calls

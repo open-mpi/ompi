@@ -5,25 +5,31 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
 
 #include "opal_config.h"
 
+#include <errno.h>
 #include <string.h>
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif  /* HAVE_UNISTD_H */
 #include <stdlib.h>
+#if HAVE_SYS_STAT_H
+#include <sys/stat.h>
+#endif /* HAVE_SYS_STAT_H */
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif  /* HAVE_SYS_TYPES_H */
@@ -108,16 +114,15 @@ int opal_os_dirpath_create(const char *path, const mode_t mode)
 
         /* Now that we finally have the name to check, check it.
            Create it if it doesn't exist. */
-        if (0 != (ret = stat(tmp, &buf)) ) {
-            if (0 != (ret = mkdir(tmp, mode) && 0 != stat(tmp, &buf))) { 
-                opal_output(0,
-                            "opal_os_dirpath_create: "
-                            "Error: Unable to create the sub-directory (%s) of (%s), mkdir failed [%d]\n",
-                            tmp, path, ret);
-                opal_argv_free(parts);
-                free(tmp);
-                return OPAL_ERROR;
-            }
+        ret = mkdir(tmp, mode);
+        if ((0 > ret && EEXIST != errno) || 0 != stat(tmp, &buf)) {
+            opal_output(0,
+                        "opal_os_dirpath_create: "
+                        "Error: Unable to create the sub-directory (%s) of (%s), mkdir failed [%d]\n",
+                        tmp, path, ret);
+            opal_argv_free(parts);
+            free(tmp);
+            return OPAL_ERROR;
         }
     }
 
@@ -128,7 +133,7 @@ int opal_os_dirpath_create(const char *path, const mode_t mode)
     return OPAL_SUCCESS;
 }
 
-/** 
+/**
  * This function attempts to remove a directory along with all the
  * files in it.  If the recursive variable is non-zero, then it will
  * try to recursively remove all directories.  If provided, the
@@ -145,7 +150,7 @@ int opal_os_dirpath_destroy(const char *path,
     DIR *dp;
     struct dirent *ep;
     char *filenm;
-#ifndef HAVE_STRUCT_DIRENT_D_TYPE 
+#ifndef HAVE_STRUCT_DIRENT_D_TYPE
     struct stat buf;
 #endif
 
@@ -175,13 +180,13 @@ int opal_os_dirpath_destroy(const char *path,
             (0 == strcmp(ep->d_name, "..")) ) {
             continue;
         }
-        
+
         /* Check to see if it is a directory */
         is_dir = false;
 
         /* Create a pathname.  This is not always needed, but it makes
          * for cleaner code just to create it here.  Note that we are
-         * allocating memory here, so we need to free it later on. 
+         * allocating memory here, so we need to free it later on.
          */
         filenm = opal_os_path(false, path, ep->d_name, NULL);
 #ifdef HAVE_STRUCT_DIRENT_D_TYPE
@@ -193,7 +198,7 @@ int opal_os_dirpath_destroy(const char *path,
         if (rc < 0 || S_ISDIR(buf.st_mode)) {
             is_dir = true;
         }
-#endif /* have dirent.d_type */        
+#endif /* have dirent.d_type */
 
         /*
          * If not recursively decending, then if we find a directory then fail
@@ -237,12 +242,12 @@ int opal_os_dirpath_destroy(const char *path,
             free(filenm);
         }
     }
-    
+
     /* Done with this directory */
     closedir(dp);
-    
+
  cleanup:
-    
+
     /*
      * If the directory is empty, them remove it
      */
@@ -256,7 +261,7 @@ int opal_os_dirpath_destroy(const char *path,
 bool opal_os_dirpath_is_empty(const char *path ) {
     DIR *dp;
     struct dirent *ep;
-    
+
     if (NULL != path) {  /* protect against error */
     	dp = opendir(path);
     	if (NULL != dp) {

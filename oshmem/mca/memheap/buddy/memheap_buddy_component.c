@@ -5,9 +5,9 @@
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 #include "oshmem_config.h"
@@ -30,7 +30,7 @@ mca_memheap_base_component_t mca_memheap_buddy_component = {
         .mca_component_name = "buddy",
         MCA_BASE_MAKE_VERSION(component, OSHMEM_MAJOR_VERSION, OSHMEM_MINOR_VERSION,
                               OSHMEM_RELEASE_VERSION),
-        
+
         .mca_open_component = _basic_open,
         .mca_close_component = mca_memheap_buddy_component_close,
     },
@@ -64,7 +64,7 @@ mca_memheap_base_module_t* mca_memheap_buddy_component_init(memheap_context_t *c
 
 /*
  * This function is automaticaly called from mca_base_components_close.
- * It releases the component's allocated memory. 
+ * It releases the component's allocated memory.
  */
 int mca_memheap_buddy_component_close()
 {

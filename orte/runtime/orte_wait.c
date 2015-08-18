@@ -5,28 +5,26 @@
  * Copyright (c) 2004-2008 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2013 Los Alamos National Security, LLC.  All rights
- *                         reserved. 
+ *                         reserved.
  * Copyright (c) 2008      Institut National de Recherche en Informatique
  *                         et Automatique. All rights reserved.
  * Copyright (c) 2014      Intel Corporation.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
 
 #include "orte_config.h"
 
-#ifdef HAVE_STRING_H
 #include <string.h>
-#endif
 #include <assert.h>
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
@@ -260,7 +258,7 @@ static void wait_signal_callback(int fd, short event, void *arg)
         if (pid <= 0) {
             return;
         }
-        
+
         /* we are already in an event, so it is safe to access the list */
         OPAL_LIST_FOREACH(t2, &pending_cbs, orte_wait_tracker_t) {
             if (pid == t2->child->pid) {

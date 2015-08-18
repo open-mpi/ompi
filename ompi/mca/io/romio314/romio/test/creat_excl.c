@@ -1,5 +1,5 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/*  
+/*
  *  (C) 2001 by Argonne National Laboratory.
  *      See COPYRIGHT in top-level directory.
  */
@@ -7,7 +7,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-/* 
+/*
  * the new defered open code made some changes to the way we manage CREAT|EXCL,
  * so test out that code path */
 
@@ -19,7 +19,7 @@ struct options {
 typedef struct options options;
 
 
-void handle_error(int errcode, char *str) 
+void handle_error(int errcode, char *str)
 {
 	char msg[MPI_MAX_ERROR_STRING];
 	int resultlen;
@@ -28,7 +28,7 @@ void handle_error(int errcode, char *str)
 	MPI_Abort(MPI_COMM_WORLD, 1);
 }
 
-void parse_args(int argc, char ** argv, int rank, options *opts) 
+void parse_args(int argc, char ** argv, int rank, options *opts)
 {
 	int i, len=0;
 	if (rank == 0) {

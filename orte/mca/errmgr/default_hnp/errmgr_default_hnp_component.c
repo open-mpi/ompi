@@ -5,9 +5,9 @@
  *                         reserved.
  *
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -22,7 +22,7 @@
 /*
  * Public string for version number
  */
-const char *orte_errmgr_default_hnp_component_version_string = 
+const char *orte_errmgr_default_hnp_component_version_string =
     "ORTE ERRMGR default_hnp MCA component version " ORTE_VERSION;
 
 /*
@@ -38,7 +38,7 @@ static int default_hnp_component_query(mca_base_module_t **module, int *priority
  * and pointer to our public functions in it
  */
 orte_errmgr_base_component_t mca_errmgr_default_hnp_component = {
-    /* Handle the general mca_component_t struct containing 
+    /* Handle the general mca_component_t struct containing
      *  meta information about the component default_hnp
      */
     .base_version = {
@@ -76,7 +76,7 @@ static int default_hnp_register(void)
     return ORTE_SUCCESS;
 }
 
-static int default_hnp_open(void) 
+static int default_hnp_open(void)
 {
     return ORTE_SUCCESS;
 }

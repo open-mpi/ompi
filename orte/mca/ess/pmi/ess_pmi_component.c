@@ -5,9 +5,9 @@
  *                         rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  *
  * These symbols are in a file by themselves to provide nice linker
@@ -68,7 +68,7 @@ static int pmi_component_open(void)
 static int pmi_component_query(mca_base_module_t **module, int *priority)
 {
     int ret;
-    
+
     /* all APPS must use pmix */
     if (ORTE_PROC_IS_APP) {
         /* open and setup pmix */

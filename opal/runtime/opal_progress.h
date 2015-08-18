@@ -5,17 +5,17 @@
  * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2014 Los Alamos National Security, LLC.  All rights
- *                         reserved. 
+ *                         reserved.
  *
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -36,7 +36,7 @@ BEGIN_C_DECLS
 /**
  * Initialize the progress engine
  *
- * Initialize the progress engine, including constructing the 
+ * Initialize the progress engine, including constructing the
  * proper locks and allocating space for the progress registration
  * functions.  At this point, any function in the progress engine
  * interface may be called.
@@ -44,7 +44,7 @@ BEGIN_C_DECLS
 OPAL_DECLSPEC int opal_progress_init(void);
 
 
-/** 
+/**
  * Shut down the progress engine
  *
  * Shut down the progress engine.  This includes deregistering all
@@ -76,7 +76,7 @@ OPAL_DECLSPEC void opal_progress(void);
  * meaning that the call to opal_event_loop() will block pending
  * events, but may block for a period of time.
  *
- * @param flags     One of the valid vlags argument to 
+ * @param flags     One of the valid vlags argument to
  *                  opal_event_loop().
  * @return          Previous value of flags used to call
  *                  opal_event_loop().
@@ -142,7 +142,7 @@ OPAL_DECLSPEC void opal_progress_set_event_poll_rate(int microseconds);
 
 /**
  * Progress callback function typedef
- * 
+ *
  * Prototype for the a progress function callback.  Progress function
  * callbacks can be registered with opal_progress_register() and
  * deregistered with opal_progress_deregister().  It should be noted

@@ -93,7 +93,7 @@ extern opal_rng_buff_t opal_btl_usnic_rand_buff;
 
 /* Set to >0 to randomly drop received frags.  The higher the number,
    the more frequent the drops. */
-#define WANT_RECV_FRAG_DROPS 0
+#define WANT_RECV_DROPS 0
 /* Set to >0 to randomly fail to send an ACK, mimicing a lost ACK.
    The higher the number, the more frequent the failed-to-send-ACK. */
 #define WANT_FAIL_TO_SEND_ACK 0
@@ -102,10 +102,10 @@ extern opal_rng_buff_t opal_btl_usnic_rand_buff;
    the failed-to-resend-frag. */
 #define WANT_FAIL_TO_RESEND_FRAG 0
 
-#if WANT_RECV_FRAG_DROPS > 0
-#define FAKE_RECV_FRAG_DROP (opal_rand(&opal_btl_usnic_rand_buff) < WANT_RECV_FRAG_DROPS)
+#if WANT_RECV_DROPS > 0
+#define FAKE_RECV_DROP (opal_rand(&opal_btl_usnic_rand_buff) < WANT_RECV_DROPS)
 #else
-#define FAKE_RECV_FRAG_DROP 0
+#define FAKE_RECV_DROP 0
 #endif
 
 #if WANT_FAIL_TO_SEND_ACK > 0
@@ -213,6 +213,22 @@ typedef struct opal_btl_usnic_component_t {
     /* Prefix for the connectivity map filename (map will be output if
        the prefix is non-NULL) */
     char *connectivity_map_prefix;
+
+    /** Expected return value from fi_cq_readerr() upon success.  In
+        libfabric v1.0.0 / API v1.0, the usnic provider returned
+        sizeof(fi_cq_err_entry) upon success.  In libfabric >=v1.1 /
+        API >=v1.1, the usnic provider returned 1 upon success. */
+    ssize_t cq_readerr_success_value;
+    ssize_t cq_readerr_try_again_value;
+
+    /** Offset into the send buffer where the payload will go.  For
+        libfabric v1.0.0 / API v1.0, this is 0.  For libfabric >=v1.1
+        / API >=v1.1, this is the endpoint.msg_prefix_size (i.e.,
+        component.transport_header_len). */
+    uint32_t prefix_send_offset;
+
+    /* OPAL async progress event base */
+    opal_event_base_t *opal_evbase;
 } opal_btl_usnic_component_t;
 
 OPAL_MODULE_DECLSPEC extern opal_btl_usnic_component_t mca_btl_usnic_component;

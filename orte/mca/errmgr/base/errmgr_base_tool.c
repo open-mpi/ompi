@@ -6,17 +6,15 @@
  *                         All rights reserved.
  *
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
 #include "orte_config.h"
 
-#ifdef HAVE_STRING_H
 #include <string.h>
-#endif
 #if HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif  /* HAVE_SYS_TYPES_H */
@@ -276,18 +274,18 @@ static int errmgr_base_tool_start_cmdline_listener(void)
 static int errmgr_base_tool_stop_cmdline_listener(void)
 {
     int exit_status = ORTE_SUCCESS;
-    
+
     if (!errmgr_cmdline_recv_issued && ORTE_PROC_IS_HNP) {
         return ORTE_SUCCESS;
     }
-    
+
     OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base_framework.framework_output,
                          "errmgr:base:tool: Shutdown Command Line Channel"));
-    
+
     orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_MIGRATE);
 
     errmgr_cmdline_recv_issued = false;
-    
+
     return exit_status;
 }
 

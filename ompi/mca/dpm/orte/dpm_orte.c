@@ -14,8 +14,8 @@
  * Copyright (c) 2006-2009 University of Houston.  All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
- *                         reserved. 
- * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
+ *                         reserved.
+ * Copyright (c) 2013-2015 Intel, Inc. All rights reserved
  * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -31,9 +31,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <ctype.h>
-#if HAVE_TIME_H
 #include <time.h>
-#endif
 #if HAVE_SYS_TIME_H
 #include <sys/time.h>
 #endif
@@ -116,7 +114,7 @@ ompi_dpm_base_module_t ompi_dpm_orte_module = {
     ompi_dpm_base_mark_dyncomm,
     open_port,
     parse_port_name,
-    route_to_port, 
+    route_to_port,
     close_port,
     finalize,
     dpm_pconnect,
@@ -147,7 +145,7 @@ static void connect_complete(int status, orte_process_name_t* sender,
  * Init the module
  */
 static int init(void)
-{    
+{
     OBJ_CONSTRUCT(&ompi_dpm_port_mutex, opal_mutex_t);
     next_tag = OMPI_RML_TAG_DYNAMIC;
     OBJ_CONSTRUCT(&orte_dpm_acceptors, opal_list_t);
@@ -192,10 +190,10 @@ static int connect_accept(ompi_communicator_t *comm, int root,
                          "%s dpm:orte:connect_accept with port %s %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          port_string, send_first ? "sending first" : "recv first"));
-    
+
     /* set default error return */
     *newcomm = MPI_COMM_NULL;
-    
+
     size = ompi_comm_size ( comm );
     rank = ompi_comm_rank ( comm );
 
@@ -224,7 +222,7 @@ static int connect_accept(ompi_communicator_t *comm, int root,
         }
         free(hnp_uri); free(rml_uri);
     }
-    
+
     if ( rank == root ) {
         /* Generate the message buffer containing the number of processes and the list of
            participating processes */
@@ -232,16 +230,16 @@ static int connect_accept(ompi_communicator_t *comm, int root,
         if (NULL == nbuf) {
             return OMPI_ERROR;
         }
-        
+
         if (OPAL_SUCCESS != (rc = opal_dss.pack(nbuf, &size, 1, OPAL_INT))) {
             ORTE_ERROR_LOG(rc);
             goto exit;
         }
-        
+
         if (OMPI_GROUP_IS_DENSE(group)) {
             ompi_proc_pack(group->grp_proc_pointers, size, false, nbuf);
         } else {
-            proc_list = (ompi_proc_t **) calloc (group->grp_proc_count, 
+            proc_list = (ompi_proc_t **) calloc (group->grp_proc_count,
                                                  sizeof (ompi_proc_t *));
             for (i=0 ; i<group->grp_proc_count ; i++) {
                 if (NULL == (proc_list[i] = ompi_group_peer_lookup(group,i))) {
@@ -249,7 +247,7 @@ static int connect_accept(ompi_communicator_t *comm, int root,
                     rc = ORTE_ERR_NOT_FOUND;
                     goto exit;
                 }
-                
+
                 OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_framework.framework_output,
                                      "%s dpm:orte:connect_accept adding %s to proc list",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -257,7 +255,7 @@ static int connect_accept(ompi_communicator_t *comm, int root,
             }
             ompi_proc_pack(proc_list, size, false, nbuf);
         }
-        
+
         /* pack wireup info - this is required so that all involved parties can
          * discover how to talk to each other. For example, consider the case
          * where we connect_accept to one independent job (B), and then connect_accept
@@ -293,7 +291,7 @@ static int connect_accept(ompi_communicator_t *comm, int root,
                                  "%s dpm:orte:connect_accept got data from %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_NAME_PRINT(&xfer.name)));
-            
+
         } else {
             OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_framework.framework_output,
                                  "%s dpm:orte:connect_accept recving first",
@@ -385,7 +383,7 @@ static int connect_accept(ompi_communicator_t *comm, int root,
     OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_framework.framework_output,
                          "%s dpm:orte:connect_accept unpacked %d new procs",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), new_proc_len));
-    
+
     /* If we added new procs, we need to do the modex and then call
        PML add_procs */
     if (new_proc_len > 0) {
@@ -508,12 +506,12 @@ static int connect_accept(ompi_communicator_t *comm, int root,
 
     /* put group elements in the list */
     for (j = 0; j < rsize; j++) {
-        new_group_pointer->grp_proc_pointers[j] = rprocs[j]; 
+        new_group_pointer->grp_proc_pointers[j] = rprocs[j];
     }                           /* end proc loop */
 
     /* increment proc reference counters */
     ompi_group_increment_proc_count(new_group_pointer);
-    
+
     OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_framework.framework_output,
                          "%s dpm:orte:connect_accept setting up communicator",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
@@ -787,7 +785,7 @@ static int spawn(int count, const char *array_of_commands[],
 
     /* setup the job object */
     jdata = OBJ_NEW(orte_job_t);
-    
+
     /* Convert the list of commands to an array of orte_app_context_t
        pointers */
     for (i = 0; i < count; ++i) {
@@ -802,7 +800,7 @@ static int spawn(int count, const char *array_of_commands[],
         opal_pointer_array_add(jdata->apps, app);
         app->idx = i;
         jdata->num_apps++;
-        
+
         /* copy over the name of the executable */
         app->app = strdup(array_of_commands[i]);
         if (NULL == app->app) {
@@ -813,7 +811,7 @@ static int spawn(int count, const char *array_of_commands[],
         }
         /* record the number of procs to be generated */
         app->num_procs = array_of_maxprocs[i];
-        
+
         /* copy over the argv array */
         counter = 1;
 
@@ -873,31 +871,31 @@ static int spawn(int count, const char *array_of_commands[],
             if ( flag ) {
                 jdata->personality = strdup(host);
             }
-            
+
             /* check for 'host' */
             ompi_info_get (array_of_info[i], "host", sizeof(host) - 1, host, &flag);
             if ( flag ) {
                 orte_set_attribute(&app->attributes, ORTE_APP_DASH_HOST, false, host, OPAL_STRING);
             }
- 
+
             /* check for 'hostfile' */
             ompi_info_get (array_of_info[i], "hostfile", sizeof(host) - 1, host, &flag);
             if ( flag ) {
                 orte_set_attribute(&app->attributes, ORTE_APP_HOSTFILE, false, host, OPAL_STRING);
             }
-            
+
             /* check for 'add-hostfile' */
             ompi_info_get (array_of_info[i], "add-hostfile", sizeof(host) - 1, host, &flag);
             if ( flag ) {
                 orte_set_attribute(&app->attributes, ORTE_APP_ADD_HOSTFILE, false, host, OPAL_STRING);
             }
-            
+
             /* check for 'add-host' */
             ompi_info_get (array_of_info[i], "add-host", sizeof(host) - 1, host, &flag);
             if ( flag ) {
                 orte_set_attribute(&app->attributes, ORTE_APP_ADD_HOST, false, host, OPAL_STRING);
             }
-            
+
             /* check for env */
             ompi_info_get (array_of_info[i], "env", sizeof(host)-1, host, &flag);
             if ( flag ) {
@@ -908,8 +906,8 @@ static int spawn(int count, const char *array_of_commands[],
                 opal_argv_free(envars);
             }
 
-            /* 'path', 'arch', 'file', 'soft'  -- to be implemented */ 
-            
+            /* 'path', 'arch', 'file', 'soft'  -- to be implemented */
+
             /* check for 'ompi_prefix' (OMPI-specific -- to effect the same
              * behavior as --prefix option to orterun)
              */
@@ -918,14 +916,14 @@ static int spawn(int count, const char *array_of_commands[],
                 orte_set_attribute(&app->attributes, ORTE_APP_PREFIX_DIR, false, prefix, OPAL_STRING);
             }
 
-            /* check for 'wdir' */ 
+            /* check for 'wdir' */
             ompi_info_get (array_of_info[i], "wdir", sizeof(cwd) - 1, cwd, &flag);
             if ( flag ) {
                 app->cwd = strdup(cwd);
                 have_wdir = 1;
             }
-            
-            /* check for 'mapper' */ 
+
+            /* check for 'mapper' */
             ompi_info_get(array_of_info[i], "mapper", sizeof(mapper) - 1, mapper, &flag);
             if ( flag ) {
                 if (NULL == jdata->map) {
@@ -938,7 +936,7 @@ static int spawn(int count, const char *array_of_commands[],
                 jdata->map->req_mapper = strdup(mapper);
             }
 
-            /* check for 'display_map' */ 
+            /* check for 'display_map' */
             ompi_info_get_bool(array_of_info[i], "display_map", &local_spawn, &flag);
             if ( flag ) {
                 if (NULL == jdata->map) {
@@ -951,7 +949,7 @@ static int spawn(int count, const char *array_of_commands[],
                 jdata->map->display_map = true;
             }
 
-            /* check for 'npernode' and 'ppr' */ 
+            /* check for 'npernode' and 'ppr' */
             ompi_info_get (array_of_info[i], "npernode", sizeof(slot_list) - 1, slot_list, &flag);
             if ( flag ) {
                 if (ORTE_SUCCESS != ompi_info_value_to_int(slot_list, &npernode)) {
@@ -1039,7 +1037,7 @@ static int spawn(int count, const char *array_of_commands[],
                     /* not allowed to provide multiple ranking policies */
                     return OMPI_ERROR;
                 }
-                if (ORTE_SUCCESS != (rc = orte_rmaps_base_set_ranking_policy(&jdata->map->ranking, 
+                if (ORTE_SUCCESS != (rc = orte_rmaps_base_set_ranking_policy(&jdata->map->ranking,
                                                                              jdata->map->mapping, slot_list))) {
                     return rc;
                 }
@@ -1071,13 +1069,13 @@ static int spawn(int count, const char *array_of_commands[],
             if ( flag ) {
                 orte_set_attribute(&app->attributes, ORTE_APP_PRELOAD_BIN, false, NULL, OPAL_BOOL);
             }
-            
-            /* check for 'preload_files' */ 
+
+            /* check for 'preload_files' */
             ompi_info_get (array_of_info[i], "ompi_preload_files", sizeof(cwd) - 1, cwd, &flag);
             if ( flag ) {
                 orte_set_attribute(&app->attributes, ORTE_APP_PRELOAD_FILES, false, cwd, OPAL_STRING);
             }
-            
+
             /* see if this is a non-mpi job - if so, then set the flag so ORTE
              * knows what to do
              */
@@ -1085,13 +1083,13 @@ static int spawn(int count, const char *array_of_commands[],
             if (flag && non_mpi) {
                 orte_set_attribute(&jdata->attributes, ORTE_JOB_NON_ORTE_JOB, false, NULL, OPAL_BOOL);
             }
-            
+
             /* see if this is an MCA param that the user wants applied to the child job */
             ompi_info_get (array_of_info[i], "ompi_param", sizeof(params) - 1, params, &flag);
             if ( flag ) {
                 opal_argv_append_unique_nosize(&app->env, params, true);
             }
-            
+
             /* see if user specified what to do with stdin - defaults to
              * not forwarding stdin to child processes
              */
@@ -1119,7 +1117,7 @@ static int spawn(int count, const char *array_of_commands[],
             }
             app->cwd = strdup(cwd);
         }
-        
+
         /* leave the map info alone - the launcher will
          * decide where to put things
          */
@@ -1129,7 +1127,7 @@ static int spawn(int count, const char *array_of_commands[],
     if (NULL == jdata->personality) {
         jdata->personality = strdup("ompi");
     }
-    
+
     /* spawn procs */
     rc = orte_plm.spawn(jdata);
     OBJ_RELEASE(jdata);
@@ -1170,7 +1168,7 @@ static int open_port(char *port_name, orte_rml_tag_t given_tag)
     char *rml_uri=NULL;
     int rc, len;
     char tag[12];
-    
+
     /* if we are a singleton and the supporting HNP hasn't
      * been spawned, then do so now
      */
@@ -1192,13 +1190,13 @@ static int open_port(char *port_name, orte_rml_tag_t given_tag)
         ORTE_ERROR_LOG(rc);
         goto cleanup;
     }
-    
+
     if (NULL == (rml_uri = orte_rml.get_contact_info())) {
         rc = OMPI_ERROR;
         ORTE_ERROR_LOG(rc);
         goto cleanup;
     }
-    
+
     if (ORTE_RML_TAG_INVALID == given_tag) {
         OPAL_THREAD_LOCK(&ompi_dpm_port_mutex);
         snprintf(tag, 12, "%d", next_tag);
@@ -1207,16 +1205,16 @@ static int open_port(char *port_name, orte_rml_tag_t given_tag)
     } else {
         snprintf(tag, 12, "%d", given_tag);
     }
-    
-    
+
+
     len = strlen(orte_process_info.my_hnp_uri) + strlen(rml_uri) + strlen(tag);
-    
+
     /* if the overall port name is too long, we abort */
     if (len > (MPI_MAX_PORT_NAME-1)) {
         rc = OMPI_ERR_VALUE_OUT_OF_BOUNDS;
         goto cleanup;
     }
-    
+
     /* assemble the port name */
     snprintf(port_name, MPI_MAX_PORT_NAME, "%s+%s:%s", orte_process_info.my_hnp_uri, rml_uri, tag);
     rc = OMPI_SUCCESS;
@@ -1225,16 +1223,16 @@ cleanup:
     if (NULL != rml_uri) {
         free(rml_uri);
     }
-    
+
     return rc;
 }
 
 
 static int route_to_port(char *rml_uri, orte_process_name_t *rproc)
-{    
+{
     opal_buffer_t route;
     int rc;
-    
+
     /* We need to ask the routed module to init_routes so it can do the
      * right thing. In most cases, it will route any messages to the
      * proc through our HNP - however, this is NOT the case in all
@@ -1243,48 +1241,48 @@ static int route_to_port(char *rml_uri, orte_process_name_t *rproc)
      */
     /* pack a cmd so the buffer can be unpacked correctly */
     OBJ_CONSTRUCT(&route, opal_buffer_t);
-    
+
     /* pack the provided uri */
     opal_dss.pack(&route, &rml_uri, 1, OPAL_STRING);
-    
+
     /* init the route */
     if (ORTE_SUCCESS != (rc = orte_routed.init_routes(rproc->jobid, &route))) {
         ORTE_ERROR_LOG(rc);
     }
     OBJ_DESTRUCT(&route);
-    
+
     /* nothing more to do here */
     return rc;
 }
 
 static int parse_port_name(const char *port_name,
-                           char **hnp_uri, 
+                           char **hnp_uri,
                            char **rml_uri,
                            orte_rml_tag_t *ptag)
 {
     char *tmpstring=NULL, *ptr;
     int tag;
     int rc;
-    
+
     /* don't mangle the port name */
     tmpstring = strdup(port_name);
     if (NULL == tmpstring) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
-    
+
     /* find the ':' demarking the RML tag we added to the end */
     if (NULL == (ptr = strrchr(tmpstring, ':'))) {
         rc = OMPI_ERR_NOT_FOUND;
         goto cleanup;
     }
-    
+
     /* terminate the port_name at that location */
     *ptr = '\0';
     ptr++;
-    
+
     /* convert the RML tag */
-    sscanf(ptr,"%d", &tag);
-    
+    (void)sscanf(ptr,"%d", &tag);
+
     /* now split out the second field - the uri of the remote proc */
     if (NULL == (ptr = strchr(tmpstring, '+'))) {
         rc = OMPI_ERR_NOT_FOUND;
@@ -1292,15 +1290,15 @@ static int parse_port_name(const char *port_name,
     }
     *ptr = '\0';
     ptr++;
-    
+
     /* save that info */
     if(NULL != hnp_uri) *hnp_uri = tmpstring;
     else free(tmpstring);
     if(NULL != rml_uri) *rml_uri = strdup(ptr);
     if(NULL != ptag) *ptag = tag;
-    
+
     return OMPI_SUCCESS;
-    
+
 cleanup:
     /* release the tmp storage */
     free(tmpstring);
@@ -1319,25 +1317,25 @@ static int dyn_init(void)
     int root=0, rc;
     bool send_first = true;
     ompi_communicator_t *newcomm=NULL;
-    
+
     /* if env-variable is set, we are a dynamically spawned
         * child - parse port and call comm_connect_accept */
     if (NULL == (port_name = ompi_dpm_base_dyn_init())) {
         /* nothing to do */
         return OMPI_SUCCESS;
     }
-    
+
     OPAL_OUTPUT_VERBOSE((1, ompi_dpm_base_framework.framework_output,
                          "%s dpm:orte:dyn_init with port %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          port_name));
-    
+
     rc = connect_accept (MPI_COMM_WORLD, root, port_name, send_first, &newcomm);
     free(port_name);
     if (OMPI_SUCCESS != rc) {
         return rc;
     }
-    
+
     /* originally, we set comm_parent to comm_null (in comm_init),
      * now we have to decrease the reference counters to the according
      * objects
@@ -1352,7 +1350,7 @@ static int dyn_init(void)
     /* Set name for debugging purposes */
     snprintf(newcomm->c_name, MPI_MAX_OBJECT_NAME, "MPI_COMM_PARENT");
     newcomm->c_flags |= OMPI_COMM_NAMEISSET;
-    
+
     return OMPI_SUCCESS;
 }
 
@@ -1438,7 +1436,7 @@ static void process_request(orte_process_name_t* sender,
             ORTE_ERROR_LOG(rc);
             goto cleanup;
         }
-        
+
         OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_framework.framework_output,
                              "%s dpm:orte:pconnect new procs added",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
@@ -1480,11 +1478,11 @@ static void process_request(orte_process_name_t* sender,
     }
 
     /* put group element in the list */
-    new_group_pointer->grp_proc_pointers[0] = rprocs[0]; 
+    new_group_pointer->grp_proc_pointers[0] = rprocs[0];
 
     /* increment proc reference counter */
     ompi_group_increment_proc_count(new_group_pointer);
-    
+
     OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_framework.framework_output,
                          "%s dpm:pconprocess setting up communicator",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));

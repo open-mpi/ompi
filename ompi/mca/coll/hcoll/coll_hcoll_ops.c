@@ -1,5 +1,7 @@
 /**
-  Copyright (c) 2011 Mellanox Technologies. All rights reserved.
+  Copyright (c) 2011      Mellanox Technologies. All rights reserved.
+  Copyright (c) 2015      Research Organization for Information Science
+                          and Technology (RIST). All rights reserved.
   $COPYRIGHT$
 
   Additional copyrights may follow
@@ -10,9 +12,9 @@
 #include "ompi_config.h"
 #include "ompi/constants.h"
 #include "coll_hcoll.h"
-#include "hcoll_constants.h"
+#include "hcoll/api/hcoll_constants.h"
 #include "coll_hcoll_dtypes.h"
-#include "hcoll_dte.h"
+#include "hcoll/api/hcoll_dte.h"
 int mca_coll_hcoll_barrier(struct ompi_communicator_t *comm,
                          mca_coll_base_module_t *module){
     int rc;

@@ -5,11 +5,11 @@
 # Copyright (c) 2004-2013 The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
-# Copyright (c) 2004-2009 High Performance Computing Center Stuttgart, 
+# Copyright (c) 2004-2009 High Performance Computing Center Stuttgart,
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2011-2013 Inria.  All rights reserved.
 # Copyright (c) 2011-2013 Universite Bordeaux 1
 # Copyright (c) 2013-2014 Los Alamos National Security, LLC. All rights
@@ -17,9 +17,9 @@
 # Copyright (c) 2015      Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
-# 
+#
 # Additional copyrights may follow
-# 
+#
 # $HEADER$
 #
 
@@ -29,7 +29,7 @@ SUBDIRS = profile
 
 #
 # OMPI_PRPOFILING_DEFINES flag is enabled when we want our MPI_* symbols
-# to be replaced by PMPI_*. In other words, this flag decides 
+# to be replaced by PMPI_*. In other words, this flag decides
 # whether "profile/defines.h" is included or not. "profile/defines.h"
 # replaces all MPI_* symbols with PMPI_* symbols. In this directory,
 # we need it to be 0
@@ -55,7 +55,14 @@ AM_CPPFLAGS = -DOMPI_PROFILE_LAYER=0 -DOMPI_COMPILING_FORTRAN_WRAPPERS=1
 
 lib_LTLIBRARIES =
 CLEANFILES =
-libmpi_mpifh_la_LIBADD = $(top_builddir)/ompi/libmpi.la $(OMPI_MPIEXT_MPIFH_LIBS)
+# Note that we invoke some OPAL functions directly in libmpi_mpifh.la,
+# so we need to link in the OPAL library directly (pulling it in
+# indirectly via libmpi.la does not work on all platforms).
+libmpi_mpifh_la_LIBADD = \
+        $(top_builddir)/ompi/libmpi.la \
+        $(OMPI_MPIEXT_MPIFH_LIBS) \
+        $(OMPI_TOP_BUILDDIR)/opal/lib@OPAL_LIB_PREFIX@open-pal.la
+
 libmpi_mpifh_la_LDFLAGS = -version-info $(libmpi_mpifh_so_version)
 
 # Are we building the mpif.h bindings at all?
@@ -130,6 +137,8 @@ libmpi_mpifh_la_SOURCES += \
         add_error_code_f.c \
         add_error_string_f.c \
         address_f.c \
+        aint_add_f.c \
+        aint_diff_f.c \
         allgather_f.c \
         allgatherv_f.c \
         alloc_mem_f.c \
@@ -448,9 +457,13 @@ libmpi_mpifh_la_SOURCES += \
         file_get_view_f.c \
         file_iread_at_f.c \
         file_iread_f.c \
+        file_iread_at_all_f.c \
+        file_iread_all_f.c \
         file_iread_shared_f.c \
         file_iwrite_at_f.c \
         file_iwrite_f.c \
+        file_iwrite_at_all_f.c \
+        file_iwrite_all_f.c \
         file_iwrite_shared_f.c \
         file_open_f.c \
         file_preallocate_f.c \

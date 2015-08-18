@@ -5,20 +5,21 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2012      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
 /**
- * @file 
+ * @file
  *
  * General command line parsing facility for use throughout Open MPI.
  *
@@ -41,7 +42,7 @@
  * sparingly.
  *
  * The "long" name is a multi-character name that is found after a
- * pair of dashes.  For example, "--some-option-name".  
+ * pair of dashes.  For example, "--some-option-name".
  *
  * A command line option is a combination of 1 or more of a short
  * name, single dash name, and a long name.  Any of the names may be
@@ -126,21 +127,21 @@ BEGIN_C_DECLS
     struct opal_cmd_line_t {
         /** Make this an OBJ handle */
         opal_object_t super;
-        
+
         /** Thread safety */
         opal_mutex_t lcl_mutex;
-        
+
         /** List of cmd_line_option_t's (defined internally) */
         opal_list_t lcl_options;
-        
+
         /** Duplicate of argc from opal_cmd_line_parse() */
         int lcl_argc;
         /** Duplicate of argv from opal_cmd_line_parse() */
         char **lcl_argv;
-        
+
         /** Parsed output; list of cmd_line_param_t's (defined internally) */
         opal_list_t lcl_params;
-        
+
         /** List of tail (unprocessed) arguments */
         int lcl_tail_argc;
         /** List of tail (unprocessed) arguments */
@@ -210,7 +211,7 @@ BEGIN_C_DECLS
      * Convenience typedef
      */
     typedef struct opal_cmd_line_init_t opal_cmd_line_init_t;
-    
+
     /**
      * Top-level command line handle.
      *
@@ -251,7 +252,7 @@ BEGIN_C_DECLS
      *
      * \code
      * opal_cmd_line_init_t cmd_line_init[] = {
-     *    { NULL, NULL, NULL, 'h', NULL, "help", 0, 
+     *    { NULL, NULL, NULL, 'h', NULL, "help", 0,
      *      &orterun_globals.help, OPAL_CMD_LINE_TYPE_BOOL,
      *      "This help message" },
      *
@@ -307,11 +308,11 @@ BEGIN_C_DECLS
      * used to generate the output from opal_cmd_line_get_usage_msg().
      *
      */
-    OPAL_DECLSPEC int opal_cmd_line_make_opt3(opal_cmd_line_t *cmd, 
-                                              char short_name, 
+    OPAL_DECLSPEC int opal_cmd_line_make_opt3(opal_cmd_line_t *cmd,
+                                              char short_name,
                                               const char *sd_name,
-                                              const char *long_name, 
-                                              int num_params, 
+                                              const char *long_name,
+                                              int num_params,
                                               const char *desc);
 
     /**
@@ -352,7 +353,7 @@ BEGIN_C_DECLS
      * example, if "--fo" is specified, and no "fo" option is
      * registered (e.g., perhaps the user meant to type "--foo"), an
      * error message is always printed, UNLESS this unknown token
-     * happens after a "--" token (see below).  
+     * happens after a "--" token (see below).
      *
      * The contents of argc and argv are not changed during parsing.
      * argv[0] is assumed to be the executable name, and is ignored during
@@ -401,7 +402,7 @@ BEGIN_C_DECLS
      * different sets of argv tokens is safe, but will erase any
      * previous parsing results.
      */
-    OPAL_DECLSPEC int opal_cmd_line_parse(opal_cmd_line_t *cmd, 
+    OPAL_DECLSPEC int opal_cmd_line_parse(opal_cmd_line_t *cmd,
                                           bool ignore_unknown,
                                           int argc, char **argv);
 
@@ -441,13 +442,13 @@ BEGIN_C_DECLS
      * opal_cmd_line_parse(), or opal_cmd_line_parse() was not invoked on
      * this handle.
      *
-     * This function should only be called after opal_cmd_line_parse().  
+     * This function should only be called after opal_cmd_line_parse().
      *
      * The function will return true if the option matching opt was found
      * (either by its short or long name) during token parsing.
      * Otherwise, it will return false.
      */
-    OPAL_DECLSPEC bool opal_cmd_line_is_taken(opal_cmd_line_t *cmd, 
+    OPAL_DECLSPEC bool opal_cmd_line_is_taken(opal_cmd_line_t *cmd,
                                               const char *opt) __opal_attribute_nonnull__(1) __opal_attribute_nonnull__(2);
 
     /**
@@ -480,7 +481,7 @@ BEGIN_C_DECLS
      * What is returned is a pointer to the actual string that is on
      * the handle; it should not be modified or freed.
      */
-    OPAL_DECLSPEC char *opal_cmd_line_get_argv(opal_cmd_line_t *cmd, 
+    OPAL_DECLSPEC char *opal_cmd_line_get_argv(opal_cmd_line_t *cmd,
                                                int index);
 
     /**
@@ -503,7 +504,7 @@ BEGIN_C_DECLS
      * either the option was not specified as part of the OPAL command line
      * handle, or opal_cmd_line_parse() was not invoked on this handle.
      */
-    OPAL_DECLSPEC int opal_cmd_line_get_ninsts(opal_cmd_line_t *cmd, 
+    OPAL_DECLSPEC int opal_cmd_line_get_ninsts(opal_cmd_line_t *cmd,
                                                const char *opt) __opal_attribute_nonnull__(1) __opal_attribute_nonnull__(2);
 
     /**
@@ -518,7 +519,7 @@ BEGIN_C_DECLS
      * @retval param String of the parameter.
      * @retval NULL If any of the input values are invalid.
      *
-     * This function should only be called after opal_cmd_line_parse().  
+     * This function should only be called after opal_cmd_line_parse().
      *
      * This function returns the Nth parameter for the Ith instance of a
      * given option on the parsed command line (both N and I are
@@ -533,8 +534,8 @@ BEGIN_C_DECLS
      * The returned string should \em not be modified or freed by the
      * caller.
      */
-    OPAL_DECLSPEC char *opal_cmd_line_get_param(opal_cmd_line_t *cmd, 
-                                                const char *opt, 
+    OPAL_DECLSPEC char *opal_cmd_line_get_param(opal_cmd_line_t *cmd,
+                                                const char *opt,
                                                 int instance_num,
                                                 int param_num);
 
@@ -565,8 +566,8 @@ BEGIN_C_DECLS
      * of the tail parameters, and must be freed (likely with a call
      * to opal_argv_free()) by the caller.
      */
-    OPAL_DECLSPEC int opal_cmd_line_get_tail(opal_cmd_line_t *cmd, int *tailc, 
-                                             char ***tailv) __opal_attribute_nonnull__(1) __opal_attribute_nonnull__(2);
+    OPAL_DECLSPEC int opal_cmd_line_get_tail(opal_cmd_line_t *cmd, int *tailc,
+                                             char ***tailv);
 
 END_C_DECLS
 

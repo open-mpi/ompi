@@ -5,14 +5,14 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 /*
@@ -78,7 +78,7 @@ static void setIndices(JNIEnv *env, jintArray indices, int *cIdx, int count)
     }
 
     (*env)->SetIntArrayRegion(env, indices, 0, count, jIdx);
-    
+
     if(jIdx != cIdx)
         free(jIdx);
 }
@@ -166,6 +166,18 @@ JNIEXPORT jobject JNICALL Java_mpi_Request_testStatus(
     int flag;
     MPI_Status status;
     int rc = MPI_Test(&req, &flag, &status);
+    ompi_java_exceptionCheck(env, rc);
+    (*env)->SetLongField(env, jthis, ompi_java.ReqHandle, (jlong)req);
+    return flag ? ompi_java_status_new(env, &status) : NULL;
+}
+
+JNIEXPORT jobject JNICALL Java_mpi_Request_getStatus(
+        JNIEnv *env, jobject jthis, jlong handle)
+{
+    MPI_Request req = (MPI_Request)handle;
+    int flag;
+    MPI_Status status;
+    int rc = MPI_Request_get_status(req, &flag, &status);
     ompi_java_exceptionCheck(env, rc);
     (*env)->SetLongField(env, jthis, ompi_java.ReqHandle, (jlong)req);
     return flag ? ompi_java_status_new(env, &status) : NULL;

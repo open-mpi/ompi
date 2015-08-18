@@ -49,23 +49,23 @@ void ADIOI_LUSTRE_Get_striping_info(ADIO_File fd, int **striping_info_ptr,
     /* Calculate how many IO clients we need */
     /* Algorithm courtesy Pascal Deveze (pascal.deveze@bull.net) */
     /* To avoid extent lock conflicts,
-     * avail_cb_nodes should either 
+     * avail_cb_nodes should either
      * 	- be a multiple of stripe_count,
      *  - or divide stripe_count exactly
      * so that each OST is accessed by a maximum of CO constant clients. */
     if (nprocs_for_coll >= stripe_count)
 	/* avail_cb_nodes should be a multiple of stripe_count and the number
 	 * of procs per OST should be limited to the minimum between
-	 * nprocs_for_coll/stripe_count and CO 
-	 * 
-	 * e.g. if stripe_count=20, nprocs_for_coll=42 and CO=3 then 
+	 * nprocs_for_coll/stripe_count and CO
+	 *
+	 * e.g. if stripe_count=20, nprocs_for_coll=42 and CO=3 then
 	 * avail_cb_nodes should be equal to 40 */
-        avail_cb_nodes = 
+        avail_cb_nodes =
 		stripe_count * ADIOI_MIN(nprocs_for_coll/stripe_count, CO);
     else {
         /* nprocs_for_coll is less than stripe_count */
         /* avail_cb_nodes should divide stripe_count */
-        /* e.g. if stripe_count=60 and nprocs_for_coll=8 then 
+        /* e.g. if stripe_count=60 and nprocs_for_coll=8 then
 	 * avail_cb_nodes should be egal to 6 */
         /* This could be done with :
                 while (stripe_count % avail_cb_nodes != 0) avail_cb_nodes--;
@@ -83,7 +83,7 @@ void ADIOI_LUSTRE_Get_striping_info(ADIO_File fd, int **striping_info_ptr,
 		}
 		/* if divisor is less than nprocs_for_coll, divisor is a
 		 * solution, but it is not sure that it is the best one */
-                else if (divisor <= nprocs_for_coll) 
+                else if (divisor <= nprocs_for_coll)
 			avail_cb_nodes = divisor;
 	    }
 	    divisor++;
@@ -202,7 +202,7 @@ void ADIOI_LUSTRE_Calc_my_req(ADIO_File fd, ADIO_Offset *offset_list,
     for (i = 0; i < nprocs; i++) {
 	/* add one to count_my_req_per_proc[i] to avoid zero size malloc */
 	buf_idx[i] = (int *) ADIOI_Malloc((count_my_req_per_proc[i] + 1)
-			                   * sizeof(int)); 
+			                   * sizeof(int));
     }
 
     /* now allocate space for my_req, offset, and len */

@@ -4,7 +4,7 @@
  * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -14,9 +14,9 @@
  *                         All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 /** @file:
@@ -36,7 +36,7 @@ BEGIN_C_DECLS
 typedef uint8_t orte_daemon_cmd_flag_t;
 #define ORTE_DAEMON_CMD_T   OPAL_UINT8
 
-    
+
 /*
  * Definitions needed for communication
  */
@@ -59,7 +59,7 @@ typedef uint8_t orte_daemon_cmd_flag_t;
 #define ORTE_DAEMON_TERMINATE_JOB_CMD       (orte_daemon_cmd_flag_t) 18
 #define ORTE_DAEMON_HALT_VM_CMD             (orte_daemon_cmd_flag_t) 19
 #define ORTE_DAEMON_HALT_DVM_CMD            (orte_daemon_cmd_flag_t) 20
-    
+
 /* request proc resource usage */
 #define ORTE_DAEMON_TOP_CMD                 (orte_daemon_cmd_flag_t) 22
 
@@ -95,7 +95,7 @@ typedef struct {
     int msg_str_len;
 } orte_odls_pipe_err_msg_t;
 
-/* 
+/*
  * Max length of strings from the orte_odls_pipe_err_msg_t
  */
 #define ORTE_ODLS_MAX_FILE_LEN 511

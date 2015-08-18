@@ -5,16 +5,16 @@
  * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2014      Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  *
  * These symbols are in a file by themselves to provide nice linker
@@ -57,7 +57,7 @@ int orte_common_alps_proc_in_pagg(bool *flag)
         snprintf(task_is_app_fname,sizeof(task_is_app_fname),
                  "/proc/self/task/%ld/task_is_app",syscall(SYS_gettid));
         fd_task_is_app = fopen(task_is_app_fname, "r");
-        if (fd_task_is_app != NULL) {   /* okay we're in a PAGG container, 
+        if (fd_task_is_app != NULL) {   /* okay we're in a PAGG container,
                                            and we are an app task (not just a process
                                            running on a mom node, for example), */
             *flag = 1;

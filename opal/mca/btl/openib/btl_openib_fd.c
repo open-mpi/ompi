@@ -175,7 +175,7 @@ static int service_pipe_cmd_add_fd(bool use_libevent, cmd_t *cmd)
     if (use_libevent) {
         /* Make an event for this fd */
         ri->ri_event_used = true;
-        opal_event_set(opal_event_base, &ri->ri_event, ri->ri_fd,
+        opal_event_set(opal_sync_event_base, &ri->ri_event, ri->ri_fd,
                        ri->ri_flags | OPAL_EV_PERSIST, service_fd_callback,
                        ri);
         opal_event_add(&ri->ri_event, 0);
@@ -382,14 +382,14 @@ static void *service_thread_start(void *context)
         if (0 != rc && EAGAIN == errno) {
             continue;
         }
-    
+
         OPAL_OUTPUT((-1, "fd service thread woke up!"));
 
         if (0 > rc) {
             if (EBADF == errno) {
-                /* We are assuming we lost a socket so set rc to 1 so we'll 
-                 * try to read a command off the service pipe to receive a 
-                 * rm command (corresponding to the socket that went away).  
+                /* We are assuming we lost a socket so set rc to 1 so we'll
+                 * try to read a command off the service pipe to receive a
+                 * rm command (corresponding to the socket that went away).
                  * If the EBADF is from the service pipe then the error
 		 * condition will be handled by the service_pipe_cmd().
                  */
@@ -501,7 +501,7 @@ int opal_btl_openib_fd_init(void)
 
         /* Create a libevent event that is used in the main thread
            to watch its pipe */
-        opal_event_set(opal_event_base, &main_thread_event, pipe_to_main_thread[0],
+        opal_event_set(opal_sync_event_base, &main_thread_event, pipe_to_main_thread[0],
                        OPAL_EV_READ | OPAL_EV_PERSIST,
                        main_thread_event_callback, NULL);
         opal_event_add(&main_thread_event, 0);
@@ -659,7 +659,7 @@ int opal_btl_openib_fd_finalize(void)
         /* For the threaded version, send a command down the pipe */
         cmd_t cmd;
         OPAL_OUTPUT((-1, "shutting down openib fd"));
-        /* Check if the thread exists before asking it to quit */ 
+        /* Check if the thread exists before asking it to quit */
         if (ESRCH != pthread_kill(thread, 0)) {
             memset(&cmd, 0, cmd_size);
             cmd.pc_cmd = CMD_TIME_TO_QUIT;

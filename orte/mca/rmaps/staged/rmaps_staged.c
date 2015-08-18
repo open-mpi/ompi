@@ -3,9 +3,9 @@
  *                         All rights reserved
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -17,9 +17,7 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif  /* HAVE_UNISTD_H */
-#ifdef HAVE_STRING_H
 #include <string.h>
-#endif  /* HAVE_STRING_H */
 
 #include "opal/mca/hwloc/base/base.h"
 #include "opal/dss/dss.h"
@@ -70,7 +68,7 @@ static int staged_mapper(orte_job_t *jdata)
                         "%s mca:rmaps:staged: mapping job %s with %d procs",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                         ORTE_JOBID_PRINT(jdata->jobid), (int)jdata->num_procs);
- 
+
     /* flag that I did the mapping */
     if (NULL != jdata->map->last_mapper) {
         free(jdata->map->last_mapper);
@@ -344,7 +342,7 @@ static int staged_mapper(orte_job_t *jdata)
             /* track number mapped */
             jdata->num_mapped++;
             /* map this proc to the first available slot */
-            OBJ_RETAIN(node);  /* maintain accounting on object */    
+            OBJ_RETAIN(node);  /* maintain accounting on object */
 	    opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
 				"%s mca:rmaps:staged: assigning proc %s to node %s",
 				ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -417,7 +415,7 @@ static int staged_mapper(orte_job_t *jdata)
     if (!work_to_do) {
         return ORTE_ERR_RESOURCE_BUSY;
     }
- 
+
     /* flag that the job was updated so it will be
      * included in the pidmap message
      */

@@ -1,9 +1,9 @@
 /*
  * Copyright (c) 2011 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  *
  * This file is included at the top of opal_config.h, and is
@@ -15,7 +15,7 @@
  * need to #ifndef/#endif protection here.
  */
 
-#ifndef OPAL_CONFIG_H 
+#ifndef OPAL_CONFIG_H
 #error "opal_config_top.h should only be included from opal_config.h"
 #endif
 
@@ -24,7 +24,7 @@
    you include a .h file from another project that defines these
    macros (e.g., gmp.h) and then include OMPI/ORTE/OPAL's config.h,
    you'll get a preprocessor conflict.  So put these undef's here to
-   protect us from other package's PACKAGE_<foo> macros.  
+   protect us from other package's PACKAGE_<foo> macros.
 
    Note that we can't put them directly in opal_config.h (e.g., via
    AH_TOP) because they will be turned into #define's by autoconf. */

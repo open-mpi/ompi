@@ -6,7 +6,7 @@
  * Copyright (c) 2004-2010 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -16,9 +16,9 @@
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -75,6 +75,10 @@ static inline void opal_atomic_wmb(void)
     MB();
 }
 
+static inline void opal_atomic_isync(void)
+{
+}
+
 #endif /* OPAL_GCC_INLINE_ASSEMBLY */
 
 
@@ -96,7 +100,7 @@ static inline int opal_atomic_cmpset_32(volatile int32_t *addr,
                        : "=qm" (ret), "+a" (oldval), "+m" (*addr)
                        : "q"(newval)
                        : "memory", "cc");
-   
+
    return (int)ret;
 }
 
@@ -119,16 +123,16 @@ static inline int opal_atomic_cmpset_32(volatile int32_t *addr,
 #endif
 
 /* On Linux the EBX register is used by the shared libraries
- * to keep the global offset. In same time this register is 
+ * to keep the global offset. In same time this register is
  * required by the cmpxchg8b instruction (as an input parameter).
- * This conflict force us to save the EBX before the cmpxchg8b 
+ * This conflict force us to save the EBX before the cmpxchg8b
  * and to restore it afterward.
  */
 static inline int opal_atomic_cmpset_64(volatile int64_t *addr,
                                         int64_t oldval,
                                         int64_t newval)
 {
-   /* 
+   /*
     * Compare EDX:EAX with m64. If equal, set ZF and load ECX:EBX into
     * m64. Else, clear ZF and load m64 into EDX:EAX.
     */

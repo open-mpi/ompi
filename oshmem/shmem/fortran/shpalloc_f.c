@@ -5,9 +5,9 @@
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -29,7 +29,7 @@ SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
         shpalloc_,
         shpalloc__,
         shpalloc_f,
-        (FORTRAN_POINTER_T *addr, MPI_Fint *length, MPI_Fint *errcode, MPI_Fint *abort), 
+        (FORTRAN_POINTER_T *addr, MPI_Fint *length, MPI_Fint *errcode, MPI_Fint *abort),
         (addr,length,errcode,abort) )
 
 void shpalloc_f(FORTRAN_POINTER_T *addr, MPI_Fint *length, MPI_Fint *errcode, MPI_Fint *abort)
@@ -41,7 +41,7 @@ void shpalloc_f(FORTRAN_POINTER_T *addr, MPI_Fint *length, MPI_Fint *errcode, MP
         *errcode = -1;
     }
     address = shmalloc(*length*4);
-    
+
     *addr = (FORTRAN_POINTER_T)(uintptr_t)address;
     if (!(*addr))
     {

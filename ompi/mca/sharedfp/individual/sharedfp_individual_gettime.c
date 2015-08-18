@@ -23,6 +23,6 @@ double mca_sharedfp_individual_gettime(void)
 	gettimeofday(&timestamp,NULL);
 	seconds  = (double)timestamp.tv_sec;
 	microsec = ((double)timestamp.tv_usec)/((double)1000000.0);
-	
+
 	return (seconds+microsec);
 }

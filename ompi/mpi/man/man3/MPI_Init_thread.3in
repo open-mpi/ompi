@@ -22,7 +22,7 @@ int MPI_Init_thread(int *\fIargc\fP, char ***\fIargv\fP,
 .nf
 INCLUDE 'mpif.h'
 MPI_INIT_THREAD(\fIREQUIRED, PROVIDED, IERROR\fP)
-	INTEGER	\fIREQUIRED, PROVIDED, IERROR\fP 
+	INTEGER	\fIREQUIRED, PROVIDED, IERROR\fP
 
 .fi
 .SH C++ Syntax
@@ -52,7 +52,7 @@ provided
 Available level of thread support (integer).
 .TP 1i
 IERROR
-Fortran only: Error status (integer). 
+Fortran only: Error status (integer).
 .
 .
 .SH DESCRIPTION
@@ -86,10 +86,10 @@ function. In Open MPI, the value is dependent on how the library was
 configured and built. Note that there is no guarantee that
 \fIprovided\fP will be greater than or equal to \fIrequired\fP.
 .sp
-Also note that calling MPI_Init_thread with a 
-.I required 
+Also note that calling MPI_Init_thread with a
+.I required
 value of
-.I MPI_THREAD_SINGLE 
+.I MPI_THREAD_SINGLE
 is equivalent to calling MPI_Init.
 .sp
 All MPI programs must contain a call to MPI_Init or
@@ -102,7 +102,7 @@ them:
 		/* declare variables */
 		MPI_Init_thread(&argc, &argv, req, &prov);
 		/* parse arguments */
-		/* main program */ 
+		/* main program */
 		MPI_Finalize();
 	}
 .fi
@@ -162,13 +162,13 @@ by multiple threads.
 .
 .PP
 Note that Open MPI's thread support is in a fairly early stage; the
-above devices are likely to 
-.IR work , 
+above devices are likely to
+.IR work ,
 but the latency is likely to be fairly high.  Specifically, efforts so
-far have concentrated on 
-.IR correctness , 
-not 
-.I performance 
+far have concentrated on
+.IR correctness ,
+not
+.I performance
 (yet).
 .
 .
@@ -185,7 +185,7 @@ called. By default, this error handler aborts the MPI job, except for
 I/O function errors. The error handler may be changed with
 MPI_Comm_set_errhandler; the predefined error handler MPI_ERRORS_RETURN
 may be used to cause error values to be returned. Note that MPI does not
-guarantee that an MPI program can continue past an error. 
+guarantee that an MPI program can continue past an error.
 .
 .SH SEE ALSO
 .ft R

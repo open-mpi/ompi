@@ -33,9 +33,7 @@
 #if HAVE_SYS_STAT_H
 #include <sys/stat.h>
 #endif /* HAVE_SYS_STAT_H */
-#ifdef HAVE_STRING_H
 #include <string.h>
-#endif /* HAVE_STRING_H */
 #ifdef HAVE_NETDB_H
 #include <netdb.h>
 #endif /* HAVE_NETDB_H */
@@ -339,7 +337,7 @@ segment_unlink(map_segment_t *ds_buf)
 
 /*
  * Get current huge page size
- *   
+ *
  */
 size_t sshmem_sysv_gethugepagesize(void)
 {

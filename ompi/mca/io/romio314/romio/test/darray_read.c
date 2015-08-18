@@ -19,9 +19,9 @@ static void handle_error(int errcode, const char *str)
 }
 
 
-int main(int argc, char *argv[]) 
-{ 
-  int i, j, nerrors=0, total_errors=0; 
+int main(int argc, char *argv[])
+{
+  int i, j, nerrors=0, total_errors=0;
 
   int rank, size;
   int bpos;
@@ -43,7 +43,7 @@ int main(int argc, char *argv[])
   int tsize, nelem;
 
   MPI_File dfile;
- 
+
   MPI_Init(&argc, &argv);
 
   MPI_Comm_size(MPI_COMM_WORLD, &size);
@@ -121,4 +121,4 @@ int main(int argc, char *argv[])
 
   exit(total_errors);
 
-} 
+}

@@ -5,15 +5,15 @@
  * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2013      University of Houston. All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  *
  * These symbols are in a file by themselves to provide nice linker
@@ -62,9 +62,9 @@ int mca_sharedfp_addproc_component_init_query(bool enable_progress_threads,
                                             bool enable_mpi_threads)
 {
     /* Nothing to do */
-   
+
    return OMPI_SUCCESS;
-}      
+}
 
 struct mca_sharedfp_base_module_1_0_0_t *
         mca_sharedfp_addproc_component_file_query
@@ -77,9 +77,9 @@ struct mca_sharedfp_base_module_1_0_0_t *
 }
 
 int mca_sharedfp_addproc_component_file_unquery (mca_io_ompio_file_t *file)
-{    
+{
    /* This function might be needed for some purposes later. for now it
-    * does not have anything to do since there are no steps which need 
+    * does not have anything to do since there are no steps which need
     * to be undone if this module is not selected */
 
    return OMPI_SUCCESS;
@@ -90,7 +90,7 @@ int mca_sharedfp_addproc_module_init (mca_io_ompio_file_t *file)
     return OMPI_SUCCESS;
 }
 
-   
+
 int mca_sharedfp_addproc_module_finalize (mca_io_ompio_file_t *file)
 {
     return OMPI_SUCCESS;

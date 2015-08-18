@@ -12,9 +12,7 @@
 #include "opal/constants.h"
 
 #include <stdio.h>
-#ifdef HAVE_STRING_H
 #include <string.h>
-#endif  /* HAVE_STRING_H */
 #include <infiniband/verbs.h>
 
 #include "common_verbs.h"
@@ -42,7 +40,7 @@ static bool make_qp(struct ibv_pd *pd, struct ibv_cq *cq, enum ibv_qp_type type)
     qpia.cap.max_inline_data = 0;
     qpia.qp_type = type;
     qpia.sq_sig_all = 0;
-    
+
     qp = ibv_create_qp(pd, &qpia);
     if (NULL != qp) {
         ibv_destroy_qp(qp);
@@ -59,9 +57,9 @@ int opal_common_verbs_qp_test(struct ibv_context *device_context, int flags)
     struct ibv_cq *cq = NULL;
 
     /* Bozo check */
-    if (NULL == device_context || 
+    if (NULL == device_context ||
         (0 == (flags & (OPAL_COMMON_VERBS_FLAGS_RC | OPAL_COMMON_VERBS_FLAGS_UD)))) {
-        return OPAL_ERR_BAD_PARAM;       
+        return OPAL_ERR_BAD_PARAM;
     }
 
     /* Try to make both the PD and CQ */

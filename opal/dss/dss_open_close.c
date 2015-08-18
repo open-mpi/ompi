@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2012-2013 Los Alamos National Security, Inc.  All rights reserved. 
+ * Copyright (c) 2012-2013 Los Alamos National Security, Inc.  All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -279,7 +279,7 @@ int opal_dss_register_vars (void)
         return ret;
     }
 
-    /* the threshold as to where to stop doubling the size of the buffer 
+    /* the threshold as to where to stop doubling the size of the buffer
      * allocated memory and start doing additive increases */
     opal_dss_threshold_size = OPAL_DSS_DEFAULT_THRESHOLD_SIZE;
     ret = mca_base_var_register ("opal", "dss", NULL, "buffer_threshold_size", NULL,
@@ -577,7 +577,7 @@ int opal_dss_open(void)
                                                      "OPAL_TIME", &tmp))) {
         return rc;
     }
-    
+
     tmp = OPAL_NAME;
     if (OPAL_SUCCESS != (rc = opal_dss.register_type(opal_dss_pack_name,
                                           opal_dss_unpack_name,

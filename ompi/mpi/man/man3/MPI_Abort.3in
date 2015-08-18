@@ -19,8 +19,8 @@ int MPI_Abort(MPI_Comm \fIcomm\fP, int\fI errorcode\fP)
 .ft R
 .nf
 INCLUDE 'mpif.h'
-MPI_ABORT(\fICOMM\fP, \fIERRORCODE\fP, \fIIERROR\fP)			
-	INTEGER		\fICOMM\fP,\fI ERRORCODE\fP,\fI IERROR 
+MPI_ABORT(\fICOMM\fP, \fIERRORCODE\fP, \fIIERROR\fP)
+	INTEGER		\fICOMM\fP,\fI ERRORCODE\fP,\fI IERROR
 
 .fi
 .SH C++ Syntax
@@ -32,17 +32,17 @@ void Comm::Abort(int \fIerrorcode\fP)
 .SH INPUT PARAMETERS
 .ft R
 .TP 1i
-comm    
+comm
 Communicator of tasks to abort.
 .TP 1i
-errorcode    
+errorcode
 Error code to return to invoking environment.
 
 .SH OUTPUT PARAMETER
 .ft R
 .TP 1i
 IERROR
-Fortran only: Error status (integer). 
+Fortran only: Error status (integer).
 
 .SH DESCRIPTION
 .ft R
@@ -61,5 +61,5 @@ Almost all MPI routines return an error value; C routines as the value of the fu
 .sp
 Before the error value is returned, the current MPI error handler is
 called. By default, this error handler aborts the MPI job, except for I/O function errors. The error handler
-may be changed with MPI_Comm_set_errhandler; the predefined error handler MPI_ERRORS_RETURN may be used to cause error values to be returned. Note that MPI does not guarantee that an MPI program can continue past an error.  
+may be changed with MPI_Comm_set_errhandler; the predefined error handler MPI_ERRORS_RETURN may be used to cause error values to be returned. Note that MPI does not guarantee that an MPI program can continue past an error.
 

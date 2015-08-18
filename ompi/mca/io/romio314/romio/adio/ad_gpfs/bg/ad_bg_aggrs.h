@@ -6,7 +6,7 @@
  * \brief ???
  */
 
-/* 
+/*
  *
  * Declares functions specific for the BlueGene platform within the GPFS
  * parallel I/O solution.  Implements aligned file-domain partitioning

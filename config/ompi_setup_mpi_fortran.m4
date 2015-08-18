@@ -101,17 +101,25 @@ AC_DEFUN([OMPI_SETUP_MPI_FORTRAN],[
     # AC_DEFINE these results, even in the --disable-mpi-fortran case,
     # for ompi_info.
     AC_DEFINE_UNQUOTED([OMPI_FORTRAN_DOUBLE_UNDERSCORE],
-        [$ompi_fortran_double_underscore], 
+        [$ompi_fortran_double_underscore],
         [Whether fortran symbols have a trailing double underscore or not])
-    AC_DEFINE_UNQUOTED([OMPI_FORTRAN_SINGLE_UNDERSCORE], 
+    OMPI_FORTRAN_DOUBLE_UNDERSCORE=$ompi_fortran_double_underscore
+    AC_SUBST(OMPI_FORTRAN_DOUBLE_UNDERSCORE)
+    AC_DEFINE_UNQUOTED([OMPI_FORTRAN_SINGLE_UNDERSCORE],
         [$ompi_fortran_single_underscore],
         [Whether fortran symbols have a trailing underscore or not])
+    OMPI_FORTRAN_SINGLE_UNDERSCORE=$ompi_fortran_single_underscore
+    AC_SUBST(OMPI_FORTRAN_SINGLE_UNDERSCORE)
     AC_DEFINE_UNQUOTED([OMPI_FORTRAN_CAPS],
         [$ompi_fortran_caps],
         [Whether fortran symbols are all caps or not])
-    AC_DEFINE_UNQUOTED([OMPI_FORTRAN_PLAIN], 
+    OMPI_FORTRAN_CAPS=$ompi_fortran_caps
+    AC_SUBST(OMPI_FORTRAN_CAPS)
+    AC_DEFINE_UNQUOTED([OMPI_FORTRAN_PLAIN],
         [$ompi_fortran_plain],
         [Whether fortran symbols have no trailing underscore or not])
+    OMPI_FORTRAN_PLAIN=$ompi_fortran_plain
+    AC_SUBST(OMPI_FORTRAN_PLAIN)
 
     # Check to see if any of the MPI Fortran bindings were
     # specifically requested.  If so, and we weren't able to setup the
@@ -135,7 +143,7 @@ AC_DEFUN([OMPI_SETUP_MPI_FORTRAN],[
     # regardless of whether we have F77 support or not.
     OMPI_FORTRAN_CHECK([CHARACTER], [yes],
                    [char, int32_t, int, int64_t, long long, long], [-1], [yes])
-    
+
     OMPI_FORTRAN_CHECK([LOGICAL], [yes],
                    [char, int32_t, int, int64_t, long long, long], [-1], [yes])
     OMPI_FORTRAN_CHECK([LOGICAL*1], [yes],
@@ -146,7 +154,7 @@ AC_DEFUN([OMPI_SETUP_MPI_FORTRAN],[
                    [int32_t, int, int64_t, long long, long], [4], [yes])
     OMPI_FORTRAN_CHECK([LOGICAL*8], [yes],
                    [int, int64_t, long long, long], [8], [yes])
-    
+
     OMPI_FORTRAN_CHECK([INTEGER], [yes],
                    [int32_t, int, int64_t, long long, long], [-1], [yes])
     OMPI_FORTRAN_CHECK([INTEGER*1], [no],
@@ -159,7 +167,7 @@ AC_DEFUN([OMPI_SETUP_MPI_FORTRAN],[
                    [int, int64_t, long long, long], [8], [yes])
     OMPI_FORTRAN_CHECK([INTEGER*16], [no],
                    [int, int64_t, long long, long], [16], [yes])
-    
+
     OMPI_FORTRAN_CHECK([REAL], [yes],
                    [float, double, long double], [-1], [yes])
     OMPI_FORTRAN_CHECK([REAL*2], [no],
@@ -170,15 +178,15 @@ AC_DEFUN([OMPI_SETUP_MPI_FORTRAN],[
                    [float, double, long double], [8], [yes])
     OMPI_FORTRAN_CHECK([REAL*16], [no],
                    [float, double, long double], [16], [yes])
-    
+
     # In some compilers, the bit representation of REAL*16 is not the same
     # as the C counterpart that we found.  If this is the case, then we
     # want to disable reduction support for MPI_REAL16 (per ticket #1603).
     OMPI_FORTRAN_CHECK_REAL16_C_EQUIV
-    
+
     OMPI_FORTRAN_CHECK([DOUBLE PRECISION], [yes],
                    [float, double, long double], [-1], [yes])
-    
+
     OMPI_FORTRAN_CHECK([COMPLEX], [yes], [float _Complex], [-1], [no])
 
     # The complex*N tests are a bit different (note: the complex tests are
@@ -191,39 +199,39 @@ AC_DEFUN([OMPI_SETUP_MPI_FORTRAN],[
     # a) we must support real*(N/2) (i.e., compiler supports it and we
     #    have a back-end C type for it)
     # b) compiler supports complex*N
-    
+
     OMPI_FORTRAN_CHECK([COMPLEX*4], [no], [float _Complex], [4], [no])
-    OMPI_FORTRAN_CHECK([COMPLEX*8], [no], 
+    OMPI_FORTRAN_CHECK([COMPLEX*8], [no],
                    [float _Complex, double _Complex, long double _Complex],
                    [8], [no])
-    OMPI_FORTRAN_CHECK([COMPLEX*16], [no], 
-                   [float _Complex, double _Complex, long double _Complex], 
+    OMPI_FORTRAN_CHECK([COMPLEX*16], [no],
+                   [float _Complex, double _Complex, long double _Complex],
                    [16], [no])
-    OMPI_FORTRAN_CHECK([COMPLEX*32], [no], 
+    OMPI_FORTRAN_CHECK([COMPLEX*32], [no],
                    [float _Complex, double _Complex, long double _Complex],
                    [32], [no])
     # Double precision complex types are not standard, but many
     # compilers support it.  Code should be wrapped with #ifdef
     # OMPI_HAVE_FORTRAN_DOUBLE_COMPLEX
     OMPI_FORTRAN_CHECK([DOUBLE COMPLEX], [no],
-                   [float _Complex, double _Complex, long double _Complex], 
+                   [float _Complex, double _Complex, long double _Complex],
                    [-1], [no])
-    
+
     # Regardless of whether we have fortran bindings, or even a
     # fortran compiler, get the max value for a fortran MPI handle
     # (this macro handles the case where we don't have a fortran
-    # compiler).  
+    # compiler).
     OMPI_FORTRAN_GET_HANDLE_MAX
 
     # Check for Fortran compilers value of TRUE and for the correct
     # assumption on LOGICAL for conversion into what C considers to be
-    # a true value.  
+    # a true value.
     OMPI_FORTRAN_GET_VALUE_TRUE
     OMPI_FORTRAN_CHECK_LOGICAL_ARRAY
 
     # Find out how many array ranks this compiler supports.
     OMPI_FORTRAN_CHECK_MAX_ARRAY_RANK
-    
+
     # How big should MPI_STATUS_SIZE be?  (i.e., the size of
     # MPI_STATUS, expressed in units of Fortran INTEGERs).  The C
     # equivalent of MPI_Status contains 4 C ints and a size_t.
@@ -315,7 +323,7 @@ AC_DEFUN([OMPI_SETUP_MPI_FORTRAN],[
     AS_IF([test $ompi_fortran_happy -eq 1 && \
            test $OMPI_TRY_FORTRAN_BINDINGS -ge $OMPI_FORTRAN_USEMPI_BINDINGS],
           [ # Look for the fortran module compiler flag
-           OMPI_FORTRAN_FIND_MODULE_INCLUDE_FLAG([], 
+           OMPI_FORTRAN_FIND_MODULE_INCLUDE_FLAG([],
                [AC_MSG_WARN([*** Could not determine the fortran compiler flag to indicate where modules reside])
                 AC_MSG_ERROR([*** Cannot continue])])
 
@@ -348,7 +356,7 @@ AC_DEFUN([OMPI_SETUP_MPI_FORTRAN],[
           [AC_MSG_RESULT([yes])],
           [OMPI_TRY_FORTRAN_BINDINGS=$OMPI_FORTRAN_MPIFH_BINDINGS
            AC_MSG_RESULT([no])])
-    
+
     #---------------------------------
     # Fortran use mpi_f08 MPI bindings
     #---------------------------------
@@ -486,8 +494,8 @@ AC_DEFUN([OMPI_SETUP_MPI_FORTRAN],[
           [ # How big are derived types with a single INTEGER?
            OMPI_FORTRAN_GET_SIZEOF([type, BIND(C) :: test_mpi_handle
   integer :: MPI_VAL
-end type test_mpi_handle], 
-                                   [type(test_mpi_handle)], 
+end type test_mpi_handle],
+                                   [type(test_mpi_handle)],
                                    [OMPI_FORTRAN_F08_HANDLE_SIZE])
           ])
 
@@ -512,7 +520,7 @@ end type test_mpi_handle],
                #    ("good" compilers)
                # c) compiler that does not support the items listed
                #    in b) ("bad" compilers)
-    
+
                AC_MSG_CHECKING([which mpi_f08 implementation to build])
                AS_IF([test $OMPI_BUILD_FORTRAN_F08_SUBARRAYS -eq 1],
                      [ # Case a) partial/prototype implementation
@@ -567,7 +575,7 @@ end type test_mpi_handle],
     # and this header file must be usable in .F90 files.  :-(
     AC_CONFIG_FILES([ompi/mpi/fortran/configure-fortran-output.h])
 
-    # Values for wrapper compilers    
+    # Values for wrapper compilers
     OMPI_FC=$FC
     set dummy $OMPI_FC
     OMPI_FC_ARGV0=[$]2
@@ -627,7 +635,7 @@ end type test_mpi_handle],
     AM_CONDITIONAL(BUILD_PMPI_FORTRAN_MPIFH_BINDINGS_LAYER,
                    [test $OMPI_BUILD_FORTRAN_BINDINGS -gt $OMPI_FORTRAN_NO_BINDINGS && \
                     test $WANT_MPI_PROFILING -eq 1])
-    AM_CONDITIONAL(OMPI_BUILD_FORTRAN_MPIFH_BINDINGS, 
+    AM_CONDITIONAL(OMPI_BUILD_FORTRAN_MPIFH_BINDINGS,
                    [test $OMPI_BUILD_FORTRAN_BINDINGS -gt $OMPI_FORTRAN_NO_BINDINGS])
 
     # -------------------
@@ -658,15 +666,15 @@ end type test_mpi_handle],
     # the unused "use mpi" directory, but we might as well have the
     # ompi/mpi/fortran/use-mpi*/Makefile.ams be safe, too.
     # True if we're building either "use mpi" bindings
-    AM_CONDITIONAL(OMPI_BUILD_FORTRAN_USEMPI_BINDINGS, 
+    AM_CONDITIONAL(OMPI_BUILD_FORTRAN_USEMPI_BINDINGS,
                    [test $OMPI_BUILD_FORTRAN_BINDINGS -ge $OMPI_FORTRAN_USEMPI_BINDINGS || \
                     test $OMPI_FORTRAN_HAVE_IGNORE_TKR -eq 1])
     # True if we're building the old TKR-style bindings
-    AM_CONDITIONAL(OMPI_BUILD_FORTRAN_USEMPI_TKR_BINDINGS, 
+    AM_CONDITIONAL(OMPI_BUILD_FORTRAN_USEMPI_TKR_BINDINGS,
                    [test $OMPI_BUILD_FORTRAN_BINDINGS -ge $OMPI_FORTRAN_USEMPI_BINDINGS && \
                     test $OMPI_FORTRAN_HAVE_IGNORE_TKR -eq 0])
     # True if we're building the new ignore-TKR-style bindings
-    AM_CONDITIONAL(OMPI_BUILD_FORTRAN_USEMPI_IGNORE_TKR_BINDINGS, 
+    AM_CONDITIONAL(OMPI_BUILD_FORTRAN_USEMPI_IGNORE_TKR_BINDINGS,
                    [test $OMPI_BUILD_FORTRAN_BINDINGS -ge $OMPI_FORTRAN_USEMPI_BINDINGS && \
                     test $OMPI_FORTRAN_HAVE_IGNORE_TKR -eq 1])
 
@@ -703,7 +711,7 @@ end type test_mpi_handle],
                        [$OMPI_FORTRAN_NEED_WRAPPER_ROUTINES],
                        [Whether the mpi_f08 implementation is using wrapper routines ("bad" Fortran compiler) or weak symbols ("good" Fortran compiler) for the F08 interface definition implementations])
 
-    AC_DEFINE_UNQUOTED(OMPI_FORTRAN_F08_HANDLE_SIZE, 
+    AC_DEFINE_UNQUOTED(OMPI_FORTRAN_F08_HANDLE_SIZE,
                        $OMPI_FORTRAN_F08_HANDLE_SIZE,
                        [How many bytes the mpi_f08 TYPE(MPI_<foo>) handles will be])
 
@@ -727,47 +735,47 @@ end type test_mpi_handle],
     AC_DEFINE_UNQUOTED(OMPI_FORTRAN_HAVE_BIND_C_TYPE_NAME,
                        [$OMPI_FORTRAN_HAVE_BIND_C_TYPE_NAME],
                        [For ompi_info: Whether the compiler supports TYPE, BIND(C, NAME="name") or not])
-    AC_DEFINE_UNQUOTED([OMPI_FORTRAN_HAVE_OPTIONAL_ARGS], 
+    AC_DEFINE_UNQUOTED([OMPI_FORTRAN_HAVE_OPTIONAL_ARGS],
                        [$OMPI_FORTRAN_HAVE_OPTIONAL_ARGS],
                        [For ompi_info: whether the Fortran compiler supports optional arguments or not])
 
     # For configure-fortran-output.h, mpi-f08-types.F90 (and ompi_info)
     AC_SUBST([OMPI_FORTRAN_HAVE_PRIVATE])
-    AC_DEFINE_UNQUOTED([OMPI_FORTRAN_HAVE_PRIVATE], 
+    AC_DEFINE_UNQUOTED([OMPI_FORTRAN_HAVE_PRIVATE],
                        [$OMPI_FORTRAN_HAVE_PRIVATE],
                        [For mpi-f08-types.f90 and ompi_info: whether the compiler supports the "private" keyword or not (used in MPI_Status)])
 
     # For configure-fortran-output.h, mpi-f08-types.F90 (and ompi_info)
     AC_SUBST([OMPI_FORTRAN_HAVE_PROTECTED])
-    AC_DEFINE_UNQUOTED([OMPI_FORTRAN_HAVE_PROTECTED], 
+    AC_DEFINE_UNQUOTED([OMPI_FORTRAN_HAVE_PROTECTED],
                        [$OMPI_FORTRAN_HAVE_PROTECTED],
                        [For mpi-f08-types.f90 and .F90 and ompi_info: whether the compiler supports the "protected" keyword or not])
 
     # For configure-fortran-output.h, mpi-f08-interfaces-callbacks.F90
     # (and ompi_info)
     AC_SUBST([OMPI_FORTRAN_HAVE_ABSTRACT])
-    AC_DEFINE_UNQUOTED([OMPI_FORTRAN_HAVE_ABSTRACT], 
+    AC_DEFINE_UNQUOTED([OMPI_FORTRAN_HAVE_ABSTRACT],
                        [$OMPI_FORTRAN_HAVE_ABSTRACT],
                        [For mpi-f08-interfaces-callbacks.f90 and ompi_info: whether the compiler supports the "abstract" keyword or not])
 
     # For configure-fortran-output.h, various files in
     # ompi/mpi/fortran/use-mpi-f08/*.F90 and *.h files (and ompi_info)
     AC_SUBST([OMPI_FORTRAN_HAVE_ASYNCHRONOUS])
-    AC_DEFINE_UNQUOTED([OMPI_FORTRAN_HAVE_ASYNCHRONOUS], 
+    AC_DEFINE_UNQUOTED([OMPI_FORTRAN_HAVE_ASYNCHRONOUS],
                        [$OMPI_FORTRAN_HAVE_ASYNCHRONOUS],
                        [For ompi/mpi/fortran/use-mpi-f08/blah.F90 and blah.h and ompi_info: whether the compiler supports the "asynchronous" keyword or not])
 
     # For configure-fortran-output.h, various files in
     # ompi/mpi/fortran/use-mpi-f08/*.F90 and *.h files (and ompi_info)
     AC_SUBST([OMPI_FORTRAN_HAVE_PROCEDURE])
-    AC_DEFINE_UNQUOTED([OMPI_FORTRAN_HAVE_PROCEDURE], 
+    AC_DEFINE_UNQUOTED([OMPI_FORTRAN_HAVE_PROCEDURE],
                        [$OMPI_FORTRAN_HAVE_PROCEDURE],
                        [For ompi/mpi/fortran/use-mpi-f08/blah.F90 and blah.h and ompi_info: whether the compiler supports the "procedure" keyword or not])
 
     # For configure-fortran-output.h, various files in
     # ompi/mpi/fortran/use-mpi-f08/*.F90 and *.h files (and ompi_info)
     AC_SUBST([OMPI_FORTRAN_HAVE_C_FUNLOC])
-    AC_DEFINE_UNQUOTED([OMPI_FORTRAN_HAVE_C_FUNLOC], 
+    AC_DEFINE_UNQUOTED([OMPI_FORTRAN_HAVE_C_FUNLOC],
                        [$OMPI_FORTRAN_HAVE_C_FUNLOC],
                        [For ompi/mpi/fortran/use-mpi-f08/blah.F90 and blah.h and ompi_info: whether the compiler supports c_funloc or not])
 
@@ -778,7 +786,7 @@ end type test_mpi_handle],
     # ompi/mpi/fortran/use-mpi-f08 if it's not to be built, but we
     # might as well have ompi/mpi/fortran/use-mpi-f08/Makefile.am be
     # safe, too.
-    AM_CONDITIONAL(OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS, 
+    AM_CONDITIONAL(OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS,
                    [test $OMPI_BUILD_FORTRAN_BINDINGS -ge $OMPI_FORTRAN_USEMPIF08_BINDINGS])
 
     AC_DEFINE_UNQUOTED(OMPI_BUILD_FORTRAN_BINDINGS,

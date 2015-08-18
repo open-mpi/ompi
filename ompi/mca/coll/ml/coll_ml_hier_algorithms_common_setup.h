@@ -22,7 +22,7 @@ struct mca_coll_ml_schedule_hier_info_t {
     int nbcol_functions;
     bool call_for_top_function;
 };
-typedef struct mca_coll_ml_schedule_hier_info_t 
+typedef struct mca_coll_ml_schedule_hier_info_t
                mca_coll_ml_schedule_hier_info_t;
 
 #define MCA_COLL_ML_INIT_HIER_INFO(info, n_hr, g_hr, ml_module) \
@@ -88,7 +88,7 @@ int mca_coll_ml_schedule_init_scratch(mca_coll_ml_topology_t *topo_info,
         mca_coll_ml_schedule_hier_info_t *h_info,
         int **out_scratch_indx, int **out_scratch_num);
 
-mca_coll_ml_collective_operation_description_t* 
+mca_coll_ml_collective_operation_description_t*
 mca_coll_ml_schedule_alloc(mca_coll_ml_schedule_hier_info_t *h_info);
 
 void mca_coll_ml_call_types(mca_coll_ml_schedule_hier_info_t *h_info,

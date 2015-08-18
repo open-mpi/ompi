@@ -5,19 +5,19 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
-/** 
+/**
  * @file
  *
  * MCA io base framework public interface functions.
@@ -66,7 +66,7 @@ BEGIN_C_DECLS
      */
     OMPI_DECLSPEC int mca_io_base_find_available(bool enable_progress_threads,
                                                  bool enable_mpi_threads);
-    
+
     /**
      * Select an available component for a new file handle.
      *
@@ -94,7 +94,7 @@ BEGIN_C_DECLS
      *
      * - If the \em preferred argument is NULL, the selection set is
      *   defined to be all the components found during
-     *   mca_io_base_find_available().  
+     *   mca_io_base_find_available().
      * - If \em preferred is not NULL, then the selection set is just
      *   that component.  (However, in this mode, we may make 2 passes
      *   through the selection process -- more on this below).
@@ -154,7 +154,7 @@ BEGIN_C_DECLS
      * the available components (rather than some pre-selected
      * module).  See io.h for details.
      */
-    OMPI_DECLSPEC int mca_io_base_delete(char *filename, 
+    OMPI_DECLSPEC int mca_io_base_delete(char *filename,
                                          struct ompi_info_t *info);
 
     OMPI_DECLSPEC int mca_io_base_register_datarep(char *,

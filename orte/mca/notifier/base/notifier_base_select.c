@@ -5,25 +5,23 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
 
 #include "orte_config.h"
 
-#ifdef HAVE_STRING_H
 #include <string.h>
-#endif
 
 #include "orte/mca/mca.h"
 #include "opal/mca/base/base.h"
@@ -40,12 +38,12 @@
  */
 static bool orte_notifier_base_selected = false;
 
-/** 
+/**
  * Function for weeding out notifier components that don't want to run.
  *
- * Call the init function on all available compoenent to find out if 
- * they want to run. Select all components that don't fail. Failing 
- * Components will be closed and unloaded. The selected modules will 
+ * Call the init function on all available compoenent to find out if
+ * they want to run. Select all components that don't fail. Failing
+ * Components will be closed and unloaded. The selected modules will
  * be returned to the called in a opal_list_t.
  */
 
@@ -102,7 +100,7 @@ int orte_notifier_base_select(void)
             continue;
         }
         bmod = (orte_notifier_base_module_t*)module;
-        
+
         /* see if it can be init'd */
         if (NULL != bmod->init) {
             opal_output_verbose(5, orte_notifier_base_framework.framework_output,
@@ -116,7 +114,7 @@ int orte_notifier_base_select(void)
          * Append them to the list
          */
         opal_output_verbose(5, orte_notifier_base_framework.framework_output,
-                            "notifier:base:select adding component [%s]", 
+                            "notifier:base:select adding component [%s]",
                             component->base_version.mca_component_name);
         tmp_module = OBJ_NEW(orte_notifier_active_module_t);
         tmp_module->component = component;

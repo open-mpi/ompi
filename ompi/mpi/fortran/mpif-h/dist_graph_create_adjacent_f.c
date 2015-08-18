@@ -9,9 +9,9 @@
  * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -106,7 +106,7 @@ void ompi_dist_graph_create_adjacent_f(MPI_Fint *comm_old, MPI_Fint *indegree,
                                                            OMPI_FINT_2_INT(*outdegree),
                                                            OMPI_ARRAY_NAME_CONVERT(destinations),
                                                            c_destweights,
-                                                           c_info, 
+                                                           c_info,
                                                            OMPI_LOGICAL_2_INT(*reorder),
                                                            &c_comm_graph));
     if (OMPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {

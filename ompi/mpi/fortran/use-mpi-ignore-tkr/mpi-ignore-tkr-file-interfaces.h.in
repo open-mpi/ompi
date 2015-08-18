@@ -377,6 +377,35 @@ end subroutine PMPI_File_iread
 
 end interface
 
+interface MPI_File_iread_all
+
+subroutine MPI_File_iread_all(fh, buf, count, datatype, request&
+        , ierror)
+  integer, intent(in) :: fh
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ buf
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: buf
+  integer, intent(in) :: count
+  integer, intent(in) :: datatype
+  integer, intent(out) :: request
+  integer, intent(out) :: ierror
+end subroutine MPI_File_iread_all
+
+end interface
+
+interface PMPI_File_iread_all
+
+subroutine PMPI_File_iread_all(fh, buf, count, datatype, request&
+        , ierror)
+  integer, intent(in) :: fh
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ buf
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: buf
+  integer, intent(in) :: count
+  integer, intent(in) :: datatype
+  integer, intent(out) :: request
+  integer, intent(out) :: ierror
+end subroutine PMPI_File_iread_all
+
+end interface
 
 interface MPI_File_iread_at
 
@@ -412,6 +441,39 @@ end subroutine PMPI_File_iread_at
 
 end interface
 
+interface MPI_File_iread_at_all
+
+subroutine MPI_File_iread_at_all(fh, offset, buf, count, datatype, &
+        request, ierror)
+  include 'mpif-config.h'
+  integer, intent(in) :: fh
+  integer(kind=MPI_OFFSET_KIND), intent(in) :: offset
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ buf
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: buf
+  integer, intent(in) :: count
+  integer, intent(in) :: datatype
+  integer, intent(out) :: request
+  integer, intent(out) :: ierror
+end subroutine MPI_File_iread_at_all
+
+end interface
+
+interface PMPI_File_iread_at_all
+
+subroutine PMPI_File_iread_at_all(fh, offset, buf, count, datatype, &
+        request, ierror)
+  include 'mpif-config.h'
+  integer, intent(in) :: fh
+  integer(kind=MPI_OFFSET_KIND), intent(in) :: offset
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ buf
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: buf
+  integer, intent(in) :: count
+  integer, intent(in) :: datatype
+  integer, intent(out) :: request
+  integer, intent(out) :: ierror
+end subroutine PMPI_File_iread_at_all
+
+end interface
 
 interface MPI_File_iread_shared
 
@@ -474,6 +536,35 @@ end subroutine PMPI_File_iwrite
 
 end interface
 
+interface MPI_File_iwrite_all
+
+subroutine MPI_File_iwrite_all(fh, buf, count, datatype, request&
+        , ierror)
+  integer, intent(in) :: fh
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ buf
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(in) :: buf
+  integer, intent(in) :: count
+  integer, intent(in) :: datatype
+  integer, intent(out) :: request
+  integer, intent(out) :: ierror
+end subroutine MPI_File_iwrite_all
+
+end interface
+
+interface PMPI_File_iwrite_all
+
+subroutine PMPI_File_iwrite_all(fh, buf, count, datatype, request&
+        , ierror)
+  integer, intent(in) :: fh
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ buf
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(in) :: buf
+  integer, intent(in) :: count
+  integer, intent(in) :: datatype
+  integer, intent(out) :: request
+  integer, intent(out) :: ierror
+end subroutine PMPI_File_iwrite_all
+
+end interface
 
 interface MPI_File_iwrite_at
 
@@ -509,6 +600,39 @@ end subroutine PMPI_File_iwrite_at
 
 end interface
 
+interface MPI_File_iwrite_at_all
+
+subroutine MPI_File_iwrite_at_all(fh, offset, buf, count, datatype, &
+        request, ierror)
+  include 'mpif-config.h'
+  integer, intent(in) :: fh
+  integer(kind=MPI_OFFSET_KIND), intent(in) :: offset
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ buf
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(in) :: buf
+  integer, intent(in) :: count
+  integer, intent(in) :: datatype
+  integer, intent(out) :: request
+  integer, intent(out) :: ierror
+end subroutine MPI_File_iwrite_at_all
+
+end interface
+
+interface PMPI_File_iwrite_at_all
+
+subroutine PMPI_File_iwrite_at_all(fh, offset, buf, count, datatype, &
+        request, ierror)
+  include 'mpif-config.h'
+  integer, intent(in) :: fh
+  integer(kind=MPI_OFFSET_KIND), intent(in) :: offset
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ buf
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(in) :: buf
+  integer, intent(in) :: count
+  integer, intent(in) :: datatype
+  integer, intent(out) :: request
+  integer, intent(out) :: ierror
+end subroutine PMPI_File_iwrite_at_all
+
+end interface
 
 interface MPI_File_iwrite_shared
 

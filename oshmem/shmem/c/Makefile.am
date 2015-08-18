@@ -3,9 +3,9 @@
 #                         All rights reserved
 # Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
-# 
+#
 # Additional copyrights may follow
-# 
+#
 # $HEADER$
 #
 
@@ -66,7 +66,7 @@ if PROJECT_OSHMEM
 noinst_LTLIBRARIES += liboshmem_c.la
 endif
 
-headers = 
+headers =
 
 # In case when OSHMEM_PROFILING enabled
 # We build api from c/profile folder

@@ -5,16 +5,16 @@
 # Copyright (c) 2004-2005 The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
-# Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+# Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2008-2011 University of Houston. All rights reserved.
+# Copyright (c) 2008-2015 University of Houston. All rights reserved.
 # Copyright (c) 2012 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
-# 
+#
 # Additional copyrights may follow
-# 
+#
 # $HEADER$
 #
 
@@ -23,12 +23,8 @@ sources = \
         fcoll_two_phase_module.c \
         fcoll_two_phase_component.c \
         fcoll_two_phase_file_read_all.c \
-        fcoll_two_phase_file_read_all_begin.c \
-        fcoll_two_phase_file_read_all_end.c \
         fcoll_two_phase_file_write_all.c \
-        fcoll_two_phase_file_write_all_begin.c \
-	fcoll_two_phase_support_fns.c \
-        fcoll_two_phase_file_write_all_end.c
+	fcoll_two_phase_support_fns.c
 
 # Make the output library in this directory, and name it either
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la

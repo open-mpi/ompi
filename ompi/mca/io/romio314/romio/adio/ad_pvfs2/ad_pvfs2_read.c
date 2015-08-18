@@ -1,7 +1,7 @@
-/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- 
- *     vim: ts=8 sts=4 sw=4 noexpandtab 
- * 
- *   Copyright (C) 1997 University of Chicago. 
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*-
+ *     vim: ts=8 sts=4 sw=4 noexpandtab
+ *
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -11,7 +11,7 @@
 #include "ad_pvfs2_io.h"
 #include "ad_pvfs2_common.h"
 
-void ADIOI_PVFS2_ReadContig(ADIO_File fd, void *buf, int count, 
+void ADIOI_PVFS2_ReadContig(ADIO_File fd, void *buf, int count,
 			    MPI_Datatype datatype, int file_ptr_type,
 			    ADIO_Offset offset, ADIO_Status *status,
 			    int *error_code)
@@ -60,7 +60,7 @@ void ADIOI_PVFS2_ReadContig(ADIO_File fd, void *buf, int count,
 #ifdef ADIOI_MPE_LOGGING
     MPE_Log_event( ADIOI_MPE_read_a, 0, NULL );
 #endif
-    ret = PVFS_sys_read(pvfs_fs->object_ref, file_req, offset, buf, 
+    ret = PVFS_sys_read(pvfs_fs->object_ref, file_req, offset, buf,
 			mem_req, &(pvfs_fs->credentials), &resp_io);
 #ifdef ADIOI_MPE_LOGGING
     MPE_Log_event( ADIOI_MPE_read_b, 0, NULL );
@@ -106,7 +106,7 @@ static int ADIOI_PVFS2_ReadStridedListIO(ADIO_File fd, void *buf, int count,
 
 static int ADIOI_PVFS2_ReadStridedDtypeIO(ADIO_File fd, void *buf, int count,
 				   MPI_Datatype datatype, int file_ptr_type,
-				   ADIO_Offset offset, ADIO_Status *status, 
+				   ADIO_Offset offset, ADIO_Status *status,
 				   int *error_code)
 {
     return ADIOI_PVFS2_StridedDtypeIO(fd, buf, count,
@@ -126,12 +126,12 @@ void ADIOI_PVFS2_ReadStrided(ADIO_File fd, void *buf, int count,
      * - new List I/O (from avery)
      * - classic List I/O  (the one that's always been in ROMIO)
      * I imagine we'll keep Datatype as an optional optimization, and afer a
-     * release or two promote it to the default 
+     * release or two promote it to the default
      */
     int ret = -1;
 
     if (fd->hints->fs_hints.pvfs2.posix_read == ADIOI_HINT_ENABLE) {
-	ADIOI_GEN_ReadStrided(fd, buf, count, datatype, 
+	ADIOI_GEN_ReadStrided(fd, buf, count, datatype,
 		file_ptr_type, offset, status, error_code);
 	return;
     }
@@ -158,12 +158,12 @@ void ADIOI_PVFS2_ReadStrided(ADIO_File fd, void *buf, int count,
     }
     /* Use classic list I/O if no hints given base case */
 
-    ADIOI_PVFS2_OldReadStrided(fd, buf, count, datatype, 
+    ADIOI_PVFS2_OldReadStrided(fd, buf, count, datatype,
 	    file_ptr_type, offset, status, error_code);
     return;
 }
 
 
 /*
- * vim: ts=8 sts=4 sw=4 noexpandtab 
+ * vim: ts=8 sts=4 sw=4 noexpandtab
  */

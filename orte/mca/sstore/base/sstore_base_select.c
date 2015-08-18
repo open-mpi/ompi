@@ -2,17 +2,15 @@
  * Copyright (c)      2010 The Trustees of Indiana University.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
 #include "orte_config.h"
 
-#ifdef HAVE_STRING_H
 #include <string.h>
-#endif
 
 #include "orte/constants.h"
 

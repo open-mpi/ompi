@@ -1,9 +1,9 @@
 /*
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
   * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  *
  */
@@ -15,9 +15,7 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif  /* HAVE_UNISTD_H */
-#ifdef HAVE_STRING_H
 #include <string.h>
-#endif  /* HAVE_STRING_H */
 #include <stdio.h>
 #include <curl/curl.h>
 

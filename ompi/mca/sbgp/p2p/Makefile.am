@@ -34,7 +34,7 @@ mcacomponentdir = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_sbgp_p2p_la_SOURCES = $(sources)
 mca_sbgp_p2p_la_LDFLAGS = -module -avoid-version
-mca_sbgp_p2p_la_LIBADD = 
+mca_sbgp_p2p_la_LIBADD =
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_sbgp_p2p_la_SOURCES =$(sources)

@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2007 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2007 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -15,9 +15,9 @@
  *                         All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -36,9 +36,7 @@
 #include <sys/param.h>
 #endif
 #include <errno.h>
-#ifdef HAVE_SIGNAL_H
 #include <signal.h>
-#endif
 
 #include "opal/version.h"
 #include "opal/mca/installdirs/installdirs.h"
@@ -84,7 +82,7 @@ int main(int argc, char *argv[])
 
     /* Initialize the argv parsing handle */
     if (OPAL_SUCCESS != opal_init_util(&argc, &argv)) {
-        opal_show_help("help-opal_info.txt", "lib-call-fail", true, 
+        opal_show_help("help-opal_info.txt", "lib-call-fail", true,
                        "opal_init_util", __FILE__, __LINE__, NULL);
         exit(ret);
     }
@@ -92,7 +90,7 @@ int main(int argc, char *argv[])
     ompi_info_cmd_line = OBJ_NEW(opal_cmd_line_t);
     if (NULL == ompi_info_cmd_line) {
         ret = errno;
-        opal_show_help("help-opal_info.txt", "lib-call-fail", true, 
+        opal_show_help("help-opal_info.txt", "lib-call-fail", true,
                        "opal_cmd_line_create", __FILE__, __LINE__, NULL);
         exit(ret);
     }
@@ -113,7 +111,7 @@ int main(int argc, char *argv[])
     /* setup the mca_types array */
     OBJ_CONSTRUCT(&mca_types, opal_pointer_array_t);
     opal_pointer_array_init(&mca_types, 256, INT_MAX, 128);
-    
+
     /* add in the opal frameworks */
     opal_info_register_types(&mca_types);
 
@@ -121,7 +119,7 @@ int main(int argc, char *argv[])
     /* add in the orte frameworks */
     orte_info_register_types(&mca_types);
 #endif
-    
+
     ompi_info_register_types(&mca_types);
 
     /* init the component map */
@@ -138,7 +136,7 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
-    /* Execute the desired action(s) */    
+    /* Execute the desired action(s) */
     want_all = opal_cmd_line_is_taken(ompi_info_cmd_line, "all");
     if (want_all) {
         opal_info_out("Package", "package", OPAL_PACKAGE_STRING);
@@ -170,9 +168,9 @@ int main(int argc, char *argv[])
         opal_info_do_type(ompi_info_cmd_line);
         acted = true;
     }
-    
+
     /* If no command line args are specified, show default set */
-    
+
     if (!acted) {
         opal_info_out("Package", "package", OPAL_PACKAGE_STRING);
         ompi_info_show_ompi_version(opal_info_ver_full);
@@ -184,9 +182,9 @@ int main(int argc, char *argv[])
                                          opal_info_component_all, opal_info_ver_full,
                                          opal_info_ver_all);
     }
-    
+
     /* All done */
-    
+
     if (NULL != app_env) {
         opal_argv_free(app_env);
     }
@@ -208,6 +206,6 @@ int main(int argc, char *argv[])
     /* Put our own call to opal_finalize_util() here because we called
        it up above (and it refcounts) */
     opal_finalize_util();
-    
+
     return 0;
 }

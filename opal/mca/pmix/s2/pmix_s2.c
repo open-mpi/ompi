@@ -81,9 +81,7 @@ const opal_pmix_base_module_t opal_pmix_s2_module = {
     NULL,
     s2_spawn,
     s2_job_connect,
-    s2_job_disconnect,
-    NULL,
-    NULL
+    s2_job_disconnect
 };
 
 // usage accounting
@@ -266,7 +264,7 @@ static int s2_init(void)
 
     /* increment the init count */
     ++pmix_init_count;
-    
+
     return OPAL_SUCCESS;
  err_exit:
     PMI2_Finalize();

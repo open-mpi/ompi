@@ -5,16 +5,16 @@
  * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2011 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  *
  */
@@ -25,9 +25,7 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif  /* HAVE_UNISTD_H */
-#ifdef HAVE_STRING_H
 #include <string.h>
-#endif  /* HAVE_STRING_H */
 #include <ctype.h>
 
 #include <lsf/lsbatch.h>
@@ -74,10 +72,10 @@ static int rte_init(void)
         error = "orte_ess_base_std_prolog";
         goto error;
     }
-    
+
     /* Start by getting a unique name */
     lsf_set_name();
-    
+
     /* if I am a daemon, complete my setup using the
      * default procedure
      */
@@ -97,7 +95,7 @@ static int rte_init(void)
         opal_argv_free(hosts);
         return ORTE_SUCCESS;
     }
-    
+
     if (ORTE_PROC_IS_TOOL) {
         /* otherwise, if I am a tool proc, use that procedure */
         if (ORTE_SUCCESS != (ret = orte_ess_base_tool_setup())) {
@@ -106,9 +104,9 @@ static int rte_init(void)
             goto error;
         }
         return ORTE_SUCCESS;
-        
+
     }
-    
+
     /* otherwise, I must be an application process - use
      * the default procedure to finish my setup
      */
@@ -117,9 +115,9 @@ static int rte_init(void)
         error = "orte_ess_base_app_setup";
         goto error;
     }
-    
+
     return ORTE_SUCCESS;
-    
+
 error:
     if (ORTE_ERR_SILENT != ret && !orte_report_silent_errors) {
         orte_show_help("help-orte-runtime.txt",
@@ -165,7 +163,7 @@ static int lsf_set_name(void)
     int lsf_nodeid;
     orte_jobid_t jobid;
     orte_vpid_t vpid;
-      
+
     if (NULL ==orte_ess_base_jobid) {
         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
         return ORTE_ERR_NOT_FOUND;
@@ -196,6 +194,6 @@ static int lsf_set_name(void)
         ORTE_ERROR_LOG(rc);
         return rc;
     }
-    
+
     return ORTE_SUCCESS;
 }

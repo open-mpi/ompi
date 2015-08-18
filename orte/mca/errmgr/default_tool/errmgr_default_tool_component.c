@@ -2,9 +2,9 @@
  * Copyright (c) 2013      Intel, Inc. All rights reserved.
  *
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -18,7 +18,7 @@
 /*
  * Public string for version number
  */
-const char *orte_errmgr_default_tool_component_version_string = 
+const char *orte_errmgr_default_tool_component_version_string =
     "ORTE ERRMGR default_tool MCA component version " ORTE_VERSION;
 
 /*
@@ -35,7 +35,7 @@ static int errmgr_default_tool_component_query(mca_base_module_t **module, int *
  */
 orte_errmgr_base_component_t mca_errmgr_default_tool_component =
 {
-    /* Handle the general mca_component_t struct containing 
+    /* Handle the general mca_component_t struct containing
      *  meta information about the component
      */
     .base_version = {
@@ -72,7 +72,7 @@ static int errmgr_default_tool_register(void)
     return ORTE_SUCCESS;
 }
 
-static int errmgr_default_tool_open(void) 
+static int errmgr_default_tool_open(void)
 {
     return ORTE_SUCCESS;
 }
@@ -88,9 +88,9 @@ static int errmgr_default_tool_component_query(mca_base_module_t **module, int *
         /* set our priority high as we are the default for tools */
         *priority = my_priority;
         *module = (mca_base_module_t *)&orte_errmgr_default_tool_module;
-        return ORTE_SUCCESS;        
+        return ORTE_SUCCESS;
     }
-    
+
     *priority = -1;
     *module = NULL;
     return ORTE_ERROR;

@@ -1,10 +1,12 @@
 # -*- makefile -*-
 #
 # Copyright (c) 2011-2014 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+#                         reserved.
 # $COPYRIGHT$
-# 
+#
 # Additional copyrights may follow
-# 
+#
 # $HEADER$
 #
 
@@ -23,39 +25,41 @@ include $(top_srcdir)/Makefile.ompi-rules
 # just list them here in EXTRA_DIST so that they get picked up by
 # "make dist".
 JAVA_SRC_FILES = \
-        CartComm.java     \
-        CartParms.java    \
-        Comm.java         \
+	CartComm.java     \
+	CartParms.java    \
+	Comm.java         \
 	Constant.java     \
-        Datatype.java     \
+	Count.java	  \
+	Datatype.java     \
 	DistGraphNeighbors.java \
 	DoubleInt.java    \
 	DoubleComplex.java \
-        Errhandler.java   \
+	Errhandler.java   \
 	FloatComplex.java \
 	FloatInt.java     \
 	File.java         \
 	FileView.java     \
-        Freeable.java     \
-        GraphComm.java    \
-        GraphParms.java   \
-        Group.java        \
+	Freeable.java     \
+	GraphComm.java    \
+	GraphParms.java   \
+	Group.java        \
 	Info.java	  \
 	Int2.java         \
-        Intercomm.java    \
-        Intracomm.java    \
+	Intercomm.java    \
+	Intracomm.java    \
 	LongInt.java      \
 	Message.java      \
-        MPI.java          \
-        MPIException.java \
-        Op.java           \
-        Prequest.java     \
-        Request.java      \
-        ShiftParms.java   \
+	MPI.java          \
+	MPIException.java \
+	Op.java           \
+	Prequest.java     \
+	Request.java      \
+	ShiftParms.java   \
 	ShortInt.java     \
-        Status.java       \
+	Status.java       \
 	Struct.java       \
 	UserFunction.java \
+	Version.java	  \
 	Win.java
 
 EXTRA_DIST = $(JAVA_SRC_FILES)
@@ -68,26 +72,28 @@ if OMPI_WANT_JAVA_BINDINGS
 # we have a specific list of files here, as opposed to deriving them
 # from JAVA_SRC_FILES.
 JAVA_H = \
-        mpi_MPI.h          \
-        mpi_CartParms.h    \
-        mpi_CartComm.h     \
-        mpi_Comm.h         \
+	mpi_MPI.h          \
+	mpi_CartParms.h    \
+	mpi_CartComm.h     \
+	mpi_Comm.h         \
 	mpi_Constant.h     \
-        mpi_Datatype.h     \
-        mpi_Errhandler.h   \
+	mpi_Count.h        \
+	mpi_Datatype.h     \
+	mpi_Errhandler.h   \
 	mpi_File.h         \
-        mpi_GraphParms.h   \
-        mpi_GraphComm.h    \
-        mpi_Group.h        \
+	mpi_GraphParms.h   \
+	mpi_GraphComm.h    \
+	mpi_Group.h        \
 	mpi_Info.h         \
-        mpi_Intercomm.h    \
-        mpi_Intracomm.h    \
+	mpi_Intercomm.h    \
+	mpi_Intracomm.h    \
 	mpi_Message.h      \
-        mpi_Op.h           \
-        mpi_Prequest.h     \
-        mpi_Request.h      \
-        mpi_ShiftParms.h   \
-        mpi_Status.h       \
+	mpi_Op.h           \
+	mpi_Prequest.h     \
+	mpi_Request.h      \
+	mpi_ShiftParms.h   \
+	mpi_Status.h       \
+	mpi_Version.h	   \
 	mpi_Win.h
 
 # A little verbosity magic; see Makefile.ompi-rules for an explanation.

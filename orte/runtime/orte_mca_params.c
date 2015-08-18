@@ -5,21 +5,21 @@
  * Copyright (c) 2004-2008 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2011 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2009-2010 Oracle and/or its affiliates.  All rights reserved. 
+ * Copyright (c) 2009-2010 Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.
  *                         All rights reserved
  * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -72,14 +72,14 @@ int orte_register_params(void)
     lds.lds_want_stdout = true;
     orte_clean_output = opal_output_open(&lds);
     OBJ_DESTRUCT(&lds);
-    
+
     orte_help_want_aggregate = true;
     (void) mca_base_var_register ("orte", "orte", "base", "help_aggregate",
                                   "If orte_base_help_aggregate is true, duplicate help messages will be aggregated rather than displayed individually.  This can be helpful for parallel jobs that experience multiple identical failures; rather than print out the same help/failure message N times, display it once with a count of how many processes sent the same message.",
                                   MCA_BASE_VAR_TYPE_BOOL, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
                                   OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_ALL_EQ,
                                   &orte_help_want_aggregate);
-    
+
     /* LOOK FOR A TMP DIRECTORY BASE */
     /* Several options are provided to cover a range of possibilities:
      *
@@ -126,7 +126,7 @@ int orte_register_params(void)
                     "------------------------------------------------------------------");
         exit(1);
     }
-     
+
     if (NULL != orte_tmpdir_base) {
         if (NULL != orte_process_info.tmpdir_base) {
             free(orte_process_info.tmpdir_base);
@@ -163,7 +163,7 @@ int orte_register_params(void)
                                   MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
                                   OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_ALL,
                                   &orte_create_session_dirs);
-    
+
     orte_execute_quiet = false;
     (void) mca_base_var_register ("orte", "orte", NULL, "execute_quiet",
                                   "Do not output error and help messages",
@@ -241,7 +241,7 @@ int orte_register_params(void)
                                   MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
                                   OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_ALL,
                                   &orte_leave_session_attached);
-    
+
     /* if any debug level is set, ensure we output debug level dumps */
     if (orte_debug_flag || orte_debug_daemons_flag || orte_leave_session_attached) {
         orte_devel_level_output = true;
@@ -319,7 +319,7 @@ int orte_register_params(void)
                                   MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
                                   OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
                                   &orte_startup_timeout);
- 
+
     /* User-level debugger info string */
     orte_base_user_debugger = "totalview @mpirun@ -a @mpirun_args@ : ddt -n @np@ -start @executable@ @executable_argv@ @single_app@ : fxp @mpirun@ -a @mpirun_args@";
     (void) mca_base_var_register ("orte", "orte", NULL, "base_user_debugger",
@@ -333,12 +333,12 @@ int orte_register_params(void)
                                 "Max time to wait [in secs] before aborting an ORTE operation (default: 1sec)",
                                 false, false, 1, &value);
     orte_max_timeout = 1000000.0 * value;  /* convert to usec */
-    
+
     mca_base_param_reg_int_name("orte", "timeout_step",
                                 "Time to wait [in usecs/proc] before aborting an ORTE operation (default: 1000 usec/proc)",
                                 false, false, 1000, &orte_timeout_usec_per_proc);
 #endif
-    
+
     /* default hostfile */
     orte_default_hostfile = NULL;
     (void) mca_base_var_register ("orte", "orte", NULL, "default_hostfile",
@@ -346,7 +346,7 @@ int orte_register_params(void)
                                   MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
                                   OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
                                   &orte_default_hostfile);
-                                  
+
     if (NULL == orte_default_hostfile) {
         /* nothing was given, so define the default */
         asprintf(&orte_default_hostfile, "%s/openmpi-default-hostfile", opal_install_dirs.sysconfdir);
@@ -361,7 +361,7 @@ int orte_register_params(void)
         /* flag that it was given */
         orte_default_hostfile_given = true;
     }
-    
+
     /* regex of nodes in system */
     orte_node_regex = NULL;
     (void) mca_base_var_register ("orte", "orte", NULL, "node_regex",
@@ -377,7 +377,7 @@ int orte_register_params(void)
                                   MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
                                   OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
                                   &orte_keep_fqdn_hostnames);
-    
+
     /* whether or not to retain aliases of hostnames */
     orte_retain_aliases = false;
     (void) mca_base_var_register ("orte", "orte", NULL, "retain_aliases",
@@ -412,7 +412,7 @@ int orte_register_params(void)
     if (orte_xml_output) {
         orte_tag_output = true;
     }
-    
+
 
     orte_xml_file = NULL;
     (void) mca_base_var_register ("orte", "orte", NULL, "xml_file",
@@ -436,7 +436,7 @@ int orte_register_params(void)
         /* default to stdout */
         orte_xml_fp = stdout;
     }
-        
+
     /* whether to timestamp output */
     orte_timestamp_output = false;
     (void) mca_base_var_register ("orte", "orte", NULL, "timestamp_output",
@@ -444,7 +444,7 @@ int orte_register_params(void)
                                   MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
                                   OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
                                   &orte_timestamp_output);
-    
+
     /* redirect output into files */
     orte_output_filename = NULL;
     (void) mca_base_var_register ("orte", "orte", NULL, "output_filename",
@@ -460,7 +460,7 @@ int orte_register_params(void)
                                   OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
                                   &orte_show_resolved_nodenames);
 
-#if 0    
+#if 0
     /* XXX -- option doesn't appear to do anything */
     mca_base_param_reg_int_name("orte", "hetero_apps",
                                 "Indicates that multiple app_contexts are being provided that are a mix of 32/64 bit binaries (default: false)",
@@ -539,7 +539,7 @@ int orte_register_params(void)
                                   MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
                                   OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
                                   &orte_forward_job_control);
-    
+
     /* whether or not to report launch progress */
     orte_report_launch_progress = false;
     (void) mca_base_var_register ("orte", "orte", NULL, "report_launch_progress",
@@ -547,7 +547,7 @@ int orte_register_params(void)
                                   MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
                                   OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
                                   &orte_report_launch_progress);
-    
+
     /* cluster hardware info detected by orte only */
     orte_local_cpu_type = NULL;
     (void) mca_base_var_register ("orte", "orte", NULL, "cpu_type",
@@ -573,7 +573,7 @@ int orte_register_params(void)
     if (NULL != orte_report_events_uri) {
         orte_report_events = true;
     }
-    
+
     /* barrier control */
     orte_do_not_barrier = false;
     (void) mca_base_var_register ("orte", "orte", NULL, "do_not_barrier",
@@ -595,7 +595,7 @@ int orte_register_params(void)
                                   MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
                                   OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
                                   &orte_max_restarts);
-    
+
     if (!orte_enable_recovery && orte_max_restarts != 0) {
         if (ORTE_PROC_IS_HNP) {
             opal_output(orte_clean_output,
@@ -607,11 +607,11 @@ int orte_register_params(void)
                         "this warning in the future, please set the orte_enable_recovery\n"
                         "param to non-zero.\n"
                         "------------------------------------------------------------------",
-                        orte_max_restarts);            
+                        orte_max_restarts);
         }
         orte_enable_recovery = true;
     }
-    
+
     orte_abort_non_zero_exit = true;
     (void) mca_base_var_register ("orte", "orte", NULL, "abort_on_non_zero_status",
                                   "Abort the job if any process returns a non-zero exit status - no restart in such cases",
@@ -640,7 +640,7 @@ int orte_register_params(void)
                                   OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
                                   &orte_report_child_jobs_separately);
 
-    
+
 #if 0
     /* XXX -- unused parameter */
     mca_base_param_reg_int_name("orte", "child_time_to_exit",

@@ -6,9 +6,9 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -19,9 +19,7 @@
 #include "orte_config.h"
 #include "orte/constants.h"
 
-#ifdef HAVE_STRING_H
 #include <string.h>
-#endif
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -522,15 +520,15 @@ static int raw_preposition_files(orte_job_t *jdata,
         }
         /* set the flags to non-blocking */
         if ((flags = fcntl(fd, F_GETFL, 0)) < 0) {
-            opal_output(orte_filem_base_framework.framework_output, "[%s:%d]: fcntl(F_GETFL) failed with errno=%d\n", 
+            opal_output(orte_filem_base_framework.framework_output, "[%s:%d]: fcntl(F_GETFL) failed with errno=%d\n",
                         __FILE__, __LINE__, errno);
         } else {
             flags |= O_NONBLOCK;
             if (fcntl(fd, F_SETFL, flags) < 0) {
-                opal_output(orte_filem_base_framework.framework_output, "[%s:%d]: fcntl(F_GETFL) failed with errno=%d\n", 
+                opal_output(orte_filem_base_framework.framework_output, "[%s:%d]: fcntl(F_GETFL) failed with errno=%d\n",
                             __FILE__, __LINE__, errno);
             }
-        }            
+        }
         OPAL_OUTPUT_VERBOSE((1, orte_filem_base_framework.framework_output,
                              "%s filem:raw: setting up to position file %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), fs->local_target));
@@ -672,7 +670,7 @@ static int raw_link_local_files(orte_job_t *jdata,
      * local process in the job
      */
     my_dir = opal_dirname(orte_process_info.job_session_dir);
-    
+
     /* setup */
     if (NULL != orte_process_info.tmpdir_base) {
         prefix = strdup(orte_process_info.tmpdir_base);
@@ -825,12 +823,12 @@ static void send_chunk(int fd, short argc, void *cbdata)
 
     if (numbytes < 0) {
         /* either we have a connection error or it was a non-blocking read */
-        
+
         /* non-blocking, retry */
         if (EAGAIN == errno || EINTR == errno) {
             opal_event_add(&rev->ev, 0);
             return;
-        } 
+        }
 
         OPAL_OUTPUT_VERBOSE((1, orte_filem_base_framework.framework_output,
                              "%s filem:raw:read error on file %s",
@@ -842,7 +840,7 @@ static void send_chunk(int fd, short argc, void *cbdata)
          */
         numbytes = 0;
     }
-    
+
     /* if job termination has been ordered, just ignore the
      * data and delete the read event
      */

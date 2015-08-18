@@ -28,10 +28,10 @@ int main(int argc, char* argv[])
         /* First, spawn all the children.  Give them an argv
            identifying which child they are */
         for (i = 0; i < NUM_CHILDREN; ++i) {
-            printf("Parent [pid %ld] about to spawn child #%d\n", 
+            printf("Parent [pid %ld] about to spawn child #%d\n",
                    (long)pid, i);
             asprintf(&(child_argv[0]), "%d", i);
-            MPI_Comm_spawn(argv[0], child_argv, 1, MPI_INFO_NULL, 
+            MPI_Comm_spawn(argv[0], child_argv, 1, MPI_INFO_NULL,
                            0, MPI_COMM_WORLD, &children[i],
                            MPI_ERRCODES_IGNORE);
             printf("Parent done with spawn of child %d\n", i);
@@ -51,7 +51,7 @@ int main(int argc, char* argv[])
             MPI_Comm_disconnect(&children[i]);
             printf("Parent disconnected from child %d\n", i);
         }
-    } 
+    }
     /* Otherwise, we're the child */
     else {
         gethostname(hostname, 512);

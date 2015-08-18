@@ -1,10 +1,11 @@
 /*
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
+ * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -28,7 +29,7 @@ BEGIN_C_DECLS
 
 /*
  * This is the base priority for a SPML wrapper component
- * If there exists more than one then it is undefined 
+ * If there exists more than one then it is undefined
  * which one is picked.
  */
 #define SPML_SELECT_WRAPPER_PRIORITY -128
@@ -83,18 +84,18 @@ OSHMEM_DECLSPEC extern mca_base_framework_t oshmem_spml_base_framework;
 #ifdef OPAL_ENABLE_DEBUG
 #define SPML_VERBOSE(level, ...) \
     oshmem_output_verbose(level, oshmem_spml_base_framework.framework_output, \
-        "%s:%d - %s()", __SPML_FILE__, __LINE__, __FUNCTION__, __VA_ARGS__)
+        "%s:%d - %s()", __SPML_FILE__, __LINE__, __func__, __VA_ARGS__)
 #else
 #define SPML_VERBOSE(level, ...)
 #endif
 
 #define SPML_ERROR(...) \
     oshmem_output(oshmem_spml_base_framework.framework_output, \
-        "Error %s:%d - %s()", __SPML_FILE__, __LINE__, __FUNCTION__, __VA_ARGS__)
+        "Error %s:%d - %s()", __SPML_FILE__, __LINE__, __func__, __VA_ARGS__)
 
 #define SPML_WARNING(...) \
     oshmem_output_verbose(0, oshmem_spml_base_framework.framework_output, \
-        "Warning %s:%d - %s()", __SPML_FILE__, __LINE__, __FUNCTION__, __VA_ARGS__)
+        "Warning %s:%d - %s()", __SPML_FILE__, __LINE__, __func__, __VA_ARGS__)
 
 END_C_DECLS
 

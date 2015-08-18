@@ -111,6 +111,8 @@ typedef struct opal_hotel_t {
     /* Max number of rooms in the hotel */
     int num_rooms;
 
+    /* event base to be used for eviction timeout */
+    opal_event_base_t *evbase;
     struct timeval eviction_timeout;
     opal_hotel_eviction_callback_fn_t evict_callback_fn;
 
@@ -133,6 +135,7 @@ OBJ_CLASS_DECLARATION(opal_hotel_t);
  *
  * @param hotel Pointer to a hotel (IN)
  * @param num_rooms The total number of rooms in the hotel (IN)
+ * @param evbase Pointer to event base used for eviction timeout
  * @param eviction_timeout Max length of a stay at the hotel before
  * the eviction callback is invoked (in microseconds)
  * @param eviction_event_priority Event lib priority for the eviction timeout
@@ -147,6 +150,7 @@ OBJ_CLASS_DECLARATION(opal_hotel_t);
  *  the error indicate what went wrong in the function.
  */
 OPAL_DECLSPEC int opal_hotel_init(opal_hotel_t *hotel, int num_rooms,
+                                  opal_event_base_t *evbase,
                                   uint32_t eviction_timeout,
                                   int eviction_event_priority,
                                   opal_hotel_eviction_callback_fn_t evict_callback_fn);
@@ -188,8 +192,10 @@ static inline int opal_hotel_checkin(opal_hotel_t *hotel,
     room->occupant = occupant;
 
     /* Assign the event and make it pending */
-    opal_event_add(&(room->eviction_timer_event),
-                   &(hotel->eviction_timeout));
+    if (NULL != hotel->evbase) {
+        opal_event_add(&(room->eviction_timer_event),
+                       &(hotel->eviction_timeout));
+    }
 
     return OPAL_SUCCESS;
 }
@@ -211,8 +217,10 @@ static inline void opal_hotel_checkin_with_res(opal_hotel_t *hotel,
     room->occupant = occupant;
 
     /* Assign the event and make it pending */
-    opal_event_add(&(room->eviction_timer_event),
-                   &(hotel->eviction_timeout));
+    if (NULL != hotel->evbase) {
+        opal_event_add(&(room->eviction_timer_event),
+                       &(hotel->eviction_timeout));
+    }
 }
 
 /**
@@ -237,8 +245,9 @@ static inline void opal_hotel_checkout(opal_hotel_t *hotel, int room_num)
     room = &(hotel->rooms[room_num]);
     if (OPAL_LIKELY(NULL != room->occupant)) {
         room->occupant = NULL;
-        opal_event_del(&(room->eviction_timer_event));
-
+        if (NULL != hotel->evbase) {
+            opal_event_del(&(room->eviction_timer_event));
+        }
         hotel->last_unoccupied_room++;
         assert(hotel->last_unoccupied_room < hotel->num_rooms);
         hotel->unoccupied_rooms[hotel->last_unoccupied_room] = room_num;
@@ -273,7 +282,9 @@ static inline void opal_hotel_checkout_and_return_occupant(opal_hotel_t *hotel, 
         opal_output (10, "checking out occupant %p from room num %d", room->occupant, room_num);
         *occupant = room->occupant;
         room->occupant = NULL;
-        opal_event_del(&(room->eviction_timer_event));
+        if (NULL != hotel->evbase) {
+            opal_event_del(&(room->eviction_timer_event));
+        }
         hotel->last_unoccupied_room++;
         assert(hotel->last_unoccupied_room < hotel->num_rooms);
         hotel->unoccupied_rooms[hotel->last_unoccupied_room] = room_num;
@@ -297,19 +308,6 @@ static inline bool opal_hotel_is_empty (opal_hotel_t *hotel)
     else
         return false;
 }
-
-/**
- * Destroy a hotel.
- *
- * @param hotel Pointer to hotel (IN)
- *
- * @return OPAL_SUCCESS Always
- *
- * The hotel (and all of its rooms) is destroyed.  No further eviction
- * callbacks will be invoked.
- */
-OPAL_DECLSPEC int opal_hotel_finalize(opal_hotel_t *hotel);
-
 
 END_C_DECLS
 

@@ -38,10 +38,10 @@ OBJ_CLASS_DECLARATION(mca_vprotocol_pessimist_send_request_t);
 
 #define VPESSIMIST_RECV_FTREQ(req) \
     ((mca_vprotocol_pessimist_recv_request_t *) VPROTOCOL_RECV_FTREQ(req))
-    
+
 #define VPESSIMIST_SEND_FTREQ(req) \
     ((mca_vprotocol_pessimist_send_request_t *) VPROTOCOL_SEND_FTREQ(req))
-    
+
 #define VPESSIMIST_FTREQ_INIT(req) do {                                         \
         VPESSIMIST_FTREQ(req)->reqid = mca_vprotocol_pessimist.clock++;        \
 } while(0)

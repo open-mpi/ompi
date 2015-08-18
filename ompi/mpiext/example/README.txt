@@ -3,7 +3,7 @@ Copyright (C) 2012 Cisco Systems, Inc.  All rights reserved.
 $COPYRIGHT$
 
 This example MPI extension shows how to make an MPI extension for Open
-MPI.  
+MPI.
 
 An MPI extension provides new top-level APIs in Open MPI that are
 available to user-level applications (vs. adding new code/APIs that is
@@ -74,7 +74,7 @@ Under this top-level directory, the extension *must* have a directory
 named "c" (for the C bindings) that:
 
 - contains a file named mpiext_<ext_name>_c.h
-- installs mpiext_<ext_name>_c.h to 
+- installs mpiext_<ext_name>_c.h to
   $includedir/openmpi/mpiext/<ext_name>/c
 - builds a Libtool convenience library named libmpiext_<ext_name>_c.la
 
@@ -82,7 +82,7 @@ Optionally, the extension may have a director named "mpif-h" (for the
 Fortran mpif.h bindings) that:
 
 - contains a file named mpiext_<ext_name>_mpifh.h
-- installs mpiext_<ext_name>_mpih.h to 
+- installs mpiext_<ext_name>_mpih.h to
   $includedir/openmpi/mpiext/<ext_name>/mpif-h
 - builds a Libtool convenience library named libmpiext_<ext_name>_mpifh.la
 
@@ -133,6 +133,6 @@ file.
 This are reasons for this strange ordering, but suffice it to say that
 "make dist" doesn't have the same ordering requiements as "make all",
 and is therefore easier to have a "normal" Automake-usual top-down
-sequential directory traversal.  
+sequential directory traversal.
 
 Enjoy!

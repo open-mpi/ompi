@@ -43,10 +43,10 @@ int MPI_Dist_graph_create(MPI_Comm comm_old, int n, const int sources[],
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         if (ompi_comm_invalid(comm_old)) {
-            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, 
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM,
                                           FUNC_NAME);
         } else if (OMPI_COMM_IS_INTER(comm_old)) {
-            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, 
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM,
                                           FUNC_NAME);
         } else if (n < 0 || NULL == newcomm) {
             return OMPI_ERRHANDLER_INVOKE(comm_old, MPI_ERR_ARG, FUNC_NAME);
@@ -80,7 +80,7 @@ int MPI_Dist_graph_create(MPI_Comm comm_old, int n, const int sources[],
     /* Ensure there is a topo attached to this communicator */
     if(OMPI_SUCCESS != (err = mca_topo_base_comm_select(comm_old, NULL,
                                                         &topo, OMPI_COMM_DIST_GRAPH))) {
-        return OMPI_ERRHANDLER_INVOKE(comm_old, err, FUNC_NAME);      
+        return OMPI_ERRHANDLER_INVOKE(comm_old, err, FUNC_NAME);
     }
 
     /* XXX -- CONST -- do not cast away const -- update mca/topo */

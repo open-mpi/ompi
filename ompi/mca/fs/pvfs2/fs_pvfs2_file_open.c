@@ -5,20 +5,20 @@
  * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2014 University of Houston. All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
 /* This code is based on the PVFS2 ADIO module in ROMIO
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -40,12 +40,12 @@ struct open_status_s {
 };
 typedef struct open_status_s open_status;
 
-static void fake_an_open(PVFS_fs_id id, 
-                         char *pvfs2_name, 
+static void fake_an_open(PVFS_fs_id id,
+                         char *pvfs2_name,
                          int access_mode,
-	                 int stripe_width, 
+	                 int stripe_width,
                          PVFS_size stripe_size,
-                         mca_fs_pvfs2 *pvfs2_fs, 
+                         mca_fs_pvfs2 *pvfs2_fs,
 			 open_status *o_status);
 /*
  *	file_open_pvfs2: This is the same strategy as ROMIO's pvfs2 open
@@ -55,7 +55,7 @@ static void fake_an_open(PVFS_fs_id id,
  *	Returns:	- Success if new file handle
  */
 int
-mca_fs_pvfs2_file_open (struct ompi_communicator_t *comm, 
+mca_fs_pvfs2_file_open (struct ompi_communicator_t *comm,
                         char* filename,
                         int access_mode,
                         struct ompi_info_t *info,
@@ -132,12 +132,12 @@ mca_fs_pvfs2_file_open (struct ompi_communicator_t *comm,
 	    o_status.error = -1;
         }
         else {
-            fake_an_open (pvfs2_id, 
+            fake_an_open (pvfs2_id,
                           pvfs2_path,
-                          access_mode, 
+                          access_mode,
                           fs_pvfs2_stripe_width,
                           (PVFS_size)fs_pvfs2_stripe_size,
-                          pvfs2_fs, 
+                          pvfs2_fs,
                           &o_status);
         }
         pvfs2_fs->object_ref = o_status.object_ref;
@@ -171,24 +171,24 @@ mca_fs_pvfs2_file_open (struct ompi_communicator_t *comm,
     fh->f_fs_ptr = pvfs2_fs;
 
     /* update the internal ompio structure to store stripe
-       size and stripe depth correctly. 
+       size and stripe depth correctly.
        Hadi(to be done): For this read the stripe size and stripe depth from
        the file itself
     */
-    
+
     if (fs_pvfs2_stripe_size > 0 && fs_pvfs2_stripe_width > 0) {
         fh->f_stripe_size = fs_pvfs2_stripe_size;
     }
- 
+
     return OMPI_SUCCESS;
 }
 
-static void fake_an_open(PVFS_fs_id id, 
-                         char *pvfs2_name, 
+static void fake_an_open(PVFS_fs_id id,
+                         char *pvfs2_name,
                          int access_mode,
-	                 int stripe_width, 
+	                 int stripe_width,
                          PVFS_size stripe_size,
-                         mca_fs_pvfs2 *pvfs2_fs, 
+                         mca_fs_pvfs2 *pvfs2_fs,
 			 open_status *o_status)
 {
     int ret;
@@ -199,7 +199,7 @@ static void fake_an_open(PVFS_fs_id id,
     PVFS_sys_dist *dist;
 
     memset(&attribs, 0, sizeof(PVFS_sys_attr));
-    
+
     attribs.owner = geteuid();
     attribs.group = getegid();
     attribs.perms = 0644;
@@ -219,24 +219,24 @@ static void fake_an_open(PVFS_fs_id id,
     memset(&resp_getparent, 0, sizeof(resp_getparent));
     memset(&resp_create, 0, sizeof(resp_create));
 
-    ret = PVFS_sys_lookup(id, 
+    ret = PVFS_sys_lookup(id,
                           pvfs2_name,
-                          &(pvfs2_fs->credentials), 
-                          &resp_lookup, 
+                          &(pvfs2_fs->credentials),
+                          &resp_lookup,
                           PVFS2_LOOKUP_LINK_FOLLOW);
 
     if ( ret == (-PVFS_ENOENT)) {
 	if (access_mode & MPI_MODE_CREATE)  {
-	    ret = PVFS_sys_getparent(id, 
+	    ret = PVFS_sys_getparent(id,
                                      pvfs2_name,
-                                     &(pvfs2_fs->credentials), 
-                                     &resp_getparent); 
+                                     &(pvfs2_fs->credentials),
+                                     &resp_getparent);
 	    if (ret < 0) {
                 opal_output (1, "pvfs_sys_getparent returns with %d\n", ret);
 		o_status->error = ret;
 		return;
 	    }
-            
+
             /* Set the distribution stripe size if specified */
             if (0 < stripe_size) {
                 /* Note that the distribution is hardcoded here */
@@ -245,34 +245,34 @@ static void fake_an_open(PVFS_fs_id id,
                                               "strip_size",
                                               &stripe_size);
                 if (ret < 0)  {
-                    opal_output (1, 
+                    opal_output (1,
                             "pvfs_sys_dist_setparam returns with %d\n", ret);
                     o_status->error = ret;
                 }
             }
 
             /* Perform file creation */
-            ret = PVFS_sys_create(resp_getparent.basename, 
-                                  resp_getparent.parent_ref, 
+            ret = PVFS_sys_create(resp_getparent.basename,
+                                  resp_getparent.parent_ref,
                                   attribs,
-                                  &(pvfs2_fs->credentials), 
-                                  dist, 
-                                  &resp_create); 
+                                  &(pvfs2_fs->credentials),
+                                  dist,
+                                  &resp_create);
             /*
 #ifdef HAVE_PVFS2_CREATE_WITHOUT_LAYOUT
-            ret = PVFS_sys_create(resp_getparent.basename, 
-                                  resp_getparent.parent_ref, 
-                                  attribs, 
-                                  &(pvfs2_fs->credentials), 
-                                  dist, 
-                                  &resp_create); 
-				  #else             
-            ret = PVFS_sys_create(resp_getparent.basename, 
-                                  resp_getparent.parent_ref, 
-                                  attribs, 
-                                  &(pvfs2_fs->credentials), 
-                                  dist, 
-                                  NULL, 
+            ret = PVFS_sys_create(resp_getparent.basename,
+                                  resp_getparent.parent_ref,
+                                  attribs,
+                                  &(pvfs2_fs->credentials),
+                                  dist,
+                                  &resp_create);
+				  #else
+            ret = PVFS_sys_create(resp_getparent.basename,
+                                  resp_getparent.parent_ref,
+                                  attribs,
+                                  &(pvfs2_fs->credentials),
+                                  dist,
+                                  NULL,
                                   &resp_create);
             #endif
             */
@@ -283,10 +283,10 @@ static void fake_an_open(PVFS_fs_id id,
 	     * less work for us and we can just open it up and return the
 	     * handle */
 	    if (ret == (-PVFS_EEXIST)) {
-		ret = PVFS_sys_lookup(id, 
+		ret = PVFS_sys_lookup(id,
                                       pvfs2_name,
-                                      &(pvfs2_fs->credentials), 
-                                      &resp_lookup, 
+                                      &(pvfs2_fs->credentials),
+                                      &resp_lookup,
                                       PVFS2_LOOKUP_LINK_FOLLOW);
 		if ( ret < 0 ) {
 		    o_status->error = ret;
@@ -303,12 +303,12 @@ static void fake_an_open(PVFS_fs_id id,
 	    o_status->error = ret;
 	    return;
 	}
-    } 
+    }
     else if (access_mode & MPI_MODE_EXCL) {
 	/* lookup should not succeed if opened with EXCL */
 	o_status->error = -PVFS_EEXIST;
 	return;
-    } 
+    }
     else {
 	o_status->object_ref = resp_lookup.ref;
     }

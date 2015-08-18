@@ -1,6 +1,8 @@
 /********************** BEGIN OMPI CHANGES *****************************/
 /*
  * Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  *
  * Additional copyrights may follow.
  */
@@ -2086,19 +2088,19 @@ typedef struct malloc_chunk* mbinptr;
 
   Normally, this should be MIN_LARGE_SIZE. But you can weaken
   best fit guarantees to sometimes speed up malloc by increasing value.
-  Doing this means that malloc may choose a chunk that is 
+  Doing this means that malloc may choose a chunk that is
   non-best-fitting by up to the width of the bin.
 
   Some useful cutoff values:
       512 - all bins sorted
-     2560 - leaves bins <=     64 bytes wide unsorted  
+     2560 - leaves bins <=     64 bytes wide unsorted
     12288 - leaves bins <=    512 bytes wide unsorted
     65536 - leaves bins <=   4096 bytes wide unsorted
    262144 - leaves bins <=  32768 bytes wide unsorted
        -1 - no bins sorted (not recommended!)
 */
 
-#define FIRST_SORTED_BIN_SIZE MIN_LARGE_SIZE 
+#define FIRST_SORTED_BIN_SIZE MIN_LARGE_SIZE
 /* #define FIRST_SORTED_BIN_SIZE 65536 */
 
 /*
@@ -3944,7 +3946,7 @@ public_mALLOPt(int p, int v)
 /* Mac OS X).  (The predefined __INTEL_COMPILER macro is nonsense,  */
 /* 9999, and both the 2011.6.233 and 2011.7.256 releases identify   */
 /* themselves as V12.1.0 from the -v command line option.)          */
- 
+
 #ifdef __INTEL_COMPILER_BUILD_DATE
 #  if __INTEL_COMPILER_BUILD_DATE == 20110811
 #    pragma GCC optimization_level 1
@@ -4126,7 +4128,7 @@ _int_malloc(mstate av, size_t bytes)
             fwd = bck;
             bck = bck->bk;
           }
-          else if ((unsigned long)(size) >= 
+          else if ((unsigned long)(size) >=
                    (unsigned long)(FIRST_SORTED_BIN_SIZE)) {
 
             /* maintain large bins in sorted order */
@@ -5008,9 +5010,9 @@ _int_icalloc(av, n_elements, elem_size, chunks)
 mstate av; size_t n_elements; size_t elem_size; Void_t* chunks[];
 #endif
 {
-  size_t sz = elem_size; /* serves as 1-element array */
+  size_t sz[1] = {elem_size};
   /* opts arg of 3 means all elements are same size, and should be cleared */
-  return iALLOc(av, n_elements, &sz, 3, chunks);
+  return iALLOc(av, n_elements, sz, 3, chunks);
 }
 
 /*

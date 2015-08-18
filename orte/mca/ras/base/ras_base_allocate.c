@@ -5,25 +5,23 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.  All rights
- *                         reserved. 
+ *                         reserved.
  * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
 #include "orte_config.h"
 
-#ifdef HAVE_STRING_H
 #include <string.h>
-#endif
 
 #include "orte/constants.h"
 #include "orte/types.h"
@@ -58,7 +56,7 @@ void orte_ras_base_display_alloc(void)
     char *tmp=NULL, *tmp2, *tmp3;
     int i, istart;
     orte_node_t *alloc;
-    
+
     if (orte_xml_output) {
         asprintf(&tmp, "<allocation>\n");
     } else {
@@ -99,7 +97,7 @@ void orte_ras_base_display_alloc(void)
     } else {
         opal_output(orte_clean_output, "%s=================================================================\n", tmp);
     }
-    free(tmp);    
+    free(tmp);
 }
 
 /*
@@ -120,15 +118,15 @@ void orte_ras_base_allocate(int fd, short args, void *cbdata)
     OPAL_OUTPUT_VERBOSE((5, orte_ras_base_framework.framework_output,
                          "%s ras:base:allocate",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-    
+
     /* convenience */
     jdata = caddy->jdata;
 
     /* if we already did this, don't do it again - the pool of
-     * global resources is set. 
+     * global resources is set.
      */
     if (orte_ras_base.allocation_read) {
-        
+
         OPAL_OUTPUT_VERBOSE((5, orte_ras_base_framework.framework_output,
                              "%s ras:base:allocate allocation already read",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
@@ -144,7 +142,7 @@ void orte_ras_base_allocate(int fd, short args, void *cbdata)
      * In other words, if a node isn't found in this step, then
      * no job launched by this HNP will be able to utilize it.
      */
-    
+
     /* construct a list to hold the results */
     OBJ_CONSTRUCT(&nodes, opal_list_t);
 
@@ -193,7 +191,7 @@ void orte_ras_base_allocate(int fd, short args, void *cbdata)
             OBJ_RELEASE(caddy);
             return;
         }
-    } 
+    }
     /* If something came back, save it and we are done */
     if (!opal_list_is_empty(&nodes)) {
         /* flag that the allocation is managed */
@@ -227,11 +225,11 @@ void orte_ras_base_allocate(int fd, short args, void *cbdata)
         OBJ_RELEASE(caddy);
         return;
     }
-    
+
     OPAL_OUTPUT_VERBOSE((5, orte_ras_base_framework.framework_output,
                          "%s ras:base:allocate nothing found in module - proceeding to hostfile",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-    
+
     /* nothing was found, or no active module was alive. Our next
      * option is to look for a hostfile and assign our global
      * pool from there.
@@ -258,7 +256,7 @@ void orte_ras_base_allocate(int fd, short args, void *cbdata)
                              "%s ras:base:allocate parsing default hostfile %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              orte_default_hostfile));
-        
+
         /* a default hostfile was provided - parse it */
         if (ORTE_SUCCESS != (rc = orte_util_add_hostfile_nodes(&nodes,
                                                                orte_default_hostfile))) {
@@ -273,7 +271,7 @@ void orte_ras_base_allocate(int fd, short args, void *cbdata)
                              "%s ras:base:allocate parsing rankfile %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              orte_rankfile));
-        
+
         /* a rankfile was provided - parse it */
         if (ORTE_SUCCESS != (rc = orte_util_add_hostfile_nodes(&nodes,
                                                                orte_rankfile))) {
@@ -291,7 +289,7 @@ void orte_ras_base_allocate(int fd, short args, void *cbdata)
             OPAL_OUTPUT_VERBOSE((5, orte_ras_base_framework.framework_output,
                                  "%s ras:base:allocate adding hostfile %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), hosts));
-            
+
             /* hostfile was specified - parse it and add it to the list */
             if (ORTE_SUCCESS != (rc = orte_util_add_hostfile_nodes(&nodes, hosts))) {
                 free(hosts);
@@ -342,11 +340,11 @@ void orte_ras_base_allocate(int fd, short args, void *cbdata)
         OBJ_DESTRUCT(&nodes);
         goto DISPLAY;
     }
-    
+
     OPAL_OUTPUT_VERBOSE((5, orte_ras_base_framework.framework_output,
                          "%s ras:base:allocate nothing found in hostfiles - checking for rankfile",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-    
+
     /* Our next option is to look for a rankfile - if one was provided, we
      * will use its nodes to create a default allocation pool
      */
@@ -382,12 +380,12 @@ void orte_ras_base_allocate(int fd, short args, void *cbdata)
         OBJ_DESTRUCT(&nodes);
         goto DISPLAY;
     }
-    
-    
+
+
     OPAL_OUTPUT_VERBOSE((5, orte_ras_base_framework.framework_output,
                          "%s ras:base:allocate nothing found in rankfile - inserting current node",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-    
+
  addlocal:
     /* if nothing was found by any of the above methods, then we have no
      * earthly idea what to do - so just add the local host
@@ -409,7 +407,7 @@ void orte_ras_base_allocate(int fd, short args, void *cbdata)
     node->slots_max = 0;
     node->slots = 1;
     opal_list_append(&nodes, &node->super);
-    
+
     /* store the results in the global resource pool - this removes the
      * list items
      */
@@ -437,7 +435,7 @@ void orte_ras_base_allocate(int fd, short args, void *cbdata)
             OBJ_RELEASE(caddy);
         }
     }
-    
+
     /* set total slots alloc */
     jdata->total_slots_alloc = orte_ras_base.total_slots_alloc;
 
@@ -459,7 +457,7 @@ int orte_ras_base_add_hosts(orte_job_t *jdata)
 
     /* construct a list to hold the results */
     OBJ_CONSTRUCT(&nodes, opal_list_t);
-    
+
     /* Individual add-hostfile names, if given, are included
      * in the app_contexts for this job. We therefore need to
      * retrieve the app_contexts for the job, and then cycle
@@ -472,7 +470,7 @@ int orte_ras_base_add_hosts(orte_job_t *jdata)
      * generate an error in this scenario, so only non-relative syntax
      * can be present
      */
-    
+
     for (i=0; i < jdata->apps->size; i++) {
         if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, i))) {
             continue;
@@ -481,7 +479,7 @@ int orte_ras_base_add_hosts(orte_job_t *jdata)
             OPAL_OUTPUT_VERBOSE((5, orte_ras_base_framework.framework_output,
                                  "%s ras:base:add_hosts checking add-hostfile %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), hosts));
-            
+
             /* hostfile was specified - parse it and add it to the list */
             if (ORTE_SUCCESS != (rc = orte_util_add_hostfile_nodes(&nodes, hosts))) {
                 ORTE_ERROR_LOG(rc);
@@ -525,7 +523,7 @@ int orte_ras_base_add_hosts(orte_job_t *jdata)
             free(hosts);
         }
     }
-    
+
     /* if something was found, we add that to our global pool */
     if (!opal_list_is_empty(&nodes)) {
         /* mark all the nodes as "added" */
@@ -541,11 +539,11 @@ int orte_ras_base_add_hosts(orte_job_t *jdata)
         /* cleanup */
         OBJ_DESTRUCT(&nodes);
     }
-    
+
     /* shall we display the results? */
     if (0 < opal_output_get_verbosity(orte_ras_base_framework.framework_output)) {
         orte_ras_base_display_alloc();
     }
-    
+
     return ORTE_SUCCESS;
 }

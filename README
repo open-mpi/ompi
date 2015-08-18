@@ -1,7 +1,7 @@
 Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
                         University Research and Technology
                         Corporation.  All rights reserved.
-Copyright (c) 2004-2007 The University of Tennessee and The University
+Copyright (c) 2004-2015 The University of Tennessee and The University
                         of Tennessee Research Foundation.  All rights
                         reserved.
 Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
@@ -146,6 +146,8 @@ General notes
 Compiler Notes
 --------------
 
+- Open MPI requires a C99-capable compiler to build.
+
 - Mixing compilers from different vendors when building Open MPI
   (e.g., using the C/C++ compiler from one vendor and the Fortran
   compiler from a different vendor) has been successfully employed by
@@ -174,8 +176,8 @@ Compiler Notes
     pgi-9 : 9.0-4 known GOOD
     pgi-10: 10.0-0 known GOOD
     pgi-11: NO known good version with --enable-debug
-    pgi-12: 12.10 known GOOD (and 12.8 and 12.9 both known BAD with
-            --enable-debug)
+    pgi-12: 12.10 known BAD due to C99 compliance issues, and 12.8
+            and 12.9 both known BAD with --enable-debug
     pgi-13: 13.10 known GOOD
 
 - Similarly, there is a known Fortran PGI compiler issue with long
@@ -434,6 +436,9 @@ General Run-Time Support Notes
 MPI Functionality and Features
 ------------------------------
 
+- Rank reordering support is available using the TreeMatch library. It is activated
+  for the graph and dist_graph topologies.
+
 - All MPI-3 functionality is supported.
 
 - When using MPI deprecated functions, some compilers will emit
@@ -604,16 +609,17 @@ Network Support
   - "cm" supports a smaller number of networks (and they cannot be
     used together), but may provide better overall MPI performance:
 
-    - InfiniPath PSM
+    - QLogic InfiniPath / Intel True Scale PSM
+    - Intel Omni-Path PSM2
     - Mellanox MXM
     - Portals4
-    - OpenFabrics Interfaces ("libfabric")
+    - OpenFabrics Interfaces ("libfabric" tag matching)
 
-    Open MPI will, by default, choose to use "cm" when the InfiniPath
-    PSM or the Mellanox MXM MTL can be used.  Otherwise, "ob1" will be
-    used and the corresponding BTLs will be selected. Users can force
-    the use of ob1 or cm if desired by setting the "pml" MCA parameter
-    at run-time:
+    Open MPI will, by default, choose to use "cm" when one of the
+    above transports can be used.  Otherwise, "ob1" will be used and
+    the corresponding BTLs will be selected. Users can force the use
+    of ob1 or cm if desired by setting the "pml" MCA parameter at
+    run-time:
 
       shell$ mpirun --mca pml ob1 ...
       or
@@ -708,6 +714,9 @@ Open MPI Extensions
   - cr: Provides routines to access to checkpoint restart routines.
     See ompi/mpiext/cr/mpiext_cr_c.h for a listing of availble
     functions.
+  - cuda: When the library is compiled with CUDA-aware support, it provides
+    two things.  First, a macro MPIX_CUDA_AWARE_SUPPORT. Secondly, the
+    function MPIX_Query_cuda_support that can be used to query for support.
   - example: A non-functional extension; its only purpose is to
     provide an example for how to create other extensions.
 
@@ -848,6 +857,21 @@ NETWORKING SUPPORT / OPTIONS
   same server.  See http://runtime.bordeaux.inria.fr/knem/ for
   details.
 
+--with-libfabric=<directory>
+  Specify the directory where the OpenFabrics Interfaces libfabric
+  library and header files are located.  This option is generally only
+  necessary if the libfabric headers and libraries are not in default
+  compiler/linker search paths.
+
+  Libfabric is the support library for OpenFabrics Interfaces-based
+  network adapters, such as Cisco usNIC, Intel True Scale PSM, etc.
+
+--with-libfabric-libdir=<directory>
+  Look in directory for the libfabric libraries.  By default, Open MPI
+  will look in <libfabric directory>/lib and <libfabric
+  directory>/lib64, which covers most cases.  This option is only
+  needed for special configurations.
+
 --with-mxm=<directory>
   Specify the directory where the Mellanox MXM library and header
   files are located.  This option is generally only necessary if the
@@ -860,24 +884,6 @@ NETWORKING SUPPORT / OPTIONS
   Look in directory for the MXM libraries.  By default, Open MPI will
   look in <mxm directory>/lib and <mxm directory>/lib64, which covers
   most cases.  This option is only needed for special configurations.
-
---with-usnic
-  Abort configure if Cisco usNIC support cannot be built.
-
---with-verbs=<directory>
-  Specify the directory where the verbs (also know as OpenFabrics, and
-  previously known as OpenIB) libraries and header files are located.
-  This option is generally only necessary if the verbs headers and
-  libraries are not in default compiler/linker search paths.
-
-  "OpenFabrics" refers to operating system bypass networks, such as
-  InfiniBand, usNIC, iWARP, and RoCE (aka "IBoIP").
-
---with-verbs-libdir=<directory>
-  Look in directory for the verbs libraries.  By default, Open MPI
-  will look in <verbs_directory>/lib and <verbs_ directory>/lib64,
-  which covers most cases.  This option is only needed for special
-  configurations.
 
 --with-portals4=<directory>
   Specify the directory where the Portals4 libraries and header files
@@ -899,9 +905,9 @@ NETWORKING SUPPORT / OPTIONS
   Set configuration values for Portals 4
 
 --with-psm=<directory>
-  Specify the directory where the InfiniPath PSM library and
-  header files are located.  This option is generally only necessary
-  if the InfiniPath headers and libraries are not in default
+  Specify the directory where the QLogic InfiniPath / Intel True Scale
+  PSM library and header files are located.  This option is generally
+  only necessary if the PSM headers and libraries are not in default
   compiler/linker search paths.
 
   PSM is the support library for QLogic InfiniPath and Intel TrueScale
@@ -912,20 +918,40 @@ NETWORKING SUPPORT / OPTIONS
   look in <psm directory>/lib and <psm directory>/lib64, which covers
   most cases.  This option is only needed for special configurations.
 
---with-sctp=<directory>
-  Specify the directory where the SCTP libraries and header files are
-  located.  This option is generally only necessary if the SCTP headers
-  and libraries are not in default compiler/linker search paths.
+--with-psm2=<directory>
+  Specify the directory where the Intel Omni-Path PSM2 library and
+  header files are located.  This option is generally only necessary
+  if the PSM2 headers and libraries are not in default compiler/linker
+  search paths.
 
-  SCTP is a special network stack over Ethernet networks.
+  PSM2 is the support library for Intel Omni-Path network adapters.
 
---with-sctp-libdir=<directory>
-  Look in directory for the SCTP libraries.  By default, Open MPI will
-  look in <sctp directory>/lib and <sctp directory>/lib64, which covers
-  most cases.  This option is only needed for special configurations.
+--with-psm2-libdir=<directory>
+  Look in directory for the PSM2 libraries.  By default, Open MPI will
+  look in <psm2 directory>/lib and <psm2 directory>/lib64, which
+  covers most cases.  This option is only needed for special
+  configurations.
 
 --with-scif=<dir>
   Look in directory for Intel SCIF support libraries
+
+--with-verbs=<directory>
+  Specify the directory where the verbs (also know as OpenFabrics, and
+  previously known as OpenIB) libraries and header files are located.
+  This option is generally only necessary if the verbs headers and
+  libraries are not in default compiler/linker search paths.
+
+  "OpenFabrics" refers to operating system bypass networks, such as
+  InfiniBand, usNIC, iWARP, and RoCE (aka "IBoIP").
+
+--with-verbs-libdir=<directory>
+  Look in directory for the verbs libraries.  By default, Open MPI
+  will look in <verbs_directory>/lib and <verbs_ directory>/lib64,
+  which covers most cases.  This option is only needed for special
+  configurations.
+
+--with-usnic
+  Abort configure if Cisco usNIC support cannot be built.
 
 RUN-TIME SYSTEM SUPPORT
 
@@ -1380,13 +1406,12 @@ NOTE: The version numbering conventions were changed with the release
 Backwards Compatibility
 -----------------------
 
-Open MPI version Y is backwards compatible with Open MPI version X
+Open MPI version vY is backwards compatible with Open MPI version vX
 (where Y>X) if users can:
 
-  * Compile an MPI/OSHMEM application with version X, mpirun/oshrun it
-    with version Y, and get the same user-observable behavior.
-  * Invoke ompi_info with the same CLI options in versions X and Y and
-    get the same user-observable behavior.
+  * Users can compile a correct MPI / OSHMEM program with vX
+  * Run it with the same CLI options and MCA parameters using vX or vY
+  * The job executes correctly
 
 Note that this definition encompasses several things:
 
@@ -1394,6 +1419,12 @@ Note that this definition encompasses several things:
   * MPI / OSHMEM run time system
   * mpirun / oshrun command line options
   * MCA parameter names / values / meanings
+
+However, this definition only applies when the same version of Open
+MPI is used with all instances of the runtime and MPI / OSHMEM
+processes in a single MPI job.  If the versions are not exactly the
+same everywhere, Open MPI is not guaranteed to work properly in any
+scenario.
 
 Software Version Number
 -----------------------
@@ -1425,6 +1456,8 @@ format.  Each of the three numbers has a specific meaning:
     if there is a release that only contains bug fixes and no other
     user-observable changes or new features, only the third integer
     will be increased (e.g., from v4.3.0 to v4.3.1).
+
+The "A.B.C" version number may optionally be followed by a Quantifier:
 
   * Quantifier: Open MPI version numbers sometimes have an arbitrary
     string affixed to the end of the version number. Common strings
@@ -1614,10 +1647,8 @@ MPI implementations!
 Compiling the extensions
 ------------------------
 
-Open MPI extensions are not enabled by default; they must be enabled
-by Open MPI's configure script.  The --enable-mpi-ext command line
-switch accepts a comma-delimited list of extensions to enable, or, if
-it is specified without a list, all extensions are enabled.
+Open MPI extensions are all enabled by default; they can be disabled
+via the --disable-mpi-ext command line switch.
 
 Since extensions are meant to be used by advanced users only, this
 file does not document which extensions are available or what they

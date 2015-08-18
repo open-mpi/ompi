@@ -6,7 +6,7 @@
  * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -14,10 +14,12 @@
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2014-2015 Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -133,8 +135,8 @@ int mca_base_component_find (const char *directory, mca_base_framework_t *framew
         find_dyn_components(directory, framework, (const char**)requested_component_names,
                             include_mode);
     } else {
-        opal_output_verbose(40, 0, 
-                            "mca: base: component_find: dso loading for %s MCA components disabled", 
+        opal_output_verbose (MCA_BASE_VERBOSE_INFO, 0,
+                            "mca: base: component_find: dso loading for %s MCA components disabled",
                             framework->framework_name);
     }
 #endif
@@ -193,11 +195,11 @@ int mca_base_components_filter (mca_base_framework_t *framework, uint32_t filter
         if (!can_use || (filter_flags & dummy->data.param_field) != filter_flags) {
             if (can_use && (filter_flags & MCA_BASE_METADATA_PARAM_CHECKPOINT) &&
                 !(MCA_BASE_METADATA_PARAM_CHECKPOINT & dummy->data.param_field)) {
-                opal_output_verbose(10, output_id,
-                                    "mca: base: components_filter: "
-                                    "(%s) Component %s is *NOT* Checkpointable - Disabled",
-                                    component->reserved,
-                                    component->mca_component_name);
+                opal_output_verbose (MCA_BASE_VERBOSE_COMPONENT, output_id,
+                                     "mca: base: components_filter: "
+                                     "(%s) Component %s is *NOT* Checkpointable - Disabled",
+                                     component->reserved,
+                                     component->mca_component_name);
             }
 
             opal_list_remove_item (components, &cli->super);
@@ -206,11 +208,11 @@ int mca_base_components_filter (mca_base_framework_t *framework, uint32_t filter
 
             OBJ_RELEASE(cli);
         } else if (filter_flags & MCA_BASE_METADATA_PARAM_CHECKPOINT) {
-            opal_output_verbose(10, output_id,
-                                "mca: base: components_filter: "
-                                "(%s) Component %s is Checkpointable",
-                                component->reserved,
-                                component->mca_component_name);
+            opal_output_verbose (MCA_BASE_VERBOSE_COMPONENT, output_id,
+                                 "mca: base: components_filter: "
+                                 "(%s) Component %s is Checkpointable",
+                                 component->reserved,
+                                 component->mca_component_name);
         }
     }
 
@@ -272,7 +274,7 @@ static bool use_component(const bool include_mode,
 {
     bool found = false;
     const char **req_comp_name = requested_component_names;
-    
+
     /*
      * If no selection is specified then we use all components
      * we can find.
@@ -320,7 +322,7 @@ static int component_find_check (mca_base_framework_t *framework, char **request
         bool found = false;
 
         OPAL_LIST_FOREACH(cli, components, mca_base_component_list_item_t) {
-            if (0 == strcmp(requested_component_names[i], 
+            if (0 == strcmp(requested_component_names[i],
                             cli->cli_component->mca_component_name)) {
                 found = true;
                 break;
@@ -330,7 +332,7 @@ static int component_find_check (mca_base_framework_t *framework, char **request
         if (!found) {
             char h[MAXHOSTNAMELEN];
             gethostname(h, sizeof(h));
-            opal_show_help("help-mca-base.txt", 
+            opal_show_help("help-mca-base.txt",
                            "find-available:not-valid", true,
                            h, framework->framework_name, requested_component_names[i]);
             return OPAL_ERR_NOT_FOUND;
@@ -364,7 +366,7 @@ int mca_base_component_parse_requested (const char *requested, bool *include_mod
     /* Double check to ensure that the user did not specify the negate
        character anywhere else in the value. */
     if (NULL != strstr (requested, negate)) {
-        opal_show_help("help-mca-base.txt", 
+        opal_show_help("help-mca-base.txt",
                        "framework-param:too-many-negates",
                        true, requested_orig);
         return OPAL_ERROR;

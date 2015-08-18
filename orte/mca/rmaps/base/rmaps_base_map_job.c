@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -14,9 +14,9 @@
  *                         All rights reserved.
  * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -64,7 +64,7 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
      * ALLOWED TO CALL RMAPS INDEPENDENTLY. ONLY THE PLM CAN
      * DO SO, AND ALL PLM COMMANDS ARE RELAYED TO HNP
      */
-    
+
     opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                         "mca:rmaps: mapping job %s",
                         ORTE_JOBID_PRINT(jdata->jobid));
@@ -76,7 +76,7 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
      * NULL MAP FIELD
      * LONE EXCEPTION - WE COPY DISPLAY MAP ACROSS IF THEY
      * DIDN'T SET IT
-     */        
+     */
     if (NULL == jdata->map) {
         opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                             "mca:rmaps: creating new map for job %s",
@@ -93,7 +93,16 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
         nprocs = 0;
         for (i=0; i < jdata->apps->size; i++) {
             if (NULL != (app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, i))) {
-                nprocs += app->num_procs;
+                if (0 == app->num_procs) {
+                    opal_list_t nodes;
+                    orte_std_cntr_t slots;
+                    OBJ_CONSTRUCT(&nodes, opal_list_t);
+                    orte_rmaps_base_get_target_nodes(&nodes, &slots, app, ORTE_MAPPING_BYNODE, true, true);
+                    OPAL_LIST_DESTRUCT(&nodes);
+                    nprocs += slots;
+                } else {
+                    nprocs += app->num_procs;
+                }
             }
         }
         opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
@@ -113,20 +122,20 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
                      * to byslot if nothing else was specified by the user.
                      */
                     opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
-                                        "mca:rmaps mapping not given - using byslot");
+                                        "mca:rmaps[%d] mapping not given - using byslot", __LINE__);
                     ORTE_SET_MAPPING_POLICY(map->mapping, ORTE_MAPPING_BYSLOT);
                 } else if (opal_hwloc_use_hwthreads_as_cpus) {
                     opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
-                                        "mca:rmaps mapping not given - using byhwthread");
+                                        "mca:rmaps[%d] mapping not given - using byhwthread", __LINE__);
                     ORTE_SET_MAPPING_POLICY(map->mapping, ORTE_MAPPING_BYHWTHREAD);
                 } else {
                     opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
-                                        "mca:rmaps mapping not given - using bycore");
+                                        "mca:rmaps[%d] mapping not given - using bycore", __LINE__);
                     ORTE_SET_MAPPING_POLICY(map->mapping, ORTE_MAPPING_BYCORE);
                 }
             } else {
                 opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
-                                    "mca:rmaps mapping not given - using bysocket");
+                                    "mca:rmaps[%d] mapping not given - using bysocket", __LINE__);
                 ORTE_SET_MAPPING_POLICY(map->mapping, ORTE_MAPPING_BYSOCKET);
             }
 #else
@@ -190,20 +199,20 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
                      * to byslot if nothing else was specified by the user.
                      */
                     opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
-                                        "mca:rmaps mapping not given - using byslot");
+                                        "mca:rmaps[%d] mapping not given - using byslot", __LINE__);
                     ORTE_SET_MAPPING_POLICY(jdata->map->mapping, ORTE_MAPPING_BYSLOT);
                 } else if (opal_hwloc_use_hwthreads_as_cpus) {
                     opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
-                                        "mca:rmaps mapping not given - using byhwthread");
+                                        "mca:rmaps[%d] mapping not given - using byhwthread", __LINE__);
                     ORTE_SET_MAPPING_POLICY(jdata->map->mapping, ORTE_MAPPING_BYHWTHREAD);
                 } else {
                     opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
-                                        "mca:rmaps mapping not given - using bycore");
+                                        "mca:rmaps[%d] mapping not given - using bycore", __LINE__);
                     ORTE_SET_MAPPING_POLICY(jdata->map->mapping, ORTE_MAPPING_BYCORE);
                 }
             } else {
                 opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
-                                    "mca:rmaps mapping not set by user - using bysocket");
+                                    "mca:rmaps[%d] mapping not set by user - using bysocket", __LINE__);
                 ORTE_SET_MAPPING_POLICY(jdata->map->mapping, ORTE_MAPPING_BYSOCKET);
             }
 #else
@@ -248,24 +257,38 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
             jdata->map->binding = opal_hwloc_binding_policy;
         } else {
             orte_mapping_policy_t mpol;
-            mpol = ORTE_GET_MAPPING_POLICY(orte_rmaps_base.mapping);
+            mpol = ORTE_GET_MAPPING_POLICY(jdata->map->mapping);
             /* if the user explicitly mapped-by some object, then we default
              * to binding to that object */
             if (ORTE_MAPPING_POLICY_IS_SET(jdata->map->mapping) &&
                 ORTE_MAPPING_BYBOARD < mpol && mpol < ORTE_MAPPING_BYSLOT) {
                 if (ORTE_MAPPING_BYHWTHREAD == mpol) {
+                    opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
+                                        "mca:rmaps[%d] binding not given - using byhwthread", __LINE__);
                     OPAL_SET_DEFAULT_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_HWTHREAD);
                 } else if (ORTE_MAPPING_BYCORE == mpol) {
+                    opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
+                                        "mca:rmaps[%d] binding not given - using bycore", __LINE__);
                     OPAL_SET_DEFAULT_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_CORE);
                 } else if (ORTE_MAPPING_BYL1CACHE == mpol) {
+                    opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
+                                        "mca:rmaps[%d] binding not given - using byl1cache", __LINE__);
                     OPAL_SET_DEFAULT_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_L1CACHE);
                 } else if (ORTE_MAPPING_BYL2CACHE == mpol) {
+                    opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
+                                        "mca:rmaps[%d] binding not given - using byl2cache", __LINE__);
                     OPAL_SET_DEFAULT_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_L2CACHE);
                 } else if (ORTE_MAPPING_BYL3CACHE == mpol) {
+                    opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
+                                        "mca:rmaps[%d] binding not given - using byl3cache", __LINE__);
                     OPAL_SET_DEFAULT_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_L3CACHE);
                 } else if (ORTE_MAPPING_BYSOCKET == mpol) {
+                    opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
+                                        "mca:rmaps[%d] binding not given - using bysocket", __LINE__);
                     OPAL_SET_DEFAULT_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_SOCKET);
                 } else if (ORTE_MAPPING_BYNUMA == mpol) {
+                    opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
+                                        "mca:rmaps[%d] binding not given - using bynuma", __LINE__);
                     OPAL_SET_DEFAULT_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_NUMA);
                 }
             } else if (ORTE_MAPPING_BYNODE == mpol || ORTE_MAPPING_BYBOARD == mpol) {
@@ -276,13 +299,19 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
                 if (1 < orte_rmaps_base.cpus_per_rank) {
                     /* assigning multiple cpus to a rank implies threading,
                      * so we only bind to the NUMA level */
+                    opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
+                                        "mca:rmaps[%d] binding not given - using bynuma", __LINE__);
                     OPAL_SET_DEFAULT_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_NUMA);
                 } else {
                     if (opal_hwloc_use_hwthreads_as_cpus) {
                         /* if we are using hwthread cpus, then bind to those */
+                    opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
+                                        "mca:rmaps[%d] binding not given - using byhwthread", __LINE__);
                         OPAL_SET_DEFAULT_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_HWTHREAD);
                     } else {
                         /* for performance, bind to core */
+                    opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
+                                        "mca:rmaps[%d] binding not given - using bycore", __LINE__);
                         OPAL_SET_DEFAULT_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_CORE);
                     }
                 }
@@ -290,15 +319,19 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
                 if (1 < orte_rmaps_base.cpus_per_rank) {
                     /* assigning multiple cpus to a rank implies threading,
                      * so we only bind to the NUMA level */
+                    opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
+                                        "mca:rmaps[%d] binding not given - using bynuma", __LINE__);
                     OPAL_SET_DEFAULT_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_NUMA);
                 } else {
                     /* for performance, bind to socket */
+                    opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
+                                        "mca:rmaps[%d] binding not given - using bysocket", __LINE__);
                     OPAL_SET_DEFAULT_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_SOCKET);
                 }
             }
         }
     }
-    
+
     /* if we are not going to launch, then we need to set any
      * undefined topologies to match our own so the mapper
      * can operate
@@ -379,7 +412,7 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
         OBJ_RELEASE(caddy);
         return;
     }
-    
+
 #if OPAL_HAVE_HWLOC
     /* compute and save bindings */
     if (ORTE_SUCCESS != (rc = orte_rmaps_base_compute_bindings(jdata))) {
@@ -389,7 +422,7 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
         return;
     }
 #endif
-    
+
     /* set the offset so shared memory components can potentially
      * connect to any spawned jobs
      */
@@ -466,7 +499,7 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
                 opal_output(orte_clean_output, "\t</host>");
                 fflush(stderr);
             }
-            
+
 #if OPAL_HAVE_HWLOC
             {
                 opal_hwloc_locality_t locality;

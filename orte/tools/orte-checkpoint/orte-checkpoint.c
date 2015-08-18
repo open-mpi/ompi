@@ -31,9 +31,7 @@
 
 #include <stdio.h>
 #include <errno.h>
-#ifdef HAVE_STDLIB_H
 #include <stdlib.h>
-#endif  /*  HAVE_STDLIB_H */
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif  /* HAVE_UNISTD_H */
@@ -49,9 +47,7 @@
 #ifdef HAVE_SYS_WAIT_H
 #include <sys/wait.h>
 #endif  /* HAVE_SYS_WAIT_H */
-#ifdef HAVE_STRING_H
 #include <string.h>
-#endif  /* HAVE_STRING_H */
 
 
 #include "opal/util/cmd_line.h"
@@ -607,7 +603,7 @@ static int ckpt_init(int argc, char *argv[]) {
     /* we are never allowed to operate as a distributed tool,
      * so insist on the ess/tool component */
     opal_setenv("OMPI_MCA_ess", "tool", true, &environ);
-    
+
     /***************************
      * We need all of OPAL and the TOOLS portion of ORTE - this
      * sets us up so we can talk to any HNP over the wire

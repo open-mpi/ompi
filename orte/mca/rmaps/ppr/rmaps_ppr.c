@@ -4,9 +4,9 @@
  *                         All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -18,9 +18,7 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif  /* HAVE_UNISTD_H */
-#ifdef HAVE_STRING_H
 #include <string.h>
-#endif  /* HAVE_STRING_H */
 
 #include "opal/mca/hwloc/base/base.h"
 #include "opal/util/argv.h"
@@ -122,7 +120,7 @@ static int ppr_mapper(orte_job_t *jdata)
     opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                         "mca:rmaps:ppr: mapping job %s with ppr %s",
                         ORTE_JOBID_PRINT(jdata->jobid), jdata->map->ppr);
- 
+
     /* flag that I did the mapping */
     if (NULL != jdata->map->last_mapper) {
         free(jdata->map->last_mapper);
@@ -265,7 +263,7 @@ static int ppr_mapper(orte_job_t *jdata)
 
         /* if a bookmark exists from some prior mapping, set us to start there */
         jdata->bookmark = orte_rmaps_base_get_starting_point(&node_list, jdata);
-        
+
         /* cycle across the nodes */
         nprocs_mapped = 0;
         for (item = opal_list_get_first(&node_list);

@@ -5,18 +5,18 @@
  * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.  All rights
- *                         reserved. 
+ *                         reserved.
  * Copyright (c) 2014      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -101,7 +101,7 @@ int orte_routed_base_process_callback(orte_jobid_t job, opal_buffer_t *buffer)
         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
         return ORTE_ERR_NOT_FOUND;
     }
-    
+
     /* unpack the data for each entry */
     cnt = 1;
     while (ORTE_SUCCESS == (rc = opal_dss.unpack(buffer, &vpid, &cnt, ORTE_VPID))) {
@@ -110,34 +110,34 @@ int orte_routed_base_process_callback(orte_jobid_t job, opal_buffer_t *buffer)
             ORTE_ERROR_LOG(rc);
             continue;
         }
-        
+
         OPAL_OUTPUT_VERBOSE((2, orte_routed_base_framework.framework_output,
                              "%s routed_base:callback got uri %s for job %s rank %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              (NULL == rml_uri) ? "NULL" : rml_uri,
                              ORTE_JOBID_PRINT(job), ORTE_VPID_PRINT(vpid)));
-        
+
         if (NULL == rml_uri) {
             /* should not happen */
             ORTE_ERROR_LOG(ORTE_ERR_FATAL);
             return ORTE_ERR_FATAL;
         }
-        
+
         if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, vpid))) {
             ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
             continue;
         }
-        
+
         /* update the record */
         proc->rml_uri = strdup(rml_uri);
         free(rml_uri);
-        
+
         cnt = 1;
     }
     if (ORTE_ERR_UNPACK_READ_PAST_END_OF_BUFFER != rc) {
         ORTE_ERROR_LOG(rc);
         return rc;
-    }    
+    }
 
-    return ORTE_SUCCESS;    
+    return ORTE_SUCCESS;
 }

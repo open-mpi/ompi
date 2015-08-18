@@ -2,15 +2,15 @@
  * Copyright (c) 2013      Intel, Inc. All rights reserved.
  *
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
 /**
  * @file
- * 
+ *
  */
 
 #ifndef MCA_ERRMGR_default_tool_EXPORT_H

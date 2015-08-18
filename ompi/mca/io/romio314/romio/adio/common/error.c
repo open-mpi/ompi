@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -14,7 +14,7 @@
 int ADIOI_Error(ADIO_File fd, int error_code, char *string)
 {
     char buf[MPI_MAX_ERROR_STRING];
-    int myrank, result_len; 
+    int myrank, result_len;
     MPI_Errhandler err_handler;
 
     if (fd == ADIO_FILE_NULL) err_handler = ADIOI_DFLT_ERR_HANDLER;

@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -27,7 +27,7 @@
 
 /*@
     MPIO_Test - Test the completion of a nonblocking read or write
-                
+
 Input Parameters:
 . request - request object (handle)
 
@@ -64,7 +64,7 @@ int MPIO_Test(MPIO_Request *request, int *flag, MPI_Status *status)
     }
 
     /* --BEGIN ERROR HANDLING-- */
-    if ((*request < (MPIO_Request) 0) || 
+    if ((*request < (MPIO_Request) 0) ||
 	((*request)->cookie != ADIOI_REQ_COOKIE))
     {
 	error_code = MPIO_Err_create_code(MPI_SUCCESS, MPIR_ERR_RECOVERABLE,

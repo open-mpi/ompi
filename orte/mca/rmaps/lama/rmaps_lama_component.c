@@ -6,9 +6,9 @@
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -42,7 +42,7 @@ bool rmaps_lama_am_oversubscribing = false;
 orte_rmaps_base_component_t mca_rmaps_lama_component = {
     .base_version = {
         ORTE_RMAPS_BASE_VERSION_2_0_0,
-        
+
         .mca_component_name = "lama",
         MCA_BASE_MAKE_VERSION(component, ORTE_MAJOR_VERSION, ORTE_MINOR_VERSION,
                               ORTE_RELEASE_VERSION),

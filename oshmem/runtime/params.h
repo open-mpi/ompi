@@ -24,14 +24,14 @@ BEGIN_C_DECLS
  */
 OSHMEM_DECLSPEC extern bool ompi_mpi_abort_print_stack;
 
-/** 
- * Whether or not the lock routines are recursive 
- * (ie support embedded calls) 
+/**
+ * Whether or not the lock routines are recursive
+ * (ie support embedded calls)
  */
 OSHMEM_DECLSPEC extern int oshmem_shmem_lock_recursive;
 
-/** 
- * Level of shmem API verbosity 
+/**
+ * Level of shmem API verbosity
  */
 OSHMEM_DECLSPEC extern int oshmem_shmem_api_verbose;
 

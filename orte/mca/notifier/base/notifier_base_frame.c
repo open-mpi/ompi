@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2009 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2014      Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -24,9 +24,7 @@
 #include "orte_config.h"
 #include "orte/constants.h"
 
-#ifdef HAVE_STRING_H
 #include <string.h>
-#endif
 
 #include "orte/mca/mca.h"
 #include "opal/util/argv.h"
@@ -114,7 +112,7 @@ static int orte_notifier_base_register(mca_base_register_flag_t flags)
                                  &orte_notifier_base.default_actions);
 
     if (NULL == orte_notifier_base.default_actions) {
-        orte_notifier_base.default_actions = strdup(ORTE_NOTIFIER_DEFAULT_MODULE); 
+        orte_notifier_base.default_actions = strdup(ORTE_NOTIFIER_DEFAULT_MODULE);
     }
     /* let the user define a action for emergency events */
     orte_notifier_base.emerg_actions = NULL;
@@ -189,7 +187,7 @@ static int orte_notifier_base_register(mca_base_register_flag_t flags)
                                  &orte_notifier_base.error_actions);
 
     return ORTE_SUCCESS;
-}    
+}
 
 static int orte_notifier_base_close(void)
 {
@@ -197,7 +195,7 @@ static int orte_notifier_base_close(void)
 
     if (orte_notifier_base.ev_base_active) {
         orte_notifier_base.ev_base_active = false;
-        opal_stop_progress_thread("notifier", true);
+        opal_progress_thread_finalize("notifier");
     }
 
     OPAL_LIST_FOREACH(i_module, &orte_notifier_base.modules, orte_notifier_active_module_t) {
@@ -206,7 +204,7 @@ static int orte_notifier_base_close(void)
         }
     }
     OPAL_LIST_DESTRUCT(&orte_notifier_base.modules);
-    
+
     /* close all remaining available components */
     return mca_base_framework_components_close(&orte_notifier_base_framework, NULL);
 }
@@ -218,15 +216,15 @@ static int orte_notifier_base_close(void)
 static int orte_notifier_base_open(mca_base_open_flag_t flags)
 {
     int rc;
-    
+
     /* construct the array of modules */
     OBJ_CONSTRUCT(&orte_notifier_base.modules, opal_list_t);
 
     /* if requested, create our own event base */
     if (use_progress_thread) {
         orte_notifier_base.ev_base_active = true;
-        if (NULL == (orte_notifier_base.ev_base = 
-                     opal_start_progress_thread("notifier", true))) {
+        if (NULL == (orte_notifier_base.ev_base =
+                     opal_progress_thread_init("notifier"))) {
             orte_notifier_base.ev_base_active = false;
             return ORTE_ERROR;
         }

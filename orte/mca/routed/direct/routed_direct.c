@@ -1,14 +1,14 @@
 /*
  * Copyright (c) 2007-2011 Los Alamos National Security, LLC.
- *                         All rights reserved. 
+ *                         All rights reserved.
  * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2014      Intel Corporation.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -93,23 +93,23 @@ static int delete_route(orte_process_name_t *proc)
                          "%s routed_direct_delete_route for %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(proc)));
-    
+
     /*There is nothing to do here */
-    
+
     return ORTE_SUCCESS;
 }
 
 static int update_route(orte_process_name_t *target,
                         orte_process_name_t *route)
-{ 
+{
     OPAL_OUTPUT_VERBOSE((1, orte_routed_base_framework.framework_output,
                          "%s routed_direct_update: %s --> %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(target), 
+                         ORTE_NAME_PRINT(target),
                          ORTE_NAME_PRINT(route)));
 
     /*There is nothing to do here */
-    
+
     return ORTE_SUCCESS;
 }
 
@@ -239,24 +239,24 @@ static void recv_ack(int status, orte_process_name_t* sender,
 static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
 {
     int rc;
-    
+
     /* if I am a tool, then I stand alone - there is nothing to do */
     if (ORTE_PROC_IS_TOOL) {
         return ORTE_SUCCESS;
     }
-    
+
     /* if I am a daemon or HNP, then I have to extract the routing info for this job
      * from the data sent to me for launch and update the routing tables to
      * point at the daemon for each proc
      */
     if (ORTE_PROC_IS_DAEMON) {
-        
+
         OPAL_OUTPUT_VERBOSE((1, orte_routed_base_framework.framework_output,
                              "%s direct: init routes for daemon job %s\n\thnp_uri %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_JOBID_PRINT(job),
                              (NULL == orte_process_info.my_hnp_uri) ? "NULL" : orte_process_info.my_hnp_uri));
-        
+
         if (NULL == ndat) {
             /* indicates this is being called during orte_init.
              * Get the HNP's name for possible later use
@@ -266,7 +266,7 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
                 ORTE_ERROR_LOG(ORTE_ERR_FATAL);
                 return ORTE_ERR_FATAL;
             }
-            
+
             /* extract the hnp name and store it */
             if (ORTE_SUCCESS != (rc = orte_rml_base_parse_uris(orte_process_info.my_hnp_uri,
                                                                ORTE_PROC_MY_HNP, NULL))) {
@@ -274,7 +274,7 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
                 return rc;
             }
             /* set the contact info into the hash table */
-            orte_rml.set_contact_info(orte_process_info.my_hnp_uri);    
+            orte_rml.set_contact_info(orte_process_info.my_hnp_uri);
             /* the HNP is my lifeline */
             lifeline = ORTE_PROC_MY_HNP;
 
@@ -291,22 +291,22 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
             }
             return rc;
         }
-        
+
         OPAL_OUTPUT_VERBOSE((2, orte_routed_base_framework.framework_output,
                              "%s routed_direct: completed init routes",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-        
+
         return ORTE_SUCCESS;
     }
-    
-    
+
+
     if (ORTE_PROC_IS_HNP) {
-        
+
         OPAL_OUTPUT_VERBOSE((1, orte_routed_base_framework.framework_output,
                              "%s routed_direct: init routes for HNP job %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_JOBID_PRINT(job)));
-        
+
         if (NULL != ndat) {
             /* if this is for my own jobid, then I am getting an update of RML info
              * for the daemons - so update our contact info and routes
@@ -318,7 +318,7 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
                 }
             }
         }
-        
+
         return ORTE_SUCCESS;
     }
 
@@ -382,7 +382,7 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
         OPAL_OUTPUT_VERBOSE((1, orte_routed_base_framework.framework_output,
                              "%s routed_direct: init routes w/non-NULL data",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-            
+
         if (ORTE_JOB_FAMILY(ORTE_PROC_MY_NAME->jobid) != ORTE_JOB_FAMILY(job)) {
             /* if this is for a different job family, then we route via our HNP
              * to minimize connection counts to entities such as ompi-server, so
@@ -392,7 +392,7 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
                                  "%s routed_direct_init_routes: diff job family - sending update to %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_HNP)));
-                
+
             /* prep the buffer for transmission to the HNP */
             xfer = OBJ_NEW(opal_buffer_t);
             opal_dss.pack(xfer, &cmd, 1, ORTE_RML_CMD);
@@ -417,12 +417,12 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
                                     ORTE_RML_TAG_UPDATE_ROUTE_ACK,
                                     ORTE_RML_NON_PERSISTENT,
                                     recv_ack, &ack_waiting);
-            ORTE_WAIT_FOR_COMPLETION(ack_waiting);                
+            ORTE_WAIT_FOR_COMPLETION(ack_waiting);
 
             OPAL_OUTPUT_VERBOSE((1, orte_routed_base_framework.framework_output,
                                  "%s routed_direct_init_routes: ack recvd",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-                
+
             /* our get_route function automatically routes all messages for
              * other job families via the HNP, so nothing more to do here
              */
@@ -529,7 +529,7 @@ static void update_routing_plan(void)
     OPAL_OUTPUT_VERBOSE((2, orte_routed_base_framework.framework_output,
                          "%s routed:direct: update routing plan",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-    
+
     if (!ORTE_PROC_IS_HNP) {
         /* nothing to do */
         return;
@@ -538,7 +538,7 @@ static void update_routing_plan(void)
     /* clear the current list */
     OPAL_LIST_DESTRUCT(&my_children);
     OBJ_CONSTRUCT(&my_children, opal_list_t);
-    
+
     /* HNP is directly connected to each daemon */
     if (NULL == (jdata = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid))) {
         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
@@ -558,7 +558,7 @@ static void update_routing_plan(void)
 
 static void get_routing_list(opal_list_t *coll)
 {
-    
+
     OPAL_OUTPUT_VERBOSE((2, orte_routed_base_framework.framework_output,
                          "%s routed:direct: get routing list",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
@@ -569,7 +569,7 @@ static void get_routing_list(opal_list_t *coll)
     if (!ORTE_PROC_IS_DAEMON && !ORTE_PROC_IS_HNP) {
         return;
     }
-    
+
     orte_routed_base_xcast_routing(coll, &my_children);
 }
 

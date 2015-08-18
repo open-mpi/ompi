@@ -12,7 +12,7 @@ subroutine PMPI_Win_attach_f08(win,base,size,ierror)
    implicit none
    OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: base
    INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: size
-   TYPE(MPI_Win), INTENT(OUT) :: win
+   TYPE(MPI_Win), INTENT(IN) :: win
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
    integer :: c_ierror
 

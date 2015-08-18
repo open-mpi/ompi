@@ -78,7 +78,7 @@ ompi_global_scope     bool      If set to true, unpublish the name from
 
 .fi
 
-.sp 
+.sp
 \fIbool\fP info keys are actually strings but are evaluated as
 follows: if the string value is a number, it is converted to an
 integer and cast to a boolean (meaning that zero integers are false
@@ -116,7 +116,7 @@ called. By default, this error handler aborts the MPI job, except for
 I/O function errors. The error handler may be changed with
 MPI_Comm_set_errhandler; the predefined error handler MPI_ERRORS_RETURN
 may be used to cause error values to be returned. Note that MPI does not
-guarantee that an MPI program can continue past an error. 
+guarantee that an MPI program can continue past an error.
 .sp
 See the MPI man page for a full list of MPI error codes.
 

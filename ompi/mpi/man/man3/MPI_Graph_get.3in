@@ -21,14 +21,14 @@ int MPI_Graph_get(MPI_Comm \fIcomm\fP, int\fI maxindex\fP, int\fI maxedges\fP,
 INCLUDE 'mpif.h'
 MPI_GRAPH_GET(\fICOMM, MAXINDEX, MAXEDGES, INDEX, EDGES, IERROR\fP)
 	INTEGER	\fICOMM, MAXINDEX, MAXEDGES, INDEX(*)\fP
-	INTEGER	\fIEDGES(*), IERROR\fP 
+	INTEGER	\fIEDGES(*), IERROR\fP
 
 .fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
-void Graphcomm::Get_topo(int \fImaxindex\fP, int \fImaxedges\fP, 
-	int \fIindex\fP[], int \fIedges\fP[]) const 
+void Graphcomm::Get_topo(int \fImaxindex\fP, int \fImaxedges\fP,
+	int \fIindex\fP[], int \fIedges\fP[]) const
 
 .fi
 .SH INPUT PARAMETERS
@@ -55,7 +55,7 @@ Array of integers containing the graph structure.
 .ft R
 .TP 1i
 IERROR
-Fortran only: Error status (integer). 
+Fortran only: Error status (integer).
 
 .SH DESCRIPTION
 .ft R
@@ -67,7 +67,7 @@ The information provided by MPI_Graphdims_get can be used to dimension the vecto
 Almost all MPI routines return an error value; C routines as the value of the function and Fortran routines in the last argument. C++ functions do not return errors. If the default error handler is set to MPI::ERRORS_THROW_EXCEPTIONS, then on error the C++ exception mechanism will be used to throw an MPI::Exception object.
 .sp
 Before the error value is returned, the current MPI error handler is
-called. By default, this error handler aborts the MPI job, except for I/O function errors. The error handler may be changed with MPI_Comm_set_errhandler; the predefined error handler MPI_ERRORS_RETURN may be used to cause error values to be returned. Note that MPI does not guarantee that an MPI program can continue past an error.  
+called. By default, this error handler aborts the MPI job, except for I/O function errors. The error handler may be changed with MPI_Comm_set_errhandler; the predefined error handler MPI_ERRORS_RETURN may be used to cause error values to be returned. Note that MPI does not guarantee that an MPI program can continue past an error.
 
 .SH SEE ALSO
 .ft R

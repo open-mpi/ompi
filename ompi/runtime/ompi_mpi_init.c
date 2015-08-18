@@ -6,13 +6,13 @@
  * Copyright (c) 2004-2014 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006-2015 Los Alamos National Security, LLC.  All rights
- *                         reserved. 
+ *                         reserved.
  * Copyright (c) 2006-2009 University of Houston. All rights reserved.
  * Copyright (c) 2008-2009 Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
@@ -22,9 +22,9 @@
  *                         and Technology (RIST). All rights reserved.
  *
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -105,7 +105,7 @@
    implicity from libmpi, there are times when the malloc initialize
    hook in the memory component doesn't work.  So we have to do it
    from here, since any MPI code is going to call MPI_Init... */
-OPAL_DECLSPEC void (*__malloc_initialize_hook) (void) = 
+OPAL_DECLSPEC void (*__malloc_initialize_hook) (void) =
     opal_memory_linux_malloc_init_hook;
 #endif
 
@@ -238,7 +238,7 @@ MPI_Fint *MPI_F_STATUSES_IGNORE = NULL;
 
    The values are *NOT* initialized.  We do not use the values of
    these constants; only their addresses (because they're always
-   passed by reference by Fortran).  
+   passed by reference by Fortran).
 
    Initializing upon instantiation these can reveal size and/or
    alignment differences between Fortran and C (!) which can cause
@@ -257,30 +257,7 @@ MPI_Fint *MPI_F_STATUSES_IGNORE = NULL;
    ompi/include/mpif-common.h.
  */
 
-#define INST(type, value, upper_case, lower_case, single_u, double_u)   \
-type lower_case = value; \
-type upper_case = value; \
-type single_u = value;  \
-type double_u = value
-
-INST(int, -1, MPI_FORTRAN_BOTTOM, mpi_fortran_bottom,
-     mpi_fortran_bottom_, mpi_fortran_bottom__);
-INST(int, -1, MPI_FORTRAN_IN_PLACE, mpi_fortran_in_place,
-     mpi_fortran_in_place_, mpi_fortran_in_place__);
-INST(int, -1, MPI_FORTRAN_UNWEIGHTED, mpi_fortran_unweighted,
-     mpi_fortran_unweighted_, mpi_fortran_unweighted__);
-INST(int, -1, MPI_FORTRAN_WEIGHTS_EMPTY, mpi_fortran_weights_empty,
-     mpi_fortran_weights_empty_, mpi_fortran_weights_empty__);
-INST(char *, NULL, MPI_FORTRAN_ARGV_NULL, mpi_fortran_argv_null,
-     mpi_fortran_argv_null_, mpi_fortran_argv_null__);
-INST(char *, NULL, MPI_FORTRAN_ARGVS_NULL, mpi_fortran_argvs_null,
-     mpi_fortran_argvs_null_, mpi_fortran_argvs_null__);
-INST(int *, NULL, MPI_FORTRAN_ERRCODES_IGNORE, mpi_fortran_errcodes_ignore,
-     mpi_fortran_errcodes_ignore_, mpi_fortran_errcodes_ignore__);
-INST(int *, NULL, MPI_FORTRAN_STATUS_IGNORE, mpi_fortran_status_ignore,
-     mpi_fortran_status_ignore_, mpi_fortran_status_ignore__);
-INST(int *, NULL, MPI_FORTRAN_STATUSES_IGNORE, mpi_fortran_statuses_ignore,
-      mpi_fortran_statuses_ignore_, mpi_fortran_statuses_ignore__);
+#include "mpif-c-constants.h"
 
 /*
  * Hash tables for MPI_Type_create_f90* functions
@@ -348,7 +325,7 @@ void ompi_mpi_thread_level(int requested, int *provided)
         ompi_mpi_main_thread = opal_thread_get_self();
     }
 
-    ompi_mpi_thread_multiple = (ompi_mpi_thread_provided == 
+    ompi_mpi_thread_multiple = (ompi_mpi_thread_provided ==
                                 MPI_THREAD_MULTIPLE);
 }
 
@@ -392,7 +369,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
 
     /* bitflag of the thread level support provided. To be used
      * for the modex in order to work in heterogeneous environments. */
-    uint8_t threadlevel_bf; 
+    uint8_t threadlevel_bf;
 
     /* Indicate that we have *started* MPI_INIT*.  MPI_FINALIZE has
        something sorta similar in a static local variable in
@@ -479,7 +456,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         goto error;
     }
     ompi_rte_initialized = true;
-    
+
     /* check for timing request - get stop time and report elapsed time if so */
     OPAL_TIMING_MNEXT((&tm,"time from completion of rte_init to modex"));
 
@@ -553,7 +530,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         error = "ompi_op_base_open() failed";
         goto error;
     }
-    if (OMPI_SUCCESS != 
+    if (OMPI_SUCCESS !=
         (ret = ompi_op_base_find_available(OPAL_ENABLE_PROGRESS_THREADS,
                                            ompi_mpi_thread_multiple))) {
         error = "ompi_op_base_find_available() failed";
@@ -611,14 +588,14 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
 
     /* Select which MPI components to use */
 
-    if (OMPI_SUCCESS != 
+    if (OMPI_SUCCESS !=
         (ret = mca_mpool_base_init(OPAL_ENABLE_PROGRESS_THREADS,
                                    ompi_mpi_thread_multiple))) {
         error = "mca_mpool_base_init() failed";
         goto error;
     }
 
-    if (OMPI_SUCCESS != 
+    if (OMPI_SUCCESS !=
         (ret = mca_pml_base_select(OPAL_ENABLE_PROGRESS_THREADS,
                                    ompi_mpi_thread_multiple))) {
         error = "mca_pml_base_select() failed";
@@ -644,14 +621,14 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         goto error;
     }
 
-    if (OMPI_SUCCESS != 
+    if (OMPI_SUCCESS !=
         (ret = mca_coll_base_find_available(OPAL_ENABLE_PROGRESS_THREADS,
                                             ompi_mpi_thread_multiple))) {
         error = "mca_coll_base_find_available() failed";
         goto error;
     }
 
-    if (OMPI_SUCCESS != 
+    if (OMPI_SUCCESS !=
         (ret = ompi_osc_base_find_available(OPAL_ENABLE_PROGRESS_THREADS,
                                             ompi_mpi_thread_multiple))) {
         error = "ompi_osc_base_find_available() failed";
@@ -697,13 +674,13 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         error = "ompi_mpi_errcode_init() failed";
         goto error;
     }
-    
+
     /* initialize internal error codes */
     if (OMPI_SUCCESS != (ret = ompi_errcode_intern_init())) {
         error = "ompi_errcode_intern_init() failed";
         goto error;
     }
-     
+
     /* initialize groups  */
     if (OMPI_SUCCESS != (ret = ompi_group_init())) {
         error = "ompi_group_init() failed";
@@ -776,8 +753,8 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
      * Dump all MCA parameters if requested
      */
     if (ompi_mpi_show_mca_params) {
-        ompi_show_all_mca_params(ompi_mpi_comm_world.comm.c_my_rank, 
-                                 nprocs, 
+        ompi_show_all_mca_params(ompi_mpi_comm_world.comm.c_my_rank,
+                                 nprocs,
                                  ompi_process_info.nodename);
     }
 
@@ -805,7 +782,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
        latency. */
     opal_progress_set_event_flag(OPAL_EVLOOP_NONBLOCK);
 #endif
-    
+
     /* wire up the mpi interface, if requested.  Do this after the
        non-block switch for non-TCP performance.  Do before the
        polling change as anyone with a complex wire-up is going to be
@@ -824,7 +801,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         error = "ompi_pubsub_base_select() failed";
         goto error;
     }
-    
+
     /* Setup the dynamic process management (DPM) framework */
     if (OMPI_SUCCESS != (ret = mca_base_framework_open(&ompi_dpm_base_framework, 0))) {
         error = "ompi_dpm_base_open() failed";
@@ -835,19 +812,19 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         goto error;
     }
 
-    /* Determine the overall threadlevel support of all processes 
-       in MPI_COMM_WORLD. This has to be done before calling 
+    /* Determine the overall threadlevel support of all processes
+       in MPI_COMM_WORLD. This has to be done before calling
        coll_base_comm_select, since some of the collective components
        e.g. hierarch, might create subcommunicators. The threadlevel
        requested by all processes is required in order to know
        which cid allocation algorithm can be used. */
-    if ( OMPI_SUCCESS != 
+    if ( OMPI_SUCCESS !=
 	 ( ret = ompi_comm_cid_init ())) {
 	error = "ompi_mpi_init: ompi_comm_cid_init failed";
 	goto error;
     }
 
-    /* Init coll for the comms. This has to be after dpm_base_select, 
+    /* Init coll for the comms. This has to be after dpm_base_select,
        (since dpm.mark_dyncomm is not set in the communicator creation
        function else), but before dpm.dyncom_init, since this function
        might require collective for the CID allocation. */
@@ -857,7 +834,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         goto error;
     }
 
-    if (OMPI_SUCCESS != 
+    if (OMPI_SUCCESS !=
         (ret = mca_coll_base_comm_select(MPI_COMM_SELF))) {
         error = "mca_coll_base_comm_select(MPI_COMM_SELF) failed";
         goto error;
@@ -881,16 +858,16 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         goto error;
     }
 
-    /* Undo OPAL calling opal_progress_event_users_increment() during 
-       opal_init, to get better latency when not using TCP.  Do 
-       this *after* dyn_init, as dyn init uses lots of RTE 
-       communication and we don't want to hinder the performance of 
-       that code. */ 
-    opal_progress_event_users_decrement(); 
+    /* Undo OPAL calling opal_progress_event_users_increment() during
+       opal_init, to get better latency when not using TCP.  Do
+       this *after* dyn_init, as dyn init uses lots of RTE
+       communication and we don't want to hinder the performance of
+       that code. */
+    opal_progress_event_users_decrement();
 
     /* see if yield_when_idle was specified - if so, use it */
     opal_progress_set_yield_when_idle(ompi_mpi_yield_when_idle);
-    
+
     /* negative value means use default - just don't do anything */
     if (ompi_mpi_event_tick_rate >= 0) {
         opal_progress_set_event_poll_rate(ompi_mpi_event_tick_rate);

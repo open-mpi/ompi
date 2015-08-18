@@ -5,15 +5,15 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2010-2012 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -84,9 +84,9 @@ void ompi_comm_spawn_multiple_f(MPI_Fint *count, char *array_commands,
     char ***c_array_argv;
     OMPI_ARRAY_NAME_DECL(array_maxprocs);
     OMPI_ARRAY_NAME_DECL(array_errcds);
-    
+
     c_comm = MPI_Comm_f2c(*comm);
-    
+
     MPI_Comm_size(c_comm, &size);
 
     array_size = OMPI_FINT_2_INT(*count);
@@ -105,15 +105,15 @@ void ompi_comm_spawn_multiple_f(MPI_Fint *count, char *array_commands,
     if (OMPI_IS_FORTRAN_ARGVS_NULL(array_argv)) {
         c_array_argv = MPI_ARGVS_NULL;
     } else {
-	ompi_fortran_multiple_argvs_f2c(OMPI_FINT_2_INT(*count), array_argv, 
+	ompi_fortran_multiple_argvs_f2c(OMPI_FINT_2_INT(*count), array_argv,
 					argv_string_len, &c_array_argv);
     }
 
     OMPI_ARRAY_FINT_2_INT(array_maxprocs, array_size);
-    
-    ompi_fortran_argv_f2c(array_commands, cmd_string_len, 
+
+    ompi_fortran_argv_f2c(array_commands, cmd_string_len,
                           cmd_string_len, &c_array_commands);
-	
+
     c_info = (MPI_Info *) malloc (array_size * sizeof(MPI_Info));
     for (i = 0; i < array_size; ++i) {
 	c_info[i] = MPI_Info_f2c(array_info[i]);
@@ -121,7 +121,7 @@ void ompi_comm_spawn_multiple_f(MPI_Fint *count, char *array_commands,
 
     c_ierr = MPI_Comm_spawn_multiple(OMPI_FINT_2_INT(*count),
                                      c_array_commands,
-                                     c_array_argv, 
+                                     c_array_argv,
                                      OMPI_ARRAY_NAME_CONVERT(array_maxprocs),
                                      c_info,
                                      OMPI_FINT_2_INT(*root),
@@ -143,7 +143,7 @@ void ompi_comm_spawn_multiple_f(MPI_Fint *count, char *array_commands,
     opal_argv_free(c_array_commands);
 
     if (MPI_ARGVS_NULL != c_array_argv && NULL != c_array_argv) {
-	for (i = 0; i < OMPI_FINT_2_INT(*count); ++i) { 
+	for (i = 0; i < OMPI_FINT_2_INT(*count); ++i) {
 	    opal_argv_free(c_array_argv[i]);
 	}
     }

@@ -30,14 +30,14 @@ int main(int argc, char* argv[])
     }
     MPI_Barrier(MPI_COMM_WORLD);
 
-    orte_show_help("help-orte-runtime.txt", 
+    orte_show_help("help-orte-runtime.txt",
                    "orte_init:startup:internal-failure", true,
                    "Nothing", "ORTE_EVERYTHING_IS_PEACHY", "42");
     sleep(rank * 3);
 
-    orte_show_help("help-orte-runtime.txt", 
+    orte_show_help("help-orte-runtime.txt",
                    "orte_init:startup:internal-failure", true,
-                   "Duplicate orte_show_help detection", 
+                   "Duplicate orte_show_help detection",
                    "ORTE_SHOW_HELP_DUPLICATE_FAILED", "99999");
 
     MPI_Barrier(MPI_COMM_WORLD);
@@ -48,6 +48,6 @@ int main(int argc, char* argv[])
         opal_output(0, "============================================================================");
     }
     MPI_Finalize();
-    
+
     return 0;
 }

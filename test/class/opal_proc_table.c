@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -17,16 +17,14 @@
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
 #include "opal_config.h"
-#ifdef HAVE_STDINT_H
 #include <stdint.h>
-#endif
 #include <string.h>
 #include "support.h"
 #include "opal/class/opal_object.h"
@@ -68,9 +66,9 @@ char *perm_keys[] = {
     NULL
 };
 
-/* 
+/*
  * This data specifically knows about the April'2014 version of hash tables.
- * It inserts some keys.  
+ * It inserts some keys.
  * It inserts some more with a capacity offset to generate collisions.
  * Then it checks the table via traversal.
  * Then... it removes a key and checks again (via traversal)
@@ -94,7 +92,7 @@ static void validate_table(opal_proc_table_t *table, char *keys[])
 {
     int         j, ret;
     value_t value;
-    
+
     for ( j = 0; keys[j]; j += 3) {
         opal_process_name_t key;
         key.jobid = atoi(keys[j]);
@@ -121,16 +119,16 @@ validate_remove_traversal(opal_hash_table_t * table, const char * expected_chars
     void * raw_value;
     void * node;
     if (debug) {
-	fprintf(stderr, "debug: expecting '%s' capacity is %d\n", 
+	fprintf(stderr, "debug: expecting '%s' capacity is %d\n",
 		expected_chars, (int) table->ht_capacity);
     }
     for (rc = opal_hash_table_get_first_key_uint32(table, &key, &raw_value, &node);
 	 OPAL_SUCCESS == rc;
-	 rc = opal_hash_table_get_next_key_uint32(table, &key, &raw_value, node, &node)) { 
+	 rc = opal_hash_table_get_next_key_uint32(table, &key, &raw_value, node, &node)) {
 	const char * value = (const char *) raw_value;
 	char expected, actual;
 	if (debug) {
-	    fprintf(stderr, "key %d (probe at %d) value '%s' excpected_scanner '%s'\n", 
+	    fprintf(stderr, "key %d (probe at %d) value '%s' excpected_scanner '%s'\n",
 		    key, (int) (key%table->ht_capacity), value, expected_scanner);
 	}
 	if (1 != strlen(value)) {
@@ -142,7 +140,7 @@ validate_remove_traversal(opal_hash_table_t * table, const char * expected_chars
 	    fprintf(stderr, "Found key %d value '%s' but not expected!\n", key, value);
 	    problems += 1;
 	    continue;
-	} 
+	}
 	expected = *expected_scanner++;
 	actual = *value;
 	if (actual != expected) {
@@ -196,7 +194,7 @@ static void test_ptable(opal_proc_table_t *table)
         if (OPAL_SUCCESS != rc) {
             fprintf(error_out, "*** FAILED opal_proc_table_get_next_key (%d) ***\n", j/3);
         }
-        
+
         if (key.jobid != atoi(num_keys[j]) ||
             key.vpid != atoi(num_keys[j+1]) ||
             0 != strcmp(num_keys[j+2], v)) {
@@ -204,20 +202,20 @@ static void test_ptable(opal_proc_table_t *table)
                         num_keys[j], num_keys[j+1], num_keys[j+2],
                         key.jobid, key.vpid, v);
         }
- 
+
         rc = opal_proc_table_get_next_key(table, &key, (void **)&v, n1, (void **)&n1, n2, (void **)&n2);
     }
     if (OPAL_SUCCESS == rc) {
         fprintf(error_out, "*** DID NOT FAIL last opal_proc_table_get_next_key %d\n", j/3);
         return;
     }
-    
-    
+
+
 #if 0
     /* remove all values for next test */
     opal_proc_table_remove_all(table);
     test_verify_int(0, opal_hash_table_get_size(table));
-    
+
     fprintf(error_out, "\nTesting removal and traversal...\n");
     j = 0;
     char * str;
@@ -233,7 +231,7 @@ static void test_ptable(opal_proc_table_t *table)
 	opal_hash_table_remove_value_uint32(table, atoi(str));
 	validate_remove_traversal(table, remove_keys[j++]);
     }
-    
+
     /* remove all values for next test */
     opal_hash_table_remove_all(table);
     test_verify_int(0, opal_hash_table_get_size(table));
@@ -246,7 +244,7 @@ static void test_ptable(opal_proc_table_t *table)
 static void test_dynamic(void)
 {
     opal_proc_table_t     *table;
-    
+
     table = OBJ_NEW(opal_proc_table_t);
     if ( NULL == table )
     {
@@ -256,7 +254,7 @@ static void test_dynamic(void)
     fprintf(error_out, "Testing with dynamically created table...\n");
     opal_proc_table_init(table, 2, 4);
     test_ptable(table);
-    
+
     OBJ_RELEASE(table);
 }
 
@@ -264,7 +262,7 @@ static void test_dynamic(void)
 static void test_static(void)
 {
     opal_proc_table_t     table;
-    
+
     OBJ_CONSTRUCT(&table, opal_proc_table_t);
     opal_proc_table_init(&table, 8, 128);
 
@@ -294,7 +292,7 @@ int main(int argc, char **argv)
     error_out = fopen( "./opal_proc_table_test_out.txt", "w" );
     if( error_out == NULL ) error_out = stderr;
 #endif
-    
+
     test_dynamic();
     test_static();
 #ifndef STANDALONE
@@ -302,6 +300,6 @@ int main(int argc, char **argv)
 #endif
 
     opal_finalize_util ();
-    
+
     return test_finalize();
 }

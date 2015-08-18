@@ -2,9 +2,9 @@
 #
 # Copyright (c) 2014      Intel, Inc.  All rights reserved.
 # $COPYRIGHT$
-# 
+#
 # Additional copyrights may follow
-# 
+#
 # $HEADER$
 #
 
@@ -12,10 +12,10 @@
 # -----------------------------------------------------------
 AC_DEFUN([MCA_opal_pmix_s2_CONFIG], [
     AC_CONFIG_FILES([opal/mca/pmix/s2/Makefile])
-         
+
     AC_REQUIRE([OPAL_CHECK_UGNI])
     AC_REQUIRE([OPAL_CHECK_PMI])
-         
+
     # Evaluate succeed / fail
     AS_IF([test "$opal_enable_pmi2" = "yes" && test "$opal_check_ugni_happy" = "no"],
           [$1

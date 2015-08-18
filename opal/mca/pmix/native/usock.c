@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2013 Los Alamos National Security, LLC. 
+ * Copyright (c) 2006-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
@@ -34,6 +34,12 @@
 #endif
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
+#endif
+#ifdef HAVE_SYS_STAT_H
+#include <sys/stat.h>
+#endif
+#ifdef HAVE_FCNTL_H
+#include <fcntl.h>
 #endif
 
 #include "opal_stdint.h"
@@ -191,6 +197,7 @@ void pmix_usock_process_msg(int fd, short flags, void *cbdata)
     /* we get here if no matching recv was found - this is an error */
     opal_output(0, "%s UNEXPECTED MESSAGE",
                 OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
+    PMIX_NATIVE_ABNORMAL_TERM;  // report the error upstream
     OBJ_RELEASE(msg);
 }
 
@@ -222,9 +229,10 @@ static void pmix_usock_try_connect(int fd, short args, void *cbdata)
                             "usock_peer_try_connect: attempting to connect to server on socket %d",
                             mca_pmix_native_component.sd);
         /* try to connect */
-        if (connect(mca_pmix_native_component.sd, &mca_pmix_native_component.address, addrlen) < 0) {
+        if (connect(mca_pmix_native_component.sd, (struct sockaddr*)&mca_pmix_native_component.address, addrlen) < 0) {
             if (opal_socket_errno == ETIMEDOUT) {
-                /* The server may be too busy to accept new connections */
+                /* The server may be too busy to accept new connections,
+                 * so cycle around and let it try again */
                 opal_output_verbose(2, opal_pmix_base_framework.framework_output,
                                     "timeout connecting to server");
                 CLOSE_THE_SOCKET(mca_pmix_native_component.sd);
@@ -235,7 +243,7 @@ static void pmix_usock_try_connect(int fd, short args, void *cbdata)
                abort a connection that was ECONNREFUSED on the last
                attempt, without even trying to establish the
                connection.  Handle that case in a semi-rational
-               way by trying twice before giving up */
+               way by trying again before giving up */
             if (ECONNABORTED == opal_socket_errno) {
                 opal_output_verbose(2, opal_pmix_base_framework.framework_output,
                                     "connection to server aborted by OS - retrying");
@@ -255,6 +263,7 @@ static void pmix_usock_try_connect(int fd, short args, void *cbdata)
         if (0 <= mca_pmix_native_component.sd) {
             CLOSE_THE_SOCKET(mca_pmix_native_component.sd);
         }
+        PMIX_NATIVE_ABNORMAL_TERM;  // report the error upstream
         return;
     }
 
@@ -264,7 +273,7 @@ static void pmix_usock_try_connect(int fd, short args, void *cbdata)
     opal_output_verbose(2, opal_pmix_base_framework.framework_output,
                         "%s sock_peer_try_connect: Connection across to server succeeded",
                         OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
- 
+
     /* setup event callbacks */
     opal_event_set(mca_pmix_native_component.evbase,
                    &mca_pmix_native_component.recv_event,
@@ -282,7 +291,7 @@ static void pmix_usock_try_connect(int fd, short args, void *cbdata)
     opal_event_set_priority(&mca_pmix_native_component.send_event, OPAL_EV_MSG_LO_PRI);
     mca_pmix_native_component.send_ev_active = false;
 
-     /* setup the socket as non-blocking */
+    /* setup the socket as non-blocking */
     if ((flags = fcntl(mca_pmix_native_component.sd, F_GETFL, 0)) < 0) {
         opal_output(0, "usock_peer_connect: fcntl(F_GETFL) failed: %s (%d)\n",
                     strerror(opal_socket_errno),
@@ -305,13 +314,13 @@ static void pmix_usock_try_connect(int fd, short args, void *cbdata)
     if (OPAL_SUCCESS == (rc = usock_send_connect_ack())) {
         mca_pmix_native_component.state = PMIX_USOCK_CONNECT_ACK;
     } else {
-        opal_output(0, 
+        opal_output(0,
                     "%s usock_peer_try_connect: "
                     "usock_send_connect_ack to server failed: %s (%d)",
                     OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
                     opal_strerror(rc), rc);
-        mca_pmix_native_component.state = PMIX_USOCK_FAILED;
         CLOSE_THE_SOCKET(mca_pmix_native_component.sd);
+        PMIX_NATIVE_ABNORMAL_TERM;  // report the error upstream
         return;
     }
 }
@@ -324,7 +333,7 @@ int usock_send_connect_ack(void)
     size_t sdsize;
     char *cred;
     size_t credsize;
-    
+
     opal_output_verbose(2, opal_pmix_base_framework.framework_output,
                         "%s SEND CONNECT ACK",
                         OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
@@ -419,12 +428,12 @@ void pmix_usock_dump(const char* msg)
                     strerror(opal_socket_errno),
                     opal_socket_errno);
     }
-                                                                                                            
+
 #if defined(USOCK_NODELAY)
     optlen = sizeof(nodelay);
     if (getsockopt(mca_pmix_native_component.sd, IPPROTO_USOCK, USOCK_NODELAY, (char *)&nodelay, &optlen) < 0) {
         opal_output(0, "%s usock_peer_dump: USOCK_NODELAY option: %s (%d)\n",
-                    OPAL_NAME_PRINT(OPAL_PROC_MY_NAME), 
+                    OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
                     strerror(opal_socket_errno),
                     opal_socket_errno);
     }

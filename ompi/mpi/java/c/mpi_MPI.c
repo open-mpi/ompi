@@ -6,7 +6,7 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -15,9 +15,9 @@
  * Copyright (c) 2015      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 /*
@@ -54,12 +54,8 @@
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
-#ifdef HAVE_STDLIB_H
 #include <stdlib.h>
-#endif
-#ifdef HAVE_STRING_H
 #include <string.h>
-#endif
 #ifdef HAVE_TARGETCONDITIONALS_H
 #include <TargetConditionals.h>
 #endif
@@ -80,9 +76,9 @@
 #include "mpi_MPI.h"
 #include "mpiJava.h"
 
-ompi_java_globals_t ompi_java;
+ompi_java_globals_t ompi_java = {0};
 int ompi_mpi_java_eager = 65536;
-opal_free_list_t ompi_java_buffers;
+opal_free_list_t ompi_java_buffers = {{0}};
 static void *libmpi = NULL;
 
 static void bufferConstructor(ompi_java_buffer_t *item)
@@ -208,6 +204,8 @@ static void deleteClasses(JNIEnv *env)
 {
     (*env)->DeleteGlobalRef(env, ompi_java.CartParmsClass);
     (*env)->DeleteGlobalRef(env, ompi_java.ShiftParmsClass);
+    (*env)->DeleteGlobalRef(env, ompi_java.VersionClass);
+    (*env)->DeleteGlobalRef(env, ompi_java.CountClass);
     (*env)->DeleteGlobalRef(env, ompi_java.GraphParmsClass);
     (*env)->DeleteGlobalRef(env, ompi_java.DistGraphNeighborsClass);
     (*env)->DeleteGlobalRef(env, ompi_java.StatusClass);
@@ -259,6 +257,12 @@ JNIEXPORT jobject JNICALL Java_mpi_MPI_newDoubleInt(JNIEnv *env, jclass clazz)
     jclass c = (*env)->FindClass(env, "mpi/DoubleInt");
     jmethodID m = (*env)->GetMethodID(env, c, "<init>", "(II)V");
     return (*env)->NewObject(env, c, m, iOff, sizeof(int));
+}
+
+JNIEXPORT void JNICALL Java_mpi_MPI_initVersion(JNIEnv *env, jclass jthis)
+{
+    ompi_java.VersionClass = findClass(env, "mpi/Version");
+    ompi_java.VersionInit = (*env)->GetMethodID(env, ompi_java.VersionClass, "<init>", "(II)V");
 }
 
 JNIEXPORT jobjectArray JNICALL Java_mpi_MPI_Init_1jni(
@@ -355,6 +359,26 @@ JNIEXPORT void JNICALL Java_mpi_MPI_Finalize_1jni(JNIEnv *env, jclass obj)
     int rc = MPI_Finalize();
     ompi_java_exceptionCheck(env, rc);
     deleteClasses(env);
+}
+
+JNIEXPORT jobject JNICALL Java_mpi_MPI_getVersionJNI(JNIEnv *env, jclass jthis)
+{
+	int version, subversion;
+	int rc = MPI_Get_version(&version, &subversion);
+	ompi_java_exceptionCheck(env, rc);
+
+	return (*env)->NewObject(env, ompi_java.VersionClass,
+	                             ompi_java.VersionInit, version, subversion);
+}
+
+JNIEXPORT jstring JNICALL Java_mpi_MPI_getLibVersionJNI(JNIEnv *env, jclass jthis)
+{
+	int length;
+	char version[MPI_MAX_LIBRARY_VERSION_STRING];
+	int rc = MPI_Get_library_version(version, &length);
+	ompi_java_exceptionCheck(env, rc);
+
+	return (*env)->NewStringUTF(env, version);
 }
 
 JNIEXPORT jint JNICALL Java_mpi_MPI_getProcessorName(
@@ -979,6 +1003,30 @@ void ompi_java_forgetIntArray(JNIEnv *env, jintArray array,
     (*env)->ReleaseIntArrayElements(env, array, jptr, JNI_ABORT);
 }
 
+void ompi_java_getDatatypeArray(JNIEnv *env, jlongArray array,
+                           jlong **jptr, MPI_Datatype **cptr)
+{
+    jlong *jLongs = (*env)->GetLongArrayElements(env, array, NULL);
+    *jptr = jLongs;
+
+    int i, length = (*env)->GetArrayLength(env, array);
+    MPI_Datatype *cDatatypes = calloc(length, sizeof(MPI_Datatype));
+
+    for(i = 0; i < length; i++){
+        cDatatypes[i] = (MPI_Datatype)jLongs[i];
+    }
+    *cptr = cDatatypes;
+}
+
+void ompi_java_forgetDatatypeArray(JNIEnv *env, jlongArray array,
+                              jlong *jptr, MPI_Datatype *cptr)
+{
+    if(jptr != cptr)
+        free(cptr);
+
+    (*env)->ReleaseLongArrayElements(env, array, jptr, JNI_ABORT);
+}
+
 void ompi_java_getBooleanArray(JNIEnv *env, jbooleanArray array,
                                jboolean **jptr, int **cptr)
 {
@@ -988,7 +1036,7 @@ void ompi_java_getBooleanArray(JNIEnv *env, jbooleanArray array,
 
     for(i = 0; i < length; i++)
         cb[i] = jb[i];
-    
+
     *jptr = jb;
     *cptr = cb;
 }
@@ -1089,7 +1137,7 @@ void* ompi_java_attrSet(JNIEnv *env, jbyteArray jval)
 
     (*env)->GetByteArrayRegion(env, jval,
             0, length, (jbyte*)cval + sizeof(int));
-    
+
     return cval;
 }
 

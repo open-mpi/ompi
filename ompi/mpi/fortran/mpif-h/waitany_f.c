@@ -5,15 +5,15 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -82,7 +82,7 @@ void ompi_waitany_f(MPI_Fint *count, MPI_Fint *array_of_requests,
        skipping other parameter error checks. */
     if (OPAL_UNLIKELY(0 == OMPI_FINT_2_INT(*count))) {
         *indx = OMPI_INT_2_FINT(MPI_UNDEFINED);
-        MPI_Status_c2f(&ompi_status_empty, status); 
+        MPI_Status_c2f(&ompi_status_empty, status);
         *ierr = OMPI_INT_2_FINT(MPI_SUCCESS);
         return;
     }
@@ -99,7 +99,7 @@ void ompi_waitany_f(MPI_Fint *count, MPI_Fint *array_of_requests,
         c_req[i] = MPI_Request_f2c(array_of_requests[i]);
     }
 
-    c_ierr = MPI_Waitany(OMPI_FINT_2_INT(*count), c_req, 
+    c_ierr = MPI_Waitany(OMPI_FINT_2_INT(*count), c_req,
                          OMPI_SINGLE_NAME_CONVERT(indx),
                          &c_status);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
@@ -115,7 +115,7 @@ void ompi_waitany_f(MPI_Fint *count, MPI_Fint *array_of_requests,
             ++(*indx);
         }
         if (!OMPI_IS_FORTRAN_STATUS_IGNORE(status)) {
-            MPI_Status_c2f(&c_status, status); 
+            MPI_Status_c2f(&c_status, status);
         }
     }
     free(c_req);

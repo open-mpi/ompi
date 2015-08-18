@@ -10,10 +10,11 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2012      Los Alamos National Security, Inc.  All rights reserved. 
+ * Copyright (c) 2012      Los Alamos National Security, Inc.  All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -36,12 +37,10 @@
 #include "opal/dss/dss.h"
 #include "opal/util/proc.h"
 
-#ifdef HAVE_STRING_H
-#    if !defined(STDC_HEADERS) && HAVE_MEMORY_H
-#        include <memory.h>
-#    endif
-#    include <string.h>
+#if !defined(STDC_HEADERS) && HAVE_MEMORY_H
+#    include <memory.h>
 #endif
+#include <string.h>
 
 BEGIN_C_DECLS
 
@@ -50,7 +49,7 @@ BEGIN_C_DECLS
  */
 #define OPAL_DSS_DEFAULT_INITIAL_SIZE  128
 /*
- * The default threshold size when we switch from doubling the 
+ * The default threshold size when we switch from doubling the
  * buffer size to addatively increasing it
  */
 #define OPAL_DSS_DEFAULT_THRESHOLD_SIZE 1024
@@ -75,13 +74,13 @@ BEGIN_C_DECLS
  * Internal type corresponding to bool.  Do not use this in interface
  * calls - use OPAL_BOOL instead.
  */
-#if SIZEOF_BOOL == 1
+#if SIZEOF__BOOL == 1
 #define DSS_TYPE_BOOL OPAL_UINT8
-#elif SIZEOF_BOOL == 2
+#elif SIZEOF__BOOL == 2
 #define DSS_TYPE_BOOL OPAL_UINT16
-#elif SIZEOF_BOOL == 4
+#elif SIZEOF__BOOL == 4
 #define DSS_TYPE_BOOL OPAL_UINT32
-#elif SIZEOF_BOOL == 8
+#elif SIZEOF__BOOL == 8
 #define DSS_TYPE_BOOL OPAL_UINT64
 #else
 #error Unsupported bool size!
@@ -155,7 +154,7 @@ BEGIN_C_DECLS
             ret = OPAL_ERR_NOT_FOUND;                                       \
         }                                                                   \
     } while (0)
-        
+
 /* NOTE: do not need to deal with endianness here, as the unpacking of
    the underling sender-side type will do that for us.  Repeat: the
    data in tmpbuf[] is already in host byte order. */
@@ -169,8 +168,8 @@ BEGIN_C_DECLS
         }                                                                   \
         free(tmpbuf);                                                       \
     } while (0)
-            
-            
+
+
 /**
  * Internal struct used for holding registered dss functions
  */
@@ -258,10 +257,10 @@ void opal_dss_dump_data_types(int output);
 /*
  * Specialized functions
  */
-OPAL_DECLSPEC    int opal_dss_pack_buffer(opal_buffer_t *buffer, const void *src, 
+OPAL_DECLSPEC    int opal_dss_pack_buffer(opal_buffer_t *buffer, const void *src,
                                           int32_t num_vals, opal_data_type_t type);
 
-OPAL_DECLSPEC    int opal_dss_unpack_buffer(opal_buffer_t *buffer, void *dst, 
+OPAL_DECLSPEC    int opal_dss_unpack_buffer(opal_buffer_t *buffer, void *dst,
                                             int32_t *num_vals, opal_data_type_t type);
 
 /*

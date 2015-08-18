@@ -1,10 +1,10 @@
 /*
- * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2010-2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -38,7 +38,7 @@
  * and opens event components, etc.
  *
  * This function is invoked during opal_init().
- * 
+ *
  * This function fills in the internal global variable
  * opal_event_base_components_opened, which is a list of all
  * event components that were successfully opened.  This
@@ -60,11 +60,11 @@ static int opal_event_base_close(void)
     return mca_base_framework_components_close (&opal_event_base_framework,
 						NULL);
 }
-			   
+
 /*
  * Globals
  */
-opal_event_base_t *opal_event_base=NULL;
+opal_event_base_t *opal_sync_event_base=NULL;
 
 static int opal_event_base_open(mca_base_open_flag_t flags)
 {
@@ -84,13 +84,13 @@ static int opal_event_base_open(mca_base_open_flag_t flags)
     opal_event_use_threads();
 
     /* get our event base */
-    if (NULL == (opal_event_base = opal_event_base_create())) {
+    if (NULL == (opal_sync_event_base = opal_event_base_create())) {
         return OPAL_ERROR;
     }
 
     /* set the number of priorities */
     if (0 < OPAL_EVENT_NUM_PRI) {
-        opal_event_base_priority_init(opal_event_base, OPAL_EVENT_NUM_PRI);
+        opal_event_base_priority_init(opal_sync_event_base, OPAL_EVENT_NUM_PRI);
     }
 
     return rc;

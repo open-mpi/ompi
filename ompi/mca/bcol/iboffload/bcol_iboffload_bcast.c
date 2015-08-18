@@ -188,7 +188,7 @@ int mca_bcol_iboffload_small_msg_bcast_progress(
 
     IBOFFLOAD_VERBOSE(10, ("Run progress.\n"));
 
-    /* We should send the data to our children in the tree before 
+    /* We should send the data to our children in the tree before
        the upper layer will start with buffers recycling */
     if (BCOL_AND_NET_ARE_COMPLETED(coll_request)) {
         coll_request->user_handle_freed = true;

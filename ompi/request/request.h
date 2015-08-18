@@ -6,7 +6,7 @@
  * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -16,9 +16,9 @@
  * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 /**
@@ -46,7 +46,7 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_request_t);
 
 /*
  * The following include pulls in shared typedefs with debugger plugins.
- * For more information on why we do this see the Notice to developers 
+ * For more information on why we do this see the Notice to developers
  * comment at the top of the ompi_msgq_dll.c file.
  */
 
@@ -62,7 +62,7 @@ typedef int (*ompi_request_free_fn_t)(struct ompi_request_t** rptr);
 /*
  * Optional function to cancel a pending request.
  */
-typedef int (*ompi_request_cancel_fn_t)(struct ompi_request_t* request, int flag); 
+typedef int (*ompi_request_cancel_fn_t)(struct ompi_request_t* request, int flag);
 
 /*
  * Optional function called when the request is completed from the MPI
@@ -96,7 +96,7 @@ typedef union ompi_mpi_object_t {
 } ompi_mpi_object_t;
 
 /**
- * Main top-level request struct definition 
+ * Main top-level request struct definition
  */
 struct ompi_request_t {
     opal_free_list_item_t super;                /**< Base type */
@@ -143,7 +143,7 @@ typedef struct ompi_predefined_request_t ompi_predefined_request_t;
         (request)->req_complete = false;              \
         (request)->req_state = OMPI_REQUEST_INACTIVE; \
         (request)->req_persistent = (persistent);     \
-    } while (0); 
+    } while (0);
 
 /**
  * Finalize a request.  This is a macro to avoid function call
@@ -153,7 +153,7 @@ typedef struct ompi_predefined_request_t ompi_predefined_request_t;
  *
  * When finalizing a request, if MPI_Request_f2c() was previously
  * invoked on that request, then this request was added to the f2c
- * table, and we need to remove it 
+ * table, and we need to remove it
  *
  * This function should be called only from the MPI layer. It should
  * never be called from the PML. It take care of the upper level clean-up.
@@ -168,7 +168,7 @@ do {                                                                    \
                                     (request)->req_f_to_c_index, NULL); \
         (request)->req_f_to_c_index = MPI_UNDEFINED;                    \
     }                                                                   \
-} while (0); 
+} while (0);
 
 /**
  * Non-blocking test for request completion.

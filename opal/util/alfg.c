@@ -2,9 +2,9 @@
  * Copyright (c) 2014      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -12,35 +12,35 @@
 
 #include "alfg.h"
 
-/* Mask corresponding to the primitive polynomial 
- *--------------------------------------------------- 
- * 
+/* Mask corresponding to the primitive polynomial
+ *---------------------------------------------------
+ *
  * p(x) = 1 + x^25 + x^27 + x^29 + x^30 + x^31 + x^32
  *
- *--------------------------------------------------- 
- */  
+ *---------------------------------------------------
+ */
 #define MASK 0x80000057U
 
 /* Additive lagged Fibonacci parameters:
- *--------------------------------------------------- 
+ *---------------------------------------------------
  *
  * x_n = (x_(n - TAP1) + x_(n - TAP2) ) mod M
  *
- *--------------------------------------------------- 
- */ 
+ *---------------------------------------------------
+ */
 #define TAP1 127
 #define TAP2 97
 #define CBIT 21  /* Canonical bit */
 
 
-/** 
+/**
  * @brief      Galois shift register: Used to seed the ALFG's
  *             canonical rectangle
- *           
- * @param[in]  unsigned int *seed: used to seed the Galois register 
- * @param[out] uint32_t lsb: least significant bit of the Galois 
- *             register after shift 
- */ 
+ *
+ * @param[in]  unsigned int *seed: used to seed the Galois register
+ * @param[out] uint32_t lsb: least significant bit of the Galois
+ *             register after shift
+ */
 static uint32_t galois(unsigned int *seed){
 
     uint32_t lsb;
@@ -52,9 +52,9 @@ static uint32_t galois(unsigned int *seed){
     return lsb;
 }
 
-/** 
+/**
  * @brief   Routine to seed the ALFG register
- * 
+ *
  * @param[in]   uint32_t seed
  * @param[out]  opal_rng_buff_t *buff: handle to ALFG buffer state
  */
@@ -80,17 +80,17 @@ int opal_srand(opal_rng_buff_t *buff, uint32_t seed) {
             buff->alfg[j] = buff->alfg[j] ^ ((galois(&seed_cpy))<<i);
         }
     }
-    
+
     return 1;
 
 }
 
-/** 
+/**
  * @brief       The additive lagged Fibonnaci PRNG
  *
  * @param[in]   opal_rng_buff_t *buff: handle to ALFG buffer state
  * @param[out]  32-bit unsigned random integer
- */ 
+ */
 
 uint32_t opal_rand(opal_rng_buff_t *buff){
 

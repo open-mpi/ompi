@@ -6,16 +6,16 @@
  * Copyright (c) 2004-2009 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2014-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 /**
@@ -26,15 +26,13 @@
 
 #include "opal_config.h"
 
-#ifdef HAVE_STDLIB_H
 #include <stdlib.h>
-#endif  /* HAVE_STDLIB_H */
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif  /* HAVE_SYS_TYPES_H */
 #include "opal/mca/event/event.h"
 #include "opal/mca/btl/btl.h"
-#include "opal/mca/btl/base/base.h" 
+#include "opal/mca/btl/base/base.h"
 
 BEGIN_C_DECLS
 
@@ -66,14 +64,14 @@ int mca_btl_self_component_close(void);
 
 /**
  * SELF module initialization.
- * 
+ *
  * @param num_btls (OUT)                  Number of BTLs returned in BTL array.
  * @param enable_progress_threads (IN)    Flag indicating whether BTL is allowed to have progress threads
  * @param enable_mpi_threads (IN)         Flag indicating whether BTL must support multilple simultaneous invocations from different threads
  *
  */
 mca_btl_base_module_t** mca_btl_self_component_init(
-    int *num_btls, 
+    int *num_btls,
     bool enable_progress_threads,
     bool enable_mpi_threads
 );
@@ -83,7 +81,7 @@ extern mca_btl_base_module_t mca_btl_self;
 
 /**
  * Cleanup any resources held by the BTL.
- * 
+ *
  * @param btl  BTL instance.
  * @return     OPAL_SUCCESS or error status on failure.
  */
@@ -99,12 +97,12 @@ int mca_btl_self_finalize(
  * Called for message that is send from process with the virtual
  * address of the shared memory segment being different than that of
  * the receiver.
- * 
+ *
  * @param btl (IN)
- * @param proc (IN)  
+ * @param proc (IN)
  * @param peer (OUT)
  * @return     OPAL_SUCCESS or error status on failure.
- * 
+ *
  */
 
 int mca_btl_self_add_procs(
@@ -157,7 +155,7 @@ int mca_btl_self_free(
     struct mca_btl_base_module_t* btl,
     mca_btl_base_descriptor_t* segment
 );
-                                                                                                                   
+
 /**
  * Pack data
  *
@@ -173,7 +171,7 @@ struct mca_btl_base_descriptor_t* mca_btl_self_prepare_src(
     size_t* size,
     uint32_t flags
 );
-                                                                                                            
+
 /**
  * Initiate a send to the peer.
  *

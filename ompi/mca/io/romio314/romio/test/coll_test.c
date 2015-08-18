@@ -1,5 +1,5 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/*  
+/*
  *  (C) 2001 by Argonne National Laboratory.
  *      See COPYRIGHT in top-level directory.
  */
@@ -17,7 +17,7 @@
 /* The file name is taken as a command-line argument. */
 
 /* Note that the file access pattern is noncontiguous. */
-   
+
 void handle_error(int errcode, const char *str);
 
 void handle_error(int errcode, const char *str)
@@ -49,7 +49,7 @@ int main(int argc, char **argv)
     MPI_Comm_rank(MPI_COMM_WORLD, &mynod);
     MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
 
-/* process 0 takes the file name as a command-line argument and 
+/* process 0 takes the file name as a command-line argument and
    broadcasts it to other processes */
     if (!mynod) {
 	i = 1;
@@ -94,7 +94,7 @@ int main(int argc, char **argv)
     for (i=0; i<ndims; i++) array_of_psizes[i] = 0;
     MPI_Dims_create(nprocs, ndims, array_of_psizes);
 
-    MPI_Type_create_darray(nprocs, mynod, ndims, array_of_gsizes, 
+    MPI_Type_create_darray(nprocs, mynod, ndims, array_of_gsizes,
 			   array_of_distribs, array_of_dargs,
 			   array_of_psizes, order, MPI_INT, &newtype);
     MPI_Type_commit(&newtype);
@@ -127,10 +127,10 @@ int main(int argc, char **argv)
 /* end of initialization */
 
     /* write the array to the file */
-    errcode = MPI_File_open(MPI_COMM_WORLD, filename, 
+    errcode = MPI_File_open(MPI_COMM_WORLD, filename,
 		    MPI_MODE_CREATE | MPI_MODE_RDWR, info, &fh);
     if (errcode != MPI_SUCCESS) handle_error(errcode, "MPI_File_open");
-   
+
     errcode = MPI_File_set_view(fh, 0, MPI_INT, newtype, "native", info);
     if (errcode != MPI_SUCCESS) handle_error(errcode, "MPI_File_set_view");
 
@@ -140,10 +140,10 @@ int main(int argc, char **argv)
     if (errcode != MPI_SUCCESS) handle_error(errcode, "MPI_File_close");
 
     if (!mynod) {
-        /* wkl suggests potential for false " No Errors" if both read 
+        /* wkl suggests potential for false " No Errors" if both read
 	 * and write use the same file view */
         /* solution: rank 0 reads entire file and checks write values */
-	errcode = MPI_File_open(MPI_COMM_SELF, filename, 
+	errcode = MPI_File_open(MPI_COMM_SELF, filename,
 			MPI_MODE_RDONLY, info, &fh);
         if (errcode != MPI_SUCCESS) handle_error(errcode, "MPI_File_open");
 
@@ -157,7 +157,7 @@ int main(int argc, char **argv)
         for (i=0; i<array_size; i++)
             if (readbuf[i] != i) {
                 errs++;
-                fprintf(stderr, "Error: write integer %d but read %d\n", 
+                fprintf(stderr, "Error: write integer %d but read %d\n",
 				i,readbuf[i]);
                 break;
             }
@@ -167,7 +167,7 @@ int main(int argc, char **argv)
 
     /* now read it back */
     readbuf = (int *) malloc(bufcount * sizeof(int));
-    errcode = MPI_File_open(MPI_COMM_WORLD, filename, 
+    errcode = MPI_File_open(MPI_COMM_WORLD, filename,
 		    MPI_MODE_CREATE | MPI_MODE_RDWR, info, &fh);
     if (errcode != MPI_SUCCESS) handle_error(errcode, "MPI_File_open");
 

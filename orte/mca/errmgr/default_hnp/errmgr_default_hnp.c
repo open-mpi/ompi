@@ -1,19 +1,19 @@
 /*
  * Copyright (c) 2009-2011 The Trustees of Indiana University.
  *                         All rights reserved.
- * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved. 
+ * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010-2011 Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2011      Oracle and/or all its affiliates.  All rights reserved. 
+ * Copyright (c) 2011      Oracle and/or all its affiliates.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2014      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -23,9 +23,7 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif  /* HAVE_UNISTD_H */
-#ifdef HAVE_STRING_H
 #include <string.h>
-#endif
 #ifdef HAVE_SYS_WAIT_H
 #include <sys/wait.h>
 #endif
@@ -194,7 +192,7 @@ static void job_errors(int fd, short args, void *cbdata)
                 OBJ_RELEASE(caddy);
                 return;
             }
-            OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
+            OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base_framework.framework_output,
                                  "%s errmgr:hnp sending dyn error release of job %s to %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_JOBID_PRINT(jdata->jobid),
@@ -262,7 +260,7 @@ static void job_errors(int fd, short args, void *cbdata)
         jdata->num_procs != jdata->num_reported) {
         orte_show_help("help-errmgr-base.txt", "failed-daemon", true);
     }
-        
+
     /* abort the job */
     ORTE_ACTIVATE_JOB_STATE(caddy->jdata, ORTE_JOB_STATE_FORCED_EXIT);
     /* set the global abnormal exit flag  */
@@ -285,7 +283,7 @@ static void proc_errors(int fd, short args, void *cbdata)
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(proc),
                          orte_proc_state_to_str(state)));
-    
+
     /*
      * if orte is trying to shutdown, just let it
      */
@@ -676,7 +674,7 @@ static void default_hnp_abort(orte_job_t *jdata)
                          "%s errmgr:default_hnp: abort called on job %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_JOBID_PRINT(jdata->jobid)));
-    
+
     /* set control params to indicate we are terminating */
     orte_job_term_ordered = true;
     orte_enable_recovery = false;
@@ -706,7 +704,7 @@ static void default_hnp_abort(orte_job_t *jdata)
     OPAL_OUTPUT_VERBOSE((1, orte_errmgr_base_framework.framework_output,
                          "%s errmgr:default_hnp: ordering orted termination",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-    
+
     /* tell the plm to terminate the orteds - they will automatically
      * kill their local procs
      */

@@ -3,23 +3,21 @@
  *                         All rights reserved.
  * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
  *                         All rights reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
 #include "orte_config.h"
 
-#ifdef HAVE_STRING_H
 #include <string.h>
-#endif
 
 #include "orte/constants.h"
 
@@ -62,7 +60,7 @@ int orte_snapc_base_select(bool seed, bool app)
     mca_base_var_get_value(var_id, &include_list, NULL, NULL);
 
     if(NULL != include_list && NULL != include_list[0] &&
-       0 == strncmp(include_list[0], "none", strlen("none")) ){ 
+       0 == strncmp(include_list[0], "none", strlen("none")) ){
         opal_output_verbose(10, orte_snapc_base_framework.framework_output,
                             "snapc:select: Using %s component",
                             include_list[0]);

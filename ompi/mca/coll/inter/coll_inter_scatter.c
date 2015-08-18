@@ -5,15 +5,15 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2008 University of Houston. All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -56,12 +56,12 @@ mca_coll_inter_scatter_inter(void *sbuf, int scount,
         err = OMPI_SUCCESS;
     } else if (MPI_ROOT != root) {
         /* First process receives the data from root */
-	if(0 == rank) { 
+	if(0 == rank) {
 	    err = ompi_datatype_get_extent(rdtype, &lb, &incr);
 	    if (OMPI_SUCCESS != err) {
 		return OMPI_ERROR;
 	    }
-	    
+
 	    incr *= rcount;
 	    size_local = ompi_comm_size(comm->c_local_comm);
 	    ptmp = (char*)malloc(size_local * incr);
@@ -69,7 +69,7 @@ mca_coll_inter_scatter_inter(void *sbuf, int scount,
 		return OMPI_ERR_OUT_OF_RESOURCE;
 	    }
 
-	    err = MCA_PML_CALL(recv(ptmp, rcount*size_local, rdtype, 
+	    err = MCA_PML_CALL(recv(ptmp, rcount*size_local, rdtype,
 				    root, MCA_COLL_BASE_TAG_SCATTER,
 				    comm, MPI_STATUS_IGNORE));
 	    if (OMPI_SUCCESS != err) {
@@ -77,8 +77,8 @@ mca_coll_inter_scatter_inter(void *sbuf, int scount,
             }
 	}
 	/* Perform the scatter locally with the first process as root */
-	err = comm->c_local_comm->c_coll.coll_scatter(ptmp, rcount, rdtype, 
-						      rbuf, rcount, rdtype, 
+	err = comm->c_local_comm->c_coll.coll_scatter(ptmp, rcount, rdtype,
+						      rbuf, rcount, rdtype,
 						      0, comm->c_local_comm,
                                                       comm->c_local_comm->c_coll.coll_scatter_module);
 	if (NULL != ptmp) {

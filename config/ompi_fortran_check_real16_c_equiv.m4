@@ -6,7 +6,7 @@ dnl                         Corporation.  All rights reserved.
 dnl Copyright (c) 2004-2005 The University of Tennessee and The University
 dnl                         of Tennessee Research Foundation.  All rights
 dnl                         reserved.
-dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
@@ -15,9 +15,9 @@ dnl Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
 dnl Copyright (c) 2015      Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
 dnl $COPYRIGHT$
-dnl 
+dnl
 dnl Additional copyrights may follow
-dnl 
+dnl
 dnl $HEADER$
 dnl
 
@@ -29,7 +29,7 @@ AC_DEFUN([OMPI_FORTRAN_CHECK_REAL16_C_EQUIV],[
     AS_VAR_PUSHDEF([real16_matches_c_var], [ompi_cv_real16_c_equiv])
 
     # We have to do this as a cache check for cross-compilation platforms
-    AC_CACHE_CHECK([for C type matching bit representation of REAL*16], 
+    AC_CACHE_CHECK([for C type matching bit representation of REAL*16],
         real16_matches_c_var,
         [AS_IF([test "$OMPI_TRY_FORTRAN_BINDINGS" -gt "$OMPI_FORTRAN_NO_BINDINGS" && \
                 test "$OMPI_HAVE_FORTRAN_REAL16" = "1"],
@@ -84,7 +84,7 @@ AC_DEFUN([OMPI_FORTRAN_CHECK_REAL16_C_EQUIV],[
     AS_VAR_POPDEF([real16_matches_c_var])
 
     AS_IF([test "$ompi_real16_matches_c" = "yes"],
-          [define_value=1], 
+          [define_value=1],
           [define_value=0
            AC_MSG_WARN([MPI_REAL16 and MPI_COMPLEX32 support have been disabled])])
     AC_DEFINE_UNQUOTED([OMPI_REAL16_MATCHES_C], [$define_value],

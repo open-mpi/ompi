@@ -181,16 +181,16 @@ static int mca_sbgp_map_to_logical_socket_id(int *socket)
     first_pu_object = hwloc_get_obj_by_type(opal_hwloc_topology, HWLOC_OBJ_PU, 0);
 
 
-    /* get the next bit in the bitmap (note: if pu_os_index == -1, then the 
-     * first bit is returned 
+    /* get the next bit in the bitmap (note: if pu_os_index == -1, then the
+     * first bit is returned
      */
      /* traverse the hwloc tree */
      while( -1 != (pu_os_index = hwloc_bitmap_next(good, pu_os_index) ) ) {
-         /* Traverse all PUs in the machine in logical order, in the simple case 
+         /* Traverse all PUs in the machine in logical order, in the simple case
           * there should only be a single PU that this process is bound to, right?
           *
           */
-          for( obj = first_pu_object; obj != NULL; obj = obj->next_cousin ) {/* WTF is a "next_cousin" ? */ 
+          for( obj = first_pu_object; obj != NULL; obj = obj->next_cousin ) {/* WTF is a "next_cousin" ? */
               /* is this PU the same as the bit I pulled off the mask? */
               if( obj->os_index == (unsigned int) pu_os_index) {
                   /* Then I found it, break out of for loop */
@@ -200,7 +200,7 @@ static int mca_sbgp_map_to_logical_socket_id(int *socket)
 
           if( NULL != obj) {
               /* if we found the PU, then go upward in the tree
-               * looking for the enclosing socket 
+               * looking for the enclosing socket
                */
                while( (NULL != obj) && ( HWLOC_OBJ_SOCKET != obj->type) ){
                    obj = obj->parent;
@@ -215,16 +215,16 @@ static int mca_sbgp_map_to_logical_socket_id(int *socket)
                        this_pus_logical_socket_id = obj->logical_index;
                        my_logical_socket_id = this_pus_logical_socket_id;
                    } else {
-                       /* this is not the first PU that I'm bound to. 
+                       /* this is not the first PU that I'm bound to.
                         * Seems I'm bound to more than a single PU. Question
-                        * is, am I bound to the same socket?? 
+                        * is, am I bound to the same socket??
                         */
-                       /* in order to get rid of the compiler warning, I had to cast 
-                        * "this_pus_logical_socket_id", at a glance this seems ok, 
-                        * but if subgrouping problems arise, maybe look here. I shall 
+                       /* in order to get rid of the compiler warning, I had to cast
+                        * "this_pus_logical_socket_id", at a glance this seems ok,
+                        * but if subgrouping problems arise, maybe look here. I shall
                         * tag this line with the "mark of the beast" for grepability
                         * 666
-                        */  
+                        */
                         if( (unsigned int) this_pus_logical_socket_id != obj->logical_index ){
                             /* 666 */
                             /* Then we're bound to more than one socket...fail */

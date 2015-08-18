@@ -5,19 +5,19 @@
  * Copyright (c) 2004-2013 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Inria.  All rights reserved.
  * Copyright (c) 2011-2013 Universite Bordeaux 1
- * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2013-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  *
  * This file prototypes all MPI fortran functions in all four fortran
@@ -85,6 +85,8 @@ PN2(void, MPI_Add_error_class, mpi_add_error_class, MPI_ADD_ERROR_CLASS, (MPI_Fi
 PN2(void, MPI_Add_error_code, mpi_add_error_code, MPI_ADD_ERROR_CODE, (MPI_Fint *errorclass, MPI_Fint *errorcode, MPI_Fint *ierr));
 PN2(void, MPI_Add_error_string, mpi_add_error_string, MPI_ADD_ERROR_STRING, (MPI_Fint *errorcode, char *string, MPI_Fint *ierr, int l));
 PN2(void, MPI_Address, mpi_address, MPI_ADDRESS, (char *location, MPI_Fint *address, MPI_Fint *ierr));
+PN2(MPI_Aint, MPI_Aint_add, mpi_aint_add, MPI_AINT_ADD, (MPI_Aint *base, MPI_Aint *diff));
+PN2(MPI_Aint, MPI_Aint_diff, mpi_aint_diff, MPI_AINT_DIFF, (MPI_Aint *addr1, MPI_Aint *addr2));
 PN2(void, MPI_Allgather, mpi_allgather, MPI_ALLGATHER, (char *sendbuf, MPI_Fint *sendcount, MPI_Fint *sendtype, char *recvbuf, MPI_Fint *recvcount, MPI_Fint *recvtype, MPI_Fint *comm, MPI_Fint *ierr));
 PN2(void, MPI_Allgatherv, mpi_allgatherv, MPI_ALLGATHERV, (char *sendbuf, MPI_Fint *sendcount, MPI_Fint *sendtype, char *recvbuf, MPI_Fint *recvcounts, MPI_Fint *displs, MPI_Fint *recvtype, MPI_Fint *comm, MPI_Fint *ierr));
 PN2(void, MPI_Alloc_mem, mpi_alloc_mem, MPI_ALLOC_MEM, (MPI_Aint *size, MPI_Fint *info, char *baseptr, MPI_Fint *ierr));
@@ -185,12 +187,16 @@ PN2(void, MPI_File_write_at, mpi_file_write_at, MPI_FILE_WRITE_AT, (MPI_Fint *fh
 PN2(void, MPI_File_write_at_all, mpi_file_write_at_all, MPI_FILE_WRITE_AT_ALL, (MPI_Fint *fh, MPI_Offset *offset, char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *status, MPI_Fint *ierr));
 PN2(void, MPI_File_iread_at, mpi_file_iread_at, MPI_FILE_IREAD_AT, (MPI_Fint *fh, MPI_Offset *offset, char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *request, MPI_Fint *ierr));
 PN2(void, MPI_File_iwrite_at, mpi_file_iwrite_at, MPI_FILE_IWRITE_AT, (MPI_Fint *fh, MPI_Offset *offset, char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *request, MPI_Fint *ierr));
+PN2(void, MPI_File_iread_at_all, mpi_file_iread_at_all, MPI_FILE_IREAD_AT_ALL, (MPI_Fint *fh, MPI_Offset *offset, char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *request, MPI_Fint *ierr));
+PN2(void, MPI_File_iwrite_at_all, mpi_file_iwrite_at_all, MPI_FILE_IWRITE_AT_ALL, (MPI_Fint *fh, MPI_Offset *offset, char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *request, MPI_Fint *ierr));
 PN2(void, MPI_File_read, mpi_file_read, MPI_FILE_READ, (MPI_Fint *fh, char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *status, MPI_Fint *ierr));
 PN2(void, MPI_File_read_all, mpi_file_read_all, MPI_FILE_READ_ALL, (MPI_Fint *fh, char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *status, MPI_Fint *ierr));
 PN2(void, MPI_File_write, mpi_file_write, MPI_FILE_WRITE, (MPI_Fint *fh, char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *status, MPI_Fint *ierr));
 PN2(void, MPI_File_write_all, mpi_file_write_all, MPI_FILE_WRITE_ALL, (MPI_Fint *fh, char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *status, MPI_Fint *ierr));
 PN2(void, MPI_File_iread, mpi_file_iread, MPI_FILE_IREAD, (MPI_Fint *fh, char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *request, MPI_Fint *ierr));
 PN2(void, MPI_File_iwrite, mpi_file_iwrite, MPI_FILE_IWRITE, (MPI_Fint *fh, char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *request, MPI_Fint *ierr));
+PN2(void, MPI_File_iread_all, mpi_file_iread_all, MPI_FILE_IREAD_ALL, (MPI_Fint *fh, char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *request, MPI_Fint *ierr));
+PN2(void, MPI_File_iwrite_all, mpi_file_iwrite_all, MPI_FILE_IWRITE_ALL, (MPI_Fint *fh, char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *request, MPI_Fint *ierr));
 PN2(void, MPI_File_seek, mpi_file_seek, MPI_FILE_SEEK, (MPI_Fint *fh, MPI_Offset *offset, MPI_Fint *whence, MPI_Fint *ierr));
 PN2(void, MPI_File_get_position, mpi_file_get_position, MPI_FILE_GET_POSITION, (MPI_Fint *fh, MPI_Offset *offset, MPI_Fint *ierr));
 PN2(void, MPI_File_get_byte_offset, mpi_file_get_byte_offset, MPI_FILE_GET_BYTE_OFFSET, (MPI_Fint *fh, MPI_Offset *offset, MPI_Offset *disp, MPI_Fint *ierr));

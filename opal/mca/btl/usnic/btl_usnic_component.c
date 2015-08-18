@@ -163,6 +163,7 @@ static int usnic_component_open(void)
     mca_btl_usnic_component.usnic_all_modules = NULL;
     mca_btl_usnic_component.usnic_active_modules = NULL;
     mca_btl_usnic_component.transport_header_len = -1;
+    mca_btl_usnic_component.prefix_send_offset = 0;
 
     /* initialize objects */
     OBJ_CONSTRUCT(&mca_btl_usnic_component.usnic_procs, opal_list_t);
@@ -208,6 +209,9 @@ static int usnic_component_close(void)
     if (mca_btl_usnic_component.connectivity_enabled) {
         opal_btl_usnic_connectivity_client_finalize();
         opal_btl_usnic_connectivity_agent_finalize();
+    }
+    if (mca_btl_usnic_component.opal_evbase) {
+        opal_progress_thread_finalize(NULL);
     }
 
     free(mca_btl_usnic_component.usnic_all_modules);
@@ -630,7 +634,40 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
     hints.ep_attr = &ep_attr;
     hints.fabric_attr = &fabric_attr;
 
-    ret = fi_getinfo(FI_VERSION(1, 0), NULL, 0, 0, &hints, &info_list);
+    /* This code understands libfabric API v1.0 and v1.1.  Even if we
+       were compiled with libfabric API v1.0, we still want to request
+       v1.1 -- here's why:
+
+       - In libfabric v1.0.0 (i.e., API v1.0), the usnic provider did
+         not check the value of the "version" parameter passed into
+         fi_getinfo()
+
+       - If you pass FI_VERSION(1,0) to libfabric v1.1.0 (i.e., API
+         v1.1), the usnic provider will disable FI_MSG_PREFIX support
+         (on the assumption that the application will not handle
+         FI_MSG_PREFIX properly).  This can happen if you compile OMPI
+         against libfabric v1.0.0 (i.e., API v1.0) and run OMPI
+         against libfabric v1.1.0 (i.e., API v1.1).
+
+       So never request API v1.0 -- always request a minimum of
+       v1.1.
+
+       NOTE: The configure.m4 in this component will require libfabric
+       >= v1.1.0 (i.e., it won't accept v1.0.0) because of a critical
+       bug in the usnic provider in libfabric v1.0.0.  However, the
+       compatibility code with libfabric v1.0.0 in the usNIC BTL has
+       been retained, for two reasons:
+
+       1. It's not harmful, nor overly complicated.  So the
+          compatibility code was not ripped out.
+       2. At least some versions of Cisco Open MPI are shipping with
+          an embedded (libfabric v1.0.0+critical bug fix).
+
+       Someday, #2 may no longer be true, and we may therefore rip out
+       the libfabric v1.0.0 compatibility code. */
+    uint32_t libfabric_api;
+    libfabric_api = FI_VERSION(1, 1);
+    ret = fi_getinfo(libfabric_api, NULL, 0, 0, &hints, &info_list);
     if (0 != ret) {
         opal_output_verbose(5, USNIC_OUT,
                             "btl:usnic: disqualifiying myself due to fi_getinfo failure: %s (%d)", strerror(-ret), ret);
@@ -663,6 +700,29 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
 
     opal_output_verbose(5, USNIC_OUT,
                         "btl:usnic: usNIC fabrics found");
+
+    /* Due to ambiguities in documentation, in libfabric v1.0.0 (i.e.,
+       API v1.0) the usnic provider returned sizeof(struct
+       fi_cq_err_entry) from fi_cq_readerr() upon success.
+
+       The ambiguities were clarified in libfabric v1.1.0 (i.e., API
+       v1.1); the usnic provider returned 1 from fi_cq_readerr() upon
+       success.
+
+       So query to see what version of the libfabric API we are
+       running with, and adapt accordingly. */
+    libfabric_api = fi_version();
+    if (1 == FI_MAJOR(libfabric_api) &&
+        0 == FI_MINOR(libfabric_api)) {
+        // Old fi_cq_readerr() behavior: success=sizeof(...), try again=0
+        mca_btl_usnic_component.cq_readerr_success_value =
+            sizeof(struct fi_cq_err_entry);
+        mca_btl_usnic_component.cq_readerr_try_again_value = 0;
+    } else {
+        // New fi_cq_readerr() behavior: success=1, try again=-FI_EAGAIN
+        mca_btl_usnic_component.cq_readerr_success_value = 1;
+        mca_btl_usnic_component.cq_readerr_try_again_value = -FI_EAGAIN;
+    }
 
     /* libnl initialization */
     opal_proc_t *me = opal_proc_local_get();
@@ -861,8 +921,10 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
        checking agent and client. */
     if (mca_btl_usnic_component.num_modules > 0 &&
         mca_btl_usnic_component.connectivity_enabled) {
+        mca_btl_usnic_component.opal_evbase = opal_progress_thread_init(NULL);
         if (OPAL_SUCCESS != opal_btl_usnic_connectivity_agent_init() ||
             OPAL_SUCCESS != opal_btl_usnic_connectivity_client_init()) {
+            opal_progress_thread_finalize(NULL);
             return NULL;
         }
     }
@@ -972,7 +1034,7 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
     }
 
     /* start timer to guarantee synthetic clock advances */
-    opal_event_set(opal_event_base, &usnic_clock_timer_event,
+    opal_event_set(opal_sync_event_base, &usnic_clock_timer_event,
                    -1, 0, usnic_clock_callback,
                    &usnic_clock_timeout);
     usnic_clock_timer_event_set = true;
@@ -1087,6 +1149,9 @@ static int usnic_handle_completion(
     seg = (opal_btl_usnic_segment_t*)completion->op_context;
     rseg = (opal_btl_usnic_recv_segment_t*)seg;
 
+    /* Make the completion be Valgrind-defined */
+    opal_memchecker_base_mem_defined(seg, sizeof(*seg));
+
     /* Handle work completions */
     switch(seg->us_type) {
 
@@ -1094,27 +1159,18 @@ static int usnic_handle_completion(
     case OPAL_BTL_USNIC_SEG_ACK:
         opal_btl_usnic_ack_complete(module,
                 (opal_btl_usnic_ack_segment_t *)seg);
-{ opal_btl_usnic_send_segment_t *sseg = (opal_btl_usnic_send_segment_t *)seg;
-++module->mod_channels[sseg->ss_channel].credits;
-}
         break;
 
     /**** Send of frag segment completion ****/
     case OPAL_BTL_USNIC_SEG_FRAG:
         opal_btl_usnic_frag_send_complete(module,
                 (opal_btl_usnic_frag_segment_t*)seg);
-{ opal_btl_usnic_send_segment_t *sseg = (opal_btl_usnic_send_segment_t *)seg;
-++module->mod_channels[sseg->ss_channel].credits;
-}
         break;
 
     /**** Send of chunk segment completion ****/
     case OPAL_BTL_USNIC_SEG_CHUNK:
         opal_btl_usnic_chunk_send_complete(module,
                 (opal_btl_usnic_chunk_segment_t*)seg);
-{ opal_btl_usnic_send_segment_t *sseg = (opal_btl_usnic_send_segment_t *)seg;
-++module->mod_channels[sseg->ss_channel].credits;
-}
         break;
 
     /**** Receive completions ****/
@@ -1145,17 +1201,27 @@ usnic_handle_cq_error(opal_btl_usnic_module_t* module,
     }
 
     rc = fi_cq_readerr(channel->cq, &err_entry, 0);
-    if (rc != sizeof(err_entry)) {
-        BTL_ERROR(("%s: cq_readerr ret = %d",
-               module->fabric_info->fabric_attr->name, rc));
+    if (rc == mca_btl_usnic_component.cq_readerr_try_again_value) {
+        return;
+    } else if (rc != mca_btl_usnic_component.cq_readerr_success_value) {
+        BTL_ERROR(("%s: cq_readerr ret = %d (expected %d)",
+                   module->fabric_info->fabric_attr->name, rc,
+                   (int) mca_btl_usnic_component.cq_readerr_success_value));
         channel->chan_error = true;
-    } else if (err_entry.prov_errno == 1) {
+    }
+
+    /* Silently count CRC errors.  Truncation errors are usually a
+       different symptom of a CRC error. */
+    else if (FI_ECRC == err_entry.prov_errno ||
+             FI_ETRUNC == err_entry.prov_errno) {
 #if MSGDEBUG1
         static int once = 0;
         if (once++ == 0) {
-            BTL_ERROR(("%s: Channel %d, CRC error",
-                   module->fabric_info->fabric_attr->name,
-                   channel->chan_index));
+            BTL_ERROR(("%s: Channel %d, %s",
+                       module->fabric_info->fabric_attr->name,
+                       channel->chan_index,
+                       FI_ECRC == err_entry.prov_errno ?
+                       "CRC error" : "message truncation"));
         }
 #endif
 
@@ -1171,23 +1237,10 @@ usnic_handle_cq_error(opal_btl_usnic_module_t* module,
             rseg->rs_next = channel->repost_recv_head;
             channel->repost_recv_head = rseg;
         }
-    } else if (FI_ETRUNC == err_entry.prov_errno) {
-        /* This error is usually a different symptom of a CRC error */
-#if MSGDEBUG1
-        static int once = 0;
-        if (once++ == 0) {
-            BTL_ERROR(("%s: Channel %d, message truncation",
-                   module->fabric_info->fabric_attr->name,
-                   channel->chan_index));
-        }
-#endif
-
-        /* silently count CRC errors */
-        ++module->stats.num_crc_errors;
     } else {
         BTL_ERROR(("%s: CQ[%d] prov_err = %d",
                module->fabric_info->fabric_attr->name, channel->chan_index,
-               err_entry.prov_errno));
+                   err_entry.prov_errno));
         channel->chan_error = true;
     }
 }

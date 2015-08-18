@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 2003 University of Chicago, Ohio Supercomputer Center. 
+ *   Copyright (C) 2003 University of Chicago, Ohio Supercomputer Center.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -113,9 +113,9 @@ void ADIOI_GRIDFTP_Resize(ADIO_File fd, ADIO_Offset size, int *error_code)
 						       GLOBUS_NULL))!=GLOBUS_SUCCESS )
 		{
 		    globus_err_handler("globus_ftp_client_partial_put",myname,result);
-		    *error_code = MPIO_Err_create_code(MPI_SUCCESS, 
-				    MPIR_ERR_RECOVERABLE, myname, __LINE__, 
-				    MPI_ERR_IO, "**io", "**io %s", 
+		    *error_code = MPIO_Err_create_code(MPI_SUCCESS,
+				    MPIR_ERR_RECOVERABLE, myname, __LINE__,
+				    MPI_ERR_IO, "**io", "**io %s",
 				    globus_object_printable_to_string(globus_error_get(result)));
 		    return;
 		}
@@ -129,9 +129,9 @@ void ADIOI_GRIDFTP_Resize(ADIO_File fd, ADIO_Offset size, int *error_code)
 							  GLOBUS_NULL))!=GLOBUS_SUCCESS )
 		{
 		    globus_err_handler("globus_ftp_client_register_write",myname,result);
-		    *error_code = MPIO_Err_create_code(MPI_SUCCESS, 
-				    MPIR_ERR_RECOVERABLE, myname, __LINE__, 
-				    MPI_ERR_IO, "**io", "**io %s", 
+		    *error_code = MPIO_Err_create_code(MPI_SUCCESS,
+				    MPIR_ERR_RECOVERABLE, myname, __LINE__,
+				    MPI_ERR_IO, "**io", "**io %s",
 				    globus_object_printable_to_string(globus_error_get(result)));
 		    return;
 		}
@@ -161,9 +161,9 @@ void ADIOI_GRIDFTP_Resize(ADIO_File fd, ADIO_Offset size, int *error_code)
 						GLOBUS_NULL))!=GLOBUS_SUCCESS )
 		{
 		    globus_err_handler("globus_ftp_client_move",myname,result);
-		    *error_code = MPIO_Err_create_code(MPI_SUCCESS, 
-				    MPIR_ERR_RECOVERABLE, myname, __LINE__, 
-				    MPI_ERR_IO, "**io", "**io %s", 
+		    *error_code = MPIO_Err_create_code(MPI_SUCCESS,
+				    MPIR_ERR_RECOVERABLE, myname, __LINE__,
+				    MPI_ERR_IO, "**io", "**io %s",
 				    globus_object_printable_to_string(globus_error_get(result)));
 		    return;
 		}
@@ -189,9 +189,9 @@ void ADIOI_GRIDFTP_Resize(ADIO_File fd, ADIO_Offset size, int *error_code)
 						GLOBUS_NULL))!=GLOBUS_SUCCESS )
 		{
 		    globus_err_handler("globus_ftp_client_partial_third_party_transfer",myname,result);
-		    *error_code = MPIO_Err_create_code(MPI_SUCCESS, 
-				    MPIR_ERR_RECOVERABLE, myname, __LINE__, 
-				    MPI_ERR_IO, "**io", "**io %s", 
+		    *error_code = MPIO_Err_create_code(MPI_SUCCESS,
+				    MPIR_ERR_RECOVERABLE, myname, __LINE__,
+				    MPI_ERR_IO, "**io", "**io %s",
 				    globus_object_printable_to_string(globus_error_get(result)));
 		    return;
 		}
@@ -213,9 +213,9 @@ void ADIOI_GRIDFTP_Resize(ADIO_File fd, ADIO_Offset size, int *error_code)
 						  GLOBUS_NULL))!=GLOBUS_SUCCESS )
 		{
 		    globus_err_handler("globus_ftp_client_delete",myname,result);
-		    *error_code = MPIO_Err_create_code(MPI_SUCCESS, 
-				    MPIR_ERR_RECOVERABLE, myname, __LINE__, 
-				    MPI_ERR_IO, "**io", "**io %s", 
+		    *error_code = MPIO_Err_create_code(MPI_SUCCESS,
+				    MPIR_ERR_RECOVERABLE, myname, __LINE__,
+				    MPI_ERR_IO, "**io", "**io %s",
 				    globus_object_printable_to_string(globus_error_get(result)));
 		    return;
 		}

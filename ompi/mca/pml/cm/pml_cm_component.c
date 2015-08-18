@@ -61,7 +61,7 @@ mca_pml_base_component_2_0_0_t mca_pml_cm_component = {
     .pmlm_finalize = mca_pml_cm_component_fini,
 };
 
-/* Array of send completion callback - one per send type 
+/* Array of send completion callback - one per send type
  * These are called internally by the library when the send
  * is completed from its perspective.
  */
@@ -124,7 +124,7 @@ mca_pml_cm_component_open(void)
 	ret = OPAL_ERR_NOT_AVAILABLE;
       }
     }
-    
+
     return ret;
 }
 
@@ -143,19 +143,20 @@ mca_pml_cm_component_init(int* priority,
 {
     int ret;
 
-    if((*priority) > ompi_pml_cm.default_priority) { 
+    if((*priority) > ompi_pml_cm.default_priority) {
         *priority = ompi_pml_cm.default_priority;
         return NULL;
     }
     *priority = ompi_pml_cm.default_priority;
-    opal_output_verbose( 10, 0, 
+    opal_output_verbose( 10, 0,
                          "in cm pml priority is %d\n", *priority);
     /* find a useable MTL */
     ret = ompi_mtl_base_select(enable_progress_threads, enable_mpi_threads);
-    if (OMPI_SUCCESS != ret) { 
+    if (OMPI_SUCCESS != ret) {
         *priority = -1;
         return NULL;
     } else if((strcmp(ompi_mtl_base_selected_component->mtl_version.mca_component_name, "psm") == 0) ||
+              (strcmp(ompi_mtl_base_selected_component->mtl_version.mca_component_name, "psm2") == 0) ||
               (strcmp(ompi_mtl_base_selected_component->mtl_version.mca_component_name, "mxm") == 0) ||
               (strcmp(ompi_mtl_base_selected_component->mtl_version.mca_component_name, "ofi") == 0) ||
               (strcmp(ompi_mtl_base_selected_component->mtl_version.mca_component_name, "portals4") == 0)) {
@@ -167,12 +168,12 @@ mca_pml_cm_component_init(int* priority,
         *priority = 30;
     }
 
-    
+
     /* update our tag / context id max values based on MTL
        information */
     ompi_pml_cm.super.pml_max_contextid = ompi_mtl->mtl_max_contextid;
     ompi_pml_cm.super.pml_max_tag = ompi_mtl->mtl_max_tag;
-    
+
     return &ompi_pml_cm.super;
 }
 

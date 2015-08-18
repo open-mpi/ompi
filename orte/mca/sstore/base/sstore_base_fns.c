@@ -5,17 +5,15 @@
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
 #include "orte_config.h"
 
-#ifdef HAVE_STRING_H
 #include <string.h>
-#endif
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
@@ -363,7 +361,7 @@ int orte_sstore_base_get_global_snapshot_ref(char **name_str, pid_t pid)
     else {
         *name_str = strdup(orte_sstore_base_global_snapshot_ref);
     }
-    
+
     return ORTE_SUCCESS;
 }
 
@@ -488,7 +486,7 @@ int orte_sstore_base_get_all_snapshots(opal_list_t *all_snapshots, char *basedir
     orte_sstore_base_global_snapshot_info_t *global_snapshot = NULL;
 
     /* Sanity check */
-    if( NULL == all_snapshots || 
+    if( NULL == all_snapshots ||
         (NULL == orte_sstore_base_global_snapshot_dir && NULL == basedir)) {
         ORTE_ERROR_LOG(ORTE_ERROR);
         exit_status = ORTE_ERROR;
@@ -539,7 +537,7 @@ int orte_sstore_base_get_all_snapshots(opal_list_t *all_snapshots, char *basedir
                         asprintf(&(global_snapshot->reference),
                                  "%s",
                                  dir_entp->d_name);
-                        asprintf(&(global_snapshot->metadata_filename), 
+                        asprintf(&(global_snapshot->metadata_filename),
                                  "%s/%s/%s",
                                  global_snapshot->basedir,
                                  global_snapshot->reference,
@@ -556,7 +554,7 @@ int orte_sstore_base_get_all_snapshots(opal_list_t *all_snapshots, char *basedir
         free( tmp_str);
         tmp_str = NULL;
     }
-    
+
     closedir(dirp);
 
  cleanup:
@@ -673,12 +671,12 @@ int orte_sstore_base_extract_global_metadata(orte_sstore_base_global_snapshot_in
             global_snapshot->tune_param  = strdup(value);
         }
     } while(0 == feof(metadata) );
-    
+
     /* Append the last item */
     if( NULL != vpid_snapshot) {
         opal_list_append(&global_snapshot->local_snapshots, &(vpid_snapshot->super));
     }
-    
+
  cleanup:
     if( NULL != metadata ) {
         fclose(metadata);
@@ -766,7 +764,7 @@ int orte_sstore_base_find_all_seq_nums(orte_sstore_base_global_snapshot_info_t *
             tmp_str = NULL;
         }
     }
-    
+
  cleanup:
     if( NULL != metadata ) {
         fclose(metadata);
@@ -893,12 +891,12 @@ int orte_sstore_base_metadata_read_next_token(FILE *file, char **token, char **v
     /* Ignore lines with just '#' too */
     if(2 >= line_len)
         goto try_again;
-    
+
     /*
      * Extract the token from the set
      */
-    for(c = 0; 
-        line[c] != ':' && 
+    for(c = 0;
+        line[c] != ':' &&
             c < line_len;
         ++c) {
         ;
@@ -922,7 +920,7 @@ int orte_sstore_base_metadata_read_next_token(FILE *file, char **token, char **v
      * Extract the value from the set
      */
     local_value = (char *)malloc(sizeof(char) * (line_len - c + 1));
-    for(v = 0, s = c; 
+    for(v = 0, s = c;
         s < line_len;
         ++s, ++v) {
         local_value[v] = line[s];
@@ -943,7 +941,7 @@ int orte_sstore_base_metadata_read_next_token(FILE *file, char **token, char **v
         else {
             end_of_line = false;
         }
-        
+
         local_value = (char *)realloc(local_value, sizeof(char) * line_len);
         for(s = 0;
             s < line_len;

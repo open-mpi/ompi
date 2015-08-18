@@ -5,9 +5,9 @@
  * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -17,9 +17,7 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif  /* HAVE_UNISTD_H */
-#ifdef HAVE_STRING_H
 #include <string.h>
-#endif
 #ifdef HAVE_FCNTL_H
 #include <fcntl.h>
 #endif
@@ -455,7 +453,7 @@ static void process_opens(int fd, short args, void *cbdata)
 
     opal_output_verbose(1, orte_dfs_base_framework.framework_output,
                         "%s PROCESSING OPEN", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-    
+
     /* get the scheme to determine if we can process locally or not */
     if (NULL == (scheme = opal_uri_get_scheme(dfs->uri))) {
         ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
@@ -543,7 +541,7 @@ static void process_opens(int fd, short args, void *cbdata)
         opal_list_remove_item(&requests, &dfs->super);
         goto complete;
     }
-    
+
     opal_output_verbose(1, orte_dfs_base_framework.framework_output,
                         "%s sending open file request to %s file %s",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -651,7 +649,7 @@ static void process_close(int fd, short args, void *cbdata)
         ORTE_ERROR_LOG(rc);
         goto complete;
     }
-    
+
     opal_output_verbose(1, orte_dfs_base_framework.framework_output,
                         "%s sending close file request to %s for fd %d",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -957,7 +955,7 @@ static void process_reads(int fd, short args, void *cbdata)
         ORTE_ERROR_LOG(rc);
         goto complete;
     }
-    
+
     opal_output_verbose(1, orte_dfs_base_framework.framework_output,
                         "%s sending read file request to %s for fd %d",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),

@@ -6,7 +6,7 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -16,9 +16,9 @@
  * Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
  *
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -135,6 +135,14 @@ int mca_btl_base_param_register(mca_base_component_t *version,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &module->btl_cuda_rdma_limit);
 #endif /* OPAL_CUDA_GDR_SUPPORT */
+#if OPAL_CUDA_SUPPORT
+    module->btl_cuda_max_send_size = 0;
+    (void) mca_base_component_var_register(version, "cuda_max_send_size", "Maximum size (in bytes) of a single GPU \"phase 2\" fragment of a long message when using the pipeline protocol (must be >= 1) (only valid on smcuda btl)",
+                                           MCA_BASE_VAR_TYPE_SIZE_T, NULL, 0, 0,
+                                           OPAL_INFO_LVL_4,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &module->btl_cuda_max_send_size);
+#endif /* OPAL_CUDA_SUPPORT */
 
     (void) mca_base_component_var_register(version, "max_send_size", "Maximum size (in bytes) of a single \"phase 2\" fragment of a long message when using the pipeline protocol (must be >= 1)",
                                            MCA_BASE_VAR_TYPE_SIZE_T, NULL, 0, 0,
@@ -179,9 +187,9 @@ int mca_btl_base_param_register(mca_base_component_t *version,
 /* Verify btl parameters make sense */
 int mca_btl_base_param_verify(mca_btl_base_module_t *module)
 {
-    if (module->btl_min_rdma_pipeline_size < 
+    if (module->btl_min_rdma_pipeline_size <
         (module->btl_eager_limit + module->btl_rdma_pipeline_send_length)) {
-        module->btl_min_rdma_pipeline_size = 
+        module->btl_min_rdma_pipeline_size =
             module->btl_eager_limit + module->btl_rdma_pipeline_send_length;
     }
 

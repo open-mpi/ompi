@@ -5,18 +5,18 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007-2013 Los Alamos National Security, LLC.  All rights
- *                         reserved. 
+ *                         reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -24,9 +24,7 @@
 
 #include <stdio.h>
 #include <errno.h>
-#ifdef HAVE_STDLIB_H
 #include <stdlib.h>
-#endif  /*  HAVE_STDLIB_H */
 #ifdef HAVE_SYS_STAT_H
 #include <sys/stat.h>
 #endif  /* HAVE_SYS_STAT_H */
@@ -39,9 +37,7 @@
 #ifdef HAVE_SYS_WAIT_H
 #include <sys/wait.h>
 #endif  /* HAVE_SYS_WAIT_H */
-#ifdef HAVE_STRING_H
 #include <string.h>
-#endif  /* HAVE_STRING_H */
 
 #include "opal/mca/installdirs/installdirs.h"
 #include "opal/runtime/opal.h"
@@ -259,7 +255,7 @@ data_callback(const char *key, const char *value)
         if (NULL != value) options_data[parse_options_idx].version = strdup(value);
     } else if (0 == strcmp(key, "preprocessor_flags")) {
         char **values = opal_argv_split(value, ' ');
-        opal_argv_insert(&options_data[parse_options_idx].preproc_flags, 
+        opal_argv_insert(&options_data[parse_options_idx].preproc_flags,
                          opal_argv_count(options_data[parse_options_idx].preproc_flags),
                          values);
         expand_flags(options_data[parse_options_idx].preproc_flags);
@@ -316,18 +312,18 @@ data_callback(const char *key, const char *value)
             if (0 != strcmp(options_data[parse_options_idx].path_includedir, "/usr/include") ||
                 0 == strncmp(options_data[parse_options_idx].language, "Fortran", strlen("Fortran"))) {
                 char *line;
-                asprintf(&line, OPAL_INCLUDE_FLAG"%s", 
+                asprintf(&line, OPAL_INCLUDE_FLAG"%s",
                          options_data[parse_options_idx].path_includedir);
                 opal_argv_append_nosize(&options_data[parse_options_idx].preproc_flags, line);
                 free(line);
             }
         }
     } else if (0 == strcmp(key, "libdir")) {
-        if (NULL != value) options_data[parse_options_idx].path_libdir = 
+        if (NULL != value) options_data[parse_options_idx].path_libdir =
                                opal_install_dirs_expand(value);
         if (0 != strcmp(options_data[parse_options_idx].path_libdir, "/usr/lib")) {
             char *line;
-            asprintf(&line, OPAL_LIBDIR_FLAG"%s", 
+            asprintf(&line, OPAL_LIBDIR_FLAG"%s",
                      options_data[parse_options_idx].path_libdir);
             opal_argv_append_nosize(&options_data[parse_options_idx].link_flags, line);
             free(line);
@@ -337,13 +333,13 @@ data_callback(const char *key, const char *value)
 
 
 static int
-data_init(const char *appname) 
+data_init(const char *appname)
 {
     int ret;
     char *datafile;
 
     /* now load the data */
-    asprintf(&datafile, "%s%s%s-wrapper-data.txt", 
+    asprintf(&datafile, "%s%s%s-wrapper-data.txt",
              opal_install_dirs.opaldatadir, OPAL_PATH_SEP, appname);
     if (NULL == datafile) return OPAL_ERR_TEMP_OUT_OF_RESOURCE;
 
@@ -405,7 +401,7 @@ load_env_data(const char *project, const char *flag, char **data)
             free(envname);
             return;
         }
-    } 
+    }
     free(envname);
 
     if (NULL != *data) free(*data);
@@ -429,7 +425,7 @@ load_env_data_argv(const char *project, const char *flag, char ***data)
             free(envname);
             return;
         }
-    } 
+    }
     free(envname);
 
     if (NULL != *data) opal_argv_free(*data);
@@ -518,7 +514,7 @@ main(int argc, char *argv[])
      * Sanity Checks
      *
      ****************************************************/
-    
+
     if (NULL != options_data[user_data_idx].req_file) {
         /* make sure the language is supported */
         if (0 == strcmp(options_data[user_data_idx].req_file, "not supported")) {
@@ -602,9 +598,9 @@ main(int argc, char *argv[])
             } else if (0 == strncmp(user_argv[i], "-showme:help", strlen("-showme:help")) ||
                        0 == strncmp(user_argv[i], "--showme:help", strlen("--showme:help"))) {
                 char *str;
-                str = opal_show_help_string("help-opal-wrapper.txt", "usage", 
+                str = opal_show_help_string("help-opal-wrapper.txt", "usage",
                                             false, argv[0],
-                                            options_data[user_data_idx].project, 
+                                            options_data[user_data_idx].project,
                                             NULL);
                 if (NULL != str) {
                     printf("%s", str);
@@ -636,7 +632,7 @@ main(int argc, char *argv[])
         } else if (0 == strcmp(user_argv[i], "-c")) {
             flags &= ~COMP_WANT_LINK;
             real_flag = true;
-        } else if (0 == strcmp(user_argv[i], "-E") || 
+        } else if (0 == strcmp(user_argv[i], "-E") ||
                    0 == strcmp(user_argv[i], "-M")) {
             flags &= ~(COMP_WANT_COMPILE | COMP_WANT_LINK);
             real_flag = true;
@@ -690,7 +686,7 @@ main(int argc, char *argv[])
             disable_flags = false;
             flags |= COMP_SHOW_ERROR;
             real_flag = true;
-        } else { 
+        } else {
             /* if the option flag is one that we use to determine
                which set of compiler data to use, don't count it as a
                real option */
@@ -743,7 +739,7 @@ main(int argc, char *argv[])
         exec_argc = 0;
     }
 
-    /* This error would normally not happen unless the user edits the 
+    /* This error would normally not happen unless the user edits the
        wrapper data files manually */
     if (NULL == exec_argv) {
         opal_show_help("help-opal-wrapper.txt", "no-compiler-specified", true);

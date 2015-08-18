@@ -10,9 +10,9 @@
  *                         All rights reserved.
  * Copyright (c) 2014      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -22,9 +22,7 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif  /* HAVE_UNISTD_H */
-#ifdef HAVE_STRING_H
 #include <string.h>
-#endif
 
 #include "opal/util/output.h"
 #include "opal/dss/dss.h"
@@ -402,7 +400,7 @@ static void proc_errors(int fd, short args, void *cbdata)
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          orte_proc_state_to_str(state),
                          ORTE_NAME_PRINT(proc)));
- 
+
     if (ORTE_PROC_STATE_TERM_NON_ZERO == state) {
         /* update the state */
         child->state = state;
@@ -570,7 +568,7 @@ static void proc_errors(int fd, short args, void *cbdata)
                              "%s errmgr:default_orted reporting all procs in %s terminated",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_JOBID_PRINT(jdata->jobid)));
-        
+
         /* remove all of this job's children from the global list */
         for (i=0; i < orte_local_children->size; i++) {
             if (NULL == (ptr = (orte_proc_t*)opal_pointer_array_get_item(orte_local_children, i))) {
@@ -744,7 +742,7 @@ static void killprocs(orte_jobid_t job, orte_vpid_t vpid)
     orte_proc_t proc;
     int rc;
 
-    if (ORTE_JOBID_WILDCARD == job 
+    if (ORTE_JOBID_WILDCARD == job
         && ORTE_VPID_WILDCARD == vpid) {
         if (ORTE_SUCCESS != (rc = orte_odls.kill_local_procs(NULL))) {
             ORTE_ERROR_LOG(rc);

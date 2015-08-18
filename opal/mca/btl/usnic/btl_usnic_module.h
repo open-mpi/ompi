@@ -29,18 +29,13 @@
 #include <rdma/fi_eq.h>
 #include <rdma/fi_endpoint.h>
 #include <rdma/fi_errno.h>
+#include <rdma/fi_ext_usnic.h>
 
 #include "opal/class/opal_pointer_array.h"
 
 #include "btl_usnic_endpoint.h"
 #include "btl_usnic_stats.h"
 #include "btl_usnic_util.h"
-
-/* When using the embedded libfabric, this file will be in
-   opal/mca/common/libfabric/libfabric/prov/usnic/src/fi_ext_usnic.h.
-   When using the external libfabric, this file will be in
-   rdma/fi_ext_usnic.h. */
-#include OPAL_BTL_USNIC_FI_EXT_USNIC_H
 
 /*
  * Default limits.
@@ -74,6 +69,7 @@ typedef struct opal_btl_usnic_channel_t {
     int chan_sd_num;
 
     int credits;  /* RFXXX until libfab credits fixed */
+    uint32_t rx_post_cnt;
 
     /* fastsend enabled if num_credits_available >= fastsend_wqe_thresh */
     unsigned fastsend_wqe_thresh;

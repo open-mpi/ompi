@@ -12,7 +12,7 @@
  * Copyright (c) 2011-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
+ * Copyright (c) 2013-2015 Intel, Inc. All rights reserved
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -119,7 +119,7 @@ static void unbind_procs(orte_job_t *jdata)
         orte_remove_attribute(&proc->attributes, ORTE_PROC_CPU_BITMAP);
     }
 }
-         
+
 static int bind_upwards(orte_job_t *jdata,
                         orte_node_t *node,
                         hwloc_obj_type_t target,
@@ -277,7 +277,8 @@ static int bind_downwards(orte_job_t *jdata,
         }
         /* bozo check */
         locale = NULL;
-        if (!orte_get_attribute(&proc->attributes, ORTE_PROC_HWLOC_LOCALE, (void**)&locale, OPAL_PTR)) {
+        if (!orte_get_attribute(&proc->attributes, ORTE_PROC_HWLOC_LOCALE, (void**)&locale, OPAL_PTR) ||
+            NULL == locale) {
             orte_show_help("help-orte-rmaps-base.txt", "rmaps:no-locale", true, ORTE_NAME_PRINT(&proc->name));
             hwloc_bitmap_free(totalcpuset);
             return ORTE_ERR_SILENT;
@@ -378,7 +379,7 @@ static int bind_downwards(orte_job_t *jdata,
         }
     }
     hwloc_bitmap_free(totalcpuset);
-    
+
     return ORTE_SUCCESS;
 }
 

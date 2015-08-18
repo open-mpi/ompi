@@ -2,11 +2,11 @@
 #
 # Copyright (c) 2004-2009 The Trustees of Indiana University.
 #                         All rights reserved.
-# Copyright (c) 2012 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2012-2015 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
-# 
+#
 # Additional copyrights may follow
-# 
+#
 # $HEADER$
 #
 
@@ -20,8 +20,14 @@ AC_DEFUN([OMPI_MPIEXT_example_CONFIG],[
     AC_CONFIG_FILES([ompi/mpiext/example/use-mpi/Makefile])
     AC_CONFIG_FILES([ompi/mpiext/example/use-mpi-f08/Makefile])
 
-    # This example can always build, so we just execute $1.
-    $1
+    # If your extension can build, run $1.  Otherwise, run $2.  For
+    # the purposes of this example, we don't want it to build in most
+    # cases.  So only build if someone specifies an --enable-mpi-ext
+    # value that contains the token "example".
+    AS_IF([test "$ENABLE_example" = "1" || \
+           test "$ENABLE_EXT_ALL" = "1"],
+          [$1],
+          [$2])
 ])
 
 # only need to set this if the component needs init/finalize hooks

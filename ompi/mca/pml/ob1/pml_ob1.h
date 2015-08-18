@@ -6,7 +6,7 @@
  * Copyright (c) 2004-2013 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -15,13 +15,13 @@
  * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 /**
- *  @file 
+ *  @file
  */
 
 #ifndef MCA_PML_OB1_H
@@ -47,7 +47,7 @@ BEGIN_C_DECLS
  */
 
 struct mca_pml_ob1_t {
-    mca_pml_base_module_t super; 
+    mca_pml_base_module_t super;
 
     int priority;
     int free_list_num;      /* initial size of free list */
@@ -58,9 +58,9 @@ struct mca_pml_ob1_t {
     size_t rdma_retries_limit;
     int max_rdma_per_request;
     int max_send_per_range;
-    bool leave_pinned; 
+    bool leave_pinned;
     int leave_pinned_pipeline;
-    
+
     /* lock queue access */
     opal_mutex_t lock;
 
@@ -78,12 +78,12 @@ struct mca_pml_ob1_t {
     opal_list_t rdma_pending;
     /* List of pending fragments without a matching communicator */
     opal_list_t non_existing_communicator_pending;
-    bool enabled; 
+    bool enabled;
     char* allocator_name;
-    mca_allocator_base_module_t* allocator; 
+    mca_allocator_base_module_t* allocator;
     unsigned int unexpected_limit;
 };
-typedef struct mca_pml_ob1_t mca_pml_ob1_t; 
+typedef struct mca_pml_ob1_t mca_pml_ob1_t;
 
 extern mca_pml_ob1_t mca_pml_ob1;
 extern int mca_pml_ob1_output;
@@ -208,6 +208,14 @@ extern int mca_pml_ob1_start( size_t count,
 
 extern int mca_pml_ob1_ft_event( int state );
 
+/**
+ * We will use these requests to hold on a traditionally allocated
+ * requests in order to allow the parallel debugger full access to the
+ * message queues (instead of allocating the requests on the stack).
+ */
+extern struct mca_pml_ob1_recv_request_t *mca_pml_ob1_recvreq;
+extern struct mca_pml_ob1_send_request_t *mca_pml_ob1_sendreq;
+
 END_C_DECLS
 
 struct mca_pml_ob1_pckt_pending_t {
@@ -252,7 +260,7 @@ do {                                                            \
     } while(0)
 
 
-int mca_pml_ob1_send_fin(ompi_proc_t* proc, mca_bml_base_btl_t* bml_btl, 
+int mca_pml_ob1_send_fin(ompi_proc_t* proc, mca_bml_base_btl_t* bml_btl,
         opal_ptr_t hdr_frag, uint64_t size, uint8_t order, int status);
 
 /* This function tries to resend FIN/ACK packets from pckt_pending queue.

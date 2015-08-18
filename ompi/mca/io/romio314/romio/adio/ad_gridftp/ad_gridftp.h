@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
- *   Copyright (C) 2003 University of Chicago, Ohio Supercomputer Center. 
+/*
+ *   Copyright (C) 2003 University of Chicago, Ohio Supercomputer Center.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -26,32 +26,32 @@ extern globus_ftp_client_operationattr_t oattr[ADIO_GRIDFTP_HANDLES_MAX];
 /* TODO: weed out the now-unused prototypes  */
 void ADIOI_GRIDFTP_Open(ADIO_File fd, int *error_code);
 void ADIOI_GRIDFTP_Close(ADIO_File fd, int *error_code);
-void ADIOI_GRIDFTP_ReadContig(ADIO_File fd, void *buf, int count, 
+void ADIOI_GRIDFTP_ReadContig(ADIO_File fd, void *buf, int count,
 			     MPI_Datatype datatype, int file_ptr_type,
 			     ADIO_Offset offset, ADIO_Status *status, int
 			     *error_code);
-void ADIOI_GRIDFTP_WriteContig(ADIO_File fd, void *buf, int count, 
+void ADIOI_GRIDFTP_WriteContig(ADIO_File fd, void *buf, int count,
 			      MPI_Datatype datatype, int file_ptr_type,
 			      ADIO_Offset offset, ADIO_Status *status, int
-			      *error_code);   
-void ADIOI_GRIDFTP_IwriteContig(ADIO_File fd, void *buf, int count, 
+			      *error_code);
+void ADIOI_GRIDFTP_IwriteContig(ADIO_File fd, void *buf, int count,
 			       MPI_Datatype datatype, int file_ptr_type,
 			       ADIO_Offset offset, ADIO_Request *request, int
-			       *error_code);   
-void ADIOI_GRIDFTP_IreadContig(ADIO_File fd, void *buf, int count, 
+			       *error_code);
+void ADIOI_GRIDFTP_IreadContig(ADIO_File fd, void *buf, int count,
 			      MPI_Datatype datatype, int file_ptr_type,
 			      ADIO_Offset offset, ADIO_Request *request, int
-			      *error_code);   
+			      *error_code);
 int ADIOI_GRIDFTP_ReadDone(ADIO_Request *request, ADIO_Status *status, int
 			  *error_code);
 int ADIOI_GRIDFTP_WriteDone(ADIO_Request *request, ADIO_Status *status, int
 			   *error_code);
 void ADIOI_GRIDFTP_ReadComplete(ADIO_Request *request, ADIO_Status *status, int
-			       *error_code); 
+			       *error_code);
 void ADIOI_GRIDFTP_WriteComplete(ADIO_Request *request, ADIO_Status *status,
-				int *error_code); 
-void ADIOI_GRIDFTP_Fcntl(ADIO_File fd, int flag, ADIO_Fcntl_t *fcntl_struct, 
-			int *error_code); 
+				int *error_code);
+void ADIOI_GRIDFTP_Fcntl(ADIO_File fd, int flag, ADIO_Fcntl_t *fcntl_struct,
+			int *error_code);
 void ADIOI_GRIDFTP_WriteStrided(ADIO_File fd, void *buf, int count,
 			       MPI_Datatype datatype, int file_ptr_type,
 			       ADIO_Offset offset, ADIO_Status *status,
@@ -79,10 +79,10 @@ void ADIOI_GRIDFTP_IwriteStrided(ADIO_File fd, void *buf, int count,
 void ADIOI_GRIDFTP_Flush(ADIO_File fd, int *error_code);
 void ADIOI_GRIDFTP_Resize(ADIO_File fd, ADIO_Offset size, int *error_code);
 void ADIOI_GRIDFTP_SetInfo(ADIO_File fd, MPI_Info users_info, int *error_code);
-void ADIOI_GRIDFTP_Get_shared_fp(ADIO_File fd, int size, 
-				ADIO_Offset *shared_fp, 
+void ADIOI_GRIDFTP_Get_shared_fp(ADIO_File fd, int size,
+				ADIO_Offset *shared_fp,
 				int *error_code);
-void ADIOI_GRIDFTP_Set_shared_fp(ADIO_File fd, ADIO_Offset offset, 
+void ADIOI_GRIDFTP_Set_shared_fp(ADIO_File fd, ADIO_Offset offset,
 				int *error_code);
 void ADIOI_GRIDFTP_Delete(char *filename, int *error_code);
 

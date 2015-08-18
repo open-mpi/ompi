@@ -1,12 +1,12 @@
-# 
+#
 # Copyright (c) 2006 The Trustees of Indiana University and Indiana
 #                    University Research and Technology
 #                    Corporation.  All rights reserved.
 # Copyright (c) 2006 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
-# 
+#
 # Additional copyrights may follow
-# 
+#
 # $HEADER$
 
 #############################################################################
@@ -57,7 +57,7 @@ Requires: %__rm %__mkdir %__sed %__mv %__chmod %__chown
 Requires: modules-oscar
 Requires: env-switcher
 
-%description 
+%description
 
 This RPM is used to install a Open MPI-installation-agnostic
 modulefile that is used to automatically select which Open MPI

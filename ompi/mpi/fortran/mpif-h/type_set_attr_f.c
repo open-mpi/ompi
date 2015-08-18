@@ -5,15 +5,15 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -77,7 +77,7 @@ void ompi_type_set_attr_f(MPI_Fint *type, MPI_Fint *type_keyval, MPI_Aint *attri
     c_ierr = ompi_attr_set_fortran_mpi2(TYPE_ATTR,
                                         c_type,
                                         &c_type->d_keyhash,
-                                        OMPI_FINT_2_INT(*type_keyval), 
+                                        OMPI_FINT_2_INT(*type_keyval),
                                         *attribute_val,
                                         false);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);

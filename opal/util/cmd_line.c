@@ -5,26 +5,26 @@
  * Copyright (c) 2004-2013 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2012      Los Alamos National Security, LLC. 
+ * Copyright (c) 2012      Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2012-2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
 #include "opal_config.h"
 
 #include <stdio.h>
-#ifdef HAVE_STRING_H
 #include <string.h>
-#endif  /* HAVE_STRING_H */
 #include <ctype.h>
 
 #include "opal/class/opal_object.h"
@@ -130,10 +130,10 @@ static char special_empty_token[] = {
 static int make_opt(opal_cmd_line_t *cmd, opal_cmd_line_init_t *e);
 static void free_parse_results(opal_cmd_line_t *cmd);
 static int split_shorts(opal_cmd_line_t *cmd,
-                        char *token, char **args, 
-                        int *output_argc, char ***output_argv, 
+                        char *token, char **args,
+                        int *output_argc, char ***output_argv,
                         int *num_args_used, bool ignore_unknown);
-static cmd_line_option_t *find_option(opal_cmd_line_t *cmd, 
+static cmd_line_option_t *find_option(opal_cmd_line_t *cmd,
                                       const char *option_name) __opal_attribute_nonnull__(1) __opal_attribute_nonnull__(2);
 static int set_dest(cmd_line_option_t *option, char *sval);
 static void fill(const cmd_line_option_t *a, char result[3][BUFSIZ]);
@@ -204,8 +204,8 @@ int opal_cmd_line_make_opt_mca(opal_cmd_line_t *cmd,
 /*
  * Create a command line option, --long-name and/or -s (short name).
  */
-int opal_cmd_line_make_opt3(opal_cmd_line_t *cmd, char short_name, 
-                            const char *sd_name, const char *long_name, 
+int opal_cmd_line_make_opt3(opal_cmd_line_t *cmd, char short_name,
+                            const char *sd_name, const char *long_name,
                             int num_params, const char *desc)
 {
     opal_cmd_line_init_t e;
@@ -290,7 +290,7 @@ int opal_cmd_line_parse(opal_cmd_line_t *cmd, bool ignore_unknown,
         if (0 == strcmp(cmd->lcl_argv[i], "--")) {
             ++i;
             while (i < cmd->lcl_argc) {
-                opal_argv_append(&cmd->lcl_tail_argc, &cmd->lcl_tail_argv, 
+                opal_argv_append(&cmd->lcl_tail_argc, &cmd->lcl_tail_argv,
                                  cmd->lcl_argv[i]);
                 ++i;
             }
@@ -328,9 +328,9 @@ int opal_cmd_line_parse(opal_cmd_line_t *cmd, bool ignore_unknown,
             if (NULL == option) {
                 shortsv = NULL;
                 shortsc = 0;
-                ret = split_shorts(cmd, cmd->lcl_argv[i] + 1, 
+                ret = split_shorts(cmd, cmd->lcl_argv[i] + 1,
                                    &(cmd->lcl_argv[i + 1]),
-                                   &shortsc, &shortsv, 
+                                   &shortsc, &shortsv,
                                    &num_args_used, ignore_unknown);
                 if (OPAL_SUCCESS == ret) {
                     option = find_option(cmd, shortsv[0] + 1);
@@ -401,7 +401,7 @@ int opal_cmd_line_parse(opal_cmd_line_t *cmd, bool ignore_unknown,
                         printed_error = true;
                         goto error;
                     } else {
-                        if (0 == strcmp(cmd->lcl_argv[i], 
+                        if (0 == strcmp(cmd->lcl_argv[i],
                                         special_empty_token)) {
                             fprintf(stderr, "%s: Error: option \"%s\" did not "
                                     "have enough parameters (%d)\n",
@@ -418,7 +418,7 @@ int opal_cmd_line_parse(opal_cmd_line_t *cmd, bool ignore_unknown,
                             OBJ_RELEASE(param);
                             printed_error = true;
                             goto error;
-                        } 
+                        }
 
                         /* Otherwise, save this parameter */
 
@@ -426,7 +426,7 @@ int opal_cmd_line_parse(opal_cmd_line_t *cmd, bool ignore_unknown,
                             /* Save in the argv on the param entry */
 
                             opal_argv_append(&param->clp_argc,
-                                             &param->clp_argv, 
+                                             &param->clp_argv,
                                              cmd->lcl_argv[i]);
 
                             /* If it's the first, save it in the
@@ -469,7 +469,7 @@ int opal_cmd_line_parse(opal_cmd_line_t *cmd, bool ignore_unknown,
            an error and return. */
         if (is_unknown_option || is_unknown_token) {
             if (!ignore_unknown || is_unknown_option) {
-                fprintf(stderr, "%s: Error: unknown option \"%s\"\n", 
+                fprintf(stderr, "%s: Error: unknown option \"%s\"\n",
                         cmd->lcl_argv[0], cmd->lcl_argv[i]);
                 printed_error = true;
                 if (have_help_option) {
@@ -479,7 +479,7 @@ int opal_cmd_line_parse(opal_cmd_line_t *cmd, bool ignore_unknown,
             }
         error:
             while (i < cmd->lcl_argc) {
-                opal_argv_append(&cmd->lcl_tail_argc, &cmd->lcl_tail_argv, 
+                opal_argv_append(&cmd->lcl_tail_argc, &cmd->lcl_tail_argv,
                                  cmd->lcl_argv[i]);
                 ++i;
             }
@@ -514,7 +514,6 @@ char *opal_cmd_line_get_usage_msg(opal_cmd_line_t *cmd)
     char *start, *desc, *ptr;
     opal_list_item_t *item;
     cmd_line_option_t *option, **sorted;
-    bool filled;
 
     /* Thread serialization */
 
@@ -528,13 +527,13 @@ char *opal_cmd_line_get_usage_msg(opal_cmd_line_t *cmd)
 
     /* First, take the original list and sort it */
 
-    sorted = (cmd_line_option_t**)malloc(sizeof(cmd_line_option_t *) * 
+    sorted = (cmd_line_option_t**)malloc(sizeof(cmd_line_option_t *) *
                                          opal_list_get_size(&cmd->lcl_options));
     if (NULL == sorted) {
         opal_mutex_unlock(&cmd->lcl_mutex);
         return NULL;
     }
-    for (i = 0, item = opal_list_get_first(&cmd->lcl_options); 
+    for (i = 0, item = opal_list_get_first(&cmd->lcl_options);
          opal_list_get_end(&cmd->lcl_options) != item;
          ++i, item = opal_list_get_next(item)) {
         sorted[i] = (cmd_line_option_t *) item;
@@ -546,10 +545,10 @@ char *opal_cmd_line_get_usage_msg(opal_cmd_line_t *cmd)
     for (j = 0; j < opal_list_get_size(&cmd->lcl_options); ++j) {
         option = sorted[j];
         if (NULL != option->clo_description) {
-            
+            bool filled = false;
+
             /* Build up the output line */
 
-            filled = false;
             memset(line, 0, sizeof(line));
             if ('\0' != option->clo_short_name) {
                 line[0] = '-';
@@ -573,7 +572,6 @@ char *opal_cmd_line_get_usage_msg(opal_cmd_line_t *cmd)
                 }
                 strncat(line, "--", sizeof(line) - 1);
                 strncat(line, option->clo_long_name, sizeof(line) - 1);
-                filled = true;
             }
                    strncat(line, " ", sizeof(line) - 1);
             for (i = 0; (int)i < option->clo_num_params; ++i) {
@@ -647,7 +645,7 @@ char *opal_cmd_line_get_usage_msg(opal_cmd_line_t *cmd)
                    line's worth and add it to the array.  Then reset
                    and loop around to get the next line's worth. */
 
-                for (ptr = start + (MAX_WIDTH - PARAM_WIDTH); 
+                for (ptr = start + (MAX_WIDTH - PARAM_WIDTH);
                      ptr > start; --ptr) {
                     if (isspace(*ptr)) {
                         *ptr = '\0';
@@ -666,14 +664,14 @@ char *opal_cmd_line_get_usage_msg(opal_cmd_line_t *cmd)
                    and break there. */
 
                 if (ptr == start) {
-                    for (ptr = start + (MAX_WIDTH - PARAM_WIDTH); 
+                    for (ptr = start + (MAX_WIDTH - PARAM_WIDTH);
                          ptr < start + len; ++ptr) {
                         if (isspace(*ptr)) {
                             *ptr = '\0';
 
                             strncat(line, start, sizeof(line) - 1);
                             opal_argv_append(&argc, &argv, line);
-                            
+
                             start = ptr + 1;
                             memset(line, ' ', PARAM_WIDTH);
                             line[PARAM_WIDTH] = '\0';
@@ -739,7 +737,7 @@ int opal_cmd_line_get_ninsts(opal_cmd_line_t *cmd, const char *opt)
     ret = 0;
     option = find_option(cmd, opt);
     if (NULL != option) {
-        for (item = opal_list_get_first(&cmd->lcl_params); 
+        for (item = opal_list_get_first(&cmd->lcl_params);
              opal_list_get_end(&cmd->lcl_params) != item;
              item = opal_list_get_next(item)) {
             param = (cmd_line_param_t *) item;
@@ -763,7 +761,7 @@ int opal_cmd_line_get_ninsts(opal_cmd_line_t *cmd, const char *opt)
  * Return a specific parameter for a specific instance of a option
  * from the parsed command line.
  */
-char *opal_cmd_line_get_param(opal_cmd_line_t *cmd, const char *opt, int inst, 
+char *opal_cmd_line_get_param(opal_cmd_line_t *cmd, const char *opt, int inst,
                               int idx)
 {
     int num_found;
@@ -786,7 +784,7 @@ char *opal_cmd_line_get_param(opal_cmd_line_t *cmd, const char *opt, int inst,
            parameter index greater than we will have */
 
         if (idx < option->clo_num_params) {
-            for (item = opal_list_get_first(&cmd->lcl_params); 
+            for (item = opal_list_get_first(&cmd->lcl_params);
                  opal_list_get_end(&cmd->lcl_params) != item;
                  item = opal_list_get_next(item)) {
                 param = (cmd_line_param_t *) item;
@@ -800,11 +798,11 @@ char *opal_cmd_line_get_param(opal_cmd_line_t *cmd, const char *opt, int inst,
             }
         }
     }
-    
+
     /* Thread serialization */
-    
+
     opal_mutex_unlock(&cmd->lcl_mutex);
-    
+
     /* All done */
 
     return NULL;
@@ -959,8 +957,8 @@ static int make_opt(opal_cmd_line_t *cmd, opal_cmd_line_init_t *e)
 
     if (NULL == cmd) {
         return OPAL_ERR_BAD_PARAM;
-    } else if ('\0' == e->ocl_cmd_short_name && 
-               NULL == e->ocl_cmd_single_dash_name && 
+    } else if ('\0' == e->ocl_cmd_short_name &&
+               NULL == e->ocl_cmd_single_dash_name &&
                NULL == e->ocl_cmd_long_name) {
         return OPAL_ERR_BAD_PARAM;
     } else if (e->ocl_num_params < 0) {
@@ -1013,7 +1011,7 @@ static void free_parse_results(opal_cmd_line_t *cmd)
        itself; it was not allocated from the heap) */
 
     for (item = opal_list_remove_first(&cmd->lcl_params);
-         NULL != item; 
+         NULL != item;
          item = opal_list_remove_first(&cmd->lcl_params)) {
         OBJ_RELEASE(item);
     }
@@ -1040,8 +1038,8 @@ static void free_parse_results(opal_cmd_line_t *cmd)
  * short name).  Ensure to differentiate the resulting options from
  * "single dash" names.
  */
-static int split_shorts(opal_cmd_line_t *cmd, char *token, char **args, 
-                        int *output_argc, char ***output_argv, 
+static int split_shorts(opal_cmd_line_t *cmd, char *token, char **args,
+                        int *output_argc, char ***output_argv,
                         int *num_args_used, bool ignore_unknown)
 {
     int i, j, len;
@@ -1078,7 +1076,7 @@ static int split_shorts(opal_cmd_line_t *cmd, char *token, char **args,
             } else {
                 opal_argv_append(output_argc, output_argv, fake_token);
             }
-        } 
+        }
 
         /* If we do find the option, copy it and all of its parameters
            to the output args.  If we run out of paramters (i.e., no
@@ -1093,7 +1091,7 @@ static int split_shorts(opal_cmd_line_t *cmd, char *token, char **args,
                                      args[*num_args_used]);
                     ++(*num_args_used);
                 } else {
-                    opal_argv_append(output_argc, output_argv, 
+                    opal_argv_append(output_argc, output_argv,
                                      special_empty_token);
                 }
             }
@@ -1106,7 +1104,7 @@ static int split_shorts(opal_cmd_line_t *cmd, char *token, char **args,
 }
 
 
-static cmd_line_option_t *find_option(opal_cmd_line_t *cmd, 
+static cmd_line_option_t *find_option(opal_cmd_line_t *cmd,
                                       const char *option_name)
 {
     opal_list_item_t *item;
@@ -1131,7 +1129,7 @@ static cmd_line_option_t *find_option(opal_cmd_line_t *cmd,
     }
 
     /* Not found */
-    
+
     return NULL;
 }
 
@@ -1152,7 +1150,7 @@ static int set_dest(cmd_line_option_t *option, char *sval)
        registered table alone and set an environment variable with the
        desired value.  The environment variable will get picked up
        during a nromal parameter lookup, and all will be well. */
-    
+
     if (NULL != option->clo_mca_param_env_var) {
         switch(option->clo_type) {
         case OPAL_CMD_LINE_TYPE_STRING:

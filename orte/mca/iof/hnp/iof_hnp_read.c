@@ -5,18 +5,18 @@
  * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
- *                         reserved. 
+ *                         reserved.
  * Copyright (c) 2014-2015 Intel Corporation.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -27,9 +27,7 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif  /* HAVE_UNISTD_H */
-#ifdef HAVE_STRING_H
 #include <string.h>
-#endif  /* HAVE_STRING_H */
 
 #include "opal/dss/dss.h"
 
@@ -77,7 +75,7 @@ bool orte_iof_hnp_stdin_check(int fd)
 void orte_iof_hnp_stdin_cb(int fd, short event, void *cbdata)
 {
     bool should_process = orte_iof_hnp_stdin_check(0);
-    
+
     if (should_process) {
         mca_iof_hnp_component.stdinev->active = true;
         opal_event_add(mca_iof_hnp_component.stdinev->ev, 0);
@@ -100,18 +98,18 @@ void orte_iof_hnp_read_local_handler(int fd, short event, void *cbdata)
     int rc;
     orte_ns_cmp_bitmask_t mask;
     bool exclusive;
-    
+
     /* read up to the fragment size */
     numbytes = read(fd, data, sizeof(data));
-    
+
     if (numbytes < 0) {
         /* either we have a connection error or it was a non-blocking read */
-        
+
         /* non-blocking, retry */
         if (EAGAIN == errno || EINTR == errno) {
             opal_event_add(rev->ev, 0);
             return;
-        } 
+        }
 
         OPAL_OUTPUT_VERBOSE((1, orte_iof_base_framework.framework_output,
                              "%s iof:hnp:read handler %s Error on connection:%d",
@@ -123,13 +121,13 @@ void orte_iof_hnp_read_local_handler(int fd, short event, void *cbdata)
          */
         numbytes = 0;
     }
-    
+
     /* is this read from our stdin? */
     if (ORTE_IOF_STDIN & rev->tag) {
         /* The event has fired, so it's no longer active until we
            re-add it */
         mca_iof_hnp_component.stdinev->active = false;
-    
+
         /* if job termination has been ordered, just ignore the
          * data and delete the read event
          */
@@ -142,12 +140,12 @@ void orte_iof_hnp_read_local_handler(int fd, short event, void *cbdata)
              item != opal_list_get_end(&mca_iof_hnp_component.sinks);
              item = opal_list_get_next(item)) {
             orte_iof_sink_t* sink = (orte_iof_sink_t*)item;
-            
+
             /* only look at stdin sinks */
             if (!(ORTE_IOF_STDIN & sink->tag)) {
                 continue;
             }
-            
+
             mask = ORTE_NS_CMP_ALL;
 
             /* if the daemon is me, then this is a local sink */
@@ -174,7 +172,7 @@ void orte_iof_hnp_read_local_handler(int fd, short event, void *cbdata)
                                      "%s sending %d bytes from stdin to daemon %s",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), numbytes,
                                      ORTE_NAME_PRINT(&sink->daemon)));
-                
+
                 /* send the data to the daemon so it can
                  * write it to the proc's fd - in this case,
                  * we pass sink->name to indicate who is to
@@ -212,7 +210,7 @@ void orte_iof_hnp_read_local_handler(int fd, short event, void *cbdata)
         /* nothing more to do */
         return;
     }
-    
+
     /* this must be output from one of my local procs - see
      * if anyone else has requested a copy of this info
      */
@@ -250,7 +248,7 @@ void orte_iof_hnp_read_local_handler(int fd, short event, void *cbdata)
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), numbytes,
                          (ORTE_IOF_STDOUT & rev->tag) ? "stdout" : ((ORTE_IOF_STDERR & rev->tag) ? "stderr" : "stddiag"),
                          ORTE_NAME_PRINT(&rev->name)));
-    
+
     if (0 == numbytes) {
         /* if we read 0 bytes from the stdout/err/diag, there is
          * nothing to output - find this proc on our list and
@@ -323,7 +321,7 @@ void orte_iof_hnp_read_local_handler(int fd, short event, void *cbdata)
             }
         }
     }
-    
+
     /* re-add the event */
     opal_event_add(rev->ev, 0);
 

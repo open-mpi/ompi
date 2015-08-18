@@ -6,7 +6,7 @@
  * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -17,13 +17,13 @@
  * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
-/** 
+/**
  * @file:
  *
  * Infrastructure for MPI group support.
@@ -41,15 +41,15 @@ BEGIN_C_DECLS
 
 #define BSIZE ((int)sizeof(unsigned char)*8)
 
-struct ompi_group_sporadic_list_t 
-{ 
-  int rank_first; 
-  int length; 
-}; 
-    
+struct ompi_group_sporadic_list_t
+{
+  int rank_first;
+  int length;
+};
+
 struct ompi_group_sporadic_data_t
 {
-    struct ompi_group_sporadic_list_t  *grp_sporadic_list; 
+    struct ompi_group_sporadic_list_t  *grp_sporadic_list;
                                             /** list to hold the sporadic struct */
     int                        grp_sporadic_list_len;/** length of the structure*/
 };
@@ -67,7 +67,7 @@ struct ompi_group_bitmap_data_t
 
 /**
  * Group structure
- * Currently we have four formats for storing the process pointers that are members 
+ * Currently we have four formats for storing the process pointers that are members
  * of the group.
  * PList: a dense format that stores all the process pointers of the group.
  * Sporadic: a sparse format that stores the ranges of the ranks from the parent group,
@@ -116,7 +116,7 @@ typedef struct ompi_predefined_group_t ompi_predefined_group_t;
 
 /*
  * The following include pulls in shared typedefs with debugger plugins.
- * For more information on why we do this see the Notice to developers 
+ * For more information on why we do this see the Notice to developers
  * comment at the top of the ompi_msgq_dll.c file.
  */
 #include "group_dbg.h"
@@ -232,7 +232,7 @@ void ompi_set_group_rank(ompi_group_t *group, struct ompi_proc_t *proc_pointer);
 /**
  * Abstracting MPI_Group_translate_ranks to an ompi function for internal use
  */
-OMPI_DECLSPEC int ompi_group_translate_ranks ( ompi_group_t *group1, 
+OMPI_DECLSPEC int ompi_group_translate_ranks ( ompi_group_t *group1,
                                                int n_ranks, const int *ranks1,
                                                ompi_group_t *group2,
                                                int *ranks2);
@@ -244,7 +244,7 @@ OMPI_DECLSPEC int ompi_group_compare(ompi_group_t *group1,
                                      ompi_group_t *group2,
                                      int *result);
 
-/** 
+/**
  * Abstracting MPI_Group_free, since it is required by some internal functions...
  */
 int ompi_group_free (ompi_group_t **group);
@@ -254,44 +254,44 @@ int ompi_group_free (ompi_group_t **group);
  */
 OMPI_DECLSPEC ompi_proc_t* ompi_group_get_proc_ptr (ompi_group_t* group , int rank);
 
-int ompi_group_translate_ranks_sporadic ( ompi_group_t *group1, 
+int ompi_group_translate_ranks_sporadic ( ompi_group_t *group1,
                                  int n_ranks, const int *ranks1,
-                                 ompi_group_t *group2, 
+                                 ompi_group_t *group2,
                                  int *ranks2);
-int ompi_group_translate_ranks_sporadic_reverse ( ompi_group_t *group1, 
+int ompi_group_translate_ranks_sporadic_reverse ( ompi_group_t *group1,
                                  int n_ranks, const int *ranks1,
-                                 ompi_group_t *group2, 
+                                 ompi_group_t *group2,
                                  int *ranks2);
-int ompi_group_translate_ranks_strided ( ompi_group_t *group1, 
+int ompi_group_translate_ranks_strided ( ompi_group_t *group1,
                                  int n_ranks, const int *ranks1,
-                                 ompi_group_t *group2, 
+                                 ompi_group_t *group2,
                                  int *ranks2);
-int ompi_group_translate_ranks_strided_reverse ( ompi_group_t *group1, 
+int ompi_group_translate_ranks_strided_reverse ( ompi_group_t *group1,
                                  int n_ranks, const int *ranks1,
-                                 ompi_group_t *group2, 
+                                 ompi_group_t *group2,
                                  int *ranks2);
-int ompi_group_translate_ranks_bmap ( ompi_group_t *group1, 
+int ompi_group_translate_ranks_bmap ( ompi_group_t *group1,
                                  int n_ranks, const int *ranks1,
-                                 ompi_group_t *group2, 
+                                 ompi_group_t *group2,
                                  int *ranks2);
-int ompi_group_translate_ranks_bmap_reverse ( ompi_group_t *group1, 
+int ompi_group_translate_ranks_bmap_reverse ( ompi_group_t *group1,
                                  int n_ranks, const int *ranks1,
-                                 ompi_group_t *group2, 
+                                 ompi_group_t *group2,
                                  int *ranks2);
 
 /**
- *  Prototypes for the group back-end functions. Argument lists 
+ *  Prototypes for the group back-end functions. Argument lists
  are similar to the according  C MPI functions.
  */
 int ompi_group_incl(ompi_group_t* group, int n, const int *ranks,
                     ompi_group_t **new_group);
 int ompi_group_excl(ompi_group_t* group, int n, const int *ranks,
                     ompi_group_t **new_group);
-int ompi_group_range_incl(ompi_group_t* group, int n_triplets, 
+int ompi_group_range_incl(ompi_group_t* group, int n_triplets,
                           int ranges[][3],ompi_group_t **new_group);
-int ompi_group_range_excl(ompi_group_t* group, int n_triplets, 
+int ompi_group_range_excl(ompi_group_t* group, int n_triplets,
                           int ranges[][3],ompi_group_t **new_group);
-int ompi_group_union (ompi_group_t* group1, ompi_group_t* group2, 
+int ompi_group_union (ompi_group_t* group1, ompi_group_t* group2,
                       ompi_group_t **new_group);
 int ompi_group_intersection(ompi_group_t* group1,ompi_group_t* group2,
                             ompi_group_t **new_group);
@@ -299,7 +299,7 @@ int ompi_group_difference(ompi_group_t* group1, ompi_group_t* group2,
                           ompi_group_t **new_group);
 
 
-/** 
+/**
  *  Include Functions to handle Sparse storage formats
  */
 int ompi_group_incl_plist(ompi_group_t* group, int n, const int *ranks,
@@ -311,7 +311,7 @@ int ompi_group_incl_strided(ompi_group_t* group, int n, const int *ranks,
 int ompi_group_incl_bmap(ompi_group_t* group, int n, const int *ranks,
                          ompi_group_t **new_group);
 
-/** 
+/**
  *  Functions to calculate storage spaces
  */
 int ompi_group_calc_plist ( int n, const int *ranks );

@@ -24,10 +24,11 @@
 
 #include "opal/util/argv.h"
 
+#include "orte/util/attr.h"
 #include "orte/mca/notifier/base/base.h"
 
 
-static void orte_notifier_base_identify_modules(char ***modules, 
+static void orte_notifier_base_identify_modules(char ***modules,
                                                 orte_notifier_request_t *req);
 
 void orte_notifier_base_log(int sd, short args, void *cbdata)
@@ -36,7 +37,7 @@ void orte_notifier_base_log(int sd, short args, void *cbdata)
     char **modules = NULL;
     orte_notifier_active_module_t *imod;
     int i;
-    
+
     /* if no modules are active, then there is nothing to do */
     if (0 == opal_list_get_size(&orte_notifier_base.modules)) {
         return;
@@ -72,7 +73,7 @@ void orte_notifier_base_event(int sd, short args, void *cbdata)
     char **modules = NULL;
     orte_notifier_active_module_t *imod;
     int i;
-    
+
     /* if no modules are active, then there is nothing to do */
     if (0 == opal_list_get_size(&orte_notifier_base.modules)) {
         return;
@@ -108,7 +109,7 @@ void orte_notifier_base_report(int sd, short args, void *cbdata)
     char **modules = NULL;
     orte_notifier_active_module_t *imod;
     int i;
-    
+
     /* if no modules are active, then there is nothing to do */
     if (0 == opal_list_get_size(&orte_notifier_base.modules)) {
         return;
@@ -154,34 +155,34 @@ const char* orte_notifier_base_sev2str(orte_notifier_severity_t severity)
     }
 }
 
-static void orte_notifier_base_identify_modules(char ***modules, 
+static void orte_notifier_base_identify_modules(char ***modules,
                                                 orte_notifier_request_t *req)
 {
     if (NULL != req->action) {
         *modules = opal_argv_split(req->action, ',');
     } else {
-        if (ORTE_NOTIFIER_EMERG == req->severity &&  
+        if (ORTE_NOTIFIER_EMERG == req->severity &&
             (NULL != orte_notifier_base.emerg_actions)) {
             *modules = opal_argv_split(orte_notifier_base.emerg_actions, ',');
-        } else if (ORTE_NOTIFIER_ALERT == req->severity &&  
+        } else if (ORTE_NOTIFIER_ALERT == req->severity &&
                    (NULL != orte_notifier_base.alert_actions)) {
             *modules = opal_argv_split(orte_notifier_base.alert_actions, ',');
-        } else if (ORTE_NOTIFIER_CRIT == req->severity &&  
+        } else if (ORTE_NOTIFIER_CRIT == req->severity &&
                    (NULL != orte_notifier_base.crit_actions)) {
             *modules = opal_argv_split(orte_notifier_base.crit_actions, ',');
-        } else if (ORTE_NOTIFIER_WARN == req->severity &&  
+        } else if (ORTE_NOTIFIER_WARN == req->severity &&
                    (NULL != orte_notifier_base.warn_actions)) {
             *modules = opal_argv_split(orte_notifier_base.warn_actions, ',');
-        } else if (ORTE_NOTIFIER_NOTICE == req->severity &&  
+        } else if (ORTE_NOTIFIER_NOTICE == req->severity &&
                    (NULL != orte_notifier_base.notice_actions)) {
             *modules = opal_argv_split(orte_notifier_base.notice_actions, ',');
-        } else if (ORTE_NOTIFIER_INFO == req->severity &&  
+        } else if (ORTE_NOTIFIER_INFO == req->severity &&
                    (NULL != orte_notifier_base.info_actions)) {
             *modules = opal_argv_split(orte_notifier_base.info_actions, ',');
-        } else if (ORTE_NOTIFIER_DEBUG == req->severity &&  
+        } else if (ORTE_NOTIFIER_DEBUG == req->severity &&
                    (NULL != orte_notifier_base.debug_actions)) {
-            *modules = opal_argv_split(orte_notifier_base.debug_actions, ','); 
-        } else if (ORTE_NOTIFIER_ERROR == req->severity &&  
+            *modules = opal_argv_split(orte_notifier_base.debug_actions, ',');
+        } else if (ORTE_NOTIFIER_ERROR == req->severity &&
                    (NULL != orte_notifier_base.error_actions)) {
             *modules = opal_argv_split(orte_notifier_base.error_actions, ',');
         } else if (NULL != orte_notifier_base.default_actions) {

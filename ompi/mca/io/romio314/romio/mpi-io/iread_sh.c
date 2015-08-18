@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -110,7 +110,7 @@ int MPI_File_iread_shared(MPI_File fh, void *buf, int count,
 	    }
 
             ADIO_ReadContig(adio_fh, buf, count, datatype, ADIO_EXPLICIT_OFFSET,
-			    off, &status, &error_code);  
+			    off, &status, &error_code);
 
             if (adio_fh->file_system != ADIO_NFS)
 	    {

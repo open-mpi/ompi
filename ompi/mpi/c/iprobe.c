@@ -5,14 +5,14 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -52,7 +52,7 @@ int MPI_Iprobe(int source, int tag, MPI_Comm comm, int *flag, MPI_Status *status
             rc = MPI_ERR_TAG;
         } else if (ompi_comm_invalid(comm)) {
             rc = MPI_ERR_COMM;
-        } else if ((source != MPI_ANY_SOURCE) && 
+        } else if ((source != MPI_ANY_SOURCE) &&
                    (MPI_PROC_NULL != source) &&
                    ompi_comm_peer_invalid(comm, source)) {
             rc = MPI_ERR_RANK;

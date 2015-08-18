@@ -6,16 +6,16 @@
  * Copyright (c) 2004-2014 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      Sun Microsystems Inc. All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -580,7 +580,7 @@ int main( int argc, char* argv[] )
     if( outputFlags & DUMP_DATA_AFTER_COMMIT ) {
         opal_datatype_dump( pdt3 );
     }
-    
+
     OBJ_RELEASE( pdt1 ); assert( pdt1 == NULL );
     OBJ_RELEASE( pdt2 ); assert( pdt2 == NULL );
     OBJ_RELEASE( pdt3 ); assert( pdt3 == NULL );
@@ -594,7 +594,7 @@ int main( int argc, char* argv[] )
         local_copy_with_convertor_2datatypes( ddt, 4500, ddt, 4500, 12 );
     }
     printf( ">>--------------------------------------------<<\n" );
-    
+
     printf( ">>--------------------------------------------<<\n" );
     if( outputFlags & CHECK_PACK_UNPACK ) {
         printf( "Contiguous multiple data-type (4500*1)\n" );
@@ -670,7 +670,7 @@ int main( int argc, char* argv[] )
     }
     printf( ">>--------------------------------------------<<\n" );
     OBJ_RELEASE( pdt ); assert( pdt == NULL );
-     
+
     printf( ">>--------------------------------------------<<\n" );
     pdt = test_struct_char_double();
     if( outputFlags & CHECK_PACK_UNPACK ) {
@@ -680,7 +680,7 @@ int main( int argc, char* argv[] )
     }
     printf( ">>--------------------------------------------<<\n" );
     OBJ_RELEASE( pdt ); assert( pdt == NULL );
-    
+
     printf( ">>--------------------------------------------<<\n" );
     pdt = test_create_twice_two_doubles();
     if( outputFlags & CHECK_PACK_UNPACK ) {

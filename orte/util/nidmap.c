@@ -6,7 +6,7 @@
  * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -16,9 +16,9 @@
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 #include "orte_config.h"
@@ -85,12 +85,12 @@ int orte_util_build_daemon_nidmap(char **nodes)
     opal_value_t kv;
 
     num_nodes = opal_argv_count(nodes);
-    
+
     if (0 == num_nodes) {
         /* nothing to do */
         return ORTE_SUCCESS;
     }
-    
+
     /* install the entry for the HNP */
     proc.jobid = ORTE_PROC_MY_NAME->jobid;
     proc.vpid = 0;
@@ -164,7 +164,7 @@ int orte_util_build_daemon_nidmap(char **nodes)
             return ORTE_ERR_NOT_FOUND;
         }
         addr = inet_ntoa(*(struct in_addr*)h->h_addr_list[0]);
-        
+
         /* since we are using static ports, all my fellow daemons will be on my
          * port. Setup the contact info for each daemon in my hash tables. Note
          * that this will -not- open a port to those daemons, but will only
@@ -183,7 +183,7 @@ int orte_util_build_daemon_nidmap(char **nodes)
         free(proc_name);
         free(uri);
     }
-    
+
     /* load the hash tables */
     if (ORTE_SUCCESS != (rc = orte_rml_base_update_contact_info(&buf))) {
         ORTE_ERROR_LOG(rc);
@@ -242,11 +242,11 @@ int orte_util_encode_nodemap(opal_byte_object_t *boptr, bool update)
             return rc;
         }
     }
-    
+
     /* transfer the payload to the byte object */
     opal_dss.unload(&buf, (void**)&boptr->bytes, &boptr->size);
     OBJ_DESTRUCT(&buf);
-    
+
     return ORTE_SUCCESS;
 }
 
@@ -321,14 +321,14 @@ int orte_util_decode_daemon_nodemap(opal_byte_object_t *bo)
     rc = ORTE_SUCCESS;
 
     orte_process_info.num_procs = daemons->num_procs;
-    
+
     if (orte_process_info.max_procs < orte_process_info.num_procs) {
         orte_process_info.max_procs = orte_process_info.num_procs;
     }
 
     /* update num_daemons */
     orte_process_info.num_daemons = daemons->num_procs;
-    
+
     if (0 < opal_output_get_verbosity(orte_debug_verbosity)) {
         int i;
         for (i=0; i < orte_node_pool->size; i++) {

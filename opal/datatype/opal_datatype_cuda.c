@@ -42,7 +42,7 @@ void opal_cuda_add_initialization_function(int (*fptr)(opal_common_cuda_function
  * for all future calls.
  */
 void mca_cuda_convertor_init(opal_convertor_t* convertor, const void *pUserBuf)
-{   
+{
     /* Only do the initialization on the first GPU access */
     if (!initialized) {
         opal_cuda_support_init();
@@ -98,7 +98,7 @@ void *opal_cuda_memcpy(void *dest, const void *src, size_t size, opal_convertor_
     if (!(convertor->flags & CONVERTOR_CUDA)) {
         return memcpy(dest, src, size);
     }
-            
+
     if (convertor->flags & CONVERTOR_CUDA_ASYNC) {
         res = ftable.gpu_cu_memcpy_async(dest, (void *)src, size, convertor);
     } else {
@@ -151,7 +151,7 @@ void *opal_cuda_memmove(void *dest, void *src, size_t size)
 
 /**
  * This function gets called once to check if the program is running in a cuda
- * environment. 
+ * environment.
  */
 static void opal_cuda_support_init(void)
 {

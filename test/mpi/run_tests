@@ -5,19 +5,19 @@
 
 # Arguements
 # ==========
-# 
+#
 # test_list  =  no args or all runs all tests
 #              or
 #               llm runs ompi mpi llm tests
 #               ns runs ompi mpi ns tests
-#               oob runs ompi mpi oob tests 
+#               oob runs ompi mpi oob tests
 #               pcm runs ompi mpi pcm tests
 
 # Usage
 #
 # =====
 # To invoke this script, enter either
-#     run_tests 
+#     run_tests
 # with no arguments to run all tests, or
 #     run_tests <test_name>
 

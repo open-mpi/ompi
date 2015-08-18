@@ -6,7 +6,7 @@
  * Copyright (c) 2004-2014 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -15,9 +15,9 @@
  * Copyright (c) 2011-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -31,7 +31,7 @@
 #include "pml_ob1_hdr.h"
 #include "pml_ob1_rdma.h"
 #include "pml_ob1_rdmafrag.h"
-#include "ompi/mca/bml/bml.h" 
+#include "ompi/mca/bml/bml.h"
 
 BEGIN_C_DECLS
 
@@ -50,9 +50,9 @@ struct mca_pml_ob1_send_request_t {
     bool req_throttle_sends;
     size_t req_pipeline_depth;
     size_t req_bytes_delivered;
-    uint32_t req_rdma_cnt; 
+    uint32_t req_rdma_cnt;
     mca_pml_ob1_send_pending_t req_pending;
-    opal_mutex_t req_send_range_lock; 
+    opal_mutex_t req_send_range_lock;
     opal_list_t req_send_ranges;
     mca_pml_ob1_rdma_frag_t *rdma_frag;
     /** The size of this array is set from mca_pml_ob1.max_rdma_per_request */
@@ -182,7 +182,7 @@ static inline void mca_pml_ob1_free_rdma_resources (mca_pml_ob1_send_request_t* 
 
 
 /**
- * Start a send request. 
+ * Start a send request.
  */
 
 #define MCA_PML_OB1_SEND_REQUEST_START(sendreq, rc)       \
@@ -215,18 +215,23 @@ do {                                                                            
                             &(sendreq->req_send.req_base), PERUSE_SEND);             \
 } while(0)
 
+static inline void mca_pml_ob1_send_request_fini (mca_pml_ob1_send_request_t *sendreq)
+{
+    /*  Let the base handle the reference counts */
+    MCA_PML_BASE_SEND_REQUEST_FINI((&(sendreq)->req_send));
+    if (sendreq->rdma_frag) {
+        MCA_PML_OB1_RDMA_FRAG_RETURN (sendreq->rdma_frag);
+        sendreq->rdma_frag = NULL;
+    }
+}
+
 /*
  * Release resources associated with a request
  */
 
 #define MCA_PML_OB1_SEND_REQUEST_RETURN(sendreq)                        \
     do {                                                                \
-        /*  Let the base handle the reference counts */                 \
-        MCA_PML_BASE_SEND_REQUEST_FINI((&(sendreq)->req_send));         \
-        if (sendreq->rdma_frag) {                                       \
-            MCA_PML_OB1_RDMA_FRAG_RETURN (sendreq->rdma_frag);          \
-            sendreq->rdma_frag = NULL;                                  \
-        }                                                               \
+        mca_pml_ob1_send_request_fini (sendreq);                        \
         opal_free_list_return ( &mca_pml_base_send_requests,            \
                                 (opal_free_list_item_t*)sendreq);       \
     } while(0)
@@ -298,12 +303,12 @@ send_request_pml_complete_check(mca_pml_ob1_send_request_t *sendreq)
 }
 
 /**
- *  Schedule additional fragments 
+ *  Schedule additional fragments
  */
 int
 mca_pml_ob1_send_request_schedule_once(mca_pml_ob1_send_request_t*);
 
-static inline int 
+static inline int
 mca_pml_ob1_send_request_schedule_exclusive(mca_pml_ob1_send_request_t* sendreq)
 {
     int rc;
@@ -337,7 +342,7 @@ mca_pml_ob1_send_request_schedule(mca_pml_ob1_send_request_t* sendreq)
 
 #if OPAL_CUDA_SUPPORT
 int mca_pml_ob1_send_request_start_cuda(
-    mca_pml_ob1_send_request_t* sendreq, 
+    mca_pml_ob1_send_request_t* sendreq,
     mca_bml_base_btl_t* bml_btl,
     size_t size);
 #endif /* OPAL_CUDA_SUPPORT */

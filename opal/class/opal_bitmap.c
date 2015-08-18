@@ -5,17 +5,19 @@
  * Copyright (c) 2004-2014 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010-2012 Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -35,12 +37,12 @@
 static void opal_bitmap_construct(opal_bitmap_t *bm);
 static void opal_bitmap_destruct(opal_bitmap_t *bm);
 
-OBJ_CLASS_INSTANCE(opal_bitmap_t, opal_object_t, 
+OBJ_CLASS_INSTANCE(opal_bitmap_t, opal_object_t,
                    opal_bitmap_construct, opal_bitmap_destruct);
 
 
-static void 
-opal_bitmap_construct(opal_bitmap_t *bm) 
+static void
+opal_bitmap_construct(opal_bitmap_t *bm)
 {
     bm->bitmap = NULL;
     bm->array_size = 0;
@@ -107,41 +109,41 @@ int
 opal_bitmap_set_bit(opal_bitmap_t *bm, int bit)
 {
     int index, offset, new_size;
-    
+
     if ((bit < 0) || (NULL == bm) || (bit > bm->max_size)) {
         return OPAL_ERR_BAD_PARAM;
     }
-    
+
     index = bit / SIZE_OF_BASE_TYPE;
     offset = bit % SIZE_OF_BASE_TYPE;
-    
+
     if (index >= bm->array_size) {
-        
+
         /* We need to allocate more space for the bitmap, since we are
          out of range. We don't throw any error here, because this is
          valid and we simply expand the bitmap */
-        
+
         new_size = (int)(((size_t)index / bm->array_size + 1 ) * bm->array_size);
         if( new_size > bm->max_size )
             new_size = bm->max_size;
-        
+
         /* New size is just a multiple of the original size to fit in
          the index. */
         bm->bitmap = (uint64_t*)realloc(bm->bitmap, new_size*sizeof(uint64_t));
         if (NULL == bm->bitmap) {
             return OPAL_ERR_OUT_OF_RESOURCE;
         }
-        
+
         /* zero out the new elements */
         memset(&bm->bitmap[bm->array_size], 0, (new_size - bm->array_size) * sizeof(uint64_t));
-        
+
         /* Update the array_size */
         bm->array_size = new_size;
     }
-    
+
     /* Now set the bit */
     bm->bitmap[index] |= (1UL << offset);
-    
+
     return OPAL_SUCCESS;
 }
 
@@ -150,14 +152,14 @@ int
 opal_bitmap_clear_bit(opal_bitmap_t *bm, int bit)
 {
     int index, offset;
-    
+
     if ((bit < 0) || NULL == bm || (bit >= (bm->array_size * SIZE_OF_BASE_TYPE))) {
         return OPAL_ERR_BAD_PARAM;
     }
-    
-    index = bit / SIZE_OF_BASE_TYPE; 
+
+    index = bit / SIZE_OF_BASE_TYPE;
     offset = bit % SIZE_OF_BASE_TYPE;
-    
+
     bm->bitmap[index] &= ~(1UL << offset);
     return OPAL_SUCCESS;
 }
@@ -167,18 +169,18 @@ bool
 opal_bitmap_is_set_bit(opal_bitmap_t *bm, int bit)
 {
     int index, offset;
-    
+
     if ((bit < 0) || NULL == bm || (bit >= (bm->array_size * SIZE_OF_BASE_TYPE))) {
         return false;
     }
-    
-    index = bit / SIZE_OF_BASE_TYPE; 
+
+    index = bit / SIZE_OF_BASE_TYPE;
     offset = bit % SIZE_OF_BASE_TYPE;
-    
+
     if (0 != (bm->bitmap[index] & (1UL << offset))) {
         return true;
     }
-    
+
     return false;
 }
 
@@ -189,7 +191,7 @@ opal_bitmap_clear_all_bits(opal_bitmap_t *bm)
     if (NULL == bm) {
         return OPAL_ERR_BAD_PARAM;
     }
-    
+
     memset(bm->bitmap, 0, bm->array_size * sizeof(uint64_t));
     return OPAL_SUCCESS;
 }
@@ -201,9 +203,9 @@ opal_bitmap_set_all_bits(opal_bitmap_t *bm)
     if (NULL == bm) {
         return OPAL_ERR_BAD_PARAM;
     }
-    
+
     memset(bm->bitmap, 0xff, bm->array_size * sizeof(uint64_t));
-    
+
     return OPAL_SUCCESS;
 }
 
@@ -213,25 +215,25 @@ opal_bitmap_find_and_set_first_unset_bit(opal_bitmap_t *bm, int *position)
 {
     int i = 0;
     uint64_t temp, all_ones = 0xffffffffffffffffUL;
-    
+
     if (NULL == bm) {
         return OPAL_ERR_BAD_PARAM;
     }
-    
+
     /* Neglect all which don't have an unset bit */
     *position = 0;
     while((i < bm->array_size) && (bm->bitmap[i] == all_ones)) {
         ++i;
     }
-    
+
     if (i == bm->array_size) {
         /* increase the bitmap size then */
         *position = bm->array_size * SIZE_OF_BASE_TYPE;
         return opal_bitmap_set_bit(bm, *position);
     }
-    
+
     /* This one has an unset bit, find its bit number */
-    
+
     temp = bm->bitmap[i];
     bm->bitmap[i] |= (bm->bitmap[i] + 1); /* Set the first zero bit */
     temp ^= bm->bitmap[i];  /* Compute the change: the first unset bit in the original number */
@@ -346,39 +348,24 @@ bool opal_bitmap_are_different(opal_bitmap_t *left, opal_bitmap_t *right)
 char * opal_bitmap_get_string(opal_bitmap_t *bitmap)
 {
     int i;
-    char *tmp_str = NULL;
     char *bitmap_str = NULL;
-    char cur_char = ' ';
 
     if( NULL == bitmap) {
         return NULL;
     }
 
+    bitmap_str = malloc(bitmap->array_size * SIZE_OF_BASE_TYPE + 1);
+    if (NULL == bitmap_str) {
+        return NULL;
+    }
+    bitmap_str[bitmap->array_size * SIZE_OF_BASE_TYPE] = '\0';
+
     for( i = 0; i < (bitmap->array_size * SIZE_OF_BASE_TYPE); ++i) {
         if( opal_bitmap_is_set_bit(bitmap, i) ) {
-            cur_char = 'X';
+            bitmap_str[i] = 'X';
         } else {
-            cur_char = '_';
+            bitmap_str[i] = '_';
         }
-
-        if( NULL == bitmap_str ) {
-            asprintf(&tmp_str, "%c", cur_char);
-        } else {
-            asprintf(&tmp_str, "%s%c", bitmap_str, cur_char);
-        }
-
-        if( NULL != bitmap_str ) {
-            free(bitmap_str);
-            bitmap_str = NULL;
-        }
-        bitmap_str = strdup(tmp_str);
-        free(tmp_str);
-        tmp_str = NULL;
-    }
-
-    if( NULL != tmp_str ) {
-        free(tmp_str);
-        tmp_str = NULL;
     }
 
     return bitmap_str;

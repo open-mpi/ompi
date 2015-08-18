@@ -78,7 +78,7 @@ AC_DEFUN([AX_CXX_NAMESPACE_STD],
 AC_CACHE_CHECK(whether the compiler implements the namespace std,
 ac_cv_cxx_namespace_std,
 [ac_cv_cxx_namespace_std=no
-if test "$ac_cv_cxx_namespaces" = yes ; then 
+if test "$ac_cv_cxx_namespaces" = yes ; then
    AC_LANG_SAVE
    AC_LANG_CPLUSPLUS
    AC_TRY_COMPILE([
@@ -106,13 +106,13 @@ dnl
 dnl If no actions are specified, a working value is added to 'CXXOPTIONS'
 dnl
 dnl Notes:
-dnl This is now careful to check that the output is different, since 
+dnl This is now careful to check that the output is different, since
 dnl some compilers are noisy.
-dnl 
+dnl
 dnl We are extra careful to prototype the functions in case compiler options
 dnl that complain about poor code are in effect.
 dnl
-dnl Because this is a long script, we have ensured that you can pass a 
+dnl Because this is a long script, we have ensured that you can pass a
 dnl variable containing the option name as the first argument.
 dnl D*/
 AC_DEFUN([PAC_CXX_CHECK_COMPILER_OPTION],[

@@ -1,5 +1,5 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/*  
+/*
  *  (C) 2001 by Argonne National Laboratory.
  *      See COPYRIGHT in top-level directory.
  */
@@ -12,11 +12,11 @@
 
 /* Uses asynchronous I/O. Each process writes to separate files and
    reads them back. The file name is taken as a command-line argument,
-   and the process rank is appended to it.*/ 
+   and the process rank is appended to it.*/
 
 void handle_error(int errcode, const char *str);
 
-void handle_error(int errcode, const char *str) 
+void handle_error(int errcode, const char *str)
 {
 	char msg[MPI_MAX_ERROR_STRING];
 	int resultlen;
@@ -37,7 +37,7 @@ int main(int argc, char **argv)
     MPI_Init(&argc,&argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-/* process 0 takes the file name as a command-line argument and 
+/* process 0 takes the file name as a command-line argument and
    broadcasts it to other processes */
     if (!rank) {
 	i = 1;
@@ -72,7 +72,7 @@ int main(int argc, char **argv)
     strcpy(tmp, filename);
     sprintf(filename, "%s.%d", tmp, rank);
 
-    errcode = MPI_File_open(MPI_COMM_SELF, filename, 
+    errcode = MPI_File_open(MPI_COMM_SELF, filename,
 		    MPI_MODE_CREATE | MPI_MODE_RDWR, MPI_INFO_NULL, &fh);
     if (errcode != MPI_SUCCESS) {
 	    handle_error(errcode, "MPI_File_open");
@@ -84,7 +84,7 @@ int main(int argc, char **argv)
     }
 #ifdef MPIO_USES_MPI_REQUEST
     MPI_Wait( &request, &status );
-#else    
+#else
     MPIO_Wait(&request, &status);
 #endif
     MPI_File_close(&fh);
@@ -92,7 +92,7 @@ int main(int argc, char **argv)
     /* reopen the file and read the data back */
 
     for (i=0; i<nints; i++) buf[i] = 0;
-    errcode = MPI_File_open(MPI_COMM_SELF, filename, 
+    errcode = MPI_File_open(MPI_COMM_SELF, filename,
 		    MPI_MODE_CREATE | MPI_MODE_RDWR, MPI_INFO_NULL, &fh);
     if (errcode != MPI_SUCCESS) {
 	    handle_error(errcode, "MPI_File_open");
@@ -134,5 +134,5 @@ int main(int argc, char **argv)
     free(tmp);
 
     MPI_Finalize();
-    return 0; 
+    return 0;
 }

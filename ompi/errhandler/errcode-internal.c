@@ -6,7 +6,7 @@
  * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -15,9 +15,9 @@
  * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
  *                         reseved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -55,6 +55,7 @@ static ompi_errcode_intern_t ompi_err_rma_attach_intern;
 static ompi_errcode_intern_t ompi_err_rma_range_intern;
 static ompi_errcode_intern_t ompi_err_rma_conflict_intern;
 static ompi_errcode_intern_t ompi_err_win_intern;
+static ompi_errcode_intern_t ompi_err_rma_flavor_intern;
 
 static void ompi_errcode_intern_construct(ompi_errcode_intern_t* errcode);
 static void ompi_errcode_intern_destruct(ompi_errcode_intern_t* errcode);
@@ -79,7 +80,7 @@ int ompi_errcode_intern_init (void)
     ompi_success_intern.mpi_code = MPI_SUCCESS;
     ompi_success_intern.index = pos++;
     strncpy(ompi_success_intern.errstring, "OMPI_SUCCESS", OMPI_MAX_ERROR_STRING);
-    opal_pointer_array_set_item(&ompi_errcodes_intern, ompi_success_intern.index,  
+    opal_pointer_array_set_item(&ompi_errcodes_intern, ompi_success_intern.index,
                                 &ompi_success_intern);
 
     OBJ_CONSTRUCT(&ompi_error_intern, ompi_errcode_intern_t);
@@ -250,6 +251,14 @@ int ompi_errcode_intern_init (void)
     opal_pointer_array_set_item(&ompi_errcodes_intern, ompi_err_win_intern.index,
                                 &ompi_err_win_intern);
 
+    OBJ_CONSTRUCT(&ompi_err_rma_flavor_intern, ompi_errcode_intern_t);
+    ompi_err_rma_flavor_intern.code = OMPI_ERR_RMA_FLAVOR;
+    ompi_err_rma_flavor_intern.mpi_code = MPI_ERR_RMA_FLAVOR;
+    ompi_err_rma_flavor_intern.index = pos++;
+    strncpy(ompi_err_rma_flavor_intern.errstring, "OMPI_ERR_RMA_FLAVOR", OMPI_MAX_ERROR_STRING);
+    opal_pointer_array_set_item(&ompi_errcodes_intern, ompi_err_rma_flavor_intern.index,
+                                &ompi_err_rma_flavor_intern);
+
     ompi_errcode_intern_lastused=pos;
     return OMPI_SUCCESS;
 }
@@ -279,6 +288,7 @@ int ompi_errcode_intern_finalize(void)
     OBJ_DESTRUCT(&ompi_err_rma_range_intern);
     OBJ_DESTRUCT(&ompi_err_rma_conflict_intern);
     OBJ_DESTRUCT(&ompi_err_win_intern);
+    OBJ_DESTRUCT(&ompi_err_rma_flavor_intern);
 
     OBJ_DESTRUCT(&ompi_errcodes_intern);
     return OMPI_SUCCESS;

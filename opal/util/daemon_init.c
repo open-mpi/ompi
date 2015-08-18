@@ -5,14 +5,16 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -43,7 +45,7 @@ int opal_daemon_init(char *working_dir)
     } else if (pid != 0) {
         exit(0);   /* parent goes bye-bye */
     }
-    
+
     /* child continues */
 #if defined(HAVE_SETSID)
     setsid();  /* become session leader */
@@ -55,8 +57,11 @@ int opal_daemon_init(char *working_dir)
 
     /* connect input to /dev/null */
     fd = open("/dev/null", O_RDONLY);
-    if(fd > STDIN_FILENO) {
-        dup2(fd, STDIN_FILENO);
+    if (0 > fd) {
+        return OPAL_ERR_FATAL;
+    }
+    dup2(fd, STDIN_FILENO);
+    if(fd != STDIN_FILENO) {
         close(fd);
     }
 

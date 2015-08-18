@@ -6,7 +6,7 @@
  * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -17,18 +17,16 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
 #include "ompi_config.h"
 
 #include <stdio.h>
-#ifdef HAVE_STRING_H
 #include <string.h>
-#endif
 
 #include "mpi.h"
 
@@ -114,6 +112,7 @@ static ompi_mpi_errcode_t ompi_err_rma_attach;
 static ompi_mpi_errcode_t ompi_err_rma_flavor;
 static ompi_mpi_errcode_t ompi_err_rma_shared;
 static ompi_mpi_errcode_t ompi_t_err_invalid;
+static ompi_mpi_errcode_t ompi_t_err_invalid_name;
 
 static void ompi_mpi_errcode_construct(ompi_mpi_errcode_t* errcode);
 static void ompi_mpi_errcode_destruct(ompi_mpi_errcode_t* errcode);
@@ -214,6 +213,7 @@ int ompi_mpi_errcode_init (void)
     CONSTRUCT_ERRCODE( ompi_err_rma_flavor, MPI_ERR_RMA_FLAVOR, "MPI_ERR_RMA_FLAVOR: Invalid type of window" );
     CONSTRUCT_ERRCODE( ompi_err_rma_shared, MPI_ERR_RMA_SHARED, "MPI_ERR_RMA_SHARED: Memory cannot be shared" );
     CONSTRUCT_ERRCODE( ompi_t_err_invalid, MPI_T_ERR_INVALID, "MPI_T_ERR_INVALID: Invalid use of the interface or bad parameter value(s)" );
+    CONSTRUCT_ERRCODE( ompi_t_err_invalid_name, MPI_T_ERR_INVALID_NAME, "MPI_T_ERR_INVALID_NAME: The variable or category name is invalid" );
 
     /* Per MPI-3 p353:27-32, MPI_LASTUSEDCODE must be >=
        MPI_ERR_LASTCODE.  So just start it as == MPI_ERR_LASTCODE. */
@@ -226,9 +226,9 @@ int ompi_mpi_errcode_finalize(void)
 {
     int i;
     ompi_mpi_errcode_t *errc;
-    
+
     for (i=ompi_mpi_errcode_lastpredefined+1; i<=ompi_mpi_errcode_lastused; i++) {
-        /* 
+        /*
          * there are some user defined error-codes, which
          * we have to free.
          */
@@ -309,6 +309,7 @@ int ompi_mpi_errcode_finalize(void)
     OBJ_DESTRUCT(&ompi_err_rma_flavor);
     OBJ_DESTRUCT(&ompi_err_rma_shared);
     OBJ_DESTRUCT(&ompi_t_err_invalid);
+    OBJ_DESTRUCT(&ompi_t_err_invalid_name);
 
     OBJ_DESTRUCT(&ompi_mpi_errcodes);
     return OMPI_SUCCESS;
@@ -322,7 +323,7 @@ int ompi_mpi_errcode_add(int errclass )
     newerrcode->code = (ompi_mpi_errcode_lastused+1);
     newerrcode->cls = errclass;
     opal_pointer_array_set_item(&ompi_mpi_errcodes, newerrcode->code, newerrcode);
-    
+
     ompi_mpi_errcode_lastused++;
     return newerrcode->code;
 }
@@ -334,7 +335,7 @@ int ompi_mpi_errclass_add(void)
     newerrcode = OBJ_NEW(ompi_mpi_errcode_t);
     newerrcode->cls = ( ompi_mpi_errcode_lastused+1);
     opal_pointer_array_set_item(&ompi_mpi_errcodes, newerrcode->cls, newerrcode);
-    
+
     ompi_mpi_errcode_lastused++;
     return newerrcode->cls;
 }
@@ -344,14 +345,14 @@ int ompi_mpi_errnum_add_string(int errnum, const char *errstring, int len)
     ompi_mpi_errcode_t *errcodep;
 
     errcodep = (ompi_mpi_errcode_t *)opal_pointer_array_get_item(&ompi_mpi_errcodes, errnum);
-    if ( NULL == errcodep ) { 
+    if ( NULL == errcodep ) {
         return OMPI_ERROR;
     }
 
     if ( MPI_MAX_ERROR_STRING > len ) {
         len = MPI_MAX_ERROR_STRING;
     }
-    
+
     strncpy ( errcodep->errstring, errstring, len );
     return OMPI_SUCCESS;
 }

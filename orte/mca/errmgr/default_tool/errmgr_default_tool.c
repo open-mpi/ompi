@@ -2,7 +2,7 @@
  * Copyright (c) 2009-2011 The Trustees of Indiana University.
  *                         All rights reserved.
  *
- * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved. 
+ * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
  *
  * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
@@ -11,9 +11,9 @@
  *                         All rights reserved.
  * Copyright (c) 2013      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -23,9 +23,7 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif  /* HAVE_UNISTD_H */
-#ifdef HAVE_STRING_H
 #include <string.h>
-#endif
 
 #include "opal/util/output.h"
 #include "opal/dss/dss.h"
@@ -96,7 +94,7 @@ static void proc_errors(int fd, short args, void *cbdata)
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(&caddy->name),
                          orte_proc_state_to_str(caddy->proc_state)));
-    
+
     /*
      * if orte is trying to shutdown, just let it
      */

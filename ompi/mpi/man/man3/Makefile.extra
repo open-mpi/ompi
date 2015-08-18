@@ -3,9 +3,9 @@
 # Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
 # Copyright (c) 2012-2013 Los Alamos National Security, LLC.  All rights reserved.
 # $COPYRIGHT$
-# 
+#
 # Additional copyrights may follow
-# 
+#
 # $HEADER$
 #
 
@@ -19,6 +19,8 @@ mpi_api_man_pages = \
         mpi/man/man3/MPI_Add_error_code.3 \
         mpi/man/man3/MPI_Add_error_string.3 \
         mpi/man/man3/MPI_Address.3 \
+	mpi/man/man3/MPI_Aint_add.3 \
+	mpi/man/man3/MPI_Aint_diff.3 \
         mpi/man/man3/MPI_Allgather.3 \
         mpi/man/man3/MPI_Iallgather.3 \
         mpi/man/man3/MPI_Allgatherv.3 \
@@ -124,9 +126,13 @@ mpi_api_man_pages = \
         mpi/man/man3/MPI_File_get_view.3 \
         mpi/man/man3/MPI_File_iread.3 \
         mpi/man/man3/MPI_File_iread_at.3 \
+        mpi/man/man3/MPI_File_iread_all.3 \
+        mpi/man/man3/MPI_File_iread_at_all.3 \
         mpi/man/man3/MPI_File_iread_shared.3 \
         mpi/man/man3/MPI_File_iwrite.3 \
         mpi/man/man3/MPI_File_iwrite_at.3 \
+        mpi/man/man3/MPI_File_iwrite_all.3 \
+        mpi/man/man3/MPI_File_iwrite_at_all.3 \
         mpi/man/man3/MPI_File_iwrite_shared.3 \
         mpi/man/man3/MPI_File_open.3 \
         mpi/man/man3/MPI_File_preallocate.3 \
@@ -377,13 +383,16 @@ mpi_api_man_pages = \
         mpi/man/man3/MPI_Waitall.3 \
         mpi/man/man3/MPI_Waitany.3 \
         mpi/man/man3/MPI_Waitsome.3 \
+        mpi/man/man3/MPI_Win_attach.3 \
         mpi/man/man3/MPI_Win_c2f.3 \
         mpi/man/man3/MPI_Win_call_errhandler.3 \
         mpi/man/man3/MPI_Win_complete.3 \
         mpi/man/man3/MPI_Win_create.3 \
+        mpi/man/man3/MPI_Win_create_dynamic.3 \
         mpi/man/man3/MPI_Win_create_errhandler.3 \
         mpi/man/man3/MPI_Win_create_keyval.3 \
         mpi/man/man3/MPI_Win_delete_attr.3 \
+        mpi/man/man3/MPI_Win_detach.3 \
         mpi/man/man3/MPI_Win_f2c.3 \
         mpi/man/man3/MPI_Win_fence.3 \
         mpi/man/man3/MPI_Win_flush.3 \
@@ -395,12 +404,14 @@ mpi_api_man_pages = \
         mpi/man/man3/MPI_Win_get_attr.3 \
         mpi/man/man3/MPI_Win_get_errhandler.3 \
         mpi/man/man3/MPI_Win_get_group.3 \
+        mpi/man/man3/MPI_Win_get_info.3 \
         mpi/man/man3/MPI_Win_get_name.3 \
         mpi/man/man3/MPI_Win_lock.3 \
         mpi/man/man3/MPI_Win_lock_all.3 \
         mpi/man/man3/MPI_Win_post.3 \
         mpi/man/man3/MPI_Win_set_attr.3 \
         mpi/man/man3/MPI_Win_set_errhandler.3 \
+        mpi/man/man3/MPI_Win_set_info.3 \
         mpi/man/man3/MPI_Win_set_name.3 \
         mpi/man/man3/MPI_Win_start.3 \
         mpi/man/man3/MPI_Win_sync.3 \

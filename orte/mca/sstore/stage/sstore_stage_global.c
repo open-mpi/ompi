@@ -5,9 +5,9 @@
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -17,9 +17,7 @@
 
 #include "orte_config.h"
 
-#ifdef HAVE_STRING_H
 #include <string.h>
-#endif
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -477,7 +475,7 @@ int orte_sstore_stage_global_request_global_snapshot_data(orte_sstore_base_handl
      */
     snapshot->seq_num   = handle_info->seq_num;
     snapshot->reference = strdup(handle_info->ref_name);
-    snapshot->basedir   = strdup(handle_info->base_location); 
+    snapshot->basedir   = strdup(handle_info->base_location);
     snapshot->metadata_filename = strdup(handle_info->metadata_filename);
 
     /* If this is the current checkpoint, pull data from local cache */
@@ -1748,7 +1746,7 @@ static void sstore_stage_report_progress(orte_sstore_stage_global_snapshot_info_
 
     if( perc_done >= (handle_info->last_progress_report + orte_sstore_stage_progress_meter ) ||
         handle_info->last_progress_report == 0.0 ) {
-        handle_info->last_progress_report = perc_done;        
+        handle_info->last_progress_report = perc_done;
         opal_output(0, "sstore:stage: progress: %10.2f %c Finished\n",
                     perc_done, '%');
     }

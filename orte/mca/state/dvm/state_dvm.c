@@ -1,9 +1,9 @@
 /*
  * Copyright (c) 2015      Intel, Inc. All rights reserved
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -13,9 +13,7 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif  /* HAVE_UNISTD_H */
-#ifdef HAVE_STRING_H
 #include <string.h>
-#endif
 
 #include "opal/util/output.h"
 
@@ -222,7 +220,7 @@ static void vm_ready(int fd, short args, void *cbdata)
         OBJ_RELEASE(caddy);
         return;
     }
-    
+
     /* progress the job */
     caddy->jdata->state = ORTE_JOB_STATE_VM_READY;
 
@@ -299,7 +297,7 @@ void check_complete(int fd, short args, void *cbdata)
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_JOBID_PRINT(jdata->jobid),
                          orte_job_state_to_str(jdata->state)));
-    
+
     /* if this job is a continuously operating one, then don't do
      * anything further - just return here
      */
@@ -308,7 +306,7 @@ void check_complete(int fd, short args, void *cbdata)
          ORTE_FLAG_TEST(jdata, ORTE_JOB_FLAG_RECOVERABLE))) {
         goto CHECK_ALIVE;
     }
-    
+
     /* if the job that is being checked is the HNP, then we are
      * trying to terminate the orteds. In that situation, we
      * do -not- check all jobs - we simply notify the HNP
@@ -336,7 +334,7 @@ void check_complete(int fd, short args, void *cbdata)
         OBJ_RELEASE(caddy);
         return;
     }
-    
+
     /* Release the resources used by this job. Since some errmgrs may want
      * to continue using resources allocated to the job as part of their
      * fault recovery procedure, we only do this once the job is "complete".
@@ -384,7 +382,7 @@ void check_complete(int fd, short args, void *cbdata)
         OBJ_RELEASE(map);
         jdata->map = NULL;
     }
-    
+
  CHECK_ALIVE:
     /* now check to see if all jobs are done - trigger notification of this jdata
      * object when we find it

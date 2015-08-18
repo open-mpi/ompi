@@ -2,9 +2,9 @@
  * Copyright (c) 2011      Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -33,12 +33,12 @@ OBJ_CLASS_INSTANCE(test_data_t,
                    opal_tree_item_t,
                    NULL, NULL);
 
-static void check_descendants(opal_tree_item_t* item, unsigned *data, 
-                              unsigned level, int *err_order, 
+static void check_descendants(opal_tree_item_t* item, unsigned *data,
+                              unsigned level, int *err_order,
                               int *err_ancestor);
 static int test_comp(opal_tree_item_t *item, void *key);
 static int test_serialize(opal_tree_item_t *item, opal_buffer_t *buffer);
-static int test_deserialize(opal_buffer_t *serial_data, 
+static int test_deserialize(opal_buffer_t *serial_data,
 			    opal_tree_item_t **item);
 static void *test_get_key(opal_tree_item_t *item);
 
@@ -108,8 +108,8 @@ int main(int argc, char **argv)
         }
         item = opal_tree_get_first_child(item);
     }
-            
-    /* checking for tree size */ 
+
+    /* checking for tree size */
     tree_size=opal_tree_get_size(&tree);
     if( tree_size == total_elements ) {
         test_success();
@@ -132,7 +132,7 @@ int main(int argc, char **argv)
         i = 0;
         check_descendants(item, (unsigned *)&i, 0, &err_order, &err_ancestor);
     }
-            
+
     if (!err_order) {
         test_success();
     } else {
@@ -191,17 +191,17 @@ int main(int argc, char **argv)
     }
     /* validate the tree count adjusted */
     if (5 != (tree_size - opal_tree_get_size(&tree))) {
-	test_failure(" failed subtree removal tree size test");	
+	test_failure(" failed subtree removal tree size test");
     } else {
 	/* validate cannot find children in tree */
 	key = 13;
-	if (NULL != 
+	if (NULL !=
 	    opal_tree_find_with(opal_tree_get_root(&tree), (void*)&key)) {
 	    test_failure(" failed subtree removal item children removed test");
 	} else {
 	    /* validate cannot find the item */
 	    key = 8;
-	    if (NULL != 
+	    if (NULL !=
 		opal_tree_find_with(opal_tree_get_root(&tree), (void*)&key)) {
 		test_failure(" failed subtree removal item removed test");
 	    } else {
@@ -213,15 +213,15 @@ int main(int argc, char **argv)
     /* check serialization-deserialization */
     /* serialize tree */
     serial_tree = OBJ_NEW(opal_buffer_t);
-    
-    if (OPAL_SUCCESS == opal_tree_serialize(opal_tree_get_root(&tree), 
+
+    if (OPAL_SUCCESS == opal_tree_serialize(opal_tree_get_root(&tree),
 					    serial_tree)) {
         opal_tree_t tmp_tree;
         opal_buffer_t *serial2_tree;
 
         /* create new tree */
         OBJ_CONSTRUCT(&tmp_tree, opal_tree_t);
-        opal_tree_init(&tmp_tree, test_comp, test_serialize, 
+        opal_tree_init(&tmp_tree, test_comp, test_serialize,
                        test_deserialize, test_get_key);
 
         /* deserialize tree */
@@ -241,10 +241,10 @@ int main(int argc, char **argv)
 		    test_success();
 		} else {
 		    test_failure(" failed tree deserialization data compare");
-		} 
+		}
 	    } else {
 		test_failure(" failed tree deserialization size compare");
-	    } 
+	    }
 	} else {
 	    test_failure(" failed tree second pass serialization");
 	}
@@ -253,7 +253,7 @@ int main(int argc, char **argv)
     }
 
     if (NULL != elements) free(elements);
-    
+
     opal_finalize_util ();
 
     return test_finalize();
@@ -262,12 +262,12 @@ int main(int argc, char **argv)
 /*
  * check all the descendants from our level and below for correct data and
  * level.  Note this will traverse the tree in a weird fashion where you
- * go across all siblings and then start searching down the last siblings 
+ * go across all siblings and then start searching down the last siblings
  * children.  As the current tests are set up if one populated more than just
  * the left sided children things will probably fail.
  */
-static void check_descendants(opal_tree_item_t* item, 
-                              unsigned *data, 
+static void check_descendants(opal_tree_item_t* item,
+                              unsigned *data,
                               unsigned level,
                               int *err_order, int *err_ancestor)
 {
@@ -303,10 +303,10 @@ static int test_comp(opal_tree_item_t *item, void *key)
     return(0);
 }
 
-static int test_serialize(opal_tree_item_t *item, opal_buffer_t *buffer) 
+static int test_serialize(opal_tree_item_t *item, opal_buffer_t *buffer)
 {
     test_data_t *ele = (test_data_t *)item;
-    
+
     return(opal_dss.pack(buffer, &ele->data, 1, OPAL_INT32));
 }
 
@@ -317,7 +317,7 @@ static int test_deserialize(opal_buffer_t *serial_data, opal_tree_item_t **item)
 
     ele = (test_data_t *)malloc(sizeof(test_data_t));
     OBJ_CONSTRUCT(ele, test_data_t);
-    if (OPAL_SUCCESS == (rc = opal_dss.unpack(serial_data, &ele->data, &idx, 
+    if (OPAL_SUCCESS == (rc = opal_dss.unpack(serial_data, &ele->data, &idx,
 					      OPAL_INT32))) {
 	*item = (opal_tree_item_t*)ele;
     } else {

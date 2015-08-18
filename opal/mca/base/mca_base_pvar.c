@@ -1,8 +1,12 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2013-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Bull SAS.  All rights reserved.
+ * Copyright (c) 2015      The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -76,7 +80,7 @@ int mca_base_pvar_find (const char *project, const char *framework, const char *
         return OPAL_ERROR;
     }
 
-    ret = mca_base_pvar_find_by_name (full_name, &index);
+    ret = mca_base_pvar_find_by_name (full_name, MCA_BASE_PVAR_CLASS_ANY, &index);
     free (full_name);
 
     /* NTH: should we verify the name components match the returned variable? */
@@ -84,8 +88,9 @@ int mca_base_pvar_find (const char *project, const char *framework, const char *
     return (OPAL_SUCCESS != ret) ? ret : index;
 }
 
-int mca_base_pvar_find_by_name (const char *full_name, int *index)
+int mca_base_pvar_find_by_name (const char *full_name, int var_class, int *index)
 {
+    mca_base_pvar_t *pvar;
     void *tmp;
     int rc;
 
@@ -93,6 +98,15 @@ int mca_base_pvar_find_by_name (const char *full_name, int *index)
                                         &tmp);
     if (OPAL_SUCCESS != rc) {
         return rc;
+    }
+
+    rc = mca_base_pvar_get_internal ((int)(uintptr_t) tmp, &pvar, false);
+    if (OPAL_SUCCESS != rc) {
+        return rc;
+    }
+
+    if (MCA_BASE_PVAR_CLASS_ANY != var_class && pvar->var_class != var_class) {
+        return OPAL_ERR_NOT_FOUND;
     }
 
     *index = (int)(uintptr_t) tmp;
@@ -285,6 +299,7 @@ int mca_base_pvar_register (const char *project, const char *framework, const ch
                 break;
             }
 
+            pvar->pvar_index = pvar_count;
             opal_hash_table_set_value_ptr (&mca_base_pvar_index_hash, pvar->name, strlen (pvar->name),
                                            (void *)(uintptr_t) pvar->pvar_index);
 
@@ -317,9 +332,8 @@ int mca_base_pvar_register (const char *project, const char *framework, const ch
     if (!(flags & MCA_BASE_PVAR_FLAG_READONLY)) {
         pvar->set_value = set_value ? set_value : mca_base_pvar_default_set_value;
     }
-        
+
     pvar->ctx        = ctx;
-    pvar->pvar_index = pvar_count;
 
     return pvar->pvar_index;
 }
@@ -447,7 +461,7 @@ int mca_base_pvar_handle_alloc (mca_base_pvar_session_t *session, int index, voi
         }
 
         pvar_handle->obj_handle = obj_handle;
-        pvar_handle->pvar = pvar; 
+        pvar_handle->pvar = pvar;
 
         *handle = pvar_handle;
 
@@ -492,7 +506,7 @@ int mca_base_pvar_handle_alloc (mca_base_pvar_session_t *session, int index, voi
                 ret = OPAL_ERR_OUT_OF_RESOURCE;
                 break;
             }
-       
+
             pvar_handle->last_value = calloc (*count, datatype_size);
             if (NULL == pvar_handle->last_value) {
                 ret = OPAL_ERR_OUT_OF_RESOURCE;
@@ -699,7 +713,7 @@ int mca_base_pvar_handle_write_value (mca_base_pvar_handle_t *handle, const void
     if (OPAL_SUCCESS != ret) {
         return ret;
     }
-    
+
     memmove (handle->current_value, value, handle->count * var_type_sizes[handle->pvar->type]);
 
     return OPAL_SUCCESS;

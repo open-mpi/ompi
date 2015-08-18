@@ -5,15 +5,15 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2009 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -142,7 +142,7 @@ static int init_query(const mca_base_component_t * c,
  * Query a specific component, op v2.0.0
  */
 static int init_query_1_0_0(const mca_base_component_t * component,
-                            bool enable_progress_threads, 
+                            bool enable_progress_threads,
                             bool enable_mpi_threads)
 {
     ompi_op_base_component_1_0_0_t *op =

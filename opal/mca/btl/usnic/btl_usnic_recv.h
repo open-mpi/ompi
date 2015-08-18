@@ -23,12 +23,27 @@ void opal_btl_usnic_recv_call(opal_btl_usnic_module_t *module,
 static inline int
 opal_btl_usnic_post_recv_list(opal_btl_usnic_channel_t *channel)
 {
+    struct iovec iov;
+    struct fi_msg msg;
+    uint64_t flag;
     opal_btl_usnic_recv_segment_t *rseg;
     int rc;
 
+    msg.msg_iov = &iov;
+    msg.iov_count = 1;
     for (rseg = channel->repost_recv_head; NULL != rseg; rseg = rseg->rs_next) {
-        rc = fi_recv(channel->ep, rseg->rs_protocol_header,
-                     rseg->rs_len, NULL, FI_ADDR_UNSPEC, rseg);
+        msg.context = rseg;
+        iov.iov_base = rseg->rs_protocol_header;
+        iov.iov_len = rseg->rs_len;
+
+        ++channel->rx_post_cnt;
+        if (OPAL_UNLIKELY((channel->rx_post_cnt & 15) == 0)) {
+            flag = 0;
+        } else {
+            flag = FI_MORE;
+        }
+
+        rc = fi_recvmsg(channel->ep, &msg, flag);
         if (0 != rc) {
             return rc;
         }
@@ -267,6 +282,9 @@ opal_btl_usnic_recv_fast(opal_btl_usnic_module_t *module,
     int delta;
     int i;
 
+    /* Make the whole payload Valgrind defined */
+    opal_memchecker_base_mem_defined(seg->rs_protocol_header, seg->rs_len);
+
     bseg = &seg->rs_base;
 
     /* Find out who sent this segment */
@@ -285,10 +303,6 @@ opal_btl_usnic_dump_hex(bseg->us_btl_header, bseg->us_btl_header->payload_len + 
             (OPAL_BTL_USNIC_PAYLOAD_TYPE_FRAG ==
                 bseg->us_btl_header->payload_type) &&
             seg->rs_base.us_btl_header->put_addr == NULL) {
-
-        /* Valgrind help */
-        opal_memchecker_base_mem_defined(
-                (void*)(seg->rs_protocol_header), seg->rs_len);
 
         seq = seg->rs_base.us_btl_header->pkt_seq;
         delta = SEQ_DIFF(seq, endpoint->endpoint_next_contig_seq_to_recv);
@@ -381,6 +395,9 @@ opal_btl_usnic_recv(opal_btl_usnic_module_t *module,
     mca_btl_active_message_callback_t* reg;
     opal_btl_usnic_endpoint_t *endpoint;
     int rc;
+
+    /* Make the whole payload Valgrind defined */
+    opal_memchecker_base_mem_defined(seg->rs_protocol_header, seg->rs_len);
 
     bseg = &seg->rs_base;
 

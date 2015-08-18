@@ -4,9 +4,9 @@
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
  *
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -17,9 +17,7 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif  /* HAVE_UNISTD_H */
-#ifdef HAVE_STRING_H
 #include <string.h>
-#endif  /* HAVE_STRING_H */
 
 #include "opal/dss/dss.h"
 
@@ -60,12 +58,12 @@ void orte_iof_mrorted_read_handler(int fd, short event, void *cbdata)
 
     /* read up to the fragment size */
     numbytes = read(fd, data, sizeof(data));
-    
+
     OPAL_OUTPUT_VERBOSE((1, orte_iof_base_framework.framework_output,
                          "%s iof:mrorted:read handler read %d bytes from %s, fd %d",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          numbytes, ORTE_NAME_PRINT(&rev->name), fd));
-    
+
     if (numbytes <= 0) {
         if (0 > numbytes) {
             /* either we have a connection error or it was a non-blocking read */
@@ -73,7 +71,7 @@ void orte_iof_mrorted_read_handler(int fd, short event, void *cbdata)
                 /* non-blocking, retry */
                 opal_event_add(rev->ev, 0);
                 return;
-            } 
+            }
 
             OPAL_OUTPUT_VERBOSE((1, orte_iof_base_framework.framework_output,
                                  "%s iof:mrorted:read handler %s Error on connection:%d",
@@ -83,7 +81,7 @@ void orte_iof_mrorted_read_handler(int fd, short event, void *cbdata)
         /* numbytes must have been zero, so go down and close the fd etc */
         goto CLEAN_RETURN;
     }
-    
+
     /* see if the user wanted the output directed to files */
     if (NULL != orte_output_filename) {
         /* find the sink for this rank */
@@ -111,7 +109,7 @@ void orte_iof_mrorted_read_handler(int fd, short event, void *cbdata)
             }
         }
     }
-    
+
     if (ORTE_IOF_STDOUT & rev->tag) {
         /* see if we need to forward this output */
         stdout_target = ORTE_JOBID_INVALID;
@@ -152,7 +150,7 @@ void orte_iof_mrorted_read_handler(int fd, short event, void *cbdata)
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), numbytes,
                                      ORTE_NAME_PRINT(&rev->name),
                                      ORTE_NAME_PRINT(&daemon->name)));
-                
+
                 /* send the data to the daemon so it can
                  * write it to all local procs from this job
                  */
@@ -160,12 +158,12 @@ void orte_iof_mrorted_read_handler(int fd, short event, void *cbdata)
             }
         }
     }
-    
+
  PROCESS:
     if (write_out) {
         /* prep the buffer */
         buf = OBJ_NEW(opal_buffer_t);
-    
+
         /* pack the stream first - we do this so that flow control messages can
          * consist solely of the tag
          */
@@ -173,13 +171,13 @@ void orte_iof_mrorted_read_handler(int fd, short event, void *cbdata)
             ORTE_ERROR_LOG(rc);
             goto CLEAN_RETURN;
         }
-    
+
         /* pack name of process that gave us this data */
         if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, &rev->name, 1, ORTE_NAME))) {
             ORTE_ERROR_LOG(rc);
             goto CLEAN_RETURN;
         }
-    
+
         /* pack the data - only pack the #bytes we read! */
         if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, &data, numbytes, OPAL_BYTE))) {
             ORTE_ERROR_LOG(rc);
@@ -190,16 +188,16 @@ void orte_iof_mrorted_read_handler(int fd, short event, void *cbdata)
         OPAL_OUTPUT_VERBOSE((1, orte_iof_base_framework.framework_output,
                              "%s iof:mrorted:read handler sending %d bytes to HNP",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), numbytes));
-    
+
         orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, buf, ORTE_RML_TAG_IOF_HNP,
                                 orte_rml_send_callback, NULL);
     }
-    
+
     /* re-add the event */
     opal_event_add(rev->ev, 0);
 
     return;
-   
+
  CLEAN_RETURN:
     /* must be an error, or zero bytes were read indicating that the
      * proc terminated this IOF channel - either way, find this proc

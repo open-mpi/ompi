@@ -6,7 +6,7 @@
  * Copyright (c) 2004-2009 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -15,9 +15,9 @@
  * Copyright (c) 2013-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -33,7 +33,7 @@
 #include "pml_ob1_recvreq.h"
 #include "pml_ob1_rdmafrag.h"
 #include "pml_ob1_recvfrag.h"
-#include "ompi/mca/bml/base/base.h" 
+#include "ompi/mca/bml/base/base.h"
 #include "pml_ob1_component.h"
 #include "opal/mca/allocator/base/base.h"
 #include "opal/mca/base/mca_base_pvar.h"
@@ -60,7 +60,7 @@ mca_pml_base_component_2_0_0_t mca_pml_ob1_component = {
 
     .pmlm_version = {
         MCA_PML_BASE_VERSION_2_0_0,
-    
+
         .mca_component_name = "ob1",
         .mca_component_major_version = OMPI_MAJOR_VERSION,
         .mca_component_minor_version = OMPI_MINOR_VERSION,
@@ -81,7 +81,7 @@ mca_pml_base_component_2_0_0_t mca_pml_ob1_component = {
 void *mca_pml_ob1_seg_alloc( struct mca_mpool_base_module_t* mpool,
                              size_t* size,
                              mca_mpool_base_registration_t** registration);
- 
+
 void mca_pml_ob1_seg_free( struct mca_mpool_base_module_t* mpool,
                            void* segment );
 
@@ -191,7 +191,7 @@ static int mca_pml_ob1_component_register(void)
     mca_pml_ob1_param_register_int("max_send_per_range", 4, &mca_pml_ob1.max_send_per_range);
 
     mca_pml_ob1_param_register_uint("unexpected_limit", 128, &mca_pml_ob1.unexpected_limit);
- 
+
     mca_pml_ob1.allocator_name = "bucket";
     (void) mca_base_component_var_register(&mca_pml_ob1_component.pmlm_version, "allocator",
                                            "Name of allocator component for unexpected messages",
@@ -218,7 +218,7 @@ static int mca_pml_ob1_component_open(void)
     mca_pml_ob1_output = opal_output_open(NULL);
     opal_output_set_verbosity(mca_pml_ob1_output, mca_pml_ob1_verbose);
 
-    mca_pml_ob1.enabled = false; 
+    mca_pml_ob1.enabled = false;
     return mca_base_framework_open(&ompi_bml_base_framework, 0);
 }
 
@@ -237,7 +237,7 @@ static int mca_pml_ob1_component_close(void)
 
 
 static mca_pml_base_module_t*
-mca_pml_ob1_component_init( int* priority, 
+mca_pml_ob1_component_init( int* priority,
                             bool enable_progress_threads,
                             bool enable_mpi_threads )
 {
@@ -246,7 +246,7 @@ mca_pml_ob1_component_init( int* priority,
     opal_output_verbose( 10, mca_pml_ob1_output,
                          "in ob1, my priority is %d\n", mca_pml_ob1.priority);
 
-    if((*priority) > mca_pml_ob1.priority) { 
+    if((*priority) > mca_pml_ob1.priority) {
         *priority = mca_pml_ob1.priority;
         return NULL;
     }
@@ -266,7 +266,7 @@ mca_pml_ob1_component_init( int* priority,
         return NULL;
     }
 
-    if(OMPI_SUCCESS != mca_bml_base_init( enable_progress_threads, 
+    if(OMPI_SUCCESS != mca_bml_base_init( enable_progress_threads,
                                           enable_mpi_threads)) {
         return NULL;
     }
@@ -289,8 +289,20 @@ int mca_pml_ob1_component_fini(void)
         return rc;
 
     if(!mca_pml_ob1.enabled)
-        return OMPI_SUCCESS; /* never selected.. return success.. */  
+        return OMPI_SUCCESS; /* never selected.. return success.. */
     mca_pml_ob1.enabled = false;  /* not anymore */
+
+    /* return the static receive/send requests to the respective free list and
+     * let the free list handle destruction. */
+    if( NULL != mca_pml_ob1_recvreq ) {
+        opal_free_list_return (&mca_pml_base_recv_requests, (opal_free_list_item_t *) mca_pml_ob1_recvreq);
+        mca_pml_ob1_recvreq = NULL;
+    }
+
+    if( NULL != mca_pml_ob1_sendreq ) {
+        opal_free_list_return (&mca_pml_base_send_requests, (opal_free_list_item_t *) mca_pml_ob1_sendreq);
+        mca_pml_ob1_sendreq = NULL;
+    }
 
     OBJ_DESTRUCT(&mca_pml_ob1.rdma_pending);
     OBJ_DESTRUCT(&mca_pml_ob1.pckt_pending);
@@ -329,11 +341,11 @@ int mca_pml_ob1_component_fini(void)
 
 void *mca_pml_ob1_seg_alloc( struct mca_mpool_base_module_t* mpool,
                              size_t* size,
-                             mca_mpool_base_registration_t** registration) { 
+                             mca_mpool_base_registration_t** registration) {
     return malloc(*size);
 }
 
 void mca_pml_ob1_seg_free( struct mca_mpool_base_module_t* mpool,
-                           void* segment ) { 
+                           void* segment ) {
     free(segment);
 }

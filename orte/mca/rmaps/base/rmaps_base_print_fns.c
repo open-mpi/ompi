@@ -61,7 +61,7 @@ static void buffer_cleanup(void *value)
 {
     int i;
     orte_rmaps_print_buffers_t *ptr;
-    
+
     if (NULL != value) {
         ptr = (orte_rmaps_print_buffers_t*)value;
         for (i=0; i < ORTE_RMAPS_PRINT_NUM_BUFS; i++) {
@@ -74,7 +74,7 @@ static orte_rmaps_print_buffers_t *get_print_buffer(void)
 {
     orte_rmaps_print_buffers_t *ptr;
     int ret, i;
-    
+
     if (!fns_init) {
         /* setup the print_args function */
         if (ORTE_SUCCESS != (ret = opal_tsd_key_create(&print_tsd_key, buffer_cleanup))) {
@@ -83,10 +83,10 @@ static orte_rmaps_print_buffers_t *get_print_buffer(void)
         }
         fns_init = true;
     }
-    
+
     ret = opal_tsd_getspecific(print_tsd_key, (void**)&ptr);
     if (OPAL_SUCCESS != ret) return NULL;
-    
+
     if (NULL == ptr) {
         ptr = (orte_rmaps_print_buffers_t*)malloc(sizeof(orte_rmaps_print_buffers_t));
         for (i=0; i < ORTE_RMAPS_PRINT_NUM_BUFS; i++) {
@@ -95,7 +95,7 @@ static orte_rmaps_print_buffers_t *get_print_buffer(void)
         ptr->cntr = 0;
         ret = opal_tsd_setspecific(print_tsd_key, (void*)ptr);
     }
-    
+
     return (orte_rmaps_print_buffers_t*) ptr;
 }
 

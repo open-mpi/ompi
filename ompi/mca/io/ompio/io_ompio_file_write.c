@@ -5,15 +5,15 @@
  *  Copyright (c) 2004-2005 The University of Tennessee and The University
  *                          of Tennessee Research Foundation.  All rights
  *                          reserved.
- *  Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ *  Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                          University of Stuttgart.  All rights reserved.
  *  Copyright (c) 2004-2005 The Regents of the University of California.
  *                          All rights reserved.
- *  Copyright (c) 2008-2014 University of Houston. All rights reserved.
+ *  Copyright (c) 2008-2015 University of Houston. All rights reserved.
  *  $COPYRIGHT$
- *  
+ *
  *  Additional copyrights may follow
- *  
+ *
  *  $HEADER$
  */
 
@@ -36,13 +36,13 @@
 #include "math.h"
 #include <unistd.h>
 
-/* Read and write routines are split into two interfaces. 
-**   The 
-**   mca_io_ompio_file_read/write[_at] 
-**  
+/* Read and write routines are split into two interfaces.
+**   The
+**   mca_io_ompio_file_read/write[_at]
+**
 ** routines are the ones registered with the ompio modules.
 ** The
-** 
+**
 ** ompio_io_ompio_file_read/write[_at]
 **
 ** routesin are used e.g. from the shared file pointer modules.
@@ -83,7 +83,7 @@ int ompio_io_ompio_file_write (mca_io_ompio_file_t *fh,
     struct iovec *decoded_iov = NULL;
     size_t bytes_per_cycle=0;
     size_t total_bytes_written = 0;
-    size_t max_data=0, real_bytes_written=0; 
+    size_t max_data=0, real_bytes_written=0;
     ssize_t ret_code=0;
     int i = 0; /* index into the decoded iovec of the buffer */
     int j = 0; /* index into the file view iovec */
@@ -95,15 +95,20 @@ int ompio_io_ompio_file_write (mca_io_ompio_file_t *fh,
 	return ret;
     }
 
-    ompi_io_ompio_decode_datatype (fh, 
-                                   datatype, 
-                                   count, 
-                                   buf, 
-                                   &max_data, 
-                                   &decoded_iov, 
+    ompi_io_ompio_decode_datatype (fh,
+                                   datatype,
+                                   count,
+                                   buf,
+                                   &max_data,
+                                   &decoded_iov,
                                    &iov_count);
 
-    bytes_per_cycle = mca_io_ompio_cycle_buffer_size;
+    if ( -1 == mca_io_ompio_cycle_buffer_size ) {
+	bytes_per_cycle = max_data;
+    }
+    else {
+	bytes_per_cycle = mca_io_ompio_cycle_buffer_size;
+    }
     cycles = ceil((float)max_data/bytes_per_cycle);
 
 #if 0
@@ -112,15 +117,15 @@ int ompio_io_ompio_file_write (mca_io_ompio_file_t *fh,
 
     j = fh->f_index_in_file_view;
     for (index = 0; index < cycles; index++) {
-	mca_io_ompio_build_io_array ( fh, 
-					 index, 
-					 cycles, 
-					 bytes_per_cycle, 
-					 max_data, 
-					 iov_count, 
-					 decoded_iov, 
-					 &i, 
-					 &j, 
+	mca_io_ompio_build_io_array ( fh,
+					 index,
+					 cycles,
+					 bytes_per_cycle,
+					 max_data,
+					 iov_count,
+					 decoded_iov,
+					 &i,
+					 &j,
 					 &total_bytes_written);
 
         if (fh->f_num_of_io_entries) {
@@ -215,8 +220,9 @@ int ompio_io_ompio_file_iwrite (mca_io_ompio_file_t *fh,
 
     ompio_req = OBJ_NEW(mca_ompio_request_t);
     ompio_req->req_type = MCA_OMPIO_REQUEST_WRITE;
+    ompio_req->req_ompi.req_state = OMPI_REQUEST_ACTIVE;
 
-    if ( 0 == count ) {
+  if ( 0 == count ) {
 	ompi_request_complete (&ompio_req->req_ompi, 0);
 	ompio_req->req_ompi.req_status.MPI_ERROR = OMPI_SUCCESS;
 	ompio_req->req_ompi.req_status._ucount = 0;
@@ -228,43 +234,43 @@ int ompio_io_ompio_file_iwrite (mca_io_ompio_file_t *fh,
 
 	uint32_t iov_count = 0;
 	struct iovec *decoded_iov = NULL;
-	size_t max_data = 0; 
+	size_t max_data = 0;
 	size_t total_bytes_written =0;
 	int i = 0; /* index into the decoded iovec of the buffer */
 	int j = 0; /* index into the file vie iovec */
 
-	ompi_io_ompio_decode_datatype (fh, 
-				       datatype, 
-				       count, 
-				       buf, 
-				       &max_data, 
-				       &decoded_iov, 
+	ompi_io_ompio_decode_datatype (fh,
+				       datatype,
+				       count,
+				       buf,
+				       &max_data,
+				       &decoded_iov,
 				       &iov_count);
 	j = fh->f_index_in_file_view;
 
 	/* Non blocking operations have to occur in a single cycle */
-	mca_io_ompio_build_io_array ( fh, 
+	mca_io_ompio_build_io_array ( fh,
 				      0,         // index of current cycle iteration
 				      1,         // number of cycles
-				      max_data,  // setting bytes_per_cycle to max_data 
-				      max_data, 
-				      iov_count, 
-				      decoded_iov, 
-				      &i, 
-				      &j, 
+				      max_data,  // setting bytes_per_cycle to max_data
+				      max_data,
+				      iov_count,
+				      decoded_iov,
+				      &i,
+				      &j,
 				      &total_bytes_written);
-	
+
         if (fh->f_num_of_io_entries) {
 	  fh->f_fbtl->fbtl_ipwritev (fh, (ompi_request_t *) ompio_req);
         }
-	
+
 	if ( false == mca_io_ompio_progress_is_registered ) {
 	    // Lazy initialization of progress function to minimize impact
 	    // on other ompi functionality in case its not used.
 	    opal_progress_register (mca_io_ompio_component_progress);
 	    mca_io_ompio_progress_is_registered=true;
         }
-	
+
         fh->f_num_of_io_entries = 0;
         if (NULL != fh->f_io_array) {
             free (fh->f_io_array);
@@ -279,7 +285,7 @@ int ompio_io_ompio_file_iwrite (mca_io_ompio_file_t *fh,
 	// This fbtl does not support non-blocking write operations
 	ompi_status_public_t status;
 	ret = ompio_io_ompio_file_write(fh,buf,count,datatype, &status);
-	
+
 	ompi_request_complete (&ompio_req->req_ompi, 0);
 	ompio_req->req_ompi.req_status.MPI_ERROR = ret;
 	ompio_req->req_ompi.req_status._ucount = status._ucount;
@@ -298,7 +304,7 @@ int mca_io_ompio_file_iwrite_at (ompi_file_t *fh,
 {
     int ret = OMPI_SUCCESS;
     mca_io_ompio_data_t *data;
-        
+
     data = (mca_io_ompio_data_t *) fh->f_io_selected_data;
     ret = ompio_io_ompio_file_iwrite_at(&data->ompio_fh,offset,buf,count,datatype,request);
 
@@ -326,9 +332,9 @@ int ompio_io_ompio_file_iwrite_at (mca_io_ompio_file_t *fh,
     /* An explicit offset file operation is not suppsed to modify
     ** the internal file pointer. So reset the pointer
     ** to the previous value
-    ** It is OK to reset the position already here, althgouth 
+    ** It is OK to reset the position already here, althgouth
     ** the operation might still be pending/ongoing, since
-    ** the entire array of <offset, length, memaddress> have 
+    ** the entire array of <offset, length, memaddress> have
     ** already been constructed in the file_iwrite operation
     */
     ompi_io_ompio_set_explicit_offset (fh, prev_offset);
@@ -339,9 +345,9 @@ int ompio_io_ompio_file_iwrite_at (mca_io_ompio_file_t *fh,
 /* Helper function used by both read and write operations     */
 /**************************************************************/
 
-int mca_io_ompio_build_io_array ( mca_io_ompio_file_t *fh, int index, int cycles, 
-				  size_t bytes_per_cycle, int max_data, uint32_t iov_count, 
-				  struct iovec *decoded_iov, int *ii, int *jj, size_t *tbw ) 
+int mca_io_ompio_build_io_array ( mca_io_ompio_file_t *fh, int index, int cycles,
+				  size_t bytes_per_cycle, int max_data, uint32_t iov_count,
+				  struct iovec *decoded_iov, int *ii, int *jj, size_t *tbw )
 {
     OPAL_PTRDIFF_TYPE disp;
     int block = 1;
@@ -352,7 +358,7 @@ int mca_io_ompio_build_io_array ( mca_io_ompio_file_t *fh, int index, int cycles
     int k = 0; /* index into the io_array */
     int i = *ii;
     int j = *jj;
-    
+
     sum_previous_length = fh->f_position_in_file_view;
 
     if ((index == cycles-1) && (max_data % bytes_per_cycle)) {
@@ -361,49 +367,49 @@ int mca_io_ompio_build_io_array ( mca_io_ompio_file_t *fh, int index, int cycles
     else {
 	bytes_to_write_in_cycle = bytes_per_cycle;
     }
-    
-    fh->f_io_array = (mca_io_ompio_io_array_t *)malloc 
+
+    fh->f_io_array = (mca_io_ompio_io_array_t *)malloc
 	(OMPIO_IOVEC_INITIAL_SIZE * sizeof (mca_io_ompio_io_array_t));
     if (NULL == fh->f_io_array) {
 	opal_output(1, "OUT OF MEMORY\n");
 	return OMPI_ERR_OUT_OF_RESOURCE;
     }
-    
+
     while (bytes_to_write_in_cycle) {
 	/* reallocate if needed  */
 	if (OMPIO_IOVEC_INITIAL_SIZE*block <= k) {
 	    block ++;
-	    fh->f_io_array = (mca_io_ompio_io_array_t *)realloc 
-		(fh->f_io_array, OMPIO_IOVEC_INITIAL_SIZE * 
+	    fh->f_io_array = (mca_io_ompio_io_array_t *)realloc
+		(fh->f_io_array, OMPIO_IOVEC_INITIAL_SIZE *
 		 block * sizeof (mca_io_ompio_io_array_t));
 	    if (NULL == fh->f_io_array) {
 		opal_output(1, "OUT OF MEMORY\n");
 		return OMPI_ERR_OUT_OF_RESOURCE;
 	    }
 	}
-	
-	if (decoded_iov[i].iov_len - 
+
+	if (decoded_iov[i].iov_len -
 	    (total_bytes_written - sum_previous_counts) <= 0) {
 	    sum_previous_counts += decoded_iov[i].iov_len;
 	    i = i + 1;
 	}
-	
-	disp = (OPAL_PTRDIFF_TYPE)decoded_iov[i].iov_base + 
+
+	disp = (OPAL_PTRDIFF_TYPE)decoded_iov[i].iov_base +
 	    (total_bytes_written - sum_previous_counts);
 	fh->f_io_array[k].memory_address = (IOVBASE_TYPE *)disp;
-        
-	if (decoded_iov[i].iov_len - 
-	    (total_bytes_written - sum_previous_counts) >= 
+
+	if (decoded_iov[i].iov_len -
+	    (total_bytes_written - sum_previous_counts) >=
 	    bytes_to_write_in_cycle) {
 	    fh->f_io_array[k].length = bytes_to_write_in_cycle;
 	}
 	else {
-	    fh->f_io_array[k].length =  decoded_iov[i].iov_len - 
+	    fh->f_io_array[k].length =  decoded_iov[i].iov_len -
 		(total_bytes_written - sum_previous_counts);
 	}
-	
-	if (! (fh->f_flags & OMPIO_CONTIGUOUS_FVIEW)) { 
-	    if (fh->f_decoded_iov[j].iov_len - 
+
+	if (! (fh->f_flags & OMPIO_CONTIGUOUS_FVIEW)) {
+	    if (fh->f_decoded_iov[j].iov_len -
 		(fh->f_total_bytes - sum_previous_length) <= 0) {
 		sum_previous_length += fh->f_decoded_iov[j].iov_len;
 		j = j + 1;
@@ -416,21 +422,21 @@ int mca_io_ompio_build_io_array ( mca_io_ompio_file_t *fh, int index, int cycles
 		    fh->f_total_bytes = 0;
 		}
 	    }
-	} 
-	
-	disp = (OPAL_PTRDIFF_TYPE)fh->f_decoded_iov[j].iov_base + 
+	}
+
+	disp = (OPAL_PTRDIFF_TYPE)fh->f_decoded_iov[j].iov_base +
 	    (fh->f_total_bytes - sum_previous_length);
 	fh->f_io_array[k].offset = (IOVBASE_TYPE *)(intptr_t)(disp + fh->f_offset);
-	
-	if (! (fh->f_flags & OMPIO_CONTIGUOUS_FVIEW)) { 
-	    if (fh->f_decoded_iov[j].iov_len - 
-		(fh->f_total_bytes - sum_previous_length) 
+
+	if (! (fh->f_flags & OMPIO_CONTIGUOUS_FVIEW)) {
+	    if (fh->f_decoded_iov[j].iov_len -
+		(fh->f_total_bytes - sum_previous_length)
 		< fh->f_io_array[k].length) {
-		fh->f_io_array[k].length = fh->f_decoded_iov[j].iov_len - 
+		fh->f_io_array[k].length = fh->f_decoded_iov[j].iov_len -
 		    (fh->f_total_bytes - sum_previous_length);
 	    }
 	}
-	
+
 	total_bytes_written += fh->f_io_array[k].length;
 	fh->f_total_bytes += fh->f_io_array[k].length;
 	bytes_to_write_in_cycle -= fh->f_io_array[k].length;
@@ -439,12 +445,12 @@ int mca_io_ompio_build_io_array ( mca_io_ompio_file_t *fh, int index, int cycles
     fh->f_position_in_file_view = sum_previous_length;
     fh->f_index_in_file_view = j;
     fh->f_num_of_io_entries = k;
-    
+
 #if 0
     if (fh->f_rank == 0) {
 	int d;
 	printf("*************************** %d\n", fh->f_num_of_io_entries);
-	
+
 	for (d=0 ; d<fh->f_num_of_io_entries ; d++) {
 	    printf(" ADDRESS: %p  OFFSET: %p   LENGTH: %d\n",
 		   fh->f_io_array[d].memory_address,
@@ -475,12 +481,12 @@ int mca_io_ompio_file_write_all (ompi_file_t *fh,
     data = (mca_io_ompio_data_t *) fh->f_io_selected_data;
 
     ret = data->ompio_fh.
-        f_fcoll->fcoll_file_write_all (&data->ompio_fh, 
-                                       buf, 
-                                       count, 
+        f_fcoll->fcoll_file_write_all (&data->ompio_fh,
+                                       buf,
+                                       count,
                                        datatype,
                                        status);
-    
+
     if ( MPI_STATUS_IGNORE != status ) {
 	size_t size;
 
@@ -507,6 +513,36 @@ int mca_io_ompio_file_write_at_all (ompi_file_t *fh,
     return ret;
 }
 
+int mca_io_ompio_file_iwrite_all (ompi_file_t *fh,
+				  void *buf,
+				  int count,
+				  struct ompi_datatype_t *datatype,
+				  ompi_request_t **request)
+{
+    int ret = OMPI_SUCCESS;
+    mca_io_ompio_data_t *data=NULL;
+    mca_io_ompio_file_t *fp=NULL;
+
+    data = (mca_io_ompio_data_t *) fh->f_io_selected_data;
+    fp = &data->ompio_fh;
+
+    if ( NULL != fp->f_fcoll->fcoll_file_iwrite_all ) {
+	ret = fp->f_fcoll->fcoll_file_iwrite_all (&data->ompio_fh,
+						  buf,
+						  count,
+						  datatype,
+						  request);
+    }
+    else {
+	/* this fcoll component does not support non-blocking
+	   collective I/O operations. WE fake it with
+	   individual non-blocking I/O operations. */
+	ret = ompio_io_ompio_file_iwrite ( fp, buf, count, datatype, request );
+    }
+
+    return ret;
+}
+
 int ompio_io_ompio_file_write_at_all (mca_io_ompio_file_t *fh,
 				      OMPI_MPI_OFFSET_TYPE offset,
 				      void *buf,
@@ -528,6 +564,57 @@ int ompio_io_ompio_file_write_at_all (mca_io_ompio_file_t *fh,
     ompi_io_ompio_set_explicit_offset (fh, prev_offset);
     return ret;
 }
+
+int mca_io_ompio_file_iwrite_at_all (ompi_file_t *fh,
+				     OMPI_MPI_OFFSET_TYPE offset,
+				     void *buf,
+				     int count,
+				     struct ompi_datatype_t *datatype,
+				     ompi_request_t **request)
+{
+    int ret = OMPI_SUCCESS;
+    mca_io_ompio_data_t *data;
+
+    data = (mca_io_ompio_data_t *) fh->f_io_selected_data;
+    ret = ompio_io_ompio_file_iwrite_at_all ( &data->ompio_fh, offset, buf, count, datatype, request );
+    return ret;
+}
+
+int ompio_io_ompio_file_iwrite_at_all (mca_io_ompio_file_t *fp,
+				       OMPI_MPI_OFFSET_TYPE offset,
+				       void *buf,
+				       int count,
+				       struct ompi_datatype_t *datatype,
+				       ompi_request_t **request)
+{
+
+    int ret = OMPI_SUCCESS;
+    OMPI_MPI_OFFSET_TYPE prev_offset;
+
+    ompio_io_ompio_file_get_position (fp, &prev_offset );
+
+    ompi_io_ompio_set_explicit_offset (fp, offset);
+
+    if ( NULL != fp->f_fcoll->fcoll_file_iwrite_all ) {
+	ret = fp->f_fcoll->fcoll_file_iwrite_all (fp,
+						  buf,
+						  count,
+						  datatype,
+						  request);
+    }
+    else {
+	/* this fcoll component does not support non-blocking
+	   collective I/O operations. WE fake it with
+	   individual non-blocking I/O operations. */
+	ret = ompio_io_ompio_file_iwrite ( fp, buf, count, datatype, request );
+    }
+
+    ompi_io_ompio_set_explicit_offset (fp, prev_offset);
+    return ret;
+}
+
+
+
 
 
 /* Infrastructure for shared file pointer operations */
@@ -659,86 +746,23 @@ int mca_io_ompio_file_write_ordered_end (ompi_file_t *fp,
 
 /* Split collectives . Not really used but infrastructure is in place */
 /**********************************************************************/
-int mca_io_ompio_file_write_at_all_begin (ompi_file_t *fh,
-					  OMPI_MPI_OFFSET_TYPE offset,
-					  void *buf,
-					  int count,
-					  struct ompi_datatype_t *datatype)
-{
-    int ret = OMPI_SUCCESS;
-    mca_io_ompio_data_t *data;
-
-    data = (mca_io_ompio_data_t *) fh->f_io_selected_data;
-    ret = ompio_io_ompio_file_write_at_all_begin(&data->ompio_fh,offset,buf,count,datatype);
-
-    return ret;
-}
-
-int ompio_io_ompio_file_write_at_all_begin (mca_io_ompio_file_t *fh,
-					    OMPI_MPI_OFFSET_TYPE offset,
-					    void *buf,
-					    int count,
-					    struct ompi_datatype_t *datatype)
-{
-    int ret = OMPI_SUCCESS;
-    OMPI_MPI_OFFSET_TYPE prev_offset;
-    ompio_io_ompio_file_get_position (fh, &prev_offset );
-
-    ompi_io_ompio_set_explicit_offset (fh, offset);
-    ret = fh->f_fcoll->fcoll_file_write_all_begin (fh,
-                                                   buf,
-                                                   count,
-                                                   datatype);
-
-    /* It is OK to reset the position already here, althgouth 
-    ** the operation might still be pending/ongoing, since
-    ** the entire array of <offset, length, memaddress> have 
-    ** already been constructed in the file_write_all_begin operation
-    */
-    ompi_io_ompio_set_explicit_offset (fh, prev_offset);
-    return ret;
-}
-
-int mca_io_ompio_file_write_at_all_end (ompi_file_t *fh,
-					void *buf,
-					ompi_status_public_t * status)
-{
-    int ret = OMPI_SUCCESS;
-    mca_io_ompio_data_t *data;
-
-    data = (mca_io_ompio_data_t *) fh->f_io_selected_data;
-    ret = ompio_io_ompio_file_write_at_all_end(&data->ompio_fh,buf,status);
-
-    return ret;
-}
-
-int ompio_io_ompio_file_write_at_all_end (mca_io_ompio_file_t *fh,
-					  void *buf,
-					  ompi_status_public_t * status)
-{
-    int ret = OMPI_SUCCESS;
-    
-    ret = fh->f_fcoll->fcoll_file_write_all_end (fh,
-                                                 buf,
-                                                 status);
-
-    return ret;
-}
-
 int mca_io_ompio_file_write_all_begin (ompi_file_t *fh,
 				       void *buf,
 				       int count,
 				       struct ompi_datatype_t *datatype)
 {
     int ret = OMPI_SUCCESS;
+    mca_io_ompio_file_t *fp;
     mca_io_ompio_data_t *data;
 
     data = (mca_io_ompio_data_t *) fh->f_io_selected_data;
-    ret = data->ompio_fh.
-        f_fcoll->fcoll_file_write_all_begin (&data->ompio_fh, 
-                                            buf, 
-                                            count,
-                                            datatype);
+    fp = &data->ompio_fh;
+    if ( true == fp->f_split_coll_in_use ) {
+	printf("Only one split collective I/O operation allowed per file handle at any given point in time!\n");
+	return MPI_ERR_OTHER;
+    }
+    ret = mca_io_ompio_file_iwrite_all ( fh, buf, count, datatype, &fp->f_split_coll_req );
+    fp->f_split_coll_in_use = true;
 
     return ret;
 }
@@ -748,14 +772,57 @@ int mca_io_ompio_file_write_all_end (ompi_file_t *fh,
 				     ompi_status_public_t *status)
 {
     int ret = OMPI_SUCCESS;
+    mca_io_ompio_file_t *fp;
     mca_io_ompio_data_t *data;
 
     data = (mca_io_ompio_data_t *) fh->f_io_selected_data;
-    ret = data->ompio_fh.
-        f_fcoll->fcoll_file_write_all_end (&data->ompio_fh, 
-                                          buf, 
-                                          status);
-    
+    fp = &data->ompio_fh;
+    ret = ompi_request_wait ( &fp->f_split_coll_req, status );
+
+    /* remove the flag again */
+    fp->f_split_coll_in_use = false;
     return ret;
 }
 
+
+int mca_io_ompio_file_write_at_all_begin (ompi_file_t *fh,
+					  OMPI_MPI_OFFSET_TYPE offset,
+					  void *buf,
+					  int count,
+					  struct ompi_datatype_t *datatype)
+{
+    int ret = OMPI_SUCCESS;
+    mca_io_ompio_data_t *data=NULL;
+    mca_io_ompio_file_t *fp=NULL;
+
+    data = (mca_io_ompio_data_t *) fh->f_io_selected_data;
+    fp = &data->ompio_fh;
+
+    if ( true == fp->f_split_coll_in_use ) {
+	printf("Only one split collective I/O operation allowed per file handle at any given point in time!\n");
+	return MPI_ERR_REQUEST;
+    }
+    ret = ompio_io_ompio_file_iwrite_at_all ( fp, offset, buf, count, datatype, &fp->f_split_coll_req );
+    fp->f_split_coll_in_use = true;
+
+    return ret;
+}
+
+
+int mca_io_ompio_file_write_at_all_end (ompi_file_t *fh,
+					void *buf,
+					ompi_status_public_t * status)
+{
+    int ret = OMPI_SUCCESS;
+    mca_io_ompio_data_t *data;
+    mca_io_ompio_file_t *fp=NULL;
+    
+    data = (mca_io_ompio_data_t *) fh->f_io_selected_data;
+    fp = &data->ompio_fh;
+    ret = ompi_request_wait ( &fp->f_split_coll_req, status );
+
+    /* remove the flag again */
+    fp->f_split_coll_in_use = false;
+
+    return ret;
+}

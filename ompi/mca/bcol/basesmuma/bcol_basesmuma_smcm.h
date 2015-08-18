@@ -6,9 +6,9 @@
  * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -86,7 +86,7 @@ typedef struct bcol_basesmuma_smcm_proc_item_t bcol_basesmuma_smcm_proc_item_t;
 OBJ_CLASS_DECLARATION(bcol_basesmuma_smcm_proc_item_t);
 
 
-/* allocate shared memory file 
+/* allocate shared memory file
  *   in_ptr - pointer to preallocated memory (if NULL, this will be mmaped)
  *   alignment - region memory alignment
  *   file name - fully qualified backing file name
@@ -97,7 +97,7 @@ OMPI_DECLSPEC extern bcol_basesmuma_smcm_mmap_t *bcol_basesmuma_smcm_mem_reg(voi
                 size_t alignment,
                 char* file_name);
 
-OMPI_DECLSPEC extern bcol_basesmuma_smcm_mmap_t* bcol_basesmuma_smcm_create_mmap(int fd, 
+OMPI_DECLSPEC extern bcol_basesmuma_smcm_mmap_t* bcol_basesmuma_smcm_create_mmap(int fd,
         size_t size, char *file_name,
         size_t size_ctl_structure,
         size_t data_seg_alignment);

@@ -19,7 +19,7 @@ BEGIN_C_DECLS
 
 int bcol_ptpcoll_bcast_init(mca_bcol_base_module_t *super);
 
-int bcol_ptpcoll_bcast_k_nomial_anyroot (bcol_function_args_t *input_args, 
+int bcol_ptpcoll_bcast_k_nomial_anyroot (bcol_function_args_t *input_args,
         struct mca_bcol_base_function_t *const_args);
 int bcol_ptpcoll_bcast_k_nomial_anyroot_progress(bcol_function_args_t *input_args,
         struct mca_bcol_base_function_t *const_args);
@@ -175,10 +175,10 @@ do {                                                                            
     (module->pow_2 == module->ml_mem.ml_buf_desc[i].radix_mask_pow)
 
 /* inline functions */
-static inline __opal_attribute_always_inline__ 
+static inline __opal_attribute_always_inline__
 int bcol_ptpcoll_bcast_binomial_scatter_gatther_send_extra(
         mca_bcol_ptpcoll_module_t *ptpcoll_module,
-        void *data_buffer, int count, int tag, 
+        void *data_buffer, int count, int tag,
         int extra_peer, ompi_communicator_t *comm,
         int *active_requests, ompi_request_t **requests)
 {
@@ -188,7 +188,7 @@ int bcol_ptpcoll_bcast_binomial_scatter_gatther_send_extra(
 
     /* tag is -1 already */
     /* send the all data to your extra peer */
-    PTPCOLL_VERBOSE(10, ("bcol_ptpcoll_bcast_binomial_scatter_gatther_send_extra to %d tag %d", 
+    PTPCOLL_VERBOSE(10, ("bcol_ptpcoll_bcast_binomial_scatter_gatther_send_extra to %d tag %d",
                 extra_peer, tag));
     rc = MCA_PML_CALL(isend(data_buffer, count, MPI_BYTE,
                 group_list[extra_peer], tag,
@@ -211,9 +211,9 @@ int bcol_ptpcoll_bcast_binomial_scatter_gatther_send_extra(
     return BCOL_FN_COMPLETE;
 }
 
-static inline __opal_attribute_always_inline__ 
+static inline __opal_attribute_always_inline__
 int bcol_ptpcoll_send_n_extra(mca_bcol_ptpcoll_module_t *ptpcoll_module,
-        void *data_buffer, int count, int tag, 
+        void *data_buffer, int count, int tag,
         int *extra_peers, int num_peers, int skip,
         ompi_communicator_t *comm,
         int *active_requests, ompi_request_t **requests)
@@ -225,7 +225,7 @@ int bcol_ptpcoll_send_n_extra(mca_bcol_ptpcoll_module_t *ptpcoll_module,
 
     /* send the all data to your extra peer */
     for (i = 0; i < num_peers; i++) {
-        PTPCOLL_VERBOSE(10, ("send_n_extra to %d tag %d", 
+        PTPCOLL_VERBOSE(10, ("send_n_extra to %d tag %d",
                     extra_peers[i], tag));
         if (extra_peers[i] == skip) {
             PTPCOLL_VERBOSE(10, ("SKIP"));
@@ -254,22 +254,22 @@ int bcol_ptpcoll_send_n_extra(mca_bcol_ptpcoll_module_t *ptpcoll_module,
     return BCOL_FN_COMPLETE;
 }
 
-static inline __opal_attribute_always_inline__ 
+static inline __opal_attribute_always_inline__
 int bcol_ptpcoll_bcast_binomial_gather_anyroot(mca_bcol_ptpcoll_module_t *ptpcoll_module,
         int buffer_index, void *data_buffer, int count, int base_block_size)
 {
     int rc;
     int completed = 0; /* not completed */
-    int *active_requests = 
+    int *active_requests =
         &(ptpcoll_module->ml_mem.ml_buf_desc[buffer_index].active_requests);
     int i;
-    int *iteration = 
+    int *iteration =
         &ptpcoll_module->ml_mem.ml_buf_desc[buffer_index].iteration;
     ompi_communicator_t* comm = ptpcoll_module->super.sbgp_partner_module->group_comm;
-    ompi_request_t **requests = 
+    ompi_request_t **requests =
         ptpcoll_module->ml_mem.ml_buf_desc[buffer_index].requests;
     int my_group_index = ptpcoll_module->super.sbgp_partner_module->my_index;
-    void *curr_data_sbuffer = NULL, 
+    void *curr_data_sbuffer = NULL,
          *curr_data_rbuffer = NULL;
     int radix_mask_pow = ptpcoll_module->ml_mem.ml_buf_desc[buffer_index].radix_mask_pow;
     int delta;
@@ -282,13 +282,13 @@ int bcol_ptpcoll_bcast_binomial_gather_anyroot(mca_bcol_ptpcoll_module_t *ptpcol
                 1 << ptpcoll_module->pow_2));
 
     /* we assume the iteration #iteration already was completed with probe */
-    for (i = ptpcoll_module->ml_mem.ml_buf_desc[buffer_index].iteration; 
+    for (i = ptpcoll_module->ml_mem.ml_buf_desc[buffer_index].iteration;
             i < ptpcoll_module->pow_2; i++) {
         int pow2 = 1 << i;
         int peer_index = my_group_index ^ pow2;
         int comm_rank  = group_list[peer_index];
-        int slen, rlen, 
-            send_offset, 
+        int slen, rlen,
+            send_offset,
             recv_offset;
 
         if (i > radix_mask_pow) {
@@ -313,7 +313,7 @@ int bcol_ptpcoll_bcast_binomial_gather_anyroot(mca_bcol_ptpcoll_module_t *ptpcol
                             recv_offset,
                             rlen,
                             comm_rank));
-                rc = MCA_PML_CALL(irecv(curr_data_rbuffer, rlen, MPI_BYTE, 
+                rc = MCA_PML_CALL(irecv(curr_data_rbuffer, rlen, MPI_BYTE,
                             comm_rank, tag, comm, &requests[*active_requests]));
                 if( OMPI_SUCCESS != rc ) {
                     PTPCOLL_VERBOSE(10, ("Failed to receive data"));
@@ -376,7 +376,7 @@ int bcol_ptpcoll_bcast_binomial_gather_anyroot(mca_bcol_ptpcoll_module_t *ptpcol
                         recv_offset,
                         rlen,
                         comm_rank));
-            rc = MCA_PML_CALL(irecv(curr_data_rbuffer, rlen, MPI_BYTE, 
+            rc = MCA_PML_CALL(irecv(curr_data_rbuffer, rlen, MPI_BYTE,
                         comm_rank, tag, comm, &(requests[*active_requests])));
             if( OMPI_SUCCESS != rc ) {
                 PTPCOLL_VERBOSE(10, ("Failed to receive data"));
@@ -431,7 +431,7 @@ int bcol_ptpcoll_bcast_binomial_gather_anyroot(mca_bcol_ptpcoll_module_t *ptpcol
     return BCOL_FN_COMPLETE;
 }
 
-static inline __opal_attribute_always_inline__ 
+static inline __opal_attribute_always_inline__
 int bcol_ptpcoll_bcast_binomial_probe_and_scatter_anyroot(mca_bcol_ptpcoll_module_t *ptpcoll_module,
         int buffer_index, void *data_buffer, int count, int base_block_size)
 {
@@ -441,13 +441,13 @@ int bcol_ptpcoll_bcast_binomial_probe_and_scatter_anyroot(mca_bcol_ptpcoll_modul
     int completed = 0; /* not completed */
     int comm_root;
     int i;
-    int *radix_mask_pow = 
+    int *radix_mask_pow =
         &(ptpcoll_module->ml_mem.ml_buf_desc[buffer_index].radix_mask_pow);
-    int *active_requests = 
+    int *active_requests =
         &(ptpcoll_module->ml_mem.ml_buf_desc[buffer_index].active_requests);
     ompi_communicator_t* comm = ptpcoll_module->super.sbgp_partner_module->group_comm;
     ompi_status_public_t status;
-    ompi_request_t **requests = 
+    ompi_request_t **requests =
         ptpcoll_module->ml_mem.ml_buf_desc[buffer_index].requests;
     int pow2_group_size = ptpcoll_module->pow_2num;
     int pow2_distance;
@@ -455,16 +455,16 @@ int bcol_ptpcoll_bcast_binomial_probe_and_scatter_anyroot(mca_bcol_ptpcoll_modul
     int my_group_index = ptpcoll_module->super.sbgp_partner_module->my_index;
     int group_root_index = 0;
     void *curr_data_buffer = NULL;
-    int tag = 
+    int tag =
         ptpcoll_module->ml_mem.ml_buf_desc[buffer_index].tag;
     int recv_count = 0;
-    int *coll_status = 
+    int *coll_status =
         &ptpcoll_module->ml_mem.ml_buf_desc[buffer_index].status;
 
     assert(0 == *active_requests);
 
     PTPCOLL_VERBOSE(10, ("Running bcol_ptpcoll_bcast_binomial_probe_and_scatter_anyroot"));
-    for (i = 0; i < cm->num_to_probe && 
+    for (i = 0; i < cm->num_to_probe &&
             0 == completed; i++) {
         MCA_PML_CALL(iprobe(MPI_ANY_SOURCE, tag,
                     comm, &completed, &status));
@@ -487,7 +487,7 @@ int bcol_ptpcoll_bcast_binomial_probe_and_scatter_anyroot(mca_bcol_ptpcoll_modul
     /* For proxy we have to check if we got something from extra node */
     if (PTPCOLL_PROXY & ptpcoll_module->pow_2type) {
         if (group_list[ptpcoll_module->proxy_extra_index] == comm_root) {
-            PTPCOLL_VERBOSE(9, ("IPROBE was matched, root of the data on communicator is extra node %d", 
+            PTPCOLL_VERBOSE(9, ("IPROBE was matched, root of the data on communicator is extra node %d",
                         comm_root));
             /* scatter the data among other peer in the pow2 group */
             *radix_mask_pow =  ptpcoll_module->pow_2;
@@ -497,26 +497,26 @@ int bcol_ptpcoll_bcast_binomial_probe_and_scatter_anyroot(mca_bcol_ptpcoll_modul
             recv_count = count;
             goto PR_SCATTHER;
         }
-    } 
+    }
 
     /* Find group index for communicator root of the data */
     group_root_index = get_group_index_and_distance_for_binomial
         (my_group_index, comm_root, pow2_group_size, group_list, &pow2_distance);
     if (OPAL_UNLIKELY(group_root_index < 0)) {
-        PTPCOLL_ERROR(("Fatal error, no group root index found, my id %d, pow2_g_size %d comm_root %d", 
+        PTPCOLL_ERROR(("Fatal error, no group root index found, my id %d, pow2_g_size %d comm_root %d",
                     my_group_index, pow2_group_size, comm_root));
         return OMPI_ERROR;
     }
 
-    PTPCOLL_VERBOSE(10, ("Group root index is %d distance is %d", 
+    PTPCOLL_VERBOSE(10, ("Group root index is %d distance is %d",
                 group_root_index, pow2_distance));
 
     /* Use group_root_index to calculate the */
 
     /* Post receive that will fetch the data */
-    /* Pasha: Who is packing data ? 
-       Should I assume that we get contiguous buffer ? 
-       Or should I pack by myself 
+    /* Pasha: Who is packing data ?
+       Should I assume that we get contiguous buffer ?
+       Or should I pack by myself
        ===================================================================================================
        === On this stage I assume that data is contiguous. So I use MPI_BYTE datatype and COUNT = size ===
        ===================================================================================================
@@ -526,7 +526,7 @@ int bcol_ptpcoll_bcast_binomial_probe_and_scatter_anyroot(mca_bcol_ptpcoll_modul
 
     my_left_boundary_rank = my_group_index & ((~(int)0) << pow2_distance );
 
-    curr_data_buffer = (void *)((unsigned char *)data_buffer + 
+    curr_data_buffer = (void *)((unsigned char *)data_buffer +
             (size_t) base_block_size * my_left_boundary_rank);
 
     *radix_mask_pow = pow2_distance;
@@ -536,11 +536,11 @@ int bcol_ptpcoll_bcast_binomial_probe_and_scatter_anyroot(mca_bcol_ptpcoll_modul
 PR_SCATTHER:
     PTPCOLL_VERBOSE(10, ("Bcast, receive data from %d[%d], "
                 "recv_count %d, tag %d, addr %p, offset %d, pow2_distace %d",
-                comm_root, group_root_index, recv_count, 
-                tag, curr_data_buffer, 
+                comm_root, group_root_index, recv_count,
+                tag, curr_data_buffer,
                 my_group_index * base_block_size, pow2_distance));
 
-    rc = MCA_PML_CALL(recv(curr_data_buffer, recv_count, MPI_BYTE, 
+    rc = MCA_PML_CALL(recv(curr_data_buffer, recv_count, MPI_BYTE,
                 comm_root, tag, comm, MPI_STATUS_IGNORE));
     if( OMPI_SUCCESS != rc ) {
         PTPCOLL_VERBOSE(10, ("Failed to receive data"));
@@ -554,20 +554,20 @@ PR_SCATTHER:
     K_NOMIAL_ROOT_BCAST_NB_BINOMIAL_SCATTER(
             pow2_distance,
             my_group_index, group_size, group_list,
-            data_buffer, base_block_size, 
+            data_buffer, base_block_size,
             count, tag, comm, requests,
             active_requests);
 
-    /* Since the next step (gather) does not really require 
+    /* Since the next step (gather) does not really require
        completion on scatter , we may return complete  */
     return BCOL_FN_COMPLETE;
 }
 
 static inline __opal_attribute_always_inline__
-int bcol_ptpcoll_binomial_root_to_src(int group_root, int my_rank, 
+int bcol_ptpcoll_binomial_root_to_src(int group_root, int my_rank,
         int pow2_size, int group_size, int *distance)
 {
-    int root, relative_rank, src, 
+    int root, relative_rank, src,
         pow2_distance = 0, i;
 
     if (group_root < pow2_size) {
@@ -589,13 +589,13 @@ int bcol_ptpcoll_binomial_root_to_src(int group_root, int my_rank,
 
     for (i = 1; i < pow2_size; i<<=1, pow2_distance++) {
         if (relative_rank & i) {
-            src = my_rank ^ i; 
-            if (src >= pow2_size) 
+            src = my_rank ^ i;
+            if (src >= pow2_size)
                 src -= pow2_size;
 
             *distance = pow2_distance;
             return src;
-        }   
+        }
     }
 
     /* error case */
@@ -609,22 +609,22 @@ int bcol_ptpcoll_bcast_binomial_test_and_scatter_known_root(mca_bcol_ptpcoll_mod
 {
     int *group_list = ptpcoll_module->super.sbgp_partner_module->group_list;
     int rc;
-    int *active_requests = 
+    int *active_requests =
         &(ptpcoll_module->ml_mem.ml_buf_desc[buffer_index].active_requests);
     ompi_communicator_t* comm = ptpcoll_module->super.sbgp_partner_module->group_comm;
-    ompi_request_t **requests = 
+    ompi_request_t **requests =
         ptpcoll_module->ml_mem.ml_buf_desc[buffer_index].requests;
     int my_group_index = ptpcoll_module->super.sbgp_partner_module->my_index;
-    int tmp_radix_mask_pow = 
+    int tmp_radix_mask_pow =
         ptpcoll_module->ml_mem.ml_buf_desc[buffer_index].radix_mask_pow - 1;
-    int tag = 
+    int tag =
         ptpcoll_module->ml_mem.ml_buf_desc[buffer_index].tag;
-    int *status = 
+    int *status =
         &ptpcoll_module->ml_mem.ml_buf_desc[buffer_index].status;
 
     PTPCOLL_VERBOSE(10, ("Running bcol_ptpcoll_bcast_binomial_probe_and_scatter_anyroot"));
 
-    if (0 == mca_bcol_ptpcoll_test_all_for_match(active_requests, 
+    if (0 == mca_bcol_ptpcoll_test_all_for_match(active_requests,
                 requests, &rc)) {
         PTPCOLL_VERBOSE(10, ("Test was not matched - %d", rc));
         return (OMPI_SUCCESS != rc) ? rc : BCOL_FN_STARTED;
@@ -637,7 +637,7 @@ int bcol_ptpcoll_bcast_binomial_test_and_scatter_known_root(mca_bcol_ptpcoll_mod
     K_NOMIAL_ROOT_BCAST_NB_BINOMIAL_SCATTER(
             tmp_radix_mask_pow,
             my_group_index, group_size, group_list,
-            data_buffer, base_block_size, 
+            data_buffer, base_block_size,
             count, tag, comm, requests,
             active_requests);
 
@@ -651,22 +651,22 @@ int bcol_ptpcoll_bcast_binomial_test_and_scatter_known_root(mca_bcol_ptpcoll_mod
                      ((module)->full_narray_tree_num_leafs /                             \
                      ((0 == level_size) ?                                                \
                       mca_bcol_ptpcoll_component.narray_knomial_radix :                  \
-                      level_size))     
+                      level_size))
 
 static inline __opal_attribute_always_inline__
 int bcol_ptpcoll_bcast_narray_test_and_scatter_known_root(mca_bcol_ptpcoll_module_t *ptpcoll_module,
-        int buffer_index, void *data_buffer, int count, int process_shift, 
+        int buffer_index, void *data_buffer, int count, int process_shift,
         int relative_group_index)
 {
     int *group_list = ptpcoll_module->super.sbgp_partner_module->group_list;
     int rc;
-    int *active_requests = 
+    int *active_requests =
         &(ptpcoll_module->ml_mem.ml_buf_desc[buffer_index].active_requests);
     ompi_communicator_t* comm = ptpcoll_module->super.sbgp_partner_module->group_comm;
-    ompi_request_t **requests = 
+    ompi_request_t **requests =
         ptpcoll_module->ml_mem.ml_buf_desc[buffer_index].requests;
     int tag = ptpcoll_module->ml_mem.ml_buf_desc[buffer_index].tag;
-    int *status = 
+    int *status =
         &ptpcoll_module->ml_mem.ml_buf_desc[buffer_index].status;
     int scatter_count = 0;
     int offset = 0;
@@ -675,7 +675,7 @@ int bcol_ptpcoll_bcast_narray_test_and_scatter_known_root(mca_bcol_ptpcoll_modul
 
     PTPCOLL_VERBOSE(10, ("Running bcol_ptpcoll_bcast_narray_test_and_scatter_known_root"));
 
-    if (0 == mca_bcol_ptpcoll_test_all_for_match(active_requests, 
+    if (0 == mca_bcol_ptpcoll_test_all_for_match(active_requests,
                 requests, &rc)) {
         PTPCOLL_VERBOSE(10, ("Test was not matched - %d", rc));
         return (OMPI_SUCCESS != rc) ? rc : BCOL_FN_STARTED;
@@ -686,11 +686,11 @@ int bcol_ptpcoll_bcast_narray_test_and_scatter_known_root(mca_bcol_ptpcoll_modul
     if(0 == relative_group_index) {
         scatter_count = count;
     } else {
-        scatter_count = NARRAY_BLOCK_SIZE(count, ptpcoll_module, 
+        scatter_count = NARRAY_BLOCK_SIZE(count, ptpcoll_module,
                 ptpcoll_module->narray_knomial_node[relative_group_index].level_size);
     }
 
-    offset = scatter_count * 
+    offset = scatter_count *
         ptpcoll_module->narray_knomial_node[relative_group_index].rank_on_level;
 
     /* make sure that we do not overun memory */
@@ -707,22 +707,22 @@ int bcol_ptpcoll_bcast_narray_test_and_scatter_known_root(mca_bcol_ptpcoll_modul
     curr_data_buffer = (void *)((unsigned char *)data_buffer + (size_t)offset);
 
     /* calculating scatter block size for next level of tree */
-    base_block_size = NARRAY_BLOCK_SIZE(count, ptpcoll_module, 
-        ptpcoll_module->narray_knomial_node[relative_group_index].level_size * 
+    base_block_size = NARRAY_BLOCK_SIZE(count, ptpcoll_module,
+        ptpcoll_module->narray_knomial_node[relative_group_index].level_size *
         mca_bcol_ptpcoll_component.narray_knomial_radix);
 
-    PTPCOLL_VERBOSE(10, ("scatter_known_rootaaa %d %d %d %d %d",scatter_count, offset, base_block_size, 
+    PTPCOLL_VERBOSE(10, ("scatter_known_rootaaa %d %d %d %d %d",scatter_count, offset, base_block_size,
                 ptpcoll_module->narray_knomial_node[relative_group_index].level_size /mca_bcol_ptpcoll_component.narray_knomial_radix,
                 ptpcoll_module->full_narray_tree_num_leafs));
 
-    NARRAY_SCATTER_NB((&ptpcoll_module->narray_knomial_node[relative_group_index]), 
+    NARRAY_SCATTER_NB((&ptpcoll_module->narray_knomial_node[relative_group_index]),
             process_shift, ptpcoll_module->full_narray_tree_size,
-            curr_data_buffer, base_block_size, scatter_count, tag, comm, 
+            curr_data_buffer, base_block_size, scatter_count, tag, comm,
             requests, active_requests);
 
     /* Bummer, I tried to prevent this, special case for virtual root */
     if(0 == relative_group_index) {
-        if (0 == mca_bcol_ptpcoll_test_all_for_match(active_requests, 
+        if (0 == mca_bcol_ptpcoll_test_all_for_match(active_requests,
                     requests, &rc)) {
             PTPCOLL_VERBOSE(10, ("Test was not matched - %d", rc));
             *status = PTPCOLL_ROOT_SEND_STARTED;
@@ -733,16 +733,16 @@ int bcol_ptpcoll_bcast_narray_test_and_scatter_known_root(mca_bcol_ptpcoll_modul
     return BCOL_FN_COMPLETE;
 }
 
-static inline __opal_attribute_always_inline__ 
+static inline __opal_attribute_always_inline__
 int bcol_ptpcoll_bcast_narray_knomial_gather(mca_bcol_ptpcoll_module_t *ptpcoll_module,
         const int buffer_index, void *data_buffer, const int count,
         const int relative_group_index)
 {
     int completed = 0; /* not completed */
-    int *active_requests = 
+    int *active_requests =
         &(ptpcoll_module->ml_mem.ml_buf_desc[buffer_index].active_requests);
     int my_group_index = ptpcoll_module->super.sbgp_partner_module->my_index;
-    int blocks_in_step = 
+    int blocks_in_step =
         ptpcoll_module->ml_mem.ml_buf_desc[buffer_index].radix_mask;
     int tag = ptpcoll_module->ml_mem.ml_buf_desc[buffer_index].tag - 1;
     int *group_list = ptpcoll_module->super.sbgp_partner_module->group_list;
@@ -751,10 +751,10 @@ int bcol_ptpcoll_bcast_narray_knomial_gather(mca_bcol_ptpcoll_module_t *ptpcoll_
         rc,
         len, slen, rlen,
         peer, group_peer;
-    size_t s_offset, 
+    size_t s_offset,
            r_offset;
     ompi_communicator_t* comm = ptpcoll_module->super.sbgp_partner_module->group_comm;
-    ompi_request_t **requests = 
+    ompi_request_t **requests =
         ptpcoll_module->ml_mem.ml_buf_desc[buffer_index].requests;
     netpatterns_narray_knomial_tree_node_t *narray_node =
         &ptpcoll_module->narray_knomial_node[relative_group_index];
@@ -762,7 +762,7 @@ int bcol_ptpcoll_bcast_narray_knomial_gather(mca_bcol_ptpcoll_module_t *ptpcoll_
         &narray_node->k_node;
     mca_bcol_ptpcoll_component_t *cm =
         &mca_bcol_ptpcoll_component;
-    size_t base_block_size = 
+    size_t base_block_size =
         NARRAY_BLOCK_SIZE(count, ptpcoll_module, narray_node->level_size);
 
     PTPCOLL_VERBOSE(10, ("bcol_ptpcoll_bcast_narray_knomial_gather %d %d %d %d %d %d %d",
@@ -771,13 +771,13 @@ int bcol_ptpcoll_bcast_narray_knomial_gather(mca_bcol_ptpcoll_module_t *ptpcoll_
                 relative_group_index, k_node->n_exchanges, tag));
 
     /* we assume the iteration #iteration already was completed with probe */
-    for (i = ptpcoll_module->ml_mem.ml_buf_desc[buffer_index].iteration; 
+    for (i = ptpcoll_module->ml_mem.ml_buf_desc[buffer_index].iteration;
             i < k_node->n_exchanges; i++, blocks_in_step *= cm->narray_knomial_radix) {
 
         len = base_block_size * blocks_in_step;
 
         for (k = 0; k < cm->narray_knomial_radix - 1; k++) {
-            group_peer = my_group_index + 
+            group_peer = my_group_index +
                 (k_node->rank_exchanges[i][k] - narray_node->rank_on_level);
             if (group_peer >= group_size) {
                 group_peer -= group_size;
@@ -800,8 +800,8 @@ int bcol_ptpcoll_bcast_narray_knomial_gather(mca_bcol_ptpcoll_module_t *ptpcoll_
             }
             PTPCOLL_VERBOSE(10, ("Recv data from %d, addr %p offset %d len %d %d %d tag %d",
                         peer, data_buffer, r_offset, rlen, len, blocks_in_step, tag));
-            rc = MCA_PML_CALL(irecv((void *)((unsigned char *)data_buffer + r_offset), 
-                        rlen, MPI_BYTE, 
+            rc = MCA_PML_CALL(irecv((void *)((unsigned char *)data_buffer + r_offset),
+                        rlen, MPI_BYTE,
                         peer, tag, comm, &requests[*active_requests]));
             if( OMPI_SUCCESS != rc ) {
                 PTPCOLL_VERBOSE(10, ("Failed to receive data"));
@@ -811,7 +811,7 @@ int bcol_ptpcoll_bcast_narray_knomial_gather(mca_bcol_ptpcoll_module_t *ptpcoll_
         }
 
         for (k = 0; k < cm->narray_knomial_radix - 1; k++) {
-            group_peer = my_group_index + 
+            group_peer = my_group_index +
                 (k_node->rank_exchanges[i][k] - narray_node->rank_on_level);
             if (group_peer >= group_size) {
                 group_peer -= group_size;
@@ -835,7 +835,7 @@ int bcol_ptpcoll_bcast_narray_knomial_gather(mca_bcol_ptpcoll_module_t *ptpcoll_
 
             PTPCOLL_VERBOSE(10, ("Send data from %d, addr %p offset %d len %d %d %d tag %d",
                         peer, data_buffer, s_offset, slen, len, blocks_in_step, tag));
-            rc = MCA_PML_CALL(isend((void *)((unsigned char *)data_buffer + s_offset), 
+            rc = MCA_PML_CALL(isend((void *)((unsigned char *)data_buffer + s_offset),
                         slen, MPI_BYTE,
                         peer, tag, MCA_PML_BASE_SEND_STANDARD, comm,
                         &(requests[*active_requests])));
@@ -849,9 +849,9 @@ int bcol_ptpcoll_bcast_narray_knomial_gather(mca_bcol_ptpcoll_module_t *ptpcoll_
         completed = mca_bcol_ptpcoll_test_all_for_match(active_requests, requests, &rc);
         if (0 == completed) {
             /* cache data for next iteration */
-            ptpcoll_module->ml_mem.ml_buf_desc[buffer_index].iteration = 
+            ptpcoll_module->ml_mem.ml_buf_desc[buffer_index].iteration =
                 i; /* why not to store step for next iteration ?! */
-            ptpcoll_module->ml_mem.ml_buf_desc[buffer_index].radix_mask = 
+            ptpcoll_module->ml_mem.ml_buf_desc[buffer_index].radix_mask =
                 blocks_in_step * cm->narray_knomial_radix;
             return (OMPI_SUCCESS != rc) ? rc : BCOL_FN_STARTED;
         }

@@ -6,7 +6,7 @@
  * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -14,13 +14,13 @@
  * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
-/** @file 
+/** @file
  * This file presents the MCA variable interface.
  *
  * Note that there are two scopes for MCA variables: "normal" and
@@ -135,16 +135,16 @@ typedef enum {
     MCA_BASE_VAR_SCOPE_READONLY,
     /** The value of this variable may be changed locally. */
     MCA_BASE_VAR_SCOPE_LOCAL,
-    /** The value of this variable must be set to a consistent value 
+    /** The value of this variable must be set to a consistent value
         within a group */
     MCA_BASE_VAR_SCOPE_GROUP,
-    /** The value of this variable must be set to the same value 
+    /** The value of this variable must be set to the same value
         within a group */
     MCA_BASE_VAR_SCOPE_GROUP_EQ,
-    /** The value of this variable must be set to a consistent value 
+    /** The value of this variable must be set to a consistent value
         for all processes */
     MCA_BASE_VAR_SCOPE_ALL,
-    /** The value of this variable must be set to the same value 
+    /** The value of this variable must be set to the same value
         for all processes */
     MCA_BASE_VAR_SCOPE_ALL_EQ,
     MCA_BASE_VAR_SCOPE_MAX
@@ -397,7 +397,7 @@ OPAL_DECLSPEC int mca_base_var_init(void);
  * {storage} points to a (char *), the pointed-to string will be
  * duplicated and maintained internally by the MCA variable system;
  * the caller may free the original string after this function returns
- * successfully.  
+ * successfully.
  */
 OPAL_DECLSPEC int mca_base_var_register (const char *project_name, const char *framework_name,
                                          const char *component_name, const char *variable_name,
@@ -452,12 +452,12 @@ OPAL_DECLSPEC int mca_base_framework_var_register (const mca_base_framework_t *f
  * variable.
  * @returns OPAL_ERR_OUT_OF_RESOURCE If memory could not be allocated.
  * @returns OPAL_ERROR For all other errors.
- * 
+ *
  * Upon success, this function creates a synonym MCA variable
  * that will be treated almost exactly like the original.  The
  * type (int or string) is irrelevant; this function simply
  * creates a new name that by which the same variable value is
- * accessible.  
+ * accessible.
  *
  * Note that the original variable name has precendence over all
  * synonyms.  For example, consider the case if variable is

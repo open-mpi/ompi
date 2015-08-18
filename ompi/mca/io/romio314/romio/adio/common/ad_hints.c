@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -11,7 +11,7 @@
 
 void ADIOI_GEN_SetInfo(ADIO_File fd, MPI_Info users_info, int *error_code)
 {
-/* if fd->info is null, create a new info object. 
+/* if fd->info is null, create a new info object.
    Initialize fd->info to default values.
    Initialize fd->hints to default values.
    Examine the info object passed by the user. If it contains values that
@@ -58,15 +58,15 @@ void ADIOI_GEN_SetInfo(ADIO_File fd, MPI_Info users_info, int *error_code)
     if (!fd->hints->initialized) {
 
 	/* buffer size for collective I/O */
-	ADIOI_Info_set(info, "cb_buffer_size", ADIOI_CB_BUFFER_SIZE_DFLT); 
+	ADIOI_Info_set(info, "cb_buffer_size", ADIOI_CB_BUFFER_SIZE_DFLT);
 	fd->hints->cb_buffer_size = atoi(ADIOI_CB_BUFFER_SIZE_DFLT);
 
 	/* default is to let romio automatically decide when to use
 	 * collective buffering
 	 */
-	ADIOI_Info_set(info, "romio_cb_read", "automatic"); 
+	ADIOI_Info_set(info, "romio_cb_read", "automatic");
 	fd->hints->cb_read = ADIOI_HINT_AUTO;
-	ADIOI_Info_set(info, "romio_cb_write", "automatic"); 
+	ADIOI_Info_set(info, "romio_cb_write", "automatic");
 	fd->hints->cb_write = ADIOI_HINT_AUTO;
 
 	fd->hints->cb_config_list = NULL;
@@ -83,7 +83,7 @@ void ADIOI_GEN_SetInfo(ADIO_File fd, MPI_Info users_info, int *error_code)
 	/* hint instructing the use of persistent file realms */
 	ADIOI_Info_set(info, "romio_cb_pfr", "disable");
 	fd->hints->cb_pfr = ADIOI_HINT_DISABLE;
-	
+
 	/* hint guiding the assignment of persistent file realms */
 	ADIOI_Info_set(info, "romio_cb_fr_types", "aar");
 	fd->hints->cb_fr_type = ADIOI_FR_AAR;
@@ -115,9 +115,9 @@ void ADIOI_GEN_SetInfo(ADIO_File fd, MPI_Info users_info, int *error_code)
 	/* default is to let romio automatically decide when to use data
 	 * sieving
 	 */
-	ADIOI_Info_set(info, "romio_ds_read", "automatic"); 
+	ADIOI_Info_set(info, "romio_ds_read", "automatic");
 	fd->hints->ds_read = ADIOI_HINT_AUTO;
-	ADIOI_Info_set(info, "romio_ds_write", "automatic"); 
+	ADIOI_Info_set(info, "romio_ds_write", "automatic");
 	fd->hints->ds_write = ADIOI_HINT_AUTO;
 
 	/* still to do: tune this a bit for a variety of file systems. there's
@@ -137,18 +137,18 @@ void ADIOI_GEN_SetInfo(ADIO_File fd, MPI_Info users_info, int *error_code)
 
     /* add in user's info if supplied */
     if (users_info != MPI_INFO_NULL) {
-	ADIOI_Info_check_and_install_int(fd, users_info, "cb_buffer_size", 
+	ADIOI_Info_check_and_install_int(fd, users_info, "cb_buffer_size",
 		&(fd->hints->cb_buffer_size), myname, error_code);
 
 	/* aligning file realms to certain sizes (e.g. stripe sizes)
 	 * may benefit I/O performance */
-	ADIOI_Info_check_and_install_int(fd, users_info, "romio_cb_fr_alignment", 
+	ADIOI_Info_check_and_install_int(fd, users_info, "romio_cb_fr_alignment",
 		&(fd->hints->cb_fr_alignment), myname, error_code);
 
 	/* for collective I/O, try to be smarter about when to do data sieving
 	 * using a specific threshold for the datatype size/extent
 	 * (percentage 0-100%) */
-	ADIOI_Info_check_and_install_int(fd, users_info, "romio_cb_ds_threshold", 
+	ADIOI_Info_check_and_install_int(fd, users_info, "romio_cb_ds_threshold",
 		&(fd->hints->cb_ds_threshold), myname, error_code);
 
 	ADIOI_Info_check_and_install_enabled(fd, users_info, "romio_cb_alltoall",
@@ -178,7 +178,7 @@ void ADIOI_GEN_SetInfo(ADIO_File fd, MPI_Info users_info, int *error_code)
 	ADIOI_Info_check_and_install_enabled(fd, users_info, "romio_cb_pfr",
 		&(fd->hints->cb_pfr), myname, error_code);
 
-	
+
 	/* file realm assignment types ADIOI_FR_AAR(0),
 	 ADIOI_FR_FSZ(-1), ADIOI_FR_USR_REALMS(-2), all others specify
 	 a regular fr size in bytes. probably not the best way... */
@@ -196,7 +196,7 @@ void ADIOI_GEN_SetInfo(ADIO_File fd, MPI_Info users_info, int *error_code)
 	    ADIOI_Info_set(info, "romio_cb_read", "enable");
 	    fd->hints->cb_read = 1;
 	    fd->hints->cb_write = 1;
-	} 
+	}
 	/* new hints for enabling/disabling data sieving on
 	 * reads/writes
 	 */
@@ -244,7 +244,7 @@ void ADIOI_GEN_SetInfo(ADIO_File fd, MPI_Info users_info, int *error_code)
 
 	/* Now we use striping unit in common code so we should
 	   process hints for it. */
-	ADIOI_Info_check_and_install_int(fd, users_info, "striping_unit", 
+	ADIOI_Info_check_and_install_int(fd, users_info, "striping_unit",
 		&(fd->hints->striping_unit), myname, error_code);
     }
 

@@ -2,9 +2,9 @@ dnl -*- shell-script -*-
 dnl
 dnl Copyright (c) 2010-2013 Cisco Systems, Inc.  All rights reserved.
 dnl $COPYRIGHT$
-dnl 
+dnl
 dnl Additional copyrights may follow
-dnl 
+dnl
 dnl $HEADER$
 dnl
 
@@ -22,7 +22,7 @@ m4_define(MCA_opal_event_CONFIGURE_MODE, STOP_AT_FIRST)
 
 AC_DEFUN([MCA_opal_event_CONFIG],[
     opal_event_base_include=
-    
+
     # configure all the components
     MCA_CONFIGURE_FRAMEWORK($1, $2, 1)
 
@@ -47,8 +47,8 @@ AC_DEFUN([MCA_opal_event_CONFIG],[
           [AS_IF([test "$OPAL_HAVE_WORKING_EVENTOPS" = "1"],
                  [AC_MSG_RESULT([yes])],
                  [AC_MSG_RESULT([no])])])
-    AC_DEFINE_UNQUOTED(OPAL_HAVE_WORKING_EVENTOPS, 
-                       [$OPAL_HAVE_WORKING_EVENTOPS], 
+    AC_DEFINE_UNQUOTED(OPAL_HAVE_WORKING_EVENTOPS,
+                       [$OPAL_HAVE_WORKING_EVENTOPS],
                        [Whether our event component has working event operations or not (if not, then assumedly it only has working timers and signals)])
 
     # The winning component will have told us where their header file

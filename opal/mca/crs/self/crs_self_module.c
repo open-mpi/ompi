@@ -3,7 +3,7 @@
  *                         All rights reserved.
  * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
  *                         All rights reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -12,9 +12,9 @@
  * Copyright (c) 2007      Evergrid, Inc. All rights reserved.
  *
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -24,9 +24,7 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif  /* HAVE_UNISTD_H */
-#ifdef HAVE_STRING_H
 #include <string.h>
-#endif
 #ifdef HAVE_DLFCN_H
 #include <dlfcn.h>
 #endif
@@ -150,7 +148,7 @@ int opal_crs_self_component_query(mca_base_module_t **module, int *priority)
      */
     ret = opal_crs_self_extract_callbacks();
 
-    if( OPAL_SUCCESS != ret || 
+    if( OPAL_SUCCESS != ret ||
         !mca_crs_self_component.can_checkpoint ) {
         *priority = -1;
         *module = NULL;
@@ -211,7 +209,7 @@ int opal_crs_self_module_init(void)
     if( opal_cr_is_tool ) {
         return OPAL_SUCCESS;
     }
-    
+
     /*
      * Sanity check
      */
@@ -241,7 +239,7 @@ int opal_crs_self_module_init(void)
     if(mca_crs_self_component.do_restart) {
         opal_output_verbose(10, mca_crs_self_component.super.output_handle,
                             "crs:self: module_init: Call their restart function");
-        if( NULL != mca_crs_self_component.ucb_restart_fn) 
+        if( NULL != mca_crs_self_component.ucb_restart_fn)
             mca_crs_self_component.ucb_restart_fn();
     }
 
@@ -350,7 +348,7 @@ int opal_crs_self_checkpoint(pid_t pid,
 
 
     *state = OPAL_CRS_CONTINUE;
-    
+
     /*
      * Call their continue routine for completeness
      */
@@ -370,7 +368,7 @@ int opal_crs_self_checkpoint(pid_t pid,
 }
 
 /*
- * Notice that the user restart callback is not called here, but always from 
+ * Notice that the user restart callback is not called here, but always from
  *  opal_init for the self module.
  */
 int opal_crs_self_restart(opal_crs_base_snapshot_t *base_snapshot, bool spawn_child, pid_t *child_pid)
@@ -466,7 +464,7 @@ int opal_crs_self_restart(opal_crs_base_snapshot_t *base_snapshot, bool spawn_ch
  cleanup:
     if( NULL != cr_cmd)
         free(cr_cmd);
-    if( NULL != cr_argv) 
+    if( NULL != cr_argv)
         opal_argv_free(cr_argv);
 
     return exit_status;
@@ -564,7 +562,7 @@ static int crs_self_find_function(char *prefix, char *suffix,
     }
 
     opal_output_verbose(10, mca_crs_self_component.super.output_handle,
-                        "crs:self: crs_self_find_function(--, %s, %s)", 
+                        "crs:self: crs_self_find_function(--, %s, %s)",
                         prefix, suffix);
 
     asprintf(&func_to_find, "%s_%s", prefix, suffix);
@@ -614,12 +612,12 @@ static int crs_self_find_function(char *prefix, char *suffix,
  * This funciton translates that to the command:
  *   cmd = "my_prog arg1 arg2 -mca crs self -mca crs_self_do_restart 1"
  *
- * Which will cause the program "my_prog" to call their restart function 
+ * Which will cause the program "my_prog" to call their restart function
  * upon opal_init time.
  *
  * Note: The user could bypass the opal_restart routine safely by simply calling
  *   $ my_prog arg1 arg2 -mca crs self -mca crs_self_do_restart 1
- * However, for consistency sake, we should not encourage this as it won't work for 
+ * However, for consistency sake, we should not encourage this as it won't work for
  * all of the other checkpointers.
  */
 static int opal_crs_self_restart_cmd(opal_crs_self_snapshot_t *snapshot, char **cmd)
@@ -631,27 +629,27 @@ static int opal_crs_self_restart_cmd(opal_crs_self_snapshot_t *snapshot, char **
 
     (void) mca_base_var_env_name("crs", &tmp_env_var);
     opal_setenv(tmp_env_var,
-                "self", 
+                "self",
                 true, &environ);
     free(tmp_env_var);
     tmp_env_var = NULL;
 
     (void) mca_base_var_env_name("crs_self_do_restart", &tmp_env_var);
     opal_setenv(tmp_env_var,
-                "1", 
+                "1",
                 true, &environ);
     free(tmp_env_var);
     tmp_env_var = NULL;
 
     (void) mca_base_var_env_name("crs_self_prefix", &tmp_env_var);
     opal_setenv(tmp_env_var,
-                mca_crs_self_component.prefix, 
+                mca_crs_self_component.prefix,
                 true, &environ);
     free(tmp_env_var);
     tmp_env_var = NULL;
 
     /* Instead of adding it to the command line, we should use the environment
-     * to pass the values. This allow sthe OPAL application to be braindead 
+     * to pass the values. This allow sthe OPAL application to be braindead
      * WRT MCA parameters
      *   add_args = strdup("-mca crs self -mca crs_self_do_restart 1");
      */
@@ -694,11 +692,11 @@ static int self_cold_start(opal_crs_self_snapshot_t *snapshot) {
     snapshot->super.component_name = strdup(component_name);
 
     /* Compare the strings to make sure this is our snapshot before going further */
-    if ( 0 != strncmp(mca_crs_self_component.super.base_version.mca_component_name, 
+    if ( 0 != strncmp(mca_crs_self_component.super.base_version.mca_component_name,
                       component_name, strlen(component_name)) ) {
         exit_status = OPAL_ERROR;
         opal_output(mca_crs_self_component.super.output_handle,
-                    "crs:self: self_cold_start: Error: This snapshot (%s) is not intended for us (%s)\n", 
+                    "crs:self: self_cold_start: Error: This snapshot (%s) is not intended for us (%s)\n",
                     component_name, mca_crs_self_component.super.base_version.mca_component_name);
         goto cleanup;
     }
@@ -734,7 +732,7 @@ static int self_cold_start(opal_crs_self_snapshot_t *snapshot) {
 
 static int self_update_snapshot_metadata(opal_crs_self_snapshot_t *snapshot) {
     int exit_status = OPAL_SUCCESS;
-    
+
     if(NULL == snapshot->cmd_line) {
         opal_show_help("help-opal-crs-self.txt", "self:no-restart-cmd",
                        true);
@@ -745,7 +743,7 @@ static int self_update_snapshot_metadata(opal_crs_self_snapshot_t *snapshot) {
     opal_output_verbose(10, mca_crs_self_component.super.output_handle,
                         "crs:self: update_snapshot_metadata(%s)",
                         snapshot->super.metadata_filename);
-    
+
     /*
      * Append to the metadata file the command line to restart with
      *  - How user wants us to restart

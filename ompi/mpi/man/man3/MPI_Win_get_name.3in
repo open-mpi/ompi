@@ -18,8 +18,8 @@ int MPI_Win_get_name(MPI_Win \fIwin\fP, char *\fIwin_name\fP, int *\fIresultlen\
 .SH Fortran Syntax
 .nf
 INCLUDE 'mpif.h'
-MPI_WIN_GET_NAME(\fIWIN, WIN_NAME, RESULTLEN, IERROR\fP) 
-	INTEGER \fIWIN, RESULTLEN, IERROR\fP 
+MPI_WIN_GET_NAME(\fIWIN, WIN_NAME, RESULTLEN, IERROR\fP)
+	INTEGER \fIWIN, RESULTLEN, IERROR\fP
 	CHARACTER*(*) \fIWIN_NAME\fP
 
 .fi
@@ -33,19 +33,19 @@ void MPI::Win::Get_name(char* \fIwin_name\fP, int& \fIresultlen\fP) const
 .ft R
 .TP 1i
 win
-Window whose name is to be returned (handle). 
+Window whose name is to be returned (handle).
 
 .SH OUTPUT PARAMETERS
 .ft R
 .TP 1i
 win_name
-the Tame previously stored on the window, or an empty string if no such name exists (string). 
+the Tame previously stored on the window, or an empty string if no such name exists (string).
 .TP 1i
 resultlen
-Length of returned name (integer). 
+Length of returned name (integer).
 .TP 1i
 IERROR
-Fortran only: Error status (integer). 
+Fortran only: Error status (integer).
 
 .SH DESCRIPTION
 .ft R
@@ -54,6 +54,6 @@ Fortran only: Error status (integer).
 Almost all MPI routines return an error value; C routines as the value of the function and Fortran routines in the last argument. C++ functions do not return errors. If the default error handler is set to MPI::ERRORS_THROW_EXCEPTIONS, then on error the C++ exception mechanism will be used to throw an MPI::Exception object.
 .sp
 Before the error value is returned, the current MPI error handler is
-called. By default, this error handler aborts the MPI job, except for I/O function errors. The error handler may be changed with MPI_Comm_set_errhandler; the predefined error handler MPI_ERRORS_RETURN may be used to cause error values to be returned. Note that MPI does not guarantee that an MPI program can continue past an error.  
+called. By default, this error handler aborts the MPI job, except for I/O function errors. The error handler may be changed with MPI_Comm_set_errhandler; the predefined error handler MPI_ERRORS_RETURN may be used to cause error values to be returned. Note that MPI does not guarantee that an MPI program can continue past an error.
 
 

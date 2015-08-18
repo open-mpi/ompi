@@ -6,7 +6,7 @@
  * Copyright (c) 2004-2008 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -16,9 +16,9 @@
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -26,7 +26,7 @@
 #include "ompi_config.h"
 #include "opal/prefetch.h"
 #include "opal/mca/btl/btl.h"
-#include "opal/mca/mpool/mpool.h" 
+#include "opal/mca/mpool/mpool.h"
 #include "ompi/constants.h"
 #include "ompi/mca/pml/pml.h"
 #include "pml_ob1.h"
@@ -59,11 +59,11 @@ int mca_pml_ob1_send_request_start_cuda(mca_pml_ob1_send_request_t* sendreq,
 #if OPAL_CUDA_SUPPORT_41
 #if OPAL_CUDA_GDR_SUPPORT
     /* With some BTLs, switch to RNDV from RGET at large messages */
-    if ((sendreq->req_send.req_base.req_convertor.flags & CONVERTOR_CUDA) && 
+    if ((sendreq->req_send.req_base.req_convertor.flags & CONVERTOR_CUDA) &&
         (sendreq->req_send.req_bytes_packed > (bml_btl->btl->btl_cuda_rdma_limit - sizeof(mca_pml_ob1_hdr_t)))) {
         return mca_pml_ob1_send_request_start_rndv(sendreq, bml_btl, 0, 0);
     }
-#endif /* OPAL_CUDA_GDR_SUPPORT */    
+#endif /* OPAL_CUDA_GDR_SUPPORT */
 
     sendreq->req_send.req_base.req_convertor.flags &= ~CONVERTOR_CUDA;
     if (opal_convertor_need_buffers(&sendreq->req_send.req_base.req_convertor) == false) {
@@ -102,7 +102,7 @@ int mca_pml_ob1_send_request_start_cuda(mca_pml_ob1_send_request_t* sendreq,
     return rc;
 }
 
-    
+
 
 size_t mca_pml_ob1_rdma_cuda_btls(
     mca_bml_base_endpoint_t* bml_endpoint,
@@ -119,7 +119,7 @@ size_t mca_pml_ob1_rdma_cuda_btls(
         return 0;
     }
 
-    /* check to see if memory is registered */        
+    /* check to see if memory is registered */
     for(n = 0; n < num_btls && num_btls_used < mca_pml_ob1.max_rdma_per_request;
             n++) {
         mca_bml_base_btl_t* bml_btl =
@@ -158,10 +158,10 @@ size_t mca_pml_ob1_rdma_cuda_btls(
 }
 
 int mca_pml_ob1_cuda_need_buffers(void * rreq,
-                                  mca_btl_base_module_t* btl) 
+                                  mca_btl_base_module_t* btl)
 {
     mca_pml_ob1_recv_request_t* recvreq = (mca_pml_ob1_recv_request_t*)rreq;
-    mca_bml_base_endpoint_t* bml_endpoint = 
+    mca_bml_base_endpoint_t* bml_endpoint =
         (mca_bml_base_endpoint_t*)recvreq->req_recv.req_base.req_proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML];
     mca_bml_base_btl_t *bml_btl = mca_bml_base_btl_array_find(&bml_endpoint->btl_send, btl);
 
@@ -193,7 +193,7 @@ int mca_pml_ob1_cuda_need_buffers(void * rreq,
  * future. */
 void mca_pml_ob1_cuda_add_ipc_support(struct mca_btl_base_module_t* btl, int32_t flags,
                                       ompi_proc_t* errproc, char* btlinfo)
-{ 
+{
     mca_bml_base_endpoint_t* ep;
     int btl_verbose_stream = 0;
     int i;

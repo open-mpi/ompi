@@ -6,15 +6,15 @@
 # Copyright (c) 2004-2005 The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
-# Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+# Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
-# 
+#
 # Additional copyrights may follow
-# 
+#
 # $HEADER$
 #
 # Primitive script to give approximate code counts in the Open MPI tree
@@ -97,7 +97,7 @@ sub wanted {
     # Do we want this dir?
 
     for (my $i = 0; $i <= $#skip_dirs; ++$i) {
-        if ($skip_dirs[$i] eq $dir || 
+        if ($skip_dirs[$i] eq $dir ||
             ($is_dir && $skip_dirs[$i] eq $file)) {
             print("Skipping dir: $File::Find::dir / $file\n")
                 if ($verbose);

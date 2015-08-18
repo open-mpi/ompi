@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2011 University of Houston. All rights reserved.
+ * Copyright (c) 2008-2015 University of Houston. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -29,12 +29,11 @@
 #include <unistd.h>
 
 
-int mca_fcoll_individual_file_write_all (mca_io_ompio_file_t *fh, 
-                                         void *buf, 
-                                         int count, 
-                                         struct ompi_datatype_t *datatype, 
+int mca_fcoll_individual_file_write_all (mca_io_ompio_file_t *fh,
+                                         void *buf,
+                                         int count,
+                                         struct ompi_datatype_t *datatype,
                                          ompi_status_public_t *status)
 {
-    return fh->f_fh->f_io_selected_module.v2_0_0.
-	io_module_file_write (fh->f_fh, buf, count, datatype, status);
+    return ompio_io_ompio_file_write (fh, buf, count, datatype, status);
 }

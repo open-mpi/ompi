@@ -237,7 +237,7 @@ typedef enum {
     ORTE_ERRMGR_CALLBACK_APPEND
 } orte_errmgr_error_order_t;
 
-/** 
+/**
  * Register a callback function for faults.
  *
  * This callback function will be used anytime (other than during finalize) the

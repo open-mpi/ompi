@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2015 University of Houston. All rights reserved.
+ * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -47,7 +48,7 @@ OMPI_MODULE_DECLSPEC extern mca_sharedfp_base_component_2_0_0_t mca_sharedfp_sm_
  * ******************************************************************
  */
 /*IMPORANT: Update here when implementing functions from sharedfp API*/
-int mca_sharedfp_sm_seek (mca_io_ompio_file_t *fh, 
+int mca_sharedfp_sm_seek (mca_io_ompio_file_t *fh,
                                   OMPI_MPI_OFFSET_TYPE offset, int whence);
 int mca_sharedfp_sm_get_position (mca_io_ompio_file_t *fh,
                                           OMPI_MPI_OFFSET_TYPE * offset);
@@ -100,9 +101,8 @@ int mca_sharedfp_sm_iwrite (mca_io_ompio_file_t *fh,
 /*--------------------------------------------------------------*
  *Structures and definitions only for this component
  *--------------------------------------------------------------*/
-
-struct sm_offset{
-    sem_t *mutex;      /* the mutex: a Posix memory-based unnamed semaphore */
+struct mca_sharedfp_sm_offset{
+    sem_t mutex;      /* the mutex: a POSIX memory-based unnamed semaphore */
     long long offset;  /* and the shared file pointer offset */
 };
 
@@ -111,10 +111,13 @@ struct sm_offset{
  */
 struct mca_sharedfp_sm_data
 {
-    struct sm_offset * sm_offset_ptr;
+    struct mca_sharedfp_sm_offset * sm_offset_ptr;
     /*save filename so that we can remove the file on close*/
     char * sm_filename;
-    sem_t *mutex;      /* the mutex: a Posix memory-based named semaphore */
+    /* The mutex: it will either point to a POSIX memory-based named
+       semaphore, or it will point to the a POSIX memory-based unnamed
+       semaphore located in sm_offset_ptr->mutex. */
+    sem_t *mutex;
     char *sem_name;    /* Name of the semaphore */
 };
 

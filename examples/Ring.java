@@ -5,16 +5,16 @@
  */
 
 import mpi.* ;
- 
+
 class Ring {
     static public void main(String[] args) throws MPIException {
-	
-	
+
+
 	MPI.Init(args) ;
-      
+
 	int source;  // Rank of sender
-	int dest;    // Rank of receiver 
-	int tag=50;  // Tag for messages	
+	int dest;    // Rank of receiver
+	int tag=50;  // Tag for messages
 	int next;
 	int prev;
 	int message[] = new int [1];
@@ -36,8 +36,8 @@ class Ring {
 	if (0 == myrank) {
 	    message[0] = 10;
 
-	    System.out.println("Process 0 sending " + message[0] + " to rank " + next + " (" + size + " processes in ring)"); 
-	    MPI.COMM_WORLD.send(message, 1, MPI.INT, next, tag); 
+	    System.out.println("Process 0 sending " + message[0] + " to rank " + next + " (" + size + " processes in ring)");
+	    MPI.COMM_WORLD.send(message, 1, MPI.INT, next, tag);
 	}
 
 	/* Pass the message around the ring.  The exit mechanism works as
@@ -69,7 +69,7 @@ class Ring {
 	if (0 == myrank) {
 	    MPI.COMM_WORLD.recv(message, 1, MPI.INT, prev, tag);
 	}
-    
+
 	MPI.Finalize();
     }
 }

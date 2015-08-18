@@ -118,7 +118,7 @@ main(int argc, char* argv[])
   sprintf(awpa,"%d",i);
   MPI_Info_set (info,"cb_nodes",awpa);*/
 
-    
+
   for ( i=0; i<ng; i++ ) buf[i] = rank*10000 + (i+1)%1024;
 
   for ( i=0; i<D; i++ )
@@ -131,7 +131,7 @@ main(int argc, char* argv[])
   dims[0] = npx;
   dims[1] = npy;
   dims[2] = npz;
-     
+
   MPI_Cart_create(MPI_COMM_WORLD, D, dims, periods, reorder, &new_comm);
 
   for ( i=0; i<D; i++ )
@@ -150,7 +150,7 @@ main(int argc, char* argv[])
   psize[2] = npz;
 
 /*
-  MPI_Dims_create(npes, D, psize);  
+  MPI_Dims_create(npes, D, psize);
 
   printf("psize %d %d %d\n",psize[0],psize[1],psize[2]);
 */
@@ -216,13 +216,13 @@ main(int argc, char* argv[])
      avg_eto = avg_eto/npes;
      avg_et  = avg_et/npes;
      avg_etc = avg_etc/npes;
-     printf("     open time:  %9.3f min %9.3f avg %9.3f max\n",min_eto,avg_eto,max_eto);  
-     printf("     write time: %9.3f min %9.3f avg %9.3f max\n",min_et,avg_et,max_et);  
-     printf("     close time: %9.3f min %9.3f avg %9.3f max\n\n",min_etc,avg_etc,max_etc);  
+     printf("     open time:  %9.3f min %9.3f avg %9.3f max\n",min_eto,avg_eto,max_eto);
+     printf("     write time: %9.3f min %9.3f avg %9.3f max\n",min_et,avg_et,max_et);
+     printf("     close time: %9.3f min %9.3f avg %9.3f max\n\n",min_etc,avg_etc,max_etc);
      fflush(stdout);
     }
 
   MPI_Finalize();
-  
+
   return 0;
 }

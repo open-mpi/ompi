@@ -4,9 +4,9 @@
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -81,9 +81,9 @@ ompi_coll_tuned_comm_query(struct ompi_communicator_t *comm, int *priority);
 /* API functions of decision functions and any implementations */
 
 /*
- * Note this gets long as we have to have a prototype for each 
+ * Note this gets long as we have to have a prototype for each
  * MPI collective 4 times.. 2 for the comm type and 2 for each decision
- * type. 
+ * type.
  * we might cut down the decision prototypes by conditional compiling
  */
 
@@ -221,16 +221,16 @@ int ompi_coll_tuned_scatterv_inter_dec_dynamic(SCATTERV_ARGS);
 int mca_coll_tuned_ft_event(int state);
 
 struct mca_coll_tuned_component_t {
-	/** Base coll component */ 
+	/** Base coll component */
 	mca_coll_base_component_2_0_0_t super;
-    
+
 	/** MCA parameter: Priority of this component */
 	int tuned_priority;
-    
+
 	/** global stuff that I need the component to store */
-    
+
 	/* MCA parameters first */
-    
+
 	/* cached decision table stuff (moved from MCW module) */
 	ompi_coll_alg_rule_t *all_base_rules;
 };

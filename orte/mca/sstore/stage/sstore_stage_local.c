@@ -5,9 +5,9 @@
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -17,9 +17,7 @@
 
 #include "orte_config.h"
 
-#ifdef HAVE_STRING_H
 #include <string.h>
-#endif
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -1105,7 +1103,7 @@ int orte_sstore_stage_local_process_cmd_action(orte_process_name_t *sender,
                                                opal_buffer_t* buffer)
 {
     orte_sstore_stage_local_snapshot_info_t *handle_info = NULL;
-           
+
     /*
      * Find the referenced handle (Create if it does not exist)
      */

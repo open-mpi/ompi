@@ -4,9 +4,9 @@
 #                         All rights reserved.
 #
 # $COPYRIGHT$
-# 
+#
 # Additional copyrights may follow
-# 
+#
 # $HEADER$
 #
 
@@ -69,7 +69,7 @@ AC_DEFUN([MCA_oshmem_sshmem_verbs_CONFIG],[
 		    fi
         ])
     AC_DEFINE_UNQUOTED(MPAGE_ENABLE, $oshmem_have_mpage, [Whether we can use M-PAGE supported since MOFED 1.8])
-                
+
     exp_access_happy=0
     exp_reg_mr_happy=0
     AS_IF([test "$oshmem_have_mpage" = "3"],

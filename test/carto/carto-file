@@ -20,9 +20,9 @@
   NODE               Ethernet                  eth1
 #
 #
-# Connection decleration  From node   To node:weight   To node:weight   ......   
-# (Reserve word)          (declered   (declered        (declered 
-#                          above)      above)           above)          
+# Connection decleration  From node   To node:weight   To node:weight   ......
+# (Reserve word)          (declered   (declered        (declered
+#                          above)      above)           above)
 #===============================================================================================
   CONNECTION              slot0       mem0:0           slot1:1           slot2:1 mthca0:1 eth0:1
   CONNECTION              slot1       mem1:0           slot0:1           slot3:1
@@ -33,7 +33,7 @@
   CONNECTION              mthca1      slot3:1
 #
   CONNECTION              eth0        slot0:1
-  CONNECTION              eth1        slot3:1 
+  CONNECTION              eth1        slot3:1
 #
 # end of carto file.
 

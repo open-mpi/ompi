@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2013      University of Houston. All rights reserved.
+ * Copyright (c) 2013-2015 University of Houston. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -26,6 +26,7 @@
 #include "ompi_config.h"
 #include "mpi.h"
 #include "ompi/mca/sharedfp/sharedfp.h"
+#include "ompi/mca/sharedfp/base/base.h"
 #include "ompi/mca/sharedfp/individual/sharedfp_individual.h"
 
 /*
@@ -84,14 +85,16 @@ struct mca_sharedfp_base_module_1_0_0_t * mca_sharedfp_individual_component_file
     if ( amode & MPI_MODE_WRONLY || amode & MPI_MODE_RDWR ) {
         wronly_flag=true;
 	if ( mca_sharedfp_individual_verbose ) {
-	    printf("mca_sharedfp_individual_component_file_query: "
-		   "MPI_MODE_WRONLY[true=%d,false=%d]=%d\n",true,false,wronly_flag);
+            opal_output(ompi_sharedfp_base_framework.framework_output,
+                        "mca_sharedfp_individual_component_file_query: "
+                        "MPI_MODE_WRONLY[true=%d,false=%d]=%d\n",true,false,wronly_flag);
 	}
     } else {
         wronly_flag=false;
 	if ( mca_sharedfp_individual_verbose ) {
-	    printf("mca_sharedfp_individual_component_file_query: Can not run!, "
-		   "MPI_MODE_WRONLY[true=%d,false=%d]=%d\n",true,false,wronly_flag);
+            opal_output(ompi_sharedfp_base_framework.framework_output,
+			"mca_sharedfp_individual_component_file_query: Can not run!, "
+			"MPI_MODE_WRONLY[true=%d,false=%d]=%d\n",true,false,wronly_flag);
 	}
     }
 
@@ -102,27 +105,30 @@ struct mca_sharedfp_base_module_1_0_0_t * mca_sharedfp_individual_component_file
         valuelen = MPI_MAX_INFO_VAL;
         ompi_info_get ( info,"OMPIO_SHAREDFP_RELAXED_ORDERING", valuelen, value, &flag);
         if ( flag ) {
-	    if ( mca_sharedfp_individual_verbose ) {
-		printf("mca_sharedfp_individual_component_file_query: "
-		       "OMPIO_SHAREDFP_RELAXED_ORDERING=%s\n",value);
+           if ( mca_sharedfp_individual_verbose ) {
+                opal_output(ompi_sharedfp_base_framework.framework_output,
+                        "mca_sharedfp_individual_component_file_query: "
+                        "OMPIO_SHAREDFP_RELAXED_ORDERING=%s\n",value);
 	    }
             /* flag - Returns true if key defined, false if not (boolean). */
             relaxed_order_flag=true;
-        } 
-	else {
-	    if ( mca_sharedfp_individual_verbose ) {
-		printf("mca_sharedfp_individual_component_file_query: "
-		       "OMPIO_SHAREDFP_RELAXED_ORDERING MPI_Info key not set. "
-		       "Set this key in order to increase this component's priority value.\n");
+        }
+        else {
+            if ( mca_sharedfp_individual_verbose ) {
+               opal_output(ompi_sharedfp_base_framework.framework_output,
+                        "mca_sharedfp_individual_component_file_query: "
+                        "OMPIO_SHAREDFP_RELAXED_ORDERING MPI_Info key not set. "
+                        "Set this key in order to increase this component's priority value.\n");
 	    }
 	}
-    } 
+    }
     else {
 	if ( mca_sharedfp_individual_verbose ) {
-	    printf("mca_sharedfp_individual_component_file_query: "
-		   "OMPIO_SHAREDFP_RELAXED_ORDERING MPI_Info key not set, "
-		   "got MPI_INFO_NULL. Set this key in order to increase "
-		   "this component's priority value.\n");
+            opal_output(ompi_sharedfp_base_framework.framework_output, 
+                 "mca_sharedfp_individual_component_file_query: "
+                 "OMPIO_SHAREDFP_RELAXED_ORDERING MPI_Info key not set, "
+                 "got MPI_INFO_NULL. Set this key in order to increase "
+                 "this component's priority value.\n");
 	}
     }
 
@@ -133,7 +139,7 @@ struct mca_sharedfp_base_module_1_0_0_t * mca_sharedfp_individual_component_file
      */
     if ( wronly_flag && relaxed_order_flag){
         *priority=mca_sharedfp_individual_priority;
-    } 
+    }
     else {
         *priority=1;
     }

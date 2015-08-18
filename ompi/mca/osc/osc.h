@@ -4,22 +4,22 @@
  *                         All rights reserved.
  * Copyright (c) 2004-2011 The Trustees of the University of Tennessee.
  *                         All rights reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2015 Los Alamos National Security, LLC.  All rights
- *                         reserved. 
+ *                         reserved.
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 /**
  * @file
- * 
+ *
  * One-sided Communication interface
  *
  * Interface for implementing the one-sided communication chapter of
@@ -32,9 +32,7 @@
 
 #include "opal_config.h"
 
-#ifdef HAVE_STDDEF_H
 #include <stddef.h>
-#endif
 
 #include "ompi/mca/mca.h"
 
@@ -127,13 +125,13 @@ typedef int (*ompi_osc_base_component_query_fn_t)(struct ompi_win_t *win,
  * memory can be associated with this window.  The module should be
  * ready for use immediately upon return of this function, and the
  * module is responsible for providing any required collective
- * synchronization before the end of the call.  
+ * synchronization before the end of the call.
  *
  * @note The comm is the communicator specified from the user, so
  * normal internal usage rules apply.  In other words, if you need
  * communication for the life of the window, you should call
  * comm_dup() during this function.
- * 
+ *
  * @param[in/out]  win  The window handle, already filled in by MPI_WIN_CREATE()
  * @param[in]      info An info structure with hints from the user
  *                      regarding the usage of the component
@@ -249,17 +247,17 @@ typedef int (*ompi_osc_base_module_fetch_and_op_fn_t)(void *origin_addr,
                                                       struct ompi_op_t *op,
                                                       struct ompi_win_t *win);
 
-typedef int (*ompi_osc_base_module_get_accumulate_fn_t)(void *origin_addr, 
-                                                        int origin_count, 
+typedef int (*ompi_osc_base_module_get_accumulate_fn_t)(void *origin_addr,
+                                                        int origin_count,
                                                         struct ompi_datatype_t *origin_datatype,
-                                                        void *result_addr, 
-                                                        int result_count, 
+                                                        void *result_addr,
+                                                        int result_count,
                                                         struct ompi_datatype_t *result_datatype,
-                                                        int target_rank, 
-                                                        OPAL_PTRDIFF_TYPE target_disp, 
+                                                        int target_rank,
+                                                        OPAL_PTRDIFF_TYPE target_disp,
                                                         int target_count,
-                                                        struct ompi_datatype_t *target_datatype, 
-                                                        struct ompi_op_t *op, 
+                                                        struct ompi_datatype_t *target_datatype,
+                                                        struct ompi_op_t *op,
                                                         struct ompi_win_t *win);
 
 typedef int (*ompi_osc_base_module_rput_fn_t)(void *origin_addr,
@@ -294,17 +292,17 @@ typedef int (*ompi_osc_base_module_raccumulate_fn_t)(void *origin_addr,
                                                      struct ompi_win_t *win,
                                                      struct ompi_request_t **request);
 
-typedef int (*ompi_osc_base_module_rget_accumulate_fn_t)(void *origin_addr, 
-                                                         int origin_count, 
+typedef int (*ompi_osc_base_module_rget_accumulate_fn_t)(void *origin_addr,
+                                                         int origin_count,
                                                          struct ompi_datatype_t *origin_datatype,
-                                                         void *result_addr, 
-                                                         int result_count, 
+                                                         void *result_addr,
+                                                         int result_count,
                                                          struct ompi_datatype_t *result_datatype,
-                                                         int target_rank, 
-                                                         OPAL_PTRDIFF_TYPE target_disp, 
+                                                         int target_rank,
+                                                         OPAL_PTRDIFF_TYPE target_disp,
                                                          int target_count,
-                                                         struct ompi_datatype_t *target_datatype, 
-                                                         struct ompi_op_t *op, 
+                                                         struct ompi_datatype_t *target_datatype,
+                                                         struct ompi_op_t *op,
                                                          struct ompi_win_t *win,
                                                          struct ompi_request_t **request);
 
@@ -374,7 +372,7 @@ struct ompi_osc_base_module_3_0_0_t {
 
     ompi_osc_base_module_win_attach_fn_t osc_win_attach;
     ompi_osc_base_module_win_detach_fn_t osc_win_detach;
-    ompi_osc_base_module_free_fn_t osc_free;    
+    ompi_osc_base_module_free_fn_t osc_free;
 
     ompi_osc_base_module_put_fn_t osc_put;
     ompi_osc_base_module_get_fn_t osc_get;

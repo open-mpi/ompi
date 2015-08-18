@@ -6,17 +6,17 @@
  * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2013-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -55,7 +55,7 @@ struct mca_base_component_priority_list_item_t {
     mca_base_component_list_item_t super;
     int cpli_priority;
 };
-typedef struct mca_base_component_priority_list_item_t 
+typedef struct mca_base_component_priority_list_item_t
     mca_base_component_priority_list_item_t;
 
 OPAL_DECLSPEC OBJ_CLASS_DECLARATION(mca_base_component_priority_list_item_t);
@@ -70,6 +70,30 @@ OPAL_DECLSPEC extern char *mca_base_system_default_path;
 OPAL_DECLSPEC extern char *mca_base_user_default_path;
 
 /*
+ * Standard verbosity levels
+ */
+enum {
+    /** total silence */
+    MCA_BASE_VERBOSE_NONE  = -1,
+    /** only errors are printed */
+    MCA_BASE_VERBOSE_ERROR = 0,
+    /** emit messages about component selection, open, and unloading */
+    MCA_BASE_VERBOSE_COMPONENT = 10,
+    /** also emit warnings */
+    MCA_BASE_VERBOSE_WARN  = 20,
+    /** also emit general, user-relevant information, such as rationale as to why certain choices
+     * or code paths were taken, information gleaned from probing the local system, etc. */
+    MCA_BASE_VERBOSE_INFO  = 40,
+    /** also emit relevant tracing information (e.g., which functions were invoked /
+     * call stack entry/exit info) */
+    MCA_BASE_VERBOSE_TRACE = 60,
+    /** also emit Open MPI-developer-level (i.e,. highly detailed) information */
+    MCA_BASE_VERBOSE_DEBUG = 80,
+    /** also output anything else that might be useful */
+    MCA_BASE_VERBOSE_MAX   = 100,
+};
+
+/*
  * Public functions
  */
 
@@ -78,7 +102,7 @@ OPAL_DECLSPEC extern char *mca_base_user_default_path;
  *
  * @return OPAL_SUCCESS Upon success
  * @return OPAL_ERROR Upon failure
- * 
+ *
  * This function starts up the entire MCA.  It initializes a bunch
  * of built-in MCA parameters, and initialized the MCA component
  * repository.
@@ -96,7 +120,7 @@ OPAL_DECLSPEC int mca_base_open(void);
  * @return OPAL_ERROR Upon failure
  *
  * This function closes down the entire MCA.  It clears all MCA
- * parameters and closes down the MCA component respository.  
+ * parameters and closes down the MCA component respository.
  *
  * It must be the last MCA function invoked.  It is normally invoked
  * during the finalize stage.
@@ -215,7 +239,7 @@ OPAL_DECLSPEC void mca_base_component_close (const mca_base_component_t *compone
  */
 void mca_base_component_unload (const mca_base_component_t *component, int output_id);
 
-OPAL_DECLSPEC int mca_base_components_close(int output_id, opal_list_t *components_available, 
+OPAL_DECLSPEC int mca_base_components_close(int output_id, opal_list_t *components_available,
                                             const mca_base_component_t *skip);
 
 OPAL_DECLSPEC int mca_base_framework_components_close (struct mca_base_framework_t *framework,

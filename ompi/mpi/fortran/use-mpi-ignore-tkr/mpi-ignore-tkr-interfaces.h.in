@@ -7,7 +7,7 @@
 !                         of Tennessee Research Foundation.  All rights
 !                         reserved.
 ! Copyright (c) 2012      Inria.  All rights reserved.
-! Copyright (c) 2013-2014 Los Alamos National Security, LLC. All rights
+! Copyright (c) 2013-2015 Los Alamos National Security, LLC. All rights
 !                         reserved.
 ! Copyright (c) 2015      Research Organization for Information Science
 !                         and Technology (RIST). All rights reserved.
@@ -163,6 +163,49 @@ end subroutine PMPI_Address
 
 end interface
 
+interface MPI_Aint_add
+
+function MPI_Aint_add(base, diff)
+  include 'mpif-config.h'
+  integer(kind=MPI_ADDRESS_KIND) :: base
+  integer(kind=MPI_ADDRESS_KIND) :: diff
+  integer(kind=MPI_ADDRESS_KIND) MPI_Aint_add
+end function MPI_Aint_add
+
+end interface
+
+interface PMPI_Aint_add
+
+function PMPI_Aint_add(base, diff)
+  include 'mpif-config.h'
+  integer(kind=MPI_ADDRESS_KIND) :: base
+  integer(kind=MPI_ADDRESS_KIND) :: diff
+  integer(kind=MPI_ADDRESS_KIND) PMPI_Aint_add
+end function PMPI_Aint_add
+
+end interface
+
+interface MPI_Aint_diff
+
+function MPI_Aint_diff(addr1, addr2)
+  include 'mpif-config.h'
+  integer(kind=MPI_ADDRESS_KIND) :: addr1
+  integer(kind=MPI_ADDRESS_KIND) :: addr2
+  integer(kind=MPI_ADDRESS_KIND) MPI_Aint_diff
+end function MPI_Aint_diff
+
+end interface
+
+interface PMPI_Aint_diff
+
+function PMPI_Aint_diff(addr1, addr2)
+  include 'mpif-config.h'
+  integer(kind=MPI_ADDRESS_KIND) :: addr1
+  integer(kind=MPI_ADDRESS_KIND) :: addr2
+  integer(kind=MPI_ADDRESS_KIND) PMPI_Aint_diff
+end function PMPI_Aint_diff
+
+end interface
 
 interface MPI_Allgather
 
@@ -1153,7 +1196,7 @@ end subroutine MPI_Comm_dup
 
 end interface
 
-interface MPI_Comm_dup
+interface MPI_Comm_dup_with_info
 
 subroutine MPI_Comm_dup_with_info(comm, info, newcomm, ierror)
   integer, intent(in) :: comm
@@ -1627,7 +1670,7 @@ end subroutine PMPI_Comm_split
 end interface
 
 
-interface MPI_Comm_split
+interface MPI_Comm_split_type
 
 subroutine MPI_Comm_split_type(comm, split_type, key, info, newcomm, ierror)
   integer, intent(in) :: comm
@@ -1640,7 +1683,7 @@ end subroutine MPI_Comm_split_type
 
 end interface
 
-interface PMPI_Comm_split
+interface PMPI_Comm_split_type
 
 subroutine PMPI_Comm_split_type(comm, split_type, key, info, newcomm, ierror)
   integer, intent(in) :: comm

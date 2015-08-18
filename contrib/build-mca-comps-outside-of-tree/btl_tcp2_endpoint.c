@@ -5,16 +5,16 @@
  * Copyright (c) 2004-2013 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2008 Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  *
  */
@@ -56,7 +56,7 @@
 #include "opal/util/net.h"
 
 #include "btl_tcp2.h"
-#include "btl_tcp2_endpoint.h" 
+#include "btl_tcp2_endpoint.h"
 #include "btl_tcp2_proc.h"
 #include "btl_tcp2_frag.h"
 #include "btl_tcp2_addr.h"
@@ -101,9 +101,9 @@ static void mca_btl_tcp2_endpoint_destruct(mca_btl_tcp2_endpoint_t* endpoint)
 }
 
 OBJ_CLASS_INSTANCE(
-    mca_btl_tcp2_endpoint_t, 
-    opal_list_item_t, 
-    mca_btl_tcp2_endpoint_construct, 
+    mca_btl_tcp2_endpoint_t,
+    opal_list_item_t,
+    mca_btl_tcp2_endpoint_construct,
     mca_btl_tcp2_endpoint_destruct);
 
 
@@ -163,7 +163,7 @@ static void mca_btl_tcp2_endpoint_dump(mca_btl_base_endpoint_t* btl_endpoint, co
 #endif
 
     if((flags = fcntl(btl_endpoint->endpoint_sd, F_GETFL, 0)) < 0) {
-        BTL_ERROR(("fcntl(F_GETFL) failed: %s (%d)", 
+        BTL_ERROR(("fcntl(F_GETFL) failed: %s (%d)",
                    strerror(opal_socket_errno), opal_socket_errno));
     }
 
@@ -179,7 +179,7 @@ static void mca_btl_tcp2_endpoint_dump(mca_btl_base_endpoint_t* btl_endpoint, co
 #if defined(SO_RCVBUF)
     obtlen = sizeof(rcvbuf);
     if(getsockopt(btl_endpoint->endpoint_sd, SOL_SOCKET, SO_RCVBUF, (char *)&rcvbuf, &obtlen) < 0) {
-        BTL_ERROR(("SO_RCVBUF option: %s (%d)", 
+        BTL_ERROR(("SO_RCVBUF option: %s (%d)",
                    strerror(opal_socket_errno), opal_socket_errno));
     }
 #else
@@ -188,14 +188,14 @@ static void mca_btl_tcp2_endpoint_dump(mca_btl_base_endpoint_t* btl_endpoint, co
 #if defined(TCP_NODELAY)
     obtlen = sizeof(nodelay);
     if(getsockopt(btl_endpoint->endpoint_sd, IPPROTO_TCP, TCP_NODELAY, (char *)&nodelay, &obtlen) < 0) {
-        BTL_ERROR(("TCP_NODELAY option: %s (%d)", 
+        BTL_ERROR(("TCP_NODELAY option: %s (%d)",
                    strerror(opal_socket_errno), opal_socket_errno));
     }
 #else
     nodelay = 0;
 #endif
 
-    BTL_VERBOSE(("%s: %s - %s nodelay %d sndbuf %d rcvbuf %d flags %08x", 
+    BTL_VERBOSE(("%s: %s - %s nodelay %d sndbuf %d rcvbuf %d flags %08x",
         msg, src, dst, nodelay, sndbuf, rcvbuf, flags));
 }
 #endif
@@ -211,20 +211,20 @@ static inline void mca_btl_tcp2_endpoint_event_init(mca_btl_base_endpoint_t* btl
     btl_endpoint->endpoint_cache_pos = btl_endpoint->endpoint_cache;
 #endif  /* MCA_BTL_TCP_ENDPOINT_CACHE */
 
-    opal_event_set(opal_event_base, &btl_endpoint->endpoint_recv_event, 
-                    btl_endpoint->endpoint_sd, 
-                    OPAL_EV_READ|OPAL_EV_PERSIST, 
+    opal_event_set(opal_event_base, &btl_endpoint->endpoint_recv_event,
+                    btl_endpoint->endpoint_sd,
+                    OPAL_EV_READ|OPAL_EV_PERSIST,
                     mca_btl_tcp2_endpoint_recv_handler,
                     btl_endpoint );
     /**
      * The send event should be non persistent until the endpoint is
      * completely connected. This means, when the event is created it
-     * will be fired only once, and when the endpoint is marked as 
+     * will be fired only once, and when the endpoint is marked as
      * CONNECTED the event should be recreated with the correct flags.
      */
-    opal_event_set(opal_event_base, &btl_endpoint->endpoint_send_event, 
-                    btl_endpoint->endpoint_sd, 
-                    OPAL_EV_WRITE, 
+    opal_event_set(opal_event_base, &btl_endpoint->endpoint_send_event,
+                    btl_endpoint->endpoint_sd,
+                    OPAL_EV_WRITE,
                     mca_btl_tcp2_endpoint_send_handler,
                     btl_endpoint);
 }
@@ -308,7 +308,7 @@ static int mca_btl_tcp2_endpoint_send_blocking(mca_btl_base_endpoint_t* btl_endp
 
 
 /*
- * Send the globally unique identifier for this process to a endpoint on 
+ * Send the globally unique identifier for this process to a endpoint on
  * a newly connected socket.
  */
 
@@ -319,7 +319,7 @@ static int mca_btl_tcp2_endpoint_send_connect_ack(mca_btl_base_endpoint_t* btl_e
     orte_process_name_t guid = btl_proc->proc_ompi->proc_name;
 
     ORTE_PROCESS_NAME_HTON(guid);
-    if(mca_btl_tcp2_endpoint_send_blocking(btl_endpoint, &guid, sizeof(guid)) != 
+    if(mca_btl_tcp2_endpoint_send_blocking(btl_endpoint, &guid, sizeof(guid)) !=
           sizeof(guid)) {
         return OMPI_ERR_UNREACH;
     }
@@ -332,7 +332,7 @@ static int mca_btl_tcp2_endpoint_send_connect_ack(mca_btl_base_endpoint_t* btl_e
  * (1) if a connection has not been attempted, accept the connection
  * (2) if a connection has not been established, and the endpoints process identifier
  *     is less than the local process, accept the connection
- * otherwise, reject the connection and continue with the current connection 
+ * otherwise, reject the connection and continue with the current connection
  */
 
 bool mca_btl_tcp2_endpoint_accept(mca_btl_base_endpoint_t* btl_endpoint,
@@ -351,7 +351,7 @@ bool mca_btl_tcp2_endpoint_accept(mca_btl_base_endpoint_t* btl_endpoint,
         return false;
     }
 
-    cmpval = orte_util_compare_name_fields(ORTE_NS_CMP_ALL, 
+    cmpval = orte_util_compare_name_fields(ORTE_NS_CMP_ALL,
                                     &endpoint_proc->proc_ompi->proc_name,
                                     &this_proc->proc_ompi->proc_name);
     if((btl_endpoint->endpoint_sd < 0) ||
@@ -417,8 +417,8 @@ static void mca_btl_tcp2_endpoint_connected(mca_btl_base_endpoint_t* btl_endpoin
     btl_endpoint->endpoint_retries = 0;
 
     /* Create the send event in a persistent manner. */
-    opal_event_set(opal_event_base, &btl_endpoint->endpoint_send_event, 
-                    btl_endpoint->endpoint_sd, 
+    opal_event_set(opal_event_base, &btl_endpoint->endpoint_send_event,
+                    btl_endpoint->endpoint_sd,
                     OPAL_EV_WRITE | OPAL_EV_PERSIST,
                     mca_btl_tcp2_endpoint_send_handler,
                     btl_endpoint );
@@ -483,7 +483,7 @@ static int mca_btl_tcp2_endpoint_recv_connect_ack(mca_btl_base_endpoint_t* btl_e
     if (OPAL_EQUAL != orte_util_compare_name_fields(ORTE_NS_CMP_ALL,
                                                     &btl_proc->proc_ompi->proc_name,
                                                     &guid)) {
-        BTL_ERROR(("received unexpected process identifier %s", 
+        BTL_ERROR(("received unexpected process identifier %s",
                    ORTE_NAME_PRINT(&guid)));
         mca_btl_tcp2_endpoint_close(btl_endpoint);
         return OMPI_ERR_UNREACH;
@@ -499,21 +499,21 @@ void mca_btl_tcp2_set_socket_options(int sd)
 #if defined(TCP_NODELAY)
     optval = mca_btl_tcp2_component.tcp_use_nodelay;
     if(setsockopt(sd, IPPROTO_TCP, TCP_NODELAY, (char *)&optval, sizeof(optval)) < 0) {
-        BTL_ERROR(("setsockopt(TCP_NODELAY) failed: %s (%d)", 
+        BTL_ERROR(("setsockopt(TCP_NODELAY) failed: %s (%d)",
                    strerror(opal_socket_errno), opal_socket_errno));
     }
 #endif
 #if defined(SO_SNDBUF)
     if(mca_btl_tcp2_component.tcp_sndbuf > 0 &&
        setsockopt(sd, SOL_SOCKET, SO_SNDBUF, (char *)&mca_btl_tcp2_component.tcp_sndbuf, sizeof(int)) < 0) {
-        BTL_ERROR(("setsockopt(SO_SNDBUF) failed: %s (%d)", 
+        BTL_ERROR(("setsockopt(SO_SNDBUF) failed: %s (%d)",
                    strerror(opal_socket_errno), opal_socket_errno));
     }
 #endif
 #if defined(SO_RCVBUF)
     if(mca_btl_tcp2_component.tcp_rcvbuf > 0 &&
        setsockopt(sd, SOL_SOCKET, SO_RCVBUF, (char *)&mca_btl_tcp2_component.tcp_rcvbuf, sizeof(int)) < 0) {
-        BTL_ERROR(("setsockopt(SO_RCVBUF) failed: %s (%d)", 
+        BTL_ERROR(("setsockopt(SO_RCVBUF) failed: %s (%d)",
                    strerror(opal_socket_errno), opal_socket_errno));
     }
 #endif
@@ -535,14 +535,14 @@ static int mca_btl_tcp2_endpoint_start_connect(mca_btl_base_endpoint_t* btl_endp
     /* By default consider a IPv4 connection */
     uint16_t af_family = AF_INET;
     opal_socklen_t addrlen = sizeof(struct sockaddr_in);
-    
+
 #if OPAL_ENABLE_IPV6
     if (AF_INET6 == btl_endpoint->endpoint_addr->addr_family) {
         af_family = AF_INET6;
         addrlen = sizeof (struct sockaddr_in6);
     }
 #endif
-    
+
     btl_endpoint->endpoint_sd = socket(af_family, SOCK_STREAM, 0);
     if (btl_endpoint->endpoint_sd < 0) {
         btl_endpoint->endpoint_retries++;
@@ -557,19 +557,19 @@ static int mca_btl_tcp2_endpoint_start_connect(mca_btl_base_endpoint_t* btl_endp
 
     /* setup the socket as non-blocking */
     if((flags = fcntl(btl_endpoint->endpoint_sd, F_GETFL, 0)) < 0) {
-        BTL_ERROR(("fcntl(F_GETFL) failed: %s (%d)", 
+        BTL_ERROR(("fcntl(F_GETFL) failed: %s (%d)",
                    strerror(opal_socket_errno), opal_socket_errno));
     } else {
         flags |= O_NONBLOCK;
         if(fcntl(btl_endpoint->endpoint_sd, F_SETFL, flags) < 0)
-            BTL_ERROR(("fcntl(F_SETFL) failed: %s (%d)", 
+            BTL_ERROR(("fcntl(F_SETFL) failed: %s (%d)",
                        strerror(opal_socket_errno), opal_socket_errno));
     }
 
     /* start the connect - will likely fail with EINPROGRESS */
     mca_btl_tcp2_proc_tosocks(btl_endpoint->endpoint_addr, &endpoint_addr);
 
-    opal_output_verbose(20, mca_btl_base_output, 
+    opal_output_verbose(20, mca_btl_base_output,
                         "btl: tcp: attempting to connect() to address %s on port %d",
                         opal_net_get_hostname((struct sockaddr*) &endpoint_addr),
                         btl_endpoint->endpoint_addr->addr_port);
@@ -607,7 +607,7 @@ static int mca_btl_tcp2_endpoint_start_connect(mca_btl_base_endpoint_t* btl_endp
 
 /*
  * Check the status of the connection. If the connection failed, will retry
- * later. Otherwise, send this processes identifier to the endpoint on the 
+ * later. Otherwise, send this processes identifier to the endpoint on the
  * newly connected socket.
  */
 static void mca_btl_tcp2_endpoint_complete_connect(mca_btl_base_endpoint_t* btl_endpoint)
@@ -623,7 +623,7 @@ static void mca_btl_tcp2_endpoint_complete_connect(mca_btl_base_endpoint_t* btl_
 
     /* check connect completion status */
     if(getsockopt(btl_endpoint->endpoint_sd, SOL_SOCKET, SO_ERROR, (char *)&so_error, &so_length) < 0) {
-        BTL_ERROR(("getsockopt() to %s failed: %s (%d)", 
+        BTL_ERROR(("getsockopt() to %s failed: %s (%d)",
                    opal_net_get_hostname((struct sockaddr*) &endpoint_addr),
                    strerror(opal_socket_errno), opal_socket_errno));
         mca_btl_tcp2_endpoint_close(btl_endpoint);
@@ -634,7 +634,7 @@ static void mca_btl_tcp2_endpoint_complete_connect(mca_btl_base_endpoint_t* btl_
         return;
     }
     if(so_error != 0) {
-        BTL_ERROR(("connect() to %s failed: %s (%d)", 
+        BTL_ERROR(("connect() to %s failed: %s (%d)",
                    opal_net_get_hostname((struct sockaddr*) &endpoint_addr),
                    strerror(so_error), so_error));
         mca_btl_tcp2_endpoint_close(btl_endpoint);
@@ -651,7 +651,7 @@ static void mca_btl_tcp2_endpoint_complete_connect(mca_btl_base_endpoint_t* btl_
 
 
 /*
- * A file descriptor is available/ready for recv. Check the state 
+ * A file descriptor is available/ready for recv. Check the state
  * of the socket and take the appropriate action.
  */
 
@@ -689,13 +689,13 @@ static void mca_btl_tcp2_endpoint_recv_handler(int sd, short flags, void* user)
 
             frag = btl_endpoint->endpoint_recv_frag;
             if(NULL == frag) {
-                if(mca_btl_tcp2_module.super.btl_max_send_size > 
-                   mca_btl_tcp2_module.super.btl_eager_limit) { 
+                if(mca_btl_tcp2_module.super.btl_max_send_size >
+                   mca_btl_tcp2_module.super.btl_eager_limit) {
                     MCA_BTL_TCP_FRAG_ALLOC_MAX(frag);
-                } else { 
+                } else {
                     MCA_BTL_TCP_FRAG_ALLOC_EAGER(frag);
                 }
-                
+
                 if(NULL == frag) {
                     OPAL_THREAD_UNLOCK(&btl_endpoint->endpoint_recv_lock);
                     return;

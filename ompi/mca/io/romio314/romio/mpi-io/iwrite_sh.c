@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -92,7 +92,7 @@ int MPI_File_iwrite_shared(MPI_File fh, ROMIO_CONST void *buf, int count,
 	off = adio_fh->disp + adio_fh->etype_size * shared_fp;
         if (!(adio_fh->atomicity))
 	    ADIO_IwriteContig(adio_fh, buf, count, datatype, ADIO_EXPLICIT_OFFSET,
-		            off, request, &error_code); 
+		            off, request, &error_code);
 	else {
             /* to maintain strict atomicity semantics with other concurrent
               operations, lock (exclusive) and call blocking routine */
@@ -101,7 +101,7 @@ int MPI_File_iwrite_shared(MPI_File fh, ROMIO_CONST void *buf, int count,
                 ADIOI_WRITE_LOCK(adio_fh, off, SEEK_SET, bufsize);
 
             ADIO_WriteContig(adio_fh, buf, count, datatype, ADIO_EXPLICIT_OFFSET,
-			     off, &status, &error_code);  
+			     off, &status, &error_code);
 
             if (adio_fh->file_system != ADIO_NFS)
                 ADIOI_UNLOCK(adio_fh, off, SEEK_SET, bufsize);
@@ -111,7 +111,7 @@ int MPI_File_iwrite_shared(MPI_File fh, ROMIO_CONST void *buf, int count,
     }
     else
 	ADIO_IwriteStrided(adio_fh, buf, count, datatype, ADIO_EXPLICIT_OFFSET,
-			   shared_fp, request, &error_code); 
+			   shared_fp, request, &error_code);
 
 fn_exit:
     MPIU_THREAD_CS_EXIT(ALLFUNC,);

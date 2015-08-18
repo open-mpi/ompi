@@ -6,21 +6,21 @@
  * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2012      The University of Wisconsin-La Crosse. All rights
  *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
-/** @file 
- * 
+/** @file
+ *
  * OMPI Layer Checkpoint/Restart Runtime functions
  *
  */
@@ -131,22 +131,22 @@ notify_collectives(int msg)
             (ompi_communicator_t *)opal_pointer_array_get_item(&ompi_mpi_communicators, i);
         if (NULL == comm) continue;
 
-        SIGNAL(comm, modules, highest_module, msg, ret, allgather); 
-        SIGNAL(comm, modules, highest_module, msg, ret, allgatherv); 
-        SIGNAL(comm, modules, highest_module, msg, ret, allreduce); 
-        SIGNAL(comm, modules, highest_module, msg, ret, alltoall); 
-        SIGNAL(comm, modules, highest_module, msg, ret, alltoallv); 
-        SIGNAL(comm, modules, highest_module, msg, ret, alltoallw); 
-        SIGNAL(comm, modules, highest_module, msg, ret, barrier); 
-        SIGNAL(comm, modules, highest_module, msg, ret, bcast); 
-        SIGNAL(comm, modules, highest_module, msg, ret, exscan); 
-        SIGNAL(comm, modules, highest_module, msg, ret, gather); 
-        SIGNAL(comm, modules, highest_module, msg, ret, gatherv); 
-        SIGNAL(comm, modules, highest_module, msg, ret, reduce); 
-        SIGNAL(comm, modules, highest_module, msg, ret, reduce_scatter); 
-        SIGNAL(comm, modules, highest_module, msg, ret, scan); 
-        SIGNAL(comm, modules, highest_module, msg, ret, scatter); 
-        SIGNAL(comm, modules, highest_module, msg, ret, scatterv); 
+        SIGNAL(comm, modules, highest_module, msg, ret, allgather);
+        SIGNAL(comm, modules, highest_module, msg, ret, allgatherv);
+        SIGNAL(comm, modules, highest_module, msg, ret, allreduce);
+        SIGNAL(comm, modules, highest_module, msg, ret, alltoall);
+        SIGNAL(comm, modules, highest_module, msg, ret, alltoallv);
+        SIGNAL(comm, modules, highest_module, msg, ret, alltoallw);
+        SIGNAL(comm, modules, highest_module, msg, ret, barrier);
+        SIGNAL(comm, modules, highest_module, msg, ret, bcast);
+        SIGNAL(comm, modules, highest_module, msg, ret, exscan);
+        SIGNAL(comm, modules, highest_module, msg, ret, gather);
+        SIGNAL(comm, modules, highest_module, msg, ret, gatherv);
+        SIGNAL(comm, modules, highest_module, msg, ret, reduce);
+        SIGNAL(comm, modules, highest_module, msg, ret, reduce_scatter);
+        SIGNAL(comm, modules, highest_module, msg, ret, scan);
+        SIGNAL(comm, modules, highest_module, msg, ret, scatter);
+        SIGNAL(comm, modules, highest_module, msg, ret, scatterv);
     }
 
     return OMPI_SUCCESS;
@@ -156,7 +156,7 @@ notify_collectives(int msg)
 /*
  * CR Init
  */
-int ompi_cr_init(void) 
+int ompi_cr_init(void)
 {
     /*
      * Register some MCA variables
@@ -177,7 +177,7 @@ int ompi_cr_init(void)
 
     opal_output_verbose(10, ompi_cr_output,
                         "ompi_cr: init: ompi_cr_init()");
-    
+
     /* Register the OMPI interlevel coordination callback */
     opal_cr_reg_coord_callback(ompi_cr_coord, &prev_coord_callback);
 
@@ -238,14 +238,14 @@ int ompi_cr_finalize(void)
 {
     opal_output_verbose(10, ompi_cr_output,
                         "ompi_cr: finalize: ompi_cr_finalize()");
-    
+
     return OMPI_SUCCESS;
 }
 
 /*
  * Interlayer coordination callback
  */
-int ompi_cr_coord(int state) 
+int ompi_cr_coord(int state)
 {
     int ret, exit_status = OMPI_SUCCESS;
 
@@ -254,7 +254,7 @@ int ompi_cr_coord(int state)
                         opal_crs_base_state_str((opal_crs_state_type_t)state));
 
     /*
-     * Before calling the previous callback, we have the opportunity to 
+     * Before calling the previous callback, we have the opportunity to
      * take action given the state.
      */
     if(OPAL_CRS_CHECKPOINT == state) {
@@ -291,10 +291,10 @@ int ompi_cr_coord(int state)
         exit_status = ret;
         goto cleanup;
     }
-    
-    
+
+
     /*
-     * After calling the previous callback, we have the opportunity to 
+     * After calling the previous callback, we have the opportunity to
      * take action given the state to tidy up.
      */
     if(OPAL_CRS_CHECKPOINT == state) {
@@ -362,7 +362,7 @@ static int ompi_cr_coord_pre_ckpt(void) {
     if (OMPI_SUCCESS != (ret = notify_collectives(OPAL_CR_CHECKPOINT))) {
         goto cleanup;
     }
-    
+
     /*
      * Notify PML
      *  - Will notify BML and BTL's
@@ -371,7 +371,7 @@ static int ompi_cr_coord_pre_ckpt(void) {
         exit_status = ret;
         goto cleanup;
     }
-    
+
  cleanup:
 
     return exit_status;
@@ -395,10 +395,10 @@ static int ompi_cr_coord_pre_restart(void) {
         goto cleanup;
     }
 
- cleanup:    
+ cleanup:
     return exit_status;
 }
-    
+
 static int ompi_cr_coord_pre_continue(void) {
 #if OPAL_ENABLE_FT_CR == 1
     int ret, exit_status = OMPI_SUCCESS;
@@ -428,7 +428,7 @@ static int ompi_cr_coord_pre_continue(void) {
         OPAL_CR_SET_TIMER(OPAL_CR_TIMER_CRCP1);
     }
 
- cleanup:    
+ cleanup:
     return exit_status;
 #else
     return OMPI_SUCCESS;
@@ -472,7 +472,7 @@ static int ompi_cr_coord_post_restart(void) {
     if (OMPI_SUCCESS != (ret = notify_collectives(OPAL_CRS_RESTART))) {
         goto cleanup;
     }
-    
+
  cleanup:
 
     return exit_status;

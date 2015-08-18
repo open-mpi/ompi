@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -14,14 +14,14 @@
 static int is_aggregator(int rank, ADIO_File fd);
 static int uses_generic_read(ADIO_File fd);
 static int uses_generic_write(ADIO_File fd);
-static int build_cb_config_list(ADIO_File fd, 
-	MPI_Comm orig_comm, MPI_Comm comm, 
+static int build_cb_config_list(ADIO_File fd,
+	MPI_Comm orig_comm, MPI_Comm comm,
 	int rank, int procs, int *error_code);
 
 MPI_File ADIO_Open(MPI_Comm orig_comm,
 		   MPI_Comm comm, const char *filename, int file_system,
 		   ADIOI_Fns *ops,
-		   int access_mode, ADIO_Offset disp, MPI_Datatype etype, 
+		   int access_mode, ADIO_Offset disp, MPI_Datatype etype,
 		   MPI_Datatype filetype,
 		   MPI_Info info, int perm, int *error_code)
 {
@@ -126,13 +126,13 @@ MPI_File ADIO_Open(MPI_Comm orig_comm,
      * (e.g. Blue Gene) more efficent */
     fd->io_buf = ADIOI_Malloc(fd->hints->cb_buffer_size);
 
-     /* deferred open: 
+     /* deferred open:
      * we can only do this optimization if 'fd->hints->deferred_open' is set
      * (which means the user hinted 'no_indep_rw' and collective buffering).
      * Furthermore, we only do this if our collective read/write routines use
      * our generic function, and not an fs-specific routine (we can defer opens
      * only if we use our aggreagation code). */
-    if (fd->hints->deferred_open && 
+    if (fd->hints->deferred_open &&
 		    !(uses_generic_read(fd) \
 			    && uses_generic_write(fd))) {
 	    fd->hints->deferred_open = 0;
@@ -147,7 +147,7 @@ MPI_File ADIO_Open(MPI_Comm orig_comm,
      * one else does that right now */
     if (fd->hints->ranklist == NULL) {
 	build_cb_config_list(fd, orig_comm, comm, rank, procs, error_code);
-	if (*error_code != MPI_SUCCESS) 
+	if (*error_code != MPI_SUCCESS)
 	    goto fn_exit;
     }
     /* for debugging, it can be helpful to see the hints selected */
@@ -177,7 +177,7 @@ MPI_File ADIO_Open(MPI_Comm orig_comm,
 
         /* If the file was successfully opened, close it */
         if (*error_code == MPI_SUCCESS) {
-        
+
             /* in the deferred open case, only those who have actually
                opened the file should close it */
             if (fd->hints->deferred_open)  {
@@ -210,16 +210,16 @@ MPI_File ADIO_Open(MPI_Comm orig_comm,
 }
 
 /* a simple linear search. possible enancement: add a my_cb_nodes_index member
- * ( index into cb_nodes, else -1 if not aggregator ) for faster lookups 
+ * ( index into cb_nodes, else -1 if not aggregator ) for faster lookups
  *
  * fd->hints->cb_nodes is the number of aggregators
  * fd->hints->ranklist[] is an array of the ranks of aggregators
  *
- * might want to move this to adio/common/cb_config_list.c 
+ * might want to move this to adio/common/cb_config_list.c
  */
 int is_aggregator(int rank, ADIO_File fd ) {
         int i;
-        
+
 	if (fd->my_cb_nodes_index == -2) {
 	    for (i=0; i< fd->hints->cb_nodes; i++ ) {
 		if ( rank == fd->hints->ranklist[i] ) {
@@ -253,8 +253,8 @@ static int uses_generic_write(ADIO_File fd)
     return 0;
 }
 
-static int build_cb_config_list(ADIO_File fd, 
-	MPI_Comm orig_comm, MPI_Comm comm, 
+static int build_cb_config_list(ADIO_File fd,
+	MPI_Comm orig_comm, MPI_Comm comm,
 	int rank, int procs, int *error_code)
 {
     ADIO_cb_name_array array;
@@ -282,7 +282,7 @@ static int build_cb_config_list(ADIO_File fd,
 	    return 0;
 	}
 
-	rank_ct = ADIOI_cb_config_list_parse(fd->hints->cb_config_list, 
+	rank_ct = ADIOI_cb_config_list_parse(fd->hints->cb_config_list,
 					     array, tmp_ranklist,
 					     fd->hints->cb_nodes);
 
@@ -310,6 +310,6 @@ static int build_cb_config_list(ADIO_File fd,
     return 0;
 }
 
-/* 
- * vim: ts=8 sts=4 sw=4 noexpandtab 
+/*
+ * vim: ts=8 sts=4 sw=4 noexpandtab
  */

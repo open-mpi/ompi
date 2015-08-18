@@ -13,7 +13,7 @@
  * Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007-2009 Sun Microsystems, Inc. All rights reserved.
  * Copyright (c) 2007-2013 Los Alamos National Security, LLC.  All rights
- *                         reserved. 
+ *                         reserved.
  * Copyright (c) 2013-2015 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
@@ -25,13 +25,9 @@
 #include "orte_config.h"
 #include "orte/constants.h"
 
-#ifdef HAVE_STRING_H
 #include <string.h>
-#endif
 #include <stdio.h>
-#ifdef HAVE_STDLIB_H
 #include <stdlib.h>
-#endif  /* HAVE_STDLIB_H */
 #ifdef HAVE_STRINGS_H
 #include <strings.h>
 #endif  /* HAVE_STRINGS_H */
@@ -117,7 +113,7 @@ static opal_cmd_line_init_t cmd_line_init[] = {
     { NULL, '\0', "report-uri", "report-uri", 1,
       &myglobals.report_uri, OPAL_CMD_LINE_TYPE_STRING,
       "Printout URI on stdout [-], stderr [+], or a file [anything else]" },
-    
+
     { NULL, '\0', "prefix", "prefix", 1,
       &myglobals.prefix, OPAL_CMD_LINE_TYPE_STRING,
       "Prefix to be used to look for ORTE executables" },
@@ -155,7 +151,7 @@ int main(int argc, char *argv[])
     /* find our basename (the name of the executable) so that we can
        use it in pretty-print error messages */
     myglobals.basename = opal_basename(argv[0]);
-    
+
     opal_cmd_line_create(&cmd_line, cmd_line_init);
     mca_base_cmd_line_setup(&cmd_line);
     if (OPAL_SUCCESS != (rc = opal_cmd_line_parse(&cmd_line, true,
@@ -171,9 +167,9 @@ int main(int argc, char *argv[])
        that --version --help works as one might expect. */
     if (myglobals.version) {
         char *str;
-        str = opal_info_make_version_str("all", 
-                                         OPAL_MAJOR_VERSION, OPAL_MINOR_VERSION, 
-                                         OPAL_RELEASE_VERSION, 
+        str = opal_info_make_version_str("all",
+                                         OPAL_MAJOR_VERSION, OPAL_MINOR_VERSION,
+                                         OPAL_RELEASE_VERSION,
                                          OPAL_GREEK_VERSION,
                                          OPAL_REPO_REV);
         if (NULL != str) {
@@ -209,7 +205,7 @@ int main(int argc, char *argv[])
     /*
      * Since this process can now handle MCA/GMCA parameters, make sure to
      * process them.
-     * NOTE: It is "safe" to call mca_base_cmd_line_process_args() before 
+     * NOTE: It is "safe" to call mca_base_cmd_line_process_args() before
      *  opal_init_util() since mca_base_cmd_line_process_args() does *not*
      *  depend upon opal_init_util() functionality.
      */
@@ -221,7 +217,7 @@ int main(int argc, char *argv[])
     if (OPAL_SUCCESS != opal_init(&argc, &argv)) {
         exit(1);
     }
-    
+
     /* Check for help request */
     if (myglobals.help) {
         char *str, *args = NULL;
@@ -246,17 +242,11 @@ int main(int argc, char *argv[])
         exit(0);
     }
 
-    /* flag that I am the HNP */
-    orte_process_info.proc_type = ORTE_PROC_HNP;
-    
     /* Setup MCA params */
     orte_register_params();
 
-    /* specify the DVM state machine */
-    opal_setenv("OMPI_MCA_state", "dvm", true, &environ);
-    
     /* Intialize our Open RTE environment */
-    if (ORTE_SUCCESS != (rc = orte_init(&argc, &argv, ORTE_PROC_HNP))) {
+    if (ORTE_SUCCESS != (rc = orte_init(&argc, &argv, ORTE_PROC_MASTER))) {
         /* cannot call ORTE_ERROR_LOG as it could be the errmgr
          * never got loaded!
          */
@@ -371,8 +361,8 @@ int main(int argc, char *argv[])
         }
     }
 
-    /* Did the user specify a hostfile. Need to check for both 
-     * hostfile and machine file. 
+    /* Did the user specify a hostfile. Need to check for both
+     * hostfile and machine file.
      * We can only deal with one hostfile per app context, otherwise give an error.
      */
     if (0 < (j = opal_cmd_line_get_ninsts(&cmd_line, "hostfile"))) {
@@ -395,7 +385,7 @@ int main(int argc, char *argv[])
             orte_set_attribute(&app->attributes, ORTE_APP_HOSTFILE, ORTE_ATTR_LOCAL, value, OPAL_STRING);
         }
     }
- 
+
     /* Did the user specify any hosts? */
     if (0 < (j = opal_cmd_line_get_ninsts(&cmd_line, "host"))) {
         char **targ=NULL, *tval;
@@ -451,7 +441,7 @@ static void send_callback(int status, orte_process_name_t *peer,
 
 {
     orte_job_t *jdata = (orte_job_t*)cbdata;
-    
+
     OBJ_RELEASE(buffer);
     /* cleanup the job object */
     opal_pointer_array_set_item(orte_job_data, ORTE_LOCAL_JOBID(jdata->jobid), NULL);
@@ -464,7 +454,7 @@ static void notify_requestor(int sd, short args, void *cbdata)
     orte_proc_t *pptr;
     int ret;
     opal_buffer_t *reply;
-    
+
     /* notify the requestor */
     reply = OBJ_NEW(opal_buffer_t);
     /* see if there was any problem */

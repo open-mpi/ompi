@@ -6,14 +6,14 @@
 # Copyright (c) 2004-2005 The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
-# Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+# Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # $COPYRIGHT$
-# 
+#
 # Additional copyrights may follow
-# 
+#
 # $HEADER$
 #
 
@@ -48,7 +48,7 @@ while (<HEADERS>) {
     $protection = "HAVE_" . $protection;
 
     print $protection;
-    
+
     $string_to_replace = "#ifdef $protection$_#endif\n";
 
     print $string_to_replace;
@@ -70,7 +70,7 @@ while (<HEADERS>) {
                 }
             }
             close (C_FILE);
-            if ($protected == 0) { 
+            if ($protected == 0) {
                 #this file is not yet protected
                 open(C_FILE, "$c_file") || print "Open failed on $c_file\n";
                 open(TEMP, "> $temp_file") || print "Open failed on temp.c \n";
@@ -113,7 +113,7 @@ while (<HEADERS>) {
                 }
             }
             close (H_FILE);
-            if ($protected == 0) { 
+            if ($protected == 0) {
                 #this file is not yet protected
                 open(H_FILE, "$h_file") || print "Open failed on $h_file\n";
                 open(TEMP, "> $temp_file") || print "Open failed on temp.c \n";

@@ -105,7 +105,7 @@ int mca_pml_bfo_enable(bool enable)
                          mca_pml_bfo.free_list_max,
                          mca_pml_bfo.free_list_inc,
                          NULL );
-                                                                                                            
+
     OBJ_CONSTRUCT(&mca_pml_bfo.recv_frags, ompi_free_list_t);
 
     ompi_free_list_init_new( &mca_pml_bfo.recv_frags,
@@ -117,7 +117,7 @@ int mca_pml_bfo_enable(bool enable)
                          mca_pml_bfo.free_list_max,
                          mca_pml_bfo.free_list_inc,
                          NULL );
-                                                                                                            
+
     OBJ_CONSTRUCT(&mca_pml_bfo.pending_pckts, ompi_free_list_t);
     ompi_free_list_init_new( &mca_pml_bfo.pending_pckts,
                          sizeof(mca_pml_bfo_pckt_pending_t),
@@ -226,7 +226,7 @@ int mca_pml_bfo_add_comm(ompi_communicator_t* comm)
         /* As we now know we work on a fragment for this communicator
          * we should remove it from the
          * non_existing_communicator_pending list. */
-        opal_list_remove_item( &mca_pml_bfo.non_existing_communicator_pending, 
+        opal_list_remove_item( &mca_pml_bfo.non_existing_communicator_pending,
                                item );
 
       add_fragment_to_unexpected:
@@ -314,7 +314,7 @@ int mca_pml_bfo_add_procs(ompi_proc_t** procs, size_t nprocs)
 
     /*
      * JJH: Disable this in FT enabled builds since
-     * we use a wrapper PML. It will cause this check to 
+     * we use a wrapper PML. It will cause this check to
      * return failure as all processes will return the wrapper PML
      * component in use instead of the wrapped PML component underneath.
      */
@@ -347,11 +347,11 @@ int mca_pml_bfo_add_procs(ompi_proc_t** procs, size_t nprocs)
     for (item = opal_list_get_first(&mca_btl_base_modules_initialized) ;
          item != opal_list_get_end(&mca_btl_base_modules_initialized) ;
          item = opal_list_get_next(item)) {
-        mca_btl_base_selected_module_t *sm = 
+        mca_btl_base_selected_module_t *sm =
             (mca_btl_base_selected_module_t*) item;
         if (sm->btl_module->btl_eager_limit < sizeof(mca_pml_bfo_hdr_t)) {
 	    opal_show_help("help-mpi-pml-bfo.txt", "eager_limit_too_small",
-			   true, 
+			   true,
 			   sm->btl_component->btl_version.mca_component_name,
 			   ompi_process_info.nodename,
 			   sm->btl_component->btl_version.mca_component_name,
@@ -371,7 +371,7 @@ int mca_pml_bfo_add_procs(ompi_proc_t** procs, size_t nprocs)
                                NULL );
     if(OMPI_SUCCESS != rc)
         goto cleanup_and_return;
-    
+
     rc = mca_bml.bml_register( MCA_PML_BFO_HDR_TYPE_RNDV,
                                mca_pml_bfo_recv_frag_callback_rndv,
                                NULL );
@@ -383,19 +383,19 @@ int mca_pml_bfo_add_procs(ompi_proc_t** procs, size_t nprocs)
                                NULL );
     if(OMPI_SUCCESS != rc)
         goto cleanup_and_return;
-    
+
     rc = mca_bml.bml_register( MCA_PML_BFO_HDR_TYPE_ACK,
                                mca_pml_bfo_recv_frag_callback_ack,
                                NULL );
     if(OMPI_SUCCESS != rc)
         goto cleanup_and_return;
-    
+
     rc = mca_bml.bml_register( MCA_PML_BFO_HDR_TYPE_FRAG,
                                mca_pml_bfo_recv_frag_callback_frag,
                                NULL );
     if(OMPI_SUCCESS != rc)
         goto cleanup_and_return;
-    
+
     rc = mca_bml.bml_register( MCA_PML_BFO_HDR_TYPE_PUT,
                                mca_pml_bfo_recv_frag_callback_put,
                                NULL );
@@ -407,7 +407,7 @@ int mca_pml_bfo_add_procs(ompi_proc_t** procs, size_t nprocs)
                                NULL );
     if(OMPI_SUCCESS != rc)
         goto cleanup_and_return;
-    
+
 #if PML_BFO
     rc = mca_pml_bfo_register_callbacks();
     if(OMPI_SUCCESS != rc)
@@ -417,7 +417,7 @@ int mca_pml_bfo_add_procs(ompi_proc_t** procs, size_t nprocs)
     rc = mca_bml.bml_register_error((mca_btl_base_module_error_cb_fn_t)mca_pml_bfo_error_handler);
     if(OMPI_SUCCESS != rc)
         goto cleanup_and_return;
-    
+
   cleanup_and_return:
     OBJ_DESTRUCT(&reachable);
 
@@ -466,8 +466,8 @@ static void mca_pml_bfo_fin_completion( mca_btl_base_module_t* btl,
                                         struct mca_btl_base_descriptor_t* des,
                                         int status )
 {
-    
-    mca_bml_base_btl_t* bml_btl = (mca_bml_base_btl_t*) des->des_context; 
+
+    mca_bml_base_btl_t* bml_btl = (mca_bml_base_btl_t*) des->des_context;
 
 #if PML_BFO
     if( OPAL_UNLIKELY(OMPI_SUCCESS != status) ) {
@@ -557,11 +557,11 @@ void mca_pml_bfo_process_pending_packets(mca_bml_base_btl_t* bml_btl)
         OPAL_THREAD_UNLOCK(&mca_pml_bfo.lock);
         if(NULL == pckt)
             break;
-        if(pckt->bml_btl != NULL && 
+        if(pckt->bml_btl != NULL &&
                 pckt->bml_btl->btl == bml_btl->btl) {
             send_dst = pckt->bml_btl;
         } else {
-            mca_bml_base_endpoint_t* endpoint = 
+            mca_bml_base_endpoint_t* endpoint =
                 (mca_bml_base_endpoint_t*) pckt->proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML];
             send_dst = mca_bml_base_btl_array_find(
                     &endpoint->btl_eager, bml_btl->btl);
@@ -643,7 +643,7 @@ void mca_pml_bfo_process_pending_rdma(void)
 
 void mca_pml_bfo_error_handler(
         struct mca_btl_base_module_t* btl, int32_t flags,
-        ompi_proc_t* errproc, char* btlinfo ) { 
+        ompi_proc_t* errproc, char* btlinfo ) {
 #if PML_BFO
     if (flags & MCA_BTL_ERROR_FLAGS_NONFATAL) {
         mca_pml_bfo_failover_error_handler(btl, flags, errproc, btlinfo);
@@ -676,7 +676,7 @@ int mca_pml_bfo_ft_event( int state )
     else if(OPAL_CRS_CONTINUE == state) {
         first_continue_pass = !first_continue_pass;
 
-        if( !first_continue_pass ) { 
+        if( !first_continue_pass ) {
             if( opal_cr_timing_barrier_enabled ) {
                 OPAL_CR_SET_TIMER(OPAL_CR_TIMER_COREBR0);
                 opal_pmix.fence(NULL, 0);
@@ -697,7 +697,7 @@ int mca_pml_bfo_ft_event( int state )
              * Refresh the proc structure, and publish our proc info in the modex.
              * NOTE: Do *not* call ompi_proc_finalize as there are many places in
              *       the code that point to indv. procs in this strucutre. For our
-             *       needs here we only need to fix up the modex, bml and pml 
+             *       needs here we only need to fix up the modex, bml and pml
              *       references.
              */
             if (OMPI_SUCCESS != (ret = ompi_proc_refresh())) {
@@ -736,7 +736,7 @@ int mca_pml_bfo_ft_event( int state )
          * Refresh the proc structure, and publish our proc info in the modex.
          * NOTE: Do *not* call ompi_proc_finalize as there are many places in
          *       the code that point to indv. procs in this strucutre. For our
-         *       needs here we only need to fix up the modex, bml and pml 
+         *       needs here we only need to fix up the modex, bml and pml
          *       references.
          */
         if (OMPI_SUCCESS != (ret = ompi_proc_refresh())) {
@@ -766,7 +766,7 @@ int mca_pml_bfo_ft_event( int state )
         opal_output(0, "pml:base: ft_event: BML ft_event function failed: %d\n",
                     ret);
     }
-    
+
     if(OPAL_CRS_CHECKPOINT == state) {
         OPAL_CR_SET_TIMER(OPAL_CR_TIMER_P2P1);
 

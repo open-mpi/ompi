@@ -23,9 +23,7 @@
 #include "orte_config.h"
 #include "orte/constants.h"
 
-#ifdef HAVE_STRING_H
 #include <string.h>
-#endif
 
 #include <stdio.h>
 #include <ctype.h>
@@ -89,11 +87,11 @@ opal_cmd_line_init_t orte_server_cmd_line_opts[] = {
     { NULL, 'd', NULL, "debug", 0,
       &debug, OPAL_CMD_LINE_TYPE_BOOL,
         "Debug the Open MPI server" },
-        
+
     { "orte_no_daemonize", '\0', NULL, "no-daemonize", 0,
       &no_daemonize, OPAL_CMD_LINE_TYPE_BOOL,
       "Don't daemonize into the background" },
-    
+
     { NULL, 'r', NULL, "report-uri", 1,
       &report_uri, OPAL_CMD_LINE_TYPE_STRING,
       "Report the server's uri on stdout [-], stderr [+], or a file [anything else]"},
@@ -117,7 +115,7 @@ int main(int argc, char *argv[])
         fprintf(stderr, "OPAL failed to initialize -- orted aborting\n");
         exit(1);
     }
-    
+
     /* setup to check common command line options that just report and die */
     cmd_line = OBJ_NEW(opal_cmd_line_t);
     opal_cmd_line_create(cmd_line, orte_server_cmd_line_opts);
@@ -130,12 +128,12 @@ int main(int argc, char *argv[])
         }
         return 1;
     }
-    
+
     /* check for help request */
     if (help) {
         char *str, *args = NULL;
         args = opal_cmd_line_get_usage_msg(cmd_line);
-        str = opal_show_help_string("help-orte-server.txt", 
+        str = opal_show_help_string("help-orte-server.txt",
                                     "orteserver:usage", false,
                                     argv[0], args);
         if (NULL != str) {
@@ -152,14 +150,14 @@ int main(int argc, char *argv[])
      * process them.
      */
     mca_base_cmd_line_process_args(cmd_line, &environ, &environ);
-    
+
     /* if debug is set, then set orte_debug_flag so that the data server
      * code will output
      */
     if (debug) {
         putenv(OPAL_MCA_PREFIX"orte_debug=1");
     }
-        
+
     /* detach from controlling terminal
      * otherwise, remain attached so output can get to us
      */
@@ -174,7 +172,7 @@ int main(int argc, char *argv[])
      * Note: This must happen before opal_init().
      */
     opal_cr_set_enabled(false);
-    
+
     /* Select the none component, since we don't actually use a checkpointer */
     (void) mca_base_var_env_name("crs", &tmp_env_var);
     opal_setenv(tmp_env_var,
@@ -199,7 +197,7 @@ int main(int argc, char *argv[])
         fprintf(stderr, "orte-server: failed to initialize -- aborting\n");
         exit(1);
     }
-    
+
     /* report out our URI, if we were requested to do so, using syntax
      * proposed in an email thread by Jeff Squyres
      */
@@ -225,25 +223,25 @@ int main(int argc, char *argv[])
         }
         free(rml_uri);
     }
-    
+
     /* setup the data server to listen for commands */
     if (ORTE_SUCCESS != (ret = orte_data_server_init())) {
         fprintf(stderr, "orte-server: failed to start data server -- aborting\n");
         orte_finalize();
         exit(1);
     }
-    
+
     /* setup to listen for commands sent specifically to me */
     orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_DAEMON,
                             ORTE_RML_NON_PERSISTENT, orte_daemon_recv, NULL);
 
     /* Set signal handlers to catch kill signals so we can properly clean up
-     * after ourselves. 
+     * after ourselves.
      */
-    opal_event_set(opal_event_base, &term_handler, SIGTERM, OPAL_EV_SIGNAL,
+    opal_event_set(orte_event_base, &term_handler, SIGTERM, OPAL_EV_SIGNAL,
                    shutdown_callback, NULL);
     opal_event_add(&term_handler, NULL);
-    opal_event_set(opal_event_base, &int_handler, SIGINT, OPAL_EV_SIGNAL,
+    opal_event_set(orte_event_base, &int_handler, SIGINT, OPAL_EV_SIGNAL,
                    shutdown_callback, NULL);
     opal_event_add(&int_handler, NULL);
 
@@ -286,7 +284,7 @@ int main(int argc, char *argv[])
     }
 
     /* should never get here, but if we do... */
-    
+
     /* Finalize and clean up ourselves */
     orte_finalize();
     return orte_exit_status;
@@ -297,7 +295,7 @@ static void shutdown_callback(int fd, short flags, void *arg)
     if (debug) {
         opal_output(0, "%s orte-server: finalizing", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
     }
-    
+
     /* Finalize and clean up ourselves */
     orte_finalize();
     exit(orte_exit_status);

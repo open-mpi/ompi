@@ -6,7 +6,7 @@
 # Copyright (c) 2004-2013 The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
-# Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+# Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
@@ -18,9 +18,9 @@
 # Copyright (c) 2015      Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
-# 
+#
 # Additional copyrights may follow
-# 
+#
 # $HEADER$
 #
 
@@ -28,7 +28,7 @@ include $(top_srcdir)/Makefile.ompi-rules
 
 #
 # OMPI_PROFILING_DEFINES flag is enabled when we want our MPI_* symbols
-# to be replaced by PMPI_*. In other words, this flag decides 
+# to be replaced by PMPI_*. In other words, this flag decides
 # whether "profile/defines.h" is included or not. "profile/defines.h"
 # replaces all MPI_* symbols with PMPI_* symbols. In this directory
 # we definately need it to be 1.
@@ -55,6 +55,8 @@ linked_files = \
         padd_error_code_f.c \
         padd_error_string_f.c \
         paddress_f.c \
+        paint_add_f.c \
+        paint_diff_f.c \
         pallgather_f.c \
         pallgatherv_f.c \
         palloc_mem_f.c \
@@ -374,9 +376,13 @@ linked_files += \
         pfile_get_view_f.c \
         pfile_iread_at_f.c \
         pfile_iread_f.c \
+        pfile_iread_at_all_f.c \
+        pfile_iread_all_f.c \
         pfile_iread_shared_f.c \
         pfile_iwrite_at_f.c \
         pfile_iwrite_f.c \
+        pfile_iwrite_at_all_f.c \
+        pfile_iwrite_all_f.c \
         pfile_iwrite_shared_f.c \
         pfile_open_f.c \
         pfile_preallocate_f.c \

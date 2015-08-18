@@ -6,12 +6,12 @@
  * Copyright (c) 2004-2014 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
- *                         reserved. 
+ *                         reserved.
  * Copyright (c) 2008-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2010-2014 Los Alamos National Security, LLC.
@@ -20,18 +20,16 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
 #include "opal_config.h"
 
 #include <time.h>
-#ifdef HAVE_SIGNAL_H
 #include <signal.h>
-#endif
 
 #include "opal/constants.h"
 #include "opal/runtime/opal.h"
@@ -173,7 +171,7 @@ int opal_register_params(void)
        - 10.0.0./8
        - 172.16.0.0/12
        - 192.168.0.0/16
-       
+
        RFC3330 also mentions
        - 169.254.0.0/16 for DHCP onlink iff there's no DHCP server
     */
@@ -290,8 +288,8 @@ int opal_register_params(void)
 
     /* dss has parameters */
     ret = opal_dss_register_vars ();
-    if (OPAL_SUCCESS != ret) { 
-        return ret; 
+    if (OPAL_SUCCESS != ret) {
+        return ret;
     }
 
     return OPAL_SUCCESS;

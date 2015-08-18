@@ -29,9 +29,7 @@
 #ifdef HAVE_FCNTL_H
 #include <fcntl.h>
 #endif  /* HAVE_FCNTL_H */
-#ifdef HAVE_STRING_H
 #include <string.h>
-#endif /* HAVE_STRING_H */
 #if OPAL_HAVE_SOLARIS && !defined(_POSIX_C_SOURCE)
   #define _POSIX_C_SOURCE 200112L /* Required for shm_{open,unlink} decls */
   #include <sys/mman.h>

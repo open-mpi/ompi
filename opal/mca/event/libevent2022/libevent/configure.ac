@@ -597,7 +597,7 @@ if test "$enable_epoll" != "no" ; then
         # the libevent library.  Badness ensues.  Therefore, check to
         # see that this struct gets correctly passed between userspace
         # and the kernel.
-        
+
         # In this test, we use epoll in Level Triggered mode. We create
         # a pipe and the write only file descriptor of the pipe is
         # added to the epoll set. The test is successful if
@@ -605,7 +605,6 @@ if test "$enable_epoll" != "no" ; then
         # written to.
 
         haveepoll=no
-        AC_MSG_CHECKING([for working epoll library interface])
         AC_RUN_IFELSE([AC_LANG_PROGRAM([
 AC_INCLUDES_DEFAULT
 #include <sys/epoll.h>
@@ -652,6 +651,7 @@ else
     AC_MSG_RESULT([disabled])
 fi
 AM_CONDITIONAL(EPOLL_BACKEND, [test "x$haveepoll" = "xyes" -a "$enable_epoll" != "no"])
+AC_MSG_CHECKING([for working epoll library interface])
 AS_IF([test "$enable_epoll" != "no" && test "x$haveepoll" = "xyes"],
       [AC_DEFINE(HAVE_EPOLL, 1,
                  [Define if your system supports the epoll interface])
@@ -689,7 +689,7 @@ main(int argc, char **argv)
     memset(&epevin.data.ptr, 5, sizeof(epevin.data.ptr));
     epevin.events = EPOLLIN | EPOLLOUT;
 
-    if (syscall(__NR_epoll_ctl, epfd, 
+    if (syscall(__NR_epoll_ctl, epfd,
         EPOLL_CTL_ADD, fildes[[1]], &epevin) == -1)
         exit(1);
 

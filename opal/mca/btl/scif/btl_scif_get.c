@@ -41,7 +41,7 @@ int mca_btl_scif_get (mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t
 
     roffset = remote_handle->scif_offset + (off_t)(remote_address - remote_handle->scif_base);
     loffset = local_handle->scif_offset + (off_t)((intptr_t)local_address - local_handle->scif_base);
-        
+
     if (mca_btl_scif_component.rma_use_cpu) {
         scif_flags = SCIF_RMA_USECPU;
     }

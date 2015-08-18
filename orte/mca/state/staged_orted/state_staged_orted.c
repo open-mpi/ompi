@@ -3,9 +3,9 @@
  *                         All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -15,9 +15,7 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif  /* HAVE_UNISTD_H */
-#ifdef HAVE_STRING_H
 #include <string.h>
-#endif
 
 #include "opal/util/output.h"
 #include "opal/dss/dss.h"
@@ -251,7 +249,7 @@ static void send_fms(opal_buffer_t *bptr, void *cbdata)
     }
 }
 
-    
+
 static void track_procs(int fd, short argc, void *cbdata)
 {
     orte_state_caddy_t *caddy = (orte_state_caddy_t*)cbdata;

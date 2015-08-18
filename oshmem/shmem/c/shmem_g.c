@@ -2,9 +2,9 @@
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 #include "oshmem_config.h"
@@ -18,7 +18,7 @@
 
 /*
  * These routines provide a low latency mechanism to retrieve basic types (short, int, float,
- * double, long) from symmetric data objects on remote PEs. 
+ * double, long) from symmetric data objects on remote PEs.
  * Retrieves the value at the symmetric address addr of the remote PE pe.
  */
 #define SHMEM_TYPE_G(type_name, type)    \

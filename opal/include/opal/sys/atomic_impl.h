@@ -6,7 +6,7 @@
  * Copyright (c) 2004-2014 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -14,17 +14,15 @@
  * Copyright (c) 2012-2014 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
 /* Inline C implementation of the functions defined in atomic.h */
 
-#ifdef HAVE_STDLIB_H
 #include <stdlib.h>
-#endif
 
 /**********************************************************************
  *
@@ -61,7 +59,7 @@ static inline int32_t
 opal_atomic_add_32(volatile int32_t *addr, int delta)
 {
    int32_t oldval;
-   
+
    do {
       oldval = *addr;
    } while (0 == opal_atomic_cmpset_32(addr, oldval, oldval + delta));
@@ -76,7 +74,7 @@ static inline int32_t
 opal_atomic_sub_32(volatile int32_t *addr, int delta)
 {
    int32_t oldval;
-   
+
    do {
       oldval = *addr;
    } while (0 == opal_atomic_cmpset_32(addr, oldval, oldval - delta));
@@ -108,7 +106,7 @@ static inline int64_t
 opal_atomic_add_64(volatile int64_t *addr, int64_t delta)
 {
    int64_t oldval;
-   
+
    do {
       oldval = *addr;
    } while (0 == opal_atomic_cmpset_64(addr, oldval, oldval + delta));
@@ -216,15 +214,15 @@ opal_atomic_cmpset_rel_xx(volatile void* addr, int64_t oldval,
 
 
 static inline int
-opal_atomic_cmpset_ptr(volatile void* addr, 
-                       void* oldval, 
+opal_atomic_cmpset_ptr(volatile void* addr,
+                       void* oldval,
                        void* newval)
 {
 #if SIZEOF_VOID_P == 4 && OPAL_HAVE_ATOMIC_CMPSET_32
-    return opal_atomic_cmpset_32((int32_t*) addr, (unsigned long) oldval, 
+    return opal_atomic_cmpset_32((int32_t*) addr, (unsigned long) oldval,
                                  (unsigned long) newval);
 #elif SIZEOF_VOID_P == 8 && OPAL_HAVE_ATOMIC_CMPSET_64
-    return opal_atomic_cmpset_64((int64_t*) addr, (unsigned long) oldval, 
+    return opal_atomic_cmpset_64((int64_t*) addr, (unsigned long) oldval,
                                  (unsigned long) newval);
 #else
     abort();
@@ -233,15 +231,15 @@ opal_atomic_cmpset_ptr(volatile void* addr,
 
 
 static inline int
-opal_atomic_cmpset_acq_ptr(volatile void* addr, 
-                           void* oldval, 
+opal_atomic_cmpset_acq_ptr(volatile void* addr,
+                           void* oldval,
                            void* newval)
 {
 #if SIZEOF_VOID_P == 4 && OPAL_HAVE_ATOMIC_CMPSET_32
-    return opal_atomic_cmpset_acq_32((int32_t*) addr, (unsigned long) oldval, 
+    return opal_atomic_cmpset_acq_32((int32_t*) addr, (unsigned long) oldval,
                                      (unsigned long) newval);
 #elif SIZEOF_VOID_P == 8 && OPAL_HAVE_ATOMIC_CMPSET_64
-    return opal_atomic_cmpset_acq_64((int64_t*) addr, (unsigned long) oldval, 
+    return opal_atomic_cmpset_acq_64((int64_t*) addr, (unsigned long) oldval,
                                      (unsigned long) newval);
 #else
     abort();
@@ -249,15 +247,15 @@ opal_atomic_cmpset_acq_ptr(volatile void* addr,
 }
 
 
-static inline int opal_atomic_cmpset_rel_ptr(volatile void* addr, 
-                                             void* oldval, 
+static inline int opal_atomic_cmpset_rel_ptr(volatile void* addr,
+                                             void* oldval,
                                              void* newval)
 {
 #if SIZEOF_VOID_P == 4 && OPAL_HAVE_ATOMIC_CMPSET_32
-    return opal_atomic_cmpset_rel_32((int32_t*) addr, (unsigned long) oldval, 
+    return opal_atomic_cmpset_rel_32((int32_t*) addr, (unsigned long) oldval,
                                      (unsigned long) newval);
 #elif SIZEOF_VOID_P == 8 && OPAL_HAVE_ATOMIC_CMPSET_64
-    return opal_atomic_cmpset_rel_64((int64_t*) addr, (unsigned long) oldval, 
+    return opal_atomic_cmpset_rel_64((int64_t*) addr, (unsigned long) oldval,
                                      (unsigned long) newval);
 #else
     abort();
@@ -325,19 +323,19 @@ opal_atomic_sub_xx(volatile void* addr, int32_t value, size_t length)
 }
 
 #if SIZEOF_VOID_P == 4 && OPAL_HAVE_ATOMIC_ADD_32
-static inline int32_t opal_atomic_add_ptr( volatile void* addr, 
+static inline int32_t opal_atomic_add_ptr( volatile void* addr,
                                            void* delta )
 {
     return opal_atomic_add_32((int32_t*) addr, (unsigned long) delta);
 }
 #elif SIZEOF_VOID_P == 8 && OPAL_HAVE_ATOMIC_ADD_64
-static inline int64_t opal_atomic_add_ptr( volatile void* addr, 
+static inline int64_t opal_atomic_add_ptr( volatile void* addr,
                                            void* delta )
 {
     return opal_atomic_add_64((int64_t*) addr, (unsigned long) delta);
 }
 #else
-static inline int32_t opal_atomic_add_ptr( volatile void* addr, 
+static inline int32_t opal_atomic_add_ptr( volatile void* addr,
                                            void* delta )
 {
     abort();
@@ -346,19 +344,19 @@ static inline int32_t opal_atomic_add_ptr( volatile void* addr,
 #endif
 
 #if SIZEOF_VOID_P == 4 && OPAL_HAVE_ATOMIC_SUB_32
-static inline int32_t opal_atomic_sub_ptr( volatile void* addr, 
+static inline int32_t opal_atomic_sub_ptr( volatile void* addr,
                                            void* delta )
 {
     return opal_atomic_sub_32((int32_t*) addr, (unsigned long) delta);
 }
 #elif SIZEOF_VOID_P == 8 && OPAL_HAVE_ATOMIC_SUB_32
-static inline int64_t opal_atomic_sub_ptr( volatile void* addr, 
+static inline int64_t opal_atomic_sub_ptr( volatile void* addr,
                                            void* delta )
 {
     return opal_atomic_sub_64((int64_t*) addr, (unsigned long) delta);
 }
 #else
-static inline int32_t opal_atomic_sub_ptr( volatile void* addr, 
+static inline int32_t opal_atomic_sub_ptr( volatile void* addr,
                                            void* delta )
 {
     abort();
@@ -375,7 +373,7 @@ static inline int32_t opal_atomic_sub_ptr( volatile void* addr,
  *********************************************************************/
 #ifdef OPAL_NEED_INLINE_ATOMIC_SPINLOCKS
 
-/* 
+/*
  * Lock initialization function. It set the lock to UNLOCKED.
  */
 static inline void

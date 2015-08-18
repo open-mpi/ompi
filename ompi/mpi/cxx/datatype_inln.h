@@ -1,12 +1,12 @@
 // -*- c++ -*-
-// 
+//
 // Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
 //                         University Research and Technology
 //                         Corporation.  All rights reserved.
 // Copyright (c) 2004-2005 The University of Tennessee and The University
 //                         of Tennessee Research Foundation.  All rights
 //                         reserved.
-// Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+// Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 //                         University of Stuttgart.  All rights reserved.
 // Copyright (c) 2004-2005 The Regents of the University of California.
 //                         All rights reserved.
@@ -14,9 +14,9 @@
 // Copyright (c) 2011      FUJITSU LIMITED.  All rights reserved.
 
 // $COPYRIGHT$
-// 
+//
 // Additional copyrights may follow
-// 
+//
 // $HEADER$
 //
 
@@ -44,11 +44,11 @@ MPI::Datatype::Create_vector(int count, int blocklength,
 
 inline MPI::Datatype
 MPI::Datatype::Create_indexed(int count,
-				     const int array_of_blocklengths[], 
+				     const int array_of_blocklengths[],
 				     const int array_of_displacements[]) const
 {
   MPI_Datatype newtype;
-  (void)MPI_Type_indexed(count, const_cast<int *>(array_of_blocklengths), 
+  (void)MPI_Type_indexed(count, const_cast<int *>(array_of_blocklengths),
 			 const_cast<int *>(array_of_displacements), mpi_datatype, &newtype);
   return newtype;
 }
@@ -65,7 +65,7 @@ MPI::Datatype::Create_struct(int count, const int array_of_blocklengths[],
     type_array[i] = array_of_types[i];
 
   (void)MPI_Type_create_struct(count, const_cast<int *>(array_of_blocklengths),
-                               const_cast<MPI_Aint*>(array_of_displacements), 
+                               const_cast<MPI_Aint*>(array_of_displacements),
                                type_array, &newtype);
   delete[] type_array;
   return newtype;
@@ -98,7 +98,7 @@ MPI::Datatype::Create_indexed_block(int count, int blocklength,
 				    const int array_of_displacements[]) const
 {
   MPI_Datatype newtype;
-  (void)MPI_Type_create_indexed_block(count, blocklength, const_cast<int *>(array_of_displacements), 
+  (void)MPI_Type_create_indexed_block(count, blocklength, const_cast<int *>(array_of_displacements),
                                       mpi_datatype, &newtype);
   return newtype;
 }
@@ -113,7 +113,7 @@ MPI::Datatype::Create_resized(const MPI::Aint lb, const MPI::Aint extent) const
 }
 
 inline int
-MPI::Datatype::Get_size() const 
+MPI::Datatype::Get_size() const
 {
   int size;
   (void)MPI_Type_size(mpi_datatype, &size);
@@ -123,7 +123,7 @@ MPI::Datatype::Get_size() const
 inline void
 MPI::Datatype::Get_extent(MPI::Aint& lb, MPI::Aint& extent) const
 {
-  (void)MPI_Type_get_extent(mpi_datatype, &lb, &extent); 
+  (void)MPI_Type_get_extent(mpi_datatype, &lb, &extent);
 }
 
 inline void
@@ -133,7 +133,7 @@ MPI::Datatype::Get_true_extent(MPI::Aint& lb, MPI::Aint& extent) const
 }
 
 inline void
-MPI::Datatype::Commit() 
+MPI::Datatype::Commit()
 {
   (void)MPI_Type_commit(&mpi_datatype);
 }
@@ -150,14 +150,14 @@ MPI::Datatype::Pack(const void* inbuf, int incount,
 inline void
 MPI::Datatype::Unpack(const void* inbuf, int insize,
 			     void *outbuf, int outcount, int& position,
-			     const MPI::Comm& comm) const 
+			     const MPI::Comm& comm) const
 {
   (void)MPI_Unpack(const_cast<void *>(inbuf), insize, &position,
 		   outbuf, outcount, mpi_datatype, comm);
 }
 
 inline int
-MPI::Datatype::Pack_size(int incount, const MPI::Comm& comm) const 
+MPI::Datatype::Pack_size(int incount, const MPI::Comm& comm) const
 {
   int size;
   (void)MPI_Pack_size(incount, mpi_datatype, comm, &size);
@@ -199,7 +199,7 @@ MPI::Datatype::Create_subarray(int ndims, const int array_of_sizes[],
   const
 {
   MPI_Datatype type;
-  (void) MPI_Type_create_subarray(ndims, const_cast<int *>(array_of_sizes), 
+  (void) MPI_Type_create_subarray(ndims, const_cast<int *>(array_of_sizes),
                                   const_cast<int *>(array_of_subsizes),
                                   const_cast<int *>(array_of_starts),
                                   order, mpi_datatype, &type);
@@ -272,12 +272,12 @@ MPI::Datatype::Dup() const
 //    functions
 inline int
 MPI::Datatype::Create_keyval(MPI::Datatype::Copy_attr_function* type_copy_attr_fn,
-                             MPI::Datatype::Delete_attr_function* type_delete_attr_fn, 
+                             MPI::Datatype::Delete_attr_function* type_delete_attr_fn,
                              void* extra_state)
 {
     // Back-end function does the heavy lifting
     int ret, keyval;
-    ret = do_create_keyval(NULL, NULL, 
+    ret = do_create_keyval(NULL, NULL,
                            type_copy_attr_fn, type_delete_attr_fn,
                            extra_state, keyval);
     return (MPI_SUCCESS == ret) ? keyval : ret;
@@ -287,13 +287,13 @@ MPI::Datatype::Create_keyval(MPI::Datatype::Copy_attr_function* type_copy_attr_f
 //    functions
 inline int
 MPI::Datatype::Create_keyval(MPI_Type_copy_attr_function* type_copy_attr_fn,
-                             MPI_Type_delete_attr_function* type_delete_attr_fn, 
+                             MPI_Type_delete_attr_function* type_delete_attr_fn,
                              void* extra_state)
 {
     // Back-end function does the heavy lifting
     int ret, keyval;
     ret = do_create_keyval(type_copy_attr_fn, type_delete_attr_fn,
-                           NULL, NULL, 
+                           NULL, NULL,
                            extra_state, keyval);
     return (MPI_SUCCESS == ret) ? keyval : ret;
 }
@@ -308,7 +308,7 @@ MPI::Datatype::Create_keyval(MPI::Datatype::Copy_attr_function* type_copy_attr_f
     // Back-end function does the heavy lifting
     int ret, keyval;
     ret = do_create_keyval(NULL, type_delete_attr_fn,
-                           type_copy_attr_fn, NULL, 
+                           type_copy_attr_fn, NULL,
                            extra_state, keyval);
     return (MPI_SUCCESS == ret) ? keyval : ret;
 }
@@ -358,11 +358,11 @@ MPI::Datatype::Get_contents(int max_integers, int max_addresses,
 {
     int i;
     MPI_Datatype *c_datatypes = new MPI_Datatype[max_datatypes];
-    
+
     (void) MPI_Type_get_contents(mpi_datatype, max_integers, max_addresses,
-                                 max_datatypes, 
-                                 const_cast<int *>(array_of_integers), 
-                                 const_cast<MPI_Aint*>(array_of_addresses), 
+                                 max_datatypes,
+                                 const_cast<int *>(array_of_integers),
+                                 const_cast<MPI_Aint*>(array_of_addresses),
                                  c_datatypes);
     // Convert the C MPI_Datatypes to the user's OUT MPI::Datatype
     // array parameter

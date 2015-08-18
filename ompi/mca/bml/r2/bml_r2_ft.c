@@ -5,17 +5,17 @@
  * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2012 Los Alamos National Security, LLC.  All rights
- *                         reserved. 
+ *                         reserved.
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -31,7 +31,7 @@
 
 #include "ompi/runtime/ompi_cr.h"
 #include "ompi/mca/bml/base/base.h"
-#include "ompi/mca/bml/base/bml_base_btl.h" 
+#include "ompi/mca/bml/base/bml_base_btl.h"
 #include "ompi/mca/pml/base/base.h"
 #include "ompi/proc/proc.h"
 
@@ -102,7 +102,7 @@ int mca_bml_r2_ft_event(int state)
              * - BTL modules
              * - MPool modules
              *
-             * These should be cleaning out stale state, and memory references in 
+             * These should be cleaning out stale state, and memory references in
              * preparation for being shut down.
              */
             for(btl_idx = 0; btl_idx < mca_bml_r2.num_btl_modules; btl_idx++) {
@@ -133,7 +133,7 @@ int mca_bml_r2_ft_event(int state)
             }
         } /* OPAL_CRS_CONTINUE == state && !first_continue_pass */
     }
-    
+
     if(OPAL_CRS_CHECKPOINT == state) {
         ;
     }

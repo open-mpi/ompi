@@ -6,14 +6,14 @@
 # Copyright (c) 2004-2005 The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
-# Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+# Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # $COPYRIGHT$
-# 
+#
 # Additional copyrights may follow
-# 
+#
 # $HEADER$
 #
 # This is a simple makefile for windows which makes all the components
@@ -85,13 +85,13 @@ C_SUBDIRS =  \
         mca/schema/base \
         win32/generated_source \
         win \
-        win32 
+        win32
 
-EXTRA_DIRS = 
+EXTRA_DIRS =
 
 #
 # Files included by the dist that we don't want to compile
-# 
+#
 EXCLUDE_FILES = dt_arch.c \
                 epoll.c \
                 epoll_sub.c \
@@ -187,7 +187,7 @@ ADDLIBS = \
         oleaut32.lib \
         uuid.lib \
         odbc32.lib \
-        odbccp32.lib 
+        odbccp32.lib
 
 .c.obj:
 	$(CXX) $(CXXFLAGS) $*.c
@@ -231,9 +231,9 @@ install:
 	@install -p ${topdir}/src/libmpi.dll ${installdir}/lib/libmpi.dll
 	@install -d ${topdir}/include ${installdir}/include/
 	@install -p ${topdir}/include/ompi_config_bottom.h \
-                                  ${installdir}/include/ompi_config_bottom.h 
+                                  ${installdir}/include/ompi_config_bottom.h
 	@install -p ${topdir}/src/win32/generated_include/opal_config.h \
-                                  ${installdir}/include/opal_config.h 
+                                  ${installdir}/include/opal_config.h
 	@install -p ${topdir}/include/mpi.h ${installdir}/include/mpi.h
 	@install -p ${topdir}/include/ompi_stdint.h ${installdir}/include/ompi_stdint.h
 	@install -d ${topdir}/src/win32 ${installdir}/include/win32

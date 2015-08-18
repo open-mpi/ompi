@@ -13,9 +13,9 @@
 # Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
 #
 # $COPYRIGHT$
-# 
+#
 # Additional copyrights may follow
-# 
+#
 # $HEADER$
 #
 
@@ -50,7 +50,7 @@ bfo_sources  = \
 	pml_bfo_recvreq.h \
 	pml_bfo_sendreq.c \
 	pml_bfo_sendreq.h \
-	pml_bfo_start.c 
+	pml_bfo_start.c
 
 # If we have CUDA support requested, build the CUDA file also
 if OPAL_cuda_support

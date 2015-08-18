@@ -6,9 +6,9 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -18,9 +18,7 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif  /* HAVE_UNISTD_H */
-#ifdef HAVE_STRING_H
 #include <string.h>
-#endif
 #ifdef HAVE_FCNTL_H
 #include <fcntl.h>
 #endif
@@ -301,8 +299,8 @@ static void process_opens(int fd, short args, void *cbdata)
 {
     orte_dfs_request_t *dfs = (orte_dfs_request_t*)cbdata;
     int rc;
-    opal_buffer_t *buffer;
-    char *scheme, *host, *filename;
+    opal_buffer_t *buffer = NULL;
+    char *scheme = NULL, *host = NULL, *filename = NULL;
     int v;
     orte_node_t *node, *nptr;
 
@@ -326,6 +324,9 @@ static void process_opens(int fd, short args, void *cbdata)
         }
         goto complete;
     }
+
+    free(scheme);
+    scheme = NULL;
 
     /* dissect the uri to extract host and filename/path */
     if (NULL == (filename = opal_filename_from_uri(dfs->uri, &host))) {
@@ -363,6 +364,9 @@ static void process_opens(int fd, short args, void *cbdata)
                         "%s file %s on host %s daemon %s",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                         filename, host, ORTE_NAME_PRINT(&node->daemon->name));
+
+    free(host);
+    host = NULL;
     /* double-check: if it is our local daemon, then we
      * treat this as local
      */
@@ -400,18 +404,20 @@ static void process_opens(int fd, short args, void *cbdata)
         opal_list_remove_item(&requests, &dfs->super);
         goto complete;
     }
-    
+
     opal_output_verbose(1, orte_dfs_base_framework.framework_output,
                         "%s sending open file request to %s file %s",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                         ORTE_NAME_PRINT(&node->daemon->name),
                         filename);
+
+    free(filename);
+    filename = NULL;
     /* send it */
     if (0 > (rc = orte_rml.send_buffer_nb(&node->daemon->name, buffer,
                                           ORTE_RML_TAG_DFS_CMD,
                                           orte_rml_send_callback, NULL))) {
         ORTE_ERROR_LOG(rc);
-        OBJ_RELEASE(buffer);
         opal_list_remove_item(&requests, &dfs->super);
         goto complete;
     }
@@ -419,6 +425,18 @@ static void process_opens(int fd, short args, void *cbdata)
     return;
 
  complete:
+    if (NULL != buffer) {
+        OBJ_RELEASE(buffer);
+    }
+    if (NULL != scheme) {
+        free(scheme);
+    }
+    if (NULL != host) {
+        free(host);
+    }
+    if (NULL != filename) {
+        free(filename);
+    }
     OBJ_RELEASE(dfs);
 }
 
@@ -500,7 +518,7 @@ static void process_close(int fd, short args, void *cbdata)
         ORTE_ERROR_LOG(rc);
         goto complete;
     }
-    
+
     opal_output_verbose(1, orte_dfs_base_framework.framework_output,
                         "%s sending close file request to %s for fd %d",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -863,7 +881,7 @@ static void process_reads(int fd, short args, void *cbdata)
         ORTE_ERROR_LOG(rc);
         goto complete;
     }
-    
+
     opal_output_verbose(1, orte_dfs_base_framework.framework_output,
                         "%s sending read file request to %s for fd %d",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -1619,6 +1637,10 @@ static void recv_dfs_cmd(int status, orte_process_name_t* sender,
                                         (long)i64, my_fd);
                     /* do the read */
                     read_buf = (uint8_t*)malloc(i64);
+                    if (NULL == read_buf) {
+                        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+                        goto answer_read;
+                    }
                     bytes_read = read(my_fd, read_buf, (long)i64);
                     if (0 < bytes_read) {
                         /* update our location */
@@ -1633,21 +1655,35 @@ static void recv_dfs_cmd(int status, orte_process_name_t* sender,
         answer = OBJ_NEW(opal_buffer_t);
         if (OPAL_SUCCESS != (rc = opal_dss.pack(answer, &cmd, 1, ORTE_DFS_CMD_T))) {
             ORTE_ERROR_LOG(rc);
+            OBJ_RELEASE(answer);
+            if (NULL != read_buf) {
+                free(read_buf);
+            }
             return;
         }
         if (OPAL_SUCCESS != (rc = opal_dss.pack(answer, &rid, 1, OPAL_UINT64))) {
             ORTE_ERROR_LOG(rc);
+            OBJ_RELEASE(answer);
+            if (NULL != read_buf) {
+                free(read_buf);
+            }
             return;
         }
         /* include the number of bytes read */
         if (OPAL_SUCCESS != (rc = opal_dss.pack(answer, &bytes_read, 1, OPAL_INT64))) {
             ORTE_ERROR_LOG(rc);
+            OBJ_RELEASE(answer);
+            if (NULL != read_buf) {
+                free(read_buf);
+            }
             return;
         }
         /* include the bytes read */
         if (0 < bytes_read) {
             if (OPAL_SUCCESS != (rc = opal_dss.pack(answer, read_buf, bytes_read, OPAL_UINT8))) {
                 ORTE_ERROR_LOG(rc);
+                OBJ_RELEASE(answer);
+                free(read_buf);
                 return;
             }
         }
@@ -2263,6 +2299,10 @@ static void remote_read(int fd, short args, void *cbdata)
                         "%s issuing read",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
     read_buf = (uint8_t*)malloc(req->nbytes);
+    if (NULL == read_buf) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        return;
+    }
     bytes_read = read(req->trk->local_fd, read_buf, (long)req->nbytes);
     if (0 < bytes_read) {
         /* update our location */
@@ -2272,21 +2312,28 @@ static void remote_read(int fd, short args, void *cbdata)
     answer = OBJ_NEW(opal_buffer_t);
     if (OPAL_SUCCESS != (rc = opal_dss.pack(answer, &cmd, 1, ORTE_DFS_CMD_T))) {
         ORTE_ERROR_LOG(rc);
+        free(read_buf);
         return;
     }
     if (OPAL_SUCCESS != (rc = opal_dss.pack(answer, &req->rid, 1, OPAL_UINT64))) {
         ORTE_ERROR_LOG(rc);
+        free(read_buf);
+        OBJ_RELEASE(answer);
         return;
     }
     /* include the number of bytes read */
     if (OPAL_SUCCESS != (rc = opal_dss.pack(answer, &bytes_read, 1, OPAL_INT64))) {
         ORTE_ERROR_LOG(rc);
+        free(read_buf);
+        OBJ_RELEASE(answer);
         return;
     }
     /* include the bytes read */
     if (0 < bytes_read) {
         if (OPAL_SUCCESS != (rc = opal_dss.pack(answer, read_buf, bytes_read, OPAL_UINT8))) {
             ORTE_ERROR_LOG(rc);
+            free(read_buf);
+            OBJ_RELEASE(answer);
             return;
         }
     }

@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
- *   Copyright (C) 1997 University of Chicago. 
+/*
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -28,7 +28,7 @@ int MPI_Register_datarep(const char *datarep, MPI_Datarep_conversion_function *r
 #endif
 
 /*@
-  MPI_Register_datarep - Register functions for user-defined data 
+  MPI_Register_datarep - Register functions for user-defined data
                          representations
 
 Input Parameters:
@@ -45,12 +45,12 @@ Input Parameters:
  Notes:
  This function allows the user to provide routines to convert data from
  an external representation, used within a file, and the native representation,
- used within the CPU.  There is one predefined data representation, 
+ used within the CPU.  There is one predefined data representation,
  'external32'.  Please consult the MPI-2 standard for details on this
  function.
 
 .N fortran
-  
+
   @*/
 int MPI_Register_datarep(ROMIO_CONST char *datarep,
 			 MPI_Datarep_conversion_function *read_conversion_fn,

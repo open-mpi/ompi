@@ -5,17 +5,17 @@
  * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
- *                         reserved. 
+ *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -26,9 +26,7 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif  /* HAVE_UNISTD_H */
-#ifdef HAVE_STRING_H
 #include <string.h>
-#endif  /* HAVE_STRING_H */
 
 #include "opal/dss/dss.h"
 
@@ -66,7 +64,7 @@ void orte_iof_orted_read_handler(int fd, short event, void *cbdata)
     opal_list_item_t *item;
     orte_iof_proc_t *proct;
     orte_ns_cmp_bitmask_t mask;
-    
+
     /* read up to the fragment size */
 #if !defined(__WINDOWS__)
     numbytes = read(fd, data, sizeof(data));
@@ -78,12 +76,12 @@ void orte_iof_orted_read_handler(int fd, short event, void *cbdata)
         numbytes = (int)readed;
     }
 #endif  /* !defined(__WINDOWS__) */
-    
+
     OPAL_OUTPUT_VERBOSE((1, orte_iof_base_framework.framework_output,
                          "%s iof:orted:read handler read %d bytes from %s, fd %d",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          numbytes, ORTE_NAME_PRINT(&rev->name), fd));
-    
+
     if (numbytes <= 0) {
         if (0 > numbytes) {
             /* either we have a connection error or it was a non-blocking read */
@@ -91,7 +89,7 @@ void orte_iof_orted_read_handler(int fd, short event, void *cbdata)
                 /* non-blocking, retry */
                 opal_event_add(rev->ev, 0);
                 return;
-            } 
+            }
 
             OPAL_OUTPUT_VERBOSE((1, orte_iof_base_framework.framework_output,
                                  "%s iof:orted:read handler %s Error on connection:%d",
@@ -101,7 +99,7 @@ void orte_iof_orted_read_handler(int fd, short event, void *cbdata)
         /* numbytes must have been zero, so go down and close the fd etc */
         goto CLEAN_RETURN;
     }
-    
+
     /* see if the user wanted the output directed to files */
     if (NULL != orte_output_filename) {
         /* find the sink for this rank */
@@ -130,10 +128,10 @@ void orte_iof_orted_read_handler(int fd, short event, void *cbdata)
         }
         goto RESTART;
     }
-    
+
     /* prep the buffer */
     buf = OBJ_NEW(opal_buffer_t);
-    
+
     /* pack the stream first - we do this so that flow control messages can
      * consist solely of the tag
      */
@@ -141,13 +139,13 @@ void orte_iof_orted_read_handler(int fd, short event, void *cbdata)
         ORTE_ERROR_LOG(rc);
         goto CLEAN_RETURN;
     }
-    
+
     /* pack name of process that gave us this data */
     if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, &rev->name, 1, ORTE_NAME))) {
         ORTE_ERROR_LOG(rc);
         goto CLEAN_RETURN;
     }
-    
+
     /* pack the data - only pack the #bytes we read! */
     if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, &data, numbytes, OPAL_BYTE))) {
         ORTE_ERROR_LOG(rc);
@@ -158,16 +156,16 @@ void orte_iof_orted_read_handler(int fd, short event, void *cbdata)
     OPAL_OUTPUT_VERBOSE((1, orte_iof_base_framework.framework_output,
                          "%s iof:orted:read handler sending %d bytes to HNP",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), numbytes));
-    
+
     orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, buf, ORTE_RML_TAG_IOF_HNP,
                             send_cb, NULL);
-    
+
  RESTART:
     /* re-add the event */
     opal_event_add(rev->ev, 0);
 
     return;
-   
+
  CLEAN_RETURN:
     /* must be an error, or zero bytes were read indicating that the
      * proc terminated this IOF channel - either way, find this proc

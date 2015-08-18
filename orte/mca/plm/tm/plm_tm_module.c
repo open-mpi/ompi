@@ -5,18 +5,18 @@
  * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007-2012 Los Alamos National Security, LLC.  All rights
- *                         reserved. 
+ *                         reserved.
  * Copyright (c) 2014      Intel Corporation.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  *
  * These symbols are in a file by themselves to provide nice linker
@@ -30,9 +30,7 @@
 #include "orte/constants.h"
 #include "orte/types.h"
 
-#ifdef HAVE_STRING_H
 #include <string.h>
-#endif
 
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
@@ -119,7 +117,7 @@ static void poll_spawns(int fd, short args, void *cbdata);
 static int plm_tm_init(void)
 {
     int rc;
-    
+
     if (ORTE_SUCCESS != (rc = orte_plm_base_comm_start())) {
         ORTE_ERROR_LOG(rc);
     }
@@ -133,7 +131,7 @@ static int plm_tm_init(void)
         ORTE_ERROR_LOG(rc);
         return rc;
     }
-    
+
     /* overwrite the daemons_launched state to point to
      * our own local function
      */
@@ -176,7 +174,7 @@ static void launch_daemons(int fd, short args, void *cbdata)
     char **nodeargv;
     int argc = 0;
     int rc;
-    orte_std_cntr_t i; 
+    orte_std_cntr_t i;
     char *bin_base = NULL, *lib_base = NULL;
     tm_event_t *tm_events = NULL;
     tm_task_id *tm_task_ids = NULL;
@@ -222,7 +220,7 @@ static void launch_daemons(int fd, short args, void *cbdata)
         OBJ_RELEASE(state);
         return;
     }
-    
+
     /* Get the map for this job */
     if (NULL == (map = daemons->map)) {
         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
@@ -240,11 +238,11 @@ static void launch_daemons(int fd, short args, void *cbdata)
         OBJ_RELEASE(state);
         return;
     }
-    
+
     OPAL_OUTPUT_VERBOSE((1, orte_plm_base_framework.framework_output,
                          "%s plm:tm: launching vm",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-    
+
     /* Allocate a bunch of TM events to use for tm_spawn()ing */
     tm_events = malloc(sizeof(tm_event_t) * map->num_new_daemons);
     if (NULL == tm_events) {
@@ -268,24 +266,24 @@ static void launch_daemons(int fd, short args, void *cbdata)
         if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(map->nodes, i))) {
             continue;
         }
-        
+
         /* if this daemon already exists, don't launch it! */
         if (ORTE_FLAG_TEST(node, ORTE_NODE_FLAG_DAEMON_LAUNCHED)) {
             continue;
         }
-        
+
         /* add to list */
         opal_argv_append_nosize(&nodeargv, node->name);
     }
     nodelist = opal_argv_join(nodeargv, ',');
     opal_argv_free(nodeargv);
-    
+
     /* Add basic orted command line options */
     orte_plm_base_orted_append_basic_args(&argc, &argv, "tm",
                                           &proc_vpid_index,
                                           nodelist);
     free(nodelist);
-    
+
     if (0 < opal_output_get_verbosity(orte_plm_base_framework.framework_output)) {
         param = opal_argv_join(argv, ' ');
         OPAL_OUTPUT_VERBOSE((1, orte_plm_base_framework.framework_output,
@@ -315,14 +313,14 @@ static void launch_daemons(int fd, short args, void *cbdata)
     (void) mca_base_var_env_name ("plm", &var);
     opal_setenv(var, "rsh", true, &env);
     free(var);
-    
+
     /* add our umask -- see big note in orted.c */
     current_umask = umask(0);
     umask(current_umask);
     (void)asprintf(&var, "0%o", current_umask);
     opal_setenv("ORTE_DAEMON_UMASK_VALUE", var, true, &env);
     free(var);
-    
+
     /* If we have a prefix, then modify the PATH and
        LD_LIBRARY_PATH environment variables. We only allow
        a single prefix to be specified. Since there will
@@ -333,11 +331,11 @@ static void launch_daemons(int fd, short args, void *cbdata)
     orte_get_attribute(&app->attributes, ORTE_APP_PREFIX_DIR, (void**)&prefix_dir, OPAL_STRING);
     if (NULL != prefix_dir) {
         char *newenv;
-        
+
         for (i = 0; NULL != env && NULL != env[i]; ++i) {
             /* Reset PATH */
             if (0 == strncmp("PATH=", env[i], 5)) {
-                (void)asprintf(&newenv, "%s/%s:%s", 
+                (void)asprintf(&newenv, "%s/%s:%s",
                                prefix_dir, bin_base, env[i] + 5);
                 OPAL_OUTPUT_VERBOSE((1, orte_plm_base_framework.framework_output,
                                      "%s plm:tm: resetting PATH: %s",
@@ -345,11 +343,11 @@ static void launch_daemons(int fd, short args, void *cbdata)
                                      newenv));
                 opal_setenv("PATH", newenv, true, &env);
                 free(newenv);
-            } 
-            
+            }
+
             /* Reset LD_LIBRARY_PATH */
             else if (0 == strncmp("LD_LIBRARY_PATH=", env[i], 16)) {
-                (void)asprintf(&newenv, "%s/%s:%s", 
+                (void)asprintf(&newenv, "%s/%s:%s",
                                prefix_dir, lib_base, env[i] + 16);
                 OPAL_OUTPUT_VERBOSE((1, orte_plm_base_framework.framework_output,
                                      "%s plm:tm: resetting LD_LIBRARY_PATH: %s",
@@ -357,11 +355,11 @@ static void launch_daemons(int fd, short args, void *cbdata)
                                      newenv));
                 opal_setenv("LD_LIBRARY_PATH", newenv, true, &env);
                 free(newenv);
-            } 
+            }
         }
         free(prefix_dir);
     }
-    
+
     /* Iterate through each of the nodes and spin
      * up a daemon.
      */
@@ -374,12 +372,12 @@ static void launch_daemons(int fd, short args, void *cbdata)
         if (ORTE_FLAG_TEST(node, ORTE_NODE_FLAG_DAEMON_LAUNCHED)) {
             continue;
         }
- 
+
         OPAL_OUTPUT_VERBOSE((1, orte_plm_base_framework.framework_output,
                              "%s plm:tm: launching on node %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              node->name));
-        
+
         /* setup process name */
         rc = orte_util_convert_vpid_to_string(&vpid_string, node->daemon->name.vpid);
         if (ORTE_SUCCESS != rc) {
@@ -389,7 +387,7 @@ static void launch_daemons(int fd, short args, void *cbdata)
         free(argv[proc_vpid_index]);
         argv[proc_vpid_index] = strdup(vpid_string);
         free(vpid_string);
-        
+
         /* exec the daemon */
         if (0 < opal_output_get_verbosity(orte_plm_base_framework.framework_output)) {
             param = opal_argv_join(argv, ' ');
@@ -399,7 +397,7 @@ static void launch_daemons(int fd, short args, void *cbdata)
                                  (NULL == param) ? "NULL" : param));
             if (NULL != param) free(param);
         }
-        
+
         launchid = 0;
         if (!orte_get_attribute(&node->attributes, ORTE_NODE_LAUNCH_ID, (void**)&ldptr, OPAL_INT32)) {
             orte_show_help("help-plm-tm.txt", "tm-spawn-failed", true, argv[0], node->name, 0);
@@ -412,7 +410,7 @@ static void launch_daemons(int fd, short args, void *cbdata)
             rc = ORTE_ERROR;
             goto cleanup;
         }
-        
+
         launched++;
     }
 
@@ -476,23 +474,23 @@ static void poll_spawns(int fd, short args, void *cbdata)
 int plm_tm_terminate_orteds(void)
 {
     int rc;
-    
+
     if (ORTE_SUCCESS != (rc = orte_plm_base_orted_exit(ORTE_DAEMON_EXIT_CMD))) {
         ORTE_ERROR_LOG(rc);
     }
-    
+
     return rc;
 }
 
 static int plm_tm_signal_job(orte_jobid_t jobid, int32_t signal)
 {
     int rc;
-    
+
     /* order them to pass this signal to their local procs */
     if (ORTE_SUCCESS != (rc = orte_plm_base_orted_signal_local_procs(jobid, signal))) {
         ORTE_ERROR_LOG(rc);
     }
-    
+
     return rc;
 }
 
@@ -503,7 +501,7 @@ static int plm_tm_signal_job(orte_jobid_t jobid, int32_t signal)
 static int plm_tm_finalize(void)
 {
     int rc;
-    
+
     /* cleanup any pending recvs */
     if (ORTE_SUCCESS != (rc = orte_plm_base_comm_stop())) {
         ORTE_ERROR_LOG(rc);
@@ -541,6 +539,6 @@ static int plm_tm_connect(void)
         sched_yield();
 #endif
     }
-    
+
     return ORTE_ERR_RESOURCE_BUSY;
 }

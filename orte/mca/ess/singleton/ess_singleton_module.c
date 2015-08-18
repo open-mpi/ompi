@@ -6,19 +6,19 @@
  * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved. 
+ * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013-2015 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  *
  */
@@ -26,9 +26,7 @@
 #include "orte_config.h"
 #include "orte/constants.h"
 
-#ifdef HAVE_STRING_H
 #include <string.h>
-#endif
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
@@ -91,7 +89,7 @@ static int rte_init(void)
             0 == strncmp(orte_ess_singleton_server_uri, "FILE", strlen("FILE"))) {
             char input[1024], *filename;
             FILE *fp;
-            
+
             /* it is a file - get the filename */
             filename = strchr(orte_ess_singleton_server_uri, ':');
             if (NULL == filename) {
@@ -101,14 +99,14 @@ static int rte_init(void)
                 return ORTE_ERROR;
             }
             ++filename; /* space past the : */
-            
+
             if (0 >= strlen(filename)) {
                 /* they forgot to give us the name! */
                 orte_show_help("help-orterun.txt", "orterun:ompi-server-filename-missing", true,
                                "singleton", orte_ess_singleton_server_uri);
                 return ORTE_ERROR;
             }
-            
+
             /* open the file and extract the uri */
             fp = fopen(filename, "r");
             if (NULL == fp) { /* can't find or read file! */
@@ -140,27 +138,27 @@ static int rte_init(void)
     orte_process_info.proc_type |= ORTE_PROC_SINGLETON;
     /* we were not started by a daemon */
     orte_standalone_operation = true;
-    
+
     /* now define my own name */
     /* hash the nodename */
     OPAL_HASH_STR(orte_process_info.nodename, hash32);
-        
+
     bias = (uint32_t)orte_process_info.pid;
-        
+
     OPAL_OUTPUT_VERBOSE((5, orte_ess_base_framework.framework_output,
                          "ess:singleton: initial bias %ld nodename hash %lu",
                          (long)bias, (unsigned long)hash32));
-        
+
     /* fold in the bias */
     hash32 = hash32 ^ bias;
-        
+
     /* now compress to 16-bits */
     jobfam = (uint16_t)(((0x0000ffff & (0xffff0000 & hash32) >> 16)) ^ (0x0000ffff & hash32));
-        
+
     OPAL_OUTPUT_VERBOSE((5, orte_ess_base_framework.framework_output,
                          "ess:singleton:: final jobfam %lu",
                          (unsigned long)jobfam));
-        
+
     /* set the name - if we eventually spawn an HNP, it will use
      * local jobid 0, so offset us by 1
      */
@@ -171,7 +169,7 @@ static int rte_init(void)
     if (orte_process_info.max_procs < orte_process_info.num_procs) {
         orte_process_info.max_procs = orte_process_info.num_procs;
     }
-    
+
     /* flag that we are not routing since we have no HNP */
     orte_routing_is_enabled = false;
 
@@ -255,7 +253,7 @@ static int rte_init(void)
         }
         OBJ_DESTRUCT(&kvn);
     }
-    
+
     /* push our local rank */
     OBJ_CONSTRUCT(&kvn, opal_value_t);
     kvn.key = strdup(OPAL_DSTORE_LOCALRANK);
@@ -286,13 +284,13 @@ static int rte_init(void)
 static int rte_finalize(void)
 {
     int ret;
-        
+
     /* mark us as finalized */
     if (NULL != opal_pmix.finalize) {
         opal_pmix.finalize();
         (void) mca_base_framework_close(&opal_pmix_base_framework);
     }
-        
+
     /* use the default procedure to finish */
     if (ORTE_SUCCESS != (ret = orte_ess_base_app_finalize())) {
         ORTE_ERROR_LOG(ret);

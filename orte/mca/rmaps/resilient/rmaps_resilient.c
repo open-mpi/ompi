@@ -8,9 +8,9 @@
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
  *
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -22,9 +22,7 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif  /* HAVE_UNISTD_H */
-#ifdef HAVE_STRING_H
 #include <string.h>
-#endif  /* HAVE_STRING_H */
 #include <stdio.h>
 
 #include "opal/util/argv.h"
@@ -98,7 +96,7 @@ static int orte_rmaps_resilient_map(orte_job_t *jdata)
     opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                         "mca:rmaps:resilient: mapping job %s",
                         ORTE_JOBID_PRINT(jdata->jobid));
- 
+
     /* flag that I did the mapping */
     if (NULL != jdata->map->last_mapper) {
         free(jdata->map->last_mapper);
@@ -252,7 +250,7 @@ static int orte_rmaps_resilient_map(orte_job_t *jdata)
             opal_pointer_array_add(jdata->map->nodes, nd);
             ORTE_FLAG_SET(nd, ORTE_NODE_FLAG_MAPPED);
         }
-        OBJ_RETAIN(nd);  /* maintain accounting on object */    
+        OBJ_RETAIN(nd);  /* maintain accounting on object */
         proc->node = nd;
         nd->num_procs++;
         opal_pointer_array_add(nd->procs, (void*)proc);
@@ -280,14 +278,14 @@ static char *orte_getline(FILE *fp)
 {
     char *ret, *buff;
     char input[1024];
-    
+
     ret = fgets(input, 1024, fp);
     if (NULL != ret) {
         input[strlen(input)-1] = '\0';  /* remove newline */
         buff = strdup(input);
         return buff;
     }
-    
+
     return NULL;
 }
 
@@ -424,7 +422,7 @@ static int get_ftgrp_target(orte_proc_t *proc,
                                  ftgrp->ftgrp));
         }
     }
- 
+
     if (NULL == target) {
         /* nothing found */
         return ORTE_ERR_NOT_FOUND;
@@ -509,7 +507,7 @@ static int get_new_node(orte_proc_t *proc,
      * Cycle thru the list, transferring
      * all available nodes to the candidate list
      * so we can get them in the right order
-     * 
+     *
      */
     OBJ_CONSTRUCT(&candidates, opal_list_t);
     while (NULL != (item = opal_list_remove_first(&node_list))) {
@@ -647,7 +645,7 @@ static void flag_nodes(opal_list_t *node_list)
     orte_node_t *node, *nd;
     orte_rmaps_res_ftgrp_t *ftgrp;
     int k;
-    
+
     for (item = opal_list_get_first(&mca_rmaps_resilient_component.fault_grps);
          item != opal_list_get_end(&mca_rmaps_resilient_component.fault_grps);
          item = opal_list_get_next(item)) {
@@ -698,7 +696,7 @@ static int map_to_ftgrps(orte_job_t *jdata)
     /* start at the beginning... */
     jdata->num_procs = 0;
     map = jdata->map;
-    
+
     for (i=0; i < jdata->apps->size; i++) {
         /* get the app_context */
         if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, i))) {
@@ -845,7 +843,7 @@ static int map_to_ftgrps(orte_job_t *jdata)
 
             /* track number of procs mapped */
             num_assigned++;
-                
+
             /* flag this fault group as used */
             if (NULL != target) {
                 target->used = true;
@@ -854,7 +852,7 @@ static int map_to_ftgrps(orte_job_t *jdata)
 
         /* track number of procs */
         jdata->num_procs += app->num_procs;
-        
+
         /* compute vpids and add proc objects to the job - this has to be
          * done after each app_context is mapped in order to keep the
          * vpids contiguous within an app_context

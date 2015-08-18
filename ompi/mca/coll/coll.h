@@ -466,7 +466,7 @@ struct mca_coll_base_module_2_1_0_t {
     /** Fault tolerance event trigger function */
     mca_coll_base_module_ft_event_fn_t ft_event;
 
-    /** Disable function called when a collective module will not 
+    /** Disable function called when a collective module will not
         be used for the given communicator */
     mca_coll_base_module_disable_1_1_0_fn_t coll_module_disable;
 

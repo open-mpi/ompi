@@ -11,9 +11,9 @@
 #                         and Technology (RIST). All rights reserved.
 #
 # $COPYRIGHT$
-# 
+#
 # Additional copyrights may follow
-# 
+#
 # $HEADER$
 #
 
@@ -92,6 +92,8 @@ mpi_api_files = \
         add_error_class_f08.F90 \
         add_error_code_f08.F90 \
         add_error_string_f08.F90 \
+        aint_add_f08.F90 \
+        aint_diff_f08.F90 \
         allgather_f08.F90 \
         allgatherv_f08.F90 \
         alloc_mem_f08.F90 \
@@ -327,6 +329,7 @@ mpi_api_files = \
         type_set_attr_f08.F90 \
         type_set_name_f08.F90 \
         type_size_f08.F90 \
+        type_size_x_f08.F90 \
         type_vector_f08.F90 \
         unpack_external_f08.F90 \
         unpack_f08.F90 \
@@ -392,9 +395,13 @@ mpi_api_files += \
         file_get_view_f08.F90 \
         file_iread_at_f08.F90 \
         file_iread_f08.F90 \
+        file_iread_at_all_f08.F90 \
+        file_iread_all_f08.F90 \
         file_iread_shared_f08.F90 \
         file_iwrite_at_f08.F90 \
         file_iwrite_f08.F90 \
+        file_iwrite_at_all_f08.F90 \
+        file_iwrite_all_f08.F90 \
         file_iwrite_shared_f08.F90 \
         file_open_f08.F90 \
         file_preallocate_f08.F90 \
@@ -444,6 +451,8 @@ pmpi_api_files = \
         profile/padd_error_class_f08.F90 \
         profile/padd_error_code_f08.F90 \
         profile/padd_error_string_f08.F90 \
+        profile/paint_add_f08.F90 \
+        profile/paint_diff_f08.F90 \
         profile/pallgather_f08.F90 \
         profile/pallgatherv_f08.F90 \
         profile/palloc_mem_f08.F90 \
@@ -525,6 +534,7 @@ pmpi_api_files = \
         profile/pget_elements_f08.F90 \
         profile/pget_elements_x_f08.F90 \
         profile/pget_f08.F90 \
+        profile/pget_library_version_f08.F90 \
         profile/pget_processor_name_f08.F90 \
         profile/pget_version_f08.F90 \
         profile/pgraph_create_f08.F90 \
@@ -689,12 +699,15 @@ pmpi_api_files = \
         profile/pwaitsome_f08.F90 \
         profile/pwin_allocate_f08.F90 \
         profile/pwin_allocate_shared_f08.F90 \
+        profile/pwin_attach_f08.F90 \
         profile/pwin_call_errhandler_f08.F90 \
         profile/pwin_complete_f08.F90 \
+        profile/pwin_create_dynamic_f08.F90 \
         profile/pwin_create_errhandler_f08.F90 \
         profile/pwin_create_f08.F90 \
         profile/pwin_create_keyval_f08.F90 \
         profile/pwin_delete_attr_f08.F90 \
+        profile/pwin_detach_f08.F90 \
         profile/pwin_fence_f08.F90 \
         profile/pwin_flush_f08.F90 \
         profile/pwin_flush_all_f08.F90 \
@@ -705,12 +718,14 @@ pmpi_api_files = \
         profile/pwin_get_attr_f08.F90 \
         profile/pwin_get_errhandler_f08.F90 \
         profile/pwin_get_group_f08.F90 \
+        profile/pwin_get_info_f08.F90 \
         profile/pwin_get_name_f08.F90 \
         profile/pwin_lock_f08.F90 \
         profile/pwin_lock_all_f08.F90 \
         profile/pwin_post_f08.F90 \
         profile/pwin_set_attr_f08.F90 \
         profile/pwin_set_errhandler_f08.F90 \
+        profile/pwin_set_info_f08.F90 \
         profile/pwin_set_name_f08.F90 \
         profile/pwin_shared_query_f08.F90 \
         profile/pwin_start_f08.F90 \
@@ -790,6 +805,7 @@ libmpi_usempif08_la_SOURCES = \
         mpi-f08.F90 \
         mpi-f-interfaces-bind.h pmpi-f-interfaces-bind.h \
         attr-fn-f08-callback-interfaces.h \
+        buffer_detach.c \
         conversion-fn-null-f08-interface.h \
         constants.h \
         constants.c

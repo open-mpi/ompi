@@ -14,5 +14,5 @@ int main(int argc, char* argv[])
     char *dum=NULL;
 
     pi = (double)*dum;
-    
+
 }

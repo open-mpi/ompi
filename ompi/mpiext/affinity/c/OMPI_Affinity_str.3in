@@ -33,7 +33,7 @@ string as human-readable resource names, such as "socket 0, core 0".
 
 OMPI_AFFINITY_LAYOUT_FMT returns ASCII art representing where this MPI
 process is bound relative to the machine resource layout.  For example
-"[. B][. .]" shows the process that called the routine is bound to 
+"[. B][. .]" shows the process that called the routine is bound to
 socket 0, core 1 in a system with 2 sockets, each containing 2 cores.
 
 See below for more output examples.
@@ -66,7 +66,7 @@ prettyprint information about three things:
 .
 .TP
 Where Open MPI bound this process.
-The string returned in 
+The string returned in
 .B
 ompi_bound
 will either indicate that Open MPI did not bind this process to
@@ -110,7 +110,7 @@ all processors in the system).
     MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-    OMPI_Affinity_str(OMPI_AFFINITY_RSRC_STRING_FMT, 
+    OMPI_Affinity_str(OMPI_AFFINITY_RSRC_STRING_FMT,
                       ompi_bound, current_binding, exists);
     printf("rank %d: \\n"
            "       ompi_bound: %s\\n"
@@ -122,24 +122,24 @@ all processors in the system).
 .PP
 Output of mpirun -np 2 -bind-to-core a.out:
 .nf
-rank 0: 
-       ompi_bound: socket 0[core 0] 
-  current_binding: socket 0[core 0] 
+rank 0:
+       ompi_bound: socket 0[core 0]
+  current_binding: socket 0[core 0]
            exists: socket 0 has 4 cores
-rank 1: 
-       ompi_bound: socket 0[core 1] 
-  current_binding: socket 0[core 1] 
+rank 1:
+       ompi_bound: socket 0[core 1]
+  current_binding: socket 0[core 1]
            exists: socket 0 has 4 cores
 .fi
 .PP
 Output of mpirun -np 2 -bind-to-socket a.out:
 .nf
-rank 0: 
-       ompi_bound: socket 0[core 0-3] 
+rank 0:
+       ompi_bound: socket 0[core 0-3]
   current_binding: Not bound (or bound to all available processors)
            exists: socket 0 has 4 cores
-rank 1: 
-       ompi_bound: socket 0[core 0-3] 
+rank 1:
+       ompi_bound: socket 0[core 0-3]
   current_binding: Not bound (or bound to all available processors)
            exists: socket 0 has 4 cores
 .fi
@@ -156,7 +156,7 @@ rank 1:
     MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-    OMPI_Affinity_str(OMPI_AFFINITY_LAYOUT_FMT, 
+    OMPI_Affinity_str(OMPI_AFFINITY_LAYOUT_FMT,
                       ompi_bound, current_binding, exists);
     printf("rank %d: \\n"
            "       ompi_bound: %s\\n"
@@ -168,11 +168,11 @@ rank 1:
 .PP
 Output of mpirun -np 2 -bind-to-core a.out:
 .nf
-rank 0: 
+rank 0:
        ompi_bound: [B . . .]
   current_binding: [B . . .]
            exists: [. . . .]
-rank 1: 
+rank 1:
        ompi_bound: [. B . .]
   current_binding: [. B . .]
            exists: [. . . .]
@@ -180,11 +180,11 @@ rank 1:
 .PP
 Output of mpirun -np 2 -bind-to-socket a.out:
 .nf
-rank 0: 
+rank 0:
        ompi_bound: [B B B B]
   current_binding: [B B B B]
            exists: [. . . .]
-rank 1: 
+rank 1:
        ompi_bound: [B B B B]
   current_binding: [B B B B]
            exists: [. . . .]

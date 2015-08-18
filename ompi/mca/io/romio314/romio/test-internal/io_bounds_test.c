@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
- *   Copyright (C) 2008 University of Chicago. 
+/*
+ *   Copyright (C) 2008 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -40,7 +40,7 @@ int main (int argc, char **argv) {
 
     MPI_Init (&argc, &argv);
     MPI_Comm_rank (MPI_COMM_WORLD, &rank);
-    
+
     if (argc != 1) {
 	if (!rank) {
 	    printf ("Use only one process\n");
@@ -116,7 +116,7 @@ int run_test (test_param_t *test) {
 
     MPI_File_seek (fh, test->offset, MPI_SEEK_SET);
     ADIOI_Calc_bounds ((ADIO_File) fh, test->count, MPI_BYTE, ADIO_INDIVIDUAL,
-		       test->offset, &st_offset, &end_offset);    
+		       test->offset, &st_offset, &end_offset);
 
     ind_err = 0;
     if (st_offset != test->correct_st_offset) {
@@ -173,7 +173,7 @@ int print_usage ()
 	"   io_bounds_test -A -T <test #>\n");
 }
 
-int print_test_params (test_param_t *test) 
+int print_test_params (test_param_t *test)
 {
     int i;
     printf (
@@ -181,7 +181,7 @@ int print_test_params (test_param_t *test)
 	"bytes:          %d\n"
 	"Filetype [n](disp, lens, type):\n",
 	test->offset, test->count);
-    
+
     for (i=0; i<test->type_count; i++) {
 	printf (
 	    "    [%d](%lld, %d, ",

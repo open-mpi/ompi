@@ -5,15 +5,15 @@
 # Copyright (c) 2004-2005 The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
-# Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+# Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2008-2014 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
-# 
+#
 # Additional copyrights may follow
-# 
+#
 # $HEADER$
 #
 
@@ -71,7 +71,7 @@ mcacomponent_LTLIBRARIES = $(component)
 mca_op_example_la_SOURCES = $(component_sources)
 mca_op_example_la_LDFLAGS = -module -avoid-version
 
-# Specific information for static builds.  
+# Specific information for static builds.
 #
 # Note that we *must* "noinst"; the upper-layer Makefile.am's will
 # slurp in the resulting .la library into libmpi.

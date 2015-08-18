@@ -23,9 +23,7 @@
 #include "orte_config.h"
 #include "orte/constants.h"
 
-#ifdef HAVE_STRING_H
 #include <string.h>
-#endif
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
 #endif
@@ -136,7 +134,7 @@ int orte_plm_base_orted_terminate_job(orte_jobid_t jobid)
                          "%s plm:base:orted_terminate job %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_JOBID_PRINT(jobid)));
-    
+
     OBJ_CONSTRUCT(&procs, opal_pointer_array_t);
     opal_pointer_array_init(&procs, 1, 1, 1);
     OBJ_CONSTRUCT(&proc, orte_proc_t);
@@ -163,7 +161,7 @@ int orte_plm_base_orted_kill_local_procs(opal_pointer_array_t *procs)
     OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
                          "%s plm:base:orted_cmd sending kill_local_procs cmds",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-    
+
     cmd = OBJ_NEW(opal_buffer_t);
     /* pack the command */
     if (ORTE_SUCCESS != (rc = opal_dss.pack(cmd, &command, 1, ORTE_DAEMON_CMD))) {
@@ -171,7 +169,7 @@ int orte_plm_base_orted_kill_local_procs(opal_pointer_array_t *procs)
         OBJ_RELEASE(cmd);
         return rc;
     }
-    
+
     /* pack the proc names */
     if (NULL != procs) {
         for (v=0; v < procs->size; v++) {
@@ -211,30 +209,30 @@ int orte_plm_base_orted_signal_local_procs(orte_jobid_t job, int32_t signal)
     OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
                          "%s plm:base:orted_cmd sending signal_local_procs cmds",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-    
+
     OBJ_CONSTRUCT(&cmd, opal_buffer_t);
-    
+
     /* pack the command */
     if (ORTE_SUCCESS != (rc = opal_dss.pack(&cmd, &command, 1, ORTE_DAEMON_CMD))) {
         ORTE_ERROR_LOG(rc);
         OBJ_DESTRUCT(&cmd);
         return rc;
     }
-    
+
     /* pack the jobid */
     if (ORTE_SUCCESS != (rc = opal_dss.pack(&cmd, &job, 1, ORTE_JOBID))) {
         ORTE_ERROR_LOG(rc);
         OBJ_DESTRUCT(&cmd);
         return rc;
     }
-    
+
     /* pack the signal */
     if (ORTE_SUCCESS != (rc = opal_dss.pack(&cmd, &signal, 1, OPAL_INT32))) {
         ORTE_ERROR_LOG(rc);
         OBJ_DESTRUCT(&cmd);
         return rc;
     }
-    
+
     /* goes to all daemons */
     sig = OBJ_NEW(orte_grpcomm_signature_t);
     sig->signature = (orte_process_name_t*)malloc(sizeof(orte_process_name_t));

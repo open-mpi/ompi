@@ -1,12 +1,12 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
-/* 
+/*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -30,7 +30,7 @@ static bool check_ranks (int, const int *);
 
 int ompi_group_calc_bmap ( int n, int orig_size , const int *ranks) {
     if (check_ranks(n,ranks)) {
-        return ompi_group_div_ceil(orig_size,BSIZE); 
+        return ompi_group_div_ceil(orig_size,BSIZE);
     }
     else {
         return -1;
@@ -38,10 +38,10 @@ int ompi_group_calc_bmap ( int n, int orig_size , const int *ranks) {
 }
 
 /* from parent group to child group*/
-int ompi_group_translate_ranks_bmap ( ompi_group_t *parent_group, 
+int ompi_group_translate_ranks_bmap ( ompi_group_t *parent_group,
                                       int n_ranks, const int *ranks1,
-                                      ompi_group_t *child_group, 
-                                      int *ranks2) 
+                                      ompi_group_t *child_group,
+                                      int *ranks2)
 {
     int i,count,j,k,m;
     unsigned char tmp, tmp1;
@@ -55,17 +55,17 @@ int ompi_group_translate_ranks_bmap ( ompi_group_t *parent_group,
             count = 0;
             tmp = ( 1 << (m % BSIZE) );
             /* check if the bit that correponds to the parent rank is set in the bitmap */
-            if ( tmp == (child_group->sparse_data.grp_bitmap.grp_bitmap_array[(int)(m/BSIZE)] 
+            if ( tmp == (child_group->sparse_data.grp_bitmap.grp_bitmap_array[(int)(m/BSIZE)]
                          & (1 << (m % BSIZE)))) {
-                /* 
-                 * add up how many bits are set, till we get to the bit of parent 
+                /*
+                 * add up how many bits are set, till we get to the bit of parent
                  * rank that we want. The rank in the child will be the sum of the bits
-                 * that are set on the way till we get to the correponding bit 
+                 * that are set on the way till we get to the correponding bit
                  */
                 for (i=0 ; i<=(int)(m/BSIZE) ; i++) {
                     for (k=0 ; k<BSIZE ; k++) {
                         tmp1 = ( 1 << k);
-                        if ( tmp1 == ( child_group->sparse_data.grp_bitmap.grp_bitmap_array[i] 
+                        if ( tmp1 == ( child_group->sparse_data.grp_bitmap.grp_bitmap_array[i]
                                        & (1 << k) ) ) {
                             count++;
                         }
@@ -82,10 +82,10 @@ int ompi_group_translate_ranks_bmap ( ompi_group_t *parent_group,
     return OMPI_SUCCESS;
 }
 /* from child group to parent group */
-int ompi_group_translate_ranks_bmap_reverse ( ompi_group_t *child_group, 
+int ompi_group_translate_ranks_bmap_reverse ( ompi_group_t *child_group,
                                               int n_ranks, const int *ranks1,
-                                              ompi_group_t *parent_group, 
-                                              int *ranks2) 
+                                              ompi_group_t *parent_group,
+                                              int *ranks2)
 {
     int i,j,count,m,k;
     unsigned char tmp;
@@ -103,7 +103,7 @@ int ompi_group_translate_ranks_bmap_reverse ( ompi_group_t *child_group,
             for (i=0 ; i<child_group->sparse_data.grp_bitmap.grp_bitmap_array_len ; i++) {
                 for (k=0 ; k<BSIZE ; k++) {
                     tmp = ( 1 << k);
-                    if ( tmp == ( child_group->sparse_data.grp_bitmap.grp_bitmap_array[i] 
+                    if ( tmp == ( child_group->sparse_data.grp_bitmap.grp_bitmap_array[i]
                                   & (1 << k) ) ) {
                         count++;
                     }
@@ -119,7 +119,7 @@ int ompi_group_translate_ranks_bmap_reverse ( ompi_group_t *child_group,
     return OMPI_SUCCESS;
 }
 
-int ompi_group_div_ceil (int num, int den) 
+int ompi_group_div_ceil (int num, int den)
 {
     if (0 == num%den) {
         return num/den;
@@ -131,7 +131,7 @@ int ompi_group_div_ceil (int num, int den)
 /*
  * This functions is to check that all ranks in the included list of ranks
  * are monotonically increasing. If not, the bitmap format can not be used
- * since we won't be able to translate the ranks corrently since the algorithms 
+ * since we won't be able to translate the ranks corrently since the algorithms
  * assume that the ranks are in order in the bitmap list.
  */
 static bool check_ranks (int n, const int *ranks) {
@@ -152,7 +152,7 @@ int ompi_group_incl_bmap(ompi_group_t* group, int n, const int *ranks,
     ompi_group_t *group_pointer, *new_group_pointer;
 
     group_pointer = (ompi_group_t *)group;
-    
+
     if ( 0 == n ) {
         *new_group = MPI_GROUP_EMPTY;
         OBJ_RETAIN(MPI_GROUP_EMPTY);
@@ -170,23 +170,23 @@ int ompi_group_incl_bmap(ompi_group_t* group, int n, const int *ranks,
     }
 
     /* set the bits */
-    for (i=0 ; i<n ; i++) { 
+    for (i=0 ; i<n ; i++) {
         bit_set = ranks[i] % BSIZE;
         new_group_pointer->
             sparse_data.grp_bitmap.grp_bitmap_array[(int)(ranks[i]/BSIZE)] |= (1 << bit_set);
     }
-    
+
     new_group_pointer -> grp_parent_group_ptr = group_pointer;
-    
+
     OBJ_RETAIN(new_group_pointer -> grp_parent_group_ptr);
     ompi_group_increment_proc_count(new_group_pointer -> grp_parent_group_ptr);
-    
+
     ompi_group_increment_proc_count(new_group_pointer);
     my_group_rank=group_pointer->grp_my_rank;
-    
+
     ompi_group_translate_ranks (group_pointer,1,&my_group_rank,
                                 new_group_pointer,&new_group_pointer->grp_my_rank);
-        
+
     *new_group = (MPI_Group)new_group_pointer;
 
     return OMPI_SUCCESS;

@@ -5,14 +5,18 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -39,6 +43,66 @@ JNIEXPORT jlong JNICALL Java_mpi_Win_createWin(
 
     ompi_java_exceptionCheck(env, rc);
     return (jlong)win;
+}
+
+JNIEXPORT jlong JNICALL Java_mpi_Win_allocateWin(JNIEnv *env, jobject jthis,
+                                                 jint size, jint dispUnit, jlong info, jlong comm, jobject jBase)
+{
+    void *basePtr = (*env)->GetDirectBufferAddress(env, jBase);
+    MPI_Win win;
+    
+    int rc = MPI_Win_allocate((MPI_Aint)size, dispUnit,
+                              (MPI_Info)info, (MPI_Comm)comm, basePtr, &win);
+    
+    ompi_java_exceptionCheck(env, rc);
+    return (jlong)win;
+}
+
+JNIEXPORT jlong JNICALL Java_mpi_Win_allocateSharedWin(JNIEnv *env, jobject jthis,
+                                                       jint size, jint dispUnit, jlong info, jlong comm, jobject jBase)
+{
+    void *basePtr = (*env)->GetDirectBufferAddress(env, jBase);
+    MPI_Win win;
+    
+    int rc = MPI_Win_allocate_shared((MPI_Aint)size, dispUnit,
+                                     (MPI_Info)info, (MPI_Comm)comm, basePtr, &win);
+    
+    ompi_java_exceptionCheck(env, rc);
+    return (jlong)win;
+}
+
+JNIEXPORT jlong JNICALL Java_mpi_Win_createDynamicWin(
+        JNIEnv *env, jobject jthis,
+        jlong info, jlong comm)
+{
+    MPI_Win win;
+
+    int rc = MPI_Win_create_dynamic(
+                            (MPI_Info)info, (MPI_Comm)comm, &win);
+
+    ompi_java_exceptionCheck(env, rc);
+    return (jlong)win;
+}
+
+JNIEXPORT void JNICALL Java_mpi_Win_attach(
+        JNIEnv *env, jobject jthis, jlong win, jobject jBase,
+        jint size)
+{
+    void *base = (*env)->GetDirectBufferAddress(env, jBase);
+
+    int rc = MPI_Win_attach((MPI_Win)win, base, (MPI_Aint)size);
+
+    ompi_java_exceptionCheck(env, rc);
+}
+
+JNIEXPORT void JNICALL Java_mpi_Win_detach(
+        JNIEnv *env, jobject jthis, jlong win, jobject jBase)
+{
+    void *base = (*env)->GetDirectBufferAddress(env, jBase);
+
+    int rc = MPI_Win_detach((MPI_Win)win, base);
+
+    ompi_java_exceptionCheck(env, rc);
 }
 
 JNIEXPORT jlong JNICALL Java_mpi_Win_getGroup(
@@ -241,4 +305,192 @@ JNIEXPORT jlong JNICALL Java_mpi_Win_free(
     int rc = MPI_Win_free(&win);
     ompi_java_exceptionCheck(env, rc);
     return (jlong)win;
+}
+
+JNIEXPORT jlong JNICALL Java_mpi_Win_getInfo(
+        JNIEnv *env, jobject jthis, jlong handle)
+{
+    MPI_Win win = (MPI_Win)handle;
+    MPI_Info info;
+    int rc = MPI_Win_get_info((MPI_Win)win, &info);
+    ompi_java_exceptionCheck(env, rc);
+    return (jlong)info;
+}
+
+JNIEXPORT void JNICALL Java_mpi_Win_setInfo(
+        JNIEnv *env, jobject jthis, jlong handle, jlong i)
+{
+    MPI_Win win = (MPI_Win)handle;
+    MPI_Info info = (MPI_Info)i;
+    int rc = MPI_Win_set_info(win, info);
+    ompi_java_exceptionCheck(env, rc);
+}
+
+JNIEXPORT jlong JNICALL Java_mpi_Win_rPut(JNIEnv *env, jobject jthis,
+    jlong win, jobject origin_addr, jint origin_count, jlong origin_type,
+    jint target_rank, jint target_disp, jint target_count, jlong target_datatype,
+    jint basetype)
+{
+    void *origPtr = ompi_java_getDirectBufferAddress(env, origin_addr);
+    MPI_Request request;
+    
+    int rc = MPI_Rput(origPtr, origin_count, (MPI_Datatype)origin_type,
+                      target_rank, (MPI_Aint)target_disp, target_count, (MPI_Datatype)target_datatype,
+                      (MPI_Win)win, &request);
+    
+    ompi_java_exceptionCheck(env, rc);
+    return (jlong)request;
+}
+
+JNIEXPORT jlong JNICALL Java_mpi_Win_rGet(JNIEnv *env, jobject jthis, jlong win,
+    jobject origin, jint orgCount, jlong orgType, jint targetRank, jint targetDisp,
+    jint targetCount, jlong targetType, jint base)
+{
+    void *orgPtr = (*env)->GetDirectBufferAddress(env, origin);
+    MPI_Request request;
+    
+    int rc = MPI_Rget(orgPtr, orgCount, (MPI_Datatype)orgType,
+                      targetRank, (MPI_Aint)targetDisp, targetCount,
+                      (MPI_Datatype)targetType, (MPI_Win)win, &request);
+    
+    ompi_java_exceptionCheck(env, rc);
+    return (jlong)request;
+}
+
+JNIEXPORT jlong JNICALL Java_mpi_Win_rAccumulate(JNIEnv *env, jobject jthis, jlong win,
+    jobject origin, jint orgCount, jlong orgType, jint targetRank, jint targetDisp,
+    jint targetCount, jlong targetType, jobject jOp, jlong hOp, jint baseType)
+{
+    void *orgPtr = (*env)->GetDirectBufferAddress(env, origin);
+    MPI_Op op = ompi_java_op_getHandle(env, jOp, hOp, baseType);
+    MPI_Request request;
+    
+    int rc = MPI_Raccumulate(orgPtr, orgCount, (MPI_Datatype)orgType,
+                            targetRank, (MPI_Aint)targetDisp, targetCount,
+                            (MPI_Datatype)targetType, op, (MPI_Win)win, &request);
+    
+    ompi_java_exceptionCheck(env, rc);
+    return (jlong)request;
+}
+
+JNIEXPORT void JNICALL Java_mpi_Win_getAccumulate(JNIEnv *env, jobject jthis, jlong win,
+                            jobject origin, jint orgCount, jlong orgType, jobject resultBuff, jint resultCount,
+                                                  jlong resultType, jint targetRank, jint targetDisp, jint targetCount, jlong targetType,
+                                                  jobject jOp, jlong hOp, jint baseType)
+{
+    void *orgPtr = (*env)->GetDirectBufferAddress(env, origin);
+    void *resultPtr = (*env)->GetDirectBufferAddress(env, resultBuff);
+    MPI_Op op = ompi_java_op_getHandle(env, jOp, hOp, baseType);
+    
+    int rc = MPI_Get_accumulate(orgPtr, orgCount, (MPI_Datatype)orgType,
+                                resultPtr, resultCount, (MPI_Datatype)resultType,
+                                targetRank, (MPI_Aint)targetDisp, targetCount,
+                                (MPI_Datatype)targetType, op, (MPI_Win)win);
+    
+    ompi_java_exceptionCheck(env, rc);
+}
+
+JNIEXPORT jlong JNICALL Java_mpi_Win_rGetAccumulate(JNIEnv *env, jobject jthis, jlong win,
+                                                    jobject origin, jint orgCount, jlong orgType, jobject resultBuff, jint resultCount,
+                                                    jlong resultType, jint targetRank, jint targetDisp, jint targetCount, jlong targetType,
+                                                    jobject jOp, jlong hOp, jint baseType)
+{
+    void *orgPtr = (*env)->GetDirectBufferAddress(env, origin);
+    void *resultPtr = (*env)->GetDirectBufferAddress(env, resultBuff);
+    MPI_Op op = ompi_java_op_getHandle(env, jOp, hOp, baseType);
+    MPI_Request request;
+    
+    int rc = MPI_Rget_accumulate(orgPtr, orgCount, (MPI_Datatype)orgType,
+                                 resultPtr, resultCount, (MPI_Datatype)resultType,
+                                 targetRank, (MPI_Aint)targetDisp, targetCount,
+                                 (MPI_Datatype)targetType, op, (MPI_Win)win, &request);
+    
+    ompi_java_exceptionCheck(env, rc);
+    return (jlong)request;
+}
+
+JNIEXPORT void JNICALL Java_mpi_Win_lockAll(JNIEnv *env, jobject jthis, jlong win, jint assertion)
+{
+    int rc = MPI_Win_lock_all(assertion, (MPI_Win)win);
+    ompi_java_exceptionCheck(env, rc);
+}
+
+JNIEXPORT void JNICALL Java_mpi_Win_unlockAll(JNIEnv *env, jobject jthis, jlong win)
+{
+    int rc = MPI_Win_unlock_all((MPI_Win)win);
+    ompi_java_exceptionCheck(env, rc);
+}
+
+JNIEXPORT void JNICALL Java_mpi_Win_sync(JNIEnv *env, jobject jthis, jlong win)
+{
+    int rc = MPI_Win_sync((MPI_Win)win);
+    ompi_java_exceptionCheck(env, rc);
+}
+
+JNIEXPORT void JNICALL Java_mpi_Win_flush(JNIEnv *env, jobject jthis, jlong win, jint targetRank)
+{
+    int rc = MPI_Win_flush(targetRank, (MPI_Win)win);
+    ompi_java_exceptionCheck(env, rc);
+}
+
+JNIEXPORT void JNICALL Java_mpi_Win_flushAll(JNIEnv *env, jobject jthis, jlong win)
+{
+    int rc = MPI_Win_flush_all((MPI_Win)win);
+    ompi_java_exceptionCheck(env, rc);
+}
+
+JNIEXPORT void JNICALL Java_mpi_Win_compareAndSwap (JNIEnv *env, jobject jthis, jlong win, jobject origin,
+                                                    jobject compareAddr, jobject resultAddr, jlong dataType, jint targetRank, jint targetDisp)
+{
+    void *orgPtr = (*env)->GetDirectBufferAddress(env, origin);
+    void *compPtr = (*env)->GetDirectBufferAddress(env, compareAddr);
+    void *resultPtr = (*env)->GetDirectBufferAddress(env, resultAddr);
+    
+    int rc = MPI_Compare_and_swap(orgPtr, compPtr, resultPtr, dataType, targetRank, targetDisp, (MPI_Win)win);
+    ompi_java_exceptionCheck(env, rc);
+}
+
+JNIEXPORT void JNICALL Java_mpi_Win_fetchAndOp(JNIEnv *env, jobject jthis, jlong win, jobject origin,
+                                               jobject resultAddr, jlong dataType, jint targetRank, jint targetDisp, jobject jOp, jlong hOp, jint baseType)
+{
+    void *orgPtr = (*env)->GetDirectBufferAddress(env, origin);
+    void *resultPtr = (*env)->GetDirectBufferAddress(env, resultAddr);
+    MPI_Op op = ompi_java_op_getHandle(env, jOp, hOp, baseType);
+    
+    int rc = MPI_Fetch_and_op(orgPtr, resultPtr, dataType, targetRank, targetDisp, op, (MPI_Win)win);
+    ompi_java_exceptionCheck(env, rc);
+}
+
+JNIEXPORT void JNICALL Java_mpi_Win_flushLocal(JNIEnv *env, jobject jthis, jlong win, jint targetRank)
+{
+    int rc = MPI_Win_flush_local(targetRank, (MPI_Win)win);
+    ompi_java_exceptionCheck(env, rc);
+}
+
+JNIEXPORT void JNICALL Java_mpi_Win_flushLocalAll(JNIEnv *env, jobject jthis, jlong win)
+{
+    int rc = MPI_Win_flush_local_all((MPI_Win)win);
+    ompi_java_exceptionCheck(env, rc);
+}
+
+JNIEXPORT void JNICALL Java_mpi_Win_setName(
+        JNIEnv *env, jobject jthis, jlong handle, jstring jname)
+{
+    const char *name = (*env)->GetStringUTFChars(env, jname, NULL);
+    int rc = MPI_Win_set_name((MPI_Comm)handle, (char*)name);
+    ompi_java_exceptionCheck(env, rc);
+    (*env)->ReleaseStringUTFChars(env, jname, name);
+}
+
+JNIEXPORT jstring JNICALL Java_mpi_Win_getName(
+        JNIEnv *env, jobject jthis, jlong handle)
+{
+    char name[MPI_MAX_OBJECT_NAME];
+    int len;
+    int rc = MPI_Win_get_name((MPI_Comm)handle, name, &len);
+
+    if(ompi_java_exceptionCheck(env, rc))
+        return NULL;
+
+    return (*env)->NewStringUTF(env, name);
 }

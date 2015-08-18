@@ -3,14 +3,14 @@
  *                         All rights reserved.
  * Copyright (c) 2004-2011 The Trustees of the University of Tennessee.
  *                         All rights reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -154,8 +154,8 @@ int orte_snapc_full_module_init(bool seed, bool app)
     opal_output_verbose(10, mca_snapc_full_component.super.output_handle,
                         "snapc:full: module_init(%d, %d)", seed, app);
 
-    /* 
-     * Global Snapshot Coordinator 
+    /*
+     * Global Snapshot Coordinator
      */
     if(seed) {
         opal_output_verbose(5, mca_snapc_full_component.super.output_handle,
@@ -168,11 +168,11 @@ int orte_snapc_full_module_init(bool seed, bool app)
             goto cleanup;
         }
     }
-    /* 
-     * Local Snapshot Coordinator -- orted 
+    /*
+     * Local Snapshot Coordinator -- orted
      */
     else if(!seed && !app) {
-        /* 
+        /*
          * JJH Currently we are not guarenteed a bootproxy, and we have no way
          * JJH (that I know of) to tell if we were generated from the bootproxy
          * JJH or from the HNP inside the application.
@@ -188,7 +188,7 @@ int orte_snapc_full_module_init(bool seed, bool app)
             goto cleanup;
         }
     }
-    /* 
+    /*
      * Application Snapshot Coordinator
      */
     else if(app) {
@@ -210,7 +210,7 @@ int orte_snapc_full_module_init(bool seed, bool app)
         }
     }
     else {
-        /* 
+        /*
          * Logically this should not happen
          */
         opal_output_verbose(5, mca_snapc_full_component.super.output_handle,
@@ -231,7 +231,7 @@ int orte_snapc_full_module_finalize(void)
     opal_output_verbose(10, mca_snapc_full_component.super.output_handle,
                         "snapc:full: module_finalize()");
 
-    switch(orte_snapc_coord_type) 
+    switch(orte_snapc_coord_type)
         {
         case ORTE_SNAPC_GLOBAL_COORD_TYPE:
             global_coord_finalize();
@@ -286,7 +286,7 @@ int orte_snapc_full_release_job(orte_jobid_t jobid) {
 }
 
 int orte_snapc_full_ft_event(int state) {
-    switch(orte_snapc_coord_type) 
+    switch(orte_snapc_coord_type)
         {
         case ORTE_SNAPC_GLOBAL_COORD_TYPE:
         case ORTE_SNAPC_LOCAL_COORD_TYPE:
@@ -304,7 +304,7 @@ int orte_snapc_full_ft_event(int state) {
 
 int orte_snapc_full_start_ckpt(orte_snapc_base_quiesce_t *datum)
 {
-    switch(orte_snapc_coord_type) 
+    switch(orte_snapc_coord_type)
         {
         case ORTE_SNAPC_GLOBAL_COORD_TYPE:
             return global_coord_start_ckpt(datum);
@@ -324,7 +324,7 @@ int orte_snapc_full_start_ckpt(orte_snapc_base_quiesce_t *datum)
 
 int orte_snapc_full_end_ckpt(orte_snapc_base_quiesce_t *datum)
 {
-    switch(orte_snapc_coord_type) 
+    switch(orte_snapc_coord_type)
         {
         case ORTE_SNAPC_GLOBAL_COORD_TYPE:
             return global_coord_end_ckpt(datum);
@@ -344,7 +344,7 @@ int orte_snapc_full_end_ckpt(orte_snapc_base_quiesce_t *datum)
 
 int orte_snapc_full_request_op(orte_snapc_base_request_op_t *datum)
 {
-    switch(orte_snapc_coord_type) 
+    switch(orte_snapc_coord_type)
         {
         case ORTE_SNAPC_GLOBAL_COORD_TYPE:
             ; /* Do nothing */

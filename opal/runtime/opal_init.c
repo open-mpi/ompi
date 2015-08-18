@@ -298,12 +298,12 @@ opal_init_util(int* pargc, char*** pargv)
                 __FILE__, __LINE__, ret);
         return ret;
     }
-    
+
     /* initialize the help system */
     opal_show_help_init();
 
     /* register handler for errnum -> string converstion */
-    if (OPAL_SUCCESS != 
+    if (OPAL_SUCCESS !=
         (ret = opal_error_register("OPAL",
                                    OPAL_ERR_BASE, OPAL_ERR_MAX, opal_err2str))) {
         error = "opal_error_register";
@@ -469,7 +469,7 @@ opal_init(int* pargc, char*** pargv)
         error = "opal_event_base_open";
         goto return_error;
     }
-            
+
     /*
      * Initialize the general progress engine
      */
@@ -518,7 +518,7 @@ opal_init(int* pargc, char*** pargv)
         error = "opal_cr_init";
         goto return_error;
     }
-    
+
     /* initialize the security framework */
     if( OPAL_SUCCESS != (ret = mca_base_framework_open(&opal_sec_base_framework, 0)) ) {
         error = "opal_sec_base_open";
@@ -555,12 +555,12 @@ int opal_init_test(void)
                 __FILE__, __LINE__, ret);
         return ret;
     }
-    
+
     /* initialize the help system */
     opal_show_help_init();
 
     /* register handler for errnum -> string converstion */
-    if (OPAL_SUCCESS != 
+    if (OPAL_SUCCESS !=
         (ret = opal_error_register("OPAL",
                                    OPAL_ERR_BASE, OPAL_ERR_MAX, opal_err2str))) {
         error = "opal_error_register";

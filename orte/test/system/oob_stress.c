@@ -58,19 +58,19 @@ main(int argc, char *argv[]){
     } else {
         count = MAX_COUNT;
     }
-    
+
     peer.jobid = ORTE_PROC_MY_NAME->jobid;
     peer.vpid = ORTE_PROC_MY_NAME->vpid + 1;
     if (peer.vpid == orte_process_info.num_procs) {
         peer.vpid = 0;
     }
-            
+
     for (j=1; j < count+1; j++) {
         /* rank0 starts ring */
         if (ORTE_PROC_MY_NAME->vpid == 0) {
             /* setup the initiating buffer - put random sized message in it */
             buf = OBJ_NEW(opal_buffer_t);
-            
+
             maxpower = (double)(j%7);
             msgsize = (int)pow(10.0, maxpower);
             opal_output(0, "Ring %d message size %d bytes", j, msgsize);

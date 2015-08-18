@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -104,10 +104,10 @@ void mpi_file_set_view_(MPI_Fint *fh,MPI_Offset *disp,MPI_Fint *etype,
 {
     char *newstr;
     MPI_File fh_c;
-    int i, real_len; 
+    int i, real_len;
     MPI_Datatype etype_c, filetype_c;
     MPI_Info info_c;
-    
+
     etype_c = MPI_Type_f2c(*etype);
     filetype_c = MPI_Type_f2c(*filetype);
     info_c = MPI_Info_f2c(*info);
@@ -127,9 +127,9 @@ void mpi_file_set_view_(MPI_Fint *fh,MPI_Offset *disp,MPI_Fint *etype,
     newstr = (char *) ADIOI_Malloc((real_len+1)*sizeof(char));
     ADIOI_Strncpy(newstr, datarep, real_len);
     newstr[real_len] = '\0';
-    
+
     fh_c = MPI_File_f2c(*fh);
- 
+
     *ierr = MPI_File_set_view(fh_c,*disp,etype_c,filetype_c,newstr,info_c);
 
     ADIOI_Free(newstr);
@@ -152,9 +152,9 @@ FORTRAN_API void FORT_CALL mpi_file_set_view_( MPI_Fint *fh, MPI_Offset *disp, M
 #endif
     char *newstr;
     MPI_File fh_c;
-    int i, real_len; 
+    int i, real_len;
     MPI_Info info_c;
-    
+
     info_c = MPI_Info_f2c(*info);
 
     /* strip trailing blanks in datarep */
@@ -172,9 +172,9 @@ FORTRAN_API void FORT_CALL mpi_file_set_view_( MPI_Fint *fh, MPI_Offset *disp, M
     newstr = (char *) ADIOI_Malloc((real_len+1)*sizeof(char));
     ADIOI_Strncpy(newstr, datarep, real_len);
     newstr[real_len] = '\0';
-    
+
     fh_c = MPI_File_f2c(*fh);
- 
+
     *ierr = MPI_File_set_view(fh_c,*disp,*etype,*filetype,newstr,info_c);
 
     ADIOI_Free(newstr);

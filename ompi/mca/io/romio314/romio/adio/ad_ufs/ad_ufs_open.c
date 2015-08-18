@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -31,7 +31,7 @@ void ADIOI_UFS_Open(ADIO_File fd, int *error_code)
     if (fd->access_mode & ADIO_EXCL)
 	amode = amode | O_EXCL;
 
-    
+
 #ifdef ADIOI_MPE_LOGGING
     MPE_Log_event( ADIOI_MPE_open_a, 0, NULL );
 #endif

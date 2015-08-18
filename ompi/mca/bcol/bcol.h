@@ -431,7 +431,7 @@ struct mca_bcol_base_memory_block_desc_t {
     /* Counter that defines what bank should be synchronized next
      * since collectives could be completed out of order, we have to make
      * sure that memory synchronization collectives started in order ! */
-    int memsync_counter; 
+    int memsync_counter;
 
     /* This arrays of flags used to signal that the bank is ready for recycling */
     bool *ready_for_memsync;

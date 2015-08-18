@@ -5,14 +5,14 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 /*
@@ -35,7 +35,7 @@
 */
 /*
  * File         : mpi_Group.c
- * Headerfile   : mpi_Group.h 
+ * Headerfile   : mpi_Group.h
  * Author       : Xinying Li
  * Created      : Thu Apr  9 12:22:15 1998
  * Revision     : $Revision: 1.3 $

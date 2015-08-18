@@ -1,10 +1,11 @@
 /*
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
+ * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 /**
@@ -34,7 +35,7 @@ OSHMEM_DECLSPEC extern struct mca_memheap_base_module_t* mca_memheap_base_module
 
 /* only used within base -- no need to DECLSPEC */
 #define MEMHEAP_BASE_MIN_ORDER         3                                /* forces 64 bit alignment */
-#define MEMHEAP_BASE_PAGE_ORDER        21   
+#define MEMHEAP_BASE_PAGE_ORDER        21
 #define MEMHEAP_BASE_PRIVATE_SIZE      (1ULL << MEMHEAP_BASE_PAGE_ORDER) /* should be at least the same as a huge page size */
 #define MEMHEAP_BASE_MIN_SIZE          (1ULL << MEMHEAP_BASE_PAGE_ORDER)    /* must fit into at least one huge page */
 
@@ -47,7 +48,7 @@ extern int mca_memheap_base_key_exchange;
 #define HEAP_SEG_INDEX  0
 #define SYMB_SEG_INDEX  1
 
-typedef struct mca_memheap_map {  
+typedef struct mca_memheap_map {
     map_segment_t   mem_segs[MCA_MEMHEAP_MAX_SEGMENTS]; /* TODO: change into pointer array */
     int             n_segments;
     int             num_transports;
@@ -133,18 +134,18 @@ OSHMEM_DECLSPEC extern mca_base_framework_t oshmem_memheap_base_framework;
 #ifdef OPAL_ENABLE_DEBUG
 #define MEMHEAP_VERBOSE(level, ...) \
     oshmem_output_verbose(level, oshmem_memheap_base_framework.framework_output, \
-        "%s:%d - %s()", __SPML_FILE__, __LINE__, __FUNCTION__, __VA_ARGS__)
+        "%s:%d - %s()", __SPML_FILE__, __LINE__, __func__, __VA_ARGS__)
 #else
 #define MEMHEAP_VERBOSE(level, ...)
 #endif
 
 #define MEMHEAP_ERROR(...) \
     oshmem_output(oshmem_memheap_base_framework.framework_output, \
-        "Error %s:%d - %s()", __SPML_FILE__, __LINE__, __FUNCTION__, __VA_ARGS__)
+        "Error %s:%d - %s()", __SPML_FILE__, __LINE__, __func__, __VA_ARGS__)
 
 #define MEMHEAP_WARN(...) \
     oshmem_output_verbose(0, oshmem_memheap_base_framework.framework_output, \
-        "Warning %s:%d - %s()", __SPML_FILE__, __LINE__, __FUNCTION__, __VA_ARGS__)
+        "Warning %s:%d - %s()", __SPML_FILE__, __LINE__, __func__, __VA_ARGS__)
 
 END_C_DECLS
 

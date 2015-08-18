@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -55,7 +55,7 @@ void ADIO_Init(int *argc, char ***argv, int *error_code)
 
     ADIOI_UNREFERENCED_ARG(argc);
     ADIOI_UNREFERENCED_ARG(argv);
-    
+
 #ifdef ROMIO_INSIDE_MPICH
     MPIR_Ext_init();
 #endif
@@ -69,11 +69,11 @@ void ADIO_Init(int *argc, char ***argv, int *error_code)
 
 #if defined(ROMIO_XFS) || defined(ROMIO_LUSTRE)
     c = getenv("MPIO_DIRECT_READ");
-    if (c && (!strcmp(c, "true") || !strcmp(c, "TRUE"))) 
+    if (c && (!strcmp(c, "true") || !strcmp(c, "TRUE")))
 	ADIOI_Direct_read = 1;
     else ADIOI_Direct_read = 0;
     c = getenv("MPIO_DIRECT_WRITE");
-    if (c && (!strcmp(c, "true") || !strcmp(c, "TRUE"))) 
+    if (c && (!strcmp(c, "true") || !strcmp(c, "TRUE")))
 	ADIOI_Direct_write = 1;
     else ADIOI_Direct_write = 0;
 #endif
@@ -93,7 +93,7 @@ void ADIO_Init(int *argc, char ***argv, int *error_code)
         MPE_Log_get_state_eventIDs( &ADIOI_MPE_unlock_a, &ADIOI_MPE_unlock_b );
         MPE_Log_get_state_eventIDs( &ADIOI_MPE_postwrite_a,
                                     &ADIOI_MPE_postwrite_b );
-	MPE_Log_get_state_eventIDs( &ADIOI_MPE_openinternal_a, 
+	MPE_Log_get_state_eventIDs( &ADIOI_MPE_openinternal_a,
 			&ADIOI_MPE_openinternal_b);
 	MPE_Log_get_state_eventIDs( &ADIOI_MPE_stat_a, &ADIOI_MPE_stat_b);
 	MPE_Log_get_state_eventIDs( &ADIOI_MPE_iread_a, &ADIOI_MPE_iread_b);

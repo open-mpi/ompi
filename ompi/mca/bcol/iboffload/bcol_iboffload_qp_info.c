@@ -211,7 +211,7 @@ static void mca_bcol_iboffload_fillin_qp_attr(int qp_index,
                                    mca_bcol_iboffload_endpoint_t *ep,
                                    ompi_common_ofacm_base_qp_config_t *qp_config)
 {
-        uint32_t max_sge, *init_attr_mask = 
+        uint32_t max_sge, *init_attr_mask =
                                   &qp_config->init_attr_mask[qp_index];
 
         struct ibv_qp_attr *attr = &qp_config->attr[qp_index];
@@ -248,7 +248,7 @@ static void mca_bcol_iboffload_fillin_qp_attr(int qp_index,
         }
 
         init_attr->cap.max_send_sge = max_sge;
-        init_attr->cap.max_recv_sge = max_sge; 
+        init_attr->cap.max_recv_sge = max_sge;
 /* Vasily: the value will be changed later */
 /* TODO Pasha: this is real crap */
         init_attr->cap.max_recv_wr  = (uint32_t) cm->cq_size;

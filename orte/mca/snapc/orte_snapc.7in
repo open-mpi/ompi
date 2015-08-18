@@ -5,7 +5,7 @@
 .\" Copyright (c) 2008-2009 Sun Microsystems, Inc.  All rights reserved.
 .\"
 .\" Man page for ORTE's SnapC Functionality
-.\" 
+.\"
 .\" .TH name     section center-footer   left-footer  center-header
 .TH ORTE_SNAPC 7 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .\" **************************
@@ -87,7 +87,7 @@ error.
 .SS none SnapC Component
 .PP
 The \fInone\fP component simply selects no SnapC component. All of the SnapC
-function calls return immediately with ORTE_SUCCESS. 
+function calls return immediately with ORTE_SUCCESS.
 .
 .PP
 This component is the last component to be selected by default. This means that if

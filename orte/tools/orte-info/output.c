@@ -5,15 +5,15 @@
  * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -24,9 +24,7 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
-#ifdef HAVE_SIGNAL_H
 #include <signal.h>
-#endif
 #ifdef HAVE_TERMIOS_H
 #include <termios.h>
 #endif
@@ -39,7 +37,7 @@
 
 #include "opal/util/show_help.h"
 
-#define OMPI_max(a,b) (((a) > (b)) ? (a) : (b)) 
+#define OMPI_max(a,b) (((a) > (b)) ? (a) : (b))
 
 
 /*
@@ -49,7 +47,7 @@
 static int centerpoint = 24;
 static int screen_width = 78;
 
-/* 
+/*
  * Prints the passed integer in a pretty or parsable format.
  */
 void orte_info_out(const char *pretty_message, const char *plain_message, const char *value)
@@ -58,7 +56,7 @@ void orte_info_out(const char *pretty_message, const char *plain_message, const 
     char *spaces = NULL;
     char *filler = NULL;
     char *pos, *v, savev, *v_to_free;
-    
+
 #ifdef HAVE_ISATTY
     /* If we have isatty(), if this is not a tty, then disable
      * wrapping for grep-friendly behavior
@@ -67,7 +65,7 @@ void orte_info_out(const char *pretty_message, const char *plain_message, const 
         screen_width = INT_MAX;
     }
 #endif
-    
+
 #ifdef TIOCGWINSZ
     if (screen_width < INT_MAX) {
         struct winsize size;
@@ -106,13 +104,13 @@ void orte_info_out(const char *pretty_message, const char *plain_message, const 
 
     if (orte_info_pretty && NULL != pretty_message) {
         if (centerpoint > (int)strlen(pretty_message)) {
-            asprintf(&spaces, "%*s", centerpoint - 
+            asprintf(&spaces, "%*s", centerpoint -
                      (int)strlen(pretty_message), " ");
         } else {
             spaces = strdup("");
 #if OPAL_ENABLE_DEBUG
             if (centerpoint < (int)strlen(pretty_message)) {
-                opal_show_help("help-orte-info.txt", 
+                opal_show_help("help-orte-info.txt",
                                "developer warning: field too long", false,
                                pretty_message, centerpoint);
             }
@@ -126,14 +124,14 @@ void orte_info_out(const char *pretty_message, const char *plain_message, const 
         }
         free(spaces);
         spaces = NULL;
-        
+
         while (true) {
             if (strlen(v) < max_value_width) {
                 printf("%s%s\n", filler, v);
                 break;
             } else {
                 asprintf(&spaces, "%*s", centerpoint + 2, " ");
-                
+
                 /* Work backwards to find the first space before
                  * max_value_width
                  */
@@ -146,11 +144,11 @@ void orte_info_out(const char *pretty_message, const char *plain_message, const 
                      * space after max_value_width.
                      */
                     pos = strchr(&v[max_value_width], ' ');
-                    
+
                     if (NULL == pos) {
-                        
+
                         /* There's just no spaces.  So just print it and be done. */
-                        
+
                         printf("%s%s\n", filler, v);
                         break;
                     } else {
@@ -163,7 +161,7 @@ void orte_info_out(const char *pretty_message, const char *plain_message, const 
                     printf("%s%s\n", filler, v);
                     v = pos + 1;
                 }
-                
+
                 /* Reset for the next iteration */
                 free(filler);
                 filler = strdup(spaces);
@@ -189,12 +187,12 @@ void orte_info_out(const char *pretty_message, const char *plain_message, const 
     }
 }
 
-void orte_info_out_int(const char *pretty_message, 
-                       const char *plain_message, 
+void orte_info_out_int(const char *pretty_message,
+                       const char *plain_message,
                        int value)
 {
     char *valstr;
-    
+
     asprintf(&valstr, "%d", (int)value);
     orte_info_out(pretty_message, plain_message, valstr);
     free(valstr);

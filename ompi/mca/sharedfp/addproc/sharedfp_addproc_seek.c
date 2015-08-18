@@ -50,13 +50,13 @@ mca_sharedfp_addproc_seek (mca_io_ompio_file_t *fh,
     /* This is a collective call,
      * only one process needs to communicate with the */
     if(0 == rank){
-        ret = MCA_PML_CALL(send ( &buff, 1, OMPI_OFFSET_DATATYPE, 0, whence, 
-				  MCA_PML_BASE_SEND_STANDARD, 
+        ret = MCA_PML_CALL(send ( &buff, 1, OMPI_OFFSET_DATATYPE, 0, whence,
+				  MCA_PML_BASE_SEND_STANDARD,
 				  addproc_data->intercom));
 	if ( OMPI_SUCCESS != ret ) {
 	    return OMPI_ERROR;
 	}
-        ret = MCA_PML_CALL(recv(&position, 1, OMPI_OFFSET_DATATYPE, 0, whence, 
+        ret = MCA_PML_CALL(recv(&position, 1, OMPI_OFFSET_DATATYPE, 0, whence,
 				addproc_data->intercom, MPI_STATUS_IGNORE));
 	if ( OMPI_SUCCESS != ret ) {
 	    return OMPI_ERROR;

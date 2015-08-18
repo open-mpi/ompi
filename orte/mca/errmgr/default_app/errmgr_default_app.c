@@ -2,17 +2,18 @@
  * Copyright (c) 2009-2011 The Trustees of Indiana University.
  *                         All rights reserved.
  *
- * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved. 
+ * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
  *
  * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2015      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -22,13 +23,11 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif  /* HAVE_UNISTD_H */
-#ifdef HAVE_STRING_H
 #include <string.h>
-#endif
 
 #include "opal/util/output.h"
 #include "opal/dss/dss.h"
-#include "opal/mca/pmix/pmix.h"
+#include "opal/errhandler/opal_errhandler.h"
 
 #include "orte/util/error_strings.h"
 #include "orte/util/name_fns.h"
@@ -45,17 +44,17 @@
 /*
  * Module functions: Global
  */
-static int init(void);
-static int finalize(void);
+ static int init(void);
+ static int finalize(void);
 
-static int abort_peers(orte_process_name_t *procs,
-                       orte_std_cntr_t num_procs,
-                       int error_code);
+ static int abort_peers(orte_process_name_t *procs,
+                        orte_std_cntr_t num_procs,
+                        int error_code);
 
 /******************
  * HNP module
  ******************/
-orte_errmgr_base_module_t orte_errmgr_default_app_module = {
+ orte_errmgr_base_module_t orte_errmgr_default_app_module = {
     init,
     finalize,
     orte_errmgr_base_log,
@@ -70,7 +69,7 @@ orte_errmgr_base_module_t orte_errmgr_default_app_module = {
 };
 
 static void proc_errors(int fd, short args, void *cbdata);
-static void pmix_error(int error)
+static void pmix_error(int error, opal_proc_t *proc, void *cbdata)
 {
     /* push it into our event base */
     ORTE_ACTIVATE_PROC_STATE(ORTE_PROC_MY_NAME, ORTE_PROC_STATE_COMM_FAILED);
@@ -79,25 +78,20 @@ static void pmix_error(int error)
 /************************
  * API Definitions
  ************************/
-static int init(void)
-{
+ static int init(void)
+ {
     /* setup state machine to trap proc errors */
     orte_state.add_proc_state(ORTE_PROC_STATE_ERROR, proc_errors, ORTE_ERROR_PRI);
 
-    /* register an errhandler with the PMIx framework so
-     * we can know of loss of connection to the server */
-    if (NULL != opal_pmix.register_errhandler) {
-        opal_pmix.register_errhandler(pmix_error);
-    }
+    /* register an errhandler */
+    opal_register_errhandler(pmix_error, NULL);
 
     return ORTE_SUCCESS;
 }
 
 static int finalize(void)
 {
-    if (NULL != opal_pmix.deregister_errhandler) {
-        opal_pmix.deregister_errhandler();
-    }
+    opal_deregister_errhandler();
 
     return ORTE_SUCCESS;
 }
@@ -110,15 +104,15 @@ static void proc_errors(int fd, short args, void *cbdata)
     opal_pointer_array_t errors;
 
     OPAL_OUTPUT_VERBOSE((1, orte_errmgr_base_framework.framework_output,
-                         "%s errmgr:default_app: proc %s state %s",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(&caddy->name),
-                         orte_proc_state_to_str(caddy->proc_state)));
-    
+                        "%s errmgr:default_app: proc %s state %s",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                        ORTE_NAME_PRINT(&caddy->name),
+                        orte_proc_state_to_str(caddy->proc_state)));
+
     /*
      * if orte is trying to shutdown, just let it
      */
-    if (orte_finalizing) {
+     if (orte_finalizing) {
         OBJ_RELEASE(caddy);
         return;
     }
@@ -143,8 +137,8 @@ static void proc_errors(int fd, short args, void *cbdata)
         /* flag that we must abnormally terminate as far as the
          * RTE is concerned
          */
-        orte_abnormal_term_ordered = true;
-    } else if (ORTE_PROC_STATE_LIFELINE_LOST == caddy->proc_state) {
+         orte_abnormal_term_ordered = true;
+     } else if (ORTE_PROC_STATE_LIFELINE_LOST == caddy->proc_state) {
         /* we need to die, so mark us so */
         orte_abnormal_term_ordered = true;
     }

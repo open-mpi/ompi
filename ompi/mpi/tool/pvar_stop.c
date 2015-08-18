@@ -32,7 +32,7 @@ static int pvar_handle_stop (mca_base_pvar_handle_t *handle)
 
 int MPI_T_pvar_stop(MPI_T_pvar_session session, MPI_T_pvar_handle handle)
 {
-    int ret;
+    int ret = MPI_SUCCESS;
 
     if (!mpit_is_initialized ()) {
         return MPI_T_ERR_NOT_INITIALIZED;

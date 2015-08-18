@@ -57,7 +57,7 @@ mca_bcol_ptpcoll_component_t mca_bcol_ptpcoll_component = {
     {
         /* First, the mca_component_t struct containing meta
            information about the component itself */
-        
+
         .bcol_version = {
             MCA_BCOL_BASE_VERSION_2_0_0,
 
@@ -75,7 +75,7 @@ mca_bcol_ptpcoll_component_t mca_bcol_ptpcoll_component = {
         },
 
         /* Initialization / querying functions */
-        
+
         .collm_init_query = mca_bcol_ptpcoll_init_query,
         .collm_comm_query = mca_bcol_ptpcoll_comm_query,
         .init_done = false,
@@ -121,8 +121,8 @@ static int ptpcoll_close(void)
     return OMPI_SUCCESS;
 }
 
-/* query to see if the component is available for use, and can 
- * satisfy the thread and progress requirements 
+/* query to see if the component is available for use, and can
+ * satisfy the thread and progress requirements
  */
 int mca_bcol_ptpcoll_init_query(bool enable_progress_threads,
         bool enable_mpi_threads)
@@ -139,7 +139,7 @@ int mca_bcol_ptpcoll_init_query(bool enable_progress_threads,
  * mpool2, which will use malloc for allocation, if no other allocator
  * is available.
  */
-void * bcol_ptpcoll_allocate_memory(size_t length, size_t alignment, 
+void * bcol_ptpcoll_allocate_memory(size_t length, size_t alignment,
  struct mca_bcol_base_module_t *bcol_module)
 {
    /* do nothing */
@@ -156,7 +156,7 @@ int bcol_ptpcoll_register_memory(void * in_ptr, size_t length, size_t alignment,
    return OMPI_SUCCESS;
 }
 
-/* deregister memory - nothing to do 
+/* deregister memory - nothing to do
  */
 int bcol_ptpcoll_deregister_memory( void * in_ptr,
      struct mca_bcol_base_module_t *bcol_module)

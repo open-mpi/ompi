@@ -1,9 +1,9 @@
 /*
- * Copyright (c) 2014      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2015 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -21,6 +21,7 @@
 
 #include "opal/mca/mca.h"
 #include "opal/mca/event/event.h"
+#include "opal/errhandler/opal_errhandler.h"
 #include "opal/util/proc.h"
 
 #include "opal/mca/pmix/base/base.h"
@@ -40,6 +41,13 @@ typedef enum {
     PMIX_USOCK_FAILED,
     PMIX_USOCK_ACCEPTING
 } pmix_usock_state_t;
+
+/* define a macro for abnormal termination */
+#define PMIX_NATIVE_ABNORMAL_TERM                               \
+    do {                                                        \
+        mca_pmix_native_component.state = PMIX_USOCK_FAILED;    \
+        opal_invoke_errhandler(OPAL_ERR_COMM_FAILURE, NULL);    \
+    } while(0);
 
 /* define a command type for communicating to the
  * pmix server */
@@ -202,12 +210,13 @@ OPAL_MODULE_DECLSPEC int usock_send_connect_ack(void);
         opal_event_active(&ms->ev, OPAL_EV_WRITE, 1);                   \
     } while(0);
 
-#define CLOSE_THE_SOCKET(socket)                                \
-    do {                                                        \
-        shutdown(socket, 2);                                    \
-        close(socket);                                          \
-        /* notify the error handler */                          \
-        opal_pmix_base_errhandler(OPAL_ERR_COMM_FAILURE);       \
+#define CLOSE_THE_SOCKET(socket)                \
+    do {                                        \
+        if (0 <= socket) {                      \
+            shutdown(socket, 2);                \
+            close(socket);                      \
+            socket = -1;                        \
+        }                                       \
     } while(0)
 
 

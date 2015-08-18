@@ -37,7 +37,7 @@ OSHMEM_DECLSPEC OBJ_CLASS_DECLARATION(oshmem_request_t);
 
 /*
  * The following include pulls in shared typedefs with debugger plugins.
- * For more information on why we do this see the Notice to developers 
+ * For more information on why we do this see the Notice to developers
  * comment at the top of the oshmem_msgq_dll.c file.
  */
 
@@ -82,7 +82,7 @@ typedef int (*oshmem_request_cancel_fn_t)(struct oshmem_request_t* request,
                                           int flag);
 
 /*
- * Optional function called when the request is completed from the SHMEM 
+ * Optional function called when the request is completed from the SHMEM
  * library perspective. This function is not allowed to release any
  * ressources related to the request.
  */
@@ -108,7 +108,7 @@ typedef union oshmem_shmem_object_t {
 } oshmem_shmem_object_t;
 
 /**
- * Main top-level request struct definition 
+ * Main top-level request struct definition
  */
 struct oshmem_request_t {
     opal_free_list_item_t super; /**< Base type *//*TODO: Implement in shmem */
@@ -158,7 +158,7 @@ typedef struct oshmem_predefined_request_t oshmem_predefined_request_t;
         (request)->req_complete = false;              \
         (request)->req_state = OSHMEM_REQUEST_INACTIVE; \
         (request)->req_persistent = (persistent);     \
-    } while (0); 
+    } while (0);
 
 /**
  * Finalize a request.  This is a macro to avoid function call
@@ -168,7 +168,7 @@ typedef struct oshmem_predefined_request_t oshmem_predefined_request_t;
  *
  * When finalizing a request, if MPI_Request_f2c() was previously
  * invoked on that request, then this request was added to the f2c
- * table, and we need to remove it 
+ * table, and we need to remove it
  *
  * This function should be called only from the SHMEM layer. It should
  * never be called from the SPML. It take care of the upper level clean-up.
@@ -183,7 +183,7 @@ do {                                                                    \
                                     (request)->req_f_to_c_index, NULL); \
         (request)->req_f_to_c_index = SHMEM_UNDEFINED;                    \
     }                                                                   \
-} while (0); 
+} while (0);
 
 /**
  * Non-blocking test for request completion.
@@ -379,7 +379,7 @@ static inline int oshmem_request_free(oshmem_request_t** request)
 #define oshmem_request_wait_some  (oshmem_request_functions.req_wait_some)
 
 /**
- * Wait for any completion. It is a caller responsibility to check for 
+ * Wait for any completion. It is a caller responsibility to check for
  * condition and call us again if needed.
  */
 static inline void oshmem_request_wait_any_completion(void)

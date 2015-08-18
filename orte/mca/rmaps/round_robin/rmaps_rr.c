@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -14,9 +14,9 @@
  *                         All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -28,9 +28,7 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif  /* HAVE_UNISTD_H */
-#ifdef HAVE_STRING_H
 #include <string.h>
-#endif  /* HAVE_STRING_H */
 
 #include "orte/util/show_help.h"
 #include "orte/mca/errmgr/errmgr.h"
@@ -83,7 +81,7 @@ static int orte_rmaps_rr_map(orte_job_t *jdata)
     opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                         "mca:rmaps:rr: mapping job %s",
                         ORTE_JOBID_PRINT(jdata->jobid));
- 
+
     /* flag that I did the mapping */
     if (NULL != jdata->map->last_mapper) {
         free(jdata->map->last_mapper);
@@ -92,13 +90,13 @@ static int orte_rmaps_rr_map(orte_job_t *jdata)
 
     /* start at the beginning... */
     jdata->num_procs = 0;
-    
+
     /* cycle through the app_contexts, mapping them sequentially */
     for(i=0; i < jdata->apps->size; i++) {
         if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, i))) {
             continue;
         }
-        
+
         /* setup the nodelist here in case we jump to error */
         OBJ_CONSTRUCT(&node_list, opal_list_t);
 
@@ -127,7 +125,7 @@ static int orte_rmaps_rr_map(orte_job_t *jdata)
 
         /* if a bookmark exists from some prior mapping, set us to start there */
         jdata->bookmark = orte_rmaps_base_get_starting_point(&node_list, jdata);
-        
+
         if (0 == app->num_procs) {
             /* set the num_procs to equal the number of slots on these
              * mapped nodes, taking into account the number of cpus/rank
@@ -140,7 +138,7 @@ static int orte_rmaps_rr_map(orte_job_t *jdata)
                 app->num_procs = 1;
             }
         }
-        
+
         /* Make assignments */
         if (ORTE_MAPPING_BYNODE == ORTE_GET_MAPPING_POLICY(jdata->map->mapping)) {
             rc = orte_rmaps_rr_bynode(jdata, app, &node_list, num_slots,

@@ -48,7 +48,7 @@ fifo_read(int fd, short event, void *arg)
 #ifdef WIN32
 	len = ReadFile((HANDLE)fd, buf, sizeof(buf) - 1, &dwBytesRead, NULL);
 
-	/* Check for end of file. */ 
+	/* Check for end of file. */
 	if(len && dwBytesRead == 0) {
 		fprintf(stderr, "End Of File");
 		opal_event.del(ev);
@@ -78,14 +78,14 @@ main (int argc, char **argv)
 	opal_event_t evfifo;
 #ifdef WIN32
 	HANDLE socket;
-	// Open a file. 
-	socket = CreateFile("test.txt",     // open File 
-			GENERIC_READ,                 // open for reading 
-			0,                            // do not share 
-			NULL,                         // no security 
-			OPEN_EXISTING,                // existing file only 
-			FILE_ATTRIBUTE_NORMAL,        // normal file 
-			NULL);                        // no attr. template 
+	// Open a file.
+	socket = CreateFile("test.txt",     // open File
+			GENERIC_READ,                 // open for reading
+			0,                            // do not share
+			NULL,                         // no security
+			OPEN_EXISTING,                // existing file only
+			FILE_ATTRIBUTE_NORMAL,        // normal file
+			NULL);                        // no attr. template
 
 	if(socket == INVALID_HANDLE_VALUE)
 		return 1;
@@ -94,7 +94,7 @@ main (int argc, char **argv)
 	struct stat st;
 	char *fifo = "event.fifo";
 	int socket;
- 
+
 	if (lstat (fifo, &st) == 0) {
 		if ((st.st_mode & S_IFMT) == S_IFREG) {
 			errno = EEXIST;
@@ -135,7 +135,7 @@ main (int argc, char **argv)
 
 	/* Add it to the active events, without a timeout */
 	opal_event.add(&evfifo, NULL);
-	
+
 	opal_event.dispatch(opal_event_base);
 #ifdef WIN32
 	CloseHandle(socket);

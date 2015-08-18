@@ -28,9 +28,7 @@
  */
 #include "orte_config.h"
 
-#ifdef HAVE_STRING_H
 #include <string.h>
-#endif
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
 #endif
@@ -67,11 +65,11 @@ int orte_plm_base_comm_start(void)
     if (recv_issued) {
         return ORTE_SUCCESS;
     }
-    
+
     OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
                          "%s plm:base:receive start comm",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-    
+
     orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
                             ORTE_RML_TAG_PLM,
                             ORTE_RML_PERSISTENT,
@@ -88,7 +86,7 @@ int orte_plm_base_comm_start(void)
                                 orte_plm_base_daemon_failed, NULL);
     }
     recv_issued = true;
-    
+
     return ORTE_SUCCESS;
 }
 
@@ -98,17 +96,17 @@ int orte_plm_base_comm_stop(void)
     if (!recv_issued) {
         return ORTE_SUCCESS;
     }
-    
+
     OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
                          "%s plm:base:receive stop comm",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-    
+
     orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_PLM);
     if (ORTE_PROC_IS_HNP) {
         orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_ORTED_CALLBACK);
     }
     recv_issued = false;
-    
+
     return ORTE_SUCCESS;
 }
 
@@ -145,21 +143,21 @@ void orte_plm_base_recv(int status, orte_process_name_t* sender,
         ORTE_ERROR_LOG(rc);
         goto CLEANUP;
     }
-        
+
     switch (command) {
     case ORTE_PLM_LAUNCH_JOB_CMD:
         OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
                              "%s plm:base:receive job launch command from %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_NAME_PRINT(sender)));
-                
+
         /* unpack the job object */
         count = 1;
         if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &jdata, &count, ORTE_JOB))) {
             ORTE_ERROR_LOG(rc);
             goto ANSWER_LAUNCH;
         }
-            
+
         /* record the sender so we know who to respond to */
         jdata->originator.jobid = sender->jobid;
         jdata->originator.vpid = sender->vpid;
@@ -184,7 +182,7 @@ void orte_plm_base_recv(int status, orte_process_name_t* sender,
                 free(prefix_dir);
             }
         }
-        
+
         /* if the user asked to forward any envars, cycle through the app contexts
          * in the comm_spawn request and add them
          */
@@ -223,6 +221,8 @@ void orte_plm_base_recv(int status, orte_process_name_t* sender,
             } else {
                 jdata->bookmark = parent->bookmark;
             }
+            /* provide the parent's last object */
+            jdata->bkmark_obj = parent->bkmark_obj;
         }
 
         /* launch it */
@@ -241,12 +241,12 @@ void orte_plm_base_recv(int status, orte_process_name_t* sender,
 
         /* setup the response */
         answer = OBJ_NEW(opal_buffer_t);
-        
+
         /* pack the error code to be returned */
         if (ORTE_SUCCESS != (ret = opal_dss.pack(answer, &rc, 1, OPAL_INT32))) {
             ORTE_ERROR_LOG(ret);
         }
-                
+
         /* send the response back to the sender */
         if (0 > (ret = orte_rml.send_buffer_nb(sender, answer, ORTE_RML_TAG_PLM_PROXY,
                                                orte_rml_send_callback, NULL))) {
@@ -254,7 +254,7 @@ void orte_plm_base_recv(int status, orte_process_name_t* sender,
             OBJ_RELEASE(answer);
         }
         break;
-                
+
     case ORTE_PLM_UPDATE_PROC_STATE:
         opal_output_verbose(5, orte_plm_base_framework.framework_output,
                             "%s plm:base:receive update proc state command from %s",
@@ -262,12 +262,12 @@ void orte_plm_base_recv(int status, orte_process_name_t* sender,
                             ORTE_NAME_PRINT(sender));
         count = 1;
         while (ORTE_SUCCESS == (rc = opal_dss.unpack(buffer, &job, &count, ORTE_JOBID))) {
-                    
+
             opal_output_verbose(5, orte_plm_base_framework.framework_output,
                                 "%s plm:base:receive got update_proc_state for job %s",
                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                 ORTE_JOBID_PRINT(job));
-                    
+
             name.jobid = job;
             running = false;
             /* get the job object */
@@ -300,7 +300,7 @@ void orte_plm_base_recv(int status, orte_process_name_t* sender,
                     ORTE_ERROR_LOG(rc);
                     goto CLEANUP;
                 }
-                        
+
                 OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
                                      "%s plm:base:receive got update_proc_state for vpid %lu state %s exit_code %d",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -339,7 +339,7 @@ void orte_plm_base_recv(int status, orte_process_name_t* sender,
             rc = ORTE_SUCCESS;
         }
         break;
-                
+
     case ORTE_PLM_REGISTERED_CMD:
         count=1;
         if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &job, &count, ORTE_JOBID))) {
@@ -366,19 +366,19 @@ void orte_plm_base_recv(int status, orte_process_name_t* sender,
         rc = ORTE_ERR_VALUE_OUT_OF_BOUNDS;
         break;
     }
-        
+
  CLEANUP:
     if (ORTE_SUCCESS != rc) {
         goto DEPART;
     }
-        
+
  DEPART:
     /* see if an error occurred - if so, wakeup the HNP so we can exit */
     if (ORTE_PROC_IS_HNP && ORTE_SUCCESS != rc) {
         jdata = NULL;
         ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
     }
-    
+
     OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
                          "%s plm:base:receive done processing commands",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));

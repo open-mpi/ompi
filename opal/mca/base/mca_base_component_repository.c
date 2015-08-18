@@ -6,17 +6,19 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -91,6 +93,7 @@ static int process_repository_item (const char *filename, void *data)
                   STRINGIFY(MCA_BASE_MAX_COMPONENT_NAME_LEN) "s", type, name);
     if (0 > ret) {
         /* does not patch the expected template. skip */
+        free(base);
         return OPAL_SUCCESS;
     }
 
@@ -259,6 +262,7 @@ int mca_base_component_repository_get_components (mca_base_framework_t *framewor
     return OPAL_ERR_NOT_FOUND;
 }
 
+#if OPAL_HAVE_DL_SUPPORT
 static void mca_base_component_repository_release_internal (mca_base_component_repository_item_t *ri) {
     int group_id;
 
@@ -274,6 +278,7 @@ static void mca_base_component_repository_release_internal (mca_base_component_r
         ri->ri_dlhandle = NULL;
     }
 }
+#endif
 
 void mca_base_component_repository_release(const mca_base_component_t *component)
 {
@@ -309,10 +314,10 @@ int mca_base_component_repository_open (mca_base_framework_t *framework,
     char *struct_name = NULL;
     int vl, ret;
 
-    opal_output_verbose(40, 0, "mca_base_component_repository_open: examining dynamic %s MCA component \"%s\" at path %s",
-                        ri->ri_type, ri->ri_name, ri->ri_path);
+    opal_output_verbose(MCA_BASE_VERBOSE_INFO, 0, "mca_base_component_repository_open: examining dynamic "
+                        "%s MCA component \"%s\" at path %s", ri->ri_type, ri->ri_name, ri->ri_path);
 
-    vl = mca_base_component_show_load_errors ? 0 : 40;
+    vl = mca_base_component_show_load_errors ? MCA_BASE_VERBOSE_ERROR : MCA_BASE_VERBOSE_INFO;
 
     /* Ensure that this component is not already loaded (should only happen
        if it was statically loaded).  It's an error if it's already
@@ -322,7 +327,7 @@ int mca_base_component_repository_open (mca_base_framework_t *framework,
 
     OPAL_LIST_FOREACH(mitem, &framework->framework_components, mca_base_component_list_item_t) {
         if (0 == strcmp(mitem->cli_component->mca_component_name, ri->ri_name)) {
-            opal_output_verbose(40, 0, "mca_base_component_repository_open: already loaded (ignored)");
+            opal_output_verbose (MCA_BASE_VERBOSE_INFO, 0, "mca_base_component_repository_open: already loaded (ignored)");
             return OPAL_ERR_BAD_PARAM;
         }
     }
@@ -331,7 +336,7 @@ int mca_base_component_repository_open (mca_base_framework_t *framework,
     mitem = NULL;
 
     if (NULL != ri->ri_dlhandle) {
-        opal_output_verbose(40, 0, "mca_base_component_repository_open: already loaded. returning cached component");
+        opal_output_verbose (MCA_BASE_VERBOSE_INFO, 0, "mca_base_component_repository_open: already loaded. returning cached component");
         mitem = OBJ_NEW(mca_base_component_list_item_t);
         if (NULL == mitem) {
             return OPAL_ERR_OUT_OF_RESOURCE;
@@ -440,8 +445,8 @@ int mca_base_component_repository_open (mca_base_framework_t *framework,
         ri->ri_component_struct = mitem->cli_component = component_struct;
         opal_list_append(&framework->framework_components, &mitem->super);
 
-        opal_output_verbose(40, 0, "mca_base_component_repository_open: opened dynamic %s MCA component \"%s\"",
-                            ri->ri_type, ri->ri_name);
+        opal_output_verbose (MCA_BASE_VERBOSE_INFO, 0, "mca_base_component_repository_open: opened dynamic %s MCA "
+                             "component \"%s\"", ri->ri_type, ri->ri_name);
 
         return OPAL_SUCCESS;
     } while (0);

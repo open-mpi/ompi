@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2010-2011 Cisco Systems, Inc.  All rights reserved. 
+ * Copyright (c) 2010-2011 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2014      Intel, Inc.  All rights reserved.
@@ -29,9 +29,7 @@
 #ifdef HAVE_SYS_SIGNAL_H
 #include <sys/signal.h>
 #else
-#ifdef HAVE_SIGNAL_H
 #include <signal.h>
-#endif
 #endif
 
 #include "orte/mca/plm/plm_types.h"

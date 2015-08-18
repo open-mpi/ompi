@@ -23,7 +23,7 @@ dnl
 
 # OMPI_CHECK_PLFS(prefix, [action-if-found], [action-if-not-found])
 # --------------------------------------------------------
-# check if PLFS support can be found.  sets prefix_{CPPFLAGS, 
+# check if PLFS support can be found.  sets prefix_{CPPFLAGS,
 # LDFLAGS, LIBS} as needed and runs action-if-found if there is
 # support, otherwise executes action-if-not-found
 AC_DEFUN([OMPI_CHECK_PLFS],[
@@ -32,7 +32,7 @@ AC_DEFUN([OMPI_CHECK_PLFS],[
     check_plfs_LDFLAGS=
     check_plfs_LIBS=
 
-    check_plfs_save_LIBS="$LIBS" 
+    check_plfs_save_LIBS="$LIBS"
     check_plfs_save_LDFLAGS="$LDFLAGS"
     check_plfs_save_CPPFLAGS="$CPPFLAGS"
 
@@ -46,7 +46,7 @@ AC_DEFUN([OMPI_CHECK_PLFS],[
              [Build Plfs support, optionally adding DIR/include, DIR/lib, and DIR/lib64 to the search path for headers and libraries])])
     OPAL_CHECK_WITHDIR([plfs], [$with_plfs], [include/plfs.h])
 
-    AC_ARG_WITH([plfs-libs], 
+    AC_ARG_WITH([plfs-libs],
         [AC_HELP_STRING([--with-plfs-libs=LIBS],
                        [Libraries to link with for plfs])])
 
@@ -57,29 +57,29 @@ AC_DEFUN([OMPI_CHECK_PLFS],[
     temp_with_plfs_libs="$with_plfs_libs"
     AS_IF([test -z "$with_plfs_libs"],
 	[with_plfs_libs="plfs pthread"])
-    
+
     # Add correct -I and -L flags
     AS_IF([test -d "$with_plfs/include"],
         [check_plfs_CPPFLAGS="-I$with_plfs/include"
             $1_CPPFLAGS="$check_plfs_CPPFLAGS"
             CPPFLAGS="$CPPFLAGS $check_plfs_CPPFLAGS"],
 	[ompi_check_plfs_happy="no"])
-    
+
     AS_IF([test "$ompi_check_plfs_happy" = "yes"],
 	[AS_IF([test -d "$with_plfs/lib"],
 		[check_plfs_LDFLAGS="-L$with_plfs/lib"
 		    $1_LDFLAGS="$check_plfs_LDFLAGS"
 		    LDFLAGS="$LDFLAGS $check_plfs_LDFLAGS"],
-		[ompi_check_plfs_happy="no"]) 
+		[ompi_check_plfs_happy="no"])
     ],[])
-	    
+
     # Try to find all the plfs libraries
     AS_IF([test "$ompi_check_plfs_happy" = "yes"],
 	[ AS_IF([test -n "$with_plfs_libs"]
 		[for lib in $with_plfs_libs ; do
 		    check_plfs_LIBS="$check_plfs_LIBS -l$lib"
-		    done]) 
-		
+		    done])
+
 	    $1_LIBS="$check_plfs_LIBS"
 	    LIBS="$LIBS $check_plfs_LIBS"
 

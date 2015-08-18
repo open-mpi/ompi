@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -15,9 +15,9 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -25,9 +25,7 @@
 #include "orte_config.h"
 #include "orte/constants.h"
 
-#ifdef HAVE_STRING_H
 #include <string.h>
-#endif
 #include <stdio.h>
 
 #include "orte/mca/mca.h"
@@ -162,7 +160,7 @@ static void orte_iof_base_write_event_destruct(orte_iof_write_event_t* wev)
             return;
         }
     }
-    
+
     if (2 < wev->fd) {
         OPAL_OUTPUT_VERBOSE((20, orte_iof_base_framework.framework_output,
                              "%s iof: closing fd %d for write event",
@@ -275,7 +273,7 @@ static int orte_iof_base_open(mca_base_open_flag_t flags)
             ORTE_IOF_SINK_DEFINE(&orte_iof_base.iof_write_stderr, ORTE_PROC_MY_NAME,
                                  2, ORTE_IOF_STDERR, orte_iof_base_write_handler, NULL);
         }
-        
+
         /* do NOT set these file descriptors to non-blocking. If we do so,
          * we set the file descriptor to non-blocking for everyone that has
          * that file descriptor, which includes everyone else in our shell
@@ -284,8 +282,8 @@ static int orte_iof_base_open(mca_base_open_flag_t flags)
          * This causes things like "mpirun -np 1 big_app | cat" to lose
          * output, because cat's stdout is then ALSO non-blocking and cat
          * isn't built to deal with that case (same with almost all other
-         * unix text utils). 
-         */        
+         * unix text utils).
+         */
     }
 
     /* Open up all available components */

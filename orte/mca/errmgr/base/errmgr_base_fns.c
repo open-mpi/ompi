@@ -5,11 +5,11 @@
  * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved. 
+ * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010-2011 Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
@@ -17,9 +17,9 @@
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -27,9 +27,7 @@
 #include "orte_config.h"
 #include "orte/constants.h"
 
-#ifdef HAVE_STRING_H
 #include <string.h>
-#endif
 #if HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif  /* HAVE_SYS_TYPES_H */
@@ -190,7 +188,7 @@ void orte_errmgr_base_log(int error_code, char *filename, int line)
         /* if the error is silent, say nothing */
         return;
     }
-    
+
     opal_output(0, "%s ORTE_ERROR_LOG: %s in file %s at line %d",
                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                 errstring, filename, line);
@@ -199,7 +197,7 @@ void orte_errmgr_base_log(int error_code, char *filename, int line)
 void orte_errmgr_base_abort(int error_code, char *fmt, ...)
 {
     va_list arglist;
-    
+
     /* If there was a message, output it */
     va_start(arglist, fmt);
     if( NULL != fmt ) {
@@ -209,7 +207,7 @@ void orte_errmgr_base_abort(int error_code, char *fmt, ...)
         free( buffer );
     }
     va_end(arglist);
-    
+
     /* if I am a daemon or the HNP... */
     if (ORTE_PROC_IS_HNP || ORTE_PROC_IS_DAEMON) {
         /* whack my local procs */
@@ -553,7 +551,7 @@ int orte_errmgr_base_update_app_context_for_cr_recovery(orte_job_t *jobdata,
                  global_snapshot_seq);
         orte_set_attribute(&new_app_context->attributes, ORTE_APP_SSTORE_LOAD, ORTE_ATTR_LOCAL, sload, OPAL_STRING);
         free(sload);
-        
+
         /* Add it to the job_t data structure */
         /*current_global_jobdata->num_apps++; */
         new_app_context->idx = (jobdata->num_apps);

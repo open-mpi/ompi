@@ -15,7 +15,7 @@
  * $HEADER$
  */
 
-/** 
+/**
  * @file
  *
  * Routing table for the RML
@@ -121,7 +121,7 @@ typedef int (*orte_routed_module_delete_route_fn_t)(orte_process_name_t *proc);
  * cellid entries, but before any wildcard cellid and jobid entries.
  *
  * @retval ORTE_SUCCESS Success
- * @retval ORTE_ERR_NOT_SUPPORTED The updated is not supported.  This 
+ * @retval ORTE_ERR_NOT_SUPPORTED The updated is not supported.  This
  *                      is likely due to using partially-specified
  *                      names with a component that does not support
  *                      such functionality

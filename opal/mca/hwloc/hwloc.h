@@ -6,7 +6,7 @@
  *                         reserved.
  *
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
  */
 
@@ -21,12 +21,8 @@
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
 #endif
-#ifdef HAVE_STDINT_H
 #include <stdint.h>
-#endif
-#ifdef HAVE_STDARG_H
 #include <stdarg.h>
-#endif
 
 #include "opal/class/opal_list.h"
 #include "opal/class/opal_value_array.h"

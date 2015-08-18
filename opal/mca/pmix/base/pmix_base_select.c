@@ -1,9 +1,9 @@
 /*
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -50,6 +50,6 @@ int opal_pmix_base_select(void)
             exit_status = ret;
         }
     }
-    
+
     return exit_status;
 }

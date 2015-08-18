@@ -5,14 +5,14 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 /*
@@ -107,6 +107,56 @@ JNIEXPORT jint JNICALL Java_mpi_Status_getElements(
     int rc = MPI_Get_elements(&stat, datatype, &count);
     ompi_java_exceptionCheck(env, rc);
     return count;
+}
+
+JNIEXPORT jobject JNICALL Java_mpi_Status_getElementsX(
+        JNIEnv *env, jobject jthis, jint source, jint tag,
+        jint error, jint cancelled, jlong ucount, jlong jType)
+{
+    MPI_Count count;
+    MPI_Status stat;
+    getStatus(&stat, source, tag, error, cancelled, ucount);
+    MPI_Datatype datatype = (MPI_Datatype)jType;
+    int rc = MPI_Get_elements_x(&stat, datatype, &count);
+    ompi_java_exceptionCheck(env, rc);
+
+	return (*env)->NewObject(env, ompi_java.CountClass,
+				ompi_java.CountInit, (jlong)count);
+}
+
+JNIEXPORT jint JNICALL Java_mpi_Status_setElements(
+        JNIEnv *env, jobject jthis, jint source, jint tag,
+        jint error, jint cancelled, jlong ucount, jlong jType, int count)
+{
+    MPI_Status stat;
+    getStatus(&stat, source, tag, error, cancelled, ucount);
+    MPI_Datatype datatype = (MPI_Datatype)jType;
+    int rc = MPI_Status_set_elements(&stat, datatype, count);
+    ompi_java_exceptionCheck(env, rc);
+    return stat._ucount;
+}
+
+JNIEXPORT jlong JNICALL Java_mpi_Status_setElementsX(
+        JNIEnv *env, jobject jthis, jint source, jint tag,
+        jint error, jint cancelled, jlong ucount, jlong jType, jlong jcount)
+{
+    MPI_Status stat;
+    MPI_Count count = (long)jcount;
+    getStatus(&stat, source, tag, error, cancelled, ucount);
+    MPI_Datatype datatype = (MPI_Datatype)jType;
+    int rc = MPI_Status_set_elements_x(&stat, datatype, count);
+    ompi_java_exceptionCheck(env, rc);
+    return (jlong)stat._ucount;
+}
+
+JNIEXPORT void JNICALL Java_mpi_Status_setCancelled(
+        JNIEnv *env, jobject jthis, jint source, jint tag,
+        jint error, jint cancelled, jlong ucount, int flag)
+{
+    MPI_Status stat;
+    getStatus(&stat, source, tag, error, cancelled, ucount);
+    int rc = MPI_Status_set_cancelled(&stat, flag);
+    ompi_java_exceptionCheck(env, rc);
 }
 
 jobject ompi_java_status_new(JNIEnv *env, MPI_Status *status)

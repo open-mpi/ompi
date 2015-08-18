@@ -421,7 +421,7 @@ static int iboffload_open(void)
 
     /* Check MCA parameters */
     if (0 != (mca_bcol_iboffload_component.exchange_tree_order & (mca_bcol_iboffload_component.exchange_tree_order - 1))) {
-        IBOFFLOAD_ERROR(("Warning: ibcol_iboffload_exchange_tree_order is %d which is not a power of 2, setting it to 2", 
+        IBOFFLOAD_ERROR(("Warning: ibcol_iboffload_exchange_tree_order is %d which is not a power of 2, setting it to 2",
                          mca_bcol_iboffload_component.exchange_tree_order));
         mca_bcol_iboffload_component.exchange_tree_order = 2;
     }

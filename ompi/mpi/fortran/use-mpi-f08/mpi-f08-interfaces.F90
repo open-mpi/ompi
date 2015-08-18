@@ -1,7 +1,7 @@
 ! -*- f90 -*-
 !
-! Copyright (c) 2009-2014 Cisco Systems, Inc.  All rights reserved.
-! Copyright (c) 2009-2013 Los Alamos National Security, LLC.
+! Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
+! Copyright (c) 2009-2015 Los Alamos National Security, LLC.
 !                         All rights reserved.
 ! Copyright (c) 2012      The University of Tennessee and The University
 !                         of Tennessee Research Foundation.  All rights
@@ -71,13 +71,9 @@ end interface  MPI_Buffer_attach
 
 interface  MPI_Buffer_detach
 subroutine MPI_Buffer_detach_f08(buffer_addr,size,ierror)
+   USE, INTRINSIC ::  ISO_C_BINDING, ONLY : C_PTR
    implicit none
-   !DEC$ ATTRIBUTES NO_ARG_CHECK :: buffer_addr
-   !GCC$ ATTRIBUTES NO_ARG_CHECK :: buffer_addr
-   !$PRAGMA IGNORE_TKR buffer_addr
-   !DIR$ IGNORE_TKR buffer_addr
-   !IBM* IGNORE_TKR buffer_addr
-   OMPI_FORTRAN_IGNORE_TKR_TYPE :: buffer_addr
+   TYPE(C_PTR), INTENT(OUT) ::  buffer_addr
    INTEGER, INTENT(OUT) :: size
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 end subroutine MPI_Buffer_detach_f08
@@ -2482,6 +2478,26 @@ function  MPI_Wtime_f08( ) BIND(C,name="MPI_Wtime")
 end function MPI_Wtime_f08
 end interface MPI_Wtime
 
+interface MPI_Aint_add
+function  MPI_Aint_add_f08(base,diff)
+   use :: mpi_f08_types, only : MPI_ADDRESS_KIND
+   implicit none
+   INTEGER(MPI_ADDRESS_KIND) :: base
+   INTEGER(MPI_ADDRESS_KIND) :: diff
+   INTEGER(MPI_ADDRESS_KIND) :: MPI_Aint_add_f08
+end function MPI_Aint_add_f08
+end interface MPI_Aint_add
+
+interface MPI_Aint_diff
+function  MPI_Aint_diff_f08(addr1,addr2)
+   use :: mpi_f08_types, only : MPI_ADDRESS_KIND
+   implicit none
+   INTEGER(MPI_ADDRESS_KIND) :: addr1
+   INTEGER(MPI_ADDRESS_KIND) :: addr2
+   INTEGER(MPI_ADDRESS_KIND) :: MPI_Aint_diff_f08
+end function MPI_Aint_diff_f08
+end interface MPI_Aint_diff
+
 interface  MPI_Abort
 subroutine MPI_Abort_f08(comm,errorcode,ierror)
    use :: mpi_f08_types, only : MPI_Comm
@@ -2666,15 +2682,13 @@ end interface  MPI_Finalized
 ! be okay once the Interop TR is implemented.
 interface  MPI_Free_mem
 subroutine MPI_Free_mem_f08(base,ierror)
-   use :: mpi_f08_types, only : MPI_ADDRESS_KIND
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: base
    !GCC$ ATTRIBUTES NO_ARG_CHECK :: base
    !$PRAGMA IGNORE_TKR base
    !DIR$ IGNORE_TKR base
    !IBM* IGNORE_TKR base
-!   INTEGER(MPI_ADDRESS_KIND), DIMENSION(*) OMPI_ASYNCHRONOUS :: base
-   INTEGER(MPI_ADDRESS_KIND), DIMENSION(*) :: base
+   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: base
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 end subroutine MPI_Free_mem_f08
 end interface  MPI_Free_mem
@@ -3419,14 +3433,14 @@ subroutine MPI_Win_flush_local_f08(rank,win,ierror)
 end subroutine MPI_Win_flush_local_f08
 end interface  MPI_Win_flush_local
 
-interface  MPI_Win_flush_all_local
-subroutine MPI_Win_flush_all_local_f08(win,ierror)
+interface  MPI_Win_flush_local_all
+subroutine MPI_Win_flush_local_all_f08(win,ierror)
    use :: mpi_f08_types, only : MPI_Win
    implicit none
    TYPE(MPI_Win), INTENT(IN) :: win
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
-end subroutine MPI_Win_flush_all_local_f08
-end interface  MPI_Win_flush_all_local
+end subroutine MPI_Win_flush_local_all_f08
+end interface  MPI_Win_flush_local_all
 
 interface  MPI_Win_flush_all
 subroutine MPI_Win_flush_all_f08(win,ierror)
@@ -3683,6 +3697,43 @@ subroutine MPI_File_iread_at_f08(fh,offset,buf,count,datatype,request,ierror)
 end subroutine MPI_File_iread_at_f08
 end interface  MPI_File_iread_at
 
+interface  MPI_File_iread_all
+subroutine MPI_File_iread_all_f08(fh,buf,count,datatype,request,ierror)
+   use :: mpi_f08_types, only : MPI_File, MPI_Datatype, MPI_Request
+   implicit none
+   TYPE(MPI_File), INTENT(IN) :: fh
+   !DEC$ ATTRIBUTES NO_ARG_CHECK :: buf
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: buf
+   !$PRAGMA IGNORE_TKR buf
+   !DIR$ IGNORE_TKR buf
+   !IBM* IGNORE_TKR buf
+   OMPI_FORTRAN_IGNORE_TKR_TYPE :: buf
+   INTEGER, INTENT(IN) :: count
+   TYPE(MPI_Datatype), INTENT(IN) :: datatype
+   TYPE(MPI_Request), INTENT(OUT) :: request
+   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+end subroutine MPI_File_iread_all_f08
+end interface  MPI_File_iread_all
+
+interface  MPI_File_iread_at_all
+subroutine MPI_File_iread_at_all_f08(fh,offset,buf,count,datatype,request,ierror)
+   use :: mpi_f08_types, only : MPI_File, MPI_Datatype, MPI_Request, MPI_OFFSET_KIND
+   implicit none
+   TYPE(MPI_File), INTENT(IN) :: fh
+   INTEGER(MPI_OFFSET_KIND), INTENT(IN) :: offset
+   !DEC$ ATTRIBUTES NO_ARG_CHECK :: buf
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: buf
+   !$PRAGMA IGNORE_TKR buf
+   !DIR$ IGNORE_TKR buf
+   !IBM* IGNORE_TKR buf
+   OMPI_FORTRAN_IGNORE_TKR_TYPE :: buf
+   INTEGER, INTENT(IN) :: count
+   TYPE(MPI_Datatype), INTENT(IN) :: datatype
+   TYPE(MPI_Request), INTENT(OUT) :: request
+   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+end subroutine MPI_File_iread_at_all_f08
+end interface  MPI_File_iread_at_all
+
 interface  MPI_File_iread_shared
 subroutine MPI_File_iread_shared_f08(fh,buf,count,datatype,request,ierror)
    use :: mpi_f08_types, only : MPI_File, MPI_Datatype, MPI_Request
@@ -3737,6 +3788,43 @@ subroutine MPI_File_iwrite_at_f08(fh,offset,buf,count,datatype,request,ierror)
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 end subroutine MPI_File_iwrite_at_f08
 end interface  MPI_File_iwrite_at
+
+interface  MPI_File_iwrite_all
+subroutine MPI_File_iwrite_all_f08(fh,buf,count,datatype,request,ierror)
+   use :: mpi_f08_types, only : MPI_File, MPI_Datatype, MPI_Request
+   implicit none
+   TYPE(MPI_File), INTENT(IN) :: fh
+   !DEC$ ATTRIBUTES NO_ARG_CHECK :: buf
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: buf
+   !$PRAGMA IGNORE_TKR buf
+   !DIR$ IGNORE_TKR buf
+   !IBM* IGNORE_TKR buf
+   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: buf
+   INTEGER, INTENT(IN) :: count
+   TYPE(MPI_Datatype), INTENT(IN) :: datatype
+   TYPE(MPI_Request), INTENT(OUT) :: request
+   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+end subroutine MPI_File_iwrite_all_f08
+end interface  MPI_File_iwrite_all
+
+interface  MPI_File_iwrite_at_all
+subroutine MPI_File_iwrite_at_all_f08(fh,offset,buf,count,datatype,request,ierror)
+   use :: mpi_f08_types, only : MPI_File, MPI_Datatype, MPI_Request, MPI_OFFSET_KIND
+   implicit none
+   TYPE(MPI_File), INTENT(IN) :: fh
+   INTEGER(MPI_OFFSET_KIND), INTENT(IN) :: offset
+   !DEC$ ATTRIBUTES NO_ARG_CHECK :: buf
+   !GCC$ ATTRIBUTES NO_ARG_CHECK :: buf
+   !$PRAGMA IGNORE_TKR buf
+   !DIR$ IGNORE_TKR buf
+   !IBM* IGNORE_TKR buf
+   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: buf
+   INTEGER, INTENT(IN) :: count
+   TYPE(MPI_Datatype), INTENT(IN) :: datatype
+   TYPE(MPI_Request), INTENT(OUT) :: request
+   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+end subroutine MPI_File_iwrite_at_all_f08
+end interface  MPI_File_iwrite_at_all
 
 interface  MPI_File_iwrite_shared
 subroutine MPI_File_iwrite_shared_f08(fh,buf,count,datatype,request,ierror)

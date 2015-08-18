@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2006      The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -6,6 +7,8 @@
  *                         rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  *
  * Author(s): Torsten Hoefler <htor@cs.indiana.edu>
  *
@@ -16,7 +19,7 @@
 int ompi_comm_neighbors_count(MPI_Comm comm, int *indegree, int *outdegree, int *weighted) {
     int res;
 
-    if (OMPI_COMM_IS_CART(comm)) { 
+    if (OMPI_COMM_IS_CART(comm)) {
         int ndims;
         res = MPI_Cartdim_get(comm, &ndims)  ;
         if (MPI_SUCCESS != res) {
@@ -27,7 +30,7 @@ int ompi_comm_neighbors_count(MPI_Comm comm, int *indegree, int *outdegree, int 
         *weighted = 0;
     } else if (OMPI_COMM_IS_GRAPH(comm)) {
         int rank, nneighbors;
-        MPI_Comm_rank(comm, &rank);
+        rank = ompi_comm_rank ((ompi_communicator_t *) comm);
         res = MPI_Graph_neighbors_count(comm, rank, &nneighbors);
         if (MPI_SUCCESS != res) {
             return res;
@@ -54,7 +57,7 @@ int ompi_comm_neighbors(MPI_Comm comm, int maxindegree, int sources[], int sourc
     }
     if(indeg > maxindegree && outdeg > maxoutdegree) return MPI_ERR_TRUNCATE; /* we want to return *all* neighbors */
 
-    if (OMPI_COMM_IS_CART(comm)) { 
+    if (OMPI_COMM_IS_CART(comm)) {
         int ndims, i, rpeer, speer;
         res = MPI_Cartdim_get(comm, &ndims);
         if (MPI_SUCCESS != res) {
@@ -70,8 +73,7 @@ int ompi_comm_neighbors(MPI_Comm comm, int maxindegree, int sources[], int sourc
           sources[index] = destinations[index] = speer; index++;
         }
     } else if (OMPI_COMM_IS_GRAPH(comm)) {
-        int rank;
-        MPI_Comm_rank(comm, &rank);
+        int rank = ompi_comm_rank ((ompi_communicator_t *) comm);
         res = MPI_Graph_neighbors(comm, rank, maxindegree, sources);
         if (MPI_SUCCESS != res) {
             return res;

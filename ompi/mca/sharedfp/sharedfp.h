@@ -70,7 +70,7 @@ struct ompi_file_t;
  * **************** component struct *******************************
  */
 
-typedef int (*mca_sharedfp_base_component_init_query_1_0_0_fn_t) 
+typedef int (*mca_sharedfp_base_component_init_query_1_0_0_fn_t)
 (bool enable_progress_threads,
  bool enable_mpi_threads);
 

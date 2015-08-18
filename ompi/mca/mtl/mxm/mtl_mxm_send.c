@@ -16,7 +16,7 @@
 #include "mtl_mxm_request.h"
 #include "ompi/mca/mtl/base/mtl_base_datatype.h"
 
-static inline  __opal_attribute_always_inline__ 
+static inline  __opal_attribute_always_inline__
               size_t ompi_mtl_mxm_stream_pack(opal_convertor_t *convertor, void *buffer,
                                               size_t length, size_t offset)
 {
@@ -58,7 +58,7 @@ static inline __opal_attribute_always_inline__ int
     size_t *buffer_len = &mxm_send_req->base.data.buffer.length;
 
 #if !(OPAL_ENABLE_HETEROGENEOUS_SUPPORT)
-    if (convertor->pDesc && 
+    if (convertor->pDesc &&
 	opal_datatype_is_contiguous_memory_layout(convertor->pDesc,
 						  convertor->count)) {
 	    mxm_send_req->base.data.buffer.ptr = convertor->pBaseBuf;
@@ -211,7 +211,7 @@ int ompi_mtl_mxm_isend(struct mca_mtl_base_module_t* mtl,
     mxm_send_req->opcode                   = MXM_REQ_OP_SEND;
     if (mode == MCA_PML_BASE_SEND_SYNCHRONOUS) {
         mxm_send_req->base.flags           |= MXM_REQ_FLAG_SEND_SYNC;
-    } 
+    }
 #else
 #if defined(MXM_REQ_SEND_FLAG_REENTRANT)
     mxm_send_req->flags                    = MXM_REQ_SEND_FLAG_REENTRANT;

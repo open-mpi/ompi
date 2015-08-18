@@ -2,9 +2,9 @@
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -24,8 +24,8 @@ static char *local_lock_sync;
 static int *local_lock_turn;
 
 enum {
-    ATOMIC_LOCK_IDLE = 0, 
-    ATOMIC_LOCK_WAITING = 1, 
+    ATOMIC_LOCK_IDLE = 0,
+    ATOMIC_LOCK_WAITING = 1,
     ATOMIC_LOCK_ACTIVE = 2
 };
 

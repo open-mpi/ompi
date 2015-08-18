@@ -25,9 +25,7 @@
 #include <sys/param.h>
 #endif
 #include <errno.h>
-#ifdef HAVE_SIGNAL_H
 #include <signal.h>
-#endif
 
 #include "opal/version.h"
 #include "opal/mca/installdirs/installdirs.h"

@@ -34,9 +34,7 @@
 #include "ompi_config.h"
 
 #include <stdio.h>
-#ifdef HAVE_STRING_H
 #include <string.h>
-#endif
 #ifdef HAVE_SCHED_H
 #include <sched.h>
 #endif

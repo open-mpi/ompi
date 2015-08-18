@@ -5,13 +5,13 @@
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 /**
- *  @file 
+ *  @file
  */
 
 #ifndef MCA_SPML_UD_MXM_H
@@ -26,7 +26,7 @@
 #include "oshmem/mca/spml/base/spml_base_request.h"
 #include "oshmem/mca/spml/base/spml_base_getreq.h"
 
-#include "ompi/mca/bml/base/base.h" 
+#include "ompi/mca/bml/base/base.h"
 #include "opal/class/opal_free_list.h"
 #include "opal/class/opal_list.h"
 
@@ -95,8 +95,8 @@ struct mca_spml_ikrit_t {
     int n_relays; /* number of procs/node serving as relays */
 
     char *mxm_tls;
-    int   ud_only;  /* only ud transport is used. In this case 
-                       it is possible to speedup mkey exchange 
+    int   ud_only;  /* only ud transport is used. In this case
+                       it is possible to speedup mkey exchange
                        and not to register memheap */
     int hw_rdma_channel;  /* true if we provide separate channel that
                        has true one sided capability */

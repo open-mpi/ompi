@@ -155,7 +155,7 @@ static int smtp_close(void)
     return ORTE_SUCCESS;
 }
 
-static int smtp_component_query(mca_base_module_t **module, 
+static int smtp_component_query(mca_base_module_t **module,
                                 int *priority)
 {
     *priority = 0;
@@ -166,7 +166,7 @@ static int smtp_component_query(mca_base_module_t **module,
         '\0' == mca_notifier_smtp_component.to[0] ||
         NULL == mca_notifier_smtp_component.from_addr ||
         '\0' == mca_notifier_smtp_component.from_addr[0]) {
-        orte_show_help("help-orte-notifier-smtp.txt", 
+        orte_show_help("help-orte-notifier-smtp.txt",
                        "to/from not specified", true);
         return ORTE_ERR_NOT_FOUND;
     }
@@ -174,7 +174,7 @@ static int smtp_component_query(mca_base_module_t **module,
     /* Sanity checks */
     if (NULL == mca_notifier_smtp_component.server ||
         '\0' == mca_notifier_smtp_component.server[0]) {
-        orte_show_help("help-orte-notifier-smtp.txt", 
+        orte_show_help("help-orte-notifier-smtp.txt",
                        "server not specified", true);
         return ORTE_ERR_NOT_FOUND;
     }
@@ -185,7 +185,7 @@ static int smtp_component_query(mca_base_module_t **module,
     mca_notifier_smtp_component.server_hostent =
         gethostbyname(mca_notifier_smtp_component.server);
     if (NULL == mca_notifier_smtp_component.server_hostent) {
-        orte_show_help("help-orte-notifier-smtp.txt", 
+        orte_show_help("help-orte-notifier-smtp.txt",
                        "unable to resolve server",
                        true, mca_notifier_smtp_component.server);
         return ORTE_ERR_NOT_FOUND;
@@ -193,5 +193,5 @@ static int smtp_component_query(mca_base_module_t **module,
 
     *priority = 10;
     *module = (mca_base_module_t *)&orte_notifier_smtp_module;
-    return ORTE_SUCCESS;    
+    return ORTE_SUCCESS;
 }

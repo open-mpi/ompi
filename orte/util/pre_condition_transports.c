@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -13,17 +13,15 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
 #include "orte_config.h"
 
-#ifdef HAVE_STRING_H
 #include <string.h>
-#endif
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
@@ -36,9 +34,7 @@
 #ifdef HAVE_FCNTL_H
 #include <fcntl.h>
 #endif
-#ifdef HAVE_TIME_H
 #include <time.h>
-#endif
 
 #include "opal/mca/base/mca_base_var.h"
 #include "opal/util/alfg.h"
@@ -58,7 +54,7 @@
  * into the environment of every MPI process when launched.
  */
 
-static inline void orte_pre_condition_transports_use_rand(uint64_t* unique_key) { 
+static inline void orte_pre_condition_transports_use_rand(uint64_t* unique_key) {
     opal_rng_buff_t rng;
     opal_srand(&rng,(unsigned int)time(NULL));
     unique_key[0] = opal_rand(&rng);
@@ -96,7 +92,7 @@ char* orte_pre_condition_transports_print(uint64_t *unique_key)
     /* print the first number */
     int_ptr = (unsigned int*) &unique_key[0];
     for (i = 0 ; i < sizeof(uint64_t) / sizeof(unsigned int) ; ++i) {
-        snprintf(string_key + written_len, 
+        snprintf(string_key + written_len,
                  string_key_len - written_len,
                  format, int_ptr[i]);
         written_len = strlen(string_key);
@@ -109,7 +105,7 @@ char* orte_pre_condition_transports_print(uint64_t *unique_key)
     /* print the second number */
     int_ptr = (unsigned int*) &unique_key[1];
     for (i = 0 ; i < sizeof(uint64_t) / sizeof(unsigned int) ; ++i) {
-        snprintf(string_key + written_len, 
+        snprintf(string_key + written_len,
                  string_key_len - written_len,
                  format, int_ptr[i]);
         written_len = strlen(string_key);
@@ -127,23 +123,23 @@ int orte_pre_condition_transports(orte_job_t *jdata)
     orte_app_context_t *app;
     char *string_key, *cs_env;
     int fd_rand;
-    size_t bytes_read; 
+    size_t bytes_read;
     struct stat buf;
 
     /* put the number here - or else create an appropriate string. this just needs to
      * eventually be a string variable
      */
-    if(0 != stat("/dev/urandom", &buf)) { 
+    if(0 != stat("/dev/urandom", &buf)) {
         /* file doesn't exist! */
-        orte_pre_condition_transports_use_rand(unique_key); 
+        orte_pre_condition_transports_use_rand(unique_key);
     }
-        
+
     if(-1 == (fd_rand = open("/dev/urandom", O_RDONLY))) {
-        orte_pre_condition_transports_use_rand(unique_key); 
-    } else { 
+        orte_pre_condition_transports_use_rand(unique_key);
+    } else {
         bytes_read = read(fd_rand, (char *) unique_key, 16);
         if(bytes_read != 16) {
-            orte_pre_condition_transports_use_rand(unique_key); 
+            orte_pre_condition_transports_use_rand(unique_key);
         }
         close(fd_rand);
     }
@@ -158,7 +154,7 @@ int orte_pre_condition_transports(orte_job_t *jdata)
         free(string_key);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
-    
+
     for (n=0; n < jdata->apps->size; n++) {
         if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, n))) {
             continue;

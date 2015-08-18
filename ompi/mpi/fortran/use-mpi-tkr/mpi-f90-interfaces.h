@@ -78,6 +78,27 @@ end subroutine MPI_Add_error_string
 
 end interface
 
+interface MPI_Aint_add
+
+function MPI_Aint_add(base, diff)
+  include 'mpif-config.h'
+  integer(kind=MPI_ADDRESS_KIND), intent(in) :: base
+  integer(kind=MPI_ADDRESS_KIND), intent(in) :: diff
+  integer(kind=MPI_ADDRESS_KIND) MPI_Aint_add
+end function MPI_Aint_add
+
+end interface
+
+interface MPI_Aint_diff
+
+function MPI_Aint_diff(addr1, addr2)
+  include 'mpif-config.h'
+  integer(kind=MPI_ADDRESS_KIND), intent(in) :: addr1
+  integer(kind=MPI_ADDRESS_KIND), intent(in) :: addr2
+  integer(kind=MPI_ADDRESS_KIND) MPI_Aint_diff
+end function MPI_Aint_diff
+
+end interface
 
 interface MPI_Attr_delete
 

@@ -4,9 +4,9 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -37,7 +37,7 @@
 #define MEMHEAP_RKEY_RESP_FAIL      0xA3
 
 #define MEMHEAP_MKEY_MAXSIZE   4096
-#define MEMHEAP_RECV_REQS_MAX  16 
+#define MEMHEAP_RECV_REQS_MAX  16
 
 typedef struct oob_comm_request {
     opal_list_item_t super;
@@ -330,7 +330,7 @@ static void do_recv(int source_pe, opal_buffer_t* buffer)
 }
 
 /**
- * simple/fast version of MPI_Test that 
+ * simple/fast version of MPI_Test that
  * - only works with persistant request
  * - does not do any progress
  * - can be safely called from within opal_progress()
@@ -428,7 +428,7 @@ static int oshmem_mkey_recv_cb(void)
         assert(r);
     }
 
-    return 1;  
+    return 1;
 }
 
 int memheap_oob_init(mca_memheap_map_t *map)
@@ -444,11 +444,11 @@ int memheap_oob_init(mca_memheap_map_t *map)
     OBJ_CONSTRUCT(&memheap_oob.req_list, opal_list_t);
 
 
-    for (i = 0; i < MEMHEAP_RECV_REQS_MAX; i++) { 
+    for (i = 0; i < MEMHEAP_RECV_REQS_MAX; i++) {
         r = &memheap_oob.req_pool[i];
         rc = MPI_Recv_init(r->buf, sizeof(r->buf), MPI_BYTE,
-                MPI_ANY_SOURCE, 0, 
-                oshmem_comm_world,  
+                MPI_ANY_SOURCE, 0,
+                oshmem_comm_world,
                 &r->recv_req);
         if (MPI_SUCCESS != rc) {
             MEMHEAP_ERROR("Failed to created recv request %d", rc);
@@ -475,7 +475,7 @@ void memheap_oob_destruct(void)
 
     opal_progress_unregister(oshmem_mkey_recv_cb);
 
-    for (i = 0; i < MEMHEAP_RECV_REQS_MAX; i++) { 
+    for (i = 0; i < MEMHEAP_RECV_REQS_MAX; i++) {
         r = &memheap_oob.req_pool[i];
         MPI_Cancel(&r->recv_req);
         MPI_Request_free(&r->recv_req);
@@ -722,7 +722,7 @@ static inline void* va2rva(void* va,
                               void* local_base,
                               void* remote_base)
 {
-    return (void*) (remote_base > local_base ? 
+    return (void*) (remote_base > local_base ?
         (uintptr_t)va + ((uintptr_t)remote_base - (uintptr_t)local_base) :
         (uintptr_t)va - ((uintptr_t)local_base - (uintptr_t)remote_base));
 }

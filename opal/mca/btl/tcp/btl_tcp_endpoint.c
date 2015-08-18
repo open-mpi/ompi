@@ -48,9 +48,7 @@
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
 #endif  /* HAVE_SYS_TIME_H */
-#ifdef HAVE_TIME_H
 #include <time.h>
-#endif  /* HAVE_TIME_H */
 
 #include "opal/mca/event/event.h"
 #include "opal/util/net.h"
@@ -311,7 +309,7 @@ static inline void mca_btl_tcp_endpoint_event_init(mca_btl_base_endpoint_t* btl_
     btl_endpoint->endpoint_cache_pos = btl_endpoint->endpoint_cache;
 #endif  /* MCA_BTL_TCP_ENDPOINT_CACHE */
 
-    opal_event_set(opal_event_base, &btl_endpoint->endpoint_recv_event,
+    opal_event_set(opal_sync_event_base, &btl_endpoint->endpoint_recv_event,
                     btl_endpoint->endpoint_sd,
                     OPAL_EV_READ|OPAL_EV_PERSIST,
                     mca_btl_tcp_endpoint_recv_handler,
@@ -322,7 +320,7 @@ static inline void mca_btl_tcp_endpoint_event_init(mca_btl_base_endpoint_t* btl_
      * will be fired only once, and when the endpoint is marked as
      * CONNECTED the event should be recreated with the correct flags.
      */
-    opal_event_set(opal_event_base, &btl_endpoint->endpoint_send_event,
+    opal_event_set(opal_sync_event_base, &btl_endpoint->endpoint_send_event,
                     btl_endpoint->endpoint_sd,
                     OPAL_EV_WRITE,
                     mca_btl_tcp_endpoint_send_handler,
@@ -511,7 +509,7 @@ void mca_btl_tcp_endpoint_accept(mca_btl_base_endpoint_t* btl_endpoint,
     assert(btl_endpoint->endpoint_sd_next == -1);
     btl_endpoint->endpoint_sd_next = sd;
 
-    opal_event_evtimer_set(opal_event_base, &btl_endpoint->endpoint_accept_event,
+    opal_event_evtimer_set(opal_sync_event_base, &btl_endpoint->endpoint_accept_event,
                            mca_btl_tcp_endpoint_complete_accept, btl_endpoint);
     opal_event_add(&btl_endpoint->endpoint_accept_event, &now);
 }
@@ -572,7 +570,7 @@ static void mca_btl_tcp_endpoint_connected(mca_btl_base_endpoint_t* btl_endpoint
     MCA_BTL_TCP_ENDPOINT_DUMP(1, btl_endpoint, true, "READY [endpoint_connected]");
 
     /* Create the send event in a persistent manner. */
-    opal_event_set(opal_event_base, &btl_endpoint->endpoint_send_event,
+    opal_event_set(opal_sync_event_base, &btl_endpoint->endpoint_send_event,
                     btl_endpoint->endpoint_sd,
                     OPAL_EV_WRITE | OPAL_EV_PERSIST,
                     mca_btl_tcp_endpoint_send_handler,

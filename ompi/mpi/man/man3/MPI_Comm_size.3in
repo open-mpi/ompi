@@ -5,7 +5,7 @@
 .\" $COPYRIGHT$
 .TH MPI_Comm_size 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
-\fBMPI_Comm_size \fP \- Returns the size of the group associated with a communicator.  
+\fBMPI_Comm_size \fP \- Returns the size of the group associated with a communicator.
 
 .SH SYNTAX
 .ft R
@@ -19,7 +19,7 @@ int MPI_Comm_size(MPI_Comm \fIcomm\fP, int *\fIsize\fP)
 .nf
 INCLUDE 'mpif.h'
 MPI_COMM_SIZE(\fICOMM, SIZE, IERROR\fP)
-	INTEGER	\fICOMM, SIZE, IERROR\fP 
+	INTEGER	\fICOMM, SIZE, IERROR\fP
 
 .fi
 .SH C++ Syntax
@@ -42,7 +42,7 @@ Number of processes in the group of comm (integer).
 .ft R
 .TP 1i
 IERROR
-Fortran only: Error status (integer). 
+Fortran only: Error status (integer).
 
 .SH DESCRIPTION
 .ft R
@@ -56,17 +56,17 @@ communication between two groups), this function returns the size of
 the local group.  To return the size of the remote group, use the
 MPI_Comm_remote_size function.
 .sp
-This call is often used with MPI_Comm_rank to determine the amount of concurrency available for a specific library or program. MPI_Comm_rank indicates the rank of the process that calls it in the range from  0 . . . size-1, where size is the return value of MPI_Comm_size. 
+This call is often used with MPI_Comm_rank to determine the amount of concurrency available for a specific library or program. MPI_Comm_rank indicates the rank of the process that calls it in the range from  0 . . . size-1, where size is the return value of MPI_Comm_size.
 
 .SH NOTE
 .ft R
-MPI_COMM_NULL is not considered a valid argument to this function. 
+MPI_COMM_NULL is not considered a valid argument to this function.
 
 .SH ERRORS
 Almost all MPI routines return an error value; C routines as the value of the function and Fortran routines in the last argument. C++ functions do not return errors. If the default error handler is set to MPI::ERRORS_THROW_EXCEPTIONS, then on error the C++ exception mechanism will be used to throw an MPI::Exception object.
 .sp
 Before the error value is returned, the current MPI error handler is
-called. By default, this error handler aborts the MPI job, except for I/O function errors. The error handler may be changed with MPI_Comm_set_errhandler; the predefined error handler MPI_ERRORS_RETURN may be used to cause error values to be returned. Note that MPI does not guarantee that an MPI program can continue past an error.  
+called. By default, this error handler aborts the MPI job, except for I/O function errors. The error handler may be changed with MPI_Comm_set_errhandler; the predefined error handler MPI_ERRORS_RETURN may be used to cause error values to be returned. Note that MPI does not guarantee that an MPI program can continue past an error.
 
 .SH SEE ALSO
 .ft R

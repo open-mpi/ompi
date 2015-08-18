@@ -5,14 +5,14 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -39,7 +39,8 @@ ompi_mtl_datatype_pack(struct opal_convertor_t *convertor,
     uint32_t iov_count = 1;
 
 #if !(OPAL_ENABLE_HETEROGENEOUS_SUPPORT)
-    if (convertor->pDesc && 
+    if (convertor->pDesc &&
+	!(convertor->flags & CONVERTOR_COMPLETED) &&
 	opal_datatype_is_contiguous_memory_layout(convertor->pDesc,
 						  convertor->count)) {
 	    *freeAfter = false;
@@ -62,9 +63,9 @@ ompi_mtl_datatype_pack(struct opal_convertor_t *convertor,
         if (NULL == iov.iov_base) return OMPI_ERR_OUT_OF_RESOURCE;
         *freeAfter = true;
     }
-    
+
     opal_convertor_pack( convertor, &iov, &iov_count, buffer_len );
-    
+
     *buffer = iov.iov_base;
 
     return OMPI_SUCCESS;
@@ -88,7 +89,7 @@ ompi_mtl_datatype_recv_buf(struct opal_convertor_t *convertor,
         *buffer = malloc(*buffer_len);
         *free_on_error = true;
     } else {
-        *buffer = convertor->pBaseBuf + 
+        *buffer = convertor->pBaseBuf +
             convertor->use_desc->desc[convertor->use_desc->used].end_loop.first_elem_disp;
     }
     return OMPI_SUCCESS;

@@ -5,15 +5,15 @@
  * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2009 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2009 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -47,7 +47,7 @@
  */
 #define _CRT_RAND_S
 
-/* It is always better to include windows.h with the lean and mean option. 
+/* It is always better to include windows.h with the lean and mean option.
    So, include it with that option and then include some which are required.
    Note: this file is included only on windows */
 
@@ -59,7 +59,7 @@
 #endif  /* VC_EXTRALEAN */
 #include <windows.h>
 
-/* FD_SETSIZE determines how many sockets windows can select() on. If not defined 
+/* FD_SETSIZE determines how many sockets windows can select() on. If not defined
    before including winsock2.h, it is defined to be 64. We are going to go ahead and
    make it 1024 for now. PLEASE CHECK IF THIS IS RIGHT */
 #define FD_SETSIZE 1024
@@ -72,9 +72,7 @@
 #include <signal.h>
 #include <conio.h>
 #include <fcntl.h>
-#ifdef HAVE_STDINT_H
 #include <stdint.h>
-#endif
 
 /**
  * For all file io operations
@@ -138,10 +136,10 @@ typedef unsigned int uint;
 #define unlink                    _unlink
 #define dup2                      _dup2
 #define dup                       _dup
-#define write                     _write 
-#define read                      _read 
-#define fileno                    _fileno 
-#define isatty                    _isatty 
+#define write                     _write
+#define read                      _read
+#define fileno                    _fileno
+#define isatty                    _isatty
 #define execvp                    _execvp
 #define S_ISDIR(STAT_MODE)        ((STAT_MODE) & _S_IFDIR)
 #define S_ISREG(STAT_MODE)        ((STAT_MODE) & _S_IFREG)
@@ -266,7 +264,7 @@ typedef unsigned int uint;
 #define SIGKILL   9
 #define SIGUSR1   10
 /* 11 is used for SIGSEGV on windows */
-#define SIGUSR2   12   
+#define SIGUSR2   12
 #define SIGPIPE   13
 #define SIGALRM   14
 /* 15 is used for SIGTERM on windows */
@@ -287,7 +285,7 @@ typedef unsigned int uint;
 #define SIGWINCH  30
 #define SIGIO     31
 
-/* Note: 
+/* Note:
  *   The two defines below are likely to break the orte_wait
  *   functionality. The proper method of replacing these bits
  *   of functionality is left for further investigated.
@@ -298,8 +296,8 @@ typedef unsigned int uint;
 #define sigset_t int
 #define in_addr_t uint32_t
 
-/* Need to define _Bool here for different version of VS. 
-   The definition in opal_config_bottom.h won't help, 
+/* Need to define _Bool here for different version of VS.
+   The definition in opal_config_bottom.h won't help,
    as long as we have a mixed C and C++ projects in one solution. */
 #if defined(_MSC_VER) && _MSC_VER < 1600
 #define _Bool BOOL

@@ -1,9 +1,9 @@
 /*
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
   * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  *
  */
@@ -11,9 +11,7 @@
 #include "opal_config.h"
 #include "opal/constants.h"
 
-#ifdef HAVE_STRING_H
 #include <string.h>
-#endif
 
 #include "opal_stdint.h"
 #include "opal/dss/dss_types.h"

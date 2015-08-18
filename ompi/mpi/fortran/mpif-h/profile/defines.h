@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2013 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -15,9 +15,9 @@
  * Copyright (c) 2013-2014 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 #ifndef OMPI_F77_PROFILE_DEFINES_H
@@ -29,6 +29,8 @@
 #define ompi_add_error_code_f pompi_add_error_code_f
 #define ompi_add_error_string_f pompi_add_error_string_f
 #define ompi_address_f pompi_address_f
+#define ompi_aint_add_f pompi_aint_add_f
+#define ompi_aint_diff_f pompi_aint_diff_f
 #define ompi_allgather_f pompi_allgather_f
 #define ompi_allgatherv_f pompi_allgatherv_f
 #define ompi_alloc_mem_f pompi_alloc_mem_f
@@ -126,12 +128,16 @@
 #define ompi_file_write_at_f pompi_file_write_at_f
 #define ompi_file_write_at_all_f pompi_file_write_at_all_f
 #define ompi_file_iread_at_f pompi_file_iread_at_f
+#define ompi_file_iwrite_at_all_f pompi_file_iwrite_at_all_f
+#define ompi_file_iread_at_all_f pompi_file_iread_at_all_f
 #define ompi_file_iwrite_at_f pompi_file_iwrite_at_f
 #define ompi_file_read_f pompi_file_read_f
 #define ompi_file_read_all_f pompi_file_read_all_f
 #define ompi_file_write_f pompi_file_write_f
 #define ompi_file_write_all_f pompi_file_write_all_f
 #define ompi_file_iread_f pompi_file_iread_f
+#define ompi_file_iwrite_all_f pompi_file_iwrite_all_f
+#define ompi_file_iread_all_f pompi_file_iread_all_f
 #define ompi_file_iwrite_f pompi_file_iwrite_f
 #define ompi_file_seek_f pompi_file_seek_f
 #define ompi_file_get_position_f pompi_file_get_position_f

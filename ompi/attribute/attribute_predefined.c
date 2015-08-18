@@ -52,7 +52,7 @@
  * MPI_APPNUM is set as the result of a GPR subscription.
  *
  * MPI_LASTUSEDCODE is set to an initial value and is reset every time
- * MPI_ADD_ERROR_CLASS or MPI_ADD_ERROR_CODE is invoked.  
+ * MPI_ADD_ERROR_CLASS or MPI_ADD_ERROR_CODE is invoked.
  * Its copy function is set to
  * MPI_COMM_NULL_COPY_FN, meaning that *only* MPI_COMM_WORLD will have
  * this attribute value.  As such, we only have to update
@@ -81,9 +81,7 @@
 
 #include "ompi_config.h"
 
-#ifdef HAVE_STDLIB_H
 #include <stdlib.h>
-#endif
 
 #include "mpi.h"
 

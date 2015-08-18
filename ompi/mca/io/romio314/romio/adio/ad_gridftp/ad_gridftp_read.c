@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 2003 University of Chicago, Ohio Supercomputer Center. 
+ *   Copyright (C) 2003 University of Chicago, Ohio Supercomputer Center.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -100,7 +100,7 @@ static void readdiscontig_data_cb(void *myargs, globus_ftp_client_handle_t *hand
     return;
 }
 
-void ADIOI_GRIDFTP_ReadContig(ADIO_File fd, void *buf, int count, 
+void ADIOI_GRIDFTP_ReadContig(ADIO_File fd, void *buf, int count,
 			     MPI_Datatype datatype, int file_ptr_type,
 			     ADIO_Offset offset, ADIO_Status *status, int
 			     *error_code)
@@ -156,12 +156,12 @@ void ADIOI_GRIDFTP_ReadContig(ADIO_File fd, void *buf, int count,
     if ( result != GLOBUS_SUCCESS )
 	{
 	    globus_err_handler("globus_ftp_client_register_read",myname,result);
-	    *error_code = MPIO_Err_create_code(MPI_SUCCESS, 
-			    MPIR_ERR_RECOVERABLE, myname, __LINE__, 
-			    MPI_ERR_IO, "**io", "**io %s", 
+	    *error_code = MPIO_Err_create_code(MPI_SUCCESS,
+			    MPIR_ERR_RECOVERABLE, myname, __LINE__,
+			    MPI_ERR_IO, "**io", "**io %s",
 			    globus_object_printable_to_string(globus_error_get(result)));
 	    return;
-	}  
+	}
 
 
     /* The ctl callback won't start till the data callbacks complete, so it's
@@ -227,14 +227,14 @@ void ADIOI_GRIDFTP_ReadDiscontig(ADIO_File fd, void *buf, int count,
     MPI_Type_size_x(datatype,&btype_size);
     MPI_Type_extent(datatype,&btype_extent);
     ADIOI_Datatype_iscontig(datatype,&buf_contig);
-    
+
     if ( ( btype_extent!=btype_size ) || ( ! buf_contig ) )
 	{
 	    FPRINTF(stderr,"[%d/%d] %s called with discontigous memory buffer\n",
 		    myrank,nprocs,myname);
 	    fflush(stderr);
-	    *error_code = MPIO_Err_create_code(MPI_SUCCESS, 
-			    MPIR_ERR_RECOVERABLE, myname, __LINE__, 
+	    *error_code = MPIO_Err_create_code(MPI_SUCCESS,
+			    MPIR_ERR_RECOVERABLE, myname, __LINE__,
 			    MPI_ERR_IO, "**io", 0 );
 	    return;
 	}
@@ -279,8 +279,8 @@ void ADIOI_GRIDFTP_ReadDiscontig(ADIO_File fd, void *buf, int count,
 	    FPRINTF(stderr,"[%d/%d] %s error in computing extent -- extent %d is smaller than total bytes requested %d!\n",
 		    myrank,nprocs,myname,extent,count*btype_size);
 	    fflush(stderr);
-	    *error_code = MPIO_Err_create_code(MPI_SUCCESS, 
-			    MPIR_ERR_RECOVERABLE, myname, __LINE__, 
+	    *error_code = MPIO_Err_create_code(MPI_SUCCESS,
+			    MPIR_ERR_RECOVERABLE, myname, __LINE__,
 			    MPI_ERR_IO, "**io", 0);
 	    return;
 	}
@@ -301,9 +301,9 @@ void ADIOI_GRIDFTP_ReadDiscontig(ADIO_File fd, void *buf, int count,
 					       GLOBUS_NULL))!=GLOBUS_SUCCESS )
 	{
 	    globus_err_handler("globus_ftp_client_partial_get",myname,result);
-	    *error_code = MPIO_Err_create_code(MPI_SUCCESS, 
-			    MPIR_ERR_RECOVERABLE, myname, __LINE__, 
-			    MPI_ERR_IO, "**io", "**io %s", 
+	    *error_code = MPIO_Err_create_code(MPI_SUCCESS,
+			    MPIR_ERR_RECOVERABLE, myname, __LINE__,
+			    MPI_ERR_IO, "**io", "**io %s",
 			    globus_object_printable_to_string(globus_error_get(result)));
 	    return;
 	}
@@ -391,15 +391,15 @@ void ADIOI_GRIDFTP_ReadStrided(ADIO_File fd, void *buf, int count,
     MPI_Comm_size(fd->comm, &nprocs);
     MPI_Comm_rank(fd->comm, &myrank);
 #ifdef PRINT_ERR_MSG
-    FPRINTF(stdout, "[%d/%d] ADIOI_GRIDFTP_ReadStrided called on %s\n", myrank, 
+    FPRINTF(stdout, "[%d/%d] ADIOI_GRIDFTP_ReadStrided called on %s\n", myrank,
 	    nprocs, fd->filename);
-    FPRINTF(stdout, "[%d/%d]    calling ADIOI_GEN_ReadStrided\n", myrank, 
+    FPRINTF(stdout, "[%d/%d]    calling ADIOI_GEN_ReadStrided\n", myrank,
 	    nprocs);
 #endif
 
     ADIOI_GEN_ReadStrided(fd, buf, count, datatype, file_ptr_type, offset,
 			  status, error_code);
-    
+
     */
 
     char myname[]="ADIOI_GRIDFTP_ReadStrided";
@@ -457,7 +457,7 @@ void ADIOI_GRIDFTP_ReadStrided(ADIO_File fd, void *buf, int count,
 
 	    ADIOI_Free(intermediate);
 	}
-    else 
+    else
 	{
 	    /* Why did you bother calling ReadStrided?!?!?! */
 	    ADIOI_GRIDFTP_ReadContig(fd, buf, count, datatype,

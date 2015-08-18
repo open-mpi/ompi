@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007-2012 Los Alamos National Security, LLC.  All rights
- *                         reserved. 
+ *                         reserved.
  * Copyright (c) 2008      Institut National de Recherche en Informatique
  *                         et Automatique. All rights reserved.
  * Copyright (c) 2014      Intel Corporation.  All rights reserved.
@@ -37,9 +37,7 @@
 #include <unistd.h>
 #endif
 #include <signal.h>
-#ifdef HAVE_STDLIB_H
 #include <stdlib.h>
-#endif
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
@@ -108,7 +106,7 @@ static void launch_daemons(int fd, short args, void *cbdata);
 int plm_lsf_init(void)
 {
     int rc;
-    
+
     if (ORTE_SUCCESS != (rc = orte_plm_base_comm_start())) {
         ORTE_ERROR_LOG(rc);
     }
@@ -201,15 +199,15 @@ static void launch_daemons(int fd, short args, void *cbdata)
     OPAL_OUTPUT_VERBOSE((1, orte_plm_base_framework.framework_output,
                          "%s plm:lsf: launching vm",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-    
-    
+
+
     /* Get the map for this job */
     if (NULL == (map = daemons->map)) {
         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
         rc = ORTE_ERR_NOT_FOUND;
         goto cleanup;
     }
-    
+
     num_nodes = map->num_new_daemons;
     if (0 == num_nodes) {
         /* set the state to indicate the daemons reported - this
@@ -239,7 +237,7 @@ static void launch_daemons(int fd, short args, void *cbdata)
         if (ORTE_FLAG_TEST(node, ORTE_NODE_FLAG_DAEMON_LAUNCHED)) {
             continue;
         }
-        
+
         /* otherwise, add it to the list of nodes upon which
          * we need to launch a daemon
          */
@@ -252,7 +250,7 @@ static void launch_daemons(int fd, short args, void *cbdata)
      */
     argv = NULL;
     argc = 0;
-    
+
     /*
      * ORTED OPTIONS
      */
@@ -332,11 +330,11 @@ static void launch_daemons(int fd, short args, void *cbdata)
 
     /* lsb_launch tampers with SIGCHLD.
      * After the call to lsb_launch, the signal handler for SIGCHLD is NULL.
-     * So, we disable the SIGCHLD handler of libevent for the duration of 
+     * So, we disable the SIGCHLD handler of libevent for the duration of
      * the call to lsb_launch
      */
     orte_wait_disable();
-    
+
     /* exec the daemon(s). Do NOT wait for lsb_launch to complete as
      * it only completes when the processes it starts - in this case,
      * the orteds - complete. We need to go ahead and return so
@@ -351,7 +349,7 @@ static void launch_daemons(int fd, short args, void *cbdata)
         goto cleanup;
     }
     orte_wait_enable();  /* re-enable our SIGCHLD handler */
-    
+
     /* indicate that the daemons for this job were launched */
     state->jdata->state = ORTE_JOB_STATE_DAEMONS_LAUNCHED;
     daemons->state = ORTE_JOB_STATE_DAEMONS_LAUNCHED;
@@ -366,7 +364,7 @@ static void launch_daemons(int fd, short args, void *cbdata)
     if (NULL != env) {
         opal_argv_free(env);
     }
-    
+
     /* cleanup the caddy */
     OBJ_RELEASE(state);
 
@@ -383,7 +381,7 @@ static void launch_daemons(int fd, short args, void *cbdata)
 static int plm_lsf_terminate_orteds(void)
 {
     int rc;
-    
+
     if (ORTE_SUCCESS != (rc = orte_plm_base_orted_exit(ORTE_DAEMON_EXIT_CMD))) {
         ORTE_ERROR_LOG(rc);
     }
@@ -398,7 +396,7 @@ static int plm_lsf_terminate_orteds(void)
 static int plm_lsf_signal_job(orte_jobid_t jobid, int32_t signal)
 {
     int rc;
-    
+
     /* order the orteds to pass this signal to their local procs */
     if (ORTE_SUCCESS != (rc = orte_plm_base_orted_signal_local_procs(jobid, signal))) {
         ORTE_ERROR_LOG(rc);
@@ -410,11 +408,11 @@ static int plm_lsf_signal_job(orte_jobid_t jobid, int32_t signal)
 static int plm_lsf_finalize(void)
 {
     int rc;
-    
+
     /* cleanup any pending recvs */
     if (ORTE_SUCCESS != (rc = orte_plm_base_comm_stop())) {
         ORTE_ERROR_LOG(rc);
     }
-    
+
     return ORTE_SUCCESS;
 }

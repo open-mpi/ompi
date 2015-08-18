@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -50,7 +50,7 @@ void ADIOI_SFS_Open(ADIO_File fd, int *error_code)
 #else /* MPICH-1 */
 	*error_code = MPIR_Err_setmsg(MPI_ERR_IO, MPIR_ADIO_ERROR,
 			      myname, "I/O Error", "%s", strerror(errno));
-	ADIOI_Error(ADIO_FILE_NULL, *error_code, myname);	    
+	ADIOI_Error(ADIO_FILE_NULL, *error_code, myname);
 #endif
     }
     else *error_code = MPI_SUCCESS;

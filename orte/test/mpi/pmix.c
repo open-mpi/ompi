@@ -2,9 +2,9 @@
  * Copyright (c) 2015      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 /*
@@ -58,7 +58,7 @@ int main(int argc, char* argv[])
             DO_FINALIZE(rc, 1, "[%d] pmix_init failed.\n", my_rank);
         }
     }
-    
+
     int data = my_rank;
     t0 = get_timestamp();
     OPAL_MODEX_SEND_VALUE(rc, PMIX_SYNC_REQD, PMIX_GLOBAL,
@@ -83,7 +83,7 @@ int main(int argc, char* argv[])
         }
     }
     t5 = get_timestamp();
-  
+
     /* using fence as a barrier */
     opal_pmix.fence(NULL, 0);
     t6 = get_timestamp();

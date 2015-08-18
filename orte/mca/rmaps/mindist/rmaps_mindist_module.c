@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -16,9 +16,9 @@
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -30,9 +30,7 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif  /* HAVE_UNISTD_H */
-#ifdef HAVE_STRING_H
 #include <string.h>
-#endif  /* HAVE_STRING_H */
 
 #include "opal/mca/base/mca_base_var.h"
 
@@ -127,7 +125,7 @@ static int mindist_map(orte_job_t *jdata)
     opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                         "mca:rmaps:mindist: mapping job %s",
                         ORTE_JOBID_PRINT(jdata->jobid));
- 
+
     /* flag that I did the mapping */
     if (NULL != jdata->map->last_mapper) {
         free(jdata->map->last_mapper);
@@ -136,13 +134,13 @@ static int mindist_map(orte_job_t *jdata)
 
     /* start at the beginning... */
     jdata->num_procs = 0;
-    
+
     /* cycle through the app_contexts, mapping them sequentially */
     for(i=0; i < jdata->apps->size; i++) {
         if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, i))) {
             continue;
         }
-        
+
         /* setup the nodelist here in case we jump to error */
         OBJ_CONSTRUCT(&node_list, opal_list_t);
 
@@ -172,17 +170,17 @@ static int mindist_map(orte_job_t *jdata)
 
         /* if a bookmark exists from some prior mapping, set us to start there */
         jdata->bookmark = orte_rmaps_base_get_starting_point(&node_list, jdata);
-       
+
         if (0 == app->num_procs) {
             /* set the num_procs to equal the number of slots on these mapped nodes */
             app->num_procs = num_slots;
         }
-        
+
         nprocs_mapped = 0;
         if (!num_nodes) {
             rc = ORTE_ERR_SILENT;
             goto error;
-        } 
+        }
         if (bynode) {
             /* calculate num_procs_to_assign for bynode case */
             navg = app->num_procs / num_nodes;
@@ -197,7 +195,7 @@ static int mindist_map(orte_job_t *jdata)
                 item != opal_list_get_end(&node_list);
                 item = opal_list_get_next(item)) {
             node = (orte_node_t*)item;
-       
+
             if (NULL == node->topology) {
                 orte_show_help("help-orte-rmaps-base.txt", "rmaps:no-topology",
                         true, node->name);
@@ -214,7 +212,7 @@ static int mindist_map(orte_job_t *jdata)
                 rc = ORTE_ERR_SILENT;
                 goto error;
             }
-            
+
             /* get the number of available pus */
             if (opal_hwloc_use_hwthreads_as_cpus) {
                 total_npus = opal_hwloc_base_get_nbobjs_by_type(node->topology, HWLOC_OBJ_PU, 0, OPAL_HWLOC_AVAILABLE);
@@ -234,7 +232,7 @@ static int mindist_map(orte_job_t *jdata)
                     }
                 }
             }
-            /* first we need to fill summary object for root with information about nodes 
+            /* first we need to fill summary object for root with information about nodes
              * so we call opal_hwloc_base_get_nbobjs_by_type */
             opal_hwloc_base_get_nbobjs_by_type(node->topology, HWLOC_OBJ_NODE, 0, OPAL_HWLOC_AVAILABLE);
             OBJ_CONSTRUCT(&numa_list, opal_list_t);
@@ -304,7 +302,7 @@ static int mindist_map(orte_job_t *jdata)
                     num_procs_to_assign--;
                 }
             }
-            
+
             /* add the node to the map, if needed */
             if (!ORTE_FLAG_TEST(node, ORTE_NODE_FLAG_MAPPED)) {
                 if (ORTE_SUCCESS > (rc = opal_pointer_array_add(jdata->map->nodes, (void*)node))) {
@@ -325,7 +323,7 @@ static int mindist_map(orte_job_t *jdata)
          */
 
         extra_procs = app->num_procs - nprocs_mapped;
-        if (extra_procs > 0) { 
+        if (extra_procs > 0) {
             /* check if oversubscribing is allowed */
             if (ORTE_MAPPING_NO_OVERSUBSCRIBE & ORTE_GET_MAPPING_DIRECTIVE(jdata->map->mapping)) {
                 orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:alloc-error",
@@ -369,7 +367,7 @@ static int mindist_map(orte_job_t *jdata)
                         orte_set_attribute(&proc->attributes, ORTE_PROC_HWLOC_LOCALE, ORTE_ATTR_LOCAL, obj, OPAL_PTR);
                         if (k > npus/orte_rmaps_base.cpus_per_rank-1) {
                             numa_item = opal_list_get_next(numa_item);
-                            if (numa_item == opal_list_get_end(&numa_list)) { 
+                            if (numa_item == opal_list_get_end(&numa_list)) {
                                 numa_item = opal_list_get_first(&numa_list);
                             }
                             obj = hwloc_get_obj_by_type(node->topology, HWLOC_OBJ_NODE,((opal_rmaps_numa_node_t*)numa_item)->index);

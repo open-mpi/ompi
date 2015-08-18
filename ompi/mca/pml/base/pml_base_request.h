@@ -6,7 +6,7 @@
  * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -14,9 +14,9 @@
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 /**
@@ -47,14 +47,14 @@ OMPI_DECLSPEC extern opal_free_list_t mca_pml_base_recv_requests;
  */
 /*
  * The following include pulls in shared typedefs with debugger plugins.
- * For more information on why we do this see the Notice to developers 
+ * For more information on why we do this see the Notice to developers
  * comment at the top of the ompi_msgq_dll.c file.
  */
 #include "pml_base_request_dbg.h"
 
 
 /**
- *  Base type for PML P2P requests 
+ *  Base type for PML P2P requests
  */
 struct mca_pml_base_request_t {
 

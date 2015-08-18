@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2013 Los Alamos National Security, LLC. 
+ * Copyright (c) 2006-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
@@ -266,7 +266,7 @@ static void process_send(int fd, short args, void *cbdata)
             /* we don't know how to talk to our daemon,
              * which is strange since we already got here.
              * likely means we lost a race condition, so
-             * 
+             *
              */
             ORTE_ACTIVATE_USOCK_MSG_ERROR(NULL, op->msg,
                                           ORTE_PROC_MY_DAEMON,
@@ -345,7 +345,7 @@ static void send_nb(orte_rml_send_t *msg)
  * socket to recv.  This is called for the listen sockets to accept an
  * incoming connection, on new sockets trying to complete the software
  * connection process, and for probes.  Data on an established
- * connection is handled elsewhere. 
+ * connection is handled elsewhere.
  */
 static void recv_handler(int sd, short flags, void *cbdata)
 {

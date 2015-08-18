@@ -5,15 +5,15 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2013      University of Houston. All rights reserved.
+ * Copyright (c) 2013-2015 University of Houston. All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -54,16 +54,18 @@ int mca_sharedfp_individual_file_open (struct ompi_communicator_t *comm,
         opal_output(0, "mca_sharedfp_individual_file_open: Error during file open\n");
         return err;
     }
+    shfileHandle->f_fh = fh->f_fh;
 
     sh = (struct mca_sharedfp_base_data_t*) malloc ( sizeof(struct mca_sharedfp_base_data_t));
     if ( NULL == sh ){
         opal_output(0, "mca_sharedfp_individual_file_open: Error, unable to malloc "
 		    "f_sharedfp_ptr struct\n");
+	free (shfileHandle );
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
-    
+
     rank = ompi_comm_rank ( comm );
-    
+
     /*Populate the sh file structure based on the implementation*/
     sh->sharedfh      = shfileHandle;		/* Shared file pointer*/
     sh->global_offset = 0;			/* Global Offset*/
@@ -78,7 +80,8 @@ int mca_sharedfp_individual_file_open (struct ompi_communicator_t *comm,
     /* NOTE: Open the data file without shared file pointer   */
     /*--------------------------------------------------------*/
     if ( mca_sharedfp_individual_verbose ) {
-	printf("mca_sharedfp_individual_file_open: open data file.\n");
+       opal_output(ompi_sharedfp_base_framework.framework_output,
+                "mca_sharedfp_individual_file_open: open data file.\n");
     }
 
     /* data filename created by appending .data.$rank to the original filename*/
@@ -93,6 +96,8 @@ int mca_sharedfp_individual_file_open (struct ompi_communicator_t *comm,
                                    MPI_INFO_NULL, datafilehandle, false);
     if ( OMPI_SUCCESS != err) {
         opal_output(0, "mca_sharedfp_individual_file_open: Error during datafile file open\n");
+        free (shfileHandle );
+        free (sh);
         return err;
     }
 
@@ -101,19 +106,37 @@ int mca_sharedfp_individual_file_open (struct ompi_communicator_t *comm,
     /* NOTE: Open the meta file without shared file pointer     */
     /*----------------------------------------------------------*/
     if ( mca_sharedfp_individual_verbose ) {
-	printf("mca_sharedfp_individual_file_open: metadata file.\n");
+        opal_output(ompi_sharedfp_base_framework.framework_output,
+                "mca_sharedfp_individual_file_open: metadata file.\n");
     }
 
     /* metadata filename created by appending .metadata.$rank to the original filename*/
-    metadatafilename = (char*) malloc ( len );   
+    metadatafilename = (char*) malloc ( len );
+    if ( NULL == metadatafilename ) {
+        free (shfileHandle );
+        free (sh);
+        opal_output(0, "mca_sharedfp_individual_file_open: Error during memory allocation\n");
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
     snprintf ( metadatafilename, len, "%s%s%d", filename, ".metadata.",rank);
 
     metadatafilehandle = (mca_io_ompio_file_t *)malloc(sizeof(mca_io_ompio_file_t));
+    if ( NULL == metadatafilehandle ) {
+        free (shfileHandle );
+        free (sh);
+        free (metadatafilename);
+        opal_output(0, "mca_sharedfp_individual_file_open: Error during memory allocation\n");
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
     err = ompio_io_ompio_file_open ( MPI_COMM_SELF,metadatafilename,
                                      MPI_MODE_RDWR | MPI_MODE_CREATE | MPI_MODE_DELETE_ON_CLOSE,
                                      MPI_INFO_NULL, metadatafilehandle, false);
     if ( OMPI_SUCCESS != err) {
         opal_output(0, "mca_sharedfp_individual_file_open: Error during metadatafile file open\n");
+        free (shfileHandle );
+        free (sh);
+        free (metadatafilename);
+        free (metadatafilehandle);
         return err;
     }
 
@@ -140,7 +163,8 @@ int mca_sharedfp_individual_file_close (mca_io_ompio_file_t *fh)
 
     if ( NULL == fh->f_sharedfp_data ){
 	if ( mca_sharedfp_individual_verbose ) {
-	    printf("sharedfp_inidividual_file_close - shared file pointer structure not initialized\n");
+                opal_output(ompi_sharedfp_base_framework.framework_output,
+                    "sharedfp_inidividual_file_close - shared file pointer structure not initialized\n");
 	}
         return OMPI_SUCCESS;
     }
@@ -195,16 +219,16 @@ mca_sharedfp_individual_header_record* mca_sharedfp_individual_insert_headnode (
 	if (!headnode)
 	    return NULL;
     }
-    
+
     headnode->numofrecords = 0;			/* No records in the linked list */
     headnode->numofrecordsonfile = 0;		/* No records in the metadatafile for this file */
-    
+
     headnode->datafile_offset = 0;
     headnode->metadatafile_offset = 0;
-    
+
     headnode->metafile_start_offset = 0;
     headnode->datafile_start_offset = 0;
-    
+
     headnode->metadatafilehandle = 0;
     headnode->datafilehandle     = 0;
     headnode->next   = NULL;

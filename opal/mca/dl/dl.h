@@ -44,8 +44,8 @@
  * like a good solution.
  */
 
-#ifndef MCA_DLOPEN_H
-#define MCA_DLOPEN_H
+#ifndef OPAL_MCA_DL_DL_H
+#define OPAL_MCA_DL_DL_H
 
 #include "opal_config.h"
 
@@ -183,4 +183,4 @@ typedef struct opal_dl_base_module_1_0_0_t opal_dl_base_module_t;
 
 END_C_DECLS
 
-#endif /* OPAL_DL_H */
+#endif /* OPAL_MCA_DL_DL_H */

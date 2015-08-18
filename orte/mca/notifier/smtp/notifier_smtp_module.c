@@ -27,15 +27,11 @@
 
 #include <stdio.h>
 #include <string.h>
-#ifdef HAVE_STDARG_H
 #include <stdarg.h>
-#endif
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
-#ifdef HAVE_SIGNAL_H
 #include <signal.h>
-#endif
 
 #include "opal/util/show_help.h"
 #include "opal/util/argv.h"
@@ -52,12 +48,12 @@
 
 
 /* Static API's */
-static void mylog(orte_notifier_base_severity_t severity, int errcode, 
+static void mylog(orte_notifier_base_severity_t severity, int errcode,
                   const char *msg, va_list ap);
-static void myhelplog(orte_notifier_base_severity_t severity, int errcode, 
-                      const char *filename, 
+static void myhelplog(orte_notifier_base_severity_t severity, int errcode,
+                      const char *filename,
                       const char *topic, va_list ap);
-static void mypeerlog(orte_notifier_base_severity_t severity, int errcode, 
+static void mypeerlog(orte_notifier_base_severity_t severity, int errcode,
                       orte_process_name_t *peer_proc,
                       const char *msg, va_list ap);
 
@@ -205,7 +201,7 @@ static int send_email(char *msg)
     sig.sa_handler = SIG_IGN;
     sigemptyset(&sig.sa_mask);
     sig.sa_flags = 0;
-    sigaction(SIGPIPE, &sig, &oldsig); 
+    sigaction(SIGPIPE, &sig, &oldsig);
     set_oldsig = true;
 
     /* Try to get a libesmtp session.  If so, assume that libesmtp is
@@ -250,8 +246,8 @@ static int send_email(char *msg)
     if (0 == smtp_set_header(message, "Subject", c->subject) ||
         0 == smtp_set_header_option(message, "Subject", Hdr_OVERRIDE, 1) ||
         0 == smtp_set_header(message, "To", NULL, NULL) ||
-        0 == smtp_set_header(message, "From", 
-                             (NULL != c->from_name ? 
+        0 == smtp_set_header(message, "From",
+                             (NULL != c->from_name ?
                               c->from_name : c->from_addr),
                              c->from_addr) ||
         0 == smtp_set_header(message, "X-Mailer", str) ||
@@ -305,15 +301,15 @@ static int send_email(char *msg)
 
         e = smtp_errno();
         smtp_strerror(e, em, sizeof(em));
-        orte_show_help("help-orte-notifier-smtp.txt", 
+        orte_show_help("help-orte-notifier-smtp.txt",
                        "send_email failed",
-                       true, "libesmtp library call failed", 
+                       true, "libesmtp library call failed",
                        errmsg, em, e, msg);
     }
     return err;
 }
 
-static void mylog(orte_notifier_base_severity_t severity, int errcode, 
+static void mylog(orte_notifier_base_severity_t severity, int errcode,
                   const char *msg, va_list ap)
 {
     char *output;

@@ -34,11 +34,11 @@ BEGIN_C_DECLS
 #  define SPIN
 #endif
 
-/** 
+/**
  * Structure to hold the basic shared memory coll component.  First it holds the
  * base coll component, and then holds a bunch of
  * sm-coll-component-specific stuff (e.g., current MCA param
- * values). 
+ * values).
  */
 struct mca_bcol_ptpcoll_component_t {
     /** Base coll component */
@@ -49,7 +49,7 @@ struct mca_bcol_ptpcoll_component_t {
     int k_nomial_radix;
     /** The radix of narray tree, initilized by mca parameter */
     int narray_radix;
-    /** The radix is used for narray scatther and knomail gather for 
+    /** The radix is used for narray scatther and knomail gather for
       large message bcast **/
     int narray_knomial_radix;
     /** Number of times to poll for specific tag/src */
@@ -86,7 +86,7 @@ struct mca_bcol_ptpcoll_collreq_t {
     int need_toserv_extra;
     int extra_partner_rank;
 
-    ompi_request_t **requests; 
+    ompi_request_t **requests;
 };
 typedef struct mca_bcol_ptpcoll_collreq_t mca_bcol_ptpcoll_collreq_t;
 OBJ_CLASS_DECLARATION(mca_bcol_ptpcoll_collreq_t);
@@ -96,22 +96,22 @@ OBJ_CLASS_DECLARATION(mca_bcol_ptpcoll_collreq_t);
  */
 typedef struct mca_bcol_ptpcoll_component_t mca_bcol_ptpcoll_component_t;
 
-/* Bcast small messages, 
+/* Bcast small messages,
    known root algorithm */
 enum {
     PTPCOLL_KNOMIAL = 1,
     PTPCOLL_NARRAY
 };
 
-/* Bcast large messages, 
+/* Bcast large messages,
    known root algorithm */
 enum {
     PTPCOLL_BINOMIAL_SG = 1,  /* Binomila scatter-gather */
     PTPCOLL_NARRAY_KNOMIAL_SG /* Narray-Knomial scatter-gather */
 };
 
-/* 
- * Implemented function index list 
+/*
+ * Implemented function index list
  */
 
 /* barrier */
@@ -227,9 +227,9 @@ struct mca_bcol_ptpcoll_ml_buffer_desc_t {
     uint64_t     buffer_index;      /* my buff index */
     int       active_requests;   /* keep number of active requests */
     ompi_request_t **requests;      /* caching pointers to requests */
-    int          data_src;          /* used for bcast to cache internal data */ 
-    int          radix_mask;        /* used for bcast to cache internal data */ 
-    int          radix_mask_pow;    /* used for bcast to cache internal data */ 
+    int          data_src;          /* used for bcast to cache internal data */
+    int          radix_mask;        /* used for bcast to cache internal data */
+    int          radix_mask_pow;    /* used for bcast to cache internal data */
     int          iteration;         /* buffer iteration in knomial, binomail, etc. algorithms */
     int          tag;               /* tag number that is attached to this operation */
     int          status;       /* operation status */
@@ -242,7 +242,7 @@ struct mca_bcol_ptpcoll_ml_buffer_desc_t {
 };
 typedef struct mca_bcol_ptpcoll_ml_buffer_desc_t mca_bcol_ptpcoll_ml_buffer_desc_t;
 
-/* 
+/*
  * Information that we need to keep in order to access and
  * track local ML memory that is used as source and destinatination
  * for collectives operations
@@ -304,7 +304,7 @@ struct mca_bcol_ptpcoll_module_t {
     /* Nary tree info */
     netpatterns_tree_node_t *narray_node;
 
-    /* if the rank in group, it keeps the extra peer. 
+    /* if the rank in group, it keeps the extra peer.
        if the rank is extra, it keeps the proxy peer.
      */
     int proxy_extra_index;    /* pow2 algorithm */
@@ -331,12 +331,12 @@ struct mca_bcol_ptpcoll_module_t {
     /* list of extra indexes */
     int *narray_knomial_proxy_extra_index;
     /* number of extra peers , maximum k - 1*/
-    int narray_knomial_proxy_num; 
+    int narray_knomial_proxy_num;
     /* Narray-Knomial node information array */
     netpatterns_narray_knomial_tree_node_t *narray_knomial_node;
-    /* Knomial exchange tree */ 
+    /* Knomial exchange tree */
     netpatterns_k_exchange_node_t knomial_exchange_tree;
-    /* knomial allgather tree --- Do not disable, we need both 
+    /* knomial allgather tree --- Do not disable, we need both
        different algorithms define recursive k - ing differently
      */
     netpatterns_k_exchange_node_t knomial_allgather_tree;
@@ -358,7 +358,7 @@ OBJ_CLASS_DECLARATION(mca_bcol_ptpcoll_module_t);
 /**
  * Global component instance
  */
-OMPI_MODULE_DECLSPEC extern mca_bcol_ptpcoll_component_t 
+OMPI_MODULE_DECLSPEC extern mca_bcol_ptpcoll_component_t
 mca_bcol_ptpcoll_component;
 
 
@@ -388,7 +388,7 @@ int bcol_ptpcoll_barrier_recurs_knomial(bcol_function_args_t *input_args,
         struct mca_bcol_base_function_t *const_args);
 int bcol_ptpcoll_barrier_init(mca_bcol_base_module_t *super);
 int mca_bcol_ptpcoll_memsync_init(mca_bcol_base_module_t *super);
-void * bcol_ptpcoll_allocate_memory(size_t length, size_t alignment, 
+void * bcol_ptpcoll_allocate_memory(size_t length, size_t alignment,
         struct mca_bcol_base_module_t *bcol_module);
 int bcol_ptpcoll_register_memory(void * in_ptr, size_t length, size_t alignment,
         struct mca_bcol_base_module_t *bcol_module);
@@ -412,7 +412,7 @@ int bcol_ptpcoll_k_nomial_allgather_progress(bcol_function_args_t *input_args,
 /* allgather register */
 int bcol_ptpcoll_allgather_init(mca_bcol_base_module_t *super);
 
-static inline __opal_attribute_always_inline__ 
+static inline __opal_attribute_always_inline__
         int mca_bcol_ptpcoll_test_for_match(ompi_request_t **request , int *rc)
 {
     int matched = 0;
@@ -428,7 +428,7 @@ static inline __opal_attribute_always_inline__
     return matched;
 }
 
-static inline __opal_attribute_always_inline__ 
+static inline __opal_attribute_always_inline__
         int mca_bcol_ptpcoll_test_all_for_match(int *n_requests, ompi_request_t **requests , int *rc)
 {
     int matched = 0;

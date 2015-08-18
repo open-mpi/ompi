@@ -4,17 +4,15 @@
  *                         reserved.
  * Copyright (c) 2014      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
 #include "ompi_config.h"
 
-#ifdef HAVE_STRING_H
 #include <string.h>
-#endif
 #include <stdio.h>
 
 #include "coll_cuda.h"
@@ -52,7 +50,7 @@ static void mca_coll_cuda_module_destruct(mca_coll_cuda_module_t *module)
 }
 
 OBJ_CLASS_INSTANCE(mca_coll_cuda_module_t, mca_coll_base_module_t,
-                   mca_coll_cuda_module_construct, 
+                   mca_coll_cuda_module_construct,
                    mca_coll_cuda_module_destruct);
 
 
@@ -76,7 +74,7 @@ int mca_coll_cuda_init_query(bool enable_progress_threads,
  * priority we want to return.
  */
 mca_coll_base_module_t *
-mca_coll_cuda_comm_query(struct ompi_communicator_t *comm, 
+mca_coll_cuda_comm_query(struct ompi_communicator_t *comm,
                          int *priority)
 {
     mca_coll_cuda_module_t *cuda_module;
@@ -149,7 +147,7 @@ int mca_coll_cuda_module_enable(mca_coll_base_module_t *module,
         return OMPI_SUCCESS;
     } else {
         orte_show_help("help-mpi-coll-cuda.txt", "missing collective", true,
-                       orte_process_info.nodename, 
+                       orte_process_info.nodename,
                        mca_coll_cuda_component.priority, msg);
         return OMPI_ERR_NOT_FOUND;
     }

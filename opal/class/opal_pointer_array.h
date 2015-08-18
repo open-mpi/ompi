@@ -6,14 +6,14 @@
  * Copyright (c) 2004-2008 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 /** @file
@@ -33,6 +33,7 @@
 
 #include "opal/threads/mutex.h"
 #include "opal/class/opal_object.h"
+#include "opal/prefetch.h"
 
 BEGIN_C_DECLS
 
@@ -107,7 +108,7 @@ OPAL_DECLSPEC int opal_pointer_array_add(opal_pointer_array_t *array, void *ptr)
  *
  * @return Error code.  (-1) indicates an error.
  */
-OPAL_DECLSPEC int opal_pointer_array_set_item(opal_pointer_array_t *array, 
+OPAL_DECLSPEC int opal_pointer_array_set_item(opal_pointer_array_t *array,
                                 int index, void *value);
 
 /**
@@ -119,12 +120,12 @@ OPAL_DECLSPEC int opal_pointer_array_set_item(opal_pointer_array_t *array,
  * @return Error code.  NULL indicates an error.
  */
 
-static inline void *opal_pointer_array_get_item(opal_pointer_array_t *table, 
+static inline void *opal_pointer_array_get_item(opal_pointer_array_t *table,
                                                 int element_index)
 {
     void *p;
 
-    if( table->size <= element_index ) {
+    if( OPAL_UNLIKELY(0 > element_index || table->size <= element_index) ) {
         return NULL;
     }
     OPAL_THREAD_LOCK(&(table->lock));
@@ -172,10 +173,10 @@ OPAL_DECLSPEC int opal_pointer_array_set_size(opal_pointer_array_t *array, int s
  * @return true/false True if element could be reserved
  *                    False if element could not be reserved (e.g., in use).
  *
- * In contrary to array_set, this function does not allow to overwrite 
+ * In contrary to array_set, this function does not allow to overwrite
  * a value, unless the previous value is NULL ( equiv. to free ).
  */
-OPAL_DECLSPEC bool opal_pointer_array_test_and_set_item (opal_pointer_array_t *table, 
+OPAL_DECLSPEC bool opal_pointer_array_test_and_set_item (opal_pointer_array_t *table,
                                           int index,
                                           void *value);
 
@@ -190,7 +191,7 @@ static inline void opal_pointer_array_remove_all(opal_pointer_array_t *array)
     int i;
     if( array->number_free == array->size )
         return;  /* nothing to do here this time (the array is already empty) */
- 
+
     OPAL_THREAD_LOCK(&array->lock);
     array->lowest_free = 0;
     array->number_free = array->size;

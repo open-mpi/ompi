@@ -118,7 +118,7 @@ struct mca_coll_fca_component_t {
 
     /** MCA parameter: FCA device */
     char* fca_dev;
-    
+
     /** MCA parameter: Enable FCA */
     int   fca_enable;
 
@@ -199,7 +199,7 @@ struct mca_coll_fca_component_t {
 
     /** MCA parameter hash table size*/
     int fca_hash_size;
-    
+
     /** MCA parameter hash table size*/
     int fca_number_of_primes;
 

@@ -53,7 +53,7 @@ AC_DEFUN([_OPAL_ATTRIBUTE_FAIL_SEARCH],[
 # regarding unused function in main file)
 #       static int usage (int * argument);
 #
-# The last argument is for specific CFLAGS, that need to be set 
+# The last argument is for specific CFLAGS, that need to be set
 # for the compiler to generate a warning on the cross-check.
 # This may need adaption for future compilers / CFLAG-settings.
 #
@@ -138,7 +138,7 @@ AC_DEFUN([_OPAL_CHECK_SPECIFIC_ATTRIBUTE], [
 # attribute most often fail with a warning (when the warning
 # level is set).
 # The compilers output is parsed in _OPAL_ATTRIBUTE_FAIL_SEARCH
-# 
+#
 # To add a new attributes __NAME__ add the
 #   opal_cv___attribute__NAME
 # add a new check with _OPAL_CHECK_SPECIFIC_ATTRIBUTE (possibly with a cross-check)

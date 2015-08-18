@@ -5,9 +5,9 @@
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 /**
@@ -38,9 +38,9 @@ OSHMEM_DECLSPEC extern opal_free_list_t mca_spml_base_send_requests;
 OSHMEM_DECLSPEC extern opal_free_list_t mca_spml_base_recv_requests;
 OSHMEM_DECLSPEC extern opal_free_list_t mca_spml_base_atomic_requests;
 
-/* TODO: Consider to add requests lists 
+/* TODO: Consider to add requests lists
  * 1. List of Non blocking requests with NULL handle.
- * 2. List of Non blocking request with Non-NULL handle. 
+ * 2. List of Non blocking request with Non-NULL handle.
  * 3. List of non completed puts (for small msgs).
  */
 
@@ -58,7 +58,7 @@ typedef enum {
 } mca_spml_base_request_type_t;
 
 /**
- *  Base type for SPML one sided requests 
+ *  Base type for SPML one sided requests
  */
 struct mca_spml_base_request_t {
 

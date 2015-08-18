@@ -88,7 +88,7 @@ msg_run_expand_to_hold_more(struct msg *msg)
   msg->run_num_allocated = tobe_allocated;
   return 0;}
 
-struct run* 
+struct run*
 msg_run_add(struct msg *msg)
 {
   if (++msg->run_length >= msg->run_num_allocated) {

@@ -35,7 +35,7 @@ static int bcol_basesmuma_fanout_new(
     mca_bcol_basesmuma_module_t* bcol_module =
         (mca_bcol_basesmuma_module_t *) c_input_args->bcol_module;
 
-    int idx, probe, 
+    int idx, probe,
         my_rank = bcol_module->super.sbgp_partner_module->my_index,
         leading_dim = bcol_module->colls_no_user_data.size_of_group;
     int8_t  ready_flag;
@@ -43,7 +43,7 @@ static int bcol_basesmuma_fanout_new(
     int buff_index = input_args->buffer_index;
     mca_bcol_basesmuma_component_t *cm = &mca_bcol_basesmuma_component;
 
-    
+
     volatile mca_bcol_basesmuma_payload_t *ctl_structs;
 
     /* control structures */
@@ -63,7 +63,7 @@ static int bcol_basesmuma_fanout_new(
 
     /* init the header */
     BASESMUMA_HEADER_INIT(my_ctl, ready_flag, sequence_number, bcol_id);
-    
+
     /* Wait on my parent to arrive */
     if (my_tree_node->n_parents) {
         parent_ctl = ctl_structs[my_tree_node->parent_rank].ctl_struct;

@@ -1,5 +1,5 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/*  
+/*
  *  (C) 2001 by Argonne National Laboratory.
  *      See COPYRIGHT in top-level directory.
  */
@@ -17,7 +17,7 @@
 /* The file name is taken as a command-line argument. */
 
 /* Note that the file access pattern is noncontiguous. */
-   
+
 int main(int argc, char **argv)
 {
     MPI_Datatype newtype;
@@ -36,7 +36,7 @@ int main(int argc, char **argv)
     MPI_Comm_rank(MPI_COMM_WORLD, &mynod);
     MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
 
-/* process 0 takes the file name as a command-line argument and 
+/* process 0 takes the file name as a command-line argument and
    broadcasts it to other processes */
     if (!mynod) {
 	i = 1;
@@ -81,7 +81,7 @@ int main(int argc, char **argv)
     for (i=0; i<ndims; i++) array_of_psizes[i] = 0;
     MPI_Dims_create(nprocs, ndims, array_of_psizes);
 
-    MPI_Type_create_darray(nprocs, mynod, ndims, array_of_gsizes, 
+    MPI_Type_create_darray(nprocs, mynod, ndims, array_of_gsizes,
 			   array_of_distribs, array_of_dargs,
 			   array_of_psizes, order, MPI_INT, &newtype);
     MPI_Type_commit(&newtype);
@@ -114,7 +114,7 @@ int main(int argc, char **argv)
 /* end of initialization */
 
     /* write the array to the file */
-    MPI_File_open(MPI_COMM_WORLD, filename, MPI_MODE_CREATE | MPI_MODE_RDWR, 
+    MPI_File_open(MPI_COMM_WORLD, filename, MPI_MODE_CREATE | MPI_MODE_RDWR,
                   MPI_INFO_NULL, &fh);
     MPI_File_set_view(fh, 0, MPI_INT, newtype, "native", MPI_INFO_NULL);
     MPI_File_write_all_begin(fh, writebuf, bufcount, MPI_INT);
@@ -124,7 +124,7 @@ int main(int argc, char **argv)
 
     /* now read it back */
     readbuf = (int *) malloc(bufcount * sizeof(int));
-    MPI_File_open(MPI_COMM_WORLD, filename, MPI_MODE_CREATE | MPI_MODE_RDWR, 
+    MPI_File_open(MPI_COMM_WORLD, filename, MPI_MODE_CREATE | MPI_MODE_RDWR,
                   MPI_INFO_NULL, &fh);
     MPI_File_set_view(fh, 0, MPI_INT, newtype, "native", MPI_INFO_NULL);
     MPI_File_read_all_begin(fh, readbuf, bufcount, MPI_INT);
@@ -135,7 +135,7 @@ int main(int argc, char **argv)
     for (i=0; i<bufcount; i++) {
 	if (readbuf[i] != writebuf[i]) {
 	    errs++;
-	    fprintf(stderr, "Process %d, readbuf %d, writebuf %d, i %d\n", 
+	    fprintf(stderr, "Process %d, readbuf %d, writebuf %d, i %d\n",
 		    mynod, readbuf[i], writebuf[i], i);
 	}
     }

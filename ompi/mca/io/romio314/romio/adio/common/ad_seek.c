@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
- *   Copyright (C) 1997 University of Chicago. 
+/*
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -11,11 +11,11 @@
 #include <unistd.h>
 #endif
 
-ADIO_Offset ADIOI_GEN_SeekIndividual(ADIO_File fd, ADIO_Offset offset, 
+ADIO_Offset ADIOI_GEN_SeekIndividual(ADIO_File fd, ADIO_Offset offset,
 				     int whence, int *error_code)
 {
 /* implemented for whence=SEEK_SET only. SEEK_CUR and SEEK_END must
-   be converted to the equivalent with SEEK_SET before calling this 
+   be converted to the equivalent with SEEK_SET before calling this
    routine. */
 /* offset is in units of etype relative to the filetype */
 
@@ -46,7 +46,7 @@ ADIO_Offset ADIOI_GEN_SeekIndividual(ADIO_File fd, ADIO_Offset offset,
 	    /* Since offset relative to the filetype size, we can't
 	       do compute the offset when that result is zero.
 	       Return zero for the offset for now */
-	    *error_code = MPI_SUCCESS; 
+	    *error_code = MPI_SUCCESS;
 	    return 0;
 	}
 
@@ -54,7 +54,7 @@ ADIO_Offset ADIOI_GEN_SeekIndividual(ADIO_File fd, ADIO_Offset offset,
 	n_filetypes = offset / n_etypes_in_filetype;
 	etype_in_filetype = offset % n_etypes_in_filetype;
 	size_in_filetype = etype_in_filetype * etype_size;
- 
+
 	sum = 0;
 	for (i=0; i<flat_file->count; i++) {
 	    sum += flat_file->blocklens[i];
@@ -73,7 +73,7 @@ ADIO_Offset ADIOI_GEN_SeekIndividual(ADIO_File fd, ADIO_Offset offset,
 /*
  * we used to call lseek here and update both fp_ind and fp_sys_posn, but now
  * we don't seek and only update fp_ind (ROMIO's idea of where we are in the
- * file).  We leave the system file descriptor and fp_sys_posn alone. 
+ * file).  We leave the system file descriptor and fp_sys_posn alone.
  * The fs-specifc ReadContig and WriteContig will seek to the correct place in
  * the file before reading/writing if the 'offset' parameter doesn't match
  * fp_sys_posn

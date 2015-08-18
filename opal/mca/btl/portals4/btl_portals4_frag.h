@@ -6,7 +6,7 @@
  * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -14,9 +14,9 @@
  *                         All rights reserved.
  * Copyright (c) 2014      Bull SAS.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -28,7 +28,7 @@
 BEGIN_C_DECLS
 
 struct mca_btl_portals4_segment_t {
-  mca_btl_base_segment_t base; 
+  mca_btl_base_segment_t base;
   ptl_match_bits_t key;
 };
 typedef struct mca_btl_portals4_segment_t mca_btl_portals4_segment_t;
@@ -37,10 +37,10 @@ typedef struct mca_btl_portals4_segment_t mca_btl_portals4_segment_t;
  * Portals send fragment derived type
  */
 struct mca_btl_portals4_frag_t {
-    mca_btl_base_descriptor_t base; 
-    mca_btl_portals4_segment_t segments[1]; 
+    mca_btl_base_descriptor_t base;
+    mca_btl_portals4_segment_t segments[1];
     /* needed for retransmit case */
-   struct mca_btl_base_endpoint_t *endpoint; 
+   struct mca_btl_base_endpoint_t *endpoint;
     /* needed for retransmit case */
     mca_btl_base_header_t hdr;
     /* handle to use for communication */
@@ -49,7 +49,7 @@ struct mca_btl_portals4_frag_t {
     ptl_handle_md_t md_h;
     /* size of the allocated memory region -- not the amount of data
        we need to send */
-    size_t size; 
+    size_t size;
     /* match bits for retransmit case */
     ptl_match_bits_t match_bits;
     /* length for retransmit case */
@@ -65,22 +65,22 @@ struct mca_btl_portals4_frag_t {
         mca_btl_base_registration_handle_t *local_handle;
     } rdma_cb;
 
-    enum { BTL_PORTALS4_FRAG_TYPE_EAGER, 
+    enum { BTL_PORTALS4_FRAG_TYPE_EAGER,
            BTL_PORTALS4_FRAG_TYPE_MAX,
            BTL_PORTALS4_FRAG_TYPE_USER } type;
     unsigned char  data[16];
 };
-typedef struct mca_btl_portals4_frag_t mca_btl_portals4_frag_t; 
+typedef struct mca_btl_portals4_frag_t mca_btl_portals4_frag_t;
 OBJ_CLASS_DECLARATION(mca_btl_portals4_frag_t);
 
-typedef struct mca_btl_portals4_frag_t mca_btl_portals4_frag_eager_t; 
-OBJ_CLASS_DECLARATION(mca_btl_portals4_frag_eager_t); 
+typedef struct mca_btl_portals4_frag_t mca_btl_portals4_frag_eager_t;
+OBJ_CLASS_DECLARATION(mca_btl_portals4_frag_eager_t);
 
-typedef struct mca_btl_portals4_frag_t mca_btl_portals4_frag_max_t; 
-OBJ_CLASS_DECLARATION(mca_btl_portals4_frag_max_t); 
+typedef struct mca_btl_portals4_frag_t mca_btl_portals4_frag_max_t;
+OBJ_CLASS_DECLARATION(mca_btl_portals4_frag_max_t);
 
-typedef struct mca_btl_portals4_frag_t mca_btl_portals4_frag_user_t; 
-OBJ_CLASS_DECLARATION(mca_btl_portals4_frag_user_t); 
+typedef struct mca_btl_portals4_frag_t mca_btl_portals4_frag_user_t;
+OBJ_CLASS_DECLARATION(mca_btl_portals4_frag_user_t);
 
 /*
  * Macros to allocate/return descriptors from module specific

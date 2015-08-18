@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 2003 University of Chicago, Ohio Supercomputer Center. 
+ *   Copyright (C) 2003 University of Chicago, Ohio Supercomputer Center.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -13,7 +13,7 @@ static globus_cond_t cond;
 static globus_bool_t delete_done, delete_success;
 static void delete_cb(void *myarg, globus_ftp_client_handle_t *handle, globus_object_t *error)
 {
-    
+
     if (error)
 	{
 	    FPRINTF(stderr, "%s\n", globus_object_printable_to_string(error));
@@ -39,7 +39,7 @@ void ADIOI_GRIDFTP_Delete(char *filename, int *error_code)
 
     globus_module_activate(GLOBUS_FTP_CLIENT_MODULE);
     result=globus_ftp_client_handle_init(&handle,GLOBUS_NULL);
-   
+
     if (result != GLOBUS_SUCCESS )
     {
 	    globus_err_handler("globus_ftp_client_handle_init",myname,result);
@@ -47,11 +47,11 @@ void ADIOI_GRIDFTP_Delete(char *filename, int *error_code)
 			    MPIR_ERR_RECOVERABLE,
 			    myname, __LINE__,
 			    MPI_ERR_IO,
-			    "**io", "**io %s", 
+			    "**io", "**io %s",
 			    globus_object_printable_to_string(globus_error_get(result)));
-	    return; 
+	    return;
     }
-    
+
     delete_done=GLOBUS_FALSE;
     delete_success=GLOBUS_FALSE;
     result=globus_ftp_client_delete(&handle,filename,GLOBUS_NULL,delete_cb,GLOBUS_NULL);
@@ -78,7 +78,7 @@ void ADIOI_GRIDFTP_Delete(char *filename, int *error_code)
 			    MPIR_ERR_RECOVERABLE,
 			    myname, __LINE__,
 			    MPI_ERR_IO,
-			    "**io", "**io %s", 
+			    "**io", "**io %s",
 			    globus_object_printable_to_string(globus_error_get(result)));
 	    return;
 	}
@@ -89,7 +89,7 @@ void ADIOI_GRIDFTP_Delete(char *filename, int *error_code)
 			    MPIR_ERR_RECOVERABLE,
 			    myname, __LINE__,
 			    MPI_ERR_IO,
-			    "**io", "**io %s", 
+			    "**io", "**io %s",
 			    globus_object_printable_to_string(globus_error_get(result)));
 	}
 }

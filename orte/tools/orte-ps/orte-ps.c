@@ -5,22 +5,22 @@
  * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
- *                         reserved. 
+ *                         reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -38,9 +38,7 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif  /* HAVE_UNISTD_H */
-#ifdef HAVE_STDLIB_H
 #include <stdlib.h>
-#endif  /*  HAVE_STDLIB_H */
 #ifdef HAVE_SYS_STAT_H
 #include <sys/stat.h>
 #endif  /* HAVE_SYS_STAT_H */
@@ -50,9 +48,7 @@
 #ifdef HAVE_SYS_WAIT_H
 #include <sys/wait.h>
 #endif  /* HAVE_SYS_WAIT_H */
-#ifdef HAVE_STRING_H
 #include <string.h>
-#endif  /* HAVE_STRING_H */
 #ifdef HAVE_DIRENT_H
 #include <dirent.h>
 #endif  /* HAVE_DIRENT_H */
@@ -92,7 +88,7 @@ struct orte_ps_mpirun_info_t {
     /* array of jobs */
     orte_std_cntr_t num_jobs;
     orte_job_t **jobs;
-    
+
     /* array of nodes */
     orte_std_cntr_t num_nodes;
     orte_node_t **nodes;
@@ -110,7 +106,7 @@ static void orte_ps_mpirun_info_construct(orte_ps_mpirun_info_t *ptr)
 static void orte_ps_mpirun_info_destruct(orte_ps_mpirun_info_t *ptr)
 {
     orte_std_cntr_t i;
-    
+
     if (NULL != ptr->hnp) OBJ_RELEASE(ptr->hnp);
     if (NULL != ptr->jobs) {
         for (i=0; i < ptr->num_jobs; i++) {
@@ -170,50 +166,50 @@ orte_ps_globals_t orte_ps_globals = {0};
 
 opal_cmd_line_init_t cmd_line_opts[] = {
     { NULL,
-      'h', NULL, "help", 
+      'h', NULL, "help",
       0,
       &orte_ps_globals.help, OPAL_CMD_LINE_TYPE_BOOL,
       "This help message" },
 
     { NULL,
-      'v', NULL, "verbose", 
+      'v', NULL, "verbose",
       0,
       &orte_ps_globals.verbose, OPAL_CMD_LINE_TYPE_BOOL,
       "Be Verbose" },
 
     { NULL,
-      '\0', NULL, "parseable", 
+      '\0', NULL, "parseable",
       0,
       &orte_ps_globals.parseable, OPAL_CMD_LINE_TYPE_BOOL,
       "Provide parseable output" },
 
     { NULL,
-      '\0', NULL, "daemons", 
+      '\0', NULL, "daemons",
       0,
      &orte_ps_globals.daemons, OPAL_CMD_LINE_TYPE_INT,
       "Display daemon job information" },
 
     { NULL,
-      'j', NULL, "jobid", 
+      'j', NULL, "jobid",
       1,
       &orte_ps_globals.jobid, OPAL_CMD_LINE_TYPE_INT,
       "Specify a local jobid for the given mpirun - a value from 0 to N" },
 
     { NULL,
-      'p', NULL, "pid", 
+      'p', NULL, "pid",
       1,
       &orte_ps_globals.pid, OPAL_CMD_LINE_TYPE_INT,
       "Specify mpirun pid" },
 
     { NULL,
-      'n', NULL, "nodes", 
+      'n', NULL, "nodes",
       0,
       &orte_ps_globals.nodes, OPAL_CMD_LINE_TYPE_INT,
       "Display Node Information" },
 
     /* End of list */
     { NULL,
-      '\0', NULL, NULL, 
+      '\0', NULL, NULL,
       0,
       NULL, OPAL_CMD_LINE_TYPE_NULL,
       NULL }
@@ -276,7 +272,7 @@ main(int argc, char *argv[])
                             "orte_ps: Gathering Information for HNP: %s:%d\n",
                             ORTE_NAME_PRINT(&(hnpinfo.hnp->name)),
                             hnpinfo.hnp->pid);
-        
+
         if( ORTE_SUCCESS != (ret = gather_information(&hnpinfo)) ) {
             /* this could be due to a stale session directory - if so,
              * just skip this entry, but don't abort
@@ -329,11 +325,11 @@ static int parse_args(int argc, char *argv[]) {
 
     /* Parse the command line options */
     opal_cmd_line_create(&cmd_line, cmd_line_opts);
-    
+
     mca_base_open();
     mca_base_cmd_line_setup(&cmd_line);
     ret = opal_cmd_line_parse(&cmd_line, false, argc, argv);
-    
+
     if (OPAL_SUCCESS != ret) {
         if (OPAL_ERR_SILENT != ret) {
             fprintf(stderr, "%s: command line error (%s)\n", argv[0],
@@ -427,7 +423,7 @@ static int orte_ps_init(int argc, char *argv[]) {
     /* we are never allowed to operate as a distributed tool,
      * so insist on the ess/tool component */
     opal_setenv("OMPI_MCA_ess", "tool", true, &environ);
-    
+
     /***************************
      * We need all of OPAL and the TOOL portion of ORTE
      ***************************/
@@ -439,16 +435,16 @@ static int orte_ps_init(int argc, char *argv[]) {
 static int pretty_print(orte_ps_mpirun_info_t *hnpinfo) {
     char *header;
     int len_hdr;
-    
+
     /*
      * Print header and remember header length
      */
     len_hdr = asprintf(&header, "Information from mpirun %s", ORTE_JOBID_PRINT(hnpinfo->hnp->name.jobid));
-    
+
     printf("\n\n%s\n", header);
     free(header);
     pretty_print_dashed_line(len_hdr);
-    
+
     /*
      * Print Node Information
      */
@@ -484,15 +480,15 @@ static int pretty_print_nodes(orte_node_t **nodes, orte_std_cntr_t num_nodes) {
 
     for(i=0; i < num_nodes; i++) {
         node = nodes[i];
-        
+
         if( NULL != node->name &&
             (int)strlen(node->name) > len_name)
             len_name = (int) strlen(node->name);
-                
+
         if( (int)strlen(pretty_node_state(node->state)) > len_state )
             len_state = (int)strlen(pretty_node_state(node->state));
     }
-    
+
     line_len = (len_name    + 3 +
                 len_state   + 3 +
                 len_slots   + 3 +
@@ -510,22 +506,22 @@ static int pretty_print_nodes(orte_node_t **nodes, orte_std_cntr_t num_nodes) {
     printf("\n");
 
     pretty_print_dashed_line(line_len);
-    
+
     /*
      * Print Info
      */
     for(i=0; i < num_nodes; i++) {
         node = nodes[i];
-        
+
         printf("%*s | ", len_name,    node->name);
         printf("%*s | ", len_state,   pretty_node_state(node->state));
         printf("%*d | ", len_slots,   (uint)node->slots);
         printf("%*d | ", len_slots_m, (uint)node->slots_max);
         printf("%*d | ", len_slots_i, (uint)node->slots_inuse);
         printf("\n");
-        
+
     }
-    
+
     return ORTE_SUCCESS;
 }
 
@@ -559,7 +555,7 @@ static int pretty_print_jobs(orte_job_t **jobs, orte_std_cntr_t num_jobs) {
 
         /* setup the printed name - do -not- free this! */
         jobstr = ORTE_JOBID_PRINT(job->jobid);
-        
+
         /*
          * Caculate segment lengths
          */
@@ -586,7 +582,7 @@ static int pretty_print_jobs(orte_job_t **jobs, orte_std_cntr_t num_jobs) {
         len_ckpt_r = -3;
         len_ckpt_l = -3;
 #endif
-    
+
         line_len = (len_jobid  + 3 +
                     len_state  + 3 +
                     len_slots  + 3 +
@@ -615,7 +611,7 @@ static int pretty_print_jobs(orte_job_t **jobs, orte_std_cntr_t num_jobs) {
 
         /*
          * Print Info
-         */        
+         */
         printf("%*s | ",  len_jobid ,  ORTE_JOBID_PRINT(job->jobid));
         printf("%*s | ",  len_state ,  orte_job_state_to_str(job->state));
         printf("%*d | ",  len_slots ,  (uint)job->total_slots_alloc);
@@ -631,20 +627,20 @@ static int pretty_print_jobs(orte_job_t **jobs, orte_std_cntr_t num_jobs) {
         pretty_print_vpids(job);
         printf("\n\n"); /* give a little room between job outputs */
     }
-    
+
     return ORTE_SUCCESS;
 }
 
 static int pretty_print_vpids(orte_job_t *job) {
-    int len_o_proc_name = 0, 
-        len_proc_name   = 0, 
-        len_rank        = 0, 
+    int len_o_proc_name = 0,
+        len_proc_name   = 0,
+        len_rank        = 0,
         len_pid         = 0,
         len_state       = 0,
         len_node        = 0,
         len_ckpt_s      = 0,
         len_ckpt_r      = 0,
-        len_ckpt_l      = 0; 
+        len_ckpt_l      = 0;
     int i, line_len;
     orte_vpid_t v;
     orte_proc_t *vpid;
@@ -680,7 +676,7 @@ static int pretty_print_vpids(orte_job_t *job) {
     for(v=0; v < job->num_procs; v++) {
         char *rankstr;
         vpid = (orte_proc_t*)job->procs->addr[v];
-        
+
         /*
          * Find my app context
          */
@@ -697,12 +693,12 @@ static int pretty_print_vpids(orte_job_t *job) {
         for( i = 0; i < (int)job->num_apps; ++i) {
             app = (orte_app_context_t*)job->apps->addr[i];
             if( app->idx == vpid->app_idx ) {
-                if( (int)strlen(app->app) > len_proc_name) 
+                if( (int)strlen(app->app) > len_proc_name)
                     len_proc_name = strlen(app->app);
                 break;
             }
         }
-        
+
         o_proc_name = orte_util_print_name_args(&vpid->name);
         if ((int)strlen(o_proc_name) > len_o_proc_name)
             len_o_proc_name = strlen(o_proc_name);
@@ -766,16 +762,16 @@ static int pretty_print_vpids(orte_job_t *job) {
     printf("%*s |",  len_ckpt_l      , "Ckpt Loc");
 #endif
     printf("\n");
-    
+
     printf("\t");
     pretty_print_dashed_line(line_len);
-    
+
     /*
      * Print Info
      */
     for(v=0; v < job->num_procs; v++) {
         vpid = (orte_proc_t*)job->procs->addr[v];
-        
+
         printf("\t");
 
         if( 0 >= (int)job->num_apps ) {
@@ -792,7 +788,7 @@ static int pretty_print_vpids(orte_job_t *job) {
                 break;
             }
         }
-        
+
         o_proc_name = orte_util_print_name_args(&vpid->name);
 
         printf("%*s | ",  len_o_proc_name, o_proc_name);
@@ -803,16 +799,16 @@ static int pretty_print_vpids(orte_job_t *job) {
             free(nodename);
         }
         printf("%*s | ",  len_state      , orte_proc_state_to_str(vpid->state));
-        
+
 #if OPAL_ENABLE_FT_CR == 1
         printf("%*s | ",  len_ckpt_s, state_str);
         printf("%*s | ",  len_ckpt_r, (NULL == snap_ref ?  "" : snap_ref));
         printf("%*s |",   len_ckpt_l, (NULL == snap_loc ?  "" : snap_loc));
 #endif
         printf("\n");
-        
+
     }
-    
+
     return ORTE_SUCCESS;
 }
 
@@ -828,7 +824,7 @@ static void pretty_print_dashed_line(int len) {
 
 static int gather_information(orte_ps_mpirun_info_t *hnpinfo) {
     int ret;
-    
+
     if( ORTE_SUCCESS != (ret = gather_active_jobs(hnpinfo) )) {
         goto cleanup;
     }
@@ -847,18 +843,18 @@ static int gather_information(orte_ps_mpirun_info_t *hnpinfo) {
 
 static int gather_active_jobs(orte_ps_mpirun_info_t *hnpinfo) {
     int ret;
-    
+
     if (ORTE_SUCCESS != (ret = orte_util_comm_query_job_info(&(hnpinfo->hnp->name), orte_ps_globals.jobid,
                                                              &hnpinfo->num_jobs, &hnpinfo->jobs))) {
         ORTE_ERROR_LOG(ret);
     }
-    
+
     return ret;
 }
 
 static int gather_nodes(orte_ps_mpirun_info_t *hnpinfo) {
     int ret;
-    
+
     if (ORTE_SUCCESS != (ret = orte_util_comm_query_node_info(&(hnpinfo->hnp->name), NULL,
                                                              &hnpinfo->num_nodes, &hnpinfo->nodes))) {
         ORTE_ERROR_LOG(ret);
@@ -889,10 +885,10 @@ static int gather_vpid_info(orte_ps_mpirun_info_t *hnpinfo) {
         }
 
         /* query the HNP for info on the procs in this job */
-        if (ORTE_SUCCESS != (ret = orte_util_comm_query_proc_info(&(hnpinfo->hnp->name), 
+        if (ORTE_SUCCESS != (ret = orte_util_comm_query_proc_info(&(hnpinfo->hnp->name),
                                                                   job->jobid,
-                                                                  ORTE_VPID_WILDCARD, 
-                                                                  &cnt, 
+                                                                  ORTE_VPID_WILDCARD,
+                                                                  &cnt,
                                                                   &procs))) {
             ORTE_ERROR_LOG(ret);
         }

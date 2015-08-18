@@ -6,7 +6,7 @@
  * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -14,9 +14,9 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -49,13 +49,13 @@ int mca_io_ompio_get_f_aggregator_index (ompi_file_t *fh)
 
 int mca_io_ompio_get_f_num_of_io_entries(ompi_file_t *fh)
 {
-    
+
     mca_io_ompio_data_t *data;
     mca_io_ompio_file_t *file;
-    
+
     data = (mca_io_ompio_data_t *) fh->f_io_selected_data;
     file = &data->ompio_fh;
-    
+
     return file->f_num_of_io_entries;
 }
 
@@ -79,7 +79,7 @@ int mca_io_ompio_get_fcoll_dynamic_num_io_procs (int *num_procs)
 int mca_io_ompio_get_fcoll_dynamic_constant_cbs (int *constant_cbs)
 {
     int param;
-    
+
     param = mca_base_var_find("ompi", "fcoll", "dynamic", "constant_cbs");
     if (param >= 0){
         const int *value = NULL;
@@ -97,7 +97,7 @@ int mca_io_ompio_get_fcoll_dynamic_constant_cbs (int *constant_cbs)
 
 int mca_io_ompio_get_fcoll_dynamic_cycle_buffer_size (int *cycle_buffer_size)
 {
-   
+
     int param;
 
     param = mca_base_var_find("ompi", "fcoll", "dynamic", "cycle_buffer_size");
@@ -116,7 +116,7 @@ int mca_io_ompio_get_fcoll_dynamic_cycle_buffer_size (int *cycle_buffer_size)
 int mca_io_ompio_get_f_io_array(ompi_file_t *fh,
 				mca_io_ompio_io_array_t **f_io_array)
 {
-    
+
      mca_io_ompio_data_t *data;
      mca_io_ompio_file_t *file;
 
@@ -202,7 +202,7 @@ int mca_io_ompio_generate_io_array(ompi_file_t *file,
 				   int *bytes_per_process,
 				   char *global_buf,
 				   int *tblocks,
-				   int *sorted, 
+				   int *sorted,
 				   int *nvalue,
 				   int *bytes_left_ptr,
 				   int *sorted_index)
@@ -212,11 +212,11 @@ int mca_io_ompio_generate_io_array(ompi_file_t *file,
     int k, j, x=sorted_index[0];
     int blocks = *tblocks;
     int bytes_left = bytes_left_ptr[0];
-   
-    
+
+
     data = (mca_io_ompio_data_t *) file->f_io_selected_data;
     fh = &data->ompio_fh;
-    
+
 
     if (fh->f_procs_in_group[fh->f_aggregator_index] == fh->f_rank) {
 	int global_count = *tglobal_count;
@@ -235,8 +235,8 @@ int mca_io_ompio_generate_io_array(ompi_file_t *file,
 	    free (fh->f_io_array);
 	    fh->f_io_array = NULL;
 	}
-	    
-	fh->f_io_array = (mca_io_ompio_io_array_t *) malloc 
+
+	fh->f_io_array = (mca_io_ompio_io_array_t *) malloc
 	    (OMPIO_IOVEC_INITIAL_SIZE * sizeof (mca_io_ompio_io_array_t));
 	if (NULL == fh->f_io_array) {
 	    opal_output(1, "OUT OF MEMORY\n");
@@ -288,11 +288,11 @@ int mca_io_ompio_generate_io_array(ompi_file_t *file,
 		    continue;
 		}
 		else {
-		    fh->f_io_array[k].offset = (IOVBASE_TYPE *) 
+		    fh->f_io_array[k].offset = (IOVBASE_TYPE *)
 			((OPAL_PTRDIFF_TYPE)global_fview[sorted[x]].iov_base +  (global_fview[sorted[x]].iov_len - bytes_left));
-		    
+
 		    fh->f_io_array[k].length = bytes_to_write;
-		    fh->f_io_array[k].memory_address = 
+		    fh->f_io_array[k].memory_address =
                             &global_buf[start+temp[nvalue[0]]];
 /*		    printf("global_buf[%d] : %d\n",
 		    (start+temp[nvalue[0]]),(int)global_buf[start+temp[nvalue[0]]]);*/
@@ -313,7 +313,7 @@ int mca_io_ompio_generate_io_array(ompi_file_t *file,
 /*		    printf("global_buf[%d] : %d\n",
 		    (start+temp[nvalue[0]]),(int)global_buf[start+temp[nvalue[0]]]);*/
 
-		    bytes_left = 
+		    bytes_left =
                             global_fview[sorted[x]].iov_len - bytes_to_write;
 		    bytes_to_write = 0;
 		    k ++;
@@ -327,7 +327,7 @@ int mca_io_ompio_generate_io_array(ompi_file_t *file,
 		    temp[nvalue[0]] += (int)fh->f_io_array[k].length;
 /*		    printf("global_buf[%d] : %d\n",
 		    (start+temp[nvalue[0]]),(int)global_buf[start+temp[nvalue[0]]]);*/
-		    
+
 		    bytes_to_write -= global_fview[sorted[x]].iov_len;
 		    k ++;
 		    x ++;
@@ -341,7 +341,7 @@ int mca_io_ompio_generate_io_array(ompi_file_t *file,
 			  fh->f_io_array[i].offset,
 			  fh->f_io_array[i].length);
 			  }*/
-	
+
 
 	bytes_left_ptr[0] = bytes_left;
 	sorted_index[0] = x;
@@ -366,17 +366,17 @@ int mca_io_ompio_non_contiguous_create_receive_buf(int *bytes_received,
     int current_position = 0, iov_index = 0;
 
     remaining = *bytes_received;
-    
+
     while (remaining) {
 	mem_address = (OPAL_PTRDIFF_TYPE)
 	    (decoded_iov[iov_index].iov_base) + current_position;
-	
-	if (remaining >= 
+
+	if (remaining >=
 	    (decoded_iov[iov_index].iov_len - current_position)) {
 	    memcpy ((IOVBASE_TYPE *) mem_address,
 		    receive_buf+temp_position,
 		    decoded_iov[iov_index].iov_len - current_position);
-	    remaining = remaining - 
+	    remaining = remaining -
 		(decoded_iov[iov_index].iov_len - current_position);
 	    temp_position = temp_position +
 		(decoded_iov[iov_index].iov_len - current_position);
@@ -408,17 +408,17 @@ int mca_io_ompio_non_contiguous_create_send_buf(int *bytes_sent,
     size_t remaining = 0;
     size_t temp_position = 0;
     int current_position = 0, iov_index = 0;
-    
+
     remaining = *bytes_sent;
     while (remaining) {
 	mem_address = (OPAL_PTRDIFF_TYPE)
 	    (decoded_iov[iov_index].iov_base) + current_position;
-	if (remaining >= 
+	if (remaining >=
                     (decoded_iov[iov_index].iov_len - current_position)) {
 	    memcpy (send_buf+temp_position,
 		    (IOVBASE_TYPE *)mem_address,
 		    decoded_iov[iov_index].iov_len - current_position);
-	    remaining = remaining - 
+	    remaining = remaining -
 		(decoded_iov[iov_index].iov_len - current_position);
 	    temp_position = temp_position +
 		(decoded_iov[iov_index].iov_len - current_position);
@@ -436,20 +436,20 @@ int mca_io_ompio_non_contiguous_create_send_buf(int *bytes_sent,
 }
 
 
- 
+
 int mca_io_ompio_get_datatype_size (ompi_datatype_t * datatype)
 {
     return datatype->super.size;
 }
 
-int mca_io_ompio_decode_datatype_external (ompi_file_t *fp, 
+int mca_io_ompio_decode_datatype_external (ompi_file_t *fp,
 					   ompi_datatype_t *datatype,
 					   int count,
 					   void *buf,
 					   size_t *max_data,
 					   struct iovec **iov,
 					   uint32_t *iovec_count)
-{                      
+{
 
      int res;
      mca_io_ompio_data_t *data;
@@ -464,7 +464,7 @@ int mca_io_ompio_decode_datatype_external (ompi_file_t *fp,
 					  max_data,
 					  iov,
 					  iovec_count);
-     if(res != OMPI_SUCCESS){ 
+     if(res != OMPI_SUCCESS){
 	 printf("Error in ompio decode datatype\n");
 	 return res;
      }
@@ -477,7 +477,7 @@ int mca_io_ompio_datatype_is_contiguous(ompi_datatype_t *datatype,
 {
     mca_io_ompio_data_t *data;
     mca_io_ompio_file_t *fh;
-    
+
     data = (mca_io_ompio_data_t *) fp->f_io_selected_data;
     fh = &data->ompio_fh;
 
@@ -504,7 +504,7 @@ int mca_io_ompio_set_aggregator_props (ompi_file_t *fp,
 					      num_aggregators,
 					      bytes_per_proc);
     if(res != OMPI_SUCCESS){
-	printf("Error in aggregator props external\n"); 
+	printf("Error in aggregator props external\n");
 	return res;
     }
 
@@ -538,14 +538,14 @@ int mca_io_ompio_free_f_io_array (ompi_file_t *fp){
 
     mca_io_ompio_data_t *data;
     mca_io_ompio_file_t *fh;
-    
+
     data = (mca_io_ompio_data_t *) fp->f_io_selected_data;
     fh = &data->ompio_fh;
-    
+
     if (NULL != fh->f_io_array) {
 	free (fh->f_io_array);
 	fh->f_io_array = NULL;
     }
-    
+
     return OMPI_SUCCESS;
 }

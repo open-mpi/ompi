@@ -40,12 +40,12 @@ int mca_sharedfp_addproc_request_position(struct mca_sharedfp_base_data_t * sh,
 
     *offset = 0;
 
-    ret = MCA_PML_CALL(send( &sendBuff, count, OMPI_OFFSET_DATATYPE, 0, REQUEST_TAG, 
+    ret = MCA_PML_CALL(send( &sendBuff, count, OMPI_OFFSET_DATATYPE, 0, REQUEST_TAG,
 			     MCA_PML_BASE_SEND_STANDARD, addproc_data->intercom));
     if ( OMPI_SUCCESS != ret ) {
 	return ret;
     }
-    ret = MCA_PML_CALL(recv( &position, count, OMPI_OFFSET_DATATYPE, 0, OFFSET_TAG, 
+    ret = MCA_PML_CALL(recv( &position, count, OMPI_OFFSET_DATATYPE, 0, OFFSET_TAG,
 			     addproc_data->intercom, MPI_STATUS_IGNORE));
 
     *offset = position;

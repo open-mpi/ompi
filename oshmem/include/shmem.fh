@@ -33,9 +33,9 @@
       integer SHMEM_REDUCE_MIN_WRKDATA_SIZE
       parameter ( SHMEM_REDUCE_MIN_WRKDATA_SIZE = 8 )
 
-!     
+!
 !     waits
-!     
+!
       integer SHMEM_CMP_EQ
       parameter ( SHMEM_CMP_EQ = 0 )
       integer SHMEM_CMP_NE

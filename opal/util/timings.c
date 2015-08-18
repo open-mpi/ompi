@@ -2,9 +2,9 @@
  * Copyright (C) 2014      Artem Polyakov <artpol84@gmail.com>
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -15,9 +15,7 @@
 #include <stdio.h>
 #include <unistd.h>
 
-#ifdef HAVE_STRING_H
 #include <string.h>
-#endif
 
 #include <errno.h>
 #ifdef HAVE_SYS_TYPES_H
@@ -204,7 +202,7 @@ static get_ts_t _init_timestamping(opal_timer_type_t type)
 static opal_timing_event_t *opal_timing_event_alloc(opal_timing_t *t)
 {
     if( t->buffer_offset >= t->buffer_size ){
-        // notch timings overhead 
+        // notch timings overhead
         double alloc_begin = t->get_ts();
 
         t->buffer = malloc(sizeof(opal_timing_event_t)*t->buffer_size);
@@ -218,7 +216,7 @@ static opal_timing_event_t *opal_timing_event_alloc(opal_timing_t *t)
         t->buffer_offset = 0;
         t->buffer[0].fib = 1;
         t->buffer[0].ts_ovh = alloc_end - alloc_begin;
-    } 
+    }
     int tmp = t->buffer_offset;
     (t->buffer_offset)++;
     return t->buffer + tmp;
@@ -462,7 +460,7 @@ int opal_timing_report(opal_timing_t *t, char *fname)
     }
 
     _prepare_descriptions(t, &descr);
-    
+
     buf = malloc(OPAL_TIMING_OUTBUF_SIZE+1);
     if( buf == NULL ){
         rc = OPAL_ERR_OUT_OF_RESOURCE;

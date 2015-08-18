@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
- *   Copyright (C) 2008 University of Chicago. 
+/*
+ *   Copyright (C) 2008 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -39,7 +39,7 @@ void ADIOI_Calc_file_realms (ADIO_File fd, ADIO_Offset min_st_offset,
 {
     int nprocs_for_coll;
     int file_realm_calc_type;
-    
+
     MPI_Datatype *file_realm_types = NULL;
     ADIO_Offset *file_realm_st_offs = NULL;
 
@@ -49,8 +49,8 @@ void ADIOI_Calc_file_realms (ADIO_File fd, ADIO_Offset min_st_offset,
 #ifdef DEBUG
     printf ("ADIOI_Calc_file_realms\n");
 #endif
-    
-    nprocs_for_coll = fd->hints->cb_nodes;    
+
+    nprocs_for_coll = fd->hints->cb_nodes;
     file_realm_calc_type = fd->hints->cb_fr_type;
 
     /* If PFRs are disabled we know these pointers are not allocated */
@@ -85,7 +85,7 @@ void ADIOI_Calc_file_realms (ADIO_File fd, ADIO_Offset min_st_offset,
 	    ADIOI_Malloc (nprocs_for_coll * sizeof(ADIO_Offset));
 	file_realm_types   = (MPI_Datatype *)
 	    ADIOI_Malloc (nprocs_for_coll * sizeof(MPI_Datatype));
-	
+
 	if (file_realm_calc_type == ADIOI_FR_AAR) {
 	    ADIOI_Calc_file_realms_aar (fd, nprocs_for_coll,
 					fd->hints->cb_pfr,
@@ -218,7 +218,7 @@ void ADIOI_Calc_file_realms_fsize (ADIO_File fd, int nprocs_for_coll,
     MPI_Datatype simpletype;
 
     ADIO_Fcntl (fd, ADIO_FCNTL_GET_FSIZE, &fcntl_struct, &error_code);
-    
+
     /* use impending file size since a write call may lengthen the file */
     fsize = ADIOI_MAX (fcntl_struct.fsize, max_end_offset+1);
     fr_size = (fsize + nprocs_for_coll - 1) / nprocs_for_coll;
@@ -274,7 +274,7 @@ int ADIOI_Agg_idx (int rank, ADIO_File fd) {
 static void align_fr (int fr_size, ADIO_Offset fr_off, int alignment,
 	       int *aligned_fr_size, ADIO_Offset *aligned_fr_off) {
     *aligned_fr_off = fr_off - (fr_off % alignment);
-    *aligned_fr_size = ((fr_off + fr_size) / alignment) * alignment - 
+    *aligned_fr_size = ((fr_off + fr_size) / alignment) * alignment -
 	*aligned_fr_off;
     if ((fr_off + fr_size) % alignment)
 	*aligned_fr_size += alignment;

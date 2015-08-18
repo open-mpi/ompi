@@ -4,9 +4,9 @@
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -27,6 +27,10 @@
 
 static const char FUNC_NAME[] = "MPI_Win_get_info";
 
+static void _win_info_set (ompi_info_t *info, const char *key, int set)
+{
+    ompi_info_set (info, key, set ? "true" : "false");
+}
 
 int MPI_Win_get_info(MPI_Win win, MPI_Info *info_used)
 {
@@ -50,11 +54,10 @@ int MPI_Win_get_info(MPI_Win win, MPI_Info *info_used)
 
     if (OMPI_SUCCESS == ret && *info_used) {
         /* set standard info keys based on what the OSC module is using */
-        if (win->w_flags & OMPI_WIN_NO_LOCKS) {
-            ompi_info_set (*info_used, "no_locks", "true");
-        } else {
-            ompi_info_set (*info_used, "no_locks", "false");
-        }
+
+        _win_info_set (*info_used, "no_locks", win->w_flags & OMPI_WIN_NO_LOCKS);
+        _win_info_set (*info_used, "same_size", win->w_flags & OMPI_WIN_SAME_SIZE);
+        _win_info_set (*info_used, "same_disp_unit", win->w_flags & OMPI_WIN_SAME_DISP);
     }
 
     OMPI_ERRHANDLER_RETURN(ret, win, ret, FUNC_NAME);

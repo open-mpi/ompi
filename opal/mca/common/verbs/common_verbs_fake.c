@@ -82,7 +82,9 @@ static struct ibv_device *fake_driver_init(const char *uverbs_sys_path,
                             value, sizeof(value)) < 0) {
         return NULL;
     }
-    sscanf(value, "%i", &vendor);
+    if (sscanf(value, "%i", &vendor) != 1) {
+        return NULL;
+    }
 
     if (vendor == PCI_VENDOR_ID_CISCO) {
         return &fake_dev;

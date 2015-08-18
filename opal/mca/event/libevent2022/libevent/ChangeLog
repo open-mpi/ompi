@@ -1308,11 +1308,11 @@ Changes in 2.0.1-alpha (17 Apr 2009):
  o Correct handling of trailing headers in chunked replies; from Scott Lamb.
  o Support multi-line HTTP headers; based on a patch from Moshe Litvin
  o Reject negative Content-Length headers; anonymous bug report
- o Detect CLOCK_MONOTONIC at runtime for evdns; anonymous bug report	
+ o Detect CLOCK_MONOTONIC at runtime for evdns; anonymous bug report
  o Various HTTP correctness fixes from Scott Lamb
  o Fix a bug where deleting signals with the kqueue backend would cause subsequent adds to fail
  o Support multiple events listening on the same signal; make signals regular events that go on the same event queue; problem report by Alexander Drozdov.
- o Fix a problem with epoll() and reinit; problem report by Alexander Drozdov.	
+ o Fix a problem with epoll() and reinit; problem report by Alexander Drozdov.
  o Fix off-by-one errors in devpoll; from Ian Bell
  o Make event_add not change any state if it fails; reported by Ian Bell.
  o Fix a bug where headers arriving in multiple packets were not parsed; fix from Jiang Hong; test by me.

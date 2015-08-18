@@ -423,11 +423,11 @@ int opal_dss_pack_data_type(opal_buffer_t *buffer, const void *src, int32_t num_
                             opal_data_type_t type)
 {
     int ret;
-    
+
     /* Turn around and pack the real type */
     if (OPAL_SUCCESS != (ret = opal_dss_pack_buffer(buffer, src, num_vals, OPAL_DATA_TYPE_T))) {
     }
-    
+
     return ret;
 }
 
@@ -469,9 +469,9 @@ int opal_dss_pack_pstat(opal_buffer_t *buffer, const void *src,
     int32_t i;
     int ret;
     char *cptr;
-    
+
     ptr = (opal_pstats_t **) src;
-    
+
     for (i = 0; i < num_vals; ++i) {
         cptr = ptr[i]->node;
         if (OPAL_SUCCESS != (ret = opal_dss_pack_buffer(buffer, &cptr, 1, OPAL_STRING))) {
@@ -622,7 +622,7 @@ int opal_dss_pack_node_stat(opal_buffer_t *buffer, const void *src,
     opal_netstats_t *ns;
 
     ptr = (opal_node_stats_t **) src;
-    
+
     for (i = 0; i < num_vals; ++i) {
         if (OPAL_SUCCESS != (ret = opal_dss_pack_float(buffer, &ptr[i]->la, 1, OPAL_FLOAT))) {
             return ret;
@@ -702,7 +702,7 @@ int opal_dss_pack_value(opal_buffer_t *buffer, const void *src,
     int ret;
 
     ptr = (opal_value_t **) src;
-    
+
     for (i = 0; i < num_vals; ++i) {
         /* pack the key and type */
         if (OPAL_SUCCESS != (ret = opal_dss_pack_string(buffer, &ptr[i]->key, 1, OPAL_STRING))) {
@@ -1132,7 +1132,7 @@ int opal_dss_pack_buffer_contents(opal_buffer_t *buffer, const void *src,
     int ret;
 
     ptr = (opal_buffer_t **) src;
-    
+
     for (i = 0; i < num_vals; ++i) {
         /* pack the number of bytes */
         OPAL_OUTPUT((opal_dss_verbose, "opal_dss_pack_buffer_contents: bytes_used %u\n", (unsigned)ptr[i]->bytes_used));

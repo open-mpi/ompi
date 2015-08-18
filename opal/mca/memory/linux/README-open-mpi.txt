@@ -74,7 +74,7 @@ variables are set, we don't enable the memory hooks.
 We then use the following matrix to determine whether to enable the
 memory hooks or not (explanation of the matrix is below):
 
-       lp / lpp   yes   no   runtime   not found       
+       lp / lpp   yes   no   runtime   not found
        yes        yes   yes  yes       yes
        no         yes   no   no        no
        runtime    yes   no   runtime   runtime

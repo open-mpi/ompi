@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -16,9 +16,9 @@
  * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -26,9 +26,7 @@
 #include "orte_config.h"
 #include "orte/constants.h"
 
-#ifdef HAVE_STRING_H
 #include <string.h>
-#endif
 
 #include "opal/class/opal_ring_buffer.h"
 #include "orte/mca/mca.h"
@@ -92,7 +90,7 @@ static int orte_odls_base_close(void)
         OBJ_RELEASE(item);
     }
     OBJ_DESTRUCT(&orte_odls_globals.xterm_ranks);
-    
+
     /* cleanup the global list of local children and job data */
     for (i=0; i < orte_local_children->size; i++) {
         if (NULL != (proc = (orte_proc_t*)opal_pointer_array_get_item(orte_local_children, i))) {
@@ -128,7 +126,7 @@ static int orte_odls_base_open(mca_base_open_flag_t flags)
     /* initialize ODLS globals */
     OBJ_CONSTRUCT(&orte_odls_globals.xterm_ranks, opal_list_t);
     orte_odls_globals.xtermcmd = NULL;
-    
+
     /* check if the user requested that we display output in xterms */
     if (NULL != orte_xterm) {
         /* construct a list of ranks to be displayed */
@@ -175,7 +173,7 @@ static int orte_odls_base_open(mca_base_open_flag_t flags)
         }
         opal_argv_append_nosize(&orte_odls_globals.xtermcmd, "-e");
     }
-    
+
      /* Open up all available components */
     return mca_base_framework_components_open(&orte_odls_base_framework, flags);
 }

@@ -11,9 +11,7 @@
 
 
 #include "ompi_config.h"
-#ifdef HAVE_STDLIB_H
 #include <stdlib.h>
-#endif  /* HAVE_STDLIB_H */
 
 #include "coll_ml.h"
 #include "coll_ml_inlines.h"

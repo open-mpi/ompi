@@ -852,7 +852,7 @@ int mca_base_var_deregister(int vari)
         var->mbv_storage->stringval) {
         free (var->mbv_storage->stringval);
         var->mbv_storage->stringval = NULL;
-    } else if (MCA_BASE_VAR_TYPE_BOOL != var->mbv_type && NULL != var->mbv_enumerator) {
+    } else if (var->mbv_enumerator && !var->mbv_enumerator->enum_is_static) {
         OBJ_RELEASE(var->mbv_enumerator);
     }
 
@@ -1486,7 +1486,9 @@ static int register_variable (const char *project_name, const char *framework_na
             OBJ_RELEASE (var->mbv_enumerator);
         }
 
-        OBJ_RETAIN(enumerator);
+        if (!enumerator->enum_is_static) {
+            OBJ_RETAIN(enumerator);
+        }
     }
 
     var->mbv_enumerator = enumerator;
@@ -1847,7 +1849,7 @@ static void var_destructor(mca_base_var_t *var)
     }
 
     /* don't release the boolean enumerator */
-    if (MCA_BASE_VAR_TYPE_BOOL != var->mbv_type && NULL != var->mbv_enumerator) {
+    if (var->mbv_enumerator && !var->mbv_enumerator->enum_is_static) {
         OBJ_RELEASE(var->mbv_enumerator);
     }
 
@@ -1860,6 +1862,7 @@ static void var_destructor(mca_base_var_t *var)
     if (NULL != var->mbv_long_name) {
         free(var->mbv_long_name);
     }
+
     if (NULL != var->mbv_description) {
         free(var->mbv_description);
     }

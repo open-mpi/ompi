@@ -38,15 +38,18 @@ AC_DEFUN([OMPI_EXT],[
     #
     AC_ARG_ENABLE(mpi-ext,
         AC_HELP_STRING([--enable-mpi-ext[=LIST]],
-                       [Comma-separated list of extensions that should be built.  Possible values: ompi_mpiext_list.  Example: "--enable-mpi-ext=foo,bar" will enable building the MPI extensions "foo" and "bar".  If LIST is empty or the special value "all", then all available MPI extensions will be built (default: none).]))
+                       [Comma-separated list of extensions that should be built.  Possible values: ompi_mpiext_list.  Example: "--enable-mpi-ext=foo,bar" will enable building the MPI extensions "foo" and "bar".  If LIST is empty or the special value "all", then all available MPI extensions will be built (default: all).]))
 
     # print some nice messages about what we're about to do...
     AC_MSG_CHECKING([for available MPI Extensions])
     AC_MSG_RESULT([ompi_mpiext_list])
 
     AC_MSG_CHECKING([which MPI extension should be enabled])
-    if test "$enable_mpi_ext" = "yes" || test "$enable_mpi_ext" = "all"; then
-        msg="All Extensions"
+    if test "$enable_mpi_ext" = "" || \
+       test "$enable_mpi_ext" = "yes" || \
+       test "$enable_mpi_ext" = "all"; then
+        enable_mpi_ext=all
+        msg="All Available Extensions"
         str="`echo ENABLE_EXT_ALL=1`"
         eval $str
     else
@@ -173,7 +176,7 @@ EOF
     # Make an AM conditional to see whether we're building the mpi_ext
     # module.  Note that we only build it if we support the ignore-tkr
     # mpi module.
-    AS_IF([test $OMPI_BUILD_FORTRAN_USEMPI_BINDINGS -eq 1 && \
+    AS_IF([test $OMPI_BUILD_FORTRAN_BINDINGS -ge $OMPI_FORTRAN_USEMPI_BINDINGS && \
            test $OMPI_FORTRAN_HAVE_IGNORE_TKR -eq 1],
           [OMPI_BUILD_FORTRAN_USEMPI_EXT=1],
           [OMPI_BUILD_FORTRAN_USEMPI_EXT=0])
@@ -210,7 +213,7 @@ EOF
 
     # Only build this mpi_f08_ext module if we're building the "use
     # mpi_f08" module *and* it's the non-descriptor one.
-    AS_IF([test $OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS -eq 1 && \
+    AS_IF([test $OMPI_BUILD_FORTRAN_BINDINGS -ge $OMPI_FORTRAN_USEMPIF08_BINDINGS && \
            test $OMPI_BUILD_FORTRAN_F08_SUBARRAYS -eq 0],
           [OMPI_BUILD_FORTRAN_USEMPIF08_EXT=1],
           [OMPI_BUILD_FORTRAN_USEMPIF08_EXT=0])
@@ -453,7 +456,7 @@ AC_DEFUN([EXT_PROCESS_COMPONENT],[
 
     AC_MSG_CHECKING([if MPI Extension $component has C bindings])
 
-    AS_IF([test ! -e "$test_header"],
+    AS_IF([test ! -e "$test_header" && test ! -e "$test_header.in"],
           [ # There *must* be C bindings
            AC_MSG_RESULT([no])
            AC_MSG_WARN([C bindings for MPI extensions are required])

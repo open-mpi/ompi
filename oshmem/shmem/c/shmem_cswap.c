@@ -2,9 +2,9 @@
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 #include "oshmem_config.h"
@@ -17,7 +17,7 @@
 #include "oshmem/mca/atomic/atomic.h"
 
 /*
- * shmem_cswap performs an atomic conditional swap operation. 
+ * shmem_cswap performs an atomic conditional swap operation.
  * The conditional swap routines write value to address target on PE pe, and return the previous
  * contents of target. The replacement must occur only if cond is equal to target;
  * otherwise target is left unchanged. In either case, the routine must return the initial value

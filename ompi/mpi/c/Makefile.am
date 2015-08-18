@@ -5,7 +5,7 @@
 # Copyright (c) 2004-2013 The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
-# Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+# Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
@@ -16,9 +16,9 @@
 # Copyright (c) 2013      Los Alamos National Security, LLC. All rights
 #                         reserved.
 # $COPYRIGHT$
-# 
+#
 # Additional copyrights may follow
-# 
+#
 # $HEADER$
 #
 
@@ -26,7 +26,7 @@ SUBDIRS = profile
 
 #
 # OMPI_PRPOFILING_DEFINES flag s enabled when we want our MPI_* symbols
-# to be replaced by PMPI_*. In other words, this flag decides 
+# to be replaced by PMPI_*. In other words, this flag decides
 # whether "profile/defines.h" is included or not. "profile/defines.h"
 # replaces all MPI_* symbols with PMPI_* symbols. In this directory,
 # we need it to be 0
@@ -406,10 +406,14 @@ libmpi_c_mpi_la_SOURCES += \
         file_get_type_extent.c \
         file_get_view.c \
         file_iread_at.c \
+        file_iread_at_all.c \
         file_iread.c \
+        file_iread_all.c \
         file_iread_shared.c \
         file_iwrite_at.c \
+        file_iwrite_at_all.c \
         file_iwrite.c \
+        file_iwrite_all.c \
         file_iwrite_shared.c \
         file_open.c \
         file_preallocate.c \

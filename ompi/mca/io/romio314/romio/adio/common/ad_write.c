@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 2004 University of Chicago. 
+ *   Copyright (C) 2004 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -95,7 +95,7 @@ void ADIOI_GEN_WriteContig(ADIO_File fd, const void *buf, int count,
     fd->fp_sys_posn = offset + bytes_xfered;
 
     if (file_ptr_type == ADIO_INDIVIDUAL) {
-	fd->fp_ind += bytes_xfered; 
+	fd->fp_ind += bytes_xfered;
     }
 
 #ifdef ROMIO_GPFS

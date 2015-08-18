@@ -5,16 +5,16 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 /*
@@ -212,6 +212,15 @@ JNIEXPORT jlongArray JNICALL Java_mpi_Comm_iDup(
     cr[1] = (jlong)request;
     (*env)->ReleasePrimitiveArrayCritical(env, jcr, cr, 0);
     return jcr;
+}
+
+JNIEXPORT jlong JNICALL Java_mpi_Comm_dupWithInfo(
+        JNIEnv *env, jobject jthis, jlong comm, jlong info)
+{
+    MPI_Comm newcomm;
+    int rc = MPI_Comm_dup_with_info((MPI_Comm)comm, (MPI_Info)info, &newcomm);
+    ompi_java_exceptionCheck(env, rc);
+    return (jlong)newcomm;
 }
 
 JNIEXPORT jint JNICALL Java_mpi_Comm_getSize(
@@ -1579,6 +1588,82 @@ JNIEXPORT jlong JNICALL Java_mpi_Comm_iAllToAllv(
     ompi_java_forgetIntArray(env, sDispls, jSDispls, cSDispls);
     ompi_java_forgetIntArray(env, rDispls, jRDispls, cRDispls);
     return (jlong)request;
+}
+
+JNIEXPORT void JNICALL Java_mpi_Comm_allToAllw(
+		JNIEnv *env, jobject jthis, jlong jComm,
+		jobject sendBuf, jintArray sCount, jintArray sDispls, jlongArray sTypes,
+		jobject recvBuf, jintArray rCount, jintArray rDispls, jlongArray rTypes)
+{
+	MPI_Comm     comm  = (MPI_Comm)jComm;
+
+	jlong* jSTypes, *jRTypes;
+	MPI_Datatype *cSTypes, *cRTypes;
+
+	ompi_java_getDatatypeArray(env, sTypes, &jSTypes, &cSTypes);
+	ompi_java_getDatatypeArray(env, rTypes, &jRTypes, &cRTypes);
+
+	jint *jSCount, *jRCount, *jSDispls, *jRDispls;
+	int  *cSCount, *cRCount, *cSDispls, *cRDispls;
+	ompi_java_getIntArray(env, sCount,  &jSCount,  &cSCount);
+	ompi_java_getIntArray(env, rCount,  &jRCount,  &cRCount);
+	ompi_java_getIntArray(env, sDispls, &jSDispls, &cSDispls);
+	ompi_java_getIntArray(env, rDispls, &jRDispls, &cRDispls);
+
+	void *sPtr = ompi_java_getDirectBufferAddress(env, sendBuf),
+	     *rPtr = ompi_java_getDirectBufferAddress(env, recvBuf);
+
+	int rc = MPI_Alltoallw(
+			sPtr, cSCount, cSDispls, cSTypes,
+			rPtr, cRCount, cRDispls, cRTypes, comm);
+
+	ompi_java_exceptionCheck(env, rc);
+	ompi_java_forgetIntArray(env, sCount,  jSCount,  cSCount);
+	ompi_java_forgetIntArray(env, rCount,  jRCount,  cRCount);
+	ompi_java_forgetIntArray(env, sDispls, jSDispls, cSDispls);
+	ompi_java_forgetIntArray(env, rDispls, jRDispls, cRDispls);
+	ompi_java_forgetDatatypeArray(env, sTypes, jSTypes, cSTypes);
+	ompi_java_forgetDatatypeArray(env, rTypes, jRTypes, cRTypes);
+}
+
+JNIEXPORT jlong JNICALL Java_mpi_Comm_iAllToAllw(
+		JNIEnv *env, jobject jthis, jlong jComm,
+				jobject sendBuf, jintArray sCount, jintArray sDispls, jlongArray sTypes,
+				jobject recvBuf, jintArray rCount, jintArray rDispls, jlongArray rTypes)
+{
+	MPI_Comm     comm  = (MPI_Comm)jComm;
+
+	jlong* jSTypes, *jRTypes;
+	MPI_Datatype *cSTypes, *cRTypes;
+
+	ompi_java_getDatatypeArray(env, sTypes, &jSTypes, &cSTypes);
+	ompi_java_getDatatypeArray(env, rTypes, &jRTypes, &cRTypes);
+
+	jint *jSCount, *jRCount, *jSDispls, *jRDispls;
+	int  *cSCount, *cRCount, *cSDispls, *cRDispls;
+	ompi_java_getIntArray(env, sCount,  &jSCount,  &cSCount);
+	ompi_java_getIntArray(env, rCount,  &jRCount,  &cRCount);
+	ompi_java_getIntArray(env, sDispls, &jSDispls, &cSDispls);
+	ompi_java_getIntArray(env, rDispls, &jRDispls, &cRDispls);
+
+	void *sPtr = ompi_java_getDirectBufferAddress(env, sendBuf),
+	     *rPtr = ompi_java_getDirectBufferAddress(env, recvBuf);
+
+	MPI_Request request;
+
+	int rc = MPI_Ialltoallw(
+			sPtr, cSCount, cSDispls, cSTypes,
+			rPtr, cRCount, cRDispls, cRTypes, comm, &request);
+
+	ompi_java_exceptionCheck(env, rc);
+	ompi_java_forgetIntArray(env, sCount,  jSCount,  cSCount);
+	ompi_java_forgetIntArray(env, rCount,  jRCount,  cRCount);
+	ompi_java_forgetIntArray(env, sDispls, jSDispls, cSDispls);
+	ompi_java_forgetIntArray(env, rDispls, jRDispls, cRDispls);
+	ompi_java_forgetDatatypeArray(env, sTypes, jSTypes, cSTypes);
+	ompi_java_forgetDatatypeArray(env, rTypes, jRTypes, cRTypes);
+
+	return (jlong)request;
 }
 
 JNIEXPORT void JNICALL Java_mpi_Comm_neighborAllGather(

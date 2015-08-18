@@ -30,7 +30,7 @@ do{                                                             \
            *active_requests ^= (1<<j);                          \
        }                                                        \
     }                                                           \
-}while(0)                                       
+}while(0)
 
 
 
@@ -75,18 +75,18 @@ int bcol_basesmuma_k_nomial_barrier_init(bcol_function_args_t *input_args,
     int matched = 0;
     int64_t sequence_number=input_args->sequence_num;
     int my_rank = bcol_module->super.sbgp_partner_module->my_index;
-    
-    volatile mca_bcol_basesmuma_payload_t *data_buffs; 
+
+    volatile mca_bcol_basesmuma_payload_t *data_buffs;
 
     /* control structures */
     volatile mca_bcol_basesmuma_header_t *my_ctl_pointer;
     volatile mca_bcol_basesmuma_header_t *peer_ctl_pointer;
-#if 0 
+#if 0
     fprintf(stderr,"entering sm barrier sn = %d buff index = %d\n",sequence_number,input_args->buffer_index);
 #endif
     /* initialize the iteration counter */
-    buff_idx = input_args->buffer_index; 
-    leading_dim = bcol_module->colls_no_user_data.size_of_group; 
+    buff_idx = input_args->buffer_index;
+    leading_dim = bcol_module->colls_no_user_data.size_of_group;
     idx=SM_ARRAY_INDEX(leading_dim,buff_idx,0);
     data_buffs=(volatile mca_bcol_basesmuma_payload_t *)
         bcol_module->colls_with_user_data.data_buffs+idx;
@@ -99,15 +99,15 @@ int bcol_basesmuma_k_nomial_barrier_init(bcol_function_args_t *input_args,
     *iteration = 0;
     *active_requests = 0;
     *status = 0;
-    
+
     /* k-nomial parameters */
     tree_order = exchange_node->tree_order;
     pow_k = exchange_node->log_tree_order;
 
-    /* calculate the maximum number of requests 
-     * at each level each rank communicates with 
-     * at most (k - 1) peers 
-     * so if we set k - 1 bit fields in "max_requests", then 
+    /* calculate the maximum number of requests
+     * at each level each rank communicates with
+     * at most (k - 1) peers
+     * so if we set k - 1 bit fields in "max_requests", then
      * we have max_request  == 2^(k - 1) -1
      */
     for(i = 0; i < (tree_order - 1); i++){
@@ -131,9 +131,9 @@ int bcol_basesmuma_k_nomial_barrier_init(bcol_function_args_t *input_args,
         for( i = 0; i < cm->num_to_probe && (0 == matched); i++ ) {
             if(IS_PEER_READY(peer_ctl_pointer, ready_flag, sequence_number, BARRIER_RKING_FLAG, bcol_id)){
                 matched = 1;
-                
+
                 goto FINISHED;
-            } 
+            }
 
         }
 
@@ -146,14 +146,14 @@ int bcol_basesmuma_k_nomial_barrier_init(bcol_function_args_t *input_args,
         /* I am a proxy for someone */
         src = exchange_node->rank_extra_sources_array[0];
         peer_ctl_pointer = data_buffs[src].ctl_struct;
-        
+
         /* probe for extra rank's arrival */
         for( i = 0; i < cm->num_to_probe && ( 0 == matched); i++) {
             if(IS_PEER_READY(peer_ctl_pointer,ready_flag, sequence_number, BARRIER_RKING_FLAG, bcol_id)){
                 matched = 1;
                 /* copy it in */
                 goto MAIN_PHASE;
-            } 
+            }
         }
         *status = ready_flag;
         *iteration = -1;
@@ -173,21 +173,21 @@ MAIN_PHASE:
         CALC_ACTIVE_REQUESTS(active_requests,exchange_node->rank_exchanges[*iteration],tree_order);
         /* Now post the recv's */
         for( j = 0; j < (tree_order - 1); j++ ) {
-            
+
             /* recv phase */
             src = exchange_node->rank_exchanges[*iteration][j];
             if( src < 0 ) {
-                /* then not a valid rank, continue */ 
+                /* then not a valid rank, continue */
                 continue;
             }
 
             peer_ctl_pointer = data_buffs[src].ctl_struct;
             if( !(*active_requests&(1<<j))) {
-               /* then the bit hasn't been set, thus this peer 
-                * hasn't been processed at this level 
+               /* then the bit hasn't been set, thus this peer
+                * hasn't been processed at this level
                 * I am putting the probe loop as the inner most loop to achieve
-                * better temporal locality, this comes at a cost to asynchronicity 
-                * but should get better cache performance 
+                * better temporal locality, this comes at a cost to asynchronicity
+                * but should get better cache performance
                 */
                 matched = 0;
                 for( probe = 0; probe < cm->num_to_probe && (0 == matched); probe++){
@@ -197,7 +197,7 @@ MAIN_PHASE:
                         *active_requests ^= (1<<j);
                     }
                 }
-            } 
+            }
 
 
         }
@@ -260,7 +260,7 @@ int bcol_basesmuma_k_nomial_barrier_progress(bcol_function_args_t *input_args,
     int max_requests = 0; /* critical to set this */
     int pow_k, tree_order;
     int bcol_id = (int) bcol_module->super.bcol_id;
-    
+
     int matched = 0;
     int64_t sequence_number=input_args->sequence_num;
     int my_rank = bcol_module->super.sbgp_partner_module->my_index;
@@ -270,29 +270,29 @@ int bcol_basesmuma_k_nomial_barrier_progress(bcol_function_args_t *input_args,
     /* control structures */
     volatile mca_bcol_basesmuma_header_t *my_ctl_pointer;
     volatile mca_bcol_basesmuma_header_t *peer_ctl_pointer;
-#if 0 
+#if 0
     fprintf(stderr,"%d: entering sm allgather progress active requests %d iter %d ready_flag %d\n",my_rank,
             *active_requests,*iter,*status);
 #endif
-    buff_idx = buffer_index; 
-    leading_dim=bcol_module->colls_no_user_data.size_of_group; 
+    buff_idx = buffer_index;
+    leading_dim=bcol_module->colls_no_user_data.size_of_group;
     idx=SM_ARRAY_INDEX(leading_dim,buff_idx,0);
-  
+
     data_buffs=(volatile mca_bcol_basesmuma_payload_t *)
                 bcol_module->colls_with_user_data.data_buffs+idx;
     my_ctl_pointer = data_buffs[my_rank].ctl_struct;
-    
+
     /* increment the starting flag by one and return */
     flag_offset = my_ctl_pointer->starting_flag_value[bcol_id];
     ready_flag = *status;
     /* k-nomial parameters */
     tree_order = exchange_node->tree_order;
     pow_k = exchange_node->log_tree_order;
-    
-    /* calculate the maximum number of requests 
-     * at each level each rank communicates with 
-     * at most (k - 1) peers 
-     * so if we set k - 1 bit fields in "max_requests", then 
+
+    /* calculate the maximum number of requests
+     * at each level each rank communicates with
+     * at most (k - 1) peers
+     * so if we set k - 1 bit fields in "max_requests", then
      * we have max_request  == 2^(k - 1) -1
      */
     for(i = 0; i < (tree_order - 1); i++){
@@ -314,9 +314,9 @@ int bcol_basesmuma_k_nomial_barrier_progress(bcol_function_args_t *input_args,
         for( i = 0; i < cm->num_to_probe && (0 == matched); i++ ) {
             if(IS_PEER_READY(peer_ctl_pointer, ready_flag, sequence_number, BARRIER_RKING_FLAG, bcol_id)){
                 matched = 1;
-                
+
                 goto FINISHED;
-            } 
+            }
 
         }
 
@@ -328,7 +328,7 @@ int bcol_basesmuma_k_nomial_barrier_progress(bcol_function_args_t *input_args,
         /* I am a proxy for someone */
         src = exchange_node->rank_extra_sources_array[0];
         peer_ctl_pointer = data_buffs[src].ctl_struct;
-        
+
         /* probe for extra rank's arrival */
         for( i = 0; i < cm->num_to_probe && ( 0 == matched); i++) {
             if(IS_PEER_READY(peer_ctl_pointer,ready_flag, sequence_number, BARRIER_RKING_FLAG, bcol_id)){
@@ -337,7 +337,7 @@ int bcol_basesmuma_k_nomial_barrier_progress(bcol_function_args_t *input_args,
                 ready_flag++;
                 *iteration = 0;
                 goto MAIN_PHASE;
-            } 
+            }
         }
         return BCOL_FN_STARTED;
 
@@ -354,11 +354,11 @@ MAIN_PHASE:
             CALC_ACTIVE_REQUESTS(active_requests,exchange_node->rank_exchanges[*iter],tree_order);
         }
         for( j = 0; j < (tree_order - 1); j++ ) {
-            
+
             /* recv phase */
             src = exchange_node->rank_exchanges[*iter][j];
             if( src < 0 ) {
-                /* then not a valid rank, continue  
+                /* then not a valid rank, continue
                  */
                 continue;
             }
@@ -367,7 +367,7 @@ MAIN_PHASE:
             if( !(*active_requests&(1<<j))){
 
                 /* I am putting the probe loop as the inner most loop to achieve
-                 * better temporal locality 
+                 * better temporal locality
                  */
                 matched = 0;
                 for( probe = 0; probe < cm->num_to_probe && (0 == matched); probe++){
@@ -377,7 +377,7 @@ MAIN_PHASE:
                         *active_requests ^= (1<<j);
                     }
                 }
-            } 
+            }
 
 
         }
@@ -386,9 +386,9 @@ MAIN_PHASE:
             ready_flag++;
             /* reset the active requests for the next level */
             *active_requests = 0;
-            /* calculate the number of active requests 
-             * logically makes sense to do it here. We don't 
-             * want to inadvertantly flip a bit to zero that we 
+            /* calculate the number of active requests
+             * logically makes sense to do it here. We don't
+             * want to inadvertantly flip a bit to zero that we
              * set previously
              */
         } else {
@@ -409,7 +409,7 @@ MAIN_PHASE:
     }
 
 FINISHED:
-  
+
     my_ctl_pointer->starting_flag_value[bcol_id]++;
     return BCOL_FN_COMPLETE;
 }

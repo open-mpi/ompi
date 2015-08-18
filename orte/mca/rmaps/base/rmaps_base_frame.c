@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -16,18 +16,16 @@
  * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
 #include "orte_config.h"
 #include "orte/constants.h"
 
-#ifdef HAVE_STRING_H
 #include <string.h>
-#endif
 
 #include "orte/mca/mca.h"
 #include "opal/util/argv.h"
@@ -527,7 +525,7 @@ static int orte_rmaps_base_open(mca_base_open_flag_t flags)
         orte_rmaps_base.display_map = true;
         orte_devel_level_output = true;
     }
-   
+
     /* should we display a diffable report of proc locations after determining it? */
     if (rmaps_base_display_diffable_map) {
         orte_rmaps_base.display_map = true;
@@ -632,7 +630,7 @@ int orte_rmaps_base_set_mapping_policy(orte_mapping_policy_t *policy,
     if (NULL != device) {
         *device = NULL;
     }
-    
+
     opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                         "%s rmaps:base set policy with %s",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -741,7 +739,7 @@ int orte_rmaps_base_set_mapping_policy(orte_mapping_policy_t *policy,
             /* if we are mapping processes to individual hwthreads, then
              * we need to treat those hwthreads as separate cpus
              */
-            opal_hwloc_use_hwthreads_as_cpus = true;            
+            opal_hwloc_use_hwthreads_as_cpus = true;
         } else if ( NULL != device && 0 == strncasecmp(spec, "dist", len)) {
             if (NULL != rmaps_dist_device) {
                 if (NULL != (pch = strchr(rmaps_dist_device, ':'))) {

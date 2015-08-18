@@ -4,7 +4,7 @@
  *                         All rights reserved.
  * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
  *                         All rights reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -15,17 +15,15 @@
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
 #include "opal_config.h"
 
-#ifdef HAVE_STRING_H
 #include <string.h>
-#endif
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
@@ -275,7 +273,7 @@ char * opal_crs_base_state_str(opal_crs_state_type_t state)
         str = strdup("Unknown");
         break;
     }
-    
+
     return str;
 }
 
@@ -389,7 +387,7 @@ static int metadata_extract_next_token(FILE *file, char **token, char **value)
 
         /* Ignore lines with just '#' too */
     } while (line_len <= 2);
-    
+
     /*
      * Extract the token from the set
      */
@@ -402,13 +400,13 @@ static int metadata_extract_next_token(FILE *file, char **token, char **value)
     *tmp = '\0';
 
     *token = strdup (line);
+    if (NULL == *token) {
+        return OPAL_ERR_OUT_OF_RESOURCE;
+    }
     local_value = strdup (tmp + 1);
-
-    if (NULL == *token || NULL == local_value) {
-        if (local_value) {
-            free (local_value);
-        }
-
+    if (NULL == local_value) {
+        free(*token);
+        *token = NULL;
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
 
@@ -433,12 +431,13 @@ static int metadata_extract_next_token(FILE *file, char **token, char **value)
         }
 
         value_len += line_len;
-        
+
         tmp = (char *) realloc(local_value, value_len);
         if (NULL == tmp) {
             exit_status = OPAL_ERR_OUT_OF_RESOURCE;
             break;
         }
+        local_value = tmp;
 
         strcat (local_value, line);
     }

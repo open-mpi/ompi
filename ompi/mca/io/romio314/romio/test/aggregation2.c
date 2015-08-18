@@ -1,5 +1,5 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/*  
+/*
  *  (C) 2007 by Argonne National Laboratory.
  *      See COPYRIGHT in top-level directory.
  */
@@ -29,7 +29,7 @@ static void handle_error(int errcode, const char *str)
         MPI_Abort(MPI_COMM_WORLD, 1);
 }
 
-int main(int argc, char ** argv) 
+int main(int argc, char ** argv)
 {
     MPI_Info info = MPI_INFO_NULL;
     MPI_File fh;
@@ -51,19 +51,19 @@ int main(int argc, char ** argv)
     }
     off = rank*sizeof(buffer);
 
-    errcode = MPI_File_open(MPI_COMM_WORLD, argv[1], 
+    errcode = MPI_File_open(MPI_COMM_WORLD, argv[1],
 		MPI_MODE_WRONLY|MPI_MODE_CREATE, info, &fh);
     if (errcode != MPI_SUCCESS) handle_error(errcode, "MPI_File_open");
-    errcode = MPI_File_write_at_all(fh, off, buffer, BUFSIZE, 
+    errcode = MPI_File_write_at_all(fh, off, buffer, BUFSIZE,
 		MPI_INT,  &status);
     if (errcode != MPI_SUCCESS) handle_error(errcode, "MPI_File_write_at_all");
     errcode = MPI_File_close(&fh);
     if (errcode != MPI_SUCCESS) handle_error(errcode, "MPI_File_close");
 
-    errcode = MPI_File_open(MPI_COMM_WORLD, argv[1], 
+    errcode = MPI_File_open(MPI_COMM_WORLD, argv[1],
 		MPI_MODE_RDONLY, info, &fh);
     if (errcode != MPI_SUCCESS) handle_error(errcode, "MPI_File_open");
-    errcode = MPI_File_read_at_all(fh, off, buf2, BUFSIZE, 
+    errcode = MPI_File_read_at_all(fh, off, buf2, BUFSIZE,
 		MPI_INT,  &status);
     if (errcode != MPI_SUCCESS) handle_error(errcode, "MPI_File_read_at_all");
     errcode = MPI_File_close(&fh);

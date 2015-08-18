@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -15,9 +15,9 @@
  *                         All rights reserved.
  * Copyright (c) 2013-2015 Intel, Inc. All rights reserved
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -285,7 +285,7 @@ typedef struct {
         on the number of slots that can be allocated on a given
         node. This is for some environments (e.g. grid) there may be
         fixed limits on the number of slots that can be used.
-        
+
         This value also could have been a boolean - but we may want to
         allow the hard limit be different than the soft limit - in
         other words allow the node to be oversubscribed up to a
@@ -333,6 +333,9 @@ typedef struct {
      * indicates the node where we stopped
      */
     orte_node_t *bookmark;
+    /* if we are binding, bookmark the index of the
+     * last object we bound to */
+    unsigned int bkmark_obj;
     /* state of the overall job */
     orte_job_state_t state;
     /* number of procs mapped */

@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2013      University of Houston. All rights reserved.
+ * Copyright (c) 2013-2015 University of Houston. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -24,6 +24,7 @@
 #include "mpi.h"
 #include "ompi/constants.h"
 #include "ompi/mca/sharedfp/sharedfp.h"
+#include "ompi/mca/sharedfp/base/base.h"
 
 /*Use fcntl to lock the hidden file which stores the current position*/
 #include <fcntl.h>
@@ -62,13 +63,14 @@ int mca_sharedfp_lockedfile_request_position(struct mca_sharedfp_base_data_t * s
 
     /* Aquire an exclusive lock */
     if (fcntl(fd, F_SETLKW, &fl) == -1) {
-        printf("sharedfp_lockedfile_request_position: errorr acquiring lock: fcntl(%d,F_SETLKW,&fl)\n",fd);
-        printf("sharedfp_lockedfile_request_position: error(%i): %s", errno, strerror(errno));
+        opal_output(0,"sharedfp_lockedfile_request_position: errorr acquiring lock: fcntl(%d,F_SETLKW,&fl)\n",fd);
+        opal_output(0,"sharedfp_lockedfile_request_position: error(%i): %s", errno, strerror(errno));
         return OMPI_ERROR;
     }
     else{
 	if ( mca_sharedfp_lockedfile_verbose ) {
-	    printf("sharedfp_lockedfile_request_position: Success: acquired lock.for fd: %d\n",fd);
+            opal_output(ompi_sharedfp_base_framework.framework_output,
+                        "sharedfp_lockedfile_request_position: Success: acquired lock.for fd: %d\n",fd);
 	}
     }
 
@@ -76,14 +78,16 @@ int mca_sharedfp_lockedfile_request_position(struct mca_sharedfp_base_data_t * s
     lseek ( fd, 0, SEEK_SET );
     read ( fd, &buf, sizeof(OMPI_MPI_OFFSET_TYPE));
     if ( mca_sharedfp_lockedfile_verbose ) {
-	printf("sharedfp_lockedfile_request_position: Read last_offset=%lld! ret=%d\n",buf, ret);
+        opal_output(ompi_sharedfp_base_framework.framework_output,
+                    "sharedfp_lockedfile_request_position: Read last_offset=%lld! ret=%d\n",buf, ret);
     }
 
     /* increment the position  */
     position = buf + bytes_requested;
     if ( mca_sharedfp_lockedfile_verbose ) {
-	printf("sharedfp_lockedfile_request_position: old_offset=%lld, bytes_requested=%d, new offset=%lld!\n",
-	       buf,bytes_requested,position);
+        opal_output(ompi_sharedfp_base_framework.framework_output,
+                    "sharedfp_lockedfile_request_position: old_offset=%lld, bytes_requested=%d, new offset=%lld!\n",
+                    buf,bytes_requested,position);
     }
 
     /* write to the file  */
@@ -92,7 +96,8 @@ int mca_sharedfp_lockedfile_request_position(struct mca_sharedfp_base_data_t * s
 
     /* unlock the file */
     if ( mca_sharedfp_lockedfile_verbose ) {
-	printf("sharedfp_lockedfile_request_position: Releasing lock...");
+        opal_output(ompi_sharedfp_base_framework.framework_output,
+                    "sharedfp_lockedfile_request_position: Releasing lock...");
     }
 
     /* NOTE: We thought we could reuse the flock struct
@@ -108,13 +113,14 @@ int mca_sharedfp_lockedfile_request_position(struct mca_sharedfp_base_data_t * s
     fl.l_pid    = getpid();
 
     if (fcntl(fd, F_SETLK, &fl) == -1) {
-        printf("sharedfp_lockedfile_request_position:failed to release lock for fd: %d\n",fd);
-        printf("error(%i): %s", errno, strerror(errno));
+        opal_output(0,"sharedfp_lockedfile_request_position:failed to release lock for fd: %d\n",fd);
+        opal_output(0,"error(%i): %s", errno, strerror(errno));
         return OMPI_ERROR;
     }
     else {
 	if ( mca_sharedfp_lockedfile_verbose ) {
-	    printf("sharedfp_lockedfile_request_position: released lock.for fd: %d\n",fd);
+            opal_output(ompi_sharedfp_base_framework.framework_output,
+                        "sharedfp_lockedfile_request_position: released lock.for fd: %d\n",fd);
 	}
     }
 

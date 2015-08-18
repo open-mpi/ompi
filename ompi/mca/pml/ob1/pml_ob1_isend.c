@@ -28,9 +28,8 @@
 #include "pml_ob1_sendreq.h"
 #include "pml_ob1_recvreq.h"
 #include "ompi/peruse/peruse-internal.h"
-#if HAVE_ALLOCA_H
-#include <alloca.h>
-#endif  /* HAVE_ALLOCA_H */
+
+mca_pml_ob1_send_request_t *mca_pml_ob1_sendreq = NULL;
 
 int mca_pml_ob1_isend_init(void *buf,
                            size_t count,
@@ -181,8 +180,7 @@ int mca_pml_ob1_send(void *buf,
     ompi_proc_t *dst_proc = ompi_comm_peer_lookup (comm, dst);
     mca_bml_base_endpoint_t* endpoint = (mca_bml_base_endpoint_t*)
                                         dst_proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML];
-    mca_pml_ob1_send_request_t *sendreq =
-        alloca(mca_pml_base_send_requests.fl_frag_size);
+    mca_pml_ob1_send_request_t *sendreq = NULL;
     int16_t seqn;
     int rc;
 
@@ -206,6 +204,11 @@ int mca_pml_ob1_send(void *buf,
 
     seqn = (uint16_t) OPAL_THREAD_ADD32(&ob1_comm->procs[dst].send_sequence, 1);
 
+    /**
+     * The immediate send will not have a request, so they are
+     * intracable from the point of view of any debugger attached to
+     * the parallel application.
+     */
     if (MCA_PML_BASE_SEND_SYNCHRONOUS != sendmode) {
         rc = mca_pml_ob1_send_inline (buf, count, datatype, dst, tag, seqn, dst_proc,
                                       endpoint, comm);
@@ -214,7 +217,18 @@ int mca_pml_ob1_send(void *buf,
         }
     }
 
-    OBJ_CONSTRUCT(sendreq, mca_pml_ob1_send_request_t);
+#if !OMPI_ENABLE_THREAD_MULTIPLE
+    sendreq = mca_pml_ob1_sendreq;
+    if( OPAL_UNLIKELY(NULL == sendreq) )
+#endif  /* !OMPI_ENABLE_THREAD_MULTIPLE */
+        {
+            MCA_PML_OB1_SEND_REQUEST_ALLOC(comm, dst, sendreq);
+            if (NULL == sendreq)
+                return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
+#if !OMPI_ENABLE_THREAD_MULTIPLE
+            mca_pml_ob1_sendreq = sendreq;
+#endif  /* !OMPI_ENABLE_THREAD_MULTIPLE */
+        }
     sendreq->req_send.req_base.req_proc = dst_proc;
     sendreq->rdma_frag = NULL;
 
@@ -234,9 +248,13 @@ int mca_pml_ob1_send(void *buf,
         ompi_request_wait_completion(&sendreq->req_send.req_base.req_ompi);
 
         rc = sendreq->req_send.req_base.req_ompi.req_status.MPI_ERROR;
-        MCA_PML_BASE_SEND_REQUEST_FINI(&sendreq->req_send);
     }
-    OBJ_DESTRUCT(sendreq);
+
+#if OMPI_ENABLE_THREAD_MULTIPLE
+    MCA_PML_OB1_SEND_REQUEST_RETURN(sendreq);
+#else
+    mca_pml_ob1_send_request_fini (sendreq);
+#endif
 
     return rc;
 }

@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -63,7 +63,7 @@ int MPI_Info_delete(MPI_Info info, char *key)
 
     while (curr) {
 	if (!strcmp(curr->key, key)) {
-	    ADIOI_Free(curr->key); 
+	    ADIOI_Free(curr->key);
 	    ADIOI_Free(curr->value);
 	    prev->next = curr->next;
 	    ADIOI_Free(curr);
@@ -76,7 +76,7 @@ int MPI_Info_delete(MPI_Info info, char *key)
 
     if (!done) {
 	FPRINTF(stderr, "MPI_Info_delete: key not defined in info\n");
-        MPI_Abort(MPI_COMM_WORLD, 1);	
+        MPI_Abort(MPI_COMM_WORLD, 1);
     }
 
     return MPI_SUCCESS;

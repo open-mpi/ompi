@@ -201,8 +201,7 @@ opal_btl_usnic_ack_send(
     /* Get an ACK frag.  If we don't get one, just discard this ACK. */
     ack = opal_btl_usnic_ack_segment_alloc(module);
     if (OPAL_UNLIKELY(NULL == ack)) {
-        opal_output(0, "====================== No frag for sending the ACK -- skipped");
-        abort();
+        return;
     }
 
     /* send the seq of the lowest item in the window that
@@ -252,6 +251,7 @@ opal_btl_usnic_ack_complete(opal_btl_usnic_module_t *module,
                                    opal_btl_usnic_ack_segment_t *ack)
 {
     opal_btl_usnic_ack_segment_return(module, ack);
+    ++module->mod_channels[ack->ss_channel].credits;
 }
 
 /*****************************************************************************/

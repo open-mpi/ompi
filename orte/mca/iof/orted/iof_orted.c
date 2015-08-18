@@ -5,17 +5,17 @@
  * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
- *                         reserved. 
+ *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -27,9 +27,7 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif  /* HAVE_UNISTD_H */
-#ifdef HAVE_STRING_H
 #include <string.h>
-#endif  /* HAVE_STRING_H */
 
 #ifdef HAVE_FCNTL_H
 #include <fcntl.h>
@@ -98,12 +96,12 @@ static int init(void)
                             ORTE_RML_PERSISTENT,
                             orte_iof_orted_recv,
                             NULL);
-    
+
     /* setup the local global variables */
     OBJ_CONSTRUCT(&mca_iof_orted_component.sinks, opal_list_t);
     OBJ_CONSTRUCT(&mca_iof_orted_component.procs, opal_list_t);
     mca_iof_orted_component.xoff = false;
-    
+
     return ORTE_SUCCESS;
 }
 
@@ -128,12 +126,12 @@ static int orted_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_ta
                          "%s iof:orted pushing fd %d for process %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          fd, ORTE_NAME_PRINT(dst_name)));
-    
+
     /* set the file descriptor to non-blocking - do this before we setup
      * and activate the read event in case it fires right away
      */
     if((flags = fcntl(fd, F_GETFL, 0)) < 0) {
-        opal_output(orte_iof_base_framework.framework_output, "[%s:%d]: fcntl(F_GETFL) failed with errno=%d\n", 
+        opal_output(orte_iof_base_framework.framework_output, "[%s:%d]: fcntl(F_GETFL) failed with errno=%d\n",
                     __FILE__, __LINE__, errno);
     } else {
         flags |= O_NONBLOCK;
@@ -145,7 +143,7 @@ static int orted_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_ta
          item != opal_list_get_end(&mca_iof_orted_component.procs);
          item = opal_list_get_next(item)) {
         proct = (orte_iof_proc_t*)item;
-        
+
         mask = ORTE_NS_CMP_ALL;
 
         if (OPAL_EQUAL == orte_util_compare_name_fields(mask, &proct->name, dst_name)) {
@@ -189,7 +187,7 @@ static int orted_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_ta
                              orte_iof_base_write_handler,
                              &mca_iof_orted_component.sinks);
     }
-    
+
 SETUP:
     /* define a read event and activate it */
     if (src_tag & ORTE_IOF_STDOUT) {
@@ -234,22 +232,22 @@ static int orted_pull(const orte_process_name_t* dst_name,
 {
     orte_iof_sink_t *sink;
     int flags;
-    
+
     /* this is a local call - only stdin is supported */
     if (ORTE_IOF_STDIN != src_tag) {
         return ORTE_ERR_NOT_SUPPORTED;
     }
-    
+
     OPAL_OUTPUT_VERBOSE((1, orte_iof_base_framework.framework_output,
                          "%s iof:orted pulling fd %d for process %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          fd, ORTE_NAME_PRINT(dst_name)));
-    
+
     /* set the file descriptor to non-blocking - do this before we setup
      * the sink in case it fires right away
      */
     if((flags = fcntl(fd, F_GETFL, 0)) < 0) {
-        opal_output(orte_iof_base_framework.framework_output, "[%s:%d]: fcntl(F_GETFL) failed with errno=%d\n", 
+        opal_output(orte_iof_base_framework.framework_output, "[%s:%d]: fcntl(F_GETFL) failed with errno=%d\n",
                     __FILE__, __LINE__, errno);
     } else {
         flags |= O_NONBLOCK;
@@ -259,7 +257,7 @@ static int orted_pull(const orte_process_name_t* dst_name,
     ORTE_IOF_SINK_DEFINE(&sink, dst_name, fd, ORTE_IOF_STDIN,
                          stdin_write_handler,
                          &mca_iof_orted_component.sinks);
-    
+
     return ORTE_SUCCESS;
 }
 
@@ -275,13 +273,13 @@ static int orted_close(const orte_process_name_t* peer,
     opal_list_item_t *item, *next_item;
     orte_iof_sink_t* sink;
     orte_ns_cmp_bitmask_t mask;
-    
+
     for (item = opal_list_get_first(&mca_iof_orted_component.sinks);
          item != opal_list_get_end(&mca_iof_orted_component.sinks);
          item = next_item ) {
         sink = (orte_iof_sink_t*)item;
         next_item = opal_list_get_next(item);
-        
+
         mask = ORTE_NS_CMP_ALL;
 
         if (OPAL_EQUAL == orte_util_compare_name_fields(mask, &sink->name, peer) &&
@@ -303,7 +301,7 @@ static int orted_close(const orte_process_name_t* peer,
 static int finalize(void)
 {
     opal_list_item_t *item;
-    
+
     while ((item = opal_list_remove_first(&mca_iof_orted_component.sinks)) != NULL) {
         OBJ_RELEASE(item);
     }
@@ -333,14 +331,14 @@ static void stdin_write_handler(int fd, short event, void *cbdata)
     opal_list_item_t *item;
     orte_iof_write_output_t *output;
     int num_written;
-    
+
     OPAL_OUTPUT_VERBOSE((1, orte_iof_base_framework.framework_output,
                          "%s orted:stdin:write:handler writing data to %d",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          wev->fd));
-    
+
     wev->pending = false;
-    
+
     while (NULL != (item = opal_list_remove_first(&wev->outputs))) {
         output = (orte_iof_write_output_t*)item;
         if (0 == output->numbytes) {
@@ -369,7 +367,7 @@ static void stdin_write_handler(int fd, short event, void *cbdata)
                 wev->pending = true;
                 opal_event_add(wev->ev, 0);
                 goto CHECK;
-            }            
+            }
             /* otherwise, something bad happened so all we can do is declare an
              * error and abort
              */
@@ -394,7 +392,7 @@ static void stdin_write_handler(int fd, short event, void *cbdata)
             /* push this item back on the front of the list */
             opal_list_prepend(&wev->outputs, item);
             /* leave the write event running so it will call us again
-             * when the fd is ready. 
+             * when the fd is ready.
              */
             wev->pending = true;
             opal_event_add(wev->ev, 0);
@@ -402,7 +400,7 @@ static void stdin_write_handler(int fd, short event, void *cbdata)
         }
         OBJ_RELEASE(output);
     }
-    
+
 CHECK:
     if (mca_iof_orted_component.xoff) {
         /* if we have told the HNP to stop reading stdin, see if

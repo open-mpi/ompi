@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
- * Copyright (c) 2013      Research Organization for Information Science 
+ * Copyright (c) 2013      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -25,10 +25,7 @@
 
 #include <stddef.h>
 #include <stdio.h>
-
-#ifdef HAVE_STDINT_H
 #include <stdint.h>
-#endif
 
 #include "opal/prefetch.h"
 #include "opal/util/arch.h"
@@ -214,7 +211,7 @@ opal_convertor_t* opal_convertor_create( int32_t remote_arch, int32_t mode )
         assert( (CONVERTOR)->bConverted < (CONVERTOR)->local_size );    \
     } while(0)
 
-/** 
+/**
  * Return 0 if everything went OK and if there is still room before the complete
  *          conversion of the data (need additional call with others input buffers )
  *        1 if everything went fine and the data was completly converted

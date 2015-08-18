@@ -12,17 +12,17 @@
 .nf
 C Syntax
     #include <mpi.h>
-    int MPI_File_read_shared(MPI_File \fIfh\fP, void \fI*buf\fP, int \fIcount\fP, 
+    int MPI_File_read_shared(MPI_File \fIfh\fP, void \fI*buf\fP, int \fIcount\fP,
 MPI_Datatype \fIdatatype\fP, MPI_Status \fI*status\fP)
 
 .fi
 .SH Fortran Syntax
 .nf
     INCLUDE 'mpif.h'
-    MPI_FILE_READ_SHARED(\fIFH\fP, \fIBUF\fP, \fICOUNT\fP, \fIDATATYPE\fP, \fISTATUS\fP, 
+    MPI_FILE_READ_SHARED(\fIFH\fP, \fIBUF\fP, \fICOUNT\fP, \fIDATATYPE\fP, \fISTATUS\fP,
 	\fIIERROR\fP)
 		<TYPE>		BUF(*)
-        	INTEGER		FH, COUNT, DATATYPE, 
+        	INTEGER		FH, COUNT, DATATYPE,
 				STATUS(MPI_STATUS_SIZE), IERROR
 
 .fi
@@ -39,7 +39,7 @@ void MPI::File::Read_shared(void* \fIbuf\fP, int \fIcount\fP,
 .SH INPUT/OUTPUT PARAMETER
 .ft R
 .TP 1i
-fh    
+fh
 File handle (handle).
 
 .SH INPUT PARAMETERS
@@ -63,7 +63,7 @@ status
 Status object (status).
 .TP 1i
 IERROR
-Fortran only: Error status (integer). 
+Fortran only: Error status (integer).
 
 .SH DESCRIPTION
 .ft R
@@ -73,5 +73,5 @@ MPI_File_read_shared is a blocking routine that uses the shared file pointer to 
 Almost all MPI routines return an error value; C routines as the value of the function and Fortran routines in the last argument. C++ functions do not return errors. If the default error handler is set to MPI::ERRORS_THROW_EXCEPTIONS, then on error the C++ exception mechanism will be used to throw an MPI::Exception object.
 .sp
 Before the error value is returned, the current MPI error handler is
-called. For MPI I/O function errors, the default error handler is set to MPI_ERRORS_RETURN. The error handler may be changed with MPI_File_set_errhandler; the predefined error handler MPI_ERRORS_ARE_FATAL may be used to make I/O errors fatal. Note that MPI does not guarantee that an MPI program can continue past an error.  
+called. For MPI I/O function errors, the default error handler is set to MPI_ERRORS_RETURN. The error handler may be changed with MPI_File_set_errhandler; the predefined error handler MPI_ERRORS_ARE_FATAL may be used to make I/O errors fatal. Note that MPI does not guarantee that an MPI program can continue past an error.
 

@@ -1,16 +1,20 @@
 #
-# Copyright (c) 2013      Sandia National Laboratories. All rights reserved.
+# Copyright (c) 2013-2015 Sandia National Laboratories. All rights reserved.
+# Copyright (c) 2015      Bull SAS.  All rights reserved.
 # $COPYRIGHT$
-# 
+#
 # Additional copyrights may follow
-# 
+#
 # $HEADER$
 #
 
 local_sources = \
 	coll_portals4.h \
+	coll_portals4_allreduce.c \
 	coll_portals4_component.c \
 	coll_portals4_barrier.c \
+	coll_portals4_bcast.c \
+	coll_portals4_reduce.c \
 	coll_portals4_request.h \
 	coll_portals4_request.c
 

@@ -12,7 +12,7 @@
 .SH C Syntax
 .nf
 #include <mpi.h>
-int MPI_Mrecv(void \fI*buf\fP, int\fI count\fP, MPI_Datatype\fI type\fP, 
+int MPI_Mrecv(void \fI*buf\fP, int\fI count\fP, MPI_Datatype\fI type\fP,
 	MPI_Message\fI *message\fP, MPI_Status\fI *status\fP)
 
 .fi
@@ -22,7 +22,7 @@ INCLUDE 'mpif.h'
 MPI_MRECV(\fIBUF, COUNT, DATATYPE, MESSAGE, STATUS, IERROR\fP)
 	<type>	\fIBUF(*)\fP
 	INTEGER	\fCOUNT, DATATYPE, MESSAGE\fP
-	INTEGER	\fISTATUS(MPI_STATUS_SIZE), IERROR\fP 
+	INTEGER	\fISTATUS(MPI_STATUS_SIZE), IERROR\fP
 
 .fi
 .SH C++ Syntax
@@ -52,7 +52,7 @@ status
 Status object (status).
 .TP 1i
 IERROR
-Fortran only: Error status (integer). 
+Fortran only: Error status (integer).
 
 .SH DESCRIPTION
 .ft R
@@ -70,7 +70,7 @@ This is an MPI-3 function and has no C++ binding.
 .SH ERRORS
 Almost all MPI routines return an error value; C routines as the value
 of the function and Fortran routines in the last argument. C++
-functions do not return errors. 
+functions do not return errors.
 .sp
 Before the error value is returned, the current MPI error handler is
 called. By default, this error handler aborts the MPI job, except for

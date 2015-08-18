@@ -25,7 +25,7 @@ AC_DEFUN([OPAL_CHECK_KNEM],[
     OPAL_VAR_SCOPE_PUSH([opal_check_knem_happy opal_check_knem_$1_save_CPPFLAGS opal_check_knem_dir])
     AC_ARG_WITH([knem],
         [AC_HELP_STRING([--with-knem(=DIR)],
-             [Build knem Linux kernel module support, searching for headers in DIR])])
+             [Build knem Linux kernel module support, searching for headers in DIR/include])])
 
     OPAL_CHECK_WITHDIR([knem], [$with_knem], [include/knem_io.h])
     opal_check_knem_$1_save_CPPFLAGS="$CPPFLAGS"

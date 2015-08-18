@@ -1,5 +1,5 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/*  
+/*
  *  (C) 2001 by Argonne National Laboratory.
  *      See COPYRIGHT in top-level directory.
  */
@@ -8,7 +8,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-/* A simple performance test. The file name is taken as a 
+/* A simple performance test. The file name is taken as a
    command-line argument. */
 
 #define SIZE (1048576*4)       /* read/write size per node in bytes */
@@ -26,7 +26,7 @@ int main(int argc, char **argv)
     MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
     MPI_Comm_rank(MPI_COMM_WORLD, &mynod);
 
-/* process 0 takes the file name as a command-line argument and 
+/* process 0 takes the file name as a command-line argument and
    broadcasts it to other processes */
     if (!mynod) {
 	i = 1;
@@ -56,7 +56,7 @@ int main(int argc, char **argv)
     buf = (int *) malloc(SIZE);
 
     for (j=0; j<ntimes; j++) {
-	MPI_File_open(MPI_COMM_WORLD, filename, MPI_MODE_CREATE | 
+	MPI_File_open(MPI_COMM_WORLD, filename, MPI_MODE_CREATE |
              MPI_MODE_RDWR, MPI_INFO_NULL, &fh);
 	MPI_File_seek(fh, mynod*SIZE, MPI_SEEK_SET);
 
@@ -64,33 +64,33 @@ int main(int argc, char **argv)
 	stim = MPI_Wtime();
 	MPI_File_write(fh, buf, SIZE, MPI_BYTE, &status);
 	write_tim = MPI_Wtime() - stim;
-  
+
 	MPI_File_close(&fh);
 
 	MPI_Barrier(MPI_COMM_WORLD);
 
-	MPI_File_open(MPI_COMM_WORLD, filename, MPI_MODE_CREATE | 
+	MPI_File_open(MPI_COMM_WORLD, filename, MPI_MODE_CREATE |
                    MPI_MODE_RDWR, MPI_INFO_NULL, &fh);
 	MPI_File_seek(fh, mynod*SIZE, MPI_SEEK_SET);
-      
+
 	MPI_Barrier(MPI_COMM_WORLD);
 	stim = MPI_Wtime();
 	MPI_File_read(fh, buf, SIZE, MPI_BYTE, &status);
 	read_tim = MPI_Wtime() - stim;
-  
+
 	MPI_File_close(&fh);
-  
+
 	MPI_Allreduce(&write_tim, &new_write_tim, 1, MPI_DOUBLE, MPI_MAX,
 		      MPI_COMM_WORLD);
 	MPI_Allreduce(&read_tim, &new_read_tim, 1, MPI_DOUBLE, MPI_MAX,
 		    MPI_COMM_WORLD);
 
-	min_read_tim = (new_read_tim < min_read_tim) ? 
+	min_read_tim = (new_read_tim < min_read_tim) ?
 	    new_read_tim : min_read_tim;
-	min_write_tim = (new_write_tim < min_write_tim) ? 
+	min_write_tim = (new_write_tim < min_write_tim) ?
 	    new_write_tim : min_write_tim;
     }
-    
+
     if (mynod == 0) {
 	read_bw = (SIZE*nprocs)/(min_read_tim*1024.0*1024.0);
 	write_bw = (SIZE*nprocs)/(min_write_tim*1024.0*1024.0);
@@ -103,7 +103,7 @@ int main(int argc, char **argv)
 
     flag = 0;
     for (j=0; j<ntimes; j++) {
-	MPI_File_open(MPI_COMM_WORLD, filename, MPI_MODE_CREATE | 
+	MPI_File_open(MPI_COMM_WORLD, filename, MPI_MODE_CREATE |
                  MPI_MODE_RDWR, MPI_INFO_NULL, &fh);
 	MPI_File_seek(fh, mynod*SIZE, MPI_SEEK_SET);
 
@@ -116,30 +116,30 @@ int main(int argc, char **argv)
 	    flag = 1;
 	    break;
 	}
-  
+
 	MPI_File_close(&fh);
-  
+
 	MPI_Barrier(MPI_COMM_WORLD);
 
-	MPI_File_open(MPI_COMM_WORLD, filename, MPI_MODE_CREATE | 
+	MPI_File_open(MPI_COMM_WORLD, filename, MPI_MODE_CREATE |
                    MPI_MODE_RDWR, MPI_INFO_NULL, &fh);
 	MPI_File_seek(fh, mynod*SIZE, MPI_SEEK_SET);
-      
+
 	MPI_Barrier(MPI_COMM_WORLD);
 	stim = MPI_Wtime();
 	MPI_File_read(fh, buf, SIZE, MPI_BYTE, &status);
 	read_tim = MPI_Wtime() - stim;
-  
+
 	MPI_File_close(&fh);
-  
+
 	MPI_Allreduce(&write_tim, &new_write_tim, 1, MPI_DOUBLE, MPI_MAX,
 		      MPI_COMM_WORLD);
 	MPI_Allreduce(&read_tim, &new_read_tim, 1, MPI_DOUBLE, MPI_MAX,
 		    MPI_COMM_WORLD);
 
-	min_read_tim = (new_read_tim < min_read_tim) ? 
+	min_read_tim = (new_read_tim < min_read_tim) ?
 	    new_read_tim : min_read_tim;
-	min_write_tim = (new_write_tim < min_write_tim) ? 
+	min_write_tim = (new_write_tim < min_write_tim) ?
 	    new_write_tim : min_write_tim;
     }
 

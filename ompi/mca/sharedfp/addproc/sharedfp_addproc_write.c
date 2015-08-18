@@ -132,7 +132,7 @@ int mca_sharedfp_addproc_write_ordered (mca_io_ompio_file_t *fh,
     }
 
     ret = sh->comm->c_coll.coll_gather ( &sendBuff, sendcnt, OMPI_OFFSET_DATATYPE, buff,
-					 recvcnt, OMPI_OFFSET_DATATYPE, 0, sh->comm, 
+					 recvcnt, OMPI_OFFSET_DATATYPE, 0, sh->comm,
 					 sh->comm->c_coll.coll_gather_module);
     if( OMPI_SUCCESS != ret ){
 	goto exit;
@@ -144,7 +144,7 @@ int mca_sharedfp_addproc_write_ordered (mca_io_ompio_file_t *fh,
     if ( 0 == rank ) {
         for (i = 0; i < size ; i ++) {
             bytesRequested += buff[i];
-	    
+
 	    if ( mca_sharedfp_addproc_verbose ){
 		printf("sharedfp_addproc_write_ordered: Bytes requested are %ld\n",bytesRequested);
 	    }
@@ -172,7 +172,7 @@ int mca_sharedfp_addproc_write_ordered (mca_io_ompio_file_t *fh,
 
     /* Scatter the results to the other processes*/
     ret = sh->comm->c_coll.coll_scatter ( buff, sendcnt, OMPI_OFFSET_DATATYPE, &offsetBuff,
-					  recvcnt, OMPI_OFFSET_DATATYPE, 0, sh->comm, 
+					  recvcnt, OMPI_OFFSET_DATATYPE, 0, sh->comm,
 					  sh->comm->c_coll.coll_scatter_module );
     if( OMPI_SUCCESS != ret ){
 	goto exit;

@@ -6,16 +6,16 @@
 # Copyright (c) 2004-2005 The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
-# Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+# Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2007-2010 Cisco Systems, Inc. All rights reserved.
 # Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
 # $COPYRIGHT$
-# 
+#
 # Additional copyrights may follow
-# 
+#
 # $HEADER$
 #
 # This is the US/English general help file for Open RTE's orterun.
@@ -175,7 +175,7 @@ confusion. Operation will continue, but the application's prefix
 option will be ignored.
 #
 [orterun:empty-prefix]
-A prefix was supplied to %s that only contained slashes.  
+A prefix was supplied to %s that only contained slashes.
 
 This is a fatal error; %s will now abort.  No processes were launched.
 #
@@ -216,7 +216,7 @@ when attempting to start process rank %lu.
 
 This can be resolved by setting the mca parameter opal_set_max_sys_limits to 1,
 increasing your limit descriptor setting (using limit or ulimit commands),
-asking the system administrator for that node to increase the system limit, or 
+asking the system administrator for that node to increase the system limit, or
 by rearranging your processes to place fewer of them on that node.
 #
 [orterun:sys-limit-sockets]

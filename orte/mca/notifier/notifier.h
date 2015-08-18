@@ -39,12 +39,8 @@
 
 #include "orte_config.h"
 
-#ifdef HAVE_STDARG_H
 #include <stdarg.h>
-#endif
-#ifdef HAVE_LIMITS_H
 #include <limits.h>
-#endif
 #ifdef HAVE_SYSLOG_H
 #include <syslog.h>
 #endif
@@ -100,7 +96,7 @@ OBJ_CLASS_DECLARATION(orte_notifier_request_t);
 
 /* initialize the selected module */
 typedef int (*orte_notifier_base_module_init_fn_t)(void);
-    
+
 /* finalize the selected module */
 typedef void (*orte_notifier_base_module_finalize_fn_t)(void);
 

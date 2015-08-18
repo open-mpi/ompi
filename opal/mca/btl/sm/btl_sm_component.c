@@ -30,9 +30,7 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif  /* HAVE_UNISTD_H */
-#ifdef HAVE_STRING_H
 #include <string.h>
-#endif  /* HAVE_STRING_H */
 #ifdef HAVE_FCNTL_H
 #include <fcntl.h>
 #endif  /* HAVE_FCNTL_H */
@@ -334,7 +332,7 @@ static int mca_btl_sm_component_close(void)
         mca_btl_sm.knem_frag_array = NULL;
     }
     if (NULL != mca_btl_sm.knem_status_array) {
-        munmap(mca_btl_sm.knem_status_array, 
+        munmap(mca_btl_sm.knem_status_array,
                mca_btl_sm_component.knem_max_simultaneous);
         mca_btl_sm.knem_status_array = NULL;
     }
@@ -400,7 +398,7 @@ static int mca_btl_sm_component_close(void)
 #endif
 
 CLEANUP:
-    
+
 #if OPAL_CUDA_SUPPORT
     mca_common_cuda_fini();
 #endif /* OPAL_CUDA_SUPPORT */
@@ -409,7 +407,7 @@ CLEANUP:
     return return_value;
 }
 
-/* 
+/*
  * Returns the number of processes on the node.
  */
 static inline int
@@ -980,7 +978,7 @@ mca_btl_sm_component_init(int *num_btls,
         mca_btl_sm.knem_frag_array = NULL;
     }
     if (NULL != mca_btl_sm.knem_status_array) {
-        munmap(mca_btl_sm.knem_status_array, 
+        munmap(mca_btl_sm.knem_status_array,
                mca_btl_sm_component.knem_max_simultaneous);
         mca_btl_sm.knem_status_array = NULL;
     }
@@ -1034,22 +1032,22 @@ void mca_btl_sm_component_event_thread(opal_object_t* thread)
 }
 #endif
 
-void btl_sm_process_pending_sends(struct mca_btl_base_endpoint_t *ep) 
-{ 
-    btl_sm_pending_send_item_t *si; 
-    int rc; 
+void btl_sm_process_pending_sends(struct mca_btl_base_endpoint_t *ep)
+{
+    btl_sm_pending_send_item_t *si;
+    int rc;
 
     while ( 0 < opal_list_get_size(&ep->pending_sends) ) {
         /* Note that we access the size of ep->pending_sends unlocked
-           as it doesn't really matter if the result is wrong as 
+           as it doesn't really matter if the result is wrong as
            opal_list_remove_first is called with a lock and we handle it
            not finding an item to process */
         OPAL_THREAD_LOCK(&ep->endpoint_lock);
-        si = (btl_sm_pending_send_item_t*)opal_list_remove_first(&ep->pending_sends); 
+        si = (btl_sm_pending_send_item_t*)opal_list_remove_first(&ep->pending_sends);
         OPAL_THREAD_UNLOCK(&ep->endpoint_lock);
 
         if(NULL == si) return; /* Another thread got in before us. Thats ok. */
-    
+
         OPAL_THREAD_ADD32(&mca_btl_sm_component.num_pending_sends, -1);
 
         MCA_BTL_SM_FIFO_WRITE(ep, ep->my_smp_rank, ep->peer_smp_rank, si->data,
@@ -1060,7 +1058,7 @@ void btl_sm_process_pending_sends(struct mca_btl_base_endpoint_t *ep)
         if ( OPAL_SUCCESS != rc )
             return;
     }
-} 
+}
 
 int mca_btl_sm_component_progress(void)
 {
@@ -1212,13 +1210,13 @@ int mca_btl_sm_component_progress(void)
         return nevents;
     }
     while (mca_btl_sm.knem_status_num_used > 0 &&
-           KNEM_STATUS_PENDING != 
+           KNEM_STATUS_PENDING !=
            mca_btl_sm.knem_status_array[mca_btl_sm.knem_status_first_used]) {
-        if (KNEM_STATUS_SUCCESS == 
+        if (KNEM_STATUS_SUCCESS ==
             mca_btl_sm.knem_status_array[mca_btl_sm.knem_status_first_used]) {
 
             /* Handle the completed fragment */
-            frag = 
+            frag =
                 mca_btl_sm.knem_frag_array[mca_btl_sm.knem_status_first_used];
             frag->cb.func (&mca_btl_sm.super, frag->endpoint,
                            frag->cb.local_address, frag->cb.local_handle,
@@ -1230,7 +1228,7 @@ int mca_btl_sm_component_progress(void)
             ++nevents;
             --mca_btl_sm.knem_status_num_used;
             ++mca_btl_sm.knem_status_first_used;
-            if (mca_btl_sm.knem_status_first_used >= 
+            if (mca_btl_sm.knem_status_first_used >=
                 mca_btl_sm_component.knem_max_simultaneous) {
                 mca_btl_sm.knem_status_first_used = 0;
             }

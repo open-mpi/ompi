@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2013 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006-2009 Mellanox Technologies. All rights reserved.
  * Copyright (c) 2006-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
@@ -357,7 +357,7 @@ int btl_openib_register_mca_params(void)
                    "InfiniBand outstanding atomic reads "
                    "(must be >= 0)",
                    4, &mca_btl_openib_component.ib_qp_ous_rd_atom, 0));
-    
+
     asprintf(&msg, "OpenFabrics MTU, in bytes (if not specified in INI files).  Valid values are: %d=256 bytes, %d=512 bytes, %d=1024 bytes, %d=2048 bytes, %d=4096 bytes",
              IBV_MTU_256,
              IBV_MTU_512,
@@ -394,7 +394,7 @@ int btl_openib_register_mca_params(void)
                   "InfiniBand transmit timeout, plugged into formula: 4.096 microseconds * (2^btl_openib_ib_timeout) "
                   "(must be >= 0 and <= 31)",
                   20, &mca_btl_openib_component.ib_timeout, 0));
-    
+
     CHECK(reg_uint("ib_retry_count", NULL,
                   "InfiniBand transmit retry count "
                   "(must be >= 0 and <= 7)",
@@ -493,7 +493,7 @@ int btl_openib_register_mca_params(void)
                                           &btl_openib_failover_enabled);
     if (0 > tmp) ret = tmp;
 #endif
-    
+
     CHECK(reg_bool("enable_srq_resize", NULL,
                    "Enable/Disable on demand SRQ resize. "
                    "(0 = without resizing, nonzero = with resizing)", 1,
@@ -709,11 +709,12 @@ int btl_openib_register_mca_params(void)
                   32, &mca_btl_openib_component.use_memalign,
                   REGINT_GE_ZERO));
 
-    mca_btl_openib_component.memalign_threshold = mca_btl_openib_module.super.btl_eager_limit;
+    mca_btl_openib_component.memalign_threshold =
+        mca_btl_openib_module.super.btl_eager_limit;
     tmp = mca_base_component_var_register(&mca_btl_openib_component.super.btl_version,
                                           "memalign_threshold",
                                           "Allocating memory more than btl_openib_memalign_threshhold"
-                                          "bytes will automatically be aligned to the value of btl_openib_memalign bytes."
+                                          "bytes will automatically be algined to the value of btl_openib_memalign bytes."
                                           "memalign_threshhold defaults to the same value as mca_btl_openib_eager_limit.",
                                           MCA_BASE_VAR_TYPE_SIZE_T, NULL, 0, 0,
                                           OPAL_INFO_LVL_9,
@@ -814,16 +815,21 @@ int btl_openib_verify_mca_params (void)
         }
     }
 #endif /* Workaround */
+    if (0 != mca_btl_openib_module.super.btl_cuda_max_send_size) {
+        opal_show_help("help-mpi-btl-openib.txt", "do_not_set_openib_value",
+                       true, opal_process_info.nodename);
+        mca_btl_openib_module.super.btl_cuda_max_send_size = 0;
+    }
 #endif
 
 #if BTL_OPENIB_MALLOC_HOOKS_ENABLED
-    if (mca_btl_openib_component.use_memalign != 32  
+    if (mca_btl_openib_component.use_memalign != 32
         && mca_btl_openib_component.use_memalign != 64
-        && mca_btl_openib_component.use_memalign != 0){ 
+        && mca_btl_openib_component.use_memalign != 0){
         opal_show_help("help-mpi-btl-openib.txt", "invalid mca param value",
                        true, "Wrong btl_openib_memalign parameter value. Allowed values: 64, 32, 0.",
                        "btl_openib_memalign is reset to 32");
-        mca_btl_openib_component.use_memalign = 32; 
+        mca_btl_openib_component.use_memalign = 32;
     }
 #endif
 

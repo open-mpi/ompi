@@ -57,7 +57,7 @@ int opal_common_verbs_find_max_inline(struct ibv_device *device,
     struct ibv_cq *cq;
     struct ibv_qp_init_attr init_attr;
     uint32_t max_inline_data;
-    
+
     *max_inline_arg = 0;
 
     /* Make a dummy CQ */
@@ -74,7 +74,7 @@ int opal_common_verbs_find_max_inline(struct ibv_device *device,
                        ibv_get_device_name(device));
         return OPAL_ERR_NOT_AVAILABLE;
     }
-    
+
     /* Setup the QP attributes */
     memset(&init_attr, 0, sizeof(init_attr));
     init_attr.qp_type = IBV_QPT_RC;
@@ -84,7 +84,7 @@ int opal_common_verbs_find_max_inline(struct ibv_device *device,
     init_attr.cap.max_send_sge = 1;
     init_attr.cap.max_recv_sge = 1;
     init_attr.cap.max_recv_wr = 1;
-    
+
     /* Loop over max_inline_data values; just check powers of 2 --
        that's good enough */
     init_attr.cap.max_inline_data = max_inline_data = 1 << 20;
@@ -100,7 +100,7 @@ int opal_common_verbs_find_max_inline(struct ibv_device *device,
         max_inline_data >>= 1;
         init_attr.cap.max_inline_data = max_inline_data;
     }
-    
+
     /* Destroy the temp CQ */
     ibv_destroy_cq(cq);
 

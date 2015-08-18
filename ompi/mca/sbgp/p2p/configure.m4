@@ -2,9 +2,9 @@
 #
 # Copyright (c) 2013      Sandia National Laboratories.  All rights reserved.
 # $COPYRIGHT$
-# 
+#
 # Additional copyrights may follow
-# 
+#
 # $HEADER$
 #
 
@@ -17,7 +17,7 @@ AC_DEFUN([MCA_ompi_sbgp_p2p_POST_CONFIG], [
     AS_IF([test "$1" = "1"], [OMPI_REQUIRE_ENDPOINT_TAG([BML])])
 ])dnl
 
-# MCA_ompi_sbgp_p2p_CONFIG(action-if-can-compile, 
+# MCA_ompi_sbgp_p2p_CONFIG(action-if-can-compile,
 #                        [action-if-cant-compile])
 # ------------------------------------------------
 # We can always build, unless we were explicitly disabled.

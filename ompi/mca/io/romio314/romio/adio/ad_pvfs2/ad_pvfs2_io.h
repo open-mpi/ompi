@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*-
  * vim: ts=8 sts=4 sw=4 noexpandtab
  *
- *   Copyright (C) 2006 University of Chicago. 
+ *   Copyright (C) 2006 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -60,7 +60,7 @@ void print_buf_file_ol_pairs(int64_t buf_off_arr[],
 /* Datatype I/O helper prototypes */
 int ADIOI_PVFS2_StridedDtypeIO(ADIO_File fd, void *buf, int count,
 			       MPI_Datatype datatype, int file_ptr_type,
-			       ADIO_Offset offset, ADIO_Status *status, 
+			       ADIO_Offset offset, ADIO_Status *status,
 			       int *error_code, int rw_type);
 
 int convert_named(MPI_Datatype *mpi_dtype,

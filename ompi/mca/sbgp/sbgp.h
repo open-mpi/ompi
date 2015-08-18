@@ -82,7 +82,7 @@ struct mca_sbgp_base_module_2_0_0_t {
     mca_sbgp_net_type group_net;
 
     /*FIXME:
-     * I don't know where to add the use_hdl flag since the 
+     * I don't know where to add the use_hdl flag since the
      * mca_bcol_basesmuma_comm_query takes just two input parameters.
      */
     bool use_hdl;

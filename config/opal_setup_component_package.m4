@@ -21,16 +21,16 @@ dnl
 dnl $HEADER$
 dnl
 
-# OPAL_SETUP_COMPONENT_PACKAGE(1: framework_name, 
+# OPAL_SETUP_COMPONENT_PACKAGE(1: framework_name,
 #                              2: component_name,
 #                              3: option_name,
 #                              4: withdir_dir_check_file,
 #                              5: withdir_libdir_check_file,
-#                              6: header, 
-#                              7: library, 
-#                              8: function, 
-#                              9: extra-libraries, 
-#                              10: [action-if-found], 
+#                              6: header,
+#                              7: library,
+#                              8: function,
+#                              9: extra-libraries,
+#                              10: [action-if-found],
 #                              11: [action-if-not-found])
 # ------------------------------------------------
 # Many components need to just check for one package, and if it's all

@@ -5,15 +5,15 @@
  * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2011 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  *
  */
@@ -24,9 +24,7 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif  /* HAVE_UNISTD_H */
-#ifdef HAVE_STRING_H
 #include <string.h>
-#endif  /* HAVE_STRING_H */
 #include <ctype.h>
 
 
@@ -75,17 +73,17 @@ static int rte_init(void)
         error = "orte_ess_base_std_prolog";
         goto error;
     }
-    
+
     /* Start by getting a unique name */
     tm_set_name();
-    
+
     /* if I am a daemon, complete my setup using the
      * default procedure
      */
     if (ORTE_PROC_IS_DAEMON) {
         /* get the list of nodes used for this job */
         nodelist = getenv(OPAL_MCA_PREFIX"orte_nodelist");
-        
+
         if (NULL != nodelist) {
             /* split the node list into an argv array */
             hosts = opal_argv_split(nodelist, ',');
@@ -98,7 +96,7 @@ static int rte_init(void)
         opal_argv_free(hosts);
         return ORTE_SUCCESS;
     }
-    
+
     if (ORTE_PROC_IS_TOOL) {
         /* otherwise, if I am a tool proc, use that procedure */
         if (ORTE_SUCCESS != (ret = orte_ess_base_tool_setup())) {
@@ -107,13 +105,13 @@ static int rte_init(void)
             goto error;
         }
         return ORTE_SUCCESS;
-        
+
     }
-    
+
     /* no other options are supported! */
     error = "ess_error";
     ret = ORTE_ERROR;
-    
+
 error:
     if (ORTE_ERR_SILENT != ret && !orte_report_silent_errors) {
         orte_show_help("help-orte-runtime.txt",
@@ -127,7 +125,7 @@ error:
 static int rte_finalize(void)
 {
     int ret;
-   
+
     /* if I am a daemon, finalize using the default procedure */
     if (ORTE_PROC_IS_DAEMON) {
         if (ORTE_SUCCESS != (ret = orte_ess_base_orted_finalize())) {
@@ -149,7 +147,7 @@ static int rte_finalize(void)
             return ret;
         }
     }
-    
+
     return ORTE_SUCCESS;
 }
 
@@ -158,7 +156,7 @@ static int tm_set_name(void)
     int rc;
     orte_jobid_t jobid;
     orte_vpid_t vpid;
-    
+
     OPAL_OUTPUT_VERBOSE((1, orte_ess_base_framework.framework_output,
                          "ess:tm setting name"));
     if (NULL == orte_ess_base_jobid) {
@@ -169,7 +167,7 @@ static int tm_set_name(void)
         ORTE_ERROR_LOG(rc);
         return(rc);
     }
-    
+
     if (NULL == orte_ess_base_vpid) {
         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
         return ORTE_ERR_NOT_FOUND;

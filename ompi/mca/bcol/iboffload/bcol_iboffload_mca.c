@@ -200,7 +200,7 @@ int mca_bcol_iboffload_verify_params(void)
                    "bcol_iboffload_ib_service_level reset to 0");
         mca_bcol_iboffload_component.service_level = 0;
     }
- 
+
     if(mca_bcol_iboffload_component.buffer_alignment <= 1 ||
        (mca_bcol_iboffload_component.buffer_alignment & (mca_bcol_iboffload_component.buffer_alignment - 1))) {
         opal_show_help("help-mpi-btl-openib.txt", "wrong buffer alignment",

@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -13,7 +13,7 @@ void ADIOI_HFS_Resize(ADIO_File fd, ADIO_Offset size, int *error_code)
 #ifndef PRINT_ERR_MSG
     static char myname[] = "ADIOI_HFS_RESIZE";
 #endif
-    
+
     err = ftruncate64(fd->fd_sys, size);
     if (err == -1) {
 #ifdef MPICH
@@ -24,7 +24,7 @@ void ADIOI_HFS_Resize(ADIO_File fd, ADIO_Offset size, int *error_code)
 #else /* MPICH-1 */
 	*error_code = MPIR_Err_setmsg(MPI_ERR_IO, MPIR_ADIO_ERROR,
 			      myname, "I/O Error", "%s", strerror(errno));
-	ADIOI_Error(fd, *error_code, myname);	    
+	ADIOI_Error(fd, *error_code, myname);
 #endif
     }
     else *error_code = MPI_SUCCESS;

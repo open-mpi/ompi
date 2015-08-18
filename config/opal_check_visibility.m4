@@ -6,16 +6,16 @@
 # Copyright (c) 2004-2005 The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
-# Copyright (c) 2004-2007 High Performance Computing Center Stuttgart, 
+# Copyright (c) 2004-2007 High Performance Computing Center Stuttgart,
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2009-2011 Oracle and/or its affiliates.  All rights reserved.
 # $COPYRIGHT$
-# 
+#
 # Additional copyrights may follow
-# 
+#
 # $HEADER$
 #
 
@@ -26,7 +26,7 @@ AC_DEFUN([OPAL_CHECK_VISIBILITY],[
 
     # Check if the compiler has support for visibility, like some
     # versions of gcc, icc Sun Studio cc.
-    AC_ARG_ENABLE(visibility, 
+    AC_ARG_ENABLE(visibility,
         AC_HELP_STRING([--enable-visibility],
             [enable visibility feature of certain compilers/linkers (default: enabled)]))
 
@@ -35,7 +35,7 @@ AC_DEFUN([OPAL_CHECK_VISIBILITY],[
 
     if test "$enable_visibility" = "no"; then
         AC_MSG_CHECKING([$opal_msg])
-        AC_MSG_RESULT([no (disabled)]) 
+        AC_MSG_RESULT([no (disabled)])
     else
         CFLAGS_orig=$CFLAGS
 

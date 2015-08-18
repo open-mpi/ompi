@@ -8,9 +8,9 @@
  * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -61,9 +61,9 @@
  * Oct 27 1997 JHC: Created by exploding db_message_state_mpich.cxx
  */
 
-/* 
-   The following was added by William Gropp to improve the portability 
-   to systems with non-ANSI C compilers 
+/*
+   The following was added by William Gropp to improve the portability
+   to systems with non-ANSI C compilers
  */
 
 #include "ompi_config.h"
@@ -71,20 +71,16 @@
 #ifdef HAVE_NO_C_CONST
 #define const
 #endif
-#if defined(HAVE_STRING_H)
 #include <string.h>
-#endif  /* defined(HAVE_STRING_H) */
-#if defined(HAVE_STDLIB_H)
 #include <stdlib.h>
-#endif  /* defined(HAVE_STDLIB_H) */
 
 /* Notice to developers!!!!
- * The following include files with _dbg.h suffixes contains definitions 
+ * The following include files with _dbg.h suffixes contains definitions
  * that are shared between the debuggger plugins and the OMPI code base.
  * This is done instead of including the non-_dbg suffixed files because
- * of the different way compilers may handle extern definitions. The 
- * particular case that is causing problems is when there is an extern 
- * variable or function that is accessed in a static inline function. 
+ * of the different way compilers may handle extern definitions. The
+ * particular case that is causing problems is when there is an extern
+ * variable or function that is accessed in a static inline function.
  * For example, here is the code we often see in a header file.
  *
  * extern int request_complete;
@@ -107,12 +103,12 @@
  *
  * If this code exists it actually compiles fine however an undefined symbol
  * is kept for foo() and in the case of some tools that load in plugins with
- * RTLD_NOW this undefined symbol causes the dlopen to fail since we do not 
+ * RTLD_NOW this undefined symbol causes the dlopen to fail since we do not
  * have (nor really need) the supporting library containing foo().
  *
- * Therefore, to handle cases like the above with compilers that require the 
- * symbols (like Sun Studio) instead of  pulling in all of OMPI into the 
- * plugins or defining dummy symbols here we separate the definitions used by 
+ * Therefore, to handle cases like the above with compilers that require the
+ * symbols (like Sun Studio) instead of  pulling in all of OMPI into the
+ * plugins or defining dummy symbols here we separate the definitions used by
  * both sets of code into the _dbg.h files.
  *
  * This means if one needs to add another definition that the plugins must see
@@ -127,7 +123,7 @@
 #include "msgq_interface.h"
 #include "ompi_msgq_dll_defs.h"
 
-/* 
+/*
    End of inclusion
  */
 
@@ -209,12 +205,12 @@ int mqs_dll_taddr_width (void)
  */
 /**********************************************************************/
 /* Translate a process number */
-static int translate (group_t *this, int index) 
-{ 	
+static int translate (group_t *this, int index)
+{
     if (index == MQS_INVALID_PROCESS ||
         ((unsigned int)index) >= ((unsigned int) this->entries))
         return MQS_INVALID_PROCESS;
-    return this->local_to_global[index]; 
+    return this->local_to_global[index];
 } /* translate */
 
 /**********************************************************************/
@@ -242,7 +238,7 @@ static group_t * find_or_create_group( mqs_process *proc,
         DEBUG(VERBOSE_COMM, ("Get a size for the communicator = %d\n", np));
         return NULL;  /* Makes no sense ! */
     }
-    is_dense = 
+    is_dense =
         ompi_fetch_int( proc,
                         group_base + i_info->ompi_group_t.offset.grp_flags,
                         p_info );
@@ -259,7 +255,7 @@ static group_t * find_or_create_group( mqs_process *proc,
         }
     }
 
-    /* Hmm, couldn't find one, so fetch it */	
+    /* Hmm, couldn't find one, so fetch it */
     group = (group_t *)mqs_malloc (sizeof (group_t));
     tr = (int *)mqs_malloc (np*sizeof(int));
     trbuffer = (char *)mqs_malloc (np*sizeof(mqs_taddr_t));
@@ -267,7 +263,7 @@ static group_t * find_or_create_group( mqs_process *proc,
     group->group_base = group_base;
     DEBUG(VERBOSE_GROUP, ("Create a new group 0x%p with %d members\n",
                           (void*)group, np) );
-    
+
     tablep = ompi_fetch_pointer( proc,
                                  group_base + i_info->ompi_group_t.offset.grp_proc_pointers,
                                  p_info);
@@ -357,7 +353,7 @@ int mqs_setup_image (mqs_image *image, const mqs_image_callbacks *icb)
     i_info->extra = NULL;
 
     mqs_put_image_info (image, (mqs_image_info *)i_info);
-  
+
     return mqs_ok;
 } /* mqs_setup_image */
 
@@ -406,7 +402,7 @@ int mqs_image_has_queues (mqs_image *image, char **message)
  * has no message queue information.
  */
 int mqs_setup_process (mqs_process *process, const mqs_process_callbacks *pcb)
-{ 
+{
     /* Extract the addresses of the global variables we need and save them away */
     mpi_process_info *p_info = (mpi_process_info *)mqs_malloc (sizeof (mpi_process_info));
 
@@ -474,7 +470,7 @@ int mqs_setup_process (mqs_process *process, const mqs_process_callbacks *pcb)
                p_info->sizes.size_t_size = ompi_fetch_int( process, /* sizeof (size_t) */
                                                            typedefs_sizeof,
                                                            p_info );
-               DEBUG( VERBOSE_GENERAL, 
+               DEBUG( VERBOSE_GENERAL,
                       ("sizes short = %d int = %d long = %d long long = %d "
                        "void* = %d bool = %d size_t = %d\n",
                        p_info->sizes.short_size, p_info->sizes.int_size,
@@ -484,7 +480,7 @@ int mqs_setup_process (mqs_process *process, const mqs_process_callbacks *pcb)
         }
 
         mqs_put_process_info (process, (mqs_process_info *)p_info);
-      
+
         return mqs_ok;
     }
     return err_no_store;
@@ -505,10 +501,10 @@ int mqs_process_has_queues (mqs_process *proc, char **msg)
     DEBUG(VERBOSE_GENERAL,("checking the status of the OMPI dll\n"));
     if (mqs_find_symbol (image, "ompi_mpi_communicators", &extra->commlist_base) != mqs_ok)
         return err_all_communicators;
-  
+
     if (mqs_find_symbol (image, "mca_pml_base_send_requests", &extra->send_queue_base) != mqs_ok)
         return err_mpid_sends;
-  
+
     if (mqs_find_symbol (image, "mca_pml_base_recv_requests", &extra->recv_queue_base) != mqs_ok)
         return err_mpid_recvs;
     DEBUG(VERBOSE_GENERAL,("process_has_queues returned success\n"));
@@ -516,7 +512,7 @@ int mqs_process_has_queues (mqs_process *proc, char **msg)
 } /* mqs_process_has_queues */
 
 /***********************************************************************
- * Check if the communicators have changed by looking at the 
+ * Check if the communicators have changed by looking at the
  * pointer array values for lowest_free and number_free.
  */
 static int communicators_changed (mqs_process *proc)
@@ -580,7 +576,7 @@ static int compare_comms (const void *a, const void *b)
 } /* compare_comms */
 
 /***********************************************************************
- * Rebuild our list of communicators because something has changed 
+ * Rebuild our list of communicators because something has changed
  */
 static int rebuild_communicator_list (mqs_process *proc)
 {
@@ -637,7 +633,7 @@ static int rebuild_communicator_list (mqs_process *proc)
                         (long long)comm_addr_base, (int)sizeof(mqs_taddr_t)));
     for( i = 0; (commcount < (comm_size - number_free)) && (i < comm_size); i++ ) {
         /* Get the communicator pointer */
-        comm_ptr = 
+        comm_ptr =
             ompi_fetch_pointer( proc,
                                 comm_addr_base + i * p_info->sizes.pointer_size,
                                 p_info );
@@ -970,7 +966,7 @@ static int opal_free_list_t_init_parser( mqs_process *proc, mpi_process_info *p_
                              (long long)active_allocation, (long long)position->upper_bound));
     }
     position->current_item = active_allocation;
-    
+
     /*opal_free_list_t_dump_position( position );*/
     return mqs_ok;
 }
@@ -1137,12 +1133,12 @@ static int fetch_request( mqs_process *proc, mpi_process_info *p_info,
         res->desired_local_rank  = ompi_fetch_int( proc, current_item + i_info->mca_pml_base_request_t.offset.req_peer, p_info );
         res->desired_global_rank = translate( extra->current_communicator->group,
                                               res->desired_local_rank );
-        
+
         res->buffer = ompi_fetch_pointer( proc, current_item + i_info->mca_pml_base_request_t.offset.req_addr,
                                      p_info );
         /* Set this to true if it's a buffered request */
         res->system_buffer = FALSE;
-            
+
         /* The pointer to the request datatype */
         ompi_datatype =
             ompi_fetch_pointer( proc,
@@ -1210,7 +1206,7 @@ static int fetch_request( mqs_process *proc, mpi_process_info *p_info,
         /* If the length we're looking for is the count ... */
         /*res->desired_length      =
           ompi_fetch_int( proc, current_item + i_info->mca_pml_base_request_t.offset.req_count, p_info );*/
-        
+
         if( (mqs_st_pending < res->status) && (MCA_PML_REQUEST_SEND != req_type) ) {  /* The real data from the status */
             res->actual_length       =
                 ompi_fetch_size_t( proc, current_item + i_info->ompi_request_t.offset.req_status +
@@ -1230,7 +1226,7 @@ static int fetch_request( mqs_process *proc, mpi_process_info *p_info,
 }
 
 /***********************************************************************
- * Setup to iterate over pending operations 
+ * Setup to iterate over pending operations
  */
 int mqs_setup_operation_iterator (mqs_process *proc, int op)
 {
@@ -1259,7 +1255,7 @@ int mqs_setup_operation_iterator (mqs_process *proc, int op)
 } /* mqs_setup_operation_iterator */
 
 /***********************************************************************
- * Fetch the next valid operation. 
+ * Fetch the next valid operation.
  * Since Open MPI only maintains a single queue of each type of operation,
  * we have to run over it and filter out the operations which
  * match the active communicator.
@@ -1297,11 +1293,11 @@ void mqs_destroy_process_info (mqs_process_info *mp_info)
         comm = extra->communicator_list;
         while (comm) {
             communicator_t *next = comm->next;
-            
+
             if( NULL != comm->group )
                 group_decref (comm->group);  /* Group is no longer referenced from here */
             mqs_free (comm);
-            
+
             comm = next;
         }
         if (NULL != extra) {
@@ -1327,95 +1323,95 @@ char * mqs_dll_error_string (int errcode)
     switch (errcode) {
     case err_silent_failure:
         return "";
-    case err_no_current_communicator: 
+    case err_no_current_communicator:
         return "No current communicator in the communicator iterator";
-    case err_bad_request:    
+    case err_bad_request:
         return "Attempting to setup to iterate over an unknown queue of operations";
-    case err_no_store: 
+    case err_no_store:
         return "Unable to allocate store";
-    case err_failed_qhdr: 
+    case err_failed_qhdr:
         return "Failed to find type MPID_QHDR";
-    case err_unexpected: 
+    case err_unexpected:
         return "Failed to find field 'unexpected' in MPID_QHDR";
-    case err_posted: 
+    case err_posted:
         return "Failed to find field 'posted' in MPID_QHDR";
-    case err_failed_queue: 
+    case err_failed_queue:
         return "Failed to find type MPID_QUEUE";
-    case err_first: 
+    case err_first:
         return "Failed to find field 'first' in MPID_QUEUE";
-    case err_context_id: 
+    case err_context_id:
         return "Failed to find field 'context_id' in MPID_QEL";
-    case err_tag: 
+    case err_tag:
         return "Failed to find field 'tag' in MPID_QEL";
-    case err_tagmask: 
+    case err_tagmask:
         return "Failed to find field 'tagmask' in MPID_QEL";
-    case err_lsrc: 
+    case err_lsrc:
         return "Failed to find field 'lsrc' in MPID_QEL";
-    case err_srcmask: 
+    case err_srcmask:
         return "Failed to find field 'srcmask' in MPID_QEL";
-    case err_next: 
+    case err_next:
         return "Failed to find field 'next' in MPID_QEL";
-    case err_ptr: 
+    case err_ptr:
         return "Failed to find field 'ptr' in MPID_QEL";
-    case err_missing_type: 
+    case err_missing_type:
         return "Failed to find some type";
-    case err_missing_symbol: 
+    case err_missing_symbol:
         return "Failed to find field the global symbol";
-    case err_db_shandle: 
+    case err_db_shandle:
         return "Failed to find field 'db_shandle' in MPIR_SQEL";
-    case err_db_comm: 
+    case err_db_comm:
         return "Failed to find field 'db_comm' in MPIR_SQEL";
-    case err_db_target: 
+    case err_db_target:
         return "Failed to find field 'db_target' in MPIR_SQEL";
-    case err_db_tag: 
+    case err_db_tag:
         return "Failed to find field 'db_tag' in MPIR_SQEL";
-    case err_db_data: 
+    case err_db_data:
         return "Failed to find field 'db_data' in MPIR_SQEL";
-    case err_db_byte_length: 
+    case err_db_byte_length:
         return "Failed to find field 'db_byte_length' in MPIR_SQEL";
-    case err_db_next: 
+    case err_db_next:
         return "Failed to find field 'db_next' in MPIR_SQEL";
-    case err_failed_rhandle: 
+    case err_failed_rhandle:
         return "Failed to find type MPIR_RHANDLE";
-    case err_is_complete: 
+    case err_is_complete:
         return "Failed to find field 'is_complete' in MPIR_RHANDLE";
-    case err_buf: 
+    case err_buf:
         return "Failed to find field 'buf' in MPIR_RHANDLE";
-    case err_len: 
+    case err_len:
         return "Failed to find field 'len' in MPIR_RHANDLE";
-    case err_s: 
+    case err_s:
         return "Failed to find field 's' in MPIR_RHANDLE";
-    case err_failed_status: 
+    case err_failed_status:
         return "Failed to find type MPI_Status";
-    case err_count: 
+    case err_count:
         return "Failed to find field 'count' in MPIR_Status";
-    case err_MPI_SOURCE: 
+    case err_MPI_SOURCE:
         return "Failed to find field 'MPI_SOURCE' in MPIR_Status";
-    case err_MPI_TAG: 
+    case err_MPI_TAG:
         return "Failed to find field 'MPI_TAG' in MPIR_Status";
-    case err_failed_commlist: 
+    case err_failed_commlist:
         return "Failed to find type MPIR_Comm_list";
-    case err_sequence_number: 
+    case err_sequence_number:
         return "Failed to find field 'sequence_number' in MPIR_Comm_list";
-    case err_comm_first: 
+    case err_comm_first:
         return "Failed to find field 'comm_first' in MPIR_Comm_list";
-    case err_failed_communicator: 
+    case err_failed_communicator:
         return "Failed to find type MPIR_Communicator";
-    case err_lrank_to_grank: 
+    case err_lrank_to_grank:
         return "Failed to find field 'lrank_to_grank' in MPIR_Communicator";
-    case err_send_context: 
+    case err_send_context:
         return "Failed to find field 'send_context' in MPIR_Communicator";
-    case err_recv_context: 
+    case err_recv_context:
         return "Failed to find field 'recv_context' in MPIR_Communicator";
-    case err_comm_next: 
+    case err_comm_next:
         return "Failed to find field 'comm_next' in MPIR_Communicator";
-    case err_comm_name: 
+    case err_comm_name:
         return "Failed to find field 'comm_name' in MPIR_Communicator";
-    case err_all_communicators: 
+    case err_all_communicators:
         return "Failed to find the global symbol MPIR_All_communicators";
-    case err_mpid_sends: 
+    case err_mpid_sends:
         return "Failed to access the global send requests list";
-    case err_mpid_recvs: 
+    case err_mpid_recvs:
         return "Failed to access the global receive requests list";
     case err_group_corrupt:
         return "Could not read a communicator's group from the process (probably a store corruption)";

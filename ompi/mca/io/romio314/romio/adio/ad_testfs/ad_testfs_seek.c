@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 2001 University of Chicago. 
+ *   Copyright (C) 2001 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -16,9 +16,9 @@
  *
  * Returns an absolute offset in bytes.  The offset passed into the call is in
  * terms of the etype relative to the filetype, so some calculations are
- * necessary.  
+ * necessary.
  */
-ADIO_Offset ADIOI_TESTFS_SeekIndividual(ADIO_File fd, ADIO_Offset offset, 
+ADIO_Offset ADIOI_TESTFS_SeekIndividual(ADIO_File fd, ADIO_Offset offset,
 					int whence, int *error_code)
 {
     int myrank, nprocs;
@@ -36,7 +36,7 @@ ADIO_Offset ADIOI_TESTFS_SeekIndividual(ADIO_File fd, ADIO_Offset offset,
 
     MPI_Comm_size(fd->comm, &nprocs);
     MPI_Comm_rank(fd->comm, &myrank);
-    FPRINTF(stdout, "[%d/%d] ADIOI_TESTFS_SeekIndividual called on %s\n", 
+    FPRINTF(stdout, "[%d/%d] ADIOI_TESTFS_SeekIndividual called on %s\n",
 	    myrank, nprocs, fd->filename);
 
     ADIOI_Datatype_iscontig(fd->filetype, &filetype_is_contig);
@@ -50,7 +50,7 @@ ADIO_Offset ADIOI_TESTFS_SeekIndividual(ADIO_File fd, ADIO_Offset offset,
 	MPI_Type_extent(fd->filetype, &filetype_extent);
 	MPI_Type_size_x(fd->filetype, &filetype_size);
 	if ( ! filetype_size ) {
-	    *error_code = MPI_SUCCESS; 
+	    *error_code = MPI_SUCCESS;
 	    return 0;
 	}
 
@@ -59,7 +59,7 @@ ADIO_Offset ADIOI_TESTFS_SeekIndividual(ADIO_File fd, ADIO_Offset offset,
 	n_filetypes = (int) (offset / n_etypes_in_filetype);
 	etype_in_filetype = (int) (offset % n_etypes_in_filetype);
 	size_in_filetype = etype_in_filetype * etype_size;
- 
+
 	sum = 0;
 	for (i=0; i<flat_file->count; i++) {
 	    sum += flat_file->blocklens[i];

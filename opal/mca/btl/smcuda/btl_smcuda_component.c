@@ -27,9 +27,7 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif  /* HAVE_UNISTD_H */
-#ifdef HAVE_STRING_H
 #include <string.h>
-#endif  /* HAVE_STRING_H */
 #ifdef HAVE_FCNTL_H
 #include <fcntl.h>
 #endif  /* HAVE_FCNTL_H */
@@ -175,7 +173,7 @@ static int smcuda_register(void)
 #endif /* OPAL_CUDA_SUPPORT */
     mca_btl_smcuda.super.btl_eager_limit = 4*1024;
     mca_btl_smcuda.super.btl_rndv_eager_limit = 4*1024;
-    mca_btl_smcuda.super.btl_max_send_size = 128*1024;
+    mca_btl_smcuda.super.btl_max_send_size = 32*1024;
     mca_btl_smcuda.super.btl_rdma_pipeline_send_length = 64*1024;
     mca_btl_smcuda.super.btl_rdma_pipeline_frag_size = 64*1024;
     mca_btl_smcuda.super.btl_min_rdma_pipeline_size = 64*1024;
@@ -187,7 +185,18 @@ static int smcuda_register(void)
     /* Call the BTL based to register its MCA params */
     mca_btl_base_param_register(&mca_btl_smcuda_component.super.btl_version,
                                 &mca_btl_smcuda.super);
-
+#if OPAL_CUDA_SUPPORT
+    /* If user has not set the value, then set to the defalt */
+    if (0 == mca_btl_smcuda.super.btl_cuda_max_send_size) {
+        mca_btl_smcuda.super.btl_cuda_max_send_size = 128*1024;
+    }
+    /* If user has not set the value, then set to magic number which will be converted to the minimum
+     * size needed to fit the PML header (see pml_ob1.c) */
+    if (0 == mca_btl_smcuda.super.btl_cuda_eager_limit) {
+        mca_btl_smcuda.super.btl_cuda_eager_limit = SIZE_MAX; /* magic number */
+    }
+    mca_common_cuda_register_mca_variables();
+#endif /* OPAL_CUDA_SUPPORT */
     return mca_btl_smcuda_component_verify();
 }
 
@@ -215,6 +224,17 @@ static int mca_btl_smcuda_component_open(void)
 
     mca_btl_smcuda_component.max_frag_size = mca_btl_smcuda.super.btl_max_send_size;
     mca_btl_smcuda_component.eager_limit = mca_btl_smcuda.super.btl_eager_limit;
+
+#if OPAL_CUDA_SUPPORT
+    /* Possibly adjust max_frag_size if the cuda size is bigger */
+    if (mca_btl_smcuda.super.btl_cuda_max_send_size > mca_btl_smcuda.super.btl_max_send_size) {
+        mca_btl_smcuda_component.max_frag_size = mca_btl_smcuda.super.btl_cuda_max_send_size;
+    }
+    opal_output_verbose(10, opal_btl_base_framework.framework_output,
+                        "btl: smcuda: cuda_max_send_size=%d, max_send_size=%d, max_frag_size=%d",
+                        (int)mca_btl_smcuda.super.btl_cuda_max_send_size, (int)mca_btl_smcuda.super.btl_max_send_size,
+                        (int)mca_btl_smcuda_component.max_frag_size);
+#endif /* OPAL_CUDA_SUPPORT */
 
     /* initialize objects */
     OBJ_CONSTRUCT(&mca_btl_smcuda_component.sm_lock, opal_mutex_t);
@@ -297,7 +317,7 @@ CLEANUP:
     return return_value;
 }
 
-/* 
+/*
  * Returns the number of processes on the node.
  */
 static inline int
@@ -784,8 +804,8 @@ static void btl_smcuda_control(mca_btl_base_module_t* btl,
                 smcuda_btl->error_cb(&smcuda_btl->super, MCA_BTL_ERROR_FLAGS_ADD_CUDA_IPC,
                                      ep_proc, (char *)&mca_btl_smcuda_component.cuda_ipc_output);
                 opal_output_verbose(10, mca_btl_smcuda_component.cuda_ipc_output,
-                                    "Sending CUDA IPC ACK:  myrank=%d, mydev=%d, peerrank=%d, peerdev=%d", 
-                                    endpoint->my_smp_rank, mydevnum, endpoint->peer_smp_rank, 
+                                    "Sending CUDA IPC ACK:  myrank=%d, mydev=%d, peerrank=%d, peerdev=%d",
+                                    endpoint->my_smp_rank, mydevnum, endpoint->peer_smp_rank,
                                     ctrlhdr.cudev);
                 mca_btl_smcuda_send_cuda_ipc_ack(btl, endpoint, 1);
             }
@@ -969,22 +989,22 @@ void mca_btl_smcuda_component_event_thread(opal_object_t* thread)
 }
 #endif
 
-void btl_smcuda_process_pending_sends(struct mca_btl_base_endpoint_t *ep) 
-{ 
-    btl_smcuda_pending_send_item_t *si; 
-    int rc; 
+void btl_smcuda_process_pending_sends(struct mca_btl_base_endpoint_t *ep)
+{
+    btl_smcuda_pending_send_item_t *si;
+    int rc;
 
     while ( 0 < opal_list_get_size(&ep->pending_sends) ) {
         /* Note that we access the size of ep->pending_sends unlocked
-           as it doesn't really matter if the result is wrong as 
+           as it doesn't really matter if the result is wrong as
            opal_list_remove_first is called with a lock and we handle it
            not finding an item to process */
         OPAL_THREAD_LOCK(&ep->endpoint_lock);
-        si = (btl_smcuda_pending_send_item_t*)opal_list_remove_first(&ep->pending_sends); 
+        si = (btl_smcuda_pending_send_item_t*)opal_list_remove_first(&ep->pending_sends);
         OPAL_THREAD_UNLOCK(&ep->endpoint_lock);
 
         if(NULL == si) return; /* Another thread got in before us. Thats ok. */
-    
+
         OPAL_THREAD_ADD32(&mca_btl_smcuda_component.num_pending_sends, -1);
 
         MCA_BTL_SMCUDA_FIFO_WRITE(ep, ep->my_smp_rank, ep->peer_smp_rank, si->data,
@@ -995,7 +1015,7 @@ void btl_smcuda_process_pending_sends(struct mca_btl_base_endpoint_t *ep)
         if ( OPAL_SUCCESS != rc )
             return;
     }
-} 
+}
 
 int mca_btl_smcuda_component_progress(void)
 {

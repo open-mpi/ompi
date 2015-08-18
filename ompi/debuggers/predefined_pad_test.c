@@ -1,9 +1,9 @@
-/*   
+/*
  * Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -51,7 +51,7 @@ static int errors = 0;
         }                                                               \
     } while(0)
 
-int main(int argc, char **argv) 
+int main(int argc, char **argv)
 {
     PAD_CHECK(communicator);
     PAD_CHECK(errhandler);
@@ -71,6 +71,6 @@ int main(int argc, char **argv)
         fprintf(stderr, "NUMBER OF ERRORS: %d\n", errors);
         exit(1);
     }
-    
+
     return 0;
 }

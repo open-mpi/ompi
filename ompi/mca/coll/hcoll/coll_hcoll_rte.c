@@ -7,6 +7,8 @@
  *                         reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
  *                         reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -39,9 +41,9 @@
 #include "ompi/mca/pml/pml.h"
 
 
-#include "hcoll_dte.h"
-#include "hcoll_api.h"
-#include "hcoll_constants.h"
+#include "hcoll/api/hcoll_dte.h"
+#include "hcoll/api/hcoll_api.h"
+#include "hcoll/api/hcoll_constants.h"
 /*
  * Local functions
  */
@@ -377,7 +379,7 @@ static int group_id(rte_grp_handle_t group){
     return ((ompi_communicator_t *)group)->c_contextid;
 }
 
-static int 
+static int
 request_free(struct ompi_request_t **ompi_req)
 {
     ompi_request_t *req = *ompi_req;

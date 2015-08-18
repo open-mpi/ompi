@@ -2,9 +2,9 @@
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 #include "oshmem_config.h"
@@ -17,7 +17,7 @@
 #include "oshmem/mca/spml/spml.h"
 
 /*
- * These routines retrieve data from a contiguous data object on a remote PE. 
+ * These routines retrieve data from a contiguous data object on a remote PE.
  * The shmem_get() routines transfer nelems elements of the data object at address source
  * on the remote PE (pe), to the data object at address target on the local PE. These routines
  * return after the data has been copied to address target on the local pe.

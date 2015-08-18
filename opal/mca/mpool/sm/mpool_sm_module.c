@@ -5,18 +5,18 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2011-2012 Los Alamos National Security, LLC.  
- *                         All rights reserved. 
+ * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
+ *                         All rights reserved.
  * Copyright (c) 2011-2014 NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -38,21 +38,21 @@
 
 static void sm_module_finalize(mca_mpool_base_module_t* module);
 
-/* 
+/*
  *  Initializes the mpool module.
- */ 
+ */
 void mca_mpool_sm_module_init(mca_mpool_sm_module_t* mpool)
 {
-    mpool->super.mpool_component = &mca_mpool_sm_component.super; 
-    mpool->super.mpool_base = mca_mpool_sm_base; 
-    mpool->super.mpool_alloc = mca_mpool_sm_alloc; 
-    mpool->super.mpool_realloc = mca_mpool_sm_realloc; 
-    mpool->super.mpool_free = mca_mpool_sm_free; 
-    mpool->super.mpool_find = NULL; 
-    mpool->super.mpool_register = NULL; 
-    mpool->super.mpool_deregister = NULL; 
+    mpool->super.mpool_component = &mca_mpool_sm_component.super;
+    mpool->super.mpool_base = mca_mpool_sm_base;
+    mpool->super.mpool_alloc = mca_mpool_sm_alloc;
+    mpool->super.mpool_realloc = mca_mpool_sm_realloc;
+    mpool->super.mpool_free = mca_mpool_sm_free;
+    mpool->super.mpool_find = NULL;
+    mpool->super.mpool_register = NULL;
+    mpool->super.mpool_deregister = NULL;
     mpool->super.mpool_release_memory = NULL;
-    mpool->super.mpool_finalize = sm_module_finalize; 
+    mpool->super.mpool_finalize = sm_module_finalize;
     mpool->super.mpool_ft_event = mca_mpool_sm_ft_event;
     mpool->super.flags = 0;
 
@@ -139,7 +139,7 @@ static void sm_module_finalize(mca_mpool_base_module_t* module)
     mca_mpool_sm_module_t *sm_module = (mca_mpool_sm_module_t*) module;
 
     if (NULL != sm_module->sm_common_module) {
-        if (OPAL_SUCCESS == 
+        if (OPAL_SUCCESS ==
             mca_common_sm_fini(sm_module->sm_common_module)) {
 #if OPAL_ENABLE_FT_CR == 1
             /* Only unlink the file if we are *not* restarting.  If we

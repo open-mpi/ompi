@@ -19,23 +19,23 @@ BEGIN_C_DECLS
 
 
 /** Rebuild the PML requests pools to make room for extra space at end of each
-  * request. 
-  * The extra data is allocated in each requests so that it can hold instances  
-  * of the req_recv_class and req_send_class fields of the 
+  * request.
+  * The extra data is allocated in each requests so that it can hold instances
+  * of the req_recv_class and req_send_class fields of the
   * mca_vprotocol_base_module_t. If those fields are NULL the requests are not
   * recreated.
   *  @return OMPI_SUCCESS or failure status
   */
-OMPI_DECLSPEC int mca_vprotocol_base_request_parasite(void);    
+OMPI_DECLSPEC int mca_vprotocol_base_request_parasite(void);
 
-    
+
 /** Gives the actual address of the protocol specific part of a recv request.
  *   @param req (IN) the address of an ompi_request.
  *   @return address of the custom vprotocol data associated with the request.
  */
 #define VPROTOCOL_RECV_FTREQ(req) \
     (((uintptr_t) req) + mca_pml_v.host_pml_req_recv_size)
-    
+
 /** Gives the address of the real request associated with a protocol specific
  * send request.
  *  @param ftreq (IN) the address of a protocol specific request.
@@ -44,7 +44,7 @@ OMPI_DECLSPEC int mca_vprotocol_base_request_parasite(void);
 #define VPROTOCOL_RECV_REQ(ftreq) \
     ((mca_pml_base_recv_request_t *) \
         (((uintptr_t) ftreq) - mca_pml_v.host_pml_req_send_size))
-    
+
 /** Gives the actual address of the protocol specific part of a send request.
  *   @param req (IN) the address of an ompi_request.
  *   @return address of the custom vprotocol data associated with the request.
@@ -60,8 +60,8 @@ OMPI_DECLSPEC int mca_vprotocol_base_request_parasite(void);
 #define VPROTOCOL_SEND_REQ(ftreq) \
     ((mca_pml_base_send_request_t *) \
         (((uintptr_t) ftreq) - mca_pml_v.host_pml_req_send_size))
- 
-/** Unified macro to get the actual address of the protocol specific part of 
+
+/** Unified macro to get the actual address of the protocol specific part of
   * an send - or - recv request.
   *  @param request (IN) the address of an ompi_request.
   *  @return address of the custom vprotocol data associated with the request.
@@ -76,7 +76,7 @@ OMPI_DECLSPEC int mca_vprotocol_base_request_parasite(void);
         : VPROTOCOL_RECV_FTREQ(req)                                            \
     )                                                                          \
 )
- 
+
 END_C_DECLS
 
 #endif /* __INCLUDE_VPROTOCOL_REQUEST_H_ */

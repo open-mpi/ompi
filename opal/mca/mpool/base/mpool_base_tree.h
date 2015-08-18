@@ -6,7 +6,7 @@
  * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
@@ -14,9 +14,9 @@
  * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -33,7 +33,7 @@ BEGIN_C_DECLS
 
 /*
  * Data structures for the tree of allocated memory
- * used for MPI_Alloc_mem and MPI_Free_mem 
+ * used for MPI_Alloc_mem and MPI_Free_mem
  */
 
 /**
@@ -57,34 +57,34 @@ OPAL_DECLSPEC OBJ_CLASS_DECLARATION(mca_mpool_base_tree_item_t);
 /*
  * initialize/finalize the rb tree
  */
-int mca_mpool_base_tree_init(void); 
+int mca_mpool_base_tree_init(void);
 int mca_mpool_base_tree_fini(void);
 
-/* 
- * insert an item in the rb tree 
- */ 
-int mca_mpool_base_tree_insert(mca_mpool_base_tree_item_t* item); 
-
-/* 
- * remove an item from the rb tree 
+/*
+ * insert an item in the rb tree
  */
-int mca_mpool_base_tree_delete(mca_mpool_base_tree_item_t* item); 
+int mca_mpool_base_tree_insert(mca_mpool_base_tree_item_t* item);
+
+/*
+ * remove an item from the rb tree
+ */
+int mca_mpool_base_tree_delete(mca_mpool_base_tree_item_t* item);
 
 
 /**
- *  find the item in the rb tree  
+ *  find the item in the rb tree
  */
 mca_mpool_base_tree_item_t* mca_mpool_base_tree_find(void* base);
 
-/* 
- * get a tree item from the free list 
+/*
+ * get a tree item from the free list
  */
-mca_mpool_base_tree_item_t* mca_mpool_base_tree_item_get(void); 
+mca_mpool_base_tree_item_t* mca_mpool_base_tree_item_get(void);
 
-/* 
- * put tree item back into the free list 
+/*
+ * put tree item back into the free list
  */
-void mca_mpool_base_tree_item_put(mca_mpool_base_tree_item_t* item); 
+void mca_mpool_base_tree_item_put(mca_mpool_base_tree_item_t* item);
 
 /*
  * For debugging, print a show_help kind of message if there are items

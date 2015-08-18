@@ -5,20 +5,20 @@
  * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
- *                         reserved. 
+ *                         reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 #include "orte_config.h"
@@ -29,9 +29,7 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif  /* HAVE_UNISTD_H */
-#ifdef HAVE_STRING_H
 #include <string.h>
-#endif  /* HAVE_STRING_H */
 
 #ifdef HAVE_FCNTL_H
 #include <fcntl.h>
@@ -95,26 +93,26 @@ orte_iof_base_module_t orte_iof_hnp_module = {
 static int init(void)
 {
     int rc;
-    
+
     /* post non-blocking recv to catch forwarded IO from
      * the orteds
-     */    
+     */
     orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
                             ORTE_RML_TAG_IOF_HNP,
                             ORTE_RML_PERSISTENT,
                             orte_iof_hnp_recv,
                             NULL);
-    
+
     if (ORTE_SUCCESS != (rc = orte_rml.add_exception_handler(orte_iof_hnp_exception_handler))) {
         ORTE_ERROR_LOG(rc);
         orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_IOF_HNP);
         return rc;
     }
-    
+
     OBJ_CONSTRUCT(&mca_iof_hnp_component.sinks, opal_list_t);
     OBJ_CONSTRUCT(&mca_iof_hnp_component.procs, opal_list_t);
     mca_iof_hnp_component.stdinev = NULL;
-    
+
     return ORTE_SUCCESS;
 }
 
@@ -151,18 +149,18 @@ static int hnp_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_tag,
     if (ORTE_VPID_INVALID == dst_name->vpid || fd < 0) {
         return ORTE_SUCCESS;
     }
-    
+
     OPAL_OUTPUT_VERBOSE((1, orte_iof_base_framework.framework_output,
                          "%s iof:hnp pushing fd %d for process %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          fd, ORTE_NAME_PRINT(dst_name)));
-    
+
     if (!(src_tag & ORTE_IOF_STDIN)) {
         /* set the file descriptor to non-blocking - do this before we setup
          * and activate the read event in case it fires right away
          */
         if((flags = fcntl(fd, F_GETFL, 0)) < 0) {
-            opal_output(orte_iof_base_framework.framework_output, "[%s:%d]: fcntl(F_GETFL) failed with errno=%d\n", 
+            opal_output(orte_iof_base_framework.framework_output, "[%s:%d]: fcntl(F_GETFL) failed with errno=%d\n",
                         __FILE__, __LINE__, errno);
         } else {
             flags |= O_NONBLOCK;
@@ -215,7 +213,7 @@ static int hnp_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_tag,
                                  orte_iof_base_write_handler,
                                  &mca_iof_hnp_component.sinks);
         }
-        
+
     SETUP:
         /* define a read event and activate it */
         if (src_tag & ORTE_IOF_STDOUT) {
@@ -273,7 +271,7 @@ static int hnp_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_tag,
             sink->daemon.vpid = proc->node->daemon->name.vpid;
         }
     }
-    
+
     /* now setup the read - but check to only do this once */
     if (NULL == mca_iof_hnp_component.stdinev) {
         /* Since we are the HNP, we don't want to set nonblocking on our
@@ -284,16 +282,16 @@ static int hnp_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_tag,
          * This causes things like "mpirun -np 1 big_app | cat" to lose
          * output, because cat's stdout is then ALSO non-blocking and cat
          * isn't built to deal with that case (same with almost all other
-         * unix text utils). 
+         * unix text utils).
          */
         if (0 != fd) {
             if((flags = fcntl(fd, F_GETFL, 0)) < 0) {
-                opal_output(orte_iof_base_framework.framework_output, "[%s:%d]: fcntl(F_GETFL) failed with errno=%d\n", 
+                opal_output(orte_iof_base_framework.framework_output, "[%s:%d]: fcntl(F_GETFL) failed with errno=%d\n",
                             __FILE__, __LINE__, errno);
             } else {
                 flags |= O_NONBLOCK;
                 fcntl(fd, F_SETFL, flags);
-            }            
+            }
         }
         if (isatty(fd)) {
             /* We should avoid trying to read from stdin if we
@@ -306,7 +304,7 @@ static int hnp_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_tag,
             opal_event_signal_set(orte_event_base, &mca_iof_hnp_component.stdinsig,
                                   SIGCONT, orte_iof_hnp_stdin_cb,
                                   NULL);
-            
+
             /* setup a read event to read stdin, but don't activate it yet. The
              * dst_name indicates who should receive the stdin. If that recipient
              * doesn't do a corresponding pull, however, then the stdin will
@@ -315,7 +313,7 @@ static int hnp_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_tag,
             ORTE_IOF_READ_EVENT(&mca_iof_hnp_component.stdinev,
                                 dst_name, fd, ORTE_IOF_STDIN,
                                 orte_iof_hnp_read_local_handler, false);
-            
+
             /* check to see if we want the stdin read event to be
              * active - we will always at least define the event,
              * but may delay its activation
@@ -348,28 +346,28 @@ static int hnp_pull(const orte_process_name_t* dst_name,
 {
     orte_iof_sink_t *sink;
     int flags;
-    
+
     /* this is a local call - only stdin is supported */
     if (ORTE_IOF_STDIN != src_tag) {
         return ORTE_ERR_NOT_SUPPORTED;
     }
-    
+
     OPAL_OUTPUT_VERBOSE((1, orte_iof_base_framework.framework_output,
                          "%s iof:hnp pulling fd %d for process %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          fd, ORTE_NAME_PRINT(dst_name)));
-    
+
     /* set the file descriptor to non-blocking - do this before we setup
      * the sink in case it fires right away
      */
     if((flags = fcntl(fd, F_GETFL, 0)) < 0) {
-        opal_output(orte_iof_base_framework.framework_output, "[%s:%d]: fcntl(F_GETFL) failed with errno=%d\n", 
+        opal_output(orte_iof_base_framework.framework_output, "[%s:%d]: fcntl(F_GETFL) failed with errno=%d\n",
                     __FILE__, __LINE__, errno);
     } else {
         flags |= O_NONBLOCK;
         fcntl(fd, F_SETFL, flags);
     }
-    
+
     ORTE_IOF_SINK_DEFINE(&sink, dst_name, fd, ORTE_IOF_STDIN,
                          stdin_write_handler,
                          &mca_iof_hnp_component.sinks);
@@ -389,7 +387,7 @@ static int hnp_close(const orte_process_name_t* peer,
     opal_list_item_t *item, *next_item;
     orte_iof_sink_t* sink;
     orte_ns_cmp_bitmask_t mask;
-    
+
     for(item = opal_list_get_first(&mca_iof_hnp_component.sinks);
         item != opal_list_get_end(&mca_iof_hnp_component.sinks);
         item = next_item ) {
@@ -397,10 +395,10 @@ static int hnp_close(const orte_process_name_t* peer,
         next_item = opal_list_get_next(item);
 
         mask = ORTE_NS_CMP_ALL;
-        
+
         if (OPAL_EQUAL == orte_util_compare_name_fields(mask, &sink->name, peer) &&
            (source_tag & sink->tag)) {
-            
+
             /* No need to delete the event or close the file
              * descriptor - the destructor will automatically
              * do it for us.
@@ -420,7 +418,7 @@ static int finalize(void)
     orte_iof_write_event_t *wev;
     int num_written;
     bool dump;
-    
+
     /* check if anything is still trying to be written out */
     wev = orte_iof_base.iof_write_stdout->wev;
     if (!opal_list_is_empty(&wev->outputs)) {
@@ -457,7 +455,7 @@ static int finalize(void)
             }
         }
     }
-    
+
     orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_IOF_HNP);
 
     return ORTE_SUCCESS;
@@ -481,14 +479,14 @@ static void stdin_write_handler(int fd, short event, void *cbdata)
     opal_list_item_t *item;
     orte_iof_write_output_t *output;
     int num_written;
-    
+
     OPAL_OUTPUT_VERBOSE((1, orte_iof_base_framework.framework_output,
                          "%s hnp:stdin:write:handler writing data to %d",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          wev->fd));
-    
+
     wev->pending = false;
-    
+
     while (NULL != (item = opal_list_remove_first(&wev->outputs))) {
         output = (orte_iof_write_output_t*)item;
         /* if an abnormal termination has occurred, just dump
@@ -527,7 +525,7 @@ static void stdin_write_handler(int fd, short event, void *cbdata)
                 wev->pending = true;
                 opal_event_add(wev->ev, 0);
                 goto CHECK;
-            }            
+            }
             /* otherwise, something bad happened so all we can do is declare an
              * error and abort
              */
@@ -547,7 +545,7 @@ static void stdin_write_handler(int fd, short event, void *cbdata)
             /* push this item back on the front of the list */
             opal_list_prepend(&wev->outputs, item);
             /* leave the write event running so it will call us again
-             * when the fd is ready. 
+             * when the fd is ready.
              */
             wev->pending = true;
             opal_event_add(wev->ev, 0);
@@ -591,10 +589,10 @@ orte_iof_hnp_exception_handler(orte_process_name_t* peer, orte_rml_exception_t r
 {
 #if 0
     orte_iof_base_endpoint_t *endpoint;
-    opal_output_verbose(1, orte_iof_base_framework.framework_output, 
+    opal_output_verbose(1, orte_iof_base_framework.framework_output,
                         "iof svc exception handler! %s\n",
                         ORTE_NAME_PRINT((orte_process_name_t*)peer));
-    
+
     /* If we detect an exception on the RML connection to a peer,
      delete all of its subscriptions and publications.  Note that
      exceptions can be detected during a normal RML shutdown; they
@@ -602,13 +600,13 @@ orte_iof_hnp_exception_handler(orte_process_name_t* peer, orte_rml_exception_t r
     orte_iof_hnp_sub_delete_all(peer);
     orte_iof_hnp_pub_delete_all(peer);
     opal_output_verbose(1, orte_iof_base_framework.framework_output, "deleted all pubs and subs\n");
-    
+
     /* Find any streams on any endpoints for this peer and close them */
-    while (NULL != 
+    while (NULL !=
            (endpoint = orte_iof_base_endpoint_match(peer, ORTE_NS_CMP_ALL,
                                                     ORTE_IOF_ANY))) {
         orte_iof_base_endpoint_closed(endpoint);
-        
+
         /* Delete the endpoint that we just matched */
         orte_iof_base_endpoint_delete(peer, ORTE_NS_CMP_ALL, ORTE_IOF_ANY);
     }

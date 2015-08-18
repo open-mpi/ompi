@@ -76,7 +76,7 @@ int mca_sharedfp_addproc_file_open (struct ompi_communicator_t *comm,
     }
 
     /*Spawn a new process which will maintain the offsets for this file open*/
-    ret = MPI_Comm_spawn("mca_sharedfp_addproc_control", MPI_ARGV_NULL, 1, MPI_INFO_NULL, 
+    ret = MPI_Comm_spawn("mca_sharedfp_addproc_control", MPI_ARGV_NULL, 1, MPI_INFO_NULL,
 		   0, sh->comm, &newInterComm, &err);
     if ( OMPI_SUCCESS != ret  ) {
 	printf( "mca_sharedfp_addproc_file_open: error spawning control process ret=%d\n",
@@ -119,7 +119,7 @@ int mca_sharedfp_addproc_file_close (mca_io_ompio_file_t *fh)
 
     if ( NULL == fh->f_sharedfp_data){
 	/* Can happen with lazy initialization of the sharedfp structures */
-	if ( mca_sharedfp_addproc_verbose ) {	    
+	if ( mca_sharedfp_addproc_verbose ) {
 	    printf( "sharedfp_addproc_file_close - shared file pointer structure not initialized\n");
 	}
         return OMPI_SUCCESS;
@@ -129,7 +129,7 @@ int mca_sharedfp_addproc_file_close (mca_io_ompio_file_t *fh)
     rank = ompi_comm_rank ( sh->comm );
 
     /* Make sure that all processes are ready to release the
-    ** shared file pointer resources  
+    ** shared file pointer resources
     */
     sh->comm->c_coll.coll_barrier(sh->comm, sh->comm->c_coll.coll_barrier_module );
 
@@ -138,7 +138,7 @@ int mca_sharedfp_addproc_file_close (mca_io_ompio_file_t *fh)
     if (addproc_data) {
         /*tell additional proc to stop listening*/
         if(0 == rank){
-            MCA_PML_CALL(send( &sendBuff, count, OMPI_OFFSET_DATATYPE, 0, END_TAG, 
+            MCA_PML_CALL(send( &sendBuff, count, OMPI_OFFSET_DATATYPE, 0, END_TAG,
 			       MCA_PML_BASE_SEND_STANDARD, addproc_data->intercom));
         }
 

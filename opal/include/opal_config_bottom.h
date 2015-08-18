@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2010 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2010 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -15,10 +15,11 @@
  *                         All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  *
  * This file is included at the bottom of opal_config.h, and is
@@ -30,7 +31,7 @@
  * need to #ifndef/#endif protection here.
  */
 
-#ifndef OPAL_CONFIG_H 
+#ifndef OPAL_CONFIG_H
 #error "opal_config_bottom.h should only be included from opal_config.h"
 #endif
 
@@ -241,10 +242,6 @@
 #    define OPAL_MODULE_DECLSPEC
 #  endif
 
-/*
- * Do we have <stdint.h>?
- */
-#ifdef HAVE_STDINT_H
 #if !defined(__STDC_LIMIT_MACROS) && (defined(c_plusplus) || defined (__cplusplus))
 /* When using a C++ compiler, the max / min value #defines for std
    types are only included if __STDC_LIMIT_MACROS is set before
@@ -252,10 +249,7 @@
 #define __STDC_LIMIT_MACROS
 #endif
 #include "opal_config.h"
-#include <stdint.h>
-#else
 #include "opal_stdint.h"
-#endif
 
 /***********************************************************************
  *
@@ -268,61 +262,6 @@
 
 #ifndef HAVE_PTRDIFF_T
 typedef OPAL_PTRDIFF_TYPE ptrdiff_t;
-#endif
-
-/*
- * If we're in C, we may need to bring in the bool type and true/false
- * constants.  OPAL_NEED_C_BOOL will be true if the compiler either
- * needs <stdbool.h> or doesn't define the bool type at all.
- */
-#if !(defined(c_plusplus) || defined(__cplusplus))
-#    if OPAL_NEED_C_BOOL
-#        if OPAL_USE_STDBOOL_H
-             /* If we're using <stdbool.h>, there is an implicit
-                assumption that the C++ bool is the same size and has
-                the same alignment.  However, configure may have
-                disabled the MPI C++ bindings, so if "_Bool" exists,
-                then use that sizeof. */
-#            include <stdbool.h>
-             /* This section exists because AC_SIZEOF(bool) may not be
-                run in configure if we're not building the MPI C++
-                bindings. */
-#            undef SIZEOF_BOOL
-#            if SIZEOF__BOOL > 0
-#                define SIZEOF_BOOL SIZEOF__BOOL
-#            else
-                 /* If all else fails, assume it's 1 */
-#                define SIZEOF_BOOL 1
-#            endif
-#        else
-             /* We need to create a bool type and ensure that it's the
-                same size / alignment as the C++ bool size /
-                alignment */
-#            define false 0
-#            define true 1
-#            if SIZEOF_BOOL == SIZEOF_CHAR && OPAL_ALIGNMENT_CXX_BOOL == OPAL_ALIGNMENT_CHAR
-typedef unsigned char bool;
-#            elif SIZEOF_BOOL == SIZEOF_SHORT && OPAL_ALIGNMENT_CXX_BOOL == OPAL_ALIGNMENT_SHORT
-typedef short bool;
-#            elif SIZEOF_BOOL == SIZEOF_INT && OPAL_ALIGNMENT_CXX_BOOL == OPAL_ALIGNMENT_INT
-typedef int bool;
-#            elif SIZEOF_BOOL == SIZEOF_LONG && OPAL_ALIGNMENT_CXX_BOOL == OPAL_ALIGNMENT_LONG
-typedef long bool;
-#            elif defined(SIZEOF_LONG_LONG) && defined(OPAL_ALIGNMENT_LONG) && SIZEOF_BOOL == SIZEOF_LONG && OPAL_ALIGNMENT_CXX_BOOL == OPAL_ALIGNMENT_LONG
-typedef long long bool;
-             /* If we have _Bool, use that */
-#            elif SIZEOF__BOOL > 0
-#                undef SIZEOF_BOOL
-#                define bool _Bool
-#                define SIZEOF_BOOL SIZEOF__BOOL
-#            else
-             /* If all else fails, just make bool be an unsigned char
-                and size of 1 */
-typedef unsigned char bool;
-#                define SIZEOF_BOOL 1
-#            endif
-#        endif  /* OPAL_USE_STDBOOL_H */
-#    endif  /* OPAL_NEED_C_BOOL */
 #endif
 
 /*
@@ -468,6 +407,9 @@ static inline uint16_t ntohs(uint16_t netvar) { return netvar; }
 
 #define IOVBASE_TYPE  void
 
+/* ensure the bool type is defined as it is used everywhere */
+#include <stdbool.h>
+
 /**
  * If we generate our own bool type, we need a special way to cast the result
  * in such a way to keep the compilers silent.
@@ -570,7 +512,7 @@ static inline uint16_t ntohs(uint16_t netvar) { return netvar; }
    want to protect others from the autoconf/automake-generated
    PACKAGE_<foo> macros in opal_config.h.  We can't put these undef's
    directly in opal_config.h because they'll be turned into #defines'
-   via autoconf.  
+   via autoconf.
 
    So put them here in case any only else includes OMPI/ORTE/OPAL's
    config.h files. */

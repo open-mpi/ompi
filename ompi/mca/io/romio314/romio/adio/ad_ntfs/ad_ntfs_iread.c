@@ -1,14 +1,14 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
- *   Copyright (C) 1997 University of Chicago. 
+/*
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
 #include "ad_ntfs.h"
 
-void ADIOI_NTFS_IreadContig(ADIO_File fd, void *buf, int count, 
+void ADIOI_NTFS_IreadContig(ADIO_File fd, void *buf, int count,
                 MPI_Datatype datatype, int file_ptr_type,
-                ADIO_Offset offset, ADIO_Request *request, int *error_code)  
+                ADIO_Offset offset, ADIO_Request *request, int *error_code)
 {
     MPI_Count len, typesize;
     int err;

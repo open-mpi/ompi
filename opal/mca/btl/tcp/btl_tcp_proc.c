@@ -6,7 +6,7 @@
  * Copyright (c) 2004-2014 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -16,9 +16,9 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -58,9 +58,9 @@ static int max_assignment_cardinality;
 static enum mca_btl_tcp_connection_quality **weights;
 static struct mca_btl_tcp_addr_t ***best_addr;
 
-OBJ_CLASS_INSTANCE( mca_btl_tcp_proc_t, 
-                    opal_list_item_t, 
-                    mca_btl_tcp_proc_construct, 
+OBJ_CLASS_INSTANCE( mca_btl_tcp_proc_t,
+                    opal_list_item_t,
+                    mca_btl_tcp_proc_construct,
                     mca_btl_tcp_proc_destruct );
 
 void mca_btl_tcp_proc_construct(mca_btl_tcp_proc_t* tcp_proc)
@@ -82,7 +82,7 @@ void mca_btl_tcp_proc_destruct(mca_btl_tcp_proc_t* tcp_proc)
     if( NULL != tcp_proc->proc_opal ) {
         /* remove from list of all proc instances */
         OPAL_THREAD_LOCK(&mca_btl_tcp_component.tcp_lock);
-        opal_proc_table_remove_value(&mca_btl_tcp_component.tcp_procs, 
+        opal_proc_table_remove_value(&mca_btl_tcp_component.tcp_procs,
                                      tcp_proc->proc_opal->proc_name);
         OPAL_THREAD_UNLOCK(&mca_btl_tcp_component.tcp_lock);
         OBJ_RELEASE(tcp_proc->proc_opal);
@@ -101,7 +101,7 @@ void mca_btl_tcp_proc_destruct(mca_btl_tcp_proc_t* tcp_proc)
 /*
  * Create a TCP process structure. There is a one-to-one correspondence
  * between a opal_proc_t and a mca_btl_tcp_proc_t instance. We cache
- * additional data (specifically the list of mca_btl_tcp_endpoint_t instances, 
+ * additional data (specifically the list of mca_btl_tcp_endpoint_t instances,
  * and published addresses) associated w/ a given destination on this
  * datastructure.
  */
@@ -113,7 +113,7 @@ mca_btl_tcp_proc_t* mca_btl_tcp_proc_create(opal_proc_t* proc)
     int rc;
 
     OPAL_THREAD_LOCK(&mca_btl_tcp_component.tcp_lock);
-    rc = opal_proc_table_get_value(&mca_btl_tcp_component.tcp_procs, 
+    rc = opal_proc_table_get_value(&mca_btl_tcp_component.tcp_procs,
                                    proc->proc_name, (void**)&btl_proc);
     if(OPAL_SUCCESS == rc) {
         OPAL_THREAD_UNLOCK(&mca_btl_tcp_component.tcp_lock);
@@ -343,12 +343,12 @@ static mca_btl_tcp_interface_t** mca_btl_tcp_retrieve_local_interfaces(void)
                 continue;
             }
 
-            local_interfaces[local_kindex_to_index[kindex]]->ipv4_address = 
+            local_interfaces[local_kindex_to_index[kindex]]->ipv4_address =
                 (struct sockaddr_storage*) malloc(sizeof(local_addr));
-            memcpy(local_interfaces[local_kindex_to_index[kindex]]->ipv4_address, 
+            memcpy(local_interfaces[local_kindex_to_index[kindex]]->ipv4_address,
                    &local_addr, sizeof(local_addr));
-            opal_ifindextomask(idx, 
-                               &local_interfaces[local_kindex_to_index[kindex]]->ipv4_netmask, 
+            opal_ifindextomask(idx,
+                               &local_interfaces[local_kindex_to_index[kindex]]->ipv4_netmask,
                                sizeof(int));
             break;
         case AF_INET6:
@@ -357,12 +357,12 @@ static mca_btl_tcp_interface_t** mca_btl_tcp_retrieve_local_interfaces(void)
                 continue;
             }
 
-            local_interfaces[local_kindex_to_index[kindex]]->ipv6_address 
+            local_interfaces[local_kindex_to_index[kindex]]->ipv6_address
                 = (struct sockaddr_storage*) malloc(sizeof(local_addr));
-            memcpy(local_interfaces[local_kindex_to_index[kindex]]->ipv6_address, 
+            memcpy(local_interfaces[local_kindex_to_index[kindex]]->ipv6_address,
                    &local_addr, sizeof(local_addr));
-            opal_ifindextomask(idx, 
-                               &local_interfaces[local_kindex_to_index[kindex]]->ipv6_netmask, 
+            opal_ifindextomask(idx,
+                               &local_interfaces[local_kindex_to_index[kindex]]->ipv6_netmask,
                                sizeof(int));
             break;
         default:
@@ -382,10 +382,10 @@ cleanup:
 }
 /*
  * Note that this routine must be called with the lock on the process
- * already held.  Insert a btl instance into the proc array and assign 
+ * already held.  Insert a btl instance into the proc array and assign
  * it an address.
  */
-int mca_btl_tcp_proc_insert( mca_btl_tcp_proc_t* btl_proc, 
+int mca_btl_tcp_proc_insert( mca_btl_tcp_proc_t* btl_proc,
                              mca_btl_base_endpoint_t* btl_endpoint )
 {
     struct sockaddr_storage endpoint_addr_ss;
@@ -456,10 +456,10 @@ int mca_btl_tcp_proc_insert( mca_btl_tcp_proc_t* btl_proc,
                     return OPAL_ERR_OUT_OF_RESOURCE;
             }
             peer_interfaces[index] = (mca_btl_tcp_interface_t *) malloc(sizeof(mca_btl_tcp_interface_t));
-            mca_btl_tcp_initialise_interface(peer_interfaces[index], 
+            mca_btl_tcp_initialise_interface(peer_interfaces[index],
                                              endpoint_addr->addr_ifkindex, index);
-        }       
-        
+        }
+
         /*
          * in case one of the peer addresses is already in use,
          * mark the complete peer interface as 'not available'
@@ -472,13 +472,13 @@ int mca_btl_tcp_proc_insert( mca_btl_tcp_proc_t* btl_proc,
         case AF_INET:
             peer_interfaces[index]->ipv4_address = (struct sockaddr_storage*) malloc(sizeof(endpoint_addr_ss));
             peer_interfaces[index]->ipv4_endpoint_addr = endpoint_addr;
-            memcpy(peer_interfaces[index]->ipv4_address, 
+            memcpy(peer_interfaces[index]->ipv4_address,
                    &endpoint_addr_ss, sizeof(endpoint_addr_ss));
             break;
         case AF_INET6:
             peer_interfaces[index]->ipv6_address = (struct sockaddr_storage*) malloc(sizeof(endpoint_addr_ss));
             peer_interfaces[index]->ipv6_endpoint_addr = endpoint_addr;
-            memcpy(peer_interfaces[index]->ipv6_address, 
+            memcpy(peer_interfaces[index]->ipv6_address,
                    &endpoint_addr_ss, sizeof(endpoint_addr_ss));
             break;
         default:
@@ -492,7 +492,7 @@ int mca_btl_tcp_proc_insert( mca_btl_tcp_proc_t* btl_proc,
     }
 
     /*
-     * assign weights to each possible pair of interfaces    
+     * assign weights to each possible pair of interfaces
      */
 
     perm_size = num_local_interfaces;
@@ -502,7 +502,7 @@ int mca_btl_tcp_proc_insert( mca_btl_tcp_proc_t* btl_proc,
 
     weights = (enum mca_btl_tcp_connection_quality**) malloc(perm_size
                                                              * sizeof(enum mca_btl_tcp_connection_quality*));
-    
+
     best_addr = (mca_btl_tcp_addr_t ***) malloc(perm_size
                                                 * sizeof(mca_btl_tcp_addr_t **));
     for(i = 0; i < perm_size; ++i) {
@@ -514,7 +514,7 @@ int mca_btl_tcp_proc_insert( mca_btl_tcp_proc_t* btl_proc,
                                                       sizeof(mca_btl_tcp_addr_t *));
         memset(best_addr[i], 0, perm_size * sizeof(mca_btl_tcp_addr_t *));
     }
-    
+
 
     for(i=0; i<num_local_interfaces; ++i) {
         for(j=0; j<num_peer_interfaces; ++j) {
@@ -586,7 +586,7 @@ int mca_btl_tcp_proc_insert( mca_btl_tcp_proc_t* btl_proc,
                 }
                 best_addr[i][j] = peer_interfaces[j]->ipv6_endpoint_addr;
                 continue;
-            } 
+            }
 
         } /* for each peer interface */
     } /* for each local interface */
@@ -605,8 +605,8 @@ int mca_btl_tcp_proc_insert( mca_btl_tcp_proc_t* btl_proc,
 
     /* Can only find the best set of connections when the number of
      * interfaces is not too big.  When it gets larger, we fall back
-     * to a simpler and faster (and not as optimal) algorithm. 
-     * See ticket https://svn.open-mpi.org/trac/ompi/ticket/2031 
+     * to a simpler and faster (and not as optimal) algorithm.
+     * See ticket https://svn.open-mpi.org/trac/ompi/ticket/2031
      * for more details about this issue.  */
     if (perm_size <= MAX_PERMUTATION_INTERFACES) {
         memset(a, 0, perm_size * sizeof(int));
@@ -618,10 +618,10 @@ int mca_btl_tcp_proc_insert( mca_btl_tcp_proc_t* btl_proc,
         for(i = 0; i < perm_size; ++i) {
             if(best_assignment[i] > num_peer_interfaces
                || weights[i][best_assignment[i]] == CQ_NO_CONNECTION
-               || peer_interfaces[best_assignment[i]]->inuse 
+               || peer_interfaces[best_assignment[i]]->inuse
                || NULL == peer_interfaces[best_assignment[i]]) {
                 continue;
-            } 
+            }
             peer_interfaces[best_assignment[i]]->inuse++;
             btl_endpoint->endpoint_addr = best_addr[i][best_assignment[i]];
             btl_endpoint->endpoint_addr->addr_inuse++;
@@ -735,7 +735,7 @@ mca_btl_tcp_proc_t* mca_btl_tcp_proc_lookup(const opal_process_name_t *name)
 {
     mca_btl_tcp_proc_t* proc = NULL;
     OPAL_THREAD_LOCK(&mca_btl_tcp_component.tcp_lock);
-    opal_proc_table_get_value(&mca_btl_tcp_component.tcp_procs, 
+    opal_proc_table_get_value(&mca_btl_tcp_component.tcp_procs,
                               *name, (void**)&proc);
     OPAL_THREAD_UNLOCK(&mca_btl_tcp_component.tcp_lock);
     return proc;
@@ -818,7 +818,7 @@ bool mca_btl_tcp_proc_tosocks(mca_btl_tcp_addr_t* proc_addr,
         opal_output( 0, "mca_btl_tcp_proc: unknown af_family received: %d\n",
                      proc_addr->addr_family );
         return false;
-    } 
+    }
     return true;
 }
 

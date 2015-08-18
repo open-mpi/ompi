@@ -72,7 +72,7 @@ Request (handle, non-blocking only).
 .ft R
 .TP 1i
 IERROR
-Fortran only: Error status (integer). 
+Fortran only: Error status (integer).
 
 .SH DESCRIPTION
 .ft R
@@ -86,22 +86,22 @@ the receive buffer defined by \fIrecvbuf\fP, \fIrecvcounts\fP[i], and \fIdatatyp
 
 
 .SH USE OF IN-PLACE OPTION
-When the communicator is an intracommunicator, you can perform a reduce-scatter operation in-place (the output buffer is used as the input buffer).  Use the variable MPI_IN_PLACE as the value of the \fIsendbuf\fR.  In this case, the input data is taken from the top of the receive buffer.  The area occupied by the input data may be either longer or shorter than the data filled by the output data. 
+When the communicator is an intracommunicator, you can perform a reduce-scatter operation in-place (the output buffer is used as the input buffer).  Use the variable MPI_IN_PLACE as the value of the \fIsendbuf\fR.  In this case, the input data is taken from the top of the receive buffer.  The area occupied by the input data may be either longer or shorter than the data filled by the output data.
 .sp
 .SH WHEN COMMUNICATOR IS AN INTER-COMMUNICATOR
 .sp
-When the communicator is an inter-communicator, the reduce-scatter operation occurs in two phases.  First, the result of the reduction performed on the data provided by the processes in the first group is scattered among the processes in the second group.  Then the reverse occurs: the reduction performed on the data provided by the processes in the second group is scattered among the processes in the first group.  For each group, all processes provide the same \fIrecvcounts\fR argument, and the sum of the \fIrecvcounts\fR values should be the same for both groups.  
-.sp  
+When the communicator is an inter-communicator, the reduce-scatter operation occurs in two phases.  First, the result of the reduction performed on the data provided by the processes in the first group is scattered among the processes in the second group.  Then the reverse occurs: the reduction performed on the data provided by the processes in the second group is scattered among the processes in the first group.  For each group, all processes provide the same \fIrecvcounts\fR argument, and the sum of the \fIrecvcounts\fR values should be the same for both groups.
+.sp
 .SH NOTES ON COLLECTIVE OPERATIONS
 
 The reduction functions (
 .I MPI_Op
 ) do not return an error value.  As a result,
-if the functions detect an error, all they can do is either call 
+if the functions detect an error, all they can do is either call
 .I MPI_Abort
 or silently skip the problem.  Thus, if you change the error handler from
 .I MPI_ERRORS_ARE_FATAL
-to something else, for example, 
+to something else, for example,
 .I MPI_ERRORS_RETURN
 ,
 then no error may be indicated.
@@ -113,5 +113,5 @@ all collective routines return the same error value.
 Almost all MPI routines return an error value; C routines as the value of the function and Fortran routines in the last argument. C++ functions do not return errors. If the default error handler is set to MPI::ERRORS_THROW_EXCEPTIONS, then on error the C++ exception mechanism will be used to throw an MPI::Exception object.
 .sp
 Before the error value is returned, the current MPI error handler is
-called. By default, this error handler aborts the MPI job, except for I/O function errors. The error handler may be changed with MPI_Comm_set_errhandler; the predefined error handler MPI_ERRORS_RETURN may be used to cause error values to be returned. Note that MPI does not guarantee that an MPI program can continue past an error.  
+called. By default, this error handler aborts the MPI job, except for I/O function errors. The error handler may be changed with MPI_Comm_set_errhandler; the predefined error handler MPI_ERRORS_RETURN may be used to cause error values to be returned. Note that MPI does not guarantee that an MPI program can continue past an error.
 

@@ -3,9 +3,9 @@
  *                         reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -16,9 +16,7 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif  /* HAVE_UNISTD_H */
-#ifdef HAVE_STRING_H
 #include <string.h>
-#endif  /* HAVE_STRING_H */
 
 #include "opal/dss/dss.h"
 
@@ -72,7 +70,7 @@ bool orte_iof_mrhnp_stdin_check(int fd)
 void orte_iof_mrhnp_stdin_cb(int fd, short event, void *cbdata)
 {
     bool should_process = orte_iof_mrhnp_stdin_check(0);
-    
+
     if (should_process) {
         mca_iof_mr_hnp_component.stdinev->active = true;
         opal_event_add(mca_iof_mr_hnp_component.stdinev->ev, 0);
@@ -111,12 +109,12 @@ void orte_iof_mrhnp_read_local_handler(int fd, short event, void *cbdata)
 
     if (numbytes < 0) {
         /* either we have a connection error or it was a non-blocking read */
-        
+
         /* non-blocking, retry */
         if (EAGAIN == errno || EINTR == errno) {
             opal_event_add(rev->ev, 0);
             return;
-        } 
+        }
 
         OPAL_OUTPUT_VERBOSE((1, orte_iof_base_framework.framework_output,
                              "%s iof:mrhnp:read handler %s Error on connection:%d",
@@ -128,7 +126,7 @@ void orte_iof_mrhnp_read_local_handler(int fd, short event, void *cbdata)
          */
         numbytes = 0;
     }
-    
+
     /* if job termination has been ordered, just ignore the
      * data and delete the stdin read event, if that is what fired
      */
@@ -143,7 +141,7 @@ void orte_iof_mrhnp_read_local_handler(int fd, short event, void *cbdata)
         /* The event has fired, so it's no longer active until we
          * re-add it
          */
-        mca_iof_mr_hnp_component.stdinev->active = false;    
+        mca_iof_mr_hnp_component.stdinev->active = false;
         /* if this was read from my stdin, I need to send this input to all
          * daemons who host mapper procs
          */
@@ -201,7 +199,7 @@ void orte_iof_mrhnp_read_local_handler(int fd, short event, void *cbdata)
                                          "%s sending %d bytes from stdin to daemon %s",
                                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), numbytes,
                                          ORTE_NAME_PRINT(&daemon->name)));
-                
+
                     /* send the data to the daemon so it can
                      * write it to all local procs from this job.
                      * If the connection closed,
@@ -278,7 +276,7 @@ void orte_iof_mrhnp_read_local_handler(int fd, short event, void *cbdata)
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), numbytes,
                                      ORTE_NAME_PRINT(&rev->name),
                                      ORTE_NAME_PRINT(&daemon->name)));
-                
+
                 /* send the data to the daemon so it can
                  * write it to all local procs from this job
                  */
@@ -286,14 +284,14 @@ void orte_iof_mrhnp_read_local_handler(int fd, short event, void *cbdata)
             }
         }
     }
-    
+
  PROCESS:
     OPAL_OUTPUT_VERBOSE((1, orte_iof_base_framework.framework_output,
                          "%s read %d bytes from %s of %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), numbytes,
                          (ORTE_IOF_STDOUT & rev->tag) ? "stdout" : ((ORTE_IOF_STDERR & rev->tag) ? "stderr" : "stddiag"),
                          ORTE_NAME_PRINT(&rev->name)));
-    
+
     if (0 == numbytes) {
         /* if we read 0 bytes from the stdout/err/diag, find this proc
          * on our list and
@@ -339,7 +337,7 @@ void orte_iof_mrhnp_read_local_handler(int fd, short event, void *cbdata)
             orte_iof_base_write_output(&rev->name, rev->tag, data, numbytes, orte_iof_base.iof_write_stderr->wev);
         }
     }
-    
+
     /* re-add the event */
     opal_event_add(rev->ev, 0);
 

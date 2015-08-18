@@ -50,7 +50,7 @@ OMPI_MODULE_DECLSPEC extern mca_sharedfp_base_component_2_0_0_t mca_sharedfp_ind
 
 int mca_sharedfp_individual_get_position(mca_io_ompio_file_t *fh,
 					 OMPI_MPI_OFFSET_TYPE * offset);
-int mca_sharedfp_individual_seek (mca_io_ompio_file_t *fh, 
+int mca_sharedfp_individual_seek (mca_io_ompio_file_t *fh,
                                   OMPI_MPI_OFFSET_TYPE offset, int whence);
 int mca_sharedfp_individual_file_open (struct ompi_communicator_t *comm,
                                        char* filename,

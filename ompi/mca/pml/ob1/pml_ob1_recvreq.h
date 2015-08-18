@@ -6,7 +6,7 @@
  * Copyright (c) 2004-2014 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2007 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2007 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -17,9 +17,9 @@
  *                         and Technology (RIST). All rights reserved.
  *
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 /**
@@ -128,16 +128,21 @@ do {                                                                \
         ompi_request_complete( &(recvreq->req_recv.req_base.req_ompi), true );        \
     } while (0)
 
+static inline void mca_pml_ob1_recv_request_fini (mca_pml_ob1_recv_request_t *recvreq)
+{
+    MCA_PML_BASE_RECV_REQUEST_FINI(&recvreq->req_recv);
+    if ((recvreq)->local_handle) {
+        mca_bml_base_deregister_mem (recvreq->rdma_bml, recvreq->local_handle);
+        recvreq->local_handle = NULL;
+    }
+}
+
 /*
  *  Free the PML receive request
  */
 #define MCA_PML_OB1_RECV_REQUEST_RETURN(recvreq)                        \
     {                                                                   \
-        MCA_PML_BASE_RECV_REQUEST_FINI(&(recvreq)->req_recv);           \
-        if ((recvreq)->local_handle) {                                  \
-            mca_bml_base_deregister_mem ((recvreq)->rdma_bml, (recvreq)->local_handle); \
-            (recvreq)->local_handle = NULL;                             \
-        }                                                               \
+        mca_pml_ob1_recv_request_fini (recvreq);                        \
         opal_free_list_return (&mca_pml_base_recv_requests,             \
                                (opal_free_list_item_t*)(recvreq));      \
     }
@@ -330,7 +335,7 @@ void mca_pml_ob1_recv_request_frag_copy_start(
     size_t num_segments,
     mca_btl_base_descriptor_t* des);
 
-void mca_pml_ob1_recv_request_frag_copy_finished(struct mca_btl_base_module_t* btl,  
+void mca_pml_ob1_recv_request_frag_copy_finished(struct mca_btl_base_module_t* btl,
     struct mca_btl_base_endpoint_t* ep,
     struct mca_btl_base_descriptor_t* des,
     int status );

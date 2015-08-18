@@ -5,15 +5,15 @@
  * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2011 University of Houston. All rights reserved.
+ * Copyright (c) 2008-2015 University of Houston. All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -36,11 +36,11 @@ static mca_fcoll_base_module_1_0_0_t dynamic =  {
     mca_fcoll_dynamic_module_init,
     mca_fcoll_dynamic_module_finalize,
     mca_fcoll_dynamic_file_read_all,
-    mca_fcoll_dynamic_file_read_all_begin,
-    mca_fcoll_dynamic_file_read_all_end,
+    NULL, /* iread_all */
     mca_fcoll_dynamic_file_write_all,
-    mca_fcoll_dynamic_file_write_all_begin,
-    mca_fcoll_dynamic_file_write_all_end
+    NULL, /*iwrite_all */
+    NULL, /* progress */
+    NULL  /* request_free */
 };
 
 int
@@ -70,9 +70,9 @@ mca_fcoll_dynamic_component_file_query (mca_io_ompio_file_t *fh, int *priority)
 }
 
 int mca_fcoll_dynamic_component_file_unquery (mca_io_ompio_file_t *file)
-{    
+{
    /* This function might be needed for some purposes later. for now it
-    * does not have anything to do since there are no steps which need 
+    * does not have anything to do since there are no steps which need
     * to be undone if this module is not selected */
 
    return OMPI_SUCCESS;
@@ -83,8 +83,8 @@ int mca_fcoll_dynamic_module_init (mca_io_ompio_file_t *file)
     return OMPI_SUCCESS;
 }
 
-   
-int mca_fcoll_dynamic_module_finalize (mca_io_ompio_file_t *file) 
+
+int mca_fcoll_dynamic_module_finalize (mca_io_ompio_file_t *file)
 {
     return OMPI_SUCCESS;
 }

@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -62,7 +62,7 @@ int MPI_File_get_view(MPI_File fh, MPI_Offset *disp, MPI_Datatype *etype,
     if (datarep <= (char *) 0)
     {
 	error_code = MPIO_Err_create_code(MPI_SUCCESS, MPIR_ERR_RECOVERABLE,
-					  myname, __LINE__, MPI_ERR_ARG, 
+					  myname, __LINE__, MPI_ERR_ARG,
 					  "**iodatarepnomem", 0);
 	error_code = MPIO_Err_return_file(adio_fh, error_code);
 	goto fn_exit;
@@ -70,14 +70,14 @@ int MPI_File_get_view(MPI_File fh, MPI_Offset *disp, MPI_Datatype *etype,
     /* --END ERROR HANDLING-- */
 
     *disp = adio_fh->disp;
-    ADIOI_Strncpy(datarep, 
+    ADIOI_Strncpy(datarep,
 	    (adio_fh->is_external32 ? "external32": "native"), MPI_MAX_DATAREP_STRING);
 
     MPI_Type_get_envelope(adio_fh->etype, &i, &j, &k, &combiner);
     if (combiner == MPI_COMBINER_NAMED) *etype = adio_fh->etype;
     else {
 	/* FIXME: It is wrong to use MPI_Type_contiguous; the user could choose to
-	   re-implement MPI_Type_contiguous in an unexpected way.  Either use 
+	   re-implement MPI_Type_contiguous in an unexpected way.  Either use
 	   MPIR_Barrier_impl as in MPICH or PMPI_Type_contiguous */
         MPI_Type_contiguous(1, adio_fh->etype, &copy_etype);
 

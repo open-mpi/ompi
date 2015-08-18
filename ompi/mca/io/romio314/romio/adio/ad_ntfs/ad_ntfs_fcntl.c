@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
- *   Copyright (C) 1997 University of Chicago. 
+/*
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -17,7 +17,7 @@ void ADIOI_NTFS_Fcntl(ADIO_File fd, int flag, ADIO_Fcntl_t *fcntl_struct, int *e
     {
     case ADIO_FCNTL_GET_FSIZE:
 	fcntl_struct->fsize = SetFilePointer(fd->fd_sys, 0, 0, FILE_END);
-	if (fd->fp_sys_posn != -1) 
+	if (fd->fp_sys_posn != -1)
 	{
 	    dwTemp = DWORDHIGH(fd->fp_sys_posn);
 	    if (SetFilePointer(fd->fd_sys, DWORDLOW(fd->fp_sys_posn), &dwTemp, FILE_BEGIN) == INVALID_SET_FILE_POINTER)

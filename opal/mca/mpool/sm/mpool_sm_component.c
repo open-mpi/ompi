@@ -26,9 +26,7 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif  /* HAVE_UNISTD_H*/
-#ifdef HAVE_STDLIB_H
 #include <stdlib.h>
-#endif  /* HAVE_STDLIB_H */
 #include <errno.h>
 #include "opal/mca/base/base.h"
 
@@ -143,7 +141,7 @@ mca_mpool_sm_init(struct mca_mpool_base_resources_t *resources)
     mca_allocator_base_component_t* allocator_component;
 
     /* Make a new mpool module */
-    mpool_module = 
+    mpool_module =
         (mca_mpool_sm_module_t *)malloc(sizeof(mca_mpool_sm_module_t));
     mca_mpool_sm_module_init(mpool_module);
 
@@ -197,16 +195,16 @@ mca_mpool_sm_init(struct mca_mpool_base_resources_t *resources)
     }
 
     /* setup allocator */
-    mpool_module->sm_allocator = 
+    mpool_module->sm_allocator =
       allocator_component->allocator_init(true,
-                                          mca_common_sm_seg_alloc, 
+                                          mca_common_sm_seg_alloc,
                                           NULL, &(mpool_module->super));
     if (NULL == mpool_module->sm_allocator) {
         opal_output(0, "mca_mpool_sm_init: unable to initialize allocator");
         free(mpool_module);
         return NULL;
     }
-   
+
     return &mpool_module->super;
 }
 

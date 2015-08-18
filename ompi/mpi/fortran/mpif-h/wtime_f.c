@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -5,15 +6,17 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -22,8 +25,9 @@
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 
 /* The OMPI_GENERATE_F77_BINDINGS work only for the most common F77 bindings, the
- * one that does not return any value. There are 2 exceptions MPI_Wtick and MPI_Wtime.
- * For these 2 we can insert the bindings manually.
+ * one that does not return any value. There are 4 exceptions MPI_Wtick, MPI_Wtime,
+ * MPI_Aint_add, and MPI_Aint_diff. For these 4 we can insert the bindings
+ * manually.
  */
 #if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_WTIME = ompi_wtime_f

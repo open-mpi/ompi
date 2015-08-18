@@ -31,8 +31,8 @@ do {  \
             /*fprintf(stderr,"I am %d sending to child %d\n",my_group_index,child);*/ \
             child_ctl_pointer = data_buffs[child].ctl_struct; \
             child_ctl_pointer->src = my_group_index;  \
-            /* this can be improved to make better asynchronous progress, but it's 
-             * fine for now.            
+            /* this can be improved to make better asynchronous progress, but it's
+             * fine for now.
              */                                                                 \
             while(child_ctl_pointer->sequence_number != sequence_number );       \
             child_ctl_pointer->flags[BCAST_FLAG][bcol_id] = ready_flag;  \
@@ -53,7 +53,7 @@ int pow_sm_k(int radix_k, int group_size, int *pow_k_group_size);
  * Get list of possible sources from which data may arrive based on a K-nomial tree fan-out.
  */
 
-int get_k_nomial_src_list(int group_size, int radix, 
+int get_k_nomial_src_list(int group_size, int radix,
                           int my_index, int *src_list);
 
 

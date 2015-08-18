@@ -5,12 +5,12 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2014 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2014 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights
- *                         reserved. 
+ *                         reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved
  * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
@@ -70,7 +70,7 @@ int MPI_Dims_create(int nnodes, int ndims, int dims[])
         }
 
         if (1 > ndims) {
-            return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD, 
+            return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD,
                                            MPI_ERR_DIMS, FUNC_NAME);
         }
 
@@ -162,7 +162,7 @@ assignnodes(int ndim, int nfactor, int *pfacts, int **pdims)
     int f;
     int *p;
     int *pmin;
-          
+
     if (0 >= ndim) {
        return MPI_ERR_DIMS;
     }
@@ -177,7 +177,7 @@ assignnodes(int ndim, int nfactor, int *pfacts, int **pdims)
     for (i = 0, p = bins; i < ndim; ++i, ++p) {
         *p = 1;
      }
-    
+
     /* Loop assigning factors from the highest to the lowest */
     for (j = nfactor - 1; j >= 0; --j) {
         f = pfacts[j];
@@ -190,7 +190,7 @@ assignnodes(int ndim, int nfactor, int *pfacts, int **pdims)
         }
         *pmin *= f;
      }
-    
+
      /* Sort dimensions in decreasing order (O(n^2) for now) */
      for (i = 0, pmin = bins; i < ndim - 1; ++i, ++pmin) {
          for (j = i + 1, p = pmin + 1; j < ndim; ++j, ++p) {

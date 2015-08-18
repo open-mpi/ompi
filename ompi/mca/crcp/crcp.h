@@ -6,16 +6,16 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 /**
@@ -120,41 +120,41 @@ typedef ompi_crcp_base_pml_state_t* (*ompi_crcp_base_pml_progress_fn_t)
      (ompi_crcp_base_pml_state_t*);
 
 typedef ompi_crcp_base_pml_state_t* (*ompi_crcp_base_pml_iprobe_fn_t)
-     (int dst, int tag, struct ompi_communicator_t* comm, int *matched, 
+     (int dst, int tag, struct ompi_communicator_t* comm, int *matched,
       ompi_status_public_t* status, ompi_crcp_base_pml_state_t* );
 
 typedef ompi_crcp_base_pml_state_t* (*ompi_crcp_base_pml_probe_fn_t)
-     ( int dst, int tag, struct ompi_communicator_t* comm, 
+     ( int dst, int tag, struct ompi_communicator_t* comm,
        ompi_status_public_t* status, ompi_crcp_base_pml_state_t* );
 
 typedef ompi_crcp_base_pml_state_t* (*ompi_crcp_base_pml_isend_init_fn_t)
-     ( void *buf, size_t count, ompi_datatype_t *datatype, int dst, int tag, 
-       mca_pml_base_send_mode_t mode, struct ompi_communicator_t* comm, 
+     ( void *buf, size_t count, ompi_datatype_t *datatype, int dst, int tag,
+       mca_pml_base_send_mode_t mode, struct ompi_communicator_t* comm,
        struct ompi_request_t **request, ompi_crcp_base_pml_state_t* );
 
 typedef ompi_crcp_base_pml_state_t* (*ompi_crcp_base_pml_isend_fn_t)
      ( void *buf, size_t count, ompi_datatype_t *datatype, int dst, int tag,
-       mca_pml_base_send_mode_t mode, struct ompi_communicator_t* comm, 
+       mca_pml_base_send_mode_t mode, struct ompi_communicator_t* comm,
        struct ompi_request_t **request, ompi_crcp_base_pml_state_t* );
 
 typedef ompi_crcp_base_pml_state_t* (*ompi_crcp_base_pml_send_fn_t)
      ( void *buf, size_t count, ompi_datatype_t *datatype, int dst, int tag,
-       mca_pml_base_send_mode_t mode, struct ompi_communicator_t* comm, 
+       mca_pml_base_send_mode_t mode, struct ompi_communicator_t* comm,
        ompi_crcp_base_pml_state_t* );
 
 typedef ompi_crcp_base_pml_state_t* (*ompi_crcp_base_pml_irecv_init_fn_t)
      ( void *buf, size_t count, ompi_datatype_t *datatype, int src, int tag,
-       struct ompi_communicator_t* comm,  struct ompi_request_t **request, 
+       struct ompi_communicator_t* comm,  struct ompi_request_t **request,
        ompi_crcp_base_pml_state_t*);
 
 typedef ompi_crcp_base_pml_state_t* (*ompi_crcp_base_pml_irecv_fn_t)
      ( void *buf, size_t count, ompi_datatype_t *datatype, int src, int tag,
-       struct ompi_communicator_t* comm, struct ompi_request_t **request, 
+       struct ompi_communicator_t* comm, struct ompi_request_t **request,
        ompi_crcp_base_pml_state_t* );
 
 typedef ompi_crcp_base_pml_state_t* (*ompi_crcp_base_pml_recv_fn_t)
      (  void *buf, size_t count, ompi_datatype_t *datatype, int src, int tag,
-        struct ompi_communicator_t* comm,  ompi_status_public_t* status, 
+        struct ompi_communicator_t* comm,  ompi_status_public_t* status,
         ompi_crcp_base_pml_state_t*);
 
 typedef ompi_crcp_base_pml_state_t* (*ompi_crcp_base_pml_dump_fn_t)
@@ -352,7 +352,7 @@ struct ompi_crcp_base_module_1_0_0_t {
     mca_crcp_base_btl_module_get_fn_t         btl_get;
 
     mca_crcp_base_btl_module_dump_fn_t        btl_dump;
-    
+
     mca_crcp_base_btl_module_ft_event_fn_t    btl_ft_event;
 };
 typedef struct ompi_crcp_base_module_1_0_0_t ompi_crcp_base_module_1_0_0_t;

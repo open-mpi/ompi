@@ -6,7 +6,7 @@
  * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
@@ -14,9 +14,9 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -25,12 +25,8 @@
 #include "opal/datatype/opal_convertor.h"
 #include "ompi/proc/proc.h"
 
-#ifdef HAVE_STDLIB_H
 #include <stdlib.h>
-#endif
-#ifdef HAVE_STRING_H
 #include <string.h>
-#endif
 
 #include <poll.h>
 
@@ -62,7 +58,7 @@ main(int argc, char* argv[])
     /* make ompi_proc_local () work ... */
     struct ompi_proc_t dummy_proc;
     ompi_proc_local_proc = &dummy_proc;
-    
+
 
     int _dbg = 0;
     while (_dbg) poll(NULL, 0, 1);

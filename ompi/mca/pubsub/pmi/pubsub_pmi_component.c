@@ -5,9 +5,9 @@
  *                         reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -31,7 +31,7 @@ static int my_priority = 100;  /* must be above "orte" component */
 ompi_pubsub_base_component_t mca_pubsub_pmi_component = {
     .base_version = {
         OMPI_PUBSUB_BASE_VERSION_2_0_0,
-        
+
         .mca_component_name = "pmi",
         MCA_BASE_MAKE_VERSION(component, OMPI_MAJOR_VERSION, OMPI_MINOR_VERSION,
                               OMPI_RELEASE_VERSION),
@@ -75,7 +75,7 @@ static int pubsub_pmi_component_close(void)
 static int pubsub_pmi_component_query(mca_base_module_t **module, int *priority)
 {
     if (NULL != opal_pmix.init) {
-    
+
         if (OPAL_SUCCESS == opal_pmix.init()) {
             *priority = my_priority;
             *module = (mca_base_module_t *)&ompi_pubsub_pmi_module;

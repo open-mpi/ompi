@@ -26,12 +26,8 @@
 
 #include "opal_config.h"
 
-#ifdef HAVE_STDARG_H
 #include <stdarg.h>
-#endif
-#ifdef HAVE_STRING_H
 #include <string.h>
-#endif
 
 #if defined(VERBOSE)
 #include "opal/util/output.h"
@@ -70,7 +66,7 @@ static inline void DUMP( char* fmt, ... )
 #        define __opal_attribute_unused_tmp__  __opal_attribute_unused__
 #      else
 #        define __opal_attribute_unused_tmp__
-#      endif  
+#      endif
 static inline void DUMP( char* fmt __opal_attribute_unused_tmp__, ... )
 {
 #if defined(__PGI)

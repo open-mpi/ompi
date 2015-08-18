@@ -114,7 +114,7 @@ typedef void (*orte_dfs_base_module_post_file_map_fn_t)(opal_buffer_t *buf,
                                                         void *cbdata);
 
 /* Get the file map for a process
- * 
+ *
  * Returns the file map associated with the specified process name. If
  * NULL is provided, then all known process maps will be returned in the
  * byte object. It is the responsibility of the caller to unpack it, so

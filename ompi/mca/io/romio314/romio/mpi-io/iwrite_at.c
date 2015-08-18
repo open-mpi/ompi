@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -47,7 +47,7 @@ Output Parameters:
 #endif
 
 int MPI_File_iwrite_at(MPI_File fh, MPI_Offset offset, ROMIO_CONST void *buf,
-                       int count, MPI_Datatype datatype, 
+                       int count, MPI_Datatype datatype,
                        MPIO_Request *request)
 {
     int error_code;

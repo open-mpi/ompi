@@ -1,7 +1,7 @@
-/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- 
- * vim: ts=8 sts=4 sw=4 noexpandtab 
- * 
- *   Copyright (C) 2008 University of Chicago. 
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*-
+ * vim: ts=8 sts=4 sw=4 noexpandtab
+ *
+ *   Copyright (C) 2008 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -26,7 +26,7 @@ void ADIOI_ZOIDFS_ReadStrided(ADIO_File fd, void *buf, int count,
     int n_filetypes, etype_in_filetype;
     ADIO_Offset abs_off_in_filetype=0;
     MPI_Count filetype_size, etype_size, buftype_size;
-    MPI_Aint filetype_extent, buftype_extent; 
+    MPI_Aint filetype_extent, buftype_extent;
     int buf_count, buftype_is_contig, filetype_is_contig;
     ADIO_Offset off, disp, start_off, initial_off;
     int flag, st_frd_size, st_n_filetypes;
@@ -76,7 +76,7 @@ void ADIOI_ZOIDFS_ReadStrided(ADIO_File fd, void *buf, int count,
 #ifdef HAVE_STATUS_SET_BYTES
 	MPIR_Status_set_bytes(status, datatype, 0);
 #endif
-	*error_code = MPI_SUCCESS; 
+	*error_code = MPI_SUCCESS;
 	return;
     }
 
@@ -86,7 +86,7 @@ void ADIOI_ZOIDFS_ReadStrided(ADIO_File fd, void *buf, int count,
     etype_size = fd->etype_size;
 
     bufsize = buftype_size * count;
-    
+
     zoidfs_obj_ptr = (ADIOI_ZOIDFS_object *)fd->fs_ptr;
 
     if (!buftype_is_contig && filetype_is_contig) {
@@ -99,7 +99,7 @@ void ADIOI_ZOIDFS_ReadStrided(ADIO_File fd, void *buf, int count,
 	flat_buf = ADIOI_Flatlist;
 	while (flat_buf->type != datatype) flat_buf = flat_buf->next;
 
-	off = (file_ptr_type == ADIO_INDIVIDUAL) ? fd->fp_ind : 
+	off = (file_ptr_type == ADIO_INDIVIDUAL) ? fd->fp_ind :
 	    fd->disp + etype_size * offset;
 
 	file_list_count = 1;
@@ -121,9 +121,9 @@ void ADIOI_ZOIDFS_ReadStrided(ADIO_File fd, void *buf, int count,
 	/* step through each block in memory, filling memory arrays */
 	while (b_blks_read < total_blks_to_read) {
 	    for (i=0; i<flat_buf->count; i++) {
-		mem_offsets[b_blks_read % MAX_ARRAY_SIZE] = 
+		mem_offsets[b_blks_read % MAX_ARRAY_SIZE] =
 		    buf + j*buftype_extent + flat_buf->indices[i];
-		mem_lengths[b_blks_read % MAX_ARRAY_SIZE] = 
+		mem_lengths[b_blks_read % MAX_ARRAY_SIZE] =
 		    flat_buf->blocklens[i];
 		file_lengths += flat_buf->blocklens[i];
 		b_blks_read++;
@@ -159,21 +159,21 @@ void ADIOI_ZOIDFS_ReadStrided(ADIO_File fd, void *buf, int count,
 		    }
 		    total_bytes_read += file_lengths;
 		    /* --END ERROR HANDLING-- */
-		  
-		    /* in the case of error or the last read list call, 
+
+		    /* in the case of error or the last read list call,
 		     * leave here */
 		    if (err_flag || b_blks_read == total_blks_to_read) break;
 
 		    file_offsets += file_lengths;
 		    file_lengths = 0;
-		} 
+		}
 	    } /* for (i=0; i<flat_buf->count; i++) */
 	    j++;
 	} /* while (b_blks_read < total_blks_to_read) */
 	ADIOI_Free(mem_offsets);
 	ADIOI_Free(mem_lengths);
 
-        if (file_ptr_type == ADIO_INDIVIDUAL) 
+        if (file_ptr_type == ADIO_INDIVIDUAL)
 	    fd->fp_ind += total_bytes_read;
 
 	fd->fp_sys_posn = -1;  /* set it to null. */
@@ -212,11 +212,11 @@ void ADIOI_ZOIDFS_ReadStrided(ADIO_File fd, void *buf, int count,
 	while (!flag) {
 	    n_filetypes++;
 	    for (i=0; i<flat_file->count; i++) {
-	        if (disp + flat_file->indices[i] + 
+	        if (disp + flat_file->indices[i] +
 		    ((ADIO_Offset) n_filetypes)*filetype_extent +
 		    flat_file->blocklens[i]  >= offset) {
 		    st_index = i;
-		    frd_size = disp + flat_file->indices[i] + 
+		    frd_size = disp + flat_file->indices[i] +
 				    ((ADIO_Offset) n_filetypes)*filetype_extent
 				      + flat_file->blocklens[i] - offset;
 		    flag = 1;
@@ -230,7 +230,7 @@ void ADIOI_ZOIDFS_ReadStrided(ADIO_File fd, void *buf, int count,
 	n_filetypes = (int) (offset / n_etypes_in_filetype);
 	etype_in_filetype = (int) (offset % n_etypes_in_filetype);
 	size_in_filetype = etype_in_filetype * etype_size;
-	
+
 	sum = 0;
 	for (i=0; i<flat_file->count; i++) {
 	    sum += flat_file->blocklens[i];
@@ -242,16 +242,16 @@ void ADIOI_ZOIDFS_ReadStrided(ADIO_File fd, void *buf, int count,
 		break;
 	    }
 	}
-	
+
 	/* abs. offset in bytes in the file */
-	offset = disp + ((ADIO_Offset) n_filetypes)*filetype_extent + 
+	offset = disp + ((ADIO_Offset) n_filetypes)*filetype_extent +
 	    abs_off_in_filetype;
     } /* else [file_ptr_type != ADIO_INDIVIDUAL] */
 
     start_off = offset;
     st_frd_size = frd_size;
     st_n_filetypes = n_filetypes;
-    
+
     if (buftype_is_contig && !filetype_is_contig) {
 
 /* contiguous in memory, noncontiguous in file. should be the most
@@ -260,13 +260,13 @@ void ADIOI_ZOIDFS_ReadStrided(ADIO_File fd, void *buf, int count,
 	/* only one memory off-len pair, so no array here */
         size_t mem_lengths;
 	size_t mem_offsets;
-	
+
 	i = 0;
 	j = st_index;
 	n_filetypes = st_n_filetypes;
-	
+
 	mem_list_count = 1;
-	
+
 	/* determine how many blocks in file to read */
 	f_data_read = ADIOI_MIN(st_frd_size, bufsize);
 	total_blks_to_read = 1;
@@ -279,17 +279,17 @@ void ADIOI_ZOIDFS_ReadStrided(ADIO_File fd, void *buf, int count,
 	    f_data_read += flat_file->blocklens[j];
 	    total_blks_to_read++;
 	    if (j<(flat_file->count-1)) j++;
-	    else j = 0;	
+	    else j = 0;
 	}
-      
+
 	j = st_index;
 	n_filetypes = st_n_filetypes;
 	n_read_lists = total_blks_to_read/MAX_ARRAY_SIZE;
 	extra_blks = total_blks_to_read%MAX_ARRAY_SIZE;
-	
+
 	mem_offsets = (size_t)buf;
 	mem_lengths = 0;
-	
+
 	/* if at least one full readlist, allocate file arrays
 	   at max array size and don't free until very end */
 	if (n_read_lists) {
@@ -306,7 +306,7 @@ void ADIOI_ZOIDFS_ReadStrided(ADIO_File fd, void *buf, int count,
 	    file_lengths = (uint64_t*)ADIOI_Malloc(extra_blks*
 						  sizeof(uint64_t));
 	}
-	
+
 	/* for file arrays that are of MAX_ARRAY_SIZE, build arrays */
 	for (i=0; i<n_read_lists; i++) {
 	    file_list_count = MAX_ARRAY_SIZE;
@@ -317,7 +317,7 @@ void ADIOI_ZOIDFS_ReadStrided(ADIO_File fd, void *buf, int count,
 	    }
 	    for (k=0; k<MAX_ARRAY_SIZE; k++) {
 	        if (i || k) {
-		    file_offsets[k] = disp + 
+		    file_offsets[k] = disp +
 			((ADIO_Offset)n_filetypes)*filetype_extent
 		      + flat_file->indices[j];
 		    file_lengths[k] = flat_file->blocklens[j];
@@ -366,7 +366,7 @@ void ADIOI_ZOIDFS_ReadStrided(ADIO_File fd, void *buf, int count,
 	    }
 	    for (k=0; k<extra_blks; k++) {
 	        if(i || k) {
-		    file_offsets[k] = disp + 
+		    file_offsets[k] = disp +
 			((ADIO_Offset)n_filetypes)*filetype_extent +
 			flat_file->indices[j];
 		    if (k == (extra_blks - 1)) {
@@ -400,7 +400,7 @@ void ADIOI_ZOIDFS_ReadStrided(ADIO_File fd, void *buf, int count,
 						   MPIR_ERR_RECOVERABLE,
 						   myname, __LINE__,
 						   ADIOI_ZOIDFS_error_convert(err_flag),
-						   "Error in zoidfs_read", 0);		
+						   "Error in zoidfs_read", 0);
 		goto error_state;
 	    }
 	    /* --END ERROR HANDLING-- */
@@ -409,7 +409,7 @@ void ADIOI_ZOIDFS_ReadStrided(ADIO_File fd, void *buf, int count,
     }
     else {
 /* noncontiguous in memory as well as in file */
-      
+
         ADIOI_Flatten_datatype(datatype);
 	flat_buf = ADIOI_Flatlist;
 	while (flat_buf->type != datatype) flat_buf = flat_buf->next;
@@ -425,7 +425,7 @@ void ADIOI_ZOIDFS_ReadStrided(ADIO_File fd, void *buf, int count,
 	max_mem_list = 0;
 	max_file_list = 0;
 
-	/* run through and file max_file_list and max_mem_list so that you 
+	/* run through and file max_file_list and max_mem_list so that you
 	   can allocate the file and memory arrays less than MAX_ARRAY_SIZE
 	   if possible */
 
@@ -433,7 +433,7 @@ void ADIOI_ZOIDFS_ReadStrided(ADIO_File fd, void *buf, int count,
 	    k = start_k;
 	    new_buffer_read = 0;
 	    mem_list_count = 0;
-	    while ((mem_list_count < MAX_ARRAY_SIZE) && 
+	    while ((mem_list_count < MAX_ARRAY_SIZE) &&
 		   (new_buffer_read < bufsize-size_read)) {
 	        /* find mem_list_count and file_list_count such that both are
 		   less than MAX_ARRAY_SIZE, the sum of their lengths are
@@ -441,9 +441,9 @@ void ADIOI_ZOIDFS_ReadStrided(ADIO_File fd, void *buf, int count,
 		   read in the next immediate read list is less than
 		   bufsize */
 	        if(mem_list_count) {
-		    if((new_buffer_read + flat_buf->blocklens[k] + 
+		    if((new_buffer_read + flat_buf->blocklens[k] +
 			size_read) > bufsize) {
-		        end_brd_size = new_buffer_read + 
+		        end_brd_size = new_buffer_read +
 			    flat_buf->blocklens[k] - (bufsize - size_read);
 			new_buffer_read = bufsize - size_read;
 		    }
@@ -461,15 +461,15 @@ void ADIOI_ZOIDFS_ReadStrided(ADIO_File fd, void *buf, int count,
 		}
 		mem_list_count++;
 		k = (k + 1)%flat_buf->count;
-	     } /* while ((mem_list_count < MAX_ARRAY_SIZE) && 
+	     } /* while ((mem_list_count < MAX_ARRAY_SIZE) &&
 	       (new_buffer_read < bufsize-size_read)) */
 	    j = start_j;
 	    new_file_read = 0;
 	    file_list_count = 0;
-	    while ((file_list_count < MAX_ARRAY_SIZE) && 
+	    while ((file_list_count < MAX_ARRAY_SIZE) &&
 		   (new_file_read < new_buffer_read)) {
 	        if(file_list_count) {
-		    if((new_file_read + flat_file->blocklens[j]) > 
+		    if((new_file_read + flat_file->blocklens[j]) >
 		       new_buffer_read) {
 		        end_frd_size = new_buffer_read - new_file_read;
 			new_file_read = new_buffer_read;
@@ -490,9 +490,9 @@ void ADIOI_ZOIDFS_ReadStrided(ADIO_File fd, void *buf, int count,
 		file_list_count++;
 		if (j < (flat_file->count - 1)) j++;
 		else j = 0;
-		
+
 		k = start_k;
-		if ((new_file_read < new_buffer_read) && 
+		if ((new_file_read < new_buffer_read) &&
 		    (file_list_count == MAX_ARRAY_SIZE)) {
 		    new_buffer_read = 0;
 		    mem_list_count = 0;
@@ -521,13 +521,13 @@ void ADIOI_ZOIDFS_ReadStrided(ADIO_File fd, void *buf, int count,
 		    } /* while (new_buffer_read < new_file_read) */
 		} /* if ((new_file_read < new_buffer_read) && (file_list_count
 		     == MAX_ARRAY_SIZE)) */
-	    } /* while ((mem_list_count < MAX_ARRAY_SIZE) && 
+	    } /* while ((mem_list_count < MAX_ARRAY_SIZE) &&
 		 (new_buffer_read < bufsize-size_read)) */
 
 	    /*  fakes filling the readlist arrays of lengths found above  */
 	    k = start_k;
 	    j = start_j;
-	    for (i=0; i<mem_list_count; i++) {	     
+	    for (i=0; i<mem_list_count; i++) {
 		if(i) {
 		    if (i == (mem_list_count - 1)) {
 			if (flat_buf->blocklens[k] == end_brd_size)
@@ -548,7 +548,7 @@ void ADIOI_ZOIDFS_ReadStrided(ADIO_File fd, void *buf, int count,
 		    if (i == (file_list_count - 1)) {
 			if (flat_file->blocklens[j] == end_frd_size)
 			    frd_size = flat_file->blocklens[(j+1)%
-							  flat_file->count];   
+							  flat_file->count];
 			else {
 			    frd_size = flat_file->blocklens[j] - end_frd_size;
 			    j--;
@@ -581,11 +581,11 @@ void ADIOI_ZOIDFS_ReadStrided(ADIO_File fd, void *buf, int count,
 	 * region and many (700) very small memory regions.  both cases caused
 	 * problems for this code */
 
-	if ( ( (file_list_count == 1) && 
+	if ( ( (file_list_count == 1) &&
 		    (new_file_read < flat_file->blocklens[0] ) ) ||
-		((mem_list_count == 1) && 
+		((mem_list_count == 1) &&
 		    (new_buffer_read < flat_buf->blocklens[0]) ) ||
-		((file_list_count == MAX_ARRAY_SIZE) && 
+		((file_list_count == MAX_ARRAY_SIZE) &&
 		    (new_file_read < flat_buf->blocklens[0]) ) ||
 		( (mem_list_count == MAX_ARRAY_SIZE) &&
 		    (new_buffer_read < flat_file->blocklens[0])) )
@@ -601,7 +601,7 @@ void ADIOI_ZOIDFS_ReadStrided(ADIO_File fd, void *buf, int count,
 	mem_lengths = (size_t*)ADIOI_Malloc(max_mem_list*sizeof(size_t));
 	file_offsets = (uint64_t *)ADIOI_Malloc(max_file_list*sizeof(uint64_t));
 	file_lengths = (uint64_t *)ADIOI_Malloc(max_file_list*sizeof(uint64_t));
-	    
+
 	size_read = 0;
 	n_filetypes = st_n_filetypes;
 	frd_size = st_frd_size;
@@ -614,12 +614,12 @@ void ADIOI_ZOIDFS_ReadStrided(ADIO_File fd, void *buf, int count,
 	/*  this section calculates mem_list_count and file_list_count
 	    and also finds the possibly odd sized last array elements
 	    in new_frd_size and new_brd_size  */
-	
+
 	while (size_read < bufsize) {
 	    k = start_k;
 	    new_buffer_read = 0;
 	    mem_list_count = 0;
-	    while ((mem_list_count < MAX_ARRAY_SIZE) && 
+	    while ((mem_list_count < MAX_ARRAY_SIZE) &&
 		   (new_buffer_read < bufsize-size_read)) {
 	        /* find mem_list_count and file_list_count such that both are
 		   less than MAX_ARRAY_SIZE, the sum of their lengths are
@@ -627,9 +627,9 @@ void ADIOI_ZOIDFS_ReadStrided(ADIO_File fd, void *buf, int count,
 		   read in the next immediate read list is less than
 		   bufsize */
 	        if(mem_list_count) {
-		    if((new_buffer_read + flat_buf->blocklens[k] + 
+		    if((new_buffer_read + flat_buf->blocklens[k] +
 			size_read) > bufsize) {
-		        end_brd_size = new_buffer_read + 
+		        end_brd_size = new_buffer_read +
 			    flat_buf->blocklens[k] - (bufsize - size_read);
 			new_buffer_read = bufsize - size_read;
 		    }
@@ -647,15 +647,15 @@ void ADIOI_ZOIDFS_ReadStrided(ADIO_File fd, void *buf, int count,
 		}
 		mem_list_count++;
 		k = (k + 1)%flat_buf->count;
-	     } /* while ((mem_list_count < MAX_ARRAY_SIZE) && 
+	     } /* while ((mem_list_count < MAX_ARRAY_SIZE) &&
 	       (new_buffer_read < bufsize-size_read)) */
 	    j = start_j;
 	    new_file_read = 0;
 	    file_list_count = 0;
-	    while ((file_list_count < MAX_ARRAY_SIZE) && 
+	    while ((file_list_count < MAX_ARRAY_SIZE) &&
 		   (new_file_read < new_buffer_read)) {
 	        if(file_list_count) {
-		    if((new_file_read + flat_file->blocklens[j]) > 
+		    if((new_file_read + flat_file->blocklens[j]) >
 		       new_buffer_read) {
 		        end_frd_size = new_buffer_read - new_file_read;
 			new_file_read = new_buffer_read;
@@ -676,9 +676,9 @@ void ADIOI_ZOIDFS_ReadStrided(ADIO_File fd, void *buf, int count,
 		file_list_count++;
 		if (j < (flat_file->count - 1)) j++;
 		else j = 0;
-		
+
 		k = start_k;
-		if ((new_file_read < new_buffer_read) && 
+		if ((new_file_read < new_buffer_read) &&
 		    (file_list_count == MAX_ARRAY_SIZE)) {
 		    new_buffer_read = 0;
 		    mem_list_count = 0;
@@ -707,14 +707,14 @@ void ADIOI_ZOIDFS_ReadStrided(ADIO_File fd, void *buf, int count,
 		    } /* while (new_buffer_read < new_file_read) */
 		} /* if ((new_file_read < new_buffer_read) && (file_list_count
 		     == MAX_ARRAY_SIZE)) */
-	    } /* while ((mem_list_count < MAX_ARRAY_SIZE) && 
+	    } /* while ((mem_list_count < MAX_ARRAY_SIZE) &&
 		 (new_buffer_read < bufsize-size_read)) */
 
 	    /*  fills the allocated readlist arrays  */
 	    k = start_k;
 	    j = start_j;
-	    for (i=0; i<mem_list_count; i++) {	     
-	        mem_offsets[i] = buf + 
+	    for (i=0; i<mem_list_count; i++) {
+	        mem_offsets[i] = buf +
 			buftype_extent* (buf_count/flat_buf->count) +
 					 flat_buf->indices[k];
 		if(!i) {
@@ -741,7 +741,7 @@ void ADIOI_ZOIDFS_ReadStrided(ADIO_File fd, void *buf, int count,
 		k = (k + 1)%flat_buf->count;
 	    } /* for (i=0; i<mem_list_count; i++) */
 	    for (i=0; i<file_list_count; i++) {
-	        file_offsets[i] = disp + flat_file->indices[j] + 
+	        file_offsets[i] = disp + flat_file->indices[j] +
 		    ((ADIO_Offset)n_filetypes) * filetype_extent;
 	        if (!i) {
 		    file_lengths[0] = frd_size;
@@ -752,7 +752,7 @@ void ADIOI_ZOIDFS_ReadStrided(ADIO_File fd, void *buf, int count,
 		        file_lengths[i] = end_frd_size;
 			if (flat_file->blocklens[j] == end_frd_size)
 			    frd_size = flat_file->blocklens[(j+1)%
-							  flat_file->count];   
+							  flat_file->count];
 			else {
 			    frd_size = flat_file->blocklens[j] - end_frd_size;
 			    j--;
@@ -799,7 +799,7 @@ void ADIOI_ZOIDFS_ReadStrided(ADIO_File fd, void *buf, int count,
     /* when incrementing fp_ind, need to also take into account the file type:
      * consider an N-element 1-d subarray with a lb and ub: ( |---xxxxx-----|
      * if we wrote N elements, offset needs to point at beginning of type, not
-     * at empty region at offset N+1) 
+     * at empty region at offset N+1)
      *
      * As we discussed on mpich-discuss in may/june 2009, the code below might
      * look wierd, but by putting fp_ind at the last byte written, the next
@@ -809,10 +809,10 @@ void ADIOI_ZOIDFS_ReadStrided(ADIO_File fd, void *buf, int count,
 	fd->fp_ind = file_offsets[file_list_count-1]+
 	    file_lengths[file_list_count-1];
     }
-    
+
     ADIOI_Free(file_offsets);
     ADIOI_Free(file_lengths);
-    
+
     if (err_flag == 0) *error_code = MPI_SUCCESS;
 
 error_state:
@@ -820,11 +820,11 @@ error_state:
 
 #ifdef HAVE_STATUS_SET_BYTES
     MPIR_Status_set_bytes(status, datatype, bufsize);
-    /* This is a temporary way of filling in status. The right way is to 
-       keep track of how much data was actually read and placed in buf 
+    /* This is a temporary way of filling in status. The right way is to
+       keep track of how much data was actually read and placed in buf
        by ADIOI_BUFFERED_READ. */
 #endif
-    
+
     if (!buftype_is_contig) ADIOI_Delete_flattened(datatype);
 }
 

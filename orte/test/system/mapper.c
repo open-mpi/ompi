@@ -2,6 +2,7 @@
  */
 
 #include <stdio.h>
+#include <ctype.h>
 
 #include "orte/constants.h"
 

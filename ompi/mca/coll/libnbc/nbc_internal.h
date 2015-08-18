@@ -1,14 +1,19 @@
+/* -*- Mode: C; c-basic-offset:2 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2006 The Trustees of Indiana University and Indiana
  *                    University Research and Technology
  *                    Corporation.  All rights reserved.
- * Copyright (c) 2006 The Technical University of Chemnitz. All 
+ * Copyright (c) 2006 The Technical University of Chemnitz. All
  *                    rights reserved.
  *
  * Author(s): Torsten Hoefler <htor@cs.indiana.edu>
  *
  * Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2014      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  *
  */
 #ifndef __NBC_INTERNAL_H__
@@ -28,6 +33,7 @@
 #include "ompi/include/ompi/constants.h"
 #include "ompi/request/request.h"
 #include "ompi/datatype/ompi_datatype.h"
+#include "ompi/communicator/communicator.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -66,7 +72,7 @@ extern "C" {
 #define NBC_SCATTER 14
 #define NBC_SCATTERV 15
 /* set the number of collectives in nbc.h !!!! */
-  
+
 /* several typedefs for NBC */
 
 /* the function type enum */
@@ -80,66 +86,74 @@ typedef enum {
 
 /* the send argument struct */
 typedef struct {
-  void *buf;
-  char tmpbuf;
+  NBC_Fn_type type;
   int count;
+  void *buf;
   MPI_Datatype datatype;
   int dest;
+  char tmpbuf;
 } NBC_Args_send;
 
 /* the receive argument struct */
 typedef struct {
-  void *buf;
-  char tmpbuf;
+  NBC_Fn_type type;
   int count;
+  void *buf;
   MPI_Datatype datatype;
+  char tmpbuf;
   int source;
 } NBC_Args_recv;
 
 /* the operation argument struct */
 typedef struct {
-  void *buf1;
+  NBC_Fn_type type;
   char tmpbuf1;
-  void *buf2;
   char tmpbuf2;
-  void *buf3;
   char tmpbuf3;
-  int count;
+  void *buf1;
+  void *buf2;
+  void *buf3;
   MPI_Op op;
   MPI_Datatype datatype;
+  int count;
 } NBC_Args_op;
 
 /* the copy argument struct */
 typedef struct {
-  void *src; 
-  char tmpsrc;
+  NBC_Fn_type type;
   int srccount;
-  MPI_Datatype srctype;
+  void *src;
   void *tgt;
-  char tmptgt;
-  int tgtcount;
+  MPI_Datatype srctype;
   MPI_Datatype tgttype;
+  int tgtcount;
+  char tmpsrc;
+  char tmptgt;
 } NBC_Args_copy;
 
 /* unpack operation arguments */
 typedef struct {
-  void *inbuf; 
-  char tmpinbuf;
+  NBC_Fn_type type;
   int count;
+  void *inbuf;
+  void *outbuf;
   MPI_Datatype datatype;
-  void *outbuf; 
+  char tmpinbuf;
   char tmpoutbuf;
 } NBC_Args_unpack;
 
 /* internal function prototypes */
-int NBC_Sched_create(NBC_Schedule* schedule);
-int NBC_Sched_send(void* buf, char tmpbuf, int count, MPI_Datatype datatype, int dest, NBC_Schedule *schedule);
-int NBC_Sched_recv(void* buf, char tmpbuf, int count, MPI_Datatype datatype, int source, NBC_Schedule *schedule);
-int NBC_Sched_op(void* buf3, char tmpbuf3, void* buf1, char tmpbuf1, void* buf2, char tmpbuf2, int count, MPI_Datatype datatype, MPI_Op op, NBC_Schedule *schedule);
-int NBC_Sched_copy(void *src, char tmpsrc, int srccount, MPI_Datatype srctype, void *tgt, char tmptgt, int tgtcount, MPI_Datatype tgttype, NBC_Schedule *schedule);
-int NBC_Sched_unpack(void *inbuf, char tmpinbuf, int count, MPI_Datatype datatype, void *outbuf, char tmpoutbuf, NBC_Schedule *schedule);
-int NBC_Sched_barrier(NBC_Schedule *schedule);
-int NBC_Sched_commit(NBC_Schedule *schedule);
+int NBC_Sched_send (void* buf, char tmpbuf, int count, MPI_Datatype datatype, int dest, NBC_Schedule *schedule, bool barrier);
+int NBC_Sched_recv (void* buf, char tmpbuf, int count, MPI_Datatype datatype, int source, NBC_Schedule *schedule, bool barrier);
+int NBC_Sched_op (void* buf3, char tmpbuf3, void* buf1, char tmpbuf1, void* buf2, char tmpbuf2, int count, MPI_Datatype datatype,
+                  MPI_Op op, NBC_Schedule *schedule, bool barrier);
+int NBC_Sched_copy (void *src, char tmpsrc, int srccount, MPI_Datatype srctype, void *tgt, char tmptgt, int tgtcount,
+                    MPI_Datatype tgttype, NBC_Schedule *schedule, bool barrier);
+int NBC_Sched_unpack (void *inbuf, char tmpinbuf, int count, MPI_Datatype datatype, void *outbuf, char tmpoutbuf,
+                      NBC_Schedule *schedule, bool barrier);
+
+int NBC_Sched_barrier (NBC_Schedule *schedule);
+int NBC_Sched_commit (NBC_Schedule *schedule);
 
 #ifdef NBC_CACHE_SCHEDULE
 /* this is a dummy structure which is used to get the schedule out of
@@ -239,17 +253,26 @@ int NBC_Scatter_args_compare(NBC_Scatter_args *a, NBC_Scatter_args *b, void *par
 /* Schedule cache structures/functions */
 void NBC_SchedCache_args_delete(void *entry);
 void NBC_SchedCache_args_delete_key_dummy(void *k);
-  
+
 #endif
 
 
 int NBC_Start(NBC_Handle *handle, NBC_Schedule *schedule);
 int NBC_Init_handle(struct ompi_communicator_t *comm, ompi_coll_libnbc_request_t **request, ompi_coll_libnbc_module_t *module);
+void NBC_Return_handle(ompi_coll_libnbc_request_t *request);
 static inline int NBC_Type_intrinsic(MPI_Datatype type);
-static inline int NBC_Copy(void *src, int srccount, MPI_Datatype srctype, void *tgt, int tgtcount, MPI_Datatype tgttype, MPI_Comm comm);
 int NBC_Create_fortran_handle(int *fhandle, NBC_Handle **handle);
 
 /* some macros */
+
+static inline void NBC_Error (char *format, ...) {
+  va_list args;
+
+  va_start (args, format);
+  vfprintf (stderr, format, args);
+  fprintf (stderr, "\n");
+  va_end (args);
+}
 
 /* a schedule has the following format:
  * [schedule] ::= [size][round-schedule][delimiter][round-schedule][delimiter]...[end]
@@ -259,7 +282,7 @@ int NBC_Create_fortran_handle(int *fhandle, NBC_Handle **handle);
  * [type] ::= function type (NBC_Fn_type)
  * [type-args] ::= type specific arguments (NBC_Args_send, NBC_Args_recv or, NBC_Args_op)
  * [delimiter] ::= 1 (char) - indicates that a round follows
- * [end] ::= 0 (char) - indicates that this is the last round 
+ * [end] ::= 0 (char) - indicates that this is the last round
  */
 
 /*
@@ -275,83 +298,68 @@ int NBC_Create_fortran_handle(int *fhandle, NBC_Handle **handle);
  * schedule. A round has the format:
  * [num]{[type][type-args]}
  * e.g. [(int)2][(NBC_Fn_type)SEND][(NBC_Args_send)SEND-ARGS][(NBC_Fn_type)RECV][(NBC_Args_recv)RECV-ARGS] */
-#define NBC_GET_ROUND_SIZE(schedule, size) \
- {  \
-   int num; \
-   char *p = (char*) schedule; \
-   NBC_Fn_type type; \
-   int i;  \
-     \
-   NBC_GET_BYTES(p,num); \
-   /*NBC_DEBUG(10, "GET_ROUND_SIZE got %i elements\n", num); */\
-   for (i=0; i<num; i++) { \
-     NBC_GET_BYTES(p,type); \
-     switch(type) { \
-       case SEND: \
-         /*printf("found a SEND at offset %li\n", (long)p-(long)schedule); */\
-         p += sizeof(NBC_Args_send); \
-         break; \
-       case RECV: \
-         /*printf("found a RECV at offset %li\n", (long)p-(long)schedule); */\
-         p += sizeof(NBC_Args_recv); \
-         break; \
-       case OP: \
-         /*printf("found a OP at offset %li\n", (long)p-(long)schedule); */\
-         p += sizeof(NBC_Args_op); \
-         break; \
-       case COPY: \
-         /*printf("found a COPY at offset %li\n", (long)p-(long)schedule); */\
-         p += sizeof(NBC_Args_copy); \
-         break; \
-       case UNPACK: \
-         /*printf("found a UNPACK at offset %li\n", (long)p-(long)schedule); */\
-         p += sizeof(NBC_Args_unpack); \
-         break; \
-       default: \
-         printf("NBC_GET_ROUND_SIZE: bad type %i at offset %li\n", type, (long)p-sizeof(type)-(long)schedule); \
-         return NBC_BAD_SCHED; \
-     } \
-   } \
-   size = (long)p-(long)schedule; \
- }
+static inline void nbc_get_round_size (char *p, unsigned long *size) {
+  NBC_Fn_type type;
+  unsigned long offset = 0;
+  int num;
+
+  NBC_GET_BYTES(p,num);
+  /*NBC_DEBUG(10, "GET_ROUND_SIZE got %i elements\n", num); */
+  for (int i = 0 ; i < num ; ++i) {
+    memcpy (&type, p + offset, sizeof (type));
+    switch(type) {
+    case SEND:
+      /*printf("found a SEND at offset %li\n", (long)p-(long)schedule); */
+      offset += sizeof(NBC_Args_send);
+      break;
+    case RECV:
+      /*printf("found a RECV at offset %li\n", (long)p-(long)schedule); */
+      offset += sizeof(NBC_Args_recv);
+      break;
+    case OP:
+      /*printf("found a OP at offset %li\n", (long)p-(long)schedule); */
+      offset += sizeof(NBC_Args_op);            \
+      break;
+    case COPY:
+      /*printf("found a COPY at offset %li\n", (long)p-(long)schedule); */
+      offset += sizeof(NBC_Args_copy);
+      break;
+    case UNPACK:
+      /*printf("found a UNPACK at offset %li\n", (long)p-(long)schedule); */
+      offset += sizeof(NBC_Args_unpack);
+      break;
+    default:
+      NBC_Error("NBC_GET_ROUND_SIZE: bad type %i at offset %li", type, offset);
+      return;
+    }
+  }
+
+  *size = offset + sizeof (int);
+}
+
 
 /* returns the size of a schedule in bytes */
-#define NBC_GET_SIZE(schedule, size) \
-{ \
-  size=*(int*)schedule; \
+static inline int nbc_schedule_get_size (NBC_Schedule *schedule) {
+  return schedule->size;
 }
 
 /* increase the size of a schedule by size bytes */
-#define NBC_INC_SIZE(schedule, size) \
-{ \
-  *(int*)schedule+=size; \
+static inline void nbc_schedule_inc_size (NBC_Schedule *schedule, int size) {
+  schedule->size += size;
 }
 
 /* increments the number of operations in the last round */
-#define NBC_INC_NUM_ROUND(schedule) \
-{ \
-  int total_size, num_last_round; \
-  long round_size; \
-  char *ptr, *lastround; \
- \
-  NBC_GET_SIZE(schedule, total_size); \
- \
-  /* ptr begins at first round (first int is overall size) */ \
-  ptr = (char*)schedule+sizeof(int); \
-  lastround = ptr; \
-  while ((long)ptr-(long)schedule < total_size) { \
-    NBC_GET_ROUND_SIZE(ptr, round_size); \
-    /*printf("got round_size %i\n", round_size);*/ \
-    lastround = ptr; \
-    ptr += round_size; \
-    ptr += sizeof(char); /* barrier delimiter */ \
-    /*printf("(long)ptr-(long)schedule=%li, total_size=%i\n", (long)ptr-(long)schedule, total_size); */\
-  } \
-  /*printf("lastround count is at offset: %li\n", (long)lastround-(long)schedule);*/ \
-  /* increment the count in the last round of the schedule */ \
-  memcpy(&num_last_round, lastround, sizeof(int)); \
-  num_last_round++; \
-  memcpy(lastround, &num_last_round, sizeof(int)); \
+static inline void nbc_schedule_inc_round (NBC_Schedule *schedule) {
+  int last_round_num;
+  char *lastround;
+
+  lastround = schedule->data + schedule->current_round_offset;
+
+  /* increment the count in the last round of the schedule (memcpy is used
+   * to protect against unaligned access) */
+  memcpy (&last_round_num, lastround, sizeof (last_round_num));
+  ++last_round_num;
+  memcpy (lastround, &last_round_num, sizeof (last_round_num));
 }
 
 /* NBC_PRINT_ROUND prints a round in a schedule. A round has the format:
@@ -428,39 +436,30 @@ int NBC_Create_fortran_handle(int *fhandle, NBC_Handle **handle);
   } \
 }
 
-#define NBC_CHECK_NULL(ptr) \
-{ \
-  if(ptr == NULL) { \
-    printf("realloc error :-(\n"); \
-  } \
-}
-
-
-
 /*
-#define NBC_DEBUG(level, ...) {} 
+#define NBC_DEBUG(level, ...) {}
 */
 
-static inline void NBC_DEBUG(int level, const char *fmt, ...) 
-{ 
+static inline void NBC_DEBUG(int level, const char *fmt, ...)
+{
 #if NBC_DLEVEL > 0
   va_list ap;
-  int rank; 
- 
-  if(NBC_DLEVEL >= level) { 
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank); 
-    
-    printf("[LibNBC - %i] ", rank); 
+  int rank;
+
+  if(NBC_DLEVEL >= level) {
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+    printf("[LibNBC - %i] ", rank);
     va_start(ap, fmt);
     vprintf(fmt, ap);
     va_end (ap);
-  } 
+  }
 #endif
 }
 
 /* returns true (1) or false (0) if type is intrinsic or not */
 static inline int NBC_Type_intrinsic(MPI_Datatype type) {
-  
+
   if( ( type == MPI_INT ) ||
       ( type == MPI_LONG ) ||
       ( type == MPI_SHORT ) ||
@@ -476,9 +475,9 @@ static inline int NBC_Type_intrinsic(MPI_Datatype type) {
       ( type == MPI_LONG_INT) ||
       ( type == MPI_2INT) ||
       ( type == MPI_SHORT_INT) ||
-      ( type == MPI_LONG_DOUBLE_INT)) 
+      ( type == MPI_LONG_DOUBLE_INT))
     return 1;
-  else 
+  else
     return 0;
 }
 
@@ -496,24 +495,48 @@ static inline int NBC_Copy(void *src, int srccount, MPI_Datatype srctype, void *
     /* if we have the same types and they are contiguous (intrinsic
      * types are contiguous), we can just use a single memcpy */
     res = ompi_datatype_get_extent(srctype, &lb, &ext);
-    if (OMPI_SUCCESS != res) { printf("MPI Error in MPI_Type_extent() (%i)\n", res); return res; }
+    if (OMPI_SUCCESS != res) {
+      NBC_Error ("MPI Error in MPI_Type_extent() (%i)", res);
+      return res;
+    }
+
     memcpy(tgt, src, srccount*ext);
   } else {
     /* we have to pack and unpack */
     res = MPI_Pack_size(srccount, srctype, comm, &size);
-    if (MPI_SUCCESS != res || 0 == size) { printf("MPI Error in MPI_Pack_size() (%i:%i)\n", res, size); return (MPI_SUCCESS == res) ? MPI_ERR_SIZE : res; }
+    if (MPI_SUCCESS != res) {
+      NBC_Error ("MPI Error in MPI_Pack_size() (%i:%i)", res, size);
+      return res;
+    }
+
+    if (0 == size) {
+        return OMPI_SUCCESS;
+    }
     packbuf = malloc(size);
-    if (NULL == packbuf) { printf("Error in malloc()\n"); return res; }
+    if (NULL == packbuf) {
+      NBC_Error("Error in malloc()");
+      return res;
+    }
+
     pos=0;
     res = MPI_Pack(src, srccount, srctype, packbuf, size, &pos, comm);
-    if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Pack() (%i)\n", res); return res; }
+
+    if (MPI_SUCCESS != res) {
+      NBC_Error ("MPI Error in MPI_Pack() (%i)", res);
+      free (packbuf);
+      return res;
+    }
+
     pos=0;
     res = MPI_Unpack(packbuf, size, &pos, tgt, tgtcount, tgttype, comm);
-    if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Unpack() (%i)\n", res); return res; }
     free(packbuf);
+    if (MPI_SUCCESS != res) {
+      NBC_Error ("MPI Error in MPI_Unpack() (%i)", res);
+      return res;
+    }
   }
 
-  return NBC_OK;
+  return OMPI_SUCCESS;
 }
 
 static inline int NBC_Unpack(void *src, int srccount, MPI_Datatype srctype, void *tgt, MPI_Comm comm) {
@@ -528,25 +551,35 @@ static inline int NBC_Unpack(void *src, int srccount, MPI_Datatype srctype, void
     /* if we have the same types and they are contiguous (intrinsic
      * types are contiguous), we can just use a single memcpy */
     res = ompi_datatype_get_extent (srctype, &lb, &ext);
-    if (OMPI_SUCCESS != res) { printf("MPI Error in MPI_Type_extent() (%i)\n", res); return res; }
+    if (OMPI_SUCCESS != res) {
+      NBC_Error ("MPI Error in MPI_Type_extent() (%i)", res);
+      return res;
+    }
+
     memcpy(tgt, src, srccount * ext);
 
   } else {
     /* we have to unpack */
     res = MPI_Pack_size(srccount, srctype, comm, &size);
-    if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Pack_size() (%i)\n", res); return res; }
-    pos=0;
+    if (MPI_SUCCESS != res) {
+      NBC_Error ("MPI Error in MPI_Pack_size() (%i)", res);
+      return res;
+    }
+    pos = 0;
     res = MPI_Unpack(src, size, &pos, tgt, srccount, srctype, comm);
-    if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Unpack() (%i)\n", res); return res; }
+    if (MPI_SUCCESS != res) {
+      NBC_Error ("MPI Error in MPI_Unpack() (%i)", res);
+      return res;
+    }
   }
 
-  return NBC_OK;
+  return OMPI_SUCCESS;
 }
 
 /* deletes elements from dict until low watermark is reached */
 static inline void NBC_SchedCache_dictwipe(hb_tree *dict, int *size) {
   hb_itor *itor;
-  
+
   itor = hb_itor_new(dict);
   for (; hb_itor_valid(itor) && (*size>NBC_SCHED_DICT_LOWER); hb_itor_next(itor)) {
     hb_tree_remove(dict, hb_itor_key(itor), 0);
@@ -571,13 +604,13 @@ static inline void NBC_SchedCache_dictwipe(hb_tree *dict, int *size) {
   } \
 }
 
-int NBC_Comm_neighbors_count(MPI_Comm comm, int *indegree, int *outdegree, int *weighted);
-int NBC_Comm_neighbors(MPI_Comm comm, int maxindegree, int sources[], int sourceweights[], int maxoutdegree, int destinations[], int destweights[]);
+int NBC_Comm_neighbors_count (ompi_communicator_t *comm, int *indegree, int *outdegree);
+int NBC_Comm_neighbors (ompi_communicator_t *comm, int **sources, int *source_count, int **destinations, int *dest_count);
 
 #ifdef __cplusplus
 }
 #endif
- 
+
 #endif
 
 
