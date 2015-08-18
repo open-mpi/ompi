@@ -314,10 +314,10 @@ int mca_base_component_repository_open (mca_base_framework_t *framework,
     char *struct_name = NULL;
     int vl, ret;
 
-    opal_output_verbose(40, 0, "mca_base_component_repository_open: examining dynamic %s MCA component \"%s\" at path %s",
-                        ri->ri_type, ri->ri_name, ri->ri_path);
+    opal_output_verbose(MCA_BASE_VERBOSE_INFO, 0, "mca_base_component_repository_open: examining dynamic "
+                        "%s MCA component \"%s\" at path %s", ri->ri_type, ri->ri_name, ri->ri_path);
 
-    vl = mca_base_component_show_load_errors ? 0 : 40;
+    vl = mca_base_component_show_load_errors ? MCA_BASE_VERBOSE_ERROR : MCA_BASE_VERBOSE_INFO;
 
     /* Ensure that this component is not already loaded (should only happen
        if it was statically loaded).  It's an error if it's already
@@ -327,7 +327,7 @@ int mca_base_component_repository_open (mca_base_framework_t *framework,
 
     OPAL_LIST_FOREACH(mitem, &framework->framework_components, mca_base_component_list_item_t) {
         if (0 == strcmp(mitem->cli_component->mca_component_name, ri->ri_name)) {
-            opal_output_verbose(40, 0, "mca_base_component_repository_open: already loaded (ignored)");
+            opal_output_verbose (MCA_BASE_VERBOSE_INFO, 0, "mca_base_component_repository_open: already loaded (ignored)");
             return OPAL_ERR_BAD_PARAM;
         }
     }
@@ -336,7 +336,7 @@ int mca_base_component_repository_open (mca_base_framework_t *framework,
     mitem = NULL;
 
     if (NULL != ri->ri_dlhandle) {
-        opal_output_verbose(40, 0, "mca_base_component_repository_open: already loaded. returning cached component");
+        opal_output_verbose (MCA_BASE_VERBOSE_INFO, 0, "mca_base_component_repository_open: already loaded. returning cached component");
         mitem = OBJ_NEW(mca_base_component_list_item_t);
         if (NULL == mitem) {
             return OPAL_ERR_OUT_OF_RESOURCE;
@@ -445,8 +445,8 @@ int mca_base_component_repository_open (mca_base_framework_t *framework,
         ri->ri_component_struct = mitem->cli_component = component_struct;
         opal_list_append(&framework->framework_components, &mitem->super);
 
-        opal_output_verbose(40, 0, "mca_base_component_repository_open: opened dynamic %s MCA component \"%s\"",
-                            ri->ri_type, ri->ri_name);
+        opal_output_verbose (MCA_BASE_VERBOSE_INFO, 0, "mca_base_component_repository_open: opened dynamic %s MCA "
+                             "component \"%s\"", ri->ri_type, ri->ri_name);
 
         return OPAL_SUCCESS;
     } while (0);
