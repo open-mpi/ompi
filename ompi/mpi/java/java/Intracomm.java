@@ -468,9 +468,11 @@ public class Intracomm extends Comm
 		MPI.check();
 		op.setDatatype(type);
 		assertDirectBuffer(sendbuf, recvbuf);
-
-		return new Request(iScan(handle, sendbuf, recvbuf, count,
+		Request req = new Request(iScan(handle, sendbuf, recvbuf, count,
 				type.handle, type.baseType, op, op.handle));
+		req.addSendBufRef(sendbuf);
+		req.addRecvBufRef(recvbuf);
+		return req;
 	}
 
 	/**
@@ -490,10 +492,11 @@ public class Intracomm extends Comm
 		MPI.check();
 		op.setDatatype(type);
 		assertDirectBuffer(buf);
-
-		return new Request(iScan(
+		Request req = new Request(iScan(
 				handle, null, buf, count,
 				type.handle, type.baseType, op, op.handle));
+		req.addSendBufRef(buf);
+		return req;
 	}
 
 	private native long iScan(
@@ -592,9 +595,11 @@ public class Intracomm extends Comm
 		MPI.check();
 		op.setDatatype(type);
 		assertDirectBuffer(sendbuf, recvbuf);
-
-		return new Request(iExScan(handle, sendbuf, recvbuf, count,
+		Request req = new Request(iExScan(handle, sendbuf, recvbuf, count,
 				type.handle, type.baseType, op, op.handle));
+		req.addSendBufRef(sendbuf);
+		req.addRecvBufRef(recvbuf);
+		return req;
 	}
 
 	/**
@@ -614,10 +619,11 @@ public class Intracomm extends Comm
 		MPI.check();
 		op.setDatatype(type);
 		assertDirectBuffer(buf);
-
-		return new Request(iExScan(
+		Request req = new Request(iExScan(
 				handle, null, buf, count,
 				type.handle, type.baseType, op, op.handle));
+		req.addRecvBufRef(buf);
+		return req;
 	}
 
 	private native long iExScan(
