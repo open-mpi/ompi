@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
+ * Copyright (c) 2013-2015 Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -140,8 +142,6 @@ typedef struct opal_atomic_lock_t opal_atomic_lock_t;
 #include "opal/sys/sync_builtin/atomic.h"
 #elif OPAL_ASSEMBLY_BUILTIN == OPAL_BUILTIN_OSX
 #include "opal/sys/osx/atomic.h"
-#elif OPAL_ASSEMBLY_ARCH == OPAL_ALPHA
-#include "opal/sys/alpha/atomic.h"
 #elif OPAL_ASSEMBLY_ARCH == OPAL_AMD64
 #include "opal/sys/amd64/atomic.h"
 #elif OPAL_ASSEMBLY_ARCH == OPAL_ARM

@@ -63,7 +63,6 @@ EXTRA_DIST	= \
 	generate-all-asm.pl \
 	base/aix.conf \
 	base/default.conf \
-	base/ALPHA.asm \
 	base/AMD64.asm \
 	base/ARM.asm \
 	base/IA32.asm \
