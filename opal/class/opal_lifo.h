@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007      Voltaire All rights reserved.
  * Copyright (c) 2010      IBM Corporation.  All rights reserved.
- * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2014-2015 Los Alamos National Security, LLC. All rights
  *                         reseved.
  * $COPYRIGHT$
  *
@@ -25,6 +25,7 @@
 #define OPAL_LIFO_H_HAS_BEEN_INCLUDED
 
 #include "opal_config.h"
+#include <time.h>
 #include "opal/class/opal_list.h"
 
 #include "opal/sys/atomic.h"
@@ -180,6 +181,52 @@ static inline opal_list_item_t *opal_lifo_push_atomic (opal_lifo_t *lifo,
     } while (1);
 }
 
+#if OPAL_HAVE_ATOMIC_LLSC_PTR
+
+static inline void _opal_lifo_release_cpu (void)
+{
+    /* NTH: there are many ways to cause the current thread to be suspended. This one
+     * should work well in most cases. Another approach would be to use poll (NULL, 0, ) but
+     * the interval will be forced to be in ms (instead of ns or us). Note that there
+     * is a performance improvement for the lifo test when this call is made on detection
+     * of contention but it may not translate into actually MPI or application performance
+     * improvements. */
+    static struct timespec interval = { .tv_sec = 0, .tv_nsec = 100 };
+    nanosleep (&interval, NULL);
+}
+
+/* Retrieve one element from the LIFO. If we reach the ghost element then the LIFO
+ * is empty so we return NULL.
+ */
+static inline opal_list_item_t *opal_lifo_pop_atomic (opal_lifo_t* lifo)
+{
+    opal_list_item_t *item, *next;
+    int attempt = 0;
+
+    do {
+        if (++attempt == 5) {
+            /* deliberatly suspend this thread to allow other threads to run. this should
+             * only occur during periods of contention on the lifo. */
+            _opal_lifo_release_cpu ();
+            attempt = 0;
+        }
+
+        item = (opal_list_item_t *) opal_atomic_ll_ptr (&lifo->opal_lifo_head.data.item);
+        if (&lifo->opal_lifo_ghost == item) {
+            return NULL;
+        }
+
+        next = (opal_list_item_t *) item->opal_list_next;
+    } while (!opal_atomic_sc_ptr (&lifo->opal_lifo_head.data.item, next));
+
+    opal_atomic_wmb ();
+
+    item->opal_list_next = NULL;
+    return item;
+}
+
+#else
+
 /* Retrieve one element from the LIFO. If we reach the ghost element then the LIFO
  * is empty so we return NULL.
  */
@@ -215,6 +262,8 @@ static inline opal_list_item_t *opal_lifo_pop_atomic (opal_lifo_t* lifo)
     item->opal_list_next = NULL;
     return item;
 }
+
+#endif /* OPAL_HAVE_ATOMIC_LLSC_PTR */
 
 #endif
 
