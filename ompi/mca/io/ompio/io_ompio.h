@@ -60,6 +60,7 @@ OMPI_DECLSPEC extern int mca_io_ompio_coll_timing_info;
 
 #define QUEUESIZE 2048
 #define MCA_IO_DEFAULT_FILE_VIEW_SIZE 4*1024*1024
+#define OMPIO_FCOLL_WANT_TIME_BREAKDOWN 0
 
 #define OMPIO_MIN(a, b) (((a) < (b)) ? (a) : (b))
 #define OMPIO_MAX(a, b) (((a) < (b)) ? (b) : (a))
@@ -157,14 +158,14 @@ typedef struct {
     double time[3];
     int nprocs_for_coll;
     int aggregator;
-}print_entry;
+}mca_io_ompio_print_entry;
 
 typedef struct {
-    print_entry entry[QUEUESIZE + 1];
+    mca_io_ompio_print_entry entry[QUEUESIZE + 1];
     int first;
     int last;
     int count;
-} print_queue;
+} mca_io_ompio_print_queue;
 
 typedef struct {
 	int ndims;
@@ -271,7 +272,7 @@ typedef int (*mca_io_ompio_set_aggregator_props_fn_t) (struct mca_io_ompio_file_
 
 typedef int (*mca_io_ompio_full_print_queue_fn_t) (int queue_type);
 typedef int (*mca_io_ompio_register_print_entry_fn_t) (int queue_type,
-							print_entry x);
+							mca_io_ompio_print_entry x);
 
 
 /**
@@ -381,8 +382,8 @@ struct mca_io_ompio_data_t {
 };
 typedef struct mca_io_ompio_data_t mca_io_ompio_data_t;
 
-OMPI_DECLSPEC extern print_queue *coll_write_time;
-OMPI_DECLSPEC extern print_queue *coll_read_time;
+OMPI_DECLSPEC extern mca_io_ompio_print_queue *coll_write_time;
+OMPI_DECLSPEC extern mca_io_ompio_print_queue *coll_read_time;
 
 /* functions to retrieve the number of aggregators and the size of the 
    temporary buffer on aggregators from the fcoll modules */
@@ -425,16 +426,6 @@ OMPI_DECLSPEC int ompio_io_ompio_file_write_at_all (mca_io_ompio_file_t *fh,
                                                     struct ompi_datatype_t *datatype,
                                                     ompi_status_public_t *status);
 
-OMPI_DECLSPEC int ompio_io_ompio_file_write_at_all_begin (mca_io_ompio_file_t *fh,
-                                                          OMPI_MPI_OFFSET_TYPE offset,
-                                                          void *buf,
-                                                          int count,
-                                                          struct ompi_datatype_t *datatype);
-
-OMPI_DECLSPEC int ompio_io_ompio_file_write_at_all_end (mca_io_ompio_file_t *fh,
-                                                        void *buf,
-                                                        ompi_status_public_t * status);
-
 OMPI_DECLSPEC int ompio_io_ompio_file_iwrite_at (mca_io_ompio_file_t *fh,
                                                  OMPI_MPI_OFFSET_TYPE offset,
                                                  void *buf,
@@ -448,6 +439,12 @@ OMPI_DECLSPEC int ompio_io_ompio_file_iwrite (mca_io_ompio_file_t *fh,
                                               struct ompi_datatype_t *datatype,
                                               ompi_request_t **request);
 
+OMPI_DECLSPEC int ompio_io_ompio_file_iwrite_at_all (mca_io_ompio_file_t *fh,
+						     OMPI_MPI_OFFSET_TYPE offset,
+						     void *buf,
+						     int count,
+						     struct ompi_datatype_t *datatype,
+						     ompi_request_t **request);
 OMPI_DECLSPEC int ompio_io_ompio_file_iread (mca_io_ompio_file_t *fh,
 					     void *buf,
 					     int count,
@@ -465,6 +462,12 @@ OMPI_DECLSPEC int ompio_io_ompio_file_iread_at (mca_io_ompio_file_t *fh,
                                                 int count,
                                                 struct ompi_datatype_t *datatype,
                                                 ompi_request_t **request);
+OMPI_DECLSPEC int ompio_io_ompio_file_iread_at_all (mca_io_ompio_file_t *fh,
+						    OMPI_MPI_OFFSET_TYPE offset,
+						    void *buf,
+						    int count,
+						    struct ompi_datatype_t *datatype,
+						    ompi_request_t **request);
 OMPI_DECLSPEC int ompio_io_ompio_file_read_at (mca_io_ompio_file_t *fh,
                                                OMPI_MPI_OFFSET_TYPE offset,
                                                void *buf,
@@ -477,14 +480,6 @@ OMPI_DECLSPEC int ompio_io_ompio_file_read_at_all (mca_io_ompio_file_t *fh,
                                                    int count,
                                                    struct ompi_datatype_t *datatype,
                                                    ompi_status_public_t * status);
-OMPI_DECLSPEC int ompio_io_ompio_file_read_at_all_begin (mca_io_ompio_file_t *ompio_fh,
-                                                         OMPI_MPI_OFFSET_TYPE offset,
-                                                         void *buf,
-                                                         int count,
-                                                         struct ompi_datatype_t *datatype);
-OMPI_DECLSPEC int ompio_io_ompio_file_read_at_all_end (mca_io_ompio_file_t *ompio_fh,
-                                                       void *buf,
-                                                       ompi_status_public_t * status);
 OMPI_DECLSPEC int ompio_io_ompio_file_get_size (mca_io_ompio_file_t *fh,
                                                 OMPI_MPI_OFFSET_TYPE *size);
 
@@ -663,20 +658,20 @@ OMPI_DECLSPEC int ompi_io_ompio_bcast_array (void *buff,
                                              ompi_communicator_t *comm);
 
 OMPI_DECLSPEC int ompi_io_ompio_register_print_entry (int queue_type,
-						      print_entry x);
+						      mca_io_ompio_print_entry x);
 
-OMPI_DECLSPEC int ompi_io_ompio_unregister_print_entry (int queue_type, print_entry *x);
+OMPI_DECLSPEC int ompi_io_ompio_unregister_print_entry (int queue_type, mca_io_ompio_print_entry *x);
 
 OMPI_DECLSPEC int ompi_io_ompio_empty_print_queue(int queue_type);
 
 OMPI_DECLSPEC int ompi_io_ompio_full_print_queue(int queue_type);
 
-OMPI_DECLSPEC int ompi_io_ompio_initialize_print_queue(print_queue *q);
+OMPI_DECLSPEC int ompi_io_ompio_initialize_print_queue(mca_io_ompio_print_queue *q);
 
 OMPI_DECLSPEC int ompi_io_ompio_print_time_info(int queue_type,
 						char *name_operation,
 						mca_io_ompio_file_t *fh);
-int ompi_io_ompio_set_print_queue (print_queue **q, 
+int ompi_io_ompio_set_print_queue (mca_io_ompio_print_queue **q,
 				   int queue_type);
 	       
 

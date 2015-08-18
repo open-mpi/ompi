@@ -30,16 +30,9 @@
 #include "ompi/info/info.h"
 
 #include <sys/ioctl.h>
-#include <lustre/liblustreapi.h>
-#include <lustre/lustre_user.h>
 
-/*
- *	file_open_lustre
- *
- *	Function:	- opens a new file
- *	Accepts:	- same arguments as MPI_File_open()
- *	Returns:	- Success if new file handle
- */
+static void *alloc_lum();
+
 static void *alloc_lum()
 {
   int v1, v3, join;
@@ -52,6 +45,13 @@ static void *alloc_lum()
   return malloc(MAX(v1, v3));
 }
 
+/*
+ *	file_open_lustre
+ *
+ *	Function:	- opens a new file
+ *	Accepts:	- same arguments as MPI_File_open()
+ *	Returns:	- Success if new file handle
+ */
 
 int
 mca_fs_lustre_file_open (struct ompi_communicator_t *comm, 

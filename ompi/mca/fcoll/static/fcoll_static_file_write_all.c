@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2014 University of Houston. All rights reserved.
+ * Copyright (c) 2008-2015 University of Houston. All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights reserved.
  *
  * $COPYRIGHT$
@@ -32,7 +32,6 @@
 #include <unistd.h>
 
 #define DEBUG_ON 0
-#define TIME_BREAKDOWN 0
 
 typedef struct local_io_array{
   OMPI_MPI_OFFSET_TYPE offset;
@@ -93,11 +92,11 @@ mca_fcoll_static_file_write_all (mca_io_ompio_file_t *fh,
   ompi_datatype_t *types[3];
   ompi_datatype_t *io_array_type=MPI_DATATYPE_NULL;
   /*----------------------------------------------*/
-#if TIME_BREAKDOWN
+#if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
   double write_time = 0.0, start_write_time = 0.0, end_write_time = 0.0;
   double comm_time = 0.0, start_comm_time = 0.0, end_comm_time = 0.0;
   double exch_write = 0.0, start_exch = 0.0, end_exch = 0.0;
-  print_entry nentry;
+  mca_io_ompio_print_entry nentry;
 #endif
 
   
@@ -349,7 +348,7 @@ mca_fcoll_static_file_write_all (mca_io_ompio_file_t *fh,
   }
 #endif
 
-#if TIME_BREAKDOWN
+#if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
     start_exch = MPI_Wtime();
 #endif
 
@@ -673,7 +672,7 @@ mca_fcoll_static_file_write_all (mca_io_ompio_file_t *fh,
 	       bytes_to_write_in_cycle,
 	       fh->f_procs_per_group);
 #endif
-#if TIME_BREAKDOWN
+#if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
 	  start_comm_time = MPI_Wtime();
 #endif
 	global_buf  = (char *) malloc (global_count);
@@ -800,7 +799,7 @@ mca_fcoll_static_file_write_all (mca_io_ompio_file_t *fh,
 	}
 #endif
     }
-#if TIME_BREAKDOWN
+#if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
       end_comm_time = MPI_Wtime();
       comm_time += end_comm_time - start_comm_time;
 #endif
@@ -850,8 +849,8 @@ mca_fcoll_static_file_write_all (mca_io_ompio_file_t *fh,
 		 fh->f_io_array[i].length);
       }
 #endif
-      
-#if TIME_BREAKDOWN
+
+#if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
 	start_write_time = MPI_Wtime();
 #endif
 
@@ -861,9 +860,9 @@ mca_fcoll_static_file_write_all (mca_io_ompio_file_t *fh,
 	      ret = OMPI_ERROR;
 	      goto exit;
 	}
-      } 
-      
-#if TIME_BREAKDOWN
+      }
+
+#if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
 	end_write_time = MPI_Wtime();
 	write_time += end_write_time - start_write_time;
 #endif
@@ -897,7 +896,7 @@ mca_fcoll_static_file_write_all (mca_io_ompio_file_t *fh,
     }
   }
 
-#if TIME_BREAKDOWN
+#if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
     end_exch = MPI_Wtime();
     exch_write += end_exch - start_exch;
     nentry.time[0] = write_time;

@@ -128,8 +128,8 @@ ompio_io_ompio_file_open (ompi_communicator_t *comm,
     ompio_fh->f_split_coll_in_use = false;
 
     /*Initialize the print_queues queues here!*/
-    coll_write_time = (print_queue *) malloc (sizeof(print_queue));
-    coll_read_time = (print_queue *) malloc (sizeof(print_queue));
+    coll_write_time = (mca_io_ompio_print_queue *) malloc (sizeof(mca_io_ompio_print_queue));
+    coll_read_time = (mca_io_ompio_print_queue *) malloc (sizeof(mca_io_ompio_print_queue));
 
     ompi_io_ompio_initialize_print_queue(coll_write_time);
     ompi_io_ompio_initialize_print_queue(coll_read_time);

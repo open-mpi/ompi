@@ -24,6 +24,7 @@
 #include "mpi.h"
 #include "ompi/constants.h"
 #include "ompi/mca/sharedfp/sharedfp.h"
+#include "ompi/mca/sharedfp/base/base.h"
 
 int mca_sharedfp_individual_write (mca_io_ompio_file_t *fh,
                                        void *buf,
@@ -40,7 +41,7 @@ int mca_sharedfp_individual_write (mca_io_ompio_file_t *fh,
 
     if ( NULL == fh->f_sharedfp_data ) {
 	if ( mca_sharedfp_individual_verbose ) {
-	    printf("sharedfp_individual_write: opening the shared file pointer file\n");
+	    opal_output(ompi_sharedfp_base_framework.framework_output,"sharedfp_individual_write: opening the shared file pointer file\n");
 	}
         shared_fp_base_module = fh->f_sharedfp;
 
@@ -104,7 +105,8 @@ int mca_sharedfp_individual_write_ordered (mca_io_ompio_file_t *fh,
 
     if(fh->f_sharedfp_data==NULL){
 	if ( mca_sharedfp_individual_verbose ) {
-	    printf("sharedfp_individual_write - opening the shared file pointer\n");
+	    opal_output(ompi_sharedfp_base_framework.framework_output, 
+"sharedfp_individual_write_ordered - opening the shared file pointer\n");
 	}
         shared_fp_base_module = fh->f_sharedfp;
 
@@ -114,7 +116,7 @@ int mca_sharedfp_individual_write_ordered (mca_io_ompio_file_t *fh,
                                                         fh->f_info,
                                                         fh);
         if ( OMPI_SUCCESS != ret ) {
-            opal_output(0,"sharedfp_individual_write - error opening the shared file pointer\n");
+            opal_output(0,"sharedfp_individual_write_ordered - error opening the shared file pointer\n");
             return ret;
         }
     }
