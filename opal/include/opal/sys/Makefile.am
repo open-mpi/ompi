@@ -27,7 +27,6 @@ headers += \
 	opal/sys/timer.h \
         opal/sys/cma.h
 
-include opal/sys/alpha/Makefile.am
 include opal/sys/amd64/Makefile.am
 include opal/sys/arm/Makefile.am
 include opal/sys/ia32/Makefile.am

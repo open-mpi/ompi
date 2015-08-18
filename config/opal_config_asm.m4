@@ -916,12 +916,6 @@ AC_DEFUN([OPAL_CONFIG_ASM],[
             OPAL_GCC_INLINE_ASSIGN='"mov %0=r0\n;;\n" : "=&r"(ret)'
             ;;
 
-        alpha-*|alphaev[[4-8]]-*|alphaev56-*|alphaev6[[78]]-*)
-            opal_cv_asm_arch="ALPHA"
-            OPAL_ASM_SUPPORT_64BIT=1
-            OPAL_GCC_INLINE_ASSIGN='"bis [$]31,[$]31,%0" : "=&r"(ret)'
-            ;;
-
         armv7*)
             opal_cv_asm_arch="ARM"
             OPAL_ASM_SUPPORT_64BIT=1
