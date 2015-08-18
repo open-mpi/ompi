@@ -769,7 +769,7 @@ public class Comm implements Freeable, Cloneable
 	{
 		MPI.check();
 		assertDirectBuffer(buf);
-		return new Prequest(sendInit(handle, buf, count, type.handle, dest, tag));
+		return new Prequest(sendInit(handle, buf, count, type.handle, dest, tag), buf);
 	}
 
 	private native long sendInit(
@@ -794,7 +794,7 @@ public class Comm implements Freeable, Cloneable
 	{
 		MPI.check();
 		assertDirectBuffer(buf);
-		return new Prequest(bSendInit(handle, buf, count, type.handle, dest, tag));
+		return new Prequest(bSendInit(handle, buf, count, type.handle, dest, tag), buf);
 	}
 
 	private native long bSendInit(
@@ -819,7 +819,7 @@ public class Comm implements Freeable, Cloneable
 	{
 		MPI.check();
 		assertDirectBuffer(buf);
-		return new Prequest(sSendInit(handle, buf, count, type.handle, dest, tag));
+		return new Prequest(sSendInit(handle, buf, count, type.handle, dest, tag), buf);
 	}
 
 	private native long sSendInit(
@@ -844,7 +844,7 @@ public class Comm implements Freeable, Cloneable
 	{
 		MPI.check();
 		assertDirectBuffer(buf);
-		return new Prequest(rSendInit(handle, buf, count, type.handle, dest, tag));
+		return new Prequest(rSendInit(handle, buf, count, type.handle, dest, tag), buf);
 	}
 
 	private native long rSendInit(
@@ -869,7 +869,7 @@ public class Comm implements Freeable, Cloneable
 	{
 		MPI.check();
 		assertDirectBuffer(buf);
-		return new Prequest(recvInit(handle, buf, count, type.handle, source, tag));
+		return new Prequest(recvInit(handle, buf, count, type.handle, source, tag), buf);
 	}
 
 	private native long recvInit(
