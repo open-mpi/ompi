@@ -54,13 +54,13 @@ mca_io_ompio_file_open (ompi_communicator_t *comm,
     }
 
 
+    /*save pointer back to the file_t structure */
+    data->ompio_fh.f_fh = fh;
 
     ret = ompio_io_ompio_file_open(comm,filename,amode,info,&data->ompio_fh,use_sharedfp);
 
     if ( OMPI_SUCCESS == ret ) {
         fh->f_flags |= OMPIO_FILE_IS_OPEN;
-        /*save pointer back to the file_t structure */
-        data->ompio_fh.f_fh = fh;
     }
 
 
