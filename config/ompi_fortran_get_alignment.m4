@@ -132,3 +132,48 @@ EOF
     AS_VAR_POPDEF([type_var])dnl
     OPAL_VAR_SCOPE_POP
 ])
+
+# OMPI_FORTRAN_F08_GET_HANDLE_ALIGNMENT(type, variable to set)
+# ------------------------------------------
+AC_DEFUN([OMPI_FORTRAN_F08_GET_HANDLE_ALIGNMENT],[
+    # Use of m4_translit suggested by Eric Blake:
+    # http://lists.gnu.org/archive/html/bug-autoconf/2010-10/msg00016.html
+    AS_VAR_PUSHDEF([type_var],
+       m4_translit([[ompi_cv_fortran_alignment_$1]], [*], [p]))
+
+    AC_CACHE_CHECK([alignment of Fortran $1], type_var,
+        [AC_LANG_PUSH([Fortran])
+         AC_LINK_IFELSE([AC_LANG_SOURCE([[module alignment_mod
+type, BIND(C) :: test_mpi_handle
+  integer :: MPI_VAL
+end type test_mpi_handle
+type(test_mpi_handle) :: t1
+type(test_mpi_handle) :: t2
+end module
+
+program falignment
+   use alignment_mod
+   OPEN(UNIT=10, FILE="conftestval")
+   if (LOC(t1) > LOC(t2)) then
+      write (10,'(I5)') LOC(t1)-LOC(t2)
+   else
+      write (10,'(I5)') LOC(t2)-LOC(t1)
+   endif
+   CLOSE(10)
+      
+end program]])],
+                          [AS_IF([test "$cross_compiling" = "yes"],
+                                 [AC_MSG_ERROR([Can not determine alignment of $1 when cross-compiling])],
+                                 [OPAL_LOG_COMMAND([./conftest],
+                                                   [AS_VAR_SET(type_var, [`cat conftestval`])],
+                                                   [AC_MSG_ERROR([Could not determine alignment of $1])])])],
+
+                          [AC_MSG_WARN([Could not determine alignment of $1])
+                           AC_MSG_WARN([See config.log for details])
+                           AC_MSG_ERROR([Cannot continue])])
+         rm -rf conftest* *.mod 2> /dev/null
+         AC_LANG_POP([Fortran])])
+
+    AS_VAR_COPY([$2], [type_var])
+    AS_VAR_POPDEF([type_var])dnl
+])dnl
