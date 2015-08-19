@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -86,7 +87,7 @@ ompi_coll_tuned_comm_query(struct ompi_communicator_t *comm, int *priority)
      * but this would probably add an extra if and funct call to the path
      */
     tuned_module->super.coll_module_enable = tuned_module_enable;
-    tuned_module->super.ft_event = mca_coll_tuned_ft_event;
+    tuned_module->super.ft_event = NULL;
 
     /* By default stick with the fied version of the tuned collectives. Later on,
      * when the module get enabled, set the correct version based on the availability
@@ -279,22 +280,3 @@ tuned_module_enable( mca_coll_base_module_t *module,
     return OMPI_SUCCESS;
 }
 
-int mca_coll_tuned_ft_event(int state) {
-    if(OPAL_CRS_CHECKPOINT == state) {
-        ;
-    }
-    else if(OPAL_CRS_CONTINUE == state) {
-        ;
-    }
-    else if(OPAL_CRS_RESTART == state) {
-        ;
-    }
-    else if(OPAL_CRS_TERM == state ) {
-        ;
-    }
-    else {
-        ;
-    }
-
-    return OMPI_SUCCESS;
-}

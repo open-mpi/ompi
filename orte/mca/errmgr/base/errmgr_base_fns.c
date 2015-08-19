@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010-2011 Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
+ * Copyright (c) 2011-2015 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
  * Copyright (c) 2014      Research Organization for Information Science
@@ -54,8 +54,6 @@
 #include "opal/util/output.h"
 #include "opal/util/basename.h"
 #include "opal/util/argv.h"
-#include "opal/mca/crs/crs.h"
-#include "opal/mca/crs/base/base.h"
 
 #include "orte/util/name_fns.h"
 #include "orte/util/session_dir.h"

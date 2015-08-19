@@ -406,19 +406,6 @@ void orte_plm_base_complete_setup(int fd, short args, void *cbdata)
          * about stdin */
     }
 
-#if OPAL_ENABLE_FT_CR == 1
-    /*
-     * Notify the Global SnapC component regarding new job (even if it was restarted)
-     */
-    {
-        int rc;
-        if( ORTE_SUCCESS != (rc = orte_snapc.setup_job(jdata->jobid) ) ) {
-            /* Silent Failure :/ JJH */
-            ORTE_ERROR_LOG(rc);
-        }
-    }
-#endif
-
     /* if coprocessors were detected, now is the time to
      * identify who is attached to what host - this info
      * will be shipped to the daemons in the nidmap. Someday,

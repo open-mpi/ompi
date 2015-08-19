@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2009-2013 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2010-2012 Los Alamos National Security, LLC.
+ * Copyright (c) 2010-2015 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -193,7 +193,7 @@ mca_coll_sm_comm_query(struct ompi_communicator_t *comm, int *priority)
 
     /* All is good -- return a module */
     sm_module->super.coll_module_enable = sm_module_enable;
-    sm_module->super.ft_event        = mca_coll_sm_ft_event;
+    sm_module->super.ft_event        = NULL;
     sm_module->super.coll_allgather  = NULL;
     sm_module->super.coll_allgatherv = NULL;
     sm_module->super.coll_allreduce  = mca_coll_sm_allreduce_intra;
@@ -589,23 +589,3 @@ static int bootstrap_comm(ompi_communicator_t *comm,
     return OMPI_SUCCESS;
 }
 
-
-int mca_coll_sm_ft_event(int state) {
-    if(OPAL_CRS_CHECKPOINT == state) {
-        ;
-    }
-    else if(OPAL_CRS_CONTINUE == state) {
-        ;
-    }
-    else if(OPAL_CRS_RESTART == state) {
-        ;
-    }
-    else if(OPAL_CRS_TERM == state ) {
-        ;
-    }
-    else {
-        ;
-    }
-
-    return OMPI_SUCCESS;
-}

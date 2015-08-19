@@ -34,10 +34,6 @@
 #include "mpool_sm.h"
 #include "opal/mca/common/sm/common_sm.h"
 
-#if OPAL_ENABLE_FT_CR    == 1
-#include "opal/runtime/opal_cr.h"
-#endif
-
 /*
  * Local functions
  */

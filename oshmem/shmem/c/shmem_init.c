@@ -1,6 +1,8 @@
 /*
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC.
+ *                         All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -14,7 +16,6 @@
 
 #include "orte/util/show_help.h"
 
-#include "opal/runtime/opal_cr.h"
 #include "opal/util/output.h"
 
 #include "oshmem/constants.h"
@@ -62,7 +63,6 @@ void shmem_init(void)
         oshmem_shmem_abort(-1);
     }
 
-    OPAL_CR_INIT_LIBRARY();
 #if HAVE_ON_EXIT
     on_exit(shmem_onexit, NULL);
 #endif

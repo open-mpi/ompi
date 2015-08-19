@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2007-2012 Los Alamos National Security, LLC.
+ * Copyright (c) 2007-2015 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
@@ -54,10 +54,6 @@ static int get_wireup_info(opal_buffer_t *buf);
 static int set_lifeline(orte_process_name_t *proc);
 static size_t num_routes(void);
 
-#if OPAL_ENABLE_FT_CR == 1
-static int debruijn_ft_event(int state);
-#endif
-
 orte_routed_module_t orte_routed_debruijn_module = {
     init,
     finalize,
@@ -72,11 +68,7 @@ orte_routed_module_t orte_routed_debruijn_module = {
     get_routing_list,
     get_wireup_info,
     num_routes,
-#if OPAL_ENABLE_FT_CR == 1
-    debruijn_ft_event
-#else
     NULL
-#endif
 };
 
 /* local globals */
@@ -894,37 +886,4 @@ static size_t num_routes(void)
 {
     return opal_list_get_size(&my_children);
 }
-
-#if OPAL_ENABLE_FT_CR == 1
-static int debruijn_ft_event(int state)
-{
-    int ret, exit_status = ORTE_SUCCESS;
-
-    /******** Checkpoint Prep ********/
-    if(OPAL_CRS_CHECKPOINT == state) {
-    }
-    /******** Continue Recovery ********/
-    else if (OPAL_CRS_CONTINUE == state ) {
-    }
-    /******** Restart Recovery ********/
-    else if (OPAL_CRS_RESTART == state ) {
-        /*
-         * Re-exchange the routes
-         */
-        if (ORTE_SUCCESS != (ret = orte_routed.init_routes(ORTE_PROC_MY_NAME->jobid, NULL))) {
-            exit_status = ret;
-            goto cleanup;
-        }
-    }
-    else if (OPAL_CRS_TERM == state ) {
-        /* Nothing */
-    }
-    else {
-        /* Error state = Nothing */
-    }
-
- cleanup:
-    return exit_status;
-}
-#endif
 

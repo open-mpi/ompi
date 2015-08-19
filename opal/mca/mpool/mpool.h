@@ -30,9 +30,6 @@
 #include "opal/mca/mca.h"
 #include "opal/class/opal_free_list.h"
 
-#include "opal/mca/crs/crs.h"
-#include "opal/mca/crs/base/base.h"
-
 #define MCA_MPOOL_FLAGS_CACHE_BYPASS      0x01
 #define MCA_MPOOL_FLAGS_PERSIST           0x02
 #define MCA_MPOOL_FLAGS_MPI_ALLOC_MEM     0x04

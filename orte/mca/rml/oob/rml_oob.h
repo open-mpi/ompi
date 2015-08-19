@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2012      Los Alamos National Security, LLC.
+ * Copyright (c) 2012-2015 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -48,7 +48,6 @@ extern orte_rml_oob_module_t orte_rml_oob_module;
 
 int orte_rml_oob_init(void);
 int orte_rml_oob_fini(void);
-int orte_rml_oob_ft_event(int state);
 
 int orte_rml_oob_send_nb(orte_process_name_t* peer,
                          struct iovec* msg,

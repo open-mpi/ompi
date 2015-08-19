@@ -12,6 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2008-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2008-2009 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -233,7 +234,6 @@ struct ompi_request_t;
 #define OMPI_ERRHANDLER_CHECK(rc, mpi_object, err_code, message) \
   if( OPAL_UNLIKELY(rc != OMPI_SUCCESS) ) { \
     int __mpi_err_code = ompi_errcode_get_mpi_code(err_code);         \
-    OPAL_CR_EXIT_LIBRARY() \
     ompi_errhandler_invoke((mpi_object)->error_handler, \
 			   (mpi_object), \
                            (int) (mpi_object)->errhandler_type, \
@@ -258,7 +258,6 @@ struct ompi_request_t;
  * MPI_SUCCESS.
  */
 #define OMPI_ERRHANDLER_RETURN(rc, mpi_object, err_code, message) \
-  OPAL_CR_EXIT_LIBRARY() \
   if ( OPAL_UNLIKELY(OMPI_SUCCESS != rc) ) { \
     int __mpi_err_code = ompi_errcode_get_mpi_code(err_code);         \
     ompi_errhandler_invoke((mpi_object)->error_handler, \

@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2013 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2007-2013 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2015      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
@@ -22,6 +22,7 @@
 
 #include "orte_config.h"
 #include "orte/constants.h"
+#include "opal/util/opal_environ.h"
 
 #include <string.h>
 
@@ -48,7 +49,6 @@
 #include "opal/util/show_help.h"
 #include "opal/util/daemon_init.h"
 #include "opal/runtime/opal.h"
-#include "opal/runtime/opal_cr.h"
 
 
 #include "orte/util/name_fns.h"
@@ -106,9 +106,6 @@ int main(int argc, char *argv[])
     int ret = 0;
     opal_cmd_line_t *cmd_line = NULL;
     char *rml_uri;
-#if OPAL_ENABLE_FT_CR == 1
-    char * tmp_env_var = NULL;
-#endif
 
     /* init enough of opal to process cmd lines */
     if (OPAL_SUCCESS != opal_init_util(&argc, &argv)) {
@@ -165,29 +162,6 @@ int main(int argc, char *argv[])
        no_daemonize == false) {
         opal_daemon_init(NULL);
     }
-
-#if OPAL_ENABLE_FT_CR == 1
-    /* Disable the checkpoint notification routine for this
-     * tool. As we will never need to checkpoint this tool.
-     * Note: This must happen before opal_init().
-     */
-    opal_cr_set_enabled(false);
-
-    /* Select the none component, since we don't actually use a checkpointer */
-    (void) mca_base_var_env_name("crs", &tmp_env_var);
-    opal_setenv(tmp_env_var,
-                "none",
-                true, &environ);
-    free(tmp_env_var);
-    tmp_env_var = NULL;
-
-    /* Mark as a tool program */
-    (void) mca_base_var_env_name("opal_cr_is_tool", &tmp_env_var);
-    opal_setenv(tmp_env_var,
-                "1",
-                true, &environ);
-    free(tmp_env_var);
-#endif
 
     /* don't want session directories */
     orte_create_session_dirs = false;

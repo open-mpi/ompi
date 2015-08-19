@@ -36,6 +36,7 @@
 #include "mpi.h"
 #include "opal/class/opal_pointer_array.h"
 #include "opal/util/output.h"
+#include "opal/include/opal/prefetch.h"
 
 BEGIN_C_DECLS
 

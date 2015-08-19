@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2011 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2012-2013 Los Alamos National Security, LLC.
+ * Copyright (c) 2012-2015 Los Alamos National Security, LLC.
  *                         All rights reserved
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
@@ -54,9 +54,6 @@ struct orterun_globals_t {
     char *stdin_target;
     char *prefix;
     char *path_to_mpirun;
-#if OPAL_ENABLE_FT_CR == 1
-    char *sstore_load;
-#endif
     bool disable_recovery;
     bool preload_binaries;
     bool index_argv;

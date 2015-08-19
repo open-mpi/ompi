@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2010-2011 Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2011-2014 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2011-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2013-2015 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
@@ -39,7 +39,6 @@
 #include "opal/class/opal_list.h"
 #include "opal/mca/event/event.h"
 #include "opal/runtime/opal.h"
-#include "opal/runtime/opal_cr.h"
 
 #include "opal/util/arch.h"
 #include "opal/util/argv.h"

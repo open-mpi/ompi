@@ -91,9 +91,6 @@ static char* component_get_addr(void);
 static int component_set_addr(orte_process_name_t *peer,
                               char **uris);
 static bool component_is_reachable(orte_process_name_t *peer);
-#if OPAL_ENABLE_FT_CR == 1
-static int component_ft_event(int state);
-#endif
 
 /*
  * Struct of function pointers and all that to let us be initialized
@@ -121,9 +118,6 @@ mca_oob_tcp_component_t mca_oob_tcp_component = {
         .get_addr = component_get_addr,
         .set_addr = component_set_addr,
         .is_reachable = component_is_reachable,
-#if OPAL_ENABLE_FT_CR == 1
-        .ft_event = component_ft_event,
-#endif
     },
 };
 
@@ -881,20 +875,6 @@ static bool component_is_reachable(orte_process_name_t *peer)
     return true;
 }
 
-#if OPAL_ENABLE_FT_CR == 1
-static int component_ft_event(int state)
-{
-    opal_output_verbose(2, orte_oob_base_framework.framework_output,
-                        "%s TCP FT EVENT", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-
-    /* pass it into the module */
-    if (NULL != mca_oob_tcp_module.api.ft_event) {
-        mca_oob_tcp_module.api.ft_event(state);
-    }
-
-    return ORTE_SUCCESS;
-}
-#endif // OPAL_ENABLE_FT_CR
 
 void mca_oob_tcp_component_set_module(int fd, short args, void *cbdata)
 {

@@ -39,9 +39,6 @@
 
 #include "opal/dss/dss_types.h"
 
-#include "opal/mca/crs/crs.h"
-#include "opal/mca/crs/base/base.h"
-
 #include "orte/mca/routed/routed_types.h"
 
 BEGIN_C_DECLS

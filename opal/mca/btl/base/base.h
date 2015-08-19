@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -26,6 +28,7 @@
 #include "opal_config.h"
 #include "opal/class/opal_list.h"
 #include "opal/mca/mca.h"
+#include "opal/mca/base/mca_base_framework.h"
 #include "opal/mca/btl/btl.h"
 
 BEGIN_C_DECLS

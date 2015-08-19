@@ -3,6 +3,8 @@
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -16,7 +18,6 @@
 #include "opal_config.h"
 #include "opal/mca/dl/dl.h"
 #include "opal/util/opal_environ.h"
-#include "opal/runtime/opal_cr.h"
 
 #include "opal/mca/base/base.h"
 

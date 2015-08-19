@@ -41,10 +41,6 @@
 #include "opal/mca/btl/btl.h"
 #include "opal/mca/btl/base/btl_base_error.h"
 
-#if OPAL_ENABLE_FT_CR == 1
-#include "opal/runtime/opal_cr.h"
-#endif
-
 #include "btl_openib_ini.h"
 
 #include "btl_openib.h"
@@ -1762,53 +1758,3 @@ static int mca_btl_openib_deregister_mem (mca_btl_base_module_t *btl, mca_btl_ba
     return OPAL_SUCCESS;
 }
 
-#if OPAL_ENABLE_FT_CR == 0
-int mca_btl_openib_ft_event(int state) {
-    return OPAL_SUCCESS;
-}
-#else
-int mca_btl_openib_ft_event(int state) {
-    int i;
-
-    if(OPAL_CRS_CHECKPOINT == state) {
-        /* Continue must reconstruct the routes (including modex), since we
-         * have to tear down the devices completely. */
-        opal_cr_continue_like_restart = true;
-
-        /*
-         * To keep the node from crashing we need to call ibv_close_device
-         * before the checkpoint is taken. To do this we need to tear
-         * everything down, and rebuild it all on continue/restart. :(
-         */
-
-        /* Shutdown all modules
-         * - Do this backwards since the openib_finalize function also loops
-         *   over this variable.
-         */
-        for (i = 0; i < mca_btl_openib_component.ib_num_btls; ++i ) {
-            mca_btl_openib_finalize_resources( &(mca_btl_openib_component.openib_btls[i])->super);
-        }
-
-        mca_btl_openib_component.devices_count = 0;
-        mca_btl_openib_component.ib_num_btls = 0;
-        OBJ_DESTRUCT(&mca_btl_openib_component.ib_procs);
-
-        opal_btl_openib_connect_base_finalize();
-    }
-    else if(OPAL_CRS_CONTINUE == state) {
-        ; /* Cleared by forcing the modex, no work needed */
-    }
-    else if(OPAL_CRS_RESTART == state) {
-        ;
-    }
-    else if(OPAL_CRS_TERM == state ) {
-        ;
-    }
-    else {
-        ;
-    }
-
-    return OPAL_SUCCESS;
-}
-
-#endif /* OPAL_ENABLE_FT_CR */

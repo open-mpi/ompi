@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2010-2012 Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2011-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2013-2014 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
@@ -45,7 +45,6 @@
 #include "opal/util/output.h"
 #include "opal/util/proc.h"
 #include "opal/runtime/opal.h"
-#include "opal/runtime/opal_cr.h"
 #include "opal/runtime/opal_progress_threads.h"
 
 #include "orte/mca/errmgr/errmgr.h"
@@ -54,10 +53,6 @@
 #include "orte/mca/odls/odls_types.h"
 #include "orte/mca/filem/base/base.h"
 #include "orte/mca/errmgr/base/base.h"
-#if OPAL_ENABLE_FT_CR == 1
-#include "orte/mca/snapc/base/base.h"
-#include "orte/mca/sstore/base/base.h"
-#endif
 #include "orte/mca/state/base/base.h"
 #include "orte/util/proc_info.h"
 #include "orte/util/session_dir.h"
@@ -185,36 +180,6 @@ int orte_ess_base_app_setup(bool db_restrict_local)
         error = "orte_errmgr_base_select";
         goto error;
     }
-#if OPAL_ENABLE_FT_CR == 1
-    /*
-     * Setup the SnapC
-     */
-    if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_snapc_base_framework, 0))) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_snapc_base_open";
-        goto error;
-    }
-    if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_sstore_base_framework, 0))) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_sstore_base_open";
-        goto error;
-    }
-    if (ORTE_SUCCESS != (ret = orte_snapc_base_select(ORTE_PROC_IS_HNP, ORTE_PROC_IS_APP))) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_snapc_base_select";
-        goto error;
-    }
-    if (ORTE_SUCCESS != (ret = orte_sstore_base_select())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_sstore_base_select";
-        goto error;
-    }
-
-    /* apps need the OPAL CR stuff */
-    opal_cr_set_enabled(true);
-#else
-    opal_cr_set_enabled(false);
-#endif
 
     /* open the distributed file system */
     if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_dfs_base_framework, 0))) {
@@ -246,11 +211,6 @@ int orte_ess_base_app_setup(bool db_restrict_local)
 
 int orte_ess_base_app_finalize(void)
 {
-
-#if OPAL_ENABLE_FT_CR == 1
-    (void) mca_base_framework_close(&orte_snapc_base_framework);
-    (void) mca_base_framework_close(&orte_sstore_base_framework);
-#endif
 
     /* close frameworks */
     (void) mca_base_framework_close(&orte_filem_base_framework);

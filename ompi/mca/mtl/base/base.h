@@ -10,8 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
- *                         reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -22,7 +21,9 @@
 #ifndef MCA_MTL_BASE_H
 #define MCA_MTL_BASE_H
 
+
 #include "ompi_config.h"
+#include "opal/mca/base/mca_base_framework.h"
 
 #include "ompi/mca/mca.h"
 #include "ompi/mca/mtl/mtl.h"

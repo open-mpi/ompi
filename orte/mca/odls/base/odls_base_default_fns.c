@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2011 Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
+ * Copyright (c) 2011-2015 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2011-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013-2015 Intel, Inc.  All rights reserved.
@@ -82,15 +82,6 @@
 #include "orte/runtime/orte_wait.h"
 #include "orte/orted/orted.h"
 #include "orte/orted/pmix/pmix_server.h"
-
-#if OPAL_ENABLE_FT_CR == 1
-#include "orte/mca/snapc/snapc.h"
-#include "orte/mca/snapc/base/base.h"
-#include "orte/mca/sstore/sstore.h"
-#include "orte/mca/sstore/base/base.h"
-#include "opal/mca/crs/crs.h"
-#include "opal/mca/crs/base/base.h"
-#endif
 
 #include "orte/mca/odls/base/base.h"
 #include "orte/mca/odls/base/odls_private.h"
@@ -667,26 +658,6 @@ void orte_odls_base_default_launch_local(int fd, short sd, void *cbdata)
         goto GETOUT;
     }
 
-#if OPAL_ENABLE_FT_CR == 1
-    /*
-     * Notify the local SnapC component regarding new job
-     */
-    if( ORTE_SUCCESS != (rc = orte_snapc.setup_job(job) ) ) {
-        /* Silent Failure :/ JJH */
-        ORTE_ERROR_LOG(rc);
-    }
-#endif
-
-#if OPAL_ENABLE_FT_CR == 1
-    for (j=0; j < jobdat->apps->size; j++) {
-        if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(jobdat->apps, j))) {
-            continue;
-        }
-        orte_sstore.fetch_app_deps(app);
-    }
-    orte_sstore.wait_all_deps();
-#endif
-
     /* track if we are indexing argvs so we don't check every time */
     index_argv = orte_get_attribute(&jobdat->attributes, ORTE_JOB_INDEX_ARGV, NULL, OPAL_BOOL);
 
@@ -993,29 +964,6 @@ void orte_odls_base_default_launch_local(int fd, short sd, void *cbdata)
                 continue;
             }
 
-#if OPAL_ENABLE_FT_CR == 1
-            /*
-             * OPAL CRS components need the opportunity to take action before a process
-             * is forked.
-             * Needs access to:
-             *   - Environment
-             *   - Rank/ORTE Name
-             *   - Binary to exec
-             */
-            if( NULL != opal_crs.crs_prelaunch ) {
-                if( OPAL_SUCCESS != (rc = opal_crs.crs_prelaunch(child->name.vpid,
-                                                                 orte_sstore_base_prelaunch_location,
-                                                                 &(app->app),
-                                                                 &(app->cwd),
-                                                                 &(app->argv),
-                                                                 &(app->env) ) ) ) {
-                    ORTE_ERROR_LOG(rc);
-                    child->exit_code = ORTE_PROC_STATE_FAILED_TO_LAUNCH;
-                    ORTE_ACTIVATE_PROC_STATE(&child->name, ORTE_PROC_STATE_FAILED_TO_LAUNCH);
-                    continue;
-                }
-            }
-#endif
             /* if we are indexing the argv by rank, do so now */
             if (index_argv) {
                 char *param;

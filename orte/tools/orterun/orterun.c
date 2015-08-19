@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007-2009 Sun Microsystems, Inc. All rights reserved.
- * Copyright (c) 2007-2013 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2013-2015 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
@@ -69,9 +69,6 @@
 #include "opal/util/show_help.h"
 #include "opal/util/fd.h"
 #include "opal/sys/atomic.h"
-#if OPAL_ENABLE_FT_CR == 1
-#include "opal/runtime/opal_cr.h"
-#endif
 
 #include "opal/version.h"
 #include "opal/runtime/opal.h"
@@ -241,13 +238,6 @@ static opal_cmd_line_init_t cmd_line_init[] = {
     { NULL, '\0', NULL, "preload-files", 1,
       &orterun_globals.preload_files, OPAL_CMD_LINE_TYPE_STRING,
       "Preload the comma separated list of files to the remote machines current working directory before starting the remote process." },
-
-#if OPAL_ENABLE_FT_CR == 1
-    /* Tell SStore to preload a snapshot before launch */
-    { NULL, '\0', NULL, "sstore-load", 1,
-      &orterun_globals.sstore_load, OPAL_CMD_LINE_TYPE_STRING,
-      "Internal Use Only! Tell SStore to preload a snapshot before launch." },
-#endif
 
     /* Use an appfile */
     { NULL, '\0', NULL, "app", 1,
@@ -498,12 +488,6 @@ static opal_cmd_line_init_t cmd_line_init[] = {
       NULL, OPAL_CMD_LINE_TYPE_BOOL,
       "Nodes in cluster may differ in topology, so send the topology back from each node [Default = false]" },
 
-#if OPAL_ENABLE_CRDEBUG == 1
-    { "opal_cr_enable_crdebug", '\0', "crdebug", "crdebug", 0,
-      NULL, OPAL_CMD_LINE_TYPE_BOOL,
-      "Enable C/R Debugging" },
-#endif
-
     { NULL, '\0', "disable-recovery", "disable-recovery", 0,
       &orterun_globals.disable_recovery, OPAL_CMD_LINE_TYPE_BOOL,
       "Disable recovery (resets all recovery options to off)" },
@@ -600,9 +584,6 @@ int orterun(int argc, char *argv[])
     orte_job_t *daemons;
     orte_app_context_t *app, *dapp;
     orte_job_t *jdata=NULL, *jptr;
-#if OPAL_ENABLE_FT_CR == 1
-    char *tmp_env_var = NULL;
-#endif
 
     /* find our basename (the name of the executable) so that we can
        use it in pretty-print error messages */
@@ -892,15 +873,6 @@ int orterun(int argc, char *argv[])
         exit(ORTE_ERROR_DEFAULT_EXIT_CODE);
     }
 
-#if OPAL_ENABLE_FT_CR == 1
-    /* Disable OPAL CR notifications for this tool */
-    opal_cr_set_enabled(false);
-    (void) mca_base_var_env_name("opal_cr_is_tool", &tmp_env_var);
-    opal_setenv(tmp_env_var,
-                "1",
-                true, &environ);
-    free(tmp_env_var);
-#endif
 
     /* get the daemon job object */
     daemons = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid);
@@ -1142,9 +1114,6 @@ static int init_globals(void)
     orterun_globals.preload_binaries = false;
     orterun_globals.preload_files  = NULL;
 
-#if OPAL_ENABLE_FT_CR == 1
-    orterun_globals.sstore_load = NULL;
-#endif
 
     /* All done */
     globals_init = true;
@@ -1624,13 +1593,6 @@ static int create_app(int argc, char* argv[],
         orte_set_attribute(&app->attributes, ORTE_APP_PRELOAD_FILES, ORTE_ATTR_LOCAL,
                            orterun_globals.preload_files, OPAL_STRING);
     }
-
-#if OPAL_ENABLE_FT_CR == 1
-    if(NULL != orterun_globals.sstore_load) {
-        orte_set_attribute(&app->attributes, ORTE_APP_SSTORE_LOAD, ORTE_ATTR_LOCAL,
-                           orterun_globals.sstore_load, OPAL_STRING);
-    }
-#endif
 
     /* Do not try to find argv[0] here -- the starter is responsible
        for that because it may not be relevant to try to find it on

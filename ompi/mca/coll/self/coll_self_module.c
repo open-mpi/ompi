@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -61,7 +62,7 @@ mca_coll_self_comm_query(struct ompi_communicator_t *comm,
         if (NULL == module) return NULL;
 
         module->super.coll_module_enable = mca_coll_self_module_enable;
-        module->super.ft_event        = mca_coll_self_ft_event;
+        module->super.ft_event        = NULL;
         module->super.coll_allgather  = mca_coll_self_allgather_intra;
         module->super.coll_allgatherv = mca_coll_self_allgatherv_intra;
         module->super.coll_allreduce  = mca_coll_self_allreduce_intra;
@@ -96,23 +97,3 @@ mca_coll_self_module_enable(mca_coll_base_module_t *module,
     return OMPI_SUCCESS;
 }
 
-
-int mca_coll_self_ft_event(int state) {
-    if(OPAL_CRS_CHECKPOINT == state) {
-        ;
-    }
-    else if(OPAL_CRS_CONTINUE == state) {
-        ;
-    }
-    else if(OPAL_CRS_RESTART == state) {
-        ;
-    }
-    else if(OPAL_CRS_TERM == state ) {
-        ;
-    }
-    else {
-        ;
-    }
-
-    return OMPI_SUCCESS;
-}
