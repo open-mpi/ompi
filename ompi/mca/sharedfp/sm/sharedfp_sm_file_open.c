@@ -52,11 +52,12 @@ int mca_sharedfp_sm_file_open (struct ompi_communicator_t *comm,
     int err = OMPI_SUCCESS;
     struct mca_sharedfp_base_data_t* sh;
     struct mca_sharedfp_sm_data * sm_data = NULL;
-    mca_io_ompio_file_t * shfileHandle;
+    mca_io_ompio_file_t * shfileHandle, *ompio_fh;
     char * filename_basename;
     char * sm_filename;
     struct mca_sharedfp_sm_offset * sm_offset_ptr;
     struct mca_sharedfp_sm_offset sm_offset;
+    mca_io_ompio_data_t *data;
     int sm_fd;
     int rank;
 
@@ -75,6 +76,15 @@ int mca_sharedfp_sm_file_open (struct ompi_communicator_t *comm,
         return err;
     }
     shfileHandle->f_fh = fh->f_fh;
+    data = (mca_io_ompio_data_t *) fh->f_fh->f_io_selected_data;
+    ompio_fh = &data->ompio_fh;
+
+    err = mca_io_ompio_set_view_internal (shfileHandle, 
+                                          ompio_fh->f_disp, 
+                                          ompio_fh->f_etype, 
+                                          ompio_fh->f_orig_filetype,
+                                          ompio_fh->f_datarep,
+                                          MPI_INFO_NULL);
 
     /*Memory is allocated here for the sh structure*/
     if ( mca_sharedfp_sm_verbose ) {

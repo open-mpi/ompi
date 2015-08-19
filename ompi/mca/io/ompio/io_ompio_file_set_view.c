@@ -28,6 +28,7 @@
 #include "ompi/mca/fs/base/base.h"
 #include "ompi/mca/fcoll/fcoll.h"
 #include "ompi/mca/fcoll/base/base.h"
+#include "ompi/mca/sharedfp/sharedfp.h"
 #include "ompi/mca/pml/pml.h"
 #include "opal/datatype/opal_convertor.h"
 #include "ompi/datatype/ompi_datatype.h"
@@ -53,98 +54,19 @@ int mca_io_ompio_set_view_internal(mca_io_ompio_file_t *fh,
     int num_groups = 0;
     contg *contg_groups;
 
-
-
-    MPI_Aint lb,ub;
-
-    fh->f_iov_count   = 0;
-    fh->f_disp        = disp;
-    fh->f_offset      = disp;
-    fh->f_total_bytes = 0;
-
-    ompi_io_ompio_decode_datatype (fh,
-                                   filetype,
-                                   1,
-                                   NULL,
-                                   &max_data,
-                                   &fh->f_decoded_iov,
-                                   &fh->f_iov_count);
-
-    opal_datatype_get_extent(&filetype->super, &lb, &fh->f_view_extent);
-    opal_datatype_type_ub   (&filetype->super, &ub);
-    opal_datatype_type_size (&etype->super, &fh->f_etype_size);
-    opal_datatype_type_size (&filetype->super, &fh->f_view_size);
-    ompi_datatype_duplicate (etype, &fh->f_etype);
-    ompi_datatype_duplicate (filetype, &fh->f_filetype);
-
-    fh->f_cc_size = get_contiguous_chunk_size (fh);
-
-    if (opal_datatype_is_contiguous_memory_layout(&etype->super,1)) {
-        if (opal_datatype_is_contiguous_memory_layout(&filetype->super,1) &&
-	    fh->f_view_extent == (OPAL_PTRDIFF_TYPE)fh->f_view_size ) {
-            fh->f_flags |= OMPIO_CONTIGUOUS_FVIEW;
-        }
-    }
-
-
-    contg_groups = (contg*) calloc ( 1, fh->f_size * sizeof(contg));
-    if (NULL == contg_groups) {
-        opal_output (1, "OUT OF MEMORY\n");
-        return OMPI_ERR_OUT_OF_RESOURCE;
-    }
-    for( i = 0; i < fh->f_size; i++){
-       contg_groups[i].procs_in_contg_group = (int*)calloc (1,fh->f_size * sizeof(int));
-       if(NULL == contg_groups[i].procs_in_contg_group){
-          int j;
-          opal_output (1, "OUT OF MEMORY\n");
-          for(j=0; j<i; j++) {
-              free(contg_groups[j].procs_in_contg_group);
-          }
-          free(contg_groups);
-          return OMPI_ERR_OUT_OF_RESOURCE;
-       }
-    }
-    if( OMPI_SUCCESS != mca_io_ompio_fview_based_grouping(fh,
-                                                          &num_groups,
-                                                          contg_groups)){
-       opal_output(1, "mca_io_ompio_fview_based_grouping() failed\n");
-       free(contg_groups);
-       return OMPI_ERROR;
-    }
-    if( !( (fh->f_comm->c_flags & OMPI_COMM_CART) &&
-           (num_groups == 1 || num_groups == fh->f_size)) ) {
-          mca_io_ompio_finalize_initial_grouping(fh,
-                                                 num_groups,
-                                                 contg_groups);
-    }
-    for( i = 0; i < fh->f_size; i++){
-       free(contg_groups[i].procs_in_contg_group);
-    }
-    free(contg_groups);
-
-
-    return OMPI_SUCCESS;
-}
-
-int mca_io_ompio_file_set_view (ompi_file_t *fp,
-                                OMPI_MPI_OFFSET_TYPE disp,
-                                ompi_datatype_t *etype,
-                                ompi_datatype_t *filetype,
-                                char *datarep,
-                                ompi_info_t *info)
-{
-    mca_io_ompio_data_t *data;
-    mca_io_ompio_file_t *fh;
     size_t ftype_size;
-    OPAL_PTRDIFF_TYPE ftype_extent, lb;
+    OPAL_PTRDIFF_TYPE ftype_extent, lb, ub;
+    ompi_datatype_t *newfiletype;
 
-    data = (mca_io_ompio_data_t *) fp->f_io_selected_data;
-    fh = &data->ompio_fh;
-
-    ompi_datatype_destroy (&fh->f_etype);
-    ompi_datatype_destroy (&fh->f_filetype);
-    ompi_datatype_destroy (&fh->f_orig_filetype);
-
+    if ( NULL != fh->f_etype ) {
+        ompi_datatype_destroy (&fh->f_etype);
+    }
+    if ( NULL != fh->f_filetype ) {
+        ompi_datatype_destroy (&fh->f_filetype);
+    }
+    if ( NULL != fh->f_orig_filetype ) {
+        ompi_datatype_destroy (&fh->f_orig_filetype);
+    }
     if (NULL != fh->f_decoded_iov) {
         free (fh->f_decoded_iov);
         fh->f_decoded_iov = NULL;
@@ -165,38 +87,126 @@ int mca_io_ompio_file_set_view (ompi_file_t *fp,
     opal_datatype_get_extent(&filetype->super, &lb, &ftype_extent);
     opal_datatype_type_size (&filetype->super, &ftype_size);
 
-    if ( etype == filetype && 
-	 ompi_datatype_is_predefined (filetype ) &&
+    if ( etype == filetype                             && 
+	 ompi_datatype_is_predefined (filetype )       &&
 	 ftype_extent == (OPAL_PTRDIFF_TYPE)ftype_size ){
-	ompi_datatype_t *newfiletype;
 	ompi_datatype_create_contiguous(MCA_IO_DEFAULT_FILE_VIEW_SIZE,
 					&ompi_mpi_byte.dt,
 					&newfiletype);
 	ompi_datatype_commit (&newfiletype);
-	mca_io_ompio_set_view_internal (fh,
-					disp,
-					etype,
-					newfiletype,
-					datarep,
-					info);
-	ompi_datatype_destroy ( &newfiletype );
     } 
     else {
-	mca_io_ompio_set_view_internal (fh,
-					disp,
-					etype,
-					filetype,
-					datarep,
-					info);
+        newfiletype = filetype;
+    }
+    
+
+
+    fh->f_iov_count   = 0;
+    fh->f_disp        = disp;
+    fh->f_offset      = disp;
+    fh->f_total_bytes = 0;
+
+    ompi_io_ompio_decode_datatype (fh,
+                                   newfiletype,
+                                   1,
+                                   NULL,
+                                   &max_data,
+                                   &fh->f_decoded_iov,
+                                   &fh->f_iov_count);
+
+    opal_datatype_get_extent(&newfiletype->super, &lb, &fh->f_view_extent);
+    opal_datatype_type_ub   (&newfiletype->super, &ub);
+    opal_datatype_type_size (&etype->super, &fh->f_etype_size);
+    opal_datatype_type_size (&newfiletype->super, &fh->f_view_size);
+    ompi_datatype_duplicate (etype, &fh->f_etype);
+    ompi_datatype_duplicate (newfiletype, &fh->f_filetype);
+
+    fh->f_cc_size = get_contiguous_chunk_size (fh);
+
+    if (opal_datatype_is_contiguous_memory_layout(&etype->super,1)) {
+        if (opal_datatype_is_contiguous_memory_layout(&filetype->super,1) &&
+	    fh->f_view_extent == (OPAL_PTRDIFF_TYPE)fh->f_view_size ) {
+            fh->f_flags |= OMPIO_CONTIGUOUS_FVIEW;
+        }
     }
 
-    if (OMPI_SUCCESS != mca_fcoll_base_file_select (&data->ompio_fh,
-                                                    NULL)) {
+    contg_groups = (contg*) calloc ( 1, fh->f_size * sizeof(contg));
+    if (NULL == contg_groups) {
+        opal_output (1, "OUT OF MEMORY\n");
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+    for( i = 0; i < fh->f_size; i++){
+       contg_groups[i].procs_in_contg_group = (int*)calloc (1,fh->f_size * sizeof(int));
+       if(NULL == contg_groups[i].procs_in_contg_group){
+          int j;
+          opal_output (1, "OUT OF MEMORY\n");
+          for(j=0; j<i; j++) {
+              free(contg_groups[j].procs_in_contg_group);
+          }
+          free(contg_groups);
+          return OMPI_ERR_OUT_OF_RESOURCE;
+       }
+    }
+
+    if( OMPI_SUCCESS != mca_io_ompio_fview_based_grouping(fh,
+                                                          &num_groups,
+                                                          contg_groups)){
+       opal_output(1, "mca_io_ompio_fview_based_grouping() failed\n");
+       free(contg_groups);
+       return OMPI_ERROR;
+    }
+    if( !( (fh->f_comm->c_flags & OMPI_COMM_CART) &&
+           (num_groups == 1 || num_groups == fh->f_size)) ) {
+          mca_io_ompio_finalize_initial_grouping(fh,
+                                                 num_groups,
+                                                 contg_groups);
+    }
+    for( i = 0; i < fh->f_size; i++){
+       free(contg_groups[i].procs_in_contg_group);
+    }
+    free(contg_groups);
+
+    if ( etype == filetype                              && 
+	 ompi_datatype_is_predefined (filetype )        &&
+	 ftype_extent == (OPAL_PTRDIFF_TYPE)ftype_size ){
+	ompi_datatype_destroy ( &newfiletype );
+    } 
+
+
+    if (OMPI_SUCCESS != mca_fcoll_base_file_select (fh, NULL)) {
         opal_output(1, "mca_fcoll_base_file_select() failed\n");
         return OMPI_ERROR;
     }
 
     return OMPI_SUCCESS;
+}
+
+int mca_io_ompio_file_set_view (ompi_file_t *fp,
+                                OMPI_MPI_OFFSET_TYPE disp,
+                                ompi_datatype_t *etype,
+                                ompi_datatype_t *filetype,
+                                char *datarep,
+                                ompi_info_t *info)
+{
+    int ret=OMPI_SUCCESS;
+    mca_io_ompio_data_t *data;
+    mca_io_ompio_file_t *fh;
+    mca_io_ompio_file_t *sh;
+
+    data = (mca_io_ompio_data_t *) fp->f_io_selected_data;
+
+    /* we need to call the internal file set view twice: once for the individual
+       file pointer, once for the shared file pointer (if it is existent)
+    */
+    fh = &data->ompio_fh;
+    ret = mca_io_ompio_set_view_internal(fh, disp, etype, filetype, datarep, info);
+
+    if ( NULL != fh->f_sharedfp_data) { 
+        sh = ((struct mca_sharedfp_base_data_t *)fh->f_sharedfp_data)->sharedfh;
+        ret = mca_io_ompio_set_view_internal(sh, disp, etype, filetype, datarep, info);
+    }
+
+    return ret;
 }
 
 int mca_io_ompio_file_get_view (struct ompi_file_t *fp,
