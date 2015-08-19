@@ -9,5 +9,5 @@
 #
 
 export LANG=C
-find . -not \( -name .svn -prune -o -name .git -prune \) -type f -print0 | xargs -0 sed -i '' -E "s/[[:space:]]*$//"
+git ls-files | grep -v pdf | grep -v 3in | tr '\n' '\0' | xargs -0 sed -i '' -E "s/[[:space:]]*$//"
 
