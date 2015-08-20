@@ -40,9 +40,11 @@ int mca_sharedfp_addproc_file_open (struct ompi_communicator_t *comm,
     int ret = OMPI_SUCCESS, err;
     int rank;
     struct mca_sharedfp_base_data_t* sh;
-    mca_io_ompio_file_t * shfileHandle;
+    mca_io_ompio_file_t * shfileHandle, *ompio_fh;
     MPI_Comm newInterComm;
     struct mca_sharedfp_addproc_data * addproc_data = NULL;
+    mca_io_ompio_data_t *data;
+
 
     /*-------------------------------------------------*/
     /*Open the same file again without shared file pointer*/
@@ -53,6 +55,16 @@ int mca_sharedfp_addproc_file_open (struct ompi_communicator_t *comm,
         opal_output(0, "mca_sharedfp_addproc_file_open: Error during file open\n");
         return ret;
     }
+    shfileHandle->f_fh = fh->f_fh;
+    data = (mca_io_ompio_data_t *) fh->f_fh->f_io_selected_data;
+    ompio_fh = &data->ompio_fh;
+
+    err = mca_io_ompio_set_view_internal (shfileHandle, 
+                                          ompio_fh->f_disp, 
+                                          ompio_fh->f_etype, 
+                                          ompio_fh->f_orig_filetype,
+                                          ompio_fh->f_datarep,
+                                          MPI_INFO_NULL);
 
     /*Memory is allocated here for the sh structure*/
     if ( mca_sharedfp_addproc_verbose ) {
