@@ -44,7 +44,8 @@ int mca_sharedfp_lockedfile_file_open (struct ompi_communicator_t *comm,
     int handle, rank;
     struct mca_sharedfp_lockedfile_data * module_data = NULL;
     struct mca_sharedfp_base_data_t* sh;
-    mca_io_ompio_file_t * shfileHandle;
+    mca_io_ompio_file_t * shfileHandle, *ompio_fh;
+    mca_io_ompio_data_t *data;
 
     /*------------------------------------------------------------*/
     /*Open the same file again without shared file pointer support*/
@@ -55,6 +56,17 @@ int mca_sharedfp_lockedfile_file_open (struct ompi_communicator_t *comm,
         opal_output(0, "mca_sharedfp_lockedfile_file_open: Error during file open\n");
         return err;
     }
+    shfileHandle->f_fh = fh->f_fh;
+    data = (mca_io_ompio_data_t *) fh->f_fh->f_io_selected_data;
+    ompio_fh = &data->ompio_fh;
+
+    err = mca_io_ompio_set_view_internal (shfileHandle, 
+                                          ompio_fh->f_disp, 
+                                          ompio_fh->f_etype, 
+                                          ompio_fh->f_orig_filetype,
+                                          ompio_fh->f_datarep,
+                                          MPI_INFO_NULL);
+
 
     /*Memory is allocated here for the sh structure*/
     sh = (struct mca_sharedfp_base_data_t*)malloc(sizeof(struct mca_sharedfp_base_data_t));
