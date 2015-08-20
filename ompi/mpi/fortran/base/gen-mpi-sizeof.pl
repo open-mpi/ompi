@@ -224,8 +224,10 @@ sub output_file {
 ! it).
 !
 ! If you want support for MPI_SIZEOF, please use a different Fortran
-! compiler to build Open MPI.
+! compiler to build Open MPI.\n\n";
 
+        if ($want_bodies) {
+            print OUT "!
 ! Dummy subroutine, just so that there is *some* Fortran in this file
 ! (some compilers are unhappy if there are no Fortran statements in this
 ! file).
@@ -235,6 +237,7 @@ subroutine ompi_sad_panda()
   print *, 'Open MPI is a sad panda because your Fortran compiler'
   print *, 'does not support enough Fortran mojo for MPI_SIZEOF'
 end subroutine ompi_sad_panda\n\n";
+        }
     }
 
     close(OUT);
