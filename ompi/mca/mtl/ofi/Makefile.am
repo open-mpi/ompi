@@ -48,5 +48,7 @@ mca_mtl_ofi_la_LIBADD = $(ompi_mtl_ofi_LIBS) \
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_mtl_ofi_la_SOURCES = $(mtl_ofi_sources)
-libmca_mtl_ofi_la_LDFLAGS = -module -avoid-version
-
+libmca_mtl_ofi_la_LDFLAGS = \
+        $(ompi_mtl_ofi_LDFLAGS) \
+        -module -avoid-version
+libmca_mtl_ofi_la_LIBADD = $(ompi_mtl_ofi_LIBS)
