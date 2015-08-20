@@ -394,7 +394,9 @@ public Request iReadAt(long offset, Buffer buf, int count, Datatype type)
 {
     MPI.check();
     assertDirectBuffer(buf);
-    return new Request(iReadAt(handle, offset, buf, count, type.handle));
+    Request req = new Request(iReadAt(handle, offset, buf, count, type.handle));
+    req.addRecvBufRef(buf);
+    return req;
 }
 
 private native long iReadAt(
@@ -415,7 +417,9 @@ public Request iWriteAt(long offset, Buffer buf, int count, Datatype type)
 {
     MPI.check();
     assertDirectBuffer(buf);
-    return new Request(iWriteAt(handle, offset, buf, count, type.handle));
+    Request req = new Request(iWriteAt(handle, offset, buf, count, type.handle));
+    req.addSendBufRef(buf);
+    return req;
 }
 
 private native long iWriteAt(
@@ -550,7 +554,9 @@ public Request iRead(Buffer buf, int count, Datatype type) throws MPIException
 {
     MPI.check();
     assertDirectBuffer(buf);
-    return new Request(iRead(handle, buf, count, type.handle));
+    Request req = new Request(iRead(handle, buf, count, type.handle));
+    req.addRecvBufRef(buf);
+    return req;
 }
 
 private native long iRead(long fh, Buffer buf, int count, long type)
@@ -568,7 +574,9 @@ public Request iWrite(Buffer buf, int count, Datatype type) throws MPIException
 {
     MPI.check();
     assertDirectBuffer(buf);
-    return new Request(iWrite(handle, buf, count, type.handle));
+    Request req = new Request(iWrite(handle, buf, count, type.handle));
+    req.addSendBufRef(buf);
+    return req;
 }
 
 private native long iWrite(long fh, Buffer buf, int count, long type)
@@ -692,7 +700,9 @@ public Request iReadShared(Buffer buf, int count, Datatype type)
 {
     MPI.check();
     assertDirectBuffer(buf);
-    return new Request(iReadShared(handle, buf, count, type.handle));
+    Request req = new Request(iReadShared(handle, buf, count, type.handle));
+    req.addRecvBufRef(buf);
+    return req;
 }
 
 private native long iReadShared(long fh, Buffer buf, int count, long type)
@@ -711,7 +721,9 @@ public Request iWriteShared(Buffer buf, int count, Datatype type)
 {
     MPI.check();
     assertDirectBuffer(buf);
-    return new Request(iWriteShared(handle, buf, count, type.handle));
+    Request req = new Request(iWriteShared(handle, buf, count, type.handle));
+    req.addSendBufRef(buf);
+    return req;
 }
 
 private native long iWriteShared(long fh, Buffer buf, int count, long type)

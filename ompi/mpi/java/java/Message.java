@@ -149,7 +149,9 @@ public Request imRecv(Buffer buf, int count, Datatype type)
 {
     MPI.check();
     assertDirectBuffer(buf);
-    return new Request(imRecv(handle, buf, count, type.handle));
+    Request req = new Request(imRecv(handle, buf, count, type.handle));
+    req.addRecvBufRef(buf);
+    return req; 
 }
 
 private native long imRecv(long message, Object buf, int count, long type)

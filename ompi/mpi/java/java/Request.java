@@ -61,12 +61,16 @@
 
 package mpi;
 
+import java.nio.Buffer;
+
 /**
  * Request object.
  */
 public class Request implements Freeable
 {
 protected long handle;
+protected Buffer sendBuf;
+protected Buffer recvBuf;
 
 static
 {
@@ -108,6 +112,32 @@ public final void cancel() throws MPIException
 }
 
 private native void cancel(long request) throws MPIException;
+
+/**
+ * Adds a receive buffer to this Request object.  This method 
+ * should be called by the internal api whenever a persistent 
+ * request is created and any time a request object, that has 
+ * an associated buffer, is returned from an opperation to protect 
+ * the buffer from getting prematurely garbage collected.
+ * @param buf buffer to add to the array list
+ */
+protected final void addRecvBufRef(Buffer buf)
+{
+	this.recvBuf = buf;
+}
+
+/**
+ * Adds a send buffer to this Request object.  This method 
+ * should be called by the internal api whenever a persistent 
+ * request is created and any time a request object, that has 
+ * an associated buffer, is returned from an opperation to protect 
+ * the buffer from getting prematurely garbage collected.
+ * @param buf buffer to add to the array list
+ */
+protected final void addSendBufRef(Buffer buf)
+{
+	this.sendBuf = buf;
+}
 
 /**
  * Test if request object is null.
