@@ -82,6 +82,20 @@ Master (not on release branches yet)
 - Added "yalla" PML for faster MXM support.
 - Added persistent distributed virtual machine (pDVM) support for fast
   workflow executions.
+- Fixed typo in GCC inline assembly introduced in Open MPI v1.8.8.
+  Thanks to Paul Hargrove for pointing out the issue.
+- Add missing man pages for MPI_Win_get|set_info(3).
+- Ensure that session directories are cleaned up at the end of a run.
+- Fixed linking issues on some OSs where symbols of dependent
+  libraries are not automatically publicly available.
+- Improve hcoll and fca configury library detection.  Thanks to David
+  Shrader for helping track down the issue.
+- Removed the LAMA mapper (for use in setting affinity).  Its
+  functionality has been largely superseded by other mpirun CLI
+  options.
+- CUDA: Made the asynchronous copy mode be the default.
+- Fix a malloc(0) warning in MPI_IREDUCE_SCATTER_BLOCK.  Thanks to
+  Lisandro Dalcin for reporting the issue.
 - Fix typo in MPI_Scatter(3) man page.  Thanks to Akshay Venkatesh for
   noticing the mistake.
 - Add rudimentary protection from TCP port scanners.
@@ -105,11 +119,9 @@ Master (not on release branches yet)
 1.8.8
 -----
 
-- Fix a segfault in MPI_Finalize caused by misordering
-  of PML vs comm shutdown
-- Update sentinels-checking Fortran macros
-- Set default values for OSHMEM
-- Fix an invalid memory access in mrecv & imrecv
+- Fix a segfault in MPI_FINALIZE with PSM2 caused by misordering of
+  PML vs. communicator shutdown.
+- Fix an invalid memory access in MPI_MRECV and MPI_IMRECV.
 
 
 1.8.7
