@@ -174,10 +174,10 @@ static inline int32_t opal_atomic_swap_32( volatile int32_t *addr,
     return oldval;
 }
 
-#endif /* OPAL_GCC_INLINE_ASSEMBLY */
+#endif /* OMPI_GCC_INLINE_ASSEMBLY */
 
 
-#if OPAL_GCC_INLINE_ASSEMBLY
+#if OMPI_GCC_INLINE_ASSEMBLY
 
 /**
  * atomic_add - add integer to atomic variable
