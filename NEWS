@@ -119,9 +119,15 @@ Master (not on release branches yet)
 1.8.8
 -----
 
-- Fix a segfault in MPI_FINALIZE with PSM2 caused by misordering of
-  PML vs. communicator shutdown.
+- Fix a segfault in MPI_FINALIZE with the PSM MTL.
+- Fix mpi_f08 sentinels (e.g., MPI_STATUS_IGNORE) handling.
+- Set some additional MXM default values for OSHMEM.
 - Fix an invalid memory access in MPI_MRECV and MPI_IMRECV.
+- Include two fixes that were mistakenly left out of the official
+  v1.8.7 tarball:
+  - Fixed MPI_WIN_POST and MPI_WIN_START for zero-size messages
+  - Protect the OOB TCP ports from segfaulting when accessed by port
+    scanners
 
 
 1.8.7
