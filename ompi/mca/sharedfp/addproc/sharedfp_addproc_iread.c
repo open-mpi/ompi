@@ -58,6 +58,8 @@ int mca_sharedfp_addproc_iread(mca_io_ompio_file_t *fh,
 
     /*Request to the additional process for the offset*/
     ret = mca_sharedfp_addproc_request_position(sh,bytesRequested,&offset);
+    offset /= sh->sharedfh->f_etype_size;
+
     if( OMPI_SUCCESS == ret ){
 	if ( mca_sharedfp_addproc_verbose ){
 	    opal_output(ompi_sharedfp_base_framework.framework_output,
@@ -170,6 +172,7 @@ int mca_sharedfp_addproc_read_ordered_begin(mca_io_ompio_file_t *fh,
 
     /*Each process now has its own individual offset in recvBUFF*/
     offset = offsetBuff - sendBuff;
+    offset /= sh->sharedfh->f_etype_size;
 
     if ( mca_sharedfp_addproc_verbose ){
 	opal_output(ompi_sharedfp_base_framework.framework_output,
