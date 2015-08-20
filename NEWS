@@ -80,7 +80,6 @@ included in the vX.Y.Z section and be denoted as:
   functionality has been largely superseded by other mpirun CLI
   options.
 - CUDA: Made the asynchronous copy mode be the default.
-- Fix an invalid memory reference in MPI_MRECV / MPI_IMRECV.
 - Fix a malloc(0) warning in MPI_IREDUCE_SCATTER_BLOCK.  Thanks to
   Lisandro Dalcin for reporting the issue.
 - Fix typo in MPI_Scatter(3) man page.  Thanks to Akshay Venkatesh for
@@ -101,6 +100,14 @@ included in the vX.Y.Z section and be denoted as:
   David Shrader for the patch.
 - Fixed incorrect memalign threshhold in the openib BTL.  Thanks to
   Xavier Besseron for pointing out the issue.
+
+
+1.8.8
+-----
+
+- Fix a segfault in MPI_FINALIZE with PSM2 caused by misordering of
+  PML vs. communicator shutdown.
+- Fix an invalid memory access in MPI_MRECV and MPI_IMRECV.
 
 
 1.8.7
