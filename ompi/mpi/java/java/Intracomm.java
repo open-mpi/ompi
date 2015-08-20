@@ -419,9 +419,11 @@ public final Request iScan(Buffer sendbuf, Buffer recvbuf,
     MPI.check();
     op.setDatatype(type);
     assertDirectBuffer(sendbuf, recvbuf);
-
-    return new Request(iScan(handle, sendbuf, recvbuf, count,
-                             type.handle, type.baseType, op, op.handle));
+    Request req = new Request(iScan(handle, sendbuf, recvbuf, count,
+            type.handle, type.baseType, op, op.handle));
+    req.addSendBufRef(sendbuf);
+    req.addRecvBufRef(recvbuf);
+    return req;
 }
 
 /**
@@ -441,10 +443,11 @@ public final Request iScan(Buffer buf, int count, Datatype type, Op op)
     MPI.check();
     op.setDatatype(type);
     assertDirectBuffer(buf);
-
-    return new Request(iScan(
+    Request req = new Request(iScan(
             handle, null, buf, count,
             type.handle, type.baseType, op, op.handle));
+    req.addSendBufRef(buf);
+    return req;
 }
 
 private native long iScan(
@@ -543,9 +546,11 @@ public final Request iExScan(Buffer sendbuf, Buffer recvbuf,
     MPI.check();
     op.setDatatype(type);
     assertDirectBuffer(sendbuf, recvbuf);
-
-    return new Request(iExScan(handle, sendbuf, recvbuf, count,
-                               type.handle, type.baseType, op, op.handle));
+    Request req = new Request(iExScan(handle, sendbuf, recvbuf, count,
+            type.handle, type.baseType, op, op.handle));
+    req.addSendBufRef(sendbuf);
+    req.addRecvBufRef(recvbuf);
+    return req;
 }
 
 /**
@@ -565,10 +570,11 @@ public final Request iExScan(Buffer buf, int count, Datatype type, Op op)
     MPI.check();
     op.setDatatype(type);
     assertDirectBuffer(buf);
-
-    return new Request(iExScan(
+    Request req = new Request(iExScan(
             handle, null, buf, count,
             type.handle, type.baseType, op, op.handle));
+    req.addRecvBufRef(buf);
+    return req;
 }
 
 private native long iExScan(
