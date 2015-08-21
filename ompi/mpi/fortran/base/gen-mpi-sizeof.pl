@@ -227,16 +227,24 @@ sub output_file {
 ! compiler to build Open MPI.\n\n";
 
         if ($want_bodies) {
+            my $name = "ompi_sad_panda";
+            $name = "pompi_sad_panda"
+                if ($pmpi_arg);
             print OUT "!
 ! Dummy subroutine, just so that there is *some* Fortran in this file
-! (some compilers are unhappy if there are no Fortran statements in this
+! (this is defensive programming: since the Fortran compiler doesn't
+! support enough mojo, configure should set some AM_CONDITIONALs such
+! that this file should not end up being compiled, but just in case
+! that logic changes someday and this file *does* end up getting
+! compiled, make sure that it's not entirely empty because some
+! compilers are unhappy if there are no Fortran statements in this
 ! file).
-subroutine ompi_sad_panda()
+subroutine $name()
   implicit none
 
   print *, 'Open MPI is a sad panda because your Fortran compiler'
   print *, 'does not support enough Fortran mojo for MPI_SIZEOF'
-end subroutine ompi_sad_panda\n\n";
+end subroutine $name\n\n";
         }
     }
 
