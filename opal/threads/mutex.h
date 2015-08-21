@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -10,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2007-2013 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2007      Voltaire. All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
@@ -253,10 +254,10 @@ static inline bool opal_set_using_threads(bool have)
     do {                                        \
         if(opal_using_threads()) {              \
             opal_mutex_lock(mutex);             \
-            (action);                           \
+            action;                             \
             opal_mutex_unlock(mutex);           \
         } else {                                \
-            (action);                           \
+            action;                             \
         }                                       \
     } while (0)
 
