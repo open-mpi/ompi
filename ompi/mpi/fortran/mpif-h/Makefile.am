@@ -109,13 +109,13 @@ MOSTLYCLEANFILES = *.mod
 # out this workaround indefinitely.  So Jeff advised Absoft to fix
 # this bug in Sep 2014.
 if OMPI_BUILD_FORTRAN_MPIFH_BINDINGS
-noinst_LTLIBRARIES += libmpi_mpifh_sizeof.la
 
 if BUILD_FORTRAN_SIZEOF
+noinst_LTLIBRARIES += libmpi_mpifh_sizeof.la
 # Do not dist this file; it is generated
 nodist_libmpi_mpifh_sizeof_la_SOURCES = sizeof_f.f90
-endif
 libmpi_mpifh_la_LIBADD += libmpi_mpifh_sizeof.la
+endif
 
 sizeof_pl = $(top_srcdir)/ompi/mpi/fortran/base/gen-mpi-sizeof.pl
 
