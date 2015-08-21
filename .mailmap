@@ -21,6 +21,8 @@
 
 Dave Goodell <dgoodell@cisco.com> <dgoodell@open-mpi-git-mirror.example.com>
 Jeff Squyres <jsquyres@cisco.com> <jsquyres@open-mpi-git-mirror.example.com>
+# Jeff accidentally stomped on his $HOME/.gitconfig for a short while:
+Jeff Squyres <jsquyres@cisco.com> --quiet <--quiet>
 Reese Faucette <rfaucett@cisco.com> <rfaucett@open-mpi-git-mirror.example.com>
 Bill D'Amico <bdamico@cisco.com> <damico@open-mpi-git-mirror.example.com>
 Adrian Reber <adrian.reber@hs-esslingen.de> <adrian@open-mpi-git-mirror.example.com>
