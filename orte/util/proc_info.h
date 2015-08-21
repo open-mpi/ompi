@@ -58,10 +58,10 @@ typedef uint32_t orte_proc_type_t;
 #define ORTE_PROC_APP           0x0030
 #define ORTE_PROC_CM            0x0040
 #define ORTE_PROC_AGGREGATOR    0x0080
-#define ORTE_PROC_DVM           0x0102  // DVM is DVM+Daemon
+#define ORTE_PROC_DVM           0x0102   // DVM + daemon
 #define ORTE_PROC_IOF_ENDPT     0x1000
 #define ORTE_PROC_SCHEDULER     0x2000
-#define ORTE_PROC_MASTER        0x4104  // DVM Master is HNP+DVM+Master
+#define ORTE_PROC_MASTER        0x4004   // Master + HNP
 
 #define ORTE_PROC_IS_SINGLETON      (ORTE_PROC_SINGLETON & orte_process_info.proc_type)
 #define ORTE_PROC_IS_DAEMON         (ORTE_PROC_DAEMON & orte_process_info.proc_type)
@@ -72,10 +72,10 @@ typedef uint32_t orte_proc_type_t;
 #define ORTE_PROC_IS_APP            (ORTE_PROC_APP & orte_process_info.proc_type)
 #define ORTE_PROC_IS_CM             (ORTE_PROC_CM & orte_process_info.proc_type)
 #define ORTE_PROC_IS_AGGREGATOR     (ORTE_PROC_AGGREGATOR & orte_process_info.proc_type)
-#define ORTE_PROC_IS_DVM            (ORTE_PROC_IS_DAEMON && (ORTE_PROC_DVM & orte_process_info.proc_type))
+#define ORTE_PROC_IS_DVM            (ORTE_PROC_DVM & orte_process_info.proc_type)
 #define ORTE_PROC_IS_IOF_ENDPT      (ORTE_PROC_IOF_ENDPT & orte_process_info.proc_type)
 #define ORTE_PROC_IS_SCHEDULER      (ORTE_PROC_SCHEDULER & orte_process_info.proc_type)
-#define ORTE_PROC_IS_MASTER         (ORTE_PROC_IS_DVM && ORTE_PROC_IS_HNP && (ORTE_PROC_MASTER & orte_process_info.proc_type))
+#define ORTE_PROC_IS_MASTER         (ORTE_PROC_MASTER & orte_process_info.proc_type)
 
 
 /**
