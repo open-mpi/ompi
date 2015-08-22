@@ -573,10 +573,11 @@ public final class Win implements Freeable
 	{
 		if(!origin_addr.isDirect())
 			throw new IllegalArgumentException("The origin must be direct buffer.");
-
-		return new Request(rPut(handle, origin_addr, origin_count,
+		Request req = new Request(rPut(handle, origin_addr, origin_count,
 				origin_datatype.handle, target_rank, target_disp,
 				target_count, target_datatype.handle, getBaseType(origin_datatype, target_datatype)));
+		req.addSendBufRef(origin_addr);
+		return req;
 	}
 
 	private native long rPut(long win, Buffer origin_addr, int origin_count,
@@ -605,10 +606,11 @@ public final class Win implements Freeable
 
 		if(!origin.isDirect())
 			throw new IllegalArgumentException("The origin must be direct buffer.");
-
-		return new Request(rGet(handle, origin, orgCount, orgType.handle,
+		Request req = new Request(rGet(handle, origin, orgCount, orgType.handle,
 				targetRank, targetDisp, targetCount, targetType.handle,
 				getBaseType(orgType, targetType)));
+		req.addRecvBufRef(origin);
+		return req;
 	}
 
 	private native long rGet(
@@ -638,10 +640,11 @@ public final class Win implements Freeable
 
 		if(!origin.isDirect())
 			throw new IllegalArgumentException("The origin must be direct buffer.");
-
-		return new Request(rAccumulate(handle, origin, orgCount, orgType.handle,
+		Request req = new Request(rAccumulate(handle, origin, orgCount, orgType.handle,
 				targetRank, targetDisp, targetCount, targetType.handle,
 				op, op.handle, getBaseType(orgType, targetType)));
+		req.addSendBufRef(origin);
+		return req;
 	}
 
 	private native long rAccumulate(
@@ -715,11 +718,12 @@ public final class Win implements Freeable
 
 		if(!origin.isDirect())
 			throw new IllegalArgumentException("The origin must be direct buffer.");
-
-		return new Request(rGetAccumulate(handle, origin, orgCount, orgType.handle,
+		Request req = new Request(rGetAccumulate(handle, origin, orgCount, orgType.handle,
 				resultAddr, resultCount, resultType.handle,
 				targetRank, targetDisp, targetCount, targetType.handle,
 				op, op.handle, getBaseType(orgType, targetType)));
+		req.addRecvBufRef(origin);
+		return req;
 	}
 
 	private native long rGetAccumulate(
