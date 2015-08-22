@@ -227,9 +227,7 @@ sub output_file {
 ! compiler to build Open MPI.\n\n";
 
         if ($want_bodies) {
-            my $name = "ompi_sad_panda";
-            $name = "pompi_sad_panda"
-                if ($pmpi_arg);
+            my $name =  $pmpi_arg ? "pompi_sad_panda" : "ompi_sad_panda";
             print OUT "!
 ! Dummy subroutine, just so that there is *some* Fortran in this file
 ! (this is defensive programming: since the Fortran compiler doesn't
