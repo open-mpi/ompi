@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2009-2014 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2011-2013 Inria.  All rights reserved.
 # Copyright (c) 2011-2013 Universite Bordeaux 1
 # Copyright (c) 2013-2014 Los Alamos National Security, LLC. All rights
@@ -25,6 +25,9 @@
 #
 
 include $(top_srcdir)/Makefile.man-page-rules
+
+CLEANFILES=
+libmpi_mpifh_pmpi_la_LIBADD =
 
 #
 # OMPI_PROFILING_DEFINES flag is enabled when we want our MPI_* symbols
@@ -421,7 +424,19 @@ $(linked_files):
 
 # psizeof_f.f90 is generated based on some results from configure tests.
 CLEANFILES += psizeof_f.f90
+
+# Build the MPI_SIZEOF code in a separate convenience library (see
+# lengthy comment in ompi/mpi/fortran/mpif-h/Makefile.am for an
+# explanation why).
+if BUILD_FORTRAN_SIZEOF
+noinst_LTLIBRARIES += libmpi_mpifh_psizeof.la
+# Do not dist this file; it is generated
+nodist_libmpi_mpifh_psizeof_la_SOURCES = psizeof_f.f90
+libmpi_mpifh_pmpi_la_LIBADD += libmpi_mpifh_psizeof.la
+endif
+
 sizeof_pl=$(top_srcdir)/ompi/mpi/fortran/base/gen-mpi-sizeof.pl
+
 psizeof_f.f90: $(top_builddir)/config.status
 psizeof_f.f90: $(sizeof_pl)
 psizeof_f.f90:
@@ -436,7 +451,6 @@ psizeof_f.f90:
 # The library itself
 #
 nodist_libmpi_mpifh_pmpi_la_SOURCES = \
-        psizeof_f.f90 \
         $(linked_files)
 
 # Conditionally install the header files
