@@ -1,6 +1,6 @@
 #!/usr/bin/env perl
 #
-# Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2014-2015 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2015      Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
@@ -218,12 +218,32 @@ sub output_file {
 ! Specifically: we need support for the INTERFACE keyword,
 ! ISO_FORTRAN_ENV, and the STORAGE_SIZE() intrinsic on all types.
 ! Apparently, this compiler does not support both of those things, so
-! this file will be blank (i.e., we didn't bother generating the
-! necessary stuff for MPI_SIZEOF because the compiler doesn't support
+! this file will be (effecitvely) blank (i.e., we didn't bother
+! generating the necessary stuff for MPI_SIZEOF because the compiler
+! doesn't support
 ! it).
 !
 ! If you want support for MPI_SIZEOF, please use a different Fortran
 ! compiler to build Open MPI.\n\n";
+
+        if ($want_bodies) {
+            my $name =  $pmpi_arg ? "pompi_sad_panda" : "ompi_sad_panda";
+            print OUT "!
+! Dummy subroutine, just so that there is *some* Fortran in this file
+! (this is defensive programming: since the Fortran compiler doesn't
+! support enough mojo, configure should set some AM_CONDITIONALs such
+! that this file should not end up being compiled, but just in case
+! that logic changes someday and this file *does* end up getting
+! compiled, make sure that it's not entirely empty because some
+! compilers are unhappy if there are no Fortran statements in this
+! file).
+subroutine $name()
+  implicit none
+
+  print *, 'Open MPI is a sad panda because your Fortran compiler'
+  print *, 'does not support enough Fortran mojo for MPI_SIZEOF'
+end subroutine $name\n\n";
+        }
     }
 
     close(OUT);
