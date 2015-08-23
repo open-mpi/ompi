@@ -24,6 +24,11 @@ AC_DEFUN([MCA_ompi_mtl_ofi_CONFIG],[
     AC_CONFIG_FILES([ompi/mca/mtl/ofi/Makefile])
 
     OPAL_CHECK_LIBFABRIC([ompi_mtl_ofi],
-          [$1],
+          [$1
+           mtl_ofi_WRAPPER_EXTRA_LDFLAGS="$ompi_mtl_ofi_LDFLAGS"
+           mtl_ofi_WRAPPER_EXTRA_LIBS="$ompi_mtl_ofi_LIBS"],
           [$2])
+
+    AC_SUBST(ompi_mtl_ofi_LDFLAGS)
+    AC_SUBST(ompi_mtl_ofi_LIBS)
 ])dnl
