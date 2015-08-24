@@ -1,6 +1,8 @@
 #!/bin/bash
 #
 # Copyright (c) 2015      Intel, Inc. All rights reserved.
+# Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+#                         reserved
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -8,6 +10,14 @@
 # $HEADER$
 #
 
-export LANG=C
-git ls-files | grep -v pdf | grep -v 3in | tr '\n' '\0' | xargs -0 sed -i '' -E "s/[[:space:]]*$//"
-
+for file in $(git ls-files) ; do
+    # check for the mime-type and do not follow symbolic links. this
+    # will cause file to print application/x-symlink for the mime-type
+    # allowing us to only have to check if the type is application to
+    # skip sym links, pdfs, etc. If any other file types should be
+    # skipped add the check here.
+    type=$(file -b --mime-type -h $file)
+    if test -f $file && test ${type::4} == "text" ; then
+        LC_ALL=C sed -i '' -E "s/[[:space:]]*$//" $file
+    fi
+done
