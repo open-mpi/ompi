@@ -322,9 +322,9 @@ ompio_io_ompio_file_close (mca_io_ompio_file_t *ompio_fh)
         ret = ompio_fh->f_sharedfp->sharedfp_file_close(ompio_fh);
     }
     if ( NULL != ompio_fh->f_fs ) {
-	/* The pointer might not be set if file_close() is 
+	/* The pointer might not be set if file_close() is
 	** called from the file destructor in case of an error
-	** during file_open() 
+	** during file_open()
 	*/
 	ret = ompio_fh->f_fs->fs_file_close (ompio_fh);
     }

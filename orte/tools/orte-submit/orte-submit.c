@@ -726,7 +726,7 @@ int main(int argc, char *argv[])
     while (mywait) {
         opal_event_loop(orte_event_base, OPAL_EVLOOP_ONCE);
     }
- 
+
  DONE:
     /* cleanup and leave */
     orte_finalize();

@@ -668,7 +668,7 @@ public class Comm implements Freeable, Cloneable
 	{
 		MPI.check();
 		assertDirectBuffer(buf);
-		Request req = new Request(ibSend(handle, buf, count, type.handle, dest, tag)); 
+		Request req = new Request(ibSend(handle, buf, count, type.handle, dest, tag));
 		req.addSendBufRef(buf);
 		return req;
 	}
@@ -2400,8 +2400,8 @@ public class Comm implements Freeable, Cloneable
 				recvHandles);
 	}
 
-	private native void allToAllw(long comm, 
-			Buffer sendBuf, int[] sendCount, int[] sDispls, long[] sendTypes, 
+	private native void allToAllw(long comm,
+			Buffer sendBuf, int[] sendCount, int[] sDispls, long[] sendTypes,
 			Buffer recvBuf, int[] recvCount, int[] rDispls, long[] recvTypes)
 					throws MPIException;
 

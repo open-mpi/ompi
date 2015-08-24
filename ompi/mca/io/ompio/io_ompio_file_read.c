@@ -468,7 +468,7 @@ int mca_io_ompio_file_iread_at_all (ompi_file_t *fh,
     ret = ompio_io_ompio_file_iread_at_all ( &data->ompio_fh, offset, buf, count, datatype, request );
     return ret;
 }
-    
+
 int ompio_io_ompio_file_iread_at_all (mca_io_ompio_file_t *fp,
 				      OMPI_MPI_OFFSET_TYPE offset,
 				      void *buf,

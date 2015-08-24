@@ -83,7 +83,7 @@ static int allocate(orte_job_t *jdata, opal_list_t *nodes)
             opal_argv_append_nosize(&max_slot_cnt, tmp);
         }
     }
- 
+
 #if OPAL_HAVE_HWLOC
     if (NULL != mca_ras_simulator_component.topofiles) {
         files = opal_argv_split(mca_ras_simulator_component.topofiles, ',');
