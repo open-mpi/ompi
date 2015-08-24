@@ -50,7 +50,7 @@ OPAL_DECLSPEC extern bool opal_uses_threads;
  * Opaque mutex object
  */
 typedef struct opal_mutex_t opal_mutex_t;
-
+typedef struct opal_mutex_t opal_recursive_mutex_t;
 
 /**
  * Try to acquire a mutex.
