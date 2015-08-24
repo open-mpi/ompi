@@ -554,6 +554,8 @@ static int udcm_endpoint_init_self_xrc (struct mca_btl_base_endpoint_t *lcl_ep)
 
         lcl_ep->endpoint_state = MCA_BTL_IB_CONNECTED;
 
+        /* need to hold the endpoint lock before calling udcm_finish_connection */
+        OPAL_THREAD_LOCK(&lcl_ep->endpoint_lock);
         rc = udcm_finish_connection (lcl_ep);
     } while (0);
     opal_mutex_unlock (&udep->udep_lock);
@@ -594,6 +596,8 @@ static int udcm_endpoint_init_self (struct mca_btl_base_endpoint_t *lcl_ep)
 
         lcl_ep->endpoint_state = MCA_BTL_IB_CONNECTED;
 
+        /* need to hold the endpoint lock before calling udcm_finish_connection */
+        OPAL_THREAD_LOCK(&lcl_ep->endpoint_lock);
         rc = udcm_finish_connection (lcl_ep);
 
         return OPAL_SUCCESS;
