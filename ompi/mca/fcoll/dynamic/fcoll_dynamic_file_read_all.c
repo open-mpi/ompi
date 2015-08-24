@@ -851,6 +851,16 @@
  #endif
 
  exit:
+     if (!(fh->f_flags & OMPIO_CONTIGUOUS_MEMORY)) {
+         if (NULL != receive_buf) {
+             free (receive_buf);
+             receive_buf = NULL;
+         }
+     }
+     if (NULL != global_buf) {
+         free (global_buf);
+         global_buf = NULL;
+     }         
      if (NULL != sorted) {
        free (sorted);
        sorted = NULL;
@@ -877,6 +887,26 @@
        displs = NULL;
      }
      if (fh->f_procs_in_group[fh->f_aggregator_index] == fh->f_rank) {
+
+       if (NULL != sorted_file_offsets){
+           free(sorted_file_offsets);
+           sorted_file_offsets = NULL;
+       }
+       if (NULL != file_offsets_for_agg){
+           free(file_offsets_for_agg);
+           file_offsets_for_agg = NULL;
+       }
+       if (NULL != memory_displacements){
+           free(memory_displacements);
+           memory_displacements= NULL;
+       }
+       if (NULL != sendtype){
+           for (i = 0; i < fh->f_procs_per_group; i++) {
+               ompi_datatype_destroy(sendtype+i);
+           }
+           free(sendtype);
+           sendtype=NULL;
+       }
 
        if (NULL != disp_index){
 	 free(disp_index);
