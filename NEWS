@@ -66,6 +66,7 @@ included in the vX.Y.Z section and be denoted as:
   - Added OFI MTL (usable with PSM in libfabric v1.1.0).
 - Added Intel Omni-Path support via new PSM2 MTL.
 - Added "yalla" PML for faster MXM support.
+- Removed support for MX
 - Added persistent distributed virtual machine (pDVM) support for fast
   workflow executions.
 - Fixed typo in GCC inline assembly introduced in Open MPI v1.8.8.

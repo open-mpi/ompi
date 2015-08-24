@@ -608,7 +608,6 @@ Network Support
   - "cm" supports a smaller number of networks (and they cannot be
     used together), but may provide better overall MPI performance:
 
-    - Myrinet MX and Open-MX
     - QLogic InfiniPath / Intel True Scale PSM
     - Intel Omni-Path PSM2
     - Mellanox MXM
@@ -685,9 +684,8 @@ Network Support
   v2.6.15 with libibverbs v1.1 or later (first released as part of
   OFED v1.2), per restrictions imposed by the OFED network stack.
 
-- The Myrinet MX BTL has been removed; MX support is now only
-  available through the MX MTL.  Please use a prior version of Open
-  MPI is you need the MX BTL support.
+- Support for Myrinet MX has been removed. Please use a prior version of Open
+  MPI if you need the MX support.
 
 - Linux "knem" support is used when the "vader" or "sm" (shared
   memory) BTLs are compiled with knem support (see the --with-knem
@@ -872,21 +870,6 @@ NETWORKING SUPPORT / OPTIONS
   will look in <libfabric directory>/lib and <libfabric
   directory>/lib64, which covers most cases.  This option is only
   needed for special configurations.
-
---with-mx=<directory>
-  Specify the directory where the MX libraries and header files are
-  located.  This option is generally only necessary if the MX headers
-  and libraries are not in default compiler/linker search paths.
-
-  MX is the support library for Myrinet-based networks.  An open
-  source software package named Open-MX provides the same
-  functionality on Ethernet-based clusters (Open-MX can provide
-  MPI performance improvements compared to TCP messaging).
-
---with-mx-libdir=<directory>
-  Look in directory for the MX libraries.  By default, Open MPI will
-  look in <mx directory>/lib and <mx directory>/lib64, which covers
-  most cases.  This option is only needed for special configurations.
 
 --with-mxm=<directory>
   Specify the directory where the Mellanox MXM library and header
@@ -1942,8 +1925,7 @@ Each framework typically has one or more components that are used at
 run-time.  For example, the btl framework is used by the MPI layer to
 send bytes across different types underlying networks.  The tcp btl,
 for example, sends messages across TCP-based networks; the openib btl
-sends messages across OpenFabrics-based networks; the MX btl sends
-messages across Myrinet MX / Open-MX networks.
+sends messages across OpenFabrics-based networks.
 
 Each component typically has some tunable parameters that can be
 changed at run-time.  Use the ompi_info command to check a component
@@ -2034,11 +2016,9 @@ passed on the mpirun command line will override an environment
 variable; an environment variable will override the system-wide
 defaults.
 
-Each component typically activates itself when relavant.  For example,
-the MX component will detect that MX devices are present and will
-automatically be used for MPI communications.  The SLURM component
-will automatically detect when running inside a SLURM job and activate
-itself.  And so on.
+Each component typically activates itself when relavant.  For
+example, the SLURM component will automatically detect when running
+inside a SLURM job and activate itself.  And so on.
 
 Components can be manually activated or deactivated if necessary, of
 course.  The most common components that are manually activated,
