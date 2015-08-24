@@ -313,7 +313,7 @@ static int get_rsrc_exists(char str[OMPI_AFFINITY_STRING_MAX])
                 }
             }
         }
-    } 
+    }
 
     return OMPI_SUCCESS;
 }

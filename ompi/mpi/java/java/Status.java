@@ -159,7 +159,7 @@ public final class Status
 	private native Count getElementsX(
 			int source, int tag, int error,
 			int cancelled, long ucount, long datatype) throws MPIException;
-	
+
 	/**
 	 * Sets the number of basic elements for this status object.
 	 * <p>Java binding of the MPI operation {@code MPI_STATUS_SET_ELEMENTS}.
@@ -182,7 +182,7 @@ public final class Status
 	private native int setElements(
 			int source, int tag, int error,
 			int cancelled, long ucount, long datatype, int count) throws MPIException;
-	
+
 	/**
 	 * Sets the number of basic elements for this status object.
 	 * <p>Java binding of the MPI operation {@code MPI_STATUS_SET_ELEMENTS_X}.
@@ -205,7 +205,7 @@ public final class Status
 	private native long setElementsX(
 			int source, int tag, int error,
 			int cancelled, long ucount, long datatype, long count) throws MPIException;
-	
+
 	/**
 	 * Sets the cancelled flag.
 	 * <p>Java binding of the MPI operation {@code MPI_STATUS_SET_CANCELLED}.
@@ -221,7 +221,7 @@ public final class Status
 		int  error     = (int)data[i++];
 		int  cancelled = (int)data[i++];
 		long ucount    = data[i++];
-		
+
 		if(flag) {
 			setCancelled(source, tag, error, cancelled, ucount, 1);
 			data[3] = 1;
@@ -229,13 +229,13 @@ public final class Status
 			setCancelled(source, tag, error, cancelled, ucount, 0);
 			data[3] = 0;
 		}
-		
+
 	}
 
 	private native void setCancelled(
 			int source, int tag, int error,
 			int cancelled, long ucount, int flag) throws MPIException;
-	
+
 	/**
 	 * Returns the "source" of message.
 	 * <p>Java binding of the MPI value {@code MPI_SOURCE}.

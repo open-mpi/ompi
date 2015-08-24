@@ -59,9 +59,9 @@ int mca_sharedfp_addproc_file_open (struct ompi_communicator_t *comm,
     data = (mca_io_ompio_data_t *) fh->f_fh->f_io_selected_data;
     ompio_fh = &data->ompio_fh;
 
-    err = mca_io_ompio_set_view_internal (shfileHandle, 
-                                          ompio_fh->f_disp, 
-                                          ompio_fh->f_etype, 
+    err = mca_io_ompio_set_view_internal (shfileHandle,
+                                          ompio_fh->f_disp,
+                                          ompio_fh->f_etype,
                                           ompio_fh->f_orig_filetype,
                                           ompio_fh->f_datarep,
                                           MPI_INFO_NULL);

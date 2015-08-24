@@ -816,7 +816,7 @@ int mca_io_ompio_file_write_at_all_end (ompi_file_t *fh,
     int ret = OMPI_SUCCESS;
     mca_io_ompio_data_t *data;
     mca_io_ompio_file_t *fp=NULL;
-    
+
     data = (mca_io_ompio_data_t *) fh->f_io_selected_data;
     fp = &data->ompio_fh;
     ret = ompi_request_wait ( &fp->f_split_coll_req, status );

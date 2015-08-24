@@ -126,7 +126,7 @@ public final class CartComm extends Intracomm
 	    MPI.check();
 	    return new CartComm(dupWithInfo(handle, info.handle));
 	}
-	
+
 	/**
 	 * Returns cartesian topology information.
 	 * <p>Java binding of the MPI operations {@code MPI_CARTDIM_GET} and

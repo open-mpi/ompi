@@ -117,10 +117,10 @@ public class Request implements Freeable
 	private native void cancel(long request) throws MPIException;
 
 	/**
-	 * Adds a receive buffer to this Request object.  This method 
-	 * should be called by the internal api whenever a persistent 
-	 * request is created and any time a request object, that has 
-	 * an associated buffer, is returned from an opperation to protect 
+	 * Adds a receive buffer to this Request object.  This method
+	 * should be called by the internal api whenever a persistent
+	 * request is created and any time a request object, that has
+	 * an associated buffer, is returned from an opperation to protect
 	 * the buffer from getting prematurely garbage collected.
 	 * @param buf buffer to add to the array list
 	 */
@@ -130,10 +130,10 @@ public class Request implements Freeable
 	}
 
 	/**
-	 * Adds a send buffer to this Request object.  This method 
-	 * should be called by the internal api whenever a persistent 
-	 * request is created and any time a request object, that has 
-	 * an associated buffer, is returned from an opperation to protect 
+	 * Adds a send buffer to this Request object.  This method
+	 * should be called by the internal api whenever a persistent
+	 * request is created and any time a request object, that has
+	 * an associated buffer, is returned from an opperation to protect
 	 * the buffer from getting prematurely garbage collected.
 	 * @param buf buffer to add to the array list
 	 */

@@ -666,7 +666,7 @@ static void component_shutdown(void)
 
     /* because the listeners are in a separate
      * async thread for apps, we can't just release them here.
-     * Instead, we push it into that event thread and release 
+     * Instead, we push it into that event thread and release
      * them there */
      if (ORTE_PROC_IS_APP) {
         opal_event_t ev;
