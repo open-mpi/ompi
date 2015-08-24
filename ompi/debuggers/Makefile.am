@@ -10,6 +10,7 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2007-2015 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2015      Intel, Inc. All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -43,13 +44,14 @@ headers = \
 # Simple checks to ensure that the DSOs are functional
 
 dlopen_test_SOURCES = dlopen_test.c
+dlopen_test_LDFLAGS = $(OMPI_WRAPPER_EXTRA_LDFLAGS)
 dlopen_test_LDADD = \
         $(top_builddir)/ompi/libmpi.la \
         $(top_builddir)/opal/libopen-pal.la
 dlopen_test_DEPENDENCIES = $(ompi_predefined_LDADD)
 
 predefined_gap_test_SOURCES = predefined_gap_test.c
-predefined_gap_test_LDFLAGS = $(WRAPPER_EXTRA_LDFLAGS)
+predefined_gap_test_LDFLAGS = $(OMPI_WRAPPER_EXTRA_LDFLAGS)
 predefined_gap_test_LDADD = $(top_builddir)/ompi/libmpi.la
 predefined_gap_test_DEPENDENCIES = $(ompi_predefined_LDADD)
 
