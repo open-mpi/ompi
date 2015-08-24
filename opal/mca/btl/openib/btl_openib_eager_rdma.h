@@ -1,5 +1,8 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -81,17 +84,33 @@ typedef struct mca_btl_openib_eager_rdma_remote_t mca_btl_openib_eager_rdma_remo
                                    mca_btl_openib_component.eager_rdma_num) \
                                 (I) = 0;                                    \
                         } while (0)
-#define MCA_BTL_OPENIB_RDMA_MOVE_INDEX(HEAD, OLD_HEAD)                      \
-    do {                                                                    \
-        int32_t new_head;                                                   \
-        do {                                                                \
-            OLD_HEAD = HEAD;                                                \
-            new_head = OLD_HEAD + 1;                                        \
-            if(new_head == mca_btl_openib_component.eager_rdma_num)         \
-                new_head = 0;                                               \
-        } while(!OPAL_ATOMIC_CMPSET_32(&HEAD, OLD_HEAD, new_head));         \
+
+
+#if OPAL_ENABLE_DEBUG
+
+/**
+ * @brief read and increment the remote head index and generate a sequence
+ *        number
+ */
+
+#define MCA_BTL_OPENIB_RDMA_MOVE_INDEX(HEAD, OLD_HEAD, SEQ)             \
+    do {                                                                \
+        (SEQ) = OPAL_THREAD_ADD32(&(HEAD), 1) - 1;                      \
+        (OLD_HEAD) = (SEQ) % mca_btl_openib_component.eager_rdma_num;   \
     } while(0)
 
+#else
+
+/**
+ * @brief read and increment the remote head index
+ */
+
+#define MCA_BTL_OPENIB_RDMA_MOVE_INDEX(HEAD, OLD_HEAD)                  \
+    do {                                                                \
+        (OLD_HEAD) = (OPAL_THREAD_ADD32(&(HEAD), 1) - 1) % mca_btl_openib_component.eager_rdma_num; \
+    } while(0)
+
+#endif
 
 END_C_DECLS
 #endif
