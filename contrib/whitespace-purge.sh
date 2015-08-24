@@ -17,7 +17,7 @@ for file in $(git ls-files) ; do
     # skip sym links, pdfs, etc. If any other file types should be
     # skipped add the check here.
     type=$(file -b --mime-type -h $file)
-    if test -f $file && test ${type::4} == "text" ; then
+    if test ${type::4} == "text" ; then
         LC_ALL=C sed -i '' -E "s/[[:space:]]*$//" $file
     fi
 done
