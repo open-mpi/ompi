@@ -2534,12 +2534,6 @@ btl_openib_component_init(int *num_btl_modules,
         malloc_hook_set = true;
     }
 #endif
-    /* Currently refuse to run if MPI_THREAD_MULTIPLE is enabled */
-    if (enable_mpi_threads && !mca_btl_base_thread_multiple_override) {
-        opal_output_verbose(5, opal_btl_base_framework.framework_output,
-                            "btl:openib: MPI_THREAD_MULTIPLE not suppported; skipping this component");
-        goto no_btls;
-    }
 
     /* Per https://svn.open-mpi.org/trac/ompi/ticket/1305, check to
        see if $sysfsdir/class/infiniband exists.  If it does not,
