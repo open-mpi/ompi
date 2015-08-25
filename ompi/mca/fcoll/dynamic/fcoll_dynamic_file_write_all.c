@@ -372,6 +372,7 @@ mca_fcoll_dynamic_file_write_all (mca_io_ompio_file_t *fh,
 	}
 
 	for(l=0;l<fh->f_procs_per_group;l++){
+          recvtype[i]   = MPI_DATATYPE_NULL;  
 	  disp_index[l] =  1;
 
 	  if (NULL != blocklen_per_process[l]){
@@ -952,9 +953,12 @@ mca_fcoll_dynamic_file_write_all (mca_io_ompio_file_t *fh,
 	    free (fh->f_io_array);
 	    fh->f_io_array = NULL;
 	  }
-	  for (i =0; i< fh->f_procs_per_group; i++)
-	    ompi_datatype_destroy(recvtype+i);
 	  if (NULL != recvtype){
+              for (i =0; i< fh->f_procs_per_group; i++) {
+                  if ( MPI_DATATYPE_NULL != recvtype[i] ) {
+                      ompi_datatype_destroy(&recvtype[i]);
+                  }
+              }
 	      free(recvtype);
 	      recvtype=NULL;
 	  }
@@ -1006,7 +1010,9 @@ mca_fcoll_dynamic_file_write_all (mca_io_ompio_file_t *fh,
       }
       if (NULL != recvtype){
 	  for (i =0; i< fh->f_procs_per_group; i++) {
-              ompi_datatype_destroy(recvtype+i);
+              if ( MPI_DATATYPE_NULL != recvtype[i] ) {
+                  ompi_datatype_destroy(&recvtype[i]);
+              }
           }
           free(recvtype);
           recvtype=NULL;
