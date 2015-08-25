@@ -509,6 +509,18 @@ oshmem/shmem/java/java/shmem
 oshmem/shmem/java/java/shmem_Addr.h
 oshmem/shmem/java/java/shmem_PSync.h
 
+oshmem/shmem/man/man3/shmem_*.3
+oshmem/shmem/man/man3/OpenSHMEM.3
+oshmem/shmem/man/man3/intro_shmem.3
+oshmem/shmem/man/man3/_my_pe.3
+oshmem/shmem/man/man3/_num_pes.3
+oshmem/shmem/man/man3/shfree.3
+oshmem/shmem/man/man3/shmalloc.3
+oshmem/shmem/man/man3/shmemalign.3
+oshmem/shmem/man/man3/shrealloc.3
+oshmem/shmem/man/man3/start_pes.3
+oshmem/shmem/man/man3/.dir-stamp
+
 oshmem/tools/oshmem_info/oshmem_info
 oshmem/tools/oshmem_info/oshmem_info.1
 
