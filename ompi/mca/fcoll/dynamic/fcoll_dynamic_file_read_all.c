@@ -350,7 +350,7 @@
 	 }
 
 	 for(l=0;l<fh->f_procs_per_group;l++){
-
+           sendtype[l] = MPI_DATATYPE_NULL;  
 	   disp_index[l] =  1;
 
 	   if (NULL != blocklen_per_process[l]){
@@ -804,8 +804,11 @@
 	   free (global_buf);
 	   global_buf = NULL;
 	 }
-	 for (i = 0; i < fh->f_procs_per_group; i++)
-	   ompi_datatype_destroy(sendtype+i);
+	 for (i = 0; i < fh->f_procs_per_group; i++) {
+             if ( MPI_DATATYPE_NULL != sendtype[i] ){ 
+                 ompi_datatype_destroy(&sendtype[i]);
+             }
+         }
 	 if (NULL != sendtype){
 	   free(sendtype);
 	   sendtype=NULL;
@@ -902,7 +905,9 @@
        }
        if (NULL != sendtype){
            for (i = 0; i < fh->f_procs_per_group; i++) {
-               ompi_datatype_destroy(sendtype+i);
+               if ( MPI_DATATYPE_NULL != sendtype[i] ) {
+                   ompi_datatype_destroy(&sendtype[i]);
+               }
            }
            free(sendtype);
            sendtype=NULL;
