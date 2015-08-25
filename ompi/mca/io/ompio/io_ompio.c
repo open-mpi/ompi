@@ -419,6 +419,18 @@ int ompi_io_ompio_generate_current_file_view (struct mca_io_ompio_file_t *fh,
 		}
 	    }
 	    fp = fopen("fileview_info.out", "w+");
+            if ( NULL == fp ) {
+                for (i=0; i<fh->f_size; i++) {
+                    free(adj_matrix[i]);
+                }
+                free(adj_matrix);
+                free(sorted);
+                free(all_process);
+                free(per_process);
+                free(recvcounts);
+                free(displs);
+		return MPI_ERR_OTHER;
+            }
 	    fprintf(fp,"FILEVIEW\n");
 	    column_list = (int *) malloc ( m * sizeof(int));
 	    if (NULL == column_list){
