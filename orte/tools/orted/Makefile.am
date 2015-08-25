@@ -11,6 +11,8 @@
 #                         All rights reserved.
 # Copyright (c) 2007-2014 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
+# Copyright (c) 2015      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -43,7 +45,11 @@ orted_SOURCES = orted.c
 #  nothing to -all-static in the Makefile.in
 #  nice for systems that don't have all the shared
 #  libraries on the computes
+if ORTE_STATIC_RUNTIME
+orted_LDFLAGS = -static
+else
 orted_LDFLAGS =
+endif # ORTE_STATIC_RUNTIME
 orted_LDADD = \
 	$(top_builddir)/orte/lib@ORTE_LIB_PREFIX@open-rte.la \
 	$(top_builddir)/opal/lib@OPAL_LIB_PREFIX@open-pal.la
