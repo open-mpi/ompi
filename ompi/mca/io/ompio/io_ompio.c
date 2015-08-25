@@ -1452,19 +1452,20 @@ int ompi_io_ompio_distribute_file_view (mca_io_ompio_file_t *fh,
     }
     */
  exit:
-    for (i=0 ; i<num_aggregators ; i++) {
-        if (NULL != broken[i]) {
-            free (broken[i]);
+
+    if (NULL != broken) {
+        for (i=0 ; i<num_aggregators ; i++) {
+            if (NULL != broken[i]) {
+                free (broken[i]);
+            }
         }
+        free (broken);
     }
     if (NULL != req) {
         free (req);
     }
     if (NULL != sendreq) {
         free (sendreq);
-    }
-    if (NULL != broken) {
-        free (broken);
     }
     free (num_entries);
     free (broken_index);
