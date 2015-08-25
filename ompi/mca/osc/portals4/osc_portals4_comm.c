@@ -970,7 +970,7 @@ ompi_osc_portals4_compare_and_swap(void *origin_addr,
     ret = ompi_datatype_type_size(dt, &length);
     if (OMPI_SUCCESS != ret) return ret;
 
-    assert(length < module->fetch_atomic_max);
+    assert(length <= module->fetch_atomic_max);
 
     result_md_offset = (ptl_size_t) result_addr;
     origin_md_offset = (ptl_size_t) origin_addr;
@@ -1033,7 +1033,7 @@ ompi_osc_portals4_fetch_and_op(void *origin_addr,
     ret = ompi_datatype_type_size(dt, &length);
     if (OMPI_SUCCESS != ret) return ret;
 
-    assert(length < module->fetch_atomic_max);
+    assert(length <= module->fetch_atomic_max);
 
     (void)opal_atomic_add_64(&module->opcount, 1);
 
