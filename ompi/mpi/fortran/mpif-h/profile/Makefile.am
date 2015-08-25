@@ -45,8 +45,6 @@ AM_CPPFLAGS = -DOMPI_PROFILE_LAYER=1 -DOMPI_COMPILING_FORTRAN_WRAPPERS=1
 noinst_LTLIBRARIES =
 if BUILD_PMPI_FORTRAN_MPIFH_BINDINGS_LAYER
 noinst_LTLIBRARIES += libmpi_mpifh_pmpi.la
-else
-noinst_LTLIBRARIES +=
 endif
 
 headers = \
@@ -439,12 +437,12 @@ CLEANFILES += psizeof_f.f90
 # Build the MPI_SIZEOF code in a separate convenience library (see
 # lengthy comment in ompi/mpi/fortran/mpif-h/Makefile.am for an
 # explanation why).
-#if BUILD_FORTRAN_SIZEOF
+if BUILD_FORTRAN_SIZEOF
 noinst_LTLIBRARIES += libmpi_mpifh_psizeof.la
 # Do not dist this file; it is generated
 nodist_libmpi_mpifh_psizeof_la_SOURCES = psizeof_f.f90
 libmpi_mpifh_pmpi_la_LIBADD += libmpi_mpifh_psizeof.la
-#endif
+endif
 
 sizeof_pl=$(top_srcdir)/ompi/mpi/fortran/base/gen-mpi-sizeof.pl
 
