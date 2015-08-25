@@ -396,7 +396,9 @@ public final class File
 	{
 		MPI.check();
 		assertDirectBuffer(buf);
-		return new Request(iReadAt(handle, offset, buf, count, type.handle));
+		Request req = new Request(iReadAt(handle, offset, buf, count, type.handle));
+		req.addRecvBufRef(buf);
+		return req;
 	}
 
 	private native long iReadAt(
@@ -417,7 +419,9 @@ public final class File
 	{
 		MPI.check();
 		assertDirectBuffer(buf);
-		return new Request(iWriteAt(handle, offset, buf, count, type.handle));
+		Request req = new Request(iWriteAt(handle, offset, buf, count, type.handle));
+		req.addSendBufRef(buf);
+		return req;
 	}
 
 	private native long iWriteAt(
@@ -552,7 +556,9 @@ public final class File
 	{
 		MPI.check();
 		assertDirectBuffer(buf);
-		return new Request(iRead(handle, buf, count, type.handle));
+		Request req = new Request(iRead(handle, buf, count, type.handle));
+		req.addRecvBufRef(buf);
+		return req;
 	}
 
 	private native long iRead(long fh, Buffer buf, int count, long type)
@@ -570,7 +576,9 @@ public final class File
 	{
 		MPI.check();
 		assertDirectBuffer(buf);
-		return new Request(iWrite(handle, buf, count, type.handle));
+		Request req = new Request(iWrite(handle, buf, count, type.handle));
+		req.addRecvBufRef(buf);
+		return req;
 	}
 
 	private native long iWrite(long fh, Buffer buf, int count, long type)
@@ -694,7 +702,9 @@ public final class File
 	{
 		MPI.check();
 		assertDirectBuffer(buf);
-		return new Request(iReadShared(handle, buf, count, type.handle));
+		Request req = new Request(iReadShared(handle, buf, count, type.handle));
+		req.addRecvBufRef(buf);
+		return req;
 	}
 
 	private native long iReadShared(long fh, Buffer buf, int count, long type)
@@ -713,7 +723,9 @@ public final class File
 	{
 		MPI.check();
 		assertDirectBuffer(buf);
-		return new Request(iWriteShared(handle, buf, count, type.handle));
+		Request req = new Request(iWriteShared(handle, buf, count, type.handle));
+		req.addSendBufRef(buf);
+		return req;
 	}
 
 	private native long iWriteShared(long fh, Buffer buf, int count, long type)
