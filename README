@@ -527,37 +527,39 @@ MPI Collectives
   MPI process onto Mellanox QDR InfiniBand switch CPUs and HCAs.
 
 - The "ML" coll component is an implementation of MPI collective
-  operations that takes advantage of communication hierarchies
-  in modern systems. A ML collective operation is implemented by
+  operations that takes advantage of communication hierarchies in
+  modern systems. A ML collective operation is implemented by
   combining multiple independently progressing collective primitives
   implemented over different communication hierarchies, hence a ML
-  collective operation is also referred to as a hierarchical collective
-  operation. The number of collective primitives that are included in a
-  ML collective operation is a function of subgroups(hierarchies).
-  Typically, MPI processes in a single communication hierarchy such as
-  CPU socket, node, or subnet are grouped together into a single subgroup
-  (hierarchy). The number of subgroups are configurable at runtime,
-  and each different collective operation could be configured to have
-  a different of number of subgroups.
+  collective operation is also referred to as a hierarchical
+  collective operation. The number of collective primitives that are
+  included in a ML collective operation is a function of
+  subgroups(hierarchies).  Typically, MPI processes in a single
+  communication hierarchy such as CPU socket, node, or subnet are
+  grouped together into a single subgroup (hierarchy). The number of
+  subgroups are configurable at runtime, and each different collective
+  operation could be configured to have a different of number of
+  subgroups.
 
   The component frameworks and components used by/required for a
   "ML" collective operation.
 
   Frameworks:
-  * "sbgp" - Provides functionality for grouping processes into subgroups
+  * "sbgp" - Provides functionality for grouping processes into
+             subgroups
   * "bcol" - Provides collective primitives optimized for a particular
              communication hierarchy
 
   Components:
-  * sbgp components     - Provides grouping functionality over a CPU socket
-                          ("basesocket"), shared memory ("basesmuma"),
-                          Mellanox's ConnectX HCA ("ibnet"), and other
-                          interconnects supported by PML ("p2p")
-
-  * BCOL components     - Provides optimized collective primitives for
-                          shared memory ("basesmuma"), Mellanox's ConnectX
-                          HCA ("iboffload"), and other interconnects supported
-                          by PML ("ptpcoll")
+  * sbgp components - Provides grouping functionality over a CPU
+                      socket ("basesocket"), shared memory
+                      ("basesmuma"), Mellanox's ConnectX HCA
+                      ("ibnet"), and other interconnects supported by
+                      PML ("p2p")
+  * BCOL components - Provides optimized collective primitives for
+                      shared memory ("basesmuma"), Mellanox's ConnectX
+                      HCA ("iboffload"), and other interconnects
+                      supported by PML ("ptpcoll")
 
 - The "cuda" coll component provides CUDA-aware support for the
   reduction type collectives with GPU buffers. This component is only
@@ -997,10 +999,11 @@ RUN-TIME SYSTEM SUPPORT
   most cases.  This option is only needed for special configurations.
 
 --with-pmi
-  Build PMI support (by default on non-Cray XE/XC systems, it is not built).
-  On Cray XE/XC systems, the location of pmi is detected automatically as
-  part of the configure process.  For non-Cray systems, if the pmi2.h header
-  is found in addition to pmi.h, then support for PMI2 will be built.
+  Build PMI support (by default on non-Cray XE/XC systems, it is not
+  built).  On Cray XE/XC systems, the location of pmi is detected
+  automatically as part of the configure process.  For non-Cray
+  systems, if the pmi2.h header is found in addition to pmi.h, then
+  support for PMI2 will be built.
 
 --with-slurm
   Force the building of SLURM scheduler support.
@@ -1631,9 +1634,9 @@ Open MPI API Extensions
 -----------------------
 
 Open MPI contains a framework for extending the MPI API that is
-available to applications.  Each extension is usually a standalone set of
-functionality that is distinct from other extensions (similar to how
-Open MPI's plugins are usually unrelated to each other).  These
+available to applications.  Each extension is usually a standalone set
+of functionality that is distinct from other extensions (similar to
+how Open MPI's plugins are usually unrelated to each other).  These
 extensions provide new functions and/or constants that are available
 to MPI applications.
 
@@ -1951,9 +1954,9 @@ Here's how the three sub-groups are defined:
     get their MPI/OSHMEM application to run correctly.
  2. Application tuner: Generally, these are parameters that can be
     used to tweak MPI application performance.
- 3. MPI/OSHMEM developer: Parameters that either don't fit in the other two,
-    or are specifically intended for debugging / development of Open
-    MPI itself.
+ 3. MPI/OSHMEM developer: Parameters that either don't fit in the
+    other two, or are specifically intended for debugging /
+    development of Open MPI itself.
 
 Each sub-group is broken down into three classifications:
 
