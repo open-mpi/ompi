@@ -111,7 +111,7 @@ CLEANFILES += sizeof_f.f90
 # out this workaround indefinitely.  So Jeff advised Absoft to fix
 # this bug in Sep 2014.
 noinst_LTLIBRARIES=
-if BUILD_FORTRAN_SIZEOF
+if BUILD_PMPI_FORTRAN_MPIFH_BINDINGS_LAYER
 noinst_LTLIBRARIES += libmpi_mpifh_sizeof.la
 # Do not dist this file; it is generated
 nodist_libmpi_mpifh_sizeof_la_SOURCES = sizeof_f.f90
