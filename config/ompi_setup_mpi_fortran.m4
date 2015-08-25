@@ -309,7 +309,8 @@ AC_DEFUN([OMPI_SETUP_MPI_FORTRAN],[
 
     # We need INTERFACE, ISO_FORTRAN_ENV, and STORAGE_SIZE() support
     # to build MPI_SIZEOF support
-    AS_IF([test $OMPI_FORTRAN_HAVE_INTERFACE -eq 1 && \
+    AS_IF([test $ompi_fortran_happy -eq 1 && \
+           test $OMPI_FORTRAN_HAVE_INTERFACE -eq 1 && \
            test $OMPI_FORTRAN_HAVE_ISO_FORTRAN_ENV -eq 1 && \
            test $OMPI_FORTRAN_HAVE_STORAGE_SIZE -eq 1],
           [OMPI_FORTRAN_BUILD_SIZEOF=1],
