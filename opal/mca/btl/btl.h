@@ -605,12 +605,15 @@ typedef int (*mca_btl_base_module_finalize_fn_t)(
  * modex_recv() function. The BTL may utilize this information to
  * determine reachability of each peer process.
  *
- * For each process that is reachable by the BTL, the bit corresponding to the index
- * into the proc array (nprocs) should be set in the reachable bitmask. The BTL
- * will return an array of pointers to a data structure defined
- * by the BTL that is then returned to the BTL on subsequent calls to the BTL data
- * transfer functions (e.g btl_send). This may be used by the BTL to cache any addressing
- * or connection information (e.g. TCP socket, IB queue pair).
+ * The caller may pass a "reachable" bitmap pointer.  If it is not
+ * NULL, for each process that is reachable by the BTL, the bit
+ * corresponding to the index into the proc array (nprocs) should be
+ * set in the reachable bitmask. The BTL will return an array of
+ * pointers to a data structure defined by the BTL that is then
+ * returned to the BTL on subsequent calls to the BTL data transfer
+ * functions (e.g btl_send). This may be used by the BTL to cache any
+ * addressing or connection information (e.g. TCP socket, IB queue
+ * pair).
  */
 typedef int (*mca_btl_base_module_add_procs_fn_t)(
     struct mca_btl_base_module_t* btl,
