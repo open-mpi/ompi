@@ -427,7 +427,7 @@ static int usnic_add_procs(struct mca_btl_base_module_t* base_module,
 
     /* Find all the endpoints with a complete set of USD destinations
        and mark them as reachable */
-    for (size_t i = 0; i < nprocs; ++i) {
+    for (size_t i = 0; NULL != reachable && i < nprocs; ++i) {
         if (NULL != endpoints[i]) {
             bool happy = true;
             for (int channel = 0; channel < USNIC_NUM_CHANNELS; ++channel) {
