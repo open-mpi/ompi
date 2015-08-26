@@ -123,7 +123,7 @@ public class Intracomm extends Comm
 		MPI.check();
 		return new Intracomm(iDup(handle));
 	}
-	
+
 	/**
 	 * Duplicates this communicator with the info object used in the call.
 	 * <p>Java binding of {@code MPI_COMM_DUP_WITH_INFO}.
@@ -136,7 +136,7 @@ public class Intracomm extends Comm
 	    MPI.check();
 	    return new Intracomm(dupWithInfo(handle, info.handle));
 	}
-	
+
 	/**
 	 * Partition the group associated with this communicator and create
 	 * a new communicator within each subgroup.
@@ -186,7 +186,7 @@ public class Intracomm extends Comm
 	}
 
 	private native long create(long comm, long group);
-	
+
 	/**
 	 * Create a new intracommunicator for the given group.
 	 * <p>Java binding of the MPI operation {@code MPI_COMM_CREATE_GROUP}.
@@ -202,7 +202,7 @@ public class Intracomm extends Comm
 	}
 
 	private native long createGroup(long comm, long group, int tag);
-	
+
 	// Topology Constructors
 
 	/**

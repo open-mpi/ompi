@@ -104,7 +104,7 @@ mpif-c-constants-decl.h:
 	    --single $(OMPI_FORTRAN_SINGLE_UNDERSCORE) \
 	    --double $(OMPI_FORTRAN_DOUBLE_UNDERSCORE)
 
-if WANT_INSTALL_HEADERS 
+if WANT_INSTALL_HEADERS
 ompidir = $(ompiincludedir)
 nobase_dist_ompi_HEADERS = $(headers)
 nobase_nodist_ompi_HEADERS = $(nodist_headers)

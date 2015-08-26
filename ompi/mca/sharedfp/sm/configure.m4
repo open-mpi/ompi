@@ -31,7 +31,7 @@ AC_DEFUN([MCA_ompi_sharedfp_sm_CONFIG],[
 
     AC_CHECK_HEADER([semaphore.h],
         [AC_CHECK_FUNCS([sem_init],[sharedfp_sm_happy=yes],[])])
-	
+
     AS_IF([test "$sharedfp_sm_happy" = "yes"],
           [$1],
           [$2])

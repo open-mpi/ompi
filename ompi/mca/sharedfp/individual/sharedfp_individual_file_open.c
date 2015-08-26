@@ -53,7 +53,7 @@ int mca_sharedfp_individual_file_open (struct ompi_communicator_t *comm,
         opal_output(0, "mca_sharedfp_individual_file_open: unable to allocate memory\n");
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
-        
+
     err = ompio_io_ompio_file_open ( comm, filename, amode, info, shfileHandle, false);
     if ( OMPI_SUCCESS != err )  {
         opal_output(0, "mca_sharedfp_individual_file_open: Error during file open\n");

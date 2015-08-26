@@ -83,22 +83,22 @@ int mca_io_ompio_set_view_internal(mca_io_ompio_file_t *fh,
     fh->f_flags |= OMPIO_FILE_VIEW_IS_SET;
     fh->f_datarep = strdup (datarep);
     ompi_datatype_duplicate (filetype, &fh->f_orig_filetype );
-    
+
     opal_datatype_get_extent(&filetype->super, &lb, &ftype_extent);
     opal_datatype_type_size (&filetype->super, &ftype_size);
 
-    if ( etype == filetype                             && 
+    if ( etype == filetype                             &&
 	 ompi_datatype_is_predefined (filetype )       &&
 	 ftype_extent == (OPAL_PTRDIFF_TYPE)ftype_size ){
 	ompi_datatype_create_contiguous(MCA_IO_DEFAULT_FILE_VIEW_SIZE,
 					&ompi_mpi_byte.dt,
 					&newfiletype);
 	ompi_datatype_commit (&newfiletype);
-    } 
+    }
     else {
         newfiletype = filetype;
     }
-    
+
 
 
     fh->f_iov_count   = 0;
@@ -166,11 +166,11 @@ int mca_io_ompio_set_view_internal(mca_io_ompio_file_t *fh,
     }
     free(contg_groups);
 
-    if ( etype == filetype                              && 
+    if ( etype == filetype                              &&
 	 ompi_datatype_is_predefined (filetype )        &&
 	 ftype_extent == (OPAL_PTRDIFF_TYPE)ftype_size ){
 	ompi_datatype_destroy ( &newfiletype );
-    } 
+    }
 
 
     if (OMPI_SUCCESS != mca_fcoll_base_file_select (fh, NULL)) {
@@ -201,7 +201,7 @@ int mca_io_ompio_file_set_view (ompi_file_t *fp,
     fh = &data->ompio_fh;
     ret = mca_io_ompio_set_view_internal(fh, disp, etype, filetype, datarep, info);
 
-    if ( NULL != fh->f_sharedfp_data) { 
+    if ( NULL != fh->f_sharedfp_data) {
         sh = ((struct mca_sharedfp_base_data_t *)fh->f_sharedfp_data)->sharedfh;
         ret = mca_io_ompio_set_view_internal(sh, disp, etype, filetype, datarep, info);
     }

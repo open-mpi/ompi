@@ -126,7 +126,7 @@ public final class GraphComm extends Intracomm
 	    MPI.check();
 	    return new GraphComm(dupWithInfo(handle, info.handle));
 	}
-	
+
 	/**
 	 * Returns graph topology information.
 	 * <p>Java binding of the MPI operations {@code MPI_GRAPHDIMS_GET}

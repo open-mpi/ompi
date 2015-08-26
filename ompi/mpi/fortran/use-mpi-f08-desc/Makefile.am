@@ -69,7 +69,7 @@ OMPI_Fortran_binding.lo: OMPI_Fortran_binding.f90 mpi-f08-types.lo
 #
 
 mpi_api_lo_files = $(mpi_api_files:.f90=.lo)
- 
+
 $(mpi_api_lo_files): mpi-f08.lo
 
 mpi-f08.lo: mpi-f08-types.lo

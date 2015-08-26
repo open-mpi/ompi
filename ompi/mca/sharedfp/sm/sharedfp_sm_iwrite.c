@@ -41,7 +41,7 @@ int mca_sharedfp_sm_iwrite(mca_io_ompio_file_t *fh,
 
      if( NULL == fh->f_sharedfp_data){
          if ( mca_sharedfp_sm_verbose ) {
-             opal_output(ompi_sharedfp_base_framework.framework_output, 
+             opal_output(ompi_sharedfp_base_framework.framework_output,
 			 "sharedfp_sm_iwrite - opening the shared file pointer\n");
          }
          shared_fp_base_module = fh->f_sharedfp;
@@ -65,16 +65,16 @@ int mca_sharedfp_sm_iwrite(mca_io_ompio_file_t *fh,
      sh = fh->f_sharedfp_data;
 
      if ( mca_sharedfp_sm_verbose ) {
-         opal_output(ompi_sharedfp_base_framework.framework_output, 
+         opal_output(ompi_sharedfp_base_framework.framework_output,
 		     "sharedfp_sm_iwrite: Bytes Requested is %ld\n",bytesRequested);
      }
     /* Request the offset to write bytesRequested bytes */
      ret = mca_sharedfp_sm_request_position(sh,bytesRequested,&offset);
      offset /= sh->sharedfh->f_etype_size;
-     
+
      if ( -1 != ret ) {
         if ( mca_sharedfp_sm_verbose ) {
-            opal_output(ompi_sharedfp_base_framework.framework_output, 
+            opal_output(ompi_sharedfp_base_framework.framework_output,
 			"sharedfp_sm_iwrite: Offset received is %lld\n",offset);
         }
         /* Write to the file */
@@ -105,7 +105,7 @@ int mca_sharedfp_sm_write_ordered_begin(mca_io_ompio_file_t *fh,
 
     if ( NULL == fh->f_sharedfp_data){
  	if ( mca_sharedfp_sm_verbose ) {
-	    opal_output(ompi_sharedfp_base_framework.framework_output, 
+	    opal_output(ompi_sharedfp_base_framework.framework_output,
 			"sharedfp_sm_write_ordered_begin: opening the shared file pointer\n");
 	}
         shared_fp_base_module = fh->f_sharedfp;
@@ -158,7 +158,7 @@ int mca_sharedfp_sm_write_ordered_begin(mca_io_ompio_file_t *fh,
         for (i = 0; i < size ; i ++) {
 	    bytesRequested += buff[i];
 	    if ( mca_sharedfp_sm_verbose ) {
-		opal_output(ompi_sharedfp_base_framework.framework_output, 
+		opal_output(ompi_sharedfp_base_framework.framework_output,
 			    "mca_sharedfp_sm_write_ordered_begin: Bytes requested are %ld\n",
 			    bytesRequested);
 	    }
@@ -175,7 +175,7 @@ int mca_sharedfp_sm_write_ordered_begin(mca_io_ompio_file_t *fh,
 	    goto exit;
         }
 	if ( mca_sharedfp_sm_verbose ) {
-	    opal_output(ompi_sharedfp_base_framework.framework_output, 
+	    opal_output(ompi_sharedfp_base_framework.framework_output,
 			"mca_sharedfp_sm_write_ordered_begin: Offset received is %lld\n",offsetReceived);
 	}
 
@@ -196,9 +196,9 @@ int mca_sharedfp_sm_write_ordered_begin(mca_io_ompio_file_t *fh,
     /*Each process now has its own individual offset in recvBUFF*/
     offset = offsetBuff - sendBuff;
     offset /= sh->sharedfh->f_etype_size;
-    
+
     if ( mca_sharedfp_sm_verbose ) {
-	opal_output(ompi_sharedfp_base_framework.framework_output, 
+	opal_output(ompi_sharedfp_base_framework.framework_output,
 		    "mca_sharedfp_sm_write_ordered_begin: Offset returned is %lld\n",offset);
     }
 

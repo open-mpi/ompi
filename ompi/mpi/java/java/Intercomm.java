@@ -106,7 +106,7 @@ public final class Intercomm extends Comm
 		MPI.check();
 		return new Intercomm(iDup(handle));
 	}
-	
+
 	/**
 	* Duplicates this communicator with the info object used in the call.
 	* <p>Java binding of {@code MPI_COMM_DUP_WITH_INFO}.
@@ -119,7 +119,7 @@ public final class Intercomm extends Comm
 	    MPI.check();
 	    return new Intercomm(dupWithInfo(handle, info.handle));
 	}
-	
+
 	// Inter-Communication
 
 	/**

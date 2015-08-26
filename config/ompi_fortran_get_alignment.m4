@@ -160,7 +160,7 @@ program falignment
       write (10,'(I5)') LOC(t2)-LOC(t1)
    endif
    CLOSE(10)
-      
+
 end program]])],
                           [AS_IF([test "$cross_compiling" = "yes"],
                                  [AC_MSG_ERROR([Can not determine alignment of $1 when cross-compiling])],

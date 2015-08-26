@@ -280,8 +280,8 @@ int ompi_io_ompio_scatterv_array (void *sbuf,
 		reqs[i] = MPI_REQUEST_NULL;
             }
         }
-        if (OMPI_SUCCESS != err) { 
-            free ( reqs );	    
+        if (OMPI_SUCCESS != err) {
+            free ( reqs );
             return err;
         }
     }
@@ -364,7 +364,7 @@ int ompi_io_ompio_gather_array (void *sbuf,
     OPAL_PTRDIFF_TYPE extent, lb;
     int err = OMPI_SUCCESS;
     ompi_request_t ** reqs=NULL;
-    
+
     rank = ompi_comm_rank (comm);
 
     /* Everyone but the writers sends data and returns. */
