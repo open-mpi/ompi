@@ -139,9 +139,9 @@ mca_sharedfp_individual_header_record* mca_sharedfp_individual_insert_headnode(v
 int mca_sharedfp_individual_collaborate_data(struct mca_sharedfp_base_data_t *sh);
 int mca_sharedfp_individual_get_timestamps_and_reclengths(double **buff, long **rec_length, MPI_Offset **offbuff,struct mca_sharedfp_base_data_t *sh);
 int mca_sharedfp_individual_create_buff(double **ts,MPI_Offset **off,int totalnodes,int size);
-int mca_sharedfp_individual_sort_timestamps(double **ts,MPI_Offset **off, int totalnodes);
+int mca_sharedfp_individual_sort_timestamps(double **ts,MPI_Offset **off, int **ranks, int totalnodes);
 MPI_Offset  mca_sharedfp_individual_assign_globaloffset(MPI_Offset **offsetbuff,int totalnodes,struct mca_sharedfp_base_data_t *sh);
-int mca_sharedfp_individual_getoffset(double timestamp, double *ts, int totalnodes);
+int mca_sharedfp_individual_getoffset(double timestamp, double *ts, int *ranks, int myrank, int totalnodes);
 /*int mca_sharedfp_individual_cleanup(double *ts, int* rnk, MPI_Offset *off);*/
 
 int mca_sharedfp_individual_insert_metadata(int functype,long recordlength,struct mca_sharedfp_base_data_t *sh );
