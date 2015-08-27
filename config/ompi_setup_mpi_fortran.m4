@@ -490,6 +490,7 @@ AC_DEFUN([OMPI_SETUP_MPI_FORTRAN],[
                [OMPI_FORTRAN_HAVE_ASYNCHRONOUS=0])])
 
     OMPI_FORTRAN_F08_HANDLE_SIZE=4
+    OMPI_FORTRAN_F08_HANDLE_ALIGNMENT=4
     AS_IF([test $OMPI_TRY_FORTRAN_BINDINGS -ge $OMPI_FORTRAN_USEMPIF08_BINDINGS && \
            test $OMPI_BUILD_FORTRAN_BINDINGS -ge $OMPI_FORTRAN_USEMPIF08_BINDINGS],
           [ # How big are derived types with a single INTEGER?
@@ -498,6 +499,9 @@ AC_DEFUN([OMPI_SETUP_MPI_FORTRAN],[
 end type test_mpi_handle], 
                                    [type(test_mpi_handle)], 
                                    [OMPI_FORTRAN_F08_HANDLE_SIZE])
+           OMPI_FORTRAN_F08_GET_HANDLE_ALIGNMENT(
+                                   [type(test_mpi_handle)],
+                                   [OMPI_FORTRAN_F08_HANDLE_ALIGNMENT])
           ])
 
     OMPI_FORTRAN_NEED_WRAPPER_ROUTINES=1
@@ -715,6 +719,10 @@ end type test_mpi_handle],
     AC_DEFINE_UNQUOTED(OMPI_FORTRAN_F08_HANDLE_SIZE, 
                        $OMPI_FORTRAN_F08_HANDLE_SIZE,
                        [How many bytes the mpi_f08 TYPE(MPI_<foo>) handles will be])
+
+    AC_DEFINE_UNQUOTED(OMPI_FORTRAN_F08_HANDLE_ALIGNMENT,
+                       $OMPI_FORTRAN_F08_HANDLE_ALIGNMENT,
+                       [How many bytes the mpi_f08 TYPE(MPI_<foo>) handles will be aligned to])
 
     # These go into ompi/info/param.c
     AC_DEFINE_UNQUOTED(OMPI_FORTRAN_HAVE_F08_ASSUMED_RANK,
