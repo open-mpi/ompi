@@ -13,6 +13,8 @@
  * Copyright (c) 2009      Sun Microsystmes, Inc.  All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -126,8 +128,7 @@ int MPI_Accumulate(const void *origin_addr, int origin_count, MPI_Datatype origi
 
     OPAL_CR_ENTER_LIBRARY();
 
-    /* XXX -- CONST -- do not cast away const -- update mca/osc */
-    rc = ompi_win->w_osc_module->osc_accumulate((void *) origin_addr,
+    rc = ompi_win->w_osc_module->osc_accumulate(origin_addr,
                                                 origin_count,
                                                 origin_datatype,
                                                 target_rank,
