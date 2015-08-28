@@ -3,6 +3,8 @@
  * Copyright (c) 2012      Sandia National Laboratories.  All rights reserved.
  * Copyright (c) 2014-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -22,7 +24,7 @@ struct ompi_osc_pt2pt_request_t {
     ompi_request_t super;
 
     int type;
-    void *origin_addr;
+    const void *origin_addr;
     int origin_count;
     struct ompi_datatype_t *origin_dt;
     ompi_osc_pt2pt_module_t* module;

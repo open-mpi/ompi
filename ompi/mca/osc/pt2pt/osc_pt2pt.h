@@ -12,6 +12,8 @@
  *                         reserved.
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2013 Sandia National Laboratories.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -246,7 +248,7 @@ OBJ_CLASS_DECLARATION(ompi_osc_pt2pt_pending_t);
 extern bool ompi_osc_pt2pt_no_locks;
 
 int ompi_osc_pt2pt_attach(struct ompi_win_t *win, void *base, size_t len);
-int ompi_osc_pt2pt_detach(struct ompi_win_t *win, void *base);
+int ompi_osc_pt2pt_detach(struct ompi_win_t *win, const void *base);
 
 int ompi_osc_pt2pt_free(struct ompi_win_t *win);
 
@@ -278,15 +280,15 @@ int ompi_osc_pt2pt_get(void *origin_addr,
                              struct ompi_datatype_t *target_dt,
                              struct ompi_win_t *win);
 
-int ompi_osc_pt2pt_compare_and_swap(void *origin_addr,
-                                   void *compare_addr,
+int ompi_osc_pt2pt_compare_and_swap(const void *origin_addr,
+                                   const void *compare_addr,
                                    void *result_addr,
                                    struct ompi_datatype_t *dt,
                                    int target,
                                    OPAL_PTRDIFF_TYPE target_disp,
                                    struct ompi_win_t *win);
 
-int ompi_osc_pt2pt_fetch_and_op(void *origin_addr,
+int ompi_osc_pt2pt_fetch_and_op(const void *origin_addr,
                                void *result_addr,
                                struct ompi_datatype_t *dt,
                                int target,
@@ -294,7 +296,7 @@ int ompi_osc_pt2pt_fetch_and_op(void *origin_addr,
                                struct ompi_op_t *op,
                                struct ompi_win_t *win);
 
-int ompi_osc_pt2pt_get_accumulate(void *origin_addr,
+int ompi_osc_pt2pt_get_accumulate(const void *origin_addr,
                                  int origin_count,
                                  struct ompi_datatype_t *origin_datatype,
                                  void *result_addr,
@@ -327,7 +329,7 @@ int ompi_osc_pt2pt_rget(void *origin_addr,
                        struct ompi_win_t *win,
                        struct ompi_request_t **request);
 
-int ompi_osc_pt2pt_raccumulate(void *origin_addr,
+int ompi_osc_pt2pt_raccumulate(const void *origin_addr,
                               int origin_count,
                               struct ompi_datatype_t *origin_dt,
                               int target,
@@ -405,7 +407,7 @@ int ompi_osc_pt2pt_component_irecv(ompi_osc_pt2pt_module_t *module,
                                   struct ompi_communicator_t *comm);
 
 int ompi_osc_pt2pt_component_isend(ompi_osc_pt2pt_module_t *module,
-                                  void *buf,
+                                  const void *buf,
                                   size_t count,
                                   struct ompi_datatype_t *datatype,
                                   int dest,
@@ -565,7 +567,7 @@ static inline void osc_pt2pt_copy_on_recv (void *target, void *source, size_t so
  *       buffer. The copy is done with a convertor generated from proc,
  *       datatype, and count.
  */
-static inline void osc_pt2pt_copy_for_send (void *target, size_t target_len, void *source, ompi_proc_t *proc,
+static inline void osc_pt2pt_copy_for_send (void *target, size_t target_len, const void *source, ompi_proc_t *proc,
                                            int count, ompi_datatype_t *datatype)
 {
     opal_convertor_t convertor;
