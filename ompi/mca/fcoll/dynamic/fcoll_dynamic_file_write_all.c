@@ -372,6 +372,7 @@ mca_fcoll_dynamic_file_write_all (mca_io_ompio_file_t *fh,
 	}
 	
 	for(l=0;l<fh->f_procs_per_group;l++){
+          recvtype[i]   = MPI_DATATYPE_NULL;  
 	  disp_index[l] =  1;
 	 
 	  if (NULL != blocklen_per_process[l]){
@@ -952,9 +953,12 @@ mca_fcoll_dynamic_file_write_all (mca_io_ompio_file_t *fh,
 	    free (fh->f_io_array);
 	    fh->f_io_array = NULL;
 	  }
-	  for (i =0; i< fh->f_procs_per_group; i++) 
-	    ompi_datatype_destroy(recvtype+i);
 	  if (NULL != recvtype){
+              for (i =0; i< fh->f_procs_per_group; i++) {
+                  if ( MPI_DATATYPE_NULL != recvtype[i] ) {
+                      ompi_datatype_destroy(&recvtype[i]);
+                  }
+              }
 	      free(recvtype);
 	      recvtype=NULL;
 	  }
@@ -992,6 +996,28 @@ mca_fcoll_dynamic_file_write_all (mca_io_ompio_file_t *fh,
 
  exit :
     if (fh->f_procs_in_group[fh->f_aggregator_index] == fh->f_rank) {
+      if (NULL != sorted_file_offsets){
+          free(sorted_file_offsets);
+	  sorted_file_offsets = NULL;
+      }
+      if(NULL != file_offsets_for_agg){
+	  free(file_offsets_for_agg);
+	  file_offsets_for_agg = NULL;
+      }
+      if (NULL != memory_displacements){
+	  free(memory_displacements);
+	  memory_displacements = NULL;
+      }
+      if (NULL != recvtype){
+	  for (i =0; i< fh->f_procs_per_group; i++) {
+              if ( MPI_DATATYPE_NULL != recvtype[i] ) {
+                  ompi_datatype_destroy(&recvtype[i]);
+              }
+          }
+          free(recvtype);
+          recvtype=NULL;
+      }
+
       if (NULL != fh->f_io_array) {
 	free (fh->f_io_array);
 	fh->f_io_array = NULL;
@@ -1032,7 +1058,17 @@ mca_fcoll_dynamic_file_write_all (mca_io_ompio_file_t *fh,
       }
 
     }
-    
+
+    if (! (fh->f_flags & OMPIO_CONTIGUOUS_MEMORY)) {
+	if (NULL != send_buf) {
+	    free (send_buf);
+	    send_buf = NULL;
+	}
+    }
+    if (NULL != global_buf) {
+        free (global_buf);
+        global_buf = NULL;
+    }
     if (NULL != sorted) {
         free (sorted);
         sorted = NULL;

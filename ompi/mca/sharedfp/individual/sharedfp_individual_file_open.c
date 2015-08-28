@@ -49,6 +49,11 @@ int mca_sharedfp_individual_file_open (struct ompi_communicator_t *comm,
     /*Open the same file again without shared file pointer*/
     /*-------------------------------------------------*/
     shfileHandle =  (mca_io_ompio_file_t *) malloc ( sizeof(mca_io_ompio_file_t));
+    if ( NULL == shfileHandle ) {
+        opal_output(0, "mca_sharedfp_individual_file_open: unable to allocate memory\n");
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+        
     err = ompio_io_ompio_file_open ( comm, filename, amode, info, shfileHandle, false);
     if ( OMPI_SUCCESS != err )  {
         opal_output(0, "mca_sharedfp_individual_file_open: Error during file open\n");
@@ -59,7 +64,7 @@ int mca_sharedfp_individual_file_open (struct ompi_communicator_t *comm,
     if ( NULL == sh ){
         opal_output(0, "mca_sharedfp_individual_file_open: Error, unable to malloc "
 		    "f_sharedfp_ptr struct\n");
-	free (shfileHandle );
+	free ( shfileHandle );
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
     
@@ -86,10 +91,23 @@ int mca_sharedfp_individual_file_open (struct ompi_communicator_t *comm,
     /* data filename created by appending .data.$rank to the original filename*/
     len = strlen (filename ) + 64;
     datafilename = (char*)malloc( len );
+    if ( NULL == datafilename ) {
+        opal_output(0, "mca_sharedfp_individual_file_open: unable to allocate memory\n");
+        free ( shfileHandle );
+        free ( sh );
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
     snprintf(datafilename, len, "%s%s%d",filename,".data.",rank);
 
 
     datafilehandle = (mca_io_ompio_file_t *)malloc(sizeof(mca_io_ompio_file_t));
+    if ( NULL == datafilehandle ) {
+        opal_output(0, "mca_sharedfp_individual_file_open: unable to allocate memory\n");
+        free ( shfileHandle );
+        free ( sh );
+        free ( datafilename );
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
     err = ompio_io_ompio_file_open(MPI_COMM_SELF, datafilename,
                                    MPI_MODE_RDWR | MPI_MODE_CREATE | MPI_MODE_DELETE_ON_CLOSE,
                                    MPI_INFO_NULL, datafilehandle, false);
@@ -97,6 +115,8 @@ int mca_sharedfp_individual_file_open (struct ompi_communicator_t *comm,
         opal_output(0, "mca_sharedfp_individual_file_open: Error during datafile file open\n");
         free (shfileHandle );
         free (sh);
+	free (datafilename);
+        free (datafilehandle);
         return err;
     }
 
@@ -114,6 +134,8 @@ int mca_sharedfp_individual_file_open (struct ompi_communicator_t *comm,
     if ( NULL == metadatafilename ) {
         free (shfileHandle );
         free (sh);
+	free (datafilename);
+        free (datafilehandle);
         opal_output(0, "mca_sharedfp_individual_file_open: Error during memory allocation\n");
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
@@ -123,6 +145,8 @@ int mca_sharedfp_individual_file_open (struct ompi_communicator_t *comm,
     if ( NULL == metadatafilehandle ) {
         free (shfileHandle );
         free (sh);
+        free (datafilename);
+        free (datafilehandle);
         free (metadatafilename);
         opal_output(0, "mca_sharedfp_individual_file_open: Error during memory allocation\n");
         return OMPI_ERR_OUT_OF_RESOURCE;
@@ -134,6 +158,8 @@ int mca_sharedfp_individual_file_open (struct ompi_communicator_t *comm,
         opal_output(0, "mca_sharedfp_individual_file_open: Error during metadatafile file open\n");
         free (shfileHandle );
         free (sh);
+        free (datafilename);
+        free (datafilehandle);
         free (metadatafilename);
         free (metadatafilehandle);
         return err;

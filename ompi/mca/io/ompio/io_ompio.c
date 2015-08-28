@@ -106,7 +106,7 @@ int ompi_io_ompio_set_file_defaults (mca_io_ompio_file_t *fh)
 {
 
    if (NULL != fh) {
-        ompi_datatype_t *types[2], *default_file_view;
+        ompi_datatype_t *types[2];
         int blocklen[2] = {1, 1};
         OPAL_PTRDIFF_TYPE d[2], base;
         int i;
@@ -132,27 +132,22 @@ int ompi_io_ompio_set_file_defaults (mca_io_ompio_file_t *fh)
         fh->f_init_num_aggrs = -1;
         fh->f_init_aggr_list = NULL;
 
-	ompi_datatype_create_contiguous(MCA_IO_DEFAULT_FILE_VIEW_SIZE,
-					&ompi_mpi_byte.dt,
-					&default_file_view);
-	ompi_datatype_commit (&default_file_view);
-		
-	fh->f_etype = &ompi_mpi_byte.dt;
-	fh->f_filetype =  default_file_view;
-	ompi_datatype_duplicate ( &ompi_mpi_byte.dt, &fh->f_orig_filetype );
-
 
         /* Default file View */
         fh->f_iov_type = MPI_DATATYPE_NULL;
         fh->f_stripe_size = mca_io_ompio_bytes_per_agg;
 	/*Decoded iovec of the file-view*/
 	fh->f_decoded_iov = NULL;
-        
+
+        fh->f_etype = NULL;
+        fh->f_filetype = NULL;
+        fh->f_orig_filetype = NULL;
+
 	mca_io_ompio_set_view_internal(fh,
 				       0,
 				       &ompi_mpi_byte.dt,
-				       default_file_view,
-				       "native",
+				       &ompi_mpi_byte.dt,
+                                       "native",
 				       fh->f_info);
     
 
@@ -425,6 +420,18 @@ int ompi_io_ompio_generate_current_file_view (struct mca_io_ompio_file_t *fh,
 		}
 	    }
 	    fp = fopen("fileview_info.out", "w+");
+            if ( NULL == fp ) {
+                for (i=0; i<fh->f_size; i++) {
+                    free(adj_matrix[i]);
+                }
+                free(adj_matrix);
+                free(sorted);
+                free(all_process);
+                free(per_process);
+                free(recvcounts);
+                free(displs);
+		return MPI_ERR_OTHER;
+            }
 	    fprintf(fp,"FILEVIEW\n");
 	    column_list = (int *) malloc ( m * sizeof(int));
 	    if (NULL == column_list){
@@ -1445,19 +1452,20 @@ int ompi_io_ompio_distribute_file_view (mca_io_ompio_file_t *fh,
     }
     */
  exit:
-    for (i=0 ; i<num_aggregators ; i++) {
-        if (NULL != broken[i]) {
-            free (broken[i]);
+
+    if (NULL != broken) {
+        for (i=0 ; i<num_aggregators ; i++) {
+            if (NULL != broken[i]) {
+                free (broken[i]);
+            }
         }
+        free (broken);
     }
     if (NULL != req) {
         free (req);
     }
     if (NULL != sendreq) {
         free (sendreq);
-    }
-    if (NULL != broken) {
-        free (broken);
     }
     free (num_entries);
     free (broken_index);
