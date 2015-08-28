@@ -95,9 +95,8 @@ end subroutine pompi_buffer_attach_f
 ! PMPI_BUFFER_DETACH (i.e., it is different than the mpif.h / mpi
 ! module C implementation function).
 !
-! Note, too, we don't need a "p" version of the C implementation
-! function -- Fortran's interfaces provide MPI_ and PMPI_ names for
-! us; they can just both be bound to the same back-end
+! Note, too, the "p" version of the C implementation
+! function is a 1-line routine. It calls
 ! ompi_buffer_detach_f08 C function.
 subroutine pompi_buffer_detach_f(buffer_addr,size,ierror) &
    BIND(C, name="pompi_buffer_detach_f08")
