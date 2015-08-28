@@ -5,7 +5,7 @@
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2006      The Technical University of Chemnitz. All
  *                         rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
@@ -20,9 +20,9 @@
  * would not be sufficient ... we simply do not cache it */
 
 /* simple linear Alltoallw */
-int ompi_coll_libnbc_ialltoallw(void* sendbuf, int *sendcounts, int *sdispls,
-                                MPI_Datatype sendtypes[], void* recvbuf, int *recvcounts, int *rdispls,
-                                MPI_Datatype recvtypes[], struct ompi_communicator_t *comm, ompi_request_t ** request,
+int ompi_coll_libnbc_ialltoallw(const void* sendbuf, const int *sendcounts, const int *sdispls,
+                                struct ompi_datatype_t * const *sendtypes, void* recvbuf, const int *recvcounts, const int *rdispls,
+                                struct ompi_datatype_t * const *recvtypes, struct ompi_communicator_t *comm, ompi_request_t ** request,
 				struct mca_coll_base_module_2_1_0_t *module)
 {
   int rank, p, res;
@@ -100,9 +100,9 @@ int ompi_coll_libnbc_ialltoallw(void* sendbuf, int *sendcounts, int *sdispls,
 }
 
 /* simple linear Alltoallw */
-int ompi_coll_libnbc_ialltoallw_inter (void* sendbuf, int *sendcounts, int *sdispls,
-				       MPI_Datatype sendtypes[], void* recvbuf, int *recvcounts, int *rdispls,
-				       MPI_Datatype recvtypes[], struct ompi_communicator_t *comm, ompi_request_t ** request,
+int ompi_coll_libnbc_ialltoallw_inter (const void* sendbuf, const int *sendcounts, const int *sdispls,
+				       struct ompi_datatype_t * const *sendtypes, void* recvbuf, const int *recvcounts, const int *rdispls,
+				       struct ompi_datatype_t * const *recvtypes, struct ompi_communicator_t *comm, ompi_request_t ** request,
 				       struct mca_coll_base_module_2_1_0_t *module)
 {
   int res, rsize;

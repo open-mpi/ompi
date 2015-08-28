@@ -3,6 +3,8 @@
  * Copyright (c) 2004-2015 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -117,10 +119,10 @@ ompi_coll_tuned_allgatherv_intra_check_forced_init(coll_tuned_force_algorithm_mc
     return (MPI_SUCCESS);
 }
 
-int ompi_coll_tuned_allgatherv_intra_do_forced(void *sbuf, int scount,
+int ompi_coll_tuned_allgatherv_intra_do_forced(const void *sbuf, int scount,
                                                struct ompi_datatype_t *sdtype,
-                                               void *rbuf, int *rcounts,
-                                               int *rdispls,
+                                               void *rbuf, const int *rcounts,
+                                               const int *rdispls,
                                                struct ompi_datatype_t *rdtype,
                                                struct ompi_communicator_t *comm,
                                                mca_coll_base_module_t *module)
@@ -165,10 +167,10 @@ int ompi_coll_tuned_allgatherv_intra_do_forced(void *sbuf, int scount,
 }
 
 
-int ompi_coll_tuned_allgatherv_intra_do_this(void *sbuf, int scount,
+int ompi_coll_tuned_allgatherv_intra_do_this(const void *sbuf, int scount,
                                              struct ompi_datatype_t *sdtype,
-                                             void *rbuf, int *rcounts,
-                                             int *rdispls,
+                                             void *rbuf, const int *rcounts,
+                                             const int *rdispls,
                                              struct ompi_datatype_t *rdtype,
                                              struct ompi_communicator_t *comm,
                                              mca_coll_base_module_t *module,

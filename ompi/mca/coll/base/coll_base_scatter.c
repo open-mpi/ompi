@@ -12,6 +12,8 @@
  *                         All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -33,7 +35,7 @@
 #include "coll_base_util.h"
 
 int
-ompi_coll_base_scatter_intra_binomial(void *sbuf, int scount,
+ompi_coll_base_scatter_intra_binomial( const void *sbuf, int scount,
                                        struct ompi_datatype_t *sdtype,
                                        void *rbuf, int rcount,
                                        struct ompi_datatype_t *rdtype,
@@ -193,7 +195,7 @@ ompi_coll_base_scatter_intra_binomial(void *sbuf, int scount,
  *	Returns:	- MPI_SUCCESS or error code
  */
 int
-ompi_coll_base_scatter_intra_basic_linear(void *sbuf, int scount,
+ompi_coll_base_scatter_intra_basic_linear(const void *sbuf, int scount,
                                           struct ompi_datatype_t *sdtype,
                                           void *rbuf, int rcount,
                                           struct ompi_datatype_t *rdtype,

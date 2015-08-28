@@ -8,7 +8,7 @@
  * Copyright (c) 2013      The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
  *                         reserved.
@@ -23,8 +23,8 @@
  * would not be sufficient ... we simply do not cache it */
 
 
-int ompi_coll_libnbc_igatherv(void* sendbuf, int sendcount, MPI_Datatype sendtype,
-                              void* recvbuf, int *recvcounts, int *displs, MPI_Datatype recvtype,
+int ompi_coll_libnbc_igatherv(const void* sendbuf, int sendcount, MPI_Datatype sendtype,
+                              void* recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype,
                               int root, struct ompi_communicator_t *comm, ompi_request_t ** request,
                               struct mca_coll_base_module_2_1_0_t *module) {
   int rank, p, res;
@@ -107,8 +107,8 @@ int ompi_coll_libnbc_igatherv(void* sendbuf, int sendcount, MPI_Datatype sendtyp
   return OMPI_SUCCESS;
 }
 
-int ompi_coll_libnbc_igatherv_inter (void* sendbuf, int sendcount, MPI_Datatype sendtype,
-				     void* recvbuf, int *recvcounts, int *displs, MPI_Datatype recvtype,
+int ompi_coll_libnbc_igatherv_inter (const void* sendbuf, int sendcount, MPI_Datatype sendtype,
+				     void* recvbuf, const int *recvcounts, const int *displs, MPI_Datatype recvtype,
 				     int root, struct ompi_communicator_t *comm, ompi_request_t ** request,
 				     struct mca_coll_base_module_2_1_0_t *module) {
   int res, rsize;

@@ -14,6 +14,8 @@
  * Copyright (c) 2012      Oak Ridge National Labs. All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights
  *                         reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -97,8 +99,7 @@ int MPI_Ireduce_scatter_block(const void *sendbuf, void *recvbuf, int recvcount,
     /* Invoke the coll component to perform the back-end operation */
 
     OBJ_RETAIN(op);
-    /* XXX -- CONST -- do not cast away const -- update mca/coll */
-    err = comm->c_coll.coll_ireduce_scatter_block((void *) sendbuf, recvbuf, recvcount,
+    err = comm->c_coll.coll_ireduce_scatter_block(sendbuf, recvbuf, recvcount,
                                                   datatype, op, comm, request,
                                                   comm->c_coll.coll_ireduce_scatter_block_module);
     OBJ_RELEASE(op);

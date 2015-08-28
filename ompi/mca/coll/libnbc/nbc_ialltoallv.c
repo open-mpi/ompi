@@ -5,7 +5,7 @@
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2006      The Technical University of Chemnitz. All
  *                         rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
@@ -20,8 +20,8 @@
  * would not be sufficient ... we simply do not cache it */
 
 /* simple linear Alltoallv */
-int ompi_coll_libnbc_ialltoallv(void* sendbuf, int *sendcounts, int *sdispls,
-                                MPI_Datatype sendtype, void* recvbuf, int *recvcounts, int *rdispls,
+int ompi_coll_libnbc_ialltoallv(const void* sendbuf, const int *sendcounts, const int *sdispls,
+                                MPI_Datatype sendtype, void* recvbuf, const int *recvcounts, const int *rdispls,
                                 MPI_Datatype recvtype, struct ompi_communicator_t *comm, ompi_request_t ** request,
                                 struct mca_coll_base_module_2_1_0_t *module)
 {
@@ -115,8 +115,8 @@ int ompi_coll_libnbc_ialltoallv(void* sendbuf, int *sendcounts, int *sdispls,
 }
 
 /* simple linear Alltoallv */
-int ompi_coll_libnbc_ialltoallv_inter (void* sendbuf, int *sendcounts, int *sdispls,
-				       MPI_Datatype sendtype, void* recvbuf, int *recvcounts, int *rdispls,
+int ompi_coll_libnbc_ialltoallv_inter (const void* sendbuf, const int *sendcounts, const int *sdispls,
+				       MPI_Datatype sendtype, void* recvbuf, const int *recvcounts, const int *rdispls,
 				       MPI_Datatype recvtype, struct ompi_communicator_t *comm, ompi_request_t ** request,
 				       struct mca_coll_base_module_2_1_0_t *module)
 {

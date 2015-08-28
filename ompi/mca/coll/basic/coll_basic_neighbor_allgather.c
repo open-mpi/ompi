@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -209,7 +209,7 @@ mca_coll_basic_neighbor_allgather_dist_graph(const void *sbuf, int scount,
     return ompi_request_wait_all (indegree + outdegree, basic_module->mccb_reqs, MPI_STATUSES_IGNORE);
 }
 
-int mca_coll_basic_neighbor_allgather(void *sbuf, int scount,
+int mca_coll_basic_neighbor_allgather(const void *sbuf, int scount,
                                       struct ompi_datatype_t *sdtype, void *rbuf,
                                       int rcount, struct ompi_datatype_t *rdtype,
                                       struct ompi_communicator_t *comm,

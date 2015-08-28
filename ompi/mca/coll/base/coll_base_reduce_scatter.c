@@ -14,6 +14,8 @@
  * Copyright (c) 2009      University of Houston. All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -41,8 +43,8 @@
  * This function just calls a reduce to rank 0, followed by an
  * appropriate scatterv call.
  */
-int ompi_coll_base_reduce_scatter_intra_nonoverlapping(void *sbuf, void *rbuf,
-                                                        int *rcounts,
+int ompi_coll_base_reduce_scatter_intra_nonoverlapping(const void *sbuf, void *rbuf,
+                                                        const int *rcounts,
                                                         struct ompi_datatype_t *dtype,
                                                         struct ompi_op_t *op,
                                                         struct ompi_communicator_t *comm,
@@ -122,9 +124,9 @@ int ompi_coll_base_reduce_scatter_intra_nonoverlapping(void *sbuf, void *rbuf,
  *  Limitation: - Works only for commutative operations.
  */
 int
-ompi_coll_base_reduce_scatter_intra_basic_recursivehalving(void *sbuf,
+ompi_coll_base_reduce_scatter_intra_basic_recursivehalving( const void *sbuf,
                                                             void *rbuf,
-                                                            int *rcounts,
+                                                            const int *rcounts,
                                                             struct ompi_datatype_t *dtype,
                                                             struct ompi_op_t *op,
                                                             struct ompi_communicator_t *comm,
@@ -447,7 +449,7 @@ ompi_coll_base_reduce_scatter_intra_basic_recursivehalving(void *sbuf,
  *
  */
 int
-ompi_coll_base_reduce_scatter_intra_ring(void *sbuf, void *rbuf, int *rcounts,
+ompi_coll_base_reduce_scatter_intra_ring( const void *sbuf, void *rbuf, const int *rcounts,
                                           struct ompi_datatype_t *dtype,
                                           struct ompi_op_t *op,
                                           struct ompi_communicator_t *comm,

@@ -12,7 +12,7 @@
  * Copyright (c) 2009      University of Houston. All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC. All Rights
  *                         reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -82,7 +82,7 @@
  *         [4]    [4]    [4]    [4]    [4]    [4]
  *         [5]    [5]    [5]    [5]    [5]    [5]
  */
-int ompi_coll_base_allgather_intra_bruck(void *sbuf, int scount,
+int ompi_coll_base_allgather_intra_bruck(const void *sbuf, int scount,
                                           struct ompi_datatype_t *sdtype,
                                           void* rbuf, int rcount,
                                           struct ompi_datatype_t *rdtype,
@@ -255,7 +255,7 @@ int ompi_coll_base_allgather_intra_bruck(void *sbuf, int scount,
  *          step, and send them appropriate messages.
  */
 int
-ompi_coll_base_allgather_intra_recursivedoubling(void *sbuf, int scount,
+ompi_coll_base_allgather_intra_recursivedoubling(const void *sbuf, int scount,
                                                   struct ompi_datatype_t *sdtype,
                                                   void* rbuf, int rcount,
                                                   struct ompi_datatype_t *rdtype,
@@ -362,7 +362,7 @@ ompi_coll_base_allgather_intra_recursivedoubling(void *sbuf, int scount,
  *               No additional memory requirements.
  *
  */
-int ompi_coll_base_allgather_intra_ring(void *sbuf, int scount,
+int ompi_coll_base_allgather_intra_ring(const void *sbuf, int scount,
                                          struct ompi_datatype_t *sdtype,
                                          void* rbuf, int rcount,
                                          struct ompi_datatype_t *rdtype,
@@ -490,7 +490,7 @@ int ompi_coll_base_allgather_intra_ring(void *sbuf, int scount,
  *         [5]    [5]    [5]    [5]    [5]    [5]
  */
 int
-ompi_coll_base_allgather_intra_neighborexchange(void *sbuf, int scount,
+ompi_coll_base_allgather_intra_neighborexchange(const void *sbuf, int scount,
                                                  struct ompi_datatype_t *sdtype,
                                                  void* rbuf, int rcount,
                                                  struct ompi_datatype_t *rdtype,
@@ -606,7 +606,7 @@ ompi_coll_base_allgather_intra_neighborexchange(void *sbuf, int scount,
 }
 
 
-int ompi_coll_base_allgather_intra_two_procs(void *sbuf, int scount,
+int ompi_coll_base_allgather_intra_two_procs(const void *sbuf, int scount,
                                               struct ompi_datatype_t *sdtype,
                                               void* rbuf, int rcount,
                                               struct ompi_datatype_t *rdtype,
@@ -687,7 +687,7 @@ int ompi_coll_base_allgather_intra_two_procs(void *sbuf, int scount,
  *    Returns:    - MPI_SUCCESS or error code
  */
 int
-ompi_coll_base_allgather_intra_basic_linear(void *sbuf, int scount,
+ompi_coll_base_allgather_intra_basic_linear(const void *sbuf, int scount,
                                              struct ompi_datatype_t *sdtype,
                                              void *rbuf,
                                              int rcount,

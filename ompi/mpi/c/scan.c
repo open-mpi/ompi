@@ -13,6 +13,8 @@
  * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights
  *                         reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -101,8 +103,7 @@ int MPI_Scan(const void *sendbuf, void *recvbuf, int count,
     /* Call the coll component to actually perform the allgather */
 
     OBJ_RETAIN(op);
-    /* XXX -- CONST -- do not cast away const -- update mca/coll */
-    err = comm->c_coll.coll_scan((void *) sendbuf, recvbuf, count,
+    err = comm->c_coll.coll_scan(sendbuf, recvbuf, count,
                                  datatype, op, comm,
                                  comm->c_coll.coll_scan_module);
     OBJ_RELEASE(op);

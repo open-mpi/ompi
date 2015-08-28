@@ -2,6 +2,8 @@
  * Copyright (c) 2004-2015 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -118,7 +120,7 @@ ompi_coll_tuned_allgather_intra_check_forced_init(coll_tuned_force_algorithm_mca
     return (MPI_SUCCESS);
 }
 
-int ompi_coll_tuned_allgather_intra_do_forced(void *sbuf, int scount,
+int ompi_coll_tuned_allgather_intra_do_forced(const void *sbuf, int scount,
                                               struct ompi_datatype_t *sdtype,
                                               void* rbuf, int rcount,
                                               struct ompi_datatype_t *rdtype,
@@ -169,7 +171,7 @@ int ompi_coll_tuned_allgather_intra_do_forced(void *sbuf, int scount,
 }
 
 
-int ompi_coll_tuned_allgather_intra_do_this(void *sbuf, int scount,
+int ompi_coll_tuned_allgather_intra_do_this(const void *sbuf, int scount,
                                             struct ompi_datatype_t *sdtype,
                                             void* rbuf, int rcount,
                                             struct ompi_datatype_t *rdtype,

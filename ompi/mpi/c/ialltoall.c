@@ -14,7 +14,7 @@
  * Copyright (c) 2012      Oak Ridge National Laboratory. All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -93,8 +93,7 @@ int MPI_Ialltoall(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
     OPAL_CR_ENTER_LIBRARY();
 
     /* Invoke the coll component to perform the back-end operation */
-    /* XXX -- CONST -- do not cast away const -- update mca/coll */
-    err = comm->c_coll.coll_ialltoall((void *) sendbuf, sendcount, sendtype,
+    err = comm->c_coll.coll_ialltoall(sendbuf, sendcount, sendtype,
                                       recvbuf, recvcount, recvtype, comm,
                                       request, comm->c_coll.coll_ialltoall_module);
     OMPI_ERRHANDLER_RETURN(err, comm, err, FUNC_NAME);

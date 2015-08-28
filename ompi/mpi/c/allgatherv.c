@@ -14,6 +14,8 @@
  * Copyright (c) 2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -138,8 +140,7 @@ int MPI_Allgatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
     OPAL_CR_ENTER_LIBRARY();
 
     /* Invoke the coll component to perform the back-end operation */
-    /* XXX -- CONST -- do not cast away const -- update mca/coll */
-    err = comm->c_coll.coll_allgatherv((void *) sendbuf, sendcount, sendtype,
+    err = comm->c_coll.coll_allgatherv(sendbuf, sendcount, sendtype,
                                        recvbuf, (int *) recvcounts,
                                        (int *) displs, recvtype, comm,
                                        comm->c_coll.coll_allgatherv_module);

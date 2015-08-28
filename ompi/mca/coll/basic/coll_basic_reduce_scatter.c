@@ -14,7 +14,7 @@
  * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -64,7 +64,7 @@
  * so this should be investigated further.
  */
 int
-mca_coll_basic_reduce_scatter_intra(void *sbuf, void *rbuf, int *rcounts,
+mca_coll_basic_reduce_scatter_intra(const void *sbuf, void *rbuf, const int *rcounts,
                                     struct ompi_datatype_t *dtype,
                                     struct ompi_op_t *op,
                                     struct ompi_communicator_t *comm,
@@ -360,7 +360,7 @@ mca_coll_basic_reduce_scatter_intra(void *sbuf, void *rbuf, int *rcounts,
  *	Returns:	- MPI_SUCCESS or error code
  */
 int
-mca_coll_basic_reduce_scatter_inter(void *sbuf, void *rbuf, int *rcounts,
+mca_coll_basic_reduce_scatter_inter(const void *sbuf, void *rbuf, const int *rcounts,
                                     struct ompi_datatype_t *dtype,
                                     struct ompi_op_t *op,
                                     struct ompi_communicator_t *comm,
