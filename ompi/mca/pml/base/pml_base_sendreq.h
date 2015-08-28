@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -35,7 +37,7 @@ BEGIN_C_DECLS
  */
 struct mca_pml_base_send_request_t {
     mca_pml_base_request_t req_base;         /**< base request type - common data structure for use by wait/test */
-    void *req_addr;                          /**< pointer to send buffer - may not be application buffer */
+    const void *req_addr;                    /**< pointer to send buffer - may not be application buffer */
     size_t req_bytes_packed;                 /**< packed size of a message given the datatype and count */
     mca_pml_base_send_mode_t req_send_mode;  /**< type of send */
 };

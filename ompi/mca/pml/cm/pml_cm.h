@@ -4,6 +4,8 @@
  * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -65,7 +67,7 @@ OMPI_DECLSPEC extern int mca_pml_cm_del_comm(struct ompi_communicator_t* comm);
 
 
 __opal_attribute_always_inline__ static inline int
-mca_pml_cm_irecv_init(void *addr,
+mca_pml_cm_irecv_init(const void *addr,
                       size_t count,
                       ompi_datatype_t * datatype,
                       int src,
@@ -90,7 +92,7 @@ mca_pml_cm_irecv_init(void *addr,
 }
 
 __opal_attribute_always_inline__ static inline int
-mca_pml_cm_irecv(void *addr,
+mca_pml_cm_irecv(const void *addr,
                  size_t count,
                  ompi_datatype_t * datatype,
                  int src,
@@ -131,7 +133,7 @@ mca_pml_cm_recv_fast_completion(struct mca_mtl_request_t *mtl_request)
 }
 
 __opal_attribute_always_inline__ static inline int
-mca_pml_cm_recv(void *addr,
+mca_pml_cm_recv(const void *addr,
                 size_t count,
                 ompi_datatype_t * datatype,
                 int src,
@@ -207,7 +209,7 @@ mca_pml_cm_recv(void *addr,
 }
 
 __opal_attribute_always_inline__ static inline int
-mca_pml_cm_isend_init(void* buf,
+mca_pml_cm_isend_init(const void* buf,
                         size_t count,
                         ompi_datatype_t* datatype,
                         int dst,
@@ -233,7 +235,7 @@ mca_pml_cm_isend_init(void* buf,
 }
 
 __opal_attribute_always_inline__ static inline int
-mca_pml_cm_isend(void* buf,
+mca_pml_cm_isend(const void* buf,
                    size_t count,
                    ompi_datatype_t* datatype,
                    int dst,
@@ -304,7 +306,7 @@ mca_pml_cm_isend(void* buf,
 }
 
 __opal_attribute_always_inline__ static inline int
-mca_pml_cm_send(void *buf,
+mca_pml_cm_send(const void *buf,
                 size_t count,
                 ompi_datatype_t* datatype,
                 int dst,

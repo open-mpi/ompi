@@ -34,7 +34,7 @@
 
 mca_pml_ob1_send_request_t *mca_pml_ob1_sendreq = NULL;
 
-int mca_pml_ob1_isend_init(void *buf,
+int mca_pml_ob1_isend_init(const void *buf,
                            size_t count,
                            ompi_datatype_t * datatype,
                            int dst,
@@ -64,7 +64,7 @@ int mca_pml_ob1_isend_init(void *buf,
 }
 
 /* try to get a small message out on to the wire quickly */
-static inline int mca_pml_ob1_send_inline (void *buf, size_t count,
+static inline int mca_pml_ob1_send_inline (const void *buf, size_t count,
                                            ompi_datatype_t * datatype,
                                            int dst, int tag, int16_t seqn,
                                            ompi_proc_t *dst_proc, mca_bml_base_endpoint_t* endpoint,
@@ -120,7 +120,7 @@ static inline int mca_pml_ob1_send_inline (void *buf, size_t count,
     return (int) size;
 }
 
-int mca_pml_ob1_isend(void *buf,
+int mca_pml_ob1_isend(const void *buf,
                       size_t count,
                       ompi_datatype_t * datatype,
                       int dst,
@@ -171,7 +171,7 @@ int mca_pml_ob1_isend(void *buf,
     return rc;
 }
 
-int mca_pml_ob1_send(void *buf,
+int mca_pml_ob1_send(const void *buf,
                      size_t count,
                      ompi_datatype_t * datatype,
                      int dst,

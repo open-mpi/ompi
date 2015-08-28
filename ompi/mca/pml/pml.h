@@ -13,6 +13,8 @@
  * Copyright (c) 2006-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -206,7 +208,7 @@ typedef int (*mca_pml_base_module_del_comm_fn_t)(struct ompi_communicator_t* com
  *  @return                 OMPI_SUCCESS or failure status.
  */
 typedef int (*mca_pml_base_module_irecv_init_fn_t)(
-    void *buf,
+    const void *buf,
     size_t count,
     struct ompi_datatype_t *datatype,
     int src,
@@ -228,7 +230,7 @@ typedef int (*mca_pml_base_module_irecv_init_fn_t)(
  *  @return                 OMPI_SUCCESS or failure status.
  */
 typedef int (*mca_pml_base_module_irecv_fn_t)(
-    void *buf,
+    const void *buf,
     size_t count,
     struct ompi_datatype_t *datatype,
     int src,
@@ -257,7 +259,7 @@ typedef int (*mca_pml_base_module_imrecv_fn_t)(
  *  @return                 OMPI_SUCCESS or failure status.
  */
 typedef int (*mca_pml_base_module_recv_fn_t)(
-    void *buf,
+    const void *buf,
     size_t count,
     struct ompi_datatype_t *datatype,
     int src,
@@ -287,7 +289,7 @@ typedef int (*mca_pml_base_module_mrecv_fn_t)(
  *  @return                 OMPI_SUCCESS or failure status.
  */
 typedef int (*mca_pml_base_module_isend_init_fn_t)(
-    void *buf,
+    const void *buf,
     size_t count,
     struct ompi_datatype_t *datatype,
     int dst,
@@ -312,7 +314,7 @@ typedef int (*mca_pml_base_module_isend_init_fn_t)(
  *  @return                 OMPI_SUCCESS or failure status.
  */
 typedef int (*mca_pml_base_module_isend_fn_t)(
-    void *buf,
+    const void *buf,
     size_t count,
     struct ompi_datatype_t *datatype,
     int dst,
@@ -336,7 +338,7 @@ typedef int (*mca_pml_base_module_isend_fn_t)(
  *  @return                 OMPI_SUCCESS or failure status.
  */
 typedef int (*mca_pml_base_module_send_fn_t)(
-    void *buf,
+    const void *buf,
     size_t count,
     struct ompi_datatype_t *datatype,
     int dst,

@@ -13,6 +13,8 @@
  * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights
  *                         reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -91,8 +93,7 @@ int MPI_Send_init(const void *buf, int count, MPI_Datatype type,
     /*
      * Here, we just initialize the request -- memchecker should set the buffer in MPI_Start.
      */
-    /* XXX -- CONST -- do not cast away const -- update mca/pml */
-    rc = MCA_PML_CALL(isend_init((void *) buf,count,type,dest,tag,MCA_PML_BASE_SEND_STANDARD,comm,request));
+    rc = MCA_PML_CALL(isend_init(buf,count,type,dest,tag,MCA_PML_BASE_SEND_STANDARD,comm,request));
     OMPI_ERRHANDLER_RETURN(rc, comm, rc, FUNC_NAME);
 }
 

@@ -12,6 +12,8 @@
  *                         All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -129,7 +131,7 @@ mca_allocator_base_module_t* mca_allocator_basic_component_init(
    */
     void mca_allocator_basic_free(
         mca_allocator_base_module_t * mem,
-        void * ptr);
+        const void * ptr);
 
 /**
    * Frees all the memory from all the basics back to the system. Note that
