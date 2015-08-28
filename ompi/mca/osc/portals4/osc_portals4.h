@@ -122,7 +122,7 @@ int ompi_osc_portals4_detach(struct ompi_win_t *win, const void *base);
 
 int ompi_osc_portals4_free(struct ompi_win_t *win);
 
-int ompi_osc_portals4_put(void *origin_addr,
+int ompi_osc_portals4_put(const void *origin_addr,
                           int origin_count,
                           struct ompi_datatype_t *origin_dt,
                           int target,
@@ -140,7 +140,7 @@ int ompi_osc_portals4_get(void *origin_addr,
                           struct ompi_datatype_t *target_dt,
                           struct ompi_win_t *win);
 
-int ompi_osc_portals4_accumulate(void *origin_addr,
+int ompi_osc_portals4_accumulate(const void *origin_addr,
                                  int origin_count,
                                  struct ompi_datatype_t *origin_dt,
                                  int target,
@@ -179,7 +179,7 @@ int ompi_osc_portals4_get_accumulate(const void *origin_addr,
                                      struct ompi_op_t *op,
                                      struct ompi_win_t *win);
 
-int ompi_osc_portals4_rput(void *origin_addr,
+int ompi_osc_portals4_rput(const void *origin_addr,
                            int origin_count,
                            struct ompi_datatype_t *origin_dt,
                            int target,
@@ -210,7 +210,7 @@ int ompi_osc_portals4_raccumulate(const void *origin_addr,
                                   struct ompi_win_t *win,
                                   struct ompi_request_t **request);
 
-int ompi_osc_portals4_rget_accumulate(void *origin_addr,
+int ompi_osc_portals4_rget_accumulate(const void *origin_addr,
                                       int origin_count,
                                       struct ompi_datatype_t *origin_datatype,
                                       void *result_addr,
