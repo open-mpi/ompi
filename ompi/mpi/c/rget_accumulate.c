@@ -14,6 +14,8 @@
  * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
  * Copyright (c) 2014      Los Alamos National Security, LLC. All right
  *                         reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -135,8 +137,7 @@ int MPI_Rget_accumulate(const void *origin_addr, int origin_count, MPI_Datatype 
 
     OPAL_CR_ENTER_LIBRARY();
 
-    /* TODO: do not cast away the const */
-    rc = ompi_win->w_osc_module->osc_rget_accumulate((void *) origin_addr,
+    rc = ompi_win->w_osc_module->osc_rget_accumulate(origin_addr,
                                                     origin_count,
                                                     origin_datatype,
                                                     result_addr,

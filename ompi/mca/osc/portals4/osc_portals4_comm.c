@@ -179,7 +179,7 @@ ompi_osc_portals4_get_dt(struct ompi_datatype_t *dt, ptl_datatype_t *ptl_dt)
 
 
 int
-ompi_osc_portals4_rput(void *origin_addr,
+ompi_osc_portals4_rput(const void *origin_addr,
                        int origin_count,
                        struct ompi_datatype_t *origin_dt,
                        int target,
@@ -423,8 +423,8 @@ ompi_osc_portals4_raccumulate(const void *origin_addr,
 
 
 int
-ompi_osc_portals4_rget_accumulate(void *origin_addr, 
-                                  int origin_count, 
+ompi_osc_portals4_rget_accumulate(const void *origin_addr,
+                                  int origin_count,
                                   struct ompi_datatype_t *origin_dt,
                                   void *result_addr, 
                                   int result_count, 
@@ -599,7 +599,7 @@ ompi_osc_portals4_rget_accumulate(void *origin_addr,
 
 
 int
-ompi_osc_portals4_put(void *origin_addr,
+ompi_osc_portals4_put(const void *origin_addr,
                       int origin_count,
                       struct ompi_datatype_t *origin_dt,
                       int target,
@@ -717,7 +717,7 @@ ompi_osc_portals4_get(void *origin_addr,
 
 
 int
-ompi_osc_portals4_accumulate(void *origin_addr,
+ompi_osc_portals4_accumulate(const void *origin_addr,
                              int origin_count,
                              struct ompi_datatype_t *origin_dt,
                              int target,

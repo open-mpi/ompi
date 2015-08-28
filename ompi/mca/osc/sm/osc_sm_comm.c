@@ -21,7 +21,7 @@
 #include "osc_sm.h"
 
 int
-ompi_osc_sm_rput(void *origin_addr,
+ompi_osc_sm_rput(const void *origin_addr,
                  int origin_count,
                  struct ompi_datatype_t *origin_dt,
                  int target,
@@ -45,7 +45,7 @@ ompi_osc_sm_rput(void *origin_addr,
 
     remote_address = ((char*) (module->bases[target])) + module->disp_units[target] * target_disp;
 
-    ret = ompi_datatype_sndrcv(origin_addr, origin_count, origin_dt,
+    ret = ompi_datatype_sndrcv((void *)origin_addr, origin_count, origin_dt,
                                remote_address, target_count, target_dt);
     if (OMPI_SUCCESS != ret) {
         return ret;
@@ -149,8 +149,8 @@ ompi_osc_sm_raccumulate(const void *origin_addr,
 
 
 int
-ompi_osc_sm_rget_accumulate(void *origin_addr, 
-                                  int origin_count, 
+ompi_osc_sm_rget_accumulate(const void *origin_addr,
+                                  int origin_count,
                                   struct ompi_datatype_t *origin_dt,
                                   void *result_addr, 
                                   int result_count, 
@@ -185,7 +185,7 @@ ompi_osc_sm_rget_accumulate(void *origin_addr,
     if (OMPI_SUCCESS != ret || op == &ompi_mpi_op_no_op.op) goto done;
 
     if (op == &ompi_mpi_op_replace.op) {
-        ret = ompi_datatype_sndrcv(origin_addr, origin_count, origin_dt,
+        ret = ompi_datatype_sndrcv((void *)origin_addr, origin_count, origin_dt,
                                    remote_address, target_count, target_dt);
     } else {
         ret = ompi_osc_base_sndrcv_op(origin_addr, origin_count, origin_dt,
@@ -206,7 +206,7 @@ ompi_osc_sm_rget_accumulate(void *origin_addr,
 
 
 int
-ompi_osc_sm_put(void *origin_addr,
+ompi_osc_sm_put(const void *origin_addr,
                       int origin_count,
                       struct ompi_datatype_t *origin_dt,
                       int target,
@@ -229,7 +229,7 @@ ompi_osc_sm_put(void *origin_addr,
 
     remote_address = ((char*) (module->bases[target])) + module->disp_units[target] * target_disp;
 
-    ret = ompi_datatype_sndrcv(origin_addr, origin_count, origin_dt,
+    ret = ompi_datatype_sndrcv((void *)origin_addr, origin_count, origin_dt,
                                remote_address, target_count, target_dt);
 
     return ret;
@@ -268,7 +268,7 @@ ompi_osc_sm_get(void *origin_addr,
 
 
 int
-ompi_osc_sm_accumulate(void *origin_addr,
+ompi_osc_sm_accumulate(const void *origin_addr,
                        int origin_count,
                        struct ompi_datatype_t *origin_dt,
                        int target,
@@ -295,7 +295,7 @@ ompi_osc_sm_accumulate(void *origin_addr,
 
     opal_atomic_lock(&module->node_states[target].accumulate_lock);
     if (op == &ompi_mpi_op_replace.op) {
-        ret = ompi_datatype_sndrcv(origin_addr, origin_count, origin_dt,
+        ret = ompi_datatype_sndrcv((void *)origin_addr, origin_count, origin_dt,
                                     remote_address, target_count, target_dt);
     } else {
         ret = ompi_osc_base_sndrcv_op(origin_addr, origin_count, origin_dt,
