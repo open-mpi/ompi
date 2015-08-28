@@ -11,6 +11,8 @@
  * Copyright (c) 2007-2014 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2012-2013 Sandia National Laboratories.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -38,7 +40,7 @@ ompi_osc_pt2pt_attach(struct ompi_win_t *win, void *base, size_t len)
 
 
 int
-ompi_osc_pt2pt_detach(struct ompi_win_t *win, void *base)
+ompi_osc_pt2pt_detach(struct ompi_win_t *win, const void *base)
 {
     return OMPI_SUCCESS;
 }

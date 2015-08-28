@@ -4,7 +4,9 @@
  * Copyright (c) 2014-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
- * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -424,7 +426,7 @@ ompi_osc_sm_attach(struct ompi_win_t *win, void *base, size_t len)
 
 
 int
-ompi_osc_sm_detach(struct ompi_win_t *win, void *base)
+ompi_osc_sm_detach(struct ompi_win_t *win, const void *base)
 {
     ompi_osc_sm_module_t *module =
         (ompi_osc_sm_module_t*) win->w_osc_module;
