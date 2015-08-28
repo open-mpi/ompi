@@ -82,7 +82,7 @@ static int ompi_osc_pt2pt_dt_send_complete (ompi_request_t *request)
 }
 
 /* self communication optimizations */
-static inline int ompi_osc_pt2pt_put_self (void *source, int source_count, ompi_datatype_t *source_datatype,
+static inline int ompi_osc_pt2pt_put_self (const void *source, int source_count, ompi_datatype_t *source_datatype,
                                           OPAL_PTRDIFF_TYPE target_disp, int target_count, ompi_datatype_t *target_datatype,
                                           ompi_osc_pt2pt_module_t *module, ompi_osc_pt2pt_request_t *request)
 {
@@ -103,7 +103,7 @@ static inline int ompi_osc_pt2pt_put_self (void *source, int source_count, ompi_
         return OMPI_ERR_RMA_SYNC;
     }
 
-    ret = ompi_datatype_sndrcv (source, source_count, source_datatype,
+    ret = ompi_datatype_sndrcv ((void *)source, source_count, source_datatype,
                                 target, target_count, target_datatype);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
         return ret;
@@ -286,7 +286,7 @@ static inline int ompi_osc_pt2pt_gacc_self (const void *source, int source_count
 }
 /* end: self communication optimizations */
 
-static inline int ompi_osc_pt2pt_put_w_req (void *origin_addr, int origin_count,
+static inline int ompi_osc_pt2pt_put_w_req (const void *origin_addr, int origin_count,
                                            struct ompi_datatype_t *origin_dt,
                                            int target, OPAL_PTRDIFF_TYPE target_disp,
                                            int target_count, struct ompi_datatype_t *target_dt,
@@ -450,7 +450,7 @@ static inline int ompi_osc_pt2pt_put_w_req (void *origin_addr, int origin_count,
 }
 
 int
-ompi_osc_pt2pt_put(void *origin_addr, int origin_count,
+ompi_osc_pt2pt_put(const void *origin_addr, int origin_count,
                   struct ompi_datatype_t *origin_dt,
                   int target, OPAL_PTRDIFF_TYPE target_disp,
                   int target_count,
@@ -635,7 +635,7 @@ ompi_osc_pt2pt_accumulate_w_req (const void *origin_addr, int origin_count,
 }
 
 int
-ompi_osc_pt2pt_accumulate(void *origin_addr, int origin_count,
+ompi_osc_pt2pt_accumulate(const void *origin_addr, int origin_count,
                          struct ompi_datatype_t *origin_dt,
                          int target, OPAL_PTRDIFF_TYPE target_disp,
                          int target_count,
@@ -746,7 +746,7 @@ int ompi_osc_pt2pt_fetch_and_op(const void *origin_addr, void *result_addr,
                                         target, target_disp, 1, dt, op, win);
 }
 
-int ompi_osc_pt2pt_rput(void *origin_addr, int origin_count,
+int ompi_osc_pt2pt_rput(const void *origin_addr, int origin_count,
                        struct ompi_datatype_t *origin_dt,
                        int target, OPAL_PTRDIFF_TYPE target_disp,
                        int target_count, struct ompi_datatype_t *target_dt,
@@ -1205,7 +1205,7 @@ int ompi_osc_pt2pt_get_accumulate(const void *origin_addr, int origin_count,
 }
 
 
-int ompi_osc_pt2pt_rget_accumulate(void *origin_addr, int origin_count,
+int ompi_osc_pt2pt_rget_accumulate(const void *origin_addr, int origin_count,
                                   struct ompi_datatype_t *origin_dt,
                                   void *result_addr, int result_count,
                                   struct ompi_datatype_t *result_dt,

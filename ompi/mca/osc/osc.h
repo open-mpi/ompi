@@ -203,7 +203,7 @@ typedef int (*ompi_osc_base_module_win_detach_fn_t)(struct ompi_win_t *win, cons
 typedef int (*ompi_osc_base_module_free_fn_t)(struct ompi_win_t *win);
 
 
-typedef int (*ompi_osc_base_module_put_fn_t)(void *origin_addr,
+typedef int (*ompi_osc_base_module_put_fn_t)(const void *origin_addr,
                                             int origin_count,
                                             struct ompi_datatype_t *origin_dt,
                                             int target,
@@ -223,7 +223,7 @@ typedef int (*ompi_osc_base_module_get_fn_t)(void *origin_addr,
                                             struct ompi_win_t *win);
 
 
-typedef int (*ompi_osc_base_module_accumulate_fn_t)(void *origin_addr,
+typedef int (*ompi_osc_base_module_accumulate_fn_t)(const void *origin_addr,
                                                    int origin_count,
                                                    struct ompi_datatype_t *origin_dt,
                                                    int target,
@@ -262,7 +262,7 @@ typedef int (*ompi_osc_base_module_get_accumulate_fn_t)(const void *origin_addr,
                                                         struct ompi_op_t *op, 
                                                         struct ompi_win_t *win);
 
-typedef int (*ompi_osc_base_module_rput_fn_t)(void *origin_addr,
+typedef int (*ompi_osc_base_module_rput_fn_t)(const void *origin_addr,
                                               int origin_count,
                                               struct ompi_datatype_t *origin_dt,
                                               int target,
@@ -294,8 +294,8 @@ typedef int (*ompi_osc_base_module_raccumulate_fn_t)(const void *origin_addr,
                                                      struct ompi_win_t *win,
                                                      struct ompi_request_t **request);
 
-typedef int (*ompi_osc_base_module_rget_accumulate_fn_t)(void *origin_addr, 
-                                                         int origin_count, 
+typedef int (*ompi_osc_base_module_rget_accumulate_fn_t)(const void *origin_addr,
+                                                         int origin_count,
                                                          struct ompi_datatype_t *origin_datatype,
                                                          void *result_addr, 
                                                          int result_count, 
