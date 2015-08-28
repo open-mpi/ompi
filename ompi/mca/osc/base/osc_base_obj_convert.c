@@ -134,7 +134,7 @@ int ompi_osc_base_process_op (void *outbuf, void *inbuf, size_t inbuflen,
     return OMPI_SUCCESS;
 }
 
-int ompi_osc_base_sndrcv_op (void *origin, int32_t origin_count,
+int ompi_osc_base_sndrcv_op (const void *origin, int32_t origin_count,
                              struct ompi_datatype_t *origin_dt,
                              void *target, int32_t target_count,
                              struct ompi_datatype_t *target_dt,
@@ -152,7 +152,7 @@ int ompi_osc_base_sndrcv_op (void *origin, int32_t origin_count,
     bool done;
 
     if (ompi_datatype_is_predefined(origin_dt) && origin_dt == target_dt) {
-        ompi_op_reduce(op, origin, target, origin_count, origin_dt);
+        ompi_op_reduce(op, (void *)origin, target, origin_count, origin_dt);
 
         return OMPI_SUCCESS;
     }

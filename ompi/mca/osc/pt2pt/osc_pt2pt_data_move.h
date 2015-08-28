@@ -11,6 +11,8 @@
  * Copyright (c) 2012      Sandia National Laboratories.  All rights reserved.
  * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -66,7 +68,7 @@ int ompi_osc_pt2pt_control_send_unbuffered (ompi_osc_pt2pt_module_t *module,
  * be called with the associated request. The context specified in ctx will be stored in
  * the req_completion_cb_data member of the ompi_request_t for use by the callback.
  */
-int ompi_osc_pt2pt_isend_w_cb (void *ptr, int count, ompi_datatype_t *datatype, int target, int tag,
+int ompi_osc_pt2pt_isend_w_cb (const void *ptr, int count, ompi_datatype_t *datatype, int target, int tag,
                               ompi_communicator_t *comm, ompi_request_complete_fn_t cb, void *ctx);
 
 /**

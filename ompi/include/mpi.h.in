@@ -15,6 +15,8 @@
  * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
  * Copyright (c) 2012-2014 Los Alamos Nat Security, LLC. All rights reserved.
  * Copyright (c) 2011-2013 INRIA.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -1316,7 +1318,7 @@ OMPI_DECLSPEC  int MPI_Comm_spawn_multiple(int count, char *array_of_commands[],
 OMPI_DECLSPEC  int MPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm *newcomm);
 OMPI_DECLSPEC  int MPI_Comm_split_type(MPI_Comm comm, int split_type, int key, MPI_Info info, MPI_Comm *newcomm);
 OMPI_DECLSPEC  int MPI_Comm_test_inter(MPI_Comm comm, int *flag);
-OMPI_DECLSPEC  int MPI_Compare_and_swap(void *origin_addr, void *compare_addr,
+OMPI_DECLSPEC  int MPI_Compare_and_swap(const void *origin_addr, const void *compare_addr,
                                         void *result_addr, MPI_Datatype datatype, int target_rank,
                                         MPI_Aint target_disp, MPI_Win win);
 OMPI_DECLSPEC  int MPI_Dims_create(int nnodes, int ndims, int dims[]);
@@ -1334,7 +1336,7 @@ OMPI_DECLSPEC  int MPI_Error_class(int errorcode, int *errorclass);
 OMPI_DECLSPEC  int MPI_Error_string(int errorcode, char *string, int *resultlen);
 OMPI_DECLSPEC  int MPI_Exscan(const void *sendbuf, void *recvbuf, int count,
                               MPI_Datatype datatype, MPI_Op op, MPI_Comm comm);
-OMPI_DECLSPEC  int MPI_Fetch_and_op(void *origin_addr, void *result_addr, MPI_Datatype datatype,
+OMPI_DECLSPEC  int MPI_Fetch_and_op(const void *origin_addr, void *result_addr, MPI_Datatype datatype,
                                     int target_rank, MPI_Aint target_disp, MPI_Op op, MPI_Win win);
 OMPI_DECLSPEC  int MPI_Iexscan(const void *sendbuf, void *recvbuf, int count,
                               MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Request *request);
@@ -1602,8 +1604,8 @@ OMPI_DECLSPEC  int MPI_Put(const void *origin_addr, int origin_count, MPI_Dataty
                            int target_rank, MPI_Aint target_disp, int target_count,
                            MPI_Datatype target_datatype, MPI_Win win);
 OMPI_DECLSPEC  int MPI_Query_thread(int *provided);
-OMPI_DECLSPEC  int MPI_Raccumulate(void *origin_addr, int origin_count, MPI_Datatype origin_datatype, 
-                                   int target_rank, MPI_Aint target_disp, int target_count, 
+OMPI_DECLSPEC  int MPI_Raccumulate(const void *origin_addr, int origin_count, MPI_Datatype origin_datatype,
+                                   int target_rank, MPI_Aint target_disp, int target_count,
                                    MPI_Datatype target_datatype, MPI_Op op, MPI_Win win, MPI_Request *request);
 OMPI_DECLSPEC  int MPI_Recv_init(void *buf, int count, MPI_Datatype datatype, int source,
                                  int tag, MPI_Comm comm, MPI_Request *request);
@@ -1826,7 +1828,7 @@ OMPI_DECLSPEC  int MPI_Win_create_keyval(MPI_Win_copy_attr_function *win_copy_at
                                          MPI_Win_delete_attr_function *win_delete_attr_fn,
                                          int *win_keyval, void *extra_state);
 OMPI_DECLSPEC  int MPI_Win_delete_attr(MPI_Win win, int win_keyval);
-OMPI_DECLSPEC  int MPI_Win_detach(MPI_Win win, void *base);
+OMPI_DECLSPEC  int MPI_Win_detach(MPI_Win win, const void *base);
 OMPI_DECLSPEC  MPI_Win MPI_Win_f2c(MPI_Fint win);
 OMPI_DECLSPEC  int MPI_Win_fence(int assert, MPI_Win win);
 OMPI_DECLSPEC  int MPI_Win_flush(int rank, MPI_Win win);
@@ -2008,7 +2010,7 @@ OMPI_DECLSPEC  int PMPI_Comm_spawn_multiple(int count, char *array_of_commands[]
 OMPI_DECLSPEC  int PMPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm *newcomm);
 OMPI_DECLSPEC  int PMPI_Comm_split_type(MPI_Comm comm, int split_type, int key, MPI_Info info, MPI_Comm *newcomm);
 OMPI_DECLSPEC  int PMPI_Comm_test_inter(MPI_Comm comm, int *flag);
-OMPI_DECLSPEC  int PMPI_Compare_and_swap(void *origin_addr, void *compare_addr,
+OMPI_DECLSPEC  int PMPI_Compare_and_swap(const void *origin_addr, const void *compare_addr,
                                          void *result_addr, MPI_Datatype datatype, int target_rank,
                                          MPI_Aint target_disp, MPI_Win win);
 OMPI_DECLSPEC  int PMPI_Dims_create(int nnodes, int ndims, int dims[]);
@@ -2026,7 +2028,7 @@ OMPI_DECLSPEC  int PMPI_Error_class(int errorcode, int *errorclass);
 OMPI_DECLSPEC  int PMPI_Error_string(int errorcode, char *string, int *resultlen);
 OMPI_DECLSPEC  int PMPI_Exscan(const void *sendbuf, void *recvbuf, int count,
                                MPI_Datatype datatype, MPI_Op op, MPI_Comm comm);
-OMPI_DECLSPEC  int PMPI_Fetch_and_op(void *origin_addr, void *result_addr, MPI_Datatype datatype,
+OMPI_DECLSPEC  int PMPI_Fetch_and_op(const void *origin_addr, void *result_addr, MPI_Datatype datatype,
                                      int target_rank, MPI_Aint target_disp, MPI_Op op, MPI_Win win);
 OMPI_DECLSPEC  int PMPI_Iexscan(const void *sendbuf, void *recvbuf, int count,
                                MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Request *request);
@@ -2296,8 +2298,8 @@ OMPI_DECLSPEC  int PMPI_Put(const void *origin_addr, int origin_count, MPI_Datat
                             int target_rank, MPI_Aint target_disp, int target_count,
                             MPI_Datatype target_datatype, MPI_Win win);
 OMPI_DECLSPEC  int PMPI_Query_thread(int *provided);
-OMPI_DECLSPEC  int PMPI_Raccumulate(void *origin_addr, int origin_count, MPI_Datatype origin_datatype, 
-                                    int target_rank, MPI_Aint target_disp, int target_count, 
+OMPI_DECLSPEC  int PMPI_Raccumulate(const void *origin_addr, int origin_count, MPI_Datatype origin_datatype,
+                                    int target_rank, MPI_Aint target_disp, int target_count,
                                     MPI_Datatype target_datatype, MPI_Op op, MPI_Win win, MPI_Request *request);
 OMPI_DECLSPEC  int PMPI_Recv_init(void *buf, int count, MPI_Datatype datatype, int source,
                                   int tag, MPI_Comm comm, MPI_Request *request);
@@ -2520,7 +2522,7 @@ OMPI_DECLSPEC  int PMPI_Win_create_keyval(MPI_Win_copy_attr_function *win_copy_a
                                           MPI_Win_delete_attr_function *win_delete_attr_fn,
                                           int *win_keyval, void *extra_state);
 OMPI_DECLSPEC  int PMPI_Win_delete_attr(MPI_Win win, int win_keyval);
-OMPI_DECLSPEC  int PMPI_Win_detach(MPI_Win win, void *base);
+OMPI_DECLSPEC  int PMPI_Win_detach(MPI_Win win, const void *base);
 OMPI_DECLSPEC  MPI_Win PMPI_Win_f2c(MPI_Fint win);
 OMPI_DECLSPEC  int PMPI_Win_fence(int assert, MPI_Win win);
 OMPI_DECLSPEC  int PMPI_Win_flush(int rank, MPI_Win win);

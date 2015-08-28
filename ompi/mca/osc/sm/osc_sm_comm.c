@@ -3,6 +3,8 @@
  * Copyright (c) 2011      Sandia National Laboratories.  All rights reserved.
  * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -99,7 +101,7 @@ ompi_osc_sm_rget(void *origin_addr,
 
 
 int
-ompi_osc_sm_raccumulate(void *origin_addr,
+ompi_osc_sm_raccumulate(const void *origin_addr,
                         int origin_count,
                         struct ompi_datatype_t *origin_dt,
                         int target,
@@ -127,7 +129,7 @@ ompi_osc_sm_raccumulate(void *origin_addr,
 
     opal_atomic_lock(&module->node_states[target].accumulate_lock);
     if (op == &ompi_mpi_op_replace.op) {
-        ret = ompi_datatype_sndrcv(origin_addr, origin_count, origin_dt,
+        ret = ompi_datatype_sndrcv((void *)origin_addr, origin_count, origin_dt,
                                     remote_address, target_count, target_dt);
     } else {
         ret = ompi_osc_base_sndrcv_op(origin_addr, origin_count, origin_dt,
@@ -307,8 +309,8 @@ ompi_osc_sm_accumulate(void *origin_addr,
 
 
 int
-ompi_osc_sm_get_accumulate(void *origin_addr, 
-                           int origin_count, 
+ompi_osc_sm_get_accumulate(const void *origin_addr,
+                           int origin_count,
                            struct ompi_datatype_t *origin_dt,
                            void *result_addr, 
                            int result_count, 
@@ -342,7 +344,7 @@ ompi_osc_sm_get_accumulate(void *origin_addr,
     if (OMPI_SUCCESS != ret || op == &ompi_mpi_op_no_op.op) goto done;
 
     if (op == &ompi_mpi_op_replace.op) {
-        ret = ompi_datatype_sndrcv(origin_addr, origin_count, origin_dt,
+        ret = ompi_datatype_sndrcv((void *)origin_addr, origin_count, origin_dt,
                                    remote_address, target_count, target_dt);
     } else {
         ret = ompi_osc_base_sndrcv_op(origin_addr, origin_count, origin_dt,
@@ -358,8 +360,8 @@ ompi_osc_sm_get_accumulate(void *origin_addr,
 
 
 int
-ompi_osc_sm_compare_and_swap(void *origin_addr,
-                             void *compare_addr,
+ompi_osc_sm_compare_and_swap(const void *origin_addr,
+                             const void *compare_addr,
                              void *result_addr,
                              struct ompi_datatype_t *dt,
                              int target,
@@ -398,7 +400,7 @@ ompi_osc_sm_compare_and_swap(void *origin_addr,
 
 
 int
-ompi_osc_sm_fetch_and_op(void *origin_addr,
+ompi_osc_sm_fetch_and_op(const void *origin_addr,
                          void *result_addr,
                          struct ompi_datatype_t *dt,
                          int target,
@@ -429,7 +431,7 @@ ompi_osc_sm_fetch_and_op(void *origin_addr,
     if (op == &ompi_mpi_op_replace.op) {
         ompi_datatype_copy_content_same_ddt(dt, 1, (char*) remote_address, (char*) origin_addr);
     } else {
-        ompi_op_reduce(op, origin_addr, remote_address, 1, dt);
+        ompi_op_reduce(op, (void *)origin_addr, remote_address, 1, dt);
     }
 
  done:
