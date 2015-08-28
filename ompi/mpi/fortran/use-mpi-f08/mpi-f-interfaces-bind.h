@@ -1368,7 +1368,7 @@ subroutine ompi_comm_set_attr_f(comm,comm_keyval,attribute_val,ierror) &
 end subroutine ompi_comm_set_attr_f
 
 subroutine ompi_comm_set_info_f(comm,info,ierror) &
-   BIND(C, name="ompi_comm_get_info_f")
+   BIND(C, name="ompi_comm_set_info_f")
    implicit none
    INTEGER, INTENT(IN) :: comm
    INTEGER, INTENT(IN) :: info
