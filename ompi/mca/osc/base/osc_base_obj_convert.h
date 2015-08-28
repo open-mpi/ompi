@@ -7,6 +7,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -117,7 +119,7 @@ OMPI_DECLSPEC int ompi_osc_base_process_op(void *outbuf,
                                            int count,
                                            ompi_op_t *op);
 
-OMPI_DECLSPEC int ompi_osc_base_sndrcv_op(void *origin,
+OMPI_DECLSPEC int ompi_osc_base_sndrcv_op(const void *origin,
                                           int32_t origin_count,
                                           struct ompi_datatype_t *origin_dt,
                                           void *target,
