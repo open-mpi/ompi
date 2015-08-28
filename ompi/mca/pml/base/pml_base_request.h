@@ -13,6 +13,8 @@
  * Copyright (c) 2009      Sun Microsystems, Inc. All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -68,7 +70,7 @@ struct mca_pml_base_request_t {
     opal_convertor_t req_convertor;       /**< always need the convertor */
 /* END: These field have to match the definition of the mca_pml_cm_request_t */
 
-    void *req_addr;                       /**< pointer to application buffer */
+    const void *req_addr;                 /**< pointer to application buffer */
     size_t req_count;                     /**< count of user datatype elements */
     int32_t req_peer;                     /**< peer process - rank w/in this communicator */
     int32_t req_tag;                      /**< user defined tag */

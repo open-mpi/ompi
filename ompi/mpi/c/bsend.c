@@ -13,6 +13,8 @@
  * Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights
  *                         reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -76,8 +78,7 @@ int MPI_Bsend(const void *buf, int count, MPI_Datatype type, int dest, int tag, 
     }
 
     OPAL_CR_ENTER_LIBRARY();
-    /* XXX -- CONST -- do not cast away const -- update mca/pml */
-    rc = MCA_PML_CALL(send((void *) buf, count, type, dest, tag, MCA_PML_BASE_SEND_BUFFERED, comm));
+    rc = MCA_PML_CALL(send(buf, count, type, dest, tag, MCA_PML_BASE_SEND_BUFFERED, comm));
     OMPI_ERRHANDLER_RETURN(rc, comm, rc, FUNC_NAME);
 }
 

@@ -15,6 +15,8 @@
  * Copyright (c) 2010-2012 Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
  * Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -31,7 +33,7 @@
 
 mca_pml_ob1_recv_request_t *mca_pml_ob1_recvreq = NULL;
 
-int mca_pml_ob1_irecv_init(void *addr,
+int mca_pml_ob1_irecv_init(const void *addr,
                            size_t count,
                            ompi_datatype_t * datatype,
                            int src,
@@ -56,7 +58,7 @@ int mca_pml_ob1_irecv_init(void *addr,
     return OMPI_SUCCESS;
 }
 
-int mca_pml_ob1_irecv(void *addr,
+int mca_pml_ob1_irecv(const void *addr,
                       size_t count,
                       ompi_datatype_t * datatype,
                       int src,
@@ -83,7 +85,7 @@ int mca_pml_ob1_irecv(void *addr,
 }
 
 
-int mca_pml_ob1_recv(void *addr,
+int mca_pml_ob1_recv(const void *addr,
                      size_t count,
                      ompi_datatype_t * datatype,
                      int src,

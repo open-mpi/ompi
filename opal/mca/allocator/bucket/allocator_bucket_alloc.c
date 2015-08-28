@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      IBM Corp.,  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -278,7 +280,7 @@ void * mca_allocator_bucket_realloc(
    * Frees the passed region of memory
    *
    */
-void mca_allocator_bucket_free(mca_allocator_base_module_t * mem, void * ptr)
+void mca_allocator_bucket_free(mca_allocator_base_module_t * mem, const void * ptr)
 {
     mca_allocator_bucket_t * mem_options = (mca_allocator_bucket_t *) mem;
     mca_allocator_bucket_chunk_header_t * chunk  = (mca_allocator_bucket_chunk_header_t *) ptr - 1;

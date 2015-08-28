@@ -15,6 +15,8 @@
  * Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -267,7 +269,7 @@ void * mca_allocator_basic_realloc(
   */
 void mca_allocator_basic_free(
     mca_allocator_base_module_t * base,
-    void * ptr)
+    const void * ptr)
 {
     mca_allocator_basic_module_t* module = (mca_allocator_basic_module_t*)base;
     mca_allocator_basic_segment_t* seg;
