@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010-2011 Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -192,7 +192,7 @@ ompi_mpi_abort(struct ompi_communicator_t* comm,
         fprintf(stderr, "[%s:%d] Local abort %s completed successfully, but am not able to aggregate error messages, and not able to guarantee that all other processes were killed!\n",
                 host, (int) pid, ompi_mpi_finalized ?
                 "after MPI_FINALIZE started" : "before MPI_INIT completed");
-        exit(errcode == 0 ? 1 : errcode);
+        _exit(errcode == 0 ? 1 : errcode);
     }
 
     /* If OMPI is initialized and we have a non-NULL communicator,
