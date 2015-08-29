@@ -43,7 +43,6 @@ OPAL_DECLSPEC int opal_sec_base_select(void);
 
 /* base stubs */
 OPAL_DECLSPEC int opal_sec_base_get_cred(char *method,
-                                         int dstorehandle,
                                          opal_process_name_t *my_id,
                                          char **payload, size_t *size);
 

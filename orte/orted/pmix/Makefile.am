@@ -1,6 +1,6 @@
 #
-# Copyright (c) 2014      Intel, Inc. All rights reserved.
-# Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
+# Copyright (c) 2014      Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -14,7 +14,8 @@ headers += \
 
 lib@ORTE_LIB_PREFIX@open_rte_la_SOURCES += \
           orted/pmix/pmix_server.c \
-          orted/pmix/pmix_server_connection.c \
-          orted/pmix/pmix_server_sendrecv.c \
-          orted/pmix/pmix_server_db.c \
-          orted/pmix/pmix_server_process_msgs.c
+          orted/pmix/pmix_server_fence.c \
+          orted/pmix/pmix_server_register_fns.c \
+          orted/pmix/pmix_server_dyn.c \
+          orted/pmix/pmix_server_pub.c \
+          orted/pmix/pmix_server_gen.c

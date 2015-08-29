@@ -24,17 +24,17 @@
 #define _PMIX_SERVER_H_
 
 #include "orte_config.h"
-#include "opal/mca/dstore/base/base.h"
 
+#include "opal/mca/pmix/pmix.h"
 
 BEGIN_C_DECLS
 
 ORTE_DECLSPEC int pmix_server_init(void);
 ORTE_DECLSPEC void pmix_server_finalize(void);
-ORTE_DECLSPEC void pmix_server_register(void);
+ORTE_DECLSPEC void pmix_server_register_params(void);
 
-/* provide access to the pmix server uri */
-ORTE_DECLSPEC extern char *pmix_server_uri;
+
+ORTE_DECLSPEC int orte_pmix_server_register_nspace(orte_job_t *jdata);
 
 END_C_DECLS
 

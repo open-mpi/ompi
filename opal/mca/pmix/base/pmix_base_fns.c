@@ -31,8 +31,30 @@
 
 #include "opal/mca/pmix/base/base.h"
 #include "opal/mca/pmix/base/pmix_base_fns.h"
+#include "opal/mca/pmix/base/pmix_base_hash.h"
 
 #define OPAL_PMI_PAD  10
+
+static opal_pmix_errhandler_fn_t errhandler = NULL;
+
+void opal_pmix_base_register_handler(opal_pmix_errhandler_fn_t err)
+{
+    errhandler = err;
+}
+
+void opal_pmix_base_errhandler(int status,
+                               opal_list_t *procs,
+                               opal_list_t *info)
+{
+    if (NULL != errhandler) {
+        errhandler(status);
+    }
+}
+
+void opal_pmix_base_deregister_handler(void)
+{
+    errhandler = NULL;
+}
 
 static char* setup_key(const opal_process_name_t* name, const char *key, int pmix_keylen_max);
 static char *pmi_encode(const void *val, size_t vallen);
@@ -361,7 +383,7 @@ int opal_pmix_base_cache_keys_locally(const opal_process_name_t* id, const char*
 
     /* first try to fetch data from data storage */
     OBJ_CONSTRUCT(&values, opal_list_t);
-    rc = opal_dstore.fetch(opal_dstore_internal, id, key, &values);
+    rc = opal_pmix_base_fetch(id, key, &values);
     if (OPAL_SUCCESS == rc) {
         kv = (opal_value_t*)opal_list_get_first(&values);
         /* create the copy */
@@ -456,10 +478,9 @@ int opal_pmix_base_cache_keys_locally(const opal_process_name_t* id, const char*
                 return OPAL_ERROR;
         }
         /* store data in local hash table */
-        if (OPAL_SUCCESS != (rc = opal_dstore.store(opal_dstore_internal, id, kv))) {
+        if (OPAL_SUCCESS != (rc = opal_pmix_base_store(id, kv))) {
             OPAL_ERROR_LOG(rc);
         }
-
         /* keep going and cache everything locally */
         offset = (size_t) (tmp3 - tmp_val) + size;
         if (0 == strcmp(kv->key, key)) {

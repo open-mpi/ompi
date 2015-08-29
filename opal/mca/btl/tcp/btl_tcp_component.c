@@ -16,7 +16,7 @@
  * Copyright (c) 2012-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2013-2015 NVIDIA Corporation.  All rights reserved.
- * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
  * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -917,8 +917,8 @@ static int mca_btl_tcp_component_exchange(void)
                  }
              } /* end of for opal_ifbegin() */
          } /* end of for tcp_num_btls */
-         OPAL_MODEX_SEND(rc, PMIX_SYNC_REQD, PMIX_GLOBAL,
-                         &mca_btl_tcp_component.super.btl_version,
+         OPAL_MODEX_SEND(rc, OPAL_PMIX_GLOBAL,
+                         &mca_btl_tcp_component.super.btl_version, 
                          addrs, xfer_size);
          free(addrs);
      } /* end if */

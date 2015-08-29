@@ -3,7 +3,7 @@
  * Copyright (c) 2011-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2011      UT-Battelle, LLC. All rights reserved.
- * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -18,7 +18,7 @@
 #include "btl_ugni_smsg.h"
 
 #include "opal/include/opal/align.h"
-#include "opal/mca/dstore/dstore.h"
+#include "opal/mca/pmix/pmix.h"
 
 #define INITIAL_GNI_EPS 10000
 
@@ -289,11 +289,10 @@ static int
 mca_btl_ugni_setup_mpools (mca_btl_ugni_module_t *ugni_module)
 {
     struct mca_mpool_base_resources_t mpool_resources;
-    unsigned int mbox_increment, nprocs;
+    unsigned int mbox_increment;
+    uint32_t nprocs, *u32;
     const char *mpool_name;
     int rc;
-    opal_list_t vals;
-    opal_value_t *kv;
 
     rc = opal_pointer_array_init (&ugni_module->pending_smsg_frags_bb, 0,
                                   1 << 30, 32768);
@@ -302,16 +301,13 @@ mca_btl_ugni_setup_mpools (mca_btl_ugni_module_t *ugni_module)
     }
 
     /* determine how many procs are in the job (might want to check universe size here) */
-    OBJ_CONSTRUCT(&vals, opal_list_t);
-    if (OPAL_SUCCESS == opal_dstore.fetch(opal_dstore_internal, &OPAL_PROC_MY_NAME,
-                                          OPAL_DSTORE_UNIV_SIZE, &vals)) {
-        /* the number of procs in the job is in the uint32 field */
-        kv = (opal_value_t*)opal_list_get_first(&vals);
-        nprocs = kv->data.uint32;
-    } else {
+    u32 = &nprocs;
+    OPAL_MODEX_RECV_VALUE(rc, OPAL_PMIX_UNIV_SIZE, &OPAL_PROC_MY_NAME,
+                          &u32, OPAL_UINT32);
+    if (OPAL_SUCCESS != rc) {
+        /* take a wild conservative guess */
         nprocs = 512;
     }
-    OPAL_LIST_DESTRUCT(&vals);
 
     rc = mca_btl_ugni_smsg_setup (nprocs);
     if (OPAL_UNLIKELY(OPAL_SUCCESS != rc)) {

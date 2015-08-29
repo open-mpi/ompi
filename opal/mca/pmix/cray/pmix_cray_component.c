@@ -88,9 +88,10 @@ static int pmix_cray_component_query(mca_base_module_t **module, int *priority)
     FILE *fd = NULL, *fd_task_is_app = NULL;
     char task_is_app_fname[PATH_MAX];
 
-    /* disqualify ourselves if not running in a Cray PAGG container */
+    /* disqualify ourselves if not running in a Cray PAGG container, or we
+       were launched by the orte/mpirun launcher */
     fd = fopen(proc_job_file, "r");
-    if (fd == NULL) {
+    if ((fd == NULL) || (getenv("OMPI_NO_USE_CRAY_PMI") != NULL)) {
         *priority = 0;
         *module = NULL;
         rc = OPAL_ERROR;

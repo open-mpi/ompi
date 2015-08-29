@@ -143,6 +143,7 @@ typedef struct {
         void *ptr;  // never packed or passed anywhere
         orte_vpid_t vpid;
         orte_jobid_t jobid;
+        opal_process_name_t name;
     } data;
 } orte_attribute_t;
 OPAL_DECLSPEC OBJ_CLASS_DECLARATION(orte_attribute_t);

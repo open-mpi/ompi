@@ -20,7 +20,7 @@
  *                         All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -34,8 +34,8 @@
 
 #include "ompi/constants.h"
 #include "opal/mca/hwloc/base/base.h"
-#include "opal/mca/dstore/dstore.h"
 #include "opal/dss/dss.h"
+#include "opal/mca/pmix/pmix.h"
 
 #include "ompi/proc/proc.h"
 #include "opal/threads/mutex.h"
@@ -43,7 +43,7 @@
 #include "opal/util/output.h"
 #include "ompi/mca/topo/topo.h"
 #include "ompi/mca/topo/base/base.h"
-#include "ompi/mca/dpm/dpm.h"
+#include "ompi/dpm/dpm.h"
 
 #include "ompi/attribute/attribute.h"
 #include "ompi/communicator/communicator.h"
@@ -202,7 +202,7 @@ int ompi_comm_set_nb ( ompi_communicator_t **ncomm,
        Necessary for the disconnect of dynamic communicators. */
 
     if ( 0 < local_size && (OMPI_COMM_IS_INTRA(newcomm) || 0 <remote_size) ) {
-        ompi_dpm.mark_dyncomm (newcomm);
+        ompi_dpm_mark_dyncomm (newcomm);
     }
 
     /* Set error handler */
@@ -1766,8 +1766,6 @@ ompi_proc_t **ompi_comm_get_rprocs ( ompi_communicator_t *local_comm,
     char *recvbuf;
     ompi_proc_t **proc_list=NULL;
     int i;
-    opal_list_t myvals;
-    opal_value_t *kv;
 
     local_rank = ompi_comm_rank (local_comm);
     local_size = ompi_comm_size (local_comm);
@@ -1780,7 +1778,7 @@ ompi_proc_t **ompi_comm_get_rprocs ( ompi_communicator_t *local_comm,
         }
         if(OMPI_GROUP_IS_DENSE(local_comm->c_local_group)) {
             rc = ompi_proc_pack(local_comm->c_local_group->grp_proc_pointers,
-                                local_size, true, sbuf);
+                                local_size, sbuf);
         }
         /* get the proc list for the sparse implementations */
         else {
@@ -1788,7 +1786,7 @@ ompi_proc_t **ompi_comm_get_rprocs ( ompi_communicator_t *local_comm,
                                                  sizeof (ompi_proc_t *));
             for(i=0 ; i<local_comm->c_local_group->grp_proc_count ; i++)
                 proc_list[i] = ompi_group_peer_lookup(local_comm->c_local_group,i);
-            rc = ompi_proc_pack (proc_list, local_size, true, sbuf);
+            rc = ompi_proc_pack (proc_list, local_size, sbuf);
         }
         if ( OMPI_SUCCESS != rc ) {
             goto err_exit;
@@ -1867,7 +1865,7 @@ ompi_proc_t **ompi_comm_get_rprocs ( ompi_communicator_t *local_comm,
     }
 
     /* decode the names into a proc-list */
-    rc = ompi_proc_unpack(rbuf, rsize, &rprocs, true, NULL, NULL);
+    rc = ompi_proc_unpack(rbuf, rsize, &rprocs, NULL, NULL);
     OBJ_RELEASE(rbuf);
     if (OMPI_SUCCESS != rc) {
         OMPI_ERROR_LOG(rc);
@@ -1876,22 +1874,16 @@ ompi_proc_t **ompi_comm_get_rprocs ( ompi_communicator_t *local_comm,
 
     /* set the locality of the remote procs */
     for (i=0; i < rsize; i++) {
-        /* get the locality information - do not use modex recv for
-         * this request as that will automatically cause the hostname
-         * to be loaded as well. All RTEs are required to provide this
-         * information at startup for procs on our node. Thus, not
-         * finding the info indicates that the proc is non-local.
-         */
-        OBJ_CONSTRUCT(&myvals, opal_list_t);
-        if (OMPI_SUCCESS != opal_dstore.fetch(opal_dstore_internal,
-                                              &rprocs[i]->super.proc_name,
-                                              OPAL_DSTORE_LOCALITY, &myvals)) {
-            rprocs[i]->super.proc_flags = OPAL_PROC_NON_LOCAL;
+        /* get the locality information - all RTEs are required
+         * to provide this information at startup */
+        uint16_t *u16ptr, u16;
+        u16ptr = &u16;
+        OPAL_MODEX_RECV_VALUE(rc, OPAL_PMIX_LOCALITY, &rprocs[i]->super.proc_name, &u16ptr, OPAL_UINT16);
+        if (OPAL_SUCCESS == rc) {
+            rprocs[i]->super.proc_flags = u16;
         } else {
-            kv = (opal_value_t*)opal_list_get_first(&myvals);
-            rprocs[i]->super.proc_flags = kv->data.uint16;
+            rprocs[i]->super.proc_flags = OPAL_PROC_NON_LOCAL;
         }
-        OPAL_LIST_DESTRUCT(&myvals);
     }
 
     /* And now add the information into the database */
@@ -2210,7 +2202,7 @@ static int ompi_comm_fill_rest(ompi_communicator_t *comm,
     if( MPI_UNDEFINED != my_rank ) {
         /* verify whether to set the flag, that this comm
            contains process from more than one jobid. */
-        ompi_dpm.mark_dyncomm (comm);
+        ompi_dpm_mark_dyncomm (comm);
     }
 
     /* set the error handler */

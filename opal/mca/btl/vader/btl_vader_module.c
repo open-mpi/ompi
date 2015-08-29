@@ -14,7 +14,7 @@
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
  * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -162,7 +162,8 @@ static int init_vader_endpoint (struct mca_btl_base_endpoint_t *ep, struct opal_
     ep->peer_smp_rank = remote_rank;
 
     if (remote_rank != MCA_BTL_VADER_LOCAL_RANK) {
-        OPAL_MODEX_RECV(rc, &component->super.btl_version, proc, (void **) &modex, &msg_size);
+        OPAL_MODEX_RECV(rc, &component->super.btl_version,
+                        &proc->proc_name, (void **) &modex, &msg_size);
         if (OPAL_SUCCESS != rc) {
             return rc;
         }

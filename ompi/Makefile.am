@@ -14,6 +14,7 @@
 # Copyright (c) 2010-2011 Sandia National Laboratories. All rights reserved.
 # Copyright (c) 2013-2015 Los Alamos National Security, LLC. All rights
 #                         reserved.
+# Copyright (c) 2015      Intel, Inc. All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -172,6 +173,7 @@ endif
 include class/Makefile.am
 include attribute/Makefile.am
 include communicator/Makefile.am
+include dpm/Makefile.am
 include errhandler/Makefile.am
 include file/Makefile.am
 include group/Makefile.am

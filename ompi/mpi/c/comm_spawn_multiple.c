@@ -14,6 +14,7 @@
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved.
+ * Copyright (c) 2015      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -28,7 +29,7 @@
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/info/info.h"
-#include "ompi/mca/dpm/dpm.h"
+#include "ompi/dpm/dpm.h"
 #include "ompi/memchecker.h"
 
 #if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
@@ -149,7 +150,7 @@ int MPI_Comm_spawn_multiple(int count, char *array_of_commands[], char **array_o
         if (!non_mpi) {
             /* Open a port. The port_name is passed as an environment
                variable to the children. */
-            if (OMPI_SUCCESS != (rc = ompi_dpm.open_port (port_name, OMPI_RML_TAG_INVALID))) {
+            if (OMPI_SUCCESS != (rc = ompi_dpm_open_port (port_name))) {
                 goto error;
             }
         } else if (1 < ompi_comm_size(comm)) {
@@ -157,7 +158,7 @@ int MPI_Comm_spawn_multiple(int count, char *array_of_commands[], char **array_o
             rc = OMPI_ERR_NOT_SUPPORTED;
             goto error;
         }
-        if (OMPI_SUCCESS != (rc = ompi_dpm.spawn(count, (const char **) array_of_commands,
+        if (OMPI_SUCCESS != (rc = ompi_dpm_spawn(count, (const char **) array_of_commands,
                                                  array_of_argv, array_of_maxprocs,
                                                  array_of_info, port_name))) {
             goto error;
@@ -167,7 +168,7 @@ int MPI_Comm_spawn_multiple(int count, char *array_of_commands[], char **array_o
     if (non_mpi) {
         newcomp = MPI_COMM_NULL;
     } else {
-        rc = ompi_dpm.connect_accept (comm, root, port_name, send_first, &newcomp);
+        rc = ompi_dpm_connect_accept (comm, root, port_name, send_first, &newcomp);
     }
 
 error:
@@ -175,7 +176,7 @@ error:
 
     /* close the port */
     if (rank == root && !non_mpi) {
-        ompi_dpm.close_port(port_name);
+        ompi_dpm_close_port(port_name);
     }
 
     /* set array of errorcodes */

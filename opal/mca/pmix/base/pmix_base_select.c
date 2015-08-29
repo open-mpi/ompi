@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -22,7 +22,6 @@
 
 int opal_pmix_base_select(void)
 {
-    int ret, exit_status = OPAL_SUCCESS;
     opal_pmix_base_component_t *best_component = NULL;
     opal_pmix_base_module_t *best_module = NULL;
 
@@ -40,16 +39,9 @@ int opal_pmix_base_select(void)
     /* Save the winner */
     opal_pmix = *best_module;
 
-    /* Initialize the winner */
-    if (OPAL_SUCCESS != (ret = opal_pmix.init()) ) {
-        /* connection not available is okay - just means
-         * that a server hasn't already been defined */
-        if (OPAL_ERR_SERVER_NOT_AVAIL == ret) {
-            exit_status = OPAL_SUCCESS;
-        } else {
-            exit_status = ret;
-        }
-    }
+    /* do not initialize the module here as the type
+     * of process determines which init (client or server)
+     * should be done */
 
-    return exit_status;
+    return OPAL_SUCCESS;
 }

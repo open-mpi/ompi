@@ -762,16 +762,21 @@ int orte_dt_pack_attr(opal_buffer_t *buffer, const void *src, int32_t num_vals,
         case OPAL_PTR:
             /* just ignore these values */
             break;
-        case ORTE_VPID:
+        case OPAL_VPID:
             if (OPAL_SUCCESS != (ret = opal_dss_pack_buffer(buffer, &ptr[i]->data.vpid, 1, ORTE_VPID))) {
                 return ret;
             }
             break;
-        case ORTE_JOBID:
+        case OPAL_JOBID:
             if (OPAL_SUCCESS != (ret = opal_dss_pack_buffer(buffer, &ptr[i]->data.jobid, 1, ORTE_JOBID))) {
                 return ret;
             }
             break;
+        case OPAL_NAME:
+            if (OPAL_SUCCESS != (ret = opal_dss_pack_buffer(buffer, &ptr[i]->data.name, 1, ORTE_NAME))) {
+                return ret;
+            }
+            break;        
         default:
             opal_output(0, "PACK-ORTE-ATTR: UNSUPPORTED TYPE %d", (int)ptr[i]->type);
             return OPAL_ERROR;

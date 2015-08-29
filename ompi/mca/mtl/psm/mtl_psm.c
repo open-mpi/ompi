@@ -174,7 +174,7 @@ int ompi_mtl_psm_module_init(int local_rank, int num_local_procs) {
     ompi_mtl_psm.epid = epid;
     ompi_mtl_psm.mq   = mq;
 
-    OPAL_MODEX_SEND(rc, PMIX_SYNC_REQD, PMIX_GLOBAL,
+    OPAL_MODEX_SEND(rc, OPAL_PMIX_GLOBAL,
                     &mca_mtl_psm_component.super.mtl_version,
                     &ompi_mtl_psm.epid,
                     sizeof(psm_epid_t));
@@ -296,7 +296,7 @@ ompi_mtl_psm_add_procs(struct mca_mtl_base_module_t *mtl,
         }
 
         OPAL_MODEX_RECV(rc, &mca_mtl_psm_component.super.mtl_version,
-                        &procs[i]->super, (void**)&epid, &size);
+                        &procs[i]->super.proc_name, (void**)&epid, &size);
 	if (rc != OMPI_SUCCESS || size != sizeof(psm_epid_t)) {
 	  rc = OMPI_ERROR;
           goto bail;

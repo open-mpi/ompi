@@ -148,7 +148,7 @@ static void allgather_stub(int fd, short args, void *cbdata)
         cd->sig->seq_num = *((uint32_t *)(seq_number)) + 1;
     } else {
         OPAL_OUTPUT((orte_grpcomm_base_framework.framework_output,
-                     "%s rpcomm:base:allgather can't not get signature from hash table",
+                     "%s rpcomm:base:allgather cannot get signature from hash table",
                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         ORTE_ERROR_LOG(ret);
         OBJ_RELEASE(cd);

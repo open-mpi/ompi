@@ -130,7 +130,7 @@ void orte_plm_base_recv(int status, orte_process_name_t* sender,
     orte_process_name_t name;
     pid_t pid;
     bool running;
-    int i;
+    int i, room;
     char **env;
     char *prefix_dir;
 
@@ -247,8 +247,20 @@ void orte_plm_base_recv(int status, orte_process_name_t* sender,
             ORTE_ERROR_LOG(ret);
         }
 
+        /* pack an invalid jobid */
+        job = ORTE_JOBID_INVALID;
+        if (ORTE_SUCCESS != (ret = opal_dss.pack(answer, &job, 1, ORTE_JOBID))) {
+            ORTE_ERROR_LOG(ret);
+        }
+        /* pack the room number of the request */
+        if (orte_get_attribute(&jdata->attributes, ORTE_JOB_ROOM_NUM, (void**)&room, OPAL_INT)) {
+            if (ORTE_SUCCESS != (ret = opal_dss.pack(answer, &room, 1, OPAL_INT))) {
+                ORTE_ERROR_LOG(ret);
+            }
+        }
+
         /* send the response back to the sender */
-        if (0 > (ret = orte_rml.send_buffer_nb(sender, answer, ORTE_RML_TAG_PLM_PROXY,
+        if (0 > (ret = orte_rml.send_buffer_nb(sender, answer, ORTE_RML_TAG_LAUNCH_RESP,
                                                orte_rml_send_callback, NULL))) {
             ORTE_ERROR_LOG(ret);
             OBJ_RELEASE(answer);

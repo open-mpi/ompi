@@ -4,6 +4,7 @@
  *                         reserved.
  * Copyright (c) 2011-2015 INRIA.  All rights reserved.
  * Copyright (c) 2012-2015 Bordeaux Poytechnic Institute
+ * Copyright (c) 2015      Intel, Inc. All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -27,7 +28,7 @@
 
 #include "ompi/mca/pml/pml.h"
 
-#include "opal/mca/dstore/dstore.h"
+#include "opal/mca/pmix/pmix.h"
 
 #define ERR_EXIT(ERR)                           \
     do { free(local_pattern);                   \
@@ -178,7 +179,7 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* topo_module,
         for(i = 0; i < size ; i++) {
             proc = ompi_group_peer_lookup(comm_old->c_local_group, i);
             pval = &val;
-            OPAL_MODEX_RECV_VALUE(err, OPAL_DSTORE_NODEID, &(proc->super), &pval, OPAL_UINT32);
+            OPAL_MODEX_RECV_VALUE(err, OPAL_PMIX_NODEID, &(proc->super.proc_name), &pval, OPAL_UINT32);
             if( OPAL_SUCCESS != err ) {
                 opal_output(0, "Unable to extract peer %s nodeid from the modex.\n",
                             OMPI_NAME_PRINT(&(proc->super)));
@@ -863,20 +864,20 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* topo_module,
 #endif
 
             OBJ_CONSTRUCT(&kv, opal_value_t);
-            kv.key = strdup(OPAL_DSTORE_CPUSET);
+            kv.key = strdup(OPAL_PMIX_CPUSET);
             kv.type = OPAL_STRING;
             kv.data.string = strdup(set_as_string);
 
-            (void)opal_dstore.store(opal_dstore_internal, (opal_process_name_t*)ORTE_PROC_MY_NAME, &kv);
+            (void)opal_pmix.store_local((opal_process_name_t*)ORTE_PROC_MY_NAME, &kv);
             OBJ_DESTRUCT(&kv);
 
             locality = opal_hwloc_base_get_relative_locality(opal_hwloc_topology,
                                                              orte_process_info.cpuset,set_as_string);
             OBJ_CONSTRUCT(&kv, opal_value_t);
-            kv.key = strdup(OPAL_DSTORE_LOCALITY);
+            kv.key = strdup(OPAL_PMIX_LOCALITY);
             kv.type = OPAL_UINT16;
             kv.data.uint16 = locality;
-            (void)opal_dstore.store(opal_dstore_internal, (opal_process_name_t*)ORTE_PROC_MY_NAME, &kv);
+            (void)opal_pmix.store_local((opal_process_name_t*)ORTE_PROC_MY_NAME, &kv);
             OBJ_DESTRUCT(&kv);
 
             if( OMPI_SUCCESS != (err = ompi_comm_create(comm_old,
