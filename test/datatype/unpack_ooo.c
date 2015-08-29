@@ -5,6 +5,7 @@
  *                         reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -31,12 +32,12 @@ uint32_t remote_arch = 0xffffffff;
 struct foo_t {
     int i[3];
     double d[3];
-} foo = {}, *bar = NULL;
+} foo = {0}, *bar = NULL;
 
 struct pfoo_t {
     int i[2];
     double d[2];
-} pfoo = {}, *pbar = NULL;
+} pfoo = {0}, *pbar = NULL;
 
 static void print_hex(void* ptr, int count, int space)
 {
