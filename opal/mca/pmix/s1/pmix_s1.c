@@ -47,7 +47,7 @@ static int s1_publish(opal_pmix_data_range_t scope,
 static int s1_lookup(opal_pmix_data_range_t scope,
                      opal_list_t *data);
 static int s1_unpublish(opal_pmix_data_range_t scope, char **keys);
-static int s1_spawn(opal_list_t *apps, opal_jobid_t *jobid);
+static int s1_spawn(opal_list_t *jobinfo, opal_list_t *apps, opal_jobid_t *jobid);
 static int s1_job_connect(opal_list_t *procs);
 static int s1_job_disconnect(opal_list_t *procs);
 static int s1_store_local(const opal_process_name_t *proc,
@@ -452,7 +452,7 @@ static int s1_abort(int flag, const char msg[],
     return OPAL_SUCCESS;
 }
 
-static int s1_spawn(opal_list_t *apps, opal_jobid_t *jobid)
+static int s1_spawn(opal_list_t *jobinfo, opal_list_t *apps, opal_jobid_t *jobid)
 {
     /*
     int rc;

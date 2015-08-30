@@ -40,7 +40,7 @@ static int cray_fini(void);
 static int cray_initialized(void);
 static int cray_abort(int flat, const char *msg,
                       opal_list_t *procs);
-static int cray_spawn(opal_list_t *apps, opal_jobid_t *jobid);
+static int cray_spawn(opal_list_t *jobinfo, opal_list_t *apps, opal_jobid_t *jobid);
 static int cray_job_connect(opal_list_t *procs);
 static int cray_job_disconnect(opal_list_t *procs);
 static int cray_put(opal_pmix_scope_t scope, opal_value_t *kv);
@@ -387,7 +387,7 @@ static int cray_abort(int flag, const char *msg,
     return OPAL_SUCCESS;
 }
 
-static int cray_spawn(opal_list_t *apps, opal_jobid_t *jobid)
+static int cray_spawn(opal_list_t *jobinfo, opal_list_t *apps, opal_jobid_t *jobid)
 {
     return OPAL_ERR_NOT_IMPLEMENTED;
 }
