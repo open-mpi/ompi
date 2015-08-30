@@ -145,7 +145,9 @@ void orte_rml_base_open_channel(int fd, short flags, void *cbdata)
      // associate open channel request and the newly created channel object
     open_chan->channel = channel;
     type = &type_val;
-    orte_get_attribute( open_chan->qos_attributes, ORTE_QOS_TYPE, (void**)&type, OPAL_UINT8);
+    if (!orte_get_attribute( open_chan->qos_attributes, ORTE_QOS_TYPE, (void**)&type, OPAL_UINT8)) {
+      return;
+    }
     open_chan->channel->qos = (void*) orte_qos_get_module (open_chan->qos_attributes);
     OPAL_OUTPUT_VERBOSE((1, orte_rml_base_framework.framework_output,
                          "%s rml_open_channel type = %d to peer %s ",
@@ -343,7 +345,10 @@ void orte_rml_open_channel_recv_callback (int status,
     /* unpack attributes first */
     if ( ORTE_SUCCESS == unpack_channel_attributes( buffer, &qos_attributes)) {
         type = &type_val;
-        orte_get_attribute( &qos_attributes, ORTE_QOS_TYPE, (void**)&type, OPAL_UINT8);
+        if (!orte_get_attribute( &qos_attributes, ORTE_QOS_TYPE, (void**)&type, OPAL_UINT8)) {
+          OPAL_LIST_DESTRUCT(&qos_attributes);
+          return;
+        }
         OPAL_OUTPUT_VERBOSE((1, orte_rml_base_framework.framework_output,
                              "rml_open_channel_recv_callback type =%d",
                              type_val));
@@ -398,6 +403,7 @@ void orte_rml_open_channel_recv_callback (int status,
         //reply with error message
         send_open_channel_reply (peer, NULL, false);
     }
+    OPAL_LIST_DESTRUCT(&qos_attributes);
 }
 
 static int send_open_channel_reply (orte_process_name_t *peer,

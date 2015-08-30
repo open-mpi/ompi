@@ -74,6 +74,7 @@ static bool added_transport_keys=false;
 static bool added_num_procs = false;
 static bool added_app_ctx = false;
 static bool added_pmix_envs = false;
+static char *pmixenvars[4];
 
 static int fork_hnp(void);
 
@@ -319,7 +320,7 @@ static int rte_init(void)
         OBJ_RELEASE(kv);
     }
 #endif
-    
+
     /* use the std app init to complete the procedure */
     if (ORTE_SUCCESS != (rc = orte_ess_base_app_setup(true))) {
         ORTE_ERROR_LOG(rc);
@@ -415,7 +416,7 @@ static int fork_hnp(void)
     sigset_t sigs;
     int buffer_length, num_chars_read, chunk;
     char *orted_uri;
-    int rc;
+    int rc, i;
 
     /* A pipe is used to communicate between the parent and child to
        indicate whether the exec ultimately succeeded or failed.  The
@@ -556,12 +557,14 @@ static int fork_hnp(void)
         chunk = ORTE_URI_MSG_LGTH-1;
         num_chars_read = 0;
         orted_uri = (char*)malloc(buffer_length);
+        memset(orted_uri, 0, buffer_length);
 
         while (chunk == (rc = read(p[0], &orted_uri[num_chars_read], chunk))) {
             /* we read an entire buffer - better get more */
             num_chars_read += chunk;
+            orted_uri = realloc((void*)orted_uri, buffer_length+ORTE_URI_MSG_LGTH);
+            memset(&orted_uri[buffer_length], 0, ORTE_URI_MSG_LGTH);
             buffer_length += ORTE_URI_MSG_LGTH;
-            orted_uri = realloc((void*)orted_uri, buffer_length);
         }
         num_chars_read += rc;
 
@@ -612,10 +615,11 @@ static int fork_hnp(void)
             return ORTE_ERR_BAD_PARAM;
         }
         /* push each piece into the environment */
-        putenv(argv[0]);
-        putenv(argv[1]);
-        putenv(argv[2]);
-        putenv(argv[3]);
+        for (i=0; i < 4; i++) {
+            pmixenvars[i] = strdup(argv[i]);
+            putenv(pmixenvars[i]);
+        }
+        opal_argv_free(argv);
         added_pmix_envs = true;
 
         /* all done - report success */

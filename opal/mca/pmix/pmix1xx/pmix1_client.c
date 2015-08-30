@@ -581,7 +581,7 @@ int pmix1_spawn(opal_list_t *job_info, opal_list_t *apps, opal_jobid_t *jobid)
     pmix_info_t *pinfo = NULL;
     pmix_app_t *papps;
     size_t napps, n, m, ninfo = 0;
-    char nspace[PMIX_MAX_NSLEN];
+    char nspace[PMIX_MAX_NSLEN+1];
     opal_pmix_info_t *info;
     opal_pmix_app_t *app;
 
@@ -630,7 +630,7 @@ static void spcbfunc(pmix_status_t status,
 {
     pmix1_opcaddy_t *op = (pmix1_opcaddy_t*)cbdata;
     int rc;
-    opal_jobid_t jobid;
+    opal_jobid_t jobid=OPAL_JOBID_INVALID;
 
     rc = pmix1_convert_rc(status);
     if (PMIX_SUCCESS == status) {
@@ -855,11 +855,13 @@ int pmix1_resolve_peers(const char *nodename, opal_jobid_t jobid,
                 if (NULL != nspace) {
                     free(nspace);
                 }
+                PMIX_PROC_FREE(array, nprocs);
                 return rc;
             }
             nm->name.vpid = array[n].rank;
         }
     }
+    PMIX_PROC_FREE(array, nprocs);
 
     return rc;
 }
