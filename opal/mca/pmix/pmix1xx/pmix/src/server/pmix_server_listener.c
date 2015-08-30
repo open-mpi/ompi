@@ -415,12 +415,14 @@ pmix_status_t pmix_server_authenticate(int sd, int *out_rank, pmix_peer_t **peer
                         "connect-ack recvd from peer %s:%d",
                         nspace, rank);
 
-    /* check that this is from a matching version - for ABI
-     * compatibility, we only require that this match at the
-     * major and minor levels: not the release */
+    /* do not check the version - we only retain it at this
+     * time in case we need to check it at some future date.
+     * For now, our intent is to retain backward compatibility
+     * and so we will assume that all versions are compatible. */
     csize = strlen(nspace)+1+sizeof(int);
     version = (char*)(msg+csize);
     csize += strlen(version) + 1;  // position ourselves before modifiying version
+#if 0
     /* find the first '.' */
     ptr = strchr(version, '.');
     if (NULL != ptr) {
@@ -440,6 +442,7 @@ pmix_status_t pmix_server_authenticate(int sd, int *out_rank, pmix_peer_t **peer
 
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "connect-ack version from client matches ours");
+#endif
 
     /* see if we know this nspace */
     nptr = NULL;
