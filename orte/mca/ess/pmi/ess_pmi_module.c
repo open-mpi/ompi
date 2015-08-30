@@ -91,7 +91,7 @@ static int rte_init(void)
     size_t sz;
     int u32, *u32ptr;
     uint16_t u16, *u16ptr;
-    char **peers, **cpusets, *mycpuset;
+    char **peers=NULL, **cpusets=NULL, *mycpuset;
     opal_process_name_t name;
     size_t i;
 
@@ -326,6 +326,8 @@ static int rte_init(void)
         ret = opal_pmix.store_local(&name, kv);
         if (OPAL_SUCCESS != ret) {
             error = "local store of locality";
+            opal_argv_free(cpusets);
+            opal_argv_free(peers);
             goto error;
         }
         OBJ_RELEASE(kv);
@@ -374,11 +376,15 @@ static int rte_init(void)
         if (OPAL_SUCCESS != ret) {
             ORTE_ERROR_LOG(ret);
             error = "pmix store local";
+            opal_argv_free(cpusets);
+            opal_argv_free(peers);
             goto error;
         }
         OBJ_RELEASE(kv);
     }
 #endif
+    opal_argv_free(peers);
+    opal_argv_free(cpusets);
 
     /* we don't need to force the routed system to pick the
      * "direct" component as that should happen automatically

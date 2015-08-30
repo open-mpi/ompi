@@ -63,8 +63,8 @@ static void opcbfunc(int status, void *cbdata)
             opal_list_remove_item(lt, &k1->super);
             OBJ_RELEASE(k1);
         }
+        OBJ_RELEASE(lt);
     }
-    OBJ_RELEASE(lt);
 }
 
 /* stuff proc attributes for sending back to a proc */

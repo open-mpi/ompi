@@ -443,13 +443,15 @@ static void pmix_server_dmdx_resp(int status, orte_process_name_t* sender,
     /* check the request out of the tracking hotel */
     opal_hotel_checkout_and_return_occupant(&orte_pmix_server_globals.reqs, room_num, (void**)&req);
     /* return the returned data to the requestor */
-    if (NULL != req && NULL != req->mdxcbfunc) {
-        req->mdxcbfunc(ret, (char*)data, ndata, req->cbdata, relcbfunc, data);
+    if (NULL != req) {
+        if (NULL != req->mdxcbfunc) {
+            req->mdxcbfunc(ret, (char*)data, ndata, req->cbdata, relcbfunc, data);
+        }
+        OBJ_RELEASE(req);
     }
     if (NULL != data) {
         free(data);
     }
-    OBJ_RELEASE(req);
 }
 
 

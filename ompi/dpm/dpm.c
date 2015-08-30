@@ -167,6 +167,9 @@ int ompi_dpm_connect_accept(ompi_communicator_t *comm, int root,
         for (i=0; i < size; i++) {
             rc = opal_convert_process_name_to_string(&nstring, &(proc_list[i]->super.proc_name));
             if (OPAL_SUCCESS != rc) {
+                if (!dense) {
+                    free(proc_list);
+                }
                 return OMPI_ERROR;
             }
             opal_argv_append_nosize(&members, nstring);

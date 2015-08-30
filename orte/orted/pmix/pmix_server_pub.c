@@ -455,14 +455,16 @@ void pmix_server_keyval_client(int status, orte_process_name_t* sender,
     opal_hotel_checkout_and_return_occupant(&orte_pmix_server_globals.reqs, room_num, (void**)&req);
 
   release:
-    /* pass down the response */
-    if (NULL != req->opcbfunc) {
-        req->opcbfunc(ret, req->cbdata);
-    } else {
-        req->lkcbfunc(ret, info, req->cbdata);
-    }
+    if (NULL != req) {
+        /* pass down the response */
+        if (NULL != req->opcbfunc) {
+            req->opcbfunc(ret, req->cbdata);
+        } else {
+            req->lkcbfunc(ret, info, req->cbdata);
+        }
 
-    /* cleanup */
-    OBJ_RELEASE(req);
+        /* cleanup */
+        OBJ_RELEASE(req);
+    }
 }
 
