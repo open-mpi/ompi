@@ -14,7 +14,7 @@
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2012-2013 Inria.  All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -100,8 +100,7 @@ int MPI_Cart_rank(MPI_Comm comm, const int coords[], int *rank)
     }
     OPAL_CR_ENTER_LIBRARY();
 
-    /* XXX -- CONST -- do not cast away const -- update mca/topo */
-    err = comm->c_topo->topo.cart.cart_rank(comm, (int *) coords, rank);
+    err = comm->c_topo->topo.cart.cart_rank(comm, coords, rank);
     OPAL_CR_EXIT_LIBRARY();
 
     OMPI_ERRHANDLER_RETURN(err, comm, err, FUNC_NAME);

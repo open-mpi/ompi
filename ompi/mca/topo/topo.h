@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2012-2013 Inria.  All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
@@ -155,8 +155,8 @@ typedef int (*mca_topo_base_module_cart_create_fn_t)
                     (mca_topo_base_module_t *topo_module,
                      ompi_communicator_t* old_comm,
                      int ndims,
-                     int *dims,
-                     int *periods,
+                     const int *dims,
+                     const int *periods,
                      bool reorder,
                      ompi_communicator_t** comm_topo);
 
@@ -177,14 +177,14 @@ typedef int (*mca_topo_base_module_cartdim_get_fn_t)
 typedef int (*mca_topo_base_module_cart_map_fn_t)
                     (struct ompi_communicator_t *comm,
                      int ndims,
-                     int *dims,
-                     int *periods,
+                     const int *dims,
+                     const int *periods,
                      int *newrank);
 
 /* Back end for MPI_CART_RANK */
 typedef int (*mca_topo_base_module_cart_rank_fn_t)
                     (struct ompi_communicator_t *comm,
-                     int *coords,
+                     const int *coords,
                      int *rank);
 
 /* Back end for MPI_CART_SHIFT */
@@ -198,7 +198,7 @@ typedef int (*mca_topo_base_module_cart_shift_fn_t)
 /* Back end for MPI_CART_SUB */
 typedef int (*mca_topo_base_module_cart_sub_fn_t)
                     (struct ompi_communicator_t *comm,
-                     int *remain_dims,
+                     const int *remain_dims,
                      struct ompi_communicator_t ** new_comm);
 
 /* Back end for MPI_GRAPH_CREATE */
@@ -206,8 +206,8 @@ typedef int (*mca_topo_base_module_graph_create_fn_t)
                     (mca_topo_base_module_t *topo_module,
                      ompi_communicator_t* old_comm,
                      int nnodes,
-                     int *index,
-                     int *edges,
+                     const int *index,
+                     const int *edges,
                      bool reorder,
                      ompi_communicator_t** new_comm);
 
@@ -223,8 +223,8 @@ typedef int (*mca_topo_base_module_graph_get_fn_t)
 typedef int (*mca_topo_base_module_graph_map_fn_t)
                     (struct ompi_communicator_t *comm,
                      int nnodes,
-                     int *index,
-                     int *edges,
+                     const int *index,
+                     const int *edges,
                      int *newrank);
 
 /* Back end for MPI_GRAPHDIMS_GET */
@@ -250,8 +250,8 @@ typedef int (*mca_topo_base_module_graph_neighbors_count_fn_t)
 typedef int (*mca_topo_base_module_dist_graph_create_fn_t)
                     (struct mca_topo_base_module_t* module,
                      struct ompi_communicator_t *old_comm,
-                     int n, int nodes[],
-                     int degrees[], int targets[], int weights[],
+                     int n, const int nodes[],
+                     const int degrees[], const int targets[], const int weights[],
                      struct ompi_info_t *info, int reorder,
                      struct ompi_communicator_t **new_comm);
 
@@ -259,11 +259,11 @@ typedef int (*mca_topo_base_module_dist_graph_create_fn_t)
 typedef int (*mca_topo_base_module_dist_graph_create_adjacent_fn_t)
                     (struct mca_topo_base_module_t* module,
                      ompi_communicator_t *comm_old,
-                     int indegree, int sources[],
-                     int sourceweights[],
+                     int indegree, const int sources[],
+                     const int sourceweights[],
                      int outdegree,
-                     int destinations[],
-                     int destweights[],
+                     const int destinations[],
+                     const int destweights[],
                      struct ompi_info_t *info, int reorder,
                      ompi_communicator_t **comm_dist_graph);
 

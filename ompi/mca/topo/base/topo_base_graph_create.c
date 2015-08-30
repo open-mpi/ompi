@@ -43,8 +43,8 @@
 int mca_topo_base_graph_create(mca_topo_base_module_t *topo,
                                ompi_communicator_t* old_comm,
                                int nnodes,
-                               int *index,
-                               int *edges,
+                               const int *index,
+                               const int *edges,
                                bool reorder,
                                ompi_communicator_t** comm_topo)
 {

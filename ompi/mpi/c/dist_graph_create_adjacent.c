@@ -10,6 +10,8 @@
  * Copyright (c) 2013-2014 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2012-2013 Inria.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  *
  * Author(s): Torsten Hoefler
  *
@@ -94,10 +96,9 @@ int MPI_Dist_graph_create_adjacent(MPI_Comm comm_old,
         return OMPI_ERRHANDLER_INVOKE(comm_old, err, FUNC_NAME);
     }
 
-    /* XXX -- CONST -- do not cast away const -- update mca/topo */
     err = topo->topo.dist_graph.dist_graph_create_adjacent(topo, comm_old, indegree,
-                                                           (int *) sources, (int *) sourceweights, outdegree,
-                                                           (int *) destinations, (int *) destweights, info,
+                                                           sources, sourceweights, outdegree,
+                                                           destinations, destweights, info,
                                                            reorder, comm_dist_graph);
     OMPI_ERRHANDLER_RETURN(err, comm_old, err, FUNC_NAME);
 }
