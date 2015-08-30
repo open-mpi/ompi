@@ -1592,19 +1592,19 @@ static void _mdxcbfunc(int sd, short argc, void *cbdata)
         pmix_collect_t ctype = (pmix_collect_t)byte;
 
         // Check that this blob was accumulated with the same data collection setting
-        if( ctype != tracker->collect_type ){
+        if (ctype != tracker->collect_type) {
             rc = PMIX_ERR_INVALID_ARG;
             goto finish_collective;
         }
 
         // Skip the rest of the iteration if there is no data
-        if( PMIX_COLLECT_YES != tracker->collect_type){
+        if (PMIX_COLLECT_YES != tracker->collect_type) {
             continue;
         }
 
         // Extract the node-wise blob containing rank data
         cnt = 1;
-        if( PMIX_SUCCESS != (rc = pmix_bfrop.unpack(&xfer, &databuf, &cnt, PMIX_BUFFER) ) ){
+        if (PMIX_SUCCESS != (rc = pmix_bfrop.unpack(&xfer, &databuf, &cnt, PMIX_BUFFER))) {
             rc = PMIX_ERR_DATA_VALUE_NOT_FOUND;
             goto finish_collective;
         }
