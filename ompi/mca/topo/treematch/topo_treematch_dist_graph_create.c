@@ -5,6 +5,8 @@
  * Copyright (c) 2011-2015 INRIA.  All rights reserved.
  * Copyright (c) 2012-2015 Bordeaux Poytechnic Institute
  * Copyright (c) 2015      Intel, Inc. All rights reserved
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -97,9 +99,9 @@ static int check_oversubscribing(int rank,
 
 int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* topo_module,
                                          ompi_communicator_t *comm_old,
-                                         int n, int nodes[],
-                                         int degrees[], int targets[],
-                                         int weights[],
+                                         int n, const int nodes[],
+                                         const int degrees[], const int targets[],
+                                         const int weights[],
                                          struct ompi_info_t *info, int reorder,
                                          ompi_communicator_t **newcomm)
 {

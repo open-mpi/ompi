@@ -43,14 +43,14 @@
  * @retval MPI_ERR_COMM
  */
 int mca_topo_base_cart_sub (ompi_communicator_t* comm,
-                            int *remain_dims,
+                            const int *remain_dims,
                             ompi_communicator_t** new_comm)
 {
     struct ompi_communicator_t *temp_comm;
     mca_topo_base_comm_cart_2_2_0_t *old_cart;
     int errcode, colour, key, colfactor, keyfactor;
     int ndim, dim, i;
-    int *d, *dorig = NULL, *dold, *c, *r, *p, *porig = NULL, *pold;
+    int *d, *dorig = NULL, *dold, *c, *p, *porig = NULL, *pold;
     mca_topo_base_module_t* topo;
     mca_topo_base_comm_cart_2_2_0_t* cart;
 
@@ -67,11 +67,10 @@ int mca_topo_base_cart_sub (ompi_communicator_t* comm,
     i = old_cart->ndims - 1;
     d = old_cart->dims + i;
     c = comm->c_topo->mtc.cart->coords + i;
-    r = remain_dims + i;
 
-    for (; i >= 0; --i, --d, --c, --r) {
+    for (; i >= 0; --i, --d, --c) {
         dim = *d;
-        if (*r == 0) {
+        if (remain_dims[i] == 0) {
             colour += colfactor * (*c);
             colfactor *= dim;
         } else {
@@ -110,9 +109,8 @@ int mca_topo_base_cart_sub (ompi_communicator_t* comm,
             /* Copy the periods */
             porig = p = (int*)malloc(ndim * sizeof(int));
             pold = old_cart->periods;
-            r = remain_dims;
-            for (i = 0; i < old_cart->ndims; ++i, ++dold, ++pold, ++r) {
-                if (*r) {
+            for (i = 0; i < old_cart->ndims; ++i, ++dold, ++pold) {
+                if (remain_dims[i]) {
                     *d++ = *dold;
                     *p++ = *pold;
                 }

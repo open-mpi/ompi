@@ -4,6 +4,8 @@
  *                         reserved.
  * Copyright (c) 2011-2015 INRIA.  All rights reserved.
  * Copyright (c) 2011-2015 Bordeaux Polytechnic Institute
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -64,9 +66,9 @@ OBJ_CLASS_DECLARATION(mca_topo_treematch_module_t);
 
 int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* module,
                                          ompi_communicator_t *comm_old,
-                                         int n, int nodes[],
-                                         int degrees[], int targets[],
-                                         int weights[],
+                                         int n, const int nodes[],
+                                         const int degrees[], const int targets[],
+                                         const int weights[],
                                          struct ompi_info_t *info, int reorder,
                                          ompi_communicator_t **newcomm);
 /*
