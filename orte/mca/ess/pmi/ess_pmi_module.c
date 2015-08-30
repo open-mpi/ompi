@@ -91,7 +91,7 @@ static int rte_init(void)
     size_t sz;
     int u32, *u32ptr;
     uint16_t u16, *u16ptr;
-    char **peers=NULL, **cpusets=NULL, *mycpuset;
+    char **peers=NULL, *mycpuset;
     opal_process_name_t name;
     size_t i;
 
@@ -230,6 +230,11 @@ static int rte_init(void)
             goto error;
         }
         free(val);
+        /* filter the cpus thru any default cpu set */
+        if (OPAL_SUCCESS != (ret = opal_hwloc_base_filter_cpus(opal_hwloc_topology))) {
+            error = "filtering topology";
+            goto error;
+        }
     } else {
         /* it wasn't passed down to us, so go get it */
         if (OPAL_SUCCESS != (ret = opal_hwloc_base_get_topology())) {
@@ -256,32 +261,16 @@ static int rte_init(void)
     /* get our local peers */
     if (0 < orte_process_info.num_local_peers) {
         /* retrieve the local peers */
-        OPAL_MODEX_RECV_VALUE(ret, OPAL_PMIX_LOCAL_PEERS, NULL, &val, OPAL_STRING);
+        OPAL_MODEX_RECV_VALUE(ret, OPAL_PMIX_LOCAL_PEERS,
+                              ORTE_PROC_MY_NAME, &val, OPAL_STRING);
         if (OPAL_SUCCESS == ret && NULL != val) {
             peers = opal_argv_split(val, ',');
             free(val);
-            /* and their cpusets */
-            OPAL_MODEX_RECV_VALUE(ret, OPAL_PMIX_LOCAL_CPUSETS, NULL, &val, OPAL_STRING);
-            if (OPAL_SUCCESS == ret && NULL != val) {
-                cpusets = opal_argv_split(val, ':');
-                free(val);
-                if (opal_argv_count(peers) != opal_argv_count(cpusets)) {
-                    ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
-                    opal_argv_free(peers);
-                    opal_argv_free(cpusets);
-                    error = "mismatch #local peers and #cpusets";
-                    goto error;
-                }
-            } else {
-                cpusets = NULL;
-            }
         } else {
             peers = NULL;
-            cpusets = NULL;
         }
     } else {
         peers = NULL;
-        cpusets = NULL;
     }
 
     /* get our cpuset */
@@ -301,7 +290,10 @@ static int rte_init(void)
         kv->key = strdup(OPAL_PMIX_LOCALITY);
         kv->type = OPAL_UINT16;
         name.vpid = sz;
-        if (NULL == peers) {
+        if (sz == ORTE_PROC_MY_NAME->vpid) {
+            /* we are fully local to ourselves */
+            u16 = OPAL_PROC_ALL_LOCAL;
+        } else if (NULL == peers) {
             /* nobody is local to us */
             u16 = OPAL_PROC_NON_LOCAL;
         } else {
@@ -313,30 +305,44 @@ static int rte_init(void)
             if (NULL == peers[i]) {
                 /* not a local peer */
                 u16 = OPAL_PROC_NON_LOCAL;
-            } else if (NULL == mycpuset || NULL == cpusets || NULL == cpusets[i]) {
+            } else if (NULL == mycpuset) {
+                /* all we can say is that it shares our node */
                 u16 = OPAL_PROC_ON_CLUSTER | OPAL_PROC_ON_CU | OPAL_PROC_ON_NODE;
-            } else if (NULL != cpusets && NULL != cpusets[i]) {
-                u16 = opal_hwloc_base_get_relative_locality(opal_hwloc_topology,
-                                                            mycpuset, cpusets[i]);
             } else {
-                u16 = OPAL_PROC_ON_CLUSTER | OPAL_PROC_ON_CU | OPAL_PROC_ON_NODE;
+                /* attempt to get their cpuset */
+                OPAL_MODEX_RECV_VALUE(ret, OPAL_PMIX_CPUSET, &name, &val, OPAL_STRING);
+                if (OPAL_SUCCESS == ret && NULL != val) {
+                    /* we have it, so compute the locality */
+                    u16 = opal_hwloc_base_get_relative_locality(opal_hwloc_topology,
+                                                                mycpuset, val);
+                    free(val);
+                } else {
+                    /* all we can say is that it shares our node */
+                    u16 = OPAL_PROC_ON_CLUSTER | OPAL_PROC_ON_CU | OPAL_PROC_ON_NODE;
+                }
             }
         }
         kv->data.uint16 = u16;
         ret = opal_pmix.store_local(&name, kv);
         if (OPAL_SUCCESS != ret) {
             error = "local store of locality";
-            opal_argv_free(cpusets);
+            if (NULL != mycpuset) {
+                free(mycpuset);
+            }
             opal_argv_free(peers);
             goto error;
         }
         OBJ_RELEASE(kv);
     }
+    if (NULL != mycpuset){
+        free(mycpuset);
+    }
 #else
     /* get our local peers */
     if (0 < orte_process_info.num_local_peers) {
         /* retrieve the local peers */
-        OPAL_MODEX_RECV_VALUE(ret, OPAL_PMIX_LOCAL_PEERS, NULL, &val, OPAL_STRING);
+        OPAL_MODEX_RECV_VALUE(ret, OPAL_PMIX_LOCAL_PEERS,
+                              ORTE_PROC_MY_NAME, &val, OPAL_STRING);
         if (OPAL_SUCCESS == ret && NULL != val) {
             peers = opal_argv_split(val, ',');
             free(val);
@@ -353,8 +359,11 @@ static int rte_init(void)
         kv->key = strdup(OPAL_PMIX_LOCALITY);
         kv->type = OPAL_UINT16;
         name.vpid = sz;
-        if (NULL == peers) {
-                /* nobody is local to us */
+        if (sz == ORTE_PROC_MY_NAME->vpid) {
+            /* we are fully local to ourselves */
+            u16 = OPAL_PROC_ALL_LOCAL;
+        } else if (NULL == peers) {
+            /* nobody is local to us */
             u16 = OPAL_PROC_NON_LOCAL;
         } else {
             for (i=0; NULL != peers[i]; i++) {
@@ -370,8 +379,8 @@ static int rte_init(void)
                 u16 = OPAL_PROC_ON_CLUSTER | OPAL_PROC_ON_CU | OPAL_PROC_ON_NODE;
             }
         }
-            /* store this data internally - not to be pushed outside of
-             * ourselves as it only has meaning relative to us */
+        /* store this data internally - not to be pushed outside of
+         * ourselves as it only has meaning relative to us */
         ret = opal_pmix.store_local(&name, kv);
         if (OPAL_SUCCESS != ret) {
             ORTE_ERROR_LOG(ret);
@@ -384,7 +393,6 @@ static int rte_init(void)
     }
 #endif
     opal_argv_free(peers);
-    opal_argv_free(cpusets);
 
     /* we don't need to force the routed system to pick the
      * "direct" component as that should happen automatically

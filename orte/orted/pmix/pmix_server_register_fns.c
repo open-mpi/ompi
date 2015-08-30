@@ -255,10 +255,7 @@ int orte_pmix_server_register_nspace(orte_job_t *jdata)
                 kv->key = strdup(OPAL_PMIX_CPUSET);
                 kv->type = OPAL_STRING;
                 if (orte_get_attribute(&pptr->attributes, ORTE_PROC_CPU_BITMAP, (void**)&tmp, OPAL_STRING)) {
-                    (void)asprintf(&kv->data.string, "%s:%s", ORTE_NAME_PRINT(&pptr->name), tmp);
-                    free(tmp);
-                } else {
-                    (void)asprintf(&kv->data.string, "%s", ORTE_NAME_PRINT(&pptr->name));
+                    kv->data.string = tmp;
                 }
                 opal_list_append(info, &kv->super);
                 /* go ahead and register this client */
