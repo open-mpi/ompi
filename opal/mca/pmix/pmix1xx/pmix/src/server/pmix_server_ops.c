@@ -89,7 +89,6 @@ pmix_status_t _satisfy_local_req(pmix_nspace_t *nptr, pmix_rank_info_t *info,
     char *data;
     size_t sz;
 
-
     /* check for the local/global data - data committed to remote
      * scope does not get returned to a local proc
      * get any local/global contribution - note that there
@@ -208,22 +207,22 @@ pmix_status_t pmix_pending_request(pmix_nspace_t *nptr, int rank,
      * pmix_pending_localy_fin would be called to resolve this. Just add the
      * request for now.
      */
-    if( NULL == lcd ){
-    lcd = PMIX_NEW(pmix_dmdx_local_t);
-    if( NULL == lcd ){
-        PMIX_INFO_FREE(info, ninfo);
-        return PMIX_ERR_NOMEM;
-    }
-    strncpy(lcd->proc.nspace, nptr->nspace, PMIX_MAX_NSLEN);
-    lcd->proc.rank = rank;
-    lcd->info = info;
-    lcd->ninfo = ninfo;
-    PMIX_CONSTRUCT(&lcd->loc_reqs, pmix_list_t);
-    pmix_list_append(&pmix_server_globals.local_reqs, &lcd->super);
+    if (NULL == lcd) {
+        lcd = PMIX_NEW(pmix_dmdx_local_t);
+        if (NULL == lcd){
+            PMIX_INFO_FREE(info, ninfo);
+            return PMIX_ERR_NOMEM;
+        }
+        strncpy(lcd->proc.nspace, nptr->nspace, PMIX_MAX_NSLEN);
+        lcd->proc.rank = rank;
+        lcd->info = info;
+        lcd->ninfo = ninfo;
+        PMIX_CONSTRUCT(&lcd->loc_reqs, pmix_list_t);
+        pmix_list_append(&pmix_server_globals.local_reqs, &lcd->super);
 
-    /* check & send request if need/possible */
-        if( nptr->server->all_registered && NULL == info ){
-            if( NULL != pmix_host_server.direct_modex ){
+        /* check & send request if need/possible */
+        if (nptr->server->all_registered && NULL == info) {
+            if (NULL != pmix_host_server.direct_modex) {
                 pmix_host_server.direct_modex(&lcd->proc, info, ninfo, dmdx_cbfunc, lcd);
             } else {
                 /* if we don't have direct modex feature, just respond with "not found" */
@@ -418,7 +417,7 @@ pmix_status_t pmix_server_commit(pmix_peer_t *peer, pmix_buffer_t *buf)
     cnt = 1;
     while (PMIX_SUCCESS == (rc = pmix_bfrop.unpack(buf, &scope, &cnt, PMIX_SCOPE))) {
         if (PMIX_LOCAL == scope) {
-           ht = &nptr->server->mylocal;
+            ht = &nptr->server->mylocal;
         } else if (PMIX_REMOTE == scope) {
             ht = &nptr->server->myremote;
         } else {
@@ -684,6 +683,7 @@ pmix_status_t pmix_server_fence(pmix_server_caddy_t *cd,
                         "recvd FENCE");
 
     if (NULL == pmix_host_server.fence_nb) {
+        PMIX_ERROR_LOG(PMIX_ERR_NOT_SUPPORTED);
         return PMIX_ERR_NOT_SUPPORTED;
     }
 
@@ -733,7 +733,7 @@ pmix_status_t pmix_server_fence(pmix_server_caddy_t *cd,
     /* find/create the local tracker for this operation */
     if (NULL == (trk = get_tracker(procs, nprocs, PMIX_FENCENB_CMD))) {
         /* If no tracker was found - create and initialize it once */
-        if( NULL == (trk = new_tracker(procs, nprocs, PMIX_FENCENB_CMD))) {
+        if (NULL == (trk = new_tracker(procs, nprocs, PMIX_FENCENB_CMD))) {
             /* only if a bozo error occurs */
             PMIX_ERROR_LOG(PMIX_ERROR);
             /* DO NOT HANG */
@@ -746,20 +746,20 @@ pmix_status_t pmix_server_fence(pmix_server_caddy_t *cd,
         trk->type = PMIX_FENCENB_CMD;
         trk->modexcbfunc = modexcbfunc;
        /* mark if they want the data back */
-        if (0 == collect_data) {
-            trk->collect_type = PMIX_COLLECT_NO;
-        } else {
+        if (collect_data) {
             trk->collect_type = PMIX_COLLECT_YES;
+        } else {
+            trk->collect_type = PMIX_COLLECT_NO;
         }
     } else {
-        switch ( trk->collect_type ) {
+        switch (trk->collect_type) {
         case PMIX_COLLECT_NO:
-            if( collect_data ){
+            if (collect_data) {
                 trk->collect_type = PMIX_COLLECT_INVALID;
             }
             break;
         case PMIX_COLLECT_YES:
-            if( !collect_data ){
+            if (!collect_data) {
                 trk->collect_type = PMIX_COLLECT_INVALID;
             }
             break;
@@ -804,7 +804,7 @@ pmix_status_t pmix_server_fence(pmix_server_caddy_t *cd,
         unsigned char tmp = (unsigned char)trk->collect_type;
         pmix_bfrop.pack(&bucket, &tmp, 1, PMIX_BYTE);
 
-        if( PMIX_COLLECT_YES == trk->collect_type) {
+        if (PMIX_COLLECT_YES == trk->collect_type) {
             pmix_buffer_t databuf;
             PMIX_CONSTRUCT(&databuf, pmix_buffer_t);
             pmix_output_verbose(2, pmix_globals.debug_output,
