@@ -39,7 +39,7 @@ AC_DEFUN([_PMIX_HWLOC_EMBEDDED_MODE],[
     AC_MSG_CHECKING([for hwloc])
     AC_MSG_RESULT([assumed available (embedded mode)])
 
-    PMIX_HWLOC_HEADER=$with_hwloc_header
+    PMIX_HWLOC_HEADER="$with_hwloc_header"
     PMIX_HWLOC_CPPFLAGS=
     PMIX_HWLOC_LIB=
     PMIX_HWLOC_LDFLAGS=

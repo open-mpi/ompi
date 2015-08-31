@@ -33,7 +33,7 @@
 #endif
 
 
-#if PMIX_COMPILE_TIMING
+#if PMIX_ENABLE_TIMING
 
 #include "src/class/pmix_pointer_array.h"
 #include "src/class/pmix_list.h"

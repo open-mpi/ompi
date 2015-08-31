@@ -39,7 +39,7 @@ static void notification_fn(pmix_status_t status,
                             pmix_proc_t procs[], size_t nprocs,
                             pmix_info_t info[], size_t ninfo)
 {
-    pmix_output(0, "Client %s:%d NOTIFIED with status %d", myproc.nspace, myproc.rank, status);
+    fprintf(stderr, "Client %s:%d NOTIFIED with status %d\n", myproc.nspace, myproc.rank, status);
     completed = true;
 }
 
@@ -50,41 +50,41 @@ int main(int argc, char **argv)
     pmix_value_t *val = &value;
     pmix_proc_t proc;
     uint32_t nprocs;
-    
+
     /* init us */
     if (PMIX_SUCCESS != (rc = PMIx_Init(&myproc))) {
-        pmix_output(0, "Client ns %s rank %d: PMIx_Init failed: %d", myproc.nspace, myproc.rank, rc);
+        fprintf(stderr, "Client ns %s rank %d: PMIx_Init failed: %d\n", myproc.nspace, myproc.rank, rc);
         exit(0);
     }
-    pmix_output(0, "Client ns %s rank %d: Running", myproc.nspace, myproc.rank);
+    fprintf(stderr, "Client ns %s rank %d: Running\n", myproc.nspace, myproc.rank);
 
     /* get our universe size */
     if (PMIX_SUCCESS != (rc = PMIx_Get(&myproc, PMIX_UNIV_SIZE, NULL, 0, &val))) {
-        pmix_output(0, "Client ns %s rank %d: PMIx_Get universe size failed: %d", myproc.nspace, myproc.rank, rc);
+        fprintf(stderr, "Client ns %s rank %d: PMIx_Get universe size failed: %d\n", myproc.nspace, myproc.rank, rc);
         goto done;
     }
     nprocs = val->data.uint32;
     PMIX_VALUE_RELEASE(val);
-    pmix_output(0, "Client %s:%d universe size %d", myproc.nspace, myproc.rank, nprocs);
+    fprintf(stderr, "Client %s:%d universe size %d\n", myproc.nspace, myproc.rank, nprocs);
     completed = false;
-    
+
     /* register our errhandler */
     PMIx_Register_errhandler(NULL, 0, notification_fn);
-    
+
     /* call fence to sync */
     PMIX_PROC_CONSTRUCT(&proc);
     (void)strncpy(proc.nspace, myproc.nspace, PMIX_MAX_NSLEN);
     proc.rank = PMIX_RANK_WILDCARD;
     if (PMIX_SUCCESS != (rc = PMIx_Fence(&proc, 1, NULL, 0))) {
-        pmix_output(0, "Client ns %s rank %d: PMIx_Fence failed: %d", myproc.nspace, myproc.rank, rc);
+        fprintf(stderr, "Client ns %s rank %d: PMIx_Fence failed: %d\n", myproc.nspace, myproc.rank, rc);
         goto done;
     }
-    
+
     /* rank=0 calls abort */
     if (0 == myproc.rank) {
         PMIx_Abort(PMIX_ERR_OUT_OF_RESOURCE, "Eat rocks",
                    &proc, 1);
-        pmix_output(0, "Client ns %s rank %d: Abort called", myproc.nspace, myproc.rank);
+        fprintf(stderr, "Client ns %s rank %d: Abort called\n", myproc.nspace, myproc.rank);
     }
     /* everyone simply waits */
     while (!completed) {
@@ -96,9 +96,9 @@ int main(int argc, char **argv)
 
  done:
     /* finalize us */
-    pmix_output(0, "Client ns %s rank %d: Finalizing", myproc.nspace, myproc.rank);
+    fprintf(stderr, "Client ns %s rank %d: Finalizing\n", myproc.nspace, myproc.rank);
     PMIx_Deregister_errhandler();
-    
+
     if (PMIX_SUCCESS != (rc = PMIx_Finalize())) {
         fprintf(stderr, "Client ns %s rank %d:PMIx_Finalize failed: %d\n", myproc.nspace, myproc.rank, rc);
     } else {

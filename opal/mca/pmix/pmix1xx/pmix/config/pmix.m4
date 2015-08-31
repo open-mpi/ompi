@@ -146,7 +146,6 @@ AC_DEFUN([PMIX_SETUP_CORE],[
     ##################################
     # Does the compiler support "ident"-like constructs?
     PMIX_CHECK_IDENT([CC], [CFLAGS], [c], [C])
-    PMIX_SETUP_CC
 
     #
     # Check for some types
@@ -192,6 +191,31 @@ AC_DEFUN([PMIX_SETUP_CORE],[
     AC_CHECK_SIZEOF(wchar_t)
 
     AC_CHECK_SIZEOF(pid_t)
+
+    #
+    # Check for type alignments
+    #
+
+    PMIX_C_GET_ALIGNMENT(bool, PMIX_ALIGNMENT_BOOL)
+    PMIX_C_GET_ALIGNMENT(int8_t, PMIX_ALIGNMENT_INT8)
+    PMIX_C_GET_ALIGNMENT(int16_t, PMIX_ALIGNMENT_INT16)
+    PMIX_C_GET_ALIGNMENT(int32_t, PMIX_ALIGNMENT_INT32)
+    PMIX_C_GET_ALIGNMENT(int64_t, PMIX_ALIGNMENT_INT64)
+    PMIX_C_GET_ALIGNMENT(char, PMIX_ALIGNMENT_CHAR)
+    PMIX_C_GET_ALIGNMENT(short, PMIX_ALIGNMENT_SHORT)
+    PMIX_C_GET_ALIGNMENT(wchar_t, PMIX_ALIGNMENT_WCHAR)
+    PMIX_C_GET_ALIGNMENT(int, PMIX_ALIGNMENT_INT)
+    PMIX_C_GET_ALIGNMENT(long, PMIX_ALIGNMENT_LONG)
+    if test "$ac_cv_type_long_long" = yes; then
+        PMIX_C_GET_ALIGNMENT(long long, PMIX_ALIGNMENT_LONG_LONG)
+    fi
+    PMIX_C_GET_ALIGNMENT(float, PMIX_ALIGNMENT_FLOAT)
+    PMIX_C_GET_ALIGNMENT(double, PMIX_ALIGNMENT_DOUBLE)
+    if test "$ac_cv_type_long_double" = yes; then
+        PMIX_C_GET_ALIGNMENT(long double, PMIX_ALIGNMENT_LONG_DOUBLE)
+    fi
+    PMIX_C_GET_ALIGNMENT(void *, PMIX_ALIGNMENT_VOID_P)
+    PMIX_C_GET_ALIGNMENT(size_t, PMIX_ALIGNMENT_SIZE_T)
 
 
     #
@@ -265,18 +289,18 @@ AC_DEFUN([PMIX_SETUP_CORE],[
     pmix_show_title "Header file tests"
 
     AC_CHECK_HEADERS([arpa/inet.h \
-                               fcntl.h inttypes.h libgen.h \
-                               netinet/in.h \
-                               stdint.h stddef.h \
-                               stdlib.h string.h strings.h \
-                               sys/param.h \
-                               sys/select.h sys/socket.h \
-                               stdarg.h sys/stat.h sys/time.h \
-                               sys/types.h sys/un.h sys/uio.h net/uio.h \
-                               sys/wait.h syslog.h \
-                               time.h unistd.h \
-                               crt_externs.h signal.h \
-                               ioLib.h sockLib.h hostLib.h limits.h])
+                      fcntl.h inttypes.h libgen.h \
+                      netinet/in.h \
+                      stdint.h stddef.h \
+                      stdlib.h string.h strings.h \
+                      sys/param.h \
+                      sys/select.h sys/socket.h \
+                      stdarg.h sys/stat.h sys/time.h \
+                      sys/types.h sys/un.h sys/uio.h net/uio.h \
+                      sys/wait.h syslog.h \
+                      time.h unistd.h \
+                      crt_externs.h signal.h \
+                      ioLib.h sockLib.h hostLib.h limits.h])
 
     # Note that sometimes we have <stdbool.h>, but it doesn't work (e.g.,
     # have both Portland and GNU installed; using pgcc will find GNU's
@@ -547,7 +571,7 @@ AC_DEFUN([PMIX_SETUP_CORE],[
     # final compiler config
     ############################################################################
 
-    pmix_show_subtitle "Compiler flags"
+    pmix_show_subtitle "Set path-related compiler flags"
 
     #
     # This is needed for VPATH builds, so that it will -I the appropriate
@@ -568,14 +592,6 @@ AC_DEFUN([PMIX_SETUP_CORE],[
     else
         CPPFLAGS='-I$(PMIX_top_srcdir) -I$(PMIX_top_srcdir)/src -I$(PMIX_top_srcdir)/include'" $CPPFLAGS"
     fi
-
-    #
-    # Delayed the substitution of CFLAGS and CXXFLAGS until now because
-    # they may have been modified throughout the course of this script.
-    #
-
-    AC_SUBST(CFLAGS)
-    AC_SUBST(CPPFLAGS)
 
     # pmixdatadir, pmixlibdir, and pmixinclude are essentially the same as
     # pkg*dir, but will always be */pmix.
@@ -639,7 +655,7 @@ else
     WANT_PICKY_COMPILER=0
 fi
 #################### Early development override ####################
-if test "$WANT_PICKY_COMPILER" = "0" -a -z "$enable_picky" -a "$PMIX_DEVEL" = 1; then
+if test "$WANT_PICKY_COMPILER" = "0" -a -z "$enable_picky" -a "$PMIX_DEVEL" = "1"; then
     WANT_PICKY_COMPILER=1
     echo "--> developer override: enable picky compiler by default"
 fi
