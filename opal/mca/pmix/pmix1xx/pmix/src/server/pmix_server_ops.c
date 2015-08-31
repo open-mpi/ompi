@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2014-2015 Intel, Inc.  All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014-2015 Artem Y. Polyakov <artpol84@gmail.com>.
  *                         All rights reserved.
@@ -60,6 +60,11 @@ static void dmdx_cbfunc(pmix_status_t status, const char *data,
                         size_t ndata, void *cbdata,
                         pmix_release_cbfunc_t relfn, void *relcbdata);
 
+static pmix_status_t _satisfy_local_req(pmix_nspace_t *nptr, pmix_rank_info_t *info,
+                                        pmix_modex_cbfunc_t cbfunc, void *cbdata);
+
+static pmix_status_t _satisfy_remote_req(pmix_nspace_t *nptr, int rank,
+                                         pmix_modex_cbfunc_t cbfunc, void *cbdata);
 typedef struct {
     pmix_object_t super;
     pmix_event_t ev;
@@ -114,8 +119,8 @@ pmix_status_t _satisfy_local_req(pmix_nspace_t *nptr, pmix_rank_info_t *info,
     return PMIX_ERR_NOT_FOUND;
 }
 
-pmix_status_t _satisfy_remote_req(pmix_nspace_t *nptr, int rank,
-                                    pmix_modex_cbfunc_t cbfunc, void *cbdata)
+static pmix_status_t _satisfy_remote_req(pmix_nspace_t *nptr, int rank,
+                                         pmix_modex_cbfunc_t cbfunc, void *cbdata)
 {
     int rc;
     pmix_buffer_t pbkt, xfer;
@@ -152,10 +157,6 @@ pmix_status_t pmix_pending_request(pmix_nspace_t *nptr, int rank,
 {
     pmix_dmdx_local_t *lcd = NULL, *cd;
     pmix_rank_info_t *iptr, *rkinfo;
-    pmix_buffer_t pbkt, xfer;
-    pmix_value_t *val;
-    char *data;
-    size_t sz;
     int rc;
 
     /* 1. Try to satisfy the request right now */
@@ -510,10 +511,8 @@ static pmix_server_trkr_t* get_tracker(pmix_proc_t *procs,
                                        size_t nprocs, pmix_cmd_t type)
 {
     pmix_server_trkr_t *trk;
-    pmix_rank_info_t *iptr, *info;
     size_t i;
-    bool match, all_def;
-    pmix_nspace_t *nptr, *ns;
+    bool match;
 
     pmix_output_verbose(5, pmix_globals.debug_output,
                         "get_tracker called with %d procs", (int)nprocs);
@@ -578,7 +577,7 @@ static pmix_server_trkr_t* new_tracker(pmix_proc_t *procs,
     pmix_server_trkr_t *trk;
     pmix_rank_info_t *iptr, *info;
     size_t i;
-    bool match, all_def;
+    bool all_def;
     pmix_nspace_t *nptr, *ns;
 
     pmix_output_verbose(5, pmix_globals.debug_output,
@@ -893,7 +892,6 @@ static void _process_dmdx_reply(int fd, short args, void *cbdata)
     }
     PMIX_RELEASE(kp);  // maintain acctg
 
-cleanup:
     /* always execute the callback to avoid having the client hang */
     pmix_pending_resolve(nptr, caddy->lcd->proc.rank, caddy->lcd);
 

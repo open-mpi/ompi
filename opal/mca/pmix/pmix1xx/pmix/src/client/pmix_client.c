@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2014-2015 Intel, Inc.  All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014      Artem Y. Polyakov <artpol84@gmail.com>.
  *                         All rights reserved.
@@ -58,13 +58,6 @@
 #define PMIX_MAX_RETRIES 10
 
 static int usock_connect(struct sockaddr *address);
-static void myerrhandler(pmix_status_t status,
-                         pmix_proc_t procs[], size_t nprocs,
-                         pmix_info_t info[], size_t ninfo)
-{
-    pmix_output_verbose(2, pmix_globals.debug_output,
-                        "pmix:client default errhandler activated");
-}
 
 static void pmix_client_notify_recv(struct pmix_peer_t *peer, pmix_usock_hdr_t *hdr,
                                     pmix_buffer_t *buf, void *cbdata)
@@ -856,7 +849,6 @@ void pmix_client_process_nspace_blob(const char *nspace, pmix_buffer_t *bptr)
     pmix_nspace_t *nsptr, *nsptr2;
     pmix_nrec_t *nrec, *nr2;
     char **procs;
-    pmix_value_t *val;
 
     /* cycle across our known nspaces */
     nsptr = NULL;
