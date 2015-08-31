@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2014-2015 Intel, Inc.  All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014-2015 Artem Y. Polyakov <artpol84@gmail.com>.
  *                         All rights reserved.
@@ -362,7 +362,7 @@ static void connection_handler(int sd, short flags, void* cbdata)
 pmix_status_t pmix_server_authenticate(int sd, int *out_rank, pmix_peer_t **peer,
                                        pmix_buffer_t **reply)
 {
-    char *msg, *nspace, *version, *cred, *ptr;
+    char *msg, *nspace, *version, *cred;
     int rc, rank;
     pmix_usock_hdr_t hdr;
     pmix_nspace_t *nptr, *tmp;

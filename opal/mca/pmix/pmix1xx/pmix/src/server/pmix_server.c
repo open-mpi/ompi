@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2014-2015 Intel, Inc.  All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014-2015 Artem Y. Polyakov <artpol84@gmail.com>.
  *                         All rights reserved.
@@ -542,7 +542,6 @@ pmix_status_t PMIx_server_register_nspace(const char nspace[], int nlocalprocs,
                                           pmix_op_cbfunc_t cbfunc, void *cbdata)
 {
     pmix_setup_caddy_t *cd;
-    size_t i;
 
     cd = PMIX_NEW(pmix_setup_caddy_t);
     (void)strncpy(cd->proc.nspace, nspace, PMIX_MAX_NSLEN);
@@ -569,7 +568,7 @@ static void _execute_collective(int sd, short args, void *cbdata)
     pmix_server_trkr_t *trk = tcd->trk;
     char *data = NULL;
     size_t sz = 0;
-    pmix_buffer_t bucket, pbkt, xfer;
+    pmix_buffer_t bucket, xfer;
     pmix_rank_info_t *info;
     pmix_value_t *val;
 
@@ -653,8 +652,6 @@ static void _register_client(int sd, short args, void *cbdata)
     pmix_nspace_t *nptr, *tmp;
     pmix_server_trkr_t *trk;
     pmix_trkr_caddy_t *tcd;
-    bool found;
-    pmix_dmdx_local_t *lcd, *lcdnext;
 
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "pmix:server _register_client for nspace %s rank %d",
@@ -781,7 +778,7 @@ static void _dmodex_req(int sd, short args, void *cbdata)
     pmix_setup_caddy_t *cd = (pmix_setup_caddy_t*)cbdata;
     pmix_rank_info_t *info, *iptr;
     pmix_nspace_t *nptr, *ns;
-    pmix_buffer_t pbkt, xfer;
+    pmix_buffer_t pbkt;
     pmix_value_t *val;
     char *data = NULL;
     size_t sz = 0;
@@ -1567,7 +1564,6 @@ static void _mdxcbfunc(int sd, short argc, void *cbdata)
     pmix_buffer_t xfer, *bptr, *databuf, *bpscope, *reply;
     pmix_nspace_t *nptr, *ns;
     pmix_server_caddy_t *cd;
-    pmix_kval_t *kp;
     char *nspace;
     int rank, rc;
     int32_t cnt = 1;
@@ -1804,66 +1800,6 @@ static void get_cbfunc(int status, const char *data, size_t ndata, void *cbdata,
         relfn(relcbd);
     }
     PMIX_RELEASE(cd);
-}
-
-static void _cnct(int sd, short args, void *cbdata)
-{
-    pmix_shift_caddy_t *scd = (pmix_shift_caddy_t*)cbdata;
-    pmix_server_trkr_t *tracker = scd->tracker;
-    pmix_buffer_t *reply;
-    int rc, i;
-    pmix_server_caddy_t *cd;
-    char **nspaces=NULL;
-    pmix_nspace_t *nptr;
-    pmix_buffer_t *job_info_ptr;
-
-    /* setup the reply, starting with the returned status */
-    reply = PMIX_NEW(pmix_buffer_t);
-    if (PMIX_SUCCESS != (rc = pmix_bfrop.pack(reply, &scd->status, 1, PMIX_INT))) {
-        PMIX_ERROR_LOG(rc);
-        goto cleanup;
-    }
-
-    if (PMIX_CONNECTNB_CMD == tracker->type) {
-        /* find the unique nspaces that are participating */
-        PMIX_LIST_FOREACH(cd, &tracker->local_cbs, pmix_server_caddy_t) {
-            pmix_argv_append_unique_nosize(&nspaces, cd->peer->info->nptr->nspace, false);
-        }
-
-        /* loop across all participating nspaces and include their
-         * job-related info */
-        for (i=0; NULL != nspaces[i]; i++) {
-            PMIX_LIST_FOREACH(nptr, &pmix_globals.nspaces, pmix_nspace_t) {
-                if (0 != strcmp(nspaces[i], nptr->nspace)) {
-                    continue;
-                }
-                job_info_ptr = &nptr->server->job_info;
-                if (PMIX_SUCCESS != (rc = pmix_bfrop.pack(reply, &job_info_ptr, 1, PMIX_BUFFER))) {
-                    PMIX_ERROR_LOG(rc);
-                    pmix_argv_free(nspaces);
-                    goto cleanup;
-                }
-            }
-        }
-        pmix_argv_free(nspaces);
-    }
-
-    /* loop across all procs in the tracker, sending them the reply */
-    PMIX_LIST_FOREACH(cd, &tracker->local_cbs, pmix_server_caddy_t) {
-        PMIX_RETAIN(reply);
-        pmix_output_verbose(2, pmix_globals.debug_output,
-                            "server:cnct_cbfunc reply being sent to %s:%d",
-                            cd->peer->info->nptr->nspace, cd->peer->info->rank);
-        PMIX_SERVER_QUEUE_REPLY(cd->peer, cd->hdr.tag, reply);
-    }
-
-  cleanup:
-    PMIX_RELEASE(reply);  // maintain accounting
-    pmix_list_remove_item(&pmix_server_globals.collectives, &tracker->super);
-    PMIX_RELEASE(tracker);
-
-    /* we are done */
-    PMIX_RELEASE(scd);
 }
 
 static void cnct_cbfunc(int status, void *cbdata)

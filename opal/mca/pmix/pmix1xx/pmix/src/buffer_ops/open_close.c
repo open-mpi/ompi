@@ -12,6 +12,8 @@
  *                         All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, Inc.  All rights reserved.
  * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -476,6 +478,7 @@ void pmix_value_load(pmix_value_t *v, void *data,
         case PMIX_MODEX:
         case PMIX_PERSIST:
         case PMIX_PROC:
+        case PMIX_BOOL:
             /* silence warnings */
             break;
         }
@@ -589,6 +592,7 @@ int pmix_value_unload(pmix_value_t *kv, void **data,
         case PMIX_MODEX:
         case PMIX_PERSIST:
         case PMIX_PROC:
+        case PMIX_BOOL:
             /* silence warnings */
             rc = PMIX_ERROR;
             break;
