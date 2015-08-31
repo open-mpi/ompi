@@ -433,8 +433,7 @@ static inline int mca_pml_ob1_recv_request_ack_send(ompi_proc_t* proc,
 {
     size_t i;
     mca_bml_base_btl_t* bml_btl;
-    mca_bml_base_endpoint_t* endpoint =
-        (mca_bml_base_endpoint_t*)proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML];
+    mca_bml_base_endpoint_t* endpoint = mca_bml_base_get_endpoint (proc);
 
     for(i = 0; i < mca_bml_base_btl_array_get_size(&endpoint->btl_eager); i++) {
         bml_btl = mca_bml_base_btl_array_get_next(&endpoint->btl_eager);
