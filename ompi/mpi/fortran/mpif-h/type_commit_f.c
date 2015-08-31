@@ -23,7 +23,8 @@
 
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_TYPE_COMMIT = ompi_type_commit_f
 #pragma weak pmpi_type_commit = ompi_type_commit_f
 #pragma weak pmpi_type_commit_ = ompi_type_commit_f
@@ -31,7 +32,7 @@
 
 #pragma weak PMPI_Type_commit_f = ompi_type_commit_f
 #pragma weak PMPI_Type_commit_f08 = ompi_type_commit_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_TYPE_COMMIT,
                            pmpi_type_commit,
                            pmpi_type_commit_,
@@ -39,6 +40,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_TYPE_COMMIT,
                            pompi_type_commit_f,
                            (MPI_Fint *type, MPI_Fint *ierr),
                            (type, ierr) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -49,9 +51,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_TYPE_COMMIT,
 
 #pragma weak MPI_Type_commit_f = ompi_type_commit_f
 #pragma weak MPI_Type_commit_f08 = ompi_type_commit_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_COMMIT,
                            mpi_type_commit,
                            mpi_type_commit_,
@@ -59,11 +60,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_COMMIT,
                            ompi_type_commit_f,
                            (MPI_Fint *type, MPI_Fint *ierr),
                            (type, ierr) )
-#endif
-
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
+#else
 #define ompi_type_commit_f pompi_type_commit_f
+#endif
 #endif
 
 #if OMPI_ENABLE_MPI_PROFILING

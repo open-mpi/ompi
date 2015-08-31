@@ -19,11 +19,10 @@
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/win/win.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_BUILD_MPI_PROFILING
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_Win_get_info = PMPI_Win_get_info
 #endif
-
-#if OMPI_BUILD_MPI_PROFILING
 #define MPI_Win_get_info PMPI_Win_get_info
 #endif
 

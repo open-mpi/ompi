@@ -28,6 +28,14 @@
 #include "oshmem/mca/memheap/base/base.h"
 #include "oshmem/mca/spml/spml.h"
 
+#if OMPI_ENABLE_MPI_PROFILING
+#define MPI_Cancel PMPI_Cancel
+#define MPI_Get_count PMPI_Get_count
+#define MPI_Recv_init PMPI_Recv_init
+#define MPI_Request_free PMPI_Request_free
+#define MPI_Send PMPI_Send
+#define MPI_Start PMPI_Start
+#endif
 
 /* Turn ON/OFF debug output from build (default 0) */
 #ifndef MEMHEAP_BASE_DEBUG

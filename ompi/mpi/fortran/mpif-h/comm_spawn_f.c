@@ -26,7 +26,8 @@
 #include "ompi/mpi/fortran/base/strings.h"
 #include "opal/util/argv.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_COMM_SPAWN = ompi_comm_spawn_f
 #pragma weak pmpi_comm_spawn = ompi_comm_spawn_f
 #pragma weak pmpi_comm_spawn_ = ompi_comm_spawn_f
@@ -34,7 +35,7 @@
 
 #pragma weak PMPI_Comm_spawn_f = ompi_comm_spawn_f
 #pragma weak PMPI_Comm_spawn_f08 = ompi_comm_spawn_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_COMM_SPAWN,
                             pmpi_comm_spawn,
                             pmpi_comm_spawn_,
@@ -42,6 +43,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_COMM_SPAWN,
                             pompi_comm_spawn_f,
                             (char *command, char *argv, MPI_Fint *maxprocs, MPI_Fint *info, MPI_Fint *root, MPI_Fint *comm, MPI_Fint *intercomm, MPI_Fint *array_of_errcodes, MPI_Fint *ierr, int cmd_len, int string_len),
                             (command, argv, maxprocs, info, root, comm, intercomm, array_of_errcodes, ierr, cmd_len, string_len) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -52,9 +54,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_COMM_SPAWN,
 
 #pragma weak MPI_Comm_spawn_f = ompi_comm_spawn_f
 #pragma weak MPI_Comm_spawn_f08 = ompi_comm_spawn_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_COMM_SPAWN,
                             mpi_comm_spawn,
                             mpi_comm_spawn_,
@@ -62,11 +63,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_COMM_SPAWN,
                             ompi_comm_spawn_f,
                             (char *command, char *argv, MPI_Fint *maxprocs, MPI_Fint *info, MPI_Fint *root, MPI_Fint *comm, MPI_Fint *intercomm, MPI_Fint *array_of_errcodes, MPI_Fint *ierr, int cmd_len, int string_len),
                             (command, argv, maxprocs, info, root, comm, intercomm, array_of_errcodes, ierr, cmd_len, string_len) )
-#endif
-
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
+#else
 #define ompi_comm_spawn_f pompi_comm_spawn_f
+#endif
 #endif
 
 #if OMPI_ENABLE_MPI_PROFILING

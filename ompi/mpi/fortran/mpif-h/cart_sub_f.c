@@ -23,7 +23,8 @@
 
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_CART_SUB = ompi_cart_sub_f
 #pragma weak pmpi_cart_sub = ompi_cart_sub_f
 #pragma weak pmpi_cart_sub_ = ompi_cart_sub_f
@@ -31,7 +32,7 @@
 
 #pragma weak PMPI_Cart_sub_f = ompi_cart_sub_f
 #pragma weak PMPI_Cart_sub_f08 = ompi_cart_sub_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_CART_SUB,
                            pmpi_cart_sub,
                            pmpi_cart_sub_,
@@ -39,6 +40,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_CART_SUB,
                            pompi_cart_sub_f,
                            (MPI_Fint *comm, ompi_fortran_logical_t *remain_dims, MPI_Fint *new_comm, MPI_Fint *ierr),
                            (comm, remain_dims, new_comm, ierr) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -49,9 +51,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_CART_SUB,
 
 #pragma weak MPI_Cart_sub_f = ompi_cart_sub_f
 #pragma weak MPI_Cart_sub_f08 = ompi_cart_sub_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_CART_SUB,
                            mpi_cart_sub,
                            mpi_cart_sub_,
@@ -59,11 +60,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_CART_SUB,
                            ompi_cart_sub_f,
                            (MPI_Fint *comm, ompi_fortran_logical_t *remain_dims, MPI_Fint *new_comm, MPI_Fint *ierr),
                            (comm, remain_dims, new_comm, ierr) )
-#endif
-
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
+#else
 #define ompi_cart_sub_f pompi_cart_sub_f
+#endif
 #endif
 
 #if OMPI_ENABLE_MPI_PROFILING

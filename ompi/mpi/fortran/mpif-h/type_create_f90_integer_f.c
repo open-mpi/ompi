@@ -23,7 +23,8 @@
 
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_TYPE_CREATE_F90_INTEGER = ompi_type_create_f90_integer_f
 #pragma weak pmpi_type_create_f90_integer = ompi_type_create_f90_integer_f
 #pragma weak pmpi_type_create_f90_integer_ = ompi_type_create_f90_integer_f
@@ -31,7 +32,7 @@
 
 #pragma weak PMPI_Type_create_f90_integer_f = ompi_type_create_f90_integer_f
 #pragma weak PMPI_Type_create_f90_integer_f08 = ompi_type_create_f90_integer_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_TYPE_CREATE_F90_INTEGER,
                            pmpi_type_create_f90_integer,
                            pmpi_type_create_f90_integer_,
@@ -39,6 +40,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_TYPE_CREATE_F90_INTEGER,
                            pompi_type_create_f90_integer_f,
                            (MPI_Fint *r, MPI_Fint *newtype, MPI_Fint *ierr),
                            (r, newtype, ierr) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -49,9 +51,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_TYPE_CREATE_F90_INTEGER,
 
 #pragma weak MPI_Type_create_f90_integer_f = ompi_type_create_f90_integer_f
 #pragma weak MPI_Type_create_f90_integer_f08 = ompi_type_create_f90_integer_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_CREATE_F90_INTEGER,
                            mpi_type_create_f90_integer,
                            mpi_type_create_f90_integer_,
@@ -59,11 +60,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_CREATE_F90_INTEGER,
                            ompi_type_create_f90_integer_f,
                            (MPI_Fint *r, MPI_Fint *newtype, MPI_Fint *ierr),
                            (r, newtype, ierr) )
-#endif
-
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
+#else
 #define ompi_type_create_f90_integer_f pompi_type_create_f90_integer_f
+#endif
 #endif
 
 #if OMPI_ENABLE_MPI_PROFILING

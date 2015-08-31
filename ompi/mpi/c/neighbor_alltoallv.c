@@ -33,11 +33,10 @@
 #include "ompi/memchecker.h"
 #include "ompi/communicator/comm_helpers.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_BUILD_MPI_PROFILING
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_Neighbor_alltoallv = PMPI_Neighbor_alltoallv
 #endif
-
-#if OMPI_BUILD_MPI_PROFILING
 #define MPI_Neighbor_alltoallv PMPI_Neighbor_alltoallv
 #endif
 

@@ -27,11 +27,10 @@
 #include "ompi/mpi/fortran/base/fint_2_int.h"
 #include "ompi/file/file.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_BUILD_MPI_PROFILING
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_File_c2f = PMPI_File_c2f
 #endif
-
-#if OMPI_BUILD_MPI_PROFILING
 #define MPI_File_c2f PMPI_File_c2f
 #endif
 

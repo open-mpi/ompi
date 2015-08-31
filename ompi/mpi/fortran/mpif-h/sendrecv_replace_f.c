@@ -24,7 +24,8 @@
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 #include "ompi/mpi/fortran/base/constants.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_SENDRECV_REPLACE = ompi_sendrecv_replace_f
 #pragma weak pmpi_sendrecv_replace = ompi_sendrecv_replace_f
 #pragma weak pmpi_sendrecv_replace_ = ompi_sendrecv_replace_f
@@ -32,7 +33,7 @@
 
 #pragma weak PMPI_Sendrecv_replace_f = ompi_sendrecv_replace_f
 #pragma weak PMPI_Sendrecv_replace_f08 = ompi_sendrecv_replace_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_SENDRECV_REPLACE,
                            pmpi_sendrecv_replace,
                            pmpi_sendrecv_replace_,
@@ -40,6 +41,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_SENDRECV_REPLACE,
                            pompi_sendrecv_replace_f,
                            (char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *dest, MPI_Fint *sendtag, MPI_Fint *source, MPI_Fint *recvtag, MPI_Fint *comm, MPI_Fint *status, MPI_Fint *ierr),
                            (buf, count, datatype, dest, sendtag, source, recvtag, comm, status, ierr) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -50,9 +52,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_SENDRECV_REPLACE,
 
 #pragma weak MPI_Sendrecv_replace_f = ompi_sendrecv_replace_f
 #pragma weak MPI_Sendrecv_replace_f08 = ompi_sendrecv_replace_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_SENDRECV_REPLACE,
                            mpi_sendrecv_replace,
                            mpi_sendrecv_replace_,
@@ -60,11 +61,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_SENDRECV_REPLACE,
                            ompi_sendrecv_replace_f,
                            (char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *dest, MPI_Fint *sendtag, MPI_Fint *source, MPI_Fint *recvtag, MPI_Fint *comm, MPI_Fint *status, MPI_Fint *ierr),
                            (buf, count, datatype, dest, sendtag, source, recvtag, comm, status, ierr) )
-#endif
-
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
+#else
 #define ompi_sendrecv_replace_f pompi_sendrecv_replace_f
+#endif
 #endif
 
 #if OMPI_ENABLE_MPI_PROFILING

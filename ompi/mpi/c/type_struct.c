@@ -22,11 +22,10 @@
 
 #include "ompi/mpi/c/bindings.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_BUILD_MPI_PROFILING
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_Type_struct = PMPI_Type_struct
 #endif
-
-#if OMPI_BUILD_MPI_PROFILING
 #define MPI_Type_struct PMPI_Type_struct
 #endif
 

@@ -23,7 +23,8 @@
 
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_GRAPHDIMS_GET = ompi_graphdims_get_f
 #pragma weak pmpi_graphdims_get = ompi_graphdims_get_f
 #pragma weak pmpi_graphdims_get_ = ompi_graphdims_get_f
@@ -31,7 +32,7 @@
 
 #pragma weak PMPI_Graphdims_get_f = ompi_graphdims_get_f
 #pragma weak PMPI_Graphdims_get_f08 = ompi_graphdims_get_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_GRAPHDIMS_GET,
                            pmpi_graphdims_get,
                            pmpi_graphdims_get_,
@@ -39,6 +40,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_GRAPHDIMS_GET,
                            pompi_graphdims_get_f,
                            (MPI_Fint *comm, MPI_Fint *nnodes, MPI_Fint *nedges, MPI_Fint *ierr),
                            (comm, nnodes, nedges, ierr) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -49,9 +51,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_GRAPHDIMS_GET,
 
 #pragma weak MPI_Graphdims_get_f = ompi_graphdims_get_f
 #pragma weak MPI_Graphdims_get_f08 = ompi_graphdims_get_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_GRAPHDIMS_GET,
                            mpi_graphdims_get,
                            mpi_graphdims_get_,
@@ -59,11 +60,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_GRAPHDIMS_GET,
                            ompi_graphdims_get_f,
                            (MPI_Fint *comm, MPI_Fint *nnodes, MPI_Fint *nedges, MPI_Fint *ierr),
                            (comm, nnodes, nedges, ierr) )
-#endif
-
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
+#else
 #define ompi_graphdims_get_f pompi_graphdims_get_f
+#endif
 #endif
 
 #if OMPI_ENABLE_MPI_PROFILING

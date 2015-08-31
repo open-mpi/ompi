@@ -29,11 +29,10 @@
 #include "ompi/mca/topo/topo.h"
 #include "ompi/memchecker.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_BUILD_MPI_PROFILING
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_Graph_neighbors_count = PMPI_Graph_neighbors_count
 #endif
-
-#if OMPI_BUILD_MPI_PROFILING
 #define MPI_Graph_neighbors_count PMPI_Graph_neighbors_count
 #endif
 

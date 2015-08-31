@@ -23,7 +23,8 @@
 
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_FREE_MEM = ompi_free_mem_f
 #pragma weak pmpi_free_mem = ompi_free_mem_f
 #pragma weak pmpi_free_mem_ = ompi_free_mem_f
@@ -31,7 +32,7 @@
 
 #pragma weak PMPI_Free_mem_f = ompi_free_mem_f
 #pragma weak PMPI_Free_mem_f08 = ompi_free_mem_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_FREE_MEM,
                            pmpi_free_mem,
                            pmpi_free_mem_,
@@ -39,6 +40,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_FREE_MEM,
                            pompi_free_mem_f,
                            (char *base, MPI_Fint *ierr),
                            (base, ierr) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -49,9 +51,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_FREE_MEM,
 
 #pragma weak MPI_Free_mem_f = ompi_free_mem_f
 #pragma weak MPI_Free_mem_f08 = ompi_free_mem_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_FREE_MEM,
                            mpi_free_mem,
                            mpi_free_mem_,
@@ -59,11 +60,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_FREE_MEM,
                            ompi_free_mem_f,
                            (char *base, MPI_Fint *ierr),
                            (base, ierr) )
-#endif
-
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
+#else
 #define ompi_free_mem_f pompi_free_mem_f
+#endif
 #endif
 
 #if OMPI_ENABLE_MPI_PROFILING

@@ -1,7 +1,8 @@
 /*
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
- *
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -55,6 +56,10 @@
 #include "oshmem/request/request.h"
 #include "oshmem/shmem/shmem_lock.h"
 #include "oshmem/runtime/oshmem_shmem_preconnect.h"
+
+#if OMPI_ENABLE_MPI_PROFILING
+#define MPI_Comm_free PMPI_Comm_free
+#endif
 
 static int _shmem_finalize(void);
 

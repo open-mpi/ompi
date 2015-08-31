@@ -23,7 +23,8 @@
 
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_FINALIZED = ompi_finalized_f
 #pragma weak pmpi_finalized = ompi_finalized_f
 #pragma weak pmpi_finalized_ = ompi_finalized_f
@@ -31,7 +32,7 @@
 
 #pragma weak PMPI_Finalized_f = ompi_finalized_f
 #pragma weak PMPI_Finalized_f08 = ompi_finalized_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_FINALIZED,
                            pmpi_finalized,
                            pmpi_finalized_,
@@ -39,6 +40,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_FINALIZED,
                            pompi_finalized_f,
                            (ompi_fortran_logical_t *flag, MPI_Fint *ierr),
                            (flag, ierr) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -49,9 +51,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_FINALIZED,
 
 #pragma weak MPI_Finalized_f = ompi_finalized_f
 #pragma weak MPI_Finalized_f08 = ompi_finalized_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_FINALIZED,
                            mpi_finalized,
                            mpi_finalized_,
@@ -59,11 +60,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_FINALIZED,
                            ompi_finalized_f,
                            (ompi_fortran_logical_t *flag, MPI_Fint *ierr),
                            (flag, ierr) )
-#endif
-
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
+#else
 #define ompi_finalized_f pompi_finalized_f
+#endif
 #endif
 
 #if OMPI_ENABLE_MPI_PROFILING

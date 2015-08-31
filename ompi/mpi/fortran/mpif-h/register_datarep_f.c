@@ -31,7 +31,8 @@
 #include "ompi/runtime/mpiruntime.h"
 #include "ompi/file/file.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_REGISTER_DATAREP = ompi_register_datarep_f
 #pragma weak pmpi_register_datarep = ompi_register_datarep_f
 #pragma weak pmpi_register_datarep_ = ompi_register_datarep_f
@@ -39,7 +40,7 @@
 
 #pragma weak PMPI_Register_datarep_f = ompi_register_datarep_f
 #pragma weak PMPI_Register_datarep_f08 = ompi_register_datarep_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_REGISTER_DATAREP,
                            pmpi_register_datarep,
                            pmpi_register_datarep_,
@@ -47,6 +48,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_REGISTER_DATAREP,
                            pompi_register_datarep_f,
                            (char *datarep, ompi_mpi2_fortran_datarep_conversion_fn_t *read_conversion_fn, ompi_mpi2_fortran_datarep_conversion_fn_t *write_conversion_fn, ompi_mpi2_fortran_datarep_extent_fn_t *dtype_file_extent_fn, MPI_Aint *extra_state, MPI_Fint *ierr, int datarep_len),
                            (datarep, read_conversion_fn, write_conversion_fn, dtype_file_extent_fn, extra_state, ierr, datarep_len) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -57,9 +59,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_REGISTER_DATAREP,
 
 #pragma weak MPI_Register_datarep_f = ompi_register_datarep_f
 #pragma weak MPI_Register_datarep_f08 = ompi_register_datarep_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_REGISTER_DATAREP,
                            mpi_register_datarep,
                            mpi_register_datarep_,
@@ -67,11 +68,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_REGISTER_DATAREP,
                            ompi_register_datarep_f,
                            (char *datarep, ompi_mpi2_fortran_datarep_conversion_fn_t *read_conversion_fn, ompi_mpi2_fortran_datarep_conversion_fn_t *write_conversion_fn, ompi_mpi2_fortran_datarep_extent_fn_t *dtype_file_extent_fn, MPI_Aint *extra_state, MPI_Fint *ierr, int datarep_len),
                            (datarep, read_conversion_fn, write_conversion_fn, dtype_file_extent_fn, extra_state, ierr, datarep_len) )
-#endif
-
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
+#else
 #define ompi_register_datarep_f pompi_register_datarep_f
+#endif
 #endif
 
 #if OMPI_ENABLE_MPI_PROFILING
@@ -104,7 +103,7 @@ typedef struct intercept_extra_state {
 
 OBJ_CLASS_DECLARATION(intercept_extra_state_t);
 
-#if !OMPI_PROFILE_LAYER || OPAL_HAVE_WEAK_SYMBOLS
+#if !OMPI_BUILD_MPI_PROFILING || OPAL_HAVE_WEAK_SYMBOLS
 static void intercept_extra_state_constructor(intercept_extra_state_t *obj)
 {
     obj->read_fn_f77 = NULL;
@@ -116,7 +115,7 @@ static void intercept_extra_state_constructor(intercept_extra_state_t *obj)
 OBJ_CLASS_INSTANCE(intercept_extra_state_t,
                    opal_list_item_t,
                    intercept_extra_state_constructor, NULL);
-#endif  /* !OMPI_PROFILE_LAYER */
+#endif  /* !OMPI_BUILD_MPI_PROFILING */
 
 /*
  * This function works by calling the C version of

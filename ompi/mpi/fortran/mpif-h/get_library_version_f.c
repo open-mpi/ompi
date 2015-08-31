@@ -24,7 +24,8 @@
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 #include "ompi/mpi/fortran/base/strings.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_GET_LIBRARY_VERSION = ompi_get_library_version_f
 #pragma weak pmpi_get_library_version = ompi_get_library_version_f
 #pragma weak pmpi_get_library_version_ = ompi_get_library_version_f
@@ -32,7 +33,7 @@
 
 #pragma weak PMPI_Get_library_version_f = ompi_get_library_version_f
 #pragma weak PMPI_Get_library_version_f08 = ompi_get_library_version_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_GET_LIBRARY_VERSION,
                             pmpi_get_library_version,
                             pmpi_get_library_version_,
@@ -40,6 +41,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_GET_LIBRARY_VERSION,
                             pompi_get_library_version_f,
                             (char *version, MPI_Fint *resultlen, MPI_Fint *ierr, MPI_Fint version_len),
                             (version, resultlen, ierr, version_len) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -50,9 +52,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_GET_LIBRARY_VERSION,
 
 #pragma weak MPI_Get_library_version_f = ompi_get_library_version_f
 #pragma weak MPI_Get_library_version_f08 = ompi_get_library_version_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_GET_LIBRARY_VERSION,
                             mpi_get_library_version,
                             mpi_get_library_version_,
@@ -60,11 +61,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_GET_LIBRARY_VERSION,
                             ompi_get_library_version_f,
                             (char *version, MPI_Fint *resultlen, MPI_Fint *ierr, MPI_Fint version_len),
                             (version, resultlen, ierr, version_len) )
-#endif
-
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
+#else
 #define ompi_get_library_version_f pompi_get_library_version_f
+#endif
 #endif
 
 #if OMPI_ENABLE_MPI_PROFILING

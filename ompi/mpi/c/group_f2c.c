@@ -28,11 +28,10 @@
 #include "ompi/mpi/fortran/base/fint_2_int.h"
 #include "ompi/group/group.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_BUILD_MPI_PROFILING
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_Group_f2c = PMPI_Group_f2c
 #endif
-
-#if OMPI_BUILD_MPI_PROFILING
 #define MPI_Group_f2c PMPI_Group_f2c
 #endif
 

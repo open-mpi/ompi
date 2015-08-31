@@ -26,7 +26,8 @@
 #include "ompi/mpi/fortran/mpif-h/status-conversion.h"
 #include "ompi/mpi/fortran/base/constants.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_FILE_WRITE_ALL_END = ompi_file_write_all_end_f
 #pragma weak pmpi_file_write_all_end = ompi_file_write_all_end_f
 #pragma weak pmpi_file_write_all_end_ = ompi_file_write_all_end_f
@@ -34,7 +35,7 @@
 
 #pragma weak PMPI_File_write_all_end_f = ompi_file_write_all_end_f
 #pragma weak PMPI_File_write_all_end_f08 = ompi_file_write_all_end_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_FILE_WRITE_ALL_END,
                            pmpi_file_write_all_end,
                            pmpi_file_write_all_end_,
@@ -42,6 +43,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_FILE_WRITE_ALL_END,
                            pompi_file_write_all_end_f,
                            (MPI_Fint *fh, char *buf, MPI_Fint *status, MPI_Fint *ierr),
                            (fh, buf, status, ierr) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -52,9 +54,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_FILE_WRITE_ALL_END,
 
 #pragma weak MPI_File_write_all_end_f = ompi_file_write_all_end_f
 #pragma weak MPI_File_write_all_end_f08 = ompi_file_write_all_end_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_FILE_WRITE_ALL_END,
                            mpi_file_write_all_end,
                            mpi_file_write_all_end_,
@@ -62,11 +63,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_FILE_WRITE_ALL_END,
                            ompi_file_write_all_end_f,
                            (MPI_Fint *fh, char *buf, MPI_Fint *status, MPI_Fint *ierr),
                            (fh, buf, status, ierr) )
-#endif
-
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
+#else
 #define ompi_file_write_all_end_f pompi_file_write_all_end_f
+#endif
 #endif
 
 #if OMPI_ENABLE_MPI_PROFILING

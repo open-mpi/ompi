@@ -24,7 +24,8 @@
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 #include "ompi/mpi/fortran/base/constants.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_STATUS_SET_ELEMENTS = ompi_status_set_elements_f
 #pragma weak pmpi_status_set_elements = ompi_status_set_elements_f
 #pragma weak pmpi_status_set_elements_ = ompi_status_set_elements_f
@@ -32,7 +33,7 @@
 
 #pragma weak PMPI_Status_set_elements_f = ompi_status_set_elements_f
 #pragma weak PMPI_Status_set_elements_f08 = ompi_status_set_elements_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_STATUS_SET_ELEMENTS,
                            pmpi_status_set_elements,
                            pmpi_status_set_elements_,
@@ -40,6 +41,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_STATUS_SET_ELEMENTS,
                            pompi_status_set_elements_f,
                            (MPI_Fint *status, MPI_Fint *datatype, MPI_Fint *count, MPI_Fint *ierr),
                            (status, datatype, count, ierr) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -50,9 +52,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_STATUS_SET_ELEMENTS,
 
 #pragma weak MPI_Status_set_elements_f = ompi_status_set_elements_f
 #pragma weak MPI_Status_set_elements_f08 = ompi_status_set_elements_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_STATUS_SET_ELEMENTS,
                            mpi_status_set_elements,
                            mpi_status_set_elements_,
@@ -60,11 +61,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_STATUS_SET_ELEMENTS,
                            ompi_status_set_elements_f,
                            (MPI_Fint *status, MPI_Fint *datatype, MPI_Fint *count, MPI_Fint *ierr),
                            (status, datatype, count, ierr) )
-#endif
-
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
+#else
 #define ompi_status_set_elements_f pompi_status_set_elements_f
+#endif
 #endif
 
 #if OMPI_ENABLE_MPI_PROFILING

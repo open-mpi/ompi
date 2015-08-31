@@ -23,7 +23,8 @@
 
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_FILE_SET_ATOMICITY = ompi_file_set_atomicity_f
 #pragma weak pmpi_file_set_atomicity = ompi_file_set_atomicity_f
 #pragma weak pmpi_file_set_atomicity_ = ompi_file_set_atomicity_f
@@ -31,7 +32,7 @@
 
 #pragma weak PMPI_File_set_atomicity_f = ompi_file_set_atomicity_f
 #pragma weak PMPI_File_set_atomicity_f08 = ompi_file_set_atomicity_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_FILE_SET_ATOMICITY,
                            pmpi_file_set_atomicity,
                            pmpi_file_set_atomicity_,
@@ -39,6 +40,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_FILE_SET_ATOMICITY,
                            pompi_file_set_atomicity_f,
                            (MPI_Fint *fh, ompi_fortran_logical_t *flag, MPI_Fint *ierr),
                            (fh, flag, ierr) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -49,9 +51,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_FILE_SET_ATOMICITY,
 
 #pragma weak MPI_File_set_atomicity_f = ompi_file_set_atomicity_f
 #pragma weak MPI_File_set_atomicity_f08 = ompi_file_set_atomicity_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_FILE_SET_ATOMICITY,
                            mpi_file_set_atomicity,
                            mpi_file_set_atomicity_,
@@ -59,11 +60,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_FILE_SET_ATOMICITY,
                            ompi_file_set_atomicity_f,
                            (MPI_Fint *fh, ompi_fortran_logical_t *flag, MPI_Fint *ierr),
                            (fh, flag, ierr) )
-#endif
-
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
+#else
 #define ompi_file_set_atomicity_f pompi_file_set_atomicity_f
+#endif
 #endif
 
 #if OMPI_ENABLE_MPI_PROFILING

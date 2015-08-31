@@ -31,11 +31,10 @@
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/communicator/communicator.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_BUILD_MPI_PROFILING
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_Group_incl = PMPI_Group_incl
 #endif
-
-#if OMPI_BUILD_MPI_PROFILING
 #define MPI_Group_incl PMPI_Group_incl
 #endif
 

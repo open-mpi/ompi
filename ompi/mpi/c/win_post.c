@@ -27,11 +27,10 @@
 #include "ompi/win/win.h"
 #include "ompi/mca/osc/osc.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_BUILD_MPI_PROFILING
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_Win_post = PMPI_Win_post
 #endif
-
-#if OMPI_BUILD_MPI_PROFILING
 #define MPI_Win_post PMPI_Win_post
 #endif
 

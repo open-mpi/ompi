@@ -25,7 +25,8 @@
 #include "ompi/attribute/attribute.h"
 #include "ompi/communicator/communicator.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_COMM_SET_ATTR = ompi_comm_set_attr_f
 #pragma weak pmpi_comm_set_attr = ompi_comm_set_attr_f
 #pragma weak pmpi_comm_set_attr_ = ompi_comm_set_attr_f
@@ -33,7 +34,7 @@
 
 #pragma weak PMPI_Comm_set_attr_f = ompi_comm_set_attr_f
 #pragma weak PMPI_Comm_set_attr_f08 = ompi_comm_set_attr_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_COMM_SET_ATTR,
                            pmpi_comm_set_attr,
                            pmpi_comm_set_attr_,
@@ -41,6 +42,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_COMM_SET_ATTR,
                            pompi_comm_set_attr_f,
                            (MPI_Fint *comm, MPI_Fint *comm_keyval, MPI_Aint *attribute_val, MPI_Fint *ierr),
                            (comm, comm_keyval, attribute_val, ierr) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -51,9 +53,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_COMM_SET_ATTR,
 
 #pragma weak MPI_Comm_set_attr_f = ompi_comm_set_attr_f
 #pragma weak MPI_Comm_set_attr_f08 = ompi_comm_set_attr_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_COMM_SET_ATTR,
                            mpi_comm_set_attr,
                            mpi_comm_set_attr_,
@@ -61,11 +62,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_COMM_SET_ATTR,
                            ompi_comm_set_attr_f,
                            (MPI_Fint *comm, MPI_Fint *comm_keyval, MPI_Aint *attribute_val, MPI_Fint *ierr),
                            (comm, comm_keyval, attribute_val, ierr) )
-#endif
-
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
+#else
 #define ompi_comm_set_attr_f pompi_comm_set_attr_f
+#endif
 #endif
 
 #if OMPI_ENABLE_MPI_PROFILING

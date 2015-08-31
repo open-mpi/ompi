@@ -30,11 +30,10 @@
 #include "ompi/win/win.h"
 #include "ompi/memchecker.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_BUILD_MPI_PROFILING
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_Win_create = PMPI_Win_create
 #endif
-
-#if OMPI_BUILD_MPI_PROFILING
 #define MPI_Win_create PMPI_Win_create
 #endif
 

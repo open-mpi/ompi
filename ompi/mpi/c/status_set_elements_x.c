@@ -31,11 +31,10 @@
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/memchecker.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_BUILD_MPI_PROFILING
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_Status_set_elements_x = PMPI_Status_set_elements_x
 #endif
-
-#if OMPI_BUILD_MPI_PROFILING
 #define MPI_Status_set_elements_x PMPI_Status_set_elements_x
 #endif
 

@@ -27,11 +27,10 @@
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/pml/base/pml_base_bsend.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_BUILD_MPI_PROFILING
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_Buffer_detach = PMPI_Buffer_detach
 #endif
-
-#if OMPI_BUILD_MPI_PROFILING
 #define MPI_Buffer_detach PMPI_Buffer_detach
 #endif
 

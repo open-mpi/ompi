@@ -23,7 +23,8 @@
 
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_WIN_UNLOCK_ALL = ompi_win_unlock_all_f
 #pragma weak pmpi_win_unlock_all = ompi_win_unlock_all_f
 #pragma weak pmpi_win_unlock_all_ = ompi_win_unlock_all_f
@@ -31,7 +32,7 @@
 
 #pragma weak PMPI_Win_unlock_all_f = ompi_win_unlock_all_f
 #pragma weak PMPI_Win_unlock_all_f08 = ompi_win_unlock_all_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_WIN_UNLOCK_ALL,
                            pmpi_win_unlock_all,
                            pmpi_win_unlock_all_,
@@ -39,6 +40,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_WIN_UNLOCK_ALL,
                            pompi_win_unlock_all_f,
                            (MPI_Fint *win, MPI_Fint *ierr),
                            (win, ierr) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -49,9 +51,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_WIN_UNLOCK_ALL,
 
 #pragma weak MPI_Win_unlock_all_f = ompi_win_unlock_all_f
 #pragma weak MPI_Win_unlock_all_f08 = ompi_win_unlock_all_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_WIN_UNLOCK_ALL,
                            mpi_win_unlock_all,
                            mpi_win_unlock_all_,
@@ -59,11 +60,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_WIN_UNLOCK_ALL,
                            ompi_win_unlock_all_f,
                            (MPI_Fint *win, MPI_Fint *ierr),
                            (win, ierr) )
-#endif
-
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
+#else
 #define ompi_win_unlock_all_f pompi_win_unlock_all_f
+#endif
 #endif
 
 #if OMPI_ENABLE_MPI_PROFILING

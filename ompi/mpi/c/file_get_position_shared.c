@@ -26,11 +26,10 @@
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/file/file.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_BUILD_MPI_PROFILING
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_File_get_position_shared = PMPI_File_get_position_shared
 #endif
-
-#if OMPI_BUILD_MPI_PROFILING
 #define MPI_File_get_position_shared PMPI_File_get_position_shared
 #endif
 

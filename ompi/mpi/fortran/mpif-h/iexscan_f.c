@@ -24,7 +24,8 @@
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 #include "ompi/mpi/fortran/base/constants.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_IEXSCAN = ompi_iexscan_f
 #pragma weak pmpi_iexscan = ompi_iexscan_f
 #pragma weak pmpi_iexscan_ = ompi_iexscan_f
@@ -32,7 +33,7 @@
 
 #pragma weak PMPI_Iexscan_f = ompi_iexscan_f
 #pragma weak PMPI_Iexscan_f08 = ompi_iexscan_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_IEXSCAN,
                             pmpi_iexscan,
                             pmpi_iexscan_,
@@ -40,6 +41,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_IEXSCAN,
                             pompi_iexscan_f,
                             (char *sendbuf, char *recvbuf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *op, MPI_Fint *comm, MPI_Fint *request, MPI_Fint *ierr),
                             (sendbuf, recvbuf, count, datatype, op, comm, request, ierr) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -50,9 +52,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_IEXSCAN,
 
 #pragma weak MPI_Iexscan_f = ompi_iexscan_f
 #pragma weak MPI_Iexscan_f08 = ompi_iexscan_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_IEXSCAN,
                             mpi_iexscan,
                             mpi_iexscan_,
@@ -60,11 +61,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_IEXSCAN,
                             ompi_iexscan_f,
                             (char *sendbuf, char *recvbuf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *op, MPI_Fint *comm, MPI_Fint *request, MPI_Fint *ierr),
                             (sendbuf, recvbuf, count, datatype, op, comm, request, ierr) )
-#endif
-
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
+#else
 #define ompi_iexscan_f pompi_iexscan_f
+#endif
 #endif
 
 #if OMPI_ENABLE_MPI_PROFILING

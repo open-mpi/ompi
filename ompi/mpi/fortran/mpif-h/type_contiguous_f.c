@@ -23,7 +23,8 @@
 
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_TYPE_CONTIGUOUS = ompi_type_contiguous_f
 #pragma weak pmpi_type_contiguous = ompi_type_contiguous_f
 #pragma weak pmpi_type_contiguous_ = ompi_type_contiguous_f
@@ -31,7 +32,7 @@
 
 #pragma weak PMPI_Type_contiguous_f = ompi_type_contiguous_f
 #pragma weak PMPI_Type_contiguous_f08 = ompi_type_contiguous_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_TYPE_CONTIGUOUS,
                            pmpi_type_contiguous,
                            pmpi_type_contiguous_,
@@ -39,6 +40,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_TYPE_CONTIGUOUS,
                            pompi_type_contiguous_f,
                            (MPI_Fint *count, MPI_Fint *oldtype, MPI_Fint *newtype, MPI_Fint *ierr),
                            (count, oldtype, newtype, ierr) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -49,9 +51,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_TYPE_CONTIGUOUS,
 
 #pragma weak MPI_Type_contiguous_f = ompi_type_contiguous_f
 #pragma weak MPI_Type_contiguous_f08 = ompi_type_contiguous_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_CONTIGUOUS,
                            mpi_type_contiguous,
                            mpi_type_contiguous_,
@@ -59,11 +60,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_CONTIGUOUS,
                            ompi_type_contiguous_f,
                            (MPI_Fint *count, MPI_Fint *oldtype, MPI_Fint *newtype, MPI_Fint *ierr),
                            (count, oldtype, newtype, ierr) )
-#endif
-
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
+#else
 #define ompi_type_contiguous_f pompi_type_contiguous_f
+#endif
 #endif
 
 #if OMPI_ENABLE_MPI_PROFILING

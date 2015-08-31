@@ -24,7 +24,8 @@
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 #include "ompi/group/group.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_GROUP_DIFFERENCE = ompi_group_difference_f
 #pragma weak pmpi_group_difference = ompi_group_difference_f
 #pragma weak pmpi_group_difference_ = ompi_group_difference_f
@@ -32,7 +33,7 @@
 
 #pragma weak PMPI_Group_difference_f = ompi_group_difference_f
 #pragma weak PMPI_Group_difference_f08 = ompi_group_difference_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_GROUP_DIFFERENCE,
                            pmpi_group_difference,
                            pmpi_group_difference_,
@@ -40,6 +41,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_GROUP_DIFFERENCE,
                            pompi_group_difference_f,
                            (MPI_Fint *group1, MPI_Fint *group2, MPI_Fint *newgroup, MPI_Fint *ierr),
                            (group1, group2, newgroup, ierr) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -50,9 +52,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_GROUP_DIFFERENCE,
 
 #pragma weak MPI_Group_difference_f = ompi_group_difference_f
 #pragma weak MPI_Group_difference_f08 = ompi_group_difference_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_GROUP_DIFFERENCE,
                            mpi_group_difference,
                            mpi_group_difference_,
@@ -60,11 +61,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_GROUP_DIFFERENCE,
                            ompi_group_difference_f,
                            (MPI_Fint *group1, MPI_Fint *group2, MPI_Fint *newgroup, MPI_Fint *ierr),
                            (group1, group2, newgroup, ierr) )
-#endif
-
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
+#else
 #define ompi_group_difference_f pompi_group_difference_f
+#endif
 #endif
 
 #if OMPI_ENABLE_MPI_PROFILING

@@ -24,7 +24,8 @@
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 #include "ompi/group/group.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_GROUP_SIZE = ompi_group_size_f
 #pragma weak pmpi_group_size = ompi_group_size_f
 #pragma weak pmpi_group_size_ = ompi_group_size_f
@@ -32,7 +33,7 @@
 
 #pragma weak PMPI_Group_size_f = ompi_group_size_f
 #pragma weak PMPI_Group_size_f08 = ompi_group_size_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_GROUP_SIZE,
                            pmpi_group_size,
                            pmpi_group_size_,
@@ -40,6 +41,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_GROUP_SIZE,
                            pompi_group_size_f,
                            (MPI_Fint *group, MPI_Fint *size, MPI_Fint *ierr),
                            (group, size, ierr) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -50,9 +52,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_GROUP_SIZE,
 
 #pragma weak MPI_Group_size_f = ompi_group_size_f
 #pragma weak MPI_Group_size_f08 = ompi_group_size_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_GROUP_SIZE,
                            mpi_group_size,
                            mpi_group_size_,
@@ -60,11 +61,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_GROUP_SIZE,
                            ompi_group_size_f,
                            (MPI_Fint *group, MPI_Fint *size, MPI_Fint *ierr),
                            (group, size, ierr) )
-#endif
-
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
+#else
 #define ompi_group_size_f pompi_group_size_f
+#endif
 #endif
 
 #if OMPI_ENABLE_MPI_PROFILING

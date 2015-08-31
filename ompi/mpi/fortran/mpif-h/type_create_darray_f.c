@@ -23,7 +23,8 @@
 
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_TYPE_CREATE_DARRAY = ompi_type_create_darray_f
 #pragma weak pmpi_type_create_darray = ompi_type_create_darray_f
 #pragma weak pmpi_type_create_darray_ = ompi_type_create_darray_f
@@ -31,7 +32,7 @@
 
 #pragma weak PMPI_Type_create_darray_f = ompi_type_create_darray_f
 #pragma weak PMPI_Type_create_darray_f08 = ompi_type_create_darray_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_TYPE_CREATE_DARRAY,
                            pmpi_type_create_darray,
                            pmpi_type_create_darray_,
@@ -39,6 +40,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_TYPE_CREATE_DARRAY,
                            pompi_type_create_darray_f,
                            (MPI_Fint *size, MPI_Fint *rank, MPI_Fint *ndims, MPI_Fint *gsize_array, MPI_Fint *distrib_array, MPI_Fint *darg_array, MPI_Fint *psize_array, MPI_Fint *order, MPI_Fint *oldtype, MPI_Fint *newtype, MPI_Fint *ierr),
                            (size, rank, ndims, gsize_array, distrib_array, darg_array, psize_array, order, oldtype, newtype, ierr) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -49,9 +51,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_TYPE_CREATE_DARRAY,
 
 #pragma weak MPI_Type_create_darray_f = ompi_type_create_darray_f
 #pragma weak MPI_Type_create_darray_f08 = ompi_type_create_darray_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_CREATE_DARRAY,
                            mpi_type_create_darray,
                            mpi_type_create_darray_,
@@ -59,11 +60,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_CREATE_DARRAY,
                            ompi_type_create_darray_f,
                            (MPI_Fint *size, MPI_Fint *rank, MPI_Fint *ndims, MPI_Fint *gsize_array, MPI_Fint *distrib_array, MPI_Fint *darg_array, MPI_Fint *psize_array, MPI_Fint *order, MPI_Fint *oldtype, MPI_Fint *newtype, MPI_Fint *ierr),
                            (size, rank, ndims, gsize_array, distrib_array, darg_array, psize_array, order, oldtype, newtype, ierr) )
-#endif
-
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
+#else
 #define ompi_type_create_darray_f pompi_type_create_darray_f
+#endif
 #endif
 
 #if OMPI_ENABLE_MPI_PROFILING

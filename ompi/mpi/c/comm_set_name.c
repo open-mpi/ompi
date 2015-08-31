@@ -33,11 +33,10 @@
 #include "ompi/totalview.h"
 #include "ompi/memchecker.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_BUILD_MPI_PROFILING
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_Comm_set_name = PMPI_Comm_set_name
 #endif
-
-#if OMPI_BUILD_MPI_PROFILING
 #define MPI_Comm_set_name PMPI_Comm_set_name
 #endif
 
@@ -74,10 +73,6 @@ int MPI_Comm_set_name(MPI_Comm comm, const char *name)
   /* Force TotalView DLL to take note of this name setting */
 
   ++ompi_tv_comm_sequence_number;
-#endif
-
-#if OMPI_BUILD_MPI_PROFILING
-#define MPI_Comm_set_name PMPI_Comm_set_name
 #endif
    OMPI_ERRHANDLER_RETURN(rc, comm, rc, FUNC_NAME);
 }

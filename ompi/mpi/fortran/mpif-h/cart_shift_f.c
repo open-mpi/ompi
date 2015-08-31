@@ -23,7 +23,8 @@
 
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_CART_SHIFT = ompi_cart_shift_f
 #pragma weak pmpi_cart_shift = ompi_cart_shift_f
 #pragma weak pmpi_cart_shift_ = ompi_cart_shift_f
@@ -31,7 +32,7 @@
 
 #pragma weak PMPI_Cart_shift_f = ompi_cart_shift_f
 #pragma weak PMPI_Cart_shift_f08 = ompi_cart_shift_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_CART_SHIFT,
                            pmpi_cart_shift,
                            pmpi_cart_shift_,
@@ -39,6 +40,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_CART_SHIFT,
                            pompi_cart_shift_f,
                            (MPI_Fint *comm, MPI_Fint *direction, MPI_Fint *disp, MPI_Fint *rank_source, MPI_Fint *rank_dest, MPI_Fint *ierr),
                            (comm, direction, disp, rank_source, rank_dest, ierr) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -49,9 +51,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_CART_SHIFT,
 
 #pragma weak MPI_Cart_shift_f = ompi_cart_shift_f
 #pragma weak MPI_Cart_shift_f08 = ompi_cart_shift_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_CART_SHIFT,
                            mpi_cart_shift,
                            mpi_cart_shift_,
@@ -59,11 +60,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_CART_SHIFT,
                            ompi_cart_shift_f,
                            (MPI_Fint *comm, MPI_Fint *direction, MPI_Fint *disp, MPI_Fint *rank_source, MPI_Fint *rank_dest, MPI_Fint *ierr),
                            (comm, direction, disp, rank_source, rank_dest, ierr) )
-#endif
-
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
+#else
 #define ompi_cart_shift_f pompi_cart_shift_f
+#endif
 #endif
 
 #if OMPI_ENABLE_MPI_PROFILING

@@ -23,7 +23,8 @@
 
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_COMM_DISCONNECT = ompi_comm_disconnect_f
 #pragma weak pmpi_comm_disconnect = ompi_comm_disconnect_f
 #pragma weak pmpi_comm_disconnect_ = ompi_comm_disconnect_f
@@ -31,7 +32,7 @@
 
 #pragma weak PMPI_Comm_disconnect_f = ompi_comm_disconnect_f
 #pragma weak PMPI_Comm_disconnect_f08 = ompi_comm_disconnect_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_COMM_DISCONNECT,
                            pmpi_comm_disconnect,
                            pmpi_comm_disconnect_,
@@ -39,6 +40,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_COMM_DISCONNECT,
                            pompi_comm_disconnect_f,
                            (MPI_Fint *comm, MPI_Fint *ierr),
                            (comm, ierr) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -49,9 +51,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_COMM_DISCONNECT,
 
 #pragma weak MPI_Comm_disconnect_f = ompi_comm_disconnect_f
 #pragma weak MPI_Comm_disconnect_f08 = ompi_comm_disconnect_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_COMM_DISCONNECT,
                            mpi_comm_disconnect,
                            mpi_comm_disconnect_,
@@ -59,11 +60,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_COMM_DISCONNECT,
                            ompi_comm_disconnect_f,
                            (MPI_Fint *comm, MPI_Fint *ierr),
                            (comm, ierr) )
-#endif
-
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
+#else
 #define ompi_comm_disconnect_f pompi_comm_disconnect_f
+#endif
 #endif
 
 #if OMPI_ENABLE_MPI_PROFILING

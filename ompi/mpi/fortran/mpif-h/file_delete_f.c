@@ -25,7 +25,8 @@
 #include "ompi/mpi/fortran/base/strings.h"
 #include "ompi/file/file.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_FILE_DELETE = ompi_file_delete_f
 #pragma weak pmpi_file_delete = ompi_file_delete_f
 #pragma weak pmpi_file_delete_ = ompi_file_delete_f
@@ -33,7 +34,7 @@
 
 #pragma weak PMPI_File_delete_f = ompi_file_delete_f
 #pragma weak PMPI_File_delete_f08 = ompi_file_delete_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_FILE_DELETE,
                            pmpi_file_delete,
                            pmpi_file_delete_,
@@ -41,6 +42,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_FILE_DELETE,
                            pompi_file_delete_f,
                            (char *filename, MPI_Fint *info, MPI_Fint *ierr, int filename_len),
                            (filename, info, ierr, filename_len)  )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -51,9 +53,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_FILE_DELETE,
 
 #pragma weak MPI_File_delete_f = ompi_file_delete_f
 #pragma weak MPI_File_delete_f08 = ompi_file_delete_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_FILE_DELETE,
                            mpi_file_delete,
                            mpi_file_delete_,
@@ -61,11 +62,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_FILE_DELETE,
                            ompi_file_delete_f,
                            (char *filename, MPI_Fint *info, MPI_Fint *ierr, int filename_len),
                            (filename, info, ierr, filename_len) )
-#endif
-
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
+#else
 #define ompi_file_delete_f pompi_file_delete_f
+#endif
 #endif
 
 #if OMPI_ENABLE_MPI_PROFILING

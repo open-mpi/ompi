@@ -27,7 +27,8 @@
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 #include "ompi/mpi/fortran/base/constants.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_NEIGHBOR_ALLGATHERV = ompi_neighbor_allgatherv_f
 #pragma weak pmpi_neighbor_allgatherv = ompi_neighbor_allgatherv_f
 #pragma weak pmpi_neighbor_allgatherv_ = ompi_neighbor_allgatherv_f
@@ -35,7 +36,7 @@
 
 #pragma weak PMPI_Neighbor_allgatherv_f = ompi_neighbor_allgatherv_f
 #pragma weak PMPI_Neighbor_allgatherv_f08 = ompi_neighbor_allgatherv_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_NEIGHBOR_ALLGATHERV,
                            pmpi_neighbor_allgatherv,
                            pmpi_neighbor_allgatherv_,
@@ -43,6 +44,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_NEIGHBOR_ALLGATHERV,
                            pompi_neighbor_allgatherv_f,
                            (char *sendbuf, MPI_Fint *sendcount, MPI_Fint *sendtype, char *recvbuf, MPI_Fint *recvcounts, MPI_Fint *displs, MPI_Fint *recvtype, MPI_Fint *comm, MPI_Fint *ierr),
                            (sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs, recvtype, comm, ierr) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -53,9 +55,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_NEIGHBOR_ALLGATHERV,
 
 #pragma weak MPI_Neighbor_allgatherv_f = ompi_neighbor_allgatherv_f
 #pragma weak MPI_Neighbor_allgatherv_f08 = ompi_neighbor_allgatherv_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_NEIGHBOR_ALLGATHERV,
                            mpi_neighbor_allgatherv,
                            mpi_neighbor_allgatherv_,
@@ -63,11 +64,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_NEIGHBOR_ALLGATHERV,
                            ompi_neighbor_allgatherv_f,
                            (char *sendbuf, MPI_Fint *sendcount, MPI_Fint *sendtype, char *recvbuf, MPI_Fint *recvcounts, MPI_Fint *displs, MPI_Fint *recvtype, MPI_Fint *comm, MPI_Fint *ierr),
                            (sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs, recvtype, comm, ierr) )
-#endif
-
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
+#else
 #define ompi_neighbor_allgatherv_f pompi_neighbor_allgatherv_f
+#endif
 #endif
 
 #if OMPI_ENABLE_MPI_PROFILING

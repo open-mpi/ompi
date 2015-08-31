@@ -24,7 +24,8 @@
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 #include "ompi/mpi/fortran/base/constants.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_WAIT = ompi_wait_f
 #pragma weak pmpi_wait = ompi_wait_f
 #pragma weak pmpi_wait_ = ompi_wait_f
@@ -32,7 +33,7 @@
 
 #pragma weak PMPI_Wait_f = ompi_wait_f
 #pragma weak PMPI_Wait_f08 = ompi_wait_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_WAIT,
                            pmpi_wait,
                            pmpi_wait_,
@@ -40,6 +41,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_WAIT,
                            pompi_wait_f,
                            (MPI_Fint *request, MPI_Fint *status, MPI_Fint *ierr),
                            (request, status, ierr) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -50,9 +52,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_WAIT,
 
 #pragma weak MPI_Wait_f = ompi_wait_f
 #pragma weak MPI_Wait_f08 = ompi_wait_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_WAIT,
                            mpi_wait,
                            mpi_wait_,
@@ -60,11 +61,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_WAIT,
                            ompi_wait_f,
                            (MPI_Fint *request, MPI_Fint *status, MPI_Fint *ierr),
                            (request, status, ierr) )
-#endif
-
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
+#else
 #define ompi_wait_f pompi_wait_f
+#endif
 #endif
 
 #if OMPI_ENABLE_MPI_PROFILING

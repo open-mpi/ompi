@@ -24,7 +24,8 @@
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 #include "ompi/mpi/fortran/base/constants.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_ISCATTERV = ompi_iscatterv_f
 #pragma weak pmpi_iscatterv = ompi_iscatterv_f
 #pragma weak pmpi_iscatterv_ = ompi_iscatterv_f
@@ -32,7 +33,7 @@
 
 #pragma weak PMPI_Iscatterv_f = ompi_iscatterv_f
 #pragma weak PMPI_Iscatterv_f08 = ompi_iscatterv_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_ISCATTERV,
                             pmpi_iscatterv,
                             pmpi_iscatterv_,
@@ -40,6 +41,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_ISCATTERV,
                             pompi_iscatterv_f,
                             (char *sendbuf, MPI_Fint *sendcounts, MPI_Fint *displs, MPI_Fint *sendtype, char *recvbuf, MPI_Fint *recvcount, MPI_Fint *recvtype, MPI_Fint *root, MPI_Fint *comm, MPI_Fint *request, MPI_Fint *ierr),
                             (sendbuf, sendcounts, displs, sendtype, recvbuf, recvcount, recvtype, root, comm, request, ierr) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -50,9 +52,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_ISCATTERV,
 
 #pragma weak MPI_Iscatterv_f = ompi_iscatterv_f
 #pragma weak MPI_Iscatterv_f08 = ompi_iscatterv_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_ISCATTERV,
                             mpi_iscatterv,
                             mpi_iscatterv_,
@@ -60,11 +61,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_ISCATTERV,
                             ompi_iscatterv_f,
                             (char *sendbuf, MPI_Fint *sendcounts, MPI_Fint *displs, MPI_Fint *sendtype, char *recvbuf, MPI_Fint *recvcount, MPI_Fint *recvtype, MPI_Fint *root, MPI_Fint *comm, MPI_Fint *request, MPI_Fint *ierr),
                             (sendbuf, sendcounts, displs, sendtype, recvbuf, recvcount, recvtype, root, comm, request, ierr) )
-#endif
-
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
+#else
 #define ompi_iscatterv_f pompi_iscatterv_f
+#endif
 #endif
 
 #if OMPI_ENABLE_MPI_PROFILING

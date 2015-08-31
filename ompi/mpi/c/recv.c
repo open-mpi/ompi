@@ -28,11 +28,10 @@
 #include "ompi/memchecker.h"
 #include "ompi/request/request.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_BUILD_MPI_PROFILING
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_Recv = PMPI_Recv
 #endif
-
-#if OMPI_BUILD_MPI_PROFILING
 #define MPI_Recv PMPI_Recv
 #endif
 

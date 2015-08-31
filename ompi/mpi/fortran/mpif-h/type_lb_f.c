@@ -23,7 +23,8 @@
 
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_TYPE_LB = ompi_type_lb_f
 #pragma weak pmpi_type_lb = ompi_type_lb_f
 #pragma weak pmpi_type_lb_ = ompi_type_lb_f
@@ -31,7 +32,7 @@
 
 #pragma weak PMPI_Type_lb_f = ompi_type_lb_f
 #pragma weak PMPI_Type_lb_f08 = ompi_type_lb_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_TYPE_LB,
                            pmpi_type_lb,
                            pmpi_type_lb_,
@@ -39,6 +40,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_TYPE_LB,
                            pompi_type_lb_f,
                            (MPI_Fint *type, MPI_Fint *lb, MPI_Fint *ierr),
                            (type, lb, ierr) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -49,9 +51,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_TYPE_LB,
 
 #pragma weak MPI_Type_lb_f = ompi_type_lb_f
 #pragma weak MPI_Type_lb_f08 = ompi_type_lb_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_LB,
                            mpi_type_lb,
                            mpi_type_lb_,
@@ -59,11 +60,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_LB,
                            ompi_type_lb_f,
                            (MPI_Fint *type, MPI_Fint *lb, MPI_Fint *ierr),
                            (type, lb, ierr) )
-#endif
-
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
+#else
 #define ompi_type_lb_f pompi_type_lb_f
+#endif
 #endif
 
 #if OMPI_ENABLE_MPI_PROFILING

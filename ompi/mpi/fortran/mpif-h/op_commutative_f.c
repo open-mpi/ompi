@@ -23,7 +23,8 @@
 
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_OP_COMMUTATIVE = ompi_op_commutative_f
 #pragma weak pmpi_op_commutative = ompi_op_commutative_f
 #pragma weak pmpi_op_commutative_ = ompi_op_commutative_f
@@ -31,7 +32,7 @@
 
 #pragma weak PMPI_Op_commutative_f = ompi_op_commutative_f
 #pragma weak PMPI_Op_commutative_f08 = ompi_op_commutative_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_OP_COMMUTATIVE,
                            pmpi_op_commutative,
                            pmpi_op_commutative_,
@@ -39,6 +40,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_OP_COMMUTATIVE,
                            pompi_op_commutative_f,
                            (MPI_Fint *op, MPI_Fint *commute, MPI_Fint *ierr),
                            (op, commute, ierr) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -49,9 +51,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_OP_COMMUTATIVE,
 
 #pragma weak MPI_Op_commutative_f = ompi_op_commutative_f
 #pragma weak MPI_Op_commutative_f08 = ompi_op_commutative_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_OP_COMMUTATIVE,
                            mpi_op_commutative,
                            mpi_op_commutative_,
@@ -59,11 +60,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_OP_COMMUTATIVE,
                            ompi_op_commutative_f,
                            (MPI_Fint *op, MPI_Fint *commute, MPI_Fint *ierr),
                            (op, commute, ierr) )
-#endif
-
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
+#else
 #define ompi_op_commutative_f pompi_op_commutative_f
+#endif
 #endif
 
 #if OMPI_ENABLE_MPI_PROFILING

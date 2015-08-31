@@ -26,7 +26,8 @@
 #include "ompi/mpi/fortran/base/strings.h"
 #include "ompi/communicator/communicator.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_WIN_SET_NAME = ompi_win_set_name_f
 #pragma weak pmpi_win_set_name = ompi_win_set_name_f
 #pragma weak pmpi_win_set_name_ = ompi_win_set_name_f
@@ -34,7 +35,7 @@
 
 #pragma weak PMPI_Win_set_name_f = ompi_win_set_name_f
 #pragma weak PMPI_Win_set_name_f08 = ompi_win_set_name_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_WIN_SET_NAME,
                            pmpi_win_set_name,
                            pmpi_win_set_name_,
@@ -42,6 +43,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_WIN_SET_NAME,
                            pompi_win_set_name_f,
                            (MPI_Fint *win, char *win_name, MPI_Fint *ierr, int name_len),
                            (win, win_name, ierr, name_len) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -52,9 +54,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_WIN_SET_NAME,
 
 #pragma weak MPI_Win_set_name_f = ompi_win_set_name_f
 #pragma weak MPI_Win_set_name_f08 = ompi_win_set_name_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_WIN_SET_NAME,
                            mpi_win_set_name,
                            mpi_win_set_name_,
@@ -62,11 +63,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_WIN_SET_NAME,
                            ompi_win_set_name_f,
                            (MPI_Fint *win, char *win_name, MPI_Fint *ierr, int name_len),
                            (win, win_name, ierr, name_len) )
-#endif
-
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
+#else
 #define ompi_win_set_name_f pompi_win_set_name_f
+#endif
 #endif
 
 #if OMPI_ENABLE_MPI_PROFILING

@@ -3,8 +3,7 @@
  *                         All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- *
- * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -80,6 +79,10 @@
 #pragma ident OMPI_IDENT_STRING
 #elif OPAL_CC_USE_IDENT
 #ident OSHMEM_IDENT_STRING
+#endif
+
+#if OMPI_ENABLE_MPI_PROFILING
+#define MPI_Comm_dup PMPI_Comm_dup
 #endif
 
 /*

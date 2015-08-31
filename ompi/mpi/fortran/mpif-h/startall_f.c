@@ -25,7 +25,8 @@
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/communicator/communicator.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_STARTALL = ompi_startall_f
 #pragma weak pmpi_startall = ompi_startall_f
 #pragma weak pmpi_startall_ = ompi_startall_f
@@ -33,7 +34,7 @@
 
 #pragma weak PMPI_Startall_f = ompi_startall_f
 #pragma weak PMPI_Startall_f08 = ompi_startall_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_STARTALL,
                            pmpi_startall,
                            pmpi_startall_,
@@ -41,6 +42,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_STARTALL,
                            pompi_startall_f,
                            (MPI_Fint *count, MPI_Fint *array_of_requests, MPI_Fint *ierr),
                            (count, array_of_requests, ierr) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -51,9 +53,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_STARTALL,
 
 #pragma weak MPI_Startall_f = ompi_startall_f
 #pragma weak MPI_Startall_f08 = ompi_startall_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_STARTALL,
                            mpi_startall,
                            mpi_startall_,
@@ -61,11 +62,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_STARTALL,
                            ompi_startall_f,
                            (MPI_Fint *count, MPI_Fint *array_of_requests, MPI_Fint *ierr),
                            (count, array_of_requests, ierr) )
-#endif
-
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
+#else
 #define ompi_startall_f pompi_startall_f
+#endif
 #endif
 
 #if OMPI_ENABLE_MPI_PROFILING

@@ -23,7 +23,8 @@
 
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_GREQUEST_COMPLETE = ompi_grequest_complete_f
 #pragma weak pmpi_grequest_complete = ompi_grequest_complete_f
 #pragma weak pmpi_grequest_complete_ = ompi_grequest_complete_f
@@ -31,7 +32,7 @@
 
 #pragma weak PMPI_Grequest_complete_f = ompi_grequest_complete_f
 #pragma weak PMPI_Grequest_complete_f08 = ompi_grequest_complete_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_GREQUEST_COMPLETE,
                            pmpi_grequest_complete,
                            pmpi_grequest_complete_,
@@ -39,6 +40,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_GREQUEST_COMPLETE,
                            pompi_grequest_complete_f,
                            (MPI_Fint *request, MPI_Fint *ierr),
                            (request, ierr) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -49,9 +51,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_GREQUEST_COMPLETE,
 
 #pragma weak MPI_Grequest_complete_f = ompi_grequest_complete_f
 #pragma weak MPI_Grequest_complete_f08 = ompi_grequest_complete_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_GREQUEST_COMPLETE,
                            mpi_grequest_complete,
                            mpi_grequest_complete_,
@@ -59,11 +60,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_GREQUEST_COMPLETE,
                            ompi_grequest_complete_f,
                            (MPI_Fint *request, MPI_Fint *ierr),
                            (request, ierr) )
-#endif
-
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
+#else
 #define ompi_grequest_complete_f pompi_grequest_complete_f
+#endif
 #endif
 
 #if OMPI_ENABLE_MPI_PROFILING

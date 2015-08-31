@@ -20,11 +20,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_BUILD_MPI_PROFILING
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_Comm_get_info = PMPI_Comm_get_info
 #endif
-
-#if OMPI_BUILD_MPI_PROFILING
 #define MPI_Comm_get_info PMPI_Comm_get_info
 #endif
 

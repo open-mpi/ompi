@@ -23,7 +23,8 @@
 
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_TYPE_EXTENT = ompi_type_extent_f
 #pragma weak pmpi_type_extent = ompi_type_extent_f
 #pragma weak pmpi_type_extent_ = ompi_type_extent_f
@@ -31,7 +32,7 @@
 
 #pragma weak PMPI_Type_extent_f = ompi_type_extent_f
 #pragma weak PMPI_Type_extent_f08 = ompi_type_extent_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_TYPE_EXTENT,
                            pmpi_type_extent,
                            pmpi_type_extent_,
@@ -39,6 +40,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_TYPE_EXTENT,
                            pompi_type_extent_f,
                            (MPI_Fint *type, MPI_Fint *extent, MPI_Fint *ierr),
                            (type, extent, ierr) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -49,9 +51,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_TYPE_EXTENT,
 
 #pragma weak MPI_Type_extent_f = ompi_type_extent_f
 #pragma weak MPI_Type_extent_f08 = ompi_type_extent_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_EXTENT,
                            mpi_type_extent,
                            mpi_type_extent_,
@@ -59,11 +60,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_EXTENT,
                            ompi_type_extent_f,
                            (MPI_Fint *type, MPI_Fint *extent, MPI_Fint *ierr),
                            (type, extent, ierr) )
-#endif
-
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
+#else
 #define ompi_type_extent_f pompi_type_extent_f
+#endif
 #endif
 
 #if OMPI_ENABLE_MPI_PROFILING

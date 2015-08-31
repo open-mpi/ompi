@@ -24,7 +24,8 @@
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 #include "ompi/mpi/fortran/base/constants.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_ALLGATHER = ompi_allgather_f
 #pragma weak pmpi_allgather = ompi_allgather_f
 #pragma weak pmpi_allgather_ = ompi_allgather_f
@@ -32,7 +33,7 @@
 
 #pragma weak PMPI_Allgather_f = ompi_allgather_f
 #pragma weak PMPI_Allgather_f08 = ompi_allgather_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_ALLGATHER,
                            pmpi_allgather,
                            pmpi_allgather_,
@@ -40,6 +41,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_ALLGATHER,
                            pompi_allgather_f,
                            (char *sendbuf, MPI_Fint *sendcount, MPI_Fint *sendtype, char *recvbuf, MPI_Fint *recvcount, MPI_Fint *recvtype, MPI_Fint *comm, MPI_Fint *ierr),
                            (sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, ierr) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -50,9 +52,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_ALLGATHER,
 
 #pragma weak MPI_Allgather_f = ompi_allgather_f
 #pragma weak MPI_Allgather_f08 = ompi_allgather_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_ALLGATHER,
                            mpi_allgather,
                            mpi_allgather_,
@@ -60,11 +61,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_ALLGATHER,
                            ompi_allgather_f,
                            (char *sendbuf, MPI_Fint *sendcount, MPI_Fint *sendtype, char *recvbuf, MPI_Fint *recvcount, MPI_Fint *recvtype, MPI_Fint *comm, MPI_Fint *ierr),
                            (sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, ierr) )
-#endif
-
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
+#else
 #define ompi_allgather_f pompi_allgather_f
+#endif
 #endif
 
 #if OMPI_ENABLE_MPI_PROFILING

@@ -22,7 +22,8 @@
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 #include "ompi/mpi/fortran/base/constants.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_DIST_GRAPH_CREATE_ADJACENT = ompi_dist_graph_create_adjacent_f
 #pragma weak pmpi_dist_graph_create_adjacent = ompi_dist_graph_create_adjacent_f
 #pragma weak pmpi_dist_graph_create_adjacent_ = ompi_dist_graph_create_adjacent_f
@@ -30,7 +31,7 @@
 
 #pragma weak PMPI_Dist_graph_create_adjacent_f = ompi_dist_graph_create_adjacent_f
 #pragma weak PMPI_Dist_graph_create_adjacent_f08 = ompi_dist_graph_create_adjacent_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_DIST_GRAPH_CREATE_ADJACENT,
                             pmpi_dist_graph_create_adjacent,
                             pmpi_dist_graph_create_adjacent_,
@@ -38,6 +39,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_DIST_GRAPH_CREATE_ADJACENT,
                             pompi_dist_graph_create_adjacent_f,
                             (MPI_Fint *comm_old, MPI_Fint *indegree,  MPI_Fint *sources, MPI_Fint *sourceweights, MPI_Fint *outdegree,  MPI_Fint *destinations, MPI_Fint *destweights, MPI_Fint *info, ompi_fortran_logical_t *reorder, MPI_Fint *comm_graph, MPI_Fint *ierr),
                             (comm_old, indegree, sources, sourceweights, outdegree, destinations, destweights, info, reorder, comm_graph, ierr) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -48,9 +50,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_DIST_GRAPH_CREATE_ADJACENT,
 
 #pragma weak MPI_Dist_graph_create_adjacent_f = ompi_dist_graph_create_adjacent_f
 #pragma weak MPI_Dist_graph_create_adjacent_f08 = ompi_dist_graph_create_adjacent_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_DIST_GRAPH_CREATE_ADJACENT,
                             mpi_dist_graph_create_adjacent,
                             mpi_dist_graph_create_adjacent_,
@@ -60,8 +61,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_DIST_GRAPH_CREATE_ADJACENT,
                             (comm_old, indegree,  sources, sourceweights, outdegree, destinations, destweights, info, reorder, comm_graph, ierr) )
 #endif
 
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
+#if OMPI_BUILD_MPI_PROFILING && ! OPAL_HAVE_WEAK_SYMBOLS
 #define ompi_dist_graph_create_adjacent_f pompi_dist_graph_create_adjacent_f
+#endif
 #endif
 
 #if OMPI_ENABLE_MPI_PROFILING

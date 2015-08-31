@@ -25,7 +25,8 @@
 #include "ompi/constants.h"
 #include "ompi/mpi/fortran/base/strings.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_TYPE_GET_NAME = ompi_type_get_name_f
 #pragma weak pmpi_type_get_name = ompi_type_get_name_f
 #pragma weak pmpi_type_get_name_ = ompi_type_get_name_f
@@ -33,7 +34,7 @@
 
 #pragma weak PMPI_Type_get_name_f = ompi_type_get_name_f
 #pragma weak PMPI_Type_get_name_f08 = ompi_type_get_name_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_TYPE_GET_NAME,
                             pmpi_type_get_name,
                             pmpi_type_get_name_,
@@ -41,6 +42,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_TYPE_GET_NAME,
                             pompi_type_get_name_f,
                             (MPI_Fint *type, char *type_name, MPI_Fint *resultlen, MPI_Fint *ierr, int name_len),
                             (type, type_name, resultlen, ierr, name_len) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -51,9 +53,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_TYPE_GET_NAME,
 
 #pragma weak MPI_Type_get_name_f = ompi_type_get_name_f
 #pragma weak MPI_Type_get_name_f08 = ompi_type_get_name_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_GET_NAME,
                             mpi_type_get_name,
                             mpi_type_get_name_,
@@ -61,11 +62,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_GET_NAME,
                             ompi_type_get_name_f,
                             (MPI_Fint *type, char *type_name, MPI_Fint *resultlen, MPI_Fint *ierr, int name_len),
                             (type, type_name, resultlen, ierr, name_len) )
-#endif
-
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
+#else
 #define ompi_type_get_name_f pompi_type_get_name_f
+#endif
 #endif
 
 #if OMPI_ENABLE_MPI_PROFILING

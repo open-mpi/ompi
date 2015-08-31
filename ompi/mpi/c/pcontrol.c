@@ -24,11 +24,10 @@
 #include "ompi/runtime/params.h"
 #include "ompi/errhandler/errhandler.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_BUILD_MPI_PROFILING
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_Pcontrol = PMPI_Pcontrol
 #endif
-
-#if OMPI_BUILD_MPI_PROFILING
 #define MPI_Pcontrol PMPI_Pcontrol
 #endif
 

@@ -23,7 +23,8 @@
 
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_FINALIZE = ompi_finalize_f
 #pragma weak pmpi_finalize = ompi_finalize_f
 #pragma weak pmpi_finalize_ = ompi_finalize_f
@@ -31,7 +32,7 @@
 
 #pragma weak PMPI_Finalize_f = ompi_finalize_f
 #pragma weak PMPI_Finalize_f08 = ompi_finalize_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_FINALIZE,
                            pmpi_finalize,
                            pmpi_finalize_,
@@ -39,6 +40,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_FINALIZE,
                            pompi_finalize_f,
                            (MPI_Fint *ierr),
                            (ierr) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -49,9 +51,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_FINALIZE,
 
 #pragma weak MPI_Finalize_f = ompi_finalize_f
 #pragma weak MPI_Finalize_f08 = ompi_finalize_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_FINALIZE,
                            mpi_finalize,
                            mpi_finalize_,
@@ -59,11 +60,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_FINALIZE,
                            ompi_finalize_f,
                            (MPI_Fint *ierr),
                            (ierr) )
-#endif
-
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
+#else
 #define ompi_finalize_f pompi_finalize_f
+#endif
 #endif
 
 #if OMPI_ENABLE_MPI_PROFILING

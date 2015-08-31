@@ -25,7 +25,8 @@
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/communicator/communicator.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_COMM_CREATE_ERRHANDLER = ompi_comm_create_errhandler_f
 #pragma weak pmpi_comm_create_errhandler = ompi_comm_create_errhandler_f
 #pragma weak pmpi_comm_create_errhandler_ = ompi_comm_create_errhandler_f
@@ -33,7 +34,7 @@
 
 #pragma weak PMPI_Comm_create_errhandler_f = ompi_comm_create_errhandler_f
 #pragma weak PMPI_Comm_create_errhandler_f08 = ompi_comm_create_errhandler_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_COMM_CREATE_ERRHANDLER,
                            pmpi_comm_create_errhandler,
                            pmpi_comm_create_errhandler_,
@@ -41,6 +42,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_COMM_CREATE_ERRHANDLER,
                            pompi_comm_create_errhandler_f,
                            (ompi_errhandler_fortran_handler_fn_t* function, MPI_Fint *errhandler, MPI_Fint *ierr),
                            (function, errhandler, ierr) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -51,9 +53,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_COMM_CREATE_ERRHANDLER,
 
 #pragma weak MPI_Comm_create_errhandler_f = ompi_comm_create_errhandler_f
 #pragma weak MPI_Comm_create_errhandler_f08 = ompi_comm_create_errhandler_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_COMM_CREATE_ERRHANDLER,
                            mpi_comm_create_errhandler,
                            mpi_comm_create_errhandler_,
@@ -61,11 +62,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_COMM_CREATE_ERRHANDLER,
                            ompi_comm_create_errhandler_f,
                            (ompi_errhandler_fortran_handler_fn_t* function, MPI_Fint *errhandler, MPI_Fint *ierr),
                            (function, errhandler, ierr) )
-#endif
-
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
+#else
 #define ompi_comm_create_errhandler_f pompi_comm_create_errhandler_f
+#endif
 #endif
 
 #if OMPI_ENABLE_MPI_PROFILING

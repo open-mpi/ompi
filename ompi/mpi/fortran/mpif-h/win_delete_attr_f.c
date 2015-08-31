@@ -23,7 +23,8 @@
 
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_WIN_DELETE_ATTR = ompi_win_delete_attr_f
 #pragma weak pmpi_win_delete_attr = ompi_win_delete_attr_f
 #pragma weak pmpi_win_delete_attr_ = ompi_win_delete_attr_f
@@ -31,7 +32,7 @@
 
 #pragma weak PMPI_Win_delete_attr_f = ompi_win_delete_attr_f
 #pragma weak PMPI_Win_delete_attr_f08 = ompi_win_delete_attr_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_WIN_DELETE_ATTR,
                            pmpi_win_delete_attr,
                            pmpi_win_delete_attr_,
@@ -39,6 +40,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_WIN_DELETE_ATTR,
                            pompi_win_delete_attr_f,
                            (MPI_Fint *win, MPI_Fint *win_keyval, MPI_Fint *ierr),
                            (win, win_keyval, ierr) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -49,9 +51,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_WIN_DELETE_ATTR,
 
 #pragma weak MPI_Win_delete_attr_f = ompi_win_delete_attr_f
 #pragma weak MPI_Win_delete_attr_f08 = ompi_win_delete_attr_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_WIN_DELETE_ATTR,
                            mpi_win_delete_attr,
                            mpi_win_delete_attr_,
@@ -59,11 +60,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_WIN_DELETE_ATTR,
                            ompi_win_delete_attr_f,
                            (MPI_Fint *win, MPI_Fint *win_keyval, MPI_Fint *ierr),
                            (win, win_keyval, ierr) )
-#endif
-
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
+#else
 #define ompi_win_delete_attr_f pompi_win_delete_attr_f
+#endif
 #endif
 
 #if OMPI_ENABLE_MPI_PROFILING

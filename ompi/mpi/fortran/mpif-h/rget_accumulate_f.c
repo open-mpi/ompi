@@ -28,7 +28,8 @@
 #include "ompi/mpi/fortran/base/constants.h"
 
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_RGET_ACCUMULATE = ompi_rget_accumulate_f
 #pragma weak pmpi_rget_accumulate = ompi_rget_accumulate_f
 #pragma weak pmpi_rget_accumulate_ = ompi_rget_accumulate_f
@@ -36,7 +37,7 @@
 
 #pragma weak PMPI_Get_accumulate_f = ompi_rget_accumulate_f
 #pragma weak PMPI_Get_accumulate_f08 = ompi_rget_accumulate_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_RGET_ACCUMULATE,
                             pmpi_rget_accumulate,
                             pmpi_rget_accumulate_,
@@ -44,6 +45,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_RGET_ACCUMULATE,
                             pompi_rget_accumulate_f,
                             (char *origin_addr, MPI_Fint *origin_count, MPI_Fint *origin_datatype, char *result_addr, MPI_Fint *result_count, MPI_Fint *result_datatype, MPI_Fint *target_rank, MPI_Aint *target_disp, MPI_Fint *target_count, MPI_Fint *target_datatype, MPI_Fint *op, MPI_Fint *win, MPI_Fint *request, MPI_Fint *ierr),
                             (origin_addr, origin_count, origin_datatype, result_addr, result_count, result_datatype, target_rank, target_disp, target_count, target_datatype, op, win, request, ierr) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -54,9 +56,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_RGET_ACCUMULATE,
 
 #pragma weak MPI_Get_accumulate_f = ompi_rget_accumulate_f
 #pragma weak MPI_Get_accumulate_f08 = ompi_rget_accumulate_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_RGET_ACCUMULATE,
                             mpi_rget_accumulate,
                             mpi_rget_accumulate_,
@@ -64,11 +65,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_RGET_ACCUMULATE,
                             ompi_rget_accumulate_f,
                             (char *origin_addr, MPI_Fint *origin_count, MPI_Fint *origin_datatype, char *result_addr, MPI_Fint *result_count, MPI_Fint *result_datatype, MPI_Fint *target_rank, MPI_Aint *target_disp, MPI_Fint *target_count, MPI_Fint *target_datatype, MPI_Fint *op, MPI_Fint *win, MPI_Fint *request, MPI_Fint *ierr),
                             (origin_addr, origin_count, origin_datatype, result_addr, result_count, result_datatype, target_rank, target_disp, target_count, target_datatype, op, win, request, ierr) )
-#endif
-
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
+#else
 #define ompi_rget_accumulate_f pompi_rget_accumulate_f
+#endif
 #endif
 
 #if OMPI_ENABLE_MPI_PROFILING
