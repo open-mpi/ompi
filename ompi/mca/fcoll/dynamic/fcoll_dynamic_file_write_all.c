@@ -96,6 +96,10 @@ mca_fcoll_dynamic_file_write_all (mca_io_ompio_file_t *fh,
     MPI_Aint *total_bytes_per_process = NULL;
     MPI_Request send_req=NULL, *recv_req=NULL;
     int my_aggregator=-1;
+    bool sendbuf_is_contiguous = false;
+    size_t ftype_size;
+    OPAL_PTRDIFF_TYPE ftype_extent, lb; 
+
     
 #if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
     double write_time = 0.0, start_write_time = 0.0, end_write_time = 0.0;
@@ -103,16 +107,22 @@ mca_fcoll_dynamic_file_write_all (mca_io_ompio_file_t *fh,
     double exch_write = 0.0, start_exch = 0.0, end_exch = 0.0;
     mca_io_ompio_print_entry nentry;
 #endif
-    
-    
-//    if (opal_datatype_is_contiguous_memory_layout(&datatype->super,1)) {
-//        fh->f_flags |= OMPIO_CONTIGUOUS_MEMORY;
-//    }
+     
+    opal_datatype_type_size ( &datatype->super, &ftype_size );
+    opal_datatype_get_extent ( &datatype->super, &lb, &ftype_extent );
     
     /**************************************************************************
      ** 1.  In case the data is not contigous in memory, decode it into an iovec
      **************************************************************************/
-    if (! (fh->f_flags & OMPIO_CONTIGUOUS_MEMORY)) {
+    if ( ( ftype_extent == (OPAL_PTRDIFF_TYPE) ftype_size)             && 
+         opal_datatype_is_contiguous_memory_layout(&datatype->super,1) && 
+         0 == lb ) {
+        sendbuf_is_contiguous = true;
+    }
+    
+
+
+    if (! sendbuf_is_contiguous ) {
         ret =   fh->f_decode_datatype ((struct mca_io_ompio_file_t *) fh,
                                        datatype,
                                        count,
@@ -791,7 +801,7 @@ mca_fcoll_dynamic_file_write_all (mca_io_ompio_file_t *fh,
         } /* end if (my_aggregator == fh->f_rank ) */
         
         
-        if (fh->f_flags & OMPIO_CONTIGUOUS_MEMORY) {
+        if ( sendbuf_is_contiguous ) {
             send_buf = &((char*)buf)[total_bytes_written];
         }
         else if (bytes_sent) {
@@ -880,7 +890,7 @@ mca_fcoll_dynamic_file_write_all (mca_io_ompio_file_t *fh,
 	}
 #endif
         
-        if (! (fh->f_flags & OMPIO_CONTIGUOUS_MEMORY)) {
+        if (! sendbuf_is_contiguous) {
             if (NULL != send_buf) {
                 free (send_buf);
                 send_buf = NULL;
@@ -1050,7 +1060,7 @@ exit :
         
     }
     
-    if (! (fh->f_flags & OMPIO_CONTIGUOUS_MEMORY)) {
+    if (! sendbuf_is_contiguous) {
 	if (NULL != send_buf) {
 	    free (send_buf);
 	    send_buf = NULL;
