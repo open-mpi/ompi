@@ -124,6 +124,7 @@
 ! Wasn't that simple?  Here's the list of subroutines that are not
 ! prototyped in this file because they fall into case #1 or #2, above.
 !
+! Case #1:
 ! MPI_Cart_create
 ! MPI_Cart_get
 ! MPI_Cart_map
@@ -137,15 +138,20 @@
 ! MPI_File_set_atomicity
 ! MPI_Finalized
 ! MPI_Graph_create
-! MPI_Improbe
 ! MPI_Info_get
 ! MPI_Info_get_valuelen
 ! MPI_Initialized
 ! MPI_Intercomm_merge
-! MPI_Iprobe
 ! MPI_Is_thread_main
 ! MPI_Op_commutative
 ! MPI_Op_create
+! MPI_Type_get_attr
+! MPI_Win_get_attr
+! MPI_Win_test
+!
+! Case #2:
+! MPI_Iprobe
+! MPI_Improbe
 ! MPI_Request_get_status
 ! MPI_Status_set_cancelled
 ! MPI_Test
@@ -153,9 +159,6 @@
 ! MPI_Testany
 ! MPI_Testsome
 ! MPI_Test_cancelled
-! MPI_Type_get_attr
-! MPI_Win_get_attr
-! MPI_Win_test
 !
 
 interface
