@@ -32,11 +32,10 @@
 
 #include <float.h>
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_BUILD_MPI_PROFILING
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_Type_create_f90_real = PMPI_Type_create_f90_real
 #endif
-
-#if OMPI_BUILD_MPI_PROFILING
 #define MPI_Type_create_f90_real PMPI_Type_create_f90_real
 #endif
 

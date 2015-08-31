@@ -32,11 +32,10 @@
 #include "ompi/mca/pml/base/pml_base_bsend.h"
 #include "ompi/memchecker.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_BUILD_MPI_PROFILING
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_Ibsend = PMPI_Ibsend
 #endif
-
-#if OMPI_BUILD_MPI_PROFILING
 #define MPI_Ibsend PMPI_Ibsend
 #endif
 

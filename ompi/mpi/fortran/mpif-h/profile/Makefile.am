@@ -29,7 +29,7 @@ include $(top_srcdir)/Makefile.ompi-rules
 CLEANFILES=
 libmpi_mpifh_pmpi_la_LIBADD =
 
-AM_CPPFLAGS = -DOMPI_PROFILE_LAYER=1 -DOMPI_COMPILING_FORTRAN_WRAPPERS=1
+AM_CPPFLAGS = -DOMPI_BUILD_MPI_PROFILING=1 -DOMPI_COMPILING_FORTRAN_WRAPPERS=1
 #
 # This build needs to go through only if profiling is required.
 # Further, this build HAS to go through if profiling is required.

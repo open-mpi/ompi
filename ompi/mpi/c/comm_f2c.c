@@ -28,11 +28,10 @@
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/mpi/fortran/base/fint_2_int.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_BUILD_MPI_PROFILING
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_Comm_f2c = PMPI_Comm_f2c
 #endif
-
-#if OMPI_BUILD_MPI_PROFILING
 #define MPI_Comm_f2c PMPI_Comm_f2c
 #endif
 

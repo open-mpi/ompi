@@ -31,11 +31,10 @@
 #include "ompi/mca/pml/pml.h"
 #include "ompi/memchecker.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_BUILD_MPI_PROFILING
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_Comm_create_group = PMPI_Comm_create_group
 #endif
-
-#if OMPI_BUILD_MPI_PROFILING
 #define MPI_Comm_create_group PMPI_Comm_create_group
 #endif
 

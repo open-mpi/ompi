@@ -23,7 +23,8 @@
 
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_FILE_SET_SIZE = ompi_file_set_size_f
 #pragma weak pmpi_file_set_size = ompi_file_set_size_f
 #pragma weak pmpi_file_set_size_ = ompi_file_set_size_f
@@ -31,7 +32,7 @@
 
 #pragma weak PMPI_File_set_size_f = ompi_file_set_size_f
 #pragma weak PMPI_File_set_size_f08 = ompi_file_set_size_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_FILE_SET_SIZE,
                            pmpi_file_set_size,
                            pmpi_file_set_size_,
@@ -39,6 +40,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_FILE_SET_SIZE,
                            pompi_file_set_size_f,
                            (MPI_Fint *fh, MPI_Offset *size, MPI_Fint *ierr),
                            (fh, size, ierr) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -49,9 +51,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_FILE_SET_SIZE,
 
 #pragma weak MPI_File_set_size_f = ompi_file_set_size_f
 #pragma weak MPI_File_set_size_f08 = ompi_file_set_size_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_FILE_SET_SIZE,
                            mpi_file_set_size,
                            mpi_file_set_size_,
@@ -59,11 +60,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_FILE_SET_SIZE,
                            ompi_file_set_size_f,
                            (MPI_Fint *fh, MPI_Offset *size, MPI_Fint *ierr),
                            (fh, size, ierr) )
-#endif
-
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
+#else
 #define ompi_file_set_size_f pompi_file_set_size_f
+#endif
 #endif
 
 

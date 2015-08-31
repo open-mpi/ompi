@@ -26,7 +26,8 @@
 
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_WIN_FLUSH = ompi_win_flush_f
 #pragma weak pmpi_win_flush = ompi_win_flush_f
 #pragma weak pmpi_win_flush_ = ompi_win_flush_f
@@ -34,7 +35,7 @@
 
 #pragma weak PMPI_Win_flush_f = ompi_win_flush_f
 #pragma weak PMPI_Win_flush_f08 = ompi_win_flush_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_WIN_FLUSH,
                            pmpi_win_flush,
                            pmpi_win_flush_,
@@ -42,6 +43,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_WIN_FLUSH,
                            pompi_win_flush_f,
                            (MPI_Fint *rank, MPI_Fint *win, MPI_Fint *ierr),
                            (rank, win, ierr) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -52,9 +54,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_WIN_FLUSH,
 
 #pragma weak MPI_Win_flush_f = ompi_win_flush_f
 #pragma weak MPI_Win_flush_f08 = ompi_win_flush_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_WIN_FLUSH,
                            mpi_win_flush,
                            mpi_win_flush_,
@@ -62,11 +63,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_WIN_FLUSH,
                            ompi_win_flush_f,
                            (MPI_Fint *rank, MPI_Fint *win, MPI_Fint *ierr),
                            (rank, win, ierr) )
-#endif
-
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
+#else
 #define ompi_win_flush_f pompi_win_flush_f
+#endif
 #endif
 
 

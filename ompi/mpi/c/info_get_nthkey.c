@@ -27,11 +27,10 @@
 #include "ompi/info/info.h"
 #include <string.h>
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_BUILD_MPI_PROFILING
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_Info_get_nthkey = PMPI_Info_get_nthkey
 #endif
-
-#if OMPI_BUILD_MPI_PROFILING
 #define MPI_Info_get_nthkey PMPI_Info_get_nthkey
 #endif
 

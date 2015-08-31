@@ -24,7 +24,8 @@
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 #include "ompi/mpi/fortran/base/constants.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_IALLTOALLW = ompi_ialltoallw_f
 #pragma weak pmpi_ialltoallw = ompi_ialltoallw_f
 #pragma weak pmpi_ialltoallw_ = ompi_ialltoallw_f
@@ -32,7 +33,7 @@
 
 #pragma weak PMPI_Ialltoallw_f = ompi_ialltoallw_f
 #pragma weak PMPI_Ialltoallw_f08 = ompi_ialltoallw_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_IALLTOALLW,
                             pmpi_ialltoallw,
                             pmpi_ialltoallw_,
@@ -40,6 +41,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_IALLTOALLW,
                             pompi_ialltoallw_f,
                             (char *sendbuf, MPI_Fint *sendcounts, MPI_Fint *sdispls, MPI_Fint *sendtypes, char *recvbuf, MPI_Fint *recvcounts, MPI_Fint *rdispls, MPI_Fint *recvtypes, MPI_Fint *comm, MPI_Fint *request, MPI_Fint *ierr),
                             (sendbuf, sendcounts, sdispls, sendtypes, recvbuf, recvcounts, rdispls, recvtypes, comm, request, ierr) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -50,9 +52,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_IALLTOALLW,
 
 #pragma weak MPI_Ialltoallw_f = ompi_ialltoallw_f
 #pragma weak MPI_Ialltoallw_f08 = ompi_ialltoallw_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_IALLTOALLW,
                             mpi_ialltoallw,
                             mpi_ialltoallw_,
@@ -60,11 +61,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_IALLTOALLW,
                             ompi_ialltoallw_f,
                             (char *sendbuf, MPI_Fint *sendcounts, MPI_Fint *sdispls, MPI_Fint *sendtypes, char *recvbuf, MPI_Fint *recvcounts, MPI_Fint *rdispls, MPI_Fint *recvtypes, MPI_Fint *comm, MPI_Fint *request, MPI_Fint *ierr),
                             (sendbuf, sendcounts, sdispls, sendtypes, recvbuf, recvcounts, rdispls, recvtypes, comm, request, ierr) )
-#endif
-
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
+#else
 #define ompi_ialltoallw_f pompi_ialltoallw_f
+#endif
 #endif
 
 

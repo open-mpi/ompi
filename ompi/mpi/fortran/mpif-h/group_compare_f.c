@@ -25,7 +25,8 @@
 #include "ompi/group/group.h"
 
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_GROUP_COMPARE = ompi_group_compare_f
 #pragma weak pmpi_group_compare = ompi_group_compare_f
 #pragma weak pmpi_group_compare_ = ompi_group_compare_f
@@ -33,7 +34,7 @@
 
 #pragma weak PMPI_Group_compare_f = ompi_group_compare_f
 #pragma weak PMPI_Group_compare_f08 = ompi_group_compare_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_GROUP_COMPARE,
                            pmpi_group_compare,
                            pmpi_group_compare_,
@@ -42,6 +43,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_GROUP_COMPARE,
                            (MPI_Fint *group1, MPI_Fint *group2,
                             MPI_Fint *result, MPI_Fint *ierror),
                            (group1,group2,result,ierror))
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -54,7 +56,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_GROUP_COMPARE,
 #pragma weak MPI_Group_compare_f08 = ompi_group_compare_f
 #endif
 
-#if ! OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
+#if ! OMPI_BUILD_MPI_PROFILING && ! OPAL_HAVE_WEAK_SYMBOLS
 OMPI_GENERATE_F77_BINDINGS (MPI_GROUP_COMPARE,
                            mpi_group_compare,
                            mpi_group_compare_,
@@ -67,7 +69,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_GROUP_COMPARE,
 
 
 
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
+#if OMPI_BUILD_MPI_PROFILING && ! OPAL_HAVE_WEAK_SYMBOLS
 #define ompi_group_compare_f pompi_group_compare_f
 #endif
 

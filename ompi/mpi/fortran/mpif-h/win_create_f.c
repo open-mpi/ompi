@@ -23,7 +23,8 @@
 
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_WIN_CREATE = ompi_win_create_f
 #pragma weak pmpi_win_create = ompi_win_create_f
 #pragma weak pmpi_win_create_ = ompi_win_create_f
@@ -31,7 +32,7 @@
 
 #pragma weak PMPI_Win_create_f = ompi_win_create_f
 #pragma weak PMPI_Win_create_f08 = ompi_win_create_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_WIN_CREATE,
                            pmpi_win_create,
                            pmpi_win_create_,
@@ -39,6 +40,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_WIN_CREATE,
                            pompi_win_create_f,
                            (char *base, MPI_Aint *size, MPI_Fint *disp_unit, MPI_Fint *info, MPI_Fint *comm, MPI_Fint *win, MPI_Fint *ierr),
                            (base, size, disp_unit, info, comm, win, ierr) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -49,9 +51,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_WIN_CREATE,
 
 #pragma weak MPI_Win_create_f = ompi_win_create_f
 #pragma weak MPI_Win_create_f08 = ompi_win_create_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_WIN_CREATE,
                            mpi_win_create,
                            mpi_win_create_,
@@ -59,11 +60,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_WIN_CREATE,
                            ompi_win_create_f,
                            (char *base, MPI_Aint *size, MPI_Fint *disp_unit, MPI_Fint *info, MPI_Fint *comm, MPI_Fint *win, MPI_Fint *ierr),
                            (base, size, disp_unit, info, comm, win, ierr) )
-#endif
-
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
+#else
 #define ompi_win_create_f pompi_win_create_f
+#endif
 #endif
 
 

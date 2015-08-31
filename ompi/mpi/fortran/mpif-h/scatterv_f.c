@@ -24,7 +24,8 @@
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 #include "ompi/mpi/fortran/base/constants.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_SCATTERV = ompi_scatterv_f
 #pragma weak pmpi_scatterv = ompi_scatterv_f
 #pragma weak pmpi_scatterv_ = ompi_scatterv_f
@@ -32,7 +33,7 @@
 
 #pragma weak PMPI_Scatterv_f = ompi_scatterv_f
 #pragma weak PMPI_Scatterv_f08 = ompi_scatterv_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_SCATTERV,
                            pmpi_scatterv,
                            pmpi_scatterv_,
@@ -40,6 +41,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_SCATTERV,
                            pompi_scatterv_f,
                            (char *sendbuf, MPI_Fint *sendcounts, MPI_Fint *displs, MPI_Fint *sendtype, char *recvbuf, MPI_Fint *recvcount, MPI_Fint *recvtype, MPI_Fint *root, MPI_Fint *comm, MPI_Fint *ierr),
                            (sendbuf, sendcounts, displs, sendtype, recvbuf, recvcount, recvtype, root, comm, ierr) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -50,9 +52,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_SCATTERV,
 
 #pragma weak MPI_Scatterv_f = ompi_scatterv_f
 #pragma weak MPI_Scatterv_f08 = ompi_scatterv_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_SCATTERV,
                            mpi_scatterv,
                            mpi_scatterv_,
@@ -60,11 +61,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_SCATTERV,
                            ompi_scatterv_f,
                            (char *sendbuf, MPI_Fint *sendcounts, MPI_Fint *displs, MPI_Fint *sendtype, char *recvbuf, MPI_Fint *recvcount, MPI_Fint *recvtype, MPI_Fint *root, MPI_Fint *comm, MPI_Fint *ierr),
                            (sendbuf, sendcounts, displs, sendtype, recvbuf, recvcount, recvtype, root, comm, ierr) )
-#endif
-
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
+#else
 #define ompi_scatterv_f pompi_scatterv_f
+#endif
 #endif
 
 

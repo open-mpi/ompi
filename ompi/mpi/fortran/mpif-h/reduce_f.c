@@ -24,7 +24,8 @@
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 #include "ompi/mpi/fortran/base/constants.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_REDUCE = ompi_reduce_f
 #pragma weak pmpi_reduce = ompi_reduce_f
 #pragma weak pmpi_reduce_ = ompi_reduce_f
@@ -32,7 +33,7 @@
 
 #pragma weak PMPI_Reduce_f = ompi_reduce_f
 #pragma weak PMPI_Reduce_f08 = ompi_reduce_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_REDUCE,
                            pmpi_reduce,
                            pmpi_reduce_,
@@ -40,6 +41,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_REDUCE,
                            pompi_reduce_f,
                            (char *sendbuf, char *recvbuf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *op, MPI_Fint *root, MPI_Fint *comm, MPI_Fint *ierr),
                            (sendbuf, recvbuf, count, datatype, op, root, comm, ierr) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -50,9 +52,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_REDUCE,
 
 #pragma weak MPI_Reduce_f = ompi_reduce_f
 #pragma weak MPI_Reduce_f08 = ompi_reduce_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_REDUCE,
                            mpi_reduce,
                            mpi_reduce_,
@@ -60,11 +61,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_REDUCE,
                            ompi_reduce_f,
                            (char *sendbuf, char *recvbuf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *op, MPI_Fint *root, MPI_Fint *comm, MPI_Fint *ierr),
                            (sendbuf, recvbuf, count, datatype, op, root, comm, ierr) )
-#endif
-
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
+#else
 #define ompi_reduce_f pompi_reduce_f
+#endif
 #endif
 
 

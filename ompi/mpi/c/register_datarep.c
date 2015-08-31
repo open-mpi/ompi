@@ -30,11 +30,10 @@
 #include "ompi/mca/io/base/base.h"
 #include "ompi/file/file.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_BUILD_MPI_PROFILING
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_Register_datarep = PMPI_Register_datarep
 #endif
-
-#if OMPI_BUILD_MPI_PROFILING
 #define MPI_Register_datarep PMPI_Register_datarep
 #endif
 

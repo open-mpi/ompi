@@ -28,11 +28,10 @@
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/datatype/ompi_datatype_internal.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_BUILD_MPI_PROFILING
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_Type_match_size = PMPI_Type_match_size
 #endif
-
-#if OMPI_BUILD_MPI_PROFILING
 #define MPI_Type_match_size PMPI_Type_match_size
 #endif
 

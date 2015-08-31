@@ -25,11 +25,10 @@
 #include "ompi/mca/topo/topo.h"
 #include "ompi/mca/topo/base/base.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_BUILD_MPI_PROFILING
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_Dist_graph_neighbors = PMPI_Dist_graph_neighbors
 #endif
-
-#if OMPI_BUILD_MPI_PROFILING
 #define MPI_Dist_graph_neighbors PMPI_Dist_graph_neighbors
 #endif
 

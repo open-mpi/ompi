@@ -29,11 +29,10 @@
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/memchecker.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_BUILD_MPI_PROFILING
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_Test_cancelled = PMPI_Test_cancelled
 #endif
-
-#if OMPI_BUILD_MPI_PROFILING
 #define MPI_Test_cancelled PMPI_Test_cancelled
 #endif
 

@@ -27,11 +27,10 @@
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/attribute/attribute.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_BUILD_MPI_PROFILING
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_Win_create_keyval = PMPI_Win_create_keyval
 #endif
-
-#if OMPI_BUILD_MPI_PROFILING
 #define MPI_Win_create_keyval PMPI_Win_create_keyval
 #endif
 

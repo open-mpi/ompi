@@ -10,9 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
- * Copyright (c) 2012      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
- * Copyright (c) 2015      FUJITSU LIMITED.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -29,7 +28,8 @@
 #include "ompi/mpi/fortran/base/constants.h"
 #include "ompi/communicator/communicator.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_MPROBE = ompi_mprobe_f
 #pragma weak pmpi_mprobe = ompi_mprobe_f
 #pragma weak pmpi_mprobe_ = ompi_mprobe_f
@@ -37,7 +37,7 @@
 
 #pragma weak PMPI_Mprobe_f = ompi_mprobe_f
 #pragma weak PMPI_Mprobe_f08 = ompi_mprobe_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_MPROBE,
                             pmpi_mprobe,
                             pmpi_mprobe_,
@@ -47,18 +47,15 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_MPROBE,
                              MPI_Fint *status, MPI_Fint *ierr),
                             (source, tag, comm, message, status, ierr) )
 #endif
+#endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_MPROBE = ompi_mprobe_f
 #pragma weak mpi_mprobe = ompi_mprobe_f
 #pragma weak mpi_mprobe_ = ompi_mprobe_f
 #pragma weak mpi_mprobe__ = ompi_mprobe_f
-
-#pragma weak MPI_Mprobe_f = ompi_mprobe_f
-#pragma weak MPI_Mprobe_f08 = ompi_mprobe_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_MPROBE,
                             mpi_mprobe,
                             mpi_mprobe_,
@@ -67,11 +64,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_MPROBE,
                             (MPI_Fint *source, MPI_Fint *tag, MPI_Fint *comm, MPI_Fint *message,
                              MPI_Fint *status, MPI_Fint *ierr),
                             (source, tag, comm, message, status, ierr) )
-#endif
-
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
+#else
 #define ompi_mprobe_f pompi_mprobe_f
+#endif
 #endif
 
 

@@ -18,7 +18,8 @@
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 #include "ompi/mpi/fortran/base/constants.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_DIST_GRAPH_NEIGHBORS = ompi_dist_graph_neighbors_f
 #pragma weak pmpi_dist_graph_neighbors = ompi_dist_graph_neighbors_f
 #pragma weak pmpi_dist_graph_neighbors_ = ompi_dist_graph_neighbors_f
@@ -26,7 +27,7 @@
 
 #pragma weak PMPI_Dist_graph_neighbors_f = ompi_dist_graph_neighbors_f
 #pragma weak PMPI_Dist_graph_neighbors_f08 = ompi_dist_graph_neighbors_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_DIST_GRAPH_NEIGHBORS,
                             pmpi_dist_graph_neighbors,
                             pmpi_dist_graph_neighbors_,
@@ -34,6 +35,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_DIST_GRAPH_NEIGHBORS,
                             pompi_dist_graph_neighbors_f,
                             (MPI_Fint* comm, MPI_Fint* maxindegree, MPI_Fint* sources, MPI_Fint* sourceweights, MPI_Fint* maxoutdegree, MPI_Fint* destinations, MPI_Fint* destweights, MPI_Fint *ierr),
                             (comm, maxindegree, sources, sourceweights, maxoutdegree, destinations, destweights, ierr) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -44,9 +46,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_DIST_GRAPH_NEIGHBORS,
 
 #pragma weak MPI_Dist_graph_neighbors_f = ompi_dist_graph_neighbors_f
 #pragma weak MPI_Dist_graph_neighbors_f08 = ompi_dist_graph_neighbors_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_DIST_GRAPH_NEIGHBORS,
                             mpi_dist_graph_neighbors,
                             mpi_dist_graph_neighbors_,
@@ -56,8 +57,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_DIST_GRAPH_NEIGHBORS,
                             (comm, maxindegree, sources, sourceweights, maxoutdegree, destinations, destweights, ierr) )
 #endif
 
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
+#if OMPI_BUILD_MPI_PROFILING && ! OPAL_HAVE_WEAK_SYMBOLS
 #define ompi_dist_graph_neighbors_f pompi_dist_graph_neighbors_f
+#endif
 #endif
 
 

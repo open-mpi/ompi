@@ -9,9 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2012      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
- * Copyright (c) 2015      FUJITSU LIMITED.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -28,15 +27,13 @@
 #include "ompi/mpi/fortran/base/constants.h"
 #include "ompi/communicator/communicator.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_MRECV = ompi_mrecv_f
 #pragma weak pmpi_mrecv = ompi_mrecv_f
 #pragma weak pmpi_mrecv_ = ompi_mrecv_f
 #pragma weak pmpi_mrecv__ = ompi_mrecv_f
-
-#pragma weak PMPI_Mrecv_f = ompi_mrecv_f
-#pragma weak PMPI_Mrecv_f08 = ompi_mrecv_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_MRECV,
                             pmpi_mrecv,
                             pmpi_mrecv_,
@@ -46,18 +43,15 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_MRECV,
                              MPI_Fint *status, MPI_Fint *ierr),
                             (buf, count, datatype, message, status, ierr) )
 #endif
+#endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_MRECV = ompi_mrecv_f
 #pragma weak mpi_mrecv = ompi_mrecv_f
 #pragma weak mpi_mrecv_ = ompi_mrecv_f
 #pragma weak mpi_mrecv__ = ompi_mrecv_f
-
-#pragma weak MPI_Mrecv_f = ompi_mrecv_f
-#pragma weak MPI_Mrecv_f08 = ompi_mrecv_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_MRECV,
                             mpi_mrecv,
                             mpi_mrecv_,
@@ -66,11 +60,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_MRECV,
                             (char *buf, MPI_Fint *count, MPI_Fint *datatype,
                              MPI_Fint *message, MPI_Fint *status, MPI_Fint *ierr),
                             (buf, count, datatype, message, status, ierr) )
-#endif
-
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
+#else
 #define ompi_mrecv_f pompi_mrecv_f
+#endif
 #endif
 
 

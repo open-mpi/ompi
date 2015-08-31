@@ -23,7 +23,8 @@
 
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_INFO_GET_NKEYS = ompi_info_get_nkeys_f
 #pragma weak pmpi_info_get_nkeys = ompi_info_get_nkeys_f
 #pragma weak pmpi_info_get_nkeys_ = ompi_info_get_nkeys_f
@@ -31,7 +32,7 @@
 
 #pragma weak PMPI_Info_get_nkeys_f = ompi_info_get_nkeys_f
 #pragma weak PMPI_Info_get_nkeys_f08 = ompi_info_get_nkeys_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_INFO_GET_NKEYS,
                            pmpi_info_get_nkeys,
                            pmpi_info_get_nkeys_,
@@ -39,6 +40,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_INFO_GET_NKEYS,
                            pompi_info_get_nkeys_f,
                            (MPI_Fint *info, MPI_Fint *nkeys, MPI_Fint *ierr),
                            (info, nkeys, ierr) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -49,9 +51,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_INFO_GET_NKEYS,
 
 #pragma weak MPI_Info_get_nkeys_f = ompi_info_get_nkeys_f
 #pragma weak MPI_Info_get_nkeys_f08 = ompi_info_get_nkeys_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_INFO_GET_NKEYS,
                            mpi_info_get_nkeys,
                            mpi_info_get_nkeys_,
@@ -59,11 +60,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_INFO_GET_NKEYS,
                            ompi_info_get_nkeys_f,
                            (MPI_Fint *info, MPI_Fint *nkeys, MPI_Fint *ierr),
                            (info, nkeys, ierr) )
-#endif
-
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
+#else
 #define ompi_info_get_nkeys_f pompi_info_get_nkeys_f
+#endif
 #endif
 
 

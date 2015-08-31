@@ -24,7 +24,8 @@
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 #include "ompi/mpi/fortran/base/constants.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_IALLGATHERV = ompi_iallgatherv_f
 #pragma weak pmpi_iallgatherv = ompi_iallgatherv_f
 #pragma weak pmpi_iallgatherv_ = ompi_iallgatherv_f
@@ -32,7 +33,7 @@
 
 #pragma weak PMPI_Iallgatherv_f = ompi_iallgatherv_f
 #pragma weak PMPI_Iallgatherv_f08 = ompi_iallgatherv_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_IALLGATHERV,
                             pmpi_iallgatherv,
                             pmpi_iallgatherv_,
@@ -40,6 +41,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_IALLGATHERV,
                             pompi_iallgatherv_f,
                             (char *sendbuf, MPI_Fint *sendcount, MPI_Fint *sendtype, char *recvbuf, MPI_Fint *recvcounts, MPI_Fint *displs, MPI_Fint *recvtype, MPI_Fint *comm, MPI_Fint *request, MPI_Fint *ierr),
                             (sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs, recvtype, comm, request, ierr) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -50,9 +52,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_IALLGATHERV,
 
 #pragma weak MPI_Iallgatherv_f = ompi_iallgatherv_f
 #pragma weak MPI_Iallgatherv_f08 = ompi_iallgatherv_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_IALLGATHERV,
                             mpi_iallgatherv,
                             mpi_iallgatherv_,
@@ -60,11 +61,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_IALLGATHERV,
                             ompi_iallgatherv_f,
                             (char *sendbuf, MPI_Fint *sendcount, MPI_Fint *sendtype, char *recvbuf, MPI_Fint *recvcounts, MPI_Fint *displs, MPI_Fint *recvtype, MPI_Fint *comm, MPI_Fint *request, MPI_Fint *ierr),
                             (sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs, recvtype, comm, request, ierr) )
-#endif
-
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
+#else
 #define ompi_iallgatherv_f pompi_iallgatherv_f
+#endif
 #endif
 
 

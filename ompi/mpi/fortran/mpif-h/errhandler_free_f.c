@@ -23,7 +23,8 @@
 
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_ERRHANDLER_FREE = ompi_errhandler_free_f
 #pragma weak pmpi_errhandler_free = ompi_errhandler_free_f
 #pragma weak pmpi_errhandler_free_ = ompi_errhandler_free_f
@@ -31,7 +32,7 @@
 
 #pragma weak PMPI_Errhandler_free_f = ompi_errhandler_free_f
 #pragma weak PMPI_Errhandler_free_f08 = ompi_errhandler_free_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_ERRHANDLER_FREE,
                            pmpi_errhandler_free,
                            pmpi_errhandler_free_,
@@ -39,6 +40,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_ERRHANDLER_FREE,
                            pompi_errhandler_free_f,
                            (MPI_Fint *errhandler, MPI_Fint *ierr),
                            (errhandler, ierr) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -49,9 +51,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_ERRHANDLER_FREE,
 
 #pragma weak MPI_Errhandler_free_f = ompi_errhandler_free_f
 #pragma weak MPI_Errhandler_free_f08 = ompi_errhandler_free_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_ERRHANDLER_FREE,
                            mpi_errhandler_free,
                            mpi_errhandler_free_,
@@ -59,11 +60,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_ERRHANDLER_FREE,
                            ompi_errhandler_free_f,
                            (MPI_Fint *errhandler, MPI_Fint *ierr),
                            (errhandler, ierr) )
-#endif
-
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
+#else
 #define ompi_errhandler_free_f pompi_errhandler_free_f
+#endif
 #endif
 
 

@@ -23,7 +23,8 @@
 
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_BARRIER = ompi_barrier_f
 #pragma weak pmpi_barrier = ompi_barrier_f
 #pragma weak pmpi_barrier_ = ompi_barrier_f
@@ -31,7 +32,7 @@
 
 #pragma weak PMPI_Barrier_f = ompi_barrier_f
 #pragma weak PMPI_Barrier_f08 = ompi_barrier_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_BARRIER,
                            pmpi_barrier,
                            pmpi_barrier_,
@@ -39,6 +40,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_BARRIER,
                            pompi_barrier_f,
                            (MPI_Fint *comm, MPI_Fint *ierr),
                            (comm, ierr) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -49,9 +51,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_BARRIER,
 
 #pragma weak MPI_Barrier_f = ompi_barrier_f
 #pragma weak MPI_Barrier_f08 = ompi_barrier_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_BARRIER,
                            mpi_barrier,
                            mpi_barrier_,
@@ -59,11 +60,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_BARRIER,
                            ompi_barrier_f,
                            (MPI_Fint *comm, MPI_Fint *ierr),
                            (comm, ierr) )
-#endif
-
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
+#else
 #define ompi_barrier_f pompi_barrier_f
+#endif
 #endif
 
 

@@ -28,7 +28,8 @@
 #include "ompi/mpi/fortran/base/constants.h"
 
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_COMPARE_AND_SWAP = ompi_compare_and_swap_f
 #pragma weak pmpi_compare_and_swap = ompi_compare_and_swap_f
 #pragma weak pmpi_compare_and_swap_ = ompi_compare_and_swap_f
@@ -36,7 +37,7 @@
 
 #pragma weak PMPI_Compare_and_swap_f = ompi_compare_and_swap_f
 #pragma weak PMPI_Compare_and_swap_f08 = ompi_compare_and_swap_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_COMPARE_AND_SWAP,
 			    pmpi_compare_and_swap,
 			    pmpi_compare_and_swap_,
@@ -44,6 +45,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_COMPARE_AND_SWAP,
 			    pompi_compare_and_swap_f,
                             (char *origin_addr, char *compare_addr, char *result_addr, MPI_Fint *datatype, MPI_Fint *target_rank, MPI_Aint *target_disp, MPI_Fint *win, MPI_Fint *ierr),
 			    (origin_addr, compare_addr, result_addr, datatype, target_rank, target_disp, win, ierr) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -54,9 +56,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_COMPARE_AND_SWAP,
 
 #pragma weak MPI_Compare_and_swap_f = ompi_compare_and_swap_f
 #pragma weak MPI_Compare_and_swap_f08 = ompi_compare_and_swap_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_COMPARE_AND_SWAP,
 			    mpi_compare_and_swap,
 			    mpi_compare_and_swap_,
@@ -64,11 +65,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_COMPARE_AND_SWAP,
 			    ompi_compare_and_swap_f,
                             (char *origin_addr, char *compare_addr, char *result_addr, MPI_Fint *datatype, MPI_Fint *target_rank, MPI_Aint *target_disp, MPI_Fint *win, MPI_Fint *ierr),
 			    (origin_addr, compare_addr, result_addr, datatype, target_rank, target_disp, win, ierr) )
-#endif
-
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
+#else
 #define ompi_compare_and_swap_f pompi_compare_and_swap_f
+#endif
 #endif
 
 

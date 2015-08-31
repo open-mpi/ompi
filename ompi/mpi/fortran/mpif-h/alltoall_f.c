@@ -24,7 +24,8 @@
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 #include "ompi/mpi/fortran/base/constants.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_ALLTOALL = ompi_alltoall_f
 #pragma weak pmpi_alltoall = ompi_alltoall_f
 #pragma weak pmpi_alltoall_ = ompi_alltoall_f
@@ -32,7 +33,7 @@
 
 #pragma weak PMPI_Alltoall_f = ompi_alltoall_f
 #pragma weak PMPI_Alltoall_f08 = ompi_alltoall_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_ALLTOALL,
                            pmpi_alltoall,
                            pmpi_alltoall_,
@@ -40,6 +41,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_ALLTOALL,
                            pompi_alltoall_f,
                            (char *sendbuf, MPI_Fint *sendcount, MPI_Fint *sendtype, char *recvbuf, MPI_Fint *recvcount, MPI_Fint *recvtype, MPI_Fint *comm, MPI_Fint *ierr),
                            (sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, ierr) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -50,9 +52,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_ALLTOALL,
 
 #pragma weak MPI_Alltoall_f = ompi_alltoall_f
 #pragma weak MPI_Alltoall_f08 = ompi_alltoall_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_ALLTOALL,
                            mpi_alltoall,
                            mpi_alltoall_,
@@ -60,11 +61,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_ALLTOALL,
                            ompi_alltoall_f,
                            (char *sendbuf, MPI_Fint *sendcount, MPI_Fint *sendtype, char *recvbuf, MPI_Fint *recvcount, MPI_Fint *recvtype, MPI_Fint *comm, MPI_Fint *ierr),
                            (sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, ierr) )
-#endif
-
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
+#else
 #define ompi_alltoall_f pompi_alltoall_f
+#endif
 #endif
 
 

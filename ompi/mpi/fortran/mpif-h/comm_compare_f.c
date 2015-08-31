@@ -23,7 +23,8 @@
 
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_COMM_COMPARE = ompi_comm_compare_f
 #pragma weak pmpi_comm_compare = ompi_comm_compare_f
 #pragma weak pmpi_comm_compare_ = ompi_comm_compare_f
@@ -31,7 +32,7 @@
 
 #pragma weak PMPI_Comm_compare_f = ompi_comm_compare_f
 #pragma weak PMPI_Comm_compare_f08 = ompi_comm_compare_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_COMM_COMPARE,
                            pmpi_comm_compare,
                            pmpi_comm_compare_,
@@ -39,6 +40,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_COMM_COMPARE,
                            pompi_comm_compare_f,
                            (MPI_Fint *comm1, MPI_Fint *comm2, MPI_Fint *result, MPI_Fint *ierr),
                            (comm1, comm2, result, ierr) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -49,9 +51,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_COMM_COMPARE,
 
 #pragma weak MPI_Comm_compare_f = ompi_comm_compare_f
 #pragma weak MPI_Comm_compare_f08 = ompi_comm_compare_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_COMM_COMPARE,
                            mpi_comm_compare,
                            mpi_comm_compare_,
@@ -59,11 +60,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_COMM_COMPARE,
                            ompi_comm_compare_f,
                            (MPI_Fint *comm1, MPI_Fint *comm2, MPI_Fint *result, MPI_Fint *ierr),
                            (comm1, comm2, result, ierr) )
-#endif
-
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
+#else
 #define ompi_comm_compare_f pompi_comm_compare_f
+#endif
 #endif
 
 

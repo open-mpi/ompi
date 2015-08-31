@@ -24,7 +24,8 @@
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 #include "ompi/mpi/fortran/base/constants.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_REQUEST_GET_STATUS = ompi_request_get_status_f
 #pragma weak pmpi_request_get_status = ompi_request_get_status_f
 #pragma weak pmpi_request_get_status_ = ompi_request_get_status_f
@@ -32,7 +33,7 @@
 
 #pragma weak PMPI_Request_get_status_f = ompi_request_get_status_f
 #pragma weak PMPI_Request_get_status_f08 = ompi_request_get_status_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_REQUEST_GET_STATUS,
                            pmpi_request_get_status,
                            pmpi_request_get_status_,
@@ -40,6 +41,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_REQUEST_GET_STATUS,
                            pompi_request_get_status_f,
                            (MPI_Fint *request, ompi_fortran_logical_t *flag, MPI_Fint *status, MPI_Fint *ierr),
                            (request, flag, status, ierr) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -50,9 +52,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_REQUEST_GET_STATUS,
 
 #pragma weak MPI_Request_get_status_f = ompi_request_get_status_f
 #pragma weak MPI_Request_get_status_f08 = ompi_request_get_status_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_REQUEST_GET_STATUS,
                            mpi_request_get_status,
                            mpi_request_get_status_,
@@ -60,11 +61,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_REQUEST_GET_STATUS,
                            ompi_request_get_status_f,
                            (MPI_Fint *request, ompi_fortran_logical_t *flag, MPI_Fint *status, MPI_Fint *ierr),
                            (request, flag, status, ierr) )
-#endif
-
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
+#else
 #define ompi_request_get_status_f pompi_request_get_status_f
+#endif
 #endif
 
 

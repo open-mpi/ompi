@@ -43,11 +43,10 @@
 #include "ompi/dpm/dpm.h"
 
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_BUILD_MPI_PROFILING
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_Comm_join = PMPI_Comm_join
 #endif
-
-#if OMPI_BUILD_MPI_PROFILING
 #define MPI_Comm_join PMPI_Comm_join
 #endif
 

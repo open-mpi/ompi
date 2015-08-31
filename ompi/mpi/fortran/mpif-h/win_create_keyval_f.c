@@ -24,7 +24,8 @@
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 #include "ompi/communicator/communicator.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_WIN_CREATE_KEYVAL = ompi_win_create_keyval_f
 #pragma weak pmpi_win_create_keyval = ompi_win_create_keyval_f
 #pragma weak pmpi_win_create_keyval_ = ompi_win_create_keyval_f
@@ -32,7 +33,7 @@
 
 #pragma weak PMPI_Win_create_keyval_f = ompi_win_create_keyval_f
 #pragma weak PMPI_Win_create_keyval_f08 = ompi_win_create_keyval_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_WIN_CREATE_KEYVAL,
                            pmpi_win_create_keyval,
                            pmpi_win_create_keyval_,
@@ -40,6 +41,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_WIN_CREATE_KEYVAL,
                            pompi_win_create_keyval_f,
                            (ompi_mpi2_fortran_copy_attr_function* win_copy_attr_fn, ompi_mpi2_fortran_delete_attr_function* win_delete_attr_fn, MPI_Fint *win_keyval, MPI_Aint *extra_state, MPI_Fint *ierr),
                            (win_copy_attr_fn, win_delete_attr_fn, win_keyval, extra_state, ierr) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -50,9 +52,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_WIN_CREATE_KEYVAL,
 
 #pragma weak MPI_Win_create_keyval_f = ompi_win_create_keyval_f
 #pragma weak MPI_Win_create_keyval_f08 = ompi_win_create_keyval_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_WIN_CREATE_KEYVAL,
                            mpi_win_create_keyval,
                            mpi_win_create_keyval_,
@@ -60,11 +61,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_WIN_CREATE_KEYVAL,
                            ompi_win_create_keyval_f,
                            (ompi_mpi2_fortran_copy_attr_function* win_copy_attr_fn, ompi_mpi2_fortran_delete_attr_function* win_delete_attr_fn, MPI_Fint *win_keyval, MPI_Aint *extra_state, MPI_Fint *ierr),
                            (win_copy_attr_fn, win_delete_attr_fn, win_keyval, extra_state, ierr) )
-#endif
-
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
+#else
 #define ompi_win_create_keyval_f pompi_win_create_keyval_f
+#endif
 #endif
 
 static char FUNC_NAME[] = "MPI_Win_create_keyval";

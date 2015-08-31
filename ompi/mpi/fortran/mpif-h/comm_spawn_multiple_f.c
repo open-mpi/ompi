@@ -27,7 +27,8 @@
 #include "opal/util/argv.h"
 
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_COMM_SPAWN_MULTIPLE = ompi_comm_spawn_multiple_f
 #pragma weak pmpi_comm_spawn_multiple = ompi_comm_spawn_multiple_f
 #pragma weak pmpi_comm_spawn_multiple_ = ompi_comm_spawn_multiple_f
@@ -35,7 +36,7 @@
 
 #pragma weak PMPI_Comm_spawn_multiple_f = ompi_comm_spawn_multiple_f
 #pragma weak PMPI_Comm_spawn_multiple_f08 = ompi_comm_spawn_multiple_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_COMM_SPAWN_MULTIPLE,
                            pmpi_comm_spawn_multiple,
                            pmpi_comm_spawn_multiple_,
@@ -43,6 +44,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_COMM_SPAWN_MULTIPLE,
                            pompi_comm_spawn_multiple_f,
                            (MPI_Fint *count, char *array_of_commands, char *array_of_argv, MPI_Fint *array_of_maxprocs, MPI_Fint *array_of_info, MPI_Fint *root, MPI_Fint *comm, MPI_Fint *intercomm, MPI_Fint *array_of_errcodes, MPI_Fint *ierr, int cmd_string_len, int argv_string_len),
                            (count, array_of_commands, array_of_argv, array_of_maxprocs, array_of_info, root, comm, intercomm, array_of_errcodes, ierr, cmd_string_len, argv_string_len) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -53,9 +55,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_COMM_SPAWN_MULTIPLE,
 
 #pragma weak MPI_Comm_spawn_multiple_f = ompi_comm_spawn_multiple_f
 #pragma weak MPI_Comm_spawn_multiple_f08 = ompi_comm_spawn_multiple_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_COMM_SPAWN_MULTIPLE,
                            mpi_comm_spawn_multiple,
                            mpi_comm_spawn_multiple_,
@@ -63,11 +64,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_COMM_SPAWN_MULTIPLE,
                            ompi_comm_spawn_multiple_f,
                            (MPI_Fint *count, char *array_of_commands, char *array_of_argv, MPI_Fint *array_of_maxprocs, MPI_Fint *array_of_info, MPI_Fint *root, MPI_Fint *comm, MPI_Fint *intercomm, MPI_Fint *array_of_errcodes, MPI_Fint *ierr, int cmd_string_len, int argv_string_len),
                            (count, array_of_commands, array_of_argv, array_of_maxprocs, array_of_info, root, comm, intercomm, array_of_errcodes, ierr, cmd_string_len, argv_string_len) )
-#endif
-
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
+#else
 #define ompi_comm_spawn_multiple_f pompi_comm_spawn_multiple_f
+#endif
 #endif
 
 
