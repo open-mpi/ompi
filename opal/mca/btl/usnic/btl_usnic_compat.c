@@ -52,7 +52,8 @@ void usnic_compat_modex_recv(int *rc,
                              opal_btl_usnic_modex_t **modexes,
                              size_t *size)
 {
-    OPAL_MODEX_RECV(*rc, component, proc, (uint8_t**) modexes, size);
+    OPAL_MODEX_RECV(*rc, component, &proc->proc_name,
+                    (uint8_t**) modexes, size);
 }
 
 uint64_t usnic_compat_rte_hash_name(opal_process_name_t *pname)
