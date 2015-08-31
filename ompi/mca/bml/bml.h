@@ -160,14 +160,11 @@ static inline bool mca_bml_base_btl_array_remove( mca_bml_base_btl_array_t* arra
  */
 static inline mca_bml_base_btl_t* mca_bml_base_btl_array_get_index(mca_bml_base_btl_array_t* array, size_t item_index)
 {
-#if OPAL_ENABLE_DEBUG
-    if(item_index >= array->arr_size) {
-        opal_output(0, "mca_bml_base_btl_array_get_index: invalid array index %lu >= %lu",
-                    (unsigned long)item_index, (unsigned long)array->arr_size);
-        return 0;
+    if (item_index < array->arr_size) {
+        return &array->bml_btls[item_index];
     }
-#endif
-    return &array->bml_btls[item_index];
+
+    return NULL;
 }
 
 /**
@@ -441,7 +438,7 @@ typedef int (*mca_bml_base_module_finalize_fn_t)( void );
  * @return                    OMPI_SUCCESS or error status on failure.
  *
  * The mca_bml_base_module_add_procs_fn_t() is called by the PML to
- * determine the set of BMLs that should be used to reach each process.
+ * determine the set of BTLs that should be used to reach each process.
  * Any addressing information exported by the peer via the mca_base_modex_send()
  * function should be available during this call via the corresponding
  * mca_base_modex_recv() function. The BML may utilize this information to
@@ -464,6 +461,25 @@ typedef int (*mca_bml_base_module_add_procs_fn_t)(
                                                   struct ompi_proc_t** procs,
                                                   struct opal_bitmap_t* reachable
                                                   );
+
+/**
+ * PML->BML notification of change in the process list.
+ *
+ * @param proc (IN)           Process
+ * @return                    OMPI_SUCCESS or error status on failure.
+ *
+ * The mca_bml_base_module_add_proc_fn_t() is called by the PML to
+ * determine the set of BTLs that should be used to reach each process.
+ * Any addressing information exported by the peer via the mca_base_modex_send()
+ * function should be available during this call via the corresponding
+ * mca_base_modex_recv() function. The BML may utilize this information to
+ * determine reachability of each peer process.
+ *
+ * \note This function will return OMPI_ERR_UNREACH if the process can not
+ * be reached by a currently active BTL. This is not a fatal error, and the
+ * calling layer is free to continue using the BML interface.
+ */
+typedef int (*mca_bml_base_module_add_proc_fn_t) (struct ompi_proc_t *proc);
 
 /**
  * Notification of change to the process list.
@@ -559,6 +575,7 @@ struct mca_bml_base_module_t {
     mca_bml_base_component_t* bml_component; /**< pointer back to the BML component structure */
 
     /* BML function table */
+    mca_bml_base_module_add_proc_fn_t      bml_add_proc;
     mca_bml_base_module_add_procs_fn_t     bml_add_procs;
     mca_bml_base_module_del_procs_fn_t     bml_del_procs;
     mca_bml_base_module_add_btl_fn_t       bml_add_btl;
