@@ -72,3 +72,29 @@ OBJ_CLASS_INSTANCE(opal_mutex_t,
                    opal_object_t,
                    opal_mutex_construct,
                    opal_mutex_destruct);
+
+static void opal_recursive_mutex_construct(opal_recursive_mutex_t *m)
+{
+    pthread_mutexattr_t attr;
+    pthread_mutexattr_init(&attr);
+
+#if OPAL_ENABLE_DEBUG
+    m->m_lock_debug = 0;
+    m->m_lock_file = NULL;
+    m->m_lock_line = 0;
+#endif
+
+    pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
+
+    pthread_mutex_init(&m->m_lock_pthread, &attr);
+    pthread_mutexattr_destroy(&attr);
+
+#if OPAL_HAVE_ATOMIC_SPINLOCKS
+    opal_atomic_init( &m->m_lock_atomic, OPAL_ATOMIC_UNLOCKED );
+#endif
+}
+
+OBJ_CLASS_INSTANCE(opal_recursive_mutex_t,
+                   opal_object_t,
+                   opal_recursive_mutex_construct,
+                   opal_mutex_destruct);
