@@ -187,6 +187,10 @@ int pmix_server_init(void)
     orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_LAUNCH_RESP,
                             ORTE_RML_PERSISTENT, pmix_server_launch_resp, NULL);
 
+    /* setup recv for replies from data server */
+    orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_DATA_CLIENT,
+                            ORTE_RML_PERSISTENT, pmix_server_keyval_client, NULL);
+
     /* setup the local server */
     if (ORTE_SUCCESS != (rc = opal_pmix.server_init(&pmix_server))) {
         ORTE_ERROR_LOG(rc);

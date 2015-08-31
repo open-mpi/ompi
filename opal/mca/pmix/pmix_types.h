@@ -28,6 +28,10 @@ BEGIN_C_DECLS
  * these keys are RESERVED */
 #define OPAL_PMIX_ATTR_UNDEF      NULL
 
+/* identification attributes */
+#define OPAL_PMIX_USERID                "pmix.euid"         // (uint32_t) effective user id
+#define OPAL_PMIX_GRPID                 "pmix.egid"         // (uint32_t) effective group id
+
 #define OPAL_PMIX_CPUSET                "pmix.cpuset"       // (char*) hwloc bitmap applied to proc upon launch
 #define OPAL_PMIX_CREDENTIAL            "pmix.cred"         // (char*) security credential assigned to proc
 #define OPAL_PMIX_SPAWNED               "pmix.spawned"      // (bool) true if this proc resulted from a call to PMIx_Spawn
@@ -159,19 +163,15 @@ typedef enum {
 
 
 /****    PMIX INFO STRUCT    ****/
-typedef struct {
-    opal_list_item_t super;
-    char *key;
-    opal_value_t value;
-} opal_pmix_info_t;
-OBJ_CLASS_DECLARATION(opal_pmix_info_t);
+
+/* NOTE: the pmix_info_t is essentially equivalent to the opal_value_t
+ * Hence, we do not define an opal_value_t */
 
 
 /****    PMIX LOOKUP RETURN STRUCT    ****/
 typedef struct {
     opal_list_item_t super;
     opal_process_name_t proc;
-    char *key;
     opal_value_t value;
 } opal_pmix_pdata_t;
 OBJ_CLASS_DECLARATION(opal_pmix_pdata_t);
@@ -256,7 +256,7 @@ typedef void (*opal_pmix_lookup_cbfunc_t)(int status,
  * It is the responsibility of the application to parse any provided info array
  * for defined key-values if it so desires.
  *
- * Possible uses of a pmix_info_t object include:
+ * Possible uses of the opal_value_t list include:
  *
  * - for the RM to alert the process as to planned actions, such as
  *   to abort the session, in response to the reported error

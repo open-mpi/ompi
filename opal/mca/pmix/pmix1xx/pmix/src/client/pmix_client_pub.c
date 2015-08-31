@@ -137,6 +137,12 @@ int PMIx_Publish_nb(pmix_data_range_t scope,
         PMIX_RELEASE(msg);
         return rc;
     }
+    /* pack our effective userid - will be used to constrain lookup */
+    if (PMIX_SUCCESS != (rc = pmix_bfrop.pack(msg, &pmix_globals.uid, 1, PMIX_UINT32))) {
+        PMIX_ERROR_LOG(rc);
+        PMIX_RELEASE(msg);
+        return rc;
+    }
     /* pack the data range */
     if (PMIX_SUCCESS != (rc = pmix_bfrop.pack(msg, &scope, 1, PMIX_DATA_RANGE))) {
         PMIX_ERROR_LOG(rc);
@@ -233,7 +239,7 @@ int PMIx_Lookup_nb(pmix_data_range_t range, char **keys,
     pmix_cmd_t cmd = PMIX_LOOKUPNB_CMD;
     int rc;
     pmix_cb_t *cb;
-    size_t nkeys;
+    size_t nkeys, n;
 
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "pmix: lookup called");
@@ -251,6 +257,12 @@ int PMIx_Lookup_nb(pmix_data_range_t range, char **keys,
     msg = PMIX_NEW(pmix_buffer_t);
     /* pack the cmd */
     if (PMIX_SUCCESS != (rc = pmix_bfrop.pack(msg, &cmd, 1, PMIX_CMD))) {
+        PMIX_ERROR_LOG(rc);
+        PMIX_RELEASE(msg);
+        return rc;
+    }
+    /* pack our effective userid - will be used to constrain lookup */
+    if (PMIX_SUCCESS != (rc = pmix_bfrop.pack(msg, &pmix_globals.uid, 1, PMIX_UINT32))) {
         PMIX_ERROR_LOG(rc);
         PMIX_RELEASE(msg);
         return rc;
@@ -282,10 +294,12 @@ int PMIx_Lookup_nb(pmix_data_range_t range, char **keys,
         return rc;
     }
     if (0 < nkeys) {
-        if (PMIX_SUCCESS != (rc = pmix_bfrop.pack(msg, keys, nkeys, PMIX_STRING))) {
-            PMIX_ERROR_LOG(rc);
-            PMIX_RELEASE(msg);
-            return rc;
+        for (n=0; n < nkeys; n++) {
+            if (PMIX_SUCCESS != (rc = pmix_bfrop.pack(msg, &keys[n], 1, PMIX_STRING))) {
+                PMIX_ERROR_LOG(rc);
+                PMIX_RELEASE(msg);
+                return rc;
+            }
         }
     }
 
@@ -330,7 +344,7 @@ int PMIx_Unpublish(pmix_data_range_t scope, char **keys)
     return rc;
 }
 
-int PMIx_Unpublish_nb(pmix_data_range_t scope, char **keys,
+int PMIx_Unpublish_nb(pmix_data_range_t range, char **keys,
                       pmix_op_cbfunc_t cbfunc, void *cbdata)
 {
     pmix_buffer_t *msg;
@@ -354,8 +368,14 @@ int PMIx_Unpublish_nb(pmix_data_range_t scope, char **keys,
         PMIX_RELEASE(msg);
         return rc;
     }
-    /* pack the scope */
-    if (PMIX_SUCCESS != (rc = pmix_bfrop.pack(msg, &scope, 1, PMIX_DATA_RANGE))) {
+    /* pack our effective userid - will be used to constrain lookup */
+    if (PMIX_SUCCESS != (rc = pmix_bfrop.pack(msg, &pmix_globals.uid, 1, PMIX_UINT32))) {
+        PMIX_ERROR_LOG(rc);
+        PMIX_RELEASE(msg);
+        return rc;
+    }
+    /* pack the range */
+    if (PMIX_SUCCESS != (rc = pmix_bfrop.pack(msg, &range, 1, PMIX_DATA_RANGE))) {
         PMIX_ERROR_LOG(rc);
         PMIX_RELEASE(msg);
         return rc;
@@ -493,18 +513,22 @@ static void lookup_cbfunc(int status, pmix_pdata_t pdata[], size_t ndata,
     pmix_pdata_t *tgt = (pmix_pdata_t*)cb->cbdata;
     size_t i, j;
 
-    /* find the matching key in the provided info array - error if not found */
-    for (i=0; i < ndata; i++) {
-        for (j=0; j < cb->nvals; j++) {
-            if (0 == strcmp(pdata[i].key, tgt[j].key)) {
-                /* transfer the publishing proc id */
-                (void)strncpy(tgt[j].proc.nspace, pdata[i].proc.nspace, PMIX_MAX_NSLEN);
-                tgt[j].proc.rank = pdata[i].proc.rank;
-                /* transfer the value to the pmix_info_t */
-                pmix_value_xfer(&tgt[j].value, &pdata[i].value);
-                break;
+    cb->status = status;
+    if (PMIX_SUCCESS == status) {
+        /* find the matching key in the provided info array - error if not found */
+        for (i=0; i < ndata; i++) {
+            for (j=0; j < cb->nvals; j++) {
+                if (0 == strcmp(pdata[i].key, tgt[j].key)) {
+                    /* transfer the publishing proc id */
+                    (void)strncpy(tgt[j].proc.nspace, pdata[i].proc.nspace, PMIX_MAX_NSLEN);
+                    tgt[j].proc.rank = pdata[i].proc.rank;
+                    /* transfer the value to the pmix_info_t */
+                    pmix_value_xfer(&tgt[j].value, &pdata[i].value);
+                    break;
+                }
             }
         }
     }
+
     cb->active = false;
 }

@@ -351,7 +351,7 @@ int pmix1_publish(opal_pmix_data_range_t scope,
     int rc;
     pmix_info_t *pinfo;
     pmix_status_t ret;
-    opal_pmix_info_t *iptr;
+    opal_value_t *iptr;
     size_t sz, n;
 
     rc = convert_data_range(&rng, scope);
@@ -369,9 +369,9 @@ int pmix1_publish(opal_pmix_data_range_t scope,
     if (0 < sz) {
         PMIX_INFO_CREATE(pinfo, sz);
         n=0;
-        OPAL_LIST_FOREACH(iptr, info, opal_pmix_info_t) {
+        OPAL_LIST_FOREACH(iptr, info, opal_value_t) {
             (void)strncpy(pinfo[n].key, iptr->key, PMIX_MAX_KEYLEN);
-            pmix1_value_load(&pinfo[n].value, &iptr->value);
+            pmix1_value_load(&pinfo[n].value, iptr);
             ++n;
         }
     }
@@ -390,7 +390,7 @@ int pmix1_publishnb(opal_pmix_data_range_t scope,
     pmix_persistence_t pst;
     int rc;
     pmix_status_t ret;
-    opal_pmix_info_t *iptr;
+    opal_value_t *iptr;
     size_t n;
     pmix1_opcaddy_t *op;
 
@@ -412,9 +412,9 @@ int pmix1_publishnb(opal_pmix_data_range_t scope,
     if (0 < op->sz) {
         PMIX_INFO_CREATE(op->info, op->sz);
         n=0;
-        OPAL_LIST_FOREACH(iptr, info, opal_pmix_info_t) {
+        OPAL_LIST_FOREACH(iptr, info, opal_value_t) {
             (void)strncpy(op->info[n].key, iptr->key, PMIX_MAX_KEYLEN);
-            pmix1_value_load(&op->info[n].value, &iptr->value);
+            pmix1_value_load(&op->info[n].value, iptr);
             ++n;
         }
     }
@@ -443,26 +443,29 @@ int pmix1_lookup(opal_pmix_data_range_t scope,
     PMIX_PDATA_CREATE(pdata, sz);
     n=0;
     OPAL_LIST_FOREACH(d, data, opal_pmix_pdata_t) {
-        (void)strncpy(pdata[n++].key, d->key, PMIX_MAX_KEYLEN);
+        (void)strncpy(pdata[n++].key, d->value.key, PMIX_MAX_KEYLEN);
     }
 
     ret = PMIx_Lookup(rng, NULL, 0, pdata, sz);
 
-    /* transfer the data back */
-    n=0;
-    OPAL_LIST_FOREACH(d, data, opal_pmix_pdata_t) {
-        rc = opal_convert_string_to_jobid(&d->proc.jobid, pdata[n].proc.nspace);
-        if (OPAL_SUCCESS != rc) {
-            OPAL_ERROR_LOG(rc);
-            PMIX_PDATA_FREE(pdata, sz);
-            return OPAL_ERR_BAD_PARAM;
-        }
-        d->proc.vpid = pdata[n].proc.rank;
-        rc = pmix1_value_unload(&d->value, &pdata[n].value);
-        if (OPAL_SUCCESS != rc) {
-            OPAL_ERROR_LOG(rc);
-            PMIX_PDATA_FREE(pdata, sz);
-            return OPAL_ERR_BAD_PARAM;
+    if (PMIX_SUCCESS == ret) {
+        /* transfer the data back */
+        n=0;
+        OPAL_LIST_FOREACH(d, data, opal_pmix_pdata_t) {
+            rc = opal_convert_string_to_jobid(&d->proc.jobid, pdata[n].proc.nspace);
+            if (OPAL_SUCCESS != rc) {
+                OPAL_ERROR_LOG(rc);
+                PMIX_PDATA_FREE(pdata, sz);
+                return OPAL_ERR_BAD_PARAM;
+            }
+            d->proc.vpid = pdata[n].proc.rank;
+            rc = pmix1_value_unload(&d->value, &pdata[n].value);
+            if (OPAL_SUCCESS != rc) {
+                OPAL_ERROR_LOG(rc);
+                PMIX_PDATA_FREE(pdata, sz);
+                return OPAL_ERR_BAD_PARAM;
+            }
+            ++n;
         }
     }
 
@@ -475,7 +478,7 @@ static void lk_cbfunc(pmix_status_t status,
 {
     pmix1_opcaddy_t *op = (pmix1_opcaddy_t*)cbdata;
     opal_pmix_pdata_t *d;
-    opal_list_t results;
+    opal_list_t results, *r;
     int rc;
     size_t n;
 
@@ -485,36 +488,43 @@ static void lk_cbfunc(pmix_status_t status,
     }
 
     rc = pmix1_convert_rc(status);
-    OBJ_CONSTRUCT(&results, opal_list_t);
-    for (n=0; n < ndata; n++) {
-        d = OBJ_NEW(opal_pmix_pdata_t);
-        opal_list_append(&results, &d->super);
-        rc = opal_convert_string_to_jobid(&d->proc.jobid, data[n].proc.nspace);
-        if (OPAL_SUCCESS != rc) {
-            rc = OPAL_ERR_BAD_PARAM;
-            OPAL_ERROR_LOG(rc);
-            goto release;
+    if (OPAL_SUCCESS == rc) {
+        OBJ_CONSTRUCT(&results, opal_list_t);
+        for (n=0; n < ndata; n++) {
+            d = OBJ_NEW(opal_pmix_pdata_t);
+            opal_list_append(&results, &d->super);
+            rc = opal_convert_string_to_jobid(&d->proc.jobid, data[n].proc.nspace);
+            if (OPAL_SUCCESS != rc) {
+                rc = OPAL_ERR_BAD_PARAM;
+                OPAL_ERROR_LOG(rc);
+                goto release;
+            }
+            d->proc.vpid = data[n].proc.rank;
+            d->value.key = strdup(data[n].key);
+            rc = pmix1_value_unload(&d->value, &data[n].value);
+            if (OPAL_SUCCESS != rc) {
+                rc = OPAL_ERR_BAD_PARAM;
+                OPAL_ERROR_LOG(rc);
+                goto release;
+            }
         }
-        d->proc.vpid = data[n].proc.rank;
-        d->key = strdup(data[n].key);
-        rc = pmix1_value_unload(&d->value, &data[n].value);
-        if (OPAL_SUCCESS != rc) {
-            rc = OPAL_ERR_BAD_PARAM;
-            OPAL_ERROR_LOG(rc);
-            goto release;
-        }
+        r = &results;
+    } else {
+        r = NULL;
     }
 
   release:
     /* execute the callback */
-    op->lkcbfunc(rc, &results, op->cbdata);
+    op->lkcbfunc(rc, r, op->cbdata);
 
-    OPAL_LIST_DESTRUCT(&results);
+    if (NULL != r) {
+        OPAL_LIST_DESTRUCT(&results);
+    }
     OBJ_RELEASE(op);
 }
 
 int pmix1_lookupnb(opal_pmix_data_range_t scope, int wait, char **keys,
-                     opal_pmix_lookup_cbfunc_t cbfunc, void *cbdata)
+                   opal_pmix_lookup_cbfunc_t cbfunc, void *cbdata)
 {
     pmix_data_range_t rng;
     int rc;
@@ -582,15 +592,15 @@ int pmix1_spawn(opal_list_t *job_info, opal_list_t *apps, opal_jobid_t *jobid)
     pmix_app_t *papps;
     size_t napps, n, m, ninfo = 0;
     char nspace[PMIX_MAX_NSLEN+1];
-    opal_pmix_info_t *info;
+    opal_value_t *info;
     opal_pmix_app_t *app;
 
     if (NULL != job_info && 0 < (ninfo = opal_list_get_size(job_info))) {
         PMIX_INFO_CREATE(pinfo, ninfo);
         n=0;
-        OPAL_LIST_FOREACH(info, job_info, opal_pmix_info_t) {
+        OPAL_LIST_FOREACH(info, job_info, opal_value_t) {
             (void)strncpy(pinfo[n].key, info->key, PMIX_MAX_KEYLEN);
-            pmix1_value_load(&pinfo[n].value, &info->value);
+            pmix1_value_load(&pinfo[n].value, info);
             ++n;
         }
     }
@@ -607,9 +617,9 @@ int pmix1_spawn(opal_list_t *job_info, opal_list_t *apps, opal_jobid_t *jobid)
         if (0 < (papps[n].ninfo = opal_list_get_size(&app->info))) {
             PMIX_INFO_CREATE(papps[n].info, papps[n].ninfo);
             m=0;
-            OPAL_LIST_FOREACH(info, &app->info, opal_pmix_info_t) {
+            OPAL_LIST_FOREACH(info, &app->info, opal_value_t) {
                 (void)strncpy(papps[n].info[m].key, info->key, PMIX_MAX_KEYLEN);
-                pmix1_value_load(&papps[n].info[m].value, &info->value);
+                pmix1_value_load(&papps[n].info[m].value, info);
                 ++m;
             }
         }
@@ -647,7 +657,7 @@ int pmix1_spawnnb(opal_list_t *job_info, opal_list_t *apps,
     pmix_status_t ret;
     pmix1_opcaddy_t *op;
     size_t n, m;
-    opal_pmix_info_t *info;
+    opal_value_t *info;
     opal_pmix_app_t *app;
 
     /* create the caddy */
@@ -658,9 +668,9 @@ int pmix1_spawnnb(opal_list_t *job_info, opal_list_t *apps,
     if (NULL != job_info && 0 < (op->ninfo = opal_list_get_size(job_info))) {
         PMIX_INFO_CREATE(op->info, op->ninfo);
         n=0;
-        OPAL_LIST_FOREACH(info, job_info, opal_pmix_info_t) {
+        OPAL_LIST_FOREACH(info, job_info, opal_value_t) {
             (void)strncpy(op->info[n].key, info->key, PMIX_MAX_KEYLEN);
-            pmix1_value_load(&op->info[n].value, &info->value);
+            pmix1_value_load(&op->info[n].value, info);
             ++n;
         }
     }
@@ -677,9 +687,9 @@ int pmix1_spawnnb(opal_list_t *job_info, opal_list_t *apps,
         if (0 < (op->apps[n].ninfo = opal_list_get_size(&app->info))) {
             PMIX_INFO_CREATE(op->apps[n].info, op->apps[n].ninfo);
             m=0;
-            OPAL_LIST_FOREACH(info, &app->info, opal_pmix_info_t) {
+            OPAL_LIST_FOREACH(info, &app->info, opal_value_t) {
                 (void)strncpy(op->apps[n].info[m].key, info->key, PMIX_MAX_KEYLEN);
-                pmix1_value_load(&op->apps[n].info[m].value, &info->value);
+                pmix1_value_load(&op->apps[n].info[m].value, info);
                 ++m;
             }
         }

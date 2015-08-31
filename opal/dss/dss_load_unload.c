@@ -367,3 +367,104 @@ int opal_value_unload(opal_value_t *kv,
     }
     return OPAL_SUCCESS;
 }
+
+int opal_value_xfer(opal_value_t *dest,
+                    opal_value_t *src)
+{
+    opal_byte_object_t *boptr;
+
+    if (NULL != src->key) {
+        dest->key = strdup(src->key);
+    }
+    dest->type = src->type;
+
+    switch (src->type) {
+    case OPAL_BOOL:
+        dest->data.flag = src->data.flag;
+        break;
+    case OPAL_BYTE:
+        dest->data.byte = src->data.byte;
+        break;
+    case OPAL_STRING:
+        if (NULL != dest->data.string) {
+            free(dest->data.string);
+        }
+        if (NULL != src->data.string) {
+            dest->data.string = strdup(src->data.string);
+        } else {
+            dest->data.string = NULL;
+        }
+        break;
+    case OPAL_SIZE:
+        dest->data.size = src->data.size;
+        break;
+    case OPAL_PID:
+        dest->data.pid = src->data.pid;
+        break;
+
+    case OPAL_INT:
+        dest->data.integer = src->data.integer;
+        break;
+    case OPAL_INT8:
+        dest->data.int8 = src->data.int8;
+        break;
+    case OPAL_INT16:
+        dest->data.int16 = src->data.int16;
+        break;
+    case OPAL_INT32:
+        dest->data.int32 = src->data.int32;
+        break;
+    case OPAL_INT64:
+        dest->data.int64 = src->data.int64;
+        break;
+
+    case OPAL_UINT:
+        dest->data.uint = src->data.uint;
+        break;
+    case OPAL_UINT8:
+        dest->data.uint8 = src->data.uint8;
+        break;
+    case OPAL_UINT16:
+        dest->data.uint16 = src->data.uint16;
+        break;
+    case OPAL_UINT32:
+        dest->data.uint32 = src->data.uint32;
+        break;
+    case OPAL_UINT64:
+        dest->data.uint64 = src->data.uint64;
+        break;
+
+    case OPAL_BYTE_OBJECT:
+        if (NULL != dest->data.bo.bytes) {
+            free(dest->data.bo.bytes);
+        }
+        boptr = &src->data.bo;
+        if (NULL != boptr && NULL != boptr->bytes && 0 < boptr->size) {
+            dest->data.bo.bytes = (uint8_t *) malloc(boptr->size);
+            memcpy(dest->data.bo.bytes, boptr->bytes, boptr->size);
+            dest->data.bo.size = boptr->size;
+        } else {
+            dest->data.bo.bytes = NULL;
+            dest->data.bo.size = 0;
+        }
+        break;
+
+    case OPAL_FLOAT:
+        dest->data.fval = src->data.fval;
+        break;
+
+    case OPAL_TIMEVAL:
+        dest->data.tv.tv_sec = src->data.tv.tv_sec;
+        dest->data.tv.tv_usec = src->data.tv.tv_usec;
+        break;
+
+    case OPAL_PTR:
+        dest->data.ptr = src->data.ptr;
+        break;
+
+    default:
+        OPAL_ERROR_LOG(OPAL_ERR_NOT_SUPPORTED);
+        return OPAL_ERR_NOT_SUPPORTED;
+    }
+    return OPAL_SUCCESS;
+}

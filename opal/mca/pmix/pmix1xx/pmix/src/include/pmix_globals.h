@@ -24,6 +24,10 @@
 #include <pmix/rename.h>
 #include <private/types.h>
 
+#include <unistd.h>
+#ifdef HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
 #include PMIX_EVENT_HEADER
 
 #include <pmix_common.h>
@@ -42,6 +46,8 @@ BEGIN_C_DECLS
 typedef struct {
     int init_cntr;                       // #times someone called Init - #times called Finalize
     pmix_proc_t myid;
+    uid_t uid;                           // my effective uid
+    gid_t gid;                           // my effective gid
     int pindex;
     pmix_event_base_t *evbase;
     int debug_output;

@@ -58,7 +58,7 @@ typedef int (*opal_pmix_server_abort_fn_t)(opal_process_name_t *proc, void *serv
  * in the fence[_nb] operation. The callback is to be executed once each daemon
  * hosting at least one participant has called the host server's fencenb function.
  *
- * The list of opal_pmix_info_t includes any directives from the user regarding
+ * The list of opal_value_t includes any directives from the user regarding
  * how the fence is to be executed (e.g., timeout limits).
  *
  * The provided data is to be collectively shared with all host
@@ -73,7 +73,7 @@ typedef int (*opal_pmix_server_fencenb_fn_t)(opal_list_t *procs, opal_list_t *in
  * PMIx server on the remote node that hosts the specified proc to
  * obtain and return a direct modex blob for that proc
  *
- * The list of opal_pmix_info_t includes any directives from the user regarding
+ * The list of opal_value_t includes any directives from the user regarding
  * how the operation is to be executed (e.g., timeout limits).
  */
 typedef int (*opal_pmix_server_dmodex_req_fn_t)(opal_process_name_t *proc, opal_list_t *info,
@@ -92,7 +92,7 @@ typedef int (*opal_pmix_server_dmodex_req_fn_t)(opal_process_name_t *proc, opal_
  * process is also provided and is expected to be returned on any subsequent
  * lookup request */
 typedef int (*opal_pmix_server_publish_fn_t)(opal_process_name_t *proc,
-                                             opal_pmix_data_range_t scope,
+                                             opal_pmix_data_range_t range,
                                              opal_pmix_persistence_t persist,
                                              opal_list_t *info,
                                              opal_pmix_op_cbfunc_t cbfunc, void *cbdata);
@@ -106,12 +106,12 @@ typedef int (*opal_pmix_server_publish_fn_t)(opal_process_name_t *proc,
  * before executing the callback function, or should callback with whatever
  * data is immediately available.
  *
- * The list of opal_pmix_info_t includes any directives from the user regarding
+ * The list of opal_value_t includes any directives from the user regarding
  * how the operation is to be executed (e.g., timeout limits, whether the
  * lookup should wait until data appears).
  */
 typedef int (*opal_pmix_server_lookup_fn_t)(opal_process_name_t *proc,
-                                            opal_pmix_data_range_t scope,
+                                            opal_pmix_data_range_t range,
                                             opal_list_t *info, char **keys,
                                             opal_pmix_lookup_cbfunc_t cbfunc, void *cbdata);
 
@@ -120,7 +120,8 @@ typedef int (*opal_pmix_server_lookup_fn_t)(opal_process_name_t *proc,
  * been published. The callback is to be executed upon completion of the delete
  * procedure */
 typedef int (*opal_pmix_server_unpublish_fn_t)(opal_process_name_t *proc,
-                                               opal_pmix_data_range_t scope, char **keys,
+                                               opal_pmix_data_range_t range,
+                                               opal_list_t *info,  char **keys,
                                                opal_pmix_op_cbfunc_t cbfunc, void *cbdata);
 
 /* Spawn a set of applications/processes as per the PMIx API. Note that
@@ -142,7 +143,7 @@ typedef int (*opal_pmix_server_spawn_fn_t)(opal_process_name_t *requestor,
  * set of procs at a time. However, a process *can* be simultaneously engaged
  * in multiple connect operations, each involving a different set of procs
  *
- *  The list of opal_pmix_info_t includes any directives from the user regarding
+ *  The list of opal_value_t includes any directives from the user regarding
  * how the operation is to be executed (e.g., timeout limits).
  */
 typedef int (*opal_pmix_server_connect_fn_t)(opal_list_t *procs, opal_list_t *info,
@@ -155,7 +156,7 @@ typedef int (*opal_pmix_server_connect_fn_t)(opal_list_t *procs, opal_list_t *in
  * disconnect - i.e., you have to fully disconnect before you can reconnect to the
  * same group of processes.
  *
- * The list of opal_pmix_info_t includes any directives from the user regarding
+ * The list of opal_value_t includes any directives from the user regarding
  * how the operation is to be executed (e.g., timeout limits).
  */
 typedef int (*opal_pmix_server_disconnect_fn_t)(opal_list_t *procs, opal_list_t *info,
@@ -165,12 +166,12 @@ typedef int (*opal_pmix_server_disconnect_fn_t)(opal_list_t *procs, opal_list_t 
  * manager may have access to events beyond process failure. In cases where
  * the client application requests to be notified of such events, the request
  * will be passed to the PMIx server, which in turn shall pass the request to
- * the resource manager. The list of opal_pmix_info_t will describe the
+ * the resource manager. The list of opal_value_t will describe the
  * desired events */
  typedef int (*opal_pmix_server_register_events_fn_t)(opal_list_t *info,
                                                       opal_pmix_op_cbfunc_t cbfunc,
                                                       void *cbdata);
- 
+
 /* Callback function for incoming connection requests from
  * local clients */
 typedef void (*opal_pmix_connection_cbfunc_t)(int incoming_sd);

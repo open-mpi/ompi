@@ -155,7 +155,8 @@ extern int pmix_server_lookup_fn(opal_process_name_t *proc,
                                  opal_list_t *info, char **keys,
                                  opal_pmix_lookup_cbfunc_t cbfunc, void *cbdata);
 extern int pmix_server_unpublish_fn(opal_process_name_t *proc,
-                                    opal_pmix_data_range_t range, char **keys,
+                                    opal_pmix_data_range_t range,
+                                    opal_list_t *info, char **keys,
                                     opal_pmix_op_cbfunc_t cbfunc, void *cbdata);
 extern int pmix_server_spawn_fn(opal_process_name_t *requestor,
                                 opal_list_t *job_info, opal_list_t *apps,
@@ -168,9 +169,14 @@ extern int pmix_server_register_events_fn(opal_list_t *info,
                                           opal_pmix_op_cbfunc_t cbfunc,
                                           void *cbdata);
 
+/* declare the RML recv functions for responses */
 extern void pmix_server_launch_resp(int status, orte_process_name_t* sender,
                                     opal_buffer_t *buffer,
                                     orte_rml_tag_t tg, void *cbdata);
+
+extern void pmix_server_keyval_client(int status, orte_process_name_t* sender,
+                                      opal_buffer_t *buffer,
+                                      orte_rml_tag_t tg, void *cbdata);
 
 /* exposed shared variables */
 typedef struct {

@@ -53,7 +53,7 @@ int MPI_Publish_name(const char *service_name, MPI_Info info,
     opal_pmix_persistence_t persist;
     bool persistence_given = false;
     opal_list_t values;
-    opal_pmix_info_t *pinfo;
+    opal_value_t *pinfo;
 
     if ( MPI_PARAM_CHECK ) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
@@ -118,10 +118,10 @@ int MPI_Publish_name(const char *service_name, MPI_Info info,
 
     /* publish the values */
     OBJ_CONSTRUCT(&values, opal_list_t);
-    pinfo = OBJ_NEW(opal_pmix_info_t);
+    pinfo = OBJ_NEW(opal_value_t);
     pinfo->key = strdup(service_name);
-    pinfo->value.type = OPAL_STRING;
-    pinfo->value.data.string = strdup(port_name);
+    pinfo->type = OPAL_STRING;
+    pinfo->data.string = strdup(port_name);
     opal_list_append(&values, &pinfo->super);
 
     rc = opal_pmix.publish(rng, persist, &values);
