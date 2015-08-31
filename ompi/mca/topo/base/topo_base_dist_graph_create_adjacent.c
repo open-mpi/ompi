@@ -22,9 +22,9 @@
 int mca_topo_base_dist_graph_create_adjacent(mca_topo_base_module_t* module,
                                              ompi_communicator_t *comm_old,
                                              int indegree, int sources[],
-                                             int sourceweights[], 
+                                             int sourceweights[],
                                              int outdegree,
-                                             int destinations[], 
+                                             int destinations[],
                                              int destweights[],
                                              ompi_info_t *info, int reorder,
                                              ompi_communicator_t **newcomm)

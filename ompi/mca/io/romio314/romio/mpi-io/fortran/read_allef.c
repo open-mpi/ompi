@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -90,13 +90,13 @@ extern FORTRAN_API void FORT_CALL mpi_file_read_all_end_( MPI_Fint *, void*, MPI
 #endif
 
 /* Prototype to keep compiler happy */
-FORTRAN_API void FORT_CALL mpi_file_read_all_end_(MPI_Fint *fh,void *buf,MPI_Status *status, 
+FORTRAN_API void FORT_CALL mpi_file_read_all_end_(MPI_Fint *fh,void *buf,MPI_Status *status,
 			    MPI_Fint *ierr );
 
 FORTRAN_API void FORT_CALL mpi_file_read_all_end_(MPI_Fint *fh,void *buf,MPI_Status *status, MPI_Fint *ierr )
 {
     MPI_File fh_c;
-    
+
     fh_c = MPI_File_f2c(*fh);
 
     *ierr = MPI_File_read_all_end(fh_c,buf,status);

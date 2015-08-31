@@ -144,7 +144,7 @@ int mca_spml_base_wait(void* addr, int cmp, void* value, int datatype)
  */
 int mca_spml_base_wait_nb(void* handle)
 {
-    /* TODO fence is a gag for more accurate code 
+    /* TODO fence is a gag for more accurate code
      * Use shmem_quiet() (or a function calling shmem_quiet()) or
      * shmem_wait_nb() to force completion of transfers for non-blocking operations.
      */

@@ -6,7 +6,7 @@
 .\" $COPYRIGHT$
 .TH MPI_Comm_accept 3OpenMPI "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
-\fBMPI_Comm_accept \fP \- Establishes communication with a client. 
+\fBMPI_Comm_accept \fP \- Establishes communication with a client.
 
 .SH SYNTAX
 .ft R
@@ -21,7 +21,7 @@ int MPI_Comm_accept(const char *\fIport_name\fP, MPI_Info \fIinfo\fP, int \fIroo
 INCLUDE 'mpif.h'
 MPI_COMM_ACCEPT(\fIPORT_NAME, INFO, ROOT, COMM, NEWCOMM, IERROR\fP)
 	CHARACTER*(*)	\fIPORT_NAME\fP
-	INTEGER		\fIINFO, ROOT, COMM, NEWCOMM, IERROR\fP 
+	INTEGER		\fIINFO, ROOT, COMM, NEWCOMM, IERROR\fP
 
 .fi
 .SH C++ Syntax
@@ -38,7 +38,7 @@ port_name
 Port name (string, used only on \fIroot\fP).
 .TP 1i
 info
-Options given by root for the accept (handle, used only on root). No options currently supported. 
+Options given by root for the accept (handle, used only on root). No options currently supported.
 .TP 1i
 root
 Rank in \fIcomm\fP of root node (integer).
@@ -53,7 +53,7 @@ newcomm
 Intercommunicator with client as remote group (handle)
 .TP 1i
 IERROR
-Fortran only: Error status (integer). 
+Fortran only: Error status (integer).
 
 .SH DESCRIPTION
 .ft R
@@ -66,9 +66,9 @@ The \fIport_name\fP must have been established through a call to MPI_Open_port o
 Almost all MPI routines return an error value; C routines as the value of the function and Fortran routines in the last argument. C++ functions do not return errors. If the default error handler is set to MPI::ERRORS_THROW_EXCEPTIONS, then on error the C++ exception mechanism will be used to throw an MPI::Exception object.
 .sp
 Before the error value is returned, the current MPI error handler is
-called. By default, this error handler aborts the MPI job, except for I/O function errors. The error handler may be changed with MPI_Comm_set_errhandler; the predefined error handler MPI_ERRORS_RETURN may be used to cause error values to be returned.  
+called. By default, this error handler aborts the MPI job, except for I/O function errors. The error handler may be changed with MPI_Comm_set_errhandler; the predefined error handler MPI_ERRORS_RETURN may be used to cause error values to be returned.
 .sp
-See the MPI man page for a full list of MPI error codes. 
+See the MPI man page for a full list of MPI error codes.
 
 .SH SEE ALSO
 MPI_Comm_connect

@@ -7,8 +7,8 @@
  */
 
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
-/* 
- *   Copyright (C) 2001 University of Chicago. 
+/*
+ *   Copyright (C) 2001 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 #include "ad_gpfs.h"

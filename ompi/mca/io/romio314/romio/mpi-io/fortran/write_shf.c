@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -99,7 +99,7 @@ void mpi_file_write_shared_(MPI_Fint *fh,void *buf,MPI_Fint *count,
 {
     MPI_File fh_c;
     MPI_Datatype datatype_c;
-    
+
     fh_c = MPI_File_f2c(*fh);
     datatype_c = MPI_Type_f2c(*datatype);
 
@@ -114,7 +114,7 @@ FORTRAN_API void FORT_CALL mpi_file_write_shared_(MPI_Fint *fh,void *buf,MPI_Fin
                    MPI_Fint *datatype,MPI_Status *status, MPI_Fint *ierr )
 {
     MPI_File fh_c;
-    
+
     fh_c = MPI_File_f2c(*fh);
     *ierr = MPI_File_write_shared(fh_c, buf,*count,*datatype,status);
 }

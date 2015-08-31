@@ -13,7 +13,7 @@ main(int argc, char *argv[])
     char * expected;
 
     test_init("ompi_numtostr_t");
-    
+
     tst = opal_ltostr(10);
     expected = malloc(sizeof(long) * 8);
     snprintf(expected, sizeof(long) * 8, "%d", 10);
@@ -26,7 +26,7 @@ main(int argc, char *argv[])
 
     free(tst);
     free(expected);
-    
+
     tst = opal_dtostr(5.32);
     expected = malloc(sizeof(long) * 8);
     snprintf(expected, sizeof(long) * 8, "%f", 5.32);
@@ -38,6 +38,6 @@ main(int argc, char *argv[])
     }
 
     test_finalize();
-        
+
     return 0;
 }

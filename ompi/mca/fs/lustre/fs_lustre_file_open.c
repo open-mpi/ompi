@@ -5,15 +5,15 @@
  * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2015 University of Houston. All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -54,7 +54,7 @@ static void *alloc_lum()
  */
 
 int
-mca_fs_lustre_file_open (struct ompi_communicator_t *comm, 
+mca_fs_lustre_file_open (struct ompi_communicator_t *comm,
                      char* filename,
                      int access_mode,
                      struct ompi_info_t *info,
@@ -121,13 +121,13 @@ mca_fs_lustre_file_open (struct ompi_communicator_t *comm,
 
             fh->fd = open(filename, O_CREAT | O_RDWR | O_LOV_DELAY_CREATE, perm);
             if (fh->fd < 0) {
-                fprintf(stderr, "Can't open %s file: %d (%s)\n", 
+                fprintf(stderr, "Can't open %s file: %d (%s)\n",
                         filename, errno, strerror(errno));
                 return OMPI_ERROR;
             }
             close (fh->fd);
         }
-        fh->f_comm->c_coll.coll_barrier (fh->f_comm, 
+        fh->f_comm->c_coll.coll_barrier (fh->f_comm,
                                          fh->f_comm->c_coll.coll_barrier_module);
     }
 

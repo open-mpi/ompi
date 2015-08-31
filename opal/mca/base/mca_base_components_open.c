@@ -6,7 +6,7 @@
  * Copyright (c) 2004-2013 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -15,9 +15,9 @@
  *                         All rights reserved.
  * Copyright (c) 2014      Hochschule Esslingen.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -101,7 +101,7 @@ static int open_components(mca_base_framework_t *framework)
     }
 #endif  /* (OPAL_ENABLE_FT == 1) && (OPAL_ENABLE_FT_CR == 1) */
 
-    /* If mca_base_framework_register_components was called with the MCA_BASE_COMPONENTS_ALL flag 
+    /* If mca_base_framework_register_components was called with the MCA_BASE_COMPONENTS_ALL flag
        we need to trim down and close any extra components we do not want open */
     ret = mca_base_components_filter (framework, open_only_flags);
     if (OPAL_SUCCESS != ret) {
@@ -134,14 +134,14 @@ static int open_components(mca_base_framework_t *framework)
 		    /* If the component returns OPAL_ERR_NOT_AVAILABLE,
 		       it's a cue to "silently ignore me" -- it's not a
 		       failure, it's just a way for the component to say
-		       "nope!".  
+		       "nope!".
 
 		       Otherwise, however, display an error.  We may end
 		       up displaying this twice, but it may go to separate
 		       streams.  So better to be redundant than to not
 		       display the error in the stream where it was
 		       expected. */
-                
+
 		    if (mca_base_component_show_load_errors) {
 			opal_output_verbose (MCA_BASE_VERBOSE_ERROR, output_id,
                                              "mca: base: components_open: component %s "
@@ -162,8 +162,8 @@ static int open_components(mca_base_framework_t *framework)
 	    }
 	}
     }
-    
+
     /* All done */
-    
+
     return OPAL_SUCCESS;
 }

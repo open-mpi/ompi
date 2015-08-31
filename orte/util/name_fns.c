@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -13,9 +13,9 @@
  * Copyright (c) 2014-2014 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 #include "orte_config.h"
@@ -58,7 +58,7 @@ OBJ_CLASS_INSTANCE(orte_namelist_t,              /* type name */
                    opal_list_item_t,             /* parent "class" name */
                    orte_namelist_construct,      /* constructor */
                    orte_namelist_destructor);    /* destructor */
-                   
+
 static bool fns_init=false;
 
 static opal_tsd_key_t print_args_tsd_key;
@@ -88,7 +88,7 @@ get_print_name_buffer(void)
 {
     orte_print_args_buffers_t *ptr;
     int ret, i;
-    
+
     if (!fns_init) {
         /* setup the print_args function */
         if (ORTE_SUCCESS != (ret = opal_tsd_key_create(&print_args_tsd_key, buffer_cleanup))) {
@@ -97,10 +97,10 @@ get_print_name_buffer(void)
         }
         fns_init = true;
     }
-    
+
     ret = opal_tsd_getspecific(print_args_tsd_key, (void**)&ptr);
     if (OPAL_SUCCESS != ret) return NULL;
-    
+
     if (NULL == ptr) {
         ptr = (orte_print_args_buffers_t*)malloc(sizeof(orte_print_args_buffers_t));
         for (i=0; i < ORTE_PRINT_NAME_ARG_NUM_BUFS; i++) {
@@ -109,15 +109,15 @@ get_print_name_buffer(void)
         ptr->cntr = 0;
         ret = opal_tsd_setspecific(print_args_tsd_key, (void*)ptr);
     }
-    
+
     return (orte_print_args_buffers_t*) ptr;
 }
 
 char* orte_util_print_name_args(const orte_process_name_t *name)
 {
     orte_print_args_buffers_t *ptr;
-    char *job, *vpid; 
-    
+    char *job, *vpid;
+
     /* protect against NULL names */
     if (NULL == name) {
         /* get the next buffer */
@@ -133,7 +133,7 @@ char* orte_util_print_name_args(const orte_process_name_t *name)
         snprintf(ptr->buffers[ptr->cntr++], ORTE_PRINT_NAME_ARGS_MAX_SIZE, "[NO-NAME]");
         return ptr->buffers[ptr->cntr-1];
     }
-    
+
     /* get the jobid, vpid strings first - this will protect us from
      * stepping on each other's buffer. This also guarantees
      * that the print_args function has been initialized, so
@@ -141,24 +141,24 @@ char* orte_util_print_name_args(const orte_process_name_t *name)
      */
     job = orte_util_print_jobids(name->jobid);
     vpid = orte_util_print_vpids(name->vpid);
-    
+
     /* get the next buffer */
     ptr = get_print_name_buffer();
-    
+
     if (NULL == ptr) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return orte_print_args_null;
     }
-    
+
     /* cycle around the ring */
     if (ORTE_PRINT_NAME_ARG_NUM_BUFS == ptr->cntr) {
         ptr->cntr = 0;
     }
-    
-    snprintf(ptr->buffers[ptr->cntr++], 
-             ORTE_PRINT_NAME_ARGS_MAX_SIZE, 
+
+    snprintf(ptr->buffers[ptr->cntr++],
+             ORTE_PRINT_NAME_ARGS_MAX_SIZE,
              "[%s,%s]", job, vpid);
-    
+
     return ptr->buffers[ptr->cntr-1];
 }
 
@@ -166,19 +166,19 @@ char* orte_util_print_jobids(const orte_jobid_t job)
 {
     orte_print_args_buffers_t *ptr;
     unsigned long tmp1, tmp2;
-    
+
     ptr = get_print_name_buffer();
-    
+
     if (NULL == ptr) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return orte_print_args_null;
     }
-    
+
     /* cycle around the ring */
     if (ORTE_PRINT_NAME_ARG_NUM_BUFS == ptr->cntr) {
         ptr->cntr = 0;
     }
-    
+
     if (ORTE_JOBID_INVALID == job) {
         snprintf(ptr->buffers[ptr->cntr++], ORTE_PRINT_NAME_ARGS_MAX_SIZE, "[INVALID]");
     } else if (ORTE_JOBID_WILDCARD == job) {
@@ -186,8 +186,8 @@ char* orte_util_print_jobids(const orte_jobid_t job)
     } else {
         tmp1 = ORTE_JOB_FAMILY((unsigned long)job);
         tmp2 = ORTE_LOCAL_JOBID((unsigned long)job);
-        snprintf(ptr->buffers[ptr->cntr++], 
-                 ORTE_PRINT_NAME_ARGS_MAX_SIZE, 
+        snprintf(ptr->buffers[ptr->cntr++],
+                 ORTE_PRINT_NAME_ARGS_MAX_SIZE,
                  "[%lu,%lu]", tmp1, tmp2);
     }
     return ptr->buffers[ptr->cntr-1];
@@ -197,27 +197,27 @@ char* orte_util_print_job_family(const orte_jobid_t job)
 {
     orte_print_args_buffers_t *ptr;
     unsigned long tmp1;
-    
+
     ptr = get_print_name_buffer();
-    
+
     if (NULL == ptr) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return orte_print_args_null;
     }
-    
+
     /* cycle around the ring */
     if (ORTE_PRINT_NAME_ARG_NUM_BUFS == ptr->cntr) {
         ptr->cntr = 0;
     }
-    
+
     if (ORTE_JOBID_INVALID == job) {
         snprintf(ptr->buffers[ptr->cntr++], ORTE_PRINT_NAME_ARGS_MAX_SIZE, "INVALID");
     } else if (ORTE_JOBID_WILDCARD == job) {
         snprintf(ptr->buffers[ptr->cntr++], ORTE_PRINT_NAME_ARGS_MAX_SIZE, "WILDCARD");
     } else {
         tmp1 = ORTE_JOB_FAMILY((unsigned long)job);
-        snprintf(ptr->buffers[ptr->cntr++], 
-                 ORTE_PRINT_NAME_ARGS_MAX_SIZE, 
+        snprintf(ptr->buffers[ptr->cntr++],
+                 ORTE_PRINT_NAME_ARGS_MAX_SIZE,
                  "%lu", tmp1);
     }
     return ptr->buffers[ptr->cntr-1];
@@ -227,27 +227,27 @@ char* orte_util_print_local_jobid(const orte_jobid_t job)
 {
     orte_print_args_buffers_t *ptr;
     unsigned long tmp1;
-    
+
     ptr = get_print_name_buffer();
-    
+
     if (NULL == ptr) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return orte_print_args_null;
     }
-    
+
     /* cycle around the ring */
     if (ORTE_PRINT_NAME_ARG_NUM_BUFS == ptr->cntr) {
         ptr->cntr = 0;
     }
-    
+
     if (ORTE_JOBID_INVALID == job) {
         snprintf(ptr->buffers[ptr->cntr++], ORTE_PRINT_NAME_ARGS_MAX_SIZE, "INVALID");
     } else if (ORTE_JOBID_WILDCARD == job) {
         snprintf(ptr->buffers[ptr->cntr++], ORTE_PRINT_NAME_ARGS_MAX_SIZE, "WILDCARD");
     } else {
         tmp1 = (unsigned long)job & 0x0000ffff;
-        snprintf(ptr->buffers[ptr->cntr++], 
-                 ORTE_PRINT_NAME_ARGS_MAX_SIZE, 
+        snprintf(ptr->buffers[ptr->cntr++],
+                 ORTE_PRINT_NAME_ARGS_MAX_SIZE,
                  "%lu", tmp1);
     }
     return ptr->buffers[ptr->cntr-1];
@@ -256,26 +256,26 @@ char* orte_util_print_local_jobid(const orte_jobid_t job)
 char* orte_util_print_vpids(const orte_vpid_t vpid)
 {
     orte_print_args_buffers_t *ptr;
-    
+
     ptr = get_print_name_buffer();
-    
+
     if (NULL == ptr) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return orte_print_args_null;
     }
-    
+
     /* cycle around the ring */
     if (ORTE_PRINT_NAME_ARG_NUM_BUFS == ptr->cntr) {
         ptr->cntr = 0;
     }
-    
+
     if (ORTE_VPID_INVALID == vpid) {
         snprintf(ptr->buffers[ptr->cntr++], ORTE_PRINT_NAME_ARGS_MAX_SIZE, "INVALID");
     } else if (ORTE_VPID_WILDCARD == vpid) {
         snprintf(ptr->buffers[ptr->cntr++], ORTE_PRINT_NAME_ARGS_MAX_SIZE, "WILDCARD");
     } else {
-        snprintf(ptr->buffers[ptr->cntr++], 
-                 ORTE_PRINT_NAME_ARGS_MAX_SIZE, 
+        snprintf(ptr->buffers[ptr->cntr++],
+                 ORTE_PRINT_NAME_ARGS_MAX_SIZE,
                  "%ld", (long)vpid);
     }
     return ptr->buffers[ptr->cntr-1];
@@ -291,12 +291,12 @@ int orte_util_convert_jobid_to_string(char **jobid_string, const orte_jobid_t jo
         *jobid_string = strdup(ORTE_SCHEMA_WILDCARD_STRING);
         return ORTE_SUCCESS;
     }
-    
+
     if (0 > asprintf(jobid_string, "%ld", (long) jobid)) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
-    
+
     return ORTE_SUCCESS;
 }
 
@@ -333,18 +333,18 @@ int orte_util_convert_vpid_to_string(char **vpid_string, const orte_vpid_t vpid)
         *vpid_string = strdup(ORTE_SCHEMA_WILDCARD_STRING);
         return ORTE_SUCCESS;
     }
-    
+
     /* check for invalid value - handle appropriately */
     if (ORTE_VPID_INVALID == vpid) {
         *vpid_string = strdup(ORTE_SCHEMA_INVALID_STRING);
         return ORTE_SUCCESS;
     }
-    
+
     if (0 > asprintf(vpid_string, "%ld", (long) vpid)) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
-    
+
     return ORTE_SUCCESS;
 }
 
@@ -385,16 +385,16 @@ int orte_util_convert_string_to_process_name(orte_process_name_t *name,
     /* set default */
     name->jobid = ORTE_JOBID_INVALID;
     name->vpid = ORTE_VPID_INVALID;
-    
+
     /* check for NULL string - error */
     if (NULL == name_string) {
         ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
         return ORTE_ERR_BAD_PARAM;
     }
-    
+
     temp = strdup(name_string);  /** copy input string as the strtok process is destructive */
     token = strchr(temp, ORTE_SCHEMA_DELIMITER_CHAR); /** get first field -> jobid */
-    
+
     /* check for error */
     if (NULL == token) {
         ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
@@ -403,7 +403,7 @@ int orte_util_convert_string_to_process_name(orte_process_name_t *name,
     }
     *token = '\0';
     token++;
-    
+
     /* check for WILDCARD character - assign
      * value accordingly, if found
      */
@@ -414,7 +414,7 @@ int orte_util_convert_string_to_process_name(orte_process_name_t *name,
     } else {
         job = strtoul(temp, NULL, 10);
     }
-    
+
     /* check for WILDCARD character - assign
      * value accordingly, if found
      */
@@ -425,12 +425,12 @@ int orte_util_convert_string_to_process_name(orte_process_name_t *name,
     } else {
         vpid = strtoul(token, NULL, 10);
     }
-    
+
     name->jobid = job;
     name->vpid = vpid;
 
     free(temp);
-    
+
     return return_code;
 }
 
@@ -438,7 +438,7 @@ int orte_util_convert_process_name_to_string(char **name_string,
                                              const orte_process_name_t* name)
 {
     char *tmp, *tmp2;
-    
+
     if (NULL == name) { /* got an error */
         ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
         return ORTE_ERR_BAD_PARAM;
@@ -480,7 +480,7 @@ int orte_util_create_process_name(orte_process_name_t **name,
                                   )
 {
     *name = NULL;
-    
+
     *name = (orte_process_name_t*)malloc(sizeof(orte_process_name_t));
     if (NULL == *name) { /* got an error */
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
@@ -506,7 +506,7 @@ int orte_util_compare_name_fields(orte_ns_cmp_bitmask_t fields,
     } else if (NULL == name2) {
         return OPAL_VALUE1_GREATER;
     }
-    
+
     /* in this comparison function, we check for exact equalities.
      * In the case of wildcards, we check to ensure that the fields
      * actually match those values - thus, a "wildcard" in this
@@ -514,7 +514,7 @@ int orte_util_compare_name_fields(orte_ns_cmp_bitmask_t fields,
      * rather a specific value - UNLESS the CMP_WILD bitmask value
      * is set
      */
-    
+
     /* check job id */
     if (ORTE_NS_CMP_JOBID & fields) {
         if (ORTE_NS_CMP_WILD & fields &&
@@ -528,7 +528,7 @@ int orte_util_compare_name_fields(orte_ns_cmp_bitmask_t fields,
             return OPAL_VALUE1_GREATER;
         }
     }
-    
+
     /* get here if jobid's are equal, or not being checked
      * now check vpid
      */
@@ -560,7 +560,7 @@ int orte_util_compare_name_fields(orte_ns_cmp_bitmask_t fields,
  */
 uint32_t  orte_util_hash_vpid(orte_vpid_t vpid) {
     uint32_t hash;
-    
+
     hash = vpid;
     hash = (hash + 0x7ed55d16) + (hash<<12);
     hash = (hash ^ 0xc761c23c) ^ (hash>>19);
@@ -577,7 +577,7 @@ int orte_util_convert_string_to_sysinfo(char **cpu_type, char **cpu_model,
 {
     char *temp, *token;
     int return_code=ORTE_SUCCESS;
-    
+
     /* check for NULL string - error */
     if (NULL == sysinfo_string) {
         ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
@@ -586,13 +586,13 @@ int orte_util_convert_string_to_sysinfo(char **cpu_type, char **cpu_model,
 
     temp = strdup(sysinfo_string);  /** copy input string as the strtok process is destructive */
     token = strchr(temp, ORTE_SCHEMA_DELIMITER_CHAR); /** get first field -> cpu_type */
-    
+
     /* check for error */
     if (NULL == token) {
         free(temp);
         ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
         return ORTE_ERR_BAD_PARAM;
-    } 
+    }
     *token = '\0';
     token++;
 
@@ -600,13 +600,13 @@ int orte_util_convert_string_to_sysinfo(char **cpu_type, char **cpu_model,
      */
     if (0 != strcmp(temp, ORTE_SCHEMA_INVALID_STRING)) {
         *cpu_type = strdup(temp);
-    } 
+    }
 
     /* If type is a valid string get the value otherwise leave cpu_type untouched.
      */
     if (0 != strcmp(token, ORTE_SCHEMA_INVALID_STRING)) {
         *cpu_model = strdup(token);
-    } 
+    }
 
     free(temp);
 
@@ -617,7 +617,7 @@ int orte_util_convert_sysinfo_to_string(char **sysinfo_string,
 					const char *cpu_type, const char *cpu_model)
 {
     char *tmp;
-    
+
     /* check for no sysinfo values (like empty cpu_type) - where encountered, insert the
      * invalid string so we can correctly parse the name string when
      * it is passed back to us later
@@ -642,7 +642,7 @@ char *orte_pretty_print_timing(int64_t secs, int64_t usecs)
     unsigned long minutes, seconds;
     float fsecs;
     char *timestring;
-    
+
     seconds = secs + (usecs / 1000000l);
     minutes = seconds / 60l;
     seconds = seconds % 60l;
@@ -652,7 +652,7 @@ char *orte_pretty_print_timing(int64_t secs, int64_t usecs)
     } else {
         asprintf(&timestring, "%3lu:%02lu min:sec", minutes, seconds);
     }
-    
+
     return timestring;
 }
 

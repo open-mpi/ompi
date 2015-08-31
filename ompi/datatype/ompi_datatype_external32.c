@@ -63,7 +63,7 @@
  * All floating point values are in big-endian IEEE format. Double extended use 16 bytes, with
  * 15 exponent bits (bias = 10383), 112 mantissa bits and the same encoding as double. All
  * integers are in two's complement big-endian format.
- * 
+ *
  * All data are byte aligned, regardless of type. That's exactly what we expect as we can
  * consider the data stored in external32 as being packed.
  */
@@ -77,7 +77,7 @@ opal_convertor_t* ompi_mpi_external32_convertor = NULL;
 opal_convertor_t* ompi_mpi_local_convertor = NULL;
 
 int32_t ompi_datatype_default_convertors_init( void )
-{ 
+{
    /* create the extern32 convertor */
     ompi_mpi_external32_convertor = opal_convertor_create( ompi_datatype_external32_arch_id, 0 );
 

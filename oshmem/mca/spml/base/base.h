@@ -3,9 +3,9 @@
  *                         All rights reserved.
  * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -29,7 +29,7 @@ BEGIN_C_DECLS
 
 /*
  * This is the base priority for a SPML wrapper component
- * If there exists more than one then it is undefined 
+ * If there exists more than one then it is undefined
  * which one is picked.
  */
 #define SPML_SELECT_WRAPPER_PRIORITY -128

@@ -2,9 +2,9 @@
 #
 # Copyright (c) 2009-2014 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
-# 
+#
 # Additional copyrights may follow
-# 
+#
 # $HEADER$
 #
 
@@ -15,10 +15,10 @@ AC_DEFUN([OMPI_CONFIG_FILES],[
         ompi/include/Makefile
         ompi/include/mpif.h
         ompi/include/mpif-config.h
-    
+
         ompi/datatype/Makefile
         ompi/debuggers/Makefile
-    
+
         ompi/mpi/c/Makefile
         ompi/mpi/c/profile/Makefile
         ompi/mpi/cxx/Makefile
@@ -36,7 +36,7 @@ AC_DEFUN([OMPI_CONFIG_FILES],[
         ompi/mpi/fortran/mpiext/Makefile
         ompi/mpi/tool/Makefile
         ompi/mpi/tool/profile/Makefile
-    
+
         ompi/tools/ompi_info/Makefile
         ompi/tools/wrappers/Makefile
         ompi/tools/wrappers/mpicc-wrapper-data.txt

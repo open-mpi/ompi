@@ -17,7 +17,7 @@ The MPI-3 standard established a static MPI_Info object named \fIMPI_INFO_ENV\fP
 command
 If available, the value will be set to argv[0]. Note that the value may not always be available - e.g., it is valid for a program to call MPI_Init with NULL parameters, in which case argv[0] will not be set if run as a singleton. This value will never be set in a Fortran program as the argv are not available.
 .TP 1i
-argv    
+argv
 The argv given for the application. If no arguments are passed to the application, then this value will not be set. It will also not be set in the case of a singleton that calls MPI_Init with NULL parameters, or a Fortran program.
 .TP 1i
 maxprocs
@@ -42,7 +42,7 @@ thread_level
 The requested MPI thread level - note that this may differ from the \fIactual\fP MPI thread level of the application.
 .TP 1i
 ompi_num_apps
-The number of application contexts in an MPMD job.  
+The number of application contexts in an MPMD job.
 This is an Open MPI-specific field and value.
 .TP 1i
 ompi_np

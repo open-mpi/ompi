@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -13,22 +13,22 @@
  * Copyright (c) 2011      Los Alamos National Security, LLC.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 /** @file:
  *
  * The Open RTE Resource MAPping Subsystem (RMAPS)
- * 
+ *
  * The resource mapping subsystem is responsible for mapping processes
  * to specific nodes/cpus within a given job. In many systems, this
  * functionality will not be supported - the system will map processes
  * wherever it chooses and does not allow the user to specify the
  * mapping. RMAPS components, therefore, provide services for those
  * systems that do permit such mappings.
- * 
+ *
  * RMAPS checks the MCA parameters to see if a mapping algorithm has
  * been specified.  If the user selected a mapping algorithm, the
  * indicated RMAPS component will take information from the registry
@@ -38,7 +38,7 @@
  * according to its algorithm, with the results stored on the
  * appropriate job segment - the assigned nodename for each process is
  * stored in that respective process' container on the segment.
- * 
+ *
  */
 
 #ifndef ORTE_MCA_RMAPS_H
@@ -86,7 +86,7 @@ typedef orte_rmaps_base_module_1_3_0_t orte_rmaps_base_module_t;
 /*
  * rmaps component
  */
- 
+
 /**
  * rmaps component version 1.3.0
  */

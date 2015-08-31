@@ -47,21 +47,21 @@ void orte_util_parse_range_options(char *inp, char ***output)
     char nstr[32];
     char *input, *bang;
     bool bang_option=false;
-    
+
     /* protect against null input */
     if (NULL == inp) {
         return;
     }
-    
+
     /* protect the provided input */
     input = strdup(inp);
-    
+
     /* check for the special '!' operator */
     if (NULL != (bang = strchr(input, '!'))) {
         bang_option = true;
         *bang = '\0';
     }
-    
+
     /* split on commas */
     r1 = opal_argv_split(input, ',');
     /* for each resulting element, check for range */
@@ -92,7 +92,7 @@ void orte_util_parse_range_options(char *inp, char ***output)
         }
         opal_argv_free(r2);
     }
-    
+
 cleanup:
     if (bang_option) {
         opal_argv_append_nosize(output, "BANG");
@@ -107,15 +107,15 @@ void orte_util_get_ranges(char *inp, char ***startpts, char ***endpts)
     char **r1=NULL, **r2=NULL;
     int i;
     char *input;
-    
+
     /* protect against null input */
     if (NULL == inp) {
         return;
     }
-    
+
     /* protect the provided input */
     input = strdup(inp);
-    
+
     /* split on commas */
     r1 = opal_argv_split(input, ',');
     /* for each resulting element, check for range */
@@ -138,7 +138,7 @@ void orte_util_get_ranges(char *inp, char ***startpts, char ***endpts)
         }
         opal_argv_free(r2);
     }
-    
+
     free(input);
     opal_argv_free(r1);
 

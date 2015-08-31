@@ -1,10 +1,10 @@
 #!/bin/bash
 
-# Copyright (c) 2001-2006 The Trustees of Indiana University.  
+# Copyright (c) 2001-2006 The Trustees of Indiana University.
 #                         All rights reserved.
 # Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
-#                         reserved. 
-# 
+#                         reserved.
+#
 # This file is part of the Open MPI software package.  For license
 # information, see the LICENSE file in the top level directory of the
 # Open MPI source distribution.
@@ -32,7 +32,7 @@ OMPI_PACKAGE="openmpi"
 OMPI_PREFIX="/usr/local/"
 OMPI_OPTIONS="--disable-mpi-f77 --without-cs-fs --enable-mca-no-build=ras-slurm,pls-slurm,gpr-null,sds-pipe,sds-slurm,pml-cm NM=\"nm -p\""
 OMPI_OSX_README="ReadMe.rtf"
-# note - if want XGrid support, make sure that a cocoa-supported 
+# note - if want XGrid support, make sure that a cocoa-supported
 # architecture appears first on the list.  Otherwise, we won't
 # lipo that component and it will be dropped
 OPAL_ARCH_LIST="ppc ppc64 i386 x86_64"
@@ -186,7 +186,7 @@ for arch in $OPAL_ARCH_LIST ; do
 
     #
     # Run configure
-    # 
+    #
     cd $builddir
     config="$srcdir/configure CFLAGS=\"-arch $arch -isysroot $OMPI_SDK\" CXXFLAGS=\"-arch $arch -isysroot $OMPI_SDK\" OBJCFLAGS=\"-arch $arch -isysroot $OMPI_SDK\" --prefix=$OMPI_PREFIX $OMPI_OPTIONS --build=$build_arch --host=$host_arch"
     echo "--> Running configure: $config"
@@ -274,7 +274,7 @@ print_arch_if() {
             exit 1
             ;;
     esac
-} 
+}
 
 # Set arch to the first arch in the list.  Go through the for loop,
 # although we'll break out at the end of the first time through.  Look

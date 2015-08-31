@@ -68,7 +68,7 @@ int mca_sharedfp_sm_file_open (struct ompi_communicator_t *comm,
     if ( NULL == shfileHandle ) {
         opal_output(0, "mca_sharedfp_sm_file_open: Error during memory allocation\n");
         return OMPI_ERR_OUT_OF_RESOURCE;
-    }	
+    }
     err = ompio_io_ompio_file_open(comm,filename,amode,info,shfileHandle,false);
     if ( OMPI_SUCCESS != err) {
         opal_output(0, "mca_sharedfp_sm_file_open: Error during file open\n");
@@ -79,16 +79,16 @@ int mca_sharedfp_sm_file_open (struct ompi_communicator_t *comm,
     data = (mca_io_ompio_data_t *) fh->f_fh->f_io_selected_data;
     ompio_fh = &data->ompio_fh;
 
-    err = mca_io_ompio_set_view_internal (shfileHandle, 
-                                          ompio_fh->f_disp, 
-                                          ompio_fh->f_etype, 
+    err = mca_io_ompio_set_view_internal (shfileHandle,
+                                          ompio_fh->f_disp,
+                                          ompio_fh->f_etype,
                                           ompio_fh->f_orig_filetype,
                                           ompio_fh->f_datarep,
                                           MPI_INFO_NULL);
 
     /*Memory is allocated here for the sh structure*/
     if ( mca_sharedfp_sm_verbose ) {
-        opal_output(ompi_sharedfp_base_framework.framework_output, 
+        opal_output(ompi_sharedfp_base_framework.framework_output,
                     "mca_sharedfp_sm_file_open: malloc f_sharedfp_ptr struct\n");
     }
 
@@ -109,11 +109,11 @@ int mca_sharedfp_sm_file_open (struct ompi_communicator_t *comm,
 
     /*Open a shared memory segment which will hold the shared file pointer*/
     if ( mca_sharedfp_sm_verbose ) {
-        opal_output(ompi_sharedfp_base_framework.framework_output, 
+        opal_output(ompi_sharedfp_base_framework.framework_output,
                     "mca_sharedfp_sm_file_open: allocatge shared memory segment.\n");
     }
 
-    
+
     sm_data = (struct mca_sharedfp_sm_data*) malloc ( sizeof(struct mca_sharedfp_sm_data));
     if ( NULL == sm_data ){
         opal_output(0, "mca_sharedfp_sm_file_open: Error, unable to malloc sm_data struct\n");
@@ -151,24 +151,24 @@ int mca_sharedfp_sm_file_open (struct ompi_communicator_t *comm,
         free(sm_data);
         free(sh);
         free(shfileHandle);
-        return OMPI_ERROR;	
+        return OMPI_ERROR;
     }
 
     sm_data->sm_filename = sm_filename;
-    
+
     /*TODO: is it necessary to write to the file first?*/
     if( 0 == rank ){
         memset ( &sm_offset, 0, sizeof (struct mca_sharedfp_sm_offset ));
         write ( sm_fd, &sm_offset, sizeof(struct mca_sharedfp_sm_offset));
     }
     comm->c_coll.coll_barrier (comm, comm->c_coll.coll_barrier_module );
-    
+
     /*the file has been written to, now we can map*/
     sm_offset_ptr = mmap(NULL, sizeof(struct mca_sharedfp_sm_offset), PROT_READ | PROT_WRITE,
                          MAP_SHARED, sm_fd, 0);
 
     close(sm_fd);
-    
+
     if ( sm_offset_ptr==MAP_FAILED){
         err = OMPI_ERROR;
         opal_output(0, "mca_sharedfp_sm_file_open: Error, unable to mmap file: %s\n",sm_filename);
@@ -177,7 +177,7 @@ int mca_sharedfp_sm_file_open (struct ompi_communicator_t *comm,
         free(sm_data);
         free(sh);
         free(shfileHandle);
-        return OMPI_ERROR;	
+        return OMPI_ERROR;
     }
 
     /* Initialize semaphore so that is shared between processes.           */

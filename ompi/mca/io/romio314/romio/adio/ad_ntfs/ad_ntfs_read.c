@@ -1,12 +1,12 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
- *   Copyright (C) 1997 University of Chicago. 
+/*
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
 #include "ad_ntfs.h"
 
-void ADIOI_NTFS_ReadContig(ADIO_File fd, void *buf, int count, 
+void ADIOI_NTFS_ReadContig(ADIO_File fd, void *buf, int count,
 			   MPI_Datatype datatype, int file_ptr_type,
 			   ADIO_Offset offset, ADIO_Status *status,
 			   int *error_code)
@@ -140,7 +140,7 @@ void ADIOI_NTFS_ReadContig(ADIO_File fd, void *buf, int count,
 	ADIOI_Free(pOvl);
 
 	fd->fp_sys_posn = offset + (ADIO_Offset)dwNumRead;
-	/* individual file pointer not updated */        
+	/* individual file pointer not updated */
     }
     else
     {
@@ -231,9 +231,9 @@ void ADIOI_NTFS_ReadContig(ADIO_File fd, void *buf, int count,
 	}
 	ADIOI_Free(pOvl);
 
-	fd->fp_ind = fd->fp_ind + (ADIO_Offset)dwNumRead; 
+	fd->fp_ind = fd->fp_ind + (ADIO_Offset)dwNumRead;
 	fd->fp_sys_posn = fd->fp_ind;
-    }         
+    }
 
 #ifdef HAVE_STATUS_SET_BYTES
     if (err != FALSE)

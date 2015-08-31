@@ -131,4 +131,4 @@ int mca_scoll_fca_reduce(struct oshmem_group_t *group,
                          int algorithm_type);
 OBJ_CLASS_DECLARATION(mca_coll_fca_module_t);
 END_C_DECLS
-#endif 
+#endif

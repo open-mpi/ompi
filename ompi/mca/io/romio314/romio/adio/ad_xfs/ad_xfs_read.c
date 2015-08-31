@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -12,10 +12,10 @@
 
 /* style: allow:free:2 sig:0 */
 
-static void ADIOI_XFS_Aligned_Mem_File_Read(ADIO_File fd, void *buf, int len, 
+static void ADIOI_XFS_Aligned_Mem_File_Read(ADIO_File fd, void *buf, int len,
 					     ADIO_Offset offset, int *err);
 
-void ADIOI_XFS_ReadContig(ADIO_File fd, void *buf, int count, 
+void ADIOI_XFS_ReadContig(ADIO_File fd, void *buf, int count,
                      MPI_Datatype datatype, int file_ptr_type,
 		     ADIO_Offset offset, ADIO_Status *status, int *error_code)
 {
@@ -35,11 +35,11 @@ void ADIOI_XFS_ReadContig(ADIO_File fd, void *buf, int count,
 	err = pread(fd->fd_sys, buf, len, offset);
     else {       /* direct I/O enabled */
 
-	/* (1) if mem_aligned && file_aligned 
+	/* (1) if mem_aligned && file_aligned
                     use direct I/O to read up to correct io_size
                     use buffered I/O for remaining  */
 
-	if (!(((long) buf) % fd->d_mem) && !(offset % fd->d_miniosz)) 
+	if (!(((long) buf) % fd->d_mem) && !(offset % fd->d_miniosz))
 	    ADIOI_XFS_Aligned_Mem_File_Read(fd, buf, len, offset, &err);
 
         /* (2) if !file_aligned
@@ -99,7 +99,7 @@ void ADIOI_XFS_ReadContig(ADIO_File fd, void *buf, int count,
 }
 
 
-void ADIOI_XFS_Aligned_Mem_File_Read(ADIO_File fd, void *buf, int len, 
+void ADIOI_XFS_Aligned_Mem_File_Read(ADIO_File fd, void *buf, int len,
               ADIO_Offset offset, int *err)
 {
     int ntimes, rem, newrem, i, size, nbytes;
@@ -110,7 +110,7 @@ void ADIOI_XFS_Aligned_Mem_File_Read(ADIO_File fd, void *buf, int len,
        use direct I/O to read up to correct io_size,
        use buffered I/O for remaining. */
 
-    if (!(len % fd->d_miniosz) && 
+    if (!(len % fd->d_miniosz) &&
 	(len >= fd->d_miniosz) && (len <= read_chunk_sz))
 	*err = pread(fd->fd_direct, buf, len, offset);
     else if (len < fd->d_miniosz)
@@ -126,17 +126,17 @@ void ADIOI_XFS_Aligned_Mem_File_Read(ADIO_File fd, void *buf, int len,
 	}
 	if (rem) {
 	    if (!(rem % fd->d_miniosz))
-		nbytes += pread(fd->fd_direct, 
+		nbytes += pread(fd->fd_direct,
 		     ((char *)buf) + ntimes * read_chunk_sz, rem, offset);
 	    else {
 		newrem = rem % fd->d_miniosz;
 		size = rem - newrem;
 		if (size) {
-		    nbytes += pread(fd->fd_direct, 
+		    nbytes += pread(fd->fd_direct,
 		         ((char *)buf) + ntimes * read_chunk_sz, size, offset);
 		    offset += size;
 		}
-		nbytes += pread(fd->fd_sys, 
+		nbytes += pread(fd->fd_sys,
 	              ((char *)buf) + ntimes * read_chunk_sz + size, newrem, offset);
 	    }
 	}

@@ -4,7 +4,7 @@
 # $COPYRIGHT$
 #
 
-# Short version: 
+# Short version:
 #
 # This script automates the tedious task of updating copyright notices
 # in the tops of OMPI/ORTE/OPAL source files before committing back to
@@ -35,7 +35,7 @@
 #
 # NOTE: this script currently doesn't handle multi-line copyright
 # statements, such as:
-# 
+#
 # Copyright (c) 2010 University of Blabbityblah and the Trustees of
 #                    Schblitbittyboo.  All rights reserved.
 #

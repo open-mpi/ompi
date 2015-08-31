@@ -1,12 +1,12 @@
 # Copyright (c) 2013      Mellanox Technologies, Inc.
 #                         All rights reserved.
 # $COPYRIGHT$
-# 
+#
 #  Additional copyrights may follow
-# 
+#
 # $HEADER$
-# 
-# 
+#
+#
 scoll_mpi_sources = \
 					scoll_mpi.h \
 					scoll_mpi_debug.h \

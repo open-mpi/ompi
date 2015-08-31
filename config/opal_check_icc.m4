@@ -6,21 +6,21 @@ dnl                         Corporation.  All rights reserved.
 dnl Copyright (c) 2004-2005 The University of Tennessee and The University
 dnl                         of Tennessee Research Foundation.  All rights
 dnl                         reserved.
-dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2014      Intel, Inc. All rights reserved.
 dnl $COPYRIGHT$
-dnl 
+dnl
 dnl Additional copyrights may follow
-dnl 
+dnl
 dnl $HEADER$
 dnl
 
 AC_DEFUN([OPAL_CHECK_ICC_VARARGS],[
 dnl
-dnl On EM64T, icc-8.1 before version 8.1.027 segfaulted, since 
+dnl On EM64T, icc-8.1 before version 8.1.027 segfaulted, since
 dnl va_start was miscompiled...
 dnl
 AC_MSG_CHECKING([whether icc-8.1 for EM64T works with variable arguments])

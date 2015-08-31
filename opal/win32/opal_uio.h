@@ -42,7 +42,7 @@ BEGIN_C_DECLS
  */
 OPAL_DECLSPEC int writev (int fd, struct iovec *iov, int cnt);
 
-/* 
+/*
    readv  reads  data  from file descriptor fd, and puts the result in the
    buffers described by iov. The number  of  buffers  is  specified  by
    cnt.  The  buffers  are filled in the order specified.  Operates just

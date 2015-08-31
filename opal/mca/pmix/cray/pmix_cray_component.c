@@ -4,9 +4,9 @@
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  *
  * These symbols are in a file by themselves to provide nice linker
@@ -21,7 +21,7 @@
 #include "opal/constants.h"
 #include "opal/mca/pmix/pmix.h"
 #include "pmix_cray.h"
-#include <sys/syscall.h>   
+#include <sys/syscall.h>
 #include <pmi.h>
 
 /*
@@ -51,7 +51,7 @@ opal_pmix_cray_component_t mca_pmix_cray_component = {
         .base_version = {
             /* Indicate that we are a pmix v1.1.0 component (which also
                implies a specific MCA version) */
-        
+
             OPAL_PMIX_BASE_VERSION_2_0_0,
 
             /* Component name and version */
@@ -98,7 +98,7 @@ static int pmix_cray_component_query(mca_base_module_t **module, int *priority)
         snprintf(task_is_app_fname,sizeof(task_is_app_fname),
                  "/proc/self/task/%ld/task_is_app",syscall(SYS_gettid));
         fd_task_is_app = fopen(task_is_app_fname, "r");
-        if (fd_task_is_app != NULL) {   /* okay we're in a PAGG container, 
+        if (fd_task_is_app != NULL) {   /* okay we're in a PAGG container,
                                            and we are an app task (not just a process
                                            running on a mom node, for example),
                                            so we should give cray pmi a shot. */

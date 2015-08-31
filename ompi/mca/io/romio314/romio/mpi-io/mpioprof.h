@@ -1,12 +1,12 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
-/* 
-   This header file converts all MPI_ names into PMPI_ names, for 
+/*
+   This header file converts all MPI_ names into PMPI_ names, for
    building the profiling interface
  */
 
@@ -63,7 +63,7 @@
 #undef MPI_File_read
 #define MPI_File_read PMPI_File_read
 #undef MPI_File_read_all
-#define MPI_File_read_all  PMPI_File_read_all 
+#define MPI_File_read_all  PMPI_File_read_all
 #undef MPI_File_write
 #define MPI_File_write PMPI_File_write
 #undef MPI_File_write_all

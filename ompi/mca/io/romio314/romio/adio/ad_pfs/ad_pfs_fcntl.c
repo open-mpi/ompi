@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -18,10 +18,10 @@ void ADIOI_PFS_Fcntl(ADIO_File fd, int flag, ADIO_Fcntl_t *fcntl_struct,
     switch(flag) {
     case ADIO_FCNTL_GET_FSIZE:
 	if (!(fd->atomicity)) {
-          /* in M_ASYNC mode, all processes are not aware of changes 
-             in file size (although the manual says otherwise). Therefore, 
-             temporarily change to M_UNIX and then change 
-             back to M_ASYNC.*/ 
+          /* in M_ASYNC mode, all processes are not aware of changes
+             in file size (although the manual says otherwise). Therefore,
+             temporarily change to M_UNIX and then change
+             back to M_ASYNC.*/
 	    MPI_Comm_size(MPI_COMM_WORLD, &np_total);
 	    MPI_Comm_size(fd->comm, &np_comm);
 	    if (np_total == np_comm) {
@@ -31,7 +31,7 @@ void ADIOI_PFS_Fcntl(ADIO_File fd, int flag, ADIO_Fcntl_t *fcntl_struct,
             /* else it is M_UNIX anyway, so no problem */
 	}
 	fcntl_struct->fsize = lseek(fd->fd_sys, 0, SEEK_END);
-	if (fd->fp_sys_posn != -1) 
+	if (fd->fp_sys_posn != -1)
 	    lseek(fd->fd_sys, fd->fp_sys_posn, SEEK_SET);
 	*error_code = MPI_SUCCESS;
 	break;

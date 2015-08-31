@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -27,7 +27,7 @@ int MPI_File_get_byte_offset(MPI_File fh, MPI_Offset offset, MPI_Offset *disp) _
 #endif
 
 /*@
-    MPI_File_get_byte_offset - Returns the absolute byte position in 
+    MPI_File_get_byte_offset - Returns the absolute byte position in
                 the file corresponding to "offset" etypes relative to
                 the current view
 

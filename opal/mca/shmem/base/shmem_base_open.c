@@ -43,7 +43,7 @@ char *opal_shmem_base_RUNTIME_QUERY_hint = NULL;
 
 /* ////////////////////////////////////////////////////////////////////////// */
 /**
- * Register some shmem-wide MCA params 
+ * Register some shmem-wide MCA params
  */
 static int
 opal_shmem_base_register (mca_base_register_flag_t flags)

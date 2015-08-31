@@ -1,5 +1,5 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/*  
+/*
  *  (C) 2007 by Argonne National Laboratory.
  *      See COPYRIGHT in top-level directory.
  */
@@ -15,7 +15,7 @@
 #include <string.h>
 
 #define NUM_OBJS 4
-#define OBJ_SIZE 1048576 
+#define OBJ_SIZE 1048576
 
 extern char *optarg;
 extern int optind, opterr, optopt;
@@ -29,7 +29,7 @@ Usage( int line ) {
     int rank;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     if ( rank == 0 ) {
-        fprintf( stderr, 
+        fprintf( stderr,
                 "Usage (line %d): %s [-d] [-h] -f filename\n"
                 "\t-d for debugging\n"
                 "\t-h to turn on the hints to force collective aggregation\n",
@@ -61,7 +61,7 @@ print_hints( int rank, MPI_File *mfh ) {
         for( i = 0; i < nkeys; i++ ) {
             MPI_Info_get_nthkey( info, i, key );
             printf( "%35s -> ", key );
-            MPI_Info_get( info, key, 1024, value, &dummy_int ); 
+            MPI_Info_get( info, key, 1024, value, &dummy_int );
             printf( "%s\n", value );
         }
 	MPI_Info_free(&info);
@@ -93,10 +93,10 @@ write_file( char *target, int rank, MPI_Info *info ) {
     buffer = malloc(OBJ_SIZE);
 
     if ( debug ) printf( "%d writing file %s\n", rank, target );
-    
-    if( (mpi_ret = MPI_File_open(MPI_COMM_WORLD, target, 
+
+    if( (mpi_ret = MPI_File_open(MPI_COMM_WORLD, target,
                     MPI_MODE_WRONLY | MPI_MODE_CREATE, *info, &wfh ) )
-                != MPI_SUCCESS ) 
+                != MPI_SUCCESS )
     {
         fatal_error( mpi_ret, NULL, "open for write" );
     }
@@ -106,7 +106,7 @@ write_file( char *target, int rank, MPI_Info *info ) {
         fill_buffer( buffer, OBJ_SIZE, rank, offset );
         if ( debug ) printf( "%s", buffer );
         if ( (mpi_ret = MPI_File_write_at_all( wfh, offset, buffer, OBJ_SIZE,
-                        MPI_CHAR, &mpi_stat ) ) != MPI_SUCCESS ) 
+                        MPI_CHAR, &mpi_stat ) ) != MPI_SUCCESS )
         {
             fatal_error( mpi_ret, &mpi_stat, "write" );
         }
@@ -125,7 +125,7 @@ static int
 reduce_corruptions( int corrupt_blocks ) {
     int mpi_ret;
     int sum;
-    if ( ( mpi_ret = MPI_Reduce( &corrupt_blocks, &sum, 1, 
+    if ( ( mpi_ret = MPI_Reduce( &corrupt_blocks, &sum, 1,
                     MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD ) ) != MPI_SUCCESS )
     {
         fatal_error( mpi_ret, NULL, "MPI_Reduce" );
@@ -145,9 +145,9 @@ read_file( char *target, int rank, MPI_Info *info, int *corrupt_blocks ) {
     verify_buf = (char *)malloc(OBJ_SIZE);
 
     if ( debug ) printf( "%d reading file %s\n", rank, target );
-    
-    if( (mpi_ret = MPI_File_open(MPI_COMM_WORLD, target, 
-                    MPI_MODE_RDONLY, *info, &rfh ) ) != MPI_SUCCESS ) 
+
+    if( (mpi_ret = MPI_File_open(MPI_COMM_WORLD, target,
+                    MPI_MODE_RDONLY, *info, &rfh ) ) != MPI_SUCCESS )
     {
         fatal_error( mpi_ret, NULL, "open for read" );
     }
@@ -157,7 +157,7 @@ read_file( char *target, int rank, MPI_Info *info, int *corrupt_blocks ) {
         fill_buffer( verify_buf, OBJ_SIZE, rank, offset );
         if ( debug ) printf( "Expecting %s", buffer );
         if ( (mpi_ret = MPI_File_read_at_all( rfh, offset, buffer, OBJ_SIZE,
-                        MPI_CHAR, &mpi_stat ) ) != MPI_SUCCESS ) 
+                        MPI_CHAR, &mpi_stat ) ) != MPI_SUCCESS )
         {
             fatal_error( mpi_ret, &mpi_stat, "read" );
         }
@@ -182,9 +182,9 @@ read_file( char *target, int rank, MPI_Info *info, int *corrupt_blocks ) {
 
 static void
 set_hints( MPI_Info *info ) {
-    MPI_Info_set( *info, "romio_cb_write", "enable" ); 
-    MPI_Info_set( *info, "romio_no_indep_rw", "1" ); 
-    MPI_Info_set( *info, "cb_nodes", "1" ); 
+    MPI_Info_set( *info, "romio_cb_write", "enable" );
+    MPI_Info_set( *info, "romio_no_indep_rw", "1" );
+    MPI_Info_set( *info, "cb_nodes", "1" );
     MPI_Info_set( *info, "cb_buffer_size", "4194304" );
 }
 
@@ -199,7 +199,7 @@ set_hints( MPI_Info *info, char *hints ) {
         val = strtok( NULL, delimiter );
         if ( debug ) printf( "HINT: %s = %s\n", key, val );
         if ( ! val ) {
-            Usage( __LINE__ ); 
+            Usage( __LINE__ );
         }
         MPI_Info_set( *info, key, val );
         key = strtok( NULL, delimiter );
@@ -208,7 +208,7 @@ set_hints( MPI_Info *info, char *hints ) {
 }
 */
 
-int 
+int
 main( int argc, char *argv[] ) {
 	int nproc = 1, rank = 0;
     char *target = NULL;

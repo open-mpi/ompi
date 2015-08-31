@@ -5,16 +5,16 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2007 University of Houston. All rights reserved.
  * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -51,21 +51,21 @@ mca_coll_inter_allreduce_inter(void *sbuf, void *rbuf, int count,
     ompi_request_t *req[2];
 
     rank = ompi_comm_rank(comm);
-    
+
     /* Perform the reduction locally */
     err = ompi_datatype_get_extent(dtype, &lb, &extent);
     if (OMPI_SUCCESS != err) {
 	return OMPI_ERROR;
     }
-    
+
     tmpbuf = (char *) malloc(count * extent);
     if (NULL == tmpbuf) {
 	return OMPI_ERR_OUT_OF_RESOURCE;
     }
     pml_buffer = tmpbuf - lb;
-   
+
     err = comm->c_local_comm->c_coll.coll_reduce(sbuf, pml_buffer, count,
-						 dtype, op, root, 
+						 dtype, op, root,
 						 comm->c_local_comm,
                                                  comm->c_local_comm->c_coll.coll_reduce_module);
     if (OMPI_SUCCESS != err) {
@@ -96,7 +96,7 @@ mca_coll_inter_allreduce_inter(void *sbuf, void *rbuf, int count,
     }
 
     /* bcast the message to all the local processes */
-    err = comm->c_local_comm->c_coll.coll_bcast(rbuf, count, dtype, 
+    err = comm->c_local_comm->c_coll.coll_bcast(rbuf, count, dtype,
 						root, comm->c_local_comm,
                                                 comm->c_local_comm->c_coll.coll_bcast_module);
     if (OMPI_SUCCESS != err) {

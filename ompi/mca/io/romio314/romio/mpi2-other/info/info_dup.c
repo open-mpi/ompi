@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -58,7 +58,7 @@ int MPI_Info_dup(MPI_Info info, MPI_Info *newinfo)
 	curr_new->key = ADIOI_Strdup(curr_old->key);
 	curr_new->value = ADIOI_Strdup(curr_old->value);
 	curr_new->next = 0;
-	
+
 	curr_old = curr_old->next;
     }
 

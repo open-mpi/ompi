@@ -6,16 +6,16 @@
  * Copyright (c) 2004-2013 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 /*
@@ -459,7 +459,7 @@ int opal_rb_tree_traverse(opal_rb_tree_t *tree,
 }
 
 
-static void inorder_traversal(opal_rb_tree_t *tree, 
+static void inorder_traversal(opal_rb_tree_t *tree,
                               opal_rb_tree_condition_fn_t cond,
                               opal_rb_tree_action_fn_t action,
                               opal_rb_tree_node_t * node)

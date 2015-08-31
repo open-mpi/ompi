@@ -28,7 +28,7 @@
 static int
 completion_fn(ptl_event_t *ev, ompi_mtl_portals4_base_request_t *ptl_base_request)
 {
-    ompi_mtl_portals4_probe_request_t *ptl_request = 
+    ompi_mtl_portals4_probe_request_t *ptl_request =
         (ompi_mtl_portals4_probe_request_t*) ptl_base_request;
 
     opal_output_verbose(1, ompi_mtl_base_framework.framework_output,

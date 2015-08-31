@@ -6,15 +6,15 @@ dnl                         Corporation.  All rights reserved.
 dnl Copyright (c) 2004-2005 The University of Tennessee and The University
 dnl                         of Tennessee Research Foundation.  All rights
 dnl                         reserved.
-dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2010-2012 Cisco Systems, Inc.  All rights reserved.
 dnl $COPYRIGHT$
-dnl 
+dnl
 dnl Additional copyrights may follow
-dnl 
+dnl
 dnl $HEADER$
 dnl
 
@@ -25,7 +25,7 @@ AC_DEFUN([OMPI_FORTRAN_GET_SIZEOF],[
     # http://lists.gnu.org/archive/html/bug-autoconf/2010-10/msg00016.html
     AS_VAR_PUSHDEF([type_var],
        m4_translit([[ompi_cv_fortran_sizeof_$2]], [*], [p]))
-    
+
     AC_CACHE_CHECK([size of Fortran $2], type_var,
         [OMPI_FORTRAN_MAKE_C_FUNCTION([ompi_ac_size_fn], [size])
          # Fortran module

@@ -3,15 +3,15 @@
  *                         All rights reserved.
  *
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
 /**
  * @file
- * 
+ *
  */
 
 #ifndef MCA_STATE_ORTED_EXPORT_H

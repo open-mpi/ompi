@@ -1,12 +1,12 @@
 # -*- shell-script -*-
 #
-# Copyright (c) 2009-2013 Cisco Systems, Inc.  All rights reserved. 
-# Copyright (c) 2013      Los Alamos National Security, LLC.  All rights reserved. 
+# Copyright (c) 2009-2013 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2013      Los Alamos National Security, LLC.  All rights reserved.
 #
 # $COPYRIGHT$
-# 
+#
 # Additional copyrights may follow
-# 
+#
 # $HEADER$
 #
 
@@ -29,9 +29,9 @@ AC_DEFUN([MCA_opal_event_external_COMPILE_MODE], [
 # ---------------------------------
 AC_DEFUN([MCA_opal_event_external_POST_CONFIG],[
     # If we won, then do all the rest of the setup
-    AS_IF([test "$1" = "1"], 
-          [AC_DEFINE_UNQUOTED([EVENT_EXTERNAL_EVENT_VERSION], 
-                              [external], 
+    AS_IF([test "$1" = "1"],
+          [AC_DEFINE_UNQUOTED([EVENT_EXTERNAL_EVENT_VERSION],
+                              [external],
                               [Version of event])
 
            # Set this variable so that the framework m4 knows what
@@ -86,14 +86,14 @@ AC_DEFUN([MCA_opal_event_external_CONFIG],[
     # If we want external support, try it
     AS_IF([test "$opal_event_external_want" = "yes"],
           [ # Error out if the specified dir does not exist
-           OPAL_CHECK_WITHDIR([libevent-libdir], [$with_libevent_libdir], 
+           OPAL_CHECK_WITHDIR([libevent-libdir], [$with_libevent_libdir],
                               [libevent.*])
 
            AC_MSG_CHECKING([for external libevent in])
            AS_IF([test "$with_libevent" != "external" -a "$with_libevent" != "yes"],
                  [opal_event_dir=$with_libevent
                   AC_MSG_RESULT([$opal_event_dir])
-                  OPAL_CHECK_WITHDIR([libevent], [$with_libdir], 
+                  OPAL_CHECK_WITHDIR([libevent], [$with_libdir],
                                      [include/event.h])
                  ],
                  [AC_MSG_RESULT([(default search paths)])])

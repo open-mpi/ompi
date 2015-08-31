@@ -2,13 +2,13 @@
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 /**
- *  @file 
+ *  @file
  */
 
 #ifndef MCA_MEMHEAP_PTMALLOC_COMPONENT_H

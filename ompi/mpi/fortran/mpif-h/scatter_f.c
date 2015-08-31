@@ -5,15 +5,15 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2013 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -65,7 +65,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_SCATTER,
 #include "ompi/mpi/fortran/mpif-h/profile/defines.h"
 #endif
 
-void ompi_scatter_f(char *sendbuf, MPI_Fint *sendcount, 
+void ompi_scatter_f(char *sendbuf, MPI_Fint *sendcount,
 		   MPI_Fint *sendtype, char *recvbuf,
 		   MPI_Fint *recvcount, MPI_Fint *recvtype,
 		   MPI_Fint *root, MPI_Fint *comm, MPI_Fint *ierr)
@@ -73,7 +73,7 @@ void ompi_scatter_f(char *sendbuf, MPI_Fint *sendcount,
     int c_ierr;
     MPI_Datatype c_sendtype, c_recvtype;
     MPI_Comm c_comm = MPI_Comm_f2c(*comm);
-    
+
     c_sendtype = MPI_Type_f2c(*sendtype);
     c_recvtype = MPI_Type_f2c(*recvtype);
 
@@ -82,9 +82,9 @@ void ompi_scatter_f(char *sendbuf, MPI_Fint *sendcount,
     recvbuf = (char *) OMPI_F2C_BOTTOM(recvbuf);
 
     c_ierr = MPI_Scatter(sendbuf,OMPI_FINT_2_INT(*sendcount),
-                         c_sendtype, recvbuf, 
+                         c_sendtype, recvbuf,
                          OMPI_FINT_2_INT(*recvcount),
-                         c_recvtype, 
+                         c_recvtype,
                          OMPI_FINT_2_INT(*root), c_comm);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 }

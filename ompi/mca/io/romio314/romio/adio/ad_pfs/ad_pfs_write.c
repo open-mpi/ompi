@@ -1,13 +1,13 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
 #include "ad_pfs.h"
 
-void ADIOI_PFS_WriteContig(ADIO_File fd, void *buf, int count, 
+void ADIOI_PFS_WriteContig(ADIO_File fd, void *buf, int count,
 			   MPI_Datatype datatype, int file_ptr_type,
 			   ADIO_Offset offset, ADIO_Status *status,
 			   int *error_code)
@@ -24,7 +24,7 @@ void ADIOI_PFS_WriteContig(ADIO_File fd, void *buf, int count,
 	}
         err = _cwrite(fd->fd_sys, buf, len);
         fd->fp_sys_posn = offset + err;
-         /* individual file pointer not updated */        
+         /* individual file pointer not updated */
     }
     else { /* write from curr. location of ind. file pointer */
         if (fd->fp_sys_posn != fd->fp_ind) {

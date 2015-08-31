@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2013 Los Alamos National Security, LLC. 
+ * Copyright (c) 2006-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
@@ -25,7 +25,7 @@
  * In windows, many of the socket functions return an EWOULDBLOCK
  * instead of things like EAGAIN, EINPROGRESS, etc. It has been
  * verified that this will not conflict with other error codes that
- * are returned by these functions under UNIX/Linux environments 
+ * are returned by these functions under UNIX/Linux environments
  */
 
 #include "orte_config.h"
@@ -77,7 +77,7 @@ static void set_keepalive(int sd)
 #if defined(SO_KEEPALIVE)
     int option;
     socklen_t optlen;
-        
+
     /* see if the keepalive option is available */
     optlen = sizeof(option);
     if (getsockopt(sd, SOL_SOCKET, SO_KEEPALIVE, &option, &optlen) < 0) {
@@ -89,8 +89,8 @@ static void set_keepalive(int sd)
     option = 1;
     if (setsockopt(sd, SOL_SOCKET, SO_KEEPALIVE, &option, optlen) < 0) {
         opal_output_verbose(5, orte_oob_base_framework.framework_output,
-                            "[%s:%d] setsockopt(SO_KEEPALIVE) failed: %s (%d)", 
-                            __FILE__, __LINE__, 
+                            "[%s:%d] setsockopt(SO_KEEPALIVE) failed: %s (%d)",
+                            __FILE__, __LINE__,
                             strerror(opal_socket_errno),
                             opal_socket_errno);
         return;
@@ -101,8 +101,8 @@ static void set_keepalive(int sd)
                    &mca_oob_tcp_component.keepalive_time,
                    sizeof(mca_oob_tcp_component.keepalive_time)) < 0) {
         opal_output_verbose(5, orte_oob_base_framework.framework_output,
-                            "[%s:%d] setsockopt(TCP_KEEPALIVE) failed: %s (%d)", 
-                            __FILE__, __LINE__, 
+                            "[%s:%d] setsockopt(TCP_KEEPALIVE) failed: %s (%d)",
+                            __FILE__, __LINE__,
                             strerror(opal_socket_errno),
                             opal_socket_errno);
         return;
@@ -113,8 +113,8 @@ static void set_keepalive(int sd)
                    &mca_oob_tcp_component.keepalive_time,
                    sizeof(mca_oob_tcp_component.keepalive_time)) < 0) {
         opal_output_verbose(5, orte_oob_base_framework.framework_output,
-                            "[%s:%d] setsockopt(TCP_KEEPIDLE) failed: %s (%d)", 
-                            __FILE__, __LINE__, 
+                            "[%s:%d] setsockopt(TCP_KEEPIDLE) failed: %s (%d)",
+                            __FILE__, __LINE__,
                             strerror(opal_socket_errno),
                             opal_socket_errno);
         return;
@@ -126,8 +126,8 @@ static void set_keepalive(int sd)
                    &mca_oob_tcp_component.keepalive_intvl,
                    sizeof(mca_oob_tcp_component.keepalive_intvl)) < 0) {
         opal_output_verbose(5, orte_oob_base_framework.framework_output,
-                            "[%s:%d] setsockopt(TCP_KEEPINTVL) failed: %s (%d)", 
-                            __FILE__, __LINE__, 
+                            "[%s:%d] setsockopt(TCP_KEEPINTVL) failed: %s (%d)",
+                            __FILE__, __LINE__,
                             strerror(opal_socket_errno),
                             opal_socket_errno);
         return;
@@ -139,8 +139,8 @@ static void set_keepalive(int sd)
                    &mca_oob_tcp_component.keepalive_probes,
                    sizeof(mca_oob_tcp_component.keepalive_probes)) < 0) {
         opal_output_verbose(5, orte_oob_base_framework.framework_output,
-                            "[%s:%d] setsockopt(TCP_KEEPCNT) failed: %s (%d)", 
-                            __FILE__, __LINE__, 
+                            "[%s:%d] setsockopt(TCP_KEEPCNT) failed: %s (%d)",
+                            __FILE__, __LINE__,
                             strerror(opal_socket_errno),
                             opal_socket_errno);
     }
@@ -156,8 +156,8 @@ void orte_oob_tcp_set_socket_options(int sd)
     if (setsockopt(sd, IPPROTO_TCP, TCP_NODELAY, (char *)&optval, sizeof(optval)) < 0) {
         opal_backtrace_print(stderr, NULL, 1);
         opal_output_verbose(5, orte_oob_base_framework.framework_output,
-                            "[%s:%d] setsockopt(TCP_NODELAY) failed: %s (%d)", 
-                            __FILE__, __LINE__, 
+                            "[%s:%d] setsockopt(TCP_NODELAY) failed: %s (%d)",
+                            __FILE__, __LINE__,
                             strerror(opal_socket_errno),
                             opal_socket_errno);
     }
@@ -166,8 +166,8 @@ void orte_oob_tcp_set_socket_options(int sd)
     if (mca_oob_tcp_component.tcp_sndbuf > 0 &&
         setsockopt(sd, SOL_SOCKET, SO_SNDBUF, (char *)&mca_oob_tcp_component.tcp_sndbuf, sizeof(int)) < 0) {
         opal_output_verbose(5, orte_oob_base_framework.framework_output,
-                            "[%s:%d] setsockopt(SO_SNDBUF) failed: %s (%d)", 
-                            __FILE__, __LINE__, 
+                            "[%s:%d] setsockopt(SO_SNDBUF) failed: %s (%d)",
+                            __FILE__, __LINE__,
                             strerror(opal_socket_errno),
                             opal_socket_errno);
     }
@@ -176,8 +176,8 @@ void orte_oob_tcp_set_socket_options(int sd)
     if (mca_oob_tcp_component.tcp_rcvbuf > 0 &&
         setsockopt(sd, SOL_SOCKET, SO_RCVBUF, (char *)&mca_oob_tcp_component.tcp_rcvbuf, sizeof(int)) < 0) {
         opal_output_verbose(5, orte_oob_base_framework.framework_output,
-                            "[%s:%d] setsockopt(SO_RCVBUF) failed: %s (%d)", 
-                            __FILE__, __LINE__, 
+                            "[%s:%d] setsockopt(SO_RCVBUF) failed: %s (%d)",
+                            __FILE__, __LINE__,
                             strerror(opal_socket_errno),
                             opal_socket_errno);
     }

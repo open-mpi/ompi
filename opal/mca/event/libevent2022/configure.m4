@@ -5,9 +5,9 @@
 # Copyright (c) 2015      Intel, Inc. All rights reserved.
 #
 # $COPYRIGHT$
-# 
+#
 # Additional copyrights may follow
-# 
+#
 # $HEADER$
 #
 AC_DEFUN([MCA_opal_event_libevent2022_PRIORITY], [80])
@@ -23,7 +23,7 @@ AC_DEFUN([MCA_opal_event_libevent2022_COMPILE_MODE], [
 
 AC_DEFUN([MCA_opal_event_libevent2022_POST_CONFIG], [
     AM_CONDITIONAL(OPAL_EVENT_HAVE_THREAD_SUPPORT, test "$enable_event_thread_support" = "yes")
-    AS_IF([test "$1" = "1"], 
+    AS_IF([test "$1" = "1"],
           [ # Build libevent/include/event2/event-config.h.  If we
            # don't do it here, then libevent's Makefile.am will build
            # it during "make all", which is too late for us (because
@@ -80,7 +80,7 @@ EOF
           ])
 ])
 
-# MCA_event_libevent2022_CONFIG([action-if-can-compile], 
+# MCA_event_libevent2022_CONFIG([action-if-can-compile],
 #                              [action-if-cant-compile])
 # ------------------------------------------------
 AC_DEFUN([MCA_opal_event_libevent2022_CONFIG],[
@@ -95,7 +95,7 @@ AC_DEFUN([MCA_opal_event_libevent2022_CONFIG],[
           [AC_MSG_WARN([using an external libevent; disqualifiying this component])
            $2])
     OPAL_VAR_SCOPE_POP
-])        
+])
 
 AC_DEFUN([MCA_opal_event_libevent2022_DO_THE_CONFIG], [
     CFLAGS_save="$CFLAGS"
@@ -165,7 +165,7 @@ AC_DEFUN([MCA_opal_event_libevent2022_DO_THE_CONFIG], [
 
     AC_MSG_RESULT([$event_args])
 
-    OPAL_CONFIG_SUBDIR([$libevent_basedir/libevent], 
+    OPAL_CONFIG_SUBDIR([$libevent_basedir/libevent],
         [$event_args $opal_subdir_args],
         [libevent_happy="yes"], [libevent_happy="no"])
     if test "$libevent_happy" = "no"; then
@@ -186,7 +186,7 @@ AC_DEFUN([MCA_opal_event_libevent2022_DO_THE_CONFIG], [
     # libevent/include/event2/event-config.h!).  Otherwise, set it to
     # 0.
     libevent_file=$libevent_basedir/libevent/config.h
-    AS_IF([test "$libevent_happy" = "yes" -a -r $libevent_file], 
+    AS_IF([test "$libevent_happy" = "yes" -a -r $libevent_file],
           [OPAL_HAVE_WORKING_EVENTOPS=`grep HAVE_WORKING_EVENTOPS $libevent_file | awk '{print [$]3 }'`
            $1],
           [$2

@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*-
  * vim: ts=8 sts=4 sw=4 noexpandtab
  *
- *   Copyright (C) 2006 University of Chicago. 
+ *   Copyright (C) 2006 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -45,9 +45,9 @@ int ADIOI_PVFS2_StridedDtypeIO(ADIO_File fd, void *buf, int count,
     ADIOI_Datatype_iscontig(fd->filetype, &filetype_is_contig);
 
     /* changed below if error */
-    *error_code = MPI_SUCCESS;  
+    *error_code = MPI_SUCCESS;
 
-    /* datatype is the memory type 
+    /* datatype is the memory type
      * fd->filetype is the file type */
     MPI_Type_size_x(fd->filetype, &filetype_size);
     if (filetype_size == 0) {
@@ -70,34 +70,34 @@ int ADIOI_PVFS2_StridedDtypeIO(ADIO_File fd, void *buf, int count,
      * case is handled by using fd->disp and byte-converted off. */
 
     pvfs_disp = fd->disp;
-    if (file_ptr_type == ADIO_INDIVIDUAL) 
+    if (file_ptr_type == ADIO_INDIVIDUAL)
     {
-	if (filetype_is_contig) 
+	if (filetype_is_contig)
 	{
 	    off = fd->fp_ind - fd->disp;
 	}
-	else 
+	else
 	{
 	    int flag = 0;
 	    /* Should have already been flattened in ADIO_Open*/
-	    while (flat_file_p->type != fd->filetype) 
+	    while (flat_file_p->type != fd->filetype)
 	    {
 		flat_file_p = flat_file_p->next;
 	    }
 	    num_filetypes = -1;
-	    while (!flag) 
+	    while (!flag)
 	    {
 		num_filetypes++;
-		for (i = 0; i < flat_file_p->count; i++) 
+		for (i = 0; i < flat_file_p->count; i++)
 		{
 		    /* Start on a non zero-length region */
-		    if (flat_file_p->blocklens[i]) 
+		    if (flat_file_p->blocklens[i])
 		    {
 			if (fd->disp + flat_file_p->indices[i] +
 			    (num_filetypes * filetype_extent) +
 			    flat_file_p->blocklens[i] > fd->fp_ind &&
-			    fd->disp + flat_file_p->indices[i] <= 
-			    fd->fp_ind) 
+			    fd->disp + flat_file_p->indices[i] <=
+			    fd->fp_ind)
 			{
 			    cur_flat_file_reg_off = fd->fp_ind -
 				(fd->disp + flat_file_p->indices[i] +
@@ -116,7 +116,7 @@ int ADIOI_PVFS2_StridedDtypeIO(ADIO_File fd, void *buf, int count,
 	}
     }
     else /* ADIO_EXPLICIT */
-    { 
+    {
 	off = etype_size * offset;
     }
 
@@ -144,7 +144,7 @@ int ADIOI_PVFS2_StridedDtypeIO(ADIO_File fd, void *buf, int count,
     if (ret != 0) /* TODO: convert this to MPIO error handling */
         fprintf(stderr, "ADIOI_PVFS2_stridedDtypeIO: error in final"
 		" CONTIG memory type\n");
-    PVFS_Request_free(&tmp_mem_req);    
+    PVFS_Request_free(&tmp_mem_req);
 
     /* pvfs_disp is used to offset the filetype */
     ret = PVFS_Request_hindexed(1, &pvfs_blk, &pvfs_disp,
@@ -163,7 +163,7 @@ int ADIOI_PVFS2_StridedDtypeIO(ADIO_File fd, void *buf, int count,
 
     if (ret != 0) {
 	fprintf(stderr, "ADIOI_PVFS2_StridedDtypeIO: Warning - PVFS_sys_"
-		"read/write returned %d and completed %Ld bytes.\n", 
+		"read/write returned %d and completed %Ld bytes.\n",
 		ret, (long long)resp_io.total_completed);
         *error_code = MPIO_Err_create_code(MPI_SUCCESS,
                                            MPIR_ERR_RECOVERABLE,
@@ -177,40 +177,40 @@ int ADIOI_PVFS2_StridedDtypeIO(ADIO_File fd, void *buf, int count,
     {
         fd->fp_ind = off += resp_io.total_completed;
     }
-    
+
   error_state:
     fd->fp_sys_posn = -1;   /* set it to null. */
 
     PVFS_Request_free(&mem_req);
-    PVFS_Request_free(&file_req);    
+    PVFS_Request_free(&file_req);
 
 #ifdef DEBUG_DTYPE
     fprintf(stderr, "ADIOI_PVFS2_StridedDtypeIO: "
-            "resp_io.total_completed=%Ld,ret=%d\n", 
+            "resp_io.total_completed=%Ld,ret=%d\n",
 	    resp_io.total_completed, ret);
 #endif
 
 #ifdef HAVE_STATUS_SET_BYTES
     MPIR_Status_set_bytes(status, datatype, resp_io.total_completed);
     /* This is a temporary way of filling in status. The right way is to
-     * keep track of how much data was actually acccessed by 
+     * keep track of how much data was actually acccessed by
      * ADIOI_BUFFERED operations */
 #endif
     return ret;
 }
 
 /* convert_mpi_pvfs2_dtype - Convert a MPI datatype into
- * a PVFS2 datatype so that we can natively use the PVFS2 
- * datatypes in the PVFS2 I/O calls instead of converting 
- * all datatypes to the hindexed method 
+ * a PVFS2 datatype so that we can natively use the PVFS2
+ * datatypes in the PVFS2 I/O calls instead of converting
+ * all datatypes to the hindexed method
  * return 1  - a leaf node
- * return 0  - normal return 
+ * return 0  - normal return
  * return -1 - problems */
 
-int convert_mpi_pvfs2_dtype(MPI_Datatype *mpi_dtype, 
+int convert_mpi_pvfs2_dtype(MPI_Datatype *mpi_dtype,
 			    PVFS_Request *pvfs_dtype)
 {
-    int num_int = -1, num_addr = -1, num_dtype = -1, 
+    int num_int = -1, num_addr = -1, num_dtype = -1,
 	combiner = -1, i = -1, ret = -1, leaf = -1;
     int *arr_int = NULL;
     MPI_Aint *arr_addr = NULL;
@@ -227,16 +227,16 @@ int convert_mpi_pvfs2_dtype(MPI_Datatype *mpi_dtype,
 			  &num_dtype,
 			  &combiner);
 
-    /* Depending on type of datatype do the following 
+    /* Depending on type of datatype do the following
      * operations */
-    
+
     if (combiner == MPI_COMBINER_NAMED)
     {
 	convert_named(mpi_dtype, pvfs_dtype, combiner);
 	return 1;
     }
 
-    /* Allocate space for the arrays necessary for 
+    /* Allocate space for the arrays necessary for
      * MPI_Type_get_contents */
 
     if ((arr_int = ADIOI_Malloc(sizeof(int)*num_int)) == NULL)
@@ -266,7 +266,7 @@ int convert_mpi_pvfs2_dtype(MPI_Datatype *mpi_dtype,
 			  arr_addr,
 			  arr_dtype);
 
-    /* If it's not a predefined datatype, it is either a 
+    /* If it's not a predefined datatype, it is either a
      * derived datatype or a structured datatype */
 
     if (combiner != MPI_COMBINER_STRUCT)
@@ -278,28 +278,28 @@ int convert_mpi_pvfs2_dtype(MPI_Datatype *mpi_dtype,
 	{
 	    case MPI_COMBINER_CONTIGUOUS:
 		leaf = convert_mpi_pvfs2_dtype(&arr_dtype[0], old_pvfs_dtype);
-		ret = PVFS_Request_contiguous(arr_int[0], 
+		ret = PVFS_Request_contiguous(arr_int[0],
 					      *old_pvfs_dtype, pvfs_dtype);
 		break;
 	    case MPI_COMBINER_VECTOR:
 		leaf = convert_mpi_pvfs2_dtype(&arr_dtype[0], old_pvfs_dtype);
 		ret = PVFS_Request_vector(arr_int[0], arr_int[1],
-					  arr_int[2], *old_pvfs_dtype, 
+					  arr_int[2], *old_pvfs_dtype,
 					  pvfs_dtype);
 		break;
 	    case MPI_COMBINER_HVECTOR:
 		leaf = convert_mpi_pvfs2_dtype(&arr_dtype[0], old_pvfs_dtype);
 		ret = PVFS_Request_hvector(arr_int[0], arr_int[1],
-					   arr_addr[0], *old_pvfs_dtype, 
+					   arr_addr[0], *old_pvfs_dtype,
 					   pvfs_dtype);
 		break;
-		/* Both INDEXED and HINDEXED types require PVFS_size 
-		 * address arrays.  Therefore, we need to copy and 
-		 * convert the data from MPI_get_contents() into 
+		/* Both INDEXED and HINDEXED types require PVFS_size
+		 * address arrays.  Therefore, we need to copy and
+		 * convert the data from MPI_get_contents() into
 		 * a PVFS_size buffer */
 	    case MPI_COMBINER_INDEXED:
 		leaf = convert_mpi_pvfs2_dtype(&arr_dtype[0], old_pvfs_dtype);
-		if ((pvfs_arr_disp = 
+		if ((pvfs_arr_disp =
 			    ADIOI_Malloc(arr_int[0]*sizeof(PVFS_size))) == 0)
 		{
 		    fprintf(stderr, "convert_mpi_pvfs2_dtype: "
@@ -307,17 +307,17 @@ int convert_mpi_pvfs2_dtype(MPI_Datatype *mpi_dtype,
 		}
 		for (i = 0; i < arr_int[0]; i++)
 		{
-		    pvfs_arr_disp[i] = 
+		    pvfs_arr_disp[i] =
 			(PVFS_size) arr_int[arr_int[0]+1+i];
 		}
-		ret = PVFS_Request_indexed(arr_int[0], &arr_int[1], 
+		ret = PVFS_Request_indexed(arr_int[0], &arr_int[1],
 				     pvfs_arr_disp,
 				     *old_pvfs_dtype, pvfs_dtype);
 		ADIOI_Free(pvfs_arr_disp);
 		break;
 	    case MPI_COMBINER_HINDEXED:
 		leaf = convert_mpi_pvfs2_dtype(&arr_dtype[0], old_pvfs_dtype);
-		if ((pvfs_arr_disp = 
+		if ((pvfs_arr_disp =
 			    ADIOI_Malloc(arr_int[0]*sizeof(PVFS_size))) == 0)
 		{
 		    fprintf(stderr, "convert_mpi_pvfs2_dtype: "
@@ -325,17 +325,17 @@ int convert_mpi_pvfs2_dtype(MPI_Datatype *mpi_dtype,
 		}
 		for (i = 0; i < arr_int[0]; i++)
 		{
-		    pvfs_arr_disp[i] = 
+		    pvfs_arr_disp[i] =
 			(PVFS_size) arr_addr[i];
 		}
-		ret = PVFS_Request_hindexed(arr_int[0], &arr_int[1], 
+		ret = PVFS_Request_hindexed(arr_int[0], &arr_int[1],
 				      (int64_t *)&arr_addr[0],
 				      *old_pvfs_dtype, pvfs_dtype);
-		ADIOI_Free(pvfs_arr_disp);		
+		ADIOI_Free(pvfs_arr_disp);
 		break;
 	    case MPI_COMBINER_DUP:
                 leaf = convert_mpi_pvfs2_dtype(&arr_dtype[0], old_pvfs_dtype);
-		ret = PVFS_Request_contiguous(1, 
+		ret = PVFS_Request_contiguous(1,
 					      *old_pvfs_dtype, pvfs_dtype);
 
                 break;
@@ -343,7 +343,7 @@ int convert_mpi_pvfs2_dtype(MPI_Datatype *mpi_dtype,
 		/* No native PVFS2 support for this operation currently */
 		ADIOI_Free(old_pvfs_dtype);
 		fprintf(stderr, "convert_mpi_pvfs2_dtype: "
-			"INDEXED_BLOCK is unsupported\n"); 
+			"INDEXED_BLOCK is unsupported\n");
 		break;
 	    case MPI_COMBINER_HINDEXED_BLOCK:
 		/* No native PVFS2 support for this operation currently */
@@ -354,42 +354,42 @@ int convert_mpi_pvfs2_dtype(MPI_Datatype *mpi_dtype,
 	    case MPI_COMBINER_HINDEXED_INTEGER:
 		ADIOI_Free(old_pvfs_dtype);
 		fprintf(stderr, "convert_mpi_pvfs2_dtype: "
-			"HINDEXED_INTEGER is unsupported\n"); 
+			"HINDEXED_INTEGER is unsupported\n");
 		break;
 	    case MPI_COMBINER_STRUCT_INTEGER:
 		ADIOI_Free(old_pvfs_dtype);
 		fprintf(stderr, "convert_mpi_pvfs2_dtype: "
-			"STRUCT_INTEGER is unsupported\n"); 
+			"STRUCT_INTEGER is unsupported\n");
 		break;
 	    case MPI_COMBINER_SUBARRAY:
 		ADIOI_Free(old_pvfs_dtype);
 		fprintf(stderr, "convert_mpi_pvfs2_dtype: "
-			"SUBARRAY is unsupported\n"); 
+			"SUBARRAY is unsupported\n");
 		break;
 	    case MPI_COMBINER_DARRAY:
 		ADIOI_Free(old_pvfs_dtype);
 		fprintf(stderr, "convert_mpi_pvfs2_dtype: "
-			"DARRAY is unsupported\n"); 
+			"DARRAY is unsupported\n");
 		break;
 	    case MPI_COMBINER_F90_REAL:
 		ADIOI_Free(old_pvfs_dtype);
 		fprintf(stderr, "convert_mpi_pvfs2_dtype: "
-			"F90_REAL is unsupported\n"); 
+			"F90_REAL is unsupported\n");
 		break;
 	    case MPI_COMBINER_F90_COMPLEX:
 		ADIOI_Free(old_pvfs_dtype);
 		fprintf(stderr, "convert_mpi_pvfs2_dtype: "
-			"F90_COMPLEX is unsupported\n"); 
+			"F90_COMPLEX is unsupported\n");
 		break;
 	    case MPI_COMBINER_F90_INTEGER:
 		ADIOI_Free(old_pvfs_dtype);
 		fprintf(stderr, "convert_mpi_pvfs2_dtype: "
-			"F90_INTEGER is unsupported\n"); 
+			"F90_INTEGER is unsupported\n");
 		break;
 	    case MPI_COMBINER_RESIZED:
 		ADIOI_Free(old_pvfs_dtype);
 		fprintf(stderr, "convert_mpi_pvfs2_dtype: "
-			"RESIZED is unsupported\n"); 
+			"RESIZED is unsupported\n");
 		break;
 	    default:
 		break;
@@ -400,7 +400,7 @@ int convert_mpi_pvfs2_dtype(MPI_Datatype *mpi_dtype,
 		    "for a derived datatype\n");
 
 #ifdef DEBUG_DTYPE
-	print_dtype_info(combiner,    
+	print_dtype_info(combiner,
 			 num_int,
 			 num_addr,
 			 num_dtype,
@@ -418,7 +418,7 @@ int convert_mpi_pvfs2_dtype(MPI_Datatype *mpi_dtype,
 
 	PVFS_Request_free(old_pvfs_dtype);
 	ADIOI_Free(old_pvfs_dtype);
-	
+
 	return ret;
     }
     else /* MPI_COMBINER_STRUCT */
@@ -430,9 +430,9 @@ int convert_mpi_pvfs2_dtype(MPI_Datatype *mpi_dtype,
 
 	/* When converting into a PVFS_Request_struct, we no longer
 	 * can use MPI_LB and MPI_UB.  Therfore, we have to do the
-	 * following.  
-	 * We simply ignore all the MPI_LB and MPI_UB types and 
-	 * get the lb and extent and pass it on through a 
+	 * following.
+	 * We simply ignore all the MPI_LB and MPI_UB types and
+	 * get the lb and extent and pass it on through a
 	 * PVFS resized_req */
 
 	arr_count = 0;
@@ -450,7 +450,7 @@ int convert_mpi_pvfs2_dtype(MPI_Datatype *mpi_dtype,
 	    MPI_Type_get_extent(*mpi_dtype, &mpi_lb, &mpi_extent);
 	    pvfs_lb = mpi_lb;
 	    pvfs_extent = mpi_extent;
-	    if ((pvfs_arr_len = ADIOI_Malloc(arr_count*sizeof(int))) 
+	    if ((pvfs_arr_len = ADIOI_Malloc(arr_count*sizeof(int)))
 		== NULL)
 	    {
 		fprintf(stderr, "convert_mpi_pvfs2_dtype: "
@@ -464,7 +464,7 @@ int convert_mpi_pvfs2_dtype(MPI_Datatype *mpi_dtype,
 	    fprintf(stderr, "convert_mpi_pvfs2_dtype: "
 		    "Failed to allocate PVFS_Requests\n");
 
-	if ((pvfs_arr_disp = ADIOI_Malloc(arr_count*sizeof(PVFS_size))) 
+	if ((pvfs_arr_disp = ADIOI_Malloc(arr_count*sizeof(PVFS_size)))
 	    == NULL)
 	{
 	    fprintf(stderr, "convert_mpi_pvfs2_dtype: "
@@ -480,12 +480,12 @@ int convert_mpi_pvfs2_dtype(MPI_Datatype *mpi_dtype,
 		leaf = convert_mpi_pvfs2_dtype(
 		    &arr_dtype[i], &old_pvfs_dtype_arr[arr_count]);
 		if (leaf != 1)
-		    MPI_Type_free(&arr_dtype[i]); 
-		pvfs_arr_disp[arr_count] = 
+		    MPI_Type_free(&arr_dtype[i]);
+		pvfs_arr_disp[arr_count] =
 		    (PVFS_size) arr_addr[i];
 		if (has_lb_ub)
 		{
-		    pvfs_arr_len[arr_count] = 
+		    pvfs_arr_len[arr_count] =
 			arr_int[i+1];
 		}
 		arr_count++;
@@ -500,8 +500,8 @@ int convert_mpi_pvfs2_dtype(MPI_Datatype *mpi_dtype,
 	    if ((tmp_pvfs_dtype = ADIOI_Malloc(sizeof(PVFS_Request))) == NULL)
 		fprintf(stderr, "convert_mpi_pvfs2_dtype: "
 			"Failed to allocate PVFS_Request\n");
-	    
-	    ret = PVFS_Request_struct(arr_count, pvfs_arr_len, 
+
+	    ret = PVFS_Request_struct(arr_count, pvfs_arr_len,
 				      pvfs_arr_disp,
 				      old_pvfs_dtype_arr, tmp_pvfs_dtype);
 	    if (ret != 0)
@@ -517,7 +517,7 @@ int convert_mpi_pvfs2_dtype(MPI_Datatype *mpi_dtype,
 		    arr_count++;
 		}
 	    }
-	    
+
 #ifdef DEBUG_DTYPE
 	    fprintf(stderr, "STRUCT(WITHOUT %d LB or UB)(%d,[",
 		    arr_int[0] - arr_count, arr_count);
@@ -528,8 +528,8 @@ int convert_mpi_pvfs2_dtype(MPI_Datatype *mpi_dtype,
 	    fprintf(stderr, "]\n");
 	    fprintf(stderr, "RESIZED(LB = %Ld, EXTENT = %Ld)\n",
 		    pvfs_lb, pvfs_extent);
-#endif 
-	    ret = PVFS_Request_resized(*tmp_pvfs_dtype, 
+#endif
+	    ret = PVFS_Request_resized(*tmp_pvfs_dtype,
 				       pvfs_lb, pvfs_extent, pvfs_dtype);
 	    if (ret != 0)
 		fprintf(stderr, "Error in PVFS_Request_resize\n");
@@ -539,7 +539,7 @@ int convert_mpi_pvfs2_dtype(MPI_Datatype *mpi_dtype,
 	}
 	else /* No MPI_LB or MPI_UB datatypes */
 	{
-	    ret = PVFS_Request_struct(arr_int[0], &arr_int[1], 
+	    ret = PVFS_Request_struct(arr_int[0], &arr_int[1],
 				      pvfs_arr_disp,
 				      old_pvfs_dtype_arr, pvfs_dtype);
 	    if (ret != 0)
@@ -553,14 +553,14 @@ int convert_mpi_pvfs2_dtype(MPI_Datatype *mpi_dtype,
 	    }
 
 #ifdef DEBUG_DTYPE
-	    print_dtype_info(combiner,    
+	    print_dtype_info(combiner,
 			     num_int,
 			     num_addr,
 			     num_dtype,
 			     arr_int,
 			     arr_addr,
 			     arr_dtype);
-#endif 
+#endif
 	}
 
 	ADIOI_Free(arr_int);
@@ -579,9 +579,9 @@ int convert_mpi_pvfs2_dtype(MPI_Datatype *mpi_dtype,
     return -1;
 }
 
-int convert_named(MPI_Datatype *mpi_dtype, 
+int convert_named(MPI_Datatype *mpi_dtype,
 		  PVFS_Request *pvfs_dtype, int combiner)
-{ 
+{
     int ret = -1;
 #ifdef DEBUG_DTYPE
     fprintf(stderr, "NAMED");
@@ -681,7 +681,7 @@ int convert_named(MPI_Datatype *mpi_dtype,
     return ret;
 }
 
-void print_dtype_info(int combiner,    
+void print_dtype_info(int combiner,
 		      int num_int,
 		      int num_addr,
 		      int num_dtype,
@@ -696,7 +696,7 @@ void print_dtype_info(int combiner,
 	    fprintf(stderr, "CONTIG(%d)\n", arr_int[0]);
 	    break;
 	case MPI_COMBINER_VECTOR:
-	    fprintf(stderr, "VECTOR(%d,%d,%d)\n", 
+	    fprintf(stderr, "VECTOR(%d,%d,%d)\n",
 		    arr_int[0], arr_int[1], arr_int[2]);
 	    break;
 	case MPI_COMBINER_HVECTOR:

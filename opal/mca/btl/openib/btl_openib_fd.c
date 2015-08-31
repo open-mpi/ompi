@@ -382,14 +382,14 @@ static void *service_thread_start(void *context)
         if (0 != rc && EAGAIN == errno) {
             continue;
         }
-    
+
         OPAL_OUTPUT((-1, "fd service thread woke up!"));
 
         if (0 > rc) {
             if (EBADF == errno) {
-                /* We are assuming we lost a socket so set rc to 1 so we'll 
-                 * try to read a command off the service pipe to receive a 
-                 * rm command (corresponding to the socket that went away).  
+                /* We are assuming we lost a socket so set rc to 1 so we'll
+                 * try to read a command off the service pipe to receive a
+                 * rm command (corresponding to the socket that went away).
                  * If the EBADF is from the service pipe then the error
 		 * condition will be handled by the service_pipe_cmd().
                  */
@@ -659,7 +659,7 @@ int opal_btl_openib_fd_finalize(void)
         /* For the threaded version, send a command down the pipe */
         cmd_t cmd;
         OPAL_OUTPUT((-1, "shutting down openib fd"));
-        /* Check if the thread exists before asking it to quit */ 
+        /* Check if the thread exists before asking it to quit */
         if (ESRCH != pthread_kill(thread, 0)) {
             memset(&cmd, 0, cmd_size);
             cmd.pc_cmd = CMD_TIME_TO_QUIT;

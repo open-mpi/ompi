@@ -78,7 +78,7 @@ mca_mpool_base_registration_t *vader_get_registation (struct mca_btl_base_endpoi
         }
 
         /* start the new segment from the lower of the two bases */
-        base = (uintptr_t) regs[i]->base < base ? (uintptr_t) regs[i]->base : base;                        
+        base = (uintptr_t) regs[i]->base < base ? (uintptr_t) regs[i]->base : base;
 
         (void)opal_atomic_add (&regs[i]->ref_count, -1);
 

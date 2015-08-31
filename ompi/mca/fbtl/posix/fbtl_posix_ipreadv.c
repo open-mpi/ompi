@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -13,9 +13,9 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -46,13 +46,13 @@ ssize_t mca_fbtl_posix_ipreadv (mca_io_ompio_file_t *fh,
         opal_output (1,"could not allocate memory\n");
         return 0;
     }
-    
+
     data->aio_req_count = fh->f_num_of_io_entries;
     data->aio_open_reqs = fh->f_num_of_io_entries;
     data->aio_req_type  = FBTL_POSIX_READ;
     data->aio_req_chunks = fbtl_posix_max_aio_active_reqs;
     data->aio_total_len = 0;
-    data->aio_reqs = (struct aiocb *) malloc (sizeof(struct aiocb) * 
+    data->aio_reqs = (struct aiocb *) malloc (sizeof(struct aiocb) *
                                               fh->f_num_of_io_entries);
     if (NULL == data->aio_reqs) {
         opal_output(1, "OUT OF MEMORY\n");
@@ -85,7 +85,7 @@ ssize_t mca_fbtl_posix_ipreadv (mca_io_ompio_file_t *fh,
     }
     else {
 	data->aio_last_active_req = data->aio_req_count;
-    }	
+    }
     for (i=0; i < data->aio_last_active_req; i++) {
         if (-1 == aio_read(&data->aio_reqs[i])) {
             opal_output(1, "aio_read() error: %s", strerror(errno));

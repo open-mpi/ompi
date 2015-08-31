@@ -3,9 +3,9 @@
  *                         All rights reserved.
  * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -34,7 +34,7 @@ SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
         shmem_int2_min_to_all_,
         shmem_int2_min_to_all__,
         shmem_int2_min_to_all_f,
-        (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *nreduce, MPI_Fint *PE_start, MPI_Fint * logPE_stride, MPI_Fint *PE_size, FORTRAN_POINTER_T *pWrk, FORTRAN_POINTER_T pSync), 
+        (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *nreduce, MPI_Fint *PE_start, MPI_Fint * logPE_stride, MPI_Fint *PE_size, FORTRAN_POINTER_T *pWrk, FORTRAN_POINTER_T pSync),
         (target,source,nreduce,PE_start,logPE_stride,PE_size,pWrk,pSync) )
 
 SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
@@ -42,7 +42,7 @@ SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
         shmem_int4_min_to_all_,
         shmem_int4_min_to_all__,
         shmem_int4_min_to_all_f,
-        (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *nreduce, MPI_Fint *PE_start, MPI_Fint * logPE_stride, MPI_Fint *PE_size, FORTRAN_POINTER_T *pWrk, FORTRAN_POINTER_T pSync), 
+        (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *nreduce, MPI_Fint *PE_start, MPI_Fint * logPE_stride, MPI_Fint *PE_size, FORTRAN_POINTER_T *pWrk, FORTRAN_POINTER_T pSync),
         (target,source,nreduce,PE_start,logPE_stride,PE_size,pWrk,pSync) )
 
 SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
@@ -50,7 +50,7 @@ SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
         shmem_int8_min_to_all_,
         shmem_int8_min_to_all__,
         shmem_int8_min_to_all_f,
-        (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *nreduce, MPI_Fint *PE_start, MPI_Fint * logPE_stride, MPI_Fint *PE_size, FORTRAN_POINTER_T *pWrk, FORTRAN_POINTER_T pSync), 
+        (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *nreduce, MPI_Fint *PE_start, MPI_Fint * logPE_stride, MPI_Fint *PE_size, FORTRAN_POINTER_T *pWrk, FORTRAN_POINTER_T pSync),
         (target,source,nreduce,PE_start,logPE_stride,PE_size,pWrk,pSync) )
 
 SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
@@ -58,7 +58,7 @@ SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
         shmem_real4_min_to_all_,
         shmem_real4_min_to_all__,
         shmem_real4_min_to_all_f,
-        (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *nreduce, MPI_Fint *PE_start, MPI_Fint * logPE_stride, MPI_Fint *PE_size, FORTRAN_POINTER_T *pWrk, FORTRAN_POINTER_T pSync), 
+        (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *nreduce, MPI_Fint *PE_start, MPI_Fint * logPE_stride, MPI_Fint *PE_size, FORTRAN_POINTER_T *pWrk, FORTRAN_POINTER_T pSync),
         (target,source,nreduce,PE_start,logPE_stride,PE_size,pWrk,pSync) )
 
 SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
@@ -66,7 +66,7 @@ SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
         shmem_real8_min_to_all_,
         shmem_real8_min_to_all__,
         shmem_real8_min_to_all_f,
-        (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *nreduce, MPI_Fint *PE_start, MPI_Fint * logPE_stride, MPI_Fint *PE_size, FORTRAN_POINTER_T *pWrk, FORTRAN_POINTER_T pSync), 
+        (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *nreduce, MPI_Fint *PE_start, MPI_Fint * logPE_stride, MPI_Fint *PE_size, FORTRAN_POINTER_T *pWrk, FORTRAN_POINTER_T pSync),
         (target,source,nreduce,PE_start,logPE_stride,PE_size,pWrk,pSync) )
 
 SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
@@ -74,7 +74,7 @@ SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
         shmem_real16_min_to_all_,
         shmem_real16_min_to_all__,
         shmem_real16_min_to_all_f,
-        (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *nreduce, MPI_Fint *PE_start, MPI_Fint * logPE_stride, MPI_Fint *PE_size, FORTRAN_POINTER_T *pWrk, FORTRAN_POINTER_T pSync), 
+        (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *nreduce, MPI_Fint *PE_start, MPI_Fint * logPE_stride, MPI_Fint *PE_size, FORTRAN_POINTER_T *pWrk, FORTRAN_POINTER_T pSync),
         (target,source,nreduce,PE_start,logPE_stride,PE_size,pWrk,pSync) )
 
 

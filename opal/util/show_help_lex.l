@@ -9,14 +9,14 @@
  * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -77,7 +77,7 @@ CHAR        [A-Za-z0-9_\-\.]
 int opal_show_help_yylex_destroy(void)
 {
     if (NULL != YY_CURRENT_BUFFER) {
-        yy_delete_buffer(YY_CURRENT_BUFFER); 
+        yy_delete_buffer(YY_CURRENT_BUFFER);
 #if defined(YY_CURRENT_BUFFER_LVALUE)
         YY_CURRENT_BUFFER_LVALUE = NULL;
 #else

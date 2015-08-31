@@ -18,9 +18,9 @@ fi
 initfile=$1
 postfile=$2
 
-# 1. Filter OPAL_TRACE entrieas only 
+# 1. Filter OPAL_TRACE entrieas only
 #    and put the timestamp to the first place
-#.2. Sort considering that we dealing with 
+#.2. Sort considering that we dealing with
 #    floating point numbers
 # 3. Return to initial field order and count relative fields
 cat $initfile | \
@@ -33,8 +33,8 @@ awk 'BEGIN { FPAT = "([^ ]+)|(\"[^\"]+\")" }
         print $0
     }
 }' | sort --general-numeric-sort | \
-awk 'BEGIN { 
-    FPAT = "([^ ]+)|(\"[^\"]+\")" 
+awk 'BEGIN {
+    FPAT = "([^ ]+)|(\"[^\"]+\")"
     first = 0
     prev = 0
 }

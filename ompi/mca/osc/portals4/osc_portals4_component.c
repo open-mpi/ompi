@@ -6,9 +6,9 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -291,7 +291,7 @@ component_init(bool enable_progress_threads, bool enable_mpi_threads)
 
     mca_osc_portals4_component.matching_atomic_max = actual.max_atomic_size;
     mca_osc_portals4_component.matching_fetch_atomic_max = actual.max_fetch_atomic_size;
-    mca_osc_portals4_component.matching_atomic_ordered_size = 
+    mca_osc_portals4_component.matching_atomic_ordered_size =
         MAX(actual.max_waw_ordered_size, actual.max_war_ordered_size);
 
     ret = PtlEQAlloc(mca_osc_portals4_component.matching_ni_h,
@@ -341,7 +341,7 @@ component_init(bool enable_progress_threads, bool enable_mpi_threads)
 }
 
 
-static int 
+static int
 component_finalize(void)
 {
     PtlNIFini(mca_osc_portals4_component.matching_ni_h);
@@ -381,7 +381,7 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
     if (NULL == module) return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
 
     /* fill in the function pointer part */
-    memcpy(module, &ompi_osc_portals4_module_template, 
+    memcpy(module, &ompi_osc_portals4_module_template,
            sizeof(ompi_osc_base_module_t));
 
     /* fill in our part */
@@ -406,8 +406,8 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
     /* share everyone's displacement units. Only do an allgather if
        strictly necessary, since it requires O(p) state. */
     tmp = disp_unit;
-    ret = module->comm->c_coll.coll_bcast(&tmp, 1, MPI_INT, 0, 
-                                          module->comm, 
+    ret = module->comm->c_coll.coll_bcast(&tmp, 1, MPI_INT, 0,
+                                          module->comm,
                                           module->comm->c_coll.coll_bcast_module);
     if (OMPI_SUCCESS != ret) {
         opal_output_verbose(1, ompi_osc_base_framework.framework_output,
@@ -442,7 +442,7 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
                             __FILE__, __LINE__, ret);
         goto error;
     }
-    
+
     md.start = 0;
     md.length = PTL_SIZE_MAX;
     md.options = PTL_MD_EVENT_SUCCESS_DISABLE | PTL_MD_EVENT_CT_REPLY | PTL_MD_EVENT_CT_ACK;

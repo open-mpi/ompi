@@ -5,15 +5,15 @@ dnl                         Corporation.  All rights reserved.
 dnl Copyright (c) 2004-2005 The University of Tennessee and The University
 dnl                         of Tennessee Research Foundation.  All rights
 dnl                         reserved.
-dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2014      Intel, Inc. All rights reserved.
 dnl $COPYRIGHT$
-dnl 
+dnl
 dnl Additional copyrights may follow
-dnl 
+dnl
 dnl $HEADER$
 dnl
 
@@ -24,7 +24,7 @@ dnl Otherwise, run action-if-fail.  Neither action-if-success nor
 dnl action-if-fail are required.
 dnl
 dnl No preprocessing is guaranteed to be done on asm-code.  Some
-dnl compilers do not run the preprocessor on assembly files.  
+dnl compilers do not run the preprocessor on assembly files.
 dnl
 dnl On failure, asm-test.s will be included in config.out
 AC_DEFUN([OPAL_TRY_ASSEMBLE],

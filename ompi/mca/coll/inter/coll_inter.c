@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -13,9 +13,9 @@
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -49,19 +49,19 @@ static const mca_coll_base_module_1_0_0_t inter = {
      and will use the functions provided in the basic module */
   mca_coll_inter_allgather_inter,
   mca_coll_inter_allgatherv_inter,
-  mca_coll_inter_allreduce_inter, 
+  mca_coll_inter_allreduce_inter,
   NULL, /* alltoall */
   NULL, /* alltoallv */
   NULL, /* alltoallw */
   NULL, /* barrier */
   mca_coll_inter_bcast_inter,
   NULL,  /* exscan */
-  mca_coll_inter_gather_inter,  
-  mca_coll_inter_gatherv_inter,  
+  mca_coll_inter_gather_inter,
+  mca_coll_inter_gatherv_inter,
   mca_coll_inter_reduce_inter,
   NULL,  /* reduce_scatter */
   NULL,  /* scan */
-  mca_coll_inter_scatter_inter,  
+  mca_coll_inter_scatter_inter,
   mca_coll_inter_scatterv_inter
 };
 #endif
@@ -94,7 +94,7 @@ mca_coll_inter_comm_query(struct ompi_communicator_t *comm, int *priority)
     if (!OMPI_COMM_IS_INTER(comm)) {
         return NULL;
     }
- 
+
     /* Get the priority level attached to this module. If priority is less
      * than or equal to 0, then the module is unavailable. */
     *priority = mca_coll_inter_priority_param;
@@ -104,7 +104,7 @@ mca_coll_inter_comm_query(struct ompi_communicator_t *comm, int *priority)
 
     size = ompi_comm_size(comm);
     rsize = ompi_comm_remote_size(comm);
-    
+
     if ( size < mca_coll_inter_crossover && rsize < mca_coll_inter_crossover) {
 	return NULL;
     }
@@ -133,10 +133,10 @@ mca_coll_inter_comm_query(struct ompi_communicator_t *comm, int *priority)
     inter_module->super.coll_scan       = NULL;
     inter_module->super.coll_scatter    = mca_coll_inter_scatter_inter;
     inter_module->super.coll_scatterv   = mca_coll_inter_scatterv_inter;
- 
+
     return &(inter_module->super);
 }
-    
+
 
 /*
  * Init module on the communicator
@@ -146,15 +146,15 @@ mca_coll_inter_module_enable(mca_coll_base_module_t *module,
                              struct ompi_communicator_t *comm)
 {
     mca_coll_inter_module_t *inter_module = (mca_coll_inter_module_t*) module;
-    
+
     inter_module->inter_comm = comm;
-    
+
 #if 0
     if ( mca_coll_inter_verbose_param ) {
       mca_coll_inter_dump_struct (data);
     }
 #endif
-  
+
     return OMPI_SUCCESS;
 }
 
@@ -166,10 +166,10 @@ static void mca_coll_inter_dump_struct ( struct mca_coll_base_comm_t *c)
 
     rank = ompi_comm_rank ( c->inter_comm );
 
-    printf("%d: Dump of inter-struct for  comm %s cid %u\n", 
+    printf("%d: Dump of inter-struct for  comm %s cid %u\n",
            rank, c->inter_comm->c_name, c->inter_comm->c_contextid);
 
-    
+
     return;
 }
 #endif

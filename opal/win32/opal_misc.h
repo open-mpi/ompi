@@ -64,10 +64,10 @@ static __inline unsigned int sleep(unsigned int seconds) {
     return 0;
 }
 
-/* this function can currently ONLY return the page size. for it to 
+/* this function can currently ONLY return the page size. for it to
    do the entire sysconf range it needs to be extended */
 static __inline size_t sysconf(int option) {
-    
+
     SYSTEM_INFO sys_info;
 
     if( _SC_OPEN_MAX == option ) {
@@ -88,7 +88,7 @@ static __inline size_t sysconf(int option) {
 #define F_SETFL 1
 #define O_NONBLOCK 0
 /*
- * this function is currently defined only for setting the socket to be 
+ * this function is currently defined only for setting the socket to be
  * in the non-blocking mode. Else this function returns error not implemented.
  * This calls ioctlsocket in the winsock library
  */

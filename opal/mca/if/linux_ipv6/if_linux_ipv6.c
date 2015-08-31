@@ -2,9 +2,9 @@
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -155,7 +155,7 @@ static int if_linux_ipv6_open(void)
             } else {
                 intf->if_flags = IFF_UP;
             }
-                
+
             /* copy new interface information to heap and append
                to list */
             opal_list_append(&opal_if_list, &(intf->super));

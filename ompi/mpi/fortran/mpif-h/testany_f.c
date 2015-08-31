@@ -5,15 +5,15 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -83,14 +83,14 @@ void ompi_testany_f(MPI_Fint *count, MPI_Fint *array_of_requests, MPI_Fint *indx
     if (OPAL_UNLIKELY(0 == OMPI_FINT_2_INT(*count))) {
         *flag = OMPI_FORTRAN_VALUE_TRUE;
         *indx = OMPI_INT_2_FINT(MPI_UNDEFINED);
-        MPI_Status_c2f(&ompi_status_empty, status); 
+        MPI_Status_c2f(&ompi_status_empty, status);
         *ierr = OMPI_INT_2_FINT(MPI_SUCCESS);
         return;
     }
 
     c_req = (MPI_Request *) malloc(OMPI_FINT_2_INT(*count) * sizeof(MPI_Request));
     if (c_req == NULL) {
-        c_ierr = OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, 
+        c_ierr = OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD,
                                         MPI_ERR_NO_MEM,
                                         FUNC_NAME);
         if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
@@ -122,7 +122,7 @@ void ompi_testany_f(MPI_Fint *count, MPI_Fint *array_of_requests, MPI_Fint *indx
             ++(*indx);
         }
         if (!OMPI_IS_FORTRAN_STATUS_IGNORE(status)) {
-            MPI_Status_c2f(&c_status, status); 
+            MPI_Status_c2f(&c_status, status);
         }
     }
     free(c_req);

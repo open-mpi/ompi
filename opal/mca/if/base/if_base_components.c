@@ -4,9 +4,9 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  *
  */
@@ -64,7 +64,7 @@ static int opal_if_base_open (mca_base_open_flag_t flags)
         return OPAL_SUCCESS;
     }
     frameopen = true;
-    
+
     /* setup the global list */
     OBJ_CONSTRUCT(&opal_if_list, opal_list_t);
 
@@ -79,7 +79,7 @@ static int opal_if_base_close(void)
     if (!frameopen) {
         return OPAL_SUCCESS;
     }
-    
+
     while (NULL != (item = opal_list_remove_first(&opal_if_list))) {
         OBJ_RELEASE(item);
     }

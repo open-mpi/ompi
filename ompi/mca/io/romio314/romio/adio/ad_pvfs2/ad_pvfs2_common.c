@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
- *   Copyright (C) 2003 University of Chicago. 
+/*
+ *   Copyright (C) 2003 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -37,7 +37,7 @@ void ADIOI_PVFS2_End(int *error_code)
     *error_code = MPI_SUCCESS;
 }
 
-int ADIOI_PVFS2_End_call(MPI_Comm comm, int keyval, 
+int ADIOI_PVFS2_End_call(MPI_Comm comm, int keyval,
 			 void *attribute_val, void *extra_state)
 {
     int error_code;
@@ -77,10 +77,10 @@ void ADIOI_PVFS2_Init(int *error_code )
 
 	return;
     }
-    
+
     MPI_Keyval_create(MPI_NULL_COPY_FN, ADIOI_PVFS2_End_call,
-		      &ADIOI_PVFS2_Initialized, (void *)0); 
-    /* just like romio does, we make a dummy attribute so we 
+		      &ADIOI_PVFS2_Initialized, (void *)0);
+    /* just like romio does, we make a dummy attribute so we
      * get cleaned up */
     MPI_Attr_put(MPI_COMM_SELF, ADIOI_PVFS2_Initialized, (void *)0);
 }
@@ -88,7 +88,7 @@ void ADIOI_PVFS2_Init(int *error_code )
 void ADIOI_PVFS2_makeattribs(PVFS_sys_attr * attribs)
 {
     memset(attribs, 0, sizeof(PVFS_sys_attr));
-    
+
     attribs->owner = geteuid();
     attribs->group = getegid();
     attribs->perms = 0644;
@@ -145,6 +145,6 @@ int ADIOI_PVFS2_error_convert(int pvfs_error)
 
 }
 
-/* 
- * vim: ts=8 sts=4 sw=4 noexpandtab 
+/*
+ * vim: ts=8 sts=4 sw=4 noexpandtab
  */

@@ -5,9 +5,9 @@
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 #include "oshmem_config.h"
@@ -64,7 +64,7 @@ mca_memheap_base_module_t* mca_memheap_ptmalloc_component_init(memheap_context_t
 
 /*
  * This function is automaticaly called from mca_base_components_close.
- * It releases the component's allocated memory. 
+ * It releases the component's allocated memory.
  */
 int mca_memheap_ptmalloc_component_close()
 {

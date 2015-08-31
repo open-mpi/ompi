@@ -5,14 +5,14 @@
  * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -25,8 +25,8 @@
 static void mca_btl_template_proc_construct(mca_btl_template_proc_t* proc);
 static void mca_btl_template_proc_destruct(mca_btl_template_proc_t* proc);
 
-OBJ_CLASS_INSTANCE(mca_btl_template_proc_t, 
-        opal_list_item_t, mca_btl_template_proc_construct, 
+OBJ_CLASS_INSTANCE(mca_btl_template_proc_t,
+        opal_list_item_t, mca_btl_template_proc_construct,
         mca_btl_template_proc_destruct);
 
 void mca_btl_template_proc_construct(mca_btl_template_proc_t* template_proc)
@@ -93,7 +93,7 @@ static mca_btl_template_proc_t* mca_btl_template_proc_lookup_opal(opal_proc_t* o
 /*
  * Create a TEMPLATE process structure. There is a one-to-one correspondence
  * between a opal_proc_t and a mca_btl_template_proc_t instance. We cache
- * additional data (specifically the list of mca_btl_template_endpoint_t instances, 
+ * additional data (specifically the list of mca_btl_template_endpoint_t instances,
  * and published addresses) associated w/ a given destination on this
  * datastructure.
  */
@@ -127,7 +127,7 @@ mca_btl_template_proc_t* mca_btl_template_proc_create(opal_proc_t* opal_proc)
     module_proc->proc_addr_count = 1;
 
     /* XXX: Right now, there can be only 1 peer associated
-     * with a proc. Needs a little bit change in 
+     * with a proc. Needs a little bit change in
      * mca_btl_template_proc_t to allow on demand increasing of
      * number of endpoints for this proc */
 
@@ -144,10 +144,10 @@ mca_btl_template_proc_t* mca_btl_template_proc_create(opal_proc_t* opal_proc)
 
 /*
  * Note that this routine must be called with the lock on the process
- * already held.  Insert a btl instance into the proc array and assign 
+ * already held.  Insert a btl instance into the proc array and assign
  * it an address.
  */
-int mca_btl_template_proc_insert(mca_btl_template_proc_t* module_proc, 
+int mca_btl_template_proc_insert(mca_btl_template_proc_t* module_proc,
         mca_btl_base_endpoint_t* module_endpoint)
 {
     /* insert into endpoint array */

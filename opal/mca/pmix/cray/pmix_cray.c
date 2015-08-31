@@ -429,9 +429,9 @@ static int cray_fence(opal_process_name_t *procs, size_t nprocs)
         cnt = 1;
         while (OPAL_SUCCESS == (rc = opal_dss.unpack(buf, &kp, &cnt, OPAL_VALUE))) {
             opal_output_verbose(20, opal_pmix_base_framework.framework_output,
-                        "%s pmix:cray unpacked kp with key %s type(%d) for id  %s", 
+                        "%s pmix:cray unpacked kp with key %s type(%d) for id  %s",
                          OPAL_NAME_PRINT(OPAL_PROC_MY_NAME), kp->key, kp->type, OPAL_NAME_PRINT(id));
-            if (OPAL_SUCCESS != (rc = opal_dstore.store(opal_dstore_internal, 
+            if (OPAL_SUCCESS != (rc = opal_dstore.store(opal_dstore_internal,
                                                          &id, kp))) {
                 OPAL_ERROR_LOG(rc);
                 goto fn_exit;

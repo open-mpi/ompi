@@ -5,16 +5,16 @@
  * Copyright (c) 2004-2015 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -29,10 +29,10 @@
 #include "ompi/mca/pml/pml.h"
 #include "coll_base_util.h"
 
-int ompi_coll_base_sendrecv_nonzero_actual( void* sendbuf, size_t scount, 
+int ompi_coll_base_sendrecv_nonzero_actual( void* sendbuf, size_t scount,
                                              ompi_datatype_t* sdatatype,
                                              int dest, int stag,
-                                             void* recvbuf, size_t rcount, 
+                                             void* recvbuf, size_t rcount,
                                              ompi_datatype_t* rdatatype,
                                              int source, int rtag,
                                              struct ompi_communicator_t* comm,
@@ -47,7 +47,7 @@ int ompi_coll_base_sendrecv_nonzero_actual( void* sendbuf, size_t scount,
     /* post new irecv */
     ompi_datatype_type_size(rdatatype, &typesize);
     if (0 != rcount && 0 != typesize) {
-        err = MCA_PML_CALL(irecv( recvbuf, rcount, rdatatype, source, rtag, 
+        err = MCA_PML_CALL(irecv( recvbuf, rcount, rdatatype, source, rtag,
                                   comm, req++));
         ++nreqs;
         if (err != MPI_SUCCESS) { line = __LINE__; goto error_handler; }
@@ -56,7 +56,7 @@ int ompi_coll_base_sendrecv_nonzero_actual( void* sendbuf, size_t scount,
     /* send data to children */
     ompi_datatype_type_size(sdatatype, &typesize);
     if (0 != scount && 0 != typesize) {
-        err = MCA_PML_CALL(isend( sendbuf, scount, sdatatype, dest, stag, 
+        err = MCA_PML_CALL(isend( sendbuf, scount, sdatatype, dest, stag,
                                   MCA_PML_BASE_SEND_STANDARD, comm, req++));
         ++nreqs;
         if (err != MPI_SUCCESS) { line = __LINE__; goto error_handler; }

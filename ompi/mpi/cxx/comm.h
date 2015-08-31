@@ -1,21 +1,21 @@
 // -*- c++ -*-
-// 
+//
 // Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
 //                         University Research and Technology
 //                         Corporation.  All rights reserved.
 // Copyright (c) 2004-2005 The University of Tennessee and The University
 //                         of Tennessee Research Foundation.  All rights
 //                         reserved.
-// Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+// Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 //                         University of Stuttgart.  All rights reserved.
 // Copyright (c) 2004-2005 The Regents of the University of California.
 //                         All rights reserved.
 // Copyright (c) 2006-2009 Cisco Systems, Inc.  All rights reserved.
 // Copyright (c) 2011      FUJITSU LIMITED.  All rights reserved.
 // $COPYRIGHT$
-// 
+//
 // Additional copyrights may follow
-// 
+//
 // $HEADER$
 //
 
@@ -31,7 +31,7 @@ public:
   inline Comm_Null() { }
   // copy
   inline Comm_Null(const Comm_Null& data) : pmpi_comm(data.pmpi_comm) { }
-  // inter-language operability  
+  // inter-language operability
   inline Comm_Null(MPI_Comm data) : pmpi_comm(data) { }
 
   inline Comm_Null(const PMPI::Comm_Null& data) : pmpi_comm(data) { }
@@ -40,7 +40,7 @@ public:
   virtual inline ~Comm_Null() { }
 
   inline Comm_Null& operator=(const Comm_Null& data) {
-    pmpi_comm = data.pmpi_comm; 
+    pmpi_comm = data.pmpi_comm;
     return *this;
   }
 
@@ -62,7 +62,7 @@ public:
   inline Comm_Null() : mpi_comm(MPI_COMM_NULL) { }
   // copy
   inline Comm_Null(const Comm_Null& data) : mpi_comm(data.mpi_comm) { }
-  // inter-language operability  
+  // inter-language operability
   inline Comm_Null(MPI_Comm data) : mpi_comm(data) { }
 
   // destruction
@@ -81,7 +81,7 @@ public:
 
 #endif
 
-  
+
 protected:
 
 #if 0 /* OMPI_ENABLE_MPI_PROFILING */
@@ -89,7 +89,7 @@ protected:
 #else
   MPI_Comm mpi_comm;
 #endif
-  
+
 
 };
 
@@ -102,9 +102,9 @@ public:
         __mpi_interface_deprecated__("MPI::Comm::Errhandler_fn was deprecated in MPI-2.2; use MPI::Comm::Errhandler_function instead");
   typedef int Copy_attr_function(const Comm& oldcomm, int comm_keyval,
 				 void* extra_state, void* attribute_val_in,
-				 void* attribute_val_out, 
+				 void* attribute_val_out,
 				 bool& flag);
-  typedef int Delete_attr_function(Comm& comm, int comm_keyval, 
+  typedef int Delete_attr_function(Comm& comm, int comm_keyval,
 				   void* attribute_val,
 				   void* extra_state);
 #if !0 /* OMPI_ENABLE_MPI_PROFILING */
@@ -120,7 +120,7 @@ public:
   Comm(const Comm_Null& data);
 
 #if 0 /* OMPI_ENABLE_MPI_PROFILING */
-  Comm(const Comm& data) : 
+  Comm(const Comm& data) :
     Comm_Null(data),
     pmpi_comm((const PMPI::Comm&) data) { }
 
@@ -136,13 +136,13 @@ public:
   // assignment
   Comm& operator=(const Comm& data) {
     this->Comm_Null::operator=(data);
-    pmpi_comm = data.pmpi_comm; 
+    pmpi_comm = data.pmpi_comm;
     return *this;
   }
   Comm& operator=(const Comm_Null& data) {
     this->Comm_Null::operator=(data);
     MPI_Comm tmp = data;
-    pmpi_comm = tmp; 
+    pmpi_comm = tmp;
     return *this;
   }
   // inter-language operability
@@ -163,7 +163,7 @@ public:
   // Point-to-Point
   //
 
-  virtual void Send(const void *buf, int count, 
+  virtual void Send(const void *buf, int count,
 		    const Datatype & datatype, int dest, int tag) const;
 
   virtual void Recv(void *buf, int count, const Datatype & datatype,
@@ -172,25 +172,25 @@ public:
 
   virtual void Recv(void *buf, int count, const Datatype & datatype,
 		    int source, int tag) const;
-  
+
   virtual void Bsend(const void *buf, int count,
 		     const Datatype & datatype, int dest, int tag) const;
-  
-  virtual void Ssend(const void *buf, int count, 
+
+  virtual void Ssend(const void *buf, int count,
 		     const Datatype & datatype, int dest, int tag) const ;
 
   virtual void Rsend(const void *buf, int count,
 		     const Datatype & datatype, int dest, int tag) const;
-  
+
   virtual Request Isend(const void *buf, int count,
 			const Datatype & datatype, int dest, int tag) const;
-  
+
   virtual Request Ibsend(const void *buf, int count, const
 			 Datatype & datatype, int dest, int tag) const;
-  
+
   virtual Request Issend(const void *buf, int count,
 			 const Datatype & datatype, int dest, int tag) const;
-  
+
   virtual Request Irsend(const void *buf, int count,
 			 const Datatype & datatype, int dest, int tag) const;
 
@@ -202,67 +202,67 @@ public:
   virtual bool Iprobe(int source, int tag) const;
 
   virtual void Probe(int source, int tag, Status & status) const;
-  
+
   virtual void Probe(int source, int tag) const;
-  
+
   virtual Prequest Send_init(const void *buf, int count,
-			     const Datatype & datatype, int dest, 
+			     const Datatype & datatype, int dest,
 			     int tag) const;
-  
+
   virtual Prequest Bsend_init(const void *buf, int count,
-			      const Datatype & datatype, int dest, 
+			      const Datatype & datatype, int dest,
 			      int tag) const;
-  
+
   virtual Prequest Ssend_init(const void *buf, int count,
-			      const Datatype & datatype, int dest, 
+			      const Datatype & datatype, int dest,
 			      int tag) const;
-  
+
   virtual Prequest Rsend_init(const void *buf, int count,
-			      const Datatype & datatype, int dest, 
+			      const Datatype & datatype, int dest,
 			      int tag) const;
-  
+
   virtual Prequest Recv_init(void *buf, int count,
-			     const Datatype & datatype, int source, 
+			     const Datatype & datatype, int source,
 			     int tag) const;
-  
+
   virtual void Sendrecv(const void *sendbuf, int sendcount,
-			const Datatype & sendtype, int dest, int sendtag, 
-			void *recvbuf, int recvcount, 
+			const Datatype & sendtype, int dest, int sendtag,
+			void *recvbuf, int recvcount,
 			const Datatype & recvtype, int source,
 			int recvtag, Status & status) const;
-  
+
   virtual void Sendrecv(const void *sendbuf, int sendcount,
-			const Datatype & sendtype, int dest, int sendtag, 
-			void *recvbuf, int recvcount, 
+			const Datatype & sendtype, int dest, int sendtag,
+			void *recvbuf, int recvcount,
 			const Datatype & recvtype, int source,
 			int recvtag) const;
 
   virtual void Sendrecv_replace(void *buf, int count,
-				const Datatype & datatype, int dest, 
+				const Datatype & datatype, int dest,
 				int sendtag, int source,
 				int recvtag, Status & status) const;
 
   virtual void Sendrecv_replace(void *buf, int count,
-				const Datatype & datatype, int dest, 
+				const Datatype & datatype, int dest,
 				int sendtag, int source,
 				int recvtag) const;
-  
+
   //
   // Groups, Contexts, and Communicators
   //
 
   virtual Group Get_group() const;
-  
+
   virtual int Get_size() const;
 
   virtual int Get_rank() const;
-  
+
   static int Compare(const Comm & comm1, const Comm & comm2);
-  
+
   virtual Comm& Clone() const = 0;
 
   virtual void Free(void);
-  
+
   virtual bool Is_inter() const;
 
 
@@ -278,105 +278,105 @@ public:
   Barrier() const;
 
   virtual void
-  Bcast(void *buffer, int count, 
+  Bcast(void *buffer, int count,
 	const Datatype& datatype, int root) const;
-  
+
   virtual void
-  Gather(const void *sendbuf, int sendcount, 
-	 const Datatype & sendtype, 
-	 void *recvbuf, int recvcount, 
+  Gather(const void *sendbuf, int sendcount,
+	 const Datatype & sendtype,
+	 void *recvbuf, int recvcount,
 	 const Datatype & recvtype, int root) const;
-  
+
   virtual void
-  Gatherv(const void *sendbuf, int sendcount, 
-	  const Datatype & sendtype, void *recvbuf, 
-	  const int recvcounts[], const int displs[], 
+  Gatherv(const void *sendbuf, int sendcount,
+	  const Datatype & sendtype, void *recvbuf,
+	  const int recvcounts[], const int displs[],
 	  const Datatype & recvtype, int root) const;
-  
+
   virtual void
-  Scatter(const void *sendbuf, int sendcount, 
-	  const Datatype & sendtype, 
-	  void *recvbuf, int recvcount, 
+  Scatter(const void *sendbuf, int sendcount,
+	  const Datatype & sendtype,
+	  void *recvbuf, int recvcount,
 	  const Datatype & recvtype, int root) const;
-  
+
   virtual void
-  Scatterv(const void *sendbuf, const int sendcounts[], 
+  Scatterv(const void *sendbuf, const int sendcounts[],
 	   const int displs[], const Datatype & sendtype,
-	   void *recvbuf, int recvcount, 
+	   void *recvbuf, int recvcount,
 	   const Datatype & recvtype, int root) const;
-  
+
   virtual void
-  Allgather(const void *sendbuf, int sendcount, 
-	    const Datatype & sendtype, void *recvbuf, 
+  Allgather(const void *sendbuf, int sendcount,
+	    const Datatype & sendtype, void *recvbuf,
 	    int recvcount, const Datatype & recvtype) const;
-  
+
   virtual void
-  Allgatherv(const void *sendbuf, int sendcount, 
-	     const Datatype & sendtype, void *recvbuf, 
+  Allgatherv(const void *sendbuf, int sendcount,
+	     const Datatype & sendtype, void *recvbuf,
 	     const int recvcounts[], const int displs[],
 	     const Datatype & recvtype) const;
-  
+
   virtual void
-  Alltoall(const void *sendbuf, int sendcount, 
-	   const Datatype & sendtype, void *recvbuf, 
+  Alltoall(const void *sendbuf, int sendcount,
+	   const Datatype & sendtype, void *recvbuf,
 	   int recvcount, const Datatype & recvtype) const;
-  
+
   virtual void
-  Alltoallv(const void *sendbuf, const int sendcounts[], 
-	    const int sdispls[], const Datatype & sendtype, 
-	    void *recvbuf, const int recvcounts[], 
+  Alltoallv(const void *sendbuf, const int sendcounts[],
+	    const int sdispls[], const Datatype & sendtype,
+	    void *recvbuf, const int recvcounts[],
 	    const int rdispls[], const Datatype & recvtype) const;
-  
+
   virtual void
   Alltoallw(const void *sendbuf, const int sendcounts[],
             const int sdispls[], const Datatype sendtypes[],
             void *recvbuf, const int recvcounts[],
             const int rdispls[], const Datatype recvtypes[]) const;
-  
+
   virtual void
-  Reduce(const void *sendbuf, void *recvbuf, int count, 
-	 const Datatype & datatype, const Op & op, 
+  Reduce(const void *sendbuf, void *recvbuf, int count,
+	 const Datatype & datatype, const Op & op,
 	 int root) const;
-  
-  
+
+
   virtual void
   Allreduce(const void *sendbuf, void *recvbuf, int count,
 	    const Datatype & datatype, const Op & op) const;
-  
+
   virtual void
-  Reduce_scatter(const void *sendbuf, void *recvbuf, 
-		 int recvcounts[], 
-		 const Datatype & datatype, 
+  Reduce_scatter(const void *sendbuf, void *recvbuf,
+		 int recvcounts[],
+		 const Datatype & datatype,
 		 const Op & op) const;
 
-  // 
+  //
   // Process Creation
   //
 
   virtual void Disconnect();
 
   static Intercomm Get_parent();
-  
+
   static Intercomm Join(const int fd);
 
   //
   // External Interfaces
   //
-  
+
   virtual void Get_name(char * comm_name, int& resultlen) const;
 
   virtual void Set_name(const char* comm_name);
-  
+
   //
   // Process Topologies
   //
-  
+
   virtual int Get_topology() const;
-  
+
   //
   // Environmental Inquiry
   //
-  
+
   virtual void Abort(int errorcode);
 
   //
@@ -411,7 +411,7 @@ public:
                            Delete_attr_function* comm_delete_attr_fn,
                            void* extra_state);
 
-protected:  
+protected:
   static int do_create_keyval(MPI_Comm_copy_attr_function* c_copy_fn,
                               MPI_Comm_delete_attr_function* c_delete_fn,
                               Copy_attr_function* cxx_copy_fn,
@@ -425,17 +425,17 @@ public:
   virtual void Set_attr(int comm_keyval, const void* attribute_val) const;
 
   virtual bool Get_attr(int comm_keyval, void* attribute_val) const;
-  
+
   virtual void Delete_attr(int comm_keyval);
 
   static int NULL_COPY_FN(const Comm& oldcomm, int comm_keyval,
 			  void* extra_state, void* attribute_val_in,
 			  void* attribute_val_out, bool& flag);
-  
+
   static int DUP_FN(const Comm& oldcomm, int comm_keyval,
 		    void* extra_state, void* attribute_val_in,
 		    void* attribute_val_out, bool& flag);
-  
+
   static int NULL_DELETE_FN(Comm& comm, int comm_keyval, void* attribute_val,
 			    void* extra_state);
 

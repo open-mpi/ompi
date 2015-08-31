@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
- *   Copyright (C) 1997 University of Chicago. 
+/*
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -111,12 +111,12 @@
    from the compiler */
 #if defined(ROMIO_HAVE_STRUCT_STATVFS_WITH_F_BASETYPE) || \
     defined(HAVE_STRUCT_STATFS) || \
-    defined(ROMIO_HAVE_STRUCT_STAT_WITH_ST_FSTYPE) 
+    defined(ROMIO_HAVE_STRUCT_STAT_WITH_ST_FSTYPE)
 #ifndef ROMIO_NTFS
 #define ROMIO_NEEDS_ADIOPARENTDIR
 static void ADIO_FileSysType_parentdir(const char *filename, char **dirnamep);
 #endif
-#endif 
+#endif
 static void ADIO_FileSysType_prefix(const char *filename, int *fstype,
 				    int *error_code);
 static void ADIO_FileSysType_fncall(const char *filename, int *fstype,
@@ -141,13 +141,13 @@ Output Parameters:
    here.  We assume that S_ISLNK is *always* defined as a macro.  If
    that is not universally true, then add a test to the romio
    configure that trys to link a program that references S_ISLNK */
-#if !defined(S_ISLNK) 
+#if !defined(S_ISLNK)
 #    if defined(S_IFLNK)
      /* Check for the link bit */
 #    define S_ISLNK(mode) ((mode) & S_IFLNK)
 #    else
      /* no way to check if it is a link, so say false */
-#    define S_ISLNK(mode) 0   
+#    define S_ISLNK(mode) 0
 #    endif
 #endif /* !(S_ISLNK) */
 
@@ -161,7 +161,7 @@ static void ADIO_FileSysType_parentdir(const char *filename, char **dirnamep)
     int err;
     char *dir = NULL, *slash;
     struct stat statbuf;
-    
+
     err = lstat(filename, &statbuf);
 
     if (err || (!S_ISLNK(statbuf.st_mode))) {
@@ -221,8 +221,8 @@ Output Parameters:
 
  MPI_SUCCESS is stored in the location pointed to by error_code on success.
 
- This function is used by MPI_File_open() and MPI_File_delete() to determine 
- file system type.  Most other functions use the type which is stored when the 
+ This function is used by MPI_File_open() and MPI_File_delete() to determine
+ file system type.  Most other functions use the type which is stored when the
  file is opened.
  */
 static void ADIO_FileSysType_fncall(const char *filename, int *fstype, int *error_code)
@@ -444,7 +444,7 @@ static void ADIO_FileSysType_fncall(const char *filename, int *fstype, int *erro
 	    if(*error_code != MPI_SUCCESS) return;
 	}
     }
-    
+
     if (err) {
     	/* --BEGIN ERROR HANDLING-- */
     	*error_code = MPIO_Err_create_code(MPI_SUCCESS, MPIR_ERR_RECOVERABLE,
@@ -499,7 +499,7 @@ static void ADIO_FileSysType_fncall_scalable(MPI_Comm comm, const char *filename
 
 
 /*
-  ADIO_FileSysType_prefix - determines file system type for a file using 
+  ADIO_FileSysType_prefix - determines file system type for a file using
   a prefix on the file name.  upper layer should have already determined
   that a prefix is present.
 
@@ -552,18 +552,18 @@ static void ADIO_FileSysType_prefix(const char *filename, int *fstype, int *erro
     else if (!strncmp(filename, "zoidfs:", 7)||
 		    !strncmp(filename, "ZOIDFS:", 7)) {
 	    *fstype = ADIO_ZOIDFS;
-    } 
-    else if (!strncmp(filename, "testfs:", 7) 
+    }
+    else if (!strncmp(filename, "testfs:", 7)
 	     || !strncmp(filename, "TESTFS:", 7))
     {
 	*fstype = ADIO_TESTFS;
     }
-    else if (!strncmp(filename, "ftp:", 4) 
+    else if (!strncmp(filename, "ftp:", 4)
 		    || !strncmp(filename, "gsiftp:", 7))
     {
 	*fstype = ADIO_GRIDFTP;
     }
-    else if (!strncmp(filename, "lustre:", 7) 
+    else if (!strncmp(filename, "lustre:", 7)
 	     || !strncmp(filename, "LUSTRE:", 7))
     {
 	*fstype = ADIO_LUSTRE;
@@ -599,7 +599,7 @@ Output Parameters:
 . error_code - (pointer to) int holding error code
 
 Notes:
-This code used to be in MPI_File_open(), but it has been moved into here in 
+This code used to be in MPI_File_open(), but it has been moved into here in
 order to clean things up.  The goal is to separate all this "did we compile
 for this fs type" code from the MPI layer and also to introduce the ADIOI_Fns
 tables in a reasonable way. -- Rob, 06/06/2001
@@ -625,13 +625,13 @@ void ADIO_ResolveFileType(MPI_Comm comm, const char *filename, int *fstype,
 	/* Optimization: we can reduce the 'storm of stats' that result from
 	 * thousands of mpi processes determinig file type this way.  Let us
 	 * have just one process stat the file and broadcast the result to
-	 * everyone else.  
+	 * everyone else.
 	 * - Note that we will not catch cases like
 	 * http://www.mcs.anl.gov/web-mail-archive/lists/mpich-discuss/2007/08/msg00042.html
 	 * (edit: now http://lists.mcs.anl.gov/pipermail/mpich-discuss/2007-August/002648.html)
 	 *
 	 * where file systems are not mounted or available on other processes,
-	 * but we'll catch those a few functions later in ADIO_Open 
+	 * but we'll catch those a few functions later in ADIO_Open
 	 * - Note that if we have NFS enabled, we might have a situation where,
 	 *   for example, /home/user/data.out is UFS on one process but NFS on
 	 *   others, so we won't perform this optimization if NFS is enabled.
@@ -674,7 +674,7 @@ void ADIO_ResolveFileType(MPI_Comm comm, const char *filename, int *fstype,
 	}
     }
     else {
-	/* prefix specified; just match via prefix and assume everyone got 
+	/* prefix specified; just match via prefix and assume everyone got
 	 * the same thing.
 	 *
 	 * perhaps we should have this code go through the allreduce as well?
@@ -846,7 +846,7 @@ void ADIO_ResolveFileType(MPI_Comm comm, const char *filename, int *fstype,
 #endif
     }
     if (file_system == ADIO_LUSTRE) {
-#ifndef ROMIO_LUSTRE 
+#ifndef ROMIO_LUSTRE
 	*error_code = MPIO_Err_create_code(MPI_SUCCESS, MPIR_ERR_RECOVERABLE, myname, __LINE__, MPI_ERR_IO, "**iofstypeunsupported", 0);
 	return;
 #else
@@ -867,6 +867,6 @@ void ADIO_ResolveFileType(MPI_Comm comm, const char *filename, int *fstype,
     *fstype = file_system;
     return;
 }
-/* 
- * vim: ts=8 sts=4 sw=4 noexpandtab 
+/*
+ * vim: ts=8 sts=4 sw=4 noexpandtab
  */

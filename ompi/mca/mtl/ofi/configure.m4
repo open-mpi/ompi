@@ -25,7 +25,7 @@ AC_DEFUN([MCA_ompi_mtl_ofi_CONFIG],[
 
     # ensure we already ran the common libfabric config
     AC_REQUIRE([MCA_opal_common_libfabric_CONFIG])
-    
+
     AS_IF([test "$opal_common_libfabric_happy" = "yes"],
           [$1],
           [$2])

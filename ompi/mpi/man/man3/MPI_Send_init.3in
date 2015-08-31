@@ -24,14 +24,14 @@ MPI_SEND_INIT(\fIBUF, COUNT, DATATYPE, DEST, TAG, COMM, REQUEST,
 		IERROR\fP)
 	<type>	\fIBUF\fP(*)
 	INTEGER	\fIREQUEST, COUNT, DATATYPE, DEST, TAG\fP
-	INTEGER	\fICOMM, REQUEST, IERROR\fP 
+	INTEGER	\fICOMM, REQUEST, IERROR\fP
 
 .fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>
-Prequest Comm::Send_init(const void* \fIbuf\fP, int \fIcount\fP, const 
-	Datatype& \fIdatatype\fP, int \fIdest\fP, int \fItag\fP) const 
+Prequest Comm::Send_init(const void* \fIbuf\fP, int \fIcount\fP, const
+	Datatype& \fIdatatype\fP, int \fIdest\fP, int \fItag\fP) const
 
 .fi
 .SH INPUT PARAMETERS
@@ -63,19 +63,19 @@ Communication request (handle).
 .ft R
 .TP 1i
 IERROR
-Fortran only: Error status (integer). 
+Fortran only: Error status (integer).
 
 .SH DESCRIPTION
 .ft R
-Creates a persistent communication request for a standard mode send operation, and binds to it all the arguments of a send operation. 
+Creates a persistent communication request for a standard mode send operation, and binds to it all the arguments of a send operation.
 .sp
-A communication (send or receive) that uses a persistent request is initiated by the function MPI_Start or MPI_Startall. 
+A communication (send or receive) that uses a persistent request is initiated by the function MPI_Start or MPI_Startall.
 
 .SH ERRORS
 Almost all MPI routines return an error value; C routines as the value of the function and Fortran routines in the last argument. C++ functions do not return errors. If the default error handler is set to MPI::ERRORS_THROW_EXCEPTIONS, then on error the C++ exception mechanism will be used to throw an MPI::Exception object.
 .sp
 Before the error value is returned, the current MPI error handler is
-called. By default, this error handler aborts the MPI job, except for I/O function errors. The error handler may be changed with MPI_Comm_set_errhandler; the predefined error handler MPI_ERRORS_RETURN may be used to cause error values to be returned. Note that MPI does not guarantee that an MPI program can continue past an error.  
+called. By default, this error handler aborts the MPI job, except for I/O function errors. The error handler may be changed with MPI_Comm_set_errhandler; the predefined error handler MPI_ERRORS_RETURN may be used to cause error values to be returned. Note that MPI does not guarantee that an MPI program can continue past an error.
 
 .SH SEE ALSO
 .ft R

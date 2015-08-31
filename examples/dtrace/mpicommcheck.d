@@ -2,9 +2,9 @@
  * Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
  *                         Use is subject to license terms.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -45,6 +45,6 @@ END
 {
     printf("Communicator Allocations = %d, Communicator Deallocations = %d\n",
 	allocations, deallocations);
-}    
+}
 
 

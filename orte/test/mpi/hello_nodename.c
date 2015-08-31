@@ -39,7 +39,7 @@ int main(int argc, char* argv[])
     } else {
         asprintf(&unistr, "%d", *(int*)univ_size);
     }
-    
+
     gethostname(hostname, 512);
     printf("Hello, World, I am %d of %d on host %s from app number %s universe size %s universe envar %s\n",
            rank, size, hostname, appstr, unistr, (NULL == envar) ? "NULL" : envar);

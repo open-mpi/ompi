@@ -6,16 +6,16 @@
  * Copyright (c) 2004-2009 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 /**
@@ -32,7 +32,7 @@
 #include "opal/mca/event/event.h"
 #include "opal/mca/btl/btl.h"
 #include "opal/mca/btl/base/base.h"
-#include "opal/mca/mpool/mpool.h" 
+#include "opal/mca/mpool/mpool.h"
 
 BEGIN_C_DECLS
 
@@ -44,7 +44,7 @@ BEGIN_C_DECLS
 
 struct mca_btl_template_component_t {
     mca_btl_base_component_3_0_0_t          super;  /**< base BTL component */
-    
+
     uint32_t                                template_num_btls;
     /**< number of hcas available to the TEMPLATE component */
 
@@ -66,12 +66,12 @@ struct mca_btl_template_component_t {
     opal_mutex_t template_lock;
     /**< lock for accessing module state */
 
-    char* template_mpool_name; 
-    /**< name of memory pool */ 
+    char* template_mpool_name;
+    /**< name of memory pool */
 
     bool leave_pinned;
     /**< pin memory on first use and leave pinned */
-}; 
+};
 typedef struct mca_btl_template_component_t mca_btl_template_component_t;
 
 OPAL_MODULE_DECLSPEC extern mca_btl_template_component_t mca_btl_template_component;
@@ -93,20 +93,20 @@ struct mca_btl_template_module_t {
 #if MCA_BTL_HAS_MPOOL
     struct mca_mpool_base_module_t* template_mpool;
 #endif
-}; 
+};
 typedef struct mca_btl_template_module_t mca_btl_template_module_t;
 extern mca_btl_template_module_t mca_btl_template_module;
 
 
 /**
  * TEMPLATE component initialization.
- * 
+ *
  * @param num_btl_modules (OUT)           Number of BTLs returned in BTL array.
  * @param allow_multi_user_threads (OUT)  Flag indicating wether BTL supports user threads (TRUE)
  * @param have_hidden_threads (OUT)       Flag indicating wether BTL uses threads (TRUE)
  */
 extern mca_btl_base_module_t** mca_btl_template_component_init(
-    int *num_btl_modules, 
+    int *num_btl_modules,
     bool allow_multi_user_threads,
     bool have_hidden_threads
 );
@@ -121,7 +121,7 @@ extern int mca_btl_template_component_progress(void);
 
 /**
  * Cleanup any resources held by the BTL.
- * 
+ *
  * @param btl  BTL instance.
  * @return     OPAL_SUCCESS or error status on failure.
  */
@@ -133,14 +133,14 @@ extern int mca_btl_template_finalize(
 
 /**
  * PML->BTL notification of change in the process list.
- * 
+ *
  * @param btl (IN)
  * @param nprocs (IN)     Number of processes
  * @param procs (IN)      Set of processes
  * @param peers (OUT)     Set of (optional) peer addressing info.
  * @param peers (IN/OUT)  Set of processes that are reachable via this BTL.
  * @return     OPAL_SUCCESS or error status on failure.
- * 
+ *
  */
 
 extern int mca_btl_template_add_procs(
@@ -182,7 +182,7 @@ extern int mca_btl_template_del_procs(
 extern int mca_btl_template_send(
     struct mca_btl_base_module_t* btl,
     struct mca_btl_base_endpoint_t* btl_peer,
-    struct mca_btl_base_descriptor_t* descriptor, 
+    struct mca_btl_base_descriptor_t* descriptor,
     mca_btl_base_tag_t tag
 );
 
@@ -308,11 +308,11 @@ int mca_btl_template_deregister_mem (struct mca_btl_base_module_t* btl,
  */
 
 extern int mca_btl_template_register(
-    struct mca_btl_base_module_t* btl, 
-    mca_btl_base_tag_t tag, 
-    mca_btl_base_module_recv_cb_fn_t cbfunc, 
-    void* cbdata); 
-    
+    struct mca_btl_base_module_t* btl,
+    mca_btl_base_tag_t tag,
+    mca_btl_base_module_recv_cb_fn_t cbfunc,
+    void* cbdata);
+
 /**
  * Allocate a descriptor with a segment of the requested size.
  * Note that the BTL layer may choose to return a smaller size
@@ -327,7 +327,7 @@ extern mca_btl_base_descriptor_t* mca_btl_template_alloc(
     struct mca_btl_base_endpoint_t* endpoint,
     uint8_t order,
     size_t size,
-    uint32_t flags); 
+    uint32_t flags);
 
 
 /**
@@ -338,9 +338,9 @@ extern mca_btl_base_descriptor_t* mca_btl_template_alloc(
  */
 
 extern int mca_btl_template_free(
-    struct mca_btl_base_module_t* btl, 
-    mca_btl_base_descriptor_t* des); 
-    
+    struct mca_btl_base_module_t* btl,
+    mca_btl_base_descriptor_t* des);
+
 
 /**
  * Prepare a descriptor for send/rdma using the supplied
@@ -353,7 +353,7 @@ extern int mca_btl_template_free(
  * @param endpoint (IN)     BTL peer addressing
  * @param convertor (IN)    Data type convertor
  * @param reserve (IN)      Additional bytes requested by upper layer to precede user data
- * @param size (IN/OUT)     Number of bytes to prepare (IN), number of bytes actually prepared (OUT) 
+ * @param size (IN/OUT)     Number of bytes to prepare (IN), number of bytes actually prepared (OUT)
 */
 
 mca_btl_base_descriptor_t* mca_btl_template_prepare_src(

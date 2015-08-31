@@ -6,20 +6,20 @@
  * Copyright (c) 2004-2010 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
- *                         reserved. 
+ *                         reserved.
  * Copyright (c) 2007-2008 UT-Battelle, LLC
  * Copyright (c) 2007-2009 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 /**
@@ -243,7 +243,7 @@ struct ompi_op_base_module_1_0_0_t;
 typedef struct ompi_op_base_module_1_0_0_t ompi_op_base_module_t;
 
 /**
- * Typedef for 2-buffer op functions.  
+ * Typedef for 2-buffer op functions.
  *
  * We don't use MPI_User_function because this would create a
  * confusing dependency loop between this file and mpi.h.  So this is
@@ -305,7 +305,7 @@ typedef int (*ompi_op_base_component_init_query_fn_t)
  * not wish to run or return an error during module_enable().
  *
  * @param[in] op          The MPI_Op being created
- * @param[out] priority   Priority setting for component on 
+ * @param[out] priority   Priority setting for component on
  *                        this op
  *
  * @returns An initialized module structure if the component can
@@ -385,7 +385,7 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_op_base_module_1_0_0_t);
 /**
  * Struct that is used in op.h to hold all the function pointers and
  * pointers to the corresopnding modules (so that we can properly
- * RETAIN/RELEASE them) 
+ * RETAIN/RELEASE them)
  */
 typedef struct ompi_op_base_op_fns_1_0_0_t {
     ompi_op_base_handler_fn_1_0_0_t fns[OMPI_OP_BASE_TYPE_MAX];
@@ -397,7 +397,7 @@ typedef ompi_op_base_op_fns_1_0_0_t ompi_op_base_op_fns_t;
 /**
  * Struct that is used in op.h to hold all the function pointers and
  * pointers to the corresopnding modules (so that we can properly
- * RETAIN/RELEASE them) 
+ * RETAIN/RELEASE them)
  */
 typedef struct ompi_op_base_op_3buff_fns_1_0_0_t {
     ompi_op_base_3buff_handler_fn_1_0_0_t fns[OMPI_OP_BASE_TYPE_MAX];

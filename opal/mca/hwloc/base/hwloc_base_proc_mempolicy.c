@@ -1,9 +1,9 @@
 /*
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -42,21 +42,21 @@ int opal_hwloc_base_set_process_membind_policy(void)
         policy = HWLOC_MEMBIND_BIND;
         flags = HWLOC_MEMBIND_STRICT;
         break;
-        
+
     case OPAL_HWLOC_BASE_MAP_NONE:
     default:
         policy = HWLOC_MEMBIND_DEFAULT;
         flags = 0;
         break;
     }
-    
+
     cpuset = hwloc_bitmap_alloc();
     if (NULL == cpuset) {
         rc = OPAL_ERR_OUT_OF_RESOURCE;
     } else {
         int e;
         hwloc_get_cpubind(opal_hwloc_topology, cpuset, 0);
-        rc = hwloc_set_membind(opal_hwloc_topology, 
+        rc = hwloc_set_membind(opal_hwloc_topology,
                                cpuset, policy, flags);
         e = errno;
         hwloc_bitmap_free(cpuset);
@@ -69,6 +69,6 @@ int opal_hwloc_base_set_process_membind_policy(void)
             rc = 0;
         }
     }
-    
+
     return (0 == rc) ? OPAL_SUCCESS : OPAL_ERROR;
 }

@@ -1,9 +1,9 @@
 /*
  * Copyright (c) 2011      Sandia National Laboratories.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -26,7 +26,7 @@ request_cancel(struct ompi_request_t *request, int complete)
 static int
 request_free(struct ompi_request_t **ompi_req)
 {
-    ompi_osc_portals4_request_t *request = 
+    ompi_osc_portals4_request_t *request =
         (ompi_osc_portals4_request_t*) *ompi_req;
 
     if (true != request->super.req_complete) {

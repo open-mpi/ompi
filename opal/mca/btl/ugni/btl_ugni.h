@@ -194,7 +194,7 @@ int mca_btl_ugni_module_init (mca_btl_ugni_module_t *ugni_module,
                               opal_common_ugni_device_t *device);
 
 /**
- * BML->BTL notification of change in the process list. 
+ * BML->BTL notification of change in the process list.
  *
  * location: btl_ugni_add_procs.c
  *
@@ -246,7 +246,7 @@ mca_btl_ugni_send (struct mca_btl_base_module_t *btl,
                    mca_btl_base_tag_t tag);
 
 /**
- * Initiate an immediate blocking send. 
+ * Initiate an immediate blocking send.
  *
  * location: btl_ugni_sendi.c
  *
@@ -313,7 +313,7 @@ typedef struct mca_btl_ugni_reg_t {
     mca_btl_base_registration_handle_t handle;
 } mca_btl_ugni_reg_t;
 
-/* Global structures */ 
+/* Global structures */
 
 OPAL_MODULE_DECLSPEC extern mca_btl_ugni_component_t mca_btl_ugni_component;
 OPAL_MODULE_DECLSPEC extern mca_btl_ugni_module_t mca_btl_ugni_module;

@@ -4,9 +4,9 @@
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 /** @file:
@@ -15,7 +15,7 @@
  *
  * Multi-select framework so that multiple personalities can be
  * simultaneously supported
- * 
+ *
  */
 
 #ifndef ORTE_MCA_SCHIZO_H
@@ -72,7 +72,7 @@ ORTE_DECLSPEC extern orte_schizo_base_module_t orte_schizo;
 /*
  * schizo component
  */
- 
+
 /**
  * schizo component version 1.3.0
  */

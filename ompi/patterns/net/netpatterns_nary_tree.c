@@ -88,7 +88,7 @@ int netpatterns_setup_narray_tree(int tree_order, int my_rank, int num_nodes,
         /* tree_order consecutive ranks have the same parent */
         my_node->parent_rank=cum_cnt-cnt/tree_order+my_rank_in_my_level/tree_order;
     }
-    
+
     /* figure out number of levels in the tree */
     n_lvls_in_tree=0;
     result=num_nodes;
@@ -138,7 +138,7 @@ int netpatterns_setup_narray_tree(int tree_order, int my_rank, int num_nodes,
             for (lvl= start_index ; lvl <= end_index ; lvl++ ) {
                 my_node->children_ranks[lvl-start_index]=lvl;
             }
-        } 
+        }
     }
     /* set node type */
     if( 0 == my_node->n_parents ) {
@@ -226,13 +226,13 @@ int netpatterns_setup_narray_knomial_tree(
             cnt*=tree_order;
         }
 
-        my_node->rank_on_level = 
-            my_rank_in_my_level = 
+        my_node->rank_on_level =
+            my_rank_in_my_level =
             my_rank-cum_cnt;
         my_node->level_size = cnt;
 
         rc = netpatterns_setup_recursive_knomial_tree_node(
-                my_node->level_size, my_node->rank_on_level, 
+                my_node->level_size, my_node->rank_on_level,
                 tree_order, &my_node->k_node);
         if (OMPI_SUCCESS != rc) {
             goto Error;
@@ -241,7 +241,7 @@ int netpatterns_setup_narray_knomial_tree(
         /* tree_order consecutive ranks have the same parent */
         my_node->parent_rank=cum_cnt-cnt/tree_order+my_rank_in_my_level/tree_order;
     }
-    
+
     /* figure out number of levels in the tree */
     n_lvls_in_tree=0;
     result=num_nodes;
@@ -296,7 +296,7 @@ int netpatterns_setup_narray_knomial_tree(
             for (lvl= start_index ; lvl <= end_index ; lvl++ ) {
                 my_node->children_ranks[lvl-start_index]=lvl;
             }
-        } 
+        }
     }
     /* set node type */
     if( 0 == my_node->n_parents ) {
@@ -345,7 +345,7 @@ static int fill_in_node_data(int tree_order, int num_nodes, int my_node,
     /* local variables */
     int rc, num_ranks_per_child, num_children, n_extra;
     int child, rank, n_to_offset, n_ranks_to_child;
-    
+
     /* figure out who are my children */
     num_ranks_per_child=num_nodes/tree_order;
     if( num_ranks_per_child ) {
@@ -393,7 +393,7 @@ static int fill_in_node_data(int tree_order, int num_nodes, int my_node,
         rank=my_node+1+child*num_ranks_per_child;
         rank+=n_to_offset;
 
-        /* set parent information */        
+        /* set parent information */
         nodes_data[rank].n_parents=1;
         nodes_data[rank].parent_rank=my_node;
 
@@ -401,7 +401,7 @@ static int fill_in_node_data(int tree_order, int num_nodes, int my_node,
         if(n_extra && (child < n_extra) ) {
             n_ranks_to_child++;
         }
-    
+
         /* set child information */
         nodes_data[my_node].children_ranks[child]=rank;
 
@@ -431,7 +431,7 @@ error:
  * appropriate communication pattern for such roots.
  */
 OMPI_DECLSPEC int netpatterns_setup_narray_tree_contigous_ranks(
-        int tree_order, int num_nodes, 
+        int tree_order, int num_nodes,
         netpatterns_tree_node_t **tree_nodes)
 {
     /* local variables */
@@ -448,7 +448,7 @@ OMPI_DECLSPEC int netpatterns_setup_narray_tree_contigous_ranks(
     }
 
     (*tree_nodes)[0].n_parents=0;
-    rc=fill_in_node_data(tree_order, 
+    rc=fill_in_node_data(tree_order,
             num_descendent_ranks, 0, *tree_nodes);
 
     /* successful return */

@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -22,7 +22,7 @@ struct ADIOI_RequestD *ADIOI_Malloc_request(void)
     int i;
 
     if (!ADIOI_Req_avail_head) {
-	ADIOI_Req_avail_head = (ADIOI_Req_node *) 
+	ADIOI_Req_avail_head = (ADIOI_Req_node *)
 	              ADIOI_Malloc(NUM*sizeof(ADIOI_Req_node));
 	if (ADIOI_Req_avail_head == NULL)
 	{
@@ -40,7 +40,7 @@ struct ADIOI_RequestD *ADIOI_Malloc_request(void)
 	/* keep track of malloced area that needs to be freed later */
 	if (!ADIOI_Malloc_req_tail) {
 	    ADIOI_Malloc_req_tail = (ADIOI_Malloc_req *)
-		ADIOI_Malloc(sizeof(ADIOI_Malloc_req)); 
+		ADIOI_Malloc(sizeof(ADIOI_Malloc_req));
 	    ADIOI_Malloc_req_head = ADIOI_Malloc_req_tail;
 	    ADIOI_Malloc_req_head->ptr = ADIOI_Req_avail_head;
 	    ADIOI_Malloc_req_head->next = NULL;
@@ -57,7 +57,7 @@ struct ADIOI_RequestD *ADIOI_Malloc_request(void)
     ptr = ADIOI_Req_avail_head;
     ADIOI_Req_avail_head = ADIOI_Req_avail_head->next;
     if (!ADIOI_Req_avail_head) ADIOI_Req_avail_tail = NULL;
-    
+
     (ptr->reqd).cookie = ADIOI_REQ_COOKIE;
     return &(ptr->reqd);
 }
@@ -65,7 +65,7 @@ struct ADIOI_RequestD *ADIOI_Malloc_request(void)
 
 void ADIOI_Free_request(ADIOI_Req_node *node)
 {
-/* This function could be called as ADIOI_Free_request(ADIO_Request request), 
+/* This function could be called as ADIOI_Free_request(ADIO_Request request),
    because request would be a pointer to the first element of ADIOI_Req_node.*/
 
 /* moves this node to available pool. does not actually free it. */

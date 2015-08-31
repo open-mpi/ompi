@@ -6,18 +6,18 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2010      University of Houston.  All rights reserved.
  * Copyright (c) 2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.  All rights
- *                         reserved. 
+ *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -64,7 +64,7 @@ int MPI_Allgatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
                             (char *)(recvbuf)+displs[i]*ext,
                             recvcounts[i], recvtype);
         }
-        
+
         /* check whether the actual send buffer is defined. */
         if (MPI_IN_PLACE == sendbuf) {
             memchecker_call(&opal_memchecker_base_isdefined,
@@ -84,7 +84,7 @@ int MPI_Allgatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
         err = MPI_SUCCESS;
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         if (ompi_comm_invalid(comm)) {
-            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, 
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM,
                                           FUNC_NAME);
         } else if (MPI_IN_PLACE == recvbuf) {
             return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
@@ -108,13 +108,13 @@ int MPI_Allgatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
             return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_COUNT, FUNC_NAME);
           }
         }
-          
+
         if (NULL == displs) {
           return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_BUFFER, FUNC_NAME);
         }
     }
 
-    /* Do we need to do anything?  Everyone had to give the same 
+    /* Do we need to do anything?  Everyone had to give the same
        signature, which means that everyone must have given a
        sum(recvounts) > 0 if there's anything to do. */
 
@@ -129,9 +129,9 @@ int MPI_Allgatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
 	}
     }
     /* There is no rule that can be applied for inter-communicators, since
-       recvcount(s)=0 only indicates that the processes in the other group 
+       recvcount(s)=0 only indicates that the processes in the other group
        do not send anything, sendcount=0 only indicates that I do not send
-       anything. However, other processes in my group might very well send 
+       anything. However, other processes in my group might very well send
        something */
 
 

@@ -29,7 +29,7 @@ static int mca_vprotocol_example_component_finalize(void);
 static int _priority;
 
 
-mca_pml_v_protocol_base_component_2_0_0_t mca_vprotocol_example_component = 
+mca_pml_v_protocol_base_component_2_0_0_t mca_vprotocol_example_component =
 {
   /* First, the mca_base_component_t struct containing meta
    * information about the component itself */
@@ -53,7 +53,7 @@ mca_pml_v_protocol_base_component_2_0_0_t mca_vprotocol_example_component =
 
 /** MCA level functions
   */
-  
+
 int mca_vprotocol_example_component_open(void)
 {
   _priority = mca_param_register_int( "priority", -1);
@@ -69,7 +69,7 @@ int mca_vprotocol_example_component_close(void)
 
 /** VPROTOCOL level functions (same as PML one)
   */
-  
+
 mca_pml_v_protocol_base_module_t *mca_vprotocol_example_component_init( int* priority,
                                                                           bool enable_progress_threads,
                                                                           bool enable_mpi_threads)
@@ -78,28 +78,28 @@ mca_pml_v_protocol_base_module_t *mca_vprotocol_example_component_init( int* pri
   *priority = _priority;
 
 /**
-  * Some protocols requires sanity check about thread support (those making piecewise deterministic assumption) 
+  * Some protocols requires sanity check about thread support (those making piecewise deterministic assumption)
   if(enable_mpi_threads)
   {
     OPAL_OUTPUT_VERBOSE( mca_pml_v_verbose, mca_pml_v_output, "vprotocol_example.init: threads are enabled, and not supported by vprotocol example fault tolerant layer, will not load"));
     return NULL;
   }
   */
-  
+
 /**
   * Insert your own protocol initialization here
   */
 
   return &mca_vprotocol_example.super;
 }
-                                                                          
+
 int mca_vprotocol_example_component_finalize(void)
 {
   V_OUTPUT_VERBOSE(10, "vprotocol_example_finalize");
-  
+
 /**
   * Insert your own garbage collecting here
   */
-  
+
   return OMPI_SUCCESS;
 }

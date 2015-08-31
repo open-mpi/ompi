@@ -6,9 +6,9 @@
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 /** @file */
@@ -43,7 +43,7 @@ OMPI_DECLSPEC int comm_allgather_pml(void *src_buf, void *dest_buf, int count,
     OPAL_PTRDIFF_TYPE dt_extent;
     char *src_buf_current;
     char *dest_buf_current;
-    struct iovec send_iov[2] = {{0,0},{0,0}}, 
+    struct iovec send_iov[2] = {{0,0},{0,0}},
                  recv_iov[2] = {{0,0},{0,0}};
     ompi_request_t *requests[4];
 
@@ -76,7 +76,7 @@ OMPI_DECLSPEC int comm_allgather_pml(void *src_buf, void *dest_buf, int count,
 
     /* get my reduction communication pattern */
     memset(&my_exchange_node, 0, sizeof(netpatterns_pair_exchange_node_t));
-    rc = netpatterns_setup_recursive_doubling_tree_node(n_peers, 
+    rc = netpatterns_setup_recursive_doubling_tree_node(n_peers,
             my_rank_in_group, &my_exchange_node);
     if(OMPI_SUCCESS != rc){
         return rc;
@@ -136,7 +136,7 @@ OMPI_DECLSPEC int comm_allgather_pml(void *src_buf, void *dest_buf, int count,
         msg_cnt=0;
 
         /*
-         * Power of 2 data segment 
+         * Power of 2 data segment
          */
         /* post non-blocking receive */
         if(pair_rank > my_rank_in_group ){
@@ -226,7 +226,7 @@ OMPI_DECLSPEC int comm_allgather_pml(void *src_buf, void *dest_buf, int count,
             goto Error;
         }
         msg_cnt++;
-        if( iovec_len > 1 ) { 
+        if( iovec_len > 1 ) {
             rc=MCA_PML_CALL(isend(send_iov[1].iov_base,
                         send_iov[1].iov_len,dtype,ranks_in_comm[pair_rank],
                         -OMPI_COMMON_TAG_ALLREDUCE,MCA_PML_BASE_SEND_STANDARD,
@@ -241,7 +241,7 @@ OMPI_DECLSPEC int comm_allgather_pml(void *src_buf, void *dest_buf, int count,
         if(pair_rank < my_rank_in_group ){
             src_buf_current-=current_data_extent;
             local_data_start_rank-=proc_block;
-        } 
+        }
         proc_block*=2;
         current_data_extent*=2;
         current_data_count*=2;
@@ -254,8 +254,8 @@ OMPI_DECLSPEC int comm_allgather_pml(void *src_buf, void *dest_buf, int count,
     if(0 < my_exchange_node.n_extra_sources)  {
 
         if ( EXTRA_NODE == my_exchange_node.node_type ) {
-            /* 
-             ** receive the data 
+            /*
+             ** receive the data
              ** */
             extra_rank=my_exchange_node.rank_extra_source;
 

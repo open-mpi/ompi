@@ -5,15 +5,15 @@
  * Copyright (c) 2004-2014 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2008 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 #include "ompi_config.h"
@@ -37,7 +37,7 @@
 static const char FUNC_NAME[] = "MPI_Abort";
 
 
-int MPI_Abort(MPI_Comm comm, int errorcode) 
+int MPI_Abort(MPI_Comm comm, int errorcode)
 {
     MEMCHECKER(
         memchecker_comm(comm);
@@ -53,7 +53,7 @@ int MPI_Abort(MPI_Comm comm, int errorcode)
     }
 
     opal_show_help("help-mpi-api.txt", "mpi-abort", true,
-                   ompi_comm_rank(comm), 
+                   ompi_comm_rank(comm),
                    ('\0' != comm->c_name[0]) ? comm->c_name : "<Unknown>",
                    errorcode);
     return ompi_mpi_abort(comm, errorcode);

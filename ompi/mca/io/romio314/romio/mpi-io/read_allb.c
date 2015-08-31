@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -85,7 +85,7 @@ int MPIOI_File_read_all_begin(MPI_File fh,
 	goto fn_exit;
     }
     /* --END ERROR HANDLING-- */
-    
+
     MPI_Type_size_x(datatype, &datatype_size);
 
     /* --BEGIN ERROR HANDLING-- */
@@ -95,7 +95,7 @@ int MPIOI_File_read_all_begin(MPI_File fh,
 
     if (adio_fh->split_coll_count) {
 	error_code = MPIO_Err_create_code(MPI_SUCCESS, MPIR_ERR_RECOVERABLE,
-					  myname, __LINE__, MPI_ERR_IO, 
+					  myname, __LINE__, MPI_ERR_IO,
 					  "**iosplitcoll", 0);
 	error_code = MPIO_Err_return_file(adio_fh, error_code);
 	goto fn_exit;

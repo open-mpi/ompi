@@ -1,5 +1,5 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
  *   Copyright (C) 2007 UChicago/Argonne LLC
  *   See COPYRIGHT notice in top-level directory.
@@ -12,16 +12,16 @@
  *
  * optimization: by having just one process create a file, close it,
  * then have all N processes open it, we can possibly avoid contention
- * for write locks on a directory for some file systems.  
+ * for write locks on a directory for some file systems.
  *
  * Happy side-effect: exclusive create (error if file already exists)
- * just falls out 
+ * just falls out
  *
  * Note: this is not a "scalable open" (c.f. "The impact of file systems
- * on MPI-IO scalability").  
+ * on MPI-IO scalability").
  */
-     
-void ADIOI_GEN_OpenColl(ADIO_File fd, int rank, 
+
+void ADIOI_GEN_OpenColl(ADIO_File fd, int rank,
 	int access_mode, int *error_code)
 {
     int orig_amode_excl, orig_amode_wronly;
@@ -34,9 +34,9 @@ void ADIOI_GEN_OpenColl(ADIO_File fd, int rank,
 	   /* remove delete_on_close flag if set */
 	   if (access_mode & ADIO_DELETE_ON_CLOSE)
 	       fd->access_mode = access_mode ^ ADIO_DELETE_ON_CLOSE;
-	   else 
+	   else
 	       fd->access_mode = access_mode;
-	       
+
 	   tmp_comm = fd->comm;
 	   fd->comm = MPI_COMM_SELF;
 	   (*(fd->fns->ADIOI_xxx_Open))(fd, error_code);
@@ -44,7 +44,7 @@ void ADIOI_GEN_OpenColl(ADIO_File fd, int rank,
 	   MPI_Bcast(error_code, 1, MPI_INT, \
 		     fd->hints->ranklist[0], fd->comm);
 	   /* if no error, close the file and reopen normally below */
-	   if (*error_code == MPI_SUCCESS) 
+	   if (*error_code == MPI_SUCCESS)
 	       (*(fd->fns->ADIOI_xxx_Close))(fd, error_code);
 
 	   fd->access_mode = access_mode; /* back to original */
@@ -53,10 +53,10 @@ void ADIOI_GEN_OpenColl(ADIO_File fd, int rank,
 
        if (*error_code != MPI_SUCCESS) {
 	   return;
-       } 
+       }
        else {
            /* turn off CREAT (and EXCL if set) for real multi-processor open */
-           access_mode ^= ADIO_CREATE; 
+           access_mode ^= ADIO_CREATE;
 	   if (access_mode & ADIO_EXCL)
 		   access_mode ^= ADIO_EXCL;
        }
@@ -85,7 +85,7 @@ void ADIOI_GEN_OpenColl(ADIO_File fd, int rank,
 	}
     }
 
-/* For writing with data sieving, a read-modify-write is needed. If 
+/* For writing with data sieving, a read-modify-write is needed. If
    the file is opened for write_only, the read will fail. Therefore,
    if write_only, open the file as read_write, but record it as write_only
    in fd, so that get_amode returns the right answer. */
@@ -103,10 +103,10 @@ void ADIOI_GEN_OpenColl(ADIO_File fd, int rank,
 
     (*(fd->fns->ADIOI_xxx_Open))(fd, error_code);
 
-    /* if error, may be it was due to the change in amode above. 
-       therefore, reopen with access mode provided by the user.*/ 
-    fd->access_mode = orig_amode_wronly;  
-    if (*error_code != MPI_SUCCESS) 
+    /* if error, may be it was due to the change in amode above.
+       therefore, reopen with access mode provided by the user.*/
+    fd->access_mode = orig_amode_wronly;
+    if (*error_code != MPI_SUCCESS)
         (*(fd->fns->ADIOI_xxx_Open))(fd, error_code);
 
     /* if we turned off EXCL earlier, then we should turn it back on */
@@ -124,6 +124,6 @@ void ADIOI_GEN_OpenColl(ADIO_File fd, int rank,
 
 }
 
-/* 
- * vim: ts=8 sts=4 sw=4 noexpandtab 
+/*
+ * vim: ts=8 sts=4 sw=4 noexpandtab
  */

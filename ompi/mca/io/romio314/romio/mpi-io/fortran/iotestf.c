@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -94,7 +94,7 @@ FORTRAN_API void FORT_CALL mpio_test_(MPI_Fint *request,MPI_Fint *flag,MPI_Statu
 FORTRAN_API void FORT_CALL mpio_test_(MPI_Fint *request,MPI_Fint *flag,MPI_Status *status, MPI_Fint *ierr )
 {
     MPIO_Request req_c;
-    
+
     req_c = MPIO_Request_f2c(*request);
     *ierr = MPIO_Test(&req_c,flag,status);
     *request = MPIO_Request_c2f(req_c);

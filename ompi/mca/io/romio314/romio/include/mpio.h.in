@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -36,7 +36,7 @@ typedef struct ADIOI_FileD *MPI_File;
 
 @DEFINE_HAVE_MPI_GREQUEST@
 #ifndef HAVE_MPI_GREQUEST
-typedef struct ADIOI_RequestD *MPIO_Request;  
+typedef struct ADIOI_RequestD *MPIO_Request;
 #else
 #define MPIO_Request MPI_Request
 #define MPIO_USES_MPI_REQUEST
@@ -54,7 +54,7 @@ typedef struct ADIOI_RequestD *MPIO_Request;
    this definition. */
 #ifndef HAVE_MPI_DATAREP_FUNCTIONS
 #define HAVE_MPI_DATAREP_FUNCTIONS
-typedef int (MPI_Datarep_conversion_function)(void *, MPI_Datatype, int, 
+typedef int (MPI_Datarep_conversion_function)(void *, MPI_Datatype, int,
              void *, MPI_Offset, void *);
 typedef int (MPI_Datarep_extent_function)(MPI_Datatype datatype, MPI_Aint *,
 					  void *);
@@ -65,7 +65,7 @@ typedef int (MPI_Datarep_extent_function)(MPI_Datatype datatype, MPI_Aint *,
 @NEEDS_MPI_FINT@
 #endif
 #ifdef NEEDS_MPI_FINT
-typedef int MPI_Fint; 
+typedef int MPI_Fint;
 #endif
 
 #ifndef HAVE_MPI_INFO
@@ -81,7 +81,7 @@ typedef int MPI_Fint;
 #define MPI_MODE_RDONLY              2  /* ADIO_RDONLY */
 #define MPI_MODE_RDWR                8  /* ADIO_RDWR  */
 #define MPI_MODE_WRONLY              4  /* ADIO_WRONLY  */
-#define MPI_MODE_CREATE              1  /* ADIO_CREATE */ 
+#define MPI_MODE_CREATE              1  /* ADIO_CREATE */
 #define MPI_MODE_EXCL               64  /* ADIO_EXCL */
 #define MPI_MODE_DELETE_ON_CLOSE    16  /* ADIO_DELETE_ON_CLOSE */
 #define MPI_MODE_UNIQUE_OPEN        32  /* ADIO_UNIQUE_OPEN */
@@ -123,7 +123,7 @@ typedef int MPI_Fint;
 
 /* MPI-IO function prototypes */
 
-/* The compiler must support ANSI C style prototypes, otherwise 
+/* The compiler must support ANSI C style prototypes, otherwise
    long long constants (e.g. 0) may get passed as ints. */
 
 #ifndef HAVE_PRAGMA_HP_SEC_DEF
@@ -161,8 +161,8 @@ int MPI_File_write_at_all(MPI_File fh, MPI_Offset offset, const void *buf, int c
     MPICH_ATTR_POINTER_WITH_TYPE_TAG(3,5);
 
 /* nonblocking calls currently use MPIO_Request, because generalized
-   requests not yet implemented. For the same reason, MPIO_Test and 
-   MPIO_Wait are used to test and wait on nonblocking I/O requests */ 
+   requests not yet implemented. For the same reason, MPIO_Test and
+   MPIO_Wait are used to test and wait on nonblocking I/O requests */
 int MPI_File_iread_at(MPI_File fh, MPI_Offset offset, void *buf, int count, MPI_Datatype datatype,
                       MPIO_Request *request) MPICH_ATTR_POINTER_WITH_TYPE_TAG(3,5);
 int MPI_File_iwrite_at(MPI_File fh, MPI_Offset offset, const void *buf, int count,
@@ -180,8 +180,8 @@ int MPI_File_write_all(MPI_File fh, const void *buf, int count, MPI_Datatype dat
                        MPI_Status *status) MPICH_ATTR_POINTER_WITH_TYPE_TAG(2,4);
 
 /* nonblocking calls currently use MPIO_Request, because generalized
-   requests not yet implemented. For the same reason, MPIO_Test and 
-   MPIO_Wait are used to test and wait on nonblocking I/O requests */ 
+   requests not yet implemented. For the same reason, MPIO_Test and
+   MPIO_Wait are used to test and wait on nonblocking I/O requests */
 
 int MPI_File_iread(MPI_File fh, void *buf, int count, MPI_Datatype datatype, MPIO_Request *request)
     MPICH_ATTR_POINTER_WITH_TYPE_TAG(2,4);
@@ -357,9 +357,9 @@ int PMPI_File_set_info(MPI_File, MPI_Info);
 int PMPI_File_get_info(MPI_File, MPI_Info *);
 
 /* Section 9.3 */
-int PMPI_File_set_view(MPI_File, MPI_Offset, 
+int PMPI_File_set_view(MPI_File, MPI_Offset,
     MPI_Datatype, MPI_Datatype, const char *, MPI_Info);
-int PMPI_File_get_view(MPI_File, MPI_Offset *, 
+int PMPI_File_get_view(MPI_File, MPI_Offset *,
       MPI_Datatype *, MPI_Datatype *, char *);
 
 /* Section 9.4.2 */
@@ -377,8 +377,8 @@ int PMPI_File_write_at_all(MPI_File, MPI_Offset, const void *,
               MPICH_ATTR_POINTER_WITH_TYPE_TAG(3,5);
 
 /* nonblocking calls currently use MPIO_Request, because generalized
-   requests not yet implemented. For the same reason, MPIO_Test and 
-   MPIO_Wait are used to test and wait on nonblocking I/O requests */ 
+   requests not yet implemented. For the same reason, MPIO_Test and
+   MPIO_Wait are used to test and wait on nonblocking I/O requests */
 
 int PMPI_File_iread_at(MPI_File, MPI_Offset, void *,
 	      int, MPI_Datatype, MPIO_Request *)
@@ -398,8 +398,8 @@ int PMPI_File_write_all(MPI_File, const void *, int, MPI_Datatype, MPI_Status *)
                         MPICH_ATTR_POINTER_WITH_TYPE_TAG(2,4);
 
 /* nonblocking calls currently use MPIO_Request, because generalized
-   requests not yet implemented. For the same reason, MPIO_Test and 
-   MPIO_Wait are used to test and wait on nonblocking I/O requests */ 
+   requests not yet implemented. For the same reason, MPIO_Test and
+   MPIO_Wait are used to test and wait on nonblocking I/O requests */
 
 int PMPI_File_iread(MPI_File, void *, int, MPI_Datatype, MPIO_Request *)
                     MPICH_ATTR_POINTER_WITH_TYPE_TAG(2,4);
@@ -415,7 +415,7 @@ int PMPI_File_read_shared(MPI_File, void *, int, MPI_Datatype, MPI_Status *)
                           MPICH_ATTR_POINTER_WITH_TYPE_TAG(2,4);
 int PMPI_File_write_shared(MPI_File, const void *, int, MPI_Datatype, MPI_Status *)
                            MPICH_ATTR_POINTER_WITH_TYPE_TAG(2,4);
-int PMPI_File_iread_shared(MPI_File, void *, int, 
+int PMPI_File_iread_shared(MPI_File, void *, int,
 			   MPI_Datatype, MPIO_Request *)
                            MPICH_ATTR_POINTER_WITH_TYPE_TAG(2,4);
 int PMPI_File_iwrite_shared(MPI_File, const void *, int,
@@ -474,11 +474,11 @@ int PMPI_File_get_errhandler( MPI_File, MPI_Errhandler * );
 
 #ifndef HAVE_MPI_DARRAY_SUBARRAY
 /* Section 4.14.4 */
-int PMPI_Type_create_subarray(int, int *, int *, int *, int, 
+int PMPI_Type_create_subarray(int, int *, int *, int *, int,
                       MPI_Datatype, MPI_Datatype *);
 
 /* Section 4.14.5 */
-int PMPI_Type_create_darray(int, int, int, int *, int *, 
+int PMPI_Type_create_darray(int, int, int, int *, int *,
                     int *, int *, int, MPI_Datatype, MPI_Datatype *);
 #endif
 

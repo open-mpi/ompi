@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2013 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -13,9 +13,9 @@
  * Copyright (c) 2006-2009 University of Houston.  All rights reserved.
  * Copyright (c) 2012-2013 Inria.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -57,15 +57,15 @@ int MPI_Intercomm_merge(MPI_Comm intercomm, int high,
     );
 
     if ( MPI_PARAM_CHECK ) {
-        OMPI_ERR_INIT_FINALIZE(FUNC_NAME); 
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 
         if (ompi_comm_invalid ( intercomm ) ||
-             !( intercomm->c_flags & OMPI_COMM_INTER ) ) 
+             !( intercomm->c_flags & OMPI_COMM_INTER ) )
             return OMPI_ERRHANDLER_INVOKE ( MPI_COMM_WORLD, MPI_ERR_COMM,
                                             FUNC_NAME);
 
         if ( NULL == newcomm )
-            return OMPI_ERRHANDLER_INVOKE ( intercomm, MPI_ERR_ARG, 
+            return OMPI_ERRHANDLER_INVOKE ( intercomm, MPI_ERR_ARG,
                                             FUNC_NAME);
     }
 
@@ -118,7 +118,7 @@ int MPI_Intercomm_merge(MPI_Comm intercomm, int high,
     new_group_pointer = MPI_GROUP_NULL;
 
     /* Determine context id. It is identical to f_2_c_handle */
-    rc = ompi_comm_nextcid ( newcomp,              /* new comm */ 
+    rc = ompi_comm_nextcid ( newcomp,              /* new comm */
                              intercomm,            /* old comm */
                              NULL,                 /* bridge comm */
                              NULL,                 /* local leader */
@@ -130,7 +130,7 @@ int MPI_Intercomm_merge(MPI_Comm intercomm, int high,
     }
 
     /* activate communicator and init coll-module */
-    rc = ompi_comm_activate( &newcomp,             /* new comm */ 
+    rc = ompi_comm_activate( &newcomp,             /* new comm */
                              intercomm,            /* old comm */
                              NULL,                 /* bridge comm */
                              NULL,                 /* local leader */

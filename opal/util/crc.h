@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009      IBM Corporation.  All rights reserved.
  * Copyright (c) 2009      Los Alamos National Security, LLC.  All rights
- *                         reserved. 
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -62,8 +62,8 @@ opal_bcopy_csum (
     size_t plength = 0;
     return opal_bcopy_csum_partial(source, destination, copylen, csumlen, &plong, &plength);
 }
-                                                                                                                  
-OPAL_DECLSPEC unsigned int 
+
+OPAL_DECLSPEC unsigned int
 opal_bcopy_uicsum_partial (
     const void *  source,
     void *  destination,
@@ -85,8 +85,8 @@ opal_bcopy_uicsum (
     size_t plength = 0;
     return opal_bcopy_uicsum_partial(source, destination, copylen, csumlen, &pint, &plength);
 }
-                                                                                                                  
-OPAL_DECLSPEC unsigned long 
+
+OPAL_DECLSPEC unsigned long
 opal_csum_partial (
     const void *  source,
     size_t csumlen,
@@ -95,7 +95,7 @@ opal_csum_partial (
     );
 
 
-static inline unsigned long 
+static inline unsigned long
 opal_csum(const void *  source, size_t csumlen)
 {
     unsigned long lastPartialLong = 0;
@@ -115,13 +115,13 @@ opal_csum16 (const void *  source, size_t csumlen)
 	    csum += *src++;
         csumlen -= 2;
     }
-    /* Add leftover byte, if any */ 
+    /* Add leftover byte, if any */
     if(csumlen > 0)
         csum += *((unsigned char*)src);
     /* Fold 32-bit checksum to 16 bits */
     while(csum >> 16) {
-        csum = (csum & 0xFFFF) + (csum >> 16);    
-    }        
+        csum = (csum & 0xFFFF) + (csum >> 16);
+    }
     return csum;
 }
 
@@ -133,21 +133,21 @@ opal_uicsum_partial (
     size_t*  lastPartialLength
     );
 
-static inline unsigned int 
+static inline unsigned int
 opal_uicsum(const void *  source, size_t csumlen)
 {
     unsigned int lastPartialInt = 0;
     size_t lastPartialLength = 0;
     return opal_uicsum_partial(source, csumlen, &lastPartialInt, &lastPartialLength);
 }
-                                                                                                                  
+
 /*
  * CRC Support
  */
 
 void opal_initialize_crc_table(void);
 
-OPAL_DECLSPEC unsigned int 
+OPAL_DECLSPEC unsigned int
 opal_bcopy_uicrc_partial(
     const void *  source,
     void *  destination,
@@ -155,29 +155,29 @@ opal_bcopy_uicrc_partial(
     size_t crclen,
     unsigned int partial_crc);
 
-static inline unsigned int 
+static inline unsigned int
 opal_bcopy_uicrc(
-    const void *  source, 
+    const void *  source,
     void *  destination,
-    size_t copylen, 
+    size_t copylen,
     size_t crclen)
 {
     return opal_bcopy_uicrc_partial(source, destination, copylen, crclen, CRC_INITIAL_REGISTER);
 }
 
-OPAL_DECLSPEC unsigned int 
+OPAL_DECLSPEC unsigned int
 opal_uicrc_partial(
-    const void *  source, 
-    size_t crclen, 
+    const void *  source,
+    size_t crclen,
     unsigned int partial_crc);
 
 
-static inline unsigned int 
+static inline unsigned int
 opal_uicrc(const void *  source, size_t crclen)
 {
     return opal_uicrc_partial(source, crclen, CRC_INITIAL_REGISTER);
 }
-                                                                                                                  
+
 END_C_DECLS
 
 #endif

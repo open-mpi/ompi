@@ -8,7 +8,7 @@
 #include "ad_nfs.h"
 
 int ADIOI_NFS_Feature(ADIO_File fd, int flag)
-{       
+{
         switch(flag) {
                 case ADIO_SHARED_FP:
                 case ADIO_LOCKS:

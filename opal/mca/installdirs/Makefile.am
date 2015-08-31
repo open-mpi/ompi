@@ -1,11 +1,11 @@
 #
 # Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
-#                         reserved. 
+#                         reserved.
 # Copyright (c) 2010 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
-# 
+#
 # Additional copyrights may follow
-# 
+#
 # $HEADER$
 #
 

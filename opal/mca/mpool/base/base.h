@@ -5,15 +5,15 @@
  * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2009 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 /**
@@ -30,27 +30,27 @@
 
 BEGIN_C_DECLS
 
-static inline unsigned int my_log2(unsigned long val) { 
+static inline unsigned int my_log2(unsigned long val) {
     unsigned int count = 0;
-    while(val > 0) { 
-        val = val >> 1; 
+    while(val > 0) {
+        val = val >> 1;
         count++;
     }
     return count > 0 ? count-1: 0;
 }
 static inline void *down_align_addr(void* addr, unsigned int shift) {
-    return (void*) (((intptr_t) addr) & (~(intptr_t) 0) << shift); 
+    return (void*) (((intptr_t) addr) & (~(intptr_t) 0) << shift);
 }
 
-static inline void *up_align_addr(void*addr, unsigned int shift) { 
-    return (void*) ((((intptr_t) addr) | ~((~(intptr_t) 0) << shift))); 
+static inline void *up_align_addr(void*addr, unsigned int shift) {
+    return (void*) ((((intptr_t) addr) | ~((~(intptr_t) 0) << shift)));
 }
 
 struct mca_mpool_base_selected_module_t {
     opal_list_item_t super;
     mca_mpool_base_component_t *mpool_component;
     mca_mpool_base_module_t *mpool_module;
-    void* user_data; 
+    void* user_data;
     struct mca_mpool_base_resources_t *mpool_resources;
 };
 typedef struct mca_mpool_base_selected_module_t mca_mpool_base_selected_module_t;
@@ -68,12 +68,12 @@ OPAL_DECLSPEC OBJ_CLASS_DECLARATION(mca_mpool_base_selected_module_t);
 OPAL_DECLSPEC int mca_mpool_base_init(bool enable_progress_threads, bool enable_mpi_threads);
 OPAL_DECLSPEC mca_mpool_base_component_t* mca_mpool_base_component_lookup(const char* name);
 OPAL_DECLSPEC mca_mpool_base_module_t* mca_mpool_base_module_create(
-    const char* name, 
+    const char* name,
     void* user_data,
     struct mca_mpool_base_resources_t* mpool_resources);
 OPAL_DECLSPEC mca_mpool_base_module_t* mca_mpool_base_module_lookup(const char* name);
 OPAL_DECLSPEC int mca_mpool_base_module_destroy(mca_mpool_base_module_t *module);
- 
+
 /*
  * Globals
  */
@@ -85,7 +85,7 @@ OPAL_DECLSPEC extern uint32_t mca_mpool_base_page_size_log;
 extern int mca_mpool_base_used_mem_hooks;
 
 OPAL_DECLSPEC extern mca_base_framework_t opal_mpool_base_framework;
-    
+
 END_C_DECLS
 
 #endif /* MCA_MEM_BASE_H */

@@ -45,7 +45,7 @@ t1func(evutil_socket_t fd, short what, void *arg)
         c2 = OBJ_NEW(orte_state_caddy_t);
         opal_event_set(orte_event_base, &c2->ev, -1, OPAL_EV_READ, t1func, c2);
         opal_event_set_priority(&c2->ev, ORTE_SYS_PRI);
-        
+
         fprintf(stderr, "EVENT %d DEFINED\n", loops);
         fflush(stderr);
         opal_event_active(&c2->ev, OPAL_EV_WRITE, 1);

@@ -33,7 +33,7 @@ dnl ifc - An older Intel compiler
 dnl fc  - A compiler on some unknown system.  This has been removed because
 dnl       it may also be the name of a command for something other than
 dnl       the Fortran compiler (e.g., fc=file system check!)
-dnl gfortran - The GNU Fortran compiler (not the same as g95) 
+dnl gfortran - The GNU Fortran compiler (not the same as g95)
 dnl gfc - An alias for gfortran recommended in cygwin installations
 dnl NOTE: this macro suffers from a basically intractable "expanded before it
 dnl was required" problem when libtool is also used
@@ -58,7 +58,7 @@ AC_COMPILE_IFELSE([
 ],[
     AC_MSG_RESULT([f90])
 ],[
-    ac_fc_srcext="f" 
+    ac_fc_srcext="f"
     AC_COMPILE_IFELSE([
         AC_LANG_PROGRAM()
     ],[
@@ -101,12 +101,12 @@ AC_LINK_IFELSE([
 rm -f work.pc work.pcl
 AC_LANG_POP(Fortran)
 dnl cross_compiling no longer maintained by autoconf as part of the
-dnl AC_LANG changes.  If we set it here, a later AC_LANG may not 
+dnl AC_LANG changes.  If we set it here, a later AC_LANG may not
 dnl restore it (in the case where one compiler claims to be a cross compiler
 dnl and another does not)
 dnl cross_compiling=$pac_cv_prog_f90_cross
 ])
-dnl/*D 
+dnl/*D
 dnl PAC_PROG_FC_INT_KIND - Determine kind parameter for an integer with
 dnl the specified number of bytes.
 dnl
@@ -124,7 +124,7 @@ else
     AC_LANG_PUSH(Fortran)
     AC_MSG_CHECKING([for Fortran 90 integer kind for $2-byte integers])
     # Convert bytes to digits
-    case $2 in 
+    case $2 in
         1) sellen=2 ;;
         2) sellen=4 ;;
         4) sellen=8 ;;
@@ -134,7 +134,7 @@ else
     esac
     # Check for cached value
     eval testval=\$"pac_cv_prog_fc_int_kind_$sellen"
-    if test -n "$testval" ; then 
+    if test -n "$testval" ; then
         AC_MSG_RESULT([$testval (cached)])
         $1=$testval
     else
@@ -170,7 +170,7 @@ dnl ------------------------------------------------------------------------
 dnl Special characteristics that have no autoconf counterpart but that
 dnl we need as part of the Fortran 90 support.  To distinquish these, they
 dnl have a [PAC] prefix.
-dnl 
+dnl
 dnl At least one version of the Cray compiler needs the option -em to
 dnl generate a separate module file, rather than including the module
 dnl information in the object (.o) file.
@@ -226,7 +226,7 @@ AC_COMPILE_IFELSE([
                 pac_MOD=""
             fi
         fi
-        if test -z "$pac_MOD" ; then 
+        if test -z "$pac_MOD" ; then
             pac_cv_fc_module_ext="unknown"
         else
             pac_cv_fc_module_ext=$pac_MOD
@@ -304,7 +304,7 @@ AC_COMPILE_IFELSE([],[
         mv $pac_module conftestdir
         # Remove any temporary files, and hide the work.pc file
         # (if the compiler generates them)
-        if test -f work.pc ; then 
+        if test -f work.pc ; then
             mv -f work.pc conftest.pc
         fi
         rm -f work.pcl
@@ -343,7 +343,7 @@ if test "X$pac_cv_fc_module_incflag" = "X" ; then
             AC_MSG_RESULT([-cl,filename where filename contains a list of files and directories])
             FC_WORK_FILES_ARG="-cl,mpimod.pcl"
             FCMODINCSPEC="-cl,<dir>/<file>mod.pcl"
-        else 
+        else
             # The version of the Intel compiler that I have refuses to let
             # you put the "work catalog" list anywhere but the current directory.
             pac_cv_fc_module_incflag="Unavailable!"
@@ -351,12 +351,12 @@ if test "X$pac_cv_fc_module_incflag" = "X" ; then
     else
         # Early versions of the Intel ifc compiler required a *file*
         # containing the names of files that contained the names of the
-        # 
+        #
         # -cl,filename.pcl
         #   filename.pcl contains
         #     fullpathname.pc
-        # The "fullpathname.pc" is generated, I believe, when a module is 
-        # compiled.  
+        # The "fullpathname.pc" is generated, I believe, when a module is
+        # compiled.
         # Intel compilers use a wierd system: -cl,filename.pcl .  If no file is
         # specified, work.pcl and work.pc are created.  However, if you specify
         # a file, it must contain the name of a file ending in .pc .  Ugh!
@@ -415,7 +415,7 @@ AC_COMPILE_IFELSE([],[
         rm -f "$pac_module"
         # Remove any temporary files, and hide the work.pc file
         # (if the compiler generates them)
-        if test -f work.pc ; then 
+        if test -f work.pc ; then
             mv -f work.pc conftest.pc
         fi
         rm -f work.pcl
@@ -478,7 +478,7 @@ AC_SUBST([FCMODOUTFLAG],[$pac_cv_fc_module_outflag])
 dnl
 dnl PAC_FC_AND_F77_COMPATIBLE([action-if-true],[action-if-false])
 dnl
-dnl Determine whether object files compiled with Fortran 77 can be 
+dnl Determine whether object files compiled with Fortran 77 can be
 dnl linked to Fortran 90 main programs.
 dnl
 dnl The test uses a name that includes an underscore unless the 3rd
@@ -543,7 +543,7 @@ dnl
 ])
 dnl
 dnl
-dnl /*D 
+dnl /*D
 dnl PAC_PROG_FC_CRAY_POINTER - Check if Fortran supports Cray-style pointer.
 dnl                            If so, set pac_cv_prog_fc_has_pointer to yes
 dnl                            and find out if any extra compiler flag is
@@ -650,7 +650,7 @@ AC_LANG_POP(C)
 dnl
 if test "$pac_cv_prog_fc_and_c_stdio_libs" != none -a \
         "$pac_cv_prog_fc_and_c_stdio_libs" != unknown ; then
-    FC_OTHER_LIBS="$FC_OTHER_LIBS $pac_cv_prog_fc_and_c_stdio_libs"    
+    FC_OTHER_LIBS="$FC_OTHER_LIBS $pac_cv_prog_fc_and_c_stdio_libs"
 fi
 ])
 dnl
@@ -668,13 +668,13 @@ dnl
 dnl If no actions are specified, a working value is added to 'FCOPTIONS'
 dnl
 dnl Notes:
-dnl This is now careful to check that the output is different, since 
+dnl This is now careful to check that the output is different, since
 dnl some compilers are noisy.
-dnl 
+dnl
 dnl We are extra careful to prototype the functions in case compiler options
 dnl that complain about poor code are in effect.
 dnl
-dnl Because this is a long script, we have ensured that you can pass a 
+dnl Because this is a long script, we have ensured that you can pass a
 dnl variable containing the option name as the first argument.
 dnl D*/
 AC_DEFUN([PAC_FC_CHECK_COMPILER_OPTION],[
@@ -817,14 +817,14 @@ for arg in --version -V -v ; do
     rm -f conftest.txt
     PAC_RUNLOG([$FC $arg </dev/null >conftest.txt 2>&1])
     # Ignore the return code, because some compilers set the
-    # return code to zero on invalid arguments and some to 
+    # return code to zero on invalid arguments and some to
     # non-zero on success (with no files to compile)
     if test -f conftest.txt ; then
         if grep 'Portland Group' conftest.txt >/dev/null 2>&1 ; then
             pac_cv_fc_vendor=pgi
         elif grep 'Sun Workshop' conftest.txt >/dev/null 2>&1 ; then
             pac_cv_fc_vendor=sun
-	elif grep 'Sun Fortran 9' conftest.txt >/dev/null 2>&1 ; then 
+	elif grep 'Sun Fortran 9' conftest.txt >/dev/null 2>&1 ; then
 	    pac_cv_fc_vendor=sun
         elif grep 'Absoft' conftest.txt >/dev/null 2>&1 ; then
             pac_cv_fc_vendor=absoft

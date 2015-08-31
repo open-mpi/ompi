@@ -3,7 +3,7 @@
  *                         All rights reserved.
  * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
  *                         All rights reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -11,9 +11,9 @@
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
  *
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -144,7 +144,7 @@ void opal_crs_blcr_destruct( opal_crs_blcr_snapshot_t *snapshot) {
 
 /*****************
  * MCA Functions
- *****************/ 
+ *****************/
 int opal_crs_blcr_component_query(mca_base_module_t **module, int *priority)
 {
     opal_output_verbose(10, mca_crs_blcr_component.super.output_handle,
@@ -193,7 +193,7 @@ int opal_crs_blcr_module_init(void)
 
     blcr_restart_cmd    = strdup("cr_restart");
     blcr_checkpoint_cmd = strdup("cr_checkpoint");
-    
+
     if( !opal_cr_is_tool ) {
         /*
          * Register the thread handler
@@ -232,7 +232,7 @@ int opal_crs_blcr_module_init(void)
     opal_output_verbose(10, mca_crs_blcr_component.super.output_handle,
                         "crs:blcr: module_init() --> Finished [%d]",
                         opal_cr_is_tool);
-    
+
     return OPAL_SUCCESS;
 }
 
@@ -456,7 +456,7 @@ int opal_crs_blcr_checkpoint(pid_t pid,
      * returns, we also need to wait for it.
      */
     cr_request_file(loc_fname);
-        
+
     /* Wait for checkpoint to finish */
     do {
         usleep(1000); /* JJH Do we really want to sleep? */
@@ -466,7 +466,7 @@ int opal_crs_blcr_checkpoint(pid_t pid,
 
     *state = blcr_current_state;
     free(loc_fname);
-    
+
  cleanup:
     if( NULL != snapshot->super.metadata ) {
         fclose(snapshot->super.metadata );
@@ -502,7 +502,7 @@ int opal_crs_blcr_restart(opal_crs_base_snapshot_t *base_snapshot, bool spawn_ch
             goto cleanup;
         }
     }
-    
+
 
     /*
      * Get the restart command
@@ -526,7 +526,7 @@ int opal_crs_blcr_restart(opal_crs_base_snapshot_t *base_snapshot, bool spawn_ch
     if (!spawn_child) {
         cr_full_cmd = opal_argv_join(cr_argv, ' ');
         opal_output_verbose(10, mca_crs_blcr_component.super.output_handle,
-                            "crs:blcr: blcr_restart: SELF: exec :(%s, %s):", 
+                            "crs:blcr: blcr_restart: SELF: exec :(%s, %s):",
                             blcr_restart_cmd, cr_full_cmd);
 
         status = execvp(blcr_restart_cmd, cr_argv);
@@ -552,10 +552,10 @@ int opal_crs_blcr_restart(opal_crs_base_snapshot_t *base_snapshot, bool spawn_ch
         if( 0 == *child_pid) {
             /* Child Process */
             opal_output_verbose(10, mca_crs_blcr_component.super.output_handle,
-                                "crs:blcr: blcr_restart: CHILD: exec :(%s, %s):", 
+                                "crs:blcr: blcr_restart: CHILD: exec :(%s, %s):",
                                 blcr_restart_cmd,
                                 opal_argv_join(cr_argv, ' '));
-            
+
             status = execvp(blcr_restart_cmd, cr_argv);
 
             if(status < 0) {
@@ -583,10 +583,10 @@ int opal_crs_blcr_restart(opal_crs_base_snapshot_t *base_snapshot, bool spawn_ch
         free(cr_cmd);
     if(NULL != cr_argv)
         opal_argv_free(cr_argv);
-    
+
     return exit_status;
 }
-    
+
 int opal_crs_blcr_disable_checkpoint(void)
 {
     opal_output_verbose(10, mca_crs_blcr_component.super.output_handle,
@@ -617,7 +617,7 @@ int opal_crs_blcr_enable_checkpoint(void)
 static int opal_crs_blcr_thread_callback(void *arg) {
     const struct cr_checkpoint_info *ckpt_info = cr_get_checkpoint_info();
     int ret;
-    
+
     opal_output_verbose(10, mca_crs_blcr_component.super.output_handle,
                         "crs:blcr: thread_callback()");
 
@@ -647,7 +647,7 @@ static int opal_crs_blcr_thread_callback(void *arg) {
 
         ret = cr_checkpoint(0);
     }
-    
+
     /*
      * Restarting
      */
@@ -705,7 +705,7 @@ static int opal_crs_blcr_restart_cmd(char *fname, char **cmd)
                         "crs:blcr: restart_cmd(%s, ---)", fname);
 
     if (NULL == fname) {
-        opal_output_verbose(10, opal_crs_base_framework.framework_output, 
+        opal_output_verbose(10, opal_crs_base_framework.framework_output,
                             "crs:blcr: restart_cmd: Error: filename is NULL!");
         return OPAL_CRS_ERROR;
     }
@@ -721,7 +721,7 @@ static int blcr_get_checkpoint_filename(char **fname, pid_t pid)
                         "crs:blcr: get_checkpoint_filename(--, %d)", pid);
 
     asprintf(fname, "ompi_blcr_context.%d", pid);
-    
+
     return OPAL_SUCCESS;
 }
 
@@ -762,7 +762,7 @@ static int blcr_cold_start(opal_crs_blcr_snapshot_t *snapshot) {
                       component_name, strlen(component_name)) ) {
         exit_status = OPAL_ERROR;
         opal_output(mca_crs_blcr_component.super.output_handle,
-                    "crs:blcr: blcr_cold_start: Error: This snapshot (%s) is not intended for us (%s)\n", 
+                    "crs:blcr: blcr_cold_start: Error: This snapshot (%s) is not intended for us (%s)\n",
                     component_name, mca_crs_blcr_component.super.base_version.mca_component_name);
         goto cleanup;
     }

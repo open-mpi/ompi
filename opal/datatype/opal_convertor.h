@@ -235,7 +235,7 @@ OPAL_DECLSPEC int32_t opal_convertor_prepare_for_send( opal_convertor_t* convert
                                                        int32_t count,
                                                        const void* pUserBuf);
 
-static inline int32_t opal_convertor_copy_and_prepare_for_send( const opal_convertor_t* pSrcConv, 
+static inline int32_t opal_convertor_copy_and_prepare_for_send( const opal_convertor_t* pSrcConv,
                                                                 const struct opal_datatype_t* datatype,
                                                                 int32_t count,
                                                                 const void* pUserBuf,
@@ -256,7 +256,7 @@ OPAL_DECLSPEC int32_t opal_convertor_prepare_for_recv( opal_convertor_t* convert
                                                        const struct opal_datatype_t* datatype,
                                                        int32_t count,
                                                        const void* pUserBuf );
-static inline int32_t opal_convertor_copy_and_prepare_for_recv( const opal_convertor_t* pSrcConv, 
+static inline int32_t opal_convertor_copy_and_prepare_for_recv( const opal_convertor_t* pSrcConv,
                                                                 const struct opal_datatype_t* datatype,
                                                                 int32_t count,
                                                                 const void* pUserBuf,

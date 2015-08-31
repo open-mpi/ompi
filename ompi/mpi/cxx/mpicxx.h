@@ -1,12 +1,12 @@
 // -*- c++ -*-
-// 
+//
 // Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
 //                         University Research and Technology
 //                         Corporation.  All rights reserved.
 // Copyright (c) 2004-2005 The University of Tennessee and The University
 //                         of Tennessee Research Foundation.  All rights
 //                         reserved.
-// Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+// Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 //                         University of Stuttgart.  All rights reserved.
 // Copyright (c) 2004-2005 The Regents of the University of California.
 //                         All rights reserved.
@@ -14,22 +14,22 @@
 // Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
 // Copyright (c) 2011      FUJITSU LIMITED.  All rights reserved.
 // $COPYRIGHT$
-// 
+//
 // Additional copyrights may follow
-// 
+//
 // $HEADER$
 //
 
 #ifndef MPIPP_H
 #define MPIPP_H
 
-// 
+//
 // Let's ensure that we're really in C++, and some errant programmer
 // hasn't included <mpicxx.h> just "for completeness"
 //
 
 // We do not include the opal_config.h and may not replace extern "C" {
-#if defined(c_plusplus) || defined(__cplusplus) 
+#if defined(c_plusplus) || defined(__cplusplus)
 
 // do not include ompi_config.h.  it will smash free() as a symbol
 #include "mpi.h"
@@ -70,8 +70,8 @@ static const int SEEK_END = ompi_stdio_seek_end;
 #endif
 
 #ifdef OPAL_HAVE_SYS_SYNCH_H
-// Solaris threads.h pulls in sys/synch.h which in certain versions 
-// defines LOCK_SHARED.  
+// Solaris threads.h pulls in sys/synch.h which in certain versions
+// defines LOCK_SHARED.
 
 // include so that we can smash LOCK_SHARED
 #include <sys/synch.h>
@@ -94,12 +94,12 @@ struct opal_mutex_t;
 
 // See lengthy explanation in intercepts.cc about this function.
 extern "C" void
-ompi_mpi_cxx_op_intercept(void *invec, void *outvec, int *len, 
+ompi_mpi_cxx_op_intercept(void *invec, void *outvec, int *len,
                           MPI_Datatype *datatype, MPI_User_function *fn);
 
 extern "C" void
 ompi_mpi_cxx_comm_errhandler_invoke(ompi_errhandler_t *c_errhandler,
-                                    MPI_Comm *mpi_comm, int *err, 
+                                    MPI_Comm *mpi_comm, int *err,
                                     const char *message);
 extern "C" void
 ompi_mpi_cxx_win_errhandler_invoke(ompi_errhandler_t *c_errhandler,
@@ -116,28 +116,28 @@ ompi_mpi_cxx_file_errhandler_invoke(ompi_errhandler_t *c_errhandler,
 enum CommType { eIntracomm, eIntercomm, eCartcomm, eGraphcomm};
 
 extern "C" int
-ompi_mpi_cxx_comm_copy_attr_intercept(MPI_Comm oldcomm, int keyval, 
-                                      void *extra_state, void *attribute_val_in, 
+ompi_mpi_cxx_comm_copy_attr_intercept(MPI_Comm oldcomm, int keyval,
+                                      void *extra_state, void *attribute_val_in,
                                       void *attribute_val_out, int *flag,
                                       MPI_Comm newcomm);
 extern "C" int
-ompi_mpi_cxx_comm_delete_attr_intercept(MPI_Comm comm, int keyval, 
+ompi_mpi_cxx_comm_delete_attr_intercept(MPI_Comm comm, int keyval,
                                         void *attribute_val, void *extra_state);
 
 extern "C" int
-ompi_mpi_cxx_type_copy_attr_intercept(MPI_Datatype oldtype, int keyval, 
-                                      void *extra_state, void *attribute_val_in, 
+ompi_mpi_cxx_type_copy_attr_intercept(MPI_Datatype oldtype, int keyval,
+                                      void *extra_state, void *attribute_val_in,
                                       void *attribute_val_out, int *flag);
 extern "C" int
-ompi_mpi_cxx_type_delete_attr_intercept(MPI_Datatype type, int keyval, 
+ompi_mpi_cxx_type_delete_attr_intercept(MPI_Datatype type, int keyval,
                                         void *attribute_val, void *extra_state);
 
 extern "C" int
-ompi_mpi_cxx_win_copy_attr_intercept(MPI_Win oldwin, int keyval, 
-                                      void *extra_state, void *attribute_val_in, 
+ompi_mpi_cxx_win_copy_attr_intercept(MPI_Win oldwin, int keyval,
+                                      void *extra_state, void *attribute_val_in,
                                       void *attribute_val_out, int *flag);
 extern "C" int
-ompi_mpi_cxx_win_delete_attr_intercept(MPI_Win win, int keyval, 
+ompi_mpi_cxx_win_delete_attr_intercept(MPI_Win win, int keyval,
                                         void *attribute_val, void *extra_state);
 
 
@@ -146,11 +146,11 @@ ompi_mpi_cxx_win_delete_attr_intercept(MPI_Win win, int keyval,
 // MPI generalized request intercepts
 //
 
-extern "C" int 
+extern "C" int
 ompi_mpi_cxx_grequest_query_fn_intercept(void *state, MPI_Status *status);
-extern "C" int 
+extern "C" int
 ompi_mpi_cxx_grequest_free_fn_intercept(void *state);
-extern "C" int 
+extern "C" int
 ompi_mpi_cxx_grequest_cancel_fn_intercept(void *state, int canceled);
 
 /**
@@ -217,7 +217,7 @@ namespace MPI {
 #include "ompi/mpi/cxx/op.h"
 #include "ompi/mpi/cxx/status.h"
 #include "ompi/mpi/cxx/request.h"   //includes class Prequest
-#include "ompi/mpi/cxx/group.h" 
+#include "ompi/mpi/cxx/group.h"
 #include "ompi/mpi/cxx/comm.h"
 #include "ompi/mpi/cxx/win.h"
 #if OMPI_PROVIDE_MPI_FILE_INTERFACE
@@ -233,7 +233,7 @@ namespace MPI {
 #include "openmpi/ompi/mpi/cxx/op.h"
 #include "openmpi/ompi/mpi/cxx/status.h"
 #include "openmpi/ompi/mpi/cxx/request.h"   //includes class Prequest
-#include "openmpi/ompi/mpi/cxx/group.h" 
+#include "openmpi/ompi/mpi/cxx/group.h"
 #include "openmpi/ompi/mpi/cxx/comm.h"
 #include "openmpi/ompi/mpi/cxx/win.h"
 #if OMPI_PROVIDE_MPI_FILE_INTERFACE
@@ -303,5 +303,5 @@ namespace MPI {
 #endif
 #endif
 
-#endif // #if defined(c_plusplus) || defined(__cplusplus) 
+#endif // #if defined(c_plusplus) || defined(__cplusplus)
 #endif // #ifndef MPIPP_H_

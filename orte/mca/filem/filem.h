@@ -6,16 +6,16 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
  *                         reserved
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 /**
@@ -94,7 +94,7 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_filem_base_process_set_t);
  * Local: Local file reference
  * Remove: Remote file reference
  *
- * Note: If multiple process sinks are used it is assumed that the 
+ * Note: If multiple process sinks are used it is assumed that the
  * file reference is the same for each of the sinks. If this is not
  * true then more than one filem request needs to be created.
  */
@@ -133,7 +133,7 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_filem_base_file_set_t);
  * in a single call of the API function. Allowing the implementation
  * to optimize the sending/receiving of data.
  * Used for the following:
- * 
+ *
  */
 struct orte_filem_base_request_1_0_0_t {
     /** This is an object, so must have a super */
@@ -214,9 +214,9 @@ typedef int (*orte_filem_base_module_finalize_fn_t)
  *       component will negotiate the correct absolute path for that file/directory
  *       for the remote machine.
  *
- * @param request FileM request describing the files/directories to send, 
+ * @param request FileM request describing the files/directories to send,
  *        the remote files/directories to use, and the processes to see the change.
- * 
+ *
  * @return ORTE_SUCCESS on successful file transer
  * @return ORTE_ERROR on failed file transfer
  */
@@ -230,9 +230,9 @@ typedef int (*orte_filem_base_put_fn_t)
  *       component will negotiate the correct absolute path for that file/directory
  *       for the remote machine.
  *
- * @param request FileM request describing the files/directories to send, 
+ * @param request FileM request describing the files/directories to send,
  *        the remote files/directories to use, and the processes to see the change.
- * 
+ *
  * @return ORTE_SUCCESS on successful file transer
  * @return ORTE_ERROR on failed file transfer
  */
@@ -246,9 +246,9 @@ typedef int (*orte_filem_base_put_nb_fn_t)
  *       component will negotiate the correct absolute path for that file/directory
  *       for the remote machine.
  *
- * @param request FileM request describing the files/directories to receive, 
+ * @param request FileM request describing the files/directories to receive,
  *        the remote files/directories to use, and the processes to see the change.
- * 
+ *
  * @return ORTE_SUCCESS on successful file transer
  * @return ORTE_ERROR on failed file transfer
  */
@@ -262,9 +262,9 @@ typedef int (*orte_filem_base_get_fn_t)
  *       component will negotiate the correct absolute path for that file/directory
  *       for the remote machine.
  *
- * @param request FileM request describing the files/directories to receive, 
+ * @param request FileM request describing the files/directories to receive,
  *        the remote files/directories to use, and the processes to see the change.
- * 
+ *
  * @return ORTE_SUCCESS on successful file transer
  * @return ORTE_ERROR on failed file transfer
  */
@@ -273,12 +273,12 @@ typedef int (*orte_filem_base_get_nb_fn_t)
 
 /**
  * Remove a file from the remote machine
- * 
+ *
  * Note: By using a relative path for the remote file/directory, the filem
  *       component will negotiate the correct absolute path for that file/directory
  *       for the remote machine.
  *
- * @param request FileM request describing the remote files/directories to remove, 
+ * @param request FileM request describing the remote files/directories to remove,
  *        the processes to see the change.
  *
  * @return ORTE_SUCCESS on success
@@ -289,12 +289,12 @@ typedef int (*orte_filem_base_rm_fn_t)
 
 /**
  * Remove a file from the remote machine (Async)
- * 
+ *
  * Note: By using a relative path for the remote file/directory, the filem
  *       component will negotiate the correct absolute path for that file/directory
  *       for the remote machine.
  *
- * @param request FileM request describing the remote files/directories to remove, 
+ * @param request FileM request describing the remote files/directories to remove,
  *        the processes to see the change.
  *
  * @return ORTE_SUCCESS on success

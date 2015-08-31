@@ -2,9 +2,9 @@
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 #include "oshmem_config.h"
@@ -27,7 +27,7 @@ static bool __group_cache_enabled = true;
 
 /*
  * The shared memory (SHMEM) reduction routines perform an associative binary operation
- * across symmetric arrays on multiple virtual PEs. 
+ * across symmetric arrays on multiple virtual PEs.
  * This routine returns the result of performing a operation on the source data
  * object of every PE in the active set. The active set of PEs is defined by the triple PE_start,
  * logPE_stride and PE_size.

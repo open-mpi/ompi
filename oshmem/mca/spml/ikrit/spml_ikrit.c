@@ -750,7 +750,7 @@ int mca_spml_ikrit_oob_get_mkeys(int pe, uint32_t seg, sshmem_mkey_t *mkeys)
         mkeys[ptl].len = 0;
         mkeys[ptl].u.key = MAP_SEGMENT_SHM_INVALID;
         return OSHMEM_SUCCESS;
-    } 
+    }
 
     return OSHMEM_ERROR;
 #endif
@@ -1190,7 +1190,7 @@ static inline int mca_spml_ikrit_put_internal(void* dst_addr,
  * Problems:
  * - slighly worse performance than impl based on non buffered put
  * - fence complexity is O(n_active_connections) instead of O(n_connections_with_outstanding_puts).
- *   Later is bounded by the network RTT & mxm ack timer. 
+ *   Later is bounded by the network RTT & mxm ack timer.
  */
 int mca_spml_ikrit_put_simple(void* dst_addr,
                               size_t size,
@@ -1355,7 +1355,7 @@ int mca_spml_ikrit_fence(void)
                  "Into fence with %d active puts on %d pes",
                  mca_spml_ikrit.n_active_puts, (int)opal_list_get_size(&mca_spml_ikrit.active_peers));
 
-    /* puts(unless are send sync) are completed by remote side lazily. That is either when remote decides to 
+    /* puts(unless are send sync) are completed by remote side lazily. That is either when remote decides to
      * ack window which can take hundreds of ms. So speed things up by doing fence */
     while (NULL != (item = opal_list_remove_first(&mca_spml_ikrit.active_peers))) {
         peer = (mxm_peer_t *) item;

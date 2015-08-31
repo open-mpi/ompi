@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 2003 University of Chicago. 
+ *   Copyright (C) 2003 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -31,7 +31,7 @@
 int MPIO_Waitsome(int count, MPIO_Request requests[], int *outcount,
 		  int indices[], MPI_Status *statuses)
 {
-    int i, flag, err; 
+    int i, flag, err;
     MPIU_THREADPRIV_DECL;
 
     MPIU_THREAD_CS_ENTER(ALLFUNC,);

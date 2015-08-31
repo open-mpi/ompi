@@ -17,7 +17,7 @@
 int mca_vprotocol_pessimist_progress(void)
 {
     int ret;
-    
+
     printf("PROGRESS\n");
     /* First let the real progress take place */
     ret = mca_pml_v.host_pml.pml_progress();

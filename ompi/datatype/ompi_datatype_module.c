@@ -520,7 +520,7 @@ int32_t ompi_datatype_init( void )
     /* The order of the data registration should be the same as the
      * one in the mpif.h file. Any modification here should be
      * reflected there !!!  Do the Fortran types first so that mpif.h
-     * can have consecutive, dense numbers. */ 
+     * can have consecutive, dense numbers. */
 
     /* This macro makes everything significantly easier to read below.
        All hail the moog!  :-) */

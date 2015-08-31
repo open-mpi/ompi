@@ -1,11 +1,11 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 2003 University of Chicago, Ohio Supercomputer Center. 
+ *   Copyright (C) 2003 University of Chicago, Ohio Supercomputer Center.
  *   See COPYRIGHT notice in top-level directory.
  */
 
-/* 
+/*
 
 Valid hints for ftp:// and gsiftp:// URLs (aside from the std. ones):
 
@@ -19,7 +19,7 @@ Valid hints for ftp:// and gsiftp:// URLs (aside from the std. ones):
 
   tcp_buffer         integer size of tcp stream buffers in bytes
 
-  transfer_type      ascii or binary (default binary)  
+  transfer_type      ascii or binary (default binary)
 
 These *must* be specified at open time currently.
 */
@@ -29,12 +29,12 @@ These *must* be specified at open time currently.
 
 void ADIOI_GRIDFTP_SetInfo(ADIO_File fd, MPI_Info users_info, int *error_code)
 {
-    
+
     if (!(fd->info))
 	{
 	    if ( users_info==MPI_INFO_NULL )
 		{
-		    /* This must be part of the open call. */ 
+		    /* This must be part of the open call. */
 		    MPI_Info_create(&(fd->info));
 		}
 	    else
@@ -46,7 +46,7 @@ void ADIOI_GRIDFTP_SetInfo(ADIO_File fd, MPI_Info users_info, int *error_code)
 	{
 	    int i,nkeys,valuelen,flag;
 	    char key[MPI_MAX_INFO_KEY], value[MPI_MAX_INFO_VAL];
-	    
+
 	    if ( users_info!=MPI_INFO_NULL )
 		{
 		    MPI_Info_get_nkeys(users_info,&nkeys);
@@ -62,7 +62,7 @@ void ADIOI_GRIDFTP_SetInfo(ADIO_File fd, MPI_Info users_info, int *error_code)
 			}
 		}
 	}
-    
+
     /* let the generic ROMIO and MPI-I/O stuff happen... */
-    ADIOI_GEN_SetInfo(fd, users_info, error_code); 
+    ADIOI_GEN_SetInfo(fd, users_info, error_code);
 }

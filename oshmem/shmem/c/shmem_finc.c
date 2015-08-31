@@ -2,9 +2,9 @@
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 #include "oshmem_config.h"
@@ -18,7 +18,7 @@
 #include "oshmem/mca/atomic/atomic.h"
 
 /*
- * These routines perform a fetch-and-increment operation. 
+ * These routines perform a fetch-and-increment operation.
  * The fetch and increment routines retrieve the value at address target on PE pe, and update
  * target with the result of incrementing the retrieved value by one. The operation must be
  * completed without the possibility of another process updating target between the time of

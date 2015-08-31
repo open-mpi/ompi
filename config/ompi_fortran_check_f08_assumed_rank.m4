@@ -6,27 +6,27 @@ dnl                         Corporation.  All rights reserved.
 dnl Copyright (c) 2004-2005 The University of Tennessee and The University
 dnl                         of Tennessee Research Foundation.  All rights
 dnl                         reserved.
-dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
-dnl                         reserved. 
+dnl                         reserved.
 dnl Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
 dnl Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
 dnl $COPYRIGHT$
-dnl 
+dnl
 dnl Additional copyrights may follow
-dnl 
+dnl
 dnl $HEADER$
 
 # Does this compiler support the Fortran 2008 assumed rank syntax?
 
-# OMPI_FORTRAN_CHECK_F08_ASSUMED_RANK([action if found], 
+# OMPI_FORTRAN_CHECK_F08_ASSUMED_RANK([action if found],
 #                                      [action if not found])
 # ----------------------------------------------------------------
 AC_DEFUN([OMPI_FORTRAN_CHECK_F08_ASSUMED_RANK], [
-    AS_VAR_PUSHDEF([fortran_f08_assumed_rank], 
+    AS_VAR_PUSHDEF([fortran_f08_assumed_rank],
                    [ompi_cv_fortran_f08_assumed_rank])
 
     AC_CACHE_CHECK([Fortran compiler F08 assumed rank syntax],

@@ -19,7 +19,7 @@
 #
 
 headers += \
-        base/base.h 
+        base/base.h
 
 libmca_notifier_la_SOURCES += \
         base/notifier_base_frame.c \

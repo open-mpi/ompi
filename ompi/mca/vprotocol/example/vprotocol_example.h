@@ -34,11 +34,11 @@ OMPI_DECLSPEC int mca_vprotocol_example_progress(void);
 OMPI_DECLSPEC int mca_vprotocol_example_add_comm(struct ompi_communicator_t* comm);
 OMPI_DECLSPEC int mca_vprotocol_example_del_comm(struct ompi_communicator_t* comm);
 
-OMPI_DECLSPEC int mca_vprotocol_example_irecv_init(void *buf,                           
-                                            size_t count,                         
-                                            struct ompi_datatype_t *datatype,              
+OMPI_DECLSPEC int mca_vprotocol_example_irecv_init(void *buf,
+                                            size_t count,
+                                            struct ompi_datatype_t *datatype,
                                             int src,
-                                            int tag,                                
+                                            int tag,
                                             struct ompi_communicator_t* comm,
                                             struct ompi_request_t **request );
 OMPI_DECLSPEC int mca_vprotocol_example_irecv(void *addr,

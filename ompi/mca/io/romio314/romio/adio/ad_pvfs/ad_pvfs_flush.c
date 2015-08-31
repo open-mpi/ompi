@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -19,7 +19,7 @@ void ADIOI_PVFS_Flush(ADIO_File fd, int *error_code)
      */
 
     MPI_Comm_rank(fd->comm, &rank);
-    MPI_Reduce(&dummy_in, &dummy, 1, MPI_INT, MPI_SUM, 
+    MPI_Reduce(&dummy_in, &dummy, 1, MPI_INT, MPI_SUM,
 		    fd->hints->ranklist[0], fd->comm);
     if (rank == fd->hints->ranklist[0]) {
 	    err = pvfs_fsync(fd->fd_sys);

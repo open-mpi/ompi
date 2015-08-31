@@ -1,9 +1,9 @@
-! 
-!     Copyright (C) 1997 University of Chicago. 
+!
+!     Copyright (C) 1997 University of Chicago.
 !     See COPYRIGHT notice in top-level directory.
 !
-! 
-!    user include file for Fortran MPI-IO programs 
+!
+!    user include file for Fortran MPI-IO programs
 !
       INTEGER MPI_MODE_RDONLY, MPI_MODE_RDWR, MPI_MODE_WRONLY
       INTEGER MPI_MODE_DELETE_ON_CLOSE, MPI_MODE_UNIQUE_OPEN

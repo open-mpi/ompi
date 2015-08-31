@@ -6,15 +6,15 @@
  * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2015 University of Houston. All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -124,7 +124,7 @@ enum ompio_fs_type
 
 OMPI_DECLSPEC extern mca_io_base_component_2_0_0_t mca_io_ompio_component;
 /*
- * global variables, instantiated in module.c  
+ * global variables, instantiated in module.c
  */
 extern opal_mutex_t mca_io_ompio_mutex;
 extern mca_io_base_module_2_0_0_t mca_io_ompio_module;
@@ -191,7 +191,7 @@ typedef struct{
 
 /* forward declaration to keep the compiler happy. */
 struct mca_io_ompio_file_t;
-typedef int (*mca_io_ompio_decode_datatype_fn_t) (struct mca_io_ompio_file_t *fh, 
+typedef int (*mca_io_ompio_decode_datatype_fn_t) (struct mca_io_ompio_file_t *fh,
 						  struct ompi_datatype_t *datatype,
 						  int count,
 						  void *buf,
@@ -204,34 +204,34 @@ typedef int (*mca_io_ompio_generate_current_file_view_fn_t) (struct mca_io_ompio
 							     int *iov_count);
 
 /*
- * Function that sorts an io_array according to the offset by filling 
+ * Function that sorts an io_array according to the offset by filling
  * up an array of the indices into the array (HEAP SORT)
  */
 typedef int (*mca_io_ompio_sort_fn_t) (mca_io_ompio_io_array_t *io_array,
 				       int num_entries,
 				       int *sorted);
 
-typedef int (*mca_io_ompio_sort_iovec_fn_t) (struct iovec *iov, 
-					     int num_entries, 
+typedef int (*mca_io_ompio_sort_iovec_fn_t) (struct iovec *iov,
+					     int num_entries,
 					     int *sorted);
 
 /* collective operations based on list of participating ranks instead of communicators*/
-typedef int (*mca_io_ompio_allgather_array_fn_t) (void *sbuf, 
+typedef int (*mca_io_ompio_allgather_array_fn_t) (void *sbuf,
 						  int scount,
-						  ompi_datatype_t *sdtype, 
+						  ompi_datatype_t *sdtype,
 						  void *rbuf,
-						  int rcount, 
+						  int rcount,
 						  ompi_datatype_t *rdtype,
 						  int root_index,
 						  int *procs_in_group,
 						  int procs_per_group,
 						  ompi_communicator_t *comm);
 
-typedef int (*mca_io_ompio_allgatherv_array_fn_t) (void *sbuf, 
+typedef int (*mca_io_ompio_allgatherv_array_fn_t) (void *sbuf,
 						   int scount,
-						   ompi_datatype_t *sdtype, 
+						   ompi_datatype_t *sdtype,
 						   void *rbuf,
-						   int *rcounts, 
+						   int *rcounts,
 						   int *disps,
 						   ompi_datatype_t *rdtype,
 						   int root_index,
@@ -239,10 +239,10 @@ typedef int (*mca_io_ompio_allgatherv_array_fn_t) (void *sbuf,
 						   int procs_per_group,
 						   ompi_communicator_t *comm);
 
-typedef int (*mca_io_ompio_gather_array_fn_t) (void *sbuf, 
+typedef int (*mca_io_ompio_gather_array_fn_t) (void *sbuf,
 					       int scount,
 					       ompi_datatype_t *sdtype,
-					       void *rbuf, 
+					       void *rbuf,
 					       int rcount,
 					       ompi_datatype_t *rdtype,
 					       int root_index,
@@ -261,7 +261,7 @@ typedef int (*mca_io_ompio_gatherv_array_fn_t) (void *sbuf,
 						int procs_per_group,
 						ompi_communicator_t *comm);
 
-/* functions to retrieve the number of aggregators and the size of the 
+/* functions to retrieve the number of aggregators and the size of the
    temporary buffer on aggregators from the fcoll modules */
 typedef void (*mca_io_ompio_get_num_aggregators_fn_t) ( int *num_aggregators);
 typedef void (*mca_io_ompio_get_bytes_per_agg_fn_t) ( int *bytes_per_agg);
@@ -355,7 +355,7 @@ struct mca_io_ompio_file_t {
     int *f_init_procs_in_group;
 
     int f_final_num_aggrs;
-    
+
     /* internal ompio functions required by fbtl and fcoll */
     mca_io_ompio_decode_datatype_fn_t                       f_decode_datatype;
     mca_io_ompio_generate_current_file_view_fn_t f_generate_current_file_view;
@@ -373,7 +373,7 @@ struct mca_io_ompio_file_t {
     mca_io_ompio_set_aggregator_props_fn_t             f_set_aggregator_props;
 
     mca_io_ompio_full_print_queue_fn_t                     f_full_print_queue;
-    mca_io_ompio_register_print_entry_fn_t             f_register_print_entry;   
+    mca_io_ompio_register_print_entry_fn_t             f_register_print_entry;
 };
 typedef struct mca_io_ompio_file_t mca_io_ompio_file_t;
 
@@ -385,16 +385,16 @@ typedef struct mca_io_ompio_data_t mca_io_ompio_data_t;
 OMPI_DECLSPEC extern mca_io_ompio_print_queue *coll_write_time;
 OMPI_DECLSPEC extern mca_io_ompio_print_queue *coll_read_time;
 
-/* functions to retrieve the number of aggregators and the size of the 
+/* functions to retrieve the number of aggregators and the size of the
    temporary buffer on aggregators from the fcoll modules */
 OMPI_DECLSPEC void mca_io_ompio_get_num_aggregators ( int *num_aggregators);
 OMPI_DECLSPEC void mca_io_ompio_get_bytes_per_agg ( int *bytes_per_agg);
 
 
-OMPI_DECLSPEC int mca_io_ompio_build_io_array ( mca_io_ompio_file_t *fh, int index, int cycles, 
-						size_t bpc, int max_data, uint32_t iov_count, 
-						struct iovec *decoded_iov, int *ii, int *jj, 
-						size_t *tbw ); 
+OMPI_DECLSPEC int mca_io_ompio_build_io_array ( mca_io_ompio_file_t *fh, int index, int cycles,
+						size_t bpc, int max_data, uint32_t iov_count,
+						struct iovec *decoded_iov, int *ii, int *jj,
+						size_t *tbw );
 
 OMPI_DECLSPEC int ompi_io_ompio_set_file_defaults (mca_io_ompio_file_t *fh);
 
@@ -490,7 +490,7 @@ OMPI_DECLSPEC int ompio_io_ompio_file_get_position (mca_io_ompio_file_t *fh,
  * Function that takes in a datatype and buffer, and decodes that datatype
  * into an iovec using the convertor_raw function
  */
-OMPI_DECLSPEC int ompi_io_ompio_decode_datatype (struct mca_io_ompio_file_t *fh, 
+OMPI_DECLSPEC int ompi_io_ompio_decode_datatype (struct mca_io_ompio_file_t *fh,
                                                  struct ompi_datatype_t *datatype,
                                                  int count,
                                                  void *buf,
@@ -499,15 +499,15 @@ OMPI_DECLSPEC int ompi_io_ompio_decode_datatype (struct mca_io_ompio_file_t *fh,
                                                  uint32_t *iov_count);
 
 /*
- * Function that sorts an io_array according to the offset by filling 
+ * Function that sorts an io_array according to the offset by filling
  * up an array of the indices into the array (HEAP SORT)
  */
 OMPI_DECLSPEC int ompi_io_ompio_sort (mca_io_ompio_io_array_t *io_array,
                                       int num_entries,
                                       int *sorted);
 
-OMPI_DECLSPEC int ompi_io_ompio_sort_iovec (struct iovec *iov, 
-					    int num_entries, 
+OMPI_DECLSPEC int ompi_io_ompio_sort_iovec (struct iovec *iov,
+					    int num_entries,
 					    int *sorted);
 
 OMPI_DECLSPEC int ompi_io_ompio_sort_offlen (mca_io_ompio_offlen_array_t *io_array,
@@ -516,7 +516,7 @@ OMPI_DECLSPEC int ompi_io_ompio_sort_offlen (mca_io_ompio_offlen_array_t *io_arr
 
 
 
-OMPI_DECLSPEC int ompi_io_ompio_set_explicit_offset (mca_io_ompio_file_t *fh, 
+OMPI_DECLSPEC int ompi_io_ompio_set_explicit_offset (mca_io_ompio_file_t *fh,
 						     OMPI_MPI_OFFSET_TYPE offset);
 
 OMPI_DECLSPEC int ompi_io_ompio_generate_current_file_view (struct mca_io_ompio_file_t *fh,
@@ -617,41 +617,41 @@ OMPI_DECLSPEC int ompi_io_ompio_scatterv_array (void *sbuf,
                                                 int *procs_in_group,
                                                 int procs_per_group,
                                                 ompi_communicator_t *comm);
-OMPI_DECLSPEC int ompi_io_ompio_allgather_array (void *sbuf, 
+OMPI_DECLSPEC int ompi_io_ompio_allgather_array (void *sbuf,
                                                  int scount,
-                                                 ompi_datatype_t *sdtype, 
+                                                 ompi_datatype_t *sdtype,
                                                  void *rbuf,
-                                                 int rcount, 
+                                                 int rcount,
                                                  ompi_datatype_t *rdtype,
                                                  int root_index,
                                                  int *procs_in_group,
                                                  int procs_per_group,
                                                  ompi_communicator_t *comm);
-						 
-OMPI_DECLSPEC int ompi_io_ompio_allgatherv_array (void *sbuf, 
+
+OMPI_DECLSPEC int ompi_io_ompio_allgatherv_array (void *sbuf,
                                                   int scount,
-                                                  ompi_datatype_t *sdtype, 
+                                                  ompi_datatype_t *sdtype,
                                                   void *rbuf,
-                                                  int *rcounts, 
+                                                  int *rcounts,
                                                   int *disps,
                                                   ompi_datatype_t *rdtype,
                                                   int root_index,
                                                   int *procs_in_group,
                                                   int procs_per_group,
                                                   ompi_communicator_t *comm);
-OMPI_DECLSPEC int ompi_io_ompio_gather_array (void *sbuf, 
+OMPI_DECLSPEC int ompi_io_ompio_gather_array (void *sbuf,
                                               int scount,
                                               ompi_datatype_t *sdtype,
-                                              void *rbuf, 
+                                              void *rbuf,
                                               int rcount,
                                               ompi_datatype_t *rdtype,
                                               int root_index,
                                               int *procs_in_group,
                                               int procs_per_group,
                                               ompi_communicator_t *comm);
-OMPI_DECLSPEC int ompi_io_ompio_bcast_array (void *buff, 
+OMPI_DECLSPEC int ompi_io_ompio_bcast_array (void *buff,
                                              int count,
-                                             ompi_datatype_t *datatype, 
+                                             ompi_datatype_t *datatype,
                                              int root_index,
                                              int *procs_in_group,
                                              int procs_per_group,
@@ -673,31 +673,31 @@ OMPI_DECLSPEC int ompi_io_ompio_print_time_info(int queue_type,
 						mca_io_ompio_file_t *fh);
 int ompi_io_ompio_set_print_queue (mca_io_ompio_print_queue **q,
 				   int queue_type);
-	       
+
 
 /*
  * ******************************************************************
  * ********* functions which are implemented in this module *********
  * ******************************************************************
- */ 
+ */
 
-int mca_io_ompio_file_set_view (struct ompi_file_t *fh, 
-                                OMPI_MPI_OFFSET_TYPE disp, 
+int mca_io_ompio_file_set_view (struct ompi_file_t *fh,
+                                OMPI_MPI_OFFSET_TYPE disp,
                                 struct ompi_datatype_t *etype,
-                                struct ompi_datatype_t *filetype, 
+                                struct ompi_datatype_t *filetype,
                                 char *datarep,
                                 struct ompi_info_t *info);
 
-int mca_io_ompio_set_view_internal (struct mca_io_ompio_file_t *fh, 
-				    OMPI_MPI_OFFSET_TYPE disp, 
+int mca_io_ompio_set_view_internal (struct mca_io_ompio_file_t *fh,
+				    OMPI_MPI_OFFSET_TYPE disp,
 				    struct ompi_datatype_t *etype,
-				    struct ompi_datatype_t *filetype, 
+				    struct ompi_datatype_t *filetype,
 				    char *datarep,
 				    struct ompi_info_t *info);
 
-int mca_io_ompio_file_get_view (struct ompi_file_t *fh, 
+int mca_io_ompio_file_get_view (struct ompi_file_t *fh,
                                 OMPI_MPI_OFFSET_TYPE *disp,
-                                struct ompi_datatype_t **etype, 
+                                struct ompi_datatype_t **etype,
                                 struct ompi_datatype_t **filetype,
                                 char *datarep);
 int mca_io_ompio_file_open (struct ompi_communicator_t *comm,
@@ -837,7 +837,7 @@ int mca_io_ompio_file_get_position (struct ompi_file_t *fh,
 int mca_io_ompio_file_get_byte_offset (struct ompi_file_t *fh,
                                        OMPI_MPI_OFFSET_TYPE offset,
                                        OMPI_MPI_OFFSET_TYPE *disp);
-    
+
 /* Section 9.4.4 */
 int mca_io_ompio_file_read_shared (struct ompi_file_t *fh,
                                    void *buf,
@@ -936,7 +936,7 @@ int mca_io_ompio_file_sync (struct ompi_file_t *fh);
  * ******************************************************************
  * ************ functions implemented in this module end ************
  * ******************************************************************
- */ 
+ */
 
 
 END_C_DECLS

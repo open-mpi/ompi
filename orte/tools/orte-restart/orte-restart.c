@@ -5,18 +5,18 @@
  * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
- *                         reserved. 
+ *                         reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -106,63 +106,63 @@ orte_restart_globals_t orte_restart_globals;
 
 opal_cmd_line_init_t cmd_line_opts[] = {
     { NULL,
-      'h', NULL, "help", 
+      'h', NULL, "help",
       0,
       &orte_restart_globals.help, OPAL_CMD_LINE_TYPE_BOOL,
       "This help message" },
 
     { NULL,
-      'v', NULL, "verbose", 
+      'v', NULL, "verbose",
       0,
       &orte_restart_globals.verbose, OPAL_CMD_LINE_TYPE_BOOL,
       "Be Verbose" },
 
     { NULL,
-      '\0', NULL, "fork", 
+      '\0', NULL, "fork",
       0,
       &orte_restart_globals.forked, OPAL_CMD_LINE_TYPE_BOOL,
       "Fork off a new process which is the restarted process instead of "
       "replacing orte_restart" },
 
     { NULL,
-      's', NULL, "seq", 
+      's', NULL, "seq",
       1,
       &orte_restart_globals.seq_number, OPAL_CMD_LINE_TYPE_INT,
       "The sequence number of the checkpoint to start from. "
       "(Default: -1, or most recent)" },
 
     { NULL,
-      '\0', "hostfile", "hostfile", 
+      '\0', "hostfile", "hostfile",
       1,
       &orte_restart_globals.hostfile, OPAL_CMD_LINE_TYPE_STRING,
       "Provide a hostfile to use for launch" },
 
     { NULL,
-      '\0', "machinefile", "machinefile", 
+      '\0', "machinefile", "machinefile",
       1,
       &orte_restart_globals.hostfile, OPAL_CMD_LINE_TYPE_STRING,
       "Provide a hostfile to use for launch" },
 
     { NULL,
-      'i', NULL, "info", 
+      'i', NULL, "info",
       0,
       &orte_restart_globals.info_only, OPAL_CMD_LINE_TYPE_BOOL,
       "Display information about the checkpoint" },
 
     { NULL,
-      'a', NULL, "apponly", 
+      'a', NULL, "apponly",
       0,
       &orte_restart_globals.app_only, OPAL_CMD_LINE_TYPE_BOOL,
       "Only create the app context file, do not restart from it" },
 
     { NULL,
-      '\0', NULL, "showme", 
+      '\0', NULL, "showme",
       0,
       &orte_restart_globals.showme, OPAL_CMD_LINE_TYPE_BOOL,
       "Display the full command line that would have been exec'ed." },
 
     { NULL,
-      '\0', "mpirun_opts", "mpirun_opts", 
+      '\0', "mpirun_opts", "mpirun_opts",
       1,
       &orte_restart_globals.mpirun_opts, OPAL_CMD_LINE_TYPE_STRING,
       "Command line options to pass directly to mpirun (be sure to quote long strings, and escape internal quotes)" },
@@ -177,7 +177,7 @@ opal_cmd_line_init_t cmd_line_opts[] = {
 
     /* End of list */
     { NULL,
-      '\0', NULL, NULL, 
+      '\0', NULL, NULL,
       0,
       NULL, OPAL_CMD_LINE_TYPE_NULL,
       NULL }
@@ -267,7 +267,7 @@ main(int argc, char *argv[])
         opal_output_verbose(10, orte_restart_globals.output,
                             "Restarting from file (%s)",
                             orte_restart_globals.snapshot_ref);
-        
+
         if( orte_restart_globals.forked ) {
             opal_output_verbose(10, orte_restart_globals.output,
                                 "\t Forking off a child");
@@ -356,13 +356,13 @@ static int initialize(int argc, char *argv[]) {
     /* we are never allowed to operate as a distributed tool,
      * so insist on the ess/tool component */
     opal_setenv("OMPI_MCA_ess", "tool", true, &environ);
-    
+
     /* Setup any ORTE stuff we might need */
     if (OPAL_SUCCESS != (ret = orte_init(&argc, &argv, ORTE_PROC_TOOL))) {
         exit_status = ret;
         goto cleanup;
     }
-    
+
     /* Unset these now that we no longer need them */
     opal_unsetenv(tmp_env_var, &environ);
     free(tmp_env_var);
@@ -429,13 +429,13 @@ static int parse_args(int argc, char *argv[])
     }
 #endif
 
-    /* Parse the command line options */    
+    /* Parse the command line options */
     opal_cmd_line_create(&cmd_line, cmd_line_opts);
-    
+
     mca_base_open();
     mca_base_cmd_line_setup(&cmd_line);
     ret = opal_cmd_line_parse(&cmd_line, true, argc, argv);
-    
+
     if (OPAL_SUCCESS != ret) {
         if (OPAL_ERR_SILENT != ret) {
             fprintf(stderr, "%s: command line error (%s)\n", argv[0],
@@ -458,11 +458,11 @@ static int parse_args(int argc, char *argv[])
         exit(0);
     }
 
-    /** 
-     * Put all of the MCA arguments in the environment 
+    /**
+     * Put all of the MCA arguments in the environment
      */
     mca_base_cmd_line_process_args(&cmd_line, &app_env, &global_env);
-    
+
     len = opal_argv_count(app_env);
     for(i = 0; i < len; ++i) {
         putenv(app_env[i]);
@@ -472,7 +472,7 @@ static int parse_args(int argc, char *argv[])
     for(i = 0; i < len; ++i) {
         putenv(global_env[i]);
     }
-    
+
     (void) mca_base_var_env_name("opal_cr_is_tool", &tmp_env_var);
     opal_setenv(tmp_env_var,
                 "1",
@@ -496,7 +496,7 @@ static int parse_args(int argc, char *argv[])
     free(argv0);
 
     orte_restart_globals.snapshot_ref = strdup(argv[0]);
-    if ( NULL == orte_restart_globals.snapshot_ref || 
+    if ( NULL == orte_restart_globals.snapshot_ref ||
          0 >= strlen(orte_restart_globals.snapshot_ref) ) {
         opal_show_help("help-orte-restart.txt", "invalid_filename", true,
                        "<none provided>");
@@ -509,7 +509,7 @@ static int parse_args(int argc, char *argv[])
     if(argc > 1) {
         orte_restart_globals.snapshot_ref = strdup(opal_argv_join(argv, ' '));
     }
-    
+
     return ORTE_SUCCESS;
 }
 
@@ -576,9 +576,9 @@ static int create_appfile(orte_sstore_base_global_snapshot_info_t *snapshot)
         item != opal_list_get_end(&snapshot->local_snapshots);
         item  = opal_list_get_next(item) ) {
         vpid_snapshot = (orte_sstore_base_local_snapshot_info_t*)item;
-        
+
         fprintf(appfile, "#\n");
-        fprintf(appfile, "# Old Process Name: %u.%u\n", 
+        fprintf(appfile, "# Old Process Name: %u.%u\n",
                 vpid_snapshot->process_name.jobid,
                 vpid_snapshot->process_name.vpid);
         fprintf(appfile, "#\n");
@@ -742,7 +742,7 @@ static int spawn_children(orte_sstore_base_global_snapshot_info_t *snapshot, pid
     /* To fork off a child */
     if( orte_restart_globals.forked ) {
         *child_pid = fork();
-        
+
         if( 0 == *child_pid) {
             /* Child Process */
             status = execvp(strdup(argv[0]), argv);

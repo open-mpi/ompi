@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 2001 University of Chicago. 
+ *   Copyright (C) 2001 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -9,7 +9,7 @@
 #include "adioi.h"
 #include "adio_extern.h"
 
-void ADIOI_TESTFS_Fcntl(ADIO_File fd, int flag, ADIO_Fcntl_t *fcntl_struct, 
+void ADIOI_TESTFS_Fcntl(ADIO_File fd, int flag, ADIO_Fcntl_t *fcntl_struct,
 			int *error_code)
 {
     int myrank, nprocs;
@@ -19,7 +19,7 @@ void ADIOI_TESTFS_Fcntl(ADIO_File fd, int flag, ADIO_Fcntl_t *fcntl_struct,
 
     MPI_Comm_size(fd->comm, &nprocs);
     MPI_Comm_rank(fd->comm, &myrank);
-    FPRINTF(stdout, "[%d/%d] ADIOI_TESTFS_Fcntl called on %s\n", 
+    FPRINTF(stdout, "[%d/%d] ADIOI_TESTFS_Fcntl called on %s\n",
 	    myrank, nprocs, fd->filename);
 
     switch(flag) {
@@ -40,7 +40,7 @@ void ADIOI_TESTFS_Fcntl(ADIO_File fd, int flag, ADIO_Fcntl_t *fcntl_struct,
     default:
 	/* --BEGIN ERROR HANDLING-- */
 	*error_code = MPIO_Err_create_code(MPI_SUCCESS, MPIR_ERR_RECOVERABLE,
-					   myname, __LINE__, 
+					   myname, __LINE__,
 					   MPI_ERR_ARG,
 					   "**flag", "**flag %d", flag);
 	return;

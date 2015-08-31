@@ -3,9 +3,9 @@
  *                         All rights reserved.
  * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -31,7 +31,7 @@ SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
         shmem_set_cache_inv_,
         shmem_set_cache_inv__,
         shmem_set_cache_inv_f,
-        (void), 
+        (void),
         ())
 
 SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
@@ -39,7 +39,7 @@ SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
         shmem_set_cache_line_inv_,
         shmem_set_cache_line_inv__,
         shmem_set_cache_line_inv_f,
-        (FORTRAN_POINTER_T target), 
+        (FORTRAN_POINTER_T target),
         (target))
 
 SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
@@ -47,7 +47,7 @@ SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
         shmem_clear_cache_inv_,
         shmem_clear_cache_inv__,
         shmem_clear_cache_inv_f,
-        (void), 
+        (void),
         ())
 
 SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
@@ -55,7 +55,7 @@ SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
         shmem_clear_cache_line_inv_,
         shmem_clear_cache_line_inv__,
         shmem_clear_cache_line_inv_f,
-        (FORTRAN_POINTER_T target), 
+        (FORTRAN_POINTER_T target),
         (target))
 
 SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
@@ -63,7 +63,7 @@ SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
         shmem_udcflush_,
         shmem_udcflush__,
         shmem_udcflush_f,
-        (void), 
+        (void),
         ())
 
 SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
@@ -71,7 +71,7 @@ SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
         shmem_udcflush_line_,
         shmem_udcflush_line__,
         shmem_udcflush_line_f,
-        (FORTRAN_POINTER_T target), 
+        (FORTRAN_POINTER_T target),
         (target))
 
 void shmem_set_cache_inv_f(void)

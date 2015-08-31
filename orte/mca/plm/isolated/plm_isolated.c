@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007-2012 Los Alamos National Security, LLC.  All rights
- *                         reserved. 
+ *                         reserved.
  * Copyright (c) 2008-2009 Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2011      IBM Corporation.  All rights reserved.
  * Copyright (c) 2014      Intel, Inc.  All rights reserved.
@@ -73,19 +73,19 @@ static void launch_daemons(int fd, short args, void *cbdata);
 static int isolated_init(void)
 {
     int rc;
-    
+
     /* point to our launch command */
     if (ORTE_SUCCESS != (rc = orte_state.add_job_state(ORTE_JOB_STATE_LAUNCH_DAEMONS,
                                                        launch_daemons, ORTE_SYS_PRI))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
-    
+
     /* start the recvs */
     if (ORTE_SUCCESS != (rc = orte_plm_base_comm_start())) {
         ORTE_ERROR_LOG(rc);
     }
-    
+
     return rc;
 }
 
@@ -135,11 +135,11 @@ static int isolated_terminate_orteds(void)
 static int isolated_finalize(void)
 {
     int rc;
-    
+
     /* cleanup any pending recvs */
     if (ORTE_SUCCESS != (rc = orte_plm_base_comm_stop())) {
         ORTE_ERROR_LOG(rc);
     }
-    
+
     return rc;
 }

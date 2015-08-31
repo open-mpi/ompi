@@ -3,9 +3,9 @@
  *                         All rights reserved.
  * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -32,7 +32,7 @@ SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
         shmem_broadcast4_,
         shmem_broadcast4__,
         shmem_broadcast4_f,
-        (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *nlong, MPI_Fint *PE_root, MPI_Fint *PE_start, MPI_Fint * logPE_stride, MPI_Fint *PE_size, FORTRAN_POINTER_T pSync), 
+        (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *nlong, MPI_Fint *PE_root, MPI_Fint *PE_start, MPI_Fint * logPE_stride, MPI_Fint *PE_size, FORTRAN_POINTER_T pSync),
         (target, source, nlong, PE_root, PE_start, logPE_stride, PE_size, pSync))
 
 SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
@@ -40,7 +40,7 @@ SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
         shmem_broadcast8_,
         shmem_broadcast8__,
         shmem_broadcast8_f,
-        (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *nlong, MPI_Fint *PE_root, MPI_Fint *PE_start, MPI_Fint * logPE_stride, MPI_Fint *PE_size, FORTRAN_POINTER_T pSync), 
+        (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *nlong, MPI_Fint *PE_root, MPI_Fint *PE_start, MPI_Fint * logPE_stride, MPI_Fint *PE_size, FORTRAN_POINTER_T pSync),
         (target, source, nlong, PE_root, PE_start, logPE_stride, PE_size, pSync))
 
 SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
@@ -48,7 +48,7 @@ SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
         shmem_broadcast32_,
         shmem_broadcast32__,
         shmem_broadcast32_f,
-        (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *nlong, MPI_Fint *PE_root, MPI_Fint *PE_start, MPI_Fint * logPE_stride, MPI_Fint *PE_size, FORTRAN_POINTER_T pSync), 
+        (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *nlong, MPI_Fint *PE_root, MPI_Fint *PE_start, MPI_Fint * logPE_stride, MPI_Fint *PE_size, FORTRAN_POINTER_T pSync),
         (target, source, nlong, PE_root, PE_start, logPE_stride, PE_size, pSync))
 
 SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
@@ -56,7 +56,7 @@ SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
         shmem_broadcast64_,
         shmem_broadcast64__,
         shmem_broadcast64_f,
-        (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *nlong, MPI_Fint *PE_root, MPI_Fint *PE_start, MPI_Fint * logPE_stride, MPI_Fint *PE_size, FORTRAN_POINTER_T pSync), 
+        (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *nlong, MPI_Fint *PE_root, MPI_Fint *PE_start, MPI_Fint * logPE_stride, MPI_Fint *PE_size, FORTRAN_POINTER_T pSync),
         (target, source, nlong, PE_root, PE_start, logPE_stride, PE_size, pSync))
 
 #define SHMEM_BROADCAST(F_NAME, T_NAME, OSHMEM_GROUP_CACHE_ENABLED) void F_NAME(FORTRAN_POINTER_T target, \

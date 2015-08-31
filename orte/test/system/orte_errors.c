@@ -24,7 +24,7 @@ int main(int argc, char* argv[])
     }
 
     for (i=0; ORTE_ERR_MAX < i; i--) {
-        fprintf(stderr, "%d: %s\n", -1*i, 
+        fprintf(stderr, "%d: %s\n", -1*i,
                 (NULL == ORTE_ERROR_NAME(i)) ? "NULL" : ORTE_ERROR_NAME(i));
     }
 

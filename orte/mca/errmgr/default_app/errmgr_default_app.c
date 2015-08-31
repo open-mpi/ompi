@@ -2,7 +2,7 @@
  * Copyright (c) 2009-2011 The Trustees of Indiana University.
  *                         All rights reserved.
  *
- * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved. 
+ * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
  *
  * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
@@ -10,9 +10,9 @@
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -112,7 +112,7 @@ static void proc_errors(int fd, short args, void *cbdata)
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(&caddy->name),
                          orte_proc_state_to_str(caddy->proc_state)));
-    
+
     /*
      * if orte is trying to shutdown, just let it
      */

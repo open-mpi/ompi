@@ -2,9 +2,9 @@
  * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
  * Copyright (c) 2012-2013 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -28,8 +28,8 @@
 static const char FUNC_NAME[] = "MPI_Mrecv";
 
 
-int MPI_Mrecv(void *buf, int count, MPI_Datatype type, 
-              MPI_Message *message, MPI_Status *status) 
+int MPI_Mrecv(void *buf, int count, MPI_Datatype type,
+              MPI_Message *message, MPI_Status *status)
 {
     int rc = MPI_SUCCESS;
     ompi_communicator_t *comm;
@@ -45,7 +45,7 @@ int MPI_Mrecv(void *buf, int count, MPI_Datatype type,
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         OMPI_CHECK_DATATYPE_FOR_RECV(rc, type, count);
         OMPI_CHECK_USER_BUFFER(rc, buf, type, count);
-        
+
         if (NULL == message || MPI_MESSAGE_NULL == *message) {
             rc = MPI_ERR_REQUEST;
             comm = MPI_COMM_NULL;

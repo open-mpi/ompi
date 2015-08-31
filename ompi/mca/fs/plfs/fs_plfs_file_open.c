@@ -5,15 +5,15 @@
  * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2014 University of Houston. All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -39,7 +39,7 @@
  *	Returns:	- Success if new file handle
  */
 int
-mca_fs_plfs_file_open (struct ompi_communicator_t *comm, 
+mca_fs_plfs_file_open (struct ompi_communicator_t *comm,
                      char* filename,
                      int access_mode,
                      struct ompi_info_t *info,
@@ -58,7 +58,7 @@ mca_fs_plfs_file_open (struct ompi_communicator_t *comm,
 
     getcwd( wpath, sizeof(wpath) );
     sprintf( wpath,"%s/%s",wpath,filename );
-    
+
     if (OMPIO_PERM_NULL == fh->f_perm) {
         old_mask = umask(022);
         umask(old_mask);
@@ -76,7 +76,7 @@ mca_fs_plfs_file_open (struct ompi_communicator_t *comm,
         amode = amode | O_WRONLY;
     if (access_mode & MPI_MODE_RDWR)
         amode = amode | O_RDWR;
-    if (access_mode & MPI_MODE_EXCL) { 
+    if (access_mode & MPI_MODE_EXCL) {
         if( is_plfs_path(wpath) == 1 ) { //the file already exists
 	    return OMPI_ERROR;
 	}
@@ -90,7 +90,7 @@ mca_fs_plfs_file_open (struct ompi_communicator_t *comm,
 	plfs_ret = plfs_open( &pfd, wpath, amode, 0, perm, NULL );
 	fh->f_fs_ptr = pfd;
     }
-    
+
     comm->c_coll.coll_bcast ( &plfs_ret, 1, MPI_INT, 0, comm, comm->c_coll.coll_bcast_module);
     if ( PLFS_SUCCESS != plfs_ret ) {
         return OMPI_ERROR;
@@ -100,12 +100,12 @@ mca_fs_plfs_file_open (struct ompi_communicator_t *comm,
         plfs_ret = plfs_open( &pfd, wpath, amode, 0, perm, NULL );
 	if (PLFS_SUCCESS != plfs_ret) {
 	    opal_output(0, "fs_plfs_file_open: Error in plfs_open:\n%s\n", strplfserr(plfs_ret));
-	    return OMPI_ERROR; 
+	    return OMPI_ERROR;
 	}
 	else {
 	    fh->f_fs_ptr = pfd;
 	}
-    }    
+    }
 
     if (mca_fs_plfs_num_hostdir > 0) {
         plfs_ret = plfs_setxattr( pfd, &mca_fs_plfs_num_hostdir, key, len );

@@ -597,7 +597,7 @@ if test "$enable_epoll" != "no" ; then
         # the libevent library.  Badness ensues.  Therefore, check to
         # see that this struct gets correctly passed between userspace
         # and the kernel.
-        
+
         # In this test, we use epoll in Level Triggered mode. We create
         # a pipe and the write only file descriptor of the pipe is
         # added to the epoll set. The test is successful if
@@ -689,7 +689,7 @@ main(int argc, char **argv)
     memset(&epevin.data.ptr, 5, sizeof(epevin.data.ptr));
     epevin.events = EPOLLIN | EPOLLOUT;
 
-    if (syscall(__NR_epoll_ctl, epfd, 
+    if (syscall(__NR_epoll_ctl, epfd,
         EPOLL_CTL_ADD, fildes[[1]], &epevin) == -1)
         exit(1);
 

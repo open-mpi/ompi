@@ -7,9 +7,9 @@
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -92,7 +92,7 @@ enum {
 };
 
 /**
- * Find a list of ibv_device ports that match a specific criteria. 
+ * Find a list of ibv_device ports that match a specific criteria.
  *
  * @param if_include (IN): comma-delimited list of interfaces to use
  * @param if_exclude (IN): comma-delimited list of interfaces to NOT use
@@ -122,8 +122,8 @@ enum {
  * port_items referring to it have been freed).
  */
 OPAL_DECLSPEC opal_list_t *
-opal_common_verbs_find_ports(const char *if_include, 
-                             const char *if_exclude, 
+opal_common_verbs_find_ports(const char *if_include,
+                             const char *if_exclude,
                              int flags,
                              int verbose_stream);
 
@@ -163,7 +163,7 @@ opal_common_verbs_find_max_inline(struct ibv_device *device,
  * Flags can be the logical OR of OPAL_COMMON_VERBS_FLAGS_RC and/or
  * OPAL_COMMON_VERBS_FLAGS_UD.  All other values are ignored.
  */
-OPAL_DECLSPEC int opal_common_verbs_qp_test(struct ibv_context *device_context, 
+OPAL_DECLSPEC int opal_common_verbs_qp_test(struct ibv_context *device_context,
                                             int flags);
 /*
  * ibv_fork_init testing - if fork support is requested then ibv_fork_init

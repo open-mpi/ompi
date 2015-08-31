@@ -5,14 +5,14 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -36,7 +36,7 @@
  * may help the gentle reader to consider this an inverse comparison.
  * :-)
  */
-int 
+int
 mca_base_component_compare_priority(mca_base_component_priority_list_item_t *a,
                                     mca_base_component_priority_list_item_t *b)
 {
@@ -53,7 +53,7 @@ mca_base_component_compare_priority(mca_base_component_priority_list_item_t *a,
 }
 
 
-int mca_base_component_compare(const mca_base_component_t* aa, 
+int mca_base_component_compare(const mca_base_component_t* aa,
                                const mca_base_component_t* bb)
 {
     int val;
@@ -72,22 +72,22 @@ int mca_base_component_compare(const mca_base_component_t* aa,
 
     /* The names were equal, so compare the versions */
 
-    if (aa->mca_component_major_version > 
+    if (aa->mca_component_major_version >
         bb->mca_component_major_version) {
       return -1;
-    } else if (aa->mca_component_major_version < 
+    } else if (aa->mca_component_major_version <
                bb->mca_component_major_version) {
       return 1;
-    } else if (aa->mca_component_minor_version > 
+    } else if (aa->mca_component_minor_version >
                bb->mca_component_minor_version) {
       return -1;
-    } else if (aa->mca_component_minor_version < 
+    } else if (aa->mca_component_minor_version <
                bb->mca_component_minor_version) {
       return 1;
-    } else if (aa->mca_component_release_version > 
+    } else if (aa->mca_component_release_version >
                bb->mca_component_release_version) {
       return -1;
-    } else if (aa->mca_component_release_version < 
+    } else if (aa->mca_component_release_version <
                bb->mca_component_release_version) {
       return 1;
     }
@@ -97,11 +97,11 @@ int mca_base_component_compare(const mca_base_component_t* aa,
 
 
 /**
- * compare but exclude the release version - declare compatible 
+ * compare but exclude the release version - declare compatible
  * if the major/minor version are the same.
  */
 int mca_base_component_compatible(
-    const mca_base_component_t* aa, 
+    const mca_base_component_t* aa,
     const mca_base_component_t* bb)
 {
     int val;
@@ -120,16 +120,16 @@ int mca_base_component_compatible(
 
     /* The names were equal, so compare the versions */
 
-    if (aa->mca_component_major_version > 
+    if (aa->mca_component_major_version >
         bb->mca_component_major_version) {
       return -1;
-    } else if (aa->mca_component_major_version < 
+    } else if (aa->mca_component_major_version <
                bb->mca_component_major_version) {
       return 1;
-    } else if (aa->mca_component_minor_version > 
+    } else if (aa->mca_component_minor_version >
                bb->mca_component_minor_version) {
       return -1;
-    } else if (aa->mca_component_minor_version < 
+    } else if (aa->mca_component_minor_version <
                bb->mca_component_minor_version) {
       return 1;
     }
@@ -142,7 +142,7 @@ int mca_base_component_compatible(
  */
 char * mca_base_component_to_string(const mca_base_component_t *a) {
     char * str = NULL;
-    if(0 > asprintf(&str, "%s.%s.%d.%d", a->mca_type_name, 
+    if(0 > asprintf(&str, "%s.%s.%d.%d", a->mca_type_name,
                     a->mca_component_name, a->mca_component_major_version,
                     a->mca_component_minor_version)) {
         return NULL;

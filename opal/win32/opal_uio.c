@@ -37,7 +37,7 @@ int writev( int fd, struct iovec * iov, int cnt )
       return err;
    }
    return (int) sendlen;
-} 
+}
 
 
 int readv( int fd, struct iovec * iov, int cnt )
@@ -52,5 +52,5 @@ int readv( int fd, struct iovec * iov, int cnt )
 	   return err;
    }
    return (int) recvlen;
-} 
+}
 

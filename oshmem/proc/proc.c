@@ -12,9 +12,9 @@
 
 #include "oshmem_config.h"
 #include "oshmem/proc/proc.h"
-#include "oshmem/constants.h" 
-#include "oshmem/runtime/runtime.h" 
-#include "oshmem/mca/scoll/base/base.h" 
+#include "oshmem/constants.h"
+#include "oshmem/runtime/runtime.h"
+#include "oshmem/mca/scoll/base/base.h"
 
 #ifdef HAVE_STRINGS_H
 #include <strings.h>

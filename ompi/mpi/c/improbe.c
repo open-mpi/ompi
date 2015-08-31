@@ -3,9 +3,9 @@
  * Copyright (c) 2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -29,7 +29,7 @@
 static const char FUNC_NAME[] = "MPI_Improbe";
 
 
-int MPI_Improbe(int source, int tag, MPI_Comm comm, int *flag, 
+int MPI_Improbe(int source, int tag, MPI_Comm comm, int *flag,
                 MPI_Message *message, MPI_Status *status)
 {
     int rc;
@@ -45,7 +45,7 @@ int MPI_Improbe(int source, int tag, MPI_Comm comm, int *flag,
             rc = MPI_ERR_TAG;
         } else if (ompi_comm_invalid(comm)) {
             rc = MPI_ERR_COMM;
-        } else if ((source != MPI_ANY_SOURCE) && 
+        } else if ((source != MPI_ANY_SOURCE) &&
                    (MPI_PROC_NULL != source) &&
                    ompi_comm_peer_invalid(comm, source)) {
             rc = MPI_ERR_RANK;

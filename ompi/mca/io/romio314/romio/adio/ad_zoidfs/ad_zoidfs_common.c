@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
- *   Copyright (C) 2003 University of Chicago. 
+/*
+ *   Copyright (C) 2003 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -34,7 +34,7 @@ void ADIOI_ZOIDFS_End(int *error_code)
     *error_code = MPI_SUCCESS;
 }
 
-int ADIOI_ZOIDFS_End_call(MPI_Comm comm, int keyval, 
+int ADIOI_ZOIDFS_End_call(MPI_Comm comm, int keyval,
 			 void *attribute_val, void *extra_state)
 {
     int error_code;
@@ -64,10 +64,10 @@ void ADIOI_ZOIDFS_Init(int rank, int *error_code )
 					   0);
 	return;
     }
-    
+
     MPI_Keyval_create(MPI_NULL_COPY_FN, ADIOI_ZOIDFS_End_call,
-		      &ADIOI_ZOIDFS_Initialized, (void *)0); 
-    /* just like romio does, we make a dummy attribute so we 
+		      &ADIOI_ZOIDFS_Initialized, (void *)0);
+    /* just like romio does, we make a dummy attribute so we
      * get cleaned up */
     MPI_Attr_put(MPI_COMM_SELF, ADIOI_ZOIDFS_Initialized, (void *)0);
 }
@@ -121,6 +121,6 @@ int ADIOI_ZOIDFS_error_convert(int error)
     }
 }
 
-/* 
- * vim: ts=8 sts=4 sw=4 noexpandtab 
+/*
+ * vim: ts=8 sts=4 sw=4 noexpandtab
  */

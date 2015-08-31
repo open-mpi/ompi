@@ -63,9 +63,9 @@ struct mca_btl_smcuda_segment_t {
 #if OPAL_CUDA_SUPPORT
     uint8_t key[128]; /* 64 bytes for CUDA mem handle, 64 bytes for CUDA event handle */
     /** Address of the entire memory handle */
-    opal_ptr_t memh_seg_addr;        
+    opal_ptr_t memh_seg_addr;
      /** Length in bytes of entire memory handle */
-    uint32_t memh_seg_len;           
+    uint32_t memh_seg_len;
 #endif /* OPAL_CUDA_SUPPORT */
 };
 typedef struct mca_btl_smcuda_segment_t mca_btl_smcuda_segment_t;

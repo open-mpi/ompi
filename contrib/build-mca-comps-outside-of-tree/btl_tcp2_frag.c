@@ -5,22 +5,22 @@
  * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  *
  * In windows, many of the socket functions return an EWOULDBLOCK
  * instead of \ things like EAGAIN, EINPROGRESS, etc. It has been
  * verified that this will \ not conflict with other error codes that
- * are returned by these functions \ under UNIX/Linux environments 
+ * are returned by these functions \ under UNIX/Linux environments
  */
 
 #include "ompi_config.h"
@@ -40,62 +40,62 @@
 
 #include "opal/opal_socket_errno.h"
 #include "ompi/mca/btl/base/btl_base_error.h"
-#include "btl_tcp2_frag.h" 
+#include "btl_tcp2_frag.h"
 #include "btl_tcp2_endpoint.h"
 
-static void mca_btl_tcp2_frag_common_constructor(mca_btl_tcp2_frag_t* frag) 
-{ 
+static void mca_btl_tcp2_frag_common_constructor(mca_btl_tcp2_frag_t* frag)
+{
     frag->base.des_src = NULL;
     frag->base.des_src_cnt = 0;
     frag->base.des_dst = NULL;
     frag->base.des_dst_cnt = 0;
 }
 
-static void mca_btl_tcp2_frag_eager_constructor(mca_btl_tcp2_frag_t* frag) 
-{ 
-    frag->size = mca_btl_tcp2_module.super.btl_eager_limit;   
+static void mca_btl_tcp2_frag_eager_constructor(mca_btl_tcp2_frag_t* frag)
+{
+    frag->size = mca_btl_tcp2_module.super.btl_eager_limit;
     frag->my_list = &mca_btl_tcp2_component.tcp_frag_eager;
-    mca_btl_tcp2_frag_common_constructor(frag); 
+    mca_btl_tcp2_frag_common_constructor(frag);
 }
 
-static void mca_btl_tcp2_frag_max_constructor(mca_btl_tcp2_frag_t* frag) 
-{ 
-    frag->size = mca_btl_tcp2_module.super.btl_max_send_size; 
+static void mca_btl_tcp2_frag_max_constructor(mca_btl_tcp2_frag_t* frag)
+{
+    frag->size = mca_btl_tcp2_module.super.btl_max_send_size;
     frag->my_list = &mca_btl_tcp2_component.tcp_frag_max;
-    mca_btl_tcp2_frag_common_constructor(frag); 
+    mca_btl_tcp2_frag_common_constructor(frag);
 }
 
-static void mca_btl_tcp2_frag_user_constructor(mca_btl_tcp2_frag_t* frag) 
-{ 
-    frag->size = 0; 
+static void mca_btl_tcp2_frag_user_constructor(mca_btl_tcp2_frag_t* frag)
+{
+    frag->size = 0;
     frag->my_list = &mca_btl_tcp2_component.tcp_frag_user;
-    mca_btl_tcp2_frag_common_constructor(frag); 
+    mca_btl_tcp2_frag_common_constructor(frag);
 }
 
 
 OBJ_CLASS_INSTANCE(
-    mca_btl_tcp2_frag_t, 
-    mca_btl_base_descriptor_t, 
-    NULL, 
-    NULL); 
+    mca_btl_tcp2_frag_t,
+    mca_btl_base_descriptor_t,
+    NULL,
+    NULL);
 
 OBJ_CLASS_INSTANCE(
-    mca_btl_tcp2_frag_eager_t, 
-    mca_btl_base_descriptor_t, 
-    mca_btl_tcp2_frag_eager_constructor, 
-    NULL); 
+    mca_btl_tcp2_frag_eager_t,
+    mca_btl_base_descriptor_t,
+    mca_btl_tcp2_frag_eager_constructor,
+    NULL);
 
 OBJ_CLASS_INSTANCE(
-    mca_btl_tcp2_frag_max_t, 
-    mca_btl_base_descriptor_t, 
-    mca_btl_tcp2_frag_max_constructor, 
-    NULL); 
+    mca_btl_tcp2_frag_max_t,
+    mca_btl_base_descriptor_t,
+    mca_btl_tcp2_frag_max_constructor,
+    NULL);
 
 OBJ_CLASS_INSTANCE(
-    mca_btl_tcp2_frag_user_t, 
-    mca_btl_base_descriptor_t, 
-    mca_btl_tcp2_frag_user_constructor, 
-    NULL); 
+    mca_btl_tcp2_frag_user_t,
+    mca_btl_base_descriptor_t,
+    mca_btl_tcp2_frag_user_constructor,
+    NULL);
 
 
 bool mca_btl_tcp2_frag_send(mca_btl_tcp2_frag_t* frag, int sd)
@@ -119,7 +119,7 @@ bool mca_btl_tcp2_frag_send(mca_btl_tcp2_frag_t* frag, int sd)
                 mca_btl_tcp2_endpoint_close(frag->endpoint);
                 return false;
             default:
-                BTL_ERROR(("mca_btl_tcp2_frag_send: writev failed: %s (%d)", 
+                BTL_ERROR(("mca_btl_tcp2_frag_send: writev failed: %s (%d)",
                            strerror(opal_socket_errno),
                            opal_socket_errno));
                 mca_btl_tcp2_endpoint_close(frag->endpoint);
@@ -185,7 +185,7 @@ bool mca_btl_tcp2_frag_recv(mca_btl_tcp2_frag_t* frag, int sd)
      * iovec for the caching in the fragment structure (the +1).
      */
     frag->iov_ptr[num_vecs].iov_base = btl_endpoint->endpoint_cache_pos;
-    frag->iov_ptr[num_vecs].iov_len  = 
+    frag->iov_ptr[num_vecs].iov_len  =
         mca_btl_tcp2_component.tcp_endpoint_cache - btl_endpoint->endpoint_cache_length;
     num_vecs++;
 #endif  /* MCA_BTL_TCP_ENDPOINT_CACHE */
@@ -211,7 +211,7 @@ bool mca_btl_tcp2_frag_recv(mca_btl_tcp2_frag_t* frag, int sd)
 	    mca_btl_tcp2_endpoint_close(btl_endpoint);
 	    return false;
 	default:
-            BTL_ERROR(("mca_btl_tcp2_frag_recv: readv failed: %s (%d)", 
+            BTL_ERROR(("mca_btl_tcp2_frag_recv: readv failed: %s (%d)",
                        strerror(opal_socket_errno),
                        opal_socket_errno));
 	    mca_btl_tcp2_endpoint_close(btl_endpoint);
@@ -251,7 +251,7 @@ bool mca_btl_tcp2_frag_recv(mca_btl_tcp2_frag_t* frag, int sd)
                 frag->iov[1].iov_len = frag->hdr.size;
                 frag->iov_cnt++;
 #ifndef __sparc
-                /* The following cannot be done for sparc code 
+                /* The following cannot be done for sparc code
                  * because it causes alignment errors when accessing
                  * structures later on in the btl and pml code.
                  */

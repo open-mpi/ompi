@@ -61,7 +61,7 @@ mca_btl_portals4_component_t mca_btl_portals4_component = {
           /* The component is not checkpoint ready */
           .param_field = MCA_BASE_METADATA_PARAM_NONE
       },
-      
+
       .btl_init = mca_btl_portals4_component_init,
       .btl_progress = mca_btl_portals4_component_progress,
     }
@@ -435,7 +435,7 @@ static mca_btl_base_module_t** mca_btl_portals4_component_init(int *num_btls,
     ptl_process_ids = NULL;
 
     btls = malloc(mca_btl_portals4_component.num_btls * sizeof(mca_btl_portals4_module_t*) );
-    memcpy(btls , mca_btl_portals4_component.btls, 
+    memcpy(btls , mca_btl_portals4_component.btls,
             mca_btl_portals4_component.num_btls*sizeof(mca_btl_portals4_module_t*) );
 
     opal_output_verbose(1, opal_btl_base_framework.framework_output, "The btl portals4 component has been initialized and uses %d NI(s)",
@@ -716,7 +716,7 @@ mca_btl_portals4_component_progress(void)
                     frag->md_h = PTL_INVALID_HANDLE;
 
                     OPAL_BTL_PORTALS4_FRAG_RETURN_USER(&portals4_btl->super, frag);
-                    OPAL_THREAD_ADD32(&portals4_btl->portals_outstanding_ops, -1); 
+                    OPAL_THREAD_ADD32(&portals4_btl->portals_outstanding_ops, -1);
                     OPAL_OUTPUT_VERBOSE((90, opal_btl_base_framework.framework_output,
                         "PTL_EVENT_REPLY: Decrementing portals_outstanding_ops=%d\n", portals4_btl->portals_outstanding_ops));
                     goto done;

@@ -6,7 +6,7 @@
   * Copyright (c) 2004-2007 The University of Tennessee and The University
   *                         of Tennessee Research Foundation.  All rights
   *                         reserved.
-  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
   *                         University of Stuttgart.  All rights reserved.
   * Copyright (c) 2004-2005 The Regents of the University of California.
   *                         All rights reserved.
@@ -15,9 +15,9 @@
   * Copyright (c) 2009      IBM Corporation.  All rights reserved.
   *
   * $COPYRIGHT$
-  * 
+  *
   * Additional copyrights may follow
-  * 
+  *
   * $HEADER$
   */
 /**
@@ -28,26 +28,26 @@
 #define MCA_RCACHE_VMA_H
 #include "opal_config.h"
 #include "opal/mca/mca.h"
-#include "opal/class/opal_list.h" 
+#include "opal/class/opal_list.h"
 #include "opal/class/opal_rb_tree.h"
 #include "opal/mca/rcache/rcache.h"
 
 BEGIN_C_DECLS
 
-struct mca_rcache_vma_module_t { 
+struct mca_rcache_vma_module_t {
     mca_rcache_base_module_t base;
     opal_rb_tree_t rb_tree;
     opal_list_t vma_list;
     opal_list_t vma_delete_list;
     size_t reg_cur_cache_size;
 };
-typedef struct mca_rcache_vma_module_t mca_rcache_vma_module_t; 
+typedef struct mca_rcache_vma_module_t mca_rcache_vma_module_t;
 
 
-struct mca_rcache_vma_component_t { 
-    mca_rcache_base_component_t super; 
+struct mca_rcache_vma_component_t {
+    mca_rcache_base_component_t super;
 };
-typedef struct mca_rcache_vma_component_t mca_rcache_vma_component_t; 
+typedef struct mca_rcache_vma_component_t mca_rcache_vma_component_t;
 
 OPAL_DECLSPEC extern mca_rcache_vma_component_t mca_rcache_vma_component;
 

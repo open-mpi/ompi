@@ -7,9 +7,9 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -56,12 +56,12 @@ ompi_message_init(void)
 
     ompi_message_null.message.req_ptr = NULL;
     ompi_message_null.message.count = 0;
-    ompi_message_null.message.m_f_to_c_index = 
+    ompi_message_null.message.m_f_to_c_index =
         opal_pointer_array_add(&ompi_message_f_to_c_table, &ompi_message_null);
 
     OBJ_CONSTRUCT(&ompi_message_no_proc, ompi_message_t);
     ompi_message_no_proc.message.m_f_to_c_index =
-        opal_pointer_array_add(&ompi_message_f_to_c_table, 
+        opal_pointer_array_add(&ompi_message_f_to_c_table,
                                &ompi_message_no_proc);
     if (1 != ompi_message_no_proc.message.m_f_to_c_index) {
         return OMPI_ERR_NOT_FOUND;

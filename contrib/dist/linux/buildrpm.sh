@@ -4,7 +4,7 @@
 #                         University Research and Technology
 #                         Corporation.  All rights reserved.
 # Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
-# 
+#
 
 #
 # General config vars
@@ -95,7 +95,7 @@ echo "--> Found specfile: $specfile"
 
 rpmtopdir=${rpmtopdir:-"`grep %_topdir $HOME/.rpmmacros | awk '{ print $2 }'`"}
 if test "$rpmtopdir" != ""; then
-	rpmbuild_options="$rpmbuild_options --define '_topdir $rpmtopdir'" 
+	rpmbuild_options="$rpmbuild_options --define '_topdir $rpmtopdir'"
     if test ! -d "$rpmtopdir"; then
 	mkdir -p "$rpmtopdir"
 	mkdir -p "$rpmtopdir/BUILD"

@@ -3,20 +3,20 @@
  *                         All rights reserved.
  * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
  *                         All rights reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
 /**
  * @file
- * 
+ *
  * BLCR CRS component
  *
  */
@@ -58,13 +58,13 @@ BEGIN_C_DECLS
     /*
      * Actual funcationality
      */
-    int opal_crs_blcr_checkpoint( pid_t pid, 
+    int opal_crs_blcr_checkpoint( pid_t pid,
                                   opal_crs_base_snapshot_t *snapshot,
                                   opal_crs_base_ckpt_options_t *options,
                                   opal_crs_state_type_t    *state);
 
-    int opal_crs_blcr_restart(    opal_crs_base_snapshot_t *snapshot, 
-                                  bool spawn_child, 
+    int opal_crs_blcr_restart(    opal_crs_base_snapshot_t *snapshot,
+                                  bool spawn_child,
                                   pid_t *child_pid);
 
     int opal_crs_blcr_disable_checkpoint(void);

@@ -198,13 +198,13 @@ static int hcoll_register(void)
     CHECK(reg_int("np",NULL,
                   "Minimal number of processes in the communicator"
                   " for the corresponding hcoll context to be created (default: 32)",
-                  2, 
+                  2,
                   &mca_coll_hcoll_component.hcoll_np,
                   0));
 
     CHECK(reg_int("datatype_fallback",NULL,
                   "[1|0|] Enable/Disable user defined dattypes fallback",
-                  1, 
+                  1,
                   &mca_coll_hcoll_component.hcoll_datatype_fallback,
                   0));
 

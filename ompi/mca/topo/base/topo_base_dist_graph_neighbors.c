@@ -19,7 +19,7 @@
 #include "ompi/mca/topo/base/base.h"
 
 
-int mca_topo_base_dist_graph_neighbors(ompi_communicator_t *comm, 
+int mca_topo_base_dist_graph_neighbors(ompi_communicator_t *comm,
                                        int maxindegree,
                                        int sources[], int sourceweights[],
                                        int maxoutdegree, int destinations[],

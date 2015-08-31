@@ -5,15 +5,15 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -64,7 +64,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_WIN_GET_ERRHANDLER,
 #include "ompi/mpi/fortran/mpif-h/profile/defines.h"
 #endif
 
-void ompi_win_get_errhandler_f(MPI_Fint *win, MPI_Fint *errhandler, 
+void ompi_win_get_errhandler_f(MPI_Fint *win, MPI_Fint *errhandler,
 			      MPI_Fint *ierr)
 {
     int c_ierr;

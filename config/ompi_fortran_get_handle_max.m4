@@ -6,15 +6,15 @@ dnl                         Corporation.  All rights reserved.
 dnl Copyright (c) 2004-2005 The University of Tennessee and The University
 dnl                         of Tennessee Research Foundation.  All rights
 dnl                         reserved.
-dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
 dnl $COPYRIGHT$
-dnl 
+dnl
 dnl Additional copyrights may follow
-dnl 
+dnl
 dnl $HEADER$
 dnl
 
@@ -24,13 +24,13 @@ dnl
 # min(INT_MAX, max fortran INTEGER).  This represents the maximum
 # number of fortran MPI handle index.
 AC_DEFUN([OMPI_FORTRAN_GET_HANDLE_MAX],[
-    AS_VAR_PUSHDEF([fortran_handle_max_var], 
+    AS_VAR_PUSHDEF([fortran_handle_max_var],
                    [ompi_cv_fortran_handle_max])
 
     AC_CACHE_CHECK([for max Fortran MPI handle index],
         fortran_handle_max_var,
         [ # Find max fortran INTEGER value.  Set to sentinel value if we don't
-         # have a Fortran compiler (e.g., if --disable-fortran was given). 
+         # have a Fortran compiler (e.g., if --disable-fortran was given).
          if test $ompi_fortran_happy -eq 0; then
              ompi_fint_max=0
          else
@@ -46,8 +46,8 @@ AC_DEFUN([OMPI_FORTRAN_GET_HANDLE_MAX],[
 ]],[[FILE *fp = fopen("conftest.out", "w");
 long cint = INT_MAX;
 fprintf(fp, "%ld", cint);
-fclose(fp);]])], 
-             [ompi_cint_max=`cat conftest.out`], 
+fclose(fp);]])],
+             [ompi_cint_max=`cat conftest.out`],
              [ompi_cint_max=0],
              [ #cross compiling is fun.  compute INT_MAX same as INTEGER max
               OPAL_COMPUTE_MAX_VALUE([$ac_cv_sizeof_int], [ompi_cint_max])])
@@ -71,7 +71,7 @@ fclose(fp);]])],
              fi
           fi
           AS_VAR_SET(fortran_handle_max_var, [$value])
-          rm -f conftest.out > /dev/null 2>&1 
+          rm -f conftest.out > /dev/null 2>&1
           unset value])
 
     AS_VAR_COPY([ompi_fortran_handle_max], [fortran_handle_max_var])

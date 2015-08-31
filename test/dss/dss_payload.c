@@ -73,13 +73,13 @@ static bool test1(void)        /* verify dss_copy_payload */
     int16_t dst[NUM_ELEMS];
     int32_t src32[NUM_ELEMS];
     int32_t dst32[NUM_ELEMS];
-    
+
     /* init src arrays */
     for (i=0; i < NUM_ELEMS; i++) {
         src[i] = i;
         src32[i] = 132 * i;
     }
-    
+
     /* init A */
     bufA = OBJ_NEW(opal_buffer_t);
     if (NULL == bufA) {
@@ -88,7 +88,7 @@ static bool test1(void)        /* verify dss_copy_payload */
     }
 
     opal_dss.set_buffer_type(bufA, OPAL_DSS_BUFFER_NON_DESC);
-    
+
     /* pack something in A */
     for (i=0;i<NUM_ITERS;i++) {
         rc = opal_dss.pack(bufA, src, NUM_ELEMS, OPAL_INT16);
@@ -97,16 +97,16 @@ static bool test1(void)        /* verify dss_copy_payload */
             return(false);
         }
     }
-    
+
     /* setup bufB */
     bufB = OBJ_NEW(opal_buffer_t);
     if (NULL == bufB) {
         fprintf(test_out, "orte_buffer failed init in OBJ_NEW\n");
         return false;
     }
-    
+
     opal_dss.set_buffer_type(bufB, OPAL_DSS_BUFFER_NON_DESC);
-    
+
     /* pack something in B */
     for (i=0;i<NUM_ITERS;i++) {
         rc = opal_dss.pack(bufB, src32, NUM_ELEMS, OPAL_INT32);
@@ -115,13 +115,13 @@ static bool test1(void)        /* verify dss_copy_payload */
             return(false);
         }
     }
-    
+
     /* copy payload to bufB */
     if (OPAL_SUCCESS != (rc = opal_dss.copy_payload(bufB, bufA))) {
         fprintf(test_out, "opal_dss.copy_payload failed with return code %d\n", rc);
         return(false);
     }
-    
+
     /* pack some more stuff in B */
     for (i=0;i<NUM_ITERS;i++) {
         rc = opal_dss.pack(bufB, src32, NUM_ELEMS, OPAL_INT32);
@@ -130,22 +130,22 @@ static bool test1(void)        /* verify dss_copy_payload */
             return(false);
         }
     }
-    
+
     /* validate the results */
     for (i=0; i<NUM_ITERS; i++) {
         int j;
         int32_t count;
-        
+
         for(j=0; j<NUM_ELEMS; j++)
             dst32[j] = -1;
-        
+
         count = NUM_ELEMS;
         rc = opal_dss.unpack(bufB, dst32, &count, OPAL_INT32);
         if (OPAL_SUCCESS != rc || count != NUM_ELEMS) {
             fprintf(test_out, "opal_dss.unpack of dest buffer failed with return code %d\n", rc);
             return(false);
         }
-        
+
         for(j=0; j<NUM_ELEMS; j++) {
             if(src32[j] != dst32[j]) {
                 fprintf(test_out, "test2: invalid results from unpack of dest buffer\n");
@@ -153,21 +153,21 @@ static bool test1(void)        /* verify dss_copy_payload */
             }
         }
     }
-    
+
     for (i=0; i<NUM_ITERS; i++) {
         int j;
         int32_t count;
-        
+
         for(j=0; j<NUM_ELEMS; j++)
             dst[j] = -1;
-        
+
         count = NUM_ELEMS;
         rc = opal_dss.unpack(bufB, dst, &count, OPAL_INT16);
         if (OPAL_SUCCESS != rc || count != NUM_ELEMS) {
             fprintf(test_out, "opal_dss.unpack of dest buffer failed with return code %d\n", rc);
             return(false);
         }
-        
+
         for(j=0; j<NUM_ELEMS; j++) {
             if(src[j] != dst[j]) {
                 fprintf(test_out, "test2: invalid results from unpack of dest buffer\n");
@@ -175,21 +175,21 @@ static bool test1(void)        /* verify dss_copy_payload */
             }
         }
     }
-    
+
     for (i=0; i<NUM_ITERS; i++) {
         int j;
         int32_t count;
-        
+
         for(j=0; j<NUM_ELEMS; j++)
             dst32[j] = -1;
-        
+
         count = NUM_ELEMS;
         rc = opal_dss.unpack(bufB, dst32, &count, OPAL_INT32);
         if (OPAL_SUCCESS != rc || count != NUM_ELEMS) {
             fprintf(test_out, "opal_dss.unpack of dest buffer failed with return code %d\n", rc);
             return(false);
         }
-        
+
         for(j=0; j<NUM_ELEMS; j++) {
             if(src32[j] != dst32[j]) {
                 fprintf(test_out, "test2: invalid results from unpack of dest buffer\n");
@@ -197,22 +197,22 @@ static bool test1(void)        /* verify dss_copy_payload */
             }
         }
     }
-    
+
     /* check that A is still okay */
     for (i=0; i<NUM_ITERS; i++) {
         int j;
         int32_t count;
-        
+
         for(j=0; j<NUM_ELEMS; j++)
             dst[j] = -1;
-        
+
         count = NUM_ELEMS;
         rc = opal_dss.unpack(bufA, dst, &count, OPAL_INT16);
         if (OPAL_SUCCESS != rc || count != NUM_ELEMS) {
             fprintf(test_out, "opal_dss.unpack of src buffer failed with return code %d\n", rc);
             return(false);
         }
-        
+
         for(j=0; j<NUM_ELEMS; j++) {
             if(src[j] != dst[j]) {
                 fprintf(test_out, "test2: invalid results from unpack of src buffer\n");
@@ -220,14 +220,14 @@ static bool test1(void)        /* verify dss_copy_payload */
             }
         }
     }
-    
+
     OBJ_RELEASE(bufA);
     OBJ_RELEASE(bufB);
     if (NULL != bufA || NULL != bufB) {
         fprintf(test_out, "OBJ_RELEASE did not NULL the buffer pointer\n");
         return false;
     }
-    
+
     return (true);
 }
 
@@ -239,15 +239,15 @@ static bool test2(void)        /* verify dss_xfer_payload */
     int32_t i;
     int16_t src[NUM_ELEMS];
     int16_t dst[NUM_ELEMS];
-    
+
     bufA = OBJ_NEW(opal_buffer_t);
     if (NULL == bufA) {
         fprintf(test_out, "orte_buffer failed init in OBJ_NEW\n");
         return false;
     }
-    
+
     opal_dss.set_buffer_type(bufA, OPAL_DSS_BUFFER_NON_DESC);
-    
+
     for (i=0;i<NUM_ITERS;i++) {
         rc = opal_dss.pack(bufA, src, NUM_ELEMS, OPAL_INT16);
         if (OPAL_SUCCESS != rc) {
@@ -255,37 +255,37 @@ static bool test2(void)        /* verify dss_xfer_payload */
             return(false);
         }
     }
-    
+
     /* setup bufB */
     bufB = OBJ_NEW(opal_buffer_t);
     if (NULL == bufB) {
         fprintf(test_out, "orte_buffer failed init in OBJ_NEW\n");
         return false;
     }
-    
+
     opal_dss.set_buffer_type(bufB, OPAL_DSS_BUFFER_NON_DESC);
-    
+
     /* xfer payload to bufB */
     if (OPAL_SUCCESS != (rc = opal_dss.xfer_payload(bufB, bufA))) {
         fprintf(test_out, "opal_dss.xfer_payload failed with return code %d\n", rc);
         return(false);
     }
-    
+
     /* validate the results */
     for (i=0; i<NUM_ITERS; i++) {
         int j;
         int32_t count;
-        
+
         for(j=0; j<NUM_ELEMS; j++)
             dst[j] = -1;
-        
+
         count = NUM_ELEMS;
         rc = opal_dss.unpack(bufB, dst, &count, OPAL_INT16);
         if (OPAL_SUCCESS != rc || count != NUM_ELEMS) {
             fprintf(test_out, "opal_dss.unpack of dest buffer failed with return code %d\n", rc);
             return(false);
         }
-        
+
         for(j=0; j<NUM_ELEMS; j++) {
             if(src[j] != dst[j]) {
                 fprintf(test_out, "test2: invalid results from unpack of dest buffer\n");
@@ -293,13 +293,13 @@ static bool test2(void)        /* verify dss_xfer_payload */
             }
         }
     }
-    
+
     OBJ_RELEASE(bufA);
     OBJ_RELEASE(bufB);
     if (NULL != bufA || NULL != bufB) {
         fprintf(test_out, "OBJ_RELEASE did not NULL the buffer pointer\n");
         return false;
     }
-    
+
     return (true);
 }

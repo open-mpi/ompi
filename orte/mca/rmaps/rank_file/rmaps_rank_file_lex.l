@@ -9,7 +9,7 @@
  * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -18,11 +18,11 @@
  *                         All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- *  
+ *
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 #include "orte_config.h"
@@ -56,11 +56,11 @@ WHITE       [\f\t\v ]
 
 %%
 
-{WHITE}*\n         { orte_rmaps_rank_file_line++; 
+{WHITE}*\n         { orte_rmaps_rank_file_line++;
                      return ORTE_RANKFILE_NEWLINE; }
-#.*\n              { orte_rmaps_rank_file_line++; 
+#.*\n              { orte_rmaps_rank_file_line++;
                      return ORTE_RANKFILE_NEWLINE; }
-"//".*\n           { orte_rmaps_rank_file_line++; 
+"//".*\n           { orte_rmaps_rank_file_line++;
                      return ORTE_RANKFILE_NEWLINE; }
 
 "/*"               { BEGIN(comment);
@@ -68,22 +68,22 @@ WHITE       [\f\t\v ]
 <comment>[^*\n]*       ; /* Eat up non '*'s */
 <comment>"*"+[^*/\n]*  ; /* Eat '*'s not followed by a '/' */
 <comment>\n        { orte_rmaps_rank_file_line++;
-                     return ORTE_RANKFILE_NEWLINE; } 
+                     return ORTE_RANKFILE_NEWLINE; }
 <comment>"*"+"/"   { BEGIN(INITIAL); /* Done with Block Comment */
                      return ORTE_RANKFILE_NEWLINE; }
 
-\"[^\"]*\"         { orte_rmaps_rank_file_value.sval = yytext; 
+\"[^\"]*\"         { orte_rmaps_rank_file_value.sval = yytext;
                      return ORTE_RANKFILE_QUOTED_STRING; }
 
-{WHITE}+           ;			
+{WHITE}+           ;
 
 "="                { return ORTE_RANKFILE_EQUAL; }
 
-rank                { orte_rmaps_rank_file_value.sval = yytext; 
+rank                { orte_rmaps_rank_file_value.sval = yytext;
                      return ORTE_RANKFILE_RANK; }
-slot               { orte_rmaps_rank_file_value.sval = yytext; 
+slot               { orte_rmaps_rank_file_value.sval = yytext;
                      return ORTE_RANKFILE_SLOT; }
-slots              { orte_rmaps_rank_file_value.sval = yytext; 
+slots              { orte_rmaps_rank_file_value.sval = yytext;
                      return ORTE_RANKFILE_SLOT; }
 
 username           { orte_rmaps_rank_file_value.sval = yytext;
@@ -93,7 +93,7 @@ username           { orte_rmaps_rank_file_value.sval = yytext;
 "user_name"        { orte_rmaps_rank_file_value.sval = yytext;
                      return ORTE_RANKFILE_USERNAME; }
 
-[0-9]+             { orte_rmaps_rank_file_value.ival = atol(yytext); 
+[0-9]+             { orte_rmaps_rank_file_value.ival = atol(yytext);
                      return ORTE_RANKFILE_INT; }
 %{ /* First detect hosts as standard Strings (but without ".")
     * then username@IPv4 or IPV4, then username@IPv6 or IPv6,
@@ -113,13 +113,13 @@ username           { orte_rmaps_rank_file_value.sval = yytext;
                       return ORTE_RANKFILE_IPV6; }
 
 ([A-Za-z0-9][A-Za-z0-9_\-]*"@")?[A-Za-z][A-Za-z0-9_\-\.]*  {
-                     orte_rmaps_rank_file_value.sval = yytext; 
+                     orte_rmaps_rank_file_value.sval = yytext;
                      return ORTE_RANKFILE_HOSTNAME; }
 
 \+n[0-9]+           { orte_rmaps_rank_file_value.sval = yytext;
 					 return ORTE_RANKFILE_RELATIVE; }
 
-.                  { orte_rmaps_rank_file_value.sval = yytext; 
+.                  { orte_rmaps_rank_file_value.sval = yytext;
                      return ORTE_RANKFILE_ERROR; }
 
 %%
@@ -133,7 +133,7 @@ username           { orte_rmaps_rank_file_value.sval = yytext;
 int orte_rmaps_rank_file_lex_destroy (void)
 {
     if (NULL != YY_CURRENT_BUFFER) {
-        yy_delete_buffer(YY_CURRENT_BUFFER); 
+        yy_delete_buffer(YY_CURRENT_BUFFER);
 #if defined(YY_CURRENT_BUFFER_LVALUE)
         YY_CURRENT_BUFFER_LVALUE = NULL;
 #else

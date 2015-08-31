@@ -6,9 +6,9 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -152,14 +152,14 @@ int
 ompi_osc_sm_rget_accumulate(const void *origin_addr,
                                   int origin_count,
                                   struct ompi_datatype_t *origin_dt,
-                                  void *result_addr, 
-                                  int result_count, 
+                                  void *result_addr,
+                                  int result_count,
                                   struct ompi_datatype_t *result_dt,
-                                  int target, 
-                                  MPI_Aint target_disp, 
+                                  int target,
+                                  MPI_Aint target_disp,
                                   int target_count,
-                                  struct ompi_datatype_t *target_dt, 
-                                  struct ompi_op_t *op, 
+                                  struct ompi_datatype_t *target_dt,
+                                  struct ompi_op_t *op,
                                   struct ompi_win_t *win,
                                   struct ompi_request_t **ompi_req)
 {
@@ -312,14 +312,14 @@ int
 ompi_osc_sm_get_accumulate(const void *origin_addr,
                            int origin_count,
                            struct ompi_datatype_t *origin_dt,
-                           void *result_addr, 
-                           int result_count, 
+                           void *result_addr,
+                           int result_count,
                            struct ompi_datatype_t *result_dt,
-                           int target, 
-                           MPI_Aint target_disp, 
+                           int target,
+                           MPI_Aint target_disp,
                            int target_count,
                            struct ompi_datatype_t *target_dt,
-                           struct ompi_op_t *op, 
+                           struct ompi_op_t *op,
                            struct ompi_win_t *win)
 {
     int ret;
@@ -375,7 +375,7 @@ ompi_osc_sm_compare_and_swap(const void *origin_addr,
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
                          "compare_and_swap: 0x%lx, %s, %d, %d, 0x%lx",
-                         (unsigned long) origin_addr, 
+                         (unsigned long) origin_addr,
                          dt->name, target, (int) target_disp,
                          (unsigned long) win));
 
@@ -414,7 +414,7 @@ ompi_osc_sm_fetch_and_op(const void *origin_addr,
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
                          "fetch_and_op: 0x%lx, %s, %d, %d, %s, 0x%lx",
-                         (unsigned long) origin_addr, 
+                         (unsigned long) origin_addr,
                          dt->name, target, (int) target_disp,
                          op->o_name,
                          (unsigned long) win));

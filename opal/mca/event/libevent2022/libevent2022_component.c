@@ -1,13 +1,13 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved. 
+ * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2015 Los Alamos National Security, LLC.  All rights reserved.
  * Copyright (c) 2015      Intel, Inc. All rights reserved.
  *
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  *
  * These symbols are in a file by themselves to provide nice linker
@@ -121,7 +121,7 @@ const opal_event_component_t mca_event_libevent2022_component = {
 };
 
 static int libevent2022_register (void)
-{ 
+{
     const struct eventop** _eventop = eventops;
     char available_eventops[1024] = "none";
     char *help_msg = NULL;
@@ -144,7 +144,7 @@ static int libevent2022_register (void)
      * won't be used with libevent.  For example, we currently have
      * ompi_mpi_init() set to use "all" (to include epoll and friends)
      * so that the TCP BTL can be a bit more scalable -- because we
-     * *know* that MPI apps don't use pty's with libevent.  
+     * *know* that MPI apps don't use pty's with libevent.
      * Note that other tools explicitly *do* use pty's with libevent:
      *
      * - orted
@@ -170,7 +170,7 @@ static int libevent2022_register (void)
     event_module_include = "poll";
 #endif
 
-    asprintf( &help_msg, 
+    asprintf( &help_msg,
               "Comma-delimited list of libevent subsystems "
               "to use (%s -- available on your platform)",
               available_eventops );
@@ -197,6 +197,6 @@ static int libevent2022_register (void)
 }
 
 static int libevent2022_open(void)
-{    
+{
     return OPAL_SUCCESS;
 }

@@ -5,15 +5,15 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      IBM Corp.,  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -73,7 +73,7 @@ mca_allocator_bucket_t * mca_allocator_bucket_init(
    */
 void * mca_allocator_bucket_alloc(
     mca_allocator_base_module_t * mem,
-    size_t size, 
+    size_t size,
     mca_mpool_base_registration_t** registration)
 {
     mca_allocator_bucket_t * mem_options = (mca_allocator_bucket_t *) mem;
@@ -101,14 +101,14 @@ void * mca_allocator_bucket_alloc(
         mem_options->buckets[bucket_num].free_chunk = chunk->u.next_free;
         chunk->u.bucket = bucket_num;
         /* go past the header */
-        chunk += 1; 
+        chunk += 1;
         /*release the lock */
         OPAL_THREAD_UNLOCK(&(mem_options->buckets[bucket_num].lock));
         return((void *) chunk);
     }
     /* figure out the size of bucket we need */
     allocated_size = bucket_size;
-    /* we have to add in the size of the segment header into the 
+    /* we have to add in the size of the segment header into the
      * amount we need to request */
     allocated_size += sizeof(mca_allocator_bucket_segment_head_t);
     /* attempt to get the memory */
@@ -116,21 +116,21 @@ void * mca_allocator_bucket_alloc(
                    mem_options->get_mem_fn(mem_options->super.alc_mpool, &allocated_size, registration);
     if(NULL == segment_header) {
         /* release the lock */
-        OPAL_THREAD_UNLOCK(&(mem_options->buckets[bucket_num].lock)); 
+        OPAL_THREAD_UNLOCK(&(mem_options->buckets[bucket_num].lock));
         return(NULL);
     }
     /* if were allocated more memory then we actually need, then we will try to
      * break it up into multiple chunks in the current bucket */
     allocated_size -= (sizeof(mca_allocator_bucket_segment_head_t) + bucket_size);
-    chunk = first_chunk = segment_header->first_chunk = 
-                  (mca_allocator_bucket_chunk_header_t *) (segment_header + 1); 
+    chunk = first_chunk = segment_header->first_chunk =
+                  (mca_allocator_bucket_chunk_header_t *) (segment_header + 1);
     /* add the segment into the segment list */
     segment_header->next_segment = mem_options->buckets[bucket_num].segment_head;
     mem_options->buckets[bucket_num].segment_head = segment_header;
     if(allocated_size >= bucket_size) {
-        mem_options->buckets[bucket_num].free_chunk = 
+        mem_options->buckets[bucket_num].free_chunk =
                         (mca_allocator_bucket_chunk_header_t *) ((char *) chunk + bucket_size);
-        chunk->next_in_segment = (mca_allocator_bucket_chunk_header_t *) 
+        chunk->next_in_segment = (mca_allocator_bucket_chunk_header_t *)
                                    ((char *)chunk + bucket_size);
         while(allocated_size >= bucket_size) {
             chunk = (mca_allocator_bucket_chunk_header_t *) ((char *) chunk + bucket_size);
@@ -154,12 +154,12 @@ void * mca_allocator_bucket_alloc(
   * allocates an aligned region of memory
   */
 void * mca_allocator_bucket_alloc_align(
-    mca_allocator_base_module_t * mem, 
-    size_t size, 
-    size_t alignment, 
+    mca_allocator_base_module_t * mem,
+    size_t size,
+    size_t alignment,
     mca_mpool_base_registration_t** registration)
 {
-    mca_allocator_bucket_t * mem_options = (mca_allocator_bucket_t *) mem; 
+    mca_allocator_bucket_t * mem_options = (mca_allocator_bucket_t *) mem;
     int bucket_num = 1;
     void * ptr;
     size_t aligned_max_size, bucket_size;
@@ -168,15 +168,15 @@ void * mca_allocator_bucket_alloc_align(
     mca_allocator_bucket_chunk_header_t * first_chunk;
     mca_allocator_bucket_segment_head_t * segment_header;
     char * aligned_memory;
-     
+
     /* since we do not have a way to get pre aligned memory, we need to request
      * a chunk then return an aligned spot in it. In the worst case we need
      * the requested size plus the alignment and the header size */
     aligned_max_size = size + alignment + sizeof(mca_allocator_bucket_chunk_header_t)
-                       + sizeof(mca_allocator_bucket_segment_head_t);  
+                       + sizeof(mca_allocator_bucket_segment_head_t);
     bucket_size = size + sizeof(mca_allocator_bucket_chunk_header_t);
-    allocated_size = aligned_max_size; 
-    /* get some memory */ 
+    allocated_size = aligned_max_size;
+    /* get some memory */
     ptr = mem_options->get_mem_fn(mem_options->super.alc_mpool, &allocated_size, registration);
     if(NULL == ptr) {
         return(NULL);
@@ -188,7 +188,7 @@ void * mca_allocator_bucket_alloc_align(
 
     /* we want to align the memory right after the header, so we go past the header */
     aligned_memory = (char *) (first_chunk + 1);
-    /* figure out how much the alignment is off by */ 
+    /* figure out how much the alignment is off by */
     alignment_off = ((size_t)  aligned_memory) % alignment;
     aligned_memory += (alignment - alignment_off);
     /* we now have an aligned piece of memory. Now we have to put the chunk
@@ -199,7 +199,7 @@ void * mca_allocator_bucket_alloc_align(
         bucket_num++;
     }
     bucket_size = 1;
-    bucket_size <<= MCA_ALLOCATOR_BUCKET_1_BITSHIFTS + bucket_num; 
+    bucket_size <<= MCA_ALLOCATOR_BUCKET_1_BITSHIFTS + bucket_num;
 
     /* if were allocated more memory then we actually need, then we will try to
      * break it up into multiple chunks in the current bucket */
@@ -238,8 +238,8 @@ void * mca_allocator_bucket_alloc_align(
   */
 void * mca_allocator_bucket_realloc(
     mca_allocator_base_module_t * mem,
-    void * ptr, 
-    size_t size, 
+    void * ptr,
+    size_t size,
     mca_mpool_base_registration_t** registration)
 {
     mca_allocator_bucket_t * mem_options = (mca_allocator_bucket_t *) mem;
@@ -270,7 +270,7 @@ void * mca_allocator_bucket_realloc(
     memcpy(ret_ptr, ptr, bucket_size);
     /* free the old area in memory */
     mca_allocator_bucket_free((mca_allocator_base_module_t *) mem_options, ptr);
-    return(ret_ptr); 
+    return(ret_ptr);
 }
 
 
@@ -281,10 +281,10 @@ void * mca_allocator_bucket_realloc(
 void mca_allocator_bucket_free(mca_allocator_base_module_t * mem, void * ptr)
 {
     mca_allocator_bucket_t * mem_options = (mca_allocator_bucket_t *) mem;
-    mca_allocator_bucket_chunk_header_t * chunk  = (mca_allocator_bucket_chunk_header_t *) ptr - 1; 
+    mca_allocator_bucket_chunk_header_t * chunk  = (mca_allocator_bucket_chunk_header_t *) ptr - 1;
     int bucket_num = chunk->u.bucket;
     OPAL_THREAD_LOCK(&(mem_options->buckets[bucket_num].lock));
-    chunk->u.next_free = mem_options->buckets[bucket_num].free_chunk; 
+    chunk->u.next_free = mem_options->buckets[bucket_num].free_chunk;
     mem_options->buckets[bucket_num].free_chunk = chunk;
     OPAL_THREAD_UNLOCK(&(mem_options->buckets[bucket_num].lock));
 }
@@ -321,7 +321,7 @@ int mca_allocator_bucket_cleanup(mca_allocator_base_module_t * mem)
         empty = true;
         segment = mem_options->buckets[i].segment_head;
         while( (true == empty) && (NULL != segment) ) {
-            first_chunk = segment->first_chunk; 
+            first_chunk = segment->first_chunk;
             chunk = first_chunk;
             /* determine if the segment is free */
             do {
@@ -349,7 +349,7 @@ int mca_allocator_bucket_cleanup(mca_allocator_base_module_t * mem)
         } else {
             /* traverse the list of segment headers until we hit NULL */
             while(NULL != *segment_header) {
-                first_chunk = (*segment_header)->first_chunk; 
+                first_chunk = (*segment_header)->first_chunk;
                 chunk = first_chunk;
                 empty = true;
                 /* determine if the segment is free */
@@ -370,7 +370,7 @@ int mca_allocator_bucket_cleanup(mca_allocator_base_module_t * mem)
                             while(next_chunk->u.next_free != chunk) {
                                 next_chunk = next_chunk->u.next_free;
                             }
-                            next_chunk->u.next_free = chunk->u.next_free; 
+                            next_chunk->u.next_free = chunk->u.next_free;
                         }
                     } while((chunk = chunk->next_in_segment) != first_chunk);
                     /* set the segment list to point to the next segment */

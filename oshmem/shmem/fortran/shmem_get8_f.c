@@ -3,9 +3,9 @@
  *                         All rights reserved.
  * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -28,14 +28,14 @@ SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
         shmem_get8_,
         shmem_get8__,
         shmem_get8_f,
-        (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *len, MPI_Fint *pe), 
+        (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *len, MPI_Fint *pe),
         (target,source,len,pe) )
 
 void shmem_get8_f(FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *len, MPI_Fint *pe)
 {
-    MCA_SPML_CALL(get(FPTR_2_VOID_PTR(source), 
-        OMPI_FINT_2_INT(*len) * 8, 
-        FPTR_2_VOID_PTR(target), 
+    MCA_SPML_CALL(get(FPTR_2_VOID_PTR(source),
+        OMPI_FINT_2_INT(*len) * 8,
+        FPTR_2_VOID_PTR(target),
         OMPI_FINT_2_INT(*pe)));
 }
-  
+

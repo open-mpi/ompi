@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
@@ -36,9 +36,9 @@ typedef enum {
 } mca_pml_cm_request_type_t;
 
 /**
- *  Base type for PML CM P2P requests 
+ *  Base type for PML CM P2P requests
  */
-struct mca_pml_cm_request_t { 
+struct mca_pml_cm_request_t {
 
 /* START: These fields have to match the definition of the mca_pml_base_request_t */
     ompi_request_t req_ompi;              /**< base request */

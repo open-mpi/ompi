@@ -8,9 +8,9 @@
  *                         reserved.
  *
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -37,7 +37,7 @@ static int crs_dmtcp_close(void);
 opal_crs_dmtcp_component_t mca_crs_dmtcp_component = {
     /* First do the base component stuff */
     {
-        /* Handle the general mca_component_t struct containing 
+        /* Handle the general mca_component_t struct containing
          *  meta information about the component itself
          */
         .base_version = {
@@ -47,7 +47,7 @@ opal_crs_dmtcp_component_t mca_crs_dmtcp_component = {
             .mca_component_name = "dmtcp",
             MCA_BASE_MAKE_VERSION(component, OPAL_MAJOR_VERSION, OPAL_MINOR_VERSION,
                                   OPAL_RELEASE_VERSION),
-            
+
             /* Component open and close functions */
             .mca_open_component = crs_dmtcp_open,
             .mca_close_component = crs_dmtcp_close,
@@ -95,15 +95,15 @@ static int crs_dmtcp_register (void)
                                            &mca_crs_dmtcp_component.super.verbose);
     return (0 > ret) ? ret : OPAL_SUCCESS;
 }
- 
-static int crs_dmtcp_open(void) 
+
+static int crs_dmtcp_open(void)
 {
     /* If there is a custom verbose level for this component than use it
      * otherwise take our parents level and output channel
      */
     if ( 0 != mca_crs_dmtcp_component.super.verbose) {
         mca_crs_dmtcp_component.super.output_handle = opal_output_open(NULL);
-        opal_output_set_verbosity(mca_crs_dmtcp_component.super.output_handle, 
+        opal_output_set_verbosity(mca_crs_dmtcp_component.super.output_handle,
                                   mca_crs_dmtcp_component.super.verbose);
     } else {
         mca_crs_dmtcp_component.super.output_handle = opal_crs_base_framework.framework_output;
@@ -115,10 +115,10 @@ static int crs_dmtcp_open(void)
     opal_output_verbose(10, mca_crs_dmtcp_component.super.output_handle,
                         "crs:dmtcp: open()");
     opal_output_verbose(20, mca_crs_dmtcp_component.super.output_handle,
-                        "crs:dmtcp: open: priority = %d", 
+                        "crs:dmtcp: open: priority = %d",
                         mca_crs_dmtcp_component.super.priority);
     opal_output_verbose(20, mca_crs_dmtcp_component.super.output_handle,
-                        "crs:dmtcp: open: verbosity = %d", 
+                        "crs:dmtcp: open: verbosity = %d",
                         mca_crs_dmtcp_component.super.verbose);
 
     return OPAL_SUCCESS;

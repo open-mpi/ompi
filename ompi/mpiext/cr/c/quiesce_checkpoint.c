@@ -4,9 +4,9 @@
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2012 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 #include "ompi_config.h"
@@ -55,7 +55,7 @@ int OMPI_CR_Quiesce_checkpoint(MPI_Comm commP, char **handle, int *seq, MPI_Info
     ret = orte_snapc.request_op(datum);
     /*ret = ompi_crcp_base_quiesce_start(info);*/
     if( OMPI_SUCCESS != ret ) {
-        OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_OTHER, 
+        OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_OTHER,
                                FUNC_NAME);
     }
     OPAL_CR_EXIT_LIBRARY();

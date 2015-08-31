@@ -1,9 +1,9 @@
 /*
  * Copyright (c) 2014      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -78,7 +78,7 @@ int orte_rtc_base_select(void)
                 continue;
             }
         }
-      
+
         /* add to the list of selected modules */
         newmodule = OBJ_NEW(orte_rtc_base_selected_module_t);
         newmodule->pri = priority;

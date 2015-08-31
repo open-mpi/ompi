@@ -1,21 +1,21 @@
 // -*- c++ -*-
-// 
+//
 // Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
 //                         University Research and Technology
 //                         Corporation.  All rights reserved.
 // Copyright (c) 2004-2005 The University of Tennessee and The University
 //                         of Tennessee Research Foundation.  All rights
 //                         reserved.
-// Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+// Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 //                         University of Stuttgart.  All rights reserved.
 // Copyright (c) 2004-2005 The Regents of the University of California.
 //                         All rights reserved.
 // Copyright (c) 2008-2009 Cisco Systems, Inc.  All rights reserved.
 // Copyright (c) 2011      FUJITSU LIMITED.  All rights reserved.
 // $COPYRIGHT$
-// 
+//
 // Additional copyrights may follow
-// 
+//
 // $HEADER$
 //
 
@@ -113,14 +113,14 @@ static const int MAX_OBJECT_NAME = MPI_MAX_OBJECT_NAME;
 
 // elementary datatypes (C / C++)
 OMPI_DECLSPEC extern const Datatype CHAR;
-OMPI_DECLSPEC extern const Datatype SHORT;          
-OMPI_DECLSPEC extern const Datatype INT;            
+OMPI_DECLSPEC extern const Datatype SHORT;
+OMPI_DECLSPEC extern const Datatype INT;
 OMPI_DECLSPEC extern const Datatype LONG;
 OMPI_DECLSPEC extern const Datatype SIGNED_CHAR;
 OMPI_DECLSPEC extern const Datatype UNSIGNED_CHAR;
-OMPI_DECLSPEC extern const Datatype UNSIGNED_SHORT; 
-OMPI_DECLSPEC extern const Datatype UNSIGNED;       
-OMPI_DECLSPEC extern const Datatype UNSIGNED_LONG;  
+OMPI_DECLSPEC extern const Datatype UNSIGNED_SHORT;
+OMPI_DECLSPEC extern const Datatype UNSIGNED;
+OMPI_DECLSPEC extern const Datatype UNSIGNED_LONG;
 OMPI_DECLSPEC extern const Datatype FLOAT;
 OMPI_DECLSPEC extern const Datatype DOUBLE;
 OMPI_DECLSPEC extern const Datatype LONG_DOUBLE;
@@ -245,7 +245,7 @@ OMPI_DECLSPEC extern Comm_Null          COMM_NULL;
 OMPI_DECLSPEC extern const Datatype     DATATYPE_NULL;
 OMPI_DECLSPEC extern Request            REQUEST_NULL;
 OMPI_DECLSPEC extern const Op           OP_NULL;
-OMPI_DECLSPEC extern const Errhandler   ERRHANDLER_NULL;  
+OMPI_DECLSPEC extern const Errhandler   ERRHANDLER_NULL;
 #if OMPI_PROVIDE_MPI_FILE_INTERFACE
 OMPI_DECLSPEC extern const File         FILE_NULL;
 #endif

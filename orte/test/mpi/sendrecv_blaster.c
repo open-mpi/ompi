@@ -11,27 +11,27 @@
 #include "mpi.h"
 
 int main(int argc, char *argv[])
-{ 
+{
     MPI_Status     status;               /* MPI status                          */
     int            mpierr;               /* MPI function return code            */
     int            rank;                 /* Process rank within MPI_COMM_WORLD  */
     int            size;
     int            dest, src;
     int            tag0=41;              /* MPI message tag                     */
-    
+
     int            inject;
     int            report;
     int            iterations;
-    int            n_bytes; 
+    int            n_bytes;
     unsigned char* send_buff;
     unsigned char* recv_buff;
     char*          tmp;
-    
+
     int            i, j, count;
-    
+
     float fraction, randval;
     struct timeval tp;
-    
+
     if (1 < argc) {
         if (0 == strncmp(argv[1], "-h", 2) ||
             0 == strncmp(argv[1], "--h", 3)) {
@@ -47,7 +47,7 @@ int main(int argc, char *argv[])
             return 0;
         }
     }
-    
+
     mpierr = MPI_Init(&argc, &argv);
     if (mpierr != MPI_SUCCESS)
     {
@@ -55,9 +55,9 @@ int main(int argc, char *argv[])
         fflush(stderr);
         MPI_Abort(MPI_COMM_WORLD, -1);
     }
-    
+
     MPI_Comm_set_errhandler(MPI_COMM_WORLD, MPI_ERRORS_RETURN);
-    
+
     mpierr = MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     if (mpierr != MPI_SUCCESS || rank < 0)
     {
@@ -65,7 +65,7 @@ int main(int argc, char *argv[])
         fflush(stderr);
         MPI_Abort(MPI_COMM_WORLD, -1);
     }
-    
+
     mpierr = MPI_Comm_size(MPI_COMM_WORLD, &size);
     if (mpierr != MPI_SUCCESS || size < 0)
     {
@@ -88,7 +88,7 @@ int main(int argc, char *argv[])
     if (dest > size-1) {
         dest = 0;
     }
-    
+
     for (i=1; i < argc; i++) {
         fprintf(stderr, "got %s\n", argv[i]);
         if (0 == strncmp(argv[i], "pattern", strlen("pattern"))) {
@@ -139,7 +139,7 @@ int main(int argc, char *argv[])
 
     send_buff = (unsigned char *) valloc(n_bytes);
     recv_buff = (unsigned char *) valloc(n_bytes);
-    
+
     /* seed the random number generator */
     gettimeofday (&tp, NULL);
     srand (tp.tv_usec);
@@ -148,7 +148,7 @@ int main(int argc, char *argv[])
     {
         send_buff[i] = i%128;
     }
-    
+
     fprintf(stderr, "Rank %d: recving from src %d sending to dest %d with max buff size %dKbytes\n",
             rank, src, dest, n_bytes/1024);
 
@@ -183,7 +183,7 @@ int main(int argc, char *argv[])
             }
         }
     }
-    
+
     fprintf(stderr, "Rank %d completed test\n", rank);
     MPI_Finalize();
 }

@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
- *   Copyright (C) 1997 University of Chicago. 
+/*
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -80,7 +80,7 @@ void ADIOI_Datatype_iscontig(MPI_Datatype datatype, int *flag)
 	adds = (MPI_Aint *) ADIOI_Malloc((nadds+1)*sizeof(MPI_Aint));
 	types = (MPI_Datatype *) ADIOI_Malloc((ntypes+1)*sizeof(MPI_Datatype));
 	MPI_Type_get_contents(datatype, nints, nadds, ntypes, ints,
-			      adds, types); 
+			      adds, types);
 	ADIOI_Datatype_iscontig(types[0], flag);
 
 #ifndef MPISGI
@@ -99,7 +99,7 @@ void ADIOI_Datatype_iscontig(MPI_Datatype datatype, int *flag)
 	break;
     }
 
-    /* This function needs more work. It should check for contiguity 
+    /* This function needs more work. It should check for contiguity
        in other cases as well.*/
 }
 #endif

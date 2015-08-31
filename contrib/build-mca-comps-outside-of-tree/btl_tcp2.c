@@ -5,18 +5,18 @@
  * Copyright (c) 2004-2013 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
- *                         reserved. 
+ *                         reserved.
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
  *
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -26,12 +26,12 @@
 #include "ompi/mca/btl/btl.h"
 
 #include "btl_tcp2.h"
-#include "btl_tcp2_frag.h" 
+#include "btl_tcp2_frag.h"
 #include "btl_tcp2_proc.h"
 #include "btl_tcp2_endpoint.h"
-#include "opal/datatype/opal_convertor.h" 
-#include "ompi/mca/mpool/base/base.h" 
-#include "ompi/mca/mpool/mpool.h" 
+#include "opal/datatype/opal_convertor.h"
+#include "ompi/mca/mpool/base/base.h"
+#include "ompi/mca/mpool/mpool.h"
 #include "ompi/proc/proc.h"
 
 mca_btl_tcp2_module_t mca_btl_tcp2_module = {
@@ -49,16 +49,16 @@ mca_btl_tcp2_module_t mca_btl_tcp2_module = {
         0, /* flags */
         mca_btl_tcp2_add_procs,
         mca_btl_tcp2_del_procs,
-        NULL, 
+        NULL,
         mca_btl_tcp2_finalize,
-        mca_btl_tcp2_alloc, 
-        mca_btl_tcp2_free, 
+        mca_btl_tcp2_alloc,
+        mca_btl_tcp2_free,
         mca_btl_tcp2_prepare_src,
         mca_btl_tcp2_prepare_dst,
         mca_btl_tcp2_send,
         NULL, /* send immediate */
         mca_btl_tcp2_put,
-        NULL, /* get */ 
+        NULL, /* get */
         mca_btl_base_dump,
         NULL, /* mpool */
         NULL, /* register error */
@@ -70,10 +70,10 @@ mca_btl_tcp2_module_t mca_btl_tcp2_module = {
  *
  */
 
-int mca_btl_tcp2_add_procs( struct mca_btl_base_module_t* btl, 
-                           size_t nprocs, 
-                           struct ompi_proc_t **ompi_procs, 
-                           struct mca_btl_base_endpoint_t** peers, 
+int mca_btl_tcp2_add_procs( struct mca_btl_base_module_t* btl,
+                           size_t nprocs,
+                           struct ompi_proc_t **ompi_procs,
+                           struct mca_btl_base_endpoint_t** peers,
                            opal_bitmap_t* reachable )
 {
     mca_btl_tcp2_module_t* tcp_btl = (mca_btl_tcp2_module_t*)btl;
@@ -101,15 +101,15 @@ int mca_btl_tcp2_add_procs( struct mca_btl_base_module_t* btl,
         }
 
         /*
-         * Check to make sure that the peer has at least as many interface 
-         * addresses exported as we are trying to use. If not, then 
+         * Check to make sure that the peer has at least as many interface
+         * addresses exported as we are trying to use. If not, then
          * don't bind this BTL instance to the proc.
          */
 
         OPAL_THREAD_LOCK(&tcp_proc->proc_lock);
 
         /* The btl_proc datastructure is shared by all TCP BTL
-         * instances that are trying to reach this destination. 
+         * instances that are trying to reach this destination.
          * Cache the peer instance on the btl_proc.
          */
         tcp_endpoint = OBJ_NEW(mca_btl_tcp2_endpoint_t);
@@ -140,9 +140,9 @@ int mca_btl_tcp2_add_procs( struct mca_btl_base_module_t* btl,
     return OMPI_SUCCESS;
 }
 
-int mca_btl_tcp2_del_procs(struct mca_btl_base_module_t* btl, 
-        size_t nprocs, 
-        struct ompi_proc_t **procs, 
+int mca_btl_tcp2_del_procs(struct mca_btl_base_module_t* btl,
+        size_t nprocs,
+        struct ompi_proc_t **procs,
         struct mca_btl_base_endpoint_t ** endpoints)
 {
     mca_btl_tcp2_module_t* tcp_btl = (mca_btl_tcp2_module_t*)btl;
@@ -174,16 +174,16 @@ mca_btl_base_descriptor_t* mca_btl_tcp2_alloc(
     uint32_t flags)
 {
     mca_btl_tcp2_frag_t* frag = NULL;
-    
-    if(size <= btl->btl_eager_limit) { 
-        MCA_BTL_TCP_FRAG_ALLOC_EAGER(frag); 
-    } else if (size <= btl->btl_max_send_size) { 
-        MCA_BTL_TCP_FRAG_ALLOC_MAX(frag); 
+
+    if(size <= btl->btl_eager_limit) {
+        MCA_BTL_TCP_FRAG_ALLOC_EAGER(frag);
+    } else if (size <= btl->btl_max_send_size) {
+        MCA_BTL_TCP_FRAG_ALLOC_MAX(frag);
     }
     if( OPAL_UNLIKELY(NULL == frag) ) {
         return NULL;
     }
-    
+
     frag->segments[0].seg_len = size;
     frag->segments[0].seg_addr.pval = frag+1;
 
@@ -191,7 +191,7 @@ mca_btl_base_descriptor_t* mca_btl_tcp2_alloc(
     frag->base.des_src_cnt = 1;
     frag->base.des_dst = NULL;
     frag->base.des_dst_cnt = 0;
-    frag->base.des_flags = flags; 
+    frag->base.des_flags = flags;
     frag->base.order = MCA_BTL_NO_ORDER;
     frag->btl = (mca_btl_tcp2_module_t*)btl;
     return (mca_btl_base_descriptor_t*)frag;
@@ -203,12 +203,12 @@ mca_btl_base_descriptor_t* mca_btl_tcp2_alloc(
  */
 
 int mca_btl_tcp2_free(
-    struct mca_btl_base_module_t* btl, 
-    mca_btl_base_descriptor_t* des) 
+    struct mca_btl_base_module_t* btl,
+    mca_btl_base_descriptor_t* des)
 {
-    mca_btl_tcp2_frag_t* frag = (mca_btl_tcp2_frag_t*)des; 
-    MCA_BTL_TCP_FRAG_RETURN(frag); 
-    return OMPI_SUCCESS; 
+    mca_btl_tcp2_frag_t* frag = (mca_btl_tcp2_frag_t*)des;
+    MCA_BTL_TCP_FRAG_RETURN(frag);
+    return OMPI_SUCCESS;
 }
 
 /**
@@ -244,7 +244,7 @@ mca_btl_base_descriptor_t* mca_btl_tcp2_prepare_src(
     if (max_data+reserve <= btl->btl_eager_limit) {
         MCA_BTL_TCP_FRAG_ALLOC_EAGER(frag);
     } else {
-        /* 
+        /*
          * otherwise pack as much data as we can into a fragment
          * that is the max send size.
          */
@@ -265,13 +265,13 @@ mca_btl_base_descriptor_t* mca_btl_tcp2_prepare_src(
         }
         iov.iov_len = max_data;
         iov.iov_base = (IOVBASE_TYPE*)(((unsigned char*)(frag->segments[0].seg_addr.pval)) + reserve);
-        
+
         rc = opal_convertor_pack(convertor, &iov, &iov_count, &max_data );
         if( OPAL_UNLIKELY(rc < 0) ) {
             mca_btl_tcp2_free(btl, &frag->base);
             return NULL;
         }
-        
+
         frag->segments[0].seg_len += max_data;
 
     } else {
@@ -358,11 +358,11 @@ mca_btl_base_descriptor_t* mca_btl_tcp2_prepare_dst(
 
 int mca_btl_tcp2_send( struct mca_btl_base_module_t* btl,
                       struct mca_btl_base_endpoint_t* endpoint,
-                      struct mca_btl_base_descriptor_t* descriptor, 
+                      struct mca_btl_base_descriptor_t* descriptor,
                       mca_btl_base_tag_t tag )
 {
-    mca_btl_tcp2_module_t* tcp_btl = (mca_btl_tcp2_module_t*) btl; 
-    mca_btl_tcp2_frag_t* frag = (mca_btl_tcp2_frag_t*)descriptor; 
+    mca_btl_tcp2_module_t* tcp_btl = (mca_btl_tcp2_module_t*) btl;
+    mca_btl_tcp2_frag_t* frag = (mca_btl_tcp2_frag_t*)descriptor;
     int i;
 
     frag->btl = tcp_btl;
@@ -400,8 +400,8 @@ int mca_btl_tcp2_put( mca_btl_base_module_t* btl,
                      mca_btl_base_endpoint_t* endpoint,
                      mca_btl_base_descriptor_t* descriptor )
 {
-    mca_btl_tcp2_module_t* tcp_btl = (mca_btl_tcp2_module_t*) btl; 
-    mca_btl_tcp2_frag_t* frag = (mca_btl_tcp2_frag_t*)descriptor; 
+    mca_btl_tcp2_module_t* tcp_btl = (mca_btl_tcp2_module_t*) btl;
+    mca_btl_tcp2_frag_t* frag = (mca_btl_tcp2_frag_t*)descriptor;
     int i;
 
     frag->btl = tcp_btl;
@@ -438,13 +438,13 @@ int mca_btl_tcp2_put( mca_btl_base_module_t* btl,
  *
  */
 
-int mca_btl_tcp2_get( 
+int mca_btl_tcp2_get(
     mca_btl_base_module_t* btl,
     mca_btl_base_endpoint_t* endpoint,
     mca_btl_base_descriptor_t* descriptor)
 {
-    mca_btl_tcp2_module_t* tcp_btl = (mca_btl_tcp2_module_t*) btl; 
-    mca_btl_tcp2_frag_t* frag = (mca_btl_tcp2_frag_t*)descriptor; 
+    mca_btl_tcp2_module_t* tcp_btl = (mca_btl_tcp2_module_t*) btl;
+    mca_btl_tcp2_frag_t* frag = (mca_btl_tcp2_frag_t*)descriptor;
     int rc;
 
     frag->btl = tcp_btl;
@@ -472,7 +472,7 @@ int mca_btl_tcp2_get(
 
 int mca_btl_tcp2_finalize(struct mca_btl_base_module_t* btl)
 {
-    mca_btl_tcp2_module_t* tcp_btl = (mca_btl_tcp2_module_t*) btl; 
+    mca_btl_tcp2_module_t* tcp_btl = (mca_btl_tcp2_module_t*) btl;
     opal_list_item_t* item;
     for( item = opal_list_remove_first(&tcp_btl->tcp_endpoints);
          item != NULL;

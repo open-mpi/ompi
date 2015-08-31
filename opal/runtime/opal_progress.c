@@ -6,19 +6,19 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2014 Los Alamos National Security, LLC.  All rights
- *                         reserved. 
+ *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  *
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -42,8 +42,8 @@
 bool opal_progress_debug = false;
 #endif
 
-/* 
- * default parameters 
+/*
+ * default parameters
  */
 static int opal_progress_event_flag = OPAL_EVLOOP_ONCE | OPAL_EVLOOP_NONBLOCK;
 int opal_progress_spin_count = 10000;
@@ -71,7 +71,7 @@ static int32_t event_progress_counter = 0;
 /* reset value for counter when it hits 0 */
 static int32_t event_progress_delta = 0;
 #endif
-/* users of the event library from MPI cause the tick rate to 
+/* users of the event library from MPI cause the tick rate to
    be every time */
 static int32_t num_event_users = 0;
 
@@ -106,7 +106,7 @@ opal_progress_init(void)
 #endif
 
     OPAL_OUTPUT((debug_output, "progress: initialized event flag to: %x",
-                 opal_progress_event_flag));                 
+                 opal_progress_event_flag));
     OPAL_OUTPUT((debug_output, "progress: initialized yield_when_idle to: %s",
                  opal_progress_yield_when_idle ? "true" : "false"));
     OPAL_OUTPUT((debug_output, "progress: initialized num users to: %d",
@@ -138,7 +138,7 @@ opal_progress_finalize(void)
 
 
 /*
- * Progress the event library and any functions that have registered to 
+ * Progress the event library and any functions that have registered to
  * be called.  We don't propogate errors from the progress functions,
  * so no action is taken if they return failures.  The functions are
  * expected to return the number of events progressed, to determine
@@ -165,7 +165,7 @@ opal_progress(void)
     /* trip the event library if we've reached our tick rate and we are
        enabled */
         if (now - event_progress_last_time > event_progress_delta ) {
-                event_progress_last_time = (num_event_users > 0) ? 
+                event_progress_last_time = (num_event_users > 0) ?
                     now - event_progress_delta : now;
 
                 events += opal_event_loop(opal_event_base, opal_progress_event_flag);
@@ -175,7 +175,7 @@ opal_progress(void)
     /* trip the event library if we've reached our tick rate and we are
        enabled */
         if (OPAL_THREAD_ADD32(&event_progress_counter, -1) <= 0 ) {
-                event_progress_counter = 
+                event_progress_counter =
                     (num_event_users > 0) ? 0 : event_progress_delta;
                 events += opal_event_loop(opal_event_base, opal_progress_event_flag);
         }
@@ -352,7 +352,7 @@ opal_progress_unregister(opal_progress_callback_t cb)
             break;
         }
     }
-    
+
     /* If we found the function we're unregistering: If callbacks_len
        is 0, we're not goig to do anything interesting anyway, so
        skip.  If callbacks_len is 1, it will soon be 0, so no need to

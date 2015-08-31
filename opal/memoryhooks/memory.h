@@ -5,14 +5,14 @@
  * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -49,7 +49,7 @@ BEGIN_C_DECLS
  *
  * Initialize the memory hooks subsystem.  This is generally called
  * during opal_init() and should be called before any other function
- * in the interface is called.  
+ * in the interface is called.
  *
  * \note Note that some back-end functionality is activated pre-main,
  * so not calling this function does not prevent the memory hooks from
@@ -87,14 +87,14 @@ OPAL_DECLSPEC int opal_mem_hooks_finalize(void);
  * if support is provided.
  *
  * @retval OPAL_MEMORY_FREE_SUPPORT   Memory hooks subsytem can trigger
- *                                    callback events when memory is going 
+ *                                    callback events when memory is going
  *                                    to be released by the process, either
  *                                    by the user calling an allocator
  *                                    function or munmap.  Implies
  *                                    OPAL_MEMORY_MUNMAP_SUPPORT.
  * @retval OPAL_MEMORY_MUNMAP_SUPPORT Subsystem can trigger callback events
  *                                    by the user calling munmap directly.
- * @retval OPAL_MEMORY_CHUNK_SUPPORT  Memory hooks subsystem will only 
+ * @retval OPAL_MEMORY_CHUNK_SUPPORT  Memory hooks subsystem will only
  *                                    trigger callback events when the
  *                                    process is giving memory back to the
  *                                    operating system, not at ever call
@@ -113,7 +113,7 @@ OPAL_DECLSPEC int opal_mem_hooks_support_level(void);
  * the note in opal_mem_hooks_register_alloc() or
  * opal_mem_hooks_register_release().
  *
- * @param buf     Pointer to the start of the allocation 
+ * @param buf     Pointer to the start of the allocation
  * @param lentgh  Length of the allocation
  * @param cbdata  Data passed to memory hooks when callback
  *                was registered
@@ -121,7 +121,7 @@ OPAL_DECLSPEC int opal_mem_hooks_support_level(void);
  *                general allocation routines (malloc, calloc, free,
  *                etc.) or directly from the user (mmap, munmap, etc.)
  */
-typedef void (opal_mem_hooks_callback_fn_t)(void *buf, size_t length, 
+typedef void (opal_mem_hooks_callback_fn_t)(void *buf, size_t length,
                                             void *cbdata, bool from_alloc);
 
 
@@ -138,10 +138,10 @@ typedef void (opal_mem_hooks_callback_fn_t)(void *buf, size_t length,
  * @retval OPAL_SUCCESS The registration completed successfully.
  * @retval OPAL_EXISTS  The function is already registered and will not
  *                      be registered again.
- * @retval OPAL_ERR_NOT_SUPPORTED There are no hooks available for 
+ * @retval OPAL_ERR_NOT_SUPPORTED There are no hooks available for
  *                      receiving callbacks when memory is to be released
  */
-OPAL_DECLSPEC int opal_mem_hooks_register_release(opal_mem_hooks_callback_fn_t *func, 
+OPAL_DECLSPEC int opal_mem_hooks_register_release(opal_mem_hooks_callback_fn_t *func,
                                                   void *cbdata);
 
 /**

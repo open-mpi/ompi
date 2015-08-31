@@ -1,16 +1,16 @@
 /*
- * Copyright (c) 2007      High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2007      High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2007-2008 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007-2013 The University of Tennessee and The University of
  *                         Tennessee Research Foundation.  All rights reserved.
  * Copyright (c) 2012-2013 Inria.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * Some text copied from and references made to mpi_interface.h.
- * 
+ *
  * Copyright (C) 2000-2004 by Etnus, LLC
  * Copyright (C) 1999 by Etnus, Inc.
  * Copyright (C) 1997-1998 Dolphin Interconnect Solutions Inc.
@@ -564,7 +564,7 @@ int mpidbg_init_once(const mqs_basic_callbacks *callbacks);
 /*-----------------------------------------------------------------------*/
 
 /* Query the DLL to find out what version of the interface it
-   supports. 
+   supports.
 
    Parameters:
 
@@ -581,21 +581,21 @@ int mpidbg_interface_version_compatibility(void);
 
 /* Returns a string describing this DLL.
 
-   Parameters: 
+   Parameters:
 
    None
 
    This function will return:
 
    A null-terminated string describing this DLL.
-*/   
+*/
 char *mpidbg_version_string(void);
 
 /*-----------------------------------------------------------------------*/
 
 /* Returns the address width that this DLL was compiled with.
 
-   Parameters: 
+   Parameters:
 
    None
 
@@ -617,7 +617,7 @@ int mpidbg_dll_taddr_width(void);
    the image (e.g., all of the type offsets it needs could be kept
    here).  The debugger will call mqs_destroy_image_info when it no
    longer wants to keep information about the given executable.
- 
+
    This will be called once for each executable image in the parallel
    job.
 
@@ -706,7 +706,7 @@ void mpidbg_finalize_per_image(mqs_image *image, mqs_image_info *image_info);
                    mpidbg_finalize_per_process()).
    MPIDBG_ERR_*: if something went wrong.
 */
-int mpidbg_init_per_process(mqs_process *process, 
+int mpidbg_init_per_process(mqs_process *process,
                             const mqs_process_callbacks *callbacks,
                             struct mpidbg_handle_info_t *handle_types);
 
@@ -751,7 +751,7 @@ void mpidbg_finalize_per_process(mqs_process *process,
    MPIDBG_ERR_NOT_FOUND: if the handle is not valid / found.
    MPIDBG_ERR_UNSUPPORTED: if this function is unsupported.
 */
-int mpidbg_comm_query(mqs_image *image, mqs_image_info *image_info, 
+int mpidbg_comm_query(mqs_image *image, mqs_image_info *image_info,
                       mqs_process *process, mqs_process_info *process_info,
                       mqs_taddr_t c_comm, struct mpidbg_comm_info_t **info);
 
@@ -777,7 +777,7 @@ int mpidbg_comm_query(mqs_image *image, mqs_image_info *image_info,
    MPIDBG_ERR_NOT_FOUND: if the handle is not valid / found.
    MPIDBG_ERR_UNSUPPORTED: if this function is unsupported.
 */
-int mpidbg_comm_f2c(mqs_image *image, mqs_image_info *image_info, 
+int mpidbg_comm_f2c(mqs_image *image, mqs_image_info *image_info,
                     mqs_process *process, mqs_process_info *process_info,
                     mqs_taddr_t f77_comm, mqs_taddr_t *c_comm);
 
@@ -809,9 +809,9 @@ int mpidbg_comm_f2c(mqs_image *image, mqs_image_info *image_info,
    MPIDBG_ERR_NOT_FOUND: if the handle is not valid / found.
    MPIDBG_ERR_UNSUPPORTED: if this function is unsupported.
 */
-int mpidbg_comm_cxx2c(mqs_image *image, mqs_image_info *image_info, 
+int mpidbg_comm_cxx2c(mqs_image *image, mqs_image_info *image_info,
                       mqs_process *process, mqs_process_info *process_info,
-                      mqs_taddr_t cxx_comm, 
+                      mqs_taddr_t cxx_comm,
                       enum mpidbg_comm_info_bitmap_t comm_type,
                       mqs_taddr_t *c_comm);
 
@@ -825,17 +825,17 @@ int mpidbg_comm_cxx2c(mqs_image *image, mqs_image_info *image_info,
    "errhandler_type" argument to the cxx2c function because
    MPI::Errhandler has no derived classes. */
 
-int mpidbg_errhandler_query(mqs_image *image, mqs_image_info *image_info, 
+int mpidbg_errhandler_query(mqs_image *image, mqs_image_info *image_info,
                             mqs_process *process, mqs_process_info *process_info,
                             mqs_taddr_t errhandler,
                             struct mpidbg_errhandler_info_t **info);
-int mpidbg_errhandler_f2c(mqs_image *image, mqs_image_info *image_info, 
+int mpidbg_errhandler_f2c(mqs_image *image, mqs_image_info *image_info,
                           mqs_process *process, mqs_process_info *process_info,
-                          mqs_taddr_t f77_errhandler, 
+                          mqs_taddr_t f77_errhandler,
                           mqs_taddr_t *c_errhandler);
-int mpidbg_errhandler_cxx2c(mqs_image *image, mqs_image_info *image_info, 
+int mpidbg_errhandler_cxx2c(mqs_image *image, mqs_image_info *image_info,
                             mqs_process *process, mqs_process_info *process_info,
-                            mqs_taddr_t cxx_errhandler, 
+                            mqs_taddr_t cxx_errhandler,
                             mqs_taddr_t *c_errhandler);
 
 /*-----------------------------------------------------------------------
@@ -846,16 +846,16 @@ int mpidbg_errhandler_cxx2c(mqs_image *image, mqs_image_info *image_info,
 /* These functions are analogous to the mpidbg_comm_* functions, but
    for MPI_Request. */
 
-int mpidbg_request_query(mqs_image *image, mqs_image_info *image_info, 
+int mpidbg_request_query(mqs_image *image, mqs_image_info *image_info,
                          mqs_process *process, mqs_process_info *process_info,
                          mqs_taddr_t request,
                          struct mpidbg_request_info_t **info);
-int mpidbg_request_f2c(mqs_image *image, mqs_image_info *image_info, 
+int mpidbg_request_f2c(mqs_image *image, mqs_image_info *image_info,
                        mqs_process *process, mqs_process_info *process_info,
                        mqs_taddr_t f77_request, mqs_taddr_t *c_request);
-int mpidbg_request_cxx2c(mqs_image *image, mqs_image_info *image_info, 
+int mpidbg_request_cxx2c(mqs_image *image, mqs_image_info *image_info,
                          mqs_process *process, mqs_process_info *process_info,
-                         mqs_taddr_t cxx_request, 
+                         mqs_taddr_t cxx_request,
                          enum mpidbg_request_info_bitmap_t request_type,
                          mqs_taddr_t *c_request);
 
@@ -867,16 +867,16 @@ int mpidbg_request_cxx2c(mqs_image *image, mqs_image_info *image_info,
 /* These functions are analogous to the mpidbg_comm_* functions, but
    for MPI_Status. */
 
-int mpidbg_status_query(mqs_image *image, mqs_image_info *image_info, 
+int mpidbg_status_query(mqs_image *image, mqs_image_info *image_info,
                         mqs_process *process, mqs_process_info *process_info,
                         mqs_taddr_t status,
                         struct mpidbg_status_info_t **info);
-int mpidbg_status_f2c(mqs_image *image, mqs_image_info *image_info, 
+int mpidbg_status_f2c(mqs_image *image, mqs_image_info *image_info,
                       mqs_process *process, mqs_process_info *process_info,
                       mqs_taddr_t f77_status, mqs_taddr_t *c_status);
-int mpidbg_status_cxx2c(mqs_image *image, mqs_image_info *image_info, 
+int mpidbg_status_cxx2c(mqs_image *image, mqs_image_info *image_info,
                         mqs_process *process, mqs_process_info *process_info,
-                        mqs_taddr_t cxx_status, 
+                        mqs_taddr_t cxx_status,
                         mqs_taddr_t *c_status);
 
 #endif /* __MPIDBG_INTERFACE_H__ */

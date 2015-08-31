@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -13,12 +13,12 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
- 
+
 /*
  * DSS Buffer Operations
  */
@@ -41,7 +41,7 @@ int opal_dss_unload(opal_buffer_t *buffer, void **payload,
     if (NULL == payload) {
         return OPAL_ERR_BAD_PARAM;
     }
-    
+
     /* anything in the buffer - if not, nothing to do */
     if (NULL == buffer->base_ptr || 0 == buffer->bytes_used) {
         *payload = NULL;
@@ -52,7 +52,7 @@ int opal_dss_unload(opal_buffer_t *buffer, void **payload,
     /* okay, we have something to provide - pass it back */
     *payload = buffer->base_ptr;
     *bytes_used = buffer->bytes_used;
-    
+
     /* dereference everything in buffer */
     buffer->base_ptr = NULL;
     buffer->pack_ptr = buffer->unpack_ptr = NULL;
@@ -71,7 +71,7 @@ int opal_dss_load(opal_buffer_t *buffer, void *payload,
     if (NULL == buffer) {
         return OPAL_ERR_BAD_PARAM;
     }
-    
+
     /* check if buffer already has payload - free it if so */
     if (NULL != buffer->base_ptr) {
         free(buffer->base_ptr);
@@ -88,10 +88,10 @@ int opal_dss_load(opal_buffer_t *buffer, void *payload,
     }
 
     /* populate the buffer */
-    buffer->base_ptr = (char*)payload; 
+    buffer->base_ptr = (char*)payload;
 
     /* set pack/unpack pointers */
-    buffer->pack_ptr = ((char*)buffer->base_ptr) + bytes_used; 
+    buffer->pack_ptr = ((char*)buffer->base_ptr) + bytes_used;
     buffer->unpack_ptr = buffer->base_ptr;
 
     /* set counts for size and space */
@@ -99,7 +99,7 @@ int opal_dss_load(opal_buffer_t *buffer, void *payload,
 
     /* All done */
 
-    return OPAL_SUCCESS;    
+    return OPAL_SUCCESS;
 }
 
 
@@ -116,7 +116,7 @@ int opal_dss_copy_payload(opal_buffer_t *dest, opal_buffer_t *src)
     if (NULL == dest || NULL == src) {
         return OPAL_ERR_BAD_PARAM;
     }
-    
+
     /* if the dest is already populated, check to ensure that both
      * source and dest are of the same buffer type
      */
@@ -125,12 +125,12 @@ int opal_dss_copy_payload(opal_buffer_t *dest, opal_buffer_t *src)
             return OPAL_ERR_BUFFER;
         }
     }
-    
+
     /* either the dest was empty or the two types already match -
      * either way, just ensure the two types DO match
      */
     dest->type = src->type;
-    
+
     /* compute how much of the src buffer remains unpacked
      * buffer->bytes_used is the total number of bytes in the buffer that
      * have been packed. However, we may have already unpacked some of
@@ -139,24 +139,24 @@ int opal_dss_copy_payload(opal_buffer_t *dest, opal_buffer_t *src)
      * beyond the unpack_ptr
      */
     bytes_left = src->bytes_used - (src->unpack_ptr - src->base_ptr);
-    
+
     /* if nothing is left, then nothing to do */
     if (0 == bytes_left) {
         return OPAL_SUCCESS;
     }
-    
+
     /* add room to the dest for the src buffer's payload */
     if (NULL == (dst_ptr = opal_dss_buffer_extend(dest, bytes_left))) {
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
-    
+
     /* copy the src payload to the specified location in dest */
     memcpy(dst_ptr, src->unpack_ptr, bytes_left);
-    
+
     /* adjust the dest buffer's bookkeeping */
     dest->bytes_used += bytes_left;
     dest->pack_ptr = ((char*)dest->pack_ptr) + bytes_left;
-    
+
     return OPAL_SUCCESS;
 }
 

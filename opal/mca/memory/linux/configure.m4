@@ -6,15 +6,15 @@
 # Copyright (c) 2004-2005 The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
-# Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+# Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2008-2010 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
-# 
+#
 # Additional copyrights may follow
-# 
+#
 # $HEADER$
 #
 AC_DEFUN([MCA_opal_memory_linux_PRIORITY], [40])
@@ -26,7 +26,7 @@ AC_DEFUN([MCA_opal_memory_linux_COMPILE_MODE], [
 ])
 
 
-# MCA_memory_linux_CONFIG(action-if-can-compile, 
+# MCA_memory_linux_CONFIG(action-if-can-compile,
 #                        [action-if-cant-compile])
 # ------------------------------------------------
 AC_DEFUN([MCA_opal_memory_linux_CONFIG],[
@@ -107,7 +107,7 @@ AC_DEFUN([MCA_opal_memory_linux_CONFIG],[
     #
     # See if we have sbrk prototyped
     #
-    AS_IF([test "$memory_linux_ptmalloc2_happy" = yes], 
+    AS_IF([test "$memory_linux_ptmalloc2_happy" = yes],
           [AC_CHECK_DECLS([sbrk])])
 
     #
@@ -118,9 +118,9 @@ AC_DEFUN([MCA_opal_memory_linux_CONFIG],[
            memory_linux_munmap=1
 
            # it's nearly impossible to call mmap from syscall(), so
-           # only go this route if we can't get at munmap any other 
+           # only go this route if we can't get at munmap any other
            # way.
-           AC_CHECK_HEADER([syscall.h], 
+           AC_CHECK_HEADER([syscall.h],
                [AC_CHECK_FUNCS([syscall], [], [memory_linux_munmap=0])])
 
            # Always look for __munmap and __mmap
@@ -148,7 +148,7 @@ AC_DEFUN([MCA_opal_memory_linux_CONFIG],[
           [value=0])
     AC_DEFINE_UNQUOTED([MEMORY_LINUX_PTMALLOC2], [$value],
                        [Whether ptmalloc2 is supported on this system or not])
-    AM_CONDITIONAL([MEMORY_LINUX_PTMALLOC2], 
+    AM_CONDITIONAL([MEMORY_LINUX_PTMALLOC2],
                    [test "$memory_linux_ptmalloc2_happy" = yes])
 
     ######################################################################
@@ -169,11 +169,11 @@ AC_DEFUN([MCA_opal_memory_linux_CONFIG],[
     # code base to use
     AS_IF([test "$memory_linux_ummu_happy" = yes],
           [memory_base_include="linux/public.h"
-           value=1], 
+           value=1],
           [value=0])
     AC_DEFINE_UNQUOTED([MEMORY_LINUX_UMMUNOTIFY], [$value],
                        [Whether ummunotify is supported on this system or not])
-    AM_CONDITIONAL([MEMORY_LINUX_UMMUNOTIFY], 
+    AM_CONDITIONAL([MEMORY_LINUX_UMMUNOTIFY],
                    [test "$memory_linux_ummu_happy" = yes])
 
     ######################################################################
@@ -189,7 +189,7 @@ AC_DEFUN([MCA_opal_memory_linux_CONFIG],[
     AS_IF([test "$memory_linux_ptmalloc2_happy" = yes -o \
                 "$memory_linux_ummu_happy" = yes],
           [memory_base_found=1
-           $1], 
+           $1],
           [memory_base_found=0
            memory_base_include=
            $2])

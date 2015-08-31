@@ -5,15 +5,15 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -84,8 +84,8 @@ void ompi_ialltoall_f(char *sendbuf, MPI_Fint *sendcount, MPI_Fint *sendtype,
 
     c_ierr = MPI_Ialltoall(sendbuf,
                            OMPI_FINT_2_INT(*sendcount),
-                           c_sendtype, 
-                           recvbuf, 
+                           c_sendtype,
+                           recvbuf,
                            OMPI_FINT_2_INT(*recvcount),
                            c_recvtype, c_comm, &c_req);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);

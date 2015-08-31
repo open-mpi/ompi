@@ -1,21 +1,21 @@
 // -*- c++ -*-
-// 
+//
 // Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
 //                         University Research and Technology
 //                         Corporation.  All rights reserved.
 // Copyright (c) 2004-2005 The University of Tennessee and The University
 //                         of Tennessee Research Foundation.  All rights
 //                         reserved.
-// Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+// Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 //                         University of Stuttgart.  All rights reserved.
 // Copyright (c) 2004-2005 The Regents of the University of California.
 //                         All rights reserved.
 // Copyright (c) 2006-2008 Cisco Systems, Inc.  All rights reserved.
 // Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
 // $COPYRIGHT$
-// 
+//
 // Additional copyrights may follow
-// 
+//
 // $HEADER$
 //
 
@@ -24,25 +24,25 @@
 //
 
 inline void
-MPI::Request::Wait(MPI::Status &status) 
+MPI::Request::Wait(MPI::Status &status)
 {
   (void)MPI_Wait(&mpi_request, &status.mpi_status);
 }
 
 inline void
-MPI::Request::Wait() 
+MPI::Request::Wait()
 {
   (void)MPI_Wait(&mpi_request, MPI_STATUS_IGNORE);
 }
 
 inline void
-MPI::Request::Free() 
+MPI::Request::Free()
 {
   (void)MPI_Request_free(&mpi_request);
 }
 
 inline bool
-MPI::Request::Test(MPI::Status &status) 
+MPI::Request::Test(MPI::Status &status)
 {
   int t;
   (void)MPI_Test(&mpi_request, &t, &status.mpi_status);
@@ -50,7 +50,7 @@ MPI::Request::Test(MPI::Status &status)
 }
 
 inline bool
-MPI::Request::Test() 
+MPI::Request::Test()
 {
   int t;
   (void)MPI_Test(&mpi_request, &t, MPI_STATUS_IGNORE);
@@ -115,7 +115,7 @@ MPI::Request::Testany(int count, MPI::Request array[], int& index)
   for (i=0; i < count; i++) {
     array_of_requests[i] = array[i];
   }
-  (void)MPI_Testany(count, array_of_requests, &index, &flag, 
+  (void)MPI_Testany(count, array_of_requests, &index, &flag,
 		    MPI_STATUS_IGNORE);
   for (i=0; i < count; i++) {
     array[i] = array_of_requests[i];
@@ -159,7 +159,7 @@ MPI::Request::Waitall(int count, MPI::Request req_array[])
   }
 
   delete [] array_of_requests;
-} 
+}
 
 inline bool
 MPI::Request::Testall(int count, MPI::Request req_array[],
@@ -198,11 +198,11 @@ MPI::Request::Testall(int count, MPI::Request req_array[])
   delete [] array_of_requests;
 
   return OPAL_INT_TO_BOOL(flag);
-} 
+}
 
 inline int
 MPI::Request::Waitsome(int incount, MPI::Request req_array[],
-			      int array_of_indices[], MPI::Status stat_array[]) 
+			      int array_of_indices[], MPI::Status stat_array[])
 {
   int i, outcount;
   MPI_Request* array_of_requests = new MPI_Request[incount];
@@ -223,7 +223,7 @@ MPI::Request::Waitsome(int incount, MPI::Request req_array[],
 
 inline int
 MPI::Request::Waitsome(int incount, MPI::Request req_array[],
-			      int array_of_indices[]) 
+			      int array_of_indices[])
 {
   int i, outcount;
   MPI_Request* array_of_requests = new MPI_Request[incount];
@@ -244,7 +244,7 @@ MPI::Request::Waitsome(int incount, MPI::Request req_array[],
 
 inline int
 MPI::Request::Testsome(int incount, MPI::Request req_array[],
-			      int array_of_indices[], MPI::Status stat_array[]) 
+			      int array_of_indices[], MPI::Status stat_array[])
 {
   int i, outcount;
   MPI_Request* array_of_requests = new MPI_Request[incount];
@@ -265,7 +265,7 @@ MPI::Request::Testsome(int incount, MPI::Request req_array[],
 
 inline int
 MPI::Request::Testsome(int incount, MPI::Request req_array[],
-			      int array_of_indices[]) 
+			      int array_of_indices[])
 {
   int i, outcount;
   MPI_Request* array_of_requests = new MPI_Request[incount];
@@ -305,12 +305,12 @@ MPI::Prequest::Startall(int count, MPI:: Prequest array_of_requests[])
   for (i=0; i < count; i++) {
     mpi_requests[i] = array_of_requests[i];
   }
-  (void)MPI_Startall(count, mpi_requests); 
+  (void)MPI_Startall(count, mpi_requests);
   for (i=0; i < count; i++) {
     array_of_requests[i].mpi_request = mpi_requests[i] ;
   }
   delete [] mpi_requests;
-} 
+}
 
 inline bool MPI::Request::Get_status(MPI::Status& status) const
 {
@@ -343,7 +343,7 @@ MPI::Grequest::Start(Query_function *query_fn, Free_function *free_fn,
 	Cancel_function *cancel_fn, void *extra)
 {
     MPI_Request grequest = 0;
-    Intercept_data_t *new_extra = 
+    Intercept_data_t *new_extra =
         new MPI::Grequest::Intercept_data_t;
 
     new_extra->id_extra = extra;

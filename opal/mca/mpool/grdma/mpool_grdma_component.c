@@ -118,7 +118,7 @@ grdma_init(struct mca_mpool_base_resources_t *resources)
     /* Set this here (vs in component.c) because
        opal_leave_pinned* may have been set after MCA params were
        read (e.g., by the openib btl) */
-    mca_mpool_grdma_component.leave_pinned = (int) 
+    mca_mpool_grdma_component.leave_pinned = (int)
         (1 == opal_leave_pinned || opal_leave_pinned_pipeline);
 
     /* find the specified pool */

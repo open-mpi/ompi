@@ -39,8 +39,8 @@ static int ompi_mtl_portals4_component_register(void);
 static int ompi_mtl_portals4_component_open(void);
 static int ompi_mtl_portals4_component_close(void);
 static int ompi_mtl_portals4_component_query(mca_base_module_t **module, int *priority);
-static mca_mtl_base_module_t* 
-ompi_mtl_portals4_component_init(bool enable_progress_threads, 
+static mca_mtl_base_module_t*
+ompi_mtl_portals4_component_init(bool enable_progress_threads,
                                  bool enable_mpi_threads);
 
 OMPI_MODULE_DECLSPEC extern mca_mtl_base_component_2_0_0_t mca_mtl_portals4_component;
@@ -184,7 +184,7 @@ ompi_mtl_portals4_component_register(void)
 static int
 ompi_mtl_portals4_component_open(void)
 {
-    ompi_mtl_portals4.base.mtl_request_size = 
+    ompi_mtl_portals4.base.mtl_request_size =
         sizeof(ompi_mtl_portals4_request_t) -
         sizeof(struct mca_mtl_request_t);
 
@@ -197,24 +197,24 @@ ompi_mtl_portals4_component_open(void)
 #endif
                         );
     opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
-                        "Eager limit: %d", (int) 
+                        "Eager limit: %d", (int)
                         ompi_mtl_portals4.eager_limit);
-    opal_output_verbose(1, ompi_mtl_base_framework.framework_output, 
-                        "Short receive blocks: %d", 
+    opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
+                        "Short receive blocks: %d",
                         ompi_mtl_portals4.recv_short_num);
-    opal_output_verbose(1, ompi_mtl_base_framework.framework_output, 
+    opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                         "Send queue size: %d", ompi_mtl_portals4.send_queue_size);
-    opal_output_verbose(1, ompi_mtl_base_framework.framework_output, 
+    opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                         "Recv queue size: %d", ompi_mtl_portals4.recv_queue_size);
-    opal_output_verbose(1, ompi_mtl_base_framework.framework_output, 
-                        "Long protocol: %s", 
+    opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
+                        "Long protocol: %s",
                         (ompi_mtl_portals4.protocol == eager) ? "Eager" :
                         (ompi_mtl_portals4.protocol == rndv) ? "Rendezvous" :
                          "Other");
 
     OBJ_CONSTRUCT(&ompi_mtl_portals4.fl_message, opal_free_list_t);
     opal_free_list_init(&ompi_mtl_portals4.fl_message,
-                        sizeof(ompi_mtl_portals4_message_t) + 
+                        sizeof(ompi_mtl_portals4_message_t) +
                         ompi_mtl_portals4.eager_limit,
                         opal_cache_line_size,
                         OBJ_CLASS(ompi_mtl_portals4_message_t),
@@ -238,7 +238,7 @@ ompi_mtl_portals4_component_query(mca_base_module_t **module, int *priority)
     /*
      * assume if portals4 MTL was compiled, the user wants it
      */
- 
+
     *priority = param_priority;
     *module = (mca_base_module_t *)&ompi_mtl_portals4.base;
     return OMPI_SUCCESS;
@@ -471,7 +471,7 @@ ompi_mtl_portals4_progress(void)
     }
 
 #if OMPI_MTL_PORTALS4_FLOW_CONTROL
-    if (OPAL_UNLIKELY(0 == count && 
+    if (OPAL_UNLIKELY(0 == count &&
                       0 != opal_list_get_size(&ompi_mtl_portals4.flowctl.pending_sends))) {
         ompi_mtl_portals4_pending_list_progress();
     }

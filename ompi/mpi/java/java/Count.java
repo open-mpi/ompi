@@ -82,7 +82,7 @@ public final class Count implements Comparable
 		return false;
 	}
 
-	public int compareTo(Object obj) 
+	public int compareTo(Object obj)
 	{
 		if(obj instanceof Count) {
 			if(this.count - ((Count)obj).getCount() > 0) {

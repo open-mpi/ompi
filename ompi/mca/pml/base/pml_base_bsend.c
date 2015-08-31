@@ -5,15 +5,15 @@
  * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -27,7 +27,7 @@
 #include "ompi/mca/pml/base/pml_base_request.h"
 #include "ompi/mca/pml/base/pml_base_sendreq.h"
 #include "ompi/mca/pml/base/pml_base_bsend.h"
-#include "opal/mca/mpool/mpool.h" 
+#include "opal/mca/mpool/mpool.h"
 
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
@@ -35,7 +35,7 @@
 
 static opal_mutex_t     mca_pml_bsend_mutex;      /* lock for thread safety */
 static opal_condition_t mca_pml_bsend_condition;  /* condition variable to block on detach */
-static mca_allocator_base_component_t* mca_pml_bsend_allocator_component;  
+static mca_allocator_base_component_t* mca_pml_bsend_allocator_component;
 static mca_allocator_base_module_t* mca_pml_bsend_allocator;  /* sub-allocator to manage users buffer */
 static size_t           mca_pml_bsend_usersize;   /* user provided buffer size */
 static unsigned char   *mca_pml_bsend_userbase;   /* user provided buffer base */
@@ -45,17 +45,17 @@ static size_t           mca_pml_bsend_size;       /* adjusted size of user buffe
 static size_t           mca_pml_bsend_count;      /* number of outstanding requests */
 static size_t           mca_pml_bsend_pagesz;     /* mmap page size */
 static int              mca_pml_bsend_pagebits;   /* number of bits in pagesz */
-static int32_t          mca_pml_bsend_init = 0; 
+static int32_t          mca_pml_bsend_init = 0;
 
 /* defined in pml_base_open.c */
 extern char *ompi_pml_base_bsend_allocator_name;
 
 /*
- * Routine to return pages to sub-allocator as needed 
+ * Routine to return pages to sub-allocator as needed
  */
 static void* mca_pml_bsend_alloc_segment(
-    struct mca_mpool_base_module_t* module, 
-    size_t* size_inout, 
+    struct mca_mpool_base_module_t* module,
+    size_t* size_inout,
     mca_mpool_base_registration_t** registration)
 {
     void *addr;
@@ -64,7 +64,7 @@ static void* mca_pml_bsend_alloc_segment(
         return NULL;
     }
     /* allocate all that is left */
-    size = mca_pml_bsend_size - (mca_pml_bsend_addr - mca_pml_bsend_base); 
+    size = mca_pml_bsend_size - (mca_pml_bsend_addr - mca_pml_bsend_base);
     addr = mca_pml_bsend_addr;
     mca_pml_bsend_addr += size;
     *size_inout = size;
@@ -107,7 +107,7 @@ int mca_pml_base_bsend_init(bool thread_safe)
  */
 int mca_pml_base_bsend_fini(void)
 {
-    if(OPAL_THREAD_ADD32(&mca_pml_bsend_init,-1) > 0) 
+    if(OPAL_THREAD_ADD32(&mca_pml_bsend_init,-1) > 0)
         return OMPI_SUCCESS;
 
     if(NULL != mca_pml_bsend_allocator)
@@ -152,7 +152,7 @@ int mca_pml_base_bsend_attach(void* addr, int size)
      */
     mca_pml_bsend_userbase = (unsigned char*)addr;
     mca_pml_bsend_usersize = size;
-    /* 
+    /*
      * Align to pointer boundaries. The bsend overhead is large enough
      * to account for this.  Compute any alignment that needs to be done.
      */
@@ -168,7 +168,7 @@ int mca_pml_base_bsend_attach(void* addr, int size)
 }
 
 /*
- * User-level call to detach buffer 
+ * User-level call to detach buffer
  */
 int mca_pml_base_bsend_detach(void* addr, int* size)
 {
@@ -183,7 +183,7 @@ int mca_pml_base_bsend_detach(void* addr, int* size)
     /* wait on any pending requests */
     while(mca_pml_bsend_count != 0)
         opal_condition_wait(&mca_pml_bsend_condition, &mca_pml_bsend_mutex);
-    
+
     /* free resources associated with the allocator */
     mca_pml_bsend_allocator->alc_finalize(mca_pml_bsend_allocator);
     mca_pml_bsend_allocator = NULL;
@@ -203,10 +203,10 @@ int mca_pml_base_bsend_detach(void* addr, int* size)
     mca_pml_bsend_count = 0;
     OPAL_THREAD_UNLOCK(&mca_pml_bsend_mutex);
     return OMPI_SUCCESS;
-} 
+}
 
-     
-/* 
+
+/*
  * pack send buffer into buffer
  */
 
@@ -237,7 +237,7 @@ int mca_pml_base_bsend_request_start(ompi_request_t* request)
             OPAL_THREAD_UNLOCK(&mca_pml_bsend_mutex);
             return OMPI_ERR_BUFFER;
         }
-    
+
         OPAL_THREAD_UNLOCK(&mca_pml_bsend_mutex);
 
         /* The convertor is already initialized in the begining so we just have to
@@ -247,25 +247,25 @@ int mca_pml_base_bsend_request_start(ompi_request_t* request)
         iov.iov_len = sendreq->req_bytes_packed;
         iov_count = 1;
         max_data = iov.iov_len;
-        if((rc = opal_convertor_pack( &sendreq->req_base.req_convertor, 
-                                      &iov, 
-                                      &iov_count, 
+        if((rc = opal_convertor_pack( &sendreq->req_base.req_convertor,
+                                      &iov,
+                                      &iov_count,
                                       &max_data )) < 0) {
             return OMPI_ERROR;
         }
- 
+
         /* setup convertor to point to packed buffer (at position zero) */
         opal_convertor_prepare_for_send( &sendreq->req_base.req_convertor, &(ompi_mpi_packed.dt.super),
                                          max_data, sendreq->req_addr );
         /* increment count of pending requests */
         mca_pml_bsend_count++;
     }
-    
+
     return OMPI_SUCCESS;
 }
 
 
-/* 
+/*
  * allocate buffer
  */
 
@@ -299,11 +299,11 @@ int mca_pml_base_bsend_request_alloc(ompi_request_t* request)
     /* increment count of pending requests */
     mca_pml_bsend_count++;
     OPAL_THREAD_UNLOCK(&mca_pml_bsend_mutex);
-    
+
     return OMPI_SUCCESS;
 }
 
-/* 
+/*
  * allocate buffer
  */
 
@@ -332,13 +332,13 @@ void*  mca_pml_base_bsend_request_alloc_buf( size_t length )
     /* increment count of pending requests */
     mca_pml_bsend_count++;
     OPAL_THREAD_UNLOCK(&mca_pml_bsend_mutex);
-    
+
     return buf;
 }
 
 
 /*
- *  Request completed - free buffer and decrement pending count 
+ *  Request completed - free buffer and decrement pending count
  */
 int mca_pml_base_bsend_request_free(void* addr)
 {
@@ -347,7 +347,7 @@ int mca_pml_base_bsend_request_free(void* addr)
 
     /* free buffer */
     mca_pml_bsend_allocator->alc_free(mca_pml_bsend_allocator, addr);
-    
+
     /* decrement count of buffered requests */
     if(--mca_pml_bsend_count == 0)
         opal_condition_signal(&mca_pml_bsend_condition);
@@ -355,17 +355,17 @@ int mca_pml_base_bsend_request_free(void* addr)
     OPAL_THREAD_UNLOCK(&mca_pml_bsend_mutex);
     return OMPI_SUCCESS;
 }
-                                                                                                             
+
 
 
 /*
- *  Request completed - free buffer and decrement pending count 
+ *  Request completed - free buffer and decrement pending count
  */
 int mca_pml_base_bsend_request_fini(ompi_request_t* request)
 {
     mca_pml_base_send_request_t* sendreq = (mca_pml_base_send_request_t*)request;
-    if(sendreq->req_bytes_packed == 0 || 
-       sendreq->req_addr == NULL || 
+    if(sendreq->req_bytes_packed == 0 ||
+       sendreq->req_addr == NULL ||
        sendreq->req_addr == sendreq->req_base.req_addr)
         return OMPI_SUCCESS;
 
@@ -383,5 +383,5 @@ int mca_pml_base_bsend_request_fini(ompi_request_t* request)
     OPAL_THREAD_UNLOCK(&mca_pml_bsend_mutex);
     return OMPI_SUCCESS;
 }
-                                                                                                             
+
 

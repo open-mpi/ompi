@@ -6,14 +6,14 @@ dnl                         Corporation.  All rights reserved.
 dnl Copyright (c) 2004-2005 The University of Tennessee and The University
 dnl                         of Tennessee Research Foundation.  All rights
 dnl                         reserved.
-dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl $COPYRIGHT$
-dnl 
+dnl
 dnl Additional copyrights may follow
-dnl 
+dnl
 dnl $HEADER$
 dnl
 
@@ -59,7 +59,7 @@ rm -f conf_fs_test.$$ CONF_FS_TEST.$$
 # Now see what the user wants to do...
 #
 AC_MSG_CHECKING([if configuring for case sensitive filesystem])
-AC_ARG_WITH(cs_fs, 
+AC_ARG_WITH(cs_fs,
             AC_HELP_STRING([--with-cs-fs],
                            [Destination FS is case sensitive (default: set to value of the build FS's case sensitivity)]))
 

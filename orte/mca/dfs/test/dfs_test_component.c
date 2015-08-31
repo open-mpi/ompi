@@ -4,9 +4,9 @@
  *                         reserved.
  *
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -22,7 +22,7 @@
 /*
  * Public string for version number
  */
-const char *orte_dfs_test_component_version_string = 
+const char *orte_dfs_test_component_version_string =
     "ORTE DFS test MCA component version " ORTE_VERSION;
 
 /*
@@ -39,7 +39,7 @@ static int dfs_test_component_query(mca_base_module_t **module, int *priority);
  */
 orte_dfs_base_component_t mca_dfs_test_component =
 {
-    /* Handle the general mca_component_t struct containing 
+    /* Handle the general mca_component_t struct containing
      *  meta information about the component
      */
     .base_version = {
@@ -74,8 +74,8 @@ static int dfs_test_register(void)
 
     return ORTE_SUCCESS;
 }
- 
-static int dfs_test_open(void) 
+
+static int dfs_test_open(void)
 {
     return ORTE_SUCCESS;
 }
@@ -91,9 +91,9 @@ static int dfs_test_component_query(mca_base_module_t **module, int *priority)
         /* set our priority high so apps use us */
         *priority = 10000;
         *module = (mca_base_module_t *)&orte_dfs_test_module;
-        return ORTE_SUCCESS;        
+        return ORTE_SUCCESS;
     }
-    
+
     *priority = -1;
     *module = NULL;
     return ORTE_ERROR;

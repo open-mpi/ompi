@@ -4,9 +4,9 @@
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -48,7 +48,7 @@ int main( int argc, char* argv[] )
     sparse_array = (my_data_t*)malloc( sizeof(my_data_t) * SIZE );
     array = (int*)malloc( sizeof(int) * SIZE );
     packed = (int*)malloc( sizeof(int) * SIZE );
-   
+
     /**
      * Initialize the sparse data using the index.
      */

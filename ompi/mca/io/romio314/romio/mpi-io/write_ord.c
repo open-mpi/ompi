@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  *
  */
@@ -92,7 +92,7 @@ int MPI_File_write_ordered(MPI_File fh, ROMIO_CONST void *buf, int count,
     /* --BEGIN ERROR HANDLING-- */
     if (error_code != MPI_SUCCESS) {
 	error_code = MPIO_Err_create_code(MPI_SUCCESS, MPIR_ERR_FATAL,
-					  myname, __LINE__, MPI_ERR_INTERN, 
+					  myname, __LINE__, MPI_ERR_INTERN,
 					  "**iosharedfailed", 0);
 	error_code = MPIO_Err_return_file(adio_fh, error_code);
 	goto fn_exit;
@@ -104,7 +104,7 @@ int MPI_File_write_ordered(MPI_File fh, ROMIO_CONST void *buf, int count,
     xbuf = buf;
     if (adio_fh->is_external32) {
 	error_code = MPIU_external32_buffer_setup(buf, count, datatype, &e32buf);
-	if (error_code != MPI_SUCCESS) 
+	if (error_code != MPI_SUCCESS)
 	    goto fn_exit;
 
 	xbuf = e32buf;

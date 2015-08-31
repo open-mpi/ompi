@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -119,14 +119,14 @@ int MPI_File_read_shared(MPI_File fh, void *buf, int count,
         off = adio_fh->disp + adio_fh->etype_size * shared_fp;
 
         /* if atomic mode requested, lock (exclusive) the region, because there
-           could be a concurrent noncontiguous request. On NFS, locking 
+           could be a concurrent noncontiguous request. On NFS, locking
            is done in the ADIO_ReadContig.*/
 
         if ((adio_fh->atomicity) && (adio_fh->file_system != ADIO_NFS))
             ADIOI_WRITE_LOCK(adio_fh, off, SEEK_SET, bufsize);
 
         ADIO_ReadContig(adio_fh, xbuf, count, datatype, ADIO_EXPLICIT_OFFSET,
-                        off, status, &error_code); 
+                        off, status, &error_code);
 
         if ((adio_fh->atomicity) && (adio_fh->file_system != ADIO_NFS))
             ADIOI_UNLOCK(adio_fh, off, SEEK_SET, bufsize);

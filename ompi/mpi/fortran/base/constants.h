@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2013 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -15,9 +15,9 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -30,7 +30,7 @@
 /*
  * Several variables are used to link against MPI F77 constants which
  * correspond to addresses, e.g. MPI_BOTTOM, and are implemented via
- * common blocks.  
+ * common blocks.
  *
  * We use common blocks so that in the C wrapper functions, we can
  * compare the address that comes in against known addresses (e.g., if

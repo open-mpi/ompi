@@ -6,24 +6,24 @@
 # Copyright (c) 2004-2005 The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
-# Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+# Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
 #                         Use is subject to license terms.
 # $COPYRIGHT$
-# 
+#
 # Additional copyrights may follow
-# 
+#
 # $HEADER$
 #
 [empty-nodelist-error]
-There are not enough slots available in the Grid Engine 
+There are not enough slots available in the Grid Engine
 Parallel Environment (PE) to satisfy the slot requirement needed to
 launch ORTE daemons to the remote hosts, as requested by the application.
 
-Either request fewer slots in application with less value in -np, 
+Either request fewer slots in application with less value in -np,
 or make more PE slots available for use.
 
 [cannot-read-pe-hostfile]

@@ -91,7 +91,7 @@ btl_portals4_init_interface(void)
             opal_output_verbose(1, opal_btl_base_framework.framework_output,
                             "%s:%d: PtlEQAlloc failed for NI %d: %d",
                             __FILE__, __LINE__, interface, ret);
-            goto error; 
+            goto error;
         }
         mca_btl_portals4_component.eqs_h[interface] = portals4_btl->recv_eq_h;
         OPAL_OUTPUT_VERBOSE((90, opal_btl_base_framework.framework_output,
@@ -99,7 +99,7 @@ btl_portals4_init_interface(void)
 
         /* Create recv_idx portal table entry */
         ret = PtlPTAlloc(portals4_btl->portals_ni_h,
-                     PTL_PT_ONLY_USE_ONCE | 
+                     PTL_PT_ONLY_USE_ONCE |
                      PTL_PT_ONLY_TRUNCATE,
                      portals4_btl->recv_eq_h,
                      REQ_BTL_TABLE_ID,
@@ -108,7 +108,7 @@ btl_portals4_init_interface(void)
             opal_output_verbose(1, opal_btl_base_framework.framework_output,
                             "%s:%d: PtlPTAlloc failed for NI %d: %d",
                             __FILE__, __LINE__, interface, ret);
-            goto error;      
+            goto error;
         }
         OPAL_OUTPUT_VERBOSE((90, opal_btl_base_framework.framework_output,
             "PtlPTAlloc (recv_idx) OK for NI %d recv_idx=%d", interface, portals4_btl->recv_idx));
@@ -148,7 +148,7 @@ btl_portals4_init_interface(void)
 
         ret = PtlMDBind(portals4_btl->portals_ni_h,
                     &md,
-                    &portals4_btl->send_md_h); 
+                    &portals4_btl->send_md_h);
         if (PTL_OK != ret) {
             opal_output_verbose(1, opal_btl_base_framework.framework_output,
                             "%s:%d: PtlMDBind failed for NI %d: %d\n",
@@ -541,7 +541,7 @@ mca_btl_portals4_register_mem(mca_btl_base_module_t *btl_base,
             opal_output_verbose(1, opal_btl_base_framework.framework_output,
                                 "%s:%d: PtlMEAppend failed: %d\n",
                                 __FILE__, __LINE__, ret);
-            OPAL_THREAD_ADD32(&portals4_btl->portals_outstanding_ops, -1); 
+            OPAL_THREAD_ADD32(&portals4_btl->portals_outstanding_ops, -1);
             return NULL;
         }
         OPAL_OUTPUT_VERBOSE((90, opal_btl_base_framework.framework_output,

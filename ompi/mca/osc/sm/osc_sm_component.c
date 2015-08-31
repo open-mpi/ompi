@@ -8,9 +8,9 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -115,7 +115,7 @@ component_init(bool enable_progress_threads, bool enable_mpi_threads)
 }
 
 
-static int 
+static int
 component_finalize(void)
 {
     /* clean up requests free list */
@@ -179,7 +179,7 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
     if (NULL == module) return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
 
     /* fill in the function pointer part */
-    memcpy(module, &ompi_osc_sm_module_template, 
+    memcpy(module, &ompi_osc_sm_module_template,
            sizeof(ompi_osc_base_module_t));
 
     /* need our communicator for collectives in next phase */
@@ -493,7 +493,7 @@ ompi_osc_sm_get_info(struct ompi_win_t *win, struct ompi_info_t **info_used)
     if (NULL == info) return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
 
     if (module->flavor == MPI_WIN_FLAVOR_SHARED) {
-        ompi_info_set(info, "blocking_fence", 
+        ompi_info_set(info, "blocking_fence",
                       (1 == module->global_state->use_barrier_for_fence) ? "true" : "false");
         ompi_info_set(info, "alloc_shared_noncontig",
                       (module->noncontig) ? "true" : "false");

@@ -27,7 +27,7 @@ static void fill_cache_line_size(void)
                                               i, OPAL_HWLOC_LOGICAL);
         if (NULL == obj) {
             break;
-        } else { 
+        } else {
             found = true;
             if (NULL != obj->attr &&
                 size > obj->attr->cache.linesize) {
@@ -61,7 +61,7 @@ int main(int argc, char* argv[])
         fprintf(stderr, "opal_hwloc: couldn't init opal - error code %d\n", rc);
         return rc;
     }
-    
+
     if (0 != hwloc_topology_init(&my_topology)) {
         return OPAL_ERR_NOT_SUPPORTED;
     }

@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -112,7 +112,7 @@ int MPIOI_File_write_all(MPI_File fh,
     xbuf = buf;
     if (adio_fh->is_external32) {
 	error_code = MPIU_external32_buffer_setup(buf, count, datatype, &e32buf);
-	if (error_code != MPI_SUCCESS) 
+	if (error_code != MPI_SUCCESS)
 	    goto fn_exit;
 
 	xbuf = e32buf;

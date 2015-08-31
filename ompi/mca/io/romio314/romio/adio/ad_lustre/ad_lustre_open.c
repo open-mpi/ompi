@@ -165,7 +165,7 @@ fn_exit:
     ADIOI_Free(value);
 
     /* --BEGIN ERROR HANDLING-- */
-    if (fd->fd_sys == -1 || ((fd->fd_direct == -1) && 
+    if (fd->fd_sys == -1 || ((fd->fd_direct == -1) &&
 		(fd->direct_write || fd->direct_read))) {
 	*error_code = ADIOI_Err_create_code(myname, fd->filename, errno);
     }

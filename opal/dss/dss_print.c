@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2012      Los Alamos National Security, Inc.  All rights reserved. 
+ * Copyright (c) 2012      Los Alamos National Security, Inc.  All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -643,7 +643,7 @@ int opal_dss_print_pstat(char **output, char *prefix, opal_pstats_t *src, opal_d
     /* deal with NULL prefix */
     if (NULL == prefix) asprintf(&prefx, " ");
     else prefx = prefix;
-    
+
     /* if src is NULL, just print data type and return */
     if (NULL == src) {
         asprintf(output, "%sData type: OPAL_PSTATS\tValue: NULL pointer", prefx);
@@ -674,7 +674,7 @@ int opal_dss_print_node_stat(char **output, char *prefix, opal_node_stats_t *src
     /* deal with NULL prefix */
     if (NULL == prefix) asprintf(&prefx, " ");
     else prefx = prefix;
-    
+
     /* if src is NULL, just print data type and return */
     if (NULL == src) {
         asprintf(output, "%sData type: OPAL_NODE_STATS\tValue: NULL pointer", prefx);
@@ -693,7 +693,7 @@ int opal_dss_print_node_stat(char **output, char *prefix, opal_node_stats_t *src
     if (prefx != prefix) {
         free(prefx);
     }
-    
+
     return OPAL_SUCCESS;
 }
 
@@ -708,7 +708,7 @@ int opal_dss_print_value(char **output, char *prefix, opal_value_t *src, opal_da
     /* deal with NULL prefix */
     if (NULL == prefix) asprintf(&prefx, " ");
     else prefx = prefix;
-    
+
     /* if src is NULL, just print data type and return */
     if (NULL == src) {
         asprintf(output, "%sData type: OPAL_VALUE\tValue: NULL pointer", prefx);
@@ -717,7 +717,7 @@ int opal_dss_print_value(char **output, char *prefix, opal_value_t *src, opal_da
         }
         return OPAL_SUCCESS;
     }
-    
+
     switch (src->type) {
     case OPAL_BOOL:
         asprintf(output, "%sOPAL_VALUE: Data type: OPAL_BOOL\tKey: %s\tValue: %s",

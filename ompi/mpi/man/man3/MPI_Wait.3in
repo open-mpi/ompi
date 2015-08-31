@@ -18,7 +18,7 @@ int MPI_Wait(MPI_Request *\fIrequest\fP, MPI_Status\fI *status\fP)
 .nf
 INCLUDE 'mpif.h'
 MPI_WAIT(\fIREQUEST, STATUS, IERROR\fP)
-	INTEGER	\fIREQUEST, STATUS(MPI_STATUS_SIZE), IERROR\fP 
+	INTEGER	\fIREQUEST, STATUS(MPI_STATUS_SIZE), IERROR\fP
 
 .fi
 .SH C++ Syntax
@@ -26,51 +26,51 @@ MPI_WAIT(\fIREQUEST, STATUS, IERROR\fP)
 #include <mpi.h>
 void Request::Wait(Status& \fIstatus\fP)
 
-void Request::Wait() 
+void Request::Wait()
 
 .fi
 .SH INPUT PARAMETER
 .ft R
 .TP 1i
-request      
+request
 Request (handle).
 .sp
 .SH OUTPUT PARAMETERS
 .ft R
 .TP 1i
-status      
+status
 Status object (status).
 .ft R
 .TP 1i
 IERROR
-Fortran only: Error status (integer). 
+Fortran only: Error status (integer).
 
 .SH DESCRIPTION
 .ft R
-A call to MPI_Wait returns when the operation identified by request is complete. If the communication object associated with this request was created by a nonblocking send or receive call, then the object is deallocated by the call to MPI_Wait and the request handle is set to MPI_REQUEST_NULL. 
+A call to MPI_Wait returns when the operation identified by request is complete. If the communication object associated with this request was created by a nonblocking send or receive call, then the object is deallocated by the call to MPI_Wait and the request handle is set to MPI_REQUEST_NULL.
 .sp
 The call returns, in status, information on the completed operation. The content of the status object for a receive operation can be accessed as described in Section 3.2.5 of the MPI-1 Standard, "Return Status." The status object for a send operation may be queried by a call to MPI_Test_cancelled (see Section 3.8 of the MPI-1 Standard, "Probe and Cancel").
 .sp
-If your application does not need to examine the \fIstatus\fP field, you can save resources by using the predefined constant MPI_STATUS_IGNORE as a special value for the \fIstatus\fP argument. 
+If your application does not need to examine the \fIstatus\fP field, you can save resources by using the predefined constant MPI_STATUS_IGNORE as a special value for the \fIstatus\fP argument.
 .sp
-One is allowed to call MPI_Wait with a null or inactive request argument. In this case the operation returns immediately with empty status. 
+One is allowed to call MPI_Wait with a null or inactive request argument. In this case the operation returns immediately with empty status.
 
 .SH NOTES
-Successful return of MPI_Wait after an MPI_Ibsend implies that the user send buffer can be reused  i.e., data has been sent out or copied into a buffer attached with MPI_Buffer_attach. Note that, at this point, we can no longer cancel the send (for more information, see Section 3.8 of the MPI-1 Standard, "Probe and Cancel"). If a matching receive is never posted, then the buffer cannot be freed. This runs somewhat counter to the stated goal of MPI_Cancel (always being able to free program space that was committed to the communication subsystem). 
+Successful return of MPI_Wait after an MPI_Ibsend implies that the user send buffer can be reused  i.e., data has been sent out or copied into a buffer attached with MPI_Buffer_attach. Note that, at this point, we can no longer cancel the send (for more information, see Section 3.8 of the MPI-1 Standard, "Probe and Cancel"). If a matching receive is never posted, then the buffer cannot be freed. This runs somewhat counter to the stated goal of MPI_Cancel (always being able to free program space that was committed to the communication subsystem).
 .sp
-Example: Simple usage of nonblocking operations and  MPI_Wait. 
+Example: Simple usage of nonblocking operations and  MPI_Wait.
 .sp
 .nf
-    CALL MPI_COMM_RANK(comm, rank, ierr) 
-    IF(rank.EQ.0) THEN 
-        CALL MPI_ISEND(a(1), 10, MPI_REAL, 1, tag, comm, request, ierr) 
-        **** do some computation **** 
-        CALL MPI_WAIT(request, status, ierr) 
-    ELSE 
-        CALL MPI_IRECV(a(1), 15, MPI_REAL, 0, tag, comm, request, ierr) 
-        **** do some computation **** 
-        CALL MPI_WAIT(request, status, ierr) 
-    END IF 
+    CALL MPI_COMM_RANK(comm, rank, ierr)
+    IF(rank.EQ.0) THEN
+        CALL MPI_ISEND(a(1), 10, MPI_REAL, 1, tag, comm, request, ierr)
+        **** do some computation ****
+        CALL MPI_WAIT(request, status, ierr)
+    ELSE
+        CALL MPI_IRECV(a(1), 15, MPI_REAL, 0, tag, comm, request, ierr)
+        **** do some computation ****
+        CALL MPI_WAIT(request, status, ierr)
+    END IF
 
 .fi
 .SH ERRORS

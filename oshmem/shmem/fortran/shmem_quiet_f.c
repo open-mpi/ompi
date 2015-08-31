@@ -3,9 +3,9 @@
  *                         All rights reserved.
  * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -25,7 +25,7 @@ SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
         shmem_quiet_,
         shmem_quiet__,
         shmem_quiet_f,
-        (void), 
+        (void),
         () )
 
 void shmem_quiet_f(void)

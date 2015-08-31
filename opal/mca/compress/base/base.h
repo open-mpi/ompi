@@ -4,9 +4,9 @@
  *                         Corporation.  All rights reserved.
  *
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 #ifndef OPAL_COMPRESS_BASE_H
@@ -32,11 +32,11 @@ extern "C" {
      *
      * @retval OPAL_SUCCESS Upon success
      * @retval OPAL_ERROR   Upon failures
-     * 
+     *
      * This function is invoked during opal_init();
      */
     OPAL_DECLSPEC int opal_compress_base_open(mca_base_open_flag_t flags);
-    
+
     /**
      * Select an available component.
      *
@@ -46,13 +46,13 @@ extern "C" {
      *
      */
     OPAL_DECLSPEC int opal_compress_base_select(void);
-    
+
     /**
      * Finalize the COMPRESS MCA framework
      *
      * @retval OPAL_SUCCESS Upon success
      * @retval OPAL_ERROR   Upon failures
-     * 
+     *
      * This function is invoked during opal_finalize();
      */
     OPAL_DECLSPEC int opal_compress_base_close(void);

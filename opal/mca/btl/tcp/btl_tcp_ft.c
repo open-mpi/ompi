@@ -5,17 +5,17 @@
  * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
- *                         reserved. 
+ *                         reserved.
  *
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 #include "opal_config.h"
@@ -24,7 +24,7 @@
 
 
 #include "btl_tcp.h"
-#include "btl_tcp_frag.h" 
+#include "btl_tcp_frag.h"
 #include "btl_tcp_proc.h"
 #include "btl_tcp_endpoint.h"
 

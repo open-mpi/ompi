@@ -1,14 +1,14 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2013      Mellanox Technologies, Inc.
- *                         All rights reserved. 
+ *                         All rights reserved.
  * Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -34,7 +34,7 @@ BEGIN_C_DECLS
 
 /**
  * MCA->PML Called by MCA framework to initialize the component.
- * 
+ *
  * @param priority (OUT) Relative priority or ranking used by MCA to
  * selected a component.
  *
@@ -118,7 +118,7 @@ typedef int (*mca_spml_base_module_wait_fn_t)(void* addr,
  * @param size   the size of the buffer to be registered.
  * @param seg_id sysv segment id
  * @param count  number of internal transports (btls) that registered memory
- * @return       array of mkeys (one mkey per "btl") or NULL on failure 
+ * @return       array of mkeys (one mkey per "btl") or NULL on failure
  *
  */
 typedef sshmem_mkey_t * (*mca_spml_base_module_register_fn_t)(void *addr,
@@ -132,7 +132,7 @@ typedef sshmem_mkey_t * (*mca_spml_base_module_register_fn_t)(void *addr,
 typedef int (*mca_spml_base_module_deregister_fn_t)(sshmem_mkey_t *mkeys);
 
 /**
- * try to fill up mkeys that can be used to reach remote pe. 
+ * try to fill up mkeys that can be used to reach remote pe.
  * @param pe  remote pe
  * @param seg 0 - symmetric heap, 1 - static data, everything else are static data in .so
  * @param mkeys  mkeys array
@@ -162,7 +162,7 @@ typedef int (*mca_spml_base_module_del_procs_fn_t)(oshmem_proc_t** procs,
  *
  * @param dst_addr The address in the remote PE of the object being written.
  * @param size     The number of bytes to be written.
- * @param src_addr An address on the local PE holdng the value to be written.  
+ * @param src_addr An address on the local PE holdng the value to be written.
  * @param dst      The remote PE to be written to.
  * @return         OSHMEM_SUCCESS or failure status.
  */
@@ -178,7 +178,7 @@ typedef int (*mca_spml_base_module_put_fn_t)(void *dst_addr,
  *
  * @param dst_addr The address in the remote PE of the object being written.
  * @param size     The number of bytes to be written.
- * @param src_addr An address on the local PE holdng the value to be written.  
+ * @param src_addr An address on the local PE holdng the value to be written.
  * @param dst      The remote PE to be written to.
  * @param handle   The address of a handle to be passed to shmem_wait_nb() or
  *                 shmem_test_nb() to wait or poll for the completion of the transfer.
@@ -193,9 +193,9 @@ typedef int (*mca_spml_base_module_put_nb_fn_t)(void *dst_addr,
 /**
  * Blocking data transfer from remote PE.
  * Read data from remote PE.
- * 
+ *
  * @param dst_addr - The address on the local PE, to write the result of the get operation to.
- * @param size     - The number of bytes to be read. 
+ * @param size     - The number of bytes to be read.
  * @param src_addr - The address on the remote PE, to read from.
  * @param src      - The ID of the remote PE.
  * @return         - OSHMEM_SUCCESS or failure status.
@@ -206,7 +206,7 @@ typedef int (*mca_spml_base_module_get_fn_t)(void *dst_addr,
                                              int src);
 
 /**
- *  Post a receive and wait for completion. 
+ *  Post a receive and wait for completion.
  *
  *  @param buf (IN)         User buffer.
  *  @param count (IN)       The number of bytes to be sent.
@@ -230,14 +230,14 @@ typedef int (*mca_spml_base_module_send_fn_t)(void *buf,
                                               mca_spml_base_put_mode_t mode);
 
 /**
- * Wait for completion of all outstanding put() requests 
+ * Wait for completion of all outstanding put() requests
  *
  * @return         - OSHMEM_SUCCESS or failure status.
  */
 typedef int (*mca_spml_base_module_fence_fn_t)(void);
 
 /**
- * Waits for completion of a non-blocking put or get issued by the calling PE. 
+ * Waits for completion of a non-blocking put or get issued by the calling PE.
  *
  * @return         - OSHMEM_SUCCESS or failure status.
  */

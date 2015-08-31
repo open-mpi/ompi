@@ -2,7 +2,7 @@
  * Copyright (c) 2006      The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2006      The Technical University of Chemnitz. All 
+ * Copyright (c) 2006      The Technical University of Chemnitz. All
  *                         rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -16,15 +16,15 @@
 /* tree comparison function for schedule cache */
 int NBC_Allgather_args_compare(NBC_Allgather_args *a, NBC_Allgather_args *b, void *param) {
 
-	if( (a->sendbuf == b->sendbuf) && 
-      (a->sendcount == b->sendcount) && 
+	if( (a->sendbuf == b->sendbuf) &&
+      (a->sendcount == b->sendcount) &&
       (a->sendtype == b->sendtype) &&
       (a->recvbuf == b->recvbuf) &&
       (a->recvcount == b->recvcount) &&
       (a->recvtype == b->recvtype) ) {
     return  0;
   }
-	if( a->sendbuf < b->sendbuf ) {	
+	if( a->sendbuf < b->sendbuf ) {
     return -1;
 	}
 	return +1;
@@ -35,7 +35,7 @@ int NBC_Allgather_args_compare(NBC_Allgather_args *a, NBC_Allgather_args *b, voi
  * the algorithm uses p-1 rounds
  * each node sends the packet it received last round (or has in round 0) to it's right neighbor (modulo p)
  * each node receives from it's left (modulo p) neighbor */
-int ompi_coll_libnbc_iallgather(void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int recvcount, 
+int ompi_coll_libnbc_iallgather(void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int recvcount,
                                 MPI_Datatype recvtype, struct ompi_communicator_t *comm, ompi_request_t ** request,
                                 struct mca_coll_base_module_2_1_0_t *module)
 {
@@ -51,7 +51,7 @@ int ompi_coll_libnbc_iallgather(void* sendbuf, int sendcount, MPI_Datatype sendt
   ompi_coll_libnbc_module_t *libnbc_module = (ompi_coll_libnbc_module_t*) module;
 
   NBC_IN_PLACE(sendbuf, recvbuf, inplace);
-  
+
   res = NBC_Init_handle(comm, coll_req, libnbc_module);
   if(res != NBC_OK) { printf("Error in NBC_Init_handle(%i)\n", res); return res; }
   handle = (*coll_req);
@@ -90,7 +90,7 @@ int ompi_coll_libnbc_iallgather(void* sendbuf, int sendcount, MPI_Datatype sendt
 
     res = NBC_Sched_create(schedule);
     if(NBC_OK != res) { printf("Error in NBC_Sched_create, (%i)\n", res); return res; }
-    
+
     sbuf = ((char *)recvbuf) + (rank*recvcount*rcvext);
     /* do p-1 rounds */
     for(r=0;r<p;r++) {
@@ -131,10 +131,10 @@ int ompi_coll_libnbc_iallgather(void* sendbuf, int sendcount, MPI_Datatype sendt
 #endif
 
   /*NBC_PRINT_SCHED(*schedule);*/
- 
+
   res = NBC_Start(handle, schedule);
   if (NBC_OK != res) { printf("Error in NBC_Start() (%i)\n", res); return res; }
- 
+
   return NBC_OK;
 }
 

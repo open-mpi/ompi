@@ -5,7 +5,7 @@
 # Copyright (c) 2004-2005 The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
-# Copyright (c) 2004-2009 High Performance Computing Center Stuttgart, 
+# Copyright (c) 2004-2009 High Performance Computing Center Stuttgart,
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
@@ -15,9 +15,9 @@
 # Copyright (c) 2013-2015 Los Alamos National Security, LLC. All rights
 #                         reserved.
 # $COPYRIGHT$
-# 
+#
 # Additional copyrights may follow
-# 
+#
 # $HEADER$
 #
 
@@ -26,12 +26,12 @@
 if BUILD_MPI_BINDINGS_LAYER
 c_mpi_lib = mpi/c/libmpi_c_mpi.la mpi/tool/libmpi_mpit.la
 else
-c_mpi_lib = 
+c_mpi_lib =
 endif
 if BUILD_PMPI_BINDINGS_LAYER
 c_pmpi_lib = mpi/c/profile/libmpi_c_pmpi.la mpi/tool/profile/libmpi_pmpit.la
 else
-c_pmpi_lib = 
+c_pmpi_lib =
 endif
 
 # See if we have Fortran mpif.h MPI bindings

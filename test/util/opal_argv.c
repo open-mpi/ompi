@@ -5,14 +5,14 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -71,13 +71,13 @@ int main(int argc, char* argv[])
   } else {
       test_failure("test9 argv test failed");
   }
-  
+
   if (test10()) {
       test_success();
   } else {
       test_failure("test10 argv test failed");
   }
-  
+
   /* All done */
   return test_finalize();
 }
@@ -90,7 +90,7 @@ static bool test1(void)
   int i, j, argc = 28;
 
   /* Test basic functionality.  Start with a NULL argv and add the
-     contents of the a array.  
+     contents of the a array.
 
      Set argc to be an initiall bogus number -- opal_argv_add() should
      reset it back to zero after the first iteration.
@@ -366,10 +366,10 @@ static bool test9(void)
     int argc;
 
     /* bozo cases */
-    
+
     if (OPAL_SUCCESS != opal_argv_delete(NULL, NULL, 0, 0)) {
         return false;
-    } 
+    }
 
     a = NULL;
     argc = 0;
@@ -377,7 +377,7 @@ static bool test9(void)
     if (OPAL_SUCCESS != opal_argv_delete(&argc, &a, 7, 1) ||
         1 != opal_argv_count(a)) {
         return false;
-    } 
+    }
     opal_argv_free(a);
 
     a = NULL;
@@ -510,7 +510,7 @@ static bool test10(void)
     int o, i;
 
     /* bozo cases */
-    
+
     orig = NULL;
     o = 0;
     insert = NULL;
@@ -518,14 +518,14 @@ static bool test10(void)
     opal_argv_append(&i, &insert, "insert a");
     if (OPAL_SUCCESS == opal_argv_insert(NULL, 0, insert)) {
         return false;
-    } 
+    }
     opal_argv_append(&o, &orig, "orig a");
     if (OPAL_SUCCESS != opal_argv_insert(&orig, 0, NULL)) {
         return false;
-    } 
+    }
     if (OPAL_SUCCESS == opal_argv_insert(&orig, -1, insert)) {
         return false;
-    } 
+    }
     opal_argv_free(orig);
     opal_argv_free(insert);
 

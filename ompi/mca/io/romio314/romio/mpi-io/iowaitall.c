@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 2003 University of Chicago. 
+ *   Copyright (C) 2003 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -30,7 +30,7 @@
 
 int MPIO_Waitall( int count, MPIO_Request requests[], MPI_Status statuses[] )
 {
-    int notdone, i, flag, err; 
+    int notdone, i, flag, err;
     MPIU_THREADPRIV_DECL;
 
     MPIU_THREAD_CS_ENTER(ALLFUNC,);
@@ -39,8 +39,8 @@ int MPIO_Waitall( int count, MPIO_Request requests[], MPI_Status statuses[] )
 	    err = MPIO_Wait(requests, statuses);
 	    goto fn_exit;
     }
-    
-    
+
+
     do {
 	notdone = 0;
 	for (i=0; i<count; i++) {

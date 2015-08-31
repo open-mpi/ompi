@@ -3,9 +3,9 @@
  *                         All rights reserved.
  *
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 #ifndef ORTE_IOF_MR_ORTED_H
@@ -22,9 +22,9 @@
 BEGIN_C_DECLS
 
 /**
- * IOF MR_ORTED Component 
+ * IOF MR_ORTED Component
  */
-typedef struct { 
+typedef struct {
     orte_iof_base_component_t super;
     opal_list_t sinks;
     opal_list_t procs;

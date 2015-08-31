@@ -337,7 +337,7 @@ segment_unlink(map_segment_t *ds_buf)
 
 /*
  * Get current huge page size
- *   
+ *
  */
 size_t sshmem_sysv_gethugepagesize(void)
 {

@@ -9,16 +9,16 @@ program main
       use mpi
       use mpi_ext
       implicit none
-      
+
       integer ierr, rank, size
-      
+
       call MPI_INIT(ierr)
       call MPI_COMM_RANK(MPI_COMM_WORLD, rank, ierr)
       call MPI_COMM_SIZE(MPI_COMM_WORLD, size, ierr)
-      
+
       write(*, '("Hello, world, I am ", i2, " of ", i2)') rank, size
       call OMPI_PROGRESS(3, MPI_COMM_WORLD, ierr)
-      
+
       call MPI_FINALIZE(ierr)
 end program
-      
+

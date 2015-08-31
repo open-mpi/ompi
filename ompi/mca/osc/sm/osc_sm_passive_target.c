@@ -5,9 +5,9 @@
  *                         reserved.
  * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -55,10 +55,10 @@ lk_fetch32(ompi_osc_sm_module_t *module,
 
 
 static inline int
-start_exclusive(ompi_osc_sm_module_t *module, 
+start_exclusive(ompi_osc_sm_module_t *module,
                 int target)
 {
-    uint32_t me = lk_fetch_add32(module, target, 
+    uint32_t me = lk_fetch_add32(module, target,
                                  offsetof(ompi_osc_sm_lock_t, counter), 1);
 
     while (me != lk_fetch32(module, target,
@@ -71,7 +71,7 @@ start_exclusive(ompi_osc_sm_module_t *module,
 
 
 static inline int
-end_exclusive(ompi_osc_sm_module_t *module, 
+end_exclusive(ompi_osc_sm_module_t *module,
               int target)
 {
     lk_add32(module, target, offsetof(ompi_osc_sm_lock_t, write), 1);
@@ -82,10 +82,10 @@ end_exclusive(ompi_osc_sm_module_t *module,
 
 
 static inline int
-start_shared(ompi_osc_sm_module_t *module, 
+start_shared(ompi_osc_sm_module_t *module,
              int target)
 {
-    uint32_t me = lk_fetch_add32(module, target, 
+    uint32_t me = lk_fetch_add32(module, target,
                                  offsetof(ompi_osc_sm_lock_t, counter), 1);
 
     while (me != lk_fetch32(module, target,
@@ -100,7 +100,7 @@ start_shared(ompi_osc_sm_module_t *module,
 
 
 static inline int
-end_shared(ompi_osc_sm_module_t *module, 
+end_shared(ompi_osc_sm_module_t *module,
            int target)
 {
     lk_add32(module, target, offsetof(ompi_osc_sm_lock_t, write), 1);

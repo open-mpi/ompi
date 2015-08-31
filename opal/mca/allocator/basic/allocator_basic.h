@@ -6,16 +6,16 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -23,8 +23,8 @@
  *  A generic memory basic allocator.
  **/
 
-#ifndef ALLOCATOR_BASIC_H 
-#define ALLOCATOR_BASIC_H 
+#ifndef ALLOCATOR_BASIC_H
+#define ALLOCATOR_BASIC_H
 
 #include "opal_config.h"
 #include <stdlib.h>
@@ -76,10 +76,10 @@ int mca_allocator_basic_component_close(void);
 mca_allocator_base_module_t* mca_allocator_basic_component_init(
     bool enable_mpi_threads,
     mca_allocator_base_component_segment_alloc_fn_t segment_alloc,
-    mca_allocator_base_component_segment_free_fn_t segment_free, 
+    mca_allocator_base_component_segment_free_fn_t segment_free,
     struct mca_mpool_base_module_t* module
 );
-                                                                                                 
+
 /**
    * Accepts a request for memory in a specific region defined by the
    * mca_allocator_basic_options_t struct and returns a pointer to memory in that
@@ -92,9 +92,9 @@ mca_allocator_base_module_t* mca_allocator_basic_component_init(
    * @retval NULL if the allocation was unsuccessful
    */
     void * mca_allocator_basic_alloc(
-        mca_allocator_base_module_t * mem, 
-        size_t size, 
-        size_t align, 
+        mca_allocator_base_module_t * mem,
+        size_t size,
+        size_t align,
         mca_mpool_base_registration_t** registration);
 
 /**
@@ -112,9 +112,9 @@ mca_allocator_base_module_t* mca_allocator_basic_component_init(
    *
    */
     void * mca_allocator_basic_realloc(
-        mca_allocator_base_module_t * mem, 
-        void * ptr, 
-        size_t size, 
+        mca_allocator_base_module_t * mem,
+        void * ptr,
+        size_t size,
         mca_mpool_base_registration_t** registration);
 
 /**

@@ -133,7 +133,7 @@ typedef struct mca_btl_scif_component_t {
 int mca_btl_scif_module_init (void);
 
 /**
- * BML->BTL notification of change in the process list. 
+ * BML->BTL notification of change in the process list.
  *
  * location: btl_scif_add_procs.c
  *
@@ -240,7 +240,7 @@ typedef struct mca_btl_scif_reg_t {
     mca_btl_scif_registration_handle_t *handles;
 } mca_btl_scif_reg_t;
 
-/* Global structures */ 
+/* Global structures */
 
 OPAL_MODULE_DECLSPEC extern mca_btl_scif_component_t mca_btl_scif_component;
 OPAL_MODULE_DECLSPEC extern mca_btl_scif_module_t mca_btl_scif_module;

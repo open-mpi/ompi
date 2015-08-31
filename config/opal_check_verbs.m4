@@ -69,9 +69,9 @@ AC_DEFUN([OPAL_CHECK_VERBS_DIR],[
              [Search for verbs libraries in DIR])])
 
     # Sanity check the --with values
-    OPAL_CHECK_WITHDIR([verbs], [$with_verbs], 
+    OPAL_CHECK_WITHDIR([verbs], [$with_verbs],
                        [include/infiniband/verbs.h])
-    OPAL_CHECK_WITHDIR([verbs-libdir], [$with_verbs_libdir], 
+    OPAL_CHECK_WITHDIR([verbs-libdir], [$with_verbs_libdir],
                        [libibverbs.*])
 
     # Set standardized shell variables for OFED lovin' components to

@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -16,9 +16,9 @@
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -33,9 +33,9 @@
 
 /*
  * opal_hash_table_t
- * 
+ *
  * Sketch: [Contributed by David Linden of Hewlett-Packard]
- * 
+ *
  * This has been found to be good for search and insert and
  * (seldom-)remove, all with probablistic O(1) time.  Having a good
  * distribution of the hash indices is important, so even if you know
@@ -55,7 +55,7 @@
  * because searching will eventually find an invalid element.  At
  * maximum density, assuming random usage of the elements, the
  * expected search length is 1/(1-density); for a density of 1/2, this
- * is 2.  
+ * is 2.
  *
  * I believe this blinded bucket/element scheme is actually more
  * storage-efficient than a bucket having a linear list of elements.
@@ -87,7 +87,7 @@
 
 #define HASH_MULTIPLIER 31
 
-/* 
+/*
  * Define the structs that are opaque in the .h
  */
 
@@ -108,7 +108,7 @@ typedef struct opal_hash_element_t opal_hash_element_t;
 struct opal_hash_type_methods_t {
     /* Frees any storage associated with the element
      * The value is not owned by the hash table
-     * The key,key_size of pointer keys is 
+     * The key,key_size of pointer keys is
      */
     void        (*elt_destructor)(opal_hash_element_t * elt);
     /* Hash the key of the element -- for growing and adjusting-after-removal */
@@ -121,7 +121,7 @@ static void opal_hash_table_construct(opal_hash_table_t* ht);
 static void opal_hash_table_destruct(opal_hash_table_t* ht);
 
 OBJ_CLASS_INSTANCE(
-    opal_hash_table_t, 
+    opal_hash_table_t,
     opal_object_t,
     opal_hash_table_construct,
     opal_hash_table_destruct
@@ -144,11 +144,11 @@ opal_hash_table_destruct(opal_hash_table_t* ht)
     free(ht->ht_table);
 }
 
-/* 
+/*
  * Init, etc
  */
 
-static size_t 
+static size_t
 opal_hash_round_capacity_up(size_t capacity)
 {
     /* round up to (1 mod 30) */
@@ -200,7 +200,7 @@ opal_hash_table_remove_all(opal_hash_table_t* ht)
     ht->ht_size = 0;
     /* the tests reuse the hash table for different types after removing all */
     /* so we should allow that by forgetting what type it used to be */
-    ht->ht_type_methods = NULL;	
+    ht->ht_type_methods = NULL;
     return OPAL_SUCCESS;
 }
 
@@ -212,10 +212,10 @@ opal_hash_grow(opal_hash_table_t * ht)
     opal_hash_element_t* new_table;
     size_t old_capacity;
     size_t new_capacity;
-  
+
     old_table    = ht->ht_table;
     old_capacity = ht->ht_capacity;
-    
+
     new_capacity = old_capacity * ht->ht_growth_numer / ht->ht_growth_denom;
     new_capacity = opal_hash_round_capacity_up(new_capacity);
 
@@ -317,13 +317,13 @@ opal_hash_table_remove_elt_at(opal_hash_table_t * ht, size_t ii)
 
 /***************************************************************************/
 
-static uint64_t 
+static uint64_t
 opal_hash_hash_elt_uint32(opal_hash_element_t * elt)
 {
   return elt->key.u32;
 }
 
-static const struct opal_hash_type_methods_t 
+static const struct opal_hash_type_methods_t
 opal_hash_type_methods_uint32 = {
     NULL,
     opal_hash_hash_elt_uint32
@@ -450,13 +450,13 @@ opal_hash_table_remove_value_uint32(opal_hash_table_t * ht, uint32_t key)
 /***************************************************************************/
 
 
-static uint64_t 
+static uint64_t
 opal_hash_hash_elt_uint64(opal_hash_element_t * elt)
 {
   return elt->key.u64;
 }
 
-static const struct opal_hash_type_methods_t 
+static const struct opal_hash_type_methods_t
 opal_hash_type_methods_uint64 = {
     NULL,
     opal_hash_hash_elt_uint64
@@ -584,13 +584,13 @@ opal_hash_table_remove_value_uint64(opal_hash_table_t * ht, uint64_t key)
 /***************************************************************************/
 
 /* helper function used in several places */
-static uint64_t 
+static uint64_t
 opal_hash_hash_key_ptr(const void * key, size_t key_size)
 {
     uint64_t hash;
     const unsigned char *scanner;
     size_t ii;
-    
+
     hash = 0;
     scanner = (const unsigned char *)key;
     for (ii = 0; ii < key_size; ii += 1) {
@@ -601,7 +601,7 @@ opal_hash_hash_key_ptr(const void * key, size_t key_size)
 
 /* ptr methods */
 
-static void 
+static void
 opal_hash_destruct_elt_ptr(opal_hash_element_t * elt)
 {
     elt->key.ptr.key_size = 0;
@@ -612,20 +612,20 @@ opal_hash_destruct_elt_ptr(opal_hash_element_t * elt)
     }
 }
 
-static uint64_t 
+static uint64_t
 opal_hash_hash_elt_ptr(opal_hash_element_t * elt)
 {
     return opal_hash_hash_key_ptr(elt->key.ptr.key, elt->key.ptr.key_size);
 }
 
-static const struct opal_hash_type_methods_t 
+static const struct opal_hash_type_methods_t
 opal_hash_type_methods_ptr = {
     opal_hash_destruct_elt_ptr,
     opal_hash_hash_elt_ptr
 };
 
 int                             /* OPAL_ return code */
-opal_hash_table_get_value_ptr(opal_hash_table_t * ht, 
+opal_hash_table_get_value_ptr(opal_hash_table_t * ht,
                               const void * key, size_t key_size,
                               void * *value)
 {
@@ -663,8 +663,8 @@ opal_hash_table_get_value_ptr(opal_hash_table_t * ht,
 }
 
 int                             /* OPAL_ return code */
-opal_hash_table_set_value_ptr(opal_hash_table_t * ht, 
-                              const void * key, size_t key_size, 
+opal_hash_table_set_value_ptr(opal_hash_table_t * ht,
+                              const void * key, size_t key_size,
                               void * value)
 {
     int rc;
@@ -707,7 +707,7 @@ opal_hash_table_set_value_ptr(opal_hash_table_t * ht,
         } else if (elt->key.ptr.key_size == key_size &&
                    0 == memcmp(elt->key.ptr.key, key, key_size)) {
             /* replace existing value */
-            elt->value = value; 
+            elt->value = value;
             return OPAL_SUCCESS;
         } else {
             /* keep looking */
@@ -716,7 +716,7 @@ opal_hash_table_set_value_ptr(opal_hash_table_t * ht,
 }
 
 int                             /* OPAL_ return code */
-opal_hash_table_remove_value_ptr(opal_hash_table_t * ht, 
+opal_hash_table_remove_value_ptr(opal_hash_table_t * ht,
                                  const void * key, size_t key_size)
 {
     size_t ii, capacity = ht->ht_capacity;
@@ -755,7 +755,7 @@ opal_hash_table_remove_value_ptr(opal_hash_table_t * ht,
 /* Traversals */
 
 static int                      /* OPAL_ return code */
-opal_hash_table_get_next_elt(opal_hash_table_t *ht, 
+opal_hash_table_get_next_elt(opal_hash_table_t *ht,
                              opal_hash_element_t * prev_elt, /* NULL means find first */
                              opal_hash_element_t * *next_elt)
 {
@@ -773,16 +773,16 @@ opal_hash_table_get_next_elt(opal_hash_table_t *ht,
 }
 
 int                             /* OPAL_ return code */
-opal_hash_table_get_first_key_uint32(opal_hash_table_t * ht, 
-                                     uint32_t *key, void * *value, 
+opal_hash_table_get_first_key_uint32(opal_hash_table_t * ht,
+                                     uint32_t *key, void * *value,
                                      void * *node)
 {
   return opal_hash_table_get_next_key_uint32(ht, key, value, NULL, node);
 }
 
 int                             /* OPAL_ return code */
-opal_hash_table_get_next_key_uint32(opal_hash_table_t * ht, 
-                                    uint32_t *key, void * *value, 
+opal_hash_table_get_next_key_uint32(opal_hash_table_t * ht,
+                                    uint32_t *key, void * *value,
                                     void * in_node, void * *out_node)
 {
   opal_hash_element_t * elt;
@@ -796,16 +796,16 @@ opal_hash_table_get_next_key_uint32(opal_hash_table_t * ht,
 }
 
 int                             /* OPAL_ return code */
-opal_hash_table_get_first_key_ptr(opal_hash_table_t * ht, 
-                                  void * *key, size_t *key_size, void * *value, 
+opal_hash_table_get_first_key_ptr(opal_hash_table_t * ht,
+                                  void * *key, size_t *key_size, void * *value,
                                   void * *node)
 {
   return opal_hash_table_get_next_key_ptr(ht, key, key_size, value, NULL, node);
 }
 
 int                             /* OPAL_ return code */
-opal_hash_table_get_next_key_ptr(opal_hash_table_t * ht, 
-                                 void * *key, size_t *key_size, void * *value, 
+opal_hash_table_get_next_key_ptr(opal_hash_table_t * ht,
+                                 void * *key, size_t *key_size, void * *value,
                                  void * in_node, void * *out_node)
 {
   opal_hash_element_t * elt;
@@ -820,16 +820,16 @@ opal_hash_table_get_next_key_ptr(opal_hash_table_t * ht,
 }
 
 int                             /* OPAL_ return code */
-opal_hash_table_get_first_key_uint64(opal_hash_table_t * ht, 
-                                     uint64_t *key, void * *value, 
+opal_hash_table_get_first_key_uint64(opal_hash_table_t * ht,
+                                     uint64_t *key, void * *value,
                                      void * *node)
 {
   return opal_hash_table_get_next_key_uint64(ht, key, value, NULL, node);
 }
 
 int                             /* OPAL_ return code */
-opal_hash_table_get_next_key_uint64(opal_hash_table_t * ht, 
-                                    uint64_t *key, void * *value, 
+opal_hash_table_get_next_key_uint64(opal_hash_table_t * ht,
+                                    uint64_t *key, void * *value,
                                     void * in_node, void * *out_node)
 {
   opal_hash_element_t * elt;
@@ -849,7 +849,7 @@ static void opal_proc_table_construct(opal_proc_table_t* pt);
 static void opal_proc_table_destruct(opal_proc_table_t* pt);
 
 OBJ_CLASS_INSTANCE(
-    opal_proc_table_t, 
+    opal_proc_table_t,
     opal_hash_table_t,
     opal_proc_table_construct,
     opal_proc_table_destruct
@@ -866,7 +866,7 @@ opal_proc_table_destruct(opal_proc_table_t* pt)
 {
 }
 
-/* 
+/*
  * Init, etc
  */
 
@@ -886,7 +886,7 @@ int opal_proc_table_remove_all(opal_proc_table_t *pt) {
     void * node;
 
     rc = opal_hash_table_get_first_key_uint32(&pt->super, &jobid, (void **)&vpids, &node);
-    
+
     if (OPAL_SUCCESS == rc) {
         do {
             if (NULL != vpids) {
@@ -901,7 +901,7 @@ int opal_proc_table_remove_all(opal_proc_table_t *pt) {
     return rc;
 }
 
-int opal_proc_table_get_value(opal_proc_table_t* pt, opal_process_name_t key, 
+int opal_proc_table_get_value(opal_proc_table_t* pt, opal_process_name_t key,
                               void** ptr) {
     int rc;
     opal_hash_table_t * vpids;

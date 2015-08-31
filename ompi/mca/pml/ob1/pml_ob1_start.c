@@ -5,16 +5,16 @@
  * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -55,7 +55,7 @@ int mca_pml_ob1_start(size_t count, ompi_request_t** requests)
                     break;
                 /* otherwise fall through */
             case OMPI_REQUEST_ACTIVE: {
-            
+
                 ompi_request_t *request;
                 OPAL_THREAD_LOCK(&ompi_request_lock);
                 if (pml_request->req_pml_complete == false) {
@@ -71,7 +71,7 @@ int mca_pml_ob1_start(size_t count, ompi_request_t** requests)
                 /* allocate a new request */
                 switch(pml_request->req_type) {
                     case MCA_PML_REQUEST_SEND: {
-                         mca_pml_base_send_mode_t sendmode = 
+                         mca_pml_base_send_mode_t sendmode =
                              ((mca_pml_base_send_request_t*)pml_request)->req_send_mode;
                          rc = mca_pml_ob1_isend_init(
                               pml_request->req_addr,
@@ -111,7 +111,7 @@ int mca_pml_ob1_start(size_t count, ompi_request_t** requests)
 
         /* start the request */
         switch(pml_request->req_type) {
-            case MCA_PML_REQUEST_SEND: 
+            case MCA_PML_REQUEST_SEND:
             {
                 mca_pml_ob1_send_request_t* sendreq = (mca_pml_ob1_send_request_t*)pml_request;
                 MEMCHECKER(

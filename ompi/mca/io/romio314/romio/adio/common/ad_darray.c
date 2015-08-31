@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -18,11 +18,11 @@ static int MPIOI_Type_cyclic(int *array_of_gsizes, int dim, int ndims, int nproc
 		      MPI_Aint *st_offset);
 
 
-int ADIO_Type_create_darray(int size, int rank, int ndims, 
-			    int *array_of_gsizes, int *array_of_distribs, 
-			    int *array_of_dargs, int *array_of_psizes, 
-			    int order, MPI_Datatype oldtype, 
-			    MPI_Datatype *newtype) 
+int ADIO_Type_create_darray(int size, int rank, int ndims,
+			    int *array_of_gsizes, int *array_of_distribs,
+			    int *array_of_dargs, int *array_of_psizes,
+			    int order, MPI_Datatype oldtype,
+			    MPI_Datatype *newtype)
 {
     MPI_Datatype type_old, type_new=MPI_DATATYPE_NULL, types[3];
     int procs, tmp_rank, i, tmp_size, blklens[3], *coords;
@@ -52,12 +52,12 @@ int ADIO_Type_create_darray(int size, int rank, int ndims,
 		MPIOI_Type_block(array_of_gsizes, i, ndims,
 				 array_of_psizes[i],
 				 coords[i], array_of_dargs[i],
-				 order, orig_extent, 
+				 order, orig_extent,
 				 type_old, &type_new,
-				 st_offsets+i); 
+				 st_offsets+i);
 		break;
 	    case MPI_DISTRIBUTE_CYCLIC:
-		MPIOI_Type_cyclic(array_of_gsizes, i, ndims, 
+		MPIOI_Type_cyclic(array_of_gsizes, i, ndims,
 				  array_of_psizes[i], coords[i],
 				  array_of_dargs[i], order,
 				  orig_extent, type_old,
@@ -65,11 +65,11 @@ int ADIO_Type_create_darray(int size, int rank, int ndims,
 		break;
 	    case MPI_DISTRIBUTE_NONE:
 		/* treat it as a block distribution on 1 process */
-		MPIOI_Type_block(array_of_gsizes, i, ndims, 1, 0, 
+		MPIOI_Type_block(array_of_gsizes, i, ndims, 1, 0,
 				 MPI_DISTRIBUTE_DFLT_DARG, order,
-				 orig_extent, 
+				 orig_extent,
 				 type_old, &type_new,
-				 st_offsets+i); 
+				 st_offsets+i);
 		break;
 	    }
 	    if (i) MPI_Type_free(&type_old);
@@ -94,20 +94,20 @@ int ADIO_Type_create_darray(int size, int rank, int ndims,
 		MPIOI_Type_block(array_of_gsizes, i, ndims, array_of_psizes[i],
 				 coords[i], array_of_dargs[i], order,
 				 orig_extent, type_old, &type_new,
-				 st_offsets+i); 
+				 st_offsets+i);
 		break;
 	    case MPI_DISTRIBUTE_CYCLIC:
-		MPIOI_Type_cyclic(array_of_gsizes, i, ndims, 
+		MPIOI_Type_cyclic(array_of_gsizes, i, ndims,
 				  array_of_psizes[i], coords[i],
-				  array_of_dargs[i], order, 
+				  array_of_dargs[i], order,
 				  orig_extent, type_old, &type_new,
 				  st_offsets+i);
 		break;
 	    case MPI_DISTRIBUTE_NONE:
 		/* treat it as a block distribution on 1 process */
 		MPIOI_Type_block(array_of_gsizes, i, ndims, array_of_psizes[i],
-		      coords[i], MPI_DISTRIBUTE_DFLT_DARG, order, orig_extent, 
-                           type_old, &type_new, st_offsets+i); 
+		      coords[i], MPI_DISTRIBUTE_DFLT_DARG, order, orig_extent,
+                           type_old, &type_new, st_offsets+i);
 		break;
 	    }
 	    if (i != ndims-1) MPI_Type_free(&type_old);
@@ -127,13 +127,13 @@ int ADIO_Type_create_darray(int size, int rank, int ndims,
 
     disps[2] = orig_extent;
     for (i=0; i<ndims; i++) disps[2] *= (MPI_Aint)array_of_gsizes[i];
-	
+
     disps[0] = 0;
     blklens[0] = blklens[1] = blklens[2] = 1;
     types[0] = MPI_LB;
     types[1] = type_new;
     types[2] = MPI_UB;
-    
+
     MPI_Type_struct(3, blklens, disps, types, newtype);
 
     MPI_Type_free(&type_new);
@@ -149,13 +149,13 @@ int ADIO_Type_create_darray(int size, int rank, int ndims,
 static int MPIOI_Type_block(int *array_of_gsizes, int dim, int ndims, int nprocs,
 		     int rank, int darg, int order, MPI_Aint orig_extent,
 		     MPI_Datatype type_old, MPI_Datatype *type_new,
-		     MPI_Aint *st_offset) 
+		     MPI_Aint *st_offset)
 {
 /* nprocs = no. of processes in dimension dim of grid
    rank = coordinate of this process in dimension dim */
     int blksize, global_size, mysize, i, j;
     MPI_Aint stride;
-    
+
     global_size = array_of_gsizes[dim];
 
     if (darg == MPI_DISTRIBUTE_DFLT_DARG)
@@ -180,7 +180,7 @@ static int MPIOI_Type_block(int *array_of_gsizes, int dim, int ndims, int nprocs
 
     stride = orig_extent;
     if (order == MPI_ORDER_FORTRAN) {
-	if (dim == 0) 
+	if (dim == 0)
 	    MPI_Type_contiguous(mysize, type_old, type_new);
 	else {
 	    for (i=0; i<dim; i++) stride *= (MPI_Aint)array_of_gsizes[i];
@@ -188,7 +188,7 @@ static int MPIOI_Type_block(int *array_of_gsizes, int dim, int ndims, int nprocs
 	}
     }
     else {
-	if (dim == ndims-1) 
+	if (dim == ndims-1)
 	    MPI_Type_contiguous(mysize, type_old, type_new);
 	else {
 	    for (i=ndims-1; i>dim; i--) stride *= (MPI_Aint)array_of_gsizes[i];
@@ -211,7 +211,7 @@ static int MPIOI_Type_block(int *array_of_gsizes, int dim, int ndims, int nprocs
 static int MPIOI_Type_cyclic(int *array_of_gsizes, int dim, int ndims, int nprocs,
 		      int rank, int darg, int order, MPI_Aint orig_extent,
 		      MPI_Datatype type_old, MPI_Datatype *type_new,
-		      MPI_Aint *st_offset) 
+		      MPI_Aint *st_offset)
 {
 /* nprocs = no. of processes in dimension dim of grid
    rank = coordinate of this process in dimension dim */
@@ -227,7 +227,7 @@ static int MPIOI_Type_cyclic(int *array_of_gsizes, int dim, int ndims, int nproc
 	return MPI_ERR_ARG;
     }
     /* --END ERROR HANDLING-- */
-    
+
     st_index = rank*blksize;
     end_index = array_of_gsizes[dim] - 1;
 
@@ -240,7 +240,7 @@ static int MPIOI_Type_cyclic(int *array_of_gsizes, int dim, int ndims, int nproc
 
     count = local_size/blksize;
     rem = local_size % blksize;
-    
+
     stride = (MPI_Aint)nprocs*(MPI_Aint)blksize*orig_extent;
     if (order == MPI_ORDER_FORTRAN)
 	for (i=0; i<dim; i++) stride *= (MPI_Aint)array_of_gsizes[i];
@@ -266,7 +266,7 @@ static int MPIOI_Type_cyclic(int *array_of_gsizes, int dim, int ndims, int nproc
     }
 
     /* In the first iteration, we need to set the displacement in that
-       dimension correctly. */ 
+       dimension correctly. */
     if ( ((order == MPI_ORDER_FORTRAN) && (dim == 0)) ||
          ((order == MPI_ORDER_C) && (dim == ndims-1)) ) {
         types[0] = MPI_LB;
@@ -284,9 +284,9 @@ static int MPIOI_Type_cyclic(int *array_of_gsizes, int dim, int ndims, int nproc
                             the struct above */
     }
     else {
-        *st_offset = (MPI_Aint)rank * (MPI_Aint)blksize; 
+        *st_offset = (MPI_Aint)rank * (MPI_Aint)blksize;
         /* st_offset is in terms of no. of elements of type oldtype in
-         * this dimension */ 
+         * this dimension */
     }
 
     if (local_size == 0) *st_offset = 0;

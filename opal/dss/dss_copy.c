@@ -201,14 +201,14 @@ int opal_dss_copy_pstat(opal_pstats_t **dest, opal_pstats_t *src,
                         opal_data_type_t type)
 {
     opal_pstats_t *p;
-    
+
     /* create the new object */
     *dest = OBJ_NEW(opal_pstats_t);
     if (NULL == *dest) {
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
     p = *dest;
-    
+
     /* copy the individual fields */
     memcpy(p->node, src->node, sizeof(src->node));
     p->rank = src->rank;
@@ -223,7 +223,7 @@ int opal_dss_copy_pstat(opal_pstats_t **dest, opal_pstats_t *src,
     p->peak_vsize = src->peak_vsize;
     p->processor = src->processor;
     p->sample_time.tv_sec = src->sample_time.tv_sec;
-    p->sample_time.tv_usec = src->sample_time.tv_usec;    
+    p->sample_time.tv_usec = src->sample_time.tv_usec;
     return OPAL_SUCCESS;
 }
 
@@ -232,14 +232,14 @@ int opal_dss_copy_node_stat(opal_node_stats_t **dest, opal_node_stats_t *src,
                             opal_data_type_t type)
 {
     opal_node_stats_t *p;
-    
+
     /* create the new object */
     *dest = OBJ_NEW(opal_node_stats_t);
     if (NULL == *dest) {
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
     p = *dest;
-    
+
     /* copy the individual fields */
     p->la = src->la;
     p->la5 = src->la5;
@@ -247,7 +247,7 @@ int opal_dss_copy_node_stat(opal_node_stats_t **dest, opal_node_stats_t *src,
     p->total_mem = src->total_mem;
     p->free_mem = src->free_mem;
     p->sample_time.tv_sec = src->sample_time.tv_sec;
-    p->sample_time.tv_usec = src->sample_time.tv_usec;    
+    p->sample_time.tv_usec = src->sample_time.tv_usec;
     return OPAL_SUCCESS;
 }
 
@@ -256,14 +256,14 @@ int opal_dss_copy_value(opal_value_t **dest, opal_value_t *src,
                         opal_data_type_t type)
 {
     opal_value_t *p;
-    
+
     /* create the new object */
     *dest = OBJ_NEW(opal_value_t);
     if (NULL == *dest) {
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
     p = *dest;
-    
+
     /* copy the type and key */
     if (NULL != src->key) {
         p->key = strdup(src->key);

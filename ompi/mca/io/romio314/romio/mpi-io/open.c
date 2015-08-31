@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -71,7 +71,7 @@ int MPI_File_open(MPI_Comm comm, ROMIO_CONST char *filename, int amode,
     if (error_code || flag)
     {
 	error_code = MPIO_Err_create_code(error_code, MPIR_ERR_RECOVERABLE,
-					  myname, __LINE__, MPI_ERR_COMM, 
+					  myname, __LINE__, MPI_ERR_COMM,
 					  "**commnotintra", 0);
 	goto fn_fail;
     }
@@ -80,16 +80,16 @@ int MPI_File_open(MPI_Comm comm, ROMIO_CONST char *filename, int amode,
 	 ((amode&MPI_MODE_WRONLY)?1:0) != 1 )
     {
 	error_code = MPIO_Err_create_code(MPI_SUCCESS, MPIR_ERR_RECOVERABLE,
-					  myname, __LINE__, MPI_ERR_AMODE, 
+					  myname, __LINE__, MPI_ERR_AMODE,
 					  "**fileamodeone", 0);
 	goto fn_fail;
     }
 
-    if ((amode & MPI_MODE_RDONLY) && 
+    if ((amode & MPI_MODE_RDONLY) &&
             ((amode & MPI_MODE_CREATE) || (amode & MPI_MODE_EXCL)))
     {
 	error_code = MPIO_Err_create_code(MPI_SUCCESS, MPIR_ERR_RECOVERABLE,
-					  myname, __LINE__, MPI_ERR_AMODE, 
+					  myname, __LINE__, MPI_ERR_AMODE,
 					  "**fileamoderead", 0);
 	goto fn_fail;
     }
@@ -97,7 +97,7 @@ int MPI_File_open(MPI_Comm comm, ROMIO_CONST char *filename, int amode,
     if ((amode & MPI_MODE_RDWR) && (amode & MPI_MODE_SEQUENTIAL))
     {
 	error_code = MPIO_Err_create_code(MPI_SUCCESS, MPIR_ERR_RECOVERABLE,
-					  myname, __LINE__, MPI_ERR_AMODE, 
+					  myname, __LINE__, MPI_ERR_AMODE,
 					  "**fileamodeseq", 0);
 	goto fn_fail;
     }
@@ -132,7 +132,7 @@ int MPI_File_open(MPI_Comm comm, ROMIO_CONST char *filename, int amode,
     if (error_code != MPI_SUCCESS)
     {
 	/* ADIO_ResolveFileType() will print as informative a message as it
-	 * possibly can or call MPIO_Err_setmsg.  We just need to propagate 
+	 * possibly can or call MPIO_Err_setmsg.  We just need to propagate
 	 * the error up.
 	 */
 	goto fn_fail;
@@ -149,7 +149,7 @@ int MPI_File_open(MPI_Comm comm, ROMIO_CONST char *filename, int amode,
 	filename = tmp + 1;
     }
 
-/* use default values for disp, etype, filetype */    
+/* use default values for disp, etype, filetype */
 
     *fh = ADIO_Open(comm, dupcomm, filename, file_system, fsops, amode, 0,
 		    MPI_BYTE, MPI_BYTE, info, ADIO_PERM_NULL, &error_code);
@@ -163,10 +163,10 @@ int MPI_File_open(MPI_Comm comm, ROMIO_CONST char *filename, int amode,
     /* if MPI_MODE_SEQUENTIAL requested, file systems cannot do explicit offset
      * or independent file pointer accesses, leaving not much else aside from
      * shared file pointer accesses. */
-    if ( !ADIO_Feature((*fh), ADIO_SHARED_FP) && (amode & MPI_MODE_SEQUENTIAL)) 
+    if ( !ADIO_Feature((*fh), ADIO_SHARED_FP) && (amode & MPI_MODE_SEQUENTIAL))
     {
-        error_code = MPIO_Err_create_code(MPI_SUCCESS, MPIR_ERR_RECOVERABLE, 
-			                  myname, __LINE__, 
+        error_code = MPIO_Err_create_code(MPI_SUCCESS, MPIR_ERR_RECOVERABLE,
+			                  myname, __LINE__,
 					  MPI_ERR_UNSUPPORTED_OPERATION,
 					  "**iosequnsupported", 0);
 	ADIO_Close(*fh, &error_code);
@@ -176,7 +176,7 @@ int MPI_File_open(MPI_Comm comm, ROMIO_CONST char *filename, int amode,
     /* determine name of file that will hold the shared file pointer */
     /* can't support shared file pointers on a file system that doesn't
        support file locking. */
-    if ((error_code == MPI_SUCCESS) && 
+    if ((error_code == MPI_SUCCESS) &&
 		    ADIO_Feature((*fh), ADIO_SHARED_FP)) {
 	MPI_Comm_rank(dupcomm, &rank);
 	ADIOI_Shfp_fname(*fh, rank, &error_code);
@@ -184,7 +184,7 @@ int MPI_File_open(MPI_Comm comm, ROMIO_CONST char *filename, int amode,
 	    goto fn_fail;
 
         /* if MPI_MODE_APPEND, set the shared file pointer to end of file.
-           indiv. file pointer already set to end of file in ADIO_Open. 
+           indiv. file pointer already set to end of file in ADIO_Open.
            Here file view is just bytes. */
 	if ((*fh)->access_mode & MPI_MODE_APPEND) {
 	    if (rank == (*fh)->hints->ranklist[0])  /* only one person need set the sharedfp */

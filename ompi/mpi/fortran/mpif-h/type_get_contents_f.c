@@ -5,15 +5,15 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -71,8 +71,8 @@ static const char FUNC_NAME[] = "MPI_TYPE_GET_CONTENTS";
 
 void ompi_type_get_contents_f(MPI_Fint *mtype, MPI_Fint *max_integers,
 			     MPI_Fint *max_addresses, MPI_Fint *max_datatypes,
-			     MPI_Fint *array_of_integers, 
-			     MPI_Aint *array_of_addresses, 
+			     MPI_Fint *array_of_integers,
+			     MPI_Aint *array_of_addresses,
 			     MPI_Fint *array_of_datatypes, MPI_Fint *ierr)
 {
     MPI_Aint *c_address_array = NULL;
@@ -107,11 +107,11 @@ void ompi_type_get_contents_f(MPI_Fint *mtype, MPI_Fint *max_integers,
 
     OMPI_ARRAY_FINT_2_INT(array_of_integers, *max_integers);
 
-    c_ierr = MPI_Type_get_contents(c_mtype, 
-                                   OMPI_FINT_2_INT(*max_integers), 
+    c_ierr = MPI_Type_get_contents(c_mtype,
+                                   OMPI_FINT_2_INT(*max_integers),
                                    OMPI_FINT_2_INT(*max_addresses),
                                    OMPI_FINT_2_INT(*max_datatypes),
-                                   OMPI_ARRAY_NAME_CONVERT(array_of_integers), 
+                                   OMPI_ARRAY_NAME_CONVERT(array_of_integers),
                                    c_address_array, c_datatype_array);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 

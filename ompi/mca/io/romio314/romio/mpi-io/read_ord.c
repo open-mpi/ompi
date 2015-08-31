@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -77,7 +77,7 @@ int MPI_File_read_ordered(MPI_File fh, void *buf, int count,
     MPI_Comm_rank(adio_fh->comm, &myrank);
 
     incr = (count*datatype_size)/adio_fh->etype_size;
-    
+
     /* Use a message as a 'token' to order the operations */
     source = myrank - 1;
     dest   = myrank + 1;

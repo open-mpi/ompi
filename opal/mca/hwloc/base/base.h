@@ -2,9 +2,9 @@
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013-2014 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -173,8 +173,8 @@ OPAL_DECLSPEC unsigned int opal_hwloc_base_get_obj_idx(hwloc_topology_t topo,
                                                        hwloc_obj_t obj,
                                                        opal_hwloc_resource_type_t rtype);
 
-OPAL_DECLSPEC int opal_hwloc_get_sorted_numa_list(hwloc_topology_t topo, 
-                                    char* device_name, 
+OPAL_DECLSPEC int opal_hwloc_get_sorted_numa_list(hwloc_topology_t topo,
+                                    char* device_name,
                                     opal_list_t *sorted_list);
 
 /**
@@ -209,7 +209,7 @@ OPAL_DECLSPEC char* opal_hwloc_base_check_on_coprocessor(void);
  */
 OPAL_DECLSPEC int opal_hwloc_base_report_bind_failure(const char *file,
                                                       int line,
-                                                      const char *msg, 
+                                                      const char *msg,
                                                       int rc);
 
 /**
@@ -256,7 +256,7 @@ OPAL_DECLSPEC int opal_hwloc_base_cset2str(char *str, int len,
                                            hwloc_cpuset_t cpuset);
 
 /**
- * Make a prettyprint string for a cset in a map format.  
+ * Make a prettyprint string for a cset in a map format.
  * Example: [B./..]
  * Key:  [] - signifies socket
  *        / - divider between cores

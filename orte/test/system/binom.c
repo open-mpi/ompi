@@ -44,14 +44,14 @@ int down_search(int rank, int parent, int me, int num_procs,
     int i, bitmap, peer, hibit, mask, found;
     orte_routed_tree_t *child;
     opal_bitmap_t *relations;
-    
+
     /* is this me? */
     if (me == rank) {
         bitmap = opal_cube_dim(num_procs);
-        
+
         hibit = opal_hibit(rank, bitmap);
         --bitmap;
-        
+
         for (i = hibit + 1, mask = 1 << i; i <= bitmap; ++i, mask <<= 1) {
             peer = rank | mask;
             if (peer < num_procs) {
@@ -77,13 +77,13 @@ int down_search(int rank, int parent, int me, int num_procs,
         }
         return parent;
     }
-    
+
     /* find the children of this rank */
     bitmap = opal_cube_dim(num_procs);
-    
+
     hibit = opal_hibit(rank, bitmap);
     --bitmap;
-    
+
     for (i = hibit + 1, mask = 1 << i; i <= bitmap; ++i, mask <<= 1) {
         peer = rank | mask;
         if (peer < num_procs) {
@@ -106,16 +106,16 @@ int main(int argc, char* argv[])
     int num_procs;
     orte_routed_tree_t *child;
     opal_bitmap_t *relations;
-    
+
     if (2 != argc) {
         printf("usage: binom x, where x=number of procs\n");
         exit(1);
     }
-    
+
     orte_init(&argc, &argv, ORTE_PROC_TOOL);
-        
+
     num_procs = atoi(argv[1]);
-    
+
     for (i=0; i < num_procs; i++) {
         OBJ_CONSTRUCT(&children, opal_list_t);
         num_children = 0;
@@ -134,6 +134,6 @@ int main(int argc, char* argv[])
         }
         OBJ_DESTRUCT(&children);
     }
-    
+
     orte_finalize();
 }

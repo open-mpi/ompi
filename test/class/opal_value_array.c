@@ -5,15 +5,15 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2014 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -77,7 +77,7 @@ int main(int argc, char **argv)
 
     /* set fixed size */
     opal_value_array_set_size(&array, NUM_ITEMS);
-    
+
     /* initialize array */
     count = 0;
     for(i=0; i < NUM_ITEMS; i++) {
@@ -96,7 +96,7 @@ int main(int argc, char **argv)
     for(i=0; i < count; i++) {
         test_verify_int(i, OPAL_VALUE_ARRAY_GET_ITEM(&array, uint64_t, i));
     }
-    
+
     /* remove an item */
     opal_value_array_remove_item(&array, NUM_ITEMS);
 
@@ -111,7 +111,7 @@ int main(int argc, char **argv)
             test_verify_int(i, OPAL_VALUE_ARRAY_GET_ITEM(&array, uint64_t, i));
         }
     }
-    
+
     OBJ_DESTRUCT(&array);
 
     opal_finalize_util ();

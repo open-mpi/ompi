@@ -6,16 +6,16 @@
  * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -71,7 +71,7 @@ struct ompi_file_t {
     /** Type of the error handler.  This field does not have the "f_"
         prefix for the same reason as the field error_handler. */
     ompi_errhandler_type_t errhandler_type;
-    
+
     /** Indicate what version of the IO component we're using (this
         indicates what member to look at in the union, below) */
     mca_io_base_version_t f_io_version;
@@ -145,11 +145,11 @@ int ompi_file_init(void);
  * mainly calls OBJ_RELEASE() but also does some other error
  * handling as well.
  */
-int ompi_file_open(struct ompi_communicator_t *comm, char *filename, 
-                   int amode, struct ompi_info_t *info, 
+int ompi_file_open(struct ompi_communicator_t *comm, char *filename,
+                   int amode, struct ompi_info_t *info,
                    ompi_file_t **fh);
-    
-/** 
+
+/**
  * Atomicly set a name on a file handle.
  *
  * @param file MPI_File handle to set the name on
@@ -188,7 +188,7 @@ int ompi_file_close(ompi_file_t **file);
  * Invoked during ompi_mpi_finalize().
  */
 int ompi_file_finalize(void);
-    
+
 /**
  * Check to see if an MPI_File handle is valid.
  *

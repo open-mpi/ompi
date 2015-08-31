@@ -2,7 +2,7 @@
  * Copyright (c) 2006      The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2006      The Technical University of Chemnitz. All 
+ * Copyright (c) 2006      The Technical University of Chemnitz. All
  *                         rights reserved.
  * Copyright (c) 2012      Sandia National Laboratories. All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
@@ -23,16 +23,16 @@
  *
  * Algorithm:
  * pairwise exchange
- * round r: 
+ * round r:
  *  grp = rank % 2^r
  *  if grp == 0: receive from rank + 2^(r-1) if it exists and reduce value
  *  if grp == 1: send to rank - 2^(r-1) and exit function
- *  
+ *
  * do this for R=log_2(p) rounds
- *    
+ *
  */
 
-int ompi_coll_libnbc_ireduce_scatter_block(void* sendbuf, void* recvbuf, int recvcount, MPI_Datatype datatype, 
+int ompi_coll_libnbc_ireduce_scatter_block(void* sendbuf, void* recvbuf, int recvcount, MPI_Datatype datatype,
                                      MPI_Op op, struct ompi_communicator_t *comm, ompi_request_t ** request,
                                      struct mca_coll_base_module_2_1_0_t *module) {
   int peer, rank, maxr, p, r, res, count, offset, firstred;
@@ -42,7 +42,7 @@ int ompi_coll_libnbc_ireduce_scatter_block(void* sendbuf, void* recvbuf, int rec
   NBC_Handle *handle;
   ompi_coll_libnbc_request_t **coll_req = (ompi_coll_libnbc_request_t**) request;
   ompi_coll_libnbc_module_t *libnbc_module = (ompi_coll_libnbc_module_t*) module;
-  
+
   NBC_IN_PLACE(sendbuf, recvbuf, inplace);
 
   res = NBC_Init_handle(comm, coll_req, libnbc_module);
@@ -54,7 +54,7 @@ int ompi_coll_libnbc_ireduce_scatter_block(void* sendbuf, void* recvbuf, int rec
   if (MPI_SUCCESS != res || 0 == p) { printf("MPI Error in MPI_Comm_size() (%i:%i)\n", res, p); return (MPI_SUCCESS == res) ? MPI_ERR_SIZE : res; }
   res = MPI_Type_extent(datatype, &ext);
   if (MPI_SUCCESS != res || 0 == ext) { printf("MPI Error in MPI_Type_extent() (%i:%i)\n", res, (int)ext); return (MPI_SUCCESS == res) ? MPI_ERR_SIZE : res; }
-  
+
   schedule = (NBC_Schedule*)malloc(sizeof(NBC_Schedule));
   if (NULL == schedule) { printf("Error in malloc()\n"); return NBC_OOR; }
 
@@ -76,7 +76,7 @@ int ompi_coll_libnbc_ireduce_scatter_block(void* sendbuf, void* recvbuf, int rec
       res = NBC_Copy(sendbuf, count, datatype, redbuf, count, datatype, comm);
       if (NBC_OK != res) { printf("Error in NBC_Copy() (%i)\n", res); return res; }
     }
-  
+
     firstred = 1;
     for(r=1; r<=maxr; r++) {
       if((rank % (1<<r)) == 0) {
@@ -116,7 +116,7 @@ int ompi_coll_libnbc_ireduce_scatter_block(void* sendbuf, void* recvbuf, int rec
         break;
       }
     }
-  
+
     res = NBC_Sched_barrier(schedule);
     if (NBC_OK != res) { free(handle->tmpbuf); printf("Error in NBC_Sched_barrier() (%i)\n", res); return res; }
 
@@ -141,13 +141,13 @@ int ompi_coll_libnbc_ireduce_scatter_block(void* sendbuf, void* recvbuf, int rec
   }
 
   /*NBC_PRINT_SCHED(*schedule);*/
-  
+
   res = NBC_Sched_commit(schedule);
   if (NBC_OK != res) { free(handle->tmpbuf); printf("Error in NBC_Sched_commit() (%i)\n", res); return res; }
-  
+
   res = NBC_Start(handle, schedule);
   if (NBC_OK != res) { free(handle->tmpbuf); printf("Error in NBC_Start() (%i)\n", res); return res; }
-  
+
   /* tmpbuf is freed with the handle */
   return NBC_OK;
 }

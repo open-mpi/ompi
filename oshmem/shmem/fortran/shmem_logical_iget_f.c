@@ -3,10 +3,10 @@
  *                         All rights reserved.
  * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
- * $HEADER$	
+ *
+ * $HEADER$
  */
 
 #include "oshmem_config.h"
@@ -29,7 +29,7 @@ SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
         shmem_logical_iget_,
         shmem_logical_iget__,
         shmem_logical_iget_f,
-        (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *tst, MPI_Fint *sst, MPI_Fint *len, MPI_Fint *pe), 
+        (FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *tst, MPI_Fint *sst, MPI_Fint *len, MPI_Fint *pe),
         (target,source,tst,sst,len,pe) )
 
 void shmem_logical_iget_f(FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MPI_Fint *tst, MPI_Fint *sst, MPI_Fint *len, MPI_Fint *pe)
@@ -43,11 +43,11 @@ void shmem_logical_iget_f(FORTRAN_POINTER_T target, FORTRAN_POINTER_T source, MP
     ompi_datatype_type_size(&ompi_mpi_logical.dt, &logical_type_size);
 
     for (i=0; i<length; i++)
-    {  
-        MCA_SPML_CALL(get((uint8_t *)FPTR_2_VOID_PTR(source) + i * sst_c * logical_type_size, 
-            logical_type_size, 
-            (uint8_t *)FPTR_2_VOID_PTR(target) + i * tst_c * logical_type_size, 
+    {
+        MCA_SPML_CALL(get((uint8_t *)FPTR_2_VOID_PTR(source) + i * sst_c * logical_type_size,
+            logical_type_size,
+            (uint8_t *)FPTR_2_VOID_PTR(target) + i * tst_c * logical_type_size,
             OMPI_FINT_2_INT(*pe)));
     }
 }
- 
+

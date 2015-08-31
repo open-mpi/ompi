@@ -3,9 +3,9 @@
  * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
  *                         reserved
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -22,7 +22,7 @@
 /*
  * Public string for version number
  */
-const char *orte_filem_raw_component_version_string = 
+const char *orte_filem_raw_component_version_string =
 "ORTE FILEM raw MCA component version " ORTE_VERSION;
 
 /*
@@ -70,7 +70,7 @@ static int filem_raw_register(void)
     return ORTE_SUCCESS;
 }
 
-static int filem_raw_open(void) 
+static int filem_raw_open(void)
 {
     return ORTE_SUCCESS;
 }

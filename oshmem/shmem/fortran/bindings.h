@@ -3,9 +3,9 @@
  *                         All rights reserved.
  * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -24,7 +24,7 @@
         params) \
 ret upper_case signature {return wrapper_function params; } \
 ret single_underscore signature {return wrapper_function params; } \
-ret double_underscore signature {return wrapper_function params; } 
+ret double_underscore signature {return wrapper_function params; }
 
 #define SHMEM_GENERATE_FORTRAN_BINDINGS_SUB(ret, \
         upper_case, \
@@ -35,6 +35,6 @@ ret double_underscore signature {return wrapper_function params; }
         params) \
 ret upper_case signature {wrapper_function params; } \
 ret single_underscore signature {wrapper_function params; } \
-ret double_underscore signature {wrapper_function params; } 
+ret double_underscore signature {wrapper_function params; }
 
 #endif /*SHMEM_FORTRAN_BINDINGS_H*/

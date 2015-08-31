@@ -2,18 +2,18 @@
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
 #ifndef OSHMEM_C_PROFILE_DEFINES_H
 #define OSHMEM_C_PROFILE_DEFINES_H
 /*
- * This file is included in the top directory only if 
+ * This file is included in the top directory only if
  * profiling is required. Once profiling is required,
- * this file will replace all shmem_* symbols with 
+ * this file will replace all shmem_* symbols with
  * pshmem_* symbols
  */
 
@@ -28,34 +28,34 @@
 #define shmem_finalize              pshmem_finalize
 
 
-/* 
- * Query routines 
+/*
+ * Query routines
  */
 #define _num_pes                    p_num_pes
 #define _my_pe                      p_my_pe
 
 
-/* 
- * Accessability routines 
+/*
+ * Accessability routines
  */
 #define shmem_pe_accessible         pshmem_pe_accessible
 #define shmem_addr_accessible       pshmem_addr_accessible
 
-/* 
- * Symmetric heap routines 
+/*
+ * Symmetric heap routines
  */
 #define shmalloc                    pshmalloc
 #define shmemalign                  pshmemalign
 #define shrealloc                   pshrealloc
 #define shfree                      pshfree
 
-/* 
- * Remote pointer operations 
+/*
+ * Remote pointer operations
  */
 #define shmem_ptr                   pshmem_ptr
 
-/* 
- * Elemental put routines 
+/*
+ * Elemental put routines
  */
 #define shmem_char_p                pshmem_char_p
 #define shmem_short_p               pshmem_short_p
@@ -69,8 +69,8 @@
 #define shmem_int32_p               pshmem_int32_p
 #define shmem_int64_p               pshmem_int64_p
 
-/* 
- * Block data put routines 
+/*
+ * Block data put routines
  */
 #define shmem_char_put              pshmem_char_put
 #define shmem_short_put             pshmem_short_put
@@ -86,8 +86,8 @@
 #define shmem_put128                pshmem_put128
 #define shmem_putmem                pshmem_putmem
 
-/* 
- * Strided put routines 
+/*
+ * Strided put routines
  */
 #define shmem_int_iput              pshmem_int_iput
 #define shmem_short_iput            pshmem_short_iput
@@ -101,8 +101,8 @@
 #define shmem_iput64                pshmem_iput64
 #define shmem_iput128               pshmem_iput128
 
-/* 
- * Elemental get routines 
+/*
+ * Elemental get routines
  */
 #define shmem_char_g                pshmem_char_g
 #define shmem_short_g               pshmem_short_g
@@ -116,8 +116,8 @@
 #define shmem_int32_g               pshmem_int32_g
 #define shmem_int64_g               pshmem_int64_g
 
-/* 
- * Block data get routines 
+/*
+ * Block data get routines
  */
 #define shmem_char_get              pshmem_char_get
 #define shmem_short_get             pshmem_short_get
@@ -133,8 +133,8 @@
 #define shmem_get128                pshmem_get128
 #define shmem_getmem                pshmem_getmem
 
-/* 
- * Strided get routines 
+/*
+ * Strided get routines
  */
 #define shmem_int_iget              pshmem_int_iget
 #define shmem_short_iget            pshmem_short_iget
@@ -148,8 +148,8 @@
 #define shmem_iget64                pshmem_iget64
 #define shmem_iget128               pshmem_iget128
 
-/* 
- * Atomic operations 
+/*
+ * Atomic operations
  */
 /* Atomic swap */
 #define shmem_swap                  pshmem_swap
@@ -198,15 +198,15 @@
 #define shmem_int32_inc             pshmem_int32_inc
 #define shmem_int64_inc             pshmem_int64_inc
 
-/* 
- * Lock functions 
+/*
+ * Lock functions
  */
 #define shmem_set_lock              pshmem_set_lock
 #define shmem_clear_lock            pshmem_clear_lock
 #define shmem_test_lock             pshmem_test_lock
 
-/* 
- * P2P sync routines 
+/*
+ * P2P sync routines
  */
 #define shmem_short_wait            pshmem_short_wait
 #define shmem_int_wait              pshmem_int_wait
@@ -226,16 +226,16 @@
 #define shmem_int32_wait_until      pshmem_int32_wait_until
 #define shmem_int64_wait_until      pshmem_int64_wait_until
 
-/* 
- * Barrier sync routines 
+/*
+ * Barrier sync routines
  */
 #define shmem_barrier               pshmem_barrier
 #define shmem_barrier_all           pshmem_barrier_all
 #define shmem_fence                 pshmem_fence
 #define shmem_quiet                 pshmem_quiet
 
-/* 
- * Collective routines 
+/*
+ * Collective routines
  */
 #define shmem_broadcast32           pshmem_broadcast32
 #define shmem_broadcast64           pshmem_broadcast64
@@ -245,8 +245,8 @@
 #define shmem_fcollect32            pshmem_fcollect32
 #define shmem_fcollect64            pshmem_fcollect64
 
-/* 
- * Reduction routines 
+/*
+ * Reduction routines
  */
 #define shmem_short_and_to_all      pshmem_short_and_to_all
 #define shmem_int_and_to_all        pshmem_int_and_to_all

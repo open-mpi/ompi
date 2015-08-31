@@ -22,7 +22,7 @@ dnl
 
 # OMPI_CHECK_UDAPL(prefix, [action-if-found], [action-if-not-found])
 # --------------------------------------------------------
-# check if uDAPL support can be found.  sets prefix_{CPPFLAGS, 
+# check if uDAPL support can be found.  sets prefix_{CPPFLAGS,
 # LDFLAGS, LIBS} as needed and runs action-if-found if there is
 # support, otherwise executes action-if-not-found
 AC_DEFUN([OMPI_CHECK_UDAPL],[
@@ -44,7 +44,7 @@ AC_DEFUN([OMPI_CHECK_UDAPL],[
     # Linux/OFED, you'll get a bunch of warning messages about the
     # providers that don't work.  However, on Linux/OFED, you don't
     # really want to use udapl anyway; you likely really want to use
-    # the openib BTL (i.e., native verbs, not udapl).  
+    # the openib BTL (i.e., native verbs, not udapl).
 
     # So after exploring many different scenarios, the least evil
     # solution seemed to be to disable building the udapl BTL on
@@ -53,7 +53,7 @@ AC_DEFUN([OMPI_CHECK_UDAPL],[
     # --with-udapl(=DIR), the udapl BTL will not be built.
     AS_IF([test -z "$with_udapl"],
           [case $host in
-              *linux*) 
+              *linux*)
                   AC_MSG_WARN([On Linux and --with-udapl was not specified])
                   AC_MSG_WARN([Not building the udapl BTL])
                   with_udapl=no
@@ -84,7 +84,7 @@ dnl out we need -ldapl to link (looks like udapl over GM).
     ompi_check_package_$1_orig_LIBS="$$1_LIBS"
 
     AS_IF([test "$ompi_check_udapl_happy" = "yes"],
-          [_OPAL_CHECK_PACKAGE_HEADER([$1], 
+          [_OPAL_CHECK_PACKAGE_HEADER([$1],
                 [dat/udat.h],
                 [$ompi_check_udapl_dir],
                 [ompi_check_udapl_happy="yes"],

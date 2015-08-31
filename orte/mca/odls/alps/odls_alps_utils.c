@@ -5,16 +5,16 @@
  * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2014      Los Alamos National Security, LLC.  All rights
- *                         reserved. 
+ *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  *
  * These symbols are in a file by themselves to provide nice linker
@@ -109,7 +109,7 @@ int orte_odls_alps_get_rdma_creds(void)
 
         /*
          * now get the GNI rdma credentials info
-         */ 
+         */
 
         ret = alps_app_lli_put_request(ALPS_APP_LLI_ALPS_REQ_GNI, NULL, 0);
         if (ALPS_APP_LLI_ALPS_STAT_OK != ret) {
@@ -152,7 +152,7 @@ int orte_odls_alps_get_rdma_creds(void)
         rdmacred_buf = (alpsAppGni_t *)(rdmacred_rsp->u.buf);
 
         /*
-         * now set up the env. variables - 
+         * now set up the env. variables -
          * The cray pmi sets up 4 environment variables:
          * PMI_GNI_DEV_ID - format (id0:id1....idX)
          * PMI_GNI_LOC_ADDR - format (locaddr0:locaddr1:....locaddrX)
@@ -242,7 +242,7 @@ int orte_odls_alps_get_rdma_creds(void)
             goto fn_exit;
         }
 
-    } 
+    }
 
    fn_exit:
     if (ORTE_SUCCESS == ret) already_got_creds = 1;

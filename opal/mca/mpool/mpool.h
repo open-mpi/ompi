@@ -51,23 +51,23 @@ struct opal_info_t;
 
 struct mca_mpool_base_resources_t;
 
-struct mca_mpool_base_registration_t { 
+struct mca_mpool_base_registration_t {
     opal_free_list_item_t super;
-    struct mca_mpool_base_module_t *mpool; 
+    struct mca_mpool_base_module_t *mpool;
     unsigned char* base;
-    unsigned char* bound; 
+    unsigned char* bound;
     unsigned char* alloc_base;
-    int32_t ref_count; 
+    int32_t ref_count;
     uint32_t flags;
     void *mpool_context;
 #if OPAL_CUDA_GDR_SUPPORT
     unsigned long long gpu_bufID;
 #endif /* OPAL_CUDA_GDR_SUPPORT */
-};  
+};
 
-typedef struct mca_mpool_base_registration_t mca_mpool_base_registration_t; 
+typedef struct mca_mpool_base_registration_t mca_mpool_base_registration_t;
 
-OPAL_DECLSPEC OBJ_CLASS_DECLARATION(mca_mpool_base_registration_t); 
+OPAL_DECLSPEC OBJ_CLASS_DECLARATION(mca_mpool_base_registration_t);
 
 /**
  * component initialize
@@ -82,9 +82,9 @@ typedef void* (*mca_mpool_base_module_alloc_fn_t)(
     struct mca_mpool_base_module_t* mpool,
     size_t size,
     size_t align,
-    uint32_t flags, 
+    uint32_t flags,
     mca_mpool_base_registration_t** registration);
-                                                                                                                                   
+
 /**
   * realloc function typedef
   */
@@ -93,15 +93,15 @@ typedef void* (*mca_mpool_base_module_realloc_fn_t)(
     void* addr,
     size_t size,
     mca_mpool_base_registration_t** registration);
-                                                                                                                                   
+
 /**
   * free function typedef
   */
 typedef void (*mca_mpool_base_module_free_fn_t)(
     struct mca_mpool_base_module_t* mpool,
-    void *addr, 
+    void *addr,
     mca_mpool_base_registration_t* registration);
-                                                                                                                                   
+
 /**
   * register memory
   */
@@ -109,9 +109,9 @@ typedef int (*mca_mpool_base_module_register_fn_t)(
     struct mca_mpool_base_module_t* mpool,
     void * addr,
     size_t size,
-    uint32_t flags, 
+    uint32_t flags,
     mca_mpool_base_registration_t** registration);
-    
+
 /**
   * deregister memory
   */
@@ -121,21 +121,21 @@ typedef int (*mca_mpool_base_module_deregister_fn_t)(
 
 /**
  * find registration in this memory pool
- */ 
+ */
 
 typedef int (*mca_mpool_base_module_find_fn_t) (
         struct mca_mpool_base_module_t* mpool, void* addr, size_t size,
         mca_mpool_base_registration_t **reg);
 
-/** 
+/**
  * release registration
- */ 
+ */
 
-typedef int (*mca_mpool_base_module_release_fn_t) ( 
-                                            struct mca_mpool_base_module_t* mpool, 
-                                            mca_mpool_base_registration_t* registration); 
+typedef int (*mca_mpool_base_module_release_fn_t) (
+                                            struct mca_mpool_base_module_t* mpool,
+                                            mca_mpool_base_registration_t* registration);
 
-                                            
+
 /**
  * release memory region
  */
@@ -194,11 +194,11 @@ struct mca_mpool_base_module_t {
     mca_mpool_base_module_register_fn_t mpool_register;  /**< register memory */
     mca_mpool_base_module_deregister_fn_t mpool_deregister; /**< deregister memory */
     mca_mpool_base_module_find_fn_t mpool_find; /**< find regisrations in the cache */
-    mca_mpool_base_module_release_fn_t mpool_release; /**< release a registration from the cache */ 
+    mca_mpool_base_module_release_fn_t mpool_release; /**< release a registration from the cache */
     mca_mpool_base_module_release_memory_fn_t mpool_release_memory; /**< release memor region from the cache  */
     mca_mpool_base_module_finalize_fn_t mpool_finalize;  /**< finalize */
     mca_mpool_base_module_ft_event_fn_t mpool_ft_event;  /**< ft_event */
-    struct mca_rcache_base_module_t *rcache; /* the rcache associated with this mpool */ 
+    struct mca_rcache_base_module_t *rcache; /* the rcache associated with this mpool */
     uint32_t flags; /**< mpool flags */
 };
 /**
@@ -237,7 +237,7 @@ OPAL_DECLSPEC void * mca_mpool_base_alloc(size_t size, struct opal_info_t * info
  * @retval OPAL_SUCCESS
  * @retval OPAL_ERR_BAD_PARAM if the passed base pointer was invalid
  */
-OPAL_DECLSPEC int mca_mpool_base_free(void * base); 
+OPAL_DECLSPEC int mca_mpool_base_free(void * base);
 
 /**
  * Function for the red black tree to compare 2 keys
@@ -253,13 +253,13 @@ OPAL_DECLSPEC int mca_mpool_base_tree_node_compare(void * key1, void * key2);
 
 
 OPAL_DECLSPEC int mca_mpool_base_insert(
-    void * addr, 
-    size_t size, 
-    mca_mpool_base_module_t* mpool, 
-    void* user_in, 
-    mca_mpool_base_registration_t* registration); 
+    void * addr,
+    size_t size,
+    mca_mpool_base_module_t* mpool,
+    void* user_in,
+    mca_mpool_base_registration_t* registration);
 
-OPAL_DECLSPEC int mca_mpool_base_remove(void * base); 
+OPAL_DECLSPEC int mca_mpool_base_remove(void * base);
 
 /**
  * Macro for use in components that are of type mpool

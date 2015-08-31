@@ -2,9 +2,9 @@
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 /**
@@ -82,7 +82,7 @@ OSHMEM_DECLSPEC OBJ_CLASS_DECLARATION(mca_spml_base_atomic_request_t);
         (request)->req_oshmem.req_state = OSHMEM_REQUEST_ACTIVE;                    \
     } while (0)
 
-/** 
+/**
  *  Return a atomic request. Handle the release of the communicator and the
  *  attached datatype.
  *

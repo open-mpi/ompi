@@ -6,15 +6,15 @@
  * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2011 University of Houston. All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -31,11 +31,11 @@
 #include "io_ompio.h"
 
 
-int ompi_io_ompio_allgatherv_array (void *sbuf, 
+int ompi_io_ompio_allgatherv_array (void *sbuf,
                                     int scount,
-                                    ompi_datatype_t *sdtype, 
+                                    ompi_datatype_t *sdtype,
                                     void *rbuf,
-                                    int *rcounts, 
+                                    int *rcounts,
                                     int *disps,
                                     ompi_datatype_t *rdtype,
                                     int root_index,
@@ -74,11 +74,11 @@ int ompi_io_ompio_allgatherv_array (void *sbuf,
     }
 
     err = ompi_io_ompio_gatherv_array (send_buf,
-                                       rcounts[j], 
+                                       rcounts[j],
                                        send_type,
                                        rbuf,
-                                       rcounts, 
-                                       disps, 
+                                       rcounts,
+                                       disps,
                                        rdtype,
                                        root_index,
                                        procs_in_group,
@@ -101,26 +101,26 @@ int ompi_io_ompio_allgatherv_array (void *sbuf,
         return err;
     }
 
-    ompi_io_ompio_bcast_array (rbuf, 
+    ompi_io_ompio_bcast_array (rbuf,
                                1,
                                newtype,
                                root_index,
                                procs_in_group,
                                procs_per_group,
                                comm);
-    
+
     ompi_datatype_destroy (&newtype);
 
     return OMPI_SUCCESS;
 }
 
-int ompi_io_ompio_gatherv_array (void *sbuf, 
+int ompi_io_ompio_gatherv_array (void *sbuf,
                                  int scount,
                                  ompi_datatype_t *sdtype,
-                                 void *rbuf, 
-                                 int *rcounts, 
+                                 void *rbuf,
+                                 int *rcounts,
                                  int *disps,
-                                 ompi_datatype_t *rdtype, 
+                                 ompi_datatype_t *rdtype,
                                  int root_index,
                                  int *procs_in_group,
                                  int procs_per_group,
@@ -136,18 +136,18 @@ int ompi_io_ompio_gatherv_array (void *sbuf,
 
     if (procs_in_group[root_index] != rank)  {
         if (scount > 0) {
-            return MCA_PML_CALL(send(sbuf, 
-                                     scount, 
-                                     sdtype, 
+            return MCA_PML_CALL(send(sbuf,
+                                     scount,
+                                     sdtype,
                                      procs_in_group[root_index],
                                      OMPIO_TAG_GATHERV,
-                                     MCA_PML_BASE_SEND_STANDARD, 
+                                     MCA_PML_BASE_SEND_STANDARD,
                                      comm));
         }
         return err;
     }
 
-    /* writer processes, loop receiving data from proceses 
+    /* writer processes, loop receiving data from proceses
        belonging to each corresponding root */
 
     err = opal_datatype_get_extent (&rdtype->super, &lb, &extent);
@@ -162,8 +162,8 @@ int ompi_io_ompio_gatherv_array (void *sbuf,
         ptmp = ((char *) rbuf) + (extent * disps[i]);
 
         if (procs_in_group[i] == rank) {
-            if (MPI_IN_PLACE != sbuf && 
-                (0 < scount) && 
+            if (MPI_IN_PLACE != sbuf &&
+                (0 < scount) &&
                 (0 < rcounts[i])) {
                 err = ompi_datatype_sndrcv (sbuf,
                                             scount,
@@ -203,13 +203,13 @@ int ompi_io_ompio_gatherv_array (void *sbuf,
     return err;
 }
 
-int ompi_io_ompio_scatterv_array (void *sbuf, 
+int ompi_io_ompio_scatterv_array (void *sbuf,
                                   int *scounts,
                                   int *disps,
                                   ompi_datatype_t *sdtype,
-                                  void *rbuf, 
-                                  int rcount, 
-                                  ompi_datatype_t *rdtype, 
+                                  void *rbuf,
+                                  int rcount,
+                                  ompi_datatype_t *rdtype,
                                   int root_index,
                                   int *procs_in_group,
                                   int procs_per_group,
@@ -225,9 +225,9 @@ int ompi_io_ompio_scatterv_array (void *sbuf,
 
     if (procs_in_group[root_index] != rank) {
         if (rcount > 0) {
-            err = MCA_PML_CALL(recv(rbuf, 
-                                    rcount, 
-                                    rdtype, 
+            err = MCA_PML_CALL(recv(rbuf,
+                                    rcount,
+                                    rdtype,
                                     procs_in_group[root_index],
                                     OMPIO_TAG_SCATTERV,
                                     comm,
@@ -236,7 +236,7 @@ int ompi_io_ompio_scatterv_array (void *sbuf,
         return err;
     }
 
-    /* writer processes, loop sending data to proceses 
+    /* writer processes, loop sending data to proceses
        belonging to each corresponding root */
 
     err = opal_datatype_get_extent (&sdtype->super, &lb, &extent);
@@ -252,8 +252,8 @@ int ompi_io_ompio_scatterv_array (void *sbuf,
         ptmp = ((char *) sbuf) + (extent * disps[i]);
 
         if (procs_in_group[i] == rank) {
-            if (MPI_IN_PLACE != sbuf && 
-                (0 < scounts[i]) && 
+            if (MPI_IN_PLACE != sbuf &&
+                (0 < scounts[i]) &&
                 (0 < rcount)) {
                 err = ompi_datatype_sndrcv (ptmp,
                                             scounts[i],
@@ -280,8 +280,8 @@ int ompi_io_ompio_scatterv_array (void *sbuf,
 		reqs[i] = MPI_REQUEST_NULL;
             }
         }
-        if (OMPI_SUCCESS != err) { 
-            free ( reqs );	    
+        if (OMPI_SUCCESS != err) {
+            free ( reqs );
             return err;
         }
     }
@@ -293,11 +293,11 @@ int ompi_io_ompio_scatterv_array (void *sbuf,
     return err;
 }
 
-int ompi_io_ompio_allgather_array (void *sbuf, 
+int ompi_io_ompio_allgather_array (void *sbuf,
                                    int scount,
-                                   ompi_datatype_t *sdtype, 
+                                   ompi_datatype_t *sdtype,
                                    void *rbuf,
-                                   int rcount, 
+                                   int rcount,
                                    ompi_datatype_t *rdtype,
                                    int root_index,
                                    int *procs_in_group,
@@ -321,20 +321,20 @@ int ompi_io_ompio_allgather_array (void *sbuf,
     }
 
     /* Gather and broadcast. */
-    err = ompi_io_ompio_gather_array (sbuf, 
-                                      scount, 
-                                      sdtype, 
-                                      rbuf, 
+    err = ompi_io_ompio_gather_array (sbuf,
+                                      scount,
+                                      sdtype,
+                                      rbuf,
                                       rcount,
-                                      rdtype, 
+                                      rdtype,
                                       root_index,
                                       procs_in_group,
                                       procs_per_group,
                                       comm);
 
     if (OMPI_SUCCESS == err) {
-        err = ompi_io_ompio_bcast_array (rbuf, 
-                                         rcount * procs_per_group, 
+        err = ompi_io_ompio_bcast_array (rbuf,
+                                         rcount * procs_per_group,
                                          rdtype,
                                          root_index,
                                          procs_in_group,
@@ -346,10 +346,10 @@ int ompi_io_ompio_allgather_array (void *sbuf,
     return err;
 }
 
-int ompi_io_ompio_gather_array (void *sbuf, 
+int ompi_io_ompio_gather_array (void *sbuf,
                                 int scount,
                                 ompi_datatype_t *sdtype,
-                                void *rbuf, 
+                                void *rbuf,
                                 int rcount,
                                 ompi_datatype_t *rdtype,
                                 int root_index,
@@ -364,17 +364,17 @@ int ompi_io_ompio_gather_array (void *sbuf,
     OPAL_PTRDIFF_TYPE extent, lb;
     int err = OMPI_SUCCESS;
     ompi_request_t ** reqs=NULL;
-    
+
     rank = ompi_comm_rank (comm);
-    
+
     /* Everyone but the writers sends data and returns. */
     if (procs_in_group[root_index] != rank) {
-        err = MCA_PML_CALL(send(sbuf, 
-                                scount, 
-                                sdtype, 
+        err = MCA_PML_CALL(send(sbuf,
+                                scount,
+                                sdtype,
                                 procs_in_group[root_index],
                                 OMPIO_TAG_GATHER,
-                                MCA_PML_BASE_SEND_STANDARD, 
+                                MCA_PML_BASE_SEND_STANDARD,
                                 comm));
         return err;
     }
@@ -393,11 +393,11 @@ int ompi_io_ompio_gather_array (void *sbuf,
          ++i, ptmp += incr) {
         if (procs_in_group[i] == rank) {
             if (MPI_IN_PLACE != sbuf) {
-                err = ompi_datatype_sndrcv (sbuf, 
-                                            scount, 
+                err = ompi_datatype_sndrcv (sbuf,
+                                            scount,
                                             sdtype ,
-                                            ptmp, 
-                                            rcount, 
+                                            ptmp,
+                                            rcount,
                                             rdtype);
             }
             else {
@@ -415,7 +415,7 @@ int ompi_io_ompio_gather_array (void *sbuf,
                                      &reqs[i]));
             /*
             for (k=0 ; k<4 ; k++)
-                printf ("RECV %p  %d \n", 
+                printf ("RECV %p  %d \n",
                         ((struct iovec *)ptmp)[k].iov_base,
                         ((struct iovec *)ptmp)[k].iov_len);
             */
@@ -436,7 +436,7 @@ int ompi_io_ompio_gather_array (void *sbuf,
     return err;
 }
 
-int ompi_io_ompio_bcast_array (void *buff, 
+int ompi_io_ompio_bcast_array (void *buff,
                                int count,
                                ompi_datatype_t *datatype,
                                int root_index,
@@ -449,7 +449,7 @@ int ompi_io_ompio_bcast_array (void *buff,
     ompi_request_t ** reqs=NULL;
 
     rank = ompi_comm_rank (comm);
-    
+
     /* Non-writers receive the data. */
     if (procs_in_group[root_index] != rank) {
         err = MCA_PML_CALL(recv(buff,

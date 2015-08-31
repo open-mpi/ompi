@@ -121,10 +121,10 @@ struct mca_sharedfp_base_module_1_0_0_t * mca_sharedfp_individual_component_file
                         "Set this key in order to increase this component's priority value.\n");
 	    }
 	}
-    } 
+    }
     else {
 	if ( mca_sharedfp_individual_verbose ) {
-            opal_output(ompi_sharedfp_base_framework.framework_output, 
+            opal_output(ompi_sharedfp_base_framework.framework_output,
                  "mca_sharedfp_individual_component_file_query: "
                  "OMPIO_SHAREDFP_RELAXED_ORDERING MPI_Info key not set, "
                  "got MPI_INFO_NULL. Set this key in order to increase "
@@ -139,7 +139,7 @@ struct mca_sharedfp_base_module_1_0_0_t * mca_sharedfp_individual_component_file
      */
     if ( wronly_flag && relaxed_order_flag){
         *priority=mca_sharedfp_individual_priority;
-    } 
+    }
     else {
         *priority=1;
     }

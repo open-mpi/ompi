@@ -107,7 +107,7 @@ opal_finalize_util(void)
        the malloc code turning off doesn't affect opal_output that
        much */
     opal_output_finalize();
-    
+
     /* close the dss */
     opal_dss_close();
 
@@ -201,7 +201,7 @@ void opal_finalize_test(void)
        the malloc code turning off doesn't affect opal_output that
        much */
     opal_output_finalize();
-    
+
     /* close the dss */
     opal_dss_close();
 

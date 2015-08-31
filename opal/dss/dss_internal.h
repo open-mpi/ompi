@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2012      Los Alamos National Security, Inc.  All rights reserved. 
+ * Copyright (c) 2012      Los Alamos National Security, Inc.  All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -48,7 +48,7 @@ BEGIN_C_DECLS
  */
 #define OPAL_DSS_DEFAULT_INITIAL_SIZE  128
 /*
- * The default threshold size when we switch from doubling the 
+ * The default threshold size when we switch from doubling the
  * buffer size to addatively increasing it
  */
 #define OPAL_DSS_DEFAULT_THRESHOLD_SIZE 1024
@@ -153,7 +153,7 @@ BEGIN_C_DECLS
             ret = OPAL_ERR_NOT_FOUND;                                       \
         }                                                                   \
     } while (0)
-        
+
 /* NOTE: do not need to deal with endianness here, as the unpacking of
    the underling sender-side type will do that for us.  Repeat: the
    data in tmpbuf[] is already in host byte order. */
@@ -167,8 +167,8 @@ BEGIN_C_DECLS
         }                                                                   \
         free(tmpbuf);                                                       \
     } while (0)
-            
-            
+
+
 /**
  * Internal struct used for holding registered dss functions
  */
@@ -256,10 +256,10 @@ void opal_dss_dump_data_types(int output);
 /*
  * Specialized functions
  */
-OPAL_DECLSPEC    int opal_dss_pack_buffer(opal_buffer_t *buffer, const void *src, 
+OPAL_DECLSPEC    int opal_dss_pack_buffer(opal_buffer_t *buffer, const void *src,
                                           int32_t num_vals, opal_data_type_t type);
 
-OPAL_DECLSPEC    int opal_dss_unpack_buffer(opal_buffer_t *buffer, void *dst, 
+OPAL_DECLSPEC    int opal_dss_unpack_buffer(opal_buffer_t *buffer, void *dst,
                                             int32_t *num_vals, opal_data_type_t type);
 
 /*

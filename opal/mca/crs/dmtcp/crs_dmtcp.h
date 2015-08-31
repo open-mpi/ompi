@@ -5,15 +5,15 @@
  *                         All rights reserved.
  *
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
 /**
  * @file
- * 
+ *
  * DMTCP CRS component
  *
  */
@@ -61,13 +61,13 @@ BEGIN_C_DECLS
     /*
      * Actual CRS funcationality
      */
-    int opal_crs_dmtcp_checkpoint( pid_t pid, 
+    int opal_crs_dmtcp_checkpoint( pid_t pid,
                                   opal_crs_base_snapshot_t *snapshot,
                                   opal_crs_base_ckpt_options_t *options,
                                   opal_crs_state_type_t    *state);
 
-    int opal_crs_dmtcp_restart(    opal_crs_base_snapshot_t *snapshot, 
-                                  bool spawn_child, 
+    int opal_crs_dmtcp_restart(    opal_crs_base_snapshot_t *snapshot,
+                                  bool spawn_child,
                                   pid_t *child_pid);
 
     int opal_crs_dmtcp_disable_checkpoint(void);

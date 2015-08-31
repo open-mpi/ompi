@@ -6,7 +6,7 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -14,9 +14,9 @@
  * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 #include "ompi_config.h"
@@ -63,7 +63,7 @@ int MPI_Bsend_init(const void *buf, int count, MPI_Datatype type,
             rc = MPI_ERR_TYPE;
         } else if (tag < 0 || tag > mca_pml.pml_max_tag) {
             rc = MPI_ERR_TAG;
-        } else if (ompi_comm_peer_invalid(comm, dest) && 
+        } else if (ompi_comm_peer_invalid(comm, dest) &&
                    (MPI_PROC_NULL != dest)) {
             rc = MPI_ERR_RANK;
         } else if (request == NULL) {

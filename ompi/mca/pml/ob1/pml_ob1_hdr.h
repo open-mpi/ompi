@@ -6,7 +6,7 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -14,9 +14,9 @@
  * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 /**
@@ -56,7 +56,7 @@
 #define MCA_PML_OB1_HDR_FLAGS_SIGNAL  32 /* message can be optionally signalling */
 
 /**
- * Common hdr attributes - must be first element in each hdr type 
+ * Common hdr attributes - must be first element in each hdr type
  */
 struct mca_pml_ob1_common_hdr_t {
     uint8_t hdr_type;  /**< type of envelope */
@@ -71,11 +71,11 @@ static inline void mca_pml_ob1_common_hdr_prepare (mca_pml_ob1_common_hdr_t *hdr
     hdr->hdr_flags = hdr_flags;
 }
 
-#define MCA_PML_OB1_COMMON_HDR_NTOH(h) 
-#define MCA_PML_OB1_COMMON_HDR_HTON(h) 
+#define MCA_PML_OB1_COMMON_HDR_NTOH(h)
+#define MCA_PML_OB1_COMMON_HDR_HTON(h)
 
 /**
- *  Header definition for the first fragment, contains the 
+ *  Header definition for the first fragment, contains the
  *  attributes required to match the corresponding posted receive.
  */
 struct mca_pml_ob1_match_hdr_t {
@@ -92,7 +92,7 @@ struct mca_pml_ob1_match_hdr_t {
 #define OMPI_PML_OB1_MATCH_HDR_LEN  16
 #else
 #define OMPI_PML_OB1_MATCH_HDR_LEN  14
-#endif 
+#endif
 
 typedef struct mca_pml_ob1_match_hdr_t mca_pml_ob1_match_hdr_t;
 
@@ -126,7 +126,7 @@ do { \
     (h).hdr_src = htonl((h).hdr_src); \
     (h).hdr_tag = htonl((h).hdr_tag); \
     (h).hdr_seq = htons((h).hdr_seq); \
-} while (0) 
+} while (0)
 
 /**
  * Header definition for the first fragment when an acknowledgment
@@ -162,7 +162,7 @@ static inline void mca_pml_ob1_rendezvous_hdr_prepare (mca_pml_ob1_rendezvous_hd
     do { \
         MCA_PML_OB1_MATCH_HDR_HTON((h).hdr_match); \
         (h).hdr_msg_length = hton64((h).hdr_msg_length); \
-    } while (0) 
+    } while (0)
 
 /**
  * Header definition for a combined rdma rendezvous/get
@@ -208,7 +208,7 @@ static inline void mca_pml_ob1_rget_hdr_prepare (mca_pml_ob1_rget_hdr_t *hdr, ui
     do {                                                \
         MCA_PML_OB1_RNDV_HDR_HTON((h).hdr_rndv);        \
         (h).hdr_src_ptr = hton64((h).hdr_src_ptr);      \
-    } while (0) 
+    } while (0)
 
 /**
  *  Header for subsequent fragments.
@@ -305,7 +305,7 @@ static inline void mca_pml_ob1_ack_hdr_prepare (mca_pml_ob1_ack_hdr_t *hdr, uint
         MCA_PML_OB1_COMMON_HDR_HTON((h).hdr_common);       \
         (h).hdr_send_offset = hton64((h).hdr_send_offset); \
         (h).hdr_send_size = hton64((h).hdr_send_size);     \
-    } while (0) 
+    } while (0)
 
 /**
  *  Header used to initiate an RDMA operation.
@@ -363,7 +363,7 @@ static inline void mca_pml_ob1_rdma_hdr_prepare (mca_pml_ob1_rdma_hdr_t *hdr, ui
         (h).hdr_rdma_offset = hton64((h).hdr_rdma_offset); \
         (h).hdr_dst_ptr = hton64((h).hdr_dst_ptr);         \
         (h).hdr_dst_size = hton64((h).hdr_dst_size);       \
-    } while (0) 
+    } while (0)
 
 /**
  *  Header used to complete an RDMA operation.

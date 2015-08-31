@@ -24,7 +24,7 @@
       integer :: c_ierror
       type(CFI_cdesc_t) :: buf_desc
 
-      call make_desc_f(buf, buf_desc) 
+      call make_desc_f(buf, buf_desc)
       !call print_desc(buf_desc)
 
       call ompi_recv_f08_desc_f(buf_desc, count, datatype%MPI_VAL, source, tag, comm%MPI_VAL, status, c_ierror)

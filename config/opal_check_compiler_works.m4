@@ -4,13 +4,13 @@ dnl Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
 dnl                         University Research and Technology
 dnl                         Corporation.  All rights reserved.
 dnl Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
-dnl                         reserved. 
+dnl                         reserved.
 dnl Copyright (c) 2010-2012 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2014      Intel, Inc. All rights reserved.
 dnl $COPYRIGHT$
-dnl 
+dnl
 dnl Additional copyrights may follow
-dnl 
+dnl
 dnl $HEADER$
 dnl
 
@@ -39,14 +39,14 @@ AC_DEFUN([OPAL_CHECK_COMPILER_WORKS],
                            [AS_VAR_SET(lang_var, ["links (cross compiling)"])],
                            [AS_VAR_SET(lang_var, ["no"])])])
          AC_LANG_POP($1)])
-    AS_VAR_IF(lang_var, [no], 
+    AS_VAR_IF(lang_var, [no],
           [cat <<EOF >&2
 **********************************************************************
 * It appears that your $1 compiler is unable to produce working
 * executables.  A simple test application failed to properly
 * execute.  Note that this is likely not a problem with Open MPI,
 * but a problem with the local compiler installation.  More
-* information (including exactly what command was given to the 
+* information (including exactly what command was given to the
 * compiler and what error resulted when the command was executed) is
 * available in the config.log file in the Open MPI build directory.
 **********************************************************************

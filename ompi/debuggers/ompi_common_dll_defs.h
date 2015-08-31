@@ -8,9 +8,9 @@
  * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -45,7 +45,7 @@
  * Information associated with a specific executable image.  Common
  * across all DLLs.
  */
-typedef struct 
+typedef struct
 {
     /* Functions needed here */
     const struct mqs_image_callbacks * image_callbacks;
@@ -258,12 +258,12 @@ typedef struct
 
     /* For the caller to hang their own stuff */
     void *extra;
-} mpi_image_info; 
+} mpi_image_info;
 
 /***********************************************************************/
 /* Information for a single process.  Common across all DLLs.
  */
-typedef struct 
+typedef struct
 {
     const struct mqs_process_callbacks * process_callbacks; /* Functions needed here */
 
@@ -307,27 +307,27 @@ extern const mqs_basic_callbacks *mqs_basic_entrypoints;
 int ompi_fill_in_type_info(mqs_image *image, char **message);
 
 /* Fetch a pointer from the process */
-mqs_taddr_t ompi_fetch_pointer(mqs_process *proc, mqs_taddr_t addr, 
+mqs_taddr_t ompi_fetch_pointer(mqs_process *proc, mqs_taddr_t addr,
                                mpi_process_info *p_info);
 
 /* Fetch an int from the process */
-mqs_tword_t ompi_fetch_int(mqs_process *proc, mqs_taddr_t addr, 
+mqs_tword_t ompi_fetch_int(mqs_process *proc, mqs_taddr_t addr,
                            mpi_process_info *p_info);
 
 /* Fetch a bool from the process */
-mqs_tword_t ompi_fetch_bool(mqs_process *proc, mqs_taddr_t addr, 
+mqs_tword_t ompi_fetch_bool(mqs_process *proc, mqs_taddr_t addr,
                             mpi_process_info *p_info);
 
 /* Fetch a size_t from the process */
-mqs_taddr_t ompi_fetch_size_t(mqs_process *proc, mqs_taddr_t addr, 
+mqs_taddr_t ompi_fetch_size_t(mqs_process *proc, mqs_taddr_t addr,
                               mpi_process_info *p_info);
 
 /* Helpers to fetch stuff from an opal_pointer_array_t */
-int ompi_fetch_opal_pointer_array_info(mqs_process *proc, mqs_taddr_t addr, 
+int ompi_fetch_opal_pointer_array_info(mqs_process *proc, mqs_taddr_t addr,
                                        mpi_process_info *p_info,
-                                       int *size, int *lowest_free, 
+                                       int *size, int *lowest_free,
                                        int *number_free);
-int ompi_fetch_opal_pointer_array_item(mqs_process *proc, mqs_taddr_t addr, 
+int ompi_fetch_opal_pointer_array_item(mqs_process *proc, mqs_taddr_t addr,
                                        mpi_process_info *p_info, int index,
                                        mqs_taddr_t *item);
 #endif

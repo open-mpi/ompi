@@ -3,9 +3,9 @@
  *                         All rights reserved.
  * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -18,7 +18,7 @@ SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
         shmem_finalize_,
         shmem_finalize__,
         shmem_finalize_f,
-        (void), 
+        (void),
         () )
 
 void shmem_finalize_f(void)

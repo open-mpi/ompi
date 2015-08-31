@@ -41,12 +41,12 @@ void ompitest_error( char* filename, int lineno, const char* fmt, ... )
     free(buf);
 }
 
-int 
+int
 main(int argc, char *argv[])
 {
     int rank, size;
     MPI_Comm parent;
- 
+
     MPI_Init(&argc, &argv);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -86,14 +86,14 @@ spawn_and_merge( char* argv[], char* arg, int count,
     spawn_argv[0] = arg;
     spawn_argv[1] = NULL;
     err = MPI_Comm_spawn(argv[0], spawn_argv, count, MPI_INFO_NULL, 0,
-                         MPI_COMM_WORLD, inter, errcode); 
+                         MPI_COMM_WORLD, inter, errcode);
     for (i = 0; i < count; i++)
         if (errcode[i] != MPI_SUCCESS)
-            ompitest_error(__FILE__, __LINE__, 
-                           "ERROR: MPI_Comm_spawn returned errcode[%d] = %d\n", 
+            ompitest_error(__FILE__, __LINE__,
+                           "ERROR: MPI_Comm_spawn returned errcode[%d] = %d\n",
                            i, errcode[i]);
     if (err != MPI_SUCCESS)
-        ompitest_error(__FILE__, __LINE__, 
+        ompitest_error(__FILE__, __LINE__,
                        "ERROR: MPI_Comm_spawn returned errcode = %d\n", err);
     err = MPI_Intercomm_merge( *inter, 0, intra );
     free(errcode);
@@ -108,7 +108,7 @@ do_parent(char *argv[], int rank, int count)
 
     err = spawn_and_merge( argv, cmd_argv1, count, &ab_inter, &ab_intra );
     err = spawn_and_merge( argv, cmd_argv2, count, &ac_inter, &ac_intra );
-    
+
     printf( "%s: MPI_Intercomm_create( ab_intra, 0, ac_intra, %d, %d, &inter) (%d)\n",
             whoami, count, tag, err );
     err = MPI_Intercomm_create( ab_intra, 0, ac_intra, count, tag, &ab_c_inter );

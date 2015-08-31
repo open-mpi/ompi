@@ -6,7 +6,7 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -15,9 +15,9 @@
  *                         All rights reserved.
  * Copyright (c) 2015      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 /**
@@ -62,7 +62,7 @@ mca_coll_sm_component_t mca_coll_sm_component = {
     {
         /* First, the mca_component_t struct containing meta
            information about the component itself */
-        
+
         .collm_version = {
             MCA_COLL_BASE_VERSION_2_0_0,
 
@@ -132,7 +132,7 @@ static int sm_verify_mca_variables(void)
     mca_coll_sm_component_t *cs = &mca_coll_sm_component;
 
     if (0 != (cs->sm_fragment_size % cs->sm_control_size)) {
-        cs->sm_fragment_size += cs->sm_control_size - 
+        cs->sm_fragment_size += cs->sm_control_size -
             (cs->sm_fragment_size % cs->sm_control_size);
     }
 
@@ -144,20 +144,20 @@ static int sm_verify_mca_variables(void)
         cs->sm_comm_num_segments = cs->sm_comm_num_in_use_flags;
     }
     if (0 != (cs->sm_comm_num_segments % cs->sm_comm_num_in_use_flags)) {
-        cs->sm_comm_num_segments += cs->sm_comm_num_in_use_flags - 
+        cs->sm_comm_num_segments += cs->sm_comm_num_in_use_flags -
             (cs->sm_comm_num_segments % cs->sm_comm_num_in_use_flags);
     }
-    cs->sm_segs_per_inuse_flag = 
+    cs->sm_segs_per_inuse_flag =
         cs->sm_comm_num_segments / cs->sm_comm_num_in_use_flags;
 
     if (cs->sm_tree_degree > cs->sm_control_size) {
-        opal_show_help("help-mpi-coll-sm.txt", 
+        opal_show_help("help-mpi-coll-sm.txt",
                        "tree-degree-larger-than-control", true,
                        cs->sm_tree_degree, cs->sm_control_size);
         cs->sm_tree_degree = cs->sm_control_size;
     }
     if (cs->sm_tree_degree > 255) {
-        opal_show_help("help-mpi-coll-sm.txt", 
+        opal_show_help("help-mpi-coll-sm.txt",
                        "tree-degree-larger-than-255", true,
                        cs->sm_tree_degree);
         cs->sm_tree_degree = 255;

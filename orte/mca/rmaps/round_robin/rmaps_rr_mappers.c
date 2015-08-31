@@ -316,7 +316,7 @@ int orte_rmaps_rr_bynode(orte_job_t *jdata,
                  * have to track how many procs to "shift" elsewhere
                  * to make up the difference
                  */
-                
+
                 /* compute the number of procs to go on this node */
                 if (add_one) {
                     if (0 == nxtra_nodes) {

@@ -36,7 +36,7 @@ OMPI_DECLSPEC extern int netpatterns_base_err(const char*, ...) __opal_attribute
             netpatterns_base_err args;               \
             netpatterns_base_err("\n");              \
         }                                                        \
-    } while(0); 
+    } while(0);
 #else
 #define NETPATTERNS_VERBOSE(args)
 #endif
@@ -116,7 +116,7 @@ struct netpatterns_narray_knomial_tree_node_t {
     /* Knomial recursive gather information */
     struct netpatterns_k_exchange_node_t k_node;
 };
-typedef struct netpatterns_narray_knomial_tree_node_t 
+typedef struct netpatterns_narray_knomial_tree_node_t
 netpatterns_narray_knomial_tree_node_t;
 
 
@@ -133,7 +133,7 @@ OMPI_DECLSPEC int netpatterns_setup_narray_knomial_tree( int tree_order, int my_
 OMPI_DECLSPEC void netpatterns_cleanup_narray_knomial_tree (netpatterns_narray_knomial_tree_node_t *my_node);
 
 /* setup an multi-nomial tree - for each node in the tree
- *  this returns it's parent, and it's children 
+ *  this returns it's parent, and it's children
  */
 OMPI_DECLSPEC int netpatterns_setup_multinomial_tree(int tree_order, int num_nodes,
         netpatterns_tree_node_t *tree_nodes);

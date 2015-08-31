@@ -20,13 +20,13 @@ static inline int bcast_sched_chain(int rank, int p, int root, NBC_Schedule *sch
 /* tree comparison function for schedule cache */
 int NBC_Bcast_args_compare(NBC_Bcast_args *a, NBC_Bcast_args *b, void *param) {
 
-	if( (a->buffer == b->buffer) && 
-      (a->count == b->count) && 
+	if( (a->buffer == b->buffer) &&
+      (a->count == b->count) &&
       (a->datatype == b->datatype) &&
       (a->root == b->root) ) {
     return  0;
   }
-	if( a->buffer < b->buffer ) {	
+	if( a->buffer < b->buffer ) {
     return -1;
 	}
 	return +1;
@@ -56,7 +56,7 @@ int ompi_coll_libnbc_ibcast(void *buffer, int count, MPI_Datatype datatype, int 
   if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Comm_rank() (%i)\n", res); return res; }
   res = MPI_Type_size(datatype, &size);
   if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Type_size() (%i)\n", res); return res; }
-  
+
   segsize = 16384;
   /* algorithm selection */
   if(p <= 4) {
@@ -83,7 +83,7 @@ int ompi_coll_libnbc_ibcast(void *buffer, int count, MPI_Datatype datatype, int 
   if(found == NULL) {
 #endif
     schedule = (NBC_Schedule*)malloc(sizeof(NBC_Schedule));
-    
+
     res = NBC_Sched_create(schedule);
     if(res != NBC_OK) { printf("Error in NBC_Sched_create, res = %i\n", res); return res; }
 
@@ -99,7 +99,7 @@ int ompi_coll_libnbc_ibcast(void *buffer, int count, MPI_Datatype datatype, int 
         break;
     }
     if (NBC_OK != res) { printf("Error in Schedule creation() (%i)\n", res); return res; }
-    
+
     res = NBC_Sched_commit(schedule);
     if (NBC_OK != res) { printf("Error in NBC_Sched_commit() (%i)\n", res); return res; }
 #ifdef NBC_CACHE_SCHEDULE
@@ -121,17 +121,17 @@ int ompi_coll_libnbc_ibcast(void *buffer, int count, MPI_Datatype datatype, int 
     schedule=found->schedule;
   }
 #endif
-  
+
   res = NBC_Start(handle, schedule);
   if (NBC_OK != res) { printf("Error in NBC_Start() (%i)\n", res); return res; }
-  
+
   return NBC_OK;
 }
 
-/* better binomial bcast 
+/* better binomial bcast
  * working principle:
  * - each node gets a virtual rank vrank
- * - the 'root' node get vrank 0 
+ * - the 'root' node get vrank 0
  * - node 0 gets the vrank of the 'root'
  * - all other ranks stay identical (they do not matter)
  *
@@ -139,7 +139,7 @@ int ompi_coll_libnbc_ibcast(void *buffer, int count, MPI_Datatype datatype, int 
  * - each node with vrank > 2^r and vrank < 2^r+1 receives from node
  *   vrank - 2^r (vrank=1 receives from 0, vrank 0 receives never)
  * - each node sends each round r to node vrank + 2^r
- * - a node stops to send if 2^r > commsize  
+ * - a node stops to send if 2^r > commsize
  */
 #define RANK2VRANK(rank, vrank, root) \
 { \
@@ -155,7 +155,7 @@ int ompi_coll_libnbc_ibcast(void *buffer, int count, MPI_Datatype datatype, int 
 }
 static inline int bcast_sched_binomial(int rank, int p, int root, NBC_Schedule *schedule, void *buffer, int count, MPI_Datatype datatype) {
   int maxr, vrank, peer, r, res;
-  
+
   maxr = (int)ceil((log((double)p)/LOG2));
 
   RANK2VRANK(rank, vrank, root);
@@ -187,7 +187,7 @@ static inline int bcast_sched_binomial(int rank, int p, int root, NBC_Schedule *
 
 /* simple linear MPI_Ibcast */
 static inline int bcast_sched_linear(int rank, int p, int root, NBC_Schedule *schedule, void *buffer, int count, MPI_Datatype datatype) {
-  int peer, res;  
+  int peer, res;
 
   /* send to all others */
   if(rank == root) {
@@ -203,7 +203,7 @@ static inline int bcast_sched_linear(int rank, int p, int root, NBC_Schedule *sc
     res = NBC_Sched_recv(buffer, false, count, datatype, root, schedule);
     if (NBC_OK != res) { printf("Error in NBC_Sched_recv() (%i)\n", res); return res; }
   }
-  
+
   return NBC_OK;
 }
 
@@ -218,14 +218,14 @@ static inline int bcast_sched_chain(int rank, int p, int root, NBC_Schedule *sch
   VRANK2RANK(speer, vrank+1, root);
   res = MPI_Type_extent(datatype, &ext);
   if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Type_extent() (%i)\n", res); return res; }
-  
+
   if(count == 0) return NBC_OK;
 
   numfrag = count*size/fragsize;
   if((count*size)%fragsize != 0) numfrag++;
   fragcount = count/numfrag;
   /*if(!rank) printf("numfrag: %i, count: %i, size: %i, fragcount: %i\n", numfrag, count, size, fragcount);*/
-  
+
   for(fragnum = 0; fragnum < numfrag; fragnum++) {
     buf = (char*)buffer+fragnum*fragcount*ext;
     thiscount = fragcount;
@@ -249,6 +249,6 @@ static inline int bcast_sched_chain(int rank, int p, int root, NBC_Schedule *sch
       if(vrank == 0) res = NBC_Sched_barrier(schedule);
     }
   }
-  
+
   return NBC_OK;
 }

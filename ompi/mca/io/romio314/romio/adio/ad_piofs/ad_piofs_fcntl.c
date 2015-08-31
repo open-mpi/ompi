@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -23,7 +23,7 @@ void ADIOI_PIOFS_Fcntl(ADIO_File fd, int flag, ADIO_Fcntl_t *fcntl_struct, int *
     switch(flag) {
     case ADIO_FCNTL_GET_FSIZE:
 	fcntl_struct->fsize = llseek(fd->fd_sys, 0, SEEK_END);
-	if (fd->fp_sys_posn != -1) 
+	if (fd->fp_sys_posn != -1)
 	     llseek(fd->fd_sys, fd->fp_sys_posn, SEEK_SET);
 	if (fcntl_struct->fsize == -1) {
 #ifdef MPICH
@@ -34,7 +34,7 @@ void ADIOI_PIOFS_Fcntl(ADIO_File fd, int flag, ADIO_Fcntl_t *fcntl_struct, int *
 #else /* MPICH-1 */
 	    *error_code = MPIR_Err_setmsg(MPI_ERR_IO, MPIR_ADIO_ERROR,
 			      myname, "I/O Error", "%s", strerror(errno));
-	    ADIOI_Error(fd, *error_code, myname);	    
+	    ADIOI_Error(fd, *error_code, myname);
 #endif
 	}
 	else *error_code = MPI_SUCCESS;
@@ -45,12 +45,12 @@ void ADIOI_PIOFS_Fcntl(ADIO_File fd, int flag, ADIO_Fcntl_t *fcntl_struct, int *
 	break;
 
     case ADIO_FCNTL_SET_ATOMICITY:
-	piofs_change_view = (piofs_change_view_t *) 
+	piofs_change_view = (piofs_change_view_t *)
                                  ADIOI_Malloc(sizeof(piofs_change_view_t));
-	piofs_change_view->Vbs = piofs_change_view->Vn = 
+	piofs_change_view->Vbs = piofs_change_view->Vn =
              piofs_change_view->Hbs = piofs_change_view->Hn = 1;
 	piofs_change_view->subfile = 0;
-	piofs_change_view->flags = (fcntl_struct->atomicity == 0) 
+	piofs_change_view->flags = (fcntl_struct->atomicity == 0)
                              ? (ACTIVE | NORMAL) : (ACTIVE | CAUTIOUS);
 	err = piofsioctl(fd->fd_sys, PIOFS_CHANGE_VIEW, piofs_change_view);
 	ADIOI_Free(piofs_change_view);
@@ -64,7 +64,7 @@ void ADIOI_PIOFS_Fcntl(ADIO_File fd, int flag, ADIO_Fcntl_t *fcntl_struct, int *
 #else /* MPICH-1 */
 	    *error_code = MPIR_Err_setmsg(MPI_ERR_IO, MPIR_ADIO_ERROR,
 			      myname, "I/O Error", "%s", strerror(errno));
-	    ADIOI_Error(fd, *error_code, myname);	    
+	    ADIOI_Error(fd, *error_code, myname);
 #endif
 	}
 	else *error_code = MPI_SUCCESS;

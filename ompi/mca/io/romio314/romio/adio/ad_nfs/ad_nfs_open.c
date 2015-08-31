@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -19,7 +19,7 @@ void ADIOI_NFS_Open(ADIO_File fd, int *error_code)
 	perm = old_mask ^ 0666;
     }
     else perm = fd->perm;
-    
+
     amode = 0;
     if (fd->access_mode & ADIO_CREATE)
 	amode = amode | O_CREAT;

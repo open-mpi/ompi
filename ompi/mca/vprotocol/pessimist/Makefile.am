@@ -2,9 +2,9 @@
 # Copyright (c) 2004-2007 The Trustees of the University of Tennessee.
 #                         All rights reserved.
 # $COPYRIGHT$
-# 
+#
 # Additional copyrights may follow
-# 
+#
 # $HEADER$
 #
 
@@ -38,7 +38,7 @@ local_sources = \
         vprotocol_pessimist_sender_based.c
 
 if MCA_BUILD_ompi_vprotocol_pessimist_DSO
-component_noinst = 
+component_noinst =
 component_install = mca_vprotocol_pessimist.la
 else
 component_noinst = libmca_vprotocol_pessimist.la

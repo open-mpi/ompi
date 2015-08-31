@@ -1,11 +1,11 @@
 dnl -*- shell-script -*-
 dnl
 dnl Copyright (c) 2007      Los Alamos National Security, LLC.
-dnl                         All rights reserved. 
+dnl                         All rights reserved.
 dnl $COPYRIGHT$
-dnl 
+dnl
 dnl Additional copyrights may follow
-dnl 
+dnl
 dnl $HEADER$
 dnl
 

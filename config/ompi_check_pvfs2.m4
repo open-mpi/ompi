@@ -23,7 +23,7 @@ dnl
 
 # OMPI_CHECK_PVFS2(prefix, [action-if-found], [action-if-not-found])
 # --------------------------------------------------------
-# check if PVFS2 support can be found.  sets prefix_{CPPFLAGS, 
+# check if PVFS2 support can be found.  sets prefix_{CPPFLAGS,
 # LDFLAGS, LIBS} as needed and runs action-if-found if there is
 # support, otherwise executes action-if-not-found
 AC_DEFUN([OMPI_CHECK_PVFS2],[
@@ -32,7 +32,7 @@ AC_DEFUN([OMPI_CHECK_PVFS2],[
     check_pvfs2_LDFLAGS=
     check_pvfs2_LIBS=
 
-    check_pvfs2_save_LIBS="$LIBS" 
+    check_pvfs2_save_LIBS="$LIBS"
     check_pvfs2_save_LDFLAGS="$LDFLAGS"
     check_pvfs2_save_CPPFLAGS="$CPPFLAGS"
 
@@ -46,7 +46,7 @@ AC_DEFUN([OMPI_CHECK_PVFS2],[
              [Build Pvfs2 support, optionally adding DIR/include, DIR/lib, and DIR/lib64 to the search path for headers and libraries])])
     OPAL_CHECK_WITHDIR([pvfs2], [$with_pvfs2], [include/pvfs2.h])
 
-    AC_ARG_WITH([pvfs2-libs], 
+    AC_ARG_WITH([pvfs2-libs],
         [AC_HELP_STRING([--with-pvfs2-libs=LIBS],
                        [Libraries to link with for pvfs2])])
 
@@ -57,29 +57,29 @@ AC_DEFUN([OMPI_CHECK_PVFS2],[
     temp_with_pvfs2_libs="$with_pvfs2_libs"
     AS_IF([test -z "$with_pvfs2_libs"],
 	[with_pvfs2_libs="pvfs2 pthread"])
-    
+
     # Add correct -I and -L flags
     AS_IF([test -d "$with_pvfs2/include"],
         [check_pvfs2_CPPFLAGS="-I$with_pvfs2/include"
             $1_CPPFLAGS="$check_pvfs2_CPPFLAGS"
             CPPFLAGS="$CPPFLAGS $check_pvfs2_CPPFLAGS"],
 	[ompi_check_pvfs2_happy="no"])
-    
+
     AS_IF([test "$ompi_check_pvfs2_happy" = "yes"],
 	[AS_IF([test -d "$with_pvfs2/lib"],
 		[check_pvfs2_LDFLAGS="-L$with_pvfs2/lib"
 		    $1_LDFLAGS="$check_pvfs2_LDFLAGS"
 		    LDFLAGS="$LDFLAGS $check_pvfs2_LDFLAGS"],
-		[ompi_check_pvfs2_happy="no"]) 
+		[ompi_check_pvfs2_happy="no"])
     ],[])
-	    
+
     # Try to find all the pvfs2 libraries
     AS_IF([test "$ompi_check_pvfs2_happy" = "yes"],
 	[ AS_IF([test -n "$with_pvfs2_libs"]
 		[for lib in $with_pvfs2_libs ; do
 		    check_pvfs2_LIBS="$check_pvfs2_LIBS -l$lib"
-		    done]) 
-		
+		    done])
+
 	    $1_LIBS="$check_pvfs2_LIBS"
 	    LIBS="$LIBS $check_pvfs2_LIBS"
 

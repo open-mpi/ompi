@@ -11,21 +11,21 @@ dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2006 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
-dnl                         reserved. 
+dnl                         reserved.
 dnl Copyright (c) 2007-2009 Sun Microsystems, Inc.  All rights reserved.
 dnl Copyright (c) 2008-2013 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2015      Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
 dnl $COPYRIGHT$
-dnl 
+dnl
 dnl Additional copyrights may follow
-dnl 
+dnl
 dnl $HEADER$
 dnl
 
 # This macro is necessary to get the title to be displayed first.  :-)
 AC_DEFUN([OMPI_SETUP_CXX_BANNER],[
-    opal_show_subtitle "C++ compiler and preprocessor" 
+    opal_show_subtitle "C++ compiler and preprocessor"
 ])
 
 # This macro is necessary because PROG_CXX* is REQUIREd by multiple
@@ -116,7 +116,7 @@ AC_DEFUN([_OMPI_SETUP_CXX_COMPILER],[
           [AS_IF([test "$ompi_cv_cxx_compiler_vendor" = "microsoft" ],
                  [ompi_cxx_compiler_works=yes],
                  [OPAL_CHECK_COMPILER_WORKS([C++], [#include <string>
-], 
+],
                                             [std::string foo = "Hello, world"],
                                             [ompi_cxx_compiler_works=yes],
                                             [ompi_cxx_compiler_works=no])])])
@@ -131,7 +131,7 @@ AC_DEFUN([_OMPI_SETUP_CXX_COMPILER],[
 
     AC_MSG_CHECKING([if able to build the MPI C++ bindings])
     AS_IF([test "$WANT_MPI_CXX_SUPPORT" = "1"],
-          [AC_MSG_RESULT([yes])], 
+          [AC_MSG_RESULT([yes])],
           [AC_MSG_RESULT([no])
            AS_IF([test "$enable_mpi_cxx" = "yes"],
                  [AC_MSG_WARN([MPI C++ binding support requested but not delivered])
@@ -178,10 +178,10 @@ AC_DEFUN([_OMPI_SETUP_CXX_COMPILER_BACKEND],[
         CXXFLAGS="$CXXFLAGS $add -Wno-long-double -fstrict-prototype"
         AC_CACHE_CHECK([if $CXX supports -Wno-long-double],
                    [ompi_cv_cxx_wno_long_double],
-                   [AC_TRY_COMPILE([], [], 
+                   [AC_TRY_COMPILE([], [],
                                    [dnl Alright, the -Wno-long-double did not produce any errors...
                                     dnl Well well, try to extract a warning regarding unrecognized or ignored options
-                                    AC_TRY_COMPILE([], [long double test;], 
+                                    AC_TRY_COMPILE([], [long double test;],
                                                    [
                                                        ompi_cv_cxx_wno_long_double="yes"
                                                        if test -s conftest.err ; then
@@ -243,7 +243,7 @@ AC_DEFUN([_OMPI_SETUP_CXX_COMPILER_BACKEND],[
 * files created by your C compiler.  This generally indicates either
 * a conflict between the options specified in CFLAGS and CXXFLAGS
 * or a problem with the local compiler installation.  More
-* information (including exactly what command was given to the 
+* information (including exactly what command was given to the
 * compilers and what error resulted when the commands were executed) is
 * available in the config.log file in this directory.
 **********************************************************************
@@ -296,7 +296,7 @@ AC_DEFUN([_OMPI_CXX_CHECK_EXCEPTIONS],[
     # Check for special things due to C++ exceptions
     ENABLE_CXX_EXCEPTIONS=no
     HAVE_CXX_EXCEPTIONS=0
-    AC_ARG_ENABLE([cxx-exceptions], 
+    AC_ARG_ENABLE([cxx-exceptions],
         [AC_HELP_STRING([--enable-cxx-exceptions],
 	                [enable support for C++ exceptions (default: disabled)])],
         [ENABLE_CXX_EXCEPTIONS="$enableval"])
@@ -366,10 +366,10 @@ AC_DEFUN([_OMPI_CXX_CHECK_BUILTIN],[
     AS_IF([test "$WANT_MPI_CXX_SUPPORT" = "1"],
           [_OMPI_CXX_CHECK_BUILTIN_BACKEND])
 
-    AC_DEFINE_UNQUOTED([OMPI_CXX_HAVE_BUILTIN_EXPECT], 
+    AC_DEFINE_UNQUOTED([OMPI_CXX_HAVE_BUILTIN_EXPECT],
                        [$have_cxx_builtin_expect],
                        [Whether C++ compiler supports __builtin_expect])
-    AC_DEFINE_UNQUOTED([OMPI_CXX_HAVE_BUILTIN_PREFETCH], 
+    AC_DEFINE_UNQUOTED([OMPI_CXX_HAVE_BUILTIN_PREFETCH],
                        [$have_cxx_builtin_prefetch],
                        [Whether C++ compiler supports __builtin_prefetch])
 
@@ -442,7 +442,7 @@ AC_DEFUN([_OMPI_CXX_CHECK_2D_CONST_CAST_BACKEND],[
        [ompi_cv_cxx_supports_2d_const_cast],
        [AC_TRY_COMPILE([int non_const_func(int ranges[][3]);
 int cast_test(const int ranges[][3]) {
-  return non_const_func(const_cast<int(*)[3]>(ranges));  
+  return non_const_func(const_cast<int(*)[3]>(ranges));
 }],
             [],
             [ompi_cv_cxx_supports_2d_const_cast="yes"],

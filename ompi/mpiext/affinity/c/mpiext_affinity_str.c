@@ -20,7 +20,7 @@
  * 1. What processor(s) Open MPI bound this process to
  * 2. What processor(s) this process is bound to
  * 3. What processor(s) exist on this host
- * 
+ *
  * Note that 1 and 2 may be different!
  */
 
@@ -145,7 +145,7 @@ static int get_rsrc_ompi_bound(char str[OMPI_AFFINITY_STRING_MAX])
     if (NULL == orte_proc_applied_binding) {
         ret = OPAL_ERR_NOT_BOUND;
     } else {
-        ret = opal_hwloc_base_cset2str(str, OMPI_AFFINITY_STRING_MAX, 
+        ret = opal_hwloc_base_cset2str(str, OMPI_AFFINITY_STRING_MAX,
                                        opal_hwloc_topology,
                                        orte_proc_applied_binding);
     }
@@ -173,7 +173,7 @@ static int get_rsrc_current_binding(char str[OMPI_AFFINITY_STRING_MAX])
 
     /* get our bindings */
     boundset = hwloc_bitmap_alloc();
-    if (hwloc_get_cpubind(opal_hwloc_topology, boundset, 
+    if (hwloc_get_cpubind(opal_hwloc_topology, boundset,
                           HWLOC_CPUBIND_PROCESS) < 0) {
         /* we are NOT bound if get_cpubind fails, nor can we be bound
            - the environment does not support it */
@@ -210,7 +210,7 @@ static int get_rsrc_current_binding(char str[OMPI_AFFINITY_STRING_MAX])
 }
 
 
-/* 
+/*
  * Prettyprint a list of all available sockets and cores.  Note that
  * this is *everything* -- not just the ones that are available to
  * this process.
@@ -224,7 +224,7 @@ static int get_rsrc_exists(char str[OMPI_AFFINITY_STRING_MAX])
     hwloc_obj_t socket, core, c2;
 
     str[0] = '\0';
-    for (socket = hwloc_get_obj_by_type(opal_hwloc_topology, 
+    for (socket = hwloc_get_obj_by_type(opal_hwloc_topology,
                                         HWLOC_OBJ_SOCKET, 0);
          NULL != socket; socket = socket->next_cousin) {
         /* If this isn't the first socket, add a delimiter */
@@ -243,17 +243,17 @@ static int get_rsrc_exists(char str[OMPI_AFFINITY_STRING_MAX])
                                                            socket->cpuset,
                                                            HWLOC_OBJ_CORE);
         core = hwloc_get_obj_inside_cpuset_by_type(opal_hwloc_topology,
-                                                   socket->cpuset, 
+                                                   socket->cpuset,
                                                    HWLOC_OBJ_CORE, 0);
         if (NULL != core) {
-            num_pus = 
+            num_pus =
                 hwloc_get_nbobjs_inside_cpuset_by_type(opal_hwloc_topology,
                                                        core->cpuset,
                                                        HWLOC_OBJ_PU);
-            
+
             /* Only 1 core */
             if (1 == num_cores) {
-                strncat(str, "1 core with ", 
+                strncat(str, "1 core with ",
                         OMPI_AFFINITY_STRING_MAX - strlen(str));
                 if (1 == num_pus) {
                     strncat(str, "1 hwt",
@@ -262,26 +262,26 @@ static int get_rsrc_exists(char str[OMPI_AFFINITY_STRING_MAX])
                     snprintf(tmp, stmp, "%d hwts", num_pus);
                     strncat(str, tmp, OMPI_AFFINITY_STRING_MAX - strlen(str));
                 }
-            } 
-            
+            }
+
             /* Multiple cores */
             else {
                 bool same = true;
-                
+
                 snprintf(tmp, stmp, "%d cores", num_cores);
                 strncat(str, tmp, OMPI_AFFINITY_STRING_MAX - strlen(str));
-                
+
                 /* Do all the cores have the same number of PUs? */
                 for (c2 = core; NULL != c2; c2 = c2->next_cousin) {
                     if (hwloc_get_nbobjs_inside_cpuset_by_type(opal_hwloc_topology,
                                                                core->cpuset,
-                                                               HWLOC_OBJ_PU) != 
+                                                               HWLOC_OBJ_PU) !=
                         num_pus) {
                         same = false;
                         break;
                     }
                 }
-                
+
                 /* Yes, they all have the same number of PUs */
                 if (same) {
                     snprintf(tmp, stmp, ", each with %d hwt", num_pus);
@@ -290,31 +290,31 @@ static int get_rsrc_exists(char str[OMPI_AFFINITY_STRING_MAX])
                         strncat(str, "s", OMPI_AFFINITY_STRING_MAX - strlen(str));
                     }
                 }
-                
+
                 /* No, they have differing numbers of PUs */
                 else {
                     bool first = true;
-                    
+
                     strncat(str, "with (", OMPI_AFFINITY_STRING_MAX - strlen(str));
                     for (c2 = core; NULL != c2; c2 = c2->next_cousin) {
                         if (!first) {
-                            strncat(str, ", ", 
+                            strncat(str, ", ",
                                     OMPI_AFFINITY_STRING_MAX - strlen(str));
                         }
                         first = false;
-                        
+
                         i = hwloc_get_nbobjs_inside_cpuset_by_type(opal_hwloc_topology,
                                                                    core->cpuset,
                                                                    HWLOC_OBJ_PU);
                         snprintf(tmp, stmp, "%d", i);
                         strncat(str, tmp, OMPI_AFFINITY_STRING_MAX - strlen(str));
                     }
-                    strncat(str, ") hwts", 
+                    strncat(str, ") hwts",
                             OMPI_AFFINITY_STRING_MAX - strlen(str));
                 }
             }
         }
-    } 
+    }
 
     return OMPI_SUCCESS;
 }
@@ -338,7 +338,7 @@ static int get_layout_ompi_bound(char str[OMPI_AFFINITY_STRING_MAX])
     if (NULL == orte_proc_applied_binding) {
         ret = OPAL_ERR_NOT_BOUND;
     } else {
-        ret = opal_hwloc_base_cset2mapstr(str, OMPI_AFFINITY_STRING_MAX, 
+        ret = opal_hwloc_base_cset2mapstr(str, OMPI_AFFINITY_STRING_MAX,
                                           opal_hwloc_topology,
                                           orte_proc_applied_binding);
     }
@@ -366,7 +366,7 @@ static int get_layout_current_binding(char str[OMPI_AFFINITY_STRING_MAX])
 
     /* get our bindings */
     boundset = hwloc_bitmap_alloc();
-    if (hwloc_get_cpubind(opal_hwloc_topology, boundset, 
+    if (hwloc_get_cpubind(opal_hwloc_topology, boundset,
                           HWLOC_CPUBIND_PROCESS) < 0) {
         /* we are NOT bound if get_cpubind fails, nor can we be bound
            - the environment does not support it */
@@ -409,7 +409,7 @@ static int get_layout_current_binding(char str[OMPI_AFFINITY_STRING_MAX])
  *
  * Example: [../..]
  * Key:  [] - signifies socket
- *        / - signifies core 
+ *        / - signifies core
  *        . - signifies PU
  */
 static int get_layout_exists(char str[OMPI_AFFINITY_STRING_MAX])
@@ -421,20 +421,20 @@ static int get_layout_exists(char str[OMPI_AFFINITY_STRING_MAX])
     str[0] = '\0';
 
     /* Iterate over all existing sockets */
-    for (socket = hwloc_get_obj_by_type(opal_hwloc_topology, 
+    for (socket = hwloc_get_obj_by_type(opal_hwloc_topology,
                                         HWLOC_OBJ_SOCKET, 0);
-         NULL != socket; 
+         NULL != socket;
          socket = socket->next_cousin) {
         strncat(str, "[", len - strlen(str));
 
         /* Iterate over all existing cores in this socket */
         core_index = 0;
         for (core = hwloc_get_obj_inside_cpuset_by_type(opal_hwloc_topology,
-                                                        socket->cpuset, 
+                                                        socket->cpuset,
                                                         HWLOC_OBJ_CORE, core_index);
-             NULL != core; 
+             NULL != core;
              core = hwloc_get_obj_inside_cpuset_by_type(opal_hwloc_topology,
-                                                        socket->cpuset, 
+                                                        socket->cpuset,
                                                         HWLOC_OBJ_CORE, ++core_index)) {
             if (core_index > 0) {
                 strncat(str, "/", len - strlen(str));
@@ -443,11 +443,11 @@ static int get_layout_exists(char str[OMPI_AFFINITY_STRING_MAX])
             /* Iterate over all existing PUs in this core */
             pu_index = 0;
             for (pu = hwloc_get_obj_inside_cpuset_by_type(opal_hwloc_topology,
-                                                          core->cpuset, 
+                                                          core->cpuset,
                                                           HWLOC_OBJ_PU, pu_index);
-                 NULL != pu; 
+                 NULL != pu;
                  pu = hwloc_get_obj_inside_cpuset_by_type(opal_hwloc_topology,
-                                                          core->cpuset, 
+                                                          core->cpuset,
                                                           HWLOC_OBJ_PU, ++pu_index)) {
                 strncat(str, ".", len - strlen(str));
             }

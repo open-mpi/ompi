@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -12,12 +12,12 @@
  * flush request, it will stress the PVFS2 servers with redundant
  * PVFS_sys_flush requests.  Instead, one process should wait for
  * everyone to catch up, do the sync, then broadcast the result.  We can
- * get away with this thanks to PVFS2's stateless design 
+ * get away with this thanks to PVFS2's stateless design
  */
 
-void ADIOI_PVFS2_Flush(ADIO_File fd, int *error_code) 
-{ 
-    int ret, rank, dummy=0, dummy_in=0; 
+void ADIOI_PVFS2_Flush(ADIO_File fd, int *error_code)
+{
+    int ret, rank, dummy=0, dummy_in=0;
     ADIOI_PVFS2_fs *pvfs_fs;
     static char myname[] = "ADIOI_PVFS2_FLUSH";
 
@@ -30,7 +30,7 @@ void ADIOI_PVFS2_Flush(ADIO_File fd, int *error_code)
 
     /* unlike ADIOI_PVFS2_Resize, MPI_File_sync() does not perform any
      * syncronization */
-    MPI_Reduce(&dummy_in, &dummy, 1, MPI_INT, MPI_SUM, 
+    MPI_Reduce(&dummy_in, &dummy, 1, MPI_INT, MPI_SUM,
 	    fd->hints->ranklist[0], fd->comm);
 
     /* io_worker computed in ADIO_Open */
@@ -50,6 +50,6 @@ void ADIOI_PVFS2_Flush(ADIO_File fd, int *error_code)
     /* --END ERROR HANDLING-- */
 }
 
-/* 
- * vim: ts=8 sts=4 sw=4 noexpandtab 
+/*
+ * vim: ts=8 sts=4 sw=4 noexpandtab
  */

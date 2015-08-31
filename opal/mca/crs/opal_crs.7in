@@ -5,7 +5,7 @@
 .\" Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
 .\"
 .\" Man page for OPAL's CRS Functionality
-.\" 
+.\"
 .\" .TH name     section center-footer   left-footer  center-header
 .TH OPAL_CRS 7 "#OPAL_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 
@@ -34,7 +34,7 @@ procress:
 .
 .TP 4
 Checkpoint
-When the checkpoint request arrives, the procress is notified of the 
+When the checkpoint request arrives, the procress is notified of the
 request before the checkpoint is taken.
 .
 .TP 4
@@ -65,7 +65,7 @@ First, the program must call \fIOPAL_INIT\fR early in its execution. This
 should only be called once, and it is not possible to checkpoint the process
 without it first having called this function.
 .PP
-The program must call \fIOPAL_FINALIZE\fR before termination. This does a 
+The program must call \fIOPAL_FINALIZE\fR before termination. This does a
 significant amount of cleanup. If it is not called, then it is very likely that
 remnants are left in the filesystem.
 .PP
@@ -162,7 +162,7 @@ Set the verbosity level. Default is 0, or silent except on error.
 .SS none CRS Component
 .PP
 The \fInone\fP component simply selects no CRS component. All of the CRS
-function calls return immediately with OPAL_SUCCESS. 
+function calls return immediately with OPAL_SUCCESS.
 .
 .PP
 This component is the last component to be selected by default. This means that if

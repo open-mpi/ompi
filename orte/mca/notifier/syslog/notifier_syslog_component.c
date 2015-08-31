@@ -30,7 +30,7 @@
 #include "notifier_syslog.h"
 
 
-static int orte_notifier_syslog_component_query(mca_base_module_t **module, 
+static int orte_notifier_syslog_component_query(mca_base_module_t **module,
                                                 int *priority);
 
 /*
@@ -51,10 +51,10 @@ orte_notifier_base_component_t mca_notifier_syslog_component = {
     },
 };
 
-static int orte_notifier_syslog_component_query(mca_base_module_t **module, 
+static int orte_notifier_syslog_component_query(mca_base_module_t **module,
                                                 int *priority)
 {
     *priority = 1;
     *module = (mca_base_module_t *)&orte_notifier_syslog_module;
-    return ORTE_SUCCESS;    
+    return ORTE_SUCCESS;
 }

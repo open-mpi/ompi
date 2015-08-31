@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
- *   Copyright (C) 1997 University of Chicago. 
+/*
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -72,7 +72,7 @@ int MPIOI_File_write(MPI_File fh,
 		     MPI_Datatype datatype,
 		     char *myname,
 		     MPI_Status *status)
-{		      
+{
     int error_code, buftype_is_contig, filetype_is_contig;
     MPI_Count datatype_size;
     ADIO_Offset off, bufsize;
@@ -128,7 +128,7 @@ int MPIOI_File_write(MPI_File fh,
     xbuf = buf;
     if (adio_fh->is_external32) {
 	error_code = MPIU_external32_buffer_setup(buf, count, datatype, &e32buf);
-	if (error_code != MPI_SUCCESS) 
+	if (error_code != MPI_SUCCESS)
 	    goto fn_exit;
 
 	xbuf = e32buf;
@@ -157,7 +157,7 @@ int MPIOI_File_write(MPI_File fh,
 	}
 
 	ADIO_WriteContig(adio_fh, xbuf, count, datatype, file_ptr_type,
-		     off, status, &error_code); 
+		     off, status, &error_code);
 
         if ((adio_fh->atomicity) && ADIO_Feature(adio_fh, ADIO_LOCKS))
 	{
