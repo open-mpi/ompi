@@ -9,7 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2011-2013 Inria.  All rights reserved.
 # Copyright (c) 2011-2013 Universite Bordeaux 1
 # Copyright (c) 2013-2014 Los Alamos National Security, LLC. All rights
@@ -56,7 +56,14 @@ AM_CPPFLAGS = -DOMPI_PROFILE_LAYER=0 -DOMPI_COMPILING_FORTRAN_WRAPPERS=1
 lib_LTLIBRARIES =
 noinst_LTLIBRARIES =
 CLEANFILES =
-libmpi_mpifh_la_LIBADD = $(top_builddir)/ompi/libmpi.la $(OMPI_MPIEXT_MPIFH_LIBS)
+# Note that we invoke some OPAL functions directly in libmpi_mpifh.la,
+# so we need to link in the OPAL library directly (pulling it in
+# indirectly via libmpi.la does not work on all platforms).
+libmpi_mpifh_la_LIBADD = \
+        $(top_builddir)/ompi/libmpi.la \
+        $(OMPI_MPIEXT_MPIFH_LIBS) \
+        $(OMPI_TOP_BUILDDIR)/opal/libopen-pal.la
+
 libmpi_mpifh_la_LDFLAGS = -version-info $(libmpi_mpifh_so_version)
 
 # Are we building the mpif.h bindings at all?
