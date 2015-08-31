@@ -146,7 +146,7 @@ int pmix_bfrop_unpack_buffer(pmix_buffer_t *buffer, void *dst, int32_t *num_vals
 int pmix_bfrop_unpack_bool(pmix_buffer_t *buffer, void *dest,
                            int32_t *num_vals, pmix_data_type_t type)
 {
-    int32_t i, k;
+    int32_t i;
     uint8_t *src;
     bool *dst;
 

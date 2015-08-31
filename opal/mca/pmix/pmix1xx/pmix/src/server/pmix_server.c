@@ -542,7 +542,6 @@ pmix_status_t PMIx_server_register_nspace(const char nspace[], int nlocalprocs,
                                           pmix_op_cbfunc_t cbfunc, void *cbdata)
 {
     pmix_setup_caddy_t *cd;
-    size_t i;
 
     cd = PMIX_NEW(pmix_setup_caddy_t);
     (void)strncpy(cd->proc.nspace, nspace, PMIX_MAX_NSLEN);
@@ -552,7 +551,7 @@ pmix_status_t PMIx_server_register_nspace(const char nspace[], int nlocalprocs,
     /* copy across the info array, if given */
     if (0 < ninfo) {
         cd->ninfo = ninfo;
-	cd->info = info;
+        cd->info = info;
     }
 
     /* we have to push this into our event library to avoid
@@ -569,7 +568,7 @@ static void _execute_collective(int sd, short args, void *cbdata)
     pmix_server_trkr_t *trk = tcd->trk;
     char *data = NULL;
     size_t sz = 0;
-    pmix_buffer_t bucket, pbkt, xfer;
+    pmix_buffer_t bucket, xfer;
     pmix_rank_info_t *info;
     pmix_value_t *val;
 
@@ -653,8 +652,6 @@ static void _register_client(int sd, short args, void *cbdata)
     pmix_nspace_t *nptr, *tmp;
     pmix_server_trkr_t *trk;
     pmix_trkr_caddy_t *tcd;
-    bool found;
-    pmix_dmdx_local_t *lcd, *lcdnext;
 
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "pmix:server _register_client for nspace %s rank %d",
@@ -781,7 +778,7 @@ static void _dmodex_req(int sd, short args, void *cbdata)
     pmix_setup_caddy_t *cd = (pmix_setup_caddy_t*)cbdata;
     pmix_rank_info_t *info, *iptr;
     pmix_nspace_t *nptr, *ns;
-    pmix_buffer_t pbkt, xfer;
+    pmix_buffer_t pbkt;
     pmix_value_t *val;
     char *data = NULL;
     size_t sz = 0;
@@ -1567,7 +1564,6 @@ static void _mdxcbfunc(int sd, short argc, void *cbdata)
     pmix_buffer_t xfer, *bptr, *databuf, *bpscope, *reply;
     pmix_nspace_t *nptr, *ns;
     pmix_server_caddy_t *cd;
-    pmix_kval_t *kp;
     char *nspace;
     int rank, rc;
     int32_t cnt = 1;

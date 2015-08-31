@@ -409,6 +409,9 @@ void pmix_value_load(pmix_value_t *v, void *data,
         switch(type) {
         case PMIX_UNDEF:
             break;
+        case PMIX_BOOL:
+            memcpy(&(v->data.flag), data, 1);
+            break;
         case PMIX_BYTE:
             memcpy(&(v->data.byte), data, 1);
             break;
@@ -497,6 +500,10 @@ int pmix_value_unload(pmix_value_t *kv, void **data,
         switch(type) {
         case PMIX_UNDEF:
             rc = PMIX_ERR_UNKNOWN_DATA_TYPE;
+            break;
+        case PMIX_BOOL:
+            memcpy(*data, &(kv->data.flag), 1);
+            *sz = 1;
             break;
         case PMIX_BYTE:
             memcpy(*data, &(kv->data.byte), 1);
