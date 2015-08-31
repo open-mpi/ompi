@@ -24,7 +24,7 @@
  * @file
  *
  * The pmix_list_t interface is used to provide a generic
- * doubly-linked list container for Open MPI.  It was inspired by (but
+ * doubly-linked list container for PMIx.  It was inspired by (but
  * is slightly different than) the Standard Template Library (STL)
  * std::list class.  One notable difference from std::list is that
  * when an pmix_list_t is destroyed, all of the pmix_list_item_t
@@ -100,7 +100,7 @@ PMIX_DECLSPEC PMIX_CLASS_DECLARATION(pmix_list_item_t);
 struct pmix_list_item_t
 {
     pmix_object_t super;
-    /**< Generic parent class for all Open MPI objects */
+    /**< Generic parent class for all PMIx objects */
     volatile struct pmix_list_item_t *pmix_list_next;
     /**< Pointer to next list item */
     volatile struct pmix_list_item_t *pmix_list_prev;
@@ -149,7 +149,7 @@ typedef struct pmix_list_item_t pmix_list_item_t;
 struct pmix_list_t
 {
     pmix_object_t       super;
-    /**< Generic parent class for all Open MPI objects */
+    /**< Generic parent class for all PMIx objects */
     pmix_list_item_t    pmix_list_sentinel;
     /**< Head and tail item of the list */
     volatile size_t     pmix_list_length;
@@ -461,7 +461,7 @@ static inline size_t pmix_list_get_size(pmix_list_t* list)
  * caller -- they are responsible for PMIX_RELEASE()'ing it.
  *
  * If debugging is enabled (specifically, if --enable-debug was used
- * to configure Open MPI), this is an O(N) operation because it checks
+ * to configure PMIx), this is an O(N) operation because it checks
  * to see if the item is actually in the list first.
  *
  * This is an inlined function in compilers that support inlining, so

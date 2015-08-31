@@ -61,7 +61,7 @@ AC_DEFUN([_PMIX_HWLOC_EXTERNAL],[
     pmix_hwloc_support=0
     if test "$with_hwloc" != "no"; then
         AC_MSG_CHECKING([for hwloc in])
-        if test ! -z "$with_hwloc" -a "$with_hwloc" != "yes"; then
+        if test ! -z "$with_hwloc" && test "$with_hwloc" != "yes"; then
             pmix_hwloc_dir=$with_hwloc
             if test -d $with_hwloc/lib; then
                 pmix_hwloc_libdir=$with_hwloc/lib

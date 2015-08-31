@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2008 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -99,7 +101,7 @@ static int output(int output_id, const char *format, va_list arglist);
 
 /* global state */
 bool pmix_output_redirected_to_syslog = false;
-int pmix_output_redirected_syslog_pri;
+int pmix_output_redirected_syslog_pri = 0;
 
 /*
  * Local state
@@ -935,7 +937,7 @@ static int output(int output_id, const char *format, va_list arglist)
                     char *out = buffer;
                     memset(buffer, 0, BUFSIZ);
                     snprintf(buffer, BUFSIZ - 1,
-                             "[WARNING: %d lines lost because the Open MPI process session directory did\n not exist when pmix_output() was invoked]\n",
+                             "[WARNING: %d lines lost because the PMIx process session directory did\n not exist when pmix_output() was invoked]\n",
                              ldi->ldi_file_num_lines_lost);
                     write(ldi->ldi_fd, buffer, (int)strlen(buffer));
                     ldi->ldi_file_num_lines_lost = 0;

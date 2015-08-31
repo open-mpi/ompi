@@ -152,9 +152,9 @@ INSTALLATION OPTIONS
      normal libraries (e.g., libmpi).
   2. PMIx will not attempt to open any DSO's at run-time.
 
-  Note that this option does *not* imply that OMPI's libraries will be
+  Note that this option does *not* imply that PMIx's libraries will be
   built as static objects (e.g., libmpi.a).  It only specifies the
-  location of OMPI's components: standalone DSOs or folded into the
+  location of PMIx's components: standalone DSOs or folded into the
   PMIx libraries.  You can control whether PMIx's libraries
   are build as static or dynamic via --enable|disable-static and
   --enable|disable-shared.

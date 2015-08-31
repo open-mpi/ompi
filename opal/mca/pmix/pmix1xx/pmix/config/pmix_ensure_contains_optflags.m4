@@ -1,12 +1,5 @@
 dnl -*- shell-script -*-
 dnl
-dnl PMIx copyrights:
-dnl Copyright (c) 2013      Intel, Inc. All rights reserved
-dnl
-dnl########################
-dnl This code has been adapted from pmix_ensure_contains_optflags.m4 in the Open MPI
-dnl code base - per the Open MPI license, all copyrights are retained below.
-dnl
 dnl Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
 dnl                         University Research and Technology
 dnl                         Corporation.  All rights reserved.
@@ -19,7 +12,7 @@ dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2007-2009 Sun Microsystems, Inc.  All rights reserved.
 dnl Copyright (c) 2008-2015 Cisco Systems, Inc.  All rights reserved.
-dnl########################
+dnl Copyright (c) 2013      Intel, Inc. All rights reserved
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow

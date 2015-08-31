@@ -1,7 +1,7 @@
 # -*- shell-script -*-
 #
 # Copyright (c) 2015      Intel, Inc. All rights reserved
-# Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2015      Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -26,7 +26,7 @@ AC_DEFUN([PMIX_MUNGE_CONFIG],[
     pmix_munge_support=0
     if test "$with_munge" != "no"; then
         AC_MSG_CHECKING([for munge in])
-        if test ! -z "$with_munge" -a "$with_munge" != "yes"; then
+        if test ! -z "$with_munge" && test "$with_munge" != "yes"; then
             if test -d $with_munge/include/munge; then
                 pmix_munge_dir=$with_munge/include/munge
             else

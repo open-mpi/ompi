@@ -22,8 +22,6 @@
 
 # Source code files
 
-dist_pmixdata_DATA += src/util/help-pmix-util.txt
-
 headers += \
         src/util/argv.h \
         src/util/error.h \

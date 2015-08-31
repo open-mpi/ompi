@@ -1,6 +1,7 @@
 dnl -*- shell-script -*-
 dnl
-dnl Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+dnl Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
+dnl Copyright (c) 2015      Intel, Inc. All rights reserved
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -84,7 +85,7 @@ EOF
                             [pmix_output="`strings -a conftest.${OBJEXT} | grep $pmix_ident`"
                              grep $pmix_ident conftest.${OBJEXT} 2>&1 1>/dev/null
                              pmix_status=$?
-                             AS_IF([test "$pmix_output" != "" -o "$pmix_status" = "0"],
+                             AS_IF([test "$pmix_output" != "" || test "$pmix_status" = "0"],
                                    [$6],
                                    [$7])],
                             [PMIX_LOG_MSG([the failed program was:])
