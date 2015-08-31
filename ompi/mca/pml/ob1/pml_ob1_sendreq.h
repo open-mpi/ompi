@@ -480,16 +480,16 @@ mca_pml_ob1_send_request_start_seq (mca_pml_ob1_send_request_t* sendreq, mca_bml
 static inline int
 mca_pml_ob1_send_request_start( mca_pml_ob1_send_request_t* sendreq )
 {
-    mca_bml_base_endpoint_t* endpoint = (mca_bml_base_endpoint_t*)
-                                        sendreq->req_send.req_base.req_proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML];
-    mca_pml_ob1_comm_t* comm = sendreq->req_send.req_base.req_comm->c_pml_comm;
+    mca_bml_base_endpoint_t *endpoint = mca_bml_base_get_endpoint (sendreq->req_send.req_base.req_proc);
+    ompi_communicator_t *comm = sendreq->req_send.req_base.req_comm;
+    mca_pml_ob1_comm_proc_t *ob1_proc = mca_pml_ob1_peer_lookup (comm, sendreq->req_send.req_base.req_peer);
     int32_t seqn;
 
     if (OPAL_UNLIKELY(NULL == endpoint)) {
         return OMPI_ERR_UNREACH;
     }
 
-    seqn = OPAL_THREAD_ADD32(&comm->procs[sendreq->req_send.req_base.req_peer].send_sequence, 1);
+    seqn = OPAL_THREAD_ADD32(&ob1_proc->send_sequence, 1);
 
     return mca_pml_ob1_send_request_start_seq (sendreq, endpoint, seqn);
 }

@@ -144,9 +144,12 @@ static int mca_pml_ob1_get_unex_msgq_size (const struct mca_base_pvar_t *pvar, v
     int i;
 
     for (i = 0 ; i < comm_size ; ++i) {
-        pml_proc = pml_comm->procs + i;
-
-        values[i] = opal_list_get_size (&pml_proc->unexpected_frags);
+        pml_proc = pml_comm->procs[i];
+        if (pml_proc) {
+            values[i] = opal_list_get_size (&pml_proc->unexpected_frags);
+        } else {
+            values[i] = 0;
+        }
     }
 
     return OMPI_SUCCESS;
@@ -162,9 +165,13 @@ static int mca_pml_ob1_get_posted_recvq_size (const struct mca_base_pvar_t *pvar
     int i;
 
     for (i = 0 ; i < comm_size ; ++i) {
-        pml_proc = pml_comm->procs + i;
+        pml_proc = pml_comm->procs[i];
 
-        values[i] = opal_list_get_size (&pml_proc->specific_receives);
+        if (pml_proc) {
+            values[i] = opal_list_get_size (&pml_proc->specific_receives);
+        } else {
+            values[i] = 0;
+        }
     }
 
     return OMPI_SUCCESS;
