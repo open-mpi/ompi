@@ -362,7 +362,7 @@ static void connection_handler(int sd, short flags, void* cbdata)
 pmix_status_t pmix_server_authenticate(int sd, int *out_rank, pmix_peer_t **peer,
                                        pmix_buffer_t **reply)
 {
-    char *msg, *nspace, *version, *cred, *ptr;
+    char *msg, *nspace, *version, *cred;
     int rc, rank;
     pmix_usock_hdr_t hdr;
     pmix_nspace_t *nptr, *tmp;

@@ -39,12 +39,13 @@ AC_DEFUN([_PMIX_LIBEVENT_EMBEDDED_MODE],[
     AC_MSG_CHECKING([for libevent])
     AC_MSG_RESULT([assumed available (embedded mode)])
 
-    PMIX_EVENT_HEADER=$with_libevent_header
-    PMIX_EVENT2_THREAD_HEADER=$with_libevent_header
+    PMIX_EVENT_HEADER="$with_libevent_header"
+    PMIX_EVENT2_THREAD_HEADER="$with_libevent_header"
     PMIX_EVENT_CPPFLAGS=
     PMIX_EVENT_LIB=
     PMIX_EVENT_LDFLAGS=
-])
+
+ ])
 
 AC_DEFUN([_PMIX_LIBEVENT_EXTERNAL],[
     PMIX_VAR_SCOPE_PUSH([pmix_event_dir pmix_event_libdir])

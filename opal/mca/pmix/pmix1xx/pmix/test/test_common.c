@@ -205,7 +205,7 @@ void parse_cmd(int argc, char **argv, test_params *params)
         char *rankno = getenv("SLURM_LOCALID");
         if( NULL != ranklist && NULL != rankno ){
             char **argv = pmix_argv_split(ranklist, ',');
-            int i, count = pmix_argv_count(argv);
+            int count = pmix_argv_count(argv);
             int rankidx = strtoul(rankno, NULL, 10);
             if( rankidx >= count ){
                 fprintf(stderr, "It feels like we are running under SLURM:\n\t"

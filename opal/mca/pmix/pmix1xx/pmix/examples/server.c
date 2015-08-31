@@ -300,7 +300,6 @@ int main(int argc, char **argv)
 static void set_namespace(int nprocs, char *ranks, char *nspace,
                           pmix_op_cbfunc_t cbfunc, myxfer_t *x)
 {
-    size_t ninfo = 6;
     char *regex, *ppn;
     char hostname[1024];
 
