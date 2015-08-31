@@ -42,8 +42,8 @@
  * WARNING: When using "file" as an output destination, be aware that
  * the file may not exist until the session directory for the process
  * exists.  This is at least part of the way through MPI_INIT (for
- * example).  Most MCA components and internals of Open MPI won't be
- * affected by this, but some RTE / startup aspects of Open MPI will
+ * example).  Most MCA components and internals of PMIx won't be
+ * affected by this, but some RTE / startup aspects of PMIx will
  * not be able to write to a file for output.  See pmix_output() for
  * details on what happens in these cases.
  *

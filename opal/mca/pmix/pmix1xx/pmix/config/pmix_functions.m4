@@ -1,12 +1,5 @@
 dnl -*- shell-script -*-
 dnl
-dnl PMIx copyrights:
-dnl Copyright (c) 2013      Intel, Inc. All rights reserved
-dnl
-dnl########################
-dnl This code has been adapted from pmix_get_version.m4sh in the Open MPI
-dnl code base - per the Open MPI license, all copyrights are retained below.
-dnl
 dnl Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
 dnl                         University Research and Technology
 dnl                         Corporation.  All rights reserved.
@@ -20,7 +13,7 @@ dnl                         All rights reserved.
 dnl Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
 dnl Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
 dnl Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
-dnl########################
+dnl Copyright (c) 2013      Intel, Inc. All rights reserved
 dnl
 dnl $COPYRIGHT$
 dnl
@@ -185,7 +178,7 @@ if expr "$program_transform_name" : 's.^..$' >/dev/null || \
     program_transform_name="s,x,x,"
 fi
 if test "$program_prefix$program_suffix$program_transform_name" != "NONENONEs,x,x," ; then
-    AC_MSG_WARN([*** The Open MPI configure script does not support --program-prefix, --program-suffix or --program-transform-name. Users are recommended to instead use --prefix with a unique directory and make symbolic links as desired for renaming.])
+    AC_MSG_WARN([*** The PMIx configure script does not support --program-prefix, --program-suffix or --program-transform-name. Users are recommended to instead use --prefix with a unique directory and make symbolic links as desired for renaming.])
     AC_MSG_ERROR([*** Cannot continue])
 fi
 
@@ -211,7 +204,7 @@ dnl #######################################################################
 
 AC_DEFUN([PMIX_LOG_FILE],[
 # 1 is the filename
-if test -n "$1" -a -f "$1"; then
+if test -n "$1" && test -f "$1"; then
     cat $1 >&5
 fi])dnl
 
@@ -254,7 +247,7 @@ for val in ${$1}; do
     # Loop over every token we've seen so far
 
     pmix_done="`expr $pmix_i \> $pmix_count`"
-    while test "$pmix_found" = "0" -a "$pmix_done" = "0"; do
+    while test "$pmix_found" = "0" && test "$pmix_done" = "0"; do
 
 	# Have we seen this token already?  Prefix the comparison with
 	# "x" so that "-Lfoo" values won't be cause an error.
@@ -459,11 +452,11 @@ AC_DEFUN([PMIX_WITH_OPTION_MIN_MAX_VALUE], [
     AC_ARG_WITH([max-]m4_translit($1, [_], [-]),
         AC_HELP_STRING([--with-max-]m4_translit($1, [_], [-])[=VALUE],
                        [maximum length of ]m4_translit($1, [_], [ ])[s.  VALUE argument has to be specified (default: [$2]).]))
-    if test ! -z "$with_max_[$1]" -a "$with_max_[$1]" != "no" ; then
+    if test ! -z "$with_max_[$1]" && test "$with_max_[$1]" != "no" ; then
         # Ensure it's a number (hopefully an integer!), and >0
         expr $with_max_[$1] + 1 > /dev/null 2> /dev/null
         AS_IF([test "$?" != "0"], [happy=0],
-              [AS_IF([test $with_max_[$1] -ge $3 -a $with_max_[$1] -le $4],
+              [AS_IF([test $with_max_[$1] -ge $3 && test $with_max_[$1] -le $4],
                      [happy=1], [happy=0])])
 
         # If badness in the above tests, bail

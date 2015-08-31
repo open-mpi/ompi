@@ -12,6 +12,8 @@
  *                         All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, Inc.  All rights reserved.
  * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -44,10 +46,10 @@ const char pmix_version_string[] = PMIX_VERSION;
  * globals
  */
 bool pmix_bfrop_initialized = false;
-int pmix_bfrop_initial_size;
-int pmix_bfrop_threshold_size;
-pmix_pointer_array_t pmix_bfrop_types;
-pmix_data_type_t pmix_bfrop_num_reg_types;
+int pmix_bfrop_initial_size = 0;
+int pmix_bfrop_threshold_size = 0;
+pmix_pointer_array_t pmix_bfrop_types = {{0}};
+pmix_data_type_t pmix_bfrop_num_reg_types = {0};
 pmix_bfrop_buffer_type_t default_buf_type = PMIX_BFROP_BUFFER_NON_DESC;
 
 pmix_bfrop_t pmix_bfrop = {

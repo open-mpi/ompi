@@ -1,12 +1,5 @@
 dnl -*- shell-script -*-
 dnl
-dnl PMIx copyrights:
-dnl Copyright (c) 2013      Intel, Inc. All rights reserved
-dnl
-dnl########################
-dnl This code has been adapted from pmix_check_vendor.m4 in the Open MPI
-dnl code base - per the Open MPI license, all copyrights are retained below.
-dnl
 dnl Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
 dnl                         University Research and Technology
 dnl                         Corporation.  All rights reserved.
@@ -18,8 +11,8 @@ dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
-dnl########################
-dnl Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2013      Intel, Inc. All rights reserved
+dnl Copyright (c) 2015      Cisco Systems, Inc.  All rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -112,8 +105,8 @@ AC_DEFUN([_PMIX_CHECK_COMPILER_VENDOR], [
 
                if ($CC --version | grep gccfss) >/dev/null 2>&1; then
                    AC_MSG_RESULT([gccfss])
-                   AC_MSG_WARN([Detected gccfss being used to compile Open MPI.])
-                   AC_MSG_WARN([Because of several issues Open MPI does not support])
+                   AC_MSG_WARN([Detected gccfss being used to compile PMIx.])
+                   AC_MSG_WARN([Because of several issues PMIx does not support])
                    AC_MSG_WARN([the gccfss compiler.  Please use a different compiler.])
                    AC_MSG_WARN([If you didn't think you used gccfss you may want to])
                    AC_MSG_WARN([check to see if the compiler you think you used is])

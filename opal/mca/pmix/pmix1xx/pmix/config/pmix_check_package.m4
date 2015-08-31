@@ -36,7 +36,7 @@ AC_DEFUN([_PMIX_CHECK_PACKAGE_HEADER], [
     unset pmix_Header
 
     pmix_check_package_header_happy="no"
-    AS_IF([test "$3" = "/usr" -o "$3" = "/usr/local"],
+    AS_IF([test "$3" = "/usr" || test "$3" = "/usr/local"],
            [ # try as is...
             AC_VERBOSE([looking for header without includes])
             AC_CHECK_HEADERS([$2], [pmix_check_package_header_happy="yes"], [])
@@ -85,7 +85,7 @@ AC_DEFUN([_PMIX_CHECK_PACKAGE_LIB], [
                   unset pmix_Lib])],
           [ # libdir was not specified - go through search path
            pmix_check_package_libdir="$5"
-           AS_IF([test "$pmix_check_package_libdir" = "" -o "$pmix_check_package_libdir" = "/usr" -o "$pmix_check_package_libdir" = "/usr/local"],
+           AS_IF([test "$pmix_check_package_libdir" = "" || test "$pmix_check_package_libdir" = "/usr" || test "$pmix_check_package_libdir" = "/usr/local"],
                [ # try as is...
                 AC_VERBOSE([looking for library without search path])
                 AC_CHECK_LIB([$2], [$3],

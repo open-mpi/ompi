@@ -64,7 +64,7 @@ AC_DEFUN([_PMIX_LIBEVENT_EXTERNAL],[
                                 [Search for libevent libraries in DIR ])])
 
     AC_MSG_CHECKING([for libevent in])
-    if test ! -z "$with_libevent" -a "$with_libevent" != "yes"; then
+    if test ! -z "$with_libevent" && test "$with_libevent" != "yes"; then
         pmix_event_dir=$with_libevent
         if test -d $with_libevent/lib; then
             pmix_event_libdir=$with_libevent/lib

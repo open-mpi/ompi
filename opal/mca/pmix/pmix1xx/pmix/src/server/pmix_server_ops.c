@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2014-2015 Intel, Inc.  All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014-2015 Artem Y. Polyakov <artpol84@gmail.com>.
  *                         All rights reserved.
@@ -54,7 +54,7 @@
 
 #include "pmix_server_ops.h"
 
-pmix_server_module_t pmix_host_server;
+pmix_server_module_t pmix_host_server = {0};
 
 static void dmdx_cbfunc(pmix_status_t status, const char *data,
                         size_t ndata, void *cbdata,
