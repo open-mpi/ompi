@@ -2,9 +2,9 @@
 #
 # Copyright (c) 2014      Intel, Inc.  All rights reserved.
 # $COPYRIGHT$
-# 
+#
 # Additional copyrights may follow
-# 
+#
 # $HEADER$
 #
 
@@ -17,7 +17,7 @@ AC_DEFUN([MCA_opal_pmix_cray_CONFIG], [
 #   check specifically for Cray PMI here
 #
     OPAL_CHECK_CRAY_PMI([pmix_cray], [pmix_cray_good=1], [pmix_cray_good=0])
-         
+
     # Evaluate succeed / fail
     AS_IF([test "$pmix_cray_good" = 1],
           [$1

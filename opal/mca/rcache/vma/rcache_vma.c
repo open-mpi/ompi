@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -15,9 +15,9 @@
  * Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
  *
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -28,19 +28,19 @@
 #include "opal/mca/rcache/rcache.h"
 #include "rcache_vma.h"
 #include "rcache_vma_tree.h"
-#include "opal/mca/mpool/base/base.h" 
+#include "opal/mca/mpool/base/base.h"
 
 /**
- * Initialize the rcache 
- */ 
+ * Initialize the rcache
+ */
 
-void mca_rcache_vma_module_init( mca_rcache_vma_module_t* rcache ) { 
-    rcache->base.rcache_find = mca_rcache_vma_find; 
+void mca_rcache_vma_module_init( mca_rcache_vma_module_t* rcache ) {
+    rcache->base.rcache_find = mca_rcache_vma_find;
     rcache->base.rcache_find_all = mca_rcache_vma_find_all;
-    rcache->base.rcache_insert = mca_rcache_vma_insert; 
-    rcache->base.rcache_delete = mca_rcache_vma_delete; 
-    rcache->base.rcache_clean = mca_rcache_vma_clean; 
-    rcache->base.rcache_finalize = mca_rcache_vma_finalize; 
+    rcache->base.rcache_insert = mca_rcache_vma_insert;
+    rcache->base.rcache_delete = mca_rcache_vma_delete;
+    rcache->base.rcache_clean = mca_rcache_vma_clean;
+    rcache->base.rcache_finalize = mca_rcache_vma_finalize;
     rcache->base.rcache_dump_range = mca_rcache_vma_dump_range;
     OBJ_CONSTRUCT(&rcache->base.lock, opal_mutex_t);
     mca_rcache_vma_tree_init(rcache);
@@ -50,23 +50,23 @@ int mca_rcache_vma_find(struct mca_rcache_base_module_t* rcache,
         void* addr, size_t size, mca_mpool_base_registration_t **reg)
 {
     int rc;
-    unsigned char* bound_addr; 
+    unsigned char* bound_addr;
 
-    if(size == 0) { 
-        return OPAL_ERROR; 
+    if(size == 0) {
+        return OPAL_ERROR;
     }
 
     bound_addr = ((unsigned char *)addr) + size - 1;
-        
+
     /* Check to ensure that the cache is valid */
-    if (OPAL_UNLIKELY(opal_memory_changed() && 
+    if (OPAL_UNLIKELY(opal_memory_changed() &&
                       NULL != opal_memory->memoryc_process &&
                       OPAL_SUCCESS != (rc = opal_memory->memoryc_process()))) {
         return rc;
     }
 
     *reg = mca_rcache_vma_tree_find((mca_rcache_vma_module_t*)rcache, (unsigned char*)addr,
-            bound_addr); 
+            bound_addr);
 
     return OPAL_SUCCESS;
 }
@@ -85,7 +85,7 @@ int mca_rcache_vma_find_all(struct mca_rcache_base_module_t* rcache,
     bound_addr = ((unsigned char *)addr) + size - 1;
 
     /* Check to ensure that the cache is valid */
-    if (OPAL_UNLIKELY(opal_memory_changed() && 
+    if (OPAL_UNLIKELY(opal_memory_changed() &&
                       NULL != opal_memory->memoryc_process &&
                       OPAL_SUCCESS != (rc = opal_memory->memoryc_process()))) {
         return rc;
@@ -120,7 +120,7 @@ int mca_rcache_vma_insert(struct mca_rcache_base_module_t* rcache,
     if (OPAL_LIKELY(OPAL_SUCCESS == rc)) {
         /* If we successfully registered, then tell the memory manager
            to start monitoring this region */
-        opal_memory->memoryc_register(reg->base, 
+        opal_memory->memoryc_register(reg->base,
                                       (uint64_t) reg_size, (uint64_t) (uintptr_t) reg);
     }
 
@@ -154,10 +154,10 @@ int mca_rcache_vma_clean(struct mca_rcache_base_module_t* rcache)
 	} else {
 	    vma = (mca_rcache_vma_t *)i;
 	    opal_list_remove_item(&vma_rcache->vma_delete_list, &vma->super);
-	    
+
 	    /* Need to drop the rcache lock before destroying the vma */
 	    OPAL_THREAD_UNLOCK(&rcache->lock);
-	    
+
 	    mca_rcache_vma_destroy(vma);
 	}
     } while (NULL != vma);

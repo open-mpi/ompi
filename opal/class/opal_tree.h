@@ -3,13 +3,13 @@
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
  *
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 /**
- * @file 
+ * @file
  *
  * The opal_tree_t interface is used to provide a generic
  * tree list container for Open MPI.  It was inspired by the opal_list_t
@@ -19,14 +19,14 @@
  * The general idea is a user creates an class instance that has two
  * components.  A tree structure component as defined by opal_tree_item_t
  * that links all the items together to form the tree.  Then there is
- * a user specific data component which the user defines what is stored at 
+ * a user specific data component which the user defines what is stored at
  * each item.  When a user create a type to be used for a OBJ_CLASS_INSTANCE
  * it will contain the opal_tree_item_t followed by any user specific
  * data.  Then the opal_tree_item_t objects can be put in an
  * opal_tree_t.  Hence, you create a new type that derives from
  * opal_tree_item_t; this new type can then be used with opal_tree_t
  * containers.
- * 
+ *
  * NOTE: opal_tree_item_t instances can only be on \em one tree at a
  * time.  Specifically, if you add an opal_tree_item_t to one tree,
  * and then add it to another tree (without first removing it from the
@@ -87,7 +87,7 @@ OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_tree_item_t);
 
 /**
  * \internal
- * 
+ *
  * Struct of an opal_tree_item_t
  */
 typedef struct opal_tree_item_t
@@ -143,8 +143,8 @@ typedef struct opal_tree_item_t
 typedef int (*opal_tree_comp_fn_t)(opal_tree_item_t *item, void *key);
 
 /**
-  * The serialize function typedef. This function is called by the 
-  * opal tree serialize code to serialize a tree item's user specific 
+  * The serialize function typedef. This function is called by the
+  * opal tree serialize code to serialize a tree item's user specific
   * data of a class type.
   *
   * @params item - item to serialize the user specific data from
@@ -152,12 +152,12 @@ typedef int (*opal_tree_comp_fn_t)(opal_tree_item_t *item, void *key);
   *
   * @returns OPAL_SUCCESS - when successfully serialized item
   */
-typedef int (*opal_tree_item_serialize_fn_t)(opal_tree_item_t *item, 
+typedef int (*opal_tree_item_serialize_fn_t)(opal_tree_item_t *item,
 					     opal_buffer_t *buffer);
 
 /**
   * The deserialize function typedef. This function is called by the
-  * opal tree deserialize code to deserialize a tree item's user 
+  * opal tree deserialize code to deserialize a tree item's user
   * specific data.
   *
   * @params buffer - the opal_buffer_t to deserialized data.
@@ -223,7 +223,7 @@ static inline opal_tree_item_t *opal_tree_get_parent(opal_tree_item_t *item)
  *
  * This function is safe to be called with a null item pointer.
  */
-static inline opal_tree_item_t *opal_tree_get_next_sibling(opal_tree_item_t 
+static inline opal_tree_item_t *opal_tree_get_next_sibling(opal_tree_item_t
                                                            *item)
 {
     return ((item) ? item->opal_tree_next_sibling : NULL);
@@ -255,7 +255,7 @@ static inline opal_tree_item_t *opal_tree_get_prev_sibling(opal_tree_item_t
  * This function is safe to be called with a null item pointer.
  *
  */
-static inline opal_tree_item_t *opal_tree_get_first_child(opal_tree_item_t 
+static inline opal_tree_item_t *opal_tree_get_first_child(opal_tree_item_t
                                                           *item)
 {
     return ((item) ? item->opal_tree_first_child : NULL);
@@ -271,7 +271,7 @@ static inline opal_tree_item_t *opal_tree_get_first_child(opal_tree_item_t
  * This function is safe to be called with a null item pointer.
  *
  */
-static inline opal_tree_item_t *opal_tree_get_last_child(opal_tree_item_t 
+static inline opal_tree_item_t *opal_tree_get_last_child(opal_tree_item_t
                                                          *item)
 {
     return ((item) ? item->opal_tree_last_child : NULL);
@@ -308,7 +308,7 @@ static inline bool opal_tree_is_empty(opal_tree_t* tree)
  *
  * @returns A pointer to the first item in the tree
  *
- * This is an O(1) operation to return the first item in the tree. 
+ * This is an O(1) operation to return the first item in the tree.
  *
  * This is an inlined function in compilers that support inlining, so
  * it's usually a cheap operation.
@@ -336,15 +336,15 @@ static inline opal_tree_item_t* opal_tree_get_root(opal_tree_t* tree)
  *
  * @returns The size of the tree (size_t)
  *
- * This is an O(1) (in non-debug mode) lookup to return the 
- * size of the list.  
+ * This is an O(1) (in non-debug mode) lookup to return the
+ * size of the list.
  */
 OPAL_DECLSPEC size_t opal_tree_get_size(opal_tree_t* tree);
 
 
 /* Functions to manage the tree */
 /**
- * Initialize tree container; must be called before using 
+ * Initialize tree container; must be called before using
  * the tree.
  *
  * @param tree        The tree to initialize
@@ -353,12 +353,12 @@ OPAL_DECLSPEC size_t opal_tree_get_size(opal_tree_t* tree);
  * @param deserialize De-serialization function to attach to tree.
  *
  */
-OPAL_DECLSPEC void opal_tree_init(opal_tree_t *tree, 
-                                  opal_tree_comp_fn_t comp, 
+OPAL_DECLSPEC void opal_tree_init(opal_tree_t *tree,
+                                  opal_tree_comp_fn_t comp,
                                   opal_tree_item_serialize_fn_t serialize,
                                   opal_tree_item_deserialize_fn_t deserialize,
                                   opal_tree_get_key_fn_t get_key);
-                                  
+
 /**
  * Add new item as child to its parent item
  *
@@ -367,7 +367,7 @@ OPAL_DECLSPEC void opal_tree_init(opal_tree_t *tree,
  *
  * The new_item is added at the end of the child list of the parent_item.
  */
-OPAL_DECLSPEC void opal_tree_add_child(opal_tree_item_t *parent_item, 
+OPAL_DECLSPEC void opal_tree_add_child(opal_tree_item_t *parent_item,
 				       opal_tree_item_t *new_item);
 
 /**
@@ -382,9 +382,9 @@ OPAL_DECLSPEC void opal_tree_add_child(opal_tree_item_t *parent_item,
  * item and all children below it will be removed from the tree.  This
  * means the item's siblings pointers and potentially the parents first
  * and last pointers will be updated to skip over the item.  The tree container
- * will also have its num_items adjusted to reflect the number of items 
- * that were removed.  The tree item (and all children below it) that is 
- * returned is now "owned" by the caller -- they are responsible for 
+ * will also have its num_items adjusted to reflect the number of items
+ * that were removed.  The tree item (and all children below it) that is
+ * returned is now "owned" by the caller -- they are responsible for
  * OBJ_RELEASE()'ing it.
  *
  * With ENABLE_DEBUG on this routine will validate whether the item is actually
@@ -407,28 +407,28 @@ OPAL_DECLSPEC int opal_tree_remove_item(opal_tree_t *tree,
  * Serialize tree data
  *
  * @param start_item The item of a tree to start serializing data
- * @param buffer The opal buffer that contains the serialized 
+ * @param buffer The opal buffer that contains the serialized
  *  data stream of the tree
  *
  * @returns OPAL_SUCCESS if data has been successfully converted.
  *
  * This routine walks the tree starting at start_item until it has serialized
  * all children items of start_item and creates a bytestream of data,
- * using the opal_dss.pack routine, that can be sent over a network.  
- * The format of the bytestream represents the tree parent/child relationship 
+ * using the opal_dss.pack routine, that can be sent over a network.
+ * The format of the bytestream represents the tree parent/child relationship
  * of each item in the tree plus the data inside the tree.  This routine calls
- * the tree's serialization method to serialize the user specific data for 
+ * the tree's serialization method to serialize the user specific data for
  * each item.
  *
  */
-OPAL_DECLSPEC int opal_tree_serialize(opal_tree_item_t *start_item, 
+OPAL_DECLSPEC int opal_tree_serialize(opal_tree_item_t *start_item,
 				      opal_buffer_t *buffer);
 
 /**
  * De-serialize tree data
  *
  * @param buffer The opal buffer that is to be deserialized
- * @param start_item The item in the tree the data should be 
+ * @param start_item The item in the tree the data should be
  * deserialized into
  *
  * @returns Status of call OPAL_SUCCESS if everything worked
@@ -437,7 +437,7 @@ OPAL_DECLSPEC int opal_tree_serialize(opal_tree_item_t *start_item,
  * opal_tree_serialize() function and deserializes it into the
  * tree given.  If the tree already has data in it, this routine
  * will start adding the new data as a new child of the root
- * item.  This routine calls the tree's de-serialization 
+ * item.  This routine calls the tree's de-serialization
  * method to deserialize the user specific data for each item.
  *
  */
@@ -512,8 +512,8 @@ OPAL_DECLSPEC int opal_tree_compare(opal_tree_t *left, opal_tree_t *right);
  * @param key the key we are wanting to match with
  *
  * @returns A pointer to the next item that in the tree (starting from item)
- * that matches the key based on a depth first search of the tree.  A null 
- * pointer is returned if we've reached the end of the tree and have not 
+ * that matches the key based on a depth first search of the tree.  A null
+ * pointer is returned if we've reached the end of the tree and have not
  * matched the key.
  *
  * This routine uses the tree container's comp function to determine the
@@ -523,7 +523,7 @@ OPAL_DECLSPEC int opal_tree_compare(opal_tree_t *left, opal_tree_t *right);
  * and NULL pointer is always returned for this function.
  *
  */
-OPAL_DECLSPEC opal_tree_item_t *opal_tree_find_with(opal_tree_item_t *item, 
+OPAL_DECLSPEC opal_tree_item_t *opal_tree_find_with(opal_tree_item_t *item,
                                                     void *key);
 END_C_DECLS
 

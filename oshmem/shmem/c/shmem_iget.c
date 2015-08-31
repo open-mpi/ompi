@@ -2,9 +2,9 @@
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 #include "oshmem_config.h"
@@ -17,7 +17,7 @@
 #include "oshmem/mca/spml/spml.h"
 
 /*
- * The strided get routines copy strided data located on a remote PE to a local strided data object. 
+ * The strided get routines copy strided data located on a remote PE to a local strided data object.
  * The strided get routines retrieve array data available at address source on remote PE (pe).
  * The elements of the source array are separated by a stride sst. Once the data is received,
  * it is stored at the local memory address target, separated by stride tst. The routines return

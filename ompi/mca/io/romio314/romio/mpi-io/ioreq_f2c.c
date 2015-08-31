@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -25,7 +25,7 @@
 #include "adio_extern.h"
 
 /*@
-    MPIO_Request_f2c - Translates a Fortran I/O-request handle to 
+    MPIO_Request_f2c - Translates a Fortran I/O-request handle to
                        a C I/O-request handle
 
 Input Parameters:
@@ -50,7 +50,7 @@ MPIO_Request MPIO_Request_f2c(MPI_Fint request)
 #else
 
     MPIU_THREAD_CS_ENTER(ALLFUNC,);
-    
+
     if (!request) {
 	return MPIO_REQUEST_NULL;
     }

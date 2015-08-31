@@ -11,10 +11,10 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007-2013 Los Alamos National Security, LLC.  All rights
- *                         reserved. 
+ *                         reserved.
  * Copyright (c) 2009      Institut National de Recherche en Informatique
  *                         et Automatique. All rights reserved.
- * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved. 
+ * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2013-2015 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -145,15 +145,15 @@ opal_cmd_line_init_t orte_cmd_line_opts[] = {
     { NULL, '\0', NULL, "debug-failure", 1,
       &orted_globals.fail, OPAL_CMD_LINE_TYPE_INT,
       "Have the specified orted fail after init for debugging purposes" },
-    
+
     { NULL, '\0', NULL, "debug-failure-delay", 1,
       &orted_globals.fail_delay, OPAL_CMD_LINE_TYPE_INT,
       "Have the orted specified for failure delay for the provided number of seconds before failing" },
-    
+
     { "orte_debug", 'd', NULL, "debug", 0,
       NULL, OPAL_CMD_LINE_TYPE_BOOL,
       "Debug the OpenRTE" },
-        
+
     { "orte_daemonize", '\0', NULL, "daemonize", 0,
       &orted_globals.daemonize, OPAL_CMD_LINE_TYPE_BOOL,
       "Daemonize the orted into the background" },
@@ -173,19 +173,19 @@ opal_cmd_line_init_t orte_cmd_line_opts[] = {
     { "orte_hnp_uri", '\0', NULL, "hnp-uri", 1,
       NULL, OPAL_CMD_LINE_TYPE_STRING,
       "URI for the HNP"},
-    
+
     { "orte_parent_uri", '\0', NULL, "parent-uri", 1,
       NULL, OPAL_CMD_LINE_TYPE_STRING,
       "URI for the parent if tree launch is enabled."},
-    
+
     { NULL, '\0', NULL, "tree-spawn", 0,
       &orted_globals.tree_spawn, OPAL_CMD_LINE_TYPE_BOOL,
       "Tree spawn is underway"},
-    
+
     { NULL, '\0', NULL, "set-sid", 0,
       &orted_globals.set_sid, OPAL_CMD_LINE_TYPE_BOOL,
       "Direct the orted to separate from the current session"},
-    
+
     { "tmpdir_base", '\0', NULL, "tmpdir", 1,
       NULL, OPAL_CMD_LINE_TYPE_STRING,
       "Set the root for the session directory tree" },
@@ -197,11 +197,11 @@ opal_cmd_line_init_t orte_cmd_line_opts[] = {
     { NULL, '\0', NULL, "singleton-died-pipe", 1,
       &orted_globals.singleton_died_pipe, OPAL_CMD_LINE_TYPE_INT,
       "Watch on indicated pipe for singleton termination"},
-    
+
     { "orte_output_filename", '\0', "output-filename", "output-filename", 1,
       NULL, OPAL_CMD_LINE_TYPE_STRING,
       "Redirect output from application processes into filename.rank" },
-    
+
     { "orte_xterm", '\0', "xterm", "xterm", 1,
       NULL, OPAL_CMD_LINE_TYPE_STRING,
       "Create a new xterm window and display output from the specified ranks there" },
@@ -218,7 +218,7 @@ opal_cmd_line_init_t orte_cmd_line_opts[] = {
     { "orte_hetero_nodes", '\0', NULL, "hetero-nodes", 0,
       NULL, OPAL_CMD_LINE_TYPE_BOOL,
       "Nodes in cluster may differ in topology, so send the topology back from each node [Default = false]" },
-    
+
     { NULL, '\0', NULL, "hnp-topo-sig", 1,
       &orted_globals.hnp_topo_sig, OPAL_CMD_LINE_TYPE_STRING,
       "Topology signature of HNP" },
@@ -244,14 +244,14 @@ int orte_daemon(int argc, char *argv[])
 #if OPAL_ENABLE_FT_CR == 1
     char *tmp_env_var = NULL;
 #endif
-    
+
     /* initialize the globals */
     memset(&orted_globals, 0, sizeof(orted_globals));
     /* initialize the singleton died pipe to an illegal value so we can detect it was set */
     orted_globals.singleton_died_pipe = -1;
     /* init the failure orted vpid to an invalid value */
     orted_globals.fail = ORTE_VPID_INVALID;
-    
+
     /* setup to check common command line options that just report and die */
     cmd_line = OBJ_NEW(opal_cmd_line_t);
     if (OPAL_SUCCESS != opal_cmd_line_create(cmd_line, orte_cmd_line_opts)) {
@@ -268,13 +268,13 @@ int orte_daemon(int argc, char *argv[])
         OBJ_RELEASE(cmd_line);
         return ret;
     }
-    
+
     /*
      * Since this process can now handle MCA/GMCA parameters, make sure to
      * process them.
      */
     mca_base_cmd_line_process_args(cmd_line, &environ, &environ);
-    
+
     /* Ensure that enough of OPAL is setup for us to be able to run */
     /*
      * NOTE: (JJH)
@@ -283,7 +283,7 @@ int orte_daemon(int argc, char *argv[])
      *  line could contain MCA parameters that affect the way opal_init_util()
      *  functions. AMCA parameters are one such option normally received on the
      *  command line that affect the way opal_init_util() behaves.
-     *  It is "safe" to call mca_base_cmd_line_process_args() before 
+     *  It is "safe" to call mca_base_cmd_line_process_args() before
      *  opal_init_util() since mca_base_cmd_line_process_args() does *not*
      *  depend upon opal_init_util() functionality.
      */
@@ -299,10 +299,10 @@ int orte_daemon(int argc, char *argv[])
      * orted was executed - e.g., by .csh
      */
     orte_launch_environ = opal_argv_copy(environ);
-    
+
     /* purge any ess flag set in the environ when we were launched */
     opal_unsetenv(OPAL_MCA_PREFIX"ess", &orte_launch_environ);
-    
+
     /* if orte_daemon_debug is set, let someone know we are alive right
      * away just in case we have a problem along the way
      */
@@ -310,7 +310,7 @@ int orte_daemon(int argc, char *argv[])
         gethostname(hostname, 100);
         fprintf(stderr, "Daemon was launched on %s - beginning to initialize\n", hostname);
     }
-    
+
     /* check for help request */
     if (orted_globals.help) {
         char *args = NULL;
@@ -330,7 +330,7 @@ int orte_daemon(int argc, char *argv[])
     i=0;
     while (orted_spin_flag) {
         i++;
-        if (1000 < i) i=0;        
+        if (1000 < i) i=0;
     }
 
 #if OPAL_ENABLE_FT_CR == 1
@@ -355,7 +355,7 @@ int orte_daemon(int argc, char *argv[])
        orted_globals.daemonize) {
         opal_daemon_init(NULL);
     }
-    
+
     /* Set the flag telling OpenRTE that I am NOT a
      * singleton, but am "infrastructure" - prevents setting
      * up incorrect infrastructure that only a singleton would
@@ -450,7 +450,7 @@ int orte_daemon(int argc, char *argv[])
              */
             if (0 < orted_globals.fail_delay) {
                 ORTE_TIMER_EVENT(orted_globals.fail_delay, 0, shutdown_callback, ORTE_SYS_PRI);
-                
+
             } else {
                 opal_output(0, "%s is executing clean %s", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                             orted_globals.abort ? "abort" : "abnormal termination");
@@ -460,12 +460,12 @@ int orte_daemon(int argc, char *argv[])
                  * the local session_dir tree and exit
                  */
                 orte_session_dir_cleanup(ORTE_JOBID_WILDCARD);
-                
+
                 /* if we were ordered to abort, do so */
                 if (orted_globals.abort) {
                     abort();
                 }
-                
+
                 /* otherwise, return with non-zero status */
                 ret = ORTE_ERROR_DEFAULT_EXIT_CODE;
                 goto DONE;
@@ -479,18 +479,18 @@ int orte_daemon(int argc, char *argv[])
     orte_process_info.my_daemon_uri = orte_rml.get_contact_info();
     ORTE_PROC_MY_DAEMON->jobid = ORTE_PROC_MY_NAME->jobid;
     ORTE_PROC_MY_DAEMON->vpid = ORTE_PROC_MY_NAME->vpid;
-    
+
     /* if I am also the hnp, then update that contact info field too */
     if (ORTE_PROC_IS_HNP) {
         orte_process_info.my_hnp_uri = orte_rml.get_contact_info();
         ORTE_PROC_MY_HNP->jobid = ORTE_PROC_MY_NAME->jobid;
         ORTE_PROC_MY_HNP->vpid = ORTE_PROC_MY_NAME->vpid;
     }
-    
+
     /* setup the primary daemon command receive function */
     orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_DAEMON,
                             ORTE_RML_PERSISTENT, orte_daemon_recv, NULL);
-    
+
     /* output a message indicating we are alive, our name, and our pid
      * for debugging purposes
      */
@@ -559,7 +559,7 @@ int orte_daemon(int argc, char *argv[])
         app->app = strdup("singleton");
         app->num_procs = 1;
         opal_pointer_array_add(jdata->apps, app);
-        
+
         /* setup a proc object for the singleton - since we
          * -must- be the HNP, and therefore we stored our
          * node on the global node pool, and since the singleton
@@ -756,7 +756,7 @@ int orte_daemon(int argc, char *argv[])
         {
             char *coprocessors;
             uint8_t tflag;
-                        
+
             /* add the local topology, if different from the HNP's or user directed us to,
              * but always if we are the first daemon to ensure we get a compute node */
             if (1 == ORTE_PROC_MY_NAME->vpid || orte_hetero_nodes ||
@@ -853,7 +853,7 @@ int orte_daemon(int argc, char *argv[])
             }
         }
     }
-            
+
     if (orte_debug_daemons_flag) {
         opal_output(0, "%s orted: up and running - waiting for commands!", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
     }
@@ -897,7 +897,7 @@ static void shutdown_callback(int fd, short flags, void *arg)
         /* release the timer */
         OBJ_RELEASE(tm);
     }
-    
+
     /* if we were ordered to abort, do so */
     if (orted_globals.abort) {
         opal_output(0, "%s is executing clean abort", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));

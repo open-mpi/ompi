@@ -27,7 +27,7 @@ END_FUNC(opal_atomic_wmb)
 
 START_FUNC(opal_atomic_cmpset_32)
         movl    %esi, %eax
-        lock; cmpxchgl %edx,(%rdi)   
+        lock; cmpxchgl %edx,(%rdi)
         sete     %dl
         movzbl  %dl, %eax
         ret
@@ -36,7 +36,7 @@ END_FUNC(opal_atomic_cmpset_32)
 
 START_FUNC(opal_atomic_cmpset_64)
         movq    %rsi, %rax
-        lock; cmpxchgq %rdx,(%rdi)   
+        lock; cmpxchgq %rdx,(%rdi)
         sete     %dl
         movzbl  %dl, %eax
         ret

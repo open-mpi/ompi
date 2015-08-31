@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -14,9 +14,9 @@
  * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -25,7 +25,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #ifdef HAVE_UNISTD_H
-#include <unistd.h> 
+#include <unistd.h>
 #endif  /* HAVE_UNISTD_H */
 
 #include "opal/mca/mca.h"
@@ -51,7 +51,7 @@
 /* whether we actually used the mem hooks or not */
 int mca_mpool_base_used_mem_hooks = 0;
 
-uint32_t mca_mpool_base_page_size = 0; 
+uint32_t mca_mpool_base_page_size = 0;
 uint32_t mca_mpool_base_page_size_log = 0;
 
 opal_list_t mca_mpool_base_modules = {{0}};
@@ -64,23 +64,23 @@ static int mca_mpool_base_open(mca_base_open_flag_t flags)
 {
     /* Open up all available components - and populate the
        opal_mpool_base_framework.framework_components list */
-    if (OPAL_SUCCESS != 
+    if (OPAL_SUCCESS !=
         mca_base_framework_components_open(&opal_mpool_base_framework, flags)) {
         return OPAL_ERROR;
     }
-  
+
      /* Initialize the list so that in mca_mpool_base_close(), we can
         iterate over it (even if it's empty, as in the case of opal_info) */
 
     OBJ_CONSTRUCT(&mca_mpool_base_modules, opal_list_t);
-  
-    /* get the page size for this architecture*/ 
-    mca_mpool_base_page_size = opal_getpagesize();
-    mca_mpool_base_page_size_log = my_log2(mca_mpool_base_page_size); 
 
-    /* setup tree for tracking MPI_Alloc_mem */ 
+    /* get the page size for this architecture*/
+    mca_mpool_base_page_size = opal_getpagesize();
+    mca_mpool_base_page_size_log = my_log2(mca_mpool_base_page_size);
+
+    /* setup tree for tracking MPI_Alloc_mem */
     mca_mpool_base_tree_init();
-    
+
     return OPAL_SUCCESS;
 }
 
@@ -116,7 +116,7 @@ static int mca_mpool_base_close(void)
   (void) mca_base_framework_components_close(&opal_mpool_base_framework, NULL);
 
   /* deregister memory free callback */
-  if( (modules_length > 0) && mca_mpool_base_used_mem_hooks && 
+  if( (modules_length > 0) && mca_mpool_base_used_mem_hooks &&
      0 != (OPAL_MEMORY_FREE_SUPPORT & opal_mem_hooks_support_level())) {
       opal_mem_hooks_unregister_release(mca_mpool_base_mem_cb);
   }

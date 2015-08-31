@@ -34,9 +34,9 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -209,8 +209,8 @@ static double hpctimer_wtime_gettimeofday(void)
     return (double)tv.tv_sec + 1E-6 * tv.tv_usec;
 }
 
-/* 
- * hpctimer_wtime_tsc: Returns TSC-based walltime in seconds. 
+/*
+ * hpctimer_wtime_tsc: Returns TSC-based walltime in seconds.
  */
 static double hpctimer_wtime_tsc(void)
 {
@@ -227,38 +227,38 @@ static int hpctimer_tsc_initialize(void)
 {
     hpctimer_overhead = hpctimer_measure_overhead();
     hpctimer_freq = hpctimer_calibrate_sleep(hpctimer_overhead);
-    return HPCTIMER_SUCCESS;    
+    return HPCTIMER_SUCCESS;
 }
 
-/* 
- * hpctimer_gettsc: Returns TSC value. 
+/*
+ * hpctimer_gettsc: Returns TSC value.
  */
 static __inline__ uint64_t hpctimer_gettsc(void)
 {
 #if defined(__x86_64__)
-    uint32_t low, high;                     
-    __asm__ __volatile__(                   
-        "xorl %%eax, %%eax\n"               
-        "cpuid\n"                           
-        ::: "%rax", "%rbx", "%rcx", "%rdx"  
-    );                                      
-    __asm__ __volatile__(                   
-        "rdtsc\n"                           
-        : "=a" (low), "=d" (high)           
-    );                                      
-    return ((uint64_t)high << 32) | low;     
+    uint32_t low, high;
+    __asm__ __volatile__(
+        "xorl %%eax, %%eax\n"
+        "cpuid\n"
+        ::: "%rax", "%rbx", "%rcx", "%rdx"
+    );
+    __asm__ __volatile__(
+        "rdtsc\n"
+        : "=a" (low), "=d" (high)
+    );
+    return ((uint64_t)high << 32) | low;
 
 #elif defined(__i386__)
     uint64_t tsc;
-    __asm__ __volatile__(                   
-        "xorl %%eax, %%eax\n"               
-        "cpuid\n"                           
-        ::: "%eax", "%ebx", "%ecx", "%edx"  
-    );                                      
-    __asm__ __volatile__(                   
-        "rdtsc\n"                           
-        : "=A" (tsc)                        
-    );                                      
+    __asm__ __volatile__(
+        "xorl %%eax, %%eax\n"
+        "cpuid\n"
+        ::: "%eax", "%ebx", "%ecx", "%edx"
+    );
+    __asm__ __volatile__(
+        "rdtsc\n"
+        : "=A" (tsc)
+    );
     return tsc;
 #else
 #   error "Unsupported platform"
@@ -285,7 +285,7 @@ static uint64_t hpctimer_measure_overhead(void)
     return overhead;
 }
 
-/* 
+/*
  * hpctimer_calibrate_adaptive: Returns number of TSC tics per second.
  *                              Adaptive algorithm based on sleep.
  */
@@ -297,7 +297,7 @@ static uint64_t hpctimer_calibrate_adaptive(uint64_t overhead)
     };
     int i;
     uint64_t count, freq;
-        
+
     freq = (uint64_t)(~0x01);
     for (i = 0; i < TSC_CALIBRATE_NTESTS; i++) {
         count = hpctimer_gettsc();
@@ -314,7 +314,7 @@ static uint64_t hpctimer_calibrate_adaptive(uint64_t overhead)
 }
 */
 
-/* 
+/*
  * hpctimer_calibrate_sleep: Returns number of TSC tics per second.
  */
 static uint64_t hpctimer_calibrate_sleep(uint64_t overhead)
@@ -328,7 +328,7 @@ static uint64_t hpctimer_calibrate_sleep(uint64_t overhead)
     return count / delay;
 }
 
-/* 
+/*
  * hpctimer_calibrate_loop: Returns number of TSC tics per second.
  */
 /*
@@ -341,9 +341,9 @@ static uint64_t hpctimer_calibrate_loop(uint64_t overhead)
     struct timeval tv1, tv2;
     int i, j;
     __volatile__ int dummy = 0;
-    
+
     for (i = 0; i < TSC_CALIBRATE_NTESTS; i++) {
-        gettimeofday(&tv1, NULL);       
+        gettimeofday(&tv1, NULL);
         count = hpctimer_gettsc();
         for (j = 0; j < 10000000; j++) {
             dummy++;
@@ -355,7 +355,7 @@ static uint64_t hpctimer_calibrate_loop(uint64_t overhead)
         if (count < countmin)
             countmin = count;
     }
-    return countmin * 1000000 / (tv2.tv_sec * 1000000 + tv2.tv_usec - 
+    return countmin * 1000000 / (tv2.tv_sec * 1000000 + tv2.tv_usec -
                                  tv1.tv_sec * 1000000 - tv1.tv_usec);
 }
 */

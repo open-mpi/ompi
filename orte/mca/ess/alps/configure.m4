@@ -31,7 +31,7 @@ AC_DEFUN([MCA_orte_ess_alps_CONFIG],[
           [$1
            AC_SUBST([ess_alps_CPPFLAGS])
            AC_SUBST([ess_alps_LDFLAGS])
-           AC_SUBST([ess_alps_LIBS])], 
+           AC_SUBST([ess_alps_LIBS])],
           [$2])
 
 ])dnl

@@ -191,9 +191,9 @@ static int ompi_mtl_mxm_component_open(void)
     cur_ver = mxm_get_version();
     if (cur_ver != MXM_API) {
         MXM_VERBOSE(1,
-                "WARNING: OMPI was compiled with MXM version %d.%d but version %ld.%ld detected.", 
+                "WARNING: OMPI was compiled with MXM version %d.%d but version %ld.%ld detected.",
                 MXM_VERNO_MAJOR,
-                MXM_VERNO_MINOR, 
+                MXM_VERNO_MINOR,
                 (cur_ver >> MXM_MAJOR_BIT) & 0xff,
                 (cur_ver >> MXM_MINOR_BIT) & 0xff);
     }

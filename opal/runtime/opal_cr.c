@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2013 Los Alamos National Security, LLC.  All rights
- *                         reserved. 
+ *                         reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2012-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
@@ -22,8 +22,8 @@
  * $HEADER$
  */
 
-/** @file 
- * 
+/** @file
+ *
  * OPAL Layer Checkpoint/Restart Runtime functions
  *
  */
@@ -286,7 +286,7 @@ static int opal_cr_register (void)
                                   OPAL_INFO_LVL_8, MCA_BASE_VAR_SCOPE_ALL_EQ,
                                   &opal_cr_debug_sigpipe);
 #else
-    opal_cr_is_tool = true;  /* no support for CR on Windows yet */ 
+    opal_cr_is_tool = true;  /* no support for CR on Windows yet */
 #endif  /* __WINDOWS__ */
 
 #if OPAL_ENABLE_CRDEBUG == 1
@@ -422,7 +422,7 @@ int opal_cr_init(void )
 
     } /* End opal_cr_is_tool = true */
 
-    /* 
+    /*
      * If fault tolerance was not compiled in then
      * we need to make sure that the listener thread is active to tell
      * the tools that this is not a checkpointable job.
@@ -439,7 +439,7 @@ int opal_cr_init(void )
         exit_status = ret;
         goto cleanup;
     }
-    
+
     if (OPAL_SUCCESS != (ret = opal_crs_base_select())) {
         opal_show_help( "help-opal-runtime.txt",
                         "opal_cr_init:no-crs", true,
@@ -559,7 +559,7 @@ void opal_cr_test_if_checkpoint_ready(void)
     }
 
     /*
-     * If there is no checkpoint request to act on 
+     * If there is no checkpoint request to act on
      * then just return
      */
     if(OPAL_CR_STATUS_REQUESTED != opal_cr_checkpoint_request ) {
@@ -593,8 +593,8 @@ void opal_cr_test_if_checkpoint_ready(void)
          opal_cr_checkpoint_request = OPAL_CR_STATUS_NONE;
          return;
     }
-   
-    /* 
+
+    /*
      * Start the checkpoint
      */
     opal_cr_checkpointing_state = OPAL_CR_STATUS_RUNNING;
@@ -630,7 +630,7 @@ int opal_cr_inc_core_prep(void)
      */
     if(OPAL_SUCCESS != (ret = cur_coord_callback(OPAL_CRS_CHECKPOINT)) ) {
         if ( OPAL_EXISTS != ret ) {
-            opal_output(opal_cr_output, 
+            opal_output(opal_cr_output,
                         "opal_cr: inc_core: Error: cur_coord_callback(%d) failed! %d\n",
                         OPAL_CRS_CHECKPOINT, ret);
         }
@@ -697,9 +697,9 @@ int opal_cr_inc_core_recover(int state)
     int ret;
     opal_cr_user_inc_callback_state_t cb_state;
 
-    if( opal_cr_checkpointing_state != OPAL_CR_STATUS_TERM && 
-        opal_cr_checkpointing_state != OPAL_CR_STATUS_CONTINUE && 
-        opal_cr_checkpointing_state != OPAL_CR_STATUS_RESTART_PRE && 
+    if( opal_cr_checkpointing_state != OPAL_CR_STATUS_TERM &&
+        opal_cr_checkpointing_state != OPAL_CR_STATUS_CONTINUE &&
+        opal_cr_checkpointing_state != OPAL_CR_STATUS_RESTART_PRE &&
         opal_cr_checkpointing_state != OPAL_CR_STATUS_RESTART_POST ) {
 
         if(state == OPAL_CRS_CONTINUE) {
@@ -770,7 +770,7 @@ int opal_cr_inc_core(pid_t pid,
     if(OPAL_SUCCESS != (ret = opal_cr_inc_core_prep() ) ) {
         return ret;
     }
-     
+
     /*
      * INC: Take the checkpoint
      */
@@ -795,7 +795,7 @@ int opal_cr_inc_core(pid_t pid,
 /**
  * Current Coordination callback routines
  */
-int opal_cr_coord(int state) 
+int opal_cr_coord(int state)
 {
     if(OPAL_CRS_CHECKPOINT == state) {
         /* Do Checkpoint Phase work */
@@ -1017,7 +1017,7 @@ static int extract_env_vars(int prev_pid, char * file_name)
         if( NULL == (t_set = opal_argv_split(tmp_str, '=')) ) {
             break;
         }
-        
+
         opal_setenv(t_set[0], t_set[1], true, &environ);
 
         opal_argv_free(t_set);
@@ -1032,7 +1032,7 @@ static int extract_env_vars(int prev_pid, char * file_name)
     if( NULL != tmp_str ){
         free(tmp_str);
     }
-    
+
     return exit_status;
 }
 
@@ -1354,7 +1354,7 @@ int MPIR_checkpoint_debugger_detach(void) {
      * enabled debugging functionality */
 #if 0
     /* Once the debugger can successfully force threads into the function below,
-     * then we can uncomment this line */ 
+     * then we can uncomment this line */
     if( MPIR_debug_with_checkpoint ) {
         opal_cr_debug_threads_already_waiting = true;
     }

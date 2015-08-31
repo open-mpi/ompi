@@ -5,16 +5,16 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * Copyright (c) 2014-2015 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -31,7 +31,7 @@
 #include "opal/constants.h"
 
 
-/* 
+/*
  * Private variables
  */
 
@@ -64,7 +64,7 @@ int mca_base_cmd_line_setup(opal_cmd_line_t *cmd)
     }
 
     {
-        opal_cmd_line_init_t entry = 
+        opal_cmd_line_init_t entry =
             {"mca_base_param_file_prefix", '\0', "am", NULL, 1,
              NULL, OPAL_CMD_LINE_TYPE_STRING,
              "Aggregate MCA parameter set file list"
@@ -113,7 +113,7 @@ int mca_base_cmd_line_process_args(opal_cmd_line_t *cmd,
     num_insts = opal_cmd_line_get_ninsts(cmd, OPAL_MCA_CMD_LINE_ID);
     params = values = NULL;
     for (i = 0; i < num_insts; ++i) {
-        if (OPAL_SUCCESS != (rc = process_arg(opal_cmd_line_get_param(cmd, OPAL_MCA_CMD_LINE_ID, i, 0), 
+        if (OPAL_SUCCESS != (rc = process_arg(opal_cmd_line_get_param(cmd, OPAL_MCA_CMD_LINE_ID, i, 0),
                                               opal_cmd_line_get_param(cmd, OPAL_MCA_CMD_LINE_ID, i, 1),
                                               &params, &values))) {
             return rc;
@@ -130,7 +130,7 @@ int mca_base_cmd_line_process_args(opal_cmd_line_t *cmd,
     num_insts = opal_cmd_line_get_ninsts(cmd, "g"OPAL_MCA_CMD_LINE_ID);
     params = values = NULL;
     for (i = 0; i < num_insts; ++i) {
-        if (OPAL_SUCCESS != (rc = process_arg(opal_cmd_line_get_param(cmd, "g"OPAL_MCA_CMD_LINE_ID, i, 0), 
+        if (OPAL_SUCCESS != (rc = process_arg(opal_cmd_line_get_param(cmd, "g"OPAL_MCA_CMD_LINE_ID, i, 0),
                                               opal_cmd_line_get_param(cmd, "g"OPAL_MCA_CMD_LINE_ID, i, 1),
                                               &params, &values))) {
             return rc;
@@ -190,7 +190,7 @@ static int process_arg(const char *param, const char *value,
 
     /* If we didn't already have an value for the same param, save
        this one away */
-  
+
     opal_argv_append_nosize(params, param);
     opal_argv_append_nosize(values, p1);
     free(p1);

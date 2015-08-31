@@ -5,15 +5,15 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -107,7 +107,7 @@ void ompi_waitall_f(MPI_Fint *count, MPI_Fint *array_of_requests,
             array_of_requests[i] = c_req[i]->req_f_to_c_index;
             if (!OMPI_IS_FORTRAN_STATUSES_IGNORE(array_of_statuses) &&
                 !OMPI_IS_FORTRAN_STATUS_IGNORE(&array_of_statuses[i])) {
-                MPI_Status_c2f( &c_status[i], &array_of_statuses[i * (sizeof(MPI_Status) / sizeof(int))]); 
+                MPI_Status_c2f( &c_status[i], &array_of_statuses[i * (sizeof(MPI_Status) / sizeof(int))]);
             }
         }
     }

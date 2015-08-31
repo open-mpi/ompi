@@ -5,9 +5,9 @@
 #                         and Technology (RIST). All rights reserved.
 #
 # $COPYRIGHT$
-# 
+#
 # Additional copyrights may follow
-# 
+#
 # $HEADER$
 #
 

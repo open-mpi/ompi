@@ -3,9 +3,9 @@
 #                         All rights reserved.
 #
 # $COPYRIGHT$
-# 
+#
 # Additional copyrights may follow
-# 
+#
 # $HEADER$
 #
 
@@ -18,11 +18,11 @@ ikrit_sources  = \
 	spml_ikrit.c \
 	spml_ikrit.h \
 	spml_ikrit_component.c \
-	spml_ikrit_component.h 
- 
+	spml_ikrit_component.h
+
 if MCA_BUILD_oshmem_spml_ikrit_DSO
 component_noinst =
-component_install = mca_spml_ikrit.la 
+component_install = mca_spml_ikrit.la
 else
 component_noinst = libmca_spml_ikrit.la
 component_install =

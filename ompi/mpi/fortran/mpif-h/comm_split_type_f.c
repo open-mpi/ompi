@@ -5,16 +5,16 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2012      Sandia National Laboratories. All rights reserved.
  * Copyright (c) 2012      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -75,7 +75,7 @@ void ompi_comm_split_type_f(MPI_Fint *comm, MPI_Fint *split_type, MPI_Fint *key,
 
     c_info = MPI_Info_f2c(*info);
 
-    c_ierr = OMPI_INT_2_FINT(MPI_Comm_split_type(c_comm, 
+    c_ierr = OMPI_INT_2_FINT(MPI_Comm_split_type(c_comm,
                                                  OMPI_FINT_2_INT(*split_type),
                                                  OMPI_FINT_2_INT(*key),
                                                  c_info,

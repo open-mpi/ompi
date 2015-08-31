@@ -2,9 +2,9 @@
 #
 # Copyright (c) 2015      Intel, Inc. All rights reserved
 # $COPYRIGHT$
-# 
+#
 # Additional copyrights may follow
-# 
+#
 # $HEADER$
 #
 
@@ -76,7 +76,7 @@ AC_DEFUN([MCA_opal_sec_munge_CONFIG],[
            $2],
           [AC_MSG_RESULT([yes])
            $1])
-    
+
     # set build flags to use in makefile
     AC_SUBST([sec_munge_CPPFLAGS])
     AC_SUBST([sec_munge_LDFLAGS])

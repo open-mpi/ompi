@@ -5,15 +5,15 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2007 University of Houston. All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -63,19 +63,19 @@ mca_coll_inter_gather_inter(void *sbuf, int scount,
 	if (OMPI_SUCCESS != err) {
 	    return OMPI_ERROR;
 	}
-	
+
 	incr = extent * scount;
 	size_local = ompi_comm_size(comm->c_local_comm);
-	ptmp = (char*)malloc(size_local * incr); 
+	ptmp = (char*)malloc(size_local * incr);
 	if (NULL == ptmp) {
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
-	
-	err = comm->c_local_comm->c_coll.coll_gather(sbuf, scount, sdtype, 
-						     ptmp, scount, sdtype, 
+
+	err = comm->c_local_comm->c_coll.coll_gather(sbuf, scount, sdtype,
+						     ptmp, scount, sdtype,
 						     0, comm->c_local_comm,
                                                      comm->c_local_comm->c_coll.coll_gather_module);
-	if (0 == rank) { 
+	if (0 == rank) {
 	    /* First process sends data to the root */
 	    err = MCA_PML_CALL(send(ptmp, scount*size_local, sdtype, root,
 				    MCA_COLL_BASE_TAG_GATHER,

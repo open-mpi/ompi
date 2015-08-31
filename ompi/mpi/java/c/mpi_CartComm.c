@@ -5,14 +5,14 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 /*
@@ -58,7 +58,7 @@ JNIEXPORT void JNICALL Java_mpi_CartComm_init(JNIEnv *env, jclass clazz)
 {
     ompi_java.CartParmsInit = (*env)->GetMethodID(env,
             ompi_java.CartParmsClass, "<init>", "([I[Z[I)V");
-    
+
     ompi_java.ShiftParmsInit = (*env)->GetMethodID(env,
             ompi_java.ShiftParmsClass, "<init>", "(II)V");
 }

@@ -6,7 +6,7 @@
  * Copyright (c) 2004-2014 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -15,9 +15,9 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -56,16 +56,16 @@ OBJ_CLASS_INSTANCE(ompi_errhandler_t, opal_object_t, ompi_errhandler_construct,
  * _addr flavors are for F03 bindings
  */
 ompi_predefined_errhandler_t ompi_mpi_errhandler_null = {{{0}}};
-ompi_predefined_errhandler_t *ompi_mpi_errhandler_null_addr = 
+ompi_predefined_errhandler_t *ompi_mpi_errhandler_null_addr =
     &ompi_mpi_errhandler_null;
 ompi_predefined_errhandler_t ompi_mpi_errors_are_fatal = {{{0}}};
-ompi_predefined_errhandler_t *ompi_mpi_errors_are_fatal_addr = 
+ompi_predefined_errhandler_t *ompi_mpi_errors_are_fatal_addr =
     &ompi_mpi_errors_are_fatal;
 ompi_predefined_errhandler_t ompi_mpi_errors_return = {{{0}}};
-ompi_predefined_errhandler_t *ompi_mpi_errors_return_addr = 
+ompi_predefined_errhandler_t *ompi_mpi_errors_return_addr =
     &ompi_mpi_errors_return;
 ompi_predefined_errhandler_t ompi_mpi_errors_throw_exceptions = {{{0}}};
-ompi_predefined_errhandler_t *ompi_mpi_errors_throw_exceptions_addr = 
+ompi_predefined_errhandler_t *ompi_mpi_errors_throw_exceptions_addr =
     &ompi_mpi_errors_throw_exceptions;
 
 
@@ -92,7 +92,7 @@ int ompi_errhandler_init(void)
   ompi_mpi_errhandler_null.eh.eh_file_fn = NULL;
   ompi_mpi_errhandler_null.eh.eh_win_fn  = NULL ;
   ompi_mpi_errhandler_null.eh.eh_fort_fn = NULL;
-  strncpy (ompi_mpi_errhandler_null.eh.eh_name, "MPI_ERRHANDLER_NULL", 
+  strncpy (ompi_mpi_errhandler_null.eh.eh_name, "MPI_ERRHANDLER_NULL",
 	   strlen("MPI_ERRHANDLER_NULL")+1 );
 
 
@@ -105,9 +105,9 @@ int ompi_errhandler_init(void)
   ompi_mpi_errors_are_fatal.eh.eh_file_fn = ompi_mpi_errors_are_fatal_file_handler;
   ompi_mpi_errors_are_fatal.eh.eh_win_fn  = ompi_mpi_errors_are_fatal_win_handler ;
   ompi_mpi_errors_are_fatal.eh.eh_fort_fn = NULL;
-  strncpy (ompi_mpi_errors_are_fatal.eh.eh_name, "MPI_ERRORS_ARE_FATAL", 
+  strncpy (ompi_mpi_errors_are_fatal.eh.eh_name, "MPI_ERRORS_ARE_FATAL",
 	   strlen("MPI_ERRORS_ARE_FATAL")+1 );
-  
+
   OBJ_CONSTRUCT( &ompi_mpi_errors_return.eh, ompi_errhandler_t );
   if( ompi_mpi_errors_return.eh.eh_f_to_c_index != OMPI_ERRORS_RETURN_FORTRAN )
       return OMPI_ERROR;
@@ -117,7 +117,7 @@ int ompi_errhandler_init(void)
   ompi_mpi_errors_return.eh.eh_file_fn = ompi_mpi_errors_return_file_handler;
   ompi_mpi_errors_return.eh.eh_win_fn  = ompi_mpi_errors_return_win_handler;
   ompi_mpi_errors_return.eh.eh_fort_fn = NULL;
-  strncpy (ompi_mpi_errors_return.eh.eh_name, "MPI_ERRORS_RETURN", 
+  strncpy (ompi_mpi_errors_return.eh.eh_name, "MPI_ERRORS_RETURN",
 	   strlen("MPI_ERRORS_RETURN")+1 );
 
   /* If we're going to use C++, functions will be fixed up during
@@ -126,17 +126,17 @@ int ompi_errhandler_init(void)
      conversion from C handles to C++ handles happens in that dispatch
      function -- not the errhandler_invoke.c stuff here in libmpi. */
   OBJ_CONSTRUCT( &ompi_mpi_errors_throw_exceptions.eh, ompi_errhandler_t );
-  ompi_mpi_errors_throw_exceptions.eh.eh_mpi_object_type = 
+  ompi_mpi_errors_throw_exceptions.eh.eh_mpi_object_type =
       OMPI_ERRHANDLER_TYPE_PREDEFINED;
   ompi_mpi_errors_throw_exceptions.eh.eh_lang = OMPI_ERRHANDLER_LANG_C;
-  ompi_mpi_errors_throw_exceptions.eh.eh_comm_fn = 
+  ompi_mpi_errors_throw_exceptions.eh.eh_comm_fn =
       ompi_mpi_errors_are_fatal_comm_handler;
-  ompi_mpi_errors_throw_exceptions.eh.eh_file_fn = 
+  ompi_mpi_errors_throw_exceptions.eh.eh_file_fn =
       ompi_mpi_errors_are_fatal_file_handler;
-  ompi_mpi_errors_throw_exceptions.eh.eh_win_fn  = 
+  ompi_mpi_errors_throw_exceptions.eh.eh_win_fn  =
       ompi_mpi_errors_are_fatal_win_handler ;
   ompi_mpi_errors_throw_exceptions.eh.eh_fort_fn = NULL;
-  strncpy (ompi_mpi_errors_throw_exceptions.eh.eh_name, "MPI_ERRORS_THROW_EXCEPTIONS", 
+  strncpy (ompi_mpi_errors_throw_exceptions.eh.eh_name, "MPI_ERRORS_THROW_EXCEPTIONS",
 	   strlen("MPI_ERRORS_THROW_EXCEPTIONS")+1 );
 
   /* All done */
@@ -187,7 +187,7 @@ ompi_errhandler_t *ompi_errhandler_create(ompi_errhandler_type_t object_type,
          function pointer types in the union; it doesn't matter which.
          It only matters that we dereference/use the right member when
          invoking the callback. */
-      
+
       new_errhandler->eh_mpi_object_type = object_type;
       new_errhandler->eh_lang = lang;
       switch (object_type ) {
@@ -220,11 +220,11 @@ int ompi_errhandler_runtime_callback(opal_pointer_array_t *errors) {
     ompi_rte_error_report_t *err;
     int errcode = 1;
 
-    if (NULL != errors && 
+    if (NULL != errors &&
         (NULL != (err = (ompi_rte_error_report_t*)opal_pointer_array_get_item(errors, 0)))) {
         errcode = err->errcode;
     }
-        
+
     ompi_mpi_abort(MPI_COMM_WORLD, errcode);
     return OMPI_SUCCESS;
 }
@@ -244,7 +244,7 @@ static void ompi_errhandler_construct(ompi_errhandler_t *new_errhandler)
 
   /* assign entry in fortran <-> c translation array */
 
-  ret_val = opal_pointer_array_add(&ompi_errhandler_f_to_c_table, 
+  ret_val = opal_pointer_array_add(&ompi_errhandler_f_to_c_table,
                                    new_errhandler);
   new_errhandler->eh_f_to_c_index = ret_val;
 

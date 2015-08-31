@@ -6,7 +6,7 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2009 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2009 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -15,9 +15,9 @@
  * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -88,9 +88,9 @@
 #ifndef MIN
 #  define MIN(a,b)                ((a) < (b) ? (a) : (b))
 #endif
-        
+
 /*
- *  Look for interface by name and returns its address 
+ *  Look for interface by name and returns its address
  *  as a dotted decimal formatted string.
  */
 
@@ -115,7 +115,7 @@ int opal_ifnametoaddr(const char* if_name, struct sockaddr* addr, int length)
 
 
 /*
- *  Look for interface by name and returns its 
+ *  Look for interface by name and returns its
  *  corresponding opal_list index.
  */
 
@@ -139,7 +139,7 @@ int opal_ifnametoindex(const char* if_name)
 
 
 /*
- *  Look for interface by name and returns its 
+ *  Look for interface by name and returns its
  *  corresponding kernel index.
  */
 
@@ -163,7 +163,7 @@ int16_t opal_ifnametokindex(const char* if_name)
 
 
 /*
- *  Look for interface by opal_list index and returns its 
+ *  Look for interface by opal_list index and returns its
  *  corresponding kernel index.
  */
 
@@ -204,7 +204,7 @@ int opal_ifaddrtoname(const char* if_addr, char* if_name, int length)
          */
         return OPAL_ERR_NOT_FOUND;
     }
-    
+
     if (OPAL_SUCCESS != mca_base_framework_open(&opal_if_base_framework, 0)) {
         return OPAL_ERROR;
     }
@@ -225,14 +225,14 @@ int opal_ifaddrtoname(const char* if_addr, char* if_name, int length)
         for (intf =  (opal_if_t*)opal_list_get_first(&opal_if_list);
             intf != (opal_if_t*)opal_list_get_end(&opal_if_list);
             intf =  (opal_if_t*)opal_list_get_next(intf)) {
-            
+
             if (AF_INET == r->ai_family) {
                 struct sockaddr_in ipv4;
                 struct sockaddr_in *inaddr;
 
                 inaddr = (struct sockaddr_in*) &intf->if_addr;
                 memcpy (&ipv4, r->ai_addr, r->ai_addrlen);
-                
+
                 if (inaddr->sin_addr.s_addr == ipv4.sin_addr.s_addr) {
                     strncpy(if_name, intf->if_name, length);
                     freeaddrinfo (res);
@@ -388,8 +388,8 @@ int opal_ifnext(int if_index)
 }
 
 
-/* 
- *  Lookup the interface by opal_list index and return the 
+/*
+ *  Lookup the interface by opal_list index and return the
  *  primary address assigned to the interface.
  */
 
@@ -413,8 +413,8 @@ int opal_ifindextoaddr(int if_index, struct sockaddr* if_addr, unsigned int leng
 }
 
 
-/* 
- *  Lookup the interface by opal_list kindex and return the 
+/*
+ *  Lookup the interface by opal_list kindex and return the
  *  primary address assigned to the interface.
  */
 int opal_ifkindextoaddr(int if_kindex, struct sockaddr* if_addr, unsigned int length)
@@ -437,8 +437,8 @@ int opal_ifkindextoaddr(int if_kindex, struct sockaddr* if_addr, unsigned int le
 }
 
 
-/* 
- *  Lookup the interface by opal_list index and return the 
+/*
+ *  Lookup the interface by opal_list index and return the
  *  network mask assigned to the interface.
  */
 
@@ -461,8 +461,8 @@ int opal_ifindextomask(int if_index, uint32_t* if_mask, int length)
     return OPAL_ERROR;
 }
 
-/* 
- *  Lookup the interface by opal_list index and return the 
+/*
+ *  Lookup the interface by opal_list index and return the
  *  MAC assigned to the interface.
  */
 
@@ -481,8 +481,8 @@ int opal_ifindextomac(int if_index, uint8_t mac[6])
     return OPAL_ERROR;
 }
 
-/* 
- *  Lookup the interface by opal_list index and return the 
+/*
+ *  Lookup the interface by opal_list index and return the
  *  MTU assigned to the interface.
  */
 
@@ -501,8 +501,8 @@ int opal_ifindextomtu(int if_index, int *mtu)
     return OPAL_ERROR;
 }
 
-/* 
- *  Lookup the interface by opal_list index and return the 
+/*
+ *  Lookup the interface by opal_list index and return the
  *  flags assigned to the interface.
  */
 
@@ -527,7 +527,7 @@ int opal_ifindextoflags(int if_index, uint32_t* if_flags)
 
 
 
-/* 
+/*
  *  Lookup the interface by opal_list index and return
  *  the associated name.
  */
@@ -552,7 +552,7 @@ int opal_ifindextoname(int if_index, char* if_name, int length)
 }
 
 
-/* 
+/*
  *  Lookup the interface by kernel index and return
  *  the associated name.
  */
@@ -630,12 +630,12 @@ opal_iftupletoaddr(const char *inaddr, uint32_t *net, uint32_t *mask)
 {
     int pval, dots, rc = OPAL_SUCCESS;
     const char *ptr;
-    
+
     /* if a mask was desired... */
     if (NULL != mask) {
         /* set default */
         *mask = 0xFFFFFFFF;
-        
+
         /* if entry includes mask, split that off */
         if (NULL != (ptr = strchr(inaddr, '/'))) {
             ptr = ptr + 1;  /* skip the / */
@@ -679,24 +679,24 @@ opal_iftupletoaddr(const char *inaddr, uint32_t *net, uint32_t *mask)
             }
         }
     }
-    
+
     /* if network addr is desired... */
     if (NULL != net) {
         /* now assemble the address */
         rc = parse_ipv4_dots(inaddr, net, &dots);
     }
-    
+
     return rc;
 }
 
-/* 
+/*
  *  Determine if the specified interface is loopback
  */
 
 bool opal_ifisloopback(int if_index)
 {
     opal_if_t* intf;
-    
+
     if (OPAL_SUCCESS != mca_base_framework_open(&opal_if_base_framework, 0)) {
         return OPAL_ERROR;
     }
@@ -800,7 +800,7 @@ void opal_ifgetaliases(char ***aliases)
             opal_argv_append_nosize(aliases, ipv6);
         }
 #endif
-    }    
+    }
 }
 
 #else /* HAVE_STRUCT_SOCKADDR_IN */
@@ -809,14 +809,14 @@ void opal_ifgetaliases(char ***aliases)
    ethernet devices.  Just make everything a no-op error call */
 
 int
-opal_ifnametoaddr(const char* if_name, 
+opal_ifnametoaddr(const char* if_name,
                   struct sockaddr* if_addr, int size)
 {
     return OPAL_ERR_NOT_SUPPORTED;
 }
 
 int
-opal_ifaddrtoname(const char* if_addr, 
+opal_ifaddrtoname(const char* if_addr,
                   char* if_name, int size)
 {
     return OPAL_ERR_NOT_SUPPORTED;

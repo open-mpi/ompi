@@ -4,9 +4,9 @@
  *                         reserved.
  *
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -37,7 +37,7 @@ orte_iof_mrhnp_component_t mca_iof_mr_hnp_component = {
     {
         /* First, the mca_base_component_t struct containing meta
            information about the component itself */
-        
+
         .iof_version = {
             ORTE_IOF_BASE_VERSION_2_0_0,
 
@@ -88,7 +88,7 @@ static int mrhnp_query(mca_base_module_t **module, int *priority)
         }
         return ORTE_SUCCESS;
     }
-        
+
     *priority = -1;
     *module = NULL;
     return ORTE_ERROR;

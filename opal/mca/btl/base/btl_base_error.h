@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -15,9 +15,9 @@
  *                         All rights reserved.
  * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -83,9 +83,9 @@ OPAL_DECLSPEC extern int mca_btl_base_out(const char*, ...) __opal_attribute_for
             mca_btl_base_err args;                                      \
             mca_btl_base_err("\n");                                     \
         }                                                               \
-    } while(0); 
+    } while(0);
 #else
-#define BTL_VERBOSE(args) 
+#define BTL_VERBOSE(args)
 #endif
 
 #endif
@@ -93,7 +93,7 @@ OPAL_DECLSPEC extern int mca_btl_base_out(const char*, ...) __opal_attribute_for
 
 BEGIN_C_DECLS
 
-OPAL_DECLSPEC extern void mca_btl_base_error_no_nics(const char* transport, 
+OPAL_DECLSPEC extern void mca_btl_base_error_no_nics(const char* transport,
                                                      const char* nic_name);
 
 END_C_DECLS

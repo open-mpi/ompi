@@ -6,7 +6,7 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -14,9 +14,9 @@
  * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 #include "ompi_config.h"
@@ -42,7 +42,7 @@ static const char FUNC_NAME[] = "MPI_Reduce";
 
 
 int MPI_Reduce(const void *sendbuf, void *recvbuf, int count,
-               MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm) 
+               MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm)
 {
     int err;
 
@@ -58,7 +58,7 @@ int MPI_Reduce(const void *sendbuf, void *recvbuf, int count,
                 } else {
                     memchecker_call(&opal_memchecker_base_isdefined, sendbuf, count, datatype);
                 }
-                
+
                 /* check whether root's receive buffer is addressable. */
                 memchecker_call(&opal_memchecker_base_isaddressable, recvbuf, count, datatype);
             } else {
@@ -69,7 +69,7 @@ int MPI_Reduce(const void *sendbuf, void *recvbuf, int count,
             if (MPI_ROOT == root) {
                 /* check whether root's receive buffer is addressable. */
                 memchecker_call(&opal_memchecker_base_isaddressable, recvbuf, count, datatype);
-            } else if (MPI_PROC_NULL != root) {               
+            } else if (MPI_PROC_NULL != root) {
                 /* check whether send buffer is defined. */
                 memchecker_call(&opal_memchecker_base_isdefined, sendbuf, count, datatype);
             }
@@ -81,12 +81,12 @@ int MPI_Reduce(const void *sendbuf, void *recvbuf, int count,
         err = MPI_SUCCESS;
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         if (ompi_comm_invalid(comm)) {
-            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, 
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM,
                                           FUNC_NAME);
         }
 
         /* Checks for all ranks */
-	
+
         else if (MPI_OP_NULL == op || NULL == op) {
             err = MPI_ERR_OP;
         } else if (!ompi_op_is_valid(op, datatype, &msg, FUNC_NAME)) {

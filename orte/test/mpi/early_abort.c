@@ -32,9 +32,9 @@ int main(int argc, char* argv[])
         if (0 == strcmp(rk, "0")) {
             sleep(1);
             exit(1);
-        }        
+        }
     }
-    
+
     MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);

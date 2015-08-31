@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -26,7 +26,7 @@ int MPI_File_get_group(MPI_File fh, MPI_Group *group) __attribute__((weak,alias(
 #endif
 
 /*@
-    MPI_File_get_group - Returns the group of processes that 
+    MPI_File_get_group - Returns the group of processes that
                          opened the file
 
 Input Parameters:

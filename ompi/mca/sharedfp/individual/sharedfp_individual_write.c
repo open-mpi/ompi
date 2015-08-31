@@ -5,15 +5,15 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2013      University of Houston. All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -105,7 +105,7 @@ int mca_sharedfp_individual_write_ordered (mca_io_ompio_file_t *fh,
 
     if(fh->f_sharedfp_data==NULL){
 	if ( mca_sharedfp_individual_verbose ) {
-	    opal_output(ompi_sharedfp_base_framework.framework_output, 
+	    opal_output(ompi_sharedfp_base_framework.framework_output,
 "sharedfp_individual_write_ordered - opening the shared file pointer\n");
 	}
         shared_fp_base_module = fh->f_sharedfp;
@@ -135,7 +135,7 @@ int mca_sharedfp_individual_write_ordered (mca_io_ompio_file_t *fh,
 	opal_output (0, "sharedfp_individual_write_ordered: headnode is NULL but file is open\n");
 	return OMPI_ERROR;
     }
-     
+
     /* Data from all the metadata is combined and written to the main file */
     ret  = mca_sharedfp_individual_collaborate_data ( sh );
     if ( OMPI_SUCCESS != ret)  {
@@ -148,25 +148,25 @@ int mca_sharedfp_individual_write_ordered (mca_io_ompio_file_t *fh,
 	    return OMPI_ERR_OUT_OF_RESOURCE;
 	}
     }
-    
+
     /*collect the total bytes to be written*/
-    sh->comm->c_coll.coll_gather ( &totalbytes, 1, OMPI_OFFSET_DATATYPE, 
+    sh->comm->c_coll.coll_gather ( &totalbytes, 1, OMPI_OFFSET_DATATYPE,
 				   offbuff, 1, OMPI_OFFSET_DATATYPE, 0,
 				   sh->comm, sh->comm->c_coll.coll_gather_module );
-    
+
     if ( 0 == rank ) {
         prev_offset = offbuff[0];
         offbuff[0]   = sh->global_offset;
-	
+
         for (i = 1; i < size ; i++){
             temp = offbuff[i];
             offbuff[i] = offbuff[i - 1] + prev_offset;
             prev_offset = temp;
         }
-	    
+
         for (i = 0; i < size; i++){
             global_offset = offbuff[size - 1] + prev_offset;
-        }	    	    
+        }
     }
 
 
@@ -178,8 +178,8 @@ int mca_sharedfp_individual_write_ordered (mca_io_ompio_file_t *fh,
 	opal_output(0,"sharedfp_individual_write_ordered: Error in scattering offsets \n");
 	goto exit;
     }
-    
-    ret = sh->comm->c_coll.coll_bcast ( &global_offset, 1, OMPI_OFFSET_DATATYPE, 
+
+    ret = sh->comm->c_coll.coll_bcast ( &global_offset, 1, OMPI_OFFSET_DATATYPE,
 				  0, sh->comm, sh->comm->c_coll.coll_bcast_module );
     if ( OMPI_SUCCESS != ret )  {
 	opal_output(0,"sharedfp_individual_write_ordered: Error while bcasting global offset \n");
@@ -187,7 +187,7 @@ int mca_sharedfp_individual_write_ordered (mca_io_ompio_file_t *fh,
     }
 
     sh->global_offset = global_offset;
-    
+
     /*use file_write_at_all to ensure the order*/
     ret = ompio_io_ompio_file_write_at_all(sh->sharedfh,offset, buf,count,datatype,status);
     if ( OMPI_SUCCESS != ret )  {
@@ -198,6 +198,6 @@ exit:
     if ( NULL != offbuff ) {
 	free ( offbuff);
     }
-        
+
     return ret;
 }

@@ -5,14 +5,14 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 #ifndef OMPI_CRCP_BASE_H
@@ -40,7 +40,7 @@ BEGIN_C_DECLS
      *
      */
     OMPI_DECLSPEC int ompi_crcp_base_select(void);
-    
+
     /**
      * Quiesce Interface (For MPI Ext.)
      */
@@ -73,33 +73,33 @@ BEGIN_C_DECLS
     ompi_crcp_base_pml_state_t* ompi_crcp_base_none_pml_del_procs( struct ompi_proc_t **procs, size_t nprocs, ompi_crcp_base_pml_state_t* );
 
     ompi_crcp_base_pml_state_t* ompi_crcp_base_none_pml_progress(ompi_crcp_base_pml_state_t*);
-    
+
     ompi_crcp_base_pml_state_t* ompi_crcp_base_none_pml_iprobe(int dst, int tag, struct ompi_communicator_t* comm, int *matched, ompi_status_public_t* status, ompi_crcp_base_pml_state_t* );
 
     ompi_crcp_base_pml_state_t* ompi_crcp_base_none_pml_probe( int dst, int tag, struct ompi_communicator_t* comm, ompi_status_public_t* status, ompi_crcp_base_pml_state_t* );
-    
-    ompi_crcp_base_pml_state_t* ompi_crcp_base_none_pml_isend_init( void *buf, size_t count, ompi_datatype_t *datatype, int dst, int tag, 
+
+    ompi_crcp_base_pml_state_t* ompi_crcp_base_none_pml_isend_init( void *buf, size_t count, ompi_datatype_t *datatype, int dst, int tag,
                                             mca_pml_base_send_mode_t mode, struct ompi_communicator_t* comm, struct ompi_request_t **request, ompi_crcp_base_pml_state_t* );
-    
+
     ompi_crcp_base_pml_state_t* ompi_crcp_base_none_pml_isend( void *buf, size_t count, ompi_datatype_t *datatype, int dst, int tag,
                                        mca_pml_base_send_mode_t mode, struct ompi_communicator_t* comm, struct ompi_request_t **request, ompi_crcp_base_pml_state_t* );
-    
+
     ompi_crcp_base_pml_state_t* ompi_crcp_base_none_pml_send(  void *buf, size_t count, ompi_datatype_t *datatype, int dst, int tag,
                                        mca_pml_base_send_mode_t mode, struct ompi_communicator_t* comm, ompi_crcp_base_pml_state_t* );
-    
+
     ompi_crcp_base_pml_state_t* ompi_crcp_base_none_pml_irecv_init( void *buf, size_t count, ompi_datatype_t *datatype, int src, int tag,
                                             struct ompi_communicator_t* comm,  struct ompi_request_t **request, ompi_crcp_base_pml_state_t*);
-    
+
     ompi_crcp_base_pml_state_t* ompi_crcp_base_none_pml_irecv( void *buf, size_t count, ompi_datatype_t *datatype, int src, int tag,
                                        struct ompi_communicator_t* comm, struct ompi_request_t **request, ompi_crcp_base_pml_state_t* );
-    
+
     ompi_crcp_base_pml_state_t* ompi_crcp_base_none_pml_recv(  void *buf, size_t count, ompi_datatype_t *datatype, int src, int tag,
                                        struct ompi_communicator_t* comm,  ompi_status_public_t* status, ompi_crcp_base_pml_state_t*);
-    
+
     ompi_crcp_base_pml_state_t* ompi_crcp_base_none_pml_dump( struct ompi_communicator_t* comm, int verbose, ompi_crcp_base_pml_state_t* );
-    
+
     ompi_crcp_base_pml_state_t* ompi_crcp_base_none_pml_start( size_t count, ompi_request_t** requests, ompi_crcp_base_pml_state_t* );
-    
+
     ompi_crcp_base_pml_state_t* ompi_crcp_base_none_pml_ft_event(int state, ompi_crcp_base_pml_state_t*);
 
     /* Request Interface */
@@ -120,7 +120,7 @@ BEGIN_C_DECLS
                                        struct ompi_proc_t** procs,
                                        struct mca_btl_base_endpoint_t**,
                                        ompi_crcp_base_btl_state_t*);
-    
+
     ompi_crcp_base_btl_state_t*
     ompi_crcp_base_none_btl_register( struct mca_btl_base_module_t* btl,
                                       mca_btl_base_tag_t tag,

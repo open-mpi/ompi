@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -15,9 +15,9 @@
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -159,7 +159,7 @@ static int init_query(const mca_base_component_t * component,
  * Query a specific component, coll v2.0.0
  */
 static int init_query_2_0_0(const mca_base_component_t * component,
-                            bool enable_progress_threads, 
+                            bool enable_progress_threads,
                             bool enable_mpi_threads)
 {
     mca_coll_base_component_2_0_0_t *coll =

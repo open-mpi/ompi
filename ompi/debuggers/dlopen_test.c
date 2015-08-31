@@ -67,7 +67,7 @@ static int do_test(void)
        not, skip this test. */
     fp = fopen(full_filename, "r");
     if (NULL == fp) {
-        fprintf(stderr, 
+        fprintf(stderr,
                 "File %s.la doesn't seem to exist; skipping this test\n",
                 full_filename);
         exit(77);

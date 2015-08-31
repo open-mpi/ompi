@@ -1,10 +1,10 @@
 /*
  * Copyright (c) 2007      Los Alamos National Security, LLC.
- *                         All rights reserved. 
+ *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 

@@ -6,7 +6,7 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -14,9 +14,9 @@
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  *
  * These symbols are in a file by themselves to provide nice linker
@@ -57,7 +57,7 @@ const opal_pstat_base_component_t mca_pstat_test_component = {
     .base_version = {
         /* Indicate that we are a pstat v1.1.0 component (which also
            implies a specific MCA version) */
-        
+
         OPAL_PSTAT_BASE_VERSION_2_0_0,
 
         /* Component name and version */
@@ -80,6 +80,6 @@ static int pstat_test_component_query(mca_base_module_t **module, int *priority)
 {
     *priority = 20;
     *module = (mca_base_module_t *)&opal_pstat_test_module;
-    
+
     return OPAL_SUCCESS;
 }

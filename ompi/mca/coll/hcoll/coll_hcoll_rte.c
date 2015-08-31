@@ -379,7 +379,7 @@ static int group_id(rte_grp_handle_t group){
     return ((ompi_communicator_t *)group)->c_contextid;
 }
 
-static int 
+static int
 request_free(struct ompi_request_t **ompi_req)
 {
     ompi_request_t *req = *ompi_req;

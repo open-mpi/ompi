@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -67,14 +67,14 @@ void ADIOI_XFS_SetInfo(ADIO_File fd, MPI_Info users_info, int *error_code)
     if (users_info != MPI_INFO_NULL) {
 	value = (char *) ADIOI_Malloc((MPI_MAX_INFO_VAL+1)*sizeof(char));
 
-	ADIOI_Info_get(users_info, "direct_read", MPI_MAX_INFO_VAL, 
+	ADIOI_Info_get(users_info, "direct_read", MPI_MAX_INFO_VAL,
 			 value, &flag);
 	if (flag && !strcmp(value, "true")) {
 	    ADIOI_Info_set(fd->info, "direct_read", "true");
 	    fd->direct_read = 1;
 	}
 
-	ADIOI_Info_get(users_info, "direct_write", MPI_MAX_INFO_VAL, 
+	ADIOI_Info_get(users_info, "direct_write", MPI_MAX_INFO_VAL,
 			 value, &flag);
 	if (flag && !strcmp(value, "true")) {
 	    ADIOI_Info_set(fd->info, "direct_write", "true");
@@ -83,7 +83,7 @@ void ADIOI_XFS_SetInfo(ADIO_File fd, MPI_Info users_info, int *error_code)
 
 	ADIOI_Free(value);
     }
-    
+
     /* set the values for collective I/O and data sieving parameters */
     ADIOI_GEN_SetInfo(fd, users_info, error_code);
 

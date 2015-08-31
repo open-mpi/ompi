@@ -73,13 +73,13 @@ int ompi_coll_libnbc_igatherv(void* sendbuf, int sendcount, MPI_Datatype sendtyp
       }
     }
   }
- 
+
   res = NBC_Sched_commit(schedule);
   if (NBC_OK != res) { printf("Error in NBC_Sched_commit() (%i)\n", res); return res; }
- 
+
   res = NBC_Start(handle, schedule);
   if (NBC_OK != res) { printf("Error in NBC_Start() (%i)\n", res); return res; }
- 
+
   return NBC_OK;
 }
 

@@ -8,9 +8,9 @@
  * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -91,7 +91,7 @@ void ompi_dist_graph_create_f(MPI_Fint *comm_old, MPI_Fint *n, MPI_Fint *sources
         OMPI_ARRAY_FINT_2_INT(weights, count);
         c_weights = OMPI_ARRAY_NAME_CONVERT(weights);
     }
-    
+
 
     *ierr = OMPI_INT_2_FINT(MPI_Dist_graph_create(c_comm_old, OMPI_FINT_2_INT(*n), OMPI_ARRAY_NAME_CONVERT(sources),
                                                   OMPI_ARRAY_NAME_CONVERT(degrees), OMPI_ARRAY_NAME_CONVERT(destinations),

@@ -6,51 +6,51 @@
 // Copyright (c) 2004-2005 The University of Tennessee and The University
 //                         of Tennessee Research Foundation.  All rights
 //                         reserved.
-// Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+// Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 //                         University of Stuttgart.  All rights reserved.
 // Copyright (c) 2004-2005 The Regents of the University of California.
 //                         All rights reserved.
 // Copyright (c) 2006-2009 Cisco Systems, Inc.  All rights reserved.
 // $COPYRIGHT$
-// 
+//
 // Additional copyrights may follow
-// 
+//
 // $HEADER$
 //
 
 // Typedefs for C++ callbacks registered via MPI::Register_datarep
-typedef void Datarep_extent_function(const Datatype& datatype, 
+typedef void Datarep_extent_function(const Datatype& datatype,
                                      Aint& file_extent, void* extra_state);
-typedef void Datarep_conversion_function(void* userbuf, Datatype& datatype, 
-                                         int count, void* filebuf, 
+typedef void Datarep_conversion_function(void* userbuf, Datatype& datatype,
+                                         int count, void* filebuf,
                                          Offset position, void* extra_state);
 
 // Both callback functions in C++
-void Register_datarep(const char* datarep, 
-                      Datarep_conversion_function* read_conversion_fn, 
-                      Datarep_conversion_function* write_conversion_fn, 
-                      Datarep_extent_function* dtype_file_extent_fn, 
+void Register_datarep(const char* datarep,
+                      Datarep_conversion_function* read_conversion_fn,
+                      Datarep_conversion_function* write_conversion_fn,
+                      Datarep_extent_function* dtype_file_extent_fn,
                       void* extra_state);
 
 // Overload for C read callback function (MPI_CONVERSION_FN_NULL)
-void Register_datarep(const char* datarep, 
-                      MPI_Datarep_conversion_function* read_conversion_fn, 
-                      Datarep_conversion_function* write_conversion_fn, 
-                      Datarep_extent_function* dtype_file_extent_fn, 
+void Register_datarep(const char* datarep,
+                      MPI_Datarep_conversion_function* read_conversion_fn,
+                      Datarep_conversion_function* write_conversion_fn,
+                      Datarep_extent_function* dtype_file_extent_fn,
                       void* extra_state);
 
 // Overload for C write callback function (MPI_CONVERSION_FN_NULL)
-void Register_datarep(const char* datarep, 
-                      Datarep_conversion_function* read_conversion_fn, 
-                      MPI_Datarep_conversion_function* write_conversion_fn, 
-                      Datarep_extent_function* dtype_file_extent_fn, 
+void Register_datarep(const char* datarep,
+                      Datarep_conversion_function* read_conversion_fn,
+                      MPI_Datarep_conversion_function* write_conversion_fn,
+                      Datarep_extent_function* dtype_file_extent_fn,
                       void* extra_state);
 
 // Overload for C read and write callback functions (MPI_CONVERSION_FN_NULL)
-void Register_datarep(const char* datarep, 
-                      MPI_Datarep_conversion_function* read_conversion_fn, 
-                      MPI_Datarep_conversion_function* write_conversion_fn, 
-                      Datarep_extent_function* dtype_file_extent_fn, 
+void Register_datarep(const char* datarep,
+                      MPI_Datarep_conversion_function* read_conversion_fn,
+                      MPI_Datarep_conversion_function* write_conversion_fn,
+                      Datarep_extent_function* dtype_file_extent_fn,
                       void* extra_state);
 
 class File {
@@ -93,7 +93,7 @@ public:
   File(const File& data) : mpi_file(data.mpi_file) { }
 
   File(MPI_File i) : mpi_file(i) { }
-	
+
   virtual ~File() { }
 
   File& operator=(const File& data) {
@@ -109,7 +109,7 @@ public:
 
 #endif
 
-  // from the I/o chapter of MPI - 2 
+  // from the I/o chapter of MPI - 2
 
   void Close();
 
@@ -133,22 +133,22 @@ public:
 
   MPI::Aint Get_type_extent(const MPI::Datatype& datatype) const;
 
-  void Get_view(MPI::Offset& disp, MPI::Datatype& etype, 
+  void Get_view(MPI::Offset& disp, MPI::Datatype& etype,
 		MPI::Datatype& filetype, char* datarep) const;
 
-  MPI::Request Iread(void* buf, int count, 
+  MPI::Request Iread(void* buf, int count,
 		     const MPI::Datatype& datatype);
-  
-  MPI::Request Iread_at(MPI::Offset offset, void* buf, int count, 
+
+  MPI::Request Iread_at(MPI::Offset offset, void* buf, int count,
 			const MPI::Datatype& datatype);
-  
+
   MPI::Request Iread_shared(void* buf, int count,
 			    const MPI::Datatype& datatype);
 
   MPI::Request Iwrite(const void* buf, int count,
 		       const MPI::Datatype& datatype);
 
-  MPI::Request Iwrite_at(MPI::Offset offset, const void* buf, 
+  MPI::Request Iwrite_at(MPI::Offset offset, const void* buf,
 			 int count,  const MPI::Datatype& datatype);
 
   MPI::Request Iwrite_shared(const void* buf, int count,
@@ -177,21 +177,21 @@ public:
 
   void Read_all_end(void* buf, MPI::Status& status);
 
-  void Read_at(MPI::Offset offset, 
+  void Read_at(MPI::Offset offset,
 	       void* buf, int count,  const MPI::Datatype& datatype);
 
   void Read_at(MPI::Offset offset, void* buf, int count,
 	       const MPI::Datatype& datatype, MPI::Status& status);
 
-  void Read_at_all(MPI::Offset offset, void* buf, int count, 
+  void Read_at_all(MPI::Offset offset, void* buf, int count,
 		   const MPI::Datatype& datatype);
-  
+
   void Read_at_all(MPI::Offset offset, void* buf, int count,
 		   const MPI::Datatype& datatype, MPI::Status& status);
 
   void Read_at_all_begin(MPI::Offset offset, void* buf, int count,
 			 const MPI::Datatype& datatype);
-  
+
   void Read_at_all_end(void* buf);
 
   void Read_at_all_end(void* buf, MPI::Status& status);
@@ -277,7 +277,7 @@ public:
   void Write_ordered(const void* buf, int count,
 		      const MPI::Datatype& datatype, MPI::Status& status);
 
-  void Write_ordered_begin(const void* buf, int count, 
+  void Write_ordered_begin(const void* buf, int count,
 			    const MPI::Datatype& datatype);
 
   void Write_ordered_end(const void* buf);
@@ -297,7 +297,7 @@ public:
   typedef Errhandler_function Errhandler_fn
         __mpi_interface_deprecated__("MPI::File::Errhandler_fn was deprecated in MPI-2.2; use MPI::File::Errhandler_function instead");
 
-  static MPI::Errhandler Create_errhandler(Errhandler_function* function); 
+  static MPI::Errhandler Create_errhandler(Errhandler_function* function);
 
   MPI::Errhandler Get_errhandler() const;
 

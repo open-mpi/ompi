@@ -6,16 +6,16 @@ dnl                         Corporation.  All rights reserved.
 dnl Copyright (c) 2004-2005 The University of Tennessee and The University
 dnl                         of Tennessee Research Foundation.  All rights
 dnl                         reserved.
-dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2015      Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
 dnl $COPYRIGHT$
-dnl 
+dnl
 dnl Additional copyrights may follow
-dnl 
+dnl
 dnl $HEADER$
 dnl
 
@@ -133,11 +133,11 @@ else
 		# Is it a directory?
 		if test -d "$ompi_file"; then
 		    ompi_template_dir="$ompi_file $ompi_template_dir"
-		    
+
 		# Or is it a file?
 		else
 		    name="`echo $ompi_file | cut -d. -f1`"
-		    
+
 		    temp_mask=
 		    if test "$name" = "main" || test "$name" = "other"; then
 			temp_mask="`echo $ompi_file | cut -d. -f2`"

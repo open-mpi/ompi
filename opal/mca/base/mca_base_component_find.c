@@ -6,7 +6,7 @@
  * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -17,9 +17,9 @@
  * Copyright (c) 2014-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -274,7 +274,7 @@ static bool use_component(const bool include_mode,
 {
     bool found = false;
     const char **req_comp_name = requested_component_names;
-    
+
     /*
      * If no selection is specified then we use all components
      * we can find.
@@ -322,7 +322,7 @@ static int component_find_check (mca_base_framework_t *framework, char **request
         bool found = false;
 
         OPAL_LIST_FOREACH(cli, components, mca_base_component_list_item_t) {
-            if (0 == strcmp(requested_component_names[i], 
+            if (0 == strcmp(requested_component_names[i],
                             cli->cli_component->mca_component_name)) {
                 found = true;
                 break;
@@ -332,7 +332,7 @@ static int component_find_check (mca_base_framework_t *framework, char **request
         if (!found) {
             char h[MAXHOSTNAMELEN];
             gethostname(h, sizeof(h));
-            opal_show_help("help-mca-base.txt", 
+            opal_show_help("help-mca-base.txt",
                            "find-available:not-valid", true,
                            h, framework->framework_name, requested_component_names[i]);
             return OPAL_ERR_NOT_FOUND;
@@ -366,7 +366,7 @@ int mca_base_component_parse_requested (const char *requested, bool *include_mod
     /* Double check to ensure that the user did not specify the negate
        character anywhere else in the value. */
     if (NULL != strstr (requested, negate)) {
-        opal_show_help("help-mca-base.txt", 
+        opal_show_help("help-mca-base.txt",
                        "framework-param:too-many-negates",
                        true, requested_orig);
         return OPAL_ERROR;

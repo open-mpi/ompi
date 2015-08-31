@@ -5,14 +5,14 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -48,11 +48,11 @@
 
 BEGIN_C_DECLS
 
-/** 
+/**
  * @param relative A boolean that specifies if the path name is to be constructed
  * relative to the current directory or as an absolute path. If no path
  * elements are included in the function call, then the function returns
- * "." for a relative path name and "<path separator char>" - 
+ * "." for a relative path name and "<path separator char>" -
  * the top of the directory tree - for an absolute path name.
  * @param elem1,elem2,... A variable number of (char *)path_elements
  * can be provided to the function, terminated by a NULL value. These

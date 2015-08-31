@@ -5,16 +5,16 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 #include "orte_config.h"
@@ -69,7 +69,7 @@ static char *orte_getline(FILE *fp)
 	   buff = strdup(input);
 	   return buff;
     }
-    
+
     return NULL;
 }
 
@@ -83,15 +83,15 @@ static int allocate(orte_job_t *jdata, opal_list_t *nodes)
     bool found;
     struct stat buf;
     orte_app_context_t *app;
-    
+
     /* get the list of allocated nodes */
     if ((num_nodes = lsb_getalloc(&nodelist)) < 0) {
         orte_show_help("help-ras-lsf.txt", "nodelist-failed", true);
         return ORTE_ERR_NOT_AVAILABLE;
     }
-    
+
     node = NULL;
-    
+
     /* step through the list */
     for (i = 0; i < num_nodes; i++) {
         /* is this a repeat of the current node? */
@@ -100,7 +100,7 @@ static int allocate(orte_job_t *jdata, opal_list_t *nodes)
             ++node->slots;
             continue;
         }
-        
+
         /* not a repeat - create a node entry for it */
         node = OBJ_NEW(orte_node_t);
         node->name = strdup(nodelist[i]);
@@ -109,7 +109,7 @@ static int allocate(orte_job_t *jdata, opal_list_t *nodes)
         node->slots = 1;
         opal_list_append(nodes, &node->super);
     }
-        
+
     /* release the nodelist from lsf */
     opal_argv_free(nodelist);
 
@@ -152,7 +152,7 @@ static int allocate(orte_job_t *jdata, opal_list_t *nodes)
 
         return ORTE_SUCCESS;
     }
-    
+
     return ORTE_SUCCESS;
 }
 

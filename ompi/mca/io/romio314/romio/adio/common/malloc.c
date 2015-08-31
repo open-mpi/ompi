@@ -1,17 +1,17 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
 /* These are routines for allocating and deallocating memory.
    They should be called as ADIOI_Malloc(size) and
-   ADIOI_Free(ptr). In adio.h, they are macro-replaced to 
-   ADIOI_Malloc(size,__LINE__,__FILE__) and 
+   ADIOI_Free(ptr). In adio.h, they are macro-replaced to
+   ADIOI_Malloc(size,__LINE__,__FILE__) and
    ADIOI_Free(ptr,__LINE__,__FILE__).
 
-   Later on, add some tracing and error checking, similar to 
+   Later on, add some tracing and error checking, similar to
    MPID_trmalloc. */
 
 #include "adio.h"

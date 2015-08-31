@@ -10,7 +10,7 @@
  * $HEADER$
  */
 
-#ifndef MCA_BTL_SCIF_ENDPOINT_H 
+#ifndef MCA_BTL_SCIF_ENDPOINT_H
 #define MCA_BTL_SCIF_ENDPOINT_H
 
 #include "btl_scif.h"

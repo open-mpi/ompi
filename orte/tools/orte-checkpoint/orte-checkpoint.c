@@ -603,7 +603,7 @@ static int ckpt_init(int argc, char *argv[]) {
     /* we are never allowed to operate as a distributed tool,
      * so insist on the ess/tool component */
     opal_setenv("OMPI_MCA_ess", "tool", true, &environ);
-    
+
     /***************************
      * We need all of OPAL and the TOOLS portion of ORTE - this
      * sets us up so we can talk to any HNP over the wire

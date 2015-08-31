@@ -18,7 +18,7 @@
       type(MPI_Datatype), intent(in) :: datatype
       type(MPI_Comm),     intent(in) :: comm
       integer, optional,  intent(out) :: ierror
-  
+
       integer :: err
       type(CFI_cdesc_t) :: buf_desc
 
@@ -42,7 +42,7 @@
       type(MPI_Datatype), intent(in) :: datatype
       type(MPI_Comm),     intent(in) :: comm
       integer, optional,  intent(out) :: ierror
-  
+
       integer :: err
 
       print *, "WARNING, testing of double precision arrays not yet supported with subarrays"
@@ -62,7 +62,7 @@
       type(MPI_Datatype), intent(in) :: datatype
       type(MPI_Comm),     intent(in) :: comm
       integer, optional,  intent(out) :: ierror
-  
+
       integer :: err
 
       print *, "WARNING, testing of double precision arrays not yet supported with subarrays"

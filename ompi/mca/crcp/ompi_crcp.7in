@@ -1,6 +1,6 @@
 .\"
 .\" Man page for OMPI's CRCP Functionality
-.\" 
+.\"
 .\" .TH name     section center-footer   left-footer  center-header
 .TH OMPI_CRCP 7 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .\" **************************
@@ -75,7 +75,7 @@ error.
 .SS none CRCP Component
 .PP
 The \fInone\fP component simply selects no CRCP component. All of the CRCP
-function calls return immediately with OMPI_SUCCESS. 
+function calls return immediately with OMPI_SUCCESS.
 .
 .PP
 This component is the last component to be selected by default. This means that if

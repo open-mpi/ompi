@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
- *   Copyright (C) 1997 University of Chicago. 
+/*
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -11,7 +11,7 @@ void ADIO_End(int *error_code)
 {
     ADIOI_Flatlist_node *curr, *next;
     ADIOI_Datarep *datarep, *datarep_next;
-    
+
 /*    FPRINTF(stderr, "reached end\n"); */
 
     /* if a default errhandler was set on MPI_FILE_NULL then we need to ensure

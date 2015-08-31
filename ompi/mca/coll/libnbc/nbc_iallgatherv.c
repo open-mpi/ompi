@@ -2,7 +2,7 @@
  * Copyright (c) 2006      The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2006      The Technical University of Chemnitz. All 
+ * Copyright (c) 2006      The Technical University of Chemnitz. All
  *                         rights reserved.
  *
  * Author(s): Torsten Hoefler <htor@cs.indiana.edu>
@@ -23,12 +23,12 @@
 /* simple linear MPI_Iallgatherv
  * the algorithm uses p-1 rounds
  * first round:
- *   each node sends to it's left node (rank+1)%p sendcount elements 
+ *   each node sends to it's left node (rank+1)%p sendcount elements
  *   each node begins with it's right node (rank-11)%p and receives from it recvcounts[(rank+1)%p] elements
- * second round: 
- *   each node sends to node (rank+2)%p sendcount elements 
+ * second round:
+ *   each node sends to node (rank+2)%p sendcount elements
  *   each node receives from node (rank-2)%p recvcounts[(rank+2)%p] elements */
-int ompi_coll_libnbc_iallgatherv(void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int *recvcounts, int *displs, 
+int ompi_coll_libnbc_iallgatherv(void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int *recvcounts, int *displs,
                                  MPI_Datatype recvtype, struct ompi_communicator_t *comm, ompi_request_t ** request,
                                  struct mca_coll_base_module_2_1_0_t *module)
 {
@@ -39,9 +39,9 @@ int ompi_coll_libnbc_iallgatherv(void* sendbuf, int sendcount, MPI_Datatype send
   NBC_Handle *handle;
   ompi_coll_libnbc_request_t **coll_req = (ompi_coll_libnbc_request_t**) request;
   ompi_coll_libnbc_module_t *libnbc_module = (ompi_coll_libnbc_module_t*) module;
-  
+
   NBC_IN_PLACE(sendbuf, recvbuf, inplace);
-  
+
   res = NBC_Init_handle(comm, coll_req, libnbc_module);
   if(res != NBC_OK) { printf("Error in NBC_Init_handle(%i)\n", res); return res; }
   handle = (*coll_req);
@@ -56,10 +56,10 @@ int ompi_coll_libnbc_iallgatherv(void* sendbuf, int sendcount, MPI_Datatype send
   if (NULL == schedule) { printf("Error in malloc() (%i)\n", res); return res; }
 
   handle->tmpbuf=NULL;
- 
+
   res = NBC_Sched_create(schedule);
   if(res != NBC_OK) { printf("Error in NBC_Sched_create, (%i)\n", res); return res; }
-  
+
   if (inplace) {
       sendtype = recvtype;
       sendcount = recvcounts[rank];
@@ -76,7 +76,7 @@ int ompi_coll_libnbc_iallgatherv(void* sendbuf, int sendcount, MPI_Datatype send
     speer = (rank+r)%p;
     rpeer = (rank-r+p)%p;
     rbuf = ((char *)recvbuf) + (displs[rpeer]*rcvext);
-    
+
     res = NBC_Sched_recv(rbuf, false, recvcounts[rpeer], recvtype, rpeer, schedule);
     if (NBC_OK != res) { printf("Error in NBC_Sched_recv() (%i)\n", res); return res; }
     res = NBC_Sched_send(sbuf, false, sendcount, sendtype, speer, schedule);
@@ -85,10 +85,10 @@ int ompi_coll_libnbc_iallgatherv(void* sendbuf, int sendcount, MPI_Datatype send
 
   res = NBC_Sched_commit(schedule);
   if (NBC_OK != res) { printf("Error in NBC_Sched_commit() (%i)\n", res); return res; }
- 
+
   res = NBC_Start(handle, schedule);
   if (NBC_OK != res) { printf("Error in NBC_Start() (%i)\n", res); return res; }
- 
+
   return NBC_OK;
 }
 

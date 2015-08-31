@@ -5,16 +5,16 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -50,7 +50,7 @@ static int ompi_grequest_cancel(ompi_request_t* req, int flag)
 
     if (greq->greq_cancel.c_cancel != NULL) {
         if (greq->greq_funcs_are_c) {
-            rc = greq->greq_cancel.c_cancel(greq->greq_state, 
+            rc = greq->greq_cancel.c_cancel(greq->greq_state,
                                             greq->greq_base.req_complete);
         } else {
             fflag = (ompi_fortran_logical_t) greq->greq_base.req_complete;
@@ -89,7 +89,7 @@ static void ompi_grequest_construct(ompi_grequest_t* greq)
  * object.
  *
  * 2. Call MPI_REQUEST_FREE and then (!) -- with some other
- * still-valid copy of the handler -- call MPI_GREQUEST_COMPLETE.  
+ * still-valid copy of the handler -- call MPI_GREQUEST_COMPLETE.
  *
  * 3. Reverse the order of #2 -- call MPI_GREQUEST_COMPLETE and then
  * MPI_REQUEST_FREE.
@@ -161,7 +161,7 @@ int ompi_grequest_start(
     greq->greq_state = gstate;
     greq->greq_query.c_query = gquery_fn;
     greq->greq_free.c_free = gfree_fn;
-    greq->greq_cancel.c_cancel = gcancel_fn; 
+    greq->greq_cancel.c_cancel = gcancel_fn;
     greq->greq_base.req_status = ompi_status_empty;
 
     *request = &greq->greq_base;
@@ -192,7 +192,7 @@ int ompi_grequest_complete(ompi_request_t *req)
 /*
  * Grequest queries are invoked in two places:
  *
- * 1. MPI_TEST* / MPI_WAIT*, when requests have completed. 
+ * 1. MPI_TEST* / MPI_WAIT*, when requests have completed.
  *
  * 2. MPI_REQUEST_GET_STATUS, when requests may or may not have
  * completed.

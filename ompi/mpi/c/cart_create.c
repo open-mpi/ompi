@@ -6,18 +6,18 @@
  * Copyright (c) 2004-2013 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2008 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.  All rights
- *                         reserved. 
+ *                         reserved.
  * Copyright (c) 2012-2013 Inria.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 #include "ompi_config.h"
@@ -58,7 +58,7 @@ int MPI_Cart_create(MPI_Comm old_comm, int ndims, const int dims[],
             return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_COMM,
                                           FUNC_NAME);
         } else if (OMPI_COMM_IS_INTER(old_comm)) {
-            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, 
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM,
                                           FUNC_NAME);
         }
         if (ndims < 0) {
@@ -87,9 +87,9 @@ int MPI_Cart_create(MPI_Comm old_comm, int ndims, const int dims[],
         }
     }
 
-    /* 
-     * everything seems to be alright with the communicator, we can go 
-     * ahead and select a topology module for this purpose and create 
+    /*
+     * everything seems to be alright with the communicator, we can go
+     * ahead and select a topology module for this purpose and create
      * the new graph communicator
      */
     if (OMPI_SUCCESS != (err = mca_topo_base_comm_select(old_comm,
@@ -99,7 +99,7 @@ int MPI_Cart_create(MPI_Comm old_comm, int ndims, const int dims[],
         return err;
     }
 
-    /* Now let that topology module rearrange procs/ranks if it wants to */    
+    /* Now let that topology module rearrange procs/ranks if it wants to */
     /* XXX -- CONST -- do not cast away const -- update mca/topo */
     err = topo->topo.cart.cart_create(topo, old_comm,
                                       ndims, (int *) dims, (int *) periods,

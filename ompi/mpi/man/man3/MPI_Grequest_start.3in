@@ -5,15 +5,15 @@
 .\" $COPYRIGHT$
 .TH MPI_Grequest_start 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
-\fBMPI_Grequest_start \fP \- Starts a generalized request and returns a handle to it in \fIrequest\fP. 
+\fBMPI_Grequest_start \fP \- Starts a generalized request and returns a handle to it in \fIrequest\fP.
 
 .SH SYNTAX
 .ft R
 .SH C Syntax
 .nf
 #include <mpi.h>
-int MPI_Grequest_start(MPI_Grequest_query_function \fI*query_fn\fP, 
-	MPI_Grequest_free_function \fI*free_fn\fP, 
+int MPI_Grequest_start(MPI_Grequest_query_function \fI*query_fn\fP,
+	MPI_Grequest_free_function \fI*free_fn\fP,
 	MPI_Grequest_cancel_function \fI*cancel_fn\fP, void \fI*extra_state\fP,
 	MPI_Request \fI*request\fP)
 
@@ -21,7 +21,7 @@ int MPI_Grequest_start(MPI_Grequest_query_function \fI*query_fn\fP,
 .SH Fortran Syntax (see FORTRAN 77 NOTES)
 .nf
 INCLUDE 'mpif.h'
-MPI_GREQUEST_START(\fIQUERY_FN, FREE_FN, CANCEL_FN, EXTRA_STATE, 
+MPI_GREQUEST_START(\fIQUERY_FN, FREE_FN, CANCEL_FN, EXTRA_STATE,
 	REQUEST, IERROR\fP)
 	INTEGER	\fIREQUEST, IERROR\fP
 	EXTERNAL \fIQUERY_FN, FREE_FN, CANCEL_FN\fP
@@ -61,7 +61,7 @@ Generalized request (handle).
 .ft R
 .TP 1i
 IERROR
-Fortran only: Error status (integer). 
+Fortran only: Error status (integer).
 
 .SH DESCRIPTION
 .ft R
@@ -91,7 +91,7 @@ and in C++, it is
 .sp
 The \fIquery_fn\fP function computes the status that should be returned for the generalized request. The status also includes information about successful/unsuccessful cancellation of the request (result to be returned by MPI_Test_cancelled).
 .sp
-The \fIquery_fn\fP function is invoked by the MPI_{Wait|Test}{any|some|all} call that completed the generalized request associated with this callback. The callback function is also invoked by calls to MPI_Request_get_status if the request is complete when the call occurs. In both cases, the callback is passed a reference to the corresponding status variable passed by the user to the MPI call. If the user provided MPI_STATUS_IGNORE or MPI_STATUSES_IGNORE to the MPI function that causes \fIquery_fn\fP to be called, then MPI will pass a valid status object to \fIquery_fn\fP, and this status will be ignored upon return of the callback function. Note that \fIquery_fn\fP is invoked only after MPI_Grequest_complete is called on the request; it may be invoked several times for the same generalized request. Note also that a call to MPI_{Wait|Test}{some|all} may cause multiple invocations of \fIquery_fn\fP callback functions, one for each generalized request that is completed by the MPI call. The order of these invocations is not specified by MPI. 
+The \fIquery_fn\fP function is invoked by the MPI_{Wait|Test}{any|some|all} call that completed the generalized request associated with this callback. The callback function is also invoked by calls to MPI_Request_get_status if the request is complete when the call occurs. In both cases, the callback is passed a reference to the corresponding status variable passed by the user to the MPI call. If the user provided MPI_STATUS_IGNORE or MPI_STATUSES_IGNORE to the MPI function that causes \fIquery_fn\fP to be called, then MPI will pass a valid status object to \fIquery_fn\fP, and this status will be ignored upon return of the callback function. Note that \fIquery_fn\fP is invoked only after MPI_Grequest_complete is called on the request; it may be invoked several times for the same generalized request. Note also that a call to MPI_{Wait|Test}{some|all} may cause multiple invocations of \fIquery_fn\fP callback functions, one for each generalized request that is completed by the MPI call. The order of these invocations is not specified by MPI.
 .sp
 In C, the free function is
 .sp
@@ -115,9 +115,9 @@ And in C++, it is
 .sp
 The \fIfree_fn\fP callback function is invoked to clean up user-allocated resources when the generalized request is freed.
 .sp
-The \fIfree_fn\fP function is invoked by the MPI_{Wait|Test}{any|some|all} call that completed the generalized request associated with this callback. \fIfree_fn\fP is invoked after the call to \fIquery_fn\fP for the same request. However, if the MPI call completed multiple generalized requests, the order in which \fIfree_fn\fP callback functions are invoked is not specified by MPI. 
+The \fIfree_fn\fP function is invoked by the MPI_{Wait|Test}{any|some|all} call that completed the generalized request associated with this callback. \fIfree_fn\fP is invoked after the call to \fIquery_fn\fP for the same request. However, if the MPI call completed multiple generalized requests, the order in which \fIfree_fn\fP callback functions are invoked is not specified by MPI.
 .sp
-The \fIfree_fn\fP callback is also invoked for generalized requests that are freed by a call to MPI_Request_free (no call to MPI_{Wait|Test}{any|some|all} will occur for such a request). In this case, the callback function will be called either in the MPI call MPI_Request_free(request) or in the MPI call MPI_Grequest_complete(request), whichever happens last. In other words, in this case the actual freeing code is executed as soon as both calls (MPI_Request_free and MPI_Grequest_complete) have occurred. The \fIrequest\fP is not deallocated until after \fIfree_fn\fP completes. Note that \fIfree_fn\fP will be invoked only once per request by a correct program. 
+The \fIfree_fn\fP callback is also invoked for generalized requests that are freed by a call to MPI_Request_free (no call to MPI_{Wait|Test}{any|some|all} will occur for such a request). In this case, the callback function will be called either in the MPI call MPI_Request_free(request) or in the MPI call MPI_Grequest_complete(request), whichever happens last. In other words, in this case the actual freeing code is executed as soon as both calls (MPI_Request_free and MPI_Grequest_complete) have occurred. The \fIrequest\fP is not deallocated until after \fIfree_fn\fP completes. Note that \fIfree_fn\fP will be invoked only once per request by a correct program.
 .sp
 In C, the cancel function is
 .sp
@@ -160,11 +160,11 @@ and gives the length of the declared integer in bytes.
 Almost all MPI routines return an error value; C routines as the value of the function and Fortran routines in the last argument. C++ functions do not return errors. If the default error handler is set to MPI::ERRORS_THROW_EXCEPTIONS, then on error the C++ exception mechanism will be used to throw an MPI::Exception object.
 .sp
 Before the error value is returned, the current MPI error handler is
-called. By default, this error handler aborts the MPI job, except for I/O function errors. The error handler may be changed with MPI_Comm_set_errhandler; the predefined error handler MPI_ERRORS_RETURN may be used to cause error values to be returned. Note that MPI does not guarantee that an MPI program can continue past an error.  
+called. By default, this error handler aborts the MPI job, except for I/O function errors. The error handler may be changed with MPI_Comm_set_errhandler; the predefined error handler MPI_ERRORS_RETURN may be used to cause error values to be returned. Note that MPI does not guarantee that an MPI program can continue past an error.
 .sp
-All callback functions return an error code. The code is passed back and dealt with as appropriate for the error code by the MPI function that invoked the callback function. For example, if error codes are returned, then the error code returned by the callback function will be returned by the MPI function that invoked the callback function. In the case of a MPI_{Wait|Test}any call that invokes both \fIquery_fn\fP and \fIfree_fn\fP, the MPI call will return the error code returned by the last callback, namely \fIfree_fn\fP. If one or more of the requests in a call to MPI_{Wait|Test}{some|all} has failed, then the MPI call will return MPI_ERR_IN_STATUS. In such a case, if the MPI call was passed an array of statuses, then MPI will return in each of the statuses that correspond to a completed generalized request the error code returned by the corresponding invocation of its \fIfree_fn\fP callback function. However, if the MPI function was passed MPI_STATUSES_IGNORE, then the individual error codes returned by each callback function will be lost. 
+All callback functions return an error code. The code is passed back and dealt with as appropriate for the error code by the MPI function that invoked the callback function. For example, if error codes are returned, then the error code returned by the callback function will be returned by the MPI function that invoked the callback function. In the case of a MPI_{Wait|Test}any call that invokes both \fIquery_fn\fP and \fIfree_fn\fP, the MPI call will return the error code returned by the last callback, namely \fIfree_fn\fP. If one or more of the requests in a call to MPI_{Wait|Test}{some|all} has failed, then the MPI call will return MPI_ERR_IN_STATUS. In such a case, if the MPI call was passed an array of statuses, then MPI will return in each of the statuses that correspond to a completed generalized request the error code returned by the corresponding invocation of its \fIfree_fn\fP callback function. However, if the MPI function was passed MPI_STATUSES_IGNORE, then the individual error codes returned by each callback function will be lost.
 .sp
-See the MPI man page for a full list of MPI error codes. 
+See the MPI man page for a full list of MPI error codes.
 
 
 

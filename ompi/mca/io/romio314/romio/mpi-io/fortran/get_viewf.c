@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -127,7 +127,7 @@ void mpi_file_get_view_(MPI_Fint *fh,MPI_Offset *disp,MPI_Fint *etype,
         /* this should be flagged as an error. */
         *ierr = MPI_ERR_UNKNOWN;
     }
-    
+
     *etype = MPI_Type_c2f(etype_c);
     *filetype = MPI_Type_c2f(filetype_c);
     ADIOI_Free(tmprep);
@@ -159,7 +159,7 @@ FORTRAN_API void FORT_CALL mpi_file_get_view_( MPI_Fint *fh, MPI_Offset *disp, M
         FPRINTF(stderr, "MPI_File_get_view: datarep is an invalid address\n");
         MPI_Abort(MPI_COMM_WORLD, 1);
     }
-    
+
     tmprep = (char *) ADIOI_Malloc((MPI_MAX_DATAREP_STRING+1) * sizeof(char));
     fh_c = MPI_File_f2c(*fh);
     etype_c = MPI_Type_f2c(*etype);

@@ -34,7 +34,7 @@
  * length we're working on are local.
  */
 int32_t
-opal_convertor_raw( opal_convertor_t* pConvertor, 
+opal_convertor_raw( opal_convertor_t* pConvertor,
 		    struct iovec* iov, uint32_t* iov_count,
 		    size_t* length )
 {

@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -85,7 +85,7 @@
 #endif
 
 
-void mpi_info_set_(MPI_Fint *info, char *key, char *value, int *ierr, 
+void mpi_info_set_(MPI_Fint *info, char *key, char *value, int *ierr,
                    int keylen, int vallen)
 {
     MPI_Info info_c;
@@ -103,7 +103,7 @@ void mpi_info_set_(MPI_Fint *info, char *key, char *value, int *ierr,
 
     /* strip leading and trailing blanks in key */
     lead_blanks = 0;
-    for (i=0; i<keylen; i++) 
+    for (i=0; i<keylen; i++)
 	if (key[i] == ' ') lead_blanks++;
 	else break;
 
@@ -122,7 +122,7 @@ void mpi_info_set_(MPI_Fint *info, char *key, char *value, int *ierr,
 
     /* strip leading and trailing blanks in value */
     lead_blanks = 0;
-    for (i=0; i<vallen; i++) 
+    for (i=0; i<vallen; i++)
 	if (value[i] == ' ') lead_blanks++;
 	else break;
 
@@ -138,7 +138,7 @@ void mpi_info_set_(MPI_Fint *info, char *key, char *value, int *ierr,
     ADIOI_Strncpy(newvalue, value, new_vallen);
     newvalue[new_vallen] = '\0';
 
- 
+
     info_c = MPI_Info_f2c(*info);
     *ierr = MPI_Info_set(info_c, newkey, newvalue);
     ADIOI_Free(newkey);

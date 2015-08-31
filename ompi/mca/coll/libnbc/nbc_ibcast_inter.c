@@ -30,11 +30,11 @@ int ompi_coll_libnbc_ibcast_inter(void *buffer, int count, MPI_Datatype datatype
   if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Comm_rank() (%i)\n", res); return res; }
   res = MPI_Type_size(datatype, &size);
   if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Type_size() (%i)\n", res); return res; }
-  
+
   handle->tmpbuf=NULL;
 
   schedule = (NBC_Schedule*)malloc(sizeof(NBC_Schedule));
-  
+
   res = NBC_Sched_create(schedule);
   if(res != NBC_OK) { printf("Error in NBC_Sched_create, res = %i\n", res); return res; }
 
@@ -57,12 +57,12 @@ int ompi_coll_libnbc_ibcast_inter(void *buffer, int count, MPI_Datatype datatype
       if (NBC_OK != res) { printf("Error in NBC_Sched_recv() (%i)\n", res); return res; }
     }
   }
-  
+
   res = NBC_Sched_commit(schedule);
   if (NBC_OK != res) { printf("Error in NBC_Sched_commit() (%i)\n", res); return res; }
-  
+
   res = NBC_Start(handle, schedule);
   if (NBC_OK != res) { printf("Error in NBC_Start() (%i)\n", res); return res; }
-  
+
   return NBC_OK;
 }

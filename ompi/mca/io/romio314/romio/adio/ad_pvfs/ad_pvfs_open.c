@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -37,15 +37,15 @@ void ADIOI_PVFS_Open(ADIO_File fd, int *error_code)
 
     value = (char *) ADIOI_Malloc((MPI_MAX_INFO_VAL+1)*sizeof(char));
 
-    ADIOI_Info_get(fd->info, "striping_factor", MPI_MAX_INFO_VAL, 
+    ADIOI_Info_get(fd->info, "striping_factor", MPI_MAX_INFO_VAL,
 		 value, &flag);
     if (flag && (atoi(value) > 0)) pstat.pcount = atoi(value);
 
-    ADIOI_Info_get(fd->info, "striping_unit", MPI_MAX_INFO_VAL, 
+    ADIOI_Info_get(fd->info, "striping_unit", MPI_MAX_INFO_VAL,
 		 value, &flag);
     if (flag && (atoi(value) > 0)) pstat.ssize = atoi(value);
 
-    ADIOI_Info_get(fd->info, "start_iodevice", MPI_MAX_INFO_VAL, 
+    ADIOI_Info_get(fd->info, "start_iodevice", MPI_MAX_INFO_VAL,
 		 value, &flag);
     if (flag && (atoi(value) >= 0)) pstat.base = atoi(value);
 

@@ -3,9 +3,9 @@
  *                         All rights reserved.
  * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -26,7 +26,7 @@ SHMEM_GENERATE_FORTRAN_BINDINGS_FUNCTION (ompi_fortran_logical_t,
         shmem_pe_accessible_,
         shmem_pe_accessible__,
         shmem_pe_accessible_f,
-        (MPI_Fint *pe), 
+        (MPI_Fint *pe),
         (pe) )
 
 ompi_fortran_logical_t shmem_pe_accessible_f(MPI_Fint *pe)

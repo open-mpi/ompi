@@ -6,16 +6,16 @@
  * Copyright (c) 2004-2010 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -62,7 +62,7 @@ int MPI_Get_elements_x(const MPI_Status *status, MPI_Datatype datatype, MPI_Coun
     if (MPI_PARAM_CHECK) {
         int err = MPI_SUCCESS;
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-        if (NULL == status || MPI_STATUSES_IGNORE == status || 
+        if (NULL == status || MPI_STATUSES_IGNORE == status ||
             MPI_STATUS_IGNORE == status || NULL == count) {
             err = MPI_ERR_ARG;
         } else if (NULL == datatype || MPI_DATATYPE_NULL == datatype) {

@@ -5,19 +5,19 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Los Alamos National Security, LLC.
- *                         All rights reserved. 
+ *                         All rights reserved.
  * Copyright (c) 2007      Voltaire. All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, LLC. All rights reserved.
  *
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -128,9 +128,9 @@ OPAL_DECLSPEC  int opal_argv_append_unique_nosize(char ***argv, const char *arg,
    * array.
    */
 OPAL_DECLSPEC  void opal_argv_free(char **argv);
-  
+
   /**
-   * Split a string into a NULL-terminated argv array. Do not include empty 
+   * Split a string into a NULL-terminated argv array. Do not include empty
    * strings in result array.
    *
    * @param src_string Input string.
@@ -147,7 +147,7 @@ OPAL_DECLSPEC  void opal_argv_free(char **argv);
 OPAL_DECLSPEC  char **opal_argv_split(const char *src_string, int delimiter) __opal_attribute_malloc__ __opal_attribute_warn_unused_result__;
 
   /**
-   * Split a string into a NULL-terminated argv array. Include empty 
+   * Split a string into a NULL-terminated argv array. Include empty
    * strings in result array.
    *
    * @param src_string Input string.
@@ -245,7 +245,7 @@ OPAL_DECLSPEC  char **opal_argv_copy(char **argv) __opal_attribute_malloc__ __op
      * free()ed (it is assumed that the argv "owns" the memory that
      * the pointer points to).
      */
-OPAL_DECLSPEC  int opal_argv_delete(int *argc, char ***argv, 
+OPAL_DECLSPEC  int opal_argv_delete(int *argc, char ***argv,
                                     int start, int num_to_delete);
 
     /**

@@ -2,9 +2,9 @@ dnl -*- shell-script -*-
 dnl
 dnl Copyright (c) 2006-2010 Sandia National Laboratories. All rights reserved.
 dnl $COPYRIGHT$
-dnl 
+dnl
 dnl Additional copyrights may follow
-dnl 
+dnl
 dnl $HEADER$
 dnl
 

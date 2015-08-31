@@ -2,9 +2,9 @@
  * Copyright (c) 2012      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 #include "oshmem_config.h"
@@ -21,7 +21,7 @@ void globalexit(int status)
     oshmem_shmem_inglobalexit++;
 
     orte_errmgr.abort(status, NULL);
-    
+
     oshmem_shmem_aborted = true;
     exit(status);
 }

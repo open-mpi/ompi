@@ -32,9 +32,9 @@ typedef struct _dist_graph_elem {
 } mca_topo_base_dist_graph_elem_t;
 
 int mca_topo_base_dist_graph_distribute(mca_topo_base_module_t* module,
-                                        ompi_communicator_t *comm, 
+                                        ompi_communicator_t *comm,
                                         int n, int nodes[],
-                                        int degrees[], int targets[], 
+                                        int degrees[], int targets[],
                                         int weights[],
                                         mca_topo_base_comm_dist_graph_2_2_0_t** ptopo)
 {
@@ -279,11 +279,11 @@ int mca_topo_base_dist_graph_distribute(mca_topo_base_module_t* module,
 }
 
 int mca_topo_base_dist_graph_create(mca_topo_base_module_t* module,
-                                    ompi_communicator_t *comm_old, 
+                                    ompi_communicator_t *comm_old,
                                     int n, int nodes[],
-                                    int degrees[], int targets[], 
+                                    int degrees[], int targets[],
                                     int weights[],
-                                    ompi_info_t *info, int reorder, 
+                                    ompi_info_t *info, int reorder,
                                     ompi_communicator_t **newcomm)
 {
     int err;
@@ -303,9 +303,9 @@ int mca_topo_base_dist_graph_create(mca_topo_base_module_t* module,
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
     err = mca_topo_base_dist_graph_distribute(module,
-                                              comm_old, 
+                                              comm_old,
                                               n, nodes,
-                                              degrees, targets, 
+                                              degrees, targets,
                                               weights,
                                               &topo);
     if( OMPI_SUCCESS != err ) {
@@ -318,7 +318,7 @@ int mca_topo_base_dist_graph_create(mca_topo_base_module_t* module,
        must be set before invoking ompi_comm_enable */
     rank = ompi_comm_rank(comm_old);
     if(OMPI_GROUP_IS_DENSE(comm_old->c_local_group)) {
-        memcpy(topo_procs, 
+        memcpy(topo_procs,
                comm_old->c_local_group->grp_proc_pointers,
                num_procs * sizeof(ompi_proc_t *));
     } else {

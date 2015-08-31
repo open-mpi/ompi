@@ -1,14 +1,14 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
 #include "ad_piofs.h"
 #include "adio_extern.h"
 
-void ADIOI_PIOFS_WriteContig(ADIO_File fd, void *buf, int count, 
+void ADIOI_PIOFS_WriteContig(ADIO_File fd, void *buf, int count,
                      MPI_Datatype datatype, int file_ptr_type,
 		     ADIO_Offset offset, ADIO_Status *status, int *error_code)
 {
@@ -26,7 +26,7 @@ void ADIOI_PIOFS_WriteContig(ADIO_File fd, void *buf, int count,
 	}
 	err = write(fd->fd_sys, buf, len);
 	fd->fp_sys_posn = offset + err;
-	/* individual file pointer not updated */        
+	/* individual file pointer not updated */
     }
     else { /* write from curr. location of ind. file pointer */
 	if (fd->fp_sys_posn != fd->fp_ind) {
@@ -97,7 +97,7 @@ void ADIOI_PIOFS_WriteStrided(ADIO_File fd, void *buf, int count,
 #ifdef HAVE_STATUS_SET_BYTES
 	MPIR_Status_set_bytes(status, datatype, 0);
 #endif
-	*error_code = MPI_SUCCESS; 
+	*error_code = MPI_SUCCESS;
 	return;
     }
 
@@ -105,7 +105,7 @@ void ADIOI_PIOFS_WriteStrided(ADIO_File fd, void *buf, int count,
     MPI_Type_size_x(datatype, &buftype_size);
     MPI_Type_extent(datatype, &buftype_extent);
     etype_size = fd->etype_size;
-    
+
     bufsize = buftype_size * count;
 
     if (!buftype_is_contig && filetype_is_contig) {
@@ -127,10 +127,10 @@ void ADIOI_PIOFS_WriteStrided(ADIO_File fd, void *buf, int count,
 	else off = llseek(fd->fd_sys, fd->fp_ind, SEEK_SET);
 
 	k = 0;
-	for (j=0; j<count; j++) 
+	for (j=0; j<count; j++)
 	    for (i=0; i<flat_buf->count; i++) {
 		iov[k].iov_base = ((char *) buf) + j*buftype_extent +
-		    flat_buf->indices[i]; 
+		    flat_buf->indices[i];
 		iov[k].iov_len = flat_buf->blocklens[i];
 		/*FPRINTF(stderr, "%d %d\n", iov[k].iov_base, iov[k].iov_len);*/
 
@@ -155,7 +155,7 @@ void ADIOI_PIOFS_WriteStrided(ADIO_File fd, void *buf, int count,
 #ifdef MPICH
 	    *error_code = MPIR_Err_create_code(MPI_SUCCESS, MPIR_ERR_RECOVERABLE, myname, __LINE__, MPI_ERR_IO, "**io",
 		"**io %s", strerror(errno));
-#elif defined(PRINT_ERR_MSG) 
+#elif defined(PRINT_ERR_MSG)
 	    *error_code =  MPI_ERR_UNKNOWN;
 #else /* MPICH-1 */
 	    *error_code = MPIR_Err_setmsg(MPI_ERR_IO, MPIR_ADIO_ERROR,
@@ -184,11 +184,11 @@ void ADIOI_PIOFS_WriteStrided(ADIO_File fd, void *buf, int count,
             while (!flag) {
                 n_filetypes++;
                 for (i=0; i<flat_file->count; i++) {
-                    if (disp + flat_file->indices[i] + 
-                        (ADIO_Offset) n_filetypes*filetype_extent + flat_file->blocklens[i] 
+                    if (disp + flat_file->indices[i] +
+                        (ADIO_Offset) n_filetypes*filetype_extent + flat_file->blocklens[i]
                             >= offset) {
                         st_index = i;
-                        fwr_size = disp + flat_file->indices[i] + 
+                        fwr_size = disp + flat_file->indices[i] +
                                 (ADIO_Offset) n_filetypes*filetype_extent
                                  + flat_file->blocklens[i] - offset;
                         flag = 1;
@@ -202,7 +202,7 @@ void ADIOI_PIOFS_WriteStrided(ADIO_File fd, void *buf, int count,
 	    n_filetypes = (int) (offset / n_etypes_in_filetype);
 	    etype_in_filetype = (int) (offset % n_etypes_in_filetype);
 	    size_in_filetype = etype_in_filetype * etype_size;
- 
+
 	    sum = 0;
 	    for (i=0; i<flat_file->count; i++) {
 		sum += flat_file->blocklens[i];
@@ -229,9 +229,9 @@ void ADIOI_PIOFS_WriteStrided(ADIO_File fd, void *buf, int count,
 	    off = offset;
 	    fwr_size = ADIOI_MIN(fwr_size, bufsize);
 	    while (i < bufsize) {
-                if (fwr_size) { 
-                    /* TYPE_UB and TYPE_LB can result in 
-                       fwr_size = 0. save system call in such cases */ 
+                if (fwr_size) {
+                    /* TYPE_UB and TYPE_LB can result in
+                       fwr_size = 0. save system call in such cases */
 		    llseek(fd->fd_sys, off, SEEK_SET);
 		    err = write(fd->fd_sys, ((char *) buf) + i, fwr_size);
 		    if (err == -1) err_flag = 1;
@@ -249,7 +249,7 @@ void ADIOI_PIOFS_WriteStrided(ADIO_File fd, void *buf, int count,
 			j = 0;
 			n_filetypes++;
 		    }
-		    off = disp + flat_file->indices[j] + 
+		    off = disp + flat_file->indices[j] +
                                         (ADIO_Offset) n_filetypes*filetype_extent;
 		    fwr_size = ADIOI_MIN(flat_file->blocklens[j], bufsize-i);
 		}
@@ -287,7 +287,7 @@ void ADIOI_PIOFS_WriteStrided(ADIO_File fd, void *buf, int count,
                         n_filetypes++;
                     }
 
-                    off = disp + flat_file->indices[j] + 
+                    off = disp + flat_file->indices[j] +
                                               (ADIO_Offset) n_filetypes*filetype_extent;
 
 		    new_fwr_size = flat_file->blocklens[j];
@@ -303,7 +303,7 @@ void ADIOI_PIOFS_WriteStrided(ADIO_File fd, void *buf, int count,
 		    k = (k + 1)%flat_buf->count;
 		    buf_count++;
 		    indx = buftype_extent*(buf_count/flat_buf->count) +
-			flat_buf->indices[k]; 
+			flat_buf->indices[k];
 		    new_bwr_size = flat_buf->blocklens[k];
 		    if (size != fwr_size) {
 			off += size;
@@ -330,13 +330,13 @@ void ADIOI_PIOFS_WriteStrided(ADIO_File fd, void *buf, int count,
 #endif
 	}
 	else *error_code = MPI_SUCCESS;
-    } 
+    }
 
     fd->fp_sys_posn = -1;   /* set it to null. */
 
 #ifdef HAVE_STATUS_SET_BYTES
     MPIR_Status_set_bytes(status, datatype, bufsize);
-/* This is a temporary way of filling in status. The right way is to 
+/* This is a temporary way of filling in status. The right way is to
    keep track of how much data was actually written by ADIOI_BUFFERED_WRITE. */
 #endif
 

@@ -1,5 +1,5 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/*  
+/*
  *  (C) 2001 by Argonne National Laboratory.
  *      See COPYRIGHT in top-level directory.
  */
@@ -12,7 +12,7 @@
 
 void handle_error(int errcode, const char *str);
 
-void handle_error(int errcode, const char *str) 
+void handle_error(int errcode, const char *str)
 {
 	char msg[MPI_MAX_ERROR_STRING];
 	int resultlen;
@@ -34,7 +34,7 @@ int main(int argc, char **argv)
     MPI_Init(&argc,&argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-/* process 0 takes the file name as a command-line argument and 
+/* process 0 takes the file name as a command-line argument and
    broadcasts it to other processes */
     if (!rank) {
 	i = 1;
@@ -58,7 +58,7 @@ int main(int argc, char **argv)
 	filename = (char *) malloc(len+10);
 	MPI_Bcast(filename, len+10, MPI_CHAR, 0, MPI_COMM_WORLD);
     }
-    
+
     buf = (int *) malloc(COUNT * sizeof(int));
 
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -66,7 +66,7 @@ int main(int argc, char **argv)
 
     for (i=0; i<COUNT; i++) buf[i] = COUNT*rank + i;
 
-    errcode = MPI_File_open(MPI_COMM_WORLD, filename, 
+    errcode = MPI_File_open(MPI_COMM_WORLD, filename,
 		    MPI_MODE_CREATE | MPI_MODE_RDWR, MPI_INFO_NULL, &fh);
     if (errcode != MPI_SUCCESS) {
 	    handle_error(errcode, "MPI_File_open");
@@ -100,10 +100,10 @@ int main(int argc, char **argv)
 
     if (global_sum != (((COUNT*nprocs - 1)*(COUNT*nprocs))/2)) {
 	errs++;
-	fprintf(stderr, "Error: sum %d, global_sum %d, %d\n", 
+	fprintf(stderr, "Error: sum %d, global_sum %d, %d\n",
 		sum, global_sum,(((COUNT*nprocs - 1)*(COUNT*nprocs))/2));
     }
-    
+
     free(buf);
     free(filename);
 
@@ -118,5 +118,5 @@ int main(int argc, char **argv)
     }
 
     MPI_Finalize();
-    return 0; 
+    return 0;
 }

@@ -5,9 +5,9 @@
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -22,7 +22,7 @@
 /*
  * Public string for version number
  */
-const char *orte_sstore_central_component_version_string = 
+const char *orte_sstore_central_component_version_string =
     "ORTE SSTORE central MCA component version " ORTE_VERSION;
 
 /*
@@ -39,7 +39,7 @@ static int sstore_central_close(void);
 orte_sstore_central_component_t mca_sstore_central_component = {
     /* First do the base component stuff */
     {
-        /* Handle the general mca_component_t struct containing 
+        /* Handle the general mca_component_t struct containing
          *  meta information about the component itcentral
          */
         .base_version = {
@@ -86,7 +86,7 @@ static int sstore_central_register (void)
     return ORTE_SUCCESS;
 }
 
-static int sstore_central_open(void) 
+static int sstore_central_open(void)
 {
     /* If there is a custom verbose level for this component than use it
      * otherwise take our parents level and output channel
@@ -98,17 +98,17 @@ static int sstore_central_open(void)
     } else {
         mca_sstore_central_component.super.output_handle = orte_sstore_base_framework.framework_output;
     }
-    
+
     /*
      * Debug Output
      */
     opal_output_verbose(10, mca_sstore_central_component.super.output_handle,
                         "sstore:central: open()");
     opal_output_verbose(20, mca_sstore_central_component.super.output_handle,
-                        "sstore:central: open: priority   = %d", 
+                        "sstore:central: open: priority   = %d",
                         mca_sstore_central_component.super.priority);
     opal_output_verbose(20, mca_sstore_central_component.super.output_handle,
-                        "sstore:central: open: verbosity  = %d", 
+                        "sstore:central: open: verbosity  = %d",
                         mca_sstore_central_component.super.verbose);
 
     return ORTE_SUCCESS;

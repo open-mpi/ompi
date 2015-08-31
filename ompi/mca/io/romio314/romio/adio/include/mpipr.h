@@ -4,8 +4,8 @@
  *      See COPYRIGHT in top-level directory.
  */
 /* This file replaces all MPI function names with their PMPI equivalents.
-   PMPI versions are used by default so that the user can profile 
-   application code without interference from MPI functions used by 
+   PMPI versions are used by default so that the user can profile
+   application code without interference from MPI functions used by
    MPI-IO. */
 
 #ifndef USE_MPI_VERSIONS
@@ -295,7 +295,7 @@
 #undef MPI_Wtime
 #define MPI_Wtime PMPI_Wtime
 
-/* commented out because these could be macros themselves, as in MPICH 
+/* commented out because these could be macros themselves, as in MPICH
 #undef MPI_Type_c2f
 #define MPI_Type_c2f PMPI_Type_c2f
 #undef MPI_Type_f2c

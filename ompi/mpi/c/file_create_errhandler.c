@@ -5,15 +5,15 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2009 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -44,7 +44,7 @@ int MPI_File_create_errhandler(MPI_File_errhandler_function *function,
 
   if (MPI_PARAM_CHECK) {
     OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-    if (NULL == function || 
+    if (NULL == function ||
         NULL == errhandler) {
       return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,
                                    "MPI_File_create_errhandler");
@@ -55,7 +55,7 @@ int MPI_File_create_errhandler(MPI_File_errhandler_function *function,
 
   /* Create and cache the errhandler.  Sets a refcount of 1. */
 
-  *errhandler = 
+  *errhandler =
     ompi_errhandler_create(OMPI_ERRHANDLER_TYPE_FILE,
                            (ompi_errhandler_generic_handler_fn_t*) function,
                            OMPI_ERRHANDLER_LANG_C);

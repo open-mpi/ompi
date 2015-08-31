@@ -6,29 +6,29 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2015 Los Alamos National Security, LLC.  All rights
- *                         reserved. 
+ *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 /** @file:
  *
  * The Open RTE Resource Allocation Subsystem (RAS)
- * 
+ *
  * The resource allocation subsystem is responsible for determining
  * what (if any) resources have been allocated to the specified job
  * (via some prior action), and to obtain an allocation (if possible)
  * if resources have NOT been previously allocated. It is anticipated
  * that ORTE users will execute an "mpirun" or other command that
  * invokes ORTE through one of two channels:
- * 
+ *
  * 1. the user will login to the computing resource they intend
  * to use, request a resource allocation from that system, and then
  * execute the mpirun or other command. Thus, the allocation has
@@ -38,7 +38,7 @@
  * environmental parameter to look for within the environment they
  * seek to support (e.g., an LSF component should know that LSF passes
  * allocation parameters as a specific LSF-named entity).
- * 
+ *
  * 2. the user issues an mpirun command or an application that uses
  * ORTE without obtaining an allocation in advance. Thus, the associated
  * RAS component must know how to request an allocation from the

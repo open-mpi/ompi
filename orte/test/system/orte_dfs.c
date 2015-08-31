@@ -115,7 +115,7 @@ int main(int argc, char* argv[])
         fprintf(stderr, "orte_dfs: couldn't init orte - error code %d\n", rc);
         return rc;
     }
-    
+
     /* if I am part of an initial job, then test my basic
      * API operations
      */
@@ -275,11 +275,11 @@ int main(int argc, char* argv[])
                     if (NULL == (uri = opal_filename_to_uri(path, host))) {
                         return 1;
                     }
-                    
+
                     active = true;
                     orte_dfs.open(uri, dfs_open_cbfunc, &fd);
                     ORTE_WAIT_FOR_COMPLETION(active);
-                    
+
                     if (fd < 0) {
                         /* hit an error */
                         return 1;
@@ -293,7 +293,7 @@ int main(int argc, char* argv[])
                     numread = 0;
                     orte_dfs.read(fd, buffer, length, read_cbfunc, NULL);
                     ORTE_WAIT_FOR_COMPLETION(active);
-                    
+
                     opal_output(0, "%s successfully read %d bytes",
                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), numread);
                     active= true;

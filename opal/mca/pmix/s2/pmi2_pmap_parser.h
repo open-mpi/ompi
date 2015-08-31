@@ -1,5 +1,5 @@
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
-/* 
+/*
  *
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.

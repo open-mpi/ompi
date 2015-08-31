@@ -2,9 +2,9 @@
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 #include "oshmem_config.h"
@@ -18,7 +18,7 @@
 #include "oshmem/mca/atomic/atomic.h"
 
 /*
- * These routines perform an atomic increment operation on a remote data object. 
+ * These routines perform an atomic increment operation on a remote data object.
  * The atomic increment routines replace the value of target with its value incremented by
  * one. The operation must be completed without the possibility of another process updating
  * target between the time of the fetch and the update.

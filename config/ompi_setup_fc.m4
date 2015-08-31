@@ -6,20 +6,20 @@ dnl                         Corporation.  All rights reserved.
 dnl Copyright (c) 2004-2005 The University of Tennessee and The University
 dnl                         of Tennessee Research Foundation.  All rights
 dnl                         reserved.
-dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
-dnl                         reserved. 
+dnl                         reserved.
 dnl Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
 dnl Copyright (c) 2009-2014 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2015      Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
 dnl $COPYRIGHT$
-dnl 
+dnl
 dnl Additional copyrights may follow
-dnl 
+dnl
 dnl $HEADER$
 dnl
 dnl OMPI_SETUP_FC
@@ -27,7 +27,7 @@ dnl
 
 # This is REQUIREd, below.
 AC_DEFUN_ONCE([_OMPI_SETUP_FC_BANNER],[
-    opal_show_subtitle "Fortran compiler" 
+    opal_show_subtitle "Fortran compiler"
 ])
 
 #############################################################################
@@ -78,7 +78,7 @@ AC_DEFUN([OMPI_SETUP_FC],[
     AS_IF([test $ompi_fc_happy -eq 1],
           [OPAL_CHECK_COMPILER_WORKS([Fortran], [], [], [],
               [AC_MSG_ERROR([Could not run a simple Fortran program.  Aborting.])])])
-    
+
     # OS X before 10.3 (deployment target) does not allow undefined common
     # symbols in shared libraries.  Because we can't figure out how to
     # implement MPI_STATUSES_IGNORE and friends wihtout common symbols, on
@@ -125,7 +125,7 @@ AC_DEFUN([OMPI_SETUP_FC],[
         AC_MSG_RESULT([none])
         ;;
     esac
-    
+
     # If we're still good, then save the extra file types.  Do this last
     # because it implies tests that should be invoked by the above tests
     # (e.g., running the fortran compiler).
@@ -204,7 +204,7 @@ EOF
                  [AC_MSG_RESULT([skipped (no C++ exceptions flags)])],
                  [FCFLAGS="$FCFLAGS $OMPI_CXX_EXCEPTIONS_CXXFLAGS"
                   AC_LANG_PUSH([Fortran])
-                  AC_COMPILE_IFELSE([AC_LANG_PROGRAM([], [[ 
+                  AC_COMPILE_IFELSE([AC_LANG_PROGRAM([], [[
 INTEGER I
 I = 3]])],
                       [AC_MSG_RESULT([yes])],

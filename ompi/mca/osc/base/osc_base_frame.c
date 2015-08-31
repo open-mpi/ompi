@@ -3,16 +3,16 @@
  *                         All rights reserved.
  * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
  *                         All rights reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -65,7 +65,7 @@ ompi_osc_base_finalize(void)
     opal_list_item_t* item;
 
     /* Finalize all available modules */
-    while (NULL != 
+    while (NULL !=
            (item = opal_list_remove_first(&ompi_osc_base_framework.framework_components))) {
         ompi_osc_base_component_t *component = (ompi_osc_base_component_t*)
             ((mca_base_component_list_item_t*) item)->cli_component;

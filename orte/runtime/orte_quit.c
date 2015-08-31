@@ -13,7 +13,7 @@
  * Copyright (c) 2006-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007-2009 Sun Microsystems, Inc. All rights reserved.
  * Copyright (c) 2007-2015 Los Alamos National Security, LLC.  All rights
- *                         reserved. 
+ *                         reserved.
  * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
@@ -151,7 +151,7 @@ static void dump_aborted_procs(void)
     orte_app_context_t *approc;
     orte_job_t *job;
     orte_node_t *node;
-    
+
     /* find the job that caused the problem - be sure to start the loop
      * at 1 as the daemons are in 0 and will clearly be "running", so no
      * point in checking them
@@ -227,11 +227,11 @@ static void dump_aborted_procs(void)
                     break;
                 case ORTE_ERR_EXE_NOT_FOUND:
                     orte_show_help("help-orterun.txt", "orterun:exe-not-found", true,
-                                   orte_basename, 
+                                   orte_basename,
                                    (unsigned long)proc->name.vpid,
-                                   orte_basename, 
-                                   orte_basename, 
-                                   proc->node->name, 
+                                   orte_basename,
+                                   orte_basename,
+                                   proc->node->name,
                                    approc->app);
                     break;
                 case ORTE_ERR_EXE_NOT_ACCESSIBLE:
@@ -245,8 +245,8 @@ static void dump_aborted_procs(void)
                     break;
                 case ORTE_ERR_TOPO_SLOT_LIST_NOT_SUPPORTED:
                     orte_show_help("help-orterun.txt",
-                                   "orterun:topo-not-supported", 
-                                   true, orte_process_info.nodename, "rankfile containing a slot_list of ", 
+                                   "orterun:topo-not-supported",
+                                   true, orte_process_info.nodename, "rankfile containing a slot_list of ",
                                    NULL, approc->app);
                     break;
                 case ORTE_ERR_INVALID_NODE_RANK:
@@ -265,7 +265,7 @@ static void dump_aborted_procs(void)
                     break;
                 case ORTE_ERR_TOPO_CORE_NOT_SUPPORTED:
                     orte_show_help("help-orterun.txt",
-                                   "orterun:topo-not-supported", 
+                                   "orterun:topo-not-supported",
                                    true, node->name, "bind-to-core", "",
                                    approc->app);
                     break;
@@ -281,18 +281,18 @@ static void dump_aborted_procs(void)
                     break;
                 case ORTE_ERR_TOPO_SOCKET_NOT_SUPPORTED:
                     orte_show_help("help-orterun.txt",
-                                   "orterun:topo-not-supported", 
+                                   "orterun:topo-not-supported",
                                    true, node->name, "bind-to-socket", "",
                                    approc->app);
                     break;
                 case ORTE_ERR_MODULE_NOT_FOUND:
                     orte_show_help("help-orterun.txt",
-                                   "orterun:paffinity-missing-module", 
+                                   "orterun:paffinity-missing-module",
                                    true, node->name);
                     break;
                 case ORTE_ERR_SLOT_LIST_RANGE:
                     orte_show_help("help-orterun.txt",
-                                   "orterun:invalid-slot-list-range", 
+                                   "orterun:invalid-slot-list-range",
                                    true, node->name, NULL);
                     break;
                 case ORTE_ERR_PIPE_READ_FAILURE:

@@ -4,15 +4,15 @@
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 /** @file:
  *
  * The Open RTE Run-Time Control Framework (RTC)
- * 
+ *
  */
 
 #ifndef ORTE_MCA_RTC_H

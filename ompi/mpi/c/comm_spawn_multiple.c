@@ -6,7 +6,7 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -15,9 +15,9 @@
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 #include "ompi_config.h"
@@ -56,12 +56,12 @@ int MPI_Comm_spawn_multiple(int count, char *array_of_commands[], char **array_o
     MEMCHECKER(
         memchecker_comm(comm);
     );
-    
+
     if ( MPI_PARAM_CHECK ) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 
         if ( ompi_comm_invalid (comm)) {
-            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, 
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM,
                                           FUNC_NAME);
         }
         if ( OMPI_COMM_IS_INTER(comm)) {
@@ -74,7 +74,7 @@ int MPI_Comm_spawn_multiple(int count, char *array_of_commands[], char **array_o
             return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
         }
     }
-   
+
     rank = ompi_comm_rank ( comm );
     if ( MPI_PARAM_CHECK ) {
         if ( rank == root ) {
@@ -91,7 +91,7 @@ int MPI_Comm_spawn_multiple(int count, char *array_of_commands[], char **array_o
                 return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_INFO, FUNC_NAME);
             }
             for (i = 0; i < count; ++i) {
-                if (NULL == array_of_info[i] || 
+                if (NULL == array_of_info[i] ||
                     ompi_info_is_freed(array_of_info[i])) {
                     return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INFO,
                                                   FUNC_NAME);
@@ -124,7 +124,7 @@ int MPI_Comm_spawn_multiple(int count, char *array_of_commands[], char **array_o
                 if ( 0 > array_of_maxprocs[i] ) {
                     return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
                 }
-            }  
+            }
         }
     }
 
@@ -142,7 +142,7 @@ int MPI_Comm_spawn_multiple(int count, char *array_of_commands[], char **array_o
 
     /* initialize the port name to avoid problems */
     memset(port_name, 0, MPI_MAX_PORT_NAME);
-    
+
     OPAL_CR_ENTER_LIBRARY();
 
     if ( rank == root ) {
@@ -172,12 +172,12 @@ int MPI_Comm_spawn_multiple(int count, char *array_of_commands[], char **array_o
 
 error:
     OPAL_CR_EXIT_LIBRARY();
-    
+
     /* close the port */
     if (rank == root && !non_mpi) {
         ompi_dpm.close_port(port_name);
     }
-    
+
     /* set array of errorcodes */
     if (MPI_ERRCODES_IGNORE != array_of_errcodes) {
         if (NULL != newcomp) {

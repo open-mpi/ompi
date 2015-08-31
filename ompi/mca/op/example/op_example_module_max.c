@@ -5,15 +5,15 @@
  * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2009 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -118,7 +118,7 @@ static OBJ_CLASS_INSTANCE(module_max_t,
 /**
  * Max function for C float
  */
-static void max_float(void *in, void *out, int *count, 
+static void max_float(void *in, void *out, int *count,
                       ompi_datatype_t **type, ompi_op_base_module_t *module)
 {
     module_max_t *m = (module_max_t*) module;
@@ -152,7 +152,7 @@ static void max_float(void *in, void *out, int *count,
 /**
  * Max function for C double
  */
-static void max_double(void *in, void *out, int *count, 
+static void max_double(void *in, void *out, int *count,
                        ompi_datatype_t **type, ompi_op_base_module_t *module)
 {
     module_max_t *m = (module_max_t*) module;
@@ -166,7 +166,7 @@ static void max_double(void *in, void *out, int *count,
 /**
  * Max function for Fortran REAL
  */
-static void max_real(void *in, void *out, int *count, 
+static void max_real(void *in, void *out, int *count,
                      ompi_datatype_t **type, ompi_op_base_module_t *module)
 {
     module_max_t *m = (module_max_t*) module;
@@ -180,8 +180,8 @@ static void max_real(void *in, void *out, int *count,
 /**
  * Max function for Fortran DOUBLE PRECISION
  */
-static void max_double_precision(void *in, void *out, int *count, 
-                                 ompi_datatype_t **type, 
+static void max_double_precision(void *in, void *out, int *count,
+                                 ompi_datatype_t **type,
                                  ompi_op_base_module_t *module)
 {
     module_max_t *m = (module_max_t*) module;
@@ -189,7 +189,7 @@ static void max_double_precision(void *in, void *out, int *count,
 
     /* Just another example function -- similar to max_int() */
 
-    m->fallback_double_precision(in, out, count, type, 
+    m->fallback_double_precision(in, out, count, type,
                                  m->fallback_double_precision_module);
 }
 
@@ -215,7 +215,7 @@ ompi_op_base_module_t *ompi_op_example_setup_max(ompi_op_t *op)
     /* C float */
     module->super.opm_fns[OMPI_OP_BASE_TYPE_FLOAT] = max_float;
     module->fallback_float = op->o_func.intrinsic.fns[OMPI_OP_BASE_TYPE_FLOAT];
-    module->fallback_float_module = 
+    module->fallback_float_module =
         op->o_func.intrinsic.modules[OMPI_OP_BASE_TYPE_FLOAT];
     /* If you cache a fallback function, you *must* RETAIN (i.e.,
        increase the refcount) its module so that the module knows that
@@ -224,9 +224,9 @@ ompi_op_base_module_t *ompi_op_example_setup_max(ompi_op_t *op)
 
     /* Fortran REAL */
     module->super.opm_fns[OMPI_OP_BASE_TYPE_REAL] = max_real;
-    module->fallback_real = 
+    module->fallback_real =
         op->o_func.intrinsic.fns[OMPI_OP_BASE_TYPE_REAL];
-    module->fallback_real_module = 
+    module->fallback_real_module =
         op->o_func.intrinsic.modules[OMPI_OP_BASE_TYPE_REAL];
     OBJ_RETAIN(module->fallback_real_module);
 
@@ -235,18 +235,18 @@ ompi_op_base_module_t *ompi_op_example_setup_max(ompi_op_t *op)
     if (mca_op_example_component.double_supported) {
         /* C double */
         module->super.opm_fns[OMPI_OP_BASE_TYPE_DOUBLE] = max_double;
-        module->fallback_double = 
+        module->fallback_double =
             op->o_func.intrinsic.fns[OMPI_OP_BASE_TYPE_DOUBLE];
-        module->fallback_double_module = 
+        module->fallback_double_module =
             op->o_func.intrinsic.modules[OMPI_OP_BASE_TYPE_DOUBLE];
         OBJ_RETAIN(module->fallback_double_module);
-        
+
         /* Fortran DOUBLE PRECISION */
-        module->super.opm_fns[OMPI_OP_BASE_TYPE_DOUBLE_PRECISION] = 
+        module->super.opm_fns[OMPI_OP_BASE_TYPE_DOUBLE_PRECISION] =
             max_double_precision;
-        module->fallback_double_precision = 
+        module->fallback_double_precision =
             op->o_func.intrinsic.fns[OMPI_OP_BASE_TYPE_DOUBLE_PRECISION];
-        module->fallback_double_precision_module = 
+        module->fallback_double_precision_module =
             op->o_func.intrinsic.modules[OMPI_OP_BASE_TYPE_DOUBLE_PRECISION];
         OBJ_RETAIN(module->fallback_double_precision_module);
     }

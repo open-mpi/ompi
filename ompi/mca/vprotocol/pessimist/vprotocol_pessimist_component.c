@@ -31,7 +31,7 @@ static int _sender_based_size;
 static int _event_buffer_size;
 static char *_mmap_file_name;
 
-mca_vprotocol_base_component_2_0_0_t mca_vprotocol_pessimist_component = 
+mca_vprotocol_base_component_2_0_0_t mca_vprotocol_pessimist_component =
 {
     /* First, the mca_base_component_t struct containing meta
      * information about the component itself */
@@ -114,7 +114,7 @@ static int mca_vprotocol_pessimist_component_close(void)
 static mca_vprotocol_base_module_t *mca_vprotocol_pessimist_component_init( int* priority,
                                                                           bool enable_progress_threads,
                                                                           bool enable_mpi_threads)
-{  
+{
     V_OUTPUT_VERBOSE(500, "vprotocol_pessimist: component_init");
     *priority = _priority;
 
@@ -139,16 +139,16 @@ static mca_vprotocol_base_module_t *mca_vprotocol_pessimist_component_init( int*
                          _free_list_max,
                          _free_list_inc,
                          NULL, 0, NULL, NULL, NULL);
-    mca_vprotocol_pessimist.event_buffer_max_length = 
+    mca_vprotocol_pessimist.event_buffer_max_length =
                 _event_buffer_size / sizeof(vprotocol_pessimist_mem_event_t);
     mca_vprotocol_pessimist.event_buffer_length = 0;
-    mca_vprotocol_pessimist.event_buffer = 
+    mca_vprotocol_pessimist.event_buffer =
                 (vprotocol_pessimist_mem_event_t *) malloc(_event_buffer_size);
     mca_vprotocol_pessimist.el_comm = MPI_COMM_NULL;
-    
+
     return &mca_vprotocol_pessimist.super;
 }
-                                                                          
+
 static int mca_vprotocol_pessimist_component_finalize(void)
 {
     V_OUTPUT_VERBOSE(500, "vprotocol_pessimist_finalize");
@@ -162,7 +162,7 @@ static int mca_vprotocol_pessimist_component_finalize(void)
 int mca_vprotocol_pessimist_enable(bool enable) {
     if(enable) {
         int ret;
-        if((ret = vprotocol_pessimist_sender_based_init(_mmap_file_name, 
+        if((ret = vprotocol_pessimist_sender_based_init(_mmap_file_name,
                                                  _sender_based_size)) != OMPI_SUCCESS)
             return ret;
     }

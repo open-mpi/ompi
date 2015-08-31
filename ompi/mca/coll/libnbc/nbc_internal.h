@@ -2,7 +2,7 @@
  * Copyright (c) 2006 The Trustees of Indiana University and Indiana
  *                    University Research and Technology
  *                    Corporation.  All rights reserved.
- * Copyright (c) 2006 The Technical University of Chemnitz. All 
+ * Copyright (c) 2006 The Technical University of Chemnitz. All
  *                    rights reserved.
  *
  * Author(s): Torsten Hoefler <htor@cs.indiana.edu>
@@ -66,7 +66,7 @@ extern "C" {
 #define NBC_SCATTER 14
 #define NBC_SCATTERV 15
 /* set the number of collectives in nbc.h !!!! */
-  
+
 /* several typedefs for NBC */
 
 /* the function type enum */
@@ -111,7 +111,7 @@ typedef struct {
 
 /* the copy argument struct */
 typedef struct {
-  void *src; 
+  void *src;
   char tmpsrc;
   int srccount;
   MPI_Datatype srctype;
@@ -123,11 +123,11 @@ typedef struct {
 
 /* unpack operation arguments */
 typedef struct {
-  void *inbuf; 
+  void *inbuf;
   char tmpinbuf;
   int count;
   MPI_Datatype datatype;
-  void *outbuf; 
+  void *outbuf;
   char tmpoutbuf;
 } NBC_Args_unpack;
 
@@ -239,7 +239,7 @@ int NBC_Scatter_args_compare(NBC_Scatter_args *a, NBC_Scatter_args *b, void *par
 /* Schedule cache structures/functions */
 void NBC_SchedCache_args_delete(void *entry);
 void NBC_SchedCache_args_delete_key_dummy(void *k);
-  
+
 #endif
 
 
@@ -259,7 +259,7 @@ int NBC_Create_fortran_handle(int *fhandle, NBC_Handle **handle);
  * [type] ::= function type (NBC_Fn_type)
  * [type-args] ::= type specific arguments (NBC_Args_send, NBC_Args_recv or, NBC_Args_op)
  * [delimiter] ::= 1 (char) - indicates that a round follows
- * [end] ::= 0 (char) - indicates that this is the last round 
+ * [end] ::= 0 (char) - indicates that this is the last round
  */
 
 /*
@@ -438,29 +438,29 @@ int NBC_Create_fortran_handle(int *fhandle, NBC_Handle **handle);
 
 
 /*
-#define NBC_DEBUG(level, ...) {} 
+#define NBC_DEBUG(level, ...) {}
 */
 
-static inline void NBC_DEBUG(int level, const char *fmt, ...) 
-{ 
+static inline void NBC_DEBUG(int level, const char *fmt, ...)
+{
 #if NBC_DLEVEL > 0
   va_list ap;
-  int rank; 
- 
-  if(NBC_DLEVEL >= level) { 
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank); 
-    
-    printf("[LibNBC - %i] ", rank); 
+  int rank;
+
+  if(NBC_DLEVEL >= level) {
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+    printf("[LibNBC - %i] ", rank);
     va_start(ap, fmt);
     vprintf(fmt, ap);
     va_end (ap);
-  } 
+  }
 #endif
 }
 
 /* returns true (1) or false (0) if type is intrinsic or not */
 static inline int NBC_Type_intrinsic(MPI_Datatype type) {
-  
+
   if( ( type == MPI_INT ) ||
       ( type == MPI_LONG ) ||
       ( type == MPI_SHORT ) ||
@@ -476,9 +476,9 @@ static inline int NBC_Type_intrinsic(MPI_Datatype type) {
       ( type == MPI_LONG_INT) ||
       ( type == MPI_2INT) ||
       ( type == MPI_SHORT_INT) ||
-      ( type == MPI_LONG_DOUBLE_INT)) 
+      ( type == MPI_LONG_DOUBLE_INT))
     return 1;
-  else 
+  else
     return 0;
 }
 
@@ -546,7 +546,7 @@ static inline int NBC_Unpack(void *src, int srccount, MPI_Datatype srctype, void
 /* deletes elements from dict until low watermark is reached */
 static inline void NBC_SchedCache_dictwipe(hb_tree *dict, int *size) {
   hb_itor *itor;
-  
+
   itor = hb_itor_new(dict);
   for (; hb_itor_valid(itor) && (*size>NBC_SCHED_DICT_LOWER); hb_itor_next(itor)) {
     hb_tree_remove(dict, hb_itor_key(itor), 0);
@@ -577,7 +577,7 @@ int NBC_Comm_neighbors(MPI_Comm comm, int maxindegree, int sources[], int source
 #ifdef __cplusplus
 }
 #endif
- 
+
 #endif
 
 

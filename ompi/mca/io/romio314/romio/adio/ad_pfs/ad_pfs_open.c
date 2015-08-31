@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -36,7 +36,7 @@ void ADIOI_PFS_Open(ADIO_File fd, int *error_code)
     MPI_Comm_size(MPI_COMM_WORLD, &np_total);
     MPI_Comm_size(fd->comm, &np_comm);
 
-    if (np_total == np_comm) 
+    if (np_total == np_comm)
 	fd->fd_sys = _gopen(fd->filename, amode, M_ASYNC, perm);
     else fd->fd_sys = open(fd->filename, amode, perm);
     fd->fd_direct = -1;
@@ -46,10 +46,10 @@ void ADIOI_PFS_Open(ADIO_File fd, int *error_code)
 
         /* if user has asked for pfs server buffering to be turned on,
            it will be set to true in fd->info in the earlier call
-           to ADIOI_PFS_SetInfo. Turn it on now, since we now have a 
+           to ADIOI_PFS_SetInfo. Turn it on now, since we now have a
            valid file descriptor. */
 
-	ADIOI_Info_get(fd->info, "pfs_svr_buf", MPI_MAX_INFO_VAL, 
+	ADIOI_Info_get(fd->info, "pfs_svr_buf", MPI_MAX_INFO_VAL,
 		     value, &flag);
 	if (flag && (!strcmp(value, "true"))) {
 	    err = fcntl(fd->fd_sys, F_PFS_SVR_BUF, TRUE);
@@ -71,7 +71,7 @@ void ADIOI_PFS_Open(ADIO_File fd, int *error_code)
 	}
 	ADIOI_Free(value);
 
-	if (fd->access_mode & ADIO_APPEND) 
+	if (fd->access_mode & ADIO_APPEND)
 	    fd->fp_ind = fd->fp_sys_posn = lseek(fd->fd_sys, 0, SEEK_END);
     }
 

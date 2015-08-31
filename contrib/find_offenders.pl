@@ -6,14 +6,14 @@
 # Copyright (c) 2004-2005 The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
-# Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+# Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # $COPYRIGHT$
-# 
+#
 # Additional copyrights may follow
-# 
+#
 # $HEADER$
 #
 
@@ -37,7 +37,7 @@ while (<FILE_LIST>) {
     $file_name = $_;
     open(FILE, "find . -name $file_name |") || print "find failed\n";
     while(<FILE>) {
-        #file is found 
+        #file is found
         print DANGER_FILES "#include <$file_name>\n";
     }
     close (FILE);
@@ -61,14 +61,14 @@ while (<DANGER_FILES>) {
         open(C_FILE, "$c_file") || print "Could not open $_\n";
         while (<C_FILE>) {
             if (/$header/) {
-                print OFFENSIVE $header ." --> ". $c_file ;    
+                print OFFENSIVE $header ." --> ". $c_file ;
             }
         }
         close (C_FILE);
     }
 
     close (C_FILES);
-    
+
     open(H_FILES, "find . -name *.h |") || print "Could not complete find command\n";
 
     while (<H_FILES>) {
@@ -76,7 +76,7 @@ while (<DANGER_FILES>) {
         open(H_FILE, "$h_file") || print "Could not open $_\n";
         while (<H_FILE>) {
             if (/$header/) {
-                print OFFENSIVE $header ." --> ". $h_file ;    
+                print OFFENSIVE $header ." --> ". $h_file ;
             }
         }
         close (H_FILE);

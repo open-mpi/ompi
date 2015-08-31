@@ -32,7 +32,7 @@ my $count = 0;
 my $line_count = 0;
 while ($count < $size) {
     my $offset = $line_count % $line_len;
-    my $num_to_print = 
+    my $num_to_print =
         ($size - $count < $line_len) ? $size - $count : $line_len;
     if ($num_to_print > 0) {
         my $printable = substr($line, $offset, $num_to_print - 1);

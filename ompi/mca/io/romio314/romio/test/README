@@ -1,9 +1,9 @@
-This directory contains a few example programs. 
+This directory contains a few example programs.
 
 Each program takes the filename as a command-line argument
-"-fname filename". 
+"-fname filename".
 
-If you are using "mpirun" to run an MPI program, you can run the 
+If you are using "mpirun" to run an MPI program, you can run the
 program "simple" with two processes as follows:
    mpirun -np 2 simple -fname test
 
@@ -22,9 +22,9 @@ perf.c: A simple read and write performance test. Each process writes
         reads it back. For a different access size, change the value
         of SIZE in the code. The bandwidth is reported for two cases:
         (1) without including MPI_File_sync and (2) including
-        MPI_File_sync. 
-     
-async.c: This program is the same as simple.c, except that it uses 
+        MPI_File_sync.
+
+async.c: This program is the same as simple.c, except that it uses
         asynchronous I/O.
 
 coll_test.c: This program tests the use of collective I/O. It writes
@@ -42,8 +42,8 @@ coll_perf.c: Measures the I/O bandwidth for writing/reading a 3D
 
 misc.c: Tests various miscellaneous MPI-IO functions
 
-atomicity.c: Tests whether atomicity semantics are satisfied for 
-      overlapping accesses in atomic mode. The probability of detecting 
+atomicity.c: Tests whether atomicity semantics are satisfied for
+      overlapping accesses in atomic mode. The probability of detecting
       errors is higher if you run it on 8 or more processes.
 
 large_file.c: Tests access to large files. Writes a 4-Gbyte file and
@@ -53,20 +53,20 @@ large_file.c: Tests access to large files. Writes a 4-Gbyte file and
 large_array.c: Tests writing and reading a 4-Gbyte distributed array using
       the distributed array datatype constructor. Works only on file
       systems that support 64-bit file sizes and MPI implementations
-      that support 64-bit MPI_Aint. 
+      that support 64-bit MPI_Aint.
 
-file_info.c: Tests the setting and retrieval of hints via 
+file_info.c: Tests the setting and retrieval of hints via
       MPI_File_set_info and MPI_File_get_info
 
 excl.c: Tests MPI_File_open with MPI_MODE_EXCL
 
-noncontig.c: Tests noncontiguous accesses in memory and file using 
+noncontig.c: Tests noncontiguous accesses in memory and file using
              independent I/O. Run it on two processes only.
 
 noncontig_coll.c: Same as noncontig.c, but uses collective I/O
 
-noncontig_coll2.c: Same as noncontig_coll.c, but exercises the 
-             cb_config_list hint and aggregation handling more. 
+noncontig_coll2.c: Same as noncontig_coll.c, but exercises the
+             cb_config_list hint and aggregation handling more.
 
 i_noncontig.c: Same as noncontig.c, but uses nonblocking I/O
 
@@ -78,7 +78,7 @@ fperf.f: Fortran version of perf.c
 
 fcoll_test.f: Fortran version of coll_test.c
 
-pfcoll_test.f: Same as fcoll_test.f but uses the PMPI versions of 
+pfcoll_test.f: Same as fcoll_test.f but uses the PMPI versions of
                all MPI routines
 
 fmisc.f: Fortran version of misc.c

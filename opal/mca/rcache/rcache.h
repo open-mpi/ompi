@@ -6,7 +6,7 @@
  * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -34,7 +34,7 @@
  * component initialize
  */
 typedef struct mca_rcache_base_module_t* (*mca_rcache_base_component_init_fn_t)(void);
-                                                               
+
 
 typedef int (*mca_rcache_base_module_find_fn_t) (
         struct mca_rcache_base_module_t* rcache, void* addr, size_t size,
@@ -65,25 +65,25 @@ typedef void (*mca_rcache_base_module_dump_range_fn_t)(
 typedef void (*mca_rcache_base_module_finalize_fn_t)(
         struct mca_rcache_base_module_t*);
 
-/** 
- * rcache component descriptor. Contains component version information and 
- * open/close/init functions 
- */ 
+/**
+ * rcache component descriptor. Contains component version information and
+ * open/close/init functions
+ */
 
-struct mca_rcache_base_component_2_0_0_t{ 
-    mca_base_component_t rcache_version;      /**< version */ 
-    mca_base_component_data_t rcache_data; /**<metadata */ 
-    mca_rcache_base_component_init_fn_t rcache_init; /**<init function */ 
-}; 
+struct mca_rcache_base_component_2_0_0_t{
+    mca_base_component_t rcache_version;      /**< version */
+    mca_base_component_data_t rcache_data; /**<metadata */
+    mca_rcache_base_component_init_fn_t rcache_init; /**<init function */
+};
 
-typedef struct mca_rcache_base_component_2_0_0_t mca_rcache_base_component_2_0_0_t; 
+typedef struct mca_rcache_base_component_2_0_0_t mca_rcache_base_component_2_0_0_t;
 
-typedef struct mca_rcache_base_component_2_0_0_t mca_rcache_base_component_t; 
+typedef struct mca_rcache_base_component_2_0_0_t mca_rcache_base_component_t;
 
 
 /**
  * rcache module descriptor
- */ 
+ */
 struct mca_rcache_base_module_t {
     mca_rcache_base_component_t *rcache_component; /**< component struct */
     mca_rcache_base_module_find_fn_t rcache_find;

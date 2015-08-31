@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -100,7 +100,7 @@ void mpi_file_get_type_extent_(MPI_Fint *fh,MPI_Fint *datatype,
     MPI_File fh_c;
     MPI_Datatype datatype_c;
     MPI_Aint extent_c;
-    
+
     fh_c = MPI_File_f2c(*fh);
     datatype_c = MPI_Type_f2c(*datatype);
 
@@ -118,7 +118,7 @@ FORTRAN_API void FORT_CALL mpi_file_get_type_extent_(MPI_Fint *fh,MPI_Datatype *
 {
     MPI_File fh_c;
     MPI_Aint extent_c;
-    
+
     fh_c = MPI_File_f2c(*fh);
     *ierr = MPI_File_get_type_extent(fh_c,*datatype, &extent_c);
     *(MPI_Aint*)extent = extent_c; /* Have to assume it's really an MPI_Aint?*/

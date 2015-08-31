@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 2004 University of Chicago. 
+ *   Copyright (C) 2004 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -27,7 +27,7 @@
 #include "../../mpi-io/mpioimpl.h"
 #include "../../mpi-io/mpioprof.h"
 #include "mpiu_greq.h"
-/* Workaround for incomplete set of definitions if __REDIRECT is not 
+/* Workaround for incomplete set of definitions if __REDIRECT is not
    defined and large file support is used in aio.h */
 #if !defined(__REDIRECT) && defined(__USE_FILE_OFFSET64)
 #define aiocb aiocb64
@@ -39,7 +39,7 @@ static MPIX_Grequest_class ADIOI_GEN_greq_class = 0;
 
 /* ADIOI_GEN_IwriteContig
  *
- * This code handles only the case where ROMIO_HAVE_WORKING_AIO is 
+ * This code handles only the case where ROMIO_HAVE_WORKING_AIO is
  * defined. We post an asynchronous I/O operations using the appropriate aio
  * routines.  Otherwise, the ADIOI_Fns_struct will point to the FAKE
  * version.
@@ -100,8 +100,8 @@ int ADIOI_GEN_aio(ADIO_File fd, void *buf, int len, ADIO_Offset offset,
     /* Use Direct I/O if desired and properly aligned */
     if (fd->fns == &ADIO_XFS_operations &&
 	 ((wr && fd->direct_write) || (!wr && fd->direct_read)) &&
-	 !(((long) buf) % fd->d_mem) && !(offset % fd->d_miniosz) && 
-	 !(len % fd->d_miniosz) && (len >= fd->d_miniosz) && 
+	 !(((long) buf) % fd->d_mem) && !(offset % fd->d_miniosz) &&
+	 !(len % fd->d_miniosz) && (len >= fd->d_miniosz) &&
 	 (len <= maxiosz)) {
 	    fd_sys = fd->fd_direct;
     }
@@ -146,17 +146,17 @@ int ADIOI_GEN_aio(ADIO_File fd, void *buf, int len, ADIO_Offset offset,
 #endif
 
     if (err == -1) {
-	if (errno == EAGAIN || errno == ENOSYS) { 
+	if (errno == EAGAIN || errno == ENOSYS) {
 	    /* exceeded the max. no. of outstanding requests.
-               or, aio routines are not actually implemented 
+               or, aio routines are not actually implemented
 	    treat this as a blocking request and return.  */
-	    if (wr) 
-		ADIO_WriteContig(fd, buf, len, MPI_BYTE, 
-			    ADIO_EXPLICIT_OFFSET, offset, &status, &error_code);  
+	    if (wr)
+		ADIO_WriteContig(fd, buf, len, MPI_BYTE,
+			    ADIO_EXPLICIT_OFFSET, offset, &status, &error_code);
 	    else
 		ADIO_ReadContig(fd, buf, len, MPI_BYTE,
-			    ADIO_EXPLICIT_OFFSET, offset, &status, &error_code);  
-		    
+			    ADIO_EXPLICIT_OFFSET, offset, &status, &error_code);
+
 	    MPIO_Completed_request_create(&fd, len, &error_code, request);
 	    if (aiocbp != NULL) ADIOI_Free(aiocbp);
 	    if (aio_req != NULL) ADIOI_Free(aio_req);
@@ -167,9 +167,9 @@ int ADIOI_GEN_aio(ADIO_File fd, void *buf, int len, ADIO_Offset offset,
     }
     aio_req->aiocbp = aiocbp;
     if (ADIOI_GEN_greq_class == 0) {
-	    MPIX_Grequest_class_create(ADIOI_GEN_aio_query_fn, 
-			    ADIOI_GEN_aio_free_fn, MPIU_Greq_cancel_fn, 
-			    ADIOI_GEN_aio_poll_fn, ADIOI_GEN_aio_wait_fn, 
+	    MPIX_Grequest_class_create(ADIOI_GEN_aio_query_fn,
+			    ADIOI_GEN_aio_free_fn, MPIU_Greq_cancel_fn,
+			    ADIOI_GEN_aio_poll_fn, ADIOI_GEN_aio_wait_fn,
 			    &ADIOI_GEN_greq_class);
     }
     MPIX_Grequest_class_allocate(ADIOI_GEN_greq_class, aio_req, request);
@@ -191,11 +191,11 @@ void ADIOI_GEN_IwriteStrided(ADIO_File fd, const void *buf, int count,
     MPI_Count typesize;
     MPI_Offset nbytes=0;
 
-    /* Call the blocking function.  It will create an error code 
+    /* Call the blocking function.  It will create an error code
      * if necessary.
      */
-    ADIO_WriteStrided(fd, buf, count, datatype, file_ptr_type, 
-		      offset, &status, error_code);  
+    ADIO_WriteStrided(fd, buf, count, datatype, file_ptr_type,
+		      offset, &status, error_code);
 
     if (*error_code == MPI_SUCCESS) {
 	MPI_Type_size_x(datatype, &typesize);
@@ -238,7 +238,7 @@ int ADIOI_GEN_aio_poll_fn(void *extra_state, MPI_Status *status)
 }
 
 /* wait for multiple requests to complete */
-int ADIOI_GEN_aio_wait_fn(int count, void ** array_of_states, 
+int ADIOI_GEN_aio_wait_fn(int count, void ** array_of_states,
 		double timeout, MPI_Status *status)
 {
 	const struct aiocb **cblist;
@@ -270,13 +270,13 @@ int ADIOI_GEN_aio_wait_fn(int count, void ** array_of_states,
 	    do {
 		err = aio_suspend(cblist, count, aio_timer_p);
 	    } while (err < 0 && errno == EINTR);
-	    if (err == 0) 
+	    if (err == 0)
 	    { /* run through the list of requests, and mark all the completed
 		 ones as done */
 		for (i=0; i< count; i++)
 		{
 		    /* aio_error returns an ERRNO value */
-		    if (aio_reqlist[i]->aiocbp == NULL) 
+		    if (aio_reqlist[i]->aiocbp == NULL)
 			continue;
 		    errno = aio_error(aio_reqlist[i]->aiocbp);
 		    if (errno == 0) {
@@ -286,15 +286,15 @@ int ADIOI_GEN_aio_wait_fn(int count, void ** array_of_states,
 			if (errcode != MPI_SUCCESS) {
 			    errcode = MPIO_Err_create_code(MPI_SUCCESS,
 				    MPIR_ERR_RECOVERABLE,
-				    "ADIOI_GEN_aio_wait_fn", 
-				    __LINE__, MPI_ERR_IO, 
+				    "ADIOI_GEN_aio_wait_fn",
+				    __LINE__, MPI_ERR_IO,
 				    "**mpi_grequest_complete", 0);
 			}
 			ADIOI_Free(aio_reqlist[i]->aiocbp);
 			aio_reqlist[i]->aiocbp = NULL;
 			cblist[i] = NULL;
 			nr_complete++;
-		    } 
+		    }
 		    /* TODO: need to handle error conditions somehow*/
 		}
 	    } /* TODO: also need to handle errors here  */
@@ -319,7 +319,7 @@ int ADIOI_GEN_aio_free_fn(void *extra_state)
 }
 #endif /* working AIO */
 
-int ADIOI_GEN_aio_query_fn(void *extra_state, MPI_Status *status) 
+int ADIOI_GEN_aio_query_fn(void *extra_state, MPI_Status *status)
 {
 	ADIOI_AIO_Request *aio_req;
 
@@ -327,16 +327,16 @@ int ADIOI_GEN_aio_query_fn(void *extra_state, MPI_Status *status)
 
 	MPI_Status_set_elements_x(status, MPI_BYTE, aio_req->nbytes);
 
-	/* can never cancel so always true */ 
-	MPI_Status_set_cancelled(status, 0); 
+	/* can never cancel so always true */
+	MPI_Status_set_cancelled(status, 0);
 
-	/* choose not to return a value for this */ 
-	status->MPI_SOURCE = MPI_UNDEFINED; 
-	/* tag has no meaning for this generalized request */ 
-	status->MPI_TAG = MPI_UNDEFINED; 
-	/* this generalized request never fails */ 
-	return MPI_SUCCESS; 
+	/* choose not to return a value for this */
+	status->MPI_SOURCE = MPI_UNDEFINED;
+	/* tag has no meaning for this generalized request */
+	status->MPI_TAG = MPI_UNDEFINED;
+	/* this generalized request never fails */
+	return MPI_SUCCESS;
 }
-/* 
- * vim: ts=8 sts=4 sw=4 noexpandtab 
+/*
+ * vim: ts=8 sts=4 sw=4 noexpandtab
  */

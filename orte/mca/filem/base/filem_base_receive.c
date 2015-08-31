@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.  All rights
- *                         reserved. 
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -75,7 +75,7 @@ int orte_filem_base_comm_start(void)
     if ( recv_issued ) {
         return ORTE_SUCCESS;
     }
-    
+
     OPAL_OUTPUT_VERBOSE((5, orte_filem_base_framework.framework_output,
                          "%s filem:base: Receive: Start command recv",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
@@ -87,7 +87,7 @@ int orte_filem_base_comm_start(void)
                             NULL);
 
     recv_issued = true;
-    
+
     return ORTE_SUCCESS;
 }
 
@@ -101,14 +101,14 @@ int orte_filem_base_comm_stop(void)
     if ( recv_issued ) {
         return ORTE_SUCCESS;
     }
-    
+
     OPAL_OUTPUT_VERBOSE((5, orte_filem_base_framework.framework_output,
                          "%s filem:base:receive stop comm",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-    
+
     orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_FILEM_BASE);
     recv_issued = false;
-    
+
     return ORTE_SUCCESS;
 }
 
@@ -135,7 +135,7 @@ void orte_filem_base_recv(int status, orte_process_name_t* sender,
         ORTE_ERROR_LOG(rc);
         return;
     }
-    
+
     switch (command) {
         case ORTE_FILEM_GET_PROC_NODE_NAME_CMD:
             OPAL_OUTPUT_VERBOSE((10, orte_filem_base_framework.framework_output,
@@ -152,7 +152,7 @@ void orte_filem_base_recv(int status, orte_process_name_t* sender,
 
             filem_base_process_get_remote_path_cmd(sender, buffer);
             break;
- 
+
         default:
             ORTE_ERROR_LOG(ORTE_ERR_VALUE_OUT_OF_BOUNDS);
     }

@@ -13,7 +13,7 @@
  * Copyright (c) 2006-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2008      Mellanox Technologies. All rights reserved.
  * Copyright (c) 2012-2015 Los Alamos National Security, LLC.  All rights
- *                         reserved. 
+ *                         reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved
  * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -421,7 +421,7 @@ static int parse_line(parsed_section_values_t *sv)
         /* Have no idea what this parameter is.  Not an error -- just
            ignore it */
         if (!showed_unknown_field_warning) {
-            opal_show_help("help-mpi-btl-openib.txt", 
+            opal_show_help("help-mpi-btl-openib.txt",
                            "ini file:unknown field", true,
                            ini_filename, btl_openib_ini_yynewlines,
                            key_buffer);
@@ -510,7 +510,7 @@ static void reset_values(opal_btl_openib_ini_values_t *v)
     v->rdmacm_reject_causes_connect_error = false;
     v->rdmacm_reject_causes_connect_error_set = false;
 
-    v->ignore_device        = false; 
+    v->ignore_device        = false;
     v->ignore_device_set    = false;
 }
 

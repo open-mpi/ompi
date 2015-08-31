@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -57,7 +57,7 @@ void ADIOI_NFS_Fcntl(ADIO_File fd, int flag, ADIO_Fcntl_t *fcntl_struct, int *er
 	/* --BEGIN ERROR HANDLING-- */
 	*error_code = MPIO_Err_create_code(MPI_SUCCESS, MPIR_ERR_RECOVERABLE,
 					   myname, __LINE__,
-					   MPI_ERR_ARG, 
+					   MPI_ERR_ARG,
 					   "**flag", "**flag %d", flag);
 	return;
 	/* --END ERROR HANDLING-- */

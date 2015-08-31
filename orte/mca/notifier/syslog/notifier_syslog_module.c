@@ -56,17 +56,17 @@ orte_notifier_base_module_t orte_notifier_syslog_module = {
 };
 
 
-static int init(void) 
+static int init(void)
 {
     int opts;
-    
+
     opts = LOG_CONS | LOG_PID;
     openlog("OpenRTE Error Report:", opts, LOG_USER);
-    
+
     return ORTE_SUCCESS;
 }
 
-static void finalize(void) 
+static void finalize(void)
 {
     closelog();
 }

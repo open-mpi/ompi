@@ -83,7 +83,7 @@ for this is not enough free device memory.  Try to reduce the device
 memory footprint of your application.
 #
 [cuIpcCloseMemHandle failed]
-The call to cuIpcCloseMemHandle failed. This is a warning and the program 
+The call to cuIpcCloseMemHandle failed. This is a warning and the program
 will continue to run.
   cuIpcCloseMemHandle return value:   %d
   address: %p
@@ -147,17 +147,17 @@ cause the program to abort.
   cuStreamCreate return value:   %d
 Check the cuda.h file for what the return vale means.
 #
-[dlopen disabled] 
+[dlopen disabled]
 Open MPI was compiled without dynamic library support (e.g., with the
- --disable-dlopen flag), and therefore cannot utilize CUDA support.  
+ --disable-dlopen flag), and therefore cannot utilize CUDA support.
 
 If you need CUDA support, reconfigure Open MPI with dynamic library support enabled.
 #
 [dlopen failed]
-The library attempted to open the following supporting CUDA libraries, 
+The library attempted to open the following supporting CUDA libraries,
 but each of them failed.  CUDA-aware support is disabled.
 %s
-If you are not interested in CUDA-aware support, then run with 
+If you are not interested in CUDA-aware support, then run with
 --mca mpi_cuda_support 0 to suppress this message.  If you are interested
 in CUDA-aware support, then try setting LD_LIBRARY_PATH to the location
 of libcuda.so.1 to get passed this issue.

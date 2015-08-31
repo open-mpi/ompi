@@ -5,21 +5,21 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
- *                         reserved. 
+ *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
-/** @file 
- * 
+/** @file
+ *
  * ORTE Layer Checkpoint/Restart Runtime functions
  *
  */
@@ -88,7 +88,7 @@ static int orte_cr_verbose = 0;
 /*
  * CR Init
  */
-int orte_cr_init(void) 
+int orte_cr_init(void)
 {
     int ret, exit_status = ORTE_SUCCESS;
 
@@ -115,7 +115,7 @@ int orte_cr_init(void)
      * completed as opal_output will have no idea what opal_cr_output stream means,
      * or even worse, will have assigned it to someone else!
      */
-    
+
     if(0 != orte_cr_verbose) {
         orte_cr_output = opal_output_open(NULL);
         opal_output_set_verbosity(orte_cr_output, orte_cr_verbose);
@@ -138,7 +138,7 @@ int orte_cr_init(void)
     /* Typically this is not needed. Individual BTLs will set this as needed */
     opal_cr_continue_like_restart = false;
     orte_cr_flush_restart_files   = true;
-    
+
  cleanup:
 
     return exit_status;
@@ -165,7 +165,7 @@ int orte_cr_finalize(void)
 /*
  * Interlayer coordination callback
  */
-int orte_cr_coord(int state) 
+int orte_cr_coord(int state)
 {
     int ret, exit_status = ORTE_SUCCESS;
 
@@ -174,7 +174,7 @@ int orte_cr_coord(int state)
                         opal_crs_base_state_str((opal_crs_state_type_t)state));
 
     /*
-     * Before calling the previous callback, we have the opportunity to 
+     * Before calling the previous callback, we have the opportunity to
      * take action given the state.
      */
     if(OPAL_CRS_CHECKPOINT == state) {
@@ -205,10 +205,10 @@ int orte_cr_coord(int state)
         exit_status = ret;
         goto cleanup;
     }
-    
-    
+
+
     /*
-     * After calling the previous callback, we have the opportunity to 
+     * After calling the previous callback, we have the opportunity to
      * take action given the state to tidy up.
      */
     if(OPAL_CRS_CHECKPOINT == state) {
@@ -269,10 +269,10 @@ static int orte_cr_coord_pre_restart(void) {
      */
     opal_output_verbose(10, orte_cr_output,
                         "orte_cr: coord_pre_restart: orte_cr_coord_pre_restart()");
-    
+
     return ORTE_SUCCESS;
 }
-    
+
 static int orte_cr_coord_pre_continue(void) {
     /*
      * Can not really do much until OPAL is up and running,

@@ -6,22 +6,22 @@ dnl                         Corporation.  All rights reserved.
 dnl Copyright (c) 2004-2005 The University of Tennessee and The University
 dnl                         of Tennessee Research Foundation.  All rights
 dnl                         reserved.
-dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
 dnl Copyright (c) 2014      Intel, Inc. All rights reserved.
 dnl $COPYRIGHT$
-dnl 
+dnl
 dnl Additional copyrights may follow
-dnl 
+dnl
 dnl $HEADER$
 dnl
 
 # OPAL_C_GET_ALIGN(type, config_var)
 # ----------------------------------
-# Determine datatype alignment. 
+# Determine datatype alignment.
 # First arg is type, 2nd arg is config var to define.
 AC_DEFUN([OPAL_C_GET_ALIGNMENT],[
     AC_CACHE_CHECK([alignment of $1],
@@ -39,7 +39,7 @@ AC_DEFUN([OPAL_C_GET_ALIGNMENT],[
                                [AC_MSG_WARN([*** Problem running configure test!])
                                 AC_MSG_WARN([*** See config.log for details.])
                                 AC_MSG_ERROR([*** Cannot continue.])],
-                               [ # cross compile - do a non-executable test.  Trick 
+                               [ # cross compile - do a non-executable test.  Trick
                                  # taken from the Autoconf 2.59c.  Switch to using
                                  # AC_CHECK_ALIGNOF when we can require Autoconf 2.60.
                                  _AC_COMPUTE_INT([(long int) offsetof (opal__type_alignof_, y)],

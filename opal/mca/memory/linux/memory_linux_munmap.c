@@ -5,15 +5,15 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -58,7 +58,7 @@ OPAL_DECLSPEC int munmap(void* addr, size_t len)
    that we can intercept both munmap and __munmap.  If that isn't
    possible, try calling __munmap from munmap and let __munmap go.  If
    that doesn't work, try dlsym */
-int opal_memory_linux_free_ptmalloc2_munmap(void *start, size_t length, 
+int opal_memory_linux_free_ptmalloc2_munmap(void *start, size_t length,
                                             int from_alloc)
 {
 #if !defined(HAVE___MUNMAP) && \
@@ -76,7 +76,7 @@ int opal_memory_linux_free_ptmalloc2_munmap(void *start, size_t length,
     return syscall(__NR_munmap, start, length);
 #elif defined(HAVE_DLSYM)
     if (NULL == realmunmap) {
-        union { 
+        union {
             int (*munmap_fp)(void*, size_t);
             void *munmap_p;
         } tmp;

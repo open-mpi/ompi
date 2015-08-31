@@ -6,15 +6,15 @@
 # Copyright (c) 2004-2005 The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
-# Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+# Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
-# 
+#
 # Additional copyrights may follow
-# 
+#
 # $HEADER$
 #
 
@@ -46,7 +46,7 @@ AC_DEFUN([ORTE_CHECK_SLURM],[
                 AC_MSG_RESULT([$orte_check_slurm_happy])
                 ;;
         esac
-    else 
+    else
         orte_check_slurm_happy="yes"
     fi
 
@@ -65,7 +65,7 @@ AC_DEFUN([ORTE_CHECK_SLURM],[
                          [orte_check_slurm_happy="yes"],
                          [orte_check_slurm_happy="no"])])
 
-    AS_IF([test "$orte_check_slurm_happy" = "yes"], 
-          [$2], 
+    AS_IF([test "$orte_check_slurm_happy" = "yes"],
+          [$2],
           [$3])
 ])

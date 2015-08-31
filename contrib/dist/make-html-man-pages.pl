@@ -204,7 +204,7 @@ foreach my $file (@files) {
     if (3 == $section && $name =~ /^MPI_/) {
         $meta_name = uc($name);
     }
-    
+
     # Now we're left with what we want.  Output the PHP page.
     # Write the output PHP file with our own header and footer,
     # suitable for www.open-mpi.org.
@@ -269,7 +269,7 @@ close(FILE);
 # Print the top-level engine file for this version (it will use the
 # data-<version>.inc file).
 open(FILE, ">$outdir_base/index.php") || die "Can't open $outdir_base/index.php";
-print FILE '<?php 
+print FILE '<?php
 $topdir = "../..";
 include_once("data-' . $version . '.inc");
 include_once("../engine.inc");

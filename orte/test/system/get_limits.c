@@ -6,7 +6,7 @@
 #include <sys/resource.h>
 #include <string.h>
 
-int main(int argc, char* argv[]) 
+int main(int argc, char* argv[])
 {
     struct rlimit rlim;
 
@@ -14,15 +14,15 @@ int main(int argc, char* argv[])
         fprintf (stderr, "getrlimit (RLIMIT_NOFILE): %s\n", strerror (errno));
     else {
         printf("softlimit on num_files: %d\thardlimit on num_files: %d\n", (int)rlim.rlim_cur, (int)rlim.rlim_max);
-    } 
+    }
     if (getrlimit (RLIMIT_NPROC, &rlim) < 0)
         fprintf (stderr, "getrlimit (RLIMIT_NPROC): %s\n", strerror (errno));
     else {
         printf("softlimit on num_child: %d\thardlimit on num_child: %d\n", (int)rlim.rlim_cur, (int)rlim.rlim_max);
-    } 
-    
+    }
+
     printf("RLIM_INFINITY: %d\n", (int)RLIM_INFINITY);
-    
+
     return 0;
 }
 
@@ -35,5 +35,5 @@ if (nfds_needed > rlim->rlim_cur) {
         fprintf (stderr, "setrlimit (RLIMIT_NOFILE, cur = %d): %m\n";
                  else
                  fprintf (stderr, "Hard limit for number of open files is too low\n");
-    } 
+    }
 #endif

@@ -61,12 +61,12 @@ START_FUNC(opal_atomic_cmpset_64)
 	movl	-32(%ebp), %esi
 	movl	-28(%ebp), %ecx
 	movl	%ebx, %eax
-	push %ebx            
-	movl %esi, %ebx        
+	push %ebx
+	movl %esi, %ebx
 	lock; cmpxchg8b (%edi)
-	sete %dl               
-	pop %ebx             
-	
+	sete %dl
+	pop %ebx
+
 	movzbl	%dl, %eax
 	movl	-12(%ebp), %ebx
 	movl	-8(%ebp), %esi

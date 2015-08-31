@@ -1,5 +1,5 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/*  
+/*
  *  (C) 2001 by Argonne National Laboratory.
  *      See COPYRIGHT in top-level directory.
  */
@@ -44,10 +44,10 @@ hint_defaults UFS_DEFAULTS = {
 };
 
 hint_defaults BLUEGENE_DEFAULTS = {
-    .cb_buffer_size = 16777216, 
-    .ind_rd_buffer_size = 4194304, 
-    .ind_wr_buffer_size = 4194304, 
-    .romio_cb_read = "enable", 
+    .cb_buffer_size = 16777216,
+    .ind_rd_buffer_size = 4194304,
+    .ind_wr_buffer_size = 4194304,
+    .romio_cb_read = "enable",
     .romio_cb_write = "enable",
     .cb_config_list = NULL};
 
@@ -76,7 +76,7 @@ int main(int argc, char **argv)
     MPI_Comm_rank(MPI_COMM_WORLD, &mynod);
     MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
 
-/* process 0 takes the file name as a command-line argument and 
+/* process 0 takes the file name as a command-line argument and
    broadcasts it to other processes */
     if (!mynod) {
 	i = 1;
@@ -119,7 +119,7 @@ int main(int argc, char **argv)
 
 
 /* open the file with MPI_INFO_NULL */
-    ret = MPI_File_open(MPI_COMM_WORLD, filename, MPI_MODE_CREATE | MPI_MODE_RDWR, 
+    ret = MPI_File_open(MPI_COMM_WORLD, filename, MPI_MODE_CREATE | MPI_MODE_RDWR,
                   MPI_INFO_NULL, &fh);
     if (ret != MPI_SUCCESS) handle_error(ret, "MPI_File_open");
 
@@ -132,8 +132,8 @@ int main(int argc, char **argv)
 	    MPI_Info_get_nthkey(info_used, i, key);
 	    MPI_Info_get(info_used, key, MPI_MAX_INFO_VAL-1, value, &flag);
 #ifdef INFO_DEBUG
-	    if (!mynod) 
-		fprintf(stderr, "Process %d, Default:  key = %s, value = %s\n", mynod, 
+	    if (!mynod)
+		fprintf(stderr, "Process %d, Default:  key = %s, value = %s\n", mynod,
 			key, value);
 #endif
 	    if (!strcmp("striping_factor", key)) {
@@ -249,13 +249,13 @@ int main(int argc, char **argv)
     MPI_Info_set(info, "ind_wr_buffer_size", "1048576");
 
 
-/* The following three hints related to file striping are accepted only 
-   on Intel PFS and IBM PIOFS file systems and are ignored elsewhere. 
-   They can be specified only at file-creation time; if specified later 
+/* The following three hints related to file striping are accepted only
+   on Intel PFS and IBM PIOFS file systems and are ignored elsewhere.
+   They can be specified only at file-creation time; if specified later
    they will be ignored. */
 
     /* number of I/O devices across which the file will be striped.
-       accepted only if 0 < value < default_striping_factor; 
+       accepted only if 0 < value < default_striping_factor;
        ignored otherwise */
     if (default_striping_factor - 1 > 0) {
         sprintf(value, "%d", default_striping_factor-1);
@@ -275,18 +275,18 @@ int main(int argc, char **argv)
 #endif
 
     /* the I/O device number from which to start striping the file.
-       accepted only if 0 <= value < default_striping_factor; 
+       accepted only if 0 <= value < default_striping_factor;
        ignored otherwise */
     sprintf(value, "%d", default_striping_factor-2);
     MPI_Info_set(info, "start_iodevice", value);
 
 
-/* The following hint about PFS server buffering is accepted only on 
-   Intel PFS. It can be specified anytime. */ 
+/* The following hint about PFS server buffering is accepted only on
+   Intel PFS. It can be specified anytime. */
     MPI_Info_set(info, "pfs_svr_buf", "true");
 
 /* open the file and set new info */
-    ret = MPI_File_open(MPI_COMM_WORLD, filename, MPI_MODE_CREATE | MPI_MODE_RDWR, 
+    ret = MPI_File_open(MPI_COMM_WORLD, filename, MPI_MODE_CREATE | MPI_MODE_RDWR,
                   info, &fh);
     if (ret != MPI_SUCCESS) handle_error(ret, "MPI_File_open");
 
@@ -298,8 +298,8 @@ int main(int argc, char **argv)
     for (i=0; i<nkeys; i++) {
 	MPI_Info_get_nthkey(info_used, i, key);
 	MPI_Info_get(info_used, key, MPI_MAX_INFO_VAL-1, value, &flag);
-#ifdef INFO_DEBUG	
-	if (!mynod) fprintf(stderr, "Process %d, key = %s, value = %s\n", mynod, 
+#ifdef INFO_DEBUG
+	if (!mynod) fprintf(stderr, "Process %d, key = %s, value = %s\n", mynod,
                 key, value);
 #endif
 	if (!strcmp("striping_factor", key)) {
@@ -405,13 +405,13 @@ int main(int argc, char **argv)
 	    if (verbose) fprintf(stderr, "unexpected key %s (not counted as an error)\n", key);
 	}
     }
-	    
+
     /* Q: SHOULD WE BOTHER LOOKING AT THE OTHER PROCESSES? */
     if (!mynod) {
 	if (errs) fprintf(stderr, "Found %d errors.\n", errs);
 	else printf(" No Errors\n");
     }
-    
+
     MPI_File_close(&fh);
     free(filename);
     MPI_Info_free(&info_used);

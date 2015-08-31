@@ -5,14 +5,14 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -119,7 +119,7 @@ public final class Win implements Freeable
 	 * Java binding of {@code MPI_WIN_CREATE_DYNAMIC}.
 	 * @param info     info object
 	 * @param comm     communicator
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred. 
+	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
 	 */
 	public Win(Info info, Comm comm)
 			throws MPIException
@@ -731,7 +731,7 @@ public final class Win implements Freeable
 	/**
 	 * Java binding of the MPI operation {@code MPI_WIN_LOCK_ALL}.
 	 * @param assertion program assertion
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred. 
+	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
 	 */
 	public void lockAll(int assertion) throws MPIException
 	{
@@ -744,7 +744,7 @@ public final class Win implements Freeable
 
 	/**
 	 * Java binding of the MPI operation {@code MPI_WIN_UNLOCK_ALL}.
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred. 
+	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
 	 */
 	public void unlockAll() throws MPIException
 	{
@@ -756,7 +756,7 @@ public final class Win implements Freeable
 
 	/**
 	 * Java binding of the MPI operation {@code MPI_WIN_SYNC}.
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred. 
+	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
 	 */
 	public void sync() throws MPIException
 	{
@@ -769,7 +769,7 @@ public final class Win implements Freeable
 	/**
 	 * Java binding of the MPI operation {@code MPI_WIN_FLUSH}.
 	 * @param targetRank	rank of target window
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred. 
+	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
 	 */
 	public void flush(int targetRank) throws MPIException
 	{
@@ -781,7 +781,7 @@ public final class Win implements Freeable
 
 	/**
 	 * Java binding of the MPI operation {@code MPI_WIN_FLUSH_ALL}.
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred. 
+	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
 	 */
 	public void flushAll() throws MPIException
 	{
@@ -830,7 +830,7 @@ public final class Win implements Freeable
 	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
 	 */
 
-	public void fetchAndOp(Buffer origin, Buffer resultAddr, Datatype dataType, 
+	public void fetchAndOp(Buffer origin, Buffer resultAddr, Datatype dataType,
 			int targetRank, int targetDisp, Op op)
 					throws MPIException
 	{
@@ -839,18 +839,18 @@ public final class Win implements Freeable
 		if(!origin.isDirect())
 			throw new IllegalArgumentException("The origin must be direct buffer.");
 
-		fetchAndOp(handle, origin, resultAddr, dataType.handle, targetRank, 
+		fetchAndOp(handle, origin, resultAddr, dataType.handle, targetRank,
 				targetDisp, op, op.handle, getBaseType(dataType, dataType));
 	}
 
 	private native void fetchAndOp(
-			long win, Buffer origin, Buffer resultAddr, long targetType, int targetRank, 
+			long win, Buffer origin, Buffer resultAddr, long targetType, int targetRank,
 			int targetDisp, Op jOp, long hOp, int baseType) throws MPIException;
 
 	/**
 	 * Java binding of the MPI operation {@code MPI_WIN_FLUSH_LOCAL}.
 	 * @param targetRank	rank of target window
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred. 
+	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
 	 */
 
 	public void flushLocal(int targetRank) throws MPIException
@@ -863,7 +863,7 @@ public final class Win implements Freeable
 
 	/**
 	 * Java binding of the MPI operation {@code MPI_WIN_FLUSH_LOCAL_ALL}.
-	 * @throws MPIException Signals that an MPI exception of some sort has occurred. 
+	 * @throws MPIException Signals that an MPI exception of some sort has occurred.
 	 */
 
 	public void flushLocalAll() throws MPIException

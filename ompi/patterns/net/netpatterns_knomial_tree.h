@@ -44,7 +44,7 @@ struct netpatterns_pair_exchange_node_t {
     /* number of extra sources of data - outside largest power of 2 in
      *  this group */
     int n_extra_sources;
-    
+
     /* rank of the extra source */
     /* deprecated */ int rank_extra_source;
     int *rank_extra_sources_array;
@@ -133,28 +133,28 @@ OMPI_DECLSPEC int netpatterns_setup_recursive_knomial_allgather_tree_node(
 OMPI_DECLSPEC void netpatterns_cleanup_recursive_knomial_allgather_tree_node(
         netpatterns_k_exchange_node_t *exchange_node);
 
-/* Input: k_exchange_node structure 
-      Output: index in rank_exchanges array that points 
-      to the "start_point" for outgoing send. 
+/* Input: k_exchange_node structure
+      Output: index in rank_exchanges array that points
+      to the "start_point" for outgoing send.
 
       Please see below example of usage:
-      for (i = start_point ; i > 0; i--) 
-          for (k = 0; k < tree_radix; k++) 
+      for (i = start_point ; i > 0; i--)
+          for (k = 0; k < tree_radix; k++)
               send messages to exchange_node->rank_exchanges[i][k];
 */
 
-static inline __opal_attribute_always_inline__ 
+static inline __opal_attribute_always_inline__
 int netpatterns_get_knomial_level(
-    int my_rank, int src_rank, 
+    int my_rank, int src_rank,
     int radix,   int size,
     int *k_level)
 {
-    int distance, 
+    int distance,
         pow_k;
     int logk_level = 0;
 
     /* Calculate disctance from source of data */
-    distance = src_rank - my_rank; 
+    distance = src_rank - my_rank;
 
     /* Wrap around */
     if (0 > distance) {
@@ -175,7 +175,7 @@ int netpatterns_get_knomial_level(
 /* Input: my_rank, root, radix, size
  * Output: source of the data, offset in power of K
  */
-static inline __opal_attribute_always_inline__ 
+static inline __opal_attribute_always_inline__
 int netpatterns_get_knomial_data_source(
     int my_rank, int root, int radix, int size,
     int *k_level, int *logk_level)
@@ -184,12 +184,12 @@ int netpatterns_get_knomial_data_source(
     int step = 0;
 
     /* Calculate source of the data */
-    while((0 == (root - my_rank) % level) 
+    while((0 == (root - my_rank) % level)
             && (level <= size)) {
         level *= radix;
         ++step;
-    }   
-    
+    }
+
     *k_level = level/radix;
     *logk_level = step;
     return my_rank - (my_rank % level - root % level);
@@ -199,7 +199,7 @@ int netpatterns_get_knomial_data_source(
  *        k_level - that you get from netpatterns_get_knomial_data_source
  *        k_step - some integer
  * Output: peer - next children in the tree
- * Usage: 
+ * Usage:
  *         src = netpatterns_get_knomial_data_source(
  *                  my_rank, root, radix, size,
  *                  &k_level, &logk_level)

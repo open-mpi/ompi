@@ -5,18 +5,18 @@
  * Copyright (c) 2004-2013 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2013 Inria.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
- */ 
+ */
 
 #include "ompi_config.h"
 #include "ompi/mca/topo/example/topo_example.h"
@@ -30,13 +30,13 @@
  *  @param ndims number of dimensions of cartesian structure (integer)
  *  @param dims integer array of size 'ndims' specifying the number of
  *              processes in each coordinate direction
- *  @param periods logical array of size 'ndims' specifying the 
+ *  @param periods logical array of size 'ndims' specifying the
  *                 periodicity specification in each coordinate direction
- *  @param newrank reordered rank of the calling process; 'MPI_UNDEFINED' 
+ *  @param newrank reordered rank of the calling process; 'MPI_UNDEFINED'
  *                 if calling process does not belong to grid (integer)
  *
- *  @retval MPI_SUCCESS               
- *  @retval MPI_ERR_DIMS               
+ *  @retval MPI_SUCCESS
+ *  @retval MPI_ERR_DIMS
  */
 
 int mca_topo_example_cart_map (ompi_communicator_t* comm,

@@ -1,20 +1,20 @@
 // -*- c++ -*-
-// 
+//
 // Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
 //                         University Research and Technology
 //                         Corporation.  All rights reserved.
 // Copyright (c) 2004-2005 The University of Tennessee and The University
 //                         of Tennessee Research Foundation.  All rights
 //                         reserved.
-// Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+// Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 //                         University of Stuttgart.  All rights reserved.
 // Copyright (c) 2004-2005 The Regents of the University of California.
 //                         All rights reserved.
 // Copyright (c) 2007-2008 Cisco Systems, Inc.  All rights reserved.
 // $COPYRIGHT$
-// 
+//
 // Additional copyrights may follow
-// 
+//
 // $HEADER$
 //
 
@@ -48,7 +48,7 @@ MPI::Comm::Comm()
 }
 
 // copy
-MPI::Comm::Comm(const Comm_Null& data) : Comm_Null(data) 
+MPI::Comm::Comm(const Comm_Null& data) : Comm_Null(data)
 {
 }
 
@@ -56,11 +56,11 @@ MPI::Comm::Comm(const Comm_Null& data) : Comm_Null(data)
 MPI::Errhandler
 MPI::Comm::Create_errhandler(MPI::Comm::_MPI2CPP_ERRHANDLERFN_* function)
 {
-    MPI_Errhandler c_errhandler = 
+    MPI_Errhandler c_errhandler =
         ompi_errhandler_create(OMPI_ERRHANDLER_TYPE_COMM,
                                (ompi_errhandler_generic_handler_fn_t*) function,
                                OMPI_ERRHANDLER_LANG_CXX);
-    c_errhandler->eh_cxx_dispatch_fn = 
+    c_errhandler->eh_cxx_dispatch_fn =
         (ompi_errhandler_cxx_dispatch_fn_t*)
         ompi_mpi_cxx_comm_errhandler_invoke;
     return c_errhandler;
@@ -84,7 +84,7 @@ MPI::Comm::do_create_keyval(MPI_Comm_copy_attr_function* c_copy_fn,
     // If both the callbacks are C, then do the simple thing -- no
     // need for all the C++ machinery.
     if (NULL != c_copy_fn && NULL != c_delete_fn) {
-        copy_fn.attr_communicator_copy_fn = 
+        copy_fn.attr_communicator_copy_fn =
             (MPI_Comm_internal_copy_attr_function*) c_copy_fn;
         delete_fn.attr_communicator_delete_fn = c_delete_fn;
         ret = ompi_attr_create_keyval(COMM_ATTR, copy_fn, delete_fn,
@@ -104,10 +104,10 @@ MPI::Comm::do_create_keyval(MPI_Comm_copy_attr_function* c_copy_fn,
     // extra_state into the user's original extra_state).  Ensure to
     // malloc() the struct here (vs new) so that it can be free()'ed
     // by the C attribute base.
-    cxx_extra_state = (keyval_intercept_data_t*) 
+    cxx_extra_state = (keyval_intercept_data_t*)
         malloc(sizeof(keyval_intercept_data_t));
     if (NULL == cxx_extra_state) {
-        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_NO_MEM, 
+        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_NO_MEM,
                                       "MPI::Comm::Create_keyval");
     }
     cxx_extra_state->c_copy_fn = c_copy_fn;
@@ -131,7 +131,7 @@ MPI::Comm::do_create_keyval(MPI_Comm_copy_attr_function* c_copy_fn,
     }
     if (2 != count) {
         free(cxx_extra_state);
-        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, 
+        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,
                                       "MPI::Comm::Create_keyval");
     }
 
@@ -141,7 +141,7 @@ MPI::Comm::do_create_keyval(MPI_Comm_copy_attr_function* c_copy_fn,
     // to 0), the cxx_extra_state is free()'ed.
 
     copy_fn.attr_communicator_copy_fn =
-        (MPI_Comm_internal_copy_attr_function*) 
+        (MPI_Comm_internal_copy_attr_function*)
         ompi_mpi_cxx_comm_copy_attr_intercept;
     delete_fn.attr_communicator_delete_fn =
         ompi_mpi_cxx_comm_delete_attr_intercept;

@@ -6,14 +6,14 @@
  * Copyright (c) 2004-2008 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -21,7 +21,7 @@
 
 #include "pml_ob1.h"
 #include "pml_ob1_sendreq.h"
-#include "ompi/mca/bml/base/base.h" 
+#include "ompi/mca/bml/base/base.h"
 #if OPAL_CUDA_SUPPORT
 #include "opal/mca/common/cuda/common_cuda.h"
 #include "pml_ob1_recvreq.h"
@@ -69,7 +69,7 @@ int mca_pml_ob1_progress(void)
             for(j = 0; j < (int)mca_bml_base_btl_array_get_size(&endpoint->btl_eager); j++) {
                 mca_bml_base_btl_t* bml_btl;
                 int rc;
-                
+
                 /* select a btl */
                 bml_btl = mca_bml_base_btl_array_get_next(&endpoint->btl_eager);
                 rc = mca_pml_ob1_send_request_start_btl(sendreq, bml_btl);

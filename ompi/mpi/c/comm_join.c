@@ -5,16 +5,16 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, LLC.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 #include "ompi_config.h"
@@ -54,7 +54,7 @@ static const char FUNC_NAME[] = "MPI_Comm_join";
 static int ompi_socket_send (int fd, char *buf, int len );
 static int ompi_socket_recv (int fd, char *buf, int len );
 
-int MPI_Comm_join(int fd, MPI_Comm *intercomm) 
+int MPI_Comm_join(int fd, MPI_Comm *intercomm)
 {
     int rc;
     uint32_t len, rlen, llen, lrlen;
@@ -69,7 +69,7 @@ int MPI_Comm_join(int fd, MPI_Comm *intercomm)
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 
         if ( NULL == intercomm ) {
-            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, 
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,
                                           FUNC_NAME);
         }
     }
@@ -81,7 +81,7 @@ int MPI_Comm_join(int fd, MPI_Comm *intercomm)
         OPAL_CR_EXIT_LIBRARY();
         return rc;
     }
-    
+
     /* send my process name */
     tmp_name = *OMPI_PROC_MY_NAME;
     OMPI_PROCESS_NAME_HTON(tmp_name);
@@ -112,7 +112,7 @@ int MPI_Comm_join(int fd, MPI_Comm *intercomm)
        here. */
     llen   = (uint32_t)(strlen(port_name)+1);
     len    = htonl(llen);
-    
+
     ompi_socket_send( fd, (char *) &len, sizeof(uint32_t));
     ompi_socket_recv (fd, (char *) &rlen, sizeof(uint32_t));
 
@@ -124,16 +124,16 @@ int MPI_Comm_join(int fd, MPI_Comm *intercomm)
         return MPI_ERR_INTERN;
     }
 
-    /* Assumption: socket_send should not block, even if the socket 
+    /* Assumption: socket_send should not block, even if the socket
        is not configured to be non-blocking, because the message length are
        so short. */
     ompi_socket_send (fd, port_name, llen);
     ompi_socket_recv (fd, rport, lrlen);
-    
+
     /* use the port we received to connect/accept */
     rc = ompi_dpm.connect_accept (MPI_COMM_SELF, 0, rport, send_first, &newcomp);
-    
-    
+
+
     free ( rport );
 
     *intercomm = newcomp;
@@ -148,13 +148,13 @@ static int ompi_socket_send (int fd, char *buf, int len )
     ssize_t a;
     char *c_ptr;
     int ret = OMPI_SUCCESS;
-    
+
     num   = len;
     c_ptr = buf;
 
     do {
         s_num = (size_t) num;
-        a = write ( fd, c_ptr, s_num ); 
+        a = write ( fd, c_ptr, s_num );
         if ( a == -1 ) {
             if ( errno == EINTR ) {
                 /* Catch EINTR on, mainly on IBM RS6000 */
@@ -172,7 +172,7 @@ static int ompi_socket_send (int fd, char *buf, int len )
 #endif
             else {
                 /* Another error occured */
-                fprintf (stderr,"ompi_socket_send: error while writing to socket" 
+                fprintf (stderr,"ompi_socket_send: error while writing to socket"
                          " error:%s", strerror (errno) );
                 return MPI_ERR_OTHER;
             }
@@ -180,7 +180,7 @@ static int ompi_socket_send (int fd, char *buf, int len )
         num      -= a;
         c_ptr    += a;
     }   while ( num > 0 );
-    
+
 
     if ( num < 0 )  {
         fprintf (stderr, "ompi_socket_send: more data written then available");
@@ -197,13 +197,13 @@ static int ompi_socket_recv (int fd, char *buf, int len )
     ssize_t a;
     char *c_ptr;
     int ret = MPI_SUCCESS;
-    
+
     num      = len;
     c_ptr      = buf;
 
     do {
         s_num = (size_t ) num;
-        a = read ( fd, c_ptr, s_num ); 
+        a = read ( fd, c_ptr, s_num );
         if ( a == -1 ) {
             if ( errno == EINTR ) {
                 /* Catch EINTR on, mainly on IBM RS6000 */
@@ -221,7 +221,7 @@ static int ompi_socket_recv (int fd, char *buf, int len )
 #endif
             else {
                 /* Another error occured */
-                fprintf (stderr,"ompi_socket_recv: error while reading from socket" 
+                fprintf (stderr,"ompi_socket_recv: error while reading from socket"
                          " error:%s", strerror (errno) );
                 return MPI_ERR_OTHER;
             }

@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
- *   Copyright (C) 1997 University of Chicago. 
+/*
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -8,10 +8,10 @@
 
 #ifdef ROMIO_HAVE_WORKING_AIO
 /* nearly identical to ADIOI_GEN_IreadContig, except we lock around I/O */
-void ADIOI_NFS_IreadContig(ADIO_File fd, void *buf, int count, 
+void ADIOI_NFS_IreadContig(ADIO_File fd, void *buf, int count,
 			   MPI_Datatype datatype, int file_ptr_type,
 			   ADIO_Offset offset, ADIO_Request *request,
-			   int *error_code)  
+			   int *error_code)
 {
     MPI_Count len, typesize;
     int aio_errno = 0;

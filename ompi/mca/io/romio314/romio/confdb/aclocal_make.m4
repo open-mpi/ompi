@@ -72,7 +72,7 @@ fi
 ])dnl
 
 dnl/*D
-dnl PAC_PROG_MAKE_ALLOWS_COMMENTS - Check whether comments are allowed in 
+dnl PAC_PROG_MAKE_ALLOWS_COMMENTS - Check whether comments are allowed in
 dnl   shell commands in a makefile
 dnl
 dnl Synopsis:
@@ -105,7 +105,7 @@ ALL:
 pac_str=`$MAKE -f conftest 2>&1`
 # This is needed for Mac OSX 10.5
 rm -rf conftest.dSYM
-rm -f conftest 
+rm -f conftest
 if test "$pac_str" != "success" ; then
     pac_cv_prog_make_allows_comments="no"
 else
@@ -135,7 +135,7 @@ dnl or
 dnl.vb
 dnl .PATH: . ${srcdir}
 dnl.ve
-dnl 
+dnl
 dnl Notes:
 dnl The test checks that the path works with implicit targets (some makes
 dnl support only explicit targets with 'VPATH' or 'PATH').
@@ -166,7 +166,7 @@ VPATH=.:conftestdir
 	@echo \$<
 EOF
 ac_out=`$MAKE -f conftest 2>&1 | grep 'conftestdir/a.c'`
-if test -n "$ac_out" ; then 
+if test -n "$ac_out" ; then
     pac_cv_prog_make_vpath="VPATH"
 else
     rm -f conftest
@@ -177,7 +177,7 @@ all: a.o
 	@echo \$<
 EOF
     ac_out=`$MAKE -f conftest 2>&1 | grep 'conftestdir/a.c'`
-    if test -n "$ac_out" ; then 
+    if test -n "$ac_out" ; then
         pac_cv_prog_make_vpath=".PATH"
     else
 	pac_cv_prog_make_vpath="neither VPATH nor .PATH works"
@@ -226,7 +226,7 @@ EOF
 pac_str=`$MAKE -f conftest 2>&1`
 # This is needed for Mac OSX 10.5
 rm -rf conftest.dSYM
-rm -f conftest 
+rm -f conftest
 if test "$pac_str" = "XX" ; then
     pac_cv_prog_make_set_cflags="no"
 else
@@ -241,7 +241,7 @@ fi
 ])dnl
 
 dnl/*D
-dnl PAC_PROG_MAKE_CLOCK_SKEW - Check whether there is a problem with 
+dnl PAC_PROG_MAKE_CLOCK_SKEW - Check whether there is a problem with
 dnl clock skew in suing make.
 dnl
 dnl Effect:
@@ -277,7 +277,7 @@ fi
 ])
 
 dnl/*D
-dnl PAC_PROG_MAKE - Checks for the varieties of MAKE, including support for 
+dnl PAC_PROG_MAKE - Checks for the varieties of MAKE, including support for
 dnl VPATH
 dnl
 dnl Synopsis:
@@ -292,10 +292,10 @@ dnl This macro uses 'PAC_PROG_MAKE_INCLUDE',
 dnl 'PAC_PROG_MAKE_ALLOWS_COMMENTS', 'PAC_PROG_MAKE_VPATH', and
 dnl 'PAC_PROG_MAKE_SET_CFLAGS'.  See those commands for details about their
 dnl actions.
-dnl 
+dnl
 dnl It may call 'AC_PROG_MAKE_SET', which sets 'SET_MAKE' to 'MAKE = @MAKE@'
 dnl if the make program does not set the value of make, otherwise 'SET_MAKE'
-dnl is set to empty; if the make program echos the directory name, then 
+dnl is set to empty; if the make program echos the directory name, then
 dnl 'SET_MAKE' is set to 'MAKE = $MAKE'.
 dnl D*/
 AC_DEFUN([PAC_PROG_MAKE],[

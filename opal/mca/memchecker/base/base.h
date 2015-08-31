@@ -1,10 +1,10 @@
 /*
- * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  *
  */
@@ -245,7 +245,7 @@ OPAL_DECLSPEC int opal_memchecker_base_set_vbits(void * p, char * vbits, size_t 
 #if OPAL_WANT_MEMCHECKER == 0
 #define opal_memchecker_base_set_vbits(p, vbits, len)
 #endif
-    
+
 END_C_DECLS
 
 #endif /* OPAL_MEMCHECKER_BASE_H */

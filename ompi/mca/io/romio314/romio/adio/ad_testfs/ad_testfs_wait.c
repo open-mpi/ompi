@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 2001 University of Chicago. 
+ *   Copyright (C) 2001 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -17,7 +17,7 @@ void ADIOI_TESTFS_ReadComplete(ADIO_Request *request, ADIO_Status *status, int
 
     MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
-    FPRINTF(stdout, "[%d/%d] ADIOI_TESTFS_ReadComplete called \n", 
+    FPRINTF(stdout, "[%d/%d] ADIOI_TESTFS_ReadComplete called \n",
 	    myrank, nprocs);
 
     /* do something with status set bytes? */
@@ -32,7 +32,7 @@ void ADIOI_TESTFS_WriteComplete(ADIO_Request *request, ADIO_Status *status, int
 
     MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
-    FPRINTF(stdout, "[%d/%d] ADIOI_TESTFS_WriteComplete called\n", 
+    FPRINTF(stdout, "[%d/%d] ADIOI_TESTFS_WriteComplete called\n",
 	    myrank, nprocs);
 
     /* do something with status_set_bytes? */

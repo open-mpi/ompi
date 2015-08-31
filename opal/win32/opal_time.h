@@ -70,7 +70,7 @@
         }                           \
     } while (0)
 #endif
-    
+
 #ifndef timersub
 #define timersub(tvp, uvp, vvp)                     \
     do {                                \
@@ -167,7 +167,7 @@ struct timespec
 
 /*
 NOTE: The use of timezone is obsolete even in linux and my gettimeofday
-function is not going to support it either. So, please be aware of the 
+function is not going to support it either. So, please be aware of the
 fact that if you expect to pass anything here, then you are DEAD :-D */
 struct timezone
 {

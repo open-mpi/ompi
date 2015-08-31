@@ -19,13 +19,13 @@ int main(int argc, char* argv[])
     pid = getpid();
 
     printf("spin: Pid %ld\n", (long)pid);
-    
+
     i = 0;
     while (0 == j) {
         i++;
         pi = i / 3.14159256;
         if (i > 100) i = 0;
     }
-    
+
     return 0;
 }

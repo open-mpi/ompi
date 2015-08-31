@@ -200,7 +200,7 @@ static bool test2(void)
     }
 
     opal_dss.set_buffer_type(bufA, OPAL_DSS_BUFFER_NON_DESC);
-    
+
     for (i=0;i<NUM_ITERS;i++) {
         rc = opal_dss.pack(bufA, src, NUM_ELEMS, OPAL_INT16);
         if (OPAL_SUCCESS != rc) {

@@ -39,7 +39,7 @@ may not be worthwhile to use the hardware unless the amount of data to
 be processed is "big enough" (meaning that the cost of the
 registration and/or copy-in/copy-out is ameliorated) or the memory to
 be processed is already registered or is otherwise local to the the
-accelerator hardware.  
+accelerator hardware.
 
 Hence, at run-time, the module may choose to use the accelerator
 hardware or fail over to a "basic" version of the operation.  This
@@ -96,7 +96,7 @@ Now your component should be fully functional (although entirely
 renamed as "foo" instead of "example").  You can go to the top-level
 OMPI directory and run "autogen.pl" (which will find your component
 and att it to the configure/build process) and then "configure ..."
-and "make ..." as normal.  
+and "make ..." as normal.
 
 shell$ cd (top_ompi_dir)
 shell$ ./autogen.pl
@@ -109,7 +109,7 @@ shell$ make install
 # ...lots of output...
 
 After you have installed Open MPI, running "ompi_info" should show
-your "foo" component in the output.  
+your "foo" component in the output.
 
 shell$ ompi_info | grep op:
                   MCA op: example (MCA v2.0, API v1.0, Component v1.4)
@@ -121,5 +121,5 @@ the output of autogen.pl, configure, and make to ensure that "foo" was
 found, configured, and built successfully.
 
 Once ompi_info sees your component, start editing the "foo" component
-files in a meaningful way.  
+files in a meaningful way.
 

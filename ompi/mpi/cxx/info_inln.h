@@ -1,24 +1,24 @@
 // -*- c++ -*-
-// 
+//
 // Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
 //                         University Research and Technology
 //                         Corporation.  All rights reserved.
 // Copyright (c) 2004-2005 The University of Tennessee and The University
 //                         of Tennessee Research Foundation.  All rights
 //                         reserved.
-// Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+// Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 //                         University of Stuttgart.  All rights reserved.
 // Copyright (c) 2004-2005 The Regents of the University of California.
 //                         All rights reserved.
 // $COPYRIGHT$
-// 
+//
 // Additional copyrights may follow
-// 
+//
 // $HEADER$
 //
 
 
-inline MPI::Info 
+inline MPI::Info
 MPI::Info::Create()
 {
   MPI_Info newinfo;
@@ -32,7 +32,7 @@ MPI::Info::Delete(const char* key)
    (void)MPI_Info_delete(mpi_info, const_cast<char *>(key));
 }
 
-inline MPI::Info 
+inline MPI::Info
 MPI::Info::Dup() const
 {
   MPI_Info newinfo;
@@ -68,7 +68,7 @@ MPI::Info::Get_nthkey(int n, char* key) const
   (void) MPI_Info_get_nthkey(mpi_info, n, key);
 }
 
-inline bool 
+inline bool
 MPI::Info::Get_valuelen(const char* key, int& valuelen) const
 {
   int flag;

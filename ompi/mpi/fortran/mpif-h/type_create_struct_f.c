@@ -5,15 +5,15 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -69,9 +69,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_CREATE_STRUCT,
 static const char FUNC_NAME[] = "MPI_TYPE_CREATE_STRUCT";
 
 
-void ompi_type_create_struct_f(MPI_Fint *count, 
+void ompi_type_create_struct_f(MPI_Fint *count,
 			      MPI_Fint *array_of_block_lengths,
-			      MPI_Aint *array_of_displacements, 
+			      MPI_Aint *array_of_displacements,
 			      MPI_Fint *array_of_types, MPI_Fint *newtype,
 			      MPI_Fint *ierr)
 {

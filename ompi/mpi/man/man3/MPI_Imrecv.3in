@@ -12,7 +12,7 @@
 .SH C Syntax
 .nf
 #include <mpi.h>
-int MPI_Imrecv(void \fI*buf\fP, int\fI count\fP, MPI_Datatype\fI type\fP, 
+int MPI_Imrecv(void \fI*buf\fP, int\fI count\fP, MPI_Datatype\fI type\fP,
 	MPI_Message\fI *message\fP, MPI_Request\fI *request\fP)
 
 .fi
@@ -21,7 +21,7 @@ int MPI_Imrecv(void \fI*buf\fP, int\fI count\fP, MPI_Datatype\fI type\fP,
 INCLUDE 'mpif.h'
 MPI_IMRECV(\fIBUF, COUNT, DATATYPE, MESSAGE, REQUEST, IERROR\fP)
 	<type>	\fIBUF(*)\fP
-	INTEGER	\fCOUNT, DATATYPE, MESSAGE, REQUEST, IERROR\fP 
+	INTEGER	\fCOUNT, DATATYPE, MESSAGE, REQUEST, IERROR\fP
 
 .fi
 .SH C++ Syntax
@@ -51,7 +51,7 @@ request
 Request (handle).
 .TP 1i
 IERROR
-Fortran only: Error status (integer). 
+Fortran only: Error status (integer).
 
 .SH DESCRIPTION
 .ft R
@@ -72,7 +72,7 @@ is possible to cancel the returned request with MPI_Cancel. If
 MPI_Cancel succeeds, the matched message must be found by a subsequent
 message probe (MPI_Probe, MPI_Iprobe, MPI_Mprobe, or MPI_Improbe),
 received by a subsequent receive operation or canceled by the
-sender. 
+sender.
 .sp
 Note, however, that is it possible for the cancellation of operations
 initiated with MPI_Imrecv to fail.  An example of a failing case is
@@ -87,7 +87,7 @@ This is an MPI-3 function and has no C++ binding.
 .SH ERRORS
 Almost all MPI routines return an error value; C routines as the value
 of the function and Fortran routines in the last argument. C++
-functions do not return errors. 
+functions do not return errors.
 .sp
 Before the error value is returned, the current MPI error handler is
 called. By default, this error handler aborts the MPI job, except for

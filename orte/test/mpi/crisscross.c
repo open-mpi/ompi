@@ -12,7 +12,7 @@
 #define MAX_RR_NAME 7
 
 int main(int argc, char *argv[])
-{ 
+{
  MPI_Status     status;               /* MPI status                          */
  int            mpierr;               /* MPI function return code            */
  int            rank;                 /* Process rank within MPI_COMM_WORLD  */
@@ -28,8 +28,8 @@ int main(int argc, char *argv[])
  char           rr_blank[] = {"       "};
  char           rr_empty[] = {"???????"};
 
- int            n_bytes=128*1024*1024; 
- int            n_loops=2; 
+ int            n_bytes=128*1024*1024;
+ int            n_loops=2;
  unsigned char* send_buff;
  unsigned char* recv_buff;
 
@@ -194,16 +194,16 @@ int main(int argc, char *argv[])
              mbs = ((double)n_loops*n_bytes)/(1000000.0*(et2-et1));
              if (mbs < 50.0)
                {
-                printf("   %s [%4d]   =====>>   %s [%4d]  %9.1f mbs     SLOW!\n",partner_name,i,process_name,j,mbs); 
+                printf("   %s [%4d]   =====>>   %s [%4d]  %9.1f mbs     SLOW!\n",partner_name,i,process_name,j,mbs);
                }
              else
                {
-                printf("   %s [%4d]   =====>>   %s [%4d]  %9.1f mbs\n",partner_name,i,process_name,j,mbs); 
+                printf("   %s [%4d]   =====>>   %s [%4d]  %9.1f mbs\n",partner_name,i,process_name,j,mbs);
                }
 
              min_mbs = (mbs < min_mbs) ? mbs:min_mbs;
              max_mbs = (mbs > max_mbs) ? mbs:max_mbs;
-           
+
              avg_mbs += mbs;
              xfers++;
              mismatch = 0;
@@ -259,15 +259,15 @@ int main(int argc, char *argv[])
    }
 
  fflush(stdout);
- 
+
  if ( rank == 0 )
-   { 
+   {
     mbs = sum_avg_mbs/sum_xfers;
     printf("\n     average tranfer rate for %d transfers: %9.1f mbs\n",sum_xfers, mbs);
     printf("     minimum tranfer rate for %d transfers: %9.1f mbs\n",sum_xfers, r_min_mbs);
     printf("     maximum tranfer rate for %d transfers: %9.1f mbs\n",sum_xfers, r_max_mbs);
     fflush(stdout);
-   } 
+   }
 
  return 0;
 }

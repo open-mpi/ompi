@@ -281,7 +281,7 @@ static int __create_fca_comm(mca_coll_fca_module_t *fca_module)
     opal_list_t *c_cache;
     struct timeval start, end, seq_start, seq_end, par_start, par_end;
     int act_deep;
-    
+
 
     if(mca_coll_fca_component.fca_verbose == 10) {
         gettimeofday(&start, NULL);
@@ -297,7 +297,7 @@ static int __create_fca_comm(mca_coll_fca_module_t *fca_module)
             int hash_index, part_of_hash_index;
 
             if(mca_coll_fca_component.fca_parallel_hash_calc == 1) {
-                
+
                 if(mca_coll_fca_component.fca_verbose == 10){
                     gettimeofday(&par_start, NULL);
                 }
@@ -365,7 +365,7 @@ static int __create_fca_comm(mca_coll_fca_module_t *fca_module)
             /* first check the size */
             if( c_item && (comm_size == c_item->size)) {
                 /* then we have a potential cache hit */
-                ompi_comm_compare(comm, c_item->comm, &result); 
+                ompi_comm_compare(comm, c_item->comm, &result);
                 if( MPI_CONGRUENT == result) {
                     /* cache hit! Return the context and be done with it */
                     /* first bump the score */
@@ -378,12 +378,12 @@ static int __create_fca_comm(mca_coll_fca_module_t *fca_module)
 
                     if(mca_coll_fca_component.fca_verbose == 10) {
                         gettimeofday(&end, NULL);
-                        
+
                         mca_coll_fca_component.fca_total_work_time =+
                             end.tv_sec - start.tv_sec + 1e-6 * (end.tv_usec - start.tv_usec);
-                        
+
                         mca_coll_fca_component.fca_cache_hit += 1;
-                        
+
                         if(act_deep>mca_coll_fca_component.fca_max_deep_in_cache)
                             mca_coll_fca_component.fca_max_deep_in_cache = act_deep;
                     }
@@ -426,7 +426,7 @@ static int __create_fca_comm(mca_coll_fca_module_t *fca_module)
         c_item_new = OBJ_NEW(mca_coll_fca_c_cache_item_t);
         c_item_new->fca_comm_wrap = OBJ_NEW(mca_coll_fca_comm_wrap_t);
 
-        OBJ_RETAIN(comm); 
+        OBJ_RETAIN(comm);
 
         c_item_new->size = comm_size;
         c_item_new->comm = comm;
@@ -438,9 +438,9 @@ static int __create_fca_comm(mca_coll_fca_module_t *fca_module)
     }
 
     if(mca_coll_fca_component.fca_verbose == 10) {
-        
+
         gettimeofday(&end, NULL);
-        
+
         mca_coll_fca_component.fca_total_work_time =+
             end.tv_sec - start.tv_sec + 1e-6 * (end.tv_usec - start.tv_usec);
 
@@ -535,7 +535,7 @@ static int mca_coll_fca_module_enable(mca_coll_base_module_t *module,
 
 
 static int mca_coll_fca_ft_event(int state)
-{    
+{
     return OMPI_SUCCESS;
 }
 
@@ -572,7 +572,7 @@ static void mca_coll_fca_module_destruct(mca_coll_fca_module_t *fca_module)
 
         if (fca_module->fca_comm) {
             __destroy_fca_comm(fca_module);
-        } 
+        }
     }
 
     OBJ_RELEASE(fca_module->previous_barrier_module);
@@ -703,7 +703,7 @@ static void mca_coll_fca_c_cache_item_destruct(mca_coll_fca_c_cache_item_t *item
         OBJ_RELEASE(item->fca_comm_wrap);
         /* OBJ_RELEASE(item->comm); */
     }
-} 
+}
 
 OBJ_CLASS_INSTANCE(mca_coll_fca_c_cache_item_t,
         opal_list_item_t,

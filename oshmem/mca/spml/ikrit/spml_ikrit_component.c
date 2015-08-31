@@ -5,9 +5,9 @@
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 #define _GNU_SOURCE
@@ -42,7 +42,7 @@ mca_spml_base_component_2_0_0_t mca_spml_ikrit_component = {
 
     .spmlm_version = {
         MCA_SPML_BASE_VERSION_2_0_0,
-    
+
         .mca_component_name = "ikrit",
         MCA_BASE_MAKE_VERSION(component, OSHMEM_MAJOR_VERSION, OSHMEM_MINOR_VERSION,
                               OSHMEM_RELEASE_VERSION),
@@ -93,7 +93,7 @@ static inline int set_mxm_tls()
     char *tls;
 
     /* disable dci pull for rdma ops. Use single pool.
-     * Pool size is controlled by MXM_DC_QP_LIMIT 
+     * Pool size is controlled by MXM_DC_QP_LIMIT
      * variable
      */
     setenv("MXM_OSHMEM_DC_RNDV_QP_LIMIT", "0", 0);
@@ -142,7 +142,7 @@ static inline int set_mxm_hw_rdma_tls()
     setenv("MXM_OSHMEM_HW_RDMA_RC_QP_LIMIT", "-1", 0);
     setenv("MXM_OSHMEM_HW_RDMA_TLS", "rc", 0);
 
-    return check_mxm_hw_tls("MXM_OSHMEM_HW_RDMA_TLS", 
+    return check_mxm_hw_tls("MXM_OSHMEM_HW_RDMA_TLS",
             getenv("MXM_OSHMEM_HW_RDMA_TLS"));
 }
 
@@ -204,7 +204,7 @@ static int mca_spml_ikrit_component_register(void)
                                        "create separate reliable connection channel",
                                        &mca_spml_ikrit.hw_rdma_channel);
 
-    if (!mca_spml_ikrit.hw_rdma_channel) 
+    if (!mca_spml_ikrit.hw_rdma_channel)
         v = "ud,self";
     else
         v = "rc,ud,self";

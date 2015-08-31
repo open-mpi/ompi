@@ -26,7 +26,7 @@ After the job starts up, this is how things look on the HNP side of things.
 
 ENDPOINTS (orte_iof_base_endpoint_t)
 mode   origin	 tag	fd	seq	ack	src_frags   sink_frags  notes
-=============================================================================================      
+=============================================================================================
 1	0,0,0	 1      1         0       0             0            0  pull() call from rmgr<-
 =============================================================================================  |
 1	0,0,0	 2      2         0       0             0            0  pull() call from rmgr<-|---
@@ -69,9 +69,9 @@ struct orte_iof_svc_fwd_t {
 };
 
 
-Note: This first subscriber says that it will receive from any process 
+Note: This first subscriber says that it will receive from any process
 in the job.  Note that the jobid=1 and the mask=2.  So, we expect this
-to collect the stdout from any of the ranks.  Obviously the second 
+to collect the stdout from any of the ranks.  Obviously the second
 subscriber says the same thing but for stderr.  The third subscriber
 is for receving data from stdin and sending it out to rank 0 of
 the job.  Notice the mask=ff which means compare jobid,vpid
@@ -88,18 +88,18 @@ tied to the subscription.  Hmmm, this I do not really understand.
 
 
 APPENDIX A
-These are the defines that go with the mask.  
+These are the defines that go with the mask.
 #define ORTE_NS_CMP_NONE       0x00
 #define ORTE_NS_CMP_JOBID      0x02
 #define ORTE_NS_CMP_VPID       0x04
 #define ORTE_NS_CMP_ALL        0Xff
 
 
-When we get a HDR_MSG, we call orte_iof_svc_proxy_msg() 
+When we get a HDR_MSG, we call orte_iof_svc_proxy_msg()
 
 APPENDIX B
-There are two dbx files that help get to where we want to get 
-for seeing how things work.  
+There are two dbx files that help get to where we want to get
+for seeing how things work.
 start.x : Run this first to get initial breakpoint.  Needs this
 so we can set additional breakpoints.  This also has some very
 helpful aliases for looking at the structures shown above.

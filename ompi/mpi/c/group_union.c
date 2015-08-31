@@ -5,16 +5,16 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      University of Houston. All rights reserved.
  * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 #include "ompi_config.h"
@@ -37,7 +37,7 @@
 static const char FUNC_NAME[] = "MPI_Group_union";
 
 
-int MPI_Group_union(MPI_Group group1, MPI_Group group2, MPI_Group *new_group) 
+int MPI_Group_union(MPI_Group group1, MPI_Group group2, MPI_Group *new_group)
 {
     int err;
 
@@ -48,7 +48,7 @@ int MPI_Group_union(MPI_Group group1, MPI_Group group2, MPI_Group *new_group)
         if ((MPI_GROUP_NULL == group1) || (MPI_GROUP_NULL == group2) ||
             (NULL == group1) || (NULL == group2) ||
             (NULL == new_group)) {
-            return 
+            return
                 OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_GROUP,
                                        FUNC_NAME);
         }

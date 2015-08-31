@@ -131,7 +131,7 @@ AC_SUBST(MKDIR_P)
 ])
 
 dnl Test for a clean VPATH directory.  Provide this command with the names
-dnl of all of the generated files that might cause problems 
+dnl of all of the generated files that might cause problems
 dnl (Makefiles won't cause problems because there's no VPATH usage for them)
 dnl
 dnl Synopsis
@@ -151,12 +151,12 @@ if test ! -s $srcdir/conftest$$ ; then
     pac_header=""
     ifdef([AC_LIST_HEADER],[pac_header=AC_LIST_HEADER])
     for file in config.status $pac_header $1 ; do
-        if test -f $srcdir/$file ; then 
+        if test -f $srcdir/$file ; then
 	    pac_dirtyfiles="$pac_dirtyfiles $file"
 	fi
     done
     ifelse($2,,,[
- 	for dir in $2 ; do 
+ 	for dir in $2 ; do
             if test -d $srcdir/$dir ; then
                 pac_dirtydirs="$pac_dirtydirs $dir"
 	    fi

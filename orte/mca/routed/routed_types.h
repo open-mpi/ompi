@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2008-2013 Los Alamos National Security, LLC.
- *                         All rights reserved. 
+ *                         All rights reserved.
  * Copyright (c) 2004-2008 The Trustees of Indiana University.
  *                         All rights reserved.
  * $COPYRIGHT$
@@ -10,7 +10,7 @@
  * $HEADER$
  */
 
-/** 
+/**
  * @file
  *
  * Type definitions to support routed framework

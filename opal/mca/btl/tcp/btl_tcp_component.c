@@ -6,7 +6,7 @@
  * Copyright (c) 2004-2014 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -14,15 +14,15 @@
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Laboratory
  * Copyright (c) 2012-2015 Los Alamos National Security, LLC.  All rights
- *                         reserved. 
+ *                         reserved.
  * Copyright (c) 2013-2015 NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  *
  */
@@ -64,8 +64,8 @@
 #include "opal/util/show_help.h"
 #include "opal/constants.h"
 #include "opal/mca/btl/btl.h"
-#include "opal/mca/btl/base/base.h" 
-#include "opal/mca/mpool/base/base.h" 
+#include "opal/mca/btl/base/base.h"
+#include "opal/mca/mpool/base/base.h"
 #include "opal/mca/btl/base/btl_base_error.h"
 #include "opal/mca/pmix/pmix.h"
 
@@ -73,12 +73,12 @@
 #include "btl_tcp_addr.h"
 #include "btl_tcp_proc.h"
 #include "btl_tcp_frag.h"
-#include "btl_tcp_endpoint.h" 
+#include "btl_tcp_endpoint.h"
 #if OPAL_CUDA_SUPPORT
 #include "opal/mca/common/cuda/common_cuda.h"
 #endif /* OPAL_CUDA_SUPPORT */
 
-/* 
+/*
  * Local functions
  */
 static int mca_btl_tcp_component_register(void);
@@ -110,7 +110,7 @@ mca_btl_tcp_component_t mca_btl_tcp_component = {
  */
 
 static inline char* mca_btl_tcp_param_register_string(
-        const char* param_name, 
+        const char* param_name,
         const char* help_string,
         const char* default_value,
         int level,
@@ -125,7 +125,7 @@ static inline char* mca_btl_tcp_param_register_string(
 }
 
 static inline int mca_btl_tcp_param_register_int(
-        const char* param_name, 
+        const char* param_name,
         const char* help_string,
         int default_value,
         int level,
@@ -140,7 +140,7 @@ static inline int mca_btl_tcp_param_register_int(
 }
 
 static inline unsigned int mca_btl_tcp_param_register_uint(
-        const char* param_name, 
+        const char* param_name,
         const char* help_string,
         unsigned int default_value,
         int level,
@@ -207,7 +207,7 @@ static int mca_btl_tcp_component_register(void)
     /* register TCP component parameters */
     mca_btl_tcp_param_register_uint("links", NULL, 1, OPAL_INFO_LVL_4, &mca_btl_tcp_component.tcp_num_links);
     mca_btl_tcp_param_register_string("if_include", "Comma-delimited list of devices and/or CIDR notation of networks to use for MPI communication (e.g., \"eth0,192.168.0.0/16\").  Mutually exclusive with btl_tcp_if_exclude.", "", OPAL_INFO_LVL_1, &mca_btl_tcp_component.tcp_if_include);
-    mca_btl_tcp_param_register_string("if_exclude", "Comma-delimited list of devices and/or CIDR notation of networks to NOT use for MPI communication -- all devices not matching these specifications will be used (e.g., \"eth0,192.168.0.0/16\").  If set to a non-default value, it is mutually exclusive with btl_tcp_if_include.", 
+    mca_btl_tcp_param_register_string("if_exclude", "Comma-delimited list of devices and/or CIDR notation of networks to NOT use for MPI communication -- all devices not matching these specifications will be used (e.g., \"eth0,192.168.0.0/16\").  If set to a non-default value, it is mutually exclusive with btl_tcp_if_include.",
                                       "127.0.0.1/8,sppp",
                                       OPAL_INFO_LVL_1, &mca_btl_tcp_component.tcp_if_exclude);
 
@@ -222,11 +222,11 @@ static int mca_btl_tcp_component_register(void)
         " Every read will read the expected data plus the amount of the"
                                     " endpoint_cache", 30*1024, OPAL_INFO_LVL_4, &mca_btl_tcp_component.tcp_endpoint_cache);
     mca_btl_tcp_param_register_int ("use_nagle", "Whether to use Nagle's algorithm or not (using Nagle's algorithm may increase short message latency)", 0, OPAL_INFO_LVL_4, &mca_btl_tcp_component.tcp_not_use_nodelay);
-    mca_btl_tcp_param_register_int( "port_min_v4", 
+    mca_btl_tcp_param_register_int( "port_min_v4",
                                     "The minimum port where the TCP BTL will try to bind (default 1024)",
                                     1024, OPAL_INFO_LVL_2, &mca_btl_tcp_component.tcp_port_min);
 
-    asprintf( &message, 
+    asprintf( &message,
               "The number of ports where the TCP BTL will try to bind (default %d)."
               " This parameter together with the port min, define a range of ports"
               " where Open MPI will open sockets.",
@@ -239,7 +239,7 @@ static int mca_btl_tcp_component_register(void)
     mca_btl_tcp_param_register_int( "port_min_v6",
                                     "The minimum port where the TCP BTL will try to bind (default 1024)", 1024,
                                     OPAL_INFO_LVL_2, & mca_btl_tcp_component.tcp6_port_min );
-    asprintf( &message, 
+    asprintf( &message,
               "The number of ports where the TCP BTL will try to bind (default %d)."
               " This parameter together with the port min, define a range of ports"
               " where Open MPI will open sockets.",
@@ -296,8 +296,8 @@ static int mca_btl_tcp_component_open(void)
     mca_btl_tcp_component.tcp_num_btls=0;
     mca_btl_tcp_component.tcp_addr_count = 0;
     mca_btl_tcp_component.tcp_btls=NULL;
-    
-    /* initialize objects */ 
+
+    /* initialize objects */
     OBJ_CONSTRUCT(&mca_btl_tcp_component.tcp_lock, opal_mutex_t);
     OBJ_CONSTRUCT(&mca_btl_tcp_component.tcp_procs, opal_proc_table_t);
     OBJ_CONSTRUCT(&mca_btl_tcp_component.tcp_frag_eager, opal_free_list_t);
@@ -306,7 +306,7 @@ static int mca_btl_tcp_component_open(void)
     opal_proc_table_init(&mca_btl_tcp_component.tcp_procs, 16, 256);
 
     /* if_include and if_exclude need to be mutually exclusive */
-    if (OPAL_SUCCESS != 
+    if (OPAL_SUCCESS !=
         mca_base_var_check_exclusive("ompi",
         mca_btl_tcp_component.super.btl_version.mca_type_name,
         mca_btl_tcp_component.super.btl_version.mca_component_name,
@@ -318,7 +318,7 @@ static int mca_btl_tcp_component_open(void)
            "open" failing is not printed */
         return OPAL_ERR_NOT_AVAILABLE;
     }
-    
+
     return OPAL_SUCCESS;
 }
 
@@ -331,7 +331,7 @@ static int mca_btl_tcp_component_close(void)
 {
     if (NULL != mca_btl_tcp_component.tcp_btls)
         free(mca_btl_tcp_component.tcp_btls);
-  
+
     if (mca_btl_tcp_component.tcp_listen_sd >= 0) {
         opal_event_del(&mca_btl_tcp_component.tcp_recv_event);
         CLOSE_THE_SOCKET(mca_btl_tcp_component.tcp_listen_sd);
@@ -448,7 +448,7 @@ static char **split_and_resolve(char **orig_str, char *name, bool reqd)
         str = strchr(argv[i], '/');
         if (NULL == str) {
             opal_show_help("help-mpi-btl-tcp.txt", "invalid if_inexclude",
-                           true, name, opal_process_info.nodename, 
+                           true, name, opal_process_info.nodename,
                            tmp, "Invalid specification (missing \"/\")");
             free(argv[i]);
             free(tmp);
@@ -459,7 +459,7 @@ static char **split_and_resolve(char **orig_str, char *name, bool reqd)
 
         /* Now convert the IPv4 address */
         ((struct sockaddr*) &argv_inaddr)->sa_family = AF_INET;
-        ret = inet_pton(AF_INET, argv[i], 
+        ret = inet_pton(AF_INET, argv[i],
                         &((struct sockaddr_in*) &argv_inaddr)->sin_addr);
         free(argv[i]);
 
@@ -470,16 +470,16 @@ static char **split_and_resolve(char **orig_str, char *name, bool reqd)
             free(tmp);
             continue;
         }
-        opal_output_verbose(20, opal_btl_base_framework.framework_output, 
+        opal_output_verbose(20, opal_btl_base_framework.framework_output,
                             "btl: tcp: Searching for %s address+prefix: %s / %u",
                             name,
                             opal_net_get_hostname((struct sockaddr*) &argv_inaddr),
                             argv_prefix);
-            
+
         /* Go through all interfaces and see if we can find a match */
-        for (if_index = opal_ifbegin(); if_index >= 0; 
+        for (if_index = opal_ifbegin(); if_index >= 0;
              if_index = opal_ifnext(if_index)) {
-            opal_ifindextoaddr(if_index, 
+            opal_ifindextoaddr(if_index,
                                (struct sockaddr*) &if_inaddr,
                                sizeof(if_inaddr));
             if (opal_net_samenetwork((struct sockaddr*) &argv_inaddr,
@@ -488,7 +488,7 @@ static char **split_and_resolve(char **orig_str, char *name, bool reqd)
                 break;
             }
         }
-        
+
         /* If we didn't find a match, keep trying */
         if (if_index < 0) {
             if (reqd || mca_btl_tcp_component.report_all_unfound_interfaces) {
@@ -503,7 +503,7 @@ static char **split_and_resolve(char **orig_str, char *name, bool reqd)
         /* We found a match; get the name and replace it in the
            argv */
         opal_ifindextoname(if_index, if_name, sizeof(if_name));
-        opal_output_verbose(20, opal_btl_base_framework.framework_output, 
+        opal_output_verbose(20, opal_btl_base_framework.framework_output,
                             "btl: tcp: Found match: %s (%s)",
                             opal_net_get_hostname((struct sockaddr*) &if_inaddr),
                             if_name);
@@ -523,7 +523,7 @@ static char **split_and_resolve(char **orig_str, char *name, bool reqd)
 /*
  * Create a TCP BTL instance for either:
  * (1) all interfaces specified by the user
- * (2) all available interfaces 
+ * (2) all available interfaces
  * (3) all available interfaces except for those excluded by the user
  */
 
@@ -610,7 +610,7 @@ static int mca_btl_tcp_component_create_instances(void)
         goto cleanup;
     }
 
-    /* if the interface list was not specified by the user, create 
+    /* if the interface list was not specified by the user, create
      * a BTL for each interface that was not excluded.
     */
     exclude = split_and_resolve(&mca_btl_tcp_component.tcp_if_exclude,
@@ -727,7 +727,7 @@ static int mca_btl_tcp_component_create_listen(uint16_t af_family)
 
     {
         int index, range, port;
-        
+
 #if OPAL_ENABLE_IPV6
         if (AF_INET6 == af_family) {
             range = mca_btl_tcp_component.tcp6_port_range;
@@ -793,7 +793,7 @@ static int mca_btl_tcp_component_create_listen(uint16_t af_family)
 
     /* setup listen backlog to maximum allowed by kernel */
     if(listen(sd, SOMAXCONN) < 0) {
-        BTL_ERROR(("listen() failed: %s (%d)", 
+        BTL_ERROR(("listen() failed: %s (%d)",
                    strerror(opal_socket_errno), opal_socket_errno));
         CLOSE_THE_SOCKET(sd);
         return OPAL_ERROR;
@@ -839,14 +839,14 @@ static int mca_btl_tcp_component_create_listen(uint16_t af_family)
 
 /*
  *  Register TCP module addressing information. The MCA framework
- *  will make this available to all peers. 
+ *  will make this available to all peers.
  */
 
 static int mca_btl_tcp_component_exchange(void)
 {
      int rc = 0, index;
      size_t i = 0;
-     size_t size = mca_btl_tcp_component.tcp_addr_count * 
+     size_t size = mca_btl_tcp_component.tcp_addr_count *
                    mca_btl_tcp_component.tcp_num_links * sizeof(mca_btl_tcp_addr_t);
      /* adi@2007-04-12:
       *
@@ -876,10 +876,10 @@ static int mca_btl_tcp_component_exchange(void)
                      continue;
                  }
 
-                 if (OPAL_SUCCESS != 
+                 if (OPAL_SUCCESS !=
                      opal_ifindextoaddr(index, (struct sockaddr*) &my_ss,
                                         sizeof (my_ss))) {
-                     opal_output (0, 
+                     opal_output (0,
                              "btl_tcp_component: problems getting address for index %i (kernel index %i)\n",
                              index, opal_ifindextokindex (index));
                      continue;
@@ -891,7 +891,7 @@ static int mca_btl_tcp_component_exchange(void)
                      memcpy(&addrs[current_addr].addr_inet,
                              &((struct sockaddr_in6*)&my_ss)->sin6_addr,
                              sizeof(addrs[0].addr_inet));
-                     addrs[current_addr].addr_port = 
+                     addrs[current_addr].addr_port =
                          mca_btl_tcp_component.tcp6_listen_port;
                      addrs[current_addr].addr_family = MCA_BTL_TCP_AF_INET6;
                      xfer_size += sizeof (mca_btl_tcp_addr_t);
@@ -903,10 +903,10 @@ static int mca_btl_tcp_component_exchange(void)
 #endif
                  if ((AF_INET == my_ss.ss_family) &&
                      (4 != mca_btl_tcp_component.tcp_disable_family)) {
-                     memcpy(&addrs[current_addr].addr_inet, 
+                     memcpy(&addrs[current_addr].addr_inet,
                              &((struct sockaddr_in*)&my_ss)->sin_addr,
                              sizeof(addrs[0].addr_inet));
-                     addrs[current_addr].addr_port = 
+                     addrs[current_addr].addr_port =
                          mca_btl_tcp_component.tcp_listen_port;
                      addrs[current_addr].addr_family = MCA_BTL_TCP_AF_INET;
                      xfer_size += sizeof (mca_btl_tcp_addr_t);
@@ -918,7 +918,7 @@ static int mca_btl_tcp_component_exchange(void)
              } /* end of for opal_ifbegin() */
          } /* end of for tcp_num_btls */
          OPAL_MODEX_SEND(rc, PMIX_SYNC_REQD, PMIX_GLOBAL,
-                         &mca_btl_tcp_component.super.btl_version, 
+                         &mca_btl_tcp_component.super.btl_version,
                          addrs, xfer_size);
          free(addrs);
      } /* end if */
@@ -932,7 +932,7 @@ static int mca_btl_tcp_component_exchange(void)
  *  (2) setup TCP listen socket for incoming connection attempts
  *  (3) register BTL parameters with the MCA
  */
-mca_btl_base_module_t** mca_btl_tcp_component_init(int *num_btl_modules, 
+mca_btl_base_module_t** mca_btl_tcp_component_init(int *num_btl_modules,
                                                    bool enable_progress_threads,
                                                    bool enable_mpi_threads)
 {
@@ -942,7 +942,7 @@ mca_btl_base_module_t** mca_btl_tcp_component_init(int *num_btl_modules,
 
     /* initialize free lists */
     opal_free_list_init( &mca_btl_tcp_component.tcp_frag_eager,
-                         sizeof (mca_btl_tcp_frag_eager_t) + 
+                         sizeof (mca_btl_tcp_frag_eager_t) +
                          mca_btl_tcp_module.super.btl_eager_limit,
                          opal_cache_line_size,
                          OBJ_CLASS (mca_btl_tcp_frag_eager_t),
@@ -953,7 +953,7 @@ mca_btl_base_module_t** mca_btl_tcp_component_init(int *num_btl_modules,
                          NULL, 0, NULL, NULL, NULL );
 
     opal_free_list_init( &mca_btl_tcp_component.tcp_frag_max,
-                         sizeof (mca_btl_tcp_frag_max_t) + 
+                         sizeof (mca_btl_tcp_frag_max_t) +
                          mca_btl_tcp_module.super.btl_max_send_size,
                          opal_cache_line_size,
                          OBJ_CLASS (mca_btl_tcp_frag_max_t),
@@ -997,7 +997,7 @@ mca_btl_base_module_t** mca_btl_tcp_component_init(int *num_btl_modules,
         return 0;
     }
 
-    btls = (mca_btl_base_module_t **)malloc(mca_btl_tcp_component.tcp_num_btls * 
+    btls = (mca_btl_base_module_t **)malloc(mca_btl_tcp_component.tcp_num_btls *
                   sizeof(mca_btl_base_module_t*));
     if(NULL == btls) {
         return NULL;
@@ -1035,11 +1035,11 @@ static void mca_btl_tcp_component_accept_handler( int incoming_sd,
         if(sd < 0) {
             if(opal_socket_errno == EINTR)
                 continue;
-            if (opal_socket_errno != EAGAIN && 
+            if (opal_socket_errno != EAGAIN &&
                 opal_socket_errno != EWOULDBLOCK) {
                 opal_show_help("help-mpi-btl-tcp.txt", "accept failed",
                                true, opal_process_info.nodename,
-                               getpid(), 
+                               getpid(),
                                opal_socket_errno,
                                strerror(opal_socket_errno));
             }
@@ -1056,7 +1056,7 @@ static void mca_btl_tcp_component_accept_handler( int incoming_sd,
 
 
 /**
- * Event callback when there is data available on the registered 
+ * Event callback when there is data available on the registered
  * socket to recv. This callback is triggered only once per lifetime
  * for any socket, in the beginning when we setup the handshake
  * protocol.
@@ -1091,7 +1091,7 @@ static void mca_btl_tcp_component_recv_handler(int sd, short flags, void* user)
                        strerror(opal_socket_errno), opal_socket_errno));
         }
     }
-   
+
     /* lookup the corresponding process */
     btl_proc = mca_btl_tcp_proc_lookup(&guid);
     if(NULL == btl_proc) {
@@ -1101,7 +1101,7 @@ static void mca_btl_tcp_component_recv_handler(int sd, short flags, void* user)
 
     /* lookup peer address */
     if(getpeername(sd, (struct sockaddr*)&addr, &addr_len) != 0) {
-        BTL_ERROR(("getpeername() failed: %s (%d)", 
+        BTL_ERROR(("getpeername() failed: %s (%d)",
                    strerror(opal_socket_errno), opal_socket_errno));
         CLOSE_THE_SOCKET(sd);
         return;

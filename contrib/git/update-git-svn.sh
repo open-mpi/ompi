@@ -96,7 +96,7 @@ doit $GIT18 push $force $github_url :trunk
 
 if [ -d $local_fs_git_mirror ]; then
 
-    for repo in ompi.git ompi-replication.git; do 
+    for repo in ompi.git ompi-replication.git; do
         if [ -d $local_fs_git_mirror/$repo ]; then
             doit $GIT18 push $force $local_fs_git_mirror/$repo '*:*'
             doit $GIT18 push $force $local_fs_git_mirror/$repo :trunk

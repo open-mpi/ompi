@@ -1,14 +1,14 @@
 /*
- * Copyright (c) 2012-2013 Los Alamos National Security, Inc.  All rights reserved. 
+ * Copyright (c) 2012-2013 Los Alamos National Security, Inc.  All rights reserved.
  * Copyright (c) 2013-2015 Intel Inc. All rights reserved
  * Copyright (c) 2014      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -270,7 +270,7 @@ opal_dstore_proc_data_t* opal_dstore_base_lookup_proc(opal_proc_table_t *ptable,
         }
         opal_proc_table_set_value(ptable, id, proc_data);
     }
-    
+
     return proc_data;
 }
 

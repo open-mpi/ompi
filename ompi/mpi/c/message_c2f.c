@@ -6,15 +6,15 @@
  * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 #include "ompi_config.h"
@@ -38,7 +38,7 @@
 static const char FUNC_NAME[] = "MPI_Message_c2f";
 
 
-MPI_Fint MPI_Message_c2f(MPI_Message message) 
+MPI_Fint MPI_Message_c2f(MPI_Message message)
 {
     MEMCHECKER(
         memchecker_message(&message);
@@ -68,7 +68,7 @@ MPI_Fint MPI_Message_c2f(MPI_Message message)
     */
 
     if (MPI_UNDEFINED == message->m_f_to_c_index) {
-        message->m_f_to_c_index = 
+        message->m_f_to_c_index =
             opal_pointer_array_add(&ompi_message_f_to_c_table, message);
     }
 

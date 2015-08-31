@@ -6,7 +6,7 @@
 # Copyright (c) 2004-2005 The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
-# Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+# Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
@@ -15,9 +15,9 @@
 #
 # Copyright (c) 2012 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
-# 
+#
 # Additional copyrights may follow
-# 
+#
 # $HEADER$
 #
 # This is the US/English help file for Open MPI checkpoint tool
@@ -43,7 +43,7 @@ Error: The local checkpoint contains invalid or incomplete metadata.
          %s
 #
 [restart_cmd_failure]
-Error: Unable to obtain the proper restart command to restart from the 
+Error: Unable to obtain the proper restart command to restart from the
        checkpoint file (%s). Returned %d.
        Check the installation of the %s checkpoint/restart service
        on all of the machines in your system.
@@ -51,7 +51,7 @@ Error: Unable to obtain the proper restart command to restart from the
 [comp_select_failure]
 Error: Unable to select the %s component needed to restart this
        application. (Returned %d)
-       This likely indicates that the checkpointer needed is not 
+       This likely indicates that the checkpointer needed is not
        available on this machine. You should move to a machine that
        has this checkpointer enabled.
 #

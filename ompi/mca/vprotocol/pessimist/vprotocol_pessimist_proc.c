@@ -13,7 +13,7 @@
 
 int mca_vprotocol_pessimist_add_procs(struct ompi_proc_t **procs, size_t nprocs)
 {
-  /* TODO: for each proc, retrieve post send of sender based request, post recieve of list 
+  /* TODO: for each proc, retrieve post send of sender based request, post recieve of list
       block any other communications until we are up. To be determined how i manage to send (or resend) data to failed nodes
   */
   return mca_pml_v.host_pml.pml_add_procs(procs, nprocs);

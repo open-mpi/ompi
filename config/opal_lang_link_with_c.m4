@@ -1,12 +1,12 @@
 dnl -*- shell-script -*-
 dnl
 dnl Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
-dnl                         reserved. 
+dnl                         reserved.
 dnl Copyright (c) 2010-2012 Cisco Systems, Inc.  All rights reserved.
 dnl $COPYRIGHT$
-dnl 
+dnl
 dnl Additional copyrights may follow
-dnl 
+dnl
 dnl $HEADER$
 dnl
 
@@ -20,7 +20,7 @@ AC_DEFUN([OPAL_LANG_LINK_WITH_C], [
 
   AC_CACHE_CHECK([if C and $1 are link compatible],
     lang_var,
-    [m4_if([$1], [Fortran], 
+    [m4_if([$1], [Fortran],
        [m4_define([ompi_lang_link_with_c_fortran], 1)
         OMPI_FORTRAN_MAKE_C_FUNCTION([testfunc_name], [testfunc])],
        [testfunc_name="testfunc"])
@@ -38,7 +38,7 @@ EOF
        [AC_LANG_PUSH($1)
         ompi_lang_link_with_c_libs="$LIBS"
         LIBS="conftest_c.o $LIBS"
-        m4_if(ompi_lang_link_with_c_fortran, 1, 
+        m4_if(ompi_lang_link_with_c_fortran, 1,
           [AC_LINK_IFELSE([AC_LANG_PROGRAM([], [
        external testfunc
        call testfunc(1)
@@ -50,7 +50,7 @@ extern "C" int testfunc(int);
 #else
 extern int testfunc(int);
 #endif
-], 
+],
              [return testfunc(0);])],
              [AS_VAR_SET(lang_var, ["yes"])], [AS_VAR_SET(lang_var, ["no"])])])
         LIBS="$ompi_lang_link_with_c_libs"

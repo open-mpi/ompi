@@ -5,14 +5,14 @@
  Copyright (c) 2004-2014 The University of Tennessee and The University
                          of Tennessee Research Foundation.  All rights
                          reserved.
- Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
                          University of Stuttgart.  All rights reserved.
  Copyright (c) 2004-2005 The Regents of the University of California.
                          All rights reserved.
  $COPYRIGHT$
- 
+
  Additional copyrights may follow
- 
+
  $HEADER$
  */
 
@@ -22,13 +22,13 @@
 /*
     This has to fill in the following information
 
-    1. sysname: name of the operating system -- 
+    1. sysname: name of the operating system --
     2. nodename: GetComputerName
     3. release: GetVersionEx
     4. version: GetVersionEx
     5. machine: GetSystemInfo
 */
-    
+
 int uname( struct utsname *un )
 {
     TCHAR env_variable[] = "OS=%OS%";
@@ -37,7 +37,7 @@ int uname( struct utsname *un )
     SYSTEM_INFO sys_info;
     TCHAR info_buf[OPAL_UTSNAME_LEN];
 
-    info_buf_count = ExpandEnvironmentStrings( env_variable, info_buf, OPAL_UTSNAME_LEN); 
+    info_buf_count = ExpandEnvironmentStrings( env_variable, info_buf, OPAL_UTSNAME_LEN);
     if (0 == info_buf_count) {
         snprintf( un->sysname, OPAL_UTSNAME_LEN, "Unknown" );
     } else {
@@ -46,13 +46,13 @@ int uname( struct utsname *un )
     }
     info_buf_count = OPAL_UTSNAME_LEN;
     if (!GetComputerName( un->nodename, &info_buf_count)) {
-        snprintf(un->nodename, OPAL_UTSNAME_LEN, "undefined"); 
+        snprintf(un->nodename, OPAL_UTSNAME_LEN, "undefined");
     }
-    
+
     version_info.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
     if (!GetVersionEx(&version_info)) {
-        snprintf(un->release, OPAL_UTSNAME_LEN, "undefined"); 
-        snprintf(un->version, OPAL_UTSNAME_LEN, "undefined"); 
+        snprintf(un->release, OPAL_UTSNAME_LEN, "undefined");
+        snprintf(un->version, OPAL_UTSNAME_LEN, "undefined");
     } else {
         /* fill in both release and version information */
         snprintf( un->release, OPAL_UTSNAME_LEN, "%d.%d.%d",

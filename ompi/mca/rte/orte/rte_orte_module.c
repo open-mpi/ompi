@@ -56,7 +56,7 @@ extern ompi_rte_orte_component_t mca_rte_orte_component;
 void ompi_rte_abort(int error_code, char *fmt, ...)
 {
     va_list arglist;
-    
+
     /* If there was a message, output it */
     va_start(arglist, fmt);
     if( NULL != fmt ) {
@@ -66,7 +66,7 @@ void ompi_rte_abort(int error_code, char *fmt, ...)
         free( buffer );
     }
     va_end(arglist);
-    
+
     /* if I am a daemon or the HNP... */
     if (ORTE_PROC_IS_HNP || ORTE_PROC_IS_DAEMON) {
         /* whack my local procs */
@@ -113,7 +113,7 @@ void ompi_rte_wait_for_debugger(void)
     if (1 == MPIR_being_debugged) {
         debugger = 1;
     }
-    
+
     if (!debugger) {
         /* if not, just return */
         return;
@@ -142,7 +142,7 @@ void ompi_rte_wait_for_debugger(void)
         if (0 != ORTE_PROC_MY_NAME->vpid) {
             return;
         }
-    
+
         /* VPID 0 waits for a message from the HNP */
         OBJ_CONSTRUCT(&xfer, orte_rml_recv_cb_t);
         xfer.active = true;
@@ -153,4 +153,4 @@ void ompi_rte_wait_for_debugger(void)
         /* let the MPI progress engine run while we wait */
         OMPI_WAIT_FOR_COMPLETION(xfer.active);
     }
-}    
+}

@@ -39,14 +39,14 @@ mca_mtl_psm_module_t ompi_mtl_psm = {
         /* NTH: PSM supports 16 bit context ids */
         .mtl_max_contextid = (1UL << 16) - 1,
         .mtl_max_tag = (1UL << 30),  /* must allow negatives */
-        
+
         .mtl_add_procs = ompi_mtl_psm_add_procs,
         .mtl_del_procs = ompi_mtl_psm_del_procs,
         .mtl_finalize = ompi_mtl_psm_finalize,
-        
+
         .mtl_send = ompi_mtl_psm_send,
         .mtl_isend = ompi_mtl_psm_isend,
-        
+
         .mtl_irecv = ompi_mtl_psm_irecv,
         .mtl_iprobe = ompi_mtl_psm_iprobe,
         .mtl_imrecv = ompi_mtl_psm_imrecv,
@@ -55,12 +55,12 @@ mca_mtl_psm_module_t ompi_mtl_psm = {
         .mtl_cancel = ompi_mtl_psm_cancel,
         .mtl_add_comm = ompi_mtl_psm_add_comm,
         .mtl_del_comm = ompi_mtl_psm_del_comm
-    }    
+    }
 };
 
 static
 psm_error_t
-ompi_mtl_psm_errhandler(psm_ep_t ep, const psm_error_t error, 
+ompi_mtl_psm_errhandler(psm_ep_t ep, const psm_error_t error,
 			const char *error_string, psm_error_token_t token)
 {
     switch (error) {
@@ -87,7 +87,7 @@ ompi_mtl_psm_errhandler(psm_ep_t ep, const psm_error_t error,
 
 int ompi_mtl_psm_progress( void );
 
-int ompi_mtl_psm_module_init(int local_rank, int num_local_procs) { 
+int ompi_mtl_psm_module_init(int local_rank, int num_local_procs) {
     psm_error_t err;
     psm_ep_t	ep; /* endpoint handle */
     psm_mq_t	mq;
@@ -101,7 +101,7 @@ int ompi_mtl_psm_module_init(int local_rank, int num_local_procs) {
 
     generated_key = getenv("OMPI_MCA_orte_precondition_transports");
     memset(uu, 0, sizeof(psm_uuid_t));
-    
+
     if (!generated_key || (strlen(generated_key) != 33) ||
         sscanf(generated_key, "%016llx-%016llx", &uu[0], &uu[1]) != 2)
     {
@@ -110,7 +110,7 @@ int ompi_mtl_psm_module_init(int local_rank, int num_local_procs) {
 		     generated_key ? "could not be parsed from" :
 		     "not present in", ompi_process_info.nodename);
       return OMPI_ERROR;
-      
+
     }
 
     /* Handle our own errors for opening endpoints */
@@ -123,7 +123,7 @@ int ompi_mtl_psm_module_init(int local_rank, int num_local_procs) {
     setenv("MPI_LOCALRANKID", env_string, 0);
     snprintf(env_string, sizeof(env_string), "%d", num_local_procs);
     setenv("MPI_LOCALNRANKS", env_string, 0);
-    
+
     /* Setup the endpoint options. */
     bzero((void*) &ep_opt, sizeof(ep_opt));
     ep_opt.timeout = ompi_mtl_psm.connect_timeout * 1e9;
@@ -132,10 +132,10 @@ int ompi_mtl_psm_module_init(int local_rank, int num_local_procs) {
     ep_opt.shm_mbytes = -1; /* Choose PSM defaults */
     ep_opt.sendbufs_num = -1; /* Choose PSM defaults */
 
-#if PSM_VERNO >= 0x0101   
+#if PSM_VERNO >= 0x0101
     ep_opt.network_pkey = ompi_mtl_psm.ib_pkey;
 #endif
-    
+
 #if PSM_VERNO >= 0x0107
     ep_opt.port = ompi_mtl_psm.ib_port;
     ep_opt.outsl = ompi_mtl_psm.ib_service_level;
@@ -157,9 +157,9 @@ int ompi_mtl_psm_module_init(int local_rank, int num_local_procs) {
 
     /* Future errors are handled by the default error handler */
     psm_error_register_handler(ompi_mtl_psm.ep, PSM_ERRHANDLER_DEFAULT);
-    
-    err = psm_mq_init(ep, 
-		      0xffff000000000000ULL, 
+
+    err = psm_mq_init(ep,
+		      0xffff000000000000ULL,
 		      NULL,
 		      0,
 		      &mq);
@@ -175,23 +175,23 @@ int ompi_mtl_psm_module_init(int local_rank, int num_local_procs) {
     ompi_mtl_psm.mq   = mq;
 
     OPAL_MODEX_SEND(rc, PMIX_SYNC_REQD, PMIX_GLOBAL,
-                    &mca_mtl_psm_component.super.mtl_version, 
-                    &ompi_mtl_psm.epid, 
+                    &mca_mtl_psm_component.super.mtl_version,
+                    &ompi_mtl_psm.epid,
                     sizeof(psm_epid_t));
 
     if (OMPI_SUCCESS != rc) {
-	opal_output(0, "Open MPI couldn't send PSM epid to head node process"); 
+	opal_output(0, "Open MPI couldn't send PSM epid to head node process");
 	return OMPI_ERROR;
     }
 
     /* register the psm progress function */
     opal_progress_register(ompi_mtl_psm_progress);
-        
+
     return OMPI_SUCCESS;
 }
 
 int
-ompi_mtl_psm_finalize(struct mca_mtl_base_module_t* mtl) { 
+ompi_mtl_psm_finalize(struct mca_mtl_base_module_t* mtl) {
     psm_error_t err;
 
     opal_progress_unregister(ompi_mtl_psm_progress);
@@ -199,21 +199,21 @@ ompi_mtl_psm_finalize(struct mca_mtl_base_module_t* mtl) {
     /* free resources */
     err = psm_mq_finalize(ompi_mtl_psm.mq);
     if (err) {
-        opal_output(0, "Error in psm_mq_finalize (error %s)\n", 
+        opal_output(0, "Error in psm_mq_finalize (error %s)\n",
 		    psm_error_get_string(err));
         return OMPI_ERROR;
     }
 
     err = psm_ep_close(ompi_mtl_psm.ep, PSM_EP_CLOSE_GRACEFUL, 1*1e9);
     if (err) {
-        opal_output(0, "Error in psm_ep_close (error %s)\n", 
+        opal_output(0, "Error in psm_ep_close (error %s)\n",
 		    psm_error_get_string(err));
         return OMPI_ERROR;
     }
 
     err = psm_finalize();
     if (err) {
-        opal_output(0, "Error in psm_finalize (error %s)\n", 
+        opal_output(0, "Error in psm_finalize (error %s)\n",
 		    psm_error_get_string(err));
         return OMPI_ERROR;
     }
@@ -255,7 +255,7 @@ ompi_mtl_psm_add_procs(struct mca_mtl_base_module_t *mtl,
                       size_t nprocs,
                       struct ompi_proc_t** procs)
 {
-    int i,j; 
+    int i,j;
     int rc;
     psm_epid_t   *epids_in = NULL;
     int *mask_in = NULL;
@@ -265,7 +265,7 @@ ompi_mtl_psm_add_procs(struct mca_mtl_base_module_t *mtl,
     size_t size;
     int proc_errors[PSM_ERROR_LAST] = { 0 };
     int timeout_in_secs;
-    
+
     assert(mtl == &ompi_mtl_psm.super);
     rc = OMPI_ERR_OUT_OF_RESOURCE;
 
@@ -295,7 +295,7 @@ ompi_mtl_psm_add_procs(struct mca_mtl_base_module_t *mtl,
             continue;
         }
 
-        OPAL_MODEX_RECV(rc, &mca_mtl_psm_component.super.mtl_version, 
+        OPAL_MODEX_RECV(rc, &mca_mtl_psm_component.super.mtl_version,
                         &procs[i]->super, (void**)&epid, &size);
 	if (rc != OMPI_SUCCESS || size != sizeof(psm_epid_t)) {
 	  rc = OMPI_ERROR;
@@ -331,7 +331,7 @@ ompi_mtl_psm_add_procs(struct mca_mtl_base_module_t *mtl,
 	    errstr = (char *) ompi_mtl_psm_connect_error_msg(thiserr);
 	    if (proc_errors[thiserr] == 0) {
 		proc_errors[thiserr] = 1;
-		opal_output(0, "PSM EP connect error (%s):", 
+		opal_output(0, "PSM EP connect error (%s):",
 			    errstr ? errstr : "unknown connect error");
 		for (j = 0; j < (int) nprocs; j++) {
 		  if (errs_out[j] == thiserr) {
@@ -350,14 +350,14 @@ ompi_mtl_psm_add_procs(struct mca_mtl_base_module_t *mtl,
 	 * user.  PSM prints the error and the offending endpoint's hostname
 	 * and exits with -1 */
 	psm_error_register_handler(ompi_mtl_psm.ep, PSM_ERRHANDLER_DEFAULT);
-		
+
 	/* Fill in endpoint data */
-	for (i = 0; i < (int) nprocs; i++) { 
+	for (i = 0; i < (int) nprocs; i++) {
             if (0 == mask_in[i]) {
                     continue;
             }
 
-            mca_mtl_psm_endpoint_t *endpoint = 
+            mca_mtl_psm_endpoint_t *endpoint =
 		(mca_mtl_psm_endpoint_t *) OBJ_NEW(mca_mtl_psm_endpoint_t);
 	    endpoint->peer_epid = epids_in[i];
 	    endpoint->peer_addr = epaddrs_out[i];
@@ -366,7 +366,7 @@ ompi_mtl_psm_add_procs(struct mca_mtl_base_module_t *mtl,
 
 	rc = OMPI_SUCCESS;
     }
-    
+
 bail:
     if (epids_in != NULL) {
 	free(epids_in);
@@ -409,7 +409,7 @@ ompi_mtl_psm_del_comm(struct mca_mtl_base_module_t *mtl,
 }
 
 
-int ompi_mtl_psm_progress( void ) { 
+int ompi_mtl_psm_progress( void ) {
     psm_error_t err;
     mca_mtl_psm_request_t* mtl_psm_request;
     psm_mq_status_t psm_status;
@@ -423,7 +423,7 @@ int ompi_mtl_psm_progress( void ) {
 	} else if (err != PSM_OK) {
 	    goto error;
 	}
-	
+
 	completed++;
 
 	err = psm_mq_test(&req, &psm_status);
@@ -434,7 +434,7 @@ int ompi_mtl_psm_progress( void ) {
         mtl_psm_request = (mca_mtl_psm_request_t*) psm_status.context;
 
 	if (mtl_psm_request->type == OMPI_MTL_PSM_IRECV) {
-            ompi_mtl_datatype_unpack(mtl_psm_request->convertor, 
+            ompi_mtl_datatype_unpack(mtl_psm_request->convertor,
                                      mtl_psm_request->buf,
                                      psm_status.msg_length);
 
@@ -442,11 +442,11 @@ int ompi_mtl_psm_progress( void ) {
 		    PSM_GET_MQRANK(psm_status.msg_tag);
 	    mtl_psm_request->super.ompi_req->req_status.MPI_TAG =
 		    PSM_GET_MQUTAG(psm_status.msg_tag);
-        mtl_psm_request->super.ompi_req->req_status._ucount = 
+        mtl_psm_request->super.ompi_req->req_status._ucount =
             psm_status.nbytes;
 	}
-	
-	if(mtl_psm_request->type == OMPI_MTL_PSM_ISEND) { 
+
+	if(mtl_psm_request->type == OMPI_MTL_PSM_ISEND) {
 	  if (mtl_psm_request->free_after) {
 	    free(mtl_psm_request->buf);
 	  }
@@ -454,15 +454,15 @@ int ompi_mtl_psm_progress( void ) {
 
 	switch (psm_status.error_code) {
 	    case PSM_OK:
-		mtl_psm_request->super.ompi_req->req_status.MPI_ERROR = 
+		mtl_psm_request->super.ompi_req->req_status.MPI_ERROR =
 		    OMPI_SUCCESS;
 		break;
 	    case PSM_MQ_TRUNCATION:
-		mtl_psm_request->super.ompi_req->req_status.MPI_ERROR = 
+		mtl_psm_request->super.ompi_req->req_status.MPI_ERROR =
 		    MPI_ERR_TRUNCATE;
 		break;
 	    default:
-		mtl_psm_request->super.ompi_req->req_status.MPI_ERROR = 
+		mtl_psm_request->super.ompi_req->req_status.MPI_ERROR =
                         MPI_ERR_INTERN;
 	}
 
@@ -471,7 +471,7 @@ int ompi_mtl_psm_progress( void ) {
     }
     while (1);
 
- error: 
+ error:
     opal_show_help("help-mtl-psm.txt",
 		   "error polling network", true,
 		   psm_error_get_string(err));

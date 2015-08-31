@@ -41,7 +41,7 @@ int MPIU_write_external32_conversion_fn (const void *userbuf, MPI_Datatype datat
     else
     {
         void *tmp_buf = NULL;
-        tmp_buf = ADIOI_Malloc(bytes); 
+        tmp_buf = ADIOI_Malloc(bytes);
         if (!tmp_buf)
         {
             mpi_errno = MPI_ERR_NO_MEM;
@@ -99,7 +99,7 @@ int MPIU_read_external32_conversion_fn(void *userbuf, MPI_Datatype datatype,
     else
     {
         void *tmp_buf = NULL;
-        tmp_buf = ADIOI_Malloc(bytes); 
+        tmp_buf = ADIOI_Malloc(bytes);
         if (!tmp_buf)
         {
             mpi_errno = MPI_ERR_NO_MEM;
@@ -167,6 +167,6 @@ int MPIU_external32_buffer_setup(const void * buf, int count, MPI_Datatype type,
 }
 
 
-/* 
- * vim: ts=8 sts=4 sw=4 noexpandtab 
+/*
+ * vim: ts=8 sts=4 sw=4 noexpandtab
  */

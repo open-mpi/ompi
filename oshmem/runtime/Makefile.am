@@ -1,9 +1,9 @@
 # Copyright (c) 2013      Mellanox Technologies, Inc.
 #                         All rights reserved.
 # $COPYRIGHT$
-# 
+#
 # Additional copyrights may follow
-# 
+#
 # $HEADER$
 #
 
@@ -16,7 +16,7 @@ headers += \
 	runtime/runtime.h \
 	runtime/params.h \
 	runtime/oshmem_info_support.h \
-	runtime/oshmem_shmem_preconnect.h 
+	runtime/oshmem_shmem_preconnect.h
 
 liboshmem_la_SOURCES += \
 	runtime/oshmem_shmem_init.c \

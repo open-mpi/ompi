@@ -21,10 +21,10 @@ END_FUNC(opal_atomic_wmb)
 
 
 START_FUNC(opal_atomic_cmpset_32)
-	LSYM(1) lwarx   r0, 0, r3  
-	   cmpw    0, r0, r4  
-	   bne-    REFLSYM(2)         
-	   stwcx.  r5, 0, r3  
+	LSYM(1) lwarx   r0, 0, r3
+	   cmpw    0, r0, r4
+	   bne-    REFLSYM(2)
+	   stwcx.  r5, 0, r3
 	   bne-    REFLSYM(1)
 	LSYM(2)
 	cmpw cr7,r0,r4
@@ -32,7 +32,7 @@ START_FUNC(opal_atomic_cmpset_32)
 	rlwinm r3,r3,31,1
 	blr
 END_FUNC(opal_atomic_cmpset_32)
-	
+
 
 START_FUNC(opal_atomic_cmpset_acq_32)
 	mflr r0
@@ -77,10 +77,10 @@ END_FUNC(opal_atomic_cmpset_rel_32)
 
 
 START_FUNC(opal_atomic_cmpset_64)
-	LSYM(3) ldarx   r0, 0, r3  
-	   cmpd    0, r0, r4  
+	LSYM(3) ldarx   r0, 0, r3
+	   cmpd    0, r0, r4
 	   bne-    REFLSYM(4)
-	   stdcx.  r5, 0, r3  
+	   stdcx.  r5, 0, r3
 	   bne-    REFLSYM(3)
 	LSYM(4)
 	xor r3,r4,r0
@@ -121,11 +121,11 @@ END_FUNC(opal_atomic_cmpset_rel_64)
 
 
 START_FUNC(opal_atomic_add_32)
-	LSYM(5) lwarx r0, 0, r3 
-	     add  r0, r4, r0                
-	     stwcx.   r0, 0, r3              
+	LSYM(5) lwarx r0, 0, r3
+	     add  r0, r4, r0
+	     stwcx.   r0, 0, r3
 	     bne-  REFLSYM(5)
-	
+
 	mr r3,r0
 	blr
 END_FUNC(opal_atomic_add_32)
@@ -133,10 +133,10 @@ END_FUNC(opal_atomic_add_32)
 
 START_FUNC(opal_atomic_sub_32)
 	LSYM(6)   lwarx r0,0,r3
-	     subf  r0,r4,r0                
-	     stwcx.   r0,0,r3              
+	     subf  r0,r4,r0
+	     stwcx.   r0,0,r3
 	     bne-  REFLSYM(6)
-	
+
 	mr r3,r0
 	blr
 END_FUNC(opal_atomic_sub_32)

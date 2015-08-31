@@ -6,12 +6,12 @@
  * Copyright (c) 2004-2014 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2014 Los Alamos National Security, LLC.  All rights
- *                         reserved. 
+ *                         reserved.
  * Copyright (c) 2008-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013      Intel, Inc. All rights reserved
  * Copyright (c) 2014      NVIDIA Corporation.  All rights reserved.
@@ -20,9 +20,9 @@
  * Copyright (c) 2014-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -39,11 +39,11 @@
 #include "ompi/mca/bml/base/base.h"
 #include "opal/mca/btl/btl.h"
 #include "opal/mca/btl/base/base.h"
-#include "ompi/mca/bml/base/bml_base_btl.h" 
+#include "ompi/mca/bml/base/bml_base_btl.h"
 #include "bml_r2.h"
 #include "ompi/proc/proc.h"
 
-extern mca_bml_base_component_t mca_bml_r2_component; 
+extern mca_bml_base_component_t mca_bml_r2_component;
 
 /* Names of all the BTL components that this BML is aware of */
 static char *btl_names = NULL;
@@ -64,13 +64,13 @@ static int btl_exclusivity_compare(const void* arg1, const void* arg2)
 static int mca_bml_r2_add_btls( void )
 {
     int i;
-    opal_list_t *btls = NULL; 
+    opal_list_t *btls = NULL;
     mca_btl_base_selected_module_t* selected_btl;
-    size_t num_btls = 0; 
+    size_t num_btls = 0;
     char **btl_names_argv = NULL;
-    
+
     if(true == mca_bml_r2.btls_added) {
-        return OMPI_SUCCESS; 
+        return OMPI_SUCCESS;
     }
 
     /* build an array of r2s and r2 modules */
@@ -79,11 +79,11 @@ static int mca_bml_r2_add_btls( void )
 
     mca_bml_r2.num_btl_modules = 0;
     mca_bml_r2.num_btl_progress = 0;
-   
+
     mca_bml_r2.btl_modules = (mca_btl_base_module_t **)malloc(sizeof(mca_btl_base_module_t*) * num_btls);
     mca_bml_r2.btl_progress = (mca_btl_base_component_progress_fn_t*)malloc(sizeof(mca_btl_base_component_progress_fn_t) * num_btls);
-   
-    if (NULL == mca_bml_r2.btl_modules || 
+
+    if (NULL == mca_bml_r2.btl_modules ||
         NULL == mca_bml_r2.btl_progress) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
@@ -92,14 +92,14 @@ static int mca_bml_r2_add_btls( void )
         mca_btl_base_module_t *btl = selected_btl->btl_module;
         mca_bml_r2.btl_modules[mca_bml_r2.num_btl_modules++] = btl;
         for (i = 0; NULL != btl_names_argv && NULL != btl_names_argv[i]; ++i) {
-            if (0 == 
+            if (0 ==
                 strcmp(btl_names_argv[i],
                        btl->btl_component->btl_version.mca_component_name)) {
                 break;
             }
         }
         if (NULL == btl_names_argv || NULL == btl_names_argv[i]) {
-            opal_argv_append_nosize(&btl_names_argv, 
+            opal_argv_append_nosize(&btl_names_argv,
                                     btl->btl_component->btl_version.mca_component_name);
         }
     }
@@ -111,11 +111,11 @@ static int mca_bml_r2_add_btls( void )
     }
 
     /* sort r2 list by exclusivity */
-    qsort(mca_bml_r2.btl_modules, 
-          mca_bml_r2.num_btl_modules, 
-          sizeof(struct mca_btl_base_module_t*), 
+    qsort(mca_bml_r2.btl_modules,
+          mca_bml_r2.num_btl_modules,
+          sizeof(struct mca_btl_base_module_t*),
           btl_exclusivity_compare);
-    mca_bml_r2.btls_added = true; 
+    mca_bml_r2.btls_added = true;
     return OMPI_SUCCESS;
 }
 
@@ -150,30 +150,30 @@ static void mca_bml_r2_calculate_bandwidth_latency (mca_bml_base_btl_array_t *bt
  *
  */
 
-static int mca_bml_r2_add_procs( size_t nprocs, 
-                                 struct ompi_proc_t** procs, 
+static int mca_bml_r2_add_procs( size_t nprocs,
+                                 struct ompi_proc_t** procs,
                                  struct opal_bitmap_t* reachable )
 {
     size_t p, p_index, n_new_procs = 0;
-    struct mca_btl_base_endpoint_t ** btl_endpoints = NULL;  
-    struct ompi_proc_t** new_procs = NULL; 
+    struct mca_btl_base_endpoint_t ** btl_endpoints = NULL;
+    struct ompi_proc_t** new_procs = NULL;
     int rc, ret = OMPI_SUCCESS;
 
     if(0 == nprocs) {
         return OMPI_SUCCESS;
     }
-    
+
     if(OMPI_SUCCESS != (rc = mca_bml_r2_add_btls()) ) {
         return rc;
     }
-    
+
     /* Select only the procs that don't yet have the BML proc struct. This prevent
      * us from calling btl->add_procs several times on the same destination proc.
      */
-    for(p_index = 0; p_index < nprocs; p_index++) { 
-        struct ompi_proc_t* proc = procs[p_index]; 
+    for(p_index = 0; p_index < nprocs; p_index++) {
+        struct ompi_proc_t* proc = procs[p_index];
 
-        if(NULL !=  proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML]) { 
+        if(NULL !=  proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML]) {
             continue;  /* go to the next proc */
         }
         /* Allocate the new_procs on demand */
@@ -184,7 +184,7 @@ static int mca_bml_r2_add_procs( size_t nprocs,
             }
         }
         OBJ_RETAIN(proc);
-        new_procs[n_new_procs++] = proc; 
+        new_procs[n_new_procs++] = proc;
     }
 
     if ( 0 == n_new_procs ) {
@@ -192,12 +192,12 @@ static int mca_bml_r2_add_procs( size_t nprocs,
     }
 
     /* Starting from here we only work on the unregistered procs */
-    procs = new_procs; 
-    nprocs = n_new_procs; 
-    
+    procs = new_procs;
+    nprocs = n_new_procs;
+
     /* attempt to add all procs to each r2 */
-    btl_endpoints = (struct mca_btl_base_endpoint_t **) 
-        malloc(nprocs * sizeof(struct mca_btl_base_endpoint_t*)); 
+    btl_endpoints = (struct mca_btl_base_endpoint_t **)
+        malloc(nprocs * sizeof(struct mca_btl_base_endpoint_t*));
     if (NULL == btl_endpoints) {
         free(new_procs);
         return OMPI_ERR_OUT_OF_RESOURCE;
@@ -214,7 +214,7 @@ static int mca_bml_r2_add_procs( size_t nprocs,
          * that is passed back to the r2 on data transfer calls
          */
         opal_bitmap_clear_all_bits(reachable);
-        memset(btl_endpoints, 0, nprocs *sizeof(struct mca_btl_base_endpoint_t*)); 
+        memset(btl_endpoints, 0, nprocs *sizeof(struct mca_btl_base_endpoint_t*));
 
         rc = btl->btl_add_procs(btl, n_new_procs, (opal_proc_t**)new_procs, btl_endpoints, reachable);
         if(OMPI_SUCCESS != rc) {
@@ -228,12 +228,12 @@ static int mca_bml_r2_add_procs( size_t nprocs,
         for( p = 0; p < n_new_procs; p++ ) {
             if(opal_bitmap_is_set_bit(reachable, p)) {
                 ompi_proc_t *proc = new_procs[p];
-                mca_bml_base_endpoint_t * bml_endpoint = 
-                    (mca_bml_base_endpoint_t*) proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML]; 
+                mca_bml_base_endpoint_t * bml_endpoint =
+                    (mca_bml_base_endpoint_t*) proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML];
                 mca_bml_base_btl_t* bml_btl = NULL;
                 size_t size;
-                
-                if(NULL == bml_endpoint) { 
+
+                if(NULL == bml_endpoint) {
                     /* allocate bml specific proc data */
                     bml_endpoint = OBJ_NEW(mca_bml_base_endpoint_t);
                     if (NULL == bml_endpoint) {
@@ -242,15 +242,15 @@ static int mca_bml_r2_add_procs( size_t nprocs,
                         free(new_procs);
                         return OMPI_ERR_OUT_OF_RESOURCE;
                     }
-                    
+
                     /* preallocate space in array for max number of r2s */
                     mca_bml_base_btl_array_reserve(&bml_endpoint->btl_eager, mca_bml_r2.num_btl_modules);
                     mca_bml_base_btl_array_reserve(&bml_endpoint->btl_send,  mca_bml_r2.num_btl_modules);
                     mca_bml_base_btl_array_reserve(&bml_endpoint->btl_rdma,  mca_bml_r2.num_btl_modules);
                     bml_endpoint->btl_max_send_size = -1;
                     bml_endpoint->btl_proc = proc;
-                    proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML] = bml_endpoint; 
-                 
+                    proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML] = bml_endpoint;
+
                     bml_endpoint->btl_flags_or = 0;
                 }
 
@@ -350,7 +350,7 @@ static int mca_bml_r2_add_procs( size_t nprocs,
                 }
             }
             if(found == false) {
-                mca_bml_r2.btl_progress[mca_bml_r2.num_btl_progress] = 
+                mca_bml_r2.btl_progress[mca_bml_r2.num_btl_progress] =
                     btl->btl_component->btl_progress;
                 mca_bml_r2.num_btl_progress++;
                 opal_progress_register( btl->btl_component->btl_progress );
@@ -362,7 +362,7 @@ static int mca_bml_r2_add_procs( size_t nprocs,
     /* iterate back through procs and compute metrics for registered r2s */
     for(p=0; p<n_new_procs; p++) {
         ompi_proc_t *proc = new_procs[p];
-        mca_bml_base_endpoint_t* bml_endpoint = 
+        mca_bml_base_endpoint_t* bml_endpoint =
             (mca_bml_base_endpoint_t*) proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML];
         double total_bandwidth = 0;
         uint32_t latency;
@@ -396,7 +396,7 @@ static int mca_bml_r2_add_procs( size_t nprocs,
          *     list of btls used for first fragments
          */
         for (size_t n_index = 0 ; n_index < n_send ; ++n_index) {
-            mca_bml_base_btl_t* bml_btl = 
+            mca_bml_base_btl_t* bml_btl =
                 mca_bml_base_btl_array_get_index(&bml_endpoint->btl_send, n_index);
             mca_btl_base_module_t *btl = bml_btl->btl;
 
@@ -407,11 +407,11 @@ static int mca_bml_r2_add_procs( size_t nprocs,
                 bml_btl->btl_weight = (float)(1.0 / n_send);
             }
 
-            /* check to see if this r2 is already in the array of r2s 
+            /* check to see if this r2 is already in the array of r2s
              * used for first fragments - if not add it.
              */
             if(btl->btl_latency == latency) {
-                mca_bml_base_btl_t* bml_btl_new = 
+                mca_bml_base_btl_t* bml_btl_new =
                     mca_bml_base_btl_array_insert(&bml_endpoint->btl_eager);
                 *bml_btl_new = *bml_btl;
             }
@@ -450,7 +450,7 @@ static int mca_bml_r2_add_procs( size_t nprocs,
             if (mca_bml_r2.show_unreach_errors) {
                 opal_show_help("help-mca-bml-r2.txt",
                                "unreachable proc",
-                               true, 
+                               true,
                                OMPI_NAME_PRINT(&(ompi_proc_local_proc->super.proc_name)),
                                (NULL != ompi_proc_local_proc->super.proc_hostname ?
                                 ompi_proc_local_proc->super.proc_hostname : "unknown!"),
@@ -473,27 +473,27 @@ static int mca_bml_r2_add_procs( size_t nprocs,
  * with the proc that it is/has gone away
  */
 
-static int mca_bml_r2_del_procs(size_t nprocs, 
-                                struct ompi_proc_t** procs) 
+static int mca_bml_r2_del_procs(size_t nprocs,
+                                struct ompi_proc_t** procs)
 {
     size_t p;
     int rc;
-    struct ompi_proc_t** del_procs = (struct ompi_proc_t**) 
-        malloc(nprocs * sizeof(struct ompi_proc_t*)); 
-    size_t n_del_procs = 0; 
+    struct ompi_proc_t** del_procs = (struct ompi_proc_t**)
+        malloc(nprocs * sizeof(struct ompi_proc_t*));
+    size_t n_del_procs = 0;
 
     if (NULL == del_procs) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
-    for(p = 0; p < nprocs; p++) { 
-        ompi_proc_t *proc = procs[p]; 
+    for(p = 0; p < nprocs; p++) {
+        ompi_proc_t *proc = procs[p];
         /* We much check that there are 2 references to the proc (not 1). The
          * first reference belongs to ompi/proc the second belongs to the bml
          * since we retained it. We will release that reference at the end of
          * the loop below. */
         if(((opal_object_t*)proc)->obj_reference_count == 2) {
-            del_procs[n_del_procs++] = proc; 
+            del_procs[n_del_procs++] = proc;
         }
     }
 
@@ -542,7 +542,7 @@ static inline int bml_r2_remove_btl_progress(mca_btl_base_module_t* btl)
         if(btl->btl_component->btl_progress != mca_bml_r2.btl_progress[p])
             continue;
         opal_progress_unregister( btl->btl_component->btl_progress );
-        if( p < (mca_bml_r2.num_btl_progress-1) ) { 
+        if( p < (mca_bml_r2.num_btl_progress-1) ) {
             mca_bml_r2.btl_progress[p] = mca_bml_r2.btl_progress[mca_bml_r2.num_btl_progress-1];
         }
         mca_bml_r2.num_btl_progress--;
@@ -564,11 +564,11 @@ static int mca_bml_r2_del_proc_btl(ompi_proc_t* proc, mca_btl_base_module_t* btl
 
     /* remove btl from eager list */
     mca_bml_base_btl_array_remove(&ep->btl_eager, btl);
-    
-    /* remove btl from send list */ 
-    if(mca_bml_base_btl_array_remove(&ep->btl_send, btl)) { 
-    
-        /* compute total_bandwidth and 
+
+    /* remove btl from send list */
+    if(mca_bml_base_btl_array_remove(&ep->btl_send, btl)) {
+
+        /* compute total_bandwidth and
            reset max_send_size to the min of all btl's */
         total_bandwidth = 0;
         ep->btl_max_send_size = -1;
@@ -581,7 +581,7 @@ static int mca_bml_r2_del_proc_btl(ompi_proc_t* proc, mca_btl_base_module_t* btl
                 ep->btl_max_send_size = ep_btl->btl_max_send_size;
             }
         }
-        
+
         /* compute weighting factor for this btl */
         for(b=0; b< mca_bml_base_btl_array_get_size(&ep->btl_send); b++) {
             bml_btl = mca_bml_base_btl_array_get_index(&ep->btl_send, b);
@@ -596,8 +596,8 @@ static int mca_bml_r2_del_proc_btl(ompi_proc_t* proc, mca_btl_base_module_t* btl
     }
 
     /* remove btl from RDMA list */
-    if(mca_bml_base_btl_array_remove(&ep->btl_rdma, btl)) { 
-        
+    if(mca_bml_base_btl_array_remove(&ep->btl_rdma, btl)) {
+
         /* compute total bandwidth */
         total_bandwidth = 0;
         ep->btl_pipeline_send_length = 0;
@@ -615,7 +615,7 @@ static int mca_bml_r2_del_proc_btl(ompi_proc_t* proc, mca_btl_base_module_t* btl
                 ep->btl_send_limit = ep_btl->btl_min_rdma_pipeline_size;
             }
         }
-        
+
         /* compute weighting factor for this btl */
         for(b=0; b< mca_bml_base_btl_array_get_size(&ep->btl_rdma); b++) {
             bml_btl = mca_bml_base_btl_array_get_index(&ep->btl_rdma, b);
@@ -628,12 +628,12 @@ static int mca_bml_r2_del_proc_btl(ompi_proc_t* proc, mca_btl_base_module_t* btl
             }
         }
     }
-    
+
     return OMPI_SUCCESS;
 }
 
 int mca_bml_r2_finalize( void )
-{ 
+{
     ompi_proc_t** procs;
     size_t p, num_procs;
     opal_list_item_t* w_item;
@@ -686,7 +686,7 @@ int mca_bml_r2_finalize( void )
        care of that. */
 
     return OMPI_SUCCESS;
-} 
+}
 
 
 /*
@@ -701,16 +701,16 @@ static int mca_bml_r2_del_btl(mca_btl_base_module_t* btl)
     opal_list_item_t* item;
     mca_btl_base_module_t** modules;
     bool found = false;
-    
-    if(opal_list_get_size(&mca_btl_base_modules_initialized) == 2) { 
+
+    if(opal_list_get_size(&mca_btl_base_modules_initialized) == 2) {
         opal_output(0, "only one BTL left, can't failover");
         return OMPI_SUCCESS;
     }
-    
+
     procs = ompi_proc_all(&num_procs);
     if(NULL == procs)
         return OMPI_SUCCESS;
-    
+
     /* Get rid of the associated progress function */
     bml_r2_remove_btl_progress(btl);
 
@@ -767,8 +767,8 @@ static int mca_bml_r2_add_btl(mca_btl_base_module_t* btl)
 /*
  *  Register callback w/ all active btls
  */
-static int mca_bml_r2_register( mca_btl_base_tag_t tag, 
-                                mca_btl_base_module_recv_cb_fn_t cbfunc, 
+static int mca_bml_r2_register( mca_btl_base_tag_t tag,
+                                mca_btl_base_module_recv_cb_fn_t cbfunc,
                                 void* data )
 {
     mca_btl_base_active_message_trigger[tag].cbfunc = cbfunc;
@@ -780,18 +780,18 @@ static int mca_bml_r2_register( mca_btl_base_tag_t tag,
         int i, rc;
         mca_btl_base_module_t *btl;
 
-        for(i = 0; i < (int)mca_bml_r2.num_btl_modules; i++) { 
+        for(i = 0; i < (int)mca_bml_r2.num_btl_modules; i++) {
             btl = mca_bml_r2.btl_modules[i];
             if( NULL == btl->btl_register )
                 continue;
-            rc = btl->btl_register(btl, tag, cbfunc, data);  
+            rc = btl->btl_register(btl, tag, cbfunc, data);
             if(OMPI_SUCCESS != rc) {
                 return rc;
             }
         }
     }
 
-    return OMPI_SUCCESS; 
+    return OMPI_SUCCESS;
 }
 
 
@@ -802,28 +802,28 @@ static int mca_bml_r2_register( mca_btl_base_tag_t tag,
 
 static int mca_bml_r2_register_error( mca_btl_base_module_error_cb_fn_t  cbfunc)
 {
-    uint32_t  i; 
+    uint32_t  i;
     int rc;
-    mca_btl_base_module_t *btl; 
+    mca_btl_base_module_t *btl;
     uint32_t ver;
-    
-    for(i = 0; i < mca_bml_r2.num_btl_modules; i++) { 
-        btl = mca_bml_r2.btl_modules[i]; 
-        /* this wont work for version numbers greater than 256... seems 
+
+    for(i = 0; i < mca_bml_r2.num_btl_modules; i++) {
+        btl = mca_bml_r2.btl_modules[i];
+        /* this wont work for version numbers greater than 256... seems
            reasonable.. */
         ver = btl->btl_component->btl_version.mca_type_major_version << 16 |
             btl->btl_component->btl_version.mca_type_minor_version << 8 |
             btl->btl_component->btl_version.mca_type_release_version;
         /* is version number greater than or equal to 1.0.1? */
-        if(ver >= ((1 << 16) |  (0 << 8) | 1) &&            
-           NULL != btl->btl_register_error) { 
-            rc = btl->btl_register_error(btl, cbfunc);  
+        if(ver >= ((1 << 16) |  (0 << 8) | 1) &&
+           NULL != btl->btl_register_error) {
+            rc = btl->btl_register_error(btl, cbfunc);
             if(OMPI_SUCCESS != rc) {
                 return rc;
             }
         }
     }
-    return OMPI_SUCCESS; 
+    return OMPI_SUCCESS;
 }
 
 
@@ -835,17 +835,17 @@ int mca_bml_r2_component_fini(void)
 
 mca_bml_r2_module_t mca_bml_r2 = {
     {
-        &mca_bml_r2_component, 
+        &mca_bml_r2_component,
         mca_bml_r2_add_procs,
         mca_bml_r2_del_procs,
         mca_bml_r2_add_btl,
         mca_bml_r2_del_btl,
         mca_bml_r2_del_proc_btl,
-        mca_bml_r2_register, 
+        mca_bml_r2_register,
         mca_bml_r2_register_error,
-        mca_bml_r2_finalize, 
+        mca_bml_r2_finalize,
         mca_bml_r2_ft_event
     }
-    
+
 };
 

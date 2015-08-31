@@ -16,9 +16,9 @@
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -56,7 +56,7 @@ mca_coll_basic_init_query(bool enable_progress_threads,
  * priority we want to return.
  */
 mca_coll_base_module_t *
-mca_coll_basic_comm_query(struct ompi_communicator_t *comm, 
+mca_coll_basic_comm_query(struct ompi_communicator_t *comm,
                           int *priority)
 {
     int size;
@@ -102,7 +102,7 @@ mca_coll_basic_comm_query(struct ompi_communicator_t *comm,
         }
     }
     basic_module->mccb_num_reqs = size;
-    basic_module->mccb_reqs = (ompi_request_t**) 
+    basic_module->mccb_reqs = (ompi_request_t**)
         malloc(sizeof(ompi_request_t *) * basic_module->mccb_num_reqs);
 
     /* Choose whether to use [intra|inter], and [linear|log]-based

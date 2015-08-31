@@ -5,16 +5,16 @@
  * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 /**
@@ -38,17 +38,17 @@ struct mca_btl_base_selected_module_t {
 typedef struct mca_btl_base_selected_module_t mca_btl_base_selected_module_t;
 
 
-/* holds the recv call back function to be called by the btl on 
- * a receive. 
- */ 
-struct mca_btl_base_recv_reg_t {  
-    mca_btl_base_module_recv_cb_fn_t cbfunc; 
-    void* cbdata; 
-}; 
-typedef struct mca_btl_base_recv_reg_t mca_btl_base_recv_reg_t; 
+/* holds the recv call back function to be called by the btl on
+ * a receive.
+ */
+struct mca_btl_base_recv_reg_t {
+    mca_btl_base_module_recv_cb_fn_t cbfunc;
+    void* cbdata;
+};
+typedef struct mca_btl_base_recv_reg_t mca_btl_base_recv_reg_t;
 
 
-OPAL_DECLSPEC OBJ_CLASS_DECLARATION(mca_btl_base_selected_module_t); 
+OPAL_DECLSPEC OBJ_CLASS_DECLARATION(mca_btl_base_selected_module_t);
 
 /*
  * Global functions for MCA: overall BTL open and close
@@ -76,5 +76,5 @@ OPAL_DECLSPEC extern bool mca_btl_base_thread_multiple_override;
 OPAL_DECLSPEC extern mca_base_framework_t opal_btl_base_framework;
 
 END_C_DECLS
-    
+
 #endif /* MCA_BTL_BASE_H */

@@ -139,11 +139,11 @@ AC_DEFUN([MCA_opal_btl_openib_CONFIG],[
           [AC_MSG_RESULT([yes])])
 
     AC_DEFINE_UNQUOTED(BTL_OPENIB_MALLOC_HOOKS_ENABLED, [$btl_openib_malloc_hooks_enabled],
-                       [Whether the openib BTL malloc hooks are enabled]) 
+                       [Whether the openib BTL malloc hooks are enabled])
 
     # make sure that CUDA-aware checks have been done
     AC_REQUIRE([OPAL_CHECK_CUDA])
-   
+
     # substitute in the things needed to build openib
     AC_SUBST([btl_openib_CFLAGS])
     AC_SUBST([btl_openib_CPPFLAGS])

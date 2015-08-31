@@ -6,14 +6,14 @@
 # Copyright (c) 2004-2005 The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
-# Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+# Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # $COPYRIGHT$
-# 
+#
 # Additional copyrights may follow
-# 
+#
 # $HEADER$
 #
 
@@ -42,9 +42,9 @@ $return = &test_for_headers($test_file, $result_file, $CC);
 # this file is used to extract which header files are included in a particular
 # source file. Kind of a neat implementation
 sub get_header_files {
-    
+
     local($dump_file) = @_;
-    
+
     open(C_FILES, "find $source_tree -name \*.c |") || print "could not find source files\n";
     open(H_FILES, "find $source_tree -name \*.c |") || print "could not find header files\n";
 
@@ -86,7 +86,7 @@ sub get_header_files {
 }
 
 
-#this simply constructs the header file list from dump and dump_pl and then checks whether all the 
+#this simply constructs the header file list from dump and dump_pl and then checks whether all the
 #header files are present
 sub parse_header_files {
 
@@ -114,7 +114,7 @@ sub parse_header_files {
         s/^\s*//;
         #remove anything after <*.h>
         s/>{1,1}.*\n/>\n/;
-        #remove anything before #include 
+        #remove anything before #include
         s/^.*#include/#include/;
         print TEMP $_;
     }
@@ -141,7 +141,7 @@ sub test_for_headers {
 
     while(<HEADER>) {
         print $_;
-        
+
         #create the file for compilation
         chomp $_;
         $string = "
@@ -151,15 +151,15 @@ sub test_for_headers {
         int main(int argc, char **argv) {
             return 0;
         }
-        
+
         ";
-        
+
         open(TEMP, "> $temp") || print "Could not open $temp for writing\n";
         print TEMP $string;
         close(TEMP);
-        
+
         $compiled = system("$CC $temp");
-        
+
         if ($compiled == 0) {
             print "$_ is present\n";
         } else {

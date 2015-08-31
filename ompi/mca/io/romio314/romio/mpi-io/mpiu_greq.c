@@ -36,7 +36,7 @@ int MPIU_Greq_free_fn(void *extra_state)
 {
     /* frees the memory allocated in MPIO_Completed_request_create */
     ADIOI_Free(extra_state);
-	
+
     return MPI_SUCCESS;
 }
 int MPIU_Greq_cancel_fn(void *extra_state, int complete)

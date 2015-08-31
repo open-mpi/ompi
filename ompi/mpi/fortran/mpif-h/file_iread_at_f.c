@@ -5,15 +5,15 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -66,7 +66,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_FILE_IREAD_AT,
 #endif
 
 void ompi_file_iread_at_f(MPI_Fint *fh, MPI_Offset *offset,
-                         char *buf, MPI_Fint *count, 
+                         char *buf, MPI_Fint *count,
                          MPI_Fint *datatype, MPI_Fint *request, MPI_Fint *ierr)
 {
    int c_ierr;
@@ -77,7 +77,7 @@ void ompi_file_iread_at_f(MPI_Fint *fh, MPI_Offset *offset,
    c_ierr = MPI_File_iread_at(c_fh, (MPI_Offset) *offset,
                               OMPI_F2C_BOTTOM(buf),
                               OMPI_FINT_2_INT(*count),
-                              c_type, 
+                              c_type,
                               &c_request);
    if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 

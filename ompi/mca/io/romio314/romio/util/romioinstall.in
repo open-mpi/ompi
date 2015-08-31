@@ -2,7 +2,7 @@
 #
 # This script needs to be built by configure.
 #
-# This is a script to install ROMIO. It can be invoked with 
+# This is a script to install ROMIO. It can be invoked with
 #    make install
 #
 #    (if you used -prefix at configure time) or,
@@ -47,8 +47,8 @@ failmode=soft
 
 # Shell procedures to copy files and create directories
 #
-# We could use install, but install is too different and too hard to 
-# test.  So here are the routines to copy file, make directories, and 
+# We could use install, but install is too different and too hard to
+# test.  So here are the routines to copy file, make directories, and
 # replace #...# and @...@ in files
 CP=cp
 #
@@ -72,14 +72,14 @@ elif [ -d $1 ] ; then
     echo ">>> $1 is a directory; not copied <<<"
     errs=`expr $errs + 1`
     if [ $failmode = "hard" ] ; then exit 1 ; fi
-elif [ ! -f $1 ] ; then 
+elif [ ! -f $1 ] ; then
     echo "**File $1 does not exist (or is not a regular file)!"
     errs=`expr $errs + 1`
     if [ $failmode = "hard" ] ; then exit 1 ; fi
 else
     if [ $verbose = 1 ] ; then echo "Copying $1 to $dest" ; fi
     # We don't delete the file in the event that we are copying the
-    # file over itself (we SHOULD check for that separately, by checking 
+    # file over itself (we SHOULD check for that separately, by checking
     # that directories are distinct)
     #if [ -f $dest ] ; then $Show rm -f $dest ; fi
     $Show $CP $1 $dest
@@ -111,7 +111,7 @@ CopyFileP() {
 
 #
 for arg in "$@" ; do
-    case "$arg" in 
+    case "$arg" in
         -prefix=*)
             PREFIX=`echo $arg | sed -e 's/-prefix=//'`
 	    prefix=$PREFIX
@@ -132,7 +132,7 @@ if test -z "$prefix" ; then
 fi
 
 # Uninstall filename
-if [ -z "$UNINSTALLFILE" ] ; then 
+if [ -z "$UNINSTALLFILE" ] ; then
     UNINSTALLFILE="$sbindir/romiouninstall"
     MkDir `dirname $UNINSTALLFILE`
 fi
@@ -162,13 +162,13 @@ if test "$WANT_INSTALL" = "1"; then
     #cp -r $ROMIO_HOME/lib $PREFIX
     #chmod 755 $PREFIX/lib
     for file in $TOP_BUILD_DIR/lib/* ; do
-	if [ -f $file ] ; then 
-            CopyFileP $file $libdir 
+	if [ -f $file ] ; then
+            CopyFileP $file $libdir
         fi
     done
-    # Romio also copies directories in the lib directory.  
+    # Romio also copies directories in the lib directory.
 
-    if [ -z "$mandir" ] ; then 
+    if [ -z "$mandir" ] ; then
 	mandir=$PREFIX/man
     fi
     echo "copying directory $ROMIO_HOME/man to $mandir"
@@ -182,7 +182,7 @@ if test "$WANT_INSTALL" = "1"; then
     echo "copying directory $ROMIO_HOME/test to $exampledir"
     MkDir $exampledir
     MkDir $exampledir/std
-    for file in $ROMIO_HOME/test/std/* ; do 
+    for file in $ROMIO_HOME/test/std/* ; do
 	CopyFile $file $exampledir/std
     done
     CopyFile test/Makefile $exampledir
@@ -201,9 +201,9 @@ if test "$WANT_INSTALL" = "1"; then
     NEWLIB=`echo $TMPNEWLIB | sed 's/\//\\\\\//g'`
     sed -e 5s/INCLUDE_DIR[\ ]*=\ [/a-z0-9.A-Z_-]*/INCLUDE_DIR\ =\ $NEWINC/ \
         -e 6s/LIBS[\ ]*=\ [/a-z0-9.A-Z_-]*/LIBS\ =\ $NEWLIB/ $exampledir/Makefile\
-           > $exampledir/.romiotmp 
+           > $exampledir/.romiotmp
     mv $exampledir/.romiotmp $exampledir/Makefile
-    
+
     #
     MkDir $sbindir
     echo "rm -f $UNINSTALLFILE" >> $UNINSTALLFILE

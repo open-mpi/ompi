@@ -5,16 +5,16 @@
  * Copyright (c) 2004-2015 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -61,7 +61,7 @@ mca_coll_basic_allgather_inter(void *sbuf, int scount,
     /* Algorithm:
      * - a gather to the root in remote group (simultaniously executed,
      * thats why we cannot use coll_gather).
-     * - exchange the temp-results between two roots 
+     * - exchange the temp-results between two roots
      * - inter-bcast (again simultanious).
      */
 
@@ -144,9 +144,9 @@ mca_coll_basic_allgather_inter(void *sbuf, int scount,
     }
 
 
-    /* Step 3: bcast the data to the remote group. This 
-     * happens in both groups simultaniously, thus we can 
-     * not use coll_bcast (this would deadlock). 
+    /* Step 3: bcast the data to the remote group. This
+     * happens in both groups simultaniously, thus we can
+     * not use coll_bcast (this would deadlock).
      */
     if (rank != root) {
         /* post the recv */

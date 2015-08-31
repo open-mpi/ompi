@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 2003 University of Chicago, Ohio Supercomputer Center. 
+ *   Copyright (C) 2003 University of Chicago, Ohio Supercomputer Center.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -101,12 +101,12 @@ static void writediscontig_data_cb(void *myargs, globus_ftp_client_handle_t *han
 					 eof,
 					 writediscontig_data_cb,
 					 (void *)(bytes_written));
-    FPRINTF(stderr,"wrote %Ld bytes...",(long long)length); 
+    FPRINTF(stderr,"wrote %Ld bytes...",(long long)length);
     return;
 }
 
 
-void ADIOI_GRIDFTP_WriteContig(ADIO_File fd, void *buf, int count, 
+void ADIOI_GRIDFTP_WriteContig(ADIO_File fd, void *buf, int count,
 			     MPI_Datatype datatype, int file_ptr_type,
 			     ADIO_Offset offset, ADIO_Status *status, int
 			     *error_code)
@@ -227,7 +227,7 @@ void ADIOI_GRIDFTP_WriteDiscontig(ADIO_File fd, void *buf, int count,
     MPI_Type_size_x(datatype,&btype_size);
     MPI_Type_extent(datatype,&btype_extent);
     ADIOI_Datatype_iscontig(datatype,&buf_contig);
-    
+
     if ( ( btype_extent!=btype_size ) || ( ! buf_contig ) )
 	{
 	    FPRINTF(stderr,"[%d/%d] %s called with discontigous memory buffer\n",
@@ -348,7 +348,7 @@ void ADIOI_GRIDFTP_WriteDiscontig(ADIO_File fd, void *buf, int count,
 	    nblks++;
 	}
 
-    
+
     /* The ctl callback won't start till the data callbacks complete, so it's
        safe to wait on just the ctl callback */
     globus_mutex_lock(&writediscontig_ctl_lock);
@@ -392,7 +392,7 @@ void ADIOI_GRIDFTP_WriteStrided(ADIO_File fd, void *buf, int count,
     MPI_Comm_size(fd->comm, &nprocs);
     MPI_Comm_rank(fd->comm, &myrank);
 
-    ADIOI_GEN_WriteStrided(fd, buf, count, datatype, file_ptr_type, offset, 
+    ADIOI_GEN_WriteStrided(fd, buf, count, datatype, file_ptr_type, offset,
 			   status, error_code);
     return;
 #else
@@ -460,7 +460,7 @@ void ADIOI_GRIDFTP_WriteStrided(ADIO_File fd, void *buf, int count,
 
 	    ADIOI_Free(intermediate);
 	}
-    else 
+    else
 	{
 	    /* Why did you bother calling WriteStrided?!?!?! */
 	    FPRINTF(stderr,"[%d/%d] Why the heck did you call %s with contiguous buffer *and* file types?\n",

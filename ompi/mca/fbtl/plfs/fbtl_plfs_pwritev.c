@@ -5,15 +5,15 @@
  * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2014 University of Houston. All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -42,7 +42,7 @@ ssize_t  mca_fbtl_plfs_pwritev (mca_io_ompio_file_t *fh )
         return OMPI_ERROR;
     }
 
-    iov = (struct iovec *) malloc 
+    iov = (struct iovec *) malloc
         (OMPIO_IOVEC_INITIAL_SIZE * sizeof (struct iovec));
     if (NULL == iov) {
         opal_output(1, "OUT OF MEMORY\n");
@@ -56,7 +56,7 @@ ssize_t  mca_fbtl_plfs_pwritev (mca_io_ompio_file_t *fh )
 	    iov_offset = (OMPI_MPI_OFFSET_TYPE)(intptr_t)fh->f_io_array[i].offset;
 	    iov_count ++;
 	}
-	
+
 	if (OMPIO_IOVEC_INITIAL_SIZE*block <= iov_count) {
 	    block ++;
 	    iov = (struct iovec *)realloc
@@ -67,32 +67,32 @@ ssize_t  mca_fbtl_plfs_pwritev (mca_io_ompio_file_t *fh )
 		return OMPI_ERR_OUT_OF_RESOURCE;
 	    }
 	}
-	
+
 	if (fh->f_num_of_io_entries != i+1) {
-	    if (((OMPI_MPI_OFFSET_TYPE)(intptr_t)fh->f_io_array[i].offset + 
-		 (OPAL_PTRDIFF_TYPE)fh->f_io_array[i].length) == 
+	    if (((OMPI_MPI_OFFSET_TYPE)(intptr_t)fh->f_io_array[i].offset +
+		 (OPAL_PTRDIFF_TYPE)fh->f_io_array[i].length) ==
 		(OMPI_MPI_OFFSET_TYPE)(intptr_t)fh->f_io_array[i+1].offset) {
-		iov[iov_count].iov_base = 
+		iov[iov_count].iov_base =
 		    fh->f_io_array[i+1].memory_address;
 		iov[iov_count].iov_len = fh->f_io_array[i+1].length;
 		iov_count ++;
 		continue;
 	    }
 	}
-	
+
 	// Find the total number of bytes to be written.
 	size_t bytes = 0;
 	for (int i = 0; i < iov_count; ++i) {
 	    bytes += iov[i].iov_len;
 	}
-	
+
 	// Allocate a temporary buffer to hold the data
 	char *buffer=NULL;
 	buffer = (char *) malloc (bytes);
 	if (buffer == NULL) {
 	    return OMPI_ERROR;
 	}
-	
+
 	// Copy the data into BUFFER.
 	size_t to_copy = bytes;
 	char *bp = buffer;
@@ -104,10 +104,10 @@ ssize_t  mca_fbtl_plfs_pwritev (mca_io_ompio_file_t *fh )
 		break;
 	    }
 	}
-	
+
 	// Write the data
 	ssize_t bytes_written;
-	
+
 	plfs_ret = plfs_write( pfd, buffer, bytes, iov_offset, 0, &bytes_written );
 	if (PLFS_SUCCESS != plfs_ret) {
 	    opal_output(0, "fbtl_plfs_pwritev: Error in plfs_write:\n%s\n", strplfserr(plfs_ret));
@@ -120,11 +120,11 @@ ssize_t  mca_fbtl_plfs_pwritev (mca_io_ompio_file_t *fh )
 	    buffer=NULL;
 	}
     }
-    
+
     if (NULL != iov) {
 	free (iov);
 	iov = NULL;
     }
-    
+
     return total_bytes_written;
 }

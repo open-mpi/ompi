@@ -32,7 +32,7 @@ int vprotocol_pessimist_event_logger_disconnect(ompi_communicator_t *el_comm);
   */
 
 /** Adds a matching event for this request in the event list for any ANY_SOURCE
-  * recv. This event have to be updated later by 
+  * recv. This event have to be updated later by
   * VPROTOCOL_PESSIMIST_MATCHING_LOG_FINALIZE
   * req (IN/OUT): posted RECV request (mca_pml_base_request_t *)
   *   VPESSIMIST_REQ(req) is updated to keep track of the associated event
@@ -111,17 +111,17 @@ static inline void vprotocol_pessimist_matching_log_finish(ompi_request_t *req)
 } while(0)
 
 
-/* This function sends any pending event to the Event Logger. All available 
+/* This function sends any pending event to the Event Logger. All available
  * events are merged into a single message (if small enough).
  */
-static inline void vprotocol_pessimist_event_flush(void) 
+static inline void vprotocol_pessimist_event_flush(void)
 {
     if(OPAL_UNLIKELY(!opal_list_is_empty(&mca_vprotocol_pessimist.pending_events)))
     {
         mca_vprotocol_pessimist_event_t *event;
         mca_vprotocol_pessimist_event_t *prv_event;
-        
-        for(event = 
+
+        for(event =
             (mca_vprotocol_pessimist_event_t *)
             opal_list_get_first(&mca_vprotocol_pessimist.pending_events);
             event !=
@@ -152,7 +152,7 @@ static inline void vprotocol_pessimist_event_flush(void)
                mca_vprotocol_pessimist.event_buffer_max_length)
                 __VPROTOCOL_PESSIMIST_SEND_BUFFER();
             assert(mca_vprotocol_pessimist.event_buffer_length < mca_vprotocol_pessimist.event_buffer_max_length);
-            prv_event = (mca_vprotocol_pessimist_event_t *) 
+            prv_event = (mca_vprotocol_pessimist_event_t *)
                 opal_list_remove_item(&mca_vprotocol_pessimist.pending_events,
                                       (opal_list_item_t *) event);
             VPESSIMIST_EVENT_RETURN(event);
@@ -163,44 +163,44 @@ static inline void vprotocol_pessimist_event_flush(void)
 }
 
 /** Replay matching order according to event list during recovery
- * src (IN/OUT): the requested source. If it is ANY_SOURCE it is changed to 
- *               the matched source at first run. 
- * comm (IN): the communicator's context id is used to know the next unique 
+ * src (IN/OUT): the requested source. If it is ANY_SOURCE it is changed to
+ *               the matched source at first run.
+ * comm (IN): the communicator's context id is used to know the next unique
  *            request id that will be allocated by PML
  */
 #define VPROTOCOL_PESSIMIST_MATCHING_REPLAY(src) do {                         \
   if(mca_vprotocol_pessimist.replay && ((src) == MPI_ANY_SOURCE))             \
     vprotocol_pessimist_matching_replay(&(src));                              \
-} while(0)  
+} while(0)
 void vprotocol_pessimist_matching_replay(int *src);
 
 /*******************************************************************************
-  * WAIT/TEST-SOME/ANY & PROBES 
+  * WAIT/TEST-SOME/ANY & PROBES
   */
 
 /** Store the delivered request after a non deterministic delivery
  * req (IN): the delivered request (pml_base_request_t *)
- */ 
+ */
 static inline void vprotocol_pessimist_delivery_log(ompi_request_t *req)
 {
     mca_vprotocol_pessimist_event_t *event;
     vprotocol_pessimist_delivery_event_t *devent;
-    
+
     if(req == NULL)
-    { 
+    {
         /* No request delivered to this probe, we need to count howmany times */
         V_OUTPUT_VERBOSE(70, "pessimist:\tlog\tdeliver\t%"PRIpclock"\tnone", mca_vprotocol_pessimist.clock);
         event = (mca_vprotocol_pessimist_event_t*)
                 opal_list_get_last(&mca_vprotocol_pessimist.pending_events);
         if(event->type == VPROTOCOL_PESSIMIST_EVENT_TYPE_DELIVERY &&
            event->u_event.e_delivery.reqid == 0)
-        { 
+        {
             /* consecutive probes not delivering anything are merged */
             event->u_event.e_delivery.probeid = mca_vprotocol_pessimist.clock++;
         }
         else
-        { 
-            /* Previous event is not a failed probe, lets create a new 
+        {
+            /* Previous event is not a failed probe, lets create a new
                "failed probe" event (reqid=0) then */
             VPESSIMIST_DELIVERY_EVENT_NEW(event);
             devent = &(event->u_event.e_delivery);
@@ -211,7 +211,7 @@ static inline void vprotocol_pessimist_delivery_log(ompi_request_t *req)
         }
     }
     else
-    { 
+    {
         /* A request have been delivered, log which one it is */
         V_OUTPUT_VERBOSE(70, "pessimist:\tlog\tdeliver\t%"PRIpclock"\treq %"PRIpclock, mca_vprotocol_pessimist.clock, VPESSIMIST_FTREQ(req)->reqid);
         VPESSIMIST_DELIVERY_EVENT_NEW(event);
@@ -228,7 +228,7 @@ static inline void vprotocol_pessimist_delivery_log(ompi_request_t *req)
   * n (IN): the number of input requests
   * reqs (IN): the set of considered requests (pml_base_request_t *)
   * outcount (OUT): number of delivered requests
-  * i (OUT): index(es) of the delivered request 
+  * i (OUT): index(es) of the delivered request
   * status (OUT): status of the delivered request
   */
 #define VPROTOCOL_PESSIMIST_DELIVERY_REPLAY(n, reqs, outcount, i, status) do {\

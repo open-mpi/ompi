@@ -29,9 +29,9 @@ int ompi_coll_libnbc_ialltoallv(void* sendbuf, int *sendcounts, int *sdispls,
   NBC_Handle *handle;
   ompi_coll_libnbc_request_t **coll_req = (ompi_coll_libnbc_request_t**) request;
   ompi_coll_libnbc_module_t *libnbc_module = (ompi_coll_libnbc_module_t*) module;
-  
+
   NBC_IN_PLACE(sendbuf, recvbuf, inplace);
-  
+
   res = NBC_Init_handle(comm, coll_req, libnbc_module);
   if(res != NBC_OK) { printf("Error in NBC_Init_handle(%i)\n", res); return res; }
   handle = (*coll_req);
@@ -48,7 +48,7 @@ int ompi_coll_libnbc_ialltoallv(void* sendbuf, int *sendcounts, int *sdispls,
   if (NULL == schedule) { printf("Error in malloc() (%i)\n", res); return res; }
 
   handle->tmpbuf=NULL;
-  
+
   res = NBC_Sched_create(schedule);
   if(res != NBC_OK) { printf("Error in NBC_Sched_create (%i)\n", res); return res; }
 
@@ -83,7 +83,7 @@ int ompi_coll_libnbc_ialltoallv(void* sendbuf, int *sendcounts, int *sdispls,
 
   res = NBC_Start(handle, schedule);
   if (NBC_OK != res) { printf("Error in NBC_Start() (%i)\n", res); return res; }
-  
+
   return NBC_OK;
 }
 

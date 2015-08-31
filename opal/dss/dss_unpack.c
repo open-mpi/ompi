@@ -194,7 +194,7 @@ int opal_dss_unpack_int(opal_buffer_t *buffer, void *dest,
         /* slow path - types are different sizes */
         UNPACK_SIZE_MISMATCH(int, remote_type, ret);
     }
-    
+
     return ret;
 }
 
@@ -227,7 +227,7 @@ int opal_dss_unpack_sizet(opal_buffer_t *buffer, void *dest,
         /* slow path - types are different sizes */
         UNPACK_SIZE_MISMATCH(size_t, remote_type, ret);
     }
-    
+
     return ret;
 }
 
@@ -260,7 +260,7 @@ int opal_dss_unpack_pid(opal_buffer_t *buffer, void *dest,
         /* slow path - types are different sizes */
         UNPACK_SIZE_MISMATCH(pid_t, remote_type, ret);
     }
-    
+
     return ret;
 }
 
@@ -588,10 +588,10 @@ int opal_dss_unpack_pstat(opal_buffer_t *buffer, void *dest,
     int32_t i, n, m;
     int ret;
     char *cptr;
-    
+
     ptr = (opal_pstats_t **) dest;
     n = *num_vals;
-    
+
     for (i = 0; i < n; ++i) {
         /* allocate the new object */
         ptr[i] = OBJ_NEW(opal_pstats_t);
@@ -668,7 +668,7 @@ int opal_dss_unpack_pstat(opal_buffer_t *buffer, void *dest,
             return ret;
         }
     }
-    
+
     return OPAL_SUCCESS;
 }
 
@@ -856,10 +856,10 @@ int opal_dss_unpack_node_stat(opal_buffer_t *buffer, void *dest,
     opal_node_stats_t **ptr;
     int32_t i, n, m;
     int ret;
-    
+
     ptr = (opal_node_stats_t **) dest;
     n = *num_vals;
-    
+
     for (i = 0; i < n; ++i) {
         /* allocate the new object */
         ptr[i] = OBJ_NEW(opal_node_stats_t);
@@ -937,7 +937,7 @@ int opal_dss_unpack_node_stat(opal_buffer_t *buffer, void *dest,
             return ret;
         }
     }
-    
+
     return OPAL_SUCCESS;
 }
 
@@ -953,7 +953,7 @@ int opal_dss_unpack_value(opal_buffer_t *buffer, void *dest,
 
     ptr = (opal_value_t **) dest;
     n = *num_vals;
-    
+
     for (i = 0; i < n; ++i) {
         /* allocate the new object */
         ptr[i] = OBJ_NEW(opal_value_t);
@@ -1395,7 +1395,7 @@ int opal_dss_unpack_buffer_contents(opal_buffer_t *buffer, void *dest,
 
     ptr = (opal_buffer_t **) dest;
     n = *num_vals;
-    
+
     for (i = 0; i < n; ++i) {
         /* allocate the new object */
         ptr[i] = OBJ_NEW(opal_buffer_t);

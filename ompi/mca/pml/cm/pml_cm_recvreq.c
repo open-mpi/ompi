@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
@@ -24,10 +24,10 @@
 static int
 mca_pml_cm_recv_request_free(struct ompi_request_t** request)
 {
-    mca_pml_cm_request_t* recvreq = *(mca_pml_cm_request_t**)request; 
-    
+    mca_pml_cm_request_t* recvreq = *(mca_pml_cm_request_t**)request;
+
     assert( false == recvreq->req_free_called );
-    
+
     OPAL_THREAD_LOCK(&ompi_request_lock);
     recvreq->req_free_called = true;
     if( true == recvreq->req_pml_complete ) {
@@ -35,14 +35,14 @@ mca_pml_cm_recv_request_free(struct ompi_request_t** request)
             MCA_PML_CM_THIN_RECV_REQUEST_RETURN((mca_pml_cm_hvy_recv_request_t*)recvreq );
         } else {
             MCA_PML_CM_HVY_RECV_REQUEST_RETURN((mca_pml_cm_hvy_recv_request_t*)recvreq );
-        }            
+        }
     }
 
     OPAL_THREAD_UNLOCK(&ompi_request_lock);
 
     *request = MPI_REQUEST_NULL;
     return OMPI_SUCCESS;
-} 
+}
 
 
 void mca_pml_cm_recv_request_completion(struct mca_mtl_request_t *mtl_request)
@@ -56,7 +56,7 @@ void mca_pml_cm_recv_request_completion(struct mca_mtl_request_t *mtl_request)
     }
 }
 
-static void 
+static void
 mca_pml_cm_recv_request_construct(mca_pml_cm_thin_recv_request_t* recvreq)
 {
     recvreq->req_base.req_ompi.req_free = mca_pml_cm_recv_request_free;

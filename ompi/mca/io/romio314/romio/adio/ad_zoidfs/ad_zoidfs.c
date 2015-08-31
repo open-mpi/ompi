@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 2003 University of Chicago. 
+ *   Copyright (C) 2003 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -37,6 +37,6 @@ struct ADIOI_Fns_struct ADIO_ZOIDFS_operations = {
     ADIOI_ZOIDFS_Feature,
 };
 
-/* 
- * vim: ts=8 sts=4 sw=4 noexpandtab 
+/*
+ * vim: ts=8 sts=4 sw=4 noexpandtab
  */

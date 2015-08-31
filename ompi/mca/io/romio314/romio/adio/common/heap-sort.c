@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 2008 University of Chicago. 
+ *   Copyright (C) 2008 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -97,7 +97,7 @@ void ADIOI_Heap_extract_min(heap_t *heap, ADIO_Offset* offset, int *proc,
 		      ADIO_Offset *reg_max_len) {
     heap_node_t *nodes;
     nodes = heap->nodes;
-    
+
     assert (heap->size > 0);
     *offset = nodes[0].offset;
     *proc = nodes[0].proc;
@@ -121,7 +121,7 @@ static void print_heap(heap_t *heap)
     printf ("offsets:\n");
     for (i=0; i < heap->size; i++) {
 	printf ("%lld ", heap->nodes[i].offset);
-	
+
 	if ((i+1) == next_level_idx) {
 	    printf ("\n");
 	    next_level_idx += (int) exp2(level+1);

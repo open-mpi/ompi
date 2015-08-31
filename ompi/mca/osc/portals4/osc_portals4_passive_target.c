@@ -4,9 +4,9 @@
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -133,7 +133,7 @@ lk_add64(ompi_osc_portals4_module_t *module,
 
 
 static inline int
-start_exclusive(ompi_osc_portals4_module_t *module, 
+start_exclusive(ompi_osc_portals4_module_t *module,
                 int target)
 {
     int64_t result;
@@ -151,7 +151,7 @@ start_exclusive(ompi_osc_portals4_module_t *module,
 
 
 static inline int
-end_exclusive(ompi_osc_portals4_module_t *module, 
+end_exclusive(ompi_osc_portals4_module_t *module,
               int target)
 {
     int ret;
@@ -162,7 +162,7 @@ end_exclusive(ompi_osc_portals4_module_t *module,
 
 
 static inline int
-start_shared(ompi_osc_portals4_module_t *module, 
+start_shared(ompi_osc_portals4_module_t *module,
              int target)
 {
     int64_t result;
@@ -186,7 +186,7 @@ start_shared(ompi_osc_portals4_module_t *module,
 
 
 static inline int
-end_shared(ompi_osc_portals4_module_t *module, 
+end_shared(ompi_osc_portals4_module_t *module,
            int target)
 {
     int64_t result;
@@ -205,7 +205,7 @@ ompi_osc_portals4_lock(int lock_type,
 {
     ompi_osc_portals4_module_t *module =
         (ompi_osc_portals4_module_t*) win->w_osc_module;
-    ompi_osc_portals4_outstanding_lock_t* lock;    
+    ompi_osc_portals4_outstanding_lock_t* lock;
     int ret;
 
     module->passive_target_access_epoch = true;
@@ -283,7 +283,7 @@ ompi_osc_portals4_lock_all(int assert,
 {
     ompi_osc_portals4_module_t *module =
         (ompi_osc_portals4_module_t*) win->w_osc_module;
-    ompi_osc_portals4_outstanding_lock_t* lock;    
+    ompi_osc_portals4_outstanding_lock_t* lock;
     int ret = OMPI_SUCCESS;
 
     module->passive_target_access_epoch = true;

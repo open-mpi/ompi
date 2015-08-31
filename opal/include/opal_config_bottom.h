@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2010 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2010 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -16,9 +16,9 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  *
  * This file is included at the bottom of opal_config.h, and is
@@ -30,7 +30,7 @@
  * need to #ifndef/#endif protection here.
  */
 
-#ifndef OPAL_CONFIG_H 
+#ifndef OPAL_CONFIG_H
 #error "opal_config_bottom.h should only be included from opal_config.h"
 #endif
 
@@ -563,7 +563,7 @@ static inline uint16_t ntohs(uint16_t netvar) { return netvar; }
    want to protect others from the autoconf/automake-generated
    PACKAGE_<foo> macros in opal_config.h.  We can't put these undef's
    directly in opal_config.h because they'll be turned into #defines'
-   via autoconf.  
+   via autoconf.
 
    So put them here in case any only else includes OMPI/ORTE/OPAL's
    config.h files. */

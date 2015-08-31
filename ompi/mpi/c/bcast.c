@@ -5,14 +5,14 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 #include "ompi_config.h"
@@ -50,7 +50,7 @@ int MPI_Bcast(void *buffer, int count, MPI_Datatype datatype,
                 memchecker_call(&opal_memchecker_base_isdefined, buffer, count, datatype);
             }
             /* check whether receive buffer is addressable. */
-            memchecker_call(&opal_memchecker_base_isaddressable, buffer, count, datatype);  
+            memchecker_call(&opal_memchecker_base_isaddressable, buffer, count, datatype);
         } else {
             if (MPI_ROOT == root) {
                 /* check whether root's send buffer is defined. */
@@ -66,7 +66,7 @@ int MPI_Bcast(void *buffer, int count, MPI_Datatype datatype,
       err = MPI_SUCCESS;
       OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
       if (ompi_comm_invalid(comm)) {
-          return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, 
+          return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM,
                                      FUNC_NAME);
       }
 
@@ -84,7 +84,7 @@ int MPI_Bcast(void *buffer, int count, MPI_Datatype datatype,
         if ((root >= ompi_comm_size(comm)) || (root < 0)) {
           return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ROOT, FUNC_NAME);
         }
-      } 
+      }
 
       /* Errors for intercommunicators */
 
@@ -93,7 +93,7 @@ int MPI_Bcast(void *buffer, int count, MPI_Datatype datatype,
                MPI_ROOT == root || MPI_PROC_NULL == root)) {
             return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ROOT, FUNC_NAME);
         }
-      } 
+      }
     }
 
     /* If there's only one node, or if the count is 0, we're done */
@@ -101,7 +101,7 @@ int MPI_Bcast(void *buffer, int count, MPI_Datatype datatype,
     if ((OMPI_COMM_IS_INTRA(comm) && ompi_comm_size(comm) <= 1) ||
         0 == count) {
         return MPI_SUCCESS;
-    } 
+    }
 
     OPAL_CR_ENTER_LIBRARY();
 

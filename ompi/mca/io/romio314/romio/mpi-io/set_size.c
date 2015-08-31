@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -88,7 +88,7 @@ int MPI_File_set_size(MPI_File fh, MPI_Offset size)
 
     ADIO_Resize(adio_fh, size, &error_code);
     /* TODO: what to do with error code? */
-    
+
     /* --BEGIN ERROR HANDLING-- */
     if (error_code != MPI_SUCCESS)
 	error_code = MPIO_Err_return_file(adio_fh, error_code);

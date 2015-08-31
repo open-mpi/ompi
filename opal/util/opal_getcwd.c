@@ -1,9 +1,9 @@
 /*
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -64,7 +64,7 @@ int opal_getcwd(char *buf, size_t size)
             /* If we can't stat() what getcwd() gave us, give up */
             if (0 != stat(cwd, &a)) {
                 return OPAL_ERR_IN_ERRNO;
-            } 
+            }
             /* If we can't stat() $PWD, then $PWD could just be stale
                -- so ignore it. */
             else if (0 != stat(pwd, &b)) {

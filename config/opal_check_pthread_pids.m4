@@ -5,15 +5,15 @@ dnl                         Corporation.  All rights reserved.
 dnl Copyright (c) 2004-2005 The University of Tennessee and The University
 dnl                         of Tennessee Research Foundation.  All rights
 dnl                         reserved.
-dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2008-2013 Cisco Systems, Inc.  All rights reserved.
 dnl $COPYRIGHT$
-dnl 
+dnl
 dnl Additional copyrights may follow
-dnl 
+dnl
 dnl $HEADER$
 dnl
 
@@ -65,8 +65,8 @@ void *checkpid(void *arg) {
    else
      ret = 1;
    pthread_exit((void *) &ret);
-}])], 
-[MSG=no OPAL_THREADS_HAVE_DIFFERENT_PIDS=0], 
+}])],
+[MSG=no OPAL_THREADS_HAVE_DIFFERENT_PIDS=0],
 [MSG=yes OPAL_THREADS_HAVE_DIFFERENT_PIDS=1],
 [
  # If we're cross compiling, we can't do another AC_* function here beause
@@ -99,7 +99,7 @@ AS_IF([test "$OPAL_THREADS_HAVE_DIFFERENT_PIDS" = "1"],
       [AC_MSG_WARN([This version of Open MPI only supports environments where])
        AC_MSG_WARN([threads have the same PID.  Please use an older version of])
        AC_MSG_WARN([Open MPI if you need support on systems with different])
-       AC_MSG_WARN([PIDs for threads in the same process.  Open MPI 1.4.x]) 
+       AC_MSG_WARN([PIDs for threads in the same process.  Open MPI 1.4.x])
        AC_MSG_WARN([supports such systems, as does at least some versions the])
        AC_MSG_WARN([Open MPI 1.5.x series.])
        AC_MSG_ERROR([Cannot continue])

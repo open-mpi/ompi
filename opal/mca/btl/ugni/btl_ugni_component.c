@@ -397,7 +397,7 @@ mca_btl_ugni_progress_datagram (mca_btl_ugni_module_t *ugni_module)
     /* check for datagram completion */
     OPAL_THREAD_LOCK(&ugni_module->device->dev_lock);  /* TODO: may not need lock for this function */
     grc = GNI_PostDataProbeById (ugni_module->device->dev_handle, &datagram_id);
-    OPAL_THREAD_UNLOCK(&ugni_module->device->dev_lock);  
+    OPAL_THREAD_UNLOCK(&ugni_module->device->dev_lock);
     if (OPAL_LIKELY(GNI_RC_SUCCESS != grc)) {
         return 0;
     }
@@ -417,7 +417,7 @@ mca_btl_ugni_progress_datagram (mca_btl_ugni_module_t *ugni_module)
     OPAL_THREAD_LOCK(&ugni_module->device->dev_lock);  /* TODO: may not need lock for this function */
     grc = GNI_EpPostDataWaitById (handle, datagram_id, -1, &post_state,
                                   &remote_addr, &remote_id);
-    OPAL_THREAD_UNLOCK(&ugni_module->device->dev_lock);  
+    OPAL_THREAD_UNLOCK(&ugni_module->device->dev_lock);
     if (GNI_RC_SUCCESS != grc) {
         BTL_ERROR(("GNI_EpPostDataWaitById failed with rc = %d", grc));
         return opal_common_rc_ugni_to_opal (grc);

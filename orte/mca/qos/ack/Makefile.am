@@ -1,16 +1,16 @@
 #
 #  Copyright (c) 2015      Intel, Inc. All rights reserved.
 # $COPYRIGHT$
-# 
+#
 # Additional copyrights may follow
-# 
+#
 # $HEADER$
 #
 
 sources = \
 	qos_ack.h \
-	qos_ack_component.c 
-	
+	qos_ack_component.c
+
 # Make the output library in this directory, and name it either
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la
 # (for static builds).

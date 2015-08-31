@@ -2,9 +2,9 @@
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 #include "oshmem_config.h"
@@ -102,7 +102,7 @@ static void _shmem_broadcast(void *target,
         {
             oshmem_proc_group_destroy(group);
         }
-#endif /* OSHMEM_GROUP_CACHE_ENABLED */ 
+#endif /* OSHMEM_GROUP_CACHE_ENABLED */
     }
 }
 

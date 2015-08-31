@@ -7,9 +7,9 @@
  * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -95,7 +95,7 @@ typedef struct {
 /* Information for a single process, a list of communicators, some
  * useful addresses, and the state of the iterators.
  */
-typedef struct 
+typedef struct
 {
   struct communicator_t *communicator_list;	/* List of communicators in the process */
 
@@ -114,7 +114,7 @@ typedef struct
 
   int world_proc_array_entries;
   mqs_taddr_t* world_proc_array;
-    
+
   mqs_opal_free_list_t_pos next_msg;            /* And state for the message iterator */
   mqs_op_class  what;				/* What queue are we looking on */
 } mpi_process_info_extra;

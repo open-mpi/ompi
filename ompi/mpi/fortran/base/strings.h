@@ -5,15 +5,15 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2010-2012 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -28,7 +28,7 @@ BEGIN_C_DECLS
      *
      * @param fstr Fortran string
      * @param len Fortran string length
-     * @param cstr Pointer to C string that will be created and returned 
+     * @param cstr Pointer to C string that will be created and returned
      *
      * @retval OMPI_SUCCESS upon success
      * @retval OMPI_ERROR upon error
@@ -86,7 +86,7 @@ BEGIN_C_DECLS
      * number_of_argv_arrays).  Hence, the advance parameter is used
      * to specify this displacement.
      */
-    OMPI_DECLSPEC int ompi_fortran_argv_f2c(char *farray, int string_len, 
+    OMPI_DECLSPEC int ompi_fortran_argv_f2c(char *farray, int string_len,
                                             int advancex, char ***cargv);
 
     /**

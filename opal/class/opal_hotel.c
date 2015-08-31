@@ -2,9 +2,9 @@
  * Copyright (c) 2012      Cisco Systems, Inc. All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, LLC. All rights reserved
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -19,7 +19,7 @@
 
 static void local_eviction_callback(int fd, short flags, void *arg)
 {
-    opal_hotel_room_eviction_callback_arg_t *eargs = 
+    opal_hotel_room_eviction_callback_arg_t *eargs =
         (opal_hotel_room_eviction_callback_arg_t*) arg;
     void *occupant = eargs->hotel->rooms[eargs->room_num].occupant;
 
@@ -51,7 +51,7 @@ int opal_hotel_init(opal_hotel_t *h, int num_rooms,
     h->evict_callback_fn = evict_callback_fn;
     h->rooms = (opal_hotel_room_t*)malloc(num_rooms * sizeof(opal_hotel_room_t));
     if (NULL != evict_callback_fn) {
-        h->eviction_args = 
+        h->eviction_args =
             (opal_hotel_room_eviction_callback_arg_t*)malloc(num_rooms * sizeof(opal_hotel_room_eviction_callback_arg_t));
     }
     h->unoccupied_rooms = (int*) malloc(num_rooms * sizeof(int));

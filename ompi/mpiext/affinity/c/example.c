@@ -8,10 +8,10 @@ int main(int argc, char* argv[])
     char ompi_bound[OMPI_AFFINITY_STRING_MAX];
     char current_binding[OMPI_AFFINITY_STRING_MAX];
     char exists[OMPI_AFFINITY_STRING_MAX];
-    
+
     MPI_Init(NULL, NULL);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    
+
     OMPI_Affinity_str(OMPI_AFFINITY_RSRC_STRING_FMT,
                       ompi_bound, current_binding, exists);
     printf("rank %d (resource string): \n"

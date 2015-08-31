@@ -23,7 +23,7 @@ int main(int argc, char* argv[])
     if (MPI_COMM_NULL == parent) {
         pid = getpid();
         printf("Parent [pid %ld] about to spawn!\n", (long)pid);
-        if (MPI_SUCCESS != (rc = MPI_Comm_spawn(argv[0], MPI_ARGV_NULL, 3, MPI_INFO_NULL, 
+        if (MPI_SUCCESS != (rc = MPI_Comm_spawn(argv[0], MPI_ARGV_NULL, 3, MPI_INFO_NULL,
                                                 0, MPI_COMM_WORLD, &child, MPI_ERRCODES_IGNORE))) {
             printf("Child failed to spawn\n");
             return rc;
@@ -36,7 +36,7 @@ int main(int argc, char* argv[])
         }
         MPI_Comm_disconnect(&child);
         printf("Parent disconnected\n");
-    } 
+    }
     /* Otherwise, we're the child */
     else {
         MPI_Comm_rank(MPI_COMM_WORLD, &rank);

@@ -12,7 +12,7 @@
 #                         All rights reserved.
 # Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
 #
-# orte_show_help_replacement.sh Script to detect occurences of 
+# orte_show_help_replacement.sh Script to detect occurences of
 # #include "orte/util/show_help.h", where actually either
 #  1. #include "opal/util/output.h"
 #  2. #include "orte/mca/rml/rml_types.h"

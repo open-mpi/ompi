@@ -92,7 +92,7 @@ mca_sharedfp_lockedfile_seek (mca_io_ompio_file_t *fh,
             offset = end_position + offset;
 	    opal_output(ompi_sharedfp_base_framework.framework_output,
 			"MPI_SEEK_END: file_get_size=%lld\n",end_position);
-	    
+
             if ( offset < 0){
                 opal_output(0,"sharedfp_lockedfile_seek - MPI_SEEK_CUR, offset must be > 0, got offset=%lld.\n",offset);
                 ret = -1;

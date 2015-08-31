@@ -36,18 +36,18 @@ ompi_mtl_psm_irecv(struct mca_mtl_base_module_t* mtl,
                   struct opal_convertor_t *convertor,
                   struct mca_mtl_request_t *mtl_request)
 {
-    int ret;    
+    int ret;
     psm_error_t err;
     mca_mtl_psm_request_t * mtl_psm_request = (mca_mtl_psm_request_t*) mtl_request;
     uint64_t mqtag;
     uint64_t tagsel;
     size_t length;
-    
+
     ret = ompi_mtl_datatype_recv_buf(convertor,
                                      &mtl_psm_request->buf,
-                                     &length, 
+                                     &length,
                                      &mtl_psm_request->free_after);
-    
+
     if (OMPI_SUCCESS != ret) return ret;
 
     mtl_psm_request->length = length;
@@ -59,7 +59,7 @@ ompi_mtl_psm_irecv(struct mca_mtl_base_module_t* mtl,
 #if 0
     printf("recv bits:   0x%016llx 0x%016llx\n", mqtag, tagsel);
 #endif
-    err = psm_mq_irecv(ompi_mtl_psm.mq, 
+    err = psm_mq_irecv(ompi_mtl_psm.mq,
 		       mqtag,
 		       tagsel,
 		       0,
@@ -67,7 +67,7 @@ ompi_mtl_psm_irecv(struct mca_mtl_base_module_t* mtl,
 		       length,
 		       mtl_psm_request,
 		       &mtl_psm_request->psm_request);
-    
+
     if (err) {
       opal_show_help("help-mtl-psm.txt",
 		     "error posting receive", true,

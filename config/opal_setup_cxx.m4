@@ -11,21 +11,21 @@ dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2006 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
-dnl                         reserved. 
+dnl                         reserved.
 dnl Copyright (c) 2007-2009 Sun Microsystems, Inc.  All rights reserved.
 dnl Copyright (c) 2008-2013 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2015      Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
 dnl $COPYRIGHT$
-dnl 
+dnl
 dnl Additional copyrights may follow
-dnl 
+dnl
 dnl $HEADER$
 dnl
 
 # This macro is necessary to get the title to be displayed first.  :-)
 AC_DEFUN([OPAL_SETUP_CXX_BANNER],[
-    opal_show_subtitle "C++ compiler and preprocessor" 
+    opal_show_subtitle "C++ compiler and preprocessor"
 ])
 
 # This macro is necessary because PROG_CXX* is REQUIREd by multiple
@@ -81,7 +81,7 @@ AC_DEFUN([_OPAL_SETUP_CXX_COMPILER],[
 # Back end of _OPAL_SETUP_CXX_COMPILER_BACKEND()
 AC_DEFUN([_OPAL_SETUP_CXX_COMPILER_BACKEND],[
     # Do we want code coverage
-    if test "$WANT_COVERAGE" = "1"; then 
+    if test "$WANT_COVERAGE" = "1"; then
         if test "$opal_cxx_vendor" = "gnu" ; then
             AC_MSG_WARN([$OPAL_COVERAGE_FLAGS has been added to CFLAGS (--enable-coverage)])
             WANT_DEBUG=1
@@ -112,12 +112,12 @@ AC_DEFUN([_OPAL_SETUP_CXX_COMPILER_BACKEND],[
         CXXFLAGS="$CXXFLAGS $add -Wno-long-double -fstrict-prototype"
         AC_CACHE_CHECK([if $CXX supports -Wno-long-double],
             [opal_cv_cxx_wno_long_double],
-            [AC_TRY_COMPILE([], [], 
+            [AC_TRY_COMPILE([], [],
                 [
                  dnl So -Wno-long-double did not produce any errors...
-                 dnl We will try to extract a warning regarding 
+                 dnl We will try to extract a warning regarding
                  dnl unrecognized or ignored options
-                 AC_TRY_COMPILE([], [long double test;], 
+                 AC_TRY_COMPILE([], [long double test;],
                      [
                       opal_cv_cxx_wno_long_double="yes"
                       if test -s conftest.err ; then
@@ -181,7 +181,7 @@ AC_DEFUN([_OPAL_SETUP_CXX_COMPILER_BACKEND],[
 * files created by your C compiler.  This generally indicates either
 * a conflict between the options specified in CFLAGS and CXXFLAGS
 * or a problem with the local compiler installation.  More
-* information (including exactly what command was given to the 
+* information (including exactly what command was given to the
 * compilers and what error resulted when the commands were executed) is
 * available in the config.log file in this directory.
 **********************************************************************

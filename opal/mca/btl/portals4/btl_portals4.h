@@ -42,7 +42,7 @@ BEGIN_C_DECLS
 struct mca_btl_portals4_component_t {
     /* base BTL component */
     mca_btl_base_component_2_0_0_t super;
-    
+
     unsigned int num_btls;
     unsigned int max_btls; /* Maximum number of accepted Portals4 cards */
 
@@ -191,17 +191,17 @@ int mca_btl_portals4_del_procs(struct mca_btl_base_module_t* btl_base,
                               struct opal_proc_t **procs,
                               struct mca_btl_base_endpoint_t** peers);
 
-mca_btl_base_descriptor_t* 
-mca_btl_portals4_alloc(struct mca_btl_base_module_t* btl_base, 
+mca_btl_base_descriptor_t*
+mca_btl_portals4_alloc(struct mca_btl_base_module_t* btl_base,
                       struct mca_btl_base_endpoint_t* endpoint,
                       uint8_t order,
                       size_t size,
-                      uint32_t flags); 
+                      uint32_t flags);
 
-int mca_btl_portals4_free(struct mca_btl_base_module_t* btl_base, 
-                         mca_btl_base_descriptor_t* des); 
+int mca_btl_portals4_free(struct mca_btl_base_module_t* btl_base,
+                         mca_btl_base_descriptor_t* des);
 
-mca_btl_base_descriptor_t* 
+mca_btl_base_descriptor_t*
 mca_btl_portals4_prepare_src(struct mca_btl_base_module_t* btl_base,
                             struct mca_btl_base_endpoint_t* peer,
                             struct opal_convertor_t* convertor,
@@ -212,7 +212,7 @@ mca_btl_portals4_prepare_src(struct mca_btl_base_module_t* btl_base,
 
 int mca_btl_portals4_send(struct mca_btl_base_module_t* btl_base,
                          struct mca_btl_base_endpoint_t* btl_peer,
-                         struct mca_btl_base_descriptor_t* descriptor, 
+                         struct mca_btl_base_descriptor_t* descriptor,
                          mca_btl_base_tag_t tag);
 
 
@@ -224,7 +224,7 @@ int mca_btl_portals4_sendi(struct mca_btl_base_module_t* btl_base,
                           size_t payload_size,
                           uint8_t order,
                           uint32_t flags,
-                          mca_btl_base_tag_t tag, 
+                          mca_btl_base_tag_t tag,
                           mca_btl_base_descriptor_t** des);
 
 int mca_btl_portals4_put(struct mca_btl_base_module_t* btl_base,

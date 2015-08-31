@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -43,7 +43,7 @@ void ADIO_Close(ADIO_File fd, int *error_code)
 	    } else {
 		    *error_code = MPI_SUCCESS;
 	    }
-	    
+
     }
 
     if (fd->access_mode & ADIO_DELETE_ON_CLOSE) {
@@ -101,7 +101,7 @@ void ADIO_Close(ADIO_File fd, int *error_code)
 
 
     MPI_Comm_free(&(fd->comm));
-    ADIOI_Free(fd->filename); 
+    ADIOI_Free(fd->filename);
 
     MPI_Type_get_envelope(fd->etype, &i, &j, &k, &combiner);
     if (combiner != MPI_COMBINER_NAMED) MPI_Type_free(&(fd->etype));

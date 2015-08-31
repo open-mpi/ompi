@@ -6,7 +6,7 @@
  * Copyright (c) 2004-2013 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
@@ -29,7 +29,7 @@
 #include "ompi/mca/mtl/mtl.h"
 #include "opal/prefetch.h"
 
-struct mca_pml_cm_send_request_t { 
+struct mca_pml_cm_send_request_t {
     mca_pml_cm_request_t req_base;
     mca_pml_base_send_mode_t req_send_mode;
 };
@@ -37,7 +37,7 @@ typedef struct mca_pml_cm_send_request_t mca_pml_cm_send_request_t;
 OBJ_CLASS_DECLARATION(mca_pml_cm_send_request_t);
 
 
-struct mca_pml_cm_thin_send_request_t { 
+struct mca_pml_cm_thin_send_request_t {
     mca_pml_cm_send_request_t req_send;
     mca_mtl_request_t req_mtl;            /**< the mtl specific memory. This field should be the last in the struct */
 };
@@ -365,7 +365,7 @@ do {                                                                    \
         }                                                               \
     }                                                                   \
  } while(0);
-        
+
 
 #define MCA_PML_CM_HVY_SEND_REQUEST_START(sendreq, ret)                          \
 do {                                                                             \
@@ -394,7 +394,7 @@ do {                                                                            
 /*
  * The PML has completed a send request. Note that this request
  * may have been orphaned by the user or have already completed
- * at the MPI level. 
+ * at the MPI level.
  * This macro will never be called directly from the upper level, as it should
  * only be an internal call to the PML.
  */
@@ -445,7 +445,7 @@ do {                                                                            
 /*
  * The PML has completed a send request. Note that this request
  * may have been orphaned by the user or have already completed
- * at the MPI level. 
+ * at the MPI level.
  * This macro will never be called directly from the upper level, as it should
  * only be an internal call to the PML.
  */
@@ -465,8 +465,8 @@ do {                                                                         \
     }                                                                        \
     OPAL_THREAD_UNLOCK(&ompi_request_lock);                                  \
  } while (0)
-    
-    
+
+
 /*
  * Release resources associated with a request
  */

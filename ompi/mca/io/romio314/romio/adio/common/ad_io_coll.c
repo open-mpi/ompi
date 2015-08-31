@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
- *   Copyright (C) 2008 University of Chicago. 
+/*
+ *   Copyright (C) 2008 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -31,7 +31,7 @@ static void post_aggregator_comm (MPI_Comm comm, int rw_type, int nproc,
 			   MPI_Request **requests,
 			   int *aggregators_client_count_p);
 
-static void post_client_comm (ADIO_File fd, int rw_type, 
+static void post_client_comm (ADIO_File fd, int rw_type,
 		       int agg_rank, void *buf,
 		       MPI_Datatype agg_comm_dtype,
 		       int agg_alltoallw_count,
@@ -141,7 +141,7 @@ void ADIOI_IOStridedColl (ADIO_File fd, void *buf, int count, int rdwr,
 		interleave_count++;
 	    /* This is a rudimentary check for interleaving, but should
 	     * suffice for the moment. */
-	    
+
 	    min_st_offset = ADIOI_MIN(all_st_end_offsets[i*2],
 				      min_st_offset);
 	    max_end_offset = ADIOI_MAX(all_st_end_offsets[i*2+1],
@@ -249,11 +249,11 @@ void ADIOI_IOStridedColl (ADIO_File fd, void *buf, int count, int rdwr,
 	}
     }
 #ifdef USE_PRE_REQ
-    else 
+    else
     {
 	/* Example use of ADIOI_Build_client_pre_req. to an
 	 * appropriate section */
-	
+
 	for (i = 0; i < fd->hints->cb_nodes; i++)
 	{
 	    agg_rank = fd->hints->ranklist[(i+myrank)%fd->hints->cb_nodes];
@@ -264,7 +264,7 @@ void ADIOI_IOStridedColl (ADIO_File fd, void *buf, int count, int rdwr,
 		fd, agg_rank, (i+myrank)%fd->hints->cb_nodes,
 		&(my_mem_view_state_arr[agg_rank]),
 		&(agg_file_view_state_arr[agg_rank]),
-		2*1024*1024, 
+		2*1024*1024,
 		64*1024);
 #ifdef AGGREGATION_PROFILE
 	    MPE_Log_event (5041, 0, NULL);
@@ -327,7 +327,7 @@ void ADIOI_IOStridedColl (ADIO_File fd, void *buf, int count, int rdwr,
 				       (i+myrank)%fd->hints->cb_nodes,
 				       &(my_mem_view_state_arr[agg_rank]),
 				       &(agg_file_view_state_arr[agg_rank]),
-				       agg_comm_sz_arr[agg_rank], 
+				       agg_comm_sz_arr[agg_rank],
 				       &(agg_comm_dtype_arr[agg_rank]));
 
 #ifdef AGGREGATION_PROFILE
@@ -359,7 +359,7 @@ void ADIOI_IOStridedColl (ADIO_File fd, void *buf, int count, int rdwr,
 	    fprintf (stderr, "expecting from [agg](disp,size,cnt)=");
 	    for (i=0; i < nprocs; i++) {
 		MPI_Type_size_x (agg_comm_dtype_arr[i], &size);
-		fprintf (stderr, "[%d](%d,%d,%d)", i, alltoallw_disps[i], 
+		fprintf (stderr, "[%d](%d,%d,%d)", i, alltoallw_disps[i],
 			 size, agg_alltoallw_counts[i]);
 		if (i != nprocs - 1)
 		    fprintf(stderr, ",");
@@ -372,8 +372,8 @@ void ADIOI_IOStridedColl (ADIO_File fd, void *buf, int count, int rdwr,
 			MPI_Type_size_x (client_comm_dtype_arr[i], &size);
 		    else
 			size = -1;
-		    
-		    fprintf (stderr, "[%d](%d,%d,%d)", i, alltoallw_disps[i], 
+
+		    fprintf (stderr, "[%d](%d,%d,%d)", i, alltoallw_disps[i],
 			     size, client_alltoallw_counts[i]);
 		    if (i != nprocs - 1)
 			fprintf(stderr, ",");
@@ -434,7 +434,7 @@ void ADIOI_IOStridedColl (ADIO_File fd, void *buf, int count, int rdwr,
 	    fprintf (stderr, "sending to [agg](disp,size,cnt)=");
 	    for (i=0; i < nprocs; i++) {
 		MPI_Type_size_x (agg_comm_dtype_arr[i], &size);
-		fprintf (stderr, "[%d](%d,%d,%d)", i, alltoallw_disps[i], 
+		fprintf (stderr, "[%d](%d,%d,%d)", i, alltoallw_disps[i],
 			 size, agg_alltoallw_counts[i]);
 		if (i != nprocs - 1)
 		    fprintf(stderr, ",");
@@ -446,8 +446,8 @@ void ADIOI_IOStridedColl (ADIO_File fd, void *buf, int count, int rdwr,
 		    MPI_Type_size_x (client_comm_dtype_arr[i], &size);
 		else
 		    size = -1;
-		
-		fprintf (stderr, "[%d](%d,%d,%d)", i, alltoallw_disps[i], 
+
+		fprintf (stderr, "[%d](%d,%d,%d)", i, alltoallw_disps[i],
 			 size, client_alltoallw_counts[i]);
 		if (i != nprocs - 1)
 		    fprintf(stderr, ",");
@@ -458,7 +458,7 @@ void ADIOI_IOStridedColl (ADIO_File fd, void *buf, int count, int rdwr,
 #ifdef DEBUG
 	    fprintf (stderr, "buffered_io_size = %lld\n", buffered_io_size);
 #endif
-	    
+
 	    if (clients_agg_count) {
 		client_comm_statuses = ADIOI_Malloc(clients_agg_count *
 						    sizeof(MPI_Status));
@@ -484,7 +484,7 @@ void ADIOI_IOStridedColl (ADIO_File fd, void *buf, int count, int rdwr,
 		/* make sure we actually have the data to write out */
 		agg_comm_statuses = (MPI_Status *)
 		    ADIOI_Malloc (aggs_client_count*sizeof(MPI_Status));
-		
+
 		MPI_Waitall (aggs_client_count, agg_comm_requests,
 			     agg_comm_statuses);
 #ifdef AGGREGATION_PROFILE
@@ -598,7 +598,7 @@ void ADIOI_IOStridedColl (ADIO_File fd, void *buf, int count, int rdwr,
 		    fd, agg_rank, (i+myrank)%fd->hints->cb_nodes,
 		    &(my_mem_view_state_arr[agg_rank]),
 		    &(agg_file_view_state_arr[agg_rank]),
-		    2*1024*1024, 
+		    2*1024*1024,
 		    64*1024);
 #ifdef AGGREGATION_PROFILE
 		MPE_Log_event (5041, 0, NULL);
@@ -606,7 +606,7 @@ void ADIOI_IOStridedColl (ADIO_File fd, void *buf, int count, int rdwr,
 	    }
 	}
 #endif
-	
+
 	/* aggregators pre-post all Irecv's for incoming data from
 	 * clients.  if nothing is needed, agg_comm_requests is not
 	 * allocated */
@@ -627,7 +627,7 @@ void ADIOI_IOStridedColl (ADIO_File fd, void *buf, int count, int rdwr,
     }
 
     /* Clean up */
-	
+
     if (fd->hints->cb_pfr != ADIOI_HINT_ENABLE) {
 	/* AAR, FSIZE, and User provided uniform File realms */
 	if (1) {
@@ -663,11 +663,11 @@ void ADIOI_IOStridedColl (ADIO_File fd, void *buf, int count, int rdwr,
 	}
 	ADIOI_Free (client_file_view_state_arr);
 	ADIOI_Free (cb_buf);
-    } 
+    }
     for (i = 0; i<nprocs; i++)
 	if (agg_comm_sz_arr[i] > 0)
 	    MPI_Type_free (&agg_comm_dtype_arr[i]);
-    
+
     ADIOI_Free (client_comm_sz_arr);
     ADIOI_Free (client_comm_dtype_arr);
     ADIOI_Free (my_mem_view_state_arr);
@@ -707,9 +707,9 @@ void ADIOI_Calc_bounds (ADIO_File fd, int count, MPI_Datatype buftype,
     int filetype_is_contig;
     ADIO_Offset i, remainder;
     ADIOI_Flatlist_node *flat_file;
-    
+
     ADIO_Offset st_byte_off, end_byte_off;
-    
+
 #ifdef AGGREGATION_PROFILE
     MPE_Log_event (5000, 0, NULL);
 #endif
@@ -724,12 +724,12 @@ void ADIOI_Calc_bounds (ADIO_File fd, int count, MPI_Datatype buftype,
     }
 
     ADIOI_Datatype_iscontig (fd->filetype, &filetype_is_contig);
-    
+
     MPI_Type_size_x (fd->filetype, &filetype_size);
     MPI_Type_extent (fd->filetype, &filetype_extent);
     MPI_Type_size_x (fd->etype, &etype_size);
     MPI_Type_size_x (buftype, &buftype_size);
-    
+
     total_io = buftype_size * count;
 
     if (filetype_is_contig) {
@@ -748,7 +748,7 @@ void ADIOI_Calc_bounds (ADIO_File fd, int count, MPI_Datatype buftype,
 	   points at an accessible byte in file.  the first accessible
 	   byte in the file is not necessarily the first byte, nor is
 	   it necessarily the first off/len pair in the filetype. */
-	if (file_ptr_type == ADIO_INDIVIDUAL) {	
+	if (file_ptr_type == ADIO_INDIVIDUAL) {
 	    st_byte_off = fd->fp_ind;
 	    /* find end byte of I/O (may be in middle of an etype) */
 
@@ -791,7 +791,7 @@ void ADIOI_Calc_bounds (ADIO_File fd, int count, MPI_Datatype buftype,
 		for (i=0; i<flat_file->count; i++) {
 		    sum += flat_file->blocklens[i];
 		    if (sum >= remainder) {
-			end_byte_off += flat_file->indices[i] + 
+			end_byte_off += flat_file->indices[i] +
 			    flat_file->blocklens[i] - sum + remainder - 1;
 			break;
 		    }
@@ -801,12 +801,12 @@ void ADIOI_Calc_bounds (ADIO_File fd, int count, MPI_Datatype buftype,
 	}
 	else {
 	    /* find starting byte of I/O (must be aligned with an etype) */
-	    /* byte starting point of starting filetype */		    
+	    /* byte starting point of starting filetype */
 	    st_byte_off = fd->disp + ((offset * etype_size) / filetype_size) *
 		filetype_extent;
 	    /* number of file viewable bytes into starting filetype */
 	    remainder = (etype_size * offset) % filetype_size;
-	    
+
 	    sum = 0;
 	    for (i=0; i<flat_file->count; i++) {
 		sum += flat_file->blocklens[i];
@@ -819,14 +819,14 @@ void ADIOI_Calc_bounds (ADIO_File fd, int count, MPI_Datatype buftype,
 		    break;
 		}
 	    }
-	    
+
 	    /* find end byte of I/O (may be in middle of an etype) */
 	    /* byte starting point of last filetype */
 	    end_byte_off = fd->disp + (offset * etype_size + total_io) /
 		filetype_size * filetype_extent;
 	    /* number of bytes into last filetype */
 	    remainder = (offset * etype_size + total_io) % filetype_size;
-	    
+
 	    if (!remainder) {
 		/* the last non-zero off/len pair */
 		for (i=flat_file->count-1; i>=0; i--) {
@@ -847,7 +847,7 @@ void ADIOI_Calc_bounds (ADIO_File fd, int count, MPI_Datatype buftype,
 		for (i=0; i<flat_file->count; i++) {
 		    sum += flat_file->blocklens[i];
 		    if (sum >= remainder) {
-			end_byte_off += flat_file->indices[i] + 
+			end_byte_off += flat_file->indices[i] +
 			    flat_file->blocklens[i] - sum + remainder - 1;
 			break;
 		    }
@@ -855,7 +855,7 @@ void ADIOI_Calc_bounds (ADIO_File fd, int count, MPI_Datatype buftype,
 	    }
 	}
     }
-    
+
     *st_offset  = st_byte_off;
     *end_offset = end_byte_off;
 #ifdef DEBUG
@@ -874,7 +874,7 @@ void ADIOI_Calc_bounds (ADIO_File fd, int count, MPI_Datatype buftype,
  * assume that this uses MPI_BYTE for the etype, and disp is 0 */
 void ADIOI_IOFiletype(ADIO_File fd, void *buf, int count,
 		      MPI_Datatype datatype, int file_ptr_type,
-		      ADIO_Offset offset, MPI_Datatype custom_ftype, 
+		      ADIO_Offset offset, MPI_Datatype custom_ftype,
 		      int rdwr, ADIO_Status *status, int *error_code)
 {
     MPI_Datatype user_filetype;
@@ -1031,7 +1031,7 @@ static void Exch_data_amounts (ADIO_File fd, int nprocs,
         send_requests = NULL;
         if (fd->is_agg) {
 	    /* only aggregators send data */
-	    send_requests = ADIOI_Malloc (nprocs * sizeof(MPI_Request)); 
+	    send_requests = ADIOI_Malloc (nprocs * sizeof(MPI_Request));
 
 	    /* post all sends */
 	    for (i = 0; i < nprocs; i++) {
@@ -1067,7 +1067,7 @@ static void Exch_data_amounts (ADIO_File fd, int nprocs,
     }
 }
 
-static void post_aggregator_comm (MPI_Comm comm, int rw_type, 
+static void post_aggregator_comm (MPI_Comm comm, int rw_type,
 		           int nproc, void *cb_buf,
 			   MPI_Datatype *client_comm_dtype_arr,
 			   ADIO_Offset *client_comm_sz_arr,
@@ -1115,7 +1115,7 @@ static void post_aggregator_comm (MPI_Comm comm, int rw_type,
     }
 }
 
-static void post_client_comm (ADIO_File fd, int rw_type, 
+static void post_client_comm (ADIO_File fd, int rw_type,
 		       int agg_rank, void *buf,
 		       MPI_Datatype agg_comm_dtype,
 		       int agg_alltoallw_count,

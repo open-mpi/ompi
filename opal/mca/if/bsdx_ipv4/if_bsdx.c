@@ -2,9 +2,9 @@
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -72,7 +72,7 @@ static int if_bsdx_open(void)
     struct ifaddrs *cur_ifaddrs;
     struct sockaddr_in* sin_addr;
 
-    /* 
+    /*
      * the manpage claims that getifaddrs() allocates the memory,
      * and freeifaddrs() is later used to release the allocated memory.
      * however, without this malloc the call to getifaddrs() segfaults
@@ -86,7 +86,7 @@ static int if_bsdx_open(void)
         return OPAL_ERROR;
     }
 
-    for (cur_ifaddrs = *ifadd_list; NULL != cur_ifaddrs; 
+    for (cur_ifaddrs = *ifadd_list; NULL != cur_ifaddrs;
          cur_ifaddrs = cur_ifaddrs->ifa_next) {
         opal_if_t *intf;
         struct in_addr a4;
@@ -124,7 +124,7 @@ static int if_bsdx_open(void)
 
         /* fill values into the opal_if_t */
         memcpy(&a4, &(sin_addr->sin_addr), sizeof(struct in_addr));
-            
+
         strncpy(intf->if_name, cur_ifaddrs->ifa_name, IF_NAMESIZE);
         intf->if_index = opal_list_get_size(&opal_if_list) + 1;
         ((struct sockaddr_in*) &intf->if_addr)->sin_addr = a4;
@@ -134,7 +134,7 @@ static int if_bsdx_open(void)
         intf->if_mask = prefix( sin_addr->sin_addr.s_addr);
         intf->if_flags = cur_ifaddrs->ifa_flags;
 
-        intf->if_kernel_index = 
+        intf->if_kernel_index =
             (uint16_t) if_nametoindex(cur_ifaddrs->ifa_name);
 
         opal_list_append(&opal_if_list, &(intf->super));

@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
- *                         All rights reserved. 
+ *                         All rights reserved.
  * Copyright (c) 2013-2015 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -106,7 +106,7 @@ int orte_plm_proxy_spawn(orte_job_t *jdata)
     int rc, i;
     orte_proxy_spawn_t *ps;
     orte_app_context_t *app;
-    
+
     OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
                          "%s plm:base:proxy spawn child job",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
@@ -118,7 +118,7 @@ int orte_plm_proxy_spawn(orte_job_t *jdata)
         rc = ORTE_ERR_SILENT;
         goto CLEANUP;
     }
- 
+
     /* if we are a singleton and the supporting HNP hasn't
      * been spawned, then do so now
      */
@@ -141,7 +141,7 @@ int orte_plm_proxy_spawn(orte_job_t *jdata)
 
     /* setup the buffer */
     buf = OBJ_NEW(opal_buffer_t);
-    
+
     /* tell the recipient we are sending a launch request */
     command = ORTE_PLM_LAUNCH_JOB_CMD;
     if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, &command, 1, ORTE_PLM_CMD))) {
@@ -166,9 +166,9 @@ int orte_plm_proxy_spawn(orte_job_t *jdata)
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(buf);
         goto CLEANUP;
-        
+
     }
-    
+
     /* create the proxy spawn object */
     ps = OBJ_NEW(orte_proxy_spawn_t);
     /* post the recv the HNP's response */
@@ -177,7 +177,7 @@ int orte_plm_proxy_spawn(orte_job_t *jdata)
                             ORTE_RML_NON_PERSISTENT,
                             proxy_spawn_response,
                             ps);
-    
+
     /* tell the HNP to launch the job */
     if (0 > (rc = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, buf,
                                           ORTE_RML_TAG_PLM,
@@ -187,12 +187,12 @@ int orte_plm_proxy_spawn(orte_job_t *jdata)
         OBJ_RELEASE(ps);
         goto CLEANUP;
     }
-    
-    
+
+
     OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
                          "%s plm:base:proxy waiting for response",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-    
+
     ps->active = true;
     ORTE_WAIT_FOR_COMPLETION(ps->active);
 
@@ -202,7 +202,7 @@ int orte_plm_proxy_spawn(orte_job_t *jdata)
     /* cleanup the memory */
     OBJ_RELEASE(ps);
 
- CLEANUP:    
+ CLEANUP:
     return rc;
 }
 
@@ -218,11 +218,11 @@ int orte_plm_proxy_finalize(void)
 static void set_handler_default(int sig)
 {
     struct sigaction act;
-    
+
     act.sa_handler = SIG_DFL;
     act.sa_flags = 0;
     sigemptyset(&act.sa_mask);
-    
+
     sigaction(sig, &act, (struct sigaction *)0);
 }
 
@@ -245,7 +245,7 @@ int orte_plm_base_fork_hnp(void)
         ORTE_FORCED_TERMINATE(ORTE_ERR_SILENT);
         return ORTE_ERR_SILENT;
     }
- 
+
     /* A pipe is used to communicate between the parent and child to
        indicate whether the exec ultimately succeeded or failed.  The
        child sets the pipe to be close-on-exec; the child only ever
@@ -259,7 +259,7 @@ int orte_plm_base_fork_hnp(void)
         ORTE_ERROR_LOG(ORTE_ERR_SYS_LIMITS_PIPES);
         return ORTE_ERR_SYS_LIMITS_PIPES;
     }
-    
+
     /* we also have to give the HNP a pipe it can watch to know when
      * we terminated. Since the HNP is going to be a child of us, it
      * can't just use waitpid to see when we leave - so it will watch
@@ -269,7 +269,7 @@ int orte_plm_base_fork_hnp(void)
         ORTE_ERROR_LOG(ORTE_ERR_SYS_LIMITS_PIPES);
         return ORTE_ERR_SYS_LIMITS_PIPES;
     }
-    
+
     /* find the orted binary using the install_dirs support - this also
      * checks to ensure that we can see this executable and it *is* executable by us
      */
@@ -281,28 +281,28 @@ int orte_plm_base_fork_hnp(void)
         close(p[1]);
         return ORTE_ERR_FILE_NOT_EXECUTABLE;
     }
-    
+
     /* okay, setup an appropriate argv */
     opal_argv_append(&argc, &argv, "orted");
-    
+
     /* tell the daemon it is to be the HNP */
     opal_argv_append(&argc, &argv, "--hnp");
 
     /* tell the daemon to get out of our process group */
     opal_argv_append(&argc, &argv, "--set-sid");
-    
+
     /* tell the daemon to report back its uri so we can connect to it */
     opal_argv_append(&argc, &argv, "--report-uri");
     asprintf(&param, "%d", p[1]);
     opal_argv_append(&argc, &argv, param);
     free(param);
-    
+
     /* give the daemon a pipe it can watch to tell when we have died */
     opal_argv_append(&argc, &argv, "--singleton-died-pipe");
     asprintf(&param, "%d", death_pipe[0]);
     opal_argv_append(&argc, &argv, param);
     free(param);
-    
+
     /* add any debug flags */
     if (orte_debug_flag) {
         opal_argv_append(&argc, &argv, "--debug");
@@ -311,14 +311,14 @@ int orte_plm_base_fork_hnp(void)
     if (orte_debug_daemons_flag) {
         opal_argv_append(&argc, &argv, "--debug-daemons");
     }
-    
+
     if (orte_debug_daemons_file_flag) {
         if (!orte_debug_daemons_flag) {
             opal_argv_append(&argc, &argv, "--debug-daemons");
         }
         opal_argv_append(&argc, &argv, "--debug-daemons-file");
     }
-    
+
     /* indicate that it must use the novm state machine */
     opal_argv_append(&argc, &argv, "-"OPAL_MCA_CMD_LINE_ID);
     opal_argv_append(&argc, &argv, "state_novm_select");
@@ -348,12 +348,12 @@ int orte_plm_base_fork_hnp(void)
         opal_argv_free(argv);
         return ORTE_ERR_SYS_LIMITS_CHILDREN;
     }
-    
+
     if (orte_process_info.hnp_pid == 0) {
         close(p[0]);
         close(death_pipe[1]);
         /* I am the child - exec me */
-        
+
         /* Set signal handlers back to the default.  Do this close
            to the execve() because the event library may (and likely
            will) reset them.  If we don't do this, the event
@@ -365,7 +365,7 @@ int orte_plm_base_fork_hnp(void)
         set_handler_default(SIGHUP);
         set_handler_default(SIGPIPE);
         set_handler_default(SIGCHLD);
-        
+
         /* Unblock all signals, for many of the same reasons that
            we set the default handlers, above.  This is noticable
            on Linux where the event library blocks SIGTERM, but we
@@ -375,14 +375,14 @@ int orte_plm_base_fork_hnp(void)
            forks, making them unkillable by SIGTERM). */
         sigprocmask(0, 0, &sigs);
         sigprocmask(SIG_UNBLOCK, &sigs, 0);
-        
+
         execv(cmd, argv);
-        
+
         /* if I get here, the execv failed! */
         orte_show_help("help-ess-base.txt", "ess-base:execv-error",
                        true, cmd, strerror(errno));
         exit(1);
-        
+
     } else {
         free(cmd);
         /* I am the parent - wait to hear something back and
@@ -391,7 +391,7 @@ int orte_plm_base_fork_hnp(void)
         close(p[1]);  /* parent closes the write - orted will write its contact info to it*/
         close(death_pipe[0]);  /* parent closes the death_pipe's read */
         opal_argv_free(argv);
-        
+
         /* setup the buffer to read the HNP's uri */
         buffer_length = ORTE_URI_MSG_LGTH;
         chunk = ORTE_URI_MSG_LGTH-1;

@@ -358,7 +358,7 @@ static void xcast_recv(int status, orte_process_name_t* sender,
                     ORTE_ERROR_LOG(ret);
                     goto relay;
                 }
-                
+
                 /* update our local nidmap, if required - the decode function
                  * knows what to do - it will also free the bytes in the byte object
                  */
@@ -374,7 +374,7 @@ static void xcast_recv(int status, orte_process_name_t* sender,
                     OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_framework.framework_output,
                                          "%s grpcomm:direct:xcast updating daemon nidmap",
                                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-    
+
                     if (ORTE_SUCCESS != (ret = orte_util_decode_daemon_nodemap(bo))) {
                         ORTE_ERROR_LOG(ret);
                         goto relay;
@@ -383,7 +383,7 @@ static void xcast_recv(int status, orte_process_name_t* sender,
 
                 /* update the routing plan */
                 orte_routed.update_routing_plan();
-    
+
                 /* see if we have wiring info as well */
                 cnt=1;
                 if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &flag, &cnt, OPAL_INT8))) {
@@ -441,7 +441,7 @@ static void xcast_recv(int status, orte_process_name_t* sender,
         OBJ_RELEASE(rly);
         goto CLEANUP;
     }
-    
+
     /* send the message to each recipient on list, deconstructing it as we go */
     while (NULL != (item = opal_list_remove_first(&coll))) {
         nm = (orte_namelist_t*)item;

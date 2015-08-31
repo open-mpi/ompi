@@ -2,9 +2,9 @@
  * Copyright (c) 2011-2014 Cisco Systems, Inc.  All rights reserved.
  *
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  *
  * When this component is used, this file is included in the rest of
@@ -25,7 +25,7 @@ BEGIN_C_DECLS
    functions in that file that invoke ibv_* functions.  Some linkers
    (e.g., Solaris Studio Compilers) will instantiate those static
    inline functions even if we don't use them, and therefore we need
-   to be able to resolve the ibv_* symbols at link time.  
+   to be able to resolve the ibv_* symbols at link time.
 
    Since -libverbs is only specified in places where we use other
    ibv_* functions (e.g., the OpenFabrics-based BTLs), that means that

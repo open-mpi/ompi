@@ -1,9 +1,9 @@
 #
 # Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
-# 
+#
 # Additional copyrights may follow
-# 
+#
 # $HEADER$
 #
 
@@ -20,7 +20,7 @@ sources = \
 
 if MCA_BUILD_orte_ras_simulator_DSO
 lib =
-lib_sources = 
+lib_sources =
 component = mca_ras_simulator.la
 component_sources = $(sources)
 else

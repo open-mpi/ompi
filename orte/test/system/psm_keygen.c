@@ -21,7 +21,7 @@ int main(int argc, char* argv[])
         fprintf(stderr, "Failed orte_init\n");
         exit(1);
     }
-    
+
     jdata = OBJ_NEW(orte_job_t);
     app = OBJ_NEW(orte_app_context_t);
     opal_pointer_array_set_item(jdata->apps, 0, app);

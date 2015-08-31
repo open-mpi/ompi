@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 2003 University of Chicago. 
+ *   Copyright (C) 2003 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -21,7 +21,7 @@ void ADIOI_PVFS2_Delete(const char *filename, int *error_code)
 
     ADIOI_PVFS2_Init(error_code);
     /* --BEGIN ERROR HANDLING-- */
-    if (*error_code != MPI_SUCCESS) 
+    if (*error_code != MPI_SUCCESS)
     {
 	/* ADIOI_PVFS2_INIT handles creating error codes itself */
 	return;
@@ -47,7 +47,7 @@ void ADIOI_PVFS2_Delete(const char *filename, int *error_code)
 
     ret = PVFS_sys_getparent(cur_fs, pvfs_path, &credentials, &resp_getparent);
 
-    ret = PVFS_sys_remove(resp_getparent.basename, 
+    ret = PVFS_sys_remove(resp_getparent.basename,
 			  resp_getparent.parent_ref, &credentials);
     /* --BEGIN ERROR HANDLING-- */
     if (ret != 0) {
@@ -64,6 +64,6 @@ void ADIOI_PVFS2_Delete(const char *filename, int *error_code)
     return;
 }
 
-/* 
- * vim: ts=8 sts=4 sw=4 noexpandtab 
+/*
+ * vim: ts=8 sts=4 sw=4 noexpandtab
  */

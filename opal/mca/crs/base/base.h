@@ -5,16 +5,16 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Evergrid, Inc. All rights reserved.
  *
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 #ifndef OPAL_CRS_BASE_H
@@ -45,11 +45,11 @@ BEGIN_C_DECLS
      *
      * @retval OPAL_SUCCESS Upon success
      * @retval OPAL_ERROR   Upon failures
-     * 
+     *
      * This function is invoked during opal_init();
      */
     OPAL_DECLSPEC int opal_crs_base_open(mca_base_open_flag_t flags);
-    
+
     /**
      * Select an available component.
      *
@@ -59,13 +59,13 @@ BEGIN_C_DECLS
      *
      */
     OPAL_DECLSPEC int opal_crs_base_select(void);
-    
+
     /**
      * Finalize the CRS MCA framework
      *
      * @retval OPAL_SUCCESS Upon success
      * @retval OPAL_ERROR   Upon failures
-     * 
+     *
      * This function is invoked during opal_finalize();
      */
     OPAL_DECLSPEC int opal_crs_base_close(void);

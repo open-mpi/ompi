@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2014 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -15,9 +15,9 @@
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -47,7 +47,7 @@
  *	Returns:	- MPI_SUCCESS or error code
  *
  * Algorithm:
- *     reduce and scatter (needs to be cleaned 
+ *     reduce and scatter (needs to be cleaned
  *     up at some point)
  */
 int
@@ -137,7 +137,7 @@ mca_coll_basic_reduce_scatter_block_inter(void *sbuf, void *rbuf, int rcount,
 
     totalcounts = lsize * rcount;
 
-    /* 
+    /*
      * The following code basically does an interreduce followed by a
      * intrascatter.  This is implemented by having the roots of each
      * group exchange their sbuf.  Then, the roots receive the data
@@ -185,8 +185,8 @@ mca_coll_basic_reduce_scatter_block_inter(void *sbuf, void *rbuf, int rcount,
 
 
         /* Loop receiving and calling reduction function (C or Fortran)
-         * The result of this reduction operations is then in 
-         * tmpbuf2. 
+         * The result of this reduction operations is then in
+         * tmpbuf2.
          */
         for (i = 1; i < rsize; i++) {
             err = MCA_PML_CALL(recv(tmpbuf, totalcounts, dtype, i,

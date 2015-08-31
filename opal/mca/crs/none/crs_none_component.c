@@ -5,9 +5,9 @@
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -21,7 +21,7 @@
 /*
  * Public string for version number
  */
-const char *opal_crs_none_component_version_string = 
+const char *opal_crs_none_component_version_string =
 "OPAL CRS none MCA component version " OPAL_VERSION;
 
 /*
@@ -38,7 +38,7 @@ static int crs_none_close(void);
 opal_crs_none_component_t mca_crs_none_component = {
     /* First do the base component stuff */
     {
-        /* Handle the general mca_component_t struct containing 
+        /* Handle the general mca_component_t struct containing
          *  meta information about the component itnone
          */
         .base_version = {
@@ -48,7 +48,7 @@ opal_crs_none_component_t mca_crs_none_component = {
             .mca_component_name = "none",
             MCA_BASE_MAKE_VERSION(component, OPAL_MAJOR_VERSION, OPAL_MINOR_VERSION,
                                   OPAL_RELEASE_VERSION),
-            
+
             /* Component open and close functions */
             .mca_open_component = crs_none_open,
             .mca_close_component = crs_none_close,
@@ -95,7 +95,7 @@ static opal_crs_base_module_t loc_module = {
 
 bool opal_crs_none_select_warning = false;
 
-static int crs_none_register (void) 
+static int crs_none_register (void)
 {
     int ret;
 
@@ -118,7 +118,7 @@ static int crs_none_register (void)
     return (0 > ret) ? ret : OPAL_SUCCESS;
 }
 
-static int crs_none_open(void) 
+static int crs_none_open(void)
 {
     return OPAL_SUCCESS;
 }

@@ -1000,7 +1000,7 @@ static void pmix_server_dmdx_resp(int status, orte_process_name_t* sender,
                 OBJ_RELEASE(bptr);
                 return;
             }
-            
+
             /* pass across any returned blobs */
             opal_dss.copy_payload(reply, buffer);
             /* send it */

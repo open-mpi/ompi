@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -14,9 +14,9 @@
  *                         reserved.
  * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -72,7 +72,7 @@ int orte_oob_base_select(void)
                             component->oob_base.mca_component_name);
 
         rc = component->available();
-        
+
         /* If the component is not available, then skip it as
          * it has no available interfaces
          */
@@ -106,7 +106,7 @@ int orte_oob_base_select(void)
             opal_list_append(&orte_oob_base.actives, &c2->super);
             break;
         }
-        
+
         /* record it, but maintain priority order */
         added = false;
         OPAL_LIST_FOREACH(cmp, &orte_oob_base.actives, mca_base_component_list_item_t) {

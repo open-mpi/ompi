@@ -42,7 +42,7 @@ int orte_rml_base_get_contact_info(orte_jobid_t job, opal_buffer_t *data)
     orte_job_t *jdata;
     orte_proc_t *proc;
     int rc;
-    
+
     /* lookup the job */
     if (NULL == (jdata = orte_get_job_data_object(job))) {
         /* bad jobid */
@@ -83,12 +83,12 @@ int orte_rml_base_update_contact_info(opal_buffer_t* data)
     got_name = false;
     cnt = 1;
     while (ORTE_SUCCESS == (rc = opal_dss.unpack(data, &rml_uri, &cnt, OPAL_STRING))) {
-        
+
         OPAL_OUTPUT_VERBOSE((5, orte_rml_base_framework.framework_output,
                              "%s rml:base:update:contact:info got uri %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              NULL == rml_uri ? "NULL" : rml_uri));
-        
+
         if (NULL != rml_uri) {
             /* set the contact info into the hash table */
             orte_rml.set_contact_info(rml_uri);
@@ -114,15 +114,15 @@ int orte_rml_base_update_contact_info(opal_buffer_t* data)
             }
             free(rml_uri);
         }
-        
+
         /* track how many procs were in the message */
         ++num_procs;
     }
     if (ORTE_ERR_UNPACK_READ_PAST_END_OF_BUFFER != rc) {
         ORTE_ERROR_LOG(rc);
         return rc;
-    }    
-    
+    }
+
     /* if we are a daemon and this was info about our jobid, this update would
      * include updated contact info
      * for all daemons in the system - indicating that the number of daemons
@@ -143,13 +143,13 @@ int orte_rml_base_update_contact_info(opal_buffer_t* data)
          */
         orte_routed.update_routing_plan();
     }
-    
+
     return ORTE_SUCCESS;
 }
 
 int
 orte_rml_base_parse_uris(const char* uri,
-                         orte_process_name_t* peer, 
+                         orte_process_name_t* peer,
                          char*** uris)
 {
     int rc;

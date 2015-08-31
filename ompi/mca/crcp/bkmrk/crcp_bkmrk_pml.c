@@ -9,9 +9,9 @@
  * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -130,16 +130,16 @@ static int ompi_crcp_bkmrk_pml_start_isend_init(ompi_request_t **request);
 static int ompi_crcp_bkmrk_pml_start_irecv_init(ompi_request_t **request);
 static int ompi_crcp_bkmrk_pml_start_drain_irecv_init(ompi_request_t **request, bool *found_drain);
 
-static int ompi_crcp_bkmrk_request_complete_isend_init(struct ompi_request_t *request, 
+static int ompi_crcp_bkmrk_request_complete_isend_init(struct ompi_request_t *request,
                                                ompi_crcp_bkmrk_pml_peer_ref_t *peer_ref,
                                                int src, int tag, int tmp_ddt_size);
-static int ompi_crcp_bkmrk_request_complete_isend(struct ompi_request_t *request, 
+static int ompi_crcp_bkmrk_request_complete_isend(struct ompi_request_t *request,
                                                ompi_crcp_bkmrk_pml_peer_ref_t *peer_ref,
                                                int src, int tag, int tmp_ddt_size);
-static int ompi_crcp_bkmrk_request_complete_irecv_init(struct ompi_request_t *request, 
+static int ompi_crcp_bkmrk_request_complete_irecv_init(struct ompi_request_t *request,
                                                ompi_crcp_bkmrk_pml_peer_ref_t *peer_ref,
                                                int src, int tag, int tmp_ddt_size);
-static int ompi_crcp_bkmrk_request_complete_irecv(struct ompi_request_t *request, 
+static int ompi_crcp_bkmrk_request_complete_irecv(struct ompi_request_t *request,
                                                ompi_crcp_bkmrk_pml_peer_ref_t *peer_ref,
                                                int src, int tag, int tmp_ddt_size);
 
@@ -287,7 +287,7 @@ static int drain_message_copy_remove(ompi_crcp_bkmrk_pml_drain_message_ref_t *ms
                                      ompi_crcp_bkmrk_pml_message_content_ref_t * content_ref,
                                      int *src, int *tag,
                                      struct ompi_request_t **request,
-                                     ompi_status_public_t **status, 
+                                     ompi_status_public_t **status,
                                      ompi_datatype_t *datatype, int count, void **buf,
                                      ompi_crcp_bkmrk_pml_peer_ref_t *peer_ref);
 
@@ -352,7 +352,7 @@ static void recv_bookmarks_cbfunc(int status,
 static int total_recv_bookmarks = 0;
 
 /*
- * Now that we have all the bookmarks, check them to see if we need to 
+ * Now that we have all the bookmarks, check them to see if we need to
  * drain any messages.
  */
 static int ft_event_check_bookmarks(void);
@@ -500,7 +500,7 @@ static int wait_quiesce_drain_ack(void);
  *   1 : Summary only
  *   2 : Per Peer messages + Barrier
  *   3 : Messages from all procs
- * 
+ *
  ************************************/
 #define CRCP_TIMER_TOTAL_CKPT          0
 #define CRCP_TIMER_CKPT_EX_B           1
@@ -723,7 +723,7 @@ void ompi_crcp_bkmrk_pml_peer_ref_destruct( ompi_crcp_bkmrk_pml_peer_ref_t *peer
 
     peer_ref->proc_name.jobid  = ORTE_JOBID_INVALID;
     peer_ref->proc_name.vpid   = ORTE_VPID_INVALID;
-    
+
     while( NULL != (item = opal_list_remove_first(&peer_ref->send_list)) ) {
         HOKE_TRAFFIC_MSG_REF_RETURN(item);
     }
@@ -1250,10 +1250,10 @@ ompi_crcp_base_pml_state_t* ompi_crcp_bkmrk_pml_progress(
 /**************** Probe *****************/
 /* JJH - Code reuse: Combine iprobe and probe logic */
 ompi_crcp_base_pml_state_t* ompi_crcp_bkmrk_pml_iprobe(
-                                  int dst, int tag, 
-                                  struct ompi_communicator_t* comm, 
+                                  int dst, int tag,
+                                  struct ompi_communicator_t* comm,
                                   int *matched,
-                                  ompi_status_public_t* status, 
+                                  ompi_status_public_t* status,
                                   ompi_crcp_base_pml_state_t* pml_state )
 {
     ompi_crcp_bkmrk_pml_drain_message_ref_t   *drain_msg_ref = NULL;
@@ -1294,7 +1294,7 @@ ompi_crcp_base_pml_state_t* ompi_crcp_bkmrk_pml_iprobe(
 
             /* Copy the status information */
             if( MPI_STATUS_IGNORE != status ) {
-                memcpy(status, &content_ref->status, sizeof(ompi_status_public_t)); 
+                memcpy(status, &content_ref->status, sizeof(ompi_status_public_t));
             }
 
             /* Mark as complete */
@@ -1320,9 +1320,9 @@ ompi_crcp_base_pml_state_t* ompi_crcp_bkmrk_pml_iprobe(
 }
 
 ompi_crcp_base_pml_state_t* ompi_crcp_bkmrk_pml_probe(
-                                  int dst, int tag, 
-                                  struct ompi_communicator_t* comm, 
-                                  ompi_status_public_t* status, 
+                                  int dst, int tag,
+                                  struct ompi_communicator_t* comm,
+                                  ompi_status_public_t* status,
                                   ompi_crcp_base_pml_state_t* pml_state )
 {
     ompi_crcp_bkmrk_pml_drain_message_ref_t *drain_msg_ref = NULL;
@@ -1362,7 +1362,7 @@ ompi_crcp_base_pml_state_t* ompi_crcp_bkmrk_pml_probe(
 
             /* Copy the status information */
             if( MPI_STATUS_IGNORE != status ) {
-                memcpy(status, &content_ref->status, sizeof(ompi_status_public_t)); 
+                memcpy(status, &content_ref->status, sizeof(ompi_status_public_t));
             }
 
             /* This will identify to the wrapper that this message is complete */
@@ -1380,7 +1380,7 @@ ompi_crcp_base_pml_state_t* ompi_crcp_bkmrk_pml_probe(
 /**************** Dump *****************/
 ompi_crcp_base_pml_state_t* ompi_crcp_bkmrk_pml_dump(
                                   struct ompi_communicator_t* comm,
-                                  int verbose, 
+                                  int verbose,
                                   ompi_crcp_base_pml_state_t* pml_state )
 {
     OPAL_OUTPUT_VERBOSE((30, mca_crcp_bkmrk_component.super.output_handle,
@@ -1393,7 +1393,7 @@ ompi_crcp_base_pml_state_t* ompi_crcp_bkmrk_pml_dump(
 
 /**************** Communicator *****************/
 ompi_crcp_base_pml_state_t* ompi_crcp_bkmrk_pml_add_comm(
-                                  struct ompi_communicator_t* comm, 
+                                  struct ompi_communicator_t* comm,
                                   ompi_crcp_base_pml_state_t* pml_state )
 {
     /* Note: This function is not used. Set to NULL in crcp_bkmrk_module.c */
@@ -1406,7 +1406,7 @@ ompi_crcp_base_pml_state_t* ompi_crcp_bkmrk_pml_add_comm(
 }
 
 ompi_crcp_base_pml_state_t* ompi_crcp_bkmrk_pml_del_comm(
-                                  struct ompi_communicator_t* comm, 
+                                  struct ompi_communicator_t* comm,
                                   ompi_crcp_base_pml_state_t* pml_state )
 {
     /* Note: This function is not used. Set to NULL in crcp_bkmrk_module.c */
@@ -1421,7 +1421,7 @@ ompi_crcp_base_pml_state_t* ompi_crcp_bkmrk_pml_del_comm(
 /**************** Processes *****************/
 ompi_crcp_base_pml_state_t* ompi_crcp_bkmrk_pml_add_procs(
                                    struct ompi_proc_t **procs,
-                                   size_t nprocs, 
+                                   size_t nprocs,
                                    ompi_crcp_base_pml_state_t* pml_state )
 {
     ompi_crcp_bkmrk_pml_peer_ref_t *new_peer_ref;
@@ -1459,7 +1459,7 @@ ompi_crcp_base_pml_state_t* ompi_crcp_bkmrk_pml_add_procs(
 
 ompi_crcp_base_pml_state_t* ompi_crcp_bkmrk_pml_del_procs(
                                   struct ompi_proc_t **procs,
-                                  size_t nprocs, 
+                                  size_t nprocs,
                                   ompi_crcp_base_pml_state_t* pml_state )
 {
     opal_list_item_t *item = NULL;
@@ -1499,10 +1499,10 @@ ompi_crcp_base_pml_state_t* ompi_crcp_bkmrk_pml_del_procs(
 ompi_crcp_base_pml_state_t* ompi_crcp_bkmrk_pml_isend_init(
                                   void *buf, size_t count,
                                   ompi_datatype_t *datatype,
-                                  int dst, int tag, 
+                                  int dst, int tag,
                                   mca_pml_base_send_mode_t mode,
                                   struct ompi_communicator_t* comm,
-                                  struct ompi_request_t **request, 
+                                  struct ompi_request_t **request,
                                   ompi_crcp_base_pml_state_t* pml_state )
 {
     ompi_crcp_bkmrk_pml_peer_ref_t    *peer_ref    = NULL;
@@ -1639,7 +1639,7 @@ static int ompi_crcp_bkmrk_pml_start_isend_init(ompi_request_t **request)
     return exit_status;
 }
 
-static int ompi_crcp_bkmrk_request_complete_isend_init(struct ompi_request_t *request, 
+static int ompi_crcp_bkmrk_request_complete_isend_init(struct ompi_request_t *request,
                                                ompi_crcp_bkmrk_pml_peer_ref_t *peer_ref,
                                                int src, int tag, int tmp_ddt_size)
 {
@@ -1667,7 +1667,7 @@ static int ompi_crcp_bkmrk_request_complete_isend_init(struct ompi_request_t *re
 
     if( NULL == msg_ref ) {
         /*
-         * It is possible that we did not 'find' the message because 
+         * It is possible that we did not 'find' the message because
          * we could have previously marked it as done. Due to the
          * logic in the Request Wait/Test routines we could
          * receive multiple request complete calls for the
@@ -1715,7 +1715,7 @@ ompi_crcp_base_pml_state_t* ompi_crcp_bkmrk_pml_isend(
                                   int dst, int tag,
                                   mca_pml_base_send_mode_t mode,
                                   struct ompi_communicator_t* comm,
-                                  struct ompi_request_t **request, 
+                                  struct ompi_request_t **request,
                                   ompi_crcp_base_pml_state_t* pml_state )
 {
     ompi_crcp_bkmrk_pml_peer_ref_t    *peer_ref    = NULL;
@@ -1796,7 +1796,7 @@ ompi_crcp_base_pml_state_t* ompi_crcp_bkmrk_pml_isend(
     return pml_state;
 }
 
-static int ompi_crcp_bkmrk_request_complete_isend(struct ompi_request_t *request, 
+static int ompi_crcp_bkmrk_request_complete_isend(struct ompi_request_t *request,
                                           ompi_crcp_bkmrk_pml_peer_ref_t *peer_ref,
                                           int src, int tag, int tmp_ddt_size)
 {
@@ -1824,7 +1824,7 @@ static int ompi_crcp_bkmrk_request_complete_isend(struct ompi_request_t *request
 
     if( NULL == msg_ref ) {
         /*
-         * It is possible that we did not 'find' the message because 
+         * It is possible that we did not 'find' the message because
          * we could have previously marked it as done. Due to the
          * logic in the Request Wait/Test routines we could
          * receive multiple request complete calls for the
@@ -1873,7 +1873,7 @@ ompi_crcp_base_pml_state_t* ompi_crcp_bkmrk_pml_send(
                                   ompi_datatype_t *datatype,
                                   int dst, int tag,
                                   mca_pml_base_send_mode_t mode,
-                                  struct ompi_communicator_t* comm, 
+                                  struct ompi_communicator_t* comm,
                                   ompi_crcp_base_pml_state_t* pml_state )
 {
     ompi_crcp_bkmrk_pml_peer_ref_t    *peer_ref    = NULL;
@@ -1957,7 +1957,7 @@ ompi_crcp_base_pml_state_t* ompi_crcp_bkmrk_pml_irecv_init(
                                   ompi_datatype_t *datatype,
                                   int src, int tag,
                                   struct ompi_communicator_t* comm,
-                                  struct ompi_request_t **request, 
+                                  struct ompi_request_t **request,
                                   ompi_crcp_base_pml_state_t* pml_state)
 {
     ompi_crcp_bkmrk_pml_peer_ref_t    *peer_ref      = NULL;
@@ -2082,7 +2082,7 @@ static int ompi_crcp_bkmrk_pml_start_drain_irecv_init(ompi_request_t **request, 
             exit_status = ret;
             goto DONE;
         }
-                    
+
         if( OMPI_SUCCESS != (ret = traffic_message_find(&(peer_ref->recv_init_list),
                                                         breq->req_count,
                                                         breq->req_tag,
@@ -2262,7 +2262,7 @@ static int ompi_crcp_bkmrk_pml_start_irecv_init(ompi_request_t **request)
     return exit_status;
 }
 
-static int ompi_crcp_bkmrk_request_complete_irecv_init(struct ompi_request_t *request, 
+static int ompi_crcp_bkmrk_request_complete_irecv_init(struct ompi_request_t *request,
                                                ompi_crcp_bkmrk_pml_peer_ref_t *peer_ref,
                                                int src, int tag, int tmp_ddt_size)
 {
@@ -2326,7 +2326,7 @@ static int ompi_crcp_bkmrk_request_complete_irecv_init(struct ompi_request_t *re
      */
     if( NULL == msg_ref ) {
         /*
-         * It is possible that we did not 'find' the message because 
+         * It is possible that we did not 'find' the message because
          * we could have previously marked it as done. Due to the
          * logic in the Request Wait/Test routines we could
          * receive multiple request complete calls for the
@@ -2481,7 +2481,7 @@ ompi_crcp_base_pml_state_t* ompi_crcp_bkmrk_pml_irecv(
         EXTRACT_COORD_STATE(pml_state, coord_state, rtn_state,
                             peer_ref,  msg_ref);
 
-        /* 
+        /*
          * Do the update
          */
         HOKE_CONTENT_REF_ALLOC(new_content);
@@ -2507,7 +2507,7 @@ ompi_crcp_base_pml_state_t* ompi_crcp_bkmrk_pml_irecv(
     return pml_state;
 }
 
-static int ompi_crcp_bkmrk_request_complete_irecv(struct ompi_request_t *request, 
+static int ompi_crcp_bkmrk_request_complete_irecv(struct ompi_request_t *request,
                                           ompi_crcp_bkmrk_pml_peer_ref_t *peer_ref,
                                           int src, int tag, int tmp_ddt_size)
 {
@@ -2571,7 +2571,7 @@ static int ompi_crcp_bkmrk_request_complete_irecv(struct ompi_request_t *request
      */
     if( NULL == msg_ref ) {
         /*
-         * It is possible that we did not 'find' the message because 
+         * It is possible that we did not 'find' the message because
          * we could have previously marked it as done. Due to the
          * logic in the Request Wait/Test routines we could
          * receive multiple request complete calls for the
@@ -2624,7 +2624,7 @@ ompi_crcp_base_pml_state_t* ompi_crcp_bkmrk_pml_recv(
                                   ompi_datatype_t *datatype,
                                   int src, int tag,
                                   struct ompi_communicator_t* comm,
-                                  ompi_status_public_t* status, 
+                                  ompi_status_public_t* status,
                                   ompi_crcp_base_pml_state_t* pml_state)
 {
     ompi_crcp_bkmrk_pml_peer_ref_t    *peer_ref      = NULL;
@@ -2742,7 +2742,7 @@ ompi_crcp_base_pml_state_t* ompi_crcp_bkmrk_pml_recv(
             new_msg_ref->done++;
             new_msg_ref->active--;
         } else {
-            /* 
+            /*
              * Do the update
              */
             msg_ref->done++;
@@ -2842,7 +2842,7 @@ ompi_crcp_base_pml_state_t* ompi_crcp_bkmrk_pml_start(
             if (breq->req_type == MCA_PML_REQUEST_RECV) {
                 /*
                  * If this was a drained message it will have it's type set to
-                 * OMPI_REQUEST_NOOP so the PML does not try to start it again. 
+                 * OMPI_REQUEST_NOOP so the PML does not try to start it again.
                  * So we need to replace it with the original type, but can
                  * skip starting it.
                  */
@@ -3000,7 +3000,7 @@ int ompi_crcp_bkmrk_pml_quiesce_end(ompi_crcp_bkmrk_pml_quiesce_tag_type_t tag )
 }
 
 ompi_crcp_base_pml_state_t* ompi_crcp_bkmrk_pml_ft_event(
-                                  int state, 
+                                  int state,
                                   ompi_crcp_base_pml_state_t* pml_state)
 {
     static int step_to_return_to = 0;
@@ -3735,7 +3735,7 @@ static int traffic_message_find(opal_list_t * search_list,
         }
 
         if(msg_ref->count == count  &&
-           (NULL != msg_ref->comm && msg_ref->comm->c_contextid == comm_id) && 
+           (NULL != msg_ref->comm && msg_ref->comm->c_contextid == comm_id) &&
            (msg_ref->tag  == MPI_ANY_TAG || msg_ref->tag  == tag)   &&
            (peer          == INVALID_INT || msg_ref->rank == peer)  &&
            msg_ref->ddt_size == ddt_size) {
@@ -3911,7 +3911,7 @@ static int drain_message_find_any(size_t count, int tag, int peer,
             if( comm->c_local_group->grp_proc_count <= peer ) {
                 continue;
             }
-                
+
             if( OPAL_EQUAL != ompi_rte_compare_name_fields(OMPI_RTE_CMP_ALL,
                                                             &(cur_peer_ref->proc_name),
                                                             OMPI_CAST_RTE_NAME(&comm->c_local_group->grp_proc_pointers[peer]->super.proc_name))) {
@@ -3953,7 +3953,7 @@ static int drain_message_find(opal_list_t * search_list,
     if( 0 >= opal_list_get_size(search_list) ) {
         return OMPI_SUCCESS;
     }
-    
+
     for(item  = opal_list_get_first(search_list);
         item != opal_list_get_end(search_list);
         item  = opal_list_get_next(item) ) {
@@ -3979,7 +3979,7 @@ static int drain_message_find(opal_list_t * search_list,
 
         /* If a specific rank was requested, then make sure this messages matches */
         if( INVALID_INT != peer ) {
-            if( MPI_ANY_SOURCE  != peer && 
+            if( MPI_ANY_SOURCE  != peer &&
                 drain_msg->rank != peer) {
                 continue;
             }
@@ -3989,7 +3989,7 @@ static int drain_message_find(opal_list_t * search_list,
         if( ddt_size != PROBE_ANY_SIZE &&
             count    != PROBE_ANY_COUNT) {
             /* Check the datatype size and count to make sure it matches   */
-            if((drain_msg->count   ) != count   || 
+            if((drain_msg->count   ) != count   ||
                (drain_msg->ddt_size) != ddt_size) {
                 continue;
             }
@@ -4059,7 +4059,7 @@ static int drain_message_copy_remove_persistent(ompi_crcp_bkmrk_pml_drain_messag
     /* These two requests should be exactly the same, so this is redundant, but here for completeness */
     content_ref->request = request;
 
-    memcpy(&(content_ref->status), &drain_content_ref->status, sizeof(ompi_status_public_t)); 
+    memcpy(&(content_ref->status), &drain_content_ref->status, sizeof(ompi_status_public_t));
 
     if( 0 != (ret = ompi_datatype_copy_content_same_ddt(drain_msg_ref->datatype,
                                                    drain_msg_ref->count,
@@ -4082,7 +4082,7 @@ static int drain_message_copy_remove(ompi_crcp_bkmrk_pml_drain_message_ref_t *dr
                                      ompi_crcp_bkmrk_pml_message_content_ref_t * drain_content_ref,
                                      int *src, int *tag,
                                      struct ompi_request_t **request,
-                                     ompi_status_public_t **status, 
+                                     ompi_status_public_t **status,
                                      ompi_datatype_t *datatype, int count, void **buf,
                                      ompi_crcp_bkmrk_pml_peer_ref_t *peer_ref)
 {
@@ -4102,7 +4102,7 @@ static int drain_message_copy_remove(ompi_crcp_bkmrk_pml_drain_message_ref_t *dr
     }
 
     if( NULL != status && MPI_STATUS_IGNORE != *status ) {
-        memcpy(*status, &drain_content_ref->status, sizeof(ompi_status_public_t)); 
+        memcpy(*status, &drain_content_ref->status, sizeof(ompi_status_public_t));
     }
 
     /* The buffer could be NULL - More likely when doing a count=0 type of message (e.g., Barrier) */
@@ -4177,7 +4177,7 @@ static int ft_event_coordinate_peers(void)
     static int step_to_return_to = 0;
     int exit_status = OMPI_SUCCESS;
     int ret;
-    
+
     if( step_to_return_to == 1 ) {
         goto STEP_1;
     }
@@ -4196,7 +4196,7 @@ static int ft_event_coordinate_peers(void)
     END_TIMER(CRCP_TIMER_CKPT_EX_B);
 
     /*
-     * Check exchanged bookmarks 
+     * Check exchanged bookmarks
      */
     START_TIMER(CRCP_TIMER_CKPT_CHECK_B);
     if( OMPI_SUCCESS != (ret = ft_event_check_bookmarks() ) ) {
@@ -4235,7 +4235,7 @@ static int ft_event_coordinate_peers(void)
      */
     /*
      * If we know that we are in the middle of a blocking send then we
-     * need to stall the coordination algorithm while we wait for this to 
+     * need to stall the coordination algorithm while we wait for this to
      * complete.
      */
     if( 0 < current_msg_id &&
@@ -4416,12 +4416,12 @@ static int ft_event_exchange_bookmarks(void)
     int my_idx    = OMPI_PROC_MY_NAME->vpid;
     int iter      = 0;
     int num_peers = 0;
-    
+
     num_peers = opal_list_get_size(&ompi_crcp_bkmrk_pml_peer_refs);
 
     for( peer_idx = (num_peers - my_idx - 1), iter = 0;
          iter < num_peers;
-         peer_idx = (peer_idx + 1) % num_peers, ++iter) 
+         peer_idx = (peer_idx + 1) % num_peers, ++iter)
         {
             if(my_idx > peer_idx) {
                 /* Send our bookmark status */
@@ -4760,7 +4760,7 @@ static void drain_message_ack_cbfunc(int status,
         item  = opal_list_get_next(item) ) {
         ompi_crcp_bkmrk_pml_drain_message_ack_ref_t * drain_msg_ack;
         drain_msg_ack = (ompi_crcp_bkmrk_pml_drain_message_ack_ref_t*)item;
-        
+
         /* If this ACK has not completed yet */
         if(!drain_msg_ack->complete) {
             /* If it is the correct peer */
@@ -4939,7 +4939,7 @@ static int ft_event_post_drain_message(ompi_crcp_bkmrk_pml_drain_message_ref_t  
         return OMPI_SUCCESS;
     }
 
-    /* Do not repost those that are already posted, and 
+    /* Do not repost those that are already posted, and
      * we have requests for
      */
     if( content_ref->already_posted ) {
@@ -4962,9 +4962,9 @@ static int ft_event_post_drain_message(ompi_crcp_bkmrk_pml_drain_message_ref_t  
                          OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
                          OMPI_NAME_PRINT(&(drain_msg_ref->proc_name)),
                          drain_msg_ref->rank));
-    if( OMPI_SUCCESS != (ret = wrapped_pml_module->pml_irecv(content_ref->buffer, 
+    if( OMPI_SUCCESS != (ret = wrapped_pml_module->pml_irecv(content_ref->buffer,
                                                              (drain_msg_ref->count * drain_msg_ref->ddt_size),
-                                                             drain_msg_ref->datatype, 
+                                                             drain_msg_ref->datatype,
                                                              drain_msg_ref->rank,
                                                              drain_msg_ref->tag,
                                                              drain_msg_ref->comm,
@@ -5039,7 +5039,7 @@ static int wait_quiesce_drained(void)
         goto cleanup;
     }
     opal_cr_stall_check = prev_stall;
-    
+
     /*
      * Send ACKs to all peers
      *
@@ -5229,7 +5229,7 @@ static int wait_quiesce_drain_ack(void)
 
         opal_event_loop(opal_event_base, OPAL_EVLOOP_NONBLOCK);
     }
-        
+
     /* Clear the ack queue if it isn't already clear (it should already be) */
     while (NULL != (item = opal_list_remove_first(&drained_msg_ack_list) ) ) {
         HOKE_DRAIN_ACK_MSG_REF_RETURN(item);
@@ -5478,7 +5478,7 @@ static int send_msg_details(ompi_crcp_bkmrk_pml_peer_ref_t *peer_ref,
     assert(need <= found);
 
     /* Prepare to post a Recv for the ACK All Clear signal from the peer
-     * which is sent when they have finished receiving all of the 
+     * which is sent when they have finished receiving all of the
      * inflight messages into a local buffer
      */
     HOKE_DRAIN_ACK_MSG_REF_ALLOC(d_msg_ack);

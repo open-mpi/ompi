@@ -119,7 +119,7 @@ static void unbind_procs(orte_job_t *jdata)
         orte_remove_attribute(&proc->attributes, ORTE_PROC_CPU_BITMAP);
     }
 }
-         
+
 static int bind_upwards(orte_job_t *jdata,
                         orte_node_t *node,
                         hwloc_obj_type_t target,
@@ -378,7 +378,7 @@ static int bind_downwards(orte_job_t *jdata,
         }
     }
     hwloc_bitmap_free(totalcpuset);
-    
+
     return ORTE_SUCCESS;
 }
 

@@ -6,17 +6,17 @@
  * Copyright (c) 2004-2009 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2015 Los Alamos National Security, LLC.  All rights
- *                         reserved. 
+ *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 /**
@@ -41,19 +41,19 @@
 
 #include "ompi/constants.h"
 
-#define OPAL_ENABLE_DEBUG_RELIABILITY 0 
+#define OPAL_ENABLE_DEBUG_RELIABILITY 0
 
 /*
  * BML types
  */
 
-struct ompi_proc_t; 
+struct ompi_proc_t;
 struct mca_bml_base_module_t;
 struct mca_bml_base_endpoint_t;
 struct mca_mpool_base_resources_t;
 
 /*
- * Cached set of information for each btl 
+ * Cached set of information for each btl
  */
 
 struct mca_bml_base_btl_t {
@@ -85,7 +85,7 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_bml_base_btl_array_t);
 
 /**
  * If required, reallocate (grow) the array to the indicate size.
- * 
+ *
  * @param array (IN)
  * @param size (IN)
  */
@@ -96,7 +96,7 @@ static inline size_t mca_bml_base_btl_array_get_size(mca_bml_base_btl_array_t* a
 
 /**
  * Grow the array if required, and set the size.
- * 
+ *
  * @param array (IN)
  * @param size (IN)
  */
@@ -109,14 +109,14 @@ static inline void mca_bml_base_btl_array_set_size(mca_bml_base_btl_array_t* arr
 
 /**
  * Grow the array size by one and return the item at that index.
- * 
+ *
  * @param array (IN)
  */
 static inline mca_bml_base_btl_t* mca_bml_base_btl_array_insert(mca_bml_base_btl_array_t* array)
 {
 #if OPAL_ENABLE_DEBUG
     if(array->arr_size >= array->arr_reserve) {
-        opal_output(0, "mca_bml_base_btl_array_insert: invalid array index %lu >= %lu", 
+        opal_output(0, "mca_bml_base_btl_array_insert: invalid array index %lu >= %lu",
                     (unsigned long)array->arr_size, (unsigned long)array->arr_reserve);
         return 0;
     }
@@ -124,22 +124,22 @@ static inline mca_bml_base_btl_t* mca_bml_base_btl_array_insert(mca_bml_base_btl
     return &array->bml_btls[array->arr_size++];
 }
 
-/** 
- * Remove a btl from a bml_btl 
+/**
+ * Remove a btl from a bml_btl
  *
  * @param array (IN)
  * @param btl (IN)
  */
-static inline bool mca_bml_base_btl_array_remove( mca_bml_base_btl_array_t* array, 
+static inline bool mca_bml_base_btl_array_remove( mca_bml_base_btl_array_t* array,
                                                   struct mca_btl_base_module_t* btl )
-{ 
+{
     size_t i = 0;
     /* find the btl */
     for( i = 0; i < array->arr_size; i++ ) {
         if( array->bml_btls[i].btl == btl ) {
             /* make sure not to go out of bounds */
             for( ; i < array->arr_size-1; i++ ) {
-                /* move all btl's back by 1, so the found 
+                /* move all btl's back by 1, so the found
                    btl is "removed" */
                 array->bml_btls[i] = array->bml_btls[(i+1)];
             }
@@ -154,7 +154,7 @@ static inline bool mca_bml_base_btl_array_remove( mca_bml_base_btl_array_t* arra
 
 /**
  * Return an array item at the specified index.
- * 
+ *
  * @param array (IN)
  * @param item_index (IN)
  */
@@ -172,7 +172,7 @@ static inline mca_bml_base_btl_t* mca_bml_base_btl_array_get_index(mca_bml_base_
 
 /**
  * Return the next LRU index in the array.
- * 
+ *
  * @param array (IN)
  *
  * @param index (OUT)
@@ -200,14 +200,14 @@ static inline mca_bml_base_btl_t* mca_bml_base_btl_array_get_next(mca_bml_base_b
 
 /**
  * Locate an element in the array
- * 
+ *
  * @param array (IN)
  * @param index (IN)
  */
 static inline mca_bml_base_btl_t* mca_bml_base_btl_array_find(
     mca_bml_base_btl_array_t* array, struct mca_btl_base_module_t* btl)
 {
-    size_t i=0;   
+    size_t i=0;
     for(i=0; i<array->arr_size; i++) {
         if(array->bml_btls[i].btl == btl) {
             return &array->bml_btls[i];
@@ -233,8 +233,8 @@ struct mca_bml_base_endpoint_t {
     uint32_t                 btl_flags_or;      /**< the bitwise OR of the btl flags */
 };
 typedef struct mca_bml_base_endpoint_t mca_bml_base_endpoint_t;
-                              
-    
+
+
 OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_bml_base_endpoint_t);
 
 static inline void mca_bml_base_alloc( mca_bml_base_btl_t* bml_btl,
@@ -247,10 +247,10 @@ static inline void mca_bml_base_alloc( mca_bml_base_btl_t* bml_btl,
 
 static inline void mca_bml_base_free( mca_bml_base_btl_t* bml_btl,
                                       mca_btl_base_descriptor_t* des )
-{ 
+{
     mca_btl_base_module_t* btl = bml_btl->btl;
 
-    btl->btl_free( btl, des );   
+    btl->btl_free( btl, des );
     /* The previous function is supposed to release the des object
      * so we should not touch it anymore.
      */
@@ -258,8 +258,8 @@ static inline void mca_bml_base_free( mca_bml_base_btl_t* bml_btl,
 
 #if OPAL_ENABLE_DEBUG_RELIABILITY
 
-int mca_bml_base_send( mca_bml_base_btl_t* bml_btl, 
-                       mca_btl_base_descriptor_t* des, 
+int mca_bml_base_send( mca_bml_base_btl_t* bml_btl,
+                       mca_btl_base_descriptor_t* des,
                        mca_btl_base_tag_t tag );
 
 
@@ -303,7 +303,7 @@ static inline int  mca_bml_base_sendi( mca_bml_base_btl_t* bml_btl,
                                        mca_btl_base_descriptor_t** descriptor )
 {
     mca_btl_base_module_t* btl = bml_btl->btl;
-    return btl->btl_sendi(btl, bml_btl->btl_endpoint, 
+    return btl->btl_sendi(btl, bml_btl->btl_endpoint,
                           convertor, header, header_size,
                           payload_size, order, flags, tag, descriptor);
 }
@@ -331,10 +331,10 @@ static inline int mca_bml_base_get( mca_bml_base_btl_t* bml_btl, void *local_add
 }
 
 
-static inline void mca_bml_base_prepare_src(mca_bml_base_btl_t* bml_btl, 
-                                            struct opal_convertor_t* conv, 
+static inline void mca_bml_base_prepare_src(mca_bml_base_btl_t* bml_btl,
+                                            struct opal_convertor_t* conv,
                                             uint8_t order,
-                                            size_t reserve, 
+                                            size_t reserve,
                                             size_t *size,
                                             uint32_t flags,
                                             mca_btl_base_descriptor_t** des)
@@ -383,14 +383,14 @@ static inline void mca_bml_base_deregister_mem (mca_bml_base_btl_t* bml_btl, mca
  * indicates whether multiple threads may invoke this component
  * simultaneously or not.
  *
- * @return Array of pointers to BML modules, or NULL if the transport  
+ * @return Array of pointers to BML modules, or NULL if the transport
  *         is not available.
  *
  * During component initialization, the BML component should discover
  * the physical devices that are available for the given transport,
- * and create a BML module to represent each device. Any addressing 
- * information required by peers to reach the device should be published 
- * during this function via the mca_base_modex_send() interface. 
+ * and create a BML module to represent each device. Any addressing
+ * information required by peers to reach the device should be published
+ * during this function via the mca_base_modex_send() interface.
  *
  */
 
@@ -419,39 +419,39 @@ typedef struct mca_bml_base_component_2_0_0_t mca_bml_base_component_t;
  */
 
 /**
- * MCA->BML Clean up any resources held by BML module 
+ * MCA->BML Clean up any resources held by BML module
  * before the module is unloaded.
- *  
+ *
  * @param bml (IN)   BML module.
  *
- * Prior to unloading a BML module, the MCA framework will call 
- * the BML finalize method of the module. Any resources held by 
+ * Prior to unloading a BML module, the MCA framework will call
+ * the BML finalize method of the module. Any resources held by
  * the BML should be released and if required the memory corresponding
  * to the BML module freed.
- * 
+ *
  */
 typedef int (*mca_bml_base_module_finalize_fn_t)( void );
-                                                                                                         
+
 /**
- * PML->BML notification of change in the process list. 
+ * PML->BML notification of change in the process list.
  *
  * @param nprocs (IN)         Number of processes
  * @param procs (IN)          Set of processes
  * @param reachable (OUT)     Bitmask indicating set of peer processes that are reachable by this BML.
  * @return                    OMPI_SUCCESS or error status on failure.
  *
- * The mca_bml_base_module_add_procs_fn_t() is called by the PML to 
+ * The mca_bml_base_module_add_procs_fn_t() is called by the PML to
  * determine the set of BMLs that should be used to reach each process.
  * Any addressing information exported by the peer via the mca_base_modex_send()
- * function should be available during this call via the corresponding 
- * mca_base_modex_recv() function. The BML may utilize this information to 
- * determine reachability of each peer process. 
+ * function should be available during this call via the corresponding
+ * mca_base_modex_recv() function. The BML may utilize this information to
+ * determine reachability of each peer process.
  *
- * For each process that is reachable by the BML, the bit corresponding to the index 
+ * For each process that is reachable by the BML, the bit corresponding to the index
  * into the proc array (nprocs) should be set in the reachable bitmask. The PML
  * provides the BML the option to return a pointer to a data structure defined
  * by the BML that is returned to the BML on subsequent calls to the BML data
- * transfer functions (e.g bml_send). This may be used by the BML to cache any addressing 
+ * transfer functions (e.g bml_send). This may be used by the BML to cache any addressing
  * or connection information (e.g. TCP socket, IP queue pair).
  *
  * \note This function will return OMPI_ERR_UNREACH if one or more
@@ -461,7 +461,7 @@ typedef int (*mca_bml_base_module_finalize_fn_t)( void );
  */
 typedef int (*mca_bml_base_module_add_procs_fn_t)(
                                                   size_t nprocs,
-                                                  struct ompi_proc_t** procs, 
+                                                  struct ompi_proc_t** procs,
                                                   struct opal_bitmap_t* reachable
                                                   );
 
@@ -512,7 +512,7 @@ typedef int (*mca_bml_base_module_del_btl_fn_t)( struct mca_btl_base_module_t* )
  * On failure of a btl, remove it from the set of forwarding
  * entries used by the BML.
  */
-typedef int (*mca_bml_base_module_del_proc_btl_fn_t)( 
+typedef int (*mca_bml_base_module_del_proc_btl_fn_t)(
     struct ompi_proc_t*,
     struct mca_btl_base_module_t* );
 

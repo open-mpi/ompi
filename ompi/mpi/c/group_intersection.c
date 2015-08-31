@@ -5,16 +5,16 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      University of Houston. All rights reserved.
  * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 #include "ompi_config.h"
@@ -38,13 +38,13 @@ static const char FUNC_NAME[] = "MPI_Group_intersection";
 
 
 int MPI_Group_intersection(MPI_Group group1, MPI_Group group2,
-        MPI_Group *new_group) 
+        MPI_Group *new_group)
 {
   int err;
 
   if ( MPI_PARAM_CHECK ) {
       OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-     
+
       /* verify that groups are valid */
       if ( (MPI_GROUP_NULL == group1) || (MPI_GROUP_NULL == group2) ||
            ( NULL == group1) || (NULL == group2) ||

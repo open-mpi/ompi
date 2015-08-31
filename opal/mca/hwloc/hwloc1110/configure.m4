@@ -4,9 +4,9 @@
 # Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
 #
 # $COPYRIGHT$
-# 
+#
 # Additional copyrights may follow
-# 
+#
 # $HEADER$
 #
 
@@ -107,7 +107,7 @@ AC_DEFUN([MCA_opal_hwloc_hwloc1110_CONFIG],[
         # this without "picky" flags.
         opal_hwloc_hwloc1110_save_cflags=$CFLAGS
         CFLAGS=$OPAL_CFLAGS_BEFORE_PICKY
-        HWLOC_SETUP_CORE([opal/mca/hwloc/hwloc1110/hwloc], 
+        HWLOC_SETUP_CORE([opal/mca/hwloc/hwloc1110/hwloc],
                   [AC_MSG_CHECKING([whether hwloc configure succeeded])
                    AC_MSG_RESULT([yes])
                    HWLOC_VERSION="internal v`$srcdir/$opal_hwloc_hwloc1110_basedir/hwloc/config/hwloc_get_version.sh $srcdir/$opal_hwloc_hwloc1110_basedir/hwloc/VERSION`"
@@ -117,8 +117,8 @@ AC_DEFUN([MCA_opal_hwloc_hwloc1110_CONFIG],[
                    opal_hwloc_hwloc1110_LIBS='$(OPAL_TOP_BUILDDIR)/'"$opal_hwloc_hwloc1110_basedir"'/hwloc/src/libhwloc_embedded.la $(HWLOC_EMBEDDED_LIBS)'
                    opal_hwloc_hwloc1110_support=yes
 
-                   AC_DEFINE_UNQUOTED([HWLOC_HWLOC1110_HWLOC_VERSION], 
-                       ["$HWLOC_VERSION"], 
+                   AC_DEFINE_UNQUOTED([HWLOC_HWLOC1110_HWLOC_VERSION],
+                       ["$HWLOC_VERSION"],
                        [Version of hwloc])
 
                    # Do we have verbs support?
@@ -144,7 +144,7 @@ AC_DEFUN([MCA_opal_hwloc_hwloc1110_CONFIG],[
               [enable_shared=$opal_hwloc_hwloc1110_save_shared])
         AS_IF([test -n "$opal_hwloc_hwloc1110_save_plugins"],
               [enable_plugins=$opal_hwloc_hwloc1110_save_shared])
-       
+
         CPPFLAGS=$opal_hwloc_hwloc1110_save_CPPFLAGS
         LDFLAGS=$opal_hwloc_hwloc1110_save_LDFLAGS
         LIBS=$opal_hwloc_hwloc1110_save_LIBS

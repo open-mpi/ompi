@@ -1,9 +1,9 @@
 /*
  * Copyright (c)      2012 Oak Rigde National Laboratory. All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 #include "ompi_config.h"
@@ -34,7 +34,7 @@ int MPI_Ibcast(void *buffer, int count, MPI_Datatype datatype,
 
     MEMCHECKER(
         memchecker_datatype(datatype);
-        memchecker_call(&opal_memchecker_base_isdefined, buffer, count, datatype); 
+        memchecker_call(&opal_memchecker_base_isdefined, buffer, count, datatype);
         memchecker_comm(comm);
     );
 
@@ -42,7 +42,7 @@ int MPI_Ibcast(void *buffer, int count, MPI_Datatype datatype,
       err = MPI_SUCCESS;
       OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
       if (ompi_comm_invalid(comm)) {
-          return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, 
+          return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM,
                                      FUNC_NAME);
       }
 
@@ -60,7 +60,7 @@ int MPI_Ibcast(void *buffer, int count, MPI_Datatype datatype,
         if ((root >= ompi_comm_size(comm)) || (root < 0)) {
           return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ROOT, FUNC_NAME);
         }
-      } 
+      }
 
       /* Errors for intercommunicators */
 
@@ -69,7 +69,7 @@ int MPI_Ibcast(void *buffer, int count, MPI_Datatype datatype,
                MPI_ROOT == root || MPI_PROC_NULL == root)) {
             return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ROOT, FUNC_NAME);
         }
-      } 
+      }
     }
 
     OPAL_CR_ENTER_LIBRARY();

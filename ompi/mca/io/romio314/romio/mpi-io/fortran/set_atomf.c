@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -95,7 +95,7 @@ FORTRAN_API void FORT_CALL mpi_file_set_atomicity_(MPI_Fint *fh,MPI_Fint *flag, 
 FORTRAN_API void FORT_CALL mpi_file_set_atomicity_(MPI_Fint *fh,MPI_Fint *flag, MPI_Fint *ierr )
 {
     MPI_File fh_c;
-    
+
     fh_c = MPI_File_f2c(*fh);
     *ierr = MPI_File_set_atomicity(fh_c,*flag);
 }

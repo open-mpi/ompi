@@ -1,6 +1,6 @@
 /*
  *  This code was written by Intel Corporation. Copyright (C) 2011-2012 Intel Corporation.
- *  Intel provides this material to Argonne National Laboratory subject to 
+ *  Intel provides this material to Argonne National Laboratory subject to
  *  Software Grant and Corporate Contributor License Agreement dated February 8, 2012.
  *
  *  See COPYRIGHT in top-level directory.
@@ -60,14 +60,14 @@ int main( int argc, char* argv[] ) {
     for( i = 0; i < 3; i++ ) {
 
         /* Open file */
-        CHECK(MPI_File_open( MPI_COMM_WORLD, TEST_FILENAME, 
+        CHECK(MPI_File_open( MPI_COMM_WORLD, TEST_FILENAME,
 		    MPI_MODE_RDWR | MPI_MODE_CREATE, MPI_INFO_NULL, &fileh ) );
 
         /* Set view */
 	CHECK(MPI_File_set_view( fileh, 0, MPI_INT, MPI_INT, datarep[i], MPI_INFO_NULL ));
 
         /* Write into file */
-	CHECK(MPI_File_write_at( fileh, (MPI_Offset)rank, (void*)&sample_i, 1, 
+	CHECK(MPI_File_write_at( fileh, (MPI_Offset)rank, (void*)&sample_i, 1,
 		    MPI_INT, MPI_STATUS_IGNORE ));
 
         /* Close file */

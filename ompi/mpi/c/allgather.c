@@ -6,7 +6,7 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -15,9 +15,9 @@
  * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -59,8 +59,8 @@ int MPI_Allgather(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
         memchecker_comm(comm);
         /* check whether the actual send buffer is defined. */
         if (MPI_IN_PLACE == sendbuf) {
-            memchecker_call(&opal_memchecker_base_isdefined, 
-                            (char *)(recvbuf)+rank*ext, 
+            memchecker_call(&opal_memchecker_base_isdefined,
+                            (char *)(recvbuf)+rank*ext,
                             recvcount, recvtype);
         } else {
             memchecker_datatype(sendtype);
@@ -94,7 +94,7 @@ int MPI_Allgather(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
     /* Do we need to do anything?  Everyone had to give the same send
        signature, which means that everyone must have given a
        sendcount > 0 if there's anything to send for the intra-communicator
-       case.  If we're doing IN_PLACE, however, check recvcount, 
+       case.  If we're doing IN_PLACE, however, check recvcount,
        not sendcount. */
     if ( OMPI_COMM_IS_INTRA(comm) ) {
        if ((MPI_IN_PLACE != sendbuf && 0 == sendcount) ||

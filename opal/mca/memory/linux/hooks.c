@@ -684,19 +684,19 @@ public_sET_STATe(Void_t* msptr)
    So we can basically have some hard-coded tests for things to see if
    we want to setup to use our internal ptmalloc2 or not. */
 
-static void *opal_memory_linux_malloc_hook(size_t sz, 
+static void *opal_memory_linux_malloc_hook(size_t sz,
                                            const __malloc_ptr_t caller)
 {
     return public_mALLOc(sz);
 }
 
-static void *opal_memory_linux_realloc_hook(Void_t* ptr, size_t sz, 
+static void *opal_memory_linux_realloc_hook(Void_t* ptr, size_t sz,
                                             const __malloc_ptr_t caller)
 {
     return public_rEALLOc(ptr, sz);
 }
 
-static void *opal_memory_linux_memalign_hook(size_t alignment, size_t sz, 
+static void *opal_memory_linux_memalign_hook(size_t alignment, size_t sz,
                                              const __malloc_ptr_t caller)
 {
     return public_mEMALIGn(alignment, sz);
@@ -818,12 +818,12 @@ void opal_memory_linux_malloc_init_hook(void)
         0 == access("/dev/scif", F_OK)) {
         found_driver = true;
     }
-    
+
     /* Simple combination of the results of these two environment
        variables (if both "yes" and "no" are specified, then be
        conservative and assume "yes"):
 
-       lp / lpp   yes   no   runtime   not found       
+       lp / lpp   yes   no   runtime   not found
        yes        yes   yes  yes       yes
        no         yes   no   no        no
        runtime    yes   no   runtime   runtime
@@ -879,7 +879,7 @@ void opal_memory_linux_hook_pull(bool *want_hooks)
        whatever value was set via normal MCA mechanisms likely won't
        be see if it wasn't already see by the getenv() in the
        _malloc_init_hook(). */
-    *want_hooks = !opal_memory_linux_disable; 
+    *want_hooks = !opal_memory_linux_disable;
 }
 
 

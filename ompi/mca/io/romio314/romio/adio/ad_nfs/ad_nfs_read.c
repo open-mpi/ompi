@@ -1,14 +1,14 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
 #include "ad_nfs.h"
 #include "adio_extern.h"
 
-void ADIOI_NFS_ReadContig(ADIO_File fd, void *buf, int count, 
+void ADIOI_NFS_ReadContig(ADIO_File fd, void *buf, int count,
                      MPI_Datatype datatype, int file_ptr_type,
 		     ADIO_Offset offset, ADIO_Status *status, int *error_code)
 {
@@ -41,7 +41,7 @@ void ADIOI_NFS_ReadContig(ADIO_File fd, void *buf, int count,
 #endif
 	ADIOI_UNLOCK(fd, offset, SEEK_SET, len);
 	fd->fp_sys_posn = offset + err;
-	/* individual file pointer not updated */        
+	/* individual file pointer not updated */
     }
     else {  /* read from curr. location of ind. file pointer */
 	offset = fd->fp_ind;
@@ -174,7 +174,7 @@ void ADIOI_NFS_ReadStrided(ADIO_File fd, void *buf, int count,
     ADIO_Offset abs_off_in_filetype=0;
     int req_len, partial_read;
     MPI_Count filetype_size, etype_size, buftype_size;
-    MPI_Aint filetype_extent, buftype_extent; 
+    MPI_Aint filetype_extent, buftype_extent;
     int buf_count, buftype_is_contig, filetype_is_contig;
     ADIO_Offset userbuf_off;
     ADIO_Offset off, req_off, disp, end_offset=0, readbuf_off, start_off;
@@ -192,7 +192,7 @@ void ADIOI_NFS_ReadStrided(ADIO_File fd, void *buf, int count,
 #ifdef HAVE_STATUS_SET_BYTES
 	MPIR_Status_set_bytes(status, datatype, 0);
 #endif
-	*error_code = MPI_SUCCESS; 
+	*error_code = MPI_SUCCESS;
 	return;
     }
 
@@ -206,7 +206,7 @@ void ADIOI_NFS_ReadStrided(ADIO_File fd, void *buf, int count,
 /* get max_bufsize from the info object. */
 
     value = (char *) ADIOI_Malloc((MPI_MAX_INFO_VAL+1)*sizeof(char));
-    ADIOI_Info_get(fd->info, "ind_rd_buffer_size", MPI_MAX_INFO_VAL, value, 
+    ADIOI_Info_get(fd->info, "ind_rd_buffer_size", MPI_MAX_INFO_VAL, value,
                  &info_flag);
     max_bufsize = atoi(value);
     ADIOI_Free(value);
@@ -219,7 +219,7 @@ void ADIOI_NFS_ReadStrided(ADIO_File fd, void *buf, int count,
 	flat_buf = ADIOI_Flatlist;
 	while (flat_buf->type != datatype) flat_buf = flat_buf->next;
 
-        off = (file_ptr_type == ADIO_INDIVIDUAL) ? fd->fp_ind : 
+        off = (file_ptr_type == ADIO_INDIVIDUAL) ? fd->fp_ind :
                  fd->disp + etype_size * offset;
 
 	start_off = off;
@@ -250,7 +250,7 @@ void ADIOI_NFS_ReadStrided(ADIO_File fd, void *buf, int count,
         if (!(fd->atomicity)) ADIOI_UNLOCK(fd, readbuf_off, SEEK_SET, readbuf_len);
         if (err == -1) err_flag = 1;
 
-        for (j=0; j<count; j++) 
+        for (j=0; j<count; j++)
             for (i=0; i<flat_buf->count; i++) {
                 userbuf_off = j*buftype_extent + flat_buf->indices[i];
 		req_off = off;
@@ -288,7 +288,7 @@ void ADIOI_NFS_ReadStrided(ADIO_File fd, void *buf, int count,
            n_filetypes  = (offset - flat_file->indices[0]) / filetype_extent;
           offset -= (ADIO_Offset)n_filetypes * filetype_extent;
           /* now offset is local to this extent */
- 
+
            /* find the block where offset is located, skip blocklens[i]==0 */
            for (i=0; i<flat_file->count; i++) {
                ADIO_Offset dist;
@@ -301,7 +301,7 @@ void ADIOI_NFS_ReadStrided(ADIO_File fd, void *buf, int count,
                   frd_size = flat_file->blocklens[i];
                   break;
               }
-              if (dist > 0 ) { 
+              if (dist > 0 ) {
                    frd_size = dist;
 		   break;
               }
@@ -314,7 +314,7 @@ void ADIOI_NFS_ReadStrided(ADIO_File fd, void *buf, int count,
 	    n_filetypes = (int) (offset / n_etypes_in_filetype);
 	    etype_in_filetype = (int) (offset % n_etypes_in_filetype);
 	    size_in_filetype = etype_in_filetype * etype_size;
- 
+
 	    sum = 0;
 	    for (i=0; i<flat_file->count; i++) {
 		sum += flat_file->blocklens[i];
@@ -328,7 +328,7 @@ void ADIOI_NFS_ReadStrided(ADIO_File fd, void *buf, int count,
 	    }
 
 	    /* abs. offset in bytes in the file */
-	    offset = disp + (ADIO_Offset) n_filetypes*filetype_extent + 
+	    offset = disp + (ADIO_Offset) n_filetypes*filetype_extent +
 		    abs_off_in_filetype;
 	}
 
@@ -342,7 +342,7 @@ void ADIOI_NFS_ReadStrided(ADIO_File fd, void *buf, int count,
                              offset, status, error_code);
 
            if (file_ptr_type == ADIO_INDIVIDUAL) {
-                /* update MPI-IO file pointer to point to the first byte that 
+                /* update MPI-IO file pointer to point to the first byte that
                 * can be accessed in the fileview. */
                fd->fp_ind = offset + bufsize;
                if (bufsize == frd_size) {
@@ -357,10 +357,10 @@ void ADIOI_NFS_ReadStrided(ADIO_File fd, void *buf, int count,
                                + n_filetypes*filetype_extent;
                }
            }
-           fd->fp_sys_posn = -1;   /* set it to null. */ 
+           fd->fp_sys_posn = -1;   /* set it to null. */
 #ifdef HAVE_STATUS_SET_BYTES
            MPIR_Status_set_bytes(status, datatype, bufsize);
-#endif 
+#endif
             return;
        }
 
@@ -426,9 +426,9 @@ void ADIOI_NFS_ReadStrided(ADIO_File fd, void *buf, int count,
 	    n_filetypes = st_n_filetypes;
 	    frd_size = ADIOI_MIN(st_frd_size, bufsize);
 	    while (i < bufsize) {
-                if (frd_size) { 
-                    /* TYPE_UB and TYPE_LB can result in 
-                       frd_size = 0. save system call in such cases */ 
+                if (frd_size) {
+                    /* TYPE_UB and TYPE_LB can result in
+                       frd_size = 0. save system call in such cases */
 		    /* lseek(fd->fd_sys, off, SEEK_SET);
 		    err = read(fd->fd_sys, ((char *) buf) + i, frd_size);*/
 
@@ -451,7 +451,7 @@ void ADIOI_NFS_ReadStrided(ADIO_File fd, void *buf, int count,
                         j = (j+1) % flat_file->count;
                         n_filetypes += (j == 0) ? 1 : 0;
                     }
-		    off = disp + flat_file->indices[j] + 
+		    off = disp + flat_file->indices[j] +
                                         (ADIO_Offset) n_filetypes*filetype_extent;
 		    frd_size = ADIOI_MIN(flat_file->blocklens[j], bufsize-i);
 		}
@@ -495,7 +495,7 @@ void ADIOI_NFS_ReadStrided(ADIO_File fd, void *buf, int count,
                         j = (j+1) % flat_file->count;
                         n_filetypes += (j == 0) ? 1 : 0;
                     }
-		    off = disp + flat_file->indices[j] + 
+		    off = disp + flat_file->indices[j] +
                                               (ADIO_Offset) n_filetypes*filetype_extent;
 
 		    new_frd_size = flat_file->blocklens[j];
@@ -511,7 +511,7 @@ void ADIOI_NFS_ReadStrided(ADIO_File fd, void *buf, int count,
 		    k = (k + 1)%flat_buf->count;
 		    buf_count++;
 		    i = (int) (buftype_extent*(buf_count/flat_buf->count) +
-			flat_buf->indices[k]); 
+			flat_buf->indices[k]);
 		    new_brd_size = flat_buf->blocklens[k];
 		    if (size != frd_size) {
 			off += size;
@@ -523,7 +523,7 @@ void ADIOI_NFS_ReadStrided(ADIO_File fd, void *buf, int count,
                 brd_size = new_brd_size;
 	    }
 	}
-	
+
         if (fd->atomicity)
             ADIOI_UNLOCK(fd, start_off, SEEK_SET, end_offset-start_off+1);
 
@@ -544,8 +544,8 @@ void ADIOI_NFS_ReadStrided(ADIO_File fd, void *buf, int count,
 
 #ifdef HAVE_STATUS_SET_BYTES
     MPIR_Status_set_bytes(status, datatype, bufsize);
-/* This is a temporary way of filling in status. The right way is to 
-   keep track of how much data was actually read and placed in buf 
+/* This is a temporary way of filling in status. The right way is to
+   keep track of how much data was actually read and placed in buf
    by ADIOI_BUFFERED_READ. */
 #endif
 

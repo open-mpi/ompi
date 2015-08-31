@@ -28,8 +28,8 @@ void MPIR_MPIOInit(int * error_code) {
 
 	/* --BEGIN ERROR HANDLING-- */
         if (!flag) {
-	    *error_code = MPIO_Err_create_code(MPI_SUCCESS, 
-		    MPIR_ERR_RECOVERABLE, myname, __LINE__, 
+	    *error_code = MPIO_Err_create_code(MPI_SUCCESS,
+		    MPIR_ERR_RECOVERABLE, myname, __LINE__,
 		    MPI_ERR_OTHER, "**initialized", 0);
 	    *error_code = MPIO_Err_return_file(MPI_FILE_NULL, *error_code);
 	    return;
@@ -37,7 +37,7 @@ void MPIR_MPIOInit(int * error_code) {
 	/* --END ERROR HANDLING-- */
 
         MPI_Keyval_create(MPI_NULL_COPY_FN, ADIOI_End_call, &ADIO_Init_keyval,
-                          (void *) 0);  
+                          (void *) 0);
 
 	/* put a dummy attribute on MPI_COMM_SELF, because we want the delete
 	   function to be called when MPI_COMM_SELF is freed. Clarified
@@ -51,6 +51,6 @@ void MPIR_MPIOInit(int * error_code) {
     }
     *error_code = MPI_SUCCESS;
 }
-/* 
- * vim: ts=8 sts=4 sw=4 noexpandtab 
+/*
+ * vim: ts=8 sts=4 sw=4 noexpandtab
  */

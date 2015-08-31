@@ -2,9 +2,9 @@
 # Copyright (c) 2013      Mellanox Technologies, Inc.
 #                         All rights reserved.
 # $COPYRIGHT$
-# 
+#
 # Additional copyrights may follow
-# 
+#
 # $HEADER$
 #
 
@@ -14,7 +14,7 @@ libmca_memheap_la_SOURCES =
 libmca_memheap_la_LDFLAGS =
 libmca_memheap_la_LIBADD =
 
-dist_oshmemdata_DATA = 
+dist_oshmemdata_DATA =
 
 # local files
 headers = memheap.h

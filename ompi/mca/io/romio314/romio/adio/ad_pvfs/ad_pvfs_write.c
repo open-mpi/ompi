@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 1997 University of Chicago. 
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -15,7 +15,7 @@ void ADIOI_PVFS_WriteStridedListIO(ADIO_File fd, void *buf, int count,
                        *error_code);
 #endif
 
-void ADIOI_PVFS_WriteContig(ADIO_File fd, void *buf, int count, 
+void ADIOI_PVFS_WriteContig(ADIO_File fd, void *buf, int count,
 			    MPI_Datatype datatype, int file_ptr_type,
 			    ADIO_Offset offset, ADIO_Status *status,
 			    int *error_code)
@@ -45,7 +45,7 @@ void ADIOI_PVFS_WriteContig(ADIO_File fd, void *buf, int count,
 #endif
 	if (err > 0)
 		fd->fp_sys_posn = offset + err;
-	/* individual file pointer not updated */        
+	/* individual file pointer not updated */
     }
     else { /* write from curr. location of ind. file pointer */
 	if (fd->fp_sys_posn != fd->fp_ind) {
@@ -109,7 +109,7 @@ void ADIOI_PVFS_WriteStrided(ADIO_File fd, void *buf, int count,
 
 #ifdef HAVE_PVFS_LISTIO
     if ( fd->hints->fs_hints.pvfs.listio_write == ADIOI_HINT_ENABLE ) {
-	    ADIOI_PVFS_WriteStridedListIO(fd, buf, count, datatype, 
+	    ADIOI_PVFS_WriteStridedListIO(fd, buf, count, datatype,
 			    file_ptr_type, offset, status, error_code);
 	    return;
     }
@@ -134,7 +134,7 @@ void ADIOI_PVFS_WriteStrided(ADIO_File fd, void *buf, int count,
 #ifdef HAVE_STATUS_SET_BYTES
 	MPIR_Status_set_bytes(status, datatype, 0);
 #endif
-	*error_code = MPI_SUCCESS; 
+	*error_code = MPI_SUCCESS;
 	return;
     }
 
@@ -142,7 +142,7 @@ void ADIOI_PVFS_WriteStrided(ADIO_File fd, void *buf, int count,
     MPI_Type_size_x(datatype, &buftype_size);
     MPI_Type_extent(datatype, &buftype_extent);
     etype_size = fd->etype_size;
-    
+
     bufsize = buftype_size * count;
 
     if (!buftype_is_contig && filetype_is_contig) {
@@ -280,11 +280,11 @@ void ADIOI_PVFS_WriteStrided(ADIO_File fd, void *buf, int count,
             while (!flag) {
                 n_filetypes++;
                 for (i=0; i<flat_file->count; i++) {
-                    if (disp + flat_file->indices[i] + 
-                        (ADIO_Offset) n_filetypes*filetype_extent + flat_file->blocklens[i] 
+                    if (disp + flat_file->indices[i] +
+                        (ADIO_Offset) n_filetypes*filetype_extent + flat_file->blocklens[i]
                             >= offset) {
                         st_index = i;
-                        fwr_size = disp + flat_file->indices[i] + 
+                        fwr_size = disp + flat_file->indices[i] +
                                 (ADIO_Offset) n_filetypes*filetype_extent
                                  + flat_file->blocklens[i] - offset;
                         flag = 1;
@@ -298,7 +298,7 @@ void ADIOI_PVFS_WriteStrided(ADIO_File fd, void *buf, int count,
 	    n_filetypes = (int) (offset / n_etypes_in_filetype);
 	    etype_in_filetype = (int) (offset % n_etypes_in_filetype);
 	    size_in_filetype = etype_in_filetype * etype_size;
- 
+
 	    sum = 0;
 	    for (i=0; i<flat_file->count; i++) {
 		sum += flat_file->blocklens[i];
@@ -325,9 +325,9 @@ void ADIOI_PVFS_WriteStrided(ADIO_File fd, void *buf, int count,
 	    off = offset;
 	    fwr_size = ADIOI_MIN(fwr_size, bufsize);
 	    while (i < bufsize) {
-                if (fwr_size) { 
-                    /* TYPE_UB and TYPE_LB can result in 
-                       fwr_size = 0. save system call in such cases */ 
+                if (fwr_size) {
+                    /* TYPE_UB and TYPE_LB can result in
+                       fwr_size = 0. save system call in such cases */
 #ifdef ADIOI_MPE_LOGGING
                     MPE_Log_event( ADIOI_MPE_lseek_a, 0, NULL );
 #endif
@@ -357,7 +357,7 @@ void ADIOI_PVFS_WriteStrided(ADIO_File fd, void *buf, int count,
 			j = 0;
 			n_filetypes++;
 		    }
-		    off = disp + flat_file->indices[j] + 
+		    off = disp + flat_file->indices[j] +
                                         (ADIO_Offset) n_filetypes*filetype_extent;
 		    fwr_size = ADIOI_MIN(flat_file->blocklens[j], bufsize-i);
 		}
@@ -407,7 +407,7 @@ void ADIOI_PVFS_WriteStrided(ADIO_File fd, void *buf, int count,
                         n_filetypes++;
                     }
 
-                    off = disp + flat_file->indices[j] + 
+                    off = disp + flat_file->indices[j] +
                                    (ADIO_Offset) n_filetypes*filetype_extent;
 
 		    new_fwr_size = flat_file->blocklens[j];
@@ -423,7 +423,7 @@ void ADIOI_PVFS_WriteStrided(ADIO_File fd, void *buf, int count,
 		    k = (k + 1)%flat_buf->count;
 		    buf_count++;
 		    indx = buftype_extent*(buf_count/flat_buf->count) +
-			flat_buf->indices[k]; 
+			flat_buf->indices[k];
 		    new_bwr_size = flat_buf->blocklens[k];
 		    if (size != fwr_size) {
 			off += size;
@@ -450,7 +450,7 @@ void ADIOI_PVFS_WriteStrided(ADIO_File fd, void *buf, int count,
 
 #ifdef HAVE_STATUS_SET_BYTES
     MPIR_Status_set_bytes(status, datatype, bufsize);
-/* This is a temporary way of filling in status. The right way is to 
+/* This is a temporary way of filling in status. The right way is to
    keep track of how much data was actually written by ADIOI_BUFFERED_WRITE. */
 #endif
 
@@ -461,7 +461,7 @@ void ADIOI_PVFS_WriteStrided(ADIO_File fd, void *buf, int count,
 void ADIOI_PVFS_WriteStridedListIO(ADIO_File fd, void *buf, int count,
                        MPI_Datatype datatype, int file_ptr_type,
                        ADIO_Offset offset, ADIO_Status *status, int
-                       *error_code) 
+                       *error_code)
 {
 /* Since PVFS does not support file locking, can't do buffered writes
    as on Unix */
@@ -522,7 +522,7 @@ void ADIOI_PVFS_WriteStridedListIO(ADIO_File fd, void *buf, int count,
 #ifdef HAVE_STATUS_SET_BYTES
 	MPIR_Status_set_bytes(status, datatype, 0);
 #endif
-	*error_code = MPI_SUCCESS; 
+	*error_code = MPI_SUCCESS;
 	return;
     }
 
@@ -530,7 +530,7 @@ void ADIOI_PVFS_WriteStridedListIO(ADIO_File fd, void *buf, int count,
     MPI_Type_size_x(datatype, &buftype_size);
     MPI_Type_extent(datatype, &buftype_extent);
     etype_size = fd->etype_size;
-    
+
     bufsize = buftype_size * count;
 
     if (!buftype_is_contig && filetype_is_contig) {
@@ -542,7 +542,7 @@ void ADIOI_PVFS_WriteStridedListIO(ADIO_File fd, void *buf, int count,
 	ADIOI_Flatten_datatype(datatype);
 	flat_buf = ADIOI_Flatlist;
 	while (flat_buf->type != datatype) flat_buf = flat_buf->next;
-	
+
 	if (file_ptr_type == ADIO_EXPLICIT_OFFSET) {
 	    off = fd->disp + etype_size * offset;
 #ifdef ADIOI_MPE_LOGGING
@@ -580,9 +580,9 @@ void ADIOI_PVFS_WriteStridedListIO(ADIO_File fd, void *buf, int count,
 	/* step through each block in memory, filling memory arrays */
 	while (b_blks_wrote < total_blks_to_write) {
 	    for (i=0; i<flat_buf->count; i++) {
-		mem_offsets[b_blks_wrote % MAX_ARRAY_SIZE] = 
+		mem_offsets[b_blks_wrote % MAX_ARRAY_SIZE] =
 		    ((char*)buf + j*buftype_extent + flat_buf->indices[i]);
-		mem_lengths[b_blks_wrote % MAX_ARRAY_SIZE] = 
+		mem_lengths[b_blks_wrote % MAX_ARRAY_SIZE] =
 		    flat_buf->blocklens[i];
 		file_lengths += flat_buf->blocklens[i];
 		b_blks_wrote++;
@@ -600,13 +600,13 @@ void ADIOI_PVFS_WriteStridedListIO(ADIO_File fd, void *buf, int count,
 		    pvfs_write_list(fd->fd_sys ,mem_list_count, mem_offsets,
 				   mem_lengths, file_list_count,
 				   &file_offsets, &file_lengths);
-		  
+
 		    /* in the case of the last read list call, leave here */
 		    if (b_blks_wrote == total_blks_to_write) break;
 
 		    file_offsets += file_lengths;
 		    file_lengths = 0;
-		} 
+		}
 	    } /* for (i=0; i<flat_buf->count; i++) */
 	    j++;
 	} /* while (b_blks_wrote < total_blks_to_write) */
@@ -627,7 +627,7 @@ void ADIOI_PVFS_WriteStridedListIO(ADIO_File fd, void *buf, int count,
 
 #ifdef HAVE_STATUS_SET_BYTES
 	MPIR_Status_set_bytes(status, datatype, bufsize);
-/* This is a temporary way of filling in status. The right way is to 
+/* This is a temporary way of filling in status. The right way is to
    keep track of how much data was actually written by ADIOI_BUFFERED_WRITE. */
 #endif
 
@@ -645,7 +645,7 @@ void ADIOI_PVFS_WriteStridedListIO(ADIO_File fd, void *buf, int count,
     disp = fd->disp;
 
     /* for each case - ADIO_Individual pointer or explicit, find offset
-       (file offset in bytes), n_filetypes (how many filetypes into file 
+       (file offset in bytes), n_filetypes (how many filetypes into file
        to start), fwr_size (remaining amount of data in present file
        block), and st_index (start point in terms of blocks in starting
        filetype) */
@@ -656,11 +656,11 @@ void ADIOI_PVFS_WriteStridedListIO(ADIO_File fd, void *buf, int count,
 	while (!flag) {
 	    n_filetypes++;
 	    for (i=0; i<flat_file->count; i++) {
-	        if (disp + flat_file->indices[i] + 
+	        if (disp + flat_file->indices[i] +
 		    (ADIO_Offset) n_filetypes*filetype_extent +
 		      flat_file->blocklens[i] >= offset) {
 		  st_index = i;
-		  fwr_size = disp + flat_file->indices[i] + 
+		  fwr_size = disp + flat_file->indices[i] +
 		    (ADIO_Offset) n_filetypes*filetype_extent
 		    + flat_file->blocklens[i] - offset;
 		  flag = 1;
@@ -674,7 +674,7 @@ void ADIOI_PVFS_WriteStridedListIO(ADIO_File fd, void *buf, int count,
 	n_filetypes = (int) (offset / n_etypes_in_filetype);
 	etype_in_filetype = (int) (offset % n_etypes_in_filetype);
 	size_in_filetype = etype_in_filetype * etype_size;
-	
+
 	sum = 0;
 	for (i=0; i<flat_file->count; i++) {
 	    sum += flat_file->blocklens[i];
@@ -695,7 +695,7 @@ void ADIOI_PVFS_WriteStridedListIO(ADIO_File fd, void *buf, int count,
     start_off = offset;
     st_fwr_size = fwr_size;
     st_n_filetypes = n_filetypes;
-    
+
     if (buftype_is_contig && !filetype_is_contig) {
 
 /* contiguous in memory, noncontiguous in file. should be the most
@@ -703,14 +703,14 @@ void ADIOI_PVFS_WriteStridedListIO(ADIO_File fd, void *buf, int count,
 
         int mem_lengths;
 	char *mem_offsets;
-        
+
 	i = 0;
 	j = st_index;
 	off = offset;
 	n_filetypes = st_n_filetypes;
-        
+
 	mem_list_count = 1;
-        
+
 	/* determine how many blocks in file to read */
 	f_data_wrote = ADIOI_MIN(st_fwr_size, bufsize);
 	total_blks_to_write = 1;
@@ -719,17 +719,17 @@ void ADIOI_PVFS_WriteStridedListIO(ADIO_File fd, void *buf, int count,
 	    f_data_wrote += flat_file->blocklens[j];
 	    total_blks_to_write++;
 	    if (j<(flat_file->count-1)) j++;
-	    else j = 0; 
+	    else j = 0;
 	}
-	    
+
 	j = st_index;
 	n_filetypes = st_n_filetypes;
 	n_write_lists = total_blks_to_write/MAX_ARRAY_SIZE;
 	extra_blks = total_blks_to_write%MAX_ARRAY_SIZE;
-        
+
 	mem_offsets = buf;
 	mem_lengths = 0;
-        
+
 	/* if at least one full readlist, allocate file arrays
 	   at max array size and don't free until very end */
 	if (n_write_lists) {
@@ -746,7 +746,7 @@ void ADIOI_PVFS_WriteStridedListIO(ADIO_File fd, void *buf, int count,
             file_lengths = (int32_t*)ADIOI_Malloc(extra_blks*
                                                   sizeof(int32_t));
         }
-        
+
         /* for file arrays that are of MAX_ARRAY_SIZE, build arrays */
         for (i=0; i<n_write_lists; i++) {
             file_list_count = MAX_ARRAY_SIZE;
@@ -804,7 +804,7 @@ void ADIOI_PVFS_WriteStridedListIO(ADIO_File fd, void *buf, int count,
                            &mem_lengths, file_list_count, file_offsets,
                            file_lengths);
         }
-    } 
+    }
     else {
         /* noncontiguous in memory as well as in file */
 
@@ -823,7 +823,7 @@ void ADIOI_PVFS_WriteStridedListIO(ADIO_File fd, void *buf, int count,
 	max_mem_list = 0;
 	max_file_list = 0;
 
-	/* run through and file max_file_list and max_mem_list so that you 
+	/* run through and file max_file_list and max_mem_list so that you
 	   can allocate the file and memory arrays less than MAX_ARRAY_SIZE
 	   if possible */
 
@@ -831,7 +831,7 @@ void ADIOI_PVFS_WriteStridedListIO(ADIO_File fd, void *buf, int count,
 	    k = start_k;
 	    new_buffer_write = 0;
 	    mem_list_count = 0;
-	    while ((mem_list_count < MAX_ARRAY_SIZE) && 
+	    while ((mem_list_count < MAX_ARRAY_SIZE) &&
 		   (new_buffer_write < bufsize-size_wrote)) {
 	        /* find mem_list_count and file_list_count such that both are
 		   less than MAX_ARRAY_SIZE, the sum of their lengths are
@@ -839,9 +839,9 @@ void ADIOI_PVFS_WriteStridedListIO(ADIO_File fd, void *buf, int count,
 		   read in the next immediate read list is less than
 		   bufsize */
 	        if(mem_list_count) {
-		    if((new_buffer_write + flat_buf->blocklens[k] + 
+		    if((new_buffer_write + flat_buf->blocklens[k] +
 			size_wrote) > bufsize) {
-		        end_bwr_size = new_buffer_write + 
+		        end_bwr_size = new_buffer_write +
 			    flat_buf->blocklens[k] - (bufsize - size_wrote);
 			new_buffer_write = bufsize - size_wrote;
 		    }
@@ -859,15 +859,15 @@ void ADIOI_PVFS_WriteStridedListIO(ADIO_File fd, void *buf, int count,
 		}
 		mem_list_count++;
 		k = (k + 1)%flat_buf->count;
-	     } /* while ((mem_list_count < MAX_ARRAY_SIZE) && 
+	     } /* while ((mem_list_count < MAX_ARRAY_SIZE) &&
 	       (new_buffer_write < bufsize-size_wrote)) */
 	    j = start_j;
 	    new_file_write = 0;
 	    file_list_count = 0;
-	    while ((file_list_count < MAX_ARRAY_SIZE) && 
+	    while ((file_list_count < MAX_ARRAY_SIZE) &&
 		   (new_file_write < new_buffer_write)) {
 	        if(file_list_count) {
-		    if((new_file_write + flat_file->blocklens[j]) > 
+		    if((new_file_write + flat_file->blocklens[j]) >
 		       new_buffer_write) {
 		        end_fwr_size = new_buffer_write - new_file_write;
 			new_file_write = new_buffer_write;
@@ -888,9 +888,9 @@ void ADIOI_PVFS_WriteStridedListIO(ADIO_File fd, void *buf, int count,
 		file_list_count++;
 		if (j < (flat_file->count - 1)) j++;
 		else j = 0;
-		
+
 		k = start_k;
-		if ((new_file_write < new_buffer_write) && 
+		if ((new_file_write < new_buffer_write) &&
 		    (file_list_count == MAX_ARRAY_SIZE)) {
 		    new_buffer_write = 0;
 		    mem_list_count = 0;
@@ -898,7 +898,7 @@ void ADIOI_PVFS_WriteStridedListIO(ADIO_File fd, void *buf, int count,
 		        if(mem_list_count) {
 			    if((new_buffer_write + flat_buf->blocklens[k]) >
 			       new_file_write) {
-			        end_bwr_size = new_file_write - 
+			        end_bwr_size = new_file_write -
 				    new_buffer_write;
 				new_buffer_write = new_file_write;
 				k--;
@@ -920,13 +920,13 @@ void ADIOI_PVFS_WriteStridedListIO(ADIO_File fd, void *buf, int count,
 		    } /* while (new_buffer_write < new_file_write) */
 		} /* if ((new_file_write < new_buffer_write) &&
 		     (file_list_count == MAX_ARRAY_SIZE)) */
-	    } /* while ((mem_list_count < MAX_ARRAY_SIZE) && 
+	    } /* while ((mem_list_count < MAX_ARRAY_SIZE) &&
 		 (new_buffer_write < bufsize-size_wrote)) */
 
 	    /*  fakes filling the writelist arrays of lengths found above  */
 	    k = start_k;
 	    j = start_j;
-	    for (i=0; i<mem_list_count; i++) {	     
+	    for (i=0; i<mem_list_count; i++) {
 		if(i) {
 		    if (i == (mem_list_count - 1)) {
 			if (flat_buf->blocklens[k] == end_bwr_size)
@@ -947,7 +947,7 @@ void ADIOI_PVFS_WriteStridedListIO(ADIO_File fd, void *buf, int count,
 		    if (i == (file_list_count - 1)) {
 			if (flat_file->blocklens[j] == end_fwr_size)
 			    fwr_size = flat_file->blocklens[(j+1)%
-							  flat_file->count];   
+							  flat_file->count];
 			else {
 			    fwr_size = flat_file->blocklens[j] - end_fwr_size;
 			    j--;
@@ -973,7 +973,7 @@ void ADIOI_PVFS_WriteStridedListIO(ADIO_File fd, void *buf, int count,
 	mem_lengths = (int *)ADIOI_Malloc(max_mem_list*sizeof(int));
 	file_offsets = (int64_t *)ADIOI_Malloc(max_file_list*sizeof(int64_t));
 	file_lengths = (int32_t *)ADIOI_Malloc(max_file_list*sizeof(int32_t));
-	    
+
 	size_wrote = 0;
 	n_filetypes = st_n_filetypes;
 	fwr_size = st_fwr_size;
@@ -986,12 +986,12 @@ void ADIOI_PVFS_WriteStridedListIO(ADIO_File fd, void *buf, int count,
 	/*  this section calculates mem_list_count and file_list_count
 	    and also finds the possibly odd sized last array elements
 	    in new_fwr_size and new_bwr_size  */
-	
+
 	while (size_wrote < bufsize) {
 	    k = start_k;
 	    new_buffer_write = 0;
 	    mem_list_count = 0;
-	    while ((mem_list_count < MAX_ARRAY_SIZE) && 
+	    while ((mem_list_count < MAX_ARRAY_SIZE) &&
 		   (new_buffer_write < bufsize-size_wrote)) {
 	        /* find mem_list_count and file_list_count such that both are
 		   less than MAX_ARRAY_SIZE, the sum of their lengths are
@@ -999,9 +999,9 @@ void ADIOI_PVFS_WriteStridedListIO(ADIO_File fd, void *buf, int count,
 		   read in the next immediate read list is less than
 		   bufsize */
 	        if(mem_list_count) {
-		    if((new_buffer_write + flat_buf->blocklens[k] + 
+		    if((new_buffer_write + flat_buf->blocklens[k] +
 			size_wrote) > bufsize) {
-		        end_bwr_size = new_buffer_write + 
+		        end_bwr_size = new_buffer_write +
 			    flat_buf->blocklens[k] - (bufsize - size_wrote);
 			new_buffer_write = bufsize - size_wrote;
 		    }
@@ -1019,15 +1019,15 @@ void ADIOI_PVFS_WriteStridedListIO(ADIO_File fd, void *buf, int count,
 		}
 		mem_list_count++;
 		k = (k + 1)%flat_buf->count;
-	     } /* while ((mem_list_count < MAX_ARRAY_SIZE) && 
+	     } /* while ((mem_list_count < MAX_ARRAY_SIZE) &&
 	       (new_buffer_write < bufsize-size_wrote)) */
 	    j = start_j;
 	    new_file_write = 0;
 	    file_list_count = 0;
-	    while ((file_list_count < MAX_ARRAY_SIZE) && 
+	    while ((file_list_count < MAX_ARRAY_SIZE) &&
 		   (new_file_write < new_buffer_write)) {
 	        if(file_list_count) {
-		    if((new_file_write + flat_file->blocklens[j]) > 
+		    if((new_file_write + flat_file->blocklens[j]) >
 		       new_buffer_write) {
 		        end_fwr_size = new_buffer_write - new_file_write;
 			new_file_write = new_buffer_write;
@@ -1048,9 +1048,9 @@ void ADIOI_PVFS_WriteStridedListIO(ADIO_File fd, void *buf, int count,
 		file_list_count++;
 		if (j < (flat_file->count - 1)) j++;
 		else j = 0;
-		
+
 		k = start_k;
-		if ((new_file_write < new_buffer_write) && 
+		if ((new_file_write < new_buffer_write) &&
 		    (file_list_count == MAX_ARRAY_SIZE)) {
 		    new_buffer_write = 0;
 		    mem_list_count = 0;
@@ -1080,17 +1080,17 @@ void ADIOI_PVFS_WriteStridedListIO(ADIO_File fd, void *buf, int count,
 		    } /* while (new_buffer_write < new_file_write) */
 		} /* if ((new_file_write < new_buffer_write) &&
 		     (file_list_count == MAX_ARRAY_SIZE)) */
-	    } /* while ((mem_list_count < MAX_ARRAY_SIZE) && 
+	    } /* while ((mem_list_count < MAX_ARRAY_SIZE) &&
 		 (new_buffer_write < bufsize-size_wrote)) */
 
 	    /*  fills the allocated readlist arrays  */
 	    k = start_k;
 	    j = start_j;
-	    for (i=0; i<mem_list_count; i++) {	     
+	    for (i=0; i<mem_list_count; i++) {
 	        mem_offsets[i] = ((char*)buf + buftype_extent*
 					 (buf_count/flat_buf->count) +
 					 (int)flat_buf->indices[k]);
-		
+
 		if(!i) {
 		    mem_lengths[0] = bwr_size;
 		    mem_offsets[0] += flat_buf->blocklens[k] - bwr_size;
@@ -1126,7 +1126,7 @@ void ADIOI_PVFS_WriteStridedListIO(ADIO_File fd, void *buf, int count,
 		        file_lengths[i] = end_fwr_size;
 			if (flat_file->blocklens[j] == end_fwr_size)
 			    fwr_size = flat_file->blocklens[(j+1)%
-							  flat_file->count];   
+							  flat_file->count];
 			else {
 			    fwr_size = flat_file->blocklens[j] - end_fwr_size;
 			    j--;
@@ -1166,7 +1166,7 @@ void ADIOI_PVFS_WriteStridedListIO(ADIO_File fd, void *buf, int count,
 
 #ifdef HAVE_STATUS_SET_BYTES
     MPIR_Status_set_bytes(status, datatype, bufsize);
-/* This is a temporary way of filling in status. The right way is to 
+/* This is a temporary way of filling in status. The right way is to
    keep track of how much data was actually written by ADIOI_BUFFERED_WRITE. */
 #endif
 

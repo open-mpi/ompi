@@ -6,9 +6,9 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -169,14 +169,14 @@ int ompi_osc_portals4_fetch_and_op(const void *origin_addr,
 int ompi_osc_portals4_get_accumulate(const void *origin_addr,
                                      int origin_count,
                                      struct ompi_datatype_t *origin_datatype,
-                                     void *result_addr, 
-                                     int result_count, 
+                                     void *result_addr,
+                                     int result_count,
                                      struct ompi_datatype_t *result_datatype,
-                                     int target_rank, 
-                                     MPI_Aint target_disp, 
+                                     int target_rank,
+                                     MPI_Aint target_disp,
                                      int target_count,
-                                     struct ompi_datatype_t *target_datatype, 
-                                     struct ompi_op_t *op, 
+                                     struct ompi_datatype_t *target_datatype,
+                                     struct ompi_op_t *op,
                                      struct ompi_win_t *win);
 
 int ompi_osc_portals4_rput(const void *origin_addr,
@@ -213,14 +213,14 @@ int ompi_osc_portals4_raccumulate(const void *origin_addr,
 int ompi_osc_portals4_rget_accumulate(const void *origin_addr,
                                       int origin_count,
                                       struct ompi_datatype_t *origin_datatype,
-                                      void *result_addr, 
-                                      int result_count, 
+                                      void *result_addr,
+                                      int result_count,
                                       struct ompi_datatype_t *result_datatype,
-                                      int target_rank, 
-                                      MPI_Aint target_disp, 
+                                      int target_rank,
+                                      MPI_Aint target_disp,
                                       int target_count,
-                                      struct ompi_datatype_t *target_datatype, 
-                                      struct ompi_op_t *op, 
+                                      struct ompi_datatype_t *target_datatype,
+                                      struct ompi_op_t *op,
                                       struct ompi_win_t *win,
                                       struct ompi_request_t **request);
 

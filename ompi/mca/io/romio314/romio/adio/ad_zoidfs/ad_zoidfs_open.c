@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*-
  * vim: ts=8 sts=4 sw=4 noexpandtab
  *
- *   Copyright (C) 2007 University of Chicago. 
+ *   Copyright (C) 2007 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -14,10 +14,10 @@ struct open_status_s {
     zoidfs_handle_t handle;
 };
 typedef struct open_status_s open_status;
-    
+
 static void fake_an_open(char *fname, int access_mode,
 	                 int nr_datafiles, MPI_Offset strip_size,
-                         ADIOI_ZOIDFS_object *zoidfs_ptr, 
+                         ADIOI_ZOIDFS_object *zoidfs_ptr,
 			 open_status *o_status)
 {
     int ret, created;
@@ -31,7 +31,7 @@ static void fake_an_open(char *fname, int access_mode,
      * be careful with ADIO_EXCL.
      */
     if (access_mode & ADIO_CREATE) {
-	ret = zoidfs_create(NULL, NULL, 
+	ret = zoidfs_create(NULL, NULL,
 			    fname, &attribs, &handle, &created, ZOIDFS_NO_OP_HINT);
 	if ((ret == ZFS_OK) && !created && (access_mode & ADIO_EXCL)) {
 	    /* lookup should not succeed if opened with EXCL */
@@ -51,7 +51,7 @@ static void fake_an_open(char *fname, int access_mode,
 
 /* ADIOI_ZOIDFS_Open:
  *  one process opens (or creates) the file, then broadcasts the result to the
- *  remaining processors. 
+ *  remaining processors.
  *
  * ADIO_Open used to perform an optimization when MPI_MODE_CREATE (and before
  * that, MPI_MODE_EXCL) was set.  Because ZoidFS handles file lookup and
@@ -72,9 +72,9 @@ void ADIOI_ZOIDFS_Open(ADIO_File fd, int *error_code)
     MPI_Datatype types[2] = {MPI_INT, MPI_BYTE};
     int lens[2] = {1, sizeof(ADIOI_ZOIDFS_object)};
     MPI_Aint offsets[2];
-    
+
     memset(&o_status, 0, sizeof(o_status));
-    zoidfs_obj_ptr = (ADIOI_ZOIDFS_object *) 
+    zoidfs_obj_ptr = (ADIOI_ZOIDFS_object *)
 	ADIOI_Malloc(sizeof(ADIOI_ZOIDFS_object));
     /* --BEGIN ERROR HANDLING-- */
     if (zoidfs_obj_ptr == NULL) {
@@ -102,10 +102,10 @@ void ADIOI_ZOIDFS_Open(ADIO_File fd, int *error_code)
     MPE_Log_event( ADIOI_MPE_open_a, 0, NULL );
 #endif
     if (rank == fd->hints->ranklist[0] && fd->fs_ptr == NULL) {
-	    fake_an_open(fd->filename, fd->access_mode, 
+	    fake_an_open(fd->filename, fd->access_mode,
 		    fd->hints->striping_factor,
 		    fd->hints->striping_unit,
-		    zoidfs_obj_ptr, &o_status); 
+		    zoidfs_obj_ptr, &o_status);
 	    /* store credentials and object reference in fd */
 	    *zoidfs_obj_ptr = o_status.handle;
 	    fd->fs_ptr = zoidfs_obj_ptr;
@@ -132,7 +132,7 @@ void ADIOI_ZOIDFS_Open(ADIO_File fd, int *error_code)
 
     /* --BEGIN ERROR HANDLING-- */
     if (o_status.error != ZFS_OK)
-    { 
+    {
 	ADIOI_Free(zoidfs_obj_ptr);
 	fd->fs_ptr = NULL;
 	*error_code = MPIO_Err_create_code(MPI_SUCCESS,

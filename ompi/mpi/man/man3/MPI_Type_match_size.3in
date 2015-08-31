@@ -22,7 +22,7 @@ int MPI_Type_match_size(int \fItypeclass\fP, int \fIsize\fP,
 .nf
 INCLUDE 'mpif.h'
 MPI_TYPE_MATCH_SIZE(\fITYPECLASS, SIZE, TYPE, IERROR\fP)
-	INTEGER	\fITYPECLASS, SIZE, TYPE, IERROR\fP 
+	INTEGER	\fITYPECLASS, SIZE, TYPE, IERROR\fP
 
 .fi
 .SH C++ Syntax
@@ -49,7 +49,7 @@ Datatype with correct type and size (handle).
 .ft R
 .TP 1i
 IERROR
-Fortran only: Error status (integer). 
+Fortran only: Error status (integer).
 
 .SH DESCRIPTION
 .ft R
@@ -83,7 +83,7 @@ called. By default, this error handler aborts the MPI job, except for
 I/O function errors. The error handler may be changed with
 MPI_Comm_set_errhandler; the predefined error handler MPI_ERRORS_RETURN
 may be used to cause error values to be returned. Note that MPI does not
-guarantee that an MPI program can continue past an error. 
+guarantee that an MPI program can continue past an error.
 .sp
 See the MPI man page for a full list of MPI error codes.
 

@@ -3,7 +3,7 @@
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
-# 
+#
 # $HEADER$
 #
 

@@ -145,7 +145,7 @@ main(int argc, char* argv[])
   psize[2] = npz;
 
 /*
-  MPI_Dims_create(npes, D, psize);  
+  MPI_Dims_create(npes, D, psize);
 
   printf("psize %d %d %d\n",psize[0],psize[1],psize[2]);
 */
@@ -153,7 +153,7 @@ main(int argc, char* argv[])
   MPI_Type_create_darray(npes, rank, D, gsize, distrib, dargs, psize, MPI_ORDER_FORTRAN, MPI_INT, &filetype);
 
   MPI_Type_commit(&filetype);
-  
+
   to1 = MPI_Wtime();
   MPI_File_open(new_comm, argv[1], MPI_MODE_RDONLY, info, &thefile);
   to2 = MPI_Wtime();

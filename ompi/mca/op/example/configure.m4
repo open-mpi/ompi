@@ -6,15 +6,15 @@
 # Copyright (c) 2004-2005 The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
-# Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+# Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2008-2014 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
-# 
+#
 # Additional copyrights may follow
-# 
+#
 # $HEADER$
 #
 
@@ -23,7 +23,7 @@
 # This script must define (via AC_DEFUN) an m4 macro named
 # MCA_<framework>_<component>_CONFIG that executes either $1 if the
 # component wants to build itself, or $2 if the component does not
-# want to build itself.  
+# want to build itself.
 
 # Do *NOT* invoke AC_MSG_ERROR, or any other macro that will abort
 # configure, except upon catastrophic error.  For example, it *is* a
@@ -40,7 +40,7 @@ AC_DEFUN([MCA_ompi_op_example_CONFIG],[
     AC_CONFIG_FILES([ompi/mca/op/example/Makefile])
 
     # Add checks here for any necessary header files and/or libraries
-    # that must be present to compile your component.  
+    # that must be present to compile your component.
 
     # This example performs a fairly simple test (checking for the
     # "struct sockaddr_in" C type), just for the sake of showing you
@@ -48,9 +48,9 @@ AC_DEFUN([MCA_ompi_op_example_CONFIG],[
     # of the test.
 
     # check for sockaddr_in (a good sign we have TCP)
-    AC_CHECK_TYPES([struct sockaddr_in], 
+    AC_CHECK_TYPES([struct sockaddr_in],
                    [$1],
-                   [$2], 
+                   [$2],
                    [AC_INCLUDES_DEFAULT
 #ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>

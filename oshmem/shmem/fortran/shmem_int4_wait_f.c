@@ -3,9 +3,9 @@
  *                         All rights reserved.
  * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -27,7 +27,7 @@ SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
         shmem_int4_wait_,
         shmem_int4_wait__,
         shmem_int4_wait_f,
-        (ompi_fortran_integer4_t *var, ompi_fortran_integer4_t *value), 
+        (ompi_fortran_integer4_t *var, ompi_fortran_integer4_t *value),
         (var,value))
 
 void shmem_int4_wait_f(ompi_fortran_integer4_t *var, ompi_fortran_integer4_t *value)

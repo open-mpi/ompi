@@ -6,28 +6,28 @@
 // Copyright (c) 2004-2005 The University of Tennessee and The University
 //                         of Tennessee Research Foundation.  All rights
 //                         reserved.
-// Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+// Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 //                         University of Stuttgart.  All rights reserved.
 // Copyright (c) 2004-2005 The Regents of the University of California.
 //                         All rights reserved.
 // Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
 // $COPYRIGHT$
-// 
+//
 // Additional copyrights may follow
-// 
+//
 // $HEADER$
 //
 
 
-inline void 
-MPI::File::Delete(const char* filename, const MPI::Info& info) 
+inline void
+MPI::File::Delete(const char* filename, const MPI::Info& info)
 {
   (void) MPI_File_delete(const_cast<char *>(filename), info);
 }
 
 
-inline int 
-MPI::File::Get_amode() const 
+inline int
+MPI::File::Get_amode() const
 {
   int amode;
   (void) MPI_File_get_amode(mpi_file, &amode);
@@ -35,8 +35,8 @@ MPI::File::Get_amode() const
 }
 
 
-inline bool 
-MPI::File::Get_atomicity() const 
+inline bool
+MPI::File::Get_atomicity() const
 {
   int flag;
   (void) MPI_File_get_atomicity(mpi_file, &flag);
@@ -44,7 +44,7 @@ MPI::File::Get_atomicity() const
 }
 
 inline MPI::Offset
-MPI::File::Get_byte_offset(const MPI::Offset disp) const 
+MPI::File::Get_byte_offset(const MPI::Offset disp) const
 {
   MPI_Offset offset, ldisp;
   ldisp = disp;
@@ -52,7 +52,7 @@ MPI::File::Get_byte_offset(const MPI::Offset disp) const
   return offset;
 }
 
-inline MPI::Group 
+inline MPI::Group
 MPI::File::Get_group() const
 {
   MPI_Group group;
@@ -61,7 +61,7 @@ MPI::File::Get_group() const
 }
 
 
-inline MPI::Info 
+inline MPI::Info
 MPI::File::Get_info() const
 {
   MPI_Info info_used;
@@ -70,7 +70,7 @@ MPI::File::Get_info() const
 }
 
 
-inline MPI::Offset 
+inline MPI::Offset
 MPI::File::Get_position() const
 {
   MPI_Offset offset;
@@ -79,7 +79,7 @@ MPI::File::Get_position() const
 }
 
 
-inline MPI::Offset 
+inline MPI::Offset
 MPI::File::Get_position_shared() const
 {
   MPI_Offset offset;
@@ -88,7 +88,7 @@ MPI::File::Get_position_shared() const
 }
 
 
-inline MPI::Offset 
+inline MPI::Offset
 MPI::File::Get_size() const
 {
   MPI_Offset offset;
@@ -98,7 +98,7 @@ MPI::File::Get_size() const
 }
 
 
-inline MPI::Aint 
+inline MPI::Aint
 MPI::File::Get_type_extent(const MPI::Datatype& datatype) const
 {
   MPI_Aint extent;
@@ -107,9 +107,9 @@ MPI::File::Get_type_extent(const MPI::Datatype& datatype) const
 }
 
 
-inline void 
+inline void
 MPI::File::Get_view(MPI::Offset& disp,
-			   MPI::Datatype& etype, 
+			   MPI::Datatype& etype,
 			   MPI::Datatype& filetype,
 			   char* datarep) const
 {
@@ -123,8 +123,8 @@ MPI::File::Get_view(MPI::Offset& disp,
 }
 
 
-inline MPI::Request 
-MPI::File::Iread(void* buf, int count, 
+inline MPI::Request
+MPI::File::Iread(void* buf, int count,
 			      const MPI::Datatype& datatype)
 {
   MPI_Request req;
@@ -133,8 +133,8 @@ MPI::File::Iread(void* buf, int count,
 }
 
 
-inline MPI::Request 
-MPI::File::Iread_at(MPI::Offset offset, void* buf, int count, 
+inline MPI::Request
+MPI::File::Iread_at(MPI::Offset offset, void* buf, int count,
 				 const MPI::Datatype& datatype)
 {
   MPI_Request req;
@@ -143,7 +143,7 @@ MPI::File::Iread_at(MPI::Offset offset, void* buf, int count,
 }
 
 
-inline MPI::Request 
+inline MPI::Request
 MPI::File::Iread_shared(void* buf, int count,
 				     const MPI::Datatype& datatype)
 {
@@ -153,7 +153,7 @@ MPI::File::Iread_shared(void* buf, int count,
 }
 
 
-inline MPI::Request 
+inline MPI::Request
 MPI::File::Iwrite(const void* buf, int count,
 			 const MPI::Datatype& datatype)
 {
@@ -163,8 +163,8 @@ MPI::File::Iwrite(const void* buf, int count,
 }
 
 
-inline MPI::Request 
-MPI::File::Iwrite_at(MPI::Offset offset, const void* buf, 
+inline MPI::Request
+MPI::File::Iwrite_at(MPI::Offset offset, const void* buf,
 			    int count, const MPI::Datatype& datatype)
 {
   MPI_Request req;
@@ -174,7 +174,7 @@ MPI::File::Iwrite_at(MPI::Offset offset, const void* buf,
 }
 
 
-inline MPI::Request 
+inline MPI::Request
 MPI::File::Iwrite_shared(const void* buf, int count,
 				const MPI::Datatype& datatype)
 {
@@ -184,7 +184,7 @@ MPI::File::Iwrite_shared(const void* buf, int count,
 }
 
 
-inline MPI::File 
+inline MPI::File
 MPI::File::Open(const MPI::Intracomm& comm,
 				 const char* filename, int amode,
 				 const MPI::Info& info)
@@ -195,14 +195,14 @@ MPI::File::Open(const MPI::Intracomm& comm,
 }
 
 
-inline void 
+inline void
 MPI::File::Preallocate(MPI::Offset size)
 {
   (void) MPI_File_preallocate(mpi_file, size);
 }
 
 
-inline void 
+inline void
 MPI::File::Read(void* buf, int count,
 		       const MPI::Datatype& datatype)
 {
@@ -211,7 +211,7 @@ MPI::File::Read(void* buf, int count,
 }
 
 
-inline void 
+inline void
 MPI::File::Read(void* buf, int count,
 		       const MPI::Datatype& datatype,
 		       MPI::Status& status)
@@ -220,7 +220,7 @@ MPI::File::Read(void* buf, int count,
 }
 
 
-inline void 
+inline void
 MPI::File::Read_all(void* buf, int count,
 			   const MPI::Datatype& datatype)
 {
@@ -229,7 +229,7 @@ MPI::File::Read_all(void* buf, int count,
 }
 
 
-inline void 
+inline void
 MPI::File::Read_all(void* buf, int count,
 			   const MPI::Datatype& datatype,
 			   MPI::Status& status)
@@ -238,7 +238,7 @@ MPI::File::Read_all(void* buf, int count,
 }
 
 
-inline void 
+inline void
 MPI::File::Read_all_begin(void* buf, int count,
 				 const MPI::Datatype& datatype)
 {
@@ -246,7 +246,7 @@ MPI::File::Read_all_begin(void* buf, int count,
 }
 
 
-inline void 
+inline void
 MPI::File::Read_all_end(void* buf)
 {
   MPI_Status status;
@@ -254,15 +254,15 @@ MPI::File::Read_all_end(void* buf)
 }
 
 
-inline void 
+inline void
 MPI::File::Read_all_end(void* buf, MPI::Status& status)
 {
   (void) MPI_File_read_all_end(mpi_file, buf, &status.mpi_status);
 }
 
 
-inline void 
-MPI::File::Read_at(MPI::Offset offset, 
+inline void
+MPI::File::Read_at(MPI::Offset offset,
 			  void* buf, int count,
 			  const MPI::Datatype& datatype)
 {
@@ -272,18 +272,18 @@ MPI::File::Read_at(MPI::Offset offset,
 }
 
 
-inline void 
+inline void
 MPI::File::Read_at(MPI::Offset offset, void* buf, int count,
 			  const MPI::Datatype& datatype,
 			  MPI::Status& status)
 {
-  (void) MPI_File_read_at(mpi_file, offset, buf, count, datatype, 
+  (void) MPI_File_read_at(mpi_file, offset, buf, count, datatype,
                           &status.mpi_status);
 }
 
 
-inline void 
-MPI::File::Read_at_all(MPI::Offset offset, void* buf, int count, 
+inline void
+MPI::File::Read_at_all(MPI::Offset offset, void* buf, int count,
 			      const MPI::Datatype& datatype)
 {
   MPI_Status status;
@@ -291,17 +291,17 @@ MPI::File::Read_at_all(MPI::Offset offset, void* buf, int count,
 }
 
 
-inline void 
+inline void
 MPI::File::Read_at_all(MPI::Offset offset, void* buf, int count,
 			      const MPI::Datatype& datatype,
 			      MPI::Status& status)
 {
-  (void) MPI_File_read_at_all(mpi_file, offset, buf, count, datatype, 
+  (void) MPI_File_read_at_all(mpi_file, offset, buf, count, datatype,
                               &status.mpi_status);
 }
 
 
-inline void 
+inline void
 MPI::File::Read_at_all_begin(MPI::Offset offset,
 				    void* buf, int count,
 				    const MPI::Datatype& datatype)
@@ -310,7 +310,7 @@ MPI::File::Read_at_all_begin(MPI::Offset offset,
 }
 
 
-inline void 
+inline void
 MPI::File::Read_at_all_end(void* buf)
 {
   MPI_Status status;
@@ -318,14 +318,14 @@ MPI::File::Read_at_all_end(void* buf)
 }
 
 
-inline void 
+inline void
 MPI::File::Read_at_all_end(void* buf, MPI::Status& status)
 {
   (void) MPI_File_read_at_all_end(mpi_file, buf, &status.mpi_status);
 }
 
 
-inline void 
+inline void
 MPI::File::Read_ordered(void* buf, int count,
 			       const MPI::Datatype& datatype)
 {
@@ -334,17 +334,17 @@ MPI::File::Read_ordered(void* buf, int count,
 }
 
 
-inline void 
+inline void
 MPI::File::Read_ordered(void* buf, int count,
 			       const MPI::Datatype& datatype,
 			       MPI::Status& status)
 {
-  (void) MPI_File_read_ordered(mpi_file, buf, count, datatype, 
+  (void) MPI_File_read_ordered(mpi_file, buf, count, datatype,
                                &status.mpi_status);
 }
 
 
-inline void 
+inline void
 MPI::File::Read_ordered_begin(void* buf, int count,
 				     const MPI::Datatype& datatype)
 {
@@ -352,7 +352,7 @@ MPI::File::Read_ordered_begin(void* buf, int count,
 }
 
 
-inline void 
+inline void
 MPI::File::Read_ordered_end(void* buf)
 {
   MPI_Status status;
@@ -360,14 +360,14 @@ MPI::File::Read_ordered_end(void* buf)
 }
 
 
-inline void 
+inline void
 MPI::File::Read_ordered_end(void* buf, MPI::Status& status)
 {
   (void) MPI_File_read_ordered_end(mpi_file, buf, &status.mpi_status);
 }
 
 
-inline void 
+inline void
 MPI::File::Read_shared(void* buf, int count,
 			      const MPI::Datatype& datatype)
 {
@@ -376,51 +376,51 @@ MPI::File::Read_shared(void* buf, int count,
 }
 
 
-inline void 
+inline void
 MPI::File::Read_shared(void* buf, int count,
 			      const MPI::Datatype& datatype,
 			      MPI::Status& status)
 {
-  (void) MPI_File_read_shared(mpi_file, buf, count, datatype, 
+  (void) MPI_File_read_shared(mpi_file, buf, count, datatype,
                               &status.mpi_status);
 }
 
-inline void 
+inline void
 MPI::File::Seek(MPI::Offset offset, int whence)
 {
   (void) MPI_File_seek(mpi_file, offset, whence);
 }
 
 
-inline void 
+inline void
 MPI::File::Seek_shared(MPI::Offset offset, int whence)
 {
   (void) MPI_File_seek_shared(mpi_file, offset, whence);
 }
 
 
-inline void 
+inline void
 MPI::File::Set_atomicity(bool flag)
 {
   (void) MPI_File_set_atomicity(mpi_file, flag);
 }
 
 
-inline void 
+inline void
 MPI::File::Set_info(const MPI::Info& info)
 {
   (void) MPI_File_set_info(mpi_file, info);
 }
 
 
-inline void 
+inline void
 MPI::File::Set_size(MPI::Offset size)
 {
   (void) MPI_File_set_size(mpi_file, size);
 }
 
 
-inline void 
+inline void
 MPI::File::Set_view(MPI::Offset disp,
 			   const MPI::Datatype& etype,
 			   const MPI::Datatype& filetype,
@@ -432,14 +432,14 @@ MPI::File::Set_view(MPI::Offset disp,
 }
 
 
-inline void 
+inline void
 MPI::File::Sync()
 {
   (void) MPI_File_sync(mpi_file);
 }
 
 
-inline void 
+inline void
 MPI::File::Write(const void* buf, int count,
 		      const MPI::Datatype& datatype)
 {
@@ -448,17 +448,17 @@ MPI::File::Write(const void* buf, int count,
 }
 
 
-inline void 
+inline void
 MPI::File::Write(const void* buf, int count,
 			const MPI::Datatype& datatype,
 			MPI::Status& status)
 {
-  (void) MPI_File_write(mpi_file, const_cast<void *>(buf), count, datatype, 
+  (void) MPI_File_write(mpi_file, const_cast<void *>(buf), count, datatype,
                         &status.mpi_status);
 }
 
 
-inline void 
+inline void
 MPI::File::Write_all(const void* buf, int count,
 			    const MPI::Datatype& datatype)
 {
@@ -468,17 +468,17 @@ MPI::File::Write_all(const void* buf, int count,
 
 
 
-inline void 
+inline void
 MPI::File::Write_all(const void* buf, int count,
 			    const MPI::Datatype& datatype,
 			    MPI::Status& status)
 {
-  (void) MPI_File_write_all(mpi_file, const_cast<void *>(buf), count, datatype, 
+  (void) MPI_File_write_all(mpi_file, const_cast<void *>(buf), count, datatype,
                             &status.mpi_status);
 }
 
 
-inline void 
+inline void
 MPI::File::Write_all_begin(const void* buf, int count,
 				  const MPI::Datatype& datatype)
 {
@@ -486,7 +486,7 @@ MPI::File::Write_all_begin(const void* buf, int count,
 }
 
 
-inline void 
+inline void
 MPI::File::Write_all_end(const void* buf)
 {
   MPI_Status status;
@@ -494,14 +494,14 @@ MPI::File::Write_all_end(const void* buf)
 }
 
 
-inline void 
+inline void
 MPI::File::Write_all_end(const void* buf, MPI::Status& status)
 {
   (void) MPI_File_write_all_end(mpi_file, const_cast<void *>(buf), &status.mpi_status);
 }
 
 
-inline void 
+inline void
 MPI::File::Write_at(MPI::Offset offset,
 			   const void* buf, int count,
 			   const MPI::Datatype& datatype)
@@ -512,7 +512,7 @@ MPI::File::Write_at(MPI::Offset offset,
 }
 
 
-inline void 
+inline void
 MPI::File::Write_at(MPI::Offset offset,
 			   const void* buf, int count,
 			   const MPI::Datatype& datatype,
@@ -523,7 +523,7 @@ MPI::File::Write_at(MPI::Offset offset,
 }
 
 
-inline void 
+inline void
 MPI::File::Write_at_all(MPI::Offset offset,
 			       const void* buf, int count,
 			       const MPI::Datatype& datatype)
@@ -534,18 +534,18 @@ MPI::File::Write_at_all(MPI::Offset offset,
 }
 
 
-inline void 
+inline void
 MPI::File::Write_at_all(MPI::Offset offset,
 			       const void* buf, int count,
 			       const MPI::Datatype& datatype,
 			       MPI::Status& status)
 {
-  (void) MPI_File_write_at_all(mpi_file, offset, const_cast<void *>(buf), count, 
+  (void) MPI_File_write_at_all(mpi_file, offset, const_cast<void *>(buf), count,
 			       datatype, &status.mpi_status);
 }
 
 
-inline void 
+inline void
 MPI::File::Write_at_all_begin(MPI::Offset offset,
 				     const void* buf, int count,
 				     const MPI::Datatype& datatype)
@@ -555,7 +555,7 @@ MPI::File::Write_at_all_begin(MPI::Offset offset,
 }
 
 
-inline void 
+inline void
 MPI::File::Write_at_all_end(const void* buf)
 {
   MPI_Status status;
@@ -563,14 +563,14 @@ MPI::File::Write_at_all_end(const void* buf)
 }
 
 
-inline void 
+inline void
 MPI::File::Write_at_all_end(const void* buf, MPI::Status& status)
 {
   (void) MPI_File_write_at_all_end(mpi_file, const_cast<void *>(buf), &status.mpi_status);
 }
 
 
-inline void 
+inline void
 MPI::File::Write_ordered(const void* buf, int count,
 			      const MPI::Datatype& datatype)
 {
@@ -580,7 +580,7 @@ MPI::File::Write_ordered(const void* buf, int count,
 }
 
 
-inline void 
+inline void
 MPI::File::Write_ordered(const void* buf, int count,
 				const MPI::Datatype& datatype,
 				MPI::Status& status)
@@ -590,15 +590,15 @@ MPI::File::Write_ordered(const void* buf, int count,
 }
 
 
-inline void 
-MPI::File::Write_ordered_begin(const void* buf, int count, 
+inline void
+MPI::File::Write_ordered_begin(const void* buf, int count,
 				    const MPI::Datatype& datatype)
 {
   (void) MPI_File_write_ordered_begin(mpi_file, const_cast<void *>(buf), count, datatype);
 }
 
 
-inline void 
+inline void
 MPI::File::Write_ordered_end(const void* buf)
 {
   MPI_Status status;
@@ -606,7 +606,7 @@ MPI::File::Write_ordered_end(const void* buf)
 }
 
 
-inline void 
+inline void
 MPI::File::Write_ordered_end(const void* buf,
 				    MPI::Status& status)
 {
@@ -614,7 +614,7 @@ MPI::File::Write_ordered_end(const void* buf,
 }
 
 
-inline void 
+inline void
 MPI::File::Write_shared(const void* buf, int count,
 			     const MPI::Datatype& datatype)
 {
@@ -624,7 +624,7 @@ MPI::File::Write_shared(const void* buf, int count,
 }
 
 
-inline void 
+inline void
 MPI::File::Write_shared(const void* buf, int count,
 			     const MPI::Datatype& datatype, MPI::Status& status)
 {
@@ -648,7 +648,7 @@ MPI::File::Get_errhandler() const
     return errhandler;
 }
 
-inline void 
+inline void
 MPI::File::Call_errhandler(int errorcode) const
 {
   (void) MPI_File_call_errhandler(mpi_file, errorcode);

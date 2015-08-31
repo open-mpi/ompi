@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 2004 University of Chicago. 
+ *   Copyright (C) 2004 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -20,7 +20,7 @@ void ADIOI_GEN_Resize(ADIO_File fd, ADIO_Offset size, int *error_code)
 
     /* first aggregator performs ftruncate() */
     if (rank == fd->hints->ranklist[0]) {
-    ADIOI_Assert(size == (off_t) size); 
+    ADIOI_Assert(size == (off_t) size);
 	err = ftruncate(fd->fd_sys, (off_t)size);
     }
 

@@ -5,14 +5,14 @@
  * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 /**
@@ -45,7 +45,7 @@ typedef struct mca_pml_ob1_comm_proc_t mca_pml_ob1_comm_proc_t;
 
 /**
  *  Cached on ompi_communicator_t to hold queues/state
- *  used by the PML<->PTL interface for matching logic. 
+ *  used by the PML<->PTL interface for matching logic.
  */
 struct mca_pml_comm_t {
     opal_object_t super;
@@ -69,7 +69,7 @@ OBJ_CLASS_DECLARATION(mca_pml_ob1_comm_t);
  * Initialize an instance of mca_pml_ob1_comm_t based on the communicator size.
  *
  * @param  comm   Instance of mca_pml_ob1_comm_t
- * @param  size   Size of communicator 
+ * @param  size   Size of communicator
  * @return        OMPI_SUCCESS or error status on failure.
  */
 

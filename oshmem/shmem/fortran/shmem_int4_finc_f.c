@@ -3,9 +3,9 @@
  *                         All rights reserved.
  * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -30,7 +30,7 @@ SHMEM_GENERATE_FORTRAN_BINDINGS_FUNCTION (ompi_fortran_integer4_t,
         shmem_int4_finc_,
         shmem_int4_finc__,
         shmem_int4_finc_f,
-        (FORTRAN_POINTER_T target, MPI_Fint *pe), 
+        (FORTRAN_POINTER_T target, MPI_Fint *pe),
         (target,pe) )
 
 ompi_fortran_integer4_t shmem_int4_finc_f(FORTRAN_POINTER_T target, MPI_Fint *pe)
@@ -39,11 +39,11 @@ ompi_fortran_integer4_t shmem_int4_finc_f(FORTRAN_POINTER_T target, MPI_Fint *pe
     ompi_fortran_integer4_t value = 1;
     oshmem_op_t* op = oshmem_op_sum_fint4;
 
-    MCA_ATOMIC_CALL(fadd(FPTR_2_VOID_PTR(target), 
-        (void *)&out_value, 
-        (const void*)&value, 
-        sizeof(out_value), 
-        OMPI_FINT_2_INT(*pe), 
+    MCA_ATOMIC_CALL(fadd(FPTR_2_VOID_PTR(target),
+        (void *)&out_value,
+        (const void*)&value,
+        sizeof(out_value),
+        OMPI_FINT_2_INT(*pe),
         op));
 
     return out_value;

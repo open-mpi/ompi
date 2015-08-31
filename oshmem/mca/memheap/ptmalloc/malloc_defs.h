@@ -5,7 +5,7 @@
 
 /* See malloc.c for detailed parameter description */
 #define USE_SPIN_LOCKS  0
-#define USE_DL_PREFIX   
+#define USE_DL_PREFIX
 #define ABORT   oshmem_shmem_abort(-2)
 //#define ABORT   abort()
 #define MORECORE   mca_memheap_ptmalloc_sbrk

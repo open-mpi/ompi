@@ -19,7 +19,7 @@
 int ompi_comm_neighbors_count(MPI_Comm comm, int *indegree, int *outdegree, int *weighted) {
     int res;
 
-    if (OMPI_COMM_IS_CART(comm)) { 
+    if (OMPI_COMM_IS_CART(comm)) {
         int ndims;
         res = MPI_Cartdim_get(comm, &ndims)  ;
         if (MPI_SUCCESS != res) {
@@ -57,7 +57,7 @@ int ompi_comm_neighbors(MPI_Comm comm, int maxindegree, int sources[], int sourc
     }
     if(indeg > maxindegree && outdeg > maxoutdegree) return MPI_ERR_TRUNCATE; /* we want to return *all* neighbors */
 
-    if (OMPI_COMM_IS_CART(comm)) { 
+    if (OMPI_COMM_IS_CART(comm)) {
         int ndims, i, rpeer, speer;
         res = MPI_Cartdim_get(comm, &ndims);
         if (MPI_SUCCESS != res) {

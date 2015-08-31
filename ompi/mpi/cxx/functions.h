@@ -6,16 +6,16 @@
 // Copyright (c) 2004-2005 The University of Tennessee and The University
 //                         of Tennessee Research Foundation.  All rights
 //                         reserved.
-// Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+// Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 //                         University of Stuttgart.  All rights reserved.
 // Copyright (c) 2004-2005 The Regents of the University of California.
 //                         All rights reserved.
 // Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
 // Copyright (c) 2011      FUJITSU LIMITED.  All rights reserved.
 // $COPYRIGHT$
-// 
+//
 // Additional copyrights may follow
-// 
+//
 // $HEADER$
 //
 
@@ -23,10 +23,10 @@
 // Point-to-Point Communication
 //
 
-void 
+void
 Attach_buffer(void* buffer, int size);
 
-int 
+int
 Detach_buffer(void*& buffer);
 
 //
@@ -49,19 +49,19 @@ Add_error_code(int errorclass);
 void
 Add_error_string(int errorcode, const char* string);
 
-void 
+void
 Get_processor_name(char* name, int& resultlen);
 
 void
 Get_error_string(int errorcode, char* string, int& resultlen);
 
-int 
+int
 Get_error_class(int errorcode);
 
-double 
+double
 Wtime();
 
-double 
+double
 Wtick();
 
 void
@@ -131,11 +131,11 @@ Open_port(const Info& info, char* port_name);
 
 
 void
-Publish_name(const char* service_name, const Info& info, 
+Publish_name(const char* service_name, const Info& info,
 	     const char* port_name);
 
-void 
-Unpublish_name(const char* service_name, const Info& info, 
+void
+Unpublish_name(const char* service_name, const Info& info,
 	       const char* port_name);
 
 //

@@ -5,15 +5,15 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -65,9 +65,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_CREATE_DARRAY,
 #endif
 
 void ompi_type_create_darray_f(MPI_Fint *size, MPI_Fint *rank,
-			      MPI_Fint *ndims, MPI_Fint *gsize_array, 
+			      MPI_Fint *ndims, MPI_Fint *gsize_array,
 			      MPI_Fint *distrib_array, MPI_Fint *darg_array,
-			      MPI_Fint *psize_array, MPI_Fint *order, 
+			      MPI_Fint *psize_array, MPI_Fint *order,
 			      MPI_Fint *oldtype, MPI_Fint *newtype,
 			      MPI_Fint *ierr)
 {
@@ -87,7 +87,7 @@ void ompi_type_create_darray_f(MPI_Fint *size, MPI_Fint *rank,
     c_ierr = MPI_Type_create_darray(OMPI_FINT_2_INT(*size),
                                     OMPI_FINT_2_INT(*rank),
                                     OMPI_FINT_2_INT(*ndims),
-                                    OMPI_ARRAY_NAME_CONVERT(gsize_array), 
+                                    OMPI_ARRAY_NAME_CONVERT(gsize_array),
                                     OMPI_ARRAY_NAME_CONVERT(distrib_array),
                                     OMPI_ARRAY_NAME_CONVERT(darg_array),
                                     OMPI_ARRAY_NAME_CONVERT(psize_array),

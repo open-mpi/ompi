@@ -29,7 +29,7 @@ int main(int argc, char* argv[])
     struct iovec msg;
     orte_vpid_t i;
 
-    
+
     if (0 > (rc = orte_init(&argc, &argv, ORTE_PROC_NON_MPI))) {
         fprintf(stderr, "couldn't init orte - error code %d\n", rc);
         return rc;
@@ -44,7 +44,7 @@ int main(int argc, char* argv[])
     app->app = strdup("hostname");
     opal_argv_append_nosize(&app->argv, "hostname");
     app->num_procs = 3;
-    
+
     getcwd(cwd, sizeof(cwd));
     app->cwd = strdup(cwd);
     /*===================================*/
@@ -59,7 +59,7 @@ int main(int argc, char* argv[])
     /* setup a map object */
     jdata->map = OBJ_NEW(orte_job_map_t);
     jdata->map->display_map = true;
-#endif    
+#endif
     /* launch the job */
     fprintf(stderr, "Parent: spawning children!\n");
     if (ORTE_SUCCESS != (rc = orte_plm.spawn(jdata))) {

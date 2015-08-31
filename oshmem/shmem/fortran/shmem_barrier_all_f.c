@@ -3,9 +3,9 @@
  *                         All rights reserved.
  * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -24,7 +24,7 @@ SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
         shmem_barrier_all_,
         shmem_barrier_all__,
         shmem_barrier_all_f,
-        (void), 
+        (void),
         () )
 
 void shmem_barrier_all_f(void)

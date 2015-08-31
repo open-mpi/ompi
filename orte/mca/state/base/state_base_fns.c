@@ -394,7 +394,7 @@ static void cleanup_node(orte_proc_t *proc)
                          "%s state:base:cleanup_node on proc %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(&proc->name)));
-    
+
     if (NULL == (node = proc->node)) {
         return;
     }
@@ -625,7 +625,7 @@ void orte_state_base_check_all_complete(int fd, short args, void *cbdata)
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_JOBID_PRINT(jdata->jobid),
                          orte_job_state_to_str(jdata->state)));
-    
+
     /* if this job is a continuously operating one, then don't do
      * anything further - just return here
      */
@@ -634,7 +634,7 @@ void orte_state_base_check_all_complete(int fd, short args, void *cbdata)
          ORTE_FLAG_TEST(jdata, ORTE_JOB_FLAG_RECOVERABLE))) {
         goto CHECK_ALIVE;
     }
-    
+
     /* if the job that is being checked is the HNP, then we are
      * trying to terminate the orteds. In that situation, we
      * do -not- check all jobs - we simply notify the HNP
@@ -662,7 +662,7 @@ void orte_state_base_check_all_complete(int fd, short args, void *cbdata)
         OBJ_RELEASE(caddy);
         return;
     }
-    
+
     /* Release the resources used by this job. Since some errmgrs may want
      * to continue using resources allocated to the job as part of their
      * fault recovery procedure, we only do this once the job is "complete".
@@ -710,7 +710,7 @@ void orte_state_base_check_all_complete(int fd, short args, void *cbdata)
         OBJ_RELEASE(map);
         jdata->map = NULL;
     }
-    
+
  CHECK_ALIVE:
     /* now check to see if all jobs are done - trigger notification of this jdata
      * object when we find it

@@ -198,7 +198,7 @@ int mca_sharedfp_lockedfile_write_ordered_begin(mca_io_ompio_file_t *fh,
     offset /= sh->sharedfh->f_etype_size;
 
     if ( mca_sharedfp_lockedfile_verbose ) {
-	opal_output(ompi_sharedfp_base_framework.framework_output,       
+	opal_output(ompi_sharedfp_base_framework.framework_output,
                     "sharedfp_lockedfile_write_ordered_begin: Offset returned is %lld\n",offset);
      }
 

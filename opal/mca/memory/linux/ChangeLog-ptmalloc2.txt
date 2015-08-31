@@ -50,7 +50,7 @@
 	(dist-routines): Add malloc-stats.
 	* malloc/Versions: Add _int_get_arena, _int_get_arena_info,
 	_int_get_global_info.
-	
+
 2004-07-25  Wolfram Gloger  <wg@malloc.de>
 
 	* sysdeps/generic/thread-st.h: New file.

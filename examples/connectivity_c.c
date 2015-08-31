@@ -37,7 +37,7 @@ main(int argc, char **argv)
     if (MPI_SUCCESS != MPI_Get_processor_name(name, &length)) {
         strcpy(name, "unknown");
     }
-    
+
     if (argc>1 && strcmp(argv[1], "-v")==0)
         verbose = 1;
 

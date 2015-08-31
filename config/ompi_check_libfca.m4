@@ -13,7 +13,7 @@ dnl
 
 # OMPI_CHECK_FCA(prefix, [action-if-found], [action-if-not-found])
 # --------------------------------------------------------
-# check if fca support can be found.  sets prefix_{CPPFLAGS, 
+# check if fca support can be found.  sets prefix_{CPPFLAGS,
 # LDFLAGS, LIBS} as needed and runs action-if-found if there is
 # support, otherwise executes action-if-not-found
 AC_DEFUN([OMPI_CHECK_FCA],[

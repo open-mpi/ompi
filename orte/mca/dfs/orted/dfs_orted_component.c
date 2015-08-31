@@ -4,9 +4,9 @@
  *                         reserved.
  *
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -22,7 +22,7 @@
 /*
  * Public string for version number
  */
-const char *orte_dfs_orted_component_version_string = 
+const char *orte_dfs_orted_component_version_string =
     "ORTE DFS orted MCA component version " ORTE_VERSION;
 
 int orte_dfs_orted_num_worker_threads = 0;
@@ -41,7 +41,7 @@ static int dfs_orted_component_query(mca_base_module_t **module, int *priority);
  */
 orte_dfs_base_component_t mca_dfs_orted_component =
 {
-    /* Handle the general mca_component_t struct containing 
+    /* Handle the general mca_component_t struct containing
      *  meta information about the component itdefault_orted
      */
     .base_version = {
@@ -75,7 +75,7 @@ static int dfs_orted_register(void)
     return ORTE_SUCCESS;
 }
 
-static int dfs_orted_open(void) 
+static int dfs_orted_open(void)
 {
     return ORTE_SUCCESS;
 }
@@ -91,9 +91,9 @@ static int dfs_orted_component_query(mca_base_module_t **module, int *priority)
         /* we are the default component for daemons and HNP */
         *priority = 1000;
         *module = (mca_base_module_t *)&orte_dfs_orted_module;
-        return ORTE_SUCCESS;        
+        return ORTE_SUCCESS;
     }
-    
+
     *priority = -1;
     *module = NULL;
     return ORTE_ERROR;

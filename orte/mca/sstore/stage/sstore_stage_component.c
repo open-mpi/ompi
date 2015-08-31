@@ -6,9 +6,9 @@
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -24,7 +24,7 @@
 /*
  * Public string for version number
  */
-const char *orte_sstore_stage_component_version_string = 
+const char *orte_sstore_stage_component_version_string =
     "ORTE SSTORE stage MCA component version " ORTE_VERSION;
 
 /*
@@ -41,7 +41,7 @@ static int sstore_stage_close(void);
 orte_sstore_stage_component_t mca_sstore_stage_component = {
     /* First do the base component stuff */
     {
-        /* Handle the general mca_component_t struct containing 
+        /* Handle the general mca_component_t struct containing
          *  meta information about the component itstage
          */
         .base_version = {
@@ -50,7 +50,7 @@ orte_sstore_stage_component_t mca_sstore_stage_component = {
             .mca_component_name = "stage",
             MCA_BASE_MAKE_VERSION(component, ORTE_MAJOR_VERSION, ORTE_MINOR_VERSION,
                                   ORTE_RELEASE_VERSION),
-            
+
             /* Component open and close functions */
             .mca_open_component = sstore_stage_open,
             .mca_close_component = sstore_stage_close,
@@ -235,7 +235,7 @@ static int sstore_stage_register(void)
     return ORTE_SUCCESS;
 }
 
-static int sstore_stage_open(void) 
+static int sstore_stage_open(void)
 {
     /* If there is a custom verbose level for this component than use it
      * otherwise take our parents level and output channel
@@ -247,35 +247,35 @@ static int sstore_stage_open(void)
     } else {
         mca_sstore_stage_component.super.output_handle = orte_sstore_base_framework.framework_output;
     }
-    
+
     /*
      * Debug Output
      */
     opal_output_verbose(10, mca_sstore_stage_component.super.output_handle,
                         "sstore:stage: open()");
     opal_output_verbose(20, mca_sstore_stage_component.super.output_handle,
-                        "sstore:stage: open: priority   = %d", 
+                        "sstore:stage: open: priority   = %d",
                         mca_sstore_stage_component.super.priority);
     opal_output_verbose(20, mca_sstore_stage_component.super.output_handle,
-                        "sstore:stage: open: verbosity  = %d", 
+                        "sstore:stage: open: verbosity  = %d",
                         mca_sstore_stage_component.super.verbose);
     opal_output_verbose(20, mca_sstore_stage_component.super.output_handle,
-                        "sstore:stage: open: Local snapshot directory = %s", 
+                        "sstore:stage: open: Local snapshot directory = %s",
                         orte_sstore_stage_local_snapshot_dir);
     opal_output_verbose(20, mca_sstore_stage_component.super.output_handle,
-                        "sstore:stage: open: Is Global dir. shared    = %s", 
+                        "sstore:stage: open: Is Global dir. shared    = %s",
                         (orte_sstore_stage_global_is_shared ? "True" : "False"));
     opal_output_verbose(20, mca_sstore_stage_component.super.output_handle,
-                        "sstore:stage: open: Node Local Caching       = %s", 
+                        "sstore:stage: open: Node Local Caching       = %s",
                         (orte_sstore_stage_enabled_caching ? "Enabled" : "Disabled"));
     opal_output_verbose(20, mca_sstore_stage_component.super.output_handle,
-                        "sstore:stage: open: Compression              = %s", 
+                        "sstore:stage: open: Compression              = %s",
                         (orte_sstore_stage_enabled_compression ? "Enabled" : "Disabled"));
     opal_output_verbose(20, mca_sstore_stage_component.super.output_handle,
-                        "sstore:stage: open: Compression Delay        = %d", 
+                        "sstore:stage: open: Compression Delay        = %d",
                         orte_sstore_stage_compress_delay);
     opal_output_verbose(20, mca_sstore_stage_component.super.output_handle,
-                        "sstore:stage: open: Skip FileM (Debug Only)  = %s", 
+                        "sstore:stage: open: Skip FileM (Debug Only)  = %s",
                         (orte_sstore_stage_skip_filem ? "True" : "False"));
 
     return ORTE_SUCCESS;

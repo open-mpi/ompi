@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 2004 University of Chicago. 
+ *   Copyright (C) 2004 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -30,7 +30,7 @@ void ADIOI_FAKE_IwriteContig(ADIO_File fd, const void *buf, int count,
      */
     ADIOI_Assert(len == (int) len); /* the count is an int parm */
     ADIO_WriteContig(fd, buf, (int)len, MPI_BYTE, file_ptr_type, offset,
-		     &status, error_code);  
+		     &status, error_code);
     if (*error_code == MPI_SUCCESS) {
 	MPI_Type_size_x(datatype, &typesize);
 	nbytes = (MPI_Offset)count*(MPI_Offset)typesize;
@@ -52,11 +52,11 @@ void ADIOI_FAKE_IwriteStrided(ADIO_File fd, const void *buf, int count,
     MPI_Count typesize;
     MPI_Offset nbytes=0;
 
-    /* Call the blocking function.  It will create an error code 
+    /* Call the blocking function.  It will create an error code
      * if necessary.
      */
-    ADIO_WriteStrided(fd, buf, count, datatype, file_ptr_type, 
-		      offset, &status, error_code);  
+    ADIO_WriteStrided(fd, buf, count, datatype, file_ptr_type,
+		      offset, &status, error_code);
     if (*error_code == MPI_SUCCESS) {
 	MPI_Type_size_x(datatype, &typesize);
 	nbytes = (MPI_Offset)count * (MPI_Offset)typesize;

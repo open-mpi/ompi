@@ -18,7 +18,7 @@ main(int argc, char *argv[]){
     double maxpower;
     unsigned char chr;
     bool readstdin;
-    
+
     /*
      * Init
      */
@@ -32,11 +32,11 @@ main(int argc, char *argv[]){
     } else {
         count = MAX_COUNT;
     }
-    
+
 
     i = 1;
     for (j=1; j < count+1; j++) {
-        
+
 #if 0
         maxpower = (double)(j%7);
 #endif
@@ -45,7 +45,7 @@ main(int argc, char *argv[]){
         memset(msg, chr, ORTE_IOF_BASE_MSG_MAX);
         msgsize = 10;
         msg[msgsize-1] = '\n';
-        
+
         if (i == 1) {
             i = 2;
         } else {
@@ -53,9 +53,9 @@ main(int argc, char *argv[]){
         }
 
         write(i, msg, msgsize);
-        
+
         sleep(3);
-        
+
     }
 
     orte_finalize();

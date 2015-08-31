@@ -6,9 +6,9 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -420,14 +420,14 @@ int
 ompi_osc_portals4_rget_accumulate(const void *origin_addr,
                                   int origin_count,
                                   struct ompi_datatype_t *origin_dt,
-                                  void *result_addr, 
-                                  int result_count, 
+                                  void *result_addr,
+                                  int result_count,
                                   struct ompi_datatype_t *result_dt,
-                                  int target, 
-                                  MPI_Aint target_disp, 
+                                  int target,
+                                  MPI_Aint target_disp,
                                   int target_count,
-                                  struct ompi_datatype_t *target_dt, 
-                                  struct ompi_op_t *op, 
+                                  struct ompi_datatype_t *target_dt,
+                                  struct ompi_op_t *op,
                                   struct ompi_win_t *win,
                                   struct ompi_request_t **ompi_req)
 {
@@ -790,14 +790,14 @@ int
 ompi_osc_portals4_get_accumulate(const void *origin_addr,
                                  int origin_count,
                                  struct ompi_datatype_t *origin_dt,
-                                 void *result_addr, 
-                                 int result_count, 
+                                 void *result_addr,
+                                 int result_count,
                                  struct ompi_datatype_t *result_dt,
-                                 int target, 
-                                 MPI_Aint target_disp, 
+                                 int target,
+                                 MPI_Aint target_disp,
                                  int target_count,
                                  struct ompi_datatype_t *target_dt,
-                                 struct ompi_op_t *op, 
+                                 struct ompi_op_t *op,
                                  struct ompi_win_t *win)
 {
     int ret;
@@ -890,7 +890,7 @@ ompi_osc_portals4_get_accumulate(const void *origin_addr,
                 sent += msg_length;
             } while (sent < length);
         } else {
-            ptl_size_t result_md_offset, origin_md_offset; 
+            ptl_size_t result_md_offset, origin_md_offset;
 
             ret = ompi_datatype_type_size(origin_dt, &length);
             if (OMPI_SUCCESS != ret) {
@@ -958,7 +958,7 @@ ompi_osc_portals4_compare_and_swap(const void *origin_addr,
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
                          "compare_and_swap: 0x%lx, 0x%lx, 0x%lx, %s, %d, %d, 0x%lx",
-                         (unsigned long) origin_addr, 
+                         (unsigned long) origin_addr,
                          (unsigned long) compare_addr,
                          (unsigned long) result_addr,
                          dt->name, target, (int) target_disp,
@@ -1021,7 +1021,7 @@ ompi_osc_portals4_fetch_and_op(const void *origin_addr,
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
                          "fetch_and_op: 0x%lx, 0x%lx, %s, %d, %d, %s, 0x%lx",
-                         (unsigned long) origin_addr, 
+                         (unsigned long) origin_addr,
                          (unsigned long) result_addr,
                          dt->name, target, (int) target_disp,
                          op->o_name,
@@ -1073,7 +1073,7 @@ ompi_osc_portals4_fetch_and_op(const void *origin_addr,
                      offset,
                      NULL);
     } else {
-        ptl_size_t result_md_offset, origin_md_offset; 
+        ptl_size_t result_md_offset, origin_md_offset;
 
         ret = ompi_osc_portals4_get_op(op, &ptl_op);
         if (OMPI_SUCCESS != ret) return ret;

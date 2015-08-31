@@ -4,9 +4,9 @@
  *                         reserved.
  * Copyright (c) 2014-2015 NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -27,7 +27,7 @@
  *	Returns:	- MPI_SUCCESS or error code
  *
  * Algorithm:
- *     reduce and scatter (needs to be cleaned 
+ *     reduce and scatter (needs to be cleaned
  *     up at some point)
  */
 int

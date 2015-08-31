@@ -48,7 +48,7 @@ int mca_io_ompio_set_view_internal(mca_io_ompio_file_t *fh,
 				   char *datarep,
 				   ompi_info_t *info)
 {
-    
+
     size_t max_data = 0;
     int i;
     int num_groups = 0;
@@ -83,22 +83,22 @@ int mca_io_ompio_set_view_internal(mca_io_ompio_file_t *fh,
     fh->f_flags |= OMPIO_FILE_VIEW_IS_SET;
     fh->f_datarep = strdup (datarep);
     ompi_datatype_duplicate (filetype, &fh->f_orig_filetype );
-    
+
     opal_datatype_get_extent(&filetype->super, &lb, &ftype_extent);
     opal_datatype_type_size (&filetype->super, &ftype_size);
 
-    if ( etype == filetype                             && 
+    if ( etype == filetype                             &&
 	 ompi_datatype_is_predefined (filetype )       &&
 	 ftype_extent == (OPAL_PTRDIFF_TYPE)ftype_size ){
 	ompi_datatype_create_contiguous(MCA_IO_DEFAULT_FILE_VIEW_SIZE,
 					&ompi_mpi_byte.dt,
 					&newfiletype);
 	ompi_datatype_commit (&newfiletype);
-    } 
+    }
     else {
         newfiletype = filetype;
     }
-    
+
 
     fh->f_iov_count   = 0;
     fh->f_disp        = disp;
@@ -110,7 +110,7 @@ int mca_io_ompio_set_view_internal(mca_io_ompio_file_t *fh,
                                    1,
                                    NULL,
                                    &max_data,
-                                   &fh->f_decoded_iov, 
+                                   &fh->f_decoded_iov,
                                    &fh->f_iov_count);
 
     opal_datatype_get_extent(&newfiletype->super, &lb, &fh->f_view_extent);
@@ -123,7 +123,7 @@ int mca_io_ompio_set_view_internal(mca_io_ompio_file_t *fh,
     fh->f_cc_size = get_contiguous_chunk_size (fh);
 
     if (opal_datatype_is_contiguous_memory_layout(&etype->super,1)) {
-        if (opal_datatype_is_contiguous_memory_layout(&filetype->super,1) && 
+        if (opal_datatype_is_contiguous_memory_layout(&filetype->super,1) &&
 	    fh->f_view_extent == (OPAL_PTRDIFF_TYPE)fh->f_view_size ) {
             fh->f_flags |= OMPIO_CONTIGUOUS_FVIEW;
         }
@@ -165,11 +165,11 @@ int mca_io_ompio_set_view_internal(mca_io_ompio_file_t *fh,
     }
     free(contg_groups);
 
-    if ( etype == filetype                              && 
+    if ( etype == filetype                              &&
 	 ompi_datatype_is_predefined (filetype )        &&
 	 ftype_extent == (OPAL_PTRDIFF_TYPE)ftype_size ){
 	ompi_datatype_destroy ( &newfiletype );
-    } 
+    }
 
 
     if (OMPI_SUCCESS != mca_fcoll_base_file_select (fh, NULL)) {
@@ -200,7 +200,7 @@ int mca_io_ompio_file_set_view (ompi_file_t *fp,
     fh = &data->ompio_fh;
     ret = mca_io_ompio_set_view_internal(fh, disp, etype, filetype, datarep, info);
 
-    if ( NULL != fh->f_sharedfp_data) { 
+    if ( NULL != fh->f_sharedfp_data) {
         sh = ((struct mca_sharedfp_base_data_t *)fh->f_sharedfp_data)->sharedfh;
         ret = mca_io_ompio_set_view_internal(sh, disp, etype, filetype, datarep, info);
     }
@@ -208,9 +208,9 @@ int mca_io_ompio_file_set_view (ompi_file_t *fp,
     return ret;
 }
 
-int mca_io_ompio_file_get_view (struct ompi_file_t *fp, 
+int mca_io_ompio_file_get_view (struct ompi_file_t *fp,
                                 OMPI_MPI_OFFSET_TYPE *disp,
-                                struct ompi_datatype_t **etype, 
+                                struct ompi_datatype_t **etype,
                                 struct ompi_datatype_t **filetype,
                                 char *datarep)
 {
@@ -235,9 +235,9 @@ OMPI_MPI_OFFSET_TYPE get_contiguous_chunk_size (mca_io_ompio_file_t *fh)
     OMPI_MPI_OFFSET_TYPE global_avg[3] = {0,0,0};
     int i = 0;
 
-    /* This function does two things: first, it determines the average data chunk 
-    ** size in the file view for each process and across all processes. 
-    ** Second, it establishes whether the view across all processes is uniform. 
+    /* This function does two things: first, it determines the average data chunk
+    ** size in the file view for each process and across all processes.
+    ** Second, it establishes whether the view across all processes is uniform.
     ** By definition, uniform means:
     ** 1. the file view of each process has the same number of contiguous sections
     ** 2. each section in the file view has exactly the same size
@@ -267,7 +267,7 @@ OMPI_MPI_OFFSET_TYPE get_contiguous_chunk_size (mca_io_ompio_file_t *fh)
     global_avg[0] = global_avg[0]/fh->f_size;
     global_avg[1] = global_avg[1]/fh->f_size;
 
-    if ( global_avg[0] == avg[0] && 
+    if ( global_avg[0] == avg[0] &&
 	 global_avg[1] == avg[1] &&
 	 0 == avg[2]             &&
 	 0 == global_avg[2] ) {
@@ -278,7 +278,7 @@ OMPI_MPI_OFFSET_TYPE get_contiguous_chunk_size (mca_io_ompio_file_t *fh)
     }
 
     /* second confirmation round to see whether all processes agree
-    ** on having a uniform file view or not 
+    ** on having a uniform file view or not
     */
     fh->f_comm->c_coll.coll_allreduce (&uniform,
 				       &global_uniform,
@@ -300,7 +300,7 @@ int mca_io_ompio_fview_based_grouping(mca_io_ompio_file_t *fh,
                      		      int *num_groups,
 				      contg *contg_groups)
 {
-    
+
     int k = 0;
     int p = 0;
     int g = 0;
@@ -318,7 +318,7 @@ int mca_io_ompio_fview_based_grouping(mca_io_ompio_file_t *fh,
        start_offset_len[1] = fh->f_decoded_iov[0].iov_len;
     }
     start_offset_len[2] = fh->f_rank;
-    
+
     if( OMPIO_ROOT == fh->f_rank){
        start_offsets_lens = (OMPI_MPI_OFFSET_TYPE* )malloc (3 * fh->f_size * sizeof(OMPI_MPI_OFFSET_TYPE));
        if (NULL == start_offsets_lens) {
@@ -336,14 +336,14 @@ int mca_io_ompio_fview_based_grouping(mca_io_ompio_file_t *fh,
     //Gather start offsets across processes in a group on aggregator
     fh->f_comm->c_coll.coll_gather (start_offset_len,
                                     3,
-                                    OMPI_OFFSET_DATATYPE, 
+                                    OMPI_OFFSET_DATATYPE,
                                     start_offsets_lens,
                                     3,
                                     OMPI_OFFSET_DATATYPE,
                                     OMPIO_ROOT,
                                     fh->f_comm,
                                     fh->f_comm->c_coll.coll_gather_module);
-   
+
     //Calculate contg chunk size and contg subgroups
     if(OMPIO_ROOT == fh->f_rank){
        for( k = 0 ; k < fh->f_size; k++){
@@ -377,7 +377,7 @@ int mca_io_ompio_fview_based_grouping(mca_io_ompio_file_t *fh,
             }
         }
 
-       *num_groups = p+1;           
+       *num_groups = p+1;
        if (NULL != start_offsets_lens) {
           free (start_offsets_lens);
           start_offsets_lens =  NULL;
@@ -408,9 +408,9 @@ int mca_io_ompio_finalize_initial_grouping(mca_io_ompio_file_t *fh,
     int z = 0;
     int y = 0;
     int r = 0;
-   
+
     MPI_Request *sendreq = NULL , *req = NULL;
-  
+
 
     req = (MPI_Request *)malloc (2* sizeof(MPI_Request));
     if (NULL == req) {
@@ -452,10 +452,10 @@ int mca_io_ompio_finalize_initial_grouping(mca_io_ompio_file_t *fh,
                                   MCA_PML_BASE_SEND_STANDARD,
                                   fh->f_comm,
                                   &sendreq[r++]));
-           } 
+           }
        }
     }
-    
+
     //All processes receive initial procs per group from OMPIO_ROOT
     MCA_PML_CALL(irecv(&fh->f_init_procs_per_group,
                        1,
@@ -483,14 +483,14 @@ int mca_io_ompio_finalize_initial_grouping(mca_io_ompio_file_t *fh,
                        OMPIO_PROCS_IN_GROUP_TAG,
                        fh->f_comm,
                        &req[1]));
-   
+
     ompi_request_wait (&req[1], MPI_STATUS_IGNORE);
     free (req);
     if(OMPIO_ROOT == fh->f_rank){
         ompi_request_wait_all (r, sendreq, MPI_STATUSES_IGNORE);
         free (sendreq);
     }
-   
+
 
     /*set initial aggregator list */
     //OMPIO_ROOT broadcasts aggr list
@@ -506,7 +506,7 @@ int mca_io_ompio_finalize_initial_grouping(mca_io_ompio_file_t *fh,
 				   OMPIO_ROOT,
 				   fh->f_comm,
 				   fh->f_comm->c_coll.coll_bcast_module);
-   
+
    return OMPI_SUCCESS;
 }
 

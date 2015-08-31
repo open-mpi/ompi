@@ -6,16 +6,16 @@
 // Copyright (c) 2004-2005 The University of Tennessee and The University
 //                         of Tennessee Research Foundation.  All rights
 //                         reserved.
-// Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+// Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 //                         University of Stuttgart.  All rights reserved.
 // Copyright (c) 2004-2005 The Regents of the University of California.
 //                         All rights reserved.
 // Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
 // Copyright (c) 2011      FUJITSU LIMITED.  All rights reserved.
 // $COPYRIGHT$
-// 
+//
 // Additional copyrights may follow
-// 
+//
 // $HEADER$
 //
 
@@ -55,7 +55,7 @@ MPI::Cartcomm::Dup() const
 //
 
 inline int
-MPI::Cartcomm::Get_dim() const 
+MPI::Cartcomm::Get_dim() const
 {
   int ndims;
   (void)MPI_Cartdim_get(mpi_comm, &ndims);
@@ -79,22 +79,22 @@ MPI::Cartcomm::Get_topo(int maxdims, int dims[], bool periods[],
 }
 
 inline int
-MPI::Cartcomm::Get_cart_rank(const int coords[]) const 
+MPI::Cartcomm::Get_cart_rank(const int coords[]) const
 {
   int rank;
   (void)MPI_Cart_rank(mpi_comm, const_cast<int *>(coords), &rank);
   return rank;
 }
-  
+
 inline void
-MPI::Cartcomm::Get_coords(int rank, int maxdims, int coords[]) const 
+MPI::Cartcomm::Get_coords(int rank, int maxdims, int coords[]) const
 {
   (void)MPI_Cart_coords(mpi_comm, rank, maxdims, coords);
-} 
+}
 
 inline void
 MPI::Cartcomm::Shift(int direction, int disp,
-			    int &rank_source, int &rank_dest) const 
+			    int &rank_source, int &rank_dest) const
 {
   (void)MPI_Cart_shift(mpi_comm, direction, disp, &rank_source, &rank_dest);
 }
@@ -115,7 +115,7 @@ MPI::Cartcomm::Sub(const bool remain_dims[]) const
 }
 
 inline int
-MPI::Cartcomm::Map(int ndims, const int dims[], const bool periods[]) const 
+MPI::Cartcomm::Map(int ndims, const int dims[], const bool periods[]) const
 {
   int *int_periods = new int [ndims];
   for (int i=0; i<ndims; i++) {
@@ -173,20 +173,20 @@ MPI::Graphcomm::Dup() const
 //
 
 inline void
-MPI::Graphcomm::Get_dims(int nnodes[], int nedges[]) const 
+MPI::Graphcomm::Get_dims(int nnodes[], int nedges[]) const
 {
   (void)MPI_Graphdims_get(mpi_comm, nnodes, nedges);
 }
 
 inline void
-MPI::Graphcomm::Get_topo(int maxindex, int maxedges, int index[], 
+MPI::Graphcomm::Get_topo(int maxindex, int maxedges, int index[],
 	 int edges[]) const
 {
   (void)MPI_Graph_get(mpi_comm, maxindex, maxedges, index, edges);
 }
 
 inline int
-MPI::Graphcomm::Get_neighbors_count(int rank) const 
+MPI::Graphcomm::Get_neighbors_count(int rank) const
 {
   int nneighbors;
   (void)MPI_Graph_neighbors_count(mpi_comm, rank, &nneighbors);
@@ -194,15 +194,15 @@ MPI::Graphcomm::Get_neighbors_count(int rank) const
 }
 
 inline void
-MPI::Graphcomm::Get_neighbors(int rank, int maxneighbors, 
-	      int neighbors[]) const 
+MPI::Graphcomm::Get_neighbors(int rank, int maxneighbors,
+	      int neighbors[]) const
 {
   (void)MPI_Graph_neighbors(mpi_comm, rank, maxneighbors, neighbors);
 }
 
 inline int
-MPI::Graphcomm::Map(int nnodes, const int index[], 
-    const int edges[]) const 
+MPI::Graphcomm::Map(int nnodes, const int index[],
+    const int edges[]) const
 {
   int newrank;
   (void)MPI_Graph_map(mpi_comm, nnodes, const_cast<int *>(index), const_cast<int *>(edges), &newrank);

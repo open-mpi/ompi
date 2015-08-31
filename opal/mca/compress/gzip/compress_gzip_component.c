@@ -5,9 +5,9 @@
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -21,7 +21,7 @@
 /*
  * Public string for version number
  */
-const char *opal_compress_gzip_component_version_string = 
+const char *opal_compress_gzip_component_version_string =
 "OPAL COMPRESS gzip MCA component version " OPAL_VERSION;
 
 /*
@@ -38,7 +38,7 @@ static int compress_gzip_close(void);
 opal_compress_gzip_component_t mca_compress_gzip_component = {
     /* First do the base component stuff */
     {
-        /* Handle the general mca_component_t struct containing 
+        /* Handle the general mca_component_t struct containing
          *  meta information about the component itgzip
          */
         .base_version = {
@@ -48,7 +48,7 @@ opal_compress_gzip_component_t mca_compress_gzip_component = {
             .mca_component_name = "gzip",
             MCA_BASE_MAKE_VERSION(component, OPAL_MAJOR_VERSION, OPAL_MINOR_VERSION,
                                   OPAL_RELEASE_VERSION),
-            
+
             /* Component open and close functions */
             .mca_open_component = compress_gzip_open,
             .mca_close_component = compress_gzip_close,
@@ -108,14 +108,14 @@ static int compress_gzip_register (void)
     return (0 > ret) ? ret : OPAL_SUCCESS;
 }
 
-static int compress_gzip_open(void) 
+static int compress_gzip_open(void)
 {
     /* If there is a custom verbose level for this component than use it
      * otherwise take our parents level and output channel
      */
     if ( 0 != mca_compress_gzip_component.super.verbose) {
         mca_compress_gzip_component.super.output_handle = opal_output_open(NULL);
-        opal_output_set_verbosity(mca_compress_gzip_component.super.output_handle, 
+        opal_output_set_verbosity(mca_compress_gzip_component.super.output_handle,
                                   mca_compress_gzip_component.super.verbose);
     } else {
         mca_compress_gzip_component.super.output_handle = opal_compress_base_framework.framework_output;
@@ -127,10 +127,10 @@ static int compress_gzip_open(void)
     opal_output_verbose(10, mca_compress_gzip_component.super.output_handle,
                         "compress:gzip: open()");
     opal_output_verbose(20, mca_compress_gzip_component.super.output_handle,
-                        "compress:gzip: open: priority = %d", 
+                        "compress:gzip: open: priority = %d",
                         mca_compress_gzip_component.super.priority);
     opal_output_verbose(20, mca_compress_gzip_component.super.output_handle,
-                        "compress:gzip: open: verbosity = %d", 
+                        "compress:gzip: open: verbosity = %d",
                         mca_compress_gzip_component.super.verbose);
     return OPAL_SUCCESS;
 }

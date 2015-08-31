@@ -3,9 +3,9 @@
  *                         All rights reserved.
  *
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -31,9 +31,9 @@
 BEGIN_C_DECLS
 
 /**
- * IOF HNP Component 
+ * IOF HNP Component
  */
-typedef struct { 
+typedef struct {
     orte_iof_base_component_t super;
     opal_list_t sinks;
     opal_list_t procs;
@@ -60,5 +60,5 @@ int orte_iof_hnp_send_data_to_endpoint(orte_process_name_t *host,
                                        unsigned char *data, int numbytes);
 
 END_C_DECLS
-    
+
 #endif

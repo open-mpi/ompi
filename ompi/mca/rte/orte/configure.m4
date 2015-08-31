@@ -4,9 +4,9 @@
 # Copyright (c) 2013      Sandia National Laboratories. All rights reserved.
 #
 # $COPYRIGHT$
-# 
+#
 # Additional copyrights may follow
-# 
+#
 # $HEADER$
 #
 
@@ -28,7 +28,7 @@ AC_DEFUN([MCA_ompi_rte_orte_POST_CONFIG],[
     AM_CONDITIONAL([OMPI_RTE_ORTE], [test $1 = 1])
 ])dnl
 
-# MCA_rte_orte_CONFIG([action-if-can-compile], 
+# MCA_rte_orte_CONFIG([action-if-can-compile],
 #                     [action-if-cant-compile])
 # ------------------------------------------------
 AC_DEFUN([MCA_ompi_rte_orte_CONFIG],[

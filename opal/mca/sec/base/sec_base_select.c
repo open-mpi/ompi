@@ -2,9 +2,9 @@
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -33,7 +33,7 @@ int opal_sec_base_select(void)
     opal_sec_base_module_t *smodule;
     int rc, priority;
     opal_sec_handle_t *hdl, *hptr, *hmark;
-    
+
     if (selected) {
         /* ensure we don't do this twice */
         return OPAL_SUCCESS;
@@ -93,7 +93,7 @@ int opal_sec_base_select(void)
         hdl->pri = priority;
         hdl->module = smodule;
         hdl->component = component;
-        
+
         /* add to the list of actives in priority order */
         hmark = NULL;
         OPAL_LIST_FOREACH(hptr, &opal_sec_base_actives, opal_sec_handle_t) {

@@ -6,16 +6,16 @@
  * Copyright (c) 2004-2014 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -53,7 +53,7 @@ const opal_timer_base_component_2_0_0_t mca_timer_darwin_component = {
 /* mach_timebase_info() returns a fraction that can be multiplied
    by the difference between two calls to mach_absolute_time() to
    get the number of nanoseconds that passed between the two
-   calls.  
+   calls.
 
    On PPC, mach_timebase_info returns numer = 1000000000 and denom
    = 33333335 (or possibly 25000000, depending on the machine).

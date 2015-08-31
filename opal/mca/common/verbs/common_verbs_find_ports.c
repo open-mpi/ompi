@@ -105,7 +105,7 @@ OBJ_CLASS_INSTANCE(opal_common_verbs_port_item_t,
  * Given a list of include or exclude items (never both), determine
  * whether we want the current port or not.
  */
-static bool want_this_port(char **include_list, char **exclude_list, 
+static bool want_this_port(char **include_list, char **exclude_list,
                            opal_common_verbs_device_item_t *di, int port)
 {
     int i;
@@ -134,7 +134,7 @@ static bool want_this_port(char **include_list, char **exclude_list,
 
         /* Didn't find it.  So we don't want it. */
         return false;
-    } 
+    }
 
     /* Search the exclude list */
     else {
@@ -166,7 +166,7 @@ static const char *link_layer_to_str(int link_type)
     switch(link_type) {
     case IBV_LINK_LAYER_INFINIBAND:   return "IB";
     case IBV_LINK_LAYER_ETHERNET:     return "IWARP";
-    case IBV_LINK_LAYER_UNSPECIFIED: 
+    case IBV_LINK_LAYER_UNSPECIFIED:
     default:                          return "unspecified";
     }
 }
@@ -212,8 +212,8 @@ static void check_sanity(char ***if_sanity_list, const char *dev_name, int port)
 /*
  * Find a list of ibv_ports matching a set of criteria.
  */
-opal_list_t *opal_common_verbs_find_ports(const char *if_include, 
-                                          const char *if_exclude, 
+opal_list_t *opal_common_verbs_find_ports(const char *if_include,
+                                          const char *if_exclude,
                                           int flags,
                                           int stream)
 {
@@ -255,12 +255,12 @@ opal_list_t *opal_common_verbs_find_ports(const char *if_include,
     }
 
     if (NULL != if_include) {
-        opal_output_verbose(5, stream, "finding verbs interfaces, including %s", 
+        opal_output_verbose(5, stream, "finding verbs interfaces, including %s",
                             if_include);
         if_include_list = opal_argv_split(if_include, ',');
         if_sanity_list = opal_argv_copy(if_include_list);
     } else if (NULL != if_exclude) {
-        opal_output_verbose(5, stream, "finding verbs interfaces, excluding %s", 
+        opal_output_verbose(5, stream, "finding verbs interfaces, excluding %s",
                             if_exclude);
         if_exclude_list = opal_argv_split(if_exclude, ',');
         if_sanity_list = opal_argv_copy(if_exclude_list);
@@ -415,7 +415,7 @@ opal_list_t *opal_common_verbs_find_ports(const char *if_include,
                                  OPAL_COMMON_VERBS_FLAGS_LINK_LAYER_ETHERNET)) == 0) {
                 /* If they specified neither link layer, then we want this port */
                 want = true;
-            } 
+            }
 #if HAVE_DECL_IBV_LINK_LAYER_ETHERNET
             else if (flags & OPAL_COMMON_VERBS_FLAGS_LINK_LAYER_IB) {
                 if (IBV_LINK_LAYER_INFINIBAND == port_attr.link_layer) {
@@ -445,7 +445,7 @@ opal_list_t *opal_common_verbs_find_ports(const char *if_include,
             if (NULL == pi) {
                 goto err_free_port_list;
             }
-            pi->device = di;            
+            pi->device = di;
             pi->port_num = j;
             pi->port_attr = port_attr;
             OBJ_RETAIN(di);

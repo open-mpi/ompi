@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 2003 University of Chicago. 
+ *   Copyright (C) 2003 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -17,7 +17,7 @@ void ADIOI_ZOIDFS_Delete(char *filename, int *error_code)
 
     ADIOI_ZOIDFS_Init(0, error_code);
     /* --BEGIN ERROR HANDLING-- */
-    if (*error_code != MPI_SUCCESS) 
+    if (*error_code != MPI_SUCCESS)
     {
 	/* ADIOI_ZOIDFS_INIT handles creating error codes itself */
 	return;
@@ -40,6 +40,6 @@ void ADIOI_ZOIDFS_Delete(char *filename, int *error_code)
     return;
 }
 
-/* 
- * vim: ts=8 sts=4 sw=4 noexpandtab 
+/*
+ * vim: ts=8 sts=4 sw=4 noexpandtab
  */

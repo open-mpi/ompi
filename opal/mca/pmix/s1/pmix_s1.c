@@ -297,7 +297,7 @@ static int s1_init(void)
 
     /* increment the init count */
     ++pmix_init_count;
-    
+
     return OPAL_SUCCESS;
 
  err_exit:
@@ -471,7 +471,7 @@ static int s1_fence(opal_process_name_t *procs, size_t nprocs)
                                  OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
                                  OPAL_NAME_PRINT(s1_pname),
                                  opal_hwloc_base_print_locality(locality)));
-    
+
             OBJ_CONSTRUCT(&kvn, opal_value_t);
             kvn.key = strdup(OPAL_DSTORE_LOCALITY);
             kvn.type = OPAL_UINT16;

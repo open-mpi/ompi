@@ -3,7 +3,7 @@ START_FILE
 
 	ALIGN(4)
 
-	
+
 START_FUNC(opal_atomic_mb)
 	!#PROLOGUE# 0
 	!#PROLOGUE# 1

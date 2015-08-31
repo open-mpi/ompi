@@ -5,16 +5,16 @@
  * Copyright (c) 2004-2013 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2013 Inria.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -66,7 +66,7 @@ static OBJ_CLASS_INSTANCE(queried_module_t, opal_list_item_t, NULL, NULL);
  * 3. The query function returns a module and its priority.
  * 4. Select the module with the highest priority.
  * 5. OBJ_RELEASE all the "losing" modules.
- */  
+ */
 int mca_topo_base_comm_select(const ompi_communicator_t*  comm,
                               mca_topo_base_module_t*     preferred_module,
                               mca_topo_base_module_t**    selected_module,
@@ -74,11 +74,11 @@ int mca_topo_base_comm_select(const ompi_communicator_t*  comm,
 {
     int priority;
     int best_priority;
-    opal_list_item_t *item; 
+    opal_list_item_t *item;
     mca_base_component_list_item_t *cli;
-    mca_topo_base_component_t *component; 
+    mca_topo_base_component_t *component;
     mca_topo_base_component_t *best_component;
-    mca_topo_base_module_t *module; 
+    mca_topo_base_module_t *module;
     opal_list_t queried;
     queried_module_t *om;
     int err = MPI_SUCCESS;
@@ -97,12 +97,12 @@ int mca_topo_base_comm_select(const ompi_communicator_t*  comm,
 
         /* We have a preferred module. Check if it is available
            and if so, whether it wants to run */
-         
+
          opal_output_verbose(10, ompi_topo_base_framework.framework_output,
                              "topo:base:comm_select: Checking preferred component: %s",
                              preferred_module->topo_component->topoc_version.mca_component_name);
 
-         /* query the component for its priority and get its module 
+         /* query the component for its priority and get its module
             structure. This is necessary to proceed */
          component = (mca_topo_base_component_t *)preferred_module->topo_component;
          module = component->topoc_comm_query(comm, &priority, type);
@@ -116,7 +116,7 @@ int mca_topo_base_comm_select(const ompi_communicator_t*  comm,
              *selected_module = module;
              module->topo_component = component;
              return OMPI_SUCCESS;
-         } 
+         }
          /* If we get here, the preferred component is present, but is
             unable to run.  This is not a good sign.  We should try
             selecting some other component.  We let it fall through
@@ -132,7 +132,7 @@ int mca_topo_base_comm_select(const ompi_communicator_t*  comm,
      * All we need to do is to go through the list of available
      * components and find the one which has the highest priority and
      * use that for this communicator
-     */ 
+     */
 
     best_component = NULL;
     best_priority = -1;
@@ -154,20 +154,20 @@ int mca_topo_base_comm_select(const ompi_communicator_t*  comm,
        } else {
            /*
             * call the query function and see what it returns
-            */ 
+            */
            module = component->topoc_comm_query(comm, &priority, type);
 
            if (NULL == module) {
                /*
                 * query did not return any action which can be used
-                */ 
+                */
                opal_output_verbose(10, ompi_topo_base_framework.framework_output,
                                   "select: query returned failure");
            } else {
                opal_output_verbose(10, ompi_topo_base_framework.framework_output,
                                   "select: query returned priority %d",
                                   priority);
-               /* 
+               /*
                 * is this the best component we have found till now?
                 */
                if (priority > best_priority) {
@@ -184,8 +184,8 @@ int mca_topo_base_comm_select(const ompi_communicator_t*  comm,
                    return OMPI_ERR_OUT_OF_RESOURCE;
                }
                om->om_component = component;
-               om->om_module = module; 
-               opal_list_append(&queried, (opal_list_item_t *)om); 
+               om->om_module = module;
+               opal_list_append(&queried, (opal_list_item_t *)om);
            } /* end else of if (NULL == module) */
        } /* end else of if (NULL == component->init) */
     } /* end for ... end of traversal */
@@ -206,7 +206,7 @@ int mca_topo_base_comm_select(const ompi_communicator_t*  comm,
      * returned their priorities from the query. We now have to
      * unquery() those components which have not been selected and
      * init() the component which was selected
-     */ 
+     */
     for (item = opal_list_remove_first(&queried);
          NULL != item;
          item = opal_list_remove_first(&queried)) {
@@ -220,7 +220,7 @@ int mca_topo_base_comm_select(const ompi_communicator_t*  comm,
             * defined.  Whereever a function pointer is null in the
             * module structure we need to fill it in with the base
             * structure function pointers. This is yet to be done
-            */ 
+            */
             fill_null_pointers(type, om->om_module);
             om->om_module->topo_component = best_component;
             *selected_module = om->om_module;
@@ -233,7 +233,7 @@ int mca_topo_base_comm_select(const ompi_communicator_t*  comm,
           }
           OBJ_RELEASE(om);
     } /* traversing through the entire list */
-    
+
     opal_output_verbose(10, ompi_topo_base_framework.framework_output,
                        "select: component %s selected",
                         best_component->topoc_version.mca_component_name);
@@ -248,7 +248,7 @@ int mca_topo_base_comm_select(const ompi_communicator_t*  comm,
  * a check for the common minimum funtions being implemented by the
  * module.
  */
-static void fill_null_pointers(int type, mca_topo_base_module_t *module) 
+static void fill_null_pointers(int type, mca_topo_base_module_t *module)
 {
     if( OMPI_COMM_CART == type ) {
         if (NULL == module->topo.cart.cart_coords) {

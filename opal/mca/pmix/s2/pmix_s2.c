@@ -266,7 +266,7 @@ static int s2_init(void)
 
     /* increment the init count */
     ++pmix_init_count;
-    
+
     return OPAL_SUCCESS;
  err_exit:
     PMI2_Finalize();

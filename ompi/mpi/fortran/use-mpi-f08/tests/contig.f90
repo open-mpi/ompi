@@ -17,6 +17,6 @@ end interface
   print *, A(::2)
 
   call print_array(A, 10)
-  call print_array(A(::2), 5)  
+  call print_array(A(::2), 5)
 
 end program

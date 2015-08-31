@@ -2,9 +2,9 @@
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 /**
@@ -16,7 +16,7 @@
 
 #include "oshmem_config.h"
 #include "oshmem/mca/mca.h"
-#include "opal/class/opal_list.h" 
+#include "opal/class/opal_list.h"
 #include "opal/threads/mutex.h"
 #include "oshmem/mca/memheap/memheap.h"
 #include "oshmem/mca/memheap/base/base.h"
@@ -32,14 +32,14 @@ BEGIN_C_DECLS
 
 #include "malloc_defs.h"
 /*
- * At the moment we use only dlmalloc part of the ptmalloc3. Thread safety is implemented by using locks on 
- * alloc operations. Since all shmem alloc ops are collectives, malloc performance is not a problem. So it makes 
- * sense to use simpler algorithm. 
+ * At the moment we use only dlmalloc part of the ptmalloc3. Thread safety is implemented by using locks on
+ * alloc operations. Since all shmem alloc ops are collectives, malloc performance is not a problem. So it makes
+ * sense to use simpler algorithm.
  *
  * Heap is allocate in one chunk, and we implement our on sbrk like function that serves portions of the memory
- * to malloc. 
+ * to malloc.
  *
- * At the moment we do not support growing/returning heap based memory to OS.  
+ * At the moment we do not support growing/returning heap based memory to OS.
  */
 
 /* Structure for managing shmem symmetric heap */
@@ -57,8 +57,8 @@ typedef struct mca_memheap_ptmalloc_module_t mca_memheap_ptmalloc_module_t;
 OSHMEM_DECLSPEC extern mca_memheap_ptmalloc_module_t memheap_ptmalloc;
 
 /*
- * Buddy interface. 
- * Please pay attention to the new differences in the interface. 
+ * Buddy interface.
+ * Please pay attention to the new differences in the interface.
  */
 OSHMEM_DECLSPEC extern int mca_memheap_ptmalloc_module_init(memheap_context_t *);
 OSHMEM_DECLSPEC extern int mca_memheap_ptmalloc_alloc(size_t, void**);

@@ -45,7 +45,7 @@ static int ompi_mtl_psm_component_close(void);
 static int ompi_mtl_psm_component_query(mca_base_module_t **module, int *priority);
 static int ompi_mtl_psm_component_register(void);
 
-static mca_mtl_base_module_t* ompi_mtl_psm_component_init( bool enable_progress_threads, 
+static mca_mtl_base_module_t* ompi_mtl_psm_component_init( bool enable_progress_threads,
                                                           bool enable_mpi_threads );
 
 mca_mtl_psm_component_t mca_mtl_psm_component = {
@@ -53,7 +53,7 @@ mca_mtl_psm_component_t mca_mtl_psm_component = {
     {
         /* First, the mca_base_component_t struct containing meta
          * information about the component itself */
-        
+
         .mtl_version = {
             MCA_MTL_BASE_VERSION_2_0_0,
 
@@ -81,14 +81,14 @@ static mca_base_var_enum_value_t path_query_values[] = {
     {0, NULL}
 };
 #endif
-    
+
 static int
 ompi_mtl_psm_component_register(void)
 {
 #if PSM_VERNO >= 0x010d
     mca_base_var_enum_t *new_enum;
 #endif
-    
+
 
     param_priority = 100;
     (void) mca_base_component_var_register (&mca_mtl_psm_component.super.mtl_version,
@@ -138,7 +138,7 @@ ompi_mtl_psm_component_register(void)
                                            NULL, 0, 0, OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &ompi_mtl_psm.ib_service_level);
-  
+
     ompi_mtl_psm.ib_pkey = 0x7fffUL;
     (void) mca_base_component_var_register(&mca_mtl_psm_component.super.mtl_version,
                                            "ib_pkey", "Infiniband partition key",
@@ -146,7 +146,7 @@ ompi_mtl_psm_component_register(void)
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &ompi_mtl_psm.ib_pkey);
-    
+
 #if PSM_VERNO >= 0x010d
     ompi_mtl_psm.ib_service_id = 0x1000117500000000ull;
     (void) mca_base_component_var_register(&mca_mtl_psm_component.super.mtl_version,
@@ -176,7 +176,7 @@ static int
 ompi_mtl_psm_component_open(void)
 {
   struct stat st;
-  
+
     if (ompi_mtl_psm.ib_service_level < 0)  {
       ompi_mtl_psm.ib_service_level = 0;
     } else if (ompi_mtl_psm.ib_service_level > 15) {
@@ -253,7 +253,7 @@ ompi_mtl_psm_component_init(bool enable_progress_threads,
     int num_total_procs = 0;
 
     /* Compute the total number of processes on this host and our local rank
-     * on that node. We need to provide PSM with these values so it can 
+     * on that node. We need to provide PSM with these values so it can
      * allocate hardware contexts appropriately across processes.
      */
     if (OMPI_SUCCESS != get_num_local_procs(&num_local_procs)) {
@@ -271,11 +271,11 @@ ompi_mtl_psm_component_init(bool enable_progress_threads,
         return NULL;
     }
 
-     
+
 #if PSM_VERNO >= 0x010c
     /* Set infinipath debug level */
-    err = psm_setopt(PSM_COMPONENT_CORE, 0, PSM_CORE_OPT_DEBUG, 
-		     (const void*) &ompi_mtl_psm.debug_level, 
+    err = psm_setopt(PSM_COMPONENT_CORE, 0, PSM_CORE_OPT_DEBUG,
+		     (const void*) &ompi_mtl_psm.debug_level,
 		     sizeof(unsigned));
     if (err) {
       /* Non fatal error. Can continue */
@@ -284,9 +284,9 @@ ompi_mtl_psm_component_init(bool enable_progress_threads,
 		     psm_error_get_string(err));
     }
 #endif
-    
+
     if (getenv("PSM_DEVICES") == NULL) {
-        /* Only allow for shm and ipath devices in 2.0 and earlier releases 
+        /* Only allow for shm and ipath devices in 2.0 and earlier releases
          * (unless the user overrides the setting).
          */
         if (PSM_VERNO >= 0x0104) {
@@ -304,7 +304,7 @@ ompi_mtl_psm_component_init(bool enable_progress_threads,
 	    }
         }
     }
-    
+
     err = psm_init(&verno_major, &verno_minor);
     if (err) {
       opal_show_help("help-mtl-psm.txt",
@@ -312,23 +312,23 @@ ompi_mtl_psm_component_init(bool enable_progress_threads,
 		     psm_error_get_string(err));
       return NULL;
     }
-    
+
     /* Complete PSM initialization */
     ompi_mtl_psm_module_init(local_rank, num_local_procs);
 
-    ompi_mtl_psm.super.mtl_request_size = 
-      sizeof(mca_mtl_psm_request_t) - 
+    ompi_mtl_psm.super.mtl_request_size =
+      sizeof(mca_mtl_psm_request_t) -
       sizeof(struct mca_mtl_request_t);
 
     /* don't register the err handler until we know we will be active */
     err = psm_error_register_handler(NULL /* no ep */,
 			             PSM_ERRHANDLER_NOP);
     if (err) {
-        opal_output(0, "Error in psm_error_register_handler (error %s)\n", 
+        opal_output(0, "Error in psm_error_register_handler (error %s)\n",
 		    psm_error_get_string(err));
 	return NULL;
     }
-    
+
     return &ompi_mtl_psm.super;
 }
 

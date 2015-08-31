@@ -5,15 +5,15 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2014      Bull SAS.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -21,19 +21,19 @@
 #define OPAL_BTL_PORTALS4_RECV_H
 
 #include "btl_portals4_frag.h"
-    
+
 struct mca_btl_portals4_recv_block_t {
     opal_list_item_t base;
-    
+
     mca_btl_portals4_module_t *btl;
-    
-    void *start; 
+
+    void *start;
     size_t length;
     ptl_handle_me_t me_h;
 
     volatile bool full;
     volatile int32_t pending;
-};  
+};
 typedef struct mca_btl_portals4_recv_block_t mca_btl_portals4_recv_block_t;
 OBJ_CLASS_DECLARATION(mca_btl_portals4_recv_block_t);
 
@@ -85,7 +85,7 @@ mca_btl_portals4_activate_block(mca_btl_portals4_recv_block_t *block)
     me.options =
         PTL_ME_OP_PUT |
         PTL_ME_MANAGE_LOCAL |
-        PTL_ME_EVENT_LINK_DISABLE  | 
+        PTL_ME_EVENT_LINK_DISABLE  |
         PTL_ME_MAY_ALIGN;
 
     if (mca_btl_portals4_component.use_logical) {

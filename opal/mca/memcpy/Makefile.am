@@ -4,9 +4,9 @@
 #                         reserved.
 # Copyright (c) 2010 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
-# 
+#
 # Additional copyrights may follow
-# 
+#
 # $HEADER$
 #
 
@@ -16,7 +16,7 @@ libmca_memcpy_la_SOURCES =
 
 # local files
 headers = memcpy.h
-nodist_headers = 
+nodist_headers =
 libmca_memcpy_la_SOURCES += $(headers)
 
 # Conditionally install the header files

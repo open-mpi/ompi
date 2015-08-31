@@ -5,14 +5,14 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2011 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2011 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -62,7 +62,7 @@ static inline int opal_hibit(int value, int start)
         }
     }
 #endif
-  
+
     return start;
 }
 
@@ -82,7 +82,7 @@ static inline int opal_hibit(int value, int start)
  * Using __builtin_clz (count-leading-zeros) uses 3 cycles instead of 50 cycles
  * compared to the loop-version (on Intel Nehalem -- with icc-12.1.0 -O2).
  */
-static inline int opal_cube_dim(int value) 
+static inline int opal_cube_dim(int value)
 {
     int dim, size;
 
@@ -91,7 +91,7 @@ static inline int opal_cube_dim(int value)
         return 0;
     }
     size = 8 * sizeof(int);
-    dim = size - __builtin_clz(value-1); 
+    dim = size - __builtin_clz(value-1);
 #else
     for (dim = 0, size = 1; size < value; ++dim, size <<= 1) /* empty */;
 #endif

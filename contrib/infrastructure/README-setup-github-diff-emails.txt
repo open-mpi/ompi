@@ -31,13 +31,13 @@ Still in that same config file, add a line in the remote "email" section:
 
 Now exit the editor and remove the tracking branch of the origin:
 
-    git branch -d -r origin/HEAD 
+    git branch -d -r origin/HEAD
 
 IF YOU SCREW UP AND "push" to the email remote before deleting the origin/HEAD
 tracking branch, then run the "git branch -d ..." and the following (both in
 the original repo, not the bare repo):
 
-    git push email :refs/heads/HEAD 
+    git push email :refs/heads/HEAD
 
 Copy the hooks/post-receive script from any of the other bare repos to the
 hooks subdir in this bare repo (e.g., from

@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
-/* 
+/*
  *
- *   Copyright (C) 2004 University of Chicago. 
+ *   Copyright (C) 2004 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  */
 
@@ -40,7 +40,7 @@ void ADIOI_PANFS_WriteContig(ADIO_File fd, const void *buf, int count,
 	}
 	/* --END ERROR HANDLING-- */
     }
-    
+
     AD_PANFS_RETRY(write(fd->fd_sys, buf, len),err)
     /* --BEGIN ERROR HANDLING-- */
     if (err == -1) {
@@ -57,7 +57,7 @@ void ADIOI_PANFS_WriteContig(ADIO_File fd, const void *buf, int count,
     fd->fp_sys_posn = offset + err;
 
     if (file_ptr_type == ADIO_INDIVIDUAL) {
-	fd->fp_ind += err; 
+	fd->fp_ind += err;
     }
 
 #ifdef HAVE_STATUS_SET_BYTES

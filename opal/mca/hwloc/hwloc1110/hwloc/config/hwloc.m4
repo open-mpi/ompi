@@ -367,7 +367,7 @@ EOF])
     AC_CHECK_HEADERS([dirent.h])
     AC_CHECK_HEADERS([strings.h])
     AC_CHECK_HEADERS([ctype.h])
-    
+
     AC_CHECK_FUNCS([strncasecmp], [
       _HWLOC_CHECK_DECL([strncasecmp], [
 	AC_DEFINE([HWLOC_HAVE_DECL_STRNCASECMP], [1], [Define to 1 if function `strncasecmp' is declared by system headers])

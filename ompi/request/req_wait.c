@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2013 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -13,9 +13,9 @@
  * Copyright (c) 2010-2012 Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -44,7 +44,7 @@ int ompi_request_default_wait(
 #if OPAL_ENABLE_FT_CR == 1
     OMPI_CRCP_REQUEST_COMPLETE(req);
 #endif
-        
+
     /* return status.  If it's a generalized request, we *have* to
        invoke the query_fn, even if the user procided STATUS_IGNORE.
        MPI-2:8.2. */

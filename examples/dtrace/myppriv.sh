@@ -9,6 +9,6 @@
 # $HEADER$
 #
 
-# run ppriv under a shell so you can get the privileges of the 
+# run ppriv under a shell so you can get the privileges of the
 # process that mprun creates
 ppriv $$

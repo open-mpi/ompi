@@ -2,15 +2,15 @@
  * Copyright (c) 2010      Cisco Systems, Inc. All rights reserved.
  *
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
 /**
  * @file
- * 
+ *
  */
 
 #ifndef MCA_ERRMGR_default_orted_EXPORT_H

@@ -5,7 +5,7 @@
 # Copyright (c) 2004-2005 The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
-# Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+# Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
@@ -13,9 +13,9 @@
 # Copyright (c) 2013      Mellanox Technologies, Inc.
 #                         All rights reserved.
 # $COPYRIGHT$
-# 
+#
 # Additional copyrights may follow
-# 
+#
 # $HEADER$
 #
 ############################################################################
@@ -625,7 +625,7 @@ mv tmp.files docs.files
 cd /tmp
 
 # Remove installed driver after rpm build finished
-rm -rf $RPM_BUILD_DIR/%{name}-%{version} 
+rm -rf $RPM_BUILD_DIR/%{name}-%{version}
 
 test "x$RPM_BUILD_ROOT" != "x" && rm -rf $RPM_BUILD_ROOT
 
@@ -662,7 +662,7 @@ test "x$RPM_BUILD_ROOT" != "x" && rm -rf $RPM_BUILD_ROOT
 %if %{build_all_in_one_rpm}
 
 #
-# All in one RPM 
+# All in one RPM
 #
 # Easy; just list the prefix and then specifically call out the doc
 # files.
