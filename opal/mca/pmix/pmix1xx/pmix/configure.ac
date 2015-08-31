@@ -1,8 +1,5 @@
 # -*- shell-script -*-
 #
-# This code has been adapted from opal_get_version.m4sh in the Open MPI
-# code base - per the Open MPI license, all copyrights are retained below.
-#
 # Copyright (c) 2004-2009 The Trustees of Indiana University and Indiana
 #                         University Research and Technology
 #                         Corporation.  All rights reserved.
@@ -78,13 +75,6 @@ PMIX_VAR_SCOPE_POP
 
 AH_TOP([/* -*- c -*-
  *
- * PMIx copyrights:
- * Copyright (c) 2013-2015 Intel, Inc. All rights reserved
- *
- *#########################
- * This code has been adapted from opal_config.h in the Open MPI
- * code base - per the Open MPI license, all copyrights are retained below.
- *
  * Copyright (c) 2004-2005 The Trustees of Indiana University.
  *                         All rights reserved.
  * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
@@ -93,7 +83,7 @@ AH_TOP([/* -*- c -*-
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- *#########################
+ * Copyright (c) 2013-2015 Intel, Inc. All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow

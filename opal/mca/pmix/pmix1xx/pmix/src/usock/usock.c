@@ -2,6 +2,8 @@
  * Copyright (c) 2014-2015 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014      Artem Y. Polyakov <artpol84@gmail.com>.
  *                         All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -43,7 +45,7 @@
 #include "usock.h"
 
 /* instance usock globals */
-pmix_usock_globals_t pmix_usock_globals;
+pmix_usock_globals_t pmix_usock_globals = {{{0}}};
 
 void pmix_usock_init(pmix_usock_cbfunc_t cbfunc)
 {

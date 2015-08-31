@@ -1,9 +1,10 @@
 Most files in this release are marked with the copyrights of the
 organizations who have edited them.  The copyrights below are in no
 particular order and generally reflect members of the Open MPI core
-team who have contributed code to this release.  The copyrights for
-code used under license from other parties are included in the
-corresponding files.
+team who have contributed code that may or may not have been ported
+to PMIx. Per the terms of that LICENSE, we include the list here.
+The copyrights for code used under license from other parties
+are included in the corresponding files.
 
 Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
                         University Research and Technology
@@ -11,12 +12,12 @@ Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
 Copyright (c) 2004-2010 The University of Tennessee and The University
                         of Tennessee Research Foundation.  All rights
                         reserved.
-Copyright (c) 2004-2010 High Performance Computing Center Stuttgart, 
+Copyright (c) 2004-2010 High Performance Computing Center Stuttgart,
                         University of Stuttgart.  All rights reserved.
 Copyright (c) 2004-2008 The Regents of the University of California.
                         All rights reserved.
 Copyright (c) 2006-2010 Los Alamos National Security, LLC.  All rights
-                        reserved. 
+                        reserved.
 Copyright (c) 2006-2010 Cisco Systems, Inc.  All rights reserved.
 Copyright (c) 2006-2010 Voltaire, Inc. All rights reserved.
 Copyright (c) 2006-2011 Sandia National Laboratories. All rights reserved.
@@ -26,7 +27,7 @@ Copyright (c) 2006-2010 The University of Houston. All rights reserved.
 Copyright (c) 2006-2009 Myricom, Inc.  All rights reserved.
 Copyright (c) 2007-2008 UT-Battelle, LLC. All rights reserved.
 Copyright (c) 2007-2010 IBM Corporation.  All rights reserved.
-Copyright (c) 1998-2005 Forschungszentrum Juelich, Juelich Supercomputing 
+Copyright (c) 1998-2005 Forschungszentrum Juelich, Juelich Supercomputing
                         Centre, Federal Republic of Germany
 Copyright (c) 2005-2008 ZIH, TU Dresden, Federal Republic of Germany
 Copyright (c) 2007      Evergrid, Inc. All rights reserved.
@@ -52,6 +53,9 @@ $COPYRIGHT$
 Additional copyrights may follow
 
 $HEADER$
+
+The following LICENSE pertains to both PMIx and any code ported
+from Open MPI.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
