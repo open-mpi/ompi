@@ -80,8 +80,8 @@ static void relfn(void *cbdata)
     free(data);
 }
 
-pmix_status_t _satisfy_local_req(pmix_nspace_t *nptr, pmix_rank_info_t *info,
-                                 pmix_modex_cbfunc_t cbfunc, void *cbdata)
+static pmix_status_t _satisfy_local_req(pmix_nspace_t *nptr, pmix_rank_info_t *info,
+                                        pmix_modex_cbfunc_t cbfunc, void *cbdata)
 {
     int rc;
     pmix_buffer_t pbkt, xfer;
@@ -114,8 +114,8 @@ pmix_status_t _satisfy_local_req(pmix_nspace_t *nptr, pmix_rank_info_t *info,
     return PMIX_ERR_NOT_FOUND;
 }
 
-pmix_status_t _satisfy_remote_req(pmix_nspace_t *nptr, int rank,
-                                    pmix_modex_cbfunc_t cbfunc, void *cbdata)
+static pmix_status_t _satisfy_remote_req(pmix_nspace_t *nptr, int rank,
+                                         pmix_modex_cbfunc_t cbfunc, void *cbdata)
 {
     int rc;
     pmix_buffer_t pbkt, xfer;
@@ -152,10 +152,6 @@ pmix_status_t pmix_pending_request(pmix_nspace_t *nptr, int rank,
 {
     pmix_dmdx_local_t *lcd = NULL, *cd;
     pmix_rank_info_t *iptr, *rkinfo;
-    pmix_buffer_t pbkt, xfer;
-    pmix_value_t *val;
-    char *data;
-    size_t sz;
     int rc;
 
     /* 1. Try to satisfy the request right now */
@@ -292,7 +288,7 @@ pmix_status_t pmix_pending_resolve(pmix_nspace_t *nptr, int rank, pmix_dmdx_loca
     if( NULL == lcd ){
         PMIX_LIST_FOREACH(cd, &pmix_server_globals.local_reqs, pmix_dmdx_local_t) {
             if (0 != strncmp(nptr->nspace, cd->proc.nspace, PMIX_MAX_NSLEN) ||
-                rank != cd->proc.rank) {
+                    rank != cd->proc.rank) {
                 continue;
             }
             lcd = cd;
@@ -510,10 +506,8 @@ static pmix_server_trkr_t* get_tracker(pmix_proc_t *procs,
                                        size_t nprocs, pmix_cmd_t type)
 {
     pmix_server_trkr_t *trk;
-    pmix_rank_info_t *iptr, *info;
     size_t i;
-    bool match, all_def;
-    pmix_nspace_t *nptr, *ns;
+    bool match;
 
     pmix_output_verbose(5, pmix_globals.debug_output,
                         "get_tracker called with %d procs", (int)nprocs);
@@ -578,7 +572,7 @@ static pmix_server_trkr_t* new_tracker(pmix_proc_t *procs,
     pmix_server_trkr_t *trk;
     pmix_rank_info_t *iptr, *info;
     size_t i;
-    bool match, all_def;
+    bool all_def;
     pmix_nspace_t *nptr, *ns;
 
     pmix_output_verbose(5, pmix_globals.debug_output,
@@ -878,7 +872,7 @@ static void _process_dmdx_reply(int fd, short args, void *cbdata)
         PMIX_ERROR_LOG(PMIX_ERR_NOT_FOUND);
         caddy->status = PMIX_ERR_NOT_FOUND;
         PMIX_RELEASE(caddy);
-        return;
+        goto cleanup;
     }
 
     kp = PMIX_NEW(pmix_kval_t);

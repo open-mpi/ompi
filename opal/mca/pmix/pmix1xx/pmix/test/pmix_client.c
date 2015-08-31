@@ -41,8 +41,6 @@
 
 int main(int argc, char **argv)
 {
-    char nspace[PMIX_MAX_NSLEN+1];
-    int rank;
     int rc;
     pmix_value_t value;
     pmix_value_t *val = &value;
@@ -62,7 +60,7 @@ int main(int argc, char **argv)
 
     /* init us */
     if (PMIX_SUCCESS != (rc = PMIx_Init(&myproc))) {
-        TEST_ERROR(("Client ns %s rank %d: PMIx_Init failed: %d", params.nspace, rank, rc));
+        TEST_ERROR(("Client ns %s rank %d: PMIx_Init failed: %d", params.nspace, params.rank, rc));
         FREE_TEST_PARAMS(params);
         exit(0);
     }
@@ -73,7 +71,7 @@ int main(int argc, char **argv)
         exit(0);
     }
     if ( NULL != params.prefix && -1 != params.ns_id) {
-        TEST_SET_FILE(params.prefix, params.ns_id, rank);
+        TEST_SET_FILE(params.prefix, params.ns_id, params.rank);
     }
     TEST_VERBOSE((" Client ns %s rank %d: PMIx_Init success", myproc.nspace, myproc.rank));
 

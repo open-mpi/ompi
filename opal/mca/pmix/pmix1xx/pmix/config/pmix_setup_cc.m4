@@ -1,12 +1,5 @@
 dnl -*- shell-script -*-
 dnl
-dnl PMIx copyrights:
-dnl Copyright (c) 2013      Intel, Inc. All rights reserved
-dnl
-dnl########################
-dnl This code has been adapted from pmix_setup_cc.m4 in the Open MPI
-dnl code base - per the Open MPI license, all copyrights are retained below.
-dnl
 dnl Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
 dnl                         University Research and Technology
 dnl                         Corporation.  All rights reserved.
@@ -21,7 +14,9 @@ dnl Copyright (c) 2007-2009 Sun Microsystems, Inc.  All rights reserved.
 dnl Copyright (c) 2008-2015 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2012      Los Alamos National Security, LLC. All rights
 dnl                         reserved.
-dnl########################
+dnl Copyright (c) 2015      Research Organization for Information Science
+dnl                         and Technology (RIST). All rights reserved.
+dnl Copyright (c) 2015      Intel, Inc. All rights reserved
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -42,11 +37,11 @@ AC_DEFUN([PMIX_SETUP_CC],[
     AC_REQUIRE([_PMIX_PROG_CC])
     AC_REQUIRE([AM_PROG_CC_C_O])
 
-    # require a C99 compiant compiler
+    # We require a C99 compiant compiler
     AC_PROG_CC_C99
     # The result of AC_PROG_CC_C99 is stored in ac_cv_prog_cc_c99
     if test "x$ac_cv_prog_cc_c99" = xno ; then
-        AC_MSG_WARN([Open MPI requires a C99 compiler])
+        AC_MSG_WARN([PMIx requires a C99 compiler])
         AC_MSG_ERROR([Aborting.])
     fi
 
@@ -73,55 +68,9 @@ AC_DEFUN([PMIX_SETUP_CC],[
 #endif])
            AC_DEFINE([_GNU_SOURCE])])
 
-    # Do we want code coverage
-    if test "$WANT_COVERAGE" = "1"; then
-        if test "$pmix_c_vendor" = "gnu" ; then
-            # For compilers > gcc-4.x, use --coverage for
-            # compiling and linking to circumvent trouble with
-            # libgcov.
-            CFLAGS_orig="$CFLAGS"
-            LDFLAGS_orig="$LDFLAGS"
-
-            CFLAGS="$CFLAGS_orig --coverage"
-            LDFLAGS="$LDFLAGS_orig --coverage"
-            PMIX_COVERAGE_FLAGS=
-
-            AC_CACHE_CHECK([if $CC supports --coverage],
-                      [pmix_cv_cc_coverage],
-                      [AC_TRY_COMPILE([], [],
-                                      [pmix_cv_cc_coverage="yes"],
-                                      [pmix_cv_cc_coverage="no"])])
-
-            if test "$pmix_cv_cc_coverage" = "yes" ; then
-                PMIX_COVERAGE_FLAGS="--coverage"
-                CLEANFILES="*.gcno ${CLEANFILES}"
-                CONFIG_CLEAN_FILES="*.gcda *.gcov ${CONFIG_CLEAN_FILES}"
-            else
-                PMIX_COVERAGE_FLAGS="-ftest-coverage -fprofile-arcs"
-                CLEANFILES="*.bb *.bbg ${CLEANFILES}"
-                CONFIG_CLEAN_FILES="*.da *.*.gcov ${CONFIG_CLEAN_FILES}"
-            fi
-            CFLAGS="$CFLAGS_orig $PMIX_COVERAGE_FLAGS"
-            LDFLAGS="$LDFLAGS_orig $PMIX_COVERAGE_FLAGS"
-
-            PMIX_UNIQ(CFLAGS)
-            PMIX_UNIQ(LDFLAGS)
-            AC_MSG_WARN([$PMIX_COVERAGE_FLAGS has been added to CFLAGS (--enable-coverage)])
-
-            WANT_DEBUG=1
-        else
-            AC_MSG_WARN([Code coverage functionality is currently available only with GCC])
-            AC_MSG_ERROR([Configure: Cannot continue])
-       fi
-    fi
-
     # Do we want debugging?
-    if test "$WANT_DEBUG" = "1" -a "$enable_debug_symbols" != "no" ; then
-        if test "$pmix_c_vendor" = "gnu"; then
-            CFLAGS="$CFLAGS -g"  # keep the -g3 for when it will become a standard option.
-        else
-            CFLAGS="$CFLAGS -g"
-        fi
+    if test "$WANT_DEBUG" = "1" && test "$enable_debug_symbols" != "no" ; then
+        CFLAGS="$CFLAGS -g"
 
         PMIX_UNIQ(CFLAGS)
         AC_MSG_WARN([-g has been added to CFLAGS (--enable-debug)])
@@ -130,13 +79,65 @@ AC_DEFUN([PMIX_SETUP_CC],[
     # These flags are generally gcc-specific; even the
     # gcc-impersonating compilers won't accept them.
     PMIX_CFLAGS_BEFORE_PICKY="$CFLAGS"
-    if test "$WANT_PICKY_COMPILER" = 1 -a "$pmix_c_vendor" = "gnu" ; then
-        add="-Wall -Wundef -Wsign-compare"
-        add="$add -Wmissing-prototypes -Wstrict-prototypes"
-        add="$add -Wcomment -pedantic"
-        add="$add -Werror-implicit-function-declaration "
 
-        CFLAGS="$CFLAGS $add"
+    if test $WANT_PICKY_COMPILER -eq 1; then
+        CFLAGS_orig=$CFLAGS
+        add=
+
+        # These flags are likely GCC-specific (or, more specifically,
+        # we don't have general tests for each one, and we know they
+        # work with all versions of GCC that we have used throughout
+        # the years, so we'll keep them limited just to GCC).
+        if test "$pmix_c_vendor" = "gnu" ; then
+            add="$add -Wall -Wundef -Wno-long-long -Wsign-compare"
+            add="$add -Wmissing-prototypes -Wstrict-prototypes"
+            add="$add -Wcomment -pedantic"
+        fi
+
+        # see if -Wno-long-double works...
+        # Starting with GCC-4.4, the compiler complains about not
+        # knowing -Wno-long-double, only if -Wstrict-prototypes is set, too.
+        #
+        # Actually, this is not real fix, as GCC will pass on any -Wno- flag,
+        # have fun with the warning: -Wno-britney
+        CFLAGS="$CFLAGS_orig $add -Wno-long-double -Wstrict-prototypes"
+
+        AC_CACHE_CHECK([if $CC supports -Wno-long-double],
+            [pmix_cv_cc_wno_long_double],
+            [AC_TRY_COMPILE([], [],
+                [
+                 dnl So -Wno-long-double did not produce any errors...
+                 dnl We will try to extract a warning regarding
+                 dnl unrecognized or ignored options
+                 AC_TRY_COMPILE([], [long double test;],
+                     [
+                      pmix_cv_cc_wno_long_double="yes"
+                      if test -s conftest.err ; then
+                          dnl Yes, it should be "ignor", in order to catch ignoring and ignore
+                          for i in unknown invalid ignor unrecognized ; do
+                              $GREP -iq $i conftest.err
+                              if test "$?" = "0" ; then
+                                  pmix_cv_cc_wno_long_double="no"
+                                  break;
+                              fi
+                          done
+                      fi
+                     ],
+                     [pmix_cv_cc_wno_long_double="no"])],
+                [pmix_cv_cc_wno_long_double="no"])
+            ])
+
+        if test "$pmix_cv_cc_wno_long_double" = "yes" ; then
+            add="$add -Wno-long-double"
+        fi
+
+        # Per above, we know that this flag works with GCC / haven't
+        # really tested it elsewhere.
+        if test "$pmix_c_vendor" = "gnu" ; then
+            add="$add -Werror-implicit-function-declaration "
+        fi
+
+        CFLAGS="$CFLAGS_orig $add"
         PMIX_UNIQ(CFLAGS)
         AC_MSG_WARN([$add has been added to CFLAGS (--enable-picky)])
         unset add
@@ -147,12 +148,27 @@ AC_DEFUN([PMIX_SETUP_CC],[
     if test "$GCC" = "yes"; then
         CFLAGS_orig="$CFLAGS"
 
+        # Note: Some versions of clang (at least >= 3.5 -- perhaps
+        # older versions, too?) will *warn* about -finline-functions,
+        # but still allow it.  This is very annoying, so check for
+        # that warning, too.  The clang warning looks like this:
+        # clang: warning: optimization flag '-finline-functions' is not supported
+        # clang: warning: argument unused during compilation: '-finline-functions'
         CFLAGS="$CFLAGS_orig -finline-functions"
         add=
         AC_CACHE_CHECK([if $CC supports -finline-functions],
                    [pmix_cv_cc_finline_functions],
                    [AC_TRY_COMPILE([], [],
-                                   [pmix_cv_cc_finline_functions="yes"],
+                                   [pmix_cv_cc_finline_functions="yes"
+                                    if test -s conftest.err ; then
+                                        for i in unused 'not supported' ; do
+                                            if $GREP -iq "$i" conftest.err; then
+                                                pmix_cv_cc_finline_functions="no"
+                                                break;
+                                            fi
+                                        done
+                                    fi
+                                   ],
                                    [pmix_cv_cc_finline_functions="no"])])
         if test "$pmix_cv_cc_finline_functions" = "yes" ; then
             add=" -finline-functions"
@@ -287,7 +303,7 @@ AC_DEFUN([PMIX_SETUP_CC],[
 AC_DEFUN([_PMIX_START_SETUP_CC],[
     pmix_show_subtitle "C compiler and preprocessor"
 
-	# $%@#!@#% AIX!!  This has to be called before anything invokes the C
+    # $%@#!@#% AIX!!  This has to be called before anything invokes the C
     # compiler.
     dnl AC_AIX
 ])
@@ -297,13 +313,15 @@ AC_DEFUN([_PMIX_PROG_CC],[
     #
     # Check for the compiler
     #
+    PMIX_VAR_SCOPE_PUSH([pmix_cflags_save dummy pmix_cc_arvgv0])
     pmix_cflags_save="$CFLAGS"
     AC_PROG_CC
     BASECC="`basename $CC`"
     CFLAGS="$pmix_cflags_save"
-    AC_DEFINE_UNQUOTED(PMIX_CC, "$CC", [PMIX underlying C compiler])
+    AC_DEFINE_UNQUOTED(PMIX_CC, "$CC", [PMIx underlying C compiler])
     set dummy $CC
     pmix_cc_argv0=[$]2
     PMIX_WHICH([$pmix_cc_argv0], [PMIX_CC_ABSOLUTE])
     AC_SUBST(PMIX_CC_ABSOLUTE)
+    PMIX_VAR_SCOPE_POP
 ])

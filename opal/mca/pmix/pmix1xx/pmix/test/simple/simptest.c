@@ -70,6 +70,8 @@ static pmix_status_t connect_fn(const pmix_proc_t procs[], size_t nprocs,
 static pmix_status_t disconnect_fn(const pmix_proc_t procs[], size_t nprocs,
                                    const pmix_info_t info[], size_t ninfo,
                                    pmix_op_cbfunc_t cbfunc, void *cbdata);
+static pmix_status_t register_event_fn(const pmix_info_t info[], size_t ninfo,
+                                       pmix_op_cbfunc_t cbfunc, void *cbdata);
 static pmix_status_t listener_fn(int listening_sd,
                                  pmix_connection_cbfunc_t cbfunc);
 
@@ -85,7 +87,8 @@ static pmix_server_module_t mymodule = {
     spawn_fn,
     connect_fn,
     disconnect_fn,
-    NULL
+    register_event_fn,
+    listener_fn
 };
 
 typedef struct {
@@ -601,6 +604,11 @@ static int disconnect_fn(const pmix_proc_t procs[], size_t nprocs,
     return PMIX_SUCCESS;
 }
 
+static pmix_status_t register_event_fn(const pmix_info_t info[], size_t ninfo,
+                                       pmix_op_cbfunc_t cbfunc, void *cbdata)
+{
+    return PMIX_SUCCESS;
+}
 
 static int listener_fn(int listening_sd,
                        pmix_connection_cbfunc_t cbfunc)

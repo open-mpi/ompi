@@ -856,7 +856,6 @@ void pmix_client_process_nspace_blob(const char *nspace, pmix_buffer_t *bptr)
     pmix_nspace_t *nsptr, *nsptr2;
     pmix_nrec_t *nrec, *nr2;
     char **procs;
-    pmix_value_t *val;
 
     /* cycle across our known nspaces */
     nsptr = NULL;
