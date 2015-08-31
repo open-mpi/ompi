@@ -11,6 +11,8 @@
  * Copyright (c) 2007-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -181,7 +183,7 @@ typedef int (*ompi_osc_base_module_win_shared_query_fn_t)(struct ompi_win_t *win
                                                           size_t *size, int *disp_unit, void *baseptr);
 
 typedef int (*ompi_osc_base_module_win_attach_fn_t)(struct ompi_win_t *win, void *base, size_t size);
-typedef int (*ompi_osc_base_module_win_detach_fn_t)(struct ompi_win_t *win, void *base);
+typedef int (*ompi_osc_base_module_win_detach_fn_t)(struct ompi_win_t *win, const void *base);
 
 /**
  * Free resources associated with win
@@ -201,7 +203,7 @@ typedef int (*ompi_osc_base_module_win_detach_fn_t)(struct ompi_win_t *win, void
 typedef int (*ompi_osc_base_module_free_fn_t)(struct ompi_win_t *win);
 
 
-typedef int (*ompi_osc_base_module_put_fn_t)(void *origin_addr,
+typedef int (*ompi_osc_base_module_put_fn_t)(const void *origin_addr,
                                             int origin_count,
                                             struct ompi_datatype_t *origin_dt,
                                             int target,
@@ -221,7 +223,7 @@ typedef int (*ompi_osc_base_module_get_fn_t)(void *origin_addr,
                                             struct ompi_win_t *win);
 
 
-typedef int (*ompi_osc_base_module_accumulate_fn_t)(void *origin_addr,
+typedef int (*ompi_osc_base_module_accumulate_fn_t)(const void *origin_addr,
                                                    int origin_count,
                                                    struct ompi_datatype_t *origin_dt,
                                                    int target,
@@ -231,15 +233,15 @@ typedef int (*ompi_osc_base_module_accumulate_fn_t)(void *origin_addr,
                                                    struct ompi_op_t *op,
                                                    struct ompi_win_t *win);
 
-typedef int (*ompi_osc_base_module_compare_and_swap_fn_t)(void *origin_addr,
-                                                          void *compare_addr,
+typedef int (*ompi_osc_base_module_compare_and_swap_fn_t)(const void *origin_addr,
+                                                          const void *compare_addr,
                                                           void *result_addr,
                                                           struct ompi_datatype_t *dt,
                                                           int target,
                                                           OPAL_PTRDIFF_TYPE target_disp,
                                                           struct ompi_win_t *win);
 
-typedef int (*ompi_osc_base_module_fetch_and_op_fn_t)(void *origin_addr,
+typedef int (*ompi_osc_base_module_fetch_and_op_fn_t)(const void *origin_addr,
                                                       void *result_addr,
                                                       struct ompi_datatype_t *dt,
                                                       int target,
@@ -247,8 +249,8 @@ typedef int (*ompi_osc_base_module_fetch_and_op_fn_t)(void *origin_addr,
                                                       struct ompi_op_t *op,
                                                       struct ompi_win_t *win);
 
-typedef int (*ompi_osc_base_module_get_accumulate_fn_t)(void *origin_addr, 
-                                                        int origin_count, 
+typedef int (*ompi_osc_base_module_get_accumulate_fn_t)(const void *origin_addr,
+                                                        int origin_count,
                                                         struct ompi_datatype_t *origin_datatype,
                                                         void *result_addr, 
                                                         int result_count, 
@@ -260,7 +262,7 @@ typedef int (*ompi_osc_base_module_get_accumulate_fn_t)(void *origin_addr,
                                                         struct ompi_op_t *op, 
                                                         struct ompi_win_t *win);
 
-typedef int (*ompi_osc_base_module_rput_fn_t)(void *origin_addr,
+typedef int (*ompi_osc_base_module_rput_fn_t)(const void *origin_addr,
                                               int origin_count,
                                               struct ompi_datatype_t *origin_dt,
                                               int target,
@@ -281,7 +283,7 @@ typedef int (*ompi_osc_base_module_rget_fn_t)(void *origin_addr,
                                               struct ompi_request_t **request);
 
 
-typedef int (*ompi_osc_base_module_raccumulate_fn_t)(void *origin_addr,
+typedef int (*ompi_osc_base_module_raccumulate_fn_t)(const void *origin_addr,
                                                      int origin_count,
                                                      struct ompi_datatype_t *origin_dt,
                                                      int target,
@@ -292,8 +294,8 @@ typedef int (*ompi_osc_base_module_raccumulate_fn_t)(void *origin_addr,
                                                      struct ompi_win_t *win,
                                                      struct ompi_request_t **request);
 
-typedef int (*ompi_osc_base_module_rget_accumulate_fn_t)(void *origin_addr, 
-                                                         int origin_count, 
+typedef int (*ompi_osc_base_module_rget_accumulate_fn_t)(const void *origin_addr,
+                                                         int origin_count,
                                                          struct ompi_datatype_t *origin_datatype,
                                                          void *result_addr, 
                                                          int result_count, 

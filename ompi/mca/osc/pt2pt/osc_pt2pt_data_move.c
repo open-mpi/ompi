@@ -1724,7 +1724,7 @@ isend_completion_cb(ompi_request_t *request)
 }
 
 
-int ompi_osc_pt2pt_component_isend (ompi_osc_pt2pt_module_t *module, void *buf,
+int ompi_osc_pt2pt_component_isend (ompi_osc_pt2pt_module_t *module, const void *buf,
                                     size_t count, struct ompi_datatype_t *datatype,
                                     int dest, int tag, struct ompi_communicator_t *comm)
 {
@@ -1732,7 +1732,7 @@ int ompi_osc_pt2pt_component_isend (ompi_osc_pt2pt_module_t *module, void *buf,
                                      isend_completion_cb, module);
 }
 
-int ompi_osc_pt2pt_isend_w_cb (void *ptr, int count, ompi_datatype_t *datatype, int target, int tag,
+int ompi_osc_pt2pt_isend_w_cb (const void *ptr, int count, ompi_datatype_t *datatype, int target, int tag,
                               ompi_communicator_t *comm, ompi_request_complete_fn_t cb, void *ctx)
 {
     ompi_request_t *request;
@@ -1742,7 +1742,7 @@ int ompi_osc_pt2pt_isend_w_cb (void *ptr, int count, ompi_datatype_t *datatype, 
                          "osc pt2pt: ompi_osc_pt2pt_isend_w_cb sending %d bytes to %d with tag %d",
                          count, target, tag));
 
-    ret = MCA_PML_CALL(isend_init(ptr, count, datatype, target, tag,
+    ret = MCA_PML_CALL(isend_init((void *)ptr, count, datatype, target, tag,
                                   MCA_PML_BASE_SEND_STANDARD, comm, &request));
     if (OMPI_SUCCESS != ret) {
         OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,

@@ -3,6 +3,8 @@
  * Copyright (c) 2011-2013 Sandia National Laboratories.  All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
  *                         reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -116,11 +118,11 @@ get_displacement(ompi_osc_portals4_module_t *module,
 
 
 int ompi_osc_portals4_attach(struct ompi_win_t *win, void *base, size_t len);
-int ompi_osc_portals4_detach(struct ompi_win_t *win, void *base);
+int ompi_osc_portals4_detach(struct ompi_win_t *win, const void *base);
 
 int ompi_osc_portals4_free(struct ompi_win_t *win);
 
-int ompi_osc_portals4_put(void *origin_addr,
+int ompi_osc_portals4_put(const void *origin_addr,
                           int origin_count,
                           struct ompi_datatype_t *origin_dt,
                           int target,
@@ -138,7 +140,7 @@ int ompi_osc_portals4_get(void *origin_addr,
                           struct ompi_datatype_t *target_dt,
                           struct ompi_win_t *win);
 
-int ompi_osc_portals4_accumulate(void *origin_addr,
+int ompi_osc_portals4_accumulate(const void *origin_addr,
                                  int origin_count,
                                  struct ompi_datatype_t *origin_dt,
                                  int target,
@@ -148,15 +150,15 @@ int ompi_osc_portals4_accumulate(void *origin_addr,
                                  struct ompi_op_t *op,
                                  struct ompi_win_t *win);
 
-int ompi_osc_portals4_compare_and_swap(void *origin_addr,
-                                       void *compare_addr,
+int ompi_osc_portals4_compare_and_swap(const void *origin_addr,
+                                       const void *compare_addr,
                                        void *result_addr,
                                        struct ompi_datatype_t *dt,
                                        int target,
                                        OPAL_PTRDIFF_TYPE target_disp,
                                        struct ompi_win_t *win);
 
-int ompi_osc_portals4_fetch_and_op(void *origin_addr,
+int ompi_osc_portals4_fetch_and_op(const void *origin_addr,
                                    void *result_addr,
                                    struct ompi_datatype_t *dt,
                                    int target,
@@ -164,8 +166,8 @@ int ompi_osc_portals4_fetch_and_op(void *origin_addr,
                                    struct ompi_op_t *op,
                                    struct ompi_win_t *win);
 
-int ompi_osc_portals4_get_accumulate(void *origin_addr, 
-                                     int origin_count, 
+int ompi_osc_portals4_get_accumulate(const void *origin_addr,
+                                     int origin_count,
                                      struct ompi_datatype_t *origin_datatype,
                                      void *result_addr, 
                                      int result_count, 
@@ -177,7 +179,7 @@ int ompi_osc_portals4_get_accumulate(void *origin_addr,
                                      struct ompi_op_t *op, 
                                      struct ompi_win_t *win);
 
-int ompi_osc_portals4_rput(void *origin_addr,
+int ompi_osc_portals4_rput(const void *origin_addr,
                            int origin_count,
                            struct ompi_datatype_t *origin_dt,
                            int target,
@@ -197,7 +199,7 @@ int ompi_osc_portals4_rget(void *origin_addr,
                            struct ompi_win_t *win,
                            struct ompi_request_t **request);
 
-int ompi_osc_portals4_raccumulate(void *origin_addr,
+int ompi_osc_portals4_raccumulate(const void *origin_addr,
                                   int origin_count,
                                   struct ompi_datatype_t *origin_dt,
                                   int target,
@@ -208,8 +210,8 @@ int ompi_osc_portals4_raccumulate(void *origin_addr,
                                   struct ompi_win_t *win,
                                   struct ompi_request_t **request);
 
-int ompi_osc_portals4_rget_accumulate(void *origin_addr, 
-                                      int origin_count, 
+int ompi_osc_portals4_rget_accumulate(const void *origin_addr,
+                                      int origin_count,
                                       struct ompi_datatype_t *origin_datatype,
                                       void *result_addr, 
                                       int result_count, 
