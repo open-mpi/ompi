@@ -30,7 +30,7 @@ greek=a1
 # command, or with the date (if "git describe" fails) in the form of
 # "date<date>".
 
-repo_rev=git9208efc
+repo_rev=gita1cad92
 
 # If tarball_version is not empty, it is used as the version string in
 # the tarball filename, regardless of all other versions listed in

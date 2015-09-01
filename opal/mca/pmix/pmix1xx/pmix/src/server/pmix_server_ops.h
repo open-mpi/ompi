@@ -188,10 +188,6 @@ void pmix_pending_nspace_fix(pmix_nspace_t *nptr);
 pmix_status_t pmix_pending_resolve(pmix_nspace_t *nptr, int rank, pmix_dmdx_local_t *lcd);
 
 
-pmix_status_t pmix_server_authenticate(int sd, int *out_rank,
-                                       pmix_peer_t **peer,
-                                       pmix_buffer_t **reply);
-
 pmix_status_t pmix_server_abort(pmix_peer_t *peer, pmix_buffer_t *buf,
                                 pmix_op_cbfunc_t cbfunc, void *cbdata);
 

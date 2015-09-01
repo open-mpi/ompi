@@ -18,6 +18,8 @@ dnl                         reserved.
 dnl Copyright (c) 2009-2011 Oak Ridge National Labs.  All rights reserved.
 dnl Copyright (c) 2011-2013 NVIDIA Corporation.  All rights reserved.
 dnl Copyright (c) 2013-2015 Intel, Inc. All rights reserved
+dnl Copyright (c) 2015      Research Organization for Information Science
+dnl                         and Technology (RIST). All rights reserved.
 dnl
 dnl $COPYRIGHT$
 dnl
@@ -40,7 +42,7 @@ AC_DEFUN([PMIX_SETUP_CORE],[
     # Get pmix's absolute top builddir (which may not be the same as
     # the real $top_builddir)
     PMIX_startdir=`pwd`
-    if test x"pmix_config_prefix" != "x" -a ! -d "pmix_config_prefix"; then
+    if test x"pmix_config_prefix" != "x" && test ! -d "pmix_config_prefix"; then
         mkdir -p "pmix_config_prefix"
     fi
     if test x"pmix_config_prefix" != "x"; then
@@ -83,7 +85,7 @@ AC_DEFUN([PMIX_SETUP_CORE],[
     # Debug mode?
     AC_MSG_CHECKING([if want pmix maintainer support])
     pmix_debug=
-    AS_IF([test "$pmix_debug" = "" -a "$enable_debug" = "yes"],
+    AS_IF([test "$pmix_debug" = "" && test "$enable_debug" = "yes"],
           [pmix_debug=1
            pmix_debug_msg="enabled"])
     AS_IF([test "$pmix_debug" = ""],
@@ -137,12 +139,6 @@ AC_DEFUN([PMIX_SETUP_CORE],[
     # Check for compilers and preprocessors
     ############################################################################
     pmix_show_title "Compiler and preprocessor tests"
-
-    ##################################
-    # C compiler characteristics
-    ##################################
-    # Does the compiler support "ident"-like constructs?
-    PMIX_CHECK_IDENT([CC], [CFLAGS], [c], [C])
 
     #
     # Check for some types
@@ -446,7 +442,7 @@ AC_DEFUN([PMIX_SETUP_CORE],[
     elif test $ac_cv_sizeof_void_p -eq $ac_cv_sizeof_long ; then
         pmix_ptrdiff_t="long"
         pmix_ptrdiff_size=$ac_cv_sizeof_long
-    elif test $ac_cv_type_long_long = yes -a $ac_cv_sizeof_void_p -eq $ac_cv_sizeof_long_long ; then
+    elif test $ac_cv_type_long_long = yes && test $ac_cv_sizeof_void_p -eq $ac_cv_sizeof_long_long ; then
         pmix_ptrdiff_t="long long"
         pmix_ptrdiff_size=$ac_cv_sizeof_long_long
         #else
@@ -493,7 +489,7 @@ AC_DEFUN([PMIX_SETUP_CORE],[
                                                           #endif
                                                       ])], [ompi_cv_htonl_define=yes], [ompi_cv_htonl_define=no])])
     AC_CHECK_FUNC([htonl], [ompi_have_htonl=yes], [ompi_have_htonl=no])
-    AS_IF([test "$ompi_cv_htonl_define" = "yes" -o "$ompi_have_htonl" = "yes"],
+    AS_IF([test "$ompi_cv_htonl_define" = "yes" || test "$ompi_have_htonl" = "yes"],
           [AC_DEFINE_UNQUOTED([HAVE_UNIX_BYTESWAP], [1],
                               [whether unix byteswap routines -- htonl, htons, nothl, ntohs -- are available])])
 
@@ -652,7 +648,7 @@ else
     WANT_PICKY_COMPILER=0
 fi
 #################### Early development override ####################
-if test "$WANT_PICKY_COMPILER" = "0" -a -z "$enable_picky" -a "$PMIX_DEVEL" = "1"; then
+if test "$WANT_PICKY_COMPILER" = "0" && test -z "$enable_picky" && test "$PMIX_DEVEL" = "1"; then
     WANT_PICKY_COMPILER=1
     echo "--> developer override: enable picky compiler by default"
 fi
@@ -674,7 +670,7 @@ else
     WANT_DEBUG=0
 fi
 #################### Early development override ####################
-if test "$WANT_DEBUG" = "0" -a -z "$enable_debug" -a "$PMIX_DEVEL" = "1"; then
+if test "$WANT_DEBUG" = "0" && test -z "$enable_debug" && test "$PMIX_DEVEL" = "1"; then
     WANT_DEBUG=1
     echo "--> developer override: enable debugging code by default"
 fi
@@ -716,7 +712,7 @@ AC_MSG_CHECKING([if want ident string])
 AC_ARG_WITH([ident-string],
             [AC_HELP_STRING([--with-ident-string=STRING],
                             [Embed an ident string into PMIx object files])])
-if test "$with_ident_string" = "" -o "$with_ident_string" = "no"; then
+if test "$with_ident_string" = "" || test "$with_ident_string" = "no"; then
     with_ident_string="%VERSION%"
 fi
 # This is complicated, because $PMIX_VERSION may have spaces in it.

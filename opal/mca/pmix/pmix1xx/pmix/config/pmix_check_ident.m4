@@ -80,18 +80,23 @@ EOF
     # resulting object file.  If the ident is found in "strings" or
     # the grep succeeds, rule that we have this flavor of ident.
 
-    PMIX_LOG_COMMAND([$pmix_compiler $pmix_flags -c conftest.$3 -o conftest.${OBJEXT}],
-                     [AS_IF([test -f conftest.${OBJEXT}],
-                            [pmix_output="`strings -a conftest.${OBJEXT} | grep $pmix_ident`"
-                             grep $pmix_ident conftest.${OBJEXT} 2>&1 1>/dev/null
-                             pmix_status=$?
-                             AS_IF([test "$pmix_output" != "" || test "$pmix_status" = "0"],
-                                   [$6],
-                                   [$7])],
-                            [PMIX_LOG_MSG([the failed program was:])
-                             PMIX_LOG_FILE([conftest.$3])
-                             $7]
-                            [$7])])
+    echo "configure:__oline__: $1" >&5
+    pmix_output=`$pmix_compiler $pmix_flags -c conftest.$3 -o conftest.${OBJEXT} 2>&1 1>/dev/null`
+    pmix_status=$?
+    AS_IF([test $pmix_status = 0],
+          [test -z "$pmix_output"
+           pmix_status=$?])
+    PMIX_LOG_MSG([\$? = $pmix_status], 1)
+    AS_IF([test $pmix_status = 0 && test -f conftest.${OBJEXT}],
+          [pmix_output="`strings -a conftest.${OBJEXT} | grep $pmix_ident`"
+           grep $pmix_ident conftest.${OBJEXT} 2>&1 1>/dev/null
+           pmix_status=$?
+           AS_IF([test "$pmix_output" != "" || test "$pmix_status" = "0"],
+                 [$6],
+                 [$7])],
+          [PMIX_LOG_MSG([the failed program was:])
+           PMIX_LOG_FILE([conftest.$3])
+           $7])
 
     unset pmix_compiler pmix_flags pmix_output pmix_status
     rm -rf conftest.* conftest${EXEEXT}
