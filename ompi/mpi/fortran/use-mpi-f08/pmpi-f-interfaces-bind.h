@@ -98,7 +98,7 @@ end subroutine pompi_buffer_attach_f
 ! us; they can just both be bound to the same back-end
 ! ompi_buffer_detach_f08 C function.
 subroutine pompi_buffer_detach_f(buffer_addr,size,ierror) &
-   BIND(C, name="ompi_buffer_detach_f08")
+   BIND(C, name="pompi_buffer_detach_f08")
    implicit none
    OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: buffer_addr
    INTEGER, INTENT(OUT) :: size
@@ -1416,7 +1416,7 @@ subroutine pompi_type_set_name_f(type,type_name,ierror,type_name_len) &
 end subroutine pompi_type_set_name_f
 
 subroutine pompi_win_allocate_f(size, disp_unit, info, comm, &
-      baseptr, win, ierror) BIND(C, name="ompi_win_allocate_f")
+      baseptr, win, ierror) BIND(C, name="pompi_win_allocate_f")
   USE, INTRINSIC ::  ISO_C_BINDING, ONLY : C_PTR
   use :: mpi_f08_types, only : MPI_ADDRESS_KIND
   INTEGER(KIND=MPI_ADDRESS_KIND), INTENT(IN) ::  size
@@ -1429,7 +1429,7 @@ subroutine pompi_win_allocate_f(size, disp_unit, info, comm, &
 end subroutine pompi_win_allocate_f
 
 subroutine pompi_win_allocate_shared_f(size, disp_unit, info, comm, &
-      baseptr, win, ierror) BIND(C, name="ompi_win_allocate_shared_f")
+      baseptr, win, ierror) BIND(C, name="pompi_win_allocate_shared_f")
   USE, INTRINSIC ::  ISO_C_BINDING, ONLY : C_PTR
   use :: mpi_f08_types, only : MPI_ADDRESS_KIND
   INTEGER(KIND=MPI_ADDRESS_KIND), INTENT(IN) ::  size
