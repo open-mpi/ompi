@@ -62,6 +62,7 @@
 
 /* define some commands */
 typedef enum {
+    PMIX_REQ_CMD,
     PMIX_ABORT_CMD,
     PMIX_COMMIT_CMD,
     PMIX_FENCENB_CMD,

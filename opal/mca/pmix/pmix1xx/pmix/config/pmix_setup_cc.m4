@@ -297,6 +297,13 @@ AC_DEFUN([PMIX_SETUP_CC],[
     PMIX_ENSURE_CONTAINS_OPTFLAGS(["$CFLAGS"])
     AC_MSG_RESULT([$co_result])
     CFLAGS="$co_result"
+
+    ##################################
+    # C compiler characteristics
+    ##################################
+    # Does the compiler support "ident"-like constructs?
+    PMIX_CHECK_IDENT([CC], [CFLAGS], [c], [C])
+
 ])
 
 

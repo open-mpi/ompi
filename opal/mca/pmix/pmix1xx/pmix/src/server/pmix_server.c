@@ -1908,6 +1908,7 @@ static int server_switchyard(pmix_peer_t *peer, uint32_t tag,
     pmix_cmd_t cmd;
     pmix_server_caddy_t *cd;
     pmix_proc_t proc;
+    pmix_buffer_t *reply;
 
     /* retrieve the cmd */
     cnt = 1;
@@ -1918,6 +1919,13 @@ static int server_switchyard(pmix_peer_t *peer, uint32_t tag,
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "recvd pmix cmd %d from %s:%d",
                         cmd, peer->info->nptr->nspace, peer->info->rank);
+
+    if (PMIX_REQ_CMD == cmd) {
+        reply = PMIX_NEW(pmix_buffer_t);
+        pmix_bfrop.copy_payload(reply, &(peer->info->nptr->server->job_info));
+        PMIX_SERVER_QUEUE_REPLY(peer, tag, reply);
+        return PMIX_SUCCESS;
+    }
 
     if (PMIX_ABORT_CMD == cmd) {
         PMIX_PEER_CADDY(cd, peer, tag);

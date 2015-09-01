@@ -2,6 +2,8 @@
 #
 # Copyright (c) 2015      Intel, Inc. All rights reserved
 # Copyright (c) 2015      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2015      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -27,7 +29,7 @@ AC_DEFUN([PMIX_SASL_CONFIG],[
     pmix_sasl_support=0
     if test "$with_sasl" != "no"; then
         AC_MSG_CHECKING([for sasl in])
-        if test ! -z "$with_sasl" -a "$with_sasl" != "yes"; then
+        if test ! -z "$with_sasl" && test "$with_sasl" != "yes"; then
             pmix_sasl_dir=$with_sasl/include/sasl
             if test -d $with_sasl/lib; then
                 pmix_sasl_libdir=$with_sasl/lib
