@@ -155,7 +155,7 @@ static void job_data(struct pmix_peer_t *pr, pmix_usock_hdr_t *hdr,
     pmix_status_t rc;
     char *nspace;
     int32_t cnt = 1;
-    bool *active = (bool*)cbdata;
+    pmix_cb_t *cb = (pmix_cb_t*)cbdata;
 
     /* unpack the nspace - we don't really need it, but have to
      * unpack it to maintain sequence */
@@ -165,10 +165,10 @@ static void job_data(struct pmix_peer_t *pr, pmix_usock_hdr_t *hdr,
     }
     /* decode it */
     pmix_client_process_nspace_blob(pmix_globals.myid.nspace, buf);
-    *active = false;
+    cb->active = false;
 }
 
-static int connect_to_server(struct sockaddr_un *address, bool *active)
+static int connect_to_server(struct sockaddr_un *address, void *cbdata)
 {
     int rc;
     pmix_cmd_t cmd = PMIX_REQ_CMD;
@@ -206,7 +206,7 @@ static int connect_to_server(struct sockaddr_un *address, bool *active)
         PMIX_RELEASE(req);
         return rc;
     }
-    PMIX_ACTIVATE_SEND_RECV(&pmix_client_globals.myserver, req, job_data, active);
+    PMIX_ACTIVATE_SEND_RECV(&pmix_client_globals.myserver, req, job_data, cbdata);
 
     return PMIX_SUCCESS;
 }
@@ -222,7 +222,7 @@ int PMIx_Init(pmix_proc_t *proc)
     int rc, debug_level;
     struct sockaddr_un address;
     pmix_nspace_t *nsptr;
-    bool active;
+    pmix_cb_t cb;
 
     if (NULL == proc) {
         return PMIX_ERR_BAD_PARAM;
@@ -321,11 +321,14 @@ int PMIx_Init(pmix_proc_t *proc)
     }
 
     /* connect to the server - returns job info if successful */
-    active = true;
-    if (PMIX_SUCCESS != (rc = connect_to_server(&address, &active))){
+    PMIX_CONSTRUCT(&cb, pmix_cb_t);
+    cb.active = true;
+    if (PMIX_SUCCESS != (rc = connect_to_server(&address, &cb))){
+        PMIX_DESTRUCT(&cb);
         return rc;
     }
-    PMIX_WAIT_FOR_COMPLETION(active);
+    PMIX_WAIT_FOR_COMPLETION(cb.active);
+    PMIX_DESTRUCT(&cb);
 
     return PMIX_SUCCESS;
 }
