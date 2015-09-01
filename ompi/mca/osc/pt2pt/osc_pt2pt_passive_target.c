@@ -392,8 +392,6 @@ static int ompi_osc_pt2pt_unlock_internal (int target, ompi_win_t *win)
         return OMPI_ERR_RMA_SYNC;
     }
 
-    opal_list_remove_item (&module->outstanding_locks, &lock->super);
-
     OPAL_OUTPUT_VERBOSE((25, ompi_osc_base_framework.framework_output,
                          "ompi_osc_pt2pt_unlock_internal: lock acks still expected: %d",
                          lock->lock_acks_expected));
@@ -463,6 +461,9 @@ static int ompi_osc_pt2pt_unlock_internal (int target, ompi_win_t *win)
         module->all_access_epoch = false;
     }
     --module->passive_target_access_epoch;
+
+    opal_list_remove_item (&module->outstanding_locks, &lock->super);
+
     OPAL_THREAD_UNLOCK(&module->lock);
 
     OBJ_RELEASE(lock);
