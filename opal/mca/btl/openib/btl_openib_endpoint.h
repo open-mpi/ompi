@@ -569,17 +569,18 @@ static inline int post_send(mca_btl_openib_endpoint_t *ep,
         MCA_BTL_OPENIB_RDMA_FRAG_SET_SIZE(ftr, sg->length);
         MCA_BTL_OPENIB_RDMA_MAKE_LOCAL(ftr);
 #if OPAL_ENABLE_DEBUG
-        do {
-          ftr->seq = ep->eager_rdma_remote.seq;
-        } while (!OPAL_ATOMIC_CMPSET_32((int32_t*) &ep->eager_rdma_remote.seq,
-                                        (int32_t) ftr->seq,
-                                        (int32_t) (ftr->seq+1)));
+        /* NTH: generate the sequence from the remote head index to ensure that the
+         * wrong sequence isn't set. The way this code used to look the sequence number
+         * and head were updated independently and it led to false positives for incorrect
+         * sequence numbers. */
+        MCA_BTL_OPENIB_RDMA_MOVE_INDEX(ep->eager_rdma_remote.head, head, ftr->seq);
+#else
+        MCA_BTL_OPENIB_RDMA_MOVE_INDEX(ep->eager_rdma_remote.head, head);
 #endif
         if(ep->nbo)
             BTL_OPENIB_FOOTER_HTON(*ftr);
 
         sr_desc->wr.rdma.rkey = ep->eager_rdma_remote.rkey;
-        MCA_BTL_OPENIB_RDMA_MOVE_INDEX(ep->eager_rdma_remote.head, head);
 #if BTL_OPENIB_FAILOVER_ENABLED
         /* frag->ftr is unused on the sending fragment, so use it
          * to indicate it is an eager fragment.  A non-zero value
