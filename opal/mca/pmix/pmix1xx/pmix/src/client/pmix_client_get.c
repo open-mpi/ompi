@@ -311,8 +311,10 @@ static void value_cbfunc(int status, pmix_value_t *kv, void *cbdata)
     pmix_status_t rc;
 
     cb->status = status;
-    if (PMIX_SUCCESS != (rc = pmix_bfrop.copy((void**)&cb->value, kv, PMIX_VALUE))) {
-        PMIX_ERROR_LOG(rc);
+    if (PMIX_SUCCESS == status) {
+        if (PMIX_SUCCESS != (rc = pmix_bfrop.copy((void**)&cb->value, kv, PMIX_VALUE))) {
+            PMIX_ERROR_LOG(rc);
+        }
     }
     cb->active = false;
 }
