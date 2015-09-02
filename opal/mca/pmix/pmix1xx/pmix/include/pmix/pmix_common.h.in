@@ -97,6 +97,10 @@ BEGIN_C_DECLS
  * these keys are RESERVED */
 #define PMIX_ATTR_UNDEF      NULL
 
+/* identification attributes */
+#define PMIX_USERID                "pmix.euid"         // (uint32_t) effective user id
+#define PMIX_GRPID                 "pmix.egid"         // (uint32_t) effective group id
+
 /* general proc-level attributes */
 #define PMIX_CPUSET                "pmix.cpuset"       // (char*) hwloc bitmap applied to proc upon launch
 #define PMIX_CREDENTIAL            "pmix.cred"         // (char*) security credential assigned to proc

@@ -169,7 +169,7 @@ typedef pmix_status_t (*pmix_server_dmodex_req_fn_t)(const pmix_proc_t *proc,
  * process is also provided and is expected to be returned on any subsequent
  * lookup request */
 typedef pmix_status_t (*pmix_server_publish_fn_t)(const pmix_proc_t *proc,
-                                                  pmix_data_range_t scope, pmix_persistence_t persist,
+                                                  pmix_data_range_t range, pmix_persistence_t persist,
                                                   const pmix_info_t info[], size_t ninfo,
                                                   pmix_op_cbfunc_t cbfunc, void *cbdata);
 
@@ -188,7 +188,7 @@ typedef pmix_status_t (*pmix_server_publish_fn_t)(const pmix_proc_t *proc,
  * has been set - in such cases, the host RM is required to return an error
  * if the directive cannot be met. */
 typedef pmix_status_t (*pmix_server_lookup_fn_t)(const pmix_proc_t *proc,
-                                                 pmix_data_range_t scope,
+                                                 pmix_data_range_t range,
                                                  const pmix_info_t info[], size_t ninfo,
                                                  char **keys,
                                                  pmix_lookup_cbfunc_t cbfunc, void *cbdata);
@@ -198,7 +198,9 @@ typedef pmix_status_t (*pmix_server_lookup_fn_t)(const pmix_proc_t *proc,
  * been published. The callback is to be executed upon completion of the delete
  * procedure */
 typedef pmix_status_t (*pmix_server_unpublish_fn_t)(const pmix_proc_t *proc,
-                                                    pmix_data_range_t scope, char **keys,
+                                                    pmix_data_range_t range,
+                                                    const pmix_info_t info[], size_t ninfo,
+                                                    char **keys,
                                                     pmix_op_cbfunc_t cbfunc, void *cbdata);
 
 /* Spawn a set of applications/processes as per the PMIx API. Note that
@@ -259,7 +261,7 @@ typedef pmix_status_t (*pmix_server_disconnect_fn_t)(const pmix_proc_t procs[], 
  * the resource manager. */
  typedef pmix_status_t (*pmix_server_register_events_fn_t)(const pmix_info_t info[], size_t ninfo,
                                                            pmix_op_cbfunc_t cbfunc, void *cbdata);
- 
+
 /* Callback function for incoming connection requests from
  * local clients */
 typedef void (*pmix_connection_cbfunc_t)(int incoming_sd);

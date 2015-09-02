@@ -244,6 +244,9 @@ int PMIx_Init(pmix_proc_t *proc)
     PMIX_CONSTRUCT(&pmix_client_globals.myserver, pmix_peer_t);
     /* mark that we are a client */
     pmix_globals.server = false;
+    /* get our effective id's */
+    pmix_globals.uid = geteuid();
+    pmix_globals.gid = getegid();
 
     /* initialize the output system */
     if (!pmix_output_init()) {

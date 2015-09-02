@@ -55,19 +55,14 @@ static void native_finalize(void)
 
 static char* create_cred(void)
 {
-    uid_t uid;
-    gid_t gid;
     char *cred;
 
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "sec: native create_cred");
 
-    /* get our uid/gid */
-    uid = getuid();
-    gid = getgid();
-
     /* print them and return the string */
-    (void)asprintf(&cred, "%lu:%lu", (unsigned long)uid, (unsigned long)gid);
+    (void)asprintf(&cred, "%lu:%lu", (unsigned long)pmix_globals.uid,
+                   (unsigned long)pmix_globals.gid);
 
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "sec: using credential %s", cred);

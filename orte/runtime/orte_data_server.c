@@ -12,6 +12,7 @@
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, LLC.
  *                         All rights reserved
+ * Copyright (c) 2015      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -31,8 +32,9 @@
 
 #include "opal/util/output.h"
 #include "opal/class/opal_pointer_array.h"
-
 #include "opal/dss/dss.h"
+#include "opal/mca/pmix/pmix_types.h"
+
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/runtime/orte_globals.h"
@@ -52,23 +54,26 @@ typedef struct {
     * owner can remove it
     */
     orte_process_name_t owner;
-    /* service name */
-    char *service;
-    /* port */
-    char *port;
+    /* uid of the owner - helps control
+     * access rights */
+    uint32_t uid;
+    /* characteristics */
+    opal_pmix_data_range_t range;
+    opal_pmix_persistence_t persistence;
+    /* and the values themselves */
+    opal_list_t values;
+    /* the value itself */
 } orte_data_object_t;
 
 static void construct(orte_data_object_t *ptr)
 {
     ptr->index = -1;
-    ptr->service = NULL;
-    ptr->port = NULL;
+    OBJ_CONSTRUCT(&ptr->values, opal_list_t);
 }
 
 static void destruct(orte_data_object_t *ptr)
 {
-    if (NULL != ptr->service) free(ptr->service);
-    if (NULL != ptr->port) free(ptr->port);
+    OPAL_LIST_DESTRUCT(&ptr->values);
 }
 
 OBJ_CLASS_INSTANCE(orte_data_object_t,
@@ -76,15 +81,14 @@ OBJ_CLASS_INSTANCE(orte_data_object_t,
                    construct, destruct);
 
 /* local globals */
-static opal_pointer_array_t *orte_data_server_store=NULL;
-static bool recv_issued=false;
+static opal_pointer_array_t orte_data_server_store;
 
 int orte_data_server_init(void)
 {
     int rc;
 
-    orte_data_server_store = OBJ_NEW(opal_pointer_array_t);
-    if (ORTE_SUCCESS != (rc = opal_pointer_array_init(orte_data_server_store,
+    OBJ_CONSTRUCT(&orte_data_server_store, opal_pointer_array_t);
+    if (ORTE_SUCCESS != (rc = opal_pointer_array_init(&orte_data_server_store,
                                                       1,
                                                       INT_MAX,
                                                       1))) {
@@ -92,14 +96,11 @@ int orte_data_server_init(void)
         return rc;
     }
 
-    if (!recv_issued) {
-        orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
-                                ORTE_RML_TAG_DATA_SERVER,
-                                ORTE_RML_PERSISTENT,
-                                orte_data_server,
-                                NULL);
-        recv_issued = true;
-    }
+    orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
+                            ORTE_RML_TAG_DATA_SERVER,
+                            ORTE_RML_PERSISTENT,
+                            orte_data_server,
+                            NULL);
 
     return ORTE_SUCCESS;
 }
@@ -107,295 +108,350 @@ int orte_data_server_init(void)
 void orte_data_server_finalize(void)
 {
     orte_std_cntr_t i;
-    orte_data_object_t **data;
+    orte_data_object_t *data;
 
-    if (NULL != orte_data_server_store) {
-        data = (orte_data_object_t**)orte_data_server_store->addr;
-        for (i=0; i < orte_data_server_store->size; i++) {
-            if (NULL != data[i]) OBJ_RELEASE(data[i]);
-        }
-        OBJ_RELEASE(orte_data_server_store);
-    }
+    orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_DATA_SERVER);
 
-    if (recv_issued) {
-        orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_DATA_SERVER);
-        recv_issued = false;
-    }
-}
-
-static orte_data_object_t *lookup(char *service)
-{
-    orte_std_cntr_t i;
-    orte_data_object_t **data;
-
-    data = (orte_data_object_t**)orte_data_server_store->addr;
-    for (i=0; i < orte_data_server_store->size; i++) {
-        if (NULL != data[i]) {
-            if (0 == strcmp(data[i]->service, service)) {
-                return data[i];
-            }
+    for (i=0; i < orte_data_server_store.size; i++) {
+        if (NULL != (data = (orte_data_object_t*)opal_pointer_array_get_item(&orte_data_server_store, i))) {
+            OBJ_RELEASE(data);
         }
     }
-
-    /* get here if not found - return NULL */
-    return NULL;
-}
-
-static void rml_cbfunc(int status, orte_process_name_t* sender,
-                       opal_buffer_t* buffer, orte_rml_tag_t tag,
-                       void* cbdata)
-{
-    OBJ_RELEASE(buffer);
+    OBJ_DESTRUCT(&orte_data_server_store);
 }
 
 void orte_data_server(int status, orte_process_name_t* sender,
                       opal_buffer_t* buffer, orte_rml_tag_t tag,
                       void* cbdata)
 {
-    orte_data_server_cmd_t command;
+    uint8_t command;
     orte_std_cntr_t count;
-    char *service_name, *port_name;
+    opal_process_name_t requestor;
     orte_data_object_t *data;
     opal_buffer_t *answer;
-    int rc, ret;
-    bool unique;
+    int rc, ret, k;
+    opal_value_t *iptr, *inext;
+    uint32_t ninfo, i;
+    char **keys = NULL, *str;
+    bool ret_packed = false;
+    int room_number;
+    uint32_t uid;
+    opal_pmix_data_range_t range;
 
     OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
                          "%s data server got message from %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(sender)));
 
+    /* unpack the room number of the caller's request */
     count = 1;
-    if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &command, &count, ORTE_DATA_SERVER_CMD))) {
+    if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &room_number, &count, OPAL_INT))) {
+        ORTE_ERROR_LOG(rc);
+        return;
+    }
+
+    /* unpack the command */
+    count = 1;
+    if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &command, &count, OPAL_UINT8))) {
         ORTE_ERROR_LOG(rc);
         return;
     }
 
     answer = OBJ_NEW(opal_buffer_t);
+    /* pack the room number as this must lead any response */
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(answer, &room_number, 1, OPAL_INT))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(answer);
+        return;
+    }
 
     switch(command) {
-    case ORTE_DATA_SERVER_PUBLISH:
-        /* unpack the service name */
-        count = 1;
-        if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &service_name, &count, OPAL_STRING))) {
-            ORTE_ERROR_LOG(rc);
-            goto SEND_ERROR;
-        }
-
-        /* unpack the port name */
-        count = 1;
-        if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &port_name, &count, OPAL_STRING))) {
-            ORTE_ERROR_LOG(rc);
-            goto SEND_ERROR;
-        }
-
-        /* unpack uniqueness flag */
-        count = 1;
-        if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &unique, &count, OPAL_BOOL))) {
-            ORTE_ERROR_LOG(rc);
-            goto SEND_ERROR;
-        }
-
-        OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
-                             "%s data server: publishing service %s port %s %s",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             service_name, port_name,
-                             unique ? "UNIQUE" : "OVERWRITE"));
-
-        /* check the current data store to see if this service name has already
-         * been published
-         */
-        if (NULL != (data = lookup(service_name))) {
-            /* already exists - see if overwrite allowed */
-            if (unique) {
-                /* return ORTE_EXISTS error code */
-
-                OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
-                                     "%s data server: publishing service %s port %s already exists",
-                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                     service_name, port_name));
-
-                ret = ORTE_EXISTS;
-            } else {
-                OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
-                                     "%s data server: overwriting service %s with port %s",
-                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                     service_name, port_name));
-                if (NULL != data->port) {
-                    free(data->port);
-                }
-                data->port = port_name;
-                data->owner.jobid = sender->jobid;
-                data->owner.vpid = sender->vpid;
-                ret = ORTE_SUCCESS;
-            }
-            if (ORTE_SUCCESS != (rc = opal_dss.pack(answer, &ret, 1, OPAL_INT))) {
-                ORTE_ERROR_LOG(rc);
-                /* if we can't pack it, we probably can't pack the
-                 * rc value either, so just send whatever is there
-                 */
-            }
-            goto SEND_ANSWER;
-
-        }
-
-        /* create a new data object */
+    case ORTE_PMIX_PUBLISH_CMD:
         data = OBJ_NEW(orte_data_object_t);
-
-        /* pass over the data values - these were malloc'd when unpacked,
-         * so we don't need to strdup them here
-         */
-        data->service = service_name;
-        data->port = port_name;
-        data->owner.jobid = sender->jobid;
-        data->owner.vpid = sender->vpid;
-
-        /* store the data */
-        data->index = opal_pointer_array_add(orte_data_server_store, data);
+        /* unpack the requestor */
+        count = 1;
+        if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &data->owner, &count, OPAL_NAME))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_RELEASE(data);
+            goto SEND_ERROR;
+        }
 
         OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
-                             "%s data server: successfully published service %s port %s",
+                             "%s data server: publishing data from %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             service_name, port_name));
+                             ORTE_NAME_PRINT(&data->owner)));
+
+        /* unpack the range */
+        count = 1;
+        if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &data->range, &count, OPAL_INT))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_RELEASE(data);
+            goto SEND_ERROR;
+        }
+        /* unpack the persistence */
+        count = 1;
+        if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &data->persistence, &count, OPAL_INT))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_RELEASE(data);
+            goto SEND_ERROR;
+        }
+
+        /* unpack the number of info elements */
+        count = 1;
+        if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &ninfo, &count, OPAL_UINT32))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_RELEASE(data);
+            goto SEND_ERROR;
+        }
+
+        if (0 < ninfo) {
+            for (i=0; i < ninfo; i++) {
+                count = 1;
+                if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &iptr, &count, OPAL_VALUE))) {
+                    ORTE_ERROR_LOG(rc);
+                    OBJ_RELEASE(data);
+                    goto SEND_ERROR;
+                }
+                /* if this is the userid, separate it out */
+                if (0 == strcmp(iptr->key, OPAL_PMIX_USERID)) {
+                    data->uid = iptr->data.uint32;
+                    OBJ_RELEASE(iptr);
+                } else {
+                    opal_list_append(&data->values, &iptr->super);
+                }
+            }
+        }
+
+        data->index = opal_pointer_array_add(&orte_data_server_store, data);
 
         /* tell the user it was wonderful... */
         ret = ORTE_SUCCESS;
         if (ORTE_SUCCESS != (rc = opal_dss.pack(answer, &ret, 1, OPAL_INT))) {
             ORTE_ERROR_LOG(rc);
             /* if we can't pack it, we probably can't pack the
-             * rc value either, so just send whatever is there
-             */
+             * rc value either, so just send whatever is there */
         }
         goto SEND_ANSWER;
         break;
 
-    case ORTE_DATA_SERVER_LOOKUP:
-        /* unpack the service name */
+    case ORTE_PMIX_LOOKUP_CMD:
+        OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
+                             "%s data server: lookup data from %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             ORTE_NAME_PRINT(sender)));
+
+        /* unpack the range - this sets some constraints on the range of data to be considered */
         count = 1;
-        if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &service_name, &count, OPAL_STRING))) {
+        if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &range, &count, OPAL_INT))) {
+            ORTE_ERROR_LOG(rc);
+            goto SEND_ERROR;
+        }
+
+        /* unpack the number of info elements */
+        count = 1;
+        if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &ninfo, &count, OPAL_UINT32))) {
+            ORTE_ERROR_LOG(rc);
+            goto SEND_ERROR;
+        }
+        if (0 < ninfo) {
+            for (i=0; i < ninfo; i++) {
+                count = 1;
+                if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &iptr, &count, OPAL_VALUE))) {
+                    ORTE_ERROR_LOG(rc);
+                    goto SEND_ERROR;
+                }
+                /* if this is the userid, separate it out */
+                if (0 == strcmp(iptr->key, OPAL_PMIX_USERID)) {
+                    uid = iptr->data.uint32;
+                }
+                /* ignore anything else for now */
+                OBJ_RELEASE(iptr);
+            }
+        }
+
+        /* unpack the number of keys */
+        count = 1;
+        if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &ninfo, &count, OPAL_UINT32))) {
+            ORTE_ERROR_LOG(rc);
+            goto SEND_ERROR;
+        }
+        if (0 == ninfo) {
+            /* they forgot to send us the keys?? */
+            rc = ORTE_ERR_BAD_PARAM;
+            goto SEND_ERROR;
+        }
+
+        /* unpack the keys */
+        for (i=0; i < ninfo; i++) {
+            count = 1;
+            if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &str, &count, OPAL_STRING))) {
+                ORTE_ERROR_LOG(rc);
+                opal_argv_free(keys);
+                goto SEND_ERROR;
+            }
+            opal_argv_append_nosize(&keys, str);
+            free(str);
+        }
+
+        /* cycle across the provided keys */
+        for (i=0; NULL != keys[i]; i++) {
+            /* cycle across the stored data, looking for a match */
+            for (k=0; k < orte_data_server_store.size; k++) {
+                data = (orte_data_object_t*)opal_pointer_array_get_item(&orte_data_server_store, k);
+                if (NULL == data) {
+                    continue;
+                }
+                /* can only access data posted by the same user id */
+                if (uid != data->uid) {
+                    continue;
+                }
+                /* if the range doesn't match, then we cannot consider it */
+                if (range != data->range) {
+                    continue;
+                }
+                /* see if we have this key */
+                OPAL_LIST_FOREACH(iptr, &data->values, opal_value_t) {
+                    if (0 == strcmp(iptr->key, keys[i])) {
+                        /* found it - package it for return */
+                        if (!ret_packed) {
+                            ret = ORTE_SUCCESS;
+                            if (ORTE_SUCCESS != (rc = opal_dss.pack(answer, &ret, 1, OPAL_INT))) {
+                                ORTE_ERROR_LOG(rc);
+                                opal_argv_free(keys);
+                                goto SEND_ERROR;
+                            }
+                            ret_packed = true;
+                        }
+                        if (ORTE_SUCCESS != (rc = opal_dss.pack(answer, &data->owner, 1, OPAL_NAME))) {
+                            ORTE_ERROR_LOG(rc);
+                            opal_argv_free(keys);
+                            goto SEND_ERROR;
+                        }
+                        if (ORTE_SUCCESS != (rc = opal_dss.pack(answer, &iptr, 1, OPAL_VALUE))) {
+                            ORTE_ERROR_LOG(rc);
+                            opal_argv_free(keys);
+                            goto SEND_ERROR;
+                        }
+                    }
+                }
+            }
+        }
+        opal_argv_free(keys);
+        if (!ret_packed) {
+            /* nothing was found - indicate that situation */
+            rc = ORTE_ERR_NOT_FOUND;
+            goto SEND_ERROR;
+        }
+        goto SEND_ANSWER;
+        break;
+
+    case ORTE_PMIX_UNPUBLISH_CMD:
+        /* unpack the requestor */
+        count = 1;
+        if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &requestor, &count, OPAL_NAME))) {
             ORTE_ERROR_LOG(rc);
             goto SEND_ERROR;
         }
 
         OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
-                             "%s data server: lookup on service %s",
+                             "%s data server: unpublish data from %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             service_name));
+                             ORTE_NAME_PRINT(&requestor)));
 
-        /* locate this record in the data store */
-        if (NULL == (data = lookup(service_name))) {
-
-            OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
-                                 "%s data server: service %s not found",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 service_name));
-
-            /* return ORTE_ERR_NOT_FOUND error code */
-            ret = ORTE_ERR_NOT_FOUND;
-            if (ORTE_SUCCESS != (rc = opal_dss.pack(answer, &ret, 1, OPAL_INT))) {
-                ORTE_ERROR_LOG(rc);
-                /* if we can't pack it, we probably can't pack the
-                 * rc value either, so just send whatever is there
-                 */
-            }
-            goto SEND_ANSWER;
-        }
-
-        OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
-                             "%s data server: successful lookup on service %s port %s",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             service_name, data->port));
-
-        /* pack success so the unpack on the other end can
-         * always unpack an int first
-         */
-        ret = ORTE_SUCCESS;
-        if (ORTE_SUCCESS != (rc = opal_dss.pack(answer, &ret, 1, OPAL_INT))) {
-            ORTE_ERROR_LOG(rc);
-            /* if we can't pack it, we probably can't pack the
-             * rc value either, so just send whatever is there
-             */
-            goto SEND_ANSWER;
-        }
-
-        /* pack the returned port */
-        if (ORTE_SUCCESS != (rc = opal_dss.pack(answer, &data->port, 1, OPAL_STRING))) {
-            ORTE_ERROR_LOG(rc);
-            /* if we can't pack it, we probably can't pack the
-             * rc value either, so just send whatever is there
-             */
-        }
-        goto SEND_ANSWER;
-        break;
-
-    case ORTE_DATA_SERVER_UNPUBLISH:
-        /* unpack the service name */
+        /* unpack the range - this sets some constraints on the range of data to be considered */
         count = 1;
-        if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &service_name, &count, OPAL_STRING))) {
+        if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &range, &count, OPAL_INT))) {
             ORTE_ERROR_LOG(rc);
             goto SEND_ERROR;
         }
 
-        OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
-                             "%s data server: unpublish on service %s",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             service_name));
-
-        /* locate this record in the data store */
-        if (NULL == (data = lookup(service_name))) {
-
-            OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
-                                 "%s data server: service %s not found",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 service_name));
-
-            /* return ORTE_ERR_NOT_FOUND error code */
-            ret = ORTE_ERR_NOT_FOUND;
-            if (ORTE_SUCCESS != (rc = opal_dss.pack(answer, &ret, 1, OPAL_INT))) {
-                ORTE_ERROR_LOG(rc);
-                /* if we can't pack it, we probably can't pack the
-                 * rc value either, so just send whatever is there
-                 */
+        /* unpack the number of info elements */
+        count = 1;
+        if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &ninfo, &count, OPAL_UINT32))) {
+            ORTE_ERROR_LOG(rc);
+            goto SEND_ERROR;
+        }
+        if (0 < ninfo) {
+            for (i=0; i < ninfo; i++) {
+                count = 1;
+                if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &iptr, &count, OPAL_VALUE))) {
+                    ORTE_ERROR_LOG(rc);
+                    goto SEND_ERROR;
+                }
+                /* if this is the userid, separate it out */
+                if (0 == strcmp(iptr->key, OPAL_PMIX_USERID)) {
+                    uid = iptr->data.uint32;
+                }
+                /* ignore anything else for now */
+                OBJ_RELEASE(iptr);
             }
-            goto SEND_ANSWER;
         }
 
-        /* check to see if the sender owns it - must be exact match */
-        if (OPAL_EQUAL != orte_util_compare_name_fields(ORTE_NS_CMP_ALL,
-                                                        &data->owner, sender)) {
-
-            OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
-                                 "%s data server: service %s not owned by sender %s",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 service_name, ORTE_NAME_PRINT(sender)));
-
-            /* nope - return ORTE_ERR_PERM error code */
-            ret = ORTE_ERR_PERM;
-            if (ORTE_SUCCESS != (rc = opal_dss.pack(answer, &ret, 1, OPAL_INT))) {
-                ORTE_ERROR_LOG(rc);
-                /* if we can't pack it, we probably can't pack the
-                 * rc value either, so just send whatever is there
-                 */
-            }
-            goto SEND_ANSWER;
+        /* unpack the number of keys */
+        count = 1;
+        if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &ninfo, &count, OPAL_UINT32))) {
+            ORTE_ERROR_LOG(rc);
+            goto SEND_ERROR;
+        }
+        if (0 == ninfo) {
+            /* they forgot to send us the keys?? */
+            rc = ORTE_ERR_BAD_PARAM;
+            goto SEND_ERROR;
         }
 
-        /* delete the object from the data store */
-        opal_pointer_array_set_item(orte_data_server_store, data->index, NULL);
-        OBJ_RELEASE(data);
+        /* unpack the keys */
+        for (i=0; i < ninfo; i++) {
+            count = 1;
+            if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &str, &count, OPAL_STRING))) {
+                ORTE_ERROR_LOG(rc);
+                opal_argv_free(keys);
+                goto SEND_ERROR;
+            }
+            opal_argv_append_nosize(&keys, str);
+            free(str);
+        }
 
-        OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
-                             "%s data server: service %s unpublished",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             service_name));
+        /* cycle across the provided keys */
+        for (i=0; NULL != keys[i]; i++) {
+            /* cycle across the stored data, looking for a match */
+            for (k=0; k < orte_data_server_store.size; k++) {
+                data = (orte_data_object_t*)opal_pointer_array_get_item(&orte_data_server_store, k);
+                if (NULL == data) {
+                    continue;
+                }
+                /* can only access data posted by the same user id */
+                if (uid != data->uid) {
+                    continue;
+                }
+                /* can only access data posted by the same process */
+                if (OPAL_EQUAL != orte_util_compare_name_fields(ORTE_NS_CMP_ALL, &data->owner, &requestor)) {
+                    continue;
+                }
+                /* can only access data posted for the same range */
+                if (range != data->range) {
+                    continue;
+                }
+                /* see if we have this key */
+                OPAL_LIST_FOREACH_SAFE(iptr, inext, &data->values, opal_value_t) {
+                    if (0 == strcmp(iptr->key, keys[i])) {
+                        /* found it -  delete the object from the data store */
+                        opal_list_remove_item(&data->values, &iptr->super);
+                        OBJ_RELEASE(iptr);
+                    }
+                }
+                /* if all the data has been removed, then remove the object */
+                if (0 == opal_list_get_size(&data->values)) {
+                    opal_pointer_array_set_item(&orte_data_server_store, k, NULL);
+                    OBJ_RELEASE(data);
+                }
+            }
+        }
+        opal_argv_free(keys);
 
         /* tell the sender this succeeded */
         ret = ORTE_SUCCESS;
         if (ORTE_SUCCESS != (rc = opal_dss.pack(answer, &ret, 1, OPAL_INT))) {
             ORTE_ERROR_LOG(rc);
-            /* if we can't pack it, we probably can't pack the
-             * rc value either, so just send whatever is there
-             */
         }
         goto SEND_ANSWER;
         break;
@@ -413,7 +469,8 @@ void orte_data_server(int status, orte_process_name_t* sender,
     }
 
  SEND_ANSWER:
-    if (0 > (rc = orte_rml.send_buffer_nb(sender, answer, ORTE_RML_TAG_DATA_CLIENT, rml_cbfunc, NULL))) {
+    if (0 > (rc = orte_rml.send_buffer_nb(sender, answer, ORTE_RML_TAG_DATA_CLIENT,
+                                          orte_rml_send_callback, NULL))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(answer);
     }

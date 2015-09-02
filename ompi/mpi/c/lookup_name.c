@@ -95,7 +95,7 @@ int MPI_Lookup_name(const char *service_name, MPI_Info info, char *port_name)
     /* collect the findings */
     OBJ_CONSTRUCT(&results, opal_list_t);
     pdat = OBJ_NEW(opal_pmix_pdata_t);
-    pdat->key = strdup(service_name);
+    pdat->value.key = strdup(service_name);
     opal_list_append(&results, &pdat->super);
 
     ret = opal_pmix.lookup(rng, &results);
