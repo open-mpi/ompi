@@ -126,6 +126,7 @@ static CUstream ipcStream = NULL;
 static CUstream dtohStream = NULL;
 static CUstream htodStream = NULL;
 static CUstream memcpyStream = NULL;
+static int mca_common_cuda_gpu_mem_check_workaround = (CUDA_VERSION > 7000) ? 0 : 1;
 static opal_mutex_t common_cuda_init_lock;
 static opal_mutex_t common_cuda_htod_lock;
 static opal_mutex_t common_cuda_dtoh_lock;
@@ -300,6 +301,13 @@ void mca_common_cuda_register_mca_variables(void)
                                  MCA_BASE_VAR_SCOPE_READONLY,
                                  &mca_common_cuda_cumemcpy_timing);
 #endif /* OPAL_ENABLE_DEBUG */
+
+    (void) mca_base_var_register("ompi", "mpi", "common_cuda", "gpu_mem_check_workaround",
+                                 "Set to 0 to disable GPU memory check workaround. A user would rarely have to do this.",
+                                 MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                 OPAL_INFO_LVL_9,
+                                 MCA_BASE_VAR_SCOPE_READONLY,
+                                 &mca_common_cuda_gpu_mem_check_workaround);
 }
 
 /**
@@ -773,6 +781,9 @@ static int mca_common_cuda_stage_three_init(void)
         opal_output_verbose(20, mca_common_cuda_output,
                             "CUDA: cuMemHostRegister OK on test region");
     }
+
+    opal_output_verbose(20, mca_common_cuda_output,
+                        "CUDA: the extra gpu memory check is %s", (mca_common_cuda_gpu_mem_check_workaround == 1) ? "on":"off");
 
     opal_output_verbose(30, mca_common_cuda_output,
                         "CUDA: initialized");
@@ -1832,7 +1843,7 @@ static int mca_common_cuda_is_gpu_buffer(const void *pUserBuf, opal_convertor_t 
      * made it this far, then the assumption at this point is we have GPU memory.
      * Unfotunately, this extra call is costing us another 100 ns almost doubling
      * the cost of this entire function. */
-    {
+    if (OPAL_LIKELY(mca_common_cuda_gpu_mem_check_workaround)) {
         CUdeviceptr pbase;
         size_t psize;
         res = cuFunc.cuMemGetAddressRange(&pbase, &psize, dbuf);
