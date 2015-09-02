@@ -102,6 +102,7 @@ void ompi_info_do_config(bool want_all)
     char *fortran_have_abstract;
     char *fortran_have_asynchronous;
     char *fortran_have_procedure;
+    char *fortran_have_use_only;
     char *fortran_have_c_funloc;
     char *fortran_08_using_wrappers_for_choice_buffer_functions;
     char *fortran_build_sizeof;
@@ -189,6 +190,7 @@ void ompi_info_do_config(bool want_all)
     fortran_have_abstract = OMPI_FORTRAN_HAVE_ABSTRACT ? "yes" : "no";
     fortran_have_asynchronous = OMPI_FORTRAN_HAVE_ASYNCHRONOUS ? "yes" : "no";
     fortran_have_procedure = OMPI_FORTRAN_HAVE_PROCEDURE ? "yes" : "no";
+    fortran_have_use_only = OMPI_FORTRAN_HAVE_USE_ONLY ? "yes" : "no";
     fortran_have_c_funloc = OMPI_FORTRAN_HAVE_C_FUNLOC ? "yes" : "no";
     fortran_08_using_wrappers_for_choice_buffer_functions = 
         OMPI_FORTRAN_NEED_WRAPPER_ROUTINES ? "yes" : "no";
@@ -207,6 +209,7 @@ void ompi_info_do_config(bool want_all)
             OMPI_FORTRAN_HAVE_ABSTRACT &&
             OMPI_FORTRAN_HAVE_ASYNCHRONOUS &&
             OMPI_FORTRAN_HAVE_PROCEDURE &&
+            OMPI_FORTRAN_HAVE_USE_ONLY &&
             OMPI_FORTRAN_HAVE_C_FUNLOC &&
             OMPI_FORTRAN_NEED_WRAPPER_ROUTINES) {
             fortran_usempif08_compliance = strdup("The mpi_f08 module is available, and is fully compliant.  w00t!");
@@ -230,6 +233,9 @@ void ompi_info_do_config(bool want_all)
             }
             if (!OMPI_FORTRAN_HAVE_PROCEDURE) {
                 append(f08, sizeof(f08), &first, "PROCEDUREs");
+            }
+            if (!OMPI_FORTRAN_HAVE_USE_ONLY) {
+                append(f08, sizeof(f08), &first, "USE_ONLY");
             }
             if (!OMPI_FORTRAN_HAVE_C_FUNLOC) {
                 append(f08, sizeof(f08), &first, "C_FUNLOCs");
@@ -433,6 +439,9 @@ void ompi_info_do_config(bool want_all)
     opal_info_out("Fort PROCEDURE", 
                   "compiler:fortran:procedure",
                   fortran_have_procedure);
+    opal_info_out("Fort USE...ONLY",
+                  "compiler:fortran:use_only",
+                  fortran_have_use_only);
     opal_info_out("Fort C_FUNLOC",
                   "compiler:fortran:c_funloc",
                   fortran_have_c_funloc);
