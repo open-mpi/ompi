@@ -94,6 +94,9 @@ mca_fcoll_static_file_read_all (mca_io_ompio_file_t *fh,
     ompi_datatype_t **sendtype = NULL;
     MPI_Request *send_req=NULL, recv_req=NULL;
     int my_aggregator=-1;
+    bool recvbuf_is_contiguous=false;
+    size_t ftype_size;
+    OPAL_PTRDIFF_TYPE ftype_extent, lb; 
 
 #if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
     double read_time = 0.0, start_read_time = 0.0, end_read_time = 0.0;
@@ -104,14 +107,21 @@ mca_fcoll_static_file_read_all (mca_io_ompio_file_t *fh,
 #if DEBUG_ON
     MPI_Aint gc_in;
 #endif
+    opal_datatype_type_size ( &datatype->super, &ftype_size );
+    opal_datatype_get_extent ( &datatype->super, &lb, &ftype_extent );
     
-//  if (opal_datatype_is_contiguous_memory_layout(&datatype->super,1)) {
-//   fh->f_flags |= OMPIO_CONTIGUOUS_MEMORY;
-//  }
+    /**************************************************************************
+     ** 1.  In case the data is not contigous in memory, decode it into an iovec
+     **************************************************************************/
+    if ( ( ftype_extent == (OPAL_PTRDIFF_TYPE) ftype_size)             && 
+         opal_datatype_is_contiguous_memory_layout(&datatype->super,1) && 
+         0 == lb ) {
+        recvbuf_is_contiguous = true;
+    }
     
     
     /* In case the data is not contigous in memory, decode it into an iovec */
-    if (! (fh->f_flags & OMPIO_CONTIGUOUS_MEMORY)) {
+    if (!recvbuf_is_contiguous  ) {
         fh->f_decode_datatype ( (struct mca_io_ompio_file_t *)fh,
                                 datatype,
                                 count,
@@ -507,7 +517,7 @@ mca_fcoll_static_file_read_all (mca_io_ompio_file_t *fh,
         rcomm_time  += end_rcomm_time - start_rcomm_time;
 #endif
 
-        if (fh->f_flags & OMPIO_CONTIGUOUS_MEMORY) {
+        if (recvbuf_is_contiguous ) {
             receive_buf = &((char*)buf)[position];
         }
         else if (bytes_to_read_in_cycle) {
@@ -867,7 +877,7 @@ mca_fcoll_static_file_read_all (mca_io_ompio_file_t *fh,
         
         position += bytes_to_read_in_cycle;
         
-        if (!(fh->f_flags & OMPIO_CONTIGUOUS_MEMORY)) {
+        if (!recvbuf_is_contiguous) {
             OPAL_PTRDIFF_TYPE mem_address;
             size_t remaining = 0;
             size_t temp_position = 0;
@@ -1017,9 +1027,11 @@ exit:
         sendtype=NULL;
     }
     
-    if (NULL != receive_buf){
-        free(receive_buf);
-        receive_buf=NULL;
+    if ( !recvbuf_is_contiguous ) {
+        if (NULL != receive_buf){
+            free(receive_buf);
+            receive_buf=NULL;
+        }
     }
     
     if (NULL != global_buf) {
