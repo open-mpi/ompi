@@ -713,7 +713,8 @@ mca_fcoll_dynamic_file_write_all (mca_io_ompio_file_t *fh,
             temp_disp_index = (int *)calloc (1, fh->f_procs_per_group * sizeof (int));
             if (NULL == temp_disp_index) {
                 opal_output (1, "OUT OF MEMORY\n");
-                return OMPI_ERR_OUT_OF_RESOURCE;
+                ret = OMPI_ERR_OUT_OF_RESOURCE;
+                goto exit;
             }
             
             /*Now update the displacements array  with memory offsets*/
@@ -815,7 +816,8 @@ mca_fcoll_dynamic_file_write_all (mca_io_ompio_file_t *fh,
             send_buf = malloc (bytes_sent);
             if (NULL == send_buf) {
                 opal_output (1, "OUT OF MEMORY\n");
-                return OMPI_ERR_OUT_OF_RESOURCE;
+                ret = OMPI_ERR_OUT_OF_RESOURCE;
+                goto exit;
             }
             
             remaining = bytes_sent;
