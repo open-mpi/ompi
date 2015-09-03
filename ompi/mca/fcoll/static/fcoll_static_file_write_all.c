@@ -11,7 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2008-2015 University of Houston. All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights reserved.
- *
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -58,7 +59,7 @@ int get_process_id (int rank,
 
 int
 mca_fcoll_static_file_write_all (mca_io_ompio_file_t *fh,
-                                 void *buf,
+                                 const void *buf,
                                  int count,
                                  struct ompi_datatype_t *datatype,
                                  ompi_status_public_t *status)

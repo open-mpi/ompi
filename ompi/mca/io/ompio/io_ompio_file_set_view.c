@@ -45,7 +45,7 @@ int mca_io_ompio_set_view_internal(mca_io_ompio_file_t *fh,
 				   OMPI_MPI_OFFSET_TYPE disp,
 				   ompi_datatype_t *etype,
 				   ompi_datatype_t *filetype,
-				   char *datarep,
+				   const char *datarep,
 				   ompi_info_t *info)
 {
 
@@ -185,7 +185,7 @@ int mca_io_ompio_file_set_view (ompi_file_t *fp,
                                 OMPI_MPI_OFFSET_TYPE disp,
                                 ompi_datatype_t *etype,
                                 ompi_datatype_t *filetype,
-                                char *datarep,
+                                const char *datarep,
                                 ompi_info_t *info)
 {
     int ret=OMPI_SUCCESS;

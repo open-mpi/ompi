@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2014 University of Houston. All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -56,7 +58,7 @@ int mca_fcoll_dynamic_file_read_all (mca_io_ompio_file_t *fh,
 
 
 int mca_fcoll_dynamic_file_write_all (mca_io_ompio_file_t *fh,
-                                      void *buf,
+                                      const void *buf,
                                       int count,
                                       struct ompi_datatype_t *datatype,
                                       ompi_status_public_t * status);
