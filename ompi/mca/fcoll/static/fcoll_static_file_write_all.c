@@ -92,6 +92,10 @@ mca_fcoll_static_file_write_all (mca_io_ompio_file_t *fh,
     ompi_datatype_t *types[3];
     ompi_datatype_t *io_array_type=MPI_DATATYPE_NULL;
     int my_aggregator=-1;
+    bool sendbuf_is_contiguous= false;
+    size_t ftype_size;
+    OPAL_PTRDIFF_TYPE ftype_extent, lb; 
+
 
     /*----------------------------------------------*/
 #if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
@@ -105,13 +109,22 @@ mca_fcoll_static_file_write_all (mca_io_ompio_file_t *fh,
 #if DEBUG_ON
     MPI_Aint gc_in;
 #endif
+
+    opal_datatype_type_size ( &datatype->super, &ftype_size );
+    opal_datatype_get_extent ( &datatype->super, &lb, &ftype_extent );
     
-//  if (opal_datatype_is_contiguous_memory_layout(&datatype->super,1)) {
-//    fh->f_flags |= OMPIO_CONTIGUOUS_MEMORY;
-//  }
+    /**************************************************************************
+     ** 1.  In case the data is not contigous in memory, decode it into an iovec
+     **************************************************************************/
+    if ( ( ftype_extent == (OPAL_PTRDIFF_TYPE) ftype_size)             && 
+         opal_datatype_is_contiguous_memory_layout(&datatype->super,1) && 
+         0 == lb ) {
+        sendbuf_is_contiguous = true;
+    }
+
     
     /* In case the data is not contigous in memory, decode it into an iovec */
-    if (! (fh->f_flags & OMPIO_CONTIGUOUS_MEMORY)) {
+    if (! sendbuf_is_contiguous ) {
         fh->f_decode_datatype ((struct mca_io_ompio_file_t *)fh,
                                datatype,
                                count,
@@ -767,7 +780,7 @@ mca_fcoll_static_file_write_all (mca_io_ompio_file_t *fh,
             }
         }
         
-        if (fh->f_flags & OMPIO_CONTIGUOUS_MEMORY) {
+        if ( sendbuf_is_contiguous ) {
             send_buf = &((char*)buf)[total_bytes_written];
         }
         else if (bytes_to_write_in_cycle) {
@@ -830,6 +843,12 @@ mca_fcoll_static_file_write_all (mca_io_ompio_file_t *fh,
         ret = ompi_request_wait (&send_req, MPI_STATUS_IGNORE);
         if (OMPI_SUCCESS != ret){
             goto exit;
+        }
+        if ( !sendbuf_is_contiguous ) {
+            if ( NULL != send_buf ) {
+                free ( send_buf );
+                send_buf = NULL;
+            }
         }
         
         if (my_aggregator == fh->f_rank) {
@@ -969,11 +988,13 @@ exit:
         free ( recv_req );
         recv_req = NULL;
     }
-    if (NULL != send_buf){
-        free(send_buf);
-        send_buf = NULL;
+    if ( !sendbuf_is_contiguous ) {
+        if (NULL != send_buf){
+            free(send_buf);
+            send_buf = NULL;
+        }
     }
-    
+
     if (NULL != global_buf){
         free(global_buf);
         global_buf = NULL;
