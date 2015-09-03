@@ -730,13 +730,6 @@ mca_fcoll_dynamic_file_read_all (mca_io_ompio_file_t *fh,
                 temp_disp_index = NULL;
             }
             
-            send_req = (MPI_Request *)
-                malloc (fh->f_procs_per_group * sizeof(MPI_Request));
-            if (NULL == send_req){
-                opal_output ( 1, "OUT OF MEMORY\n");
-                ret = OMPI_ERR_OUT_OF_RESOURCE;
-                goto exit;
-            }
 #if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
             start_rcomm_time = MPI_Wtime();
 #endif
@@ -965,7 +958,10 @@ exit:
             free(displs_per_process);
             displs_per_process = NULL;
         }
-        
+        if ( NULL != send_req ) {
+            free ( send_req );
+            send_req = NULL;
+        }
     }
     return ret;
 }
