@@ -38,12 +38,12 @@
 #include "mtl_ofi_endpoint.h"
 #include "mtl_ofi_compat.h"
 
-#define FI_RETRY_UNTIL_DONE(FUNC) \
-    do { \
-        do { \
-            ret = FUNC; \
+#define MTL_OFI_RETRY_UNTIL_DONE(FUNC)         \
+    do {                                       \
+        do {                                   \
+            ret = FUNC;                        \
             if(OPAL_LIKELY(0 == ret)) {break;} \
-        } while(-FI_EAGAIN == ret); \
+        } while(-FI_EAGAIN == ret);            \
     } while(0);
 
 BEGIN_C_DECLS
@@ -254,14 +254,14 @@ ompi_mtl_ofi_send_start(struct mca_mtl_base_module_t *mtl,
         ofi_req->completion_count = 2;
         MTL_OFI_SET_SEND_BITS(match_bits, comm->c_contextid,
                               comm->c_my_rank, tag, MTL_OFI_SYNC_SEND);
-        FI_RETRY_UNTIL_DONE(fi_trecv(ompi_mtl_ofi.ep,
-                                     NULL,
-                                     0,
-                                     NULL,
-                                     endpoint->peer_fiaddr,
-                                     match_bits | MTL_OFI_SYNC_SEND_ACK,
-                                     0, /* Exact match, no ignore bits */
-                                     (void *) &ack_req->ctx));
+        MTL_OFI_RETRY_UNTIL_DONE(fi_trecv(ompi_mtl_ofi.ep,
+                                          NULL,
+                                          0,
+                                          NULL,
+                                          endpoint->peer_fiaddr,
+                                          match_bits | MTL_OFI_SYNC_SEND_ACK,
+                                          0, /* Exact match, no ignore bits */
+                                          (void *) &ack_req->ctx));
         if (OPAL_UNLIKELY(0 > ret)) {
             opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                                 "%s:%d: fi_trecv failed: %s(%zd)",
@@ -275,11 +275,11 @@ ompi_mtl_ofi_send_start(struct mca_mtl_base_module_t *mtl,
     }
 
     if (ompi_mtl_ofi.max_inject_size >= length) {
-        FI_RETRY_UNTIL_DONE(fi_tinject(ompi_mtl_ofi.ep,
-                                       start,
-                                       length,
-                                       endpoint->peer_fiaddr,
-                                       match_bits));
+        MTL_OFI_RETRY_UNTIL_DONE(fi_tinject(ompi_mtl_ofi.ep,
+                                            start,
+                                            length,
+                                            endpoint->peer_fiaddr,
+                                            match_bits));
         if (OPAL_UNLIKELY(0 > ret)) {
             opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                                 "%s:%d: fi_tinject failed: %s(%zd)",
@@ -289,13 +289,13 @@ ompi_mtl_ofi_send_start(struct mca_mtl_base_module_t *mtl,
 
         ofi_req->event_callback(NULL,ofi_req);
     } else {
-        FI_RETRY_UNTIL_DONE(fi_tsend(ompi_mtl_ofi.ep,
-                                     start,
-                                     length,
-                                     NULL,
-                                     endpoint->peer_fiaddr,
-                                     match_bits,
-                                     (void *) &ofi_req->ctx));
+        MTL_OFI_RETRY_UNTIL_DONE(fi_tsend(ompi_mtl_ofi.ep,
+                                          start,
+                                          length,
+                                          NULL,
+                                          endpoint->peer_fiaddr,
+                                          match_bits,
+                                          (void *) &ofi_req->ctx));
         if (OPAL_UNLIKELY(0 > ret)) {
             opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                                 "%s:%d: fi_tsend failed: %s(%zd)",
@@ -463,13 +463,13 @@ ompi_mtl_ofi_recv_callback(struct fi_cq_tagged_entry *wc,
             endpoint = ompi_proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_MTL];
             ofi_req->remote_addr = endpoint->peer_fiaddr;
         }
-	    FI_RETRY_UNTIL_DONE(fi_tsend(ompi_mtl_ofi.ep,
-                                     NULL,
-                                     0,
-                                     NULL,
-                                     ofi_req->remote_addr,
-                                     wc->tag | MTL_OFI_SYNC_SEND_ACK,
-                                     (void *) &ofi_req->ctx));
+	    MTL_OFI_RETRY_UNTIL_DONE(fi_tsend(ompi_mtl_ofi.ep,
+                                          NULL,
+                                          0,
+                                          NULL,
+                                          ofi_req->remote_addr,
+                                          wc->tag | MTL_OFI_SYNC_SEND_ACK,
+                                          (void *) &ofi_req->ctx));
         if (OPAL_UNLIKELY(0 > ret)) {
             opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                                 "%s:%d: fi_tsend failed: %s(%zd)",
@@ -560,14 +560,14 @@ ompi_mtl_ofi_irecv(struct mca_mtl_base_module_t *mtl,
     ofi_req->remote_addr = remote_addr;
     ofi_req->match_bits = match_bits;
 
-    FI_RETRY_UNTIL_DONE(fi_trecv(ompi_mtl_ofi.ep,
-                                 start,
-                                 length,
-                                 NULL,
-                                 remote_addr,
-                                 match_bits,
-                                 mask_bits,
-                                 (void *)&ofi_req->ctx));
+    MTL_OFI_RETRY_UNTIL_DONE(fi_trecv(ompi_mtl_ofi.ep,
+                                      start,
+                                      length,
+                                      NULL,
+                                      remote_addr,
+                                      match_bits,
+                                      mask_bits,
+                                      (void *)&ofi_req->ctx));
     if (OPAL_UNLIKELY(0 > ret)) {
         if (NULL != ofi_req->buffer) {
             free(ofi_req->buffer);
@@ -680,7 +680,7 @@ ompi_mtl_ofi_imrecv(struct mca_mtl_base_module_t *mtl,
     msg.context = (void *)&ofi_req->ctx;
     msg.data = 0;
 
-    FI_RETRY_UNTIL_DONE(fi_trecvmsg(ompi_mtl_ofi.ep, &msg, msgflags));
+    MTL_OFI_RETRY_UNTIL_DONE(fi_trecvmsg(ompi_mtl_ofi.ep, &msg, msgflags));
     if (OPAL_UNLIKELY(0 > ret)) {
         opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                             "%s:%d: unexpected return code from fi_trecvmsg: %s(%zd)",
@@ -773,7 +773,7 @@ ompi_mtl_ofi_iprobe(struct mca_mtl_base_module_t *mtl,
     ofi_req.completion_count = 1;
     ofi_req.match_state = 0;
 
-    FI_RETRY_UNTIL_DONE(fi_trecvmsg(ompi_mtl_ofi.ep, &msg, msgflags));
+    MTL_OFI_RETRY_UNTIL_DONE(fi_trecvmsg(ompi_mtl_ofi.ep, &msg, msgflags));
     if (-FI_ENOMSG == ret) {
         /**
          * The search request completed but no matching message was found.
@@ -858,7 +858,7 @@ ompi_mtl_ofi_improbe(struct mca_mtl_base_module_t *mtl,
     ofi_req->completion_count = 1;
     ofi_req->match_state = 0;
 
-    FI_RETRY_UNTIL_DONE(fi_trecvmsg(ompi_mtl_ofi.ep, &msg, msgflags));
+    MTL_OFI_RETRY_UNTIL_DONE(fi_trecvmsg(ompi_mtl_ofi.ep, &msg, msgflags));
     if (-FI_ENOMSG == ret) {
         /**
          * The search request completed but no matching message was found.
