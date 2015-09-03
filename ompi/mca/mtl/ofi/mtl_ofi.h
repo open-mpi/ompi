@@ -32,7 +32,6 @@
 #include "ompi/mca/mtl/base/mtl_base_datatype.h"
 #include "ompi/message/message.h"
 
-#include "mtl_ofi.h"
 #include "mtl_ofi_types.h"
 #include "mtl_ofi_request.h"
 #include "mtl_ofi_endpoint.h"
@@ -85,7 +84,7 @@ ompi_mtl_ofi_progress(void)
                 ret = ofi_req->event_callback(&wc, ofi_req);
                 if (OMPI_SUCCESS != ret) {
                     opal_output(ompi_mtl_base_framework.framework_output,
-                                "Error returned by request event callback: %d",
+                                "Error returned by request event callback: %zd",
                                 ret);
                     abort();
                 }
@@ -100,7 +99,7 @@ ompi_mtl_ofi_progress(void)
                                 0);
             if (ret) {
                 opal_output(ompi_mtl_base_framework.framework_output,
-                            "Error returned from fi_cq_readerr: %d", ret);
+                            "Error returned from fi_cq_readerr: %zd", ret);
             }
 
             assert(error.op_context);
@@ -109,7 +108,7 @@ ompi_mtl_ofi_progress(void)
             ret = ofi_req->error_callback(&error, ofi_req);
             if (OMPI_SUCCESS != ret) {
                 opal_output(ompi_mtl_base_framework.framework_output,
-                        "Error returned by request error callback: %d",
+                        "Error returned by request error callback: %zd",
                         ret);
                 abort();
             }
@@ -683,7 +682,7 @@ ompi_mtl_ofi_imrecv(struct mca_mtl_base_module_t *mtl,
     MTL_OFI_RETRY_UNTIL_DONE(fi_trecvmsg(ompi_mtl_ofi.ep, &msg, msgflags));
     if (OPAL_UNLIKELY(0 > ret)) {
         opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
-                            "%s:%d: unexpected return code from fi_trecvmsg: %s(%zd)",
+                            "%s:%d: fi_trecvmsg failed: %s(%zd)",
                             __FILE__, __LINE__, fi_strerror(-ret), ret);
         return ompi_mtl_ofi_get_error(ret);
     }
