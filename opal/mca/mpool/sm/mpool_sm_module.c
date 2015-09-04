@@ -13,6 +13,7 @@
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2011-2014 NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2015      Intel, Inc. All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -91,9 +92,7 @@ void* mca_mpool_sm_alloc(
 
     if(mpool_sm->mem_node >= 0) {
         mseg.mbs_len = size;
-#if OPAL_HAVE_HWLOC
         opal_hwloc_base_membind(&mseg, 1, mpool_sm->mem_node);
-#endif
     }
 
     return mseg.mbs_start_addr;
@@ -116,9 +115,7 @@ void* mca_mpool_sm_realloc(
                                             registration);
     if(mpool_sm->mem_node >= 0) {
         mseg.mbs_len = size;
-#if OPAL_HAVE_HWLOC
         opal_hwloc_base_membind(&mseg, 1, mpool_sm->mem_node);
-#endif
     }
 
     return mseg.mbs_start_addr;

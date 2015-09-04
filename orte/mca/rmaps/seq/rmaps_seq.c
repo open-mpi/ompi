@@ -103,9 +103,7 @@ static int orte_rmaps_seq_map(orte_job_t *jdata)
     mca_base_component_t *c = &mca_rmaps_seq_component.base_version;
     char *hosts, *sep, *eptr;
     FILE *fp;
-#if OPAL_HAVE_HWLOC
     opal_hwloc_resource_type_t rtype;
-#endif
 
     OPAL_OUTPUT_VERBOSE((1, orte_rmaps_base_framework.framework_output,
                          "%s rmaps:seq called on job %s",
@@ -197,7 +195,6 @@ static int orte_rmaps_seq_map(orte_job_t *jdata)
         save = (seq_node_t*)opal_list_get_first(&default_seq_list);
     }
 
-#if OPAL_HAVE_HWLOC
     /* default to LOGICAL processors */
     if (orte_get_attribute(&jdata->attributes, ORTE_JOB_PHYSICAL_CPUIDS, NULL, OPAL_BOOL)) {
         opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
@@ -208,7 +205,6 @@ static int orte_rmaps_seq_map(orte_job_t *jdata)
                             "mca:rmaps:seq: using LOGICAL processors");
         rtype = OPAL_HWLOC_LOGICAL;
     }
-#endif
 
     /* initialize all the nodes as not included in this job map */
     for (j=0; j < orte_node_pool->size; j++) {
@@ -381,68 +377,64 @@ static int orte_rmaps_seq_map(orte_job_t *jdata)
                                 "mca:rmaps:seq: assign proc %s to node %s for app %s",
                                 ORTE_VPID_PRINT(proc->name.vpid), sq->hostname, app->app);
 
-#if OPAL_HAVE_HWLOC
-            {
-                /* record the cpuset, if given */
-                if (NULL != sq->cpuset) {
-                    hwloc_cpuset_t bitmap;
-                    char *cpu_bitmap;
-                    if (NULL == node->topology) {
-                        /* not allowed - for sequential cpusets, we must have
-                         * the topology info
-                         */
-                        orte_show_help("help-orte-rmaps-base.txt", "rmaps:no-topology", true, node->name);
-                        rc = ORTE_ERR_SILENT;
+            /* record the cpuset, if given */
+            if (NULL != sq->cpuset) {
+                hwloc_cpuset_t bitmap;
+                char *cpu_bitmap;
+                if (NULL == node->topology) {
+                    /* not allowed - for sequential cpusets, we must have
+                     * the topology info
+                     */
+                    orte_show_help("help-orte-rmaps-base.txt", "rmaps:no-topology", true, node->name);
+                    rc = ORTE_ERR_SILENT;
+                    goto error;
+                }
+                /* if we are using hwthreads as cpus and binding to hwthreads, then
+                 * we can just copy the cpuset across as it already specifies things
+                 * at that level */
+                if (opal_hwloc_use_hwthreads_as_cpus &&
+                    OPAL_BIND_TO_HWTHREAD == OPAL_GET_BINDING_POLICY(opal_hwloc_binding_policy)) {
+                    cpu_bitmap = strdup(sq->cpuset);
+                } else {
+                    /* setup the bitmap */
+                    bitmap = hwloc_bitmap_alloc();
+                    /* parse the slot_list to find the socket and core */
+                    if (ORTE_SUCCESS != (rc = opal_hwloc_base_slot_list_parse(sq->cpuset, node->topology, rtype, bitmap))) {
+                        ORTE_ERROR_LOG(rc);
+                        hwloc_bitmap_free(bitmap);
                         goto error;
                     }
-                    /* if we are using hwthreads as cpus and binding to hwthreads, then
-                     * we can just copy the cpuset across as it already specifies things
-                     * at that level */
-                    if (opal_hwloc_use_hwthreads_as_cpus &&
-                        OPAL_BIND_TO_HWTHREAD == OPAL_GET_BINDING_POLICY(opal_hwloc_binding_policy)) {
-                        cpu_bitmap = strdup(sq->cpuset);
-                    } else {
-                        /* setup the bitmap */
-                        bitmap = hwloc_bitmap_alloc();
-                        /* parse the slot_list to find the socket and core */
-                        if (ORTE_SUCCESS != (rc = opal_hwloc_base_slot_list_parse(sq->cpuset, node->topology, rtype, bitmap))) {
-                            ORTE_ERROR_LOG(rc);
-                            hwloc_bitmap_free(bitmap);
-                            goto error;
-                        }
-                        /* note that we cannot set the proc locale to any specific object
-                         * as the slot list may have assigned it to more than one - so
-                         * leave that field NULL
-                         */
-                        /* set the proc to the specified map */
-                        hwloc_bitmap_list_asprintf(&cpu_bitmap, bitmap);
-                        hwloc_bitmap_free(bitmap);
-                    }
-                    orte_set_attribute(&proc->attributes, ORTE_PROC_CPU_BITMAP, ORTE_ATTR_GLOBAL, cpu_bitmap, OPAL_STRING);
-                    opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
-                                        "mca:rmaps:seq: binding proc %s to cpuset %s bitmap %s",
-                                        ORTE_VPID_PRINT(proc->name.vpid), sq->cpuset, cpu_bitmap);
-                    /* we are going to bind to cpuset since the user is specifying the cpus */
-                    OPAL_SET_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_CPUSET);
-                    /* note that the user specified the mapping */
-                    ORTE_SET_MAPPING_POLICY(jdata->map->mapping, ORTE_MAPPING_BYUSER);
-                    ORTE_SET_MAPPING_DIRECTIVE(jdata->map->mapping, ORTE_MAPPING_GIVEN);
-                    /* cleanup */
-                    free(cpu_bitmap);
-                } else {
-                    hwloc_obj_t locale;
-
-                    /* assign the locale - okay for the topo to be null as
-                     * it just means it wasn't returned
+                    /* note that we cannot set the proc locale to any specific object
+                     * as the slot list may have assigned it to more than one - so
+                     * leave that field NULL
                      */
-                    if (NULL != node->topology) {
-                        locale = hwloc_get_root_obj(node->topology);
-                        orte_set_attribute(&proc->attributes, ORTE_PROC_HWLOC_LOCALE,
-                                           ORTE_ATTR_LOCAL, locale, OPAL_PTR);
-                    }
+                    /* set the proc to the specified map */
+                    hwloc_bitmap_list_asprintf(&cpu_bitmap, bitmap);
+                    hwloc_bitmap_free(bitmap);
+                }
+                orte_set_attribute(&proc->attributes, ORTE_PROC_CPU_BITMAP, ORTE_ATTR_GLOBAL, cpu_bitmap, OPAL_STRING);
+                opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
+                                    "mca:rmaps:seq: binding proc %s to cpuset %s bitmap %s",
+                                    ORTE_VPID_PRINT(proc->name.vpid), sq->cpuset, cpu_bitmap);
+                /* we are going to bind to cpuset since the user is specifying the cpus */
+                OPAL_SET_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_CPUSET);
+                /* note that the user specified the mapping */
+                ORTE_SET_MAPPING_POLICY(jdata->map->mapping, ORTE_MAPPING_BYUSER);
+                ORTE_SET_MAPPING_DIRECTIVE(jdata->map->mapping, ORTE_MAPPING_GIVEN);
+                /* cleanup */
+                free(cpu_bitmap);
+            } else {
+                hwloc_obj_t locale;
+
+                /* assign the locale - okay for the topo to be null as
+                 * it just means it wasn't returned
+                 */
+                if (NULL != node->topology) {
+                    locale = hwloc_get_root_obj(node->topology);
+                    orte_set_attribute(&proc->attributes, ORTE_PROC_HWLOC_LOCALE,
+                                       ORTE_ATTR_LOCAL, locale, OPAL_PTR);
                 }
             }
-#endif
 
             /* add to the jdata proc array */
             if (ORTE_SUCCESS != (rc = opal_pointer_array_set_item(jdata->procs, proc->name.vpid, proc))) {

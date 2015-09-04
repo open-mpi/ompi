@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2013      Intel, Inc. All rights reserved.
+ * Copyright (c) 2013-2015 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  *
@@ -128,7 +128,6 @@ typedef struct {
 } opal_hwloc_base_memory_segment_t;
 
 /* include implementation to call */
-#if OPAL_HAVE_HWLOC
 #include MCA_hwloc_IMPLEMENTATION_HEADER
 
 /* define type of processor info requested */
@@ -218,8 +217,6 @@ OPAL_DECLSPEC extern hwloc_cpuset_t opal_hwloc_my_cpuset;
 OPAL_DECLSPEC extern bool opal_hwloc_report_bindings;
 OPAL_DECLSPEC extern hwloc_obj_type_t opal_hwloc_levels[];
 OPAL_DECLSPEC extern bool opal_hwloc_use_hwthreads_as_cpus;
-
-#endif
 
 END_C_DECLS
 

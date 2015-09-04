@@ -36,7 +36,6 @@
  * Globals
  */
 bool opal_hwloc_base_inited = false;
-#if OPAL_HAVE_HWLOC
 hwloc_topology_t opal_hwloc_topology=NULL;
 hwloc_cpuset_t opal_hwloc_my_cpuset=NULL;
 hwloc_cpuset_t opal_hwloc_base_given_cpus=NULL;
@@ -58,9 +57,7 @@ hwloc_obj_type_t opal_hwloc_levels[] = {
 };
 bool opal_hwloc_use_hwthreads_as_cpus = false;
 char *opal_hwloc_base_topo_file = NULL;
-#endif
 
-#if OPAL_HAVE_HWLOC
 static mca_base_var_enum_value_t hwloc_base_map[] = {
     {OPAL_HWLOC_BASE_MAP_NONE, "none"},
     {OPAL_HWLOC_BASE_MAP_LOCAL_ONLY, "local_only"},
@@ -73,7 +70,6 @@ static mca_base_var_enum_value_t hwloc_failure_action[] = {
     {OPAL_HWLOC_BASE_MBFA_ERROR, "error"},
     {0, NULL}
 };
-#endif
 
 static int opal_hwloc_base_register(mca_base_register_flag_t flags);
 static int opal_hwloc_base_open(mca_base_open_flag_t flags);
@@ -82,15 +78,12 @@ static int opal_hwloc_base_close(void);
 MCA_BASE_FRAMEWORK_DECLARE(opal, hwloc, NULL, opal_hwloc_base_register, opal_hwloc_base_open, opal_hwloc_base_close,
                            mca_hwloc_base_static_components, 0);
 
-#if OPAL_HAVE_HWLOC
 static char *opal_hwloc_base_binding_policy = NULL;
 static bool opal_hwloc_base_bind_to_core = false;
 static bool opal_hwloc_base_bind_to_socket = false;
-#endif
 
 static int opal_hwloc_base_register(mca_base_register_flag_t flags)
 {
-#if OPAL_HAVE_HWLOC
     mca_base_var_enum_t *new_enum;
     int ret;
 
@@ -172,142 +165,132 @@ static int opal_hwloc_base_register(mca_base_register_flag_t flags)
                                  MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, OPAL_INFO_LVL_9,
                                  MCA_BASE_VAR_SCOPE_READONLY, &opal_hwloc_base_topo_file);
 
-#endif
     /* register parameters */
     return OPAL_SUCCESS;
 }
 
 static int opal_hwloc_base_open(mca_base_open_flag_t flags)
 {
+    int rc;
+    opal_data_type_t tmp;
+
     if (opal_hwloc_base_inited) {
         return OPAL_SUCCESS;
     }
     opal_hwloc_base_inited = true;
 
-#if OPAL_HAVE_HWLOC
-    {
-        int rc;
-        opal_data_type_t tmp;
+    if (OPAL_SUCCESS != (rc = opal_hwloc_base_set_binding_policy(&opal_hwloc_binding_policy,
+                                                                 opal_hwloc_base_binding_policy))) {
+        return rc;
+    }
 
-        if (OPAL_SUCCESS != (rc = opal_hwloc_base_set_binding_policy(&opal_hwloc_binding_policy,
-                                                                     opal_hwloc_base_binding_policy))) {
-            return rc;
+    if (opal_hwloc_base_bind_to_core) {
+        opal_show_help("help-opal-hwloc-base.txt", "deprecated", true,
+                       "--bind-to-core", "--bind-to core",
+                       "hwloc_base_bind_to_core", "hwloc_base_binding_policy=core");
+        /* set binding policy to core - error if something else already set */
+        if (OPAL_BINDING_POLICY_IS_SET(opal_hwloc_binding_policy) &&
+            OPAL_GET_BINDING_POLICY(opal_hwloc_binding_policy) != OPAL_BIND_TO_CORE) {
+            /* error - cannot redefine the default ranking policy */
+            opal_show_help("help-opal-hwloc-base.txt", "redefining-policy", true,
+                           "core", opal_hwloc_base_print_binding(opal_hwloc_binding_policy));
+            return OPAL_ERR_BAD_PARAM;
         }
+        OPAL_SET_BINDING_POLICY(opal_hwloc_binding_policy, OPAL_BIND_TO_CORE);
+    }
 
-        if (opal_hwloc_base_bind_to_core) {
-            opal_show_help("help-opal-hwloc-base.txt", "deprecated", true,
-                           "--bind-to-core", "--bind-to core",
-                           "hwloc_base_bind_to_core", "hwloc_base_binding_policy=core");
-            /* set binding policy to core - error if something else already set */
-            if (OPAL_BINDING_POLICY_IS_SET(opal_hwloc_binding_policy) &&
-                OPAL_GET_BINDING_POLICY(opal_hwloc_binding_policy) != OPAL_BIND_TO_CORE) {
-                /* error - cannot redefine the default ranking policy */
-                opal_show_help("help-opal-hwloc-base.txt", "redefining-policy", true,
-                               "core", opal_hwloc_base_print_binding(opal_hwloc_binding_policy));
-                return OPAL_ERR_BAD_PARAM;
-            }
-            OPAL_SET_BINDING_POLICY(opal_hwloc_binding_policy, OPAL_BIND_TO_CORE);
+    if (opal_hwloc_base_bind_to_socket) {
+        opal_show_help("help-opal-hwloc-base.txt", "deprecated", true,
+                       "--bind-to-socket", "--bind-to socket",
+                       "hwloc_base_bind_to_socket", "hwloc_base_binding_policy=socket");
+        /* set binding policy to socket - error if something else already set */
+        if (OPAL_BINDING_POLICY_IS_SET(opal_hwloc_binding_policy) &&
+            OPAL_GET_BINDING_POLICY(opal_hwloc_binding_policy) != OPAL_BIND_TO_SOCKET) {
+            /* error - cannot redefine the default ranking policy */
+            opal_show_help("help-opal-hwloc-base.txt", "redefining-policy", true,
+                           "socket", opal_hwloc_base_print_binding(opal_hwloc_binding_policy));
+            return OPAL_ERR_SILENT;
         }
+        OPAL_SET_BINDING_POLICY(opal_hwloc_binding_policy, OPAL_BIND_TO_SOCKET);
+    }
 
-        if (opal_hwloc_base_bind_to_socket) {
-            opal_show_help("help-opal-hwloc-base.txt", "deprecated", true,
-                           "--bind-to-socket", "--bind-to socket",
-                           "hwloc_base_bind_to_socket", "hwloc_base_binding_policy=socket");
-            /* set binding policy to socket - error if something else already set */
-            if (OPAL_BINDING_POLICY_IS_SET(opal_hwloc_binding_policy) &&
-                OPAL_GET_BINDING_POLICY(opal_hwloc_binding_policy) != OPAL_BIND_TO_SOCKET) {
-                /* error - cannot redefine the default ranking policy */
-                opal_show_help("help-opal-hwloc-base.txt", "redefining-policy", true,
-                               "socket", opal_hwloc_base_print_binding(opal_hwloc_binding_policy));
-                return OPAL_ERR_SILENT;
-            }
-            OPAL_SET_BINDING_POLICY(opal_hwloc_binding_policy, OPAL_BIND_TO_SOCKET);
+    /* did the user provide a slot list? */
+    if (NULL != opal_hwloc_base_slot_list) {
+        /* if we already were given a policy, then this is an error */
+        if (OPAL_BINDING_POLICY_IS_SET(opal_hwloc_binding_policy)) {
+            opal_show_help("help-opal-hwloc-base.txt", "redefining-policy", true,
+                           "socket", opal_hwloc_base_print_binding(opal_hwloc_binding_policy));
+            return OPAL_ERR_SILENT;
         }
+        OPAL_SET_BINDING_POLICY(opal_hwloc_binding_policy, OPAL_BIND_TO_CPUSET);
+    }
 
-        /* did the user provide a slot list? */
-        if (NULL != opal_hwloc_base_slot_list) {
-            /* if we already were given a policy, then this is an error */
-            if (OPAL_BINDING_POLICY_IS_SET(opal_hwloc_binding_policy)) {
-                opal_show_help("help-opal-hwloc-base.txt", "redefining-policy", true,
-                               "socket", opal_hwloc_base_print_binding(opal_hwloc_binding_policy));
-                return OPAL_ERR_SILENT;
-            }
+    /* cpu allocation specification */
+    if (NULL != opal_hwloc_base_cpu_set) {
+        if (!OPAL_BINDING_POLICY_IS_SET(opal_hwloc_binding_policy)) {
+            /* it is okay if a binding policy was already given - just ensure that
+             * we do bind to the given cpus if provided, otherwise this would be
+             * ignored if someone didn't also specify a binding policy
+             */
             OPAL_SET_BINDING_POLICY(opal_hwloc_binding_policy, OPAL_BIND_TO_CPUSET);
         }
-
-        /* cpu allocation specification */
-        if (NULL != opal_hwloc_base_cpu_set) {
-            if (!OPAL_BINDING_POLICY_IS_SET(opal_hwloc_binding_policy)) {
-                /* it is okay if a binding policy was already given - just ensure that
-                 * we do bind to the given cpus if provided, otherwise this would be
-                 * ignored if someone didn't also specify a binding policy
-                 */
-                OPAL_SET_BINDING_POLICY(opal_hwloc_binding_policy, OPAL_BIND_TO_CPUSET);
-            }
-        }
-
-        /* if we are binding to hwthreads, then we must use hwthreads as cpus */
-        if (OPAL_GET_BINDING_POLICY(opal_hwloc_binding_policy) == OPAL_BIND_TO_HWTHREAD) {
-            opal_hwloc_use_hwthreads_as_cpus = true;
-        }
-
-        /* to support tools such as ompi_info, add the components
-         * to a list
-         */
-        if (OPAL_SUCCESS !=
-            mca_base_framework_components_open(&opal_hwloc_base_framework, flags)) {
-            return OPAL_ERROR;
-        }
-
-        /* declare the hwloc data types */
-        tmp = OPAL_HWLOC_TOPO;
-        if (OPAL_SUCCESS != (rc = opal_dss.register_type(opal_hwloc_pack,
-                                                         opal_hwloc_unpack,
-                                                         (opal_dss_copy_fn_t)opal_hwloc_copy,
-                                                         (opal_dss_compare_fn_t)opal_hwloc_compare,
-                                                         (opal_dss_print_fn_t)opal_hwloc_print,
-                                                         OPAL_DSS_STRUCTURED,
-                                                         "OPAL_HWLOC_TOPO", &tmp))) {
-            return rc;
-        }
     }
-#endif
+
+    /* if we are binding to hwthreads, then we must use hwthreads as cpus */
+    if (OPAL_GET_BINDING_POLICY(opal_hwloc_binding_policy) == OPAL_BIND_TO_HWTHREAD) {
+        opal_hwloc_use_hwthreads_as_cpus = true;
+    }
+
+    /* to support tools such as ompi_info, add the components
+     * to a list
+     */
+    if (OPAL_SUCCESS !=
+        mca_base_framework_components_open(&opal_hwloc_base_framework, flags)) {
+        return OPAL_ERROR;
+    }
+
+    /* declare the hwloc data types */
+    tmp = OPAL_HWLOC_TOPO;
+    if (OPAL_SUCCESS != (rc = opal_dss.register_type(opal_hwloc_pack,
+                                                     opal_hwloc_unpack,
+                                                     (opal_dss_copy_fn_t)opal_hwloc_copy,
+                                                     (opal_dss_compare_fn_t)opal_hwloc_compare,
+                                                     (opal_dss_print_fn_t)opal_hwloc_print,
+                                                     OPAL_DSS_STRUCTURED,
+                                                     "OPAL_HWLOC_TOPO", &tmp))) {
+        return rc;
+    }
 
     return OPAL_SUCCESS;
 }
 
 static int opal_hwloc_base_close(void)
 {
+    int ret;
     if (!opal_hwloc_base_inited) {
         return OPAL_SUCCESS;
     }
 
-#if OPAL_HAVE_HWLOC
-    {
-        int ret;
+    /* no need to close the component as it was statically opened */
 
-        /* no need to close the component as it was statically opened */
-
-        /* for support of tools such as ompi_info */
-        ret = mca_base_framework_components_close (&opal_hwloc_base_framework, NULL);
-        if (OPAL_SUCCESS != ret) {
-            return ret;
-        }
-
-        /* free memory */
-        if (NULL != opal_hwloc_my_cpuset) {
-            hwloc_bitmap_free(opal_hwloc_my_cpuset);
-            opal_hwloc_my_cpuset = NULL;
-        }
-
-        /* destroy the topology */
-        if (NULL != opal_hwloc_topology) {
-            opal_hwloc_base_free_topology(opal_hwloc_topology);
-            opal_hwloc_topology = NULL;
-        }
-
+    /* for support of tools such as ompi_info */
+    ret = mca_base_framework_components_close (&opal_hwloc_base_framework, NULL);
+    if (OPAL_SUCCESS != ret) {
+        return ret;
     }
-#endif
+
+    /* free memory */
+    if (NULL != opal_hwloc_my_cpuset) {
+        hwloc_bitmap_free(opal_hwloc_my_cpuset);
+        opal_hwloc_my_cpuset = NULL;
+    }
+
+    /* destroy the topology */
+    if (NULL != opal_hwloc_topology) {
+        opal_hwloc_base_free_topology(opal_hwloc_topology);
+        opal_hwloc_topology = NULL;
+    }
+
 
     /* All done */
     opal_hwloc_base_inited = false;
@@ -445,7 +428,6 @@ char* opal_hwloc_base_print_locality(opal_hwloc_locality_t locality)
     return ptr->buffers[ptr->cntr];
 }
 
-#if OPAL_HAVE_HWLOC
 static void obj_data_const(opal_hwloc_obj_data_t *ptr)
 {
     ptr->available = NULL;
@@ -586,4 +568,3 @@ int opal_hwloc_base_set_binding_policy(opal_binding_policy_t *policy, char *spec
     *policy = tmp;
     return OPAL_SUCCESS;
 }
-#endif

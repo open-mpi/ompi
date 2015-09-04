@@ -12,7 +12,7 @@
  * Copyright (c) 2006-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -146,7 +146,6 @@ static int orte_rmaps_rr_map(orte_job_t *jdata)
         } else if (ORTE_MAPPING_BYSLOT == ORTE_GET_MAPPING_POLICY(jdata->map->mapping)) {
             rc = orte_rmaps_rr_byslot(jdata, app, &node_list, num_slots,
                                       app->num_procs);
-#if OPAL_HAVE_HWLOC
         } else if (ORTE_MAPPING_BYHWTHREAD == ORTE_GET_MAPPING_POLICY(jdata->map->mapping)) {
             rc = orte_rmaps_rr_byobj(jdata, app, &node_list, num_slots,
                                      app->num_procs, HWLOC_OBJ_PU, 0);
@@ -231,7 +230,6 @@ static int orte_rmaps_rr_map(orte_job_t *jdata)
                 rc = orte_rmaps_rr_byslot(jdata, app, &node_list, num_slots,
                                           app->num_procs);
             }
-#endif
         } else {
             /* unrecognized mapping directive */
             orte_show_help("help-orte-rmaps-base.txt", "unrecognized-policy",

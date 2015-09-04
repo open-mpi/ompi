@@ -584,7 +584,6 @@ static int cray_fence(opal_list_t *procs, int collect_data)
                         "%s pmix:cray kvs_fence complete",
                         OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
 
-#if OPAL_HAVE_HWLOC
     /* fetch my cpuset */
     OBJ_CONSTRUCT(&vals, opal_list_t);
     if (OPAL_SUCCESS == (rc = opal_pmix_base_fetch(&pmix_pname,
@@ -595,7 +594,6 @@ static int cray_fence(opal_list_t *procs, int collect_data)
         cpuset = NULL;
     }
     OPAL_LIST_DESTRUCT(&vals);
-#endif
 
     /* we only need to set locality for each local rank as "not found"
      * equates to "non-local" */
@@ -607,7 +605,6 @@ static int cray_fence(opal_list_t *procs, int collect_data)
                                 OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
                                 OPAL_NAME_PRINT(id));
         /* fetch cpuset for this vpid */
-#if OPAL_HAVE_HWLOC
         OBJ_CONSTRUCT(&vals, opal_list_t);
         if (OPAL_SUCCESS != (rc = opal_pmix_base_fetch(&id,
                                                     OPAL_PMIX_CPUSET, &vals))) {
@@ -634,10 +631,6 @@ static int cray_fence(opal_list_t *procs, int collect_data)
             }
             OPAL_LIST_DESTRUCT(&vals);
         }
-#else
-        /* all we know is we share a node */
-        locality = OPAL_PROC_ON_CLUSTER | OPAL_PROC_ON_CU | OPAL_PROC_ON_NODE;
-#endif
         OPAL_OUTPUT_VERBOSE((1, opal_pmix_base_framework.framework_output,
                              "%s pmix:cray proc %s locality %s",
                              OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
@@ -653,11 +646,9 @@ static int cray_fence(opal_list_t *procs, int collect_data)
     }
 
 fn_exit:
-#if OPAL_HAVE_HWLOC
     if (NULL != cpuset) {
         free(cpuset);
     }
-#endif
     if (all_lens != NULL) {
         free(all_lens);
     }

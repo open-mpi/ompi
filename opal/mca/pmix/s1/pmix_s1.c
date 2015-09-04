@@ -557,7 +557,6 @@ static int s1_fence(opal_list_t *procs, int collect_data)
                 OPAL_ERROR_LOG(rc);
                 return rc;
             }
-#if OPAL_HAVE_HWLOC
             if (NULL == kp || NULL == kp->data.string) {
                 /* if we share a node, but we don't know anything more, then
                  * mark us as on the node as this is all we know
@@ -572,10 +571,6 @@ static int s1_fence(opal_list_t *procs, int collect_data)
             if (NULL != kp) {
                 OBJ_RELEASE(kp);
             }
-#else
-            /* all we know is we share a node */
-            locality = OPAL_PROC_ON_CLUSTER | OPAL_PROC_ON_CU | OPAL_PROC_ON_NODE;
-#endif
             OPAL_OUTPUT_VERBOSE((1, opal_pmix_base_framework.framework_output,
                                  "%s pmix:s1 proc %s locality %s",
                                  OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),

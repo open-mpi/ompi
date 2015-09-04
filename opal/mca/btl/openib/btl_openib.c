@@ -17,7 +17,7 @@
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
  * Copyright (c) 2008-2012 Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2009      IBM Corporation.  All rights reserved.
- * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
+ * Copyright (c) 2013-2015 Intel, Inc. All rights reserved
  * Copyright (c) 2013-2015 NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -84,9 +84,7 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
-#ifdef OPAL_HAVE_HWLOC
 #include "opal/mca/hwloc/hwloc.h"
-#endif
 
 #ifndef MIN
 #define MIN(a,b) ((a)<(b)?(a):(b))

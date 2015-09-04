@@ -769,7 +769,6 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
                 opal_list_append(&job_info, &info->super);
             }
 
-#if OPAL_HAVE_HWLOC
             /* check for 'bind_to' - job-level key */
             ompi_info_get(array_of_info[i], "bind_to", sizeof(slot_list) - 1, slot_list, &flag);
             if ( flag ) {
@@ -778,7 +777,6 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
                 opal_value_load(info, slot_list, OPAL_STRING);
                 opal_list_append(&job_info, &info->super);
             }
-#endif
 
             /* check for 'preload_binary' - job-level key */
             ompi_info_get_bool(array_of_info[i], "ompi_preload_binary", &local_spawn, &flag);

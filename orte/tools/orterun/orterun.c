@@ -365,7 +365,6 @@ static opal_cmd_line_init_t cmd_line_init[] = {
         NULL, OPAL_CMD_LINE_TYPE_INT,
         "Launch n processes per node on all allocated nodes (synonym for npernode)" },
 
-#if OPAL_HAVE_HWLOC
     /* declare hardware threads as independent cpus */
     { "hwloc_base_use_hwthreads_as_cpus", '\0', "use-hwthread-cpus", "use-hwthread-cpus", 0,
       NULL, OPAL_CMD_LINE_TYPE_BOOL,
@@ -412,17 +411,6 @@ static opal_cmd_line_init_t cmd_line_init[] = {
     { "rmaps_ppr_pattern", '\0', NULL, "ppr", 1,
         NULL, OPAL_CMD_LINE_TYPE_STRING,
         "Comma-separated list of number of processes on a given resource type [default: none]" },
-#else
-    /* Mapping options */
-    { "rmaps_base_mapping_policy", '\0', NULL, "map-by", 1,
-      NULL, OPAL_CMD_LINE_TYPE_STRING,
-      "Mapping Policy [slot (default) | node]" },
-
-      /* Ranking options */
-    { "rmaps_base_ranking_policy", '\0', NULL, "rank-by", 1,
-      NULL, OPAL_CMD_LINE_TYPE_STRING,
-      "Ranking Policy [slot (default) | node]" },
-#endif
 
     /* Allocation options */
     { "orte_display_alloc", '\0', "display-allocation", "display-allocation", 0,
@@ -431,11 +419,9 @@ static opal_cmd_line_init_t cmd_line_init[] = {
     { "orte_display_devel_alloc", '\0', "display-devel-allocation", "display-devel-allocation", 0,
       NULL, OPAL_CMD_LINE_TYPE_BOOL,
       "Display a detailed list (mostly intended for developers) of the allocation being used by this job"},
-#if OPAL_HAVE_HWLOC
     { "hwloc_base_cpu_set", '\0', "cpu-set", "cpu-set", 1,
       NULL, OPAL_CMD_LINE_TYPE_STRING,
       "Comma-separated list of ranges specifying logical cpus allocated to this job [default: none]"},
-#endif
     { NULL, 'H', "host", "host", 1,
       NULL, OPAL_CMD_LINE_TYPE_STRING,
       "List of hosts to invoke processes on" },
@@ -516,11 +502,9 @@ static opal_cmd_line_init_t cmd_line_init[] = {
       NULL, OPAL_CMD_LINE_TYPE_INT,
       "Max number of times to restart a failed process" },
 
-#if OPAL_HAVE_HWLOC
     { "orte_hetero_nodes", '\0', NULL, "hetero-nodes", 0,
       NULL, OPAL_CMD_LINE_TYPE_BOOL,
       "Nodes in cluster may differ in topology, so send the topology back from each node [Default = false]" },
-#endif
 
 #if OPAL_ENABLE_CRDEBUG == 1
     { "opal_cr_enable_crdebug", '\0', "crdebug", "crdebug", 0,

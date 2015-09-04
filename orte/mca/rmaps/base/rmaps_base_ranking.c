@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -48,7 +48,6 @@
 #include "orte/mca/rmaps/base/rmaps_private.h"
 #include "orte/mca/rmaps/base/base.h"
 
-#if OPAL_HAVE_HWLOC
 static int rank_span(orte_job_t *jdata,
                      orte_app_context_t *app,
                      opal_list_t *nodes,
@@ -421,7 +420,6 @@ static int rank_by(orte_job_t *jdata,
 
     return ORTE_SUCCESS;
 }
-#endif
 
 int orte_rmaps_base_compute_vpids(orte_job_t *jdata,
                                   orte_app_context_t *app,
@@ -443,7 +441,6 @@ int orte_rmaps_base_compute_vpids(orte_job_t *jdata,
      * However, if this was the default ranking policy (as opposed to
      * something given by the user), then fall back to rank-by slot
      */
-#if OPAL_HAVE_HWLOC
     if (ORTE_RANK_BY_NUMA == ORTE_GET_RANKING_POLICY(map->ranking)) {
         opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                             "mca:rmaps: computing ranks by NUMA for job %s",
@@ -548,7 +545,6 @@ int orte_rmaps_base_compute_vpids(orte_job_t *jdata,
         }
         return rc;
     }
-#endif
 
     if (ORTE_RANK_BY_NODE == ORTE_GET_RANKING_POLICY(map->ranking) ||
         ORTE_RANK_BY_BOARD == ORTE_GET_RANKING_POLICY(map->ranking)) {
@@ -611,9 +607,7 @@ int orte_rmaps_base_compute_vpids(orte_job_t *jdata,
         return ORTE_SUCCESS;
     }
 
-#if OPAL_HAVE_HWLOC
  rankbyslot:
-#endif
     if (ORTE_RANK_BY_SLOT == ORTE_GET_RANKING_POLICY(map->ranking)) {
         /* assign the ranks sequentially */
         opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
