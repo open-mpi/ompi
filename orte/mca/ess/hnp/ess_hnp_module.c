@@ -139,6 +139,10 @@ static int rte_init(void)
     orte_proc_t *proc;
     orte_app_context_t *app;
     char **aliases, *aptr;
+    char *coprocessors, **sns;
+    uint32_t h;
+    int idx;
+    orte_topology_t *t;
 
     /* run the prolog */
     if (ORTE_SUCCESS != (ret = orte_ess_base_std_prolog())) {
@@ -188,24 +192,21 @@ static int rte_init(void)
     setup_sighandler(SIGCONT, &sigcont_handler, signal_forward_callback);
     signals_set = true;
 
-#if OPAL_HAVE_HWLOC
-    {
-        /* get the local topology */
-        if (NULL == opal_hwloc_topology) {
-            if (OPAL_SUCCESS != (ret = opal_hwloc_base_get_topology())) {
-                error = "topology discovery";
-                goto error;
-            }
-        }
-        /* generate the signature */
-        orte_topo_signature = opal_hwloc_base_get_topo_signature(opal_hwloc_topology);
-
-        if (15 < opal_output_get_verbosity(orte_ess_base_framework.framework_output)) {
-            opal_output(0, "%s Topology Info:", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-            opal_dss.dump(0, opal_hwloc_topology, OPAL_HWLOC_TOPO);
+    /* get the local topology */
+    if (NULL == opal_hwloc_topology) {
+        if (OPAL_SUCCESS != (ret = opal_hwloc_base_get_topology())) {
+            error = "topology discovery";
+            goto error;
         }
     }
-#endif
+    /* generate the signature */
+    orte_topo_signature = opal_hwloc_base_get_topo_signature(opal_hwloc_topology);
+
+    if (15 < opal_output_get_verbosity(orte_ess_base_framework.framework_output)) {
+        opal_output(0, "%s Topology Info:", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+        opal_dss.dump(0, opal_hwloc_topology, OPAL_HWLOC_TOPO);
+    }
+
 
     /* if we are using xml for output, put an mpirun start tag */
     if (orte_xml_output) {
@@ -393,16 +394,12 @@ static int rte_init(void)
     node = OBJ_NEW(orte_node_t);
     node->name = strdup(orte_process_info.nodename);
     node->index = opal_pointer_array_set_item(orte_node_pool, 0, node);
-#if OPAL_HAVE_HWLOC
-    {
-        orte_topology_t *t;
-        /* add it to the array of known topologies */
-        t = OBJ_NEW(orte_topology_t);
-        t->topo = opal_hwloc_topology;
-        t->sig = strdup(orte_topo_signature);
-        opal_pointer_array_add(orte_node_topologies, t);
-    }
-#endif
+
+    /* add it to the array of known topologies */
+    t = OBJ_NEW(orte_topology_t);
+    t->topo = opal_hwloc_topology;
+    t->sig = strdup(orte_topo_signature);
+    opal_pointer_array_add(orte_node_topologies, t);
 
     /* create and store a proc object for us */
     proc = OBJ_NEW(orte_proc_t);
@@ -512,53 +509,46 @@ static int rte_init(void)
         error = "orte_rmaps_base_find_available";
         goto error;
     }
-#if OPAL_HAVE_HWLOC
-    {
-        char *coprocessors, **sns;
-        uint32_t h;
-        int idx;
 
-        /* if a topology file was given, then the rmaps framework open
-         * will have reset our topology. Ensure we always get the right
-         * one by setting our node topology afterwards
-         */
-        node->topology = opal_hwloc_topology;
+    /* if a topology file was given, then the rmaps framework open
+     * will have reset our topology. Ensure we always get the right
+     * one by setting our node topology afterwards
+     */
+    node->topology = opal_hwloc_topology;
 
-        /* init the hash table, if necessary */
-        if (NULL == orte_coprocessors) {
-            orte_coprocessors = OBJ_NEW(opal_hash_table_t);
-            opal_hash_table_init(orte_coprocessors, orte_process_info.num_procs);
-        }
-        /* detect and add any coprocessors */
-        coprocessors = opal_hwloc_base_find_coprocessors(opal_hwloc_topology);
-        if (NULL != coprocessors) {
-            /* separate the serial numbers of the coprocessors
-             * on this host
-             */
-            sns = opal_argv_split(coprocessors, ',');
-            for (idx=0; NULL != sns[idx]; idx++) {
-                /* compute the hash */
-                OPAL_HASH_STR(sns[idx], h);
-                /* mark that this coprocessor is hosted by this node */
-                opal_hash_table_set_value_uint32(orte_coprocessors, h, (void*)&(ORTE_PROC_MY_NAME->vpid));
-            }
-            opal_argv_free(sns);
-            free(coprocessors);
-            orte_coprocessors_detected = true;
-        }
-        /* see if I am on a coprocessor */
-        coprocessors = opal_hwloc_base_check_on_coprocessor();
-        if (NULL != coprocessors) {
-            /* compute the hash */
-            OPAL_HASH_STR(coprocessors, h);
-            /* mark that I am on this coprocessor */
-            opal_hash_table_set_value_uint32(orte_coprocessors, h, (void*)&(ORTE_PROC_MY_NAME->vpid));
-            orte_set_attribute(&node->attributes, ORTE_NODE_SERIAL_NUMBER, ORTE_ATTR_LOCAL, coprocessors, OPAL_STRING);
-            free(coprocessors);
-            orte_coprocessors_detected = true;
-        }
+    /* init the hash table, if necessary */
+    if (NULL == orte_coprocessors) {
+        orte_coprocessors = OBJ_NEW(opal_hash_table_t);
+        opal_hash_table_init(orte_coprocessors, orte_process_info.num_procs);
     }
-#endif
+    /* detect and add any coprocessors */
+    coprocessors = opal_hwloc_base_find_coprocessors(opal_hwloc_topology);
+    if (NULL != coprocessors) {
+        /* separate the serial numbers of the coprocessors
+         * on this host
+         */
+        sns = opal_argv_split(coprocessors, ',');
+        for (idx=0; NULL != sns[idx]; idx++) {
+            /* compute the hash */
+            OPAL_HASH_STR(sns[idx], h);
+            /* mark that this coprocessor is hosted by this node */
+            opal_hash_table_set_value_uint32(orte_coprocessors, h, (void*)&(ORTE_PROC_MY_NAME->vpid));
+        }
+        opal_argv_free(sns);
+        free(coprocessors);
+        orte_coprocessors_detected = true;
+    }
+    /* see if I am on a coprocessor */
+    coprocessors = opal_hwloc_base_check_on_coprocessor();
+    if (NULL != coprocessors) {
+        /* compute the hash */
+        OPAL_HASH_STR(coprocessors, h);
+        /* mark that I am on this coprocessor */
+        opal_hash_table_set_value_uint32(orte_coprocessors, h, (void*)&(ORTE_PROC_MY_NAME->vpid));
+        orte_set_attribute(&node->attributes, ORTE_NODE_SERIAL_NUMBER, ORTE_ATTR_LOCAL, coprocessors, OPAL_STRING);
+        free(coprocessors);
+        orte_coprocessors_detected = true;
+    }
 
     /* Open/select the odls */
     if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_odls_base_framework, 0))) {

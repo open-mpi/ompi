@@ -81,7 +81,6 @@ static int ras_sim_register(void)
                                             OPAL_INFO_LVL_9,
                                             MCA_BASE_VAR_SCOPE_READONLY,
                                             &mca_ras_simulator_component.slots_max);
-#if OPAL_HAVE_HWLOC
     mca_ras_simulator_component.num_nodes = NULL;
     (void) mca_base_component_var_register (component, "num_nodes",
                                             "Comma-separated list of number of nodes to simulate for each topology",
@@ -117,16 +116,6 @@ static int ras_sim_register(void)
                                             OPAL_INFO_LVL_9,
                                             MCA_BASE_VAR_SCOPE_READONLY,
                                             &mca_ras_simulator_component.have_membind);
-#else
-    mca_ras_simulator_component.num_nodes = NULL;
-    (void) mca_base_component_var_register (component, "num_nodes",
-                                            "Number of nodes to simulate",
-                                            MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
-                                            OPAL_INFO_LVL_9,
-                                            MCA_BASE_VAR_SCOPE_READONLY,
-                                            &mca_ras_simulator_component.num_nodes);
-#endif
-
     return ORTE_SUCCESS;
 }
 

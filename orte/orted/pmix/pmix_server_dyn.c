@@ -229,7 +229,6 @@ int pmix_server_spawn_fn(opal_process_name_t *requestor,
             if (ORTE_SUCCESS != rc) {
                 return rc;
             }
-#if OPAL_HAVE_HWLOC
         } else if (0 == strcmp(info->key, OPAL_PMIX_BINDTO)) {
             if (NULL == jdata->map) {
                 jdata->map = OBJ_NEW(orte_job_map_t);
@@ -246,7 +245,6 @@ int pmix_server_spawn_fn(opal_process_name_t *requestor,
             if (ORTE_SUCCESS != rc) {
                 return rc;
             }
-#endif
         } else if (0 == strcmp(info->key, OPAL_PMIX_NON_PMI)) {
             orte_set_attribute(&jdata->attributes, ORTE_JOB_NON_ORTE_JOB,
                                ORTE_ATTR_GLOBAL, NULL, OPAL_BOOL);

@@ -50,7 +50,6 @@ static int allocate(orte_job_t *jdata, opal_list_t *nodes)
 {
     int i, n, val, dig, num_nodes;
     orte_node_t *node;
-#if OPAL_HAVE_HWLOC
     orte_topology_t *t;
     hwloc_topology_t topo;
     hwloc_obj_t obj;
@@ -59,7 +58,6 @@ static int allocate(orte_job_t *jdata, opal_list_t *nodes)
     char **files=NULL;
     char **topos = NULL;
     bool use_local_topology = false;
-#endif
     char **node_cnt=NULL;
     char **slot_cnt=NULL;
     char **max_slot_cnt=NULL;
@@ -83,8 +81,7 @@ static int allocate(orte_job_t *jdata, opal_list_t *nodes)
             opal_argv_append_nosize(&max_slot_cnt, tmp);
         }
     }
- 
-#if OPAL_HAVE_HWLOC
+
     if (NULL != mca_ras_simulator_component.topofiles) {
         files = opal_argv_split(mca_ras_simulator_component.topofiles, ',');
         if (opal_argv_count(files) != opal_argv_count(node_cnt)) {
@@ -101,15 +98,6 @@ static int allocate(orte_job_t *jdata, opal_list_t *nodes)
         /* use our topology */
         use_local_topology = true;
     }
-#else
-    /* If we don't have hwloc and hwloc files were specified, then
-       error out (because we can't deliver that functionality) */
-    if (NULL == mca_ras_simulator_component.topofiles) {
-        orte_show_help("help-ras-simulator.txt",
-                       "no hwloc support for topofiles", true);
-        goto error_silent;
-    }
-#endif
 
     /* setup the prefix to the node names */
     snprintf(prefix, 6, "nodeA");
@@ -128,7 +116,6 @@ static int allocate(orte_job_t *jdata, opal_list_t *nodes)
         prefix[4] += n;
 
         /* check for topology */
-#if OPAL_HAVE_HWLOC
         if (use_local_topology) {
             /* use our topology */
             topo = opal_hwloc_topology;
@@ -261,14 +248,12 @@ static int allocate(orte_job_t *jdata, opal_list_t *nodes)
             t->sig = opal_hwloc_base_get_topo_signature(topo);
             opal_pointer_array_add(orte_node_topologies, t);
         }
-#endif
 
         for (i=0; i < num_nodes; i++) {
             node = OBJ_NEW(orte_node_t);
             asprintf(&node->name, "%s%0*d", prefix, dig, i);
             node->state = ORTE_NODE_STATE_UP;
             node->slots_inuse = 0;
-#if OPAL_HAVE_HWLOC
             if (NULL == max_slot_cnt || NULL == max_slot_cnt[n]) {
                 node->slots_max = 0;
             } else {
@@ -282,7 +267,6 @@ static int allocate(orte_job_t *jdata, opal_list_t *nodes)
                 node->slots = opal_hwloc_base_get_npus(topo, obj);
             }
             node->topology = topo;
-#endif
             opal_output_verbose(1, orte_ras_base_framework.framework_output,
                                 "Created Node <%10s> [%3d : %3d]",
                                 node->name, node->slots, node->slots_max);
@@ -302,11 +286,9 @@ static int allocate(orte_job_t *jdata, opal_list_t *nodes)
     if (NULL != node_cnt) {
         opal_argv_free(node_cnt);
     }
-#if OPAL_HAVE_HWLOC
     if (NULL != topos) {
         opal_argv_free(topos);
     }
-#endif
     return ORTE_SUCCESS;
 
 error_silent:

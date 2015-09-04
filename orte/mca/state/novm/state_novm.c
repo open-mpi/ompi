@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2014      Intel, Inc. All rights reserved
+ * Copyright (c) 2014-2015 Intel, Inc. All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -198,6 +198,9 @@ static void allocation_complete(int fd, short args, void *cbdata)
     orte_state_caddy_t *state = (orte_state_caddy_t*)cbdata;
     orte_job_t *jdata = state->jdata;
     orte_job_t *daemons;
+    orte_topology_t *t;
+    orte_node_t *node;
+    int i;
 
     jdata->state = ORTE_JOB_STATE_ALLOCATION_COMPLETE;
 
@@ -210,24 +213,17 @@ static void allocation_complete(int fd, short args, void *cbdata)
     /* mark that we are not using a VM */
     orte_set_attribute(&daemons->attributes, ORTE_JOB_NO_VM, ORTE_ATTR_GLOBAL, NULL, OPAL_BOOL);
 
-#if OPAL_HAVE_HWLOC
-    {
-        orte_topology_t *t;
-        orte_node_t *node;
-        int i;
 
-        /* ensure that all nodes point to our topology - we
-         * cannot support hetero nodes with this state machine
-         */
-        t = (orte_topology_t*)opal_pointer_array_get_item(orte_node_topologies, 0);
-        for (i=1; i < orte_node_pool->size; i++) {
-            if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, i))) {
-                continue;
-            }
-            node->topology = t->topo;
+    /* ensure that all nodes point to our topology - we
+     * cannot support hetero nodes with this state machine
+     */
+    t = (orte_topology_t*)opal_pointer_array_get_item(orte_node_topologies, 0);
+    for (i=1; i < orte_node_pool->size; i++) {
+        if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, i))) {
+            continue;
         }
+        node->topology = t->topo;
     }
-#endif
 
     /* move to the map stage */
     ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_MAP);
