@@ -246,13 +246,16 @@ static pmix_status_t initialize_server_base(pmix_server_module_t *module)
     security_mode = strdup(pmix_sec.name);
 
     /* find the temp dir */
-    if (NULL == (tdir = getenv("TMPDIR"))) {
-        if (NULL == (tdir = getenv("TEMP"))) {
-            if (NULL == (tdir = getenv("TMP"))) {
-                tdir = "/tmp";
+    if (NULL == (tdir = getenv("PMIX_SERVER_TMPDIR"))) {
+        if (NULL == (tdir = getenv("TMPDIR"))) {
+            if (NULL == (tdir = getenv("TEMP"))) {
+                if (NULL == (tdir = getenv("TMP"))) {
+                    tdir = "/tmp";
+                }
             }
         }
     }
+
     /* now set the address - we use the pid here to reduce collisions */
     memset(&myaddress, 0, sizeof(struct sockaddr_un));
     myaddress.sun_family = AF_UNIX;
@@ -1879,7 +1882,7 @@ static void cnct_cbfunc(int status, void *cbdata)
     scd = PMIX_NEW(pmix_shift_caddy_t);
     scd->status = status;
     scd->tracker = tracker;
-    PMIX_THREADSHIFT(scd, _mdxcbfunc);
+    PMIX_THREADSHIFT(scd, _cnct);
 }
 
 

@@ -92,8 +92,6 @@ typedef int (*opal_pmix_server_dmodex_req_fn_t)(opal_process_name_t *proc, opal_
  * process is also provided and is expected to be returned on any subsequent
  * lookup request */
 typedef int (*opal_pmix_server_publish_fn_t)(opal_process_name_t *proc,
-                                             opal_pmix_data_range_t range,
-                                             opal_pmix_persistence_t persist,
                                              opal_list_t *info,
                                              opal_pmix_op_cbfunc_t cbfunc, void *cbdata);
 
@@ -110,18 +108,16 @@ typedef int (*opal_pmix_server_publish_fn_t)(opal_process_name_t *proc,
  * how the operation is to be executed (e.g., timeout limits, whether the
  * lookup should wait until data appears).
  */
-typedef int (*opal_pmix_server_lookup_fn_t)(opal_process_name_t *proc,
-                                            opal_pmix_data_range_t range,
-                                            opal_list_t *info, char **keys,
+typedef int (*opal_pmix_server_lookup_fn_t)(opal_process_name_t *proc, char **keys,
+                                            opal_list_t *info,
                                             opal_pmix_lookup_cbfunc_t cbfunc, void *cbdata);
 
 /* Delete data from the data store. The host server will be passed a NULL-terminated array
  * of string keys along with the scope within which the data is expected to have
  * been published. The callback is to be executed upon completion of the delete
  * procedure */
-typedef int (*opal_pmix_server_unpublish_fn_t)(opal_process_name_t *proc,
-                                               opal_pmix_data_range_t range,
-                                               opal_list_t *info,  char **keys,
+typedef int (*opal_pmix_server_unpublish_fn_t)(opal_process_name_t *proc, char **keys,
+                                               opal_list_t *info,
                                                opal_pmix_op_cbfunc_t cbfunc, void *cbdata);
 
 /* Spawn a set of applications/processes as per the PMIx API. Note that

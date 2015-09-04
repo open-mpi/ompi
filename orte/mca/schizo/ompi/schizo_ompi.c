@@ -54,7 +54,6 @@ static int parse_cli(char *personality,
 static int parse_env(char *personality,
                      char *path,
                      opal_cmd_line_t *cmd_line,
-                     char *server,
                      char **srcenv,
                      char ***dstenv);
 static int setup_fork(orte_job_t *jdata,
@@ -154,7 +153,6 @@ static int parse_cli(char *personality,
 static int parse_env(char *personality,
                      char *path,
                      opal_cmd_line_t *cmd_line,
-                     char *ompi_server,
                      char **srcenv,
                      char ***dstenv)
 {
@@ -179,11 +177,6 @@ static int parse_env(char *personality,
             opal_setenv(param, value, false, dstenv);
             free(param);
         }
-    }
-
-    /* add the ompi-server, if provided */
-    if (NULL != ompi_server) {
-        opal_setenv("OMPI_MCA_pubsub_orte_server", ompi_server, true, dstenv);
     }
 
     /* set necessary env variables for external usage from tune conf file*/

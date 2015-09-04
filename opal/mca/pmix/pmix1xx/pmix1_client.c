@@ -33,14 +33,42 @@
 static pmix_proc_t myproc;
 static char *dbgvalue=NULL;
 
-static int convert_scope(pmix_scope_t *scope,
-                         opal_pmix_scope_t sc);
-static int convert_persistence(pmix_persistence_t *p,
-                               opal_pmix_persistence_t persist);
-static int convert_data_range(pmix_data_range_t *sc,
-                              opal_pmix_data_range_t scope);
+static void myerr(pmix_status_t status,
+                  pmix_proc_t procs[], size_t nprocs,
+                  pmix_info_t info[], size_t ninfo)
+{
+    int rc;
+    opal_list_t plist, ilist;
+    opal_namelist_t *nm;
+    opal_value_t *iptr;
+    size_t n;
 
+    /* convert the incoming status */
+    rc = pmix1_convert_rc(status);
 
+    /* convert the array of procs */
+    OBJ_CONSTRUCT(&plist, opal_list_t);
+    for (n=0; n < nprocs; n++) {
+        nm = OBJ_NEW(opal_namelist_t);
+        nm->name.jobid = strtoul(procs[n].nspace, NULL, 10);
+        nm->name.vpid = procs[n].rank;
+        opal_list_append(&plist, &nm->super);
+    }
+
+    /* convert the array of info */
+    OBJ_CONSTRUCT(&ilist, opal_list_t);
+    for (n=0; n < ninfo; n++) {
+        iptr = OBJ_NEW(opal_value_t);
+        iptr->key = strdup(info[n].key);
+        pmix1_value_unload(iptr, &info[n].value);
+        opal_list_append(&plist, &nm->super);
+    }
+
+    /* call the base errhandler */
+    opal_pmix_base_errhandler(rc, &plist, &ilist);
+    OPAL_LIST_DESTRUCT(&plist);
+    OPAL_LIST_DESTRUCT(&ilist);
+}
 
 int pmix1_client_init(void)
 {
@@ -56,18 +84,27 @@ int pmix1_client_init(void)
         putenv(dbgvalue);
     }
     rc = PMIx_Init(&myproc);
-    if (PMIX_SUCCESS == rc) {
-        /* store our jobid and rank */
-        opal_convert_string_to_jobid(&pname.jobid, myproc.nspace);
-        pname.vpid = myproc.rank;
-        opal_proc_set_name(&pname);
+    if (PMIX_SUCCESS != rc) {
+        return pmix1_convert_rc(rc);
     }
-    return pmix1_convert_rc(rc);
+
+    /* store our jobid and rank */
+    opal_convert_string_to_jobid(&pname.jobid, myproc.nspace);
+    pname.vpid = myproc.rank;
+    opal_proc_set_name(&pname);
+
+    /* register the errhandler */
+    PMIx_Register_errhandler(NULL, 0, myerr);
+    return OPAL_SUCCESS;
+
 }
 
 int pmix1_client_finalize(void)
 {
     pmix_status_t rc;
+
+    /* deregister the errhandler */
+    PMIx_Deregister_errhandler();
 
     rc = PMIx_Finalize();
     return pmix1_convert_rc(rc);
@@ -222,28 +259,21 @@ int pmix1_fencenb(opal_list_t *procs, int collect_data,
 }
 
 int pmix1_put(opal_pmix_scope_t scope,
-                opal_value_t *val)
+              opal_value_t *val)
 {
-    pmix_scope_t pscope;
     pmix_value_t kv;
     pmix_status_t rc;
-    int irc;
-
-    /* convert the scope */
-    if (OPAL_SUCCESS != (irc = convert_scope(&pscope, scope))) {
-        return irc;
-    }
 
     PMIX_VALUE_CONSTRUCT(&kv);
     pmix1_value_load(&kv, val);
 
-    rc = PMIx_Put(pscope, val->key, &kv);
+    rc = PMIx_Put(scope, val->key, &kv);
     PMIX_VALUE_DESTRUCT(&kv);
     return pmix1_convert_rc(rc);
 }
 
 int pmix1_get(const opal_process_name_t *proc,
-                const char *key, opal_value_t **val)
+              const char *key, opal_value_t **val)
 {
     int ret;
     pmix_value_t *kv;
@@ -308,9 +338,8 @@ static void val_cbfunc(pmix_status_t status,
     OBJ_RELEASE(op);
 }
 
-int pmix1_getnb(const opal_process_name_t *proc,
-                  const char *key,
-                  opal_pmix_value_cbfunc_t cbfunc, void *cbdata)
+int pmix1_getnb(const opal_process_name_t *proc, const char *key,
+                opal_pmix_value_cbfunc_t cbfunc, void *cbdata)
 {
     pmix1_opcaddy_t *op;
     pmix_status_t rc;
@@ -342,28 +371,12 @@ int pmix1_getnb(const opal_process_name_t *proc,
     return pmix1_convert_rc(rc);
 }
 
-int pmix1_publish(opal_pmix_data_range_t scope,
-                    opal_pmix_persistence_t persist,
-                    opal_list_t *info)
+int pmix1_publish(opal_list_t *info)
 {
-    pmix_data_range_t rng;
-    pmix_persistence_t pst;
-    int rc;
     pmix_info_t *pinfo;
     pmix_status_t ret;
     opal_value_t *iptr;
     size_t sz, n;
-
-    rc = convert_data_range(&rng, scope);
-    if (OPAL_SUCCESS != rc) {
-        OPAL_ERROR_LOG(rc);
-        return rc;
-    }
-    rc = convert_persistence(&pst, scope);
-    if (OPAL_SUCCESS != rc) {
-        OPAL_ERROR_LOG(rc);
-        return rc;
-    }
 
     sz = opal_list_get_size(info);
     if (0 < sz) {
@@ -376,32 +389,18 @@ int pmix1_publish(opal_pmix_data_range_t scope,
         }
     }
 
-    ret = PMIx_Publish(rng, pst, pinfo, sz);
+    ret = PMIx_Publish(pinfo, sz);
 
     return pmix1_convert_rc(ret);
 }
 
-int pmix1_publishnb(opal_pmix_data_range_t scope,
-                      opal_pmix_persistence_t persist,
-                      opal_list_t *info,
-                      opal_pmix_op_cbfunc_t cbfunc, void *cbdata)
+int pmix1_publishnb(opal_list_t *info,
+                    opal_pmix_op_cbfunc_t cbfunc, void *cbdata)
 {
-    pmix_data_range_t rng;
-    pmix_persistence_t pst;
-    int rc;
     pmix_status_t ret;
     opal_value_t *iptr;
     size_t n;
     pmix1_opcaddy_t *op;
-
-    rc = convert_data_range(&rng, scope);
-    if (OPAL_SUCCESS != rc) {
-        return rc;
-    }
-    rc = convert_persistence(&pst, persist);
-    if (OPAL_SUCCESS != rc) {
-        return rc;
-    }
 
     /* create the caddy */
     op = OBJ_NEW(pmix1_opcaddy_t);
@@ -419,34 +418,39 @@ int pmix1_publishnb(opal_pmix_data_range_t scope,
         }
     }
 
-    ret = PMIx_Publish_nb(rng, pst, op->info, op->sz, opcbfunc, op);
+    ret = PMIx_Publish_nb(op->info, op->sz, opcbfunc, op);
 
     return pmix1_convert_rc(ret);
 }
 
-int pmix1_lookup(opal_pmix_data_range_t scope,
-                   opal_list_t *data)
+int pmix1_lookup(opal_list_t *data, opal_list_t *info)
 {
-    pmix_data_range_t rng;
     pmix_pdata_t *pdata;
-    size_t sz, n;
+    pmix_info_t *pinfo;
+    size_t sz, ninfo, n;
     int rc;
     pmix_status_t ret;
     opal_pmix_pdata_t *d;
+    opal_value_t *iptr;
 
-    rc = convert_data_range(&rng, scope);
-    if (OPAL_SUCCESS != rc) {
-        return rc;
-    }
     sz = opal_list_get_size(data);
-
     PMIX_PDATA_CREATE(pdata, sz);
     n=0;
     OPAL_LIST_FOREACH(d, data, opal_pmix_pdata_t) {
         (void)strncpy(pdata[n++].key, d->value.key, PMIX_MAX_KEYLEN);
     }
 
-    ret = PMIx_Lookup(rng, NULL, 0, pdata, sz);
+    ninfo = opal_list_get_size(info);
+    PMIX_INFO_CREATE(pinfo, ninfo);
+    n=0;
+    OPAL_LIST_FOREACH(iptr, info, opal_value_t) {
+        (void)strncpy(pinfo[n++].key, iptr->key, PMIX_MAX_KEYLEN);
+        pmix1_value_load(&pinfo[n].value, iptr);
+        ++n;
+    }
+
+    ret = PMIx_Lookup(pdata, sz, pinfo, ninfo);
+    PMIX_INFO_FREE(pinfo, ninfo);
 
     if (PMIX_SUCCESS == ret) {
         /* transfer the data back */
@@ -523,64 +527,82 @@ static void lk_cbfunc(pmix_status_t status,
     OBJ_RELEASE(op);
 }
 
-int pmix1_lookupnb(opal_pmix_data_range_t scope, int wait, char **keys,
+int pmix1_lookupnb(char **keys, opal_list_t *info,
                    opal_pmix_lookup_cbfunc_t cbfunc, void *cbdata)
 {
-    pmix_data_range_t rng;
-    int rc;
     pmix_status_t ret;
     pmix1_opcaddy_t *op;
-
-    rc = convert_data_range(&rng, scope);
-    if (OPAL_SUCCESS != rc) {
-        return rc;
-    }
+    opal_value_t *iptr;
+    size_t n;
 
     /* create the caddy */
     op = OBJ_NEW(pmix1_opcaddy_t);
     op->lkcbfunc = cbfunc;
     op->cbdata = cbdata;
 
-    ret = PMIx_Lookup_nb(rng, keys, NULL, 0, lk_cbfunc, op);
-
-    return pmix1_convert_rc(ret);
-}
-
-int pmix1_unpublish(opal_pmix_data_range_t scope, char **keys)
-{
-    int rc;
-    pmix_status_t ret;
-    pmix_data_range_t rng;
-
-    rc = convert_data_range(&rng, scope);
-    if (OPAL_SUCCESS != rc) {
-        return rc;
+    op->sz = opal_list_get_size(info);
+    if (0 < op->sz) {
+        PMIX_INFO_CREATE(op->info, op->sz);
+        n=0;
+        OPAL_LIST_FOREACH(iptr, info, opal_value_t) {
+            (void)strncpy(op->info[n].key, iptr->key, PMIX_MAX_KEYLEN);
+            pmix1_value_load(&op->info[n].value, iptr);
+            ++n;
+        }
     }
 
-    ret = PMIx_Unpublish(rng, keys);
+    ret = PMIx_Lookup_nb(keys, op->info, op->sz, lk_cbfunc, op);
 
     return pmix1_convert_rc(ret);
 }
 
-int pmix1_unpublishnb(opal_pmix_data_range_t scope, char **keys,
-                        opal_pmix_op_cbfunc_t cbfunc, void *cbdata)
+int pmix1_unpublish(char **keys, opal_list_t *info)
 {
-    int rc;
     pmix_status_t ret;
-    pmix_data_range_t rng;
+    size_t ninfo, n;
+    pmix_info_t *pinfo;
+    opal_value_t *iptr;
+
+    ninfo = opal_list_get_size(info);
+    PMIX_INFO_CREATE(pinfo, ninfo);
+    n=0;
+    OPAL_LIST_FOREACH(iptr, info, opal_value_t) {
+        (void)strncpy(pinfo[n++].key, iptr->key, PMIX_MAX_KEYLEN);
+        pmix1_value_load(&pinfo[n].value, iptr);
+        ++n;
+    }
+
+    ret = PMIx_Unpublish(keys, pinfo, ninfo);
+    PMIX_INFO_FREE(pinfo, ninfo);
+
+    return pmix1_convert_rc(ret);
+}
+
+int pmix1_unpublishnb(char **keys, opal_list_t *info,
+                      opal_pmix_op_cbfunc_t cbfunc, void *cbdata)
+{
+    pmix_status_t ret;
     pmix1_opcaddy_t *op;
-
-    rc = convert_data_range(&rng, scope);
-    if (OPAL_SUCCESS != rc) {
-        return rc;
-    }
+    opal_value_t *iptr;
+    size_t n;
 
     /* create the caddy */
     op = OBJ_NEW(pmix1_opcaddy_t);
     op->opcbfunc = cbfunc;
     op->cbdata = cbdata;
 
-    ret = PMIx_Unpublish_nb(rng, keys, opcbfunc, op);
+    op->sz = opal_list_get_size(info);
+    if (0 < op->sz) {
+        PMIX_INFO_CREATE(op->info, op->sz);
+        n=0;
+        OPAL_LIST_FOREACH(iptr, info, opal_value_t) {
+            (void)strncpy(op->info[n].key, iptr->key, PMIX_MAX_KEYLEN);
+            pmix1_value_load(&op->info[n].value, iptr);
+            ++n;
+        }
+    }
+
+    ret = PMIx_Unpublish_nb(keys, op->info, op->sz, opcbfunc, op);
 
     return pmix1_convert_rc(ret);
 }
@@ -893,78 +915,4 @@ int pmix1_resolve_nodes(opal_jobid_t jobid, char **nodelist)
     }
 
     return pmix1_convert_rc(ret);;
-}
-
-/***  UTILITY FUNCTIONS  ***/
-static int convert_scope(pmix_scope_t *sc,
-                         opal_pmix_scope_t scope)
-{
-    int rc = PMIX_SUCCESS;
-
-    switch (scope) {
-    case OPAL_PMIX_SCOPE_UNDEF:
-        *sc = PMIX_SCOPE_UNDEF;
-        break;
-    case OPAL_PMIX_LOCAL:
-        *sc = PMIX_LOCAL;
-        break;
-    case OPAL_PMIX_REMOTE:
-        *sc = PMIX_REMOTE;
-        break;
-    case OPAL_PMIX_GLOBAL:
-        *sc = PMIX_GLOBAL;
-        break;
-    default:
-        *sc = PMIX_SCOPE_UNDEF;
-        rc = OPAL_ERR_BAD_PARAM;
-        break;
-    }
-    return rc;
-}
-
-static int convert_persistence(pmix_persistence_t *p,
-                               opal_pmix_persistence_t persist)
-{
-    int rc = OPAL_SUCCESS;
-
-    switch (persist) {
-    case OPAL_PMIX_PERSIST_INDEF:
-        *p = PMIX_PERSIST_INDEF;
-        break;
-    case OPAL_PMIX_PERSIST_PROC:
-        *p = PMIX_PERSIST_PROC;
-        break;
-    case OPAL_PMIX_PERSIST_APP:
-        *p = PMIX_PERSIST_APP;
-        break;
-    case OPAL_PMIX_PERSIST_SESSION:
-        *p = PMIX_PERSIST_SESSION;
-        break;
-    default:
-        *p = PMIX_PERSIST_PROC;
-        rc = OPAL_ERR_BAD_PARAM;
-    }
-    return rc;
-}
-
-static int convert_data_range(pmix_data_range_t *sc,
-                              opal_pmix_data_range_t scope)
-{
-    int rc = OPAL_SUCCESS;
-
-    switch (scope) {
-    case OPAL_PMIX_DATA_RANGE_UNDEF:
-        *sc = PMIX_DATA_RANGE_UNDEF;
-        break;
-    case OPAL_PMIX_NAMESPACE:
-        *sc = PMIX_NAMESPACE;
-        break;
-    case OPAL_PMIX_SESSION:
-        *sc = PMIX_SESSION;
-        break;
-    default:
-        *sc = PMIX_DATA_RANGE_UNDEF;
-        rc = OPAL_ERR_BAD_PARAM;
-    }
-    return rc;
 }

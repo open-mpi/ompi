@@ -48,6 +48,42 @@ extern pmix_server_module_t mymodule;
 extern opal_pmix_server_module_t *host_module;
 static char *dbgvalue=NULL;
 
+static void myerr(pmix_status_t status,
+                  pmix_proc_t procs[], size_t nprocs,
+                  pmix_info_t info[], size_t ninfo)
+{
+    int rc;
+    opal_list_t plist, ilist;
+    opal_namelist_t *nm;
+    opal_value_t *iptr;
+    size_t n;
+
+    /* convert the incoming status */
+    rc = pmix1_convert_rc(status);
+
+    /* convert the array of procs */
+    OBJ_CONSTRUCT(&plist, opal_list_t);
+    for (n=0; n < nprocs; n++) {
+        nm = OBJ_NEW(opal_namelist_t);
+        nm->name.jobid = strtoul(procs[n].nspace, NULL, 10);
+        nm->name.vpid = procs[n].rank;
+        opal_list_append(&plist, &nm->super);
+    }
+
+    /* convert the array of info */
+    OBJ_CONSTRUCT(&ilist, opal_list_t);
+    for (n=0; n < ninfo; n++) {
+        iptr = OBJ_NEW(opal_value_t);
+        iptr->key = strdup(info[n].key);
+        pmix1_value_unload(iptr, &info[n].value);
+        opal_list_append(&plist, &nm->super);
+    }
+
+    /* call the base errhandler */
+    opal_pmix_base_errhandler(rc, &plist, &ilist);
+    OPAL_LIST_DESTRUCT(&plist);
+    OPAL_LIST_DESTRUCT(&ilist);
+}
 
 int pmix1_server_init(opal_pmix_server_module_t *module)
 {
@@ -65,12 +101,17 @@ int pmix1_server_init(opal_pmix_server_module_t *module)
     /* record the host module */
     host_module = module;
 
+    /* register the errhandler */
+    PMIx_Register_errhandler(NULL, 0, myerr);
     return OPAL_SUCCESS;
 }
 
 int pmix1_server_finalize(void)
 {
     pmix_status_t rc;
+
+    /* deregister the errhandler */
+    PMIx_Deregister_errhandler();
 
     rc = PMIx_server_finalize();
     return pmix1_convert_rc(rc);

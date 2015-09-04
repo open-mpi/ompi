@@ -103,7 +103,7 @@ BEGIN_C_DECLS
 typedef int (*pmix_server_client_connected_fn_t)(const pmix_proc_t *proc,
                                                  void* server_object);
 
-/* Notify the host server that a client called PMIx_Finalize- note
+/* Notify the host server that a client called PMIx_Finalize - note
  * that the client will be in a blocked state until the host server
  * executes the callback function, thus allowing the PMIx server support
  * library to release the client */
@@ -158,49 +158,46 @@ typedef pmix_status_t (*pmix_server_dmodex_req_fn_t)(const pmix_proc_t *proc,
 
 
 /* Publish data per the PMIx API specification. The callback is to be executed
- * upon completion of the operation. The host server is not required to guarantee
- * support for the requested range - i.e., the server does not need to return an
- * error if the data store doesn't support range-based isolation. However, the
- * server must return an error (a) if the key is duplicative within the storage
- * range, and (b) if the server does not allow overwriting of published info by
- * the original publisher - it is left to the discretion of the host server to
- * allow info-key-based flags to modify this behavior. The persist flag indicates
- * how long the server should retain the data. The nspace/rank of the publishing
- * process is also provided and is expected to be returned on any subsequent
- * lookup request */
+ * upon completion of the operation. The default data range is expected to be
+ * PMIX_SESSION, and the default persistence PMIX_PERSIST_SESSION. These values
+ * can be modified by including the respective pmix_info_t struct in the
+ * provided array.
+ *
+ * Note that the host server is not required to guarantee support for any specific
+ * range - i.e., the server does not need to return an error if the data store
+ * doesn't support range-based isolation. However, the server must return an error
+ * (a) if the key is duplicative within the storage range, and (b) if the server
+ * does not allow overwriting of published info by the original publisher - it is
+ * left to the discretion of the host server to allow info-key-based flags to modify
+ * this behavior.
+ *
+ * The persistence indicates how long the server should retain the data.
+ *
+ * The identifier of the publishing process is also provided and is expected to
+ * be returned on any subsequent lookup request */
 typedef pmix_status_t (*pmix_server_publish_fn_t)(const pmix_proc_t *proc,
-                                                  pmix_data_range_t range, pmix_persistence_t persist,
                                                   const pmix_info_t info[], size_t ninfo,
                                                   pmix_op_cbfunc_t cbfunc, void *cbdata);
 
 /* Lookup published data. The host server will be passed a NULL-terminated array
- * of string keys along with the range within which the data is expected to have
- * been published. The host server is not required to guarantee support for all
- * PMIx-defined ranges, but should only search data stores within the specified
- * range within the context of the corresponding "publish" API.
+ * of string keys.
  *
  * The array of info structs is used to pass user-requested options to the server.
  * This can include a wait flag to indicate that the server should wait for all
  * data to become available before executing the callback function, or should
  * immediately callback with whatever data is available. In addition, a timeout
  * can be specified on the wait to preclude an indefinite wait for data that
- * may never be published. The directives are optional _unless_ the _mandatory_ flag
- * has been set - in such cases, the host RM is required to return an error
- * if the directive cannot be met. */
-typedef pmix_status_t (*pmix_server_lookup_fn_t)(const pmix_proc_t *proc,
-                                                 pmix_data_range_t range,
+ * may never be published. */
+typedef pmix_status_t (*pmix_server_lookup_fn_t)(const pmix_proc_t *proc, char **keys,
                                                  const pmix_info_t info[], size_t ninfo,
-                                                 char **keys,
                                                  pmix_lookup_cbfunc_t cbfunc, void *cbdata);
 
 /* Delete data from the data store. The host server will be passed a NULL-terminated array
- * of string keys along with the range within which the data is expected to have
- * been published. The callback is to be executed upon completion of the delete
+ * of string keys, plus potential directives such as the data range within which the
+ * keys should be deleted. The callback is to be executed upon completion of the delete
  * procedure */
-typedef pmix_status_t (*pmix_server_unpublish_fn_t)(const pmix_proc_t *proc,
-                                                    pmix_data_range_t range,
+typedef pmix_status_t (*pmix_server_unpublish_fn_t)(const pmix_proc_t *proc, char **keys,
                                                     const pmix_info_t info[], size_t ninfo,
-                                                    char **keys,
                                                     pmix_op_cbfunc_t cbfunc, void *cbdata);
 
 /* Spawn a set of applications/processes as per the PMIx API. Note that

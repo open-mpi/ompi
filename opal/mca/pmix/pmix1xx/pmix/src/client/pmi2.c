@@ -240,7 +240,7 @@ int PMI2_Nameserv_publish(const char service_name[], const PMI_keyval_t *info_pt
     }
     /* publish the info - PMI-2 doesn't support
      * any scope other than inside our own nspace */
-    rc = PMIx_Publish(PMIX_NAMESPACE, PMIX_PERSIST_APP, info, nvals);
+    rc = PMIx_Publish(info, nvals);
 
     return convert_err(rc);
 }
@@ -261,7 +261,7 @@ int PMI2_Nameserv_unpublish(const char service_name[],
         keys[1] = info_ptr->key;
     }
 
-    rc = PMIx_Unpublish(PMIX_NAMESPACE, keys);
+    rc = PMIx_Unpublish(keys, NULL, 0);
     return convert_err(rc);
 }
 
@@ -288,7 +288,7 @@ int PMI2_Nameserv_lookup(const char service_name[], const PMI_keyval_t *info_ptr
     }
 
     /* lookup the info */
-    if (PMIX_SUCCESS != (rc = PMIx_Lookup(PMIX_NAMESPACE, NULL, 0, pdata, nvals))) {
+    if (PMIX_SUCCESS != (rc = PMIx_Lookup(pdata, nvals, NULL, 0))) {
         PMIX_PDATA_DESTRUCT(&pdata[0]);
         PMIX_PDATA_DESTRUCT(&pdata[1]);
         return convert_err(rc);

@@ -65,7 +65,6 @@ ORTE_DECLSPEC int orte_schizo_base_parse_cli(char *personality,
 ORTE_DECLSPEC int orte_schizo_base_parse_env(char *personality,
                                              char *path,
                                              opal_cmd_line_t *cmd_line,
-                                             char *server,
                                              char **srcenv,
                                              char ***dstenv);
 ORTE_DECLSPEC int orte_schizo_base_setup_fork(orte_job_t *jdata,

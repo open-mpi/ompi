@@ -62,6 +62,7 @@
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/grpcomm/grpcomm.h"
 #include "orte/mca/rml/rml.h"
+#include "orte/mca/rml/base/rml_contact.h"
 #include "orte/util/name_fns.h"
 #include "orte/util/session_dir.h"
 #include "orte/util/show_help.h"
@@ -125,21 +126,40 @@ void pmix_server_register_params(void)
                                   MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
                                   OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_ALL,
                                   &orte_pmix_server_globals.timeout);
-    orte_pmix_server_globals.timeout = orte_pmix_server_globals.timeout * 1000000;
 
     /* register the URI of the UNIVERSAL data server */
+    orte_pmix_server_globals.server_uri = NULL;
+    (void) mca_base_var_register ("orte", "pmix", NULL, "server_uri",
+                                  "URI of a session-level keyval server for publish/lookup operations",
+                                  MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                                  OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_ALL,
+                                  &orte_pmix_server_globals.server_uri);
 
-    /* if the universal server wasn't specified, then we use
-     * our own HNP for that purpose */
-    orte_pmix_server_globals.server = *ORTE_PROC_MY_HNP;
-
+    /* whether or not to wait for the universal server */
+    orte_pmix_server_globals.wait_for_server = false;
+    (void) mca_base_var_register ("orte", "pmix", NULL, "wait_for_server",
+                                  "Whether or not to wait for the session-level server to start",
+                                  MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                  OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_ALL,
+                                  &orte_pmix_server_globals.wait_for_server);
 }
 
 static void eviction_cbfunc(struct opal_hotel_t *hotel,
                             int room_num, void *occupant)
 {
     pmix_server_req_t *req = (pmix_server_req_t*)occupant;
+    int rc;
 
+    /* decrement the request timeout */
+    req->timeout -= orte_pmix_server_globals.timeout;
+    if (0 < req->timeout) {
+        /* not done yet - check us back in */
+        if (OPAL_SUCCESS == (rc = opal_hotel_checkin(&orte_pmix_server_globals.reqs, req, &req->room_num))) {
+            return;
+        }
+        ORTE_ERROR_LOG(rc);
+        /* fall thru and return an error so the caller doesn't hang */
+    }
     /* don't let the caller hang */
     if (NULL != req->opcbfunc) {
         req->opcbfunc(OPAL_ERR_TIMEOUT, req->cbdata);
@@ -169,7 +189,7 @@ int pmix_server_init(void)
     OBJ_CONSTRUCT(&orte_pmix_server_globals.reqs, opal_hotel_t);
     if (OPAL_SUCCESS != (rc = opal_hotel_init(&orte_pmix_server_globals.reqs,
                                               orte_pmix_server_globals.num_rooms,
-                                              orte_event_base, orte_pmix_server_globals.timeout,
+                                              orte_event_base, orte_pmix_server_globals.timeout*1000000,
                                               ORTE_ERROR_PRI, eviction_cbfunc))) {
         ORTE_ERROR_LOG(rc);
         return rc;
@@ -191,10 +211,101 @@ int pmix_server_init(void)
     orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_DATA_CLIENT,
                             ORTE_RML_PERSISTENT, pmix_server_keyval_client, NULL);
 
+    /* ensure the PMIx server uses the proper rendezvous directory */
+    opal_setenv("PMIX_SERVER_TMPDIR", orte_process_info.proc_session_dir, true, &environ);
+
     /* setup the local server */
     if (ORTE_SUCCESS != (rc = opal_pmix.server_init(&pmix_server))) {
         ORTE_ERROR_LOG(rc);
         /* memory cleanup will occur when finalize is called */
+    }
+
+    /* if the universal server wasn't specified, then we use
+     * our own HNP for that purpose */
+    if (NULL == orte_pmix_server_globals.server_uri) {
+        orte_pmix_server_globals.server = *ORTE_PROC_MY_HNP;
+    } else {
+        char *server;
+        opal_buffer_t buf;
+        if (0 == strncmp(orte_pmix_server_globals.server_uri, "file", strlen("file")) ||
+            0 == strncmp(orte_pmix_server_globals.server_uri, "FILE", strlen("FILE"))) {
+            char input[1024], *filename;
+            FILE *fp;
+
+            /* it is a file - get the filename */
+            filename = strchr(orte_pmix_server_globals.server_uri, ':');
+            if (NULL == filename) {
+                /* filename is not correctly formatted */
+                orte_show_help("help-orterun.txt", "orterun:ompi-server-filename-bad", true,
+                               orte_basename, orte_pmix_server_globals.server_uri);
+                return ORTE_ERR_BAD_PARAM;
+            }
+            ++filename; /* space past the : */
+
+            if (0 >= strlen(filename)) {
+                /* they forgot to give us the name! */
+                orte_show_help("help-orterun.txt", "orterun:ompi-server-filename-missing", true,
+                               orte_basename, orte_pmix_server_globals.server_uri);
+                return ORTE_ERR_BAD_PARAM;
+            }
+
+            /* open the file and extract the uri */
+            fp = fopen(filename, "r");
+            if (NULL == fp) { /* can't find or read file! */
+                orte_show_help("help-orterun.txt", "orterun:ompi-server-filename-access", true,
+                               orte_basename, orte_pmix_server_globals.server_uri);
+                return ORTE_ERR_BAD_PARAM;
+            }
+            if (NULL == fgets(input, 1024, fp)) {
+                /* something malformed about file */
+                fclose(fp);
+                orte_show_help("help-orterun.txt", "orterun:ompi-server-file-bad", true,
+                               orte_basename, orte_pmix_server_globals.server_uri,
+                               orte_basename);
+                return ORTE_ERR_BAD_PARAM;
+            }
+            fclose(fp);
+            input[strlen(input)-1] = '\0';  /* remove newline */
+            server = strdup(input);
+        } else {
+            server = strdup(orte_pmix_server_globals.server_uri);
+        }
+        /* setup our route to the server */
+        OBJ_CONSTRUCT(&buf, opal_buffer_t);
+        opal_dss.pack(&buf, &server, 1, OPAL_STRING);
+        if (ORTE_SUCCESS != (rc = orte_rml_base_update_contact_info(&buf))) {
+            ORTE_ERROR_LOG(rc);
+            ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
+            return rc;
+        }
+        OBJ_DESTRUCT(&buf);
+        /* parse the URI to get the server's name */
+        if (ORTE_SUCCESS != (rc = orte_rml_base_parse_uris(server, &orte_pmix_server_globals.server, NULL))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        /* check if we are to wait for the server to start - resolves
+         * a race condition that can occur when the server is run
+         * as a background job - e.g., in scripts
+         */
+        if (orte_pmix_server_globals.wait_for_server) {
+            /* ping the server */
+            struct timeval timeout;
+            timeout.tv_sec = orte_pmix_server_globals.timeout;
+            timeout.tv_usec = 0;
+            if (ORTE_SUCCESS != (rc = orte_rml.ping(server, &timeout))) {
+                /* try it one more time */
+                if (ORTE_SUCCESS != (rc = orte_rml.ping(server, &timeout))) {
+                    /* okay give up */
+                    orte_show_help("help-orterun.txt", "orterun:server-not-found", true,
+                                   orte_basename, server,
+                                   (long)orte_pmix_server_globals.timeout,
+                                   ORTE_ERROR_NAME(rc));
+                    ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
+                    return rc;
+                }
+            }
+        }
     }
 
     return rc;
@@ -461,6 +572,7 @@ static void pmix_server_dmdx_resp(int status, orte_process_name_t* sender,
 
 static void rqcon(pmix_server_req_t *p)
 {
+    p->timeout = orte_pmix_server_globals.timeout;
     p->jdata = NULL;
     OBJ_CONSTRUCT(&p->msg, opal_buffer_t);
     p->opcbfunc = NULL;

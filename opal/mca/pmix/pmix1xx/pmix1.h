@@ -89,20 +89,15 @@ OPAL_MODULE_DECLSPEC int pmix1_get(const opal_process_name_t *proc,
 OPAL_MODULE_DECLSPEC int pmix1_getnb(const opal_process_name_t *proc,
                                        const char *key,
                                        opal_pmix_value_cbfunc_t cbfunc, void *cbdata);
-OPAL_MODULE_DECLSPEC int pmix1_publish(opal_pmix_data_range_t scope,
-                                         opal_pmix_persistence_t persist,
-                                         opal_list_t *info);
-OPAL_MODULE_DECLSPEC int pmix1_publishnb(opal_pmix_data_range_t scope,
-                                           opal_pmix_persistence_t persist,
-                                           opal_list_t *info,
+OPAL_MODULE_DECLSPEC int pmix1_publish(opal_list_t *info);
+OPAL_MODULE_DECLSPEC int pmix1_publishnb(opal_list_t *info,
+                                         opal_pmix_op_cbfunc_t cbfunc, void *cbdata);
+OPAL_MODULE_DECLSPEC int pmix1_lookup(opal_list_t *data, opal_list_t *info);
+OPAL_MODULE_DECLSPEC int pmix1_lookupnb(char **keys, opal_list_t *info,
+                                        opal_pmix_lookup_cbfunc_t cbfunc, void *cbdata);
+OPAL_MODULE_DECLSPEC int pmix1_unpublish(char **keys, opal_list_t *info);
+OPAL_MODULE_DECLSPEC int pmix1_unpublishnb(char **keys, opal_list_t *info,
                                            opal_pmix_op_cbfunc_t cbfunc, void *cbdata);
-OPAL_MODULE_DECLSPEC int pmix1_lookup(opal_pmix_data_range_t scope,
-                                        opal_list_t *data);
-OPAL_MODULE_DECLSPEC int pmix1_lookupnb(opal_pmix_data_range_t scope, int wait, char **keys,
-                                          opal_pmix_lookup_cbfunc_t cbfunc, void *cbdata);
-OPAL_MODULE_DECLSPEC int pmix1_unpublish(opal_pmix_data_range_t scope, char **keys);
-OPAL_MODULE_DECLSPEC int pmix1_unpublishnb(opal_pmix_data_range_t scope, char **keys,
-                                             opal_pmix_op_cbfunc_t cbfunc, void *cbdata);
 OPAL_MODULE_DECLSPEC int pmix1_spawn(opal_list_t *job_info, opal_list_t *apps, opal_jobid_t *jobid);
 OPAL_MODULE_DECLSPEC int pmix1_spawnnb(opal_list_t *job_info, opal_list_t *apps,
                                          opal_pmix_spawn_cbfunc_t cbfunc, void *cbdata);
@@ -119,8 +114,6 @@ OPAL_MODULE_DECLSPEC int pmix1_resolve_peers(const char *nodename, opal_jobid_t 
 OPAL_MODULE_DECLSPEC int pmix1_resolve_nodes(opal_jobid_t jobid, char **nodelist);
 
 /****  COMMON FUNCTIONS  ****/
-OPAL_MODULE_DECLSPEC void pmix1_register_errhandler(opal_pmix_errhandler_fn_t errhandler);
-OPAL_MODULE_DECLSPEC void pmix1_deregister_errhandler(void);
 OPAL_MODULE_DECLSPEC int pmix1_store_local(const opal_process_name_t *proc,
                                              opal_value_t *val);
 

@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2015 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -190,7 +190,7 @@ int PMI_Publish_name(const char service_name[], const char port[])
 
     /* publish the info - PMI-1 doesn't support
      * any scope other than inside our own nspace */
-    rc = PMIx_Publish(PMIX_NAMESPACE, PMIX_PERSIST_APP, &info, 1);
+    rc = PMIx_Publish(&info, 1);
 
     return convert_err(rc);
 }
@@ -204,7 +204,7 @@ int PMI_Unpublish_name(const char service_name[])
     keys[0] = (char*)service_name;
     keys[1] = NULL;
 
-    rc = PMIx_Unpublish(PMIX_NAMESPACE, keys);
+    rc = PMIx_Unpublish(keys, NULL, 0);
     return convert_err(rc);
 }
 
@@ -219,7 +219,7 @@ int PMI_Lookup_name(const char service_name[], char port[])
     (void)strncpy(pdata.key, service_name, PMIX_MAX_KEYLEN);
 
     /* PMI-1 doesn't want the nspace back */
-    if (PMIX_SUCCESS != (rc = PMIx_Lookup(PMIX_NAMESPACE, NULL, 0, &pdata, 1))) {
+    if (PMIX_SUCCESS != (rc = PMIx_Lookup(&pdata, 1, NULL, 0))) {
         return convert_err(rc);
     }
 

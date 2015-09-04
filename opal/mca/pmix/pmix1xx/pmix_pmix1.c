@@ -35,6 +35,7 @@
 #include "opal/util/show_help.h"
 
 #include "pmix1.h"
+#include "opal/mca/pmix/base/base.h"
 
 #include "opal/mca/pmix/pmix1xx/pmix/include/pmix/pmix_common.h"
 
@@ -82,36 +83,10 @@ const opal_pmix_base_module_t opal_pmix_pmix1xx_module = {
     pmix1_server_notify_error,
     /* utility APIs */
     PMIx_Get_version,
-    pmix1_register_errhandler,
-    pmix1_deregister_errhandler,
+    opal_pmix_base_register_handler,
+    opal_pmix_base_deregister_handler,
     pmix1_store_local
 };
-
-static pmix_notification_fn_t errhandler = NULL;
-
-static void notification_fn(int status,
-                            opal_list_t *procs,
-                            opal_list_t *info)
-{
-    /* convert the status */
-
-    /* convert the list of procs to an array of pmix_proc_t */
-
-    /* convert the list of info to an array of pmix_info_t */
-
-    /* pass this down to the notification function
-     * we were given */
-}
-
-void pmix1_register_errhandler(opal_pmix_errhandler_fn_t errhandler)
-{
-    return;
-}
-
-void pmix1_deregister_errhandler(void)
-{
-    return;
-}
 
 int pmix1_store_local(const opal_process_name_t *proc,
                      opal_value_t *val)

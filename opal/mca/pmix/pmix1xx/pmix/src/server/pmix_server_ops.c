@@ -979,9 +979,7 @@ pmix_status_t pmix_server_publish(pmix_peer_t *peer,
 {
     pmix_status_t rc;
     int32_t cnt;
-    pmix_data_range_t range;
-    pmix_persistence_t persist;
-    size_t i, ninfo, einfo;
+    size_t ninfo, einfo;
     pmix_info_t *info = NULL;
     pmix_proc_t proc;
     uint32_t uid;
@@ -996,18 +994,6 @@ pmix_status_t pmix_server_publish(pmix_peer_t *peer,
     /* unpack the effective user id */
     cnt=1;
     if  (PMIX_SUCCESS != (rc = pmix_bfrop.unpack(buf, &uid, &cnt, PMIX_UINT32))) {
-        PMIX_ERROR_LOG(rc);
-        return rc;
-    }
-    /* unpack the scope */
-    cnt=1;
-    if (PMIX_SUCCESS != (rc = pmix_bfrop.unpack(buf, &range, &cnt, PMIX_DATA_RANGE))) {
-        PMIX_ERROR_LOG(rc);
-        return rc;
-    }
-    /* unpack the persistence */
-    cnt=1;
-    if (PMIX_SUCCESS != (rc = pmix_bfrop.unpack(buf, &persist, &cnt, PMIX_PERSIST))) {
         PMIX_ERROR_LOG(rc);
         return rc;
     }
@@ -1035,7 +1021,8 @@ pmix_status_t pmix_server_publish(pmix_peer_t *peer,
     /* call the local server */
     (void)strncpy(proc.nspace, peer->info->nptr->nspace, PMIX_MAX_NSLEN);
     proc.rank = peer->info->rank;
-    rc = pmix_host_server.publish(&proc, range, persist, info, einfo, cbfunc, cbdata);
+    pmix_output(0, "server passing %d values up", (int)einfo);
+    rc = pmix_host_server.publish(&proc, info, einfo, cbfunc, cbdata);
 
  cleanup:
     PMIX_INFO_FREE(info, einfo);
@@ -1048,8 +1035,6 @@ pmix_status_t pmix_server_lookup(pmix_peer_t *peer,
 {
     int32_t cnt;
     pmix_status_t rc;
-    int wait;
-    pmix_data_range_t range;
     size_t nkeys, i;
     char **keys=NULL, *sptr;
     pmix_info_t *info = NULL;
@@ -1070,11 +1055,21 @@ pmix_status_t pmix_server_lookup(pmix_peer_t *peer,
         PMIX_ERROR_LOG(rc);
         return rc;
     }
-    /* unpack the range */
+    /* unpack the number of keys */
     cnt=1;
-    if  (PMIX_SUCCESS != (rc = pmix_bfrop.unpack(buf, &range, &cnt, PMIX_DATA_RANGE))) {
-        PMIX_ERROR_LOG(rc);
+    if  (PMIX_SUCCESS != (rc = pmix_bfrop.unpack(buf, &nkeys, &cnt, PMIX_SIZE))) {
+         PMIX_ERROR_LOG(rc);
         return rc;
+    }
+    /* unpack the array of keys */
+    for (i=0; i < nkeys; i++) {
+        cnt=1;
+        if  (PMIX_SUCCESS != (rc = pmix_bfrop.unpack(buf, &sptr, &cnt, PMIX_STRING))) {
+            PMIX_ERROR_LOG(rc);
+            goto cleanup;
+        }
+        pmix_argv_append_nosize(&keys, sptr);
+        free(sptr);
     }
     /* unpack the number of info objects */
     cnt=1;
@@ -1098,27 +1093,10 @@ pmix_status_t pmix_server_lookup(pmix_peer_t *peer,
     info[einfo-1].value.type = PMIX_UINT32;
     info[einfo-1].value.data.uint32 = uid;
 
-    /* unpack the number of keys */
-    cnt=1;
-    if  (PMIX_SUCCESS != (rc = pmix_bfrop.unpack(buf, &nkeys, &cnt, PMIX_SIZE))) {
-         PMIX_ERROR_LOG(rc);
-        return rc;
-    }
-    /* unpack the array of keys */
-    for (i=0; i < nkeys; i++) {
-        cnt=1;
-        if  (PMIX_SUCCESS != (rc = pmix_bfrop.unpack(buf, &sptr, &cnt, PMIX_STRING))) {
-            PMIX_ERROR_LOG(rc);
-            goto cleanup;
-        }
-        pmix_argv_append_nosize(&keys, sptr);
-        free(sptr);
-    }
-
     /* call the local server */
     (void)strncpy(proc.nspace, peer->info->nptr->nspace, PMIX_MAX_NSLEN);
     proc.rank = peer->info->rank;
-    rc = pmix_host_server.lookup(&proc, range, info, einfo, keys, cbfunc, cbdata);
+    rc = pmix_host_server.lookup(&proc, keys, info, einfo, cbfunc, cbdata);
 
  cleanup:
     PMIX_INFO_FREE(info, einfo);
@@ -1132,12 +1110,11 @@ pmix_status_t pmix_server_unpublish(pmix_peer_t *peer,
 {
     int32_t cnt;
     pmix_status_t rc;
-    pmix_data_range_t range;
-    size_t i, nkeys;
+    size_t i, nkeys, ninfo, einfo;
     char **keys=NULL, *sptr;
     pmix_proc_t proc;
     uint32_t uid;
-    pmix_info_t info;
+    pmix_info_t *info;
 
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "recvd UNPUBLISH");
@@ -1149,12 +1126,6 @@ pmix_status_t pmix_server_unpublish(pmix_peer_t *peer,
     /* unpack the effective user id */
     cnt=1;
     if  (PMIX_SUCCESS != (rc = pmix_bfrop.unpack(buf, &uid, &cnt, PMIX_UINT32))) {
-        PMIX_ERROR_LOG(rc);
-        return rc;
-    }
-    /* unpack the range */
-    cnt=1;
-    if  (PMIX_SUCCESS != (rc = pmix_bfrop.unpack(buf, &range, &cnt, PMIX_DATA_RANGE))) {
         PMIX_ERROR_LOG(rc);
         return rc;
     }
@@ -1174,16 +1145,32 @@ pmix_status_t pmix_server_unpublish(pmix_peer_t *peer,
         pmix_argv_append_nosize(&keys, sptr);
         free(sptr);
     }
-    /* setup the info key */
-    PMIX_INFO_CONSTRUCT(&info);
-    (void)strncpy(info.key, PMIX_USERID, PMIX_MAX_KEYLEN);
-    info.value.type = PMIX_UINT32;
-    info.value.data.uint32 = uid;
+    /* unpack the number of info objects */
+    cnt=1;
+    if (PMIX_SUCCESS != (rc = pmix_bfrop.unpack(buf, &ninfo, &cnt, PMIX_SIZE))) {
+        PMIX_ERROR_LOG(rc);
+        return rc;
+    }
+    /* we will be adding one for the user id */
+    einfo = ninfo + 1;
+    PMIX_INFO_CREATE(info, einfo);
+    /* unpack the array of info objects */
+    if (0 < ninfo) {
+        PMIX_INFO_CREATE(info, ninfo);
+        cnt=ninfo;
+        if (PMIX_SUCCESS != (rc = pmix_bfrop.unpack(buf, info, &cnt, PMIX_INFO))) {
+            PMIX_ERROR_LOG(rc);
+            goto cleanup;
+        }
+    }
+    (void)strncpy(info[einfo-1].key, PMIX_USERID, PMIX_MAX_KEYLEN);
+    info[einfo-1].value.type = PMIX_UINT32;
+    info[einfo-1].value.data.uint32 = uid;
 
     /* call the local server */
     (void)strncpy(proc.nspace, peer->info->nptr->nspace, PMIX_MAX_NSLEN);
     proc.rank = peer->info->rank;
-    rc = pmix_host_server.unpublish(&proc, range, &info, 1, keys, cbfunc, cbdata);
+    rc = pmix_host_server.unpublish(&proc, keys, info, einfo, cbfunc, cbdata);
 
  cleanup:
     pmix_argv_free(keys);

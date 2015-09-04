@@ -325,12 +325,8 @@ typedef int (*opal_pmix_base_module_get_nb_fn_t)(const opal_process_name_t *proc
  * data has been posted and is available. The non-blocking form will
  * return immediately, executing the callback when the server confirms
  * availability of the data */
-typedef int (*opal_pmix_base_module_publish_fn_t)(opal_pmix_data_range_t scope,
-                                                  opal_pmix_persistence_t persist,
-                                                  opal_list_t *info);
-typedef int (*opal_pmix_base_module_publish_nb_fn_t)(opal_pmix_data_range_t scope,
-                                                     opal_pmix_persistence_t persist,
-                                                     opal_list_t *info,
+typedef int (*opal_pmix_base_module_publish_fn_t)(opal_list_t *info);
+typedef int (*opal_pmix_base_module_publish_nb_fn_t)(opal_list_t *info,
                                                      opal_pmix_op_cbfunc_t cbfunc, void *cbdata);
 
 /* Lookup information published by another process within the
@@ -352,8 +348,8 @@ typedef int (*opal_pmix_base_module_publish_nb_fn_t)(opal_pmix_data_range_t scop
  * and return any found items. Thus, the caller is responsible for
  * ensuring that data is published prior to executing a lookup, or
  * for retrying until the requested data is found */
-typedef int (*opal_pmix_base_module_lookup_fn_t)(opal_pmix_data_range_t scope,
-                                                 opal_list_t *data);
+typedef int (*opal_pmix_base_module_lookup_fn_t)(opal_list_t *data,
+                                                 opal_list_t *info);
 
 /* Non-blocking form of the _PMIx_Lookup_ function. Data for
  * the provided NULL-terminated keys array will be returned
@@ -362,7 +358,7 @@ typedef int (*opal_pmix_base_module_lookup_fn_t)(opal_pmix_data_range_t scope,
  * wait for _all_ requested data before executing the callback
  * (_true_), or to callback once the server returns whatever
  * data is immediately available (_false_) */
-typedef int (*opal_pmix_base_module_lookup_nb_fn_t)(opal_pmix_data_range_t scope, int wait, char **keys,
+typedef int (*opal_pmix_base_module_lookup_nb_fn_t)(char **keys, opal_list_t *info,
                                                     opal_pmix_lookup_cbfunc_t cbfunc, void *cbdata);
 
 /* Unpublish data posted by this process using the given keys
@@ -370,14 +366,14 @@ typedef int (*opal_pmix_base_module_lookup_nb_fn_t)(opal_pmix_data_range_t scope
  * the data has been removed by the server. A value of _NULL_
  * for the keys parameter instructs the server to remove
  * _all_ data published by this process within the given scope */
-typedef int (*opal_pmix_base_module_unpublish_fn_t)(opal_pmix_data_range_t scope, char **keys);
+typedef int (*opal_pmix_base_module_unpublish_fn_t)(char **keys, opal_list_t *info);
 
 /* Non-blocking form of the _PMIx_Unpublish_ function. The
  * callback function will be executed once the server confirms
  * removal of the specified data. A value of _NULL_
  * for the keys parameter instructs the server to remove
  * _all_ data published by this process within the given scope  */
-typedef int (*opal_pmix_base_module_unpublish_nb_fn_t)(opal_pmix_data_range_t scope, char **keys,
+typedef int (*opal_pmix_base_module_unpublish_nb_fn_t)(char **keys, opal_list_t *info,
                                                        opal_pmix_op_cbfunc_t cbfunc, void *cbdata);
 
 /* Spawn a new job. The spawned applications are automatically

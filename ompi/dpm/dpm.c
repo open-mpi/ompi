@@ -73,17 +73,21 @@ static OBJ_CLASS_INSTANCE(ompi_dpm_proct_caddy_t,
                           NULL, NULL);
 
 struct lookup_caddy_t {
-    bool active;
+    volatile bool active;
+    int status;
     opal_pmix_pdata_t *pdat;
 };
 
 static void lookup_cbfunc(int status, opal_list_t *data, void *cbdata)
 {
     struct lookup_caddy_t *cd = (struct lookup_caddy_t*)cbdata;
-    opal_pmix_pdata_t *p = (opal_pmix_pdata_t*)opal_list_get_first(data);
-    if (NULL != p && OPAL_STRING == p->value.type &&
-        NULL != p->value.data.string) {
-        cd->pdat->value.data.string = strdup(p->value.data.string);
+    cd->status = status;
+    if (OPAL_SUCCESS == status && NULL != data) {
+        opal_pmix_pdata_t *p = (opal_pmix_pdata_t*)opal_list_get_first(data);
+        if (NULL != p && OPAL_STRING == p->value.type &&
+            NULL != p->value.data.string) {
+            cd->pdat->value.data.string = strdup(p->value.data.string);
+        }
     }
     cd->active = false;
 }
@@ -197,17 +201,13 @@ int ompi_dpm_connect_accept(ompi_communicator_t *comm, int root,
 
         if (send_first) {
             (void)asprintf(&info->key, "%s:connect", port_string);
-            info->type = OPAL_STRING;
-            info->data.string = opal_argv_join(members, ':');
         } else {
             (void)asprintf(&info->key, "%s:accept", port_string);
-            info->type = OPAL_STRING;
-            info->data.string = opal_argv_join(members, ':');
         }
+        info->type = OPAL_STRING;
+        info->data.string = opal_argv_join(members, ':');
         /* publish it with "session" scope */
-        rc = opal_pmix.publish(OPAL_PMIX_SESSION,
-                               OPAL_PMIX_PERSIST_APP,
-                               &ilist);
+        rc = opal_pmix.publish(&ilist);
         OPAL_LIST_DESTRUCT(&ilist);
         if (OPAL_SUCCESS != rc) {
             opal_argv_free(members);
@@ -228,7 +228,7 @@ int ompi_dpm_connect_accept(ompi_communicator_t *comm, int root,
     }
     opal_list_append(&ilist, &pdat->super);
     if (NULL == opal_pmix.lookup_nb) {
-        rc = opal_pmix.lookup(OPAL_PMIX_SESSION, &ilist);
+        rc = opal_pmix.lookup(&ilist, NULL);
         if (OPAL_SUCCESS != rc) {
             OPAL_LIST_DESTRUCT(&ilist);
             opal_argv_free(members);
@@ -242,8 +242,7 @@ int ompi_dpm_connect_accept(ompi_communicator_t *comm, int root,
         opal_argv_append_nosize(&keys, pdat->value.key);
         caddy.active = true;
         caddy.pdat = pdat;
-        rc = opal_pmix.lookup_nb(OPAL_PMIX_SESSION, true, keys,
-                                 lookup_cbfunc, &caddy);
+        rc = opal_pmix.lookup_nb(keys, NULL, lookup_cbfunc, &caddy);
         if (OPAL_SUCCESS != rc) {
             OPAL_LIST_DESTRUCT(&ilist);
             opal_argv_free(keys);
@@ -252,6 +251,11 @@ int ompi_dpm_connect_accept(ompi_communicator_t *comm, int root,
         }
         OMPI_WAIT_FOR_COMPLETION(caddy.active);
         opal_argv_free(keys);
+        if (OPAL_SUCCESS != caddy.status) {
+            OPAL_LIST_DESTRUCT(&ilist);
+            opal_argv_free(members);
+            return OMPI_ERROR;
+        }
     }
     /* initiate a list of participants for the connect,
      * starting with our own members, remembering to

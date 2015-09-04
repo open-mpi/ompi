@@ -49,8 +49,8 @@ int MPI_Unpublish_name(const char *service_name, MPI_Info info,
     int rc;
     char range[OPAL_MAX_INFO_VAL];
     int flag=0;
-    opal_pmix_data_range_t rng;
-    bool range_given = false;
+    opal_list_t pinfo;
+    opal_value_t *rng;
     char **keys = NULL;
 
     if ( MPI_PARAM_CHECK ) {
@@ -71,34 +71,40 @@ int MPI_Unpublish_name(const char *service_name, MPI_Info info,
     }
 
     OPAL_CR_ENTER_LIBRARY();
+    OBJ_CONSTRUCT(&pinfo, opal_list_t);
 
     /* OMPI supports info keys to pass the range to
      * be searched for the given key */
     if (MPI_INFO_NULL != info) {
         ompi_info_get (info, "range", sizeof(range) - 1, range, &flag);
         if (flag) {
-            range_given = true;
             if (0 == strcmp(range, "nspace")) {
-                rng = OPAL_PMIX_NAMESPACE;  // share only with procs in same nspace
+                rng = OBJ_NEW(opal_value_t);
+                rng->key = strdup(OPAL_PMIX_RANGE);
+                rng->type = OPAL_INT;
+                rng->data.integer = OPAL_PMIX_NAMESPACE;  // share only with procs in same nspace
+                opal_list_append(&pinfo, &rng->super);
             } else if (0 == strcmp(range, "session")) {
-                rng = OPAL_PMIX_SESSION; // share only with procs in same session
+                rng = OBJ_NEW(opal_value_t);
+                rng->key = strdup(OPAL_PMIX_RANGE);
+                rng->type = OPAL_INT;
+                rng->data.integer = OPAL_PMIX_SESSION; // share only with procs in same session
+                opal_list_append(&pinfo, &rng->super);
             } else {
-                /* unrecognized range */
+                /* unrecognized scope */
+                OPAL_LIST_DESTRUCT(&pinfo);
                 return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,
                                             FUNC_NAME);
             }
         }
     }
-    if (!range_given) {
-        /* default to nspace */
-        rng = OPAL_PMIX_NAMESPACE;
-    }
 
     /* unpublish the service_name */
     opal_argv_append_nosize(&keys, service_name);
 
-    rc = opal_pmix.unpublish(rng, keys);
+    rc = opal_pmix.unpublish(keys, &pinfo);
     opal_argv_free(keys);
+    OPAL_LIST_DESTRUCT(&pinfo);
 
     if ( OPAL_SUCCESS != rc ) {
         if (OPAL_ERR_NOT_FOUND == rc) {

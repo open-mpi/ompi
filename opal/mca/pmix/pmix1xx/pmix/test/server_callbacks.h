@@ -29,14 +29,13 @@ pmix_status_t dmodex_fn(const pmix_proc_t *proc,
                         const pmix_info_t info[], size_t ninfo,
                         pmix_modex_cbfunc_t cbfunc, void *cbdata);
 pmix_status_t publish_fn(const pmix_proc_t *proc,
-                         pmix_data_range_t scope, pmix_persistence_t persist,
                          const pmix_info_t info[], size_t ninfo,
                          pmix_op_cbfunc_t cbfunc, void *cbdata);
-pmix_status_t lookup_fn(const pmix_proc_t *proc, pmix_data_range_t scope,
-                        const pmix_info_t info[], size_t ninfo, char **keys,
+pmix_status_t lookup_fn(const pmix_proc_t *proc, char **keys,
+                        const pmix_info_t info[], size_t ninfo,
                         pmix_lookup_cbfunc_t cbfunc, void *cbdata);
-pmix_status_t unpublish_fn(const pmix_proc_t *proc,
-                           pmix_data_range_t scope, char **keys,
+pmix_status_t unpublish_fn(const pmix_proc_t *proc, char **keys,
+                           const pmix_info_t info[], size_t ninfo,
                            pmix_op_cbfunc_t cbfunc, void *cbdata);
 pmix_status_t spawn_fn(const pmix_proc_t *proc,
                        const pmix_info_t job_info[], size_t ninfo,
