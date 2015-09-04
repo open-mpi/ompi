@@ -63,7 +63,7 @@ int main(int argc, char **argv)
     nprocs = val->data.uint32;
     PMIX_VALUE_RELEASE(val);
     pmix_output(0, "Client %s:%d universe size %d", myproc.nspace, myproc.rank, nprocs);
-    
+
     /* call fence to ensure the data is received */
     PMIX_PROC_CONSTRUCT(&proc);
     (void)strncpy(proc.nspace, myproc.nspace, PMIX_MAX_NSLEN);
@@ -72,7 +72,7 @@ int main(int argc, char **argv)
         pmix_output(0, "Client ns %s rank %d: PMIx_Fence failed: %d", myproc.nspace, myproc.rank, rc);
         goto done;
     }
-    
+
     /* publish something */
     if (0 == myproc.rank) {
         PMIX_INFO_CREATE(info, 2);
@@ -82,7 +82,7 @@ int main(int argc, char **argv)
         (void)strncpy(info[1].key, "PANDA", PMIX_MAX_KEYLEN);
         info[1].value.type = PMIX_SIZE;
         info[1].value.data.size = 123456;
-        if (PMIX_SUCCESS != (rc = PMIx_Publish(PMIX_GLOBAL, PMIX_PERSIST_APP, info, 2))) {
+        if (PMIX_SUCCESS != (rc = PMIx_Publish(info, 2))) {
             pmix_output(0, "Client ns %s rank %d: PMIx_Publish failed: %d", myproc.nspace, myproc.rank, rc);
             goto done;
         }
@@ -100,7 +100,7 @@ int main(int argc, char **argv)
     if (0 != myproc.rank) {
         PMIX_PDATA_CREATE(pdata, 1);
         (void)strncpy(pdata[0].key, "FOOBAR", PMIX_MAX_KEYLEN);
-        if (PMIX_SUCCESS != (rc = PMIx_Lookup(PMIX_GLOBAL, NULL, 0, pdata, 1))) {
+        if (PMIX_SUCCESS != (rc = PMIx_Lookup(pdata, 1, NULL, 0))) {
             pmix_output(0, "Client ns %s rank %d: PMIx_Lookup failed: %d", myproc.nspace, myproc.rank, rc);
             goto done;
         }
@@ -140,7 +140,7 @@ int main(int argc, char **argv)
         pmix_argv_append_nosize(&keys, "FOOBAR");
         pmix_argv_append_nosize(&keys, "PANDA");
 
-        if (PMIX_SUCCESS != (rc = PMIx_Unpublish(PMIX_GLOBAL, keys))) {
+        if (PMIX_SUCCESS != (rc = PMIx_Unpublish(keys, NULL, 0))) {
             pmix_output(0, "Client ns %s rank %d: PMIx_Unpublish failed: %d", myproc.nspace, myproc.rank, rc);
             goto done;
         }

@@ -53,6 +53,7 @@
  typedef struct {
     opal_object_t super;
     opal_event_t ev;
+    int timeout;
     int room_num;
     int remote_room_num;
     orte_process_name_t proxy;
@@ -146,17 +147,13 @@ extern int pmix_server_fencenb_fn(opal_list_t *procs, opal_list_t *info,
 extern int pmix_server_dmodex_req_fn(opal_process_name_t *proc, opal_list_t *info,
                                      opal_pmix_modex_cbfunc_t cbfunc, void *cbdata);
 extern int pmix_server_publish_fn(opal_process_name_t *proc,
-                                  opal_pmix_data_range_t range,
-                                  opal_pmix_persistence_t persist,
                                   opal_list_t *info,
                                   opal_pmix_op_cbfunc_t cbfunc, void *cbdata);
-extern int pmix_server_lookup_fn(opal_process_name_t *proc,
-                                 opal_pmix_data_range_t range,
-                                 opal_list_t *info, char **keys,
+extern int pmix_server_lookup_fn(opal_process_name_t *proc, char **keys,
+                                 opal_list_t *info,
                                  opal_pmix_lookup_cbfunc_t cbfunc, void *cbdata);
-extern int pmix_server_unpublish_fn(opal_process_name_t *proc,
-                                    opal_pmix_data_range_t range,
-                                    opal_list_t *info, char **keys,
+extern int pmix_server_unpublish_fn(opal_process_name_t *proc, char **keys,
+                                    opal_list_t *info,
                                     opal_pmix_op_cbfunc_t cbfunc, void *cbdata);
 extern int pmix_server_spawn_fn(opal_process_name_t *requestor,
                                 opal_list_t *job_info, opal_list_t *apps,
@@ -186,6 +183,8 @@ typedef struct {
     opal_hotel_t reqs;
     int num_rooms;
     int timeout;
+    char *server_uri;
+    bool wait_for_server;
     orte_process_name_t server;
 } pmix_server_globals_t;
 

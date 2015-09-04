@@ -647,12 +647,6 @@ static int rte_init(void)
         error = "opal_pmix_base_select";
         goto error;
     }
-    /* setup the PMIx server */
-    if (ORTE_SUCCESS != (ret = pmix_server_init())) {
-        ORTE_ERROR_LOG(ret);
-        error = "pmix server init";
-        goto error;
-    }
 
     /* setup the routed info - the selected routed component
      * will know what to do.
@@ -662,6 +656,14 @@ static int rte_init(void)
         error = "orte_routed.init_routes";
         goto error;
     }
+
+    /* setup the PMIx server */
+    if (ORTE_SUCCESS != (ret = pmix_server_init())) {
+        ORTE_ERROR_LOG(ret);
+        error = "pmix server init";
+        goto error;
+    }
+
     /* setup I/O forwarding system - must come after we init routes */
     if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_iof_base_framework, 0))) {
         ORTE_ERROR_LOG(ret);

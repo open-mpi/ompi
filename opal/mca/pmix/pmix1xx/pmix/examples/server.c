@@ -52,15 +52,13 @@ static int dmodex_fn(const pmix_proc_t *proc,
                      const pmix_info_t info[], size_t ninfo,
                      pmix_modex_cbfunc_t cbfunc, void *cbdata);
 static int publish_fn(const pmix_proc_t *proc,
-                      pmix_data_range_t scope, pmix_persistence_t persist,
                       const pmix_info_t info[], size_t ninfo,
                       pmix_op_cbfunc_t cbfunc, void *cbdata);
-static int lookup_fn(const pmix_proc_t *proc,
-                     pmix_data_range_t scope,
-                     const pmix_info_t info[], size_t ninfo, char **keys,
+static int lookup_fn(const pmix_proc_t *proc, char **keys,
+                     const pmix_info_t info[], size_t ninfo,
                      pmix_lookup_cbfunc_t cbfunc, void *cbdata);
-static int unpublish_fn(const pmix_proc_t *proc,
-                        pmix_data_range_t scope, char **keys,
+static int unpublish_fn(const pmix_proc_t *proc, char **keys,
+                        const pmix_info_t info[], size_t ninfo,
                         pmix_op_cbfunc_t cbfunc, void *cbdata);
 static int spawn_fn(const pmix_proc_t *proc,
                     const pmix_info_t job_info[], size_t ninfo,
@@ -443,7 +441,6 @@ static int dmodex_fn(const pmix_proc_t *proc,
 
 
 static int publish_fn(const pmix_proc_t *proc,
-                      pmix_data_range_t scope, pmix_persistence_t persist,
                       const pmix_info_t info[], size_t ninfo,
                       pmix_op_cbfunc_t cbfunc, void *cbdata)
 {
@@ -467,9 +464,8 @@ static int publish_fn(const pmix_proc_t *proc,
 }
 
 
-static int lookup_fn(const pmix_proc_t *proc,
-                     pmix_data_range_t scope,
-                     const pmix_info_t info[], size_t ninfo, char **keys,
+static int lookup_fn(const pmix_proc_t *proc, char **keys,
+                     const pmix_info_t info[], size_t ninfo,
                      pmix_lookup_cbfunc_t cbfunc, void *cbdata)
 {
     pmix_locdat_t *p, *p2;
@@ -517,8 +513,8 @@ static int lookup_fn(const pmix_proc_t *proc,
 }
 
 
-static int unpublish_fn(const pmix_proc_t *proc,
-                        pmix_data_range_t scope, char **keys,
+static int unpublish_fn(const pmix_proc_t *proc, char **keys,
+                        const pmix_info_t info[], size_t ninfo,
                         pmix_op_cbfunc_t cbfunc, void *cbdata)
 {
     pmix_locdat_t *p, *p2;

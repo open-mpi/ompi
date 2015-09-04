@@ -30,7 +30,7 @@ int vprotocol_pessimist_event_logger_connect(int el_rank, ompi_communicator_t **
     asprintf(&pdat->value.key, VPROTOCOL_EVENT_LOGGER_NAME_FMT, el_rank);
     opal_list_append(&results, &pdat->super);
 
-    rc = opal_pmix.lookup(OPAL_PMIX_NAMESPACE, &results);
+    rc = opal_pmix.lookup(&results, NULL);
     if (OPAL_SUCCESS != rc ||
         OPAL_STRING != pdat->value.type ||
         NULL == pdat->value.data.string) {

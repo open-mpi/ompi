@@ -65,27 +65,24 @@ BEGIN_C_DECLS
 
 /****    PMIX API    ****/
 
-/* NOTE: calls to these APIs must be thread-protected as there
- * currently is NO internal thread safety. */
-
-/* Initialize the PMIx client, returning the namespace assigned
- * to this client's application in the provided character array
- * (must be of size PMIX_MAX_NSLEN or greater). Passing a parameter
- * of _NULL_ for either or both parameters is allowed if the user
+/* Initialize the PMIx client, returning the process identifier assigned
+ * to this client's application in the provided pmix_proc_t struct.
+ * Passing a parameter of _NULL_ for this parameter is allowed if the user
  * wishes solely to initialize the PMIx system and does not require
- * return of the NULL parameter(s) at that time.
+ * return of the identifier at that time.
  *
  * When called the PMIx client will check for the required connection
  * information of the local PMIx server and will establish the connection.
  * If the information is not found, or the server connection fails, then
  * an appropriate error constant will be returned.
  *
- * If successful, the function will return PMIX_SUCCESS, will fill the
- * provided namespace array with the server-assigned namespace, and return
- * the rank of the process within the application. Note that the PMIx
- * client library is referenced counted, and so multiple calls to PMIx_Init
- * are allowed. Thus, one way to obtain the namespace and rank of the
- * process is to simply call PMIx_Init with non-NULL parameters. */
+ * If successful, the function will return PMIX_SUCCESS and will fill the
+ * provided structure with the server-assigned namespace and rank of the
+ * process within the application.
+ *
+ * Note that the PMIx client library is referenced counted, and so multiple
+ * calls to PMIx_Init are allowed. Thus, one way to obtain the namespace and
+ * rank of the process is to simply call PMIx_Init with a non-NULL parameter. */
 pmix_status_t PMIx_Init(pmix_proc_t *proc);
 
 /* Finalize the PMIx client, closing the connection to the local server.
@@ -116,10 +113,16 @@ int PMIx_Initialized(void);
  * Passing a _NULL_ msg parameter is allowed. Note that race conditions
  * caused by multiple processes calling PMIx_Abort are left to the
  * server implementation to resolve with regard to which status is
- * returned and what messages (if any) are printed.
- */
+ * returned and what messages (if any) are printed. */
 pmix_status_t PMIx_Abort(int status, const char msg[],
                          pmix_proc_t procs[], size_t nprocs);
+
+
+/* Push a value into the client's namespace. The client library will cache
+ * the information locally until _PMIx_Commit_ is called. The provided scope
+ * value is passed to the local PMIx server, which will distribute the data
+ * as directed. */
+pmix_status_t PMIx_Put(pmix_scope_t scope, const char key[], pmix_value_t *val);
 
 
 /* Push all previously _PMIx_Put_ values to the local PMIx server.
@@ -132,7 +135,7 @@ pmix_status_t PMIx_Commit(void);
 /* Execute a blocking barrier across the processes identified in the
  * specified array. Passing a _NULL_ pointer as the _procs_ parameter
  * indicates that the barrier is to span all processes in the client's
- * namespace. Each provided proc struct can pass PMIX_RANK_WILDCARD to
+ * namespace. Each provided pmix_proc_t struct can pass PMIX_RANK_WILDCARD to
  * indicate that all processes in the given namespace are
  * participating.
  *
@@ -144,19 +147,22 @@ pmix_status_t PMIx_Commit(void);
  *     A value of _false_ indicates that the callback is just used as a release
  *     and no data is to be returned at that time. A value of _true_ indicates
  *     that all _put_ data is to be collected by the barrier. Returned data is
- *     locally cached so that subsequent calls to _PMIx_Get_ can be serviced
- *     without communicating to/from the server, but at the cost of increased
- *     memory footprint
+ *     cached at the server to reduce memory footprint, and can be retrieved
+ *     as needed by calls to PMIx_Get(nb).
+ *
+ *     Note that for scalability reasons, the default behavior for PMIx_Fence
+ *     is to _not_ collect the data.
  *
  * (b) PMIX_COLLECTIVE_ALGO - a comma-delimited string indicating the algos
- *     to be used for executing the barrier, in priority order. The _mandatory_
- *     flag can instruct the host RM that it should return an error if none
- *     of the provided algos are available. Otherwise, the RM is to use one
- *     of the algos if possible, but is otherwise free to use any of its
- *     available methods to execute the operation.
+ *     to be used for executing the barrier, in priority order.
  *
- * (c) PMIX_TIMEOUT - maximum time for the fence to execute before declaring
- *     an error. The RM shall terminate the operation and notify participants
+ * (c) PMIX_COLLECTIVE_ALGO_REQD - instructs the host RM that it should return
+ *     an error if none of the specified algos are available. Otherwise, the RM
+ *     is to use one of the algos if possible, but is otherwise free to use any
+ *     of its available methods to execute the operation.
+ *
+ * (d) PMIX_TIMEOUT - maximum time for the fence to execute before declaring
+ *     an error. By default, the RM shall terminate the operation and notify participants
  *     if one or more of the indicated procs fails during the fence. However,
  *     the timeout parameter can help avoid "hangs" due to programming errors
  *     that prevent one or more procs from reaching the "fence".
@@ -164,7 +170,6 @@ pmix_status_t PMIx_Commit(void);
 pmix_status_t PMIx_Fence(const pmix_proc_t procs[], size_t nprocs,
                          const pmix_info_t info[], size_t ninfo);
 
-/* Fence_nb */
 /* Non-blocking version of PMIx_Fence. Note that the function will return
  * an error if a _NULL_ callback function is given. */
 pmix_status_t PMIx_Fence_nb(const pmix_proc_t procs[], size_t nprocs,
@@ -172,16 +177,9 @@ pmix_status_t PMIx_Fence_nb(const pmix_proc_t procs[], size_t nprocs,
                             pmix_op_cbfunc_t cbfunc, void *cbdata);
 
 
-/* Push a value into the client's namespace. The client library will cache
- * the information locally until _PMIx_Commit_ is called. The provided scope
- * value is passed to the local PMIx server, which will distribute the data
- * as directed. */
-pmix_status_t PMIx_Put(pmix_scope_t scope, const char key[], pmix_value_t *val);
-
-/* Retrieve information for the specified _key_ as published by the given _rank_
- * within the provided _namespace_, returning a pointer to the value in the
- * given address. A _NULL_ value for the namespace indicates that the rank
- * is within the caller's namespace.
+/* Retrieve information for the specified _key_ as published by the process
+ * identified in the given pmix_proc_t, returning a pointer to the value in the
+ * given address.
  *
  * This is a blocking operation - the caller will block until
  * the specified data has been _PMIx_Put_ by the specified rank. The caller is
@@ -199,55 +197,48 @@ pmix_status_t PMIx_Get(const pmix_proc_t *proc, const char key[],
                        const pmix_info_t info[], size_t ninfo,
                        pmix_value_t **val);
 
-/* Retrieve information for the specified _key_ as _PMIx_Put_ by the given _rank_
- * within the provided _namespace_. This is a non-blocking operation - the
- * callback function will be executed once the specified data has been _PMIx_Put_
- * by the specified rank and retrieved by the local server. The info
+/* A non-blocking operation version of PMIx_Get - the callback function will
+ * be executed once the specified data has been _PMIx_Put_
+ * by the identified process and retrieved by the local server. The info
  * array is used as described above for the blocking form of this call. */
 pmix_status_t PMIx_Get_nb(const pmix_proc_t *proc, const char key[],
                           const pmix_info_t info[], size_t ninfo,
                           pmix_value_cbfunc_t cbfunc, void *cbdata);
 
 
-/* Publish the data in the info array for lookup subject to the provided 
- * data range. Note that the keys must be unique within the specified
+/* Publish the data in the info array for lookup. By default,
+ * the data will be published into the PMIX_SESSION range and
+ * with PMIX_PERSIST_APP persistence. Changes to those values,
+ * and any additional directives, can be included in the pmix_info_t
+ * array.
+ *
+ * Note that the keys must be unique within the specified
  * data range or else an error will be returned (first published
  * wins). Attempts to access the data by procs outside of
  * the provided data range will be rejected.
  *
- * Note: Some host environments may support user/group level
- * access controls on the information in addition to the data range.
- * These can be specified in the info array using the appropriately
- * defined keys.
- *
  * The persistence parameter instructs the server as to how long
- * the data is to be retained, within the context of the range.
- * For example, data published within _PMIX_NAMESPACE_ will be
- * deleted along with the namespace regardless of the persistence.
- * However, data published within PMIX_USER would be retained if
- * the persistence was set to _PMIX_PERSIST_SESSION_ until the
- * allocation terminates.
+ * the data is to be retained.
  *
  * The blocking form will block until the server confirms that the
  * data has been posted and is available. The non-blocking form will
  * return immediately, executing the callback when the server confirms
  * availability of the data.
  */
-pmix_status_t PMIx_Publish(pmix_data_range_t range,
-                           pmix_persistence_t persist,
-                           const pmix_info_t info[],
-                           size_t ninfo);
-pmix_status_t PMIx_Publish_nb(pmix_data_range_t range,
-                              pmix_persistence_t persist,
-                              const pmix_info_t info[],
-                              size_t ninfo,
+pmix_status_t PMIx_Publish(const pmix_info_t info[], size_t ninfo);
+pmix_status_t PMIx_Publish_nb(const pmix_info_t info[], size_t ninfo,
                               pmix_op_cbfunc_t cbfunc, void *cbdata);
 
 
-/* Lookup information published by another process within the
- * specified range. A rabge of _PMIX_DATA_RANGE_UNDEF_ requests that
- * the search be conducted across _all_ namespaces accessible by this
- * user.
+/* Lookup information published by this or another process. By default,
+ * the search will be conducted across the PMIX_SESSION range. Changes
+ * to the range, and any additional directives, can be provided
+ * in the pmix_info_t array. Note that the search is also constrained
+ * to only data published by the current user ID - i.e., the search
+ * will not return data published by an application being executed
+ * by another user. There currently is no option to override this
+ * behavior - such an option may become available later via an
+ * appropriate pmix_info_t directive.
  *
  * The "data" parameter consists of an array of pmix_pdata_t struct with the
  * keys specifying the requested information. Data will be returned
@@ -270,18 +261,13 @@ pmix_status_t PMIx_Publish_nb(pmix_data_range_t range,
  * by including:
  *
  * (a) PMIX_WAIT - wait for the requested data to be published. The
- *     _mandatory_ flag indicates that the server is to wait until
- *     all data has become available. Otherwise, the function will
- *     return as soon as the specified number of values have been
- *     collected. A value of -1 indicates that all values must be
- *     obtained.
+ *     server is to wait until all data has become available.
  *
  * (b) PMIX_TIMEOUT - max time to wait for data to become available.
  *
  */
-pmix_status_t PMIx_Lookup(pmix_data_range_t range,
-                          const pmix_info_t info[], size_t ninfo,
-                          pmix_pdata_t data[], size_t ndata);
+pmix_status_t PMIx_Lookup(pmix_pdata_t data[], size_t ndata,
+                          const pmix_info_t info[], size_t ninfo);
 
 /* Non-blocking form of the _PMIx_Lookup_ function. Data for
  * the provided NULL-terminated keys array will be returned
@@ -289,44 +275,58 @@ pmix_status_t PMIx_Lookup(pmix_data_range_t range,
  * behavior is to _not_ wait for data to be published. The
  * info keys can be used to modify the behavior as previously
  * described */
-pmix_status_t PMIx_Lookup_nb(pmix_data_range_t range, char **keys,
-                             const pmix_info_t info[], size_t ninfo,
+pmix_status_t PMIx_Lookup_nb(char **keys, const pmix_info_t info[], size_t ninfo,
                              pmix_lookup_cbfunc_t cbfunc, void *cbdata);
 
 
-/* Unpublish data posted by this process using the given keys
- * within the specified data range. The function will block until
- * the data has been removed by the server. A value of _NULL_
- * for the keys parameter instructs the server to remove
- * _all_ data published by this process within the given range */
-pmix_status_t PMIx_Unpublish(pmix_data_range_t range, char **keys);
+/* Unpublish data posted by this process using the given keys.
+ * The function will block until the data has been removed by
+ * the server. A value of _NULL_ for the keys parameter instructs
+ * the server to remove _all_ data published by this process.
+ *
+ * By default, the range is assumed to be PMIX_SESSION. Changes
+ * to the range, and any additional directives, can be provided
+ * in the pmix_info_t array */
+pmix_status_t PMIx_Unpublish(char **keys,
+                             const pmix_info_t info[], size_t ninfo);
 
 /* Non-blocking form of the _PMIx_Unpublish_ function. The
  * callback function will be executed once the server confirms
- * removal of the specified data. A value of _NULL_
- * for the keys parameter instructs the server to remove
- * _all_ data published by this process within the given range  */
-pmix_status_t PMIx_Unpublish_nb(pmix_data_range_t range, char **keys,
+ * removal of the specified data. */
+pmix_status_t PMIx_Unpublish_nb(char **keys,
+                                const pmix_info_t info[], size_t ninfo,
                                 pmix_op_cbfunc_t cbfunc, void *cbdata);
 
 
 /* Spawn a new job. The assigned namespace of the spawned applications
  * is returned in the nspace parameter - a _NULL_ value in that
  * location indicates that the caller doesn't wish to have the
- * namespace returned. Behavior of individual resource managers
+ * namespace returned. The nspace array must be at least of size
+ * PMIX_MAX_NSLEN+1. Behavior of individual resource managers
  * may differ, but it is expected that failure of any application
  * process to start will result in termination/cleanup of _all_
  * processes in the newly spawned job and return of an error
  * code to the caller.
  *
+ * By default, the spawned processes will be PMIx "connected" to
+ * the parent process upon successful launch (see PMIx_Connect
+ * description for details). Note that this only means that the
+ * parent process (a) will be given a copy of the  new job's
+ * information so it can query job-level info without
+ * incurring any communication penalties, and (b) will receive
+ * notification of errors from process in the child job.
+ *
  * Job-level directives can be specified in the job_info array. This
  * can include:
  *
- * (a) PMIX_NON_MPI - the spawned job is not an MPI job and the procs will
+ * (a) PMIX_NON_PMI - processes in the spawned job will
  *     not be calling PMIx_Init
  *
  * (b) PMIX_TIMEOUT - declare the spawn as having failed if the launched
  *     procs do not call PMIx_Init within the specified time
+ *
+ * (c) PMIX_NOTIFY_COMPLETION - notify the parent process when the
+ *     child job terminates, either normally or with error
  */
 pmix_status_t PMIx_Spawn(const pmix_info_t job_info[], size_t ninfo,
                          const pmix_app_t apps[], size_t napps,
@@ -353,8 +353,8 @@ pmix_status_t PMIx_Spawn_nb(const pmix_info_t job_info[], size_t ninfo,
  * the job-level info from those nspaces other than their own.
  *
  * Note: a process can only engage in _one_ connect operation involving the identical
- * set of ranges at a time. However, a process _can_ be simultaneously engaged
- * in multiple connect operations, each involving a different set of ranges
+ * set of processes at a time. However, a process _can_ be simultaneously engaged
+ * in multiple connect operations, each involving a different set of processes
  *
  * As in the case of the fence operation, the info array can be used to pass
  * user-level directives regarding the algorithm to be used for the collective

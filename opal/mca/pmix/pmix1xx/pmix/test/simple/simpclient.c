@@ -44,11 +44,11 @@ int main(int argc, char **argv)
     char *tmp;
     pmix_proc_t proc, myproc;
     uint32_t nprocs, n;
-    
+
     /* init us */
     if (PMIX_SUCCESS != (rc = PMIx_Init(&myproc))) {
         pmix_output(0, "Client ns %s rank %d: PMIx_Init failed: %d", myproc.nspace, myproc.rank, rc);
-        exit(0);
+        exit(rc);
     }
     pmix_output(0, "Client ns %s rank %d: Running", myproc.nspace, myproc.rank);
 
@@ -60,7 +60,7 @@ int main(int argc, char **argv)
     nprocs = val->data.uint32;
     PMIX_VALUE_RELEASE(val);
     pmix_output(0, "Client %s:%d universe size %d", myproc.nspace, myproc.rank, nprocs);
-    
+
     /* put a few values */
     (void)asprintf(&tmp, "%s-%d-internal", myproc.nspace, myproc.rank);
     value.type = PMIX_UINT32;
@@ -99,7 +99,7 @@ int main(int argc, char **argv)
         pmix_output(0, "Client ns %s rank %d: PMIx_Fence failed: %d", myproc.nspace, myproc.rank, rc);
         goto done;
     }
-    
+
     /* check the returned data */
     (void)strncpy(proc.nspace, myproc.nspace, PMIX_MAX_NSLEN);
     for (n=0; n < nprocs; n++) {
@@ -156,5 +156,5 @@ int main(int argc, char **argv)
         fprintf(stderr, "Client ns %s rank %d:PMIx_Finalize successfully completed\n", myproc.nspace, myproc.rank);
     }
     fflush(stderr);
-    return(0);
+    return(rc);
 }

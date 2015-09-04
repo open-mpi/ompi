@@ -61,9 +61,7 @@ static void wait_lookup_cbfunc(struct pmix_peer_t *pr, pmix_usock_hdr_t *hdr,
 static void lookup_cbfunc(int status, pmix_pdata_t pdata[], size_t ndata,
                           void *cbdata);
 
-int PMIx_Publish(pmix_data_range_t scope,
-                 pmix_persistence_t persist,
-                 const pmix_info_t info[],
+int PMIx_Publish(const pmix_info_t info[],
                  size_t ninfo)
 {
     int rc;
@@ -85,7 +83,7 @@ int PMIx_Publish(pmix_data_range_t scope,
     cb = PMIX_NEW(pmix_cb_t);
     cb->active = true;
 
-    if (PMIX_SUCCESS != (rc = PMIx_Publish_nb(scope, persist, info, ninfo, op_cbfunc, cb))) {
+    if (PMIX_SUCCESS != (rc = PMIx_Publish_nb(info, ninfo, op_cbfunc, cb))) {
         PMIX_ERROR_LOG(rc);
         PMIX_RELEASE(cb);
         return rc;
@@ -99,10 +97,7 @@ int PMIx_Publish(pmix_data_range_t scope,
     return rc;
 }
 
-int PMIx_Publish_nb(pmix_data_range_t scope,
-                    pmix_persistence_t persist,
-                    const pmix_info_t info[],
-                    size_t ninfo,
+int PMIx_Publish_nb(const pmix_info_t info[], size_t ninfo,
                     pmix_op_cbfunc_t cbfunc, void *cbdata)
 {
     pmix_buffer_t *msg;
@@ -143,24 +138,14 @@ int PMIx_Publish_nb(pmix_data_range_t scope,
         PMIX_RELEASE(msg);
         return rc;
     }
-    /* pack the data range */
-    if (PMIX_SUCCESS != (rc = pmix_bfrop.pack(msg, &scope, 1, PMIX_DATA_RANGE))) {
-        PMIX_ERROR_LOG(rc);
-        PMIX_RELEASE(msg);
-        return rc;
-    }
-    /* pack the persistence */
-    if (PMIX_SUCCESS != (rc = pmix_bfrop.pack(msg, &persist, 1, PMIX_PERSIST))) {
-        PMIX_ERROR_LOG(rc);
-        PMIX_RELEASE(msg);
-        return rc;
-    }
-    /* pack the info keys that were given */
+    /* pass the number of info structs - needed on remote end so
+     * space can be malloc'd for the values */
     if (PMIX_SUCCESS != (rc = pmix_bfrop.pack(msg, &ninfo, 1, PMIX_SIZE))) {
         PMIX_ERROR_LOG(rc);
         PMIX_RELEASE(msg);
         return rc;
     }
+    /* pack the info structs */
     if (PMIX_SUCCESS != (rc = pmix_bfrop.pack(msg, info, ninfo, PMIX_INFO))) {
         PMIX_ERROR_LOG(rc);
         PMIX_RELEASE(msg);
@@ -181,9 +166,8 @@ int PMIx_Publish_nb(pmix_data_range_t scope,
     return PMIX_SUCCESS;
 }
 
-int PMIx_Lookup(pmix_data_range_t scope,
-                const pmix_info_t info[], size_t ninfo,
-                pmix_pdata_t pdata[], size_t ndata)
+int PMIx_Lookup(pmix_pdata_t pdata[], size_t ndata,
+                const pmix_info_t info[], size_t ninfo)
 {
     int rc;
     pmix_cb_t *cb;
@@ -213,8 +197,7 @@ int PMIx_Lookup(pmix_data_range_t scope,
     cb->nvals = ndata;
     cb->active = true;
 
-    if (PMIX_SUCCESS != (rc = PMIx_Lookup_nb(scope, keys,
-                                             info, ninfo,
+    if (PMIX_SUCCESS != (rc = PMIx_Lookup_nb(keys, info, ninfo,
                                              lookup_cbfunc, cb))) {
         PMIX_RELEASE(cb);
         pmix_argv_free(keys);
@@ -231,8 +214,7 @@ int PMIx_Lookup(pmix_data_range_t scope,
     return rc;
 }
 
-int PMIx_Lookup_nb(pmix_data_range_t range, char **keys,
-                   const pmix_info_t info[], size_t ninfo,
+int PMIx_Lookup_nb(char **keys, const pmix_info_t info[], size_t ninfo,
                    pmix_lookup_cbfunc_t cbfunc, void *cbdata)
 {
     pmix_buffer_t *msg;
@@ -267,25 +249,6 @@ int PMIx_Lookup_nb(pmix_data_range_t range, char **keys,
         PMIX_RELEASE(msg);
         return rc;
     }
-    /* pack the range */
-    if (PMIX_SUCCESS != (rc = pmix_bfrop.pack(msg, &range, 1, PMIX_DATA_RANGE))) {
-        PMIX_ERROR_LOG(rc);
-        PMIX_RELEASE(msg);
-        return rc;
-    }
-    /* pack the info structs */
-    if (PMIX_SUCCESS != (rc = pmix_bfrop.pack(msg, &ninfo, 1, PMIX_SIZE))) {
-        PMIX_ERROR_LOG(rc);
-        PMIX_RELEASE(msg);
-        return rc;
-    }
-    if (0 < ninfo) {
-        if (PMIX_SUCCESS != (rc = pmix_bfrop.pack(msg, info, ninfo, PMIX_INFO))) {
-            PMIX_ERROR_LOG(rc);
-            PMIX_RELEASE(msg);
-            return rc;
-        }
-    }
     /* pack the keys */
     nkeys = pmix_argv_count(keys);
     if (PMIX_SUCCESS != (rc = pmix_bfrop.pack(msg, &nkeys, 1, PMIX_SIZE))) {
@@ -302,6 +265,19 @@ int PMIx_Lookup_nb(pmix_data_range_t range, char **keys,
             }
         }
     }
+    /* pass the number of info structs - needed on remote end so
+     * space can be malloc'd for the values */
+    if (PMIX_SUCCESS != (rc = pmix_bfrop.pack(msg, &ninfo, 1, PMIX_SIZE))) {
+        PMIX_ERROR_LOG(rc);
+        PMIX_RELEASE(msg);
+        return rc;
+    }
+    /* pack the info structs */
+    if (PMIX_SUCCESS != (rc = pmix_bfrop.pack(msg, info, ninfo, PMIX_INFO))) {
+        PMIX_ERROR_LOG(rc);
+        PMIX_RELEASE(msg);
+        return rc;
+    }
 
     /* create a callback object as we need to pass it to the
      * recv routine so we know which callback to use when
@@ -316,7 +292,7 @@ int PMIx_Lookup_nb(pmix_data_range_t range, char **keys,
     return PMIX_SUCCESS;
 }
 
-int PMIx_Unpublish(pmix_data_range_t scope, char **keys)
+int PMIx_Unpublish(char **keys, const pmix_info_t info[], size_t ninfo)
 {
     int rc;
     pmix_cb_t *cb;
@@ -331,7 +307,7 @@ int PMIx_Unpublish(pmix_data_range_t scope, char **keys)
     cb->active = true;
 
     /* push the message into our event base to send to the server */
-    if (PMIX_SUCCESS != (rc = PMIx_Unpublish_nb(scope, keys, op_cbfunc, cb))) {
+    if (PMIX_SUCCESS != (rc = PMIx_Unpublish_nb(keys, info, ninfo, op_cbfunc, cb))) {
         PMIX_RELEASE(cb);
         return rc;
     }
@@ -344,7 +320,7 @@ int PMIx_Unpublish(pmix_data_range_t scope, char **keys)
     return rc;
 }
 
-int PMIx_Unpublish_nb(pmix_data_range_t range, char **keys,
+int PMIx_Unpublish_nb(char **keys, const pmix_info_t info[], size_t ninfo,
                       pmix_op_cbfunc_t cbfunc, void *cbdata)
 {
     pmix_buffer_t *msg;
@@ -374,12 +350,6 @@ int PMIx_Unpublish_nb(pmix_data_range_t range, char **keys,
         PMIX_RELEASE(msg);
         return rc;
     }
-    /* pack the range */
-    if (PMIX_SUCCESS != (rc = pmix_bfrop.pack(msg, &range, 1, PMIX_DATA_RANGE))) {
-        PMIX_ERROR_LOG(rc);
-        PMIX_RELEASE(msg);
-        return rc;
-    }
     /* pack the number of keys */
     i = pmix_argv_count(keys);
     if (PMIX_SUCCESS != (rc = pmix_bfrop.pack(msg, &i, 1, PMIX_SIZE))) {
@@ -395,6 +365,19 @@ int PMIx_Unpublish_nb(pmix_data_range_t range, char **keys,
                 return rc;
             }
         }
+    }
+    /* pass the number of info structs - needed on remote end so
+     * space can be malloc'd for the values */
+    if (PMIX_SUCCESS != (rc = pmix_bfrop.pack(msg, &ninfo, 1, PMIX_SIZE))) {
+        PMIX_ERROR_LOG(rc);
+        PMIX_RELEASE(msg);
+        return rc;
+    }
+    /* pack the info structs */
+    if (PMIX_SUCCESS != (rc = pmix_bfrop.pack(msg, info, ninfo, PMIX_INFO))) {
+        PMIX_ERROR_LOG(rc);
+        PMIX_RELEASE(msg);
+        return rc;
     }
 
     /* create a callback object */
