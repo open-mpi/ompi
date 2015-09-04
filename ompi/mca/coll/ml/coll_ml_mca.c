@@ -205,7 +205,7 @@ int mca_coll_ml_register_params(void)
     /* register openib component parameters */
 
     CHECK(reg_int("priority", NULL, "ML component priority"
-                  "(from 0(low) to 90 (high))", 27, &mca_coll_ml_component.ml_priority, 0));
+                  "(from 0(low) to 90 (high))", 0, &mca_coll_ml_component.ml_priority, 0));
 
     CHECK(reg_int("verbose", NULL, "Output some verbose ML information "
                   "(0 = no output, nonzero = output)", 0, &mca_coll_ml_component.verbose, 0));
