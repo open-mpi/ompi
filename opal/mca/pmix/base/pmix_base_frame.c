@@ -33,7 +33,7 @@
 opal_pmix_base_module_t opal_pmix = { 0 };
 bool opal_pmix_collect_all_data = false;
 bool opal_pmix_base_allow_delayed_server = false;
-int pmix_verbose_output = -1;
+int opal_pmix_verbose_output = -1;
 
 static int opal_pmix_base_frame_register(mca_base_register_flag_t flags)
 {
@@ -59,7 +59,7 @@ static int opal_pmix_base_frame_open(mca_base_open_flag_t flags)
     /* ensure the function pointers are NULL */
     memset(&opal_pmix, 0, sizeof(opal_pmix));
     /* pass across the verbosity */
-    pmix_verbose_output = opal_pmix_base_framework.framework_output;
+    opal_pmix_verbose_output = opal_pmix_base_framework.framework_output;
     return rc;
 }
 

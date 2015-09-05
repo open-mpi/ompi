@@ -783,12 +783,16 @@ static int recv_connect_ack(int sd)
 
     /* get the current timeout value so we can reset to it */
     sz = sizeof(save);
-    getsockopt(sd, SOL_SOCKET, SO_RCVTIMEO, (void*)&save, &sz);
+    if (0 != getsockopt(sd, SOL_SOCKET, SO_RCVTIMEO, (void*)&save, &sz)) {
+        return PMIX_ERR_UNREACH;
+    }
 
     /* set a timeout on the blocking recv so we don't hang */
     tv.tv_sec  = 2;
     tv.tv_usec = 0;
-    setsockopt(sd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
+    if (0 != setsockopt(sd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv))) {
+        return PMIX_ERR_UNREACH;
+    }
 
     /* receive the status reply */
     rc = pmix_usock_recv_blocking(sd, (char*)&reply, sizeof(int));
@@ -820,7 +824,9 @@ static int recv_connect_ack(int sd)
     }
 
     /* return the socket to normal */
-    setsockopt(sd, SOL_SOCKET, SO_RCVTIMEO, &save, sz);
+    if (0 != setsockopt(sd, SOL_SOCKET, SO_RCVTIMEO, &save, sz)) {
+        return PMIX_ERR_UNREACH;
+    }
 
     return PMIX_SUCCESS;
 }

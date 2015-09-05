@@ -360,13 +360,17 @@ void pmix_server_keyval_client(int status, orte_process_name_t* sender,
                                opal_buffer_t *buffer,
                                orte_rml_tag_t tg, void *cbdata)
 {
-    int rc, ret, room_num;
+    int rc, ret, room_num = -1;
     int32_t cnt;
-    pmix_server_req_t *req;
+    pmix_server_req_t *req=NULL;
     opal_list_t info;
     opal_value_t *iptr;
     opal_pmix_pdata_t *pdata;
     opal_process_name_t source;
+
+    opal_output_verbose(1, orte_pmix_server_globals.output,
+                        "%s recvd lookup data return",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
 
     OBJ_CONSTRUCT(&info, opal_list_t);
     /* unpack the room number of the request tracker */
@@ -384,12 +388,20 @@ void pmix_server_keyval_client(int status, orte_process_name_t* sender,
         goto release;
     }
 
+    opal_output_verbose(5, orte_pmix_server_globals.output,
+                        "%s recvd lookup returned status %d",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ret);
+
     if (ORTE_SUCCESS == ret) {
         /* see if any data was included - not an error if the answer is no */
         cnt = 1;
         while (OPAL_SUCCESS == opal_dss.unpack(buffer, &source, &cnt, OPAL_NAME)) {
             pdata = OBJ_NEW(opal_pmix_pdata_t);
             pdata->proc = source;
+            opal_output_verbose(5, orte_pmix_server_globals.output,
+                                "%s recvd lookup returned data from source %s",
+                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                ORTE_NAME_PRINT(&source));
             if (OPAL_SUCCESS != (rc = opal_dss.unpack(buffer, &iptr, &cnt, OPAL_VALUE))) {
                 ORTE_ERROR_LOG(rc);
                 OBJ_RELEASE(pdata);
@@ -406,10 +418,12 @@ void pmix_server_keyval_client(int status, orte_process_name_t* sender,
         }
     }
 
-    /* retrieve the tracker */
-    opal_hotel_checkout_and_return_occupant(&orte_pmix_server_globals.reqs, room_num, (void**)&req);
-
   release:
+    if (0 <= room_num) {
+        /* retrieve the tracker */
+        opal_hotel_checkout_and_return_occupant(&orte_pmix_server_globals.reqs, room_num, (void**)&req);
+    }
+
     if (NULL != req) {
         /* pass down the response */
         if (NULL != req->opcbfunc) {

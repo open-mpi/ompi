@@ -84,6 +84,7 @@ OBJ_CLASS_INSTANCE(orte_data_object_t,
 typedef struct {
     opal_list_item_t super;
     orte_process_name_t requestor;
+    int room_number;
     uint32_t uid;
     opal_pmix_data_range_t range;
     char **keys;
@@ -234,6 +235,10 @@ void orte_data_server(int status, orte_process_name_t* sender,
 
         data->index = opal_pointer_array_add(&orte_data_server_store, data);
 
+        OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
+                             "%s data server: checking for pending requests",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+
         /* check for pending requests that match this data */
         reply = NULL;
         OPAL_LIST_FOREACH_SAFE(req, rqnext, &pending, orte_data_req_t) {
@@ -250,6 +255,12 @@ void orte_data_server(int status, orte_process_name_t* sender,
                         /* found it - package it for return */
                         if (NULL == reply) {
                             reply = OBJ_NEW(opal_buffer_t);
+                            /* start with their room number */
+                            if (ORTE_SUCCESS != (rc = opal_dss.pack(reply, &req->room_number, 1, OPAL_INT))) {
+                                ORTE_ERROR_LOG(rc);
+                                break;
+                            }
+                            /* then the status */
                             ret = ORTE_SUCCESS;
                             if (ORTE_SUCCESS != (rc = opal_dss.pack(reply, &ret, 1, OPAL_INT))) {
                                 ORTE_ERROR_LOG(rc);
@@ -269,6 +280,11 @@ void orte_data_server(int status, orte_process_name_t* sender,
             }
             if (NULL != reply) {
                 /* send it back to the requestor */
+                OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
+                                     "%s data server: returning data to %s",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                     ORTE_NAME_PRINT(&req->requestor)));
+
                 if (0 > (rc = orte_rml.send_buffer_nb(&req->requestor, reply, ORTE_RML_TAG_DATA_CLIENT,
                                                       orte_rml_send_callback, NULL))) {
                     ORTE_ERROR_LOG(rc);
@@ -393,14 +409,23 @@ void orte_data_server(int status, orte_process_name_t* sender,
             }
         }
         if (!ret_packed) {
+            OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
+                                 "%s data server:lookup: data not found",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+
             /* if we were told to wait for the data, then queue this up
              * for later processing */
             if (wait) {
+                OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
+                                     "%s data server:lookup: pushing request to wait",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
                 req = OBJ_NEW(orte_data_req_t);
+                req->room_number = room_number;
                 req->requestor = *sender;
                 req->uid = uid;
                 req->range = range;
                 req->keys = keys;
+                opal_list_append(&pending, &req->super);
                 return;
             }
             /* nothing was found - indicate that situation */
@@ -409,6 +434,9 @@ void orte_data_server(int status, orte_process_name_t* sender,
             goto SEND_ERROR;
         }
         opal_argv_free(keys);
+        OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
+                             "%s data server:lookup: data found",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         goto SEND_ANSWER;
         break;
 

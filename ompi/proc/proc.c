@@ -156,27 +156,12 @@ int ompi_proc_complete_init(void)
                 proc->super.proc_flags = u16;
             }
 
-            if (ompi_process_info.num_procs < ompi_direct_modex_cutoff) {
-                /* IF the number of procs falls below the specified cutoff,
-                 * then we assume the job is small enough that retrieving
-                 * the hostname (which will typically cause retrieval of
-                 * ALL modex info for this proc) will have no appreciable
-                 * impact on launch scaling
-                 */
-                OPAL_MODEX_RECV_VALUE(ret, OPAL_PMIX_HOSTNAME, &proc->super.proc_name,
-                                      (char**)&(proc->super.proc_hostname), OPAL_STRING);
-                if (OPAL_SUCCESS != ret) {
-                    errcode = ret;
-                    break;
-                }
-            } else {
-                /* just set the hostname to NULL for now - we'll fill it in
-                 * as modex_recv's are called for procs we will talk to, thus
-                 * avoiding retrieval of ALL modex info for this proc until
-                 * required. Transports that delay calling modex_recv until
-                 * first message will therefore scale better than those that
-                 * call modex_recv on all procs during init.
-                 */
+            /* we can retrieve the hostname at no cost because it
+             * was provided at startup */
+            OPAL_MODEX_RECV_VALUE(ret, OPAL_PMIX_HOSTNAME, &proc->super.proc_name,
+                                  (char**)&(proc->super.proc_hostname), OPAL_STRING);
+            if (OPAL_SUCCESS != ret) {
+                /* we can live without it */
                 proc->super.proc_hostname = NULL;
             }
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT

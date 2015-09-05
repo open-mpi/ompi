@@ -88,8 +88,7 @@ const opal_pmix_base_module_t opal_pmix_pmix1xx_module = {
     pmix1_store_local
 };
 
-int pmix1_store_local(const opal_process_name_t *proc,
-                     opal_value_t *val)
+int pmix1_store_local(const opal_process_name_t *proc, opal_value_t *val)
 {
     pmix_value_t kv;
     pmix_status_t rc;
