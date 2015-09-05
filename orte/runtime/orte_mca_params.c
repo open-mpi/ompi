@@ -13,7 +13,7 @@
  * Copyright (c) 2009-2010 Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.
  *                         All rights reserved
- * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
+ * Copyright (c) 2013-2015 Intel, Inc. All rights reserved
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -468,14 +468,12 @@ int orte_register_params(void)
     orte_hetero_apps = OPAL_INT_TO_BOOL(value);
 #endif
 
-#if OPAL_HAVE_HWLOC
     orte_hetero_nodes = false;
     (void) mca_base_var_register ("orte", "orte", NULL, "hetero_nodes",
                                   "Nodes in cluster may differ in topology, so send the topology back from each node [Default = false]",
                                   MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
                                   OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
                                   &orte_hetero_nodes);
-#endif
 
     /* allow specification of the launch agent */
     orte_launch_agent = "orted";
@@ -665,7 +663,6 @@ int orte_register_params(void)
                                   OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
                                   &orte_max_vm_size);
 
-#if OPAL_HAVE_HWLOC
     if (opal_hwloc_use_hwthreads_as_cpus) {
         orte_set_slots = "hwthreads";
     } else {
@@ -679,9 +676,6 @@ int orte_register_params(void)
                                   MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
                                   OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
                                   &orte_set_slots);
-#else
-    orte_set_slots = NULL;
-#endif
 
     /* should we display the allocation after determining it? */
     orte_display_allocation = false;

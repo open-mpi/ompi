@@ -3,7 +3,7 @@
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2013      Inria.  All rights reserved.
- * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -109,9 +109,7 @@ typedef struct opal_process_info_t {
     char *proc_session_dir;             /**< Session directory for the process */
     int32_t num_local_peers;            /**< number of procs from my job that share my node with me */
     int32_t my_local_rank;              /**< local rank on this node within my job */
-#if OPAL_HAVE_HWLOC
     char *cpuset;                       /**< String-representation of bitmap where we are bound */
-#endif
 } opal_process_info_t;
 OPAL_DECLSPEC extern opal_process_info_t opal_process_info;
 

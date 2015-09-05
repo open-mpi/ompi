@@ -390,7 +390,6 @@ int orte_dt_print_node(char **output, char *prefix, orte_node_t *src, opal_data_
         tmp = tmp2;
     }
 
-#if OPAL_HAVE_HWLOC
     if (orte_display_topo_with_map && NULL != src->topology) {
         char *pfx3;
         asprintf(&tmp2, "%s\n%s\tDetected Resources:\n", tmp, pfx2);
@@ -406,7 +405,6 @@ int orte_dt_print_node(char **output, char *prefix, orte_node_t *src, opal_data_
         free(tmp2);
         tmp = tmp3;
     }
-#endif
 
     asprintf(&tmp2, "%s\n%s\tNum procs: %ld\tNext node_rank: %ld", tmp, pfx2,
              (long)src->num_procs, (long)src->next_node_rank);
@@ -444,6 +442,8 @@ int orte_dt_print_node(char **output, char *prefix, orte_node_t *src, opal_data_
 int orte_dt_print_proc(char **output, char *prefix, orte_proc_t *src, opal_data_type_t type)
 {
     char *tmp, *tmp2, *pfx2;
+    hwloc_obj_t loc=NULL, bd=NULL;
+    char locale[1024], bind[1024];
 
     /* set default result */
     *output = NULL;
@@ -469,45 +469,37 @@ int orte_dt_print_proc(char **output, char *prefix, orte_proc_t *src, opal_data_
     }
 
     if (!orte_devel_level_output) {
-#if OPAL_HAVE_HWLOC
-        {
-            hwloc_cpuset_t mycpus;
-            char tmp1[1024], tmp2[1024];
-            char *str=NULL, *cpu_bitmap=NULL;
+        hwloc_cpuset_t mycpus;
+        char tmp1[1024], tmp2[1024];
+        char *str=NULL, *cpu_bitmap=NULL;
 
-            if (orte_get_attribute(&src->attributes, ORTE_PROC_CPU_BITMAP, (void**)&cpu_bitmap, OPAL_STRING) &&
-                NULL != src->node->topology) {
-                mycpus = hwloc_bitmap_alloc();
-                hwloc_bitmap_list_sscanf(mycpus, cpu_bitmap);
-                if (OPAL_ERR_NOT_BOUND == opal_hwloc_base_cset2str(tmp1, sizeof(tmp1), src->node->topology, mycpus)) {
-                    str = strdup("UNBOUND");
-                } else {
-                    opal_hwloc_base_cset2mapstr(tmp2, sizeof(tmp2), src->node->topology, mycpus);
-                    asprintf(&str, "%s:%s", tmp1, tmp2);
-                }
-                hwloc_bitmap_free(mycpus);
-                asprintf(&tmp, "\n%sProcess OMPI jobid: %s App: %ld Process rank: %s Bound: %s", pfx2,
-                         ORTE_JOBID_PRINT(src->name.jobid), (long)src->app_idx,
-                         ORTE_VPID_PRINT(src->name.vpid), (NULL == str) ? "N/A" : str);
-                if (NULL != str) {
-                    free(str);
-                }
-                if (NULL != cpu_bitmap) {
-                    free(cpu_bitmap);
-                }
+        if (orte_get_attribute(&src->attributes, ORTE_PROC_CPU_BITMAP, (void**)&cpu_bitmap, OPAL_STRING) &&
+            NULL != src->node->topology) {
+            mycpus = hwloc_bitmap_alloc();
+            hwloc_bitmap_list_sscanf(mycpus, cpu_bitmap);
+            if (OPAL_ERR_NOT_BOUND == opal_hwloc_base_cset2str(tmp1, sizeof(tmp1), src->node->topology, mycpus)) {
+                str = strdup("UNBOUND");
             } else {
-                /* just print a very simple output for users */
-                asprintf(&tmp, "\n%sProcess OMPI jobid: %s App: %ld Process rank: %s Bound: N/A", pfx2,
-                         ORTE_JOBID_PRINT(src->name.jobid), (long)src->app_idx,
-                         ORTE_VPID_PRINT(src->name.vpid));
+                opal_hwloc_base_cset2mapstr(tmp2, sizeof(tmp2), src->node->topology, mycpus);
+                asprintf(&str, "%s:%s", tmp1, tmp2);
             }
+            hwloc_bitmap_free(mycpus);
+            asprintf(&tmp, "\n%sProcess OMPI jobid: %s App: %ld Process rank: %s Bound: %s", pfx2,
+                     ORTE_JOBID_PRINT(src->name.jobid), (long)src->app_idx,
+                     ORTE_VPID_PRINT(src->name.vpid), (NULL == str) ? "N/A" : str);
+            if (NULL != str) {
+                free(str);
+            }
+            if (NULL != cpu_bitmap) {
+                free(cpu_bitmap);
+            }
+        } else {
+            /* just print a very simple output for users */
+            asprintf(&tmp, "\n%sProcess OMPI jobid: %s App: %ld Process rank: %s Bound: N/A", pfx2,
+                     ORTE_JOBID_PRINT(src->name.jobid), (long)src->app_idx,
+                     ORTE_VPID_PRINT(src->name.vpid));
         }
-#else
-        /* just print a very simple output for users */
-        asprintf(&tmp, "\n%sProcess OMPI jobid: %s App: %ld Process rank: %s", pfx2,
-                 ORTE_JOBID_PRINT(src->name.jobid), (long)src->app_idx,
-                 ORTE_VPID_PRINT(src->name.vpid));
-#endif
+
         /* set the return */
         *output = tmp;
         free(pfx2);
@@ -521,40 +513,30 @@ int orte_dt_print_proc(char **output, char *prefix, orte_proc_t *src, opal_data_
     free(tmp);
     tmp = tmp2;
 
-#if OPAL_HAVE_HWLOC
-    {
-        hwloc_obj_t loc=NULL, bd=NULL;
-        char locale[1024], bind[1024];
-
-        if (orte_get_attribute(&src->attributes, ORTE_PROC_HWLOC_LOCALE, (void**)&loc, OPAL_PTR)) {
-            if (NULL != loc) {
-                if (OPAL_ERR_NOT_BOUND == opal_hwloc_base_cset2mapstr(locale, sizeof(locale), src->node->topology, loc->cpuset)) {
-                    strcpy(locale, "NODE");
-                }
-            } else {
-                strcpy(locale, "UNKNOWN");
+    if (orte_get_attribute(&src->attributes, ORTE_PROC_HWLOC_LOCALE, (void**)&loc, OPAL_PTR)) {
+        if (NULL != loc) {
+            if (OPAL_ERR_NOT_BOUND == opal_hwloc_base_cset2mapstr(locale, sizeof(locale), src->node->topology, loc->cpuset)) {
+                strcpy(locale, "NODE");
             }
         } else {
             strcpy(locale, "UNKNOWN");
         }
-        if (orte_get_attribute(&src->attributes, ORTE_PROC_HWLOC_BOUND, (void**)&bd, OPAL_PTR)) {
-            if (NULL != bd) {
-                if (OPAL_ERR_NOT_BOUND == opal_hwloc_base_cset2mapstr(bind, sizeof(bind), src->node->topology, bd->cpuset)) {
-                    strcpy(bind, "UNBOUND");
-                }
-            } else {
+    } else {
+        strcpy(locale, "UNKNOWN");
+    }
+    if (orte_get_attribute(&src->attributes, ORTE_PROC_HWLOC_BOUND, (void**)&bd, OPAL_PTR)) {
+        if (NULL != bd) {
+            if (OPAL_ERR_NOT_BOUND == opal_hwloc_base_cset2mapstr(bind, sizeof(bind), src->node->topology, bd->cpuset)) {
                 strcpy(bind, "UNBOUND");
             }
         } else {
             strcpy(bind, "UNBOUND");
         }
-        asprintf(&tmp2, "%s\n%s\tState: %s\tApp_context: %ld\n%s\tLocale:  %s\n%s\tBinding: %s", tmp, pfx2,
-                 orte_proc_state_to_str(src->state), (long)src->app_idx, pfx2, locale, pfx2, bind);
+    } else {
+        strcpy(bind, "UNBOUND");
     }
-#else
-    asprintf(&tmp2, "%s\n%s\tState: %s\tApp_context: %ld", tmp, pfx2,
-             orte_proc_state_to_str(src->state), (long)src->app_idx);
-#endif
+    asprintf(&tmp2, "%s\n%s\tState: %s\tApp_context: %ld\n%s\tLocale:  %s\n%s\tBinding: %s", tmp, pfx2,
+             orte_proc_state_to_str(src->state), (long)src->app_idx, pfx2, locale, pfx2, bind);
     free(tmp);
 
     /* set the return */
@@ -687,7 +669,6 @@ int orte_dt_print_map(char **output, char *prefix, orte_job_map_t *src, opal_dat
     asprintf(&pfx, "%s\t", pfx2);
 
     if (orte_devel_level_output) {
-#if OPAL_HAVE_HWLOC
         asprintf(&tmp, "\n%sMapper requested: %s  Last mapper: %s  Mapping policy: %s  Ranking policy: %s\n%sBinding policy: %s  Cpu set: %s  PPR: %s  Cpus-per-rank: %d",
                  pfx2, (NULL == src->req_mapper) ? "NULL" : src->req_mapper,
                  (NULL == src->last_mapper) ? "NULL" : src->last_mapper,
@@ -697,15 +678,6 @@ int orte_dt_print_map(char **output, char *prefix, orte_job_map_t *src, opal_dat
                  (NULL == opal_hwloc_base_cpu_set) ? "NULL" : opal_hwloc_base_cpu_set,
                  (NULL == src->ppr) ? "NULL" : src->ppr,
                  (int)src->cpus_per_rank);
-#else
-        asprintf(&tmp, "\n%sMapper requested: %s  Last mapper: %s  Mapping policy: %s  Ranking policy: %s  PPR: %s  Cpus-per-rank: %d",
-                 pfx2, (NULL == src->req_mapper) ? "NULL" : src->req_mapper,
-                 (NULL == src->last_mapper) ? "NULL" : src->last_mapper,
-                 orte_rmaps_base_print_mapping(src->mapping),
-                 orte_rmaps_base_print_ranking(src->ranking),
-                 (NULL == src->ppr) ? "NULL" : src->ppr,
-                 (int)src->cpus_per_rank);
-#endif
 
         if (ORTE_VPID_INVALID == src->daemon_vpid_start) {
             asprintf(&tmp2, "%s\n%sNum new daemons: %ld\tNew daemon starting vpid INVALID\n%sNum nodes: %ld",

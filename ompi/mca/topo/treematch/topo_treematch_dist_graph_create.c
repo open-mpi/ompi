@@ -15,9 +15,7 @@
 #include "ompi_config.h"
 
 #include "opal/constants.h"
-#if defined(OPAL_HAVE_HWLOC)
 #include "opal/mca/hwloc/hwloc.h"
-#endif  /* defined(OPAL_HAVE_HWLOC) */
 
 #include "ompi/mca/topo/treematch/topo_treematch.h"
 #include "ompi/mca/topo/treematch/treematch/tm_mapping.h"

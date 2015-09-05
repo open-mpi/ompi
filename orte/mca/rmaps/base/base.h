@@ -12,7 +12,7 @@
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2014      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2015 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -114,9 +114,7 @@ ORTE_DECLSPEC int orte_rmaps_base_set_vpid_range(orte_jobid_t jobid,
 ORTE_DECLSPEC char* orte_rmaps_base_print_mapping(orte_mapping_policy_t mapping);
 ORTE_DECLSPEC char* orte_rmaps_base_print_ranking(orte_ranking_policy_t ranking);
 
-#if OPAL_HAVE_HWLOC
 ORTE_DECLSPEC int orte_rmaps_base_prep_topology(hwloc_topology_t topo);
-#endif
 
 ORTE_DECLSPEC int orte_rmaps_base_filter_nodes(orte_app_context_t *app,
                                                opal_list_t *nodes,

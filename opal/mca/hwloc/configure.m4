@@ -24,9 +24,7 @@ m4_define(MCA_opal_hwloc_CONFIGURE_MODE, STOP_AT_FIRST)
 # available.  As such, we may need to artificially force this
 # framework to be configured first.  Hence, we move the entirety of
 # the hwloc framework's m4 to a separate macro and AC REQUIRE it.
-# Other components can do this as well.  This will guarantee that
-# OPAL_HAVE_HWLOC is set to 0 or 1 *before* some component needs to
-# check it.
+# Other components can do this as well.
 
 AC_DEFUN([MCA_opal_hwloc_CONFIG],[
     # Use a crude shell variable to know whether this component is
@@ -48,10 +46,10 @@ AC_DEFUN([MCA_opal_hwloc_CONFIG_REQUIRE],[
          [echo " "
           echo "==> Pre-emptively configuring the hwloc framework to satisfy dependencies."])
 
-    # See if we want hwloc, and if so, internal vs external
+    # See if we want internal vs external hwloc
     AC_ARG_WITH(hwloc,
         AC_HELP_STRING([--with-hwloc(=DIR)],
-                       [Build hwloc support.  DIR can take one of three values: "internal", "external", or a valid directory name.  "internal" (or no DIR value) forces Open MPI to use its internal copy of hwloc.  "external" forces Open MPI to use an external installation of hwloc.  Supplying a valid directory name also forces Open MPI to use an external installation of hwloc, and adds DIR/include, DIR/lib, and DIR/lib64 to the search path for headers and libraries.]))
+                       [Build hwloc support.  DIR can take one of three values: "internal", "external", or a valid directory name.  "internal" (or no DIR value) forces Open MPI to use its internal copy of hwloc.  "external" forces Open MPI to use an external installation of hwloc.  Supplying a valid directory name also forces Open MPI to use an external installation of hwloc, and adds DIR/include, DIR/lib, and DIR/lib64 to the search path for headers and libraries. Note that Open MPI no longer supports --without-hwloc.]))
 
     # Whether to enable or disable PCI support in embedded hwloc
     # support.
@@ -70,12 +68,18 @@ AC_DEFUN([MCA_opal_hwloc_CONFIG_REQUIRE],[
                   enable_pci=])
           ])
 
-    # set defaults of not having any support
-    opal_hwloc_base_enable_xml=0
-    OPAL_HAVE_HWLOC=0
+    # check for error
+    AS_IF([test "$with_hwloc" = "no"],
+          [AC_MSG_WARN([Open MPI requires HWLOC support. It can be built])
+           AC_MSG_WARN([with either its own internal copy of HWLOC, or with])
+           AC_MSG_WARN([an external copy that you supply.])
+           AC_MSG_ERROR([Cannot continue])])
 
-    # Configure all the components - always have to do this, even if
-    # we configure --without-hwloc.  Note that instead of passing in
+    # set default
+    opal_hwloc_base_enable_xml=0
+
+    # Configure all the components - always have to do this. Note that
+    # instead of passing in
     # the traditional $1 and $2 as the first arguments, we hard-code
     # "opal" and "hwloc", because this macro is invoked via AC
     # REQUIRE.
@@ -88,9 +92,8 @@ AC_DEFUN([MCA_opal_hwloc_CONFIG_REQUIRE],[
     # component's configure.m4 output.
     echo " "
 
-    # Unless --with-hwloc[=<foo>] was given, it's ok to have no hwloc
-    # component.
-    AS_IF([test "$with_hwloc" = "no" -o "$with_hwloc" = ""], [],
+    # If we aren't given a specific component, then we must find one
+    AS_IF([test "$with_hwloc" = ""], [],
        [ # STOP_AT_FIRST_PRIORITY will guarantee that we find at most
         # one.  We need to check here that we found *at least* one.
         AS_IF([test "$MCA_opal_hwloc_STATIC_COMPONENTS" = ""],
@@ -101,8 +104,6 @@ AC_DEFUN([MCA_opal_hwloc_CONFIG_REQUIRE],[
    # If we have a winning component, do some more logic
    AS_IF([test "$MCA_opal_hwloc_STATIC_COMPONENTS" != ""],
        [ # We had a winner -- w00t!
-        OPAL_HAVE_HWLOC=1
-
         # The winning component will have told us where their header file
         # is located
         AC_MSG_CHECKING([for winning hwloc component header file])
@@ -141,10 +142,6 @@ AC_DEFUN([MCA_opal_hwloc_CONFIG_REQUIRE],[
                done])
         OPAL_VAR_SCOPE_POP
     ])
-
-    AM_CONDITIONAL(OPAL_HAVE_HWLOC, test $OPAL_HAVE_HWLOC -eq 1)
-    AC_DEFINE_UNQUOTED(OPAL_HAVE_HWLOC, $OPAL_HAVE_HWLOC,
-        [Whether we have hwloc support or not])
 
    # Similar to above, if this m4 is being invoked "early" via AC
    # REQUIRE, print out a nice banner that we have now finished

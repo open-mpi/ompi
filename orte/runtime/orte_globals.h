@@ -72,13 +72,11 @@ ORTE_DECLSPEC extern bool orte_proc_is_bound;  /* instantiated in orte/runtime/o
 ORTE_DECLSPEC extern int orte_progress_thread_debug;  /* instantiated in orte/runtime/orte_init.c */
 
 
-#if OPAL_HAVE_HWLOC
 /**
  * Global indicating where this process was bound to at launch (will
  * be NULL if !orte_proc_is_bound)
  */
 OPAL_DECLSPEC extern hwloc_cpuset_t orte_proc_applied_binding;  /* instantiated in orte/runtime/orte_init.c */
-#endif
 
 
 /* Shortcut for some commonly used names */
@@ -292,10 +290,8 @@ typedef struct {
         specified limit.  For example, if we have two processors, we
         may want to allow up to four processes but no more. */
     orte_std_cntr_t slots_max;
-#if OPAL_HAVE_HWLOC
     /* system topology for this node */
     hwloc_topology_t topology;
-#endif
     /* flags */
     orte_node_flags_t flags;
     /* list of orte_attribute_t */
@@ -408,7 +404,6 @@ struct orte_proc_t {
 typedef struct orte_proc_t orte_proc_t;
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_proc_t);
 
-#if OPAL_HAVE_HWLOC
 /* define an object for storing node topologies */
 typedef struct {
     opal_object_t super;
@@ -416,7 +411,6 @@ typedef struct {
     char *sig;
 } orte_topology_t;
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_topology_t);
-#endif
 
 /**
  * Get a job data object

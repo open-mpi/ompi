@@ -378,34 +378,30 @@ static int setup_fork(orte_job_t *jdata,
     opal_setenv("OMPI_MCA_orte_num_nodes", param, true, &app->env);
     free(param);
 
-#if OPAL_HAVE_HWLOC
-    {
-        /* pass a param telling the child what type and model of cpu we are on,
-         * if we know it. If hwloc has the value, use what it knows. Otherwise,
-         * see if we were explicitly given it and use that value.
-         */
-        hwloc_obj_t obj;
-        char *htmp;
-        if (NULL != opal_hwloc_topology) {
-            obj = hwloc_get_root_obj(opal_hwloc_topology);
-            if (NULL != (htmp = (char*)hwloc_obj_get_info_by_name(obj, "CPUType")) ||
-                NULL != (htmp = orte_local_cpu_type)) {
-                opal_setenv("OMPI_MCA_orte_cpu_type", htmp, true, &app->env);
-            }
-            if (NULL != (htmp = (char*)hwloc_obj_get_info_by_name(obj, "CPUModel")) ||
-                NULL != (htmp = orte_local_cpu_model)) {
-                opal_setenv("OMPI_MCA_orte_cpu_model", htmp, true, &app->env);
-            }
-        } else {
-            if (NULL != orte_local_cpu_type) {
-                opal_setenv("OMPI_MCA_orte_cpu_type", orte_local_cpu_type, true, &app->env);
-            }
-            if (NULL != orte_local_cpu_model) {
-                opal_setenv("OMPI_MCA_orte_cpu_model", orte_local_cpu_model, true, &app->env);
-            }
+    /* pass a param telling the child what type and model of cpu we are on,
+     * if we know it. If hwloc has the value, use what it knows. Otherwise,
+     * see if we were explicitly given it and use that value.
+     */
+    hwloc_obj_t obj;
+    char *htmp;
+    if (NULL != opal_hwloc_topology) {
+        obj = hwloc_get_root_obj(opal_hwloc_topology);
+        if (NULL != (htmp = (char*)hwloc_obj_get_info_by_name(obj, "CPUType")) ||
+            NULL != (htmp = orte_local_cpu_type)) {
+            opal_setenv("OMPI_MCA_orte_cpu_type", htmp, true, &app->env);
+        }
+        if (NULL != (htmp = (char*)hwloc_obj_get_info_by_name(obj, "CPUModel")) ||
+            NULL != (htmp = orte_local_cpu_model)) {
+            opal_setenv("OMPI_MCA_orte_cpu_model", htmp, true, &app->env);
+        }
+    } else {
+        if (NULL != orte_local_cpu_type) {
+            opal_setenv("OMPI_MCA_orte_cpu_type", orte_local_cpu_type, true, &app->env);
+        }
+        if (NULL != orte_local_cpu_model) {
+            opal_setenv("OMPI_MCA_orte_cpu_model", orte_local_cpu_model, true, &app->env);
         }
     }
-#endif
 
     /* get shmem's best component name so we can provide a hint to the shmem
      * framework. the idea here is to have someone figure out what component to

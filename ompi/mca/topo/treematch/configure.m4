@@ -5,7 +5,8 @@
 #                         reserved.
 # Copyright (c) 2011-2015 INRIA.  All rights reserved.
 # Copyright (c) 2011-2015 Universite Bordeaux 1
-# Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2015      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2015       Intel, Inc. All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -33,13 +34,6 @@ AC_DEFUN([MCA_ompi_topo_treematch_CONFIG], [
     ompi_topo_treematch_dir=$srcdir
     ompi_topo_treematch_libdir=
     ompi_topo_treematch_happy=0
-
-    AC_MSG_CHECKING([for hwloc support])
-    AS_IF([test $OPAL_HAVE_HWLOC -eq 0],
-          [AC_MSG_RESULT([no (treematch requires hwloc)])
-           ompi_topo_treematch_happy=0],
-          [AC_MSG_RESULT([yes])
-           ompi_topo_treematch_happy=1])
 
     AS_IF([test $ompi_topo_treematch_happy -eq 1],
           [AS_IF([test "x$with_treematch" != xno],

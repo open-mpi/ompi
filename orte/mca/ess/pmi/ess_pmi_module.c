@@ -189,7 +189,6 @@ static int rte_init(void)
         free(string_key);
     }
 
-#if OPAL_HAVE_HWLOC
     /* retrieve our topology */
     OPAL_MODEX_RECV_VALUE(ret, OPAL_PMIX_LOCAL_TOPO,
                           ORTE_PROC_MY_NAME, &val, OPAL_STRING);
@@ -337,7 +336,7 @@ static int rte_init(void)
     if (NULL != mycpuset){
         free(mycpuset);
     }
-#else
+
     /* get our local peers */
     if (0 < orte_process_info.num_local_peers) {
         /* retrieve the local peers */
@@ -385,13 +384,11 @@ static int rte_init(void)
         if (OPAL_SUCCESS != ret) {
             ORTE_ERROR_LOG(ret);
             error = "pmix store local";
-            opal_argv_free(cpusets);
             opal_argv_free(peers);
             goto error;
         }
         OBJ_RELEASE(kv);
     }
-#endif
     opal_argv_free(peers);
 
     /* we don't need to force the routed system to pick the

@@ -126,9 +126,7 @@ struct orte_proc_info_t {
     char *sock_stdin;                   /**< Path name to temp file for stdin. */
     char *sock_stdout;                  /**< Path name to temp file for stdout. */
     char *sock_stderr;                  /**< Path name to temp file for stderr. */
-#if OPAL_HAVE_HWLOC
     char *cpuset;                       /**< String-representation of bitmap where we are bound */
-#endif
     int app_rank;                        /**< rank within my app_context */
     orte_vpid_t my_hostid;               /** identifies the local host for a coprocessor */
 };
