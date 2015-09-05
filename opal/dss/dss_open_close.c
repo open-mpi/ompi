@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, Inc.  All rights reserved.
- * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -38,7 +38,7 @@ int opal_dss_initial_size = -1;
 int opal_dss_threshold_size = -1;
 opal_pointer_array_t opal_dss_types = {{0}};
 opal_data_type_t opal_dss_num_reg_types = {0};
-opal_dss_buffer_type_t default_buf_type = OPAL_DSS_BUFFER_NON_DESC;
+static opal_dss_buffer_type_t default_buf_type = OPAL_DSS_BUFFER_NON_DESC;
 
 /* variable group id */
 static int opal_dss_group_id = -1;
