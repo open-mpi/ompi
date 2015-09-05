@@ -13,7 +13,6 @@
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2015 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -98,13 +97,10 @@ orte_rml_oob_module_t orte_rml_oob_module = {
 
         orte_rml_oob_add_exception,
         orte_rml_oob_del_exception,
-        orte_rml_oob_ft_event,
-        orte_rml_oob_purge,
 
-        orte_rml_oob_open_channel,
-        orte_rml_oob_send_channel_nb,
-        orte_rml_oob_send_buffer_channel_nb,
-        orte_rml_oob_close_channel
+        orte_rml_oob_ft_event,
+
+        orte_rml_oob_purge
     }
 };
 

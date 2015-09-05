@@ -199,7 +199,7 @@ static get_ts_t _init_timestamping(opal_timer_type_t type)
     }
 }
 
-static opal_timing_event_t *opal_timing_event_alloc(opal_timing_t *t)
+opal_timing_event_t *opal_timing_event_alloc(opal_timing_t *t)
 {
     if( t->buffer_offset >= t->buffer_size ){
         // notch timings overhead

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2015      Intel, Inc. All rights reserved
+ * Copyright (c) 2014      Intel, Inc. All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -167,16 +167,6 @@ typedef uint16_t orte_proc_flags_t;
 #define ORTE_PROC_NBEATS          (ORTE_PROC_START_KEY + 14)           // int32 - number of heartbeats in current window
 
 #define ORTE_PROC_MAX_KEY   400
-
-/*** MESSAGING QOS ATTRIBUTE KEYS ***/
-#define ORTE_QOS_START_KEY              ORTE_PROC_MAX_KEY
-#define ORTE_QOS_TYPE                   (ORTE_QOS_START_KEY + 1)         //uint8- defining what type of qos - refer to orte_qos_type enum for values
-#define ORTE_QOS_WINDOW_SIZE            (ORTE_QOS_START_KEY + 2)         // uint32 - number of messages in the window (stream)
-#define ORTE_QOS_ACK_NACK_TIMEOUT       (ORTE_QOS_START_KEY + 3)         //uint32 - timeout value in secs for msg/window ack nack
-#define ORTE_QOS_MSG_RETRY              (ORTE_QOS_START_KEY + 4)         // bool- resend message upon ACK fail or NACK or timeout.
-#define ORTE_QOS_NUM_RETRIES            (ORTE_QOS_START_KEY + 5)        // uint32 - number of retries.
-
-#define ORTE_QOS_MAX_KEY     500
 
 #define ORTE_ATTR_KEY_MAX  1000
 

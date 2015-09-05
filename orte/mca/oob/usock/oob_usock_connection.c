@@ -13,7 +13,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2013-2015 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2014 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -94,6 +94,7 @@ static int usock_peer_create_socket(mca_oob_usock_peer_t* peer)
                          "%s oob:usock:peer creating socket to %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(&(peer->name))));
+
     peer->sd = socket(PF_UNIX, SOCK_STREAM, 0);
 
     if (peer->sd < 0) {
@@ -247,6 +248,7 @@ void mca_oob_usock_peer_try_connect(int fd, short args, void *cbdata)
                         "Connection across to proc %s succeeded",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                         ORTE_NAME_PRINT(&peer->name));
+
     /* setup our recv to catch the return ack call */
     if (!peer->recv_ev_active) {
         opal_event_add(&peer->recv_event, 0);
@@ -288,8 +290,6 @@ static int usock_peer_send_connect_ack(mca_oob_usock_peer_t* peer)
     hdr.dst = peer->name;
     hdr.type = MCA_OOB_USOCK_IDENT;
     hdr.tag = 0;
-    hdr.channel = 0xffffffff;
-    hdr.seq_num = 0;
 
     /* get our security credential*/
     if (OPAL_SUCCESS != (rc = opal_sec.get_my_credential(peer->auth_method,
@@ -341,6 +341,7 @@ static void usock_peer_event_init(mca_oob_usock_peer_t* peer)
             opal_event_del(&peer->recv_event);
             peer->recv_ev_active = false;
         }
+
         opal_event_set(mca_oob_usock_module.ev_base,
                        &peer->send_event,
                        peer->sd,
@@ -868,6 +869,7 @@ void mca_oob_usock_peer_dump(mca_oob_usock_peer_t* peer, const char* msg)
                     strerror(opal_socket_errno),
                     opal_socket_errno);
     }
+
 #if defined(USOCK_NODELAY)
     optlen = sizeof(nodelay);
     if (getsockopt(peer->sd, IPPROTO_USOCK, USOCK_NODELAY, (char *)&nodelay, &optlen) < 0) {

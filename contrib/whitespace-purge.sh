@@ -3,6 +3,7 @@
 # Copyright (c) 2015      Intel, Inc. All rights reserved.
 # Copyright (c) 2015      Los Alamos National Security, LLC. All rights
 #                         reserved
+# Copyright (c) 2015 Cisco Systems, Inc.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -18,6 +19,7 @@ for file in $(git ls-files) ; do
     # skipped add the check here.
     type=$(file -b --mime-type -h $file)
     if test ${type::4} == "text" ; then
-        LC_ALL=C sed -i '' -E "s/[[:space:]]*$//" $file
+        # Eliminate whitespace at the end of lines
+        perl -pi -e 's/\s*$/\n/' $file
     fi
 done

@@ -76,7 +76,7 @@ int orte_oob_base_select(void)
         /* If the component is not available, then skip it as
          * it has no available interfaces
          */
-        if (ORTE_SUCCESS != rc && ORTE_ERR_FORCE_SELECT != rc) {
+        if (ORTE_SUCCESS != rc) {
             opal_output_verbose(5, orte_oob_base_framework.framework_output,
                                 "mca:oob:select: Skipping component [%s] - no available interfaces",
                                 component->oob_base.mca_component_name );
@@ -89,22 +89,6 @@ int orte_oob_base_select(void)
                                 "mca:oob:select: Skipping component [%s] - failed to startup",
                                 component->oob_base.mca_component_name );
             continue;
-        }
-
-        if (ORTE_ERR_FORCE_SELECT == rc) {
-            /* this component shall be the *only* component allowed
-             * for use, so shutdown and remove any prior ones */
-            while (NULL != (cmp = (mca_base_component_list_item_t*)opal_list_remove_first(&orte_oob_base.actives))) {
-                c3 = (mca_oob_base_component_t *) cmp->cli_component;
-                if (NULL != c3->shutdown) {
-                    c3->shutdown();
-                }
-                OBJ_RELEASE(cmp);
-            }
-            c2 = OBJ_NEW(mca_base_component_list_item_t);
-            c2->cli_component = (mca_base_component_t*)component;
-            opal_list_append(&orte_oob_base.actives, &c2->super);
-            break;
         }
 
         /* record it, but maintain priority order */
