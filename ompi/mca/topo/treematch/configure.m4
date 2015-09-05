@@ -35,22 +35,20 @@ AC_DEFUN([MCA_ompi_topo_treematch_CONFIG], [
     ompi_topo_treematch_libdir=
     ompi_topo_treematch_happy=0
 
-    AS_IF([test $ompi_topo_treematch_happy -eq 1],
-          [AS_IF([test "x$with_treematch" != xno],
-                 [AC_MSG_CHECKING([TreeMatch headers])
-                  AS_IF([test "x$with_treematch_include" = x],
-                        [AS_IF([test "x$with_treematch" != "xno"],
-                               [treematch_files_local="yes"
-                                with_treematch_include="$OMPI_TOP_SRCDIR/ompi/mca/topo/treematch/treematch"],
-                               [with_treematch_include="$with_treematch/include"])])
-                  AS_IF([test -f "$with_treematch_include/tm_tree.h"],
-                        [AS_IF([test "x$with_treematch" != "xno"],
-                               [AC_MSG_RESULT([in the source])],
-                               [AC_MSG_RESULT([user provided])])
-                         opal_check_treematch_dir=$with_treematch_include
-                         ompi_topo_treematch_happy=1],
-                        [AC_MSG_ERROR([missing tm_tree.h (${with_treematch}:${with_treematch_include})])])])
-          ])
+    AS_IF([test "x$with_treematch" != xno],
+          [AC_MSG_CHECKING([TreeMatch headers])
+           AS_IF([test "x$with_treematch_include" = x],
+                 [AS_IF([test "x$with_treematch" != "xno"],
+                        [treematch_files_local="yes"
+                         with_treematch_include="$OMPI_TOP_SRCDIR/ompi/mca/topo/treematch/treematch"],
+                        [with_treematch_include="$with_treematch/include"])])
+           AS_IF([test -f "$with_treematch_include/tm_tree.h"],
+                 [AS_IF([test "x$with_treematch" != "xno"],
+                        [AC_MSG_RESULT([in the source])],
+                        [AC_MSG_RESULT([user provided])])
+                  opal_check_treematch_dir=$with_treematch_include
+                  ompi_topo_treematch_happy=1],
+                 [AC_MSG_ERROR([missing tm_tree.h (${with_treematch}:${with_treematch_include})])])])
 
     AS_IF([test $ompi_topo_treematch_happy -eq 1],
           [OPAL_CHECK_WITHDIR([treematch],
