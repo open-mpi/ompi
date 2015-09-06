@@ -33,6 +33,10 @@
 
 BEGIN_C_DECLS
 
+/* provide access to the framework verbose output without
+ * exposing the entire base */
+extern int opal_pmix_verbose_output;
+
 /**
  * Provide a simplified macro for sending data via modex
  * to other processes. The macro requires four arguments:
@@ -116,15 +120,20 @@ BEGIN_C_DECLS
  *     is to be returned
  * t - the expected data type
  */
-#define OPAL_MODEX_RECV_VALUE(r, s, p, d, t)                            \
-    do {                                                                \
-        opal_value_t *_kv;                                              \
-        if (OPAL_SUCCESS != ((r) = opal_pmix.get((p), (s), &(_kv)))) {  \
-            *(d) = NULL;                                                \
-        } else {                                                        \
-            (r) = opal_value_unload(_kv, (void**)(d), (t));             \
-            OBJ_RELEASE(_kv);                                           \
-        }                                                               \
+#define OPAL_MODEX_RECV_VALUE(r, s, p, d, t)                                    \
+    do {                                                                        \
+        opal_value_t *_kv;                                                      \
+        OPAL_OUTPUT_VERBOSE((1, opal_pmix_verbose_output,                       \
+                            "%s[%s:%d] MODEX RECV VALUE FOR PROC %s KEY %s",    \
+                            OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),                 \
+                            __FILE__, __LINE__,                                 \
+                            OPAL_NAME_PRINT(*(p)), (s)));                       \
+        if (OPAL_SUCCESS != ((r) = opal_pmix.get((p), (s), &(_kv)))) {          \
+            *(d) = NULL;                                                        \
+        } else {                                                                \
+            (r) = opal_value_unload(_kv, (void**)(d), (t));                     \
+            OBJ_RELEASE(_kv);                                                   \
+        }                                                                       \
     } while(0);
 
 /**
@@ -140,19 +149,24 @@ BEGIN_C_DECLS
  * sz - pointer to a location wherein the number of bytes
  *     in the data object can be returned (size_t)
  */
-#define OPAL_MODEX_RECV_STRING(r, s, p, d, sz)                          \
-    do {                                                                \
-        opal_value_t *_kv;                                              \
-        if (OPAL_SUCCESS == ((r) = opal_pmix.get((p), (s), &(_kv))) &&  \
-            NULL != _kv) {                                              \
-            *(d) = _kv->data.bo.bytes;                                  \
-            *(sz) = _kv->data.bo.size;                                  \
-            _kv->data.bo.bytes = NULL; /* protect the data */           \
-            OBJ_RELEASE(_kv);                                           \
-        } else {                                                        \
-            *(d) = NULL;                                                \
-            *(sz) = 0;                                                  \
-        }                                                               \
+#define OPAL_MODEX_RECV_STRING(r, s, p, d, sz)                                  \
+    do {                                                                        \
+        opal_value_t *_kv;                                                      \
+        OPAL_OUTPUT_VERBOSE((1, opal_pmix_verbose_output,                       \
+                            "%s[%s:%d] MODEX RECV STRING FOR PROC %s KEY %s",   \
+                            OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),                 \
+                            __FILE__, __LINE__,                                 \
+                            OPAL_NAME_PRINT(*(p)), (s)));                       \
+        if (OPAL_SUCCESS == ((r) = opal_pmix.get((p), (s), &(_kv))) &&          \
+            NULL != _kv) {                                                      \
+            *(d) = _kv->data.bo.bytes;                                          \
+            *(sz) = _kv->data.bo.size;                                          \
+            _kv->data.bo.bytes = NULL; /* protect the data */                   \
+            OBJ_RELEASE(_kv);                                                   \
+        } else {                                                                \
+            *(d) = NULL;                                                        \
+            *(sz) = 0;                                                          \
+        }                                                                       \
     } while(0);
 
 /**
@@ -172,6 +186,11 @@ BEGIN_C_DECLS
     do {                                                                \
         char *_key;                                                     \
         _key = mca_base_component_to_string((s));                       \
+        OPAL_OUTPUT_VERBOSE((1, opal_pmix_verbose_output,               \
+                            "%s[%s:%d] MODEX RECV FOR PROC %s KEY %s",  \
+                            OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),         \
+                            __FILE__, __LINE__,                         \
+                            OPAL_NAME_PRINT(*(p)), _key));              \
         if (NULL == _key) {                                             \
             OPAL_ERROR_LOG(OPAL_ERR_OUT_OF_RESOURCE);                   \
             (r) = OPAL_ERR_OUT_OF_RESOURCE;                             \

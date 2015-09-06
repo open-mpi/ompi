@@ -112,7 +112,7 @@ int ompi_dpm_connect_accept(ompi_communicator_t *comm, int root,
                             const char *port_string, bool send_first,
                             ompi_communicator_t **newcomm)
 {
-    int size, rsize, rank, rc;
+    int k, size, rsize, rank, rc;
     char **members = NULL, *nstring;
     bool dense, isnew;
     opal_process_name_t pname;
@@ -120,6 +120,7 @@ int ompi_dpm_connect_accept(ompi_communicator_t *comm, int root,
     opal_value_t *info;
     opal_pmix_pdata_t *pdat;
     opal_namelist_t *nm;
+    opal_jobid_t jobid;
 
     ompi_communicator_t *newcomp=MPI_COMM_NULL;
     ompi_proc_t *proc;
@@ -152,6 +153,11 @@ int ompi_dpm_connect_accept(ompi_communicator_t *comm, int root,
         }
         opal_argv_append_nosize(&members, nstring);
         free(nstring);
+        /* have to add the number of procs in the job so the remote side
+         * can correctly add the procs by computing their names */
+        (void)asprintf(&nstring, "%d", size);
+        opal_argv_append_nosize(&members, nstring);
+        free(nstring);
     } else {
         if (OMPI_GROUP_IS_DENSE(group)) {
             proc_list = group->grp_proc_pointers;
@@ -173,6 +179,7 @@ int ompi_dpm_connect_accept(ompi_communicator_t *comm, int root,
             if (OPAL_SUCCESS != rc) {
                 if (!dense) {
                     free(proc_list);
+                    proc_list = NULL;
                 }
                 return OMPI_ERROR;
             }
@@ -181,24 +188,30 @@ int ompi_dpm_connect_accept(ompi_communicator_t *comm, int root,
         }
         if (!dense) {
             free(proc_list);
+            proc_list = NULL;
         }
     }
 
     if (rank == root) {
+        /* the root for each side publishes their list of participants */
+        OBJ_CONSTRUCT(&ilist, opal_list_t);
+        /* publish a key-val containing the port string itself
+         * so other participants from our job can connect */
+        info = OBJ_NEW(opal_value_t);
+        info->key = opal_argv_join(members, ':');
+        info->type = OPAL_STRING;
+        info->data.string = strdup(port_string);
+        opal_list_append(&ilist, &info->super);
         /* put my name at the front of the list of members - my
          * name will therefore be on the list twice, but the
-         * other side needs to know the root from this side */
+         * other side's root needs to know the root from this side */
         rc = opal_convert_process_name_to_string(&nstring, OMPI_PROC_MY_NAME);
         if (OPAL_SUCCESS != rc) {
                 return OMPI_ERROR;
         }
         opal_argv_prepend_nosize(&members, nstring);
         free(nstring);
-        /* the root for each side publishes their list of participants */
-        OBJ_CONSTRUCT(&ilist, opal_list_t);
         info = OBJ_NEW(opal_value_t);
-        opal_list_append(&ilist, &info->super);
-
         if (send_first) {
             (void)asprintf(&info->key, "%s:connect", port_string);
         } else {
@@ -206,16 +219,81 @@ int ompi_dpm_connect_accept(ompi_communicator_t *comm, int root,
         }
         info->type = OPAL_STRING;
         info->data.string = opal_argv_join(members, ':');
-        /* publish it with "session" scope */
+        opal_list_append(&ilist, &info->super);
+        /* publish them with "session" scope */
         rc = opal_pmix.publish(&ilist);
         OPAL_LIST_DESTRUCT(&ilist);
         if (OPAL_SUCCESS != rc) {
             opal_argv_free(members);
             return OMPI_ERROR;
         }
+    } else {
+        /* check to see if we have to get the port string for
+         * this connect - if we were started via a call to spawn,
+         * then the port string was given to us. Otherwise, the
+         * string will be NULL */
+        if (0 == strlen(port_string)) {
+            /* our root should have published it */
+            OBJ_CONSTRUCT(&ilist, opal_list_t);
+            pdat = OBJ_NEW(opal_pmix_pdata_t);
+            pdat->value.key = opal_argv_join(members, ':');
+            opal_list_append(&ilist, &pdat->super);
+            OBJ_CONSTRUCT(&mlist, opal_list_t);
+            /* if a non-blocking version of lookup isn't
+             * available, then use the blocking version */
+            if (NULL == opal_pmix.lookup_nb) {
+                rc = opal_pmix.lookup(&ilist, &mlist);
+                OPAL_LIST_DESTRUCT(&mlist);
+                if (OPAL_SUCCESS != rc) {
+                    OMPI_ERROR_LOG(rc);
+                    OPAL_LIST_DESTRUCT(&ilist);
+                    opal_argv_free(members);
+                    return OMPI_ERROR;
+                }
+            } else {
+                char **keys = NULL;
+                struct lookup_caddy_t caddy;
+                opal_argv_append_nosize(&keys, pdat->value.key);
+                caddy.active = true;
+                caddy.pdat = pdat;
+                /* tell it to wait for the data to arrive */
+                info = OBJ_NEW(opal_value_t);
+                info->key = strdup(OPAL_PMIX_WAIT);
+                info->type = OPAL_BOOL;
+                info->data.flag = true;
+                opal_list_append(&mlist, &info->super);
+                /* give it a decent timeout as we don't know when
+                 * the other side may call connect - it doesn't
+                 * have to be simultaneous */
+                info = OBJ_NEW(opal_value_t);
+                info->key = strdup(OPAL_PMIX_TIMEOUT);
+                info->type = OPAL_INT;
+                info->data.integer = (size < 60) ? size : 60;
+                opal_list_append(&mlist, &info->super);
+                rc = opal_pmix.lookup_nb(keys, &mlist, lookup_cbfunc, &caddy);
+                if (OPAL_SUCCESS != rc) {
+                    OPAL_LIST_DESTRUCT(&ilist);
+                    OPAL_LIST_DESTRUCT(&mlist);
+                    opal_argv_free(keys);
+                    opal_argv_free(members);
+                    return OMPI_ERROR;
+                }
+                OMPI_WAIT_FOR_COMPLETION(caddy.active);
+                opal_argv_free(keys);
+                OPAL_LIST_DESTRUCT(&mlist);
+                if (OPAL_SUCCESS != caddy.status) {
+                    OMPI_ERROR_LOG(caddy.status);
+                    OPAL_LIST_DESTRUCT(&ilist);
+                    opal_argv_free(members);
+                    return OMPI_ERROR;
+                }
+            }
+            port_string = strdup(pdat->value.data.string);
+            OPAL_LIST_DESTRUCT(&ilist);
+        }
     }
 
-    /* lookup the other side's info - if a non-blocking form
+   /* lookup the other side's info - if a non-blocking form
      * of lookup isn't available, then we use the blocking
      * form and trust that the underlying system will WAIT
      * until the other side publishes its data */
@@ -227,36 +305,57 @@ int ompi_dpm_connect_accept(ompi_communicator_t *comm, int root,
         (void)asprintf(&pdat->value.key, "%s:connect", port_string);
     }
     opal_list_append(&ilist, &pdat->super);
+    OBJ_CONSTRUCT(&mlist, opal_list_t);
+    /* if a non-blocking version of lookup isn't
+     * available, then use the blocking version */
     if (NULL == opal_pmix.lookup_nb) {
-        rc = opal_pmix.lookup(&ilist, NULL);
+        rc = opal_pmix.lookup(&ilist, &mlist);
+        OPAL_LIST_DESTRUCT(&mlist);
         if (OPAL_SUCCESS != rc) {
+            OMPI_ERROR_LOG(rc);
             OPAL_LIST_DESTRUCT(&ilist);
             opal_argv_free(members);
             return OMPI_ERROR;
         }
     } else {
-        /* specifically request that the lookup wait until
-         * the given data has been published */
         char **keys = NULL;
         struct lookup_caddy_t caddy;
         opal_argv_append_nosize(&keys, pdat->value.key);
         caddy.active = true;
         caddy.pdat = pdat;
-        rc = opal_pmix.lookup_nb(keys, NULL, lookup_cbfunc, &caddy);
+        /* tell it to wait for the data to arrive */
+        info = OBJ_NEW(opal_value_t);
+        info->key = strdup(OPAL_PMIX_WAIT);
+        info->type = OPAL_BOOL;
+        info->data.flag = true;
+        opal_list_append(&mlist, &info->super);
+        /* give it a decent timeout as we don't know when
+         * the other side may call connect - it doesn't
+         * have to be simultaneous */
+        info = OBJ_NEW(opal_value_t);
+        info->key = strdup(OPAL_PMIX_TIMEOUT);
+        info->type = OPAL_INT;
+        info->data.integer = (size < 60) ? size : 60;
+        opal_list_append(&mlist, &info->super);
+        rc = opal_pmix.lookup_nb(keys, &mlist, lookup_cbfunc, &caddy);
         if (OPAL_SUCCESS != rc) {
             OPAL_LIST_DESTRUCT(&ilist);
+            OPAL_LIST_DESTRUCT(&mlist);
             opal_argv_free(keys);
             opal_argv_free(members);
             return OMPI_ERROR;
         }
         OMPI_WAIT_FOR_COMPLETION(caddy.active);
         opal_argv_free(keys);
+        OPAL_LIST_DESTRUCT(&mlist);
         if (OPAL_SUCCESS != caddy.status) {
+            OMPI_ERROR_LOG(caddy.status);
             OPAL_LIST_DESTRUCT(&ilist);
             opal_argv_free(members);
             return OMPI_ERROR;
         }
     }
+
     /* initiate a list of participants for the connect,
      * starting with our own members, remembering to
      * skip the first member if we are the root rank */
@@ -268,8 +367,35 @@ int ompi_dpm_connect_accept(ompi_communicator_t *comm, int root,
     OBJ_CONSTRUCT(&mlist, opal_list_t);
     for (i=j; NULL != members[i]; i++) {
         nm = OBJ_NEW(opal_namelist_t);
-        opal_convert_string_to_process_name(&nm->name, members[i]);
-        opal_list_append(&mlist, &nm->super);
+        if (OPAL_SUCCESS != (rc = opal_convert_string_to_process_name(&nm->name, members[i]))) {
+            OMPI_ERROR_LOG(rc);
+            opal_argv_free(members);
+            OPAL_LIST_DESTRUCT(&mlist);
+            return rc;
+        }
+        /* if the rank is wildcard, then we need to add all procs
+         * in that job to the list */
+        if (OPAL_VPID_WILDCARD == nm->name.vpid) {
+            jobid = nm->name.jobid;
+            OBJ_RELEASE(nm);
+            for (k=0; k < size; k++) {
+                nm = OBJ_NEW(opal_namelist_t);
+                nm->name.jobid = jobid;
+                nm->name.vpid = k;
+                opal_list_append(&mlist, &nm->super);
+            }
+            /* now step over the size */
+            if (NULL == members[i+1]) {
+                /* this shouldn't happen and is an error */
+                OMPI_ERROR_LOG(OMPI_ERR_BAD_PARAM);
+                OPAL_LIST_DESTRUCT(&mlist);
+                opal_argv_free(members);
+                return OMPI_ERR_BAD_PARAM;
+            }
+            ++i;
+        } else {
+            opal_list_append(&mlist, &nm->super);
+        }
     }
     opal_argv_free(members);
     members = NULL;
@@ -281,27 +407,80 @@ int ompi_dpm_connect_accept(ompi_communicator_t *comm, int root,
     OPAL_LIST_DESTRUCT(&ilist);
 
     /* the first entry is the root for the remote side */
-    opal_convert_string_to_process_name(&pname, members[0]);
+    if (OPAL_SUCCESS != (rc = opal_convert_string_to_process_name(&pname, members[0]))) {
+        OMPI_ERROR_LOG(rc);
+        opal_argv_free(members);
+        return rc;
+    }
+    /* check the name - it should never be a wildcard, so
+     * this is just checking for an error */
+    if (OPAL_VPID_WILDCARD == pname.vpid) {
+        OMPI_ERROR_LOG(OMPI_ERR_BAD_PARAM);
+        opal_argv_free(members);
+        return OMPI_ERR_BAD_PARAM;
+    }
 
     /* add the list of remote procs to our list, and
      * keep a list of them for later */
     OBJ_CONSTRUCT(&ilist, opal_list_t);
     OBJ_CONSTRUCT(&rlist, opal_list_t);
+
     for (i=1; NULL != members[i]; i++) {
         nm = OBJ_NEW(opal_namelist_t);
-        opal_convert_string_to_process_name(&nm->name, members[i]);
-        opal_list_append(&mlist, &nm->super);
-        /* see if this needs to be added to our ompi_proc_t array */
-        proc = ompi_proc_find_and_add(&nm->name, &isnew);
-        if (isnew) {
+        if (OPAL_SUCCESS != (rc = opal_convert_string_to_process_name(&nm->name, members[i]))) {
+            OMPI_ERROR_LOG(rc);
+            opal_argv_free(members);
+            OPAL_LIST_DESTRUCT(&ilist);
+            OPAL_LIST_DESTRUCT(&rlist);
+            return rc;
+        }
+        if (OPAL_VPID_WILDCARD == nm->name.vpid) {
+            jobid = nm->name.jobid;
+            OBJ_RELEASE(nm);
+            /* if the vpid is wildcard, then we are including all ranks
+             * of that job, and the next entry in members should be the
+             * number of procs in the job */
+            if (NULL == members[i+1]) {
+                /* just protect against the error */
+                OMPI_ERROR_LOG(OMPI_ERR_BAD_PARAM);
+                opal_argv_free(members);
+                OPAL_LIST_DESTRUCT(&ilist);
+                OPAL_LIST_DESTRUCT(&rlist);
+                return OMPI_ERR_BAD_PARAM;
+            }
+            rsize = strtoul(members[i+1], NULL, 10);
+            ++i;
+            for (k=0; k < rsize; k++) {
+                nm = OBJ_NEW(opal_namelist_t);
+                nm->name.jobid = jobid;
+                nm->name.vpid = k;
+                opal_list_append(&mlist, &nm->super);
+                /* see if this needs to be added to our ompi_proc_t array */
+                proc = ompi_proc_find_and_add(&nm->name, &isnew);
+                if (isnew) {
+                    cd = OBJ_NEW(ompi_dpm_proct_caddy_t);
+                    cd->p = proc;
+                    opal_list_append(&ilist, &cd->super);
+                }
+                /* either way, add to the remote list */
+                cd = OBJ_NEW(ompi_dpm_proct_caddy_t);
+                cd->p = proc;
+                opal_list_append(&rlist, &cd->super);
+            }
+        } else {
+            opal_list_append(&mlist, &nm->super);
+            /* see if this needs to be added to our ompi_proc_t array */
+            proc = ompi_proc_find_and_add(&nm->name, &isnew);
+            if (isnew) {
+                cd = OBJ_NEW(ompi_dpm_proct_caddy_t);
+                cd->p = proc;
+                opal_list_append(&ilist, &cd->super);
+            }
+            /* either way, add to the remote list */
             cd = OBJ_NEW(ompi_dpm_proct_caddy_t);
             cd->p = proc;
-            opal_list_append(&ilist, &cd->super);
+            opal_list_append(&rlist, &cd->super);
         }
-        /* either way, add to the remote list */
-        cd = OBJ_NEW(ompi_dpm_proct_caddy_t);
-        cd->p = proc;
-        opal_list_append(&rlist, &cd->super);
     }
     opal_argv_free(members);
 
@@ -310,33 +489,37 @@ int ompi_dpm_connect_accept(ompi_communicator_t *comm, int root,
     rc = opal_pmix.connect(&mlist);
     OPAL_LIST_DESTRUCT(&mlist);
 
-#if 0
-        /* set the locality of the new procs - the required info should
-         * have been included in the data exchange */
-        for (j=0; j < new_proc_len; j++) {
-            OBJ_CONSTRUCT(&myvals, opal_list_t);
-            if (OMPI_SUCCESS != (rc = opal_dstore.fetch(opal_dstore_internal,
-                                                         &new_proc_list[j]->super.proc_name,
-                                                         OPAL_DSTORE_LOCALITY, &myvals))) {
-                new_proc_list[j]->super.proc_flags = OPAL_PROC_NON_LOCAL;
-            } else {
-                kv = (opal_value_t*)opal_list_get_first(&myvals);
-                new_proc_list[j]->super.proc_flags = kv->data.uint16;
-            }
-            OPAL_LIST_DESTRUCT(&myvals);
-        }
-#endif
     if (0 < opal_list_get_size(&ilist)) {
         /* convert the list of new procs to a proc_t array */
         new_proc_list = (ompi_proc_t**)calloc(opal_list_get_size(&ilist),
                                               sizeof(ompi_proc_t *));
         i = 0;
         OPAL_LIST_FOREACH(cd, &ilist, ompi_dpm_proct_caddy_t) {
-            new_proc_list[i++] = cd->p;
+            opal_value_t *kv;
+            new_proc_list[i] = cd->p;
+            /* set the locality */
+            new_proc_list[i]->super.proc_flags = OPAL_PROC_NON_LOCAL;
+            /* have to save it for later */
+            kv = OBJ_NEW(opal_value_t);
+            kv->key = strdup(OPAL_PMIX_LOCALITY);
+            kv->type = OPAL_UINT16;
+            kv->data.uint16 = OPAL_PROC_NON_LOCAL;
+            opal_pmix.store_local(&cd->p->super.proc_name, kv);
+            OBJ_RELEASE(kv); // maintain accounting
+            /* we can retrieve the hostname at no cost because it
+             * was provided at connect */
+            OPAL_MODEX_RECV_VALUE(rc, OPAL_PMIX_HOSTNAME, &new_proc_list[i]->super.proc_name,
+                                  (char**)&(new_proc_list[i]->super.proc_hostname), OPAL_STRING);
+            if (OPAL_SUCCESS != rc) {
+                /* we can live without it */
+                new_proc_list[i]->super.proc_hostname = NULL;
+            }
+            ++i;
         }
         /* call add_procs on the new ones */
         rc = MCA_PML_CALL(add_procs(new_proc_list, opal_list_get_size(&ilist)));
         free(new_proc_list);
+        new_proc_list = NULL;
         if (OMPI_SUCCESS != rc) {
             OMPI_ERROR_LOG(rc);
             OPAL_LIST_DESTRUCT(&ilist);
@@ -415,12 +598,6 @@ int ompi_dpm_connect_accept(ompi_communicator_t *comm, int root,
     */
 
  exit:
-    if (NULL != proc_list) {
-        free (proc_list);
-    }
-    if (NULL != new_proc_list) {
-        free (new_proc_list);
-    }
     if (OMPI_SUCCESS != rc) {
         if (MPI_COMM_NULL != newcomp && NULL != newcomp) {
             OBJ_RETAIN(newcomp);
@@ -446,7 +623,7 @@ static int construct_peers(ompi_group_t *group, opal_list_t *peers)
             }
             /* add to the list of peers */
             nm = OBJ_NEW(opal_namelist_t);
-            nm->name = *(opal_process_name_t*)&proct->super.proc_name;
+            nm->name = proct->super.proc_name;
             /* need to maintain an ordered list to ensure the tracker signatures
              * match across all procs */
             OPAL_LIST_FOREACH(n2, peers, opal_namelist_t) {
@@ -470,7 +647,7 @@ static int construct_peers(ompi_group_t *group, opal_list_t *peers)
             }
             /* add to the list of peers */
             nm = OBJ_NEW(opal_namelist_t);
-            nm->name = *(opal_process_name_t*)&proct->super.proc_name;
+            nm->name = proct->super.proc_name;
             /* need to maintain an ordered list to ensure the tracker signatures
              * match across all procs */
             OPAL_LIST_FOREACH(n2, peers, opal_namelist_t) {
@@ -519,6 +696,9 @@ int ompi_dpm_disconnect(ompi_communicator_t *comm)
     }
 
     opal_pmix.fence(&coll, false);
+
+    /* ensure we tell the host RM to disconnect us */
+    opal_pmix.disconnect(&coll);
     OPAL_LIST_DESTRUCT(&coll);
 
     return OMPI_SUCCESS;

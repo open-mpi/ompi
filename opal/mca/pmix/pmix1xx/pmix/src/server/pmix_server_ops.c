@@ -479,8 +479,8 @@ static pmix_server_trkr_t* get_tracker(pmix_proc_t *procs,
                                        size_t nprocs, pmix_cmd_t type)
 {
     pmix_server_trkr_t *trk;
-    size_t i;
-    bool match;
+    size_t i, j;
+    size_t matches;
 
     pmix_output_verbose(5, pmix_globals.debug_output,
                         "get_tracker called with %d procs", (int)nprocs);
@@ -504,18 +504,22 @@ static pmix_server_trkr_t* get_tracker(pmix_proc_t *procs,
         if (nprocs != trk->npcs) {
             continue;
         }
-        if( type != trk->type ){
+        if (type != trk->type) {
             continue;
         }
-        match = true;
+        matches = 0;
         for (i=0; i < nprocs; i++) {
-            if (0 != strcmp(procs[i].nspace, trk->pcs[i].nspace) ||
-                procs[i].rank != trk->pcs[i].rank) {
-                match = false;
-                break;
+            /* the procs may be in different order, so we have
+             * to do an exhaustive search */
+            for (j=0; j < trk->npcs; j++) {
+                if (0 == strcmp(procs[i].nspace, trk->pcs[j].nspace) &&
+                    procs[i].rank == trk->pcs[j].rank) {
+                    ++matches;
+                    break;
+                }
             }
         }
-        if (match) {
+        if (trk->npcs == matches) {
             return trk;
         }
     }
@@ -549,7 +553,7 @@ static pmix_server_trkr_t* new_tracker(pmix_proc_t *procs,
     pmix_nspace_t *nptr, *ns;
 
     pmix_output_verbose(5, pmix_globals.debug_output,
-                        "get_tracker called with %d procs", (int)nprocs);
+                        "new_tracker called with %d procs", (int)nprocs);
 
     /* bozo check - should never happen outside of programmer error */
     if (NULL == procs) {
@@ -584,8 +588,8 @@ static pmix_server_trkr_t* new_tracker(pmix_proc_t *procs,
         }
         if (NULL == nptr) {
             /* cannot be a local proc */
-            pmix_output_verbose(8, pmix_globals.debug_output,
-                                "get_tracker: unknown nspace %s",
+            pmix_output_verbose(5, pmix_globals.debug_output,
+                                "new_tracker: unknown nspace %s",
                                 procs[i].nspace);
             continue;
         }
@@ -594,8 +598,8 @@ static pmix_server_trkr_t* new_tracker(pmix_proc_t *procs,
             /* nope, so no point in going further on this one - we'll
              * process it once all the procs are known */
             all_def = false;
-            pmix_output_verbose(8, pmix_globals.debug_output,
-                                "get_tracker: all clients not registered nspace %s",
+            pmix_output_verbose(5, pmix_globals.debug_output,
+                                "new_tracker: all clients not registered nspace %s",
                                 procs[i].nspace);
             continue;
         }
@@ -604,7 +608,8 @@ static pmix_server_trkr_t* new_tracker(pmix_proc_t *procs,
             if (procs[i].rank == info->rank ||
                 PMIX_RANK_WILDCARD == procs[i].rank) {
                 pmix_output_verbose(5, pmix_globals.debug_output,
-                                    "adding local proc %s.%d to tracker", procs[i].nspace, procs[i].rank);
+                                    "adding local proc %s.%d to tracker",
+                                    info->nptr->nspace, info->rank);
                 /* add a tracker for this proc - don't need more than
                  * the nspace pointer and rank */
                 iptr = PMIX_NEW(pmix_rank_info_t);
@@ -1021,7 +1026,6 @@ pmix_status_t pmix_server_publish(pmix_peer_t *peer,
     /* call the local server */
     (void)strncpy(proc.nspace, peer->info->nptr->nspace, PMIX_MAX_NSLEN);
     proc.rank = peer->info->rank;
-    pmix_output(0, "server passing %d values up", (int)einfo);
     rc = pmix_host_server.publish(&proc, info, einfo, cbfunc, cbdata);
 
  cleanup:
@@ -1082,7 +1086,6 @@ pmix_status_t pmix_server_lookup(pmix_peer_t *peer,
     PMIX_INFO_CREATE(info, einfo);
     /* unpack the array of info objects */
     if (0 < ninfo) {
-        PMIX_INFO_CREATE(info, ninfo);
         cnt=ninfo;
         if (PMIX_SUCCESS != (rc = pmix_bfrop.unpack(buf, info, &cnt, PMIX_INFO))) {
             PMIX_ERROR_LOG(rc);
@@ -1156,7 +1159,6 @@ pmix_status_t pmix_server_unpublish(pmix_peer_t *peer,
     PMIX_INFO_CREATE(info, einfo);
     /* unpack the array of info objects */
     if (0 < ninfo) {
-        PMIX_INFO_CREATE(info, ninfo);
         cnt=ninfo;
         if (PMIX_SUCCESS != (rc = pmix_bfrop.unpack(buf, info, &cnt, PMIX_INFO))) {
             PMIX_ERROR_LOG(rc);
@@ -1256,7 +1258,8 @@ pmix_status_t pmix_server_connect(pmix_server_caddy_t *cd,
     size_t ninfo=0;
 
     pmix_output_verbose(2, pmix_globals.debug_output,
-                        "recvd CONNECT");
+                        "recvd CONNECT from peer %s:%d",
+                        cd->peer->info->nptr->nspace, cd->peer->info->rank);
 
     if ((disconnect && NULL == pmix_host_server.disconnect) ||
         (!disconnect && NULL == pmix_host_server.connect)) {

@@ -330,6 +330,11 @@ int pmix_server_spawn_fn(opal_process_name_t *requestor,
 int pmix_server_connect_fn(opal_list_t *procs, opal_list_t *info,
                            opal_pmix_op_cbfunc_t cbfunc, void *cbdata)
 {
+    opal_output_verbose(2, orte_pmix_server_globals.output,
+                        "%s connect called with %d procs",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                        (int)opal_list_get_size(procs));
+
     /* for now, just ack the call */
     if (NULL != cbfunc) {
         cbfunc(OPAL_SUCCESS, cbdata);
@@ -341,6 +346,11 @@ int pmix_server_connect_fn(opal_list_t *procs, opal_list_t *info,
 int pmix_server_disconnect_fn(opal_list_t *procs, opal_list_t *info,
                               opal_pmix_op_cbfunc_t cbfunc, void *cbdata)
 {
+    opal_output_verbose(2, orte_pmix_server_globals.output,
+                        "%s disconnect called with %d procs",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                        (int)opal_list_get_size(procs));
+
     /* for now, just ack the call */
     if (NULL != cbfunc) {
         cbfunc(OPAL_SUCCESS, cbdata);

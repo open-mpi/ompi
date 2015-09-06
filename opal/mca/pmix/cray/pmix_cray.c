@@ -65,20 +65,14 @@ static int cray_get(const opal_process_name_t *id,
                     opal_value_t **kv);
 static int cray_get_nb(const opal_process_name_t *id, const char *key,
                        opal_pmix_value_cbfunc_t cbfunc, void *cbdata);
-static int cray_publish(opal_pmix_data_range_t scope,
-                      opal_pmix_persistence_t persist,
-                      opal_list_t *info);
-static int cray_publish_nb(opal_pmix_data_range_t scope,
-                           opal_pmix_persistence_t persist,
-                           opal_list_t *info,
+static int cray_publish(opal_list_t *info);
+static int cray_publish_nb(opal_list_t *info,
                            opal_pmix_op_cbfunc_t cbfunc, void *cbdata);
-static int cray_lookup(opal_pmix_data_range_t scope,
-                     opal_list_t *data);
-static int cray_lookup_nb(opal_pmix_data_range_t scope, int wait,
-                          char **keys,
+static int cray_lookup(opal_list_t *data, opal_list_t *info);
+static int cray_lookup_nb(char **keys, opal_list_t *info,
                           opal_pmix_lookup_cbfunc_t cbfunc, void *cbdata);
-static int cray_unpublish(opal_pmix_data_range_t scope, char **keys);
-static int cray_unpublish_nb(opal_pmix_data_range_t scope, char **keys,
+static int cray_unpublish(char **keys, opal_list_t *info);
+static int cray_unpublish_nb(char **keys, opal_list_t *info,
                             opal_pmix_op_cbfunc_t cbfunc, void *cbdata);
 static const char *cray_get_version(void);
 static int cray_store_local(const opal_process_name_t *proc,
@@ -773,40 +767,34 @@ static int cray_get_nb(const opal_process_name_t *id, const char *key,
     return OPAL_ERR_NOT_IMPLEMENTED;
 }
 
-static int cray_publish(opal_pmix_data_range_t scope,
-                      opal_pmix_persistence_t persist,
-                      opal_list_t *info)
+static int cray_publish(opal_list_t *info)
 {
     return OPAL_ERR_NOT_SUPPORTED;
 }
 
-static int cray_publish_nb(opal_pmix_data_range_t scope,
-                           opal_pmix_persistence_t persist,
-                           opal_list_t *info,
+static int cray_publish_nb(opal_list_t *info,
                            opal_pmix_op_cbfunc_t cbfunc, void *cbdata)
 {
     return OPAL_ERR_NOT_SUPPORTED;
 }
 
-static int cray_lookup(opal_pmix_data_range_t scope,
-                     opal_list_t *data)
+static int cray_lookup(opal_list_t *data, opal_list_t *info)
 {
     return OPAL_ERR_NOT_SUPPORTED;
 }
 
-static int cray_lookup_nb(opal_pmix_data_range_t scope, int wait,
-                          char **keys,
+static int cray_lookup_nb(char **keys, opal_list_t *info,
                           opal_pmix_lookup_cbfunc_t cbfunc, void *cbdata)
 {
     return OPAL_ERR_NOT_SUPPORTED;
 }
 
-static int cray_unpublish(opal_pmix_data_range_t scope, char **keys)
+static int cray_unpublish(char **keys, opal_list_t *info)
 {
     return OPAL_ERR_NOT_SUPPORTED;
 }
 
-static int cray_unpublish_nb(opal_pmix_data_range_t scope, char **keys,
+static int cray_unpublish_nb(char **keys, opal_list_t *info,
                             opal_pmix_op_cbfunc_t cbfunc, void *cbdata)
 {
     return OPAL_ERR_NOT_SUPPORTED;
