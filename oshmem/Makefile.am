@@ -1,12 +1,12 @@
 #
-# Copyright (c) 2013      Mellanox Technologies, Inc.
+# Copyright (c) 2013-2015 Mellanox Technologies, Inc.
 #                         All rights reserved.
 # Copyright (c) 2013-2014 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2014      Intel, Inc.  All rights reserved.
 # $COPYRIGHT$
-# 
+#
 # Additional copyrights may follow
-# 
+#
 # $HEADER$
 #
 
@@ -90,5 +90,25 @@ include proc/Makefile.am
 include request/Makefile.am
 include runtime/Makefile.am
 include shmem/Makefile.am
+include shmem/man/man3/Makefile.extra
 include tools/Makefile.am
 include util/Makefile.am
+
+# Ensure that the man page directory exists before we try to make man
+# page files (because ompi/mpi/man/man3 has no config.status-generated
+# Makefile)
+dir_stamp = $(top_builddir)/$(subdir)/shmem/man/man3/.dir-stamp
+
+# Also ensure that the man pages are rebuilt if the opal_config.h file
+# changes (e.g., configure was run again, meaning that the release
+# date or version may have changed)
+$(nodist_man_MANS): $(dir_stamp) $(top_builddir)/opal/include/opal_config.h
+
+$(dir_stamp):
+	$(MKDIR_P) `dirname $@`
+	touch "$@"
+
+# Remove the generated man pages
+distclean-local:
+	rm -f $(nodist_man_MANS) $(dir_stamp)
+

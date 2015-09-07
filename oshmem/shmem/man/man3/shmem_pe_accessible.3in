@@ -1,0 +1,54 @@
+.\" -*- nroff -*-
+.\" Copyright (c) 2015      University of Houston.  All rights reserved.
+.\" Copyright (c) 2015      Mellanox Technologies, Inc.
+.\" $COPYRIGHT$
+.de Vb
+.ft CW
+.nf
+..
+.de Ve
+.ft R
+
+.fi
+..
+.TH "SHMEM\\_PE\\_ACCESSIBLE" "3" "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
+.SH NAME
+
+shmem_pe_accessible \- Determines whether a processing element (PE) is accessible via
+SHMEM data transfer operations.
+.SH SYNOPSIS
+
+C:
+.Vb
+#include <mpp/shmem.h>
+
+int shmem_pe_accessible(int pe);
+.Ve
+Fortran:
+.Vb
+INCLUDE "mpp/shmem.fh"
+
+LOGICAL LOG, SHMEM_PE_ACCESSIBLE
+INTEGER pe
+
+LOG = SHMEM_PE_ACCESSIBLE(pe)
+.Ve
+.SH DESCRIPTION
+
+shmem_pe_accessible returns a value that indicates whether the calling PE is able to perform
+OpenSHMEM communication operations with the remote PE.
+.SH RETURN VALUES
+
+.TP
+C/C++
+The return value is 1 if the specified PE is a valid remote PE for SHMEM functions;
+otherwise,it is 0.
+.TP
+Fortran
+The return value is \&.TRUE. if the specified PE is a valid remote PE for SHMEM
+functions; otherwise, it is \&.FALSE..
+.PP
+.SH SEE ALSO
+
+\fIintro_shmem\fP(3),
+\fIshmem_addr_accessible\fP(3)

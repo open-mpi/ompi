@@ -1,0 +1,207 @@
+.\" -*- nroff -*-
+.\" Copyright (c) 2015      University of Houston.  All rights reserved.
+.\" Copyright (c) 2015      Mellanox Technologies, Inc.
+.\" $COPYRIGHT$
+.de Vb
+.ft CW
+.nf
+..
+.de Ve
+.ft R
+
+.fi
+..
+.TH "SHMEM\\_GET" "3" "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
+.SH NAME
+
+\fIshmem_character_get\fP(3),
+\fIshmem_complex_get\fP(3),
+\fIshmem_double_get\fP(3),
+\fIshmem_float_get\fP(3),
+\fIshmem_get4\fP(3),
+\fIshmem_get8\fP(3),
+\fIshmem_get32\fP(3),
+\fIshmem_get64\fP(3),
+\fIshmem_get128\fP(3),
+\fIshmem_getmem\fP(3),
+\fIshmem_int_get\fP(3),
+\fIshmem_integer_get\fP(3),
+\fIshmem_logical_get\fP(3),
+\fIshmem_long_get\fP(3),
+\fIshmem_longdouble_get\fP(3),
+\fIshmem_longlong_get\fP(3),
+\fIshmem_real_get\fP(3),
+\fIshmem_short_get\fP(3)
+\- Transfers data from a specified processing element (PE).
+.SH SYNOPSIS
+
+C or C++:
+.Vb
+#include <mpp/shmem.h>
+
+void shmem_get32(void *target, const void *source,
+  size_t len, int pe);
+
+void shmem_get64(void *target, const void *source,
+  size_t len, int pe);
+
+void shmem_get128(void *target, const void *source,
+  size_t len, int pe);
+
+void shmem_getmem(void *target, const void *source,
+  size_t len, int pe);
+
+void shmem_int_get(int *target, const int *source,
+  size_t len, int pe);
+
+void shmem_double_get(double *target, const double *source,
+  size_t len, int pe);
+
+void shmem_float_get(float *target, const float *source,
+  size_t len, int pe);
+
+void shmem_long_get(long *target, const long *source,
+  size_t len, int pe);
+
+void shmem_longdouble_get(long double *target,
+  const long double *source, size_t len, int pe);
+
+void shmem_longlong_get(long long *target,
+  const long long *source, size_t len, int pe);
+
+void shmem_short_get(short *target,
+  const short *source, size_t len, int pe);
+.Ve
+Fortran:
+.Vb
+INCLUDE "mpp/shmem.fh"
+
+INTEGER len, pe
+
+CALL SHMEM_CHARACTER_GET(target, source, len, pe)
+
+CALL SHMEM_COMPLEX_GET(target, source, len, pe)
+
+CALL SHMEM_DOUBLE_GET(target, source, len, pe)
+
+CALL SHMEM_GET4(target, source, len, pe)
+
+CALL SHMEM_GET8(target, source, len, pe)
+
+CALL SHMEM_GET32(target, source, len, pe)
+
+CALL SHMEM_GET64(target, source, len, pe)
+
+CALL SHMEM_GET128(target, source, len, pe)
+
+CALL SHMEM_GETMEM(target, source, len, pe)
+
+CALL SHMEM_INTEGER_GET(target, source, len, pe)
+
+CALL SHMEM_LOGICAL_GET(target, source, len, pe)
+
+CALL SHMEM_REAL_GET(target, source, len, pe)
+.Ve
+.SH DESCRIPTION
+
+The shmem_get routines transfer \fBnelems\fP
+elements of the data object at address \fBsource\fP
+on the remote PE \fBpe\fP,
+to the data object at address \fBtarget\fP
+on the local PE. These routines
+return after the data has been copied to address \fBtarget\fP
+on the local PE.
+.PP
+The arguments are as follows:
+.TP
+target
+Local data object to be updated.
+.TP
+source
+Data object on the PE identified by pe that contains the data to be copied. This
+data object must be remotely accessible.
+.TP
+len
+Number of elements in the target and source arrays. len must be of type integer. If
+you are using Fortran, it must be a constant, variable, or array element of default
+integer type.
+.TP
+pe
+PE number of the remote PE. pe must be of type integer. If you are using Fortran, it
+must be a constant, variable, or array element of default integer type.
+.PP
+The target and source data objects must conform to typing constraints, which are as follows:
+.TP
+\fBshmem_getmem\fP: Fortran: Any noncharacter type. C: Any data type. len is
+scaled in bytes.
+.TP
+\fBshmem_get4, shmem_get32\fP: Any noncharacter type that has a storage size
+equal to 32 bits.
+.TP
+{shmem_get8, shmem_get64}: Any noncharacter type that has a storage size equal to
+64 bits.
+.TP
+\fBshmem_get128\fP: Any noncharacter type that has a storage size equal to 128
+bits.
+.TP
+\fBshmem_short_get\fP: Elements of type short.
+.TP
+\fBshmem_int_get\fP: Elements of type int.
+.TP
+\fBshmem_long_get\fP: Elements of type long.
+.TP
+\fBshmem_longlong_get\fP: Elements of type long long.
+.TP
+\fBshmem_float_get\fP: Elements of type float.
+.TP
+\fBshmem_double_get\fP: Elements of type double.
+.TP
+\fBshmem_longdouble_get\fP: Elements of type long double.
+.TP
+\fBSHMEM_CHARACTER_GET\fP: Elements of type character. len is the number of
+characters to transfer. The actual character lengths of the source and target variables are
+ignored.
+.TP
+\fBSHMEM_COMPLEX_GET\fP: Elements of type complex of default size.
+.TP
+\fBSHMEM_DOUBLE_GET\fP: (Fortran) Elements of type double precision.
+.TP
+\fBSHMEM_INTEGER_GET\fP: Elements of type integer.
+.TP
+\fBSHMEM_LOGICAL_GET\fP: Elements of type logical.
+.TP
+\fBSHMEM_REAL_GET\fP: Elements of type real.
+.PP
+If you are using Fortran, data types must be of default size. For example, a real variable must
+be declared as REAL, REAL*4, or REAL(KIND=4).
+.SH NOTES
+
+See \fIintro_shmem\fP(3)
+for a definition of the term remotely accessible.
+.SH EXAMPLES
+
+Consider this simple example for Fortran.
+.Vb
+PROGRAM REDUCTION
+  REAL VALUES, SUM
+  COMMON /C/ VALUES
+  REAL WORK
+
+  CALL START_PES(0) ! ALLOW ANY NUMBER OF PES
+  VALUES = MY_PE() ! INITIALIZE IT TO SOMETHING
+  CALL SHMEM_BARRIER_ALL
+  SUM = 0.0
+  DO I = 0,NUM_PES()\-1
+    CALL SHMEM_REAL_GET(WORK, VALUES, 1, I)
+    SUM = SUM + WORK
+  ENDDO
+  PRINT *, 'PE ', MY_PE(), ' COMPUTED SUM=', SUM
+  CALL SHMEM_BARRIER_ALL
+END
+.Ve
+.SH SEE ALSO
+
+\fIintro_shmem\fP(3),
+\fIshmem_put\fP(3),
+\fIshmem_iget\fP(3),
+\fIshmem_quiet\fP(3)
