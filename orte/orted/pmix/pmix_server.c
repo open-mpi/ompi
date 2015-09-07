@@ -569,6 +569,15 @@ static void pmix_server_dmdx_resp(int status, orte_process_name_t* sender,
     }
 }
 
+static void opcon(orte_pmix_server_op_caddy_t *p)
+{
+    p->procs = NULL;
+    p->info = NULL;
+    p->cbdata = NULL;
+}
+OBJ_CLASS_INSTANCE(orte_pmix_server_op_caddy_t,
+                   opal_object_t,
+                   opcon, NULL);
 
 static void rqcon(pmix_server_req_t *p)
 {

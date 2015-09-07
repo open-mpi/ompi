@@ -387,6 +387,9 @@ int orte_pmix_server_register_nspace(orte_job_t *jdata)
         opal_list_append(pmap, &kv->super);
     }
 
+    /* mark the job as registered */
+    orte_set_attribute(&jdata->attributes, ORTE_JOB_NSPACE_REGISTERED, ORTE_ATTR_LOCAL, NULL, OPAL_BOOL);
+
     /* pass it down */
     if (OPAL_SUCCESS != opal_pmix.server_register_nspace(jdata->jobid,
                                                          jdata->num_local_procs,

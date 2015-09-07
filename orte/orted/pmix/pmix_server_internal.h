@@ -72,10 +72,8 @@ OBJ_CLASS_DECLARATION(pmix_server_req_t);
 typedef struct {
     opal_object_t super;
     opal_event_t ev;
-    orte_job_t *jdata;
-    orte_process_name_t proc;
-    int status;
-    orte_proc_t *object;
+    opal_list_t *procs;
+    opal_list_t *info;
     opal_pmix_op_cbfunc_t cbfunc;
     void *cbdata;
 } orte_pmix_server_op_caddy_t;
@@ -115,21 +113,18 @@ do {                                                     \
     opal_event_active(&(_req->ev), OPAL_EV_WRITE, 1);    \
 } while(0);
 
-#define ORTE_PMIX_OPERATION(n, r, ob, s, fn, cf, cb)                \
-do {                                                                \
-    orte_pmix_server_op_caddy_t *_cd;                               \
-    _cd = OBJ_NEW(orte_pmix_server_op_caddy_t);                     \
-    /* convert the namespace to jobid and create name */            \
-    orte_util_convert_string_to_jobid(&(_cd->proc.jobid), (n));     \
-    _cd->proc.vpid = (r);                                           \
-    _cd->object = (ob);                                             \
-    _cd->cbfunc = (cf);                                             \
-    _cd->cbdata = (cb);                                             \
-    _cd->status = (s);                                              \
-    opal_event_set(orte_event_base, &(_cd->ev), -1,                 \
-                   OPAL_EV_WRITE, (fn), _cd);                       \
-    opal_event_set_priority(&(_cd->ev), ORTE_MSG_PRI);              \
-    opal_event_active(&(_cd->ev), OPAL_EV_WRITE, 1);                \
+#define ORTE_PMIX_OPERATION(p, i, fn, cf, cb)               \
+do {                                                        \
+    orte_pmix_server_op_caddy_t *_cd;                       \
+    _cd = OBJ_NEW(orte_pmix_server_op_caddy_t);             \
+    _cd->procs = (p);                                       \
+    _cd->info = (i);                                        \
+    _cd->cbfunc = (cf);                                     \
+    _cd->cbdata = (cb);                                     \
+    opal_event_set(orte_event_base, &(_cd->ev), -1,         \
+                   OPAL_EV_WRITE, (fn), _cd);               \
+    opal_event_set_priority(&(_cd->ev), ORTE_MSG_PRI);      \
+    opal_event_active(&(_cd->ev), OPAL_EV_WRITE, 1);        \
 } while(0);
 
 
