@@ -100,6 +100,9 @@ int MPI_Comm_join(int fd, MPI_Comm *intercomm)
         send_first = true;
     }
 
+    /* ensure the port name is NULL terminated */
+    memset(port_name, 0, MPI_MAX_PORT_NAME);
+
     /* Assumption: socket_send should not block, even if the socket
        is not configured to be non-blocking, because the message length are
        so short. */

@@ -259,6 +259,8 @@ const char *orte_attr_key_to_str(orte_attribute_key_t key)
             return "JOB-ROOM-NUM";
         case ORTE_JOB_LAUNCH_PROXY:
             return "JOB-LAUNCH-PROXY";
+        case ORTE_JOB_NSPACE_REGISTERED:
+            return "JOB-NSPACE-REGISTERED";
 
         case ORTE_PROC_NOBARRIER:
             return "PROC-NOBARRIER";

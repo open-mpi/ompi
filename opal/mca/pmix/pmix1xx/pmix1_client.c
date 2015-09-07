@@ -301,7 +301,7 @@ int pmix1_get(const opal_process_name_t *proc,
     opal_output_verbose(1, opal_pmix_base_framework.framework_output,
                         "%s PMIx_client get on proc %s key %s",
                         OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
-                        OPAL_NAME_PRINT(*proc), key);
+                        (NULL == proc) ? "NULL" : OPAL_NAME_PRINT(*proc), key);
 
     /* prep default response */
     *val = NULL;
@@ -371,7 +371,7 @@ int pmix1_getnb(const opal_process_name_t *proc, const char *key,
     opal_output_verbose(1, opal_pmix_base_framework.framework_output,
                         "%s PMIx_client get_nb on proc %s key %s",
                         OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
-                        OPAL_NAME_PRINT(*proc), key);
+                        (NULL == proc) ? "NULL" : OPAL_NAME_PRINT(*proc), key);
 
     /* create the caddy */
     op = OBJ_NEW(pmix1_opcaddy_t);
@@ -501,7 +501,7 @@ int pmix1_lookup(opal_list_t *data, opal_list_t *info)
             ++n;
         }
     } else {
-        pdata = NULL;
+        pinfo = NULL;
         ninfo = 0;
     }
 

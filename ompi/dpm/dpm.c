@@ -112,8 +112,8 @@ int ompi_dpm_connect_accept(ompi_communicator_t *comm, int root,
                             const char *port_string, bool send_first,
                             ompi_communicator_t **newcomm)
 {
-    int k, size, rsize, rank, rc;
-    char **members = NULL, *nstring;
+    int k, size, rsize, rank, rc, rportlen=0;
+    char **members = NULL, *nstring, *rport=NULL, **pkeys=NULL;
     bool dense, isnew;
     opal_process_name_t pname;
     opal_list_t ilist, mlist, rlist;
@@ -169,6 +169,7 @@ int ompi_dpm_connect_accept(ompi_communicator_t *comm, int root,
                 if (NULL == (proc_list[i] = ompi_group_peer_lookup(group,i))) {
                     ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
                     rc = ORTE_ERR_NOT_FOUND;
+                    free(proc_list);
                     goto exit;
                 }
             }
@@ -195,13 +196,6 @@ int ompi_dpm_connect_accept(ompi_communicator_t *comm, int root,
     if (rank == root) {
         /* the root for each side publishes their list of participants */
         OBJ_CONSTRUCT(&ilist, opal_list_t);
-        /* publish a key-val containing the port string itself
-         * so other participants from our job can connect */
-        info = OBJ_NEW(opal_value_t);
-        info->key = opal_argv_join(members, ':');
-        info->type = OPAL_STRING;
-        info->data.string = strdup(port_string);
-        opal_list_append(&ilist, &info->super);
         /* put my name at the front of the list of members - my
          * name will therefore be on the list twice, but the
          * other side's root needs to know the root from this side */
@@ -220,140 +214,110 @@ int ompi_dpm_connect_accept(ompi_communicator_t *comm, int root,
         info->type = OPAL_STRING;
         info->data.string = opal_argv_join(members, ':');
         opal_list_append(&ilist, &info->super);
+        /* also save the key for later */
+        opal_argv_append_nosize(&pkeys, info->key);
         /* publish them with "session" scope */
         rc = opal_pmix.publish(&ilist);
         OPAL_LIST_DESTRUCT(&ilist);
         if (OPAL_SUCCESS != rc) {
             opal_argv_free(members);
+            opal_argv_free(pkeys);
             return OMPI_ERROR;
         }
-    } else {
-        /* check to see if we have to get the port string for
-         * this connect - if we were started via a call to spawn,
-         * then the port string was given to us. Otherwise, the
-         * string will be NULL */
-        if (0 == strlen(port_string)) {
-            /* our root should have published it */
-            OBJ_CONSTRUCT(&ilist, opal_list_t);
-            pdat = OBJ_NEW(opal_pmix_pdata_t);
-            pdat->value.key = opal_argv_join(members, ':');
-            opal_list_append(&ilist, &pdat->super);
-            OBJ_CONSTRUCT(&mlist, opal_list_t);
-            /* if a non-blocking version of lookup isn't
-             * available, then use the blocking version */
-            if (NULL == opal_pmix.lookup_nb) {
-                rc = opal_pmix.lookup(&ilist, &mlist);
-                OPAL_LIST_DESTRUCT(&mlist);
-                if (OPAL_SUCCESS != rc) {
-                    OMPI_ERROR_LOG(rc);
-                    OPAL_LIST_DESTRUCT(&ilist);
-                    opal_argv_free(members);
-                    return OMPI_ERROR;
-                }
-            } else {
-                char **keys = NULL;
-                struct lookup_caddy_t caddy;
-                opal_argv_append_nosize(&keys, pdat->value.key);
-                caddy.active = true;
-                caddy.pdat = pdat;
-                /* tell it to wait for the data to arrive */
-                info = OBJ_NEW(opal_value_t);
-                info->key = strdup(OPAL_PMIX_WAIT);
-                info->type = OPAL_BOOL;
-                info->data.flag = true;
-                opal_list_append(&mlist, &info->super);
-                /* give it a decent timeout as we don't know when
-                 * the other side may call connect - it doesn't
-                 * have to be simultaneous */
-                info = OBJ_NEW(opal_value_t);
-                info->key = strdup(OPAL_PMIX_TIMEOUT);
-                info->type = OPAL_INT;
-                info->data.integer = (size < 60) ? size : 60;
-                opal_list_append(&mlist, &info->super);
-                rc = opal_pmix.lookup_nb(keys, &mlist, lookup_cbfunc, &caddy);
-                if (OPAL_SUCCESS != rc) {
-                    OPAL_LIST_DESTRUCT(&ilist);
-                    OPAL_LIST_DESTRUCT(&mlist);
-                    opal_argv_free(keys);
-                    opal_argv_free(members);
-                    return OMPI_ERROR;
-                }
-                OMPI_WAIT_FOR_COMPLETION(caddy.active);
-                opal_argv_free(keys);
-                OPAL_LIST_DESTRUCT(&mlist);
-                if (OPAL_SUCCESS != caddy.status) {
-                    OMPI_ERROR_LOG(caddy.status);
-                    OPAL_LIST_DESTRUCT(&ilist);
-                    opal_argv_free(members);
-                    return OMPI_ERROR;
-                }
-            }
-            port_string = strdup(pdat->value.data.string);
-            OPAL_LIST_DESTRUCT(&ilist);
+       /* lookup the other side's info - if a non-blocking form
+         * of lookup isn't available, then we use the blocking
+         * form and trust that the underlying system will WAIT
+         * until the other side publishes its data */
+        OBJ_CONSTRUCT(&ilist, opal_list_t);
+        pdat = OBJ_NEW(opal_pmix_pdata_t);
+        if (send_first) {
+            (void)asprintf(&pdat->value.key, "%s:accept", port_string);
+        } else {
+            (void)asprintf(&pdat->value.key, "%s:connect", port_string);
         }
+        opal_list_append(&ilist, &pdat->super);
+        OBJ_CONSTRUCT(&mlist, opal_list_t);
+        /* if a non-blocking version of lookup isn't
+         * available, then use the blocking version */
+        if (NULL == opal_pmix.lookup_nb) {
+            rc = opal_pmix.lookup(&ilist, &mlist);
+            OPAL_LIST_DESTRUCT(&mlist);
+            if (OPAL_SUCCESS != rc) {
+                OMPI_ERROR_LOG(rc);
+                OPAL_LIST_DESTRUCT(&ilist);
+                opal_argv_free(members);
+                goto exit;
+            }
+        } else {
+            char **keys = NULL;
+            struct lookup_caddy_t caddy;
+            opal_argv_append_nosize(&keys, pdat->value.key);
+            caddy.active = true;
+            caddy.pdat = pdat;
+            /* tell it to wait for the data to arrive */
+            info = OBJ_NEW(opal_value_t);
+            info->key = strdup(OPAL_PMIX_WAIT);
+            info->type = OPAL_BOOL;
+            info->data.flag = true;
+            opal_list_append(&mlist, &info->super);
+            /* give it a decent timeout as we don't know when
+             * the other side may call connect - it doesn't
+             * have to be simultaneous */
+            info = OBJ_NEW(opal_value_t);
+            info->key = strdup(OPAL_PMIX_TIMEOUT);
+            info->type = OPAL_INT;
+            info->data.integer = 60;
+            opal_list_append(&mlist, &info->super);
+            rc = opal_pmix.lookup_nb(keys, &mlist, lookup_cbfunc, &caddy);
+            if (OPAL_SUCCESS != rc) {
+                OPAL_LIST_DESTRUCT(&ilist);
+                OPAL_LIST_DESTRUCT(&mlist);
+                opal_argv_free(keys);
+                opal_argv_free(members);
+                goto exit;
+            }
+            OMPI_WAIT_FOR_COMPLETION(caddy.active);
+            opal_argv_free(keys);
+            OPAL_LIST_DESTRUCT(&mlist);
+            if (OPAL_SUCCESS != caddy.status) {
+                OMPI_ERROR_LOG(caddy.status);
+                OPAL_LIST_DESTRUCT(&ilist);
+                opal_argv_free(members);
+                goto exit;
+            }
+        }
+        /* save the result */
+        rport = strdup(pdat->value.data.string);  // need this later
+        rportlen = strlen(rport) + 1;  // retain the NULL terminator
+        OPAL_LIST_DESTRUCT(&ilist);
     }
 
-   /* lookup the other side's info - if a non-blocking form
-     * of lookup isn't available, then we use the blocking
-     * form and trust that the underlying system will WAIT
-     * until the other side publishes its data */
-    OBJ_CONSTRUCT(&ilist, opal_list_t);
-    pdat = OBJ_NEW(opal_pmix_pdata_t);
-    if (send_first) {
-        (void)asprintf(&pdat->value.key, "%s:accept", port_string);
-    } else {
-        (void)asprintf(&pdat->value.key, "%s:connect", port_string);
+    /* if we aren't in a comm_spawn, the non-root members won't have
+     * a port_string - so let's make sure everyone knows the other
+     * side's participants */
+
+    /* bcast the list-length to all processes in the local comm */
+    rc = comm->c_coll.coll_bcast(&rportlen, 1, MPI_INT, root, comm,
+                                 comm->c_coll.coll_bcast_module);
+    if (OMPI_SUCCESS != rc) {
+        free(rport);
+        goto exit;
     }
-    opal_list_append(&ilist, &pdat->super);
-    OBJ_CONSTRUCT(&mlist, opal_list_t);
-    /* if a non-blocking version of lookup isn't
-     * available, then use the blocking version */
-    if (NULL == opal_pmix.lookup_nb) {
-        rc = opal_pmix.lookup(&ilist, &mlist);
-        OPAL_LIST_DESTRUCT(&mlist);
-        if (OPAL_SUCCESS != rc) {
-            OMPI_ERROR_LOG(rc);
-            OPAL_LIST_DESTRUCT(&ilist);
-            opal_argv_free(members);
-            return OMPI_ERROR;
+
+    if (rank != root) {
+        /* non root processes need to allocate the buffer manually */
+        rport = (char*)malloc(rportlen);
+        if (NULL == rport) {
+            rc = OMPI_ERR_OUT_OF_RESOURCE;
+            goto exit;
         }
-    } else {
-        char **keys = NULL;
-        struct lookup_caddy_t caddy;
-        opal_argv_append_nosize(&keys, pdat->value.key);
-        caddy.active = true;
-        caddy.pdat = pdat;
-        /* tell it to wait for the data to arrive */
-        info = OBJ_NEW(opal_value_t);
-        info->key = strdup(OPAL_PMIX_WAIT);
-        info->type = OPAL_BOOL;
-        info->data.flag = true;
-        opal_list_append(&mlist, &info->super);
-        /* give it a decent timeout as we don't know when
-         * the other side may call connect - it doesn't
-         * have to be simultaneous */
-        info = OBJ_NEW(opal_value_t);
-        info->key = strdup(OPAL_PMIX_TIMEOUT);
-        info->type = OPAL_INT;
-        info->data.integer = (size < 60) ? size : 60;
-        opal_list_append(&mlist, &info->super);
-        rc = opal_pmix.lookup_nb(keys, &mlist, lookup_cbfunc, &caddy);
-        if (OPAL_SUCCESS != rc) {
-            OPAL_LIST_DESTRUCT(&ilist);
-            OPAL_LIST_DESTRUCT(&mlist);
-            opal_argv_free(keys);
-            opal_argv_free(members);
-            return OMPI_ERROR;
-        }
-        OMPI_WAIT_FOR_COMPLETION(caddy.active);
-        opal_argv_free(keys);
-        OPAL_LIST_DESTRUCT(&mlist);
-        if (OPAL_SUCCESS != caddy.status) {
-            OMPI_ERROR_LOG(caddy.status);
-            OPAL_LIST_DESTRUCT(&ilist);
-            opal_argv_free(members);
-            return OMPI_ERROR;
-        }
+    }
+    /* now share the list of remote participants */
+    rc = comm->c_coll.coll_bcast(rport, rportlen, MPI_BYTE, root, comm,
+                                 comm->c_coll.coll_bcast_module);
+    if (OMPI_SUCCESS != rc) {
+        free(rport);
+        goto exit;
     }
 
     /* initiate a list of participants for the connect,
@@ -370,8 +334,9 @@ int ompi_dpm_connect_accept(ompi_communicator_t *comm, int root,
         if (OPAL_SUCCESS != (rc = opal_convert_string_to_process_name(&nm->name, members[i]))) {
             OMPI_ERROR_LOG(rc);
             opal_argv_free(members);
+            free(rport);
             OPAL_LIST_DESTRUCT(&mlist);
-            return rc;
+            goto exit;
         }
         /* if the rank is wildcard, then we need to add all procs
          * in that job to the list */
@@ -390,7 +355,9 @@ int ompi_dpm_connect_accept(ompi_communicator_t *comm, int root,
                 OMPI_ERROR_LOG(OMPI_ERR_BAD_PARAM);
                 OPAL_LIST_DESTRUCT(&mlist);
                 opal_argv_free(members);
-                return OMPI_ERR_BAD_PARAM;
+                free(rport);
+                rc = OMPI_ERR_BAD_PARAM;
+                goto exit;
             }
             ++i;
         } else {
@@ -403,21 +370,22 @@ int ompi_dpm_connect_accept(ompi_communicator_t *comm, int root,
     /* the pdat object will contain a colon-delimited list
      * of process names for the remote procs - convert it
      * into an argv array */
-    members = opal_argv_split(pdat->value.data.string, ':');
-    OPAL_LIST_DESTRUCT(&ilist);
+    members = opal_argv_split(rport, ':');
+    free(rport);
 
     /* the first entry is the root for the remote side */
     if (OPAL_SUCCESS != (rc = opal_convert_string_to_process_name(&pname, members[0]))) {
         OMPI_ERROR_LOG(rc);
         opal_argv_free(members);
-        return rc;
+        goto exit;
     }
     /* check the name - it should never be a wildcard, so
      * this is just checking for an error */
     if (OPAL_VPID_WILDCARD == pname.vpid) {
         OMPI_ERROR_LOG(OMPI_ERR_BAD_PARAM);
         opal_argv_free(members);
-        return OMPI_ERR_BAD_PARAM;
+        rc = OMPI_ERR_BAD_PARAM;
+        goto exit;
     }
 
     /* add the list of remote procs to our list, and
@@ -432,7 +400,7 @@ int ompi_dpm_connect_accept(ompi_communicator_t *comm, int root,
             opal_argv_free(members);
             OPAL_LIST_DESTRUCT(&ilist);
             OPAL_LIST_DESTRUCT(&rlist);
-            return rc;
+            goto exit;
         }
         if (OPAL_VPID_WILDCARD == nm->name.vpid) {
             jobid = nm->name.jobid;
@@ -446,7 +414,8 @@ int ompi_dpm_connect_accept(ompi_communicator_t *comm, int root,
                 opal_argv_free(members);
                 OPAL_LIST_DESTRUCT(&ilist);
                 OPAL_LIST_DESTRUCT(&rlist);
-                return OMPI_ERR_BAD_PARAM;
+                rc = OMPI_ERR_BAD_PARAM;
+                goto exit;
             }
             rsize = strtoul(members[i+1], NULL, 10);
             ++i;
@@ -485,10 +454,16 @@ int ompi_dpm_connect_accept(ompi_communicator_t *comm, int root,
     opal_argv_free(members);
 
     /* tell the host RTE to connect us - this will download
-     * all known data for the nspace's of participating procs */
+     * all known data for the nspace's of participating procs
+     * so that add_procs will not result in a slew of lookups */
     rc = opal_pmix.connect(&mlist);
     OPAL_LIST_DESTRUCT(&mlist);
-
+    if (OPAL_SUCCESS != rc) {
+        OMPI_ERROR_LOG(rc);
+        OPAL_LIST_DESTRUCT(&ilist);
+        OPAL_LIST_DESTRUCT(&rlist);
+        goto exit;
+    }
     if (0 < opal_list_get_size(&ilist)) {
         /* convert the list of new procs to a proc_t array */
         new_proc_list = (ompi_proc_t**)calloc(opal_list_get_size(&ilist),
@@ -598,6 +573,10 @@ int ompi_dpm_connect_accept(ompi_communicator_t *comm, int root,
     */
 
  exit:
+    if (NULL != pkeys) {
+        opal_pmix.unpublish(pkeys, NULL);
+        opal_argv_free(pkeys);
+    }
     if (OMPI_SUCCESS != rc) {
         if (MPI_COMM_NULL != newcomp && NULL != newcomp) {
             OBJ_RETAIN(newcomp);
@@ -695,13 +674,12 @@ int ompi_dpm_disconnect(ompi_communicator_t *comm)
         return ret;
     }
 
-    opal_pmix.fence(&coll, false);
-
-    /* ensure we tell the host RM to disconnect us */
-    opal_pmix.disconnect(&coll);
+    /* ensure we tell the host RM to disconnect us - this
+     * is a blocking operation that must include a fence */
+    ret = opal_pmix.disconnect(&coll);
     OPAL_LIST_DESTRUCT(&coll);
 
-    return OMPI_SUCCESS;
+    return ret;
 }
 
 int ompi_dpm_spawn(int count, const char *array_of_commands[],
@@ -1067,7 +1045,7 @@ int ompi_dpm_open_port(char *port_name)
 
     r = opal_rand(&rnd);
     opal_convert_process_name_to_string(&tmp, OMPI_PROC_MY_NAME);
-    snprintf(port_name, MPI_MAX_PORT_NAME, "%s:%u", tmp, r);
+    snprintf(port_name, MPI_MAX_PORT_NAME-1, "%s:%u", tmp, r);
     free(tmp);
     return OMPI_SUCCESS;
 }

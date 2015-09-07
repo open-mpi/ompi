@@ -46,7 +46,8 @@
 #include "orte/runtime/orte_globals.h"
 #include "orte/mca/rml/rml.h"
 
-#include "pmix_server_internal.h"
+#include "orte/orted/pmix/pmix_server.h"
+#include "orte/orted/pmix/pmix_server_internal.h"
 
 void pmix_server_launch_resp(int status, orte_process_name_t* sender,
                              opal_buffer_t *buffer,
@@ -327,6 +328,119 @@ int pmix_server_spawn_fn(opal_process_name_t *requestor,
     return OPAL_SUCCESS;
 }
 
+static void _cnct(int sd, short args, void *cbdata);
+
+static void _cnlk(int status, opal_list_t *data, void *cbdata)
+{
+    orte_pmix_server_op_caddy_t *cd = (orte_pmix_server_op_caddy_t*)cbdata;
+    int rc, cnt;
+    opal_pmix_pdata_t *pdat;
+    orte_job_t *jdata;
+    opal_buffer_t buf;
+
+    /* if we failed to get the required data, then just inform
+     * the embedded server that the connect cannot succeed */
+    if (ORTE_SUCCESS != status || NULL == data) {
+        if (NULL != cd->cbfunc) {
+            rc = status;
+            goto release;
+        }
+    }
+
+    /* register the returned data with the embedded PMIx server */
+    pdat = (opal_pmix_pdata_t*)opal_list_get_first(data);
+    if (OPAL_BYTE_OBJECT != pdat->value.type) {
+        rc = ORTE_ERR_BAD_PARAM;
+        goto release;
+    }
+    /* the data will consist of a packed buffer with the job data in it */
+    OBJ_CONSTRUCT(&buf, opal_buffer_t);
+    opal_dss.load(&buf, pdat->value.data.bo.bytes, pdat->value.data.bo.size);
+    pdat->value.data.bo.bytes = NULL;
+    pdat->value.data.bo.size = 0;
+    cnt = 1;
+    if (OPAL_SUCCESS != (rc = opal_dss.unpack(&buf, &jdata, &cnt, ORTE_JOB))) {
+        OBJ_DESTRUCT(&buf);
+        goto release;
+    }
+    OBJ_DESTRUCT(&buf);
+    if (ORTE_SUCCESS != (rc = orte_pmix_server_register_nspace(jdata))) {
+        OBJ_RELEASE(jdata);
+        goto release;
+    }
+    OBJ_RELEASE(jdata);  // no reason to keep this around
+
+    /* restart the cnct processor */
+    ORTE_PMIX_OPERATION(cd->procs, cd->info, _cnct, cd->cbfunc, cd->cbdata);
+    OBJ_RELEASE(cd);
+
+  release:
+    if (NULL != cd->cbfunc) {
+        cd->cbfunc(rc, cd->cbdata);
+    }
+    OBJ_RELEASE(cd);
+}
+
+static void _cnct(int sd, short args, void *cbdata)
+{
+    orte_pmix_server_op_caddy_t *cd = (orte_pmix_server_op_caddy_t*)cbdata;
+    orte_namelist_t *nm;
+    char **keys = NULL, *key;
+    orte_job_t *jdata;
+    int rc = ORTE_SUCCESS;
+
+    /* at some point, we need to add bookeeping to track which
+     * procs are "connected" so we know who to notify upon
+     * termination or failure. For now, we have to ensure
+     * that we have registered all participating nspaces so
+     * the embedded PMIx server can provide them to the client.
+     * Otherwise, the client will receive an error as it won't
+     * be able to resolve any of the required data for the
+     * missing nspaces */
+
+    /* cycle thru the procs */
+    OPAL_LIST_FOREACH(nm, cd->procs, orte_namelist_t) {
+        /* see if we have the job object for this job */
+        if (NULL == (jdata = orte_get_job_data_object(nm->name.jobid))) {
+            /* we don't know about this job. If our "global" data
+             * server is just our HNP, then we have no way of finding
+             * out about it, and all we can do is return an error */
+            if (orte_pmix_server_globals.server.jobid == ORTE_PROC_MY_HNP->jobid &&
+                orte_pmix_server_globals.server.vpid == ORTE_PROC_MY_HNP->vpid) {
+                rc = ORTE_ERR_NOT_SUPPORTED;
+                goto release;
+            }
+            /* ask the global data server for the data - if we get it,
+             * then we can complete the request */
+            key = opal_convert_jobid_to_string(nm->name.jobid);
+            opal_argv_append_nosize(&keys, key);
+            free(key);
+            if (ORTE_SUCCESS != (rc = pmix_server_lookup_fn(&nm->name, keys, cd->info, _cnlk, cd))) {
+                opal_argv_free(keys);
+                goto release;
+            }
+            opal_argv_free(keys);
+            /* the callback function on this lookup will return us to this
+             * routine so we can continue the process */
+            return;
+        }
+        /* we know about the job - check to ensure it has been
+         * registered with the local PMIx server */
+        if (!orte_get_attribute(&jdata->attributes, ORTE_JOB_NSPACE_REGISTERED, NULL, OPAL_BOOL)) {
+            /* it hasn't been registered yet, so register it now */
+            if (ORTE_SUCCESS != (rc = orte_pmix_server_register_nspace(jdata))) {
+                goto release;
+            }
+        }
+    }
+
+  release:
+    if (NULL != cd->cbfunc) {
+        cd->cbfunc(rc, cd->cbdata);
+    }
+    OBJ_RELEASE(cd);
+}
+
 int pmix_server_connect_fn(opal_list_t *procs, opal_list_t *info,
                            opal_pmix_op_cbfunc_t cbfunc, void *cbdata)
 {
@@ -335,26 +449,52 @@ int pmix_server_connect_fn(opal_list_t *procs, opal_list_t *info,
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                         (int)opal_list_get_size(procs));
 
-    /* for now, just ack the call */
-    if (NULL != cbfunc) {
-        cbfunc(OPAL_SUCCESS, cbdata);
+    /* protect ourselves */
+    if (NULL == procs || 0 == opal_list_get_size(procs)) {
+        return ORTE_ERR_BAD_PARAM;
     }
+    /* must thread shift this as we will be accessing global data */
+    ORTE_PMIX_OPERATION(procs, info, _cnct, cbfunc, cbdata);
+    return ORTE_SUCCESS;
+}
 
-    return OPAL_SUCCESS;
+static void mdxcbfunc(int status,
+                      const char *data, size_t ndata, void *cbdata,
+                      opal_pmix_release_cbfunc_t relcbfunc, void *relcbdata)
+{
+    orte_pmix_server_op_caddy_t *cd = (orte_pmix_server_op_caddy_t*)cbdata;
+
+    /* ack the call */
+    if (NULL != cd->cbfunc) {
+        cd->cbfunc(status, cd->cbdata);
+    }
+    OBJ_RELEASE(cd);
 }
 
 int pmix_server_disconnect_fn(opal_list_t *procs, opal_list_t *info,
                               opal_pmix_op_cbfunc_t cbfunc, void *cbdata)
 {
+    orte_pmix_server_op_caddy_t *cd;
+    int rc;
+
     opal_output_verbose(2, orte_pmix_server_globals.output,
                         "%s disconnect called with %d procs",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                         (int)opal_list_get_size(procs));
 
-    /* for now, just ack the call */
-    if (NULL != cbfunc) {
-        cbfunc(OPAL_SUCCESS, cbdata);
+    /* at some point, we need to add bookeeping to track which
+     * procs are "connected" so we know who to notify upon
+     * termination or failure. For now, just execute a fence
+     * Note that we do not need to thread-shift here as the
+     * fence function will do it for us */
+    cd = OBJ_NEW(orte_pmix_server_op_caddy_t);
+    cd->cbfunc = cbfunc;
+    cd->cbdata = cbdata;
+
+    if (ORTE_SUCCESS != (rc = pmix_server_fencenb_fn(procs, info, NULL, 0,
+                                                     mdxcbfunc, cd))) {
+        OBJ_RELEASE(cd);
     }
 
-    return OPAL_SUCCESS;
+    return rc;
 }
