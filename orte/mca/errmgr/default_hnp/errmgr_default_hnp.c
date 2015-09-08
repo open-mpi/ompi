@@ -132,7 +132,7 @@ static void job_errors(int fd, short args, void *cbdata)
     orte_proc_t *aborted_proc;
     opal_buffer_t *answer;
     int32_t rc, ret;
-    int room;
+    int room, *rmptr;
 
     /*
      * if orte is trying to shutdown, just let it
@@ -194,7 +194,8 @@ static void job_errors(int fd, short args, void *cbdata)
                 return;
             }
             /* pack the room number */
-            if (orte_get_attribute(&jdata->attributes, ORTE_JOB_ROOM_NUM, (void**)&room, OPAL_INT)) {
+            rmptr = &room;
+            if (orte_get_attribute(&jdata->attributes, ORTE_JOB_ROOM_NUM, (void**)&rmptr, OPAL_INT)) {
                 if (ORTE_SUCCESS != (ret = opal_dss.pack(answer, &room, 1, OPAL_INT))) {
                     ORTE_ERROR_LOG(ret);
                     ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);

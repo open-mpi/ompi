@@ -1483,21 +1483,24 @@ static void _spcb(int sd, short args, void *cbdata)
         cd->active = false;
         return;
     }
-    /* add any job-related info we have on that nspace - this will
-     * include the name of the nspace */
-    nptr = NULL;
-    PMIX_LIST_FOREACH(ns, &pmix_globals.nspaces, pmix_nspace_t) {
-        if (0 == strcmp(ns->nspace, cd->nspace)) {
-            nptr = ns;
-            break;
+    if (PMIX_SUCCESS == cd->status) {
+        /* add any job-related info we have on that nspace - this will
+         * include the name of the nspace */
+        nptr = NULL;
+        PMIX_LIST_FOREACH(ns, &pmix_globals.nspaces, pmix_nspace_t) {
+            if (0 == strcmp(ns->nspace, cd->nspace)) {
+                nptr = ns;
+                break;
+            }
+        }
+        if (NULL == nptr) {
+            /* shouldn't happen */
+            PMIX_ERROR_LOG(PMIX_ERR_NOT_FOUND);
+        } else {
+            pmix_bfrop.copy_payload(reply, &nptr->server->job_info);
         }
     }
-    if (NULL == nptr) {
-        /* shouldn't happen */
-        PMIX_ERROR_LOG(PMIX_ERR_NOT_FOUND);
-    } else {
-        pmix_bfrop.copy_payload(reply, &nptr->server->job_info);
-    }
+
     /* the function that created the server_caddy did a
      * retain on the peer, so we don't have to worry about
      * it still being present - tell the originator the result */

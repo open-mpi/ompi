@@ -1029,7 +1029,6 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
     OPAL_LIST_DESTRUCT(&apps);
 
     if (OPAL_SUCCESS != rc) {
-        OMPI_ERROR_LOG(rc);
         opal_progress_event_users_decrement();
         return MPI_ERR_SPAWN;
     }
