@@ -23,6 +23,10 @@ AC_DEFUN([OMPI_CHECK_FCA],[
              [Build fca (Mellanox Fabric Collective Accelerator) support, optionally adding
               DIR/include and DIR/lib or DIR/lib64 to the search path for headers and libraries])])
 
+    AC_ARG_WITH([fca-mkey],
+        [AC_HELP_STRING([--with-fca-mkey(=MKey)],
+             [Override the default M_Key used by FCA to communicate with the Subnet Manager])])
+
     AS_IF([test "$with_fca" != "no"],
           [ompi_check_fca_libs=fca
            AS_IF([test ! -z "$with_fca" && test "$with_fca" != "yes"],
@@ -57,6 +61,10 @@ AC_DEFUN([OMPI_CHECK_FCA],[
     AS_IF([test "$ompi_check_fca_happy" = "yes" -a "$enable_progress_threads" = "yes"],
           [AC_MSG_WARN([fca driver does not currently support progress threads.  Disabling FCA.])
            ompi_check_fca_happy="no"])
+
+    AS_IF([[test "$with_fca_mkey" != "no"] && [! test -z "$with_fca_mkey"]],
+          [AC_DEFINE_UNQUOTED([FCA_SA_MKEY], [$with_fca_mkey], [FCA M_Key])],
+          [])
 
     AS_IF([test "$ompi_check_fca_happy" = "yes"],
           [$2],

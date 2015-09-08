@@ -1162,6 +1162,9 @@ int mca_coll_fca_get_fca_lib(struct ompi_communicator_t *comm)
     spec->rank_id = ompi_comm_rank(MPI_COMM_WORLD);
     spec->progress.func = mca_coll_fca_progress_cb;
     spec->progress.arg = NULL;
+#ifdef FCA_SA_MKEY
+    spec->config.device.sa_mkey = FCA_SA_MKEY;
+#endif
     ret = fca_init(spec, &mca_coll_fca_component.fca_context);
     if (ret < 0) {
         FCA_ERROR("Failed to initialize FCA: %s", fca_strerror(ret));
