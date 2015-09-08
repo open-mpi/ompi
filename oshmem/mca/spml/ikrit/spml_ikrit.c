@@ -534,7 +534,6 @@ int mca_spml_ikrit_add_procs(oshmem_proc_t** procs, size_t nprocs)
     free(ep_info);
     free(ep_hw_rdma_info);
 
-    oshmem_shmem_barrier();
 #if MXM_API >= MXM_VERSION(2,0)
     if (mca_spml_ikrit.bulk_connect) {
         /* Need a barrier to ensure remote peers already created connection */

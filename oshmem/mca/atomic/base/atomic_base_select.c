@@ -29,7 +29,7 @@
  * Global variables; most of which are loaded by back-ends of MCA
  * variables
  */
-mca_atomic_base_module_t mca_atomic;
+mca_atomic_base_module_t mca_atomic = {{0}};
 
 /*
  * Local types

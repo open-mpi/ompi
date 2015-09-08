@@ -184,17 +184,48 @@ segment_create(map_segment_t *ds_buf,
     /* init the contents of map_segment_t */
     shmem_ds_reset(ds_buf);
 
-    addr = mmap((void *)mca_sshmem_base_start_address,
+    if (mca_sshmem_mmap_component.is_anonymous) {
+        addr = mmap((void *)(mca_sshmem_mmap_component.is_start_addr_fixed ? mca_sshmem_base_start_address : NULL),
                 size,
                 PROT_READ | PROT_WRITE,
                 MAP_PRIVATE |
-#if defined(MAP_ANONYMOUS)
                 MAP_ANONYMOUS |
-#endif
-                MAP_FIXED,
+                    (mca_sshmem_mmap_component.is_start_addr_fixed ? MAP_FIXED : 0),
                 -1,
                 0);
+    }
+    else {
+        memcpy(ds_buf->seg_name, file_name, OPAL_PATH_MAX * sizeof(char));
 
+        int fd;
+        if (-1 == (fd = open(ds_buf->seg_name, O_CREAT | O_RDWR, 0600))) {
+            opal_show_help("help-oshmem-sshmem-mmap.txt",
+                       "mmap:file open failure",
+                       true, ds_buf->seg_name, strerror(errno));
+            return OSHMEM_ERROR;
+        }
+        if (0 != ftruncate(fd, size)) {
+            opal_show_help("help-oshmem-sshmem-mmap.txt",
+                       "mmap:file truncate failure",
+                       true, ds_buf->seg_name, (unsigned long long) size, strerror(errno));
+            close(fd);
+            return OSHMEM_ERROR;
+        }
+        addr = mmap((void *)(mca_sshmem_mmap_component.is_start_addr_fixed ? mca_sshmem_base_start_address : NULL),
+                    size,
+                    PROT_READ | PROT_WRITE,
+                    MAP_SHARED |
+                    (mca_sshmem_mmap_component.is_start_addr_fixed ? MAP_FIXED : 0),
+                    fd,
+                    0);
+
+        if (0 != close(fd)) {
+            OPAL_OUTPUT(
+                (oshmem_sshmem_base_framework.framework_output,
+                "file close failed: %s", strerror(errno))
+            );
+        }
+    }
     if (MAP_FAILED == addr) {
         opal_show_help("help-oshmem-sshmem.txt",
                 "create segment failure",
