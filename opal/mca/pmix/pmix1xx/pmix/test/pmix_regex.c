@@ -42,7 +42,7 @@ int main(int argc, char **argv)
     char *regex;
     char **nodes, **procs;
     pmix_status_t rc;
-    
+
     /* smoke test */
     if (PMIX_SUCCESS != 0) {
         TEST_ERROR(("ERROR IN COMPUTING CONSTANTS: PMIX_SUCCESS = %d", PMIX_SUCCESS));
@@ -68,7 +68,7 @@ int main(int argc, char **argv)
     } else {
         fprintf(stderr, "Node reverse failed: %d\n\n\n", rc);
     }
-    
+
     fprintf(stderr, "PROCS: %s\n", TEST_PROCS);
     PMIx_generate_ppn(TEST_PROCS, &regex);
     fprintf(stderr, "PPN: %s\n\n", regex);

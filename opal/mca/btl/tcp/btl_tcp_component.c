@@ -918,7 +918,7 @@ static int mca_btl_tcp_component_exchange(void)
              } /* end of for opal_ifbegin() */
          } /* end of for tcp_num_btls */
          OPAL_MODEX_SEND(rc, OPAL_PMIX_GLOBAL,
-                         &mca_btl_tcp_component.super.btl_version, 
+                         &mca_btl_tcp_component.super.btl_version,
                          addrs, xfer_size);
          free(addrs);
      } /* end if */

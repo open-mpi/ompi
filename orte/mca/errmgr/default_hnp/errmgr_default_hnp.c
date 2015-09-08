@@ -133,7 +133,7 @@ static void job_errors(int fd, short args, void *cbdata)
     opal_buffer_t *answer;
     int32_t rc, ret;
     int room;
-    
+
     /*
      * if orte is trying to shutdown, just let it
      */

@@ -506,7 +506,7 @@ static void process_opens(int fd, short args, void *cbdata)
     orte_process_name_t daemon;
     opal_list_t lt;
     opal_namelist_t *nm;
-    
+
     /* get the scheme to determine if we can process locally or not */
     if (NULL == (scheme = opal_uri_get_scheme(dfs->uri))) {
         ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);

@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2013 Los Alamos National Security, LLC. 
+ * Copyright (c) 2006-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
@@ -33,7 +33,7 @@ int main(int argc, char **argv)
     int spawned, size, rank, appnum;
     int rc;
     char *key;
-    
+
     /* init us */
     if (PMI2_SUCCESS != (rc = PMI2_Init(&spawned, &size, &rank, &appnum))) {
         fprintf(stderr, "PMI2_Init failed: %d\n", rc);
@@ -66,6 +66,6 @@ int main(int argc, char **argv)
         fprintf(stderr, "PMI2_Finalize failed: %d\n", rc);
         return rc;
     }
-    
+
     return 0;
 }

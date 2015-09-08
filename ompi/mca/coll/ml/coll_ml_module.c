@@ -334,7 +334,7 @@ static int init_ml_message_desc(opal_free_list_item_t *desc , void* ctx)
 
     /* finish setting up the fragment descriptor */
     init_ml_fragment_desc((opal_free_list_item_t*)&(msg_desc->fragment),module);
-    
+
     return OPAL_SUCCESS;
 }
 

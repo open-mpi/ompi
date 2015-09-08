@@ -448,7 +448,7 @@ static void process_opens(int fd, short args, void *cbdata)
     orte_process_name_t daemon;
     opal_list_t lt;
     opal_namelist_t *nm;
-    
+
     opal_output_verbose(1, orte_dfs_base_framework.framework_output,
                         "%s PROCESSING OPEN", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
 
@@ -490,7 +490,7 @@ static void process_opens(int fd, short args, void *cbdata)
     nm = (opal_namelist_t*)opal_list_get_first(&lt);
     daemon.vpid = nm->name.vpid;
     OPAL_LIST_DESTRUCT(&lt);
-    
+
     opal_output_verbose(1, orte_dfs_base_framework.framework_output,
                         "%s file %s on host %s daemon %s",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),

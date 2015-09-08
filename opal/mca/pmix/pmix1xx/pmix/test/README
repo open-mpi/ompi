@@ -1,6 +1,6 @@
 This is a short description how to run tests for pmix standalone library.
 
-To compile test the user should run make in the test subdirectory. 
+To compile test the user should run make in the test subdirectory.
 
 To start testing, the user should run either pmix_test or pmix_test_lite executable.
 These applications are using two different versions of server functionality and fork
