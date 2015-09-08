@@ -385,15 +385,12 @@ mca_fcoll_static_file_read_all (mca_io_ompio_file_t *fh,
             goto exit;
         }
 
-        if (NULL == sendtype){
-            sendtype = (ompi_datatype_t **) malloc (fh->f_procs_per_group * sizeof(ompi_datatype_t *));
-            if (NULL == sendtype) {
-                opal_output (1, "OUT OF MEMORY\n");
-                ret = OMPI_ERR_OUT_OF_RESOURCE;
-                goto exit;
-            }
+        sendtype = (ompi_datatype_t **) malloc (fh->f_procs_per_group * sizeof(ompi_datatype_t *));
+        if (NULL == sendtype) {
+            opal_output (1, "OUT OF MEMORY\n");
+            ret = OMPI_ERR_OUT_OF_RESOURCE;
+            goto exit;
         }
-
         for ( i=0; i<fh->f_procs_per_group; i++ ) {
             sendtype[i] = MPI_DATATYPE_NULL;
         }
@@ -451,10 +448,12 @@ mca_fcoll_static_file_read_all (mca_io_ompio_file_t *fh,
                 memory_displacements= NULL;
             }
             
-            for ( i=0; i<fh->f_procs_per_group; i++ ) {
-                if ( MPI_DATATYPE_NULL != sendtype[i] ) {
-                    ompi_datatype_destroy (&sendtype[i] );
-                    sendtype[i] = MPI_DATATYPE_NULL;
+            if ( NULL != sendtype ) {
+                for ( i=0; i<fh->f_procs_per_group; i++ ) {
+                    if ( MPI_DATATYPE_NULL != sendtype[i] ) {
+                        ompi_datatype_destroy (&sendtype[i] );
+                        sendtype[i] = MPI_DATATYPE_NULL;
+                    }
                 }
             }
             
