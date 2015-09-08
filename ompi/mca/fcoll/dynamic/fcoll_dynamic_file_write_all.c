@@ -1063,6 +1063,11 @@ exit :
         }
 
     }
+    
+    if (NULL != displs){
+	free(displs);
+	displs=NULL;
+    }
 
     if (! sendbuf_is_contiguous) {
 	if (NULL != send_buf) {
