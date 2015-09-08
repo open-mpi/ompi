@@ -192,17 +192,19 @@ static void wait_cbfunc(struct pmix_peer_t *pr, pmix_usock_hdr_t *hdr,
         PMIX_ERROR_LOG(rc);
         ret = rc;
     }
-    /* unpack the namespace */
-    cnt = 1;
-    if (PMIX_SUCCESS != (rc = pmix_bfrop.unpack(buf, &n2, &cnt, PMIX_STRING))) {
-        PMIX_ERROR_LOG(rc);
-        ret = rc;
-    }
-    if (NULL != n2) {
-        (void)strncpy(nspace, n2, PMIX_MAX_NSLEN);
-        /* extract and process any proc-related info for this nspace */
-        pmix_client_process_nspace_blob(nspace, buf);
-        free(n2);
+    if (PMIX_SUCCESS == ret) {
+        /* unpack the namespace */
+        cnt = 1;
+        if (PMIX_SUCCESS != (rc = pmix_bfrop.unpack(buf, &n2, &cnt, PMIX_STRING))) {
+            PMIX_ERROR_LOG(rc);
+            ret = rc;
+        }
+        if (NULL != n2) {
+            (void)strncpy(nspace, n2, PMIX_MAX_NSLEN);
+            /* extract and process any proc-related info for this nspace */
+            pmix_client_process_nspace_blob(nspace, buf);
+            free(n2);
+        }
     }
 
     if (NULL != cb->spawn_cbfunc) {
