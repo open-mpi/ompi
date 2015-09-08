@@ -5,9 +5,7 @@
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2013      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2014-2015 Intel Corporation.  All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2014      Intel Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -84,7 +82,6 @@ static int orte_rml_base_close(void)
     OBJ_DESTRUCT(&orte_rml_base.posted_recvs);
 
     OPAL_TIMING_REPORT(orte_rml_base.timing, &tm_rml);
-    OBJ_DESTRUCT(&orte_rml_base.open_channels);
 
     return mca_base_framework_components_close(&orte_rml_base_framework, NULL);
 }
@@ -94,11 +91,6 @@ static int orte_rml_base_open(mca_base_open_flag_t flags)
     /* Initialize globals */
     OBJ_CONSTRUCT(&orte_rml_base.posted_recvs, opal_list_t);
     OBJ_CONSTRUCT(&orte_rml_base.unmatched_msgs, opal_list_t);
-    OBJ_CONSTRUCT(&orte_rml_base.open_channels, opal_pointer_array_t);
-    if (OPAL_SUCCESS != opal_pointer_array_init(&orte_rml_base.open_channels, 0,
-                                                INT_MAX, 1)) {
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
     OPAL_TIMING_INIT(&tm_rml);
     /* Open up all available components */
     return mca_base_framework_components_open(&orte_rml_base_framework, flags);
@@ -164,6 +156,7 @@ int orte_rml_base_select(void)
                 if (NULL != selected_module && NULL != selected_module->finalize) {
                     selected_module->finalize();
                 }
+
                 selected_priority = priority;
                 selected_component = component;
                 selected_module = module;
@@ -210,14 +203,7 @@ int orte_rml_base_select(void)
         }
         return ORTE_ERROR;
     }
-    /* Post a persistent recieve for open channel request */
-    orte_rml.recv_buffer_nb (ORTE_NAME_WILDCARD, ORTE_RML_TAG_OPEN_CHANNEL_REQ,
-                             ORTE_RML_PERSISTENT, orte_rml_open_channel_recv_callback,
-                             NULL);
-    /* post a persistent recieve for close channel request */
-    orte_rml.recv_buffer_nb (ORTE_NAME_WILDCARD, ORTE_RML_TAG_CLOSE_CHANNEL_REQ,
-                             ORTE_RML_PERSISTENT, orte_rml_close_channel_recv_callback,
-                             NULL);
+
     return ORTE_SUCCESS;
 }
 
@@ -247,7 +233,6 @@ void orte_rml_recv_callback(int status, orte_process_name_t* sender,
     blob->active = false;
 }
 
-
 /***   RML CLASS INSTANCES   ***/
 static void send_cons(orte_rml_send_t *ptr)
 {
@@ -255,48 +240,14 @@ static void send_cons(orte_rml_send_t *ptr)
     ptr->iov = NULL;
     ptr->buffer = NULL;
     ptr->data = NULL;
-    ptr->channel = NULL;
-    ptr->dst_channel = ORTE_RML_INVALID_CHANNEL_NUM;
-    ptr->seq_num = 0xFFFFFFFF;
 }
 OBJ_CLASS_INSTANCE(orte_rml_send_t,
                    opal_list_item_t,
                    send_cons, NULL);
 
-static void channel_cons(orte_rml_channel_t *ptr)
-{
-    ptr->channel_num = ORTE_RML_INVALID_CHANNEL_NUM;
-    ptr->qos = NULL;
-    ptr->qos_channel_ptr = NULL;
-    ptr->recv = false;
-}
-
-OBJ_CLASS_INSTANCE(orte_rml_channel_t,
-                   opal_list_item_t,
-                   channel_cons, NULL);
-
-static void open_channel_cons(orte_rml_open_channel_t *ptr)
-{
-    ptr->cbdata = NULL;
-    ptr->qos_attributes = NULL;
-}
-OBJ_CLASS_INSTANCE(orte_rml_open_channel_t,
-                   opal_list_item_t,
-                   open_channel_cons, NULL);
-
-static void close_channel_cons(orte_rml_close_channel_t *ptr)
-{
-    ptr->cbdata = NULL;
-    ptr->channel = NULL;
-}
-OBJ_CLASS_INSTANCE(orte_rml_close_channel_t,
-                   opal_list_item_t,
-                   close_channel_cons, NULL);
-
 static void send_req_cons(orte_rml_send_request_t *ptr)
 {
-    OBJ_CONSTRUCT(&ptr->post.send, orte_rml_send_t);
-    OBJ_CONSTRUCT(&ptr->post.open_channel, orte_rml_open_channel_t);
+    OBJ_CONSTRUCT(&ptr->post, orte_rml_send_t);
 }
 OBJ_CLASS_INSTANCE(orte_rml_send_request_t,
                    opal_object_t,
@@ -306,7 +257,6 @@ static void recv_cons(orte_rml_recv_t *ptr)
 {
     ptr->iov.iov_base = NULL;
     ptr->iov.iov_len = 0;
-    ptr->channel_num = ORTE_RML_INVALID_CHANNEL_NUM;
 }
 static void recv_des(orte_rml_recv_t *ptr)
 {
@@ -352,3 +302,4 @@ static void prq_des(orte_rml_recv_request_t *ptr)
 OBJ_CLASS_INSTANCE(orte_rml_recv_request_t,
                    opal_object_t,
                    prq_cons, prq_des);
+

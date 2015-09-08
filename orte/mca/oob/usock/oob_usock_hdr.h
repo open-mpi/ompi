@@ -12,7 +12,7 @@
  * Copyright (c) 2006-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2010-2011 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2013-2015 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2014 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -48,10 +48,6 @@ typedef struct {
     mca_oob_usock_msg_type_t type;
     /* the rml tag where this message is headed */
     orte_rml_tag_t tag;
-    /* the rml channel to which this message is headed */
-    orte_rml_channel_num_t channel;
-    /* msg seq number on the src channel */
-    uint32_t seq_num;
     /* number of bytes in message */
     uint32_t nbytes;
 } mca_oob_usock_hdr_t;

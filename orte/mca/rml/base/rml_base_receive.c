@@ -53,6 +53,7 @@ void orte_rml_base_comm_start(void)
     if (recv_issued) {
         return;
     }
+
     orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
                             ORTE_RML_TAG_RML_INFO_UPDATE,
                             ORTE_RML_PERSISTENT,
@@ -67,6 +68,7 @@ void orte_rml_base_comm_stop(void)
     if (!recv_issued) {
         return;
     }
+
     orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_RML_INFO_UPDATE);
     recv_issued = false;
 }
@@ -85,10 +87,12 @@ orte_rml_base_recv(int status, orte_process_name_t* sender,
     opal_buffer_t *buf;
     int rc;
 
+
     OPAL_OUTPUT_VERBOSE((5, orte_rml_base_framework.framework_output,
                          "%s rml:base:recv: processing message from %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(sender)));
+
     count = 1;
     if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &command, &count, ORTE_RML_CMD))) {
         ORTE_ERROR_LOG(rc);
@@ -102,9 +106,11 @@ orte_rml_base_recv(int status, orte_process_name_t* sender,
                 return;
             }
             break;
+
         default:
             ORTE_ERROR_LOG(ORTE_ERR_VALUE_OUT_OF_BOUNDS);
     }
+
     /* send an ack back - this is REQUIRED to ensure that the routing
      * info gets updated -before- a message intending to use that info
      * arrives. Because message ordering is NOT preserved in the OOB, it
@@ -116,6 +122,7 @@ orte_rml_base_recv(int status, orte_process_name_t* sender,
                          "%s rml:base:recv: sending ack to %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(sender)));
+
     buf = OBJ_NEW(opal_buffer_t);
     if (0 > (rc = orte_rml.send_buffer_nb(sender, buf, ORTE_RML_TAG_UPDATE_ROUTE_ACK,
                                           orte_rml_send_callback, NULL))) {

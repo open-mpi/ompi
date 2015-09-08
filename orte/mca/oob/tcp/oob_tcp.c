@@ -13,7 +13,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2013-2015 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2014 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -250,6 +250,8 @@ static int parse_uri(const uint16_t af_family,
     else {
         return ORTE_ERR_NOT_SUPPORTED;
     }
+
+
     return ORTE_SUCCESS;
 }
 
@@ -272,7 +274,7 @@ static void process_set_peer(int fd, short args, void *cbdata)
 
     if (AF_INET != pop->af_family) {
             opal_output_verbose(20, orte_oob_base_framework.framework_output,
-                            "%s NOT AF_INET", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+	                        "%s NOT AF_INET", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
         goto cleanup;
     }
 
@@ -399,10 +401,10 @@ static void process_send(int fd, short args, void *cbdata)
     orte_process_name_t hop;
 
     opal_output_verbose(2, orte_oob_base_framework.framework_output,
-                        "%s:[%s:%d] processing send to peer %s:%d to channel =%d seq_num = %d",
+                        "%s:[%s:%d] processing send to peer %s:%d",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                         __FILE__, __LINE__,
-                        ORTE_NAME_PRINT(&op->msg->dst), op->msg->tag, op->msg->dst_channel, op->msg->seq_num);
+                        ORTE_NAME_PRINT(&op->msg->dst), op->msg->tag);
 
     /* do we have a route to this peer (could be direct)? */
     hop = orte_routed.get_route(&op->msg->dst);
@@ -581,6 +583,7 @@ static void recv_handler(int sd, short flg, void *cbdata)
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), strerror(opal_socket_errno), opal_socket_errno);
             }
         }
+
         /* is the peer instance willing to accept this connection */
         peer->sd = sd;
         if (mca_oob_tcp_peer_accept(peer) == false) {

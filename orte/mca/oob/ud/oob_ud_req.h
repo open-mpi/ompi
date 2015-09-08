@@ -4,7 +4,6 @@
  *                         reserved.
  *               2014      Mellanox Technologies, Inc.
  *                         All rights reserved.
- * Copyright (c) 2015 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -71,8 +70,6 @@ struct mca_oob_ud_msg_hdr_t {
 
     orte_process_name_t msg_origin;
     orte_process_name_t msg_target;
-    int                 msg_channel;
-    int                 msg_seq_num;
 
     uint64_t msg_id;
 
@@ -157,8 +154,6 @@ struct mca_oob_ud_req_t {
     }req_data;
 
     int                     req_tag;
-    int                     req_channel;
-    int                     req_seq_num;
     int                     req_rc;
 
     void                    *req_cbdata;

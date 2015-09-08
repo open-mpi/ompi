@@ -11,7 +11,9 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2014 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
+ *
  * Additional copyrights may follow
+ *
  * $HEADER$
  */
 
@@ -300,14 +302,12 @@ static inline opal_object_t *opal_obj_new_debug(opal_class_t* type, const char* 
  * to NULL.
  *
  * @param object        Pointer to the object
- *
- *
  */
 #if OPAL_ENABLE_DEBUG
 #define OBJ_RELEASE(object)                                             \
     do {                                                                \
-        assert(OPAL_OBJ_MAGIC_ID == ((opal_object_t *) (object))->obj_magic_id); \
         assert(NULL != ((opal_object_t *) (object))->obj_class);        \
+        assert(OPAL_OBJ_MAGIC_ID == ((opal_object_t *) (object))->obj_magic_id); \
         if (0 == opal_obj_update((opal_object_t *) (object), -1)) {     \
             OBJ_SET_MAGIC_ID((object), 0);                              \
             opal_obj_run_destructors((opal_object_t *) (object));       \

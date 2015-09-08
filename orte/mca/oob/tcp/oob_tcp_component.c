@@ -14,7 +14,7 @@
  *                         reserved.
  * Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2013-2015 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2014 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -162,6 +162,7 @@ static int tcp_component_open(void)
            "open" failing is not printed */
         return ORTE_ERR_NOT_AVAILABLE;
     }
+
     return ORTE_SUCCESS;
 }
 
@@ -319,6 +320,7 @@ static int tcp_component_register(void)
     }
 #endif // OPAL_ENABLE_IPV6
 #endif // OPAL_ENABLE_STATIC_PORTS
+
     dyn_port_string = NULL;
     (void)mca_base_component_var_register(component, "dynamic_ipv4_ports",
                                           "Range of ports to be dynamically used by daemons and procs (IPv4)",
@@ -491,6 +493,7 @@ static int component_available(void)
                          i, opal_ifindextokindex(i));
             continue;
         }
+
         /* ignore non-ip4/6 interfaces */
         if (AF_INET != my_ss.ss_family
 #if OPAL_ENABLE_IPV6
@@ -499,6 +502,7 @@ static int component_available(void)
             ) {
             continue;
         }
+
         kindex = opal_ifindextokindex(i);
         if (kindex <= 0) {
             continue;
@@ -632,7 +636,7 @@ static int component_startup(void)
 
 static void component_shutdown(void)
 {
-    int i = 0;
+    int i=0;
     opal_list_item_t *item;
 
     opal_output_verbose(2, orte_oob_base_framework.framework_output,
@@ -659,9 +663,9 @@ static void component_shutdown(void)
 static int component_send(orte_rml_send_t *msg)
 {
     opal_output_verbose(5, orte_oob_base_framework.framework_output,
-                        "%s oob:tcp:send_nb to peer %s:%d to channel=%d seq = %d",
+                        "%s oob:tcp:send_nb to peer %s:%d",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                        ORTE_NAME_PRINT(&msg->dst), msg->tag,msg->dst_channel, msg->seq_num );
+                        ORTE_NAME_PRINT(&msg->dst), msg->tag);
 
     /* the module is potentially running on its own event
      * base, so all it can do is push our send request
@@ -742,8 +746,8 @@ static int component_set_addr(orte_process_name_t *peer,
         tcpuri = strdup(uris[i]);
         if (NULL == tcpuri) {
             opal_output_verbose(2, orte_oob_base_framework.framework_output,
-                                "%s oob:tcp: out of memory",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+                            "%s oob:tcp: out of memory",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
             continue;
         }
         if (0 == strncmp(uris[i], "tcp:", 4)) {
@@ -775,6 +779,7 @@ static int component_set_addr(orte_process_name_t *peer,
                             "%s oob:tcp: working peer %s address %s",
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                             ORTE_NAME_PRINT(peer), uris[i]);
+
         /* separate the ports from the network addrs */
         ports = strrchr(tcpuri, ':');
         *ports = '\0';
@@ -1053,8 +1058,6 @@ void mca_oob_tcp_component_hop_unknown(int fd, short args, void *cbdata)
     snd->dst = mop->snd->hdr.dst;
     snd->origin = mop->snd->hdr.origin;
     snd->tag = mop->snd->hdr.tag;
-    snd->dst_channel = mop->snd->hdr.channel;
-    snd->seq_num = mop->snd->hdr.seq_num;
     snd->data = mop->snd->data;
     snd->count = mop->snd->hdr.nbytes;
     snd->cbfunc.iov = NULL;
@@ -1163,7 +1166,7 @@ static char **split_and_resolve(char **orig_str, char *name)
 
         /* Go through all interfaces and see if we can find a match */
         for (if_index = opal_ifbegin(); if_index >= 0;
-                           if_index = opal_ifnext(if_index)) {
+             if_index = opal_ifnext(if_index)) {
             opal_ifindextoaddr(if_index,
                                (struct sockaddr*) &if_inaddr,
                                sizeof(if_inaddr));
@@ -1173,6 +1176,7 @@ static char **split_and_resolve(char **orig_str, char *name)
                 break;
             }
         }
+
         /* If we didn't find a match, keep trying */
         if (if_index < 0) {
             orte_show_help("help-oob-tcp.txt", "invalid if_inexclude",
