@@ -330,7 +330,7 @@ int PMIx_Unpublish_nb(char **keys, const pmix_info_t info[], size_t ninfo,
     size_t i, j;
 
     pmix_output_verbose(2, pmix_globals.debug_output,
-                        "pmix: unpublish called");
+                        "pmix: unpublish_nb called");
 
     if (pmix_globals.init_cntr <= 0) {
         return PMIX_ERR_INIT;
