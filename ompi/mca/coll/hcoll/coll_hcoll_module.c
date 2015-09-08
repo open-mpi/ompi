@@ -46,6 +46,7 @@ static void mca_coll_hcoll_module_clear(mca_coll_hcoll_module_t *hcoll_module)
     hcoll_module->previous_ibcast      = NULL;
     hcoll_module->previous_iallreduce  = NULL;
     hcoll_module->previous_iallgather  = NULL;
+    hcoll_module->previous_igatherv    = NULL;
 }
 
 static void mca_coll_hcoll_module_construct(mca_coll_hcoll_module_t *hcoll_module)
@@ -79,11 +80,13 @@ static void mca_coll_hcoll_module_destruct(mca_coll_hcoll_module_t *hcoll_module
         OBJ_RELEASE(hcoll_module->previous_bcast_module);
         OBJ_RELEASE(hcoll_module->previous_allreduce_module);
         OBJ_RELEASE(hcoll_module->previous_allgather_module);
+        OBJ_RELEASE(hcoll_module->previous_gatherv_module);
 
         OBJ_RELEASE(hcoll_module->previous_ibarrier_module);
         OBJ_RELEASE(hcoll_module->previous_ibcast_module);
         OBJ_RELEASE(hcoll_module->previous_iallreduce_module);
         OBJ_RELEASE(hcoll_module->previous_iallgather_module);
+        OBJ_RELEASE(hcoll_module->previous_igatherv_module);
 
         /*
         OBJ_RELEASE(hcoll_module->previous_allgatherv_module);
@@ -123,11 +126,13 @@ static int mca_coll_hcoll_save_coll_handlers(mca_coll_hcoll_module_t *hcoll_modu
     HCOL_SAVE_PREV_COLL_API(bcast);
     HCOL_SAVE_PREV_COLL_API(allreduce);
     HCOL_SAVE_PREV_COLL_API(allgather);
+    HCOL_SAVE_PREV_COLL_API(gatherv);
 
     HCOL_SAVE_PREV_COLL_API(ibarrier);
     HCOL_SAVE_PREV_COLL_API(ibcast);
     HCOL_SAVE_PREV_COLL_API(iallreduce);
     HCOL_SAVE_PREV_COLL_API(iallgather);
+    HCOL_SAVE_PREV_COLL_API(igatherv);
 
     /*
       These collectives are not yet part of hcoll, so
@@ -306,11 +311,13 @@ mca_coll_hcoll_comm_query(struct ompi_communicator_t *comm, int *priority)
     hcoll_module->super.coll_allgather = hcoll_collectives.coll_allgather ? mca_coll_hcoll_allgather : NULL;
     hcoll_module->super.coll_allreduce = hcoll_collectives.coll_allreduce ? mca_coll_hcoll_allreduce : NULL;
     hcoll_module->super.coll_alltoall = /*hcoll_collectives.coll_alltoall ? mca_coll_hcoll_alltoall : */  NULL;
+    hcoll_module->super.coll_gatherv = hcoll_collectives.coll_gatherv ? mca_coll_hcoll_gatherv : NULL;
     hcoll_module->super.coll_ibarrier = hcoll_collectives.coll_ibarrier ? mca_coll_hcoll_ibarrier : NULL;
     hcoll_module->super.coll_ibcast = hcoll_collectives.coll_ibcast ? mca_coll_hcoll_ibcast : NULL;
     hcoll_module->super.coll_iallgather = hcoll_collectives.coll_iallgather ? mca_coll_hcoll_iallgather : NULL;
     hcoll_module->super.coll_iallreduce = hcoll_collectives.coll_iallreduce ? mca_coll_hcoll_iallreduce : NULL;
     hcoll_module->super.coll_gather = /*hcoll_collectives.coll_gather ? mca_coll_hcoll_gather :*/ NULL;
+    hcoll_module->super.coll_igatherv = hcoll_collectives.coll_igatherv ? mca_coll_hcoll_igatherv : NULL;
 
     *priority = cm->hcoll_priority;
     module = &hcoll_module->super;
