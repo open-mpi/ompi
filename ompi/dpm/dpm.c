@@ -771,8 +771,8 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
         /* copy over the argv array */
         if (MPI_ARGVS_NULL != array_of_argv &&
             MPI_ARGV_NULL != array_of_argv[i]) {
-            for (j=1; NULL != array_of_argv[i][j]; j++) {
-                opal_argv_append(&app->argc, &app->argv, array_of_argv[i][j-1]);
+            for (j=0; NULL != array_of_argv[i][j]; j++) {
+                opal_argv_append(&app->argc, &app->argv, array_of_argv[i][j]);
             }
         }
 
