@@ -66,10 +66,8 @@ AC_DEFUN([MCA_opal_pmix_pmix1xx_CONFIG],[
                        ["$PMIX_VERSION"],
                        [Version of PMIx])
 
-    # Finally, add some flags to the wrapper compiler if we're
-    # building with developer headers so that our headers can
-    # be found.
-    pmix1xx_WRAPPER_EXTRA_CPPFLAGS='-I${includedir}/openmpi/$opal_pmix_pmix1xx_basedir/pmix -I${includedir}/openmpi/$opal_pmix_pmix1xx_basedir/pmix/include'
+    # Finally, add a flag to support static builds
+    pmix_pmix1xx_WRAPPER_EXTRA_LIBS=-lpmix
 
     CFLAGS=$opal_pmix_pmix1xx_save_CFLAGS
     CPPFLAGS=$opal_pmix_pmix1xx_save_CPPFLAGS
