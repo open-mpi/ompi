@@ -14,6 +14,8 @@
  * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
  * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -43,7 +45,7 @@
 
 static const char FUNC_NAME[] = "MPI_Raccumulate";
 
-int MPI_Raccumulate(void *origin_addr, int origin_count, MPI_Datatype origin_datatype,
+int MPI_Raccumulate(const void *origin_addr, int origin_count, MPI_Datatype origin_datatype,
                    int target_rank, MPI_Aint target_disp, int target_count,
                    MPI_Datatype target_datatype, MPI_Op op, MPI_Win win, MPI_Request *request) 
 {
@@ -128,8 +130,7 @@ int MPI_Raccumulate(void *origin_addr, int origin_count, MPI_Datatype origin_dat
 
     OPAL_CR_ENTER_LIBRARY();
 
-    /* TODO: don't cast away the const */
-    rc = ompi_win->w_osc_module->osc_raccumulate((void*) origin_addr,
+    rc = ompi_win->w_osc_module->osc_raccumulate(origin_addr,
                                                 origin_count,
                                                 origin_datatype,
                                                 target_rank, 
