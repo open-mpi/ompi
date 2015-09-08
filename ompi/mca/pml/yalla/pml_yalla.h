@@ -54,6 +54,9 @@ struct mca_pml_yalla_module {
     int                      priority;
     int                      verbose;
     int                      output;
+#if MXM_API >= MXM_VERSION(3,4)
+    int                      force_bcopy_send;
+#endif
 };
 
 extern mca_pml_base_component_2_0_0_t mca_pml_yalla_component;
