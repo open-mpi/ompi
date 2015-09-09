@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -58,7 +60,11 @@ OMPI_GENERATE_F77_BINDINGS (MPI_IMRECV,
 
 
 #if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
+#define ompi_imrecv_f pompi_imrecv_f
+#endif
+
+#if OMPI_ENABLE_MPI_PROFILING
+#define MPI_Imrecv PMPI_Imrecv
 #endif
 
 void ompi_imrecv_f(char *buf, MPI_Fint *count, MPI_Fint *datatype,

@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -64,7 +66,11 @@ OMPI_GENERATE_F77_BINDINGS (MPI_FILE_WRITE_AT_ALL,
 
 
 #if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
+#define ompi_file_write_at_all_f pompi_file_write_at_all_f
+#endif
+
+#if OMPI_ENABLE_MPI_PROFILING
+#define MPI_File_write_at_all PMPI_File_write_at_all
 #endif
 
 void ompi_file_write_at_all_f(MPI_Fint *fh, MPI_Offset *offset,

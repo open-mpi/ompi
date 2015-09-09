@@ -13,6 +13,8 @@
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -65,7 +67,11 @@ OMPI_GENERATE_F77_BINDINGS (MPI_NEIGHBOR_ALLTOALL,
 
 
 #if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
+#define ompi_neighbor_alltoall_f pompi_neighbor_alltoall_f
+#endif
+
+#if OMPI_ENABLE_MPI_PROFILING
+#define MPI_Neighbor_alltoall PMPI_Neighbor_alltoall
 #endif
 
 void ompi_neighbor_alltoall_f(char *sendbuf, MPI_Fint *sendcount, MPI_Fint *sendtype,

@@ -52,7 +52,11 @@ OMPI_GENERATE_F77_BINDINGS (MPI_WIN_GET_INFO,
 
 
 #if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
+#define ompi_win_get_info_f pompi_win_get_info_f
+#endif
+
+#if OMPI_ENABLE_MPI_PROFILING
+#define MPI_Win_get_info PMPI_Win_get_info
 #endif
 
 void ompi_win_get_info_f(MPI_Fint *win, MPI_Fint *info, MPI_Fint *ierr)

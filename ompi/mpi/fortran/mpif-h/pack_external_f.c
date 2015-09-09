@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -65,7 +67,11 @@ OMPI_GENERATE_F77_BINDINGS (MPI_PACK_EXTERNAL,
 
 
 #if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
+#define ompi_pack_external_f pompi_pack_external_f
+#endif
+
+#if OMPI_ENABLE_MPI_PROFILING
+#define MPI_Pack_external PMPI_Pack_external
 #endif
 
 void ompi_pack_external_f(char *datarep, char *inbuf, MPI_Fint *incount,

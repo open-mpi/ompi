@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -62,7 +64,11 @@ OMPI_GENERATE_F77_BINDINGS (MPI_FILE_SET_ERRHANDLER,
 
 
 #if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
+#define ompi_file_set_errhandler_f pompi_file_set_errhandler_f
+#endif
+
+#if OMPI_ENABLE_MPI_PROFILING
+#define MPI_File_set_errhandler PMPI_File_set_errhandler
 #endif
 
 void ompi_file_set_errhandler_f(MPI_Fint *fh, MPI_Fint *errhandler,

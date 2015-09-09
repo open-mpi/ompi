@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -60,7 +62,11 @@ OMPI_GENERATE_F77_BINDINGS (MPI_CANCEL,
 #endif
 
 #if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
+#define ompi_cancel_f pompi_cancel_f
+#endif
+
+#if OMPI_ENABLE_MPI_PROFILING
+#define MPI_Cancel PMPI_Cancel
 #endif
 
 void ompi_cancel_f(MPI_Fint *request, MPI_Fint *ierr)

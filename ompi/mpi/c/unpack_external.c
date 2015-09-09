@@ -13,6 +13,8 @@
  * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights
  *                         reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -29,12 +31,12 @@
 #include "opal/datatype/opal_convertor.h"
 #include "ompi/memchecker.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
+#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_BUILD_MPI_PROFILING
 #pragma weak MPI_Unpack_external = PMPI_Unpack_external
 #endif
 
-#if OMPI_PROFILING_DEFINES
-#include "ompi/mpi/c/profile/defines.h"
+#if OMPI_BUILD_MPI_PROFILING
+#define MPI_Unpack_external PMPI_Unpack_external
 #endif
 
 static const char FUNC_NAME[] = "MPI_Unpack_external";

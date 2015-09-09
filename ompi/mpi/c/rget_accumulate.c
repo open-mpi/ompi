@@ -36,12 +36,12 @@
 #include "ompi/datatype/ompi_datatype_internal.h"
 #include "ompi/memchecker.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
+#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_BUILD_MPI_PROFILING
 #pragma weak MPI_Rget_accumulate = PMPI_Rget_accumulate
 #endif
 
-#if OMPI_PROFILING_DEFINES
-#include "ompi/mpi/c/profile/defines.h"
+#if OMPI_BUILD_MPI_PROFILING
+#define MPI_Rget_accumulate PMPI_Rget_accumulate
 #endif
 
 static const char FUNC_NAME[] = "MPI_Rget_accumulate";

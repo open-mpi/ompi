@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2011-2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -60,7 +62,11 @@ OMPI_GENERATE_F77_BINDINGS (MPI_BUFFER_DETACH,
 
 
 #if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
+#define ompi_buffer_detach_f pompi_buffer_detach_f
+#endif
+
+#if OMPI_ENABLE_MPI_PROFILING
+#define MPI_Buffer_detach PMPI_Buffer_detach
 #endif
 
 /* (this comment is repeated in ompi/mpi/fortran/use-mpi-f08/buffer_detach.c)

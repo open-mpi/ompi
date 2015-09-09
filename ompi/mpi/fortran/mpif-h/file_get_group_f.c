@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -61,7 +63,11 @@ OMPI_GENERATE_F77_BINDINGS (MPI_FILE_GET_GROUP,
 
 
 #if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
+#define ompi_file_get_group_f pompi_file_get_group_f
+#endif
+
+#if OMPI_ENABLE_MPI_PROFILING
+#define MPI_File_get_group PMPI_File_get_group
 #endif
 
 void ompi_file_get_group_f(MPI_Fint *fh, MPI_Fint *group, MPI_Fint *ierr)

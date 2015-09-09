@@ -12,6 +12,8 @@
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Inria.  All rights reserved.
  * Copyright (c) 2011-2013 Universite Bordeaux 1
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -63,7 +65,11 @@ OMPI_GENERATE_F77_BINDINGS (MPI_GRAPH_NEIGHBORS,
 
 
 #if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
+#define ompi_graph_neighbors_f pompi_graph_neighbors_f
+#endif
+
+#if OMPI_ENABLE_MPI_PROFILING
+#define MPI_Graph_neighbors PMPI_Graph_neighbors
 #endif
 
 void ompi_graph_neighbors_f(MPI_Fint *comm, MPI_Fint *rank,

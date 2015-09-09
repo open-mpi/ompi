@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -61,7 +63,11 @@ OMPI_GENERATE_F77_BINDINGS (MPI_WIN_UNLOCK,
 
 
 #if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
+#define ompi_win_unlock_f pompi_win_unlock_f
+#endif
+
+#if OMPI_ENABLE_MPI_PROFILING
+#define MPI_Win_unlock PMPI_Win_unlock
 #endif
 
 void ompi_win_unlock_f(MPI_Fint *rank, MPI_Fint *win, MPI_Fint *ierr)

@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2015      University of Houston.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -29,12 +31,12 @@
 #include "ompi/mca/io/base/io_base_request.h"
 #include "ompi/memchecker.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
+#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_BUILD_MPI_PROFILING
 #pragma weak MPI_File_iread_at_all = PMPI_File_iread_at_all
 #endif
 
-#if OMPI_PROFILING_DEFINES
-#include "ompi/mpi/c/profile/defines.h"
+#if OMPI_BUILD_MPI_PROFILING
+#define MPI_File_iread_at_all PMPI_File_iread_at_all
 #endif
 
 static const char FUNC_NAME[] = "MPI_File_iread_at_all";

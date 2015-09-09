@@ -13,6 +13,8 @@
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -28,12 +30,12 @@
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/group/group.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
+#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_BUILD_MPI_PROFILING
 #pragma weak MPI_Group_translate_ranks = PMPI_Group_translate_ranks
 #endif
 
-#if OMPI_PROFILING_DEFINES
-#include "ompi/mpi/c/profile/defines.h"
+#if OMPI_BUILD_MPI_PROFILING
+#define MPI_Group_translate_ranks PMPI_Group_translate_ranks
 #endif
 
 static const char FUNC_NAME[] = "MPI_Group_translate_ranks";

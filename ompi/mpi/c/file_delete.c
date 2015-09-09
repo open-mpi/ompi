@@ -31,12 +31,12 @@
 #include "ompi/mca/io/io.h"
 #include "ompi/mca/io/base/base.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
+#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_BUILD_MPI_PROFILING
 #pragma weak MPI_File_delete = PMPI_File_delete
 #endif
 
-#if OMPI_PROFILING_DEFINES
-#include "ompi/mpi/c/profile/defines.h"
+#if OMPI_BUILD_MPI_PROFILING
+#define MPI_File_delete PMPI_File_delete
 #endif
 
 static const char FUNC_NAME[] = "MPI_File_delete";

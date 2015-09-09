@@ -12,6 +12,8 @@
  * Copyright (c) 2011-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -64,7 +66,11 @@ OMPI_GENERATE_F77_BINDINGS (MPI_GET_ELEMENTS_X,
 
 
 #if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
+#define ompi_get_elements_x_f pompi_get_elements_x_f
+#endif
+
+#if OMPI_ENABLE_MPI_PROFILING
+#define MPI_Get_elements_x PMPI_Get_elements_x
 #endif
 
 void ompi_get_elements_x_f(MPI_Fint *status, MPI_Fint *datatype, MPI_Count *count, MPI_Fint *ierr)

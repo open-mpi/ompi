@@ -13,6 +13,8 @@
  * Copyright (c) 2011-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -64,7 +66,11 @@ OMPI_GENERATE_F77_BINDINGS (MPI_COMM_IDUP,
 
 
 #if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
+#define ompi_comm_idup_f pompi_comm_idup_f
+#endif
+
+#if OMPI_ENABLE_MPI_PROFILING
+#define MPI_Comm_idup PMPI_Comm_idup
 #endif
 
 void ompi_comm_idup_f(MPI_Fint *comm, MPI_Fint *newcomm, MPI_Fint *request, MPI_Fint *ierr)
