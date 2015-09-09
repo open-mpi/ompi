@@ -1716,7 +1716,11 @@ static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
     /* If we did find values for this device (or in the defaults
        section), handle them */
     merge_values(&values, &default_values);
-    if (values.mtu_set) {
+    /*  If MCA param was set, use it. If not, check the INI file
+        or default to IBV_MTU_1024 */
+    if (0 < mca_btl_openib_component.ib_mtu) {
+        device->mtu = mca_btl_openib_component.ib_mtu;
+    } else if (values.mtu_set) {
         switch (values.mtu) {
         case 256:
             device->mtu = IBV_MTU_256;
@@ -1735,11 +1739,11 @@ static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
             break;
         default:
             BTL_ERROR(("invalid MTU value specified in INI file (%d); ignored", values.mtu));
-            device->mtu = mca_btl_openib_component.ib_mtu;
+            device->mtu = IBV_MTU_1024 ;
             break;
         }
     } else {
-        device->mtu = mca_btl_openib_component.ib_mtu;
+        device->mtu = IBV_MTU_1024 ;
     }
 
     /* Allocate the protection domain for the device */
