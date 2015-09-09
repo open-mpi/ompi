@@ -14,6 +14,8 @@
  * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2013-2015 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -371,13 +373,13 @@ static void abcbfunc(pmix_status_t status, void *cbdata)
     PMIX_RELEASE(x);
 }
 
-static int abort_fn(const pmix_proc_t *proc,
-                    void *server_object,
-                    int status, const char msg[],
-                    pmix_proc_t procs[], size_t nprocs,
-                    pmix_op_cbfunc_t cbfunc, void *cbdata)
+static pmix_status_t abort_fn(const pmix_proc_t *proc,
+                              void *server_object,
+                              pmix_status_t status, const char msg[],
+                              pmix_proc_t procs[], size_t nprocs,
+                              pmix_op_cbfunc_t cbfunc, void *cbdata)
 {
-    int rc;
+    pmix_status_t rc;
     myxfer_t *x;
 
     pmix_output(0, "SERVER: ABORT on %s:%d", procs[0].nspace, procs[0].rank);
@@ -404,7 +406,7 @@ static int abort_fn(const pmix_proc_t *proc,
     if (PMIX_SUCCESS != (rc = PMIx_server_notify_error(status, procs, nprocs,
                                                        &x->caller, 1, x->info, 2,
                                                        abcbfunc, x))) {
-        pmix_output(0, "SERVER: FAILED NOTIFY ERROR %d", rc);
+        pmix_output(0, "SERVER: FAILED NOTIFY ERROR %d", (int)rc);
     }
 
     return PMIX_SUCCESS;
@@ -472,7 +474,7 @@ static int lookup_fn(const pmix_proc_t *proc, char **keys,
     pmix_list_t results;
     size_t i, n;
     pmix_pdata_t *pd;
-    int ret=PMIX_ERR_NOT_FOUND;
+    pmix_status_t ret = PMIX_ERR_NOT_FOUND;
 
     pmix_output(0, "SERVER: LOOKUP");
 

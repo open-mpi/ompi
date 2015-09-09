@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2014-2015 Intel, Inc.  All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014      Artem Y. Polyakov <artpol84@gmail.com>.
  *                         All rights reserved.
@@ -107,14 +107,14 @@ int PMIx_Get(const pmix_proc_t *proc, const char key[],
     return rc;
 }
 
-int PMIx_Get_nb(const pmix_proc_t *proc, const char *key,
-                const pmix_info_t info[], size_t ninfo,
-                pmix_value_cbfunc_t cbfunc, void *cbdata)
+pmix_status_t PMIx_Get_nb(const pmix_proc_t *proc, const char *key,
+                          const pmix_info_t info[], size_t ninfo,
+                          pmix_value_cbfunc_t cbfunc, void *cbdata)
 {
     pmix_value_t *val;
     pmix_buffer_t *msg;
     pmix_cb_t *cb;
-    int rc;
+    pmix_status_t rc;
     char *nm;
     pmix_nspace_t *ns, *nptr;
 
@@ -324,7 +324,7 @@ static pmix_buffer_t* pack_get(char *nspace, int rank,
                                pmix_cmd_t cmd)
 {
     pmix_buffer_t *msg;
-    int rc;
+    pmix_status_t rc;
 
     /* nope - see if we can get it */
     msg = PMIX_NEW(pmix_buffer_t);
@@ -367,7 +367,7 @@ static void getnb_cbfunc(struct pmix_peer_t *pr, pmix_usock_hdr_t *hdr,
 {
     pmix_cb_t *cb = (pmix_cb_t*)cbdata;
     pmix_cb_t *cb2;
-    int rc, ret;
+    pmix_status_t rc, ret;
     pmix_value_t *val = NULL;
     int32_t cnt;
     pmix_buffer_t *bptr;
@@ -488,7 +488,7 @@ static void getnb_shortcut(int fd, short flags, void *cbdata)
 {
     pmix_cb_t *cb = (pmix_cb_t*)cbdata;
     pmix_value_t val;
-    int rc;
+    pmix_status_t rc;
     int32_t m;
 
     pmix_output_verbose(2, pmix_globals.debug_output,

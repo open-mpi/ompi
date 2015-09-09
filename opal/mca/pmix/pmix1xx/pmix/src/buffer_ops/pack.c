@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2011-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -264,7 +266,7 @@ int pmix_bfrop_pack_int64(pmix_buffer_t *buffer, const void *src,
                           int32_t num_vals, pmix_data_type_t type)
 {
     int32_t i;
-    uint64_t tmp, *srctmp = (uint64_t*) src;
+    uint64_t tmp, tmp2;
     char *dst;
     size_t bytes_packed = num_vals * sizeof(tmp);
 
@@ -275,7 +277,8 @@ int pmix_bfrop_pack_int64(pmix_buffer_t *buffer, const void *src,
     }
 
     for (i = 0; i < num_vals; ++i) {
-        tmp = pmix_hton64(srctmp[i]);
+        memcpy(&tmp2, (char *)src+i*sizeof(uint64_t), sizeof(uint64_t));
+        tmp = pmix_hton64(tmp2);
         memcpy(dst, &tmp, sizeof(tmp));
         dst += sizeof(tmp);
     }

@@ -84,7 +84,7 @@ static pmix_status_t _satisfy_request(pmix_nspace_t *nptr, int rank,
                                          pmix_hash_table_t *ht,
                                          pmix_modex_cbfunc_t cbfunc, void *cbdata)
 {
-    int rc;
+    pmix_status_t rc;
     pmix_buffer_t pbkt, xfer;
     pmix_value_t *val;
     char *data;
@@ -120,7 +120,7 @@ pmix_status_t pmix_pending_request(pmix_nspace_t *nptr, int rank,
     pmix_dmdx_local_t *lcd = NULL, *cd;
     pmix_rank_info_t *iptr;
     pmix_hash_table_t *ht;
-    int rc;
+    pmix_status_t rc;
 
     /* 1. Try to satisfy the request right now */
 
@@ -1256,6 +1256,7 @@ pmix_status_t pmix_server_connect(pmix_server_caddy_t *cd,
     pmix_server_trkr_t *trk;
     pmix_info_t *info = NULL;
     size_t ninfo=0;
+    pmix_cmd_t type = PMIX_CONNECTNB_CMD;
 
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "recvd CONNECT from peer %s:%d",
@@ -1305,7 +1306,6 @@ pmix_status_t pmix_server_connect(pmix_server_caddy_t *cd,
     }
 
     /* find/create the local tracker for this operation */
-    pmix_cmd_t type = PMIX_CONNECTNB_CMD;
     if (disconnect) {
         type = PMIX_DISCONNECTNB_CMD;
     }

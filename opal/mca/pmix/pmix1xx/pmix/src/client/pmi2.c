@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2014-2015 Intel, Inc.  All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -219,7 +219,8 @@ int PMI2_Info_GetJobAttrIntArray(const char name[], int array[], int arraylen, i
 
 int PMI2_Nameserv_publish(const char service_name[], const PMI_keyval_t *info_ptr, const char port[])
 {
-    pmix_status_t rc, nvals;
+    pmix_status_t rc;
+    int nvals;
     pmix_info_t info[2];
 
     if (NULL == service_name || NULL == port) {

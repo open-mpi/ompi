@@ -1,6 +1,8 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2015      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -25,7 +27,7 @@ int cli_rank(cli_info_t *cli)
     return -1;
 }
 
-void cli_init(int nprocs, int order[])
+void cli_init(int nprocs, cli_state_t order[])
 {
     int n, i;
     cli_info = malloc( sizeof(cli_info_t) * nprocs);
@@ -124,7 +126,7 @@ void cli_terminate(cli_info_t *cli)
 
 void cli_cleanup(cli_info_t *cli)
 {
-    if (0 > cli->state || CLI_TERM < cli->state) {
+    if (CLI_TERM < cli->state) {
         TEST_ERROR(("Bad rank %d state %d", cli_rank(cli), cli->state));
         test_abort = true;
         return;

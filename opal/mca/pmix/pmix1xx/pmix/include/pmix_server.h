@@ -2,6 +2,8 @@
  * Copyright (c) 2013-2015 Intel, Inc. All rights reserved
  * Copyright (c) 2015      Artem Y. Polyakov <artpol84@gmail.com>.
  *                         All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Redistribution and use in source and binary forms, with or without
@@ -100,8 +102,8 @@ BEGIN_C_DECLS
 
 
 /* Notify the host server that a client connected to us */
-typedef int (*pmix_server_client_connected_fn_t)(const pmix_proc_t *proc,
-                                                 void* server_object);
+typedef pmix_status_t (*pmix_server_client_connected_fn_t)(const pmix_proc_t *proc,
+                                                           void* server_object);
 
 /* Notify the host server that a client called PMIx_Finalize - note
  * that the client will be in a blocked state until the host server

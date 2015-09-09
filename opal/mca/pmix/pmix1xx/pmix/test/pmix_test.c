@@ -14,6 +14,8 @@
  * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2013-2015 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -40,7 +42,7 @@ int main(int argc, char **argv)
     struct stat stat_buf;
     struct timeval tv;
     double test_start;
-    int order[CLI_TERM+1];
+    cli_state_t order[CLI_TERM+1];
     test_params params;
     INIT_TEST_PARAMS(params);
     int test_fail = 0;
@@ -87,10 +89,10 @@ int main(int argc, char **argv)
 
     order[CLI_UNINIT] = CLI_FORKED;
     order[CLI_FORKED] = CLI_FIN;
-    order[CLI_CONNECTED] = -1;
+    order[CLI_CONNECTED] = CLI_UNDEF;
     order[CLI_FIN] = CLI_TERM;
-    order[CLI_DISCONN] = -1;
-    order[CLI_TERM] = -1;
+    order[CLI_DISCONN] = CLI_UNDEF;
+    order[CLI_TERM] = CLI_UNDEF;
     cli_init(params.nprocs, order);
 
     /* set common argv and env */

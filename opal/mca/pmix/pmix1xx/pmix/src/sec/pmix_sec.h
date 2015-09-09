@@ -3,6 +3,8 @@
  * Copyright (c) 2007-2008 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Intel, Inc.  All rights reserved.
  *
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -98,21 +100,21 @@ typedef char* (*pmix_sec_base_module_create_cred_fn_t)(void);
  * (and indeed, would be rare) for a protocol to use both the
  * credential and handshake interfaces. It is acceptable, therefore,
  * for one of them to be NULL */
-typedef int (*pmix_sec_base_module_client_hndshk_fn_t)(int sd);
+typedef pmix_status_t (*pmix_sec_base_module_client_hndshk_fn_t)(int sd);
 
 
 /****    SERVER-SIDE FUNCTIONS    ****/
 /**
  * Validate a client's credential
  */
-typedef int (*pmix_sec_base_module_validate_cred_fn_t)(pmix_peer_t *peer, char *cred);
+typedef pmix_status_t (*pmix_sec_base_module_validate_cred_fn_t)(pmix_peer_t *peer, char *cred);
 
 /**
  * Perform the server-side handshake. Note that it is not required
  * (and indeed, would be rare) for a protocol to use both the
  * credential and handshake interfaces. It is acceptable, therefore,
  * for one of them to be NULL */
-typedef int (*pmix_sec_base_module_server_hndshk_fn_t)(pmix_peer_t *peer);
+typedef pmix_status_t (*pmix_sec_base_module_server_hndshk_fn_t)(pmix_peer_t *peer);
 
 /**
  * Struct for holding CPC module function pointers

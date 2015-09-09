@@ -1,5 +1,7 @@
 /*
  * Copyright (c) 2015      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -248,7 +250,7 @@ int unpublish_fn(const pmix_proc_t *proc, char **keys,
 }
 
 typedef struct {
-    int status;
+    pmix_status_t status;
     pmix_spawn_cbfunc_t cbfunc;
     void *cbdata;
 } release_cbdata;

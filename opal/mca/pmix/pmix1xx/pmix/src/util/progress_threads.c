@@ -1,5 +1,7 @@
 /*
  * Copyright (c) 2014-2015 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -51,7 +53,6 @@ static void* progress_engine(void *obj)
 
 pmix_event_base_t* pmix_start_progress_thread()
 {
-    int rc;
     pmix_event_base_t *ev_base;
     /* Setup threading */
     evthread_use_pthreads();
@@ -83,8 +84,8 @@ pmix_event_base_t* pmix_start_progress_thread()
     block_active = true;
 
     /* fork off a thread to progress it */
-    if (PMIX_SUCCESS != (rc = pthread_create(&engine, NULL, progress_engine, (void*)ev_base))) {
-        PMIX_ERROR_LOG(rc);
+    if (0 > pthread_create(&engine, NULL, progress_engine, (void*)ev_base)) {
+        PMIX_ERROR_LOG(PMIX_ERROR);
         return NULL;
     }
     if (!thread_initalized) {
