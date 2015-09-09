@@ -69,8 +69,7 @@ static void myerrhandler(pmix_status_t status,
 static void pmix_client_notify_recv(struct pmix_peer_t *peer, pmix_usock_hdr_t *hdr,
                                     pmix_buffer_t *buf, void *cbdata)
 {
-    pmix_status_t pstatus;
-    int status, rc;
+    pmix_status_t pstatus, status, rc;
     int32_t cnt;
     pmix_proc_t *procs=NULL;
     size_t nprocs, ninfo;
@@ -170,16 +169,17 @@ static void job_data(struct pmix_peer_t *pr, pmix_usock_hdr_t *hdr,
     cb->active = false;
 }
 
-static int connect_to_server(struct sockaddr_un *address, void *cbdata)
+static pmix_status_t connect_to_server(struct sockaddr_un *address, void *cbdata)
 {
     int rc;
+    pmix_status_t ret;
     pmix_cmd_t cmd = PMIX_REQ_CMD;
     pmix_buffer_t *req;
 
     rc = usock_connect((struct sockaddr *)address);
     if( rc < 0 ){
-        PMIX_ERROR_LOG(rc);
-        return rc;
+        PMIX_ERROR_LOG((pmix_status_t)rc);
+        return (pmix_status_t)rc;
     }
     pmix_client_globals.myserver.sd = rc;
     /* setup recv event */
@@ -203,10 +203,10 @@ static int connect_to_server(struct sockaddr_un *address, void *cbdata)
      * transaction because some systems cannot handle very large
      * blocking operations and error out if we try them. */
     req = PMIX_NEW(pmix_buffer_t);
-    if (PMIX_SUCCESS != (rc = pmix_bfrop.pack(req, &cmd, 1, PMIX_CMD))) {
-        PMIX_ERROR_LOG(rc);
+    if (PMIX_SUCCESS != (ret = pmix_bfrop.pack(req, &cmd, 1, PMIX_CMD))) {
+        PMIX_ERROR_LOG(ret);
         PMIX_RELEASE(req);
-        return rc;
+        return ret;
     }
     PMIX_ACTIVATE_SEND_RECV(&pmix_client_globals.myserver, req, job_data, cbdata);
 
@@ -230,8 +230,7 @@ int PMIx_Init(pmix_proc_t *proc)
         return PMIX_ERR_BAD_PARAM;
     }
 
-    ++pmix_globals.init_cntr;
-    if (1 < pmix_globals.init_cntr) {
+    if (0 < pmix_globals.init_cntr) {
         /* since we have been called before, the nspace and
          * rank should be known. So return them here if
          * requested */
@@ -339,6 +338,9 @@ int PMIx_Init(pmix_proc_t *proc)
     rc = cb.status;
     PMIX_DESTRUCT(&cb);
 
+    if (PMIX_SUCCESS == rc) {
+        pmix_globals.init_cntr++;
+    }
     return rc;
 }
 
@@ -350,12 +352,12 @@ int PMIx_Initialized(void)
     return false;
 }
 
-int PMIx_Finalize(void)
+pmix_status_t PMIx_Finalize(void)
 {
     pmix_buffer_t *msg;
     pmix_cb_t *cb;
     pmix_cmd_t cmd = PMIX_FINALIZE_CMD;
-    int rc;
+    pmix_status_t rc;
 
     if (1 != pmix_globals.init_cntr) {
         --pmix_globals.init_cntr;
@@ -426,7 +428,7 @@ int PMIx_Abort(int flag, const char msg[],
 {
     pmix_buffer_t *bfr;
     pmix_cmd_t cmd = PMIX_ABORT_CMD;
-    int rc;
+    pmix_status_t rc;
     pmix_cb_t *cb;
 
     pmix_output_verbose(2, pmix_globals.debug_output,
@@ -491,7 +493,7 @@ int PMIx_Abort(int flag, const char msg[],
     return PMIX_SUCCESS;
 }
 
-int PMIx_Put(pmix_scope_t scope, const char key[], pmix_value_t *val)
+pmix_status_t PMIx_Put(pmix_scope_t scope, const char key[], pmix_value_t *val)
 {
     pmix_status_t rc;
     pmix_kval_t *kv;
@@ -560,7 +562,7 @@ int PMIx_Put(pmix_scope_t scope, const char key[], pmix_value_t *val)
 
 pmix_status_t PMIx_Commit(void)
 {
-    int rc;
+    pmix_status_t rc;
     pmix_scope_t scope;
     pmix_buffer_t *msgout;
     pmix_cmd_t cmd=PMIX_COMMIT_CMD;
@@ -700,7 +702,7 @@ pmix_status_t PMIx_Resolve_nodes(const char *nspace, char **nodelist)
 }
 
 
-static int send_connect_ack(int sd)
+static pmix_status_t send_connect_ack(int sd)
 {
     char *msg;
     pmix_usock_hdr_t hdr;
@@ -771,10 +773,10 @@ static int send_connect_ack(int sd)
 /* we receive a connection acknowledgement from the server,
  * consisting of nothing more than a status report. If success,
  * then we initiate authentication method */
-static int recv_connect_ack(int sd)
+static pmix_status_t recv_connect_ack(int sd)
 {
-    int reply;
-    int rc;
+    pmix_status_t reply;
+    pmix_status_t rc;
     struct timeval tv, save;
     pmix_socklen_t sz;
 
@@ -987,7 +989,8 @@ void pmix_client_process_nspace_blob(const char *nspace, pmix_buffer_t *bptr)
 
 static int usock_connect(struct sockaddr *addr)
 {
-    int rc, sd=-1;
+    int sd=-1;
+    pmix_status_t rc;
     pmix_socklen_t addrlen = 0;
     int retries = 0;
 

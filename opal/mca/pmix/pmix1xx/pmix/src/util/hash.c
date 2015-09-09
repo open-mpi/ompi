@@ -7,6 +7,8 @@
  * Copyright (c) 2011-2014 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -98,13 +100,13 @@ int pmix_hash_store(pmix_hash_table_t *table,
     return PMIX_SUCCESS;
 }
 
-int pmix_hash_fetch(pmix_hash_table_t *table, int rank,
-                    const char *key, pmix_value_t **kvs)
+pmix_status_t pmix_hash_fetch(pmix_hash_table_t *table, int rank,
+                              const char *key, pmix_value_t **kvs)
 {
     pmix_proc_data_t *proc_data;
     pmix_kval_t *hv;
     uint64_t id;
-    int rc;
+    pmix_status_t rc;
 
     pmix_output_verbose(10, pmix_globals.debug_output,
                         "HASH:FETCH rank %d key %s",

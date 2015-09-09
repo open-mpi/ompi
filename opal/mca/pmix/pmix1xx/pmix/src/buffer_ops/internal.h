@@ -12,6 +12,8 @@
  *                         All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, Inc.  All rights reserved.
  * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -232,11 +234,11 @@ int pmix_bfrop_copy_payload(pmix_buffer_t *dest, pmix_buffer_t *src);
 /*
  * Specialized functions
  */
-PMIX_DECLSPEC    int pmix_bfrop_pack_buffer(pmix_buffer_t *buffer, const void *src,
-                                          int32_t num_vals, pmix_data_type_t type);
+PMIX_DECLSPEC    pmix_status_t pmix_bfrop_pack_buffer(pmix_buffer_t *buffer, const void *src,
+                                                      int32_t num_vals, pmix_data_type_t type);
 
-PMIX_DECLSPEC    int pmix_bfrop_unpack_buffer(pmix_buffer_t *buffer, void *dst,
-                                            int32_t *num_vals, pmix_data_type_t type);
+PMIX_DECLSPEC    pmix_status_t pmix_bfrop_unpack_buffer(pmix_buffer_t *buffer, void *dst,
+                                                        int32_t *num_vals, pmix_data_type_t type);
 
 /*
  * Internal pack functions
@@ -306,21 +308,21 @@ int pmix_bfrop_pack_pdata(pmix_buffer_t *buffer, const void *src,
  */
 int pmix_bfrop_unpack_bool(pmix_buffer_t *buffer, void *dest,
                            int32_t *num_vals, pmix_data_type_t type);
-int pmix_bfrop_unpack_byte(pmix_buffer_t *buffer, void *dest,
-                           int32_t *num_vals, pmix_data_type_t type);
-int pmix_bfrop_unpack_string(pmix_buffer_t *buffer, void *dest,
-                             int32_t *num_vals, pmix_data_type_t type);
+pmix_status_t pmix_bfrop_unpack_byte(pmix_buffer_t *buffer, void *dest,
+                                     int32_t *num_vals, pmix_data_type_t type);
+pmix_status_t pmix_bfrop_unpack_string(pmix_buffer_t *buffer, void *dest,
+                                       int32_t *num_vals, pmix_data_type_t type);
 int pmix_bfrop_unpack_sizet(pmix_buffer_t *buffer, void *dest,
                             int32_t *num_vals, pmix_data_type_t type);
 int pmix_bfrop_unpack_pid(pmix_buffer_t *buffer, void *dest,
                           int32_t *num_vals, pmix_data_type_t type);
 
-int pmix_bfrop_unpack_int(pmix_buffer_t *buffer, void *dest,
-                          int32_t *num_vals, pmix_data_type_t type);
+pmix_status_t pmix_bfrop_unpack_int(pmix_buffer_t *buffer, void *dest,
+                                    int32_t *num_vals, pmix_data_type_t type);
 int pmix_bfrop_unpack_int16(pmix_buffer_t *buffer, void *dest,
                             int32_t *num_vals, pmix_data_type_t type);
-int pmix_bfrop_unpack_int32(pmix_buffer_t *buffer, void *dest,
-                            int32_t *num_vals, pmix_data_type_t type);
+pmix_status_t pmix_bfrop_unpack_int32(pmix_buffer_t *buffer, void *dest,
+                                      int32_t *num_vals, pmix_data_type_t type);
 int pmix_bfrop_unpack_datatype(pmix_buffer_t *buffer, void *dest,
                             int32_t *num_vals, pmix_data_type_t type);
 int pmix_bfrop_unpack_int64(pmix_buffer_t *buffer, void *dest,
@@ -340,8 +342,8 @@ int pmix_bfrop_unpack_time(pmix_buffer_t *buffer, void *dest,
 int pmix_bfrop_unpack_topo(pmix_buffer_t *buffer, void *dest,
                            int32_t *num_vals, pmix_data_type_t type);
 #endif
-int pmix_bfrop_unpack_value(pmix_buffer_t *buffer, void *dest,
-                            int32_t *num_vals, pmix_data_type_t type);
+pmix_status_t pmix_bfrop_unpack_value(pmix_buffer_t *buffer, void *dest,
+                                      int32_t *num_vals, pmix_data_type_t type);
 int pmix_bfrop_unpack_array(pmix_buffer_t *buffer, void *dest,
                             int32_t *num_vals, pmix_data_type_t type);
 int pmix_bfrop_unpack_proc(pmix_buffer_t *buffer, void *dest,
@@ -464,7 +466,7 @@ pmix_bfrop_type_info_t* pmix_bfrop_find_type(pmix_data_type_t type);
 
 int pmix_bfrop_store_data_type(pmix_buffer_t *buffer, pmix_data_type_t type);
 
-int pmix_bfrop_get_data_type(pmix_buffer_t *buffer, pmix_data_type_t *type);
+pmix_status_t pmix_bfrop_get_data_type(pmix_buffer_t *buffer, pmix_data_type_t *type);
 
 END_C_DECLS
 

@@ -13,6 +13,8 @@ dnl                         All rights reserved.
 dnl Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
 dnl Copyright (c) 2013      Intel, Inc. All rights reserved
 dnl Copyright (c) 2015      Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2015      Research Organization for Information Science
+dnl                         and Technology (RIST). All rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -90,6 +92,11 @@ AC_DEFUN([_PMIX_CHECK_COMPILER_VENDOR], [
     AS_IF([test "$pmix_check_compiler_vendor_result" = "unknown"],
           [PMIX_IF_IFELSE([defined(__INTEL_COMPILER) || defined(__ICC)],
                [pmix_check_compiler_vendor_result="intel"])])
+
+    # Fujitsu
+    AS_IF([test "$pmix_check_compiler_vendor_result" = "unknown"],
+          [PMIX_IF_IFELSE([defined(__FUJITSU)], 
+               [pmix_check_compiler_vendor_result="fujitsu"])])
 
     # GNU
     AS_IF([test "$pmix_check_compiler_vendor_result" = "unknown"],

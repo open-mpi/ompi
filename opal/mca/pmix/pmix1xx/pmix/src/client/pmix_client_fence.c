@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2014-2015 Intel, Inc.  All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014      Artem Y. Polyakov <artpol84@gmail.com>.
  *                         All rights reserved.
@@ -163,9 +163,10 @@ int PMIx_Fence_nb(const pmix_proc_t procs[], size_t nprocs,
     return PMIX_SUCCESS;
 }
 
-static int unpack_return(pmix_buffer_t *data)
+static pmix_status_t unpack_return(pmix_buffer_t *data)
 {
-    int rc, ret;
+    pmix_status_t rc;
+    int ret;
     int32_t cnt;
 
     pmix_output_verbose(2, pmix_globals.debug_output,
@@ -179,14 +180,14 @@ static int unpack_return(pmix_buffer_t *data)
     }
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "client:unpack fence received status %d", ret);
-    return ret;
+    return PMIX_SUCCESS;
 }
 
-static int pack_fence(pmix_buffer_t *msg, pmix_cmd_t cmd,
-                      const pmix_proc_t *procs, size_t nprocs,
-                      const pmix_info_t *info, size_t ninfo)
+static pmix_status_t pack_fence(pmix_buffer_t *msg, pmix_cmd_t cmd,
+                                const pmix_proc_t *procs, size_t nprocs,
+                                const pmix_info_t *info, size_t ninfo)
 {
-    int rc;
+    pmix_status_t rc;
 
     /* pack the cmd */
     if (PMIX_SUCCESS != (rc = pmix_bfrop.pack(msg, &cmd, 1, PMIX_CMD))) {
@@ -224,7 +225,7 @@ static void wait_cbfunc(struct pmix_peer_t *pr, pmix_usock_hdr_t *hdr,
                         pmix_buffer_t *buf, void *cbdata)
 {
     pmix_cb_t *cb = (pmix_cb_t*)cbdata;
-    int rc;
+    pmix_status_t rc;
 
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "pmix: fence_nb callback recvd");

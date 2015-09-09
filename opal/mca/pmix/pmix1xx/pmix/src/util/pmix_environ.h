@@ -12,6 +12,8 @@
  * Copyright (c) 2007-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2015      Intel, Inc. All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -34,6 +36,8 @@
 #ifdef HAVE_CRT_EXTERNS_H
 #include <crt_externs.h>
 #endif
+
+#include <pmix_common.h>
 
 BEGIN_C_DECLS
 
@@ -125,7 +129,7 @@ PMIX_DECLSPEC int pmix_setenv(const char *name, const char *value,
  * If \em name is found in \em env, the string corresponding to
  * that entry is freed and its entry is eliminated from the array.
  */
-PMIX_DECLSPEC int pmix_unsetenv(const char *name, char ***env) __pmix_attribute_nonnull__(1);
+PMIX_DECLSPEC pmix_status_t pmix_unsetenv(const char *name, char ***env) __pmix_attribute_nonnull__(1);
 
 /* A consistent way to retrieve the home and tmp directory on all supported
  * platforms.

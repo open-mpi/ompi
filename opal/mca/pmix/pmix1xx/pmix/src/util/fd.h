@@ -3,6 +3,8 @@
  * Copyright (c) 2009      Sandia National Laboratories. All rights reserved.
  * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
  *
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -34,7 +36,7 @@ BEGIN_C_DECLS
  * Loop over reading from the fd until len bytes are read or an error
  * occurs.  EAGAIN and EINTR are transparently handled.
  */
-PMIX_DECLSPEC int pmix_fd_read(int fd, int len, void *buffer);
+PMIX_DECLSPEC pmix_status_t pmix_fd_read(int fd, int len, void *buffer);
 
 /**
  * Write a complete buffer to a file descriptor.
@@ -49,7 +51,7 @@ PMIX_DECLSPEC int pmix_fd_read(int fd, int len, void *buffer);
  * Loop over writing to the fd until len bytes are written or an error
  * occurs.  EAGAIN and EINTR are transparently handled.
  */
-PMIX_DECLSPEC int pmix_fd_write(int fd, int len, const void *buffer);
+PMIX_DECLSPEC pmix_status_t pmix_fd_write(int fd, int len, const void *buffer);
 
 /**
  * Convenience function to set a file descriptor to be close-on-exec.
@@ -63,7 +65,7 @@ PMIX_DECLSPEC int pmix_fd_write(int fd, int len, const void *buffer);
  * This is simply a convenience function because there's a few steps
  * to setting a file descriptor to be close-on-exec.
  */
-PMIX_DECLSPEC int pmix_fd_set_cloexec(int fd);
+PMIX_DECLSPEC pmix_status_t pmix_fd_set_cloexec(int fd);
 
 END_C_DECLS
 

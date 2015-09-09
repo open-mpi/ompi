@@ -2,6 +2,8 @@
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, Inc. All rights reserved.
  * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -22,13 +24,13 @@ BEGIN_C_DECLS
 
 /* store a value in the given hash table for the specified
  * rank index.*/
-int pmix_hash_store(pmix_hash_table_t *table,
-                    int rank, pmix_kval_t *kv);
+pmix_status_t pmix_hash_store(pmix_hash_table_t *table,
+                              int rank, pmix_kval_t *kv);
 
 /* Fetch the value for a specified key from within
  * the given hash_table */
-int pmix_hash_fetch(pmix_hash_table_t *table, int rank,
-                    const char *key, pmix_value_t **kvs);
+pmix_status_t pmix_hash_fetch(pmix_hash_table_t *table, int rank,
+                              const char *key, pmix_value_t **kvs);
 
 /* remove the specified key-value from the given hash_table.
  * A NULL key will result in removal of all data for the
@@ -37,8 +39,8 @@ int pmix_hash_fetch(pmix_hash_table_t *table, int rank,
  * ranks in the table. Combining key=NULL with rank=PMIX_RANK_WILDCARD
  * will therefore result in removal of all data from the
  * table */
-int pmix_hash_remove_data(pmix_hash_table_t *table,
-                          int rank, const char *key);
+pmix_status_t pmix_hash_remove_data(pmix_hash_table_t *table,
+                                    int rank, const char *key);
 
 END_C_DECLS
 

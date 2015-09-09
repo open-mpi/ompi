@@ -281,7 +281,7 @@ void pmix1_value_load(pmix_value_t *v,
             break;
         case OPAL_SIZE:
             v->type = PMIX_SIZE;
-            memcpy(&(v->data.size), &kv->data.size, sizeof(size_t));
+            v->data.size = (size_t)kv->data.size;
             break;
         case OPAL_PID:
             v->type = PMIX_PID;
@@ -344,7 +344,7 @@ void pmix1_value_load(pmix_value_t *v,
             if (NULL != kv->data.bo.bytes) {
                 v->data.bo.bytes = (char*)malloc(kv->data.bo.size);
                 memcpy(v->data.bo.bytes, kv->data.bo.bytes, kv->data.bo.size);
-                memcpy(&(v->data.bo.size), &kv->data.bo.size, sizeof(size_t));
+                v->data.bo.size = (size_t)kv->data.bo.size;
             } else {
                 v->data.bo.bytes = NULL;
                 v->data.bo.size = 0;
@@ -382,7 +382,7 @@ int pmix1_value_unload(opal_value_t *kv,
         break;
     case PMIX_SIZE:
         kv->type = OPAL_SIZE;
-        memcpy(&kv->data.size, &(v->data.size), sizeof(size_t));
+        kv->data.size = (int)v->data.size;
         break;
     case PMIX_PID:
         kv->type = OPAL_PID;
@@ -444,7 +444,7 @@ int pmix1_value_unload(opal_value_t *kv,
         kv->type = OPAL_BYTE_OBJECT;
         if (NULL != v->data.bo.bytes && 0 < v->data.bo.size) {
             kv->data.bo.bytes = (uint8_t*)v->data.bo.bytes;
-            kv->data.bo.size = v->data.bo.size;
+            kv->data.bo.size = (int)v->data.bo.size;
         } else {
             kv->data.bo.bytes = NULL;
             kv->data.bo.size = 0;

@@ -1,6 +1,8 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2015      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -29,7 +31,7 @@
 
 // In correct scenario each client has to sequentially pass all of this stages
 typedef enum {
-    CLI_UNINIT, CLI_FORKED, CLI_CONNECTED, CLI_FIN, CLI_DISCONN, CLI_TERM
+    CLI_UNINIT, CLI_FORKED, CLI_CONNECTED, CLI_FIN, CLI_DISCONN, CLI_TERM, CLI_UNDEF
 } cli_state_t;
 
 typedef struct {
@@ -48,7 +50,7 @@ extern int cli_info_cnt;
 extern bool test_abort;
 
 int cli_rank(cli_info_t *cli);
-void cli_init(int nprocs, int order[]);
+void cli_init(int nprocs, cli_state_t order[]);
 void cli_connect(cli_info_t *cli, int sd, struct event_base * ebase, event_callback_fn callback);
 void cli_finalize(cli_info_t *cli);
 void cli_disconnect(cli_info_t *cli);

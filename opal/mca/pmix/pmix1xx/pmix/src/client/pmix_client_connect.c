@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2014-2015 Intel, Inc.  All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014      Artem Y. Polyakov <artpol84@gmail.com>.
  *                         All rights reserved.
@@ -99,13 +99,13 @@ int PMIx_Connect(const pmix_proc_t procs[], size_t nprocs,
     return rc;
 }
 
-int PMIx_Connect_nb(const pmix_proc_t procs[], size_t nprocs,
-                    const pmix_info_t info[], size_t ninfo,
-                    pmix_op_cbfunc_t cbfunc, void *cbdata)
+pmix_status_t PMIx_Connect_nb(const pmix_proc_t procs[], size_t nprocs,
+                              const pmix_info_t info[], size_t ninfo,
+                              pmix_op_cbfunc_t cbfunc, void *cbdata)
 {
     pmix_buffer_t *msg;
     pmix_cmd_t cmd = PMIX_CONNECTNB_CMD;
-    int rc;
+    pmix_status_t rc;
     pmix_cb_t *cb;
 
     pmix_output_verbose(2, pmix_globals.debug_output,
@@ -206,13 +206,13 @@ int PMIx_Disconnect(const pmix_proc_t procs[], size_t nprocs,
     return rc;
 }
 
-int PMIx_Disconnect_nb(const pmix_proc_t procs[], size_t nprocs,
-                       const pmix_info_t info[], size_t ninfo,
-                       pmix_op_cbfunc_t cbfunc, void *cbdata)
+pmix_status_t PMIx_Disconnect_nb(const pmix_proc_t procs[], size_t nprocs,
+                                 const pmix_info_t info[], size_t ninfo,
+                                 pmix_op_cbfunc_t cbfunc, void *cbdata)
 {
     pmix_buffer_t *msg;
     pmix_cmd_t cmd = PMIX_DISCONNECTNB_CMD;
-    int rc;
+    pmix_status_t rc;
     pmix_cb_t *cb;
 
     pmix_output_verbose(2, pmix_globals.debug_output,
@@ -283,7 +283,8 @@ static void wait_cbfunc(struct pmix_peer_t *pr, pmix_usock_hdr_t *hdr,
                         pmix_buffer_t *buf, void *cbdata)
 {
     pmix_cb_t *cb = (pmix_cb_t*)cbdata;
-    int rc, ret;
+    pmix_status_t rc;
+    pmix_status_t ret;
     int32_t cnt;
     char *nspace;
     pmix_buffer_t *bptr;

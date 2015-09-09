@@ -11,6 +11,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2013-2015 Intel, Inc. All rights reserved
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -72,9 +74,9 @@ static void pmix_pointer_array_destruct(pmix_pointer_array_t *array)
 /**
  * initialize an array object
  */
-int pmix_pointer_array_init(pmix_pointer_array_t* array,
-                            int initial_allocation,
-                            int max_size, int block_size)
+pmix_status_t pmix_pointer_array_init(pmix_pointer_array_t* array,
+                                      int initial_allocation,
+                                      int max_size, int block_size)
 {
     size_t num_bytes;
 
@@ -159,8 +161,8 @@ int pmix_pointer_array_add(pmix_pointer_array_t *table, void *ptr)
  *
  * Assumption: NULL element is free element.
  */
-int pmix_pointer_array_set_item(pmix_pointer_array_t *table, int index,
-                                void * value)
+pmix_status_t pmix_pointer_array_set_item(pmix_pointer_array_t *table, int index,
+                                          void * value)
 {
     assert(table != NULL);
 
@@ -283,7 +285,7 @@ bool pmix_pointer_array_test_and_set_item (pmix_pointer_array_t *table,
     return true;
 }
 
-int pmix_pointer_array_set_size(pmix_pointer_array_t *array, int new_size)
+pmix_status_t pmix_pointer_array_set_size(pmix_pointer_array_t *array, int new_size)
 {
     if(new_size > array->size) {
         if (!grow_table(array, new_size, new_size)) {

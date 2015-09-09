@@ -13,6 +13,8 @@
  * Copyright (c) 2012      Los Alamos National Security, LLC. All rights reserved.
  * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
  *
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -40,9 +42,9 @@
 /*
  * Append a string to the end of a new or existing argv array.
  */
-int pmix_argv_append(int *argc, char ***argv, const char *arg)
+pmix_status_t pmix_argv_append(int *argc, char ***argv, const char *arg)
 {
-    int rc;
+    pmix_status_t rc;
 
     /* add the new element */
     if (PMIX_SUCCESS != (rc = pmix_argv_append_nosize(argv, arg))) {
@@ -54,7 +56,7 @@ int pmix_argv_append(int *argc, char ***argv, const char *arg)
     return PMIX_SUCCESS;
 }
 
-int pmix_argv_append_nosize(char ***argv, const char *arg)
+pmix_status_t pmix_argv_append_nosize(char ***argv, const char *arg)
 {
     int argc;
 
@@ -94,7 +96,7 @@ int pmix_argv_append_nosize(char ***argv, const char *arg)
     return PMIX_SUCCESS;
 }
 
-int pmix_argv_prepend_nosize(char ***argv, const char *arg)
+pmix_status_t pmix_argv_prepend_nosize(char ***argv, const char *arg)
 {
     int argc;
     int i;
@@ -128,7 +130,7 @@ int pmix_argv_prepend_nosize(char ***argv, const char *arg)
     return PMIX_SUCCESS;
 }
 
-int pmix_argv_append_unique_nosize(char ***argv, const char *arg, bool overwrite)
+pmix_status_t pmix_argv_append_unique_nosize(char ***argv, const char *arg, bool overwrite)
 {
     int i;
 
@@ -442,7 +444,7 @@ char **pmix_argv_copy(char **argv)
 }
 
 
-int pmix_argv_delete(int *argc, char ***argv, int start, int num_to_delete)
+pmix_status_t pmix_argv_delete(int *argc, char ***argv, int start, int num_to_delete)
 {
     int i;
     int count;
@@ -495,7 +497,7 @@ int pmix_argv_delete(int *argc, char ***argv, int start, int num_to_delete)
 }
 
 
-int pmix_argv_insert(char ***target, int start, char **source)
+pmix_status_t pmix_argv_insert(char ***target, int start, char **source)
 {
     int i, source_count, target_count;
     int suffix_count;
@@ -548,7 +550,7 @@ int pmix_argv_insert(char ***target, int start, char **source)
     return PMIX_SUCCESS;
 }
 
-int pmix_argv_insert_element(char ***target, int location, char *source)
+pmix_status_t pmix_argv_insert_element(char ***target, int location, char *source)
 {
     int i, target_count;
     int suffix_count;

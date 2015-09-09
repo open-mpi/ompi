@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -166,7 +168,7 @@ int pmix_bfrop_copy_string(char **dest, char *src, pmix_data_type_t type)
 }
 
 /* COPY FUNCTIONS FOR GENERIC PMIX TYPES */
-int pmix_value_xfer(pmix_value_t *p, pmix_value_t *src)
+pmix_status_t pmix_value_xfer(pmix_value_t *p, pmix_value_t *src)
 {
     pmix_info_t *p1, *s1;
 

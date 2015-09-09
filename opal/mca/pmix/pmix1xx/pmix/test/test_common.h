@@ -2,6 +2,8 @@
  * Copyright (c) 2013-2015 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Artem Y. Polyakov <artpol84@gmail.com>.
  *                         All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -39,7 +41,7 @@ extern FILE *file;
 #define STRIPPED_FILE_NAME (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
 
 #define TEST_OUTPUT(x) { \
-    fprintf(file,"%s:%s: %s\n",STRIPPED_FILE_NAME, __FUNCTION__, \
+    fprintf(file,"%s:%s: %s\n",STRIPPED_FILE_NAME, __func__, \
             pmix_test_output_prepare x ); \
     fflush(file); \
 }
@@ -53,7 +55,7 @@ extern FILE *file;
 
 // Always write errors to the stderr
 #define TEST_ERROR(x) { \
-    fprintf(stderr,"ERROR [%s:%d:%s]: %s\n", STRIPPED_FILE_NAME, __LINE__, __FUNCTION__, \
+    fprintf(stderr,"ERROR [%s:%d:%s]: %s\n", STRIPPED_FILE_NAME, __LINE__, __func__, \
             pmix_test_output_prepare x ); \
     fflush(stderr); \
 }

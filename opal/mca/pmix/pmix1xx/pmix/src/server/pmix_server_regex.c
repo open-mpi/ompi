@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2014-2015 Intel, Inc.  All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014      Artem Y. Polyakov <artpol84@gmail.com>.
  *                         All rights reserved.
@@ -120,7 +120,7 @@ void pmix_pack_proc_map(pmix_buffer_t *buf,
 pmix_status_t pmix_regex_parse_nodes(const char *regexp, char ***names)
 {
     char *tmp, *ptr;
-    int rc;
+    pmix_status_t rc;
 
     /* set default */
     *names = NULL;
@@ -162,7 +162,7 @@ pmix_status_t pmix_regex_parse_nodes(const char *regexp, char ***names)
 pmix_status_t pmix_regex_parse_procs(const char *regexp, char ***procs)
 {
     char *tmp, *ptr;
-    int rc;
+    pmix_status_t rc;
 
     /* set default */
     *procs = NULL;
@@ -203,7 +203,8 @@ pmix_status_t pmix_regex_parse_procs(const char *regexp, char ***procs)
 
 static pmix_status_t pmix_regex_extract_nodes(char *regexp, char ***names)
 {
-    int i, j, k, len, ret;
+    int i, j, k, len;
+    pmix_status_t ret;
     char *base;
     char *orig, *suffix;
     bool found_range = false;
@@ -350,7 +351,8 @@ static pmix_status_t regex_parse_value_ranges(char *base, char *ranges,
                                               int num_digits, char *suffix,
                                               char ***names)
 {
-    int i, len, ret;
+    int i, len;
+    pmix_status_t ret;
     char *start, *orig;
 
     /* Look for commas, the separator between ranges */
@@ -403,7 +405,7 @@ static pmix_status_t regex_parse_value_range(char *base, char *range,
     size_t i, k, start, end;
     size_t base_len, len;
     bool found;
-    int ret;
+    pmix_status_t ret;
 
     if (NULL == base || NULL == range) {
         return PMIX_ERROR;

@@ -1,6 +1,8 @@
 /*
  * Copyright (C) 2014      Artem Polyakov <artpol84@gmail.com>
  * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -70,9 +72,6 @@ void pmix_init_id(char* nspace, int rank);
  * Initialize timing structure.
  *
  * @param t pointer to the timing handler structure
-  *
- * @retval PMIX_SUCCESS On success
- * @retval PMIX_ERROR On failure
  */
 void pmix_timing_init(pmix_timing_t *t);
 
@@ -208,7 +207,7 @@ void pmix_timing_end_prep(pmix_timing_prep_t p,
  * @retval PMIX_SUCCESS On success
  * @retval PMIX_ERROR or PMIX_ERR_OUT_OF_RESOURCE On failure
  */
-int pmix_timing_report(pmix_timing_t *t, char *fname);
+pmix_status_t pmix_timing_report(pmix_timing_t *t, char *fname);
 
 /**
  * Report all intervals that were enqueued in the timing handler 't'.
@@ -225,7 +224,7 @@ int pmix_timing_report(pmix_timing_t *t, char *fname);
  * @retval PMIX_SUCCESS On success
  * @retval PMIX_ERROR or PMIX_ERR_OUT_OF_RESOURCE On failure
  */
-int pmix_timing_deltas(pmix_timing_t *t, char *fname);
+pmix_status_t pmix_timing_deltas(pmix_timing_t *t, char *fname);
 
 /**
  * Release all memory allocated for the timing handler 't'.

@@ -272,7 +272,7 @@ static pmix_status_t initialize_server_base(pmix_server_module_t *module)
 pmix_status_t PMIx_server_init(pmix_server_module_t *module)
 {
     pmix_usock_posted_recv_t *req;
-    int rc;
+    pmix_status_t rc;
 
     ++pmix_globals.init_cntr;
     if (1 < pmix_globals.init_cntr) {
@@ -786,7 +786,7 @@ static void _dmodex_req(int sd, short args, void *cbdata)
     char *data = NULL;
     size_t sz = 0;
     pmix_dmdx_remote_t *dcd;
-    int rc;
+    pmix_status_t rc;
 
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "DMODX LOOKING FOR %s:%d",
@@ -903,7 +903,7 @@ pmix_status_t PMIx_server_dmodex_request(const pmix_proc_t *proc,
 static void _notify_error(int sd, short args, void *cbdata)
 {
     pmix_notify_caddy_t *cd = (pmix_notify_caddy_t*)cbdata;
-    int rc;
+    pmix_status_t rc;
     int i;
     size_t j;
     pmix_peer_t *peer;
@@ -1510,7 +1510,7 @@ static void _spcb(int sd, short args, void *cbdata)
     cd->active = false;
 }
 
-static void spawn_cbfunc(int status, char *nspace, void *cbdata)
+static void spawn_cbfunc(pmix_status_t status, char *nspace, void *cbdata)
 {
     pmix_shift_caddy_t *cd;
 
@@ -1525,12 +1525,12 @@ static void spawn_cbfunc(int status, char *nspace, void *cbdata)
     PMIX_RELEASE(cd);
 }
 
-static void lookup_cbfunc(int status, pmix_pdata_t pdata[], size_t ndata,
+static void lookup_cbfunc(pmix_status_t status, pmix_pdata_t pdata[], size_t ndata,
                           void *cbdata)
 {
     pmix_server_caddy_t *cd = (pmix_server_caddy_t*)cbdata;
     pmix_buffer_t *reply;
-    int rc;
+    pmix_status_t rc;
 
     /* no need to thread-shift as no global data is accessed */
 
@@ -1571,7 +1571,8 @@ static void _mdxcbfunc(int sd, short argc, void *cbdata)
     pmix_nspace_t *nptr, *ns;
     pmix_server_caddy_t *cd;
     char *nspace;
-    int rank, rc;
+    int rank;
+    pmix_status_t rc;
     int32_t cnt = 1;
     char byte;
 
@@ -1731,7 +1732,7 @@ finish_collective:
     }
     PMIX_RELEASE(scd);
 }
-static void modex_cbfunc(int status, const char *data, size_t ndata, void *cbdata,
+static void modex_cbfunc(pmix_status_t status, const char *data, size_t ndata, void *cbdata,
                          pmix_release_cbfunc_t relfn, void *relcbd)
 {
     pmix_server_trkr_t *tracker = (pmix_server_trkr_t*)cbdata;
@@ -1760,12 +1761,12 @@ static void modex_cbfunc(int status, const char *data, size_t ndata, void *cbdat
     PMIX_THREADSHIFT(scd, _mdxcbfunc);
 }
 
-static void get_cbfunc(int status, const char *data, size_t ndata, void *cbdata,
+static void get_cbfunc(pmix_status_t status, const char *data, size_t ndata, void *cbdata,
                        pmix_release_cbfunc_t relfn, void *relcbd)
 {
     pmix_server_caddy_t *cd = (pmix_server_caddy_t*)cbdata;
     pmix_buffer_t *reply, buf;
-    int rc;
+    pmix_status_t rc;
 
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "server:get_cbfunc called with %d elements", (int)ndata);
@@ -1813,7 +1814,8 @@ static void _cnct(int sd, short args, void *cbdata)
     pmix_shift_caddy_t *scd = (pmix_shift_caddy_t*)cbdata;
     pmix_server_trkr_t *tracker = scd->tracker;
     pmix_buffer_t *reply;
-    int rc, i;
+    pmix_status_t rc;
+    int i;
     pmix_server_caddy_t *cd;
     char **nspaces=NULL;
     pmix_nspace_t *nptr;
@@ -1868,7 +1870,7 @@ static void _cnct(int sd, short args, void *cbdata)
     PMIX_RELEASE(scd);
 }
 
-static void cnct_cbfunc(int status, void *cbdata)
+static void cnct_cbfunc(pmix_status_t status, void *cbdata)
 {
     pmix_server_trkr_t *tracker = (pmix_server_trkr_t*)cbdata;
     pmix_shift_caddy_t *scd;
@@ -1906,10 +1908,10 @@ static void cnct_cbfunc(int status, void *cbdata)
  * Should an error be encountered at any time within the switchyard, an
  * error reply buffer will be returned so that the caller can be notified,
  * thereby preventing the process from hanging. */
-static int server_switchyard(pmix_peer_t *peer, uint32_t tag,
-                             pmix_buffer_t *buf)
+static pmix_status_t server_switchyard(pmix_peer_t *peer, uint32_t tag,
+                                       pmix_buffer_t *buf)
 {
-    int rc;
+    pmix_status_t rc;
     int32_t cnt;
     pmix_cmd_t cmd;
     pmix_server_caddy_t *cd;

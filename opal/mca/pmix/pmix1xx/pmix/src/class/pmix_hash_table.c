@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014-2015 Intel, Inc. All rights reserved
  * $COPYRIGHT$
@@ -70,7 +70,7 @@ static void pmix_hash_table_destruct(pmix_hash_table_t* ht)
 }
 
 
-int pmix_hash_table_init(pmix_hash_table_t* ht, size_t table_size)
+pmix_status_t pmix_hash_table_init(pmix_hash_table_t* ht, size_t table_size)
 {
     size_t i;
     size_t power2 = pmix_next_poweroftwo (table_size);
@@ -88,7 +88,7 @@ int pmix_hash_table_init(pmix_hash_table_t* ht, size_t table_size)
     return PMIX_SUCCESS;
 }
 
-int pmix_hash_table_remove_all(pmix_hash_table_t* ht)
+pmix_status_t pmix_hash_table_remove_all(pmix_hash_table_t* ht)
 {
     size_t i;
     for(i=0; i<ht->ht_table_size; i++) {
@@ -128,8 +128,8 @@ static PMIX_CLASS_INSTANCE(pmix_uint32_hash_node_t,
                           NULL);
 
 
-int pmix_hash_table_get_value_uint32(pmix_hash_table_t* ht, uint32_t key,
-				     void **ptr)
+pmix_status_t pmix_hash_table_get_value_uint32(pmix_hash_table_t* ht, uint32_t key,
+				               void **ptr)
 {
     pmix_list_t* list = ht->ht_table + (key & ht->ht_mask);
     pmix_uint32_hash_node_t *node;
@@ -153,8 +153,8 @@ int pmix_hash_table_get_value_uint32(pmix_hash_table_t* ht, uint32_t key,
 }
 
 
-int pmix_hash_table_set_value_uint32(pmix_hash_table_t* ht,
-				    uint32_t key, void* value)
+pmix_status_t pmix_hash_table_set_value_uint32(pmix_hash_table_t* ht,
+				               uint32_t key, void* value)
 {
     pmix_list_t* list = ht->ht_table + (key & ht->ht_mask);
     pmix_uint32_hash_node_t *node;
@@ -189,7 +189,7 @@ int pmix_hash_table_set_value_uint32(pmix_hash_table_t* ht,
 }
 
 
-int pmix_hash_table_remove_value_uint32(pmix_hash_table_t* ht, uint32_t key)
+pmix_status_t pmix_hash_table_remove_value_uint32(pmix_hash_table_t* ht, uint32_t key)
 {
     pmix_list_t* list = ht->ht_table + (key & ht->ht_mask);
     pmix_uint32_hash_node_t *node;
@@ -234,8 +234,8 @@ static PMIX_CLASS_INSTANCE(pmix_uint64_hash_node_t,
                           NULL);
 
 
-int pmix_hash_table_get_value_uint64(pmix_hash_table_t* ht, uint64_t key,
-				     void **ptr)
+pmix_status_t pmix_hash_table_get_value_uint64(pmix_hash_table_t* ht, uint64_t key,
+				               void **ptr)
 {
     pmix_list_t* list = ht->ht_table + (key & ht->ht_mask);
     pmix_uint64_hash_node_t *node;
@@ -259,7 +259,7 @@ int pmix_hash_table_get_value_uint64(pmix_hash_table_t* ht, uint64_t key,
 }
 
 
-int pmix_hash_table_set_value_uint64(pmix_hash_table_t* ht,
+pmix_status_t pmix_hash_table_set_value_uint64(pmix_hash_table_t* ht,
 				    uint64_t key, void* value)
 {
     pmix_list_t* list = ht->ht_table + (key & ht->ht_mask);

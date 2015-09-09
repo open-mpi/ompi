@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2014      Intel, Inc.  All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014      Artem Y. Polyakov <artpol84@gmail.com>.
  *                         All rights reserved.
@@ -101,13 +101,13 @@ int PMIx_Spawn(const pmix_info_t job_info[], size_t ninfo,
     return rc;
 }
 
-int PMIx_Spawn_nb(const pmix_info_t job_info[], size_t ninfo,
-                  const pmix_app_t apps[], size_t napps,
-                  pmix_spawn_cbfunc_t cbfunc, void *cbdata)
+pmix_status_t PMIx_Spawn_nb(const pmix_info_t job_info[], size_t ninfo,
+                            const pmix_app_t apps[], size_t napps,
+                            pmix_spawn_cbfunc_t cbfunc, void *cbdata)
 {
     pmix_buffer_t *msg;
     pmix_cmd_t cmd = PMIX_SPAWNNB_CMD;
-    int rc;
+    pmix_status_t rc;
     pmix_cb_t *cb;
 
     pmix_output_verbose(2, pmix_globals.debug_output,
@@ -176,7 +176,7 @@ static void wait_cbfunc(struct pmix_peer_t *pr, pmix_usock_hdr_t *hdr,
     pmix_cb_t *cb = (pmix_cb_t*)cbdata;
     char nspace[PMIX_MAX_NSLEN+1];
     char *n2;
-    int rc, ret;
+    pmix_status_t rc, ret;
     int32_t cnt;
 
     pmix_output_verbose(2, pmix_globals.debug_output,
@@ -212,7 +212,7 @@ static void wait_cbfunc(struct pmix_peer_t *pr, pmix_usock_hdr_t *hdr,
     }
 }
 
-static void spawn_cbfunc(int status, char nspace[], void *cbdata)
+static void spawn_cbfunc(pmix_status_t status, char nspace[], void *cbdata)
 {
     pmix_cb_t *cb = (pmix_cb_t*)cbdata;
 
