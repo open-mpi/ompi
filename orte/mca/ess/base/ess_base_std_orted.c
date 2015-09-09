@@ -510,7 +510,8 @@ int orte_ess_base_orted_setup(char **hosts)
     /* obviously, we have "reported" */
     jdata->num_reported = 1;
 
-    /* setup the PMIx framework */
+    /* setup the PMIx framework - ensure it skips all non-PMIx components */
+    putenv("OMPI_MCA_pmix=^s1,s2,cray");
     if (OPAL_SUCCESS != (ret = mca_base_framework_open(&opal_pmix_base_framework, 0))) {
         ORTE_ERROR_LOG(ret);
         error = "orte_pmix_base_open";
