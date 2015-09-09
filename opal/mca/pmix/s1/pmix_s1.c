@@ -127,9 +127,18 @@ static char* pmix_error(int pmix_err);
 static int kvs_get(const char key[], char value [], int maxvalue)
 {
     int rc;
+   
     rc = PMI_KVS_Get(pmix_kvs_name, key, value, maxvalue);
-    if( PMI_SUCCESS != rc ){
-        OPAL_PMI_ERROR(rc, "PMI_KVS_Get");
+
+    /*
+     * turns out the KVS can be called for keys that haven't yet
+     * been inserted, so suppress warning message if this is the
+     * case
+     */
+    if( PMI_SUCCESS != rc) {
+        if (PMI_ERR_INVALID_KEY != rc) {
+            OPAL_PMI_ERROR(rc, "PMI_KVS_Get");
+        }
         return OPAL_ERROR;
     }
     return OPAL_SUCCESS;
@@ -138,6 +147,7 @@ static int kvs_get(const char key[], char value [], int maxvalue)
 static int kvs_put(const char key[], const char value[])
 {
     int rc;
+
     rc = PMI_KVS_Put(pmix_kvs_name, key, value);
     if( PMI_SUCCESS != rc ){
         OPAL_PMI_ERROR(rc, "PMI_KVS_Put");
@@ -152,7 +162,7 @@ static int s1_init(void)
     int spawned;
     int rc, ret = OPAL_ERROR;
     int i, rank, lrank, nrank;
-    char *pmix_id, tmp[64];
+    char *pmix_id = NULL, tmp[64];
     opal_value_t kv;
     char *str;
     uint32_t ui32;
@@ -201,9 +211,34 @@ static int s1_init(void)
     }
     /* Get domain id */
     if (PMI_SUCCESS != (rc = PMI_Get_kvs_domain_id(pmix_id, pmix_vallen_max))) {
-        free(pmix_id);
         goto err_exit;
     }
+
+    /* get our rank */
+    ret = PMI_Get_rank(&rank);
+    if( PMI_SUCCESS != ret ) {
+        OPAL_PMI_ERROR(ret, "PMI_Get_rank");
+        goto err_exit;
+    }
+
+    /* 
+     * store our name in the opal_proc_t before
+     * storing values in the pmix hash so they
+     * can later be retrieved
+     */
+    s1_pname.jobid = strtoul(pmix_id, &str, 10);
+    s1_pname.jobid = (s1_pname.jobid << 16) & 0xffff0000;
+    if (NULL != str) {
+        ui32 = strtoul(str, NULL, 10);
+        s1_pname.jobid |= (ui32 & 0x0000ffff);
+    }
+    ldr.jobid = s1_pname.jobid;
+    s1_pname.vpid = rank;
+    opal_proc_set_name(&s1_pname);
+    opal_output_verbose(2, opal_pmix_base_framework.framework_output,
+                        "%s pmix:s1: assigned tmp name",
+                        OPAL_NAME_PRINT(s1_pname));
+
     /* Slurm PMI provides the job id as an integer followed
      * by a '.', followed by essentially a stepid. The first integer
      * defines an overall job number. The second integer is the number of
@@ -220,13 +255,6 @@ static int s1_init(void)
     }
     OBJ_DESTRUCT(&kv);
 
-    /* get our rank */
-    ret = PMI_Get_rank(&rank);
-    if( PMI_SUCCESS != ret ) {
-        OPAL_PMI_ERROR(ret, "PMI_Get_rank");
-        goto err_exit;
-    }
-    /* save it */
     OBJ_CONSTRUCT(&kv, opal_value_t);
     kv.key = strdup(OPAL_PMIX_RANK);
     kv.type = OPAL_UINT32;
@@ -237,24 +265,6 @@ static int s1_init(void)
         goto err_exit;
     }
     OBJ_DESTRUCT(&kv);
-
-    /* store our name in the opal_proc_t so that
-     * debug messages will make sense - an upper
-     * layer will eventually overwrite it, but that
-     * won't do any harm */
-    s1_pname.jobid = strtoul(pmix_id, &str, 10);
-    s1_pname.jobid = (s1_pname.jobid << 16) & 0xffff0000;
-    if (NULL != str) {
-        ui32 = strtoul(str, NULL, 10);
-        s1_pname.jobid |= (ui32 & 0x0000ffff);
-    }
-    free(pmix_id);
-    ldr.jobid = s1_pname.jobid;
-    s1_pname.vpid = rank;
-    opal_proc_set_name(&s1_pname);
-    opal_output_verbose(2, opal_pmix_base_framework.framework_output,
-                        "%s pmix:s1: assigned tmp name",
-                        OPAL_NAME_PRINT(s1_pname));
 
     pmix_kvs_name = (char*)malloc(pmix_kvslen_max);
     if( pmix_kvs_name == NULL ){
@@ -284,6 +294,7 @@ static int s1_init(void)
         goto err_exit;
     }
     OBJ_DESTRUCT(&kv);
+
     lrank = 0;
     nrank = 0;
     ldr.vpid = rank;
@@ -415,9 +426,13 @@ static int s1_init(void)
    /* increment the init count */
     ++pmix_init_count;
 
+    free(pmix_id);
     return OPAL_SUCCESS;
 
  err_exit:
+    if (NULL != pmix_id) {
+        free(pmix_id);
+    }        
     PMI_Finalize();
     return ret;
 }

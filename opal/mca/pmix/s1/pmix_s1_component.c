@@ -20,6 +20,7 @@
 
 #include "opal/constants.h"
 #include "opal/mca/pmix/pmix.h"
+#include "orte/util/proc_info.h"
 #include "pmix_s1.h"
 
 /*
@@ -91,6 +92,16 @@ static int pmix_s1_component_query(mca_base_module_t **module, int *priority)
 {
     /* disqualify ourselves if we are not under slurm */
     if (NULL == getenv("SLURM_JOBID")) {
+        *priority = 0;
+        *module = NULL;
+        return OPAL_ERROR;
+    }
+
+    /*
+     * Only APP procs should use pmi s1/s2/cray
+     */
+
+    if (!ORTE_PROC_IS_APP) {
         *priority = 0;
         *module = NULL;
         return OPAL_ERROR;
