@@ -149,14 +149,14 @@ int opal_pmix_base_store(const opal_process_name_t *id,
     int rc;
 
     opal_output_verbose(1, opal_pmix_base_framework.framework_output,
-                        "%s dstore:hash:store storing data for proc %s",
+                        "%s pmix:hash:store storing data for proc %s",
                         OPAL_NAME_PRINT(OPAL_PROC_MY_NAME), OPAL_NAME_PRINT(*id));
 
     /* lookup the proc data object for this proc */
     if (NULL == (proc_data = lookup_proc(&ptable, *id, true))) {
         /* unrecoverable error */
         OPAL_OUTPUT_VERBOSE((5, opal_pmix_base_framework.framework_output,
-                             "%s dstore:hash:store: storing data for proc %s unrecoverably failed",
+                             "%s pmix:hash:store: storing data for proc %s unrecoverably failed",
                              OPAL_NAME_PRINT(OPAL_PROC_MY_NAME), OPAL_NAME_PRINT(*id)));
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
@@ -168,7 +168,7 @@ int opal_pmix_base_store(const opal_process_name_t *id,
 #if OPAL_ENABLE_DEBUG
     char *_data_type = opal_dss.lookup_data_type(val->type);
     OPAL_OUTPUT_VERBOSE((5, opal_pmix_base_framework.framework_output,
-                         "%s dstore:hash:store: %s key %s[%s] for proc %s",
+                         "%s pmix:hash:store: %s key %s[%s] for proc %s",
                          OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
                          (NULL == kv ? "storing" : "updating"),
                          val->key, _data_type, OPAL_NAME_PRINT(*id)));
@@ -197,14 +197,14 @@ int opal_pmix_base_fetch(const opal_process_name_t *id,
     int rc;
 
     OPAL_OUTPUT_VERBOSE((5, opal_pmix_base_framework.framework_output,
-                         "%s dstore:hash:fetch: searching for key %s on proc %s",
+                         "%s pmix:hash:fetch: searching for key %s on proc %s",
                          OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
                          (NULL == key) ? "NULL" : key, OPAL_NAME_PRINT(*id)));
 
     /* lookup the proc data object for this proc */
     if (NULL == (proc_data = lookup_proc(&ptable, *id, true))) {
         OPAL_OUTPUT_VERBOSE((5, opal_pmix_base_framework.framework_output,
-                             "%s dstore_hash:fetch data for proc %s not found",
+                             "%s pmix_hash:fetch data for proc %s not found",
                              OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
                              OPAL_NAME_PRINT(*id)));
         return OPAL_ERR_NOT_FOUND;
@@ -224,7 +224,7 @@ int opal_pmix_base_fetch(const opal_process_name_t *id,
                 return rc;
             }
             OPAL_OUTPUT_VERBOSE((5, opal_pmix_base_framework.framework_output,
-                                 "%s dstore:hash:fetch: adding data for key %s on proc %s",
+                                 "%s pmix:hash:fetch: adding data for key %s on proc %s",
                                  OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
                                  (NULL == kv->key) ? "NULL" : kv->key,
                                  OPAL_NAME_PRINT(*id)));
@@ -238,7 +238,7 @@ int opal_pmix_base_fetch(const opal_process_name_t *id,
     /* find the value */
     if (NULL == (kv = lookup_keyval(proc_data, key))) {
         OPAL_OUTPUT_VERBOSE((5, opal_pmix_base_framework.framework_output,
-                             "%s dstore_hash:fetch key %s for proc %s not found",
+                             "%s pmix_hash:fetch key %s for proc %s not found",
                              OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
                              (NULL == key) ? "NULL" : key,
                              OPAL_NAME_PRINT(*id)));
