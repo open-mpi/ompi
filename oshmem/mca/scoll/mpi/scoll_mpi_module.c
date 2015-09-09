@@ -113,6 +113,8 @@ mca_scoll_mpi_comm_query(oshmem_group_t *osh_group, int *priority)
     if (NULL == oshmem_group_all) {
         osh_group->ompi_comm = &(ompi_mpi_comm_world.comm);
     } else {
+        int my_rank = MPI_UNDEFINED;
+
         err = ompi_comm_group(&(ompi_mpi_comm_world.comm), &parent_group);
         if (OPAL_UNLIKELY(OMPI_SUCCESS != err)) {
             return NULL;
@@ -132,6 +134,10 @@ mca_scoll_mpi_comm_query(oshmem_group_t *osh_group, int *priority)
                     break;
                 }
             }
+            /* NTH: keep track of my rank in the new group for the workaround below */
+            if (ranks[i] == ompi_comm_rank (&ompi_mpi_comm_world.comm)) {
+                my_rank = i;
+            }
         }
 
         err = ompi_group_incl(parent_group, osh_group->proc_count, ranks, &new_group);
@@ -139,6 +145,15 @@ mca_scoll_mpi_comm_query(oshmem_group_t *osh_group, int *priority)
             free(ranks);
             return NULL;
         }
+
+        /* NTH: XXX -- WORKAROUND -- The oshmem code overwrites ompi_proc_local_proc with its
+         * own proc but does not update the proc list in comm world or comm self. This causes
+         * the code in ompi_group_incl that updates grp_my_rank to fail. This will cause failures
+         * here and when an application attempts to mix oshmem and mpi so it will really need to
+         * be fixed in oshmem/proc and not here. For now we need to work around a new jenkins
+         * failure so set my group ranking so we do not crash when running ompi_comm_create_group. */
+        new_group->grp_my_rank = my_rank;
+
         err = ompi_comm_create_group(&(ompi_mpi_comm_world.comm), new_group, tag, &newcomm);
         if (OPAL_UNLIKELY(OMPI_SUCCESS != err)) {
             free(ranks);
