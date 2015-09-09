@@ -1,6 +1,8 @@
 #
 # Copyright (c) 2014-2015 Intel, Inc.  All rights reserved.
 # Copyright (c) 2015      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2015      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -44,6 +46,6 @@ mca_pmix_pmix1xx_la_LIBADD = $(opal_pmix_pmix1xx_LIBS)
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_pmix_pmix1xx_la_SOURCES =$(sources)
 libmca_pmix_pmix1xx_la_CFLAGS = $(opal_pmix_pmix1xx_CFLAGS)
-libmca_pmix_pmix1xx_la_CPPFLAGS = $(opal_pmix_pmix1xx_CPPFLAGS)
+libmca_pmix_pmix1xx_la_CPPFLAGS = -I$(srcdir)/pmix/include $(opal_pmix_pmix1xx_CPPFLAGS)
 libmca_pmix_pmix1xx_la_LDFLAGS = -module -avoid-version $(opal_pmix_pmix1xx_LDFLAGS)
 libmca_pmix_pmix1xx_la_LIBADD = $(opal_pmix_pmix1xx_LIBS)
