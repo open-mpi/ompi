@@ -130,6 +130,12 @@ int ompi_dpm_connect_accept(ompi_communicator_t *comm, int root,
     ompi_group_t *new_group_pointer;
     ompi_dpm_proct_caddy_t *cd;
 
+    if (NULL == opal_pmix.publish || NULL == opal_pmix.connect ||
+        NULL == opal_pmix.unpublish ||
+       (NULL == opal_pmix.lookup && NULL == opal_pmix.lookup_nb)) {
+        return OMPI_ERR_NOT_SUPPORTED;
+    }
+
     /* set default error return */
     *newcomm = MPI_COMM_NULL;
 
@@ -676,7 +682,12 @@ int ompi_dpm_disconnect(ompi_communicator_t *comm)
 
     /* ensure we tell the host RM to disconnect us - this
      * is a blocking operation that must include a fence */
-    ret = opal_pmix.disconnect(&coll);
+    if (NULL == opal_pmix.disconnect) {
+        /* use the fence */
+        ret = opal_pmix.fence(&coll, false);
+    } else {
+        ret = opal_pmix.disconnect(&coll);
+    }
     OPAL_LIST_DESTRUCT(&coll);
 
     return ret;
