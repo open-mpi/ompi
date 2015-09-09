@@ -74,6 +74,37 @@ AC_DEFUN([MCA_ompi_btl_openib_CONFIG],[
           if test "x$btl_openib_have_rdmacm" = "x1" -a \
                   "$have_threads" != "none"; then
               cpcs="$cpcs rdmacm"
+              if test "$enable_openib_rdmacm_ibaddr" = "yes"; then
+                  AC_MSG_CHECKING([IB addressing])
+                  AC_EGREP_CPP(
+                      yes,
+                      [
+                        #include <infiniband/ib.h>
+                        #ifdef AF_IB
+                          yes
+                        #endif
+                      ],
+                      [
+                        AC_CHECK_HEADERS(
+                            [rdma/rsocket.h],
+                            [
+                                AC_MSG_RESULT([yes])
+                                AC_DEFINE(BTL_OPENIB_RDMACM_IB_ADDR, 1, rdmacm IB_AF addressing support)
+                            ],
+                            [
+                                AC_MSG_RESULT([no])
+                                AC_DEFINE(BTL_OPENIB_RDMACM_IB_ADDR, 0, rdmacm without IB_AF addressing support)
+                                AC_MSG_WARN([There is no IB_AF addressing support by lib rdmacm.])
+                            ]
+                      )],
+                      [
+                       AC_MSG_RESULT([no])
+                       AC_DEFINE(BTL_OPENIB_RDMACM_IB_ADDR, 0, rdmacm without IB_AF addressing support)
+                       AC_MSG_WARN([There is no IB_AF addressing support by lib rdmacm.])
+                      ])
+              else
+                AC_DEFINE(BTL_OPENIB_RDMACM_IB_ADDR, 0, rdmacm without IB_AF addressing support)
+              fi
           fi
           if test "x$btl_openib_have_udcm" = "x1" -a \
                   "$have_threads" != "none"; then
