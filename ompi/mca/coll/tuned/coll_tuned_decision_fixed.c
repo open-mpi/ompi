@@ -121,12 +121,13 @@ int ompi_coll_tuned_alltoall_intra_dec_fixed(void *sbuf, int scount,
     ompi_datatype_type_size(sdtype, &dsize);
     block_dsize = dsize * (ptrdiff_t)scount;
 
-    if ((block_dsize < 200) && (communicator_size > 12)) {
+    if ((block_dsize < ompi_coll_tuned_alltoall_small_msg)
+                                              && (communicator_size > 12)) {
         return ompi_coll_tuned_alltoall_intra_bruck(sbuf, scount, sdtype, 
                                                     rbuf, rcount, rdtype,
                                                     comm, module);
 
-    } else if (block_dsize < 3000) {
+    } else if (block_dsize < ompi_coll_tuned_alltoall_intermediate_msg) {
         return ompi_coll_tuned_alltoall_intra_basic_linear(sbuf, scount, sdtype, 
                                                            rbuf, rcount, rdtype, 
                                                            comm, module);

@@ -50,6 +50,8 @@ char* ompi_coll_tuned_dynamic_rules_filename = (char*) NULL;
 int   ompi_coll_tuned_init_tree_fanout = 4;
 int   ompi_coll_tuned_init_chain_fanout = 4;
 int   ompi_coll_tuned_init_max_requests = 128;
+int   ompi_coll_tuned_alltoall_small_msg = 1000;
+int   ompi_coll_tuned_alltoall_intermediate_msg = 2000;
 
 /* forced alogrithm variables */
 /* indices for the MCA parameters */
@@ -147,6 +149,24 @@ static int tuned_register(void)
                                            OPAL_INFO_LVL_6,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &ompi_coll_tuned_init_chain_fanout);
+
+    ompi_coll_tuned_alltoall_small_msg = 1000;
+    (void) mca_base_component_var_register(&mca_coll_tuned_component.super.collm_version,
+                                           "alltoall_small_msg",
+                                           "threshold (if supported) to decide if small MSGs alltoall algorithm will be used",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_6,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &ompi_coll_tuned_alltoall_small_msg);
+
+    ompi_coll_tuned_alltoall_intermediate_msg = 2000;
+    (void) mca_base_component_var_register(&mca_coll_tuned_component.super.collm_version,
+                                           "alltoall_intermediate_msg",
+                                           "threshold (if supported) to decide if intermediate MSGs alltoall algorithm will be used",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_6,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &ompi_coll_tuned_alltoall_intermediate_msg);
 
     ompi_coll_tuned_use_dynamic_rules = false;
     (void) mca_base_component_var_register(&mca_coll_tuned_component.super.collm_version,
