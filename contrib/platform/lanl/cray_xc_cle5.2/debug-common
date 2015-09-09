@@ -1,0 +1,39 @@
+# do not use IB verbs
+with_verbs=no
+
+enable_dlopen=no
+enable_mem_profile=no
+enable_binaries=yes
+enable_heterogeneous=no
+enable_shared=yes
+enable_static=yes
+enable_orte_static_ports=no
+enable_ipv6=no
+enable_mpi_fortran=yes
+
+# enable debugging
+enable_mem_debug=yes
+enable_debug_symbols=yes
+enable_picky=yes
+enable_debug=yes
+
+# disable c++ bindings (removed in MPI 3.0)
+enable_mpi_cxx=no
+enable_mpi_cxx_seek=no
+enable_cxx_exceptions=no
+
+enable_per_user_config_files=no
+enable_pty_support=no
+enable_mca_no_build=crs,filem,routed-linear,snapc,pml-dr,pml-crcp2,pml-crcpw,pml-v,pml-example,crcp,pml-cm,ess-cnos,grpcomm-cnos,plm-rsh,btl-tcp,oob-ud,ras-simulator
+
+# enable direct calling for ob1
+enable_mca_direct=pml-ob1
+
+# enable development headers
+with_devel_headers=yes
+
+# enable ptmalloc (enables lazy deregistration)
+with_memory_manager=linux
+
+# disable valgrind
+with_valgrind=no
