@@ -88,10 +88,9 @@ static int rte_init(void)
     char *rmluri;
     opal_value_t *kv;
     char *val;
-    size_t sz;
     int u32, *u32ptr;
     uint16_t u16, *u16ptr;
-    char **peers=NULL, *mycpuset;
+    char **peers=NULL, *mycpuset, **cpusets=NULL;
     opal_process_name_t name;
     size_t i;
 
@@ -153,8 +152,8 @@ static int rte_init(void)
 
 
     /* get our app number from PMI - ok if not found */
-    OPAL_MODEX_RECV_VALUE(ret, OPAL_PMIX_APPNUM,
-                          ORTE_PROC_MY_NAME, &u32ptr, OPAL_UINT32);
+    OPAL_MODEX_RECV_VALUE_OPTIONAL(ret, OPAL_PMIX_APPNUM,
+                                   ORTE_PROC_MY_NAME, &u32ptr, OPAL_UINT32);
     if (OPAL_SUCCESS == ret) {
         orte_process_info.app_num = u32;
     } else {
@@ -190,8 +189,8 @@ static int rte_init(void)
     }
 
     /* retrieve our topology */
-    OPAL_MODEX_RECV_VALUE(ret, OPAL_PMIX_LOCAL_TOPO,
-                          ORTE_PROC_MY_NAME, &val, OPAL_STRING);
+    OPAL_MODEX_RECV_VALUE_OPTIONAL(ret, OPAL_PMIX_LOCAL_TOPO,
+                                   ORTE_PROC_MY_NAME, &val, OPAL_STRING);
     if (OPAL_SUCCESS == ret && NULL != val) {
         /* load the topology */
         if (0 != hwloc_topology_init(&opal_hwloc_topology)) {
@@ -259,84 +258,73 @@ static int rte_init(void)
 
     /* get our local peers */
     if (0 < orte_process_info.num_local_peers) {
+        /* if my local rank if too high, then that's an error */
+        if (orte_process_info.num_local_peers < orte_process_info.my_local_rank) {
+            ret = ORTE_ERR_BAD_PARAM;
+            error = "num local peers";
+            goto error;
+        }
         /* retrieve the local peers */
         OPAL_MODEX_RECV_VALUE(ret, OPAL_PMIX_LOCAL_PEERS,
                               ORTE_PROC_MY_NAME, &val, OPAL_STRING);
         if (OPAL_SUCCESS == ret && NULL != val) {
             peers = opal_argv_split(val, ',');
             free(val);
+            /* and their cpusets, if available */
+            OPAL_MODEX_RECV_VALUE_OPTIONAL(ret, OPAL_PMIX_LOCAL_CPUSETS, ORTE_PROC_MY_NAME, &val, OPAL_STRING);
+            if (OPAL_SUCCESS == ret && NULL != val) {
+                cpusets = opal_argv_split(val, ':');
+                free(val);
+            } else {
+                cpusets = NULL;
+            }
         } else {
             peers = NULL;
+            cpusets = NULL;
         }
     } else {
         peers = NULL;
-    }
-
-    /* get our cpuset */
-    OPAL_MODEX_RECV_VALUE(ret, OPAL_PMIX_CPUSET, ORTE_PROC_MY_NAME, &val, OPAL_STRING);
-    if (OPAL_SUCCESS != ret || NULL == val) {
-        /* if we don't have a cpuset, or it is NULL, then we declare our local
-         * peers to be on the same node and everyone else to be non-local */
-        mycpuset = NULL;
-    } else {
-        mycpuset = val;
+        cpusets = NULL;
     }
 
     /* set the locality */
-    name.jobid = ORTE_PROC_MY_NAME->jobid;
-    for (sz=0; sz < orte_process_info.num_procs; sz++) {
-        kv = OBJ_NEW(opal_value_t);
-        kv->key = strdup(OPAL_PMIX_LOCALITY);
-        kv->type = OPAL_UINT16;
-        name.vpid = sz;
-        if (sz == ORTE_PROC_MY_NAME->vpid) {
-            /* we are fully local to ourselves */
-            u16 = OPAL_PROC_ALL_LOCAL;
-        } else if (NULL == peers) {
-            /* nobody is local to us */
-            u16 = OPAL_PROC_NON_LOCAL;
+    if (NULL != peers) {
+        /* indentify our cpuset */
+        if (NULL != cpusets) {
+            mycpuset = cpusets[orte_process_info.my_local_rank];
         } else {
-            for (i=0; NULL != peers[i]; i++) {
-                if (sz == strtoul(peers[i], NULL, 10)) {
-                    break;
-                }
-            }
-            if (NULL == peers[i]) {
-                /* not a local peer */
-                u16 = OPAL_PROC_NON_LOCAL;
-            } else if (NULL == mycpuset) {
+            mycpuset = NULL;
+        }
+        name.jobid = ORTE_PROC_MY_NAME->jobid;
+        for (i=0; NULL != peers[i]; i++) {
+            kv = OBJ_NEW(opal_value_t);
+            kv->key = strdup(OPAL_PMIX_LOCALITY);
+            kv->type = OPAL_UINT16;
+            name.vpid = i;
+            if (i == ORTE_PROC_MY_NAME->vpid) {
+                /* we are fully local to ourselves */
+                u16 = OPAL_PROC_ALL_LOCAL;
+            } else if (NULL == mycpuset || NULL == cpusets[i] ||
+                       0 == strcmp(cpusets[i], "UNBOUND")) {
                 /* all we can say is that it shares our node */
                 u16 = OPAL_PROC_ON_CLUSTER | OPAL_PROC_ON_CU | OPAL_PROC_ON_NODE;
             } else {
-                /* attempt to get their cpuset */
-                OPAL_MODEX_RECV_VALUE(ret, OPAL_PMIX_CPUSET, &name, &val, OPAL_STRING);
-                if (OPAL_SUCCESS == ret && NULL != val) {
-                    /* we have it, so compute the locality */
-                    u16 = opal_hwloc_base_get_relative_locality(opal_hwloc_topology,
-                                                                mycpuset, val);
-                    free(val);
-                } else {
-                    /* all we can say is that it shares our node */
-                    u16 = OPAL_PROC_ON_CLUSTER | OPAL_PROC_ON_CU | OPAL_PROC_ON_NODE;
-                }
+                /* we have it, so compute the locality */
+                u16 = opal_hwloc_base_get_relative_locality(opal_hwloc_topology, mycpuset, cpusets[i]);
             }
-        }
-        kv->data.uint16 = u16;
-        ret = opal_pmix.store_local(&name, kv);
-        if (OPAL_SUCCESS != ret) {
-            error = "local store of locality";
-            if (NULL != mycpuset) {
-                free(mycpuset);
+            kv->data.uint16 = u16;
+            ret = opal_pmix.store_local(&name, kv);
+            if (OPAL_SUCCESS != ret) {
+                error = "local store of locality";
+                opal_argv_free(peers);
+                opal_argv_free(cpusets);
+                goto error;
             }
-            opal_argv_free(peers);
-            goto error;
+            OBJ_RELEASE(kv);
         }
-        OBJ_RELEASE(kv);
+        opal_argv_free(peers);
+        opal_argv_free(cpusets);
     }
-    if (NULL != mycpuset){
-        free(mycpuset);
-    }
-    opal_argv_free(peers);
 
     /* now that we have all required info, complete the setup */
     if (ORTE_SUCCESS != (ret = orte_ess_base_app_setup(false))) {

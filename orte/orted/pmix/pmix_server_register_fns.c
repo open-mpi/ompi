@@ -236,6 +236,7 @@ int orte_pmix_server_register_nspace(orte_job_t *jdata)
         /* construct the list of local peers, while adding
          * each proc's locality info */
         list = NULL;
+        procs = NULL;
         vpid = ORTE_VPID_MAX;
         for (i=0; i < node->procs->size; i++) {
             if (NULL == (pptr = (orte_proc_t*)opal_pointer_array_get_item(node->procs, i))) {
@@ -249,13 +250,15 @@ int orte_pmix_server_register_nspace(orte_job_t *jdata)
                 /* note that we have to pass the cpuset for each local
                  * peer so locality can be computed */
                 tmp = NULL;
-                kv = OBJ_NEW(opal_value_t);
-                kv->key = strdup(OPAL_PMIX_CPUSET);
-                kv->type = OPAL_STRING;
                 if (orte_get_attribute(&pptr->attributes, ORTE_PROC_CPU_BITMAP, (void**)&tmp, OPAL_STRING)) {
-                    kv->data.string = tmp;
+                    if (NULL != tmp) {
+                        opal_argv_append_nosize(&procs, tmp);
+                    } else {
+                        opal_argv_append_nosize(&procs, "UNBOUND");
+                    }
+                } else {
+                    opal_argv_append_nosize(&procs, "UNBOUND");
                 }
-                opal_list_append(info, &kv->super);
                 /* go ahead and register this client */
                 if (OPAL_SUCCESS != (rc = opal_pmix.server_register_client(&pptr->name, uid, gid,
                                                                            (void*)pptr, NULL, NULL))) {
@@ -272,6 +275,18 @@ int orte_pmix_server_register_nspace(orte_job_t *jdata)
             /* pass the list of peers */
             kv = OBJ_NEW(opal_value_t);
             kv->key = strdup(OPAL_PMIX_LOCAL_PEERS);
+            kv->type = OPAL_STRING;
+            kv->data.string = tmp;
+            opal_list_append(info, &kv->super);
+        }
+        /* construct the list of cpusets for transmission */
+        if (NULL != procs) {
+            tmp = opal_argv_join(procs, ':');
+            opal_argv_free(procs);
+            procs = NULL;
+            /* pass the list of cpusets */
+            kv = OBJ_NEW(opal_value_t);
+            kv->key = strdup(OPAL_PMIX_LOCAL_CPUSETS);
             kv->type = OPAL_STRING;
             kv->data.string = tmp;
             opal_list_append(info, &kv->super);

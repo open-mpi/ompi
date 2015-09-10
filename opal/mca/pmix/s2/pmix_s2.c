@@ -46,7 +46,7 @@ static int s2_fence(opal_list_t *procs, int collect_data);
 static int s2_put(opal_pmix_scope_t scope,
                   opal_value_t *kv);
 static int s2_get(const opal_process_name_t *id,
-                  const char *key,
+                  const char *key, opal_list_t *info,
                   opal_value_t **kv);
 static int s2_publish(opal_list_t *info);
 static int s2_lookup(opal_list_t *data, opal_list_t *info);
@@ -610,7 +610,7 @@ static int s2_fence(opal_list_t *procs, int collect_data)
 }
 
 static int s2_get(const opal_process_name_t *id,
-                  const char *key,
+                  const char *key, opal_list_t *info,
                   opal_value_t **kv)
 {
     int rc;
