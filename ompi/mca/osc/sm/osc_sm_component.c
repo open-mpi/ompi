@@ -127,8 +127,6 @@ component_finalize(void)
 static int
 check_win_ok(ompi_communicator_t *comm, int flavor)
 {
-    int i;
-
     if (! (MPI_WIN_FLAVOR_SHARED == flavor
            || MPI_WIN_FLAVOR_ALLOCATE == flavor) ) {
         return OMPI_ERR_NOT_SUPPORTED;
