@@ -126,7 +126,7 @@ static int kvs_get(const char key[], char value [], int maxvalue)
     int rc;
     rc = PMI_KVS_Get(pmix_kvs_name, key, value, maxvalue);
     if( PMI_SUCCESS != rc ){
-        OPAL_PMI_ERROR(rc, "PMI_KVS_Get");
+        /* silently return an error - might be okay */
         return OPAL_ERROR;
     }
     return OPAL_SUCCESS;
@@ -206,6 +206,7 @@ static int s1_init(void)
     ret = PMI_Get_rank(&rank);
     if( PMI_SUCCESS != ret ) {
         OPAL_PMI_ERROR(ret, "PMI_Get_rank");
+        free(pmix_id);
         goto err_exit;
     }
 
@@ -219,7 +220,6 @@ static int s1_init(void)
         ui32 = strtoul(str, NULL, 10);
         s1_pname.jobid |= (ui32 & 0x0000ffff);
     }
-    free(pmix_id);
     ldr.jobid = s1_pname.jobid;
     s1_pname.vpid = rank;
     /* store our name in the opal_proc_t so that
