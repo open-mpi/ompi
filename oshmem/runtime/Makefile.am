@@ -9,8 +9,9 @@
 
 # This makefile.am does not stand on its own - it is included from oshmem/Makefile.am
 
+if PROJECT_OSHMEM
 dist_oshmemdata_DATA += runtime/help-shmem-runtime.txt
-
+endif
 
 headers += \
 	runtime/runtime.h \
