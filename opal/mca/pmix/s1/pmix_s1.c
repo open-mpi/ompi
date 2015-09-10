@@ -274,8 +274,8 @@ static int s1_init(void)
     /* save the local size */
     OBJ_CONSTRUCT(&kv, opal_value_t);
     kv.key = strdup(OPAL_PMIX_LOCAL_SIZE);
-    kv.type = OPAL_UINT16;
-    kv.data.uint16 = nlranks;
+    kv.type = OPAL_UINT32;
+    kv.data.uint32 = nlranks;
     if (OPAL_SUCCESS != (ret = opal_pmix_base_store(&OPAL_PROC_MY_NAME, &kv))) {
         OPAL_ERROR_LOG(ret);
         OBJ_DESTRUCT(&kv);
