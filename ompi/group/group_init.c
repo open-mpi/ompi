@@ -210,14 +210,13 @@ ompi_group_t *ompi_group_allocate_bmap(int orig_group_size , int group_size)
  */
 void ompi_group_increment_proc_count(ompi_group_t *group)
 {
-    int proc;
     ompi_proc_t * proc_pointer;
-    for (proc = 0; proc < group->grp_proc_count; proc++) {
-        proc_pointer = ompi_group_peer_lookup(group,proc);
-        OBJ_RETAIN(proc_pointer);
+    for (int proc = 0 ; proc < group->grp_proc_count ; ++proc) {
+	proc_pointer = ompi_group_peer_lookup_existing (group, proc);
+	if (proc_pointer) {
+	    OBJ_RETAIN(proc_pointer);
+	}
     }
-
-    return;
 }
 
 /*
@@ -226,14 +225,13 @@ void ompi_group_increment_proc_count(ompi_group_t *group)
 
 void ompi_group_decrement_proc_count(ompi_group_t *group)
 {
-    int proc;
     ompi_proc_t * proc_pointer;
-    for (proc = 0; proc < group->grp_proc_count; proc++) {
-        proc_pointer = ompi_group_peer_lookup(group,proc);
-        OBJ_RELEASE(proc_pointer);
+    for (int proc = 0 ; proc < group->grp_proc_count ; ++proc) {
+	proc_pointer = ompi_group_peer_lookup_existing (group, proc);
+	if (proc_pointer) {
+	    OBJ_RELEASE(proc_pointer);
+	}
     }
-
-    return;
 }
 
 /*
@@ -255,9 +253,6 @@ static void ompi_group_construct(ompi_group_t *new_group)
 
     /* default the sparse values for groups */
     new_group->grp_parent_group_ptr = NULL;
-
-    /* return */
-    return;
 }
 
 
@@ -300,9 +295,6 @@ static void ompi_group_destruct(ompi_group_t *group)
         opal_pointer_array_set_item(&ompi_group_f_to_c_table,
                                     group->grp_f_to_c_index, NULL);
     }
-
-    /* return */
-    return;
 }
 
 

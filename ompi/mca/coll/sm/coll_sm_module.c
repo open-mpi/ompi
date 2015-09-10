@@ -74,7 +74,6 @@ uint32_t mca_coll_sm_one = 1;
  */
 static int sm_module_enable(mca_coll_base_module_t *module,
                           struct ompi_communicator_t *comm);
-static bool have_local_peers(ompi_group_t *group, size_t size);
 static int bootstrap_comm(ompi_communicator_t *comm,
                           mca_coll_sm_module_t *module);
 static int mca_coll_sm_module_disable(mca_coll_base_module_t *module,
@@ -172,8 +171,7 @@ mca_coll_sm_comm_query(struct ompi_communicator_t *comm, int *priority)
     /* If we're intercomm, or if there's only one process in the
        communicator, or if not all the processes in the communicator
        are not on this node, then we don't want to run */
-    if (OMPI_COMM_IS_INTER(comm) || 1 == ompi_comm_size(comm) ||
-        !have_local_peers(comm->c_local_group, ompi_comm_size(comm))) {
+    if (OMPI_COMM_IS_INTER(comm) || 1 == ompi_comm_size(comm) || ompi_group_have_remote_peers (comm->c_local_group)) {
         opal_output_verbose(10, ompi_coll_base_framework.framework_output,
                             "coll:sm:comm_query (%d/%s): intercomm, comm is too small, or not all peers local; disqualifying myself", comm->c_contextid, comm->c_name);
 	return NULL;
@@ -489,23 +487,6 @@ int ompi_coll_sm_lazy_enable(mca_coll_base_module_t *module,
                         comm->c_contextid, comm->c_name);
     return OMPI_SUCCESS;
 }
-
-
-static bool have_local_peers(ompi_group_t *group, size_t size)
-{
-    size_t i;
-    ompi_proc_t *proc;
-
-    for (i = 0; i < size; ++i) {
-        proc = ompi_group_peer_lookup(group,i);
-        if (!OPAL_PROC_ON_LOCAL_NODE(proc->super.proc_flags)) {
-            return false;
-        }
-    }
-
-    return true;
-}
-
 
 static int bootstrap_comm(ompi_communicator_t *comm,
                           mca_coll_sm_module_t *module)

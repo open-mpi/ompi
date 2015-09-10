@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -13,6 +14,8 @@
  * Copyright (c) 2010-2011 Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -88,7 +91,7 @@ static void try_kill_peers(ompi_communicator_t *comm,
         } else {
             assert(count <= nprocs);
             procs[count++] =
-                *OMPI_CAST_RTE_NAME(&ompi_group_get_proc_ptr(comm->c_remote_group, i)->super.proc_name);
+                *OMPI_CAST_RTE_NAME(&ompi_group_get_proc_ptr(comm->c_remote_group, i, true)->super.proc_name);
         }
     }
 
@@ -96,7 +99,7 @@ static void try_kill_peers(ompi_communicator_t *comm,
     for (i = 0; i < ompi_comm_remote_size(comm); ++i) {
         assert(count <= nprocs);
         procs[count++] =
-            *OMPI_CAST_RTE_NAME(&ompi_group_get_proc_ptr(comm->c_remote_group, i)->super.proc_name);
+            *OMPI_CAST_RTE_NAME(&ompi_group_get_proc_ptr(comm->c_remote_group, i, true)->super.proc_name);
     }
 
     if (nprocs > 0) {

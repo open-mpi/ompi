@@ -143,7 +143,7 @@ void mca_pml_ob1_recv_frag_callback_match(mca_btl_base_module_t* btl,
     comm = (mca_pml_ob1_comm_t *)comm_ptr->c_pml_comm;
 
     /* source sequence number */
-    proc = &comm->procs[hdr->hdr_src];
+    proc = mca_pml_ob1_peer_lookup (comm_ptr, hdr->hdr_src);
 
     /* We generate the MSG_ARRIVED event as soon as the PML is aware
      * of a matching fragment arrival. Independing if it is received
@@ -650,7 +650,7 @@ static int mca_pml_ob1_recv_frag_match( mca_btl_base_module_t *btl,
 
     /* source sequence number */
     frag_msg_seq = hdr->hdr_seq;
-    proc = &comm->procs[hdr->hdr_src];
+    proc = mca_pml_ob1_peer_lookup (comm_ptr, hdr->hdr_src);
 
     /**
      * We generate the MSG_ARRIVED event as soon as the PML is aware of a matching

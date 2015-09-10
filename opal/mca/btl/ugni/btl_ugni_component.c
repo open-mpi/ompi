@@ -386,8 +386,8 @@ mca_btl_ugni_component_init (int *num_btl_modules,
 static inline int
 mca_btl_ugni_progress_datagram (mca_btl_ugni_module_t *ugni_module)
 {
+    uint64_t datagram_id, data, proc_id;
     uint32_t remote_addr, remote_id;
-    uint64_t datagram_id, data;
     mca_btl_base_endpoint_t *ep;
     gni_post_state_t post_state;
     gni_ep_handle_t handle;
@@ -425,15 +425,24 @@ mca_btl_ugni_progress_datagram (mca_btl_ugni_module_t *ugni_module)
 
     /* if this is a wildcard endpoint lookup the remote peer by the proc id we received */
     if (handle == ugni_module->wildcard_ep) {
-        BTL_VERBOSE(("received connection attempt on wildcard endpoint from proc id: %" PRIx64, ugni_module->wc_remote_attr.proc_id));
-        rc = opal_hash_table_get_value_uint64 (&ugni_module->id_to_endpoint,
-                                               ugni_module->wc_remote_attr.proc_id,
-                                               (void *) &ep);
+        proc_id = mca_btl_ugni_proc_name_to_id (ugni_module->wc_remote_attr.proc_name);
+
+        BTL_VERBOSE(("received connection attempt on wildcard endpoint from proc id: %" PRIx64,
+                     proc_id));
+
+        OPAL_THREAD_LOCK(&ugni_module->endpoint_lock);
+        rc = opal_hash_table_get_value_uint64 (&ugni_module->id_to_endpoint, proc_id, (void **) &ep);
+        OPAL_THREAD_UNLOCK(&ugni_module->endpoint_lock);
+
         /* check if the endpoint is known */
         if (OPAL_UNLIKELY(OPAL_SUCCESS != rc || NULL == ep)) {
-            BTL_ERROR(("received connection attempt from an unknown peer. rc: %d, ep: %p, id: 0x%" PRIx64,
-                       rc, (void *) ep, ugni_module->wc_remote_attr.proc_id));
-            return OPAL_ERR_NOT_FOUND;
+            struct opal_proc_t *remote_proc = opal_proc_for_name (ugni_module->wc_remote_attr.proc_name);
+            BTL_VERBOSE(("Got connection request from an unknown peer {jobid = 0x%x, vid = 0x%x}",
+                         ugni_module->wc_remote_attr.proc_name.jobid, ugni_module->wc_remote_attr.proc_name.vpid));
+            ep = mca_btl_ugni_get_ep (&ugni_module->super, remote_proc);
+            if (OPAL_UNLIKELY(NULL == ep)) {
+                return rc;
+            }
         }
     } else {
         BTL_VERBOSE(("directed datagram complete for endpoint %p", (void *) ep));

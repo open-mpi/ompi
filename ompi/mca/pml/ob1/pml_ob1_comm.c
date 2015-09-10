@@ -40,14 +40,15 @@ static void mca_pml_ob1_comm_proc_destruct(mca_pml_ob1_comm_proc_t* proc)
     OBJ_DESTRUCT(&proc->frags_cant_match);
     OBJ_DESTRUCT(&proc->specific_receives);
     OBJ_DESTRUCT(&proc->unexpected_frags);
+    if (proc->ompi_proc) {
+        OBJ_RELEASE(proc->ompi_proc);
+    }
 }
 
 
-static OBJ_CLASS_INSTANCE(
-    mca_pml_ob1_comm_proc_t,
-    opal_object_t,
-    mca_pml_ob1_comm_proc_construct,
-    mca_pml_ob1_comm_proc_destruct);
+OBJ_CLASS_INSTANCE(mca_pml_ob1_comm_proc_t, opal_object_t,
+                   mca_pml_ob1_comm_proc_construct,
+                   mca_pml_ob1_comm_proc_destruct);
 
 
 static void mca_pml_ob1_comm_construct(mca_pml_ob1_comm_t* comm)
@@ -63,11 +64,16 @@ static void mca_pml_ob1_comm_construct(mca_pml_ob1_comm_t* comm)
 
 static void mca_pml_ob1_comm_destruct(mca_pml_ob1_comm_t* comm)
 {
-    size_t i;
-    for(i=0; i<comm->num_procs; i++)
-        OBJ_DESTRUCT((&comm->procs[i]));
-    if(NULL != comm->procs)
+    if (NULL != comm->procs) {
+        for (size_t i = 0; i < comm->num_procs; ++i) {
+            if (comm->procs[i]) {
+                OBJ_RELEASE(comm->procs[i]);
+            }
+        }
+
         free(comm->procs);
+    }
+
     OBJ_DESTRUCT(&comm->wild_receives);
     OBJ_DESTRUCT(&comm->matching_lock);
 }
@@ -80,17 +86,12 @@ OBJ_CLASS_INSTANCE(
     mca_pml_ob1_comm_destruct);
 
 
-int mca_pml_ob1_comm_init_size(mca_pml_ob1_comm_t* comm, size_t size)
+int mca_pml_ob1_comm_init_size (mca_pml_ob1_comm_t* comm, size_t size)
 {
-    size_t i;
-
     /* send message sequence-number support - sender side */
-    comm->procs = (mca_pml_ob1_comm_proc_t*)malloc(sizeof(mca_pml_ob1_comm_proc_t)*size);
+    comm->procs = (mca_pml_ob1_comm_proc_t **) calloc(size, sizeof (mca_pml_ob1_comm_proc_t *));
     if(NULL == comm->procs) {
         return OMPI_ERR_OUT_OF_RESOURCE;
-    }
-    for(i=0; i<size; i++) {
-        OBJ_CONSTRUCT(comm->procs+i, mca_pml_ob1_comm_proc_t);
     }
     comm->num_procs = size;
     return OMPI_SUCCESS;

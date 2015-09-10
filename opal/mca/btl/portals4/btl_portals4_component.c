@@ -221,7 +221,8 @@ mca_btl_portals4_component_open(void)
     mca_btl_portals4_module.super.btl_min_rdma_pipeline_size = 0;
     mca_btl_portals4_module.super.btl_flags =
         MCA_BTL_FLAGS_RDMA |
-        MCA_BTL_FLAGS_RDMA_MATCHED;
+        MCA_BTL_FLAGS_RDMA_MATCHED |
+        MCA_BTL_FLAGS_SEND;
 
     mca_btl_portals4_module.super.btl_registration_handle_size = sizeof (mca_btl_base_registration_handle_t);
 

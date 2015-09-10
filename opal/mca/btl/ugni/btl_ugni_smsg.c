@@ -27,7 +27,7 @@ static void mca_btl_ugni_smsg_mbox_construct (mca_btl_ugni_smsg_mbox_t *mbox) {
     mbox->attr.smsg_attr.msg_buffer     = base_reg->base;
     mbox->attr.smsg_attr.buff_size      = mca_btl_ugni_component.smsg_mbox_size;
     mbox->attr.smsg_attr.mem_hndl       = ugni_reg->handle.gni_handle;
-    mbox->attr.proc_id = mca_btl_ugni_proc_name_to_id (OPAL_PROC_MY_NAME);
+    mbox->attr.proc_name = OPAL_PROC_MY_NAME;
     mbox->attr.rmt_irq_mem_hndl = mca_btl_ugni_component.modules[0].device->smsg_irq_mhndl;
 }
 

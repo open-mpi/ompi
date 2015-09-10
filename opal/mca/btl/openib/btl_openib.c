@@ -871,6 +871,7 @@ int mca_btl_openib_add_procs(
     for (i = 0, local_procs = 0 ; i < (int) nprocs; i++) {
         struct opal_proc_t* proc = procs[i];
         mca_btl_openib_proc_t* ib_proc;
+        bool found_existing = false;
         int remote_matching_port;
 
         opal_output(-1, "add procs: adding proc %d", i);
@@ -895,6 +896,24 @@ int mca_btl_openib_add_procs(
             /* if we don't have connection info for this process, it's
              * okay because some other method might be able to reach it,
              * so just mark it as unreachable by us */
+            continue;
+        }
+
+        OPAL_THREAD_LOCK(&ib_proc->proc_lock);
+        for (j = 0 ; j < (int) ib_proc->proc_endpoint_count ; ++j) {
+            endpoint = ib_proc->proc_endpoints[j];
+            if (endpoint->endpoint_btl == openib_btl) {
+                found_existing = true;
+                break;
+            }
+        }
+        OPAL_THREAD_UNLOCK(&ib_proc->proc_lock);
+
+        if (found_existing) {
+            if (reachable) {
+                opal_bitmap_set_bit(reachable, i);
+            }
+            peers[i] = endpoint;
             continue;
         }
 
@@ -1046,6 +1065,37 @@ int mca_btl_openib_add_procs(
     openib_btl->device->mem_reg_max /= openib_btl->local_procs;
 
     return OPAL_SUCCESS;
+}
+
+struct mca_btl_base_endpoint_t *mca_btl_openib_get_ep (struct mca_btl_base_module_t *btl, struct opal_proc_t *proc)
+{
+    mca_btl_openib_module_t *openib_btl = (mca_btl_openib_module_t *) btl;
+    mca_btl_base_endpoint_t *endpoint;
+    mca_btl_openib_proc_t *ib_proc;
+
+    if (NULL == (ib_proc = mca_btl_openib_proc_create(proc))) {
+        /* if we don't have connection info for this process, it's
+         * okay because some other method might be able to reach it,
+         * so just mark it as unreachable by us */
+        return NULL;
+    }
+
+    OPAL_THREAD_LOCK(&ib_proc->proc_lock);
+    for (size_t j = 0 ; j < ib_proc->proc_endpoint_count ; ++j) {
+        endpoint = ib_proc->proc_endpoints[j];
+        if (endpoint->endpoint_btl == openib_btl) {
+            OPAL_THREAD_UNLOCK(&ib_proc->proc_lock);
+            return endpoint;
+        }
+    }
+    OPAL_THREAD_UNLOCK(&ib_proc->proc_lock);
+
+    BTL_VERBOSE(("creating new endpoint for remote process {.jobid = 0x%x, .vpid = 0x%x}",
+                 proc->proc_name.jobid, proc->proc_name.vpid));
+
+    endpoint = NULL;
+    (void) mca_btl_openib_add_procs (btl, 1, &proc, &endpoint, NULL);
+    return endpoint;
 }
 
 /*

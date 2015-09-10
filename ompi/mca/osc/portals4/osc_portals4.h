@@ -299,7 +299,7 @@ ompi_osc_portals4_get_peer(ompi_osc_portals4_module_t *module, int rank)
 static inline ptl_process_t
 ompi_osc_portals4_get_peer_group(struct ompi_group_t *group, int rank)
 {
-    ompi_proc_t *proc = ompi_group_get_proc_ptr(group, rank);
+    ompi_proc_t *proc = ompi_group_get_proc_ptr(group, rank, true);
     return *((ptl_process_t*) proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_PORTALS4]);
 }
 

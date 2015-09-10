@@ -24,6 +24,7 @@
 #include "opal/threads/mutex.h"
 #include "opal/class/opal_list.h"
 #include "ompi/proc/proc.h"
+#include "ompi/communicator/communicator.h"
 BEGIN_C_DECLS
 
 
@@ -42,6 +43,7 @@ struct mca_pml_ob1_comm_proc_t {
 };
 typedef struct mca_pml_ob1_comm_proc_t mca_pml_ob1_comm_proc_t;
 
+OBJ_CLASS_DECLARATION(mca_pml_ob1_comm_proc_t);
 
 /**
  *  Cached on ompi_communicator_t to hold queues/state
@@ -56,7 +58,7 @@ struct mca_pml_comm_t {
 #endif
     opal_mutex_t matching_lock;   /**< matching lock */
     opal_list_t wild_receives;    /**< queue of unmatched wild (source process not specified) receives */
-    mca_pml_ob1_comm_proc_t* procs;
+    mca_pml_ob1_comm_proc_t **procs;
     size_t num_procs;
     size_t last_probed;
 };
@@ -64,6 +66,18 @@ typedef struct mca_pml_comm_t mca_pml_ob1_comm_t;
 
 OBJ_CLASS_DECLARATION(mca_pml_ob1_comm_t);
 
+static inline mca_pml_ob1_comm_proc_t *mca_pml_ob1_peer_lookup (struct ompi_communicator_t *comm, int rank)
+{
+    mca_pml_ob1_comm_t *pml_comm = (mca_pml_ob1_comm_t *)comm->c_pml_comm;
+
+    if (OPAL_UNLIKELY(NULL == pml_comm->procs[rank])) {
+        pml_comm->procs[rank] = OBJ_NEW(mca_pml_ob1_comm_proc_t);
+        pml_comm->procs[rank]->ompi_proc = ompi_comm_peer_lookup (comm, rank);
+        OBJ_RETAIN(pml_comm->procs[rank]->ompi_proc);
+    }
+
+    return pml_comm->procs[rank];
+}
 
 /**
  * Initialize an instance of mca_pml_ob1_comm_t based on the communicator size.
