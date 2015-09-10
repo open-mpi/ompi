@@ -219,8 +219,8 @@ static int mca_bml_r2_endpoint_add_btl (struct ompi_proc_t *proc, mca_bml_base_e
 
     if (btl_flags & MCA_BTL_FLAGS_SEND) {
         /* dont allow an additional BTL with a lower exclusivity ranking */
-        bml_btl = mca_bml_base_btl_array_get_index (&bml_endpoint->btl_send, size - 1);
         size = mca_bml_base_btl_array_get_size (&bml_endpoint->btl_send);
+        bml_btl = mca_bml_base_btl_array_get_index (&bml_endpoint->btl_send, size - 1);
 
         if (!bml_btl || bml_btl->btl->btl_exclusivity < btl->btl_exclusivity) {
             /* this btl has higher exclusivity than an existing btl or none exists */
@@ -384,7 +384,7 @@ static int mca_bml_r2_add_proc (struct ompi_proc_t *proc)
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
-    for (int p_index = 0 ; p_index < mca_bml_r2.num_btl_modules ; ++p_index) {
+    for (size_t p_index = 0 ; p_index < mca_bml_r2.num_btl_modules ; ++p_index) {
         mca_btl_base_module_t *btl = mca_bml_r2.btl_modules[p_index];
         struct mca_btl_base_endpoint_t *btl_endpoint = NULL;
 
@@ -518,8 +518,6 @@ static int mca_bml_r2_add_procs( size_t nprocs,
             ompi_proc_t *proc = new_procs[p];
             mca_bml_base_endpoint_t *bml_endpoint =
                 (mca_bml_base_endpoint_t *) proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML];
-            mca_bml_base_btl_t *bml_btl = NULL;
-            size_t size;
 
             if (NULL == bml_endpoint) {
                 bml_endpoint = mca_bml_r2_allocate_endpoint (proc);
