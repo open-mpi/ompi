@@ -115,6 +115,8 @@ int orte_ess_base_orted_setup(char **hosts)
     orte_app_context_t *app;
     orte_node_t *node;
     char *param;
+    hwloc_obj_t obj;
+    unsigned i, j;
 
     /* my name is set, xfer it to the OPAL layer */
     orte_process_info.super.proc_name = *(opal_process_name_t*)ORTE_PROC_MY_NAME;
@@ -135,49 +137,45 @@ int orte_ess_base_orted_setup(char **hosts)
     setup_sighandler(SIGUSR1, &sigusr1_handler, signal_callback);
     setup_sighandler(SIGUSR2, &sigusr2_handler, signal_callback);
     signals_set = true;
-#if OPAL_HAVE_HWLOC
-    {
-        hwloc_obj_t obj;
-        unsigned i, j;
-        /* get the local topology */
-        if (NULL == opal_hwloc_topology) {
-            if (OPAL_SUCCESS != (ret = opal_hwloc_base_get_topology())) {
-                error = "topology discovery";
-                goto error;
-            }
-        }
-        /* generate the signature */
-        orte_topo_signature = opal_hwloc_base_get_topo_signature(opal_hwloc_topology);
-        /* remove the hostname from the topology. Unfortunately, hwloc
-         * decided to add the source hostname to the "topology", thus
-         * rendering it unusable as a pure topological description. So
-         * we remove that information here.
-         */
-        obj = hwloc_get_root_obj(opal_hwloc_topology);
-        for (i=0; i < obj->infos_count; i++) {
-            if (NULL == obj->infos[i].name ||
-                NULL == obj->infos[i].value) {
-                continue;
-            }
-            if (0 == strncmp(obj->infos[i].name, "HostName", strlen("HostName"))) {
-                free(obj->infos[i].name);
-                free(obj->infos[i].value);
-                /* left justify the array */
-                for (j=i; j < obj->infos_count-1; j++) {
-                    obj->infos[j] = obj->infos[j+1];
-                }
-                obj->infos[obj->infos_count-1].name = NULL;
-                obj->infos[obj->infos_count-1].value = NULL;
-                obj->infos_count--;
-                break;
-            }
-        }
-        if (15 < opal_output_get_verbosity(orte_ess_base_framework.framework_output)) {
-            opal_output(0, "%s Topology Info:", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-            opal_dss.dump(0, opal_hwloc_topology, OPAL_HWLOC_TOPO);
+
+    /* get the local topology */
+    if (NULL == opal_hwloc_topology) {
+        if (OPAL_SUCCESS != (ret = opal_hwloc_base_get_topology())) {
+            error = "topology discovery";
+            goto error;
         }
     }
-#endif
+    /* generate the signature */
+    orte_topo_signature = opal_hwloc_base_get_topo_signature(opal_hwloc_topology);
+    /* remove the hostname from the topology. Unfortunately, hwloc
+     * decided to add the source hostname to the "topology", thus
+     * rendering it unusable as a pure topological description. So
+     * we remove that information here.
+     */
+    obj = hwloc_get_root_obj(opal_hwloc_topology);
+    for (i=0; i < obj->infos_count; i++) {
+        if (NULL == obj->infos[i].name ||
+            NULL == obj->infos[i].value) {
+            continue;
+        }
+        if (0 == strncmp(obj->infos[i].name, "HostName", strlen("HostName"))) {
+            free(obj->infos[i].name);
+            free(obj->infos[i].value);
+            /* left justify the array */
+            for (j=i; j < obj->infos_count-1; j++) {
+                obj->infos[j] = obj->infos[j+1];
+            }
+            obj->infos[obj->infos_count-1].name = NULL;
+            obj->infos[obj->infos_count-1].value = NULL;
+            obj->infos_count--;
+            break;
+        }
+    }
+    if (15 < opal_output_get_verbosity(orte_ess_base_framework.framework_output)) {
+        opal_output(0, "%s Topology Info:", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+        opal_dss.dump(0, opal_hwloc_topology, OPAL_HWLOC_TOPO);
+    }
+
     /* open and setup the opal_pstat framework so we can provide
      * process stats if requested
      */
@@ -351,6 +349,14 @@ int orte_ess_base_orted_setup(char **hosts)
         error = "orte_routed_base_select";
         goto error;
     }
+    /* setup the routed info - the selected routed component
+     * will know what to do.
+     */
+    if (ORTE_SUCCESS != (ret = orte_routed.init_routes(ORTE_PROC_MY_NAME->jobid, NULL))) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_routed.init_routes";
+        goto error;
+    }
     /*
      * Group communications
      */
@@ -474,10 +480,9 @@ int orte_ess_base_orted_setup(char **hosts)
     node = OBJ_NEW(orte_node_t);
     node->name = strdup(orte_process_info.nodename);
     node->index = opal_pointer_array_set_item(orte_node_pool, ORTE_PROC_MY_NAME->vpid, node);
-#if OPAL_HAVE_HWLOC
     /* point our topology to the one detected locally */
     node->topology = opal_hwloc_topology;
-#endif
+
     /* create and store a proc object for us */
     proc = OBJ_NEW(orte_proc_t);
     proc->name.jobid = ORTE_PROC_MY_NAME->jobid;
@@ -505,7 +510,8 @@ int orte_ess_base_orted_setup(char **hosts)
     /* obviously, we have "reported" */
     jdata->num_reported = 1;
 
-    /* setup the PMIx framework */
+    /* setup the PMIx framework - ensure it skips all non-PMIx components */
+    putenv("OMPI_MCA_pmix=^s1,s2,cray");
     if (OPAL_SUCCESS != (ret = mca_base_framework_open(&opal_pmix_base_framework, 0))) {
         ORTE_ERROR_LOG(ret);
         error = "orte_pmix_base_open";
@@ -645,7 +651,7 @@ int orte_ess_base_orted_finalize(void)
     /* shutdown the pmix server */
     pmix_server_finalize();
     (void) mca_base_framework_close(&opal_pmix_base_framework);
-    
+
     /* close frameworks */
     (void) mca_base_framework_close(&orte_schizo_base_framework);
     (void) mca_base_framework_close(&orte_filem_base_framework);

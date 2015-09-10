@@ -120,7 +120,7 @@ int ompi_coll_tuned_allreduce_intra_check_forced_init (coll_tuned_force_algorith
 }
 
 
-int ompi_coll_tuned_allreduce_intra_do_forced(void *sbuf, void *rbuf, int count,
+int ompi_coll_tuned_allreduce_intra_do_forced(const void *sbuf, void *rbuf, int count,
                                               struct ompi_datatype_t *dtype,
                                               struct ompi_op_t *op,
                                               struct ompi_communicator_t *comm,
@@ -153,7 +153,7 @@ int ompi_coll_tuned_allreduce_intra_do_forced(void *sbuf, void *rbuf, int count,
 }
 
 
-int ompi_coll_tuned_allreduce_intra_do_this(void *sbuf, void *rbuf, int count,
+int ompi_coll_tuned_allreduce_intra_do_this(const void *sbuf, void *rbuf, int count,
                                             struct ompi_datatype_t *dtype,
                                             struct ompi_op_t *op,
                                             struct ompi_communicator_t *comm,

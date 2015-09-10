@@ -16,7 +16,7 @@
  *                         All rights reserved.
  * Copyright (c) 2010-2012 IBM Corporation.  All rights reserved.
  * Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
- * Copyright (c) 2013      Intel, Inc. All rights reserved.
+ * Copyright (c) 2013-2015 Intel, Inc. All rights reserved.
  * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -226,7 +226,6 @@ sm_btl_first_time_init(mca_btl_sm_t *sm_btl,
     mca_btl_sm_component.mem_node = my_mem_node = 0;
     mca_btl_sm_component.num_mem_nodes = num_mem_nodes = 1;
 
-#if OPAL_HAVE_HWLOC
     /* If we have hwloc support, then get accurate information */
     if (NULL != opal_hwloc_topology) {
         i = opal_hwloc_base_get_nbobjs_by_type(opal_hwloc_topology,
@@ -276,7 +275,6 @@ sm_btl_first_time_init(mca_btl_sm_t *sm_btl,
             }
         }
     }
-#endif
 
     if (NULL == (res = calloc(1, sizeof(*res)))) {
         return OPAL_ERR_OUT_OF_RESOURCE;

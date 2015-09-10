@@ -1508,7 +1508,6 @@ static uint64_t read_module_param(char *file, uint64_t value, uint64_t max)
 /* calculate memory registation limits */
 static uint64_t calculate_total_mem (void)
 {
-#if OPAL_HAVE_HWLOC
     hwloc_obj_t machine;
 
     machine = hwloc_get_next_obj_by_type (opal_hwloc_topology, HWLOC_OBJ_MACHINE, NULL);
@@ -1517,9 +1516,6 @@ static uint64_t calculate_total_mem (void)
     }
 
     return machine->memory.total_memory;
-#else
-    return 0;
-#endif
 }
 
 
@@ -1720,7 +1716,11 @@ static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
     /* If we did find values for this device (or in the defaults
        section), handle them */
     merge_values(&values, &default_values);
-    if (values.mtu_set) {
+    /*  If MCA param was set, use it. If not, check the INI file
+        or default to IBV_MTU_1024 */
+    if (0 < mca_btl_openib_component.ib_mtu) {
+        device->mtu = mca_btl_openib_component.ib_mtu;
+    } else if (values.mtu_set) {
         switch (values.mtu) {
         case 256:
             device->mtu = IBV_MTU_256;
@@ -1739,11 +1739,11 @@ static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
             break;
         default:
             BTL_ERROR(("invalid MTU value specified in INI file (%d); ignored", values.mtu));
-            device->mtu = mca_btl_openib_component.ib_mtu;
+            device->mtu = IBV_MTU_1024 ;
             break;
         }
     } else {
-        device->mtu = mca_btl_openib_component.ib_mtu;
+        device->mtu = IBV_MTU_1024 ;
     }
 
     /* Allocate the protection domain for the device */
@@ -2329,7 +2329,6 @@ static float get_ib_dev_distance(struct ibv_device *dev)
         return distance;
     }
 
-#if OPAL_HAVE_HWLOC
     float a, b;
     int i;
     hwloc_cpuset_t my_cpuset = NULL, ibv_cpuset = NULL;
@@ -2363,6 +2362,13 @@ static float get_ib_dev_distance(struct ibv_device *dev)
         goto out;
     }
 
+    opal_output_verbose(5, opal_btl_base_framework.framework_output,
+                        "hwloc_distances->nbobjs=%d", hwloc_distances->nbobjs);
+    for (i = 0; i < (int)(2 *  hwloc_distances->nbobjs); i++) {
+        opal_output_verbose(5, opal_btl_base_framework.framework_output,
+                            "hwloc_distances->latency[%d]=%f", i, hwloc_distances->latency[i]);
+    }
+
     /* If ibv_obj is a NUMA node or below, we're good. */
     switch (ibv_obj->type) {
     case HWLOC_OBJ_NODE:
@@ -2378,6 +2384,7 @@ static float get_ib_dev_distance(struct ibv_device *dev)
     default:
         /* If it's above a NUMA node, then I don't know how to compute
            the distance... */
+        opal_output_verbose(5, opal_btl_base_framework.framework_output, "ibv_obj->type set to NULL");
         ibv_obj = NULL;
         break;
     }
@@ -2387,6 +2394,8 @@ static float get_ib_dev_distance(struct ibv_device *dev)
         goto out;
     }
 
+    opal_output_verbose(5, opal_btl_base_framework.framework_output,
+                        "ibv_obj->logical_index=%d", ibv_obj->logical_index);
     /* This function is only called if the process is bound, so let's
        find out where we are bound to.  For the moment, we only care
        about the NUMA node to which we are bound. */
@@ -2413,6 +2422,8 @@ static float get_ib_dev_distance(struct ibv_device *dev)
             my_obj = my_obj->parent;
         }
         if (NULL != my_obj) {
+            opal_output_verbose(5, opal_btl_base_framework.framework_output,
+                                "my_obj->logical_index=%d", my_obj->logical_index);
             /* Distance may be asymetrical, so calculate both of them
                and take the max */
             a = hwloc_distances->latency[my_obj->logical_index +
@@ -2456,7 +2467,6 @@ static float get_ib_dev_distance(struct ibv_device *dev)
     if (NULL != my_cpuset) {
         hwloc_bitmap_free(my_cpuset);
     }
-#endif
 
     return distance;
 }
@@ -2472,15 +2482,18 @@ sort_devs_by_distance(struct ibv_device **ib_devs, int count)
 
     for (i = 0; i < count; i++) {
         devs[i].ib_dev = ib_devs[i];
+        opal_output_verbose(5, opal_btl_base_framework.framework_output,
+                            "Checking distance from this process to device=%s", ibv_get_device_name(ib_devs[i]));
         /* If we're not bound, just assume that the device is close. */
         devs[i].distance = 0;
-#if OPAL_HAVE_HWLOC
         if (opal_process_info.cpuset) {
             /* If this process is bound to one or more PUs, we can get
                an accurate distance. */
             devs[i].distance = get_ib_dev_distance(ib_devs[i]);
         }
-#endif
+        opal_output_verbose(5, opal_btl_base_framework.framework_output,
+                            "Process is %s: distance to device is %f",
+                            (opal_process_info.cpuset ? "bound" : "not bound"), devs[i].distance);
     }
 
     qsort(devs, count, sizeof(struct dev_distance), compare_distance);
@@ -2534,12 +2547,6 @@ btl_openib_component_init(int *num_btl_modules,
         malloc_hook_set = true;
     }
 #endif
-    /* Currently refuse to run if MPI_THREAD_MULTIPLE is enabled */
-    if (enable_mpi_threads && !mca_btl_base_thread_multiple_override) {
-        opal_output_verbose(5, opal_btl_base_framework.framework_output,
-                            "btl:openib: MPI_THREAD_MULTIPLE not suppported; skipping this component");
-        goto no_btls;
-    }
 
     /* Per https://svn.open-mpi.org/trac/ompi/ticket/1305, check to
        see if $sysfsdir/class/infiniband exists.  If it does not,

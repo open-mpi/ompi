@@ -15,6 +15,8 @@
  * Copyright (c) 2012      Los Alamos National Security, LLC. All rights reserved.
  * Copyright (c) 2015      Intel, Inc. All rights reserved.
  *
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -38,6 +40,8 @@
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
+
+#include <pmix_common.h>
 
 BEGIN_C_DECLS
 
@@ -70,7 +74,7 @@ BEGIN_C_DECLS
    * value into the argv array; there is no need to keep the original
    * string (i.e., the arg parameter) after invoking this function.
    */
-PMIX_DECLSPEC  int pmix_argv_append(int *argc, char ***argv, const char *arg) __pmix_attribute_nonnull__(1) __pmix_attribute_nonnull__(3);
+PMIX_DECLSPEC  pmix_status_t pmix_argv_append(int *argc, char ***argv, const char *arg) __pmix_attribute_nonnull__(1) __pmix_attribute_nonnull__(3);
 
   /**
    * Append to an argv-style array, but ignore the size of the array.
@@ -87,7 +91,7 @@ PMIX_DECLSPEC  int pmix_argv_append(int *argc, char ***argv, const char *arg) __
    * argv-style arrays that do not have integers that are actively
    * maintaing their sizes.
    */
-PMIX_DECLSPEC  int pmix_argv_append_nosize(char ***argv, const char *arg);
+PMIX_DECLSPEC  pmix_status_t pmix_argv_append_nosize(char ***argv, const char *arg);
 
 /**
  * Insert the provided arg at the beginning of the array
@@ -98,7 +102,7 @@ PMIX_DECLSPEC  int pmix_argv_append_nosize(char ***argv, const char *arg);
  * @retval PMIX_SUCCESS On success
  * @retval PMIX_ERROR On failure
  */
-PMIX_DECLSPEC int pmix_argv_prepend_nosize(char ***argv, const char *arg);
+PMIX_DECLSPEC pmix_status_t pmix_argv_prepend_nosize(char ***argv, const char *arg);
 
 /**
  * Append to an argv-style array, but only if the provided argument
@@ -115,7 +119,7 @@ PMIX_DECLSPEC int pmix_argv_prepend_nosize(char ***argv, const char *arg);
  * except that it only appends the provided argument if it does not already
  * exist in the provided array, or overwrites it if it is.
  */
-PMIX_DECLSPEC  int pmix_argv_append_unique_nosize(char ***argv, const char *arg, bool overwrite);
+PMIX_DECLSPEC  pmix_status_t pmix_argv_append_unique_nosize(char ***argv, const char *arg, bool overwrite);
 
 /**
    * Free a NULL-terminated argv array.
@@ -248,8 +252,8 @@ PMIX_DECLSPEC  char **pmix_argv_copy(char **argv) __pmix_attribute_malloc__ __pm
      * free()ed (it is assumed that the argv "owns" the memory that
      * the pointer points to).
      */
-PMIX_DECLSPEC  int pmix_argv_delete(int *argc, char ***argv,
-                                    int start, int num_to_delete);
+PMIX_DECLSPEC  pmix_status_t pmix_argv_delete(int *argc, char ***argv,
+                                              int start, int num_to_delete);
 
     /**
      * Insert one argv array into the middle of another
@@ -272,7 +276,7 @@ PMIX_DECLSPEC  int pmix_argv_delete(int *argc, char ***argv,
      * source points to are strdup'ed into the new locations in
      * target).
      */
-PMIX_DECLSPEC  int pmix_argv_insert(char ***target, int start, char **source);
+PMIX_DECLSPEC  pmix_status_t pmix_argv_insert(char ***target, int start, char **source);
 
 /**
  * Insert one argv element in front of a specific position in an array
@@ -295,7 +299,7 @@ PMIX_DECLSPEC  int pmix_argv_insert(char ***target, int start, char **source);
  * source points to is strdup'ed into the new location in
  * target).
  */
-PMIX_DECLSPEC  int pmix_argv_insert_element(char ***target, int location, char *source);
+PMIX_DECLSPEC  pmix_status_t pmix_argv_insert_element(char ***target, int location, char *source);
 
 END_C_DECLS
 

@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2009-2013 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2013-2014 Intel, Inc. All rights reserved.
+ * Copyright (c) 2013-2015 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -45,9 +45,7 @@ int orte_rmaps_rr_byslot(orte_job_t *jdata,
     orte_node_t *node;
     orte_proc_t *proc;
     int num_procs_to_assign, extra_procs_to_assign=0, nxtra_nodes=0;
-#if OPAL_HAVE_HWLOC
     hwloc_obj_t obj=NULL;
-#endif
     float balance;
     bool add_one=false;
 
@@ -72,14 +70,12 @@ int orte_rmaps_rr_byslot(orte_job_t *jdata,
         opal_output_verbose(2, orte_rmaps_base_framework.framework_output,
                             "mca:rmaps:rr:slot working node %s",
                             node->name);
-#if OPAL_HAVE_HWLOC
         /* get the root object as we are not assigning
          * locale here except at the node level
          */
         if (NULL != node->topology) {
             obj = hwloc_get_root_obj(node->topology);
         }
-#endif
         if (node->slots <= node->slots_inuse) {
             opal_output_verbose(2, orte_rmaps_base_framework.framework_output,
                                 "mca:rmaps:rr:slot node %s is full - skipping",
@@ -110,9 +106,7 @@ int orte_rmaps_rr_byslot(orte_job_t *jdata,
                 return ORTE_ERR_OUT_OF_RESOURCE;
             }
             nprocs_mapped++;
-#if OPAL_HAVE_HWLOC
             orte_set_attribute(&proc->attributes, ORTE_PROC_HWLOC_LOCALE, ORTE_ATTR_LOCAL, obj, OPAL_PTR);
-#endif
         }
     }
 
@@ -146,14 +140,13 @@ int orte_rmaps_rr_byslot(orte_job_t *jdata,
         opal_output_verbose(2, orte_rmaps_base_framework.framework_output,
                             "mca:rmaps:rr:slot working node %s",
                             node->name);
-#if OPAL_HAVE_HWLOC
         /* get the root object as we are not assigning
          * locale except at the node level
          */
         if (NULL != node->topology) {
             obj = hwloc_get_root_obj(node->topology);
         }
-#endif
+
         /* add this node to the map - do it only once */
         if (!ORTE_FLAG_TEST(node, ORTE_NODE_FLAG_MAPPED)) {
             if (ORTE_SUCCESS > (rc = opal_pointer_array_add(jdata->map->nodes, (void*)node))) {
@@ -181,9 +174,7 @@ int orte_rmaps_rr_byslot(orte_job_t *jdata,
                 return ORTE_ERR_OUT_OF_RESOURCE;
             }
             nprocs_mapped++;
-#if OPAL_HAVE_HWLOC
             orte_set_attribute(&proc->attributes, ORTE_PROC_HWLOC_LOCALE, ORTE_ATTR_LOCAL, obj, OPAL_PTR);
-#endif
         }
         /* not all nodes are equal, so only set oversubscribed for
          * this node if it is in that state
@@ -213,9 +204,7 @@ int orte_rmaps_rr_bynode(orte_job_t *jdata,
     orte_proc_t *proc;
     int num_procs_to_assign, navg, idx;
     int extra_procs_to_assign=0, nxtra_nodes=0;
-#if OPAL_HAVE_HWLOC
     hwloc_obj_t obj=NULL;
-#endif
     float balance;
     bool add_one=false;
     bool oversubscribed=false;
@@ -276,14 +265,12 @@ int orte_rmaps_rr_bynode(orte_job_t *jdata,
 
         nnodes = 0;
         OPAL_LIST_FOREACH(node, node_list, orte_node_t) {
-#if OPAL_HAVE_HWLOC
             /* get the root object as we are not assigning
              * locale except at the node level
              */
             if (NULL != node->topology) {
                 obj = hwloc_get_root_obj(node->topology);
             }
-#endif
             /* add this node to the map, but only do so once */
             if (!ORTE_FLAG_TEST(node, ORTE_NODE_FLAG_MAPPED)) {
                 if (ORTE_SUCCESS > (idx = opal_pointer_array_add(jdata->map->nodes, (void*)node))) {
@@ -352,9 +339,7 @@ int orte_rmaps_rr_bynode(orte_job_t *jdata,
                     return ORTE_ERR_OUT_OF_RESOURCE;
                 }
                 nprocs_mapped++;
-#if OPAL_HAVE_HWLOC
             orte_set_attribute(&proc->attributes, ORTE_PROC_HWLOC_LOCALE, ORTE_ATTR_LOCAL, obj, OPAL_PTR);
-#endif
             }
             /* not all nodes are equal, so only set oversubscribed for
              * this node if it is in that state
@@ -375,14 +360,13 @@ int orte_rmaps_rr_bynode(orte_job_t *jdata,
     /* now fillin as required until fully mapped */
     while (nprocs_mapped < app->num_procs) {
         OPAL_LIST_FOREACH(node, node_list, orte_node_t) {
-#if OPAL_HAVE_HWLOC
             /* get the root object as we are not assigning
              * locale except at the node level
              */
             if (NULL != node->topology) {
                 obj = hwloc_get_root_obj(node->topology);
             }
-#endif
+
            OPAL_OUTPUT_VERBOSE((20, orte_rmaps_base_framework.framework_output,
                                  "%s ADDING PROC TO NODE %s",
                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), node->name));
@@ -390,9 +374,7 @@ int orte_rmaps_rr_bynode(orte_job_t *jdata,
                 return ORTE_ERR_OUT_OF_RESOURCE;
             }
             nprocs_mapped++;
-#if OPAL_HAVE_HWLOC
             orte_set_attribute(&proc->attributes, ORTE_PROC_HWLOC_LOCALE, ORTE_ATTR_LOCAL, obj, OPAL_PTR);
-#endif
             /* not all nodes are equal, so only set oversubscribed for
              * this node if it is in that state
              */
@@ -412,7 +394,6 @@ int orte_rmaps_rr_bynode(orte_job_t *jdata,
     return ORTE_SUCCESS;
 }
 
-#if OPAL_HAVE_HWLOC
 static  int byobj_span(orte_job_t *jdata,
                        orte_app_context_t *app,
                        opal_list_t *node_list,
@@ -716,5 +697,4 @@ static int byobj_span(orte_job_t *jdata,
 
     return ORTE_SUCCESS;
 }
-#endif
 

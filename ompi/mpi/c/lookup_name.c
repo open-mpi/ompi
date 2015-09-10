@@ -46,9 +46,8 @@ int MPI_Lookup_name(const char *service_name, MPI_Info info, char *port_name)
 {
     char range[OPAL_MAX_INFO_VAL];
     int flag=0, ret;
-    opal_pmix_data_range_t rng;
-    bool range_given = false;
-    opal_list_t results;
+    opal_value_t *rng;
+    opal_list_t results, pinfo;
     opal_pmix_pdata_t *pdat;
 
     if ( MPI_PARAM_CHECK ) {
@@ -70,35 +69,42 @@ int MPI_Lookup_name(const char *service_name, MPI_Info info, char *port_name)
 
     OPAL_CR_ENTER_LIBRARY();
 
+    OBJ_CONSTRUCT(&pinfo, opal_list_t);
+
     /* OMPI supports info keys to pass the range to
      * be searched for the given key */
     if (MPI_INFO_NULL != info) {
         ompi_info_get (info, "range", sizeof(range) - 1, range, &flag);
         if (flag) {
-            range_given = true;
             if (0 == strcmp(range, "nspace")) {
-                rng = OPAL_PMIX_NAMESPACE;  // share only with procs in same nspace
+                rng = OBJ_NEW(opal_value_t);
+                rng->key = strdup(OPAL_PMIX_RANGE);
+                rng->type = OPAL_INT;
+                rng->data.integer = OPAL_PMIX_NAMESPACE;  // share only with procs in same nspace
+                opal_list_append(&pinfo, &rng->super);
             } else if (0 == strcmp(range, "session")) {
-                rng = OPAL_PMIX_SESSION; // share only with procs in same session
+                rng = OBJ_NEW(opal_value_t);
+                rng->key = strdup(OPAL_PMIX_RANGE);
+                rng->type = OPAL_INT;
+                rng->data.integer = OPAL_PMIX_SESSION; // share only with procs in same session
+                opal_list_append(&pinfo, &rng->super);
             } else {
                 /* unrecognized scope */
+                OPAL_LIST_DESTRUCT(&pinfo);
                 return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,
                                             FUNC_NAME);
             }
         }
     }
-    if (!range_given) {
-        /* default to nspace */
-        rng = OPAL_PMIX_NAMESPACE;
-    }
 
     /* collect the findings */
     OBJ_CONSTRUCT(&results, opal_list_t);
     pdat = OBJ_NEW(opal_pmix_pdata_t);
-    pdat->key = strdup(service_name);
+    pdat->value.key = strdup(service_name);
     opal_list_append(&results, &pdat->super);
 
-    ret = opal_pmix.lookup(rng, &results);
+    ret = opal_pmix.lookup(&results, &pinfo);
+    OPAL_LIST_DESTRUCT(&pinfo);
     if (OPAL_SUCCESS != ret ||
         OPAL_STRING != pdat->value.type ||
         NULL == pdat->value.data.string) {

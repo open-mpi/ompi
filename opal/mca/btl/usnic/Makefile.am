@@ -12,6 +12,7 @@
 # Copyright (c) 2006      Sandia National Laboratories. All rights
 #                         reserved.
 # Copyright (c) 2010-2015 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2015      Intel, Inc. All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -48,6 +49,7 @@ sources = \
     btl_usnic_frag.h \
     btl_usnic_graph.h \
     btl_usnic_graph.c \
+    btl_usnic_hwloc.c \
     btl_usnic_hwloc.h \
     btl_usnic_map.c \
     btl_usnic_mca.c \
@@ -64,10 +66,6 @@ sources = \
     btl_usnic_test.c \
     btl_usnic_test.h \
     $(test_sources)
-
-if OPAL_HAVE_HWLOC
-sources += btl_usnic_hwloc.c
-endif
 
 # Make the output library in this directory, and name it either
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la

@@ -13,6 +13,8 @@
  * Copyright (c) 2012      Sandia National Laboratories.  All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -36,7 +38,7 @@ OBJ_CLASS_DECLARATION(mca_pml_cm_thin_recv_request_t);
 
 struct mca_pml_cm_hvy_recv_request_t {
     mca_pml_cm_request_t req_base;
-    void *req_addr;                       /**< pointer to application buffer */
+    const void *req_addr;                 /**< pointer to application buffer */
     size_t req_count;                     /**< count of user datatype elements */
     int32_t req_peer;                     /**< peer process - rank w/in this communicator */
     int32_t req_tag;                      /**< user defined tag */

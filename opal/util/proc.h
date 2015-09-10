@@ -3,7 +3,7 @@
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2013      Inria.  All rights reserved.
- * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -109,9 +109,7 @@ typedef struct opal_process_info_t {
     char *proc_session_dir;             /**< Session directory for the process */
     int32_t num_local_peers;            /**< number of procs from my job that share my node with me */
     int32_t my_local_rank;              /**< local rank on this node within my job */
-#if OPAL_HAVE_HWLOC
     char *cpuset;                       /**< String-representation of bitmap where we are bound */
-#endif
 } opal_process_info_t;
 OPAL_DECLSPEC extern opal_process_info_t opal_process_info;
 
@@ -137,6 +135,13 @@ OPAL_DECLSPEC extern char* (*opal_vpid_print)(const opal_vpid_t);
 OPAL_DECLSPEC extern char* (*opal_jobid_print)(const opal_jobid_t);
 OPAL_DECLSPEC extern char* (*opal_convert_jobid_to_string)(opal_jobid_t jobid);
 OPAL_DECLSPEC extern int (*opal_convert_string_to_jobid)(opal_jobid_t *jobid, const char *jobid_string);
+
+/**
+ * Lookup an opal_proc_t by name
+ *
+ * @param name (IN) name to lookup
+ */
+OPAL_DECLSPEC extern struct opal_proc_t *(*opal_proc_for_name) (const opal_process_name_t name);
 
 #define OPAL_NAME_PRINT(OPAL_PN)    opal_process_name_print(OPAL_PN)
 #define OPAL_JOBID_PRINT(OPAL_PN)   opal_jobid_print(OPAL_PN)

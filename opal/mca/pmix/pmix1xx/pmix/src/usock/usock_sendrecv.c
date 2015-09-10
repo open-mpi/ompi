@@ -2,6 +2,8 @@
  * Copyright (c) 2014-2015 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014      Artem Y. Polyakov <artpol84@gmail.com>.
  *                         All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -41,9 +43,10 @@
 
 static uint32_t current_tag = 1;  // 0 is reserved for system purposes
 
-static int send_bytes(int sd, char **buf, size_t *remain)
+static pmix_status_t send_bytes(int sd, char **buf, size_t *remain)
 {
-    int ret = PMIX_SUCCESS, rc;
+    pmix_status_t ret = PMIX_SUCCESS;
+    int rc;
     char *ptr = *buf;
     while (0 < *remain) {
         rc = write(sd, ptr, *remain);
@@ -141,7 +144,7 @@ void pmix_usock_send_handler(int sd, short flags, void *cbdata)
 {
     pmix_peer_t *peer = (pmix_peer_t*)cbdata;
     pmix_usock_send_t *msg = peer->send_msg;
-    int rc;
+    pmix_status_t rc;
 
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "sock:send_handler SENDING TO PEER %s:%d with %s msg",

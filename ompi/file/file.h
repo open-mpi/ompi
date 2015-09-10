@@ -12,6 +12,8 @@
  *                         All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -145,7 +147,7 @@ int ompi_file_init(void);
  * mainly calls OBJ_RELEASE() but also does some other error
  * handling as well.
  */
-int ompi_file_open(struct ompi_communicator_t *comm, char *filename,
+int ompi_file_open(struct ompi_communicator_t *comm, const char *filename,
                    int amode, struct ompi_info_t *info,
                    ompi_file_t **fh);
 

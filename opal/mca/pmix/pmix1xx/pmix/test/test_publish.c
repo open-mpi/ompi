@@ -59,10 +59,10 @@ static int test_publish(char *my_nspace, int my_rank, int blocking)
     info.value.type = PMIX_STRING;
     info.value.data.string = strdup(data);
     if (blocking) {
-        rc = PMIx_Publish(PMIX_NAMESPACE, PMIX_PERSIST_INDEF, &info, 1);
+        rc = PMIx_Publish(&info, 1);
     } else {
         int in_progress = 1;
-        rc = PMIx_Publish_nb(PMIX_NAMESPACE, PMIX_PERSIST_INDEF, &info, 1, release_cb, &in_progress);
+        rc = PMIx_Publish_nb(&info, 1, release_cb, &in_progress);
         if (PMIX_SUCCESS == rc) {
             PMIX_WAIT_FOR_COMPLETION(in_progress);
         }
@@ -83,7 +83,7 @@ static int test_lookup(char *my_nspace, int my_rank, int blocking)
     (void)snprintf(data, 512, "data from proc %s:%d", my_nspace, my_rank);
 
     if (blocking) {
-        if (PMIX_SUCCESS != (rc = PMIx_Lookup(PMIX_NAMESPACE, NULL, 0, &pdata, 1))) {
+        if (PMIX_SUCCESS != (rc = PMIx_Lookup(&pdata, 1, NULL, 0))) {
             PMIX_PDATA_DESTRUCT(&pdata);
             return rc;
         }
@@ -98,7 +98,7 @@ static int test_lookup(char *my_nspace, int my_rank, int blocking)
         cbdata.pdata = &pdata;
         /* copy the key across */
         (void)strncpy(pdata.key, keys[0], PMIX_MAX_KEYLEN);
-        rc = PMIx_Lookup_nb(PMIX_NAMESPACE, keys, NULL, 0, lookup_cb, (void*)&cbdata);
+        rc = PMIx_Lookup_nb(keys, NULL, 0, lookup_cb, (void*)&cbdata);
         if (PMIX_SUCCESS != rc) {
             PMIX_PDATA_DESTRUCT(&pdata);
             return rc;
@@ -130,10 +130,10 @@ static int test_unpublish(char *my_nspace, int my_rank, int blocking)
     keys[1] = NULL;
 
     if (blocking) {
-        rc = PMIx_Unpublish(PMIX_NAMESPACE, keys);
+        rc = PMIx_Unpublish(keys, NULL, 0);
     } else {
         int in_progress = 1;
-        rc = PMIx_Unpublish_nb(PMIX_NAMESPACE, keys, release_cb, &in_progress);
+        rc = PMIx_Unpublish_nb(keys, NULL, 0, release_cb, &in_progress);
         if (PMIX_SUCCESS == rc) {
             PMIX_WAIT_FOR_COMPLETION(in_progress);
         }

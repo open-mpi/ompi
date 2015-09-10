@@ -35,6 +35,7 @@
 #include "opal/util/show_help.h"
 
 #include "pmix1.h"
+#include "opal/mca/pmix/base/base.h"
 
 #include "opal/mca/pmix/pmix1xx/pmix/include/pmix/pmix_common.h"
 
@@ -82,39 +83,12 @@ const opal_pmix_base_module_t opal_pmix_pmix1xx_module = {
     pmix1_server_notify_error,
     /* utility APIs */
     PMIx_Get_version,
-    pmix1_register_errhandler,
-    pmix1_deregister_errhandler,
+    opal_pmix_base_register_handler,
+    opal_pmix_base_deregister_handler,
     pmix1_store_local
 };
 
-static pmix_notification_fn_t errhandler = NULL;
-
-static void notification_fn(int status,
-                            opal_list_t *procs,
-                            opal_list_t *info)
-{
-    /* convert the status */
-
-    /* convert the list of procs to an array of pmix_proc_t */
-
-    /* convert the list of info to an array of pmix_info_t */
-
-    /* pass this down to the notification function
-     * we were given */
-}
-
-void pmix1_register_errhandler(opal_pmix_errhandler_fn_t errhandler)
-{
-    return;
-}
-
-void pmix1_deregister_errhandler(void)
-{
-    return;
-}
-
-int pmix1_store_local(const opal_process_name_t *proc,
-                     opal_value_t *val)
+int pmix1_store_local(const opal_process_name_t *proc, opal_value_t *val)
 {
     pmix_value_t kv;
     pmix_status_t rc;
@@ -307,7 +281,7 @@ void pmix1_value_load(pmix_value_t *v,
             break;
         case OPAL_SIZE:
             v->type = PMIX_SIZE;
-            memcpy(&(v->data.size), &kv->data.size, sizeof(size_t));
+            v->data.size = (size_t)kv->data.size;
             break;
         case OPAL_PID:
             v->type = PMIX_PID;
@@ -370,7 +344,7 @@ void pmix1_value_load(pmix_value_t *v,
             if (NULL != kv->data.bo.bytes) {
                 v->data.bo.bytes = (char*)malloc(kv->data.bo.size);
                 memcpy(v->data.bo.bytes, kv->data.bo.bytes, kv->data.bo.size);
-                memcpy(&(v->data.bo.size), &kv->data.bo.size, sizeof(size_t));
+                v->data.bo.size = (size_t)kv->data.bo.size;
             } else {
                 v->data.bo.bytes = NULL;
                 v->data.bo.size = 0;
@@ -408,7 +382,7 @@ int pmix1_value_unload(opal_value_t *kv,
         break;
     case PMIX_SIZE:
         kv->type = OPAL_SIZE;
-        memcpy(&kv->data.size, &(v->data.size), sizeof(size_t));
+        kv->data.size = (int)v->data.size;
         break;
     case PMIX_PID:
         kv->type = OPAL_PID;
@@ -470,7 +444,7 @@ int pmix1_value_unload(opal_value_t *kv,
         kv->type = OPAL_BYTE_OBJECT;
         if (NULL != v->data.bo.bytes && 0 < v->data.bo.size) {
             kv->data.bo.bytes = (uint8_t*)v->data.bo.bytes;
-            kv->data.bo.size = v->data.bo.size;
+            kv->data.bo.size = (int)v->data.bo.size;
         } else {
             kv->data.bo.bytes = NULL;
             kv->data.bo.size = 0;

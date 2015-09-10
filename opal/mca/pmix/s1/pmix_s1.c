@@ -41,12 +41,9 @@ static int s1_put(opal_pmix_scope_t scope,
 static int s1_get(const opal_process_name_t *id,
                   const char *key,
                   opal_value_t **kv);
-static int s1_publish(opal_pmix_data_range_t scope,
-                      opal_pmix_persistence_t persist,
-                      opal_list_t *info);
-static int s1_lookup(opal_pmix_data_range_t scope,
-                     opal_list_t *data);
-static int s1_unpublish(opal_pmix_data_range_t scope, char **keys);
+static int s1_publish(opal_list_t *info);
+static int s1_lookup(opal_list_t *data, opal_list_t *info);
+static int s1_unpublish(char **keys, opal_list_t *info);
 static int s1_spawn(opal_list_t *jobinfo, opal_list_t *apps, opal_jobid_t *jobid);
 static int s1_job_connect(opal_list_t *procs);
 static int s1_job_disconnect(opal_list_t *procs);
@@ -164,7 +161,7 @@ static int s1_init(void)
         return OPAL_ERROR;
     }
 
-    if( PMI_TRUE != initialized && PMI_SUCCESS != (rc = PMI_Init(&spawned)) ) {
+    if (PMI_TRUE != initialized && PMI_SUCCESS != (rc = PMI_Init(&spawned))) {
         OPAL_PMI_ERROR(rc, "PMI_Init");
         return OPAL_ERROR;
     }
@@ -174,7 +171,7 @@ static int s1_init(void)
 
     // Initialize space demands
     rc = PMI_KVS_Get_value_length_max(&pmix_vallen_max);
-    if( PMI_SUCCESS != rc ) {
+    if (PMI_SUCCESS != rc) {
         OPAL_PMI_ERROR(rc, "PMI_KVS_Get_value_length_max");
         goto err_exit;
     }
@@ -182,20 +179,20 @@ static int s1_init(void)
     pmix_vallen_threshold >>= 2;
 
     rc = PMI_KVS_Get_name_length_max(&pmix_kvslen_max);
-    if (PMI_SUCCESS != rc ) {
+    if (PMI_SUCCESS != rc) {
         OPAL_PMI_ERROR(rc, "PMI_KVS_Get_name_length_max");
         goto err_exit;
     }
 
     rc = PMI_KVS_Get_key_length_max(&pmix_keylen_max);
-    if( PMI_SUCCESS != rc ) {
+    if (PMI_SUCCESS != rc) {
         OPAL_PMI_ERROR(rc, "PMI_KVS_Get_key_length_max");
         goto err_exit;
     }
 
     // Initialize job environment information
     pmix_id = (char*)malloc(pmix_vallen_max);
-    if( pmix_id == NULL ){
+    if (pmix_id == NULL) {
         ret = OPAL_ERR_OUT_OF_RESOURCE;
         goto err_exit;
     }
@@ -204,11 +201,36 @@ static int s1_init(void)
         free(pmix_id);
         goto err_exit;
     }
+
+    /* get our rank */
+    ret = PMI_Get_rank(&rank);
+    if( PMI_SUCCESS != ret ) {
+        OPAL_PMI_ERROR(ret, "PMI_Get_rank");
+        goto err_exit;
+    }
+
     /* Slurm PMI provides the job id as an integer followed
      * by a '.', followed by essentially a stepid. The first integer
      * defines an overall job number. The second integer is the number of
-     * individual jobs we have run within that allocation.
-     */
+     * individual jobs we have run within that allocation. */
+    s1_pname.jobid = strtoul(pmix_id, &str, 10);
+    s1_pname.jobid = (s1_pname.jobid << 16) & 0xffff0000;
+    if (NULL != str) {
+        ui32 = strtoul(str, NULL, 10);
+        s1_pname.jobid |= (ui32 & 0x0000ffff);
+    }
+    free(pmix_id);
+    ldr.jobid = s1_pname.jobid;
+    s1_pname.vpid = rank;
+    /* store our name in the opal_proc_t so that
+     * debug messages will make sense - an upper
+     * layer will eventually overwrite it, but that
+     * won't do any harm */
+    opal_proc_set_name(&s1_pname);
+    opal_output_verbose(2, opal_pmix_base_framework.framework_output,
+                        "%s pmix:s1: assigned tmp name",
+                        OPAL_NAME_PRINT(s1_pname));
+
     OBJ_CONSTRUCT(&kv, opal_value_t);
     kv.key = strdup(OPAL_PMIX_JOBID);
     kv.type = OPAL_STRING;
@@ -220,12 +242,6 @@ static int s1_init(void)
     }
     OBJ_DESTRUCT(&kv);
 
-    /* get our rank */
-    ret = PMI_Get_rank(&rank);
-    if( PMI_SUCCESS != ret ) {
-        OPAL_PMI_ERROR(ret, "PMI_Get_rank");
-        goto err_exit;
-    }
     /* save it */
     OBJ_CONSTRUCT(&kv, opal_value_t);
     kv.key = strdup(OPAL_PMIX_RANK);
@@ -238,32 +254,14 @@ static int s1_init(void)
     }
     OBJ_DESTRUCT(&kv);
 
-    /* store our name in the opal_proc_t so that
-     * debug messages will make sense - an upper
-     * layer will eventually overwrite it, but that
-     * won't do any harm */
-    s1_pname.jobid = strtoul(pmix_id, &str, 10);
-    s1_pname.jobid = (s1_pname.jobid << 16) & 0xffff0000;
-    if (NULL != str) {
-        ui32 = strtoul(str, NULL, 10);
-        s1_pname.jobid |= (ui32 & 0x0000ffff);
-    }
-    free(pmix_id);
-    ldr.jobid = s1_pname.jobid;
-    s1_pname.vpid = rank;
-    opal_proc_set_name(&s1_pname);
-    opal_output_verbose(2, opal_pmix_base_framework.framework_output,
-                        "%s pmix:s1: assigned tmp name",
-                        OPAL_NAME_PRINT(s1_pname));
-
     pmix_kvs_name = (char*)malloc(pmix_kvslen_max);
-    if( pmix_kvs_name == NULL ){
+    if (pmix_kvs_name == NULL) {
         ret = OPAL_ERR_OUT_OF_RESOURCE;
         goto err_exit;
     }
 
     rc = PMI_KVS_Get_my_name(pmix_kvs_name, pmix_kvslen_max);
-    if( PMI_SUCCESS != rc ) {
+    if (PMI_SUCCESS != rc) {
         OPAL_PMI_ERROR(rc, "PMI_KVS_Get_my_name");
         goto err_exit;
     }
@@ -557,7 +555,6 @@ static int s1_fence(opal_list_t *procs, int collect_data)
                 OPAL_ERROR_LOG(rc);
                 return rc;
             }
-#if OPAL_HAVE_HWLOC
             if (NULL == kp || NULL == kp->data.string) {
                 /* if we share a node, but we don't know anything more, then
                  * mark us as on the node as this is all we know
@@ -572,10 +569,6 @@ static int s1_fence(opal_list_t *procs, int collect_data)
             if (NULL != kp) {
                 OBJ_RELEASE(kp);
             }
-#else
-            /* all we know is we share a node */
-            locality = OPAL_PROC_ON_CLUSTER | OPAL_PROC_ON_CU | OPAL_PROC_ON_NODE;
-#endif
             OPAL_OUTPUT_VERBOSE((1, opal_pmix_base_framework.framework_output,
                                  "%s pmix:s1 proc %s locality %s",
                                  OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
@@ -611,17 +604,14 @@ static int s1_get(const opal_process_name_t *id,
    return rc;
 }
 
-static int s1_publish(opal_pmix_data_range_t scope,
-                      opal_pmix_persistence_t persist,
-                      opal_list_t *info)
+static int s1_publish(opal_list_t *info)
 {
     // SLURM PMIv1 doesn't implement this function
 
     return OPAL_ERR_NOT_SUPPORTED;
 }
 
-static int s1_lookup(opal_pmix_data_range_t scope,
-                     opal_list_t *data)
+static int s1_lookup(opal_list_t *data, opal_list_t *info)
 {
     // Allocate mem for port here? Otherwise we won't get success!
     // SLURM PMIv1 doesn't implement this function
@@ -629,7 +619,7 @@ static int s1_lookup(opal_pmix_data_range_t scope,
     return OPAL_ERR_NOT_SUPPORTED;
 }
 
-static int s1_unpublish(opal_pmix_data_range_t scope, char **keys)
+static int s1_unpublish(char **keys, opal_list_t *info)
 {
     // SLURM PMIv1 doesn't implement this function
 

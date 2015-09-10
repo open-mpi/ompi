@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2015      Intel, Inc. All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -37,6 +39,8 @@
 #endif
 
 #include "src/class/pmix_list.h"
+
+#include <pmix_common.h>
 
 BEGIN_C_DECLS
 
@@ -96,7 +100,7 @@ static inline size_t pmix_hash_table_get_size(pmix_hash_table_t *ht)
  *
  */
 
-PMIX_DECLSPEC int pmix_hash_table_remove_all(pmix_hash_table_t *ht);
+PMIX_DECLSPEC pmix_status_t pmix_hash_table_remove_all(pmix_hash_table_t *ht);
 
 /**
  *  Retrieve value via uint32_t key.
@@ -111,8 +115,8 @@ PMIX_DECLSPEC int pmix_hash_table_remove_all(pmix_hash_table_t *ht);
  *
  */
 
-PMIX_DECLSPEC int pmix_hash_table_get_value_uint32(pmix_hash_table_t* table, uint32_t key,
-						   void** ptr);
+PMIX_DECLSPEC pmix_status_t pmix_hash_table_get_value_uint32(pmix_hash_table_t* table, uint32_t key,
+						             void** ptr);
 
 /**
  *  Set value based on uint32_t key.
@@ -124,7 +128,7 @@ PMIX_DECLSPEC int pmix_hash_table_get_value_uint32(pmix_hash_table_t* table, uin
  *
  */
 
-PMIX_DECLSPEC int pmix_hash_table_set_value_uint32(pmix_hash_table_t* table, uint32_t key, void* value);
+PMIX_DECLSPEC pmix_status_t pmix_hash_table_set_value_uint32(pmix_hash_table_t* table, uint32_t key, void* value);
 
 /**
  *  Remove value based on uint32_t key.
@@ -135,7 +139,7 @@ PMIX_DECLSPEC int pmix_hash_table_set_value_uint32(pmix_hash_table_t* table, uin
  *
  */
 
-PMIX_DECLSPEC int pmix_hash_table_remove_value_uint32(pmix_hash_table_t* table, uint32_t key);
+PMIX_DECLSPEC pmix_status_t pmix_hash_table_remove_value_uint32(pmix_hash_table_t* table, uint32_t key);
 
 /**
  *  Retrieve value via uint64_t key.
@@ -150,8 +154,8 @@ PMIX_DECLSPEC int pmix_hash_table_remove_value_uint32(pmix_hash_table_t* table, 
  *
  */
 
-PMIX_DECLSPEC int pmix_hash_table_get_value_uint64(pmix_hash_table_t *table, uint64_t key,
-						   void **ptr);
+PMIX_DECLSPEC pmix_status_t pmix_hash_table_get_value_uint64(pmix_hash_table_t *table, uint64_t key,
+						             void **ptr);
 
 /**
  *  Set value based on uint64_t key.
@@ -163,7 +167,7 @@ PMIX_DECLSPEC int pmix_hash_table_get_value_uint64(pmix_hash_table_t *table, uin
  *
  */
 
-PMIX_DECLSPEC int pmix_hash_table_set_value_uint64(pmix_hash_table_t *table, uint64_t key, void* value);
+PMIX_DECLSPEC pmix_status_t pmix_hash_table_set_value_uint64(pmix_hash_table_t *table, uint64_t key, void* value);
 
 /**
  *  Remove value based on uint64_t key.
@@ -174,7 +178,7 @@ PMIX_DECLSPEC int pmix_hash_table_set_value_uint64(pmix_hash_table_t *table, uin
  *
  */
 
-PMIX_DECLSPEC int pmix_hash_table_remove_value_uint64(pmix_hash_table_t *table, uint64_t key);
+PMIX_DECLSPEC pmix_status_t pmix_hash_table_remove_value_uint64(pmix_hash_table_t *table, uint64_t key);
 
 /**
  *  Retrieve value via arbitrary length binary key.
@@ -189,8 +193,8 @@ PMIX_DECLSPEC int pmix_hash_table_remove_value_uint64(pmix_hash_table_t *table, 
  *
  */
 
-PMIX_DECLSPEC int pmix_hash_table_get_value_ptr(pmix_hash_table_t *table, const void* key,
-						size_t keylen, void **ptr);
+PMIX_DECLSPEC pmix_status_t pmix_hash_table_get_value_ptr(pmix_hash_table_t *table, const void* key,
+						          size_t keylen, void **ptr);
 
 /**
  *  Set value based on arbitrary length binary key.
@@ -202,7 +206,7 @@ PMIX_DECLSPEC int pmix_hash_table_get_value_ptr(pmix_hash_table_t *table, const 
  *
  */
 
-PMIX_DECLSPEC int pmix_hash_table_set_value_ptr(pmix_hash_table_t *table, const void* key, size_t keylen, void* value);
+PMIX_DECLSPEC pmix_status_t pmix_hash_table_set_value_ptr(pmix_hash_table_t *table, const void* key, size_t keylen, void* value);
 
 /**
  *  Remove value based on arbitrary length binary key.
@@ -213,7 +217,7 @@ PMIX_DECLSPEC int pmix_hash_table_set_value_ptr(pmix_hash_table_t *table, const 
  *
  */
 
-PMIX_DECLSPEC int pmix_hash_table_remove_value_ptr(pmix_hash_table_t *table, const void* key, size_t keylen);
+PMIX_DECLSPEC pmix_status_t pmix_hash_table_remove_value_ptr(pmix_hash_table_t *table, const void* key, size_t keylen);
 
 
 /** The following functions are only for allowing iterating through
@@ -238,8 +242,8 @@ PMIX_DECLSPEC int pmix_hash_table_remove_value_ptr(pmix_hash_table_t *table, con
  *
  */
 
-PMIX_DECLSPEC int pmix_hash_table_get_first_key_uint32(pmix_hash_table_t *table, uint32_t *key,
-					void **value, void **node);
+PMIX_DECLSPEC pmix_status_t pmix_hash_table_get_first_key_uint32(pmix_hash_table_t *table, uint32_t *key,
+					                         void **value, void **node);
 
 
 /**
@@ -256,9 +260,9 @@ PMIX_DECLSPEC int pmix_hash_table_get_first_key_uint32(pmix_hash_table_t *table,
  *
  */
 
-PMIX_DECLSPEC int pmix_hash_table_get_next_key_uint32(pmix_hash_table_t *table, uint32_t *key,
-				       void **value, void *in_node,
-				       void **out_node);
+PMIX_DECLSPEC pmix_status_t pmix_hash_table_get_next_key_uint32(pmix_hash_table_t *table, uint32_t *key,
+				                                void **value, void *in_node,
+				                                void **out_node);
 
 
 /**
@@ -274,8 +278,8 @@ PMIX_DECLSPEC int pmix_hash_table_get_next_key_uint32(pmix_hash_table_t *table, 
  *
  */
 
-PMIX_DECLSPEC int pmix_hash_table_get_first_key_uint64(pmix_hash_table_t *table, uint64_t *key,
-				       void **value, void **node);
+PMIX_DECLSPEC pmix_status_t pmix_hash_table_get_first_key_uint64(pmix_hash_table_t *table, uint64_t *key,
+				                                 void **value, void **node);
 
 
 /**
@@ -292,9 +296,9 @@ PMIX_DECLSPEC int pmix_hash_table_get_first_key_uint64(pmix_hash_table_t *table,
  *
  */
 
-PMIX_DECLSPEC int pmix_hash_table_get_next_key_uint64(pmix_hash_table_t *table, uint64_t *key,
-				       void **value, void *in_node,
-				       void **out_node);
+PMIX_DECLSPEC pmix_status_t pmix_hash_table_get_next_key_uint64(pmix_hash_table_t *table, uint64_t *key,
+				                                void **value, void *in_node,
+				                                void **out_node);
 
 /**
  * @brief Returns next power-of-two of the given value.

@@ -13,6 +13,8 @@
  * Copyright (c) 2008-2013 University of Houston. All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -120,28 +122,28 @@ typedef int (*mca_sharedfp_base_module_get_position_fn_t)(
         struct mca_io_ompio_file_t *fh, OMPI_MPI_OFFSET_TYPE * offset);
 typedef int (*mca_sharedfp_base_module_write_fn_t)(
         struct mca_io_ompio_file_t *fh,
-        void *buf,
+        const void *buf,
         int count,
         struct ompi_datatype_t *datatype,
         ompi_status_public_t *status);
 typedef int (*mca_sharedfp_base_module_write_ordered_fn_t)(
         struct mca_io_ompio_file_t *fh,
-        void *buf,
+        const void *buf,
         int count,
         struct ompi_datatype_t *datatype,
         ompi_status_public_t *status);
 typedef int (*mca_sharedfp_base_module_write_ordered_begin_fn_t)(
         struct mca_io_ompio_file_t *fh,
-        void *buf,
+        const void *buf,
         int count,
         struct ompi_datatype_t *datatype);
 typedef int (*mca_sharedfp_base_module_write_ordered_end_fn_t)(
         struct mca_io_ompio_file_t *fh,
-        void *buf,
+        const void *buf,
         ompi_status_public_t *status);
 typedef int (*mca_sharedfp_base_module_iwrite_fn_t)(
         struct mca_io_ompio_file_t *fh,
-        void *buf,
+        const void *buf,
         int count,
         struct ompi_datatype_t *datatype,
         ompi_request_t ** request);
@@ -173,7 +175,7 @@ typedef int (*mca_sharedfp_base_module_read_ordered_end_fn_t)(
         void *buf,
         ompi_status_public_t *status);
 typedef int (*mca_sharedfp_base_module_file_open_fn_t)(
-        struct ompi_communicator_t *comm, char *filename, int amode,
+        struct ompi_communicator_t *comm, const char *filename, int amode,
         struct ompi_info_t *info, struct mca_io_ompio_file_t *fh);
 typedef int (*mca_sharedfp_base_module_file_close_fn_t)(struct mca_io_ompio_file_t *fh);
 

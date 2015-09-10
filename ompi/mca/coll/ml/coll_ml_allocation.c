@@ -17,7 +17,7 @@
 #include "coll_ml_inlines.h"
 #include "coll_ml_allocation.h"
 
-long memory_buffer_index;
+static long memory_buffer_index;
 
 mca_bcol_base_memory_block_desc_t *mca_coll_ml_allocate_block(struct mca_coll_ml_component_t *ml_component,
                                                    mca_bcol_base_memory_block_desc_t *ml_memblock)

@@ -19,7 +19,7 @@
 /* collective managment descriptor initialization - called right after
  * the constructor by opal_free_list code
  */
-static void mca_coll_ml_collective_operation_progress_init
+static int mca_coll_ml_collective_operation_progress_init
                              (opal_free_list_item_t* item, void* ctx)
 {
     int i;
@@ -56,6 +56,7 @@ static void mca_coll_ml_collective_operation_progress_init
     coll_op->coll_module =
         ((struct coll_desc_init *)ctx)->bcol_base_module;
 
+    return OPAL_SUCCESS;
 }
 
 int ml_coll_schedule_setup(mca_coll_ml_module_t *ml_module)

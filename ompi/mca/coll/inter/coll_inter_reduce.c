@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2007 University of Houston. All rights reserved.
  * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -38,7 +40,7 @@
  *	Returns:	- MPI_SUCCESS or error code
  */
 int
-mca_coll_inter_reduce_inter(void *sbuf, void *rbuf, int count,
+mca_coll_inter_reduce_inter(const void *sbuf, void *rbuf, int count,
                             struct ompi_datatype_t *dtype,
                             struct ompi_op_t *op,
                             int root, struct ompi_communicator_t *comm,

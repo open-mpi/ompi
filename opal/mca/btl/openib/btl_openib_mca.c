@@ -368,7 +368,7 @@ int btl_openib_register_mca_params(void)
         /* Don't try to recover from this */
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
-    mca_btl_openib_component.ib_mtu = IBV_MTU_1024;
+    mca_btl_openib_component.ib_mtu = 0;
     (void) mca_base_var_enum_create("btl_openib_mtus", ib_mtu_values, &new_enum);
     tmp = mca_base_component_var_register(&mca_btl_openib_component.super.btl_version,
                                           "mtu", msg, MCA_BASE_VAR_TYPE_INT, new_enum,
@@ -565,7 +565,8 @@ int btl_openib_register_mca_params(void)
     mca_btl_openib_module.super.btl_rdma_pipeline_frag_size = 1024 * 1024;
     mca_btl_openib_module.super.btl_min_rdma_pipeline_size = 256 * 1024;
     mca_btl_openib_module.super.btl_flags = MCA_BTL_FLAGS_RDMA |
-	MCA_BTL_FLAGS_NEED_ACK | MCA_BTL_FLAGS_NEED_CSUM | MCA_BTL_FLAGS_HETEROGENEOUS_RDMA;
+	MCA_BTL_FLAGS_NEED_ACK | MCA_BTL_FLAGS_NEED_CSUM | MCA_BTL_FLAGS_HETEROGENEOUS_RDMA |
+        MCA_BTL_FLAGS_SEND;
 #if BTL_OPENIB_FAILOVER_ENABLED
     mca_btl_openib_module.super.btl_flags |= MCA_BTL_FLAGS_FAILOVER_SUPPORT;
 #endif

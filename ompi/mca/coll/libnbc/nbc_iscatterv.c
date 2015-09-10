@@ -10,7 +10,7 @@
  * Copyright (c) 2013      The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  *
  * Author(s): Torsten Hoefler <htor@cs.indiana.edu>
@@ -23,7 +23,7 @@
  * would not be sufficient ... we simply do not cache it */
 
 /* simple linear MPI_Iscatterv */
-int ompi_coll_libnbc_iscatterv(void* sendbuf, int *sendcounts, int *displs, MPI_Datatype sendtype,
+int ompi_coll_libnbc_iscatterv(const void* sendbuf, const int *sendcounts, const int *displs, MPI_Datatype sendtype,
                                void* recvbuf, int recvcount, MPI_Datatype recvtype, int root,
                                struct ompi_communicator_t *comm, ompi_request_t ** request,
                                struct mca_coll_base_module_2_1_0_t *module) {
@@ -104,7 +104,7 @@ int ompi_coll_libnbc_iscatterv(void* sendbuf, int *sendcounts, int *displs, MPI_
   return OMPI_SUCCESS;
 }
 
-int ompi_coll_libnbc_iscatterv_inter (void* sendbuf, int *sendcounts, int *displs, MPI_Datatype sendtype,
+int ompi_coll_libnbc_iscatterv_inter (const void* sendbuf, const int *sendcounts, const int *displs, MPI_Datatype sendtype,
                                       void* recvbuf, int recvcount, MPI_Datatype recvtype, int root,
                                       struct ompi_communicator_t *comm, ompi_request_t ** request,
                                       struct mca_coll_base_module_2_1_0_t *module) {

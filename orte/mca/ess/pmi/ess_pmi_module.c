@@ -189,7 +189,6 @@ static int rte_init(void)
         free(string_key);
     }
 
-#if OPAL_HAVE_HWLOC
     /* retrieve our topology */
     OPAL_MODEX_RECV_VALUE(ret, OPAL_PMIX_LOCAL_TOPO,
                           ORTE_PROC_MY_NAME, &val, OPAL_STRING);
@@ -337,67 +336,7 @@ static int rte_init(void)
     if (NULL != mycpuset){
         free(mycpuset);
     }
-#else
-    /* get our local peers */
-    if (0 < orte_process_info.num_local_peers) {
-        /* retrieve the local peers */
-        OPAL_MODEX_RECV_VALUE(ret, OPAL_PMIX_LOCAL_PEERS,
-                              ORTE_PROC_MY_NAME, &val, OPAL_STRING);
-        if (OPAL_SUCCESS == ret && NULL != val) {
-            peers = opal_argv_split(val, ',');
-            free(val);
-        } else {
-            peers = NULL;
-        }
-    } else {
-        peers = NULL;
-    }
-    /* set the locality */
-    name.jobid = ORTE_PROC_MY_NAME->jobid;
-    for (sz=0; sz < orte_process_info.num_procs; sz++) {
-        kv = OBJ_NEW(opal_value_t);
-        kv->key = strdup(OPAL_PMIX_LOCALITY);
-        kv->type = OPAL_UINT16;
-        name.vpid = sz;
-        if (sz == ORTE_PROC_MY_NAME->vpid) {
-            /* we are fully local to ourselves */
-            u16 = OPAL_PROC_ALL_LOCAL;
-        } else if (NULL == peers) {
-            /* nobody is local to us */
-            u16 = OPAL_PROC_NON_LOCAL;
-        } else {
-            for (i=0; NULL != peers[i]; i++) {
-                if (sz == strtoul(peers[i], NULL, 10)) {
-                    break;
-                }
-            }
-            if (NULL == peers[i]) {
-                /* not a local peer */
-                u16 = OPAL_PROC_NON_LOCAL;
-            } else {
-                /* all we can say is they are on the same node */
-                u16 = OPAL_PROC_ON_CLUSTER | OPAL_PROC_ON_CU | OPAL_PROC_ON_NODE;
-            }
-        }
-        /* store this data internally - not to be pushed outside of
-         * ourselves as it only has meaning relative to us */
-        ret = opal_pmix.store_local(&name, kv);
-        if (OPAL_SUCCESS != ret) {
-            ORTE_ERROR_LOG(ret);
-            error = "pmix store local";
-            opal_argv_free(cpusets);
-            opal_argv_free(peers);
-            goto error;
-        }
-        OBJ_RELEASE(kv);
-    }
-#endif
     opal_argv_free(peers);
-
-    /* we don't need to force the routed system to pick the
-     * "direct" component as that should happen automatically
-     * in those cases where we are direct launched (i.e., no
-     * HNP is defined in the environment */
 
     /* now that we have all required info, complete the setup */
     if (ORTE_SUCCESS != (ret = orte_ess_base_app_setup(false))) {

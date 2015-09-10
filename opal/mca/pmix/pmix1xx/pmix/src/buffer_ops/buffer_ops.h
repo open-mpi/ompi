@@ -12,6 +12,8 @@
  *                         All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, Inc. All rights reserved.
  * Copyright (c) 2013-2015 Intel, Inc. All rights reserved
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -52,11 +54,11 @@ PMIX_CLASS_DECLARATION(pmix_kval_t);
  * of places throughout the code base - transferring a value to
  * another pmix_value_t structure
  */
-PMIX_DECLSPEC int pmix_value_xfer(pmix_value_t *kv, pmix_value_t *src);
+PMIX_DECLSPEC pmix_status_t pmix_value_xfer(pmix_value_t *kv, pmix_value_t *src);
 PMIX_DECLSPEC void pmix_value_load(pmix_value_t *v, void *data,
                                    pmix_data_type_t type);
-PMIX_DECLSPEC int pmix_value_unload(pmix_value_t *kv, void **data,
-                                    size_t *sz, pmix_data_type_t type);
+PMIX_DECLSPEC pmix_status_t pmix_value_unload(pmix_value_t *kv, void **data,
+                                              size_t *sz, pmix_data_type_t type);
 
 
 #define PMIX_LOAD_BUFFER(b, d, s)                       \
@@ -130,9 +132,9 @@ PMIX_DECLSPEC int pmix_value_unload(pmix_value_t *kv, void **data,
  * status_code = pmix_bfrop.pack(buffer, &src, 1, PMIX_INT32);
  * @endcode
  */
-typedef int (*pmix_bfrop_pack_fn_t)(pmix_buffer_t *buffer, const void *src,
-                                    int32_t num_values,
-                                    pmix_data_type_t type);
+typedef pmix_status_t (*pmix_bfrop_pack_fn_t)(pmix_buffer_t *buffer, const void *src,
+                                              int32_t num_values,
+                                              pmix_data_type_t type);
 
 /**
  * Unpack values from a buffer.
@@ -227,9 +229,9 @@ typedef int (*pmix_bfrop_pack_fn_t)(pmix_buffer_t *buffer, const void *src,
  *
  * @endcode
  */
-typedef int (*pmix_bfrop_unpack_fn_t)(pmix_buffer_t *buffer, void *dest,
-                                      int32_t *max_num_values,
-                                      pmix_data_type_t type);
+typedef pmix_status_t (*pmix_bfrop_unpack_fn_t)(pmix_buffer_t *buffer, void *dest,
+                                                int32_t *max_num_values,
+                                                pmix_data_type_t type);
 /**
  * Copy a payload from one buffer to another
  * This function will append a copy of the payload in one buffer into
@@ -241,8 +243,8 @@ typedef int (*pmix_bfrop_unpack_fn_t)(pmix_buffer_t *buffer, void *dest,
  * source buffer's payload will remain intact, as will any pre-existing
  * payload in the destination's buffer.
  */
-typedef int (*pmix_bfrop_copy_payload_fn_t)(pmix_buffer_t *dest,
-                                            pmix_buffer_t *src);
+typedef pmix_status_t (*pmix_bfrop_copy_payload_fn_t)(pmix_buffer_t *dest,
+                                                      pmix_buffer_t *src);
 
 /**
  * BFROP initialization function.
@@ -252,12 +254,12 @@ typedef int (*pmix_bfrop_copy_payload_fn_t)(pmix_buffer_t *dest,
  * structure gets loaded, so we provide an "open" call that is
  * executed as part of the program startup.
  */
-PMIX_DECLSPEC int pmix_bfrop_open(void);
+PMIX_DECLSPEC pmix_status_t pmix_bfrop_open(void);
 
 /**
  * BFROP finalize function
  */
-PMIX_DECLSPEC int pmix_bfrop_close(void);
+PMIX_DECLSPEC pmix_status_t pmix_bfrop_close(void);
 
 
 /**
@@ -283,7 +285,7 @@ PMIX_DECLSPEC int pmix_bfrop_close(void);
  * @retval PMIX_ERROR(s) An appropriate error code.
  *
  */
-typedef int (*pmix_bfrop_copy_fn_t)(void **dest, void *src, pmix_data_type_t type);
+typedef pmix_status_t (*pmix_bfrop_copy_fn_t)(void **dest, void *src, pmix_data_type_t type);
 
 /**
  * Print a data value.
@@ -296,7 +298,7 @@ typedef int (*pmix_bfrop_copy_fn_t)(void **dest, void *src, pmix_data_type_t typ
  *
  * @retval PMIX_ERROR(s) An appropriate error code.
  */
-typedef int (*pmix_bfrop_print_fn_t)(char **output, char *prefix, void *src, pmix_data_type_t type);
+typedef pmix_status_t (*pmix_bfrop_print_fn_t)(char **output, char *prefix, void *src, pmix_data_type_t type);
 
 /**
  * Base structure for the BFROP

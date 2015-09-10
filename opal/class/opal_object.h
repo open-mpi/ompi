@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -10,6 +11,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * Additional copyrights may follow
  * $HEADER$
@@ -156,6 +159,8 @@ struct opal_class_t {
                                     /**< array of parent class destructors */
     size_t cls_sizeof;              /**< size of an object instance */
 };
+
+extern int opal_class_init_epoch;
 
 /**
  * For static initializations of OBJects.
@@ -342,8 +347,8 @@ do {                                                            \
 
 #define OBJ_CONSTRUCT_INTERNAL(object, type)                        \
 do {                                                                \
-    OBJ_SET_MAGIC_ID((object), OPAL_OBJ_MAGIC_ID);              \
-    if (0 == (type)->cls_initialized) {                             \
+    OBJ_SET_MAGIC_ID((object), OPAL_OBJ_MAGIC_ID);                  \
+    if (opal_class_init_epoch != (type)->cls_initialized) {         \
         opal_class_initialize((type));                              \
     }                                                               \
     ((opal_object_t *) (object))->obj_class = (type);               \
@@ -467,7 +472,7 @@ static inline opal_object_t *opal_obj_new(opal_class_t * cls)
 #else
     object = (opal_object_t *) malloc(cls->cls_sizeof);
 #endif
-    if (0 == cls->cls_initialized) {
+    if (opal_class_init_epoch != cls->cls_initialized) {
         opal_class_initialize(cls);
     }
     if (NULL != object) {

@@ -14,6 +14,8 @@
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2015      University of Houston. All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -87,18 +89,18 @@ typedef int (*mca_io_base_component_file_unquery_fn_t)
     (struct ompi_file_t *file, struct mca_io_base_file_t *private_data);
 
 typedef int (*mca_io_base_component_file_delete_query_fn_t)
-    (char *filename, struct ompi_info_t *info,
+    (const char *filename, struct ompi_info_t *info,
      struct mca_io_base_delete_t **private_data,
      bool *usable, int *priority);
 typedef int (*mca_io_base_component_file_delete_select_fn_t)
-    (char *filename, struct ompi_info_t *info,
+    (const char *filename, struct ompi_info_t *info,
      struct mca_io_base_delete_t *private_data);
 typedef int (*mca_io_base_component_file_delete_unselect_fn_t)
-    (char *filename, struct ompi_info_t *info,
+    (const char *filename, struct ompi_info_t *info,
      struct mca_io_base_delete_t *private_data);
 
 typedef int (*mca_io_base_component_register_datarep_fn_t)(
-                                              char *,
+                                              const char *,
                                               MPI_Datarep_conversion_function*,
                                               MPI_Datarep_conversion_function*,
                                               MPI_Datarep_extent_function*,
@@ -137,7 +139,7 @@ typedef union mca_io_base_components_t mca_io_base_components_t;
  */
 
 typedef int (*mca_io_base_module_file_open_fn_t)
-    (struct ompi_communicator_t *comm, char *filename, int amode,
+    (struct ompi_communicator_t *comm, const char *filename, int amode,
      struct ompi_info_t *info, struct ompi_file_t *fh);
 typedef int (*mca_io_base_module_file_close_fn_t)(struct ompi_file_t *fh);
 
@@ -156,7 +158,7 @@ typedef int (*mca_io_base_module_file_get_info_fn_t)
 
 typedef int (*mca_io_base_module_file_set_view_fn_t)
     (struct ompi_file_t *fh, MPI_Offset disp, struct ompi_datatype_t *etype,
-     struct ompi_datatype_t *filetype, char *datarep,
+     struct ompi_datatype_t *filetype, const char *datarep,
      struct ompi_info_t *info);
 typedef int (*mca_io_base_module_file_get_view_fn_t)
     (struct ompi_file_t *fh, MPI_Offset *disp,
@@ -172,11 +174,11 @@ typedef int (*mca_io_base_module_file_read_at_all_fn_t)
      int count, struct ompi_datatype_t *datatype,
      struct ompi_status_public_t *status);
 typedef int (*mca_io_base_module_file_write_at_fn_t)
-    (struct ompi_file_t *fh, MPI_Offset offset, void *buf,
+    (struct ompi_file_t *fh, MPI_Offset offset, const void *buf,
      int count, struct ompi_datatype_t *datatype,
      struct ompi_status_public_t *status);
 typedef int (*mca_io_base_module_file_write_at_all_fn_t)
-    (struct ompi_file_t *fh, MPI_Offset offset, void *buf,
+    (struct ompi_file_t *fh, MPI_Offset offset, const void *buf,
      int count, struct ompi_datatype_t *datatype,
      struct ompi_status_public_t *status);
 
@@ -185,7 +187,7 @@ typedef int (*mca_io_base_module_file_iread_at_fn_t)
      int count, struct ompi_datatype_t *datatype,
      struct ompi_request_t **request);
 typedef int (*mca_io_base_module_file_iwrite_at_fn_t)
-    (struct ompi_file_t *fh, MPI_Offset offset, void *buf,
+    (struct ompi_file_t *fh, MPI_Offset offset, const void *buf,
      int count, struct ompi_datatype_t *datatype,
      struct ompi_request_t **request);
 
@@ -194,7 +196,7 @@ typedef int (*mca_io_base_module_file_iread_at_all_fn_t)
      int count, struct ompi_datatype_t *datatype,
      struct ompi_request_t **request);
 typedef int (*mca_io_base_module_file_iwrite_at_all_fn_t)
-    (struct ompi_file_t *fh, MPI_Offset offset, void *buf,
+    (struct ompi_file_t *fh, MPI_Offset offset, const void *buf,
      int count, struct ompi_datatype_t *datatype,
      struct ompi_request_t **request);
 
@@ -205,24 +207,24 @@ typedef int (*mca_io_base_module_file_read_all_fn_t)
     (struct ompi_file_t *fh, void *buf, int count, struct ompi_datatype_t *
      datatype, struct ompi_status_public_t *status);
 typedef int (*mca_io_base_module_file_write_fn_t)
-    (struct ompi_file_t *fh, void *buf, int count, struct ompi_datatype_t *
+    (struct ompi_file_t *fh, const void *buf, int count, struct ompi_datatype_t *
      datatype, struct ompi_status_public_t *status);
 typedef int (*mca_io_base_module_file_write_all_fn_t)
-    (struct ompi_file_t *fh, void *buf, int count, struct ompi_datatype_t *
+    (struct ompi_file_t *fh, const void *buf, int count, struct ompi_datatype_t *
      datatype, struct ompi_status_public_t *status);
 
 typedef int (*mca_io_base_module_file_iread_fn_t)
     (struct ompi_file_t *fh, void *buf, int count,
      struct ompi_datatype_t *datatype, struct ompi_request_t **request);
 typedef int (*mca_io_base_module_file_iwrite_fn_t)
-    (struct ompi_file_t *fh, void *buf, int count,
+    (struct ompi_file_t *fh, const void *buf, int count,
      struct ompi_datatype_t *datatype, struct ompi_request_t **request);
 
 typedef int (*mca_io_base_module_file_iread_all_fn_t)
     (struct ompi_file_t *fh, void *buf, int count,
      struct ompi_datatype_t *datatype, struct ompi_request_t **request);
 typedef int (*mca_io_base_module_file_iwrite_all_fn_t)
-    (struct ompi_file_t *fh, void *buf, int count,
+    (struct ompi_file_t *fh, const void *buf, int count,
      struct ompi_datatype_t *datatype, struct ompi_request_t **request);
 
 typedef int (*mca_io_base_module_file_seek_fn_t)
@@ -236,19 +238,19 @@ typedef int (*mca_io_base_module_file_read_shared_fn_t)
     (struct ompi_file_t *fh, void *buf, int count,
      struct ompi_datatype_t *datatype, struct ompi_status_public_t *status);
 typedef int (*mca_io_base_module_file_write_shared_fn_t)
-    (struct ompi_file_t *fh, void *buf, int count,
+    (struct ompi_file_t *fh, const void *buf, int count,
      struct ompi_datatype_t *datatype, struct ompi_status_public_t *status);
 typedef int (*mca_io_base_module_file_iread_shared_fn_t)
     (struct ompi_file_t *fh, void *buf, int count,
      struct ompi_datatype_t *datatype, struct ompi_request_t **request);
 typedef int (*mca_io_base_module_file_iwrite_shared_fn_t)
-    (struct ompi_file_t *fh, void *buf, int count,
+    (struct ompi_file_t *fh, const void *buf, int count,
      struct ompi_datatype_t *datatype, struct ompi_request_t **request);
 typedef int (*mca_io_base_module_file_read_ordered_fn_t)
     (struct ompi_file_t *fh, void *buf, int count,
      struct ompi_datatype_t *datatype, struct ompi_status_public_t *status);
 typedef int (*mca_io_base_module_file_write_ordered_fn_t)
-    (struct ompi_file_t *fh, void *buf, int count,
+    (struct ompi_file_t *fh, const void *buf, int count,
      struct ompi_datatype_t *datatype, struct ompi_status_public_t *status);
 typedef int (*mca_io_base_module_file_seek_shared_fn_t)
     (struct ompi_file_t *fh, MPI_Offset offset, int whence);
@@ -261,30 +263,30 @@ typedef int (*mca_io_base_module_file_read_at_all_begin_fn_t)
 typedef int (*mca_io_base_module_file_read_at_all_end_fn_t)
     (struct ompi_file_t *fh, void *buf, struct ompi_status_public_t *status);
 typedef int (*mca_io_base_module_file_write_at_all_begin_fn_t)
-    (struct ompi_file_t *fh, MPI_Offset offset, void *buf,
+    (struct ompi_file_t *fh, MPI_Offset offset, const void *buf,
      int count, struct ompi_datatype_t *datatype);
 typedef int (*mca_io_base_module_file_write_at_all_end_fn_t)
-    (struct ompi_file_t *fh, void *buf, struct ompi_status_public_t *status);
+    (struct ompi_file_t *fh, const void *buf, struct ompi_status_public_t *status);
 typedef int (*mca_io_base_module_file_read_all_begin_fn_t)
     (struct ompi_file_t *fh, void *buf, int count,
      struct ompi_datatype_t *datatype);
 typedef int (*mca_io_base_module_file_read_all_end_fn_t)
     (struct ompi_file_t *fh, void *buf, struct ompi_status_public_t *status);
 typedef int (*mca_io_base_module_file_write_all_begin_fn_t)
-    (struct ompi_file_t *fh, void *buf, int count,
+    (struct ompi_file_t *fh, const void *buf, int count,
      struct ompi_datatype_t *datatype);
 typedef int (*mca_io_base_module_file_write_all_end_fn_t)
-    (struct ompi_file_t *fh, void *buf, struct ompi_status_public_t *status);
+    (struct ompi_file_t *fh, const void *buf, struct ompi_status_public_t *status);
 typedef int (*mca_io_base_module_file_read_ordered_begin_fn_t)
     (struct ompi_file_t *fh, void *buf, int count,
      struct ompi_datatype_t *datatype);
 typedef int (*mca_io_base_module_file_read_ordered_end_fn_t)
     (struct ompi_file_t *fh, void *buf, struct ompi_status_public_t *status);
 typedef int (*mca_io_base_module_file_write_ordered_begin_fn_t)
-    (struct ompi_file_t *fh, void *buf, int count,
+    (struct ompi_file_t *fh, const void *buf, int count,
      struct ompi_datatype_t *datatype);
 typedef int (*mca_io_base_module_file_write_ordered_end_fn_t)
-    (struct ompi_file_t *fh, void *buf, struct ompi_status_public_t *status);
+    (struct ompi_file_t *fh, const void *buf, struct ompi_status_public_t *status);
 
 typedef int (*mca_io_base_module_file_get_type_extent_fn_t)
     (struct ompi_file_t *fh, struct ompi_datatype_t *datatype,

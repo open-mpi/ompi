@@ -46,7 +46,6 @@ typedef int (*orte_schizo_base_module_parse_cli_fn_t)(char *personality,
 typedef int (*orte_schizo_base_module_parse_env_fn_t)(char *personality,
                                                       char *path,
                                                       opal_cmd_line_t *cmd_line,
-                                                      char *server,
                                                       char **srcenv,
                                                       char ***dstenv);
 

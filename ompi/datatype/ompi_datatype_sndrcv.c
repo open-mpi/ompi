@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -42,7 +42,7 @@
  *           - communicator
  * Returns:  - MPI_SUCCESS or error code
  */
-int32_t ompi_datatype_sndrcv( void *sbuf, int32_t scount, const ompi_datatype_t* sdtype,
+int32_t ompi_datatype_sndrcv( const void *sbuf, int32_t scount, const ompi_datatype_t* sdtype,
                               void *rbuf, int32_t rcount, const ompi_datatype_t* rdtype)
 {
     opal_convertor_t send_convertor, recv_convertor;

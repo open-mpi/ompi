@@ -100,10 +100,10 @@ mca_base_var_enum_value_t coll_base_allgatherv_algorithms[] = {
  *         [5]    [5]    [5]    [5]    [5]    [5]    [5]
  *         [6]    [6]    [6]    [6]    [6]    [6]    [6]
  */
-int ompi_coll_base_allgatherv_intra_bruck(void *sbuf, int scount,
+int ompi_coll_base_allgatherv_intra_bruck(const void *sbuf, int scount,
                                            struct ompi_datatype_t *sdtype,
-                                           void *rbuf, int *rcounts,
-                                           int *rdispls,
+                                           void *rbuf, const int *rcounts,
+                                           const int *rdispls,
                                            struct ompi_datatype_t *rdtype,
                                            struct ompi_communicator_t *comm,
                                            mca_coll_base_module_t *module)
@@ -230,9 +230,9 @@ int ompi_coll_base_allgatherv_intra_bruck(void *sbuf, int scount,
  *               No additional memory requirements.
  *
  */
-int ompi_coll_base_allgatherv_intra_ring(void *sbuf, int scount,
+int ompi_coll_base_allgatherv_intra_ring(const void *sbuf, int scount,
                                           struct ompi_datatype_t *sdtype,
-                                          void* rbuf, int *rcounts, int *rdisps,
+                                          void* rbuf, const int *rcounts, const int *rdisps,
                                           struct ompi_datatype_t *rdtype,
                                           struct ompi_communicator_t *comm,
                                           mca_coll_base_module_t *module)
@@ -359,9 +359,9 @@ int ompi_coll_base_allgatherv_intra_ring(void *sbuf, int scount,
  *         [5]    [5]    [5]    [5]    [5]    [5]
  */
 int
-ompi_coll_base_allgatherv_intra_neighborexchange(void *sbuf, int scount,
+ompi_coll_base_allgatherv_intra_neighborexchange(const void *sbuf, int scount,
                                                   struct ompi_datatype_t *sdtype,
-                                                  void* rbuf, int *rcounts, int *rdispls,
+                                                  void* rbuf, const int *rcounts, const int *rdispls,
                                                   struct ompi_datatype_t *rdtype,
                                                   struct ompi_communicator_t *comm,
                                                   mca_coll_base_module_t *module)
@@ -506,10 +506,10 @@ ompi_coll_base_allgatherv_intra_neighborexchange(void *sbuf, int scount,
 }
 
 
-int ompi_coll_base_allgatherv_intra_two_procs(void *sbuf, int scount,
+int ompi_coll_base_allgatherv_intra_two_procs(const void *sbuf, int scount,
                                                struct ompi_datatype_t *sdtype,
-                                               void* rbuf, int *rcounts,
-                                               int *rdispls,
+                                               void* rbuf, const int *rcounts,
+                                               const int *rdispls,
                                                struct ompi_datatype_t *rdtype,
                                                struct ompi_communicator_t *comm,
                                                mca_coll_base_module_t *module)
@@ -590,10 +590,10 @@ int ompi_coll_base_allgatherv_intra_two_procs(void *sbuf, int scount,
  *	Returns:	- MPI_SUCCESS or error code
  */
 int
-ompi_coll_base_allgatherv_intra_basic_default(void *sbuf, int scount,
+ompi_coll_base_allgatherv_intra_basic_default(const void *sbuf, int scount,
                                               struct ompi_datatype_t *sdtype,
-                                              void *rbuf, int *rcounts,
-                                              int *disps,
+                                              void *rbuf, const int *rcounts,
+                                              const int *disps,
                                               struct ompi_datatype_t *rdtype,
                                               struct ompi_communicator_t *comm,
                                               mca_coll_base_module_t *module)

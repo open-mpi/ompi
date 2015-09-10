@@ -13,6 +13,8 @@
  * Copyright (c) 2009      University of Houston. All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC. All Rights
  *                         reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -47,7 +49,7 @@
  *
  */
 int
-ompi_coll_base_allreduce_intra_nonoverlapping(void *sbuf, void *rbuf, int count,
+ompi_coll_base_allreduce_intra_nonoverlapping(const void *sbuf, void *rbuf, int count,
                                                struct ompi_datatype_t *dtype,
                                                struct ompi_op_t *op,
                                                struct ompi_communicator_t *comm,
@@ -123,7 +125,7 @@ ompi_coll_base_allreduce_intra_nonoverlapping(void *sbuf, void *rbuf, int count,
  *
  */
 int
-ompi_coll_base_allreduce_intra_recursivedoubling(void *sbuf, void *rbuf,
+ompi_coll_base_allreduce_intra_recursivedoubling(const void *sbuf, void *rbuf,
                                                   int count,
                                                   struct ompi_datatype_t *dtype,
                                                   struct ompi_op_t *op,
@@ -340,7 +342,7 @@ ompi_coll_base_allreduce_intra_recursivedoubling(void *sbuf, void *rbuf,
  *
  */
 int
-ompi_coll_base_allreduce_intra_ring(void *sbuf, void *rbuf, int count,
+ompi_coll_base_allreduce_intra_ring(const void *sbuf, void *rbuf, int count,
                                      struct ompi_datatype_t *dtype,
                                      struct ompi_op_t *op,
                                      struct ompi_communicator_t *comm,
@@ -615,7 +617,7 @@ ompi_coll_base_allreduce_intra_ring(void *sbuf, void *rbuf, int count,
  *
  */
 int
-ompi_coll_base_allreduce_intra_ring_segmented(void *sbuf, void *rbuf, int count,
+ompi_coll_base_allreduce_intra_ring_segmented(const void *sbuf, void *rbuf, int count,
                                                struct ompi_datatype_t *dtype,
                                                struct ompi_op_t *op,
                                                struct ompi_communicator_t *comm,
@@ -877,7 +879,7 @@ ompi_coll_base_allreduce_intra_ring_segmented(void *sbuf, void *rbuf, int count,
  *	Returns:	- MPI_SUCCESS or error code
  */
 int
-ompi_coll_base_allreduce_intra_basic_linear(void *sbuf, void *rbuf, int count,
+ompi_coll_base_allreduce_intra_basic_linear(const void *sbuf, void *rbuf, int count,
                                              struct ompi_datatype_t *dtype,
                                              struct ompi_op_t *op,
                                              struct ompi_communicator_t *comm,

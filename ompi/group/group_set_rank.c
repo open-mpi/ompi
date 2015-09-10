@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -10,6 +11,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2007 University of Houston. All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -38,12 +41,10 @@ void ompi_set_group_rank(ompi_group_t *group, struct ompi_proc_t *proc_pointer)
         for (proc = 0; proc < group->grp_proc_count; proc++) {
             /* check and see if this proc pointer matches proc_pointer
              */
-            if (ompi_group_peer_lookup(group,proc) == proc_pointer) {
+	    if (ompi_group_peer_lookup_existing (group, proc) == proc_pointer) {
                 group->grp_my_rank = proc;
-            }
+		break;
+	    }
         }                       /* end proc loop */
     }
-
-    /* return */
-    return;
 }

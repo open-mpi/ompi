@@ -33,7 +33,7 @@
  *
  */
 
-int ompi_coll_libnbc_ireduce_scatter_block(void* sendbuf, void* recvbuf, int recvcount, MPI_Datatype datatype,
+int ompi_coll_libnbc_ireduce_scatter_block(const void* sendbuf, void* recvbuf, int recvcount, MPI_Datatype datatype,
                                            MPI_Op op, struct ompi_communicator_t *comm, ompi_request_t ** request,
                                            struct mca_coll_base_module_2_1_0_t *module) {
   int peer, rank, maxr, p, res, count;
@@ -196,7 +196,7 @@ int ompi_coll_libnbc_ireduce_scatter_block(void* sendbuf, void* recvbuf, int rec
   return OMPI_SUCCESS;
 }
 
-int ompi_coll_libnbc_ireduce_scatter_block_inter(void *sbuf, void *rbuf, int rcount, struct ompi_datatype_t *dtype,
+int ompi_coll_libnbc_ireduce_scatter_block_inter(const void *sbuf, void *rbuf, int rcount, struct ompi_datatype_t *dtype,
 						 struct ompi_op_t *op, struct ompi_communicator_t *comm,
 						 ompi_request_t **request, struct mca_coll_base_module_2_1_0_t *module) {
   int rank, res, count, rsize;

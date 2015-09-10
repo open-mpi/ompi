@@ -115,19 +115,27 @@ int pmix_usock_set_blocking(int sd)
  * A blocking send on a non-blocking socket. Used to send the small amount of connection
  * information that identifies the peers endpoint.
  */
-int pmix_usock_send_blocking(int sd, char *ptr, size_t size)
+pmix_status_t pmix_usock_send_blocking(int sd, char *ptr, size_t size)
 {
     size_t cnt = 0;
     int retval;
 
-    pmix_output_verbose(10, pmix_globals.debug_output,
+    pmix_output_verbose(8, pmix_globals.debug_output,
                         "send blocking of %"PRIsize_t" bytes to socket %d",
                         size, sd );
     while (cnt < size) {
         retval = send(sd, (char*)ptr+cnt, size-cnt, 0);
         if (retval < 0) {
+            if (EAGAIN == pmix_socket_errno ||
+                EWOULDBLOCK == pmix_socket_errno) {
+                /* just cycle and let it try again */
+                pmix_output_verbose(8, pmix_globals.debug_output,
+                                    "blocking_send received error %d:%s from remote - cycling",
+                                    pmix_socket_errno, strerror(pmix_socket_errno));
+                continue;
+            }
             if (pmix_socket_errno != EINTR) {
-                pmix_output(0, "usock_peer_send_blocking: send() to socket %d failed: %s (%d)\n",
+                pmix_output(8, "usock_peer_send_blocking: send() to socket %d failed: %s (%d)\n",
                             sd, strerror(pmix_socket_errno),
                             pmix_socket_errno);
                 return PMIX_ERR_UNREACH;
@@ -137,7 +145,7 @@ int pmix_usock_send_blocking(int sd, char *ptr, size_t size)
         cnt += retval;
     }
 
-    pmix_output_verbose(10, pmix_globals.debug_output,
+    pmix_output_verbose(8, pmix_globals.debug_output,
                         "blocking send complete to socket %d", sd);
     return PMIX_SUCCESS;
 }
@@ -146,25 +154,33 @@ int pmix_usock_send_blocking(int sd, char *ptr, size_t size)
  * A blocking recv on a non-blocking socket. Used to receive the small amount of connection
  * information that identifies the peers endpoint.
  */
-int pmix_usock_recv_blocking(int sd, char *data, size_t size)
+pmix_status_t pmix_usock_recv_blocking(int sd, char *data, size_t size)
 {
     size_t cnt = 0;
 
-    pmix_output_verbose(10, pmix_globals.debug_output,
+    pmix_output_verbose(8, pmix_globals.debug_output,
                         "waiting for blocking recv of %"PRIsize_t" bytes", size);
 
     while (cnt < size) {
-        int retval = recv(sd, (char *)data+cnt, size-cnt, 0);
+        int retval = recv(sd, (char *)data+cnt, size-cnt, MSG_WAITALL);
 
         /* remote closed connection */
         if (retval == 0) {
-            pmix_output_verbose(10, pmix_globals.debug_output,
+            pmix_output_verbose(8, pmix_globals.debug_output,
                                 "usock_recv_blocking: remote closed connection");
             return PMIX_ERR_UNREACH;
         }
 
         /* handle errors */
         if (retval < 0) {
+            if (EAGAIN == pmix_socket_errno ||
+                EWOULDBLOCK == pmix_socket_errno) {
+                /* just cycle and let it try again */
+                pmix_output_verbose(8, pmix_globals.debug_output,
+                                    "blocking_recv received error %d:%s from remote - cycling",
+                                    pmix_socket_errno, strerror(pmix_socket_errno));
+                continue;
+            }
             if (pmix_socket_errno != EINTR ) {
                 /* If we overflow the listen backlog, it's
                    possible that even though we finished the three
@@ -180,8 +196,8 @@ int pmix_usock_recv_blocking(int sd, char *data, size_t size)
                    CONNECT_ACK and propogate the error up to
                    recv_connect_ack, who will try to establish the
                    connection again */
-                pmix_output_verbose(10, pmix_globals.debug_output,
-                                    "blocking_recv received error %d:%s from remote",
+                pmix_output_verbose(8, pmix_globals.debug_output,
+                                    "blocking_recv received error %d:%s from remote - aborting",
                                     pmix_socket_errno, strerror(pmix_socket_errno));
                 return PMIX_ERR_UNREACH;
             }
@@ -190,7 +206,7 @@ int pmix_usock_recv_blocking(int sd, char *data, size_t size)
         cnt += retval;
     }
 
-    pmix_output_verbose(10, pmix_globals.debug_output,
+    pmix_output_verbose(8, pmix_globals.debug_output,
                         "blocking receive complete from remote");
     return PMIX_SUCCESS;
 }

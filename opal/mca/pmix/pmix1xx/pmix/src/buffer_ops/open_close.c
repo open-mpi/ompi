@@ -49,8 +49,8 @@ bool pmix_bfrop_initialized = false;
 int pmix_bfrop_initial_size = 0;
 int pmix_bfrop_threshold_size = 0;
 pmix_pointer_array_t pmix_bfrop_types = {{0}};
-pmix_data_type_t pmix_bfrop_num_reg_types = {0};
-pmix_bfrop_buffer_type_t default_buf_type = PMIX_BFROP_BUFFER_NON_DESC;
+pmix_data_type_t pmix_bfrop_num_reg_types = PMIX_UNDEF;
+static pmix_bfrop_buffer_type_t pmix_default_buf_type = PMIX_BFROP_BUFFER_NON_DESC;
 
 pmix_bfrop_t pmix_bfrop = {
     pmix_bfrop_pack,
@@ -67,7 +67,7 @@ pmix_bfrop_t pmix_bfrop = {
 static void pmix_buffer_construct (pmix_buffer_t* buffer)
 {
     /** set the default buffer type */
-    buffer->type = default_buf_type;
+    buffer->type = pmix_default_buf_type;
 
     /* Make everything NULL to begin with */
     buffer->base_ptr = buffer->pack_ptr = buffer->unpack_ptr = NULL;
@@ -155,9 +155,9 @@ PMIX_CLASS_INSTANCE(pmix_regex_value_t,
                     pmix_list_item_t,
                     rvcon, rvdes);
 
-int pmix_bfrop_open(void)
+pmix_status_t pmix_bfrop_open(void)
 {
-    int rc;
+    pmix_status_t rc;
 
     if (pmix_bfrop_initialized) {
         return PMIX_SUCCESS;
@@ -168,9 +168,9 @@ int pmix_bfrop_open(void)
      * and performance
      */
 #if PMIX_ENABLE_DEBUG
-    default_buf_type = PMIX_BFROP_BUFFER_FULLY_DESC;
+    pmix_default_buf_type = PMIX_BFROP_BUFFER_FULLY_DESC;
 #else
-    default_buf_type = PMIX_BFROP_BUFFER_NON_DESC;
+    pmix_default_buf_type = PMIX_BFROP_BUFFER_NON_DESC;
 #endif
 
     /* Setup the types array */
@@ -178,7 +178,7 @@ int pmix_bfrop_open(void)
     if (PMIX_SUCCESS != (rc = pmix_pointer_array_init(&pmix_bfrop_types, 64, 255, 64))) {
         return rc;
     }
-    pmix_bfrop_num_reg_types = 0;
+    pmix_bfrop_num_reg_types = PMIX_UNDEF;
     pmix_bfrop_threshold_size = PMIX_BFROP_DEFAULT_THRESHOLD_SIZE;
     pmix_bfrop_initial_size = 1;
 
@@ -377,7 +377,7 @@ int pmix_bfrop_open(void)
 }
 
 
-int pmix_bfrop_close(void)
+pmix_status_t pmix_bfrop_close(void)
 {
     int32_t i;
 
@@ -487,10 +487,10 @@ void pmix_value_load(pmix_value_t *v, void *data,
     }
 }
 
-int pmix_value_unload(pmix_value_t *kv, void **data,
-                      size_t *sz, pmix_data_type_t type)
+pmix_status_t pmix_value_unload(pmix_value_t *kv, void **data,
+                                size_t *sz, pmix_data_type_t type)
 {
-    int rc;
+    pmix_status_t rc;
 
     rc = PMIX_SUCCESS;
     if (type != kv->type) {

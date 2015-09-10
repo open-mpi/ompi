@@ -14,6 +14,8 @@
 #                         All rights reserved.
 # Copyright (c) 2010-2015 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2013-2015 Intel, Inc. All rights reserved.
+# Copyright (c) 2015      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -38,7 +40,7 @@ AC_DEFUN([MCA_opal_pmix_pmix1xx_CONFIG],[
 
     opal_pmix_pmix1xx_args="--enable-embedded-mode --with-pmix-symbol-prefix=opal_pmix_pmix1xx_ --with-libevent-header=\\\"opal/mca/event/$opal_event_base_include\\\" --with-hwloc-header=\\\"$opal_hwloc_base_include\\\""
     if test "$enable_debug" = "yes"; then
-        opal_pmix_pmix1xx_args = "--enable-debug $opal_pmix_pmix1xx_args"
+        opal_pmix_pmix1xx_args="--enable-debug $opal_pmix_pmix1xx_args"
         CFLAGS="$OPAL_CFLAGS_BEFORE_PICKY $OPAL_VISIBILITY_CFLAGS -g"
     else
         CFLAGS="$OPAL_CFLAGS_BEFORE_PICKY $OPAL_VISIBILITY_CFLAGS"
@@ -64,10 +66,8 @@ AC_DEFUN([MCA_opal_pmix_pmix1xx_CONFIG],[
                        ["$PMIX_VERSION"],
                        [Version of PMIx])
 
-    # Finally, add some flags to the wrapper compiler if we're
-    # building with developer headers so that our headers can
-    # be found.
-    pmix1xx_WRAPPER_EXTRA_CPPFLAGS='-I${includedir}/openmpi/$opal_pmix_pmix1xx_basedir/pmix -I${includedir}/openmpi/$opal_pmix_pmix1xx_basedir/pmix/include'
+    # Finally, add a flag to support static builds
+    pmix_pmix1xx_WRAPPER_EXTRA_LIBS=-lpmix
 
     CFLAGS=$opal_pmix_pmix1xx_save_CFLAGS
     CPPFLAGS=$opal_pmix_pmix1xx_save_CPPFLAGS

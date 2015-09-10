@@ -8,7 +8,7 @@
  *                         reserved.
  * Copyright (c) 2011-2013 Inria.  All rights reserved.
  * Copyright (c) 2011-2013 Université Bordeaux 1
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  */
 
@@ -21,11 +21,11 @@
 
 int mca_topo_base_dist_graph_create_adjacent(mca_topo_base_module_t* module,
                                              ompi_communicator_t *comm_old,
-                                             int indegree, int sources[],
-                                             int sourceweights[],
+                                             int indegree, const int sources[],
+                                             const int sourceweights[],
                                              int outdegree,
-                                             int destinations[],
-                                             int destweights[],
+                                             const int destinations[],
+                                             const int destweights[],
                                              ompi_info_t *info, int reorder,
                                              ompi_communicator_t **newcomm)
 {

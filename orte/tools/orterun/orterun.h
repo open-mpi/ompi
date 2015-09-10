@@ -51,9 +51,6 @@ struct orterun_globals_t {
     char *path;
     char *preload_files;
     bool sleep;
-    char *ompi_server;
-    bool wait_for_server;
-    int server_wait_timeout;
     char *stdin_target;
     char *prefix;
     char *path_to_mpirun;

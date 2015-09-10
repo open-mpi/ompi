@@ -12,7 +12,7 @@
  * Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
  * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -109,11 +109,7 @@ static int orte_rmaps_base_register(mca_base_register_flag_t flags)
     /* define default mapping policy */
     rmaps_base_mapping_policy = NULL;
     var_id = mca_base_var_register("orte", "rmaps", "base", "mapping_policy",
-#if OPAL_HAVE_HWLOC
                                    "Mapping Policy [slot | hwthread | core (default:np<=2) | l1cache | l2cache | l3cache | socket (default:np>2) | numa | board | node | seq | dist | ppr], with allowed modifiers :PE=y,SPAN,OVERSUBSCRIBE,NOOVERSUBSCRIBE",
-#else
-                                   "Mapping Policy [slot (default) | node], with allowed modifiers :SPAN,OVERSUBSCRIBE,NOOVERSUBSCRIBE",
-#endif
                                    MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
                                    OPAL_INFO_LVL_9,
                                    MCA_BASE_VAR_SCOPE_READONLY,
@@ -124,11 +120,7 @@ static int orte_rmaps_base_register(mca_base_register_flag_t flags)
     /* define default ranking policy */
     rmaps_base_ranking_policy = NULL;
     (void) mca_base_var_register("orte", "rmaps", "base", "ranking_policy",
-#if OPAL_HAVE_HWLOC
                                            "Ranking Policy [slot (default:np<=2) | hwthread | core | l1cache | l2cache | l3cache | socket (default:np>2) | numa | board | node], with modifier :SPAN or :FILL",
-#else
-                                           "Ranking Policy [slot (default) | node]",
-#endif
                                 MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
                                 OPAL_INFO_LVL_9,
                                 MCA_BASE_VAR_SCOPE_READONLY,
@@ -158,7 +150,6 @@ static int orte_rmaps_base_register(mca_base_register_flag_t flags)
 
     /* #cpus/rank to use */
     orte_rmaps_base.cpus_per_rank = 1;
-#if OPAL_HAVE_HWLOC
     var_id = mca_base_var_register("orte", "rmaps", "base", "cpus_per_proc",
                                    "Number of cpus to use for each rank [1-2**15 (default=1)]",
                                    MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
@@ -173,7 +164,6 @@ static int orte_rmaps_base_register(mca_base_register_flag_t flags)
                                    OPAL_INFO_LVL_9,
                                    MCA_BASE_VAR_SCOPE_READONLY,
                                    &rmaps_dist_device);
-#endif
 
     rmaps_base_no_schedule_local = false;
     (void) mca_base_var_register("orte", "rmaps", "base", "no_schedule_local",
@@ -264,7 +254,6 @@ static int orte_rmaps_base_open(mca_base_open_flag_t flags)
     orte_rmaps_base.mapping = 0;
     orte_rmaps_base.ranking = 0;
 
-#if OPAL_HAVE_HWLOC
     /* if a topology file was given, then set our topology
      * from it. Even though our actual topology may differ,
      * mpirun only needs to see the compute node topology
@@ -276,7 +265,6 @@ static int orte_rmaps_base_open(mca_base_open_flag_t flags)
             return ORTE_ERR_SILENT;
         }
     }
-#endif
 
     /* check for violations that has to be detected before we parse the mapping option */
     if (NULL != orte_rmaps_base.ppr) {
@@ -388,7 +376,6 @@ static int orte_rmaps_base_open(mca_base_open_flag_t flags)
     }
 
     if (1 < orte_rmaps_base.cpus_per_rank) {
-#if OPAL_HAVE_HWLOC
         /* if we were asked for multiple cpus/proc, then we have to
          * bind to those cpus - any other binding policy is an
          * error
@@ -434,7 +421,6 @@ static int orte_rmaps_base_open(mca_base_open_flag_t flags)
             ORTE_SET_MAPPING_POLICY(orte_rmaps_base.mapping, ORTE_MAPPING_BYNUMA);
             ORTE_SET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping, ORTE_MAPPING_GIVEN);
         }
-#endif
     }
 
     if (orte_rmaps_base_pernode) {
@@ -514,10 +500,8 @@ static int orte_rmaps_base_open(mca_base_open_flag_t flags)
         }
         ORTE_UNSET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping, ORTE_MAPPING_NO_OVERSUBSCRIBE);
         ORTE_SET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping, ORTE_MAPPING_SUBSCRIBE_GIVEN);
-#if OPAL_HAVE_HWLOC
         /* also set the overload allowed flag */
         opal_hwloc_binding_policy |= OPAL_BIND_ALLOW_OVERLOAD;
-#endif
     }
 
     /* should we display a detailed (developer-quality) version of the map after determining it? */
@@ -616,9 +600,7 @@ int orte_rmaps_base_set_mapping_policy(orte_mapping_policy_t *policy,
                                        char **device, char *inspec)
 {
     char *ck;
-#if OPAL_HAVE_HWLOC
     char *ptr;
-#endif
     orte_mapping_policy_t tmp;
     int rc;
     size_t len;
@@ -668,7 +650,6 @@ int orte_rmaps_base_set_mapping_policy(orte_mapping_policy_t *policy,
             /* if the policy is "dist", then we set the policy to that value
              * and save the second argument as the device
              */
-#if OPAL_HAVE_HWLOC
             if (0 == strncasecmp(spec, "ppr", strlen(spec))) {
                 /* we have to allow additional modifiers here - e.g., specifying
                  * #pe's/proc or oversubscribe - so check for modifiers
@@ -702,7 +683,6 @@ int orte_rmaps_base_set_mapping_policy(orte_mapping_policy_t *policy,
                 free(spec);
                 goto setpolicy;
             }
-#endif
             if (ORTE_SUCCESS != (rc = check_modifiers(ck, &tmp)) &&
                 ORTE_ERR_TAKE_NEXT_OPTION != rc) {
                 if (ORTE_ERR_BAD_PARAM == rc) {
@@ -719,7 +699,6 @@ int orte_rmaps_base_set_mapping_policy(orte_mapping_policy_t *policy,
             ORTE_SET_MAPPING_POLICY(tmp, ORTE_MAPPING_BYNODE);
         } else if (0 == strncasecmp(spec, "seq", len)) {
             ORTE_SET_MAPPING_POLICY(tmp, ORTE_MAPPING_SEQ);
-#if OPAL_HAVE_HWLOC
         } else if (0 == strncasecmp(spec, "core", len)) {
             ORTE_SET_MAPPING_POLICY(tmp, ORTE_MAPPING_BYCORE);
         } else if (0 == strncasecmp(spec, "l1cache", len)) {
@@ -752,7 +731,6 @@ int orte_rmaps_base_set_mapping_policy(orte_mapping_policy_t *policy,
                 free(spec);
                 return ORTE_ERR_SILENT;
             }
-#endif
         } else {
             orte_show_help("help-orte-rmaps-base.txt", "unrecognized-policy", true, "mapping", spec);
             free(spec);
@@ -793,7 +771,6 @@ int orte_rmaps_base_set_ranking_policy(orte_ranking_policy_t *policy,
             case ORTE_MAPPING_BYNODE:
                 ORTE_SET_RANKING_POLICY(tmp, ORTE_RANK_BY_NODE);
                 break;
-#if OPAL_HAVE_HWLOC
             case ORTE_MAPPING_BYCORE:
                 ORTE_SET_RANKING_POLICY(tmp, ORTE_RANK_BY_CORE);
                 break;
@@ -818,7 +795,6 @@ int orte_rmaps_base_set_ranking_policy(orte_ranking_policy_t *policy,
             case ORTE_MAPPING_BYHWTHREAD:
                 ORTE_SET_RANKING_POLICY(tmp, ORTE_RANK_BY_HWTHREAD);
                 break;
-#endif
             default:
                 /* anything not tied to a specific hw obj can rank by slot */
                 ORTE_SET_RANKING_POLICY(tmp, ORTE_RANK_BY_SLOT);
@@ -853,7 +829,6 @@ int orte_rmaps_base_set_ranking_policy(orte_ranking_policy_t *policy,
             ORTE_SET_RANKING_POLICY(tmp, ORTE_RANK_BY_SLOT);
         } else if (0 == strncasecmp(ck[0], "node", len)) {
             ORTE_SET_RANKING_POLICY(tmp, ORTE_RANK_BY_NODE);
-#if OPAL_HAVE_HWLOC
         } else if (0 == strncasecmp(ck[0], "hwthread", len)) {
             ORTE_SET_RANKING_POLICY(tmp, ORTE_RANK_BY_HWTHREAD);
         } else if (0 == strncasecmp(ck[0], "core", len)) {
@@ -870,7 +845,6 @@ int orte_rmaps_base_set_ranking_policy(orte_ranking_policy_t *policy,
             ORTE_SET_RANKING_POLICY(tmp, ORTE_RANK_BY_NUMA);
         } else if (0 == strncasecmp(ck[0], "board", len)) {
             ORTE_SET_RANKING_POLICY(tmp, ORTE_RANK_BY_BOARD);
-#endif
         } else {
             orte_show_help("help-orte-rmaps-base.txt", "unrecognized-policy", true, "ranking", rmaps_base_ranking_policy);
             opal_argv_free(ck);

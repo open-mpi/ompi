@@ -12,7 +12,7 @@
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -201,9 +201,7 @@ int orte_dt_copy_map(orte_job_map_t **dest, orte_job_map_t *src, opal_data_type_
     /* copy data into it */
     (*dest)->mapping = src->mapping;
     (*dest)->ranking = src->ranking;
-#if OPAL_HAVE_HWLOC
     (*dest)->binding = src->binding;
-#endif
     if (NULL != src->ppr) {
         (*dest)->ppr = strdup(src->ppr);
     }

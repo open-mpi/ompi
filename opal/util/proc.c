@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2013      The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
@@ -6,6 +7,8 @@
  * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -27,9 +30,7 @@ opal_process_info_t opal_process_info = {
     .proc_session_dir = NULL,
     .num_local_peers = 0,  /* there is nobody else but me */
     .my_local_rank = 0,    /* I'm the only process around here */
-#if OPAL_HAVE_HWLOC
     .cpuset = NULL,
-#endif
 };
 
 static opal_proc_t opal_local_proc = {
@@ -164,6 +165,11 @@ static int opal_convert_string_to_jobid_should_never_be_called(opal_jobid_t *job
     return OPAL_ERR_NOT_SUPPORTED;
 }
 
+static struct opal_proc_t *opal_proc_for_name_should_never_be_called (opal_process_name_t name)
+{
+    return NULL;
+}
+
 char* (*opal_process_name_print)(const opal_process_name_t) = opal_process_name_print_should_never_be_called;
 char* (*opal_vpid_print)(const opal_vpid_t) = opal_vpid_print_should_never_be_called;
 char* (*opal_jobid_print)(const opal_jobid_t) = opal_jobid_print_should_never_be_called;
@@ -171,6 +177,7 @@ int (*opal_convert_string_to_process_name)(opal_process_name_t *name, const char
 int (*opal_convert_process_name_to_string)(char** name_string, const opal_process_name_t *name) = opal_convert_process_name_to_string_should_never_be_called;
 char* (*opal_convert_jobid_to_string)(opal_jobid_t jobid) = opal_convert_jobid_to_string_should_never_be_called;
 int (*opal_convert_string_to_jobid)(opal_jobid_t *jobid, const char *jobid_string) = opal_convert_string_to_jobid_should_never_be_called;
+struct opal_proc_t *(*opal_proc_for_name) (const opal_process_name_t name) = opal_proc_for_name_should_never_be_called;
 
 char* opal_get_proc_hostname(const opal_proc_t *proc)
 {

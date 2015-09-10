@@ -1,20 +1,22 @@
 /*
- *  Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
- *                          University Research and Technology
- *                          Corporation.  All rights reserved.
- *  Copyright (c) 2004-2005 The University of Tennessee and The University
- *                          of Tennessee Research Foundation.  All rights
- *                          reserved.
- *  Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
- *                          University of Stuttgart.  All rights reserved.
- *  Copyright (c) 2004-2005 The Regents of the University of California.
- *                          All rights reserved.
- *  Copyright (c) 2008-2015 University of Houston. All rights reserved.
- *  $COPYRIGHT$
+ * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ *                         University Research and Technology
+ *                         Corporation.  All rights reserved.
+ * Copyright (c) 2004-2005 The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
+ *                         University of Stuttgart.  All rights reserved.
+ * Copyright (c) 2004-2005 The Regents of the University of California.
+ *                         All rights reserved.
+ * Copyright (c) 2008-2015 University of Houston. All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
+ * $COPYRIGHT$
  *
- *  Additional copyrights may follow
+ * Additional copyrights may follow
  *
- *  $HEADER$
+ * $HEADER$
  */
 
 #include "ompi_config.h"
@@ -39,7 +41,7 @@
 
 int
 mca_io_ompio_file_open (ompi_communicator_t *comm,
-                        char *filename,
+                        const char *filename,
                         int amode,
                         ompi_info_t *info,
                         ompi_file_t *fh)
@@ -71,7 +73,7 @@ mca_io_ompio_file_open (ompi_communicator_t *comm,
 
 int
 ompio_io_ompio_file_open (ompi_communicator_t *comm,
-                        char *filename,
+                        const char *filename,
                         int amode,
                         ompi_info_t *info,
                         mca_io_ompio_file_t *ompio_fh, bool use_sharedfp)
@@ -399,7 +401,7 @@ ompio_io_ompio_file_close (mca_io_ompio_file_t *ompio_fh)
     return ret;
 }
 
-int mca_io_ompio_file_delete (char *filename,
+int mca_io_ompio_file_delete (const char *filename,
                               struct ompi_info_t *info)
 {
     int ret = OMPI_SUCCESS;

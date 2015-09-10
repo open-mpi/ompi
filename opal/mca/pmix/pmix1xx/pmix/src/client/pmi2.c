@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2014-2015 Intel, Inc.  All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -219,7 +219,8 @@ int PMI2_Info_GetJobAttrIntArray(const char name[], int array[], int arraylen, i
 
 int PMI2_Nameserv_publish(const char service_name[], const PMI_keyval_t *info_ptr, const char port[])
 {
-    pmix_status_t rc, nvals;
+    pmix_status_t rc;
+    int nvals;
     pmix_info_t info[2];
 
     if (NULL == service_name || NULL == port) {
@@ -240,7 +241,7 @@ int PMI2_Nameserv_publish(const char service_name[], const PMI_keyval_t *info_pt
     }
     /* publish the info - PMI-2 doesn't support
      * any scope other than inside our own nspace */
-    rc = PMIx_Publish(PMIX_NAMESPACE, PMIX_PERSIST_APP, info, nvals);
+    rc = PMIx_Publish(info, nvals);
 
     return convert_err(rc);
 }
@@ -261,7 +262,7 @@ int PMI2_Nameserv_unpublish(const char service_name[],
         keys[1] = info_ptr->key;
     }
 
-    rc = PMIx_Unpublish(PMIX_NAMESPACE, keys);
+    rc = PMIx_Unpublish(keys, NULL, 0);
     return convert_err(rc);
 }
 
@@ -288,7 +289,7 @@ int PMI2_Nameserv_lookup(const char service_name[], const PMI_keyval_t *info_ptr
     }
 
     /* lookup the info */
-    if (PMIX_SUCCESS != (rc = PMIx_Lookup(PMIX_NAMESPACE, NULL, 0, pdata, nvals))) {
+    if (PMIX_SUCCESS != (rc = PMIx_Lookup(pdata, nvals, NULL, 0))) {
         PMIX_PDATA_DESTRUCT(&pdata[0]);
         PMIX_PDATA_DESTRUCT(&pdata[1]);
         return convert_err(rc);

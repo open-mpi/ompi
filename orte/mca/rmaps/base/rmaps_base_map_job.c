@@ -113,7 +113,6 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
                                 "mca:rmaps mapping given - using default");
             map->mapping = orte_rmaps_base.mapping;
         } else {
-#if OPAL_HAVE_HWLOC
             /* default based on number of procs */
             if (nprocs <= 2) {
                 if (1 < orte_rmaps_base.cpus_per_rank) {
@@ -138,10 +137,6 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
                                     "mca:rmaps[%d] mapping not given - using bysocket", __LINE__);
                 ORTE_SET_MAPPING_POLICY(map->mapping, ORTE_MAPPING_BYSOCKET);
             }
-#else
-            /* in the absence of hwloc, default to map-by slot */
-            ORTE_SET_MAPPING_POLICY(map->mapping, ORTE_MAPPING_BYSLOT);
-#endif
             /* check for oversubscribe directives */
             if (!(ORTE_MAPPING_SUBSCRIBE_GIVEN & ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping))) {
                 if (orte_managed_allocation) {
@@ -190,7 +185,6 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
         }
         /* set the default mapping policy IFF it wasn't provided */
         if (!ORTE_MAPPING_POLICY_IS_SET(jdata->map->mapping)) {
-#if OPAL_HAVE_HWLOC
             /* default based on number of procs */
             if (nprocs <= 2) {
                 if (1 < orte_rmaps_base.cpus_per_rank) {
@@ -215,10 +209,6 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
                                     "mca:rmaps[%d] mapping not set by user - using bysocket", __LINE__);
                 ORTE_SET_MAPPING_POLICY(jdata->map->mapping, ORTE_MAPPING_BYSOCKET);
             }
-#else
-            /* in the absence of hwloc, default to map-by slot */
-            ORTE_SET_MAPPING_POLICY(jdata->map->mapping, ORTE_MAPPING_BYSLOT);
-#endif
         }
         /* check for oversubscribe directives */
         if (!(ORTE_MAPPING_SUBSCRIBE_GIVEN & ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping))) {
@@ -246,7 +236,6 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
         }
     }
 
-#if OPAL_HAVE_HWLOC
     /* define the binding policy for this job - if the user specified one
      * already (e.g., during the call to comm_spawn), then we don't
      * override it */
@@ -356,7 +345,6 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
             }
         }
     }
-#endif
 
     /* cycle thru the available mappers until one agrees to map
      * the job
@@ -413,7 +401,6 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
         return;
     }
 
-#if OPAL_HAVE_HWLOC
     /* compute and save bindings */
     if (ORTE_SUCCESS != (rc = orte_rmaps_base_compute_bindings(jdata))) {
         ORTE_ERROR_LOG(rc);
@@ -421,7 +408,6 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
         OBJ_RELEASE(caddy);
         return;
     }
-#endif
 
     /* set the offset so shared memory components can potentially
      * connect to any spawned jobs
@@ -446,6 +432,10 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
         orte_node_t *node;
         orte_proc_t *proc;
         char tmp1[1024];
+        hwloc_obj_t bd=NULL;;
+        opal_hwloc_locality_t locality;
+        orte_proc_t *p0;
+        char *p0bitmap, *procbitmap;
 
         if (orte_display_diffable_output) {
             /* intended solely to test mapping methods, this output
@@ -470,74 +460,52 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
                     if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(node->procs, j))) {
                         continue;
                     }
-#if OPAL_HAVE_HWLOC
-                    {
-                        hwloc_obj_t bd=NULL;;
-
-                        memset(tmp1, 0, 1024);
-                        orte_get_attribute(&proc->attributes, ORTE_PROC_HWLOC_BOUND, (void**)&bd, OPAL_PTR);
-                        if (NULL == bd) {
+                    memset(tmp1, 0, 1024);
+                    orte_get_attribute(&proc->attributes, ORTE_PROC_HWLOC_BOUND, (void**)&bd, OPAL_PTR);
+                    if (NULL == bd) {
+                        (void)strncpy(tmp1, "UNBOUND", strlen("UNBOUND"));
+                    } else {
+                        if (OPAL_ERR_NOT_BOUND == opal_hwloc_base_cset2mapstr(tmp1, sizeof(tmp1), node->topology, bd->cpuset)) {
                             (void)strncpy(tmp1, "UNBOUND", strlen("UNBOUND"));
-                        } else {
-                            if (OPAL_ERR_NOT_BOUND == opal_hwloc_base_cset2mapstr(tmp1, sizeof(tmp1), node->topology, bd->cpuset)) {
-                                (void)strncpy(tmp1, "UNBOUND", strlen("UNBOUND"));
-                            }
                         }
-                        opal_output(orte_clean_output, "\t\t<process rank=%s app_idx=%ld local_rank=%lu node_rank=%lu binding=%s>",
-                                    ORTE_VPID_PRINT(proc->name.vpid),  (long)proc->app_idx,
-                                    (unsigned long)proc->local_rank,
-                                    (unsigned long)proc->node_rank, tmp1);
                     }
-#else
-                    opal_output(orte_clean_output, "\t\t<process rank=%s app_idx=%ld local_rank=%lu node_rank=%lu>",
+                    opal_output(orte_clean_output, "\t\t<process rank=%s app_idx=%ld local_rank=%lu node_rank=%lu binding=%s>",
                                 ORTE_VPID_PRINT(proc->name.vpid),  (long)proc->app_idx,
                                 (unsigned long)proc->local_rank,
-                                (unsigned long)proc->node_rank);
-#endif
-                    fflush(stderr);
+                                (unsigned long)proc->node_rank, tmp1);
                 }
                 opal_output(orte_clean_output, "\t</host>");
                 fflush(stderr);
             }
 
-#if OPAL_HAVE_HWLOC
-            {
-                opal_hwloc_locality_t locality;
-                orte_proc_t *p0;
-                char *p0bitmap, *procbitmap;
-                /* test locality - for the first node, print the locality of each proc relative to the first one */
-                node = (orte_node_t*)opal_pointer_array_get_item(jdata->map->nodes, 0);
-                p0 = (orte_proc_t*)opal_pointer_array_get_item(node->procs, 0);
-                p0bitmap = NULL;
-                orte_get_attribute(&p0->attributes, ORTE_PROC_CPU_BITMAP, (void**)&p0bitmap, OPAL_STRING);
-                opal_output(orte_clean_output, "\t<locality>");
-                for (j=1; j < node->procs->size; j++) {
-                    if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(node->procs, j))) {
-                        continue;
-                    }
-                    procbitmap = NULL;
-                    orte_get_attribute(&proc->attributes, ORTE_PROC_CPU_BITMAP, (void**)&procbitmap, OPAL_STRING);
-                    locality = opal_hwloc_base_get_relative_locality(node->topology,
-                                                                     p0bitmap,
-                                                                     procbitmap);
-                    opal_output(orte_clean_output, "\t\t<rank=%s rank=%s locality=%s>",
-                                ORTE_VPID_PRINT(p0->name.vpid),
-                                ORTE_VPID_PRINT(proc->name.vpid),
-                                opal_hwloc_base_print_locality(locality));
+             /* test locality - for the first node, print the locality of each proc relative to the first one */
+            node = (orte_node_t*)opal_pointer_array_get_item(jdata->map->nodes, 0);
+            p0 = (orte_proc_t*)opal_pointer_array_get_item(node->procs, 0);
+            p0bitmap = NULL;
+            orte_get_attribute(&p0->attributes, ORTE_PROC_CPU_BITMAP, (void**)&p0bitmap, OPAL_STRING);
+            opal_output(orte_clean_output, "\t<locality>");
+            for (j=1; j < node->procs->size; j++) {
+                if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(node->procs, j))) {
+                    continue;
                 }
-                opal_output(orte_clean_output, "\t</locality>\n</map>");
-                fflush(stderr);
-                if (NULL != p0bitmap) {
-                    free(p0bitmap);
-                }
-                if (NULL != procbitmap) {
-                    free(procbitmap);
-                }
+                procbitmap = NULL;
+                orte_get_attribute(&proc->attributes, ORTE_PROC_CPU_BITMAP, (void**)&procbitmap, OPAL_STRING);
+                locality = opal_hwloc_base_get_relative_locality(node->topology,
+                                                                 p0bitmap,
+                                                                 procbitmap);
+                opal_output(orte_clean_output, "\t\t<rank=%s rank=%s locality=%s>",
+                            ORTE_VPID_PRINT(p0->name.vpid),
+                            ORTE_VPID_PRINT(proc->name.vpid),
+                            opal_hwloc_base_print_locality(locality));
             }
-#else
-            opal_output(orte_clean_output, "\n</map>");
+            opal_output(orte_clean_output, "\t</locality>\n</map>");
             fflush(stderr);
-#endif
+            if (NULL != p0bitmap) {
+                free(p0bitmap);
+            }
+            if (NULL != procbitmap) {
+                free(procbitmap);
+            }
         } else {
             opal_output(orte_clean_output, " Data for JOB %s offset %s", ORTE_JOBID_PRINT(jdata->jobid), ORTE_VPID_PRINT(jdata->offset));
             opal_dss.print(&output, NULL, jdata->map, ORTE_JOB_MAP);

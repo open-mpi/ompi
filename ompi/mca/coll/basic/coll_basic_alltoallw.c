@@ -14,7 +14,7 @@
  * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2013      FUJITSU LIMITED.  All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
@@ -36,7 +36,7 @@
 
 
 static int
-mca_coll_basic_alltoallw_intra_inplace(void *rbuf, int *rcounts, const int *rdisps,
+mca_coll_basic_alltoallw_intra_inplace(const void *rbuf, const int *rcounts, const int *rdisps,
                                        struct ompi_datatype_t * const *rdtypes,
                                        struct ompi_communicator_t *comm,
                                        mca_coll_base_module_t *module)
@@ -145,10 +145,10 @@ mca_coll_basic_alltoallw_intra_inplace(void *rbuf, int *rcounts, const int *rdis
  *	Returns:	- MPI_SUCCESS or an MPI error code
  */
 int
-mca_coll_basic_alltoallw_intra(void *sbuf, int *scounts, int *sdisps,
-                               struct ompi_datatype_t **sdtypes,
-                               void *rbuf, int *rcounts, int *rdisps,
-                               struct ompi_datatype_t **rdtypes,
+mca_coll_basic_alltoallw_intra(const void *sbuf, const int *scounts, const int *sdisps,
+                               struct ompi_datatype_t * const *sdtypes,
+                               void *rbuf, const int *rcounts, const int *rdisps,
+                               struct ompi_datatype_t * const *rdtypes,
                                struct ompi_communicator_t *comm,
                                mca_coll_base_module_t *module)
 {
@@ -270,10 +270,10 @@ mca_coll_basic_alltoallw_intra(void *sbuf, int *scounts, int *sdisps,
  *	Returns:	- MPI_SUCCESS or an MPI error code
  */
 int
-mca_coll_basic_alltoallw_inter(void *sbuf, int *scounts, int *sdisps,
-                               struct ompi_datatype_t **sdtypes,
-                               void *rbuf, int *rcounts, int *rdisps,
-                               struct ompi_datatype_t **rdtypes,
+mca_coll_basic_alltoallw_inter(const void *sbuf, const int *scounts, const int *sdisps,
+                               struct ompi_datatype_t * const *sdtypes,
+                               void *rbuf, const int *rcounts, const int *rdisps,
+                               struct ompi_datatype_t * const *rdtypes,
                                struct ompi_communicator_t *comm,
                                mca_coll_base_module_t *module)
 {

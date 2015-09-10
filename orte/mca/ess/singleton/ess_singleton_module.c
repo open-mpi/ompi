@@ -256,7 +256,6 @@ static int rte_init(void)
         free(string_key);
     }
 
-#if OPAL_HAVE_HWLOC
     /* retrieve our topology */
     OPAL_MODEX_RECV_VALUE(ret, OPAL_PMIX_LOCAL_TOPO,
                           ORTE_PROC_MY_NAME, &val, OPAL_STRING);
@@ -319,7 +318,6 @@ static int rte_init(void)
         }
         OBJ_RELEASE(kv);
     }
-#endif
 
     /* use the std app init to complete the procedure */
     if (ORTE_SUCCESS != (rc = orte_ess_base_app_setup(true))) {

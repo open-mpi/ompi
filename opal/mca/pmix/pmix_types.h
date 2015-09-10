@@ -28,14 +28,21 @@ BEGIN_C_DECLS
  * these keys are RESERVED */
 #define OPAL_PMIX_ATTR_UNDEF      NULL
 
+/* identification attributes */
+#define OPAL_PMIX_USERID                "pmix.euid"         // (uint32_t) effective user id
+#define OPAL_PMIX_GRPID                 "pmix.egid"         // (uint32_t) effective group id
+
+/* general proc-level attributes */
 #define OPAL_PMIX_CPUSET                "pmix.cpuset"       // (char*) hwloc bitmap applied to proc upon launch
 #define OPAL_PMIX_CREDENTIAL            "pmix.cred"         // (char*) security credential assigned to proc
 #define OPAL_PMIX_SPAWNED               "pmix.spawned"      // (bool) true if this proc resulted from a call to PMIx_Spawn
 #define OPAL_PMIX_ARCH                  "pmix.arch"         // (uint32_t) datatype architecture flag
+
 /* scratch directory locations for use by applications */
 #define OPAL_PMIX_TMPDIR                "pmix.tmpdir"       // (char*) top-level tmp dir assigned to session
 #define OPAL_PMIX_NSDIR                 "pmix.nsdir"        // (char*) sub-tmpdir assigned to namespace
 #define OPAL_PMIX_PROCDIR               "pmix.pdir"         // (char*) sub-nsdir assigned to proc
+
 /* information about relative ranks as assigned by the RM */
 #define OPAL_PMIX_JOBID                 "pmix.jobid"        // (char*) jobid assigned by scheduler
 #define OPAL_PMIX_APPNUM                "pmix.appnum"       // (uint32_t) app number within the job
@@ -67,17 +74,20 @@ BEGIN_C_DECLS
 #define OPAL_PMIX_LOCAL_PEERS           "pmix.lpeers"       // (char*) comma-delimited string of ranks on this node within the specified nspace
 #define OPAL_PMIX_LOCAL_CPUSETS         "pmix.lcpus"        // (char*) colon-delimited cpusets of local peers within the specified nspace
 #define OPAL_PMIX_PROC_URI              "pmix.puri"         // (char*) URI containing contact info for proc
+
 /* size info */
 #define OPAL_PMIX_UNIV_SIZE             "pmix.univ.size"    // (uint32_t) #procs in this nspace
 #define OPAL_PMIX_JOB_SIZE              "pmix.job.size"     // (uint32_t) #procs in this job
 #define OPAL_PMIX_LOCAL_SIZE            "pmix.local.size"   // (uint32_t) #procs in this job on this node
 #define OPAL_PMIX_NODE_SIZE             "pmix.node.size"    // (uint32_t) #procs across all jobs on this node
 #define OPAL_PMIX_MAX_PROCS             "pmix.max.size"     // (uint32_t) max #procs for this job
+
 /* topology info */
 #define OPAL_PMIX_NET_TOPO              "pmix.ntopo"        // (char*) xml-representation of network topology
 #define OPAL_PMIX_LOCAL_TOPO            "pmix.ltopo"        // (char*) xml-representation of local node topology
 #define OPAL_PMIX_NODE_LIST             "pmix.nlist"        // (char*) comma-delimited list of nodes running procs for this job
 #define OPAL_PMIX_TOPOLOGY              "pmix.topo"         // (hwloc_topology_t) pointer to the PMIx client's internal topology object
+
 /* fault tolerance-related info */
 #define OPAL_PMIX_TERMINATE_SESSION     "pmix.term.sess"    // (bool) RM intends to terminate session
 #define OPAL_PMIX_TERMINATE_JOB         "pmix.term.job"     // (bool) RM intends to terminate this job
@@ -91,6 +101,9 @@ BEGIN_C_DECLS
 #define OPAL_PMIX_WAIT                  "pmix.wait"         // (int) caller requests that the server wait until the specified #values are found
 #define OPAL_PMIX_COLLECTIVE_ALGO       "pmix.calgo"        // (char*) comma-delimited list of algorithms to use for collective
 #define OPAL_PMIX_COLLECTIVE_ALGO_REQD  "pmix.calreqd"      // (bool) if true, indicates that the requested choice of algo is mandatory
+#define OPAL_PMIX_NOTIFY_COMPLETION     "pmix.notecomp"     // (bool) notify parent process upon termination of child job
+#define OPAL_PMIX_RANGE                 "pmix.range"        // (int) opal_pmix_data_range_t value for calls to publish/lookup/unpublish
+#define OPAL_PMIX_PERSISTENCE           "pmix.persist"      // (int) opal_pmix_persistence_t value for calls to publish
 
 /* attribute used by host server to pass data to the server convenience library - the
  * data will then be parsed and provided to the local clients */
@@ -122,7 +135,8 @@ BEGIN_C_DECLS
 #define OPAL_PMIX_STDIN_TGT             "pmix.stdin"        // (uint32_t) spawned proc rank that is to receive stdin
 
 
-/* define a scope for data "put" by PMI per the following:
+/* define a scope for data "put" by PMI per the following - maintain
+ * consistent order with the PMIx distro :
  *
  * OPAL_PMI_LOCAL - the data is intended only for other application
  *                  processes on the same node. Data marked in this way
@@ -133,7 +147,7 @@ BEGIN_C_DECLS
  * OPAL_PMI_GLOBAL - the data is to be shared with all other requesting processes,
  *                   regardless of location
  */
-#define OPAL_PMIX_SCOPE PMIX_UINT32
+#define OPAL_PMIX_SCOPE PMIX_UINT
 typedef enum {
     OPAL_PMIX_SCOPE_UNDEF = 0,
     OPAL_PMIX_LOCAL,           // share to procs also on this node
@@ -141,15 +155,17 @@ typedef enum {
     OPAL_PMIX_GLOBAL
 } opal_pmix_scope_t;
 
-/* define a range for data "published" by PMI */
-#define OPAL_PMIX_DATA_RANGE OPAL_UINT8
+/* define a range for data "published" by PMI  - maintain
+ * consistent order with the PMIx distro */
+#define OPAL_PMIX_DATA_RANGE OPAL_UINT
 typedef enum {
     OPAL_PMIX_DATA_RANGE_UNDEF = 0,
     OPAL_PMIX_NAMESPACE,       // data is available to procs in the same nspace only
     OPAL_PMIX_SESSION          // data available to all jobs in this session
 } opal_pmix_data_range_t;
 
-/* define a "persistence" policy for data published by clients */
+/* define a "persistence" policy for data published by clients - maintain
+ * consistent order with the PMIx distro */
 typedef enum {
     OPAL_PMIX_PERSIST_INDEF = 0,   // retain until specifically deleted
     OPAL_PMIX_PERSIST_PROC,        // retain until publishing process terminates
@@ -159,19 +175,15 @@ typedef enum {
 
 
 /****    PMIX INFO STRUCT    ****/
-typedef struct {
-    opal_list_item_t super;
-    char *key;
-    opal_value_t value;
-} opal_pmix_info_t;
-OBJ_CLASS_DECLARATION(opal_pmix_info_t);
+
+/* NOTE: the pmix_info_t is essentially equivalent to the opal_value_t
+ * Hence, we do not define an opal_value_t */
 
 
 /****    PMIX LOOKUP RETURN STRUCT    ****/
 typedef struct {
     opal_list_item_t super;
     opal_process_name_t proc;
-    char *key;
     opal_value_t value;
 } opal_pmix_pdata_t;
 OBJ_CLASS_DECLARATION(opal_pmix_pdata_t);
@@ -256,7 +268,7 @@ typedef void (*opal_pmix_lookup_cbfunc_t)(int status,
  * It is the responsibility of the application to parse any provided info array
  * for defined key-values if it so desires.
  *
- * Possible uses of a pmix_info_t object include:
+ * Possible uses of the opal_value_t list include:
  *
  * - for the RM to alert the process as to planned actions, such as
  *   to abort the session, in response to the reported error

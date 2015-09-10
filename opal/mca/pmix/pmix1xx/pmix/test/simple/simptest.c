@@ -14,6 +14,8 @@
  * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2013-2015 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -24,17 +26,24 @@
 
 #include <private/autogen/config.h>
 #include <pmix_server.h>
+#include <private/types.h>
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <time.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <errno.h>
+#include <signal.h>
+#include PMIX_EVENT_HEADER
 
 #include "src/util/pmix_environ.h"
 #include "src/util/output.h"
 #include "src/util/printf.h"
 #include "src/util/argv.h"
 #include "src/buffer_ops/buffer_ops.h"
+#include "src/usock/usock.h"
 
 static pmix_status_t connected(const pmix_proc_t *proc, void *server_object);
 static pmix_status_t finalized(const pmix_proc_t *proc, void *server_object,
@@ -51,14 +60,13 @@ static pmix_status_t dmodex_fn(const pmix_proc_t *proc,
                                const pmix_info_t info[], size_t ninfo,
                                pmix_modex_cbfunc_t cbfunc, void *cbdata);
 static pmix_status_t publish_fn(const pmix_proc_t *proc,
-                                pmix_data_range_t scope, pmix_persistence_t persist,
                                 const pmix_info_t info[], size_t ninfo,
                                 pmix_op_cbfunc_t cbfunc, void *cbdata);
-static pmix_status_t lookup_fn(const pmix_proc_t *proc, pmix_data_range_t scope,
-                               const pmix_info_t info[], size_t ninfo, char **keys,
+static pmix_status_t lookup_fn(const pmix_proc_t *proc, char **keys,
+                               const pmix_info_t info[], size_t ninfo,
                                pmix_lookup_cbfunc_t cbfunc, void *cbdata);
-static pmix_status_t unpublish_fn(const pmix_proc_t *proc,
-                                  pmix_data_range_t scope, char **keys,
+static pmix_status_t unpublish_fn(const pmix_proc_t *proc, char **keys,
+                                  const pmix_info_t info[], size_t ninfo,
                                   pmix_op_cbfunc_t cbfunc, void *cbdata);
 static pmix_status_t spawn_fn(const pmix_proc_t *proc,
                               const pmix_info_t job_info[], size_t ninfo,
@@ -72,8 +80,6 @@ static pmix_status_t disconnect_fn(const pmix_proc_t procs[], size_t nprocs,
                                    pmix_op_cbfunc_t cbfunc, void *cbdata);
 static pmix_status_t register_event_fn(const pmix_info_t info[], size_t ninfo,
                                        pmix_op_cbfunc_t cbfunc, void *cbdata);
-static pmix_status_t listener_fn(int listening_sd,
-                                 pmix_connection_cbfunc_t cbfunc);
 
 static pmix_server_module_t mymodule = {
     connected,
@@ -88,7 +94,7 @@ static pmix_server_module_t mymodule = {
     connect_fn,
     disconnect_fn,
     register_event_fn,
-    listener_fn
+    NULL
 };
 
 typedef struct {
@@ -101,7 +107,7 @@ PMIX_CLASS_INSTANCE(pmix_locdat_t,
 
 typedef struct {
     pmix_object_t super;
-    volatile bool completed;
+    volatile bool active;
     pmix_proc_t caller;
     pmix_info_t *info;
     size_t ninfo;
@@ -113,7 +119,7 @@ static void xfcon(myxfer_t *p)
 {
     p->info = NULL;
     p->ninfo = 0;
-    p->completed = false;
+    p->active = true;
     p->cbfunc = NULL;
     p->spcbfunc = NULL;
     p->cbdata = NULL;
@@ -128,26 +134,35 @@ PMIX_CLASS_INSTANCE(myxfer_t,
                     pmix_object_t,
                     xfcon, xfdes);
 
+typedef struct {
+    pmix_list_item_t super;
+    pid_t pid;
+} wait_tracker_t;
+PMIX_CLASS_INSTANCE(wait_tracker_t,
+                    pmix_list_item_t,
+                    NULL, NULL);
+
 static volatile int wakeup;
 static pmix_list_t pubdata;
+static pmix_event_t handler;
+static pmix_list_t children;
 
 static void set_namespace(int nprocs, char *ranks, char *nspace,
                           pmix_op_cbfunc_t cbfunc, myxfer_t *x);
 static void errhandler(pmix_status_t status,
                        pmix_proc_t procs[], size_t nprocs,
                        pmix_info_t info[], size_t ninfo);
+static void wait_signal_callback(int fd, short event, void *arg);
 
 static void opcbfunc(pmix_status_t status, void *cbdata)
 {
     myxfer_t *x = (myxfer_t*)cbdata;
 
-    x->completed = true;
-    /* release the caller, if necessary - note that
-     * this may result in release of x, so this must
-     * be the last thing we do with it here */
+    /* release the caller, if necessary */
     if (NULL != x->cbfunc) {
         x->cbfunc(PMIX_SUCCESS, x->cbdata);
     }
+    x->active = false;
 }
 
 int main(int argc, char **argv)
@@ -161,6 +176,7 @@ int main(int argc, char **argv)
     pid_t pid;
     myxfer_t *x;
     pmix_proc_t proc;
+    wait_tracker_t *child;
 
     /* smoke test */
     if (PMIX_SUCCESS != 0) {
@@ -180,6 +196,12 @@ int main(int argc, char **argv)
 
     /* setup the pub data, in case it is used */
     PMIX_CONSTRUCT(&pubdata, pmix_list_t);
+
+    /* setup to see sigchld on the forked tests */
+    PMIX_CONSTRUCT(&children, pmix_list_t);
+    event_assign(&handler, pmix_globals.evbase, SIGCHLD,
+                 EV_SIGNAL|EV_PERSIST,wait_signal_callback, &handler);
+    event_add(&handler, NULL);
 
     /* see if we were passed the number of procs to run or
      * the executable to use */
@@ -208,7 +230,6 @@ int main(int argc, char **argv)
     tmp = pmix_argv_join(atmp, ',');
     x = PMIX_NEW(myxfer_t);
     set_namespace(nprocs, tmp, "foobar", opcbfunc, x);
-    free(tmp);
 
     /* set common argv and env */
     client_env = pmix_argv_copy(environ);
@@ -220,12 +241,8 @@ int main(int argc, char **argv)
 
     /* if the nspace registration hasn't completed yet,
      * wait for it here */
-    while (!x->completed) {
-        struct timespec ts;
-        ts.tv_sec = 0;
-        ts.tv_nsec = 100000;
-        nanosleep(&ts, NULL);
-    }
+    PMIX_WAIT_FOR_COMPLETION(x->active);
+    free(tmp);
     PMIX_RELEASE(x);
 
     /* fork/exec the test */
@@ -246,12 +263,7 @@ int main(int argc, char **argv)
         }
         /* don't fork/exec the client until we know it is registered
          * so we avoid a potential race condition in the server */
-        while (!x->completed) {
-            struct timespec ts;
-            ts.tv_sec = 0;
-            ts.tv_nsec = 100000;
-            nanosleep(&ts, NULL);
-        }
+        PMIX_WAIT_FOR_COMPLETION(x->active);
         PMIX_RELEASE(x);
         pid = fork();
         if (pid < 0) {
@@ -259,6 +271,9 @@ int main(int argc, char **argv)
             PMIx_server_finalize();
             return -1;
         }
+        child = PMIX_NEW(wait_tracker_t);
+        child->pid = pid;
+        pmix_list_append(&children, &child->super);
 
         if (pid == 0) {
             execve(executable, client_argv, client_env);
@@ -370,11 +385,11 @@ static void abcbfunc(pmix_status_t status, void *cbdata)
 
 static int abort_fn(const pmix_proc_t *proc,
                     void *server_object,
-                    int status, const char msg[],
+                    pmix_status_t status, const char msg[],
                     pmix_proc_t procs[], size_t nprocs,
                     pmix_op_cbfunc_t cbfunc, void *cbdata)
 {
-    int rc;
+    pmix_status_t rc;
     myxfer_t *x;
 
     pmix_output(0, "SERVER: ABORT on %s:%d", procs[0].nspace, procs[0].rank);
@@ -401,7 +416,7 @@ static int abort_fn(const pmix_proc_t *proc,
     if (PMIX_SUCCESS != (rc = PMIx_server_notify_error(status, procs, nprocs,
                                                        &x->caller, 1, x->info, 2,
                                                        abcbfunc, x))) {
-        pmix_output(0, "SERVER: FAILED NOTIFY ERROR %d", rc);
+        pmix_output(0, "SERVER: FAILED NOTIFY ERROR %d", (int)rc);
     }
 
     return PMIX_SUCCESS;
@@ -438,7 +453,6 @@ static int dmodex_fn(const pmix_proc_t *proc,
 
 
 static int publish_fn(const pmix_proc_t *proc,
-                      pmix_data_range_t scope, pmix_persistence_t persist,
                       const pmix_info_t info[], size_t ninfo,
                       pmix_op_cbfunc_t cbfunc, void *cbdata)
 {
@@ -462,16 +476,15 @@ static int publish_fn(const pmix_proc_t *proc,
 }
 
 
-static int lookup_fn(const pmix_proc_t *proc,
-                     pmix_data_range_t scope,
-                     const pmix_info_t info[], size_t ninfo, char **keys,
+static int lookup_fn(const pmix_proc_t *proc, char **keys,
+                     const pmix_info_t info[], size_t ninfo,
                      pmix_lookup_cbfunc_t cbfunc, void *cbdata)
 {
     pmix_locdat_t *p, *p2;
     pmix_list_t results;
     size_t i, n;
     pmix_pdata_t *pd;
-    int ret=PMIX_ERR_NOT_FOUND;
+    pmix_status_t ret = PMIX_ERR_NOT_FOUND;
 
     pmix_output(0, "SERVER: LOOKUP");
 
@@ -512,8 +525,8 @@ static int lookup_fn(const pmix_proc_t *proc,
 }
 
 
-static int unpublish_fn(const pmix_proc_t *proc,
-                        pmix_data_range_t scope, char **keys,
+static int unpublish_fn(const pmix_proc_t *proc, char **keys,
+                        const pmix_info_t info[], size_t ninfo,
                         pmix_op_cbfunc_t cbfunc, void *cbdata)
 {
     pmix_locdat_t *p, *p2;
@@ -610,10 +623,39 @@ static pmix_status_t register_event_fn(const pmix_info_t info[], size_t ninfo,
     return PMIX_SUCCESS;
 }
 
-static int listener_fn(int listening_sd,
-                       pmix_connection_cbfunc_t cbfunc)
+static void wait_signal_callback(int fd, short event, void *arg)
 {
-    return PMIX_SUCCESS;
-}
+    pmix_event_t *sig = (pmix_event_t*) arg;
+    int status;
+    pid_t pid;
+    wait_tracker_t *t2;
 
+    if (SIGCHLD != event_get_signal(sig)) {
+        return;
+    }
+
+    /* we can have multiple children leave but only get one
+     * sigchild callback, so reap all the waitpids until we
+     * don't get anything valid back */
+    while (1) {
+        pid = waitpid(-1, &status, WNOHANG);
+        if (-1 == pid && EINTR == errno) {
+            /* try it again */
+            continue;
+        }
+        /* if we got garbage, then nothing we can do */
+        if (pid <= 0) {
+            return;
+        }
+
+        /* we are already in an event, so it is safe to access the list */
+        PMIX_LIST_FOREACH(t2, &children, wait_tracker_t) {
+            if (pid == t2->pid) {
+                /* found it! */
+                --wakeup;
+                break;
+            }
+        }
+    }
+}
 

@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2015 University of Houston. All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -66,7 +68,7 @@ OMPI_MODULE_DECLSPEC extern mca_fs_base_component_2_0_0_t mca_fs_pvfs2_component
  */
 
 int mca_fs_pvfs2_file_open (struct ompi_communicator_t *comm,
-                            char *filename,
+                            const char *filename,
                             int amode,
                             struct ompi_info_t *info,
                             mca_io_ompio_file_t *fh);

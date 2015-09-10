@@ -77,7 +77,7 @@ int main(int argc, char **argv)
         (void)strncpy(info[1].key, "PANDA", PMIX_MAX_KEYLEN);
         info[1].value.type = PMIX_SIZE;
         info[1].value.data.size = 123456;
-        if (PMIX_SUCCESS != (rc = PMIx_Publish(PMIX_NAMESPACE, PMIX_PERSIST_APP, info, 2))) {
+        if (PMIX_SUCCESS != (rc = PMIx_Publish(info, 2))) {
             fprintf(stderr, "Client ns %s rank %d: PMIx_Publish failed: %d\n", myproc.nspace, myproc.rank, rc);
             goto done;
         }
@@ -95,7 +95,7 @@ int main(int argc, char **argv)
     if (0 != myproc.rank) {
         PMIX_PDATA_CREATE(pdata, 1);
         (void)strncpy(pdata[0].key, "FOOBAR", PMIX_MAX_KEYLEN);
-        if (PMIX_SUCCESS != (rc = PMIx_Lookup(PMIX_NAMESPACE, NULL, 0, pdata, 1))) {
+        if (PMIX_SUCCESS != (rc = PMIx_Lookup(pdata, 1, NULL, 0))) {
             fprintf(stderr, "Client ns %s rank %d: PMIx_Lookup failed: %d\n", myproc.nspace, myproc.rank, rc);
             goto done;
         }
@@ -137,7 +137,7 @@ int main(int argc, char **argv)
         keys[1] = "PANDA";
         keys[2] = NULL;
 
-        if (PMIX_SUCCESS != (rc = PMIx_Unpublish(PMIX_NAMESPACE, keys))) {
+        if (PMIX_SUCCESS != (rc = PMIx_Unpublish(keys, NULL, 0))) {
             fprintf(stderr, "Client ns %s rank %d: PMIx_Unpublish failed: %d\n", myproc.nspace, myproc.rank, rc);
             free(keys);
             goto done;

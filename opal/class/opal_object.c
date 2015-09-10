@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -9,6 +10,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -47,6 +50,8 @@ opal_class_t opal_object_t_class = {
     sizeof(opal_object_t) /* size of the opal object */
 };
 
+int opal_class_init_epoch = 1;
+
 /*
  * Local variables
  */
@@ -81,7 +86,7 @@ void opal_class_initialize(opal_class_t *cls)
     /* Check to see if any other thread got in here and initialized
        this class before we got a chance to */
 
-    if (1 == cls->cls_initialized) {
+    if (opal_class_init_epoch == cls->cls_initialized) {
         return;
     }
     opal_atomic_lock(&class_lock);
@@ -90,7 +95,7 @@ void opal_class_initialize(opal_class_t *cls)
        roughly the same time, it may have gotten the lock and
        initialized.  So check again. */
 
-    if (1 == cls->cls_initialized) {
+    if (opal_class_init_epoch == cls->cls_initialized) {
         opal_atomic_unlock(&class_lock);
         return;
     }
@@ -151,7 +156,7 @@ void opal_class_initialize(opal_class_t *cls)
     }
     *cls_destruct_array = NULL;  /* end marker for the destructors */
 
-    cls->cls_initialized = 1;
+    cls->cls_initialized = opal_class_init_epoch;
     save_class(cls);
 
     /* All done */
@@ -166,6 +171,12 @@ void opal_class_initialize(opal_class_t *cls)
 int opal_class_finalize(void)
 {
     int i;
+
+    if (INT_MAX == opal_class_init_epoch) {
+        opal_class_init_epoch = 1;
+    } else {
+        opal_class_init_epoch++;
+    }
 
     if (NULL != classes) {
         for (i = 0; i < num_classes; ++i) {

@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -38,7 +40,7 @@
  *	Returns:	- MPI_SUCCESS or error code
  */
 int
-mca_coll_basic_scan_intra(void *sbuf, void *rbuf, int count,
+mca_coll_basic_scan_intra(const void *sbuf, void *rbuf, int count,
                           struct ompi_datatype_t *dtype,
                           struct ompi_op_t *op,
                           struct ompi_communicator_t *comm,

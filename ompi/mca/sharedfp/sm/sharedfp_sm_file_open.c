@@ -13,7 +13,7 @@
  * Copyright (c) 2013      Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -44,7 +44,7 @@
 
 
 int mca_sharedfp_sm_file_open (struct ompi_communicator_t *comm,
-                               char* filename,
+                               const char* filename,
                                int amode,
                                struct ompi_info_t *info,
                                mca_io_ompio_file_t *fh)
@@ -131,7 +131,7 @@ int mca_sharedfp_sm_file_open (struct ompi_communicator_t *comm,
     **      overwriting each other, e.g.  orte_process_info.proc_session_dir
     */
     /*sprintf(sm_filename,"%s%s",filename,".sm");*/
-    filename_basename = basename(filename);
+    filename_basename = basename((void *)filename);
     sm_filename = (char*) malloc( sizeof(char) * (strlen(filename_basename)+64) );
     if (NULL == sm_filename) {
         free(sm_data);

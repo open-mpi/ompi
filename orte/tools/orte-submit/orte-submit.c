@@ -241,7 +241,6 @@ static opal_cmd_line_init_t cmd_line_init[] = {
       &myglobals.npernode, OPAL_CMD_LINE_TYPE_INT,
         "Launch n processes per node on all allocated nodes (synonym for npernode)" },
 
-#if OPAL_HAVE_HWLOC
     /* declare hardware threads as independent cpus */
     { NULL, '\0', "use-hwthread-cpus", "use-hwthread-cpus", 0,
       &myglobals.use_hwthreads_as_cpus, OPAL_CMD_LINE_TYPE_BOOL,
@@ -275,18 +274,6 @@ static opal_cmd_line_init_t cmd_line_init[] = {
     { NULL, '\0', "slot-list", "slot-list", 1,
       &myglobals.slot_list, OPAL_CMD_LINE_TYPE_STRING,
       "List of processor IDs to bind processes to [default=NULL]"},
-
-#else
-    /* Mapping options */
-    { NULL, '\0', NULL, "map-by", 1,
-      &myglobals.mapping_policy, OPAL_CMD_LINE_TYPE_STRING,
-      "Mapping Policy [slot (default) | node]" },
-
-      /* Ranking options */
-    { NULL, '\0', NULL, "rank-by", 1,
-      &myglobals.ranking_policy, OPAL_CMD_LINE_TYPE_STRING,
-      "Ranking Policy [slot (default) | node]" },
-#endif
 
     /* mpiexec-like arguments */
     { NULL, '\0', "wdir", "wdir", 1,
@@ -637,7 +624,6 @@ int main(int argc, char *argv[])
             exit(rc);
         }
     }
-#if OPAL_HAVE_HWLOC
     if (NULL != myglobals.binding_policy) {
         if (ORTE_SUCCESS != (rc = opal_hwloc_base_set_binding_policy(&jdata->map->binding,
                                                                      myglobals.binding_policy))) {
@@ -645,7 +631,6 @@ int main(int argc, char *argv[])
             exit(rc);
         }
     }
-#endif /* OPAL_HAVE_HWLOC */
 
     /* if they asked for nolocal, mark it so */
     if (myglobals.nolocal) {
@@ -1046,7 +1031,7 @@ static int create_app(int argc, char* argv[],
     app->env = opal_argv_copy(*app_env);
     if (ORTE_SUCCESS != (rc = orte_schizo.parse_env(myglobals.personality,
                                                     myglobals.path,
-                                                    &cmd_line, NULL,
+                                                    &cmd_line,
                                                     environ, &app->env))) {
         goto cleanup;
     }

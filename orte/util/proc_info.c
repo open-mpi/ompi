@@ -85,9 +85,7 @@ ORTE_DECLSPEC orte_proc_info_t orte_process_info = {
     .sock_stdin =                      NULL,
     .sock_stdout =                     NULL,
     .sock_stderr =                     NULL,
-#if OPAL_HAVE_HWLOC
     .cpuset =                          NULL,
-#endif
     .app_rank =                        -1,
     .my_hostid =                       ORTE_VPID_INVALID
 };

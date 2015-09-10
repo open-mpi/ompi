@@ -33,7 +33,7 @@
 opal_pmix_base_module_t opal_pmix = { 0 };
 bool opal_pmix_collect_all_data = false;
 bool opal_pmix_base_allow_delayed_server = false;
-int pmix_verbose_output = -1;
+int opal_pmix_verbose_output = -1;
 
 static int opal_pmix_base_frame_register(mca_base_register_flag_t flags)
 {
@@ -59,7 +59,7 @@ static int opal_pmix_base_frame_open(mca_base_open_flag_t flags)
     /* ensure the function pointers are NULL */
     memset(&opal_pmix, 0, sizeof(opal_pmix));
     /* pass across the verbosity */
-    pmix_verbose_output = opal_pmix_base_framework.framework_output;
+    opal_pmix_verbose_output = opal_pmix_base_framework.framework_output;
     return rc;
 }
 
@@ -70,34 +70,14 @@ MCA_BASE_FRAMEWORK_DECLARE(opal, pmix, "OPAL PMI Client Framework",
                            mca_pmix_base_static_components, 0);
 
 /****  PMIX FRAMEWORK OBJECTS  ****/
-static void icon(opal_pmix_info_t *i)
-{
-    i->key = NULL;
-    OBJ_CONSTRUCT(&i->value, opal_value_t);
-}
-static void ides(opal_pmix_info_t *i)
-{
-    if (NULL != i->key) {
-        free(i->key);
-    }
-    OBJ_DESTRUCT(&i->value);
-}
-OBJ_CLASS_INSTANCE(opal_pmix_info_t,
-                   opal_list_item_t,
-                   icon, ides);
-
 static void lkcon(opal_pmix_pdata_t *p)
 {
     p->proc.jobid = OPAL_JOBID_INVALID;
     p->proc.vpid = OPAL_VPID_INVALID;
-    p->key = NULL;
     OBJ_CONSTRUCT(&p->value, opal_value_t);
 }
 static void lkdes(opal_pmix_pdata_t *p)
 {
-    if (NULL != p->key) {
-        free(p->key);
-    }
     OBJ_DESTRUCT(&p->value);
 }
 OBJ_CLASS_INSTANCE(opal_pmix_pdata_t,

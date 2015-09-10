@@ -326,20 +326,22 @@ static void mca_coll_ml_collective_operation_progress_destruct
 /* initialize the full message descriptor - can pass in module specific
  * initialization data
  */
-static void init_ml_fragment_desc(opal_free_list_item_t *desc , void* ctx);
-static void init_ml_message_desc(opal_free_list_item_t *desc , void* ctx)
+static int init_ml_fragment_desc(opal_free_list_item_t *desc , void* ctx);
+static int init_ml_message_desc(opal_free_list_item_t *desc , void* ctx)
 {
     mca_coll_ml_module_t *module= (mca_coll_ml_module_t *) ctx;
     mca_coll_ml_descriptor_t *msg_desc = (mca_coll_ml_descriptor_t *) desc;
 
     /* finish setting up the fragment descriptor */
     init_ml_fragment_desc((opal_free_list_item_t*)&(msg_desc->fragment),module);
+
+    return OPAL_SUCCESS;
 }
 
 /* initialize the fragment descriptor - can pass in module specific
  * initialization data
  */
-static void init_ml_fragment_desc(opal_free_list_item_t *desc , void* ctx)
+static int init_ml_fragment_desc(opal_free_list_item_t *desc , void* ctx)
 {
     mca_coll_ml_module_t *module= (mca_coll_ml_module_t *) ctx;
     mca_coll_ml_fragment_t *frag_desc = (mca_coll_ml_fragment_t *) desc;
@@ -352,6 +354,7 @@ static void init_ml_fragment_desc(opal_free_list_item_t *desc , void* ctx)
             malloc(sizeof(bcol_function_args_t) * module->max_fn_calls);
     }
 
+    return OPAL_SUCCESS;
 }
 static void mca_coll_ml_bcol_list_item_construct(mca_coll_ml_bcol_list_item_t *item)
 {

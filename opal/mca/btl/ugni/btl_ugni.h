@@ -49,7 +49,7 @@
 
 /* ompi and smsg endpoint attributes */
 typedef struct mca_btl_ugni_endpoint_attr_t {
-    uint64_t proc_id;
+    opal_process_name_t proc_name;
     uint32_t index;
     gni_smsg_attr_t smsg_attr;
     gni_mem_handle_t rmt_irq_mem_hndl;
@@ -67,6 +67,7 @@ typedef struct mca_btl_ugni_module_t {
 
     opal_common_ugni_device_t *device;
 
+    opal_mutex_t endpoint_lock;
     size_t endpoint_count;
     opal_pointer_array_t endpoints;
     opal_hash_table_t id_to_endpoint;
@@ -228,6 +229,8 @@ mca_btl_ugni_del_procs (struct mca_btl_base_module_t *btl,
                         size_t nprocs,
                         struct opal_proc_t **procs,
                         struct mca_btl_base_endpoint_t **peers);
+
+struct mca_btl_base_endpoint_t *mca_btl_ugni_get_ep (struct mca_btl_base_module_t *module, opal_proc_t *proc);
 
 /**
  * Initiate an asynchronous send.

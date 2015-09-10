@@ -7,11 +7,6 @@
  * $HEADER$
  */
 
-/*
- * This file is only compiled (via AM_CONDITIONAL) if OPAL_HAVE_HWLOC
- * is set.
- */
-
 #include "opal_config.h"
 
 /* Define this before including hwloc.h so that we also get the hwloc

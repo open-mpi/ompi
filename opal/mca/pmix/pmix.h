@@ -33,6 +33,10 @@
 
 BEGIN_C_DECLS
 
+/* provide access to the framework verbose output without
+ * exposing the entire base */
+extern int opal_pmix_verbose_output;
+
 /**
  * Provide a simplified macro for sending data via modex
  * to other processes. The macro requires four arguments:
@@ -116,15 +120,20 @@ BEGIN_C_DECLS
  *     is to be returned
  * t - the expected data type
  */
-#define OPAL_MODEX_RECV_VALUE(r, s, p, d, t)                            \
-    do {                                                                \
-        opal_value_t *_kv;                                              \
-        if (OPAL_SUCCESS != ((r) = opal_pmix.get((p), (s), &(_kv)))) {  \
-            *(d) = NULL;                                                \
-        } else {                                                        \
-            (r) = opal_value_unload(_kv, (void**)(d), (t));             \
-            OBJ_RELEASE(_kv);                                           \
-        }                                                               \
+#define OPAL_MODEX_RECV_VALUE(r, s, p, d, t)                                    \
+    do {                                                                        \
+        opal_value_t *_kv;                                                      \
+        OPAL_OUTPUT_VERBOSE((1, opal_pmix_verbose_output,                       \
+                            "%s[%s:%d] MODEX RECV VALUE FOR PROC %s KEY %s",    \
+                            OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),                 \
+                            __FILE__, __LINE__,                                 \
+                            OPAL_NAME_PRINT(*(p)), (s)));                       \
+        if (OPAL_SUCCESS != ((r) = opal_pmix.get((p), (s), &(_kv)))) {          \
+            *(d) = NULL;                                                        \
+        } else {                                                                \
+            (r) = opal_value_unload(_kv, (void**)(d), (t));                     \
+            OBJ_RELEASE(_kv);                                                   \
+        }                                                                       \
     } while(0);
 
 /**
@@ -140,19 +149,24 @@ BEGIN_C_DECLS
  * sz - pointer to a location wherein the number of bytes
  *     in the data object can be returned (size_t)
  */
-#define OPAL_MODEX_RECV_STRING(r, s, p, d, sz)                          \
-    do {                                                                \
-        opal_value_t *_kv;                                              \
-        if (OPAL_SUCCESS == ((r) = opal_pmix.get((p), (s), &(_kv))) &&  \
-            NULL != _kv) {                                              \
-            *(d) = _kv->data.bo.bytes;                                  \
-            *(sz) = _kv->data.bo.size;                                  \
-            _kv->data.bo.bytes = NULL; /* protect the data */           \
-            OBJ_RELEASE(_kv);                                           \
-        } else {                                                        \
-            *(d) = NULL;                                                \
-            *(sz) = 0;                                                  \
-        }                                                               \
+#define OPAL_MODEX_RECV_STRING(r, s, p, d, sz)                                  \
+    do {                                                                        \
+        opal_value_t *_kv;                                                      \
+        OPAL_OUTPUT_VERBOSE((1, opal_pmix_verbose_output,                       \
+                            "%s[%s:%d] MODEX RECV STRING FOR PROC %s KEY %s",   \
+                            OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),                 \
+                            __FILE__, __LINE__,                                 \
+                            OPAL_NAME_PRINT(*(p)), (s)));                       \
+        if (OPAL_SUCCESS == ((r) = opal_pmix.get((p), (s), &(_kv))) &&          \
+            NULL != _kv) {                                                      \
+            *(d) = _kv->data.bo.bytes;                                          \
+            *(sz) = _kv->data.bo.size;                                          \
+            _kv->data.bo.bytes = NULL; /* protect the data */                   \
+            OBJ_RELEASE(_kv);                                                   \
+        } else {                                                                \
+            *(d) = NULL;                                                        \
+            *(sz) = 0;                                                          \
+        }                                                                       \
     } while(0);
 
 /**
@@ -172,6 +186,11 @@ BEGIN_C_DECLS
     do {                                                                \
         char *_key;                                                     \
         _key = mca_base_component_to_string((s));                       \
+        OPAL_OUTPUT_VERBOSE((1, opal_pmix_verbose_output,               \
+                            "%s[%s:%d] MODEX RECV FOR PROC %s KEY %s",  \
+                            OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),         \
+                            __FILE__, __LINE__,                         \
+                            OPAL_NAME_PRINT(*(p)), _key));              \
         if (NULL == _key) {                                             \
             OPAL_ERROR_LOG(OPAL_ERR_OUT_OF_RESOURCE);                   \
             (r) = OPAL_ERR_OUT_OF_RESOURCE;                             \
@@ -325,12 +344,8 @@ typedef int (*opal_pmix_base_module_get_nb_fn_t)(const opal_process_name_t *proc
  * data has been posted and is available. The non-blocking form will
  * return immediately, executing the callback when the server confirms
  * availability of the data */
-typedef int (*opal_pmix_base_module_publish_fn_t)(opal_pmix_data_range_t scope,
-                                                  opal_pmix_persistence_t persist,
-                                                  opal_list_t *info);
-typedef int (*opal_pmix_base_module_publish_nb_fn_t)(opal_pmix_data_range_t scope,
-                                                     opal_pmix_persistence_t persist,
-                                                     opal_list_t *info,
+typedef int (*opal_pmix_base_module_publish_fn_t)(opal_list_t *info);
+typedef int (*opal_pmix_base_module_publish_nb_fn_t)(opal_list_t *info,
                                                      opal_pmix_op_cbfunc_t cbfunc, void *cbdata);
 
 /* Lookup information published by another process within the
@@ -352,8 +367,8 @@ typedef int (*opal_pmix_base_module_publish_nb_fn_t)(opal_pmix_data_range_t scop
  * and return any found items. Thus, the caller is responsible for
  * ensuring that data is published prior to executing a lookup, or
  * for retrying until the requested data is found */
-typedef int (*opal_pmix_base_module_lookup_fn_t)(opal_pmix_data_range_t scope,
-                                                 opal_list_t *data);
+typedef int (*opal_pmix_base_module_lookup_fn_t)(opal_list_t *data,
+                                                 opal_list_t *info);
 
 /* Non-blocking form of the _PMIx_Lookup_ function. Data for
  * the provided NULL-terminated keys array will be returned
@@ -362,7 +377,7 @@ typedef int (*opal_pmix_base_module_lookup_fn_t)(opal_pmix_data_range_t scope,
  * wait for _all_ requested data before executing the callback
  * (_true_), or to callback once the server returns whatever
  * data is immediately available (_false_) */
-typedef int (*opal_pmix_base_module_lookup_nb_fn_t)(opal_pmix_data_range_t scope, int wait, char **keys,
+typedef int (*opal_pmix_base_module_lookup_nb_fn_t)(char **keys, opal_list_t *info,
                                                     opal_pmix_lookup_cbfunc_t cbfunc, void *cbdata);
 
 /* Unpublish data posted by this process using the given keys
@@ -370,14 +385,14 @@ typedef int (*opal_pmix_base_module_lookup_nb_fn_t)(opal_pmix_data_range_t scope
  * the data has been removed by the server. A value of _NULL_
  * for the keys parameter instructs the server to remove
  * _all_ data published by this process within the given scope */
-typedef int (*opal_pmix_base_module_unpublish_fn_t)(opal_pmix_data_range_t scope, char **keys);
+typedef int (*opal_pmix_base_module_unpublish_fn_t)(char **keys, opal_list_t *info);
 
 /* Non-blocking form of the _PMIx_Unpublish_ function. The
  * callback function will be executed once the server confirms
  * removal of the specified data. A value of _NULL_
  * for the keys parameter instructs the server to remove
  * _all_ data published by this process within the given scope  */
-typedef int (*opal_pmix_base_module_unpublish_nb_fn_t)(opal_pmix_data_range_t scope, char **keys,
+typedef int (*opal_pmix_base_module_unpublish_nb_fn_t)(char **keys, opal_list_t *info,
                                                        opal_pmix_op_cbfunc_t cbfunc, void *cbdata);
 
 /* Spawn a new job. The spawned applications are automatically

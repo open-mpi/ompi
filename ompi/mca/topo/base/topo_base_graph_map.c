@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2012-2013 Inria.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -38,7 +40,7 @@
 
 int mca_topo_base_graph_map(ompi_communicator_t * comm,
                             int nnodes,
-                            int *index, int *edges, int *newrank)
+                            const int *index, const int *edges, int *newrank)
 {
     int myrank;
 

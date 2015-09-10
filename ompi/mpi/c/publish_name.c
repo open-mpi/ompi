@@ -48,12 +48,8 @@ int MPI_Publish_name(const char *service_name, MPI_Info info,
     int rc;
     char range[OPAL_MAX_INFO_VAL];
     int flag=0;
-    opal_pmix_data_range_t rng;
-    bool range_given = false;
-    opal_pmix_persistence_t persist;
-    bool persistence_given = false;
+    opal_value_t *rng;
     opal_list_t values;
-    opal_pmix_info_t *pinfo;
 
     if ( MPI_PARAM_CHECK ) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
@@ -73,58 +69,75 @@ int MPI_Publish_name(const char *service_name, MPI_Info info,
     }
 
     OPAL_CR_ENTER_LIBRARY();
+    OBJ_CONSTRUCT(&values, opal_list_t);
 
     /* OMPI supports info keys to pass the range and persistence to
      * be used for the given key */
     if (MPI_INFO_NULL != info) {
         ompi_info_get (info, "range", sizeof(range) - 1, range, &flag);
         if (flag) {
-            range_given = true;
             if (0 == strcmp(range, "nspace")) {
-                rng = OPAL_PMIX_NAMESPACE;  // share only with procs in same nspace
+                rng = OBJ_NEW(opal_value_t);
+                rng->key = strdup(OPAL_PMIX_RANGE);
+                rng->type = OPAL_INT;
+                rng->data.integer = OPAL_PMIX_NAMESPACE;  // share only with procs in same nspace
+                opal_list_append(&values, &rng->super);
             } else if (0 == strcmp(range, "session")) {
-                rng = OPAL_PMIX_SESSION; // share only with procs in same session
+                rng = OBJ_NEW(opal_value_t);
+                rng->key = strdup(OPAL_PMIX_RANGE);
+                rng->type = OPAL_INT;
+                rng->data.integer = OPAL_PMIX_SESSION; // share only with procs in same session
+                opal_list_append(&values, &rng->super);
             } else {
-                /* unrecognized range */
+                /* unrecognized scope */
+                OPAL_LIST_DESTRUCT(&values);
                 return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,
                                             FUNC_NAME);
             }
         }
         ompi_info_get (info, "persistence", sizeof(range) - 1, range, &flag);
         if (flag) {
-            persistence_given = true;
             if (0 == strcmp(range, "indef")) {
-                persist = OPAL_PMIX_PERSIST_INDEF;   // retain until specifically deleted
+                rng = OBJ_NEW(opal_value_t);
+                rng->key = strdup(OPAL_PMIX_PERSISTENCE);
+                rng->type = OPAL_INT;
+                rng->data.integer = OPAL_PMIX_PERSIST_INDEF;   // retain until specifically deleted
+                opal_list_append(&values, &rng->super);
             } else if (0 == strcmp(range, "proc")) {
-                persist = OPAL_PMIX_PERSIST_PROC;    // retain until publishing process terminates
+                rng = OBJ_NEW(opal_value_t);
+                rng->key = strdup(OPAL_PMIX_PERSISTENCE);
+                rng->type = OPAL_INT;
+                rng->data.integer = OPAL_PMIX_PERSIST_PROC;    // retain until publishing process terminates
+                opal_list_append(&values, &rng->super);
             } else if (0 == strcmp(range, "app")) {
-                persist = OPAL_PMIX_PERSIST_APP;     // retain until application terminates
+                rng = OBJ_NEW(opal_value_t);
+                rng->key = strdup(OPAL_PMIX_PERSISTENCE);
+                rng->type = OPAL_INT;
+                rng->data.integer = OPAL_PMIX_PERSIST_APP;     // retain until application terminates
+                opal_list_append(&values, &rng->super);
             } else if (0 == strcmp(range, "session")) {
-                persist = OPAL_PMIX_PERSIST_SESSION; // retain until session/allocation terminates
+                rng = OBJ_NEW(opal_value_t);
+                rng->key = strdup(OPAL_PMIX_PERSISTENCE);
+                rng->type = OPAL_INT;
+                rng->data.integer = OPAL_PMIX_PERSIST_SESSION; // retain until session/allocation terminates
+                opal_list_append(&values, &rng->super);
             } else {
                 /* unrecognized persistence */
+                OPAL_LIST_DESTRUCT(&values);
                 return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,
                                             FUNC_NAME);
             }
         }
     }
-    if (!range_given) {
-        /* default to nspace */
-        rng = OPAL_PMIX_NAMESPACE;
-    }
-    if (!persistence_given) {
-        persist = OPAL_PMIX_PERSIST_APP;
-    }
 
-    /* publish the values */
-    OBJ_CONSTRUCT(&values, opal_list_t);
-    pinfo = OBJ_NEW(opal_pmix_info_t);
-    pinfo->key = strdup(service_name);
-    pinfo->value.type = OPAL_STRING;
-    pinfo->value.data.string = strdup(port_name);
-    opal_list_append(&values, &pinfo->super);
+    /* publish the service name */
+    rng = OBJ_NEW(opal_value_t);
+    rng->key = strdup(service_name);
+    rng->type = OPAL_STRING;
+    rng->data.string = strdup(port_name);
+    opal_list_append(&values, &rng->super);
 
-    rc = opal_pmix.publish(rng, persist, &values);
+    rc = opal_pmix.publish(&values);
     OPAL_LIST_DESTRUCT(&values);
 
     OPAL_CR_EXIT_LIBRARY();

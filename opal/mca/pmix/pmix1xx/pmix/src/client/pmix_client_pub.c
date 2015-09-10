@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2014-2015 Intel, Inc.  All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014      Artem Y. Polyakov <artpol84@gmail.com>.
  *                         All rights reserved.
@@ -61,12 +61,10 @@ static void wait_lookup_cbfunc(struct pmix_peer_t *pr, pmix_usock_hdr_t *hdr,
 static void lookup_cbfunc(int status, pmix_pdata_t pdata[], size_t ndata,
                           void *cbdata);
 
-int PMIx_Publish(pmix_data_range_t scope,
-                 pmix_persistence_t persist,
-                 const pmix_info_t info[],
-                 size_t ninfo)
+pmix_status_t PMIx_Publish(const pmix_info_t info[],
+                           size_t ninfo)
 {
-    int rc;
+    pmix_status_t rc;
     pmix_cb_t *cb;
 
     pmix_output_verbose(2, pmix_globals.debug_output,
@@ -85,7 +83,7 @@ int PMIx_Publish(pmix_data_range_t scope,
     cb = PMIX_NEW(pmix_cb_t);
     cb->active = true;
 
-    if (PMIX_SUCCESS != (rc = PMIx_Publish_nb(scope, persist, info, ninfo, op_cbfunc, cb))) {
+    if (PMIX_SUCCESS != (rc = PMIx_Publish_nb(info, ninfo, op_cbfunc, cb))) {
         PMIX_ERROR_LOG(rc);
         PMIX_RELEASE(cb);
         return rc;
@@ -93,21 +91,18 @@ int PMIx_Publish(pmix_data_range_t scope,
 
     /* wait for the server to ack our request */
     PMIX_WAIT_FOR_COMPLETION(cb->active);
-    rc = cb->status;
+    rc = (pmix_status_t)cb->status;
     PMIX_RELEASE(cb);
 
     return rc;
 }
 
-int PMIx_Publish_nb(pmix_data_range_t scope,
-                    pmix_persistence_t persist,
-                    const pmix_info_t info[],
-                    size_t ninfo,
-                    pmix_op_cbfunc_t cbfunc, void *cbdata)
+pmix_status_t PMIx_Publish_nb(const pmix_info_t info[], size_t ninfo,
+                              pmix_op_cbfunc_t cbfunc, void *cbdata)
 {
     pmix_buffer_t *msg;
     pmix_cmd_t cmd = PMIX_PUBLISHNB_CMD;
-    int rc;
+    pmix_status_t rc;
     pmix_cb_t *cb;
 
     pmix_output_verbose(2, pmix_globals.debug_output,
@@ -137,24 +132,20 @@ int PMIx_Publish_nb(pmix_data_range_t scope,
         PMIX_RELEASE(msg);
         return rc;
     }
-    /* pack the data range */
-    if (PMIX_SUCCESS != (rc = pmix_bfrop.pack(msg, &scope, 1, PMIX_DATA_RANGE))) {
+    /* pack our effective userid - will be used to constrain lookup */
+    if (PMIX_SUCCESS != (rc = pmix_bfrop.pack(msg, &pmix_globals.uid, 1, PMIX_UINT32))) {
         PMIX_ERROR_LOG(rc);
         PMIX_RELEASE(msg);
         return rc;
     }
-    /* pack the persistence */
-    if (PMIX_SUCCESS != (rc = pmix_bfrop.pack(msg, &persist, 1, PMIX_PERSIST))) {
-        PMIX_ERROR_LOG(rc);
-        PMIX_RELEASE(msg);
-        return rc;
-    }
-    /* pack the info keys that were given */
+    /* pass the number of info structs - needed on remote end so
+     * space can be malloc'd for the values */
     if (PMIX_SUCCESS != (rc = pmix_bfrop.pack(msg, &ninfo, 1, PMIX_SIZE))) {
         PMIX_ERROR_LOG(rc);
         PMIX_RELEASE(msg);
         return rc;
     }
+    /* pack the info structs */
     if (PMIX_SUCCESS != (rc = pmix_bfrop.pack(msg, info, ninfo, PMIX_INFO))) {
         PMIX_ERROR_LOG(rc);
         PMIX_RELEASE(msg);
@@ -175,9 +166,8 @@ int PMIx_Publish_nb(pmix_data_range_t scope,
     return PMIX_SUCCESS;
 }
 
-int PMIx_Lookup(pmix_data_range_t scope,
-                const pmix_info_t info[], size_t ninfo,
-                pmix_pdata_t pdata[], size_t ndata)
+int PMIx_Lookup(pmix_pdata_t pdata[], size_t ndata,
+                const pmix_info_t info[], size_t ninfo)
 {
     int rc;
     pmix_cb_t *cb;
@@ -207,8 +197,7 @@ int PMIx_Lookup(pmix_data_range_t scope,
     cb->nvals = ndata;
     cb->active = true;
 
-    if (PMIX_SUCCESS != (rc = PMIx_Lookup_nb(scope, keys,
-                                             info, ninfo,
+    if (PMIX_SUCCESS != (rc = PMIx_Lookup_nb(keys, info, ninfo,
                                              lookup_cbfunc, cb))) {
         PMIX_RELEASE(cb);
         pmix_argv_free(keys);
@@ -225,15 +214,14 @@ int PMIx_Lookup(pmix_data_range_t scope,
     return rc;
 }
 
-int PMIx_Lookup_nb(pmix_data_range_t range, char **keys,
-                   const pmix_info_t info[], size_t ninfo,
-                   pmix_lookup_cbfunc_t cbfunc, void *cbdata)
+pmix_status_t PMIx_Lookup_nb(char **keys, const pmix_info_t info[], size_t ninfo,
+                             pmix_lookup_cbfunc_t cbfunc, void *cbdata)
 {
     pmix_buffer_t *msg;
     pmix_cmd_t cmd = PMIX_LOOKUPNB_CMD;
-    int rc;
+    pmix_status_t rc;
     pmix_cb_t *cb;
-    size_t nkeys;
+    size_t nkeys, n;
 
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "pmix: lookup called");
@@ -255,24 +243,11 @@ int PMIx_Lookup_nb(pmix_data_range_t range, char **keys,
         PMIX_RELEASE(msg);
         return rc;
     }
-    /* pack the range */
-    if (PMIX_SUCCESS != (rc = pmix_bfrop.pack(msg, &range, 1, PMIX_DATA_RANGE))) {
+    /* pack our effective userid - will be used to constrain lookup */
+    if (PMIX_SUCCESS != (rc = pmix_bfrop.pack(msg, &pmix_globals.uid, 1, PMIX_UINT32))) {
         PMIX_ERROR_LOG(rc);
         PMIX_RELEASE(msg);
         return rc;
-    }
-    /* pack the info structs */
-    if (PMIX_SUCCESS != (rc = pmix_bfrop.pack(msg, &ninfo, 1, PMIX_SIZE))) {
-        PMIX_ERROR_LOG(rc);
-        PMIX_RELEASE(msg);
-        return rc;
-    }
-    if (0 < ninfo) {
-        if (PMIX_SUCCESS != (rc = pmix_bfrop.pack(msg, info, ninfo, PMIX_INFO))) {
-            PMIX_ERROR_LOG(rc);
-            PMIX_RELEASE(msg);
-            return rc;
-        }
     }
     /* pack the keys */
     nkeys = pmix_argv_count(keys);
@@ -282,11 +257,26 @@ int PMIx_Lookup_nb(pmix_data_range_t range, char **keys,
         return rc;
     }
     if (0 < nkeys) {
-        if (PMIX_SUCCESS != (rc = pmix_bfrop.pack(msg, keys, nkeys, PMIX_STRING))) {
-            PMIX_ERROR_LOG(rc);
-            PMIX_RELEASE(msg);
-            return rc;
+        for (n=0; n < nkeys; n++) {
+            if (PMIX_SUCCESS != (rc = pmix_bfrop.pack(msg, &keys[n], 1, PMIX_STRING))) {
+                PMIX_ERROR_LOG(rc);
+                PMIX_RELEASE(msg);
+                return rc;
+            }
         }
+    }
+    /* pass the number of info structs - needed on remote end so
+     * space can be malloc'd for the values */
+    if (PMIX_SUCCESS != (rc = pmix_bfrop.pack(msg, &ninfo, 1, PMIX_SIZE))) {
+        PMIX_ERROR_LOG(rc);
+        PMIX_RELEASE(msg);
+        return rc;
+    }
+    /* pack the info structs */
+    if (PMIX_SUCCESS != (rc = pmix_bfrop.pack(msg, info, ninfo, PMIX_INFO))) {
+        PMIX_ERROR_LOG(rc);
+        PMIX_RELEASE(msg);
+        return rc;
     }
 
     /* create a callback object as we need to pass it to the
@@ -302,7 +292,7 @@ int PMIx_Lookup_nb(pmix_data_range_t range, char **keys,
     return PMIX_SUCCESS;
 }
 
-int PMIx_Unpublish(pmix_data_range_t scope, char **keys)
+int PMIx_Unpublish(char **keys, const pmix_info_t info[], size_t ninfo)
 {
     int rc;
     pmix_cb_t *cb;
@@ -317,7 +307,7 @@ int PMIx_Unpublish(pmix_data_range_t scope, char **keys)
     cb->active = true;
 
     /* push the message into our event base to send to the server */
-    if (PMIX_SUCCESS != (rc = PMIx_Unpublish_nb(scope, keys, op_cbfunc, cb))) {
+    if (PMIX_SUCCESS != (rc = PMIx_Unpublish_nb(keys, info, ninfo, op_cbfunc, cb))) {
         PMIX_RELEASE(cb);
         return rc;
     }
@@ -330,12 +320,12 @@ int PMIx_Unpublish(pmix_data_range_t scope, char **keys)
     return rc;
 }
 
-int PMIx_Unpublish_nb(pmix_data_range_t scope, char **keys,
-                      pmix_op_cbfunc_t cbfunc, void *cbdata)
+pmix_status_t PMIx_Unpublish_nb(char **keys, const pmix_info_t info[], size_t ninfo,
+                                pmix_op_cbfunc_t cbfunc, void *cbdata)
 {
     pmix_buffer_t *msg;
     pmix_cmd_t cmd = PMIX_UNPUBLISHNB_CMD;
-    int rc;
+    pmix_status_t rc;
     pmix_cb_t *cb;
     size_t i, j;
 
@@ -354,8 +344,8 @@ int PMIx_Unpublish_nb(pmix_data_range_t scope, char **keys,
         PMIX_RELEASE(msg);
         return rc;
     }
-    /* pack the scope */
-    if (PMIX_SUCCESS != (rc = pmix_bfrop.pack(msg, &scope, 1, PMIX_DATA_RANGE))) {
+    /* pack our effective userid - will be used to constrain lookup */
+    if (PMIX_SUCCESS != (rc = pmix_bfrop.pack(msg, &pmix_globals.uid, 1, PMIX_UINT32))) {
         PMIX_ERROR_LOG(rc);
         PMIX_RELEASE(msg);
         return rc;
@@ -376,6 +366,19 @@ int PMIx_Unpublish_nb(pmix_data_range_t scope, char **keys,
             }
         }
     }
+    /* pass the number of info structs - needed on remote end so
+     * space can be malloc'd for the values */
+    if (PMIX_SUCCESS != (rc = pmix_bfrop.pack(msg, &ninfo, 1, PMIX_SIZE))) {
+        PMIX_ERROR_LOG(rc);
+        PMIX_RELEASE(msg);
+        return rc;
+    }
+    /* pack the info structs */
+    if (PMIX_SUCCESS != (rc = pmix_bfrop.pack(msg, info, ninfo, PMIX_INFO))) {
+        PMIX_ERROR_LOG(rc);
+        PMIX_RELEASE(msg);
+        return rc;
+    }
 
     /* create a callback object */
     cb = PMIX_NEW(pmix_cb_t);
@@ -393,7 +396,8 @@ static void wait_cbfunc(struct pmix_peer_t *pr, pmix_usock_hdr_t *hdr,
                         pmix_buffer_t *buf, void *cbdata)
 {
     pmix_cb_t *cb = (pmix_cb_t*)cbdata;
-    int rc, ret;
+    pmix_status_t rc;
+    int ret;
     int32_t cnt;
 
     pmix_output_verbose(2, pmix_globals.debug_output,
@@ -404,10 +408,9 @@ static void wait_cbfunc(struct pmix_peer_t *pr, pmix_usock_hdr_t *hdr,
     cnt = 1;
     if (PMIX_SUCCESS != (rc = pmix_bfrop.unpack(buf, &ret, &cnt, PMIX_INT))) {
         PMIX_ERROR_LOG(rc);
-        ret = rc;
     }
     if (NULL != cb->op_cbfunc) {
-        cb->op_cbfunc(ret, cb->cbdata);
+        cb->op_cbfunc(rc, cb->cbdata);
     }
     PMIX_RELEASE(cb);
 }
@@ -424,7 +427,7 @@ static void wait_lookup_cbfunc(struct pmix_peer_t *pr, pmix_usock_hdr_t *hdr,
                                pmix_buffer_t *buf, void *cbdata)
 {
     pmix_cb_t *cb = (pmix_cb_t*)cbdata;
-    int rc, ret;
+    pmix_status_t rc, ret;
     int32_t cnt;
     pmix_pdata_t *pdata;
     size_t ndata;
@@ -493,18 +496,22 @@ static void lookup_cbfunc(int status, pmix_pdata_t pdata[], size_t ndata,
     pmix_pdata_t *tgt = (pmix_pdata_t*)cb->cbdata;
     size_t i, j;
 
-    /* find the matching key in the provided info array - error if not found */
-    for (i=0; i < ndata; i++) {
-        for (j=0; j < cb->nvals; j++) {
-            if (0 == strcmp(pdata[i].key, tgt[j].key)) {
-                /* transfer the publishing proc id */
-                (void)strncpy(tgt[j].proc.nspace, pdata[i].proc.nspace, PMIX_MAX_NSLEN);
-                tgt[j].proc.rank = pdata[i].proc.rank;
-                /* transfer the value to the pmix_info_t */
-                pmix_value_xfer(&tgt[j].value, &pdata[i].value);
-                break;
+    cb->status = status;
+    if (PMIX_SUCCESS == status) {
+        /* find the matching key in the provided info array - error if not found */
+        for (i=0; i < ndata; i++) {
+            for (j=0; j < cb->nvals; j++) {
+                if (0 == strcmp(pdata[i].key, tgt[j].key)) {
+                    /* transfer the publishing proc id */
+                    (void)strncpy(tgt[j].proc.nspace, pdata[i].proc.nspace, PMIX_MAX_NSLEN);
+                    tgt[j].proc.rank = pdata[i].proc.rank;
+                    /* transfer the value to the pmix_info_t */
+                    pmix_value_xfer(&tgt[j].value, &pdata[i].value);
+                    break;
+                }
             }
         }
     }
+
     cb->active = false;
 }

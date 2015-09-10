@@ -86,11 +86,11 @@ static void add_noise(char *noise_param, char *my_nspace, int my_rank)
     SET_KEY(key, fence_num, ind, use_same_keys);                                                                    \
     (void)strncpy(foobar.nspace, ns, PMIX_MAX_NSLEN); \
     foobar.rank = r; \
-    TEST_VERBOSE(("%s:%d want to get from %s:%d key %s", my_nspace, my_rank, ns, r, key));                     \
+    TEST_VERBOSE(("%s:%d want to get from %s:%d key %s", my_nspace, my_rank, ns, r, key));                          \
     if (blocking) {                                                                                                 \
-        if (PMIX_SUCCESS != (rc = PMIx_Get(&foobar, key, NULL, 0, &val))) {                                                 \
+        if (PMIX_SUCCESS != (rc = PMIx_Get(&foobar, key, NULL, 0, &val))) {                                         \
             if( !( rc == PMIX_ERR_NOT_FOUND && ok_notfnd ) ){                                                       \
-                TEST_ERROR(("%s:%d: PMIx_Get failed: %d from %s:%d", my_nspace, my_rank, rc, ns, r));            \
+                TEST_ERROR(("%s:%d: PMIx_Get failed: %d from %s:%d, key %s", my_nspace, my_rank, rc, ns, r, key));  \
             }                                                                                                       \
             rc = PMIX_ERROR;                                                                                        \
         }                                                                                                           \
@@ -99,8 +99,8 @@ static void add_noise(char *noise_param, char *my_nspace, int my_rank)
         cbdata.in_progress = 1;                                                                                     \
         PMIX_VALUE_CREATE(val, 1);                                                                                  \
         cbdata.kv = val;                                                                                            \
-        if (PMIX_SUCCESS != (rc = PMIx_Get_nb(&foobar, key, NULL, 0, get_cb, (void*)&cbdata))) {                            \
-            TEST_VERBOSE(("%s:%d: PMIx_Get_nb failed: %d from %s:%d", my_nspace, my_rank, rc, ns, r));           \
+        if (PMIX_SUCCESS != (rc = PMIx_Get_nb(&foobar, key, NULL, 0, get_cb, (void*)&cbdata))) {                    \
+            TEST_VERBOSE(("%s:%d: PMIx_Get_nb failed: %d from %s:%d, key=%s", my_nspace, my_rank, rc, ns, r, key)); \
             rc = PMIX_ERROR;                                                                                        \
         } else {                                                                                                    \
             count = 0;                                                                                              \
@@ -116,7 +116,8 @@ static void add_noise(char *noise_param, char *my_nspace, int my_rank)
     if (PMIX_SUCCESS == rc) {                                                                                       \
         if( PMIX_SUCCESS != cbdata.status ){                                                                        \
             if( !( rc == PMIX_ERR_NOT_FOUND && ok_notfnd ) ){                                                       \
-                TEST_VERBOSE(("%s:%d: PMIx_Get_nb failed: %d from %s:%d", my_nspace, my_rank, rc, my_nspace, r));\
+                TEST_VERBOSE(("%s:%d: PMIx_Get_nb failed: %d from %s:%d, key=%s",                                   \
+                            my_nspace, my_rank, rc, my_nspace, r));                                                 \
             }                                                                                                       \
             rc = PMIX_ERROR;                                                                                        \
         } else if (NULL == val) {                                                                                   \

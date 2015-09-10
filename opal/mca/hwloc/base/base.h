@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2013-2014 Intel, Inc. All rights reserved.
+ * Copyright (c) 2013-2015 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -57,7 +57,6 @@ opal_hwloc_print_buffers_t *opal_hwloc_get_print_buffer(void);
 extern char* opal_hwloc_print_null;
 OPAL_DECLSPEC char* opal_hwloc_base_print_locality(opal_hwloc_locality_t locality);
 
-#if OPAL_HAVE_HWLOC
 OPAL_DECLSPEC extern char *opal_hwloc_base_slot_list;
 OPAL_DECLSPEC extern char *opal_hwloc_base_cpu_set;
 OPAL_DECLSPEC extern hwloc_cpuset_t opal_hwloc_base_given_cpus;
@@ -276,7 +275,6 @@ OPAL_DECLSPEC hwloc_obj_t opal_hwloc_base_get_pu(hwloc_topology_t topo,
  * if responsible for freeing the returned string */
 OPAL_DECLSPEC char* opal_hwloc_base_get_topo_signature(hwloc_topology_t topo);
 
-#endif
 
 END_C_DECLS
 

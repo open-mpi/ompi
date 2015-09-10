@@ -315,7 +315,7 @@ have to make 3 changes in the resulting code in master:
 *** Note 2: CARE MUST BE TAKEN WHEN COPYING THE OTHER DIRECTION!  It
     is *not* as simple as simple s/opal/ompi/gi in configure.m4 and
     Makefile.am.  It certainly can be done, but there's a few strings
-    that need to stay "opal" or "OPAL" (e.g., OPAL_HAVE_HWLOC).
+    that need to stay "opal" or "OPAL" (e.g., OPAL_HAVE_FOO).
     Hence, the string replace will likely need to be done via manual
     inspection.
 

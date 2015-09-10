@@ -88,7 +88,7 @@ typedef enum {
 typedef struct {
   NBC_Fn_type type;
   int count;
-  void *buf;
+  const void *buf;
   MPI_Datatype datatype;
   int dest;
   char tmpbuf;
@@ -110,7 +110,7 @@ typedef struct {
   char tmpbuf1;
   char tmpbuf2;
   char tmpbuf3;
-  void *buf1;
+  const void *buf1;
   void *buf2;
   void *buf3;
   MPI_Op op;
@@ -143,9 +143,9 @@ typedef struct {
 } NBC_Args_unpack;
 
 /* internal function prototypes */
-int NBC_Sched_send (void* buf, char tmpbuf, int count, MPI_Datatype datatype, int dest, NBC_Schedule *schedule, bool barrier);
+int NBC_Sched_send (const void* buf, char tmpbuf, int count, MPI_Datatype datatype, int dest, NBC_Schedule *schedule, bool barrier);
 int NBC_Sched_recv (void* buf, char tmpbuf, int count, MPI_Datatype datatype, int source, NBC_Schedule *schedule, bool barrier);
-int NBC_Sched_op (void* buf3, char tmpbuf3, void* buf1, char tmpbuf1, void* buf2, char tmpbuf2, int count, MPI_Datatype datatype,
+int NBC_Sched_op (void* buf3, char tmpbuf3, const void* buf1, char tmpbuf1, void* buf2, char tmpbuf2, int count, MPI_Datatype datatype,
                   MPI_Op op, NBC_Schedule *schedule, bool barrier);
 int NBC_Sched_copy (void *src, char tmpsrc, int srccount, MPI_Datatype srctype, void *tgt, char tmptgt, int tgtcount,
                     MPI_Datatype tgttype, NBC_Schedule *schedule, bool barrier);
@@ -482,7 +482,7 @@ static inline int NBC_Type_intrinsic(MPI_Datatype type) {
 }
 
 /* let's give a try to inline functions */
-static inline int NBC_Copy(void *src, int srccount, MPI_Datatype srctype, void *tgt, int tgtcount, MPI_Datatype tgttype, MPI_Comm comm) {
+static inline int NBC_Copy(const void *src, int srccount, MPI_Datatype srctype, void *tgt, int tgtcount, MPI_Datatype tgttype, MPI_Comm comm) {
   int size, pos, res;
   OPAL_PTRDIFF_TYPE ext, lb;
   void *packbuf;
@@ -599,7 +599,7 @@ static inline void NBC_SchedCache_dictwipe(hb_tree *dict, int *size) {
     inplace = 1; \
   } else \
   if(recvbuf == MPI_IN_PLACE) { \
-    recvbuf = sendbuf; \
+    recvbuf = (void *)sendbuf; \
     inplace = 1; \
   } \
 }

@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -82,7 +84,7 @@
  *
  */
 int
-mca_coll_basic_reduce_log_intra(void *sbuf, void *rbuf, int count,
+mca_coll_basic_reduce_log_intra(const void *sbuf, void *rbuf, int count,
                                 struct ompi_datatype_t *dtype,
                                 struct ompi_op_t *op,
                                 int root, struct ompi_communicator_t *comm,
@@ -224,7 +226,7 @@ mca_coll_basic_reduce_log_intra(void *sbuf, void *rbuf, int count,
                                                    (char*)sbuf);
                     ompi_op_reduce(op, rbuf, pml_buffer, count, dtype);
                 } else {
-                    ompi_op_reduce(op, sbuf, pml_buffer, count, dtype);
+                    ompi_op_reduce(op, (void *)sbuf, pml_buffer, count, dtype);
                 }
                 /* now we have to send the buffer containing the computed data */
                 snd_buffer = pml_buffer;
@@ -279,7 +281,7 @@ mca_coll_basic_reduce_log_intra(void *sbuf, void *rbuf, int count,
  *	Returns:	- MPI_SUCCESS or error code
  */
 int
-mca_coll_basic_reduce_lin_inter(void *sbuf, void *rbuf, int count,
+mca_coll_basic_reduce_lin_inter(const void *sbuf, void *rbuf, int count,
                                 struct ompi_datatype_t *dtype,
                                 struct ompi_op_t *op,
                                 int root, struct ompi_communicator_t *comm,
@@ -358,7 +360,7 @@ mca_coll_basic_reduce_lin_inter(void *sbuf, void *rbuf, int count,
  *	Returns:	- MPI_SUCCESS or error code
  */
 int
-mca_coll_basic_reduce_log_inter(void *sbuf, void *rbuf, int count,
+mca_coll_basic_reduce_log_inter(const void *sbuf, void *rbuf, int count,
                                 struct ompi_datatype_t *dtype,
                                 struct ompi_op_t *op,
                                 int root, struct ompi_communicator_t *comm,

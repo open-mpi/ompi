@@ -218,6 +218,7 @@ typedef struct udcm_msg_hdr {
     union {
         /* UDCM_MESSAGE_CONNECT */
         struct msg_connect {
+            opal_process_name_t rem_name;
             int32_t rem_ep_index;
             uint8_t rem_port_num;
         } req;
@@ -1473,36 +1474,26 @@ static int udcm_rc_qp_create_all (mca_btl_base_endpoint_t *lcl_ep)
 /* JMS: optimization target -- can we send something in private
  data to find the proc directly instead of having to search
  through *all* procs? */
-static mca_btl_openib_endpoint_t *udcm_find_endpoint (opal_pointer_array_t *endpoints,
+static mca_btl_openib_endpoint_t *udcm_find_endpoint (struct mca_btl_openib_module_t *btl,
                                                       uint32_t qp_num, uint16_t lid,
                                                       udcm_msg_hdr_t *msg_hdr)
 {
-    uint8_t port_num;
-    int i;
+    mca_btl_base_endpoint_t *endpoint;
+    struct opal_proc_t *opal_proc;
 
-    port_num = msg_hdr->data.req.rem_port_num;
-
-    for (i = 0 ; i < opal_pointer_array_get_size (endpoints) ; ++i) {
-        mca_btl_openib_endpoint_t *endpoint;
-        modex_msg_t *msg;
-
-        endpoint = (mca_btl_openib_endpoint_t *)
-        opal_pointer_array_get_item (endpoints, i);
-        if (NULL == endpoint) {
-            continue;
-        }
-
-        msg = UDCM_ENDPOINT_REM_MODEX(endpoint);
-
-        if (msg->mm_qp_num == qp_num && msg->mm_port_num == port_num &&
-            msg->mm_lid == lid)
-            return endpoint;
+    opal_proc = opal_proc_for_name (msg_hdr->data.req.rem_name);
+    if (NULL == opal_proc) {
+        BTL_ERROR(("could not get proc associated with remote peer"));
+        return NULL;
     }
 
-    BTL_ERROR(("could not find endpoint with port: %d, lid: %d, msg_type: %d",
-               port_num, lid, msg_hdr->type));
+    endpoint = mca_btl_openib_get_ep (&btl->super, opal_proc);
+    if (NULL == endpoint) {
+        BTL_ERROR(("could not find endpoint with port: %d, lid: %d, msg_type: %d",
+                   msg_hdr->data.req.rem_port_num, lid, msg_hdr->type));
+    }
 
-    return NULL;
+    return endpoint;
 }
 
 static int udcm_endpoint_init_data (mca_btl_base_endpoint_t *lcl_ep)
@@ -1678,6 +1669,7 @@ static int udcm_send_request (mca_btl_base_endpoint_t *lcl_ep,
 
     msg->data->hdr.data.req.rem_ep_index = htonl(lcl_ep->index);
     msg->data->hdr.data.req.rem_port_num = m->modex.mm_port_num;
+    msg->data->hdr.data.req.rem_name     = OPAL_PROC_MY_NAME;
 
     for (i = 0 ; i < mca_btl_openib_component.num_qps ; ++i) {
         msg->data->qps[i].psn    = htonl(lcl_ep->qps[i].qp->lcl_psn);
@@ -1981,8 +1973,7 @@ static int udcm_process_messages (struct ibv_cq *event_cq, udcm_module_t *m)
         lcl_ep = message->hdr.lcl_ep;
 
         if (NULL == lcl_ep) {
-            lcl_ep = udcm_find_endpoint (m->btl->device->endpoints, wc[i].src_qp,
-                                         wc[i].slid, &message->hdr);
+            lcl_ep = udcm_find_endpoint (m->btl, wc[i].src_qp, wc[i].slid, &message->hdr);
         }
 
         if (NULL == lcl_ep ) {
@@ -2824,6 +2815,7 @@ static int udcm_xrc_send_request (mca_btl_base_endpoint_t *lcl_ep, mca_btl_base_
 
     msg->data->hdr.data.req.rem_ep_index = htonl(lcl_ep->index);
     msg->data->hdr.data.req.rem_port_num = m->modex.mm_port_num;
+    msg->data->hdr.data.req.rem_name     = OPAL_PROC_MY_NAME;
 
     if (UDCM_MESSAGE_XCONNECT == msg_type) {
         BTL_VERBOSE(("Sending XConnect with qp: %d, psn: %d", lcl_ep->qps[0].qp->lcl_qp->qp_num,

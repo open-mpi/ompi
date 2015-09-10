@@ -11,6 +11,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2013-2015 Intel, Inc. All rights reserved
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -28,6 +30,7 @@
 #endif
 
 #include "src/class/pmix_object.h"
+#include <pmix_common.h>
 
 BEGIN_C_DECLS
 
@@ -76,9 +79,9 @@ PMIX_DECLSPEC PMIX_CLASS_DECLARATION(pmix_pointer_array_t);
  * @return PMIX_SUCCESS if all initializations were succesfull. Otherwise,
  *  the error indicate what went wrong in the function.
  */
-PMIX_DECLSPEC int pmix_pointer_array_init( pmix_pointer_array_t* array,
-                                           int initial_allocation,
-                                           int max_size, int block_size );
+PMIX_DECLSPEC pmix_status_t pmix_pointer_array_init(pmix_pointer_array_t* array,
+                                                    int initial_allocation,
+                                                    int max_size, int block_size );
 
 /**
  * Add a pointer to the array (Grow the array, if need be)
@@ -98,10 +101,11 @@ PMIX_DECLSPEC int pmix_pointer_array_add(pmix_pointer_array_t *array, void *ptr)
  * @param index Index of element to be reset (IN)
  * @param value New value to be set at element index (IN)
  *
- * @return Error code.  (-1) indicates an error.
+ * @return PMIX_SUCCESS if item was inserted. Otherwise,
+ *  the error indicate what went wrong in the function.
  */
-PMIX_DECLSPEC int pmix_pointer_array_set_item(pmix_pointer_array_t *array,
-                                int index, void *value);
+PMIX_DECLSPEC pmix_status_t pmix_pointer_array_set_item(pmix_pointer_array_t *array,
+                                                        int index, void *value);
 
 /**
  * Get the value of an element in array
@@ -147,10 +151,13 @@ static inline int pmix_pointer_array_get_size(pmix_pointer_array_t *array)
  *
  * @param size Desired size of the array
  *
+ * @return PMIX_SUCCESS new size was set. Otherwise,
+ *  the error indicate what went wrong in the function.
+ *
  * Simple function to set the size of the array in order to
  * hide the member field from external users.
  */
-PMIX_DECLSPEC int pmix_pointer_array_set_size(pmix_pointer_array_t *array, int size);
+PMIX_DECLSPEC pmix_status_t pmix_pointer_array_set_size(pmix_pointer_array_t *array, int size);
 
 /**
  * Test whether a certain element is already in use. If not yet

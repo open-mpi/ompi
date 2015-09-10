@@ -94,7 +94,6 @@ int orte_pmix_server_register_nspace(orte_job_t *jdata)
     uid = geteuid();
     gid = getegid();
 
-#if OPAL_HAVE_HWLOC
     /* local topology - we do this so the procs won't read the
      * topology themselves as this could overwhelm the local
      * system on large-scale SMPs */
@@ -111,7 +110,6 @@ int orte_pmix_server_register_nspace(orte_job_t *jdata)
         kv->type = OPAL_STRING;
         opal_list_append(info, &kv->super);
     }
-#endif /* OPAL_HAVE_HWLOC */
 
     /* jobid */
     kv = OBJ_NEW(opal_value_t);
@@ -388,6 +386,9 @@ int orte_pmix_server_register_nspace(orte_job_t *jdata)
         kv->data.string = strdup(pptr->node->name);
         opal_list_append(pmap, &kv->super);
     }
+
+    /* mark the job as registered */
+    orte_set_attribute(&jdata->attributes, ORTE_JOB_NSPACE_REGISTERED, ORTE_ATTR_LOCAL, NULL, OPAL_BOOL);
 
     /* pass it down */
     if (OPAL_SUCCESS != opal_pmix.server_register_nspace(jdata->jobid,

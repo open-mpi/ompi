@@ -105,6 +105,8 @@ static inline bool mca_mpool_rgpusm_deregister_lru (mca_mpool_base_module_t *mpo
     old_reg = (mca_mpool_base_registration_t*)
         opal_list_remove_first (&mpool_rgpusm->lru_list);
     if (NULL == old_reg) {
+        opal_output_verbose(10, mca_mpool_rgpusm_component.output,
+                            "RGPUSM: The LRU list is empty. There is nothing to deregister");
         return false;
     }
 
@@ -121,6 +123,9 @@ static inline bool mca_mpool_rgpusm_deregister_lru (mca_mpool_base_module_t *mpo
        the deregistration fails to occur as we no longer have
        a reference to it. Is this possible? */
     if (OPAL_SUCCESS != rc) {
+        opal_output_verbose(10, mca_mpool_rgpusm_component.output,
+                            "RGPUSM: Failed to deregister the memory addr=%p, size=%d",
+                            old_reg->base, (int)(old_reg->bound - old_reg->base + 1));
         return false;
     }
 
@@ -419,6 +424,8 @@ int mca_mpool_rgpusm_register(mca_mpool_base_module_t *mpool, void *addr,
          * is MPI_ERR_OUT_OF_RESOURCES, but everything is stuck at
          * that point.  Therefore, just error out completely.
          */
+        opal_output_verbose(10, mca_mpool_rgpusm_component.output,
+                            "RGPUSM: Failed to register addr=%p, size=%d", addr, (int)size);
         return OPAL_ERROR;
     }
 
@@ -495,6 +502,9 @@ int mca_mpool_rgpusm_deregister(struct mca_mpool_base_module_t *mpool,
     {
         /* if leave_pinned is set don't deregister memory, but put it
          * on LRU list for future use */
+        opal_output_verbose(20, mca_mpool_rgpusm_component.output,
+                            "RGPUSM: Deregister: addr=%p, size=%d: cacheable and pinned, leave in cache, PUSH IN LRU",
+                            reg->base, (int)(reg->bound - reg->base + 1));
         opal_list_prepend(&mpool_rgpusm->lru_list, (opal_list_item_t*)reg);
     } else {
         /* Remove from rcache first */

@@ -53,6 +53,7 @@
  typedef struct {
     opal_object_t super;
     opal_event_t ev;
+    int timeout;
     int room_num;
     int remote_room_num;
     orte_process_name_t proxy;
@@ -71,10 +72,8 @@ OBJ_CLASS_DECLARATION(pmix_server_req_t);
 typedef struct {
     opal_object_t super;
     opal_event_t ev;
-    orte_job_t *jdata;
-    orte_process_name_t proc;
-    int status;
-    orte_proc_t *object;
+    opal_list_t *procs;
+    opal_list_t *info;
     opal_pmix_op_cbfunc_t cbfunc;
     void *cbdata;
 } orte_pmix_server_op_caddy_t;
@@ -114,21 +113,18 @@ do {                                                     \
     opal_event_active(&(_req->ev), OPAL_EV_WRITE, 1);    \
 } while(0);
 
-#define ORTE_PMIX_OPERATION(n, r, ob, s, fn, cf, cb)                \
-do {                                                                \
-    orte_pmix_server_op_caddy_t *_cd;                               \
-    _cd = OBJ_NEW(orte_pmix_server_op_caddy_t);                     \
-    /* convert the namespace to jobid and create name */            \
-    orte_util_convert_string_to_jobid(&(_cd->proc.jobid), (n));     \
-    _cd->proc.vpid = (r);                                           \
-    _cd->object = (ob);                                             \
-    _cd->cbfunc = (cf);                                             \
-    _cd->cbdata = (cb);                                             \
-    _cd->status = (s);                                              \
-    opal_event_set(orte_event_base, &(_cd->ev), -1,                 \
-                   OPAL_EV_WRITE, (fn), _cd);                       \
-    opal_event_set_priority(&(_cd->ev), ORTE_MSG_PRI);              \
-    opal_event_active(&(_cd->ev), OPAL_EV_WRITE, 1);                \
+#define ORTE_PMIX_OPERATION(p, i, fn, cf, cb)               \
+do {                                                        \
+    orte_pmix_server_op_caddy_t *_cd;                       \
+    _cd = OBJ_NEW(orte_pmix_server_op_caddy_t);             \
+    _cd->procs = (p);                                       \
+    _cd->info = (i);                                        \
+    _cd->cbfunc = (cf);                                     \
+    _cd->cbdata = (cb);                                     \
+    opal_event_set(orte_event_base, &(_cd->ev), -1,         \
+                   OPAL_EV_WRITE, (fn), _cd);               \
+    opal_event_set_priority(&(_cd->ev), ORTE_MSG_PRI);      \
+    opal_event_active(&(_cd->ev), OPAL_EV_WRITE, 1);        \
 } while(0);
 
 
@@ -146,16 +142,13 @@ extern int pmix_server_fencenb_fn(opal_list_t *procs, opal_list_t *info,
 extern int pmix_server_dmodex_req_fn(opal_process_name_t *proc, opal_list_t *info,
                                      opal_pmix_modex_cbfunc_t cbfunc, void *cbdata);
 extern int pmix_server_publish_fn(opal_process_name_t *proc,
-                                  opal_pmix_data_range_t range,
-                                  opal_pmix_persistence_t persist,
                                   opal_list_t *info,
                                   opal_pmix_op_cbfunc_t cbfunc, void *cbdata);
-extern int pmix_server_lookup_fn(opal_process_name_t *proc,
-                                 opal_pmix_data_range_t range,
-                                 opal_list_t *info, char **keys,
+extern int pmix_server_lookup_fn(opal_process_name_t *proc, char **keys,
+                                 opal_list_t *info,
                                  opal_pmix_lookup_cbfunc_t cbfunc, void *cbdata);
-extern int pmix_server_unpublish_fn(opal_process_name_t *proc,
-                                    opal_pmix_data_range_t range, char **keys,
+extern int pmix_server_unpublish_fn(opal_process_name_t *proc, char **keys,
+                                    opal_list_t *info,
                                     opal_pmix_op_cbfunc_t cbfunc, void *cbdata);
 extern int pmix_server_spawn_fn(opal_process_name_t *requestor,
                                 opal_list_t *job_info, opal_list_t *apps,
@@ -168,9 +161,14 @@ extern int pmix_server_register_events_fn(opal_list_t *info,
                                           opal_pmix_op_cbfunc_t cbfunc,
                                           void *cbdata);
 
+/* declare the RML recv functions for responses */
 extern void pmix_server_launch_resp(int status, orte_process_name_t* sender,
                                     opal_buffer_t *buffer,
                                     orte_rml_tag_t tg, void *cbdata);
+
+extern void pmix_server_keyval_client(int status, orte_process_name_t* sender,
+                                      opal_buffer_t *buffer,
+                                      orte_rml_tag_t tg, void *cbdata);
 
 /* exposed shared variables */
 typedef struct {
@@ -180,6 +178,8 @@ typedef struct {
     opal_hotel_t reqs;
     int num_rooms;
     int timeout;
+    char *server_uri;
+    bool wait_for_server;
     orte_process_name_t server;
 } pmix_server_globals_t;
 

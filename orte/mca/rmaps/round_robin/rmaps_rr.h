@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2015      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -46,13 +47,11 @@ ORTE_MODULE_DECLSPEC int orte_rmaps_rr_byslot(orte_job_t *jdata,
                                               orte_std_cntr_t num_slots,
                                               orte_vpid_t nprocs);
 
-#if OPAL_HAVE_HWLOC
 ORTE_MODULE_DECLSPEC int orte_rmaps_rr_byobj(orte_job_t *jdata, orte_app_context_t *app,
                                              opal_list_t *node_list,
                                              orte_std_cntr_t num_slots,
                                              orte_vpid_t num_procs,
                                              hwloc_obj_type_t target, unsigned cache_level);
-#endif
 
 END_C_DECLS
 

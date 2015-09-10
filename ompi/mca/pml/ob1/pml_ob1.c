@@ -191,11 +191,9 @@ int mca_pml_ob1_add_comm(ompi_communicator_t* comm)
 {
     /* allocate pml specific comm data */
     mca_pml_ob1_comm_t* pml_comm = OBJ_NEW(mca_pml_ob1_comm_t);
-    opal_list_item_t *item, *next_item;
-    mca_pml_ob1_recv_frag_t* frag;
+    mca_pml_ob1_recv_frag_t *frag, *next_frag;
     mca_pml_ob1_comm_proc_t* pml_proc;
     mca_pml_ob1_match_hdr_t* hdr;
-    int i;
 
     if (NULL == pml_comm) {
         return OMPI_ERR_OUT_OF_RESOURCE;
@@ -210,16 +208,8 @@ int mca_pml_ob1_add_comm(ompi_communicator_t* comm)
     mca_pml_ob1_comm_init_size(pml_comm, comm->c_remote_group->grp_proc_count);
     comm->c_pml_comm = pml_comm;
 
-    for( i = 0; i < comm->c_remote_group->grp_proc_count; i++ ) {
-        pml_comm->procs[i].ompi_proc = ompi_group_peer_lookup(comm->c_remote_group,i);
-        OBJ_RETAIN(pml_comm->procs[i].ompi_proc);
-    }
     /* Grab all related messages from the non_existing_communicator pending queue */
-    for( item = opal_list_get_first(&mca_pml_ob1.non_existing_communicator_pending);
-         item != opal_list_get_end(&mca_pml_ob1.non_existing_communicator_pending);
-         item = next_item ) {
-        frag = (mca_pml_ob1_recv_frag_t*)item;
-        next_item = opal_list_get_next(item);
+    OPAL_LIST_FOREACH_SAFE(frag, next_frag, &mca_pml_ob1.non_existing_communicator_pending, mca_pml_ob1_recv_frag_t) {
         hdr = &frag->hdr.hdr_match;
 
         /* Is this fragment for the current communicator ? */
@@ -229,8 +219,8 @@ int mca_pml_ob1_add_comm(ompi_communicator_t* comm)
         /* As we now know we work on a fragment for this communicator
          * we should remove it from the
          * non_existing_communicator_pending list. */
-        opal_list_remove_item( &mca_pml_ob1.non_existing_communicator_pending,
-                               item );
+        opal_list_remove_item (&mca_pml_ob1.non_existing_communicator_pending,
+                               (opal_list_item_t *) frag);
 
       add_fragment_to_unexpected:
 
@@ -249,7 +239,7 @@ int mca_pml_ob1_add_comm(ompi_communicator_t* comm)
          * We just have to push the fragment into the unexpected list of the corresponding
          * proc, or into the out-of-order (cant_match) list.
          */
-        pml_proc = &(pml_comm->procs[hdr->hdr_src]);
+        pml_proc = mca_pml_ob1_peer_lookup(comm, hdr->hdr_src);
 
         if( ((uint16_t)hdr->hdr_seq) == ((uint16_t)pml_proc->expected_sequence) ) {
             /* We're now expecting the next sequence number. */
@@ -283,12 +273,6 @@ int mca_pml_ob1_add_comm(ompi_communicator_t* comm)
 
 int mca_pml_ob1_del_comm(ompi_communicator_t* comm)
 {
-    mca_pml_ob1_comm_t* pml_comm = comm->c_pml_comm;
-    int i;
-
-    for( i = 0; i < comm->c_remote_group->grp_proc_count; i++ ) {
-        OBJ_RELEASE(pml_comm->procs[i].ompi_proc);
-    }
     OBJ_RELEASE(comm->c_pml_comm);
     comm->c_pml_comm = NULL;
     return OMPI_SUCCESS;
@@ -303,9 +287,9 @@ int mca_pml_ob1_del_comm(ompi_communicator_t* comm)
 
 int mca_pml_ob1_add_procs(ompi_proc_t** procs, size_t nprocs)
 {
+    mca_btl_base_selected_module_t *sm;
     opal_bitmap_t reachable;
     int rc;
-    opal_list_item_t *item;
 
     if(nprocs == 0)
         return OMPI_SUCCESS;
@@ -347,11 +331,7 @@ int mca_pml_ob1_add_procs(ompi_proc_t** procs, size_t nprocs)
        BTLs requires iterating over the procs, as the BML does not
        expose all currently in use btls. */
 
-    for (item = opal_list_get_first(&mca_btl_base_modules_initialized) ;
-         item != opal_list_get_end(&mca_btl_base_modules_initialized) ;
-         item = opal_list_get_next(item)) {
-        mca_btl_base_selected_module_t *sm =
-            (mca_btl_base_selected_module_t*) item;
+    OPAL_LIST_FOREACH(sm, &mca_btl_base_modules_initialized, mca_btl_base_selected_module_t) {
         if (sm->btl_module->btl_eager_limit < sizeof(mca_pml_ob1_hdr_t)) {
             opal_show_help("help-mpi-pml-ob1.txt", "eager_limit_too_small",
                            true,
@@ -589,13 +569,19 @@ int mca_pml_ob1_dump(struct ompi_communicator_t* comm, int verbose)
 
     /* iterate through all procs on communicator */
     for( i = 0; i < (int)pml_comm->num_procs; i++ ) {
-        mca_pml_ob1_comm_proc_t* proc = &pml_comm->procs[i];
+        mca_pml_ob1_comm_proc_t* proc = pml_comm->procs[i];
+
+        if (NULL == proc) {
+            continue;
+        }
+
         mca_bml_base_endpoint_t* ep = (mca_bml_base_endpoint_t*)proc->ompi_proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML];
         size_t n;
 
         opal_output(0, "[Rank %d] expected_seq %d ompi_proc %p send_seq %d\n",
                     i, proc->expected_sequence, (void*) proc->ompi_proc,
                     proc->send_sequence);
+
         /* dump all receive queues */
         if( opal_list_get_size(&proc->specific_receives) ) {
             opal_output(0, "expected specific receives\n");

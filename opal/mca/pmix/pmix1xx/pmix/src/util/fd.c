@@ -3,6 +3,8 @@
  * Copyright (c) 2009      Sandia National Laboratories. All rights reserved.
  * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
  *
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -26,7 +28,7 @@
 /*
  * Simple loop over reading from a fd
  */
-int pmix_fd_read(int fd, int len, void *buffer)
+pmix_status_t pmix_fd_read(int fd, int len, void *buffer)
 {
     int rc;
     char *b = buffer;
@@ -51,7 +53,7 @@ int pmix_fd_read(int fd, int len, void *buffer)
 /*
  * Simple loop over writing to an fd
  */
-int pmix_fd_write(int fd, int len, const void *buffer)
+pmix_status_t pmix_fd_write(int fd, int len, const void *buffer)
 {
     int rc;
     const char *b = buffer;
@@ -72,7 +74,7 @@ int pmix_fd_write(int fd, int len, const void *buffer)
 }
 
 
-int pmix_fd_set_cloexec(int fd)
+pmix_status_t pmix_fd_set_cloexec(int fd)
 {
 #ifdef FD_CLOEXEC
     int flags;

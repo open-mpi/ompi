@@ -55,5 +55,14 @@ struct mca_mtl_psm2_endpoint_t {
 typedef struct mca_mtl_psm2_endpoint_t  mca_mtl_psm2_endpoint_t;
 OBJ_CLASS_DECLARATION(mca_mtl_psm2_endpoint);
 
+static inline mca_mtl_psm_endpoint_t *ompi_mtl_psm2_get_endpoint (struct mca_mtl_base_module_t* mtl, ompi_proc_t *ompi_proc)
+{
+    if (OPAL_UNLIKELY(NULL == ompi_proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_MTL])) {
+	ompi_mtl_psm2_add_procs (mtl, 1, &ompi_proc);
+    }
+
+    return ompi_proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_MTL];
+}
+
 END_C_DECLS
 #endif

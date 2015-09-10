@@ -8,7 +8,7 @@
  * Copyright (c) 2013-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2014      NVIDIA Corporation.  All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  *
  * Author(s): Torsten Hoefler <htor@cs.indiana.edu>
@@ -17,13 +17,13 @@
 #include "nbc_internal.h"
 
 static inline int a2a_sched_linear(int rank, int p, MPI_Aint sndext, MPI_Aint rcvext, NBC_Schedule *schedule,
-                                   void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf,
+                                   const void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf,
                                    int recvcount, MPI_Datatype recvtype, MPI_Comm comm);
 static inline int a2a_sched_pairwise(int rank, int p, MPI_Aint sndext, MPI_Aint rcvext, NBC_Schedule *schedule,
-                                     void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf,
+                                     const void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf,
                                      int recvcount, MPI_Datatype recvtype, MPI_Comm comm);
 static inline int a2a_sched_diss(int rank, int p, MPI_Aint sndext, MPI_Aint rcvext, NBC_Schedule* schedule,
-                                 void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf,
+                                 const void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf,
                                  int recvcount, MPI_Datatype recvtype, MPI_Comm comm, NBC_Handle *handle);
 
 #ifdef NBC_CACHE_SCHEDULE
@@ -47,7 +47,7 @@ int NBC_Alltoall_args_compare(NBC_Alltoall_args *a, NBC_Alltoall_args *b, void *
 #endif
 
 /* simple linear MPI_Ialltoall the (simple) algorithm just sends to all nodes */
-int ompi_coll_libnbc_ialltoall(void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int recvcount,
+int ompi_coll_libnbc_ialltoall(const void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int recvcount,
                                MPI_Datatype recvtype, struct ompi_communicator_t *comm, ompi_request_t ** request,
                                struct mca_coll_base_module_2_1_0_t *module)
 {
@@ -264,7 +264,7 @@ int ompi_coll_libnbc_ialltoall(void* sendbuf, int sendcount, MPI_Datatype sendty
   return OMPI_SUCCESS;
 }
 
-int ompi_coll_libnbc_ialltoall_inter (void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int recvcount,
+int ompi_coll_libnbc_ialltoall_inter (const void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int recvcount,
 				      MPI_Datatype recvtype, struct ompi_communicator_t *comm, ompi_request_t ** request,
 				      struct mca_coll_base_module_2_1_0_t *module)
 {
@@ -339,7 +339,7 @@ int ompi_coll_libnbc_ialltoall_inter (void* sendbuf, int sendcount, MPI_Datatype
 }
 
 static inline int a2a_sched_pairwise(int rank, int p, MPI_Aint sndext, MPI_Aint rcvext, NBC_Schedule* schedule,
-                                     void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int recvcount,
+                                     const void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int recvcount,
                                      MPI_Datatype recvtype, MPI_Comm comm) {
   int res;
 
@@ -375,7 +375,7 @@ static inline int a2a_sched_pairwise(int rank, int p, MPI_Aint sndext, MPI_Aint 
 }
 
 static inline int a2a_sched_linear(int rank, int p, MPI_Aint sndext, MPI_Aint rcvext, NBC_Schedule* schedule,
-                                   void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int recvcount,
+                                   const void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int recvcount,
                                    MPI_Datatype recvtype, MPI_Comm comm) {
   int res;
 
@@ -402,7 +402,7 @@ static inline int a2a_sched_linear(int rank, int p, MPI_Aint sndext, MPI_Aint rc
 }
 
 static inline int a2a_sched_diss(int rank, int p, MPI_Aint sndext, MPI_Aint rcvext, NBC_Schedule* schedule,
-                                 void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int recvcount,
+                                 const void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int recvcount,
                                  MPI_Datatype recvtype, MPI_Comm comm, NBC_Handle *handle) {
   int res, speer, rpeer, datasize, offset, virtp;
   char *rbuf, *rtmpbuf, *stmpbuf;

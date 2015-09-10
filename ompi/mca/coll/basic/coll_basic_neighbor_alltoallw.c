@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -37,8 +37,8 @@
 
 static int
 mca_coll_basic_neighbor_alltoallw_cart(const void *sbuf, const int scounts[], const MPI_Aint sdisps[],
-                                       struct ompi_datatype_t * const sdtypes[], void *rbuf, const int rcounts[],
-                                       const MPI_Aint rdisps[], struct ompi_datatype_t * const rdtypes[],
+                                       struct ompi_datatype_t * const *sdtypes, void *rbuf, const int rcounts[],
+                                       const MPI_Aint rdisps[], struct ompi_datatype_t * const *rdtypes,
                                        struct ompi_communicator_t *comm, mca_coll_base_module_t *module)
 {
     mca_coll_basic_module_t *basic_module = (mca_coll_basic_module_t *) module;
@@ -161,8 +161,8 @@ mca_coll_basic_neighbor_alltoallw_graph(const void *sbuf, const int scounts[], c
 
 static int
 mca_coll_basic_neighbor_alltoallw_dist_graph(const void *sbuf, const int scounts[], const MPI_Aint sdisps[],
-                                             struct ompi_datatype_t * const sdtypes[], void *rbuf, const int rcounts[],
-                                             const MPI_Aint rdisps[], struct ompi_datatype_t * const rdtypes[],
+                                             struct ompi_datatype_t * const *sdtypes, void *rbuf, const int rcounts[],
+                                             const MPI_Aint rdisps[], struct ompi_datatype_t * const *rdtypes,
                                              struct ompi_communicator_t *comm, mca_coll_base_module_t *module)
 {
     mca_coll_basic_module_t *basic_module = (mca_coll_basic_module_t *) module;
@@ -206,9 +206,9 @@ mca_coll_basic_neighbor_alltoallw_dist_graph(const void *sbuf, const int scounts
     return ompi_request_wait_all (indegree + outdegree, basic_module->mccb_reqs, MPI_STATUSES_IGNORE);
 }
 
-int mca_coll_basic_neighbor_alltoallw(void *sbuf, int scounts[], MPI_Aint sdisps[],
-                                      struct ompi_datatype_t *sdtypes[], void *rbuf, int rcounts[],
-                                      MPI_Aint rdisps[], struct ompi_datatype_t *rdtypes[],
+int mca_coll_basic_neighbor_alltoallw(const void *sbuf, const int scounts[], const MPI_Aint sdisps[],
+                                      struct ompi_datatype_t * const *sdtypes, void *rbuf, const int rcounts[],
+                                      const MPI_Aint rdisps[], struct ompi_datatype_t * const *rdtypes,
                                       struct ompi_communicator_t *comm, mca_coll_base_module_t *module)
 {
     if (OMPI_COMM_IS_INTER(comm)) {

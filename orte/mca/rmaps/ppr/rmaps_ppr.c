@@ -2,7 +2,7 @@
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -56,13 +56,11 @@ typedef enum {
     OPAL_HWLOC_HWTHREAD_LEVEL
 } opal_hwloc_level_t;
 
-#if OPAL_HAVE_HWLOC
 static void prune(orte_jobid_t jobid,
                   orte_app_idx_t app_idx,
                   orte_node_t *node,
                   opal_hwloc_level_t *level,
                   orte_vpid_t *nmapped);
-#endif
 
 static int ppr[OPAL_HWLOC_HWTHREAD_LEVEL+1];
 
@@ -75,14 +73,12 @@ static int ppr_mapper(orte_job_t *jdata)
     orte_app_context_t *app;
     orte_vpid_t total_procs, nprocs_mapped;
     opal_hwloc_level_t start=OPAL_HWLOC_NODE_LEVEL;
-#if OPAL_HAVE_HWLOC
     hwloc_obj_t obj;
     hwloc_obj_type_t lowest;
     unsigned cache_level=0;
     unsigned int nobjs, i;
     bool pruning_reqd = false;
     opal_hwloc_level_t level;
-#endif
     opal_list_t node_list;
     opal_list_item_t *item;
     orte_std_cntr_t num_slots;
@@ -149,7 +145,6 @@ static int ppr_mapper(orte_job_t *jdata)
             ORTE_SET_MAPPING_POLICY(jdata->map->mapping, ORTE_MAPPING_BYNODE);
             start = OPAL_HWLOC_NODE_LEVEL;
             n++;
-#if OPAL_HAVE_HWLOC
         } else if (0 == strncasecmp(ck[1], "hwthread", len) ||
                    0 == strncasecmp(ck[1], "thread", len)) {
             ppr[OPAL_HWLOC_HWTHREAD_LEVEL] = strtol(ck[0], NULL, 10);
@@ -202,7 +197,6 @@ static int ppr_mapper(orte_job_t *jdata)
                 ORTE_SET_MAPPING_POLICY(jdata->map->mapping, ORTE_MAPPING_BYNUMA);
             }
             n++;
-#endif
         } else {
             /* unknown spec */
             orte_show_help("help-orte-rmaps-ppr.txt", "unrecognized-ppr-option", true, ck[1], jdata->map->ppr);
@@ -218,23 +212,19 @@ static int ppr_mapper(orte_job_t *jdata)
         opal_output(0, "NOTHING GIVEN");
         return ORTE_ERR_SILENT;
     }
-#if OPAL_HAVE_HWLOC
     /* if more than one level was specified, then pruning will be reqd */
     if (1 < n) {
         pruning_reqd = true;
     }
-#endif
 
     opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                         "mca:rmaps:ppr: job %s assigned policy %s",
                         ORTE_JOBID_PRINT(jdata->jobid),
                         orte_rmaps_base_print_mapping(jdata->map->mapping));
 
-#if OPAL_HAVE_HWLOC
     /* convenience */
     level = start;
     lowest = opal_hwloc_levels[start];
-#endif
 
     for (idx=0; idx < (orte_app_idx_t)jdata->apps->size; idx++) {
         if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, idx))) {
@@ -270,7 +260,6 @@ static int ppr_mapper(orte_job_t *jdata)
              item != opal_list_get_end(&node_list);
              item = opal_list_get_next(item)) {
             node = (orte_node_t*)item;
-#if OPAL_HAVE_HWLOC
             /* bozo check */
             if (NULL == node->topology) {
                 orte_show_help("help-orte-rmaps-ppr.txt", "ppr-topo-missing",
@@ -278,7 +267,6 @@ static int ppr_mapper(orte_job_t *jdata)
                 rc = ORTE_ERR_SILENT;
                 goto error;
             }
-#endif
             /* add the node to the map, if needed */
             if (!ORTE_FLAG_TEST(node, ORTE_NODE_FLAG_MAPPED)) {
                 if (ORTE_SUCCESS > (rc = opal_pointer_array_add(jdata->map->nodes, (void*)node))) {
@@ -293,20 +281,15 @@ static int ppr_mapper(orte_job_t *jdata)
              * that many procs on this node
              */
             if (OPAL_HWLOC_NODE_LEVEL == start) {
-#if OPAL_HAVE_HWLOC
                 obj = hwloc_get_root_obj(node->topology);
-#endif
                 for (j=0; j < ppr[start] && nprocs_mapped < total_procs; j++) {
                     if (NULL == (proc = orte_rmaps_base_setup_proc(jdata, node, idx))) {
                         rc = ORTE_ERR_OUT_OF_RESOURCE;
                         goto error;
                     }
                     nprocs_mapped++;
-#if OPAL_HAVE_HWLOC
                     orte_set_attribute(&proc->attributes, ORTE_PROC_HWLOC_LOCALE, ORTE_ATTR_LOCAL, obj, OPAL_PTR);
-#endif
                 }
-#if OPAL_HAVE_HWLOC
             } else {
                 /* get the number of lowest resources on this node */
                 nobjs = opal_hwloc_base_get_nbobjs_by_type(node->topology,
@@ -338,7 +321,6 @@ static int ppr_mapper(orte_job_t *jdata)
                     level--;
                     prune(jdata->jobid, idx, node, &level, &nprocs_mapped);
                 }
-#endif
             }
 
             /* set the total slots used */
@@ -410,7 +392,6 @@ static int ppr_mapper(orte_job_t *jdata)
     return rc;
 }
 
-#if OPAL_HAVE_HWLOC
 static hwloc_obj_t find_split(hwloc_topology_t topo, hwloc_obj_t obj)
 {
     unsigned k;
@@ -616,4 +597,3 @@ static void prune(orte_jobid_t jobid,
  error:
     opal_output(0, "INFINITE LOOP");
 }
-#endif

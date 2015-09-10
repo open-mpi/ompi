@@ -400,6 +400,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     opal_compare_proc = _process_name_compare;
     opal_convert_string_to_process_name = _convert_string_to_process_name;
     opal_convert_process_name_to_string = _convert_process_name_to_string;
+    opal_proc_for_name = ompi_proc_for_name;
 
     /* Register MCA variables */
     if (OPAL_SUCCESS != (ret = ompi_register_mca_variables())) {
@@ -474,7 +475,6 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     /* check for timing request - get stop time and report elapsed time if so */
     OPAL_TIMING_MNEXT((&tm,"time from completion of rte_init to modex"));
 
-#if OPAL_HAVE_HWLOC
     /* if hwloc is available but didn't get setup for some
      * reason, do so now
      */
@@ -484,7 +484,6 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
             goto error;
         }
     }
-#endif
 
     /* Register the default errhandler callback - RTE will ignore if it
      * doesn't support this capability

@@ -158,7 +158,6 @@ void* MPIR_Breakpoint(void)
 static char **global_mca_env = NULL;
 static orte_std_cntr_t total_num_apps = 0;
 static bool want_prefix_by_default = (bool) ORTE_WANT_ORTERUN_PREFIX_BY_DEFAULT;
-static char *ompi_server=NULL;
 
 /*
  * Globals
@@ -284,16 +283,10 @@ static opal_cmd_line_init_t cmd_line_init[] = {
       NULL, OPAL_CMD_LINE_TYPE_BOOL,
       "Do not attempt to resolve interfaces" },
 
-    /* uri of Open MPI server, or at least where to get it */
-    { NULL, '\0', "ompi-server", "ompi-server", 1,
-      &orterun_globals.ompi_server, OPAL_CMD_LINE_TYPE_STRING,
-      "Specify the URI of the Open MPI server, or the name of the file (specified as file:filename) that contains that info" },
-    { NULL, '\0', "wait-for-server", "wait-for-server", 0,
-      &orterun_globals.wait_for_server, OPAL_CMD_LINE_TYPE_BOOL,
-      "If ompi-server is not already running, wait until it is detected (default: false)" },
-    { NULL, '\0', "server-wait-time", "server-wait-time", 1,
-      &orterun_globals.server_wait_timeout, OPAL_CMD_LINE_TYPE_INT,
-      "Time in seconds to wait for ompi-server (default: 10 sec)" },
+    /* uri of PMIx publish/lookup server, or at least where to get it */
+    { "pmix_server_uri", '\0', "ompi-server", "ompi-server", 1,
+      NULL, OPAL_CMD_LINE_TYPE_STRING,
+      "Specify the URI of the publish/lookup server, or the name of the file (specified as file:filename) that contains that info" },
 
     { "carto_file_path", '\0', "cf", "cartofile", 1,
       NULL, OPAL_CMD_LINE_TYPE_STRING,
@@ -365,7 +358,6 @@ static opal_cmd_line_init_t cmd_line_init[] = {
         NULL, OPAL_CMD_LINE_TYPE_INT,
         "Launch n processes per node on all allocated nodes (synonym for npernode)" },
 
-#if OPAL_HAVE_HWLOC
     /* declare hardware threads as independent cpus */
     { "hwloc_base_use_hwthreads_as_cpus", '\0', "use-hwthread-cpus", "use-hwthread-cpus", 0,
       NULL, OPAL_CMD_LINE_TYPE_BOOL,
@@ -412,17 +404,6 @@ static opal_cmd_line_init_t cmd_line_init[] = {
     { "rmaps_ppr_pattern", '\0', NULL, "ppr", 1,
         NULL, OPAL_CMD_LINE_TYPE_STRING,
         "Comma-separated list of number of processes on a given resource type [default: none]" },
-#else
-    /* Mapping options */
-    { "rmaps_base_mapping_policy", '\0', NULL, "map-by", 1,
-      NULL, OPAL_CMD_LINE_TYPE_STRING,
-      "Mapping Policy [slot (default) | node]" },
-
-      /* Ranking options */
-    { "rmaps_base_ranking_policy", '\0', NULL, "rank-by", 1,
-      NULL, OPAL_CMD_LINE_TYPE_STRING,
-      "Ranking Policy [slot (default) | node]" },
-#endif
 
     /* Allocation options */
     { "orte_display_alloc", '\0', "display-allocation", "display-allocation", 0,
@@ -431,11 +412,9 @@ static opal_cmd_line_init_t cmd_line_init[] = {
     { "orte_display_devel_alloc", '\0', "display-devel-allocation", "display-devel-allocation", 0,
       NULL, OPAL_CMD_LINE_TYPE_BOOL,
       "Display a detailed list (mostly intended for developers) of the allocation being used by this job"},
-#if OPAL_HAVE_HWLOC
     { "hwloc_base_cpu_set", '\0', "cpu-set", "cpu-set", 1,
       NULL, OPAL_CMD_LINE_TYPE_STRING,
       "Comma-separated list of ranges specifying logical cpus allocated to this job [default: none]"},
-#endif
     { NULL, 'H', "host", "host", 1,
       NULL, OPAL_CMD_LINE_TYPE_STRING,
       "List of hosts to invoke processes on" },
@@ -516,11 +495,9 @@ static opal_cmd_line_init_t cmd_line_init[] = {
       NULL, OPAL_CMD_LINE_TYPE_INT,
       "Max number of times to restart a failed process" },
 
-#if OPAL_HAVE_HWLOC
     { "orte_hetero_nodes", '\0', NULL, "hetero-nodes", 0,
       NULL, OPAL_CMD_LINE_TYPE_BOOL,
       "Nodes in cluster may differ in topology, so send the topology back from each node [Default = false]" },
-#endif
 
 #if OPAL_ENABLE_CRDEBUG == 1
     { "opal_cr_enable_crdebug", '\0', "crdebug", "crdebug", 0,
@@ -1041,42 +1018,6 @@ int orterun(int argc, char *argv[])
         goto DONE;
     }
 
-    /* if an uri for the ompi-server was provided, set the route */
-    if (NULL != ompi_server) {
-        opal_buffer_t buf;
-        /* setup our route to the server */
-        OBJ_CONSTRUCT(&buf, opal_buffer_t);
-        opal_dss.pack(&buf, &ompi_server, 1, OPAL_STRING);
-        if (ORTE_SUCCESS != (rc = orte_rml_base_update_contact_info(&buf))) {
-            ORTE_ERROR_LOG(rc);
-            ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
-            goto DONE;
-        }
-        OBJ_DESTRUCT(&buf);
-        /* check if we are to wait for the server to start - resolves
-         * a race condition that can occur when the server is run
-         * as a background job - e.g., in scripts
-         */
-        if (orterun_globals.wait_for_server) {
-            /* ping the server */
-            struct timeval timeout;
-            timeout.tv_sec = orterun_globals.server_wait_timeout;
-            timeout.tv_usec = 0;
-            if (ORTE_SUCCESS != (rc = orte_rml.ping(ompi_server, &timeout))) {
-                /* try it one more time */
-                if (ORTE_SUCCESS != (rc = orte_rml.ping(ompi_server, &timeout))) {
-                    /* okay give up */
-                    orte_show_help("help-orterun.txt", "orterun:server-not-found", true,
-                                   orte_basename, ompi_server,
-                                   (long)orterun_globals.server_wait_timeout,
-                                   ORTE_ERROR_NAME(rc));
-                    ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
-                    goto DONE;
-                }
-            }
-        }
-    }
-
     /* setup for debugging */
     orte_debugger_init_before_spawn(jdata);
     orte_state.add_job_state(ORTE_JOB_STATE_READY_FOR_DEBUGGERS,
@@ -1175,9 +1116,6 @@ static int init_globals(void)
         orterun_globals.appfile =     NULL;
         orterun_globals.wdir =        NULL;
         orterun_globals.path =        NULL;
-        orterun_globals.ompi_server = NULL;
-        orterun_globals.wait_for_server = false;
-        orterun_globals.server_wait_timeout = 10;
         orterun_globals.stdin_target = "0";
         orterun_globals.report_pid        = NULL;
         orterun_globals.report_uri        = NULL;
@@ -1270,132 +1208,7 @@ static int parse_locals(orte_job_t *jdata, int argc, char* argv[])
     bool made_app;
     orte_std_cntr_t j, size1;
 
-    /* if the ompi-server was given, then set it up here */
-    if (NULL != orterun_globals.ompi_server) {
-        /* someone could have passed us a file instead of a uri, so
-         * we need to first check to see what we have - if it starts
-         * with "file", then we know it is a file. Otherwise, we assume
-         * it is a uri as provided by the ompi-server's output
-         * of an ORTE-standard string. Note that this is NOT a standard
-         * uri as it starts with the process name!
-         */
-        if (0 == strncmp(orterun_globals.ompi_server, "file", strlen("file")) ||
-            0 == strncmp(orterun_globals.ompi_server, "FILE", strlen("FILE"))) {
-            char input[1024], *filename;
-            FILE *fp;
-
-            /* it is a file - get the filename */
-            filename = strchr(orterun_globals.ompi_server, ':');
-            if (NULL == filename) {
-                /* filename is not correctly formatted */
-                orte_show_help("help-orterun.txt", "orterun:ompi-server-filename-bad", true,
-                               orte_basename, orterun_globals.ompi_server);
-                exit(1);
-            }
-            ++filename; /* space past the : */
-
-            if (0 >= strlen(filename)) {
-                /* they forgot to give us the name! */
-                orte_show_help("help-orterun.txt", "orterun:ompi-server-filename-missing", true,
-                               orte_basename, orterun_globals.ompi_server);
-                exit(1);
-            }
-
-            /* open the file and extract the uri */
-            fp = fopen(filename, "r");
-            if (NULL == fp) { /* can't find or read file! */
-                orte_show_help("help-orterun.txt", "orterun:ompi-server-filename-access", true,
-                               orte_basename, orterun_globals.ompi_server);
-                exit(1);
-            }
-            if (NULL == fgets(input, 1024, fp)) {
-                /* something malformed about file */
-                fclose(fp);
-                orte_show_help("help-orterun.txt", "orterun:ompi-server-file-bad", true,
-                               orte_basename, orterun_globals.ompi_server,
-                               orte_basename);
-                exit(1);
-            }
-            fclose(fp);
-            input[strlen(input)-1] = '\0';  /* remove newline */
-            ompi_server = strdup(input);
-        } else if (0 == strncmp(orterun_globals.ompi_server, "pid", strlen("pid")) ||
-                   0 == strncmp(orterun_globals.ompi_server, "PID", strlen("PID"))) {
-            opal_list_t hnp_list;
-            opal_list_item_t *item;
-            orte_hnp_contact_t *hnp;
-            char *ptr;
-            pid_t pid;
-
-            ptr = strchr(orterun_globals.ompi_server, ':');
-            if (NULL == ptr) {
-                /* pid is not correctly formatted */
-                orte_show_help("help-orterun.txt", "orterun:ompi-server-pid-bad", true,
-                               orte_basename, orte_basename,
-                               orterun_globals.ompi_server, orte_basename);
-                exit(1);
-            }
-            ++ptr; /* space past the : */
-
-            if (0 >= strlen(ptr)) {
-                /* they forgot to give us the pid! */
-                orte_show_help("help-orterun.txt", "orterun:ompi-server-pid-bad", true,
-                               orte_basename, orte_basename,
-                               orterun_globals.ompi_server, orte_basename);
-                exit(1);
-            }
-
-            pid = strtoul(ptr, NULL, 10);
-
-            /* to search the local mpirun's, we have to partially initialize the
-             * orte_process_info structure. This won't fully be setup until orte_init,
-             * but we finagle a little bit of it here
-             */
-            if (ORTE_SUCCESS != (rc = orte_session_dir_get_name(NULL, &orte_process_info.tmpdir_base,
-                                                                &orte_process_info.top_session_dir,
-                                                                NULL, NULL, NULL))) {
-                orte_show_help("help-orterun.txt", "orterun:ompi-server-could-not-get-hnp-list", true,
-                               orte_basename, orte_basename);
-                exit(1);
-            }
-
-            OBJ_CONSTRUCT(&hnp_list, opal_list_t);
-
-            /* get the list of HNPs, but do -not- setup contact info to them in the RML */
-            if (ORTE_SUCCESS != (rc = orte_list_local_hnps(&hnp_list, false))) {
-                orte_show_help("help-orterun.txt", "orterun:ompi-server-could-not-get-hnp-list", true,
-                               orte_basename, orte_basename);
-                exit(1);
-            }
-
-            /* search the list for the desired pid */
-            while (NULL != (item = opal_list_remove_first(&hnp_list))) {
-                hnp = (orte_hnp_contact_t*)item;
-                if (pid == hnp->pid) {
-                    ompi_server = strdup(hnp->rml_uri);
-                    goto hnp_found;
-                }
-                OBJ_RELEASE(item);
-            }
-            /* if we got here, it wasn't found */
-            orte_show_help("help-orterun.txt", "orterun:ompi-server-pid-not-found", true,
-                           orte_basename, orte_basename, pid, orterun_globals.ompi_server,
-                           orte_basename);
-            OBJ_DESTRUCT(&hnp_list);
-            exit(1);
-        hnp_found:
-            /* cleanup rest of list */
-            while (NULL != (item = opal_list_remove_first(&hnp_list))) {
-                OBJ_RELEASE(item);
-            }
-            OBJ_DESTRUCT(&hnp_list);
-        } else {
-            ompi_server = strdup(orterun_globals.ompi_server);
-        }
-    }
-
     /* Make the apps */
-
     temp_argc = 0;
     temp_argv = NULL;
     opal_argv_append(&temp_argc, &temp_argv, argv[0]);
@@ -1640,7 +1453,7 @@ static int create_app(int argc, char* argv[],
     app->env = opal_argv_copy(*app_env);
     if (ORTE_SUCCESS != (rc = orte_schizo.parse_env(orterun_globals.personality,
                                                     orterun_globals.path,
-                                                    &cmd_line, ompi_server,
+                                                    &cmd_line,
                                                     environ, &app->env))) {
         goto cleanup;
     }

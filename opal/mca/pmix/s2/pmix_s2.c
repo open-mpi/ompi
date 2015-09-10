@@ -48,12 +48,9 @@ static int s2_put(opal_pmix_scope_t scope,
 static int s2_get(const opal_process_name_t *id,
                   const char *key,
                   opal_value_t **kv);
-static int s2_publish(opal_pmix_data_range_t scope,
-                      opal_pmix_persistence_t persist,
-                      opal_list_t *info);
-static int s2_lookup(opal_pmix_data_range_t scope,
-                     opal_list_t *data);
-static int s2_unpublish(opal_pmix_data_range_t scope, char **keys);
+static int s2_publish(opal_list_t *info);
+static int s2_lookup(opal_list_t *data, opal_list_t *info);
+static int s2_unpublish(char **keys, opal_list_t *info);
 static int s2_spawn(opal_list_t *jobinfo, opal_list_t *apps, opal_jobid_t *jobid);
 static int s2_job_connect(opal_list_t *procs);
 static int s2_job_disconnect(opal_list_t *procs);
@@ -154,8 +151,15 @@ static int kvs_get(const char key[], char value [], int maxvalue)
     int rc;
     int len;
     rc = PMI2_KVS_Get(pmix_kvs_name, PMI2_ID_NULL, key, value, maxvalue, &len);
-    if( PMI2_SUCCESS != rc || len < 0){
-        OPAL_PMI_ERROR(rc, "PMI2_KVS_Get");
+    /*
+     * turns out the KVS can be called for keys that haven't yet
+     * been inserted, so suppress warning message if this is the
+     * case
+     */
+    if (PMI_SUCCESS != rc) {
+        if (PMI_ERR_INVALID_KEY != rc) {
+            OPAL_PMI_ERROR(rc, "PMI_KVS_Get");
+        }
         return OPAL_ERROR;
     }
     return OPAL_SUCCESS;
@@ -183,6 +187,9 @@ static int s2_init(void)
     size = -1;
     rank = -1;
     appnum = -1;
+    // setup hash table so we always can finalize it
+    opal_pmix_base_hash_init();
+
     if (PMI2_SUCCESS != (rc = PMI2_Init(&spawned, &size, &rank, &appnum))) {
         opal_show_help("help-pmix-base.txt", "pmix2-init-failed", true, rc);
         return OPAL_ERROR;
@@ -196,8 +203,56 @@ static int s2_init(void)
     s2_rank = rank;
     s2_appnum = appnum;
 
-    // setup hash table
-    opal_pmix_base_hash_init();
+    pmix_vallen_max = PMI2_MAX_VALLEN;
+    pmix_kvslen_max = PMI2_MAX_VALLEN; // FIX ME: What to put here for versatility?
+    pmix_keylen_max = PMI2_MAX_KEYLEN;
+    pmix_vallen_threshold = PMI2_MAX_VALLEN * 3;
+    pmix_vallen_threshold >>= 2;
+
+    pmix_kvs_name = (char*)malloc(pmix_kvslen_max);
+    if( pmix_kvs_name == NULL ){
+        PMI2_Finalize();
+        ret = OPAL_ERR_OUT_OF_RESOURCE;
+        goto err_exit;
+    }
+    rc = PMI2_Job_GetId(pmix_kvs_name, pmix_kvslen_max);
+    if( PMI2_SUCCESS != rc ) {
+        OPAL_PMI_ERROR(rc, "PMI2_Job_GetId");
+        free(pmix_kvs_name);
+        goto err_exit;
+    }
+
+    /* store our name in the opal_proc_t so that
+     * debug messages will make sense - an upper
+     * layer will eventually overwrite it, but that
+     * won't do any harm */
+    s2_pname.jobid = strtoul(pmix_kvs_name, &str, 10);
+    s2_pname.jobid = (s2_pname.jobid << 16) & 0xffff0000;
+    if (NULL != str) {
+        stepid = strtoul(str, NULL, 10);
+        s2_pname.jobid |= (stepid & 0x0000ffff);
+    }
+    s2_pname.vpid = s2_rank;
+    opal_proc_set_name(&s2_pname);
+    opal_output_verbose(2, opal_pmix_base_framework.framework_output,
+                        "%s pmix:s2: assigned tmp name",
+                        OPAL_NAME_PRINT(s2_pname));
+
+    /* Slurm PMI provides the job id as an integer followed
+     * by a '.', followed by essentially a stepid. The first integer
+     * defines an overall job number. The second integer is the number of
+     * individual jobs we have run within that allocation.
+     */
+    OBJ_CONSTRUCT(&kv, opal_value_t);
+    kv.key = strdup(OPAL_PMIX_JOBID);
+    kv.type = OPAL_STRING;
+    kv.data.string = pmix_kvs_name;
+    if (OPAL_SUCCESS != (ret = opal_pmix_base_store(&OPAL_PROC_MY_NAME, &kv))) {
+        OPAL_ERROR_LOG(ret);
+        OBJ_DESTRUCT(&kv);
+        goto err_exit;
+    }
+    OBJ_DESTRUCT(&kv);  // frees pmix_kvs_name
 
     /* save the job size */
     OBJ_CONSTRUCT(&kv, opal_value_t);
@@ -223,12 +278,6 @@ static int s2_init(void)
     }
     OBJ_DESTRUCT(&kv);
 
-    pmix_vallen_max = PMI2_MAX_VALLEN;
-    pmix_kvslen_max = PMI2_MAX_VALLEN; // FIX ME: What to put here for versatility?
-    pmix_keylen_max = PMI2_MAX_KEYLEN;
-    pmix_vallen_threshold = PMI2_MAX_VALLEN * 3;
-    pmix_vallen_threshold >>= 2;
-
     rc = PMI2_Info_GetJobAttr("universeSize", buf, 16, &found);
     if( PMI2_SUCCESS != rc ) {
         OPAL_PMI_ERROR(rc, "PMI_Get_universe_size");
@@ -245,50 +294,6 @@ static int s2_init(void)
         goto err_exit;
     }
     OBJ_DESTRUCT(&kv);
-
-    pmix_kvs_name = (char*)malloc(pmix_kvslen_max);
-    if( pmix_kvs_name == NULL ){
-        PMI2_Finalize();
-        ret = OPAL_ERR_OUT_OF_RESOURCE;
-        goto err_exit;
-    }
-    rc = PMI2_Job_GetId(pmix_kvs_name, pmix_kvslen_max);
-    if( PMI2_SUCCESS != rc ) {
-        OPAL_PMI_ERROR(rc, "PMI2_Job_GetId");
-        goto err_exit;
-    }
-
-    /* Slurm PMI provides the job id as an integer followed
-     * by a '.', followed by essentially a stepid. The first integer
-     * defines an overall job number. The second integer is the number of
-     * individual jobs we have run within that allocation.
-     */
-    OBJ_CONSTRUCT(&kv, opal_value_t);
-    kv.key = strdup(OPAL_PMIX_JOBID);
-    kv.type = OPAL_STRING;
-    kv.data.string = pmix_kvs_name;
-    if (OPAL_SUCCESS != (ret = opal_pmix_base_store(&OPAL_PROC_MY_NAME, &kv))) {
-        OPAL_ERROR_LOG(ret);
-        OBJ_DESTRUCT(&kv);
-        goto err_exit;
-    }
-    OBJ_DESTRUCT(&kv);
-
-    /* store our name in the opal_proc_t so that
-     * debug messages will make sense - an upper
-     * layer will eventually overwrite it, but that
-     * won't do any harm */
-    s2_pname.jobid = strtoul(pmix_kvs_name, &str, 10);
-    s2_pname.jobid = (s2_pname.jobid << 16) & 0xffff0000;
-    if (NULL != str) {
-        stepid = strtoul(str, NULL, 10);
-        s2_pname.jobid |= (stepid & 0x0000ffff);
-    }
-    s2_pname.vpid = s2_rank;
-    opal_proc_set_name(&s2_pname);
-    opal_output_verbose(2, opal_pmix_base_framework.framework_output,
-                        "%s pmix:s2: assigned tmp name",
-                        OPAL_NAME_PRINT(s2_pname));
 
     char *pmapping = (char*)malloc(PMI2_MAX_VALLEN);
     if( pmapping == NULL ){
@@ -531,17 +536,6 @@ static int s2_put(opal_pmix_scope_t scope,
 
 static int s2_commit(void)
 {
-    int rc;
-
-    /* check if there is partially filled meta key and put them */
-    opal_pmix_base_commit_packed (&pmix_packed_data, &pmix_packed_data_offset,
-                                  &pmix_packed_encoded_data, &pmix_packed_encoded_data_offset,
-                                  pmix_vallen_max, &pmix_pack_key, kvs_put);
-
-    if (PMI_SUCCESS != (rc = PMI_KVS_Commit(pmix_kvs_name))) {
-        OPAL_PMI_ERROR(rc, "PMI_KVS_Commit");
-        return OPAL_ERROR;
-    }
     return OPAL_SUCCESS;
 }
 
@@ -556,6 +550,16 @@ static int s2_fence(opal_list_t *procs, int collect_data)
     opal_output_verbose(2, opal_pmix_base_framework.framework_output,
                         "%s pmix:s2 called fence",
                         OPAL_NAME_PRINT(OPAL_PROC_MY_NAME));
+
+    /* check if there is partially filled meta key and put them */
+    opal_pmix_base_commit_packed (&pmix_packed_data, &pmix_packed_data_offset,
+                                  &pmix_packed_encoded_data, &pmix_packed_encoded_data_offset,
+                                  pmix_vallen_max, &pmix_pack_key, kvs_put);
+
+    /* now call fence */
+    if (PMI2_SUCCESS != PMI2_KVS_Fence()) {
+        return OPAL_ERROR;
+    }
 
     /* get the modex data from each local process and set the
      * localities to avoid having the MPI layer fetch data
@@ -573,7 +577,6 @@ static int s2_fence(opal_list_t *procs, int collect_data)
                 OPAL_ERROR_LOG(rc);
                 return rc;
             }
-#if OPAL_HAVE_HWLOC
             if (NULL == kp || NULL == kp->data.string) {
                 /* if we share a node, but we don't know anything more, then
                  * mark us as on the node as this is all we know
@@ -588,10 +591,6 @@ static int s2_fence(opal_list_t *procs, int collect_data)
             if (NULL != kp) {
                 OBJ_RELEASE(kp);
             }
-#else
-            /* all we know is we share a node */
-            locality = OPAL_PROC_ON_CLUSTER | OPAL_PROC_ON_CU | OPAL_PROC_ON_NODE;
-#endif
             OPAL_OUTPUT_VERBOSE((1, opal_pmix_base_framework.framework_output,
                                  "%s pmix:s2 proc %s locality %s",
                                  OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
@@ -615,13 +614,12 @@ static int s2_get(const opal_process_name_t *id,
                   opal_value_t **kv)
 {
     int rc;
+    opal_output(0, "CALLED GET FOR %s", key);
     rc = opal_pmix_base_cache_keys_locally(id, key, kv, pmix_kvs_name, pmix_vallen_max, kvs_get);
     return rc;
 }
 
-static int s2_publish(opal_pmix_data_range_t scope,
-                      opal_pmix_persistence_t persist,
-                      opal_list_t *info)
+static int s2_publish(opal_list_t *info)
 {
 #if 0
     int rc;
@@ -634,8 +632,7 @@ static int s2_publish(opal_pmix_data_range_t scope,
     return OPAL_ERR_NOT_IMPLEMENTED;
 }
 
-static int s2_lookup(opal_pmix_data_range_t scope,
-                     opal_list_t *data)
+static int s2_lookup(opal_list_t *data, opal_list_t *info)
 {
 #if 0
     int rc;
@@ -649,7 +646,7 @@ static int s2_lookup(opal_pmix_data_range_t scope,
     return OPAL_ERR_NOT_IMPLEMENTED;
 }
 
-static int s2_unpublish(opal_pmix_data_range_t scope, char **keys)
+static int s2_unpublish(char **keys, opal_list_t *info)
 {
 #if 0
     int rc;

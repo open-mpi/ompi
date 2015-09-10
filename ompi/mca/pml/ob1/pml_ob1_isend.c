@@ -31,7 +31,7 @@
 
 mca_pml_ob1_send_request_t *mca_pml_ob1_sendreq = NULL;
 
-int mca_pml_ob1_isend_init(void *buf,
+int mca_pml_ob1_isend_init(const void *buf,
                            size_t count,
                            ompi_datatype_t * datatype,
                            int dst,
@@ -61,7 +61,7 @@ int mca_pml_ob1_isend_init(void *buf,
 }
 
 /* try to get a small message out on to the wire quickly */
-static inline int mca_pml_ob1_send_inline (void *buf, size_t count,
+static inline int mca_pml_ob1_send_inline (const void *buf, size_t count,
                                            ompi_datatype_t * datatype,
                                            int dst, int tag, int16_t seqn,
                                            ompi_proc_t *dst_proc, mca_bml_base_endpoint_t* endpoint,
@@ -117,7 +117,7 @@ static inline int mca_pml_ob1_send_inline (void *buf, size_t count,
     return (int) size;
 }
 
-int mca_pml_ob1_isend(void *buf,
+int mca_pml_ob1_isend(const void *buf,
                       size_t count,
                       ompi_datatype_t * datatype,
                       int dst,
@@ -126,15 +126,14 @@ int mca_pml_ob1_isend(void *buf,
                       ompi_communicator_t * comm,
                       ompi_request_t ** request)
 {
-    mca_pml_ob1_comm_t* ob1_comm = comm->c_pml_comm;
+    mca_pml_ob1_comm_proc_t *ob1_proc = mca_pml_ob1_peer_lookup (comm, dst);
     mca_pml_ob1_send_request_t *sendreq = NULL;
-    ompi_proc_t *dst_proc = ompi_comm_peer_lookup (comm, dst);
-    mca_bml_base_endpoint_t* endpoint = (mca_bml_base_endpoint_t*)
-                                        dst_proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML];
+    ompi_proc_t *dst_proc = ob1_proc->ompi_proc;
+    mca_bml_base_endpoint_t* endpoint = mca_bml_base_get_endpoint (dst_proc);
     int16_t seqn;
     int rc;
 
-    seqn = (uint16_t) OPAL_THREAD_ADD32(&ob1_comm->procs[dst].send_sequence, 1);
+    seqn = (uint16_t) OPAL_THREAD_ADD32(&ob1_proc->send_sequence, 1);
 
     if (MCA_PML_BASE_SEND_SYNCHRONOUS != sendmode) {
         rc = mca_pml_ob1_send_inline (buf, count, datatype, dst, tag, seqn, dst_proc,
@@ -168,7 +167,7 @@ int mca_pml_ob1_isend(void *buf,
     return rc;
 }
 
-int mca_pml_ob1_send(void *buf,
+int mca_pml_ob1_send(const void *buf,
                      size_t count,
                      ompi_datatype_t * datatype,
                      int dst,
@@ -176,10 +175,9 @@ int mca_pml_ob1_send(void *buf,
                      mca_pml_base_send_mode_t sendmode,
                      ompi_communicator_t * comm)
 {
-    mca_pml_ob1_comm_t* ob1_comm = comm->c_pml_comm;
-    ompi_proc_t *dst_proc = ompi_comm_peer_lookup (comm, dst);
-    mca_bml_base_endpoint_t* endpoint = (mca_bml_base_endpoint_t*)
-                                        dst_proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML];
+    mca_pml_ob1_comm_proc_t *ob1_proc = mca_pml_ob1_peer_lookup (comm, dst);
+    ompi_proc_t *dst_proc = ob1_proc->ompi_proc;
+    mca_bml_base_endpoint_t* endpoint = mca_bml_base_get_endpoint (dst_proc);
     mca_pml_ob1_send_request_t *sendreq = NULL;
     int16_t seqn;
     int rc;
@@ -202,7 +200,7 @@ int mca_pml_ob1_send(void *buf,
         return OMPI_ERR_UNREACH;
     }
 
-    seqn = (uint16_t) OPAL_THREAD_ADD32(&ob1_comm->procs[dst].send_sequence, 1);
+    seqn = (uint16_t) OPAL_THREAD_ADD32(&ob1_proc->send_sequence, 1);
 
     /**
      * The immediate send will not have a request, so they are

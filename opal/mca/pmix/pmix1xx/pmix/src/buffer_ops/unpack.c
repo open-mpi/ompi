@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, Inc.  All rights reserved.
  * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -106,10 +108,10 @@ int pmix_bfrop_unpack(pmix_buffer_t *buffer, void *dst, int32_t *num_vals,
     return ret;
 }
 
-int pmix_bfrop_unpack_buffer(pmix_buffer_t *buffer, void *dst, int32_t *num_vals,
-                             pmix_data_type_t type)
+pmix_status_t pmix_bfrop_unpack_buffer(pmix_buffer_t *buffer, void *dst, int32_t *num_vals,
+                                       pmix_data_type_t type)
 {
-    int rc;
+    pmix_status_t rc;
     pmix_data_type_t local_type;
     pmix_bfrop_type_info_t *info;
 
@@ -177,10 +179,10 @@ int pmix_bfrop_unpack_bool(pmix_buffer_t *buffer, void *dest,
 /*
  * INT
  */
-int pmix_bfrop_unpack_int(pmix_buffer_t *buffer, void *dest,
-                          int32_t *num_vals, pmix_data_type_t type)
+pmix_status_t pmix_bfrop_unpack_int(pmix_buffer_t *buffer, void *dest,
+                                    int32_t *num_vals, pmix_data_type_t type)
 {
-    int ret;
+    pmix_status_t ret;
     pmix_data_type_t remote_type;
 
     if (PMIX_SUCCESS != (ret = pmix_bfrop_get_data_type(buffer, &remote_type))) {
@@ -258,8 +260,8 @@ int pmix_bfrop_unpack_pid(pmix_buffer_t *buffer, void *dest,
 /*
  * BYTE, CHAR, INT8
  */
-int pmix_bfrop_unpack_byte(pmix_buffer_t *buffer, void *dest,
-                           int32_t *num_vals, pmix_data_type_t type)
+pmix_status_t pmix_bfrop_unpack_byte(pmix_buffer_t *buffer, void *dest,
+                                     int32_t *num_vals, pmix_data_type_t type)
 {
     pmix_output_verbose(20, pmix_globals.debug_output, "pmix_bfrop_unpack_byte * %d\n", (int)*num_vals);
     /* check to see if there's enough data in buffer */
@@ -299,8 +301,8 @@ int pmix_bfrop_unpack_int16(pmix_buffer_t *buffer, void *dest,
     return PMIX_SUCCESS;
 }
 
-int pmix_bfrop_unpack_int32(pmix_buffer_t *buffer, void *dest,
-                            int32_t *num_vals, pmix_data_type_t type)
+pmix_status_t pmix_bfrop_unpack_int32(pmix_buffer_t *buffer, void *dest,
+                                      int32_t *num_vals, pmix_data_type_t type)
 {
     int32_t i;
     uint32_t tmp, *desttmp = (uint32_t*) dest;
@@ -351,10 +353,10 @@ int pmix_bfrop_unpack_int64(pmix_buffer_t *buffer, void *dest,
     return PMIX_SUCCESS;
 }
 
-int pmix_bfrop_unpack_string(pmix_buffer_t *buffer, void *dest,
+pmix_status_t pmix_bfrop_unpack_string(pmix_buffer_t *buffer, void *dest,
                              int32_t *num_vals, pmix_data_type_t type)
 {
-    int ret;
+    pmix_status_t ret;
     int32_t i, len, n=1;
     char **sdest = (char**) dest;
 
@@ -501,9 +503,10 @@ int pmix_bfrop_unpack_time(pmix_buffer_t *buffer, void *dest,
 /*
  * PMIX_VALUE
  */
-static int unpack_val(pmix_buffer_t *buffer, pmix_value_t *val)
+static pmix_status_t unpack_val(pmix_buffer_t *buffer, pmix_value_t *val)
 {
-    int ret, m;
+    int m;
+    pmix_status_t ret;
 
     m = 1;
     switch (val->type) {
@@ -615,12 +618,12 @@ static int unpack_val(pmix_buffer_t *buffer, pmix_value_t *val)
     return PMIX_SUCCESS;
 }
 
-int pmix_bfrop_unpack_value(pmix_buffer_t *buffer, void *dest,
-                           int32_t *num_vals, pmix_data_type_t type)
+pmix_status_t pmix_bfrop_unpack_value(pmix_buffer_t *buffer, void *dest,
+                                      int32_t *num_vals, pmix_data_type_t type)
 {
     pmix_value_t *ptr;
     int32_t i, m, n;
-    int ret;
+    pmix_status_t ret;
 
     ptr = (pmix_value_t *) dest;
     n = *num_vals;
@@ -894,7 +897,7 @@ int pmix_bfrop_unpack_kval(pmix_buffer_t *buffer, void *dest,
 {
     pmix_kval_t *ptr;
     int32_t i, n, m;
-    int ret;
+    pmix_status_t ret;
 
     pmix_output_verbose(20, pmix_globals.debug_output,
                         "pmix_bfrop_unpack: %d kvals", *num_vals);

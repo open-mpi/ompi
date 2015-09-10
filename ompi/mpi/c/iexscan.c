@@ -12,6 +12,8 @@
  *                         All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights
  *                         reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -79,8 +81,7 @@ int MPI_Iexscan(const void *sendbuf, void *recvbuf, int count,
     /* Invoke the coll component to perform the back-end operation */
 
     OBJ_RETAIN(op);
-    /* XXX -- CONST -- do not cast away const -- update mca/coll */
-    err = comm->c_coll.coll_iexscan((void *) sendbuf, recvbuf, count,
+    err = comm->c_coll.coll_iexscan(sendbuf, recvbuf, count,
                                     datatype, op, comm, request,
                                     comm->c_coll.coll_iexscan_module);
     OBJ_RELEASE(op);

@@ -1,5 +1,7 @@
 /*
  * Copyright (C) Mellanox Technologies Ltd. 2001-2011.  ALL RIGHTS RESERVED.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -311,7 +313,7 @@ int mca_pml_yalla_del_comm(struct ompi_communicator_t* comm)
     return OMPI_SUCCESS;
 }
 
-int mca_pml_yalla_irecv_init(void *buf, size_t count, ompi_datatype_t *datatype,
+int mca_pml_yalla_irecv_init(const void *buf, size_t count, ompi_datatype_t *datatype,
                              int src, int tag, struct ompi_communicator_t* comm,
                              struct ompi_request_t **request)
 {
@@ -327,7 +329,7 @@ int mca_pml_yalla_irecv_init(void *buf, size_t count, ompi_datatype_t *datatype,
     return OMPI_SUCCESS;
 }
 
-int mca_pml_yalla_irecv(void *buf, size_t count, ompi_datatype_t *datatype,
+int mca_pml_yalla_irecv(const void *buf, size_t count, ompi_datatype_t *datatype,
                         int src, int tag, struct ompi_communicator_t* comm,
                         struct ompi_request_t **request)
 {
@@ -351,7 +353,7 @@ int mca_pml_yalla_irecv(void *buf, size_t count, ompi_datatype_t *datatype,
     return OMPI_SUCCESS;
 }
 
-int mca_pml_yalla_recv(void *buf, size_t count, ompi_datatype_t *datatype, int src,
+int mca_pml_yalla_recv(const void *buf, size_t count, ompi_datatype_t *datatype, int src,
                        int tag, struct ompi_communicator_t* comm,
                        ompi_status_public_t* status)
 {
@@ -381,7 +383,7 @@ int mca_pml_yalla_recv(void *buf, size_t count, ompi_datatype_t *datatype, int s
     return OMPI_SUCCESS;
 }
 
-int mca_pml_yalla_isend_init(void *buf, size_t count, ompi_datatype_t *datatype,
+int mca_pml_yalla_isend_init(const void *buf, size_t count, ompi_datatype_t *datatype,
                              int dst, int tag, mca_pml_base_send_mode_t mode,
                              struct ompi_communicator_t* comm,
                              struct ompi_request_t **request)
@@ -448,7 +450,7 @@ static int mca_pml_yalla_bsend(mxm_send_req_t *mxm_sreq)
     return OMPI_SUCCESS;
 }
 
-int mca_pml_yalla_isend(void *buf, size_t count, ompi_datatype_t *datatype,
+int mca_pml_yalla_isend(const void *buf, size_t count, ompi_datatype_t *datatype,
                         int dst, int tag, mca_pml_base_send_mode_t mode,
                         struct ompi_communicator_t* comm,
                         struct ompi_request_t **request)
@@ -484,7 +486,7 @@ int mca_pml_yalla_isend(void *buf, size_t count, ompi_datatype_t *datatype,
     return OMPI_SUCCESS;
 }
 
-int mca_pml_yalla_send(void *buf, size_t count, ompi_datatype_t *datatype, int dst,
+int mca_pml_yalla_send(const void *buf, size_t count, ompi_datatype_t *datatype, int dst,
                        int tag, mca_pml_base_send_mode_t mode,
                        struct ompi_communicator_t* comm)
 {
