@@ -16,7 +16,7 @@
  * Copyright (c) 2011-2013 Inria.  All rights reserved.
  * Copyright (c) 2011-2013 Universite Bordeaux 1
  * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2012-2014 Los Alamos National Security, LLC.
+ * Copyright (c) 2012-2015 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -570,7 +570,6 @@ int ompi_comm_split( ompi_communicator_t* comm, int color, int key,
         mode      = OMPI_COMM_CID_INTRA;
     }
 
-
     /* Step 3: set up the communicator                           */
     /* --------------------------------------------------------- */
     /* Create the communicator finally */
@@ -681,6 +680,108 @@ int ompi_comm_split( ompi_communicator_t* comm, int color, int key,
 /**********************************************************************/
 /**********************************************************************/
 /**********************************************************************/
+/*
+ * Produces an array of ranks that will be part of the local/remote group in the
+ * new communicator. The results array will be modified by this call.
+ */
+static int ompi_comm_split_type_get_part (ompi_group_t *group, int *results, int **ranks_out, int *rank_size) {
+    int size = ompi_group_size (group);
+    int my_size = 0;
+    int *ranks;
+    int ret;
+
+    for (int i = 0 ; i < size ; ++i) {
+        ompi_proc_t *proc = ompi_group_get_proc_ptr_raw (group, i);
+        uint16_t locality, *u16ptr;
+        int split_type = results[i * 2];
+        int include = false;
+
+        if (ompi_proc_is_sentinel (proc)) {
+            opal_process_name_t proc_name = ompi_proc_sentinel_to_name ((intptr_t) proc);
+
+            u16ptr = &locality;
+
+            OPAL_MODEX_RECV_VALUE(ret, OPAL_PMIX_LOCALITY, &proc_name, &u16ptr, OPAL_UINT16);
+            if (OPAL_SUCCESS != ret) {
+                continue;
+            }
+        } else {
+            locality = proc->super.proc_flags;
+        }
+
+        switch (split_type) {
+        case OMPI_COMM_TYPE_HWTHREAD:
+            include = OPAL_PROC_ON_LOCAL_HWTHREAD(locality);
+            break;
+        case OMPI_COMM_TYPE_CORE:
+            include = OPAL_PROC_ON_LOCAL_CORE(locality);
+            break;
+        case OMPI_COMM_TYPE_L1CACHE:
+            include = OPAL_PROC_ON_LOCAL_L1CACHE(locality);
+            break;
+        case OMPI_COMM_TYPE_L2CACHE:
+            include = OPAL_PROC_ON_LOCAL_L2CACHE(locality);
+            break;
+        case OMPI_COMM_TYPE_L3CACHE:
+            include = OPAL_PROC_ON_LOCAL_L3CACHE(locality);
+            break;
+        case OMPI_COMM_TYPE_SOCKET:
+            include = OPAL_PROC_ON_LOCAL_SOCKET(locality);
+            break;
+        case OMPI_COMM_TYPE_NUMA:
+            include = OPAL_PROC_ON_LOCAL_NUMA(locality);
+            break;
+        case MPI_COMM_TYPE_SHARED:
+            include = OPAL_PROC_ON_LOCAL_NODE(locality);
+            break;
+        case OMPI_COMM_TYPE_BOARD:
+            include = OPAL_PROC_ON_LOCAL_BOARD(locality);
+            break;
+        case OMPI_COMM_TYPE_HOST:
+            include = OPAL_PROC_ON_LOCAL_HOST(locality);
+            break;
+        case OMPI_COMM_TYPE_CU:
+            include = OPAL_PROC_ON_LOCAL_CU(locality);
+            break;
+        case OMPI_COMM_TYPE_CLUSTER:
+            include = OPAL_PROC_ON_LOCAL_CLUSTER(locality);
+            break;
+        }
+
+        if (include) {
+            /* copy data in place */
+            results[2*my_size] = i;               /* copy rank to break ties */
+            results[2*my_size+1] = results[2*i+1];  /* copy key */
+            ++my_size;
+        }
+    }
+
+    *rank_size = my_size;
+
+    /* silence a clang warning about a 0-byte malloc. my_size can not be 0 here */
+    if (OPAL_UNLIKELY(0 == my_size)) {
+        return OMPI_SUCCESS;
+    }
+
+    /* the new array needs to be sorted so that it is in 'key' order
+     * if two keys are equal then it is sorted in original rank order! */
+    qsort (results, my_size, sizeof(int) * 2, rankkeycompare);
+
+    /* put group elements in a list */
+    ranks = (int *) malloc ( my_size * sizeof(int));
+    if (NULL == ranks) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+
+    for (int i = 0 ; i < my_size ; ++i) {
+        ranks[i] = results[i*2];
+    }
+
+    *ranks_out = ranks;
+
+    return OMPI_SUCCESS;
+}
+
 int
 ompi_comm_split_type(ompi_communicator_t *comm,
                      int split_type, int key,
@@ -692,10 +793,9 @@ ompi_comm_split_type(ompi_communicator_t *comm,
     int my_rsize;
     int mode;
     int rsize;
-    int i, loc, found;
     int inter;
-    int *results=NULL, *sorted=NULL;
-    int *rresults=NULL, *rsorted=NULL;
+    int *results=NULL;
+    int *rresults=NULL;
     int rc=OMPI_SUCCESS;
     ompi_communicator_t *newcomp = NULL;
     int *lranks=NULL, *rranks=NULL;
@@ -728,34 +828,7 @@ ompi_comm_split_type(ompi_communicator_t *comm,
        They will most likely return a communicator which is equal to MPI_COMM_SELF
        Unless oversubscribing.
     */
-    myinfo[0] = 0; // default to no type splitting (also if non-recognized split-type)
-    switch ( split_type ) {
-    case OMPI_COMM_TYPE_HWTHREAD:
-        myinfo[0] = 1; break;
-    case OMPI_COMM_TYPE_CORE:
-        myinfo[0] = 2; break;
-    case OMPI_COMM_TYPE_L1CACHE:
-        myinfo[0] = 3; break;
-    case OMPI_COMM_TYPE_L2CACHE:
-        myinfo[0] = 4; break;
-    case OMPI_COMM_TYPE_L3CACHE:
-        myinfo[0] = 5; break;
-    case OMPI_COMM_TYPE_SOCKET:
-        myinfo[0] = 6; break;
-    case OMPI_COMM_TYPE_NUMA:
-        myinfo[0] = 7; break;
-    //case MPI_COMM_TYPE_SHARED: // the standard implemented type
-    case OMPI_COMM_TYPE_NODE:
-        myinfo[0] = 8; break;
-    case OMPI_COMM_TYPE_BOARD:
-        myinfo[0] = 9; break;
-    case OMPI_COMM_TYPE_HOST:
-        myinfo[0] = 10; break;
-    case OMPI_COMM_TYPE_CU:
-        myinfo[0] = 11; break;
-    case OMPI_COMM_TYPE_CLUSTER:
-        myinfo[0] = 12; break;
-    }
+    myinfo[0] = split_type;
     myinfo[1] = key;
 
     size     = ompi_comm_size ( comm );
@@ -777,159 +850,28 @@ ompi_comm_split_type(ompi_communicator_t *comm,
     }
 
     /* check that all processors have been called with the same value */
-    for ( i=0; i < size; i++) {
-        if ( results[2*i] != myinfo[0] ) {
+    for (int i = 0 ; i < size ; ++i) {
+        if ( results[2*i] != split_type ) {
             rc = OMPI_ERR_BAD_PARAM;
             goto exit;
         }
     }
 
     /* how many are participating and on my node? */
-    for ( my_size = 0, i=0; i < size; i++) {
-        if        ( results[2*i] == 1 ) {
-            if (OPAL_PROC_ON_LOCAL_HWTHREAD(ompi_group_peer_lookup(comm->c_local_group, i)->super.proc_flags)) {
-                my_size++;
-            }
-        } else if ( results[2*i] == 2 ) {
-            if (OPAL_PROC_ON_LOCAL_CORE(ompi_group_peer_lookup(comm->c_local_group, i)->super.proc_flags)) {
-                my_size++;
-            }
-        } else if ( results[2*i] == 3 ) {
-            if (OPAL_PROC_ON_LOCAL_L1CACHE(ompi_group_peer_lookup(comm->c_local_group, i)->super.proc_flags)) {
-                my_size++;
-            }
-        } else if ( results[2*i] == 4 ) {
-            if (OPAL_PROC_ON_LOCAL_L2CACHE(ompi_group_peer_lookup(comm->c_local_group, i)->super.proc_flags)) {
-                my_size++;
-            }
-        } else if ( results[2*i] == 5 ) {
-            if (OPAL_PROC_ON_LOCAL_L3CACHE(ompi_group_peer_lookup(comm->c_local_group, i)->super.proc_flags)) {
-                my_size++;
-            }
-        } else if ( results[2*i] == 6 ) {
-            if (OPAL_PROC_ON_LOCAL_SOCKET(ompi_group_peer_lookup(comm->c_local_group, i)->super.proc_flags)) {
-                my_size++;
-            }
-        } else if ( results[2*i] == 7 ) {
-            if (OPAL_PROC_ON_LOCAL_NUMA(ompi_group_peer_lookup(comm->c_local_group, i)->super.proc_flags)) {
-                my_size++;
-            }
-        } else if ( results[2*i] == 8 ) {
-            if (OPAL_PROC_ON_LOCAL_NODE(ompi_group_peer_lookup(comm->c_local_group, i)->super.proc_flags)) {
-                my_size++;
-            }
-        } else if ( results[2*i] == 9 ) {
-            if (OPAL_PROC_ON_LOCAL_BOARD(ompi_group_peer_lookup(comm->c_local_group, i)->super.proc_flags)) {
-                my_size++;
-            }
-        } else if ( results[2*i] == 10 ) {
-            if (OPAL_PROC_ON_LOCAL_HOST(ompi_group_peer_lookup(comm->c_local_group, i)->super.proc_flags)) {
-                my_size++;
-            }
-        } else if ( results[2*i] == 11 ) {
-            if (OPAL_PROC_ON_LOCAL_CU(ompi_group_peer_lookup(comm->c_local_group, i)->super.proc_flags)) {
-                my_size++;
-            }
-        } else if ( results[2*i] == 12 ) {
-            if (OPAL_PROC_ON_LOCAL_CLUSTER(ompi_group_peer_lookup(comm->c_local_group, i)->super.proc_flags)) {
-                my_size++;
-            }
-        }
-    }
-
-    /* silence a clang warning about a 0-byte malloc. my_size can not be 0 here */
-    if (OPAL_UNLIKELY(0 == my_size)) {
+    rc = ompi_comm_split_type_get_part (comm->c_local_group, results, &lranks, &my_size);
+    if (0 == my_size) {
+        /* should never happen */
         rc = OMPI_ERR_BAD_PARAM;
+    }
+    if (OMPI_SUCCESS != rc) {
         goto exit;
     }
 
-    sorted = (int *) malloc ( sizeof( int ) * my_size * 2);
-    if ( NULL == sorted) {
-        rc =  OMPI_ERR_OUT_OF_RESOURCE;
-        goto exit;
-    }
-
-    /* ok we can now fill this info */
-    for( loc = 0, i = 0; i < size; i++ ) {
-        found = 0;
-        if        ( results[2*i] == 1 ) {
-            if (OPAL_PROC_ON_LOCAL_HWTHREAD(ompi_group_peer_lookup(comm->c_local_group, i)->super.proc_flags)) {
-                found = 1;
-            }
-        } else if ( results[2*i] == 2 ) {
-            if (OPAL_PROC_ON_LOCAL_CORE(ompi_group_peer_lookup(comm->c_local_group, i)->super.proc_flags)) {
-                found = 1;
-            }
-        } else if ( results[2*i] == 3 ) {
-            if (OPAL_PROC_ON_LOCAL_L1CACHE(ompi_group_peer_lookup(comm->c_local_group, i)->super.proc_flags)) {
-                found = 1;
-            }
-        } else if ( results[2*i] == 4 ) {
-            if (OPAL_PROC_ON_LOCAL_L2CACHE(ompi_group_peer_lookup(comm->c_local_group, i)->super.proc_flags)) {
-                found = 1;
-            }
-        } else if ( results[2*i] == 5 ) {
-            if (OPAL_PROC_ON_LOCAL_L3CACHE(ompi_group_peer_lookup(comm->c_local_group, i)->super.proc_flags)) {
-                found = 1;
-            }
-        } else if ( results[2*i] == 6 ) {
-            if (OPAL_PROC_ON_LOCAL_SOCKET(ompi_group_peer_lookup(comm->c_local_group, i)->super.proc_flags)) {
-                found = 1;
-            }
-        } else if ( results[2*i] == 7 ) {
-            if (OPAL_PROC_ON_LOCAL_NUMA(ompi_group_peer_lookup(comm->c_local_group, i)->super.proc_flags)) {
-                found = 1;
-            }
-        } else if ( results[2*i] == 8 ) {
-            if (OPAL_PROC_ON_LOCAL_NODE(ompi_group_peer_lookup(comm->c_local_group, i)->super.proc_flags)) {
-                found = 1;
-            }
-        } else if ( results[2*i] == 9 ) {
-            if (OPAL_PROC_ON_LOCAL_BOARD(ompi_group_peer_lookup(comm->c_local_group, i)->super.proc_flags)) {
-                found = 1;
-            }
-        } else if ( results[2*i] == 10 ) {
-            if (OPAL_PROC_ON_LOCAL_HOST(ompi_group_peer_lookup(comm->c_local_group, i)->super.proc_flags)) {
-                found = 1;
-            }
-        } else if ( results[2*i] == 11 ) {
-            if (OPAL_PROC_ON_LOCAL_CU(ompi_group_peer_lookup(comm->c_local_group, i)->super.proc_flags)) {
-                found = 1;
-            }
-        } else if ( results[2*i] == 12 ) {
-            if (OPAL_PROC_ON_LOCAL_CLUSTER(ompi_group_peer_lookup(comm->c_local_group, i)->super.proc_flags)) {
-                found = 1;
-            }
-        }
-
-        /* we have found and occupied the index (i) */
-        if ( found == 1 ) {
-            sorted[2*loc  ] = i;               /* copy org rank */
-            sorted[2*loc+1] = results[2*i+1];  /* copy key */
-            loc++;
-        }
-    }
-
-    /* the new array needs to be sorted so that it is in 'key' order */
-    /* if two keys are equal then it is sorted in original rank order! */
-    if(my_size>1){
-        qsort ((int*)sorted, my_size, sizeof(int)*2, rankkeycompare);
-    }
-
-    /* put group elements in a list */
-    lranks = (int *) malloc ( my_size * sizeof(int));
-    if ( NULL == lranks ) {
-        rc = OMPI_ERR_OUT_OF_RESOURCE;
-        goto exit;
-    }
-    for (i = 0; i < my_size; i++) {
-        lranks[i] = sorted[i*2];
-    }
 
     /* Step 2: determine all the information for the remote group */
     /* --------------------------------------------------------- */
     if ( inter ) {
-        rsize    = comm->c_remote_group->grp_proc_count;
+        rsize    = ompi_group_size (comm->c_remote_group);
         rresults = (int *) malloc ( rsize * 2 * sizeof(int));
         if ( NULL == rresults ) {
             rc = OMPI_ERR_OUT_OF_RESOURCE;
@@ -944,149 +886,15 @@ ompi_comm_split_type(ompi_communicator_t *comm,
             goto exit;
         }
 
-        /* how many are participating and on my node? */
-        for ( my_rsize = 0, i=0; i < rsize; i++) {
-            if        ( rresults[2*i] == 1 ) {
-                if (OPAL_PROC_ON_LOCAL_HWTHREAD(ompi_group_peer_lookup(comm->c_remote_group, i)->super.proc_flags)) {
-                    my_rsize++;
-                }
-            } else if ( rresults[2*i] == 2 ) {
-                if (OPAL_PROC_ON_LOCAL_CORE(ompi_group_peer_lookup(comm->c_remote_group, i)->super.proc_flags)) {
-                    my_rsize++;
-                }
-            } else if ( rresults[2*i] == 3 ) {
-                if (OPAL_PROC_ON_LOCAL_L1CACHE(ompi_group_peer_lookup(comm->c_remote_group, i)->super.proc_flags)) {
-                    my_rsize++;
-                }
-            } else if ( rresults[2*i] == 4 ) {
-                if (OPAL_PROC_ON_LOCAL_L2CACHE(ompi_group_peer_lookup(comm->c_remote_group, i)->super.proc_flags)) {
-                    my_rsize++;
-                }
-            } else if ( rresults[2*i] == 5 ) {
-                if (OPAL_PROC_ON_LOCAL_L3CACHE(ompi_group_peer_lookup(comm->c_remote_group, i)->super.proc_flags)) {
-                    my_rsize++;
-                }
-            } else if ( rresults[2*i] == 6 ) {
-                if (OPAL_PROC_ON_LOCAL_SOCKET(ompi_group_peer_lookup(comm->c_remote_group, i)->super.proc_flags)) {
-                    my_rsize++;
-                }
-            } else if ( rresults[2*i] == 7 ) {
-                if (OPAL_PROC_ON_LOCAL_NUMA(ompi_group_peer_lookup(comm->c_remote_group, i)->super.proc_flags)) {
-                    my_rsize++;
-                }
-            } else if ( rresults[2*i] == 8 ) {
-                if (OPAL_PROC_ON_LOCAL_NODE(ompi_group_peer_lookup(comm->c_remote_group, i)->super.proc_flags)) {
-                    my_rsize++;
-                }
-            } else if ( rresults[2*i] == 9 ) {
-                if (OPAL_PROC_ON_LOCAL_BOARD(ompi_group_peer_lookup(comm->c_remote_group, i)->super.proc_flags)) {
-                    my_rsize++;
-                }
-            } else if ( rresults[2*i] == 10 ) {
-                if (OPAL_PROC_ON_LOCAL_HOST(ompi_group_peer_lookup(comm->c_remote_group, i)->super.proc_flags)) {
-                    my_rsize++;
-                }
-            } else if ( rresults[2*i] == 11 ) {
-                if (OPAL_PROC_ON_LOCAL_CU(ompi_group_peer_lookup(comm->c_remote_group, i)->super.proc_flags)) {
-                    my_rsize++;
-                }
-            } else if ( rresults[2*i] == 12 ) {
-                if (OPAL_PROC_ON_LOCAL_CLUSTER(ompi_group_peer_lookup(comm->c_remote_group, i)->super.proc_flags)) {
-                    my_rsize++;
-                }
-            }
-        }
-
-        if (my_rsize > 0) {
-            rsorted = (int *) malloc ( sizeof( int ) * my_rsize * 2);
-            if ( NULL == rsorted) {
-                rc = OMPI_ERR_OUT_OF_RESOURCE;
-                goto exit;
-            }
-
-            /* ok we can now fill this info */
-            for( loc = 0, i = 0; i < rsize; i++ ) {
-                found = 0;
-                if        ( rresults[2*i] == 1 ) {
-                    if (OPAL_PROC_ON_LOCAL_HWTHREAD(ompi_group_peer_lookup(comm->c_remote_group, i)->super.proc_flags)) {
-                        found = 1;
-                    }
-                } else if ( rresults[2*i] == 2 ) {
-                    if (OPAL_PROC_ON_LOCAL_CORE(ompi_group_peer_lookup(comm->c_remote_group, i)->super.proc_flags)) {
-                        found = 1;
-                    }
-                } else if ( rresults[2*i] == 3 ) {
-                    if (OPAL_PROC_ON_LOCAL_L1CACHE(ompi_group_peer_lookup(comm->c_remote_group, i)->super.proc_flags)) {
-                        found = 1;
-                    }
-                } else if ( rresults[2*i] == 4 ) {
-                    if (OPAL_PROC_ON_LOCAL_L2CACHE(ompi_group_peer_lookup(comm->c_remote_group, i)->super.proc_flags)) {
-                        found = 1;
-                    }
-                } else if ( rresults[2*i] == 5 ) {
-                    if (OPAL_PROC_ON_LOCAL_L3CACHE(ompi_group_peer_lookup(comm->c_remote_group, i)->super.proc_flags)) {
-                        found = 1;
-                    }
-                } else if ( rresults[2*i] == 6 ) {
-                    if (OPAL_PROC_ON_LOCAL_SOCKET(ompi_group_peer_lookup(comm->c_remote_group, i)->super.proc_flags)) {
-                        found = 1;
-                    }
-                } else if ( rresults[2*i] == 7 ) {
-                    if (OPAL_PROC_ON_LOCAL_NUMA(ompi_group_peer_lookup(comm->c_remote_group, i)->super.proc_flags)) {
-                        found = 1;
-                    }
-                } else if ( rresults[2*i] == 8 ) {
-                    if (OPAL_PROC_ON_LOCAL_NODE(ompi_group_peer_lookup(comm->c_remote_group, i)->super.proc_flags)) {
-                        found = 1;
-                    }
-                } else if ( rresults[2*i] == 9 ) {
-                    if (OPAL_PROC_ON_LOCAL_BOARD(ompi_group_peer_lookup(comm->c_remote_group, i)->super.proc_flags)) {
-                        found = 1;
-                    }
-                } else if ( rresults[2*i] == 10 ) {
-                    if (OPAL_PROC_ON_LOCAL_HOST(ompi_group_peer_lookup(comm->c_remote_group, i)->super.proc_flags)) {
-                        found = 1;
-                    }
-                } else if ( rresults[2*i] == 11 ) {
-                    if (OPAL_PROC_ON_LOCAL_CU(ompi_group_peer_lookup(comm->c_remote_group, i)->super.proc_flags)) {
-                        found = 1;
-                    }
-                } else if ( rresults[2*i] == 12 ) {
-                    if (OPAL_PROC_ON_LOCAL_CLUSTER(ompi_group_peer_lookup(comm->c_remote_group, i)->super.proc_flags)) {
-                        found = 1;
-                    }
-                }
-
-                if ( found == 1 ) {
-                    rsorted[2*loc  ] = i;                /* org rank */
-                    rsorted[2*loc+1] = rresults[2*i+1];  /* key */
-                    loc++;
-                }
-            }
-
-            /* the new array needs to be sorted so that it is in 'key' order */
-            /* if two keys are equal then it is sorted in original rank order! */
-            if(my_rsize > 1) {
-                qsort ((int*)rsorted, my_rsize, sizeof(int)*2, rankkeycompare);
-            }
-
-            /* put group elements in a list */
-            rranks = (int *) malloc ( my_rsize * sizeof(int));
-            if ( NULL ==  rranks) {
-                rc = OMPI_ERR_OUT_OF_RESOURCE;
-                goto exit;
-            }
-
-            for (i = 0; i < my_rsize; i++) {
-                rranks[i] = rsorted[i*2];
-            }
+        rc = ompi_comm_split_type_get_part (comm->c_remote_group, rresults, &rranks, &my_rsize);
+        if (OMPI_SUCCESS != rc) {
+            goto exit;
         }
 
         mode = OMPI_COMM_CID_INTER;
     } else {
         my_rsize  = 0;
-        rranks = NULL;
-        mode      = OMPI_COMM_CID_INTRA;
+        mode = OMPI_COMM_CID_INTRA;
     }
 
 
@@ -1155,14 +963,8 @@ ompi_comm_split_type(ompi_communicator_t *comm,
     if ( NULL != results ) {
         free ( results );
     }
-    if ( NULL != sorted  ) {
-        free ( sorted );
-    }
     if ( NULL != rresults) {
         free ( rresults );
-    }
-    if ( NULL != rsorted ) {
-        free ( rsorted );
     }
     if ( NULL != lranks   ) {
         free ( lranks );
