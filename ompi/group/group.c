@@ -562,7 +562,7 @@ bool ompi_group_have_remote_peers (ompi_group_t *group)
 #if OMPI_GROUP_SPARSE
         proc = ompi_group_peer_lookup (group, i);
 #else
-        if ((intptr_t) group->grp_proc_pointers[i] < 0) {
+        if (ompi_proc_is_sentinel (group->grp_proc_pointers[i])) {
             return true;
         }
         proc = group->grp_proc_pointers[i];
