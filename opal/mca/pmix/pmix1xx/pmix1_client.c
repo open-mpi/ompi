@@ -290,16 +290,13 @@ int pmix1_put(opal_pmix_scope_t scope,
     return pmix1_convert_rc(rc);
 }
 
-int pmix1_get(const opal_process_name_t *proc, const char *key,
-              opal_list_t *info, opal_value_t **val)
+int pmix1_get(const opal_process_name_t *proc,
+              const char *key, opal_value_t **val)
 {
     int ret;
     pmix_value_t *kv;
     pmix_status_t rc;
     pmix_proc_t p, *pptr;
-    size_t ninfo, n;
-    pmix_info_t *pinfo;
-    opal_value_t *ival;
 
     opal_output_verbose(1, opal_pmix_base_framework.framework_output,
                         "%s PMIx_client get on proc %s key %s",
@@ -329,25 +326,8 @@ int pmix1_get(const opal_process_name_t *proc, const char *key,
         pptr = NULL;
     }
 
-    if (NULL != info) {
-        ninfo = opal_list_get_size(info);
-        if (0 < ninfo) {
-            PMIX_INFO_CREATE(pinfo, ninfo);
-            n=0;
-            OPAL_LIST_FOREACH(ival, info, opal_value_t) {
-                (void)strncpy(pinfo[n].key, ival->key, PMIX_MAX_KEYLEN);
-                pmix1_value_load(&pinfo[n].value, ival);
-            }
-        } else {
-            pinfo = NULL;
-        }
-    } else {
-        pinfo = NULL;
-        ninfo = 0;
-    }
-
     /* pass the request down */
-    rc = PMIx_Get(pptr, key, pinfo, ninfo, &kv);
+    rc = PMIx_Get(pptr, key, NULL, 0, &kv);
     if (PMIX_SUCCESS == rc) {
         if (NULL == kv) {
             ret = OPAL_SUCCESS;
@@ -359,7 +339,6 @@ int pmix1_get(const opal_process_name_t *proc, const char *key,
     } else {
         ret = pmix1_convert_rc(rc);
     }
-    PMIX_INFO_FREE(pinfo, ninfo);
     return ret;
 }
 
@@ -383,14 +362,11 @@ static void val_cbfunc(pmix_status_t status,
 }
 
 int pmix1_getnb(const opal_process_name_t *proc, const char *key,
-                opal_list_t *info,
                 opal_pmix_value_cbfunc_t cbfunc, void *cbdata)
 {
     pmix1_opcaddy_t *op;
     pmix_status_t rc;
     char *tmp;
-    size_t n;
-    opal_value_t *ival;
 
     opal_output_verbose(1, opal_pmix_base_framework.framework_output,
                         "%s PMIx_client get_nb on proc %s key %s",
@@ -413,20 +389,9 @@ int pmix1_getnb(const opal_process_name_t *proc, const char *key,
         op->p.rank = PMIX_RANK_WILDCARD;
     }
 
-    if (NULL != info) {
-        op->sz = opal_list_get_size(info);
-        if (0 < op->sz) {
-            PMIX_INFO_CREATE(op->info, op->sz);
-            n=0;
-            OPAL_LIST_FOREACH(ival, info, opal_value_t) {
-                (void)strncpy(op->info[n].key, ival->key, PMIX_MAX_KEYLEN);
-                pmix1_value_load(&op->info[n].value, ival);
-            }
-        }
-    }
 
     /* call the library function */
-    rc = PMIx_Get_nb(&op->p, key, op->info, op->sz, val_cbfunc, op);
+    rc = PMIx_Get_nb(&op->p, key, NULL, 0, val_cbfunc, op);
     if (PMIX_SUCCESS != rc) {
         OBJ_RELEASE(op);
     }

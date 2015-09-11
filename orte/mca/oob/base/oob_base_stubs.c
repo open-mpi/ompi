@@ -40,7 +40,7 @@ void orte_oob_base_send_nb(int fd, short args, void *cbdata)
     bool msg_sent;
     mca_oob_base_component_t *component;
     bool reachable;
-    char *uri;
+    opal_value_t *kv;
 
     /* done with this. release it now */
     OBJ_RELEASE(cd);
@@ -61,14 +61,11 @@ void orte_oob_base_send_nb(int fd, short args, void *cbdata)
                             ORTE_NAME_PRINT(&msg->dst));
         /* for direct launched procs, the URI might be in the database,
          * so check there next - if it is, the peer object will be added
-         * to our hash table. However, we don't want to chase up to the
-         * server after it, so indicate it is optional
+         * to our hash table
          */
-        OPAL_MODEX_RECV_VALUE_OPTIONAL(rc, OPAL_PMIX_PROC_URI, &msg->dst,
-                                      (char**)&uri, OPAL_STRING);
-        if (OPAL_SUCCESS == rc ) {
-            if (NULL != uri) {
-                process_uri(uri);
+	if (OPAL_SUCCESS == opal_pmix.get(&msg->dst, OPAL_PMIX_PROC_URI, &kv)) {
+            if (NULL != kv) {
+                process_uri(kv->data.string);
                 if (OPAL_SUCCESS != opal_hash_table_get_value_uint64(&orte_oob_base.peers,
                                                                      ui64, (void**)&pr) ||
                     NULL == pr) {

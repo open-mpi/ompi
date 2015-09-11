@@ -98,15 +98,12 @@ BEGIN_C_DECLS
 /* request-related info */
 #define OPAL_PMIX_COLLECT_DATA          "pmix.collect"      // (bool) collect data and return it at the end of the operation
 #define OPAL_PMIX_TIMEOUT               "pmix.timeout"      // (int) time in sec before specified operation should time out
-#define OPAL_PMIX_WAIT                  "pmix.wait"         // (int) caller requests that the server wait until at least the specified
-                                                            //       #values are found (0 => all and is the default)
+#define OPAL_PMIX_WAIT                  "pmix.wait"         // (int) caller requests that the server wait until the specified #values are found
 #define OPAL_PMIX_COLLECTIVE_ALGO       "pmix.calgo"        // (char*) comma-delimited list of algorithms to use for collective
 #define OPAL_PMIX_COLLECTIVE_ALGO_REQD  "pmix.calreqd"      // (bool) if true, indicates that the requested choice of algo is mandatory
 #define OPAL_PMIX_NOTIFY_COMPLETION     "pmix.notecomp"     // (bool) notify parent process upon termination of child job
 #define OPAL_PMIX_RANGE                 "pmix.range"        // (int) opal_pmix_data_range_t value for calls to publish/lookup/unpublish
 #define OPAL_PMIX_PERSISTENCE           "pmix.persist"      // (int) opal_pmix_persistence_t value for calls to publish
-#define OPAL_PMIX_OPTIONAL              "pmix.optional"    // (bool) look only in the immediate data store for the requested value - do
-                                                            //        not request data from the server if not found
 
 /* attribute used by host server to pass data to the server convenience library - the
  * data will then be parsed and provided to the local clients */
