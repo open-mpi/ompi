@@ -49,18 +49,29 @@ int opal_dss_unload(opal_buffer_t *buffer, void **payload,
         return OPAL_SUCCESS;
     }
 
+    /* if nothing has been unpacked, we can pass the entire
+     * region back and protect it - no need to copy. This is
+     * an optimization */
+    if (buffer->unpack_ptr == buffer->base_ptr) {
+        *payload = buffer->base_ptr;
+        *bytes_used = buffer->bytes_used;
+        buffer->base_ptr = NULL;
+        buffer->unpack_ptr = NULL;
+        buffer->pack_ptr = NULL;
+        buffer->bytes_used = 0;
+        return OPAL_SUCCESS;
+    }
+
     /* okay, we have something to provide - pass it back */
     *bytes_used = buffer->bytes_used - (buffer->unpack_ptr - buffer->base_ptr);
     if (0 == (*bytes_used)) {
         *payload = NULL;
     } else {
-        *payload = buffer->unpack_ptr;
+        /* we cannot just set the pointer as it might be
+         * partway in a malloc'd region */
+        *payload = (void*)malloc(*bytes_used);
+        memcpy(*payload, buffer->unpack_ptr, *bytes_used);
     }
-
-    /* dereference everything in buffer */
-    buffer->base_ptr = NULL;
-    buffer->pack_ptr = buffer->unpack_ptr = NULL;
-    buffer->bytes_allocated = buffer->bytes_used = 0;
 
     /* All done */
 
