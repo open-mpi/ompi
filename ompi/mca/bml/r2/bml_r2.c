@@ -361,7 +361,7 @@ static int mca_bml_r2_add_proc (struct ompi_proc_t *proc)
 {
     mca_bml_base_endpoint_t *bml_endpoint;
     /* at least one btl is in use */
-    bool btl_in_use;
+    bool btl_in_use = false;
     int rc;
 
     if (OPAL_UNLIKELY(NULL == proc)) {
