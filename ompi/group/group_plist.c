@@ -59,7 +59,7 @@ static int ompi_group_dense_overlap (ompi_group_t *group1, ompi_group_t *group2,
 
 static struct ompi_proc_t *ompi_group_dense_lookup_raw (ompi_group_t *group, const int peer_id)
 {
-    if (OPAL_UNLIKELY((intptr_t) group->grp_proc_pointers[peer_id] < 0)) {
+    if (OPAL_UNLIKELY(ompi_proc_is_sentinel (group->grp_proc_pointers[peer_id]))) {
         ompi_proc_t *proc =
             (ompi_proc_t *) ompi_proc_lookup (ompi_proc_sentinel_to_name ((intptr_t) group->grp_proc_pointers[peer_id]));
         if (NULL != proc) {

@@ -340,7 +340,7 @@ static inline struct ompi_proc_t *ompi_group_dense_lookup (ompi_group_t *group, 
     }
 #endif
 
-    if (OPAL_UNLIKELY((intptr_t) group->grp_proc_pointers[peer_id] < 0)) {
+    if (OPAL_UNLIKELY(ompi_proc_is_sentinel (group->grp_proc_pointers[peer_id]))) {
         if (!allocate) {
             return NULL;
         }
@@ -386,7 +386,7 @@ ompi_proc_t *ompi_group_get_proc_ptr_raw (ompi_group_t *group, int rank);
 static inline opal_process_name_t ompi_group_get_proc_name (ompi_group_t *group, int rank)
 {
     ompi_proc_t *proc = ompi_group_get_proc_ptr_raw (group, rank);
-    if ((intptr_t) proc < 0) {
+    if (ompi_proc_is_sentinel (proc)) {
         return ompi_proc_sentinel_to_name ((intptr_t) proc);
     }
 
