@@ -152,8 +152,9 @@ static int ompi_proc_complete_init_single (ompi_proc_t *proc)
     OPAL_MODEX_RECV_VALUE_OPTIONAL(ret, OPAL_PMIX_HOSTNAME, &proc->super.proc_name,
                                    (char**)&(proc->super.proc_hostname), OPAL_STRING);
     if (OPAL_SUCCESS != ret) {
-    return ret;
+        proc->super.proc_hostname = NULL;
     }
+
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
     /* get the remote architecture - this might force a modex except
      * for those environments where the RM provides it */
@@ -351,7 +352,7 @@ int ompi_proc_complete_init(void)
             }
 
             if (OPAL_PROC_NON_LOCAL != locality) {
-	      (void) ompi_proc_for_name (proc_name);
+                (void) ompi_proc_for_name (proc_name);
             }
         }
     }
