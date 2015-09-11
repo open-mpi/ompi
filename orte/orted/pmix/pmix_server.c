@@ -481,6 +481,7 @@ static void pmix_server_dmdx_recv(int status, orte_process_name_t* sender,
 
     /* ask our local pmix server for the data */
     if (OPAL_SUCCESS != (rc = opal_pmix.server_dmodex_request(&idreq, modex_resp, req))) {
+        ORTE_ERROR_LOG(rc);
         opal_hotel_checkout(&orte_pmix_server_globals.reqs, req->room_num);
         OBJ_RELEASE(req);
         send_error(rc, &idreq, sender);
