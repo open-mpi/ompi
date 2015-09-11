@@ -381,7 +381,8 @@ static void _register_nspace(int sd, short args, void *cbdata)
     pmix_setup_caddy_t *cd = (pmix_setup_caddy_t*)cbdata;
     pmix_nspace_t *nptr, *tmp;
     pmix_status_t rc;
-    size_t i, j, size, rank;
+    size_t i, j, size;
+    int rank;
     pmix_kval_t kv;
     char **nodes=NULL, **procs=NULL;
     pmix_buffer_t buf2;
