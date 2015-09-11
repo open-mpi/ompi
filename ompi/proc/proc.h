@@ -324,13 +324,22 @@ OMPI_DECLSPEC opal_proc_t *ompi_proc_for_name (const opal_process_name_t proc_na
 
 OMPI_DECLSPEC opal_proc_t *ompi_proc_lookup (const opal_process_name_t proc_name);
 
-
-static inline intptr_t ompi_proc_name_to_sentinel (opal_process_name_t name) {
-  return -*((intptr_t *) &name);
+/**
+ * Check if an ompi_proc_t is a sentinel
+ */
+static inline bool ompi_proc_is_sentinel (ompi_proc_t *proc)
+{
+    return (intptr_t) proc & 0x1;
 }
 
-static inline opal_process_name_t ompi_proc_sentinel_to_name (intptr_t sentinel) {
-  sentinel = -sentinel;
+static inline intptr_t ompi_proc_name_to_sentinel (opal_process_name_t name)
+{
+  return (*((intptr_t *) &name) << 1) & 0x1;
+}
+
+static inline opal_process_name_t ompi_proc_sentinel_to_name (intptr_t sentinel)
+{
+  sentinel >>= 1;;
   return *((opal_process_name_t *) &sentinel);
 }
 
