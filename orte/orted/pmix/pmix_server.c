@@ -537,7 +537,10 @@ static void pmix_server_dmdx_resp(int status, orte_process_name_t* sender,
     }
 
     /* unload the remainder of the buffer */
-    opal_dss.unload(buffer, (void**)&data, &ndata);
+    if (OPAL_SUCCESS != (rc = opal_dss.unload(buffer, (void**)&data, &ndata))) {
+        ORTE_ERROR_LOG(rc);
+        return;
+    }
 
     /* if we got something, store the blobs locally so we can
      * meet any further requests without doing a remote fetch.
@@ -564,9 +567,6 @@ static void pmix_server_dmdx_resp(int status, orte_process_name_t* sender,
             req->mdxcbfunc(ret, (char*)data, ndata, req->cbdata, relcbfunc, data);
         }
         OBJ_RELEASE(req);
-    }
-    if (NULL != data) {
-        free(data);
     }
 }
 

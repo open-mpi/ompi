@@ -857,7 +857,10 @@ static void _process_dmdx_reply(int fd, short args, void *cbdata)
         kp->key = strdup("modex");
         PMIX_VALUE_CREATE(kp->value, 1);
         kp->value->type = PMIX_BYTE_OBJECT;
-        kp->value->data.bo.bytes = (char*)caddy->data;
+        /* we don't know if the host is going to save this data
+         * or not, so we have to copy it */
+        kp->value->data.bo.bytes = (char*)malloc(caddy->ndata);
+        memcpy(kp->value->data.bo.bytes, caddy->data, caddy->ndata);
         kp->value->data.bo.size = caddy->ndata;
         /* store it in the appropriate hash */
         if (PMIX_SUCCESS != (rc = pmix_hash_store(&nptr->server->remote, caddy->lcd->proc.rank, kp))) {
