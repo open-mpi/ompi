@@ -643,7 +643,7 @@ int pmix_bfrop_pack_proc(pmix_buffer_t *buffer, const void *src,
         if (PMIX_SUCCESS != (ret = pmix_bfrop_pack_string(buffer, &ptr, 1, PMIX_STRING))) {
             return ret;
         }
-        if (PMIX_SUCCESS != (ret = pmix_bfrop_pack_sizet(buffer, &proc[i].rank, 1, PMIX_INT))) {
+        if (PMIX_SUCCESS != (ret = pmix_bfrop_pack_int(buffer, &proc[i].rank, 1, PMIX_INT))) {
             return ret;
         }
     }
