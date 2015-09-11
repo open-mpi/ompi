@@ -4,7 +4,7 @@
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
  * Copyright (c) 2013-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -306,7 +306,7 @@ int mca_coll_ml_alltoall_nb(void *sbuf, int scount,
 
 
 /* allgather */
-int mca_coll_ml_allgather(void *sbuf, int scount,
+int mca_coll_ml_allgather(const void *sbuf, int scount,
         struct ompi_datatype_t *sdtype,
         void* rbuf, int rcount,
         struct ompi_datatype_t *rdtype,
@@ -314,7 +314,7 @@ int mca_coll_ml_allgather(void *sbuf, int scount,
         mca_coll_base_module_t *module);
 
 /* non-blocking allgather */
-int mca_coll_ml_allgather_nb(void *sbuf, int scount,
+int mca_coll_ml_allgather_nb(const void *sbuf, int scount,
         struct ompi_datatype_t *sdtype,
         void* rbuf, int rcount,
         struct ompi_datatype_t *rdtype,
@@ -779,37 +779,37 @@ int mca_coll_ml_ibarrier_intra(struct ompi_communicator_t *comm,
                                mca_coll_base_module_t *module);
 
 /* Allreduce with EXTRA TOPO using - blocking */
-int mca_coll_ml_allreduce_dispatch(void *sbuf, void *rbuf, int count,
+int mca_coll_ml_allreduce_dispatch(const void *sbuf, void *rbuf, int count,
                                 struct ompi_datatype_t *dtype, struct ompi_op_t *op,
                                 struct ompi_communicator_t *comm, mca_coll_base_module_t *module);
 
 /* Allreduce with EXTRA TOPO using - Non-blocking */
-int mca_coll_ml_allreduce_dispatch_nb(void *sbuf, void *rbuf, int count,
+int mca_coll_ml_allreduce_dispatch_nb(const void *sbuf, void *rbuf, int count,
                                    ompi_datatype_t *dtype, ompi_op_t *op,
                                    ompi_communicator_t *comm,
                                    ompi_request_t **req,
                                    mca_coll_base_module_t *module);
 
 /* Allreduce - blocking */
-int mca_coll_ml_allreduce(void *sbuf, void *rbuf, int count,
+int mca_coll_ml_allreduce(const void *sbuf, void *rbuf, int count,
                                 struct ompi_datatype_t *dtype, struct ompi_op_t *op,
                                 struct ompi_communicator_t *comm,
                                 mca_coll_base_module_t *module);
 
 /* Allreduce - Non-blocking */
-int mca_coll_ml_allreduce_nb(void *sbuf, void *rbuf, int count,
+int mca_coll_ml_allreduce_nb(const void *sbuf, void *rbuf, int count,
                                 struct ompi_datatype_t *dtype, struct ompi_op_t *op,
                                 struct ompi_communicator_t *comm,
                                 ompi_request_t **req,
                                 mca_coll_base_module_t *module);
 
 /* Reduce - Blocking */
-int mca_coll_ml_reduce(void *sbuf, void *rbuf, int count,
+int mca_coll_ml_reduce(const void *sbuf, void *rbuf, int count,
         struct ompi_datatype_t *dtype, struct ompi_op_t *op,
         int root, struct ompi_communicator_t *comm,
         mca_coll_base_module_t *module);
 
-int mca_coll_ml_reduce_nb(void *sbuf, void *rbuf, int count,
+int mca_coll_ml_reduce_nb(const void *sbuf, void *rbuf, int count,
         struct ompi_datatype_t *dtype, struct ompi_op_t *op,
         int root, struct ompi_communicator_t *comm,
         ompi_request_t **req,

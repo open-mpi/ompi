@@ -4,7 +4,7 @@
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
  * Copyright (c) 2014-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -262,7 +262,7 @@ struct mca_coll_ml_collective_operation_progress_t {
         /* destination data address in user memory */
         void *dest_user_addr;
         /* source data address in user memory */
-        void *src_user_addr;
+        const void *src_user_addr;
         /* total message size */
         size_t n_bytes_total;
         /* per-process total message size - relevant for operations
@@ -493,7 +493,7 @@ enum {
 };
 
 static inline  __opal_attribute_always_inline__
-    int mca_coll_ml_convertor_prepare(ompi_datatype_t *dtype, int count, void *buff,
+    int mca_coll_ml_convertor_prepare(ompi_datatype_t *dtype, int count, const void *buff,
                                             opal_convertor_t *convertor, int stream)
 {
     size_t bytes_packed;

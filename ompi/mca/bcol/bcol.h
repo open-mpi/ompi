@@ -4,6 +4,8 @@
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
  * Copyright (c) 2013-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -355,9 +357,9 @@ struct bcol_function_args_t {
     /* root, for rooted operations */
     int root;
     /* input buffer */
-    void *sbuf;
+    const void *sbuf;
     void *rbuf;
-    void *userbuf;
+    const void *userbuf;
     struct mca_bcol_base_payload_buffer_desc_t *src_desc;
     struct mca_bcol_base_payload_buffer_desc_t *dst_desc;
    /* ml buffer size */

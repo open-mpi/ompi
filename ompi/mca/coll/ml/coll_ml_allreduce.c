@@ -4,6 +4,8 @@
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -84,7 +86,7 @@ static int mca_coll_ml_allreduce_task_setup(mca_coll_ml_collective_operation_pro
 static int mca_coll_ml_allreduce_frag_progress(mca_coll_ml_collective_operation_progress_t *coll_op)
 {
     /* local variables */
-    void *buf;
+    const void *buf;
 
     size_t dt_size;
     int ret, frag_len, count;
@@ -239,7 +241,7 @@ static int mca_coll_ml_allreduce_frag_progress(mca_coll_ml_collective_operation_
 }
 
 static inline __opal_attribute_always_inline__
-int parallel_allreduce_start(void *sbuf, void *rbuf, int count,
+int parallel_allreduce_start(const void *sbuf, void *rbuf, int count,
                                 struct ompi_datatype_t *dtype, struct ompi_op_t *op,
                                 struct ompi_communicator_t *comm,
                                 mca_coll_ml_module_t *ml_module,
@@ -415,7 +417,7 @@ int parallel_allreduce_start(void *sbuf, void *rbuf, int count,
     return OMPI_SUCCESS;
 }
 
-int mca_coll_ml_allreduce(void *sbuf, void *rbuf, int count,
+int mca_coll_ml_allreduce(const void *sbuf, void *rbuf, int count,
                            struct ompi_datatype_t *dtype, struct ompi_op_t *op,
                            struct ompi_communicator_t *comm,
                            mca_coll_base_module_t *module)
@@ -448,7 +450,7 @@ int mca_coll_ml_allreduce(void *sbuf, void *rbuf, int count,
     return OMPI_SUCCESS;
 }
 
-int mca_coll_ml_allreduce_nb(void *sbuf, void *rbuf, int count,
+int mca_coll_ml_allreduce_nb(const void *sbuf, void *rbuf, int count,
                            struct ompi_datatype_t *dtype, struct ompi_op_t *op,
                            struct ompi_communicator_t *comm,
                            ompi_request_t **req,
@@ -478,7 +480,7 @@ int mca_coll_ml_allreduce_nb(void *sbuf, void *rbuf, int count,
     return OMPI_SUCCESS;
 }
 
-int mca_coll_ml_allreduce_dispatch(void *sbuf, void *rbuf, int count,
+int mca_coll_ml_allreduce_dispatch(const void *sbuf, void *rbuf, int count,
                                    struct ompi_datatype_t *dtype, struct ompi_op_t *op,
                                    struct ompi_communicator_t *comm, mca_coll_base_module_t *module)
 {
@@ -515,7 +517,7 @@ int mca_coll_ml_allreduce_dispatch(void *sbuf, void *rbuf, int count,
     return OMPI_SUCCESS;
 }
 
-int mca_coll_ml_allreduce_dispatch_nb(void *sbuf, void *rbuf, int count,
+int mca_coll_ml_allreduce_dispatch_nb(const void *sbuf, void *rbuf, int count,
                                    ompi_datatype_t *dtype, ompi_op_t *op,
                                    ompi_communicator_t *comm,
                                    ompi_request_t **req,

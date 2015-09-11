@@ -2,6 +2,8 @@
 /*
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -16,8 +18,6 @@
 #include "coll_ml.h"
 #include "coll_ml_inlines.h"
 #include "coll_ml_allocation.h"
-
-static long memory_buffer_index;
 
 mca_bcol_base_memory_block_desc_t *mca_coll_ml_allocate_block(struct mca_coll_ml_component_t *ml_component,
                                                    mca_bcol_base_memory_block_desc_t *ml_memblock)
