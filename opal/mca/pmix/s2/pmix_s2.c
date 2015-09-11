@@ -157,9 +157,6 @@ static int kvs_get(const char key[], char value [], int maxvalue)
      * case
      */
     if (PMI_SUCCESS != rc) {
-        if (PMI_ERR_INVALID_KEY != rc) {
-            OPAL_PMI_ERROR(rc, "PMI_KVS_Get");
-        }
         return OPAL_ERROR;
     }
     return OPAL_SUCCESS;
@@ -614,7 +611,6 @@ static int s2_get(const opal_process_name_t *id,
                   opal_value_t **kv)
 {
     int rc;
-    opal_output(0, "CALLED GET FOR %s", key);
     rc = opal_pmix_base_cache_keys_locally(id, key, kv, pmix_kvs_name, pmix_vallen_max, kvs_get);
     return rc;
 }
