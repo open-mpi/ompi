@@ -1,6 +1,8 @@
 /*
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -19,7 +21,6 @@
 #include "opal/datatype/opal_convertor.h"
 
 #include "ompi/class/ompi_free_list.h"
-#include "ompi/mca/pml/ob1/pml_ob1_comm.h"
 
 BEGIN_C_DECLS
 
