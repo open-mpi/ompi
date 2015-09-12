@@ -334,12 +334,12 @@ static inline bool ompi_proc_is_sentinel (ompi_proc_t *proc)
 
 static inline intptr_t ompi_proc_name_to_sentinel (opal_process_name_t name)
 {
-  return (*((intptr_t *) &name) << 1) & 0x1;
+  return (*((intptr_t *) &name) << 1) | 0x1;
 }
 
 static inline opal_process_name_t ompi_proc_sentinel_to_name (intptr_t sentinel)
 {
-  sentinel >>= 1;;
+  sentinel >>= 1;
   return *((opal_process_name_t *) &sentinel);
 }
 
