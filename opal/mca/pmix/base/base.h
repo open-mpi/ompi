@@ -37,7 +37,9 @@ OPAL_DECLSPEC void opal_pmix_base_deregister_handler(void);
 OPAL_DECLSPEC void opal_pmix_base_errhandler(int status,
                                              opal_list_t *procs,
                                              opal_list_t *info);
-
+OPAL_DECLSPEC int opal_pmix_base_exchange(opal_value_t *info,
+                                          opal_pmix_pdata_t *pdat,
+                                          int timeout);
 END_C_DECLS
 
 #endif

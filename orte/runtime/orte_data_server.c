@@ -158,7 +158,7 @@ void orte_data_server(int status, orte_process_name_t* sender,
     opal_value_t *iptr, *inext;
     uint32_t ninfo, i;
     char **keys = NULL, *str;
-    bool ret_packed = false, wait = false;
+    bool ret_packed = false, wait = false, data_added;
     int room_number;
     uint32_t uid;
     opal_pmix_data_range_t range;
@@ -229,6 +229,10 @@ void orte_data_server(int status, orte_process_name_t* sender,
                 data->uid = iptr->data.uint32;
                 OBJ_RELEASE(iptr);
             } else {
+                OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
+                                     "%s data server: adding %s to data from %s",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), iptr->key,
+                                     ORTE_NAME_PRINT(&data->owner)));
                 opal_list_append(&data->values, &iptr->super);
             }
         }
@@ -271,6 +275,10 @@ void orte_data_server(int status, orte_process_name_t* sender,
                             ORTE_ERROR_LOG(rc);
                             break;
                         }
+                        OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
+                                             "%s data server: adding %s data from %s to response",
+                                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), iptr->key,
+                                             ORTE_NAME_PRINT(&data->owner)));
                         if (ORTE_SUCCESS != (rc = opal_dss.pack(reply, &iptr, 1, OPAL_VALUE))) {
                             ORTE_ERROR_LOG(rc);
                             break;
@@ -294,9 +302,20 @@ void orte_data_server(int status, orte_process_name_t* sender,
                 opal_list_remove_item(&pending, &req->super);
                 OBJ_RELEASE(req);
                 reply = NULL;
+                /* if the persistence is "first_read", then delete this data */
+                if (OPAL_PMIX_PERSIST_FIRST_READ == data->persistence) {
+                    OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
+                                        "%s NOT STORING DATA FROM %s AT INDEX %d",
+                                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                        ORTE_NAME_PRINT(&data->owner), data->index));
+                    opal_pointer_array_set_item(&orte_data_server_store, data->index, NULL);
+                    OBJ_RELEASE(data);
+                    goto release;
+                }
             }
         }
 
+      release:
         /* tell the user it was wonderful... */
         ret = ORTE_SUCCESS;
         if (ORTE_SUCCESS != (rc = opal_dss.pack(answer, &ret, 1, OPAL_INT))) {
@@ -367,8 +386,12 @@ void orte_data_server(int status, orte_process_name_t* sender,
         /* cycle across the provided keys */
         ret_packed = false;
         for (i=0; NULL != keys[i]; i++) {
+            OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
+                                 "%s data server: looking for %s",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), keys[i]));
             /* cycle across the stored data, looking for a match */
             for (k=0; k < orte_data_server_store.size; k++) {
+                data_added = false;
                 data = (orte_data_object_t*)opal_pointer_array_get_item(&orte_data_server_store, k);
                 if (NULL == data) {
                     continue;
@@ -383,6 +406,10 @@ void orte_data_server(int status, orte_process_name_t* sender,
                 }
                 /* see if we have this key */
                 OPAL_LIST_FOREACH(iptr, &data->values, opal_value_t) {
+                    OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
+                                        "%s COMPARING %s %s",
+                                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                        keys[i], iptr->key));
                     if (0 == strcmp(iptr->key, keys[i])) {
                         /* found it - package it for return */
                         if (!ret_packed) {
@@ -394,17 +421,30 @@ void orte_data_server(int status, orte_process_name_t* sender,
                             }
                             ret_packed = true;
                         }
+                        data_added = true;
                         if (ORTE_SUCCESS != (rc = opal_dss.pack(answer, &data->owner, 1, OPAL_NAME))) {
                             ORTE_ERROR_LOG(rc);
                             opal_argv_free(keys);
                             goto SEND_ERROR;
                         }
+                        OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
+                                             "%s data server: adding %s to data from %s",
+                                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), iptr->key,
+                                             ORTE_NAME_PRINT(&data->owner)));
                         if (ORTE_SUCCESS != (rc = opal_dss.pack(answer, &iptr, 1, OPAL_VALUE))) {
                             ORTE_ERROR_LOG(rc);
                             opal_argv_free(keys);
                             goto SEND_ERROR;
                         }
                     }
+                }
+                if (data_added && OPAL_PMIX_PERSIST_FIRST_READ == data->persistence) {
+                    OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
+                                        "%s REMOVING DATA FROM %s AT INDEX %d",
+                                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                        ORTE_NAME_PRINT(&data->owner), data->index));
+                    opal_pointer_array_set_item(&orte_data_server_store, data->index, NULL);
+                    OBJ_RELEASE(data);
                 }
             }
         }
@@ -433,6 +473,7 @@ void orte_data_server(int status, orte_process_name_t* sender,
             opal_argv_free(keys);
             goto SEND_ERROR;
         }
+
         opal_argv_free(keys);
         OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
                              "%s data server:lookup: data found",

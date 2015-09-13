@@ -72,27 +72,6 @@ static OBJ_CLASS_INSTANCE(ompi_dpm_proct_caddy_t,
                           opal_list_item_t,
                           NULL, NULL);
 
-struct lookup_caddy_t {
-    volatile bool active;
-    int status;
-    opal_pmix_pdata_t *pdat;
-};
-
-static void lookup_cbfunc(int status, opal_list_t *data, void *cbdata)
-{
-    struct lookup_caddy_t *cd = (struct lookup_caddy_t*)cbdata;
-    cd->status = status;
-    if (OPAL_SUCCESS == status && NULL != data) {
-        opal_pmix_pdata_t *p = (opal_pmix_pdata_t*)opal_list_get_first(data);
-        if (NULL != p && OPAL_STRING == p->value.type &&
-            NULL != p->value.data.string) {
-            cd->pdat->value.data.string = strdup(p->value.data.string);
-        }
-    }
-    cd->active = false;
-}
-
-
 /*
  * Init the module
  */
@@ -113,12 +92,12 @@ int ompi_dpm_connect_accept(ompi_communicator_t *comm, int root,
                             ompi_communicator_t **newcomm)
 {
     int k, size, rsize, rank, rc, rportlen=0;
-    char **members = NULL, *nstring, *rport=NULL, **pkeys=NULL;
+    char **members = NULL, *nstring, *rport=NULL;
     bool dense, isnew;
     opal_process_name_t pname;
     opal_list_t ilist, mlist, rlist;
-    opal_value_t *info;
-    opal_pmix_pdata_t *pdat;
+    opal_value_t info;
+    opal_pmix_pdata_t pdat;
     opal_namelist_t *nm;
     opal_jobid_t jobid;
 
@@ -126,7 +105,7 @@ int ompi_dpm_connect_accept(ompi_communicator_t *comm, int root,
     ompi_proc_t *proc;
     ompi_group_t *group=comm->c_local_group;
     ompi_proc_t **proc_list=NULL, **new_proc_list = NULL;
-    int32_t i,j;
+    int32_t i;
     ompi_group_t *new_group_pointer;
     ompi_dpm_proct_caddy_t *cd;
 
@@ -200,106 +179,35 @@ int ompi_dpm_connect_accept(ompi_communicator_t *comm, int root,
     }
 
     if (rank == root) {
-        /* the root for each side publishes their list of participants */
-        OBJ_CONSTRUCT(&ilist, opal_list_t);
-        /* put my name at the front of the list of members - my
-         * name will therefore be on the list twice, but the
-         * other side's root needs to know the root from this side */
-        rc = opal_convert_process_name_to_string(&nstring, OMPI_PROC_MY_NAME);
-        if (OPAL_SUCCESS != rc) {
-                return OMPI_ERROR;
-        }
-        opal_argv_prepend_nosize(&members, nstring);
-        free(nstring);
-        info = OBJ_NEW(opal_value_t);
+        /* the roots for each side exchange their list of participants */
+        OBJ_CONSTRUCT(&info, opal_value_t);
+        OBJ_CONSTRUCT(&pdat, opal_pmix_pdata_t);
         if (send_first) {
-            (void)asprintf(&info->key, "%s:connect", port_string);
+            (void)asprintf(&info.key, "%s:connect", port_string);
+            (void)asprintf(&pdat.value.key, "%s:accept", port_string);
         } else {
-            (void)asprintf(&info->key, "%s:accept", port_string);
+            (void)asprintf(&info.key, "%s:accept", port_string);
+            (void)asprintf(&pdat.value.key, "%s:connect", port_string);
         }
-        info->type = OPAL_STRING;
-        info->data.string = opal_argv_join(members, ':');
-        opal_list_append(&ilist, &info->super);
-        /* also save the key for later */
-        opal_argv_append_nosize(&pkeys, info->key);
-        /* publish them with "session" scope */
-        rc = opal_pmix.publish(&ilist);
-        OPAL_LIST_DESTRUCT(&ilist);
+        info.type = OPAL_STRING;
+        info.data.string = opal_argv_join(members, ':');
+        pdat.value.type = OPAL_STRING;
+
+        OPAL_PMIX_EXCHANGE(rc, &info, &pdat, 60);
+        OBJ_DESTRUCT(&info);
         if (OPAL_SUCCESS != rc) {
-            opal_argv_free(members);
-            opal_argv_free(pkeys);
-            return OMPI_ERROR;
+            OBJ_DESTRUCT(&pdat);
+            return rc;
         }
-       /* lookup the other side's info - if a non-blocking form
-         * of lookup isn't available, then we use the blocking
-         * form and trust that the underlying system will WAIT
-         * until the other side publishes its data */
-        OBJ_CONSTRUCT(&ilist, opal_list_t);
-        pdat = OBJ_NEW(opal_pmix_pdata_t);
-        if (send_first) {
-            (void)asprintf(&pdat->value.key, "%s:accept", port_string);
-        } else {
-            (void)asprintf(&pdat->value.key, "%s:connect", port_string);
-        }
-        opal_list_append(&ilist, &pdat->super);
-        OBJ_CONSTRUCT(&mlist, opal_list_t);
-        /* if a non-blocking version of lookup isn't
-         * available, then use the blocking version */
-        if (NULL == opal_pmix.lookup_nb) {
-            rc = opal_pmix.lookup(&ilist, &mlist);
-            OPAL_LIST_DESTRUCT(&mlist);
-            if (OPAL_SUCCESS != rc) {
-                OMPI_ERROR_LOG(rc);
-                OPAL_LIST_DESTRUCT(&ilist);
-                opal_argv_free(members);
-                goto exit;
-            }
-        } else {
-            char **keys = NULL;
-            struct lookup_caddy_t caddy;
-            opal_argv_append_nosize(&keys, pdat->value.key);
-            caddy.active = true;
-            caddy.pdat = pdat;
-            /* tell it to wait for the data to arrive */
-            info = OBJ_NEW(opal_value_t);
-            info->key = strdup(OPAL_PMIX_WAIT);
-            info->type = OPAL_BOOL;
-            info->data.flag = true;
-            opal_list_append(&mlist, &info->super);
-            /* give it a decent timeout as we don't know when
-             * the other side may call connect - it doesn't
-             * have to be simultaneous */
-            info = OBJ_NEW(opal_value_t);
-            info->key = strdup(OPAL_PMIX_TIMEOUT);
-            info->type = OPAL_INT;
-            info->data.integer = 60;
-            opal_list_append(&mlist, &info->super);
-            rc = opal_pmix.lookup_nb(keys, &mlist, lookup_cbfunc, &caddy);
-            if (OPAL_SUCCESS != rc) {
-                OPAL_LIST_DESTRUCT(&ilist);
-                OPAL_LIST_DESTRUCT(&mlist);
-                opal_argv_free(keys);
-                opal_argv_free(members);
-                goto exit;
-            }
-            OMPI_WAIT_FOR_COMPLETION(caddy.active);
-            opal_argv_free(keys);
-            OPAL_LIST_DESTRUCT(&mlist);
-            if (OPAL_SUCCESS != caddy.status) {
-                OMPI_ERROR_LOG(caddy.status);
-                OPAL_LIST_DESTRUCT(&ilist);
-                opal_argv_free(members);
-                goto exit;
-            }
-        }
+
         /* save the result */
-        rport = strdup(pdat->value.data.string);  // need this later
+        rport = strdup(pdat.value.data.string);  // need this later
         rportlen = strlen(rport) + 1;  // retain the NULL terminator
-        OPAL_LIST_DESTRUCT(&ilist);
+        OBJ_DESTRUCT(&pdat);
     }
 
     /* if we aren't in a comm_spawn, the non-root members won't have
-     * a port_string - so let's make sure everyone knows the other
+     * the port_string - so let's make sure everyone knows the other
      * side's participants */
 
     /* bcast the list-length to all processes in the local comm */
@@ -327,15 +235,9 @@ int ompi_dpm_connect_accept(ompi_communicator_t *comm, int root,
     }
 
     /* initiate a list of participants for the connect,
-     * starting with our own members, remembering to
-     * skip the first member if we are the root rank */
-    if (rank == root) {
-        j = 1;
-    } else {
-        j = 0;
-    }
+     * starting with our own members */
     OBJ_CONSTRUCT(&mlist, opal_list_t);
-    for (i=j; NULL != members[i]; i++) {
+    for (i=0; NULL != members[i]; i++) {
         nm = OBJ_NEW(opal_namelist_t);
         if (OPAL_SUCCESS != (rc = opal_convert_string_to_process_name(&nm->name, members[i]))) {
             OMPI_ERROR_LOG(rc);
@@ -373,33 +275,18 @@ int ompi_dpm_connect_accept(ompi_communicator_t *comm, int root,
     opal_argv_free(members);
     members = NULL;
 
-    /* the pdat object will contain a colon-delimited list
+    /* rport contains a colon-delimited list
      * of process names for the remote procs - convert it
      * into an argv array */
     members = opal_argv_split(rport, ':');
     free(rport);
-
-    /* the first entry is the root for the remote side */
-    if (OPAL_SUCCESS != (rc = opal_convert_string_to_process_name(&pname, members[0]))) {
-        OMPI_ERROR_LOG(rc);
-        opal_argv_free(members);
-        goto exit;
-    }
-    /* check the name - it should never be a wildcard, so
-     * this is just checking for an error */
-    if (OPAL_VPID_WILDCARD == pname.vpid) {
-        OMPI_ERROR_LOG(OMPI_ERR_BAD_PARAM);
-        opal_argv_free(members);
-        rc = OMPI_ERR_BAD_PARAM;
-        goto exit;
-    }
 
     /* add the list of remote procs to our list, and
      * keep a list of them for later */
     OBJ_CONSTRUCT(&ilist, opal_list_t);
     OBJ_CONSTRUCT(&rlist, opal_list_t);
 
-    for (i=1; NULL != members[i]; i++) {
+    for (i=0; NULL != members[i]; i++) {
         nm = OBJ_NEW(opal_namelist_t);
         if (OPAL_SUCCESS != (rc = opal_convert_string_to_process_name(&nm->name, members[i]))) {
             OMPI_ERROR_LOG(rc);
@@ -452,7 +339,7 @@ int ompi_dpm_connect_accept(ompi_communicator_t *comm, int root,
                 opal_list_append(&ilist, &cd->super);
             }
             /* either way, add to the remote list */
-            cd = OBJ_NEW(ompi_dpm_proct_caddy_t);
+           cd = OBJ_NEW(ompi_dpm_proct_caddy_t);
             cd->p = proc;
             opal_list_append(&rlist, &cd->super);
         }
@@ -550,25 +437,25 @@ int ompi_dpm_connect_accept(ompi_communicator_t *comm, int root,
     new_group_pointer = MPI_GROUP_NULL;
 
     /* allocate comm_cid */
-    rc = ompi_comm_nextcid ( newcomp,                 /* new communicator */
-                             comm,                    /* old communicator */
-                             NULL,                    /* bridge comm */
-                             &root,                   /* local leader */
-                             &pname,                  /* remote leader */
-                             OMPI_COMM_CID_INTRA_OOB, /* mode */
-                             send_first );            /* send or recv first */
+    rc = ompi_comm_nextcid ( newcomp,                  /* new communicator */
+                             comm,                     /* old communicator */
+                             NULL,                     /* bridge comm */
+                             &root,                    /* local leader */
+                             (void*)port_string,       /* rendezvous point */
+                             OMPI_COMM_CID_INTRA_PMIX, /* mode */
+                             send_first );             /* send or recv first */
     if (OMPI_SUCCESS != rc) {
         goto exit;
     }
 
     /* activate comm and init coll-component */
-    rc = ompi_comm_activate ( &newcomp,                /* new communicator */
-                              comm,                    /* old communicator */
-                              NULL,                    /* bridge comm */
-                              &root,                   /* local leader */
-                              &pname,                  /* remote leader */
-                              OMPI_COMM_CID_INTRA_OOB, /* mode */
-                              send_first );            /* send or recv first */
+    rc = ompi_comm_activate ( &newcomp,                 /* new communicator */
+                              comm,                     /* old communicator */
+                              NULL,                     /* bridge comm */
+                              &root,                    /* local leader */
+                              (void*)port_string,       /* rendezvous point */
+                              OMPI_COMM_CID_INTRA_PMIX, /* mode */
+                              send_first );             /* send or recv first */
     if (OMPI_SUCCESS != rc) {
         goto exit;
     }
@@ -579,10 +466,6 @@ int ompi_dpm_connect_accept(ompi_communicator_t *comm, int root,
     */
 
  exit:
-    if (NULL != pkeys) {
-        opal_pmix.unpublish(pkeys, NULL);
-        opal_argv_free(pkeys);
-    }
     if (OMPI_SUCCESS != rc) {
         if (MPI_COMM_NULL != newcomp && NULL != newcomp) {
             OBJ_RETAIN(newcomp);
