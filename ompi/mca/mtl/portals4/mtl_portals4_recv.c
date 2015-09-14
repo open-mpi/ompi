@@ -29,6 +29,7 @@
 #include "ompi/message/message.h"
 
 #include "mtl_portals4.h"
+#include "mtl_portals4_endpoint.h"
 #include "mtl_portals4_request.h"
 #include "mtl_portals4_recv_short.h"
 #include "mtl_portals4_message.h"
@@ -367,7 +368,7 @@ ompi_mtl_portals4_irecv(struct mca_mtl_base_module_t* mtl,
         remote_proc.rank = src;
     } else {
         ompi_proc_t* ompi_proc = ompi_comm_peer_lookup( comm, src );
-        remote_proc = *((ptl_process_t*) ompi_proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_PORTALS4]);
+        remote_proc = *((ptl_process_t*) ompi_mtl_portals4_get_endpoint (mtl, ompi_proc));
     }
 
     MTL_PORTALS4_SET_RECV_BITS(match_bits, ignore_bits, comm->c_contextid,

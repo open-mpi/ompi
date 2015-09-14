@@ -18,8 +18,6 @@
 
 #include "osc_portals4.h"
 
-#include "ompi/mca/mtl/portals4/mtl_portals4_endpoint.h"
-
 enum locktype_t {
     lock_nocheck,
     lock_exclusive,

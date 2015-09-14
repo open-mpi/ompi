@@ -50,6 +50,14 @@ struct mca_btl_portals4_component_t {
 
     /* Use the logical to physical table to accelerate portals4 adressing: 1 (true) : 0 (false) */
     int use_logical;
+    int maptable_created;
+    int need_init;
+
+    int use_flowctl;
+
+    opal_proc_t                    **world_procs;
+    size_t                           world_nprocs;
+    struct mca_btl_base_endpoint_t **world_peer_data;
 
     /* initial size of free lists */
     int portals_free_list_init_num;
