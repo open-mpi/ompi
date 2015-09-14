@@ -176,5 +176,7 @@ shmem_api_man_pages = \
         shmem/man/man3/shmem_clear_cache_inv.3 \
         shmem/man/man3/shmem_clear_cache_line_inv.3
 
+if PROJECT_OSHMEM
 nodist_man_MANS += $(shmem_api_man_pages)
 EXTRA_DIST += $(shmem_api_man_pages:.3=.3in)
+endif  # PROJECT_OSHMEM
