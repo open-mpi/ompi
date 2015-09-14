@@ -304,6 +304,19 @@ static mca_btl_base_module_t** mca_btl_portals4_component_init(int *num_btls,
     }
     OPAL_OUTPUT_VERBOSE((90, opal_btl_base_framework.framework_output, "PtlInit OK\n"));
 
+    mca_btl_portals4_component.maptable_created = 0;
+    mca_btl_portals4_component.need_init        = 1;
+
+#if OMPI_BTL_PORTALS4_FLOW_CONTROL
+    mca_btl_portals4_component.use_flowctl = 1;
+#else
+    mca_btl_portals4_component.use_flowctl = 0;
+#endif
+
+    mca_btl_portals4_component.world_nprocs    = 0;
+    mca_btl_portals4_component.world_procs     = NULL;
+    mca_btl_portals4_component.world_peer_data = NULL;
+
     /*
      * Initialize the network interfaces (try to open the interfaces 0 to (max_btls-1) )
      */
