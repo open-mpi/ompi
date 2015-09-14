@@ -107,13 +107,13 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* topo_module,
 {
     int err;
 
-    if (OMPI_SUCCESS != (err = mca_topo_base_dist_graph_distribute(topo_module, comm_old,n,nodes,
-                                                                   degrees,targets,weights,
+    if (OMPI_SUCCESS != (err = mca_topo_base_dist_graph_distribute(topo_module, comm_old, n, nodes,
+                                                                   degrees, targets, weights,
                                                                    &(topo_module->mtc.dist_graph))))
         return err;
 
     if(!reorder) {  /* No reorder. Create a new communicator, then   */
-                    /* jump out to attach  the dist_graph and return */
+                    /* jump out to attach the dist_graph and return */
     fallback:
 
         if( OMPI_SUCCESS == (err = ompi_comm_create(comm_old,
