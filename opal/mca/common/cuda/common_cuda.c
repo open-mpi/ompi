@@ -1691,10 +1691,10 @@ static void cuda_dump_memhandle(int verbose, void *memHandle, char *str) {
     }
     memcpy(&memH, memHandle, sizeof(memH));
     opal_output_verbose(verbose, mca_common_cuda_output,
-                        "%s:ctxId=%p, pid=%d, size=%d, blocksize=%d, offset=%d, gpuId=%d, "
-                        "subDeviceIndex=%d, serial=%d",
-                        str, (void *)memH.ctxId, memH.pid, (int)memH.size, (int)memH.blocksize, (int)memH.offset,
-                        memH.gpuId, memH.subDeviceIndex, (int)memH.serial);
+                        "%s:ctxId=0x%" PRIx64 ", pid=%d, size=%" PRIu64 ", blocksize=%" PRIu64 ", offset=%"
+                        PRIu64 ", gpuId=%d, subDeviceIndex=%d, serial=%" PRIu64,
+                        str, memH.ctxId, memH.pid, memH.size, memH.blocksize, memH.offset,
+                        memH.gpuId, memH.subDeviceIndex, memH.serial);
 }
 
 /*
@@ -1715,8 +1715,8 @@ static void cuda_dump_evthandle(int verbose, void *evtHandle, char *str) {
     }
     memcpy(&evtH, evtHandle, sizeof(evtH));
     opal_output_verbose(verbose, mca_common_cuda_output,
-                        "CUDA: %s:pid=%d, serial=%d, index=%d",
-                        str, (int)evtH.pid, (int)evtH.serial, (int)evtH.index);
+                        "CUDA: %s:pid=%lu, serial=%lu, index=%d",
+                        str, evtH.pid, evtH.serial, evtH.index);
 }
 
 
