@@ -1,9 +1,12 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2013-2015 Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2015      Intel, Inc. All rights reserved
+ * Copyright (c) 2015      Intel, Inc. All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -411,7 +414,6 @@ static int oshmem_mkey_recv_cb(void)
              */
             do_recv(status.MPI_SOURCE, msg);
             OBJ_RELEASE(msg);
-            free(tmp_buf);
         }
 
         rc = MPI_Start(&r->recv_req);
@@ -566,12 +568,12 @@ void mca_memheap_modex_recv_all(void)
     opal_buffer_t *msg = NULL;
     void *send_buffer = NULL;
     char *rcv_buffer = NULL;
-    void *dummy_buffer = NULL;
-    int size, dummy_size;
+    int size;
     int *rcv_size = NULL;
     int *rcv_n_transports = NULL;
     int *rcv_offsets = NULL;
     int rc = OSHMEM_SUCCESS;
+    size_t buffer_size;
 
     if (!mca_memheap_base_key_exchange) {
         oshmem_shmem_barrier();
@@ -648,7 +650,9 @@ void mca_memheap_modex_recv_all(void)
         rcv_offsets[i] = rcv_offsets[i - 1] + rcv_size[i - 1];
     }
 
-    rcv_buffer = malloc(rcv_offsets[nprocs - 1] + rcv_size[nprocs - 1]);
+    buffer_size = rcv_offsets[nprocs - 1] + rcv_size[nprocs - 1];
+
+    rcv_buffer = malloc (buffer_size);
     if (NULL == rcv_buffer) {
         MEMHEAP_ERROR("failed to allocate recieve buffer");
         rc = OSHMEM_ERR_OUT_OF_RESOURCE;
@@ -657,9 +661,12 @@ void mca_memheap_modex_recv_all(void)
 
     rc = oshmem_shmem_allgatherv(send_buffer, rcv_buffer, size, rcv_size, rcv_offsets);
     if (MPI_SUCCESS != rc) {
+        free (rcv_buffer);
         MEMHEAP_ERROR("allgatherv failed");
         goto exit_fatal;
     }
+
+    opal_dss.load(msg, rcv_buffer, buffer_size);
 
     /* deserialize mkeys */
     OPAL_THREAD_LOCK(&memheap_oob.lck);
@@ -668,7 +675,8 @@ void mca_memheap_modex_recv_all(void)
             continue;
         }
 
-        opal_dss.load(msg, (void*)((uint8_t *)rcv_buffer + rcv_offsets[i]), rcv_size[i]);
+        msg->unpack_ptr = (void *)((intptr_t) msg->base_ptr + rcv_offsets[i]);
+
         for (j = 0; j < memheap_map->n_segments; j++) {
             map_segment_t *s;
 
@@ -686,7 +694,6 @@ void mca_memheap_modex_recv_all(void)
             memheap_oob.mkeys = s->mkeys_cache[i];
             unpack_remote_mkeys(msg, i);
         }
-        opal_dss.unload(msg, &dummy_buffer, &dummy_size);
     }
 
     OPAL_THREAD_UNLOCK(&memheap_oob.lck);
@@ -703,9 +710,6 @@ exit_fatal:
     }
     if (send_buffer) {
         free(send_buffer);
-    }
-    if (rcv_buffer) {
-        free(rcv_buffer);
     }
     if (msg) {
         OBJ_RELEASE(msg);
