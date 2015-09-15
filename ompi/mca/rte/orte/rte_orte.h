@@ -96,27 +96,6 @@ typedef orte_error_t ompi_rte_error_report_t;
 #define ompi_rte_finalize() orte_finalize()
 OMPI_DECLSPEC void ompi_rte_wait_for_debugger(void);
 
-#define OMPI_DB_HOSTNAME ORTE_DB_HOSTNAME
-#define OMPI_DB_LOCALITY ORTE_DB_LOCALITY
-#define OMPI_DB_GLOBAL_RANK ORTE_DB_GLOBAL_RANK
-
-/* Communications */
-typedef orte_rml_tag_t ompi_rml_tag_t;
-#define ompi_rte_send_buffer_nb(a, b, c, d, e) orte_rml.send_buffer_nb(a, b, c, d, e)
-#define ompi_rte_recv_buffer_nb(a, b, c, d, e) orte_rml.recv_buffer_nb(a, b, c, d, e)
-#define ompi_rte_recv_cancel(a, b) orte_rml.recv_cancel(a, b)
-#define ompi_rte_parse_uris(a, b, c) orte_rml_base_parse_uris(a, b, c)
-#define ompi_rte_send_cbfunc orte_rml_send_callback
-
-/* Communication tags */
-/* carry over the INVALID def */
-#define OMPI_RML_TAG_INVALID ORTE_RML_TAG_INVALID
-/* define a starting point to avoid conflicts */
-#define OMPI_RML_TAG_BASE    ORTE_RML_TAG_MAX
-
-#define OMPI_RML_PERSISTENT      ORTE_RML_PERSISTENT
-#define OMPI_RML_NON_PERSISTENT  ORTE_RML_NON_PERSISTENT
-
 typedef struct {
     ompi_rte_component_t super;
     opal_mutex_t lock;
@@ -137,8 +116,6 @@ static inline orte_process_name_t * OMPI_CAST_RTE_NAME(opal_process_name_t * nam
     return (orte_process_name_t *)name;
 }
 #endif
-
-#define ompi_direct_modex_cutoff orte_direct_modex_cutoff
 
 END_C_DECLS
 

@@ -36,6 +36,9 @@ BEGIN_C_DECLS
 /* provide access to the framework verbose output without
  * exposing the entire base */
 extern int opal_pmix_verbose_output;
+extern int opal_pmix_base_exchange(opal_value_t *info,
+                                   opal_pmix_pdata_t *pdat,
+                                   int timeout);
 
 /**
  * Provide a simplified macro for sending data via modex
@@ -249,11 +252,23 @@ extern int opal_pmix_verbose_output;
         opal_pmix.fence((p), (s));    \
     } while(0);
 
+/**
+ * Provide a macro for accessing a base function that exchanges
+ * data values between two procs using the PMIx Publish/Lookup
+ * APIs */
+ #define OPAL_PMIX_EXCHANGE(r, i, p, t)                          \
+    do {                                                         \
+        OPAL_OUTPUT_VERBOSE((1, opal_pmix_verbose_output,        \
+                            "%s[%s:%d] EXCHANGE %s WITH %s",     \
+                            OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),  \
+                            __FILE__, __LINE__,                  \
+                            (i)->key, (p)->value.key));          \
+        (r) = opal_pmix_base_exchange((i), (p), (t));            \
+    } while(0);
+
+
 /* callback handler for errors */
 typedef void (*opal_pmix_errhandler_fn_t)(int error);
-
-/* NOTE: calls to these APIs must be thread-protected as there
- * currently is NO internal thread safety. */
 
 
 /************************************************************

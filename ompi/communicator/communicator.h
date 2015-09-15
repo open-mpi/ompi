@@ -17,7 +17,7 @@
  * Copyright (c) 2011-2013 Universite Bordeaux 1
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2014      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2015 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -93,7 +93,7 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_communicator_t);
 #define OMPI_COMM_CID_INTRA        0x00000020
 #define OMPI_COMM_CID_INTER        0x00000040
 #define OMPI_COMM_CID_INTRA_BRIDGE 0x00000080
-#define OMPI_COMM_CID_INTRA_OOB    0x00000100
+#define OMPI_COMM_CID_INTRA_PMIX   0x00000100
 #define OMPI_COMM_CID_GROUP        0x00000200
 
 /**
@@ -497,8 +497,8 @@ ompi_communicator_t* ompi_comm_allocate (int local_group_size,
  *                                          a bridge comm. local_leader
  *                                          and remote leader are in this
  *                                          case an int (rank in bridge-comm).
- *              OMPI_COMM_CID_INTRA_OOB:    2 intracomms, leaders talk
- *                                          through OOB. lleader and rleader
+ *              OMPI_COMM_CID_INTRA_PMIX:   2 intracomms, leaders talk
+ *                                          through PMIx. lleader and rleader
  *                                          are the required contact information.
  * @param send_first: to avoid a potential deadlock for
  *                    the OOB version.

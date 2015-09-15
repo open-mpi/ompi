@@ -162,6 +162,10 @@ int pmix_server_publish_fn(opal_process_name_t *proc,
             0 == strcmp(iptr->key, OPAL_PMIX_PERSISTENCE)) {
             continue;
         }
+        opal_output_verbose(5, orte_pmix_server_globals.output,
+                            "%s publishing data %s of type %d from source %s",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), iptr->key, iptr->type,
+                            ORTE_NAME_PRINT(proc));
         if (OPAL_SUCCESS != (rc = opal_dss.pack(&req->msg, &iptr, 1, OPAL_VALUE))) {
             ORTE_ERROR_LOG(rc);
             OBJ_RELEASE(req);
@@ -398,15 +402,15 @@ void pmix_server_keyval_client(int status, orte_process_name_t* sender,
         while (OPAL_SUCCESS == opal_dss.unpack(buffer, &source, &cnt, OPAL_NAME)) {
             pdata = OBJ_NEW(opal_pmix_pdata_t);
             pdata->proc = source;
-            opal_output_verbose(5, orte_pmix_server_globals.output,
-                                "%s recvd lookup returned data from source %s",
-                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                ORTE_NAME_PRINT(&source));
             if (OPAL_SUCCESS != (rc = opal_dss.unpack(buffer, &iptr, &cnt, OPAL_VALUE))) {
                 ORTE_ERROR_LOG(rc);
                 OBJ_RELEASE(pdata);
                 continue;
             }
+            opal_output_verbose(5, orte_pmix_server_globals.output,
+                                "%s recvd lookup returned data %s of type %d from source %s",
+                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), iptr->key, iptr->type,
+                                ORTE_NAME_PRINT(&source));
             if (OPAL_SUCCESS != (rc = opal_value_xfer(&pdata->value, iptr))) {
                 ORTE_ERROR_LOG(rc);
                 OBJ_RELEASE(pdata);
