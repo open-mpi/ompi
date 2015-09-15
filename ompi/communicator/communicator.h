@@ -535,6 +535,18 @@ int ompi_comm_finalize (void);
 /**
  * This is THE routine, where all the communicator stuff
  * is really set.
+ *
+ * @param[out] newcomm            new ompi communicator object
+ * @param[in]  oldcomm            old communicator
+ * @param[in]  local_size         size of local_ranks array
+ * @param[in]  local_ranks        local ranks (not used if local_group != NULL)
+ * @param[in]  remote_size        size of remote_ranks array
+ * @param[in]  remote_ranks       remote ranks (intercomm) (not used if remote_group != NULL)
+ * @param[in]  attr               attributes (can be NULL)
+ * @param[in]  errh               error handler
+ * @param[in]  copy_topocomponent whether to copy the topology
+ * @param[in]  local_group        local process group (may be NULL if local_ranks array supplied)
+ * @param[in]  remote_group       remote process group (may be NULL)
  */
 OMPI_DECLSPEC int ompi_comm_set ( ompi_communicator_t** newcomm,
                                   ompi_communicator_t* oldcomm,
@@ -548,6 +560,23 @@ OMPI_DECLSPEC int ompi_comm_set ( ompi_communicator_t** newcomm,
                                   ompi_group_t *local_group,
                                   ompi_group_t *remote_group   );
 
+/**
+ * This is THE routine, where all the communicator stuff
+ * is really set. Non-blocking version.
+ *
+ * @param[out] newcomm            new ompi communicator object
+ * @param[in]  oldcomm            old communicator
+ * @param[in]  local_size         size of local_ranks array
+ * @param[in]  local_ranks        local ranks (not used if local_group != NULL)
+ * @param[in]  remote_size        size of remote_ranks array
+ * @param[in]  remote_ranks       remote ranks (intercomm) (not used if remote_group != NULL)
+ * @param[in]  attr               attributes (can be NULL)
+ * @param[in]  errh               error handler
+ * @param[in]  copy_topocomponent whether to copy the topology
+ * @param[in]  local_group        local process group (may be NULL if local_ranks array supplied)
+ * @param[in]  remote_group       remote process group (may be NULL)
+ * @param[out] req                ompi_request_t object for tracking completion
+ */
 OMPI_DECLSPEC int ompi_comm_set_nb ( ompi_communicator_t **ncomm,
                                      ompi_communicator_t *oldcomm,
                                      int local_size,
