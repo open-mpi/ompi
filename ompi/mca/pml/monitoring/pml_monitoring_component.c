@@ -101,26 +101,6 @@ mca_pml_monitoring_messages_notify(mca_base_pvar_t *pvar,
     return OMPI_ERROR;
 }
 
-static int
-mca_pml_monitoring_get_flush(const struct mca_base_pvar_t *pvar, void *value, void *obj)
-{
-    return OMPI_SUCCESS;
-}
-
-static int
-mca_pml_monitoring_notify_flush(struct mca_base_pvar_t *pvar, mca_base_pvar_event_t event,
-                                void *obj, int *count)
-{
-    switch event {
-        case MCA_BASE_PVAR_HANDLE_BIND:
-        case MCA_BASE_PVAR_HANDLE_UNBIND:
-        case MCA_BASE_PVAR_HANDLE_START:
-        case MCA_BASE_PVAR_HANDLE_STOP:
-            return OMPI_SUCCESS;
-        }
-    return OMPI_ERROR;
-}
-
 int mca_pml_monitoring_enable(bool enable)
 {
     /* If we reach this point we were succesful at hijacking the interface of
