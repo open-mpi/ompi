@@ -1297,7 +1297,7 @@ static bool ompi_dpm_group_is_dyn (ompi_group_t *group, ompi_jobid_t thisjobid)
 {
     int size = group ? ompi_group_size (group) : 0;
 
-    for (int i = 1 ; i < size ; ++i) {
+    for (int i = 0 ; i < size ; ++i) {
         opal_process_name_t name = ompi_group_get_proc_name (group, i);
 
         if (thisjobid != ((ompi_process_name_t *) &name)->jobid) {
