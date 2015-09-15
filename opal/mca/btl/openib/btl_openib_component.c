@@ -2363,6 +2363,13 @@ static float get_ib_dev_distance(struct ibv_device *dev)
         goto out;
     }
 
+    opal_output_verbose(5, opal_btl_base_framework.framework_output,
+                        "hwloc_distances->nbobjs=%d", hwloc_distances->nbobjs);
+    for (i = 0; i < (int)(2 *  hwloc_distances->nbobjs); i++) {
+        opal_output_verbose(5, opal_btl_base_framework.framework_output,
+                            "hwloc_distances->latency[%d]=%f", i, hwloc_distances->latency[i]);
+    }
+
     /* If ibv_obj is a NUMA node or below, we're good. */
     switch (ibv_obj->type) {
     case HWLOC_OBJ_NODE:
@@ -2378,6 +2385,7 @@ static float get_ib_dev_distance(struct ibv_device *dev)
     default:
         /* If it's above a NUMA node, then I don't know how to compute
            the distance... */
+        opal_output_verbose(5, opal_btl_base_framework.framework_output, "ibv_obj->type set to NULL");
         ibv_obj = NULL;
         break;
     }
@@ -2387,6 +2395,8 @@ static float get_ib_dev_distance(struct ibv_device *dev)
         goto out;
     }
 
+    opal_output_verbose(5, opal_btl_base_framework.framework_output,
+                        "ibv_obj->logical_index=%d", ibv_obj->logical_index);
     /* This function is only called if the process is bound, so let's
        find out where we are bound to.  For the moment, we only care
        about the NUMA node to which we are bound. */
@@ -2413,6 +2423,8 @@ static float get_ib_dev_distance(struct ibv_device *dev)
             my_obj = my_obj->parent;
         }
         if (NULL != my_obj) {
+            opal_output_verbose(5, opal_btl_base_framework.framework_output,
+                                "my_obj->logical_index=%d", my_obj->logical_index);
             /* Distance may be asymetrical, so calculate both of them
                and take the max */
             a = hwloc_distances->latency[my_obj->logical_index +
@@ -2472,6 +2484,8 @@ sort_devs_by_distance(struct ibv_device **ib_devs, int count)
 
     for (i = 0; i < count; i++) {
         devs[i].ib_dev = ib_devs[i];
+        opal_output_verbose(5, opal_btl_base_framework.framework_output,
+                            "Checking distance from this process to device=%s", ibv_get_device_name(ib_devs[i]));
         /* If we're not bound, just assume that the device is close. */
         devs[i].distance = 0;
 #if OPAL_HAVE_HWLOC
@@ -2481,6 +2495,9 @@ sort_devs_by_distance(struct ibv_device **ib_devs, int count)
             devs[i].distance = get_ib_dev_distance(ib_devs[i]);
         }
 #endif
+        opal_output_verbose(5, opal_btl_base_framework.framework_output,
+                            "Process is %s: distance to device is %f",
+                            (opal_process_info.cpuset ? "bound" : "not bound"), devs[i].distance);
     }
 
     qsort(devs, count, sizeof(struct dev_distance), compare_distance);
