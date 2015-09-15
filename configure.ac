@@ -1407,7 +1407,6 @@ AC_CONFIG_FILES([
     test/support/Makefile
     test/threads/Makefile
     test/util/Makefile
-    test/monitoring/Makefile
 ])
 m4_ifdef([project_ompi], [AC_CONFIG_FILES([test/monitoring/Makefile])])
 
