@@ -1720,7 +1720,8 @@ fi
 AC_CHECK_FUNCS(lstat)
 if test "$ac_cv_func_lstat" = "yes" ; then
     # Do we need to declare lstat?
-    PAC_FUNC_NEEDS_DECL([#include <unistd.h>],lstat)
+    PAC_FUNC_NEEDS_DECL([#include <unistd.h>
+                         #include <sys/stat.h>],lstat)
 fi
 AC_CHECK_FUNCS(readlink)
 if test "$ac_cv_func_readlink" = "yes" ; then
