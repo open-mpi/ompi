@@ -110,6 +110,43 @@ extern int opal_pmix_verbose_output;
 
 /**
  * Provide a simplified macro for retrieving modex data
+ * from another process when we don't want the PMIx module
+ * to request it from the server if not found:
+ *
+ * r - the integer return status from the modex op (int)
+ * s - string key (char*)
+ * p - pointer to the opal_process_name_t of the proc that posted
+ *     the data (opal_process_name_t*)
+ * d - pointer to a location wherein the data object
+ *     is to be returned
+ * t - the expected data type
+ */
+#define OPAL_MODEX_RECV_VALUE_OPTIONAL(r, s, p, d, t)                                    \
+    do {                                                                                 \
+        opal_value_t *_kv, *_info;                                                       \
+        opal_list_t _ilist;                                                              \
+        OPAL_OUTPUT_VERBOSE((1, opal_pmix_verbose_output,                                \
+                            "%s[%s:%d] MODEX RECV VALUE OPTIONAL FOR PROC %s KEY %s",    \
+                            OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),                          \
+                            __FILE__, __LINE__,                                          \
+                            OPAL_NAME_PRINT(*(p)), (s)));                                \
+        OBJ_CONSTRUCT(&(_ilist), opal_list_t);                                           \
+        _info = OBJ_NEW(opal_value_t);                                                   \
+        _info->key = strdup(OPAL_PMIX_OPTIONAL);                                         \
+        _info->type = OPAL_BOOL;                                                         \
+        _info->data.flag = true;                                                         \
+        opal_list_append(&(_ilist), &(_info)->super);                                    \
+        if (OPAL_SUCCESS != ((r) = opal_pmix.get((p), (s), &(_ilist), &(_kv)))) {        \
+            *(d) = NULL;                                                                 \
+        } else {                                                                         \
+            (r) = opal_value_unload(_kv, (void**)(d), (t));                              \
+            OBJ_RELEASE(_kv);                                                            \
+        }                                                                                \
+        OPAL_LIST_DESTRUCT(&(_ilist));                                                   \
+    } while(0);
+
+/**
+ * Provide a simplified macro for retrieving modex data
  * from another process:
  *
  * r - the integer return status from the modex op (int)
@@ -128,7 +165,7 @@ extern int opal_pmix_verbose_output;
                             OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),                 \
                             __FILE__, __LINE__,                                 \
                             OPAL_NAME_PRINT(*(p)), (s)));                       \
-        if (OPAL_SUCCESS != ((r) = opal_pmix.get((p), (s), &(_kv)))) {          \
+        if (OPAL_SUCCESS != ((r) = opal_pmix.get((p), (s), NULL, &(_kv)))) {    \
             *(d) = NULL;                                                        \
         } else {                                                                \
             (r) = opal_value_unload(_kv, (void**)(d), (t));                     \
@@ -157,7 +194,7 @@ extern int opal_pmix_verbose_output;
                             OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),                 \
                             __FILE__, __LINE__,                                 \
                             OPAL_NAME_PRINT(*(p)), (s)));                       \
-        if (OPAL_SUCCESS == ((r) = opal_pmix.get((p), (s), &(_kv))) &&          \
+        if (OPAL_SUCCESS == ((r) = opal_pmix.get((p), (s), NULL, &(_kv))) &&    \
             NULL != _kv) {                                                      \
             *(d) = _kv->data.bo.bytes;                                          \
             *(sz) = _kv->data.bo.size;                                          \
@@ -301,23 +338,24 @@ typedef int (*opal_pmix_base_module_put_fn_t)(opal_pmix_scope_t scope,
                                               opal_value_t *val);
 
 /* Retrieve information for the specified _key_ as published by the rank
- * and jobid i the provided opal_process_name, returning a pointer to the value in the
- * given address.
+ * and jobid i the provided opal_process_name, and subject to any provided
+ * constraints, returning a pointer to the value in the given address.
  *
  * This is a blocking operation - the caller will block until
  * the specified data has been _PMIx_Put_ by the specified rank. The caller is
  * responsible for freeing all memory associated with the returned value when
  * no longer required. */
 typedef int (*opal_pmix_base_module_get_fn_t)(const opal_process_name_t *proc,
-                                              const char *key,
+                                              const char *key, opal_list_t *info,
                                               opal_value_t **val);
 
 /* Retrieve information for the specified _key_ as published by the given rank
- * and jobid in the opal_process_name_t. This is a non-blocking operation - the
+ * and jobid in the opal_process_name_t, and subject to any provided
+ * constraints. This is a non-blocking operation - the
  * callback function will be executed once the specified data has been _PMIx_Put_
  * by the specified proc and retrieved by the local server. */
 typedef int (*opal_pmix_base_module_get_nb_fn_t)(const opal_process_name_t *proc,
-                                                 const char *key,
+                                                 const char *key, opal_list_t *info,
                                                  opal_pmix_value_cbfunc_t cbfunc, void *cbdata);
 
 /* Publish the given data to the "universal" nspace

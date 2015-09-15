@@ -117,6 +117,7 @@ pmix_status_t PMIx_Get_nb(const pmix_proc_t *proc, const char *key,
     pmix_status_t rc;
     char *nm;
     pmix_nspace_t *ns, *nptr;
+    size_t n;
 
     if (NULL == proc) {
         return PMIX_ERR_BAD_PARAM;
@@ -252,7 +253,7 @@ pmix_status_t PMIx_Get_nb(const pmix_proc_t *proc, const char *key,
          * key to eventually be found, so all we can do is return
          * the error */
         pmix_output_verbose(2, pmix_globals.debug_output,
-                            "Error requesting key=%s for rank = %d, namespace = %s\n",
+                            "Error requesting key=%s for rank = %d, namespace = %s",
                             key, proc->rank, nm);
         return rc;
     }
@@ -265,6 +266,18 @@ pmix_status_t PMIx_Get_nb(const pmix_proc_t *proc, const char *key,
         return PMIX_ERR_NOT_FOUND;
     }
 
+    /* we also have to check the user's directives to see if they do not want
+     * us to attempt to retrieve it from the server */
+    for (n=0; n < ninfo; n++) {
+        if (0 == strcmp(info[n].key, PMIX_OPTIONAL) &&
+            info[n].value.data.flag) {
+            /* they don't want us to try and retrieve it */
+            pmix_output_verbose(2, pmix_globals.debug_output,
+                                "PMIx_Get key=%s for rank = %d, namespace = %s was not found - request was optional",
+                                key, proc->rank, nm);
+            return PMIX_ERR_NOT_FOUND;
+        }
+    }
     /* see if we already have a request in place with the server for data from
      * this nspace:rank. If we do, then no need to ask again as the
      * request will return _all_ data from that proc */

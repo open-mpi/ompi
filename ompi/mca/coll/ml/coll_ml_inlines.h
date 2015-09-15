@@ -7,6 +7,8 @@
  *                         reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -466,7 +468,7 @@ static inline __opal_attribute_always_inline__ mca_coll_ml_collective_operation_
 mca_coll_ml_alloc_op_prog_single_frag_dag(
         mca_coll_ml_module_t *ml_module,
         mca_coll_ml_collective_operation_description_t *coll_schedule,
-        void *src, void *dst, size_t total_bytes,
+        const void *src, void *dst, size_t total_bytes,
         size_t offset_into_user_buffer
         )
 {
@@ -511,7 +513,7 @@ mca_coll_ml_duplicate_op_prog_single_frag_dag(
     new_op = mca_coll_ml_alloc_op_prog_single_frag_dag(ml_module,
             ml_module->coll_ml_bcast_functions[old_op->fragment_data.current_coll_op],
             old_op->fragment_data.message_descriptor->dest_user_addr,
-            old_op->fragment_data.message_descriptor->src_user_addr,
+            (void *)old_op->fragment_data.message_descriptor->src_user_addr,
             old_op->fragment_data.message_descriptor->n_bytes_total,
             old_op->fragment_data.message_descriptor->n_bytes_scheduled);
 

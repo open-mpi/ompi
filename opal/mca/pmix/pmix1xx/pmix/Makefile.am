@@ -26,6 +26,7 @@ ACLOCAL_AMFLAGS = -I ./config
 headers =
 sources =
 nodist_headers =
+EXTRA_DIST =
 
 # Only install the valgrind suppressions file if we're building in
 # standalone mode
@@ -34,14 +35,9 @@ if ! PMIX_EMBEDDED_MODE
 dist_pmixdata_DATA += contrib/pmix-valgrind.supp
 endif
 
-EXTRA_DIST = README INSTALL VERSION LICENSE autogen.sh \
-             config/pmix_get_version.sh
-
-EXTRA_DIST += \
-             test/test_common.h test/cli_stages.h \
-             test/server_callbacks.h test/test_fence.h \
-             test/test_publish.h test/test_resolve_peers.h \
-             test/test_spawn.h test/utils.h test/test_cd.h
+man_MANS = \
+        man/man3/pmix_init.3 \
+        man/man7/pmix.7
 
 include config/Makefile.am
 include include/Makefile.am
@@ -62,6 +58,20 @@ libpmix_la_LDFLAGS = -version-info $(libpmix_so_version)
 if ! PMIX_EMBEDDED_MODE
 SUBDIRS = . test examples
 endif
+
+nroff:
+	@for file in $(man_MANS); do \
+	    source=`echo $$file | sed -e 's@/man[0-9]@@'`; \
+	    contrib/md2nroff.pl --source=$$source.md; \
+	done
+
+EXTRA_DIST += README INSTALL VERSION LICENSE autogen.sh \
+             config/pmix_get_version.sh $(man_MANS) \
+             test/test_common.h test/cli_stages.h \
+             test/server_callbacks.h test/test_fence.h \
+             test/test_publish.h test/test_resolve_peers.h \
+             test/test_spawn.h test/utils.h test/test_cd.h
+
 
 dist-hook:
 	env LS_COLORS= sh "$(top_srcdir)/config/distscript.sh" "$(top_srcdir)" "$(distdir)" "$(PMIX_VERSION)" "$(PMIX_REPO_REV)"

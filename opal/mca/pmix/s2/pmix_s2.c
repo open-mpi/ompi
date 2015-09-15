@@ -46,7 +46,7 @@ static int s2_fence(opal_list_t *procs, int collect_data);
 static int s2_put(opal_pmix_scope_t scope,
                   opal_value_t *kv);
 static int s2_get(const opal_process_name_t *id,
-                  const char *key,
+                  const char *key, opal_list_t *info,
                   opal_value_t **kv);
 static int s2_publish(opal_list_t *info);
 static int s2_lookup(opal_list_t *data, opal_list_t *info);
@@ -157,9 +157,6 @@ static int kvs_get(const char key[], char value [], int maxvalue)
      * case
      */
     if (PMI_SUCCESS != rc) {
-        if (PMI_ERR_INVALID_KEY != rc) {
-            OPAL_PMI_ERROR(rc, "PMI_KVS_Get");
-        }
         return OPAL_ERROR;
     }
     return OPAL_SUCCESS;
@@ -320,8 +317,8 @@ static int s2_init(void)
     /* save the local size */
     OBJ_CONSTRUCT(&kv, opal_value_t);
     kv.key = strdup(OPAL_PMIX_LOCAL_SIZE);
-    kv.type = OPAL_UINT16;
-    kv.data.uint16 = s2_nlranks;
+    kv.type = OPAL_UINT32;
+    kv.data.uint32 = s2_nlranks;
     if (OPAL_SUCCESS != (rc = opal_pmix_base_store(&OPAL_PROC_MY_NAME, &kv))) {
         OPAL_ERROR_LOG(rc);
         OBJ_DESTRUCT(&kv);
@@ -610,11 +607,10 @@ static int s2_fence(opal_list_t *procs, int collect_data)
 }
 
 static int s2_get(const opal_process_name_t *id,
-                  const char *key,
+                  const char *key, opal_list_t *info,
                   opal_value_t **kv)
 {
     int rc;
-    opal_output(0, "CALLED GET FOR %s", key);
     rc = opal_pmix_base_cache_keys_locally(id, key, kv, pmix_kvs_name, pmix_vallen_max, kvs_get);
     return rc;
 }

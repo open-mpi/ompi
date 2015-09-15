@@ -4,6 +4,8 @@
  *                         All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -17,7 +19,6 @@
 #include "opal/mca/btl/btl.h"
 #include "oshmem/mca/spml/base/spml_base_putreq.h"
 #include "opal/mca/mpool/base/base.h"
-#include "ompi/mca/pml/ob1/pml_ob1_comm.h"
 #include "ompi/mca/bml/bml.h"
 #include "oshmem/mca/spml/yoda/spml_yoda_rdmafrag.h"
 #include "oshmem/mca/spml/yoda/spml_yoda.h"

@@ -39,7 +39,7 @@ static int s1_fence(opal_list_t *procs, int collect_data);
 static int s1_put(opal_pmix_scope_t scope,
                   opal_value_t *kv);
 static int s1_get(const opal_process_name_t *id,
-                  const char *key,
+                  const char *key, opal_list_t *info,
                   opal_value_t **kv);
 static int s1_publish(opal_list_t *info);
 static int s1_lookup(opal_list_t *data, opal_list_t *info);
@@ -126,7 +126,7 @@ static int kvs_get(const char key[], char value [], int maxvalue)
     int rc;
     rc = PMI_KVS_Get(pmix_kvs_name, key, value, maxvalue);
     if( PMI_SUCCESS != rc ){
-        OPAL_PMI_ERROR(rc, "PMI_KVS_Get");
+        /* silently return an error - might be okay */
         return OPAL_ERROR;
     }
     return OPAL_SUCCESS;
@@ -206,6 +206,7 @@ static int s1_init(void)
     ret = PMI_Get_rank(&rank);
     if( PMI_SUCCESS != ret ) {
         OPAL_PMI_ERROR(ret, "PMI_Get_rank");
+        free(pmix_id);
         goto err_exit;
     }
 
@@ -219,7 +220,6 @@ static int s1_init(void)
         ui32 = strtoul(str, NULL, 10);
         s1_pname.jobid |= (ui32 & 0x0000ffff);
     }
-    free(pmix_id);
     ldr.jobid = s1_pname.jobid;
     s1_pname.vpid = rank;
     /* store our name in the opal_proc_t so that
@@ -274,8 +274,8 @@ static int s1_init(void)
     /* save the local size */
     OBJ_CONSTRUCT(&kv, opal_value_t);
     kv.key = strdup(OPAL_PMIX_LOCAL_SIZE);
-    kv.type = OPAL_UINT16;
-    kv.data.uint16 = nlranks;
+    kv.type = OPAL_UINT32;
+    kv.data.uint32 = nlranks;
     if (OPAL_SUCCESS != (ret = opal_pmix_base_store(&OPAL_PROC_MY_NAME, &kv))) {
         OPAL_ERROR_LOG(ret);
         OBJ_DESTRUCT(&kv);
@@ -588,7 +588,7 @@ static int s1_fence(opal_list_t *procs, int collect_data)
 }
 
 static int s1_get(const opal_process_name_t *id,
-                  const char *key,
+                  const char *key, opal_list_t *info,
                   opal_value_t **kv)
 {
     int rc;

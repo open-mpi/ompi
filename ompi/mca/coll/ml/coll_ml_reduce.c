@@ -2,6 +2,8 @@
 /*
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -268,7 +270,7 @@ static int mca_coll_ml_reduce_frag_progress(mca_coll_ml_collective_operation_pro
 }
 
 static inline __opal_attribute_always_inline__
-int parallel_reduce_start (void *sbuf, void *rbuf, int count,
+int parallel_reduce_start (const void *sbuf, void *rbuf, int count,
                            struct ompi_datatype_t *dtype, struct ompi_op_t *op,
                            int root,
                            struct ompi_communicator_t *comm,
@@ -457,7 +459,7 @@ int parallel_reduce_start (void *sbuf, void *rbuf, int count,
 }
 
 
-int mca_coll_ml_reduce(void *sbuf, void *rbuf, int count,
+int mca_coll_ml_reduce(const void *sbuf, void *rbuf, int count,
         struct ompi_datatype_t *dtype, struct ompi_op_t *op,
         int root, struct ompi_communicator_t *comm,
         mca_coll_base_module_t *module) {
@@ -492,7 +494,7 @@ int mca_coll_ml_reduce(void *sbuf, void *rbuf, int count,
 }
 
 
-int mca_coll_ml_reduce_nb(void *sbuf, void *rbuf, int count,
+int mca_coll_ml_reduce_nb(const void *sbuf, void *rbuf, int count,
         struct ompi_datatype_t *dtype, struct ompi_op_t *op,
         int root, struct ompi_communicator_t *comm,
         ompi_request_t **req,

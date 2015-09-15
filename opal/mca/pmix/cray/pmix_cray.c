@@ -61,9 +61,10 @@ static int cray_fence_nb(opal_list_t *procs, int collect_data,
                          opal_pmix_op_cbfunc_t cbfunc, void *cbdata);
 static int cray_commit(void);
 static int cray_get(const opal_process_name_t *id,
-                    const char *key,
+                    const char *key, opal_list_t *info,
                     opal_value_t **kv);
 static int cray_get_nb(const opal_process_name_t *id, const char *key,
+                       opal_list_t *info,
                        opal_pmix_value_cbfunc_t cbfunc, void *cbdata);
 static int cray_publish(opal_list_t *info);
 static int cray_publish_nb(opal_list_t *info,
@@ -314,8 +315,8 @@ static int cray_init(void)
     /* save the local size */
     OBJ_CONSTRUCT(&kv, opal_value_t);
     kv.key = strdup(OPAL_PMIX_LOCAL_SIZE);
-    kv.type = OPAL_UINT16;
-    kv.data.uint16 = pmix_nlranks;
+    kv.type = OPAL_UINT32;
+    kv.data.uint32 = pmix_nlranks;
     if (OPAL_SUCCESS != (rc = opal_pmix_base_store(&OPAL_PROC_MY_NAME, &kv))) {
         OPAL_ERROR_LOG(rc);
         OBJ_DESTRUCT(&kv);
@@ -735,7 +736,7 @@ static int cray_fence_nb(opal_list_t *procs, int collect_data,
     return OPAL_ERR_NOT_IMPLEMENTED;
 }
 
-static int cray_get(const opal_process_name_t *id, const char *key, opal_value_t **kv)
+static int cray_get(const opal_process_name_t *id, const char *key, opal_list_t *info, opal_value_t **kv)
 {
     int rc;
     opal_list_t vals;
@@ -762,7 +763,7 @@ static int cray_get(const opal_process_name_t *id, const char *key, opal_value_t
 }
 
 static int cray_get_nb(const opal_process_name_t *id, const char *key,
-                       opal_pmix_value_cbfunc_t cbfunc, void *cbdata)
+                       opal_list_t *info, opal_pmix_value_cbfunc_t cbfunc, void *cbdata)
 {
     return OPAL_ERR_NOT_IMPLEMENTED;
 }

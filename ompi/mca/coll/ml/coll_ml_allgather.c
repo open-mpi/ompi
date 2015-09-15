@@ -4,6 +4,8 @@
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
  * Copyright (c) 2013-2014 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -132,7 +134,7 @@ static int mca_coll_ml_allgather_frag_progress(mca_coll_ml_collective_operation_
     int ret;
     size_t frag_len, dt_size;
 
-    void *buf;
+    const void *buf;
     mca_bcol_base_payload_buffer_desc_t *src_buffer_desc;
     mca_coll_ml_collective_operation_progress_t *new_op;
 
@@ -284,7 +286,7 @@ static int mca_coll_ml_allgather_frag_progress(mca_coll_ml_collective_operation_
 }
 
 static inline __opal_attribute_always_inline__
-int mca_coll_ml_allgather_start (void *sbuf, int scount,
+int mca_coll_ml_allgather_start (const void *sbuf, int scount,
                                  struct ompi_datatype_t *sdtype,
                                  void* rbuf, int rcount,
                                  struct ompi_datatype_t *rdtype,
@@ -580,7 +582,7 @@ int mca_coll_ml_allgather_start (void *sbuf, int scount,
     return OMPI_SUCCESS;
 }
 
-int mca_coll_ml_allgather(void *sbuf, int scount,
+int mca_coll_ml_allgather(const void *sbuf, int scount,
                           struct ompi_datatype_t *sdtype,
                           void* rbuf, int rcount,
                           struct ompi_datatype_t *rdtype,
@@ -606,7 +608,7 @@ int mca_coll_ml_allgather(void *sbuf, int scount,
     return ret;
 }
 
-int mca_coll_ml_allgather_nb(void *sbuf, int scount,
+int mca_coll_ml_allgather_nb(const void *sbuf, int scount,
                              struct ompi_datatype_t *sdtype,
                              void* rbuf, int rcount,
                              struct ompi_datatype_t *rdtype,

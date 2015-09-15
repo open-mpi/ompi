@@ -897,7 +897,9 @@ int mca_btl_sm_sendi( struct mca_btl_base_module_t* btl,
         /* note that frag==NULL is equivalent to rc returning an error code */
         MCA_BTL_SM_FRAG_ALLOC_EAGER(frag);
         if( OPAL_UNLIKELY(NULL == frag) ) {
-            *descriptor = NULL;
+            if (NULL != descriptor) {
+                *descriptor = NULL;
+            }
             return OPAL_ERR_OUT_OF_RESOURCE;
         }
 

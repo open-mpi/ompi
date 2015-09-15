@@ -557,12 +557,12 @@ int ompi_group_compare(ompi_group_t *group1,
 
 bool ompi_group_have_remote_peers (ompi_group_t *group)
 {
-    for (size_t i = 0 ; i < group->grp_proc_count ; ++i) {
+    for (int i = 0 ; i < group->grp_proc_count ; ++i) {
         ompi_proc_t *proc = NULL;
 #if OMPI_GROUP_SPARSE
         proc = ompi_group_peer_lookup (group, i);
 #else
-        if ((intptr_t) group->grp_proc_pointers[i] < 0) {
+        if (ompi_proc_is_sentinel (group->grp_proc_pointers[i])) {
             return true;
         }
         proc = group->grp_proc_pointers[i];

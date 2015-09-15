@@ -14,7 +14,7 @@
  * Copyright (c) 2012-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2013-2015 Intel, Inc. All rights reserved
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -140,7 +140,7 @@ static int ompi_proc_complete_init_single (ompi_proc_t *proc)
 
     /* get the locality information - all RTEs are required
      * to provide this information at startup */
-    OPAL_MODEX_RECV_VALUE(ret, OPAL_PMIX_LOCALITY, &proc->super.proc_name, &u16ptr, OPAL_UINT16);
+    OPAL_MODEX_RECV_VALUE_OPTIONAL(ret, OPAL_PMIX_LOCALITY, &proc->super.proc_name, &u16ptr, OPAL_UINT16);
     if (OPAL_SUCCESS != ret) {
         proc->super.proc_flags = OPAL_PROC_NON_LOCAL;
     } else {
@@ -149,11 +149,12 @@ static int ompi_proc_complete_init_single (ompi_proc_t *proc)
 
     /* we can retrieve the hostname at no cost because it
      * was provided at startup */
-    OPAL_MODEX_RECV_VALUE(ret, OPAL_PMIX_HOSTNAME, &proc->super.proc_name,
-			  (char**)&(proc->super.proc_hostname), OPAL_STRING);
+    OPAL_MODEX_RECV_VALUE_OPTIONAL(ret, OPAL_PMIX_HOSTNAME, &proc->super.proc_name,
+                                   (char**)&(proc->super.proc_hostname), OPAL_STRING);
     if (OPAL_SUCCESS != ret) {
-	return ret;
+        proc->super.proc_hostname = NULL;
     }
+
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
     /* get the remote architecture - this might force a modex except
      * for those environments where the RM provides it */
@@ -266,7 +267,7 @@ int ompi_proc_init(void)
     opal_proc_local_set(&proc->super);
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
     /* add our arch to the modex */
-    OPAL_MODEX_SEND_VALUE(ret, PMIX_GLOBAL,
+    OPAL_MODEX_SEND_VALUE(ret, OPAL_PMIX_GLOBAL,
                           OPAL_PMIX_ARCH, &opal_local_arch, OPAL_UINT32);
     if (OPAL_SUCCESS != ret) {
         return ret;
@@ -345,13 +346,13 @@ int ompi_proc_complete_init(void)
 
             /* the runtime is required to fill in locality for all local processes by this
              * point. only local processes will have locality set */
-            OPAL_MODEX_RECV_VALUE(ret, OPAL_PMIX_LOCALITY, &proc_name, &u16ptr, OPAL_UINT16);
+            OPAL_MODEX_RECV_VALUE_OPTIONAL(ret, OPAL_PMIX_LOCALITY, &proc_name, &u16ptr, OPAL_UINT16);
             if (OPAL_SUCCESS == ret) {
                 locality = u16;
             }
 
             if (OPAL_PROC_NON_LOCAL != locality) {
-	      (void) ompi_proc_for_name (proc_name);
+                (void) ompi_proc_for_name (proc_name);
             }
         }
     }

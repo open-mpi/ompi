@@ -81,7 +81,7 @@ static inline int mca_btl_scif_ep_init (mca_btl_scif_endpoint_t *endpoint,
     endpoint->state = MCA_BTL_SCIF_EP_STATE_INIT;
 
     OPAL_MODEX_RECV(rc, &mca_btl_scif_component.super.btl_version,
-                    peer_proc, (void **) &modex, &msg_size);
+                    &peer_proc->proc_name, (void **) &modex, &msg_size);
     if (OPAL_SUCCESS != rc) {
         return rc;
     }
