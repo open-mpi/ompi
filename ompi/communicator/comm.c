@@ -84,8 +84,8 @@ static int ompi_comm_copy_topo (ompi_communicator_t *oldcomm,
                                 ompi_communicator_t *newcomm);
 
 /* idup with local group and info. the local group support is provided to support ompi_comm_set_nb */
-static int ompi_comm_idup_internal (ompi_communicator_t *comm, ompi_group_t *group, ompi_info_t *info,
-                                    ompi_communicator_t **newcomm, ompi_request_t **req);
+static int ompi_comm_idup_internal (ompi_communicator_t *comm, ompi_group_t *group, ompi_group_t *remote_group,
+                                    ompi_info_t *info, ompi_communicator_t **newcomm, ompi_request_t **req);
 
 
 /**********************************************************************/
@@ -144,6 +144,14 @@ int ompi_comm_set_nb ( ompi_communicator_t **ncomm,
     ompi_communicator_t *newcomm = NULL;
     int ret;
 
+    if (NULL != local_group) {
+        local_size = ompi_group_size (local_group);
+    }
+
+    if (NULL != remote_group) {
+        remote_size = ompi_group_size (remote_group);
+    }
+
     *req = NULL;
 
     /* ompi_comm_allocate */
@@ -170,6 +178,8 @@ int ompi_comm_set_nb ( ompi_communicator_t **ncomm,
 
     /* Set remote group and duplicate the local comm, if applicable */
     if (0 < remote_size) {
+        ompi_communicator_t *old_localcomm;
+
         if (NULL == remote_group || &ompi_mpi_group_null.group == remote_group) {
             ret = ompi_group_incl(oldcomm->c_remote_group, remote_size,
                                   remote_ranks, &newcomm->c_remote_group);
@@ -181,18 +191,14 @@ int ompi_comm_set_nb ( ompi_communicator_t **ncomm,
             OBJ_RETAIN(newcomm->c_remote_group);
             ompi_group_increment_proc_count(newcomm->c_remote_group);
         }
-    }
-    if (0 < remote_size || &ompi_mpi_group_null.group == remote_group) {
+
         newcomm->c_flags |= OMPI_COMM_INTER;
-        if ( OMPI_COMM_IS_INTRA(oldcomm) ) {
-            ompi_comm_idup(oldcomm, &newcomm->c_local_comm, req);
-        } else if (NULL == local_group) {
-            ompi_comm_idup(oldcomm->c_local_comm, &newcomm->c_local_comm, req);
-        } else {
-            /* NTH: use internal idup function that takes a local group argument */
-            ompi_comm_idup_internal (oldcomm->c_local_comm, local_group, NULL,
-                                     &newcomm->c_local_comm, req);
-        }
+
+        old_localcomm = OMPI_COMM_IS_INTRA(oldcomm) ? oldcomm : oldcomm->c_local_comm;
+
+        /* NTH: use internal idup function that takes a local group argument */
+        ompi_comm_idup_internal (old_localcomm, newcomm->c_local_group, NULL, NULL,
+                                 &newcomm->c_local_comm, req);
     } else {
         newcomm->c_remote_group = newcomm->c_local_group;
         OBJ_RETAIN(newcomm->c_remote_group);
@@ -267,7 +273,7 @@ int ompi_comm_create ( ompi_communicator_t *comm, ompi_group_t *group,
                        ompi_communicator_t **newcomm )
 {
     ompi_communicator_t *newcomp = NULL;
-    int rsize , lsize;
+    int rsize;
     int mode,i,j;
     int *allranks=NULL;
     int *rranks=NULL;
@@ -277,8 +283,6 @@ int ompi_comm_create ( ompi_communicator_t *comm, ompi_group_t *group,
     if (OPAL_UNLIKELY(NULL == newcomm)) {
         return OMPI_ERR_BAD_PARAM;
     }
-
-    lsize = group->grp_proc_count;
 
     if ( OMPI_COMM_IS_INTER(comm) ) {
         int tsize;
@@ -336,7 +340,7 @@ int ompi_comm_create ( ompi_communicator_t *comm, ompi_group_t *group,
 
     rc = ompi_comm_set ( &newcomp,                 /* new comm */
                          comm,                     /* old comm */
-                         lsize,                    /* local_size */
+                         0,                        /* local array size */
                          NULL,                     /* local_ranks */
                          rsize,                    /* remote_size */
                          rranks,                   /* remote_ranks */
@@ -999,10 +1003,9 @@ int ompi_comm_dup ( ompi_communicator_t * comm, ompi_communicator_t **newcomm )
 int ompi_comm_dup_with_info ( ompi_communicator_t * comm, ompi_info_t *info, ompi_communicator_t **newcomm )
 {
     ompi_communicator_t *newcomp = NULL;
-    int rsize = 0, mode = OMPI_COMM_CID_INTRA, rc = OMPI_SUCCESS;
+    int mode = OMPI_COMM_CID_INTRA, rc = OMPI_SUCCESS;
 
     if ( OMPI_COMM_IS_INTER ( comm ) ){
-        rsize  = comm->c_remote_group->grp_proc_count;
         mode   = OMPI_COMM_CID_INTER;
     }
 
@@ -1010,9 +1013,9 @@ int ompi_comm_dup_with_info ( ompi_communicator_t * comm, ompi_info_t *info, omp
 
     rc =  ompi_comm_set ( &newcomp,                               /* new comm */
                           comm,                                   /* old comm */
-                          comm->c_local_group->grp_proc_count,    /* local_size */
+                          0,                                      /* local array size */
                           NULL,                                   /* local_procs*/
-                          rsize,                                  /* remote_size */
+                          0,                                      /* remote array size */
                           NULL,                                   /* remote_procs */
                           comm->c_keyhash,                        /* attrs */
                           comm->error_handler,                    /* error handler */
@@ -1075,17 +1078,17 @@ int ompi_comm_idup (ompi_communicator_t *comm, ompi_communicator_t **newcomm, om
 
 int ompi_comm_idup_with_info (ompi_communicator_t *comm, ompi_info_t *info, ompi_communicator_t **newcomm, ompi_request_t **req)
 {
-    return ompi_comm_idup_internal (comm, comm->c_local_group, info, newcomm, req);
+    return ompi_comm_idup_internal (comm, comm->c_local_group, comm->c_remote_group, info, newcomm, req);
 }
 
 /* NTH: we need a way to idup with a smaller local group so this function takes a local group */
-static int ompi_comm_idup_internal (ompi_communicator_t *comm, ompi_group_t *group, ompi_info_t *info,
-                                    ompi_communicator_t **newcomm, ompi_request_t **req)
+static int ompi_comm_idup_internal (ompi_communicator_t *comm, ompi_group_t *group, ompi_group_t *remote_group,
+                                    ompi_info_t *info, ompi_communicator_t **newcomm, ompi_request_t **req)
 {
     struct ompi_comm_idup_with_info_context *context;
     ompi_comm_request_t *request;
     ompi_request_t *subreq[1];
-    int rsize = 0, rc;
+    int rc;
 
     *newcomm = MPI_COMM_NULL;
 
@@ -1106,15 +1109,15 @@ static int ompi_comm_idup_internal (ompi_communicator_t *comm, ompi_group_t *gro
 
     rc =  ompi_comm_set_nb (&context->newcomp,                      /* new comm */
                             comm,                                   /* old comm */
-                            group->grp_proc_count,                  /* local_size */
+                            0,                                      /* local array size */
                             NULL,                                   /* local_procs */
-                            rsize,                                  /* remote_size */
+                            0,                                      /* remote array size */
                             NULL,                                   /* remote_procs */
                             comm->c_keyhash,                        /* attrs */
                             comm->error_handler,                    /* error handler */
                             true,                                   /* copy the topo */
                             group,                                  /* local group */
-                            comm->c_remote_group,                   /* remote group */
+                            remote_group,                           /* remote group */
                             subreq);                                /* new subrequest */
     if (NULL == context->newcomp) {
         ompi_comm_request_return (request);
