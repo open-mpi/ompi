@@ -76,7 +76,7 @@ I	3	2	860 bytes	24 msgs sent
 #include "mpi.h"
 
 static MPI_T_pvar_handle flush_handle;
-static const char flush_pvar_name[] = "ompi_pml_monitoring_flush";
+static const char flush_pvar_name[] = "pml_monitoring_flush";
 static int flush_pvar_idx;
 
 int main(int argc, char* argv[])
@@ -116,7 +116,7 @@ int main(int argc, char* argv[])
     if (MPIT_result != MPI_SUCCESS)
         MPI_Abort(MPI_COMM_WORLD, MPIT_result);
 
-    MPIT_result = MPI_T_pvar_get_index(flush_pvar_name, MPI_T_BIND_NO_OBJECT, &flush_pvar_idx);
+    MPIT_result = MPI_T_pvar_get_index(flush_pvar_name, MPI_T_PVAR_CLASS_GENERIC, &flush_pvar_idx);
     if (MPIT_result != MPI_SUCCESS) {
         printf("cannot find monitoring MPI_T \"%s\" pvar, check that you have monitoring pml\n",
                flush_pvar_name);
@@ -138,8 +138,8 @@ int main(int argc, char* argv[])
     }
 
     /* Build one file per processes
-       Evevry thing that has been monitored by each
-       process since the last flush will be output in filename*/
+       Every thing that has been monitored by each
+       process since the last flush will be output in filename */
 
     /*
       Requires directory prof to be created.
@@ -148,7 +148,7 @@ int main(int argc, char* argv[])
       aggregate_profile.pl script
     */
     sprintf(filename,"./prof/phase_1_%d.prof",rank);
-    if( MPI_SUCCESS != MPI_T_pvar_read(session, flush_handle, filename) ) {
+    if( MPI_SUCCESS != MPI_T_pvar_write(session, flush_handle, filename) ) {
         fprintf(stderr, "Process %d cannot save monitoring in %s\n", rank, filename);
     }
 
@@ -157,27 +157,27 @@ int main(int argc, char* argv[])
       even ranls will circulate a token
       while odd ranks wil perform a all_to_all
     */
-    MPI_Comm_split(MPI_COMM_WORLD,rank%2,rank,&newcomm);
+    MPI_Comm_split(MPI_COMM_WORLD, rank%2, rank, &newcomm);
 
     /* the filename for flushing monitoring now uses 2 as phase number! */
-    sprintf(filename,"./prof/phase_2_%d.prof",rank);
+    sprintf(filename, "./prof/phase_2_%d.prof", rank);
 
     if(rank%2){ /*even ranks (in COMM_WORD) circulate a token*/
-        MPI_Comm_rank(newcomm,&rank);
-        MPI_Comm_size(newcomm,&size);
+        MPI_Comm_rank(newcomm, &rank);
+        MPI_Comm_size(newcomm, &size);
         if( size > 1 ) {
             to = (rank + 1) % size;;
             from = (rank - 1) % size ;
             tagno = 201;
             if (rank == 0){
-                n=50;
-                MPI_Send(&n,1,MPI_INT,to,tagno,newcomm);
+                n = 50;
+                MPI_Send(&n, 1, MPI_INT, to, tagno, newcomm);
             }
             while (1){
-                MPI_Recv(&n,1,MPI_INT,from,tagno,newcomm, &status);
-                if (rank == 0) {n--;tagno++;}
-                MPI_Send(&n,1,MPI_INT,to,tagno,newcomm);
-                if (rank != 0) {n--;tagno++;}
+                MPI_Recv(&n, 1, MPI_INT, from, tagno, newcomm, &status);
+                if (rank == 0) {n--; tagno++;}
+                MPI_Send(&n, 1, MPI_INT, to, tagno, newcomm);
+                if (rank != 0) {n--; tagno++;}
                 if (n<0){
                     if( MPI_SUCCESS != MPI_T_pvar_read(session, flush_handle, filename) ) {
                         fprintf(stderr, "Process %d cannot save monitoring in %s\n", rank, filename);
@@ -189,10 +189,10 @@ int main(int argc, char* argv[])
     }else{ /*odd ranks (in COMM_WORD) will perform a all_to_all and a barrier*/
         int send_buff[10240];
         int recv_buff[10240];
-        MPI_Comm_rank(newcomm,&rank);
-        MPI_Comm_size(newcomm,&size);
-        MPI_Alltoall(send_buff,10240/size, MPI_INT,recv_buff,10240/size,MPI_INT,newcomm);
-        MPI_Comm_split(newcomm,rank%2,rank,&newcomm);
+        MPI_Comm_rank(newcomm, &rank);
+        MPI_Comm_size(newcomm, &size);
+        MPI_Alltoall(send_buff, 10240/size, MPI_INT, recv_buff, 10240/size, MPI_INT, newcomm);
+        MPI_Comm_split(newcomm, rank%2, rank, &newcomm);
         MPI_Barrier(newcomm);
         if( MPI_SUCCESS != MPI_T_pvar_read(session, flush_handle, filename) ) {
             fprintf(stderr, "Process %d cannot save monitoring in %s\n", rank, filename);
@@ -214,7 +214,8 @@ int main(int argc, char* argv[])
 
     (void)PMPI_T_finalize();
 
-    /* Now, in MPI_Finalize(), the pml_monitoring library outputs, in STDERR, the aggregated recorded monitoring of all the phases*/
+    /* Now, in MPI_Finalize(), the pml_monitoring library outputs, in
+       STDERR, the aggregated recorded monitoring of all the phases*/
     MPI_Finalize();
     return 0;
 }

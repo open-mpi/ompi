@@ -715,6 +715,8 @@ int mca_base_pvar_handle_write_value (mca_base_pvar_handle_t *handle, const void
     }
 
     memmove (handle->current_value, value, handle->count * var_type_sizes[handle->pvar->type]);
+    /* read the value directly from the variable. */
+    ret = handle->pvar->set_value (handle->pvar, value, handle->obj_handle);
 
     return OPAL_SUCCESS;
 }
