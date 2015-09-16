@@ -13,6 +13,7 @@
  */
 
 #include "mtl_ofi.h"
+#include "opal/util/argv.h"
 
 static int ompi_mtl_ofi_component_open(void);
 static int ompi_mtl_ofi_component_query(mca_base_module_t **module, int *priority);
