@@ -10,11 +10,11 @@
 #
 # $HEADER$
 
+if PROJECT_OSHMEM
 nodist_ompidata_DATA =  \
 	shmemcc-wrapper-data.txt \
 	shmemfort-wrapper-data.txt
 
-if PROJECT_OSHMEM
 # Only install / uninstall if we're building oshmem
 install-exec-hook:
 	test -z "$(bindir)" || $(mkdir_p) "$(DESTDIR)$(bindir)"

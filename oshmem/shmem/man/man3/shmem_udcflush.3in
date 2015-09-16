@@ -1,0 +1,94 @@
+.\" -*- nroff -*-
+.\" Copyright (c) 2015      University of Houston.  All rights reserved.
+.\" Copyright (c) 2015      Mellanox Technologies, Inc.
+.\" $COPYRIGHT$
+.de Vb
+.ft CW
+.nf
+..
+.de Ve
+.ft R
+
+.fi
+..
+.TH "SHMEM\\_CACHE" "3" "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
+.SH NAME
+
+\fIshmem_clear_cache_inv\fP(3),
+\fIshmem_set_cache_inv\fP(3),
+\fIshmem_set_cache_line_inv\fP(3),
+\fIshmem_udcflush\fP(3),
+\fIshmem_udcflush_line\fP(3)
+\- Controls data cache utilities
+.SH SYNOPSIS
+
+C or C++:
+.Vb
+#include <mpp/shmem.h>
+
+void shmem_clear_cache_inv(void);
+void shmem_clear_cache_line_inv(void *target);
+void shmem_set_cache_inv(void);
+void shmem_set_cache_line_inv(void *target);
+void shmem_udcflush(void);
+void shmem_udcflush_line(void *target);
+.Ve
+Fortran:
+.Vb
+INCLUDE "mpp/shmem.fh"
+
+CALL SHMEM_CLEAR_CACHE_INV
+CALL SHMEM_CLEAR_CACHE_LINE_INV(target)
+CALL SHMEM_SET_CACHE_INV
+CALL SHMEM_SET_CACHE_LINE_INV(target)
+
+CALL SHMEM_UDCFLUSH
+CALL SHMEM_UDCFLUSH_LINE(target)
+.Ve
+.SH DESCRIPTION
+
+The following argument is passed to the cache line control routines:
+.TP
+target
+A data object that is local to the processing element (PE). target can be of
+any noncharacter type. If you are using Fortran, it can be of any kind.
+.PP
+\fBshmem_clear_cache_inv\fP
+disables automatic cache coherency mode previously
+enabled by shmem_set_cache_inv or shmem_set_cache_line_inv.
+.PP
+\fBshmem_clear_cache_line_inv\fP
+disables automatic cache coherency mode for the
+cache line associated with the address of \fBtarget\fP
+only.
+.PP
+\fBshmem_set_cache_inv\fP
+enables the OpenSHMEM API to automatically decide the
+best strategy for cache coherency.
+.PP
+\fBshmem_set_cache_line_inv\fP
+enables automatic cache coherency mode for the
+cache line associated with the address of \fBtarget\fP
+only.
+.PP
+\fBshmem_clear_cache_inv\fP
+disables automatic cache coherency mode previously
+enabled by shmem_set_cache_inv or shmem_set_cache_line_inv.
+.PP
+\fBshmem_udcflush\fP
+makes the entire user data cache coherent.
+.PP
+\fBshmem_udcflush_line\fP
+makes coherent the cache line that corresponds with
+the address specified by target.
+.PP
+.SH NOTES
+
+These routines have been retained for improved backward compatability with legacy
+architectures.
+.PP
+.SH SEE ALSO
+
+\fIintro_shmem\fP(3),
+\fIshmem_put\fP(3),
+\fIshmem_swap\fP(3)
