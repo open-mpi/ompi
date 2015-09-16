@@ -40,7 +40,7 @@ int mca_pml_monitoring_start(size_t count,
             continue;
         }
 
-        proc = ompi_group_get_proc_ptr(pml_request->req_comm->c_remote_group, pml_request->req_peer);
+        proc = ompi_group_get_proc_ptr(pml_request->req_comm->c_remote_group, pml_request->req_peer, true);
         uint64_t key = *((uint64_t*) &(proc->super.proc_name));
 
 

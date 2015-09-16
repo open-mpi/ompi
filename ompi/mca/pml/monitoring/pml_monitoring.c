@@ -212,7 +212,7 @@ static void output_monitoring( FILE *pf )
             /* aggregate data in general array*/
             all_sent_data[i] += sent_data[i];
             all_messages_count[i] += messages_count[i];
-            fprintf(pf, "I\t%d\t%d\t" PRIu64 " bytes\t" PRIu64 " msgs sent\n",
+            fprintf(pf, "I\t%d\t%d\t%" PRIu64 " bytes\t%" PRIu64 " msgs sent\n",
                     my_rank, i, all_sent_data[i], all_messages_count[i]);
             fflush(pf);
         }
@@ -228,7 +228,7 @@ static void output_monitoring( FILE *pf )
             /* aggregate data in general array*/
             all_filtered_sent_data[i] += filtered_sent_data[i];
             all_filtered_messages_count[i] += filtered_messages_count[i];
-            fprintf(pf, "E\t%d\t%d\t" PRIu64 " bytes\t" PRIu64 " msgs sent\n",
+            fprintf(pf, "E\t%d\t%d\t%" PRIu64 " bytes\t%" PRIu64 " msgs sent\n",
                     my_rank, i, all_filtered_sent_data[i], all_filtered_messages_count[i]);
             fflush(pf);
         }

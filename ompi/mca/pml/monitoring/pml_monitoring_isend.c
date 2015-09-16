@@ -17,7 +17,7 @@ extern void monitor_send_data(int dest_rank, size_t data_size, int tag);
 extern opal_hash_table_t *get_hashtable(void);
 extern opal_hash_table_t *translation_ht;
 
-int mca_pml_monitoring_isend_init(void *buf,
+int mca_pml_monitoring_isend_init(const void *buf,
                                   size_t count,
                                   ompi_datatype_t *datatype,
                                   int dst,
@@ -30,7 +30,7 @@ int mca_pml_monitoring_isend_init(void *buf,
                                               dst, tag, mode, comm, request);
 }
 
-int mca_pml_monitoring_isend(void *buf,
+int mca_pml_monitoring_isend(const void *buf,
                              size_t count,
                              ompi_datatype_t *datatype,
                              int dst,
@@ -41,7 +41,7 @@ int mca_pml_monitoring_isend(void *buf,
 {
 
     /* find the processor of teh destination */
-    ompi_proc_t *proc = ompi_group_get_proc_ptr(comm->c_remote_group, dst);
+    ompi_proc_t *proc = ompi_group_get_proc_ptr(comm->c_remote_group, dst, true);
     int world_rank;
 
     /* find its name*/
@@ -61,7 +61,7 @@ int mca_pml_monitoring_isend(void *buf,
                                          dst, tag, mode, comm, request);
 }
 
-int mca_pml_monitoring_send(void *buf,
+int mca_pml_monitoring_send(const void *buf,
                             size_t count,
                             ompi_datatype_t *datatype,
                             int dst,
@@ -70,7 +70,7 @@ int mca_pml_monitoring_send(void *buf,
                             struct ompi_communicator_t* comm)
 {
 
-    ompi_proc_t *proc = ompi_group_get_proc_ptr(comm->c_remote_group, dst);
+    ompi_proc_t *proc = ompi_group_get_proc_ptr(comm->c_remote_group, dst, true);
     int world_rank;
     uint64_t key = *((uint64_t*) &(proc->super.proc_name));
 
