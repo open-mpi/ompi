@@ -38,6 +38,7 @@
 
 #include "opal/hash_string.h"
 #include "opal/util/argv.h"
+#include "opal/util/opal_environ.h"
 #include "opal/util/path.h"
 #include "opal/mca/installdirs/installdirs.h"
 #include "opal/mca/pmix/base/base.h"
@@ -47,8 +48,6 @@
 #include "orte/util/proc_info.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/plm/base/base.h"
-#include "orte/mca/rml/rml.h"
-#include "orte/mca/routed/routed.h"
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/util/session_dir.h"
@@ -85,7 +84,6 @@ static int rte_init(void)
     char *envar, *ev1, *ev2;
     uint64_t unique_key[2];
     char *string_key;
-    char *rmluri;
     opal_value_t *kv;
     char *val;
     int u32, *u32ptr;
@@ -324,18 +322,6 @@ static int rte_init(void)
         ORTE_ERROR_LOG(rc);
         return rc;
     }
-
-    /***  PUSH DATA FOR OTHERS TO FIND   ***/
-
-    /* push our RML URI in case others need to talk directly to us */
-    rmluri = orte_rml.get_contact_info();
-    /* push it out for others to use */
-    OPAL_MODEX_SEND_VALUE(ret, OPAL_PMIX_GLOBAL, OPAL_PMIX_PROC_URI, rmluri, OPAL_STRING);
-    if (ORTE_SUCCESS != ret) {
-        error = "pmix put uri";
-        goto error;
-    }
-    free(rmluri);
 
     /* push our hostname so others can find us, if they need to */
     OPAL_MODEX_SEND_VALUE(ret, OPAL_PMIX_GLOBAL, OPAL_PMIX_HOSTNAME, orte_process_info.nodename, OPAL_STRING);
