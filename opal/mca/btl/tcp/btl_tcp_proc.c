@@ -743,7 +743,6 @@ mca_btl_tcp_proc_t* mca_btl_tcp_proc_lookup(const opal_process_name_t *name)
     if (OPAL_UNLIKELY(NULL == proc)) {
         mca_btl_base_endpoint_t *endpoint;
         opal_proc_t *opal_proc;
-        int rc;
 
         BTL_VERBOSE(("adding tcp proc for unknown peer {.jobid = 0x%x, .vpid = 0x%x}",
                      name->jobid, name->vpid));
@@ -754,7 +753,7 @@ mca_btl_tcp_proc_t* mca_btl_tcp_proc_lookup(const opal_process_name_t *name)
         }
 
         /* try adding this proc to each btl until */
-        for (int i = 0 ; i < mca_btl_tcp_component.tcp_num_btls ; ++i) {
+        for (int i = 0 ; i < (int)mca_btl_tcp_component.tcp_num_btls ; ++i) {
             endpoint = NULL;
             (void) mca_btl_tcp_add_procs (&mca_btl_tcp_component.tcp_btls[i]->super, 1, &opal_proc,
                                           &endpoint, NULL);

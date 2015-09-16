@@ -594,7 +594,7 @@ static void recv_handler(int sd, short flg, void *cbdata)
             }
             CLOSE_THE_SOCKET(sd);
             ui64 = (uint64_t*)(&peer->name);
-            opal_hash_table_set_value_uint64(&mca_oob_tcp_module.peers, (*ui64), NULL);
+            (void)opal_hash_table_set_value_uint64(&mca_oob_tcp_module.peers, (*ui64), NULL);
             OBJ_RELEASE(peer);
         }
     }
