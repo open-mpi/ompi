@@ -70,10 +70,12 @@ static void lookup_cbfunc(int status, opal_list_t *data, void *cbdata)
     cd->status = status;
     if (OPAL_SUCCESS == status && NULL != data) {
         opal_pmix_pdata_t *p = (opal_pmix_pdata_t*)opal_list_get_first(data);
-        if (NULL != p && p->value.type == cd->pdat->value.type) {
-            (void)opal_value_xfer(&cd->pdat->value, &p->value);
+        if (NULL != p) {
+            cd->pdat->proc = p->proc;
+            if (p->value.type == cd->pdat->value.type) {
+                (void)opal_value_xfer(&cd->pdat->value, &p->value);
+            }
         }
-        cd->pdat->proc = p->proc;
     }
     cd->active = false;
 }
