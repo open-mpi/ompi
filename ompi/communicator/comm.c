@@ -1003,10 +1003,12 @@ int ompi_comm_dup ( ompi_communicator_t * comm, ompi_communicator_t **newcomm )
 int ompi_comm_dup_with_info ( ompi_communicator_t * comm, ompi_info_t *info, ompi_communicator_t **newcomm )
 {
     ompi_communicator_t *newcomp = NULL;
+    ompi_group_t *remote_group = NULL;
     int mode = OMPI_COMM_CID_INTRA, rc = OMPI_SUCCESS;
 
     if ( OMPI_COMM_IS_INTER ( comm ) ){
         mode   = OMPI_COMM_CID_INTER;
+        remote_group = comm->c_remote_group;
     }
 
     *newcomm = MPI_COMM_NULL;
@@ -1021,7 +1023,7 @@ int ompi_comm_dup_with_info ( ompi_communicator_t * comm, ompi_info_t *info, omp
                           comm->error_handler,                    /* error handler */
                           true,                                   /* copy the topo */
                           comm->c_local_group,                    /* local group */
-                          comm->c_remote_group );                 /* remote group */
+                          remote_group );                         /* remote group */
     if ( NULL == newcomp ) {
         rc =  MPI_ERR_INTERN;
         return rc;
@@ -1091,6 +1093,10 @@ static int ompi_comm_idup_internal (ompi_communicator_t *comm, ompi_group_t *gro
     int rc;
 
     *newcomm = MPI_COMM_NULL;
+
+    if (!OMPI_COMM_IS_INTER (comm)){
+        remote_group = NULL;
+    }
 
     request = ompi_comm_request_get ();
     if (NULL == request) {
