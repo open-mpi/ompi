@@ -105,15 +105,15 @@ affinity_mat_t *new_affinity_mat(double **mat, double *sum_row, int order){
 
 void FREE_list_child(tree_t *tree)
 {
-  int i;
+    int i;
 
-  if(tree)
+    if(NULL == tree) return;
     for(i=0;i<tree->arity;i++)
-      FREE_list_child(tree->child[i]);
+        FREE_list_child(tree->child[i]);
 
-  FREE(tree->child);
-  if(tree->dumb)
-    FREE(tree);
+    FREE(tree->child);
+    if(tree->dumb)
+        FREE(tree);
 }
 
 void FREE_tab_child(tree_t *tree)
@@ -948,62 +948,62 @@ int adjacency_dsc(const void* x1,const void* x2)
 
 void super_fast_grouping(affinity_mat_t *aff_mat,tree_t *tab_node, tree_t *new_tab_node, int arity, int M)
 {
-  double val = 0,duration;
-  adjacency_t *graph;
-  int i,j,e,l,nb_groups;
-  int N = aff_mat->order;
-  double **mat = aff_mat->mat;
+    double val = 0,duration;
+    adjacency_t *graph;
+    int i,j,e,l,nb_groups;
+    int N = aff_mat->order;
+    double **mat = aff_mat->mat;
 
-  assert( 2 == arity);
+    assert( 2 == arity);
 
-  TIC;
-  graph = (adjacency_t*)MALLOC(sizeof(adjacency_t)*((N*N-N)/2));
-  e = 0;
-  for( i = 0 ; i < N ; i++ )
-    for( j = i+1 ; j < N ; j++){
-      graph[e].i = i;
-      graph[e].j = j;
-      graph[e].val = mat[i][j];
-      e++;
+    TIC;
+    graph = (adjacency_t*)MALLOC(sizeof(adjacency_t)*((N*N-N)/2));
+    e = 0;
+    for( i = 0 ; i < N ; i++ )
+        for( j = i+1 ; j < N ; j++){
+            graph[e].i = i;
+            graph[e].j = j;
+            graph[e].val = mat[i][j];
+            e++;
+        }
+
+    duration = TOC;
+    if(verbose_level>=DEBUG)
+        printf("linearization=%fs\n",duration);
+
+
+    assert( e == (N*N-N)/2);
+    TIC;
+    qsort(graph,e,sizeof(adjacency_t),adjacency_dsc);
+    duration = TOC;
+    if(verbose_level>=DEBUG)
+        printf("sorting=%fs\n",duration);
+
+    TIC;
+
+    TIC;
+    l = 0;
+    nb_groups = 0;
+    for( i = 0 ; (i < e) && (l < M) ; i++ )
+        if(try_add_edge(tab_node,&new_tab_node[l],arity,graph[i].i,graph[i].j,&nb_groups))
+            l++;
+
+    for( l = 0 ; l < M ; l++ ){
+        update_val(aff_mat,&new_tab_node[l]);
+        val += new_tab_node[l].val;
     }
 
-  duration = TOC;
-  if(verbose_level>=DEBUG)
-    printf("linearization=%fs\n",duration);
+    duration = TOC;
+    if(verbose_level>=DEBUG)
+        printf("Grouping=%fs\n",duration);
 
 
-  assert( e == (N*N-N)/2);
-  TIC;
-  qsort(graph,e,sizeof(adjacency_t),adjacency_dsc);
-  duration = TOC;
-  if(verbose_level>=DEBUG)
-    printf("sorting=%fs\n",duration);
-
-  TIC;
-
-TIC;
-  l = 0;
-  nb_groups = 0;
-  for( i = 0 ; (i < e) && (l < M) ; i++ )
-    if(try_add_edge(tab_node,&new_tab_node[l],arity,graph[i].i,graph[i].j,&nb_groups))
-      l++;
-
-  for( l = 0 ; l < M ; l++ ){
-    update_val(aff_mat,&new_tab_node[l]);
-    val += new_tab_node[l].val;
-  }
-
-  duration = TOC;
-  if(verbose_level>=DEBUG)
-    printf("Grouping=%fs\n",duration);
+    if(verbose_level>=DEBUG)
+        printf("val=%f\n",val);
 
 
-  if(verbose_level>=DEBUG)
-    printf("val=%f\n",val);
-
-
-  display_grouping(new_tab_node,M,arity,val);
-
+    display_grouping(new_tab_node,M,arity,val);
+    FREE(graph);
 }
 
 
@@ -1495,67 +1495,68 @@ double speed(int depth)
 
 int check_constraints(tm_topology_t  *topology, int **constraints)
 {
-  int j,i,n = nb_processing_units(topology);
-  int *tab_constraints = NULL, nb_constraints = 0;
-  int *tab_node = NULL;
-  int *count = NULL;
+    int j,i,n = nb_processing_units(topology);
+    int *tab_constraints = NULL, nb_constraints = 0;
+    int *tab_node = NULL;
+    int *count = NULL;
 
-  /* tab_node: array of core numbers.
-     tab_node[i]=-1 if this core is forbiden
-     numbering is such that
-     0<=tab_node[i]<n
-     and that there is only one core of a given number
-  */
-  tab_node = topology->node_id[topology->nb_levels-1];
+    /* tab_node: array of core numbers.
+       tab_node[i]=-1 if this core is forbiden
+       numbering is such that
+       0<=tab_node[i]<n
+       and that there is only one core of a given number
+    */
+    tab_node = topology->node_id[topology->nb_levels-1];
 
-  /* "count" counts the number of cores of a given  number.
-     count[i]: number of cores of number i.
-     0<=count[i]<=1
-  */
-  count = (int *)CALLOC(n,sizeof(int));
-  for( i = 0 ; i < n ; i++ )
-    if (tab_node[i] != -1){
-      if( (tab_node[i] >= 0) && (tab_node[i] < n)){
-	/* In the remaining, we assume that the core numbering is logical from 0 to n
-	   so if tab_node[i]!=-1 this mean sthat we have to use core number i*/
-	count[i]++;
-	nb_constraints++;
-      }else{
-	if(verbose_level >= ERROR)
-	  fprintf(stderr, "*** Error: Core numbering not between 0 and %d: tab_node[%d]=%d\n", n , i, tab_node[i]);
-	*constraints = NULL;
-	return 0;
-      }
+    /* "count" counts the number of cores of a given  number.
+       count[i]: number of cores of number i.
+       0<=count[i]<=1
+    */
+    count = (int *)CALLOC(n,sizeof(int));
+    for( i = 0 ; i < n ; i++ )
+        if (tab_node[i] != -1){
+            if( (tab_node[i] >= 0) && (tab_node[i] < n)){
+                /* In the remaining, we assume that the core numbering is logical from 0 to n
+                   so if tab_node[i]!=-1 this mean sthat we have to use core number i*/
+                count[i]++;
+                nb_constraints++;
+            }else{
+                if(verbose_level >= ERROR)
+                    fprintf(stderr, "*** Error: Core numbering not between 0 and %d: tab_node[%d]=%d\n", n , i, tab_node[i]);
+                *constraints = NULL;
+                FREE(count);
+                return 0;
+            }
+        }
+
+    if(nb_constraints == 0){
+        FREE(count);
+        *constraints = NULL;
+        return 0;
     }
 
-  if(nb_constraints == 0){
+    tab_constraints = (int*) MALLOC(sizeof(int)*nb_constraints);
+
+    /* we can now use the "counting sort" to sort the constraint tab in increasing order in linear time*/
+    j = 0;
+    for( i = 0 ; i < n ; i++ )
+        if(count[i])
+            tab_constraints[j++] = i;
+
+    /* if the constraint_tab is not full, this means that some count[i]>1*/
+    if( j != nb_constraints ){
+        if(verbose_level >= ERROR)
+            fprintf(stderr,"*** Error: Duplicate numbering: j=%d, nb_constraints= %d\n",j, nb_constraints);
+        FREE(tab_constraints);
+        FREE(count);
+        *constraints = NULL;
+        return 0;
+    }
+
+    /* FREE local variables, assign result, return result*/
     FREE(count);
-    *constraints = NULL;
-    return 0;
-  }
-
-  tab_constraints = (int*) MALLOC(sizeof(int)*nb_constraints);
-
-  /* we can now use the "counting sort" to sort the constraint tab in increasing order in linear time*/
-  j = 0;
-  for( i = 0 ; i < n ; i++ )
-    if(count[i])
-      tab_constraints[j++] = i;
-
-  /* if the constraint_tab is not full, this means that some count[i]>1*/
-  if( j != nb_constraints ){
-    if(verbose_level >= ERROR)
-    fprintf(stderr,"*** Error: Duplicate numbering: j=%d, nb_constraints= %d\n",j, nb_constraints);
-    FREE(tab_constraints);
-    FREE(count);
-    *constraints = NULL;
-    return 0;
-  }
-
-  /* FREE local variables, assign result, return result*/
-  FREE(count);
-  *constraints = tab_constraints;
-  return nb_constraints;
+    *constraints = tab_constraints;
+    return nb_constraints;
 }
 
 affinity_mat_t * build_affinity_mat(double **mat, int order){

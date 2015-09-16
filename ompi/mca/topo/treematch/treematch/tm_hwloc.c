@@ -73,7 +73,7 @@ tm_topology_t * tgt_to_tm(char *filename, double **pcost)
   build_synthetic_proc_id(topology);
 
   *pcost = cost;
-  /* FREE(cost); */
+  fclose(pf);
   /*
   topology->arity[0]=nb_proc;
   topology->nb_levels=decompose((int)ceil((1.0*nb_obj)/nb_proc),1,topology->arity);
@@ -81,7 +81,6 @@ tm_topology_t * tgt_to_tm(char *filename, double **pcost)
   */
   if(get_verbose_level() >= INFO)
     printf("Topology built from %s!\n",filename);
-
 
   return topology;
 }
