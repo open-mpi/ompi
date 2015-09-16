@@ -170,24 +170,24 @@ void print_1D_tab(int *tab,int N)
 
 int nb_lines(char *filename)
 {
-  FILE *pf = NULL;
-  char line[LINE_SIZE];
-  int N = 0;
+    FILE *pf = NULL;
+    char line[LINE_SIZE];
+    int N = 0;
 
-  if(!(pf = fopen(filename,"r"))){
-    if(get_verbose_level() >= CRITICAL)
-      fprintf(stderr,"Cannot open %s\n",filename);
-      exit(-1);
-  }
+    if(!(pf = fopen(filename,"r"))){
+        if(get_verbose_level() >= CRITICAL)
+            fprintf(stderr,"Cannot open %s\n",filename);
+        exit(-1);
+    }
 
-  while(fgets(line,LINE_SIZE,pf))
-    N++;
+    while(fgets(line,LINE_SIZE,pf))
+        N++;
 
-  if(get_verbose_level() >= DEBUG)
-    printf("Number of lines of file %s = %d\n",filename,N);
+    if(get_verbose_level() >= DEBUG)
+        printf("Number of lines of file %s = %d\n",filename,N);
 
-  fclose(pf);
-  return N;
+    fclose(pf);
+    return N;
 }
 
 void init_comm(char *filename,int N,double **comm)
@@ -299,6 +299,7 @@ int  build_binding_constraints(char *filename, int **ptab)
   }
 
   *ptab = tab;
+  fclose(pf);
   return n;
 }
 
@@ -562,8 +563,18 @@ void map_MPIPP(tm_topology_t *topology,int nb_seed,int N,int *Value,double **com
       }
     }while( max > 0 );
 
+    FREE(sol);
     sol=generate_random_sol(topology,N,topology->nb_levels-1,seed++);
   }
+  FREE(sol);
+  FREE(temp);
+  FREE(state);
+  for( i = 0 ; i < N ; i++){
+    FREE(gain[i]);
+    FREE(history[i]);
+  }
+  FREE(gain);
+  FREE(history);
 }
 
 /* void map_tree(tree_t* t1,tree_t *t2) */
@@ -624,74 +635,74 @@ int nb_leaves(tree_t *comm_tree)
 */
 
 void map_topology(tm_topology_t *topology,tree_t *comm_tree,int nb_compute_units,
-		  int level,int *sigma, int nb_processes, int *k)
+                  int level,int *sigma, int nb_processes, int *k)
 {
-  int *nodes_id = NULL;
-  int *proc_list = NULL;
-  int i,N,M,block_size;
-  unsigned int vl = get_verbose_level();
+    int *nodes_id = NULL;
+    int *proc_list = NULL;
+    int i,N,M,block_size;
+    unsigned int vl = get_verbose_level();
 
-  M = nb_leaves(comm_tree);
-  nodes_id = topology->node_id[level];
-  N = topology->nb_nodes[level];
+    M = nb_leaves(comm_tree);
+    nodes_id = topology->node_id[level];
+    N = topology->nb_nodes[level];
 
-  if(vl >= INFO){
-    printf("nb_leaves=%d\n",M);
-    printf("level=%d, nodes_id=%p, N=%d\n",level,(void *)nodes_id,N);
-    printf("N=%d,nb_compute_units=%d\n",N,nb_compute_units);
-  }
-
-  /* The number of node at level "level" in the tree should be equal to the number of processors*/
-  assert(N==nb_compute_units);
-
-  proc_list = (int*)MALLOC(sizeof(int)*M);
-  i = 0;
-  depth_first(comm_tree,proc_list,&i);
-
-  if(vl >= DEBUG)
-    for(i=0;i<M;i++){
-      printf ("%d\n",proc_list[i]);
+    if(vl >= INFO){
+        printf("nb_leaves=%d\n",M);
+        printf("level=%d, nodes_id=%p, N=%d\n",level,(void *)nodes_id,N);
+        printf("N=%d,nb_compute_units=%d\n",N,nb_compute_units);
     }
 
-  block_size = M/N;
+    /* The number of node at level "level" in the tree should be equal to the number of processors*/
+    assert(N==nb_compute_units);
 
-  if(k){/*if we need the k vector*/
-    if(vl >= INFO)
-      printf("M=%d, N=%d, BS=%d\n",M,N,block_size);
-    for( i = 0 ; i < nb_processing_units(topology) ; i++ )
-      k[i] = -1;
+    proc_list = (int*)MALLOC(sizeof(int)*M);
+    i = 0;
+    depth_first(comm_tree,proc_list,&i);
 
-    for( i = 0 ; i < M ; i++ )
-      if(proc_list[i] != -1){
-	if(vl >= DEBUG)
-	  printf ("%d->%d\n",proc_list[i],nodes_id[i/block_size]);
+    if(vl >= DEBUG)
+        for(i=0;i<M;i++){
+            printf ("%d\n",proc_list[i]);
+        }
 
-	if( proc_list[i] < nb_processes ){
-	  sigma[proc_list[i]] = nodes_id[i/block_size];
-	  k[nodes_id[i/block_size]] = proc_list[i];
-	}
-      }
-  }else{
-    if(vl >= INFO)
-      printf("M=%d, N=%d, BS=%d\n",M,N,block_size);
-    for( i = 0 ; i < M ; i++ )
-      if(proc_list[i] != -1){
-	if(vl >= DEBUG)
-	  printf ("%d->%d\n",proc_list[i],nodes_id[i/block_size]);
-	if( proc_list[i] < nb_processes )
-	  sigma[proc_list[i]] = nodes_id[i/block_size];
-      }
-  }
+    block_size = M/N;
 
-  if(vl >= DEBUG){
-    printf("k: ");
-    for( i = 0 ; i < nb_processing_units(topology) ; i++ )
-      printf("%d ",k[i]);
-    printf("\n");
-  }
+    if(k){/*if we need the k vector*/
+        if(vl >= INFO)
+            printf("M=%d, N=%d, BS=%d\n",M,N,block_size);
+        for( i = 0 ; i < nb_processing_units(topology) ; i++ )
+            k[i] = -1;
+
+        for( i = 0 ; i < M ; i++ )
+            if(proc_list[i] != -1){
+                if(vl >= DEBUG)
+                    printf ("%d->%d\n",proc_list[i],nodes_id[i/block_size]);
+
+                if( proc_list[i] < nb_processes ){
+                    sigma[proc_list[i]] = nodes_id[i/block_size];
+                    k[nodes_id[i/block_size]] = proc_list[i];
+                }
+            }
+    }else{
+        if(vl >= INFO)
+            printf("M=%d, N=%d, BS=%d\n",M,N,block_size);
+        for( i = 0 ; i < M ; i++ )
+            if(proc_list[i] != -1){
+                if(vl >= DEBUG)
+                    printf ("%d->%d\n",proc_list[i],nodes_id[i/block_size]);
+                if( proc_list[i] < nb_processes )
+                    sigma[proc_list[i]] = nodes_id[i/block_size];
+            }
+    }
+
+    if((vl >= DEBUG) && (k)){
+        printf("k: ");
+        for( i = 0 ; i < nb_processing_units(topology) ; i++ )
+            printf("%d ",k[i]);
+        printf("\n");
+    }
 
 
-  FREE(proc_list);
+    FREE(proc_list);
 }
 
 void map_topology_simple(tm_topology_t *topology,tree_t *comm_tree, int *sigma, int nb_processes, int *k)
@@ -1203,8 +1214,10 @@ int constraint_dsc(const void* x1,const void* x2)
 void  display_contsraint_tab(constraint_t *const_tab, int n)
 {
   int i;
-  for( i = 0; i < n; i++ )
-    printf("tab %d:",i);print_1D_tab(const_tab[i].constraints, const_tab[i].length);
+  for( i = 0; i < n; i++ ) {
+    printf("tab %d:",i);
+    print_1D_tab(const_tab[i].constraints, const_tab[i].length);
+  }
 }
 
 

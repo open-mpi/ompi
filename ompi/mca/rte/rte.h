@@ -196,39 +196,6 @@ END_C_DECLS
 
 BEGIN_C_DECLS
 
-/* Each RTE is required to define a DB key for identifying the node
- * upon which a process resides, and for providing this information
- * for each process
- *
- * #define OMPI_RTE_NODE_ID
- */
-
-/* Communication tags */
-#define OMPI_RML_TAG_UDAPL                          OMPI_RML_TAG_BASE+1
-#define OMPI_RML_TAG_OPENIB                         OMPI_RML_TAG_BASE+2
-#define OMPI_RML_TAG_XOPENIB                        OMPI_RML_TAG_BASE+3
-#define OMPI_RML_TAG_COMM_CID_INTRA                 OMPI_RML_TAG_BASE+4
-#define OMPI_RML_TAG_XOOB                           OMPI_RML_TAG_BASE+5
-#define OMPI_RML_TAG_SM_BACK_FILE_CREATED           OMPI_RML_TAG_BASE+6
-#define OMPI_CRCP_COORD_BOOKMARK_TAG                OMPI_RML_TAG_BASE+7
-#define OMPI_COMM_JOIN_TAG                          OMPI_RML_TAG_BASE+8
-
-/* support for shared memory collectives */
-#define OMPI_RML_TAG_COLL_SM2_BACK_FILE_CREATED     OMPI_RML_TAG_BASE+9
-/* common sm component query result index */
-#define OMPI_RML_TAG_COMMON_SM_COMP_INDEX           OMPI_RML_TAG_BASE+10
-
-/* OFACM RML TAGs */
-#define OMPI_RML_TAG_OFACM                          OMPI_RML_TAG_BASE+11
-#define OMPI_RML_TAG_XOFACM                         OMPI_RML_TAG_BASE+12
-
-#define OMPI_RML_PCONNECT_TAG                       OMPI_RML_TAG_BASE+13
-
-#define OMPI_RML_TAG_USNIC_CONNECTIVITY             OMPI_RML_TAG_BASE+14
-#define OMPI_RML_TAG_USNIC_CONNECTIVITY_REPLY       OMPI_RML_TAG_BASE+15
-
-#define OMPI_RML_TAG_DYNAMIC                        OMPI_RML_TAG_BASE+200
-
 /*
  * MCA Framework
  */

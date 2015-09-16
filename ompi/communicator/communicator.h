@@ -17,7 +17,7 @@
  * Copyright (c) 2011-2013 Universite Bordeaux 1
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2014      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2015 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -93,7 +93,7 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_communicator_t);
 #define OMPI_COMM_CID_INTRA        0x00000020
 #define OMPI_COMM_CID_INTER        0x00000040
 #define OMPI_COMM_CID_INTRA_BRIDGE 0x00000080
-#define OMPI_COMM_CID_INTRA_OOB    0x00000100
+#define OMPI_COMM_CID_INTRA_PMIX   0x00000100
 #define OMPI_COMM_CID_GROUP        0x00000200
 
 /**
@@ -497,8 +497,8 @@ ompi_communicator_t* ompi_comm_allocate (int local_group_size,
  *                                          a bridge comm. local_leader
  *                                          and remote leader are in this
  *                                          case an int (rank in bridge-comm).
- *              OMPI_COMM_CID_INTRA_OOB:    2 intracomms, leaders talk
- *                                          through OOB. lleader and rleader
+ *              OMPI_COMM_CID_INTRA_PMIX:   2 intracomms, leaders talk
+ *                                          through PMIx. lleader and rleader
  *                                          are the required contact information.
  * @param send_first: to avoid a potential deadlock for
  *                    the OOB version.
@@ -535,6 +535,18 @@ int ompi_comm_finalize (void);
 /**
  * This is THE routine, where all the communicator stuff
  * is really set.
+ *
+ * @param[out] newcomm            new ompi communicator object
+ * @param[in]  oldcomm            old communicator
+ * @param[in]  local_size         size of local_ranks array
+ * @param[in]  local_ranks        local ranks (not used if local_group != NULL)
+ * @param[in]  remote_size        size of remote_ranks array
+ * @param[in]  remote_ranks       remote ranks (intercomm) (not used if remote_group != NULL)
+ * @param[in]  attr               attributes (can be NULL)
+ * @param[in]  errh               error handler
+ * @param[in]  copy_topocomponent whether to copy the topology
+ * @param[in]  local_group        local process group (may be NULL if local_ranks array supplied)
+ * @param[in]  remote_group       remote process group (may be NULL)
  */
 OMPI_DECLSPEC int ompi_comm_set ( ompi_communicator_t** newcomm,
                                   ompi_communicator_t* oldcomm,
@@ -548,6 +560,23 @@ OMPI_DECLSPEC int ompi_comm_set ( ompi_communicator_t** newcomm,
                                   ompi_group_t *local_group,
                                   ompi_group_t *remote_group   );
 
+/**
+ * This is THE routine, where all the communicator stuff
+ * is really set. Non-blocking version.
+ *
+ * @param[out] newcomm            new ompi communicator object
+ * @param[in]  oldcomm            old communicator
+ * @param[in]  local_size         size of local_ranks array
+ * @param[in]  local_ranks        local ranks (not used if local_group != NULL)
+ * @param[in]  remote_size        size of remote_ranks array
+ * @param[in]  remote_ranks       remote ranks (intercomm) (not used if remote_group != NULL)
+ * @param[in]  attr               attributes (can be NULL)
+ * @param[in]  errh               error handler
+ * @param[in]  copy_topocomponent whether to copy the topology
+ * @param[in]  local_group        local process group (may be NULL if local_ranks array supplied)
+ * @param[in]  remote_group       remote process group (may be NULL)
+ * @param[out] req                ompi_request_t object for tracking completion
+ */
 OMPI_DECLSPEC int ompi_comm_set_nb ( ompi_communicator_t **ncomm,
                                      ompi_communicator_t *oldcomm,
                                      int local_size,

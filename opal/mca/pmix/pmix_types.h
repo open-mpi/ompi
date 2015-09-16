@@ -105,7 +105,7 @@ BEGIN_C_DECLS
 #define OPAL_PMIX_NOTIFY_COMPLETION     "pmix.notecomp"     // (bool) notify parent process upon termination of child job
 #define OPAL_PMIX_RANGE                 "pmix.range"        // (int) opal_pmix_data_range_t value for calls to publish/lookup/unpublish
 #define OPAL_PMIX_PERSISTENCE           "pmix.persist"      // (int) opal_pmix_persistence_t value for calls to publish
-#define OPAL_PMIX_OPTIONAL              "pmix.optional"    // (bool) look only in the immediate data store for the requested value - do
+#define OPAL_PMIX_OPTIONAL              "pmix.optional"     // (bool) look only in the immediate data store for the requested value - do
                                                             //        not request data from the server if not found
 
 /* attribute used by host server to pass data to the server convenience library - the
@@ -171,6 +171,7 @@ typedef enum {
  * consistent order with the PMIx distro */
 typedef enum {
     OPAL_PMIX_PERSIST_INDEF = 0,   // retain until specifically deleted
+    OPAL_PMIX_PERSIST_FIRST_READ,  // delete upon first access
     OPAL_PMIX_PERSIST_PROC,        // retain until publishing process terminates
     OPAL_PMIX_PERSIST_APP,         // retain until application terminates
     OPAL_PMIX_PERSIST_SESSION      // retain until session/allocation terminates

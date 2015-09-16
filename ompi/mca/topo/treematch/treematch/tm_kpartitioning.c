@@ -389,7 +389,7 @@ void kpartition_build_level_topology(tree_t *cur_node, com_mat_t *com_mat, int N
   const_tab = split_constraints (constraints, nb_constraints, k, topology, depth);
 
   /* create the table of k nodes of the resulting sub-tree */
-  tab_child = (tree_t **) CALLOC (k,sizeof(tree_t));
+  tab_child = (tree_t **) CALLOC (k,sizeof(tree_t*));
   for( i = 0 ; i < k ; i++){
     tab_child[i] = (tree_t *) MALLOC(sizeof(tree_t));
   }

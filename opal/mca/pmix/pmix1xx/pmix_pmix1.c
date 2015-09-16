@@ -262,6 +262,7 @@ void pmix1_value_load(pmix_value_t *v,
     switch(kv->type) {
         case OPAL_UNDEF:
             v->type = PMIX_UNDEF;
+            opal_output(0, "TYPE WAS UNDEF");
             break;
         case OPAL_BOOL:
             v->type = PMIX_BOOL;
