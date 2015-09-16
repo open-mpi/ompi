@@ -22,6 +22,7 @@
 
 #include <portals4.h>
 
+#include "ompi/communicator/communicator.h"
 #include "ompi/proc/proc.h"
 #include "ompi/mca/mtl/mtl.h"
 #include "opal/class/opal_list.h"
@@ -241,44 +242,25 @@ portals4_init_interface(void)
     return OMPI_ERROR;
 }
 
-int
-ompi_mtl_portals4_add_procs(struct mca_mtl_base_module_t *mtl,
-                            size_t nprocs,
-                            struct ompi_proc_t** procs)
+static int
+create_maptable(size_t        nprocs,
+                ompi_proc_t **procs)
 {
-    int ret, me;
+    int ret;
     size_t i;
-    bool new_found = false;
     ptl_process_t *maptable;
 
-    if (ompi_mtl_portals4.use_logical) {
-        maptable = malloc(sizeof(ptl_process_t) * nprocs);
-        if (NULL == maptable) {
-            opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
-                                "%s:%d: malloc failed\n",
-                                __FILE__, __LINE__);
-            return OMPI_ERR_OUT_OF_RESOURCE;
-        }
+    maptable = malloc(sizeof(ptl_process_t) * nprocs);
+    if (NULL == maptable) {
+        opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
+                            "%s:%d: malloc failed\n",
+                            __FILE__, __LINE__);
+        return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
-    /* Get the list of ptl_process_id_t from the runtime and copy into structure */
-    for (i = 0 ; i < nprocs ; ++i) {
+    for (i=0;i<nprocs;i++) {
         ptl_process_t *modex_id;
         size_t size;
-
-        if( procs[i] == ompi_proc_local_proc ) {
-            me = i;
-        }
-
-        if (procs[i]->super.proc_arch != ompi_proc_local()->super.proc_arch) {
-            opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
-                                "Portals 4 MTL does not support heterogeneous operations.");
-            opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
-                                "Proc %s architecture %x, mine %x.",
-                                OMPI_NAME_PRINT(&procs[i]->super.proc_name),
-                                procs[i]->super.proc_arch, ompi_proc_local()->super.proc_arch);
-            return OMPI_ERR_NOT_SUPPORTED;
-        }
 
         OPAL_MODEX_RECV(ret, &mca_mtl_portals4_component.mtl_version,
                         &procs[i]->super.proc_name, (uint8_t**)&modex_id, &size);
@@ -294,40 +276,192 @@ ompi_mtl_portals4_add_procs(struct mca_mtl_base_module_t *mtl,
             return OMPI_ERR_BAD_PARAM;
         }
 
-        if (NULL == procs[i]->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_PORTALS4]) {
-            ptl_process_t *peer_id;
-            peer_id = malloc(sizeof(ptl_process_t));
-            if (NULL == peer_id) {
-                opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
-                                    "%s:%d: malloc failed: %d\n",
-                                    __FILE__, __LINE__, ret);
-                return OMPI_ERR_OUT_OF_RESOURCE;
-            }
-            if (ompi_mtl_portals4.use_logical) {
-                peer_id->rank = i;
-                maptable[i].phys.pid = modex_id->phys.pid;
-                maptable[i].phys.nid = modex_id->phys.nid;
-                opal_output_verbose(50, ompi_mtl_base_framework.framework_output,
-                    "logical: global rank=%d pid=%d nid=%d\n",
-                    (int)i, maptable[i].phys.pid, maptable[i].phys.nid);
-            } else {
-                *peer_id = *modex_id;
-            }
+        maptable[i].phys.pid = modex_id->phys.pid;
+        maptable[i].phys.nid = modex_id->phys.nid;
+        opal_output_verbose(50, ompi_mtl_base_framework.framework_output,
+            "logical: global rank=%d pid=%d nid=%d\n",
+            (int)i, maptable[i].phys.pid, maptable[i].phys.nid);
+    }
 
-            procs[i]->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_PORTALS4] = peer_id;
+    ret = PtlSetMap(ompi_mtl_portals4.ni_h, nprocs, maptable);
+    if (OMPI_SUCCESS != ret) {
+        opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
+                            "%s:%d: logical mapping failed: %d\n",
+                            __FILE__, __LINE__, ret);
+        return ret;
+    }
+    opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
+        "logical mapping OK\n");
 
-            new_found = true;
+    free(maptable);
+
+    return OMPI_SUCCESS;
+}
+
+static int
+create_endpoint(ompi_proc_t *proc)
+{
+    ptl_process_t *endpoint;
+
+    endpoint = malloc(sizeof(ptl_process_t));
+    if (NULL == endpoint) {
+        opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
+                            "%s:%d: malloc failed: %s\n",
+                            __FILE__, __LINE__, strerror(errno));
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    } else {
+        if (ompi_mtl_portals4.use_logical) {
+            endpoint->rank = proc->super.proc_name.vpid;
         } else {
+            int ret;
+            ptl_process_t *modex_id;
+            size_t size;
+
+            OPAL_MODEX_RECV(ret, &mca_mtl_portals4_component.mtl_version,
+                            &proc->super.proc_name, (uint8_t**)&modex_id, &size);
+            if (OMPI_SUCCESS != ret) {
+                opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
+                                    "%s:%d: ompi_modex_recv failed: %d\n",
+                                    __FILE__, __LINE__, ret);
+                return ret;
+            } else if (sizeof(ptl_process_t) != size) {
+                opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
+                                    "%s:%d: ompi_modex_recv failed (size mismatch): %d\n",
+                                    __FILE__, __LINE__, ret);
+                return OMPI_ERR_BAD_PARAM;
+            }
+
+            *endpoint = *modex_id;
+        }
+    }
+
+    proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_PORTALS4] = endpoint;
+
+    return OMPI_SUCCESS;
+}
+
+ompi_proc_t *
+ompi_mtl_portals4_get_proc_group(struct ompi_group_t *group, int rank)
+{
+    int ret;
+
+    ompi_proc_t *proc = ompi_group_get_proc_ptr_raw (group, rank);
+    if (ompi_proc_is_sentinel(proc)) {
+        opal_process_name_t proc_name = ompi_proc_sentinel_to_name ((intptr_t) proc);
+        proc = (ompi_proc_t *)ompi_proc_for_name(proc_name);
+
+        OBJ_RETAIN(proc);
+    }
+    if (NULL == proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_PORTALS4]) {
+        ret = create_endpoint(proc);
+        if (OMPI_SUCCESS != ret) {
+            return NULL;
+        }
+#if 0
+    } else {
+        /*
+         * sanity check
+         */
+        int ret;
+        ptl_process_t *modex_id;
+        size_t size;
+
+        OPAL_MODEX_RECV(ret, &mca_mtl_portals4_component.mtl_version,
+                        &proc->super.proc_name, (uint8_t**)&modex_id, &size);
+
+        ptl_process_t *peer = (ptl_process_t*) proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_PORTALS4];
+        if (ompi_mtl_portals4.use_logical) {
+            if ((size_t)peer->rank != proc->super.proc_name.vpid) {
+                opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
+                                "%s:%d: existing peer and rank don't match\n",
+                                __FILE__, __LINE__);
+                return OMPI_ERROR;
+            }
+        }
+        else if (peer->phys.nid != modex_id->phys.nid ||
+                 peer->phys.pid != modex_id->phys.pid) {
+            opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
+                                "%s:%d: existing peer and modex peer don't match\n",
+                                __FILE__, __LINE__);
+            return OMPI_ERROR;
+        }
+#endif
+    }
+#if 0
+    opal_output_verbose(50, ompi_mtl_base_framework.framework_output,
+        "ompi_mtl_portals4_get_peer() - rank(vpid)=%d\n",
+        proc->super.proc_name.vpid);
+    if (proc->super.proc_name.vpid == OPAL_VPID_INVALID) {
+        for (int i=0;i<group->grp_proc_count;i++) {
+            ompi_proc_t *tmp_proc = ompi_group_get_proc_ptr_raw (group, i);
+            if (tmp_proc->super.proc_name.vpid == OPAL_VPID_INVALID) {
+                opal_output_verbose(50, ompi_mtl_base_framework.framework_output,
+                    "ompi_mtl_portals4_get_proc_group() - remote_proc[%d]->super.proc_name.vpid=OPAL_VPID_INVALID\n",
+                    i);
+            } else {
+                opal_output_verbose(50, ompi_mtl_base_framework.framework_output,
+                    "ompi_mtl_portals4_get_proc_group() - remote_proc[%d]->super.proc_name.vpid=%d\n",
+                    i, tmp_proc->super.proc_name.vpid);
+            }
+        }
+    }
+    opal_output_verbose(50, ompi_mtl_base_framework.framework_output,
+        "ompi_mtl_portals4_get_proc_group() - endpoint->phys.pid=%d endpoint->phys.nid=%d rank=%d vpid=%d\n",
+        ((ptl_process_t*)proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_PORTALS4])->phys.pid,
+        ((ptl_process_t*)proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_PORTALS4])->phys.nid,
+        ((ptl_process_t*)proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_PORTALS4])->rank,
+        proc->super.proc_name.vpid);
+#endif
+
+    return proc;
+}
+
+static int
+add_endpoints(size_t        nprocs,
+              ompi_proc_t **procs)
+{
+    int ret;
+    size_t i;
+
+    /* Get the list of ptl_process_id_t from the runtime and copy into structure */
+    for (i = 0 ; i < nprocs ; ++i) {
+        if (procs[i]->super.proc_arch != ompi_proc_local()->super.proc_arch) {
+            opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
+                                "Portals 4 MTL does not support heterogeneous operations.");
+            opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
+                                "Proc %s architecture %x, mine %x.",
+                                OMPI_NAME_PRINT(&procs[i]->super.proc_name),
+                                procs[i]->super.proc_arch, ompi_proc_local()->super.proc_arch);
+            return OMPI_ERR_NOT_SUPPORTED;
+        }
+
+        if (NULL == procs[i]->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_PORTALS4]) {
+            ret = create_endpoint(procs[i]);
+            if (OMPI_SUCCESS != ret) {
+                return ret;
+            }
+
+            OBJ_RETAIN(procs[i]);
+#if 0
+        } else {
+            /*
+             * sanity check
+             */
+            int ret;
+            ptl_process_t *modex_id;
+            size_t size;
+
+            OPAL_MODEX_RECV(ret, &mca_mtl_portals4_component.mtl_version,
+                            &procs[i]->super.proc_name, (uint8_t**)&modex_id, &size);
+
             ptl_process_t *proc = (ptl_process_t*) procs[i]->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_PORTALS4];
             if (ompi_mtl_portals4.use_logical) {
-                if ((size_t)proc->rank != i) {
+                if ((size_t)proc->rank != procs[i]->super.proc_name.vpid) {
                     opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                                     "%s:%d: existing peer and rank don't match\n",
                                     __FILE__, __LINE__);
                     return OMPI_ERROR;
                 }
-                maptable[i].phys.pid = modex_id->phys.pid;
-                maptable[i].phys.nid = modex_id->phys.nid;
             }
             else if (proc->phys.nid != modex_id->phys.nid ||
                      proc->phys.pid != modex_id->phys.pid) {
@@ -336,44 +470,102 @@ ompi_mtl_portals4_add_procs(struct mca_mtl_base_module_t *mtl,
                                     __FILE__, __LINE__);
                 return OMPI_ERROR;
             }
+#endif
         }
     }
 
-    if (ompi_mtl_portals4.use_logical) {
-        ret = PtlSetMap(ompi_mtl_portals4.ni_h, nprocs, maptable);
+    return OMPI_SUCCESS;
+}
+
+#define NEED_ALL_PROCS (ompi_mtl_portals4.use_logical || ompi_mtl_portals4.use_flowctl)
+
+int
+ompi_mtl_portals4_add_procs(struct mca_mtl_base_module_t *mtl,
+                            size_t nprocs,
+                            struct ompi_proc_t** procs)
+{
+    int ret, me=-1;
+
+    if ((NEED_ALL_PROCS) && (0 == ompi_mtl_portals4.need_init)) {
+        return OMPI_SUCCESS;
+    }
+
+    if ((NULL == ompi_mtl_portals4.world_procs) && (NEED_ALL_PROCS)) {
+        /*
+         * The configuration of the Portals4 components requires a
+         * complete list of the ranks now AND we haven't done this
+         * before.
+         */
+        /* the PML didn't give us all the processes.  must be using dynamic add_procs(). */
+        ompi_mtl_portals4.world_nprocs = ompi_process_info.num_procs;
+        ompi_mtl_portals4.world_procs  = (ompi_proc_t **)malloc(sizeof(ompi_proc_t *) * ompi_mtl_portals4.world_nprocs);
+
+        for (uint32_t i = 0 ; i < ompi_mtl_portals4.world_nprocs ; i++) {
+            if (ompi_mtl_portals4.world_procs[i] == ompi_proc_local_proc) {
+                me = i;
+            }
+            ompi_mtl_portals4.world_procs[i] = ompi_mtl_portals4_get_proc(&ompi_mpi_comm_world.comm, i);
+        }
+
+        if ((ompi_mtl_portals4.use_logical) && (0 == ompi_mtl_portals4.maptable_created)) {
+            ret=create_maptable(ompi_mtl_portals4.world_nprocs,
+                                ompi_mtl_portals4.world_procs);
+            if (OMPI_SUCCESS != ret) {
+                return ret;
+            }
+            ompi_mtl_portals4.maptable_created = 1;
+        }
+    } else {
+        /*
+         * The PML handed us a list of procs that need Portals4
+         * peer info.  Complete those procs here.
+         */
+        ret = add_endpoints(nprocs,
+                            procs);
         if (OMPI_SUCCESS != ret) {
             opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
-                                "%s:%d: logical mapping failed: %d\n",
+                                "%s:%d: add_endpoints failed: %d\n",
                                 __FILE__, __LINE__, ret);
             return ret;
         }
-        opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
-                            "logical mapping OK\n");
-        free(maptable);
     }
 
-    portals4_init_interface();
+    if (1 == ompi_mtl_portals4.need_init) {
+        /*
+         * This is the first time through here.  Initialize
+         * Portals4 and register the progress thread.
+         */
+        portals4_init_interface();
 
-    /* activate progress callback */
-    ret = opal_progress_register(ompi_mtl_portals4_progress);
-    if (OMPI_SUCCESS != ret) {
-        opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
-                            "%s:%d: opal_progress_register failed: %d\n",
-                            __FILE__, __LINE__, ret);
-        return ret;
-    }
+        /* activate progress callback */
+        ret = opal_progress_register(ompi_mtl_portals4_progress);
+        if (OMPI_SUCCESS != ret) {
+            opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
+                                "%s:%d: opal_progress_register failed: %d\n",
+                                __FILE__, __LINE__, ret);
+            return ret;
+        }
 
 #if OMPI_MTL_PORTALS4_FLOW_CONTROL
-    if (new_found) {
-        ret = ompi_mtl_portals4_flowctl_add_procs(me, nprocs, procs);
+        opal_output_verbose(50, ompi_mtl_base_framework.framework_output,
+                            "add_procs() - me=%d\n", me);
+
+        opal_output_verbose(50, ompi_mtl_base_framework.framework_output,
+                            "add_procs() - adding flowctl procs\n");
+
+        ret = ompi_mtl_portals4_flowctl_add_procs(me,
+                                                  ompi_mtl_portals4.world_nprocs,
+                                                  ompi_mtl_portals4.world_procs);
         if (OMPI_SUCCESS != ret) {
             opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                                 "%s:%d: flowctl_add_procs failed: %d\n",
                                 __FILE__, __LINE__, ret);
             return ret;
         }
-    }
 #endif
+
+        ompi_mtl_portals4.need_init = 0;
+    }
 
     return OMPI_SUCCESS;
 }
@@ -386,12 +578,19 @@ ompi_mtl_portals4_del_procs(struct mca_mtl_base_module_t *mtl,
 {
     size_t i;
 
+    opal_output_verbose(50, ompi_mtl_base_framework.framework_output,
+        "del_procs() - enter\n");
+
     for (i = 0 ; i < nprocs ; ++i) {
         if (NULL != procs[i]->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_PORTALS4]) {
             free(procs[i]->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_PORTALS4]);
             procs[i]->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_PORTALS4] = NULL;
         }
+        OBJ_RELEASE(procs[i]);
     }
+
+    opal_output_verbose(50, ompi_mtl_base_framework.framework_output,
+        "del_procs() - exit\n");
 
     return OMPI_SUCCESS;
 }
