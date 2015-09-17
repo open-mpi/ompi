@@ -1,7 +1,5 @@
 /*
  * Copyright (C) Mellanox Technologies Ltd. 2001-2011.  ALL RIGHTS RESERVED.
- * Copyright (c) 2015      Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -97,15 +95,15 @@ int mca_pml_yalla_progress(void);
 int mca_pml_yalla_add_comm(struct ompi_communicator_t* comm);
 int mca_pml_yalla_del_comm(struct ompi_communicator_t* comm);
 
-int mca_pml_yalla_irecv_init(const void *buf, size_t count, ompi_datatype_t *datatype,
+int mca_pml_yalla_irecv_init(void *buf, size_t count, ompi_datatype_t *datatype,
                              int src, int tag, struct ompi_communicator_t* comm,
                              struct ompi_request_t **request);
 
-int mca_pml_yalla_irecv(const void *buf, size_t count, ompi_datatype_t *datatype,
+int mca_pml_yalla_irecv(void *buf, size_t count, ompi_datatype_t *datatype,
                         int src, int tag, struct ompi_communicator_t* comm,
                         struct ompi_request_t **request);
 
-int mca_pml_yalla_recv(const void *buf, size_t count, ompi_datatype_t *datatype, int src,
+int mca_pml_yalla_recv(void *buf, size_t count, ompi_datatype_t *datatype, int src,
                        int tag, struct ompi_communicator_t* comm,
                        ompi_status_public_t* status);
 

@@ -166,7 +166,7 @@ extern int mca_pml_ob1_send( const void *buf,
                              mca_pml_base_send_mode_t mode,
                              struct ompi_communicator_t* comm );
 
-extern int mca_pml_ob1_irecv_init( const void *buf,
+extern int mca_pml_ob1_irecv_init( void *buf,
                                    size_t count,
                                    ompi_datatype_t *datatype,
                                    int src,
@@ -174,7 +174,7 @@ extern int mca_pml_ob1_irecv_init( const void *buf,
                                    struct ompi_communicator_t* comm,
                                    struct ompi_request_t **request );
 
-extern int mca_pml_ob1_irecv( const void *buf,
+extern int mca_pml_ob1_irecv( void *buf,
                               size_t count,
                               ompi_datatype_t *datatype,
                               int src,
@@ -182,7 +182,7 @@ extern int mca_pml_ob1_irecv( const void *buf,
                               struct ompi_communicator_t* comm,
                               struct ompi_request_t **request );
 
-extern int mca_pml_ob1_recv( const void *buf,
+extern int mca_pml_ob1_recv( void *buf,
                              size_t count,
                              ompi_datatype_t *datatype,
                              int src,

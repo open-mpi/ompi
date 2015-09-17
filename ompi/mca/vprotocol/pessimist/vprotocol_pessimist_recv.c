@@ -1,8 +1,6 @@
 /*
  * Copyright (c) 2004-2007 The Trustees of the University of Tennessee.
  *                         All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -19,7 +17,7 @@
 
 
 
-int mca_vprotocol_pessimist_irecv(const void *addr,
+int mca_vprotocol_pessimist_irecv(void *addr,
                      size_t count,
                      ompi_datatype_t * datatype,
                      int src,
@@ -45,7 +43,7 @@ int mca_vprotocol_pessimist_irecv(const void *addr,
 
 
 
-int mca_vprotocol_pessimist_recv(const void *addr,
+int mca_vprotocol_pessimist_recv(void *addr,
                       size_t count,
                       ompi_datatype_t * datatype,
                       int src,
