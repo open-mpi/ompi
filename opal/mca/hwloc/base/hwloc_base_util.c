@@ -492,6 +492,10 @@ static void df_search_cores(hwloc_obj_t obj, unsigned int *cnt)
             obj->userdata = (void*)data;
         }
         if (NULL == opal_hwloc_base_cpu_set) {
+            if (!hwloc_bitmap_isincluded(obj->cpuset, obj->allowed_cpuset)) {
+                /* do not count not allowed cores */
+                return;
+            }
             data->npus = 1;
         }
         *cnt += data->npus;
