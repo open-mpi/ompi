@@ -13,7 +13,7 @@
 #
 #
 
-AM_CPPFLAGS = $(coll_hcoll_CPPFLAGS)
+AM_CPPFLAGS = $(coll_hcoll_CPPFLAGS) -DCOLL_HCOLL_HOME=\"$(coll_hcoll_HOME)\"
 
 coll_hcoll_sources = \
 		coll_hcoll.h \
