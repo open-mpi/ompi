@@ -363,7 +363,7 @@ static inline ompi_proc_t *ompi_group_get_proc_ptr (ompi_group_t *group, int ran
 #if OMPI_GROUP_SPARSE
     do {
         if (OMPI_GROUP_IS_DENSE(group)) {
-            return ompi_group_dense_lookup (group, peer_id, allocate);
+            return ompi_group_dense_lookup (group, rank, allocate);
         }
         int ranks1 = rank;
         ompi_group_translate_ranks (group, 1, &ranks1, group->grp_parent_group_ptr, &rank);
