@@ -1103,9 +1103,9 @@ int cuda_getmemhandle(void *base, size_t size, mca_mpool_base_registration_t *ne
  */
 int cuda_ungetmemhandle(void *reg_data, mca_mpool_base_registration_t *reg)
 {
-    CUDA_DUMP_EVTHANDLE((100, ((mca_mpool_common_cuda_reg_t *)reg)->data.evtHandle, "cuda_ungetmemhandle"));
     opal_output_verbose(10, mca_common_cuda_output,
                         "CUDA: cuda_ungetmemhandle (no-op): base=%p", reg->base);
+    CUDA_DUMP_MEMHANDLE((100, ((mca_mpool_common_cuda_reg_t *)reg)->data.memHandle, "cuda_ungetmemhandle"));
 
     return OPAL_SUCCESS;
 }
@@ -1691,10 +1691,10 @@ static void cuda_dump_memhandle(int verbose, void *memHandle, char *str) {
     }
     memcpy(&memH, memHandle, sizeof(memH));
     opal_output_verbose(verbose, mca_common_cuda_output,
-                        "%s:ctxId=%d, pid=%d, size=%d, blocksize=%d, offset=%d, gpuId=%d, "
-                        "subDeviceIndex=%d, serial=%d",
-                        str, (int)memH.ctxId, memH.pid, (int)memH.size, (int)memH.blocksize, (int)memH.offset,
-                        memH.gpuId, memH.subDeviceIndex, (int)memH.serial);
+                        "%s:ctxId=0x%" PRIx64 ", pid=%d, size=%" PRIu64 ", blocksize=%" PRIu64 ", offset=%"
+                        PRIu64 ", gpuId=%d, subDeviceIndex=%d, serial=%" PRIu64,
+                        str, memH.ctxId, memH.pid, memH.size, memH.blocksize, memH.offset,
+                        memH.gpuId, memH.subDeviceIndex, memH.serial);
 }
 
 /*
@@ -1705,12 +1705,9 @@ static void cuda_dump_evthandle(int verbose, void *evtHandle, char *str) {
 
     struct InterprocessEventHandleInternal
     {
-        /* The first two entries are the CUinterprocessCtxHandle */
-        int64_t ctxId; /* unique (within a process) id of the sharing context */
-        int     pid;   /* pid of sharing context */
-
-        int     pad;   /* pad to match the structure */
-        int     index;
+        unsigned long pid;
+        unsigned long serial;
+        int index;
     } evtH;
 
     if (NULL == str) {
@@ -1718,8 +1715,8 @@ static void cuda_dump_evthandle(int verbose, void *evtHandle, char *str) {
     }
     memcpy(&evtH, evtHandle, sizeof(evtH));
     opal_output_verbose(verbose, mca_common_cuda_output,
-                        "CUDA: %s:ctxId=%d, pid=%d, index=%d",
-                        str, (int)evtH.ctxId, evtH.pid, (int)evtH.index);
+                        "CUDA: %s:pid=%lu, serial=%lu, index=%d",
+                        str, evtH.pid, evtH.serial, evtH.index);
 }
 
 
