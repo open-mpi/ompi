@@ -148,6 +148,11 @@ static int _shmem_finalize(void)
         return ret;
     }
 
+    /* free proc_group resources */
+    if (OSHMEM_SUCCESS != (ret = oshmem_proc_group_finalize())) {
+        return ret;
+    }
+
     /* free proc resources */
     if (OSHMEM_SUCCESS != (ret = oshmem_proc_finalize())) {
         return ret;
