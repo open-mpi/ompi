@@ -40,7 +40,6 @@ int orte_schizo_base_parse_cli(char *personality,
 int orte_schizo_base_parse_env(char *personality,
                                char *path,
                                opal_cmd_line_t *cmd_line,
-                               char *server,
                                char **srcenv,
                                char ***dstenv)
 {
@@ -50,7 +49,7 @@ int orte_schizo_base_parse_env(char *personality,
     OPAL_LIST_FOREACH(mod, &orte_schizo_base.active_modules, orte_schizo_base_active_module_t) {
         if (0 == strcmp(personality, mod->component->mca_component_name)) {
             if (NULL != mod->module->parse_env) {
-                rc = mod->module->parse_env(personality, path, cmd_line, server, srcenv, dstenv);
+                rc = mod->module->parse_env(personality, path, cmd_line, srcenv, dstenv);
                 return rc;
             }
         }

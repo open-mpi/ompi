@@ -285,6 +285,8 @@ static void launch_daemons(int fd, short args, void *cbdata)
     opal_argv_append(&argc, &argv, "PMI_NO_PREINITIALIZE=1");
     opal_argv_append(&argc, &argv, "-e");
     opal_argv_append(&argc, &argv, "PMI_NO_FORK=1");
+    opal_argv_append(&argc, &argv, "-e");
+    opal_argv_append(&argc, &argv, "OMPI_NO_USE_CRAY_PMI=1");
 
     /* create nodelist */
     nodelist_argv = NULL;

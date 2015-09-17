@@ -2,7 +2,7 @@
 /*
  * Copyright (c) 2012-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
  * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -31,9 +31,11 @@
 
 #include "opal/mca/pmix/base/base.h"
 #include "opal/mca/pmix/base/pmix_base_fns.h"
+#include "opal/mca/pmix/base/pmix_base_hash.h"
 
 #define OPAL_PMI_PAD  10
 
+/********     ERRHANDLER SUPPORT     ********/
 static opal_pmix_errhandler_fn_t errhandler = NULL;
 
 void opal_pmix_base_register_handler(opal_pmix_errhandler_fn_t err)
@@ -41,10 +43,12 @@ void opal_pmix_base_register_handler(opal_pmix_errhandler_fn_t err)
     errhandler = err;
 }
 
-void opal_pmix_base_errhandler(int error)
+void opal_pmix_base_errhandler(int status,
+                               opal_list_t *procs,
+                               opal_list_t *info)
 {
     if (NULL != errhandler) {
-        errhandler(error);
+        errhandler(status);
     }
 }
 
@@ -52,6 +56,132 @@ void opal_pmix_base_deregister_handler(void)
 {
     errhandler = NULL;
 }
+
+struct lookup_caddy_t {
+    volatile bool active;
+    int status;
+    opal_pmix_pdata_t *pdat;
+};
+
+/********     DATA EXCHANGE     ********/
+static void lookup_cbfunc(int status, opal_list_t *data, void *cbdata)
+{
+    struct lookup_caddy_t *cd = (struct lookup_caddy_t*)cbdata;
+    cd->status = status;
+    if (OPAL_SUCCESS == status && NULL != data) {
+        opal_pmix_pdata_t *p = (opal_pmix_pdata_t*)opal_list_get_first(data);
+        if (NULL != p) {
+            cd->pdat->proc = p->proc;
+            if (p->value.type == cd->pdat->value.type) {
+                (void)opal_value_xfer(&cd->pdat->value, &p->value);
+            }
+        }
+    }
+    cd->active = false;
+}
+
+int opal_pmix_base_exchange(opal_value_t *indat,
+                            opal_pmix_pdata_t *outdat,
+                            int timeout)
+{
+    int rc;
+    opal_list_t ilist, mlist;
+    opal_value_t *info;
+    opal_pmix_pdata_t *pdat;
+    struct lookup_caddy_t caddy;
+    char **keys;
+
+    /* protect the incoming value */
+    opal_dss.copy((void**)&info, indat, OPAL_VALUE);
+    OBJ_CONSTRUCT(&ilist, opal_list_t);
+    opal_list_append(&ilist, &info->super);
+    /* tell the server to delete upon read */
+    info = OBJ_NEW(opal_value_t);
+    info->key = strdup(OPAL_PMIX_PERSISTENCE);
+    info->type = OPAL_INT;
+    info->data.integer = OPAL_PMIX_PERSIST_FIRST_READ;
+    opal_list_append(&ilist, &info->super);
+
+    /* publish it with "session" scope */
+    rc = opal_pmix.publish(&ilist);
+    OPAL_LIST_DESTRUCT(&ilist);
+    if (OPAL_SUCCESS != rc) {
+        OPAL_ERROR_LOG(rc);
+        return rc;
+    }
+
+   /* lookup the other side's info - if a non-blocking form
+    * of lookup isn't available, then we use the blocking
+    * form and trust that the underlying system will WAIT
+    * until the other side publishes its data */
+    OBJ_CONSTRUCT(&ilist, opal_list_t);
+    pdat = OBJ_NEW(opal_pmix_pdata_t);
+    pdat->value.key = strdup(outdat->value.key);
+    pdat->value.type = outdat->value.type;
+    opal_list_append(&ilist, &pdat->super);
+    /* setup the constraints */
+    OBJ_CONSTRUCT(&mlist, opal_list_t);
+    /* tell it to wait for the data to arrive */
+    info = OBJ_NEW(opal_value_t);
+    info->key = strdup(OPAL_PMIX_WAIT);
+    info->type = OPAL_BOOL;
+    info->data.flag = true;
+    opal_list_append(&mlist, &info->super);
+    if (0 < timeout) {
+        /* give it a decent timeout as we don't know when
+         * the other side will publish - it doesn't
+         * have to be simultaneous */
+        info = OBJ_NEW(opal_value_t);
+        info->key = strdup(OPAL_PMIX_TIMEOUT);
+        info->type = OPAL_INT;
+        info->data.integer = timeout;
+        opal_list_append(&mlist, &info->super);
+    }
+
+    /* if a non-blocking version of lookup isn't
+     * available, then use the blocking version */
+    if (NULL == opal_pmix.lookup_nb) {
+        rc = opal_pmix.lookup(&ilist, &mlist);
+        OPAL_LIST_DESTRUCT(&mlist);
+        if (OPAL_SUCCESS != rc) {
+            OPAL_ERROR_LOG(rc);
+            OPAL_LIST_DESTRUCT(&ilist);
+            return rc;
+        }
+    } else {
+        caddy.active = true;
+        caddy.pdat = pdat;
+        keys = NULL;
+        opal_argv_append_nosize(&keys, pdat->value.key);
+        rc = opal_pmix.lookup_nb(keys, &mlist, lookup_cbfunc, &caddy);
+        if (OPAL_SUCCESS != rc) {
+            OPAL_ERROR_LOG(rc);
+            OPAL_LIST_DESTRUCT(&ilist);
+            OPAL_LIST_DESTRUCT(&mlist);
+            opal_argv_free(keys);
+            return rc;
+        }
+        while (caddy.active) {
+            usleep(10);
+        }
+        opal_argv_free(keys);
+        OPAL_LIST_DESTRUCT(&mlist);
+        if (OPAL_SUCCESS != caddy.status) {
+            OPAL_ERROR_LOG(caddy.status);
+            OPAL_LIST_DESTRUCT(&ilist);
+            return caddy.status;
+        }
+    }
+
+    /* pass back the result */
+    outdat->proc = pdat->proc;
+    rc = opal_value_xfer(&outdat->value, &pdat->value);
+    OPAL_LIST_DESTRUCT(&ilist);
+    return rc;
+}
+
+
+/********     DATA CONSOLIDATION     ********/
 
 static char* setup_key(const opal_process_name_t* name, const char *key, int pmix_keylen_max);
 static char *pmi_encode(const void *val, size_t vallen);
@@ -380,7 +510,7 @@ int opal_pmix_base_cache_keys_locally(const opal_process_name_t* id, const char*
 
     /* first try to fetch data from data storage */
     OBJ_CONSTRUCT(&values, opal_list_t);
-    rc = opal_dstore.fetch(opal_dstore_internal, id, key, &values);
+    rc = opal_pmix_base_fetch(id, key, &values);
     if (OPAL_SUCCESS == rc) {
         kv = (opal_value_t*)opal_list_get_first(&values);
         /* create the copy */
@@ -475,10 +605,9 @@ int opal_pmix_base_cache_keys_locally(const opal_process_name_t* id, const char*
                 return OPAL_ERROR;
         }
         /* store data in local hash table */
-        if (OPAL_SUCCESS != (rc = opal_dstore.store(opal_dstore_internal, id, kv))) {
+        if (OPAL_SUCCESS != (rc = opal_pmix_base_store(id, kv))) {
             OPAL_ERROR_LOG(rc);
         }
-
         /* keep going and cache everything locally */
         offset = (size_t) (tmp3 - tmp_val) + size;
         if (0 == strcmp(kv->key, key)) {

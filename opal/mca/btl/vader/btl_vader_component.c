@@ -15,7 +15,7 @@
  * Copyright (c) 2010-2015 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
- * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -327,7 +327,7 @@ static int mca_btl_base_vader_modex_send (void)
     }
 #endif
 
-    OPAL_MODEX_SEND(rc, PMIX_SYNC_REQD, PMIX_LOCAL,
+    OPAL_MODEX_SEND(rc, OPAL_PMIX_LOCAL,
                     &mca_btl_vader_component.super.btl_version, &modex, modex_size);
 
     return rc;

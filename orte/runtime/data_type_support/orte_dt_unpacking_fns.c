@@ -840,13 +840,18 @@ int orte_dt_unpack_attr(opal_buffer_t *buffer, void *dest, int32_t *num_vals,
                 return ret;
             }
             break;
-        case ORTE_VPID:
+        case OPAL_VPID:
             if (OPAL_SUCCESS != (ret = opal_dss_unpack_buffer(buffer, &ptr[i]->data.vpid, &m, ORTE_VPID))) {
                 return ret;
             }
             break;
-        case ORTE_JOBID:
+        case OPAL_JOBID:
             if (OPAL_SUCCESS != (ret = opal_dss_unpack_buffer(buffer, &ptr[i]->data.jobid, &m, ORTE_JOBID))) {
+                return ret;
+            }
+            break;
+        case OPAL_NAME:
+            if (OPAL_SUCCESS != (ret = opal_dss_unpack_buffer(buffer, &ptr[i]->data.name, &m, ORTE_NAME))) {
                 return ret;
             }
             break;

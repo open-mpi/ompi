@@ -64,6 +64,7 @@
 #include "opal/util/daemon_init.h"
 #include "opal/dss/dss.h"
 #include "opal/mca/hwloc/hwloc.h"
+#include "opal/mca/pmix/pmix.h"
 
 #include "orte/util/show_help.h"
 #include "orte/util/proc_info.h"
@@ -538,6 +539,7 @@ int orte_daemon(int argc, char *argv[])
         orte_app_context_t *app;
         char *tmp, *nptr, *sysinfo;
         int32_t ljob;
+        char **singenv=NULL;
 
         /* setup the singleton's job */
         jdata = OBJ_NEW(orte_job_t);
@@ -598,10 +600,23 @@ int orte_daemon(int argc, char *argv[])
         proc->app_idx = 0;
         ORTE_FLAG_SET(proc, ORTE_PROC_FLAG_LOCAL);
 
-        /* create a string that contains our uri + sysinfo + PMIx server URI */
+        /* register the singleton's nspace with our PMIx server */
+        if (ORTE_SUCCESS != (ret = orte_pmix_server_register_nspace(jdata))) {
+          ORTE_ERROR_LOG(ret);
+          goto DONE;
+        }
+        /* use setup fork to create the envars needed by the singleton */
+        if (OPAL_SUCCESS != (ret = opal_pmix.server_setup_fork(&proc->name, &singenv))) {
+          ORTE_ERROR_LOG(ret);
+          goto DONE;
+        }
+        nptr = opal_argv_join(singenv, ',');
+        opal_argv_free(singenv);
+        /* create a string that contains our uri + sysinfo + PMIx server URI envars */
         orte_util_convert_sysinfo_to_string(&sysinfo, orte_local_cpu_type, orte_local_cpu_model);
-        asprintf(&tmp, "%s[%s]%s", orte_process_info.my_daemon_uri, sysinfo, pmix_server_uri);
-	free(sysinfo);
+        asprintf(&tmp, "%s[%s]%s", orte_process_info.my_daemon_uri, sysinfo, nptr);
+	      free(sysinfo);
+        free(nptr);
 
         /* pass that info to the singleton */
         write(orted_globals.uri_pipe, tmp, strlen(tmp)+1); /* need to add 1 to get the NULL */

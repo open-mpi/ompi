@@ -37,7 +37,6 @@
 #include "opal/hash_string.h"
 #include "opal/class/opal_hash_table.h"
 #include "opal/class/opal_list.h"
-#include "opal/mca/dstore/base/base.h"
 #include "opal/mca/event/event.h"
 #include "opal/runtime/opal.h"
 #include "opal/runtime/opal_cr.h"
@@ -50,6 +49,7 @@
 #include "opal/util/malloc.h"
 #include "opal/util/basename.h"
 #include "opal/util/fd.h"
+#include "opal/mca/pmix/base/base.h"
 #include "opal/mca/pstat/base/base.h"
 #include "opal/mca/hwloc/base/base.h"
 
@@ -648,10 +648,16 @@ static int rte_init(void)
         free(contact_path);
     }
 
-    /* setup the PMIx server */
-    if (ORTE_SUCCESS != (ret = pmix_server_init())) {
+    /* setup the PMIx framework - ensure it skips all non-PMIx components */
+    putenv("OMPI_MCA_pmix=^s1,s2,cray");
+    if (OPAL_SUCCESS != (ret = mca_base_framework_open(&opal_pmix_base_framework, 0))) {
         ORTE_ERROR_LOG(ret);
-        error = "pmix server init";
+        error = "orte_pmix_base_open";
+        goto error;
+    }
+    if (ORTE_SUCCESS != (ret = opal_pmix_base_select())) {
+        ORTE_ERROR_LOG(ret);
+        error = "opal_pmix_base_select";
         goto error;
     }
 
@@ -661,6 +667,13 @@ static int rte_init(void)
     if (ORTE_SUCCESS != (ret = orte_routed.init_routes(ORTE_PROC_MY_NAME->jobid, NULL))) {
         ORTE_ERROR_LOG(ret);
         error = "orte_routed.init_routes";
+        goto error;
+    }
+
+    /* setup the PMIx server */
+    if (ORTE_SUCCESS != (ret = pmix_server_init())) {
+        ORTE_ERROR_LOG(ret);
+        error = "pmix server init";
         goto error;
     }
 
@@ -818,6 +831,7 @@ static int rte_finalize(void)
 
     /* shutdown the pmix server */
     pmix_server_finalize();
+    (void) mca_base_framework_close(&opal_pmix_base_framework);
 
     (void) mca_base_framework_close(&orte_schizo_base_framework);
     (void) mca_base_framework_close(&orte_dfs_base_framework);
@@ -831,7 +845,6 @@ static int rte_finalize(void)
     (void) mca_base_framework_close(&orte_rmaps_base_framework);
     (void) mca_base_framework_close(&orte_ras_base_framework);
     (void) mca_base_framework_close(&orte_grpcomm_base_framework);
-    (void) mca_base_framework_close(&opal_dstore_base_framework);
     (void) mca_base_framework_close(&orte_routed_base_framework);
     (void) mca_base_framework_close(&orte_plm_base_framework);
     (void) mca_base_framework_close(&orte_errmgr_base_framework);

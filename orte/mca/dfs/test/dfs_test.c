@@ -27,7 +27,7 @@
 #include "opal/util/output.h"
 #include "opal/util/uri.h"
 #include "opal/dss/dss.h"
-#include "opal/mca/dstore/dstore.h"
+#include "opal/mca/pmix/pmix.h"
 
 #include "orte/util/error_strings.h"
 #include "orte/util/name_fns.h"
@@ -446,11 +446,9 @@ static void process_opens(int fd, short args, void *cbdata)
     opal_buffer_t *buffer;
     char *scheme, *host=NULL, *filename=NULL;
     orte_process_name_t daemon;
-    bool found;
-    orte_vpid_t v;
-    opal_list_t myvals;
-    opal_value_t *kv;
-
+    opal_list_t lt;
+    opal_namelist_t *nm;
+    
     opal_output_verbose(1, orte_dfs_base_framework.framework_output,
                         "%s PROCESSING OPEN", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
 
@@ -483,33 +481,16 @@ static void process_opens(int fd, short args, void *cbdata)
 
     /* ident the daemon on that host */
     daemon.jobid = ORTE_PROC_MY_DAEMON->jobid;
-    found = false;
-    for (v=0; v < orte_process_info.num_daemons; v++) {
-        char *hostname;
-        daemon.vpid = v;
-        /* fetch the hostname where this daemon is located */
-        OBJ_CONSTRUCT(&myvals, opal_list_t);
-        if (ORTE_SUCCESS != (rc = opal_dstore.fetch(opal_dstore_internal,
-                                                    &daemon,
-                                                    OPAL_DSTORE_HOSTNAME, &myvals))) {
-            ORTE_ERROR_LOG(rc);
-            OPAL_LIST_DESTRUCT(&myvals);
-            goto complete;
-        }
-        kv = (opal_value_t*)opal_list_get_first(&myvals);
-        hostname = kv->data.string;
-        OPAL_LIST_DESTRUCT(&myvals);
-        opal_output_verbose(1, orte_dfs_base_framework.framework_output,
-                            "%s GOT HOST %s HOSTNAME %s", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), host, hostname);
-        if (0 == strcmp(host, hostname)) {
-            found = true;
-            break;
-        }
-    }
-    if (!found) {
-        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+    OBJ_CONSTRUCT(&lt, opal_list_t);
+    if (ORTE_SUCCESS != (rc = opal_pmix.resolve_peers(host, daemon.jobid, &lt))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_DESTRUCT(&lt);
         goto complete;
     }
+    nm = (opal_namelist_t*)opal_list_get_first(&lt);
+    daemon.vpid = nm->name.vpid;
+    OPAL_LIST_DESTRUCT(&lt);
+    
     opal_output_verbose(1, orte_dfs_base_framework.framework_output,
                         "%s file %s on host %s daemon %s",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),

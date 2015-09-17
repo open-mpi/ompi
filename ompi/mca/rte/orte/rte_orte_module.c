@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
+ * Copyright (c) 2013-2015 Intel, Inc. All rights reserved
  * Copyright (c) 2012-2014 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
@@ -19,7 +19,6 @@
 #include "opal/util/argv.h"
 #include "opal/util/proc.h"
 #include "opal/util/opal_getcwd.h"
-#include "opal/mca/dstore/dstore.h"
 #include "opal/mca/pmix/pmix.h"
 #include "opal/threads/threads.h"
 #include "opal/class/opal_list.h"

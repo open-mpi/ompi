@@ -132,6 +132,7 @@ static void job_errors(int fd, short args, void *cbdata)
     orte_proc_t *aborted_proc;
     opal_buffer_t *answer;
     int32_t rc, ret;
+    int room, *rmptr;
 
     /*
      * if orte is trying to shutdown, just let it
@@ -192,13 +193,23 @@ static void job_errors(int fd, short args, void *cbdata)
                 OBJ_RELEASE(caddy);
                 return;
             }
-            OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
+            /* pack the room number */
+            rmptr = &room;
+            if (orte_get_attribute(&jdata->attributes, ORTE_JOB_ROOM_NUM, (void**)&rmptr, OPAL_INT)) {
+                if (ORTE_SUCCESS != (ret = opal_dss.pack(answer, &room, 1, OPAL_INT))) {
+                    ORTE_ERROR_LOG(ret);
+                    ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+                    OBJ_RELEASE(caddy);
+                    return;
+                }
+            }
+            OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base_framework.framework_output,
                                  "%s errmgr:hnp sending dyn error release of job %s to %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_JOBID_PRINT(jdata->jobid),
                                  ORTE_NAME_PRINT(&jdata->originator)));
             if (0 > (ret = orte_rml.send_buffer_nb(&jdata->originator, answer,
-                                                   ORTE_RML_TAG_PLM_PROXY,
+                                                   ORTE_RML_TAG_LAUNCH_RESP,
                                                    orte_rml_send_callback, NULL))) {
                 ORTE_ERROR_LOG(ret);
                 OBJ_RELEASE(answer);

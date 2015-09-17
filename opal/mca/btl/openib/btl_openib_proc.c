@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2008 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
@@ -148,7 +148,7 @@ mca_btl_openib_proc_t* mca_btl_openib_proc_create(opal_proc_t* proc)
 
     /* query for the peer address info */
     OPAL_MODEX_RECV(rc, &mca_btl_openib_component.super.btl_version,
-                    proc, &message, &msg_size);
+                    &proc->proc_name, &message, &msg_size);
     if (OPAL_SUCCESS != rc) {
         BTL_VERBOSE(("[%s:%d] opal_modex_recv failed for peer %s",
                    __FILE__, __LINE__,

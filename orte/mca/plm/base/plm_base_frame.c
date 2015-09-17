@@ -49,17 +49,7 @@ orte_plm_globals_t orte_plm_globals = {0};
 /*
  * The default module
  */
-orte_plm_base_module_t orte_plm = {
-    orte_plm_proxy_init,
-    NULL,   /* cannot set hnp name in a proxy */
-    orte_plm_proxy_spawn,
-    NULL,   /* cannot remotely spawn by default */
-    NULL,   /* cannot terminate job from a proxy */
-    NULL,   /* cannot terminate orteds from a proxy */
-    NULL,   /* cannot terminate procs from a proxy */
-    NULL,   /* cannot signal job from a proxy */
-    orte_plm_proxy_finalize
-};
+orte_plm_base_module_t orte_plm = {0};
 
 
 static int orte_plm_base_close(void)

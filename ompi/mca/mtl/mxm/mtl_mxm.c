@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (C) 2001-2011 Mellanox Technologies Ltd. ALL RIGHTS RESERVED.
- * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
+ * Copyright (c) 2013-2015 Intel, Inc. All rights reserved
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
@@ -177,7 +177,7 @@ static int ompi_mtl_mxm_send_ep_address(void *address, size_t address_len)
 
     /* Send address length */
     sprintf(modex_name, "%s-len", modex_component_name);
-    OPAL_MODEX_SEND_STRING(rc, PMIX_SYNC_REQD, PMIX_GLOBAL,
+    OPAL_MODEX_SEND_STRING(rc, OPAL_PMIX_GLOBAL,
                            modex_name, &address_len, sizeof(address_len));
     if (OMPI_SUCCESS != rc) {
         MXM_ERROR("failed to send address length");
@@ -192,7 +192,7 @@ static int ompi_mtl_mxm_send_ep_address(void *address, size_t address_len)
     while (modex_buf_size) {
         sprintf(modex_name, "%s-%d", modex_component_name, modex_name_id);
         modex_cur_size = (modex_buf_size < modex_max_size) ? modex_buf_size : modex_max_size;
-        OPAL_MODEX_SEND_STRING(rc, PMIX_SYNC_REQD, PMIX_GLOBAL,
+        OPAL_MODEX_SEND_STRING(rc, OPAL_PMIX_GLOBAL,
                                modex_name, modex_buf_ptr, modex_cur_size);
         if (OMPI_SUCCESS != rc) {
             MXM_ERROR("Open MPI couldn't distribute EP connection details");
@@ -232,7 +232,7 @@ static int ompi_mtl_mxm_recv_ep_address(ompi_proc_t *source_proc, void **address
 
     /* Receive address length */
     sprintf(modex_name, "%s-len", modex_component_name);
-    OPAL_MODEX_RECV_STRING(rc, modex_name, &source_proc->super,
+    OPAL_MODEX_RECV_STRING(rc, modex_name, &source_proc->super.proc_name,
                            (char**)&address_len_buf_ptr,
                            &modex_cur_size);
     if (OMPI_SUCCESS != rc) {
@@ -253,7 +253,7 @@ static int ompi_mtl_mxm_recv_ep_address(ompi_proc_t *source_proc, void **address
     modex_buf_size = 0;
     while (modex_buf_size < *address_len_p) {
         sprintf(modex_name, "%s-%d", modex_component_name, modex_name_id);
-        OPAL_MODEX_RECV_STRING(rc, modex_name, &source_proc->super,
+        OPAL_MODEX_RECV_STRING(rc, modex_name, &source_proc->super.proc_name,
                                (char**)&modex_buf_ptr,
                                &modex_cur_size);
         if (OMPI_SUCCESS != rc) {

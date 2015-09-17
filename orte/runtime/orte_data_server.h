@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -34,6 +35,11 @@
 
 BEGIN_C_DECLS
 
+#define ORTE_PMIX_PUBLISH_CMD    0x01
+#define ORTE_PMIX_LOOKUP_CMD     0x02
+#define ORTE_PMIX_UNPUBLISH_CMD  0x03
+
+
 /* provide hooks to startup and finalize the data server */
 ORTE_DECLSPEC int orte_data_server_init(void);
 ORTE_DECLSPEC void orte_data_server_finalize(void);
@@ -42,17 +48,6 @@ ORTE_DECLSPEC void orte_data_server_finalize(void);
 ORTE_DECLSPEC void orte_data_server(int status, orte_process_name_t* sender,
                                     opal_buffer_t* buffer, orte_rml_tag_t tag,
                                     void* cbdata);
-
-/* define a type and some values for the commands
- * to be used with the server
- */
-typedef uint8_t orte_data_server_cmd_t;
-#define ORTE_DATA_SERVER_CMD OPAL_UINT8
-
-#define ORTE_DATA_SERVER_PUBLISH     0x01
-#define ORTE_DATA_SERVER_UNPUBLISH   0x02
-#define ORTE_DATA_SERVER_LOOKUP      0x04
-
 
 END_C_DECLS
 

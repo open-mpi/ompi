@@ -255,6 +255,12 @@ const char *orte_attr_key_to_str(orte_attribute_key_t key)
             return "JOB-SLOT-LIST";
         case ORTE_JOB_NOTIFICATIONS:
             return "JOB-NOTIFICATIONS";
+        case ORTE_JOB_ROOM_NUM:
+            return "JOB-ROOM-NUM";
+        case ORTE_JOB_LAUNCH_PROXY:
+            return "JOB-LAUNCH-PROXY";
+        case ORTE_JOB_NSPACE_REGISTERED:
+            return "JOB-NSPACE-REGISTERED";
 
         case ORTE_PROC_NOBARRIER:
             return "PROC-NOBARRIER";
@@ -411,6 +417,10 @@ static int orte_attr_load(orte_attribute_t *kv,
         kv->data.jobid = *(orte_jobid_t *)data;
         break;
 
+    case OPAL_NAME:
+        kv->data.name = *(opal_process_name_t *)data;
+        break;
+
     default:
         OPAL_ERROR_LOG(OPAL_ERR_NOT_SUPPORTED);
         return OPAL_ERR_NOT_SUPPORTED;
@@ -523,6 +533,10 @@ static int orte_attr_unload(orte_attribute_t *kv,
 
     case OPAL_JOBID:
         memcpy(*data, &kv->data.jobid, sizeof(orte_jobid_t));
+        break;
+
+    case OPAL_NAME:
+        memcpy(*data, &kv->data.name, sizeof(orte_process_name_t));
         break;
 
     default:

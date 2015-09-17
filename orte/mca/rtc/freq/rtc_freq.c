@@ -457,8 +457,9 @@ static void set(orte_job_t *jdata,
 
     /* see if the job has the min freq attribute set */
     fptr = &minfreq;
-    minfreq = -1.0;
-    orte_get_attribute(&jdata->attributes, ORTE_JOB_MIN_FREQ, (void**)&fptr, OPAL_FLOAT);
+    if (!orte_get_attribute(&jdata->attributes, ORTE_JOB_MIN_FREQ, (void**)&fptr, OPAL_FLOAT)) {
+        minfreq = -1.0;
+    }
 
     /* see if the job has the max freq attribute set */
     fptr = &freq;

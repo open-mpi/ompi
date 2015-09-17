@@ -68,7 +68,7 @@ static int send_ep_address(void)
         return OMPI_ERROR;
     }
 
-    OPAL_MODEX_SEND(rc, PMIX_SYNC_REQD, PMIX_GLOBAL,
+    OPAL_MODEX_SEND(rc, OPAL_PMIX_GLOBAL,
                     &mca_pml_yalla_component.pmlm_version, address, addrlen);
     if (OMPI_SUCCESS != rc) {
         PML_YALLA_ERROR("Open MPI couldn't distribute EP connection details");
@@ -82,7 +82,7 @@ static int recv_ep_address(ompi_proc_t *proc, void **address_p, size_t *addrlen_
 {
     int rc;
 
-    OPAL_MODEX_RECV(rc, &mca_pml_yalla_component.pmlm_version, &proc->super,
+    OPAL_MODEX_RECV(rc, &mca_pml_yalla_component.pmlm_version, &proc->super.proc_name,
                     address_p, addrlen_p);
     if (rc < 0) {
         PML_YALLA_ERROR("Failed to receive EP address");

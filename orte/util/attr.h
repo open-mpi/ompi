@@ -127,6 +127,9 @@ typedef uint16_t orte_job_flags_t;
 #define ORTE_JOB_REPORT_BINDINGS        (ORTE_JOB_START_KEY + 36)    // bool - Report process bindings
 #define ORTE_JOB_SLOT_LIST              (ORTE_JOB_START_KEY + 37)    // string - constraints on cores to use
 #define ORTE_JOB_NOTIFICATIONS          (ORTE_JOB_START_KEY + 38)    // string - comma-separated list of desired notifications+methods
+#define ORTE_JOB_ROOM_NUM               (ORTE_JOB_START_KEY + 39)    // int - number of remote request's hotel room
+#define ORTE_JOB_LAUNCH_PROXY           (ORTE_JOB_START_KEY + 40)    // opal_process_name_t - name of spawn requestor
+#define ORTE_JOB_NSPACE_REGISTERED      (ORTE_JOB_START_KEY + 41)    // bool - job has been registered with embedded PMIx server
 
 #define ORTE_JOB_MAX_KEY   300
 

@@ -54,6 +54,7 @@
 #include "opal/mca/hwloc/hwloc.h"
 #include "opal/mca/shmem/base/base.h"
 #include "opal/mca/pstat/pstat.h"
+#include "opal/mca/pmix/pmix.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/rml/rml.h"
@@ -80,6 +81,7 @@
 #include "orte/runtime/orte_globals.h"
 #include "orte/runtime/orte_wait.h"
 #include "orte/orted/orted.h"
+#include "orte/orted/pmix/pmix_server.h"
 
 #if OPAL_ENABLE_FT_CR == 1
 #include "orte/mca/snapc/snapc.h"
@@ -484,6 +486,13 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
     }
 
  COMPLETE:
+    /* register this job with the PMIx server - need to wait until after we
+     * have computed the #local_procs before calling the function */
+    if (ORTE_SUCCESS != (rc = orte_pmix_server_register_nspace(jdata))) {
+        ORTE_ERROR_LOG(rc);
+        goto REPORT_ERROR;
+    }
+
     return ORTE_SUCCESS;
 
  REPORT_ERROR:
@@ -846,6 +855,12 @@ void orte_odls_base_default_launch_local(int fd, short sd, void *cbdata)
                                  "%s odls:launch working child %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_NAME_PRINT(&child->name)));
+
+            /* setup the pmix environment */
+            if (OPAL_SUCCESS != (rc = opal_pmix.server_setup_fork(&child->name, &app->env))) {
+                ORTE_ERROR_LOG(rc);
+                continue;
+            }
 
             /* ensure we clear any prior info regarding state or exit status in
              * case this is a restart

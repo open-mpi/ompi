@@ -312,7 +312,7 @@ mca_pml_base_pml_selected(const char *name)
 {
     int rc;
 
-    OPAL_MODEX_SEND(rc, PMIX_SYNC_REQD, PMIX_GLOBAL, &pml_base_component, name, strlen(name) + 1);
+    OPAL_MODEX_SEND(rc, OPAL_PMIX_GLOBAL, &pml_base_component, name, strlen(name) + 1);
     return rc;
 }
 
@@ -343,7 +343,7 @@ mca_pml_base_pml_check_selected(const char *my_pml,
 
     /* get the name of the PML module selected by rank=0 */
     OPAL_MODEX_RECV(ret, &pml_base_component,
-                    &procs[0]->super, (void**) &remote_pml, &size);
+                    &procs[0]->super.proc_name, (void**) &remote_pml, &size);
 
     /* if this key wasn't found, then just assume all is well... */
     if (OMPI_SUCCESS != ret) {

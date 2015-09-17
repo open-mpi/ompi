@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2012-2014 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
+ * Copyright (c) 2013-2015 Intel, Inc. All rights reserved
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -52,7 +52,7 @@
 #include "opal/dss/dss.h"
 #include "opal/runtime/opal.h"
 #include "opal/class/opal_pointer_array.h"
-#include "opal/mca/dstore/dstore.h"
+#include "opal/mca/pmix/pmix.h"
 #include "opal/mca/hwloc/base/base.h"
 #include "opal/util/net.h"
 #include "opal/util/output.h"
@@ -79,7 +79,7 @@ int orte_util_build_daemon_nidmap(char **nodes)
     int rc;
     struct hostent *h;
     opal_buffer_t buf;
-    orte_process_name_t proc;
+    opal_process_name_t proc;
     char *uri, *addr;
     char *proc_name;
     opal_value_t kv;
@@ -98,9 +98,7 @@ int orte_util_build_daemon_nidmap(char **nodes)
     kv.key = strdup(ORTE_DB_DAEMON_VPID);
     kv.data.uint32 = proc.vpid;
     kv.type = OPAL_UINT32;
-    if (OPAL_SUCCESS != (rc = opal_dstore.store(opal_dstore_internal,
-                                                &proc,
-                                                &kv))) {
+    if (OPAL_SUCCESS != (rc = opal_pmix.store_local(&proc, &kv))) {
         ORTE_ERROR_LOG(rc);
         OBJ_DESTRUCT(&kv);
         return rc;
@@ -108,12 +106,10 @@ int orte_util_build_daemon_nidmap(char **nodes)
     OBJ_DESTRUCT(&kv);
 
     OBJ_CONSTRUCT(&kv, opal_value_t);
-    kv.key = strdup(OPAL_DSTORE_HOSTNAME);
+    kv.key = strdup(OPAL_PMIX_HOSTNAME);
     kv.data.string = strdup("HNP");
     kv.type = OPAL_STRING;
-    if (OPAL_SUCCESS != (rc = opal_dstore.store(opal_dstore_internal,
-                                                &proc,
-                                                &kv))) {
+    if (OPAL_SUCCESS != (rc = opal_pmix.store_local(&proc, &kv))) {
         ORTE_ERROR_LOG(rc);
         OBJ_DESTRUCT(&kv);
         return rc;
@@ -130,12 +126,10 @@ int orte_util_build_daemon_nidmap(char **nodes)
         proc.vpid = i+1;
         /* store the hostname for the proc */
         OBJ_CONSTRUCT(&kv, opal_value_t);
-        kv.key = strdup(OPAL_DSTORE_HOSTNAME);
+        kv.key = strdup(OPAL_PMIX_HOSTNAME);
         kv.data.string = strdup(nodes[i]);
         kv.type = OPAL_STRING;
-        if (OPAL_SUCCESS != (rc = opal_dstore.store(opal_dstore_internal,
-                                                    &proc,
-                                                    &kv))) {
+        if (OPAL_SUCCESS != (rc = opal_pmix.store_local(&proc, &kv))) {
             ORTE_ERROR_LOG(rc);
             OBJ_DESTRUCT(&kv);
             return rc;
@@ -146,12 +140,10 @@ int orte_util_build_daemon_nidmap(char **nodes)
          * case will yield correct behavior
          */
         OBJ_CONSTRUCT(&kv, opal_value_t);
-        kv.key = strdup(OPAL_DSTORE_ARCH);
+        kv.key = strdup(OPAL_PMIX_ARCH);
         kv.data.uint32 = opal_local_arch;
         kv.type = OPAL_UINT32;
-        if (OPAL_SUCCESS != (rc = opal_dstore.store(opal_dstore_internal,
-                                                    &proc,
-                                                    &kv))) {
+        if (OPAL_SUCCESS != (rc = opal_pmix.store_local(&proc, &kv))) {
             ORTE_ERROR_LOG(rc);
             OBJ_DESTRUCT(&kv);
             return rc;

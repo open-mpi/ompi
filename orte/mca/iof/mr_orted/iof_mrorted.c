@@ -323,7 +323,9 @@ static void mrorted_complete(const orte_job_t *jdata)
     /* get the stdout target */
     stdout_target = ORTE_JOBID_INVALID;
     jbptr = &stdout_target;
-    orte_get_attribute(&((orte_job_t*)jdata)->attributes, ORTE_JOB_STDOUT_TARGET, (void**)&jbptr, ORTE_JOBID);
+    if (!orte_get_attribute(&((orte_job_t*)jdata)->attributes, ORTE_JOB_STDOUT_TARGET, (void**)&jbptr, ORTE_JOBID)) {
+      return;
+    }
 
     /* the job is complete - close out the stdin
      * of any procs it was feeding

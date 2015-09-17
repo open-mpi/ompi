@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -33,7 +34,7 @@
 #include "ompi/mpi/c/profile/defines.h"
 #endif
 
-#include "ompi/mca/dpm/dpm.h"
+#include "ompi/dpm/dpm.h"
 
 
 static const char FUNC_NAME[] = "MPI_Comm_disconnect";
@@ -62,7 +63,7 @@ int MPI_Comm_disconnect(MPI_Comm *comm)
     OPAL_CR_ENTER_LIBRARY();
 
     if ( OMPI_COMM_IS_DYNAMIC(*comm)) {
-        if (OMPI_SUCCESS != ompi_dpm.disconnect (*comm)) {
+        if (OMPI_SUCCESS != ompi_dpm_disconnect (*comm)) {
             ret = OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, FUNC_NAME);
         }
     }

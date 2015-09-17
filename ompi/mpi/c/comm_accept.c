@@ -14,6 +14,7 @@
  * Copyright (c) 2008      University of Houston, Inc.  All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights
  *                         reserved.
+ * Copyright (c) 2015      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -28,7 +29,7 @@
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/info/info.h"
-#include "ompi/mca/dpm/dpm.h"
+#include "ompi/dpm/dpm.h"
 #include "ompi/memchecker.h"
 
 #if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
@@ -95,11 +96,11 @@ int MPI_Comm_accept(const char *port_name, MPI_Info info, int root,
     OPAL_CR_ENTER_LIBRARY();
 
     if ( rank == root ) {
-	rc = ompi_dpm.connect_accept (comm, root, port_name, send_first,
+	rc = ompi_dpm_connect_accept (comm, root, port_name, send_first,
 				      &newcomp);
     }
     else {
-	rc = ompi_dpm.connect_accept (comm, root, NULL, send_first,
+	rc = ompi_dpm_connect_accept (comm, root, NULL, send_first,
 				      &newcomp);
     }
 
