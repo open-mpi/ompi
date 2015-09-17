@@ -62,6 +62,17 @@ static int mca_pml_yalla_component_register(void)
                                            OPAL_INFO_LVL_3,
                                            MCA_BASE_VAR_SCOPE_LOCAL,
                                            &ompi_pml_yalla.priority);
+
+#if MXM_API >= MXM_VERSION(3,4)
+    ompi_pml_yalla.force_bcopy_send = 1;
+    (void) mca_base_component_var_register(&mca_pml_yalla_component.pmlm_version, "force_bcopy_send",
+                                           "forse send request to be performed in bcopy way in some cases",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &ompi_pml_yalla.force_bcopy_send);
+#endif
+
     return 0;
 }
 

@@ -106,13 +106,13 @@ int mca_pml_yalla_open(void)
          opal_mem_hooks_support_level()))
     {
         PML_YALLA_VERBOSE(1, "enabling on-demand memory mapping");
-        opal_setenv("MXM_PML_MEM_ON_DEMAND_MAP", "y", false, &environ);
+        opal_setenv("MXM_MPI_MEM_ON_DEMAND_MAP", "y", false, &environ);
         ompi_pml_yalla.using_mem_hooks = 1;
     } else {
         PML_YALLA_VERBOSE(1, "disabling on-demand memory mapping");
         ompi_pml_yalla.using_mem_hooks = 0;
     }
-    opal_setenv("MXM_PML_SINGLE_THREAD", ompi_mpi_thread_multiple ? "n" : "y",
+    opal_setenv("MXM_MPI_SINGLE_THREAD", ompi_mpi_thread_multiple ? "n" : "y",
                 false, &environ);
 
     /* Read options */
@@ -429,6 +429,11 @@ static int mca_pml_yalla_bsend(mxm_send_req_t *mxm_sreq)
 
     bsreq->mxm.opcode         = mxm_sreq->opcode;
     bsreq->mxm.flags          = mxm_sreq->flags;
+#if MXM_API >= MXM_VERSION(3,4)
+    if (ompi_pml_yalla.force_bcopy_send) {
+        bsreq->mxm.flags     |= MXM_REQ_SEND_FLAG_BCOPY;
+    }
+#endif
     bsreq->mxm.op.send        = mxm_sreq->op.send;
 
     error = mxm_req_send(&bsreq->mxm);

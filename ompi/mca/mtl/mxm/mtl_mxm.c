@@ -100,7 +100,7 @@ static int ompi_mtl_mxm_get_ep_address(ompi_mtl_mxm_ep_conn_info_t *ep_info, mxm
     err = mxm_ep_address(ompi_mtl_mxm.ep, ptlid,
                          (struct sockaddr *) &ep_info->ptl_addr[ptlid], &addrlen);
     if (MXM_OK != err) {
-        opal_show_help("help-mtl-mxm.txt", "unable to extract endpoint address",
+        opal_show_help("help-mtl-mxm.txt", "unable to extract endpoint ptl address",
                        true, (int)ptlid, mxm_error_string(err));
         return OMPI_ERROR;
     }
@@ -250,6 +250,9 @@ static int ompi_mtl_mxm_recv_ep_address(ompi_proc_t *source_proc, void **address
                                     &modex_cur_size);
         if (OMPI_SUCCESS != rc) {
             MXM_ERROR("Open MPI couldn't distribute EP connection details");
+            free(*address_p);
+            *address_p = NULL;
+            *address_len_p = 0;
             goto bail;
         }
 
