@@ -64,14 +64,14 @@ int mca_vprotocol_pessimist_progress(void);
 int mca_vprotocol_pessimist_add_comm(struct ompi_communicator_t* comm);
 int mca_vprotocol_pessimist_del_comm(struct ompi_communicator_t* comm);
 
-int mca_vprotocol_pessimist_irecv(const void *addr,
+int mca_vprotocol_pessimist_irecv(void *addr,
                                   size_t count,
                                   ompi_datatype_t * datatype,
                                   int src,
                                   int tag,
                                   struct ompi_communicator_t *comm,
                                   struct ompi_request_t **request );
-int mca_vprotocol_pessimist_recv(const void *addr,
+int mca_vprotocol_pessimist_recv(void *addr,
                                  size_t count,
                                  ompi_datatype_t * datatype,
                                  int src,

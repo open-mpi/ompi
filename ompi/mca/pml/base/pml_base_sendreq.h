@@ -81,7 +81,7 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION( mca_pml_base_send_request_t );
       (request)->req_base.req_ompi.req_mpi_object.comm = comm;            \
       (request)->req_addr = addr;                                         \
       (request)->req_send_mode = mode;                                    \
-      (request)->req_base.req_addr = addr;                                \
+      (request)->req_base.req_addr = (void *)addr;                        \
       (request)->req_base.req_count = count;                              \
       (request)->req_base.req_datatype = datatype;                        \
       (request)->req_base.req_peer = (int32_t)peer;                       \

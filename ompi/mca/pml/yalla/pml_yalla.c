@@ -313,7 +313,7 @@ int mca_pml_yalla_del_comm(struct ompi_communicator_t* comm)
     return OMPI_SUCCESS;
 }
 
-int mca_pml_yalla_irecv_init(const void *buf, size_t count, ompi_datatype_t *datatype,
+int mca_pml_yalla_irecv_init(void *buf, size_t count, ompi_datatype_t *datatype,
                              int src, int tag, struct ompi_communicator_t* comm,
                              struct ompi_request_t **request)
 {
@@ -329,7 +329,7 @@ int mca_pml_yalla_irecv_init(const void *buf, size_t count, ompi_datatype_t *dat
     return OMPI_SUCCESS;
 }
 
-int mca_pml_yalla_irecv(const void *buf, size_t count, ompi_datatype_t *datatype,
+int mca_pml_yalla_irecv(void *buf, size_t count, ompi_datatype_t *datatype,
                         int src, int tag, struct ompi_communicator_t* comm,
                         struct ompi_request_t **request)
 {
@@ -353,7 +353,7 @@ int mca_pml_yalla_irecv(const void *buf, size_t count, ompi_datatype_t *datatype
     return OMPI_SUCCESS;
 }
 
-int mca_pml_yalla_recv(const void *buf, size_t count, ompi_datatype_t *datatype, int src,
+int mca_pml_yalla_recv(void *buf, size_t count, ompi_datatype_t *datatype, int src,
                        int tag, struct ompi_communicator_t* comm,
                        ompi_status_public_t* status)
 {

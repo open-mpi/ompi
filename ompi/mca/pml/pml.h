@@ -208,7 +208,7 @@ typedef int (*mca_pml_base_module_del_comm_fn_t)(struct ompi_communicator_t* com
  *  @return                 OMPI_SUCCESS or failure status.
  */
 typedef int (*mca_pml_base_module_irecv_init_fn_t)(
-    const void *buf,
+    void *buf,
     size_t count,
     struct ompi_datatype_t *datatype,
     int src,
@@ -230,7 +230,7 @@ typedef int (*mca_pml_base_module_irecv_init_fn_t)(
  *  @return                 OMPI_SUCCESS or failure status.
  */
 typedef int (*mca_pml_base_module_irecv_fn_t)(
-    const void *buf,
+    void *buf,
     size_t count,
     struct ompi_datatype_t *datatype,
     int src,
@@ -259,7 +259,7 @@ typedef int (*mca_pml_base_module_imrecv_fn_t)(
  *  @return                 OMPI_SUCCESS or failure status.
  */
 typedef int (*mca_pml_base_module_recv_fn_t)(
-    const void *buf,
+    void *buf,
     size_t count,
     struct ompi_datatype_t *datatype,
     int src,

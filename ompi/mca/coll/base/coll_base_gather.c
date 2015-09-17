@@ -237,7 +237,7 @@ ompi_coll_base_gather_intra_linear_sync(const void *sbuf, int scount,
         COLL_BASE_COMPUTED_SEGCOUNT( (size_t) first_segment_size, typelng,
                                       first_segment_count );
 
-        ret = MCA_PML_CALL(recv(sbuf, 0, MPI_BYTE, root,
+        ret = MCA_PML_CALL(recv(rbuf, 0, MPI_BYTE, root,
                                 MCA_COLL_BASE_TAG_GATHER,
                                 comm, MPI_STATUS_IGNORE));
         if (ret != MPI_SUCCESS) { line = __LINE__; goto error_hndl; }

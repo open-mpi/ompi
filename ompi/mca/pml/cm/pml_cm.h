@@ -67,7 +67,7 @@ OMPI_DECLSPEC extern int mca_pml_cm_del_comm(struct ompi_communicator_t* comm);
 
 
 __opal_attribute_always_inline__ static inline int
-mca_pml_cm_irecv_init(const void *addr,
+mca_pml_cm_irecv_init(void *addr,
                       size_t count,
                       ompi_datatype_t * datatype,
                       int src,
@@ -92,7 +92,7 @@ mca_pml_cm_irecv_init(const void *addr,
 }
 
 __opal_attribute_always_inline__ static inline int
-mca_pml_cm_irecv(const void *addr,
+mca_pml_cm_irecv(void *addr,
                  size_t count,
                  ompi_datatype_t * datatype,
                  int src,
@@ -133,7 +133,7 @@ mca_pml_cm_recv_fast_completion(struct mca_mtl_request_t *mtl_request)
 }
 
 __opal_attribute_always_inline__ static inline int
-mca_pml_cm_recv(const void *addr,
+mca_pml_cm_recv(void *addr,
                 size_t count,
                 ompi_datatype_t * datatype,
                 int src,
