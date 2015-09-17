@@ -68,6 +68,8 @@ struct ompi_proc_t {
 
     /* endpoint data */
     void *proc_endpoints[OMPI_PROC_ENDPOINT_TAG_MAX];
+
+    char padding[16];         /* for future extensions (OSHMEM uses this area also)*/
 };
 typedef struct ompi_proc_t ompi_proc_t;
 OBJ_CLASS_DECLARATION(ompi_proc_t);
