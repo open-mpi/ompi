@@ -40,6 +40,8 @@ int oshmem_proc_init(void)
 {
     OBJ_CONSTRUCT(&oshmem_proc_lock, opal_mutex_t);
 
+    assert(sizeof(ompi_proc_t) >= sizeof(oshmem_proc_t));
+
     return OSHMEM_SUCCESS;
 }
 
