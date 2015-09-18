@@ -144,4 +144,9 @@ WARNING: Open MPI call to Alps alps_app_lli_pipes function failed.
   Application name:  %s
   Location:  %s:%d
   Return Value: %d
-
+#
+[close fds]
+WARNING: Closing fds in child failed.
+  Local host:        %s
+  Application name:  %s
+  Location:  %s:%d
