@@ -236,10 +236,7 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* topo_module,
     /* Then, we need to know if the processes are bound */
     /* We make the hypothesis that all processes are in  */
     /* the same state : all bound or none bound */
-    hwloc_err = hwloc_topology_init(&opal_hwloc_topology);
-    if (-1 == hwloc_err) goto fallback;
-    hwloc_err = hwloc_topology_load(opal_hwloc_topology);
-    if (-1 == hwloc_err) goto fallback;
+    assert(NULL != opal_hwloc_topology);
     root_obj = hwloc_get_root_obj(opal_hwloc_topology);
     if (NULL == root_obj) goto fallback;
 
