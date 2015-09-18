@@ -304,20 +304,6 @@ static int _shmem_init(int argc, char **argv, int requested, int *provided)
         goto error;
     }
 
-    /* TODO: DO WE NEED IT? There is issue with call add_proc twice so
-     * we need to use btl info got from PML add_procs() before call of SPML add_procs()
-     */
-    {
-        ompi_proc_t** procs = NULL;
-        size_t nprocs = 0;
-        procs = ompi_proc_world(&nprocs);
-        while (nprocs--) {
-            oshmem_group_all->proc_array[nprocs]->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML] =
-                    procs[nprocs]->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML];
-        }
-        free(procs);
-    }
-
     ret =
             MCA_SPML_CALL(add_procs(oshmem_group_all->proc_array, oshmem_group_all->proc_count));
     if (OSHMEM_SUCCESS != ret) {
