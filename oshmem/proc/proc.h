@@ -129,7 +129,7 @@ OSHMEM_DECLSPEC int oshmem_proc_finalize(void);
  *
  * @return Pointer to the local process structure
  */
-static inline oshmem_proc_t* oshmem_proc_local(void)
+static inline oshmem_proc_t *oshmem_proc_local(void)
 {
     return (oshmem_proc_t *)ompi_proc_local_proc;
 }
@@ -145,9 +145,18 @@ static inline oshmem_proc_t* oshmem_proc_local(void)
  *
  * @return Pointer to the process instance for \c name
  */
-static inline oshmem_proc_t * oshmem_proc_find(const orte_process_name_t* name)
+static inline oshmem_proc_t *oshmem_proc_for_find(const orte_process_name_t name)
 {
-	return (oshmem_proc_t *)ompi_proc_find(name);
+    return (oshmem_proc_t *)ompi_proc_for_name((const opal_process_name_t)name);
+}
+
+static inline oshmem_proc_t *oshmem_proc_find(int pe)
+{
+    orte_process_name_t name;
+
+    name.jobid = ORTE_PROC_MY_NAME->jobid;
+    name.vpid = pe;
+    return oshmem_proc_for_find(name);
 }
 
 static inline int oshmem_proc_pe(oshmem_proc_t *proc)
@@ -203,7 +212,7 @@ OSHMEM_DECLSPEC int oshmem_proc_group_finalize(void);
  * @return Array of pointers to proc instances in the current
  * known universe, or NULL if there is an internal failure.
  */
-OSHMEM_DECLSPEC oshmem_group_t* oshmem_proc_group_create(int pe_start,
+OSHMEM_DECLSPEC oshmem_group_t *oshmem_proc_group_create(int pe_start,
                                                          int pe_stride,
                                                          size_t pe_size);
 
@@ -218,7 +227,7 @@ static inline oshmem_proc_t *oshmem_proc_group_all(int pe)
     return oshmem_group_all->proc_array[pe];
 }
 
-static inline oshmem_proc_t* oshmem_proc_group_find(oshmem_group_t* group,
+static inline oshmem_proc_t *oshmem_proc_group_find(oshmem_group_t* group,
                                                     int pe)
 {
     int i = 0;
@@ -241,7 +250,7 @@ static inline oshmem_proc_t* oshmem_proc_group_find(oshmem_group_t* group,
 
         name.jobid = ORTE_PROC_MY_NAME->jobid;
         name.vpid = pe;
-        proc = oshmem_proc_find(&name);
+        proc = oshmem_proc_for_find(name);
     }
 
     return proc;
@@ -271,10 +280,8 @@ static inline int oshmem_proc_group_is_member(oshmem_group_t *group)
 
 static inline int oshmem_num_procs(void)
 {
-    if (!oshmem_group_all)
-        return opal_list_get_size(&ompi_proc_list);
-
-    return oshmem_group_all->proc_count;
+    return (oshmem_group_all ?
+        oshmem_group_all->proc_count : opal_list_get_size(&ompi_proc_list));
 }
 
 static inline int oshmem_my_proc_id(void)

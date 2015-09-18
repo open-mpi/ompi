@@ -60,6 +60,13 @@ OBJ_CLASS_INSTANCE(oshmem_group_t, opal_object_t, NULL, NULL);
 
 int oshmem_proc_group_init(void)
 {
+    if (orte_process_info.num_procs != opal_list_get_size(&ompi_proc_list)) {
+        opal_output(0,
+                "Error: oshmem_group_all is not created: orte_process_info.num_procs = %d ompi_proc_list = %d",
+		orte_process_info.num_procs,
+		opal_list_get_size(&ompi_proc_list));
+        return OSHMEM_ERROR;
+    }
 
     /* Setup communicator array */
     OBJ_CONSTRUCT(&oshmem_group_array, opal_pointer_array_t);
@@ -76,7 +83,7 @@ int oshmem_proc_group_init(void)
             == (oshmem_group_all =
                     oshmem_proc_group_create(0,
                                              1,
-                                             opal_list_get_size(&ompi_proc_list)))) {
+					     oshmem_num_procs()))) {
         oshmem_proc_group_destroy(oshmem_group_all);
         return OSHMEM_ERROR;
     }
@@ -128,6 +135,8 @@ oshmem_group_t* oshmem_proc_group_create(int pe_start,
     oshmem_proc_t** proc_array = NULL;
     oshmem_proc_t* proc = NULL;
 
+    assert(oshmem_proc_local());
+
     group = OBJ_NEW(oshmem_group_t);
 
     if (group) {
@@ -145,10 +154,13 @@ oshmem_group_t* oshmem_proc_group_create(int pe_start,
 
         group->my_pe = oshmem_proc_pe(oshmem_proc_local());
         group->is_member = 0;
-        /* now save only the procs that match this jobid */
-        for (proc = (oshmem_proc_t*) opal_list_get_first(&ompi_proc_list);
-                proc != (oshmem_proc_t*) opal_list_get_end(&ompi_proc_list);
-                proc = (oshmem_proc_t*) opal_list_get_next(proc)) {
+        for (i = 0 ; i < oshmem_num_procs() ; i++) {
+            proc = oshmem_proc_find(i);
+            if (NULL == proc) {
+                opal_output(0,
+                             "Error: Can not find proc object for pe = %d", i);
+                return NULL;
+            }
             if (count_pe >= (int) pe_size) {
                 break;
             } else if ((cur_pe >= pe_start)
