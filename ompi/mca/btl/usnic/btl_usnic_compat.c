@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2014-2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -41,7 +42,7 @@ void usnic_compat_modex_send(int *rc,
                              opal_btl_usnic_modex_t *modexes,
                              size_t size)
 {
-    OPAL_MODEX_SEND(*rc, PMIX_SYNC_REQD, PMIX_REMOTE, component,
+    OPAL_MODEX_SEND(*rc, OPAL_PMIX_REMOTE, component,
                     modexes, size);
 }
 
@@ -51,7 +52,8 @@ void usnic_compat_modex_recv(int *rc,
                              opal_btl_usnic_modex_t **modexes,
                              size_t *size)
 {
-    OPAL_MODEX_RECV(*rc, component, proc, (uint8_t**) modexes, size);
+    OPAL_MODEX_RECV(*rc, component, &proc->proc_name,
+                    (uint8_t**) modexes, size);
 }
 
 uint64_t usnic_compat_rte_hash_name(opal_process_name_t *pname)
@@ -150,7 +152,22 @@ int usnic_compat_free_list_init(opal_free_list_t *free_list,
 
 static volatile bool agent_thread_time_to_exit = false;
 static opal_thread_t agent_thread;
+static opal_event_t blocker; // event to block on
 static opal_event_base_t *agent_evbase = NULL;
+
+static struct timeval long_timeout = {
+    .tv_sec = 3600,
+    .tv_usec = 0
+};
+
+/*
+ * If this event is fired, just restart it so that this event base
+ * continues to have something to block on.
+ */
+static void blocker_timeout_cb(int fd, short args, void *cbdata)
+{
+    opal_event_add(&blocker, &long_timeout);
+}
 
 /*
  * Agent progress thread main entry point
@@ -173,6 +190,12 @@ opal_event_base_t *opal_progress_thread_init(const char *name)
     if (NULL == agent_evbase) {
         return NULL;
     }
+
+    /* add an event to the new event base (if there are no events,
+       opal_event_loop() will return immediately) */
+    opal_event_set(agent_evbase, &blocker, -1, OPAL_EV_PERSIST,
+                   blocker_timeout_cb, NULL);
+    opal_event_add(&blocker, &long_timeout);
 
     /* Spawn the agent thread event loop */
     OBJ_CONSTRUCT(&agent_thread, opal_thread_t);
@@ -769,25 +792,6 @@ opal_btl_usnic_put(struct mca_btl_base_module_t *base_module,
     sfrag->sf_endpoint = endpoint;
     sfrag->sf_size = size;
     sfrag->sf_ack_bytes_left = size;
-
-
-
-    /* JMS NOTE: This is currently broken, and is deactivated by
-       removing the MCA_BTL_FLAGS_PUT from .btl_flags in btl_module.c.
-
-       Overwriting the uf_local_seg values is not a good idea, and
-       doesn't do anything to actually send the data in the
-       progression past finish_put_or_send().
-
-       The proper fix is to change the plumbing here to eventually
-       call fi_sendv() with an iov[0] = the internal buffer that's
-       already allocated, and iov[1] = the user's buffer.  The usnic
-       provider in fi_sendv() will be smart enough to figure out which
-       is more performance: memcpy'ing the 2 buffers together and
-       doing a single xfer down to the hardware, or actually doing a
-       SG list down to the hardware. */
-
-
 
     opal_btl_usnic_frag_t *frag;
     frag = &sfrag->sf_base;

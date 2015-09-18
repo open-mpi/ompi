@@ -34,6 +34,9 @@
 /* Inclue the progress thread stuff */
 #  include "opal/runtime/opal_progress_threads.h"
 
+/* Hhwloc is now guaranteed */
+#  define OPAL_HAVE_HWLOC 1
+
 #  define USNIC_OUT opal_btl_base_framework.framework_output
 /* JMS Really want to be able to get the job size somehow...  But for
    now, so that we can compile, just set it to a constant :-( */
