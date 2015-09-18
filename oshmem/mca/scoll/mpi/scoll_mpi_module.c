@@ -76,7 +76,8 @@ static int mca_scoll_mpi_module_enable(mca_scoll_base_module_t *module,
 {
 
     if (OSHMEM_SUCCESS != mca_scoll_mpi_save_coll_handlers(module, osh_group)){
-        MPI_COLL_ERROR("scoll_mpi: mca_coll_mpi_save_coll_handlers failed");
+        MPI_COLL_ERROR("MPI module enable failed - aborting to prevent inconsistent application state");
+        oshmem_shmem_abort(-1);
         return OSHMEM_ERROR;
     }
 
