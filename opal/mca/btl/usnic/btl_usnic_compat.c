@@ -152,7 +152,22 @@ int usnic_compat_free_list_init(opal_free_list_t *free_list,
 
 static volatile bool agent_thread_time_to_exit = false;
 static opal_thread_t agent_thread;
+static opal_event_t blocker; // event to block on
 static opal_event_base_t *agent_evbase = NULL;
+
+static struct timeval long_timeout = {
+    .tv_sec = 3600,
+    .tv_usec = 0
+};
+
+/*
+ * If this event is fired, just restart it so that this event base
+ * continues to have something to block on.
+ */
+static void blocker_timeout_cb(int fd, short args, void *cbdata)
+{
+    opal_event_add(&blocker, &long_timeout);
+}
 
 /*
  * Agent progress thread main entry point
@@ -175,6 +190,12 @@ opal_event_base_t *opal_progress_thread_init(const char *name)
     if (NULL == agent_evbase) {
         return NULL;
     }
+
+    /* add an event to the new event base (if there are no events,
+       opal_event_loop() will return immediately) */
+    opal_event_set(agent_evbase, &blocker, -1, OPAL_EV_PERSIST,
+                   blocker_timeout_cb, NULL);
+    opal_event_add(&blocker, &long_timeout);
 
     /* Spawn the agent thread event loop */
     OBJ_CONSTRUCT(&agent_thread, opal_thread_t);
