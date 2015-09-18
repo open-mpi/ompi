@@ -42,7 +42,6 @@ libmca_io_ompio_la_LDFLAGS = -module -avoid-version
 
 sources = \
         io_ompio.h \
-        io_ompio_nbc.h \
         io_ompio_request.h \
         io_ompio.c \
         io_ompio_component.c \
@@ -52,5 +51,4 @@ sources = \
         io_ompio_file_open.c \
         io_ompio_file_write.c \
         io_ompio_file_read.c \
-        io_ompio_request.c \
-	io_ompio_nbc.c
+        io_ompio_request.c 
