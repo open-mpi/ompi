@@ -13,6 +13,7 @@
 #include "ompi_config.h"
 #include "scoll_mpi.h"
 #include "oshmem/proc/proc.h"
+#include "oshmem/runtime/runtime.h"
 #include "ompi/mca/coll/base/base.h"
 
 int mca_scoll_mpi_init_query(bool enable_progress_threads, bool enable_mpi_threads)

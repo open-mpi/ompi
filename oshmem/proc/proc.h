@@ -147,7 +147,7 @@ static inline oshmem_proc_t *oshmem_proc_local(void)
  */
 static inline oshmem_proc_t *oshmem_proc_for_find(const orte_process_name_t name)
 {
-    return (oshmem_proc_t *)ompi_proc_for_name((const opal_process_name_t)name);
+    return (oshmem_proc_t *)ompi_proc_for_name(name);
 }
 
 static inline oshmem_proc_t *oshmem_proc_find(int pe)
@@ -281,7 +281,7 @@ static inline int oshmem_proc_group_is_member(oshmem_group_t *group)
 static inline int oshmem_num_procs(void)
 {
     return (oshmem_group_all ?
-        oshmem_group_all->proc_count : opal_list_get_size(&ompi_proc_list));
+        oshmem_group_all->proc_count : (int)opal_list_get_size(&ompi_proc_list));
 }
 
 static inline int oshmem_my_proc_id(void)

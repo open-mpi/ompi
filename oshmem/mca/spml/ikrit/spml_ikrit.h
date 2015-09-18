@@ -166,15 +166,6 @@ extern int mca_spml_ikrit_del_procs(oshmem_proc_t** procs, size_t nprocs);
 extern int mca_spml_ikrit_fence(void);
 extern int spml_ikrit_progress(void);
 
-static inline oshmem_proc_t *mca_spml_ikrit_proc_find(int dst)
-{
-    orte_process_name_t name;
-
-    name.jobid = ORTE_PROC_MY_NAME->jobid;
-    name.vpid = dst;
-    return oshmem_proc_find(&name);
-}
-
 END_C_DECLS
 
 #endif
