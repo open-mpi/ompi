@@ -101,6 +101,9 @@
 #ifdef HAVE_SYS_SELECT_H
 #include <sys/select.h>
 #endif
+#ifdef HAVE_DIRENT_H
+#include <dirent.h>
+#endif
 
 #include "opal/mca/hwloc/hwloc.h"
 #include "opal/mca/hwloc/base/base.h"
@@ -350,6 +353,31 @@ static void send_error_show_help(int fd, int exit_status,
     exit(exit_status);
 }
 
+/* close all open file descriptors w/ exception of stdin/stdout/stderr,
+   the pipe used for the IOF INTERNAL messages, and the pipe up to
+   the parent. */
+static int close_open_file_descriptors(int write_fd,
+                                      orte_iof_base_io_conf_t opts) {
+        int pid = getpid();
+        char *fds_dir = NULL;
+        int rc = asprintf(&fds_dir, "/proc/%d/fd", pid);
+        if (rc < 0) return ORTE_ERR_OUT_OF_RESOURCE;
+        DIR *dir = opendir(fds_dir);
+        free(fds_dir);
+        if (dir == NULL) return ORTE_ERR_FILE_OPEN_FAILURE;
+        struct dirent *files;
+        while ((files = readdir(dir)) != NULL) {
+                if(!strncmp(files->d_name,".",1) || !strncmp(files->d_name,"..",2))
+                        continue;
+                unsigned int fd = strtoul(files->d_name, NULL, 10);
+                if (errno == EINVAL || errno == ERANGE) return ORTE_ERR_TYPE_MISMATCH;
+                if (fd >=3 && fd != opts.p_internal[1] && fd != write_fd) {
+                        close(fd);
+                }
+        }
+        return ORTE_SUCCESS;
+}
+
 static int do_child(orte_app_context_t* context,
                     orte_proc_t *child,
                     char **environ_copy,
@@ -427,13 +455,16 @@ static int do_child(orte_app_context_t* context,
     opal_unsetenv(param, &environ_copy);
     free(param);
 
-    /* close all file descriptors w/ exception of stdin/stdout/stderr,
+    /* close all open file descriptors w/ exception of stdin/stdout/stderr,
        the pipe used for the IOF INTERNAL messages, and the pipe up to
        the parent. */
-    for(fd=3; fd<fdmax; fd++) {
-        if (fd != opts.p_internal[1] && fd != write_fd) {
-            close(fd);
-        }
+    if (ORTE_SUCCESS != close_open_file_descriptors(write_fd, opts)) {
+            // close *all* file descriptors -- slow
+            for(fd=3; fd<fdmax; fd++) {
+                    if (fd != opts.p_internal[1] && fd != write_fd) {
+                            close(fd);
+                    }
+            }
     }
 
     if (context->argv == NULL) {
