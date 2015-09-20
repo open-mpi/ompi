@@ -66,8 +66,7 @@ ompi_coll_base_bcast_intra_generic( void* buffer,
 
 #if !defined(COLL_BASE_BCAST_USE_BLOCKING)
     if( tree->tree_nextsize != 0 ) {
-        send_reqs = (ompi_request_t**)malloc( (ptrdiff_t)tree->tree_nextsize *
-                                              sizeof(ompi_request_t*) );
+        send_reqs = coll_base_comm_get_reqs(module->base_data, tree->tree_nextsize);
     }
 #endif
 
@@ -236,19 +235,16 @@ ompi_coll_base_bcast_intra_generic( void* buffer,
         if (err != MPI_SUCCESS) { line = __LINE__; goto error_hndl; }
     }
 
-#if !defined(COLL_BASE_BCAST_USE_BLOCKING)
-    if( NULL != send_reqs ) free(send_reqs);
-#endif
-
     return (MPI_SUCCESS);
 
  error_hndl:
     OPAL_OUTPUT( (ompi_coll_base_framework.framework_output,"%s:%4d\tError occurred %d, rank %2d",
                   __FILE__, line, err, rank) );
-#if !defined(COLL_BASE_BCAST_USE_BLOCKING)
-    if( NULL != send_reqs ) free(send_reqs);
-#endif
-    return (err);
+    if( (MPI_SUCCESS != err) && (NULL != send_reqs) ) {
+        ompi_coll_base_free_reqs( send_reqs, tree->tree_nextsize);
+    }
+
+    return err;
 }
 
 int
@@ -665,10 +661,7 @@ ompi_coll_base_bcast_intra_basic_linear(void *buff, int count,
                                       MCA_COLL_BASE_TAG_BCAST,
                                       MCA_PML_BASE_SEND_STANDARD,
                                       comm, preq++));
-        if (MPI_SUCCESS != err) {
-            ompi_coll_base_free_reqs(data->mcct_reqs, i);
-            return err;
-        }
+        if (MPI_SUCCESS != err) { goto err_hndl; }
     }
     --i;
 
@@ -684,9 +677,10 @@ ompi_coll_base_bcast_intra_basic_linear(void *buff, int count,
      * the error after we free everything. */
 
     err = ompi_request_wait_all(i, reqs, MPI_STATUSES_IGNORE);
-
-    /* Free the reqs */
-    ompi_coll_base_free_reqs(reqs, i);
+ err_hndl:
+    if( MPI_SUCCESS != err ) {  /* Free the reqs */
+        ompi_coll_base_free_reqs(reqs, i);
+    }
 
     /* All done */
     return err;

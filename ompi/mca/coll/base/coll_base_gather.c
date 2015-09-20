@@ -266,7 +266,7 @@ ompi_coll_base_gather_intra_linear_sync(const void *sbuf, int scount,
         */
         char *ptmp;
         ompi_request_t *first_segment_req;
-        reqs = (ompi_request_t**) calloc(size, sizeof(ompi_request_t*));
+        reqs = coll_base_comm_get_reqs(module->base_data, size);
         if (NULL == reqs) { ret = -1; line = __LINE__; goto error_hndl; }
 
         ompi_datatype_type_size(rdtype, &typelng);
@@ -319,16 +319,13 @@ ompi_coll_base_gather_intra_linear_sync(const void *sbuf, int scount,
         /* wait all second segments to complete */
         ret = ompi_request_wait_all(size, reqs, MPI_STATUSES_IGNORE);
         if (ret != MPI_SUCCESS) { line = __LINE__; goto error_hndl; }
-
-        free(reqs);
     }
 
     /* All done */
-
     return MPI_SUCCESS;
  error_hndl:
     if (NULL != reqs) {
-        free(reqs);
+        ompi_coll_base_free_reqs(reqs, size);
     }
     OPAL_OUTPUT (( ompi_coll_base_framework.framework_output,
                    "ERROR_HNDL: node %d file %s line %d error %d\n",
@@ -405,7 +402,6 @@ ompi_coll_base_gather_intra_basic_linear(const void *sbuf, int scount,
     }
 
     /* All done */
-
     return MPI_SUCCESS;
 }
 
