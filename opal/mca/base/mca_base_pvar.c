@@ -707,7 +707,8 @@ int mca_base_pvar_handle_write_value (mca_base_pvar_handle_t *handle, const void
         return OPAL_ERR_PERM;
     }
 
-    /* TODO -- actually write the variable. this will likely require a pvar lock */
+    /* write the value directly from the variable. */
+    ret = handle->pvar->set_value (handle->pvar, value, handle->obj_handle);
 
     ret = mca_base_pvar_handle_update (handle);
     if (OPAL_SUCCESS != ret) {
@@ -715,8 +716,6 @@ int mca_base_pvar_handle_write_value (mca_base_pvar_handle_t *handle, const void
     }
 
     memmove (handle->current_value, value, handle->count * var_type_sizes[handle->pvar->type]);
-    /* read the value directly from the variable. */
-    ret = handle->pvar->set_value (handle->pvar, value, handle->obj_handle);
 
     return OPAL_SUCCESS;
 }
