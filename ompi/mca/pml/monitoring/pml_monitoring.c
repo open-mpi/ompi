@@ -14,30 +14,14 @@
 #include <ompi_config.h>
 #include <pml_monitoring.h>
 #include "opal/class/opal_hash_table.h"
-typedef struct _transtlator_t{
-  int *ranks;
-  int size;
-} translator_t;
 
-
-void initialize_monitoring( void );
-void monitor_send_data(int world_rank, size_t data_size, int tag);
-void finalize_monitoring( void );
-int filter_monitoring( void ); /* returns 1 if we distinguish positive (point-to-point) and negative (collective and meta messages) tags*/
-int ompi_mca_pml_monitoring_flush(char* filename);
-
-
-MPI_Group group_world;
+int filter_monitoring( void );
 
 /* array for stroring monitoring data*/
 uint64_t* sent_data = NULL;
 uint64_t* messages_count = NULL;
 uint64_t* filtered_sent_data = NULL;
 uint64_t* filtered_messages_count = NULL;
-uint64_t* all_sent_data = NULL;
-uint64_t* all_messages_count = NULL;
-uint64_t* all_filtered_sent_data = NULL;
-uint64_t* all_filtered_messages_count = NULL;
 
 static int init_done = 0;
 static int nbprocs = -1;
@@ -119,11 +103,8 @@ int mca_pml_monitoring_dump(struct ompi_communicator_t* comm,
 
 void finalize_monitoring( void )
 {
-    if(filter_monitoring()){
-        free(filtered_sent_data);
-        free(filtered_messages_count);
-    }
-
+    free(filtered_sent_data);
+    free(filtered_messages_count);
     free(sent_data);
     free(messages_count);
     opal_hash_table_remove_all( translation_ht );
@@ -133,38 +114,37 @@ void finalize_monitoring( void )
 void initialize_monitoring( void )
 {
     sent_data      = (uint64_t*)calloc(nbprocs, sizeof(uint64_t));
-    messages_count = (uint64_t*)   calloc(nbprocs, sizeof(uint64_t));
-    all_sent_data      = (uint64_t*)calloc(nbprocs, sizeof(uint64_t));
-    all_messages_count = (uint64_t*)   calloc(nbprocs, sizeof(uint64_t));
-
-    if(filter_monitoring()){
-        filtered_sent_data      = (uint64_t*)calloc(nbprocs, sizeof(uint64_t));
-        filtered_messages_count = (uint64_t*)   calloc(nbprocs, sizeof(uint64_t));
-        all_filtered_sent_data      = (uint64_t*)calloc(nbprocs, sizeof(uint64_t));
-        all_filtered_messages_count = (uint64_t*)   calloc(nbprocs, sizeof(uint64_t));
-    }
+    messages_count = (uint64_t*)calloc(nbprocs, sizeof(uint64_t));
+    filtered_sent_data      = (uint64_t*)calloc(nbprocs, sizeof(uint64_t));
+    filtered_messages_count = (uint64_t*)calloc(nbprocs, sizeof(uint64_t));
 
     init_done = 1;
 }
 
-
+void mca_pml_monitoring_reset( void )
+{
+    if( !init_done ) return;
+    memset(sent_data, 0, nbprocs * sizeof(uint64_t));
+    memset(messages_count, 0, nbprocs * sizeof(uint64_t));
+    memset(filtered_sent_data, 0, nbprocs * sizeof(uint64_t));
+    memset(filtered_messages_count, 0, nbprocs * sizeof(uint64_t));
+}
 
 void monitor_send_data(int world_rank, size_t data_size, int tag)
 {
+    if( 0 == filter_monitoring() ) return;  /* right now the monitoring is not started */
+
     if ( !init_done )
         initialize_monitoring();
 
     /* distinguishses positive and negative tags if requested */
-    if((tag<0) && (filter_monitoring())){
+    if((tag<0) && (1 == filter_monitoring())){
         filtered_sent_data[world_rank] += data_size;
         filtered_messages_count[world_rank]++;
-    }else{ /* if filtered monitoring is not activated data is aggregated indifferently */
+    } else { /* if filtered monitoring is not activated data is aggregated indifferently */
         sent_data[world_rank] += data_size;
         messages_count[world_rank]++;
     }
-    /*printf("%d Send dest = %d(%d:comm_world=%d), size = %ld ajouté dans : %d\n",my_rank, dest_rank, comm->c_my_rank, MPI_COMM_WORLD->c_my_rank, data_size, rank); fflush(stdout);*/
-
-
 }
 
 int mca_pml_monitoring_get_messages_count (const struct mca_base_pvar_t *pvar, void *value, void *obj_handle)
@@ -203,38 +183,22 @@ int mca_pml_monitoring_get_messages_size (const struct mca_base_pvar_t *pvar, vo
 
 static void output_monitoring( FILE *pf )
 {
-    int i;
+    if( 0 == filter_monitoring() ) return;  /* if disabled do nothing */
 
-    if ( !init_done ) return;
-
-    for (i = 0 ; i < nbprocs ; i++) {
-        if(all_sent_data[i] > 0) {
-            /* aggregate data in general array*/
-            all_sent_data[i] += sent_data[i];
-            all_messages_count[i] += messages_count[i];
+    for (int i = 0 ; i < nbprocs ; i++) {
+        if(sent_data[i] > 0) {
             fprintf(pf, "I\t%d\t%d\t%" PRIu64 " bytes\t%" PRIu64 " msgs sent\n",
-                    my_rank, i, all_sent_data[i], all_messages_count[i]);
-            fflush(pf);
+                    my_rank, i, sent_data[i], messages_count[i]);
         }
-        /* reset phase array */
-        sent_data[i] = 0;
-        messages_count[i] = 0;
     }
 
-    if( !filter_monitoring() ) return;
+    if( 1 == filter_monitoring() ) return;
     
-    for (i = 0 ; i < nbprocs ; i++) {
-        if(all_filtered_sent_data[i] > 0) {
-            /* aggregate data in general array*/
-            all_filtered_sent_data[i] += filtered_sent_data[i];
-            all_filtered_messages_count[i] += filtered_messages_count[i];
+    for (int i = 0 ; i < nbprocs ; i++) {
+        if(filtered_sent_data[i] > 0) {
             fprintf(pf, "E\t%d\t%d\t%" PRIu64 " bytes\t%" PRIu64 " msgs sent\n",
-                    my_rank, i, all_filtered_sent_data[i], all_filtered_messages_count[i]);
-            fflush(pf);
+                    my_rank, i, filtered_sent_data[i], filtered_messages_count[i]);
         }
-        /* reset phase array */
-        filtered_sent_data[i] = 0;
-        filtered_messages_count[i] = 0;
     }
 }
 
@@ -243,7 +207,6 @@ static void output_monitoring( FILE *pf )
    Flushes the monitoring into filename
    Useful for phases (see example in test/monitoring)
 */
-
 int ompi_mca_pml_monitoring_flush(char* filename)
 {
     FILE *pf = stderr;

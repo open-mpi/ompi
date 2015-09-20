@@ -18,29 +18,39 @@
 #include <opal/mca/base/mca_base_component_repository.h>
 
 static int mca_pml_monitoring_enabled = 0;
-static int mca_pml_monitoring_output_enabled = 0;
 static int mca_pml_monitoring_active = 0;
+static int mca_pml_monitoring_current_state = 0;
+static char* mca_pml_monitoring_current_filename = NULL;
 mca_pml_base_component_t pml_selected_component;
 mca_pml_base_module_t pml_selected_module;
 
 extern void finalize_monitoring( void );
 extern int  ompi_mca_pml_monitoring_flush(char* filename);
-int filter_monitoring( void );
+extern void mca_pml_monitoring_reset( void );
 
-/* Return 1 if the the seperation between internal tags and external tags is enabled */
+/* Return the current status of the monitoring system 0 if off, 1 if the
+ * seperation between internal tags and external tags is enabled. Any other
+ * positive value if the segregation between point-to-point and collective is
+ * disabled.
+ */
 int filter_monitoring( void )
 {
-    return (mca_pml_monitoring_enabled == 2) ? 1 : 0;
+    return mca_pml_monitoring_current_state;
 }
 
 static int
 mca_pml_monitoring_set_flush(struct mca_base_pvar_t *pvar, const void *value, void *obj)
 {
-    char* filename = (char*)value;
-    int err = ompi_mca_pml_monitoring_flush(filename);
-    if( 0 == err )
-        return OMPI_SUCCESS;
-    return OMPI_ERROR;
+    if( NULL != mca_pml_monitoring_current_filename )
+        free(mca_pml_monitoring_current_filename);
+    if( NULL == value )  /* No more output */
+        mca_pml_monitoring_current_filename = NULL;
+    else {
+        mca_pml_monitoring_current_filename = strdup((char*)value);
+        if( NULL == mca_pml_monitoring_current_filename )
+            return OMPI_ERROR;
+    }
+    return OMPI_SUCCESS;
 }
 
 static int
@@ -54,12 +64,18 @@ mca_pml_monitoring_notify_flush(struct mca_base_pvar_t *pvar, mca_base_pvar_even
                                 void *obj, int *count)
 {
     switch (event) {
-        case MCA_BASE_PVAR_HANDLE_BIND:
-        case MCA_BASE_PVAR_HANDLE_UNBIND:
-        case MCA_BASE_PVAR_HANDLE_START:
-        case MCA_BASE_PVAR_HANDLE_STOP:
+    case MCA_BASE_PVAR_HANDLE_BIND:
+        mca_pml_monitoring_reset();
+        *count = (NULL == mca_pml_monitoring_current_filename ? 0 : strlen(mca_pml_monitoring_current_filename));
+    case MCA_BASE_PVAR_HANDLE_UNBIND:
+        return OMPI_SUCCESS;
+    case MCA_BASE_PVAR_HANDLE_START:
+        mca_pml_monitoring_current_state = mca_pml_monitoring_enabled;
+        return OMPI_SUCCESS;
+    case MCA_BASE_PVAR_HANDLE_STOP:
+        if( 0 == ompi_mca_pml_monitoring_flush(mca_pml_monitoring_current_filename) )
             return OMPI_SUCCESS;
-        }
+    }
     return OMPI_ERROR;
 }
 
@@ -104,6 +120,10 @@ mca_pml_monitoring_comm_size_notify(mca_base_pvar_t *pvar,
 
 static int mca_pml_monitoring_component_close(void)
 {
+    if( NULL != mca_pml_monitoring_current_filename ) {
+        free(mca_pml_monitoring_current_filename);
+        mca_pml_monitoring_current_filename = NULL;
+    }
     if( !mca_pml_monitoring_enabled )
         return OMPI_SUCCESS;
 
@@ -150,10 +170,6 @@ mca_pml_monitoring_component_init(int* priority,
 static int mca_pml_monitoring_component_finish(void)
 {
     if( mca_pml_monitoring_enabled && mca_pml_monitoring_active ) {
-        /* It is over... Output what has been monitored*/
-        if ( mca_pml_monitoring_output_enabled != 0) {
-            ompi_mca_pml_monitoring_flush(NULL);
-        }
         /* Free internal data structure */
         finalize_monitoring();
         /* Call the original PML and then close */
@@ -175,14 +191,12 @@ static int mca_pml_monitoring_component_finish(void)
 static int mca_pml_monitoring_component_register(void)
 {
     (void)mca_base_component_var_register(&mca_pml_monitoring_component.pmlm_version, "enable",
-                                          "Enable the monitoring at the PML level. This value should be different than 0 in order for the monitoring to be enabled (default disable)", MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                          OPAL_INFO_LVL_9,
+                                          "Enable the monitoring at the PML level. A value of 0 will disable the monitoring (default). "
+                                          "A value of 1 will aggregate all monitoring information (point-to-point and collective). "
+                                          "Any other value will enable filtered monitoring",
+                                          MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                          OPAL_INFO_LVL_4,
                                           MCA_BASE_VAR_SCOPE_READONLY, &mca_pml_monitoring_enabled);
-
-    (void)mca_base_component_var_register(&mca_pml_monitoring_component.pmlm_version, "enable_output",
-                                          "Enable the PML monitoring textual output at MPI_Finalize. This value should be different than 0 in order for the output to be enabled (default disable)", MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                          OPAL_INFO_LVL_9,
-                                          MCA_BASE_VAR_SCOPE_READONLY, &mca_pml_monitoring_output_enabled);
 
     (void)mca_base_pvar_register("ompi", "pml", "monitoring", "messages_count", "Number of messages "
                                  "sent to each peer in a communicator", OPAL_INFO_LVL_4, MPI_T_PVAR_CLASS_SIZE,
