@@ -15,7 +15,7 @@
  * Copyright (c) 2010      IBM Corporation.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
+ * Copyright (c) 2013-2015 Intel, Inc. All rights reserved
  *
  * $COPYRIGHT$
  *
@@ -358,24 +358,34 @@ static void send_error_show_help(int fd, int exit_status,
    the parent. */
 static int close_open_file_descriptors(int write_fd,
                                       orte_iof_base_io_conf_t opts) {
-        int pid = getpid();
-        char *fds_dir = NULL;
-        int rc = asprintf(&fds_dir, "/proc/%d/fd", pid);
-        if (rc < 0) return ORTE_ERR_OUT_OF_RESOURCE;
-        DIR *dir = opendir(fds_dir);
-        free(fds_dir);
-        if (dir == NULL) return ORTE_ERR_FILE_OPEN_FAILURE;
-        struct dirent *files;
-        while ((files = readdir(dir)) != NULL) {
-                if(!strncmp(files->d_name,".",1) || !strncmp(files->d_name,"..",2))
-                        continue;
-                unsigned int fd = strtoul(files->d_name, NULL, 10);
-                if (errno == EINVAL || errno == ERANGE) return ORTE_ERR_TYPE_MISMATCH;
-                if (fd >=3 && fd != opts.p_internal[1] && fd != write_fd) {
-                        close(fd);
-                }
+    int pid = getpid();
+    char *fds_dir = NULL;
+    int rc = asprintf(&fds_dir, "/proc/%d/fd", pid);
+    if (rc < 0) {
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    DIR *dir = opendir(fds_dir);
+    free(fds_dir);
+    if (NULL == dir) {
+        return ORTE_ERR_FILE_OPEN_FAILURE;
+    }
+    struct dirent *files;
+    while (NULL != (files = readdir(dir))) {
+        if (0 == strncmp(files->d_name,".",1) ||
+            0 == strncmp(files->d_name,"..",2)) {
+            continue;
         }
-        return ORTE_SUCCESS;
+        int fd = strtol(files->d_name, NULL, 10);
+        if (errno == EINVAL || errno == ERANGE) {
+            closedir(dir);
+            return ORTE_ERR_TYPE_MISMATCH;
+        }
+        if (fd >=3 && fd != opts.p_internal[1] && fd != write_fd) {
+            close(fd);
+        }
+    }
+    closedir(dir);
+    return ORTE_SUCCESS;
 }
 
 static int do_child(orte_app_context_t* context,
@@ -459,12 +469,12 @@ static int do_child(orte_app_context_t* context,
        the pipe used for the IOF INTERNAL messages, and the pipe up to
        the parent. */
     if (ORTE_SUCCESS != close_open_file_descriptors(write_fd, opts)) {
-            // close *all* file descriptors -- slow
-            for(fd=3; fd<fdmax; fd++) {
-                    if (fd != opts.p_internal[1] && fd != write_fd) {
-                            close(fd);
-                    }
+        // close *all* file descriptors -- slow
+        for(fd=3; fd<fdmax; fd++) {
+            if (fd != opts.p_internal[1] && fd != write_fd) {
+                close(fd);
             }
+        }
     }
 
     if (context->argv == NULL) {
