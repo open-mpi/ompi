@@ -123,9 +123,11 @@ mca_coll_base_alltoallv_intra_basic_inplace(const void *rbuf, const int *rcounts
  error_hndl:
     /* Free the temporary buffer */
     free (tmp_buffer);
+    if( MPI_SUCCESS != err ) {
+        ompi_coll_base_free_reqs(base_module->base_data->mcct_reqs, 2 );
+    }
 
     /* All done */
-
     return err;
 }
 
@@ -253,8 +255,7 @@ ompi_coll_base_alltoallv_intra_basic_linear(const void *sbuf, const int *scounts
                                       preq++));
         ++nreqs;
         if (MPI_SUCCESS != err) {
-            ompi_coll_base_free_reqs(data->mcct_reqs, nreqs);
-            return err;
+            goto err_hndl;
         }
     }
 
@@ -271,8 +272,7 @@ ompi_coll_base_alltoallv_intra_basic_linear(const void *sbuf, const int *scounts
                                       preq++));
         ++nreqs;
         if (MPI_SUCCESS != err) {
-            ompi_coll_base_free_reqs(data->mcct_reqs, nreqs);
-            return err;
+            goto err_hndl;
         }
     }
 
@@ -287,9 +287,10 @@ ompi_coll_base_alltoallv_intra_basic_linear(const void *sbuf, const int *scounts
      * error after we free everything. */
     err = ompi_request_wait_all(nreqs, data->mcct_reqs,
                                 MPI_STATUSES_IGNORE);
-
-    /* Free the requests. */
-    ompi_coll_base_free_reqs(data->mcct_reqs, nreqs);
+ err_hndl:
+    if( MPI_SUCCESS != err ) {  /* Free the requests. */
+        ompi_coll_base_free_reqs(data->mcct_reqs, nreqs);
+    }
 
     return err;
 }
