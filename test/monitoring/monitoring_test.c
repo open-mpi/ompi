@@ -77,7 +77,8 @@ I	3	2	860 bytes	24 msgs sent
 
 static MPI_T_pvar_handle flush_handle;
 static const char flush_pvar_name[] = "pml_monitoring_flush";
-static int flush_pvar_idx;
+static const char flush_cvar_name[] = "pml_monitoring_enable";
+static int flush_pvar_idx, flush_cvar_idx;
 
 int main(int argc, char* argv[])
 {
@@ -97,20 +98,6 @@ int main(int argc, char* argv[])
     to = (rank + 1) % size;
     from = (rank - 1) % size;
     tagno = 201;
-    if (rank == 0){
-        n=25;
-        MPI_Isend(&n,1,MPI_INT,to,tagno,MPI_COMM_WORLD,&request);
-    }
-    while (1) {
-        MPI_Irecv(&n,1,MPI_INT,from,tagno,MPI_COMM_WORLD, &request);
-        MPI_Wait(&request,&status);
-        if (rank == 0) {n--;tagno++;}
-        MPI_Isend(&n,1,MPI_INT,to,tagno,MPI_COMM_WORLD, &request);
-        if (rank != 0) {n--;tagno++;}
-        if (n<0){
-            break;
-        }
-    }
 
     MPIT_result = MPI_T_init_thread(MPI_THREAD_SINGLE, &provided);
     if (MPIT_result != MPI_SUCCESS)
@@ -129,12 +116,35 @@ int main(int argc, char* argv[])
         MPI_Abort(MPI_COMM_WORLD, MPIT_result);
     }
 
+    /* Allocating a new PVAR in a session will reset the counters */
     MPIT_result = MPI_T_pvar_handle_alloc(session, flush_pvar_idx,
                                           MPI_COMM_WORLD, &flush_handle, &count);
     if (MPIT_result != MPI_SUCCESS) {
-        printf("failed to create handle on \"%s\" pvar, check that you have monitoring pml\n",
+        printf("failed to allocate handle on \"%s\" pvar, check that you have monitoring pml\n",
                flush_pvar_name);
         MPI_Abort(MPI_COMM_WORLD, MPIT_result);
+    }
+
+    MPIT_result = MPI_T_pvar_start(session, flush_handle);
+    if (MPIT_result != MPI_SUCCESS) {
+        printf("failed to start handle on \"%s\" pvar, check that you have monitoring pml\n",
+               flush_pvar_name);
+        MPI_Abort(MPI_COMM_WORLD, MPIT_result);
+    }
+    
+    if (rank == 0) {
+        n = 25;
+        MPI_Isend(&n,1,MPI_INT,to,tagno,MPI_COMM_WORLD,&request);
+    }
+    while (1) {
+        MPI_Irecv(&n,1,MPI_INT,from,tagno,MPI_COMM_WORLD, &request);
+        MPI_Wait(&request,&status);
+        if (rank == 0) {n--;tagno++;}
+        MPI_Isend(&n,1,MPI_INT,to,tagno,MPI_COMM_WORLD, &request);
+        if (rank != 0) {n--;tagno++;}
+        if (n<0){
+            break;
+        }
     }
 
     /* Build one file per processes
@@ -147,11 +157,31 @@ int main(int argc, char* argv[])
       and the process rank for ease of parsing with
       aggregate_profile.pl script
     */
-    sprintf(filename,"./prof/phase_1_%d.prof",rank);
+    sprintf(filename,"prof/phase_1_%d.prof",rank);
     if( MPI_SUCCESS != MPI_T_pvar_write(session, flush_handle, filename) ) {
         fprintf(stderr, "Process %d cannot save monitoring in %s\n", rank, filename);
     }
+    /* Force the writing of the monitoring data */
+    MPIT_result = MPI_T_pvar_stop(session, flush_handle);
+    if (MPIT_result != MPI_SUCCESS) {
+        printf("failed to stop handle on \"%s\" pvar, check that you have monitoring pml\n",
+               flush_pvar_name);
+        MPI_Abort(MPI_COMM_WORLD, MPIT_result);
+    }
 
+    MPIT_result = MPI_T_pvar_start(session, flush_handle);
+    if (MPIT_result != MPI_SUCCESS) {
+        printf("failed to start handle on \"%s\" pvar, check that you have monitoring pml\n",
+               flush_pvar_name);
+        MPI_Abort(MPI_COMM_WORLD, MPIT_result);
+    }
+    /* Don't set a filename. If we stop the session before setting it, then no output ile
+     * will be generated.
+     */
+    if( MPI_SUCCESS != MPI_T_pvar_write(session, flush_handle, NULL) ) {
+        fprintf(stderr, "Process %d cannot save monitoring in %s\n", rank, filename);
+    }
+    
     /*
       Second phase. Work with different communicators.
       even ranls will circulate a token
@@ -160,7 +190,7 @@ int main(int argc, char* argv[])
     MPI_Comm_split(MPI_COMM_WORLD, rank%2, rank, &newcomm);
 
     /* the filename for flushing monitoring now uses 2 as phase number! */
-    sprintf(filename, "./prof/phase_2_%d.prof", rank);
+    sprintf(filename, "prof/phase_2_%d.prof", rank);
 
     if(rank%2){ /*even ranks (in COMM_WORD) circulate a token*/
         MPI_Comm_rank(newcomm, &rank);
@@ -179,14 +209,14 @@ int main(int argc, char* argv[])
                 MPI_Send(&n, 1, MPI_INT, to, tagno, newcomm);
                 if (rank != 0) {n--; tagno++;}
                 if (n<0){
-                    if( MPI_SUCCESS != MPI_T_pvar_read(session, flush_handle, filename) ) {
+                    if( MPI_SUCCESS != MPI_T_pvar_write(session, flush_handle, filename) ) {
                         fprintf(stderr, "Process %d cannot save monitoring in %s\n", rank, filename);
                     }
                     break;
                 }
             }
         }
-    }else{ /*odd ranks (in COMM_WORD) will perform a all_to_all and a barrier*/
+    } else { /*odd ranks (in COMM_WORD) will perform a all_to_all and a barrier*/
         int send_buff[10240];
         int recv_buff[10240];
         MPI_Comm_rank(newcomm, &rank);
@@ -194,9 +224,16 @@ int main(int argc, char* argv[])
         MPI_Alltoall(send_buff, 10240/size, MPI_INT, recv_buff, 10240/size, MPI_INT, newcomm);
         MPI_Comm_split(newcomm, rank%2, rank, &newcomm);
         MPI_Barrier(newcomm);
-        if( MPI_SUCCESS != MPI_T_pvar_read(session, flush_handle, filename) ) {
+        if( MPI_SUCCESS != MPI_T_pvar_write(session, flush_handle, filename) ) {
             fprintf(stderr, "Process %d cannot save monitoring in %s\n", rank, filename);
         }
+    }
+
+    MPIT_result = MPI_T_pvar_stop(session, flush_handle);
+    if (MPIT_result != MPI_SUCCESS) {
+        printf("failed to stop handle on \"%s\" pvar, check that you have monitoring pml\n",
+               flush_pvar_name);
+        MPI_Abort(MPI_COMM_WORLD, MPIT_result);
     }
 
     MPIT_result = MPI_T_pvar_handle_free(session, &flush_handle);
