@@ -288,84 +288,28 @@ int mca_topo_base_dist_graph_create(mca_topo_base_module_t* module,
 {
     int err;
 
-    ompi_proc_t **topo_procs = NULL;
-    int num_procs, ret, rank, i;
-    ompi_communicator_t *new_comm;
-    mca_topo_base_comm_dist_graph_2_2_0_t* topo;
-    num_procs = ompi_comm_size(comm_old);
-    num_procs = ompi_comm_size(comm_old);
-    rank = ompi_comm_rank(comm_old);
-    topo_procs = (ompi_proc_t**)malloc(num_procs * sizeof(ompi_proc_t *));
-    if(OMPI_GROUP_IS_DENSE(comm_old->c_local_group)) {
-        memcpy(topo_procs, 
-               comm_old->c_local_group->grp_proc_pointers,
-               num_procs * sizeof(ompi_proc_t *));
-    } else {
-        for(i = 0 ; i < num_procs; i++) {
-            topo_procs[i] = ompi_group_peer_lookup(comm_old->c_local_group,i);
-        }
-    }
-    new_comm = ompi_comm_allocate(num_procs, 0);
-    if (NULL == new_comm) {
-        free(topo_procs);
-        return OMPI_ERR_OUT_OF_RESOURCE;
-    }
-    err = mca_topo_base_dist_graph_distribute(module,
-                                              comm_old,
-                                              n, nodes,
-                                              degrees, targets,
-                                              weights,
-                                              &topo);
-    if( OMPI_SUCCESS != err ) {
-        free(topo_procs);
-        ompi_comm_free(newcomm);
+    if( OMPI_SUCCESS != (err = ompi_comm_create(comm_old,
+                                                comm_old->c_local_group,
+                                                newcomm)) ) {
+        OBJ_RELEASE(module);
         return err;
     }
 
-    rank = ompi_comm_rank(comm_old);
-    if(OMPI_GROUP_IS_DENSE(comm_old->c_local_group)) {
-        memcpy(topo_procs,
-               comm_old->c_local_group->grp_proc_pointers,
-               num_procs * sizeof(ompi_proc_t *));
-    } else {
-        for(i = 0 ; i < num_procs; i++) {
-            topo_procs[i] = ompi_group_peer_lookup(comm_old->c_local_group,i);
-        }
-    }
-    assert(NULL == new_comm->c_topo);
-    new_comm->c_topo             = module;
-    new_comm->c_topo->reorder    = reorder;
-    new_comm->c_flags           |= OMPI_COMM_DIST_GRAPH;
-    new_comm->c_topo->mtc.dist_graph = topo;
+    assert(NULL == (*newcomm)->c_topo);
+    (*newcomm)->c_topo             = module;
+    (*newcomm)->c_topo->reorder    = reorder;
+    (*newcomm)->c_flags           |= OMPI_COMM_DIST_GRAPH;
 
-    ret = ompi_comm_enable(comm_old, new_comm,
-                           rank, num_procs, topo_procs);
-    if (OMPI_SUCCESS != ret) {
-        if ( NULL != topo->in ) {
-            free(topo->in);
-        }
-        if ( NULL != topo->out ) {
-            free(topo->out);
-        }
-        if ( NULL != topo->inw ) {
-            free(topo->inw);
-        }
-        if ( NULL != topo->outw ) {
-            free(topo->outw);
-        }
-        if (MPI_COMM_NULL != new_comm) {
-            new_comm->c_topo->mtc.dist_graph = NULL;
-            new_comm->c_topo             = NULL;
-            new_comm->c_flags           &= ~OMPI_COMM_DIST_GRAPH;
-            ompi_comm_free (&new_comm);
-        }
-        free(topo);
-        free(topo_procs);
-        return ret;
+    err = mca_topo_base_dist_graph_distribute(module,
+                                              *newcomm, 
+                                              n, nodes,
+                                              degrees, targets,
+                                              weights,
+                                              &((*newcomm)->c_topo->mtc.dist_graph));
+    if( OMPI_SUCCESS != err ) {
+        ompi_comm_free(newcomm);
     }
-    *newcomm = new_comm;
-
-    return OMPI_SUCCESS;
+    return err;
 }
 
 static void mca_topo_base_comm_dist_graph_2_2_0_construct(mca_topo_base_comm_dist_graph_2_2_0_t * dist_graph) {
