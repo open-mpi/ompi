@@ -349,6 +349,8 @@ mpi_api_man_pages = \
         mpi/man/man3/MPI_Waitall.3 \
         mpi/man/man3/MPI_Waitany.3 \
         mpi/man/man3/MPI_Waitsome.3 \
+        mpi/man/man3/MPI_Win_allocate.3 \
+        mpi/man/man3/MPI_Win_allocate_shared.3 \
         mpi/man/man3/MPI_Win_attach.3 \
         mpi/man/man3/MPI_Win_c2f.3 \
         mpi/man/man3/MPI_Win_call_errhandler.3 \
@@ -379,6 +381,7 @@ mpi_api_man_pages = \
         mpi/man/man3/MPI_Win_set_errhandler.3 \
         mpi/man/man3/MPI_Win_set_info.3 \
         mpi/man/man3/MPI_Win_set_name.3 \
+        mpi/man/man3/MPI_Win_shared_query.3 \
         mpi/man/man3/MPI_Win_start.3 \
         mpi/man/man3/MPI_Win_sync.3 \
         mpi/man/man3/MPI_Win_test.3 \
