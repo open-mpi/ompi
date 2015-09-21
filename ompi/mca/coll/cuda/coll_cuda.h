@@ -2,7 +2,7 @@
  * Copyright (c) 2014      The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2014      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2014-2015 NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -39,33 +39,33 @@ int mca_coll_cuda_module_enable(mca_coll_base_module_t *module,
                                 struct ompi_communicator_t *comm);
 
 int
-mca_coll_cuda_allreduce(void *sbuf, void *rbuf, int count,
+mca_coll_cuda_allreduce(const void *sbuf, void *rbuf, int count,
                         struct ompi_datatype_t *dtype,
                         struct ompi_op_t *op,
                         struct ompi_communicator_t *comm,
                         mca_coll_base_module_t *module);
 
-int mca_coll_cuda_reduce(void *sbuf, void *rbuf, int count,
+int mca_coll_cuda_reduce(const void *sbuf, void *rbuf, int count,
                          struct ompi_datatype_t *dtype,
                          struct ompi_op_t *op,
                          int root,
                          struct ompi_communicator_t *comm,
                          mca_coll_base_module_t *module);
 
-int mca_coll_cuda_exscan(void *sbuf, void *rbuf, int count,
+int mca_coll_cuda_exscan(const void *sbuf, void *rbuf, int count,
                          struct ompi_datatype_t *dtype,
                          struct ompi_op_t *op,
                          struct ompi_communicator_t *comm,
                          mca_coll_base_module_t *module);
 
-int mca_coll_cuda_scan(void *sbuf, void *rbuf, int count,
+int mca_coll_cuda_scan(const void *sbuf, void *rbuf, int count,
                        struct ompi_datatype_t *dtype,
                        struct ompi_op_t *op,
                        struct ompi_communicator_t *comm,
                        mca_coll_base_module_t *module);
 
 int
-mca_coll_cuda_reduce_scatter_block(void *sbuf, void *rbuf, int rcount,
+mca_coll_cuda_reduce_scatter_block(const void *sbuf, void *rbuf, int rcount,
                                    struct ompi_datatype_t *dtype,
                                    struct ompi_op_t *op,
                                    struct ompi_communicator_t *comm,
