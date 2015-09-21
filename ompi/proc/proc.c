@@ -42,7 +42,7 @@
 #include "ompi/runtime/mpiruntime.h"
 #include "ompi/runtime/params.h"
 
-static opal_list_t  ompi_proc_list;
+opal_list_t  ompi_proc_list;
 static opal_mutex_t ompi_proc_lock;
 static opal_hash_table_t ompi_proc_hash;
 
