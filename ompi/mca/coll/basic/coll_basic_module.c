@@ -76,10 +76,11 @@ mca_coll_basic_comm_query(struct ompi_communicator_t *comm,
     }
     size *= 2;
     if (OMPI_COMM_IS_CART(comm)) {
-        int cart_size, ndims;
+        int cart_size;
+        mca_topo_base_comm_cart_2_2_0_t *cart;
         assert (NULL != comm->c_topo);
-        comm->c_topo->topo.cart.cartdim_get(comm, &ndims);
-        cart_size = ndims * 4;
+        cart = comm->c_topo->mtc.cart;
+        cart_size = cart->ndims * 4;
         if (cart_size > size) {
             size = cart_size;
         }
@@ -87,16 +88,17 @@ mca_coll_basic_comm_query(struct ompi_communicator_t *comm,
         int rank, degree;
         assert (NULL != comm->c_topo);
         rank = ompi_comm_rank (comm);
-        comm->c_topo->topo.graph.graph_neighbors_count (comm, rank, &degree);
+        mca_topo_base_graph_neighbors_count (comm, rank, &degree);
         degree *= 2;
         if (degree > size) {
             size = degree;
         }
     } else if (OMPI_COMM_IS_DIST_GRAPH(comm)) {
-        int dist_graph_size, inneighbors, outneighbors, weighted;
+        int dist_graph_size;
+        mca_topo_base_comm_dist_graph_2_2_0_t *dist_graph;
         assert (NULL != comm->c_topo);
-        comm->c_topo->topo.dist_graph.dist_graph_neighbors_count(comm, &inneighbors, &outneighbors, &weighted);
-        dist_graph_size = inneighbors + outneighbors;
+        dist_graph = comm->c_topo->mtc.dist_graph;
+        dist_graph_size = dist_graph->indegree + dist_graph->outdegree;
         if (dist_graph_size > size) {
             size = dist_graph_size;
         }
