@@ -27,8 +27,8 @@ AC_DEFUN([OMPI_FIND_MPI_AINT_COUNT_OFFSET],[
     _OMPI_FIND_MPI_COUNT_TYPE
     _OMPI_FIND_MPI_OFFSET_TYPE
 
-    if test "$ompi_fortran_happy" == "1" && \
-       test "$OMPI_WANT_FORTRAN_BINDINGS" == "1"; then
+    if test "$ompi_fortran_happy" = "1" && \
+       test "$OMPI_WANT_FORTRAN_BINDINGS" = "1"; then
         _OMPI_FIND_MPI_INTEGER_KIND
         _OMPI_FIND_MPI_ADDRESS_KIND
         _OMPI_FIND_MPI_COUNT_KIND
