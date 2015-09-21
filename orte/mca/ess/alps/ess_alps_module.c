@@ -56,7 +56,7 @@ static orte_vpid_t starting_vpid = 0;
 
 static int rte_init(void)
 {
-    int ret, i;
+    int ret;
     char *error = NULL;
     char **hosts = NULL;
 
