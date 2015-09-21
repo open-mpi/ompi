@@ -97,6 +97,73 @@ AC_DEFUN([OPAL_LOAD_PLATFORM], [
             AC_SUBST(OPAL_PARAM_FROM_PLATFORM, "no")
         fi
 
+        patch_dir="${with_platform}.patches"
+        patch_done="${srcdir}/.platform_patches"
+        patch_found=no
+
+        if test -d "${patch_dir}"; then
+            if test ! -f "${patch_done}"; then
+
+                AC_MSG_NOTICE([Checking patches from ${patch_dir}/ directory ])
+                for one_patch in $patch_dir/*.patch ; do
+
+                    AC_MSG_CHECKING([patch: $one_patch for errors ])
+                    patch -d ${srcdir} -p1 -t -s --dry-run < ${one_patch}
+                    if test "$?" != "0"; then
+                        AC_MSG_RESULT([fail])
+                        AC_MSG_ERROR([Platform patches failed to apply])
+                    else
+                        AC_MSG_RESULT([ok])
+                    fi
+
+                    AC_MSG_CHECKING([patch: $one_patch for unsupported configury changes ])
+                    has_configury_items=$(patch -d ${srcdir} -p1 -t --dry-run < ${one_patch} 2>&1 | egrep "^patching" | egrep  '*\.(am|m4)$' | wc -l)
+
+                    if test $has_configury_items -ne 0; then
+                        AC_MSG_RESULT([fail])
+                        AC_MSG_ERROR([Platform patches should not change configury files])
+                    else
+                        AC_MSG_RESULT([ok])
+                    fi
+                done
+
+
+                for one_patch in $patch_dir/*.patch ; do
+                    AC_MSG_NOTICE([Applying patch ${one_patch}])
+                    patch -d ${srcdir} -p1 -t -s < ${one_patch}
+                    if test "$?" != "0"; then
+                        AC_MSG_ERROR([Failed to apply patch ${one_patch}])
+                    fi
+                    patch_found=yes
+                done
+
+                if test "$patch_found" = "yes"; then
+
+                    platform_root_short="$(basename $platform_base)"
+
+                    # If platform file resides under platform/ root folder - use filename as ident
+                    if [ test "$platform_root_short" = "platform" ]; then
+                        platform_ident="$platform_file"
+                    else
+                        platform_ident="$(basename $platform_base)"
+                    fi
+
+                    # Set custom ident for platform patched OMPI
+                    if [ test -z "$with_ident_string" ]; then
+                        with_ident_string="Platform: $platform_ident"
+                    fi
+
+                    AC_MSG_NOTICE([Platform patches applied, created stamp file ${patch_done}])
+                    touch ${patch_done}
+                fi
+
+            else
+                AC_MSG_WARN([Platform patches already applied, skipping. ${patch_done} can be removed to re-apply ])
+            fi
+        else
+            AC_MSG_NOTICE([No platform patches in ${patch_dir}])
+        fi
+
     else
         AC_SUBST(OPAL_DEFAULT_MCA_PARAM_CONF, [openmpi-mca-params.conf])
     fi
