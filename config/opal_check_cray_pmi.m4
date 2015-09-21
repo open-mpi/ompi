@@ -13,7 +13,7 @@ dnl                         All rights reserved.
 dnl Copyright (c) 2009-2011 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2011-2014 Los Alamos National Security, LLC. All rights
 dnl                         reserved.
-dnl Copyright (c) 2014      Intel, Inc. All rights reserved.
+dnl Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
 dnl Copyright (c) 2014-2015 Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
 dnl $COPYRIGHT$
@@ -50,7 +50,7 @@ AC_DEFUN([OPAL_CHECK_CRAY_PMI_EXPLICIT],[
 #   this logic assumes knowledge about all the dependencies of the Cray PMI library,
 #   something that Cray doesn't generally document
 #
-    AS_IF([test "$enable_static" == "yes"],
+    AS_IF([test "$enable_static" = "yes"],
           [AS_IF([test -d /usr/lib/alps],
                  [AC_MSG_RESULT([Detected presense of /usr/lib/alps])
                   CRAY_PMI_LDFLAGS="$CRAY_PMI_LDFLAGS -L/usr/lib/alps -lalpslli -lalpsutil"
