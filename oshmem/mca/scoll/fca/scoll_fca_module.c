@@ -14,6 +14,8 @@
 #include "scoll_fca.h"
 #include <stdio.h>
 #include <unistd.h>
+#include "opal/util/show_help.h"
+
 #include "oshmem/constants.h"
 #include "oshmem/mca/scoll/scoll.h"
 #include "oshmem/mca/scoll/base/base.h"
@@ -430,6 +432,10 @@ static int mca_scoll_fca_module_enable(mca_scoll_base_module_t *module,
      * So differnt frameworks will be used for collective ops
      */
     FCA_ERROR("FCA module enable failed - aborting to prevent inconsistent application state");
+    /* There's no modules available */
+    opal_show_help("help-oshmem-scoll-fca.txt",
+                   "module_enable:fatal", true,
+		   "FCA module enable failed - aborting to prevent inconsistent application state");
     oshmem_shmem_abort(-1);
     return OMPI_ERROR;
 }

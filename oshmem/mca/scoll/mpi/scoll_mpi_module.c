@@ -12,6 +12,8 @@
 
 #include "ompi_config.h"
 #include "scoll_mpi.h"
+#include "opal/util/show_help.h"
+
 #include "oshmem/proc/proc.h"
 #include "oshmem/runtime/runtime.h"
 #include "ompi/mca/coll/base/base.h"
@@ -78,6 +80,11 @@ static int mca_scoll_mpi_module_enable(mca_scoll_base_module_t *module,
 
     if (OSHMEM_SUCCESS != mca_scoll_mpi_save_coll_handlers(module, osh_group)){
         MPI_COLL_ERROR("MPI module enable failed - aborting to prevent inconsistent application state");
+        /* There's no modules available */
+        opal_show_help("help-oshmem-scoll-mpi.txt",
+                       "module_enable:fatal", true,
+		       		   "MPI module enable failed - aborting to prevent inconsistent application state");
+
         oshmem_shmem_abort(-1);
         return OSHMEM_ERROR;
     }

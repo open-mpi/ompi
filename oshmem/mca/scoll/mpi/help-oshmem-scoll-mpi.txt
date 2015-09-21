@@ -1,0 +1,16 @@
+#
+# Copyright (c) 2015      Mellanox Technologies, Inc.
+#                         All rights reserved.
+# $COPYRIGHT$
+#
+# Additional copyrights may follow
+#
+# $HEADER$
+#
+[module_enable:fatal]
+scoll:mpi module reports issue during module enabling phase.
+Try to use scoll:mpi component with anoter one
+for example scoll:basic
+
+  Error: %s
+#

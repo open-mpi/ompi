@@ -1,4 +1,4 @@
-# Copyright (c) 2013      Mellanox Technologies, Inc.
+# Copyright (c) 2013-2015 Mellanox Technologies, Inc.
 #                         All rights reserved.
 # $COPYRIGHT$
 #
@@ -7,6 +7,10 @@
 # $HEADER$
 #
 #
+
+dist_oshmemdata_DATA = \
+	help-oshmem-scoll-mpi.txt
+
 scoll_mpi_sources = \
 					scoll_mpi.h \
 					scoll_mpi_debug.h \
