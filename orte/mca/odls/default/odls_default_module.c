@@ -104,6 +104,7 @@
 #ifdef HAVE_DIRENT_H
 #include <dirent.h>
 #endif
+#include <ctype.h>
 
 #include "opal/mca/hwloc/hwloc.h"
 #include "opal/mca/hwloc/base/base.h"
@@ -371,8 +372,7 @@ static int close_open_file_descriptors(int write_fd,
     }
     struct dirent *files;
     while (NULL != (files = readdir(dir))) {
-        if (0 == strncmp(files->d_name,".",1) ||
-            0 == strncmp(files->d_name,"..",2)) {
+        if (!isdigit(files->d_name[0])) {
             continue;
         }
         int fd = strtol(files->d_name, NULL, 10);
