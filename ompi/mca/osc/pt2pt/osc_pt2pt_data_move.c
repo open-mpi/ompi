@@ -8,7 +8,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2014 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2009-2011 Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2012-2013 Sandia National Laboratories.  All rights reserved.
@@ -21,26 +21,19 @@
  * $HEADER$
  */
 
-#include "ompi_config.h"
-
 #include "osc_pt2pt.h"
 #include "osc_pt2pt_header.h"
 #include "osc_pt2pt_data_move.h"
 #include "osc_pt2pt_frag.h"
 #include "osc_pt2pt_request.h"
 
-#include "opal/threads/condition.h"
-#include "opal/threads/mutex.h"
 #include "opal/util/arch.h"
-#include "opal/util/output.h"
 #include "opal/sys/atomic.h"
 #include "opal/align.h"
-#include "opal/mca/btl/btl.h"
 
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/pml/base/pml_base_sendreq.h"
 #include "opal/mca/btl/btl.h"
-#include "ompi/mca/osc/base/base.h"
 #include "ompi/mca/osc/base/osc_base_obj_convert.h"
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/op/op.h"
@@ -218,7 +211,7 @@ static inline int datatype_buffer_length (ompi_datatype_t *datatype, int count)
  * to a target) before this is sent.
  */
 int ompi_osc_pt2pt_control_send (ompi_osc_pt2pt_module_t *module, int target,
-                               void *data, size_t len)
+                                 void *data, size_t len)
 {
     ompi_osc_pt2pt_frag_t *frag;
     char *ptr;
@@ -494,6 +487,7 @@ static int osc_pt2pt_get_post_send (ompi_osc_pt2pt_module_t *module, void *sourc
                                    ompi_datatype_t *datatype, int peer, int tag)
 {
     struct osc_pt2pt_get_post_send_cb_data_t *data;
+    int ret;
 
     data = malloc (sizeof (*data));
     if (OPAL_UNLIKELY(NULL == data)) {
@@ -505,8 +499,14 @@ static int osc_pt2pt_get_post_send (ompi_osc_pt2pt_module_t *module, void *sourc
      * in an active target epoch) */
     data->peer = (tag & 0x1) ? peer : MPI_PROC_NULL;
 
-    return ompi_osc_pt2pt_isend_w_cb (source, count, datatype, peer, tag, module->comm,
+    /* data will be freed by the callback */
+    ret = ompi_osc_pt2pt_isend_w_cb (source, count, datatype, peer, tag, module->comm,
                                      osc_pt2pt_get_post_send_cb, (void *) data);
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
+        free (data);
+    }
+
+    return ret;
 }
 
 /**
@@ -712,7 +712,7 @@ static int accumulate_cb (ompi_request_t *request)
 static int ompi_osc_pt2pt_acc_op_queue (ompi_osc_pt2pt_module_t *module, ompi_osc_pt2pt_header_t *header, int source,
                                        char *data, size_t data_len, ompi_datatype_t *datatype)
 {
-    ompi_osc_pt2pt_peer_t *peer = module->peers + source;
+    ompi_osc_pt2pt_peer_t *peer = ompi_osc_pt2pt_peer_lookup (module, source);
     osc_pt2pt_pending_acc_t *pending_acc;
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
@@ -877,14 +877,14 @@ static int ompi_osc_pt2pt_acc_long_start (ompi_osc_pt2pt_module_t *module, int s
         }
 
         ret = osc_pt2pt_accumulate_allocate (module, source, target, buffer, buflen, proc, acc_header->count,
-                                            datatype, op, 1, &acc_data);
+                                             datatype, op, 1, &acc_data);
         if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
             free (buffer);
             break;
         }
 
         ret = ompi_osc_pt2pt_irecv_w_cb (buffer, primitive_count, primitive_datatype, source,
-                                        acc_header->tag, module->comm, NULL, accumulate_cb, acc_data);
+                                         acc_header->tag, module->comm, NULL, accumulate_cb, acc_data);
         if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
             OBJ_RELEASE(acc_data);
         }
@@ -985,12 +985,6 @@ static int ompi_osc_gacc_long_start (ompi_osc_pt2pt_module_t *module, int source
     buflen = datatype_buffer_length (datatype, acc_header->count);
 
     do {
-        buffer = malloc (buflen);
-        if (OPAL_UNLIKELY(NULL == buffer)) {
-            ret = OMPI_ERR_OUT_OF_RESOURCE;
-            break;
-        }
-
         ret = ompi_osc_base_get_primitive_type_info (datatype, &primitive_datatype, &primitive_count);
         if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
             break;
@@ -998,9 +992,16 @@ static int ompi_osc_gacc_long_start (ompi_osc_pt2pt_module_t *module, int source
 
         primitive_count *= acc_header->count;
 
+        buffer = malloc (buflen);
+        if (OPAL_UNLIKELY(NULL == buffer)) {
+            ret = OMPI_ERR_OUT_OF_RESOURCE;
+            break;
+        }
+
         ret = osc_pt2pt_accumulate_allocate (module, source, target, buffer, buflen, proc, acc_header->count,
-                                            datatype, op, 2, &acc_data);
+                                             datatype, op, 2, &acc_data);
         if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
+            free (buffer);
             break;
         }
 
@@ -1337,20 +1338,8 @@ static inline int process_cswap (ompi_osc_pt2pt_module_t *module, int source,
 static inline int process_complete (ompi_osc_pt2pt_module_t *module, int source,
                                     ompi_osc_pt2pt_header_complete_t *complete_header)
 {
-    OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
-                         "osc pt2pt:  process_complete got complete message from %d. expected fragment count %d. "
-                         "current signal count %d. current incomming count: %d",
-                         source, complete_header->frag_count, module->active_incoming_frag_signal_count,
-                         module->active_incoming_frag_count));
-
     /* the current fragment is not part of the frag_count so we need to add it here */
-    OPAL_THREAD_ADD32((int32_t *) &module->active_incoming_frag_signal_count,
-                      complete_header->frag_count + 1);
-
-
-    if (0 == OPAL_THREAD_ADD32((int32_t *) &module->num_complete_msgs, 1)) {
-        opal_condition_broadcast (&module->cond);
-    }
+    osc_pt2pt_incoming_complete (module, source, complete_header->frag_count + 1);
 
     return sizeof (*complete_header);
 }
@@ -1361,7 +1350,7 @@ static inline int process_complete (ompi_osc_pt2pt_module_t *module, int source,
 static inline int process_flush (ompi_osc_pt2pt_module_t *module, int source,
                                  ompi_osc_pt2pt_header_flush_t *flush_header)
 {
-    ompi_osc_pt2pt_peer_t *peer = module->peers + source;
+    ompi_osc_pt2pt_peer_t *peer = ompi_osc_pt2pt_peer_lookup (module, source);
     int ret;
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
@@ -1395,7 +1384,7 @@ static inline int process_flush (ompi_osc_pt2pt_module_t *module, int source,
 static inline int process_unlock (ompi_osc_pt2pt_module_t *module, int source,
                                   ompi_osc_pt2pt_header_unlock_t *unlock_header)
 {
-    ompi_osc_pt2pt_peer_t *peer = module->peers + source;
+    ompi_osc_pt2pt_peer_t *peer = ompi_osc_pt2pt_peer_lookup (module, source);
     int ret;
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
@@ -1653,10 +1642,11 @@ static int ompi_osc_pt2pt_callback (ompi_request_t *request)
         process_frag(module, (ompi_osc_pt2pt_frag_header_t *) base_header);
 
         /* only data fragments should be included in the completion counters */
-        mark_incoming_completion (module, (base_header->base.flags & OMPI_OSC_PT2PT_HDR_FLAG_PASSIVE_TARGET) ? source : MPI_PROC_NULL);
+        mark_incoming_completion (module, (base_header->base.flags & OMPI_OSC_PT2PT_HDR_FLAG_PASSIVE_TARGET) ?
+                                  source : MPI_PROC_NULL);
         break;
     case OMPI_OSC_PT2PT_HDR_TYPE_POST:
-        (void) osc_pt2pt_incoming_post (module, source);
+        osc_pt2pt_incoming_post (module, source);
         break;
     case OMPI_OSC_PT2PT_HDR_TYPE_LOCK_ACK:
         ompi_osc_pt2pt_process_lock_ack(module, (ompi_osc_pt2pt_header_lock_ack_t *) base_header);

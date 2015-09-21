@@ -32,7 +32,9 @@ pt2pt_sources = \
 	osc_pt2pt_request.h \
 	osc_pt2pt_request.c \
 	osc_pt2pt_active_target.c \
-	osc_pt2pt_passive_target.c
+	osc_pt2pt_passive_target.c \
+	osc_pt2pt_sync.h \
+	osc_pt2pt_sync.c
 
 # Make the output library in this directory, and name it either
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la

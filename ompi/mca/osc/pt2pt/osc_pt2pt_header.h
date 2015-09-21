@@ -8,7 +8,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2014 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
@@ -118,7 +118,6 @@ typedef struct ompi_osc_pt2pt_header_cswap_t ompi_osc_pt2pt_header_cswap_t;
 
 struct ompi_osc_pt2pt_header_post_t {
     ompi_osc_pt2pt_header_base_t base;
-    uint16_t windx;
 };
 typedef struct ompi_osc_pt2pt_header_post_t ompi_osc_pt2pt_header_post_t;
 
@@ -134,7 +133,6 @@ typedef struct ompi_osc_pt2pt_header_lock_t ompi_osc_pt2pt_header_lock_t;
 
 struct ompi_osc_pt2pt_header_lock_ack_t {
     ompi_osc_pt2pt_header_base_t base;
-    uint16_t windx;
     uint32_t source;
     uint64_t lock_ptr;
 };
@@ -166,7 +164,7 @@ struct ompi_osc_pt2pt_header_flush_t {
     uint8_t padding[2];
 #endif
     uint32_t frag_count;
-    uint64_t serial_number;
+    uint64_t lock_ptr;
 };
 typedef struct ompi_osc_pt2pt_header_flush_t ompi_osc_pt2pt_header_flush_t;
 
@@ -175,13 +173,12 @@ struct ompi_osc_pt2pt_header_flush_ack_t {
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
     uint8_t padding[6];
 #endif
-    uint64_t serial_number;
+    uint64_t lock_ptr;
 };
 typedef struct ompi_osc_pt2pt_header_flush_ack_t ompi_osc_pt2pt_header_flush_ack_t;
 
 struct ompi_osc_pt2pt_frag_header_t {
     ompi_osc_pt2pt_header_base_t base;
-    uint16_t windx; /* cid of communicator backing window (our window id) */
     uint32_t source; /* rank in window of source process */
     int32_t num_ops; /* number of operations in this buffer */
     uint32_t pad; /* ensure the fragment header is a multiple of 8 bytes */
@@ -208,12 +205,10 @@ typedef union ompi_osc_pt2pt_header_t ompi_osc_pt2pt_header_t;
 
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
 #define MCA_OSC_PT2PT_FRAG_HDR_NTOH(h)       \
-    (h).windx = ntohs((h).windx);               \
     (h).source = ntohl((h).source);             \
     (h).num_ops = ntohl((h).num_ops);           \
     (h).pad = ntohl((h).pad);
 #define MCA_OSC_PT2PT_FRAG_HDR_HTON(h)       \
-    (h).windx = htons((h).windx);               \
     (h).source = htonl((h).source);             \
     (h).num_ops = htonl((h).num_ops);           \
     (h).pad = htonl((h).pad);
@@ -254,34 +249,24 @@ typedef union ompi_osc_pt2pt_header_t ompi_osc_pt2pt_header_t;
     (h).op = htonl((h).op);
 
 #define MCA_OSC_PT2PT_LOCK_HDR_NTOH(h)       \
-    (h).lock_type = ntohl((h).lock_type);       \
-    (h).lock_ptr = ntoh64((h).lock_ptr)
+    (h).lock_type = ntohl((h).lock_type)
 #define MCA_OSC_PT2PT_LOCK_HDR_HTON(h)       \
-    (h).lock_type = htonl((h).lock_type);       \
-    (h).lock_ptr = hton64((h).lock_ptr)
+    (h).lock_type = htonl((h).lock_type)
 
 #define MCA_OSC_PT2PT_UNLOCK_HDR_NTOH(h)     \
     (h).lock_type = ntohl((h).lock_type);       \
-    (h).lock_ptr = ntoh64((h).lock_ptr);        \
     (h).frag_count = ntohl((h).frag_count)
 #define MCA_OSC_PT2PT_UNLOCK_HDR_HTON(h)     \
     (h).lock_type = htonl((h).lock_type);       \
-    (h).lock_ptr = hton64((h).lock_ptr);        \
     (h).frag_count = htonl((h).frag_count)
 
 #define MCA_OSC_PT2PT_LOCK_ACK_HDR_NTOH(h)   \
-    (h).windx = ntohs((h).windx);               \
-    (h).source = ntohl((h).source);             \
-    (h).lock_ptr = ntoh64((h).lock_ptr)
+    (h).source = ntohl((h).source)
 #define MCA_OSC_PT2PT_LOCK_ACK_HDR_HTON(h)   \
-    (h).windx = htonl((h).windx);               \
-    (h).source= htonl((h).source);              \
-    (h).lock_ptr = hton64((h).lock_ptr)
+    (h).source= htonl((h).source)
 
-#define MCA_OSC_PT2PT_UNLOCK_ACK_HDR_NTOH(h) \
-    (h).lock_ptr = ntoh64((h).lock_ptr);
-#define MCA_OSC_PT2PT_UNLOCK_ACK_HDR_HTON(h) \
-    (h).lock_ptr = hton64((h).lock_ptr);
+#define MCA_OSC_PT2PT_UNLOCK_ACK_HDR_NTOH(h)
+#define MCA_OSC_PT2PT_UNLOCK_ACK_HDR_HTON(h)
 
 #define MCA_OSC_PT2PT_COMPLETE_HDR_NTOH(h)   \
     (h).frag_count = ntohl((h).frag_count)
@@ -289,21 +274,15 @@ typedef union ompi_osc_pt2pt_header_t ompi_osc_pt2pt_header_t;
     (h).frag_count = htonl((h).frag_count)
 
 #define MCA_OSC_PT2PT_FLUSH_HDR_NTOH(h)      \
-    (h).frag_count = ntohl((h).frag_count);     \
-    (h).serial_number = ntoh64((h).serial_number)
+    (h).frag_count = ntohl((h).frag_count)
 #define MCA_OSC_PT2PT_FLUSH_HDR_HTON(h)      \
-    (h).frag_count = htonl((h).frag_count);     \
-    (h).serial_number = ntoh64((h).serial_number)
+    (h).frag_count = htonl((h).frag_count)
 
-#define MCA_OSC_PT2PT_FLUSH_ACK_HDR_NTOH(h)  \
-    (h).serial_number = ntoh64((h).serial_number)
-#define MCA_OSC_PT2PT_FLUSH_ACK_HDR_HTON(h)  \
-    (h).serial_number = ntoh64((h).serial_number)
+#define MCA_OSC_PT2PT_FLUSH_ACK_HDR_NTOH(h)
+#define MCA_OSC_PT2PT_FLUSH_ACK_HDR_HTON(h)
 
-#define MCA_OSC_PT2PT_POST_HDR_NTOH(h)       \
-    (h).windx = ntohs((h).windx)
-#define MCA_OSC_PT2PT_POST_HDR_HTON(h)       \
-    (h).windx = htons((h).windx)
+#define MCA_OSC_PT2PT_POST_HDR_NTOH(h)
+#define MCA_OSC_PT2PT_POST_HDR_HTON(h)
 
 #define MCA_OSC_PT2PT_CSWAP_HDR_NTOH(h)      \
     (h).tag = ntohs((h).tag);                   \
