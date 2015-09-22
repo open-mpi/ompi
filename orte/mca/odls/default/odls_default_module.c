@@ -14,8 +14,8 @@
  * Copyright (c) 2008-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010      IBM Corporation.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
- *                         reserved. 
- * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
+ *                         reserved.
+ * Copyright (c) 2013-2015 Intel, Inc. All rights reserved
  *
  * $COPYRIGHT$
  *
@@ -107,6 +107,10 @@
 #ifdef HAVE_SYS_SELECT_H
 #include <sys/select.h>
 #endif
+#ifdef HAVE_DIRENT_H
+#include <dirent.h>
+#endif
+#include <ctype.h>
 
 #include "opal/mca/hwloc/hwloc.h"
 #include "opal/mca/hwloc/base/base.h"
@@ -400,6 +404,33 @@ static void send_error_show_help(int fd, int exit_status,
     exit(exit_status);
 }
 
+/* close all open file descriptors w/ exception of stdin/stdout/stderr,
+   the pipe used for the IOF INTERNAL messages, and the pipe up to
+   the parent. */
+static int close_open_file_descriptors(int write_fd,
+                                      orte_iof_base_io_conf_t opts) {
+    DIR *dir = opendir("/proc/self/fd");
+    if (NULL == dir) {
+        return ORTE_ERR_FILE_OPEN_FAILURE;
+    }
+    struct dirent *files;
+    while (NULL != (files = readdir(dir))) {
+        if (!isdigit(files->d_name[0])) {
+            continue;
+        }
+        int fd = strtol(files->d_name, NULL, 10);
+        if (errno == EINVAL || errno == ERANGE) {
+            closedir(dir);
+            return ORTE_ERR_TYPE_MISMATCH;
+        }
+        if (fd >=3 && fd != opts.p_internal[1] && fd != write_fd) {
+            close(fd);
+        }
+    }
+    closedir(dir);
+    return ORTE_SUCCESS;
+}
+
 static int do_child(orte_app_context_t* context,
                     orte_proc_t *child,
                     char **environ_copy,
@@ -646,12 +677,15 @@ static int do_child(orte_app_context_t* context,
     opal_unsetenv(param, &environ_copy);
     free(param);
 
-    /* close all file descriptors w/ exception of stdin/stdout/stderr,
+    /* close all open file descriptors w/ exception of stdin/stdout/stderr,
        the pipe used for the IOF INTERNAL messages, and the pipe up to
        the parent. */
-    for(fd=3; fd<fdmax; fd++) {
-        if (fd != opts.p_internal[1] && fd != write_fd) {
-            close(fd);
+    if (ORTE_SUCCESS != close_open_file_descriptors(write_fd, opts)) {
+        // close *all* file descriptors -- slow
+        for(fd=3; fd<fdmax; fd++) {
+            if (fd != opts.p_internal[1] && fd != write_fd) {
+                close(fd);
+            }
         }
     }
     
