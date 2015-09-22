@@ -359,14 +359,7 @@ static void send_error_show_help(int fd, int exit_status,
    the parent. */
 static int close_open_file_descriptors(int write_fd,
                                       orte_iof_base_io_conf_t opts) {
-    int pid = getpid();
-    char *fds_dir = NULL;
-    int rc = asprintf(&fds_dir, "/proc/%d/fd", pid);
-    if (rc < 0) {
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-    DIR *dir = opendir(fds_dir);
-    free(fds_dir);
+    DIR *dir = opendir("/proc/self/fd");
     if (NULL == dir) {
         return ORTE_ERR_FILE_OPEN_FAILURE;
     }
