@@ -52,7 +52,7 @@
 #define MPIGCLOCK_RTTMIN_NOTCHANGED_MAX 100
 #define MPIGCLOCK_MSGTAG 128
 
-static double mpigclock_measure_offset_adaptive(MPI_Comm comm, int root, int peer, double *min_rtt);
+static double mpigclock_measure_offset_adaptive(MPI_Comm comm, int root, int peer, double *min_rtt, double root_offset);
 
 
 /*
@@ -60,28 +60,63 @@ static double mpigclock_measure_offset_adaptive(MPI_Comm comm, int root, int pee
  */
 double mpigclock_sync_linear(MPI_Comm comm, int root, double *rtt)
 {
-    int i, rank, commsize;
+    int peer, rank, commsize;
     double ret = 0;
 
     MPI_Comm_rank(comm, &rank);
     MPI_Comm_size(comm, &commsize);
 
-    if (commsize < 2) {
-        *rtt = 0.0;
-        return 0.0;
-    }
-
-    for (i = 1; i < commsize; i++) {
+    for (peer = 1; peer < commsize; peer++) {
         MPI_Barrier(comm);
-        if (rank == root || rank == i) {
-            ret = mpigclock_measure_offset_adaptive(comm, root, i, rtt);
+        if (rank == root || rank == peer) {
+            ret = mpigclock_measure_offset_adaptive(comm, root, peer, rtt, 0.0);
         }
     }
     return ret;
 }
 
+/*
+ * mpigclock_sync_log: Clock synchronization algorithm with O(logn) steps.
+ * rtt argumrnt does not have a meaning
+ */
+double mpigclock_sync_log(MPI_Comm comm, int root, double *rtt)
+{
+    int peer, rank, commsize;
+    double root_offset = 0;
+    double ret = 0;
+
+    MPI_Comm_rank(comm, &rank);
+    MPI_Comm_size(comm, &commsize);
+
+    /* I am a peer */
+    if (rank != root) {
+        root = (rank - 1) / 2;
+        MPI_Recv(&root_offset, 1, MPI_DOUBLE, root, MPIGCLOCK_MSGTAG, comm, MPI_STATUS_IGNORE);
+        ret = mpigclock_measure_offset_adaptive(comm, root, rank, rtt, root_offset);
+    }
+
+    root_offset = ret;
+
+    /* I am a root */
+    *rtt = 0;
+    peer = 2 * rank + 1;
+    if (peer < commsize) {
+        MPI_Send(&root_offset, 1, MPI_DOUBLE, peer, MPIGCLOCK_MSGTAG, comm);
+        mpigclock_measure_offset_adaptive(comm, rank, peer, rtt, root_offset);
+    }
+
+    *rtt = 0;
+    peer = 2 * rank + 2;
+    if (peer < commsize) {
+        MPI_Send(&root_offset, 1, MPI_DOUBLE, peer, MPIGCLOCK_MSGTAG, comm);
+        mpigclock_measure_offset_adaptive(comm, rank, peer, rtt, root_offset);
+    }
+
+    return ret;
+}
+
 /* mpigclock_measure_offset_adaptive: Measures clock's offset of peer. */
-static double mpigclock_measure_offset_adaptive(MPI_Comm comm, int root, int peer, double *min_rtt)
+static double mpigclock_measure_offset_adaptive(MPI_Comm comm, int root, int peer, double *min_rtt, double root_offset)
 {
     int rank, commsize, rttmin_notchanged = 0;
     double starttime, stoptime, peertime, rtt, rttmin = 1E12,
@@ -116,7 +151,7 @@ static double mpigclock_measure_offset_adaptive(MPI_Comm comm, int root, int pee
             /* Root process */
             MPI_Recv(&starttime, 1, MPI_DOUBLE, peer, MPIGCLOCK_MSGTAG, comm,
                      MPI_STATUS_IGNORE);
-            peertime = hpctimer_wtime();
+            peertime = hpctimer_wtime() + root_offset;
             if (starttime < 0.0) {
                 break;
             }

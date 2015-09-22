@@ -21,7 +21,8 @@
 
 typedef enum { Gen, Chk } prog_mode_t;
 
-char *filename = NULL;
+static char *filename = NULL;
+static int alg = 0;
 prog_mode_t mode = Gen;
 void print_help(char *progname);
 int parse_opts(int rank, int argc, char **argv);
@@ -37,10 +38,11 @@ int parse_opts(int rank, int argc, char **argv)
         int option_index = 0;
         static struct option long_options[] = {
             {"output", required_argument, 0, 'o' },
+            {"alg", required_argument, 0, 'a' },
             {"help",   required_argument, 0, 'h' },
             { 0,       0,                 0, 0   } };
 
-        int c = getopt_long(argc, argv, "o:h",
+        int c = getopt_long(argc, argv, "o:a:h",
             long_options, &option_index);
         if (c == -1)
             break;
@@ -55,6 +57,9 @@ int parse_opts(int rank, int argc, char **argv)
                 perror("Cannot allocate memory");
                 return -1;
             }
+            break;
+        case 'a':
+            alg = atoi(optarg);
             break;
         default:
             return -1;
@@ -105,7 +110,17 @@ int main(int argc, char **argv)
         MPI_Abort(MPI_COMM_WORLD, 1);
     }
 
-    offs = mpigclock_sync_linear(comm, 0, &rtt);
+
+    if (commsize < 2) {
+        rtt = 0.0;
+        offs = 0.0;
+    } else {
+        if (1 == alg) {
+            offs = mpigclock_sync_log(comm, 0, &rtt);
+        } else {
+            offs = mpigclock_sync_linear(comm, 0, &rtt);
+        }
+    }
 
     double send[2] = { rtt, offs };
     if( rank == 0 ){
@@ -131,6 +146,7 @@ int main(int argc, char **argv)
         double (*m)[2] = (void*)measure;
         char (*h)[1024] = (void*)hnames;
         int i;
+        fprintf(fp, "# Used algorithm: %s\n", (alg ? "binary tree" : "linear"));
         for(i=0; i<commsize;i++){
             fprintf(fp, "%s %lf %lf\n", h[i], m[i][0], m[i][1]);
         }
