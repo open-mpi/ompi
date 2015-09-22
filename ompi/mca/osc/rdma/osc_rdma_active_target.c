@@ -103,13 +103,14 @@ static ompi_osc_rdma_peer_t **ompi_osc_rdma_get_peers (ompi_osc_rdma_module_t *m
     int *ranks1, *ranks2;
     int ret;
 
-    ranks1 = malloc (sizeof(int) * size);
-    ranks2 = malloc (sizeof(int) * size);
-    peers = malloc (sizeof (ompi_osc_rdma_peer_t *) * size);
+    ranks1 = calloc (size, sizeof(int));
+    ranks2 = calloc (size, sizeof(int));
+    peers = calloc (size, sizeof (ompi_osc_rdma_peer_t *));
     if (NULL == ranks1 || NULL == ranks2 || NULL == peers) {
         free (ranks1);
         free (ranks2);
         free (peers);
+        return NULL;
     }
 
     for (int i = 0 ; i < size ; ++i) {

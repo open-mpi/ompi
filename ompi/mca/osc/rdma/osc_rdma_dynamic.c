@@ -231,7 +231,7 @@ int ompi_osc_rdma_detach (struct ompi_win_t *win, const void *base)
     OPAL_OUTPUT_VERBOSE((5, ompi_osc_base_framework.framework_output, "Detaching memory region %p-%p at index %d",
                          base, (void *)((intptr_t) base + region->len), region_index));
 
-    if (module->selected_btl && module->selected_btl->btl_register_mem) {
+    if (module->selected_btl->btl_register_mem) {
         ompi_osc_rdma_deregister (module, module->dynamic_handles[region_index].btl_handle);
 
         if (region_index < region_count - 1) {
