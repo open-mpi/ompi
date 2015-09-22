@@ -127,7 +127,6 @@ static struct {
     char *path;
     bool enable_recovery;
     char *personality;
-    char *basename;
     char *prefix;
     bool terminate;
     bool nolocal;
@@ -333,7 +332,7 @@ static void spawn_recv(int status, orte_process_name_t* sender,
 
 int main(int argc, char *argv[])
 {
-    int rc, i;
+    int rc;
     opal_cmd_line_t cmd_line;
     char *param;
     orte_job_t *jdata=NULL;
@@ -344,7 +343,7 @@ int main(int argc, char *argv[])
     memset(&myglobals, 0, sizeof(myglobals));
     /* find our basename (the name of the executable) so that we can
        use it in pretty-print error messages */
-    myglobals.basename = opal_basename(argv[0]);
+    orte_basename = opal_basename(argv[0]);
 
 
     opal_cmd_line_create(&cmd_line, cmd_line_init);
@@ -369,7 +368,7 @@ int main(int argc, char *argv[])
                                          OPAL_REPO_REV);
         if (NULL != str) {
             fprintf(stdout, "%s %s\n\nReport bugs to %s\n",
-                    myglobals.basename, str, PACKAGE_BUGREPORT);
+                    orte_basename, str, PACKAGE_BUGREPORT);
             free(str);
         }
         exit(0);
@@ -382,10 +381,10 @@ int main(int argc, char *argv[])
     if (0 == geteuid() && !myglobals.run_as_root) {
         fprintf(stderr, "--------------------------------------------------------------------------\n");
         if (myglobals.help) {
-            fprintf(stderr, "%s cannot provide the help message when run as root\n", myglobals.basename);
+            fprintf(stderr, "%s cannot provide the help message when run as root\n", orte_basename);
         } else {
             /* show_help is not yet available, so print an error manually */
-            fprintf(stderr, "%s has detected an attempt to run as root.\n", myglobals.basename);
+            fprintf(stderr, "%s has detected an attempt to run as root.\n", orte_basename);
         }
         fprintf(stderr, " This is *strongly* discouraged as any mistake (e.g., in defining TMPDIR) or bug can\n");
         fprintf(stderr, "result in catastrophic damage to the OS file system, leaving\n");
@@ -427,7 +426,7 @@ int main(int argc, char *argv[])
         char *str, *args = NULL;
         char *project_name = NULL;
         opal_output(0, "GETTING HELP");
-        if (0 == strcmp(myglobals.basename, "mpirun")) {
+        if (0 == strcmp(orte_basename, "mpirun")) {
             project_name = "Open MPI";
         } else {
             project_name = "OpenRTE";
@@ -435,8 +434,8 @@ int main(int argc, char *argv[])
         args = opal_cmd_line_get_usage_msg(&cmd_line);
         opal_output(0, "CMD LINE %s", args);
         str = opal_show_help_string("help-orterun.txt", "orterun:usage", false,
-                                    myglobals.basename, project_name, OPAL_VERSION,
-                                    myglobals.basename, args,
+                                    orte_basename, project_name, OPAL_VERSION,
+                                    orte_basename, args,
                                     PACKAGE_BUGREPORT);
         if (NULL != str) {
             printf("%s", str);
@@ -529,11 +528,9 @@ int main(int argc, char *argv[])
      */
     opal_finalize();
 
-    for (i=0; NULL != environ[i]; i++) {
-        if (0 == strncmp(environ[i], "OMPI", 4)) {
-            fprintf(stderr, "%s\n", environ[i]);
-        }
-    }
+    /* clear the ess param from the environment so our children
+     * don't pick it up */
+    opal_unsetenv("OMPI_MCA_ess", &environ);
 
     /* set the info in our contact table */
     orte_rml.set_contact_info(orte_process_info.my_hnp_uri);
@@ -659,7 +656,7 @@ int main(int argc, char *argv[])
         /* This should never happen -- this case should be caught in
            create_app(), but let's just double check... */
         orte_show_help("help-orterun.txt", "orterun:nothing-to-do",
-                       true, myglobals.basename);
+                       true, orte_basename);
         exit(ORTE_ERROR_DEFAULT_EXIT_CODE);
     }
 
@@ -765,7 +762,7 @@ static int parse_globals(int argc, char* argv[], opal_cmd_line_t *cmd_line)
             fp = fopen(myglobals.report_pid, "w");
             if (NULL == fp) {
                 orte_show_help("help-orterun.txt", "orterun:write_file", false,
-                               myglobals.basename, "pid", myglobals.report_pid);
+                               orte_basename, "pid", myglobals.report_pid);
                 exit(0);
             }
             fprintf(fp, "%d\n", (int)getpid());
@@ -1009,7 +1006,7 @@ static int create_app(int argc, char* argv[],
 
     if (0 == count) {
         orte_show_help("help-orterun.txt", "orterun:executable-not-specified",
-                       true, myglobals.basename, myglobals.basename);
+                       true, orte_basename, orte_basename);
         rc = ORTE_ERR_NOT_FOUND;
         goto cleanup;
     }
@@ -1099,7 +1096,7 @@ static int create_app(int argc, char* argv[],
                 }
                 if (0 != strcmp(param, value)) {
                     orte_show_help("help-orterun.txt", "orterun:app-prefix-conflict",
-                                   true, myglobals.basename, value, param);
+                                   true, orte_basename, value, param);
                     /* let the global-level prefix take precedence since we
                      * know that one is being used
                      */
@@ -1125,7 +1122,7 @@ static int create_app(int argc, char* argv[],
                     param_len--;
                     if (0 == param_len) {
                         orte_show_help("help-orterun.txt", "orterun:empty-prefix",
-                                       true, myglobals.basename, myglobals.basename);
+                                       true, orte_basename, orte_basename);
                         free(param);
                         return ORTE_ERR_FATAL;
                     }
@@ -1143,7 +1140,7 @@ static int create_app(int argc, char* argv[],
     if (0 < (j = opal_cmd_line_get_ninsts(&cmd_line, "hostfile"))) {
         if(1 < j) {
             orte_show_help("help-orterun.txt", "orterun:multiple-hostfiles",
-                           true, myglobals.basename, NULL);
+                           true, orte_basename, NULL);
             return ORTE_ERR_FATAL;
         } else {
             value = opal_cmd_line_get_param(&cmd_line, "hostfile", 0, 0);
@@ -1153,7 +1150,7 @@ static int create_app(int argc, char* argv[],
     if (0 < (j = opal_cmd_line_get_ninsts(&cmd_line, "machinefile"))) {
         if(1 < j || orte_get_attribute(&app->attributes, ORTE_APP_HOSTFILE, NULL, OPAL_STRING)) {
             orte_show_help("help-orterun.txt", "orterun:multiple-hostfiles",
-                           true, myglobals.basename, NULL);
+                           true, orte_basename, NULL);
             return ORTE_ERR_FATAL;
         } else {
             value = opal_cmd_line_get_param(&cmd_line, "machinefile", 0, 0);
@@ -1177,7 +1174,7 @@ static int create_app(int argc, char* argv[],
     /* check for bozo error */
     if (0 > myglobals.num_procs) {
         orte_show_help("help-orterun.txt", "orterun:negative-nprocs",
-                       true, myglobals.basename, app->argv[0],
+                       true, orte_basename, app->argv[0],
                        myglobals.num_procs, NULL);
         return ORTE_ERR_FATAL;
     }
@@ -1216,7 +1213,7 @@ static int create_app(int argc, char* argv[],
     app->app = strdup(app->argv[0]);
     if (NULL == app->app) {
         orte_show_help("help-orterun.txt", "orterun:call-failed",
-                       true, myglobals.basename, "library", "strdup returned NULL", errno);
+                       true, orte_basename, "library", "strdup returned NULL", errno);
         rc = ORTE_ERR_NOT_FOUND;
         goto cleanup;
     }

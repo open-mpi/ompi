@@ -105,7 +105,6 @@
 #include "orte/runtime/runtime.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/runtime/orte_wait.h"
-#include "orte/runtime/orte_data_server.h"
 #include "orte/runtime/orte_locks.h"
 #include "orte/runtime/orte_quit.h"
 
@@ -1010,13 +1009,6 @@ int orterun(int argc, char *argv[])
      */
     orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_DAEMON,
                             ORTE_RML_PERSISTENT, orte_daemon_recv, NULL);
-
-    /* setup the data server */
-    if (ORTE_SUCCESS != (rc = orte_data_server_init())) {
-        ORTE_ERROR_LOG(rc);
-        ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
-        goto DONE;
-    }
 
     /* setup for debugging */
     orte_debugger_init_before_spawn(jdata);
