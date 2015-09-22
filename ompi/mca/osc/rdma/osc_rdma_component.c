@@ -61,6 +61,8 @@ static int ompi_osc_rdma_component_select (struct ompi_win_t *win, void **base, 
 static int ompi_osc_rdma_set_info (struct ompi_win_t *win, struct ompi_info_t *info);
 static int ompi_osc_rdma_get_info (struct ompi_win_t *win, struct ompi_info_t **info_used);
 
+static int ompi_osc_rdma_query_btls (ompi_communicator_t *comm, struct mca_btl_base_module_t **btl);
+
 static char *ompi_osc_rdma_btl_names;
 
 ompi_osc_rdma_component_t mca_osc_rdma_component = {
@@ -296,9 +298,15 @@ static int ompi_osc_rdma_component_query (struct ompi_win_t *win, void **base, s
                                           struct ompi_communicator_t *comm, struct ompi_info_t *info,
                                           int flavor)
 {
+
     if (MPI_WIN_FLAVOR_SHARED == flavor) {
         return -1;
     }
+
+    if (OMPI_SUCCESS != ompi_osc_rdma_query_btls (comm, NULL)) {
+        return -1;
+    }
+
 
     return mca_osc_rdma_component.priority;
 }
@@ -619,32 +627,31 @@ static int allocate_state_shared (ompi_osc_rdma_module_t *module, void **base, s
     return ret;
 }
 
-static int ompi_osc_rdma_find_rdma_endpoints (ompi_osc_rdma_module_t *module)
+static int ompi_osc_rdma_query_btls (ompi_communicator_t *comm, struct mca_btl_base_module_t **btl)
 {
     struct mca_btl_base_module_t **possible_btls = NULL;
-    int comm_size = ompi_comm_size (module->comm);
+    int comm_size = ompi_comm_size (comm);
     int rc = OMPI_SUCCESS, max_btls = 0;
     unsigned int selected_latency = INT_MAX;
-    mca_btl_base_selected_module_t *selected_btl;
+    struct mca_btl_base_module_t *selected_btl = NULL;
+    mca_btl_base_selected_module_t *item;
     int *btl_counts = NULL;
     char **btls_to_use;
     void *tmp;
 
-    module->selected_btl = NULL;
-
     btls_to_use = opal_argv_split (ompi_osc_rdma_btl_names, ',');
     if (btls_to_use) {
         /* rdma and atomics are only supported with BTLs at the moment */
-        OPAL_LIST_FOREACH(selected_btl, &mca_btl_base_modules_initialized, mca_btl_base_selected_module_t) {
+        OPAL_LIST_FOREACH(item, &mca_btl_base_modules_initialized, mca_btl_base_selected_module_t) {
             for (int i = 0 ; btls_to_use[i] ; ++i) {
-                if (0 != strcmp (btls_to_use[i], selected_btl->btl_module->btl_component->btl_version.mca_component_name)) {
+                if (0 != strcmp (btls_to_use[i], item->btl_module->btl_component->btl_version.mca_component_name)) {
                     continue;
                 }
 
-                if ((selected_btl->btl_module->btl_flags & (MCA_BTL_FLAGS_RDMA)) == MCA_BTL_FLAGS_RDMA &&
-                    (selected_btl->btl_module->btl_flags & (MCA_BTL_FLAGS_ATOMIC_FOPS | MCA_BTL_FLAGS_ATOMIC_OPS))) {
-                    if (!module->selected_btl || selected_btl->btl_module->btl_latency < module->selected_btl->btl_latency) {
-                        module->selected_btl = selected_btl->btl_module;
+                if ((item->btl_module->btl_flags & (MCA_BTL_FLAGS_RDMA)) == MCA_BTL_FLAGS_RDMA &&
+                    (item->btl_module->btl_flags & (MCA_BTL_FLAGS_ATOMIC_FOPS | MCA_BTL_FLAGS_ATOMIC_OPS))) {
+                    if (!selected_btl || item->btl_module->btl_latency < selected_btl->btl_latency) {
+                        selected_btl = item->btl_module;
                     }
                 }
             }
@@ -653,14 +660,18 @@ static int ompi_osc_rdma_find_rdma_endpoints (ompi_osc_rdma_module_t *module)
         opal_argv_free (btls_to_use);
     }
 
-    if (NULL != module->selected_btl) {
+    if (btl) {
+        *btl = selected_btl;
+    }
+
+    if (NULL != selected_btl) {
         OPAL_OUTPUT_VERBOSE((11, ompi_osc_base_framework.framework_output, "Selected BTL: %s",
-                             module->selected_btl->btl_component->btl_version.mca_component_name));
+                             selected_btl->btl_component->btl_version.mca_component_name));
         return OMPI_SUCCESS;
     }
 
     for (int i = 0 ; i < comm_size ; ++i) {
-        ompi_proc_t *proc = ompi_comm_peer_lookup (module->comm, i);
+        ompi_proc_t *proc = ompi_comm_peer_lookup (comm, i);
         mca_bml_base_endpoint_t *endpoint;
         int num_btls, prev_max;
 
@@ -733,7 +744,7 @@ static int ompi_osc_rdma_find_rdma_endpoints (ompi_osc_rdma_module_t *module)
         }
 
         if (btl_counts[i] == comm_size && possible_btls[i]->btl_latency < selected_latency) {
-            module->selected_btl = possible_btls[i];
+            selected_btl = possible_btls[i];
             selected_latency = possible_btls[i]->btl_latency;
         }
     }
@@ -741,13 +752,17 @@ static int ompi_osc_rdma_find_rdma_endpoints (ompi_osc_rdma_module_t *module)
     free (possible_btls);
     free (btl_counts);
 
-    if (NULL == module->selected_btl) {
+    if (btl) {
+        *btl = selected_btl;
+    }
+
+    if (NULL == selected_btl) {
         /* no btl = no rdma/atomics */
         return OMPI_ERR_NOT_AVAILABLE;
     }
 
     OPAL_OUTPUT_VERBOSE((11, ompi_osc_base_framework.framework_output, "Selected BTL: %s",
-                         module->selected_btl->btl_component->btl_version.mca_component_name));
+                         selected_btl->btl_component->btl_version.mca_component_name));
 
     return OMPI_SUCCESS;
 }
@@ -1017,7 +1032,7 @@ static int ompi_osc_rdma_component_select (struct ompi_win_t *win, void **base, 
     }
 
     /* find rdma capable endpoints */
-    ret = ompi_osc_rdma_find_rdma_endpoints (module);
+    ret = ompi_osc_rdma_query_btls (module->comm, &module->selected_btl);
     if (OMPI_SUCCESS != ret) {
         OPAL_OUTPUT_VERBOSE((11, ompi_osc_base_framework.framework_output, "Failed finding RDMA endpoints"));
         ompi_osc_rdma_free (win);
