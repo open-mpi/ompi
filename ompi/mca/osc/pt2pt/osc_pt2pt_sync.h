@@ -173,6 +173,8 @@ static inline void ompi_osc_pt2pt_sync_reset (ompi_osc_pt2pt_sync_t *sync)
     sync->type = OMPI_OSC_PT2PT_SYNC_TYPE_NONE;
     sync->eager_send_active = 0;
     sync->epoch_active = 0;
+    sync->peer_list.peers = NULL;
+    sync->sync.pscw.group = NULL;
 }
 
 #endif /* OMPI_OSC_PT2PT_SYNC_H */
