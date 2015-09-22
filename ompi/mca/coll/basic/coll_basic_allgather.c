@@ -47,12 +47,12 @@ mca_coll_basic_allgather_inter(const void *sbuf, int scount,
                                struct ompi_communicator_t *comm,
                                mca_coll_base_module_t *module)
 {
-    int rank, root = 0, size, rsize, err, i;
+    int rank, root = 0, size, rsize, err, i, line;
     char *tmpbuf = NULL, *ptmp;
     ptrdiff_t rlb, slb, rextent, sextent, incr;
     ompi_request_t *req;
     mca_coll_basic_module_t *basic_module = (mca_coll_basic_module_t*) module;
-    ompi_request_t **reqs = basic_module->mccb_reqs;
+    ompi_request_t **reqs = NULL;
 
     rank = ompi_comm_rank(comm);
     size = ompi_comm_size(comm);
@@ -71,35 +71,29 @@ mca_coll_basic_allgather_inter(const void *sbuf, int scount,
         err = MCA_PML_CALL(send(sbuf, scount, sdtype, root,
                                 MCA_COLL_BASE_TAG_ALLGATHER,
                                 MCA_PML_BASE_SEND_STANDARD, comm));
-        if (OMPI_SUCCESS != err) {
-            return err;
-        }
+        if (OMPI_SUCCESS != err) { line = __LINE__; goto exit; }
     } else {
         /* receive a msg. from all other procs. */
         err = ompi_datatype_get_extent(rdtype, &rlb, &rextent);
-        if (OMPI_SUCCESS != err) {
-            return err;
-        }
+        if (OMPI_SUCCESS != err) { line = __LINE__; goto exit; }
         err = ompi_datatype_get_extent(sdtype, &slb, &sextent);
-        if (OMPI_SUCCESS != err) {
-            return err;
-        }
+        if (OMPI_SUCCESS != err) { line = __LINE__; goto exit; }
+
+        /* Get a requests arrays of the right size */
+        reqs = mca_coll_basic_get_reqs(basic_module, rsize + 1);
+        if( NULL == reqs ) { line = __LINE__; goto exit; }
 
         /* Do a send-recv between the two root procs. to avoid deadlock */
         err = MCA_PML_CALL(isend(sbuf, scount, sdtype, 0,
                                  MCA_COLL_BASE_TAG_ALLGATHER,
                                  MCA_PML_BASE_SEND_STANDARD,
                                  comm, &reqs[rsize]));
-        if (OMPI_SUCCESS != err) {
-            return err;
-        }
+        if (OMPI_SUCCESS != err) { line = __LINE__; goto exit; }
 
         err = MCA_PML_CALL(irecv(rbuf, rcount, rdtype, 0,
                                  MCA_COLL_BASE_TAG_ALLGATHER, comm,
                                  &reqs[0]));
-        if (OMPI_SUCCESS != err) {
-            return err;
-        }
+        if (OMPI_SUCCESS != err) { line = __LINE__; goto exit; }
 
         incr = rextent * rcount;
         ptmp = (char *) rbuf + incr;
@@ -107,45 +101,33 @@ mca_coll_basic_allgather_inter(const void *sbuf, int scount,
             err = MCA_PML_CALL(irecv(ptmp, rcount, rdtype, i,
                                      MCA_COLL_BASE_TAG_ALLGATHER,
                                      comm, &reqs[i]));
-            if (MPI_SUCCESS != err) {
-                return err;
-            }
+            if (MPI_SUCCESS != err) { line = __LINE__; goto exit; }
         }
 
         err = ompi_request_wait_all(rsize + 1, reqs, MPI_STATUSES_IGNORE);
-        if (OMPI_SUCCESS != err) {
-            return err;
-        }
+        if (OMPI_SUCCESS != err) { line = __LINE__; goto exit; }
 
         /* Step 2: exchange the resuts between the root processes */
         tmpbuf = (char *) malloc(scount * size * sextent);
-        if (NULL == tmpbuf) {
-            return err;
-        }
+        if (NULL == tmpbuf) { line = __LINE__; goto exit; }
 
         err = MCA_PML_CALL(isend(rbuf, rsize * rcount, rdtype, 0,
                                  MCA_COLL_BASE_TAG_ALLGATHER,
                                  MCA_PML_BASE_SEND_STANDARD, comm, &req));
-        if (OMPI_SUCCESS != err) {
-            goto exit;
-        }
+        if (OMPI_SUCCESS != err) { line = __LINE__; goto exit; }
 
         err = MCA_PML_CALL(recv(tmpbuf, size * scount, sdtype, 0,
                                 MCA_COLL_BASE_TAG_ALLGATHER, comm,
                                 MPI_STATUS_IGNORE));
-        if (OMPI_SUCCESS != err) {
-            goto exit;
-        }
+        if (OMPI_SUCCESS != err) { line = __LINE__; goto exit; }
 
         err = ompi_request_wait( &req, MPI_STATUS_IGNORE);
-        if (OMPI_SUCCESS != err) {
-            goto exit;
-        }
+        if (OMPI_SUCCESS != err) { line = __LINE__; goto exit; }
     }
 
 
     /* Step 3: bcast the data to the remote group. This
-     * happens in both groups simultaniously, thus we can
+     * happens in both groups simultaneously, thus we can
      * not use coll_bcast (this would deadlock).
      */
     if (rank != root) {
@@ -153,9 +135,7 @@ mca_coll_basic_allgather_inter(const void *sbuf, int scount,
         err = MCA_PML_CALL(recv(rbuf, rsize * rcount, rdtype, 0,
                                 MCA_COLL_BASE_TAG_ALLGATHER, comm,
                                 MPI_STATUS_IGNORE));
-        if (OMPI_SUCCESS != err) {
-            goto exit;
-        }
+        if (OMPI_SUCCESS != err) { line = __LINE__; goto exit; }
 
     } else {
         /* Send the data to every other process in the remote group
@@ -165,19 +145,19 @@ mca_coll_basic_allgather_inter(const void *sbuf, int scount,
                                      MCA_COLL_BASE_TAG_ALLGATHER,
                                      MCA_PML_BASE_SEND_STANDARD,
                                      comm, &reqs[i - 1]));
-            if (OMPI_SUCCESS != err) {
-                goto exit;
-            }
-
+            if (OMPI_SUCCESS != err) { line = __LINE__; goto exit; }
         }
 
         err = ompi_request_wait_all(rsize - 1, reqs, MPI_STATUSES_IGNORE);
-        if (OMPI_SUCCESS != err) {
-            goto exit;
-        }
+        if (OMPI_SUCCESS != err) { line = __LINE__; goto exit; }
     }
 
   exit:
+    if( MPI_SUCCESS != err ) {
+        OPAL_OUTPUT( (ompi_coll_base_framework.framework_output,"%s:%4d\tError occurred %d, rank %2d",
+                      __FILE__, line, err, rank) );
+        if( NULL != reqs ) mca_coll_basic_free_reqs(reqs, rsize+1);
+    }
     if (NULL != tmpbuf) {
         free(tmpbuf);
     }

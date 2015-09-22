@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2015 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -121,8 +121,7 @@ mca_coll_basic_scatterv_inter(const void *sbuf, const int *scounts,
     int i, size, err;
     char *ptmp;
     ptrdiff_t lb, extent;
-    mca_coll_basic_module_t *basic_module = (mca_coll_basic_module_t*) module;
-    ompi_request_t **reqs = basic_module->mccb_reqs;
+    ompi_request_t **reqs;
 
     /* Initialize */
     size = ompi_comm_remote_size(comm);
@@ -145,6 +144,7 @@ mca_coll_basic_scatterv_inter(const void *sbuf, const int *scounts,
             return OMPI_ERROR;
         }
 
+        reqs = mca_coll_basic_get_reqs((mca_coll_basic_module_t*) module, size);
         for (i = 0; i < size; ++i) {
             ptmp = ((char *) sbuf) + (extent * disps[i]);
             err = MCA_PML_CALL(isend(ptmp, scounts[i], sdtype, i,
@@ -152,11 +152,15 @@ mca_coll_basic_scatterv_inter(const void *sbuf, const int *scounts,
                                      MCA_PML_BASE_SEND_STANDARD, comm,
                                      &(reqs[i])));
             if (OMPI_SUCCESS != err) {
+                mca_coll_basic_free_reqs(reqs, i);
                 return err;
             }
         }
 
         err = ompi_request_wait_all(size, reqs, MPI_STATUSES_IGNORE);
+        if (OMPI_SUCCESS != err) {
+            mca_coll_basic_free_reqs(reqs, size);
+        }
     }
 
     /* All done */

@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2015 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -120,8 +120,7 @@ mca_coll_basic_gatherv_inter(const void *sbuf, int scount,
     int i, size, err;
     char *ptmp;
     ptrdiff_t lb, extent;
-    mca_coll_basic_module_t *basic_module = (mca_coll_basic_module_t*) module;
-    ompi_request_t **reqs = basic_module->mccb_reqs;
+    ompi_request_t **reqs = NULL;
 
     size = ompi_comm_remote_size(comm);
 
@@ -143,17 +142,22 @@ mca_coll_basic_gatherv_inter(const void *sbuf, int scount,
             return OMPI_ERROR;
         }
 
+        reqs = mca_coll_basic_get_reqs((mca_coll_basic_module_t*) module, size);
         for (i = 0; i < size; ++i) {
             ptmp = ((char *) rbuf) + (extent * disps[i]);
             err = MCA_PML_CALL(irecv(ptmp, rcounts[i], rdtype, i,
                                      MCA_COLL_BASE_TAG_GATHERV,
                                      comm, &reqs[i]));
             if (OMPI_SUCCESS != err) {
+                mca_coll_basic_free_reqs(reqs, size);
                 return err;
             }
         }
 
         err = ompi_request_wait_all(size, reqs, MPI_STATUSES_IGNORE);
+        if (OMPI_SUCCESS != err) {
+            mca_coll_basic_free_reqs(reqs, size);
+        }
     }
 
     /* All done */

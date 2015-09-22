@@ -57,8 +57,7 @@ mca_coll_basic_alltoallv_inter(const void *sbuf, const int *scounts, const int *
     MPI_Aint sndextent;
     MPI_Aint rcvextent;
 
-    mca_coll_basic_module_t *basic_module = (mca_coll_basic_module_t*) module;
-    ompi_request_t **preq = basic_module->mccb_reqs;
+    ompi_request_t **preq;
 
     /* Initialize. */
 
@@ -69,6 +68,7 @@ mca_coll_basic_alltoallv_inter(const void *sbuf, const int *scounts, const int *
 
     /* Initiate all send/recv to/from others. */
     nreqs = rsize * 2;
+    preq = mca_coll_basic_get_reqs((mca_coll_basic_module_t*) module, nreqs);
 
     /* Post all receives first  */
     /* A simple optimization: do not send and recv msgs of length zero */
@@ -79,10 +79,9 @@ mca_coll_basic_alltoallv_inter(const void *sbuf, const int *scounts, const int *
                                      i, MCA_COLL_BASE_TAG_ALLTOALLV, comm,
                                      &preq[i]));
             if (MPI_SUCCESS != err) {
+                mca_coll_basic_free_reqs(preq, i);
                 return err;
             }
-        } else {
-            preq[i] = MPI_REQUEST_NULL;
         }
     }
 
@@ -95,14 +94,16 @@ mca_coll_basic_alltoallv_inter(const void *sbuf, const int *scounts, const int *
                                      MCA_PML_BASE_SEND_STANDARD, comm,
                                      &preq[rsize + i]));
             if (MPI_SUCCESS != err) {
+                mca_coll_basic_free_reqs(preq, rsize + i);
                 return err;
             }
-        } else {
-            preq[rsize + i] = MPI_REQUEST_NULL;
         }
     }
 
     err = ompi_request_wait_all(nreqs, preq, MPI_STATUSES_IGNORE);
+    if (MPI_SUCCESS != err) {
+        mca_coll_basic_free_reqs(preq, nreqs);
+    }
 
     /* All done */
     return err;

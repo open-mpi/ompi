@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2015 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -42,7 +42,6 @@ mca_coll_basic_neighbor_allgather_cart(const void *sbuf, int scount,
                                        struct ompi_communicator_t *comm,
                                        mca_coll_base_module_t *module)
 {
-    mca_coll_basic_module_t *basic_module = (mca_coll_basic_module_t *) module;
     const mca_topo_base_comm_cart_2_2_0_t *cart = comm->c_topo->mtc.cart;
     const int rank = ompi_comm_rank (comm);
     ompi_request_t **reqs;
@@ -51,9 +50,10 @@ mca_coll_basic_neighbor_allgather_cart(const void *sbuf, int scount,
 
     ompi_datatype_get_extent(rdtype, &lb, &extent);
 
+    reqs = mca_coll_basic_get_reqs( (mca_coll_basic_module_t *) module, 4 * cart->ndims );
     /* The ordering is defined as -1 then +1 in each dimension in
      * order of dimension. */
-    for (dim = 0, reqs = basic_module->mccb_reqs, nreqs = 0 ; dim < cart->ndims ; ++dim) {
+    for (dim = 0, nreqs = 0 ; dim < cart->ndims ; ++dim) {
         int srank = MPI_PROC_NULL, drank = MPI_PROC_NULL;
 
         if (cart->dims[dim] > 1) {
@@ -63,6 +63,7 @@ mca_coll_basic_neighbor_allgather_cart(const void *sbuf, int scount,
         }
 
         if (MPI_PROC_NULL != srank) {
+            nreqs += 2;
             rc = MCA_PML_CALL(irecv(rbuf, rcount, rdtype, srank,
                                     MCA_COLL_BASE_TAG_ALLGATHER,
                                     comm, reqs++));
@@ -75,13 +76,12 @@ mca_coll_basic_neighbor_allgather_cart(const void *sbuf, int scount,
                                     MCA_PML_BASE_SEND_STANDARD,
                                     comm, reqs++));
             if (OMPI_SUCCESS != rc) break;
-
-            nreqs += 2;
         }
 
         rbuf = (char *) rbuf + extent * rcount;
 
         if (MPI_PROC_NULL != drank) {
+            nreqs += 2;
             rc = MCA_PML_CALL(irecv(rbuf, rcount, rdtype, drank,
                                     MCA_COLL_BASE_TAG_ALLGATHER,
                                     comm, reqs++));
@@ -93,19 +93,21 @@ mca_coll_basic_neighbor_allgather_cart(const void *sbuf, int scount,
                                     MCA_PML_BASE_SEND_STANDARD,
                                     comm, reqs++));
             if (OMPI_SUCCESS != rc) break;
-
-            nreqs += 2;
         }
 
         rbuf = (char *) rbuf + extent * rcount;
     }
 
     if (OMPI_SUCCESS != rc) {
-        /* should probably try to clean up here */
+        mca_coll_basic_free_reqs(reqs, nreqs);
         return rc;
     }
 
-    return ompi_request_wait_all (nreqs, basic_module->mccb_reqs, MPI_STATUSES_IGNORE);
+    rc = ompi_request_wait_all (nreqs, reqs, MPI_STATUSES_IGNORE);
+    if (OMPI_SUCCESS != rc) {
+        mca_coll_basic_free_reqs(reqs, nreqs);
+    }
+    return rc;
 }
 
 static int
@@ -115,12 +117,11 @@ mca_coll_basic_neighbor_allgather_graph(const void *sbuf, int scount,
                                         struct ompi_communicator_t *comm,
                                         mca_coll_base_module_t *module)
 {
-    mca_coll_basic_module_t *basic_module = (mca_coll_basic_module_t *) module;
     const mca_topo_base_comm_graph_2_2_0_t *graph = comm->c_topo->mtc.graph;
     const int rank = ompi_comm_rank (comm);
     const int *edges;
     int degree;
-    ompi_request_t **reqs;
+    ompi_request_t **reqs, **preqs;
     ptrdiff_t lb, extent;
     int rc = MPI_SUCCESS, neighbor;
 
@@ -132,10 +133,11 @@ mca_coll_basic_neighbor_allgather_graph(const void *sbuf, int scount,
     }
 
     ompi_datatype_get_extent(rdtype, &lb, &extent);
+    reqs = preqs = mca_coll_basic_get_reqs((mca_coll_basic_module_t *) module, 2 * degree);
 
-    for (neighbor = 0, reqs = basic_module->mccb_reqs ; neighbor < degree ; ++neighbor) {
+    for (neighbor = 0; neighbor < degree ; ++neighbor) {
         rc = MCA_PML_CALL(irecv(rbuf, rcount, rdtype, edges[neighbor], MCA_COLL_BASE_TAG_ALLGATHER,
-                                comm, reqs++));
+                                comm, preqs++));
         if (OMPI_SUCCESS != rc) break;
         rbuf = (char *) rbuf + extent * rcount;
 
@@ -143,16 +145,20 @@ mca_coll_basic_neighbor_allgather_graph(const void *sbuf, int scount,
          * a const for the send buffer. */
         rc = MCA_PML_CALL(isend((void *) sbuf, scount, sdtype, edges[neighbor],
                                 MCA_COLL_BASE_TAG_ALLGATHER, MCA_PML_BASE_SEND_STANDARD,
-                                comm, reqs++));
+                                comm, preqs++));
         if (OMPI_SUCCESS != rc) break;
     }
 
     if (OMPI_SUCCESS != rc) {
-        /* should probably try to clean up here */
+        mca_coll_basic_free_reqs( reqs, (2 * neighbor + 1));
         return rc;
     }
 
-    return ompi_request_wait_all (degree * 2, basic_module->mccb_reqs, MPI_STATUSES_IGNORE);
+    rc = ompi_request_wait_all (degree * 2, reqs, MPI_STATUSES_IGNORE);
+    if (OMPI_SUCCESS != rc) {
+        mca_coll_basic_free_reqs( reqs, degree * 2);
+    }
+    return rc;
 }
 
 static int
@@ -162,11 +168,10 @@ mca_coll_basic_neighbor_allgather_dist_graph(const void *sbuf, int scount,
                                              struct ompi_communicator_t *comm,
                                              mca_coll_base_module_t *module)
 {
-    mca_coll_basic_module_t *basic_module = (mca_coll_basic_module_t *) module;
     const mca_topo_base_comm_dist_graph_2_2_0_t *dist_graph = comm->c_topo->mtc.dist_graph;
     const int *inedges, *outedges;
     int indegree, outdegree;
-    ompi_request_t **reqs;
+    ompi_request_t **reqs, **preqs;
     ptrdiff_t lb, extent;
     int rc = MPI_SUCCESS, neighbor;
 
@@ -177,17 +182,18 @@ mca_coll_basic_neighbor_allgather_dist_graph(const void *sbuf, int scount,
     outedges = dist_graph->out;
 
     ompi_datatype_get_extent(rdtype, &lb, &extent);
+    reqs = preqs = mca_coll_basic_get_reqs((mca_coll_basic_module_t *) module, indegree + outdegree);
 
-    for (neighbor = 0, reqs = basic_module->mccb_reqs ; neighbor < indegree ; ++neighbor) {
+    for (neighbor = 0; neighbor < indegree ; ++neighbor) {
         rc = MCA_PML_CALL(irecv(rbuf, rcount, rdtype, inedges[neighbor],
                                 MCA_COLL_BASE_TAG_ALLGATHER,
-                                comm, reqs++));
+                                comm, preqs++));
         if (OMPI_SUCCESS != rc) break;
         rbuf = (char *) rbuf + extent * rcount;
     }
 
     if (OMPI_SUCCESS != rc) {
-        /* should probably try to clean up here */
+        mca_coll_basic_free_reqs(reqs, neighbor);
         return rc;
     }
 
@@ -197,16 +203,20 @@ mca_coll_basic_neighbor_allgather_dist_graph(const void *sbuf, int scount,
         rc = MCA_PML_CALL(isend((void *) sbuf, scount, sdtype, outedges[neighbor],
                                 MCA_COLL_BASE_TAG_ALLGATHER,
                                 MCA_PML_BASE_SEND_STANDARD,
-                                comm, reqs++));
+                                comm, preqs++));
         if (OMPI_SUCCESS != rc) break;
     }
 
     if (OMPI_SUCCESS != rc) {
-        /* should probably try to clean up here */
+        mca_coll_basic_free_reqs(reqs, indegree + neighbor);
         return rc;
     }
 
-    return ompi_request_wait_all (indegree + outdegree, basic_module->mccb_reqs, MPI_STATUSES_IGNORE);
+    rc = ompi_request_wait_all (indegree + outdegree, reqs, MPI_STATUSES_IGNORE);
+    if (OMPI_SUCCESS != rc) {
+        mca_coll_basic_free_reqs(reqs, indegree + outdegree);
+    }
+    return rc;
 }
 
 int mca_coll_basic_neighbor_allgather(const void *sbuf, int scount,

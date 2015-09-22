@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2015 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -41,16 +41,15 @@ mca_coll_basic_neighbor_allgatherv_cart(const void *sbuf, int scount, struct omp
                                         struct ompi_datatype_t *rdtype, struct ompi_communicator_t *comm,
                                         mca_coll_base_module_t *module)
 {
-    mca_coll_basic_module_t *basic_module = (mca_coll_basic_module_t *) module;
     const mca_topo_base_comm_cart_2_2_0_t *cart = comm->c_topo->mtc.cart;
     const int rank = ompi_comm_rank (comm);
-    ompi_request_t **reqs;
+    ompi_request_t **reqs, **preqs;
     ptrdiff_t lb, extent;
     int rc = MPI_SUCCESS, dim, i, nreqs;
 
     ompi_datatype_get_extent(rdtype, &lb, &extent);
 
-    reqs = basic_module->mccb_reqs;
+    reqs = preqs = mca_coll_basic_get_reqs( (mca_coll_basic_module_t *) module, 4 * cart->ndims);
 
     /* The ordering is defined as -1 then +1 in each dimension in
      * order of dimension. */
@@ -64,36 +63,40 @@ mca_coll_basic_neighbor_allgatherv_cart(const void *sbuf, int scount, struct omp
         }
 
         if (MPI_PROC_NULL != srank) {
+            nreqs += 2;
             rc = MCA_PML_CALL(irecv((char *) rbuf + disps[i] * extent, rcounts[i], rdtype, srank,
-                                    MCA_COLL_BASE_TAG_ALLGATHER, comm, reqs++));
+                                    MCA_COLL_BASE_TAG_ALLGATHER, comm, preqs++));
             if (OMPI_SUCCESS != rc) break;
 
             /* remove cast from const when the pml layer is updated to take
              * a const for the send buffer. */
             rc = MCA_PML_CALL(isend((void *) sbuf, scount, sdtype, srank, MCA_COLL_BASE_TAG_ALLGATHER,
-                                    MCA_PML_BASE_SEND_STANDARD, comm, reqs++));
+                                    MCA_PML_BASE_SEND_STANDARD, comm, preqs++));
             if (OMPI_SUCCESS != rc) break;
-            nreqs += 2;
         }
 
         if (MPI_PROC_NULL != drank) {
+            nreqs += 2;
             rc = MCA_PML_CALL(irecv((char *) rbuf + disps[i+1] * extent, rcounts[i+1], rdtype, drank,
-                                    MCA_COLL_BASE_TAG_ALLGATHER, comm, reqs++));
+                                    MCA_COLL_BASE_TAG_ALLGATHER, comm, preqs++));
             if (OMPI_SUCCESS != rc) break;
 
             rc = MCA_PML_CALL(isend((void *) sbuf, scount, sdtype, drank, MCA_COLL_BASE_TAG_ALLGATHER,
-                                    MCA_PML_BASE_SEND_STANDARD, comm, reqs++));
+                                    MCA_PML_BASE_SEND_STANDARD, comm, preqs++));
             if (OMPI_SUCCESS != rc) break;
-            nreqs += 2;
         }
     }
 
     if (OMPI_SUCCESS != rc) {
-        /* should probably try to clean up here */
+        mca_coll_basic_free_reqs( reqs, nreqs );
         return rc;
     }
 
-    return ompi_request_wait_all (nreqs, basic_module->mccb_reqs, MPI_STATUSES_IGNORE);
+    rc = ompi_request_wait_all (nreqs, reqs, MPI_STATUSES_IGNORE);
+    if (OMPI_SUCCESS != rc) {
+        mca_coll_basic_free_reqs( reqs, nreqs );
+    }
+    return rc;
 }
 
 static int
@@ -102,14 +105,12 @@ mca_coll_basic_neighbor_allgatherv_graph(const void *sbuf, int scount, struct om
                                          struct ompi_datatype_t *rdtype, struct ompi_communicator_t *comm,
                                          mca_coll_base_module_t *module)
 {
-    mca_coll_basic_module_t *basic_module = (mca_coll_basic_module_t *) module;
     const mca_topo_base_comm_graph_2_2_0_t *graph = comm->c_topo->mtc.graph;
     const int rank = ompi_comm_rank (comm);
     const int *edges;
-    int degree;
-    ompi_request_t **reqs;
+    int rc = MPI_SUCCESS, neighbor, degree;
+    ompi_request_t **reqs, **preqs;
     ptrdiff_t lb, extent;
-    int rc = MPI_SUCCESS, neighbor;
 
     mca_topo_base_graph_neighbors_count (comm, rank, &degree);
 
@@ -119,26 +120,31 @@ mca_coll_basic_neighbor_allgatherv_graph(const void *sbuf, int scount, struct om
     }
 
     ompi_datatype_get_extent(rdtype, &lb, &extent);
+    reqs = preqs = mca_coll_basic_get_reqs( (mca_coll_basic_module_t *) module, 2 * degree);
 
-    for (neighbor = 0, reqs = basic_module->mccb_reqs ; neighbor < degree ; ++neighbor) {
+    for (neighbor = 0; neighbor < degree ; ++neighbor) {
         rc = MCA_PML_CALL(irecv((char *) rbuf + disps[neighbor] * extent, rcounts[neighbor],
-                                rdtype, edges[neighbor], MCA_COLL_BASE_TAG_ALLGATHER, comm, reqs++));
+                                rdtype, edges[neighbor], MCA_COLL_BASE_TAG_ALLGATHER, comm, preqs++));
         if (OMPI_SUCCESS != rc) break;
 
         /* remove cast from const when the pml layer is updated to take
          * a const for the send buffer. */
         rc = MCA_PML_CALL(isend((void *) sbuf, scount, sdtype, edges[neighbor],
                                 MCA_COLL_BASE_TAG_ALLGATHER, MCA_PML_BASE_SEND_STANDARD,
-                                comm, reqs++));
+                                comm, preqs++));
         if (OMPI_SUCCESS != rc) break;
     }
 
     if (OMPI_SUCCESS != rc) {
-        /* should probably try to clean up here */
+        mca_coll_basic_free_reqs( reqs, 2 * (neighbor + 1) );
         return rc;
     }
 
-    return ompi_request_wait_all (degree * 2, basic_module->mccb_reqs, MPI_STATUSES_IGNORE);
+    rc = ompi_request_wait_all (degree * 2, reqs, MPI_STATUSES_IGNORE);
+    if (OMPI_SUCCESS != rc) {
+        mca_coll_basic_free_reqs( reqs, 2 * degree );
+    }
+    return rc;
 }
 
 static int
@@ -147,11 +153,10 @@ mca_coll_basic_neighbor_allgatherv_dist_graph(const void *sbuf, int scount, stru
                                               struct ompi_datatype_t *rdtype, struct ompi_communicator_t *comm,
                                               mca_coll_base_module_t *module)
 {
-    mca_coll_basic_module_t *basic_module = (mca_coll_basic_module_t *) module;
     const mca_topo_base_comm_dist_graph_2_2_0_t *dist_graph = comm->c_topo->mtc.dist_graph;
     const int *inedges, *outedges;
     int indegree, outdegree;
-    ompi_request_t **reqs;
+    ompi_request_t **reqs, **preqs;
     ptrdiff_t lb, extent;
     int rc = MPI_SUCCESS, neighbor;
 
@@ -162,15 +167,16 @@ mca_coll_basic_neighbor_allgatherv_dist_graph(const void *sbuf, int scount, stru
     outedges = dist_graph->out;
 
     ompi_datatype_get_extent(rdtype, &lb, &extent);
+    reqs = preqs = mca_coll_basic_get_reqs( (mca_coll_basic_module_t *) module, indegree + outdegree);
 
-    for (neighbor = 0, reqs = basic_module->mccb_reqs ; neighbor < indegree ; ++neighbor) {
+    for (neighbor = 0; neighbor < indegree ; ++neighbor) {
         rc = MCA_PML_CALL(irecv((char *) rbuf + disps[neighbor] * extent, rcounts[neighbor], rdtype,
-                                inedges[neighbor], MCA_COLL_BASE_TAG_ALLGATHER, comm, reqs++));
+                                inedges[neighbor], MCA_COLL_BASE_TAG_ALLGATHER, comm, preqs++));
         if (OMPI_SUCCESS != rc) break;
     }
 
     if (OMPI_SUCCESS != rc) {
-        /* should probably try to clean up here */
+        mca_coll_basic_free_reqs(reqs, neighbor);
         return rc;
     }
 
@@ -179,16 +185,20 @@ mca_coll_basic_neighbor_allgatherv_dist_graph(const void *sbuf, int scount, stru
          * a const for the send buffer. */
         rc = MCA_PML_CALL(isend((void *) sbuf, scount, sdtype, outedges[neighbor],
                                 MCA_COLL_BASE_TAG_ALLGATHER, MCA_PML_BASE_SEND_STANDARD,
-                                comm, reqs++));
+                                comm, preqs++));
         if (OMPI_SUCCESS != rc) break;
     }
 
     if (OMPI_SUCCESS != rc) {
-        /* should probably try to clean up here */
+        mca_coll_basic_free_reqs(reqs, indegree + neighbor);
         return rc;
     }
 
-    return ompi_request_wait_all (indegree + outdegree, basic_module->mccb_reqs, MPI_STATUSES_IGNORE);
+    rc = ompi_request_wait_all (indegree + outdegree, reqs, MPI_STATUSES_IGNORE);
+    if (OMPI_SUCCESS != rc) {
+        mca_coll_basic_free_reqs(reqs, indegree + outdegree);
+    }
+    return rc;
 }
 
 int mca_coll_basic_neighbor_allgatherv(const void *sbuf, int scount, struct ompi_datatype_t *sdtype,
