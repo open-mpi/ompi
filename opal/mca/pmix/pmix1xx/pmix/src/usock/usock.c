@@ -135,9 +135,10 @@ pmix_status_t pmix_usock_send_blocking(int sd, char *ptr, size_t size)
                 continue;
             }
             if (pmix_socket_errno != EINTR) {
-                pmix_output(8, "usock_peer_send_blocking: send() to socket %d failed: %s (%d)\n",
-                            sd, strerror(pmix_socket_errno),
-                            pmix_socket_errno);
+                pmix_output_verbose(8, pmix_globals.debug_output,
+                                    "usock_peer_send_blocking: send() to socket %d failed: %s (%d)\n",
+                                    sd, strerror(pmix_socket_errno),
+                                    pmix_socket_errno);
                 return PMIX_ERR_UNREACH;
             }
             continue;
