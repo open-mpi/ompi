@@ -353,9 +353,11 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_coll_base_comm_t);
 static inline void ompi_coll_base_free_reqs(ompi_request_t **reqs, int count)
 {
     int i;
-    for (i = 0; i < count; ++i)
-        if( MPI_REQUEST_NULL != reqs[i] )
+    for (i = 0; i < count; ++i) {
+        if( MPI_REQUEST_NULL != reqs[i] ) {
             ompi_request_free(&reqs[i]);
+        }
+    }
 }
 
 /**

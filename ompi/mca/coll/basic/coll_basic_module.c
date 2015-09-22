@@ -101,9 +101,6 @@ mca_coll_basic_comm_query(struct ompi_communicator_t *comm,
             size = dist_graph_size;
         }
     }
-    basic_module->mccb_num_reqs = size;
-    basic_module->mccb_reqs = (ompi_request_t**)
-        malloc(sizeof(ompi_request_t *) * basic_module->mccb_num_reqs);
 
     /* Choose whether to use [intra|inter], and [linear|log]-based
      * algorithms. */

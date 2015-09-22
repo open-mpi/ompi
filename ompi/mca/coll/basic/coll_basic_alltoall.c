@@ -57,11 +57,7 @@ mca_coll_basic_alltoall_inter(const void *sbuf, int scount,
     MPI_Aint sndinc;
     MPI_Aint rcvinc;
 
-    ompi_request_t **req;
-    ompi_request_t **sreq;
-    ompi_request_t **rreq;
-
-    mca_coll_basic_module_t *basic_module = (mca_coll_basic_module_t*) module;
+    ompi_request_t **req, **sreq, **rreq;
 
     /* Initialize. */
 
@@ -81,7 +77,7 @@ mca_coll_basic_alltoall_inter(const void *sbuf, int scount,
 
     /* Initiate all send/recv to/from others. */
     nreqs = size * 2;
-    req = rreq = basic_module->mccb_reqs;
+    req = rreq = mca_coll_basic_get_reqs( (mca_coll_basic_module_t*) module, nreqs);
     sreq = rreq + size;
 
     prcv = (char *) rbuf;
@@ -92,6 +88,7 @@ mca_coll_basic_alltoall_inter(const void *sbuf, int scount,
         err = MCA_PML_CALL(irecv(prcv + (i * rcvinc), rcount, rdtype, i,
                                  MCA_COLL_BASE_TAG_ALLTOALL, comm, rreq));
         if (OMPI_SUCCESS != err) {
+            mca_coll_basic_free_reqs(req, nreqs);
             return err;
         }
     }
@@ -102,6 +99,7 @@ mca_coll_basic_alltoall_inter(const void *sbuf, int scount,
                                  MCA_COLL_BASE_TAG_ALLTOALL,
                                  MCA_PML_BASE_SEND_STANDARD, comm, sreq));
         if (OMPI_SUCCESS != err) {
+            mca_coll_basic_free_reqs(req, nreqs);
             return err;
         }
     }
@@ -113,6 +111,9 @@ mca_coll_basic_alltoall_inter(const void *sbuf, int scount,
      * So free them anyway -- even if there was an error, and return
      * the error after we free everything. */
     err = ompi_request_wait_all(nreqs, req, MPI_STATUSES_IGNORE);
+    if (OMPI_SUCCESS != err) {
+        mca_coll_basic_free_reqs(req, nreqs);
+    }
 
     /* All done */
     return err;

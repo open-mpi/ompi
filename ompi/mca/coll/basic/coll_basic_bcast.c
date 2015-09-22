@@ -53,9 +53,7 @@ mca_coll_basic_bcast_log_intra(void *buff, int count,
     int mask;
     int err;
     int nreqs;
-    ompi_request_t **preq;
-    mca_coll_basic_module_t *basic_module = (mca_coll_basic_module_t*) module;
-    ompi_request_t **reqs = basic_module->mccb_reqs;
+    ompi_request_t **preq, **reqs;
 
     size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
@@ -82,6 +80,8 @@ mca_coll_basic_bcast_log_intra(void *buff, int count,
     }
 
     /* Send data to the children. */
+
+    reqs = mca_coll_basic_get_reqs((mca_coll_basic_module_t*) module, size);
 
     err = MPI_SUCCESS;
     preq = reqs;
@@ -119,12 +119,11 @@ mca_coll_basic_bcast_log_intra(void *buff, int count,
          * error, and return the error after we free everything. */
 
         err = ompi_request_wait_all(nreqs, reqs, MPI_STATUSES_IGNORE);
-
-        /* Free the reqs */
-
-        mca_coll_basic_free_reqs(reqs, nreqs);
     }
 
+    if( MPI_SUCCESS != err ) {
+        mca_coll_basic_free_reqs(reqs, nreqs);
+    }
     /* All done */
 
     return err;
@@ -147,8 +146,7 @@ mca_coll_basic_bcast_lin_inter(void *buff, int count,
     int i;
     int rsize;
     int err;
-    mca_coll_basic_module_t *basic_module = (mca_coll_basic_module_t*) module;
-    ompi_request_t **reqs = basic_module->mccb_reqs;
+    ompi_request_t **reqs = NULL;
 
     rsize = ompi_comm_remote_size(comm);
 
@@ -161,6 +159,7 @@ mca_coll_basic_bcast_lin_inter(void *buff, int count,
                                 MCA_COLL_BASE_TAG_BCAST, comm,
                                 MPI_STATUS_IGNORE));
     } else {
+        reqs = mca_coll_basic_get_reqs((mca_coll_basic_module_t*) module, rsize);
         /* root section */
         for (i = 0; i < rsize; i++) {
             err = MCA_PML_CALL(isend(buff, count, datatype, i,
@@ -168,10 +167,14 @@ mca_coll_basic_bcast_lin_inter(void *buff, int count,
                                      MCA_PML_BASE_SEND_STANDARD,
                                      comm, &(reqs[i])));
             if (OMPI_SUCCESS != err) {
+                mca_coll_basic_free_reqs(reqs, rsize);
                 return err;
             }
         }
         err = ompi_request_wait_all(rsize, reqs, MPI_STATUSES_IGNORE);
+        if (OMPI_SUCCESS != err) {
+            mca_coll_basic_free_reqs(reqs, rsize);
+        }
     }
 
 
