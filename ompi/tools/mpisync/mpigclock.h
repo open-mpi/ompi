@@ -52,5 +52,6 @@
 
 /* mpigclock_measure_offset_adaptive: Measures clock's offset of peer. */
 double mpigclock_sync_linear(MPI_Comm comm, int root, double *rtt);
+double mpigclock_sync_log(MPI_Comm comm, int root, double *rtt);
 
 #endif
