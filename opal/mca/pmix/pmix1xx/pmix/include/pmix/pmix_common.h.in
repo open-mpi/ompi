@@ -80,7 +80,6 @@ BEGIN_C_DECLS
 
 /* define maximum value and key sizes */
 #define PMIX_MAX_NSLEN     255
-#define PMIX_MAX_VALLEN   1023
 #define PMIX_MAX_KEYLEN    511
 
 /* define a *wildcard* value for requests involving rank */
@@ -175,6 +174,7 @@ BEGIN_C_DECLS
 #define PMIX_PROC_DATA             "pmix.pdata"        // (pmix_value_array_t) starts with rank, then contains more data
 #define PMIX_NODE_MAP              "pmix.nmap"         // (char*) regex of nodes containing procs for this job
 #define PMIX_PROC_MAP              "pmix.pmap"         // (char*) regex describing procs on each node within this job
+#define PMIX_ANL_MAP               "pmix.anlmap"       // (char*) process mapping in ANL notation (used in PMI-1/PMI-2)
 
 /* attributes used internally to communicate data from the server to the client */
 #define PMIX_PROC_BLOB             "pmix.pblob"        // (pmix_byte_object_t) packed blob of process data
@@ -307,6 +307,7 @@ typedef enum {
 /* define a "persistence" policy for data published by clients */
 typedef enum {
     PMIX_PERSIST_INDEF = 0,   // retain until specifically deleted
+    PMIX_PERSIST_FIRST_READ,  // delete upon first access
     PMIX_PERSIST_PROC,        // retain until publishing process terminates
     PMIX_PERSIST_APP,         // retain until application terminates
     PMIX_PERSIST_SESSION      // retain until session/allocation terminates
@@ -468,13 +469,11 @@ typedef struct {
         }                                       \
     } while(0);
 
-#define PMIX_INFO_LOAD(m, d, k, v, t)                   \
-    do {                                                \
+#define PMIX_INFO_LOAD(m, k, v, t)                      \
     if (NULL != (m)) {                                  \
-        (m)->mandatory = (d);                           \
         (void)strncpy((m)->key, (k), PMIX_MAX_KEYLEN);  \
         pmix_value_load(&((m)->value), (v), (t));       \
-    } while(0);
+    }
 
 
 /****    PMIX LOOKUP RETURN STRUCT    ****/
@@ -827,7 +826,7 @@ const char* PMIx_Get_version(void);
     PMIX_VAL_SET_ ## _field(_v, _field, _val)
 
 #define PMIX_VAL_cmp_val(_val1, _val2)      ((_val1) != (_val2))
-#define PMIX_VAL_cmp_float(_val1, _val2)    (abs((_val1) - (_val2)) > 0.000001)
+#define PMIX_VAL_cmp_float(_val1, _val2)    (((_val1)>(_val2))?(((_val1)-(_val2))>0.000001):(((_val2)-(_val1))>0.000001))
 #define PMIX_VAL_cmp_ptr(_val1, _val2)      strncmp(_val1, _val2, strlen(_val1)+1)
 
 #define PMIX_VAL_CMP_int        PMIX_VAL_cmp_val

@@ -511,6 +511,9 @@ static void connection_handler(int sd, short flags, void* cbdata)
                         "connection_handler: new connection: %d",
                         pnd->sd);
 
+    /* ensure the socket is in blocking mode */
+    pmix_usock_set_blocking(pnd->sd);
+
     /* receive identifier info from the client and authenticate it - the
      * function will lookup and return the peer object if the connection
      * is successfully authenticated */

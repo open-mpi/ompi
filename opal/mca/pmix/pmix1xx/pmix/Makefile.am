@@ -37,7 +37,8 @@ endif
 
 man_MANS = \
         man/man3/pmix_init.3 \
-        man/man7/pmix.7
+        man/man7/pmix.7 \
+        man/man7/pmix_constants.7
 
 include config/Makefile.am
 include include/Makefile.am

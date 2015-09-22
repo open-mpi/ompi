@@ -30,6 +30,8 @@
 #endif
 #include PMIX_EVENT_HEADER
 
+#define ANL_MAPPING "PMI_process_mapping"
+
 #include "src/buffer_ops/buffer_ops.h"
 #include "src/util/argv.h"
 #include "src/util/error.h"
@@ -39,6 +41,7 @@
 static pmix_status_t convert_int(int *value, pmix_value_t *kv);
 static int convert_err(pmix_status_t rc);
 static pmix_proc_t myproc;
+static bool data_commited = false;
 
 int PMI_Init( int *spawned )
 {
@@ -93,6 +96,10 @@ int PMI_KVS_Put(const char kvsname[], const char key[], const char value[])
     pmix_status_t rc;
     pmix_value_t val;
 
+    pmix_output_verbose(2, pmix_globals.debug_output,
+            "PMI_KVS_Put: KVS=%s, key=%s value=%s",
+            kvsname, key, value);
+
     val.type = PMIX_STRING;
     val.data.string = (char*)value;
     rc = PMIx_Put(PMIX_GLOBAL, key, &val);
@@ -104,15 +111,106 @@ int PMI_KVS_Commit(const char kvsname[])
 {
     pmix_status_t rc;
 
+    pmix_output_verbose(2, pmix_globals.debug_output,
+            "PMI_KVS_Commit: KVS=%s", kvsname);
+
     rc = PMIx_Commit();
+    /* PMIx permits only one data commit! */
+    data_commited = true;
     return convert_err(rc);
 }
+
+int PMI_KVS_Get( const char kvsname[], const char key[], char value[], int length)
+{
+    pmix_value_t *val;
+    uint32_t i;
+    static pmix_proc_t proc;
+    uint32_t procnum;
+    proc = myproc;
+    int rc;
+
+    pmix_output_verbose(2, pmix_globals.debug_output,
+                        "PMI_KVS_Get: KVS=%s, key=%s value=%s",
+                        kvsname, key, value);
+
+    /* PMI-1 expects resource manager to set
+     * process mapping in ANL notation. */
+    if( !strcmp(key, ANL_MAPPING) ) {
+        /* we are looking in the job-data. If there is nothing there
+         * we don't want to look in rank's data, thus set rank to widcard */
+        proc.rank = PMIX_RANK_WILDCARD;
+        if( PMIX_SUCCESS == PMIx_Get(&proc, PMIX_ANL_MAP, NULL, 0, &val) &&
+                (NULL != val) && (PMIX_STRING == val->type) ){
+            strncpy(value,val->data.string,length);
+            PMIX_VALUE_FREE(val,1);
+            return PMI_SUCCESS;
+        } else {
+            /* artpol:
+             * Some RM's (i.e. SLURM) already have ANL precomputed. The export it
+             * through PMIX_ANL_MAP variable.
+             * If we haven't found it we want to have our own packing functionality
+             * since it's common.
+             * Somebody else has to write it since I've already done that for
+             * GPL'ed SLURM :) */
+            return PMI_FAIL;
+        }
+    }
+
+    /* We don't know what process keeps this data. So it looks like we need to
+     * check each process.
+     * TODO: Is there any beter way?
+     * WARNING: this may lead to the VERY long HANG's if we ask for the unknown key
+     * before we've done Commit on all nodes. We need a workaround for that.
+     *
+     * SOLUTION: perhaps rovide "OK if nothing" info flag to tell PMIx that
+     * the key supposed to already be there and if nothing there - gave up with
+     * an error and don't try to use direct modex.
+     */
+
+    if (PMIX_SUCCESS != (rc = PMIx_Get(&myproc,PMIX_JOB_SIZE, NULL, 0,&val))) {
+        pmix_output_verbose(2, pmix_globals.debug_output,
+                            "pmi1: executing put for KVS %s, key %s value %s",
+                            kvsname, key, value);
+        return  convert_err(rc);
+    }
+    procnum = val->data.uint32;
+    PMIX_VALUE_FREE(val,1);
+
+    for( i=0; i < procnum; i++){
+        proc.rank = i;
+        if( PMIX_SUCCESS == PMIx_Get(&proc, key, NULL, 0, &val) &&
+                (NULL != val) && (PMIX_STRING == val->type) ){
+            strncpy(value,val->data.string,length);
+            PMIX_VALUE_FREE(val,1);
+            return PMI_SUCCESS;
+        }
+        PMIX_VALUE_FREE(val,1);
+    }
+    return PMI_FAIL;
+}
+
 
 /* Barrier only applies to our own nspace, and we want all
  * data to be collected upon completion */
 int PMI_Barrier(void)
 {
-    return PMIx_Fence(NULL, 0, NULL, 0);
+    pmix_info_t buf;
+    int rc, ninfo = 0;
+    pmix_info_t *info = NULL;
+
+    if( data_commited ){
+        bool  val = 1;
+        info = &buf;
+        PMIX_INFO_CONSTRUCT(info);
+        PMIX_INFO_LOAD(info, PMIX_COLLECT_DATA, &val, PMIX_BOOL );
+        ninfo = 1;
+    }
+    rc = PMIx_Fence(NULL, 0, info, ninfo);
+
+    if( NULL != info ){
+        PMIX_INFO_DESTRUCT(info);
+    }
+    return rc;
 }
 
 int PMI_Get_size(int *size)
@@ -229,8 +327,12 @@ int PMI_Lookup_name(const char service_name[], char port[])
         return convert_err(PMIX_ERR_NOT_FOUND);
     }
 
-    /* return the port */
-    (void)strncpy(port, pdata.value.data.string, PMIX_MAX_VALLEN);
+    /* return the port - sadly, this API doesn't tell us
+     * the size of the port array, and so there is a
+     * potential we could overrun it. As this feature
+     * isn't widely supported in PMI-1, try being
+     * conservative */
+    (void)strncpy(port, pdata.value.data.string, PMIX_MAX_KEYLEN);
     PMIX_PDATA_DESTRUCT(&pdata);
 
     return PMIX_SUCCESS;
@@ -260,7 +362,7 @@ int PMI_Get_id_length_max(int *length)
     if (NULL == length) {
         return PMI_ERR_INVALID_VAL_LENGTH;
     }
-    *length = PMIX_MAX_VALLEN;
+    *length = PMIX_MAX_KEYLEN;
     return PMI_SUCCESS;
 }
 
@@ -327,7 +429,9 @@ int PMI_KVS_Get_value_length_max(int *length)
     if (NULL == length) {
         return PMI_ERR_INVALID_VAL_LENGTH;
     }
-    *length = PMIX_MAX_VALLEN;
+    /* don't give them an enormous size of some implementations
+     * immediately malloc a data block for their use */
+    *length = 4096;
     return PMI_SUCCESS;
 }
 
@@ -483,6 +587,9 @@ static pmix_status_t convert_int(int *value, pmix_value_t *kv)
         break;
     case PMIX_SIZE:
         *value = kv->data.size;
+        break;
+    case PMIX_BOOL:
+        *value = kv->data.flag;
         break;
     default:
         /* not an integer type */

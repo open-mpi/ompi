@@ -753,7 +753,7 @@ pmix_status_t PMIx_server_register_client(const pmix_proc_t *proc,
 /* setup the envars for a child process */
 pmix_status_t PMIx_server_setup_fork(const pmix_proc_t *proc, char ***env)
 {
-    char rankstr[PMIX_MAX_VALLEN+1];
+    char rankstr[128];
 
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "pmix:server setup_fork for nspace %s rank %d",
@@ -762,7 +762,7 @@ pmix_status_t PMIx_server_setup_fork(const pmix_proc_t *proc, char ***env)
     /* pass the nspace */
     pmix_setenv("PMIX_NAMESPACE", proc->nspace, true, env);
     /* pass the rank */
-    (void)snprintf(rankstr, PMIX_MAX_VALLEN, "%d", proc->rank);
+    (void)snprintf(rankstr, 127, "%d", proc->rank);
     pmix_setenv("PMIX_RANK", rankstr, true, env);
     /* pass our rendezvous info */
     pmix_setenv("PMIX_SERVER_URI", myuri, true, env);

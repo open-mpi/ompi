@@ -266,13 +266,12 @@ int PMIx_Init(pmix_proc_t *proc)
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "pmix: init called");
 
-    pmix_bfrop_open();
-    pmix_usock_init(pmix_client_notify_recv);
-    pmix_sec_init();
-
     /* we require the nspace */
     if (NULL == (evar = getenv("PMIX_NAMESPACE"))) {
         /* let the caller know that the server isn't available yet */
+        pmix_output_close(pmix_globals.debug_output);
+        pmix_output_finalize();
+        pmix_class_finalize();
         return PMIX_ERR_INVALID_NAMESPACE;
     }
     (void)strncpy(proc->nspace, evar, PMIX_MAX_NSLEN);
@@ -285,11 +284,17 @@ int PMIx_Init(pmix_proc_t *proc)
      * then we need to return an error */
     if (NULL == (evar = getenv("PMIX_SERVER_URI"))) {
         /* let the caller know that the server isn't available */
+        pmix_output_close(pmix_globals.debug_output);
+        pmix_output_finalize();
+        pmix_class_finalize();
         return PMIX_ERR_SERVER_NOT_AVAIL;
     }
     uri = pmix_argv_split(evar, ':');
     if (3 != pmix_argv_count(uri)) {
         pmix_argv_free(uri);
+        pmix_output_close(pmix_globals.debug_output);
+        pmix_output_finalize();
+        pmix_class_finalize();
         return PMIX_ERROR;
     }
 
@@ -308,6 +313,9 @@ int PMIx_Init(pmix_proc_t *proc)
     /* if the rendezvous file doesn't exist, that's an error */
     if (0 != access(uri[2], R_OK)) {
         pmix_argv_free(uri);
+        pmix_output_close(pmix_globals.debug_output);
+        pmix_output_finalize();
+        pmix_class_finalize();
         return PMIX_ERR_NOT_FOUND;
     }
     pmix_argv_free(uri);
@@ -315,14 +323,28 @@ int PMIx_Init(pmix_proc_t *proc)
     /* we also require our rank */
     if (NULL == (evar = getenv("PMIX_RANK"))) {
         /* let the caller know that the server isn't available yet */
+        pmix_output_close(pmix_globals.debug_output);
+        pmix_output_finalize();
+        pmix_class_finalize();
         return PMIX_ERR_DATA_VALUE_NOT_FOUND;
     }
     pmix_globals.myid.rank = strtol(evar, NULL, 10);
     proc->rank = pmix_globals.myid.rank;
     pmix_globals.pindex = -1;
 
+    /* setup the support */
+    pmix_bfrop_open();
+    pmix_usock_init(pmix_client_notify_recv);
+    pmix_sec_init();
+
     /* create an event base and progress thread for us */
     if (NULL == (pmix_globals.evbase = pmix_start_progress_thread())) {
+        pmix_sec_finalize();
+        pmix_usock_finalize();
+        pmix_bfrop_close();
+        pmix_output_close(pmix_globals.debug_output);
+        pmix_output_finalize();
+        pmix_class_finalize();
         return -1;
     }
 
@@ -332,6 +354,13 @@ int PMIx_Init(pmix_proc_t *proc)
     /* connect to the server - returns job info if successful */
     if (PMIX_SUCCESS != (rc = connect_to_server(&address, &cb))){
         PMIX_DESTRUCT(&cb);
+        pmix_stop_progress_thread(pmix_globals.evbase);
+        pmix_sec_finalize();
+        pmix_usock_finalize();
+        pmix_bfrop_close();
+        pmix_output_close(pmix_globals.debug_output);
+        pmix_output_finalize();
+        pmix_class_finalize();
         return rc;
     }
     PMIX_WAIT_FOR_COMPLETION(cb.active);
@@ -399,10 +428,6 @@ pmix_status_t PMIx_Finalize(void)
     }
 
     pmix_stop_progress_thread(pmix_globals.evbase);
-    event_base_free(pmix_globals.evbase);
-#ifdef HAVE_LIBEVENT_GLOBAL_SHUTDOWN
-    libevent_global_shutdown();
-#endif
 
     pmix_usock_finalize();
     PMIX_DESTRUCT(&pmix_client_globals.myserver);
@@ -411,6 +436,11 @@ pmix_status_t PMIx_Finalize(void)
     if (0 <= pmix_client_globals.myserver.sd) {
         CLOSE_THE_SOCKET(pmix_client_globals.myserver.sd);
     }
+    event_base_free(pmix_globals.evbase);
+#ifdef HAVE_LIBEVENT_GLOBAL_SHUTDOWN
+    libevent_global_shutdown();
+#endif
+
     pmix_bfrop_close();
     pmix_sec_finalize();
 
@@ -874,6 +904,9 @@ void pmix_client_process_nspace_blob(const char *nspace, pmix_buffer_t *bptr)
             PMIX_CONSTRUCT(&buf2, pmix_buffer_t);
             PMIX_LOAD_BUFFER(&buf2, bo->bytes, bo->size);
             /* protect the data */
+            kptr->value->data.bo.bytes = NULL;
+            kptr->value->data.bo.size = 0;
+            PMIX_RELEASE(kptr);
             bo->bytes = NULL;
             bo->size = 0;
             /* start by unpacking the rank */
@@ -904,7 +937,7 @@ void pmix_client_process_nspace_blob(const char *nspace, pmix_buffer_t *bptr)
                 kp2 = PMIX_NEW(pmix_kval_t);
             }
             /* cleanup */
-            PMIX_DESTRUCT(&buf2);
+            PMIX_DESTRUCT(&buf2);  // releases the original kptr data
             PMIX_RELEASE(kp2);
         } else if (0 == strcmp(kptr->key, PMIX_MAP_BLOB)) {
             /* transfer the byte object for unpacking */
@@ -912,6 +945,9 @@ void pmix_client_process_nspace_blob(const char *nspace, pmix_buffer_t *bptr)
             PMIX_CONSTRUCT(&buf2, pmix_buffer_t);
             PMIX_LOAD_BUFFER(&buf2, bo->bytes, bo->size);
             /* protect the data */
+            kptr->value->data.bo.bytes = NULL;
+            kptr->value->data.bo.size = 0;
+            PMIX_RELEASE(kptr);
             bo->bytes = NULL;
             bo->size = 0;
             /* start by unpacking the number of nodes */
@@ -974,17 +1010,24 @@ void pmix_client_process_nspace_blob(const char *nspace, pmix_buffer_t *bptr)
                 pmix_argv_free(procs);
                 PMIX_DESTRUCT(&kv);
             }
+            /* cleanup */
+            PMIX_DESTRUCT(&buf2);  // releases the original kptr data
         } else {
             /* this is job-level data, so just add it to that hash_table
              * with the wildcard rank */
             if (PMIX_SUCCESS != (rc = pmix_hash_store(&nsptr->internal, PMIX_RANK_WILDCARD, kptr))) {
                 PMIX_ERROR_LOG(rc);
             }
+            /* maintain accounting - but note that the kptr remains
+             * alive and stored in the hash table! So we cannot reuse
+             * it for some other purpose */
             PMIX_RELEASE(kptr);
         }
         kptr = PMIX_NEW(pmix_kval_t);
         cnt = 1;
     }
+    /* need to release the leftover kptr */
+    PMIX_RELEASE(kptr);
 }
 
 static int usock_connect(struct sockaddr *addr)

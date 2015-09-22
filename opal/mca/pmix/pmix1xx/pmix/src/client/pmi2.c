@@ -304,7 +304,7 @@ int PMI2_Nameserv_lookup(const char service_name[], const PMI_keyval_t *info_ptr
     }
 
     /* return the port */
-    (void)strncpy(port, pdata[0].value.data.string, PMIX_MAX_VALLEN);
+    (void)strncpy(port, pdata[0].value.data.string, portLen);
     PMIX_PDATA_DESTRUCT(&pdata[0]);
 
     if (NULL != info_ptr) {
