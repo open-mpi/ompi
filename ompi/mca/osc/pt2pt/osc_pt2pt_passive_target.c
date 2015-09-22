@@ -408,6 +408,8 @@ static int ompi_osc_pt2pt_unlock_internal (int target, ompi_win_t *win)
     }
 
     OPAL_THREAD_LOCK(&module->lock);
+    ompi_osc_pt2pt_module_lock_remove (module, lock);
+
     if (-1 != lock->sync.lock.target) {
         ompi_osc_pt2pt_sync_return (lock);
     } else {
@@ -415,7 +417,6 @@ static int ompi_osc_pt2pt_unlock_internal (int target, ompi_win_t *win)
     }
 
     --module->passive_target_access_epoch;
-    ompi_osc_pt2pt_module_lock_remove (module, lock);
 
     OPAL_THREAD_UNLOCK(&module->lock);
 
