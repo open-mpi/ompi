@@ -81,7 +81,7 @@ static ompi_osc_pt2pt_peer_t **ompi_osc_pt2pt_get_peers (ompi_osc_pt2pt_module_t
 
     ranks1 = calloc (size, sizeof(int));
     ranks2 = calloc (size, sizeof(int));
-    peers = calloc (size, sizeof (ompi_osc_rdma_peer_t *));
+    peers = calloc (size, sizeof (ompi_osc_pt2pt_peer_t *));
     if (NULL == ranks1 || NULL == ranks2 || NULL == peers) {
         free (ranks1);
         free (ranks2);
@@ -225,7 +225,7 @@ int ompi_osc_pt2pt_start (ompi_group_t *group, int assert, ompi_win_t *win)
     sync->sync_expected = sync->num_peers;
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
-                         "ompi_osc_rdma_start entering with group size %d...",
+                         "ompi_osc_pt2pt_start entering with group size %d...",
                          sync->num_peers));
 
     if (0 == ompi_group_size (group)) {
