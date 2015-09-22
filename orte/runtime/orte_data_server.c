@@ -104,10 +104,16 @@ OBJ_CLASS_INSTANCE(orte_data_req_t,
 /* local globals */
 static opal_pointer_array_t orte_data_server_store;
 static opal_list_t pending;
+static bool initialized = false;
 
 int orte_data_server_init(void)
 {
     int rc;
+
+    if (initialized) {
+        return ORTE_SUCCESS;
+    }
+    initialized = true;
 
     OBJ_CONSTRUCT(&orte_data_server_store, opal_pointer_array_t);
     if (ORTE_SUCCESS != (rc = opal_pointer_array_init(&orte_data_server_store,
@@ -133,6 +139,11 @@ void orte_data_server_finalize(void)
 {
     orte_std_cntr_t i;
     orte_data_object_t *data;
+
+    if (!initialized) {
+        return;
+    }
+    initialized = false;
 
     orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_DATA_SERVER);
 
