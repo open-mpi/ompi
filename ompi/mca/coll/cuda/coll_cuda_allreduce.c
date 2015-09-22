@@ -27,7 +27,7 @@
  *	Returns:	- MPI_SUCCESS or error code
  */
 int
-mca_coll_cuda_allreduce(void *sbuf, void *rbuf, int count,
+mca_coll_cuda_allreduce(const void *sbuf, void *rbuf, int count,
                         struct ompi_datatype_t *dtype,
                         struct ompi_op_t *op,
                         struct ompi_communicator_t *comm,
