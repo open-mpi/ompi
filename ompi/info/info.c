@@ -272,6 +272,22 @@ int ompi_info_set (ompi_info_t *info, const char *key, const char *value)
 }
 
 
+int ompi_info_set_value_enum (ompi_info_t *info, const char *key, int value,
+                              mca_base_var_enum_t *var_enum)
+{
+    char *string_value;
+    int ret;
+
+    ret = var_enum->string_from_value (var_enum, value, &string_value);
+    if (OPAL_SUCCESS != ret) {
+        return ret;
+    }
+
+    return ompi_info_set (info, key, string_value);
+}
+
+
+
 /*
  * Free an info handle and all of its keys and values.
  */

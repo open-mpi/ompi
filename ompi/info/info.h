@@ -151,7 +151,7 @@ int ompi_info_finalize(void);
  */
 int ompi_info_dup (ompi_info_t *info, ompi_info_t **newinfo);
 
-/*
+/**
  * Set a new key,value pair on info.
  *
  * @param info pointer to ompi_info_t object
@@ -162,6 +162,21 @@ int ompi_info_dup (ompi_info_t *info, ompi_info_t **newinfo);
  * @retval MPI_ERR_NO_MEM if out of memory
  */
 OMPI_DECLSPEC int ompi_info_set (ompi_info_t *info, const char *key, const char *value);
+
+/**
+ * Set a new key,value pair from a variable enumerator.
+ *
+ * @param info pointer to ompi_info_t object
+ * @param key pointer to the new key object
+ * @param value integer value of the info key (must be valid in var_enum)
+ * @param var_enum variable enumerator
+ *
+ * @retval MPI_SUCCESS upon success
+ * @retval MPI_ERR_NO_MEM if out of memory
+ * @retval OPAL_ERR_VALUE_OUT_OF_BOUNDS if the value is not valid in the enumerator
+ */
+OMPI_DECLSPEC int ompi_info_set_value_enum (ompi_info_t *info, const char *key, int value,
+                                            mca_base_var_enum_t *var_enum);
 
 /**
  * ompi_info_free - Free an 'MPI_Info' object.

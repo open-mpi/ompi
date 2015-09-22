@@ -58,6 +58,7 @@ int MPI_Win_get_info(MPI_Win win, MPI_Info *info_used)
         _win_info_set (*info_used, "no_locks", win->w_flags & OMPI_WIN_NO_LOCKS);
         _win_info_set (*info_used, "same_size", win->w_flags & OMPI_WIN_SAME_SIZE);
         _win_info_set (*info_used, "same_disp_unit", win->w_flags & OMPI_WIN_SAME_DISP);
+        ompi_info_set_value_enum (*info_used, "accumulate_ops", win->w_acc_ops, ompi_win_accumulate_ops);
     }
 
     OMPI_ERRHANDLER_RETURN(ret, win, ret, FUNC_NAME);
