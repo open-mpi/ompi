@@ -38,7 +38,6 @@ struct ompi_osc_sm_lock_t {
 typedef struct ompi_osc_sm_lock_t ompi_osc_sm_lock_t;
 
 struct ompi_osc_sm_node_state_t {
-    int32_t post_count;
     int32_t complete_count;
     ompi_osc_sm_lock_t lock;
     opal_atomic_lock_t accumulate_lock;
@@ -81,6 +80,9 @@ struct ompi_osc_sm_module_t {
     ompi_osc_sm_global_state_t *global_state;
     ompi_osc_sm_node_state_t *my_node_state;
     ompi_osc_sm_node_state_t *node_states;
+    uint64_t **posts;
+
+    opal_mutex_t lock;
 };
 typedef struct ompi_osc_sm_module_t ompi_osc_sm_module_t;
 
