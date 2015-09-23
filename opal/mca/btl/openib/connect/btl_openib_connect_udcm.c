@@ -2622,8 +2622,8 @@ static int udcm_xrc_recv_qp_connect (mca_btl_openib_endpoint_t *lcl_ep)
     lcl_ep->xrc_recv_qp = ibv_open_qp(openib_btl->device->ib_dev_context, &attr);
     if (NULL == lcl_ep->xrc_recv_qp) { /* failed to regester the qp, so it is already die and we should create new one */
        /* Return NOT READY !!!*/
-        BTL_ERROR(("Failed to register qp_num: %d , get error: %s (%d)\n. Replying with RNR",
-                   lcl_ep->xrc_recv_qp->qp_num, strerror(errno), errno));
+        BTL_ERROR(("Failed to register qp_num: %d, get error: %s (%d)\n. Replying with RNR",
+                   qp_num, strerror(errno), errno));
         return OPAL_ERROR;
     } else {
         BTL_VERBOSE(("Connected to XRC Recv qp [%d]", lcl_ep->xrc_recv_qp->qp_num));
@@ -2900,6 +2900,9 @@ static int udcm_xrc_handle_xconnect (mca_btl_openib_endpoint_t *lcl_ep, udcm_msg
     int response_type;
     int rc = OPAL_ERROR;
 
+    /* sanity check on message type */
+    assert (UDCM_MESSAGE_XCONNECT == msg_hdr->type || UDCM_MESSAGE_XCONNECT2 == msg_hdr->type);
+
     do {
         if (NULL == udep) {
             break;
@@ -2956,7 +2959,9 @@ static int udcm_xrc_handle_xconnect (mca_btl_openib_endpoint_t *lcl_ep, udcm_msg
         return OPAL_SUCCESS;
     } while (0);
 
-    opal_mutex_unlock (&udep->udep_lock);
+    if (udep) {
+        opal_mutex_unlock (&udep->udep_lock);
+    }
 
     /* Reject the request */
     BTL_VERBOSE(("rejecting request for reason %d", rej_reason));
