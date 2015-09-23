@@ -38,6 +38,7 @@
 #include "opal/mca/allocator/base/base.h"
 #include "opal/mca/base/mca_base_pvar.h"
 #include "opal/runtime/opal_params.h"
+#include "opal/mca/btl/base/base.h"
 
 OBJ_CLASS_INSTANCE( mca_pml_ob1_pckt_pending_t,
                     opal_free_list_item_t,
@@ -276,6 +277,17 @@ mca_pml_ob1_component_init( int* priority,
     if(OMPI_SUCCESS != mca_bml_base_init( enable_progress_threads,
                                           enable_mpi_threads)) {
         return NULL;
+    }
+
+    /* check if any btls do not support dynamic add_procs */
+    mca_btl_base_selected_module_t* selected_btl;
+    OPAL_LIST_FOREACH(selected_btl, &mca_btl_base_modules_initialized, mca_btl_base_selected_module_t) {
+        mca_btl_base_module_t *btl = selected_btl->btl_module;
+
+        if (btl->btl_flags & MCA_BTL_FLAGS_SINGLE_ADD_PROCS) {
+            mca_pml_ob1.super.pml_flags |= MCA_PML_BASE_FLAG_REQUIRE_WORLD;
+            break;
+        }
     }
 
     /* Set this here (vs in component_open()) because
