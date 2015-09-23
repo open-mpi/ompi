@@ -1,5 +1,8 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -202,6 +205,7 @@ static int dlopen_foreachfile(const char *search_path,
                 /* Skip libtool files */
                 if (strcmp(ptr, ".la") == 0 ||
                     strcmp(ptr, ".lo") == 0) {
+                    free (abs_name);
                     continue;
                 }
 
