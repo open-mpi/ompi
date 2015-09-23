@@ -51,7 +51,6 @@ mca_coll_basic_allgather_inter(const void *sbuf, int scount,
     char *tmpbuf = NULL, *ptmp;
     ptrdiff_t rlb, slb, rextent, sextent, incr;
     ompi_request_t *req;
-    mca_coll_basic_module_t *basic_module = (mca_coll_basic_module_t*) module;
     ompi_request_t **reqs = NULL;
 
     rank = ompi_comm_rank(comm);
@@ -80,7 +79,7 @@ mca_coll_basic_allgather_inter(const void *sbuf, int scount,
         if (OMPI_SUCCESS != err) { line = __LINE__; goto exit; }
 
         /* Get a requests arrays of the right size */
-        reqs = mca_coll_basic_get_reqs(basic_module, rsize + 1);
+        reqs = coll_base_comm_get_reqs(module->base_data, rsize + 1);
         if( NULL == reqs ) { line = __LINE__; goto exit; }
 
         /* Do a send-recv between the two root procs. to avoid deadlock */
@@ -156,7 +155,7 @@ mca_coll_basic_allgather_inter(const void *sbuf, int scount,
     if( MPI_SUCCESS != err ) {
         OPAL_OUTPUT( (ompi_coll_base_framework.framework_output,"%s:%4d\tError occurred %d, rank %2d",
                       __FILE__, line, err, rank) );
-        if( NULL != reqs ) mca_coll_basic_free_reqs(reqs, rsize+1);
+        if( NULL != reqs ) ompi_coll_base_free_reqs(reqs, rsize+1);
     }
     if (NULL != tmpbuf) {
         free(tmpbuf);

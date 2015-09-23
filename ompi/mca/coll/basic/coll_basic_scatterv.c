@@ -144,7 +144,7 @@ mca_coll_basic_scatterv_inter(const void *sbuf, const int *scounts,
             return OMPI_ERROR;
         }
 
-        reqs = mca_coll_basic_get_reqs((mca_coll_basic_module_t*) module, size);
+        reqs = coll_base_comm_get_reqs(module->base_data, size);
         for (i = 0; i < size; ++i) {
             ptmp = ((char *) sbuf) + (extent * disps[i]);
             err = MCA_PML_CALL(isend(ptmp, scounts[i], sdtype, i,
@@ -152,14 +152,14 @@ mca_coll_basic_scatterv_inter(const void *sbuf, const int *scounts,
                                      MCA_PML_BASE_SEND_STANDARD, comm,
                                      &(reqs[i])));
             if (OMPI_SUCCESS != err) {
-                mca_coll_basic_free_reqs(reqs, i);
+                ompi_coll_base_free_reqs(reqs, i);
                 return err;
             }
         }
 
         err = ompi_request_wait_all(size, reqs, MPI_STATUSES_IGNORE);
         if (OMPI_SUCCESS != err) {
-            mca_coll_basic_free_reqs(reqs, size);
+            ompi_coll_base_free_reqs(reqs, size);
         }
     }
 

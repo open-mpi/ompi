@@ -181,6 +181,12 @@ int
 mca_coll_basic_module_enable(mca_coll_base_module_t *module,
                              struct ompi_communicator_t *comm)
 {
+    /* prepare the placeholder for the array of request* */
+    module->base_data = OBJ_NEW(mca_coll_basic_comm_t);
+    if (NULL == module->base_data) {
+        return OMPI_ERROR;
+    }
+
     /* All done */
     return OMPI_SUCCESS;
 }

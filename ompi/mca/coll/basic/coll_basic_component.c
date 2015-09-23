@@ -106,22 +106,10 @@ basic_register(void)
     return OMPI_SUCCESS;
 }
 
-
-static void
-mca_coll_basic_module_construct(mca_coll_basic_module_t *module)
-{
-    module->mccb_reqs = NULL;
-    module->mccb_num_reqs = 0;
-}
-
-static void
-mca_coll_basic_module_destruct(mca_coll_basic_module_t *module)
-{
-    if (NULL != module->mccb_reqs) free(module->mccb_reqs);
-}
-
-
 OBJ_CLASS_INSTANCE(mca_coll_basic_module_t,
                    mca_coll_base_module_t,
-                   mca_coll_basic_module_construct,
-                   mca_coll_basic_module_destruct);
+                   NULL,
+                   NULL);
+
+OBJ_CLASS_INSTANCE(mca_coll_basic_comm_t, mca_coll_base_comm_t,
+                   NULL, NULL);

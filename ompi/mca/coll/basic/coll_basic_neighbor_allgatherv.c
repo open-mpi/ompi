@@ -49,7 +49,7 @@ mca_coll_basic_neighbor_allgatherv_cart(const void *sbuf, int scount, struct omp
 
     ompi_datatype_get_extent(rdtype, &lb, &extent);
 
-    reqs = preqs = mca_coll_basic_get_reqs( (mca_coll_basic_module_t *) module, 4 * cart->ndims);
+    reqs = preqs = coll_base_comm_get_reqs( module->base_data, 4 * cart->ndims);
 
     /* The ordering is defined as -1 then +1 in each dimension in
      * order of dimension. */
@@ -88,13 +88,13 @@ mca_coll_basic_neighbor_allgatherv_cart(const void *sbuf, int scount, struct omp
     }
 
     if (OMPI_SUCCESS != rc) {
-        mca_coll_basic_free_reqs( reqs, nreqs );
+        ompi_coll_base_free_reqs( reqs, nreqs );
         return rc;
     }
 
     rc = ompi_request_wait_all (nreqs, reqs, MPI_STATUSES_IGNORE);
     if (OMPI_SUCCESS != rc) {
-        mca_coll_basic_free_reqs( reqs, nreqs );
+        ompi_coll_base_free_reqs( reqs, nreqs );
     }
     return rc;
 }
@@ -120,7 +120,7 @@ mca_coll_basic_neighbor_allgatherv_graph(const void *sbuf, int scount, struct om
     }
 
     ompi_datatype_get_extent(rdtype, &lb, &extent);
-    reqs = preqs = mca_coll_basic_get_reqs( (mca_coll_basic_module_t *) module, 2 * degree);
+    reqs = preqs = coll_base_comm_get_reqs( module->base_data, 2 * degree);
 
     for (neighbor = 0; neighbor < degree ; ++neighbor) {
         rc = MCA_PML_CALL(irecv((char *) rbuf + disps[neighbor] * extent, rcounts[neighbor],
@@ -136,13 +136,13 @@ mca_coll_basic_neighbor_allgatherv_graph(const void *sbuf, int scount, struct om
     }
 
     if (OMPI_SUCCESS != rc) {
-        mca_coll_basic_free_reqs( reqs, 2 * (neighbor + 1) );
+        ompi_coll_base_free_reqs( reqs, 2 * (neighbor + 1) );
         return rc;
     }
 
     rc = ompi_request_wait_all (degree * 2, reqs, MPI_STATUSES_IGNORE);
     if (OMPI_SUCCESS != rc) {
-        mca_coll_basic_free_reqs( reqs, 2 * degree );
+        ompi_coll_base_free_reqs( reqs, 2 * degree );
     }
     return rc;
 }
@@ -167,7 +167,7 @@ mca_coll_basic_neighbor_allgatherv_dist_graph(const void *sbuf, int scount, stru
     outedges = dist_graph->out;
 
     ompi_datatype_get_extent(rdtype, &lb, &extent);
-    reqs = preqs = mca_coll_basic_get_reqs( (mca_coll_basic_module_t *) module, indegree + outdegree);
+    reqs = preqs = coll_base_comm_get_reqs( module->base_data, indegree + outdegree);
 
     for (neighbor = 0; neighbor < indegree ; ++neighbor) {
         rc = MCA_PML_CALL(irecv((char *) rbuf + disps[neighbor] * extent, rcounts[neighbor], rdtype,
@@ -176,7 +176,7 @@ mca_coll_basic_neighbor_allgatherv_dist_graph(const void *sbuf, int scount, stru
     }
 
     if (OMPI_SUCCESS != rc) {
-        mca_coll_basic_free_reqs(reqs, neighbor);
+        ompi_coll_base_free_reqs(reqs, neighbor);
         return rc;
     }
 
@@ -190,13 +190,13 @@ mca_coll_basic_neighbor_allgatherv_dist_graph(const void *sbuf, int scount, stru
     }
 
     if (OMPI_SUCCESS != rc) {
-        mca_coll_basic_free_reqs(reqs, indegree + neighbor);
+        ompi_coll_base_free_reqs(reqs, indegree + neighbor);
         return rc;
     }
 
     rc = ompi_request_wait_all (indegree + outdegree, reqs, MPI_STATUSES_IGNORE);
     if (OMPI_SUCCESS != rc) {
-        mca_coll_basic_free_reqs(reqs, indegree + outdegree);
+        ompi_coll_base_free_reqs(reqs, indegree + outdegree);
     }
     return rc;
 }

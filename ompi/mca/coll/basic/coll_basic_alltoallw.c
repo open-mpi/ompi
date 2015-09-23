@@ -70,7 +70,7 @@ mca_coll_basic_alltoallw_intra_inplace(const void *rbuf, const int *rcounts, con
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
-    reqs = mca_coll_basic_get_reqs( (mca_coll_basic_module_t*) module, 2);
+    reqs = coll_base_comm_get_reqs( module->base_data, 2);
     /* in-place alltoallw slow algorithm (but works) */
     for (i = 0 ; i < size ; ++i) {
         size_t msg_size_i;
@@ -129,7 +129,7 @@ mca_coll_basic_alltoallw_intra_inplace(const void *rbuf, const int *rcounts, con
     free (tmp_buffer);
     if( MPI_SUCCESS != err ) {  /* Free the requests. */
         if( NULL != reqs ) {
-            mca_coll_basic_free_reqs(reqs, 2);
+            ompi_coll_base_free_reqs(reqs, 2);
         }
     }
 
@@ -192,7 +192,7 @@ mca_coll_basic_alltoallw_intra(const void *sbuf, const int *scounts, const int *
     /* Initiate all send/recv to/from others. */
 
     nreqs = 0;
-    reqs = preq = mca_coll_basic_get_reqs((mca_coll_basic_module_t*) module, 2 * size);
+    reqs = preq = coll_base_comm_get_reqs(module->base_data, 2 * size);
 
     /* Post all receives first -- a simple optimization */
 
@@ -210,7 +210,7 @@ mca_coll_basic_alltoallw_intra(const void *sbuf, const int *scounts, const int *
                                       preq++));
         ++nreqs;
         if (MPI_SUCCESS != err) {
-            mca_coll_basic_free_reqs(reqs, nreqs);
+            ompi_coll_base_free_reqs(reqs, nreqs);
             return err;
         }
     }
@@ -232,7 +232,7 @@ mca_coll_basic_alltoallw_intra(const void *sbuf, const int *scounts, const int *
                                       preq++));
         ++nreqs;
         if (MPI_SUCCESS != err) {
-            mca_coll_basic_free_reqs(reqs, nreqs);
+            ompi_coll_base_free_reqs(reqs, nreqs);
             return err;
         }
     }
@@ -249,12 +249,10 @@ mca_coll_basic_alltoallw_intra(const void *sbuf, const int *scounts, const int *
      * error after we free everything. */
 
     err = ompi_request_wait_all(nreqs, reqs, MPI_STATUSES_IGNORE);
-    /* Free the requests. */
-    if( MPI_SUCCESS != err ) {
-        mca_coll_basic_free_reqs(reqs, nreqs);
-    }
-    /* All done */
+    /* Free the requests in all cases as they are persistent */
+    ompi_coll_base_free_reqs(reqs, nreqs);
 
+    /* All done */
     return err;
 }
 
@@ -287,7 +285,7 @@ mca_coll_basic_alltoallw_inter(const void *sbuf, const int *scounts, const int *
 
     /* Initiate all send/recv to/from others. */
     nreqs = 0;
-    reqs = preq = mca_coll_basic_get_reqs((mca_coll_basic_module_t*) module, 2 * size);
+    reqs = preq = coll_base_comm_get_reqs(module->base_data, 2 * size);
 
     /* Post all receives first -- a simple optimization */
     for (i = 0; i < size; ++i) {
@@ -304,7 +302,7 @@ mca_coll_basic_alltoallw_inter(const void *sbuf, const int *scounts, const int *
                                       comm, preq++));
         ++nreqs;
         if (OMPI_SUCCESS != err) {
-            mca_coll_basic_free_reqs(reqs, nreqs);
+            ompi_coll_base_free_reqs(reqs, nreqs);
             return err;
         }
     }
@@ -325,7 +323,7 @@ mca_coll_basic_alltoallw_inter(const void *sbuf, const int *scounts, const int *
                                       preq++));
         ++nreqs;
         if (OMPI_SUCCESS != err) {
-            mca_coll_basic_free_reqs(reqs, nreqs);
+            ompi_coll_base_free_reqs(reqs, nreqs);
             return err;
         }
     }
@@ -341,9 +339,8 @@ mca_coll_basic_alltoallw_inter(const void *sbuf, const int *scounts, const int *
      * error after we free everything. */
     err = ompi_request_wait_all(nreqs, reqs, MPI_STATUSES_IGNORE);
 
-    if (OMPI_SUCCESS != err) {  /* Free the requests. */
-        mca_coll_basic_free_reqs(reqs, nreqs);
-    }
+    /* Free the requests in all cases as they are persistent */
+    ompi_coll_base_free_reqs(reqs, nreqs);
 
     /* All done */
     return err;
