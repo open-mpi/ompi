@@ -186,6 +186,7 @@ static int rte_init(void)
     }
 
     /* retrieve our topology */
+    val = NULL;
     OPAL_MODEX_RECV_VALUE_OPTIONAL(ret, OPAL_PMIX_LOCAL_TOPO,
                                    ORTE_PROC_MY_NAME, &val, OPAL_STRING);
     if (OPAL_SUCCESS == ret && NULL != val) {

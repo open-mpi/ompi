@@ -311,6 +311,11 @@ int orte_proc_info_finalize(void)
         orte_process_info.nodename = NULL;
     }
 
+    if (NULL != orte_process_info.cpuset) {
+        free(orte_process_info.cpuset);
+        orte_process_info.cpuset = NULL;
+    }
+
     if (NULL != orte_process_info.sock_stdin) {
         free(orte_process_info.sock_stdin);
         orte_process_info.sock_stdin = NULL;
