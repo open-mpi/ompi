@@ -590,42 +590,24 @@ static int mca_bml_r2_add_procs( size_t nprocs,
 static int mca_bml_r2_del_procs(size_t nprocs,
                                 struct ompi_proc_t** procs)
 {
-    int rc;
-    struct ompi_proc_t** del_procs = (struct ompi_proc_t**)
-        malloc(nprocs * sizeof(struct ompi_proc_t*));
-    size_t n_del_procs = 0;
-
-    if (NULL == del_procs) {
-        return OMPI_ERR_OUT_OF_RESOURCE;
-    }
-
     for (size_t p = 0 ; p < nprocs ; ++p) {
         ompi_proc_t *proc = procs[p];
-        /* We much check that there are 2 references to the proc (not 1). The
-         * first reference belongs to ompi/proc the second belongs to the bml
-         * since we retained it. We will release that reference at the end of
-         * the loop below. */
-        if (((opal_object_t*)proc)->obj_reference_count == 2 &&
-            NULL != proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML]) {
-            del_procs[n_del_procs++] = proc;
-        }
-    }
-
-    for (size_t p = 0 ; p < n_del_procs ; ++p) {
-        ompi_proc_t *proc = del_procs[p];
-        mca_bml_base_endpoint_t* bml_endpoint =
+        mca_bml_base_endpoint_t *bml_endpoint =
             (mca_bml_base_endpoint_t*) proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML];
-        size_t f_size;
+
+        if (!bml_endpoint) {
+            /* NTH: I would think this is a developer bug and should not be ignored. */
+            continue;
+        }
 
         /* notify each btl that the proc is going away */
-        f_size = mca_bml_base_btl_array_get_size(&bml_endpoint->btl_send);
+        size_t f_size = mca_bml_base_btl_array_get_size (&bml_endpoint->btl_send);
         for (size_t f_index = 0 ; f_index < f_size ; ++f_index) {
             mca_bml_base_btl_t* bml_btl = mca_bml_base_btl_array_get_index(&bml_endpoint->btl_send, f_index);
-            mca_btl_base_module_t* btl = bml_btl->btl;
+            mca_btl_base_module_t *btl = bml_btl->btl;
 
-            rc = btl->btl_del_procs(btl, 1, (opal_proc_t**)&proc, &bml_btl->btl_endpoint);
-            if(OMPI_SUCCESS != rc) {
-                free(del_procs);
+            int rc = btl->btl_del_procs (btl, 1, (opal_proc_t **) &proc, &bml_btl->btl_endpoint);
+            if (OPAL_SUCCESS != rc) {
                 return rc;
             }
 
@@ -635,14 +617,37 @@ static int mca_bml_r2_del_procs(size_t nprocs,
              */
         }
 
+        /* some btl endpoints may only be in the btl_rdma array. call del_procs on those as well */
+        size_t r_size = mca_bml_base_btl_array_get_size (&bml_endpoint->btl_rdma);
+        for (size_t r_index = 0 ; r_index < r_size ; ++r_index) {
+            mca_bml_base_btl_t *rdma_btl = mca_bml_base_btl_array_get_index (&bml_endpoint->btl_rdma, r_index);
+            mca_btl_base_module_t *btl = rdma_btl->btl;
+            bool needs_del = true;
+
+            for (size_t f_index = 0 ; f_index < f_size ; ++f_index) {
+                mca_bml_base_btl_t *bml_btl = mca_bml_base_btl_array_get_index (&bml_endpoint->btl_send, f_index);
+                if (bml_btl->btl_endpoint == rdma_btl->btl_endpoint) {
+                    needs_del = false;
+                    break;
+                }
+            }
+
+            if (needs_del) {
+                int rc = btl->btl_del_procs (btl, 1, (opal_proc_t **) &proc, &rdma_btl->btl_endpoint);
+                if (OPAL_SUCCESS != rc) {
+                    return rc;
+                }
+            }
+        }
+
         proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML] = NULL;
 
+        /* release the bml endpoint's reference to the proc */
         OBJ_RELEASE(proc);
 
         /* do any required cleanup */
         OBJ_RELEASE(bml_endpoint);
     }
-    free(del_procs);
 
     return OMPI_SUCCESS;
 }
