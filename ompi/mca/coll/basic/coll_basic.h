@@ -285,29 +285,12 @@ BEGIN_C_DECLS
 
 struct mca_coll_basic_module_t {
     mca_coll_base_module_t super;
-
-    ompi_request_t **mccb_reqs;
-    int mccb_num_reqs;
 };
 typedef struct mca_coll_basic_module_t mca_coll_basic_module_t;
-OBJ_CLASS_DECLARATION(mca_coll_basic_module_t);
+OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_coll_basic_module_t);
 
-/* Utility functions */
-
-static inline void mca_coll_basic_free_reqs(ompi_request_t ** reqs, int count)
-{
-    int i;
-    for (i = 0; i < count; ++i)
-        if( MPI_REQUEST_NULL != reqs[i] ) {
-            ompi_request_free(&reqs[i]);
-        }
-}
-
-/**
- * Return the array of requests on the data. If the array was not initialized
- * or if it's size was too small, allocate it to fit the requested size.
- */
-ompi_request_t** mca_coll_basic_get_reqs(mca_coll_basic_module_t* data, int nreqs);
+typedef mca_coll_base_comm_t mca_coll_basic_comm_t;
+OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_coll_basic_comm_t);
 
 END_C_DECLS
 

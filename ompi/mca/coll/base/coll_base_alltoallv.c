@@ -288,9 +288,8 @@ ompi_coll_base_alltoallv_intra_basic_linear(const void *sbuf, const int *scounts
     err = ompi_request_wait_all(nreqs, data->mcct_reqs,
                                 MPI_STATUSES_IGNORE);
  err_hndl:
-    if( MPI_SUCCESS != err ) {  /* Free the requests. */
-        ompi_coll_base_free_reqs(data->mcct_reqs, nreqs);
-    }
+    /* Free the requests in all cases as they are persistent */
+    ompi_coll_base_free_reqs(data->mcct_reqs, nreqs);
 
     return err;
 }

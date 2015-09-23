@@ -143,7 +143,7 @@ ompi_coll_base_bcast_intra_generic( void* buffer,
 
             /* wait for and forward the previous segment to children */
             err = ompi_request_wait( &recv_reqs[req_index ^ 0x1],
-                                     MPI_STATUSES_IGNORE );
+                                     MPI_STATUS_IGNORE );
             if (err != MPI_SUCCESS) { line = __LINE__; goto error_hndl; }
 
             for( i = 0; i < tree->tree_nextsize; i++ ) {
@@ -175,7 +175,7 @@ ompi_coll_base_bcast_intra_generic( void* buffer,
         }
 
         /* Process the last segment */
-        err = ompi_request_wait( &recv_reqs[req_index], MPI_STATUSES_IGNORE );
+        err = ompi_request_wait( &recv_reqs[req_index], MPI_STATUS_IGNORE );
         if (err != MPI_SUCCESS) { line = __LINE__; goto error_hndl; }
         sendcount = original_count - (ptrdiff_t)(num_segments - 1) * count_by_segment;
         for( i = 0; i < tree->tree_nextsize; i++ ) {
@@ -240,8 +240,11 @@ ompi_coll_base_bcast_intra_generic( void* buffer,
  error_hndl:
     OPAL_OUTPUT( (ompi_coll_base_framework.framework_output,"%s:%4d\tError occurred %d, rank %2d",
                   __FILE__, line, err, rank) );
-    if( (MPI_SUCCESS != err) && (NULL != send_reqs) ) {
-        ompi_coll_base_free_reqs( send_reqs, tree->tree_nextsize);
+    if( MPI_SUCCESS != err ) {
+        ompi_coll_base_free_reqs( recv_reqs, 2);
+        if( NULL != send_reqs ) {
+            ompi_coll_base_free_reqs( send_reqs, tree->tree_nextsize);
+        }
     }
 
     return err;
@@ -378,7 +381,6 @@ ompi_coll_base_bcast_intra_split_bintree ( void* buffer,
     ptrdiff_t type_extent, lb;
     ompi_request_t *base_req, *new_req;
     ompi_coll_tree_t *tree;
-    mca_coll_base_comm_t *data = module->base_data;
 
     size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
@@ -391,7 +393,7 @@ ompi_coll_base_bcast_intra_split_bintree ( void* buffer,
 
     /* setup the binary tree topology. */
     COLL_BASE_UPDATE_BINTREE( comm, module, root );
-    tree = data->cached_bintree;
+    tree = module->base_data->cached_bintree;
 
     err = ompi_datatype_type_size( datatype, &type_size );
 
@@ -501,8 +503,8 @@ ompi_coll_base_bcast_intra_split_bintree ( void* buffer,
                                       comm, &new_req));
             if (err != MPI_SUCCESS) { line = __LINE__; goto error_hndl; }
 
-            /* wait for and forward current segment */
-            err = ompi_request_wait_all( 1, &base_req, MPI_STATUSES_IGNORE );
+            /* wait for and forward the previous segment */
+            err = ompi_request_wait( &base_req, MPI_STATUS_IGNORE );
             for( i = 0; i < tree->tree_nextsize; i++ ) {  /* send data to children (segcount[lr]) */
                 err = MCA_PML_CALL(send( tmpbuf[lr], segcount[lr], datatype,
                                          tree->tree_next[i], MCA_COLL_BASE_TAG_BCAST,
@@ -517,7 +519,7 @@ ompi_coll_base_bcast_intra_split_bintree ( void* buffer,
         } /* end of for segindex */
 
         /* wait for the last segment and forward current segment */
-        err = ompi_request_wait_all( 1, &base_req, MPI_STATUSES_IGNORE );
+        err = ompi_request_wait( &base_req, MPI_STATUS_IGNORE );
         for( i = 0; i < tree->tree_nextsize; i++ ) {  /* send data to children */
             err = MCA_PML_CALL(send(tmpbuf[lr], sendcount[lr], datatype,
                                     tree->tree_next[i], MCA_COLL_BASE_TAG_BCAST,
@@ -633,9 +635,7 @@ ompi_coll_base_bcast_intra_basic_linear(void *buff, int count,
                                         mca_coll_base_module_t *module)
 {
     int i, size, rank, err;
-    mca_coll_base_comm_t *data = module->base_data;
     ompi_request_t **preq, **reqs;
-
 
     size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
@@ -651,23 +651,19 @@ ompi_coll_base_bcast_intra_basic_linear(void *buff, int count,
     }
 
     /* Root sends data to all others. */
-    preq = reqs = coll_base_comm_get_reqs(data, size-1);
+    preq = reqs = coll_base_comm_get_reqs(module->base_data, size-1);
     for (i = 0; i < size; ++i) {
         if (i == rank) {
             continue;
         }
 
-        err = MCA_PML_CALL(isend_init(buff, count, datatype, i,
-                                      MCA_COLL_BASE_TAG_BCAST,
-                                      MCA_PML_BASE_SEND_STANDARD,
-                                      comm, preq++));
+        err = MCA_PML_CALL(isend(buff, count, datatype, i,
+                                 MCA_COLL_BASE_TAG_BCAST,
+                                 MCA_PML_BASE_SEND_STANDARD,
+                                 comm, preq++));
         if (MPI_SUCCESS != err) { goto err_hndl; }
     }
     --i;
-
-    /* Start your engines.  This will never return an error. */
-
-    MCA_PML_CALL(start(i, reqs));
 
     /* Wait for them all.  If there's an error, note that we don't
      * care what the error was -- just that there *was* an error.  The

@@ -85,7 +85,6 @@ mca_coll_basic_allreduce_inter(const void *sbuf, void *rbuf, int count,
     ptrdiff_t true_lb, true_extent;
     char *tmpbuf = NULL, *pml_buffer = NULL;
     ompi_request_t *req[2];
-    mca_coll_basic_module_t *basic_module = (mca_coll_basic_module_t*) module;
     ompi_request_t **reqs = NULL;
 
     rank = ompi_comm_rank(comm);
@@ -114,7 +113,7 @@ mca_coll_basic_allreduce_inter(const void *sbuf, void *rbuf, int count,
         if (NULL == tmpbuf) { err = OMPI_ERR_OUT_OF_RESOURCE; line = __LINE__; goto exit; }
         pml_buffer = tmpbuf - true_lb;
 
-        reqs = mca_coll_basic_get_reqs(basic_module, rsize - 1);
+        reqs = coll_base_comm_get_reqs(module->base_data, rsize - 1);
         if( NULL == reqs ) { err = OMPI_ERR_OUT_OF_RESOURCE; line = __LINE__; goto exit; }
 
         /* Do a send-recv between the two root procs. to avoid deadlock */
@@ -201,7 +200,7 @@ mca_coll_basic_allreduce_inter(const void *sbuf, void *rbuf, int count,
     if( MPI_SUCCESS != err ) {
         OPAL_OUTPUT((ompi_coll_base_framework.framework_output,"%s:%4d\tError occurred %d, rank %2d", __FILE__,
                      line, err, rank));
-        mca_coll_basic_free_reqs(reqs, rsize - 1);
+        ompi_coll_base_free_reqs(reqs, rsize - 1);
     }
     if (NULL != tmpbuf) {
         free(tmpbuf);

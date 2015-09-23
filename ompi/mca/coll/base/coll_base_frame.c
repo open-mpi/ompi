@@ -68,15 +68,7 @@ OBJ_CLASS_INSTANCE(mca_coll_base_module_t, opal_object_t,
 static void
 coll_base_comm_construct(mca_coll_base_comm_t *data)
 {
-    data->mcct_reqs = NULL;
-    data->mcct_num_reqs = 0;
-    data->cached_ntree = NULL;
-    data->cached_bintree = NULL;
-    data->cached_bmtree = NULL;
-    data->cached_in_order_bmtree = NULL;
-    data->cached_chain = NULL;
-    data->cached_pipeline = NULL;
-    data->cached_in_order_bintree = NULL;
+    memset ((char *) data + sizeof (data->super), 0, sizeof (*data) - sizeof (data->super));
 }
 
 static void

@@ -650,9 +650,9 @@ int ompi_coll_base_alltoall_intra_basic_linear(const void *sbuf, int scount,
     if( MPI_SUCCESS != err ) {
         OPAL_OUTPUT( (ompi_coll_base_framework.framework_output,"%s:%4d\tError occurred %d, rank %2d",
                       __FILE__, line, err, rank) );
-        /* Free the reqs */
-        ompi_coll_base_free_reqs(req, nreqs);
     }
+    /* Free the reqs in all cases as they are persistent requests */
+    ompi_coll_base_free_reqs(req, nreqs);
 
     /* All done */
     return err;
