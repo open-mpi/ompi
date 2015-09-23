@@ -62,9 +62,9 @@ extern int opal_pmix_base_exchange(opal_value_t *info,
                 OPAL_ERROR_LOG((r));                                     \
             }                                                            \
         }                                                                \
-        /* do not destruct the keyval as we don't own */                 \
-        /* the data - the caller will take care of the */                \
-        /* key and value storage, and the kv itself has none */          \
+        /* opal_value_load makes a copy of the data, so release it */    \
+        _kv.key = NULL;                                                  \
+        OBJ_DESTRUCT(&(_kv));                                            \
     } while(0);
 
 /**

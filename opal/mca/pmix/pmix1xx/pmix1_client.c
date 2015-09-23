@@ -131,6 +131,7 @@ int pmix1_abort(int flag, const char *msg,
     pmix_proc_t *parray=NULL;
     size_t n, cnt=0;
     opal_namelist_t *ptr;
+    char *tmp;
 
     opal_output_verbose(1, opal_pmix_base_framework.framework_output,
                         "PMIx_client abort");
@@ -141,7 +142,9 @@ int pmix1_abort(int flag, const char *msg,
         PMIX_PROC_CREATE(parray, cnt);
         n=0;
         OPAL_LIST_FOREACH(ptr, procs, opal_namelist_t) {
-            (void)strncpy(parray[n].nspace, opal_convert_jobid_to_string(ptr->name.jobid), PMIX_MAX_NSLEN);
+            tmp = opal_convert_jobid_to_string(ptr->name.jobid);
+            (void)strncpy(parray[n].nspace, tmp, PMIX_MAX_NSLEN);
+            free(tmp);
             parray[n].rank = ptr->name.vpid;
             ++n;
         }
@@ -181,6 +184,7 @@ int pmix1_fence(opal_list_t *procs, int collect_data)
     size_t n, cnt=0;
     opal_namelist_t *ptr;
     pmix_info_t info, *iptr;
+    char *tmp;
 
     opal_output_verbose(1, opal_pmix_base_framework.framework_output,
                         "PMIx_client fence");
@@ -191,7 +195,9 @@ int pmix1_fence(opal_list_t *procs, int collect_data)
         PMIX_PROC_CREATE(parray, cnt);
         n=0;
         OPAL_LIST_FOREACH(ptr, procs, opal_namelist_t) {
-            (void)strncpy(parray[n].nspace, opal_convert_jobid_to_string(ptr->name.jobid), PMIX_MAX_NSLEN);
+            tmp = opal_convert_jobid_to_string(ptr->name.jobid);
+            (void)strncpy(parray[n].nspace, tmp, PMIX_MAX_NSLEN);
+            free(tmp);
             parray[n].rank = ptr->name.vpid;
             ++n;
         }
@@ -230,6 +236,7 @@ int pmix1_fencenb(opal_list_t *procs, int collect_data,
     opal_namelist_t *ptr;
     pmix1_opcaddy_t *op;
     pmix_info_t info, *iptr;
+    char *tmp;
 
     opal_output_verbose(1, opal_pmix_base_framework.framework_output,
                         "PMIx_client fence_nb");
@@ -240,7 +247,9 @@ int pmix1_fencenb(opal_list_t *procs, int collect_data,
         PMIX_PROC_CREATE(parray, cnt);
         n=0;
         OPAL_LIST_FOREACH(ptr, procs, opal_namelist_t) {
-            (void)strncpy(parray[n].nspace, opal_convert_jobid_to_string(ptr->name.jobid), PMIX_MAX_NSLEN);
+            tmp = opal_convert_jobid_to_string(ptr->name.jobid);
+            (void)strncpy(parray[n].nspace, tmp, PMIX_MAX_NSLEN);
+            free(tmp);
             parray[n].rank = ptr->name.vpid;
             ++n;
         }
@@ -300,6 +309,7 @@ int pmix1_get(const opal_process_name_t *proc, const char *key,
     size_t ninfo, n;
     pmix_info_t *pinfo;
     opal_value_t *ival;
+    char *tmp;
 
     opal_output_verbose(1, opal_pmix_base_framework.framework_output,
                         "%s PMIx_client get on proc %s key %s",
@@ -310,7 +320,9 @@ int pmix1_get(const opal_process_name_t *proc, const char *key,
     *val = NULL;
     if (NULL != proc) {
         /* convert the process jobid */
-        (void)strncpy(p.nspace, opal_convert_jobid_to_string(proc->jobid), PMIX_MAX_NSLEN);
+        tmp = opal_convert_jobid_to_string(proc->jobid);
+        (void)strncpy(p.nspace, tmp, PMIX_MAX_NSLEN);
+        free(tmp);
         p.rank = proc->vpid;
         pptr = &p;
     } else {
@@ -918,6 +930,7 @@ int pmix1_disconnect(opal_list_t *procs)
     pmix_proc_t *parray=NULL;
     size_t n, cnt=0;
     opal_namelist_t *ptr;
+    char *tmp;
 
     /* protect against bozo error */
     if (NULL == procs || 0 == (cnt = opal_list_get_size(procs))) {
@@ -929,7 +942,9 @@ int pmix1_disconnect(opal_list_t *procs)
     PMIX_PROC_CREATE(parray, cnt);
     n=0;
     OPAL_LIST_FOREACH(ptr, procs, opal_namelist_t) {
-        (void)strncpy(parray[n].nspace, opal_convert_jobid_to_string(ptr->name.jobid), PMIX_MAX_NSLEN);
+        tmp = opal_convert_jobid_to_string(ptr->name.jobid);
+        (void)strncpy(parray[n].nspace, tmp, PMIX_MAX_NSLEN);
+        free(tmp);
         if (OPAL_VPID_WILDCARD == ptr->name.vpid) {
             parray[n].rank = PMIX_RANK_WILDCARD;
         } else {
@@ -1004,6 +1019,9 @@ int pmix1_resolve_peers(const char *nodename, opal_jobid_t jobid,
     }
 
     ret = PMIx_Resolve_peers(nodename, nspace, &array, &nprocs);
+    if (NULL != nspace) {
+        free(nspace);
+    }
     rc = pmix1_convert_rc(ret);
 
     if (NULL != array && 0 < nprocs) {
@@ -1012,9 +1030,6 @@ int pmix1_resolve_peers(const char *nodename, opal_jobid_t jobid,
             opal_list_append(procs, &nm->super);
             rc = opal_convert_string_to_jobid(&nm->name.jobid, array[n].nspace);
             if (OPAL_SUCCESS != rc) {
-                if (NULL != nspace) {
-                    free(nspace);
-                }
                 PMIX_PROC_FREE(array, nprocs);
                 return rc;
             }
