@@ -398,7 +398,12 @@ int ompi_proc_finalize (void)
     return OMPI_SUCCESS;
 }
 
-ompi_proc_t** ompi_proc_world(size_t *size)
+int ompi_proc_world_size (void)
+{
+    return ompi_process_info.num_procs;
+}
+
+ompi_proc_t **ompi_proc_get_allocated (size_t *size)
 {
     ompi_proc_t **procs;
     ompi_proc_t *proc;
@@ -452,6 +457,55 @@ ompi_proc_t** ompi_proc_world(size_t *size)
     OPAL_THREAD_UNLOCK(&ompi_proc_lock);
 
     *size = count;
+    return procs;
+}
+
+ompi_proc_t **ompi_proc_world (size_t *size)
+{
+    ompi_proc_t **procs;
+    ompi_proc_t *proc;
+    size_t count = 0;
+    ompi_rte_cmp_bitmask_t mask;
+    ompi_process_name_t my_name;
+
+    /* check bozo case */
+    if (NULL == ompi_proc_local_proc) {
+        return NULL;
+    }
+
+    /* First count how many match this jobid (we already know this from our process info) */
+    count = ompi_process_info.num_procs;
+
+    /* allocate an array */
+    procs = (ompi_proc_t **) malloc (count * sizeof(ompi_proc_t*));
+    if (NULL == procs) {
+        return NULL;
+    }
+
+    /* now get/allocate all the procs in this jobid */
+    for (int i = 0 ; i < count ; ++i) {
+        opal_process_name_t name = {.jobid = OMPI_CAST_RTE_NAME(&ompi_proc_local_proc->super.proc_name)->jobid,
+                                    .vpid = i};
+
+        /* DO NOT RETAIN THIS OBJECT - the reference count on this
+         * object will be adjusted by external callers. The intent
+         * here is to allow the reference count to drop to zero if
+         * the app no longer desires to communicate with this proc.
+         * For example, the proc may call comm_disconnect on all
+         * communicators involving this proc. In such cases, we want
+         * the proc object to be removed from the list. By not incrementing
+         * the reference count here, we allow this to occur.
+         *
+         * We don't implement that yet, but we are still safe for now as
+         * the OBJ_NEW in ompi_proc_init owns the initial reference
+         * count which cannot be released until ompi_proc_finalize is
+         * called.
+         */
+        procs[i] = ompi_proc_for_name (name);
+    }
+
+    *size = count;
+
     return procs;
 }
 

@@ -138,7 +138,10 @@ OMPI_DECLSPEC int ompi_proc_finalize(void);
  * Returns the list of proc instances associated with this job.  Given
  * the current association between a job and an MPI_COMM_WORLD, this
  * function provides the process instances for the current
- * MPI_COMM_WORLD.
+ * MPI_COMM_WORLD. Use this function only if absolutely needed as it
+ * will cause ompi_proc_t objects to be allocated for every process in
+ * the job. If you only need the allocated ompi_proc_t objects call
+ * ompi_proc_get_allocated() instead.
  *
  * @note The reference count of each process in the array is
  * NOT incremented - the caller is responsible for ensuring the
@@ -152,6 +155,36 @@ OMPI_DECLSPEC int ompi_proc_finalize(void);
  */
 OMPI_DECLSPEC ompi_proc_t** ompi_proc_world(size_t* size);
 
+/**
+ * Returns the number of processes in the associated with this job.
+ *
+ * Returns the list of proc instances associated with this job.  Given
+ * the current association between a job and an MPI_COMM_WORLD, this
+ * function provides the number of processes for the current
+ * MPI_COMM_WORLD.
+ */
+
+OMPI_DECLSPEC int ompi_proc_world_size (void);
+
+/**
+ * Returns the list of proc instances associated with this job.
+ *
+ * Returns the list of proc instances associated with this job that have
+ * already been allocated.  Given the current association between a job
+ * and an MPI_COMM_WORLD, this function provides the allocated process
+ * instances for the current MPI_COMM_WORLD.
+ *
+ * @note The reference count of each process in the array is
+ * NOT incremented - the caller is responsible for ensuring the
+ * correctness of the reference count once they are done with
+ * the array.
+ *
+ * @param[in] size     Number of processes in the ompi_proc_t array
+ *
+ * @return Array of pointers to allocated proc instances in the current
+ * MPI_COMM_WORLD, or NULL if there is an internal failure.
+ */
+OMPI_DECLSPEC ompi_proc_t **ompi_proc_get_allocated (size_t *size);
 
 /**
  * Returns the list of all known proc instances.
