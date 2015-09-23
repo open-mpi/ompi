@@ -85,6 +85,7 @@ int ompi_coll_libnbc_ineighbor_alltoallw(void *sbuf, int *scounts, MPI_Aint *sdi
     free (srcs);
 
     if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+      free (dsts);
       OBJ_RELEASE(schedule);
       return res;
     }

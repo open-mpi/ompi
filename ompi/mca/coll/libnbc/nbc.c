@@ -508,7 +508,7 @@ static inline int NBC_Start_round(NBC_Handle *handle) {
         if(unpackargs.tmpinbuf) {
           buf1=(char*)handle->tmpbuf+(long)unpackargs.inbuf;
         } else {
-          buf1=unpackargs.outbuf;
+          buf1=unpackargs.inbuf;
         }
         if(unpackargs.tmpoutbuf) {
           buf2=(char*)handle->tmpbuf+(long)unpackargs.outbuf;
