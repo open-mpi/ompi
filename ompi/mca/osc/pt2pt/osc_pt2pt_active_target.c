@@ -114,11 +114,13 @@ static ompi_osc_pt2pt_peer_t **ompi_osc_pt2pt_get_peers (ompi_osc_pt2pt_module_t
 
 static void ompi_osc_pt2pt_release_peers (ompi_osc_pt2pt_peer_t **peers, int npeers)
 {
-    for (int i = 0 ; i < npeers ; ++i) {
-        OBJ_RELEASE(peers[i]);
-    }
+    if (peers) {
+        for (int i = 0 ; i < npeers ; ++i) {
+            OBJ_RELEASE(peers[i]);
+        }
 
-    free (peers);
+        free (peers);
+    }
 }
 
 int ompi_osc_pt2pt_fence(int assert, ompi_win_t *win)
@@ -228,19 +230,23 @@ int ompi_osc_pt2pt_start (ompi_group_t *group, int assert, ompi_win_t *win)
                          "ompi_osc_pt2pt_start entering with group size %d...",
                          sync->num_peers));
 
-    if (0 == ompi_group_size (group)) {
-        /* nothing more to do. this is an empty start epoch */
-        OPAL_THREAD_UNLOCK(&module->lock);
-        return OMPI_SUCCESS;
-    }
-
-    opal_atomic_wmb ();
-
     sync->type = OMPI_OSC_PT2PT_SYNC_TYPE_PSCW;
 
     /* prevent us from entering a passive-target, fence, or another pscw access epoch until
      * the matching complete is called */
     sync->epoch_active = true;
+
+    /* save the group */
+    OBJ_RETAIN(group);
+
+    if (0 == ompi_group_size (group)) {
+        /* nothing more to do. this is an empty start epoch */
+        sync->eager_send_active = true;
+        OPAL_THREAD_UNLOCK(&module->lock);
+        return OMPI_SUCCESS;
+    }
+
+    opal_atomic_wmb ();
 
     /* translate the group ranks into the communicator */
     sync->peer_list.peers = ompi_osc_pt2pt_get_peers (module, group);
@@ -248,10 +254,6 @@ int ompi_osc_pt2pt_start (ompi_group_t *group, int assert, ompi_win_t *win)
         OPAL_THREAD_UNLOCK(&module->lock);
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
-
-    /* save the group */
-    OBJ_RETAIN(group);
-    ompi_group_increment_proc_count(group);
 
     if (!(assert & MPI_MODE_NOCHECK)) {
         OPAL_THREAD_LOCK(&sync->lock);
@@ -318,12 +320,6 @@ int ompi_osc_pt2pt_complete (ompi_win_t *win)
     group_size = sync->num_peers;
 
     peers = sync->peer_list.peers;
-    if (NULL == peers) {
-        /* empty peer list */
-        OPAL_THREAD_UNLOCK(&(module->lock));
-        OBJ_RELEASE(group);
-        return OMPI_SUCCESS;
-    }
 
     OPAL_THREAD_UNLOCK(&module->lock);
 
@@ -383,8 +379,10 @@ int ompi_osc_pt2pt_complete (ompi_win_t *win)
         module->epoch_outgoing_frag_count[rank] = 0;
     }
 
-    /* release our reference to peers in this group */
-    ompi_osc_pt2pt_release_peers (peers, group_size);
+    if (peers) {
+        /* release our reference to peers in this group */
+        ompi_osc_pt2pt_release_peers (peers, group_size);
+    }
 
     if (OMPI_SUCCESS != ret) {
         return ret;
@@ -403,7 +401,6 @@ int ompi_osc_pt2pt_complete (ompi_win_t *win)
     OPAL_THREAD_UNLOCK(&module->lock);
 
     /* phase 2 cleanup group */
-    ompi_group_decrement_proc_count(group);
     OBJ_RELEASE(group);
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
@@ -439,7 +436,6 @@ int ompi_osc_pt2pt_post (ompi_group_t *group, int assert, ompi_win_t *win)
 
     /* save the group */
     OBJ_RETAIN(group);
-    ompi_group_increment_proc_count(group);
 
     module->pw_group = group;
 
@@ -523,7 +519,6 @@ int ompi_osc_pt2pt_wait (ompi_win_t *win)
     module->pw_group = NULL;
     OPAL_THREAD_UNLOCK(&module->lock);
 
-    ompi_group_decrement_proc_count(group);
     OBJ_RELEASE(group);
 
     OPAL_OUTPUT_VERBOSE((25, ompi_osc_base_framework.framework_output,
@@ -561,7 +556,6 @@ int ompi_osc_pt2pt_test (ompi_win_t *win, int *flag)
 
         OPAL_THREAD_UNLOCK(&(module->lock));
 
-        ompi_group_decrement_proc_count(group);
         OBJ_RELEASE(group);
 
         return OMPI_SUCCESS;
