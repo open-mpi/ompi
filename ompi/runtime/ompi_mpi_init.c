@@ -739,9 +739,10 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         goto error;
     }
 
-    /* add all ompi_proc_t's to PML */
-    if (NULL == (procs = ompi_proc_world(&nprocs))) {
-        error = "ompi_proc_world() failed";
+    /* add all allocated ompi_proc_t's to PML (below the add_procs limit this
+     * behaves identically to ompi_proc_world ()) */
+    if (NULL == (procs = ompi_proc_get_allocated (&nprocs))) {
+        error = "ompi_proc_get_allocated () failed";
         goto error;
     }
     ret = MCA_PML_CALL(add_procs(procs, nprocs));

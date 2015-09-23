@@ -304,26 +304,29 @@ int ompi_mtl_mxm_module_init(void)
     }
 #endif
 
-    if (NULL == (procs = ompi_proc_world(&totps))) {
-        MXM_ERROR("Unable to obtain process list");
-        return OMPI_ERROR;
-    }
+    totps = ompi_proc_world_size ();
 
     if (totps < (size_t)ompi_mtl_mxm.mxm_np) {
         MXM_VERBOSE(1, "MXM support will be disabled because of total number "
                     "of processes (%lu) is less than the minimum set by the "
                     "mtl_mxm_np MCA parameter (%u)", totps, ompi_mtl_mxm.mxm_np);
-        free(procs);
         return OMPI_ERR_NOT_SUPPORTED;
     }
     MXM_VERBOSE(1, "MXM support enabled");
 
     if (ORTE_NODE_RANK_INVALID == (lr = ompi_process_info.my_node_rank)) {
         MXM_ERROR("Unable to obtain local node rank");
-        free(procs);
         return OMPI_ERROR;
     }
     nlps = ompi_process_info.num_local_peers + 1;
+
+    /* local procs are always allocated. if that ever changes this will need to
+     * be modified. */
+    procs = ompi_proc_get_allocated (&totps);
+    if (NULL == procs) {
+        MXM_ERROR("Unable to obtain process list");
+        return OMPI_ERROR;
+    }
 
     for (proc = 0; proc < totps; proc++) {
         if (OPAL_PROC_ON_LOCAL_NODE(procs[proc]->super.proc_flags)) {
@@ -595,14 +598,8 @@ int ompi_mtl_mxm_del_procs(struct mca_mtl_base_module_t *mtl, size_t nprocs,
     size_t i;
 
 #if MXM_API >= MXM_VERSION(3,1)
-    if (ompi_mtl_mxm.bulk_disconnect) {
-        size_t nprocs_world;
-        ompi_proc_t **procs;
-        procs = ompi_proc_world(&nprocs_world);
-        if (nprocs == nprocs_world) {
-            mxm_ep_powerdown(ompi_mtl_mxm.ep);
-        }
-        free(procs);
+    if (ompi_mtl_mxm.bulk_disconnect && nprocs == ompi_proc_world_size ()) {
+        mxm_ep_powerdown(ompi_mtl_mxm.ep);
     }
 #endif
 
