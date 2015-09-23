@@ -102,8 +102,15 @@ PMIX_CLASS_INSTANCE(pmix_usock_queue_t,
 static void scon(pmix_shift_caddy_t *p)
 {
     p->active = false;
+    p->kv = NULL;
     p->relfn = NULL;
     p->relcbd = NULL;
+}
+static void scdes(pmix_shift_caddy_t *p)
+{
+    if (NULL != p->kv) {
+        PMIX_RELEASE(p->kv);
+    }
 }
 PMIX_CLASS_INSTANCE(pmix_shift_caddy_t,
                     pmix_object_t,

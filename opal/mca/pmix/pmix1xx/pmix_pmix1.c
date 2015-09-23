@@ -354,7 +354,7 @@ void pmix1_value_load(pmix_value_t *v,
         default:
             /* silence warnings */
             break;
-        }
+    }
 }
 
 int pmix1_value_unload(opal_value_t *kv,
