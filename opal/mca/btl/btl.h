@@ -231,11 +231,14 @@ typedef uint8_t mca_btl_base_tag_t;
  */
 #define MCA_BTL_FLAGS_SIGNALED        0x4000
 
-
 /** The BTL supports network atomic operations */
 #define MCA_BTL_FLAGS_ATOMIC_OPS      0x08000
 /** The BTL supports fetching network atomic operations */
 #define MCA_BTL_FLAGS_ATOMIC_FOPS     0x10000
+
+/** The BTL requires add_procs to be with all procs including non-local. Shared-memory
+ * BTLs should not set this flag. */
+#define MCA_BTL_FLAGS_SINGLE_ADD_PROCS 0x20000
 
 /* Default exclusivity levels */
 #define MCA_BTL_EXCLUSIVITY_HIGH     (64*1024) /* internal loopback */
