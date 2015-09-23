@@ -13,7 +13,7 @@
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -120,9 +120,8 @@ int MPI_Neighbor_alltoallw(const void *sendbuf, const int sendcounts[], const MP
     OPAL_CR_ENTER_LIBRARY();
 
     /* Invoke the coll component to perform the back-end operation */
-    /* XXX -- CONST -- do not cast away const -- update mca/coll */
-    err = comm->c_coll.coll_neighbor_alltoallw((void *) sendbuf, (int *) sendcounts, (MPI_Aint *) sdispls, (ompi_datatype_t **) sendtypes,
-                                               recvbuf, (int *) recvcounts, (MPI_Aint *) rdispls, (ompi_datatype_t **) recvtypes,
+    err = comm->c_coll.coll_neighbor_alltoallw(sendbuf, sendcounts, sdispls, sendtypes,
+                                               recvbuf, recvcounts, rdispls, recvtypes,
                                                comm, comm->c_coll.coll_neighbor_alltoallw_module);
     OMPI_ERRHANDLER_RETURN(err, comm, err, FUNC_NAME);
 }

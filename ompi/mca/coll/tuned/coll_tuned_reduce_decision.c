@@ -3,6 +3,8 @@
  * Copyright (c) 2004-2015 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -141,7 +143,7 @@ int ompi_coll_tuned_reduce_intra_check_forced_init (coll_tuned_force_algorithm_m
 }
 
 
-int ompi_coll_tuned_reduce_intra_do_forced(void *sbuf, void* rbuf, int count,
+int ompi_coll_tuned_reduce_intra_do_forced(const void *sbuf, void* rbuf, int count,
                                            struct ompi_datatype_t *dtype,
                                            struct ompi_op_t *op, int root,
                                            struct ompi_communicator_t *comm,
@@ -184,7 +186,7 @@ int ompi_coll_tuned_reduce_intra_do_forced(void *sbuf, void* rbuf, int count,
 }
 
 
-int ompi_coll_tuned_reduce_intra_do_this(void *sbuf, void* rbuf, int count,
+int ompi_coll_tuned_reduce_intra_do_this(const void *sbuf, void* rbuf, int count,
                                          struct ompi_datatype_t *dtype,
                                          struct ompi_op_t *op, int root,
                                          struct ompi_communicator_t *comm,

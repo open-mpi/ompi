@@ -3,6 +3,8 @@
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2015      Bull SAS.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -148,12 +150,12 @@ int ompi_coll_portals4_ibcast_intra(void *buff, int count,
         mca_coll_base_module_t *module);
 int ompi_coll_portals4_ibcast_intra_fini(struct ompi_coll_portals4_request_t *request);
 
-int ompi_coll_portals4_reduce_intra(void *sbuf, void *rbuf, int count,
+int ompi_coll_portals4_reduce_intra(const void *sbuf, void *rbuf, int count,
         MPI_Datatype dtype, MPI_Op op,
         int root,
         struct ompi_communicator_t *comm,
         mca_coll_base_module_t *module);
-int ompi_coll_portals4_ireduce_intra(void* sendbuf, void* recvbuf, int count,
+int ompi_coll_portals4_ireduce_intra(const void* sendbuf, void* recvbuf, int count,
         MPI_Datatype dype, MPI_Op op,
         int root,
         struct ompi_communicator_t *comm,
@@ -161,11 +163,11 @@ int ompi_coll_portals4_ireduce_intra(void* sendbuf, void* recvbuf, int count,
         struct mca_coll_base_module_2_1_0_t *module);
 int ompi_coll_portals4_ireduce_intra_fini(struct ompi_coll_portals4_request_t *request);
 
-int ompi_coll_portals4_allreduce_intra(void* sendbuf, void* recvbuf, int count,
+int ompi_coll_portals4_allreduce_intra(const void* sendbuf, void* recvbuf, int count,
         MPI_Datatype dtype, MPI_Op op,
         struct ompi_communicator_t *comm,
         struct mca_coll_base_module_2_1_0_t *module);
-int ompi_coll_portals4_iallreduce_intra(void* sendbuf, void* recvbuf, int count,
+int ompi_coll_portals4_iallreduce_intra(const void* sendbuf, void* recvbuf, int count,
         MPI_Datatype dtype, MPI_Op op,
         struct ompi_communicator_t *comm,
         ompi_request_t ** ompi_request,

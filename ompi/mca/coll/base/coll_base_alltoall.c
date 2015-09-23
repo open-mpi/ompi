@@ -36,7 +36,7 @@
 
 /* MPI_IN_PLACE all to all algorithm. TODO: implement a better one. */
 int
-mca_coll_base_alltoall_intra_basic_inplace(void *rbuf, int rcount,
+mca_coll_base_alltoall_intra_basic_inplace(const void *rbuf, int rcount,
                                            struct ompi_datatype_t *rdtype,
                                            struct ompi_communicator_t *comm,
                                            mca_coll_base_module_t *module)
@@ -123,7 +123,7 @@ mca_coll_base_alltoall_intra_basic_inplace(void *rbuf, int rcount,
     return err;
 }
 
-int ompi_coll_base_alltoall_intra_pairwise(void *sbuf, int scount,
+int ompi_coll_base_alltoall_intra_pairwise(const void *sbuf, int scount,
                                             struct ompi_datatype_t *sdtype,
                                             void* rbuf, int rcount,
                                             struct ompi_datatype_t *rdtype,
@@ -181,7 +181,7 @@ int ompi_coll_base_alltoall_intra_pairwise(void *sbuf, int scount,
 }
 
 
-int ompi_coll_base_alltoall_intra_bruck(void *sbuf, int scount,
+int ompi_coll_base_alltoall_intra_bruck(const void *sbuf, int scount,
                                          struct ompi_datatype_t *sdtype,
                                          void* rbuf, int rcount,
                                          struct ompi_datatype_t *rdtype,
@@ -324,7 +324,7 @@ int ompi_coll_base_alltoall_intra_bruck(void *sbuf, int scount,
  *                    - wait for any request to complete
  *                    - replace that request by the new one of the same type.
  */
-int ompi_coll_base_alltoall_intra_linear_sync(void *sbuf, int scount,
+int ompi_coll_base_alltoall_intra_linear_sync(const void *sbuf, int scount,
                                                struct ompi_datatype_t *sdtype,
                                                void* rbuf, int rcount,
                                                struct ompi_datatype_t *rdtype,
@@ -471,7 +471,7 @@ int ompi_coll_base_alltoall_intra_linear_sync(void *sbuf, int scount,
 }
 
 
-int ompi_coll_base_alltoall_intra_two_procs(void *sbuf, int scount,
+int ompi_coll_base_alltoall_intra_two_procs(const void *sbuf, int scount,
                                              struct ompi_datatype_t *sdtype,
                                              void* rbuf, int rcount,
                                              struct ompi_datatype_t *rdtype,
@@ -545,7 +545,7 @@ int ompi_coll_base_alltoall_intra_two_procs(void *sbuf, int scount,
 
 /* copied function (with appropriate renaming) starts here */
 
-int ompi_coll_base_alltoall_intra_basic_linear(void *sbuf, int scount,
+int ompi_coll_base_alltoall_intra_basic_linear(const void *sbuf, int scount,
                                                struct ompi_datatype_t *sdtype,
                                                void* rbuf, int rcount,
                                                struct ompi_datatype_t *rdtype,

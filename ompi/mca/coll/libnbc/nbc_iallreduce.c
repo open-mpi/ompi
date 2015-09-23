@@ -7,7 +7,7 @@
  *                         rights reserved.
  * Copyright (c) 2013-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  *
  * Author(s): Torsten Hoefler <htor@cs.indiana.edu>
@@ -19,12 +19,12 @@
 
 #include <assert.h>
 
-static inline int allred_sched_diss(int rank, int p, int count, MPI_Datatype datatype, void *sendbuf,
+static inline int allred_sched_diss(int rank, int p, int count, MPI_Datatype datatype, const void *sendbuf,
                                     void *recvbuf, MPI_Op op, NBC_Schedule *schedule, NBC_Handle *handle);
-static inline int allred_sched_ring(int rank, int p, int count, MPI_Datatype datatype, void *sendbuf,
+static inline int allred_sched_ring(int rank, int p, int count, MPI_Datatype datatype, const void *sendbuf,
                                     void *recvbuf, MPI_Op op, int size, int ext, NBC_Schedule *schedule,
                                     NBC_Handle *handle);
-static inline int allred_sched_linear(int rank, int p, void *sendbuf, void *recvbuf, int count,
+static inline int allred_sched_linear(int rank, int p, const void *sendbuf, void *recvbuf, int count,
                                       MPI_Datatype datatype, MPI_Op op, int ext, int size,
                                       NBC_Schedule *schedule, NBC_Handle *handle);
 
@@ -47,7 +47,7 @@ int NBC_Allreduce_args_compare(NBC_Allreduce_args *a, NBC_Allreduce_args *b, voi
 }
 #endif
 
-int ompi_coll_libnbc_iallreduce(void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op,
+int ompi_coll_libnbc_iallreduce(const void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op,
                                 struct ompi_communicator_t *comm, ompi_request_t ** request,
                                 struct mca_coll_base_module_2_1_0_t *module)
 {
@@ -189,7 +189,7 @@ int ompi_coll_libnbc_iallreduce(void* sendbuf, void* recvbuf, int count, MPI_Dat
   return OMPI_SUCCESS;
 }
 
-int ompi_coll_libnbc_iallreduce_inter(void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op,
+int ompi_coll_libnbc_iallreduce_inter(const void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op,
                                       struct ompi_communicator_t *comm, ompi_request_t ** request,
                                       struct mca_coll_base_module_2_1_0_t *module)
 {
@@ -295,7 +295,7 @@ int ompi_coll_libnbc_iallreduce_inter(void* sendbuf, void* recvbuf, int count, M
   if (vrank == 0) rank = root; \
   if (vrank == root) rank = 0; \
 }
-static inline int allred_sched_diss(int rank, int p, int count, MPI_Datatype datatype, void *sendbuf, void *recvbuf,
+static inline int allred_sched_diss(int rank, int p, int count, MPI_Datatype datatype, const void *sendbuf, void *recvbuf,
                                     MPI_Op op, NBC_Schedule *schedule, NBC_Handle *handle) {
   int root, vrank, maxr, vpeer, peer, res;
 
@@ -387,7 +387,7 @@ static inline int allred_sched_diss(int rank, int p, int count, MPI_Datatype dat
   return OMPI_SUCCESS;
 }
 
-static inline int allred_sched_ring (int r, int p, int count, MPI_Datatype datatype, void *sendbuf, void *recvbuf, MPI_Op op,
+static inline int allred_sched_ring (int r, int p, int count, MPI_Datatype datatype, const void *sendbuf, void *recvbuf, MPI_Op op,
                                      int size, int ext, NBC_Schedule *schedule, NBC_Handle *handle) {
   int segsize, *segsizes, *segoffsets; /* segment sizes and offsets per segment (number of segments == number of nodes */
   int speer, rpeer; /* send and recvpeer */
@@ -588,7 +588,7 @@ static inline int allred_sched_ring (int r, int p, int count, MPI_Datatype datat
   return res;
 }
 
-static inline int allred_sched_linear(int rank, int rsize, void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
+static inline int allred_sched_linear(int rank, int rsize, const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
 				      MPI_Op op, int ext, int size, NBC_Schedule *schedule, NBC_Handle *handle) {
   int res;
 

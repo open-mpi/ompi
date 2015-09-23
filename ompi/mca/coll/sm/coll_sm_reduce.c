@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2009-2013 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -33,14 +35,14 @@
 /*
  * Local functions
  */
-static int reduce_inorder(void *sbuf, void* rbuf, int count,
+static int reduce_inorder(const void *sbuf, void* rbuf, int count,
                           struct ompi_datatype_t *dtype,
                           struct ompi_op_t *op,
                           int root, struct ompi_communicator_t *comm,
                           mca_coll_base_module_t *module);
 #define WANT_REDUCE_NO_ORDER 0
 #if WANT_REDUCE_NO_ORDER
-static int reduce_no_order(void *sbuf, void* rbuf, int count,
+static int reduce_no_order(const void *sbuf, void* rbuf, int count,
                            struct ompi_datatype_t *dtype,
                            struct ompi_op_t *op,
                            int root, struct ompi_communicator_t *comm,
@@ -62,7 +64,7 @@ static inline int min(int a, int b)
  *
  * Simply farms out to the associative or non-associative functions.
  */
-int mca_coll_sm_reduce_intra(void *sbuf, void* rbuf, int count,
+int mca_coll_sm_reduce_intra(const void *sbuf, void* rbuf, int count,
                              struct ompi_datatype_t *dtype,
                              struct ompi_op_t *op,
                              int root, struct ompi_communicator_t *comm,
@@ -171,7 +173,7 @@ int mca_coll_sm_reduce_intra(void *sbuf, void* rbuf, int count,
  */
 
 
-static int reduce_inorder(void *sbuf, void* rbuf, int count,
+static int reduce_inorder(const void *sbuf, void* rbuf, int count,
                           struct ompi_datatype_t *dtype,
                           struct ompi_op_t *op,
                           int root, struct ompi_communicator_t *comm,
@@ -556,7 +558,7 @@ static int reduce_inorder(void *sbuf, void* rbuf, int count,
  * This function performs the reduction in whatever order the operands
  * arrive.
  */
-static int reduce_no_order(void *sbuf, void* rbuf, int count,
+static int reduce_no_order(const void *sbuf, void* rbuf, int count,
                            struct ompi_datatype_t *dtype,
                            struct ompi_op_t *op,
                            int root, struct ompi_communicator_t *comm,

@@ -5,7 +5,7 @@
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2006      The Technical University of Chemnitz. All
  *                         rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
  *                         reserved.
@@ -39,8 +39,8 @@ int NBC_Ineighbor_allgatherv_args_compare(NBC_Ineighbor_allgatherv_args *a, NBC_
 #endif
 
 
-int ompi_coll_libnbc_ineighbor_allgatherv(void *sbuf, int scount, MPI_Datatype stype, void *rbuf,
-					  int *rcounts, int *displs, MPI_Datatype rtype,
+int ompi_coll_libnbc_ineighbor_allgatherv(const void *sbuf, int scount, MPI_Datatype stype, void *rbuf,
+					  const int *rcounts, const int *displs, MPI_Datatype rtype,
 					  struct ompi_communicator_t *comm, ompi_request_t ** request,
 					  struct mca_coll_base_module_2_1_0_t *module) {
   int res, indegree, outdegree, *srcs, *dsts;

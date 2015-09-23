@@ -10,6 +10,8 @@
  *                         rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
  *                         reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  *
  * Author(s): Torsten Hoefler <htor@cs.indiana.edu>
  *
@@ -109,7 +111,7 @@ static int nbc_schedule_round_append (NBC_Schedule *schedule, void *data, int da
 }
 
 /* this function puts a send into the schedule */
-int NBC_Sched_send (void* buf, char tmpbuf, int count, MPI_Datatype datatype, int dest, NBC_Schedule *schedule, bool barrier) {
+int NBC_Sched_send(const void* buf, char tmpbuf, int count, MPI_Datatype datatype, int dest, NBC_Schedule *schedule, bool barrier) {
   NBC_Args_send send_args;
   int ret;
 
@@ -157,8 +159,7 @@ int NBC_Sched_recv (void* buf, char tmpbuf, int count, MPI_Datatype datatype, in
 }
 
 /* this function puts an operation into the schedule */
-int NBC_Sched_op (void *buf3, char tmpbuf3, void* buf1, char tmpbuf1, void* buf2, char tmpbuf2, int count, MPI_Datatype datatype,
-                  MPI_Op op, NBC_Schedule *schedule, bool barrier) {
+int NBC_Sched_op(void *buf3, char tmpbuf3, const void* buf1, char tmpbuf1, void* buf2, char tmpbuf2, int count, MPI_Datatype datatype, MPI_Op op, NBC_Schedule *schedule, bool barrier) {
   NBC_Args_op op_args;
   int ret;
 
@@ -395,7 +396,7 @@ static inline int NBC_Start_round(NBC_Handle *handle) {
         if(sendargs.tmpbuf) {
           buf1=(char*)handle->tmpbuf+(long)sendargs.buf;
         } else {
-          buf1=sendargs.buf;
+          buf1=(void *)sendargs.buf;
         }
 #ifdef NBC_TIMING
         Isend_time -= MPI_Wtime();
@@ -462,7 +463,7 @@ static inline int NBC_Start_round(NBC_Handle *handle) {
         if(opargs.tmpbuf1) {
           buf1=(char*)handle->tmpbuf+(long)opargs.buf1;
         } else {
-          buf1=opargs.buf1;
+          buf1=(void *)opargs.buf1;
         }
         if(opargs.tmpbuf2) {
           buf2=(char*)handle->tmpbuf+(long)opargs.buf2;
