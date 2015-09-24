@@ -114,7 +114,7 @@ static void scdes(pmix_shift_caddy_t *p)
 }
 PMIX_CLASS_INSTANCE(pmix_shift_caddy_t,
                     pmix_object_t,
-                    scon, NULL);
+                    scon, scdes);
 
 
  #define PMIX_THREADSHIFT(r, c)                       \
