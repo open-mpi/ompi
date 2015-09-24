@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2013 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2006-2014 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2006-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2006      University of Houston. All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
@@ -47,10 +47,7 @@
 #include "opal/sys/atomic.h"
 #include "opal/runtime/opal.h"
 #include "opal/util/show_help.h"
-#include "opal/mca/mpool/base/base.h"
 #include "opal/mca/mpool/base/mpool_base_tree.h"
-#include "opal/mca/rcache/base/base.h"
-#include "opal/mca/allocator/base/base.h"
 #include "opal/mca/pmix/pmix.h"
 #include "opal/util/timings.h"
 
