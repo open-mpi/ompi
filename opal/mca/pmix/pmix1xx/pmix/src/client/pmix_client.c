@@ -809,6 +809,7 @@ static pmix_status_t recv_connect_ack(int sd)
     pmix_status_t rc;
     struct timeval tv, save;
     pmix_socklen_t sz;
+    bool sockopt = true;
 
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "pmix: RECV CONNECT ACK FROM SERVER");
@@ -816,14 +817,20 @@ static pmix_status_t recv_connect_ack(int sd)
     /* get the current timeout value so we can reset to it */
     sz = sizeof(save);
     if (0 != getsockopt(sd, SOL_SOCKET, SO_RCVTIMEO, (void*)&save, &sz)) {
-        return PMIX_ERR_UNREACH;
-    }
-
-    /* set a timeout on the blocking recv so we don't hang */
-    tv.tv_sec  = 2;
-    tv.tv_usec = 0;
-    if (0 != setsockopt(sd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv))) {
-        return PMIX_ERR_UNREACH;
+        if (ENOPROTOOPT == errno) {
+            sockopt = false;
+        } else {
+            return PMIX_ERR_UNREACH;
+        }
+    } else {
+        /* set a timeout on the blocking recv so we don't hang */
+        tv.tv_sec  = 2;
+        tv.tv_usec = 0;
+        if (0 != setsockopt(sd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv))) {
+            pmix_output_verbose(2, pmix_globals.debug_output,
+                                "pmix: recv_connect_ack could not setsockopt SO_RCVTIMEO");
+            return PMIX_ERR_UNREACH;
+        }
     }
 
     /* receive the status reply */
@@ -855,9 +862,11 @@ static pmix_status_t recv_connect_ack(int sd)
         return rc;
     }
 
-    /* return the socket to normal */
-    if (0 != setsockopt(sd, SOL_SOCKET, SO_RCVTIMEO, &save, sz)) {
-        return PMIX_ERR_UNREACH;
+    if (sockopt) {
+        /* return the socket to normal */
+        if (0 != setsockopt(sd, SOL_SOCKET, SO_RCVTIMEO, &save, sz)) {
+            return PMIX_ERR_UNREACH;
+        }
     }
 
     return PMIX_SUCCESS;
