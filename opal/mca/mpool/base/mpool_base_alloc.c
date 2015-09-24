@@ -44,6 +44,8 @@ struct opal_info_t {
 };
 typedef struct opal_info_t opal_info_t;
 
+OBJ_CLASS_INSTANCE(mca_mpool_base_selected_module_t, opal_list_item_t, NULL, NULL);
+
 /**
  * Memory Pool Registration
  */
