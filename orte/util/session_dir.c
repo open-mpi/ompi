@@ -556,11 +556,10 @@ orte_session_dir_finalize(orte_process_name_t *proc)
         NULL == orte_process_info.top_session_dir) {
         /* this should never happen - it means we are calling
          * cleanup *before* properly setting up the session
-         * dir system. This leaves open the possibility of
+         * dir system. Protect against the possibility of
          * accidentally removing directories we shouldn't
-         * touch
+         * touch by returning
          */
-        ORTE_ERROR_LOG(ORTE_ERR_NOT_INITIALIZED);
         return ORTE_ERR_NOT_INITIALIZED;
     }
 

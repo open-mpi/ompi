@@ -59,6 +59,8 @@ struct orte_plm_rsh_component_t {
     bool no_tree_spawn;
     int num_concurrent;
     char *agent;
+    char *agent_path;
+    char **agent_argv;
     bool assume_same_shell;
     bool pass_environ_mca_params;
     char *ssh_args;
