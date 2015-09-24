@@ -259,7 +259,7 @@ mca_btl_portals4_add_procs(struct mca_btl_base_module_t* btl_base,
         }
 
         OPAL_MODEX_RECV(ret, &mca_btl_portals4_component.super.btl_version,
-                        curr_proc, (void**) &id, &size);
+                        &curr_proc->proc_name, (void**) &id, &size);
 
         if (OPAL_ERR_NOT_FOUND == ret) {
             OPAL_OUTPUT_VERBOSE((30, opal_btl_base_framework.framework_output,
