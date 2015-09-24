@@ -401,15 +401,6 @@ int ompi_mpi_finalize(void)
     if (OMPI_SUCCESS != (ret = mca_base_framework_close(&ompi_bml_base_framework))) {
         return ret;
     }
-    if (OMPI_SUCCESS != (ret = mca_base_framework_close(&opal_mpool_base_framework))) {
-        return ret;
-    }
-    if (OMPI_SUCCESS != (ret = mca_base_framework_close(&opal_rcache_base_framework))) {
-        return ret;
-    }
-    if (OMPI_SUCCESS != (ret = mca_base_framework_close(&opal_allocator_base_framework))) {
-        return ret;
-    }
 
     /* free proc resources */
     if ( OMPI_SUCCESS != (ret = ompi_proc_finalize())) {

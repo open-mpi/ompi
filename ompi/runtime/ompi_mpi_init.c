@@ -556,18 +556,6 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
 
     /* Open up MPI-related MCA components */
 
-    if (OMPI_SUCCESS != (ret = mca_base_framework_open(&opal_allocator_base_framework, 0))) {
-        error = "mca_allocator_base_open() failed";
-        goto error;
-    }
-    if (OMPI_SUCCESS != (ret = mca_base_framework_open(&opal_rcache_base_framework, 0))) {
-        error = "mca_rcache_base_open() failed";
-        goto error;
-    }
-    if (OMPI_SUCCESS != (ret = mca_base_framework_open(&opal_mpool_base_framework, 0))) {
-        error = "mca_mpool_base_open() failed";
-        goto error;
-    }
     if (OMPI_SUCCESS != (ret = mca_base_framework_open(&ompi_bml_base_framework, 0))) {
         error = "mca_bml_base_open() failed";
         goto error;
