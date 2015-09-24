@@ -4,6 +4,7 @@
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2015      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -38,6 +39,7 @@ int mca_base_select(const char *type_name, int output_id,
     mca_base_component_t *component = NULL;
     mca_base_module_t *module = NULL;
     int priority = 0, best_priority = INT32_MIN;
+    int rc;
 
     *best_module = NULL;
     *best_component = NULL;
@@ -70,7 +72,18 @@ int mca_base_select(const char *type_name, int output_id,
                              "mca:base:select:(%5s) Querying component [%s]",
                              type_name, component->mca_component_name);
 
-        component->mca_query_component(&module, &priority);
+        rc = component->mca_query_component(&module, &priority);
+        if (OPAL_ERR_FATAL == rc) {
+            /* a fatal error was detected by this component - e.g., the
+             * user specified a required element and the component could
+             * not find it. In this case, we must not continue as we might
+             * find some other component that could run, causing us to do
+             * something the user didn't want */
+             return rc;
+        } else if (OPAL_SUCCESS != rc) {
+            /* silently skip this component */
+            continue;
+        }
 
         /*
          * If no module was returned, then skip component
