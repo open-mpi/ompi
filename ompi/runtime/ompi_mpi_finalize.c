@@ -422,7 +422,7 @@ int ompi_mpi_finalize(void)
         return ret;
     }
 
-    if (OPAL_SUCCESS != (ret = opal_finalize_util())) {
+    if (OPAL_SUCCESS != (ret = opal_finalize ())) {
         return ret;
     }
 

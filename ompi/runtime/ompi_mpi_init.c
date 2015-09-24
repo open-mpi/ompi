@@ -386,8 +386,8 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
 
     /* Setup enough to check get/set MCA params */
 
-    if (OPAL_SUCCESS != (ret = opal_init_util(&argc, &argv))) {
-        error = "ompi_mpi_init: opal_init_util failed";
+    if (OPAL_SUCCESS != (ret = opal_init (&argc, &argv))) {
+        error = "ompi_mpi_init: opal_init failed";
         goto error;
     }
 
