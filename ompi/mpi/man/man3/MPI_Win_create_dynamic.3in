@@ -1,0 +1,78 @@
+.\" -*- nroff -*-
+.\" Copyright (c) 2015      Research Organization for Information Science
+.\"                         and Technology (RIST). All rights reserved.
+.\" $COPYRIGHT$
+.TH MPI_Win_create_dynamic 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
+.SH NAME
+\fBMPI_Win_create_dynamic\fP \- One-sided MPI call that returns a window object for RMA operations.
+
+.SH SYNTAX
+.ft R
+.SH C Syntax
+.nf
+#include <mpi.h>
+MPI_Win_create_dynamic(MPI_Info \fIinfo\fP, MPI_Comm \fIcomm\fP, MPI_Win *\fIwin\fP)
+
+.fi
+.SH Fortran Syntax
+.nf
+INCLUDE 'mpif.h'
+MPI_WIN_CREATE_DYNAMIC(\fIINFO, COMM, WIN, IERROR\fP)
+	INTEGER \fIINFO, COMM, WIN, IERROR\fP
+
+.fi
+.SH INPUT PARAMETERS
+.ft R
+.TP 1i
+info
+Info argument (handle).
+.TP 1i
+comm
+Communicator (handle).
+
+.SH OUTPUT PARAMETERS
+.ft R
+.TP 1i
+win
+Window object returned by the call (handle).
+.TP 1i
+IERROR
+Fortran only: Error status (integer).
+
+.SH DESCRIPTION
+.ft R
+MPI_Win_create_dynamic is a one-sided MPI communication collective call executed by all processes in the group of \fIcomm\fP. It returns a window object without memory attached that can be used by these processes to perform RMA operations.
+.sp
+The following info keys are supported:
+.ft R
+.TP 1i
+no_locks
+If set to \fItrue\fP, then the implementation may assume that the local
+window is never locked (by a call to MPI_Win_lock or
+MPI_Win_lock_all).  Setting this value if only active synchronization
+may allow the implementation to enable certain optimizations.
+.sp
+.TP 1i
+accumulate_ordering
+By default, accumulate operations from one initiator to one target on
+the same window are strictly ordered.  If the info key
+accumulate_ordering is set to \fInone\fP, no ordering of accumulate
+operations guaranteed.  They key can also be a comma-separated list of
+required orderings consisting of \fIrar\fP, \fIwar\fP, \fIraw\fP, and \fIwaw\fP for
+read-after-read, write-after-read, read-after-write, and
+write-after-write, respectively.  Looser ordering constraints are
+likely to result in improved performance.
+.sp
+.TP 1i
+accumulate_ops
+If set to \fIsame_op\fP, the implementation will assume that all concurrent
+accumulate calls to the same target address will use the same
+operation.  If set to \fIsame_op_no_op\fP, then the implementation will
+assume that all concurrent accumulate calls to the same target address
+will use the same operation or MPI_NO_OP.  The default is \fIsame_op_no_op\fP.
+
+.SH ERRORS
+Almost all MPI routines return an error value; C routines as the value of the function and Fortran routines in the last argument.
+.sp
+Before the error value is returned, the current MPI error handler is
+called. By default, this error handler aborts the MPI job, except for I/O function errors. The error handler may be changed with MPI_Comm_set_errhandler; the predefined error handler MPI_ERRORS_RETURN may be used to cause error values to be returned. Note that MPI does not guarantee that an MPI program can continue past an error.
