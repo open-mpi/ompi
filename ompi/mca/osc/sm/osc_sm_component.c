@@ -477,9 +477,10 @@ ompi_osc_sm_free(struct ompi_win_t *win)
 
     /* cleanup */
     ompi_comm_free(&module->comm);
-    free(module);
 
     OBJ_DESTRUCT(&module->lock);
+
+    free(module);
 
     return OMPI_SUCCESS;
 }
