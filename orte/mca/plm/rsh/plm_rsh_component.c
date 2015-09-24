@@ -43,8 +43,10 @@
 #include "opal/util/opal_environ.h"
 #include "opal/util/output.h"
 #include "opal/util/argv.h"
+#include "opal/util/basename.h"
 #include "opal/util/path.h"
 
+#include "orte/mca/state/state.h"
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/util/show_help.h"
@@ -228,6 +230,7 @@ static int rsh_component_open(void)
     /* initialize globals */
     mca_plm_rsh_component.using_qrsh = false;
     mca_plm_rsh_component.using_llspawn = false;
+    mca_plm_rsh_component.agent_argv = NULL;
 
     /* lookup parameters */
     if (mca_plm_rsh_component.num_concurrent <= 0) {
@@ -256,48 +259,59 @@ static int rsh_component_query(mca_base_module_t **module, int *priority)
 
     /* Check if we are under Grid Engine parallel environment by looking at several
      * environment variables.  If so, setup the path and argv[0]. */
-    if (!mca_plm_rsh_component.disable_qrsh &&
-        NULL != getenv("SGE_ROOT") && NULL != getenv("ARC") &&
-        NULL != getenv("PE_HOSTFILE") && NULL != getenv("JOB_ID")) {
-        /* setup the search path for qrsh */
-        asprintf(&tmp, "%s/bin/%s", getenv("SGE_ROOT"), getenv("ARC"));
-        /* see if the agent is available */
-        if (ORTE_SUCCESS != rsh_launch_agent_lookup("qrsh", tmp)) {
-            /* can't be SGE */
-             opal_output_verbose(1, orte_plm_base_framework.framework_output,
-                                "%s plm:rsh: unable to be used: SGE indicated but cannot find path "
-                                "or execution permissions not set for launching agent qrsh",
-                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-             free(tmp);
-             *module = NULL;
-             return ORTE_ERROR;
+    if (NULL == mca_plm_rsh_component.agent) {
+        if (!mca_plm_rsh_component.disable_qrsh &&
+            NULL != getenv("SGE_ROOT") && NULL != getenv("ARC") &&
+            NULL != getenv("PE_HOSTFILE") && NULL != getenv("JOB_ID")) {
+            /* setup the search path for qrsh */
+            asprintf(&tmp, "%s/bin/%s", getenv("SGE_ROOT"), getenv("ARC"));
+            /* see if the agent is available */
+            if (ORTE_SUCCESS != rsh_launch_agent_lookup("qrsh", tmp)) {
+                /* can't be SGE */
+                 opal_output_verbose(1, orte_plm_base_framework.framework_output,
+                                    "%s plm:rsh: unable to be used: SGE indicated but cannot find path "
+                                    "or execution permissions not set for launching agent qrsh",
+                                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+                 free(tmp);
+                 *module = NULL;
+                 return ORTE_ERROR;
+            }
+            mca_plm_rsh_component.agent = tmp;
+            mca_plm_rsh_component.using_qrsh = true;
+            /* no tree spawn allowed under qrsh */
+            mca_plm_rsh_component.no_tree_spawn = true;
+            goto success;
+        } else if (!mca_plm_rsh_component.disable_llspawn &&
+                   NULL != getenv("LOADL_STEP_ID")) {
+            /* We are running  as a LOADLEVELER job.
+             * Search for llspawn in the users PATH */
+            if (ORTE_SUCCESS != rsh_launch_agent_lookup("llspawn", NULL)) {
+                 opal_output_verbose(1, orte_plm_base_framework.framework_output,
+                                    "%s plm:rsh: unable to be used: LoadLeveler "
+                                    "indicated but cannot find path or execution "
+                                    "permissions not set for launching agent llspawn",
+                                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+                *module = NULL;
+                return ORTE_ERROR;
+            }
+            mca_plm_rsh_component.agent = strdup("llspawn");
+            mca_plm_rsh_component.using_llspawn = true;
+            goto success;
         }
-        free(tmp);
-        mca_plm_rsh_component.using_qrsh = true;
-        /* no tree spawn allowed under qrsh */
-        mca_plm_rsh_component.no_tree_spawn = true;
-        goto success;
-    } else if (!mca_plm_rsh_component.disable_llspawn &&
-               NULL != getenv("LOADL_STEP_ID")) {
-	/* We are running  as a LOADLEVELER job.
-	   Search for llspawn in the users PATH */
-        if (ORTE_SUCCESS != rsh_launch_agent_lookup("llspawn", NULL)) {
-             opal_output_verbose(1, orte_plm_base_framework.framework_output,
-                                "%s plm:rsh: unable to be used: LoadLeveler "
-                                "indicated but cannot find path or execution "
-                                "permissions not set for launching agent llspawn",
-                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-            *module = NULL;
-            return ORTE_ERROR;
-        }
-        mca_plm_rsh_component.using_llspawn = true;
-        goto success;
     }
 
-    /* if this isn't an Grid Engine or LoadLeveler environment,
-       see if MCA-specified agent (default: ssh:rsh) is available */
+    /* if this isn't an Grid Engine or LoadLeveler environment, or
+     * if the user specified a launch agent, look for it */
 
     if (ORTE_SUCCESS != rsh_launch_agent_lookup(NULL, NULL)) {
+        /* if the user specified an agent and we couldn't find it,
+         * then we want to error out and not continue */
+        if (NULL != mca_plm_rsh_component.agent) {
+            orte_show_help("help-plm-rsh.txt", "agent-not-found", true,
+                           mca_plm_rsh_component.agent);
+            ORTE_FORCED_TERMINATE(ORTE_ERR_NOT_FOUND);
+            return ORTE_ERR_FATAL;
+        }
         /* this isn't an error - we just cannot be selected */
         OPAL_OUTPUT_VERBOSE((1, orte_plm_base_framework.framework_output,
                              "%s plm:rsh: unable to be used: cannot find path "
@@ -380,19 +394,48 @@ char **orte_plm_rsh_search(const char* agent_list, const char *path)
 
 static int rsh_launch_agent_lookup(const char *agent_list, char *path)
 {
-    char **tmp;
+    char *bname;
+    int i;
 
     OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
                          "%s plm:rsh_lookup on agent %s path %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          (NULL == agent_list) ? mca_plm_rsh_component.agent : agent_list,
                          (NULL == path) ? "NULL" : path));
-    if (NULL == (tmp = orte_plm_rsh_search(agent_list, path))) {
+    if (NULL == (mca_plm_rsh_component.agent_argv = orte_plm_rsh_search(agent_list, path))) {
         return ORTE_ERR_NOT_FOUND;
     }
 
-    /* if we got here, then one of the given agents could be found */
-    opal_argv_free(tmp);
+    /* if we got here, then one of the given agents could be found - the
+     * complete path is in the argv[0] position */
+    mca_plm_rsh_component.agent_path = strdup(mca_plm_rsh_component.agent_argv[0]);
+    bname = opal_basename(mca_plm_rsh_component.agent_argv[0]);
+    if (NULL == bname) {
+        return ORTE_SUCCESS;
+    }
+    /* replace the initial position with the basename */
+    free(mca_plm_rsh_component.agent_argv[0]);
+    mca_plm_rsh_component.agent_argv[0] = bname;
+    /* see if we need to add an xterm argument */
+    if (0 == strcmp(bname, "ssh")) {
+        /* if xterm option was given, add '-X', ensuring we don't do it twice */
+        if (NULL != orte_xterm) {
+            opal_argv_append_unique_nosize(&mca_plm_rsh_component.agent_argv, "-X", false);
+        } else if (0 >= opal_output_get_verbosity(orte_plm_base_framework.framework_output)) {
+            /* if debug was not specified, and the user didn't explicitly
+             * specify X11 forwarding/non-forwarding, add "-x" if it
+             * isn't already there (check either case)
+             */
+            for (i = 1; NULL != mca_plm_rsh_component.agent_argv[i]; ++i) {
+                if (0 == strcasecmp("-x", mca_plm_rsh_component.agent_argv[i])) {
+                    break;
+                }
+            }
+            if (NULL == mca_plm_rsh_component.agent_argv[i]) {
+                opal_argv_append_nosize(&mca_plm_rsh_component.agent_argv, "-x");
+            }
+        }
+    }
     return ORTE_SUCCESS;
 }
 
