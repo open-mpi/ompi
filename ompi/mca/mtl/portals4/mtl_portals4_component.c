@@ -229,6 +229,18 @@ ompi_mtl_portals4_component_open(void)
     ompi_mtl_portals4.recv_idx = (ptl_pt_index_t) ~0UL;
     ompi_mtl_portals4.read_idx = (ptl_pt_index_t) ~0UL;
 
+    ompi_mtl_portals4.maptable_created=0;
+    ompi_mtl_portals4.need_init=1;
+
+#if OMPI_MTL_PORTALS4_FLOW_CONTROL
+    ompi_mtl_portals4.use_flowctl=1;
+#else
+    ompi_mtl_portals4.use_flowctl=0;
+#endif
+
+    ompi_mtl_portals4.world_nprocs=0;
+    ompi_mtl_portals4.world_procs=NULL;
+
     return OMPI_SUCCESS;
 }
 

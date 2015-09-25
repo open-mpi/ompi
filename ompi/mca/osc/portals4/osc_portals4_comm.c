@@ -21,8 +21,6 @@
 #include "osc_portals4.h"
 #include "osc_portals4_request.h"
 
-#include "ompi/mca/mtl/portals4/mtl_portals4_endpoint.h"
-
 
 static int
 ompi_osc_portals4_get_op(struct ompi_op_t *op, ptl_op_t *ptl_op)
