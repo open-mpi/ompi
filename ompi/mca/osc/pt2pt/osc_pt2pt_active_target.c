@@ -336,7 +336,8 @@ int ompi_osc_pt2pt_complete (ompi_win_t *win)
     for (size_t i = 0 ; i < group_size ; ++i) {
         ompi_osc_pt2pt_header_complete_t complete_req;
         int rank = peers[i]->rank;
-
+        ompi_proc_t *proc = ompi_comm_peer_lookup (module->comm, rank);
+        
         if (my_rank == rank) {
             /* shortcut for self */
             osc_pt2pt_incoming_complete (module, rank, 0);
