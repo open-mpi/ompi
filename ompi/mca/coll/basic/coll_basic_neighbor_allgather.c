@@ -44,13 +44,13 @@ mca_coll_basic_neighbor_allgather_cart(const void *sbuf, int scount,
 {
     const mca_topo_base_comm_cart_2_2_0_t *cart = comm->c_topo->mtc.cart;
     const int rank = ompi_comm_rank (comm);
-    ompi_request_t **reqs;
+    ompi_request_t **reqs, **preqs;
     ptrdiff_t lb, extent;
     int rc = MPI_SUCCESS, dim, nreqs;
 
     ompi_datatype_get_extent(rdtype, &lb, &extent);
 
-    reqs = coll_base_comm_get_reqs( module->base_data, 4 * cart->ndims );
+    reqs = preqs = coll_base_comm_get_reqs( module->base_data, 4 * cart->ndims );
     /* The ordering is defined as -1 then +1 in each dimension in
      * order of dimension. */
     for (dim = 0, nreqs = 0 ; dim < cart->ndims ; ++dim) {
@@ -66,7 +66,7 @@ mca_coll_basic_neighbor_allgather_cart(const void *sbuf, int scount,
             nreqs += 2;
             rc = MCA_PML_CALL(irecv(rbuf, rcount, rdtype, srank,
                                     MCA_COLL_BASE_TAG_ALLGATHER,
-                                    comm, reqs++));
+                                    comm, preqs++));
             if (OMPI_SUCCESS != rc) break;
 
             /* remove cast from const when the pml layer is updated to take
@@ -74,7 +74,7 @@ mca_coll_basic_neighbor_allgather_cart(const void *sbuf, int scount,
             rc = MCA_PML_CALL(isend((void *) sbuf, scount, sdtype, srank,
                                     MCA_COLL_BASE_TAG_ALLGATHER,
                                     MCA_PML_BASE_SEND_STANDARD,
-                                    comm, reqs++));
+                                    comm, preqs++));
             if (OMPI_SUCCESS != rc) break;
         }
 
@@ -84,14 +84,14 @@ mca_coll_basic_neighbor_allgather_cart(const void *sbuf, int scount,
             nreqs += 2;
             rc = MCA_PML_CALL(irecv(rbuf, rcount, rdtype, drank,
                                     MCA_COLL_BASE_TAG_ALLGATHER,
-                                    comm, reqs++));
+                                    comm, preqs++));
             if (OMPI_SUCCESS != rc) break;
 
 
             rc = MCA_PML_CALL(isend((void *) sbuf, scount, sdtype, drank,
                                     MCA_COLL_BASE_TAG_ALLGATHER,
                                     MCA_PML_BASE_SEND_STANDARD,
-                                    comm, reqs++));
+                                    comm, preqs++));
             if (OMPI_SUCCESS != rc) break;
         }
 
