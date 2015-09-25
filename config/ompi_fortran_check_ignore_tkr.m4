@@ -156,8 +156,8 @@ AC_DEFUN([OMPI_FORTRAN_CHECK_IGNORE_TKR_SUB], [
   complex :: buffer3(4,4)
   complex, pointer, dimension(:,:) :: ptr
   target :: buffer3
-  ptr => buffer3
   integer :: buffer4
+  ptr => buffer3
 
 ! Set some known values (somewhat irrelevant for this test, but just be
 ! sure that the values are initialized)
