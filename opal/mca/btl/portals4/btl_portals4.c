@@ -217,6 +217,161 @@ btl_portals4_init_interface(void)
     return OPAL_ERROR;
 }
 
+static int
+create_endpoint(int                       interface,
+                opal_proc_t              *proc,
+                mca_btl_base_endpoint_t **endpoint)
+{
+    int ret;
+    size_t size;
+    ptl_process_t *id;
+
+    OPAL_MODEX_RECV(ret, &mca_btl_portals4_component.super.btl_version,
+                    &proc->proc_name, (void**) &id, &size);
+
+    if (OPAL_ERR_NOT_FOUND == ret) {
+        OPAL_OUTPUT_VERBOSE((30, opal_btl_base_framework.framework_output,
+            "btl/portals4: Portals 4 BTL not available on peer: %s", opal_strerror(ret)));
+        return ret;
+    } else if (OPAL_SUCCESS != ret) {
+        opal_output_verbose(0, opal_btl_base_framework.framework_output,
+            "btl/portals4: opal_modex_recv failed: %s", opal_strerror(ret));
+        return ret;
+    }
+    if (size < sizeof(ptl_process_t)) {  /* no available connection */
+        return OPAL_ERROR;
+    }
+    if ((size % sizeof(ptl_process_t)) != 0) {
+        opal_output_verbose(0, opal_btl_base_framework.framework_output,
+            "btl/portals4: invalid format in modex");
+        return OPAL_ERROR;
+    }
+    OPAL_OUTPUT_VERBOSE((90, opal_btl_base_framework.framework_output,
+        "btl/portals4: %d NI(s) declared in the modex", (int) (size/sizeof(ptl_process_t))));
+
+    *endpoint = malloc(sizeof(mca_btl_base_endpoint_t));
+    if (NULL == *endpoint) {
+        return OPAL_ERR_OUT_OF_RESOURCE;
+    }
+
+    (*endpoint)->ptl_proc = id[interface];
+
+    return OPAL_SUCCESS;
+}
+
+static int
+create_peer_and_endpoint(int                       interface,
+                         opal_proc_t              *proc,
+                         ptl_process_t            *phys_peer,
+                         mca_btl_base_endpoint_t **endpoint)
+{
+    int ret;
+    size_t size;
+    ptl_process_t *id;
+
+    OPAL_MODEX_RECV(ret, &mca_btl_portals4_component.super.btl_version,
+                    &proc->proc_name, (void**) &id, &size);
+
+    if (OPAL_ERR_NOT_FOUND == ret) {
+        OPAL_OUTPUT_VERBOSE((30, opal_btl_base_framework.framework_output,
+            "btl/portals4: Portals 4 BTL not available on peer: %s", opal_strerror(ret)));
+        return ret;
+    } else if (OPAL_SUCCESS != ret) {
+        opal_output_verbose(0, opal_btl_base_framework.framework_output,
+            "btl/portals4: opal_modex_recv failed: %s", opal_strerror(ret));
+        return ret;
+    }
+    if (size < sizeof(ptl_process_t)) {  /* no available connection */
+        return OPAL_ERROR;
+    }
+    if ((size % sizeof(ptl_process_t)) != 0) {
+        opal_output_verbose(0, opal_btl_base_framework.framework_output,
+            "btl/portals4: invalid format in modex");
+        return OPAL_ERROR;
+    }
+    OPAL_OUTPUT_VERBOSE((90, opal_btl_base_framework.framework_output,
+        "btl/portals4: %d NI(s) declared in the modex", (int) (size/sizeof(ptl_process_t))));
+
+    if (NULL == *endpoint) {
+        *endpoint = malloc(sizeof(mca_btl_base_endpoint_t));
+        if (NULL == *endpoint) {
+            return OPAL_ERR_OUT_OF_RESOURCE;
+        }
+        (*endpoint)->ptl_proc.rank = proc->proc_name.vpid;
+    }
+
+    phys_peer->phys.pid = id[interface].phys.pid;
+    phys_peer->phys.nid = id[interface].phys.nid;
+    opal_output_verbose(50, opal_btl_base_framework.framework_output,
+        "logical: global rank=%d pid=%d nid=%d\n",
+        proc->proc_name.vpid, phys_peer->phys.pid, phys_peer->phys.nid);
+
+    return OPAL_SUCCESS;
+}
+
+static int
+create_maptable(struct mca_btl_portals4_module_t *portals4_btl,
+                size_t                            nprocs,
+                opal_proc_t                     **procs,
+                mca_btl_base_endpoint_t         **endpoint)
+{
+    int ret;
+    ptl_process_t *maptable;
+
+    maptable = malloc(sizeof(ptl_process_t) * nprocs);
+    if (NULL == maptable) {
+        opal_output_verbose(1, opal_btl_base_framework.framework_output,
+                            "%s:%d: malloc failed\n",
+                            __FILE__, __LINE__);
+        return OPAL_ERR_OUT_OF_RESOURCE;
+    }
+
+    for (uint32_t i = 0 ; i < nprocs ; i++) {
+        struct opal_proc_t *curr_proc;
+
+        curr_proc = procs[i];
+
+        /* portals doesn't support heterogeneous yet... */
+        if (opal_proc_local_get()->proc_arch != curr_proc->proc_arch) {
+            opal_output_verbose(1, opal_btl_base_framework.framework_output,
+                                "Portals 4 BTL does not support heterogeneous operations.");
+            opal_output_verbose(1, opal_btl_base_framework.framework_output,
+                "Proc %s architecture %x, mine %x.",
+                OPAL_NAME_PRINT(curr_proc->proc_name),
+                curr_proc->proc_arch, opal_proc_local_get()->proc_arch);
+            return OPAL_ERR_NOT_SUPPORTED;
+        }
+
+        ret = create_peer_and_endpoint(portals4_btl->interface_num,
+                                       curr_proc,
+                                       &maptable[i],
+                                       &endpoint[i]);
+        if (OPAL_SUCCESS != ret) {
+            opal_output_verbose(1, opal_btl_base_framework.framework_output,
+                                "%s:%d: create_maptable::create_peer_and_endpoint failed: %d\n",
+                                __FILE__, __LINE__, ret);
+            return ret;
+        }
+    }
+
+    ret = PtlSetMap(portals4_btl->portals_ni_h,
+                    nprocs,
+                    maptable);
+    if (OPAL_SUCCESS != ret) {
+        opal_output_verbose(1, opal_btl_base_framework.framework_output,
+                            "%s:%d: logical mapping failed: %d\n",
+                            __FILE__, __LINE__, ret);
+        return ret;
+    }
+    opal_output_verbose(90, opal_btl_base_framework.framework_output,
+        "logical mapping OK\n");
+    free(maptable);
+
+    return OPAL_SUCCESS;
+}
+
+#define NEED_ALL_PROCS (mca_btl_portals4_component.use_logical)
+
 int
 mca_btl_portals4_add_procs(struct mca_btl_base_module_t* btl_base,
                           size_t nprocs,
@@ -226,105 +381,64 @@ mca_btl_portals4_add_procs(struct mca_btl_base_module_t* btl_base,
 {
     struct mca_btl_portals4_module_t* portals4_btl = (struct mca_btl_portals4_module_t*) btl_base;
     int ret;
-    struct opal_proc_t *curr_proc = NULL;
-    ptl_process_t *id;
-    size_t i, size;
+    size_t i;
     bool need_activate = false;
-    ptl_process_t *maptable;
 
     opal_output_verbose(50, opal_btl_base_framework.framework_output,
-                        "mca_btl_portals4_add_procs: Adding %d procs (%d) for NI %d", (int) nprocs,
-                        (int) portals4_btl->portals_num_procs, portals4_btl->interface_num);
-
-    if (mca_btl_portals4_component.use_logical) {
-        maptable = malloc(sizeof(ptl_process_t) * nprocs);
-        if (NULL == maptable) {
-            opal_output_verbose(1, opal_btl_base_framework.framework_output,
-                                "%s:%d: malloc failed\n",
-                                __FILE__, __LINE__);
-            return OPAL_ERR_OUT_OF_RESOURCE;
-        }
-    }
+                        "mca_btl_portals4_add_procs: Adding %d procs (%d) for NI %d",
+                        (int) nprocs,
+                        (int) portals4_btl->portals_num_procs,
+                        portals4_btl->interface_num);
 
     if (0 == portals4_btl->portals_num_procs) {
         need_activate = true;
     }
 
+    /*
+     * The PML handed us a list of procs that need Portals4
+     * peer info.  Complete those procs here.
+     */
     for (i = 0 ; i < nprocs ; ++i) {
-        curr_proc = procs[i];
+        struct opal_proc_t *curr_proc = procs[i];
 
         /* portals doesn't support heterogeneous yet... */
         if (opal_proc_local_get()->proc_arch != curr_proc->proc_arch) {
-            continue;
+            opal_output_verbose(1, opal_btl_base_framework.framework_output,
+                                "Portals 4 BTL does not support heterogeneous operations.");
+            opal_output_verbose(1, opal_btl_base_framework.framework_output,
+                "Proc %s architecture %x, mine %x.",
+                OPAL_NAME_PRINT(curr_proc->proc_name),
+                curr_proc->proc_arch, opal_proc_local_get()->proc_arch);
+            return OPAL_ERR_NOT_SUPPORTED;
         }
 
-        OPAL_MODEX_RECV(ret, &mca_btl_portals4_component.super.btl_version,
-                        curr_proc, (void**) &id, &size);
-
-        if (OPAL_ERR_NOT_FOUND == ret) {
-            OPAL_OUTPUT_VERBOSE((30, opal_btl_base_framework.framework_output,
-                "btl/portals4: Portals 4 BTL not available on peer: %s", opal_strerror(ret)));
-            continue;
-        } else if (OPAL_SUCCESS != ret) {
-            opal_output_verbose(0, opal_btl_base_framework.framework_output,
-                "btl/portals4: opal_modex_recv failed: %s", opal_strerror(ret));
-            return ret;
-        }
-        if (size < sizeof(ptl_process_t)) {  /* no available connection */
-            return OPAL_ERROR;
-        }
-        if ((size % sizeof(ptl_process_t)) != 0) {
-            opal_output_verbose(0, opal_btl_base_framework.framework_output,
-                "btl/portals4: invalid format in modex");
-            return OPAL_ERROR;
-        }
-        OPAL_OUTPUT_VERBOSE((90, opal_btl_base_framework.framework_output,
-            "btl/portals4: %d NI(s) declared in the modex", (int) (size/sizeof(ptl_process_t))));
-
-        btl_peer_data[i] = malloc(sizeof(mca_btl_base_endpoint_t));
-        if (NULL == btl_peer_data[i]) return OPAL_ERROR;
-
-        /* The modex may receive more than one id (this is the
-           normal case if there is more than one interface). Store the id of the corresponding
-           interface */
-
-        if (mca_btl_portals4_component.use_logical) {
-            btl_peer_data[i]->ptl_proc.rank = i;
-            maptable[i].phys.pid = id[portals4_btl->interface_num].phys.pid;
-            maptable[i].phys.nid = id[portals4_btl->interface_num].phys.nid;
-            opal_output_verbose(50, opal_btl_base_framework.framework_output,
-                "logical: global rank=%d pid=%d nid=%d\n",
-                (int)i, maptable[i].phys.pid, maptable[i].phys.nid);
-        } else {
-            btl_peer_data[i]->ptl_proc = id[portals4_btl->interface_num];
-        }
-
-        OPAL_OUTPUT_VERBOSE((90, opal_btl_base_framework.framework_output,
-                             "add_procs: rank=%x nid=%x pid=%x for NI %d\n",
-                             btl_peer_data[i]->ptl_proc.rank,
-                             btl_peer_data[i]->ptl_proc.phys.nid,
-                             btl_peer_data[i]->ptl_proc.phys.pid,
-                             portals4_btl->interface_num));
+        ret = create_endpoint(portals4_btl->interface_num,
+                              curr_proc,
+                              &btl_peer_data[i]);
 
         OPAL_THREAD_ADD32(&portals4_btl->portals_num_procs, 1);
         /* and here we can reach */
         opal_bitmap_set_bit(reachable, i);
-    }
 
-    if (mca_btl_portals4_component.use_logical) {
-        ret = PtlSetMap(portals4_btl->portals_ni_h, nprocs, maptable);
-        if (OPAL_SUCCESS != ret) {
-            opal_output_verbose(1, opal_btl_base_framework.framework_output,
-                                "%s:%d: logical mapping failed: %d\n",
-                                __FILE__, __LINE__, ret);
-            return ret;
-        }
-        opal_output_verbose(90, opal_btl_base_framework.framework_output,
-                            "logical mapping OK\n");
-        free(maptable);
+        OPAL_OUTPUT_VERBOSE((90, opal_btl_base_framework.framework_output,
+            "add_procs: rank=%x nid=%x pid=%x for NI %d\n",
+            i,
+            btl_peer_data[i]->ptl_proc.phys.nid,
+            btl_peer_data[i]->ptl_proc.phys.pid,
+            portals4_btl->interface_num));
     }
 
     if (need_activate && portals4_btl->portals_num_procs > 0) {
+        if (mca_btl_portals4_component.use_logical) {
+            ret = create_maptable(portals4_btl, nprocs, procs, btl_peer_data);
+            if (OPAL_SUCCESS != ret) {
+                opal_output_verbose(1, opal_btl_base_framework.framework_output,
+                                    "%s:%d: mca_btl_portals4_add_procs::create_maptable() failed: %d\n",
+                                    __FILE__, __LINE__, ret);
+                return ret;
+            }
+        }
+
         ret = btl_portals4_init_interface();
         if (OPAL_SUCCESS != ret) {
             opal_output_verbose(1, opal_btl_base_framework.framework_output,
@@ -333,6 +447,7 @@ mca_btl_portals4_add_procs(struct mca_btl_base_module_t* btl_base,
             return ret;
         }
     }
+
     return OPAL_SUCCESS;
 }
 
