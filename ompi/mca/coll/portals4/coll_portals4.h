@@ -29,6 +29,8 @@
 #include "ompi/communicator/communicator.h"
 #include "ompi/mca/coll/base/base.h"
 
+#include "ompi/mca/mtl/portals4/mtl_portals4.h"
+
 BEGIN_C_DECLS
 
 #define COLL_PORTALS4_NO_OP ((ptl_op_t)-1)
@@ -178,11 +180,7 @@ ompi_coll_portals4_iallreduce_intra_fini(struct ompi_coll_portals4_request_t *re
 static inline ptl_process_t
 ompi_coll_portals4_get_peer(struct ompi_communicator_t *comm, int rank)
 {
-    ompi_proc_t *proc = ompi_comm_peer_lookup(comm, rank);
-    if (proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_PORTALS4] == NULL) {
-        printf("ompi_coll_portals4_get_peer failure\n");
-    }
-    return *((ptl_process_t*) proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_PORTALS4]);
+    return ompi_mtl_portals4_get_peer(comm, rank);
 }
 
 
