@@ -26,8 +26,11 @@
 #include "opal/class/opal_free_list.h"
 #include "opal/class/opal_list.h"
 #include "opal/datatype/opal_convertor.h"
+#include "ompi/proc/proc.h"
 #include "ompi/mca/mtl/mtl.h"
 #include "ompi/mca/mtl/base/base.h"
+
+#include "ompi/communicator/communicator.h"
 
 #include "mtl_portals4_flowctl.h"
 
@@ -38,8 +41,13 @@ struct mca_mtl_portals4_send_request_t;
 struct mca_mtl_portals4_module_t {
     mca_mtl_base_module_t base;
 
+    /* add_procs() can get called multiple times.  this prevents multiple calls to portals4_init_interface(). */
+    int need_init;
+
     /* Use the logical to physical table to accelerate portals4 adressing: 1 (true) : 0 (false) */
     int use_logical;
+    /* Use flow control: 1 (true) : 0 (false) */
+    int use_flowctl;
 
     /** Eager limit; messages greater than this use a rendezvous protocol */
     unsigned long long eager_limit;
@@ -208,6 +216,29 @@ extern mca_mtl_portals4_module_t ompi_mtl_portals4;
 #define MTL_PORTALS4_GET_LENGTH(hdr_data) ((size_t)(hdr_data & 0xFFFFFFFFFFFFULL))
 #define MTL_PORTALS4_IS_SYNC_MSG(hdr_data)            \
     (0 != (MTL_PORTALS4_SYNC_MSG & hdr_data))
+
+/* mtl-portals4 helpers */
+OMPI_DECLSPEC ompi_proc_t *
+ompi_mtl_portals4_get_proc_group(struct ompi_group_t *group, int rank);
+
+static inline ptl_process_t
+ompi_mtl_portals4_get_peer_group(struct ompi_group_t *group, int rank)
+{
+    return *((ptl_process_t*)ompi_mtl_portals4_get_proc_group(group, rank));
+}
+
+static inline ompi_proc_t *
+ompi_mtl_portals4_get_proc(struct ompi_communicator_t *comm, int rank)
+{
+    return ompi_mtl_portals4_get_proc_group(comm->c_remote_group, rank);
+}
+
+static inline ptl_process_t
+ompi_mtl_portals4_get_peer(struct ompi_communicator_t *comm, int rank)
+{
+    return *((ptl_process_t*)ompi_mtl_portals4_get_proc(comm, rank));
+}
+
 
 /* MTL interface functions */
 extern int ompi_mtl_portals4_finalize(struct mca_mtl_base_module_t *mtl);
