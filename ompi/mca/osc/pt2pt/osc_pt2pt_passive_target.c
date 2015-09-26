@@ -332,7 +332,9 @@ static int ompi_osc_pt2pt_lock_internal (int lock_type, int target, int assert, 
     ret = ompi_osc_pt2pt_lock_internal_execute (module, lock);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
         OPAL_THREAD_SCOPED_LOCK(&module->lock, ompi_osc_pt2pt_module_lock_remove (module, lock));
-        ompi_osc_pt2pt_sync_return (lock);
+        if (&module->all_sync != lock) {
+            ompi_osc_pt2pt_sync_return (lock);
+        }
     }
 
     return ret;
