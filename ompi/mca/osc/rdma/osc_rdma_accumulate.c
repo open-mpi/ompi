@@ -282,9 +282,6 @@ static inline int ompi_osc_rdma_gacc_master (ompi_osc_rdma_sync_t *sync, const v
                     (target_datatype->super.size * target_count <= acc_limit))) {
         if (NULL == request) {
             OMPI_OSC_RDMA_REQUEST_ALLOC(module, peer, request);
-            if (NULL == request) {
-                return OMPI_ERR_OUT_OF_RESOURCE;
-            }
             request->internal = true;
             request->type = result_datatype ? OMPI_OSC_RDMA_TYPE_GET_ACC : OMPI_OSC_RDMA_TYPE_ACC;
         }
@@ -403,10 +400,6 @@ static inline int ompi_osc_rdma_gacc_master (ompi_osc_rdma_sync_t *sync, const v
 
             /* execute the get */
             OMPI_OSC_RDMA_REQUEST_ALLOC(module, peer, subreq);
-            if (NULL == subreq) {
-                ompi_osc_rdma_progress (module);
-                continue;
-            }
             subreq->internal = true;
             subreq->parent_request = request;
             if (request) {
@@ -597,9 +590,6 @@ static inline int cas_rdma (ompi_osc_rdma_sync_t *sync, const void *source_buffe
     int ret;
 
     OMPI_OSC_RDMA_REQUEST_ALLOC(module, peer, request);
-    if (NULL == request) {
-        return OMPI_ERR_OUT_OF_RESOURCE;
-    }
 
     request->internal = true;
     request->type = OMPI_OSC_RDMA_TYPE_CSWAP;
@@ -806,9 +796,6 @@ int ompi_osc_rdma_rget_accumulate (const void *origin_addr, int origin_count,
                          win->w_name));
 
     OMPI_OSC_RDMA_REQUEST_ALLOC(module, peer, rdma_request);
-    if (OPAL_UNLIKELY(NULL == rdma_request)) {
-        return OMPI_ERR_OUT_OF_RESOURCE;
-    }
 
     ret = ompi_osc_rdma_rget_accumulate_internal (sync, origin_addr, origin_count, origin_datatype, result_addr,
                                                   result_count, result_datatype, peer, target_rank, target_disp,
@@ -865,9 +852,6 @@ int ompi_osc_rdma_raccumulate (const void *origin_addr, int origin_count,
                          (unsigned long) target_disp, target_count, target_datatype->name, op->o_name, win->w_name));
 
     OMPI_OSC_RDMA_REQUEST_ALLOC(module, peer, rdma_request);
-    if (OPAL_UNLIKELY(NULL == rdma_request)) {
-        return OMPI_ERR_OUT_OF_RESOURCE;
-    }
 
     ret = ompi_osc_rdma_rget_accumulate_internal (sync, origin_addr, origin_count, origin_datatype, NULL, 0,
                                                   NULL, peer, target_rank, target_disp, target_count, target_datatype,
