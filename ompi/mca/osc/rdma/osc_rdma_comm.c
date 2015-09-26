@@ -199,10 +199,6 @@ static int ompi_osc_rdma_master_noncontig (ompi_osc_rdma_sync_t *sync, void *loc
             /* execute the get */
             if (!subreq && alloc_reqs) {
                 OMPI_OSC_RDMA_REQUEST_ALLOC(module, peer, subreq);
-                if (NULL == subreq) {
-                    ompi_osc_rdma_progress (module);
-                    continue;
-                }
                 subreq->internal = true;
                 subreq->type = OMPI_OSC_RDMA_TYPE_RDMA;
                 subreq->parent_request = request;
@@ -285,9 +281,6 @@ static inline int ompi_osc_rdma_master (ompi_osc_rdma_sync_t *sync, void *local_
         if (NULL == request && alloc_reqs) {
             ompi_osc_rdma_module_t *module = sync->module;
             OMPI_OSC_RDMA_REQUEST_ALLOC(module, peer, request);
-            if (NULL == request) {
-                return OMPI_ERR_OUT_OF_RESOURCE;
-            }
             request->internal = true;
             request->type = OMPI_OSC_RDMA_TYPE_RDMA;
         }
@@ -794,9 +787,6 @@ int ompi_osc_rdma_rput (const void *origin_addr, int origin_count, struct ompi_d
                          target_datatype->name, win->w_name));
 
     OMPI_OSC_RDMA_REQUEST_ALLOC(module, peer, rdma_request);
-    if (NULL == rdma_request) {
-        return OMPI_ERR_OUT_OF_RESOURCE;
-    }
 
     rdma_request->type = OMPI_OSC_RDMA_TYPE_PUT;
 
@@ -856,9 +846,6 @@ int ompi_osc_rdma_rget (void *origin_addr, int origin_count, struct ompi_datatyp
                          source_datatype->name, win->w_name));
 
     OMPI_OSC_RDMA_REQUEST_ALLOC(module, peer, rdma_request);
-    if (NULL == rdma_request) {
-        return OMPI_ERR_OUT_OF_RESOURCE;
-    }
 
     rdma_request->type = OMPI_OSC_RDMA_TYPE_GET;
     ret = ompi_osc_rdma_get_w_req (sync, origin_addr, origin_count, origin_datatype, peer,
