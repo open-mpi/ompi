@@ -90,8 +90,6 @@ int ompit_opal_to_mpit_error (int rc)
     }
 
     switch (rc) {
-    case OPAL_SUCCESS:
-        return MPI_SUCCESS;
     case OPAL_ERR_OUT_OF_RESOURCE:
         return MPI_T_ERR_MEMORY;
     case OPAL_ERR_VALUE_OUT_OF_BOUNDS:
