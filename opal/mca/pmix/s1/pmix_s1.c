@@ -233,8 +233,8 @@ static int s1_init(void)
 
     OBJ_CONSTRUCT(&kv, opal_value_t);
     kv.key = strdup(OPAL_PMIX_JOBID);
-    kv.type = OPAL_STRING;
-    kv.data.string = pmix_id;
+    kv.type = OPAL_UINT32;
+    kv.data.uint32 = s1_pname.jobid;
     if (OPAL_SUCCESS != (ret = opal_pmix_base_store(&OPAL_PROC_MY_NAME, &kv))) {
         OPAL_ERROR_LOG(ret);
         OBJ_DESTRUCT(&kv);
