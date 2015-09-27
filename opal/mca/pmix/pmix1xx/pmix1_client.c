@@ -103,7 +103,7 @@ int pmix1_client_init(void)
     }
 
     /* store our jobid and rank */
-    if (NULL != getenv(OPAL_MCA_PREFIX"orte_launch")) {
+   if (NULL != getenv(OPAL_MCA_PREFIX"orte_launch")) {
         /* if we were launched by the OMPI RTE, then
          * the jobid is in a special format - so get it */
         native_launch = true;
@@ -192,6 +192,44 @@ int pmix1_abort(int flag, const char *msg,
 
     /* release the array */
     PMIX_PROC_FREE(parray, cnt);
+
+    return pmix1_convert_rc(rc);
+}
+
+int pmix1_store_local(const opal_process_name_t *proc, opal_value_t *val)
+{
+    pmix_value_t kv;
+    pmix_status_t rc;
+    pmix_proc_t p;
+    opal_pmix1_jobid_trkr_t *job;
+
+    if (NULL != proc) {
+        /* if the jobid is my own, then we can just use
+         * my namespace */
+        if (OPAL_PROC_MY_NAME.jobid == proc->jobid) {
+            (void)strncpy(p.nspace, my_proc.nspace, PMIX_MAX_NSLEN);
+        } else {
+            /* look thru our list of jobids and find the
+             * corresponding nspace */
+            OPAL_LIST_FOREACH(job, &jobids, opal_pmix1_jobid_trkr_t) {
+                if (job->jobid == proc->jobid) {
+                    (void)strncpy(p.nspace, job->nspace, PMIX_MAX_NSLEN);
+                    break;
+                }
+            }
+        }
+        p.rank = proc->vpid;
+    } else {
+        /* use our name */
+        (void)strncpy(p.nspace, my_proc.nspace, PMIX_MAX_NSLEN);
+        p.rank = OPAL_PROC_MY_NAME.vpid;
+    }
+
+    PMIX_VALUE_CONSTRUCT(&kv);
+    pmix1_value_load(&kv, val);
+
+    rc = PMIx_Store_internal(&p, val->key, &kv);
+    PMIX_VALUE_DESTRUCT(&kv);
 
     return pmix1_convert_rc(rc);
 }
