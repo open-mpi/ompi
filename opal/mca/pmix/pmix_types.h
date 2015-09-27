@@ -44,7 +44,7 @@ BEGIN_C_DECLS
 #define OPAL_PMIX_PROCDIR               "pmix.pdir"         // (char*) sub-nsdir assigned to proc
 
 /* information about relative ranks as assigned by the RM */
-#define OPAL_PMIX_JOBID                 "pmix.jobid"        // (char*) jobid assigned by scheduler
+#define OPAL_PMIX_JOBID                 "pmix.jobid"        // (uint32_t) jobid assigned by scheduler
 #define OPAL_PMIX_APPNUM                "pmix.appnum"       // (uint32_t) app number within the job
 #define OPAL_PMIX_RANK                  "pmix.rank"         // (uint32_t) process rank within the job
 #define OPAL_PMIX_GLOBAL_RANK           "pmix.grank"        // (uint32_t) rank spanning across all jobs in this session
