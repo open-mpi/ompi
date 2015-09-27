@@ -88,31 +88,6 @@ const opal_pmix_base_module_t opal_pmix_pmix1xx_module = {
     pmix1_store_local
 };
 
-int pmix1_store_local(const opal_process_name_t *proc, opal_value_t *val)
-{
-    pmix_value_t kv;
-    pmix_status_t rc;
-    pmix_proc_t p;
-
-    if (NULL != proc) {
-        /* convert the process jobid */
-        (void)strncpy(p.nspace, opal_convert_jobid_to_string(proc->jobid), PMIX_MAX_NSLEN);
-        p.rank = proc->vpid;
-    } else {
-        /* use our name */
-        (void)strncpy(p.nspace, opal_convert_jobid_to_string(OPAL_PROC_MY_NAME.jobid), PMIX_MAX_NSLEN);
-        p.rank = OPAL_PROC_MY_NAME.vpid;
-    }
-
-    PMIX_VALUE_CONSTRUCT(&kv);
-    pmix1_value_load(&kv, val);
-
-    rc = PMIx_Store_internal(&p, val->key, &kv);
-    PMIX_VALUE_DESTRUCT(&kv);
-
-    return pmix1_convert_rc(rc);
-}
-
 pmix_status_t pmix1_convert_opalrc(int rc)
 {
     switch (rc) {
