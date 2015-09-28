@@ -239,7 +239,7 @@ ompi_coll_libnbc_progress(void)
 
     OPAL_LIST_FOREACH_SAFE(request, next, &mca_coll_libnbc_component.active_requests,
                            ompi_coll_libnbc_request_t) {
-        if (NBC_OK == NBC_Progress(request)) {
+        if (OMPI_SUCCESS == NBC_Progress(request)) {
             /* done, remove and complete */
             opal_list_remove_item(&mca_coll_libnbc_component.active_requests,
                                   &request->super.super.super);
