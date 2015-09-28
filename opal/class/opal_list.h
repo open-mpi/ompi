@@ -164,7 +164,12 @@ typedef struct opal_list_t opal_list_t;
  *
  * The opal_list_t destructor doesn't release the items on the
  * list - so provide two convenience macros that do so and then
- * destruct/release the list object itself
+ * destruct/release the list object itself. Destruct is for static
+ * lists and doesn't have to consider the reference count. Release
+ * function will release the entire list only when the list HEAD's
+ * reference count is 1. OBJ_RELEASE will decrement object's reference
+ * count. As List HEAD's release is done at the end, we compare the
+ * list HEAD's reference count to 1 instead of 0.
  *
  * @param[in] list List to destruct or release
  */
