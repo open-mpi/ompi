@@ -19,6 +19,8 @@
 #include "ompi/group/group.h"
 #include "ompi/communicator/communicator.h"
 
+#include "ompi/mca/mtl/portals4/mtl_portals4.h"
+
 #define OSC_PORTALS4_MB_DATA    0x0000000000000000ULL
 #define OSC_PORTALS4_MB_CONTROL 0x1000000000000000ULL
 
@@ -290,17 +292,15 @@ ompi_osc_portals4_complete_all(ompi_osc_portals4_module_t *module)
 }
 
 static inline ptl_process_t
-ompi_osc_portals4_get_peer(ompi_osc_portals4_module_t *module, int rank)
+ompi_osc_portals4_get_peer_group(struct ompi_group_t *group, int rank)
 {
-    ompi_proc_t *proc = ompi_comm_peer_lookup(module->comm, rank);
-    return *((ptl_process_t*) proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_PORTALS4]);
+    return ompi_mtl_portals4_get_peer_group(group, rank);
 }
 
 static inline ptl_process_t
-ompi_osc_portals4_get_peer_group(struct ompi_group_t *group, int rank)
+ompi_osc_portals4_get_peer(ompi_osc_portals4_module_t *module, int rank)
 {
-    ompi_proc_t *proc = ompi_group_get_proc_ptr(group, rank, true);
-    return *((ptl_process_t*) proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_PORTALS4]);
+    return ompi_osc_portals4_get_peer_group(module->comm->c_remote_group, rank);
 }
 
 #endif

@@ -25,4 +25,14 @@ struct mca_mtl_base_endpoint_t {
 };
 typedef struct mca_mtl_base_endpoint_t mca_mtl_base_endpoint_t;
 
+static inline mca_mtl_base_endpoint_t *
+ompi_mtl_portals4_get_endpoint (struct mca_mtl_base_module_t* mtl, ompi_proc_t *ompi_proc)
+{
+    if (OPAL_UNLIKELY(NULL == ompi_proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_PORTALS4])) {
+        ompi_mtl_portals4_add_procs (mtl, 1, &ompi_proc);
+    }
+
+    return ompi_proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_PORTALS4];
+}
+
 #endif
