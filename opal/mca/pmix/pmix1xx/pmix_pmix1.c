@@ -44,6 +44,8 @@
 /* These are functions used by both client and server to
  * access common functions in the embedded PMIx library */
 
+static const char *pmix1_get_nspace(opal_jobid_t jobid);
+static void pmix1_register_jobid(opal_jobid_t jobid, const char *nspace);
 
 const opal_pmix_base_module_t opal_pmix_pmix1xx_module = {
     /* client APIs */
@@ -85,8 +87,38 @@ const opal_pmix_base_module_t opal_pmix_pmix1xx_module = {
     PMIx_Get_version,
     opal_pmix_base_register_handler,
     opal_pmix_base_deregister_handler,
-    pmix1_store_local
+    pmix1_store_local,
+    pmix1_get_nspace,
+    pmix1_register_jobid
 };
+
+static const char *pmix1_get_nspace(opal_jobid_t jobid)
+{
+    opal_pmix1_jobid_trkr_t *jptr;
+
+    OPAL_LIST_FOREACH(jptr, &mca_pmix_pmix1xx_component.jobids, opal_pmix1_jobid_trkr_t) {
+        if (jptr->jobid == jobid) {
+            return jptr->nspace;
+        }
+    }
+    return NULL;
+}
+
+static void pmix1_register_jobid(opal_jobid_t jobid, const char *nspace)
+{
+    opal_pmix1_jobid_trkr_t *jptr;
+
+    /* if we don't already have it, add this to our jobid tracker */
+    OPAL_LIST_FOREACH(jptr, &mca_pmix_pmix1xx_component.jobids, opal_pmix1_jobid_trkr_t) {
+        if (jptr->jobid == jobid) {
+            return;
+        }
+    }
+    jptr = OBJ_NEW(opal_pmix1_jobid_trkr_t);
+    (void)strncpy(jptr->nspace, nspace, PMIX_MAX_NSLEN);
+    jptr->jobid = jobid;
+    opal_list_append(&mca_pmix_pmix1xx_component.jobids, &jptr->super);
+}
 
 pmix_status_t pmix1_convert_opalrc(int rc)
 {
@@ -436,6 +468,10 @@ int pmix1_value_unload(opal_value_t *kv,
 
 
 /****  INSTANTIATE INTERNAL CLASSES  ****/
+OBJ_CLASS_INSTANCE(opal_pmix1_jobid_trkr_t,
+                   opal_list_item_t,
+                   NULL, NULL);
+
 static void opcon(pmix1_opcaddy_t *p)
 {
     memset(&p->p, 0, sizeof(pmix_proc_t));

@@ -56,6 +56,8 @@ static int s2_job_connect(opal_list_t *procs);
 static int s2_job_disconnect(opal_list_t *procs);
 static int s2_store_local(const opal_process_name_t *proc,
                           opal_value_t *val);
+static const char *s2_get_nspace(opal_jobid_t jobid);
+static void s2_register_jobid(opal_jobid_t jobid, const char *nspace);
 
 const opal_pmix_base_module_t opal_pmix_s2_module = {
     s2_init,
@@ -96,7 +98,9 @@ const opal_pmix_base_module_t opal_pmix_s2_module = {
     NULL,
     opal_pmix_base_register_handler,
     opal_pmix_base_deregister_handler,
-    s2_store_local
+    s2_store_local,
+    s2_get_nspace,
+    s2_register_jobid
 };
 
 // usage accounting
@@ -663,6 +667,14 @@ static int s2_store_local(const opal_process_name_t *proc,
     return OPAL_SUCCESS;
 }
 
+static const char *s2_get_nspace(opal_jobid_t jobid)
+{
+    return NULL;
+}
+static void s2_register_jobid(opal_jobid_t jobid, const char *nspace)
+{
+    return;
+}
 
 static char* pmix_error(int pmix_err)
 {
