@@ -701,6 +701,12 @@ typedef void (*opal_pmix_base_module_deregister_fn_t)(void);
 typedef int (*opal_pmix_base_module_store_fn_t)(const opal_process_name_t *proc,
                                                 opal_value_t *val);
 
+/* retrieve the nspace corresponding to a given jobid */
+typedef const char* (*opal_pmix_base_module_get_nspace_fn_t)(opal_jobid_t jobid);
+
+/* register a jobid-to-nspace pair */
+typedef void (*opal_pmix_base_module_register_jobid_fn_t)(opal_jobid_t jobid, const char *nspace);
+
 /*
  * the standard public API data structure
  */
@@ -745,6 +751,8 @@ typedef struct {
     opal_pmix_base_module_register_fn_t               register_errhandler;
     opal_pmix_base_module_deregister_fn_t             deregister_errhandler;
     opal_pmix_base_module_store_fn_t                  store_local;
+    opal_pmix_base_module_get_nspace_fn_t             get_nspace;
+    opal_pmix_base_module_register_jobid_fn_t         register_jobid;
 } opal_pmix_base_module_t;
 
 typedef struct {

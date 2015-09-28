@@ -139,7 +139,13 @@ int ompi_dpm_connect_accept(ompi_communicator_t *comm, int root,
         opal_argv_append_nosize(&members, nstring);
         free(nstring);
         /* have to add the number of procs in the job so the remote side
-         * can correctly add the procs by computing their names */
+         * can correctly add the procs by computing their names, and our nspace
+         * so they can update their records */
+        if (NULL == (nstring = (char*)opal_pmix.get_nspace(OMPI_PROC_MY_NAME->jobid))) {
+            opal_argv_free(members);
+            return OMPI_ERR_NOT_SUPPORTED;
+        }
+        opal_argv_append_nosize(&members, nstring);
         (void)asprintf(&nstring, "%d", size);
         opal_argv_append_nosize(&members, nstring);
         free(nstring);
@@ -171,6 +177,11 @@ int ompi_dpm_connect_accept(ompi_communicator_t *comm, int root,
             }
             opal_argv_append_nosize(&members, nstring);
             free(nstring);
+            if (NULL == (nstring = (char*)opal_pmix.get_nspace(proc_list[i]->super.proc_name.jobid))) {
+                opal_argv_free(members);
+                return OMPI_ERR_NOT_SUPPORTED;
+            }
+            opal_argv_append_nosize(&members, nstring);
         }
         if (!dense) {
             free(proc_list);
@@ -246,6 +257,17 @@ int ompi_dpm_connect_accept(ompi_communicator_t *comm, int root,
             OPAL_LIST_DESTRUCT(&mlist);
             goto exit;
         }
+        /* step over the nspace */
+        ++i;
+        if (NULL == members[i]) {
+            /* this shouldn't happen and is an error */
+            OMPI_ERROR_LOG(OMPI_ERR_BAD_PARAM);
+            OPAL_LIST_DESTRUCT(&mlist);
+            opal_argv_free(members);
+            free(rport);
+            rc = OMPI_ERR_BAD_PARAM;
+            goto exit;
+        }
         /* if the rank is wildcard, then we need to add all procs
          * in that job to the list */
         if (OPAL_VPID_WILDCARD == nm->name.vpid) {
@@ -295,6 +317,16 @@ int ompi_dpm_connect_accept(ompi_communicator_t *comm, int root,
             OPAL_LIST_DESTRUCT(&rlist);
             goto exit;
         }
+        /* next entry is the nspace - register it */
+        ++i;
+        if (NULL == members[i]) {
+            OMPI_ERROR_LOG(OMPI_ERR_NOT_SUPPORTED);
+            opal_argv_free(members);
+            OPAL_LIST_DESTRUCT(&ilist);
+            OPAL_LIST_DESTRUCT(&rlist);
+            goto exit;
+        }
+        opal_pmix.register_jobid(nm->name.jobid, members[i]);
         if (OPAL_VPID_WILDCARD == nm->name.vpid) {
             jobid = nm->name.jobid;
             OBJ_RELEASE(nm);
