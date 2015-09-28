@@ -567,7 +567,11 @@ int ompi_comm_split( ompi_communicator_t* comm, int color, int key,
             }
         }
 
-        ompi_group_incl(comm->c_local_group, my_size, lranks, &local_group);
+        rc = ompi_group_incl(comm->c_local_group, my_size, lranks, &local_group);
+        if (OMPI_SUCCESS != rc) {
+            goto exit;
+        }
+
         ompi_group_increment_proc_count(local_group);
 
         mode = OMPI_COMM_CID_INTER;
@@ -919,7 +923,7 @@ ompi_comm_split_type(ompi_communicator_t *comm,
                          NULL,               /* local group */
                          NULL );             /* remote group */
 
-    if ( NULL == newcomm ) {
+    if ( NULL == newcomp ) {
         rc =  MPI_ERR_INTERN;
         goto exit;
     }
