@@ -1,8 +1,10 @@
 /*
  * Copyright © 2009 CNRS
- * Copyright © 2009-2014 Inria.  All rights reserved.
+ * Copyright © 2009-2015 Inria.  All rights reserved.
  * Copyright © 2009-2011, 2013 Université Bordeaux
  * Copyright © 2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright © 2015      Research Organization for Information Science
+ *                       and Technology (RIST). All rights reserved.
  * See COPYING in top-level directory.
  */
 
@@ -305,7 +307,12 @@ hwloc_pci_component_instantiate(struct hwloc_disc_component *component,
   if (!backend)
     return NULL;
   backend->flags = HWLOC_BACKEND_FLAG_NEED_LEVELS;
-  backend->discover = hwloc_look_pci;
+#ifdef HWLOC_SOLARIS_SYS
+  if ((uid_t)0 != geteuid())
+    backend->discover = NULL;
+  else
+#endif
+    backend->discover = hwloc_look_pci;
   return backend;
 }
 
