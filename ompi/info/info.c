@@ -275,7 +275,7 @@ int ompi_info_set (ompi_info_t *info, const char *key, const char *value)
 int ompi_info_set_value_enum (ompi_info_t *info, const char *key, int value,
                               mca_base_var_enum_t *var_enum)
 {
-    char *string_value;
+    const char *string_value;
     int ret;
 
     ret = var_enum->string_from_value (var_enum, value, &string_value);
