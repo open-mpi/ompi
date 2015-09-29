@@ -139,9 +139,7 @@ extern int opal_pmix_base_exchange(opal_value_t *info,
         _info->type = OPAL_BOOL;                                                         \
         _info->data.flag = true;                                                         \
         opal_list_append(&(_ilist), &(_info)->super);                                    \
-        if (OPAL_SUCCESS != ((r) = opal_pmix.get((p), (s), &(_ilist), &(_kv)))) {        \
-            *(d) = NULL;                                                                 \
-        } else {                                                                         \
+        if (OPAL_SUCCESS == ((r) = opal_pmix.get((p), (s), &(_ilist), &(_kv)))) {        \
             (r) = opal_value_unload(_kv, (void**)(d), (t));                              \
             OBJ_RELEASE(_kv);                                                            \
         }                                                                                \
@@ -168,9 +166,7 @@ extern int opal_pmix_base_exchange(opal_value_t *info,
                             OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),                 \
                             __FILE__, __LINE__,                                 \
                             OPAL_NAME_PRINT(*(p)), (s)));                       \
-        if (OPAL_SUCCESS != ((r) = opal_pmix.get((p), (s), NULL, &(_kv)))) {    \
-            *(d) = NULL;                                                        \
-        } else {                                                                \
+        if (OPAL_SUCCESS == ((r) = opal_pmix.get((p), (s), NULL, &(_kv)))) {    \
             (r) = opal_value_unload(_kv, (void**)(d), (t));                     \
             OBJ_RELEASE(_kv);                                                   \
         }                                                                       \
@@ -203,9 +199,6 @@ extern int opal_pmix_base_exchange(opal_value_t *info,
             *(sz) = _kv->data.bo.size;                                          \
             _kv->data.bo.bytes = NULL; /* protect the data */                   \
             OBJ_RELEASE(_kv);                                                   \
-        } else {                                                                \
-            *(d) = NULL;                                                        \
-            *(sz) = 0;                                                          \
         }                                                                       \
     } while(0);
 
