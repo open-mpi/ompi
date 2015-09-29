@@ -333,8 +333,6 @@ int ompi_proc_complete_init(void)
     if (ompi_process_info.num_procs >= ompi_add_procs_cutoff) {
         uint16_t u16, *u16ptr;
 
-        u16ptr = &u16;
-
         /* find and add all local processes */
         for (ompi_vpid_t i = 0 ; i < ompi_process_info.num_procs ; ++i ) {
             opal_process_name_t proc_name = {.vpid = i, .jobid = OMPI_PROC_MY_NAME->jobid};
@@ -346,6 +344,7 @@ int ompi_proc_complete_init(void)
 
             /* the runtime is required to fill in locality for all local processes by this
              * point. only local processes will have locality set */
+            u16ptr = &u16;
             OPAL_MODEX_RECV_VALUE_OPTIONAL(ret, OPAL_PMIX_LOCALITY, &proc_name, &u16ptr, OPAL_UINT16);
             if (OPAL_SUCCESS == ret) {
                 locality = u16;
