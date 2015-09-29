@@ -1705,6 +1705,7 @@ static mca_btl_base_registration_handle_t *mca_btl_openib_register_mem (mca_btl_
 {
     mca_btl_openib_reg_t *reg;
     uint32_t mflags = 0;
+    int access_flags = flags & MCA_BTL_REG_FLAG_ACCESS_ANY;
     int rc;
 
 #if OPAL_CUDA_GDR_SUPPORT
@@ -1713,7 +1714,7 @@ static mca_btl_base_registration_handle_t *mca_btl_openib_register_mem (mca_btl_
     }
 #endif /* OPAL_CUDA_GDR_SUPPORT */
 
-    rc = btl->btl_mpool->mpool_register (btl->btl_mpool, base, size, mflags,
+    rc = btl->btl_mpool->mpool_register (btl->btl_mpool, base, size, mflags, access_flags,
                                          (mca_mpool_base_registration_t **) &reg);
     if (OPAL_UNLIKELY(OPAL_SUCCESS != rc || NULL == reg)) {
         return NULL;
