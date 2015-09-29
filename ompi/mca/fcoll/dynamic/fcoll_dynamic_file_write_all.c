@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2015 University of Houston. All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -48,7 +50,7 @@ static int local_heap_sort (mca_io_ompio_local_io_array *io_array,
 
 int
 mca_fcoll_dynamic_file_write_all (mca_io_ompio_file_t *fh,
-                                  void *buf,
+                                  const void *buf,
                                   int count,
                                   struct ompi_datatype_t *datatype,
                                   ompi_status_public_t *status)

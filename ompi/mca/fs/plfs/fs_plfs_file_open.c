@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2014 University of Houston. All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -40,7 +42,7 @@
  */
 int
 mca_fs_plfs_file_open (struct ompi_communicator_t *comm,
-                     char* filename,
+                     const char* filename,
                      int access_mode,
                      struct ompi_info_t *info,
                      mca_io_ompio_file_t *fh)

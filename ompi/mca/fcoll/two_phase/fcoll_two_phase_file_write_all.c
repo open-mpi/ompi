@@ -53,7 +53,7 @@ typedef struct flat_list_node {
 
 /* local function declarations  */
 static int two_phase_exch_and_write(mca_io_ompio_file_t *fh,
-				    void *buf,
+				    const void *buf,
 				    MPI_Datatype datatype,
 				    mca_io_ompio_access_array_t *others_req,
 				    struct iovec *offset_len,
@@ -69,7 +69,7 @@ static int two_phase_exch_and_write(mca_io_ompio_file_t *fh,
 
 
 static int  two_phase_exchage_data(mca_io_ompio_file_t *fh,
-				   void *buf,
+				   const void *buf,
 				   char *write_buf,
 				   struct iovec *offset_length,
 				   int *send_size, int *start_pos,
@@ -92,7 +92,7 @@ static int  two_phase_exchage_data(mca_io_ompio_file_t *fh,
 
 
 static int two_phase_fill_send_buffer(mca_io_ompio_file_t *fh,
-				      void *buf,
+				      const void *buf,
 				      Flatlist_node *flat_buf,
 				      char **send_buf,
 				      struct iovec *offset_length,
@@ -138,7 +138,7 @@ double exch_write = 0.0, start_exch = 0.0, end_exch = 0.0;
 
 int
 mca_fcoll_two_phase_file_write_all (mca_io_ompio_file_t *fh,
-                                    void *buf,
+                                    const void *buf,
                                     int count,
                                     struct ompi_datatype_t *datatype,
                                     ompi_status_public_t *status)
@@ -577,7 +577,7 @@ exit :
 
 
 static int two_phase_exch_and_write(mca_io_ompio_file_t *fh,
-				    void *buf,
+				    const void *buf,
 				    MPI_Datatype datatype,
 				    mca_io_ompio_access_array_t *others_req,
 				    struct iovec *offset_len,
@@ -923,7 +923,7 @@ exit:
 }
 
 static int two_phase_exchage_data(mca_io_ompio_file_t *fh,
-				  void *buf,
+				  const void *buf,
 				  char *write_buf,
 				  struct iovec *offset_length,
 				  int *send_size,int *start_pos,
@@ -1253,7 +1253,7 @@ exit:
 
 
 static int two_phase_fill_send_buffer(mca_io_ompio_file_t *fh,
-				      void *buf,
+				      const void *buf,
 				      Flatlist_node *flat_buf,
 				      char **send_buf,
 				      struct iovec *offset_length,

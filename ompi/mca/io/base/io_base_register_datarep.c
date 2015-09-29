@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -27,7 +29,7 @@
 
 
 int
-mca_io_base_register_datarep(char *datarep,
+mca_io_base_register_datarep(const char *datarep,
                              MPI_Datarep_conversion_function* read_fn,
                              MPI_Datarep_conversion_function* write_fn,
                              MPI_Datarep_extent_function* extent_fn,
