@@ -78,6 +78,9 @@ static int cray_unpublish_nb(char **keys, opal_list_t *info,
 static const char *cray_get_version(void);
 static int cray_store_local(const opal_process_name_t *proc,
                           opal_value_t *val);
+static const char *cray_get_nspace(opal_jobid_t jobid);
+static void cray_register_jobid(opal_jobid_t jobid, const char *nspace);
+
 #if 0
 static bool cray_get_attr(const char *attr, opal_value_t **kv);
 #endif
@@ -109,7 +112,9 @@ const opal_pmix_base_module_t opal_pmix_cray_module = {
     .get_version = cray_get_version,
     .register_errhandler = opal_pmix_base_register_handler,
     .deregister_errhandler = opal_pmix_base_deregister_handler,
-    .store_local = cray_store_local
+    .store_local = cray_store_local,
+    .get_nspace = cray_get_nspace,
+    .register_jobid = cray_register_jobid
 };
 
 // usage accounting
@@ -812,6 +817,16 @@ static int cray_store_local(const opal_process_name_t *proc,
     opal_pmix_base_store(proc, val);
 
     return OPAL_SUCCESS;
+}
+
+static const char *cray_get_nspace(opal_jobid_t jobid)
+{
+    return NULL;
+}
+
+static void cray_register_jobid(opal_jobid_t jobid, const char *nspace)
+{
+    return;
 }
 
 static char* pmix_error(int pmix_err)

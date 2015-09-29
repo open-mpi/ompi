@@ -49,6 +49,8 @@ static int s1_job_connect(opal_list_t *procs);
 static int s1_job_disconnect(opal_list_t *procs);
 static int s1_store_local(const opal_process_name_t *proc,
                           opal_value_t *val);
+static const char *s1_get_nspace(opal_jobid_t jobid);
+static void s1_register_jobid(opal_jobid_t jobid, const char *nspace);
 
 const opal_pmix_base_module_t opal_pmix_s1_module = {
     s1_init,
@@ -89,7 +91,9 @@ const opal_pmix_base_module_t opal_pmix_s1_module = {
     NULL,
     opal_pmix_base_register_handler,
     opal_pmix_base_deregister_handler,
-    s1_store_local
+    s1_store_local,
+    s1_get_nspace,
+    s1_register_jobid
 };
 
 // usage accounting
@@ -233,8 +237,8 @@ static int s1_init(void)
 
     OBJ_CONSTRUCT(&kv, opal_value_t);
     kv.key = strdup(OPAL_PMIX_JOBID);
-    kv.type = OPAL_STRING;
-    kv.data.string = pmix_id;
+    kv.type = OPAL_UINT32;
+    kv.data.uint32 = s1_pname.jobid;
     if (OPAL_SUCCESS != (ret = opal_pmix_base_store(&OPAL_PROC_MY_NAME, &kv))) {
         OPAL_ERROR_LOG(ret);
         OBJ_DESTRUCT(&kv);
@@ -644,6 +648,14 @@ static int s1_store_local(const opal_process_name_t *proc,
     return OPAL_SUCCESS;
 }
 
+static const char *s1_get_nspace(opal_jobid_t jobid)
+{
+    return NULL;
+}
+static void s1_register_jobid(opal_jobid_t jobid, const char *nspace)
+{
+    return;
+}
 
 static char* pmix_error(int pmix_err)
 {

@@ -30,11 +30,24 @@
 
 BEGIN_C_DECLS
 
-OPAL_DECLSPEC extern opal_pmix_base_component_t mca_pmix_pmix1_component;
+typedef struct {
+  opal_pmix_base_component_t super;
+  opal_list_t jobids;
+  bool native_launch;
+} mca_pmix_pmix1_component_t;
+
+OPAL_DECLSPEC extern mca_pmix_pmix1_component_t mca_pmix_pmix1xx_component;
 
 OPAL_DECLSPEC extern const opal_pmix_base_module_t opal_pmix_pmix1xx_module;
 
 /****  INTERNAL OBJECTS  ****/
+typedef struct {
+    opal_list_item_t super;
+    opal_jobid_t jobid;
+    char nspace[PMIX_MAX_NSLEN + 1];
+} opal_pmix1_jobid_trkr_t;
+OBJ_CLASS_DECLARATION(opal_pmix1_jobid_trkr_t);
+
 typedef struct {
     opal_object_t super;
     pmix_proc_t p;

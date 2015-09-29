@@ -18,6 +18,7 @@
 #include "opal_config.h"
 
 #include "opal/constants.h"
+#include "opal/class/opal_list.h"
 #include "opal/util/proc.h"
 #include "opal/mca/pmix/pmix.h"
 #include "pmix1.h"
@@ -41,43 +42,47 @@ static int pmix1xx_component_query(mca_base_module_t **module, int *priority);
  * and pointers to our public functions in it
  */
 
-opal_pmix_base_component_t mca_pmix_pmix1xx_component = {
+mca_pmix_pmix1_component_t mca_pmix_pmix1xx_component = {
+    {
     /* First, the mca_component_t struct containing meta information
        about the component itself */
 
-    .base_version = {
+        .base_version = {
         /* Indicate that we are a pmix v1.1.0 component (which also
            implies a specific MCA version) */
 
-        OPAL_PMIX_BASE_VERSION_2_0_0,
+            OPAL_PMIX_BASE_VERSION_2_0_0,
 
         /* Component name and version */
 
-        .mca_component_name = "pmix1xx",
-        MCA_BASE_MAKE_VERSION(component, OPAL_MAJOR_VERSION, OPAL_MINOR_VERSION,
-                              OPAL_RELEASE_VERSION),
+            .mca_component_name = "pmix1xx",
+            MCA_BASE_MAKE_VERSION(component, OPAL_MAJOR_VERSION, OPAL_MINOR_VERSION,
+                                  OPAL_RELEASE_VERSION),
 
         /* Component open and close functions */
 
-        .mca_open_component = pmix1xx_open,
-        .mca_close_component = pmix1xx_close,
-        .mca_query_component = pmix1xx_component_query,
-    },
-    /* Next the MCA v1.0.0 component meta data */
-    .base_data = {
+            .mca_open_component = pmix1xx_open,
+            .mca_close_component = pmix1xx_close,
+            .mca_query_component = pmix1xx_component_query,
+        },
+        /* Next the MCA v1.0.0 component meta data */
+        .base_data = {
         /* The component is checkpoint ready */
-        MCA_BASE_METADATA_PARAM_CHECKPOINT
-    }
+            MCA_BASE_METADATA_PARAM_CHECKPOINT
+        }
+    },
+    .native_launch = false
 };
 
 static int pmix1xx_open(void)
 {
-
+    OBJ_CONSTRUCT(&mca_pmix_pmix1xx_component.jobids, opal_list_t);
     return OPAL_SUCCESS;
 }
 
 static int pmix1xx_close(void)
 {
+    OPAL_LIST_DESTRUCT(&mca_pmix_pmix1xx_component.jobids);
     return OPAL_SUCCESS;
 }
 

@@ -861,6 +861,8 @@ void orte_odls_base_default_launch_local(int fd, short sd, void *cbdata)
                 ORTE_ERROR_LOG(rc);
                 continue;
             }
+            /* tell the child that it is being launched via ORTE */
+            opal_setenv(OPAL_MCA_PREFIX"orte_launch", "1", true, &app->env);
 
             /* ensure we clear any prior info regarding state or exit status in
              * case this is a restart
