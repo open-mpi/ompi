@@ -272,15 +272,24 @@ static int ugni_reg_rdma_mem (void *reg_data, void *base, size_t size,
     mca_btl_ugni_module_t *ugni_module = (mca_btl_ugni_module_t *) reg_data;
     mca_btl_ugni_reg_t *ugni_reg = (mca_btl_ugni_reg_t *) reg;
     gni_return_t rc;
+    int flags;
 
     if (ugni_module->reg_count >= ugni_module->reg_max) {
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
 
+    if (reg->access_flags & (MCA_MPOOL_ACCESS_REMOTE_WRITE | MCA_MPOOL_ACCESS_LOCAL_WRITE |
+                             MCA_MPOOL_ACCESS_REMOTE_ATOMIC)) {
+        flags = GNI_MEM_READWRITE;
+    } else {
+        flags = GNI_MEM_READ_ONLY;
+    }
+
+    flags |= GNI_MEM_RELAXED_PI_ORDERING;
+
     OPAL_THREAD_LOCK(&ugni_module->device->dev_lock);
     rc = GNI_MemRegister (ugni_module->device->dev_handle, (uint64_t) base,
-                          size, NULL, GNI_MEM_READWRITE | GNI_MEM_RELAXED_PI_ORDERING,
-                          -1, &(ugni_reg->handle.gni_handle));
+                          size, NULL, flags, -1, &(ugni_reg->handle.gni_handle));
     OPAL_THREAD_UNLOCK(&ugni_module->device->dev_lock);
 
     if (OPAL_UNLIKELY(GNI_RC_SUCCESS != rc)) {

@@ -75,6 +75,7 @@ mca_btl_ugni_prepare_src_send_inplace (struct mca_btl_base_module_t *btl,
 
     if (OPAL_UNLIKELY(true == use_eager_get)) {
         rc = btl->btl_mpool->mpool_register(btl->btl_mpool, data_ptr, *size, 0,
+                                            MCA_MPOOL_ACCESS_REMOTE_READ,
                                             (mca_mpool_base_registration_t **)&registration);
         if (OPAL_UNLIKELY(OPAL_SUCCESS != rc)) {
             mca_btl_ugni_frag_return (frag);
