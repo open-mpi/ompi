@@ -10,7 +10,7 @@
  * Copyright (c) 2013      The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  *
  * Author(s): Torsten Hoefler <htor@cs.indiana.edu>
@@ -40,10 +40,10 @@ int NBC_Scatter_args_compare(NBC_Scatter_args *a, NBC_Scatter_args *b, void *par
 #endif
 
 /* simple linear MPI_Iscatter */
-int ompi_coll_libnbc_iscatter (void* sendbuf, int sendcount, MPI_Datatype sendtype,
-                               void* recvbuf, int recvcount, MPI_Datatype recvtype, int root,
-                               struct ompi_communicator_t *comm, ompi_request_t ** request,
-                               struct mca_coll_base_module_2_1_0_t *module) {
+int ompi_coll_libnbc_iscatter(const void* sendbuf, int sendcount, MPI_Datatype sendtype,
+                              void* recvbuf, int recvcount, MPI_Datatype recvtype, int root,
+                              struct ompi_communicator_t *comm, ompi_request_t ** request,
+                              struct mca_coll_base_module_2_1_0_t *module) {
   int rank, p, res;
   MPI_Aint sndext = 0;
   NBC_Schedule *schedule;
@@ -169,10 +169,10 @@ int ompi_coll_libnbc_iscatter (void* sendbuf, int sendcount, MPI_Datatype sendty
   return OMPI_SUCCESS;
 }
 
-int ompi_coll_libnbc_iscatter_inter (void* sendbuf, int sendcount, MPI_Datatype sendtype,
-                                     void* recvbuf, int recvcount, MPI_Datatype recvtype, int root,
-                                     struct ompi_communicator_t *comm, ompi_request_t ** request,
-                                     struct mca_coll_base_module_2_1_0_t *module) {
+int ompi_coll_libnbc_iscatter_inter(const void* sendbuf, int sendcount, MPI_Datatype sendtype,
+                                    void* recvbuf, int recvcount, MPI_Datatype recvtype, int root,
+                                    struct ompi_communicator_t *comm, ompi_request_t ** request,
+                                    struct mca_coll_base_module_2_1_0_t *module) {
     int res, rsize;
     MPI_Aint sndext;
     NBC_Schedule *schedule;

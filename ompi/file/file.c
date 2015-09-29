@@ -91,7 +91,7 @@ int ompi_file_init(void)
 /*
  * Back end to MPI_FILE_OPEN
  */
-int ompi_file_open(struct ompi_communicator_t *comm, char *filename,
+int ompi_file_open(struct ompi_communicator_t *comm, const char *filename,
                    int amode, struct ompi_info_t *info, ompi_file_t **fh)
 {
     int ret;

@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -38,19 +40,19 @@
 
 int mca_topo_base_cart_map(ompi_communicator_t* comm,
                            int ndims,
-                           int *dims, int *periods, int *newrank)
+                           const int *dims, const int *periods, int *newrank)
 {
-    int nprocs, rank, size, i, *p;
+    int nprocs, rank, size, i;
 
     /*
      * Compute the # of processes in the grid.
      */
     nprocs = 1;
-    for (i = 0, p = dims; i < ndims; ++i, ++p) {
-        if (*p <= 0) {
+    for (i = 0 ; i < ndims; ++i) {
+        if (dims[i] <= 0) {
             return MPI_ERR_DIMS;
         }
-        nprocs *= *p;
+        nprocs *= dims[i];
     }
     /*
      * Check that number of processes <= size of communicator.

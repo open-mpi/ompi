@@ -4,6 +4,8 @@
  *                         All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -77,7 +79,7 @@ int mca_vprotocol_pessimist_recv(void *addr,
                                  struct ompi_communicator_t *comm,
                                  ompi_status_public_t * status );
 
-int mca_vprotocol_pessimist_isend(void *buf,
+int mca_vprotocol_pessimist_isend(const void *buf,
                                   size_t count,
                                   ompi_datatype_t* datatype,
                                   int dst,
@@ -85,7 +87,7 @@ int mca_vprotocol_pessimist_isend(void *buf,
                                   mca_pml_base_send_mode_t sendmode,
                                   ompi_communicator_t* comm,
                                   ompi_request_t** request );
-int mca_vprotocol_pessimist_send(void *buf,
+int mca_vprotocol_pessimist_send(const void *buf,
                                  size_t count,
                                  ompi_datatype_t* datatype,
                                  int dst,

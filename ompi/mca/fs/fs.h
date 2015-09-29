@@ -13,6 +13,8 @@
  * Copyright (c) 2008-2015 University of Houston. All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -107,7 +109,7 @@ typedef int (*mca_fs_base_module_finalize_1_0_0_fn_t)
 (struct mca_io_ompio_file_t *file);
 
 typedef int (*mca_fs_base_module_file_open_fn_t)(
-    struct ompi_communicator_t *comm, char *filename, int amode,
+    struct ompi_communicator_t *comm, const char *filename, int amode,
     struct ompi_info_t *info, struct mca_io_ompio_file_t *fh);
 typedef int (*mca_fs_base_module_file_close_fn_t)(struct mca_io_ompio_file_t *fh);
 typedef int (*mca_fs_base_module_file_delete_fn_t)(

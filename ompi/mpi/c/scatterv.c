@@ -13,6 +13,8 @@
  * Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights
  *                         reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -189,8 +191,7 @@ int MPI_Scatterv(const void *sendbuf, const int sendcounts[], const int displs[]
     OPAL_CR_ENTER_LIBRARY();
 
     /* Invoke the coll component to perform the back-end operation */
-    /* XXX -- CONST -- do not cast away const -- update mca/coll */
-    err = comm->c_coll.coll_scatterv((void *) sendbuf, (int *) sendcounts, (int *) displs,
+    err = comm->c_coll.coll_scatterv(sendbuf, sendcounts, displs,
                                      sendtype, recvbuf, recvcount, recvtype, root, comm,
                                      comm->c_coll.coll_scatterv_module);
     OMPI_ERRHANDLER_RETURN(err, comm, err, FUNC_NAME);

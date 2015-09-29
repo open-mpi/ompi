@@ -13,7 +13,7 @@
  * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2013      FUJITSU LIMITED.  All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -41,9 +41,9 @@
  *	Returns:	- MPI_SUCCESS or an MPI error code
  */
 int
-mca_coll_basic_alltoallv_inter(void *sbuf, int *scounts, int *sdisps,
+mca_coll_basic_alltoallv_inter(const void *sbuf, const int *scounts, const int *sdisps,
                                struct ompi_datatype_t *sdtype, void *rbuf,
-                               int *rcounts, int *rdisps,
+                               const int *rcounts, const int *rdisps,
                                struct ompi_datatype_t *rdtype,
                                struct ompi_communicator_t *comm,
                                mca_coll_base_module_t *module)

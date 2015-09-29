@@ -14,6 +14,8 @@
  * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
  * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -138,7 +140,7 @@ extern int mca_pml_ob1_mprobe( int dst,
                               struct ompi_message_t **message,
                               ompi_status_public_t* status );
 
-extern int mca_pml_ob1_isend_init( void *buf,
+extern int mca_pml_ob1_isend_init( const void *buf,
                                    size_t count,
                                    ompi_datatype_t *datatype,
                                    int dst,
@@ -147,7 +149,7 @@ extern int mca_pml_ob1_isend_init( void *buf,
                                    struct ompi_communicator_t* comm,
                                    struct ompi_request_t **request );
 
-extern int mca_pml_ob1_isend( void *buf,
+extern int mca_pml_ob1_isend( const void *buf,
                               size_t count,
                               ompi_datatype_t *datatype,
                               int dst,
@@ -156,7 +158,7 @@ extern int mca_pml_ob1_isend( void *buf,
                               struct ompi_communicator_t* comm,
                               struct ompi_request_t **request );
 
-extern int mca_pml_ob1_send( void *buf,
+extern int mca_pml_ob1_send( const void *buf,
                              size_t count,
                              ompi_datatype_t *datatype,
                              int dst,

@@ -33,9 +33,9 @@ typedef struct _dist_graph_elem {
 
 int mca_topo_base_dist_graph_distribute(mca_topo_base_module_t* module,
                                         ompi_communicator_t *comm,
-                                        int n, int nodes[],
-                                        int degrees[], int targets[],
-                                        int weights[],
+                                        int n, const int nodes[],
+                                        const int degrees[], const int targets[],
+                                        const int weights[],
                                         mca_topo_base_comm_dist_graph_2_2_0_t** ptopo)
 {
     int i, j, err, count, left_over, pending_reqs, current_pos, index, csize;
@@ -280,9 +280,9 @@ int mca_topo_base_dist_graph_distribute(mca_topo_base_module_t* module,
 
 int mca_topo_base_dist_graph_create(mca_topo_base_module_t* module,
                                     ompi_communicator_t *comm_old,
-                                    int n, int nodes[],
-                                    int degrees[], int targets[],
-                                    int weights[],
+                                    int n, const int nodes[],
+                                    const int degrees[], const int targets[],
+                                    const int weights[],
                                     ompi_info_t *info, int reorder,
                                     ompi_communicator_t **newcomm)
 {

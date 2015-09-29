@@ -48,13 +48,13 @@ static const struct mca_io_base_module_2_0_0_t *
 static int file_unquery(struct ompi_file_t *file,
                         struct mca_io_base_file_t *private_data);
 
-static int delete_query(char *filename, struct ompi_info_t *info,
+static int delete_query(const char *filename, struct ompi_info_t *info,
                         struct mca_io_base_delete_t **private_data,
                         bool *usable, int *priorty);
-static int delete_select(char *filename, struct ompi_info_t *info,
+static int delete_select(const char *filename, struct ompi_info_t *info,
                          struct mca_io_base_delete_t *private_data);
 
-static int register_datarep(char *,
+static int register_datarep(const char *,
                             MPI_Datarep_conversion_function*,
                             MPI_Datarep_conversion_function*,
                             MPI_Datarep_extent_function*,
@@ -222,7 +222,7 @@ static int file_unquery(struct ompi_file_t *file,
 }
 
 
-static int delete_query(char *filename, struct ompi_info_t *info,
+static int delete_query(const char *filename, struct ompi_info_t *info,
                         struct mca_io_base_delete_t **private_data,
                         bool *usable, int *priority)
 {
@@ -234,7 +234,7 @@ static int delete_query(char *filename, struct ompi_info_t *info,
 }
 
 
-static int delete_select(char *filename, struct ompi_info_t *info,
+static int delete_select(const char *filename, struct ompi_info_t *info,
                          struct mca_io_base_delete_t *private_data)
 {
     int ret;
@@ -248,7 +248,7 @@ static int delete_select(char *filename, struct ompi_info_t *info,
 
 
 static int
-register_datarep(char * datarep,
+register_datarep(const char * datarep,
                  MPI_Datarep_conversion_function* read_fn,
                  MPI_Datarep_conversion_function* write_fn,
                  MPI_Datarep_extent_function* extent_fn,

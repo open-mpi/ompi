@@ -12,7 +12,7 @@
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2012      Sandia National Laboratories. All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -51,7 +51,7 @@
  *     up at some point)
  */
 int
-mca_coll_basic_reduce_scatter_block_intra(void *sbuf, void *rbuf, int rcount,
+mca_coll_basic_reduce_scatter_block_intra(const void *sbuf, void *rbuf, int rcount,
                                           struct ompi_datatype_t *dtype,
                                           struct ompi_op_t *op,
                                           struct ompi_communicator_t *comm,
@@ -119,7 +119,7 @@ mca_coll_basic_reduce_scatter_block_intra(void *sbuf, void *rbuf, int rcount,
  *	Returns:	- MPI_SUCCESS or error code
  */
 int
-mca_coll_basic_reduce_scatter_block_inter(void *sbuf, void *rbuf, int rcount,
+mca_coll_basic_reduce_scatter_block_inter(const void *sbuf, void *rbuf, int rcount,
                                           struct ompi_datatype_t *dtype,
                                           struct ompi_op_t *op,
                                           struct ompi_communicator_t *comm,

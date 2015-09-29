@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -373,7 +375,7 @@ int mca_pml_base_bsend_request_fini(ompi_request_t* request)
     OPAL_THREAD_LOCK(&mca_pml_bsend_mutex);
 
     /* free buffer */
-    mca_pml_bsend_allocator->alc_free(mca_pml_bsend_allocator, sendreq->req_addr);
+    mca_pml_bsend_allocator->alc_free(mca_pml_bsend_allocator, (void *)sendreq->req_addr);
     sendreq->req_addr = sendreq->req_base.req_addr;
 
     /* decrement count of buffered requests */

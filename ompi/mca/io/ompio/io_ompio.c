@@ -588,7 +588,7 @@ int ompi_io_ompio_set_explicit_offset (mca_io_ompio_file_t *fh,
 int ompi_io_ompio_decode_datatype (struct mca_io_ompio_file_t *fh,
                                    ompi_datatype_t *datatype,
                                    int count,
-                                   void *buf,
+                                   const void *buf,
                                    size_t *max_data,
                                    struct iovec **iov,
                                    uint32_t *iovec_count)

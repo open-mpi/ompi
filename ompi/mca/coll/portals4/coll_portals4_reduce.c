@@ -1,6 +1,8 @@
 /*
  * Copyright (c) 2015      Sandia National Laboratories. All rights reserved.
  * Copyright (c) 2015      Bull SAS.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -28,7 +30,7 @@
 
 
 static int
-reduce_kary_tree_top(void *sendbuf, void *recvbuf, int count,
+reduce_kary_tree_top(const void *sendbuf, void *recvbuf, int count,
         MPI_Datatype dtype, MPI_Op op,
         int root,
         struct ompi_communicator_t *comm,
@@ -359,7 +361,7 @@ reduce_kary_tree_bottom(ompi_coll_portals4_request_t *request)
 
 
 int
-ompi_coll_portals4_reduce_intra(void *sendbuf, void *recvbuf, int count,
+ompi_coll_portals4_reduce_intra(const void *sendbuf, void *recvbuf, int count,
         MPI_Datatype dtype, MPI_Op op,
         int root,
         struct ompi_communicator_t *comm,
@@ -389,7 +391,7 @@ ompi_coll_portals4_reduce_intra(void *sendbuf, void *recvbuf, int count,
 
 
 int
-ompi_coll_portals4_ireduce_intra(void* sendbuf, void* recvbuf, int count,
+ompi_coll_portals4_ireduce_intra(const void* sendbuf, void* recvbuf, int count,
         MPI_Datatype dtype, MPI_Op op,
         int root,
         struct ompi_communicator_t *comm,

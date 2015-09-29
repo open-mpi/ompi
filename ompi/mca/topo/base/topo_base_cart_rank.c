@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2013 Inria.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -38,7 +40,7 @@
  */
 
 int mca_topo_base_cart_rank(ompi_communicator_t* comm,
-                            int *coords,
+                            const int *coords,
                             int *rank)
 {
    int prank;
@@ -47,7 +49,6 @@ int mca_topo_base_cart_rank(ompi_communicator_t* comm,
    int factor;
    int i;
    int *d;
-   int *c;
 
    /*
     * Loop over coordinates computing the rank.
@@ -57,11 +58,10 @@ int mca_topo_base_cart_rank(ompi_communicator_t* comm,
 
     i = comm->c_topo->mtc.cart->ndims - 1;
     d = comm->c_topo->mtc.cart->dims + i;
-    c = coords + i;
 
-   for (; i >= 0; --i, --c, --d) {
+   for (; i >= 0; --i, --d) {
        dim = *d;
-       ord = *c;
+       ord = coords[i];
        /* Per MPI-2.1 7.5.4 (description of MPI_CART_RANK), if the
           dimension is periodic and the coordinate is outside of 0 <=
           coord(i) < dim, then normalize it.  If the dimension is not

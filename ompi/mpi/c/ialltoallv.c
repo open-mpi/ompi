@@ -13,7 +13,7 @@
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -118,9 +118,8 @@ int MPI_Ialltoallv(const void *sendbuf, const int sendcounts[], const int sdispl
     OPAL_CR_ENTER_LIBRARY();
 
     /* Invoke the coll component to perform the back-end operation */
-    /* XXX -- CONST -- do not cast away const -- update mca/coll */
-    err = comm->c_coll.coll_ialltoallv((void *) sendbuf, (int *) sendcounts, (int *) sdispls,
-                                       sendtype, recvbuf, (int *) recvcounts, (int *) rdispls,
+    err = comm->c_coll.coll_ialltoallv(sendbuf, sendcounts, sdispls,
+                                       sendtype, recvbuf, recvcounts, rdispls,
                                        recvtype, comm, request, comm->c_coll.coll_ialltoallv_module);
     OMPI_ERRHANDLER_RETURN(err, comm, err, FUNC_NAME);
 }

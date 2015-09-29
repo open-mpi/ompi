@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -48,7 +50,7 @@
  *  Returns:    - MPI_SUCCESS or error code
  */
 int
-ompi_coll_tuned_allreduce_intra_dec_dynamic (void *sbuf, void *rbuf, int count,
+ompi_coll_tuned_allreduce_intra_dec_dynamic (const void *sbuf, void *rbuf, int count,
                                              struct ompi_datatype_t *dtype,
                                              struct ompi_op_t *op,
                                              struct ompi_communicator_t *comm,
@@ -94,7 +96,7 @@ ompi_coll_tuned_allreduce_intra_dec_dynamic (void *sbuf, void *rbuf, int count,
  *    Returns:    - MPI_SUCCESS or error code (passed from the bcast implementation)
  */
 
-int ompi_coll_tuned_alltoall_intra_dec_dynamic(void *sbuf, int scount,
+int ompi_coll_tuned_alltoall_intra_dec_dynamic(const void *sbuf, int scount,
                                                struct ompi_datatype_t *sdtype,
                                                void* rbuf, int rcount,
                                                struct ompi_datatype_t *rdtype,
@@ -144,9 +146,9 @@ int ompi_coll_tuned_alltoall_intra_dec_dynamic(void *sbuf, int scount,
  *    Returns:    - MPI_SUCCESS or error code
  */
 
-int ompi_coll_tuned_alltoallv_intra_dec_dynamic(void *sbuf, int *scounts, int *sdisps,
+int ompi_coll_tuned_alltoallv_intra_dec_dynamic(const void *sbuf, const int *scounts, const int *sdisps,
                                                 struct ompi_datatype_t *sdtype,
-                                                void* rbuf, int *rcounts, int *rdisps,
+                                                void* rbuf, const int *rcounts, const int *rdisps,
                                                 struct ompi_datatype_t *rdtype,
                                                 struct ompi_communicator_t *comm,
                                                 mca_coll_base_module_t *module)
@@ -274,7 +276,7 @@ int ompi_coll_tuned_bcast_intra_dec_dynamic(void *buff, int count,
  *    Returns:    - MPI_SUCCESS or error code (passed from the reduce implementation)
  *
  */
-int ompi_coll_tuned_reduce_intra_dec_dynamic( void *sendbuf, void *recvbuf,
+int ompi_coll_tuned_reduce_intra_dec_dynamic( const void *sendbuf, void *recvbuf,
                                               int count, struct ompi_datatype_t* datatype,
                                               struct ompi_op_t* op, int root,
                                               struct ompi_communicator_t* comm,
@@ -327,8 +329,8 @@ int ompi_coll_tuned_reduce_intra_dec_dynamic( void *sendbuf, void *recvbuf,
  *                  the reduce_scatter implementation)
  *
  */
-int ompi_coll_tuned_reduce_scatter_intra_dec_dynamic(void *sbuf, void *rbuf,
-                                                     int *rcounts,
+int ompi_coll_tuned_reduce_scatter_intra_dec_dynamic(const void *sbuf, void *rbuf,
+                                                     const int *rcounts,
                                                      struct ompi_datatype_t *dtype,
                                                      struct ompi_op_t *op,
                                                      struct ompi_communicator_t *comm,
@@ -381,7 +383,7 @@ int ompi_coll_tuned_reduce_scatter_intra_dec_dynamic(void *sbuf, void *rbuf,
  *                        allgather function).
  */
 
-int ompi_coll_tuned_allgather_intra_dec_dynamic(void *sbuf, int scount,
+int ompi_coll_tuned_allgather_intra_dec_dynamic(const void *sbuf, int scount,
                                                 struct ompi_datatype_t *sdtype,
                                                 void* rbuf, int rcount,
                                                 struct ompi_datatype_t *rdtype,
@@ -439,10 +441,10 @@ int ompi_coll_tuned_allgather_intra_dec_dynamic(void *sbuf, int scount,
  *                        allgatherv function).
  */
 
-int ompi_coll_tuned_allgatherv_intra_dec_dynamic(void *sbuf, int scount,
+int ompi_coll_tuned_allgatherv_intra_dec_dynamic(const void *sbuf, int scount,
                                                  struct ompi_datatype_t *sdtype,
-                                                 void* rbuf, int *rcounts,
-                                                 int *rdispls,
+                                                 void* rbuf, const int *rcounts,
+                                                 const int *rdispls,
                                                  struct ompi_datatype_t *rdtype,
                                                  struct ompi_communicator_t *comm,
                                                  mca_coll_base_module_t *module)
@@ -493,7 +495,7 @@ int ompi_coll_tuned_allgatherv_intra_dec_dynamic(void *sbuf, int scount,
                                                        comm, module);
 }
 
-int ompi_coll_tuned_gather_intra_dec_dynamic(void *sbuf, int scount,
+int ompi_coll_tuned_gather_intra_dec_dynamic(const void *sbuf, int scount,
                                              struct ompi_datatype_t *sdtype,
                                              void* rbuf, int rcount,
                                              struct ompi_datatype_t *rdtype,
@@ -540,7 +542,7 @@ int ompi_coll_tuned_gather_intra_dec_dynamic(void *sbuf, int scount,
                                                    root, comm, module);
 }
 
-int ompi_coll_tuned_scatter_intra_dec_dynamic(void *sbuf, int scount,
+int ompi_coll_tuned_scatter_intra_dec_dynamic(const void *sbuf, int scount,
                                               struct ompi_datatype_t *sdtype,
                                               void* rbuf, int rcount,
                                               struct ompi_datatype_t *rdtype,

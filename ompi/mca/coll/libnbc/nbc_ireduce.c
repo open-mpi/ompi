@@ -7,7 +7,7 @@
  *                         rights reserved.
  * Copyright (c) 2013-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  *
  * Author(s): Torsten Hoefler <htor@cs.indiana.edu>
@@ -15,12 +15,12 @@
  */
 #include "nbc_internal.h"
 
-static inline int red_sched_binomial (int rank, int p, int root, void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
+static inline int red_sched_binomial (int rank, int p, int root, const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
                                       MPI_Op op, void *redbuf, NBC_Schedule *schedule, NBC_Handle *handle);
-static inline int red_sched_chain (int rank, int p, int root, void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
+static inline int red_sched_chain (int rank, int p, int root, const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
                                    MPI_Op op, int ext, int size, NBC_Schedule *schedule, NBC_Handle *handle, int fragsize);
 
-static inline int red_sched_linear (int rank, int rsize, int root, void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
+static inline int red_sched_linear (int rank, int rsize, int root, const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
                                     MPI_Op op, NBC_Schedule *schedule, NBC_Handle *handle);
 
 #ifdef NBC_CACHE_SCHEDULE
@@ -44,7 +44,7 @@ int NBC_Reduce_args_compare(NBC_Reduce_args *a, NBC_Reduce_args *b, void *param)
 #endif
 
 /* the non-blocking reduce */
-int ompi_coll_libnbc_ireduce(void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype,
+int ompi_coll_libnbc_ireduce(const void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype,
                              MPI_Op op, int root, struct ompi_communicator_t *comm, ompi_request_t ** request,
                              struct mca_coll_base_module_2_1_0_t *module) {
   int rank, p, res, segsize, size;
@@ -195,7 +195,7 @@ int ompi_coll_libnbc_ireduce(void* sendbuf, void* recvbuf, int count, MPI_Dataty
   return OMPI_SUCCESS;
 }
 
-int ompi_coll_libnbc_ireduce_inter(void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype,
+int ompi_coll_libnbc_ireduce_inter(const void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype,
 				   MPI_Op op, int root, struct ompi_communicator_t *comm, ompi_request_t ** request,
 				   struct mca_coll_base_module_2_1_0_t *module) {
   int rank, res, rsize;
@@ -284,7 +284,7 @@ int ompi_coll_libnbc_ireduce_inter(void* sendbuf, void* recvbuf, int count, MPI_
   if (vrank == 0) rank = root; \
   if (vrank == root) rank = 0; \
 }
-static inline int red_sched_binomial (int rank, int p, int root, void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
+static inline int red_sched_binomial (int rank, int p, int root, const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
                                       MPI_Op op, void *redbuf, NBC_Schedule *schedule, NBC_Handle *handle) {
   int vrank, vpeer, peer, res, maxr;
 
@@ -358,7 +358,7 @@ static inline int red_sched_binomial (int rank, int p, int root, void *sendbuf, 
 }
 
 /* chain send ... */
-static inline int red_sched_chain (int rank, int p, int root, void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
+static inline int red_sched_chain (int rank, int p, int root, const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
                                    MPI_Op op, int ext, int size, NBC_Schedule *schedule, NBC_Handle *handle, int fragsize) {
   int res, vrank, rpeer, speer, numfrag, fragcount, thiscount;
   long offset;
@@ -427,7 +427,7 @@ static inline int red_sched_chain (int rank, int p, int root, void *sendbuf, voi
 }
 
 /* simple linear algorithm for intercommunicators */
-static inline int red_sched_linear (int rank, int rsize, int root, void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
+static inline int red_sched_linear (int rank, int rsize, int root, const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
                                     MPI_Op op, NBC_Schedule *schedule, NBC_Handle *handle) {
   int res;
 

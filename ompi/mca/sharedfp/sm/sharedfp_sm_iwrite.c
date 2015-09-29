@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2013      University of Houston. All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -27,7 +29,7 @@
 #include "ompi/mca/sharedfp/base/base.h"
 
 int mca_sharedfp_sm_iwrite(mca_io_ompio_file_t *fh,
-                           void *buf,
+                           const void *buf,
                            int count,
                            ompi_datatype_t *datatype,
                            MPI_Request * request)
@@ -86,7 +88,7 @@ int mca_sharedfp_sm_iwrite(mca_io_ompio_file_t *fh,
 }
 
 int mca_sharedfp_sm_write_ordered_begin(mca_io_ompio_file_t *fh,
-                                        void *buf,
+                                        const void *buf,
                                         int count,
                                         struct ompi_datatype_t *datatype)
 {
@@ -217,7 +219,7 @@ exit:
 
 
 int mca_sharedfp_sm_write_ordered_end(mca_io_ompio_file_t *fh,
-                                      void *buf,
+                                      const void *buf,
                                       ompi_status_public_t *status)
 {
     int ret = OMPI_SUCCESS;

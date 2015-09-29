@@ -107,17 +107,17 @@ int mca_pml_yalla_recv(void *buf, size_t count, ompi_datatype_t *datatype, int s
                        int tag, struct ompi_communicator_t* comm,
                        ompi_status_public_t* status);
 
-int mca_pml_yalla_isend_init(void *buf, size_t count, ompi_datatype_t *datatype,
+int mca_pml_yalla_isend_init(const void *buf, size_t count, ompi_datatype_t *datatype,
                              int dst, int tag, mca_pml_base_send_mode_t mode,
                              struct ompi_communicator_t* comm,
                              struct ompi_request_t **request);
 
-int mca_pml_yalla_isend(void *buf, size_t count, ompi_datatype_t *datatype,
+int mca_pml_yalla_isend(const void *buf, size_t count, ompi_datatype_t *datatype,
                         int dst, int tag, mca_pml_base_send_mode_t mode,
                         struct ompi_communicator_t* comm,
                         struct ompi_request_t **request);
 
-int mca_pml_yalla_send(void *buf, size_t count, ompi_datatype_t *datatype, int dst,
+int mca_pml_yalla_send(const void *buf, size_t count, ompi_datatype_t *datatype, int dst,
                        int tag, mca_pml_base_send_mode_t mode,
                        struct ompi_communicator_t* comm);
 

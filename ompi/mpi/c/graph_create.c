@@ -14,6 +14,8 @@
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2012-2013 Inria.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -100,9 +102,8 @@ int MPI_Graph_create(MPI_Comm old_comm, int nnodes, const int indx[],
     }
 
     /* Now let that topology module rearrange procs/ranks if it wants to */
-    /* XXX -- CONST -- do not cast away const -- update mca/topo */
     err = topo->topo.graph.graph_create(topo, old_comm,
-                                        nnodes, (int *) indx, (int *) edges,
+                                        nnodes, indx, edges,
                                         (0 == reorder) ? false : true, comm_graph);
     OPAL_CR_EXIT_LIBRARY();
 
