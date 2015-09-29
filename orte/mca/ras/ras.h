@@ -12,6 +12,8 @@
  *                         All rights reserved.
  * Copyright (c) 2011-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -59,8 +61,6 @@
 #include "opal/class/opal_list.h"
 
 #include "orte/runtime/orte_globals.h"
-
-#include "ras_types.h"
 
 BEGIN_C_DECLS
 

@@ -9,7 +9,9 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2010 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2015      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -25,7 +27,7 @@ libmca_ras_la_SOURCES =
 dist_ortedata_DATA =
 
 # local files
-headers = ras.h ras_types.h
+headers = ras.h
 libmca_ras_la_SOURCES += $(headers)
 
 # Conditionally install the header files

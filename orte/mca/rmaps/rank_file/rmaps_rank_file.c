@@ -48,7 +48,6 @@
 #include "orte/mca/rmaps/rank_file/rmaps_rank_file.h"
 #include "orte/mca/rmaps/rank_file/rmaps_rank_file_lex.h"
 #include "orte/runtime/orte_globals.h"
-#include "orte/mca/ras/ras_types.h"
 
 static int orte_rmaps_rank_file_parse(const char *);
 static char *orte_rmaps_rank_file_parse_string_or_int(void);
