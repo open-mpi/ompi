@@ -8,7 +8,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2014 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2010      IBM Corporation.  All rights reserved.
  * Copyright (c) 2012-2013 Sandia National Laboratories.  All rights reserved.
@@ -476,12 +476,12 @@ int ompi_osc_rdma_complete_atomic (ompi_win_t *win)
             do {
                 if (MCA_BTL_FLAGS_ATOMIC_OPS & module->selected_btl->btl_flags) {
                     ret = module->selected_btl->btl_atomic_op (module->selected_btl, peer->state_endpoint, target, peer->state_handle,
-                                                               1, MCA_BTL_ATOMIC_ADD, 0, MCA_BTL_NO_ORDER,
+                                                               MCA_BTL_ATOMIC_ADD, 1, 0, MCA_BTL_NO_ORDER,
                                                                ompi_osc_rdma_atomic_complete, NULL, NULL);
                 } else {
                     /* don't care about the read value so use the scratch lock */
                     ret = module->selected_btl->btl_atomic_fop (module->selected_btl, peer->state_endpoint, &module->state->scratch_lock,
-                                                                target, module->state_handle, peer->state_handle, 1, MCA_BTL_ATOMIC_ADD,
+                                                                target, module->state_handle, peer->state_handle, MCA_BTL_ATOMIC_ADD, 1,
                                                                 0, MCA_BTL_NO_ORDER, ompi_osc_rdma_atomic_complete, NULL, NULL);
                 }
 
