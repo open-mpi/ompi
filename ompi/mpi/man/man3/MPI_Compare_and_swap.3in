@@ -1,5 +1,5 @@
 .\" -*- nroff -*-
-.\" Copyright 2013-2014 Los Alamos National Security, LLC. All rights reserved.
+.\" Copyright 2013-2015 Los Alamos National Security, LLC. All rights reserved.
 .\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
 .\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
@@ -14,7 +14,7 @@
 .nf
 #include <mpi.h>
 int MPI_Compare_and_swap(const void *\fIorigin_addr\fP, const void *\fIcompar_addr\fP,
-	void *\fresult_addr\fP, MPI_Datatype \fdatatype\fP, int \fItarget_rank\fP,
+	void *\fIresult_addr\fP, MPI_Datatype \fIdatatype\fP, int \fItarget_rank\fP,
 	MPI_Aint \fItarget_disp\fP, MPI_Win \fIwin\fP)
 
 .fi
