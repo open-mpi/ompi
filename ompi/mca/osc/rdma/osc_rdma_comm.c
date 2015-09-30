@@ -44,7 +44,7 @@ int ompi_osc_get_data_blocking (ompi_osc_rdma_module_t *module, struct mca_btl_b
         local_handle = frag->handle;
     }
 
-    assert (!(source_address & (module->selected_btl->btl_get_alignment - 1)));
+    assert (!(source_address & ALIGNMENT_MASK(module->selected_btl->btl_get_alignment)));
 
     do {
         ret = module->selected_btl->btl_get (module->selected_btl, endpoint, ptr, source_address,
