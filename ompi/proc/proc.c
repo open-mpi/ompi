@@ -142,12 +142,12 @@ int ompi_proc_complete_init(void)
     uint16_t u16, *u16ptr;
 
     OPAL_THREAD_LOCK(&ompi_proc_lock);
-    u16ptr = &u16;
 
     OPAL_LIST_FOREACH(proc, &ompi_proc_list, ompi_proc_t) {
         if (OMPI_CAST_RTE_NAME(&proc->super.proc_name)->vpid != OMPI_PROC_MY_NAME->vpid) {
             /* get the locality information - all RTEs are required
             * to provide this information at startup */
+            u16ptr = &u16;
             OPAL_MODEX_RECV_VALUE_OPTIONAL(ret, OPAL_PMIX_LOCALITY, &proc->super.proc_name, &u16ptr, OPAL_UINT16);
             if (OPAL_SUCCESS != ret) {
                 proc->super.proc_flags = OPAL_PROC_NON_LOCAL;
