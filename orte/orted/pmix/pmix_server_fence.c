@@ -129,8 +129,8 @@ static void dmodex_req(int sd, short args, void *cbdata)
     orte_proc_t *proct, *dmn;
     int rc, rnum;
     opal_buffer_t *buf;
-    uint8_t *data;
-    int32_t sz;
+    uint8_t *data=NULL;
+    int32_t sz=0;
 
     /* a race condition exists here because of the thread-shift - it is
      * possible that data for the specified proc arrived while we were

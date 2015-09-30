@@ -199,6 +199,8 @@ extern int opal_pmix_base_exchange(opal_value_t *info,
             *(sz) = _kv->data.bo.size;                                          \
             _kv->data.bo.bytes = NULL; /* protect the data */                   \
             OBJ_RELEASE(_kv);                                                   \
+        } else {                                                                \
+            *(sz) = 0;                                                          \
         }                                                                       \
     } while(0);
 
