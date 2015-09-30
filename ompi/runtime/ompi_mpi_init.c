@@ -124,6 +124,7 @@ const char ompi_version_string[] = OMPI_IDENT_STRING;
 bool ompi_mpi_init_started = false;
 bool ompi_mpi_initialized = false;
 bool ompi_mpi_finalized = false;
+int32_t ompi_mpi_finalize_started = 0;
 
 bool ompi_mpi_thread_multiple = false;
 int ompi_mpi_thread_requested = MPI_THREAD_SINGLE;

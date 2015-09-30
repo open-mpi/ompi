@@ -52,6 +52,8 @@ OMPI_DECLSPEC extern bool ompi_mpi_init_started;
 OMPI_DECLSPEC extern bool ompi_mpi_initialized;
 /** Has mpi been finalized? */
 OMPI_DECLSPEC extern bool ompi_mpi_finalized;
+/** Did mpi start to finalize? */
+OMPI_DECLSPEC extern int32_t ompi_mpi_finalize_started;
 
 /** Do we have multiple threads? */
 OMPI_DECLSPEC extern bool ompi_mpi_thread_multiple;

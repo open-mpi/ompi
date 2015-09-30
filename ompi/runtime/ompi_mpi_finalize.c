@@ -91,7 +91,6 @@ extern bool ompi_enable_timing;
 int ompi_mpi_finalize(void)
 {
     int ret;
-    static int32_t finalize_has_already_started = 0;
     opal_list_item_t *item;
     struct timeval ompistart, ompistop;
     ompi_rte_collective_t *coll;
@@ -103,7 +102,7 @@ int ompi_mpi_finalize(void)
        ompi_comm_free() (or run into other nasty lions, tigers, or
        bears) */
 
-    if (! opal_atomic_cmpset_32(&finalize_has_already_started, 0, 1)) {
+    if (! opal_atomic_cmpset_32(&ompi_mpi_finalize_started, 0, 1)) {
         /* Note that if we're already finalized, we cannot raise an
            MPI exception.  The best that we can do is write something
            to stderr. */
