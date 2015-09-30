@@ -1,5 +1,5 @@
 .\" -*- nroff -*-
-.\" Copyright 2013-2014 Los Alamos National Security, LLC. All rights reserved.
+.\" Copyright 2013-2015 Los Alamos National Security, LLC. All rights reserved.
 .\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
 .\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
@@ -13,8 +13,8 @@
 .SH C Syntax
 .nf
 #include <mpi.h>
-int MPI_Fetch_and_op(const void *\fIorigin_addr\fP, void *\fresult_addr\fP,
-	MPI_Datatype \fdatatype\fP, int \fItarget_rank\fP, MPI_Aint \fItarget_disp\fP,
+int MPI_Fetch_and_op(const void *\fIorigin_addr\fP, void *\fIresult_addr\fP,
+	MPI_Datatype \fIdatatype\fP, int \fItarget_rank\fP, MPI_Aint \fItarget_disp\fP,
 	MPI_Op \fIop\fP, MPI_Win \fIwin\fP)
 
 .fi
