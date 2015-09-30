@@ -465,7 +465,7 @@ orte_vpid_t orte_get_proc_daemon_vpid(orte_process_name_t *proc)
 char* orte_get_proc_hostname(orte_process_name_t *proc)
 {
     orte_proc_t *proct;
-    char *hostname;
+    char *hostname = NULL;
     int rc;
 
     /* don't bother error logging any not-found situations
@@ -507,12 +507,13 @@ orte_node_rank_t orte_get_proc_node_rank(orte_process_name_t *proc)
     }
 
     /* if we are an app, get the value from the modex db */
+    noderank = &nd;
     OPAL_MODEX_RECV_VALUE(rc, OPAL_PMIX_NODE_RANK,
                           (opal_process_name_t*)proc,
                           &noderank, ORTE_NODE_RANK);
-
-    nd = *noderank;
-    free(noderank);
+    if (OPAL_SUCCESS != rc) {
+        nd = ORTE_NODE_RANK_INVALID;
+    }
     return nd;
 }
 
