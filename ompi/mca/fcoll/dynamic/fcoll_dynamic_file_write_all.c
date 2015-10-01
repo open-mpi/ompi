@@ -366,24 +366,20 @@ mca_fcoll_dynamic_file_write_all (mca_io_ompio_file_t *fh,
 	    goto exit;
         }
 
-	blocklen_per_process = (int **)malloc (fh->f_procs_per_group * sizeof (int*));
+	blocklen_per_process = (int **)calloc (fh->f_procs_per_group, sizeof (int*));
         if (NULL == blocklen_per_process) {
             opal_output (1, "OUT OF MEMORY\n");
             ret = OMPI_ERR_OUT_OF_RESOURCE;
 	    goto exit;
         }
 
-	displs_per_process = (MPI_Aint **)malloc (fh->f_procs_per_group * sizeof (MPI_Aint*));
+	displs_per_process = (MPI_Aint **)calloc (fh->f_procs_per_group, sizeof (MPI_Aint*));
 	if (NULL == displs_per_process) {
             opal_output (1, "OUT OF MEMORY\n");
             ret = OMPI_ERR_OUT_OF_RESOURCE;
 	    goto exit;
         }
 
-	for(i=0;i<fh->f_procs_per_group;i++){
-            blocklen_per_process[i] = NULL;
-            displs_per_process[i] = NULL;
-	}
 	recv_req = (MPI_Request *)malloc ((fh->f_procs_per_group)*sizeof(MPI_Request));
 	if ( NULL == recv_req ) {
 	    opal_output (1, "OUT OF MEMORY\n");
@@ -439,22 +435,12 @@ mca_fcoll_dynamic_file_write_all (mca_io_ompio_file_t *fh,
             for(l=0;l<fh->f_procs_per_group;l++){
                 disp_index[l] =  1;
 
-                if (NULL != blocklen_per_process[l]){
-                    free(blocklen_per_process[l]);
-                    blocklen_per_process[l] = NULL;
-                }
-                if (NULL != displs_per_process[l]){
-                    free(displs_per_process[l]);
-                    displs_per_process[l] = NULL;
-                }
+                free(blocklen_per_process[l]);
+                free(displs_per_process[l]);
+
                 blocklen_per_process[l] = (int *) calloc (1, sizeof(int));
-                if (NULL == blocklen_per_process[l]) {
-                    opal_output (1, "OUT OF MEMORY for blocklen\n");
-                    ret = OMPI_ERR_OUT_OF_RESOURCE;
-                    goto exit;
-                }
                 displs_per_process[l] = (MPI_Aint *) calloc (1, sizeof(MPI_Aint));
-                if (NULL == displs_per_process[l]){
+                if (NULL == displs_per_process[l] || NULL == blocklen_per_process[l]){
                     opal_output (1, "OUT OF MEMORY for displs\n");
                     ret = OMPI_ERR_OUT_OF_RESOURCE;
                     goto exit;
@@ -1044,24 +1030,16 @@ exit :
             global_buf = NULL;
         }
         for(l=0;l<fh->f_procs_per_group;l++){
-            if (NULL != blocklen_per_process[l]){
+            if (NULL != blocklen_per_process){
                 free(blocklen_per_process[l]);
-                blocklen_per_process[l] = NULL;
             }
-            if (NULL != displs_per_process[l]){
+            if (NULL != displs_per_process){
                 free(displs_per_process[l]);
-                displs_per_process[l] = NULL;
             }
-        }
-        if (NULL != blocklen_per_process){
-            free(blocklen_per_process);
-            blocklen_per_process = NULL;
-        }
-        if (NULL != displs_per_process){
-            free(displs_per_process);
-            displs_per_process = NULL;
         }
 
+        free(blocklen_per_process);
+        free(displs_per_process);
     }
 
     if (NULL != displs){
