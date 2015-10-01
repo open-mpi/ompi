@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -12,6 +13,8 @@
  * Copyright (c) 2008-2011 University of Houston. All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -369,7 +372,7 @@ int mca_fcoll_two_phase_calc_my_requests (mca_io_ompio_file_t *fh,
 
     *count_my_req_per_proc_ptr = (int*)malloc(fh->f_size*sizeof(int));
 
-    if ( NULL == count_my_req_per_proc_ptr ){
+    if ( NULL == *count_my_req_per_proc_ptr ){
 	return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
