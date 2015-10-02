@@ -154,7 +154,7 @@ int mca_pml_monitoring_get_messages_count (const struct mca_base_pvar_t *pvar, v
     uint64_t *values = (uint64_t*) value;
     int i;
 
-    if(comm != &ompi_mpi_comm_world.comm)
+    if(comm != &ompi_mpi_comm_world.comm || NULL == messages_count)
         return OMPI_ERROR;
 
     for (i = 0 ; i < comm_size ; ++i) {
@@ -171,7 +171,7 @@ int mca_pml_monitoring_get_messages_size (const struct mca_base_pvar_t *pvar, vo
     uint64_t *values = (uint64_t*) value;
     int i;
 
-    if(comm != &ompi_mpi_comm_world.comm)
+    if(comm != &ompi_mpi_comm_world.comm || NULL == sent_data)
         return OMPI_ERROR;
 
     for (i = 0 ; i < comm_size ; ++i) {
