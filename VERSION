@@ -24,7 +24,7 @@ release=1
 # requirement is that it must be entirely printable ASCII characters
 # and have no white space.
 
-greek=a1
+greek=rc1
 
 # If repo_rev is empty, then the repository version number will be
 # obtained during "make dist" via the "git describe --tags --always"
@@ -82,16 +82,22 @@ date="Unreleased developer copy"
 # Version numbers are described in the Libtool current:revision:age
 # format.
 
-libmpi_so_version=12:0:0
+libmpi_so_version=12:1:0
+# libmpi changed
 libmpi_cxx_so_version=2:3:1
 libmpi_mpifh_so_version=12:0:0
-libmpi_usempi_tkr_so_version=5:0:4
+libmpi_usempi_tkr_so_version=5:1:4
+# libmpi_usempi_tkr changed
 libmpi_usempi_ignore_tkr_so_version=6:0:0
-libmpi_usempif08_so_version=11:0:0
-libopen_rte_so_version=12:0:0
-libopen_pal_so_version=13:0:0
+libmpi_usempif08_so_version=11:1:0
+# libmpi_usempif08 changed
+libopen_rte_so_version=12:1:0
+# libopen_rte changed
+libopen_pal_so_version=13:1:0
+# libopen_pal changed
 libmpi_java_so_version=3:0:2
-liboshmem_so_version=8:0:0
+liboshmem_so_version=8:1:0
+# liboshmem changed
 
 # "Common" components install standalone libraries that are run-time
 # linked by one or more components.  So they need to be versioned as
