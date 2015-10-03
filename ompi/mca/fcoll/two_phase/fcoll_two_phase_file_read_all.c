@@ -500,7 +500,7 @@ exit:
 	if (flat_buf->indices != NULL){
 	    free (flat_buf->indices);
 	}
-	flat_buf = NULL;
+        free (flat_buf);
     }
 
     free (start_offsets);
