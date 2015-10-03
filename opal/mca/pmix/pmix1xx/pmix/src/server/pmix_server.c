@@ -19,7 +19,7 @@
 #include <private/pmix_socket_errno.h>
 
 #include <pmix_server.h>
-
+#include <pmix_common.h>
 #include "src/include/pmix_globals.h"
 
 #ifdef HAVE_STRING_H
@@ -860,11 +860,11 @@ static void _dmodex_req(int sd, short args, void *cbdata)
      * may not be a contribution */
     if (PMIX_SUCCESS == (rc = pmix_hash_fetch(&nptr->server->myremote, info->rank, "modex", &val)) &&
         NULL != val) {
-	data = val->data.bo.bytes;
-	sz = val->data.bo.size;
-	/* protect the data */
-	val->data.bo.bytes = NULL;
-	val->data.bo.size = 0;
+    data = val->data.bo.bytes;
+    sz = val->data.bo.size;
+    /* protect the data */
+    val->data.bo.bytes = NULL;
+    val->data.bo.size = 0;
         PMIX_VALUE_RELEASE(val);
     }
 
@@ -979,11 +979,11 @@ static void _notify_error(int sd, short args, void *cbdata)
 }
 
 
-pmix_status_t PMIx_server_notify_error(pmix_status_t status,
-                                       pmix_proc_t procs[], size_t nprocs,
-                                       pmix_proc_t error_procs[], size_t error_nprocs,
-                                       pmix_info_t info[], size_t ninfo,
-                                       pmix_op_cbfunc_t cbfunc, void *cbdata)
+pmix_status_t pmix_server_notify_error(pmix_status_t status,
+                                pmix_proc_t procs[], size_t nprocs,
+                                pmix_proc_t error_procs[], size_t error_nprocs,
+                                pmix_info_t info[], size_t ninfo,
+                                pmix_op_cbfunc_t cbfunc, void *cbdata)
 {
     pmix_notify_caddy_t *cd;
     size_t n;
@@ -1030,8 +1030,10 @@ static void reg_errhandler(int sd, short args, void *cbdata)
     cd->active = false;
 }
 
-void PMIx_Register_errhandler(pmix_info_t info[], size_t ninfo,
-                              pmix_notification_fn_t err)
+void pmix_server_register_errhandler(pmix_info_t info[], size_t ninfo,
+                              pmix_notification_fn_t errhandler,
+                              pmix_errhandler_reg_cbfunc_t cbfunc,
+                              void *cbdata)
 {
     pmix_shift_caddy_t *cd;
 
@@ -1039,7 +1041,7 @@ void PMIx_Register_errhandler(pmix_info_t info[], size_t ninfo,
     cd = PMIX_NEW(pmix_shift_caddy_t);
     cd->info = info;
     cd->ninfo = ninfo;
-    cd->err = err;
+    cd->err = errhandler;
     PMIX_THREADSHIFT(cd, reg_errhandler);
     PMIX_WAIT_FOR_COMPLETION(cd->active);
     PMIX_RELEASE(cd);
@@ -1052,10 +1054,11 @@ static void dereg_errhandler(int sd, short args, void *cbdata)
     cd->active = false;
 }
 
-void PMIx_Deregister_errhandler(void)
+void pmix_server_deregister_errhandler(int errhandler_ref,
+                                pmix_op_cbfunc_t cbfunc,
+                                void *cbdata)
 {
     pmix_shift_caddy_t *cd;
-
     /* need to thread shift this request */
     cd = PMIX_NEW(pmix_shift_caddy_t);
     PMIX_THREADSHIFT(cd, dereg_errhandler);

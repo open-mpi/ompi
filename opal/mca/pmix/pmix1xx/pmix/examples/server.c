@@ -140,7 +140,10 @@ static void set_namespace(int nprocs, char *ranks, char *nspace,
 static void errhandler(pmix_status_t status,
                        pmix_proc_t procs[], size_t nprocs,
                        pmix_info_t info[], size_t ninfo);
-
+static void op_callbk(pmix_status_t status, void *cbdata);
+static void errhandler_reg_callbk (pmix_status_t status,
+                                   int errhandler_ref,
+                                   void *cbdata);
 static void opcbfunc(pmix_status_t status, void *cbdata)
 {
     myxfer_t *x = (myxfer_t*)cbdata;
@@ -175,7 +178,7 @@ int main(int argc, char **argv)
         return rc;
     }
     /* register the errhandler */
-    PMIx_Register_errhandler(NULL, 0, errhandler);
+    PMIx_Register_errhandler(NULL, 0, errhandler, errhandler_reg_callbk, NULL);
 
     /* setup the pub data, in case it is used */
     PMIX_CONSTRUCT(&pubdata, pmix_list_t);
@@ -282,7 +285,7 @@ int main(int argc, char **argv)
     pmix_argv_free(client_env);
 
     /* deregister the errhandler */
-    PMIx_Deregister_errhandler();
+    PMIx_Deregister_errhandler(0, op_callbk, NULL);
 
     /* release any pub data */
     PMIX_LIST_DESTRUCT(&pubdata);
@@ -341,6 +344,20 @@ static void errhandler(pmix_status_t status,
                        pmix_info_t info[], size_t ninfo)
 {
     pmix_output(0, "SERVER: ERRHANDLER CALLED WITH STATUS %d", status);
+}
+
+static void op_callbk(pmix_status_t status,
+                      void *cbdata)
+{
+    pmix_output(0, "SERVER: OP CALLBACK CALLED WITH STATUS %d", status);
+}
+
+static void errhandler_reg_callbk (pmix_status_t status,
+                                   int errhandler_ref,
+                                   void *cbdata)
+{
+    pmix_output(0, "SERVER: ERRHANDLER REGISTRATION CALLBACK CALLED WITH STATUS %d, ref=%d",
+                status, errhandler_ref);
 }
 
 static int connected(const pmix_proc_t *proc, void *server_object)
@@ -403,7 +420,7 @@ static pmix_status_t abort_fn(const pmix_proc_t *proc,
     x->cbfunc = cbfunc;
     x->cbdata = cbdata;
 
-    if (PMIX_SUCCESS != (rc = PMIx_server_notify_error(status, procs, nprocs,
+    if (PMIX_SUCCESS != (rc = PMIx_Notify_error(status, procs, nprocs,
                                                        &x->caller, 1, x->info, 2,
                                                        abcbfunc, x))) {
         pmix_output(0, "SERVER: FAILED NOTIFY ERROR %d", (int)rc);

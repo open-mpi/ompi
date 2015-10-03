@@ -728,6 +728,15 @@ typedef void (*pmix_notification_fn_t)(pmix_status_t status,
                                        pmix_proc_t procs[], size_t nprocs,
                                        pmix_info_t info[], size_t ninfo);
 
+/* define a callback function for calls to PMIx_Register_errhandler. The
+ * status indicates if the request was successful or not, errhandler_ref is
+ * an integer reference assigned to the errhandler by PMIX, this reference
+ * must be used to deregister the err handler. A ptr to the original
+ * cbdata is returned. */
+typedef void (*pmix_errhandler_reg_cbfunc_t) (pmix_status_t status,
+                                              int errhandler_ref,
+                                              void *cbdata);
+
 /* define a callback function for calls to PMIx_Get_nb. The status
  * indicates if the requested data was found or not - a pointer to the
  * pmix_value_t structure containing the found data is returned. The
@@ -756,16 +765,71 @@ typedef void (*pmix_value_cbfunc_t)(pmix_status_t status,
  * will be reported. Options to modify that behavior can be provided
  * in the info array
  *
+ * Both the client application and the resource manager can register
+ * err handlers for specific errors. PMIx client/server calls the registered
+ * err handler upon receiving error notify notification (via PMIx_Notify_error)
+ * from the other end (Resource Manager/Client application).
+ *
+ * Multiple err handlers can be registered for different errors. PMIX returns
+ * an integer reference to each register handler in the callback fn. The caller
+ * must retain the reference in order to deregister the errhandler.
  * Modification of the notification behavior can be accomplished by
  * deregistering the current errhandler, and then registering it
  * using a new set of info values.
  *
  * See pmix_common.h for a description of the notification function */
 void PMIx_Register_errhandler(pmix_info_t info[], size_t ninfo,
-                              pmix_notification_fn_t errhandler);
+                              pmix_notification_fn_t errhandler,
+                              pmix_errhandler_reg_cbfunc_t cbfunc,
+                              void *cbdata);
 
-/* deregister the errhandler */
-void PMIx_Deregister_errhandler(void);
+/* deregister the errhandler
+ * errhandler_ref is the reference returned by PMIx for the errhandler
+ * to pmix_errhandler_reg_cbfunc_t */
+void PMIx_Deregister_errhandler(int errhandler_ref,
+                                pmix_op_cbfunc_t cbfunc,
+                                void *cbdata);
+/* Report an error to a process for notification via any
+ * registered errhandler. The errhandler registration can be
+ * called by both the server and the client application. On the
+ * server side, the errhandler is used to report errors detected
+ * by PMIx to the host server for handling. On the client side,
+ * the errhandler is used to notify the process of errors
+ * reported by the server - e.g., the failure of another process.
+ *
+ * This function allows the host server to direct the server
+ * convenience library to notify all indicated local procs of
+ * an error. The error can be local, or anywhere in the cluster.
+ * The status indicates the error being reported.
+ *
+ * The client application can also call this function to notify the
+ * resource manager of an error it encountered. It can request the host
+ * server to notify the indicated processes about the error.
+ *
+ * The first array  of procs informs the server library as to which
+ * processes should be alerted - e.g., the processes that are in
+ * a directly-affected job or are connected to one that is affected.
+ * Passing a NULL for this array will indicate that all local procs
+ * are to be notified.
+ *
+ * The second array identifies the processes that will be impacted
+ * by the error. This could consist of a single process, or a number
+ * of processes.
+ *
+ * The info array contains any further info the RM can and/or chooses
+ * to provide.
+ *
+ * The callback function will be called upon completion of the
+ * notify_error function's actions. Note that any messages will
+ * have been queued, but may not have been transmitted by this
+ * time. Note that the caller is required to maintain the input
+ * data until the callback function has been executed!
+*/
+pmix_status_t PMIx_Notify_error(pmix_status_t status,
+                                pmix_proc_t procs[], size_t nprocs,
+                                pmix_proc_t error_procs[], size_t error_nprocs,
+                                pmix_info_t info[], size_t ninfo,
+                                pmix_op_cbfunc_t cbfunc, void *cbdata);
 
 /* Provide a string representation of a pmix_status_t value. Note
  * that the provided string is statically defined and must NOT be

@@ -50,6 +50,7 @@ include src/usock/Makefile.am
 include src/client/Makefile.am
 include src/server/Makefile.am
 include src/sec/Makefile.am
+include src/common/Makefile.am
 
 lib_LTLIBRARIES = libpmix.la
 

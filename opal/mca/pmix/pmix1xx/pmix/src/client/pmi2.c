@@ -49,6 +49,9 @@ int PMI2_Init(int *spawned, int *size, int *rank, int *appnum)
         return PMI2_ERR_INIT;
     }
 
+    /* get the rank */
+    *rank = myproc.rank;
+
     if (NULL != size) {
         /* get the universe size - this will likely pull
          * down all attributes assigned to the job, thus
@@ -57,7 +60,9 @@ int PMI2_Init(int *spawned, int *size, int *rank, int *appnum)
         if (PMIX_SUCCESS == PMIx_Get(&myproc, PMIX_UNIV_SIZE, NULL, 0, &kv)) {
             rc = convert_int(size, kv);
             PMIX_VALUE_RELEASE(kv);
-            return convert_err(rc);
+            if (PMIX_SUCCESS != rc) {
+                goto error;
+            }
         } else {
             /* cannot continue without this info */
             return PMI2_ERR_INIT;
@@ -69,7 +74,9 @@ int PMI2_Init(int *spawned, int *size, int *rank, int *appnum)
         if (PMIX_SUCCESS == PMIx_Get(&myproc, PMIX_SPAWNED, NULL, 0, &kv)) {
             rc = convert_int(spawned, kv);
             PMIX_VALUE_RELEASE(kv);
-            return convert_err(rc);
+            if (PMIX_SUCCESS != rc) {
+                goto error;
+            }
         } else {
             /* if not found, default to not spawned */
             *spawned = 0;
@@ -81,7 +88,9 @@ int PMI2_Init(int *spawned, int *size, int *rank, int *appnum)
         if (PMIX_SUCCESS == PMIx_Get(&myproc, PMIX_APPNUM, NULL, 0, &kv)) {
             rc = convert_int(appnum, kv);
             PMIX_VALUE_RELEASE(kv);
-            return convert_err(rc);
+            if (PMIX_SUCCESS != rc) {
+                goto error;
+            }
         } else {
             /* if not found, default to 0 */
             *appnum = 0;
@@ -89,6 +98,9 @@ int PMI2_Init(int *spawned, int *size, int *rank, int *appnum)
     }
 
     return PMI2_SUCCESS;
+
+error:
+    return convert_err(rc);
 }
 
 int PMI2_Initialized(void)
@@ -153,8 +165,8 @@ int PMI2_KVS_Get(const char *jobid, int src_pmi_id,
     pmix_value_t *val;
     pmix_proc_t proc;
 
-    (void)strncpy(proc.nspace, jobid, PMIX_MAX_NSLEN);
-    proc.rank = src_pmi_id;
+    (void)strncpy(proc.nspace, (jobid ? jobid : myproc.nspace), sizeof(myproc.nspace));
+    proc.rank = (src_pmi_id == PMI2_ID_NULL ? myproc.rank : src_pmi_id);
     rc = PMIx_Get(&proc, key, NULL, 0, &val);
     if (PMIX_SUCCESS == rc && NULL != val) {
         if (PMIX_STRING != val->type) {
@@ -173,9 +185,26 @@ int PMI2_KVS_Get(const char *jobid, int src_pmi_id,
 
 int PMI2_Info_GetNodeAttr(const char name[], char value[], int valuelen, int *found, int waitfor)
 {
-    /* translate the provided name to the equivalent PMIx
-     * attribute name */
-    return PMI2_FAIL;
+    pmix_status_t rc;
+    pmix_value_t *val;
+
+    *found = 0;
+    rc = PMIx_Get(&myproc, name, NULL, 0, &val);
+    if (PMIX_SUCCESS == rc && NULL != val) {
+        if (PMIX_STRING != val->type) {
+            /* this is an error */
+            PMIX_VALUE_RELEASE(val);
+            return PMI2_FAIL;
+        }
+        if (NULL != val->data.string) {
+            (void)strncpy(value, val->data.string, valuelen);
+            *found = 1;
+        }
+        PMIX_VALUE_RELEASE(val);
+    } else if (PMIX_ERR_NOT_FOUND == rc) {
+        rc = PMIX_SUCCESS;
+    }
+    return convert_err(rc);
 }
 
 /* push info at the PMIX_LOCAL scope */
@@ -208,6 +237,8 @@ int PMI2_Info_GetJobAttr(const char name[], char value[], int valuelen, int *fou
             *found = 1;
         }
         PMIX_VALUE_RELEASE(val);
+    } else if (PMIX_ERR_NOT_FOUND == rc) {
+        rc = PMIX_SUCCESS;
     }
     return convert_err(rc);
 }
@@ -323,7 +354,7 @@ int PMI2_Job_GetId(char jobid[], int jobid_size)
     if (NULL == jobid) {
         return PMI2_ERR_INVALID_ARGS;
     }
-    (void)strncpy(jobid, pmix_globals.myid.nspace, jobid_size);
+    (void)strncpy(jobid, myproc.nspace, jobid_size);
     return PMI2_SUCCESS;
 }
 
@@ -332,7 +363,7 @@ int PMI2_Job_Connect(const char jobid[], PMI2_Connect_comm_t *conn)
     pmix_status_t rc;
     pmix_proc_t proc;
 
-    (void)strncpy(proc.nspace, jobid, PMIX_MAX_NSLEN);
+    (void)strncpy(proc.nspace, (jobid ? jobid : myproc.nspace), sizeof(myproc.nspace));
     proc.rank = PMIX_RANK_WILDCARD;
     rc = PMIx_Connect(&proc, 1, NULL, 0);
     return convert_err(rc);
@@ -343,7 +374,7 @@ int PMI2_Job_Disconnect(const char jobid[])
     pmix_status_t rc;
     pmix_proc_t proc;
 
-    (void)strncpy(proc.nspace, jobid, PMIX_MAX_NSLEN);
+    (void)strncpy(proc.nspace, (jobid ? jobid : myproc.nspace), sizeof(myproc.nspace));
     proc.rank = PMIX_RANK_WILDCARD;
     rc = PMIx_Disconnect(&proc, 1, NULL, 0);
     return convert_err(rc);
@@ -441,6 +472,9 @@ static pmix_status_t convert_int(int *value, pmix_value_t *kv)
         break;
     case PMIX_SIZE:
         *value = kv->data.size;
+        break;
+    case PMIX_BOOL:
+        *value = kv->data.flag;
         break;
     default:
         /* not an integer type */

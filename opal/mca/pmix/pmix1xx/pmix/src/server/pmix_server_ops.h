@@ -11,7 +11,7 @@
 
 #include <private/autogen/config.h>
 #include <pmix/rename.h>
-
+#include <pmix_common.h>
 #include <pmix_server.h>
 #include "src/usock/usock.h"
 #include "src/util/hash.h"
@@ -232,6 +232,20 @@ void pmix_pack_proc_map(pmix_buffer_t *buf,
 pmix_status_t pmix_regex_parse_nodes(const char *regexp, char ***names);
 pmix_status_t pmix_regex_parse_procs(const char *regexp, char ***procs);
 
+void pmix_server_register_errhandler(pmix_info_t info[], size_t ninfo,
+                                     pmix_notification_fn_t errhandler,
+                                     pmix_errhandler_reg_cbfunc_t cbfunc,
+                                     void *cbdata);
+
+void pmix_server_deregister_errhandler(int errhandler_ref,
+                                       pmix_op_cbfunc_t cbfunc,
+                                       void *cbdata);
+
+pmix_status_t pmix_server_notify_error(pmix_status_t status,
+                                       pmix_proc_t procs[], size_t nprocs,
+                                       pmix_proc_t error_procs[], size_t error_nprocs,
+                                       pmix_info_t info[], size_t ninfo,
+                                       pmix_op_cbfunc_t cbfunc, void *cbdata);
 
 extern pmix_server_module_t pmix_host_server;
 extern pmix_server_globals_t pmix_server_globals;

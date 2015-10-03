@@ -65,3 +65,11 @@ void errhandler(pmix_status_t status,
                 pmix_proc_t procs[], size_t nprocs,
                 pmix_info_t info[], size_t ninfo);
 
+void op_callbk(pmix_status_t status,
+               void *cbdata);
+
+void errhandler_reg_callbk (pmix_status_t status,
+                            int errhandler_ref,
+                            void *cbdata);
+
+

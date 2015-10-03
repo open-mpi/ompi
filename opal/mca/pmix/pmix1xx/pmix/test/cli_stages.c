@@ -253,3 +253,17 @@ void errhandler(pmix_status_t status,
     test_abort = true;
 }
 
+void op_callbk(pmix_status_t status,
+                      void *cbdata)
+{
+    TEST_VERBOSE(( "OP CALLBACK CALLED WITH STATUS %d", status));
+}
+
+void errhandler_reg_callbk (pmix_status_t status,
+                                   int errhandler_ref,
+                                   void *cbdata)
+{
+    TEST_VERBOSE(("ERRHANDLER REGISTRATION CALLBACK CALLED WITH STATUS %d, ref=%d",
+                status, errhandler_ref));
+}
+

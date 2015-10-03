@@ -43,6 +43,20 @@ static void notification_fn(pmix_status_t status,
     completed = true;
 }
 
+static void op_callbk(pmix_status_t status,
+                      void *cbdata)
+{
+    fprintf(stderr, "client: OP CALLBACK CALLED WITH STATUS %d", status);
+}
+
+static void errhandler_reg_callbk (pmix_status_t status,
+                                   int errhandler_ref,
+                                   void *cbdata)
+{
+    fprintf(stderr, "cleint: ERRHANDLER REGISTRATION CALLBACK CALLED WITH STATUS %d, ref=%d",
+                status, errhandler_ref);
+}
+
 int main(int argc, char **argv)
 {
     int rc;
@@ -69,7 +83,7 @@ int main(int argc, char **argv)
     completed = false;
 
     /* register our errhandler */
-    PMIx_Register_errhandler(NULL, 0, notification_fn);
+    PMIx_Register_errhandler(NULL, 0, notification_fn, errhandler_reg_callbk, NULL);
 
     /* call fence to sync */
     PMIX_PROC_CONSTRUCT(&proc);
@@ -97,7 +111,7 @@ int main(int argc, char **argv)
  done:
     /* finalize us */
     fprintf(stderr, "Client ns %s rank %d: Finalizing\n", myproc.nspace, myproc.rank);
-    PMIx_Deregister_errhandler();
+    PMIx_Deregister_errhandler(0, op_callbk, NULL);
 
     if (PMIX_SUCCESS != (rc = PMIx_Finalize())) {
         fprintf(stderr, "Client ns %s rank %d:PMIx_Finalize failed: %d\n", myproc.nspace, myproc.rank, rc);

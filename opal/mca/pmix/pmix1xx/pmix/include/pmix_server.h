@@ -254,11 +254,20 @@ typedef pmix_status_t (*pmix_server_disconnect_fn_t)(const pmix_proc_t procs[], 
                                                      pmix_op_cbfunc_t cbfunc, void *cbdata);
 
 /* Register to receive notifications for the specified events. The resource
- * manager may have access to events beyond process failure. In cases where
- * the client application requests to be notified of such events, the request
- * will be passed to the PMIx server, which in turn shall pass the request to
- * the resource manager. */
+ * manager may have access to events beyond process failure. The client
+ * application requests to be notified of such events by registering a
+ * err handler(s) for the events. The PMIx client shall pass the request
+ * to the PMIx server, which in turn shall pass the request to
+ * the resource manager by calling the register events function. */
  typedef pmix_status_t (*pmix_server_register_events_fn_t)(const pmix_info_t info[], size_t ninfo,
+                                                           pmix_op_cbfunc_t cbfunc, void *cbdata);
+
+/* Deregister to receive notifications for the specified events that
+ * the client application has registered for previously. When the client
+ * application deregisters the err handler forevents, PMIX client passes the
+ * deregister request to PMIx server which in turn passes the request to the
+ * resource manager by calling deregister events function.*/
+ typedef pmix_status_t (*pmix_server_deregister_events_fn_t)(const pmix_info_t info[], size_t ninfo,
                                                            pmix_op_cbfunc_t cbfunc, void *cbdata);
 
 /* Callback function for incoming connection requests from
@@ -279,19 +288,20 @@ typedef pmix_status_t (*pmix_server_listener_fn_t)(int listening_sd,
                                                    pmix_connection_cbfunc_t cbfunc);
 
 typedef struct pmix_server_module_1_0_0_t {
-    pmix_server_client_connected_fn_t client_connected;
-    pmix_server_client_finalized_fn_t client_finalized;
-    pmix_server_abort_fn_t            abort;
-    pmix_server_fencenb_fn_t          fence_nb;
-    pmix_server_dmodex_req_fn_t       direct_modex;
-    pmix_server_publish_fn_t          publish;
-    pmix_server_lookup_fn_t           lookup;
-    pmix_server_unpublish_fn_t        unpublish;
-    pmix_server_spawn_fn_t            spawn;
-    pmix_server_connect_fn_t          connect;
-    pmix_server_disconnect_fn_t       disconnect;
-    pmix_server_register_events_fn_t  register_events;
-    pmix_server_listener_fn_t         listener;
+    pmix_server_client_connected_fn_t  client_connected;
+    pmix_server_client_finalized_fn_t  client_finalized;
+    pmix_server_abort_fn_t             abort;
+    pmix_server_fencenb_fn_t           fence_nb;
+    pmix_server_dmodex_req_fn_t        direct_modex;
+    pmix_server_publish_fn_t           publish;
+    pmix_server_lookup_fn_t            lookup;
+    pmix_server_unpublish_fn_t         unpublish;
+    pmix_server_spawn_fn_t             spawn;
+    pmix_server_connect_fn_t           connect;
+    pmix_server_disconnect_fn_t        disconnect;
+    pmix_server_register_events_fn_t   register_events;
+    pmix_server_deregister_events_fn_t deregister_events;
+    pmix_server_listener_fn_t          listener;
 } pmix_server_module_t;
 
 /****    SERVER SUPPORT INIT/FINALIZE FUNCTIONS    ****/
@@ -410,44 +420,6 @@ typedef void (*pmix_dmodex_response_fn_t)(pmix_status_t status,
 pmix_status_t PMIx_server_dmodex_request(const pmix_proc_t *proc,
                                          pmix_dmodex_response_fn_t cbfunc,
                                          void *cbdata);
-
-/* Report an error to a process for notification via any
- * registered errhandler. The errhandler registration can be
- * called by both the server and the client application. On the
- * server side, the errhandler is used to report errors detected
- * by PMIx to the host server for handling. On the client side,
- * the errhandler is used to notify the process of errors
- * reported by the server - e.g., the failure of another process.
- *
- * This function allows the host server to direct the server
- * convenience library to notify all indicated local procs of
- * an error. The error can be local, or anywhere in the cluster.
- * The status indicates the error being reported.
- *
- * The first array  of procs informs the server library as to which
- * processes should be alerted - e.g., the processes that are in
- * a directly-affected job or are connected to one that is affected.
- * Passing a NULL for this array will indicate that all local procs
- * are to be notified.
- *
- * The second array identifies the processes that will be impacted
- * by the error. This could consist of a single process, or a number
- * of processes.
- *
- * The info array contains any further info the RM can and/or chooses
- * to provide.
- *
- * The callback function will be called upon completion of the
- * notify_error function's actions. Note that any messages will
- * have been queued, but may not have been transmitted by this
- * time. Note that the caller is required to maintain the input
- * data until the callback function has been executed! */
-pmix_status_t PMIx_server_notify_error(pmix_status_t status,
-                                       pmix_proc_t procs[], size_t nprocs,
-                                       pmix_proc_t error_procs[], size_t error_nprocs,
-                                       pmix_info_t info[], size_t ninfo,
-                                       pmix_op_cbfunc_t cbfunc, void *cbdata);
-
 
 END_C_DECLS
 
