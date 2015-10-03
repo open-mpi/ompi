@@ -56,6 +56,9 @@ included in the vX.Y.Z section and be denoted as:
 1.10.1
 ------
 
+- Fix segv when invoking non-blocking reductions with a user-defined
+  operation.  Thanks to Rupert Nash and Georg Geiser for identifying
+  the issue.
 - No longer probe for PCI topology on Solaris (unless running as root).
 - Fix for Intel Parallel Studio 2016 ifort partial support of the
   !GCC$ pragma.  Thanks to Fabrice Roy for reporting the problem.
