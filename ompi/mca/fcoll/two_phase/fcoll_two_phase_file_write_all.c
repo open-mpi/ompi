@@ -274,7 +274,6 @@ mca_fcoll_two_phase_file_write_all (mca_io_ompio_file_t *fh,
     total_bytes = (size_t) long_total_bytes;
 
     if ( 0 == total_bytes ) {
-        free(aggregator_list);
         ret = OMPI_SUCCESS;
         goto exit;
     }
