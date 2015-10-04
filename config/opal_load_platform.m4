@@ -104,7 +104,7 @@ AC_DEFUN([OPAL_LOAD_PLATFORM], [
         if test -d "${patch_dir}"; then
             if test ! -f "${patch_done}"; then
 
-                OPAL_LOG_MSG([Checking patches from ${patch_dir}/ directory ])
+                AC_MSG_NOTICE([Checking patches from ${patch_dir}/ directory ])
                 for one_patch in $patch_dir/*.patch ; do
 
                     AC_MSG_CHECKING([patch: $one_patch for errors ])
@@ -129,7 +129,7 @@ AC_DEFUN([OPAL_LOAD_PLATFORM], [
 
 
                 for one_patch in $patch_dir/*.patch ; do
-                    OPAL_LOG_MSG([Applying patch ${one_patch}])
+                    AC_MSG_NOTICE([Applying patch ${one_patch}])
                     patch -d ${srcdir} -p1 -t -s < ${one_patch}
                     if test "$?" != "0"; then
                         AC_MSG_ERROR([Failed to apply patch ${one_patch}])
@@ -161,7 +161,7 @@ AC_DEFUN([OPAL_LOAD_PLATFORM], [
                 AC_MSG_WARN([Platform patches already applied, skipping. ${patch_done} can be removed to re-apply ])
             fi
         else
-            OPAL_LOG_MSG([No platform patches in ${patch_dir}])
+            AC_MSG_NOTICE([No platform patches in ${patch_dir}])
         fi
 
     else
