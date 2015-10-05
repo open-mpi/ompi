@@ -1811,7 +1811,7 @@ static int mca_common_cuda_is_gpu_buffer(const void *pUserBuf, opal_convertor_t 
 #if !OPAL_CUDA_GET_ATTRIBUTES
             res = cuFunc.cuPointerGetAttribute(&memCtx,
                                                CU_POINTER_ATTRIBUTE_CONTEXT, dbuf);
-            if (OPAL_UNLIKELEY(res != CUDA_SUCCESS)) {
+            if (OPAL_UNLIKELY(res != CUDA_SUCCESS)) {
                 opal_output(0, "CUDA: error calling cuPointerGetAttribute: "
                             "res=%d, ptr=%p aborting...", res, pUserBuf);
                 return OPAL_ERROR;
