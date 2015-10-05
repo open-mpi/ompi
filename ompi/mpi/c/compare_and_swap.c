@@ -66,7 +66,6 @@ int MPI_Compare_and_swap(const void *origin_addr, const void *compare_addr, void
 
     if (MPI_PROC_NULL == target_rank) return MPI_SUCCESS;
 
-    OPAL_CR_ENTER_LIBRARY();
 
     rc = win->w_osc_module->osc_compare_and_swap(origin_addr, compare_addr, result_addr,
                                                  datatype, target_rank, target_disp, win);

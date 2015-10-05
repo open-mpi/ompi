@@ -51,8 +51,6 @@ int MPI_Grequest_start(MPI_Grequest_query_function *query_fn,
         }
     }
 
-    OPAL_CR_ENTER_LIBRARY();
-
     rc = ompi_grequest_start(query_fn,free_fn,cancel_fn,extra_state,request);
     OMPI_ERRHANDLER_RETURN(rc, MPI_COMM_WORLD, rc, FUNC_NAME);
 }

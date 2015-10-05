@@ -63,8 +63,6 @@ int MPI_Win_lock(int lock_type, int rank, int assert, MPI_Win win)
     /* NTH: do not bother keeping track of locking MPI_PROC_NULL. */
     if (MPI_PROC_NULL == rank) return MPI_SUCCESS;
 
-    OPAL_CR_ENTER_LIBRARY();
-
     rc = win->w_osc_module->osc_lock(lock_type, rank, assert, win);
     OMPI_ERRHANDLER_RETURN(rc, win, rc, FUNC_NAME);
 }

@@ -43,7 +43,6 @@ int MPI_Type_match_size(int typeclass, int size, MPI_Datatype *type)
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
     }
 
-    OPAL_CR_ENTER_LIBRARY();
 
     switch( typeclass ) {
     case MPI_TYPECLASS_REAL:
@@ -59,7 +58,6 @@ int MPI_Type_match_size(int typeclass, int size, MPI_Datatype *type)
         *type = &ompi_mpi_datatype_null.dt;
     }
 
-    OPAL_CR_EXIT_LIBRARY();
     if( *type != &ompi_mpi_datatype_null.dt ) {
         return MPI_SUCCESS;
     }

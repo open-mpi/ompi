@@ -69,8 +69,6 @@ int MPI_Pack_external(const char datarep[], const void *inbuf, int incount,
         }
     }
 
-    OPAL_CR_ENTER_LIBRARY();
-
     OBJ_CONSTRUCT(&local_convertor, opal_convertor_t);
 
     /* The resulting convertor will be set to the position zero. We have to use
@@ -86,7 +84,6 @@ int MPI_Pack_external(const char datarep[], const void *inbuf, int incount,
     opal_convertor_get_packed_size( &local_convertor, &size );
     if( (*position + size) > (size_t)outsize ) {  /* we can cast as we already checked for < 0 */
         OBJ_DESTRUCT( &local_convertor );
-        OPAL_CR_EXIT_LIBRARY();
         return OMPI_ERRHANDLER_INVOKE( MPI_COMM_WORLD, MPI_ERR_TRUNCATE, FUNC_NAME );
     }
 

@@ -38,8 +38,6 @@
 
 double MPI_Wtick(void)
 {
-    OPAL_CR_NOOP_PROGRESS();
-
 #if OPAL_TIMER_CYCLE_NATIVE
     return opal_timer_base_get_freq();
 #elif OPAL_TIMER_USEC_NATIVE

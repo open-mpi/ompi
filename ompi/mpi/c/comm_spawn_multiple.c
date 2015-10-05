@@ -144,7 +144,6 @@ int MPI_Comm_spawn_multiple(int count, char *array_of_commands[], char **array_o
     /* initialize the port name to avoid problems */
     memset(port_name, 0, MPI_MAX_PORT_NAME);
 
-    OPAL_CR_ENTER_LIBRARY();
 
     if ( rank == root ) {
         if (!non_mpi) {
@@ -172,7 +171,6 @@ int MPI_Comm_spawn_multiple(int count, char *array_of_commands[], char **array_o
     }
 
 error:
-    OPAL_CR_EXIT_LIBRARY();
 
     /* close the port */
     if (rank == root && !non_mpi) {

@@ -49,7 +49,6 @@ int MPI_Comm_free_keyval(int *comm_keyval)
         }
     }
 
-    OPAL_CR_ENTER_LIBRARY();
 
     ret = ompi_attr_free_keyval(COMM_ATTR, comm_keyval, 0);
 

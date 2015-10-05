@@ -42,8 +42,6 @@ int MPI_Win_set_info(MPI_Win win, MPI_Info info)
         }
     }
 
-    OPAL_CR_ENTER_LIBRARY();
-
     ret = win->w_osc_module->osc_set_info(win, info);
     OMPI_ERRHANDLER_RETURN(ret, win, ret, FUNC_NAME);
 }

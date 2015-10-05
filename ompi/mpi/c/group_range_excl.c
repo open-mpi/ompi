@@ -110,8 +110,6 @@ int MPI_Group_range_excl(MPI_Group group, int n_triplets, int ranges[][3],
         free (elements_int_list);
     }
 
-    OPAL_CR_ENTER_LIBRARY();
-
     err = ompi_group_range_excl(group,n_triplets,ranges,new_group);
     OMPI_ERRHANDLER_RETURN(err, MPI_COMM_WORLD,err,FUNC_NAME);
 

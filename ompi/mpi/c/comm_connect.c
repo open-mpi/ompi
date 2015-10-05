@@ -95,7 +95,6 @@ int MPI_Comm_connect(const char *port_name, MPI_Info info, int root,
      * }
      */
 
-    OPAL_CR_ENTER_LIBRARY();
 
     if ( rank == root ) {
         rc = ompi_dpm_connect_accept (comm, root, port_name, send_first,

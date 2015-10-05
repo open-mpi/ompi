@@ -74,7 +74,6 @@ int MPI_Unpack(const void *inbuf, int insize, int *position,
         }
     }
 
-    OPAL_CR_ENTER_LIBRARY();
 
     if( insize > 0 ) {
         OBJ_CONSTRUCT( &local_convertor, opal_convertor_t );
@@ -86,7 +85,6 @@ int MPI_Unpack(const void *inbuf, int insize, int *position,
         opal_convertor_get_packed_size( &local_convertor, &size );
         if( (*position + size) > (unsigned int)insize ) {
             OBJ_DESTRUCT( &local_convertor );
-            OPAL_CR_EXIT_LIBRARY();
             return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_TRUNCATE, FUNC_NAME);
         }
 

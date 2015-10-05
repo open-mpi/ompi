@@ -42,8 +42,6 @@ int MPI_Add_error_class(int *errorclass)
     int err_class;
     int rc;
 
-    OPAL_CR_NOOP_PROGRESS();
-
     if ( MPI_PARAM_CHECK ) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 

@@ -66,7 +66,6 @@ int MPI_Unpack_external (const char datarep[], const void *inbuf, MPI_Aint insiz
         }
     }
 
-    OPAL_CR_ENTER_LIBRARY();
 
     OBJ_CONSTRUCT(&local_convertor, opal_convertor_t);
 
@@ -78,7 +77,6 @@ int MPI_Unpack_external (const char datarep[], const void *inbuf, MPI_Aint insiz
     opal_convertor_get_packed_size( &local_convertor, &size );
     if( (*position + size) > (unsigned int)insize ) {
         OBJ_DESTRUCT( &local_convertor );
-        OPAL_CR_EXIT_LIBRARY();
         return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_TRUNCATE, FUNC_NAME);
     }
 

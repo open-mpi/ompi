@@ -38,8 +38,6 @@ int MPI_Get_version(int *version, int *subversion)
 {
     MPI_Comm null = NULL;
 
-    OPAL_CR_NOOP_PROGRESS();
-
     if (MPI_PARAM_CHECK) {
         /* Per MPI-2:3.1, this function can be invoked before
            MPI_INIT, so we don't invoke the normal

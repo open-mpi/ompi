@@ -70,7 +70,6 @@ int MPI_Unpublish_name(const char *service_name, MPI_Info info,
         }
     }
 
-    OPAL_CR_ENTER_LIBRARY();
     OBJ_CONSTRUCT(&pinfo, opal_list_t);
 
     /* OMPI supports info keys to pass the range to
@@ -109,13 +108,11 @@ int MPI_Unpublish_name(const char *service_name, MPI_Info info,
     if ( OPAL_SUCCESS != rc ) {
         if (OPAL_ERR_NOT_FOUND == rc) {
             /* service couldn't be found */
-            OPAL_CR_EXIT_LIBRARY();
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_SERVICE,
                                           FUNC_NAME);
         }
         if (OPAL_ERR_PERM == rc) {
             /* this process didn't own the specified service */
-            OPAL_CR_EXIT_LIBRARY();
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ACCESS,
                                           FUNC_NAME);
         }
@@ -123,11 +120,9 @@ int MPI_Unpublish_name(const char *service_name, MPI_Info info,
         /* none of the MPI-specific errors occurred - must be some
          * kind of internal error
          */
-        OPAL_CR_EXIT_LIBRARY();
         return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INTERN,
                                       FUNC_NAME);
     }
 
-    OPAL_CR_EXIT_LIBRARY();
     return MPI_SUCCESS;
 }

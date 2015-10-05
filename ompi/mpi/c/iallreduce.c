@@ -94,8 +94,6 @@ int MPI_Iallreduce(const void *sendbuf, void *recvbuf, int count,
         OMPI_ERRHANDLER_CHECK(err, comm, err, FUNC_NAME);
     }
 
-    OPAL_CR_ENTER_LIBRARY();
-
     /* Invoke the coll component to perform the back-end operation */
 
     OBJ_RETAIN(op);

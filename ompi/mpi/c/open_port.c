@@ -65,8 +65,6 @@ int MPI_Open_port(MPI_Info info, char *port_name)
         */
     }
 
-    OPAL_CR_ENTER_LIBRARY();
-
     rc = ompi_dpm_open_port(port_name);
 
     OMPI_ERRHANDLER_RETURN(rc, MPI_COMM_WORLD, rc, FUNC_NAME);

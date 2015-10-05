@@ -63,7 +63,6 @@ int MPI_Info_free(MPI_Info *info)
         }
     }
 
-    OPAL_CR_ENTER_LIBRARY();
 
     err = ompi_info_free(info);
     OMPI_ERRHANDLER_RETURN(err, MPI_COMM_WORLD, err, FUNC_NAME);

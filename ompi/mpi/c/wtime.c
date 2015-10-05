@@ -52,7 +52,5 @@ double MPI_Wtime(void)
     wtime += (double)tv.tv_usec / 1000000.0;
 #endif
 
-    OPAL_CR_NOOP_PROGRESS();
-
     return wtime;
 }

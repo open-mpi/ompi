@@ -74,7 +74,6 @@ int MPI_Startall(int count, MPI_Request requests[])
         OMPI_ERRHANDLER_CHECK(rc, MPI_COMM_WORLD, rc, FUNC_NAME);
     }
 
-    OPAL_CR_ENTER_LIBRARY();
 
     for (i = 0; i < count; ++i) {
         if (OMPI_REQUEST_NOOP == requests[i]->req_type) {
@@ -91,7 +90,6 @@ int MPI_Startall(int count, MPI_Request requests[])
     }
     ret = MCA_PML_CALL(start(count, requests));
 
-    OPAL_CR_EXIT_LIBRARY();
     return ret;
 }
 

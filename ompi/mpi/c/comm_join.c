@@ -73,7 +73,6 @@ int MPI_Comm_join(int fd, MPI_Comm *intercomm)
         }
     }
 
-    OPAL_CR_ENTER_LIBRARY();
 
     /* send my process name */
     tmp_name = *OMPI_PROC_MY_NAME;
@@ -91,7 +90,6 @@ int MPI_Comm_join(int fd, MPI_Comm *intercomm)
         } else if (OMPI_PROC_MY_NAME->vpid == rname.vpid) {
             /* joining to myself is not allowed */
             *intercomm = MPI_COMM_NULL;
-            OPAL_CR_EXIT_LIBRARY();
             return MPI_ERR_INTERN;
         } else {
             send_first = false;
@@ -112,7 +110,6 @@ int MPI_Comm_join(int fd, MPI_Comm *intercomm)
     if (send_first) {
         /* open a port */
         if (OMPI_SUCCESS != (rc = ompi_dpm_open_port(port_name))) {
-            OPAL_CR_EXIT_LIBRARY();
             return rc;
         }
         llen   = (uint32_t)(strlen(port_name)+1);

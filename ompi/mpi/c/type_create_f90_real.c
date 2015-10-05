@@ -45,8 +45,6 @@ int MPI_Type_create_f90_real(int p, int r, MPI_Datatype *newtype)
 {
     uint64_t key;
 
-    OPAL_CR_NOOP_PROGRESS();
-
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 
