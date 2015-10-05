@@ -184,6 +184,9 @@ void mca_mpool_base_tree_print(void)
 
     num_leaks = 0;
     ompi_rb_tree_traverse(&mca_mpool_base_tree, condition, action);
+    if (0 == num_leaks) {
+        return;
+    }
 
     if (num_leaks <= ompi_debug_show_mpi_alloc_mem_leaks ||
         ompi_debug_show_mpi_alloc_mem_leaks < 0) {
