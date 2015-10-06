@@ -77,7 +77,7 @@ static void errreg_cbfunc (pmix_status_t status,
                           void *cbdata)
 {
     errhdler_ref = errhandler_ref;
-    opal_output_verbose(1, opal_pmix_base_framework.framework_output,
+    opal_output_verbose(5, opal_pmix_base_framework.framework_output,
                         "PMIX client errreg_cbfunc - error handler registered status=%d, reference=%d",
                          status, errhandler_ref);
 }
