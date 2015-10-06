@@ -7,6 +7,8 @@
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights
  *                         reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -28,21 +30,12 @@
 #include "ompi_config.h"
 
 #include <stddef.h>
-#ifdef HAVE_STDINT_H
 #include <stdint.h>
-#endif
-#ifdef HAVE_STRING_H
 #include <string.h>
-#endif
-#ifdef HAVE_LIMITS_H
 #include <limits.h>
-#endif
 
 #include "ompi/constants.h"
-#include "opal/class/opal_pointer_array.h"
-#include "opal/class/opal_hash_table.h"
 #include "opal/datatype/opal_convertor.h"
-#include "opal/datatype/opal_datatype.h"
 #include "mpi.h"
 
 BEGIN_C_DECLS
@@ -177,31 +170,8 @@ ompi_datatype_add( ompi_datatype_t* pdtBase, const ompi_datatype_t* pdtAdd, uint
     return opal_datatype_add( &pdtBase->super, &pdtAdd->super, count, disp, extent );
 }
 
-
-static inline int32_t
-ompi_datatype_duplicate( const ompi_datatype_t* oldType, ompi_datatype_t** newType )
-{
-    ompi_datatype_t * new_ompi_datatype = ompi_datatype_create( oldType->super.desc.used + 2 );
-
-    *newType = new_ompi_datatype;
-    if( NULL == new_ompi_datatype ) {
-        return OMPI_ERR_OUT_OF_RESOURCE;
-    }
-    opal_datatype_clone( &oldType->super, &new_ompi_datatype->super);
-    /* Strip the predefined flag at the OMPI level. */
-    new_ompi_datatype->super.flags &= ~OMPI_DATATYPE_FLAG_PREDEFINED;
-    /* By default maintain the relationships related to the old data (such as ops) */
-    new_ompi_datatype->id = oldType->id;
-
-    /* Set the keyhash to NULL -- copying attributes is *only* done at
-       the top level (specifically, MPI_TYPE_DUP). */
-    new_ompi_datatype->d_keyhash = NULL;
-    new_ompi_datatype->args = NULL;
-    snprintf (new_ompi_datatype->name, MPI_MAX_OBJECT_NAME, "Dup %s",
-              oldType->name);
-
-    return OMPI_SUCCESS;
-}
+OMPI_DECLSPEC int32_t
+ompi_datatype_duplicate( const ompi_datatype_t* oldType, ompi_datatype_t** newType );
 
 OMPI_DECLSPEC int32_t ompi_datatype_create_contiguous( int count, const ompi_datatype_t* oldType, ompi_datatype_t** newType );
 OMPI_DECLSPEC int32_t ompi_datatype_create_vector( int count, int bLength, int stride,
@@ -226,7 +196,10 @@ OMPI_DECLSPEC int32_t ompi_datatype_create_subarray(int ndims, int const* size_a
                                                     int const* start_array, int order,
                                                     const ompi_datatype_t* oldtype, ompi_datatype_t** newtype);
 static inline int32_t
-ompi_datatype_create_resized( const ompi_datatype_t* oldType, OPAL_PTRDIFF_TYPE lb, OPAL_PTRDIFF_TYPE extent, ompi_datatype_t** newType )
+ompi_datatype_create_resized( const ompi_datatype_t* oldType,
+                              OPAL_PTRDIFF_TYPE lb,
+                              OPAL_PTRDIFF_TYPE extent,
+                              ompi_datatype_t** newType )
 {
     ompi_datatype_t * type;
     ompi_datatype_duplicate( oldType, &type );
@@ -312,7 +285,7 @@ OMPI_DECLSPEC const ompi_datatype_t* ompi_datatype_match_size( int size, uint16_
 /*
  *
  */
-OMPI_DECLSPEC int32_t ompi_datatype_sndrcv( void *sbuf, int32_t scount, const ompi_datatype_t* sdtype,
+OMPI_DECLSPEC int32_t ompi_datatype_sndrcv( const void *sbuf, int32_t scount, const ompi_datatype_t* sdtype,
                                             void *rbuf, int32_t rcount, const ompi_datatype_t* rdtype);
 
 /*

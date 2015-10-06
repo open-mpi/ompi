@@ -16,10 +16,6 @@
 
 #include "opal_config.h"
 
-#include <stddef.h>
-
-#include "opal/constants.h"
-#include "opal/datatype/opal_datatype.h"
 #include "opal/datatype/opal_convertor.h"
 
 BEGIN_C_DECLS
@@ -54,9 +50,7 @@ void opal_convertor_destroy_masters( void );
 
 #if OPAL_ENABLE_DEBUG
 extern bool opal_pack_debug;
-#define DO_DEBUG(INST)  if( opal_pack_debug ) { INST }
-#else
-#define DO_DEBUG(INST)
+extern bool opal_unpack_debug;
 #endif  /* OPAL_ENABLE_DEBUG */
 
 END_C_DECLS

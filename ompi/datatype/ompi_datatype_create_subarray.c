@@ -26,7 +26,6 @@
 
 #include <stddef.h>
 
-#include "ompi/constants.h"
 #include "ompi/datatype/ompi_datatype.h"
 
 int32_t ompi_datatype_create_subarray(int ndims,
