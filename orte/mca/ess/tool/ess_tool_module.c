@@ -37,7 +37,6 @@
 #include "orte/mca/plm/plm.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/util/proc_info.h"
-#include "orte/runtime/orte_cr.h"
 
 #include "orte/mca/ess/ess.h"
 #include "orte/mca/ess/base/base.h"
@@ -137,9 +136,6 @@ static void rte_abort(int status, bool report)
      * clean environment. Taken from orte_finalize():
      * - Assume errmgr cleans up child processes before we exit.
      */
-
-    /* CRS cleanup since it may have a named pipe and thread active */
-    orte_cr_finalize();
 
     /* - Clean out the global structures
      * (not really necessary, but good practice)
