@@ -253,7 +253,7 @@ void *mca_mpool_base_alloc(size_t size, opal_info_t *info)
             mpool_tree_item->regs[mpool_tree_item->count++] = registration;
         } else {
             if(mpool->mpool_register(mpool, mem, size, MCA_MPOOL_FLAGS_PERSIST,
-                        &registration) != OPAL_SUCCESS) {
+                                     MCA_MPOOL_ACCESS_ANY, &registration) != OPAL_SUCCESS) {
                 if(mpool_requested) {
                     unregister_tree_item(mpool_tree_item);
                     goto out;

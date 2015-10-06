@@ -79,7 +79,7 @@ void mca_mpool_rgpusm_module_init(mca_mpool_rgpusm_module_t *mpool);
   * register block of memory
   */
 int mca_mpool_rgpusm_register(mca_mpool_base_module_t* mpool, void *addr,
-        size_t size, uint32_t flags, mca_mpool_base_registration_t **reg);
+        size_t size, uint32_t flags, int32_t access_flags, mca_mpool_base_registration_t **reg);
 
 /**
  * deregister memory

@@ -109,7 +109,7 @@ int mca_mpool_gpusm_find(mca_mpool_base_module_t *mpool, void *addr,
                          size_t size,
                          mca_mpool_base_registration_t **reg)
 {
-    return mca_mpool_gpusm_register(mpool, addr, size, 0, reg);
+    return mca_mpool_gpusm_register(mpool, addr, size, 0, 0, reg);
 }
 
 /*
@@ -119,7 +119,7 @@ int mca_mpool_gpusm_find(mca_mpool_base_module_t *mpool, void *addr,
  * deregister function is a no-op.
  */
 int mca_mpool_gpusm_register(mca_mpool_base_module_t *mpool, void *addr,
-                             size_t size, uint32_t flags,
+                             size_t size, uint32_t flags, int32_t access_flags,
                              mca_mpool_base_registration_t **reg)
 {
     mca_mpool_gpusm_module_t *mpool_gpusm = (mca_mpool_gpusm_module_t*)mpool;
@@ -147,6 +147,7 @@ int mca_mpool_gpusm_register(mca_mpool_base_module_t *mpool, void *addr,
     gpusm_reg->base = base;
     gpusm_reg->bound = bound;
     gpusm_reg->flags = flags;
+    gpusm_reg->access_flags = access_flags;
 
     rc = mpool_gpusm->resources.register_mem(base, size, gpusm_reg, NULL);
 

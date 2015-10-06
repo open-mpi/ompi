@@ -1010,6 +1010,7 @@ static struct mca_btl_base_registration_handle_t *mca_btl_smcuda_register_mem (
     size_t size, uint32_t flags)
 {
     mca_mpool_common_cuda_reg_t *reg;
+    int access_flags = flags & MCA_BTL_REG_FLAG_ACCESS_ANY;
     int mpool_flags = 0;
 
     if (MCA_BTL_REG_FLAG_CUDA_GPU_MEM & flags) {
@@ -1017,7 +1018,7 @@ static struct mca_btl_base_registration_handle_t *mca_btl_smcuda_register_mem (
     }
 
     btl->btl_mpool->mpool_register (btl->btl_mpool, base, size, mpool_flags,
-                                    (mca_mpool_base_registration_t **) &reg);
+                                    access_flags, (mca_mpool_base_registration_t **) &reg);
     if (OPAL_UNLIKELY(NULL == reg)) {
         return NULL;
     }
@@ -1088,6 +1089,7 @@ int mca_btl_smcuda_get_cuda (struct mca_btl_base_module_t *btl,
      * support. */
     rc = ep->mpool->mpool_register(ep->mpool, remote_handle->reg_data.memh_seg_addr.pval,
                                    remote_handle->reg_data.memh_seg_len, ep->peer_smp_rank,
+                                   MCA_MPOOL_ACCESS_LOCAL_WRITE,
                                    (mca_mpool_base_registration_t **)&reg_ptr);
 
     if (OPAL_SUCCESS != rc) {
