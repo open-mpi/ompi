@@ -257,6 +257,8 @@ int mca_pml_yalla_del_procs(struct ompi_proc_t **procs, size_t nprocs)
 
     if (ompi_mpi_finalized) {
         PML_YALLA_VERBOSE(3, "using bulk powerdown");
+        /* avoid disconnecting from a process which is still doing communication */
+        opal_pmix.fence(NULL, 0);
         mxm_ep_powerdown(ompi_pml_yalla.mxm_ep);
     }
 
