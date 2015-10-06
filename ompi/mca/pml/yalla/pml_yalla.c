@@ -247,9 +247,14 @@ int mca_pml_yalla_add_procs(struct ompi_proc_t **procs, size_t nprocs)
 int mca_pml_yalla_del_procs(struct ompi_proc_t **procs, size_t nprocs)
 {
     size_t i;
+    ompi_communicator_t *comm_world;
 
     if (ompi_mpi_finalized) {
         PML_YALLA_VERBOSE(3, "using bulk powerdown");
+        comm_world = &ompi_mpi_comm_world.comm;
+        if (ompi_comm_size(comm_world) > 1) {
+            comm_world->c_coll.coll_barrier(comm_world, comm_world->c_coll.coll_barrier_module);
+        }
         mxm_ep_powerdown(ompi_pml_yalla.mxm_ep);
     }
 

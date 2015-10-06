@@ -514,6 +514,15 @@ int ompi_mtl_mxm_del_procs(struct mca_mtl_base_module_t *mtl, size_t nprocs,
 {
     size_t i;
 
+    ompi_communicator_t *comm_world;
+
+    if (ompi_mpi_finalized) {
+        comm_world = &ompi_mpi_comm_world.comm;
+        if (ompi_comm_size(comm_world) > 1) {
+            comm_world->c_coll.coll_barrier(comm_world, comm_world->c_coll.coll_barrier_module);
+        }
+    }
+
 #if MXM_API >= MXM_VERSION(3,1)
     if (ompi_mtl_mxm.bulk_disconnect &&
             nprocs == ompi_comm_size(&ompi_mpi_comm_world.comm)) {
