@@ -27,7 +27,7 @@
 #include "ompi/mca/sharedfp/base/base.h"
 
 int mca_sharedfp_addproc_iwrite(mca_io_ompio_file_t *fh,
-                                void *buf,
+                                const void *buf,
                                 int count,
                                 ompi_datatype_t *datatype,
                                 MPI_Request * request)
@@ -71,7 +71,7 @@ int mca_sharedfp_addproc_iwrite(mca_io_ompio_file_t *fh,
 }
 
 int mca_sharedfp_addproc_write_ordered_begin(mca_io_ompio_file_t *fh,
-                                             void *buf,
+                                             const void *buf,
                                              int count,
                                              struct ompi_datatype_t *datatype)
 {
@@ -188,7 +188,7 @@ exit:
 
 
 int mca_sharedfp_addproc_write_ordered_end(mca_io_ompio_file_t *fh,
-                                           void *buf,
+                                           const void *buf,
                                            ompi_status_public_t *status)
 {
     int ret = OMPI_SUCCESS;
