@@ -13,7 +13,6 @@
  * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2015      Intel, Inc. All rights reserved.
- *
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
@@ -28,6 +27,7 @@
 
 #include "opal/class/opal_list.h"
 #include "opal/mca/pmix/pmix.h"
+#include "opal/util/show_help.h"
 
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/runtime/params.h"
@@ -69,6 +69,17 @@ int MPI_Publish_name(const char *service_name, MPI_Info info,
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INFO,
                                           FUNC_NAME);
         }
+    }
+
+    if (NULL == opal_pmix.publish) {
+        opal_show_help("help-mpi-api.txt",
+                       "MPI function not supported",
+                       true,
+                       FUNC_NAME,
+                       "Underlying runtime environment does not support name publishing functionality");
+        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD,
+                                      OMPI_ERR_NOT_SUPPORTED,
+                                        FUNC_NAME);
     }
 
     OPAL_CR_ENTER_LIBRARY();
@@ -149,15 +160,20 @@ int MPI_Publish_name(const char *service_name, MPI_Info info,
     if ( OPAL_SUCCESS != rc ) {
         if (OPAL_EXISTS == rc) {
             /* already exists - can't publish it */
-            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_FILE_EXISTS,
-                                          FUNC_NAME);
+            rc = MPI_ERR_FILE_EXISTS;
+        } else if (OPAL_ERR_NOT_SUPPORTED == rc) {
+            /* this PMIX environment doesn't support publishing */
+            rc = OMPI_ERR_NOT_SUPPORTED;
+            opal_show_help("help-mpi-api.txt",
+                           "MPI function not supported",
+                           true,
+                           FUNC_NAME,
+                           "Underlying runtime environment does not support name publishing functionality");
+        } else {
+            rc = MPI_ERR_INTERN;
         }
 
-        /* none of the MPI-specific errors occurred - must be some
-         * kind of internal error
-         */
-        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INTERN,
-                                      FUNC_NAME);
+        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, rc, FUNC_NAME);
     }
 
     return MPI_SUCCESS;
