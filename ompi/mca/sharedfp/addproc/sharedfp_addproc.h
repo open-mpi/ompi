@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2013      University of Houston. All rights reserved.
+ * Copyright (c) 2015      University of Houston. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -56,7 +56,7 @@ int mca_sharedfp_addproc_seek (mca_io_ompio_file_t *fh,
 int mca_sharedfp_addproc_get_position (mca_io_ompio_file_t *fh,
                                           OMPI_MPI_OFFSET_TYPE * offset);
 int mca_sharedfp_addproc_file_open (struct ompi_communicator_t *comm,
-                                       char* filename,
+                                       const char* filename,
                                        int amode,
                                        struct ompi_info_t *info,
                                        mca_io_ompio_file_t *fh);
@@ -80,24 +80,24 @@ int mca_sharedfp_addproc_iread (mca_io_ompio_file_t *fh,
                                     struct ompi_datatype_t *datatype,
                                     ompi_request_t **request);
 int mca_sharedfp_addproc_write (mca_io_ompio_file_t *fh,
-                                   void *buf,
+                                   const void *buf,
                                    int count,
                                    struct ompi_datatype_t *datatype,
                                    ompi_status_public_t *status);
 int mca_sharedfp_addproc_write_ordered (mca_io_ompio_file_t *fh,
-                                           void *buf,
+                                           const void *buf,
                                            int count,
                                            struct ompi_datatype_t *datatype,
                                            ompi_status_public_t *status);
 int mca_sharedfp_addproc_write_ordered_begin (mca_io_ompio_file_t *fh,
-                                                 void *buf,
+                                                 const void *buf,
                                                  int count,
                                                  struct ompi_datatype_t *datatype);
 int mca_sharedfp_addproc_write_ordered_end (mca_io_ompio_file_t *fh,
-                                               void *buf,
+                                               const void *buf,
                                                ompi_status_public_t *status);
 int mca_sharedfp_addproc_iwrite (mca_io_ompio_file_t *fh,
-                                    void *buf,
+                                    const void *buf,
                                     int count,
                                     struct ompi_datatype_t *datatype,
                                     ompi_request_t **request);

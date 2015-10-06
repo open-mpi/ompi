@@ -374,6 +374,12 @@ AC_DEFUN([OMPI_SETUP_MPI_FORTRAN],[
            OMPI_FORTRAN_F08_TYPE=$OMPI_FORTRAN_IGNORE_TKR_TYPE
           ])
 
+    # F08 bindings require the usempi PMPI profiling bindings
+    AS_IF([test "$WANT_MPI_PROFILING" -eq 0],
+          [OMPI_TRY_FORTRAN_BINDINGS=$OMPI_FORTRAN_USEMPI_BINDINGS
+           OMPI_BUILD_FORTRAN_BINDINGS=$OMPI_FORTRAN_USEMPI_BINDINGS
+           AC_MSG_WARN([PMPI is not built, cannot build usempif08 bindings])])
+
     # The overall "_BIND_C" variable will be set to 1 if we have all
     # the necessary forms of BIND(C)
     OMPI_FORTRAN_HAVE_BIND_C=0

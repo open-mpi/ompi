@@ -128,6 +128,7 @@ bool ompi_mpi_init_started = false;
 bool ompi_mpi_initialized = false;
 bool ompi_mpi_finalized = false;
 bool ompi_rte_initialized = false;
+int32_t ompi_mpi_finalize_started = false;
 
 bool ompi_mpi_thread_multiple = false;
 int ompi_mpi_thread_requested = MPI_THREAD_SINGLE;
