@@ -18,14 +18,21 @@
 int mca_coll_hcoll_barrier(struct ompi_communicator_t *comm,
                          mca_coll_base_module_t *module){
     int rc;
-    HCOL_VERBOSE(20,"RUNNING HCOL BARRIER");
     mca_coll_hcoll_module_t *hcoll_module = (mca_coll_hcoll_module_t*)module;
+    HCOL_VERBOSE(20,"RUNNING HCOL BARRIER");
+
+    if (OPAL_UNLIKELY(ompi_mpi_finalize_started)) {
+        HCOL_VERBOSE(5, "In finalize, reverting to previous barrier");
+        goto orig_barrier;
+    }
     rc = hcoll_collectives.coll_barrier(hcoll_module->hcoll_context);
     if (HCOLL_SUCCESS != rc){
         HCOL_VERBOSE(20,"RUNNING FALLBACK BARRIER");
         rc = hcoll_module->previous_barrier(comm,hcoll_module->previous_barrier_module);
     }
     return rc;
+orig_barrier:
+    return hcoll_module->previous_barrier(comm,hcoll_module->previous_barrier_module);
 }
 
 int mca_coll_hcoll_bcast(void *buff, int count,
