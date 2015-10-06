@@ -20,6 +20,8 @@
 #ifndef OMPI_MTL_PORTALS_ENDPOINT_H
 #define OMPI_MTL_PORTALS_ENDPOINT_H
 
+#include "ompi/mca/mtl/portals4/mtl_portals4.h"
+
 struct mca_mtl_base_endpoint_t {
     ptl_process_t ptl_proc;
 };
