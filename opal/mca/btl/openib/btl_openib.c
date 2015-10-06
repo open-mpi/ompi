@@ -638,28 +638,10 @@ static int prepare_device_for_use (mca_btl_openib_device_t *device)
         OBJ_CONSTRUCT(&device->qps[qp_index].recv_free, opal_free_list_t);
     }
 
-    if(mca_btl_openib_component.use_async_event_thread) {
-        mca_btl_openib_async_cmd_t async_command = {.a_cmd = OPENIB_ASYNC_CMD_FD_ADD,
-                                                    .fd = device->ib_dev_context->async_fd,
-                                                    .qp = NULL};
+    device->got_fatal_event = false;
+    device->got_port_event = false;
+    mca_btl_openib_async_add_device (device);
 
-        /* start the async even thread if it is not already started */
-        if (start_async_event_thread() != OPAL_SUCCESS)
-            return OPAL_ERROR;
-
-        device->got_fatal_event = false;
-        device->got_port_event = false;
-        if (write(mca_btl_openib_component.async_pipe[1],
-                    &async_command, sizeof(mca_btl_openib_async_cmd_t))<0){
-            BTL_ERROR(("Failed to write to pipe [%d]",errno));
-            return OPAL_ERROR;
-        }
-        /* wait for ok from thread */
-        if (OPAL_SUCCESS !=
-            btl_openib_async_command_done(device->ib_dev_context->async_fd)) {
-            return OPAL_ERROR;
-        }
-    }
 #if OPAL_ENABLE_PROGRESS_THREADS == 1
     /* Prepare data for thread, but not starting it */
     OBJ_CONSTRUCT(&device->thread, opal_thread_t);
