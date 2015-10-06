@@ -3,6 +3,7 @@
  * Copyright (C) Mellanox Technologies Ltd. 2001-2011.  ALL RIGHTS RESERVED.
  * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
  *                         reserved.
+ * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -265,6 +266,8 @@ static int ompi_mtl_mxm_component_query(mca_base_module_t **module, int *priorit
     /*
      * if we get here it means that mxm is available so give high priority
      */
+
+    ompi_mpi_dynamics_disable("the MXM MTL does not support MPI dynamic process functionality");
 
     *priority = param_priority;
     *module = (mca_base_module_t *)&ompi_mtl_mxm.super;
