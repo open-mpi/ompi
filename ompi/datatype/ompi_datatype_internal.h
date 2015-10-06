@@ -7,6 +7,8 @@
  * Copyright (c) 2010-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -26,7 +28,6 @@
 #define OMPI_DATATYPE_INTERNAL_H
 
 #include "opal/datatype/opal_datatype_internal.h"
-#include "ompi/class/ompi_free_list.h"
 
 /*
  * This is the OMPI-layered numbering of ALL supported MPI types

@@ -24,7 +24,6 @@
 
 #include <stddef.h>
 
-#include "ompi/constants.h"
 #include "ompi/datatype/ompi_datatype.h"
 
 static int

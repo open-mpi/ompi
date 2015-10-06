@@ -24,19 +24,8 @@
 
 #include "opal_config.h"
 
-#include <stddef.h>
-
-#ifdef HAVE_SYS_TYPES_H
-#include <sys/types.h>
-#endif
 #ifdef HAVE_SYS_UIO_H
 #include <sys/uio.h>
-#endif
-#ifdef HAVE_NET_UIO_H
-#include <net/uio.h>
-#endif
-#if HAVE_STRING_H
-#include <string.h>
 #endif
 
 #include "opal/constants.h"
@@ -229,6 +218,14 @@ static inline void opal_convertor_get_current_pointer( const opal_convertor_t* p
     unsigned char* base = pConv->pBaseBuf + pConv->bConverted + pConv->pDesc->true_lb;
     *position = (void*)base;
 }
+
+static inline void opal_convertor_get_offset_pointer( const opal_convertor_t* pConv,
+                                                      size_t offset, void** position )
+{
+    unsigned char* base = pConv->pBaseBuf + offset + pConv->pDesc->true_lb;
+    *position = (void*)base;
+}
+
 
 /*
  *

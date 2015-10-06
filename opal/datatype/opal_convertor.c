@@ -25,10 +25,7 @@
 
 #include <stddef.h>
 #include <stdio.h>
-
-#ifdef HAVE_STDINT_H
 #include <stdint.h>
-#endif
 
 #include "opal/prefetch.h"
 #include "opal/util/arch.h"
@@ -362,13 +359,12 @@ static inline int opal_convertor_create_stack_with_pos_contig( opal_convertor_t*
     if( OPAL_LIKELY(0 == count) ) {
         pStack[1].type     = pElems->elem.common.type;
         pStack[1].count    = pElems->elem.count;
-        pStack[1].disp     = pElems->elem.disp;
     } else {
         pStack[1].type  = OPAL_DATATYPE_UINT1;
         pStack[1].count = pData->size - count;
-        pStack[1].disp  = pData->true_lb + count;
     }
-    pStack[1].index    = 0;  /* useless */
+    pStack[1].disp  = count;
+    pStack[1].index = 0;  /* useless */
 
     pConvertor->bConverted = starting_point;
     pConvertor->stack_pos = 1;
@@ -400,13 +396,16 @@ int opal_convertor_create_stack_at_begining( opal_convertor_t* convertor,
     pStack[0].index = -1;
     pStack[0].count = convertor->count;
     pStack[0].disp  = 0;
+    pStack[0].type  = OPAL_DATATYPE_LOOP;
 
     pStack[1].index = 0;
     pStack[1].disp = 0;
     if( pElems[0].elem.common.type == OPAL_DATATYPE_LOOP ) {
         pStack[1].count = pElems[0].loop.loops;
+        pStack[1].type  = OPAL_DATATYPE_LOOP;
     } else {
         pStack[1].count = pElems[0].elem.count;
+        pStack[1].type  = pElems[0].elem.common.type;
     }
     return OPAL_SUCCESS;
 }
@@ -453,10 +452,8 @@ int32_t opal_convertor_set_position_nocheck( opal_convertor_t* convertor,
  * Compute the remote size.
  */
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
-#define OPAL_CONVERTOR_COMPUTE_REMOTE_SIZE(convertor, datatype) \
+#define OPAL_CONVERTOR_COMPUTE_REMOTE_SIZE(convertor, datatype, bdt_mask) \
 {                                                                         \
-    uint32_t bdt_mask;                                                  \
-    bdt_mask = datatype->bdt_used & convertor->master->hetero_mask;     \
     if( OPAL_UNLIKELY(0 != (bdt_mask)) ) {                                \
         opal_convertor_master_t* master;                                  \
         int i;                                                            \
@@ -476,14 +473,8 @@ int32_t opal_convertor_set_position_nocheck( opal_convertor_t* convertor,
     }                                                                     \
 }
 #else
-#if OPAL_ENABLE_DEBUG
-#define OPAL_CONVERTOR_COMPUTE_REMOTE_SIZE(convertor, datatype)         \
-    uint32_t bdt_mask;                                                  \
-    bdt_mask = datatype->bdt_used & convertor->master->hetero_mask;     \
+#define OPAL_CONVERTOR_COMPUTE_REMOTE_SIZE(convertor, datatype, bdt_mask) \
     assert(0 == (bdt_mask))
-#else
-#define OPAL_CONVERTOR_COMPUTE_REMOTE_SIZE(convertor, datatype)
-#endif
 #endif  /* OPAL_ENABLE_HETEROGENEOUS_SUPPORT */
 
 /**
@@ -495,6 +486,7 @@ int32_t opal_convertor_set_position_nocheck( opal_convertor_t* convertor,
  */
 #define OPAL_CONVERTOR_PREPARE( convertor, datatype, count, pUserBuf )  \
     {                                                                   \
+        uint32_t bdt_mask;                                              \
                                                                         \
         /* If the data is empty we just mark the convertor as           \
          * completed. With this flag set the pack and unpack functions  \
@@ -530,7 +522,9 @@ int32_t opal_convertor_set_position_nocheck( opal_convertor_t* convertor,
             }                                                           \
         }                                                               \
                                                                         \
-        OPAL_CONVERTOR_COMPUTE_REMOTE_SIZE( convertor, datatype );      \
+        bdt_mask = datatype->bdt_used & convertor->master->hetero_mask; \
+        OPAL_CONVERTOR_COMPUTE_REMOTE_SIZE( convertor, datatype,        \
+                                            bdt_mask );                 \
         assert( NULL != convertor->use_desc->desc );                    \
         /* For predefined datatypes (contiguous) do nothing more */     \
         /* if checksum is enabled then always continue */               \

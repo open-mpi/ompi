@@ -25,15 +25,8 @@
 
 #include "opal_config.h"
 
-#include <stddef.h>
-#include <stdio.h>
-
-#ifdef HAVE_STRING_H
+#include <stdarg.h>
 #include <string.h>
-#endif
-#ifdef HAVE_STDINT_H
-#include <stdint.h>
-#endif
 
 #if defined(VERBOSE)
 #include "opal/util/output.h"
@@ -151,8 +144,10 @@ struct ddt_elem_id_description {
 };
 typedef struct ddt_elem_id_description ddt_elem_id_description;
 
-/* the basic element. A data description is composed
- * by a set of basic elements.
+/**
+ * The data element description. It is similar to a vector type, a contiguous
+ * blocklen number of basic elements, with a displacement for the first element
+ * and then an extent for all the extra count.
  */
 struct ddt_elem_desc {
     ddt_elem_id_description common;           /**< basic data description and flags */
@@ -163,6 +158,14 @@ struct ddt_elem_desc {
 };
 typedef struct ddt_elem_desc ddt_elem_desc_t;
 
+/**
+ * The loop description, with it's two markers: one for the begining and one for
+ * the end. The initial marker contains the number of repetitions, the number of
+ * elements in the loop, and the extent of each loop. The end marker contains in
+ * addition to the number of elements (so that we can easily pair together the
+ * two markers), the size of the data contained inside and the displacement of
+ * the first element.
+ */
 struct ddt_loop_desc {
     ddt_elem_id_description common;           /**< basic data description and flags */
     uint32_t                loops;            /**< number of elements */
@@ -475,6 +478,11 @@ static inline int GET_FIRST_NON_LOOP( const union dt_elem_desc* _pElem )
 OPAL_DECLSPEC int opal_datatype_contain_basic_datatypes( const struct opal_datatype_t* pData, char* ptr, size_t length );
 OPAL_DECLSPEC int opal_datatype_dump_data_flags( unsigned short usflags, char* ptr, size_t length );
 OPAL_DECLSPEC int opal_datatype_dump_data_desc( union dt_elem_desc* pDesc, int nbElems, char* ptr, size_t length );
+
+#if OPAL_ENABLE_DEBUG
+extern bool opal_position_debug;
+extern bool opal_copy_debug;
+#endif  /* OPAL_ENABLE_DEBUG */
 
 END_C_DECLS
 #endif  /* OPAL_DATATYPE_INTERNAL_H_HAS_BEEN_INCLUDED */
