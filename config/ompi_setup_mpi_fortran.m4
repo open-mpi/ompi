@@ -367,18 +367,21 @@ AC_DEFUN([OMPI_SETUP_MPI_FORTRAN],[
 
     # We need to have ignore TKR functionality to build the mpi_f08
     # module
-    AS_IF([test $OMPI_TRY_FORTRAN_BINDINGS -ge $OMPI_FORTRAN_USEMPIF08_BINDINGS &&
+    AS_IF([test $OMPI_TRY_FORTRAN_BINDINGS -ge $OMPI_FORTRAN_USEMPIF08_BINDINGS && \
            test $OMPI_FORTRAN_HAVE_IGNORE_TKR -eq 1],
           [OMPI_BUILD_FORTRAN_BINDINGS=$OMPI_FORTRAN_USEMPIF08_BINDINGS
            OMPI_FORTRAN_F08_PREDECL=$OMPI_FORTRAN_IGNORE_TKR_PREDECL
            OMPI_FORTRAN_F08_TYPE=$OMPI_FORTRAN_IGNORE_TKR_TYPE
           ])
 
-    # F08 bindings require the usempi PMPI profiling bindings
-    AS_IF([test "$WANT_MPI_PROFILING" -eq 0],
-          [OMPI_TRY_FORTRAN_BINDINGS=$OMPI_FORTRAN_USEMPI_BINDINGS
-           OMPI_BUILD_FORTRAN_BINDINGS=$OMPI_FORTRAN_USEMPI_BINDINGS
-           AC_MSG_WARN([PMPI is not built, cannot build usempif08 bindings])])
+    AS_IF([test $OMPI_TRY_FORTRAN_BINDINGS -ge $OMPI_FORTRAN_USEMPIF08_BINDINGS && \
+           test $OMPI_BUILD_FORTRAN_BINDINGS -ge $OMPI_FORTRAN_USEMPIF08_BINDINGS],
+          [ # If we don't have PMPI, we won't build mpi_f08 at all
+           AC_MSG_CHECKING([whether PMPI is enabled])
+           AS_IF([test $WANT_MPI_PROFILING -eq 1],
+                 [AC_MSG_RESULT([yes])],
+                 [OMPI_BUILD_FORTRAN_BINDINGS=$OMPI_FORTRAN_USEMPI_BINDINGS
+                  AC_MSG_RESULT([no])])])
 
     # The overall "_BIND_C" variable will be set to 1 if we have all
     # the necessary forms of BIND(C)
