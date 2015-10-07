@@ -97,7 +97,7 @@ AC_DEFUN([OPAL_LOAD_PLATFORM], [
             AC_SUBST(OPAL_PARAM_FROM_PLATFORM, "no")
         fi
 
-        patch_dir="${with_platform}.patches"
+        patch_dir=${patch_dir:="${with_platform}.patches"}
         patch_done="${srcdir}/.platform_patches"
         patch_found=no
 
