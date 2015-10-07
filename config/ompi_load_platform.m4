@@ -20,6 +20,10 @@
 # OMPI_LOAD_PLATFORM()
 # --------------------
 AC_DEFUN([OMPI_LOAD_PLATFORM], [
+    AC_ARG_WITH([platform-patches-dir],
+        [AC_HELP_STRING([--with-platform-patches-dir=DIR],
+                        [Location of the platform patches directory. If you use this option, you must also use --with-platform.])])
+
     AC_ARG_WITH([platform],
         [AC_HELP_STRING([--with-platform=FILE],
                         [Load options for build from FILE.  Options on the
@@ -94,7 +98,12 @@ AC_DEFUN([OMPI_LOAD_PLATFORM], [
             AC_SUBST(OPAL_PARAM_FROM_PLATFORM, "no")
         fi
 
-        patch_dir="${with_platform}.patches"
+        if test -d "$with_platform_patches_dir"; then
+            patch_dir=$with_platform_patches_dir
+        else
+            patch_dir="${with_platform}.patches"
+        fi
+
         patch_done="${srcdir}/.platform_patches"
         patch_found=no
 
