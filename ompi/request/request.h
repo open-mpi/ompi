@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2007 The University of Tennessee and The University
+ * Copyright (c) 2004-2016 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -35,6 +35,7 @@
 #include "opal/class/opal_free_list.h"
 #include "opal/class/opal_pointer_array.h"
 #include "opal/threads/condition.h"
+#include "opal/threads/wait_sync.h"
 #include "ompi/constants.h"
 
 BEGIN_C_DECLS
@@ -102,7 +103,7 @@ struct ompi_request_t {
     opal_free_list_item_t super;                /**< Base type */
     ompi_request_type_t req_type;               /**< Enum indicating the type of the request */
     ompi_status_public_t req_status;            /**< Completion status */
-    volatile bool req_complete;                 /**< Flag indicating wether request has completed */
+    volatile void *req_complete;                /**< Flag indicating wether request has completed */
     volatile ompi_request_state_t req_state;    /**< enum indicate state of the request */
     bool req_persistent;                        /**< flag indicating if the this is a persistent request */
     int req_f_to_c_index;                       /**< Index in Fortran <-> C translation array */
@@ -117,6 +118,7 @@ struct ompi_request_t {
  * Convenience typedef
  */
 typedef struct ompi_request_t ompi_request_t;
+
 
 /**
  * Padded struct to maintain back compatibiltiy.
@@ -140,11 +142,15 @@ typedef struct ompi_predefined_request_t ompi_predefined_request_t;
  */
 #define OMPI_REQUEST_INIT(request, persistent)        \
     do {                                              \
-        (request)->req_complete = false;              \
+        (request)->req_complete = REQUEST_PENDING;    \
         (request)->req_state = OMPI_REQUEST_INACTIVE; \
         (request)->req_persistent = (persistent);     \
+        (request)->req_complete_cb  = NULL;           \
+        (request)->req_complete_cb_data = NULL;       \
     } while (0);
 
+
+#define REQUEST_COMPLETE(req)        (REQUEST_COMPLETED == (req)->req_complete)
 /**
  * Finalize a request.  This is a macro to avoid function call
  * overhead, since this is typically invoked in the critical
@@ -365,28 +371,31 @@ static inline int ompi_request_free(ompi_request_t** request)
 #define ompi_request_wait_all   (ompi_request_functions.req_wait_all)
 #define ompi_request_wait_some  (ompi_request_functions.req_wait_some)
 
-
 /**
  * Wait a particular request for completion
  */
+
+#if OPAL_ENABLE_MULTI_THREADS
 static inline void ompi_request_wait_completion(ompi_request_t *req)
 {
-    if(false == req->req_complete) {
-#if OPAL_ENABLE_PROGRESS_THREADS
-        if(opal_progress_spin(&req->req_complete)) {
-            return;
-        }
-#endif
-        OPAL_THREAD_LOCK(&ompi_request_lock);
-        ompi_request_waiting++;
-        while(false == req->req_complete) {
-            opal_condition_wait(&ompi_request_cond, &ompi_request_lock);
-        }
-        ompi_request_waiting--;
-        OPAL_THREAD_UNLOCK(&ompi_request_lock);
+    ompi_wait_sync_t sync;
+    WAIT_SYNC_INIT(&sync, 1);
+
+    if(OPAL_ATOMIC_CMPSET_PTR(&req->req_complete, REQUEST_PENDING, &sync)) {
+        SYNC_WAIT(&sync);
+    }
+
+    assert(REQUEST_COMPLETE(req));
+    WAIT_SYNC_RELEASE(&sync);
+}
+#else
+static inline void ompi_request_wait_completion(ompi_request_t *req)
+{
+    while(!REQUEST_COMPLETE(req)) {
+        opal_progress();
     }
 }
-
+#endif
 /**
  *  Signal or mark a request as complete. If with_signal is true this will
  *  wake any thread pending on the request and ompi_request_lock should be
@@ -399,21 +408,24 @@ static inline void ompi_request_wait_completion(ompi_request_t *req)
 static inline int ompi_request_complete(ompi_request_t* request, bool with_signal)
 {
     ompi_request_complete_fn_t tmp = request->req_complete_cb;
+
+    if(!OPAL_ATOMIC_CMPSET_PTR(&request->req_complete, REQUEST_PENDING, REQUEST_COMPLETED)) {
+        ompi_wait_sync_t *tmp_sync = OPAL_ATOMIC_SWP_PTR(&request->req_complete,
+                                                         REQUEST_COMPLETED);
+        /* In the case where another thread concurrently changed the request to REQUEST_PENDING */
+        if( REQUEST_PENDING != tmp_sync )
+            wait_sync_update(tmp_sync, 1, request->req_status.MPI_ERROR);
+    }
+
+    if( OPAL_UNLIKELY(MPI_SUCCESS != request->req_status.MPI_ERROR) ) {
+        ompi_request_failed++;
+    }
+
     if( NULL != tmp ) {
         request->req_complete_cb = NULL;
         tmp( request );
     }
-    ompi_request_completed++;
-    request->req_complete = true;
-    if( OPAL_UNLIKELY(MPI_SUCCESS != request->req_status.MPI_ERROR) ) {
-        ompi_request_failed++;
-    }
-    if(with_signal && ompi_request_waiting) {
-        /* Broadcast the condition, otherwise if there is already a thread
-         * waiting on another request it can use all signals.
-         */
-        opal_condition_broadcast(&ompi_request_cond);
-    }
+
     return OMPI_SUCCESS;
 }
 

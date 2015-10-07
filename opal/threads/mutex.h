@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2016 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -318,6 +318,11 @@ OPAL_THREAD_ADD_SIZE_T(volatile size_t *addr, int delta)
 #define OPAL_ATOMIC_CMPSET(x, y, z) \
     (OPAL_UNLIKELY(opal_using_threads()) ? opal_atomic_cmpset(x, y, z) : OPAL_CMPSET(x, y, z))
 #endif
+#if OPAL_HAVE_ATOMIC_CMPSET_32 || OPAL_HAVE_ATOMIC_CMPSET_64
+#define OPAL_ATOMIC_CMPSET_PTR(x, y, z) \
+    (opal_using_threads() ? opal_atomic_cmpset_ptr(x, y, z) : OPAL_CMPSET(x, y, z))
+#endif
+
 
 END_C_DECLS
 

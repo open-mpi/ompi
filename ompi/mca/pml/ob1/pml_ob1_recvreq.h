@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2014 The University of Tennessee and The University
+ * Copyright (c) 2004-2016 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2007 High Performance Computing Center Stuttgart,
@@ -175,7 +175,6 @@ recv_request_pml_complete(mca_pml_ob1_recv_request_t *recvreq)
     }
     recvreq->req_rdma_cnt = 0;
 
-    OPAL_THREAD_LOCK(&ompi_request_lock);
     if(true == recvreq->req_recv.req_base.req_free_called) {
         if( MPI_SUCCESS != recvreq->req_recv.req_base.req_ompi.req_status.MPI_ERROR ) {
             ompi_mpi_abort(&ompi_mpi_comm_world.comm, MPI_ERR_REQUEST);
@@ -196,9 +195,11 @@ recv_request_pml_complete(mca_pml_ob1_recv_request_t *recvreq)
             mca_bml_base_deregister_mem (recvreq->rdma_bml, recvreq->local_handle);
             recvreq->local_handle = NULL;
         }
+#if OPAL_ENABLE_MULTI_THREADS
+        opal_atomic_wmb();
+#endif
         MCA_PML_OB1_RECV_REQUEST_MPI_COMPLETE(recvreq);
     }
-    OPAL_THREAD_UNLOCK(&ompi_request_lock);
 }
 
 static inline bool

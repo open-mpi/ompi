@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2016 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -300,7 +300,7 @@ request_free(struct ompi_request_t **ompi_req)
     ompi_coll_libnbc_request_t *request =
         (ompi_coll_libnbc_request_t*) *ompi_req;
 
-    if (true != request->super.req_complete) {
+    if( !REQUEST_COMPLETE(&request->super) ) {
         return MPI_ERR_REQUEST;
     }
 

@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2016 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -51,9 +51,9 @@ static int ompi_grequest_cancel(ompi_request_t* req, int flag)
     if (greq->greq_cancel.c_cancel != NULL) {
         if (greq->greq_funcs_are_c) {
             rc = greq->greq_cancel.c_cancel(greq->greq_state,
-                                            greq->greq_base.req_complete);
+                                            (REQUEST_COMPLETED == greq->greq_base.req_complete));
         } else {
-            fflag = (ompi_fortran_logical_t) greq->greq_base.req_complete;
+            fflag = (ompi_fortran_logical_t) (REQUEST_COMPLETED == greq->greq_base.req_complete);
             greq->greq_cancel.f_cancel((MPI_Aint*)greq->greq_state, &fflag, &ierr);
             rc = OMPI_FINT_2_INT(ierr);
         }
