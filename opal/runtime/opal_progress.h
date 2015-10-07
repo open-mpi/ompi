@@ -53,6 +53,13 @@ OPAL_DECLSPEC int opal_progress_init(void);
  */
 OPAL_DECLSPEC int opal_progress_finalize(void);
 
+/**
+ * Run function as part of opal_progress()
+ *
+ * @param[in] fn    function to run
+ * @param[in] arg   function data
+ */
+OPAL_DECLSPEC int opal_progress_run_once (void *(*fn)(void *), void *arg);
 
 /**
  * Progress all pending events
