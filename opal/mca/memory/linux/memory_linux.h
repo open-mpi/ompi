@@ -33,11 +33,11 @@ typedef struct opal_memory_linux_component_t {
 
 #if MEMORY_LINUX_PTMALLOC2
     /* Ptmalloc2-specific data */
-    bool free_invoked;
-    bool malloc_invoked;
-    bool realloc_invoked;
-    bool memalign_invoked;
-    bool munmap_invoked;
+    volatile bool free_invoked;
+    volatile bool malloc_invoked;
+    volatile bool realloc_invoked;
+    volatile bool memalign_invoked;
+    volatile bool munmap_invoked;
 #endif
 } opal_memory_linux_component_t;
 
