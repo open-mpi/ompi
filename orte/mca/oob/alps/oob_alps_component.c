@@ -74,7 +74,6 @@
 
 static int alps_component_open(void);
 static int alps_component_close(void);
-static int alps_component_register(void);
 static int component_available(void);
 static int component_startup(void);
 static void component_shutdown(void);

@@ -101,6 +101,10 @@
 #ifdef HAVE_SYS_SELECT_H
 #include <sys/select.h>
 #endif
+#ifdef HAVE_DIRENT_H
+#include <dirent.h>
+#endif
+
 
 #include "opal/mca/hwloc/hwloc.h"
 #include "opal/mca/hwloc/base/base.h"
@@ -350,6 +354,59 @@ static void send_error_show_help(int fd, int exit_status,
     exit(exit_status);
 }
 
+static int close_open_file_descriptors(int write_fd, orte_iof_base_io_conf_t opts)
+{
+    int rc, fd;
+    DIR *dir = NULL;
+    struct dirent *files;
+    int app_alps_filedes[2], alps_app_filedes[2];
+
+    dir = opendir("/proc/self/fd");
+    if (NULL == dir) {
+        return ORTE_ERR_FILE_OPEN_FAILURE;
+    }
+
+    /* close all file descriptors w/ exception of stdin/stdout/stderr,
+       the pipe used for the IOF INTERNAL messages, and the pipe up to
+       the parent. Be careful to retain all of the pipe fd's set up
+       by the apshephered. These are needed for obtaining RDMA credentials,
+       synchronizing with aprun, etc. */
+
+    rc = alps_app_lli_pipes(app_alps_filedes,alps_app_filedes);
+    if (0 != rc) {
+        closedir(dir);
+        return ORTE_ERR_FILE_OPEN_FAILURE;
+    }
+
+    while ((files = readdir(dir)) != NULL) {
+        if(!strncmp(files->d_name,".",1) || !strncmp(files->d_name,"..",2)) continue;
+
+        fd = strtoul(files->d_name, NULL, 10);
+        if (EINVAL == errno || ERANGE == errno) {
+            closedir(dir);
+            return ORTE_ERR_TYPE_MISMATCH;
+        }
+
+        /*
+         * skip over the pipes we have open to apshepherd or slurmd
+         */
+
+        if (fd == XTAPI_FD_IDENTITY) continue;
+        if (fd == XTAPI_FD_RESILIENCY) continue;
+        if ((fd == app_alps_filedes[0]) ||
+            (fd == app_alps_filedes[1]) ||
+            (fd == alps_app_filedes[0]) ||
+            (fd == alps_app_filedes[1])) continue;
+
+        if (fd >=3 && fd != opts.p_internal[1] && fd != write_fd) {
+                        close(fd);
+        }
+    }
+
+    closedir(dir);
+    return ORTE_SUCCESS;
+}
+
 static int do_child(orte_app_context_t* context,
                     orte_proc_t *child,
                     char **environ_copy,
@@ -357,9 +414,7 @@ static int do_child(orte_app_context_t* context,
                     orte_iof_base_io_conf_t opts)
 {
     int i, rc;
-    int app_alps_filedes[2],alps_app_filedes[2];
     sigset_t sigs;
-    long fd, fdmax = sysconf(_SC_OPEN_MAX);
     char *param, *msg;
 
     if (orte_forward_job_control) {
@@ -428,30 +483,11 @@ static int do_child(orte_app_context_t* context,
     opal_unsetenv(param, &environ_copy);
     free(param);
 
-    /* close all file descriptors w/ exception of stdin/stdout/stderr,
-       the pipe used for the IOF INTERNAL messages, and the pipe up to
-       the parent. Be careful to retain all of the pipe fd's set up
-       by the apshephered. These are needed for obtaining RDMA credentials,
-       synchronizing with aprun, etc. */
-
-    rc = alps_app_lli_pipes(app_alps_filedes,alps_app_filedes);
-    if (0 != rc) {
+    if (ORTE_SUCCESS != close_open_file_descriptors(write_fd, opts)) {
         send_error_show_help(write_fd, 1, "help-orte-odls-alps.txt",
-                             "alps_app_lli_pipes",
+                             "close fds",
                              orte_process_info.nodename, context->app,
-                             __FILE__, __LINE__, rc);
-    }
-
-    for(fd=3; fd<fdmax; fd++) {
-        if (fd == XTAPI_FD_IDENTITY) continue;
-        if (fd == XTAPI_FD_RESILIENCY) continue;
-        if ((fd == app_alps_filedes[0]) ||
-            (fd == app_alps_filedes[1]) ||
-            (fd == alps_app_filedes[0]) ||
-            (fd == alps_app_filedes[1])) continue;
-        if (fd != opts.p_internal[1] && fd != write_fd) {
-            close(fd);
-        }
+                             __FILE__, __LINE__);
     }
 
 
