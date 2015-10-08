@@ -265,7 +265,7 @@ allreduce_kary_tree_top(const void *sendbuf, void *recvbuf, int count,
                             ompi_coll_portals4_get_peer(comm, child[i]),
                             mca_coll_portals4_component.pt_idx,
                             match_bits_rtr, 0, NULL, 0)) != PTL_OK)
-                        return opal_stderr("Put RTR failed %d", __FILE__, __LINE__, ret);
+                        return opal_stderr("Put RTR failed", __FILE__, __LINE__, ret);
                 }
             }
         }
