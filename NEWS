@@ -70,6 +70,10 @@ Master (not on release branches yet)
 1.10.1
 ------
 
+- Fix use of MPI_LB and MPI_UB in subarray and darray datatypes.
+  Thanks to Gus Correa for pointing out the issue.
+- Minor updates to mpi_show_mpi_alloc_mem_leaks and
+  ompi_debug_show_handle_leaks functionality.
 - Fix segv when invoking non-blocking reductions with a user-defined
   operation.  Thanks to Rupert Nash and Georg Geiser for identifying
   the issue.
@@ -95,7 +99,8 @@ Master (not on release branches yet)
 - Add missing #include in a few places.  Thanks to Orion Poplawski for
   supplying the patch.
 - When OpenSHMEM building is disabled, no longer install its header
-  files, help files, or man pages.
+  files, help files, or man pages.  Add man pages for oshrun, oshcc,
+  and oshfort.
 - Fix mpi_f08 implementations of MPI_COMM_SET_INFO, and profiling
   versions of MPI_BUFFER_DETACH, MPI_WIN_ALLOCATE,
   MPI_WIN_ALLOCATE_SHARED, MPI_WTICK, and MPI_WTIME.
@@ -104,7 +109,7 @@ Master (not on release branches yet)
 - Various updates/fixes to the openib BTL.
 - Add missing defaults for the Mellanox ConnectX 3 card to the openib BTL.
 - Minor bug fixes in the OFI MTL.
-- Various updates to Mellanox's hcoll and FCA components.
+- Various updates to Mellanox's MXM, hcoll, and FCA components.
 - Add OpenSHMEM man pages.  Thanks to Tony Curtis for sharing the man
   pages files from openshmem.org.
 - Add missing "const" attributes to MPI_COMPARE_AND_SWAP,
