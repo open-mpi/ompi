@@ -56,6 +56,10 @@ included in the vX.Y.Z section and be denoted as:
 1.10.1
 ------
 
+- Workaround an optimization problem with gcc compilers >= 4.9.2 that
+  causes problems with memory registration, and forced
+  mpi_leave_pinned to default to 0 (i.e., off).  Thanks to @oere for
+  the fix.
 - Fix use of MPI_LB and MPI_UB in subarray and darray datatypes.
   Thanks to Gus Correa and Dimitar Pashov for pointing out the issue.
 - Minor updates to mpi_show_mpi_alloc_mem_leaks and
