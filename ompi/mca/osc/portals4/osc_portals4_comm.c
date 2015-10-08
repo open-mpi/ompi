@@ -475,6 +475,11 @@ ompi_osc_portals4_rget_accumulate(const void *origin_addr,
                 OMPI_OSC_PORTALS4_REQUEST_RETURN(request);
                 return ret;
             }
+            ret = ompi_osc_portals4_get_dt(origin_dt, &ptl_dt);
+            if (OMPI_SUCCESS != ret) {
+                OMPI_OSC_PORTALS4_REQUEST_RETURN(request);
+                return ret;
+            }
             length *= origin_count;
 
             result_md_offset = (ptl_size_t) result_addr;
@@ -834,6 +839,10 @@ ompi_osc_portals4_get_accumulate(const void *origin_addr,
             ptl_size_t result_md_offset, origin_md_offset;
 
             ret = ompi_datatype_type_size(origin_dt, &length);
+            if (OMPI_SUCCESS != ret) {
+                return ret;
+            }
+            ret = ompi_osc_portals4_get_dt(origin_dt, &ptl_dt);
             if (OMPI_SUCCESS != ret) {
                 return ret;
             }
