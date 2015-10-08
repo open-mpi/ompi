@@ -171,12 +171,6 @@ int mca_topo_base_cart_create(mca_topo_base_module_t *topo,
     if (OMPI_SUCCESS != ret) {
         /* something wrong happened during setting the communicator */
         free(topo_procs);
-        OBJ_RELEASE(cart);
-        if (MPI_COMM_NULL != new_comm) {
-            new_comm->c_topo = NULL;
-            new_comm->c_flags &= ~OMPI_COMM_CART;
-            ompi_comm_free (&new_comm);
-        }
         return ret;
     }
 

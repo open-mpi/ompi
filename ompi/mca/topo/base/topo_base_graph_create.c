@@ -132,12 +132,6 @@ int mca_topo_base_graph_create(mca_topo_base_module_t *topo,
                            new_rank, num_procs, topo_procs);
     if (OMPI_SUCCESS != ret) {
         free(topo_procs);
-        OBJ_RELEASE(graph);
-        if (MPI_COMM_NULL != new_comm) {
-            new_comm->c_topo            = NULL;
-            new_comm->c_flags          &= ~OMPI_COMM_GRAPH;
-            ompi_comm_free (&new_comm);
-        }
         return ret;
     }
 
