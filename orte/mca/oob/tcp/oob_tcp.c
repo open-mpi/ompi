@@ -221,7 +221,7 @@ static void accept_connection(const int accepted_fd,
 static int parse_uri(const uint16_t af_family,
                      const char* host,
                      const char *port,
-                     struct sockaddr* inaddr)
+                     struct sockaddr_storage* inaddr)
 {
     struct sockaddr_in *in;
 
@@ -260,7 +260,6 @@ static int parse_uri(const uint16_t af_family,
 static void process_set_peer(int fd, short args, void *cbdata)
 {
     mca_oob_tcp_peer_op_t *pop = (mca_oob_tcp_peer_op_t*)cbdata;
-    struct sockaddr inaddr;
     mca_oob_tcp_peer_t *peer;
     int rc=ORTE_SUCCESS;
     uint64_t *ui64 = (uint64_t*)(&pop->peer);
@@ -290,8 +289,10 @@ static void process_set_peer(int fd, short args, void *cbdata)
         }
     }
 
-    if ((rc = parse_uri(pop->af_family, pop->net, pop->port, (struct sockaddr*) &inaddr)) != ORTE_SUCCESS) {
+    maddr = OBJ_NEW(mca_oob_tcp_addr_t);
+    if (ORTE_SUCCESS != (rc = parse_uri(pop->af_family, pop->net, pop->port, (struct sockaddr_storage*) &(maddr->addr)))) {
         ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(maddr);
         goto cleanup;
     }
 
@@ -301,8 +302,6 @@ static void process_set_peer(int fd, short args, void *cbdata)
                         ORTE_NAME_PRINT(&pop->peer),
                         (NULL == pop->net) ? "NULL" : pop->net,
                         (NULL == pop->port) ? "NULL" : pop->port);
-    maddr = OBJ_NEW(mca_oob_tcp_addr_t);
-    memcpy(&maddr->addr, &inaddr, sizeof(inaddr));
     opal_list_append(&peer->addrs, &maddr->super);
 
  cleanup:
