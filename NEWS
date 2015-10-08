@@ -57,7 +57,7 @@ included in the vX.Y.Z section and be denoted as:
 ------
 
 - Fix use of MPI_LB and MPI_UB in subarray and darray datatypes.
-  Thanks to Gus Correa and @dmt4 for pointing out the issue.
+  Thanks to Gus Correa and Dimitar Pashov for pointing out the issue.
 - Minor updates to mpi_show_mpi_alloc_mem_leaks and
   ompi_debug_show_handle_leaks functionality.
 - Fix segv when invoking non-blocking reductions with a user-defined
