@@ -224,7 +224,7 @@ ompi_mtl_portals4_get_proc_group(struct ompi_group_t *group, int rank);
 static inline ptl_process_t
 ompi_mtl_portals4_get_peer_group(struct ompi_group_t *group, int rank)
 {
-    return *((ptl_process_t*)ompi_mtl_portals4_get_proc_group(group, rank));
+    return *((ptl_process_t*)(ompi_mtl_portals4_get_proc_group(group, rank)->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_PORTALS4]));
 }
 
 static inline ompi_proc_t *
@@ -236,7 +236,7 @@ ompi_mtl_portals4_get_proc(struct ompi_communicator_t *comm, int rank)
 static inline ptl_process_t
 ompi_mtl_portals4_get_peer(struct ompi_communicator_t *comm, int rank)
 {
-    return *((ptl_process_t*)ompi_mtl_portals4_get_proc(comm, rank));
+    return *((ptl_process_t*)(ompi_mtl_portals4_get_proc(comm, rank)->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_PORTALS4]));
 }
 
 
