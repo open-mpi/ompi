@@ -159,7 +159,7 @@ static int orte_rmaps_base_register(mca_base_register_flag_t flags)
 
     rmaps_dist_device = NULL;
     var_id = mca_base_var_register("orte", "rmaps", NULL, "dist_device",
-                                   "Set device to map by distance near by",
+                                   "If specified, map processes near to this device. Any device name that is identified by the lstopo hwloc utility as Net or OpenFabrics (for example eth0, mlx4_0, etc) or special name as auto ",
                                    MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
                                    OPAL_INFO_LVL_9,
                                    MCA_BASE_VAR_SCOPE_READONLY,
