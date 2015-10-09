@@ -43,19 +43,11 @@ mca_bcol_base_memory_block_desc_t *mca_coll_ml_allocate_block(struct mca_coll_ml
 
     if (!memory_block->block){
         ML_VERBOSE(1, ("lmngr failed."));
-        ret = NULL;
-        goto exit_ERROR;
+        free(memory_block);
+        return NULL;
     }
 
     return memory_block;
-
-exit_ERROR:
-    if (memory_block){
-        free(memory_block);
-        return ret;
-    }
-
-    return ret;
 }
 
 void mca_coll_ml_free_block (mca_bcol_base_memory_block_desc_t *ml_memblock)
