@@ -48,6 +48,20 @@ static void notification_fn(pmix_status_t status,
     completed = true;
 }
 
+static void op_callbk(pmix_status_t status,
+                      void *cbdata)
+{
+    pmix_output(0, "CLIENT: OP CALLBACK CALLED WITH STATUS %d", status);
+}
+
+static void errhandler_reg_callbk (pmix_status_t status,
+                                   int errhandler_ref,
+                                   void *cbdata)
+{
+    pmix_output(0, "Client: ERRHANDLER REGISTRATION CALLBACK CALLED WITH STATUS %d, ref=%d",
+                status, errhandler_ref);
+}
+
 int main(int argc, char **argv)
 {
     int rc;
@@ -55,7 +69,7 @@ int main(int argc, char **argv)
     pmix_value_t *val = &value;
     pmix_proc_t proc;
     uint32_t nprocs;
-    
+
     /* init us */
     if (PMIX_SUCCESS != (rc = PMIx_Init(&myproc))) {
         pmix_output(0, "Client ns %s rank %d: PMIx_Init failed: %d", myproc.nspace, myproc.rank, rc);
@@ -72,10 +86,10 @@ int main(int argc, char **argv)
     PMIX_VALUE_RELEASE(val);
     pmix_output(0, "Client %s:%d universe size %d", myproc.nspace, myproc.rank, nprocs);
     completed = false;
-    
+
     /* register our errhandler */
-    PMIx_Register_errhandler(NULL, 0, notification_fn);
-    
+    PMIx_Register_errhandler(NULL, 0, notification_fn, errhandler_reg_callbk, NULL);
+
     /* call fence to sync */
     PMIX_PROC_CONSTRUCT(&proc);
     (void)strncpy(proc.nspace, myproc.nspace, PMIX_MAX_NSLEN);
@@ -84,7 +98,7 @@ int main(int argc, char **argv)
         pmix_output(0, "Client ns %s rank %d: PMIx_Fence failed: %d", myproc.nspace, myproc.rank, rc);
         goto done;
     }
-    
+
     /* rank=0 calls abort */
     if (0 == myproc.rank) {
         PMIx_Abort(PMIX_ERR_OUT_OF_RESOURCE, "Eat rocks",
@@ -102,8 +116,8 @@ int main(int argc, char **argv)
  done:
     /* finalize us */
     pmix_output(0, "Client ns %s rank %d: Finalizing", myproc.nspace, myproc.rank);
-    PMIx_Deregister_errhandler();
-    
+    PMIx_Deregister_errhandler(0, op_callbk, NULL);
+
     if (PMIX_SUCCESS != (rc = PMIx_Finalize())) {
         fprintf(stderr, "Client ns %s rank %d:PMIx_Finalize failed: %d\n", myproc.nspace, myproc.rank, rc);
     } else {

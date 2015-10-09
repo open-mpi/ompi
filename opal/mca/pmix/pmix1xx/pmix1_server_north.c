@@ -79,6 +79,8 @@ static pmix_status_t server_disconnect_fn(const pmix_proc_t procs[], size_t npro
                                           pmix_op_cbfunc_t cbfunc, void *cbdata);
 static pmix_status_t server_register_events(const pmix_info_t info[], size_t ninfo,
                                             pmix_op_cbfunc_t cbfunc, void *cbdata);
+static pmix_status_t server_deregister_events(const pmix_info_t info[], size_t ninfo,
+                                           pmix_op_cbfunc_t cbfunc, void *cbdata);
 static pmix_status_t server_listener_fn(int listening_sd,
                                         pmix_connection_cbfunc_t cbfunc);
 
@@ -95,6 +97,7 @@ pmix_server_module_t mymodule = {
     server_connect_fn,
     server_disconnect_fn,
     server_register_events,
+    server_deregister_events,
     server_listener_fn
 };
 
@@ -758,6 +761,11 @@ static pmix_status_t server_register_events(const pmix_info_t info[], size_t nin
     return pmix1_convert_opalrc(rc);
 }
 
+static pmix_status_t server_deregister_events(const pmix_info_t info[], size_t ninfo,
+                                              pmix_op_cbfunc_t cbfunc, void *cbdata)
+{
+    return PMIX_ERR_NOT_IMPLEMENTED;
+}
 static pmix_status_t server_listener_fn(int listening_sd,
                                         pmix_connection_cbfunc_t cbfunc)
 {

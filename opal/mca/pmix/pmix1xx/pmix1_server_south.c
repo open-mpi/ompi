@@ -47,6 +47,7 @@
 extern pmix_server_module_t mymodule;
 extern opal_pmix_server_module_t *host_module;
 static char *dbgvalue=NULL;
+static int errhdler_ref = 0;
 
 static void myerr(pmix_status_t status,
                   pmix_proc_t procs[], size_t nprocs,
@@ -85,6 +86,16 @@ static void myerr(pmix_status_t status,
     OPAL_LIST_DESTRUCT(&ilist);
 }
 
+static void errreg_cbfunc(pmix_status_t status,
+                          int errhandler_ref,
+                          void *cbdata)
+{
+    errhdler_ref = errhandler_ref;
+    opal_output_verbose(5, opal_pmix_base_framework.framework_output,
+                        "PMIX server errreg_cbfunc - error handler registered status=%d, reference=%d",
+                        status, errhandler_ref);
+}
+
 int pmix1_server_init(opal_pmix_server_module_t *module)
 {
     pmix_status_t rc;
@@ -102,7 +113,7 @@ int pmix1_server_init(opal_pmix_server_module_t *module)
     host_module = module;
 
     /* register the errhandler */
-    PMIx_Register_errhandler(NULL, 0, myerr);
+    PMIx_Register_errhandler(NULL, 0, myerr, errreg_cbfunc, NULL);
     return OPAL_SUCCESS;
 }
 
@@ -111,7 +122,7 @@ int pmix1_server_finalize(void)
     pmix_status_t rc;
 
     /* deregister the errhandler */
-    PMIx_Deregister_errhandler();
+    PMIx_Deregister_errhandler(errhdler_ref, NULL, NULL);
 
     rc = PMIx_server_finalize();
     return pmix1_convert_rc(rc);
@@ -354,7 +365,7 @@ int pmix1_server_notify_error(int status,
     op->cbdata = cbdata;
 
     rc = pmix1_convert_opalrc(status);
-    rc = PMIx_server_notify_error(rc, ps, psz, eps, esz,
+    rc = PMIx_Notify_error(rc, ps, psz, eps, esz,
                                   pinfo, sz, opcbfunc, op);
     if (PMIX_SUCCESS != rc) {
         OBJ_RELEASE(op);

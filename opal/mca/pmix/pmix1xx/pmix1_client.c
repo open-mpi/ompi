@@ -33,6 +33,7 @@
 
 static pmix_proc_t my_proc;
 static char *dbgvalue=NULL;
+static int errhdler_ref = 0;
 
 static void myerr(pmix_status_t status,
                   pmix_proc_t procs[], size_t nprocs,
@@ -69,6 +70,16 @@ static void myerr(pmix_status_t status,
     opal_pmix_base_errhandler(rc, &plist, &ilist);
     OPAL_LIST_DESTRUCT(&plist);
     OPAL_LIST_DESTRUCT(&ilist);
+}
+
+static void errreg_cbfunc (pmix_status_t status,
+                          int errhandler_ref,
+                          void *cbdata)
+{
+    errhdler_ref = errhandler_ref;
+    opal_output_verbose(5, opal_pmix_base_framework.framework_output,
+                        "PMIX client errreg_cbfunc - error handler registered status=%d, reference=%d",
+                         status, errhandler_ref);
 }
 
 int pmix1_client_init(void)
@@ -112,7 +123,7 @@ int pmix1_client_init(void)
     opal_proc_set_name(&pname);
 
     /* register the errhandler */
-    PMIx_Register_errhandler(NULL, 0, myerr);
+    PMIx_Register_errhandler(NULL, 0, myerr, errreg_cbfunc, NULL );
     return OPAL_SUCCESS;
 
 }
@@ -125,7 +136,7 @@ int pmix1_client_finalize(void)
                         "PMIx_client finalize");
 
     /* deregister the errhandler */
-    PMIx_Deregister_errhandler();
+    PMIx_Deregister_errhandler(errhdler_ref, NULL, NULL);
 
     rc = PMIx_Finalize();
 
@@ -711,7 +722,7 @@ static void lk_cbfunc(pmix_status_t status,
 {
     pmix1_opcaddy_t *op = (pmix1_opcaddy_t*)cbdata;
     opal_pmix_pdata_t *d;
-    opal_list_t results, *r;
+    opal_list_t results, *r = NULL;
     int rc;
     size_t n;
     opal_pmix1_jobid_trkr_t *job, *jptr;
@@ -764,10 +775,7 @@ static void lk_cbfunc(pmix_status_t status,
             }
         }
         r = &results;
-    } else {
-        r = NULL;
     }
-
   release:
     /* execute the callback */
     op->lkcbfunc(rc, r, op->cbdata);
