@@ -200,7 +200,7 @@ tuned_module_enable( mca_coll_base_module_t *module,
      * The default is set very high
      */
 
-    /* if we within the memory/size limit, allow preallocated data */
+    /* prepare the placeholder for the array of request* */
     data = OBJ_NEW(mca_coll_base_comm_t);
     if (NULL == data) {
         return OMPI_ERROR;

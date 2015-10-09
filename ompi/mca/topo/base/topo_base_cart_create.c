@@ -160,12 +160,6 @@ int mca_topo_base_cart_create(mca_topo_base_module_t *topo,
         return MPI_ERR_INTERN;
     }
 
-    assert(NULL == new_comm->c_topo);
-    assert(!(new_comm->c_flags & OMPI_COMM_CART));
-    new_comm->c_topo           = topo;
-    new_comm->c_topo->mtc.cart = cart;
-    new_comm->c_topo->reorder  = reorder;
-    new_comm->c_flags         |= OMPI_COMM_CART;
     ret = ompi_comm_enable(old_comm, new_comm,
                            new_rank, num_procs, topo_procs);
     if (OMPI_SUCCESS != ret) {
@@ -180,6 +174,10 @@ int mca_topo_base_cart_create(mca_topo_base_module_t *topo,
         return ret;
     }
 
+    new_comm->c_topo           = topo;
+    new_comm->c_topo->mtc.cart = cart;
+    new_comm->c_topo->reorder  = reorder;
+    new_comm->c_flags         |= OMPI_COMM_CART;
     *comm_topo = new_comm;
 
     if( MPI_UNDEFINED == new_rank ) {

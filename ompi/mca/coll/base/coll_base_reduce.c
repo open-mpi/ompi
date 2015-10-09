@@ -56,10 +56,10 @@ int ompi_coll_base_reduce_generic( const void* sendbuf, void* recvbuf, int origi
     char *accumbuf = NULL, *accumbuf_free = NULL;
     char *local_op_buffer = NULL, *sendtmpbuf = NULL;
     ptrdiff_t extent, lower_bound, segment_increment;
-    size_t typelng;
-    ompi_request_t* reqs[2] = {MPI_REQUEST_NULL, MPI_REQUEST_NULL};
+    ompi_request_t **sreq = NULL, *reqs[2] = {MPI_REQUEST_NULL, MPI_REQUEST_NULL};
     int num_segments, line, ret, segindex, i, rank;
     int recvcount, prevcount, inbi;
+    size_t typelng;
 
     /**
      * Determine number of segments and number of elements
@@ -279,10 +279,8 @@ int ompi_coll_base_reduce_generic( const void* sendbuf, void* recvbuf, int origi
         else {
 
             int creq = 0;
-            ompi_request_t **sreq = NULL;
 
-            sreq = (ompi_request_t**) calloc( max_outstanding_reqs,
-                                              sizeof(ompi_request_t*) );
+            sreq = coll_base_comm_get_reqs(module->base_data, max_outstanding_reqs);
             if (NULL == sreq) { line = __LINE__; ret = -1; goto error_hndl; }
 
             /* post first group of requests */
@@ -303,7 +301,6 @@ int ompi_coll_base_reduce_generic( const void* sendbuf, void* recvbuf, int origi
                 /* wait on a posted request to complete */
                 ret = ompi_request_wait(&sreq[creq], MPI_STATUS_IGNORE);
                 if (ret != MPI_SUCCESS) { line = __LINE__; goto error_hndl;  }
-                sreq[creq] = MPI_REQUEST_NULL;
 
                 if( original_count < count_by_segment ) {
                     count_by_segment = original_count;
@@ -325,9 +322,6 @@ int ompi_coll_base_reduce_generic( const void* sendbuf, void* recvbuf, int origi
             ret = ompi_request_wait_all( max_outstanding_reqs, sreq,
                                          MPI_STATUSES_IGNORE );
             if (ret != MPI_SUCCESS) { line = __LINE__; goto error_hndl;  }
-
-            /* free requests */
-            free(sreq);
         }
     }
     return OMPI_SUCCESS;
@@ -339,6 +333,9 @@ int ompi_coll_base_reduce_generic( const void* sendbuf, void* recvbuf, int origi
     if( inbuf_free[0] != NULL ) free(inbuf_free[0]);
     if( inbuf_free[1] != NULL ) free(inbuf_free[1]);
     if( accumbuf_free != NULL ) free(accumbuf);
+    if( NULL != sreq ) {
+        ompi_coll_base_free_reqs(sreq, max_outstanding_reqs);
+    }
     return ret;
 }
 

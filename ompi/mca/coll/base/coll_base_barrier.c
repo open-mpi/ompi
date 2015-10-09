@@ -324,7 +324,8 @@ int ompi_coll_base_barrier_intra_two_procs(struct ompi_communicator_t *comm,
 int ompi_coll_base_barrier_intra_basic_linear(struct ompi_communicator_t *comm,
                                               mca_coll_base_module_t *module)
 {
-    int i, err, rank, size;
+    int i, err, rank, size, line;
+    ompi_request_t** requests = NULL;
 
     rank = ompi_comm_rank(comm);
     size = ompi_comm_size(comm);
@@ -334,50 +335,43 @@ int ompi_coll_base_barrier_intra_basic_linear(struct ompi_communicator_t *comm,
         err = MCA_PML_CALL(send (NULL, 0, MPI_BYTE, 0,
                                  MCA_COLL_BASE_TAG_BARRIER,
                                  MCA_PML_BASE_SEND_STANDARD, comm));
-        if (MPI_SUCCESS != err) {
-            return err;
-        }
+        if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
 
         err = MCA_PML_CALL(recv (NULL, 0, MPI_BYTE, 0,
                                  MCA_COLL_BASE_TAG_BARRIER,
                                  comm, MPI_STATUS_IGNORE));
-        if (MPI_SUCCESS != err) {
-            return err;
-        }
+        if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
     }
 
     /* The root collects and broadcasts the messages. */
 
     else {
-        ompi_request_t** requests;
-
-        requests = (ompi_request_t**)malloc( size * sizeof(ompi_request_t*) );
+        requests = coll_base_comm_get_reqs(module->base_data, size);
         for (i = 1; i < size; ++i) {
             err = MCA_PML_CALL(irecv(NULL, 0, MPI_BYTE, MPI_ANY_SOURCE,
                                      MCA_COLL_BASE_TAG_BARRIER, comm,
                                      &(requests[i])));
-            if (MPI_SUCCESS != err) {
-                return err;
-            }
+            if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
         }
         ompi_request_wait_all( size-1, requests+1, MPI_STATUSES_IGNORE );
+        requests = NULL;  /* we're done the requests array is clean */
 
         for (i = 1; i < size; ++i) {
             err = MCA_PML_CALL(send(NULL, 0, MPI_BYTE, i,
                                     MCA_COLL_BASE_TAG_BARRIER,
                                     MCA_PML_BASE_SEND_STANDARD, comm));
-            if (MPI_SUCCESS != err) {
-                return err;
-            }
+            if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
         }
-
-        free( requests );
     }
 
     /* All done */
-
     return MPI_SUCCESS;
-
+ err_hndl:
+    OPAL_OUTPUT( (ompi_coll_base_framework.framework_output,"%s:%4d\tError occurred %d, rank %2d",
+                  __FILE__, line, err, rank) );
+    if( NULL != requests )
+        ompi_coll_base_free_reqs(requests, size-1);
+    return err;
 }
 /* copied function (with appropriate renaming) ends here */
 
