@@ -179,6 +179,7 @@ int ompi_dpm_connect_accept(ompi_communicator_t *comm, int root,
             free(nstring);
             if (NULL == (nstring = (char*)opal_pmix.get_nspace(proc_list[i]->super.proc_name.jobid))) {
                 opal_argv_free(members);
+                free (proc_list);
                 return OMPI_ERR_NOT_SUPPORTED;
             }
             opal_argv_append_nosize(&members, nstring);
