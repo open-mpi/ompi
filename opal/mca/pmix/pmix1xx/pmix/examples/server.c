@@ -343,26 +343,26 @@ static void errhandler(pmix_status_t status,
                        pmix_proc_t procs[], size_t nprocs,
                        pmix_info_t info[], size_t ninfo)
 {
-    pmix_output_verbose(2, "SERVER: ERRHANDLER CALLED WITH STATUS %d", status);
+    pmix_output_verbose(0, pmix_globals.debug_output, "SERVER: ERRHANDLER CALLED WITH STATUS %d", status);
 }
 
 static void op_callbk(pmix_status_t status,
                       void *cbdata)
 {
-     pmix_output_verbose(2, "SERVER: OP CALLBACK CALLED WITH STATUS %d", status);
+    pmix_output_verbose(2, pmix_globals.debug_output, "SERVER: OP CALLBACK CALLED WITH STATUS %d", status);
 }
 
 static void errhandler_reg_callbk (pmix_status_t status,
                                    int errhandler_ref,
                                    void *cbdata)
 {
-     pmix_output_verbose(2, "SERVER: ERRHANDLER REGISTRATION CALLBACK CALLED WITH STATUS %d, ref=%d",
+    pmix_output_verbose(1, pmix_globals.debug_output, "SERVER: ERRHANDLER REGISTRATION CALLBACK CALLED WITH STATUS %d, ref=%d",
                 status, errhandler_ref);
 }
 
 static int connected(const pmix_proc_t *proc, void *server_object)
 {
-    pmix_output_verbose(2, "SERVER: CONNECTED %s:%d", proc->nspace, proc->rank);
+    pmix_output_verbose(2, pmix_globals.debug_output, "SERVER: CONNECTED %s:%d", proc->nspace, proc->rank);
     return PMIX_SUCCESS;
 
 }
@@ -370,7 +370,7 @@ static int connected(const pmix_proc_t *proc, void *server_object)
 static int finalized(const pmix_proc_t *proc, void *server_object,
                      pmix_op_cbfunc_t cbfunc, void *cbdata)
 {
-    pmix_output_verbose(2, "SERVER: FINALIZED %s:%d", proc->nspace, proc->rank);
+    pmix_output_verbose(2, pmix_globals.debug_output, "SERVER: FINALIZED %s:%d", proc->nspace, proc->rank);
     --wakeup;
     /* ensure we call the cbfunc so the proc can exit! */
     if (NULL != cbfunc) {
@@ -399,7 +399,7 @@ static pmix_status_t abort_fn(const pmix_proc_t *proc,
     pmix_status_t rc;
     myxfer_t *x;
 
-    pmix_output_verbose(2, "SERVER: ABORT on %s:%d", procs[0].nspace, procs[0].rank);
+    pmix_output_verbose(2, pmix_globals.debug_output, "SERVER: ABORT on %s:%d", procs[0].nspace, procs[0].rank);
 
     /* instead of aborting the specified procs, notify them
      * (if they have registered their errhandler) */
@@ -423,7 +423,7 @@ static pmix_status_t abort_fn(const pmix_proc_t *proc,
     if (PMIX_SUCCESS != (rc = PMIx_Notify_error(status, procs, nprocs,
                                                        &x->caller, 1, x->info, 2,
                                                        abcbfunc, x))) {
-        pmix_output_verbose(1, "SERVER: FAILED NOTIFY ERROR %d", (int)rc);
+        pmix_output_verbose(0, pmix_globals.debug_output, "SERVER: FAILED NOTIFY ERROR %d", (int)rc);
     }
 
     return PMIX_SUCCESS;
@@ -435,7 +435,7 @@ static int fencenb_fn(const pmix_proc_t procs[], size_t nprocs,
                       char *data, size_t ndata,
                       pmix_modex_cbfunc_t cbfunc, void *cbdata)
 {
-    pmix_output_verbose(2, "SERVER: FENCENB");
+    pmix_output_verbose(2, pmix_globals.debug_output, "SERVER: FENCENB");
     /* pass the provided data back to each participating proc */
     if (NULL != cbfunc) {
         cbfunc(PMIX_SUCCESS, data, ndata, cbdata, NULL, NULL);
@@ -448,7 +448,7 @@ static int dmodex_fn(const pmix_proc_t *proc,
                      const pmix_info_t info[], size_t ninfo,
                      pmix_modex_cbfunc_t cbfunc, void *cbdata)
 {
-    pmix_output_verbose(2, "SERVER: DMODEX");
+    pmix_output_verbose(2, pmix_globals.debug_output, "SERVER: DMODEX");
 
     /* we don't have any data for remote procs as this
      * test only runs one server - so report accordingly */
@@ -466,7 +466,7 @@ static int publish_fn(const pmix_proc_t *proc,
     pmix_locdat_t *p;
     size_t n;
 
-    pmix_output_verbose(2, "SERVER: PUBLISH");
+    pmix_output_verbose(2, pmix_globals.debug_output, "SERVER: PUBLISH");
 
     for (n=0; n < ninfo; n++) {
         p = PMIX_NEW(pmix_locdat_t);
@@ -493,7 +493,7 @@ static int lookup_fn(const pmix_proc_t *proc, char **keys,
     pmix_pdata_t *pd;
     pmix_status_t ret = PMIX_ERR_NOT_FOUND;
 
-    pmix_output_verbose(2, "SERVER: LOOKUP");
+    pmix_output_verbose(2, pmix_globals.debug_output, "SERVER: LOOKUP");
 
     PMIX_CONSTRUCT(&results, pmix_list_t);
 
@@ -539,7 +539,7 @@ static int unpublish_fn(const pmix_proc_t *proc, char **keys,
     pmix_locdat_t *p, *p2;
     size_t n;
 
-    pmix_output_verbose(2, "SERVER: UNPUBLISH");
+    pmix_output_verbose(2, pmix_globals.debug_output, "SERVER: UNPUBLISH");
 
     for (n=0; NULL != keys[n]; n++) {
         PMIX_LIST_FOREACH_SAFE(p, p2, &pubdata, pmix_locdat_t) {
@@ -572,7 +572,7 @@ static int spawn_fn(const pmix_proc_t *proc,
 {
     myxfer_t *x;
 
-    pmix_output_verbose(2, "SERVER: SPAWN");
+    pmix_output_verbose(2, pmix_globals.debug_output, "SERVER: SPAWN");
 
     /* in practice, we would pass this request to the local
      * resource manager for launch, and then have that server
@@ -595,7 +595,7 @@ static int connect_fn(const pmix_proc_t procs[], size_t nprocs,
                       const pmix_info_t info[], size_t ninfo,
                       pmix_op_cbfunc_t cbfunc, void *cbdata)
 {
-    pmix_output_verbose(2, "SERVER: CONNECT");
+    pmix_output_verbose(2, pmix_globals.debug_output, "SERVER: CONNECT");
 
     /* in practice, we would pass this request to the local
      * resource manager for handling */
@@ -612,7 +612,7 @@ static int disconnect_fn(const pmix_proc_t procs[], size_t nprocs,
                          const pmix_info_t info[], size_t ninfo,
                          pmix_op_cbfunc_t cbfunc, void *cbdata)
 {
-    pmix_output_verbose(2, "SERVER: DISCONNECT");
+    pmix_output_verbose(2, pmix_globals.debug_output,"SERVER: DISCONNECT");
 
     /* in practice, we would pass this request to the local
      * resource manager for handling */
@@ -627,7 +627,7 @@ static int disconnect_fn(const pmix_proc_t procs[], size_t nprocs,
 static int register_events_fn(const pmix_info_t info[], size_t ninfo,
                               pmix_op_cbfunc_t cbfunc, void *cbdata)
 {
-    pmix_output_verbose(2, "SERVER: REGISTER EVENTS");
+    pmix_output_verbose(2, pmix_globals.debug_output, "SERVER: REGISTER EVENTS");
 
     /* in practice, we would pass this request to the local
      * resource manager for handling */

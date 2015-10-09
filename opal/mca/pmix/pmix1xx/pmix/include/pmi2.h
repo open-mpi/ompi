@@ -89,7 +89,7 @@ typedef struct PMI_keyval_t
   cannot access the KVS spaces of another job (this may happen, for
   example, if each mpiexec creates the KVS spaces for the processes
   that it manages).
-  
+
 @*/
 typedef struct PMI2_Connect_comm {
     int (*read)( void *buf, int maxlen, void *ctx );
@@ -107,10 +107,10 @@ typedef struct PMI2_Connect_comm {
   . size - number of processes in the job
   . rank - rank of this process in the job
   - appnum - which executable is this on the mpiexec commandline
-  
+
   Return values:
-  Returns 'MPI_SUCCESS' on success and an MPI error code on failure.
-  
+  Returns 'PMI2_SUCCESS' on success and an PMI error code on failure.
+
   Notes:
   Initialize PMI for this process group. The value of spawned indicates whether
   this process was created by 'PMI2_Spawn_multiple'.  'spawned' will be non-zero
@@ -121,13 +121,13 @@ int PMI2_Init(int *spawned, int *size, int *rank, int *appnum);
 
 /*@
   PMI2_Finalize - finalize the Process Manager Interface
-  
+
   Return values:
-  Returns 'MPI_SUCCESS' on success and an MPI error code on failure.
-  
+  Returns 'PMI2_SUCCESS' on success and an PMI error code on failure.
+
   Notes:
   Finalize PMI for this job.
-  
+
 @*/
 int PMI2_Finalize(void);
 
@@ -136,17 +136,17 @@ int PMI2_Finalize(void);
 
   Return values:
   Non-zero if PMI2_Initialize has been called successfully, zero otherwise.
-  
+
 @*/
 int PMI2_Initialized(void);
 
 /*@
   PMI2_Abort - abort the process group associated with this process
-  
+
   Input Parameters:
   + flag - non-zero if all processes in this job should abort, zero otherwise
   - error_msg - error message to be printed
-  
+
   Return values:
   If the abort succeeds this function will not return.  Returns an MPI
   error code otherwise.
@@ -163,7 +163,7 @@ int PMI2_Abort(int flag, const char msg[]);
   . argcs - size of argv arrays for each command string
   . argvs - array of argv arrays for each command string
   . maxprocs - array of maximum processes to spawn for each command string
-  . info_keyval_sizes - array giving the number of elements in each of the 
+  . info_keyval_sizes - array giving the number of elements in each of the
     'info_keyval_vectors'
   . info_keyval_vectors - array of keyval vector arrays
   . preput_keyval_size - Number of elements in 'preput_keyval_vector'
@@ -175,7 +175,7 @@ int PMI2_Abort(int flag, const char msg[]);
   - errors - array of errors for each command
 
   Return values:
-  Returns 'MPI_SUCCESS' on success and an MPI error code on failure.
+  Returns 'PMI2_SUCCESS' on success and an PMI error code on failure.
 
   Notes:
   This function spawns a set of processes into a new job.  The 'count'
@@ -184,7 +184,7 @@ int PMI2_Abort(int flag, const char msg[]);
   to the size of the 'preput_keyval_vector' array.  The 'preput_keyval_vector'
   contains keyval pairs that will be put in the keyval space of the newly
   created job before the processes are started.  The 'maxprocs' array
-  specifies the desired number of processes to create for each 'cmd' string.  
+  specifies the desired number of processes to create for each 'cmd' string.
   The actual number of processes may be less than the numbers specified in
   maxprocs.  The acceptable number of processes spawned may be controlled by
   ``soft'' keyvals in the info arrays.  The ``soft'' option is specified by
@@ -202,19 +202,37 @@ int PMI2_Job_Spawn(int count, const char * cmds[],
                    int errors[]);
 
 /*@
-  PMI2_Job_GetId - get job id of this job 
+  PMI2_Job_GetId - get job id of this job
 
   Input parameters:
   . jobid_size - size of buffer provided in jobid
 
   Output parameters:
   . jobid - the job id of this job
-  
+
   Return values:
-  Returns 'MPI_SUCCESS' on success and an MPI error code on failure.
+  Returns 'PMI2_SUCCESS' on success and an PMI error code on failure.
 
 @*/
 int PMI2_Job_GetId(char jobid[], int jobid_size);
+
+/*@
+  PMI2_Job_GetRank - get rank of this job
+  Output parameters:
+  . rank - the rank of this job
+  Return values:
+  Returns 'PMI2_SUCCESS' on success and an PMI error code on failure.
+@*/
+int PMI2_Job_GetRank(int* rank);
+
+/*@
+  PMI2_Info_GetSize - get the number of processes on the node
+  Output parameters:
+  . rank - the rank of this job
+  Return values:
+  Returns 'PMI2_SUCCESS' on success and an PMI error code on failure.
+@*/
+int PMI2_Info_GetSize(int* size);
 
 /*@
   PMI2_Job_Connect - connect to the parallel job with ID jobid
@@ -225,9 +243,9 @@ int PMI2_Job_GetId(char jobid[], int jobid_size);
   Output parameters:
   . conn - connection structure used to exteblish communication with
     the remote job
-  
+
   Return values:
-  Returns 'MPI_SUCCESS' on success and an MPI error code on failure.
+  Returns 'PMI2_SUCCESS' on success and an PMI error code on failure.
 
   Notes:
   This just "registers" the other parallel job as part of a parallel
@@ -247,7 +265,7 @@ int PMI2_Job_Connect(const char jobid[], PMI2_Connect_comm_t *conn);
   . jobid - job id of the job to connect to
 
   Return values:
-  Returns 'MPI_SUCCESS' on success and an MPI error code on failure.
+  Returns 'PMI2_SUCCESS' on success and an PMI error code on failure.
 
 @*/
 int PMI2_Job_Disconnect(const char jobid[]);
@@ -258,9 +276,9 @@ int PMI2_Job_Disconnect(const char jobid[]);
   Input Parameters:
   + key - key
   - value - value
-  
+
   Return values:
-  Returns 'MPI_SUCCESS' on success and an MPI error code on failure.
+  Returns 'PMI2_SUCCESS' on success and an PMI error code on failure.
 
   Notes:
   If multiple PMI2_KVS_Put calls are made with the same key between
@@ -274,7 +292,7 @@ int PMI2_KVS_Put(const char key[], const char value[]);
   PMI2_KVS_Fence - commit all PMI2_KVS_Put calls made before this fence
 
   Return values:
-  Returns 'MPI_SUCCESS' on success and an MPI error code on failure.
+  Returns 'PMI2_SUCCESS' on success and an PMI error code on failure.
 
   Notes:
   This is a collective call across the job.  It has semantics that are
@@ -287,7 +305,7 @@ int PMI2_KVS_Put(const char key[], const char value[]);
   their corresponding PMI2_KVS_Fence until some process issues a
   PMI2_KVS_Get. This might be appropriate for some wide-area
   implementations.
-  
+
 @*/
 int PMI2_KVS_Fence(void);
 
@@ -308,9 +326,9 @@ int PMI2_KVS_Fence(void);
   + value - value associated with key
   - vallen - length of the returned value, or, if the length is longer
     than maxvalue, the negative of the required length is returned
-  
+
   Return values:
-  Returns 'MPI_SUCCESS' on success and an MPI error code on failure.
+  Returns 'PMI2_SUCCESS' on success and an PMI error code on failure.
 
 @*/
 int PMI2_KVS_Get(const char *jobid, int src_pmi_id, const char key[], char value [], int maxvalue, int *vallen);
@@ -328,9 +346,9 @@ int PMI2_KVS_Get(const char *jobid, int src_pmi_id, const char key[], char value
   Output Parameters:
   + value - value of the attribute
   - found - non-zero indicates that the attribute was found
-  
+
   Return values:
-  Returns 'MPI_SUCCESS' on success and an MPI error code on failure.
+  Returns 'PMI2_SUCCESS' on success and an PMI error code on failure.
 
   Notes:
   This provides a way, when combined with PMI2_Info_PutNodeAttr, for
@@ -367,9 +385,9 @@ int PMI2_Info_GetNodeAttr(const char name[], char value[], int valuelen, int *fo
   + array - value of attribute
   . outlen - number of elements returned
   - found - non-zero if attribute was found
-  
+
   Return values:
-  Returns 'MPI_SUCCESS' on success and an MPI error code on failure.
+  Returns 'PMI2_SUCCESS' on success and an PMI error code on failure.
 
   Notes:
   Notice that, unlike PMI2_Info_GetNodeAttr, this function does not
@@ -398,12 +416,12 @@ int PMI2_Info_GetNodeAttrIntArray(const char name[], int array[], int arraylen, 
   - value - the value of the attribute
 
   Return values:
-  Returns 'MPI_SUCCESS' on success and an MPI error code on failure.
+  Returns 'PMI2_SUCCESS' on success and an PMI error code on failure.
 
   Notes:
   For example, it might be used to share segment ids with other
   processes on the same SMP node.
-  
+
 @*/
 int PMI2_Info_PutNodeAttr(const char name[], const char value[]);
 
@@ -418,9 +436,9 @@ int PMI2_Info_PutNodeAttr(const char name[], const char value[]);
   Output Parameters:
   + value - value of the attribute
   - found - non-zero indicates that the attribute was found
-  
+
   Return values:
-  Returns 'MPI_SUCCESS' on success and an MPI error code on failure.
+  Returns 'PMI2_SUCCESS' on success and an PMI error code on failure.
 
 @*/
 int PMI2_Info_GetJobAttr(const char name[], char value[], int valuelen, int *found);
@@ -437,9 +455,9 @@ int PMI2_Info_GetJobAttr(const char name[], char value[], int valuelen, int *fou
   + array - value of attribute
   . outlen - number of elements returned
   - found - non-zero if attribute was found
-  
+
   Return values:
-  Returns 'MPI_SUCCESS' on success and an MPI error code on failure.
+  Returns 'PMI2_SUCCESS' on success and an PMI error code on failure.
 
   Predefined array attribute names:
 
@@ -449,7 +467,7 @@ int PMI2_Info_GetJobAttr(const char name[], char value[], int valuelen, int *fou
   . hasNameServ - The value hasNameServ is true if the PMI2 environment
     supports the name service operations (publish, lookup, and
     unpublish).
-    
+
   . physTopology - Return the topology of the underlying network. The
     valid topology types include cartesian, hierarchical, complete,
     kautz, hypercube; additional types may be added as necessary. If
@@ -471,7 +489,7 @@ int PMI2_Info_GetJobAttr(const char name[], char value[], int valuelen, int *fou
     is cartesian,complete. All processes are connected by the
     cartesian part of this, but for each complete network, only the
     processes on the same node are connected.
-    
+
   . cartDims - Return a string of comma-separated values describing
     the dimensions of the Cartesian topology. This must be consistent
     with the value of cartCoords that may be returned by
@@ -482,7 +500,7 @@ int PMI2_Info_GetJobAttr(const char name[], char value[], int valuelen, int *fou
     PMI interface and how extensions can be added within the same API
     and wire protocol. For example, adding more complex network
     topologies requires only adding new keys, not new routines.
-    
+
   . isHeterogeneous - The value isHeterogeneous is true if the
     processes belonging to the job are running on nodes with different
     underlying data models.
@@ -491,7 +509,7 @@ int PMI2_Info_GetJobAttr(const char name[], char value[], int valuelen, int *fou
 int PMI2_Info_GetJobAttrIntArray(const char name[], int array[], int arraylen, int *outlen, int *found);
 
 /*@
-  PMI2_Nameserv_publish - publish a name 
+  PMI2_Nameserv_publish - publish a name
 
   Input parameters:
   + service_name - string representing the service being published
@@ -499,7 +517,7 @@ int PMI2_Info_GetJobAttrIntArray(const char name[], int array[], int arraylen, i
   - port - string representing the port on which to contact the service
 
   Return values:
-  Returns 'MPI_SUCCESS' on success and an MPI error code on failure.
+  Returns 'PMI2_SUCCESS' on success and an PMI error code on failure.
 
 @*/
 int PMI2_Nameserv_publish(const char service_name[], const PMI_keyval_t *info_ptr, const char port[]);
@@ -511,12 +529,12 @@ int PMI2_Nameserv_publish(const char service_name[], const PMI_keyval_t *info_pt
   + service_name - string representing the service being published
   . info_ptr -
   - portLen - size of buffer provided in port
-  
+
   Output parameters:
   . port - string representing the port on which to contact the service
 
   Return values:
-  Returns 'MPI_SUCCESS' on success and an MPI error code on failure.
+  Returns 'PMI2_SUCCESS' on success and an PMI error code on failure.
 
 @*/
 int PMI2_Nameserv_lookup(const char service_name[], const PMI_keyval_t *info_ptr,
@@ -529,10 +547,10 @@ int PMI2_Nameserv_lookup(const char service_name[], const PMI_keyval_t *info_ptr
   - info_ptr -
 
   Return values:
-  Returns 'MPI_SUCCESS' on success and an MPI error code on failure.
+  Returns 'PMI2_SUCCESS' on success and an PMI error code on failure.
 
 @*/
-int PMI2_Nameserv_unpublish(const char service_name[], 
+int PMI2_Nameserv_unpublish(const char service_name[],
                            const PMI_keyval_t *info_ptr);
 
 

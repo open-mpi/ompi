@@ -470,10 +470,10 @@ typedef struct {
     } while(0);
 
 #define PMIX_INFO_LOAD(m, k, v, t)                      \
-    if (NULL != (m)) {                                  \
+    do {                                                \
         (void)strncpy((m)->key, (k), PMIX_MAX_KEYLEN);  \
         pmix_value_load(&((m)->value), (v), (t));       \
-    }
+    } while(0);
 
 
 /****    PMIX LOOKUP RETURN STRUCT    ****/

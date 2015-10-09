@@ -1,19 +1,7 @@
 /*
- * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
- *                         University Research and Technology
- *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2011 The University of Tennessee and The University
- *                         of Tennessee Research Foundation.  All rights
- *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
- *                         University of Stuttgart.  All rights reserved.
- * Copyright (c) 2004-2005 The Regents of the University of California.
- *                         All rights reserved.
- * Copyright (c) 2006-2013 Los Alamos National Security, LLC.
- *                         All rights reserved.
- * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2013-2014 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2015      Mellanox Technologies, Inc.
+ *                         All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -74,6 +62,8 @@ static int test_item5(void);
 static int test_item6(void);
 static int test_item7(void);
 static int test_item8(void);
+/* several sequence of fences is a buggy case for pmix v1.0 (see https://github.com/open-mpi/pmix/issues/37) */
+static int test_item9(void);
 
 static int spawned, size, rank, appnum;
 static char jobid[100];
@@ -149,6 +139,12 @@ int main(int argc, char **argv)
         log_info("TI8  : %s\n", (rc ? "FAIL" : "PASS"));
     }
 
+    if (!ti || 9 == ti) {
+        rc = test_item9();
+        ret += (rc ? 1 : 0);
+        log_info("TI9  : %s\n", (rc ? "FAIL" : "PASS"));
+    }
+
     if (PMI2_SUCCESS != (rc = PMI2_Finalize())) {
         log_fatal("PMI2_Finalize failed: %d\n", rc);
         return rc;
@@ -160,6 +156,7 @@ int main(int argc, char **argv)
 static int test_item1(void)
 {
     int rc = 0;
+    int val = 0;
 
     log_info("spawned=%d size=%d rank=%d appnum=%d\n", spawned, size, rank, appnum);
 
@@ -175,8 +172,21 @@ static int test_item1(void)
     }
 
     log_info("jobid=%s\n", jobid);
-
     log_assert(memcmp(jobid, __FUNCTION__, sizeof(__FUNCTION__)), "");
+
+    val = random_value(10, 100);
+    if (PMI2_SUCCESS != (rc = PMI2_Job_GetRank(&val))) {
+        log_fatal("PMI2_Job_GetRank failed: %d\n", rc);
+        return rc;
+    }
+    log_assert(rank == val, "");
+
+    val = -1;
+    if (PMI2_SUCCESS != (rc = PMI2_Info_GetSize(&val))) {
+        log_fatal("PMI2_Info_GetSize failed: %d\n", rc);
+        return rc;
+    }
+    log_assert(0 < val, "");
 
     return rc;
 }
@@ -333,8 +343,8 @@ static int test_item7(void)
             return rc;
         }
 
-        if (PMI2_SUCCESS != (rc = PMI2_KVS_Get(jobid, PMI2_ID_NULL, tkey, val, sizeof(val), &len))) {
-            log_fatal("PMI2_KVS_Get %d\n", rc);
+        if (PMI2_SUCCESS != (rc = PMI2_KVS_Get(jobid, i, tkey, val, sizeof(val), &len))) {
+            log_fatal("PMI2_KVS_Get [%s=?] %d\n", tkey, rc);
             return rc;
         }
 
@@ -350,16 +360,56 @@ static int test_item7(void)
 static int test_item8(void)
 {
     int rc = 0;
+    int len;
+    char tkey[PMI2_MAX_VALLEN];
+    char tval[PMI2_MAX_VALLEN];
+    char val[PMI2_MAX_VALLEN];
+    int i = 0;
+
+    for (i = 0; i < size; i++) {
+        sprintf(tkey, "KEY-%d", i);
+        sprintf(tval, "VALUE-%d", i);
+        if (i == rank) {
+            if (PMI2_SUCCESS != (rc = PMI2_KVS_Put(tkey, tval))) {
+                log_fatal("PMI2_KVS_Put [%s=%s] %d\n", tkey, tval, rc);
+                return rc;
+            }
+        }
+
+        if (PMI2_SUCCESS != (rc = PMI2_KVS_Fence())) {
+            log_fatal("PMI2_KVS_Fence %d\n", rc);
+            return rc;
+        }
+
+        if (PMI2_SUCCESS != (rc = PMI2_KVS_Get(jobid, PMI2_ID_NULL, tkey, val, sizeof(val), &len))) {
+            log_fatal("PMI2_KVS_Get [%s=?] %d\n", tkey, rc);
+            return rc;
+        }
+
+        log_info("tkey=%s tval=%s val=%s len=%d\n", tkey, tval, val, len);
+
+        log_assert((int)strlen(tval) == len, "value does not meet expectation");
+        log_assert(!strcmp(tval, val), "value does not meet expectation");
+    }
+
+    return rc;
+}
+
+static int test_item9(void)
+{
+    int rc = 0;
     int i, j, r;
     char symb, symb_start = 'a';
     int fence_cnt;
     int fence_num = random_value(2, 10);
-    int keys_per_fence = random_value(10, 1000);
-    int val_size = random_value(10, PMI2_MAX_VALLEN);
+    int keys_per_fence = random_value(10, 100);
+    int val_size = random_value(10, PMI2_MAX_VALLEN / 10);
     int keys_total = 0;
 
     fence_cnt = 0;
     while (fence_cnt < fence_num) {
+        log_info("fence_cnt=%d of fence_num=%d keys_per_fence=%d keys_total=%d val_size=%d\n",
+                fence_cnt, fence_num, keys_per_fence, keys_total, val_size);
         symb = symb_start;
         for (i = 0; i < keys_per_fence; i++) {
             char key[PMI2_MAX_KEYLEN];
@@ -376,6 +426,7 @@ static int test_item8(void)
                 log_fatal("PMI2_KVS_Put [%s=%s] %d\n", key, val, rc);
                 return rc;
             }
+            log_info("PMI2_KVS_Put [rank=%d %s] %d\n", rank, key, rc);
         }
         symb_start = symb;
         keys_total += keys_per_fence;
@@ -393,10 +444,12 @@ static int test_item8(void)
                 char val[PMI2_MAX_VALLEN] = "";
                 sprintf(key, "RANK%d-key-%d", r, i);
 
-                if (PMI2_SUCCESS != (rc = PMI2_KVS_Get(jobid, PMI2_ID_NULL, key, val, sizeof(val), &len))) {
-                    log_fatal("PMI2_KVS_Get %d\n", rc);
+                if (PMI2_SUCCESS != (rc = PMI2_KVS_Get(jobid, r, key, val, sizeof(val), &len))) {
+                    log_fatal("PMI2_KVS_Get [%s=?] %d\n", key, rc);
                     return rc;
                 }
+
+                log_info("PMI2_KVS_Get [rank=%d %s] %d\n", rank, key, rc);
 
                 if (len != val_size) {
                     log_fatal("%d: failure on rank %d, key #%d: len mismatch:"
