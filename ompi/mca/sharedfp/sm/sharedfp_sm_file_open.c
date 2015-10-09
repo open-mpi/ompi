@@ -184,8 +184,14 @@ int mca_sharedfp_sm_file_open (struct ompi_communicator_t *comm,
     /* the semaphore is shared by keeping it in the shared memory segment  */
 
 #if defined(HAVE_SEM_OPEN)
-    sm_data->sem_name = (char*) malloc( sizeof(char) * (strlen(filename_basename)+32) );
-    sprintf(sm_data->sem_name,"OMPIO_sharedfp_sem_%s",filename_basename);
+
+#if defined (__APPLE__)    
+    sm_data->sem_name = (char*) malloc( sizeof(char) * 32);
+    snprintf(sm_data->sem_name,31,"OMPIO_%s",filename_basename);
+#else
+    sm_data->sem_name = (char*) malloc( sizeof(char) * 253);
+    snprintf(sm_data->sem_name,252,"OMPIO_%s",filename_basename);
+#endif
 
     if( (sm_data->mutex = sem_open(sm_data->sem_name, O_CREAT, 0644, 1)) != SEM_FAILED ) {
 #elif defined(HAVE_SEM_INIT)
