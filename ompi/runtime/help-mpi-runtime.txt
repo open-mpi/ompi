@@ -50,6 +50,24 @@ You may wish to try to narrow down the problem;
 WARNING: The MCA parameter mpi_param_check has been set to true, but
 parameter checking has been compiled out of Open MPI.  The
 mpi_param_check value has therefore been ignored.
+#
+[mpi_init: invoked multiple times]
+Open MPI has detected that this process has attempted to initialize
+MPI (via MPI_INIT or MPI_INIT_THREAD) more than once.  This is
+erroneous.
+#
+[mpi_init: already finalized]
+Open MPI has detected that this process has attempted to initialize
+MPI (via MPI_INIT or MPI_INIT_THREAD) after MPI_FINALIZE has been
+called.  This is erroneous.
+#
+[mpi_finalize: not initialized]
+The function MPI_FINALIZE was invoked before MPI was initialized in a
+process on host %s, PID %d.
+
+This indicates an erroneous MPI program; MPI must be initialized
+before it can be finalized.
+#
 [mpi_finalize:invoked_multiple_times]
 The function MPI_FINALIZE was invoked multiple times in a single
 process on host %s, PID %d.

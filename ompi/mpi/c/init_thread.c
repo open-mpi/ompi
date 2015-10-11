@@ -12,6 +12,7 @@
  * Copyright (c) 2010      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -59,23 +60,6 @@ int MPI_Init_thread(int *argc, char ***argv, int required,
 #else
     *provided = MPI_THREAD_SINGLE;
 #endif
-
-    /* Ensure that we were not already initialized or finalized */
-
-    if (ompi_mpi_finalized) {
-        if (0 == ompi_comm_rank(MPI_COMM_WORLD)) {
-            opal_show_help("help-mpi-api.txt", "mpi-function-after-finalize",
-                           true, FUNC_NAME);
-        }
-        return ompi_errhandler_invoke(NULL, NULL, OMPI_ERRHANDLER_TYPE_COMM,
-                                      MPI_ERR_OTHER, FUNC_NAME);
-    } else if (ompi_mpi_initialized) {
-        if (0 == ompi_comm_rank(MPI_COMM_WORLD)) {
-            opal_show_help("help-mpi-api.txt", "mpi-initialize-twice",
-                           true, FUNC_NAME);
-        }
-        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_OTHER, FUNC_NAME);
-    }
 
     /* Call the back-end initialization function (we need to put as
        little in this function as possible so that if it's profiled, we

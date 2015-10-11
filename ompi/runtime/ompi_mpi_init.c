@@ -124,11 +124,12 @@ const char ompi_version_string[] = OMPI_IDENT_STRING;
  * Global variables and symbols for the MPI layer
  */
 
-bool ompi_mpi_init_started = false;
-bool ompi_mpi_initialized = false;
-bool ompi_mpi_finalized = false;
-bool ompi_rte_initialized = false;
-int32_t ompi_mpi_finalize_started = false;
+opal_mutex_t ompi_mpi_bootstrap_mutex = OPAL_MUTEX_STATIC_INIT;
+volatile bool ompi_mpi_init_started = false;
+volatile bool ompi_mpi_initialized = false;
+volatile bool ompi_mpi_finalize_started = false;
+volatile bool ompi_mpi_finalized = false;
+volatile bool ompi_rte_initialized = false;
 
 bool ompi_mpi_thread_multiple = false;
 int ompi_mpi_thread_requested = MPI_THREAD_SINGLE;
@@ -384,9 +385,26 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
      * for the modex in order to work in heterogeneous environments. */
     uint8_t threadlevel_bf;
 
-    /* Indicate that we have *started* MPI_INIT*.  MPI_FINALIZE has
-       something sorta similar in a static local variable in
-       ompi_mpi_finalize(). */
+    /* Ensure that we were not already initialized or finalized.
+
+       This lock is held for the duration of ompi_mpi_init() and
+       ompi_mpi_finalize().  Hence, if we get it, then no other thread
+       is inside the critical section (and we don't have to check the
+       *_started bool variables). */
+    opal_mutex_lock(&ompi_mpi_bootstrap_mutex);
+    if (ompi_mpi_finalized) {
+        opal_show_help("help-mpi-runtime.txt",
+                       "mpi_init: already finalized", true);
+        opal_mutex_unlock(&ompi_mpi_bootstrap_mutex);
+        return MPI_ERR_OTHER;
+    } else if (ompi_mpi_initialized) {
+        opal_show_help("help-mpi-runtime.txt",
+                       "mpi_init: invoked multiple times", true);
+        opal_mutex_unlock(&ompi_mpi_bootstrap_mutex);
+        return MPI_ERR_OTHER;
+    }
+
+    /* Indicate that we have *started* MPI_INIT* */
     ompi_mpi_init_started = true;
 
     /* Setup enough to check get/set MCA params */
@@ -904,6 +922,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
                            "mpi_init:startup:internal-failure", true,
                            "MPI_INIT", "MPI_INIT", error, err_msg, ret);
         }
+        opal_mutex_unlock(&ompi_mpi_bootstrap_mutex);
         return ret;
     }
 
@@ -933,5 +952,6 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     OPAL_TIMING_REPORT(ompi_enable_timing_ext, &tm);
     OPAL_TIMING_RELEASE(&tm);
 
+    opal_mutex_unlock(&ompi_mpi_bootstrap_mutex);
     return MPI_SUCCESS;
 }
