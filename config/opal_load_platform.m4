@@ -23,6 +23,10 @@ dnl
 # OPAL_LOAD_PLATFORM()
 # --------------------
 AC_DEFUN([OPAL_LOAD_PLATFORM], [
+    AC_ARG_WITH([platform-patches-dir],
+        [AC_HELP_STRING([--with-platform-patches-dir=DIR],
+                        [Location of the platform patches directory. If you use this option, you must also use --with-platform.])])
+
     AC_ARG_WITH([platform],
         [AC_HELP_STRING([--with-platform=FILE],
                         [Load options for build from FILE.  Options on the
@@ -98,6 +102,19 @@ AC_DEFUN([OPAL_LOAD_PLATFORM], [
         fi
 
         patch_dir="${with_platform}.patches"
+        if test -n "$with_platform_patches_dir"; then
+            if test "$with_platform_patches_dir" = "yes"; then
+                patch_dir="${with_platform}.patches"
+            elif test "$with_platform_patches_dir" = "no"; then
+                AC_MSG_NOTICE([Disabling platform patches on user request])
+                patch_dir=""
+            elif test -d "$with_platform_patches_dir"; then
+                patch_dir=$with_platform_patches_dir
+            else
+                AC_MSG_ERROR([User provided patches directory: $with_platform_patches_dir not found])
+            fi
+        fi
+
         patch_done="${srcdir}/.platform_patches"
         patch_found=no
 
@@ -155,15 +172,16 @@ AC_DEFUN([OPAL_LOAD_PLATFORM], [
 
                     AC_MSG_NOTICE([Platform patches applied, created stamp file ${patch_done}])
                     touch ${patch_done}
+                else
+                    AC_MSG_NOTICE([No platform patches in ${patch_dir}])
                 fi
 
             else
                 AC_MSG_WARN([Platform patches already applied, skipping. ${patch_done} can be removed to re-apply ])
             fi
-        else
-            AC_MSG_NOTICE([No platform patches in ${patch_dir}])
+        elif test -n "${patch_dir}"; then
+          AC_MSG_NOTICE([No platform patches in ${patch_dir}])
         fi
-
     else
         AC_SUBST(OPAL_DEFAULT_MCA_PARAM_CONF, [openmpi-mca-params.conf])
     fi
