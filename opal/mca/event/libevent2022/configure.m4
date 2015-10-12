@@ -176,7 +176,7 @@ AC_DEFUN([MCA_opal_event_libevent2022_DO_THE_CONFIG], [
     # Finally, add some flags to the wrapper compiler if we're
     # building with developer headers so that our headers can
     # be found.
-    event_libevent2022_WRAPPER_EXTRA_CPPFLAGS='-I${pkgincludedir}/openmpi/opal/mca/event/libevent2022/libevent -I${pkgincludedir}/openmpi/opal/mca/event/libevent2022/libevent/include'
+    event_libevent2022_WRAPPER_EXTRA_CPPFLAGS='-I${pkgincludedir}/opal/mca/event/libevent2022/libevent -I${pkgincludedir}/opal/mca/event/libevent2022/libevent/include'
 
     CFLAGS="$CFLAGS_save"
     CPPFLAGS="$CPPFLAGS_save"
