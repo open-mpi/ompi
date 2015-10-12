@@ -63,7 +63,6 @@
 #include "orte/util/name_fns.h"
 #include "orte/util/show_help.h"
 
-#include "orte/runtime/orte_cr.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/runtime/orte_wait.h"
 
@@ -215,16 +214,6 @@ int orte_ess_base_app_setup(bool db_restrict_local)
     opal_cr_set_enabled(false);
 #endif
 
-    /* Initalize the CR setup
-     * Note: Always do this, even in non-FT builds.
-     * If we don't some user level tools may hang.
-     */
-    if (ORTE_SUCCESS != (ret = orte_cr_init())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_cr_init";
-        goto error;
-    }
-
     /* open the distributed file system */
     if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_dfs_base_framework, 0))) {
         ORTE_ERROR_LOG(ret);
@@ -255,7 +244,6 @@ int orte_ess_base_app_setup(bool db_restrict_local)
 
 int orte_ess_base_app_finalize(void)
 {
-    orte_cr_finalize();
 
     /* release the event base so we stop all potential
      * race conditions in the messaging teardown */
@@ -316,9 +304,6 @@ void orte_ess_base_app_abort(int status, bool report)
      * clean environment. Taken from orte_finalize():
      * - Assume errmgr cleans up child processes before we exit.
      */
-
-    /* CRS cleanup since it may have a named pipe and thread active */
-    orte_cr_finalize();
 
     /* If we were asked to report this termination, do so.
      * Since singletons don't start an HNP unless necessary, and

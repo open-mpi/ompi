@@ -26,5 +26,4 @@ headers += \
 libmca_errmgr_la_SOURCES += \
         base/errmgr_base_select.c \
         base/errmgr_base_frame.c \
-        base/errmgr_base_fns.c \
-        base/errmgr_base_tool.c
+        base/errmgr_base_fns.c
