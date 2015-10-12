@@ -60,9 +60,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_DIST_GRAPH_NEIGHBORS,
 #define ompi_dist_graph_neighbors_f pompi_dist_graph_neighbors_f
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Dist_graph_neighbors PMPI_Dist_graph_neighbors
-#endif
 
 void ompi_dist_graph_neighbors_f(MPI_Fint* comm, MPI_Fint* maxindegree,
                                  MPI_Fint* sources, MPI_Fint* sourceweights,
@@ -76,7 +73,7 @@ void ompi_dist_graph_neighbors_f(MPI_Fint* comm, MPI_Fint* maxindegree,
     OMPI_ARRAY_NAME_DECL(destinations);
     OMPI_ARRAY_NAME_DECL(destweights);
 
-    c_comm = MPI_Comm_f2c(*comm);
+    c_comm = PMPI_Comm_f2c(*comm);
 
     OMPI_ARRAY_FINT_2_INT_ALLOC(sources, *maxindegree);
     if( !OMPI_IS_FORTRAN_UNWEIGHTED(sourceweights) ) {
@@ -87,11 +84,11 @@ void ompi_dist_graph_neighbors_f(MPI_Fint* comm, MPI_Fint* maxindegree,
         OMPI_ARRAY_FINT_2_INT_ALLOC(destweights, *maxoutdegree);
     }
 
-    *ierr = OMPI_INT_2_FINT(MPI_Dist_graph_neighbors(c_comm, OMPI_FINT_2_INT(*maxindegree),
-                                                     OMPI_ARRAY_NAME_CONVERT(sources),
-                                                     OMPI_IS_FORTRAN_UNWEIGHTED(sourceweights) ? MPI_UNWEIGHTED : OMPI_ARRAY_NAME_CONVERT(sourceweights),
-                                                     OMPI_FINT_2_INT(*maxoutdegree), OMPI_ARRAY_NAME_CONVERT(destinations),
-                                                     OMPI_IS_FORTRAN_UNWEIGHTED(destweights) ? MPI_UNWEIGHTED : OMPI_ARRAY_NAME_CONVERT(destweights)));
+    *ierr = OMPI_INT_2_FINT(PMPI_Dist_graph_neighbors(c_comm, OMPI_FINT_2_INT(*maxindegree),
+                                                      OMPI_ARRAY_NAME_CONVERT(sources),
+                                                      OMPI_IS_FORTRAN_UNWEIGHTED(sourceweights) ? MPI_UNWEIGHTED : OMPI_ARRAY_NAME_CONVERT(sourceweights),
+                                                      OMPI_FINT_2_INT(*maxoutdegree), OMPI_ARRAY_NAME_CONVERT(destinations),
+                                                      OMPI_IS_FORTRAN_UNWEIGHTED(destweights) ? MPI_UNWEIGHTED : OMPI_ARRAY_NAME_CONVERT(destweights)));
     if (OMPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
         OMPI_ARRAY_INT_2_FINT(sources, *maxindegree);
         if( !OMPI_IS_FORTRAN_UNWEIGHTED(sourceweights) ) {

@@ -68,9 +68,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_GET_CONTENTS,
 #define ompi_type_get_contents_f pompi_type_get_contents_f
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Type_get_contents PMPI_Type_get_contents
-#endif
 
 static const char FUNC_NAME[] = "MPI_TYPE_GET_CONTENTS";
 
@@ -83,7 +80,7 @@ void ompi_type_get_contents_f(MPI_Fint *mtype, MPI_Fint *max_integers,
 {
     MPI_Aint *c_address_array = NULL;
     MPI_Datatype *c_datatype_array = NULL;
-    MPI_Datatype c_mtype = MPI_Type_f2c(*mtype);
+    MPI_Datatype c_mtype = PMPI_Type_f2c(*mtype);
     int i, c_ierr;
     OMPI_ARRAY_NAME_DECL(array_of_integers);
 
@@ -113,7 +110,7 @@ void ompi_type_get_contents_f(MPI_Fint *mtype, MPI_Fint *max_integers,
 
     OMPI_ARRAY_FINT_2_INT(array_of_integers, *max_integers);
 
-    c_ierr = MPI_Type_get_contents(c_mtype,
+    c_ierr = PMPI_Type_get_contents(c_mtype,
                                    OMPI_FINT_2_INT(*max_integers),
                                    OMPI_FINT_2_INT(*max_addresses),
                                    OMPI_FINT_2_INT(*max_datatypes),
@@ -126,7 +123,7 @@ void ompi_type_get_contents_f(MPI_Fint *mtype, MPI_Fint *max_integers,
             array_of_addresses[i] = c_address_array[i];
         }
         for (i = 0; i < *max_datatypes; i++) {
-          array_of_datatypes[i] = MPI_Type_c2f(c_datatype_array[i]);
+          array_of_datatypes[i] = PMPI_Type_c2f(c_datatype_array[i]);
         }
     }
     free(c_address_array);

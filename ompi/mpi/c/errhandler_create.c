@@ -32,10 +32,6 @@
 #define MPI_Errhandler_create PMPI_Errhandler_create
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Comm_create_errhandler PMPI_Comm_create_errhandler
-#endif
-
 int MPI_Errhandler_create(MPI_Handler_function *function,
                           MPI_Errhandler *errhandler)
 {
@@ -43,5 +39,5 @@ int MPI_Errhandler_create(MPI_Handler_function *function,
     /* This is a deprecated -- just turn around and call the real
        function */
 
-    return MPI_Comm_create_errhandler(function, errhandler);
+    return PMPI_Comm_create_errhandler(function, errhandler);
 }

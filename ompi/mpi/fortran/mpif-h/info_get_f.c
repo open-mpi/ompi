@@ -69,9 +69,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_INFO_GET,
 #define ompi_info_get_f pompi_info_get_f
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Info_get PMPI_Info_get
-#endif
 
 static const char FUNC_NAME[] = "MPI_INFO_GET";
 
@@ -94,9 +91,9 @@ void ompi_info_get_f(MPI_Fint *info, char *key, MPI_Fint *valuelen,
         if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
         return;
     }
-    c_info = MPI_Info_f2c(*info);
+    c_info = PMPI_Info_f2c(*info);
 
-    c_ierr = MPI_Info_get(c_info, c_key,
+    c_ierr = PMPI_Info_get(c_info, c_key,
                           OMPI_FINT_2_INT(*valuelen),
                           c_value,
                           OMPI_LOGICAL_SINGLE_NAME_CONVERT(flag));

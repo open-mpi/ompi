@@ -66,9 +66,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_ERROR_CLASS,
 #define ompi_error_class_f pompi_error_class_f
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Error_class PMPI_Error_class
-#endif
 
 void ompi_error_class_f(MPI_Fint *errorcode, MPI_Fint *errorclass,
 		       MPI_Fint *ierr)
@@ -76,7 +73,7 @@ void ompi_error_class_f(MPI_Fint *errorcode, MPI_Fint *errorclass,
     int c_ierr;
     OMPI_SINGLE_NAME_DECL(errorclass);
 
-    c_ierr = MPI_Error_class(OMPI_FINT_2_INT(*errorcode),
+    c_ierr = PMPI_Error_class(OMPI_FINT_2_INT(*errorcode),
                              OMPI_SINGLE_NAME_CONVERT(errorclass));
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 

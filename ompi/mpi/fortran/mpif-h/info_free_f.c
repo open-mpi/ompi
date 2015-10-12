@@ -66,21 +66,18 @@ OMPI_GENERATE_F77_BINDINGS (MPI_INFO_FREE,
 #define ompi_info_free_f pompi_info_free_f
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Info_free PMPI_Info_free
-#endif
 
 void ompi_info_free_f(MPI_Fint *info, MPI_Fint *ierr)
 {
     int c_ierr;
     MPI_Info c_info;
 
-    c_info = MPI_Info_f2c(*info);
+    c_info = PMPI_Info_f2c(*info);
 
-    c_ierr = MPI_Info_free(&c_info);
+    c_ierr = PMPI_Info_free(&c_info);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {
-        *info = MPI_Info_c2f(c_info);
+        *info = PMPI_Info_c2f(c_info);
     }
 }

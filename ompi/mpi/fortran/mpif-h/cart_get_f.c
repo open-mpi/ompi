@@ -66,9 +66,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_CART_GET,
 #define ompi_cart_get_f pompi_cart_get_f
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Cart_get PMPI_Cart_get
-#endif
 
 void ompi_cart_get_f(MPI_Fint *comm, MPI_Fint *maxdims, MPI_Fint *dims,
 		    ompi_fortran_logical_t *periods, MPI_Fint *coords, MPI_Fint *ierr)
@@ -79,14 +76,14 @@ void ompi_cart_get_f(MPI_Fint *comm, MPI_Fint *maxdims, MPI_Fint *dims,
     OMPI_ARRAY_NAME_DECL(coords);
     OMPI_LOGICAL_ARRAY_NAME_DECL(periods);
 
-    c_comm = MPI_Comm_f2c(*comm);
+    c_comm = PMPI_Comm_f2c(*comm);
 
     size = OMPI_FINT_2_INT(*maxdims);
     OMPI_ARRAY_FINT_2_INT_ALLOC(dims, size);
     OMPI_ARRAY_FINT_2_INT_ALLOC(coords, size);
     OMPI_ARRAY_LOGICAL_2_INT_ALLOC(periods, size);
 
-    c_ierr = MPI_Cart_get(c_comm,
+    c_ierr = PMPI_Cart_get(c_comm,
                           size,
                           OMPI_ARRAY_NAME_CONVERT(dims),
                           OMPI_LOGICAL_ARRAY_NAME_CONVERT(periods),

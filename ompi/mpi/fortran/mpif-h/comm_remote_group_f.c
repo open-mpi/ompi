@@ -66,20 +66,16 @@ OMPI_GENERATE_F77_BINDINGS (MPI_COMM_REMOTE_GROUP,
 #define ompi_comm_remote_group_f pompi_comm_remote_group_f
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Comm_remote_group PMPI_Comm_remote_group
-#endif
-
 void ompi_comm_remote_group_f(MPI_Fint *comm, MPI_Fint *group, MPI_Fint *ierr)
 {
     int c_ierr;
     MPI_Group c_group;
-    MPI_Comm c_comm = MPI_Comm_f2c ( *comm );
+    MPI_Comm c_comm = PMPI_Comm_f2c ( *comm );
 
-    c_ierr = MPI_Comm_remote_group ( c_comm, &c_group );
+    c_ierr = PMPI_Comm_remote_group(c_comm, &c_group);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {
-        *group = MPI_Group_c2f (c_group);
+        *group = PMPI_Group_c2f (c_group);
     }
 }

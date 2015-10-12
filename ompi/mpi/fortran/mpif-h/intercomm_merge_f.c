@@ -66,23 +66,19 @@ OMPI_GENERATE_F77_BINDINGS (MPI_INTERCOMM_MERGE,
 #define ompi_intercomm_merge_f pompi_intercomm_merge_f
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Intercomm_merge PMPI_Intercomm_merge
-#endif
-
 void ompi_intercomm_merge_f(MPI_Fint *intercomm, ompi_fortran_logical_t *high,
                            MPI_Fint *newintracomm,
                            MPI_Fint *ierr)
 {
     int c_ierr;
     MPI_Comm c_newcomm;
-    MPI_Comm c_intercomm = MPI_Comm_f2c(*intercomm);
+    MPI_Comm c_intercomm = PMPI_Comm_f2c(*intercomm);
 
-    c_ierr = MPI_Intercomm_merge (c_intercomm, OMPI_LOGICAL_2_INT(*high),
+    c_ierr = PMPI_Intercomm_merge(c_intercomm, OMPI_LOGICAL_2_INT(*high),
                                   &c_newcomm);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {
-        *newintracomm = MPI_Comm_c2f (c_newcomm);
+        *newintracomm = PMPI_Comm_c2f (c_newcomm);
     }
 }

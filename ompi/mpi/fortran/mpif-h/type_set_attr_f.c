@@ -68,14 +68,10 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_SET_ATTR,
 #define ompi_type_set_attr_f pompi_type_set_attr_f
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Type_set_attr PMPI_Type_set_attr
-#endif
-
 void ompi_type_set_attr_f(MPI_Fint *type, MPI_Fint *type_keyval, MPI_Aint *attribute_val, MPI_Fint *ierr)
 {
     int c_ierr;
-    MPI_Datatype c_type = MPI_Type_f2c(*type);
+    MPI_Datatype c_type = PMPI_Type_f2c(*type);
 
     /* This stuff is very confusing.  Be sure to see the comment at
        the top of src/attributes/attributes.c. */

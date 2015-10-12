@@ -66,9 +66,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_IBARRIER,
 #define ompi_ibarrier_f pompi_ibarrier_f
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Ibarrier PMPI_Ibarrier
-#endif
 
 void ompi_ibarrier_f(MPI_Fint *comm, MPI_Fint *request, MPI_Fint *ierr)
 {
@@ -76,10 +73,10 @@ void ompi_ibarrier_f(MPI_Fint *comm, MPI_Fint *request, MPI_Fint *ierr)
     MPI_Comm c_comm;
     MPI_Request c_req;
 
-    c_comm = MPI_Comm_f2c(*comm);
+    c_comm = PMPI_Comm_f2c(*comm);
 
-    ierr_c = MPI_Ibarrier(c_comm, &c_req);
+    ierr_c = PMPI_Ibarrier(c_comm, &c_req);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(ierr_c);
 
-    if (MPI_SUCCESS == ierr_c) *request = MPI_Request_c2f(c_req);
+    if (MPI_SUCCESS == ierr_c) *request = PMPI_Request_c2f(c_req);
 }

@@ -71,19 +71,16 @@ OMPI_GENERATE_F77_BINDINGS (MPI_COMPARE_AND_SWAP,
 #define ompi_compare_and_swap_f pompi_compare_and_swap_f
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Compare_and_swap PMPI_Compare_and_swap
-#endif
 
 void ompi_compare_and_swap_f(char *origin_addr, char *compare_addr, char *result_addr,
                              MPI_Fint *datatype, MPI_Fint *target_rank, MPI_Aint *target_disp,
                              MPI_Fint *win, MPI_Fint *ierr)
 {
     int c_ierr;
-    MPI_Datatype c_datatype = MPI_Type_f2c(*datatype);
-    MPI_Win c_win = MPI_Win_f2c(*win);
+    MPI_Datatype c_datatype = PMPI_Type_f2c(*datatype);
+    MPI_Win c_win = PMPI_Win_f2c(*win);
 
-    c_ierr = MPI_Compare_and_swap(OMPI_F2C_BOTTOM(origin_addr),
+    c_ierr = PMPI_Compare_and_swap(OMPI_F2C_BOTTOM(origin_addr),
                                   OMPI_F2C_BOTTOM(compare_addr),
                                   OMPI_F2C_BOTTOM(result_addr),
                                   c_datatype,

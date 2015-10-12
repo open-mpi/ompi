@@ -68,10 +68,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_F_SYNC_REG,
 #define ompi_f_sync_reg_f pompi_f_sync_reg_f
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_F_sync_reg PMPI_F_sync_reg
-#endif
-
 void ompi_f_sync_reg_f(char *buf)
 {
     /* This is a noop in C to disable potential Fortran optimizations. */

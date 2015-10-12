@@ -66,15 +66,12 @@ OMPI_GENERATE_F77_BINDINGS (MPI_FILE_SYNC,
 #define ompi_file_sync_f pompi_file_sync_f
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_File_sync PMPI_File_sync
-#endif
 
 void ompi_file_sync_f(MPI_Fint *fh, MPI_Fint *ierr)
 {
     int c_ierr;
-    MPI_File c_fh = MPI_File_f2c(*fh);
+    MPI_File c_fh = PMPI_File_f2c(*fh);
 
-    c_ierr = MPI_File_sync(c_fh);
+    c_ierr = PMPI_File_sync(c_fh);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 }

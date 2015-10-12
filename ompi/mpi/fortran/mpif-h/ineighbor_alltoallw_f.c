@@ -70,9 +70,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_INEIGHBOR_ALLTOALLW,
 #define ompi_ineighbor_alltoallw_f pompi_ineighbor_alltoallw_f
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Ineighbor_alltoallw PMPI_Ineighbor_alltoallw
-#endif
 
 void ompi_ineighbor_alltoallw_f(char *sendbuf, MPI_Fint *sendcounts,
                                 MPI_Aint *sdispls, MPI_Fint *sendtypes,
@@ -87,8 +84,8 @@ void ompi_ineighbor_alltoallw_f(char *sendbuf, MPI_Fint *sendcounts,
     OMPI_ARRAY_NAME_DECL(sendcounts);
     OMPI_ARRAY_NAME_DECL(recvcounts);
 
-    c_comm = MPI_Comm_f2c(*comm);
-    MPI_Comm_size(c_comm, &size);
+    c_comm = PMPI_Comm_f2c(*comm);
+    PMPI_Comm_size(c_comm, &size);
 
     c_sendtypes = (MPI_Datatype *) malloc(size * sizeof(MPI_Datatype));
     c_recvtypes = (MPI_Datatype *) malloc(size * sizeof(MPI_Datatype));
@@ -97,8 +94,8 @@ void ompi_ineighbor_alltoallw_f(char *sendbuf, MPI_Fint *sendcounts,
     OMPI_ARRAY_FINT_2_INT(recvcounts, size);
 
     while (size > 0) {
-        c_sendtypes[size - 1] = MPI_Type_f2c(sendtypes[size - 1]);
-        c_recvtypes[size - 1] = MPI_Type_f2c(recvtypes[size - 1]);
+        c_sendtypes[size - 1] = PMPI_Type_f2c(sendtypes[size - 1]);
+        c_recvtypes[size - 1] = PMPI_Type_f2c(recvtypes[size - 1]);
         --size;
     }
 
@@ -106,7 +103,7 @@ void ompi_ineighbor_alltoallw_f(char *sendbuf, MPI_Fint *sendcounts,
     sendbuf = (char *) OMPI_F2C_BOTTOM(sendbuf);
     recvbuf = (char *) OMPI_F2C_BOTTOM(recvbuf);
 
-    c_ierr = MPI_Ineighbor_alltoallw(sendbuf,
+    c_ierr = PMPI_Ineighbor_alltoallw(sendbuf,
                                      OMPI_ARRAY_NAME_CONVERT(sendcounts),
                                      sdispls,
                                      c_sendtypes,
@@ -115,7 +112,7 @@ void ompi_ineighbor_alltoallw_f(char *sendbuf, MPI_Fint *sendcounts,
                                      rdispls,
                                      c_recvtypes, c_comm, &c_request);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
-    if (MPI_SUCCESS == c_ierr) *request = MPI_Request_c2f(c_request);
+    if (MPI_SUCCESS == c_ierr) *request = PMPI_Request_c2f(c_request);
 
     OMPI_ARRAY_FINT_2_INT_CLEANUP(sendcounts);
     OMPI_ARRAY_FINT_2_INT_CLEANUP(recvcounts);

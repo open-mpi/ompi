@@ -66,21 +66,18 @@ OMPI_GENERATE_F77_BINDINGS (MPI_OP_FREE,
 #define ompi_op_free_f pompi_op_free_f
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Op_free PMPI_Op_free
-#endif
 
 void ompi_op_free_f(MPI_Fint *op, MPI_Fint *ierr)
 {
     int c_ierr;
     MPI_Op c_op;
 
-    c_op = MPI_Op_f2c(*op);
+    c_op = PMPI_Op_f2c(*op);
 
-    c_ierr = MPI_Op_free(&c_op);
+    c_ierr = PMPI_Op_free(&c_op);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {
-        *op = MPI_Op_c2f(c_op);
+        *op = PMPI_Op_c2f(c_op);
     }
 }

@@ -69,9 +69,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_ADD_ERROR_STRING,
 #define ompi_add_error_string_f pompi_add_error_string_f
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Add_error_string PMPI_Add_error_string
-#endif
 
 void ompi_add_error_string_f(MPI_Fint *errorcode, char *string,
 			    MPI_Fint *ierr, int len)
@@ -87,7 +84,7 @@ void ompi_add_error_string_f(MPI_Fint *errorcode, char *string,
     }
 
     ompi_fortran_string_f2c(string, len, &c_string);
-    ierr_c = MPI_Add_error_string(OMPI_FINT_2_INT(*errorcode), c_string);
+    ierr_c = PMPI_Add_error_string(OMPI_FINT_2_INT(*errorcode), c_string);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(ierr_c);
     free(c_string);
 }

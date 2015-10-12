@@ -107,9 +107,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_WIN_SHARED_QUERY_CPTR,
 #define ompi_win_shared_query_cptr_f pompi_win_shared_query_cptr_f
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Win_shared_query PMPI_Win_shared_query
-#endif
 
 void ompi_win_shared_query_f(MPI_Fint *win, MPI_Fint *rank, MPI_Aint *size,
                              MPI_Fint *disp_unit, char *baseptr,
@@ -118,9 +115,9 @@ void ompi_win_shared_query_f(MPI_Fint *win, MPI_Fint *rank, MPI_Aint *size,
     int c_ierr;
     MPI_Win c_win;
 
-    c_win = MPI_Win_f2c(*win);
+    c_win = PMPI_Win_f2c(*win);
 
-    c_ierr = MPI_Win_shared_query(c_win, OMPI_FINT_2_INT(*rank), size,
+    c_ierr = PMPI_Win_shared_query(c_win, OMPI_FINT_2_INT(*rank), size,
                                   OMPI_FINT_2_INT(disp_unit), baseptr);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 }

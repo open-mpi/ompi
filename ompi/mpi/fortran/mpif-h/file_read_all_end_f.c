@@ -69,20 +69,17 @@ OMPI_GENERATE_F77_BINDINGS (MPI_FILE_READ_ALL_END,
 #define ompi_file_read_all_end_f pompi_file_read_all_end_f
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_File_read_all_end PMPI_File_read_all_end
-#endif
 
 void ompi_file_read_all_end_f(MPI_Fint *fh, char *buf, MPI_Fint *status,
 			     MPI_Fint *ierr)
 {
     int c_ierr;
     OMPI_FORTRAN_STATUS_DECLARATION(c_status,c_status2)
-    MPI_File c_fh = MPI_File_f2c(*fh);
+    MPI_File c_fh = PMPI_File_f2c(*fh);
 
     OMPI_FORTRAN_STATUS_SET_POINTER(c_status,c_status2,status)
 
-    c_ierr = MPI_File_read_all_end(c_fh, buf, c_status);
+    c_ierr = PMPI_File_read_all_end(c_fh, buf, c_status);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     OMPI_FORTRAN_STATUS_RETURN(c_status,c_status2,status,c_ierr)

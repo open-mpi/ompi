@@ -68,9 +68,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_FILE_DELETE,
 #define ompi_file_delete_f pompi_file_delete_f
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_File_delete PMPI_File_delete
-#endif
 
 void ompi_file_delete_f(char *filename, MPI_Fint *info, MPI_Fint *ierr, int filename_len)
 {
@@ -78,7 +75,7 @@ void ompi_file_delete_f(char *filename, MPI_Fint *info, MPI_Fint *ierr, int file
     char *c_filename;
     int c_ierr, ret;
 
-    c_info = MPI_Info_f2c(*info);
+    c_info = PMPI_Info_f2c(*info);
 
     /* Convert the fortran string */
     if (OMPI_SUCCESS != (ret = ompi_fortran_string_f2c(filename, filename_len,
@@ -88,7 +85,7 @@ void ompi_file_delete_f(char *filename, MPI_Fint *info, MPI_Fint *ierr, int file
         return;
     }
 
-    c_ierr = MPI_File_delete(c_filename, c_info);
+    c_ierr = PMPI_File_delete(c_filename, c_info);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     free(c_filename);

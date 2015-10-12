@@ -67,9 +67,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_PACK,
 #define ompi_pack_f pompi_pack_f
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Pack PMPI_Pack
-#endif
 
 void ompi_pack_f(char *inbuf, MPI_Fint *incount, MPI_Fint *datatype,
 		char *outbuf, MPI_Fint *outsize, MPI_Fint *position,
@@ -80,11 +77,11 @@ void ompi_pack_f(char *inbuf, MPI_Fint *incount, MPI_Fint *datatype,
    MPI_Datatype c_type;
    OMPI_SINGLE_NAME_DECL(position);
 
-   c_comm = MPI_Comm_f2c(*comm);
-   c_type = MPI_Type_f2c(*datatype);
+   c_comm = PMPI_Comm_f2c(*comm);
+   c_type = PMPI_Type_f2c(*datatype);
    OMPI_SINGLE_FINT_2_INT(position);
 
-   c_ierr = MPI_Pack(OMPI_F2C_BOTTOM(inbuf), OMPI_FINT_2_INT(*incount),
+   c_ierr = PMPI_Pack(OMPI_F2C_BOTTOM(inbuf), OMPI_FINT_2_INT(*incount),
                      c_type, outbuf,
                      OMPI_FINT_2_INT(*outsize),
                      OMPI_SINGLE_NAME_CONVERT(position),

@@ -69,22 +69,19 @@ OMPI_GENERATE_F77_BINDINGS (MPI_FILE_WRITE_SHARED,
 #define ompi_file_write_shared_f pompi_file_write_shared_f
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_File_write_shared PMPI_File_write_shared
-#endif
 
 void ompi_file_write_shared_f(MPI_Fint *fh, char *buf, MPI_Fint *count,
 			     MPI_Fint *datatype, MPI_Fint *status,
 			     MPI_Fint *ierr)
 {
    int c_ierr;
-   MPI_File c_fh = MPI_File_f2c(*fh);
-   MPI_Datatype c_type = MPI_Type_f2c(*datatype);
+   MPI_File c_fh = PMPI_File_f2c(*fh);
+   MPI_Datatype c_type = PMPI_Type_f2c(*datatype);
     OMPI_FORTRAN_STATUS_DECLARATION(c_status,c_status2)
 
     OMPI_FORTRAN_STATUS_SET_POINTER(c_status,c_status2,status)
 
-   c_ierr = MPI_File_write_shared(c_fh,
+   c_ierr = PMPI_File_write_shared(c_fh,
                                   OMPI_F2C_BOTTOM(buf),
                                   OMPI_FINT_2_INT(*count),
                                   c_type,

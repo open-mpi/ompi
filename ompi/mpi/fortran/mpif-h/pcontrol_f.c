@@ -66,11 +66,8 @@ OMPI_GENERATE_F77_BINDINGS (MPI_PCONTROL,
 #define ompi_pcontrol_f pompi_pcontrol_f
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Pcontrol PMPI_Pcontrol
-#endif
 
 void ompi_pcontrol_f(MPI_Fint *level)
 {
-    MPI_Pcontrol(OMPI_FINT_2_INT(*level));
+    PMPI_Pcontrol(OMPI_FINT_2_INT(*level));
 }

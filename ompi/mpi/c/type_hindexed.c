@@ -34,10 +34,6 @@
 #define MPI_Type_hindexed PMPI_Type_hindexed
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Type_create_hindexed PMPI_Type_create_hindexed
-#endif
-
 static const char FUNC_NAME[] = "MPI_Type_hindexed";
 
 
@@ -75,7 +71,7 @@ int MPI_Type_hindexed(int count,
       }
    }
 
-   return MPI_Type_create_hindexed(count,
+   return PMPI_Type_create_hindexed(count,
                                    array_of_blocklengths,
                                    array_of_displacements,
                                    oldtype,

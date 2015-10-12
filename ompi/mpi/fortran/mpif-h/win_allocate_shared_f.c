@@ -107,9 +107,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_WIN_ALLOCATE_SHARED_CPTR,
 #define ompi_win_allocate_shared_cptr_f pompi_win_allocate_shared_cptr_f
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Win_allocate_shared PMPI_Win_allocate_shared
-#endif
 
 void ompi_win_allocate_shared_f(MPI_Aint *size, MPI_Fint *disp_unit,
                                 MPI_Fint *info, MPI_Fint *comm, char *baseptr,
@@ -120,13 +117,13 @@ void ompi_win_allocate_shared_f(MPI_Aint *size, MPI_Fint *disp_unit,
     MPI_Comm c_comm;
     MPI_Win c_win;
 
-    c_info = MPI_Info_f2c(*info);
-    c_comm = MPI_Comm_f2c(*comm);
+    c_info = PMPI_Info_f2c(*info);
+    c_comm = PMPI_Comm_f2c(*comm);
 
-    c_ierr = MPI_Win_allocate_shared(*size, OMPI_FINT_2_INT(*disp_unit),
+    c_ierr = PMPI_Win_allocate_shared(*size, OMPI_FINT_2_INT(*disp_unit),
                                      c_info, c_comm,
                                      baseptr, &c_win);
-    *win = MPI_Win_c2f(c_win);
+    *win = PMPI_Win_c2f(c_win);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 }
 

@@ -67,9 +67,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_COMM_ACCEPT,
 #define ompi_comm_accept_f pompi_comm_accept_f
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Comm_accept PMPI_Comm_accept
-#endif
 
 void ompi_comm_accept_f(char *port_name, MPI_Fint *info, MPI_Fint *root,
 		       MPI_Fint *comm, MPI_Fint *newcomm, MPI_Fint *ierr,
@@ -80,18 +77,18 @@ void ompi_comm_accept_f(char *port_name, MPI_Fint *info, MPI_Fint *root,
     MPI_Info c_info;
     char *c_port_name;
 
-    c_comm = MPI_Comm_f2c(*comm);
-    c_info = MPI_Info_f2c(*info);
+    c_comm = PMPI_Comm_f2c(*comm);
+    c_info = PMPI_Info_f2c(*info);
     ompi_fortran_string_f2c(port_name, port_name_len, &c_port_name);
 
 
-    c_ierr = MPI_Comm_accept(c_port_name, c_info,
+    c_ierr = PMPI_Comm_accept(c_port_name, c_info,
                              OMPI_FINT_2_INT(*root),
                              c_comm, &c_new_comm);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {
-        *newcomm = MPI_Comm_c2f(c_new_comm);
+        *newcomm = PMPI_Comm_c2f(c_new_comm);
     }
     free ( c_port_name );
 }

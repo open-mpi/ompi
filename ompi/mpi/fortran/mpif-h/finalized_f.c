@@ -66,16 +66,13 @@ OMPI_GENERATE_F77_BINDINGS (MPI_FINALIZED,
 #define ompi_finalized_f pompi_finalized_f
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Finalized PMPI_Finalized
-#endif
 
 void ompi_finalized_f(ompi_fortran_logical_t *flag, MPI_Fint *ierr)
 {
     int c_ierr;
     OMPI_LOGICAL_NAME_DECL(flag);
 
-    c_ierr = MPI_Finalized(OMPI_LOGICAL_SINGLE_NAME_CONVERT(flag));
+    c_ierr = PMPI_Finalized(OMPI_LOGICAL_SINGLE_NAME_CONVERT(flag));
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {

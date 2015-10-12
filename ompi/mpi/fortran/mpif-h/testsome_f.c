@@ -69,9 +69,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TESTSOME,
 #define ompi_testsome_f pompi_testsome_f
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Testsome PMPI_Testsome
-#endif
 
 static const char FUNC_NAME[] = "MPI_TESTSOME";
 
@@ -106,11 +103,11 @@ void ompi_testsome_f(MPI_Fint *incount, MPI_Fint *array_of_requests,
     c_status = (MPI_Status*) (c_req + OMPI_FINT_2_INT(*incount));
 
     for (i = 0; i < OMPI_FINT_2_INT(*incount); ++i) {
-        c_req[i] = MPI_Request_f2c(array_of_requests[i]);
+        c_req[i] = PMPI_Request_f2c(array_of_requests[i]);
     }
 
     OMPI_ARRAY_FINT_2_INT_ALLOC(array_of_indices, OMPI_FINT_2_INT(*incount));
-    c_ierr = MPI_Testsome(OMPI_FINT_2_INT(*incount), c_req,
+    c_ierr = PMPI_Testsome(OMPI_FINT_2_INT(*incount), c_req,
                           OMPI_SINGLE_NAME_CONVERT(outcount),
                           OMPI_ARRAY_NAME_CONVERT(array_of_indices),
                           c_status);
@@ -130,7 +127,7 @@ void ompi_testsome_f(MPI_Fint *incount, MPI_Fint *array_of_requests,
         if (!OMPI_IS_FORTRAN_STATUSES_IGNORE(array_of_statuses)) {
             for (i = 0; i < OMPI_FINT_2_INT(*outcount); ++i) {
                 if (!OMPI_IS_FORTRAN_STATUS_IGNORE(&array_of_statuses[i])) {
-                    MPI_Status_c2f(&c_status[i], &array_of_statuses[i * (sizeof(MPI_Status) / sizeof(int))]);
+                    PMPI_Status_c2f(&c_status[i], &array_of_statuses[i * (sizeof(MPI_Status) / sizeof(int))]);
                 }
             }
         }

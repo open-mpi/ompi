@@ -66,17 +66,14 @@ OMPI_GENERATE_F77_BINDINGS (MPI_WIN_LOCK,
 #define ompi_win_lock_f pompi_win_lock_f
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Win_lock PMPI_Win_lock
-#endif
 
 void ompi_win_lock_f(MPI_Fint *lock_type, MPI_Fint *rank,
 		    MPI_Fint *assert, MPI_Fint *win, MPI_Fint *ierr)
 {
     int c_ierr;
-    MPI_Win c_win = MPI_Win_f2c(*win);
+    MPI_Win c_win = PMPI_Win_f2c(*win);
 
-    c_ierr = MPI_Win_lock(OMPI_FINT_2_INT(*lock_type),
+    c_ierr = PMPI_Win_lock(OMPI_FINT_2_INT(*lock_type),
                           OMPI_FINT_2_INT(*rank),
                           OMPI_FINT_2_INT(*assert),
                           c_win);

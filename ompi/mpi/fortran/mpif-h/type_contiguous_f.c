@@ -66,21 +66,18 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_CONTIGUOUS,
 #define ompi_type_contiguous_f pompi_type_contiguous_f
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Type_contiguous PMPI_Type_contiguous
-#endif
 
 void ompi_type_contiguous_f(MPI_Fint *count, MPI_Fint *oldtype,
 			   MPI_Fint *newtype, MPI_Fint *ierr)
 {
     int c_ierr;
-    MPI_Datatype c_old = MPI_Type_f2c(*oldtype);
+    MPI_Datatype c_old = PMPI_Type_f2c(*oldtype);
     MPI_Datatype c_new;
 
-    c_ierr = MPI_Type_contiguous(OMPI_FINT_2_INT(*count), c_old, &c_new);
+    c_ierr = PMPI_Type_contiguous(OMPI_FINT_2_INT(*count), c_old, &c_new);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {
-        *newtype = MPI_Type_c2f(c_new);
+        *newtype = PMPI_Type_c2f(c_new);
     }
 }

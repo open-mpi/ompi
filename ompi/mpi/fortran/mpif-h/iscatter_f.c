@@ -67,9 +67,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_ISCATTER,
 #define ompi_iscatter_f pompi_iscatter_f
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Iscatter PMPI_Iscatter
-#endif
 
 void ompi_iscatter_f(char *sendbuf, MPI_Fint *sendcount,
                      MPI_Fint *sendtype, char *recvbuf,
@@ -80,20 +77,20 @@ void ompi_iscatter_f(char *sendbuf, MPI_Fint *sendcount,
     int c_ierr;
     MPI_Datatype c_sendtype, c_recvtype;
     MPI_Request c_request;
-    MPI_Comm c_comm = MPI_Comm_f2c(*comm);
+    MPI_Comm c_comm = PMPI_Comm_f2c(*comm);
 
-    c_sendtype = MPI_Type_f2c(*sendtype);
-    c_recvtype = MPI_Type_f2c(*recvtype);
+    c_sendtype = PMPI_Type_f2c(*sendtype);
+    c_recvtype = PMPI_Type_f2c(*recvtype);
 
     sendbuf = (char *) OMPI_F2C_IN_PLACE(sendbuf);
     sendbuf = (char *) OMPI_F2C_BOTTOM(sendbuf);
     recvbuf = (char *) OMPI_F2C_BOTTOM(recvbuf);
 
-    c_ierr = MPI_Iscatter(sendbuf,OMPI_FINT_2_INT(*sendcount),
+    c_ierr = PMPI_Iscatter(sendbuf,OMPI_FINT_2_INT(*sendcount),
                           c_sendtype, recvbuf,
                           OMPI_FINT_2_INT(*recvcount),
                           c_recvtype,
                           OMPI_FINT_2_INT(*root), c_comm, &c_request);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
-    if (MPI_SUCCESS == c_ierr) *request = MPI_Request_c2f(c_request);
+    if (MPI_SUCCESS == c_ierr) *request = PMPI_Request_c2f(c_request);
 }

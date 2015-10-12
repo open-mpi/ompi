@@ -67,9 +67,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_SCATTER,
 #define ompi_scatter_f pompi_scatter_f
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Scatter PMPI_Scatter
-#endif
 
 void ompi_scatter_f(char *sendbuf, MPI_Fint *sendcount,
 		   MPI_Fint *sendtype, char *recvbuf,
@@ -78,16 +75,16 @@ void ompi_scatter_f(char *sendbuf, MPI_Fint *sendcount,
 {
     int c_ierr;
     MPI_Datatype c_sendtype, c_recvtype;
-    MPI_Comm c_comm = MPI_Comm_f2c(*comm);
+    MPI_Comm c_comm = PMPI_Comm_f2c(*comm);
 
-    c_sendtype = MPI_Type_f2c(*sendtype);
-    c_recvtype = MPI_Type_f2c(*recvtype);
+    c_sendtype = PMPI_Type_f2c(*sendtype);
+    c_recvtype = PMPI_Type_f2c(*recvtype);
 
     sendbuf = (char *) OMPI_F2C_BOTTOM(sendbuf);
     recvbuf = (char *) OMPI_F2C_IN_PLACE(recvbuf);
     recvbuf = (char *) OMPI_F2C_BOTTOM(recvbuf);
 
-    c_ierr = MPI_Scatter(sendbuf,OMPI_FINT_2_INT(*sendcount),
+    c_ierr = PMPI_Scatter(sendbuf,OMPI_FINT_2_INT(*sendcount),
                          c_sendtype, recvbuf,
                          OMPI_FINT_2_INT(*recvcount),
                          c_recvtype,

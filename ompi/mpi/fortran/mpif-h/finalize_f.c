@@ -66,12 +66,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_FINALIZE,
 #define ompi_finalize_f pompi_finalize_f
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Finalize PMPI_Finalize
-#endif
 
 void ompi_finalize_f(MPI_Fint *ierr)
 {
-    int c_ierr = MPI_Finalize();
+    int c_ierr = PMPI_Finalize();
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 }

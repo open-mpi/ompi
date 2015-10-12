@@ -70,9 +70,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_IPROBE,
 #define ompi_iprobe_f pompi_iprobe_f
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Iprobe PMPI_Iprobe
-#endif
 
 void ompi_iprobe_f(MPI_Fint *source, MPI_Fint *tag, MPI_Fint *comm,
                   ompi_fortran_logical_t *flag, MPI_Fint *status, MPI_Fint *ierr)
@@ -82,11 +79,11 @@ void ompi_iprobe_f(MPI_Fint *source, MPI_Fint *tag, MPI_Fint *comm,
     OMPI_FORTRAN_STATUS_DECLARATION(c_status,c_status2)
     OMPI_LOGICAL_NAME_DECL(flag);
 
-    c_comm = MPI_Comm_f2c (*comm);
+    c_comm = PMPI_Comm_f2c (*comm);
 
     OMPI_FORTRAN_STATUS_SET_POINTER(c_status,c_status2,status)
 
-    c_ierr = MPI_Iprobe(OMPI_FINT_2_INT(*source),
+    c_ierr = PMPI_Iprobe(OMPI_FINT_2_INT(*source),
                         OMPI_FINT_2_INT(*tag),
                         c_comm, OMPI_LOGICAL_SINGLE_NAME_CONVERT(flag),
                         c_status);

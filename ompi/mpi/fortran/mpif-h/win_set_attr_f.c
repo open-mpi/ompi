@@ -69,15 +69,11 @@ OMPI_GENERATE_F77_BINDINGS (MPI_WIN_SET_ATTR,
 #define ompi_win_set_attr_f pompi_win_set_attr_f
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Win_set_attr PMPI_Win_set_attr
-#endif
-
 void ompi_win_set_attr_f(MPI_Fint *win, MPI_Fint *win_keyval,
 			MPI_Aint *attribute_val, MPI_Fint *ierr)
 {
     int c_ierr;
-    MPI_Win c_win = MPI_Win_f2c(*win);
+    MPI_Win c_win = PMPI_Win_f2c(*win);
 
     /* This stuff is very confusing.  Be sure to see the comment at
        the top of src/attributes/attributes.c. */

@@ -68,28 +68,25 @@ OMPI_GENERATE_F77_BINDINGS (MPI_FILE_GET_VIEW,
 #define ompi_file_get_view_f pompi_file_get_view_f
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_File_get_view PMPI_File_get_view
-#endif
 
 void ompi_file_get_view_f(MPI_Fint *fh, MPI_Offset *disp,
 			 MPI_Fint *etype, MPI_Fint *filetype,
 			 char *datarep, MPI_Fint *ierr, int datarep_len)
 {
     int c_ierr;
-    MPI_File c_fh = MPI_File_f2c(*fh);
+    MPI_File c_fh = PMPI_File_f2c(*fh);
     MPI_Datatype c_etype, c_filetype;
     MPI_Offset c_disp;
     char c_datarep[MPI_MAX_DATAREP_STRING];
 
-    c_ierr = MPI_File_get_view(c_fh, &c_disp, &c_etype,
+    c_ierr = PMPI_File_get_view(c_fh, &c_disp, &c_etype,
                                &c_filetype, c_datarep);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {
         *disp = (MPI_Offset) c_disp;
-        *etype = MPI_Type_c2f(c_etype);
-        *filetype = MPI_Type_c2f(c_filetype);
+        *etype = PMPI_Type_c2f(c_etype);
+        *filetype = PMPI_Type_c2f(c_filetype);
         ompi_fortran_string_c2f(c_datarep, datarep, datarep_len);
     }
 }

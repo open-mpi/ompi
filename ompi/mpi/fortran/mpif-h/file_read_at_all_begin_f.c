@@ -67,19 +67,16 @@ OMPI_GENERATE_F77_BINDINGS (MPI_FILE_READ_AT_ALL_BEGIN,
 #define ompi_file_read_at_all_begin_f pompi_file_read_at_all_begin_f
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_File_read_at_all_begin PMPI_File_read_at_all_begin
-#endif
 
 void ompi_file_read_at_all_begin_f(MPI_Fint *fh, MPI_Offset *offset,
 				  char *buf, MPI_Fint *count,
 				  MPI_Fint *datatype, MPI_Fint *ierr)
 {
    int c_ierr;
-   MPI_File c_fh = MPI_File_f2c(*fh);
-   MPI_Datatype c_type = MPI_Type_f2c(*datatype);
+   MPI_File c_fh = PMPI_File_f2c(*fh);
+   MPI_Datatype c_type = PMPI_Type_f2c(*datatype);
 
-   c_ierr = MPI_File_read_at_all_begin(c_fh,
+   c_ierr = PMPI_File_read_at_all_begin(c_fh,
                                        (MPI_Offset) *offset,
                                        OMPI_F2C_BOTTOM(buf),
                                        OMPI_FINT_2_INT(*count),

@@ -68,9 +68,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_ACCUMULATE,
 #define ompi_accumulate_f pompi_accumulate_f
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Accumulate PMPI_Accumulate
-#endif
 
 void ompi_accumulate_f(char *origin_addr, MPI_Fint *origin_count,
 		      MPI_Fint *origin_datatype, MPI_Fint *target_rank,
@@ -80,18 +77,18 @@ void ompi_accumulate_f(char *origin_addr, MPI_Fint *origin_count,
 {
     int ierr_c;
 
-    MPI_Datatype c_origin_datatype = MPI_Type_f2c(*origin_datatype);
-    MPI_Datatype c_target_datatype = MPI_Type_f2c(*target_datatype);
-    MPI_Win c_win = MPI_Win_f2c(*win);
-    MPI_Op c_op = MPI_Op_f2c(*op);
+    MPI_Datatype c_origin_datatype = PMPI_Type_f2c(*origin_datatype);
+    MPI_Datatype c_target_datatype = PMPI_Type_f2c(*target_datatype);
+    MPI_Win c_win = PMPI_Win_f2c(*win);
+    MPI_Op c_op = PMPI_Op_f2c(*op);
 
-    ierr_c = MPI_Accumulate(OMPI_F2C_BOTTOM(origin_addr),
-                            OMPI_FINT_2_INT(*origin_count),
-                            c_origin_datatype,
-                            OMPI_FINT_2_INT(*target_rank),
-                            *target_disp,
-                            OMPI_FINT_2_INT(*target_count),
-                            c_target_datatype, c_op, c_win);
+    ierr_c = PMPI_Accumulate(OMPI_F2C_BOTTOM(origin_addr),
+                             OMPI_FINT_2_INT(*origin_count),
+                             c_origin_datatype,
+                             OMPI_FINT_2_INT(*target_rank),
+                             *target_disp,
+                             OMPI_FINT_2_INT(*target_count),
+                             c_target_datatype, c_op, c_win);
 
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(ierr_c);
 }

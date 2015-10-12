@@ -67,9 +67,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_IREDUCE_SCATTER,
 #define ompi_ireduce_scatter_f pompi_ireduce_scatter_f
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Ireduce_scatter PMPI_Ireduce_scatter
-#endif
 
 void ompi_ireduce_scatter_f(char *sendbuf, char *recvbuf,
                             MPI_Fint *recvcounts, MPI_Fint *datatype,
@@ -84,20 +81,20 @@ void ompi_ireduce_scatter_f(char *sendbuf, char *recvbuf,
     int size;
     OMPI_ARRAY_NAME_DECL(recvcounts);
 
-    c_comm = MPI_Comm_f2c(*comm);
-    c_type = MPI_Type_f2c(*datatype);
-    c_op = MPI_Op_f2c(*op);
+    c_comm = PMPI_Comm_f2c(*comm);
+    c_type = PMPI_Type_f2c(*datatype);
+    c_op = PMPI_Op_f2c(*op);
 
-    MPI_Comm_size(c_comm, &size);
+    PMPI_Comm_size(c_comm, &size);
     OMPI_ARRAY_FINT_2_INT(recvcounts, size);
 
     sendbuf = (char *) OMPI_F2C_IN_PLACE(sendbuf);
     sendbuf = (char *) OMPI_F2C_BOTTOM(sendbuf);
     recvbuf = (char *) OMPI_F2C_BOTTOM(recvbuf);
 
-    c_ierr = MPI_Ireduce_scatter(sendbuf, recvbuf,
+    c_ierr = PMPI_Ireduce_scatter(sendbuf, recvbuf,
                                  OMPI_ARRAY_NAME_CONVERT(recvcounts),
                                  c_type, c_op, c_comm, &c_request);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
-    if (MPI_SUCCESS == c_ierr) *request = MPI_Request_c2f(c_request);
+    if (MPI_SUCCESS == c_ierr) *request = PMPI_Request_c2f(c_request);
 }

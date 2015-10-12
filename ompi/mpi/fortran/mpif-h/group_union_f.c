@@ -67,9 +67,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_GROUP_UNION,
 #define ompi_group_union_f pompi_group_union_f
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Group_union PMPI_Group_union
-#endif
 
 void ompi_group_union_f(MPI_Fint *group1, MPI_Fint *group2, MPI_Fint *newgroup, MPI_Fint *ierr)
 {
@@ -77,10 +74,10 @@ void ompi_group_union_f(MPI_Fint *group1, MPI_Fint *group2, MPI_Fint *newgroup, 
   ompi_group_t *c_group1, *c_group2, *c_newgroup;
 
   /* Make the fortran to c representation conversion */
-  c_group1 = MPI_Group_f2c(*group1);
-  c_group2 = MPI_Group_f2c(*group2);
+  c_group1 = PMPI_Group_f2c(*group1);
+  c_group2 = PMPI_Group_f2c(*group2);
 
-  c_ierr = MPI_Group_union(c_group1, c_group2, &c_newgroup);
+  c_ierr = PMPI_Group_union(c_group1, c_group2, &c_newgroup);
   if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
   /* translate the results from c to fortran */

@@ -67,14 +67,11 @@ OMPI_GENERATE_F77_BINDINGS (MPI_GET_COUNT,
 #define ompi_get_count_f pompi_get_count_f
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Get_count PMPI_Get_count
-#endif
 
 void ompi_get_count_f(MPI_Fint *status, MPI_Fint *datatype, MPI_Fint *count, MPI_Fint *ierr)
 {
     int c_ierr;
-    MPI_Datatype c_type = MPI_Type_f2c(*datatype);
+    MPI_Datatype c_type = PMPI_Type_f2c(*datatype);
     MPI_Status   c_status;
     OMPI_SINGLE_NAME_DECL(count);
 
@@ -82,10 +79,10 @@ void ompi_get_count_f(MPI_Fint *status, MPI_Fint *datatype, MPI_Fint *count, MPI
         *count = OMPI_INT_2_FINT(0);
         c_ierr = MPI_SUCCESS;
     } else {
-        c_ierr = MPI_Status_f2c(status, &c_status);
+        c_ierr = PMPI_Status_f2c(status, &c_status);
 
         if (MPI_SUCCESS == c_ierr) {
-            c_ierr = MPI_Get_count(&c_status, c_type,
+            c_ierr = PMPI_Get_count(&c_status, c_type,
                                    OMPI_SINGLE_NAME_CONVERT(count));
             OMPI_SINGLE_INT_2_FINT(count);
         }

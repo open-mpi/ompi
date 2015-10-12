@@ -66,16 +66,13 @@ OMPI_GENERATE_F77_BINDINGS (MPI_QUERY_THREAD,
 #define ompi_query_thread_f pompi_query_thread_f
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Query_thread PMPI_Query_thread
-#endif
 
 void ompi_query_thread_f(MPI_Fint *provided, MPI_Fint *ierr)
 {
     int c_ierr;
     OMPI_SINGLE_NAME_DECL(provided);
 
-    c_ierr = MPI_Query_thread(OMPI_SINGLE_NAME_CONVERT(provided));
+    c_ierr = PMPI_Query_thread(OMPI_SINGLE_NAME_CONVERT(provided));
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {

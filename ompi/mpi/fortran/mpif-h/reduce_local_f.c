@@ -67,9 +67,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_REDUCE_LOCAL,
 #define ompi_reduce_local_f pompi_reduce_local_f
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Reduce_local PMPI_Reduce_local
-#endif
 
 void ompi_reduce_local_f(char *inbuf, char *inoutbuf, MPI_Fint *count,
                         MPI_Fint *datatype, MPI_Fint *op, MPI_Fint *ierr)
@@ -78,13 +75,13 @@ void ompi_reduce_local_f(char *inbuf, char *inoutbuf, MPI_Fint *count,
     MPI_Datatype c_type;
     MPI_Op c_op;
 
-    c_type = MPI_Type_f2c(*datatype);
-    c_op = MPI_Op_f2c(*op);
+    c_type = PMPI_Type_f2c(*datatype);
+    c_op = PMPI_Op_f2c(*op);
 
     inbuf = (char *) OMPI_F2C_BOTTOM(inbuf);
     inoutbuf = (char *) OMPI_F2C_BOTTOM(inoutbuf);
 
-    c_ierr = MPI_Reduce_local(inbuf, inoutbuf,
+    c_ierr = PMPI_Reduce_local(inbuf, inoutbuf,
                               OMPI_FINT_2_INT(*count),
                               c_type, c_op);
    if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);

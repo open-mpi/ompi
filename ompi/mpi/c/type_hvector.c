@@ -34,10 +34,6 @@
 #define MPI_Type_hvector PMPI_Type_hvector
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Type_create_hvector PMPI_Type_create_hvector
-#endif
-
 static const char FUNC_NAME[] = "MPI_Type_hvector";
 
 
@@ -66,7 +62,7 @@ int MPI_Type_hvector(int count,
       }
    }
 
-   return MPI_Type_create_hvector(count,
+   return PMPI_Type_create_hvector(count,
                                   blocklength,
                                   stride,
                                   oldtype,

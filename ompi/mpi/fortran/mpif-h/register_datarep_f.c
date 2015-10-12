@@ -74,10 +74,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_REGISTER_DATAREP,
 #define ompi_register_datarep_f pompi_register_datarep_f
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Register_datarep PMPI_Register_datarep
-#endif
-
 static const char FUNC_NAME[] = "MPI_REGISTER_DATAREP";
 
 /* Intercept functions used below (see below for explanations in
@@ -170,9 +166,9 @@ void ompi_register_datarep_f(char *datarep,
 
     /* Convert the Fortran function callbacks to C equivalents.  Use
        local intercepts if they're not MPI_CONVERSION_FN_NULL so that
-       we can just call the C MPI API MPI_Register_datarep().  If they
+       we can just call the C MPI API PMPI_Register_datarep().  If they
        *are* MPI_CONVERSION_FN_NULL, then just pass that to
-       MPI_Register_datarep so that it becomes a no-op (i.e., no
+       PMPI_Register_datarep so that it becomes a no-op (i.e., no
        callback is ever triggered). */
     if (OMPI_IS_FORTRAN_CONVERSION_FN_NULL(read_fn_f77)) {
         /* Can't use the MPI_CONVERSION_FN_NULL macro here because it
@@ -198,7 +194,7 @@ void ompi_register_datarep_f(char *datarep,
     /* Now that the intercept data has been setup, call the C function
        with the setup intercept routines and the intercept-specific
        data/extra state. */
-    c_ierr = MPI_Register_datarep(c_datarep,
+    c_ierr = PMPI_Register_datarep(c_datarep,
                                   read_fn_c, write_fn_c,
                                   extent_intercept_fn,
                                   intercept);
@@ -214,7 +210,7 @@ static int read_intercept_fn(void *userbuf, MPI_Datatype type_c, int count_c,
                              void *extra_state)
 {
     MPI_Fint ierr, count_f77 = OMPI_FINT_2_INT(count_c);
-    MPI_Fint type_f77 = MPI_Type_c2f(type_c);
+    MPI_Fint type_f77 = PMPI_Type_c2f(type_c);
     intercept_extra_state_t *intercept_data =
         (intercept_extra_state_t*) extra_state;
 
@@ -232,7 +228,7 @@ static int write_intercept_fn(void *userbuf, MPI_Datatype type_c, int count_c,
                              void *extra_state)
 {
     MPI_Fint ierr, count_f77 = OMPI_FINT_2_INT(count_c);
-    MPI_Fint type_f77 = MPI_Type_c2f(type_c);
+    MPI_Fint type_f77 = PMPI_Type_c2f(type_c);
     intercept_extra_state_t *intercept_data =
         (intercept_extra_state_t*) extra_state;
 
@@ -248,7 +244,7 @@ static int write_intercept_fn(void *userbuf, MPI_Datatype type_c, int count_c,
 static int extent_intercept_fn(MPI_Datatype type_c, MPI_Aint *file_extent_f77,
                                void *extra_state)
 {
-    MPI_Fint ierr, type_f77 = MPI_Type_c2f(type_c);
+    MPI_Fint ierr, type_f77 = PMPI_Type_c2f(type_c);
     intercept_extra_state_t *intercept_data =
         (intercept_extra_state_t*) extra_state;
 

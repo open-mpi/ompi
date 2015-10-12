@@ -66,9 +66,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_FILE_GET_ERRHANDLER,
 #define ompi_file_get_errhandler_f pompi_file_get_errhandler_f
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_File_get_errhandler PMPI_File_get_errhandler
-#endif
 
 void ompi_file_get_errhandler_f(MPI_Fint *fh, MPI_Fint *errhandler, MPI_Fint *ierr)
 {
@@ -76,12 +73,12 @@ void ompi_file_get_errhandler_f(MPI_Fint *fh, MPI_Fint *errhandler, MPI_Fint *ie
     MPI_File c_fh;
     MPI_Errhandler c_errhandler;
 
-    c_fh = MPI_File_f2c(*fh);
+    c_fh = PMPI_File_f2c(*fh);
 
-    c_ierr = MPI_File_get_errhandler(c_fh, &c_errhandler);
+    c_ierr = PMPI_File_get_errhandler(c_fh, &c_errhandler);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {
-        *errhandler = MPI_Errhandler_c2f(c_errhandler);
+        *errhandler = PMPI_Errhandler_c2f(c_errhandler);
     }
 }

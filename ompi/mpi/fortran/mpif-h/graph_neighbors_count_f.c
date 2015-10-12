@@ -66,9 +66,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_GRAPH_NEIGHBORS_COUNT,
 #define ompi_graph_neighbors_count_f pompi_graph_neighbors_count_f
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Graph_neighbors_count PMPI_Graph_neighbors_count
-#endif
 
 void ompi_graph_neighbors_count_f(MPI_Fint *comm, MPI_Fint *rank,
 				 MPI_Fint *nneighbors, MPI_Fint *ierr)
@@ -77,9 +74,9 @@ void ompi_graph_neighbors_count_f(MPI_Fint *comm, MPI_Fint *rank,
     MPI_Comm c_comm;
     OMPI_SINGLE_NAME_DECL(nneighbors);
 
-    c_comm = MPI_Comm_f2c(*comm);
+    c_comm = PMPI_Comm_f2c(*comm);
 
-    c_ierr = MPI_Graph_neighbors_count(c_comm,
+    c_ierr = PMPI_Graph_neighbors_count(c_comm,
                                        OMPI_FINT_2_INT(*rank),
                                        OMPI_SINGLE_NAME_CONVERT(nneighbors));
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);

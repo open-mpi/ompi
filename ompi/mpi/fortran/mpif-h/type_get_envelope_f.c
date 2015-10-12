@@ -66,9 +66,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_GET_ENVELOPE,
 #define ompi_type_get_envelope_f pompi_type_get_envelope_f
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Type_get_envelope PMPI_Type_get_envelope
-#endif
 
 void ompi_type_get_envelope_f(MPI_Fint *type, MPI_Fint *num_integers,
 			     MPI_Fint *num_addresses,
@@ -76,13 +73,13 @@ void ompi_type_get_envelope_f(MPI_Fint *type, MPI_Fint *num_integers,
 			     MPI_Fint *ierr)
 {
     int c_ierr;
-    MPI_Datatype c_type = MPI_Type_f2c(*type);
+    MPI_Datatype c_type = PMPI_Type_f2c(*type);
     OMPI_SINGLE_NAME_DECL(num_integers);
     OMPI_SINGLE_NAME_DECL(num_addresses);
     OMPI_SINGLE_NAME_DECL(num_datatypes);
     OMPI_SINGLE_NAME_DECL(combiner);
 
-    c_ierr = MPI_Type_get_envelope(c_type,
+    c_ierr = PMPI_Type_get_envelope(c_type,
                                    OMPI_SINGLE_NAME_CONVERT(num_integers),
                                    OMPI_SINGLE_NAME_CONVERT(num_addresses),
                                    OMPI_SINGLE_NAME_CONVERT(num_datatypes),

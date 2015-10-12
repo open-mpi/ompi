@@ -58,20 +58,17 @@ OMPI_GENERATE_F77_BINDINGS (MPI_COMM_GET_INFO,
 #define ompi_comm_get_info_f pompi_comm_get_info_f
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Comm_get_info PMPI_Comm_get_info
-#endif
 
 void ompi_comm_get_info_f(MPI_Fint *comm, MPI_Fint *info_used, MPI_Fint *ierr)
 {
     int c_ierr;
-    MPI_Comm c_comm = MPI_Comm_f2c(*comm);
+    MPI_Comm c_comm = PMPI_Comm_f2c(*comm);
     MPI_Info c_info;
 
-    c_ierr = MPI_Comm_get_info(c_comm, &c_info);
+    c_ierr = PMPI_Comm_get_info(c_comm, &c_info);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {
-        *info_used = MPI_Info_c2f(c_info);
+        *info_used = PMPI_Info_c2f(c_info);
     }
 }

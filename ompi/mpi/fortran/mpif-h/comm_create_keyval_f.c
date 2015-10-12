@@ -67,11 +67,8 @@ OMPI_GENERATE_F77_BINDINGS (MPI_COMM_CREATE_KEYVAL,
 #define ompi_comm_create_keyval_f pompi_comm_create_keyval_f
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Comm_create_keyval PMPI_Comm_create_keyval
-#endif
+static const char FUNC_NAME[] = "MPI_Comm_create_keyval_f";
 
-     static const char FUNC_NAME[] = "MPI_Comm_create_keyval_f";
 
 void ompi_comm_create_keyval_f(ompi_mpi2_fortran_copy_attr_function* comm_copy_attr_fn,
                               ompi_mpi2_fortran_delete_attr_function* comm_delete_attr_fn,

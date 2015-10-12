@@ -69,9 +69,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_GET_PROCESSOR_NAME,
 #define ompi_get_processor_name_f pompi_get_processor_name_f
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Get_processor_name PMPI_Get_processor_name
-#endif
 
 static const char FUNC_NAME[] = "MPI_GET_PROCESSOR_NAME";
 
@@ -87,8 +84,8 @@ void ompi_get_processor_name_f(char *name, MPI_Fint *resultlen, MPI_Fint *ierr,
     char c_name[MPI_MAX_PROCESSOR_NAME];
     OMPI_SINGLE_NAME_DECL(resultlen);
 
-    ierr_c = MPI_Get_processor_name(c_name,
-                                    OMPI_SINGLE_NAME_CONVERT(resultlen));
+    ierr_c = PMPI_Get_processor_name(c_name,
+                                     OMPI_SINGLE_NAME_CONVERT(resultlen));
 
     if (MPI_SUCCESS == ierr_c) {
         OMPI_SINGLE_INT_2_FINT(resultlen);

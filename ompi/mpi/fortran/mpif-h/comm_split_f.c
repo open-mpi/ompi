@@ -66,24 +66,21 @@ OMPI_GENERATE_F77_BINDINGS (MPI_COMM_SPLIT,
 #define ompi_comm_split_f pompi_comm_split_f
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Comm_split PMPI_Comm_split
-#endif
 
 void ompi_comm_split_f(MPI_Fint *comm, MPI_Fint *color, MPI_Fint *key,
 		      MPI_Fint *newcomm, MPI_Fint *ierr)
 {
     int c_ierr;
     MPI_Comm c_newcomm;
-    MPI_Comm c_comm = MPI_Comm_f2c ( *comm );
+    MPI_Comm c_comm = PMPI_Comm_f2c ( *comm );
 
-    c_ierr = MPI_Comm_split(c_comm,
+    c_ierr = PMPI_Comm_split(c_comm,
                             OMPI_FINT_2_INT(*color),
                             OMPI_FINT_2_INT(*key),
                             &c_newcomm );
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {
-        *newcomm = MPI_Comm_c2f (c_newcomm);
+        *newcomm = PMPI_Comm_c2f (c_newcomm);
     }
 }

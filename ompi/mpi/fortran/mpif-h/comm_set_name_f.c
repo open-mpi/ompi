@@ -69,16 +69,13 @@ OMPI_GENERATE_F77_BINDINGS (MPI_COMM_SET_NAME,
 #define ompi_comm_set_name_f pompi_comm_set_name_f
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Comm_set_name PMPI_Comm_set_name
-#endif
 
 void ompi_comm_set_name_f(MPI_Fint *comm, char *comm_name, MPI_Fint *ierr,
                           int name_len)
 {
     int ret, c_ierr;
     char *c_name;
-    MPI_Comm c_comm = MPI_Comm_f2c(*comm);
+    MPI_Comm c_comm = PMPI_Comm_f2c(*comm);
 
     /* Convert the fortran string */
 
@@ -92,7 +89,7 @@ void ompi_comm_set_name_f(MPI_Fint *comm, char *comm_name, MPI_Fint *ierr,
 
     /* Call the C function */
 
-    c_ierr = MPI_Comm_set_name(c_comm, c_name);
+    c_ierr = PMPI_Comm_set_name(c_comm, c_name);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     /* Free the C name */

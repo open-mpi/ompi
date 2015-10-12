@@ -68,9 +68,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_HINDEXED,
 #define ompi_type_hindexed_f pompi_type_hindexed_f
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Type_hindexed PMPI_Type_hindexed
-#endif
 
 static const char FUNC_NAME[] = "MPI_TYPE_HINDEXED";
 
@@ -79,7 +76,7 @@ void ompi_type_hindexed_f(MPI_Fint *count, MPI_Fint *array_of_blocklengths,
 			 MPI_Fint *array_of_displacements,
 			 MPI_Fint *oldtype, MPI_Fint *newtype, MPI_Fint *ierr)
 {
-    MPI_Datatype c_old = MPI_Type_f2c(*oldtype);
+    MPI_Datatype c_old = PMPI_Type_f2c(*oldtype);
     MPI_Datatype c_new;
     MPI_Aint *c_disp_array;
     int i, c_ierr;
@@ -98,7 +95,7 @@ void ompi_type_hindexed_f(MPI_Fint *count, MPI_Fint *array_of_blocklengths,
 
     OMPI_ARRAY_FINT_2_INT(array_of_blocklengths, *count);
 
-    c_ierr = MPI_Type_hindexed(OMPI_FINT_2_INT(*count),
+    c_ierr = PMPI_Type_hindexed(OMPI_FINT_2_INT(*count),
                                OMPI_ARRAY_NAME_CONVERT(array_of_blocklengths),
                                c_disp_array, c_old, &c_new);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
@@ -107,6 +104,6 @@ void ompi_type_hindexed_f(MPI_Fint *count, MPI_Fint *array_of_blocklengths,
     OMPI_ARRAY_FINT_2_INT_CLEANUP(array_of_blocklengths);
 
     if (MPI_SUCCESS == c_ierr) {
-        *newtype = MPI_Type_c2f(c_new);
+        *newtype = PMPI_Type_c2f(c_new);
     }
 }

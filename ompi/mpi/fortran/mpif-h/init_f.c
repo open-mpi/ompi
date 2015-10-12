@@ -75,9 +75,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_INIT,
 #define ompi_init_f pompi_init_f
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Init PMPI_Init
-#endif
 
 void ompi_init_f( MPI_Fint *ierr )
 {
@@ -85,6 +82,6 @@ void ompi_init_f( MPI_Fint *ierr )
     int argc = 0;
     char **argv = NULL;
 
-    c_ierr = MPI_Init( &argc, &argv );
+    c_ierr = PMPI_Init( &argc, &argv );
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 }

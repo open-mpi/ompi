@@ -68,11 +68,8 @@ double mpi_wtime__(void) { return ompi_wtime_f(); }
 #define ompi_wtime_f pompi_wtime_f
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Wtime PMPI_Wtime
-#endif
 
 double ompi_wtime_f(void)
 {
-    return MPI_Wtime();
+    return PMPI_Wtime();
 }

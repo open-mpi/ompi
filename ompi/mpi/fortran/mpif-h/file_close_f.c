@@ -66,21 +66,18 @@ OMPI_GENERATE_F77_BINDINGS (MPI_FILE_CLOSE,
 #define ompi_file_close_f pompi_file_close_f
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_File_close PMPI_File_close
-#endif
 
 void ompi_file_close_f(MPI_Fint *fh, MPI_Fint *ierr)
 {
     int c_ierr;
     MPI_File c_fh;
 
-    c_fh = MPI_File_f2c(*fh);
+    c_fh = PMPI_File_f2c(*fh);
 
-    c_ierr = MPI_File_close(&c_fh);
+    c_ierr = PMPI_File_close(&c_fh);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {
-        *fh = MPI_File_c2f(c_fh);
+        *fh = PMPI_File_c2f(c_fh);
     }
 }

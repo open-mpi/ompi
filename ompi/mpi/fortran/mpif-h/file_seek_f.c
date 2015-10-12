@@ -66,17 +66,14 @@ OMPI_GENERATE_F77_BINDINGS (MPI_FILE_SEEK,
 #define ompi_file_seek_f pompi_file_seek_f
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_File_seek PMPI_File_seek
-#endif
 
 void ompi_file_seek_f(MPI_Fint *fh, MPI_Offset *offset,
 		     MPI_Fint *whence, MPI_Fint *ierr)
 {
     int c_ierr;
-    MPI_File c_fh = MPI_File_f2c(*fh);
+    MPI_File c_fh = PMPI_File_f2c(*fh);
 
-    c_ierr = MPI_File_seek(c_fh, (MPI_Offset) *offset,
+    c_ierr = PMPI_File_seek(c_fh, (MPI_Offset) *offset,
                            OMPI_FINT_2_INT(*whence));
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 }

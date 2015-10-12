@@ -71,9 +71,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_RPUT,
 #define ompi_rput_f pompi_rput_f
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Rput PMPI_Rput
-#endif
 
 void ompi_rput_f(char *origin_addr, MPI_Fint *origin_count,
                  MPI_Fint *origin_datatype, MPI_Fint *target_rank,
@@ -82,12 +79,12 @@ void ompi_rput_f(char *origin_addr, MPI_Fint *origin_count,
                  MPI_Fint *ierr)
 {
     int c_ierr;
-    MPI_Datatype c_origin_datatype = MPI_Type_f2c(*origin_datatype);
-    MPI_Datatype c_target_datatype = MPI_Type_f2c(*target_datatype);
-    MPI_Win c_win = MPI_Win_f2c(*win);
+    MPI_Datatype c_origin_datatype = PMPI_Type_f2c(*origin_datatype);
+    MPI_Datatype c_target_datatype = PMPI_Type_f2c(*target_datatype);
+    MPI_Win c_win = PMPI_Win_f2c(*win);
     MPI_Request c_req;
 
-    c_ierr = MPI_Rput(OMPI_F2C_BOTTOM(origin_addr),
+    c_ierr = PMPI_Rput(OMPI_F2C_BOTTOM(origin_addr),
                       OMPI_FINT_2_INT(*origin_count),
                       c_origin_datatype,
                       OMPI_FINT_2_INT(*target_rank),
@@ -97,6 +94,6 @@ void ompi_rput_f(char *origin_addr, MPI_Fint *origin_count,
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS != c_ierr) {
-        *request = MPI_Request_c2f(c_req);
+        *request = PMPI_Request_c2f(c_req);
     }
 }

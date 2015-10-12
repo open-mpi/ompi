@@ -66,17 +66,14 @@ OMPI_GENERATE_F77_BINDINGS (MPI_BARRIER,
 #define ompi_barrier_f pompi_barrier_f
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Barrier PMPI_Barrier
-#endif
 
 void ompi_barrier_f(MPI_Fint *comm, MPI_Fint *ierr)
 {
     int ierr_c;
     MPI_Comm c_comm;
 
-    c_comm = MPI_Comm_f2c(*comm);
+    c_comm = PMPI_Comm_f2c(*comm);
 
-    ierr_c = MPI_Barrier(c_comm);
+    ierr_c = PMPI_Barrier(c_comm);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(ierr_c);
 }

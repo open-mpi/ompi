@@ -66,20 +66,17 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_DUP,
 #define ompi_type_dup_f pompi_type_dup_f
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Type_dup PMPI_Type_dup
-#endif
 
 void ompi_type_dup_f(MPI_Fint *type, MPI_Fint *newtype, MPI_Fint *ierr)
 {
     int c_ierr;
-    MPI_Datatype c_type = MPI_Type_f2c(*type);
+    MPI_Datatype c_type = PMPI_Type_f2c(*type);
     MPI_Datatype c_new;
 
-    c_ierr = MPI_Type_dup(c_type, &c_new);
+    c_ierr = PMPI_Type_dup(c_type, &c_new);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {
-        *newtype = MPI_Type_c2f(c_new);
+        *newtype = PMPI_Type_c2f(c_new);
     }
 }

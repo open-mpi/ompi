@@ -68,9 +68,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_CREATE_STRUCT,
 #define ompi_type_create_struct_f pompi_type_create_struct_f
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Type_create_struct PMPI_Type_create_struct
-#endif
 
 static const char FUNC_NAME[] = "MPI_TYPE_CREATE_STRUCT";
 
@@ -95,12 +92,12 @@ void ompi_type_create_struct_f(MPI_Fint *count,
     }
 
     for (i = 0; i < *count; i++) {
-        c_type_old_array[i] = MPI_Type_f2c(array_of_types[i]);
+        c_type_old_array[i] = PMPI_Type_f2c(array_of_types[i]);
     }
 
     OMPI_ARRAY_FINT_2_INT(array_of_block_lengths, *count);
 
-    c_ierr = MPI_Type_create_struct(OMPI_FINT_2_INT(*count),
+    c_ierr = PMPI_Type_create_struct(OMPI_FINT_2_INT(*count),
 			   OMPI_ARRAY_NAME_CONVERT(array_of_block_lengths),
                            array_of_displacements, c_type_old_array, &c_new);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
@@ -108,7 +105,7 @@ void ompi_type_create_struct_f(MPI_Fint *count,
     OMPI_ARRAY_FINT_2_INT_CLEANUP(array_of_block_lengths);
 
     if (MPI_SUCCESS == c_ierr) {
-        *newtype = MPI_Type_c2f(c_new);
+        *newtype = PMPI_Type_c2f(c_new);
     }
 
     free(c_type_old_array);

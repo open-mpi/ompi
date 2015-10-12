@@ -67,9 +67,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TEST_CANCELLED,
 #define ompi_test_cancelled_f pompi_test_cancelled_f
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Test_cancelled PMPI_Test_cancelled
-#endif
 
 void ompi_test_cancelled_f(MPI_Fint *status, ompi_fortran_logical_t *flag, MPI_Fint *ierr)
 {
@@ -83,10 +80,10 @@ void ompi_test_cancelled_f(MPI_Fint *status, ompi_fortran_logical_t *flag, MPI_F
         *flag = OMPI_INT_2_LOGICAL(0);
         c_ierr = MPI_SUCCESS;
     } else {
-        c_ierr = MPI_Status_f2c( status, &c_status );
+        c_ierr = PMPI_Status_f2c( status, &c_status );
 
         if (MPI_SUCCESS == c_ierr) {
-            c_ierr = MPI_Test_cancelled(&c_status,
+            c_ierr = PMPI_Test_cancelled(&c_status,
                                         OMPI_LOGICAL_SINGLE_NAME_CONVERT(flag));
 
             OMPI_SINGLE_INT_2_LOGICAL(flag);

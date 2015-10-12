@@ -67,23 +67,20 @@ OMPI_GENERATE_F77_BINDINGS (MPI_WAIT,
 #define ompi_wait_f pompi_wait_f
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Wait PMPI_Wait
-#endif
 
 void ompi_wait_f(MPI_Fint *request, MPI_Fint *status, MPI_Fint *ierr)
 {
     int c_ierr;
-    MPI_Request c_req = MPI_Request_f2c(*request);
+    MPI_Request c_req = PMPI_Request_f2c(*request);
     MPI_Status  c_status;
 
-    c_ierr = MPI_Wait(&c_req, &c_status);
+    c_ierr = PMPI_Wait(&c_req, &c_status);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {
         *request = OMPI_INT_2_FINT(c_req->req_f_to_c_index);
         if (!OMPI_IS_FORTRAN_STATUS_IGNORE(status)) {
-            MPI_Status_c2f(&c_status, status);
+            PMPI_Status_c2f(&c_status, status);
         }
     }
 }
