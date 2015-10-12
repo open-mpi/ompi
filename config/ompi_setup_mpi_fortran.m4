@@ -377,11 +377,11 @@ AC_DEFUN([OMPI_SETUP_MPI_FORTRAN],[
     AS_IF([test $OMPI_TRY_FORTRAN_BINDINGS -ge $OMPI_FORTRAN_USEMPIF08_BINDINGS && \
            test $OMPI_BUILD_FORTRAN_BINDINGS -ge $OMPI_FORTRAN_USEMPIF08_BINDINGS],
           [ # If we don't have PMPI, we won't build mpi_f08 at all
-           AC_MSG_CHECKING([whether PMPI is enabled])
+           AC_MSG_CHECKING([whether PMPI is enabled (needed for mpi_f08)])
            AS_IF([test $WANT_MPI_PROFILING -eq 1],
                  [AC_MSG_RESULT([yes])],
                  [OMPI_BUILD_FORTRAN_BINDINGS=$OMPI_FORTRAN_USEMPI_BINDINGS
-                  AC_MSG_RESULT([no])])])
+                  AC_MSG_RESULT([no (cannot build mpi_f08)])])])
 
     # The overall "_BIND_C" variable will be set to 1 if we have all
     # the necessary forms of BIND(C)
