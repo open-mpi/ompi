@@ -1,6 +1,6 @@
 # -*- shell-script -*-
 #
-# Copyright (c) 2009-2014 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
 #
 # $COPYRIGHT$
@@ -158,7 +158,7 @@ AC_DEFUN([MCA_opal_hwloc_hwloc1110_CONFIG],[
         # headers can be found.
         hwloc_hwloc1110_WRAPPER_EXTRA_LDFLAGS="$HWLOC_EMBEDDED_LDFLAGS"
         hwloc_hwloc1110_WRAPPER_EXTRA_LIBS="$HWLOC_EMBEDDED_LIBS"
-        hwloc_hwloc1110_WRAPPER_EXTRA_CPPFLAGS='-I${includedir}/openmpi/'"$opal_hwloc_hwloc1110_basedir/hwloc/include"
+        hwloc_hwloc1110_WRAPPER_EXTRA_CPPFLAGS='-I${pkgincludedir}/'"$opal_hwloc_hwloc1110_basedir/hwloc/include"
     fi
 
     # Done!
