@@ -65,9 +65,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_PACK_SIZE,
 #endif
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Pack_size PMPI_Pack_size
-#endif
 
 void ompi_pack_size_f(MPI_Fint *incount, MPI_Fint *datatype,
 		     MPI_Fint *comm, MPI_Fint *size, MPI_Fint *ierr)
@@ -77,10 +74,10 @@ void ompi_pack_size_f(MPI_Fint *incount, MPI_Fint *datatype,
     MPI_Datatype c_type;
     OMPI_SINGLE_NAME_DECL(size);
 
-    c_comm = MPI_Comm_f2c(*comm);
-    c_type = MPI_Type_f2c(*datatype);
+    c_comm = PMPI_Comm_f2c(*comm);
+    c_type = PMPI_Type_f2c(*datatype);
 
-    c_ierr = MPI_Pack_size(OMPI_FINT_2_INT(*incount),
+    c_ierr = PMPI_Pack_size(OMPI_FINT_2_INT(*incount),
                            c_type, c_comm,
                            OMPI_SINGLE_NAME_CONVERT(size));
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);

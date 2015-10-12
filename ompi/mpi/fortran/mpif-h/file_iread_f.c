@@ -66,24 +66,21 @@ OMPI_GENERATE_F77_BINDINGS (MPI_FILE_IREAD,
 #endif
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_File_iread PMPI_File_iread
-#endif
 
 void ompi_file_iread_f(MPI_Fint *fh, char *buf, MPI_Fint *count,
 		      MPI_Fint *datatype, MPI_Fint *request, MPI_Fint *ierr)
 {
    int c_ierr;
-   MPI_File c_fh = MPI_File_f2c(*fh);
-   MPI_Datatype c_type = MPI_Type_f2c(*datatype);
+   MPI_File c_fh = PMPI_File_f2c(*fh);
+   MPI_Datatype c_type = PMPI_Type_f2c(*datatype);
    MPI_Request c_request;
 
-   c_ierr = MPI_File_iread(c_fh, OMPI_F2C_BOTTOM(buf),
+   c_ierr = PMPI_File_iread(c_fh, OMPI_F2C_BOTTOM(buf),
                            OMPI_FINT_2_INT(*count),
                            c_type, &c_request);
    if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
    if (MPI_SUCCESS == c_ierr) {
-      *request = MPI_Request_c2f(c_request);
+      *request = PMPI_Request_c2f(c_request);
    }
 }

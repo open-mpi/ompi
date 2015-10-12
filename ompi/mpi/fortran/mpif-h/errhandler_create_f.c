@@ -66,10 +66,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_ERRHANDLER_CREATE,
 #endif
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Errhandler_create PMPI_Errhandler_create
-#endif
-
 void ompi_errhandler_create_f(ompi_errhandler_fortran_handler_fn_t* function,
 			     MPI_Fint *errhandler, MPI_Fint *ierr)
 {

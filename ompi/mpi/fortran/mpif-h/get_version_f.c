@@ -65,9 +65,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_GET_VERSION,
 #endif
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Get_version PMPI_Get_version
-#endif
 
 void ompi_get_version_f(MPI_Fint *version, MPI_Fint *subversion, MPI_Fint *ierr)
 {
@@ -75,7 +72,7 @@ void ompi_get_version_f(MPI_Fint *version, MPI_Fint *subversion, MPI_Fint *ierr)
     OMPI_SINGLE_NAME_DECL(version);
     OMPI_SINGLE_NAME_DECL(subversion);
 
-    c_ierr = MPI_Get_version(OMPI_SINGLE_NAME_CONVERT(version),
+    c_ierr = PMPI_Get_version(OMPI_SINGLE_NAME_CONVERT(version),
                              OMPI_SINGLE_NAME_CONVERT(subversion));
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 

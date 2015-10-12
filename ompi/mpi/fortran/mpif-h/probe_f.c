@@ -69,9 +69,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_PROBE,
 #endif
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Probe PMPI_Probe
-#endif
 
 void ompi_probe_f(MPI_Fint *source, MPI_Fint *tag, MPI_Fint *comm, MPI_Fint *status, MPI_Fint *ierr)
 {
@@ -79,11 +76,11 @@ void ompi_probe_f(MPI_Fint *source, MPI_Fint *tag, MPI_Fint *comm, MPI_Fint *sta
     MPI_Comm c_comm;
     OMPI_FORTRAN_STATUS_DECLARATION(c_status,c_status2)
 
-    c_comm = MPI_Comm_f2c (*comm);
+    c_comm = PMPI_Comm_f2c (*comm);
 
     OMPI_FORTRAN_STATUS_SET_POINTER(c_status,c_status2,status)
 
-    c_ierr = MPI_Probe(OMPI_FINT_2_INT(*source),
+    c_ierr = PMPI_Probe(OMPI_FINT_2_INT(*source),
                        OMPI_FINT_2_INT(*tag),
                        c_comm, c_status);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);

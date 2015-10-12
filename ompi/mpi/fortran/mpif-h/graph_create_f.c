@@ -65,9 +65,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_GRAPH_CREATE,
 #endif
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Graph_create PMPI_Graph_create
-#endif
 
 void ompi_graph_create_f(MPI_Fint *comm_old, MPI_Fint *nnodes,
                         MPI_Fint *indx, MPI_Fint *edges,
@@ -79,14 +76,14 @@ void ompi_graph_create_f(MPI_Fint *comm_old, MPI_Fint *nnodes,
     OMPI_ARRAY_NAME_DECL(indx);
     OMPI_ARRAY_NAME_DECL(edges);
 
-    c_comm_old = MPI_Comm_f2c(*comm_old);
+    c_comm_old = PMPI_Comm_f2c(*comm_old);
 
     OMPI_ARRAY_FINT_2_INT(indx, *nnodes);
 
     /* Number of edges is equal to the last entry in the index array */
     OMPI_ARRAY_FINT_2_INT(edges, indx[*nnodes - 1]);
 
-    c_ierr = MPI_Graph_create(c_comm_old,
+    c_ierr = PMPI_Graph_create(c_comm_old,
                               OMPI_FINT_2_INT(*nnodes),
                               OMPI_ARRAY_NAME_CONVERT(indx),
                               OMPI_ARRAY_NAME_CONVERT(edges),
@@ -95,7 +92,7 @@ void ompi_graph_create_f(MPI_Fint *comm_old, MPI_Fint *nnodes,
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (OMPI_SUCCESS == c_ierr) {
-        *comm_graph = MPI_Comm_c2f(c_comm_graph);
+        *comm_graph = PMPI_Comm_c2f(c_comm_graph);
     }
 
     OMPI_ARRAY_FINT_2_INT_CLEANUP(indx);

@@ -68,22 +68,19 @@ OMPI_GENERATE_F77_BINDINGS (MPI_COMM_IDUP,
 #endif
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Comm_idup PMPI_Comm_idup
-#endif
 
 void ompi_comm_idup_f(MPI_Fint *comm, MPI_Fint *newcomm, MPI_Fint *request, MPI_Fint *ierr)
 {
     int c_ierr;
     MPI_Comm c_newcomm;
-    MPI_Comm c_comm = MPI_Comm_f2c(*comm);
+    MPI_Comm c_comm = PMPI_Comm_f2c(*comm);
     MPI_Request c_req;
 
-    c_ierr = MPI_Comm_idup(c_comm, &c_newcomm, &c_req);
+    c_ierr = PMPI_Comm_idup(c_comm, &c_newcomm, &c_req);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {
-        *newcomm = MPI_Comm_c2f(c_newcomm);
-        *request = MPI_Request_c2f(c_req);
+        *newcomm = PMPI_Comm_c2f(c_newcomm);
+        *request = PMPI_Request_c2f(c_req);
     }
 }

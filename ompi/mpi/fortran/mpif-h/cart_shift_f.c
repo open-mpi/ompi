@@ -65,9 +65,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_CART_SHIFT,
 #endif
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Cart_shift PMPI_Cart_shift
-#endif
 
 void ompi_cart_shift_f(MPI_Fint *comm, MPI_Fint *direction, MPI_Fint *disp,
 		      MPI_Fint *rank_source, MPI_Fint *rank_dest,
@@ -78,9 +75,9 @@ void ompi_cart_shift_f(MPI_Fint *comm, MPI_Fint *direction, MPI_Fint *disp,
     OMPI_SINGLE_NAME_DECL(rank_source);
     OMPI_SINGLE_NAME_DECL(rank_dest);
 
-    c_comm = MPI_Comm_f2c(*comm);
+    c_comm = PMPI_Comm_f2c(*comm);
 
-    c_ierr = MPI_Cart_shift(c_comm,
+    c_ierr = PMPI_Cart_shift(c_comm,
                             OMPI_FINT_2_INT(*direction),
                             OMPI_FINT_2_INT(*disp),
                             OMPI_SINGLE_NAME_CONVERT(rank_source),

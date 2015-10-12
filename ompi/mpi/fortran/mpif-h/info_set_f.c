@@ -68,9 +68,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_INFO_SET,
 #endif
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Info_set PMPI_Info_set
-#endif
 
 static const char FUNC_NAME[] = "MPI_INFO_SET";
 
@@ -96,9 +93,9 @@ void ompi_info_set_f(MPI_Fint *info, char *key, char *value, MPI_Fint *ierr,
         }
         return;
     }
-    c_info = MPI_Info_f2c(*info);
+    c_info = PMPI_Info_f2c(*info);
 
-    c_ierr = MPI_Info_set(c_info, c_key, c_value);
+    c_ierr = PMPI_Info_set(c_info, c_key, c_value);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     free(c_key);

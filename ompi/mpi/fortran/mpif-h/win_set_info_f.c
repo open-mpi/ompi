@@ -54,9 +54,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_WIN_SET_INFO,
 #endif
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Win_set_info PMPI_Win_set_info
-#endif
 
 void ompi_win_set_info_f(MPI_Fint *win, MPI_Fint *info, MPI_Fint *ierr)
 {
@@ -64,8 +61,8 @@ void ompi_win_set_info_f(MPI_Fint *win, MPI_Fint *info, MPI_Fint *ierr)
     MPI_Win c_win;
     MPI_Info c_info;
 
-    c_win = MPI_Win_f2c(*win);
-    c_info = MPI_Info_f2c(*info);
-    c_ierr = MPI_Win_set_info(c_win, c_info);
+    c_win = PMPI_Win_f2c(*win);
+    c_info = PMPI_Info_f2c(*info);
+    c_ierr = PMPI_Win_set_info(c_win, c_info);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 }

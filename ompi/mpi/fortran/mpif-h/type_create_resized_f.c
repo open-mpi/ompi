@@ -65,22 +65,19 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_CREATE_RESIZED,
 #endif
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Type_create_resized PMPI_Type_create_resized
-#endif
 
 void ompi_type_create_resized_f(MPI_Fint *oldtype, MPI_Aint *lb,
 			       MPI_Aint *extent, MPI_Fint *newtype,
 			       MPI_Fint *ierr)
 {
     int c_ierr;
-    MPI_Datatype c_old = MPI_Type_f2c(*oldtype);
+    MPI_Datatype c_old = PMPI_Type_f2c(*oldtype);
     MPI_Datatype c_new;
 
-    c_ierr = MPI_Type_create_resized(c_old, *lb, *extent, &c_new);
+    c_ierr = PMPI_Type_create_resized(c_old, *lb, *extent, &c_new);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {
-        *newtype = MPI_Type_c2f(c_new);
+        *newtype = PMPI_Type_c2f(c_new);
     }
 }

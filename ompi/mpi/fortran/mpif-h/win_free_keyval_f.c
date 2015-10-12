@@ -65,16 +65,13 @@ OMPI_GENERATE_F77_BINDINGS (MPI_WIN_FREE_KEYVAL,
 #endif
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Win_free_keyval PMPI_Win_free_keyval
-#endif
 
 void ompi_win_free_keyval_f(MPI_Fint *win_keyval, MPI_Fint *ierr)
 {
     int c_ierr;
     OMPI_SINGLE_NAME_DECL(win_keyval);
 
-    c_ierr = MPI_Win_free_keyval(OMPI_SINGLE_NAME_CONVERT(win_keyval));
+    c_ierr = PMPI_Win_free_keyval(OMPI_SINGLE_NAME_CONVERT(win_keyval));
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {

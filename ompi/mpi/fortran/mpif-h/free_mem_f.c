@@ -65,12 +65,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_FREE_MEM,
 #endif
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Free_mem PMPI_Free_mem
-#endif
 
 void ompi_free_mem_f(char *base, MPI_Fint *ierr)
 {
-    int c_ierr = MPI_Free_mem(base);
+    int c_ierr = PMPI_Free_mem(base);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 }

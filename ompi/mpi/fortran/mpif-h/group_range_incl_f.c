@@ -66,9 +66,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_GROUP_RANGE_INCL,
 #endif
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Group_range_incl PMPI_Group_range_incl
-#endif
 
 void ompi_group_range_incl_f(MPI_Fint *group, MPI_Fint *n, MPI_Fint ranges[][3], MPI_Fint *newgroup, MPI_Fint *ierr)
 {
@@ -77,10 +74,10 @@ void ompi_group_range_incl_f(MPI_Fint *group, MPI_Fint *n, MPI_Fint ranges[][3],
   OMPI_2_DIM_ARRAY_NAME_DECL(ranges, 3);
 
   /* Make the fortran to c representation conversion */
-  c_group = MPI_Group_f2c(*group);
+  c_group = PMPI_Group_f2c(*group);
 
   OMPI_2_DIM_ARRAY_FINT_2_INT(ranges, *n, 3);
-  c_ierr = MPI_Group_range_incl(c_group,
+  c_ierr = PMPI_Group_range_incl(c_group,
                                 OMPI_FINT_2_INT(*n),
                                 OMPI_ARRAY_NAME_CONVERT(ranges),
                                 &c_newgroup);

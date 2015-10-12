@@ -65,21 +65,18 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_FREE,
 #endif
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Type_free PMPI_Type_free
-#endif
 
 void ompi_type_free_f(MPI_Fint *type, MPI_Fint *ierr)
 {
     int c_ierr;
     MPI_Datatype c_type;
 
-    c_type = MPI_Type_f2c(*type);
+    c_type = PMPI_Type_f2c(*type);
 
-    c_ierr = MPI_Type_free(&c_type);
+    c_ierr = PMPI_Type_free(&c_type);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {
-        *type = MPI_Type_c2f(c_type);
+        *type = PMPI_Type_c2f(c_type);
     }
 }

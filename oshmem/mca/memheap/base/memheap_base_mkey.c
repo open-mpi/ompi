@@ -28,15 +28,6 @@
 #include "oshmem/mca/memheap/base/base.h"
 #include "oshmem/mca/spml/spml.h"
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Cancel PMPI_Cancel
-#define MPI_Get_count PMPI_Get_count
-#define MPI_Recv_init PMPI_Recv_init
-#define MPI_Request_free PMPI_Request_free
-#define MPI_Send PMPI_Send
-#define MPI_Start PMPI_Start
-#endif
-
 /* Turn ON/OFF debug output from build (default 0) */
 #ifndef MEMHEAP_BASE_DEBUG
 #define MEMHEAP_BASE_DEBUG    0
@@ -389,7 +380,7 @@ static int oshmem_mkey_recv_cb(void)
         if (OPAL_LIKELY(0 == flag)) {
             return n;
         }
-        MPI_Get_count(&status, MPI_BYTE, &size);
+        PMPI_Get_count(&status, MPI_BYTE, &size);
         MEMHEAP_VERBOSE(5, "OOB request from PE: %d, size %d", status.MPI_SOURCE, size);
         n++;
         opal_list_remove_first(&memheap_oob.req_list);
@@ -424,7 +415,7 @@ static int oshmem_mkey_recv_cb(void)
             OBJ_RELEASE(msg);
         }
 
-        rc = MPI_Start(&r->recv_req);
+        rc = PMPI_Start(&r->recv_req);
         if (MPI_SUCCESS != rc) {
             MEMHEAP_ERROR("Failed to post recv request %d", rc);
             ORTE_ERROR_LOG(rc);
@@ -455,7 +446,7 @@ int memheap_oob_init(mca_memheap_map_t *map)
 
     for (i = 0; i < MEMHEAP_RECV_REQS_MAX; i++) {
         r = &memheap_oob.req_pool[i];
-        rc = MPI_Recv_init(r->buf, sizeof(r->buf), MPI_BYTE,
+        rc = PMPI_Recv_init(r->buf, sizeof(r->buf), MPI_BYTE,
                 MPI_ANY_SOURCE, 0,
                 oshmem_comm_world,
                 &r->recv_req);
@@ -464,7 +455,7 @@ int memheap_oob_init(mca_memheap_map_t *map)
             return rc;
         }
 
-        rc = MPI_Start(&r->recv_req);
+        rc = PMPI_Start(&r->recv_req);
         if (MPI_SUCCESS != rc) {
             MEMHEAP_ERROR("Failed to post recv request %d", rc);
             return rc;
@@ -486,8 +477,8 @@ void memheap_oob_destruct(void)
 
     for (i = 0; i < MEMHEAP_RECV_REQS_MAX; i++) {
         r = &memheap_oob.req_pool[i];
-        MPI_Cancel(&r->recv_req);
-        MPI_Request_free(&r->recv_req);
+        PMPI_Cancel(&r->recv_req);
+        PMPI_Request_free(&r->recv_req);
     }
 
     OBJ_DESTRUCT(&memheap_oob.req_list);
@@ -502,7 +493,7 @@ static int send_buffer(int pe, opal_buffer_t *msg)
     int rc;
 
     opal_dss.unload(msg, &buffer, &size);
-    rc = MPI_Send(buffer, size, MPI_BYTE, pe, 0, oshmem_comm_world);
+    rc = PMPI_Send(buffer, size, MPI_BYTE, pe, 0, oshmem_comm_world);
     free(buffer);
     OBJ_RELEASE(msg);
 

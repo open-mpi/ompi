@@ -72,10 +72,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_MATCH_SIZE,
 #endif
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Type_match_size PMPI_Type_match_size
-#endif
-
 static const char FUNC_NAME[] = "MPI_Type_match_size_f";
 
 /*  We cannot use the C function as from Fortran we should check for Fortran types. The only
@@ -104,7 +100,7 @@ void ompi_type_match_size_f(MPI_Fint *typeclass, MPI_Fint *size, MPI_Fint *type,
     default:
         c_type = &ompi_mpi_datatype_null.dt;
     }
-    *type = MPI_Type_c2f( c_type );
+    *type = PMPI_Type_c2f( c_type );
     if ( c_type != &ompi_mpi_datatype_null.dt ) {
         c_ierr = MPI_SUCCESS;
     } else {

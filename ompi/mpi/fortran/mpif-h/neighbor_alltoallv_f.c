@@ -69,9 +69,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_NEIGHBOR_ALLTOALLV,
 #endif
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Neighbor_alltoallv PMPI_Neighbor_alltoallv
-#endif
 
 void ompi_neighbor_alltoallv_f(char *sendbuf, MPI_Fint *sendcounts, MPI_Fint *sdispls,
                                MPI_Fint *sendtype, char *recvbuf, MPI_Fint *recvcounts,
@@ -86,11 +83,11 @@ void ompi_neighbor_alltoallv_f(char *sendbuf, MPI_Fint *sendcounts, MPI_Fint *sd
     OMPI_ARRAY_NAME_DECL(recvcounts);
     OMPI_ARRAY_NAME_DECL(rdispls);
 
-    c_comm = MPI_Comm_f2c(*comm);
-    c_sendtype = MPI_Type_f2c(*sendtype);
-    c_recvtype = MPI_Type_f2c(*recvtype);
+    c_comm = PMPI_Comm_f2c(*comm);
+    c_sendtype = PMPI_Type_f2c(*sendtype);
+    c_recvtype = PMPI_Type_f2c(*recvtype);
 
-    MPI_Comm_size(c_comm, &size);
+    PMPI_Comm_size(c_comm, &size);
     OMPI_ARRAY_FINT_2_INT(sendcounts, size);
     OMPI_ARRAY_FINT_2_INT(sdispls, size);
     OMPI_ARRAY_FINT_2_INT(recvcounts, size);
@@ -100,7 +97,7 @@ void ompi_neighbor_alltoallv_f(char *sendbuf, MPI_Fint *sendcounts, MPI_Fint *sd
     sendbuf = (char *) OMPI_F2C_BOTTOM(sendbuf);
     recvbuf = (char *) OMPI_F2C_BOTTOM(recvbuf);
 
-    c_ierr = MPI_Neighbor_alltoallv(sendbuf,
+    c_ierr = PMPI_Neighbor_alltoallv(sendbuf,
                                     OMPI_ARRAY_NAME_CONVERT(sendcounts),
                                     OMPI_ARRAY_NAME_CONVERT(sdispls),
                                     c_sendtype,

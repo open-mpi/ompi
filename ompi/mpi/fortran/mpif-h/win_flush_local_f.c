@@ -68,15 +68,12 @@ OMPI_GENERATE_F77_BINDINGS (MPI_WIN_FLUSH_LOCAL,
 #endif
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Win_flush_local PMPI_Win_flush_local
-#endif
 
 void ompi_win_flush_local_f(MPI_Fint *rank, MPI_Fint *win, MPI_Fint *ierr)
 {
     int c_ierr;
-    MPI_Win c_win = MPI_Win_f2c(*win);
+    MPI_Win c_win = PMPI_Win_f2c(*win);
 
-    c_ierr = MPI_Win_flush_local(OMPI_FINT_2_INT(*rank), c_win);
+    c_ierr = PMPI_Win_flush_local(OMPI_FINT_2_INT(*rank), c_win);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 }

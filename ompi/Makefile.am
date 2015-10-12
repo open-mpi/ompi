@@ -15,6 +15,8 @@
 # Copyright (c) 2013-2015 Los Alamos National Security, LLC. All rights
 #                         reserved.
 # Copyright (c) 2015      Intel, Inc. All rights reserved.
+# Copyright (c) 2015      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -29,11 +31,7 @@ c_mpi_lib = mpi/c/libmpi_c_mpi.la mpi/tool/libmpi_mpit.la
 else
 c_mpi_lib =
 endif
-if BUILD_PMPI_BINDINGS_LAYER
 c_pmpi_lib = mpi/c/profile/libmpi_c_pmpi.la mpi/tool/profile/libmpi_pmpit.la
-else
-c_pmpi_lib =
-endif
 
 # See if we have Fortran mpif.h MPI bindings
 

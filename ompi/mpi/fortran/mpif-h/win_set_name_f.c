@@ -68,9 +68,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_WIN_SET_NAME,
 #endif
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Win_set_name PMPI_Win_set_name
-#endif
 
 void ompi_win_set_name_f(MPI_Fint *win, char *win_name, MPI_Fint *ierr,
 			int name_len)
@@ -79,7 +76,7 @@ void ompi_win_set_name_f(MPI_Fint *win, char *win_name, MPI_Fint *ierr,
     char *c_name;
     MPI_Win c_win;
 
-    c_win = MPI_Win_f2c(*win);
+    c_win = PMPI_Win_f2c(*win);
 
     /* Convert the fortran string */
 
@@ -93,7 +90,7 @@ void ompi_win_set_name_f(MPI_Fint *win, char *win_name, MPI_Fint *ierr,
 
     /* Call the C function */
 
-    c_ierr = MPI_Win_set_name(c_win, c_name);
+    c_ierr = PMPI_Win_set_name(c_win, c_name);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     /* Free the C name */

@@ -68,14 +68,11 @@ OMPI_GENERATE_F77_BINDINGS (MPI_GET_ELEMENTS_X,
 #endif
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Get_elements_x PMPI_Get_elements_x
-#endif
 
 void ompi_get_elements_x_f(MPI_Fint *status, MPI_Fint *datatype, MPI_Count *count, MPI_Fint *ierr)
 {
     int c_ierr;
-    MPI_Datatype c_type = MPI_Type_f2c(*datatype);
+    MPI_Datatype c_type = PMPI_Type_f2c(*datatype);
     MPI_Status   c_status;
     OMPI_SINGLE_NAME_DECL(count);
 
@@ -83,10 +80,10 @@ void ompi_get_elements_x_f(MPI_Fint *status, MPI_Fint *datatype, MPI_Count *coun
         *count = OMPI_INT_2_FINT(0);
         c_ierr = MPI_SUCCESS;
     } else {
-        c_ierr = MPI_Status_f2c(status, &c_status);
+        c_ierr = PMPI_Status_f2c(status, &c_status);
 
         if (MPI_SUCCESS == c_ierr) {
-            c_ierr = MPI_Get_elements_x(&c_status, c_type, count);
+            c_ierr = PMPI_Get_elements_x(&c_status, c_type, count);
         }
     }
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);

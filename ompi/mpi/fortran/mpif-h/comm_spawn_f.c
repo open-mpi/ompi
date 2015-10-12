@@ -68,9 +68,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_COMM_SPAWN,
 #endif
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Comm_spawn PMPI_Comm_spawn
-#endif
 
 void ompi_comm_spawn_f(char *command, char *argv, MPI_Fint *maxprocs,
 		      MPI_Fint *info, MPI_Fint *root, MPI_Fint *comm,
@@ -85,9 +82,9 @@ void ompi_comm_spawn_f(char *command, char *argv, MPI_Fint *maxprocs,
     char *c_command;
     OMPI_ARRAY_NAME_DECL(array_of_errcodes);
 
-    c_comm = MPI_Comm_f2c(*comm);
-    c_info = MPI_Info_f2c(*info);
-    MPI_Comm_size(c_comm, &size);
+    c_comm = PMPI_Comm_f2c(*comm);
+    c_info = PMPI_Info_f2c(*info);
+    PMPI_Comm_size(c_comm, &size);
     ompi_fortran_string_f2c(command, cmd_len, &c_command);
 
     /* It's allowed to ignore the errcodes */
@@ -107,7 +104,7 @@ void ompi_comm_spawn_f(char *command, char *argv, MPI_Fint *maxprocs,
         ompi_fortran_argv_f2c(argv, string_len, string_len, &c_argv);
     }
 
-    c_ierr = MPI_Comm_spawn(c_command, c_argv,
+    c_ierr = PMPI_Comm_spawn(c_command, c_argv,
                             OMPI_FINT_2_INT(*maxprocs),
                             c_info,
                             OMPI_FINT_2_INT(*root),
@@ -115,7 +112,7 @@ void ompi_comm_spawn_f(char *command, char *argv, MPI_Fint *maxprocs,
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {
-        *intercomm = MPI_Comm_c2f(c_new_comm);
+        *intercomm = PMPI_Comm_c2f(c_new_comm);
     }
     free(c_command);
     if (MPI_ARGV_NULL != c_argv && NULL != c_argv) {

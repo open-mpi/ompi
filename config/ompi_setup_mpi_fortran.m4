@@ -374,15 +374,6 @@ AC_DEFUN([OMPI_SETUP_MPI_FORTRAN],[
            OMPI_FORTRAN_F08_TYPE=$OMPI_FORTRAN_IGNORE_TKR_TYPE
           ])
 
-    AS_IF([test $OMPI_TRY_FORTRAN_BINDINGS -ge $OMPI_FORTRAN_USEMPIF08_BINDINGS && \
-           test $OMPI_BUILD_FORTRAN_BINDINGS -ge $OMPI_FORTRAN_USEMPIF08_BINDINGS],
-          [ # If we don't have PMPI, we won't build mpi_f08 at all
-           AC_MSG_CHECKING([whether PMPI is enabled (needed for mpi_f08)])
-           AS_IF([test $WANT_MPI_PROFILING -eq 1],
-                 [AC_MSG_RESULT([yes])],
-                 [OMPI_BUILD_FORTRAN_BINDINGS=$OMPI_FORTRAN_USEMPI_BINDINGS
-                  AC_MSG_RESULT([no (cannot build mpi_f08)])])])
-
     # The overall "_BIND_C" variable will be set to 1 if we have all
     # the necessary forms of BIND(C)
     OMPI_FORTRAN_HAVE_BIND_C=0
@@ -656,11 +647,10 @@ end type test_mpi_handle],
     # these layers need to be built or NOT
 
     AM_CONDITIONAL(BUILD_MPI_FORTRAN_MPIFH_BINDINGS_LAYER,
-                   [( test $WANT_MPI_PROFILING -eq 0 || test $OMPI_PROFILING_COMPILE_SEPARATELY -eq 1 ) && \
+                   [test $OMPI_PROFILING_COMPILE_SEPARATELY -eq 1 && \
                     test $OMPI_BUILD_FORTRAN_BINDINGS -gt $OMPI_FORTRAN_NO_BINDINGS])
     AM_CONDITIONAL(BUILD_PMPI_FORTRAN_MPIFH_BINDINGS_LAYER,
-                   [test $OMPI_BUILD_FORTRAN_BINDINGS -gt $OMPI_FORTRAN_NO_BINDINGS && \
-                    test $WANT_MPI_PROFILING -eq 1])
+                   [test $OMPI_BUILD_FORTRAN_BINDINGS -gt $OMPI_FORTRAN_NO_BINDINGS])
     AM_CONDITIONAL(OMPI_BUILD_FORTRAN_MPIFH_BINDINGS,
                    [test $OMPI_BUILD_FORTRAN_BINDINGS -gt $OMPI_FORTRAN_NO_BINDINGS])
 

@@ -65,9 +65,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_INIT_THREAD,
 #endif
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Init_thread PMPI_Init_thread
-#endif
 
 void ompi_init_thread_f( MPI_Fint *required, MPI_Fint *provided, MPI_Fint *ierr )
 {
@@ -76,7 +73,7 @@ void ompi_init_thread_f( MPI_Fint *required, MPI_Fint *provided, MPI_Fint *ierr 
     char** argv = NULL;
     OMPI_SINGLE_NAME_DECL(provided);
 
-    c_ierr = MPI_Init_thread(&argc, &argv,
+    c_ierr = PMPI_Init_thread(&argc, &argv,
                              OMPI_FINT_2_INT(*required),
                              OMPI_SINGLE_NAME_CONVERT(provided));
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);

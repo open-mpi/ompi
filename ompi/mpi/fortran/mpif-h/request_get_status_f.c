@@ -66,16 +66,13 @@ OMPI_GENERATE_F77_BINDINGS (MPI_REQUEST_GET_STATUS,
 #endif
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Request_get_status PMPI_Request_get_status
-#endif
 
 void ompi_request_get_status_f(MPI_Fint *request, ompi_fortran_logical_t *flag,
                               MPI_Fint *status, MPI_Fint *ierr)
 {
     int c_ierr;
     MPI_Status c_status;
-    MPI_Request c_req = MPI_Request_f2c( *request );
+    MPI_Request c_req = PMPI_Request_f2c( *request );
     OMPI_LOGICAL_NAME_DECL(flag);
 
     /* This seems silly, but someone will do it */
@@ -84,11 +81,11 @@ void ompi_request_get_status_f(MPI_Fint *request, ompi_fortran_logical_t *flag,
         *flag = OMPI_INT_2_LOGICAL(0);
         c_ierr = MPI_SUCCESS;
     } else {
-        c_ierr = MPI_Request_get_status(c_req,
+        c_ierr = PMPI_Request_get_status(c_req,
                                         OMPI_LOGICAL_SINGLE_NAME_CONVERT(flag),
                                         &c_status);
         OMPI_SINGLE_INT_2_LOGICAL(flag);
-        MPI_Status_c2f( &c_status, status );
+        PMPI_Status_c2f( &c_status, status );
     }
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 }

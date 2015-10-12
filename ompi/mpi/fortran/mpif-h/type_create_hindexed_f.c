@@ -65,9 +65,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_CREATE_HINDEXED,
 #endif
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Type_create_hindexed PMPI_Type_create_hindexed
-#endif
 
 
 void ompi_type_create_hindexed_f(MPI_Fint *count,
@@ -77,20 +74,20 @@ void ompi_type_create_hindexed_f(MPI_Fint *count,
 				MPI_Fint *ierr)
 {
     int c_ierr;
-    MPI_Datatype c_old = MPI_Type_f2c(*oldtype);
-    MPI_Datatype c_new = MPI_Type_f2c(*newtype);
+    MPI_Datatype c_old = PMPI_Type_f2c(*oldtype);
+    MPI_Datatype c_new = PMPI_Type_f2c(*newtype);
     OMPI_ARRAY_NAME_DECL(array_of_blocklengths);
 
     OMPI_ARRAY_FINT_2_INT(array_of_blocklengths, *count);
 
-    c_ierr = MPI_Type_create_hindexed(OMPI_FINT_2_INT(*count),
+    c_ierr = PMPI_Type_create_hindexed(OMPI_FINT_2_INT(*count),
                                 OMPI_ARRAY_NAME_CONVERT(array_of_blocklengths),
                                 array_of_displacements, c_old,
                                 &c_new);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {
-        *newtype = MPI_Type_c2f(c_new);
+        *newtype = PMPI_Type_c2f(c_new);
     }
 
     OMPI_ARRAY_FINT_2_INT_CLEANUP(array_of_blocklengths);

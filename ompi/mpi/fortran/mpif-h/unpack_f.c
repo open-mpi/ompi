@@ -66,9 +66,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_UNPACK,
 #endif
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Unpack PMPI_Unpack
-#endif
 
 void ompi_unpack_f(char *inbuf, MPI_Fint *insize, MPI_Fint *position,
 		  char *outbuf, MPI_Fint *outcount, MPI_Fint *datatype,
@@ -79,11 +76,11 @@ void ompi_unpack_f(char *inbuf, MPI_Fint *insize, MPI_Fint *position,
    MPI_Datatype c_type;
    OMPI_SINGLE_NAME_DECL(position);
 
-   c_comm = MPI_Comm_f2c(*comm);
-   c_type = MPI_Type_f2c(*datatype);
+   c_comm = PMPI_Comm_f2c(*comm);
+   c_type = PMPI_Type_f2c(*datatype);
    OMPI_SINGLE_FINT_2_INT(position);
 
-   c_ierr = MPI_Unpack(inbuf, OMPI_FINT_2_INT(*insize),
+   c_ierr = PMPI_Unpack(inbuf, OMPI_FINT_2_INT(*insize),
                        OMPI_SINGLE_NAME_CONVERT(position),
                        OMPI_F2C_BOTTOM(outbuf), OMPI_FINT_2_INT(*outcount),
                        c_type, c_comm);

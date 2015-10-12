@@ -66,9 +66,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_GROUP_FREE,
 #endif
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Group_free PMPI_Group_free
-#endif
 
 void ompi_group_free_f(MPI_Fint *group, MPI_Fint *ierr)
 {
@@ -77,8 +74,8 @@ void ompi_group_free_f(MPI_Fint *group, MPI_Fint *ierr)
 
   /* Make the fortran to c representation conversion */
 
-  c_group = MPI_Group_f2c(*group);
-  c_ierr = MPI_Group_free( &c_group );
+  c_group = PMPI_Group_f2c(*group);
+  c_ierr = PMPI_Group_free( &c_group );
   if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
   /* This value comes from the MPI_GROUP_NULL value in mpif.h.  Do not

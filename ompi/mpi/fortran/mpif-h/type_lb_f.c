@@ -65,17 +65,14 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_LB,
 #endif
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Type_lb PMPI_Type_lb
-#endif
 
 void ompi_type_lb_f(MPI_Fint *type, MPI_Fint *lb, MPI_Fint *ierr)
 {
     int c_ierr;
-    MPI_Datatype c_type = MPI_Type_f2c(*type);
+    MPI_Datatype c_type = PMPI_Type_f2c(*type);
     MPI_Aint c_lb;
 
-    c_ierr = MPI_Type_lb(c_type, &c_lb);
+    c_ierr = PMPI_Type_lb(c_type, &c_lb);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {

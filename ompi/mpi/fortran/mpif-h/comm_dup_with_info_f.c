@@ -68,23 +68,20 @@ OMPI_GENERATE_F77_BINDINGS (MPI_COMM_DUP_WITH_INFO,
 #endif
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Comm_dup_with_info PMPI_Comm_dup_with_info
-#endif
 
 void ompi_comm_dup_with_info_f(MPI_Fint *comm, MPI_Fint *info, MPI_Fint *newcomm, MPI_Fint *ierr)
 {
     int c_ierr;
     MPI_Comm c_newcomm;
-    MPI_Comm c_comm = MPI_Comm_f2c(*comm);
+    MPI_Comm c_comm = PMPI_Comm_f2c(*comm);
     MPI_Info c_info;
 
-    c_info = MPI_Info_f2c(*info);
+    c_info = PMPI_Info_f2c(*info);
 
-    c_ierr = MPI_Comm_dup_with_info(c_comm, c_info, &c_newcomm);
+    c_ierr = PMPI_Comm_dup_with_info(c_comm, c_info, &c_newcomm);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {
-        *newcomm = MPI_Comm_c2f(c_newcomm);
+        *newcomm = PMPI_Comm_c2f(c_newcomm);
     }
 }

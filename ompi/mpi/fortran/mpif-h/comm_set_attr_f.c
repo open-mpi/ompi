@@ -67,15 +67,11 @@ OMPI_GENERATE_F77_BINDINGS (MPI_COMM_SET_ATTR,
 #endif
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Comm_set_attr PMPI_Comm_set_attr
-#endif
-
 void ompi_comm_set_attr_f(MPI_Fint *comm, MPI_Fint *comm_keyval,
 			 MPI_Aint *attribute_val, MPI_Fint *ierr)
 {
     int c_ierr;
-    MPI_Comm c_comm = MPI_Comm_f2c(*comm);
+    MPI_Comm c_comm = PMPI_Comm_f2c(*comm);
 
     /* This stuff is very confusing.  Be sure to see the comment at
        the top of src/attributes/attributes.c. */

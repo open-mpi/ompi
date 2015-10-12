@@ -65,17 +65,14 @@ OMPI_GENERATE_F77_BINDINGS (MPI_START,
 #endif
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Start PMPI_Start
-#endif
 
 void ompi_start_f(MPI_Fint *request, MPI_Fint *ierr)
 {
     int c_ierr;
-    MPI_Request c_req = MPI_Request_f2c(*request);
+    MPI_Request c_req = PMPI_Request_f2c(*request);
     MPI_Request tmp_req = c_req;
 
-    c_ierr = MPI_Start(&c_req);
+    c_ierr = PMPI_Start(&c_req);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {
@@ -85,7 +82,7 @@ void ompi_start_f(MPI_Fint *request, MPI_Fint *ierr)
            So commit new descriptor.
         */
         if ( tmp_req != c_req ) {
-            *request = MPI_Request_c2f(c_req);
+            *request = PMPI_Request_c2f(c_req);
         }
     }
 }

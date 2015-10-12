@@ -65,19 +65,16 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_COMMIT,
 #endif
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Type_commit PMPI_Type_commit
-#endif
 
 void ompi_type_commit_f(MPI_Fint *type, MPI_Fint *ierr)
 {
     int c_ierr;
-    MPI_Datatype c_type = MPI_Type_f2c(*type);
+    MPI_Datatype c_type = PMPI_Type_f2c(*type);
 
-    c_ierr = MPI_Type_commit(&c_type);
+    c_ierr = PMPI_Type_commit(&c_type);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {
-        *type = MPI_Type_c2f(c_type);
+        *type = PMPI_Type_c2f(c_type);
     }
 }

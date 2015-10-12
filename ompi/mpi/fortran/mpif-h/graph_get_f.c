@@ -65,9 +65,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_GRAPH_GET,
 #endif
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Graph_get PMPI_Graph_get
-#endif
 
 void ompi_graph_get_f(MPI_Fint *comm, MPI_Fint *maxindex,
 		     MPI_Fint *maxedges, MPI_Fint *indx,
@@ -78,11 +75,11 @@ void ompi_graph_get_f(MPI_Fint *comm, MPI_Fint *maxindex,
     OMPI_ARRAY_NAME_DECL(indx);
     OMPI_ARRAY_NAME_DECL(edges);
 
-    c_comm = MPI_Comm_f2c(*comm);
+    c_comm = PMPI_Comm_f2c(*comm);
     OMPI_ARRAY_FINT_2_INT_ALLOC(indx, *maxindex);
     OMPI_ARRAY_FINT_2_INT_ALLOC(edges, *maxedges);
 
-    c_ierr = MPI_Graph_get(c_comm,
+    c_ierr = PMPI_Graph_get(c_comm,
                            OMPI_FINT_2_INT(*maxindex),
                            OMPI_FINT_2_INT(*maxedges),
                            OMPI_ARRAY_NAME_CONVERT(indx),

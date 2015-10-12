@@ -57,10 +57,6 @@
 #include "oshmem/shmem/shmem_lock.h"
 #include "oshmem/runtime/oshmem_shmem_preconnect.h"
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Comm_free PMPI_Comm_free
-#endif
-
 static int _shmem_finalize(void);
 
 int oshmem_shmem_finalize(void)
@@ -75,7 +71,7 @@ int oshmem_shmem_finalize(void)
 
         if ((OSHMEM_SUCCESS == ret) && ompi_mpi_initialized
                 && !ompi_mpi_finalized) {
-            MPI_Comm_free(&oshmem_comm_world);
+            PMPI_Comm_free(&oshmem_comm_world);
             ret = ompi_mpi_finalize();
         }
 

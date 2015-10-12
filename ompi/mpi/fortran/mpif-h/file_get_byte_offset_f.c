@@ -65,9 +65,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_FILE_GET_BYTE_OFFSET,
 #endif
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_File_get_byte_offset PMPI_File_get_byte_offset
-#endif
 
 void ompi_file_get_byte_offset_f(MPI_Fint *fh, MPI_Offset *offset,
 				MPI_Offset *disp, MPI_Fint *ierr)
@@ -75,9 +72,9 @@ void ompi_file_get_byte_offset_f(MPI_Fint *fh, MPI_Offset *offset,
     int c_ierr;
     MPI_File c_fh;
 
-    c_fh = MPI_File_f2c(*fh);
+    c_fh = PMPI_File_f2c(*fh);
 
-    c_ierr = MPI_File_get_byte_offset(c_fh,
+    c_ierr = PMPI_File_get_byte_offset(c_fh,
                                       (MPI_Offset) *offset,
                                       disp);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);

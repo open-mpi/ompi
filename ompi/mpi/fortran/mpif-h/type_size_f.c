@@ -65,17 +65,14 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_SIZE,
 #endif
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Type_size PMPI_Type_size
-#endif
 
 void ompi_type_size_f(MPI_Fint *type, MPI_Fint *size, MPI_Fint *ierr)
 {
     int c_ierr;
-    MPI_Datatype c_type = MPI_Type_f2c(*type);
+    MPI_Datatype c_type = PMPI_Type_f2c(*type);
     OMPI_SINGLE_NAME_DECL(size);
 
-    c_ierr = MPI_Type_size(c_type, OMPI_SINGLE_NAME_CONVERT(size));
+    c_ierr = PMPI_Type_size(c_type, OMPI_SINGLE_NAME_CONVERT(size));
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {

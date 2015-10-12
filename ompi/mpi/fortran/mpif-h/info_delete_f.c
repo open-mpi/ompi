@@ -68,9 +68,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_INFO_DELETE,
 #endif
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Info_delete PMPI_Info_delete
-#endif
 
 static const char FUNC_NAME[] = "MPI_INFO_DELETE";
 
@@ -90,9 +87,9 @@ void ompi_info_delete_f(MPI_Fint *info, char *key, MPI_Fint *ierr, int key_len)
         if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
         return;
     }
-    c_info = MPI_Info_f2c(*info);
+    c_info = PMPI_Info_f2c(*info);
 
-    c_ierr = MPI_Info_delete(c_info, c_key);
+    c_ierr = PMPI_Info_delete(c_info, c_key);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     free(c_key);

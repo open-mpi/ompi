@@ -67,9 +67,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_STARTALL,
 #endif
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Startall PMPI_Startall
-#endif
 
 static const char FUNC_NAME[] = "MPI_STARTALL";
 
@@ -90,14 +87,14 @@ void ompi_startall_f(MPI_Fint *count, MPI_Fint *array_of_requests,
     }
 
     for(i = 0; i < *count; i++ ) {
-        c_req[i] = MPI_Request_f2c(array_of_requests[i]);
+        c_req[i] = PMPI_Request_f2c(array_of_requests[i]);
     }
 
-    c_ierr = MPI_Startall(OMPI_FINT_2_INT(*count), c_req);
+    c_ierr = PMPI_Startall(OMPI_FINT_2_INT(*count), c_req);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     for( i = 0; i < *count; i++ ) {
-        array_of_requests[i] = MPI_Request_c2f(c_req[i]);
+        array_of_requests[i] = PMPI_Request_c2f(c_req[i]);
     }
     free(c_req);
 }

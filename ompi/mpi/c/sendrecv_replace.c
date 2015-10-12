@@ -37,12 +37,6 @@
 #define MPI_Sendrecv_replace PMPI_Sendrecv_replace
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Alloc_mem PMPI_Alloc_mem
-#define MPI_Free_mem PMPI_Free_mem
-#define MPI_Sendrecv PMPI_Sendrecv
-#endif
-
 static const char FUNC_NAME[] = "MPI_Sendrecv_replace";
 
 
@@ -82,7 +76,7 @@ int MPI_Sendrecv_replace(void * buf, int count, MPI_Datatype datatype,
 
     /* simple case */
     if ( source == MPI_PROC_NULL || dest == MPI_PROC_NULL || count == 0 ) {
-        rc = MPI_Sendrecv(buf,count,datatype,dest,sendtag,buf,count,datatype,source,recvtag,comm,status);
+        rc = PMPI_Sendrecv(buf,count,datatype,dest,sendtag,buf,count,datatype,source,recvtag,comm,status);
 
         OPAL_CR_EXIT_LIBRARY();
         return rc;
@@ -108,7 +102,7 @@ int MPI_Sendrecv_replace(void * buf, int count, MPI_Datatype datatype,
         /* setup a buffer for recv */
         opal_convertor_get_packed_size( &convertor, &packed_size );
         if( packed_size > sizeof(recv_data) ) {
-            rc = MPI_Alloc_mem(packed_size, MPI_INFO_NULL, &iov.iov_base);
+            rc = PMPI_Alloc_mem(packed_size, MPI_INFO_NULL, &iov.iov_base);
             if(OMPI_SUCCESS != rc) {
                 OMPI_ERRHANDLER_RETURN(OMPI_ERR_OUT_OF_RESOURCE, comm, MPI_ERR_BUFFER, FUNC_NAME);
             }
@@ -117,11 +111,11 @@ int MPI_Sendrecv_replace(void * buf, int count, MPI_Datatype datatype,
         }
 
         /* recv into temporary buffer */
-        rc = MPI_Sendrecv( buf, count, datatype, dest, sendtag, iov.iov_base, packed_size,
+        rc = PMPI_Sendrecv( buf, count, datatype, dest, sendtag, iov.iov_base, packed_size,
                            MPI_BYTE, source, recvtag, comm, &recv_status );
         if (rc != MPI_SUCCESS) {
             if(packed_size > sizeof(recv_data))
-                MPI_Free_mem(iov.iov_base);
+                PMPI_Free_mem(iov.iov_base);
             OBJ_DESTRUCT(&convertor);
             OMPI_ERRHANDLER_RETURN(rc, comm, rc, FUNC_NAME);
         }
@@ -139,7 +133,7 @@ int MPI_Sendrecv_replace(void * buf, int count, MPI_Datatype datatype,
 
         /* release resources */
         if(packed_size > sizeof(recv_data)) {
-            MPI_Free_mem(iov.iov_base);
+            PMPI_Free_mem(iov.iov_base);
         }
         OBJ_DESTRUCT(&convertor);
 

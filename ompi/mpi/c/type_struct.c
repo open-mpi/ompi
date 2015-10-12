@@ -29,10 +29,6 @@
 #define MPI_Type_struct PMPI_Type_struct
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Type_create_struct PMPI_Type_create_struct
-#endif
-
 int MPI_Type_struct(int count,
                     int array_of_blocklengths[],
                     MPI_Aint array_of_displacements[],
@@ -40,7 +36,7 @@ int MPI_Type_struct(int count,
                     MPI_Datatype *newtype)
 {
     /* the param check will be done if necessary on the MPI_Type_create_struct */
-    return MPI_Type_create_struct(count,
+    return PMPI_Type_create_struct(count,
                                   array_of_blocklengths,
                                   array_of_displacements,
                                   array_of_types,

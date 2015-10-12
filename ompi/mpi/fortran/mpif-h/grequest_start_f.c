@@ -65,9 +65,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_GREQUEST_START,
 #endif
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Grequest_start PMPI_Grequest_start
-#endif
 
 void ompi_grequest_start_f(MPI_F_Grequest_query_function* query_fn,
                           MPI_F_Grequest_free_function* free_fn,
@@ -77,7 +74,7 @@ void ompi_grequest_start_f(MPI_F_Grequest_query_function* query_fn,
 {
     int c_ierr;
     MPI_Request c_req;
-    c_ierr = MPI_Grequest_start(
+    c_ierr = PMPI_Grequest_start(
                                 (MPI_Grequest_query_function *) query_fn,
                                 (MPI_Grequest_free_function *) free_fn,
                                 (MPI_Grequest_cancel_function *) cancel_fn,
@@ -90,6 +87,6 @@ void ompi_grequest_start_f(MPI_F_Grequest_query_function* query_fn,
         ompi_grequest_t *g = (ompi_grequest_t*) c_req;
         g->greq_funcs_are_c = false;
 
-        *request = MPI_Request_c2f(c_req);
+        *request = PMPI_Request_c2f(c_req);
     }
 }

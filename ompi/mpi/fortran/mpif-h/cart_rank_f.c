@@ -65,9 +65,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_CART_RANK,
 #endif
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Cart_rank PMPI_Cart_rank
-#endif
 
 void ompi_cart_rank_f(MPI_Fint *comm, MPI_Fint *coords, MPI_Fint *rank,
 		     MPI_Fint *ierr)
@@ -77,16 +74,16 @@ void ompi_cart_rank_f(MPI_Fint *comm, MPI_Fint *coords, MPI_Fint *rank,
     OMPI_ARRAY_NAME_DECL(coords);
     OMPI_SINGLE_NAME_DECL(rank);
 
-    c_comm = MPI_Comm_f2c(*comm);
+    c_comm = PMPI_Comm_f2c(*comm);
 
-    c_ierr = MPI_Cartdim_get(c_comm, &ndims);
+    c_ierr = PMPI_Cartdim_get(c_comm, &ndims);
     if (MPI_SUCCESS != c_ierr) {
         if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
         return;
     }
     OMPI_ARRAY_FINT_2_INT(coords, ndims);
 
-    c_ierr = MPI_Cart_rank(c_comm,
+    c_ierr = PMPI_Cart_rank(c_comm,
                            OMPI_ARRAY_NAME_CONVERT(coords),
                            OMPI_SINGLE_NAME_CONVERT(rank));
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);

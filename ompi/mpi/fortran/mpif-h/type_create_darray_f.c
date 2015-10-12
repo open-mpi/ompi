@@ -65,9 +65,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_CREATE_DARRAY,
 #endif
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Type_create_darray PMPI_Type_create_darray
-#endif
 
 void ompi_type_create_darray_f(MPI_Fint *size, MPI_Fint *rank,
 			      MPI_Fint *ndims, MPI_Fint *gsize_array,
@@ -77,7 +74,7 @@ void ompi_type_create_darray_f(MPI_Fint *size, MPI_Fint *rank,
 			      MPI_Fint *ierr)
 {
     int c_ierr;
-    MPI_Datatype c_old = MPI_Type_f2c(*oldtype);
+    MPI_Datatype c_old = PMPI_Type_f2c(*oldtype);
     MPI_Datatype c_new;
     OMPI_ARRAY_NAME_DECL(gsize_array);
     OMPI_ARRAY_NAME_DECL(distrib_array);
@@ -89,7 +86,7 @@ void ompi_type_create_darray_f(MPI_Fint *size, MPI_Fint *rank,
     OMPI_ARRAY_FINT_2_INT(darg_array, *ndims);
     OMPI_ARRAY_FINT_2_INT(psize_array, *ndims);
 
-    c_ierr = MPI_Type_create_darray(OMPI_FINT_2_INT(*size),
+    c_ierr = PMPI_Type_create_darray(OMPI_FINT_2_INT(*size),
                                     OMPI_FINT_2_INT(*rank),
                                     OMPI_FINT_2_INT(*ndims),
                                     OMPI_ARRAY_NAME_CONVERT(gsize_array),
@@ -105,6 +102,6 @@ void ompi_type_create_darray_f(MPI_Fint *size, MPI_Fint *rank,
     OMPI_ARRAY_FINT_2_INT_CLEANUP(psize_array);
 
     if (MPI_SUCCESS == c_ierr) {
-      *newtype = MPI_Type_c2f(c_new);
+      *newtype = PMPI_Type_c2f(c_new);
     }
 }

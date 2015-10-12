@@ -66,9 +66,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_GROUP_INCL,
 #endif
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Group_incl PMPI_Group_incl
-#endif
 
 void ompi_group_incl_f(MPI_Fint *group, MPI_Fint *n, MPI_Fint *ranks, MPI_Fint *newgroup, MPI_Fint *ierr)
 {
@@ -78,10 +75,10 @@ void ompi_group_incl_f(MPI_Fint *group, MPI_Fint *n, MPI_Fint *ranks, MPI_Fint *
     OMPI_ARRAY_NAME_DECL(ranks);
 
     /* make the fortran to c representation conversion */
-    c_group = MPI_Group_f2c(*group);
+    c_group = PMPI_Group_f2c(*group);
 
     OMPI_ARRAY_FINT_2_INT(ranks, *n);
-    c_ierr = MPI_Group_incl(c_group,
+    c_ierr = PMPI_Group_incl(c_group,
                             OMPI_FINT_2_INT(*n),
                             OMPI_ARRAY_NAME_CONVERT(ranks),
                             &c_newgroup);

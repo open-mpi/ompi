@@ -65,18 +65,15 @@ OMPI_GENERATE_F77_BINDINGS (MPI_WIN_START,
 #endif
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Win_start PMPI_Win_start
-#endif
 
 void ompi_win_start_f(MPI_Fint *group, MPI_Fint *assert,
 		     MPI_Fint *win, MPI_Fint *ierr)
 {
     int c_ierr;
-    MPI_Group c_grp = MPI_Group_f2c(*group);
-    MPI_Win c_win = MPI_Win_f2c(*win);
+    MPI_Group c_grp = PMPI_Group_f2c(*group);
+    MPI_Win c_win = PMPI_Win_f2c(*win);
 
-    c_ierr = MPI_Win_start(c_grp,
+    c_ierr = PMPI_Win_start(c_grp,
                            OMPI_FINT_2_INT(*assert),
                            c_win);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);

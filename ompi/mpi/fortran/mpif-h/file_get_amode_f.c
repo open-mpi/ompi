@@ -65,9 +65,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_FILE_GET_AMODE,
 #endif
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_File_get_amode PMPI_File_get_amode
-#endif
 
 void ompi_file_get_amode_f(MPI_Fint *fh, MPI_Fint *amode, MPI_Fint *ierr)
 {
@@ -75,8 +72,8 @@ void ompi_file_get_amode_f(MPI_Fint *fh, MPI_Fint *amode, MPI_Fint *ierr)
     MPI_File c_fh;
     OMPI_SINGLE_NAME_DECL(amode);
 
-    c_fh = MPI_File_f2c(*fh);
-    c_ierr = MPI_File_get_amode(c_fh, OMPI_SINGLE_NAME_CONVERT(amode));
+    c_fh = PMPI_File_f2c(*fh);
+    c_ierr = PMPI_File_get_amode(c_fh, OMPI_SINGLE_NAME_CONVERT(amode));
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {

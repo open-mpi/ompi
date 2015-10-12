@@ -65,9 +65,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_INFO_GET_NKEYS,
 #endif
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Info_get_nkeys PMPI_Info_get_nkeys
-#endif
 
 void ompi_info_get_nkeys_f(MPI_Fint *info, MPI_Fint *nkeys, MPI_Fint *ierr)
 {
@@ -75,9 +72,9 @@ void ompi_info_get_nkeys_f(MPI_Fint *info, MPI_Fint *nkeys, MPI_Fint *ierr)
     MPI_Info c_info;
     OMPI_SINGLE_NAME_DECL(nkeys);
 
-    c_info = MPI_Info_f2c(*info);
+    c_info = PMPI_Info_f2c(*info);
 
-    c_ierr = MPI_Info_get_nkeys(c_info, OMPI_SINGLE_NAME_CONVERT(nkeys));
+    c_ierr = PMPI_Info_get_nkeys(c_info, OMPI_SINGLE_NAME_CONVERT(nkeys));
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {

@@ -66,9 +66,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_OPEN_PORT,
 #endif
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Open_port PMPI_Open_port
-#endif
 
 void ompi_open_port_f(MPI_Fint *info, char *port_name, MPI_Fint *ierr, int port_name_len)
 {
@@ -76,9 +73,9 @@ void ompi_open_port_f(MPI_Fint *info, char *port_name, MPI_Fint *ierr, int port_
     MPI_Info c_info;
     char c_port_name[MPI_MAX_PORT_NAME];
 
-    c_info = MPI_Info_f2c(*info);
+    c_info = PMPI_Info_f2c(*info);
 
-    c_ierr = MPI_Open_port(c_info, c_port_name);
+    c_ierr = PMPI_Open_port(c_info, c_port_name);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if ( MPI_SUCCESS == c_ierr ) {

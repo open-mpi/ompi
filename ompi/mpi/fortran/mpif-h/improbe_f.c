@@ -65,9 +65,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_IMPROBE,
 #endif
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Improbe PMPI_Improbe
-#endif
 
 void ompi_improbe_f(MPI_Fint *source, MPI_Fint *tag, MPI_Fint *comm,
                     ompi_fortran_logical_t *flag, MPI_Fint *message,
@@ -79,21 +76,21 @@ void ompi_improbe_f(MPI_Fint *source, MPI_Fint *tag, MPI_Fint *comm,
     int c_ierr;
     OMPI_LOGICAL_NAME_DECL(flag);
 
-    c_comm = MPI_Comm_f2c (*comm);
+    c_comm = PMPI_Comm_f2c (*comm);
 
     OMPI_FORTRAN_STATUS_SET_POINTER(c_status,c_status2,status)
 
-    c_ierr = OMPI_INT_2_FINT(MPI_Improbe(OMPI_FINT_2_INT(*source),
-                                         OMPI_FINT_2_INT(*tag),
-                                         c_comm, OMPI_LOGICAL_SINGLE_NAME_CONVERT(flag),
-                                         &c_message, c_status));
+    c_ierr = OMPI_INT_2_FINT(PMPI_Improbe(OMPI_FINT_2_INT(*source),
+                                          OMPI_FINT_2_INT(*tag),
+                                          c_comm, OMPI_LOGICAL_SINGLE_NAME_CONVERT(flag),
+                                          &c_message, c_status));
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {
         OMPI_SINGLE_INT_2_LOGICAL(flag);
         if (OMPI_FORTRAN_VALUE_TRUE == *flag) {
             OMPI_FORTRAN_STATUS_RETURN(c_status,c_status2,status,c_ierr)
-            *message = MPI_Message_c2f(c_message);
+            *message = PMPI_Message_c2f(c_message);
         }
     }
 }

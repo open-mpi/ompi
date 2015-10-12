@@ -65,29 +65,26 @@ OMPI_GENERATE_F77_BINDINGS (MPI_MRECV,
 #endif
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Mrecv PMPI_Mrecv
-#endif
 
 void ompi_mrecv_f(char *buf, MPI_Fint *count, MPI_Fint *datatype,
                   MPI_Fint *message, MPI_Fint *status, MPI_Fint *ierr)
 {
    int c_ierr;
     OMPI_FORTRAN_STATUS_DECLARATION(c_status,c_status2)
-   MPI_Message c_message = MPI_Message_f2c(*message);
-   MPI_Datatype c_type = MPI_Type_f2c(*datatype);
+   MPI_Message c_message = PMPI_Message_f2c(*message);
+   MPI_Datatype c_type = PMPI_Type_f2c(*datatype);
 
     OMPI_FORTRAN_STATUS_SET_POINTER(c_status,c_status2,status)
 
    /* Call the C function */
-   c_ierr = OMPI_INT_2_FINT(MPI_Mrecv(OMPI_F2C_BOTTOM(buf), OMPI_FINT_2_INT(*count),
-                                      c_type, &c_message,
-                                      c_status));
+   c_ierr = OMPI_INT_2_FINT(PMPI_Mrecv(OMPI_F2C_BOTTOM(buf), OMPI_FINT_2_INT(*count),
+                                       c_type, &c_message,
+                                       c_status));
    if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
    if (MPI_SUCCESS == c_ierr) {
       OMPI_FORTRAN_STATUS_RETURN(c_status,c_status2,status,c_ierr)
       /* message is an INOUT, and may be updated by the recv */
-      *message = MPI_Message_c2f(c_message);
+      *message = PMPI_Message_c2f(c_message);
    }
 }

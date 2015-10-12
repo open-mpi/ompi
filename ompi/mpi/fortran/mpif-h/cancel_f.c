@@ -67,15 +67,12 @@ OMPI_GENERATE_F77_BINDINGS (MPI_CANCEL,
 #endif
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Cancel PMPI_Cancel
-#endif
 
 void ompi_cancel_f(MPI_Fint *request, MPI_Fint *ierr)
 {
     int c_ierr;
-    MPI_Request c_req = MPI_Request_f2c(*request);
+    MPI_Request c_req = PMPI_Request_f2c(*request);
 
-    c_ierr = MPI_Cancel(&c_req);
+    c_ierr = PMPI_Cancel(&c_req);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 }

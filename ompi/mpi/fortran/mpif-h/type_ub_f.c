@@ -65,17 +65,14 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_UB,
 #endif
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Type_ub PMPI_Type_ub
-#endif
 
 void ompi_type_ub_f(MPI_Fint *mtype, MPI_Fint *ub, MPI_Fint *ierr)
 {
     int c_ierr;
-    MPI_Datatype c_mtype = MPI_Type_f2c(*mtype);
+    MPI_Datatype c_mtype = PMPI_Type_f2c(*mtype);
     MPI_Aint c_ub;
 
-    c_ierr = MPI_Type_ub(c_mtype, &c_ub);
+    c_ierr = PMPI_Type_ub(c_mtype, &c_ub);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {

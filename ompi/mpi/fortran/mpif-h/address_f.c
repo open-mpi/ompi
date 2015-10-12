@@ -65,16 +65,13 @@ OMPI_GENERATE_F77_BINDINGS (MPI_ADDRESS,
 #endif
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Address PMPI_Address
-#endif
 
 void ompi_address_f(char *location, MPI_Fint *address, MPI_Fint *ierr)
 {
     int ierr_c;
     MPI_Aint addr;
 
-    ierr_c = MPI_Address(location, &addr);
+    ierr_c = PMPI_Address(location, &addr);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(ierr_c);
 
     if (MPI_SUCCESS == ierr_c) {

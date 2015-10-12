@@ -65,15 +65,12 @@ OMPI_GENERATE_F77_BINDINGS (MPI_INITIALIZED,
 #endif
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Initialized PMPI_Initialized
-#endif
 
 void ompi_initialized_f(ompi_fortran_logical_t *flag, MPI_Fint *ierr)
 {
     int c_ierr;
     OMPI_LOGICAL_NAME_DECL(flag);
-    c_ierr = MPI_Initialized(OMPI_LOGICAL_SINGLE_NAME_CONVERT(flag));
+    c_ierr = PMPI_Initialized(OMPI_LOGICAL_SINGLE_NAME_CONVERT(flag));
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {

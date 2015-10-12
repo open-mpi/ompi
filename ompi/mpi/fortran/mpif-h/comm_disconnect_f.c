@@ -65,21 +65,18 @@ OMPI_GENERATE_F77_BINDINGS (MPI_COMM_DISCONNECT,
 #endif
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Comm_disconnect PMPI_Comm_disconnect
-#endif
 
 void ompi_comm_disconnect_f(MPI_Fint *comm, MPI_Fint *ierr)
 {
     int c_ierr;
     MPI_Comm c_comm;
 
-    c_comm = MPI_Comm_f2c(*comm);
+    c_comm = PMPI_Comm_f2c(*comm);
 
-    c_ierr = MPI_Comm_disconnect(&c_comm);
+    c_ierr = PMPI_Comm_disconnect(&c_comm);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {
-        *comm = MPI_Comm_c2f(c_comm);
+        *comm = PMPI_Comm_c2f(c_comm);
     }
 }

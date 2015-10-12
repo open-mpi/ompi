@@ -67,15 +67,11 @@ OMPI_GENERATE_F77_BINDINGS (MPI_ATTR_GET,
 #endif
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Attr_get PMPI_Attr_get
-#endif
-
 void ompi_attr_get_f(MPI_Fint *comm, MPI_Fint *keyval,
                     MPI_Fint *attribute_val, ompi_fortran_logical_t *flag, MPI_Fint *ierr)
 {
     int c_ierr;
-    MPI_Comm c_comm = MPI_Comm_f2c(*comm);
+    MPI_Comm c_comm = PMPI_Comm_f2c(*comm);
     OMPI_LOGICAL_NAME_DECL(flag);
 
     /* This stuff is very confusing.  Be sure to see the comment at

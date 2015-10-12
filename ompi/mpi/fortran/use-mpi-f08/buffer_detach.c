@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2011-2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -58,7 +60,7 @@ void ompi_buffer_detach_f08(char *buffer, MPI_Fint *size, MPI_Fint *ierr)
     void *dummy;
     OMPI_SINGLE_NAME_DECL(size);
 
-    c_ierr = MPI_Buffer_detach(&dummy, OMPI_SINGLE_NAME_CONVERT(size));
+    c_ierr = PMPI_Buffer_detach(&dummy, OMPI_SINGLE_NAME_CONVERT(size));
     if (NULL != ierr) {
         *ierr = OMPI_INT_2_FINT(c_ierr);
     }

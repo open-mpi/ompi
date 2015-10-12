@@ -67,15 +67,12 @@ OMPI_GENERATE_F77_BINDINGS (MPI_FILE_OPEN,
 #endif
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_File_open PMPI_File_open
-#endif
 
 void ompi_file_open_f(MPI_Fint *comm, char *filename, MPI_Fint *amode,
 		     MPI_Fint *info, MPI_Fint *fh, MPI_Fint *ierr, int name_len)
 {
-    MPI_Comm c_comm = MPI_Comm_f2c(*comm);
-    MPI_Info c_info = MPI_Info_f2c(*info);
+    MPI_Comm c_comm = PMPI_Comm_f2c(*comm);
+    MPI_Info c_info = PMPI_Info_f2c(*info);
     MPI_File c_fh;
     char *c_filename;
     int c_ierr, ret;
@@ -88,13 +85,13 @@ void ompi_file_open_f(MPI_Fint *comm, char *filename, MPI_Fint *amode,
         return;
     }
 
-    c_ierr = MPI_File_open(c_comm, c_filename,
+    c_ierr = PMPI_File_open(c_comm, c_filename,
                            OMPI_FINT_2_INT(*amode),
                            c_info, &c_fh);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {
-       *fh = MPI_File_c2f(c_fh);
+       *fh = PMPI_File_c2f(c_fh);
     }
 
     free(c_filename);

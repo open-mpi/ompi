@@ -65,17 +65,14 @@ OMPI_GENERATE_F77_BINDINGS (MPI_COMM_TEST_INTER,
 #endif
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Comm_test_inter PMPI_Comm_test_inter
-#endif
 
 void ompi_comm_test_inter_f(MPI_Fint *comm, ompi_fortran_logical_t *flag, MPI_Fint *ierr)
 {
     int c_ierr;
-    MPI_Comm c_comm = MPI_Comm_f2c (*comm);
+    MPI_Comm c_comm = PMPI_Comm_f2c (*comm);
     OMPI_LOGICAL_NAME_DECL(flag);
 
-    c_ierr = MPI_Comm_test_inter(c_comm, OMPI_LOGICAL_SINGLE_NAME_CONVERT(flag));
+    c_ierr = PMPI_Comm_test_inter(c_comm, OMPI_LOGICAL_SINGLE_NAME_CONVERT(flag));
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {

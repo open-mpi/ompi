@@ -65,19 +65,16 @@ OMPI_GENERATE_F77_BINDINGS (MPI_FILE_GET_TYPE_EXTENT,
 #endif
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_File_get_type_extent PMPI_File_get_type_extent
-#endif
 
 void ompi_file_get_type_extent_f(MPI_Fint *fh, MPI_Fint *datatype,
 				MPI_Aint *extent, MPI_Fint *ierr)
 {
     int c_ierr;
-    MPI_File c_fh = MPI_File_f2c(*fh);
+    MPI_File c_fh = PMPI_File_f2c(*fh);
     MPI_Datatype c_type;
 
-    c_type = MPI_Type_f2c(*datatype);
+    c_type = PMPI_Type_f2c(*datatype);
 
-    c_ierr = MPI_File_get_type_extent(c_fh, c_type, extent);
+    c_ierr = PMPI_File_get_type_extent(c_fh, c_type, extent);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 }

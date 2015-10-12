@@ -69,9 +69,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_INEIGHBOR_ALLGATHER,
 #endif
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Ineighbor_allgather PMPI_Ineighbor_allgather
-#endif
 
 void ompi_ineighbor_allgather_f(char *sendbuf, MPI_Fint *sendcount, MPI_Fint *sendtype,
                                 char *recvbuf, MPI_Fint *recvcount, MPI_Fint *recvtype,
@@ -82,22 +79,22 @@ void ompi_ineighbor_allgather_f(char *sendbuf, MPI_Fint *sendcount, MPI_Fint *se
     MPI_Request c_req;
     MPI_Datatype c_sendtype, c_recvtype;
 
-    c_comm = MPI_Comm_f2c(*comm);
-    c_sendtype = MPI_Type_f2c(*sendtype);
-    c_recvtype = MPI_Type_f2c(*recvtype);
+    c_comm = PMPI_Comm_f2c(*comm);
+    c_sendtype = PMPI_Type_f2c(*sendtype);
+    c_recvtype = PMPI_Type_f2c(*recvtype);
 
     sendbuf = (char *) OMPI_F2C_IN_PLACE(sendbuf);
     sendbuf = (char *) OMPI_F2C_BOTTOM(sendbuf);
     recvbuf = (char *) OMPI_F2C_BOTTOM(recvbuf);
 
-    ierr_c = MPI_Ineighbor_allgather(sendbuf,
-                                     OMPI_FINT_2_INT(*sendcount),
-                                     c_sendtype,
-                                     recvbuf,
-                                     OMPI_FINT_2_INT(*recvcount),
-                                     c_recvtype, c_comm, &c_req);
+    ierr_c = PMPI_Ineighbor_allgather(sendbuf,
+                                      OMPI_FINT_2_INT(*sendcount),
+                                      c_sendtype,
+                                      recvbuf,
+                                      OMPI_FINT_2_INT(*recvcount),
+                                      c_recvtype, c_comm, &c_req);
 
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(ierr_c);
 
-    if (MPI_SUCCESS == ierr_c) *request = MPI_Request_c2f(c_req);
+    if (MPI_SUCCESS == ierr_c) *request = PMPI_Request_c2f(c_req);
 }

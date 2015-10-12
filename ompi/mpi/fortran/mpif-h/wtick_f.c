@@ -67,11 +67,8 @@ double mpi_wtick__(void) { return ompi_wtick_f(); }
 #endif
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Wtick PMPI_Wtick
-#endif
 
 double ompi_wtick_f(void)
 {
-    return MPI_Wtick();
+    return PMPI_Wtick();
 }

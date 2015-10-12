@@ -38,10 +38,7 @@ AM_CPPFLAGS = -DOMPI_BUILD_MPI_PROFILING=1
 # Further, this build HAS to go through if profiling is required.
 #
 
-noinst_LTLIBRARIES =
-if BUILD_PMPI_BINDINGS_LAYER
-noinst_LTLIBRARIES += libmpi_c_pmpi.la
-endif
+noinst_LTLIBRARIES = libmpi_c_pmpi.la
 
 nodist_libmpi_c_pmpi_la_SOURCES = \
         pabort.c \

@@ -66,19 +66,16 @@ OMPI_GENERATE_F77_BINDINGS (MPI_FILE_WRITE_ALL_BEGIN,
 #endif
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_File_write_all_begin PMPI_File_write_all_begin
-#endif
 
 void ompi_file_write_all_begin_f(MPI_Fint *fh, char *buf,
 				MPI_Fint *count, MPI_Fint *datatype,
 				MPI_Fint *ierr)
 {
    int c_ierr;
-   MPI_File c_fh = MPI_File_f2c(*fh);
-   MPI_Datatype c_type = MPI_Type_f2c(*datatype);
+   MPI_File c_fh = PMPI_File_f2c(*fh);
+   MPI_Datatype c_type = PMPI_Type_f2c(*datatype);
 
-   c_ierr = MPI_File_write_all_begin(c_fh, OMPI_F2C_BOTTOM(buf),
+   c_ierr = PMPI_File_write_all_begin(c_fh, OMPI_F2C_BOTTOM(buf),
                                      OMPI_FINT_2_INT(*count),
                                      c_type);
    if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);

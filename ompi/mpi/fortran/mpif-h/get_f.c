@@ -67,9 +67,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_GET,
 #endif
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Get PMPI_Get
-#endif
 
 void ompi_get_f(char *origin_addr, MPI_Fint *origin_count,
 	       MPI_Fint *origin_datatype, MPI_Fint *target_rank,
@@ -77,11 +74,11 @@ void ompi_get_f(char *origin_addr, MPI_Fint *origin_count,
 	       MPI_Fint *target_datatype, MPI_Fint *win, MPI_Fint *ierr)
 {
     int c_ierr;
-    MPI_Datatype c_origin_datatype = MPI_Type_f2c(*origin_datatype);
-    MPI_Datatype c_target_datatype = MPI_Type_f2c(*target_datatype);
-    MPI_Win c_win = MPI_Win_f2c(*win);
+    MPI_Datatype c_origin_datatype = PMPI_Type_f2c(*origin_datatype);
+    MPI_Datatype c_target_datatype = PMPI_Type_f2c(*target_datatype);
+    MPI_Win c_win = PMPI_Win_f2c(*win);
 
-    c_ierr = MPI_Get(OMPI_F2C_BOTTOM(origin_addr),
+    c_ierr = PMPI_Get(OMPI_F2C_BOTTOM(origin_addr),
                      OMPI_FINT_2_INT(*origin_count),
                      c_origin_datatype,
                      OMPI_FINT_2_INT(*target_rank),

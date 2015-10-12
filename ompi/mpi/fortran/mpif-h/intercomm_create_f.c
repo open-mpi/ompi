@@ -65,9 +65,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_INTERCOMM_CREATE,
 #endif
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Intercomm_create PMPI_Intercomm_create
-#endif
 
 void ompi_intercomm_create_f(MPI_Fint *local_comm, MPI_Fint *local_leader,
 			    MPI_Fint *bridge_comm,
@@ -77,10 +74,10 @@ void ompi_intercomm_create_f(MPI_Fint *local_comm, MPI_Fint *local_leader,
 {
     int c_ierr;
     MPI_Comm c_newcomm;
-    MPI_Comm c_local_comm = MPI_Comm_f2c (*local_comm );
-    MPI_Comm c_bridge_comm = MPI_Comm_f2c (*bridge_comm);
+    MPI_Comm c_local_comm = PMPI_Comm_f2c (*local_comm );
+    MPI_Comm c_bridge_comm = PMPI_Comm_f2c (*bridge_comm);
 
-    c_ierr = MPI_Intercomm_create(c_local_comm,
+    c_ierr = PMPI_Intercomm_create(c_local_comm,
                                   OMPI_FINT_2_INT(*local_leader),
                                   c_bridge_comm,
                                   OMPI_FINT_2_INT(*remote_leader),
@@ -89,6 +86,6 @@ void ompi_intercomm_create_f(MPI_Fint *local_comm, MPI_Fint *local_leader,
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {
-        *newintercomm = MPI_Comm_c2f (c_newcomm);
+        *newintercomm = PMPI_Comm_c2f (c_newcomm);
     }
 }

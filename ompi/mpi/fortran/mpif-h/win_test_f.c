@@ -65,17 +65,14 @@ OMPI_GENERATE_F77_BINDINGS (MPI_WIN_TEST,
 #endif
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Win_test PMPI_Win_test
-#endif
 
 void ompi_win_test_f(MPI_Fint *win, ompi_fortran_logical_t *flag, MPI_Fint *ierr)
 {
     int c_ierr;
-    MPI_Win c_win = MPI_Win_f2c(*win);
+    MPI_Win c_win = PMPI_Win_f2c(*win);
     OMPI_LOGICAL_NAME_DECL(flag);
 
-    c_ierr = MPI_Win_test(c_win, OMPI_LOGICAL_SINGLE_NAME_CONVERT(flag));
+    c_ierr = PMPI_Win_test(c_win, OMPI_LOGICAL_SINGLE_NAME_CONVERT(flag));
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {

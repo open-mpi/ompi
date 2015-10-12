@@ -66,9 +66,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_SCATTERV,
 #endif
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Scatterv PMPI_Scatterv
-#endif
 
 void ompi_scatterv_f(char *sendbuf, MPI_Fint *sendcounts,
 		    MPI_Fint *displs, MPI_Fint *sendtype,
@@ -82,11 +79,11 @@ void ompi_scatterv_f(char *sendbuf, MPI_Fint *sendcounts,
     OMPI_ARRAY_NAME_DECL(sendcounts);
     OMPI_ARRAY_NAME_DECL(displs);
 
-    c_comm = MPI_Comm_f2c(*comm);
-    c_sendtype = MPI_Type_f2c(*sendtype);
-    c_recvtype = MPI_Type_f2c(*recvtype);
+    c_comm = PMPI_Comm_f2c(*comm);
+    c_sendtype = PMPI_Type_f2c(*sendtype);
+    c_recvtype = PMPI_Type_f2c(*recvtype);
 
-    MPI_Comm_size(c_comm, &size);
+    PMPI_Comm_size(c_comm, &size);
     OMPI_ARRAY_FINT_2_INT(sendcounts, size);
     OMPI_ARRAY_FINT_2_INT(displs, size);
 
@@ -94,7 +91,7 @@ void ompi_scatterv_f(char *sendbuf, MPI_Fint *sendcounts,
     recvbuf = (char *) OMPI_F2C_IN_PLACE(recvbuf);
     recvbuf = (char *) OMPI_F2C_BOTTOM(recvbuf);
 
-    c_ierr = MPI_Scatterv(sendbuf,
+    c_ierr = PMPI_Scatterv(sendbuf,
                           OMPI_ARRAY_NAME_CONVERT(sendcounts),
                           OMPI_ARRAY_NAME_CONVERT(displs),
                           c_sendtype, recvbuf,

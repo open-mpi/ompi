@@ -69,9 +69,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_PACK_EXTERNAL,
 #endif
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Pack_external PMPI_Pack_external
-#endif
 
 void ompi_pack_external_f(char *datarep, char *inbuf, MPI_Fint *incount,
 			 MPI_Fint *datatype, char *outbuf,
@@ -80,7 +77,7 @@ void ompi_pack_external_f(char *datarep, char *inbuf, MPI_Fint *incount,
 {
     int ret, c_ierr;
     char *c_datarep;
-    MPI_Datatype type = MPI_Type_f2c(*datatype);
+    MPI_Datatype type = PMPI_Type_f2c(*datatype);
 
     /* Convert the fortran string */
 
@@ -92,7 +89,7 @@ void ompi_pack_external_f(char *datarep, char *inbuf, MPI_Fint *incount,
         return;
     }
 
-    c_ierr = MPI_Pack_external(c_datarep, OMPI_F2C_BOTTOM(inbuf),
+    c_ierr = PMPI_Pack_external(c_datarep, OMPI_F2C_BOTTOM(inbuf),
                                OMPI_FINT_2_INT(*incount),
                                type, outbuf,
                                *outsize,

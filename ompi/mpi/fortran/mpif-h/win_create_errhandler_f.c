@@ -67,10 +67,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_WIN_CREATE_ERRHANDLER,
 #endif
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Win_create_errhandler PMPI_Win_create_errhandler
-#endif
-
 static const char FUNC_NAME[] = "MPI_WIN_CREATE_ERRHANDLER";
 
 
@@ -82,7 +78,7 @@ void ompi_win_create_errhandler_f(ompi_errhandler_fortran_handler_fn_t* function
                                (ompi_errhandler_generic_handler_fn_t*) function,
                                OMPI_ERRHANDLER_LANG_FORTRAN);
     if (MPI_ERRHANDLER_NULL != c_errhandler) {
-        *errhandler = MPI_Errhandler_c2f(c_errhandler);
+        *errhandler = PMPI_Errhandler_c2f(c_errhandler);
         if (NULL != ierr) *ierr = OMPI_INT_2_FINT(MPI_SUCCESS);
     } else {
         if (NULL != ierr) *ierr = OMPI_INT_2_FINT(MPI_ERR_INTERN);

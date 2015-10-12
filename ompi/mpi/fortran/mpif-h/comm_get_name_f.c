@@ -68,19 +68,16 @@ OMPI_GENERATE_F77_BINDINGS (MPI_COMM_GET_NAME,
 #endif
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Comm_get_name PMPI_Comm_get_name
-#endif
 
 void ompi_comm_get_name_f(MPI_Fint *comm, char *comm_name,
                           MPI_Fint *resultlen, MPI_Fint *ierr,
                           int name_len)
 {
     int c_ierr, c_len;
-    MPI_Comm c_comm = MPI_Comm_f2c(*comm);
+    MPI_Comm c_comm = PMPI_Comm_f2c(*comm);
     char c_name[MPI_MAX_OBJECT_NAME];
 
-    c_ierr = MPI_Comm_get_name(c_comm, c_name, &c_len);
+    c_ierr = PMPI_Comm_get_name(c_comm, c_name, &c_len);
     if (MPI_SUCCESS == c_ierr) {
         ompi_fortran_string_c2f(c_name, comm_name, name_len);
         *resultlen = OMPI_INT_2_FINT(c_len);

@@ -13,6 +13,8 @@
  * Copyright (c) 2007-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -713,15 +715,6 @@ main(int argc, char *argv[])
     if (disable_flags && !((flags & COMP_DRY_RUN) && !real_flag)) {
         flags &= ~(COMP_WANT_PREPROC|COMP_WANT_COMPILE|COMP_WANT_LINK);
     }
-
-#if !OMPI_ENABLE_MPI_PROFILING
-    /* sanity check */
-    if (flags & COMP_WANT_PMPI) {
-	    opal_show_help("help-opal-wrapper.txt", "no-profiling-support", true,
-		               argv[0], NULL);
-    }
-#endif
-
 
     /****************************************************
      *

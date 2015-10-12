@@ -65,9 +65,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_FREE_KEYVAL,
 #endif
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Type_free_keyval PMPI_Type_free_keyval
-#endif
 
 void ompi_type_free_keyval_f(MPI_Fint *type_keyval, MPI_Fint *ierr)
 {
@@ -76,7 +73,7 @@ void ompi_type_free_keyval_f(MPI_Fint *type_keyval, MPI_Fint *ierr)
 
     OMPI_SINGLE_FINT_2_INT(type_keyval);
 
-    c_ierr = MPI_Type_free_keyval(OMPI_SINGLE_NAME_CONVERT(type_keyval));
+    c_ierr = PMPI_Type_free_keyval(OMPI_SINGLE_NAME_CONVERT(type_keyval));
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {

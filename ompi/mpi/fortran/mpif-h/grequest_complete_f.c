@@ -65,15 +65,12 @@ OMPI_GENERATE_F77_BINDINGS (MPI_GREQUEST_COMPLETE,
 #endif
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Grequest_complete PMPI_Grequest_complete
-#endif
 
 void ompi_grequest_complete_f(MPI_Fint *request, MPI_Fint *ierr)
 {
     int c_ierr;
-    MPI_Request c_req = MPI_Request_f2c(*request);
+    MPI_Request c_req = PMPI_Request_f2c(*request);
 
-    c_ierr = MPI_Grequest_complete(c_req);
+    c_ierr = PMPI_Grequest_complete(c_req);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 }

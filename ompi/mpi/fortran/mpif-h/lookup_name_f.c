@@ -66,9 +66,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_LOOKUP_NAME,
 #endif
 #endif
 
-#if OMPI_ENABLE_MPI_PROFILING
-#define MPI_Lookup_name PMPI_Lookup_name
-#endif
 
 void ompi_lookup_name_f(char *service_name, MPI_Fint *info,
 		       char *port_name, MPI_Fint *ierr, int service_name_len, int port_name_len)
@@ -78,7 +75,7 @@ void ompi_lookup_name_f(char *service_name, MPI_Fint *info,
     char *c_service_name;
     char *c_port_name;
 
-    c_info = MPI_Info_f2c(*info);
+    c_info = PMPI_Info_f2c(*info);
     ompi_fortran_string_f2c(service_name, service_name_len, &c_service_name);
 
     c_port_name = (char *) malloc (port_name_len+1);
@@ -88,7 +85,7 @@ void ompi_lookup_name_f(char *service_name, MPI_Fint *info,
 	return;
     }
 
-    c_ierr = MPI_Lookup_name(c_service_name, c_info, c_port_name);
+    c_ierr = PMPI_Lookup_name(c_service_name, c_info, c_port_name);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if ( MPI_SUCCESS == c_ierr) {
