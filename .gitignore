@@ -529,6 +529,12 @@ oshmem/shmem/man/man3/.dir-stamp
 oshmem/tools/oshmem_info/oshmem_info
 oshmem/tools/oshmem_info/oshmem_info.1
 
+oshmem/tools/wrappers/oshcc.1
+oshmem/tools/wrappers/oshfort.1
+oshmem/tools/wrappers/oshrun.1
+oshmem/tools/wrappers/shmemcc.1
+oshmem/tools/wrappers/shmemfort.1
+oshmem/tools/wrappers/shmemrun.1
 oshmem/tools/wrappers/shmemcc-wrapper-data.txt
 oshmem/tools/wrappers/shmemfort-wrapper-data.txt
 
