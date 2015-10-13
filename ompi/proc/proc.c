@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2013-2015 Intel, Inc. All rights reserved
@@ -463,10 +463,7 @@ ompi_proc_t **ompi_proc_get_allocated (size_t *size)
 ompi_proc_t **ompi_proc_world (size_t *size)
 {
     ompi_proc_t **procs;
-    ompi_proc_t *proc;
     size_t count = 0;
-    ompi_rte_cmp_bitmask_t mask;
-    ompi_process_name_t my_name;
 
     /* check bozo case */
     if (NULL == ompi_proc_local_proc) {
@@ -483,7 +480,7 @@ ompi_proc_t **ompi_proc_world (size_t *size)
     }
 
     /* now get/allocate all the procs in this jobid */
-    for (int i = 0 ; i < count ; ++i) {
+    for (size_t i = 0 ; i < count ; ++i) {
         opal_process_name_t name = {.jobid = OMPI_CAST_RTE_NAME(&ompi_proc_local_proc->super.proc_name)->jobid,
                                     .vpid = i};
 
