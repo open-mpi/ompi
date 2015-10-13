@@ -465,8 +465,6 @@ ompi_proc_t **ompi_proc_world (size_t *size)
     ompi_proc_t **procs;
     ompi_proc_t *proc;
     size_t count = 0;
-    ompi_rte_cmp_bitmask_t mask;
-    ompi_process_name_t my_name;
 
     /* check bozo case */
     if (NULL == ompi_proc_local_proc) {
@@ -483,7 +481,7 @@ ompi_proc_t **ompi_proc_world (size_t *size)
     }
 
     /* now get/allocate all the procs in this jobid */
-    for (int i = 0 ; i < count ; ++i) {
+    for (size_t i = 0 ; i < count ; ++i) {
         opal_process_name_t name = {.jobid = OMPI_CAST_RTE_NAME(&ompi_proc_local_proc->super.proc_name)->jobid,
                                     .vpid = i};
 
@@ -501,7 +499,15 @@ ompi_proc_t **ompi_proc_world (size_t *size)
          * count which cannot be released until ompi_proc_finalize is
          * called.
          */
-        procs[i] = ompi_proc_for_name (name);
+        proc = (ompi_proc_t*)ompi_proc_for_name (name);
+        if (NULL == proc) {
+            for (size_t j=0; j < i; j++) {
+                OBJ_RELEASE(procs[j]);
+            }
+            free(procs);
+            return NULL;
+        }
+        procs[i] = proc;
     }
 
     *size = count;
