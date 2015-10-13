@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2007-2015 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
 # $COPYRIGHT$
 #
@@ -57,14 +57,6 @@ process on host %s, PID %d.
 This indicates an erroneous MPI program; MPI_FINALIZE is only allowed
 to be invoked exactly once in a process.
 #
-[proc:heterogeneous-support-unavailable]
-The build of Open MPI running on host %s was not
-compiled with heterogeneous support.  A process running on host
-%s appears to have a different architecture,
-which will not work.  Please recompile Open MPI with the
-configure option --enable-heterogeneous or use a homogeneous
-environment.
-#
 [sparse groups enabled but compiled out]
 WARNING: The MCA parameter mpi_use_sparse_group_storage has been set
 to true, but sparse group support was not compiled into Open MPI.  The
@@ -79,15 +71,6 @@ Node: %s
 
 In order to operate in a heterogeneous environment, please reconfigure
 Open MPI with --enable-heterogeneous.
-#
-[ompi mpi abort:cannot guarantee all killed]
-An MPI process is aborting at a time when it cannot guarantee that all
-of its peer processes in the job will be killed properly.  You should
-double check that everything has shut down cleanly.
-
-  Reason:     %s
-  Local host: %s
-  PID:        %d
 #
 [no cuda support]
 The user requested CUDA support with the --mca mpi_cuda_support 1 flag
