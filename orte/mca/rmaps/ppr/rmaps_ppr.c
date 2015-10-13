@@ -3,9 +3,9 @@
  * Copyright (c) 2011      Los Alamos National Security, LLC.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -121,7 +121,7 @@ static int ppr_mapper(orte_job_t *jdata)
     opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                         "mca:rmaps:ppr: mapping job %s with ppr %s",
                         ORTE_JOBID_PRINT(jdata->jobid), jdata->map->ppr);
- 
+
     /* flag that I did the mapping */
     if (NULL != jdata->map->last_mapper) {
         free(jdata->map->last_mapper);
@@ -264,7 +264,7 @@ static int ppr_mapper(orte_job_t *jdata)
 
         /* if a bookmark exists from some prior mapping, set us to start there */
         jdata->bookmark = orte_rmaps_base_get_starting_point(&node_list, jdata);
-        
+
         /* cycle across the nodes */
         nprocs_mapped = 0;
         for (item = opal_list_get_first(&node_list);
@@ -365,6 +365,22 @@ static int ppr_mapper(orte_job_t *jdata)
                  * properly set
                  */
                 node->oversubscribed = true;
+                /* check for permission */
+                if (node->slots_given) {
+                    /* if we weren't given a directive either way, then we will error out
+                     * as the #slots were specifically given, either by the host RM or
+                     * via hostfile/dash-host */
+                    if (!(ORTE_MAPPING_SUBSCRIBE_GIVEN & ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping))) {
+                        orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:alloc-error",
+                                       true, app->num_procs, app->app);
+                        return ORTE_ERR_SILENT;
+                    } else if (ORTE_MAPPING_NO_OVERSUBSCRIBE & ORTE_GET_MAPPING_DIRECTIVE(jdata->map->mapping)) {
+                        /* if we were explicitly told not to oversubscribe, then don't */
+                        orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:alloc-error",
+                                       true, app->num_procs, app->app);
+                        return ORTE_ERR_SILENT;
+                    }
+                }
             }
 
             /* if we haven't mapped all the procs, continue on to the

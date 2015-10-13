@@ -193,6 +193,22 @@ int orte_rmaps_rr_byslot(orte_job_t *jdata,
              * properly set
              */
             node->oversubscribed = true;
+            /* check for permission */
+            if (node->slots_given) {
+                /* if we weren't given a directive either way, then we will error out
+                 * as the #slots were specifically given, either by the host RM or
+                 * via hostfile/dash-host */
+                if (!(ORTE_MAPPING_SUBSCRIBE_GIVEN & ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping))) {
+                    orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:alloc-error",
+                                   true, app->num_procs, app->app);
+                    return ORTE_ERR_SILENT;
+                } else if (ORTE_MAPPING_NO_OVERSUBSCRIBE & ORTE_GET_MAPPING_DIRECTIVE(jdata->map->mapping)) {
+                    /* if we were explicitly told not to oversubscribe, then don't */
+                    orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:alloc-error",
+                                   true, app->num_procs, app->app);
+                    return ORTE_ERR_SILENT;
+                }
+            }
         }
         /* if we have mapped everything, then we are done */
         if (nprocs_mapped == app->num_procs) {
@@ -316,7 +332,7 @@ int orte_rmaps_rr_bynode(orte_job_t *jdata,
                  * have to track how many procs to "shift" elsewhere
                  * to make up the difference
                  */
-                
+
                 /* compute the number of procs to go on this node */
                 if (add_one) {
                     if (0 == nxtra_nodes) {
@@ -401,6 +417,22 @@ int orte_rmaps_rr_bynode(orte_job_t *jdata,
                  * properly set
                  */
                 node->oversubscribed = true;
+                /* check for permission */
+                if (node->slots_given) {
+                    /* if we weren't given a directive either way, then we will error out
+                     * as the #slots were specifically given, either by the host RM or
+                     * via hostfile/dash-host */
+                    if (!(ORTE_MAPPING_SUBSCRIBE_GIVEN & ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping))) {
+                        orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:alloc-error",
+                                       true, app->num_procs, app->app);
+                        return ORTE_ERR_SILENT;
+                    } else if (ORTE_MAPPING_NO_OVERSUBSCRIBE & ORTE_GET_MAPPING_DIRECTIVE(jdata->map->mapping)) {
+                        /* if we were explicitly told not to oversubscribe, then don't */
+                        orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:alloc-error",
+                                       true, app->num_procs, app->app);
+                        return ORTE_ERR_SILENT;
+                    }
+                }
             }
             if (nprocs_mapped == app->num_procs) {
                 /* we are done */
@@ -573,6 +605,22 @@ int orte_rmaps_rr_byobj(orte_job_t *jdata,
                  * properly set
                  */
                 node->oversubscribed = true;
+                /* check for permission */
+                if (node->slots_given) {
+                    /* if we weren't given a directive either way, then we will error out
+                     * as the #slots were specifically given, either by the host RM or
+                     * via hostfile/dash-host */
+                    if (!(ORTE_MAPPING_SUBSCRIBE_GIVEN & ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping))) {
+                        orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:alloc-error",
+                                       true, app->num_procs, app->app);
+                        return ORTE_ERR_SILENT;
+                    } else if (ORTE_MAPPING_NO_OVERSUBSCRIBE & ORTE_GET_MAPPING_DIRECTIVE(jdata->map->mapping)) {
+                        /* if we were explicitly told not to oversubscribe, then don't */
+                        orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:alloc-error",
+                                       true, app->num_procs, app->app);
+                        return ORTE_ERR_SILENT;
+                    }
+                }
             }
             if (nprocs_mapped == app->num_procs) {
                 /* we are done */
@@ -711,6 +759,22 @@ static int byobj_span(orte_job_t *jdata,
              * properly set
              */
             node->oversubscribed = true;
+            /* check for permission */
+            if (node->slots_given) {
+                /* if we weren't given a directive either way, then we will error out
+                 * as the #slots were specifically given, either by the host RM or
+                 * via hostfile/dash-host */
+                if (!(ORTE_MAPPING_SUBSCRIBE_GIVEN & ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping))) {
+                    orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:alloc-error",
+                                   true, app->num_procs, app->app);
+                    return ORTE_ERR_SILENT;
+                } else if (ORTE_MAPPING_NO_OVERSUBSCRIBE & ORTE_GET_MAPPING_DIRECTIVE(jdata->map->mapping)) {
+                    /* if we were explicitly told not to oversubscribe, then don't */
+                    orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:alloc-error",
+                                   true, app->num_procs, app->app);
+                    return ORTE_ERR_SILENT;
+                }
+            }
         }
         if (nprocs_mapped == app->num_procs) {
             /* we are done */

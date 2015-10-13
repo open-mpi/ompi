@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
- *                         All rights reserved. 
+ *                         All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -141,7 +141,7 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
 
     /** set default answer */
     *total_num_slots = 0;
-    
+
     /* get the daemon job object */
     daemons = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid);
     /* see is we have a vm or not */
@@ -283,6 +283,8 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
                  * destructed along the way
                  */
                 OBJ_RETAIN(node);
+                /* pass across anything about slots_given that was discovered */
+                node->slots_given = nptr->slots_given;
                 if (initial_map) {
                     /* if this is the first app_context we
                      * are getting for an initial map of a job,
@@ -348,7 +350,7 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
             }
         }
     }
-    
+
     /* add everything in the node pool that can be used - add them
      * in daemon order, which may be different than the order in the
      * node pool. Since an empty list is passed into us, the list at
@@ -402,7 +404,7 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
                 node->mapped = false;
             }
             if (NULL == nd || NULL == nd->daemon ||
-		NULL == node->daemon ||
+                NULL == node->daemon ||
                 nd->daemon->name.vpid < node->daemon->name.vpid) {
                 /* just append to end */
                 opal_list_append(allocated_nodes, &node->super);
@@ -446,12 +448,12 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
         }
         return ORTE_ERR_SILENT;
     }
-    
+
     /* filter the nodes thru any hostfile and dash-host options */
     OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base_framework.framework_output,
                          "%s Filtering thru apps",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-    
+
     if (ORTE_SUCCESS != (rc = orte_rmaps_base_filter_nodes(app, allocated_nodes, true))
         && ORTE_ERR_TAKE_NEXT_OPTION != rc) {
         ORTE_ERROR_LOG(rc);
@@ -503,7 +505,7 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
                  * do what it needs to do to meet the request
                  */
                 OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base_framework.framework_output,
-                                     "%s node %s is fully used, but available for oversubscrition",
+                                     "%s node %s is fully used, but available for oversubscription",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                      node->name));
         } else {
@@ -523,14 +525,14 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
              */
             return ORTE_ERR_RESOURCE_BUSY;
         } else {
-            orte_show_help("help-orte-rmaps-base.txt", 
+            orte_show_help("help-orte-rmaps-base.txt",
                            "orte-rmaps-base:all-available-resources-used", true);
             return ORTE_ERR_SILENT;
         }
     }
-    
+
     *total_num_slots = num_slots;
-    
+
     if (4 < opal_output_get_verbosity(orte_rmaps_base_framework.framework_output)) {
         opal_output(0, "AVAILABLE NODES FOR MAPPING:");
         for (item = opal_list_get_first(allocated_nodes);
@@ -559,7 +561,7 @@ orte_proc_t* orte_rmaps_base_setup_proc(orte_job_t *jdata,
     proc->state = ORTE_PROC_STATE_INIT;
     proc->app_idx = idx;
 
-    OBJ_RETAIN(node);  /* maintain accounting on object */    
+    OBJ_RETAIN(node);  /* maintain accounting on object */
     proc->node = node;
     proc->nodename = node->name;
     node->num_procs++;
@@ -586,7 +588,7 @@ orte_node_t* orte_rmaps_base_get_starting_point(opal_list_t *node_list,
     opal_list_item_t *item, *cur_node_item;
     orte_node_t *node, *nd1, *ndmin;
     int overload;
-    
+
     /* if a bookmark exists from some prior mapping, set us to start there */
     if (NULL != jdata->bookmark) {
         cur_node_item = NULL;
@@ -595,7 +597,7 @@ orte_node_t* orte_rmaps_base_get_starting_point(opal_list_t *node_list,
              item != opal_list_get_end(node_list);
              item = opal_list_get_next(item)) {
             node = (orte_node_t*)item;
-            
+
             if (node->index == jdata->bookmark->index) {
                 cur_node_item = item;
                 break;
@@ -603,13 +605,13 @@ orte_node_t* orte_rmaps_base_get_starting_point(opal_list_t *node_list,
         }
         /* see if we found it - if not, just start at the beginning */
         if (NULL == cur_node_item) {
-            cur_node_item = opal_list_get_first(node_list); 
+            cur_node_item = opal_list_get_first(node_list);
         }
     } else {
         /* if no bookmark, then just start at the beginning of the list */
         cur_node_item = opal_list_get_first(node_list);
     }
-    
+
     OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base_framework.framework_output,
                          "%s Starting bookmark at node %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
