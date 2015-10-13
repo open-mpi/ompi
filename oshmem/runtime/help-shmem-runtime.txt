@@ -2,6 +2,7 @@
 #
 # Copyright (c) 2013      Mellanox Technologies, Inc.
 #                         All rights reserved.
+# Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -20,16 +21,6 @@ developer):
 
   %s
   --> Returned "%s" (%d) instead of "Success" (0)
-#
-[heterogeneous-support-unavailable]
-This installation of Open SHMEM was configured without support for
-heterogeneous architectures, but at least one node in the allocation
-was detected to have a different architecture. The detected node was:
-
-Node: %s
-
-In order to operate in a heterogeneous environment, please reconfigure
-Open SHMEM with --enable-heterogeneous.
 #
 [oshmem shmem abort:cannot guarantee all killed]
 A SHMEM process is aborting at a time when it cannot guarantee that all
