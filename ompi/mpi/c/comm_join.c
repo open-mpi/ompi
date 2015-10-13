@@ -13,6 +13,7 @@
  *                         All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -128,6 +129,8 @@ int MPI_Comm_join(int fd, MPI_Comm *intercomm)
 
     /* use the port to connect/accept */
     rc = ompi_dpm_connect_accept (MPI_COMM_SELF, 0, port_name, send_first, &newcomp);
+
+    OPAL_CR_EXIT_LIBRARY();
 
     *intercomm = newcomp;
     OMPI_ERRHANDLER_RETURN (rc, MPI_COMM_SELF, rc, FUNC_NAME);

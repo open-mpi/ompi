@@ -16,6 +16,7 @@
  *
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -93,6 +94,7 @@ int MPI_Publish_name(const char *service_name, MPI_Info info,
             } else {
                 /* unrecognized scope */
                 OPAL_LIST_DESTRUCT(&values);
+                OPAL_CR_EXIT_LIBRARY();
                 return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,
                                             FUNC_NAME);
             }
@@ -126,6 +128,7 @@ int MPI_Publish_name(const char *service_name, MPI_Info info,
             } else {
                 /* unrecognized persistence */
                 OPAL_LIST_DESTRUCT(&values);
+                OPAL_CR_EXIT_LIBRARY();
                 return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,
                                             FUNC_NAME);
             }
