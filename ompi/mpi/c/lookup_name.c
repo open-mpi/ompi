@@ -67,8 +67,6 @@ int MPI_Lookup_name(const char *service_name, MPI_Info info, char *port_name)
         }
     }
 
-    OPAL_CR_ENTER_LIBRARY();
-
     OBJ_CONSTRUCT(&pinfo, opal_list_t);
 
     /* OMPI supports info keys to pass the range to
@@ -115,6 +113,5 @@ int MPI_Lookup_name(const char *service_name, MPI_Info info, char *port_name)
     strncpy ( port_name, pdat->value.data.string, MPI_MAX_PORT_NAME );
     OPAL_LIST_DESTRUCT(&results);
 
-    OPAL_CR_EXIT_LIBRARY();
     return MPI_SUCCESS;
 }

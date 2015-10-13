@@ -94,8 +94,6 @@ int MPI_Ineighbor_allgather(const void *sendbuf, int sendcount, MPI_Datatype sen
         OMPI_ERRHANDLER_CHECK(err, comm, err, FUNC_NAME);
     }
 
-    OPAL_CR_ENTER_LIBRARY();
-
     /* Invoke the coll component to perform the back-end operation */
     err = comm->c_coll.coll_ineighbor_allgather(sendbuf, sendcount, sendtype, recvbuf,
                                                 recvcount, recvtype, comm, request,

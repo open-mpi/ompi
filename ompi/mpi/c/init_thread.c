@@ -97,7 +97,5 @@ int MPI_Init_thread(int *argc, char ***argv, int required,
                                       err, FUNC_NAME);
     }
 
-    OPAL_CR_INIT_LIBRARY();
-
     return MPI_SUCCESS;
 }

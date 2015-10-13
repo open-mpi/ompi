@@ -65,7 +65,6 @@ int MPI_Wait(MPI_Request *request, MPI_Status *status)
         return MPI_SUCCESS;
     }
 
-    OPAL_CR_ENTER_LIBRARY();
 
     if (OMPI_SUCCESS == ompi_request_wait(request, status)) {
         /*
@@ -74,13 +73,11 @@ int MPI_Wait(MPI_Request *request, MPI_Status *status)
         MEMCHECKER(
             opal_memchecker_base_mem_undefined(&status->MPI_ERROR, sizeof(int));
         );
-        OPAL_CR_EXIT_LIBRARY();
         return MPI_SUCCESS;
     }
 
     MEMCHECKER(
         opal_memchecker_base_mem_undefined(&status->MPI_ERROR, sizeof(int));
     );
-    OPAL_CR_EXIT_LIBRARY();
     return ompi_errhandler_request_invoke(1, request, FUNC_NAME);
 }

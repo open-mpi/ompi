@@ -104,7 +104,6 @@ int MPI_Comm_spawn(const char *command, char *argv[], int maxprocs, MPI_Info inf
         ompi_info_get_bool(info, "ompi_non_mpi", &non_mpi, &flag);
     }
 
-    OPAL_CR_ENTER_LIBRARY();
 
     if ( rank == root ) {
         if (!non_mpi) {
@@ -131,7 +130,6 @@ int MPI_Comm_spawn(const char *command, char *argv[], int maxprocs, MPI_Info inf
     }
 
 error:
-    OPAL_CR_EXIT_LIBRARY();
 
     /* close the port */
     if (rank == root && !non_mpi) {

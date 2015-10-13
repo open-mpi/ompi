@@ -74,8 +74,6 @@ int MPI_File_delete(const char *filename, MPI_Info info)
         return OMPI_ERRHANDLER_INVOKE(MPI_FILE_NULL, rc, FUNC_NAME);
     }
 
-    OPAL_CR_ENTER_LIBRARY();
-
     /* Since there is no MPI_File handle associated with this
        function, the MCA has to do a selection and perform the
        action */

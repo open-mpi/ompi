@@ -87,8 +87,6 @@ int MPI_File_open(MPI_Comm comm, const char *filename, int amode,
         return OMPI_ERRHANDLER_INVOKE(MPI_FILE_NULL, rc, FUNC_NAME);
     }
 
-    OPAL_CR_ENTER_LIBRARY();
-
     /* Create an empty MPI_File handle */
 
     *fh = MPI_FILE_NULL;

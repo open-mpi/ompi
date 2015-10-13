@@ -60,7 +60,6 @@ int MPI_Pack_external_size(const char datarep[], int incount,
         }
     }
 
-    OPAL_CR_ENTER_LIBRARY();
 
     OBJ_CONSTRUCT(&local_convertor, opal_convertor_t);
 
@@ -74,6 +73,5 @@ int MPI_Pack_external_size(const char datarep[], int incount,
     *size = (MPI_Aint)length;
     OBJ_DESTRUCT( &local_convertor );
 
-    OPAL_CR_EXIT_LIBRARY();
     return OMPI_SUCCESS;
 }

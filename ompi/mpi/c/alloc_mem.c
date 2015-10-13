@@ -66,10 +66,7 @@ int MPI_Alloc_mem(MPI_Aint size, MPI_Info info, void *baseptr)
         return MPI_SUCCESS;
     }
 
-    OPAL_CR_ENTER_LIBRARY();
-
     *((void **) baseptr) = mca_mpool_base_alloc((size_t) size, (struct opal_info_t*)info);
-    OPAL_CR_EXIT_LIBRARY();
     if (NULL == *((void **) baseptr)) {
         return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_NO_MEM,
                                       FUNC_NAME);

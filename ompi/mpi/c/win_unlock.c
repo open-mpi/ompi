@@ -56,8 +56,6 @@ int MPI_Win_unlock(int rank, MPI_Win win)
     /* NTH: do not bother keeping track of unlocking MPI_PROC_NULL. */
     if (MPI_PROC_NULL == rank) return MPI_SUCCESS;
 
-    OPAL_CR_ENTER_LIBRARY();
-
     rc = win->w_osc_module->osc_unlock(rank, win);
     OMPI_ERRHANDLER_RETURN(rc, win, rc, FUNC_NAME);
 }

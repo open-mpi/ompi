@@ -52,8 +52,6 @@ int MPI_Type_commit(MPI_Datatype *type)
     }
   }
 
-  OPAL_CR_ENTER_LIBRARY();
-
   rc = ompi_datatype_commit( type );
   OMPI_ERRHANDLER_RETURN(rc, MPI_COMM_WORLD, rc, FUNC_NAME );
 }

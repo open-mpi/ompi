@@ -50,8 +50,6 @@ int MPI_Type_free_keyval(int *type_keyval)
         }
     }
 
-    OPAL_CR_ENTER_LIBRARY();
-
     ret = ompi_attr_free_keyval(TYPE_ATTR, type_keyval, 0);
 
     OMPI_ERRHANDLER_RETURN(ret, MPI_COMM_WORLD,

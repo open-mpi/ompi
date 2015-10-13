@@ -48,8 +48,6 @@ int MPI_Win_get_info(MPI_Win win, MPI_Info *info_used)
         }
     }
 
-    OPAL_CR_ENTER_LIBRARY();
-
     ret = win->w_osc_module->osc_get_info(win, info_used);
 
     if (OMPI_SUCCESS == ret && *info_used) {

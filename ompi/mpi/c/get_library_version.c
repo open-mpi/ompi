@@ -41,8 +41,6 @@ int MPI_Get_library_version(char *version, int *resultlen)
     MPI_Comm null = MPI_COMM_NULL;
     char *ptr, tmp[MPI_MAX_LIBRARY_VERSION_STRING];
 
-    OPAL_CR_NOOP_PROGRESS();
-
     if (MPI_PARAM_CHECK) {
         /* Per MPI-3, this function can be invoked before
            MPI_INIT, so we don't invoke the normal

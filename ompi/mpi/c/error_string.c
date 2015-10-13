@@ -40,8 +40,6 @@ int MPI_Error_string(int errorcode, char *string, int *resultlen)
 {
     char *tmpstring;
 
-    OPAL_CR_NOOP_PROGRESS();
-
     if ( MPI_PARAM_CHECK ) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 

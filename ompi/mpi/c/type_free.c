@@ -54,7 +54,6 @@ int MPI_Type_free(MPI_Datatype *type)
       }
    }
 
-   OPAL_CR_ENTER_LIBRARY();
 
    rc = ompi_datatype_destroy( type );
    if( rc != MPI_SUCCESS ) {
@@ -63,6 +62,5 @@ int MPI_Type_free(MPI_Datatype *type)
    }
    *type = MPI_DATATYPE_NULL;
 
-   OPAL_CR_EXIT_LIBRARY();
    return MPI_SUCCESS;
 }

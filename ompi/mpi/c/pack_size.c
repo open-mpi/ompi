@@ -60,7 +60,6 @@ int MPI_Pack_size(int incount, MPI_Datatype datatype, MPI_Comm comm,
         }
     }
 
-    OPAL_CR_ENTER_LIBRARY();
 
     OBJ_CONSTRUCT( &local_convertor, opal_convertor_t );
     /* the resulting convertor will be set to the position ZERO */
@@ -71,7 +70,6 @@ int MPI_Pack_size(int incount, MPI_Datatype datatype, MPI_Comm comm,
     *size = (int)length;
     OBJ_DESTRUCT( &local_convertor );
 
-    OPAL_CR_EXIT_LIBRARY();
 
     return MPI_SUCCESS;
 }

@@ -63,7 +63,6 @@ int MPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm *newcomm) {
         }
     }
 
-    OPAL_CR_ENTER_LIBRARY();
 
     rc = ompi_comm_split ( (ompi_communicator_t*)comm, color, key,
                           (ompi_communicator_t**)newcomm, false);

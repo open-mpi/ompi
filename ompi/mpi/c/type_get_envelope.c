@@ -60,8 +60,6 @@ int MPI_Type_get_envelope(MPI_Datatype type,
       }
    }
 
-   OPAL_CR_ENTER_LIBRARY();
-
    rc = ompi_datatype_get_args( type, 0, num_integers, NULL, num_addresses, NULL,
                            num_datatypes, NULL, combiner );
    OMPI_ERRHANDLER_RETURN( rc, MPI_COMM_WORLD, rc, FUNC_NAME );
