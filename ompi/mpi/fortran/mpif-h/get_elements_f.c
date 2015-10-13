@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -22,7 +24,8 @@
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 #include "ompi/mpi/fortran/base/constants.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_GET_ELEMENTS = ompi_get_elements_f
 #pragma weak pmpi_get_elements = ompi_get_elements_f
 #pragma weak pmpi_get_elements_ = ompi_get_elements_f
@@ -30,7 +33,7 @@
 
 #pragma weak PMPI_Get_elements_f = ompi_get_elements_f
 #pragma weak PMPI_Get_elements_f08 = ompi_get_elements_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_GET_ELEMENTS,
                            pmpi_get_elements,
                            pmpi_get_elements_,
@@ -38,6 +41,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_GET_ELEMENTS,
                            pompi_get_elements_f,
                            (MPI_Fint *status, MPI_Fint *datatype, MPI_Fint *count, MPI_Fint *ierr),
                            (status, datatype, count, ierr) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -48,9 +52,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_GET_ELEMENTS,
 
 #pragma weak MPI_Get_elements_f = ompi_get_elements_f
 #pragma weak MPI_Get_elements_f08 = ompi_get_elements_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_GET_ELEMENTS,
                            mpi_get_elements,
                            mpi_get_elements_,
@@ -58,17 +61,16 @@ OMPI_GENERATE_F77_BINDINGS (MPI_GET_ELEMENTS,
                            ompi_get_elements_f,
                            (MPI_Fint *status, MPI_Fint *datatype, MPI_Fint *count, MPI_Fint *ierr),
                            (status, datatype, count, ierr) )
+#else
+#define ompi_get_elements_f pompi_get_elements_f
+#endif
 #endif
 
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
-#endif
 
 void ompi_get_elements_f(MPI_Fint *status, MPI_Fint *datatype, MPI_Fint *count, MPI_Fint *ierr)
 {
     int c_ierr;
-    MPI_Datatype c_type = MPI_Type_f2c(*datatype);
+    MPI_Datatype c_type = PMPI_Type_f2c(*datatype);
     MPI_Status   c_status;
     OMPI_SINGLE_NAME_DECL(count);
 
@@ -76,10 +78,10 @@ void ompi_get_elements_f(MPI_Fint *status, MPI_Fint *datatype, MPI_Fint *count, 
         *count = OMPI_INT_2_FINT(0);
         c_ierr = MPI_SUCCESS;
     } else {
-        c_ierr = MPI_Status_f2c(status, &c_status);
+        c_ierr = PMPI_Status_f2c(status, &c_status);
 
         if (MPI_SUCCESS == c_ierr) {
-            c_ierr = MPI_Get_elements(&c_status, c_type,
+            c_ierr = PMPI_Get_elements(&c_status, c_type,
                                       OMPI_SINGLE_NAME_CONVERT(count));
             OMPI_SINGLE_INT_2_FINT(count);
         }

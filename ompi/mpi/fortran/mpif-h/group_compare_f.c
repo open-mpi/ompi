@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -23,7 +25,8 @@
 #include "ompi/group/group.h"
 
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_GROUP_COMPARE = ompi_group_compare_f
 #pragma weak pmpi_group_compare = ompi_group_compare_f
 #pragma weak pmpi_group_compare_ = ompi_group_compare_f
@@ -31,7 +34,7 @@
 
 #pragma weak PMPI_Group_compare_f = ompi_group_compare_f
 #pragma weak PMPI_Group_compare_f08 = ompi_group_compare_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_GROUP_COMPARE,
                            pmpi_group_compare,
                            pmpi_group_compare_,
@@ -40,6 +43,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_GROUP_COMPARE,
                            (MPI_Fint *group1, MPI_Fint *group2,
                             MPI_Fint *result, MPI_Fint *ierror),
                            (group1,group2,result,ierror))
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -52,7 +56,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_GROUP_COMPARE,
 #pragma weak MPI_Group_compare_f08 = ompi_group_compare_f
 #endif
 
-#if ! OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
+#if ! OMPI_BUILD_MPI_PROFILING && ! OPAL_HAVE_WEAK_SYMBOLS
 OMPI_GENERATE_F77_BINDINGS (MPI_GROUP_COMPARE,
                            mpi_group_compare,
                            mpi_group_compare_,
@@ -65,9 +69,10 @@ OMPI_GENERATE_F77_BINDINGS (MPI_GROUP_COMPARE,
 
 
 
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
+#if OMPI_BUILD_MPI_PROFILING && ! OPAL_HAVE_WEAK_SYMBOLS
+#define ompi_group_compare_f pompi_group_compare_f
 #endif
+
 
 void ompi_group_compare_f(MPI_Fint *group1, MPI_Fint *group2,
                          MPI_Fint *result, MPI_Fint *ierr)
@@ -77,10 +82,10 @@ void ompi_group_compare_f(MPI_Fint *group1, MPI_Fint *group2,
     OMPI_SINGLE_NAME_DECL(result);
 
     /* make the fortran to c representation conversion */
-    c_group1 = MPI_Group_f2c(*group1);
-    c_group2 = MPI_Group_f2c(*group2);
+    c_group1 = PMPI_Group_f2c(*group1);
+    c_group2 = PMPI_Group_f2c(*group2);
 
-    c_ierr = MPI_Group_compare(c_group1, c_group2,
+    c_ierr = PMPI_Group_compare(c_group1, c_group2,
                                OMPI_SINGLE_NAME_CONVERT(result)
                                );
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);

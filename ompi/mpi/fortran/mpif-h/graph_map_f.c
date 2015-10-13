@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -21,7 +23,8 @@
 
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_GRAPH_MAP = ompi_graph_map_f
 #pragma weak pmpi_graph_map = ompi_graph_map_f
 #pragma weak pmpi_graph_map_ = ompi_graph_map_f
@@ -29,7 +32,7 @@
 
 #pragma weak PMPI_Graph_map_f = ompi_graph_map_f
 #pragma weak PMPI_Graph_map_f08 = ompi_graph_map_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_GRAPH_MAP,
                            pmpi_graph_map,
                            pmpi_graph_map_,
@@ -37,6 +40,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_GRAPH_MAP,
                            pompi_graph_map_f,
                            (MPI_Fint *comm, MPI_Fint *nnodes, MPI_Fint *indx, MPI_Fint *edges, MPI_Fint *newrank, MPI_Fint *ierr),
                            (comm, nnodes, indx, edges, newrank, ierr) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -47,9 +51,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_GRAPH_MAP,
 
 #pragma weak MPI_Graph_map_f = ompi_graph_map_f
 #pragma weak MPI_Graph_map_f08 = ompi_graph_map_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_GRAPH_MAP,
                            mpi_graph_map,
                            mpi_graph_map_,
@@ -57,12 +60,11 @@ OMPI_GENERATE_F77_BINDINGS (MPI_GRAPH_MAP,
                            ompi_graph_map_f,
                            (MPI_Fint *comm, MPI_Fint *nnodes, MPI_Fint *indx, MPI_Fint *edges, MPI_Fint *newrank, MPI_Fint *ierr),
                            (comm, nnodes, indx, edges, newrank, ierr) )
+#else
+#define ompi_graph_map_f pompi_graph_map_f
+#endif
 #endif
 
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
-#endif
 
 void ompi_graph_map_f(MPI_Fint *comm, MPI_Fint *nnodes, MPI_Fint *indx,
 		     MPI_Fint *edges, MPI_Fint *nrank, MPI_Fint *ierr)
@@ -73,13 +75,13 @@ void ompi_graph_map_f(MPI_Fint *comm, MPI_Fint *nnodes, MPI_Fint *indx,
     OMPI_ARRAY_NAME_DECL(edges);
     OMPI_SINGLE_NAME_DECL(nrank);
 
-    c_comm = MPI_Comm_f2c(*comm);
+    c_comm = PMPI_Comm_f2c(*comm);
 
     /* Number of edges is equal to the last entry in the index array */
     OMPI_ARRAY_FINT_2_INT(edges, indx[*nnodes - 1]);
     OMPI_ARRAY_FINT_2_INT(indx, *nnodes);
 
-    c_ierr = MPI_Graph_map(c_comm, OMPI_FINT_2_INT(*nnodes),
+    c_ierr = PMPI_Graph_map(c_comm, OMPI_FINT_2_INT(*nnodes),
                            OMPI_ARRAY_NAME_CONVERT(indx),
                            OMPI_ARRAY_NAME_CONVERT(edges),
                            OMPI_SINGLE_NAME_CONVERT(nrank));

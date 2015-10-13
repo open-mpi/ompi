@@ -3,8 +3,7 @@
  *                         All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- *
- * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -149,7 +148,7 @@ int oshmem_shmem_init(int argc, char **argv, int requested, int *provided)
         if (!ompi_mpi_initialized && !ompi_mpi_finalized) {
             ret = ompi_mpi_init(argc, argv, requested, provided);
         }
-        MPI_Comm_dup(MPI_COMM_WORLD, &oshmem_comm_world);
+        PMPI_Comm_dup(MPI_COMM_WORLD, &oshmem_comm_world);
 
         if (OSHMEM_SUCCESS == ret) {
             ret = _shmem_init(argc, argv, requested, provided);

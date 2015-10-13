@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2010-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -25,7 +27,8 @@
 #include "opal/util/argv.h"
 
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_COMM_SPAWN_MULTIPLE = ompi_comm_spawn_multiple_f
 #pragma weak pmpi_comm_spawn_multiple = ompi_comm_spawn_multiple_f
 #pragma weak pmpi_comm_spawn_multiple_ = ompi_comm_spawn_multiple_f
@@ -33,7 +36,7 @@
 
 #pragma weak PMPI_Comm_spawn_multiple_f = ompi_comm_spawn_multiple_f
 #pragma weak PMPI_Comm_spawn_multiple_f08 = ompi_comm_spawn_multiple_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_COMM_SPAWN_MULTIPLE,
                            pmpi_comm_spawn_multiple,
                            pmpi_comm_spawn_multiple_,
@@ -41,6 +44,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_COMM_SPAWN_MULTIPLE,
                            pompi_comm_spawn_multiple_f,
                            (MPI_Fint *count, char *array_of_commands, char *array_of_argv, MPI_Fint *array_of_maxprocs, MPI_Fint *array_of_info, MPI_Fint *root, MPI_Fint *comm, MPI_Fint *intercomm, MPI_Fint *array_of_errcodes, MPI_Fint *ierr, int cmd_string_len, int argv_string_len),
                            (count, array_of_commands, array_of_argv, array_of_maxprocs, array_of_info, root, comm, intercomm, array_of_errcodes, ierr, cmd_string_len, argv_string_len) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -51,9 +55,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_COMM_SPAWN_MULTIPLE,
 
 #pragma weak MPI_Comm_spawn_multiple_f = ompi_comm_spawn_multiple_f
 #pragma weak MPI_Comm_spawn_multiple_f08 = ompi_comm_spawn_multiple_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_COMM_SPAWN_MULTIPLE,
                            mpi_comm_spawn_multiple,
                            mpi_comm_spawn_multiple_,
@@ -61,12 +64,11 @@ OMPI_GENERATE_F77_BINDINGS (MPI_COMM_SPAWN_MULTIPLE,
                            ompi_comm_spawn_multiple_f,
                            (MPI_Fint *count, char *array_of_commands, char *array_of_argv, MPI_Fint *array_of_maxprocs, MPI_Fint *array_of_info, MPI_Fint *root, MPI_Fint *comm, MPI_Fint *intercomm, MPI_Fint *array_of_errcodes, MPI_Fint *ierr, int cmd_string_len, int argv_string_len),
                            (count, array_of_commands, array_of_argv, array_of_maxprocs, array_of_info, root, comm, intercomm, array_of_errcodes, ierr, cmd_string_len, argv_string_len) )
+#else
+#define ompi_comm_spawn_multiple_f pompi_comm_spawn_multiple_f
+#endif
 #endif
 
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
-#endif
 
 void ompi_comm_spawn_multiple_f(MPI_Fint *count, char *array_commands,
 			       char *array_argv,
@@ -85,9 +87,9 @@ void ompi_comm_spawn_multiple_f(MPI_Fint *count, char *array_commands,
     OMPI_ARRAY_NAME_DECL(array_maxprocs);
     OMPI_ARRAY_NAME_DECL(array_errcds);
 
-    c_comm = MPI_Comm_f2c(*comm);
+    c_comm = PMPI_Comm_f2c(*comm);
 
-    MPI_Comm_size(c_comm, &size);
+    PMPI_Comm_size(c_comm, &size);
 
     array_size = OMPI_FINT_2_INT(*count);
 
@@ -116,10 +118,10 @@ void ompi_comm_spawn_multiple_f(MPI_Fint *count, char *array_commands,
 
     c_info = (MPI_Info *) malloc (array_size * sizeof(MPI_Info));
     for (i = 0; i < array_size; ++i) {
-	c_info[i] = MPI_Info_f2c(array_info[i]);
+	c_info[i] = PMPI_Info_f2c(array_info[i]);
     }
 
-    c_ierr = MPI_Comm_spawn_multiple(OMPI_FINT_2_INT(*count),
+    c_ierr = PMPI_Comm_spawn_multiple(OMPI_FINT_2_INT(*count),
                                      c_array_commands,
                                      c_array_argv,
                                      OMPI_ARRAY_NAME_CONVERT(array_maxprocs),
@@ -130,7 +132,7 @@ void ompi_comm_spawn_multiple_f(MPI_Fint *count, char *array_commands,
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {
-        *intercomm = MPI_Comm_c2f(c_new_comm);
+        *intercomm = PMPI_Comm_c2f(c_new_comm);
     }
 
     if (!OMPI_IS_FORTRAN_ERRCODES_IGNORE(array_errcds)) {

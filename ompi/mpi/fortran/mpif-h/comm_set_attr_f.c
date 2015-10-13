@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -23,7 +25,8 @@
 #include "ompi/attribute/attribute.h"
 #include "ompi/communicator/communicator.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_COMM_SET_ATTR = ompi_comm_set_attr_f
 #pragma weak pmpi_comm_set_attr = ompi_comm_set_attr_f
 #pragma weak pmpi_comm_set_attr_ = ompi_comm_set_attr_f
@@ -31,7 +34,7 @@
 
 #pragma weak PMPI_Comm_set_attr_f = ompi_comm_set_attr_f
 #pragma weak PMPI_Comm_set_attr_f08 = ompi_comm_set_attr_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_COMM_SET_ATTR,
                            pmpi_comm_set_attr,
                            pmpi_comm_set_attr_,
@@ -39,6 +42,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_COMM_SET_ATTR,
                            pompi_comm_set_attr_f,
                            (MPI_Fint *comm, MPI_Fint *comm_keyval, MPI_Aint *attribute_val, MPI_Fint *ierr),
                            (comm, comm_keyval, attribute_val, ierr) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -49,9 +53,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_COMM_SET_ATTR,
 
 #pragma weak MPI_Comm_set_attr_f = ompi_comm_set_attr_f
 #pragma weak MPI_Comm_set_attr_f08 = ompi_comm_set_attr_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_COMM_SET_ATTR,
                            mpi_comm_set_attr,
                            mpi_comm_set_attr_,
@@ -59,18 +62,16 @@ OMPI_GENERATE_F77_BINDINGS (MPI_COMM_SET_ATTR,
                            ompi_comm_set_attr_f,
                            (MPI_Fint *comm, MPI_Fint *comm_keyval, MPI_Aint *attribute_val, MPI_Fint *ierr),
                            (comm, comm_keyval, attribute_val, ierr) )
+#else
+#define ompi_comm_set_attr_f pompi_comm_set_attr_f
 #endif
-
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
 #endif
 
 void ompi_comm_set_attr_f(MPI_Fint *comm, MPI_Fint *comm_keyval,
 			 MPI_Aint *attribute_val, MPI_Fint *ierr)
 {
     int c_ierr;
-    MPI_Comm c_comm = MPI_Comm_f2c(*comm);
+    MPI_Comm c_comm = PMPI_Comm_f2c(*comm);
 
     /* This stuff is very confusing.  Be sure to see the comment at
        the top of src/attributes/attributes.c. */

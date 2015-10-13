@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -25,7 +27,8 @@
 #include "ompi/mpi/fortran/base/constants.h"
 #include "ompi/communicator/communicator.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_IPROBE = ompi_iprobe_f
 #pragma weak pmpi_iprobe = ompi_iprobe_f
 #pragma weak pmpi_iprobe_ = ompi_iprobe_f
@@ -33,7 +36,7 @@
 
 #pragma weak PMPI_Iprobe_f = ompi_iprobe_f
 #pragma weak PMPI_Iprobe_f08 = ompi_iprobe_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_IPROBE,
                            pmpi_iprobe,
                            pmpi_iprobe_,
@@ -41,6 +44,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_IPROBE,
                            pompi_iprobe_f,
                            (MPI_Fint *source, MPI_Fint *tag, MPI_Fint *comm, ompi_fortran_logical_t *flag, MPI_Fint *status, MPI_Fint *ierr),
                            (source, tag, comm, flag, status, ierr) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -51,9 +55,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_IPROBE,
 
 #pragma weak MPI_Iprobe_f = ompi_iprobe_f
 #pragma weak MPI_Iprobe_f08 = ompi_iprobe_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_IPROBE,
                            mpi_iprobe,
                            mpi_iprobe_,
@@ -61,12 +64,11 @@ OMPI_GENERATE_F77_BINDINGS (MPI_IPROBE,
                            ompi_iprobe_f,
                            (MPI_Fint *source, MPI_Fint *tag, MPI_Fint *comm, ompi_fortran_logical_t *flag, MPI_Fint *status, MPI_Fint *ierr),
                            (source, tag, comm, flag, status, ierr) )
+#else
+#define ompi_iprobe_f pompi_iprobe_f
+#endif
 #endif
 
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
-#endif
 
 void ompi_iprobe_f(MPI_Fint *source, MPI_Fint *tag, MPI_Fint *comm,
                   ompi_fortran_logical_t *flag, MPI_Fint *status, MPI_Fint *ierr)
@@ -76,11 +78,11 @@ void ompi_iprobe_f(MPI_Fint *source, MPI_Fint *tag, MPI_Fint *comm,
     OMPI_FORTRAN_STATUS_DECLARATION(c_status,c_status2)
     OMPI_LOGICAL_NAME_DECL(flag);
 
-    c_comm = MPI_Comm_f2c (*comm);
+    c_comm = PMPI_Comm_f2c (*comm);
 
     OMPI_FORTRAN_STATUS_SET_POINTER(c_status,c_status2,status)
 
-    c_ierr = MPI_Iprobe(OMPI_FINT_2_INT(*source),
+    c_ierr = PMPI_Iprobe(OMPI_FINT_2_INT(*source),
                         OMPI_FINT_2_INT(*tag),
                         c_comm, OMPI_LOGICAL_SINGLE_NAME_CONVERT(flag),
                         c_status);

@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012      University of Oregon.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -23,7 +25,8 @@
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 #include "ompi/mpi/fortran/base/constants.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_F_SYNC_REG = ompi_f_sync_reg_f
 #pragma weak pmpi_f_sync_reg = ompi_f_sync_reg_f
 #pragma weak pmpi_f_sync_reg_ = ompi_f_sync_reg_f
@@ -31,7 +34,7 @@
 
 #pragma weak PMPI_F_sync_reg_f = ompi_f_sync_reg_f
 #pragma weak PMPI_F_sync_reg_f08 = ompi_f_sync_reg_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_F_SYNC_REG,
                            pmpi_f_sync_reg,
                            pmpi_f_sync_reg_,
@@ -39,6 +42,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_F_SYNC_REG,
                            pompi_f_sync_reg_f,
                            (char *buf),
                            (buf) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -49,9 +53,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_F_SYNC_REG,
 
 #pragma weak MPI_F_sync_reg_f = ompi_f_sync_reg_f
 #pragma weak MPI_F_sync_reg_f08 = ompi_f_sync_reg_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_F_SYNC_REG,
                            mpi_f_sync_reg,
                            mpi_f_sync_reg_,
@@ -59,11 +62,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_F_SYNC_REG,
                            ompi_f_sync_reg_f,
                            (char *buf),
                            (buf) )
+#else
+#define ompi_f_sync_reg_f pompi_f_sync_reg_f
 #endif
-
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
 #endif
 
 void ompi_f_sync_reg_f(char *buf)

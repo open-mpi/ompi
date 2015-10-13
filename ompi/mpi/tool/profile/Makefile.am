@@ -12,8 +12,10 @@
 #                         All rights reserved.
 # Copyright (c) 2009-2014 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
-# Copyright (c)      2012 Oak Rigde National Laboratory. All rights reserved.
+# Copyright (c) 2012      Oak Rigde National Laboratory. All rights reserved.
 # Copyright (c) 2013      Los Alamos National Security, LLC. All rights
+# Copyright (c) 2015      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 #                         reserved.
 # $COPYRIGHT$
 #
@@ -38,10 +40,7 @@ AM_CPPFLAGS = -DOMPI_PROFILING_DEFINES=1
 # Further, this build HAS to go through if profiling is required.
 #
 
-noinst_LTLIBRARIES =
-if BUILD_PMPI_BINDINGS_LAYER
-noinst_LTLIBRARIES += libmpi_pmpit.la
-endif
+noinst_LTLIBRARIES = libmpi_pmpit.la
 
 headers = defines.h
 

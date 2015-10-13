@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -23,7 +25,8 @@
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/communicator/communicator.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_STARTALL = ompi_startall_f
 #pragma weak pmpi_startall = ompi_startall_f
 #pragma weak pmpi_startall_ = ompi_startall_f
@@ -31,7 +34,7 @@
 
 #pragma weak PMPI_Startall_f = ompi_startall_f
 #pragma weak PMPI_Startall_f08 = ompi_startall_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_STARTALL,
                            pmpi_startall,
                            pmpi_startall_,
@@ -39,6 +42,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_STARTALL,
                            pompi_startall_f,
                            (MPI_Fint *count, MPI_Fint *array_of_requests, MPI_Fint *ierr),
                            (count, array_of_requests, ierr) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -49,9 +53,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_STARTALL,
 
 #pragma weak MPI_Startall_f = ompi_startall_f
 #pragma weak MPI_Startall_f08 = ompi_startall_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_STARTALL,
                            mpi_startall,
                            mpi_startall_,
@@ -59,12 +62,11 @@ OMPI_GENERATE_F77_BINDINGS (MPI_STARTALL,
                            ompi_startall_f,
                            (MPI_Fint *count, MPI_Fint *array_of_requests, MPI_Fint *ierr),
                            (count, array_of_requests, ierr) )
+#else
+#define ompi_startall_f pompi_startall_f
+#endif
 #endif
 
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
-#endif
 
 static const char FUNC_NAME[] = "MPI_STARTALL";
 
@@ -85,14 +87,14 @@ void ompi_startall_f(MPI_Fint *count, MPI_Fint *array_of_requests,
     }
 
     for(i = 0; i < *count; i++ ) {
-        c_req[i] = MPI_Request_f2c(array_of_requests[i]);
+        c_req[i] = PMPI_Request_f2c(array_of_requests[i]);
     }
 
-    c_ierr = MPI_Startall(OMPI_FINT_2_INT(*count), c_req);
+    c_ierr = PMPI_Startall(OMPI_FINT_2_INT(*count), c_req);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     for( i = 0; i < *count; i++ ) {
-        array_of_requests[i] = MPI_Request_c2f(c_req[i]);
+        array_of_requests[i] = PMPI_Request_c2f(c_req[i]);
     }
     free(c_req);
 }

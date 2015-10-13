@@ -27,15 +27,7 @@ include $(top_srcdir)/Makefile.ompi-rules
 
 SUBDIRS = profile
 
-#
-# OMPI_PRPOFILING_DEFINES flag is enabled when we want our MPI_* symbols
-# to be replaced by PMPI_*. In other words, this flag decides
-# whether "profile/defines.h" is included or not. "profile/defines.h"
-# replaces all MPI_* symbols with PMPI_* symbols. In this directory,
-# we need it to be 0
-#
-
-AM_CPPFLAGS = -DOMPI_PROFILE_LAYER=0 -DOMPI_COMPILING_FORTRAN_WRAPPERS=1
+AM_CPPFLAGS = -DOMPI_BUILD_MPI_PROFILING=0 -DOMPI_COMPILING_FORTRAN_WRAPPERS=1
 
 # The top directory only builds MPI_* bindings and some support
 # glue. The bottom directory only builds PMPI_* bindings.  Each

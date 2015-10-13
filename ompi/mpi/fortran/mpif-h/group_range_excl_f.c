@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -22,7 +24,8 @@
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 #include "ompi/group/group.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_GROUP_RANGE_EXCL = ompi_group_range_excl_f
 #pragma weak pmpi_group_range_excl = ompi_group_range_excl_f
 #pragma weak pmpi_group_range_excl_ = ompi_group_range_excl_f
@@ -30,7 +33,7 @@
 
 #pragma weak PMPI_Group_range_excl_f = ompi_group_range_excl_f
 #pragma weak PMPI_Group_range_excl_f08 = ompi_group_range_excl_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_GROUP_RANGE_EXCL,
                            pmpi_group_range_excl,
                            pmpi_group_range_excl_,
@@ -38,6 +41,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_GROUP_RANGE_EXCL,
                            pompi_group_range_excl_f,
                            (MPI_Fint *group, MPI_Fint *n, MPI_Fint ranges[][3], MPI_Fint *newgroup, MPI_Fint *ierr),
                            (group, n, ranges, newgroup, ierr) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -48,9 +52,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_GROUP_RANGE_EXCL,
 
 #pragma weak MPI_Group_range_excl_f = ompi_group_range_excl_f
 #pragma weak MPI_Group_range_excl_f08 = ompi_group_range_excl_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_GROUP_RANGE_EXCL,
                            mpi_group_range_excl,
                            mpi_group_range_excl_,
@@ -58,12 +61,11 @@ OMPI_GENERATE_F77_BINDINGS (MPI_GROUP_RANGE_EXCL,
                            ompi_group_range_excl_f,
                            (MPI_Fint *group, MPI_Fint *n, MPI_Fint ranges[][3], MPI_Fint *newgroup, MPI_Fint *ierr),
                            (group, n, ranges, newgroup, ierr) )
+#else
+#define ompi_group_range_excl_f pompi_group_range_excl_f
+#endif
 #endif
 
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
-#endif
 
 void ompi_group_range_excl_f(MPI_Fint *group, MPI_Fint *n, MPI_Fint ranges[][3], MPI_Fint *newgroup, MPI_Fint *ierr)
 {
@@ -72,10 +74,10 @@ void ompi_group_range_excl_f(MPI_Fint *group, MPI_Fint *n, MPI_Fint ranges[][3],
   OMPI_2_DIM_ARRAY_NAME_DECL(ranges, 3);
 
   /* Make the fortran to c representation conversion */
-  c_group = MPI_Group_f2c(*group);
+  c_group = PMPI_Group_f2c(*group);
 
   OMPI_2_DIM_ARRAY_FINT_2_INT(ranges, *n, 3);
-  c_ierr = MPI_Group_range_excl(c_group,
+  c_ierr = PMPI_Group_range_excl(c_group,
                                 OMPI_FINT_2_INT(*n),
                                 OMPI_ARRAY_NAME_CONVERT(ranges),
                                 &c_newgroup);

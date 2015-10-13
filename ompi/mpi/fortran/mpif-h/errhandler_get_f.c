@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -21,7 +23,8 @@
 
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_ERRHANDLER_GET = ompi_errhandler_get_f
 #pragma weak pmpi_errhandler_get = ompi_errhandler_get_f
 #pragma weak pmpi_errhandler_get_ = ompi_errhandler_get_f
@@ -29,7 +32,7 @@
 
 #pragma weak PMPI_Errhandler_get_f = ompi_errhandler_get_f
 #pragma weak PMPI_Errhandler_get_f08 = ompi_errhandler_get_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_ERRHANDLER_GET,
                            pmpi_errhandler_get,
                            pmpi_errhandler_get_,
@@ -37,6 +40,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_ERRHANDLER_GET,
                            pompi_errhandler_get_f,
                            (MPI_Fint *comm, MPI_Fint *errhandler, MPI_Fint *ierr),
                            (comm, errhandler, ierr) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -47,9 +51,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_ERRHANDLER_GET,
 
 #pragma weak MPI_Errhandler_get_f = ompi_errhandler_get_f
 #pragma weak MPI_Errhandler_get_f08 = ompi_errhandler_get_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_ERRHANDLER_GET,
                            mpi_errhandler_get,
                            mpi_errhandler_get_,
@@ -57,12 +60,11 @@ OMPI_GENERATE_F77_BINDINGS (MPI_ERRHANDLER_GET,
                            ompi_errhandler_get_f,
                            (MPI_Fint *comm, MPI_Fint *errhandler, MPI_Fint *ierr),
                            (comm, errhandler, ierr) )
+#else
+#define ompi_errhandler_get_f pompi_errhandler_get_f
+#endif
 #endif
 
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
-#endif
 
 void ompi_errhandler_get_f(MPI_Fint *comm, MPI_Fint *errhandler, MPI_Fint *ierr)
 {
@@ -70,13 +72,13 @@ void ompi_errhandler_get_f(MPI_Fint *comm, MPI_Fint *errhandler, MPI_Fint *ierr)
     MPI_Comm c_comm;
     MPI_Errhandler c_errhandler;
 
-    c_comm = MPI_Comm_f2c(*comm);
+    c_comm = PMPI_Comm_f2c(*comm);
 
-    c_ierr = MPI_Errhandler_get(c_comm, &c_errhandler);
+    c_ierr = PMPI_Errhandler_get(c_comm, &c_errhandler);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {
-        *errhandler = MPI_Errhandler_c2f(c_errhandler);
+        *errhandler = PMPI_Errhandler_c2f(c_errhandler);
     }
 }
 

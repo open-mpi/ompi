@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -22,7 +24,8 @@
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 #include "ompi/mpi/fortran/base/constants.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_SEND = ompi_send_f
 #pragma weak pmpi_send = ompi_send_f
 #pragma weak pmpi_send_ = ompi_send_f
@@ -30,7 +33,7 @@
 
 #pragma weak PMPI_Send_f = ompi_send_f
 #pragma weak PMPI_Send_f08 = ompi_send_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_SEND,
                            pmpi_send,
                            pmpi_send_,
@@ -38,6 +41,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_SEND,
                            pompi_send_f,
                            (char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *dest, MPI_Fint *tag, MPI_Fint *comm, MPI_Fint *ierr),
                            (buf, count, datatype, dest, tag, comm, ierr) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -48,9 +52,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_SEND,
 
 #pragma weak MPI_Send_f = ompi_send_f
 #pragma weak MPI_Send_f08 = ompi_send_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_SEND,
                            mpi_send,
                            mpi_send_,
@@ -58,22 +61,21 @@ OMPI_GENERATE_F77_BINDINGS (MPI_SEND,
                            ompi_send_f,
                            (char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *dest, MPI_Fint *tag, MPI_Fint *comm, MPI_Fint *ierr),
                            (buf, count, datatype, dest, tag, comm, ierr) )
+#else
+#define ompi_send_f pompi_send_f
+#endif
 #endif
 
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
-#endif
 
 void ompi_send_f(char *buf, MPI_Fint *count, MPI_Fint *datatype,
                 MPI_Fint *dest, MPI_Fint *tag, MPI_Fint *comm, MPI_Fint *ierr)
 {
     int c_ierr;
 
-    MPI_Comm c_comm = MPI_Comm_f2c(*comm);
-    MPI_Datatype c_type = MPI_Type_f2c(*datatype);
+    MPI_Comm c_comm = PMPI_Comm_f2c(*comm);
+    MPI_Datatype c_type = PMPI_Type_f2c(*datatype);
 
-    c_ierr = MPI_Send(OMPI_F2C_BOTTOM(buf), OMPI_FINT_2_INT(*count),
+    c_ierr = PMPI_Send(OMPI_F2C_BOTTOM(buf), OMPI_FINT_2_INT(*count),
                       c_type, OMPI_FINT_2_INT(*dest),
                       OMPI_FINT_2_INT(*tag), c_comm);
 

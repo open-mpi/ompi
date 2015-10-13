@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -24,7 +26,8 @@
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/communicator/communicator.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_WAITALL = ompi_waitall_f
 #pragma weak pmpi_waitall = ompi_waitall_f
 #pragma weak pmpi_waitall_ = ompi_waitall_f
@@ -32,7 +35,7 @@
 
 #pragma weak PMPI_Waitall_f = ompi_waitall_f
 #pragma weak PMPI_Waitall_f08 = ompi_waitall_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_WAITALL,
                            pmpi_waitall,
                            pmpi_waitall_,
@@ -40,6 +43,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_WAITALL,
                            pompi_waitall_f,
                            (MPI_Fint *count, MPI_Fint *array_of_requests, MPI_Fint *array_of_statuses, MPI_Fint *ierr),
                            (count, array_of_requests, array_of_statuses, ierr) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -50,9 +54,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_WAITALL,
 
 #pragma weak MPI_Waitall_f = ompi_waitall_f
 #pragma weak MPI_Waitall_f08 = ompi_waitall_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_WAITALL,
                            mpi_waitall,
                            mpi_waitall_,
@@ -60,12 +63,11 @@ OMPI_GENERATE_F77_BINDINGS (MPI_WAITALL,
                            ompi_waitall_f,
                            (MPI_Fint *count, MPI_Fint *array_of_requests, MPI_Fint *array_of_statuses, MPI_Fint *ierr),
                            (count, array_of_requests, array_of_statuses, ierr) )
+#else
+#define ompi_waitall_f pompi_waitall_f
+#endif
 #endif
 
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
-#endif
 
 static const char FUNC_NAME[] = "MPI_WAITALL";
 
@@ -96,10 +98,10 @@ void ompi_waitall_f(MPI_Fint *count, MPI_Fint *array_of_requests,
     c_status = (MPI_Status*) (c_req + OMPI_FINT_2_INT(*count));
 
     for (i = 0; i < OMPI_FINT_2_INT(*count); ++i) {
-        c_req[i] = MPI_Request_f2c(array_of_requests[i]);
+        c_req[i] = PMPI_Request_f2c(array_of_requests[i]);
     }
 
-    c_ierr = MPI_Waitall(OMPI_FINT_2_INT(*count), c_req, c_status);
+    c_ierr = PMPI_Waitall(OMPI_FINT_2_INT(*count), c_req, c_status);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {
@@ -107,7 +109,7 @@ void ompi_waitall_f(MPI_Fint *count, MPI_Fint *array_of_requests,
             array_of_requests[i] = c_req[i]->req_f_to_c_index;
             if (!OMPI_IS_FORTRAN_STATUSES_IGNORE(array_of_statuses) &&
                 !OMPI_IS_FORTRAN_STATUS_IGNORE(&array_of_statuses[i])) {
-                MPI_Status_c2f( &c_status[i], &array_of_statuses[i * (sizeof(MPI_Status) / sizeof(int))]);
+                PMPI_Status_c2f( &c_status[i], &array_of_statuses[i * (sizeof(MPI_Status) / sizeof(int))]);
             }
         }
     }

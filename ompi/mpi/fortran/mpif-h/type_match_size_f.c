@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc. All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -28,7 +30,8 @@
 #include "ompi/communicator/communicator.h"
 #include "ompi/runtime/params.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_TYPE_MATCH_SIZE = ompi_type_match_size_f
 #pragma weak pmpi_type_match_size = ompi_type_match_size_f
 #pragma weak pmpi_type_match_size_ = ompi_type_match_size_f
@@ -36,7 +39,7 @@
 
 #pragma weak PMPI_Type_match_size_f = ompi_type_match_size_f
 #pragma weak PMPI_Type_match_size_f08 = ompi_type_match_size_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_TYPE_MATCH_SIZE,
                            pmpi_type_match_size,
                            pmpi_type_match_size_,
@@ -44,6 +47,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_TYPE_MATCH_SIZE,
                            pompi_type_match_size_f,
                            (MPI_Fint *typeclass, MPI_Fint *size, MPI_Fint *type, MPI_Fint *ierr),
                            (typeclass, size, type, ierr) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -54,9 +58,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_TYPE_MATCH_SIZE,
 
 #pragma weak MPI_Type_match_size_f = ompi_type_match_size_f
 #pragma weak MPI_Type_match_size_f08 = ompi_type_match_size_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_MATCH_SIZE,
                            mpi_type_match_size,
                            mpi_type_match_size_,
@@ -64,11 +67,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_MATCH_SIZE,
                            ompi_type_match_size_f,
                            (MPI_Fint *typeclass, MPI_Fint *size, MPI_Fint *type, MPI_Fint *ierr),
                            (typeclass, size, type, ierr) )
+#else
+#define ompi_type_match_size_f pompi_type_match_size_f
 #endif
-
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
 #endif
 
 static const char FUNC_NAME[] = "MPI_Type_match_size_f";
@@ -99,7 +100,7 @@ void ompi_type_match_size_f(MPI_Fint *typeclass, MPI_Fint *size, MPI_Fint *type,
     default:
         c_type = &ompi_mpi_datatype_null.dt;
     }
-    *type = MPI_Type_c2f( c_type );
+    *type = PMPI_Type_c2f( c_type );
     if ( c_type != &ompi_mpi_datatype_null.dt ) {
         c_ierr = MPI_SUCCESS;
     } else {

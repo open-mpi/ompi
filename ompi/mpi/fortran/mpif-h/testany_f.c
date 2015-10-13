@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -24,7 +26,8 @@
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/communicator/communicator.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_TESTANY = ompi_testany_f
 #pragma weak pmpi_testany = ompi_testany_f
 #pragma weak pmpi_testany_ = ompi_testany_f
@@ -32,7 +35,7 @@
 
 #pragma weak PMPI_Testany_f = ompi_testany_f
 #pragma weak PMPI_Testany_f08 = ompi_testany_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_TESTANY,
                            pmpi_testany,
                            pmpi_testany_,
@@ -40,6 +43,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_TESTANY,
                            pompi_testany_f,
                            (MPI_Fint *count, MPI_Fint *array_of_requests, MPI_Fint *indx, ompi_fortran_logical_t *flag, MPI_Fint *status, MPI_Fint *ierr),
                            (count, array_of_requests, indx, flag, status, ierr) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -50,9 +54,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_TESTANY,
 
 #pragma weak MPI_Testany_f = ompi_testany_f
 #pragma weak MPI_Testany_f08 = ompi_testany_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_TESTANY,
                            mpi_testany,
                            mpi_testany_,
@@ -60,12 +63,11 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TESTANY,
                            ompi_testany_f,
                            (MPI_Fint *count, MPI_Fint *array_of_requests, MPI_Fint *indx, ompi_fortran_logical_t *flag, MPI_Fint *status, MPI_Fint *ierr),
                            (count, array_of_requests, indx, flag, status, ierr) )
+#else
+#define ompi_testany_f pompi_testany_f
+#endif
 #endif
 
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
-#endif
 
 static const char FUNC_NAME[] = "MPI_TESTANY";
 
@@ -83,7 +85,7 @@ void ompi_testany_f(MPI_Fint *count, MPI_Fint *array_of_requests, MPI_Fint *indx
     if (OPAL_UNLIKELY(0 == OMPI_FINT_2_INT(*count))) {
         *flag = OMPI_FORTRAN_VALUE_TRUE;
         *indx = OMPI_INT_2_FINT(MPI_UNDEFINED);
-        MPI_Status_c2f(&ompi_status_empty, status);
+        PMPI_Status_c2f(&ompi_status_empty, status);
         *ierr = OMPI_INT_2_FINT(MPI_SUCCESS);
         return;
     }
@@ -98,10 +100,10 @@ void ompi_testany_f(MPI_Fint *count, MPI_Fint *array_of_requests, MPI_Fint *indx
     }
 
     for (i = 0; i < OMPI_FINT_2_INT(*count); ++i) {
-        c_req[i] = MPI_Request_f2c(array_of_requests[i]);
+        c_req[i] = PMPI_Request_f2c(array_of_requests[i]);
     }
 
-    c_ierr = MPI_Testany(OMPI_FINT_2_INT(*count), c_req,
+    c_ierr = PMPI_Testany(OMPI_FINT_2_INT(*count), c_req,
                          OMPI_SINGLE_NAME_CONVERT(indx),
                          OMPI_LOGICAL_SINGLE_NAME_CONVERT(flag),
                          &c_status);
@@ -122,7 +124,7 @@ void ompi_testany_f(MPI_Fint *count, MPI_Fint *array_of_requests, MPI_Fint *indx
             ++(*indx);
         }
         if (!OMPI_IS_FORTRAN_STATUS_IGNORE(status)) {
-            MPI_Status_c2f(&c_status, status);
+            PMPI_Status_c2f(&c_status, status);
         }
     }
     free(c_req);

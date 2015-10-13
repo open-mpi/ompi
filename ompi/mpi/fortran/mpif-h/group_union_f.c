@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -22,7 +24,8 @@
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 #include "ompi/group/group.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_GROUP_UNION = ompi_group_union_f
 #pragma weak pmpi_group_union = ompi_group_union_f
 #pragma weak pmpi_group_union_ = ompi_group_union_f
@@ -30,7 +33,7 @@
 
 #pragma weak PMPI_Group_union_f = ompi_group_union_f
 #pragma weak PMPI_Group_union_f08 = ompi_group_union_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_GROUP_UNION,
                            pmpi_group_union,
                            pmpi_group_union_,
@@ -38,6 +41,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_GROUP_UNION,
                            pompi_group_union_f,
                            (MPI_Fint *group1, MPI_Fint *group2, MPI_Fint *newgroup, MPI_Fint *ierr),
                            (group1, group2, newgroup, ierr) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -48,9 +52,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_GROUP_UNION,
 
 #pragma weak MPI_Group_union_f = ompi_group_union_f
 #pragma weak MPI_Group_union_f08 = ompi_group_union_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_GROUP_UNION,
                            mpi_group_union,
                            mpi_group_union_,
@@ -58,12 +61,11 @@ OMPI_GENERATE_F77_BINDINGS (MPI_GROUP_UNION,
                            ompi_group_union_f,
                            (MPI_Fint *group1, MPI_Fint *group2, MPI_Fint *newgroup, MPI_Fint *ierr),
                            (group1, group2, newgroup, ierr) )
+#else
+#define ompi_group_union_f pompi_group_union_f
+#endif
 #endif
 
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
-#endif
 
 void ompi_group_union_f(MPI_Fint *group1, MPI_Fint *group2, MPI_Fint *newgroup, MPI_Fint *ierr)
 {
@@ -71,10 +73,10 @@ void ompi_group_union_f(MPI_Fint *group1, MPI_Fint *group2, MPI_Fint *newgroup, 
   ompi_group_t *c_group1, *c_group2, *c_newgroup;
 
   /* Make the fortran to c representation conversion */
-  c_group1 = MPI_Group_f2c(*group1);
-  c_group2 = MPI_Group_f2c(*group2);
+  c_group1 = PMPI_Group_f2c(*group1);
+  c_group2 = PMPI_Group_f2c(*group2);
 
-  c_ierr = MPI_Group_union(c_group1, c_group2, &c_newgroup);
+  c_ierr = PMPI_Group_union(c_group1, c_group2, &c_newgroup);
   if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
   /* translate the results from c to fortran */

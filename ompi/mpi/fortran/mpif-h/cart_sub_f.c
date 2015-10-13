@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -21,7 +23,8 @@
 
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_CART_SUB = ompi_cart_sub_f
 #pragma weak pmpi_cart_sub = ompi_cart_sub_f
 #pragma weak pmpi_cart_sub_ = ompi_cart_sub_f
@@ -29,7 +32,7 @@
 
 #pragma weak PMPI_Cart_sub_f = ompi_cart_sub_f
 #pragma weak PMPI_Cart_sub_f08 = ompi_cart_sub_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_CART_SUB,
                            pmpi_cart_sub,
                            pmpi_cart_sub_,
@@ -37,6 +40,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_CART_SUB,
                            pompi_cart_sub_f,
                            (MPI_Fint *comm, ompi_fortran_logical_t *remain_dims, MPI_Fint *new_comm, MPI_Fint *ierr),
                            (comm, remain_dims, new_comm, ierr) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -47,9 +51,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_CART_SUB,
 
 #pragma weak MPI_Cart_sub_f = ompi_cart_sub_f
 #pragma weak MPI_Cart_sub_f08 = ompi_cart_sub_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_CART_SUB,
                            mpi_cart_sub,
                            mpi_cart_sub_,
@@ -57,12 +60,11 @@ OMPI_GENERATE_F77_BINDINGS (MPI_CART_SUB,
                            ompi_cart_sub_f,
                            (MPI_Fint *comm, ompi_fortran_logical_t *remain_dims, MPI_Fint *new_comm, MPI_Fint *ierr),
                            (comm, remain_dims, new_comm, ierr) )
+#else
+#define ompi_cart_sub_f pompi_cart_sub_f
+#endif
 #endif
 
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
-#endif
 
 void ompi_cart_sub_f(MPI_Fint *comm, ompi_fortran_logical_t *remain_dims,
                     MPI_Fint *new_comm, MPI_Fint *ierr)
@@ -79,8 +81,8 @@ void ompi_cart_sub_f(MPI_Fint *comm, ompi_fortran_logical_t *remain_dims,
 #endif
     OMPI_LOGICAL_ARRAY_NAME_DECL(remain_dims);
 
-    c_comm = MPI_Comm_f2c(*comm);
-    c_new_comm = MPI_Comm_f2c(*new_comm);
+    c_comm = PMPI_Comm_f2c(*comm);
+    c_new_comm = PMPI_Comm_f2c(*new_comm);
 
 #if OMPI_FORTRAN_MUST_CONVERT_LOGICAL_2_INT == 1
     *ierr = OMPI_INT_2_FINT(MPI_Cartdim_get(c_comm, &ndims));
@@ -90,13 +92,13 @@ void ompi_cart_sub_f(MPI_Fint *comm, ompi_fortran_logical_t *remain_dims,
 #endif
     OMPI_ARRAY_LOGICAL_2_INT(remain_dims, ndims);
 
-    c_ierr = MPI_Cart_sub(c_comm,
+    c_ierr = PMPI_Cart_sub(c_comm,
                           OMPI_LOGICAL_ARRAY_NAME_CONVERT(remain_dims),
                           &c_new_comm);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {
-        *new_comm = MPI_Comm_c2f(c_new_comm);
+        *new_comm = PMPI_Comm_c2f(c_new_comm);
     }
 
     OMPI_ARRAY_INT_2_LOGICAL(remain_dims, ndims);

@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -23,7 +25,8 @@
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/communicator/communicator.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_TYPE_STRUCT = ompi_type_struct_f
 #pragma weak pmpi_type_struct = ompi_type_struct_f
 #pragma weak pmpi_type_struct_ = ompi_type_struct_f
@@ -31,7 +34,7 @@
 
 #pragma weak PMPI_Type_struct_f = ompi_type_struct_f
 #pragma weak PMPI_Type_struct_f08 = ompi_type_struct_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_TYPE_STRUCT,
                            pmpi_type_struct,
                            pmpi_type_struct_,
@@ -39,6 +42,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_TYPE_STRUCT,
                            pompi_type_struct_f,
                            (MPI_Fint *count, MPI_Fint *array_of_blocklengths, MPI_Fint *array_of_displacements, MPI_Fint *array_of_types, MPI_Fint *newtype, MPI_Fint *ierr),
                            (count, array_of_blocklengths, array_of_displacements, array_of_types, newtype, ierr) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -49,9 +53,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_TYPE_STRUCT,
 
 #pragma weak MPI_Type_struct_f = ompi_type_struct_f
 #pragma weak MPI_Type_struct_f08 = ompi_type_struct_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_STRUCT,
                            mpi_type_struct,
                            mpi_type_struct_,
@@ -59,12 +62,11 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_STRUCT,
                            ompi_type_struct_f,
                            (MPI_Fint *count, MPI_Fint *array_of_blocklengths, MPI_Fint *array_of_displacements, MPI_Fint *array_of_types, MPI_Fint *newtype, MPI_Fint *ierr),
                            (count, array_of_blocklengths, array_of_displacements, array_of_types, newtype, ierr) )
+#else
+#define ompi_type_struct_f pompi_type_struct_f
+#endif
 #endif
 
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
-#endif
 
 static const char FUNC_NAME[] = "MPI_TYPE_STRUCT";
 
@@ -92,12 +94,12 @@ void ompi_type_struct_f(MPI_Fint *count, MPI_Fint *array_of_blocklengths,
 
     for (i = 0; i < *count; i++) {
         c_disp_array[i] = (MPI_Aint) array_of_displacements[i];
-        c_type_old_array[i] = MPI_Type_f2c(array_of_types[i]);
+        c_type_old_array[i] = PMPI_Type_f2c(array_of_types[i]);
     }
 
     OMPI_ARRAY_FINT_2_INT(array_of_blocklengths, *count);
 
-    c_ierr = MPI_Type_struct(OMPI_FINT_2_INT(*count),
+    c_ierr = PMPI_Type_struct(OMPI_FINT_2_INT(*count),
                              OMPI_ARRAY_NAME_CONVERT(array_of_blocklengths),
                              c_disp_array,
                              c_type_old_array, &c_new);
@@ -107,6 +109,6 @@ void ompi_type_struct_f(MPI_Fint *count, MPI_Fint *array_of_blocklengths,
     free(c_type_old_array);
 
     if (MPI_SUCCESS == c_ierr) {
-        *newtype = MPI_Type_c2f(c_new);
+        *newtype = PMPI_Type_c2f(c_new);
     }
 }

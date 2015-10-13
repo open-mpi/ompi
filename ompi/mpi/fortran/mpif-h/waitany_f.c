@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -24,7 +26,8 @@
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/communicator/communicator.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_WAITANY = ompi_waitany_f
 #pragma weak pmpi_waitany = ompi_waitany_f
 #pragma weak pmpi_waitany_ = ompi_waitany_f
@@ -32,7 +35,7 @@
 
 #pragma weak PMPI_Waitany_f = ompi_waitany_f
 #pragma weak PMPI_Waitany_f08 = ompi_waitany_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_WAITANY,
                            pmpi_waitany,
                            pmpi_waitany_,
@@ -40,6 +43,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_WAITANY,
                            pompi_waitany_f,
                            (MPI_Fint *count, MPI_Fint *array_of_requests, MPI_Fint *indx, MPI_Fint *status, MPI_Fint *ierr),
                            (count, array_of_requests, indx, status, ierr) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -50,9 +54,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_WAITANY,
 
 #pragma weak MPI_Waitany_f = ompi_waitany_f
 #pragma weak MPI_Waitany_f08 = ompi_waitany_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_WAITANY,
                            mpi_waitany,
                            mpi_waitany_,
@@ -60,12 +63,11 @@ OMPI_GENERATE_F77_BINDINGS (MPI_WAITANY,
                            ompi_waitany_f,
                            (MPI_Fint *count, MPI_Fint *array_of_requests, MPI_Fint *indx, MPI_Fint *status, MPI_Fint *ierr),
                            (count, array_of_requests, indx, status, ierr) )
+#else
+#define ompi_waitany_f pompi_waitany_f
+#endif
 #endif
 
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
-#endif
 
 static const char FUNC_NAME[] = "MPI_WAITANY";
 
@@ -82,7 +84,7 @@ void ompi_waitany_f(MPI_Fint *count, MPI_Fint *array_of_requests,
        skipping other parameter error checks. */
     if (OPAL_UNLIKELY(0 == OMPI_FINT_2_INT(*count))) {
         *indx = OMPI_INT_2_FINT(MPI_UNDEFINED);
-        MPI_Status_c2f(&ompi_status_empty, status);
+        PMPI_Status_c2f(&ompi_status_empty, status);
         *ierr = OMPI_INT_2_FINT(MPI_SUCCESS);
         return;
     }
@@ -96,10 +98,10 @@ void ompi_waitany_f(MPI_Fint *count, MPI_Fint *array_of_requests,
     }
 
     for (i = 0; i < OMPI_FINT_2_INT(*count); ++i) {
-        c_req[i] = MPI_Request_f2c(array_of_requests[i]);
+        c_req[i] = PMPI_Request_f2c(array_of_requests[i]);
     }
 
-    c_ierr = MPI_Waitany(OMPI_FINT_2_INT(*count), c_req,
+    c_ierr = PMPI_Waitany(OMPI_FINT_2_INT(*count), c_req,
                          OMPI_SINGLE_NAME_CONVERT(indx),
                          &c_status);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
@@ -115,7 +117,7 @@ void ompi_waitany_f(MPI_Fint *count, MPI_Fint *array_of_requests,
             ++(*indx);
         }
         if (!OMPI_IS_FORTRAN_STATUS_IGNORE(status)) {
-            MPI_Status_c2f(&c_status, status);
+            PMPI_Status_c2f(&c_status, status);
         }
     }
     free(c_req);

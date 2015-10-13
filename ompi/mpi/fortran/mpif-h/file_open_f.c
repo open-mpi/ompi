@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -23,7 +25,8 @@
 #include "ompi/mpi/fortran/base/strings.h"
 #include "ompi/file/file.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_FILE_OPEN = ompi_file_open_f
 #pragma weak pmpi_file_open = ompi_file_open_f
 #pragma weak pmpi_file_open_ = ompi_file_open_f
@@ -31,7 +34,7 @@
 
 #pragma weak PMPI_File_open_f = ompi_file_open_f
 #pragma weak PMPI_File_open_f08 = ompi_file_open_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_FILE_OPEN,
                            pmpi_file_open,
                            pmpi_file_open_,
@@ -39,6 +42,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_FILE_OPEN,
                            pompi_file_open_f,
                            (MPI_Fint *comm, char *filename, MPI_Fint *amode, MPI_Fint *info, MPI_Fint *fh, MPI_Fint *ierr, int name_len),
                            (comm, filename, amode, info, fh, ierr, name_len) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -49,9 +53,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_FILE_OPEN,
 
 #pragma weak MPI_File_open_f = ompi_file_open_f
 #pragma weak MPI_File_open_f08 = ompi_file_open_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_FILE_OPEN,
                            mpi_file_open,
                            mpi_file_open_,
@@ -59,18 +62,17 @@ OMPI_GENERATE_F77_BINDINGS (MPI_FILE_OPEN,
                            ompi_file_open_f,
                            (MPI_Fint *comm, char *filename, MPI_Fint *amode, MPI_Fint *info, MPI_Fint *fh, MPI_Fint *ierr, int name_len),
                            (comm, filename, amode, info, fh, ierr, name_len) )
+#else
+#define ompi_file_open_f pompi_file_open_f
+#endif
 #endif
 
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
-#endif
 
 void ompi_file_open_f(MPI_Fint *comm, char *filename, MPI_Fint *amode,
 		     MPI_Fint *info, MPI_Fint *fh, MPI_Fint *ierr, int name_len)
 {
-    MPI_Comm c_comm = MPI_Comm_f2c(*comm);
-    MPI_Info c_info = MPI_Info_f2c(*info);
+    MPI_Comm c_comm = PMPI_Comm_f2c(*comm);
+    MPI_Info c_info = PMPI_Info_f2c(*info);
     MPI_File c_fh;
     char *c_filename;
     int c_ierr, ret;
@@ -83,13 +85,13 @@ void ompi_file_open_f(MPI_Fint *comm, char *filename, MPI_Fint *amode,
         return;
     }
 
-    c_ierr = MPI_File_open(c_comm, c_filename,
+    c_ierr = PMPI_File_open(c_comm, c_filename,
                            OMPI_FINT_2_INT(*amode),
                            c_info, &c_fh);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {
-       *fh = MPI_File_c2f(c_fh);
+       *fh = PMPI_File_c2f(c_fh);
     }
 
     free(c_filename);

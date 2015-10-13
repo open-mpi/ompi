@@ -29,14 +29,7 @@ include $(top_srcdir)/Makefile.ompi-rules
 CLEANFILES=
 libmpi_mpifh_pmpi_la_LIBADD =
 
-#
-# OMPI_PROFILING_DEFINES flag is enabled when we want our MPI_* symbols
-# to be replaced by PMPI_*. In other words, this flag decides
-# whether "profile/defines.h" is included or not. "profile/defines.h"
-# replaces all MPI_* symbols with PMPI_* symbols. In this directory
-# we definately need it to be 1.
-#
-AM_CPPFLAGS = -DOMPI_PROFILE_LAYER=1 -DOMPI_COMPILING_FORTRAN_WRAPPERS=1
+AM_CPPFLAGS = -DOMPI_BUILD_MPI_PROFILING=1 -DOMPI_COMPILING_FORTRAN_WRAPPERS=1
 #
 # This build needs to go through only if profiling is required.
 # Further, this build HAS to go through if profiling is required.
@@ -46,9 +39,6 @@ noinst_LTLIBRARIES =
 if BUILD_PMPI_FORTRAN_MPIFH_BINDINGS_LAYER
 noinst_LTLIBRARIES += libmpi_mpifh_pmpi.la
 endif
-
-headers = \
-    defines.h
 
 linked_files = \
         pabort_f.c \
@@ -466,7 +456,6 @@ nodist_libmpi_mpifh_pmpi_la_SOURCES = \
 
 if WANT_INSTALL_HEADERS
 ompidir = $(ompiincludedir)/$(subdir)
-ompi_HEADERS = $(headers)
 endif
 
 # These files were created by targets above

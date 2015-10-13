@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -22,7 +24,8 @@
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 #include "ompi/mpi/fortran/base/constants.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_RSEND = ompi_rsend_f
 #pragma weak pmpi_rsend = ompi_rsend_f
 #pragma weak pmpi_rsend_ = ompi_rsend_f
@@ -30,7 +33,7 @@
 
 #pragma weak PMPI_Rsend_f = ompi_rsend_f
 #pragma weak PMPI_Rsend_f08 = ompi_rsend_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_RSEND,
                            pmpi_rsend,
                            pmpi_rsend_,
@@ -38,6 +41,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_RSEND,
                            pompi_rsend_f,
                            (char *ibuf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *dest, MPI_Fint *tag, MPI_Fint *comm, MPI_Fint *ierr),
                            (ibuf, count, datatype, dest, tag, comm, ierr) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -48,9 +52,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_RSEND,
 
 #pragma weak MPI_Rsend_f = ompi_rsend_f
 #pragma weak MPI_Rsend_f08 = ompi_rsend_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_RSEND,
                            mpi_rsend,
                            mpi_rsend_,
@@ -58,23 +61,22 @@ OMPI_GENERATE_F77_BINDINGS (MPI_RSEND,
                            ompi_rsend_f,
                            (char *ibuf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *dest, MPI_Fint *tag, MPI_Fint *comm, MPI_Fint *ierr),
                            (ibuf, count, datatype, dest, tag, comm, ierr) )
+#else
+#define ompi_rsend_f pompi_rsend_f
+#endif
 #endif
 
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
-#endif
 
 void ompi_rsend_f(char *ibuf, MPI_Fint *count, MPI_Fint *datatype,
 		 MPI_Fint *dest, MPI_Fint *tag, MPI_Fint *comm, MPI_Fint *ierr)
 {
    int c_ierr;
-   MPI_Datatype c_type = MPI_Type_f2c(*datatype);
+   MPI_Datatype c_type = PMPI_Type_f2c(*datatype);
    MPI_Comm c_comm;
 
-   c_comm = MPI_Comm_f2c (*comm);
+   c_comm = PMPI_Comm_f2c (*comm);
 
-   c_ierr = MPI_Rsend(OMPI_F2C_BOTTOM(ibuf), OMPI_FINT_2_INT(*count),
+   c_ierr = PMPI_Rsend(OMPI_F2C_BOTTOM(ibuf), OMPI_FINT_2_INT(*count),
                       c_type, OMPI_FINT_2_INT(*dest),
                       OMPI_FINT_2_INT(*tag), c_comm);
    if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
