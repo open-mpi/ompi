@@ -105,9 +105,6 @@ struct mca_coll_portals4_module_t {
     /* binomial tree */
     ompi_coll_portals4_tree_t *cached_in_order_bmtree;
     int                        cached_in_order_bmtree_root;
-
-    size_t barrier_count;
-    size_t gather_count;
 };
 typedef struct mca_coll_portals4_module_t mca_coll_portals4_module_t;
 OBJ_CLASS_DECLARATION(mca_coll_portals4_module_t);
@@ -234,6 +231,19 @@ int ompi_coll_portals4_igather_intra(const void *sbuf, int scount, struct ompi_d
                                      ompi_request_t **request,
                                      mca_coll_base_module_t *module);
 int ompi_coll_portals4_igather_intra_fini(struct ompi_coll_portals4_request_t *request);
+
+int ompi_coll_portals4_scatter_intra(const void *sbuf, int scount, struct ompi_datatype_t *sdtype,
+                                     void *rbuf, int rcount, struct ompi_datatype_t *rdtype,
+                                     int root,
+                                     struct ompi_communicator_t *comm,
+                                     mca_coll_base_module_t *module);
+int ompi_coll_portals4_iscatter_intra(const void *sbuf, int scount, struct ompi_datatype_t *sdtype,
+                                      void *rbuf, int rcount, struct ompi_datatype_t *rdtype,
+                                      int root,
+                                      struct ompi_communicator_t *comm,
+                                      ompi_request_t **request,
+                                      mca_coll_base_module_t *module);
+int ompi_coll_portals4_iscatter_intra_fini(struct ompi_coll_portals4_request_t *request);
 
 
 static inline ptl_process_t

@@ -573,6 +573,10 @@ portals4_comm_query(struct ompi_communicator_t *comm,
         return NULL;
     }
 
+    opal_output_verbose(50, ompi_coll_base_framework.framework_output,
+                        "%s:%d: My nid,pid = (%x,%x)\n",
+                        __FILE__, __LINE__, proc->phys.nid, proc->phys.pid);
+
     /* check for logical addressing mode in the MTL */
     if (0 == proc->phys.pid) {
         opal_output_verbose(1, ompi_coll_base_framework.framework_output,
@@ -595,6 +599,9 @@ portals4_comm_query(struct ompi_communicator_t *comm,
     portals4_module->super.coll_gather   = ompi_coll_portals4_gather_intra;
     portals4_module->super.coll_igather  = ompi_coll_portals4_igather_intra;
 
+    portals4_module->super.coll_scatter  = ompi_coll_portals4_scatter_intra;
+    portals4_module->super.coll_iscatter = ompi_coll_portals4_iscatter_intra;
+
     portals4_module->cached_in_order_bmtree=NULL;
     portals4_module->cached_in_order_bmtree_root=-1;
 
@@ -606,9 +613,6 @@ portals4_comm_query(struct ompi_communicator_t *comm,
 
     portals4_module->super.coll_reduce = ompi_coll_portals4_reduce_intra;
     portals4_module->super.coll_ireduce = ompi_coll_portals4_ireduce_intra;
-
-    portals4_module->barrier_count = 0;
-    portals4_module->gather_count = 0;
 
     return &(portals4_module->super);
 }
@@ -706,8 +710,7 @@ portals4_progress(void)
                         ompi_coll_portals4_iallreduce_intra_fini(ptl_request);
                         break;
                     case OMPI_COLL_PORTALS4_TYPE_SCATTER:
-                        opal_output(ompi_coll_base_framework.framework_output,
-                                "scatter is not supported yet\n");
+                        ompi_coll_portals4_iscatter_intra_fini(ptl_request);
                         break;
                     case OMPI_COLL_PORTALS4_TYPE_GATHER:
                         ompi_coll_portals4_igather_intra_fini(ptl_request);
