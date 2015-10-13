@@ -1,5 +1,5 @@
 .\" -*- nroff -*-
-.\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
+.\" Copyright (c) 2010-2015 Cisco Systems, Inc.  All rights reserved.
 .\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .\" $COPYRIGHT$
@@ -48,10 +48,10 @@ Fortran only: Error status (integer).
 
 .SH DESCRIPTION
 .ft R
-This routine, or MPI_Init_thread, must be called before any other MPI
-routine (apart from MPI_Initialized) is called. MPI can be initialized
-at most once; subsequent calls to MPI_Init or MPI_Init_thread are
-erroneous.
+This routine, or MPI_Init_thread, must be called before most other MPI
+routines are called.  There are a small number of exceptions, such as
+MPI_Initialized and MPI_Finalized.  MPI can be initialized at most
+once; subsequent calls to MPI_Init or MPI_Init_thread are erroneous.
 .sp
 All MPI programs must contain a call to MPI_Init or
 MPI_Init_thread. Open MPI accepts the C/C++ \fIargc\fP and \fIargv\fP
@@ -102,4 +102,4 @@ See the MPI man page for a full list of MPI error codes.
 MPI_Init_thread
 MPI_Initialized
 MPI_Finalize
-
+MPI_Finalized
