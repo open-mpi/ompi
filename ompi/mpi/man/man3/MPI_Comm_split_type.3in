@@ -19,9 +19,21 @@ int MPI_Comm_split_type(MPI_Comm \fIcomm\fP, int\fI split_type\fP, int\fI key\fP
 .fi
 .SH Fortran Syntax
 .nf
-INCLUDE 'mpif.h'
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
 MPI_COMM_SPLIT_TYPE(\fICOMM, SPLIT_TYPE, KEY, INFO, NEWCOMM, IERROR\fP)
 	INTEGER	\fICOMM, SPLIT_TYPE, KEY, INFO, NEWCOMM, IERROR\fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Comm_split_type(\fIcomm\fP, \fIsplit_type\fP, \fIkey\fP, \fIinfo\fP, \fInewcomm\fP, \fIierror\fP)
+	TYPE(MPI_Comm), INTENT(IN) :: \fIcomm\fP
+	INTEGER, INTENT(IN) :: \fIsplit_type\fP, \fIkey\fP
+	TYPE(MPI_Info), INTENT(IN) :: \fIinfo\fP
+	TYPE(MPI_Comm), INTENT(OUT) :: \fInewcomm\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
 .SH INPUT PARAMETERS

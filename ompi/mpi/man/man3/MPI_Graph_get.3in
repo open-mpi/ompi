@@ -18,10 +18,21 @@ int MPI_Graph_get(MPI_Comm \fIcomm\fP, int\fI maxindex\fP, int\fI maxedges\fP,
 .fi
 .SH Fortran Syntax
 .nf
-INCLUDE 'mpif.h'
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
 MPI_GRAPH_GET(\fICOMM, MAXINDEX, MAXEDGES, INDEX, EDGES, IERROR\fP)
 	INTEGER	\fICOMM, MAXINDEX, MAXEDGES, INDEX(*)\fP
 	INTEGER	\fIEDGES(*), IERROR\fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Graph_get(\fIcomm\fP, \fImaxindex\fP, \fImaxedges\fP, \fIindex\fP, \fIedges\fP, \fIierror\fP)
+	TYPE(MPI_Comm), INTENT(IN) :: \fIcomm\fP
+	INTEGER, INTENT(IN) :: \fImaxindex\fP, \fImaxedges\fP
+	INTEGER, INTENT(OUT) :: \fIindex(maxindex)\fP, \fIedges(maxedges)\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
 .SH C++ Syntax

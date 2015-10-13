@@ -20,12 +20,26 @@ int MPI_Type_create_struct(int \fIcount\fP, int \fIarray_of_blocklengths\fP[],
 .fi
 .SH Fortran Syntax (see FORTRAN 77 NOTES)
 .nf
-INCLUDE 'mpif.h'
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
 MPI_TYPE_CREATE_STRUCT(\fICOUNT, ARRAY_OF_BLOCKLENGTHS,
 		ARRAY_OF_DISPLACEMENTS, ARRAY_OF_TYPES, NEWTYPE, IERROR\fP)
 	INTEGER	\fICOUNT, ARRAY_OF_BLOCKLENGTHS(*), ARRAY_OF_TYPES(*),\fP
 	INTEGER \fINEWTYPE, IERROR \fP
 	INTEGER(KIND=MPI_ADDRESS_KIND) \fIARRAY_OF_DISPLACEMENTS(*)\fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Type_create_struct(\fIcount\fP, \fIarray_of_blocklengths\fP,
+		\fIarray_of_displacements\fP, \fIarray_of_types\fP, \fInewtype\fP, \fIierror\fP)
+	INTEGER, INTENT(IN) :: \fIcount\fP, \fIarray_of_blocklengths(count)\fP
+	INTEGER(KIND=MPI_ADDRESS_KIND), INTENT(IN) ::
+	\fIarray_of_displacements(count)\fP
+	TYPE(MPI_Datatype), INTENT(IN) :: \fIarray_of_types(count)\fP
+	TYPE(MPI_Datatype), INTENT(OUT) :: \fInewtype\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
 .SH C++ Syntax

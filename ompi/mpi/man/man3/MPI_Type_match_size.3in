@@ -20,9 +20,19 @@ int MPI_Type_match_size(int \fItypeclass\fP, int \fIsize\fP,
 .fi
 .SH Fortran Syntax
 .nf
-INCLUDE 'mpif.h'
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
 MPI_TYPE_MATCH_SIZE(\fITYPECLASS, SIZE, TYPE, IERROR\fP)
 	INTEGER	\fITYPECLASS, SIZE, TYPE, IERROR\fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Type_match_size(\fItypeclass\fP, \fIsize\fP, \fIdatatype\fP, \fIierror\fP)
+	INTEGER, INTENT(IN) :: \fItypeclass\fP, \fIsize\fP
+	TYPE(MPI_Datatype), INTENT(OUT) :: \fIdatatype\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
 .SH C++ Syntax

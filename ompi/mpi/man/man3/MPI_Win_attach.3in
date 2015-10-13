@@ -17,11 +17,22 @@ MPI_Win_detach(MPI_Win *\fIwin\fP, void *\fIbase\fP)
 .fi
 .SH Fortran Syntax
 .nf
-INCLUDE 'mpif.h'
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
 MPI_WIN_ATTACH(\fIWIN, BASE, SIZE, IERROR\fP)
 	<type> \fIBASE\fP(*)
 	INTEGER(KIND=MPI_ADDRESS_KIND) \fISIZE\fP
 	INTEGER \fIWIN, IERROR\fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Win_attach(\fIwin\fP, \fIbase\fP, \fIsize\fP, \fIierror\fP)
+	TYPE(MPI_Win), INTENT(IN) :: \fIwin\fP
+	TYPE(*), DIMENSION(..), INTENT(IN) :: \fIbase\fP
+	INTEGER(KIND=MPI_ADDRESS_KIND), INTENT(IN) :: \fIsize\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
 .SH INPUT PARAMETERS

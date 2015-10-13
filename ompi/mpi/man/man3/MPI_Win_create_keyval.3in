@@ -19,12 +19,25 @@ int MPI_Win_create_keyval(MPI_Win_copy_attr_function *\fIwin_copy_attr_fn\fP,
 .fi
 .SH Fortran Syntax (see FORTRAN 77 NOTES)
 .nf
-INCLUDE 'mpif.h'
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
 MPI_WIN_CREATE_KEYVAL(\fIWIN_COPY_ATTR_FN, WIN_DELETE_ATTR_FN,
 	WIN_KEYVAL, EXTRA_STATE, IERROR\fP)
 	EXTERNAL \fIWIN_COPY_ATTR_FN, WIN_DELETE_ATTR_FN\fP
 	INTEGER \fIWIN_KEYVAL, IERROR\fP
 	INTEGER(KIND=MPI_ADDRESS_KIND) \fIEXTRA_STATE\fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Win_create_keyval(\fIwin_copy_attr_fn\fP, \fIwin_delete_attr_fn\fP, \fIwin_keyval\fP,
+		\fIextra_state\fP, \fIierror\fP)
+	PROCEDURE(MPI_Win_copy_attr_function) :: \fIwin_copy_attr_fn\fP
+	PROCEDURE(MPI_Win_delete_attr_function) :: \fIwin_delete_attr_fn\fP
+	INTEGER, INTENT(OUT) :: \fIwin_keyval\fP
+	INTEGER(KIND=MPI_ADDRESS_KIND), INTENT(IN) :: \fIextra_state\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
 .SH C++ Syntax

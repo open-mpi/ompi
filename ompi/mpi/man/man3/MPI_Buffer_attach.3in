@@ -17,10 +17,20 @@ int MPI_Buffer_attach(void \fI*buf\fP, int\fI size\fP)
 .fi
 .SH Fortran Syntax
 .nf
-INCLUDE 'mpif.h'
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
 MPI_BUFFER_ATTACH(\fIBUF\fP,\fI SIZE\fP, \fIIERROR\fP)
 	<type>	\fIBUF\fP(\fI*\fP)
 	INTEGER	\fISIZE\fP,\fI IERROR \fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Buffer_attach(\fIbuffer\fP, \fIsize\fP, \fIierror\fP)
+	TYPE(*), DIMENSION(..), ASYNCHRONOUS :: \fIbuffer\fP
+	INTEGER, INTENT(IN) :: \fIsize\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
 .SH C++ Syntax

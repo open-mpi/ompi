@@ -17,7 +17,14 @@ double MPI_Wtime()
 .fi
 .SH Fortran Syntax
 .nf
-INCLUDE 'mpif.h'
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
+DOUBLE PRECISION MPI_WTIME()
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
 DOUBLE PRECISION MPI_WTIME()
 
 .fi

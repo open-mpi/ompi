@@ -25,6 +25,18 @@ C Syntax
     	 INTEGER      COMM, AMODE, INFO, FH, IERROR
 
 .fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_File_open(\fIcomm\fP, \fIfilename\fP, \fIamode\fP, \fIinfo\fP, \fIfh\fP, \fIierror\fP)
+	TYPE(MPI_Comm), INTENT(IN) :: \fIcomm\fP
+	CHARACTER(LEN=*), INTENT(IN) :: \fIfilename\fP
+	INTEGER, INTENT(IN) :: \fIamode\fP
+	TYPE(MPI_Info), INTENT(IN) :: \fIinfo\fP
+	TYPE(MPI_File), INTENT(OUT) :: \fIfh\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
+
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>

@@ -20,9 +20,19 @@ int MPI_Init_thread(int *\fIargc\fP, char ***\fIargv\fP,
 .fi
 .SH Fortran Syntax
 .nf
-INCLUDE 'mpif.h'
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
 MPI_INIT_THREAD(\fIREQUIRED, PROVIDED, IERROR\fP)
 	INTEGER	\fIREQUIRED, PROVIDED, IERROR\fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Init_thread(\fIrequired\fP, \fIprovided\fP, \fIierror\fP)
+	INTEGER, INTENT(IN) :: \fIrequired\fP
+	INTEGER, INTENT(OUT) :: \fIprovided\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
 .SH C++ Syntax

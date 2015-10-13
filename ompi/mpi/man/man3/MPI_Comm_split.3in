@@ -18,9 +18,20 @@ int MPI_Comm_split(MPI_Comm \fIcomm\fP, int\fI color\fP, int\fI key\fP,
 .fi
 .SH Fortran Syntax
 .nf
-INCLUDE 'mpif.h'
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
 MPI_COMM_SPLIT(\fICOMM, COLOR, KEY, NEWCOMM, IERROR\fP)
 	INTEGER	\fICOMM, COLOR, KEY, NEWCOMM, IERROR\fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Comm_split(\fIcomm\fP, \fIcolor\fP, \fIkey\fP, \fInewcomm\fP, \fIierror\fP)
+	TYPE(MPI_Comm), INTENT(IN) :: \fIcomm\fP
+	INTEGER, INTENT(IN) :: \fIcolor\fP, \fIkey\fP
+	TYPE(MPI_Comm), INTENT(OUT) :: \fInewcomm\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
 .SH C++ Syntax

@@ -19,12 +19,25 @@ int MPI_Type_create_keyval(MPI_Type_copy_attr_function *\fItype_copy_attr_fn\fP,
 .fi
 .SH Fortran Syntax (see FORTRAN 77 NOTES)
 .nf
-INCLUDE 'mpif.h'
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
 MPI_TYPE_CREATE_KEYVAL(\fITYPE_COPY_ATTR_FN, TYPE_DELETE_ATTR_FN,
 		TYPE_KEYVAL, EXTRA_STATE, IERROR\fP)
 	EXTERNAL \fITYPE_COPY_ATTR_FN, TYPE_DELETE_ATTR_FN\fP
 	INTEGER	\fITYPE_KEYVAL, IERROR \fP
 	INTEGER(KIND=MPI_ADDRESS_KIND) \fIEXTRA_STATE\fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Type_create_keyval(\fItype_copy_attr_fn\fP, \fItype_delete_attr_fn\fP, \fItype_keyval\fP,
+		\fIextra_state\fP, \fIierror\fP)
+	PROCEDURE(MPI_Type_copy_attr_function) :: \fItype_copy_attr_fn\fP
+	PROCEDURE(MPI_Type_delete_attr_function) :: \fItype_delete_attr_fn\fP
+	INTEGER, INTENT(OUT) :: \fItype_keyval\fP
+	INTEGER(KIND=MPI_ADDRESS_KIND), INTENT(IN) :: \fIextra_state\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
 .SH C++ Syntax

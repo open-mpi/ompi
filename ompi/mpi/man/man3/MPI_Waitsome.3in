@@ -19,13 +19,26 @@ int MPI_Waitsome(int \fIincount\fP, MPI_Request \fIarray_of_requests[]\fP,
 .fi
 .SH Fortran Syntax
 .nf
-INCLUDE 'mpif.h'
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
 MPI_WAITSOME(\fIINCOUNT, ARRAY_OF_REQUESTS, OUTCOUNT,
 		ARRAY_OF_INDICES, ARRAY_OF_STATUSES, IERROR\fP)
 	INTEGER	\fIINCOUNT, ARRAY_OF_REQUESTS(*), OUTCOUNT\fP
 	INTEGER	\fIARRAY_OF_INDICES(*)\fP
 	INTEGER	\fIARRAY_OF_STATUSES(MPI_STATUS_SIZE*)\fP
 	INTEGER	\fIIERROR\fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Waitsome(\fIincount\fP, \fIarray_of_requests\fP, \fIoutcount\fP, \fIarray_of_indices\fP,
+		\fIarray_of_statuses\fP, \fIierror\fP)
+	INTEGER, INTENT(IN) :: \fIincount\fP
+	TYPE(MPI_Request), INTENT(INOUT) :: \fIarray_of_requests(incount)\fP
+	INTEGER, INTENT(OUT) :: \fIoutcount\fP, \fIarray_of_indices(*)\fP
+	TYPE(MPI_Status) :: \fIarray_of_statuses(*)\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
 .SH C++ Syntax

@@ -19,9 +19,18 @@ int MPI_Query_thread(int *\fIprovided\fP)
 .fi
 .SH Fortran Syntax
 .nf
-INCLUDE 'mpif.h'
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
 MPI_QUERY_THREAD(\fIPROVIDED, IERROR\fP)
 	INTEGER	\fIPROVIDED, IERROR \fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Query_thread(\fIprovided\fP, \fIierror\fP)
+	INTEGER, INTENT(OUT) :: \fIprovided\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
 .SH C++ Syntax

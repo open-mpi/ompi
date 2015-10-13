@@ -20,13 +20,28 @@ int MPI_Comm_spawn(const char *\fIcommand\fP, char *\fIargv\fP[], int \fImaxproc
 .fi
 .SH Fortran Syntax
 .nf
-INCLUDE 'mpif.h'
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
 MPI_COMM_SPAWN(\fICOMMAND, ARGV, MAXPROCS, INFO, ROOT, COMM,
 	INTERCOMM, ARRAY_OF_ERRCODES, IERROR\fP)
 
 	CHARACTER*(*) \fICOMMAND, ARGV(*)\fP
 	INTEGER	\fIINFO, MAXPROCS, ROOT, COMM, INTERCOMM,
 	ARRAY_OF_ERRCODES(*), IERROR\fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Comm_spawn(\fIcommand\fP, \fIargv\fP, \fImaxprocs\fP, \fIinfo\fP, \fIroot\fP, \fIcomm\fP, \fIintercomm\fP,
+		\fIarray_of_errcodes\fP, \fIierror\fP)
+	CHARACTER(LEN=*), INTENT(IN) :: \fIcommand\fP, \fIargv(*)\fP
+	INTEGER, INTENT(IN) :: \fImaxprocs\fP, \fIroot\fP
+	TYPE(MPI_Info), INTENT(IN) :: \fIinfo\fP
+	TYPE(MPI_Comm), INTENT(IN) :: \fIcomm\fP
+	TYPE(MPI_Comm), INTENT(OUT) :: \fIintercomm\fP
+	INTEGER :: \fIarray_of_errcodes(*)\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
 .SH C++ Syntax

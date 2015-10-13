@@ -17,10 +17,21 @@ int MPI_Win_set_attr(MPI_Win \fIwin\fP, int \fIwin_keyval\fP, void *\fIattribute
 .fi
 .SH Fortran Syntax (see FORTRAN 77 NOTES)
 .nf
-INCLUDE 'mpif.h'
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
 MPI_WIN_SET_ATTR(\fIWIN, WIN_KEYVAL, ATTRIBUTE_VAL, IERROR\fP)
 	INTEGER \fIWIN, WIN_KEYVAL, IERROR\fP
 	INTEGER(KIND=MPI_ADDRESS_KIND) \fIATTRIBUTE_VAL\fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Win_set_attr(\fIwin\fP, \fIwin_keyval\fP, \fIattribute_val\fP, \fIierror\fP)
+	TYPE(MPI_Win), INTENT(IN) :: \fIwin\fP
+	INTEGER, INTENT(IN) :: \fIwin_keyval\fP
+	INTEGER(KIND=MPI_ADDRESS_KIND), INTENT(IN) :: \fIattribute_val\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
 .SH C++ Syntax

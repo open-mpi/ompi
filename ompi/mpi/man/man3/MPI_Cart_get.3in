@@ -18,10 +18,22 @@ int MPI_Cart_get(MPI_Comm\fI comm\fP, int\fI maxdims\fP, int\fI dims\fP[], int\f
 .fi
 .SH Fortran Syntax
 .nf
-INCLUDE 'mpif.h'
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
 MPI_CART_GET(\fICOMM\fP, \fIMAXDIMS\fP, \fIDIMS\fP, \fIPERIODS\fP, \fICOORDS\fP, \fIIERROR\fP)
 	INTEGER	\fICOMM\fP, \fIMAXDIMS\fP, \fIDIMS\fP(*), \fICOORDS\fP(*), \fIIERROR\fP
 	LOGICAL	\fIPERIODS\fP(*)
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Cart_get(\fIcomm\fP, \fImaxdims\fP, \fIdims\fP, \fIperiods\fP, \fIcoords\fP, \fIierror\fP)
+	TYPE(MPI_Comm), INTENT(IN) :: \fIcomm\fP
+	INTEGER, INTENT(IN) :: \fImaxdims\fP
+	INTEGER, INTENT(OUT) :: \fIdims(maxdims)\fP, \fIcoords(maxdims)\fP
+	LOGICAL, INTENT(OUT) :: \fIperiods(maxdims)\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
 .SH C++ Syntax

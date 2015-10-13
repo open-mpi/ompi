@@ -28,7 +28,8 @@ int MPI_Ineighbor_alltoallw(const void *\fIsendbuf\fP, const int \fIsendcounts\f
 .fi
 .SH Fortran Syntax
 .nf
-INCLUDE 'mpif.h'
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
 MPI_NEIGHBOR_ALLTOALLW(\fISENDBUF, SENDCOUNTS, SDISPLS, SENDTYPES,
 	RECVBUF, RECVCOUNTS, RDISPLS, RECVTYPES, COMM, IERROR\fP)
 
@@ -44,6 +45,35 @@ MPI_INEIGHBOR_ALLTOALLW(\fISENDBUF, SENDCOUNTS, SDISPLS, SENDTYPES,
 	INTEGER	\fISENDCOUNTS(*), SDISPLS(*), SENDTYPES(*)\fP
 	INTEGER	\fIRECVCOUNTS(*), RDISPLS(*), RECVTYPES(*)\fP
 	INTEGER	\fICOMM, REQUEST, IERROR\fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Neighbor_alltoallw(\fIsendbuf\fP, \fIsendcounts\fP, \fIsdispls\fP, \fIsendtypes\fP, \fIrecvbuf\fP,
+		\fIrecvcounts\fP, \fIrdispls\fP, \fIrecvtypes\fP, \fIcomm\fP, \fIierror\fP)
+
+	TYPE(*), DIMENSION(..), INTENT(IN) :: \fIsendbuf\fP
+	TYPE(*), DIMENSION(..) :: \fIrecvbuf\fP
+	INTEGER, INTENT(IN) :: \fIsendcounts(*)\fP, \fIrecvcounts(*)\fP
+	INTEGER(KIND=MPI_ADDRESS_KIND), INTENT(IN) :: \fIsdispls(*)\fP, \fIrdispls(*)\fP
+	TYPE(MPI_Datatype), INTENT(IN) :: \fIsendtypes(*)\fP, \fIrecvtypes(*)\fP
+	TYPE(MPI_Comm), INTENT(IN) :: \fIcomm\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
+
+MPI_Ineighbor_alltoallw(\fIsendbuf\fP, \fIsendcounts\fP, \fIsdispls\fP, \fIsendtypes\fP, \fIrecvbuf\fP,
+		\fIrecvcounts\fP, \fIrdispls\fP, \fIrecvtypes\fP, \fIcomm\fP, \fIrequest\fP, \fIierror\fP)
+
+	TYPE(*), DIMENSION(..), INTENT(IN), ASYNCHRONOUS :: \fIsendbuf\fP
+	TYPE(*), DIMENSION(..), ASYNCHRONOUS :: \fIrecvbuf\fP
+	INTEGER, INTENT(IN), ASYNCHRONOUS :: \fIsendcounts(*)\fP, \fIrecvcounts(*)\fP
+	INTEGER(KIND=MPI_ADDRESS_KIND), INTENT(IN), ASYNCHRONOUS ::
+	\fIsdispls(*)\fP, \fIrdispls(*)\fP
+	TYPE(MPI_Datatype), INTENT(IN), ASYNCHRONOUS :: \fIsendtypes(*),\fP
+	\fIrecvtypes(*)\fP
+	TYPE(MPI_Comm), INTENT(IN) :: \fIcomm\fP
+	TYPE(MPI_Request), INTENT(OUT) :: \fIrequest\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
 .SH INPUT PARAMETERS

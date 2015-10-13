@@ -24,6 +24,16 @@ C Syntax
         	INTEGER		FH, STATUS(MPI_STATUS_SIZE), IERROR
 
 .fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_File_read_all_end(\fIfh\fP, \fIbuf\fP, \fIstatus\fP, \fIierror\fP)
+	TYPE(MPI_File), INTENT(IN) :: \fIfh\fP
+	TYPE(*), DIMENSION(..), ASYNCHRONOUS :: \fIbuf\fP
+	TYPE(MPI_Status) :: \fIstatus\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
+
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>

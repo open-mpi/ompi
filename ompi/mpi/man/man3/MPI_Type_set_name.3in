@@ -18,10 +18,20 @@ int MPI_Type_set_name(MPI_Datatype \fItype\fP, const char *\fItype_name\fP)
 .fi
 .SH Fortran Syntax
 .nf
-INCLUDE 'mpif.h'
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
 MPI_TYPE_SET_NAME(\fITYPE, TYPE_NAME, IERROR\fP)
 	INTEGER	\fITYPE, IERROR\fP
 	CHARACTER*(*) \fITYPE_NAME\fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Type_set_name(\fIdatatype\fP, \fItype_name\fP, \fIierror\fP)
+	TYPE(MPI_Datatype), INTENT(IN) :: \fIdatatype\fP
+	CHARACTER(LEN=*), INTENT(IN) :: \fItype_name\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
 .SH C++ Syntax

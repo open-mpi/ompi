@@ -17,11 +17,23 @@ int MPI_Type_get_attr(MPI_Datatype \fItype\fP, int \fItype_keyval\fP, void *\fIa
 .fi
 .SH Fortran Syntax (see FORTRAN 77 NOTES)
 .nf
-INCLUDE 'mpif.h'
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
 MPI_TYPE_GET_ATTR(\fITYPE, TYPE_KEYVAL, ATTRIBUTE_VAL, FLAG, IERROR\fP)
 	INTEGER	\fITYPE, TYPE_KEYVAL, IERROR \fP
 	INTEGER(KIND=MPI_ADDRESS_KIND) \fIATTRIBUTE_VAL\fP
 	LOGICAL \fIFLAG\fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Type_get_attr(\fIdatatype\fP, \fItype_keyval\fP, \fIattribute_val\fP, \fIflag\fP, \fIierror\fP)
+	TYPE(MPI_Datatype), INTENT(IN) :: \fIdatatype\fP
+	INTEGER, INTENT(IN) :: \fItype_keyval\fP
+	INTEGER(KIND=MPI_ADDRESS_KIND), INTENT(OUT) :: \fIattribute_val\fP
+	LOGICAL, INTENT(OUT) :: \fIflag\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
 .SH C++ Syntax

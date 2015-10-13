@@ -17,10 +17,21 @@ int MPI_Info_get_nthkey(MPI_Info \fIinfo\fP, int \fIn\fP, char \fI*key\fP)
 .fi
 .SH Fortran Syntax
 .nf
-INCLUDE 'mpif.h'
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
 MPI_INFO_GET_NTHKEY(\fIINFO, N, KEY, IERROR\fP)
 	INTEGER		\fIINFO, N, IERROR\fP
 	CHARACTER*(*)	\fIKEY\fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Info_get_nthkey(\fIinfo\fP, \fIn\fP, \fIkey\fP, \fIierror\fP)
+	TYPE(MPI_Info), INTENT(IN) :: \fIinfo\fP
+	INTEGER, INTENT(IN) :: \fIn\fP
+	CHARACTER(LEN=*), INTENT(OUT) :: \fIkey\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
 .SH C++ Syntax

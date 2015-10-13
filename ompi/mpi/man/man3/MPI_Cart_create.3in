@@ -19,11 +19,23 @@ int MPI_Cart_create(MPI_Comm\fI comm_old\fP, int\fI ndims\fP, const int\fI dims\
 .fi
 .SH Fortran Syntax
 .nf
-INCLUDE 'mpif.h'
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
 MPI_CART_CREATE(\fICOMM_OLD\fP,\fI NDIMS\fP,\fI DIMS\fP,\fI PERIODS\fP,\fI REORDER\fP,
 		\fICOMM_CART\fP,\fI IERROR\fP)
 	INTEGER	\fICOMM_OLD\fP,\fI NDIMS\fP,\fI DIMS\fP(*),\fI COMM_CART\fP,\fI IERROR\fP
 	LOGICAL	\fIPERIODS\fI(*),\fI REORDER\fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Cart_create(\fIcomm_old\fP, \fIndims\fP, \fIdims\fP, \fIperiods\fP, \fIreorder\fP, \fIcomm_cart\fP, \fIierror\fP)
+	TYPE(MPI_Comm), INTENT(IN) :: \fIcomm_old\fP
+	INTEGER, INTENT(IN) :: \fIndims\fP, \fIdims(ndims)\fP
+	LOGICAL, INTENT(IN) :: \fIperiods(ndims)\fP, \fIreorder\fP
+	TYPE(MPI_Comm), INTENT(OUT) :: \fIcomm_cart\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
 .SH C++ Syntax

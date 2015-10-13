@@ -18,10 +18,21 @@ int MPI_Type_create_resized(MPI_Datatype \fIoldtype\fP, MPI_Aint\fI lb\fP,
 .fi
 .SH Fortran Syntax (see FORTRAN 77 NOTES)
 .nf
-INCLUDE 'mpif.h'
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
 MPI_TYPE_CREATE_RESIZED(\fIOLDTYPE, LB, EXTENT, NEWTYPE, IERROR\fP)
 	INTEGER	\fIOLDTYPE, NEWTYPE, IERROR\fP
 	INTEGER(KIND=MPI_ADDRESS_KIND)	\fILB, EXTENT\fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Type_create_resized(\fIoldtype\fP, \fIlb\fP, \fIextent\fP, \fInewtype\fP, \fIierror\fP)
+	INTEGER(KIND=MPI_ADDRESS_KIND), INTENT(IN) :: \fIlb\fP, \fIextent\fP
+	TYPE(MPI_Datatype), INTENT(IN) :: \fIoldtype\fP
+	TYPE(MPI_Datatype), INTENT(OUT) :: \fInewtype\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
 .SH C++ Syntax
