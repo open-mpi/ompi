@@ -204,6 +204,8 @@ static void *mca_mpool_udreg_reg_func (void *addr, uint64_t len, void *reg_conte
     udreg_reg->mpool = reg_context;
     udreg_reg->base  = addr;
     udreg_reg->bound = (void *)((uintptr_t) addr + len);
+    /* pull the access flags out of the mpool module */
+    udreg_reg->access_flags = mpool_udreg->requested_access_flags;
 
     rc = mpool_udreg->resources.register_mem(mpool_udreg->resources.reg_data,
                                              addr, len, udreg_reg);
@@ -220,6 +222,11 @@ static uint32_t mca_mpool_udreg_dereg_func (void *device_data, void *dreg_contex
     mca_mpool_udreg_module_t *mpool_udreg = (mca_mpool_udreg_module_t *) dreg_context;
     mca_mpool_base_registration_t *udreg_reg = (mca_mpool_base_registration_t *) device_data;
     int rc;
+
+    if (udreg_reg->ref_count) {
+        /* there are still users of this registration. leave it alone */
+        return 0;
+    }
 
     rc = mpool_udreg->resources.deregister_mem(mpool_udreg->resources.reg_data, udreg_reg);
 
@@ -327,7 +334,7 @@ void* mca_mpool_udreg_alloc(mca_mpool_base_module_t *mpool, size_t size,
 #endif
     }
 
-    if (OPAL_SUCCESS != mca_mpool_udreg_register(mpool, addr, size, flags, reg)) {
+    if (OPAL_SUCCESS != mca_mpool_udreg_register(mpool, addr, size, flags, MCA_MPOOL_ACCESS_ANY, reg)) {
         if (udreg_module->huge_page) {
             mca_mpool_udreg_free_huge ((mca_mpool_udreg_hugepage_alloc_t *) base_addr);
         } else {
@@ -355,47 +362,87 @@ bool mca_mpool_udreg_evict (struct mca_mpool_base_module_t *mpool)
  * register memory
  */
 int mca_mpool_udreg_register(mca_mpool_base_module_t *mpool, void *addr,
-                             size_t size, uint32_t flags,
+                             size_t size, uint32_t flags, int32_t access_flags,
                              mca_mpool_base_registration_t **reg)
 {
     mca_mpool_udreg_module_t *mpool_udreg = (mca_mpool_udreg_module_t *) mpool;
-    mca_mpool_base_registration_t *udreg_reg;
+    mca_mpool_base_registration_t *udreg_reg, *old_reg;
     bool bypass_cache = !!(flags & MCA_MPOOL_FLAGS_CACHE_BYPASS);
     udreg_entry_t *udreg_entry;
     udreg_return_t urc;
 
+    *reg = NULL;
+
+    OPAL_THREAD_LOCK(&mpool_udreg->lock);
+
+    /* we hold the lock so no other thread can modify these flags until the registration is complete */
+    mpool_udreg->requested_access_flags = access_flags;
+
     if (false == bypass_cache) {
         /* Get a udreg entry for this region */
-        OPAL_THREAD_LOCK(&mpool_udreg->lock);
-        while (UDREG_RC_SUCCESS !=
-               (urc = UDREG_Register (mpool_udreg->udreg_handle, addr, size, &udreg_entry))) {
-            /* try to remove one unused reg and retry */
-            if (!mca_mpool_udreg_evict (mpool)) {
-                *reg = NULL;
+        do {
+            while (UDREG_RC_SUCCESS !=
+                   (urc = UDREG_Register (mpool_udreg->udreg_handle, addr, size, &udreg_entry))) {
+                /* try to remove one unused reg and retry */
+                if (!mca_mpool_udreg_evict (mpool)) {
+                    OPAL_THREAD_UNLOCK(&mpool_udreg->lock);
+                    return OPAL_ERR_OUT_OF_RESOURCE;
+                }
+            }
+
+            udreg_reg = (mca_mpool_base_registration_t *) udreg_entry->device_data;
+
+            if ((udreg_reg->access_flags & access_flags) == access_flags) {
+                /* sufficient access */
+                break;
+            }
+
+            old_reg = udreg_reg;
+
+            /* to not confuse udreg make sure the new registration covers the same address
+             * range as the old one. */
+            addr = old_reg->base;
+            size = (size_t)((intptr_t) old_reg->bound - (intptr_t) old_reg->base);
+
+            /* make the new access flags more permissive */
+            mpool_udreg->requested_access_flags = access_flags | old_reg->access_flags;
+
+            /* get a new registration */
+            udreg_reg = mca_mpool_udreg_reg_func (addr, size, mpool);
+            if (NULL == udreg_reg) {
                 OPAL_THREAD_UNLOCK(&mpool_udreg->lock);
                 return OPAL_ERR_OUT_OF_RESOURCE;
             }
-        }
-        OPAL_THREAD_UNLOCK(&mpool_udreg->lock);
 
-        udreg_reg = (mca_mpool_base_registration_t *) udreg_entry->device_data;
+            /* update the device data with the new registration */
+            udreg_entry->device_data = udreg_reg;
+
+            /* ensure that mca_mpool_udreg_deregister does not call into udreg since
+             * we are forcefully evicting the registration here */
+            old_reg->flags |= MCA_MPOOL_FLAGS_CACHE_BYPASS | MCA_MPOOL_FLAGS_INVALID;
+
+            mca_mpool_udreg_dereg_func (old_reg, mpool);
+        } while (0);
+
         udreg_reg->mpool_context = udreg_entry;
     } else {
         /* if cache bypass is requested don't use the udreg cache */
         while (NULL == (udreg_reg = mca_mpool_udreg_reg_func (addr, size, mpool))) {
             /* try to remove one unused reg and retry */
             if (!mca_mpool_udreg_evict (mpool)) {
-                *reg = NULL;
+                OPAL_THREAD_UNLOCK(&mpool_udreg->lock);
                 return OPAL_ERR_OUT_OF_RESOURCE;
             }
         }
         udreg_reg->mpool_context = NULL;
     }
 
+    OPAL_THREAD_UNLOCK(&mpool_udreg->lock);
+
     udreg_reg->flags = flags;
 
     *reg = udreg_reg;
-    (*reg)->ref_count++;
+    udreg_reg->ref_count++;
 
     return OPAL_SUCCESS;
 }
@@ -445,14 +492,14 @@ int mca_mpool_udreg_deregister(struct mca_mpool_base_module_t *mpool,
 
     assert(reg->ref_count > 0);
 
-    reg->ref_count--;
+    --reg->ref_count;
 
-    if (0 == reg->ref_count && reg->flags & MCA_MPOOL_FLAGS_CACHE_BYPASS) {
-        mca_mpool_udreg_dereg_func (reg, mpool);
-    } else if (!(reg->flags & MCA_MPOOL_FLAGS_CACHE_BYPASS)) {
+    if (!(reg->flags & MCA_MPOOL_FLAGS_CACHE_BYPASS)) {
         OPAL_THREAD_LOCK(&mpool_udreg->lock);
         UDREG_DecrRefcount (mpool_udreg->udreg_handle, reg->mpool_context);
         OPAL_THREAD_UNLOCK(&mpool_udreg->lock);
+    } else {
+        mca_mpool_udreg_dereg_func (reg, mpool);
     }
 
     return OPAL_SUCCESS;

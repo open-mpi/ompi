@@ -586,11 +586,24 @@ static int openib_reg_mr(void *reg_data, void *base, size_t size,
 {
     mca_btl_openib_device_t *device = (mca_btl_openib_device_t*)reg_data;
     mca_btl_openib_reg_t *openib_reg = (mca_btl_openib_reg_t*)reg;
-    enum ibv_access_flags access_flag = (enum ibv_access_flags) (IBV_ACCESS_LOCAL_WRITE |
-        IBV_ACCESS_REMOTE_WRITE | IBV_ACCESS_REMOTE_READ);
+    enum ibv_access_flags access_flag = 0;
+
+    if (reg->access_flags & MCA_MPOOL_ACCESS_REMOTE_READ) {
+        access_flag |= IBV_ACCESS_REMOTE_READ;
+    }
+
+    if (reg->access_flags & MCA_MPOOL_ACCESS_REMOTE_WRITE) {
+        access_flag |= IBV_ACCESS_REMOTE_WRITE;
+    }
+
+    if (reg->access_flags & MCA_MPOOL_ACCESS_LOCAL_WRITE) {
+        access_flag |= IBV_ACCESS_LOCAL_WRITE;
+    }
 
 #if HAVE_DECL_IBV_ATOMIC_HCA
-    access_flag |= IBV_ACCESS_REMOTE_ATOMIC;
+    if (reg->access_flags & MCA_MPOOL_ACCESS_REMOTE_ATOMIC) {
+        access_flag |= IBV_ACCESS_REMOTE_ATOMIC;
+    }
 #endif
 
     if (device->mem_reg_max &&
