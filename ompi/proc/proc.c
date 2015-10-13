@@ -498,7 +498,15 @@ ompi_proc_t **ompi_proc_world (size_t *size)
          * count which cannot be released until ompi_proc_finalize is
          * called.
          */
-        procs[i] = ompi_proc_for_name (name);
+        proc = (ompi_proc_t*)ompi_proc_for_name (name);
+        if (NULL == proc) {
+            for (size_t j=0; j < i; j++) {
+                OBJ_RELEASE(procs[j]);
+            }
+            free(procs);
+            return NULL;
+        }
+        procs[i] = proc;
     }
 
     *size = count;
