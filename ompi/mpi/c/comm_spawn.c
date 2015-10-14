@@ -26,9 +26,12 @@
 #include "ompi_config.h"
 #include <stdio.h>
 
+#include "opal/util/show_help.h"
+
 #include "ompi/info/info.h"
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/runtime/params.h"
+#include "ompi/runtime/mpiruntime.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/dpm/dpm.h"
@@ -97,6 +100,10 @@ int MPI_Comm_spawn(const char *command, char *argv[], int maxprocs, MPI_Info inf
         }
     }
 
+    if (!ompi_mpi_dynamics_is_enabled(FUNC_NAME)) {
+        return OMPI_ERRHANDLER_INVOKE(comm, OMPI_ERR_NOT_SUPPORTED, FUNC_NAME);
+    }
+
     /* initialize the port name to avoid problems */
     memset(port_name, 0, MPI_MAX_PORT_NAME);
 
@@ -132,6 +139,14 @@ int MPI_Comm_spawn(const char *command, char *argv[], int maxprocs, MPI_Info inf
     }
 
 error:
+    if (OPAL_ERR_NOT_SUPPORTED == rc) {
+        opal_show_help("help-mpi-api.txt",
+                       "MPI function not supported",
+                       true,
+                       FUNC_NAME,
+                       "Underlying runtime environment does not support spawn functionality");
+    }
+
     /* close the port */
     if (rank == root && !non_mpi) {
         ompi_dpm_close_port(port_name);

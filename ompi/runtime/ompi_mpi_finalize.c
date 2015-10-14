@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2013 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006-2014 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2006      University of Houston. All rights reserved.
@@ -422,6 +422,10 @@ int ompi_mpi_finalize(void)
         OBJ_RELEASE(ompi_mpi_main_thread);
         ompi_mpi_main_thread = NULL;
     }
+
+    /* Clean up memory/resources from the MPI dynamic process
+       functionality checker */
+    ompi_mpi_dynamics_finalize();
 
     /* Leave the RTE */
 

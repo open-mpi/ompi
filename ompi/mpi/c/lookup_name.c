@@ -27,6 +27,7 @@
 
 #include "opal/class/opal_list.h"
 #include "opal/mca/pmix/pmix.h"
+#include "opal/util/show_help.h"
 
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/runtime/params.h"
@@ -67,6 +68,17 @@ int MPI_Lookup_name(const char *service_name, MPI_Info info, char *port_name)
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INFO,
                                           FUNC_NAME);
         }
+    }
+
+    if (NULL == opal_pmix.lookup) {
+        opal_show_help("help-mpi-api.txt",
+                       "MPI function not supported",
+                       true,
+                       FUNC_NAME,
+                       "Underlying runtime environment does not support name lookup functionality");
+        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD,
+                                      OMPI_ERR_NOT_SUPPORTED,
+                                      FUNC_NAME);
     }
 
     OPAL_CR_ENTER_LIBRARY();
@@ -111,9 +123,19 @@ int MPI_Lookup_name(const char *service_name, MPI_Info info, char *port_name)
     if (OPAL_SUCCESS != ret ||
         OPAL_STRING != pdat->value.type ||
         NULL == pdat->value.data.string) {
+        if (OPAL_ERR_NOT_SUPPORTED == ret) {
+            ret = OMPI_ERR_NOT_SUPPORTED;
+            opal_show_help("help-mpi-api.txt",
+                           "MPI function not supported",
+                           true,
+                           FUNC_NAME,
+                           "Underlying runtime environment does not support name lookup functionality");
+        } else {
+            ret = MPI_ERR_NAME;
+        }
+
         OPAL_CR_EXIT_LIBRARY();
-        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_NAME,
-                                      FUNC_NAME);
+        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, ret, FUNC_NAME);
     }
 
     strncpy ( port_name, pdat->value.data.string, MPI_MAX_PORT_NAME );

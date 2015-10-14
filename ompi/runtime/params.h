@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2006-2009 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2013      Intel, Inc. All rights reserved
  * $COPYRIGHT$
@@ -133,6 +133,12 @@ OMPI_DECLSPEC extern uint32_t ompi_direct_modex_cutoff;
  * Cutoff point for calling add_procs for all processes
  */
 OMPI_DECLSPEC extern uint32_t ompi_add_procs_cutoff;
+
+/**
+ * Whether anything in the code base has disabled MPI dynamic process
+ * functionality or not
+ */
+OMPI_DECLSPEC extern bool ompi_mpi_dynamics_enabled;
 
 /**
  * Register MCA parameters used by the MPI layer.
