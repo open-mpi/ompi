@@ -13,6 +13,12 @@
 #include "btl_ugni_rdma.h"
 #include "btl_ugni_smsg.h"
 
+/* 
+ * taken from osc_rdma_comm.h, ugh.
+ */
+
+#define ALIGNMENT_MASK(x) ((x) ? (x) - 1 : 0)
+
 int mca_btl_ugni_get (mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoint, void *local_address,
                       uint64_t remote_address, mca_btl_base_registration_handle_t *local_handle,
                       mca_btl_base_registration_handle_t *remote_handle, size_t size, int flags,
@@ -21,7 +27,8 @@ int mca_btl_ugni_get (mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t
     bool check;
 
     /* Check if the get is aligned/sized on a multiple of 4 */
-    check = !!((remote_address | (uint64_t)(intptr_t) local_address | size) & (mca_btl_ugni_module.super.btl_get_alignment - 1));
+    check = !!((remote_address | (uint64_t)(intptr_t) local_address | size) &
+                 ALIGNMENT_MASK(mca_btl_ugni_module.super.btl_get_alignment));
 
     if (OPAL_UNLIKELY(check || size > mca_btl_ugni_module.super.btl_get_limit)) {
         BTL_VERBOSE(("RDMA/FMA Get not available due to size or alignment restrictions"));
