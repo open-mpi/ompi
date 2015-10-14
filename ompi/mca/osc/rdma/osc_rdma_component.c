@@ -407,7 +407,15 @@ static int allocate_state_single (ompi_osc_rdma_module_t *module, void **base, s
     module->free_after = module->rank_array;
     my_peer->flags |= OMPI_OSC_RDMA_PEER_LOCAL_BASE;
     my_peer->state = (uint64_t) (uintptr_t) module->state;
-    my_peer->state_handle = module->state_handle;
+
+    if (module->selected_btl->btl_flags & MCA_BTL_ATOMIC_SUPPORTS_GLOB) {
+        /* all peers are local or it is safe to mix cpu and nic atomics */
+        my_peer->flags |= OMPI_OSC_RDMA_PEER_LOCAL_STATE;
+    } else {
+        /* use my endpoint handle to modify the peer's state */
+        my_peer->state_handle = module->state_handle;
+        my_peer->state_endpoint = ompi_osc_rdma_peer_btl_endpoint (module, my_rank);
+    }
 
     if (MPI_WIN_FLAVOR_DYNAMIC != module->flavor) {
         ompi_osc_rdma_peer_extended_t *ex_peer = (ompi_osc_rdma_peer_extended_t *) my_peer;
