@@ -168,9 +168,20 @@ extern int opal_class_init_epoch;
  * @param NAME   Name of the class to initialize
  */
 #if OPAL_ENABLE_DEBUG
-#define OPAL_OBJ_STATIC_INIT(BASE_CLASS) { OPAL_OBJ_MAGIC_ID, OBJ_CLASS(BASE_CLASS), 1, __FILE__, __LINE__ }
+#define OPAL_OBJ_STATIC_INIT(BASE_CLASS)        \
+    {                                           \
+        .obj_magic_id = OPAL_OBJ_MAGIC_ID,      \
+        .obj_class = OBJ_CLASS(BASE_CLASS),     \
+        .obj_reference_count = 1,               \
+        .cls_init_file_name = __FILE__,         \
+        .cls_init_lineno = __LINE__,            \
+    }
 #else
-#define OPAL_OBJ_STATIC_INIT(BASE_CLASS) { OBJ_CLASS(BASE_CLASS), 1 }
+#define OPAL_OBJ_STATIC_INIT(BASE_CLASS)        \
+    {                                           \
+        .obj_class = OBJ_CLASS(BASE_CLASS),     \
+        .obj_reference_count = 1,               \
+    }
 #endif
 
 /**
