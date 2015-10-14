@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2008      University of Houston, Inc.  All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights
  *                         reserved.
@@ -104,6 +104,8 @@ int MPI_Comm_accept(const char *port_name, MPI_Info info, int root,
 	rc = ompi_dpm_connect_accept (comm, root, NULL, send_first,
 				      &newcomp);
     }
+
+    OPAL_CR_EXIT_LIBRARY();
 
     *newcomm = newcomp;
     OMPI_ERRHANDLER_RETURN(rc, comm, rc, FUNC_NAME );

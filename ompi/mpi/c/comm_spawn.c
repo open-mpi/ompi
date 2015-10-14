@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights
  *                         reserved.
@@ -132,12 +132,12 @@ int MPI_Comm_spawn(const char *command, char *argv[], int maxprocs, MPI_Info inf
     }
 
 error:
-    OPAL_CR_EXIT_LIBRARY();
-
     /* close the port */
     if (rank == root && !non_mpi) {
         ompi_dpm_close_port(port_name);
     }
+
+    OPAL_CR_EXIT_LIBRARY();
 
     /* set error codes */
     if (MPI_ERRCODES_IGNORE != array_of_errcodes) {
