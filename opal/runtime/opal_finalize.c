@@ -55,6 +55,8 @@
 #include "opal/runtime/opal_cr.h"
 #include "opal/mca/crs/base/base.h"
 
+#include "opal/frameworks.h"
+
 extern int opal_initialized;
 extern int opal_util_initialized;
 extern bool opal_init_called;
@@ -138,6 +140,10 @@ opal_finalize(void)
 
     /* close the checkpoint and restart service */
     opal_cr_finalize();
+
+    (void) mca_base_framework_close (&opal_mpool_base_framework);
+    (void) mca_base_framework_close (&opal_rcache_base_framework);
+    (void) mca_base_framework_close (&opal_allocator_base_framework);
 
     /* close the security framework */
     (void) mca_base_framework_close(&opal_sec_base_framework);

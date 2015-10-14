@@ -60,6 +60,8 @@
 #include "opal/mca/event/base/base.h"
 #include "opal/mca/backtrace/base/base.h"
 
+#include "opal/frameworks.h"
+
 #include "opal/constants.h"
 #include "opal/util/error.h"
 #include "opal/util/stacktrace.h"
@@ -526,6 +528,19 @@ opal_init(int* pargc, char*** pargv)
     }
     if( OPAL_SUCCESS != (ret = opal_sec_base_select()) ) {
         error = "opal_sec_base_select";
+        goto return_error;
+    }
+
+    if (OPAL_SUCCESS != (ret = mca_base_framework_open(&opal_allocator_base_framework, 0))) {
+        error = "mca_allocator_base_open() failed";
+        goto return_error;
+    }
+    if (OPAL_SUCCESS != (ret = mca_base_framework_open(&opal_rcache_base_framework, 0))) {
+        error = "mca_rcache_base_open() failed";
+        goto return_error;
+    }
+    if (OPAL_SUCCESS != (ret = mca_base_framework_open(&opal_mpool_base_framework, 0))) {
+        error = "mca_mpool_base_open() failed";
         goto return_error;
     }
 

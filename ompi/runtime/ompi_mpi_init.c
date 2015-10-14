@@ -54,10 +54,6 @@
 #include "opal/util/show_help.h"
 #include "opal/runtime/opal.h"
 #include "opal/mca/event/event.h"
-#include "opal/mca/allocator/base/base.h"
-#include "opal/mca/rcache/base/base.h"
-#include "opal/mca/rcache/rcache.h"
-#include "opal/mca/mpool/base/base.h"
 #include "opal/mca/pmix/pmix.h"
 #include "opal/util/timings.h"
 
@@ -391,8 +387,8 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
 
     /* Setup enough to check get/set MCA params */
 
-    if (OPAL_SUCCESS != (ret = opal_init_util(&argc, &argv))) {
-        error = "ompi_mpi_init: opal_init_util failed";
+    if (OPAL_SUCCESS != (ret = opal_init (&argc, &argv))) {
+        error = "ompi_mpi_init: opal_init failed";
         goto error;
     }
 
@@ -557,18 +553,6 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
 
     /* Open up MPI-related MCA components */
 
-    if (OMPI_SUCCESS != (ret = mca_base_framework_open(&opal_allocator_base_framework, 0))) {
-        error = "mca_allocator_base_open() failed";
-        goto error;
-    }
-    if (OMPI_SUCCESS != (ret = mca_base_framework_open(&opal_rcache_base_framework, 0))) {
-        error = "mca_rcache_base_open() failed";
-        goto error;
-    }
-    if (OMPI_SUCCESS != (ret = mca_base_framework_open(&opal_mpool_base_framework, 0))) {
-        error = "mca_mpool_base_open() failed";
-        goto error;
-    }
     if (OMPI_SUCCESS != (ret = mca_base_framework_open(&ompi_bml_base_framework, 0))) {
         error = "mca_bml_base_open() failed";
         goto error;
@@ -601,13 +585,6 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
        so they are not opened here. */
 
     /* Select which MPI components to use */
-
-    if (OMPI_SUCCESS !=
-        (ret = mca_mpool_base_init(OPAL_ENABLE_PROGRESS_THREADS,
-                                   ompi_mpi_thread_multiple))) {
-        error = "mca_mpool_base_init() failed";
-        goto error;
-    }
 
     if (OMPI_SUCCESS !=
         (ret = mca_pml_base_select(OPAL_ENABLE_PROGRESS_THREADS,
