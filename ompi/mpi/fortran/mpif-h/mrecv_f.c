@@ -13,6 +13,7 @@
  * Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015      FUJITSU LIMITED.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -33,6 +34,9 @@
 #pragma weak pmpi_mrecv = ompi_mrecv_f
 #pragma weak pmpi_mrecv_ = ompi_mrecv_f
 #pragma weak pmpi_mrecv__ = ompi_mrecv_f
+
+#pragma weak PMPI_Mrecv_f = ompi_mrecv_f
+#pragma weak PMPI_Mrecv_f08 = ompi_mrecv_f
 #else
 OMPI_GENERATE_F77_BINDINGS (PMPI_MRECV,
                             pmpi_mrecv,
@@ -50,6 +54,9 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_MRECV,
 #pragma weak mpi_mrecv = ompi_mrecv_f
 #pragma weak mpi_mrecv_ = ompi_mrecv_f
 #pragma weak mpi_mrecv__ = ompi_mrecv_f
+
+#pragma weak MPI_Mrecv_f = ompi_mrecv_f
+#pragma weak MPI_Mrecv_f08 = ompi_mrecv_f
 #else
 #if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_MRECV,
