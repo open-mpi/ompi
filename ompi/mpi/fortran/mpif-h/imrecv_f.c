@@ -12,6 +12,7 @@
  * Copyright (c) 2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015      FUJITSU LIMITED.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -30,6 +31,9 @@
 #pragma weak pmpi_imrecv = ompi_imrecv_f
 #pragma weak pmpi_imrecv_ = ompi_imrecv_f
 #pragma weak pmpi_imrecv__ = ompi_imrecv_f
+
+#pragma weak PMPI_Imrecv_f = ompi_imrecv_f
+#pragma weak PMPI_Imrecv_f08 = ompi_imrecv_f
 #else
 OMPI_GENERATE_F77_BINDINGS (PMPI_IMRECV,
                             pmpi_imrecv,
@@ -47,6 +51,9 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_IMRECV,
 #pragma weak mpi_imrecv = ompi_imrecv_f
 #pragma weak mpi_imrecv_ = ompi_imrecv_f
 #pragma weak mpi_imrecv__ = ompi_imrecv_f
+
+#pragma weak MPI_Imrecv_f = ompi_imrecv_f
+#pragma weak MPI_Imrecv_f08 = ompi_imrecv_f
 #else
 #if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_IMRECV,
