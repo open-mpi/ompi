@@ -14,4 +14,7 @@ else
 fi
 
 # enable and Lustre in romio
-with_io_romio_flags="--with-file-system=ufs+nfs+lustre CFLAGS=-I/opt/cray/lustre-cray_gem_s/default/include"
+with_io_romio_flags="--with-file-system=ufs+nfs+lustre CFLAGS=-I/opt/cray/lustre-cray_ari_s/default/include"
+
+# enable Lustre in OMPI I/O
+with_lustre=/opt/cray/lustre-cray_ari_s/default
