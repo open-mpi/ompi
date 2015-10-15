@@ -299,7 +299,6 @@ int ompi_mpi_register_params(void)
                                   0, 0, OPAL_INFO_LVL_3, MCA_BASE_VAR_SCOPE_LOCAL,
                                   &ompi_add_procs_cutoff);
 
-
     ompi_mpi_dynamics_enabled = true;
     (void) mca_base_var_register("ompi", "mpi", NULL, "dynamics_enabled",
                                  "Is the MPI dynamic process functionality enabled (e.g., MPI_COMM_SPAWN)?  Default is yes, but certain transports and/or environments may disable it.",

@@ -11,15 +11,6 @@
 #
 # This is the US/English general help file for Open MPI.
 #
-[mpi-function-after-finalize]
-Calling most MPI functions after calling MPI_Finalize is erroneous.
-
-There are a small number of exceptions, such as MPI_Initialized,
-MPI_Finalized, and MPI_Get_version.
-#
-[mpi-initialize-twice]
-Calling MPI_Init or MPI_Init_thread twice is erroneous.
-#
 [mpi-abort]
 MPI_ABORT was invoked on rank %d in communicator %s
 with errorcode %d.
