@@ -231,6 +231,9 @@ btl_ugni_component_register(void)
     /* determine if there are get alignment restrictions */
     GNI_GetDeviceType (&device_type);
 
+    /*
+     * see def. of ALIGNMENT_MASK to figure this one out
+     */
     if (GNI_DEVICE_GEMINI == device_type) {
         mca_btl_ugni_module.super.btl_get_alignment = 4;
     } else {
