@@ -235,6 +235,7 @@ ompi/mpiext/example/tests/progress_usempi
 ompi/mpiext/example/tests/progress_usempif08
 
 ompi/mpiext/cuda/c/MPIX_Query_cuda_support.3
+ompi/mpiext/cuda/c/mpiext_cuda_c.h
 
 ompi/tools/mpisync/mpisync
 ompi/tools/mpisync/mpirun_prof
@@ -528,6 +529,12 @@ oshmem/shmem/man/man3/.dir-stamp
 oshmem/tools/oshmem_info/oshmem_info
 oshmem/tools/oshmem_info/oshmem_info.1
 
+oshmem/tools/wrappers/oshcc.1
+oshmem/tools/wrappers/oshfort.1
+oshmem/tools/wrappers/oshrun.1
+oshmem/tools/wrappers/shmemcc.1
+oshmem/tools/wrappers/shmemfort.1
+oshmem/tools/wrappers/shmemrun.1
 oshmem/tools/wrappers/shmemcc-wrapper-data.txt
 oshmem/tools/wrappers/shmemfort-wrapper-data.txt
 
