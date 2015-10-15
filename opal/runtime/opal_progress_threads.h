@@ -26,7 +26,7 @@
  * to glom on to the general OPAL-wide progress thread.
  *
  * If a name is passed that was already used in a prior call to
- * opal_start_progress_thread(), the event base associated with that
+ * opal_progress_thread_init(), the event base associated with that
  * already-running progress thread will be returned (i.e., no new
  * progress thread will be started).
  */
