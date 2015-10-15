@@ -29,8 +29,8 @@ MPI_IBARRIER(\fICOMM\fP, \fIREQUEST\fP, \fIIERROR\fP)
 .fi
 .SH C++ Syntax
 .nf
-import mpi.*;
-void MPI.COMM_WORLD.Barrier()
+#include <mpi.h>
+void MPI::Comm::Barrier() const = 0
 
 .fi
 .SH INPUT PARAMETER
