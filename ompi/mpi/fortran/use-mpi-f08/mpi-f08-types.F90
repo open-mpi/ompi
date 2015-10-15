@@ -1,6 +1,6 @@
 ! -*- f90 -*-
 !
-! Copyright (c) 2009-2014 Cisco Systems, Inc.  All rights reserved.
+! Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
 ! Copyright (c) 2009-2012 Los Alamos National Security, LLC.
 !                         All rights reserved.
 ! Copyright (c) 2015      Research Organization for Information Science
@@ -131,6 +131,7 @@ module mpi_f08_types
   !   They are defined in ompi/runtime/ompi_mpi_init.c
   !
 
+  type(MPI_Datatype), bind(C, name="ompi_f08_mpi_aint") OMPI_PROTECTED              :: MPI_AINT
   type(MPI_Datatype), bind(C, name="ompi_f08_mpi_byte") OMPI_PROTECTED              :: MPI_BYTE
   type(MPI_Datatype), bind(C, name="ompi_f08_mpi_packed") OMPI_PROTECTED            :: MPI_PACKED
   type(MPI_Datatype), bind(C, name="ompi_f08_mpi_ub") OMPI_PROTECTED                :: MPI_UB
