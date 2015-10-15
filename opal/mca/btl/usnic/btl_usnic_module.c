@@ -2101,7 +2101,8 @@ static void init_async_event(opal_btl_usnic_module_t *module)
         return;
     }
 
-    /* Get the fd to receive events on this device */
+    /* Get the fd to receive events on this device.  Keep this in the
+       sync event base (not the async event base) */
     opal_event_set(opal_sync_event_base, &(module->device_async_event), fd,
                    OPAL_EV_READ | OPAL_EV_PERSIST,
                    module_async_event_callback, module);

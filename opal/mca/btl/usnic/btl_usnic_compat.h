@@ -31,6 +31,12 @@
 /* Free lists are unified into OPAL free lists */
 #  include "opal/class/opal_free_list.h"
 
+/* Inclue the progress thread stuff */
+#  include "opal/runtime/opal_progress_threads.h"
+
+/* Hhwloc is now guaranteed */
+#  define OPAL_HAVE_HWLOC 1
+
 #  define USNIC_OUT opal_btl_base_framework.framework_output
 /* JMS Really want to be able to get the job size somehow...  But for
    now, so that we can compile, just set it to a constant :-( */
@@ -95,6 +101,8 @@ usnic_compat_proc_name_compare(opal_process_name_t a,
 #  define USNIC_MCW_SIZE ompi_process_info.num_procs
 #  define proc_bound() (ompi_rte_proc_is_bound)
 #  define opal_proc_local_get() ompi_proc_local()
+
+#  define opal_sync_event_base opal_event_base
 
 #  define opal_process_info orte_process_info
 
@@ -185,6 +193,25 @@ usnic_compat_proc_name_compare(opal_process_name_t a,
     return ompi_rte_compare_name_fields(OMPI_RTE_CMP_ALL, &a, &b);
 }
 
+/* Hotels in v1.8 */
+#  include "opal/class/opal_hotel.h"
+
+/*
+ * Performance critical; needs to be inline
+ */
+static inline int
+usnic_compat_opal_hotel_init(opal_hotel_t *hotel, int num_rooms,
+                             opal_event_base_t *evbase,
+                             uint32_t eviction_timeout,
+                             int eviction_event_priority,
+                             opal_hotel_eviction_callback_fn_t evict_callback_fn)
+{
+    return opal_hotel_init(hotel, num_rooms, eviction_timeout,
+                           eviction_event_priority, evict_callback_fn);
+}
+#define opal_hotel_init usnic_compat_opal_hotel_init
+
+
 /*
  * Replicate functions that exist on master
  */
@@ -207,6 +234,17 @@ int usnic_compat_free_list_init(opal_free_list_t *free_list,
                                 void *unused0,
                                 opal_free_list_item_init_fn_t item_init,
                                 void *ctx);
+
+/*
+ * Start the connectivity checker progress thread
+ */
+opal_event_base_t *opal_progress_thread_init(const char *name);
+
+/*
+ * Stop the connectivity checker progress thread
+ */
+int opal_progress_thread_finalize(const char *name);
+
 
 /************************************************************************/
 
