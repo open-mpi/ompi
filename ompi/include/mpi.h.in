@@ -1178,6 +1178,11 @@ OMPI_DECLSPEC extern MPI_Fint *MPI_F_STATUSES_IGNORE;
 #define MPI_TYPECLASS_REAL       2
 #define MPI_TYPECLASS_COMPLEX    3
 
+/* Aint helper macros (MPI-3.1) */
+#define MPI_Aint_add(base, disp) ((MPI_Aint) ((char *) (base) + (disp)))
+#define MPI_Aint_diff(addr1, addr2) ((MPI_Aint) ((char *) (addr1) - (char *) (addr2)))
+#define PMPI_Aint_add(base, disp) MPI_Aint_add(base, disp)
+#define PMPI_Aint_diff(addr1, addr2) PMPI_Aint_diff(addr1, addr2)
 
 /*
  * MPI API
