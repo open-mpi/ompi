@@ -42,8 +42,8 @@ MPI_Bsend_init(\fIbuf\fP, \fIcount\fP, \fIdatatype\fP, \fIdest\fP, \fItag\fP, \f
 .fi
 .SH C++ Syntax
 .nf
-import mpi.*;
-Prequest MPI.COMM_WORLD.Bsend_init(const void* \fIbuf\fP, int \fIcount\fP, const
+#include <mpi.h>
+Prequest Comm::Bsend_init(const void* \fIbuf\fP, int \fIcount\fP, const
 	Datatype& \fIdatatype\fP, int \fIdest\fP, int \fItag\fP) const
 
 .fi
