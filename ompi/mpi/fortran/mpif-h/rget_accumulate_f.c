@@ -13,6 +13,7 @@
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2015      FUJITSU LIMITED.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -32,8 +33,8 @@
 #pragma weak pmpi_rget_accumulate_ = ompi_rget_accumulate_f
 #pragma weak pmpi_rget_accumulate__ = ompi_rget_accumulate_f
 
-#pragma weak PMPI_Get_accumulate_f = ompi_rget_accumulate_f
-#pragma weak PMPI_Get_accumulate_f08 = ompi_rget_accumulate_f
+#pragma weak PMPI_Rget_accumulate_f = ompi_rget_accumulate_f
+#pragma weak PMPI_Rget_accumulate_f08 = ompi_rget_accumulate_f
 #elif OMPI_PROFILE_LAYER
 OMPI_GENERATE_F77_BINDINGS (PMPI_RGET_ACCUMULATE,
                             pmpi_rget_accumulate,
@@ -50,8 +51,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_RGET_ACCUMULATE,
 #pragma weak mpi_rget_accumulate_ = ompi_rget_accumulate_f
 #pragma weak mpi_rget_accumulate__ = ompi_rget_accumulate_f
 
-#pragma weak MPI_Get_accumulate_f = ompi_rget_accumulate_f
-#pragma weak MPI_Get_accumulate_f08 = ompi_rget_accumulate_f
+#pragma weak MPI_Rget_accumulate_f = ompi_rget_accumulate_f
+#pragma weak MPI_Rget_accumulate_f08 = ompi_rget_accumulate_f
 #endif
 
 #if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER

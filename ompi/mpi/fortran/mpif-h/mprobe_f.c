@@ -12,6 +12,7 @@
  * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
  * Copyright (c) 2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2015      FUJITSU LIMITED.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -50,6 +51,9 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_MPROBE,
 #pragma weak mpi_mprobe = ompi_mprobe_f
 #pragma weak mpi_mprobe_ = ompi_mprobe_f
 #pragma weak mpi_mprobe__ = ompi_mprobe_f
+
+#pragma weak MPI_Mprobe_f = ompi_mprobe_f
+#pragma weak MPI_Mprobe_f08 = ompi_mprobe_f
 #endif
 
 #if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER

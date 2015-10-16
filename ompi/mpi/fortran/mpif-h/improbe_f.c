@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2015      FUJITSU LIMITED.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -30,6 +31,9 @@
 #pragma weak pmpi_improbe = ompi_improbe_f
 #pragma weak pmpi_improbe_ = ompi_improbe_f
 #pragma weak pmpi_improbe__ = ompi_improbe_f
+
+#pragma weak PMPI_Improbe_f = ompi_improbe_f
+#pragma weak PMPI_Improbe_f08 = ompi_improbe_f
 #elif OMPI_PROFILE_LAYER
 OMPI_GENERATE_F77_BINDINGS (PMPI_IMPROBE,
                             pmpi_improbe,
@@ -46,6 +50,9 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_IMPROBE,
 #pragma weak mpi_improbe = ompi_improbe_f
 #pragma weak mpi_improbe_ = ompi_improbe_f
 #pragma weak mpi_improbe__ = ompi_improbe_f
+
+#pragma weak MPI_Improbe_f = ompi_improbe_f
+#pragma weak MPI_Improbe_f08 = ompi_improbe_f
 #endif
 
 #if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
