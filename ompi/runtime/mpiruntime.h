@@ -35,6 +35,7 @@
 
 #include "opal/class/opal_list.h"
 #include "opal/class/opal_hash_table.h"
+#include "opal/threads/mutex.h"
 
 BEGIN_C_DECLS
 
@@ -47,16 +48,18 @@ struct ompi_predefined_datatype_t;
 
 /* Global variables and symbols for the MPI layer */
 
-/** Did mpi start to initialize? */
-OMPI_DECLSPEC extern bool ompi_mpi_init_started;
-/** Is mpi initialized? */
-OMPI_DECLSPEC extern bool ompi_mpi_initialized;
-/** Has mpi been finalized? */
-OMPI_DECLSPEC extern bool ompi_mpi_finalized;
+/** Mutex to protect all the _init and _finalize variables */
+OMPI_DECLSPEC extern opal_mutex_t ompi_mpi_bootstrap_mutex;
+/** Did MPI start to initialize? */
+OMPI_DECLSPEC extern volatile bool ompi_mpi_init_started;
 /** Has the RTE been initialized? */
-OMPI_DECLSPEC extern bool ompi_rte_initialized;
-/** Did mpi start to finalize? */
-OMPI_DECLSPEC extern int32_t ompi_mpi_finalize_started;
+OMPI_DECLSPEC extern volatile bool ompi_rte_initialized;
+/** Is MPI fully initialized? */
+OMPI_DECLSPEC extern volatile bool ompi_mpi_initialized;
+/** Did MPI start to finalize? */
+OMPI_DECLSPEC extern volatile bool ompi_mpi_finalize_started;
+/** Has MPI been fully finalized? */
+OMPI_DECLSPEC extern volatile bool ompi_mpi_finalized;
 
 /** Do we have multiple threads? */
 OMPI_DECLSPEC extern bool ompi_mpi_thread_multiple;
