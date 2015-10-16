@@ -90,7 +90,13 @@ as \fIrecvbuf\fP is not significant for process 0. The value of
 \fIrecvbuf\fP on process 1 is always the value in \fIsendbuf\fP on
 process 0.
 .sp
-No MPI_IN_PLACE operation is supported.
+.SH USE OF IN-PLACE OPTION
+The `in place' option for intracommunicators is specified by passing MPI_IN_PLACE in the \fIsendbuf\fP argument. In this case, the input data is taken from the receive buffer, and replaced by the output data.
+.sp
+Note that MPI_IN_PLACE is a special kind of value; it has the same restrictions on its use as MPI_BOTTOM.
+.sp
+Because the in-place option converts the receive buffer into a send-and-receive buffer, a Fortran binding that includes INTENT must mark these as INOUT, not OUT.
+.sp
 
 .SH NOTES
 .ft R
