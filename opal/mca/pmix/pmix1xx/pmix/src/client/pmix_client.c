@@ -241,6 +241,11 @@ int PMIx_Init(pmix_proc_t *proc)
         return PMIX_SUCCESS;
     }
 
+    /* if we don't see the required info, then we cannot init */
+    if (NULL == getenv("PMIX_NAMESPACE")) {
+        return PMIX_ERR_INVALID_NAMESPACE;
+    }
+
     /* setup the globals */
     pmix_globals_init();
     PMIX_CONSTRUCT(&pmix_client_globals.pending_requests, pmix_list_t);
