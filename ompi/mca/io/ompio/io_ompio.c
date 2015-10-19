@@ -190,8 +190,8 @@ int ompi_io_ompio_generate_current_file_view (struct mca_io_ompio_file_t *fh,
     int block = 1;
 
    /* allocate an initial iovec, will grow if needed */
-    iov = (struct iovec *) malloc
-        (OMPIO_IOVEC_INITIAL_SIZE * sizeof (struct iovec));
+    iov = (struct iovec *) calloc
+        (OMPIO_IOVEC_INITIAL_SIZE, sizeof (struct iovec));
     if (NULL == iov) {
         opal_output(1, "OUT OF MEMORY\n");
         return OMPI_ERR_OUT_OF_RESOURCE;
