@@ -47,8 +47,9 @@ mca_mtl_base_module_t *ompi_mtl = NULL;
  * need to reexamine this at a later time.
  */
 int
-ompi_mtl_base_select(bool enable_progress_threads,
-                     bool enable_mpi_threads)
+ompi_mtl_base_select (bool enable_progress_threads,
+                      bool enable_mpi_threads,
+                      int *priority)
 {
     int ret = OMPI_ERR_NOT_FOUND;
     mca_mtl_base_component_t *best_component = NULL;
@@ -82,6 +83,7 @@ ompi_mtl_base_select(bool enable_progress_threads,
                              "select: init returned success");
         ompi_mtl_base_selected_component = best_component;
         ompi_mtl = best_module;
+        *priority = best_priority;
         ret = OMPI_SUCCESS;
     }
 

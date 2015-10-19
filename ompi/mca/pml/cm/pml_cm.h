@@ -49,7 +49,6 @@ struct ompi_pml_cm_t {
     int                   free_list_num;
     int                   free_list_max;
     int                   free_list_inc;
-    int                   default_priority;
 };
 typedef struct ompi_pml_cm_t ompi_pml_cm_t;
 extern ompi_pml_cm_t ompi_pml_cm;

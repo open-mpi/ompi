@@ -1,5 +1,9 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (C) Mellanox Technologies Ltd. 2001-2011.  ALL RIGHTS RESERVED.
+ * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
+ *                         reserved.
+ * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -89,7 +93,7 @@ static int ompi_mtl_mxm_component_register(void)
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &ompi_mtl_mxm.mxm_np);
 
-    param_priority = 100;
+    param_priority = 30;
     (void) mca_base_component_var_register (c,
                                             "priority", "Priority of the MXM MTL component",
                                             MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
