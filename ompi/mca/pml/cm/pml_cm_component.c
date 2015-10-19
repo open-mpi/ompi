@@ -143,11 +143,6 @@ mca_pml_cm_component_init(int* priority,
 {
     int ret;
 
-    if((*priority) > ompi_pml_cm.default_priority) {
-        *priority = ompi_pml_cm.default_priority;
-        return NULL;
-    }
-    *priority = ompi_pml_cm.default_priority;
     opal_output_verbose( 10, 0,
                          "in cm pml priority is %d\n", *priority);
     /* find a useable MTL */
@@ -166,8 +161,9 @@ mca_pml_cm_component_init(int* priority,
          * may still select PML/ob1 (BTLs) or PML/cm (MTLs) if preferable for the app/site.
          */
         *priority = 30;
+    } else {
+        *priority = ompi_pml_cm.default_priority;
     }
-
 
     if (ompi_mtl->mtl_flags & MCA_MTL_BASE_FLAG_REQUIRE_WORLD) {
         ompi_pml_cm.super.pml_flags |= MCA_PML_BASE_FLAG_REQUIRE_WORLD;
