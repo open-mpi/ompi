@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -10,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2010 QLogic Corporation. All rights reserved.
- * Copyright (c) 2012-2013 Los Alamos National Security, LLC.
+ * Copyright (c) 2012-2015 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2013-2015 Intel, Inc. All rights reserved
  * $COPYRIGHT$
@@ -85,7 +86,8 @@ ompi_mtl_psm2_component_register(void)
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &ompi_mtl_psm2.connect_timeout);
 
-    param_priority = 120;
+    /* set priority high enough to beat ob1's default (also set higher than psm) */
+    param_priority = 40;
     (void) mca_base_component_var_register (&mca_mtl_psm2_component.super.mtl_version,
                                             "priority", "Priority of the PSM2 MTL component",
                                             MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
