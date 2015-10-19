@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -10,6 +11,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc. All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -42,7 +45,7 @@ int opal_pstat_base_select(void)
     if( OPAL_SUCCESS != mca_base_select("pstat", opal_pstat_base_framework.framework_output,
                                         &opal_pstat_base_framework.framework_components,
                                         (mca_base_module_t **) &best_module,
-                                        (mca_base_component_t **) &best_component) ) {
+                                        (mca_base_component_t **) &best_component, NULL) ) {
         /* It is okay if we don't find a runnable component - default
          * to the unsupported default.
          */

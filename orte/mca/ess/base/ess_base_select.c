@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -10,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights reserved.
+ * Copyright (c) 2013-2015 Los Alamos National Security, LLC.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -39,7 +40,7 @@ orte_ess_base_select(void)
     if( OPAL_SUCCESS != mca_base_select("ess", orte_ess_base_framework.framework_output,
                                         &orte_ess_base_framework.framework_components,
                                         (mca_base_module_t **) &best_module,
-                                        (mca_base_component_t **) &best_component) ) {
+                                        (mca_base_component_t **) &best_component, NULL) ) {
         /* error message emitted by fn above */
         return ORTE_ERR_SILENT;
     }

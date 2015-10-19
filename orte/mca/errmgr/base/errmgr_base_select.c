@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -10,7 +11,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2012-2013 Los Alamos National Security, Inc.  All rights reserved.
+ * Copyright (c) 2012-2015 Los Alamos National Security, Inc.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -43,7 +45,7 @@ int orte_errmgr_base_select(void)
     if( OPAL_SUCCESS != mca_base_select("errmgr", orte_errmgr_base_framework.framework_output,
                                         &orte_errmgr_base_framework.framework_components,
                                         (mca_base_module_t **) &best_module,
-                                        (mca_base_component_t **) &best_component) ) {
+                                        (mca_base_component_t **) &best_component, NULL) ) {
         /* This will only happen if no component was selected */
         exit_status = ORTE_ERROR;
         goto cleanup;
