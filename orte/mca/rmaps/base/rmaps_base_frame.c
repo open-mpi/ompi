@@ -666,34 +666,8 @@ int orte_rmaps_base_set_mapping_policy(orte_mapping_policy_t *policy,
             opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                                 "%s rmaps:base policy %s modifiers %s provided",
                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), spec, ck);
-            /* if the policy is "dist", then we set the policy to that value
-             * and save the second argument as the device
-             */
 #if OPAL_HAVE_HWLOC
-            if (0 == strncasecmp(spec, "dist", strlen(spec))) {
-                ORTE_SET_MAPPING_POLICY(tmp, ORTE_MAPPING_BYDIST);
-                /* the first argument after the colon *must* be the
-                 * device we are mapping near - however, other modifiers
-                 * could have been provided, so check for them, okay if
-                 * none found
-                 */
-                if (NULL != (ptr = strchr(ck, ','))) {
-                    *ptr = '\0';
-                    ptr++; // move past the comma
-                    /* check the remaining string for modifiers - may be none, so
-                     * don't emit an error message if the modifier isn't recognized
-                     */
-                    if (ORTE_ERR_SILENT == (rc = check_modifiers(ptr, &tmp)) &&
-                        ORTE_ERR_BAD_PARAM != rc) {
-                        free(spec);
-                        return ORTE_ERR_SILENT;
-                    }
-                }
-                *device = strdup(ck);
-                ORTE_SET_MAPPING_DIRECTIVE(tmp, ORTE_MAPPING_GIVEN);
-                free(spec);
-                goto setpolicy;
-            } else if (0 == strncasecmp(spec, "ppr", strlen(spec))) {
+            if (0 == strncasecmp(spec, "ppr", strlen(spec))) {
                 /* we have to allow additional modifiers here - e.g., specifying
                  * #pe's/proc or oversubscribe - so check for modifiers
                  */
