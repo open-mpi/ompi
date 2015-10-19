@@ -97,7 +97,12 @@ static int rte_init(void)
         goto error;
     }
 
-    /* we don't have to call pmix.init because the pmix select did it */
+    /* initialize the selected module */
+    if (!opal_pmix.initialized() && (OPAL_SUCCESS != (ret = opal_pmix.init()))) {
+        /* we cannot run */
+        error = "pmix init";
+        goto error;
+    }
     u32ptr = &u32;
     u16ptr = &u16;
 
