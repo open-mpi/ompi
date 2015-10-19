@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -9,6 +10,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -34,7 +37,8 @@ BEGIN_C_DECLS
 OMPI_DECLSPEC extern mca_mtl_base_component_t* ompi_mtl_base_selected_component;
 
 OMPI_DECLSPEC int ompi_mtl_base_select(bool enable_progress_threads,
-                                       bool enable_mpi_threads);
+                                       bool enable_mpi_threads,
+                                       int *priority);
 
 OMPI_DECLSPEC extern mca_base_framework_t ompi_mtl_base_framework;
 

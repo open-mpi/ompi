@@ -58,7 +58,7 @@ int opal_crs_base_select(void)
     if( OPAL_SUCCESS != mca_base_select("crs", opal_crs_base_framework.framework_output,
                                         &opal_crs_base_framework.framework_components,
                                         (mca_base_module_t **) &best_module,
-                                        (mca_base_component_t **) &best_component) ) {
+                                        (mca_base_component_t **) &best_component, NULL) ) {
         /* This will only happen if no component was selected */
         return OPAL_ERROR;
     }

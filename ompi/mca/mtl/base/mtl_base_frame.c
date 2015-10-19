@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -54,6 +55,7 @@ ompi_mtl_base_select(bool enable_progress_threads,
     int ret = OMPI_ERR_NOT_FOUND;
     mca_mtl_base_component_t *best_component = NULL;
     mca_mtl_base_module_t *best_module = NULL;
+    int best_priority;
 
     /*
      * Select the best component
@@ -61,7 +63,8 @@ ompi_mtl_base_select(bool enable_progress_threads,
     if( OPAL_SUCCESS != mca_base_select("mtl", ompi_mtl_base_framework.framework_output,
                                         &ompi_mtl_base_framework.framework_components,
                                         (mca_base_module_t **) &best_module,
-                                        (mca_base_component_t **) &best_component) ) {
+                                        (mca_base_component_t **) &best_component,
+                                        &best_priority) ) {
         /* notify caller that no available component found */
         return ret;
     }

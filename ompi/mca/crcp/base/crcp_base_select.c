@@ -162,7 +162,7 @@ int ompi_crcp_base_select(void)
     if( OPAL_SUCCESS != mca_base_select("crcp", ompi_crcp_base_framework.framework_output,
                                         &ompi_crcp_base_framework.framework_components,
                                         (mca_base_module_t **) &best_module,
-                                        (mca_base_component_t **) &best_component) ) {
+                                        (mca_base_component_t **) &best_component, NULL) ) {
         /* This will only happen if no component was selected */
         return OMPI_ERROR;
     }
