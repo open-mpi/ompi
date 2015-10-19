@@ -419,6 +419,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     opal_compare_proc = _process_name_compare;
     opal_convert_string_to_process_name = _convert_string_to_process_name;
     opal_convert_process_name_to_string = _convert_process_name_to_string;
+    opal_proc_for_name = ompi_proc_for_name;
 
     /* Register MCA variables */
     if (OPAL_SUCCESS != (ret = ompi_register_mca_variables())) {
@@ -759,10 +760,21 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         goto error;
     }
 
-    /* add all ompi_proc_t's to PML */
-    if (NULL == (procs = ompi_proc_world(&nprocs))) {
-        error = "ompi_proc_world() failed";
-        goto error;
+    /* some btls/mtls require we call add_procs with all procs in the job.
+     * since the btls/mtls have no visibility here it is up to the pml to
+     * convey this requirement */
+    if (mca_pml_base_requires_world ()) {
+        if (NULL == (procs = ompi_proc_world (&nprocs))) {
+            error = "ompi_proc_get_allocated () failed";
+            goto error;
+        }
+    } else {
+        /* add all allocated ompi_proc_t's to PML (below the add_procs limit this
+         * behaves identically to ompi_proc_world ()) */
+        if (NULL == (procs = ompi_proc_get_allocated (&nprocs))) {
+            error = "ompi_proc_get_allocated () failed";
+            goto error;
+        }
     }
     ret = MCA_PML_CALL(add_procs(procs, nprocs));
     free(procs);

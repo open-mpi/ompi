@@ -35,25 +35,6 @@ int mca_coll_fca_init_query(bool enable_progress_threads,
     return OMPI_SUCCESS;
 }
 
-static int have_remote_peers(ompi_group_t *group, size_t size, int *local_peers)
-{
-    ompi_proc_t *proc;
-    size_t i;
-    int ret;
-
-    *local_peers = 0;
-    ret = 0;
-    for (i = 0; i < size; ++i) {
-        proc = ompi_group_peer_lookup(group, i);
-        if (OPAL_PROC_ON_LOCAL_NODE(proc->super.proc_flags)) {
-            ++*local_peers;
-        } else {
-            ret = 1;
-        }
-    }
-    return ret;
-}
-
 static inline ompi_proc_t* __local_rank_lookup(ompi_communicator_t *comm, int rank)
 {
     return ompi_group_peer_lookup(comm->c_local_group, rank);
@@ -618,7 +599,7 @@ mca_coll_fca_comm_query(struct ompi_communicator_t *comm, int *priority)
     if (size < mca_coll_fca_component.fca_np)
         goto exit;
 
-    if (!have_remote_peers(comm->c_local_group, size, &local_peers) || OMPI_COMM_IS_INTER(comm))
+    if (!ompi_group_have_remote_peers(comm->c_local_group) || OMPI_COMM_IS_INTER(comm))
         goto exit;
 
     fca_module = OBJ_NEW(mca_coll_fca_module_t);

@@ -660,7 +660,7 @@ sshmem_mkey_t *mca_spml_ikrit_register(void* addr,
         }
         SPML_VERBOSE(5,
                      "rank %d ptl %d addr %p size %llu %s",
-                     oshmem_proc_local_proc->super.proc_name.vpid, i, addr, (unsigned long long)size,
+		     oshmem_proc_pe(oshmem_proc_local()), i, addr, (unsigned long long)size,
                      mca_spml_base_mkey2str(&mkeys[i]));
 
     }

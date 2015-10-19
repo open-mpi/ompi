@@ -24,6 +24,7 @@
 #include "orte/types.h"
 #include "orte/runtime/orte_globals.h"
 
+#include "ompi/proc/proc.h"
 #include "ompi/communicator/communicator.h"
 
 BEGIN_C_DECLS
@@ -85,18 +86,6 @@ OSHMEM_DECLSPEC extern oshmem_group_t* oshmem_group_all;
 OSHMEM_DECLSPEC extern oshmem_group_t* oshmem_group_self;
 OSHMEM_DECLSPEC extern oshmem_group_t* oshmem_group_null;
 
-/**
- * @private
- *
- * Pointer to the oshmem_proc_t structure for the local process
- *
- * Pointer to the oshmem_proc_t structure for the local process.
- *
- * @note This pointer is declared here to allow inline functions
- * within this header file to access the local process quickly.
- * Please use oshmem_proc_local() instead.
- */
-OSHMEM_DECLSPEC extern oshmem_proc_t* oshmem_proc_local_proc;
 
 /* ******************************************************************** */
 
@@ -121,21 +110,6 @@ OSHMEM_DECLSPEC extern oshmem_proc_t* oshmem_proc_local_proc;
 OSHMEM_DECLSPEC int oshmem_proc_init(void);
 
 /**
- * Set the arch of each proc in the oshmem_proc_list
- *
- * In some environments, SHMEM procs are required to exchange their
- * arch via a modex operation during mpi_init. In other environments,
- * the arch is determined by other mechanisms and provided to the
- * proc directly. To support both mechanisms, we provide a separate
- * function to set the arch of the procs -after- the modex operation
- * has completed in mpi_init.
- *
- * @retval OSHMEM_SUCCESS Archs successfully set
- * @retval OSHMEM_ERROR   Archs could not be initialized
- */
-OSHMEM_DECLSPEC int oshmem_proc_set_arch(void);
-
-/**
  * Finalize the OSHMEM Process subsystem
  *
  * Finalize the Open SHMEM process subsystem.  This function will
@@ -147,64 +121,6 @@ OSHMEM_DECLSPEC int oshmem_proc_set_arch(void);
 OSHMEM_DECLSPEC int oshmem_proc_finalize(void);
 
 /**
- * Returns the list of proc instances associated with this job.
- *
- * Returns the list of proc instances associated with this job.  Given
- * the current association between a job and an pe set, this
- * function provides the process instances for the current
- * pe set.
- *
- * @note The reference count of each process in the array is
- * NOT incremented - the caller is responsible for ensuring the
- * correctness of the reference count once they are done with
- * the array.
- *
- * @param[in] size     Number of processes in the oshmem_proc_t array
- *
- * @return Array of pointers to proc instances in the current
- * pe set, or NULL if there is an internal failure.
- */
-OSHMEM_DECLSPEC oshmem_proc_t** oshmem_proc_world(size_t* size);
-
-/**
- * Returns the list of all known proc instances.
- *
- * Returns the list of all known proc instances, including those in
- * other pe sets.  It is possible that we may no longer be
- * connected to some of the procs returned (in the SHMEM sense of the
- * word connected).  In a strictly SHMEM-1 application, this function
- * will return the same information as oshmem_proc_world().
- *
- * @note The reference count of each process in the array is
- * incremented and the caller is responsible for releasing each
- * process in the array, as well as freeing the array.
- *
- * @param[in] size     Number of processes in the oshmem_proc_t array
- *
- * @return Array of pointers to proc instances in the current
- * known universe, or NULL if there is an internal failure.
- */
-OSHMEM_DECLSPEC oshmem_proc_t** oshmem_proc_all(size_t* size);
-
-/**
- * Returns a list of the local process
- *
- * Returns a list containing the local process (and only the local
- * process).  Has calling semantics similar to oshmem_proc_world() and
- * oshmem_proc_all().
- *
- * @note The reference count of each process in the array is
- * incremented and the caller is responsible for releasing each
- * process in the array, as well as freeing the array.
- *
- * @param[in] size     Number of processes in the oshmem_proc_t array
- *
- * @return Array of pointers to proc instances in the current
- * known universe, or NULL if there is an internal failure.
- */
-OSHMEM_DECLSPEC oshmem_proc_t** oshmem_proc_self(size_t* size);
-
-/**
  * Returns a pointer to the local process
  *
  * Returns a pointer to the local process.  Unlike oshmem_proc_self(),
@@ -213,9 +129,9 @@ OSHMEM_DECLSPEC oshmem_proc_t** oshmem_proc_self(size_t* size);
  *
  * @return Pointer to the local process structure
  */
-static inline oshmem_proc_t* oshmem_proc_local(void)
+static inline oshmem_proc_t *oshmem_proc_local(void)
 {
-    return oshmem_proc_local_proc;
+    return (oshmem_proc_t *)ompi_proc_local_proc;
 }
 
 /**
@@ -229,75 +145,19 @@ static inline oshmem_proc_t* oshmem_proc_local(void)
  *
  * @return Pointer to the process instance for \c name
  */
-OSHMEM_DECLSPEC oshmem_proc_t * oshmem_proc_find(const orte_process_name_t* name);
+static inline oshmem_proc_t *oshmem_proc_for_find(const orte_process_name_t name)
+{
+    return (oshmem_proc_t *)ompi_proc_for_name(name);
+}
 
-/**
- * Pack proc list into portable buffer
- *
- * This function takes a list of oshmem_proc_t pointers (e.g. as given
- * in groups) and returns a orte buffer containing all information
- * needed to add the proc to a remote list.  This includes the ORTE
- * process name, the architecture, and the hostname.  Ordering is
- * maintained.  The buffer is packed to be sent to a remote node with
- * different architecture (endian or word size).  The buffer can be
- * dss unloaded to be sent using SHMEM or send using rml_send_packed().
- *
- * @param[in] proclist     List of process pointers
- * @param[in] proclistsize Length of the proclist array
- * @param[in,out] buf      An orte_buffer containing the packed names.
- *                         The buffer must be constructed but empty when
- *                         passed to this function
- * @retval OSHMEM_SUCCESS    Success
- * @retval OSHMEM_ERROR      Unspecified error
- */
-OSHMEM_DECLSPEC int oshmem_proc_pack(oshmem_proc_t **proclist,
-                                     int proclistsize,
-                                     opal_buffer_t *buf);
+static inline oshmem_proc_t *oshmem_proc_find(int pe)
+{
+    orte_process_name_t name;
 
-/**
- * Unpack a portable buffer of procs
- *
- * This function unpacks a packed list of oshmem_proc_t structures and
- * returns the ordered list of proc structures.  If the given proc is
- * already "known", the architecture and hostname information in the
- * buffer is ignored.  If the proc is "new" to this process, it will
- * be added to the global list of known procs, with information
- * provided in the buffer.  The lookup actions are always entirely
- * local.  The proclist returned is a list of pointers to all procs in
- * the buffer, whether they were previously known or are new to this
- * process.
- *
- * @note In previous versions of this function, The PML's add_procs()
- * function was called for any new processes discovered as a result of
- * this operation.  That is no longer the case -- the caller must use
- * the newproclist information to call add_procs() if necessary.
- *
- * @note The reference count for procs created as a result of this
- * operation will be set to 1.  Existing procs will not have their
- * reference count changed.  The reference count of a proc at the
- * return of this function is the same regardless of whether NULL is
- * provided for newproclist.  The user is responsible for freeing the
- * newproclist array.
- *
- * @param[in] buf          orte_buffer containing the packed names
- * @param[in] proclistsize number of expected proc-pointres
- * @param[out] proclist    list of process pointers
- * @param[out] newproclistsize Number of new procs added as a result
- *                         of the unpack operation.  NULL may be
- *                         provided if information is not needed.
- * @param[out] newproclist List of new procs added as a result of
- *                         the unpack operation.  NULL may be
- *                         provided if informationis not needed.
- *
- * Return value:
- *   OSHMEM_SUCCESS               on success
- *   OSHMEM_ERROR                 else
- */
-OSHMEM_DECLSPEC int oshmem_proc_unpack(opal_buffer_t *buf,
-                                       int proclistsize,
-                                       oshmem_proc_t ***proclist,
-                                       int *newproclistsize,
-                                       oshmem_proc_t ***newproclist);
+    name.jobid = ORTE_PROC_MY_NAME->jobid;
+    name.vpid = pe;
+    return oshmem_proc_for_find(name);
+}
 
 static inline int oshmem_proc_pe(oshmem_proc_t *proc)
 {
@@ -352,7 +212,7 @@ OSHMEM_DECLSPEC int oshmem_proc_group_finalize(void);
  * @return Array of pointers to proc instances in the current
  * known universe, or NULL if there is an internal failure.
  */
-OSHMEM_DECLSPEC oshmem_group_t* oshmem_proc_group_create(int pe_start,
+OSHMEM_DECLSPEC oshmem_group_t *oshmem_proc_group_create(int pe_start,
                                                          int pe_stride,
                                                          size_t pe_size);
 
@@ -367,7 +227,7 @@ static inline oshmem_proc_t *oshmem_proc_group_all(int pe)
     return oshmem_group_all->proc_array[pe];
 }
 
-static inline oshmem_proc_t* oshmem_proc_group_find(oshmem_group_t* group,
+static inline oshmem_proc_t *oshmem_proc_group_find(oshmem_group_t* group,
                                                     int pe)
 {
     int i = 0;
@@ -390,7 +250,7 @@ static inline oshmem_proc_t* oshmem_proc_group_find(oshmem_group_t* group,
 
         name.jobid = ORTE_PROC_MY_NAME->jobid;
         name.vpid = pe;
-        proc = oshmem_proc_find(&name);
+        proc = oshmem_proc_for_find(name);
     }
 
     return proc;
@@ -420,12 +280,8 @@ static inline int oshmem_proc_group_is_member(oshmem_group_t *group)
 
 static inline int oshmem_num_procs(void)
 {
-    extern opal_list_t oshmem_proc_list;
-
-    if (!oshmem_group_all)
-        return opal_list_get_size(&oshmem_proc_list);
-
-    return oshmem_group_all->proc_count;
+    return (oshmem_group_all ?
+        oshmem_group_all->proc_count : (int)opal_list_get_size(&ompi_proc_list));
 }
 
 static inline int oshmem_my_proc_id(void)

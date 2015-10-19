@@ -68,6 +68,8 @@ struct ompi_proc_t {
 
     /* endpoint data */
     void *proc_endpoints[OMPI_PROC_ENDPOINT_TAG_MAX];
+
+    char padding[16];         /* for future extensions (OSHMEM uses this area also)*/
 };
 typedef struct ompi_proc_t ompi_proc_t;
 OBJ_CLASS_DECLARATION(ompi_proc_t);
@@ -83,7 +85,7 @@ OBJ_CLASS_DECLARATION(ompi_proc_t);
  * Please use ompi_proc_local() instead.
  */
 OMPI_DECLSPEC extern ompi_proc_t* ompi_proc_local_proc;
-
+OMPI_DECLSPEC extern opal_list_t  ompi_proc_list;
 
 /* ******************************************************************** */
 
@@ -136,7 +138,10 @@ OMPI_DECLSPEC int ompi_proc_finalize(void);
  * Returns the list of proc instances associated with this job.  Given
  * the current association between a job and an MPI_COMM_WORLD, this
  * function provides the process instances for the current
- * MPI_COMM_WORLD.
+ * MPI_COMM_WORLD. Use this function only if absolutely needed as it
+ * will cause ompi_proc_t objects to be allocated for every process in
+ * the job. If you only need the allocated ompi_proc_t objects call
+ * ompi_proc_get_allocated() instead.
  *
  * @note The reference count of each process in the array is
  * NOT incremented - the caller is responsible for ensuring the
@@ -150,6 +155,36 @@ OMPI_DECLSPEC int ompi_proc_finalize(void);
  */
 OMPI_DECLSPEC ompi_proc_t** ompi_proc_world(size_t* size);
 
+/**
+ * Returns the number of processes in the associated with this job.
+ *
+ * Returns the list of proc instances associated with this job.  Given
+ * the current association between a job and an MPI_COMM_WORLD, this
+ * function provides the number of processes for the current
+ * MPI_COMM_WORLD.
+ */
+
+OMPI_DECLSPEC int ompi_proc_world_size (void);
+
+/**
+ * Returns the list of proc instances associated with this job.
+ *
+ * Returns the list of proc instances associated with this job that have
+ * already been allocated.  Given the current association between a job
+ * and an MPI_COMM_WORLD, this function provides the allocated process
+ * instances for the current MPI_COMM_WORLD.
+ *
+ * @note The reference count of each process in the array is
+ * NOT incremented - the caller is responsible for ensuring the
+ * correctness of the reference count once they are done with
+ * the array.
+ *
+ * @param[in] size     Number of processes in the ompi_proc_t array
+ *
+ * @return Array of pointers to allocated proc instances in the current
+ * MPI_COMM_WORLD, or NULL if there is an internal failure.
+ */
+OMPI_DECLSPEC ompi_proc_t **ompi_proc_get_allocated (size_t *size);
 
 /**
  * Returns the list of all known proc instances.
@@ -304,6 +339,44 @@ OMPI_DECLSPEC int ompi_proc_unpack(opal_buffer_t *buf,
  */
 OMPI_DECLSPEC int ompi_proc_refresh(void);
 
+/**
+ * Get the ompi_proc_t for a given process name
+ *
+ * @param[in] proc_name opal process name
+ *
+ * @returns cached or new ompi_proc_t for the given process name
+ *
+ * This function looks up the given process name in the hash of existing
+ * ompi_proc_t structures. If no ompi_proc_t structure exists matching the
+ * given name a new ompi_proc_t is allocated, initialized, and returned.
+ *
+ * @note The ompi_proc_t is added to the local list of processes but is not
+ * added to any communicator. ompi_comm_peer_lookup is responsible for caching
+ * the ompi_proc_t on a communicator.
+ */
+OMPI_DECLSPEC opal_proc_t *ompi_proc_for_name (const opal_process_name_t proc_name);
+
+
+OMPI_DECLSPEC opal_proc_t *ompi_proc_lookup (const opal_process_name_t proc_name);
+
+/**
+ * Check if an ompi_proc_t is a sentinel
+ */
+static inline bool ompi_proc_is_sentinel (ompi_proc_t *proc)
+{
+    return (intptr_t) proc & 0x1;
+}
+
+static inline intptr_t ompi_proc_name_to_sentinel (opal_process_name_t name)
+{
+  return (*((intptr_t *) &name) << 1) | 0x1;
+}
+
+static inline opal_process_name_t ompi_proc_sentinel_to_name (intptr_t sentinel)
+{
+  sentinel >>= 1;
+  return *((opal_process_name_t *) &sentinel);
+}
 
 END_C_DECLS
 

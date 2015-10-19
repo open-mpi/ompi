@@ -14,7 +14,7 @@
  * Copyright (c) 2007      Cisco Systems, Inc. All rights reserved.
  * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2012-2013 Inria.  All rights reserved.
- * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2013-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -49,16 +49,14 @@ int ompi_group_translate_ranks ( ompi_group_t *group1,
                                  ompi_group_t *group2,
                                  int *ranks2)
 {
-    int rank, proc, proc2;
-    struct ompi_proc_t *proc1_pointer, *proc2_pointer;
-
     if ( MPI_GROUP_EMPTY == group1 || MPI_GROUP_EMPTY == group2 ) {
-        for (proc = 0; proc < n_ranks ; proc++) {
+        for (int proc = 0; proc < n_ranks ; ++proc) {
             ranks2[proc] = MPI_UNDEFINED;
         }
         return MPI_SUCCESS;
     }
 
+#if OMPI_GROUP_SPARSE
     /*
      * If we are translating from a parent to a child that uses the sparse format
      * or vice versa, we use the translate ranks function corresponding to the
@@ -80,8 +78,11 @@ int ompi_group_translate_ranks ( ompi_group_t *group1,
                 (group1,n_ranks,ranks1,group2,ranks2);
         }
 
+        /* unknown sparse group type */
+        assert (0);
     }
-    else if( group2->grp_parent_group_ptr == group1 ) { /* from parent to child*/
+
+    if( group2->grp_parent_group_ptr == group1 ) { /* from parent to child*/
         if(OMPI_GROUP_IS_SPORADIC(group2)) {
             return ompi_group_translate_ranks_sporadic
                 (group1,n_ranks,ranks1,group2,ranks2);
@@ -95,28 +96,32 @@ int ompi_group_translate_ranks ( ompi_group_t *group1,
                 (group1,n_ranks,ranks1,group2,ranks2);
         }
 
+        /* unknown sparse group type */
+        assert (0);
     }
-    else {
-        /* loop over all ranks */
-        for (proc = 0; proc < n_ranks; proc++) {
-            rank=ranks1[proc];
-            if ( MPI_PROC_NULL == rank) {
-                ranks2[proc] = MPI_PROC_NULL;
-            }
-            else {
-                proc1_pointer = ompi_group_peer_lookup(group1 ,rank);
-                /* initialize to no "match" */
-                ranks2[proc] = MPI_UNDEFINED;
-                for (proc2 = 0; proc2 < group2->grp_proc_count; proc2++) {
-                    proc2_pointer= ompi_group_peer_lookup(group2, proc2);
-                    if ( proc1_pointer == proc2_pointer) {
-                        ranks2[proc] = proc2;
-                        break;
-                    }
-                }  /* end proc2 loop */
-            } /* end proc loop */
+#endif
+
+    /* loop over all ranks */
+    for (int proc = 0; proc < n_ranks; ++proc) {
+        struct ompi_proc_t *proc1_pointer, *proc2_pointer;
+        int rank = ranks1[proc];
+
+        if ( MPI_PROC_NULL == rank) {
+            ranks2[proc] = MPI_PROC_NULL;
+            continue;
         }
-    }
+
+        proc1_pointer = ompi_group_get_proc_ptr_raw (group1, rank);
+        /* initialize to no "match" */
+        ranks2[proc] = MPI_UNDEFINED;
+        for (int proc2 = 0; proc2 < group2->grp_proc_count; ++proc2) {
+            proc2_pointer = ompi_group_get_proc_ptr_raw (group2, proc2);
+            if ( proc1_pointer == proc2_pointer) {
+                ranks2[proc] = proc2;
+                break;
+            }
+        }  /* end proc2 loop */
+    } /* end proc loop */
 
     return MPI_SUCCESS;
 }
@@ -166,25 +171,6 @@ int ompi_group_dump (ompi_group_t* group)
     }
     printf("*********************************************************\n");
     return OMPI_SUCCESS;
-}
-
-/*
- * This is the function that iterates through the sparse groups to the dense group
- * to reach the process pointer
- */
-ompi_proc_t* ompi_group_get_proc_ptr (ompi_group_t* group , int rank)
-{
-    int ranks1,ranks2;
-    do {
-        if(OMPI_GROUP_IS_DENSE(group)) {
-            return group->grp_proc_pointers[rank];
-        }
-        ranks1 = rank;
-        ompi_group_translate_ranks( group, 1, &ranks1,
-                                    group->grp_parent_group_ptr,&ranks2);
-        rank = ranks2;
-        group = group->grp_parent_group_ptr;
-    } while (1);
 }
 
 int ompi_group_minloc ( int list[] , int length )
@@ -567,4 +553,24 @@ int ompi_group_compare(ompi_group_t *group1,
     }
 
     return return_value;
+}
+
+bool ompi_group_have_remote_peers (ompi_group_t *group)
+{
+    for (int i = 0 ; i < group->grp_proc_count ; ++i) {
+        ompi_proc_t *proc = NULL;
+#if OMPI_GROUP_SPARSE
+        proc = ompi_group_peer_lookup (group, i);
+#else
+        if (ompi_proc_is_sentinel (group->grp_proc_pointers[i])) {
+            return true;
+        }
+        proc = group->grp_proc_pointers[i];
+#endif
+        if (!OPAL_PROC_ON_LOCAL_NODE(proc->super.proc_flags)) {
+            return true;
+        }
+    }
+
+    return false;
 }

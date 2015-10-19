@@ -296,8 +296,11 @@ int ompi_mpi_finalize(void)
         goto done;
     }
 
+    /* call del_procs on all allocated procs even though some may not be known
+     * to the pml layer. the pml layer is expected to be resilient and ignore
+     * any unknown procs. */
     nprocs = 0;
-    procs = ompi_proc_world(&nprocs);
+    procs = ompi_proc_get_allocated (&nprocs);
     MCA_PML_CALL(del_procs(procs, nprocs));
     free(procs);
 

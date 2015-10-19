@@ -138,6 +138,13 @@ OPAL_DECLSPEC extern char* (*opal_jobid_print)(const opal_jobid_t);
 OPAL_DECLSPEC extern char* (*opal_convert_jobid_to_string)(opal_jobid_t jobid);
 OPAL_DECLSPEC extern int (*opal_convert_string_to_jobid)(opal_jobid_t *jobid, const char *jobid_string);
 
+/**
+ * Lookup an opal_proc_t by name
+ *
+ * @param name (IN) name to lookup
+ */
+OPAL_DECLSPEC extern struct opal_proc_t *(*opal_proc_for_name) (const opal_process_name_t name);
+
 #define OPAL_NAME_PRINT(OPAL_PN)    opal_process_name_print(OPAL_PN)
 #define OPAL_JOBID_PRINT(OPAL_PN)   opal_jobid_print(OPAL_PN)
 #define OPAL_VPID_PRINT(OPAL_PN)    opal_vpid_print(OPAL_PN)

@@ -156,7 +156,6 @@ mca_pml_ob1_imrecv( void *buf,
     int src, tag;
     ompi_communicator_t *comm;
     mca_pml_ob1_comm_proc_t* proc;
-    mca_pml_ob1_comm_t* ob1_comm;
     uint64_t seq;
 
     /* get the request from the message and the frag from the request
@@ -166,7 +165,6 @@ mca_pml_ob1_imrecv( void *buf,
     src = recvreq->req_recv.req_base.req_ompi.req_status.MPI_SOURCE;
     tag = recvreq->req_recv.req_base.req_ompi.req_status.MPI_TAG;
     comm = (*message)->comm;
-    ob1_comm = recvreq->req_recv.req_base.req_comm->c_pml_comm;
     seq = recvreq->req_recv.req_base.req_sequence;
 
     /* make the request a recv request again */
@@ -204,7 +202,7 @@ mca_pml_ob1_imrecv( void *buf,
     /* Note - sequence number already assigned */
     recvreq->req_recv.req_base.req_sequence = seq;
 
-    proc = &ob1_comm->procs[recvreq->req_recv.req_base.req_peer];
+    proc = mca_pml_ob1_peer_lookup (comm, recvreq->req_recv.req_base.req_peer);
     recvreq->req_recv.req_base.req_proc = proc->ompi_proc;
     prepare_recv_req_converter(recvreq);
 
@@ -251,7 +249,6 @@ mca_pml_ob1_mrecv( void *buf,
     int src, tag, rc;
     ompi_communicator_t *comm;
     mca_pml_ob1_comm_proc_t* proc;
-    mca_pml_ob1_comm_t* ob1_comm;
     uint64_t seq;
 
     /* get the request from the message and the frag from the request
@@ -262,7 +259,6 @@ mca_pml_ob1_mrecv( void *buf,
     src = recvreq->req_recv.req_base.req_ompi.req_status.MPI_SOURCE;
     tag = recvreq->req_recv.req_base.req_ompi.req_status.MPI_TAG;
     seq = recvreq->req_recv.req_base.req_sequence;
-    ob1_comm = recvreq->req_recv.req_base.req_comm->c_pml_comm;
 
     /* make the request a recv request again */
     /* The old request kept pointers to comm and the char datatype.
@@ -298,7 +294,7 @@ mca_pml_ob1_mrecv( void *buf,
     /* Note - sequence number already assigned */
     recvreq->req_recv.req_base.req_sequence = seq;
 
-    proc = &ob1_comm->procs[recvreq->req_recv.req_base.req_peer];
+    proc = mca_pml_ob1_peer_lookup (comm, recvreq->req_recv.req_base.req_peer);
     recvreq->req_recv.req_base.req_proc = proc->ompi_proc;
     prepare_recv_req_converter(recvreq);
 

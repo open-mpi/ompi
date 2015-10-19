@@ -13,7 +13,7 @@
  * Copyright (c) 2007-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006-2009 University of Houston.  All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
- * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2011-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2013-2015 Intel, Inc. All rights reserved
  * Copyright (c) 2014-2015 Research Organization for Information Science
@@ -1210,6 +1210,22 @@ static int disconnect_waitall (int count, ompi_dpm_disconnect_obj **objs)
 /**********************************************************************/
 /**********************************************************************/
 /**********************************************************************/
+static bool ompi_dpm_group_is_dyn (ompi_group_t *group, ompi_jobid_t thisjobid)
+{
+    int size = group ? ompi_group_size (group) : 0;
+
+    for (int i = 1 ; i < size ; ++i) {
+        opal_process_name_t name = ompi_group_get_proc_name (group, i);
+
+        if (thisjobid != ((ompi_process_name_t *) &name)->jobid) {
+            /* at least one is different */
+            return true;
+        }
+    }
+
+    return false;
+}
+
 /* All we want to do in this function is determine if the number of
  * jobids in the local and/or remote group is > 1. This tells us to
  * set the disconnect flag. We don't actually care what the true
@@ -1217,56 +1233,30 @@ static int disconnect_waitall (int count, ompi_dpm_disconnect_obj **objs)
  */
 void ompi_dpm_mark_dyncomm(ompi_communicator_t *comm)
 {
-    int i;
-    int size, rsize;
-    bool found=false;
+    bool found;
     ompi_jobid_t thisjobid;
-    ompi_group_t *grp=NULL;
-    ompi_proc_t *proc = NULL;
 
     /* special case for MPI_COMM_NULL */
     if (comm == MPI_COMM_NULL) {
         return;
     }
 
-    size  = ompi_comm_size(comm);
-    rsize = ompi_comm_remote_size(comm);
+    thisjobid = ompi_group_get_proc_name (comm->c_local_group, 0).jobid;
 
     /* loop over all processes in local group and check for
      * a different jobid
      */
-    grp = comm->c_local_group;
-    proc = ompi_group_peer_lookup(grp,0);
-    thisjobid = ((ompi_process_name_t*)&proc->super.proc_name)->jobid;
-
-    for (i=1; i< size; i++) {
-        proc = ompi_group_peer_lookup(grp,i);
-        if (thisjobid != ((ompi_process_name_t*)&proc->super.proc_name)->jobid) {
-            /* at least one is different */
-            found = true;
-            goto complete;
-        }
+    found = ompi_dpm_group_is_dyn (comm->c_local_group, thisjobid);
+    if (!found) {
+        /* if inter-comm, loop over all processes in remote_group
+         * and see if any are different from thisjobid
+         */
+        found = ompi_dpm_group_is_dyn (comm->c_remote_group, thisjobid);
     }
 
-    /* if inter-comm, loop over all processes in remote_group
-     * and see if any are different from thisjobid
-     */
-    grp = comm->c_remote_group;
-    for (i=0; i< rsize; i++) {
-        proc = ompi_group_peer_lookup(grp,i);
-        if (thisjobid != ((ompi_process_name_t*)&proc->super.proc_name)->jobid) {
-            /* at least one is different */
-            found = true;
-            break;
-        }
-    }
-
- complete:
     /* if a different jobid was found, set the disconnect flag*/
     if (found) {
         ompi_comm_num_dyncomm++;
         OMPI_COMM_SET_DYNAMIC(comm);
     }
-
-    return;
 }
