@@ -46,7 +46,7 @@ mca_coll_base_alltoall_intra_basic_inplace(const void *rbuf, int rcount,
     MPI_Request *preq;
     char *tmp_buffer;
     size_t max_size;
-    ptrdiff_t ext;
+    ptrdiff_t ext, true_lb, true_ext;
 
     /* Initialize. */
 
@@ -60,13 +60,15 @@ mca_coll_base_alltoall_intra_basic_inplace(const void *rbuf, int rcount,
 
     /* Find the largest receive amount */
     ompi_datatype_type_extent (rdtype, &ext);
-    max_size = ext * rcount;
+    ompi_datatype_get_true_extent ( rdtype, &true_lb, &true_ext);
+    max_size = true_ext + ext * (rcount-1);
 
     /* Allocate a temporary buffer */
     tmp_buffer = calloc (max_size, 1);
     if (NULL == tmp_buffer) {
       return OMPI_ERR_OUT_OF_RESOURCE;
     }
+    max_size = ext * rcount;
 
     /* in-place alltoall slow algorithm (but works) */
     for (i = 0 ; i < size ; ++i) {
