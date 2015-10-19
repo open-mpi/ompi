@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -33,7 +34,8 @@
 int mca_base_select(const char *type_name, int output_id,
                     opal_list_t *components_available,
                     mca_base_module_t **best_module,
-                    mca_base_component_t **best_component)
+                    mca_base_component_t **best_component,
+                    int *priority_out)
 {
     mca_base_component_list_item_t *cli = NULL;
     mca_base_component_t *component = NULL;
@@ -108,6 +110,9 @@ int mca_base_select(const char *type_name, int output_id,
         }
     }
 
+    if (priority_out) {
+        *priority_out = best_priority;
+    }
 
     /*
      * Finished querying all components.

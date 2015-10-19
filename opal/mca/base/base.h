@@ -134,7 +134,8 @@ OPAL_DECLSPEC int mca_base_close(void);
 OPAL_DECLSPEC int mca_base_select(const char *type_name, int output_id,
                                   opal_list_t *components_available,
                                   mca_base_module_t **best_module,
-                                  mca_base_component_t **best_component);
+                                  mca_base_component_t **best_component,
+                                  int *priority_out);
 
 /**
  * A function for component query functions to discover if they have
