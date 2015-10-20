@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2014-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -212,8 +212,8 @@ static inline int ompi_osc_rdma_lock_try_acquire_exclusive (ompi_osc_rdma_module
             }
         }
 
-        OPAL_OUTPUT_VERBOSE((25, ompi_osc_base_framework.framework_output, "got %lx when attempting compare and swap %" PRIx64 " complete %d",
-                             (unsigned long) *temp, lock, atomic_complete));
+        OPAL_OUTPUT_VERBOSE((25, ompi_osc_base_framework.framework_output, "got %lx when attempting compare and swap %" PRIx64 " on %p",
+                             (unsigned long) *temp, lock, (void *) peer));
         result = (*temp != 0);
 
         ompi_osc_rdma_frag_complete (frag);
@@ -289,8 +289,8 @@ static inline int ompi_osc_rdma_lock_release_exclusive (ompi_osc_rdma_module_t *
             }
         }
 
-        OPAL_OUTPUT_VERBOSE((25, ompi_osc_base_framework.framework_output, "unlocked target lock %" PRIx64 " with value 0x%lx. old value 0x%"
-                             PRIx64, lock, (unsigned long) -OMPI_OSC_RDMA_LOCK_EXCLUSIVE, ((uint64_t *) temp)[0]));
+        OPAL_OUTPUT_VERBOSE((25, ompi_osc_base_framework.framework_output, "unlocked target lock on peer %p %" PRIx64 " using value 0x%lx"
+                             PRIx64, (void *) peer, lock, (unsigned long) -OMPI_OSC_RDMA_LOCK_EXCLUSIVE));
     } else {
         ompi_osc_rdma_unlock_local ((volatile ompi_osc_rdma_lock_t *)(intptr_t) lock);
     }

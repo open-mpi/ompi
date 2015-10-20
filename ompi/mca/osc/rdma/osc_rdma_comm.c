@@ -365,12 +365,6 @@ static void ompi_osc_rdma_aggregate_put_complete (struct mca_btl_base_module_t *
     assert (OPAL_SUCCESS == status);
 
     ompi_osc_rdma_frag_complete (frag);
-
-    OPAL_LIST_FOREACH_SAFE(request, next, &aggregation->requests, ompi_osc_rdma_request_t) {
-        opal_list_remove_item (&aggregation->requests, (opal_list_item_t *) request);
-        ompi_osc_rdma_request_complete (request, status);
-    }
-
     ompi_osc_rdma_aggregation_return (aggregation);
 
     /* make sure the aggregation is returned before marking the operation as complete */
@@ -426,7 +420,8 @@ static void ompi_osc_rdma_aggregate_append (ompi_osc_rdma_aggregation_t *aggrega
     aggregation->buffer_used += size;
 
     if (request) {
-        opal_list_append (&aggregation->requests, (opal_list_item_t *) request);
+        /* the local buffer is now available */
+        ompi_osc_rdma_request_complete (request, 0);
     }
 }
 
