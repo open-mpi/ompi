@@ -43,8 +43,8 @@ MPI_Ibarrier(\fIcomm\fP, \fIrequest\fP, \fIierror\fP)
 .fi
 .SH C++ Syntax
 .nf
-import mpi.*;
-void MPI.COMM_WORLD.Barrier()
+#include <mpi.h>
+void MPI::Comm::Barrier() const = 0
 
 .fi
 .SH INPUT PARAMETER
@@ -53,7 +53,7 @@ void MPI.COMM_WORLD.Barrier()
 comm
 Communicator (handle).
 
-.SH OUTPUT PARAMETER
+.SH OUTPUT PARAMETERS
 .ft R
 .TP 1i
 request
