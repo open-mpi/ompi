@@ -88,8 +88,13 @@ int MPI_Ialltoallw(const void *sendbuf, const int sendcounts[], const int sdispl
 
         if ((NULL == sendcounts) || (NULL == sdispls) || (NULL == sendtypes) ||
             (NULL == recvcounts) || (NULL == rdispls) || (NULL == recvtypes) ||
-            MPI_IN_PLACE == sendbuf || MPI_IN_PLACE == recvbuf) {
+            MPI_IN_PLACE == recvbuf) {
             return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
+        } else if (MPI_IN_PLACE == sendbuf) {
+            /* MPI_IN_PLACE is not fully implemented yet,
+               return MPI_ERR_INTERN for now */
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INTERN,
+                                          FUNC_NAME);
         }
 
         size = OMPI_COMM_IS_INTER(comm)?ompi_comm_remote_size(comm):ompi_comm_size(comm);
