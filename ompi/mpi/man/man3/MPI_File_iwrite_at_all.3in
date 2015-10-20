@@ -3,6 +3,8 @@
 .\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
 .\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
+.\" Copyright 2015      Research Organization for Information Science
+.\"                     and Technology (RIST). All rights reserved.
 .\" $COPYRIGHT$
 .TH MPI_File_iwrite_at_all 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
@@ -11,19 +13,20 @@
 .SH SYNTAX
 .ft R
 .nf
-C Syntax
-    #include <mpi.h>
-    int MPI_File_iwrite_at_all(MPI_File \fIfh\fP, MPI_Offset \fIoffset\fP,
-	      const void \fI*buf\fP, int \fIcount\fP, MPI_Datatype \fIdatatype\fP, MPI_Request \fI*request\fP)
+.SH C Syntax
+#include <mpi.h>
+int MPI_File_iwrite_at_all(MPI_File \fIfh\fP, MPI_Offset \fIoffset\fP,
+	const void \fI*buf\fP, int \fIcount\fP, MPI_Datatype \fIdatatype\fP, MPI_Request \fI*request\fP)
 
 .fi
 .SH Fortran Syntax (see FORTRAN 77 NOTES)
 .nf
-    INCLUDE 'mpif.h'
-    MPI_FILE_IWRITE_AT_ALL(\fIFH\fP, \fIOFFSET\fP, \fIBUF\fP, \fICOUNT\fP, \fIDATATYPE\fP, \fIREQUEST\fP, \fIIERROR\fP)
-        	<type> \fIBUF\fP(*)
-        	INTEGER	\fIFH, COUNT, DATATYPE, REQUEST, IERROR\fP
-		INTEGER(KIND=MPI_OFFSET_KIND) \fIOFFSET\fP
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
+MPI_FILE_IWRITE_AT_ALL(\fIFH\fP, \fIOFFSET\fP, \fIBUF\fP, \fICOUNT\fP, \fIDATATYPE\fP, \fIREQUEST\fP, \fIIERROR\fP)
+	<type>	\fIBUF\fP(*)
+	INTEGER	\fIFH, COUNT, DATATYPE, REQUEST, IERROR\fP
+	INTEGER(KIND=MPI_OFFSET_KIND)	\fIOFFSET\fP
 
 .fi
 .SH Fortran 2008 Syntax
