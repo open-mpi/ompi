@@ -204,6 +204,9 @@ mca_spml_ikrit_t mca_spml_ikrit = {
         mca_spml_base_wait,
         mca_spml_base_wait_nb,
         mca_spml_ikrit_fence,
+        mca_spml_base_rmkey_unpack,
+        mca_spml_base_rmkey_free,
+
         (void*)&mca_spml_ikrit
     }
 };

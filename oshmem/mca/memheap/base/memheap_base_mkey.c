@@ -232,6 +232,7 @@ static void unpack_remote_mkeys(opal_buffer_t *msg, int remote_pe)
                 }
                 cnt = memheap_oob.mkeys[tr_id].len;
                 opal_dss.unpack(msg, memheap_oob.mkeys[tr_id].u.data, &cnt, OPAL_BYTE);
+                MCA_SPML_CALL(rmkey_unpack(&memheap_oob.mkeys[tr_id], remote_pe));
             } else {
                 memheap_oob.mkeys[tr_id].u.key = MAP_SEGMENT_SHM_INVALID;
             }
