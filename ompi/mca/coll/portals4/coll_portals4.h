@@ -24,12 +24,17 @@
 #include "ompi/datatype/ompi_datatype_internal.h"
 #include "ompi/op/op.h"
 #include "ompi/mca/mca.h"
+#include "opal/datatype/opal_convertor.h"
 #include "ompi/mca/coll/coll.h"
 #include "ompi/request/request.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/mca/coll/base/base.h"
+#include "ompi/datatype/ompi_datatype.h"
+#include "ompi/mca/mtl/portals4/mtl_portals4_endpoint.h"
 
 #include "ompi/mca/mtl/portals4/mtl_portals4.h"
+
+#define MAXTREEFANOUT 32
 
 BEGIN_C_DECLS
 
@@ -61,9 +66,26 @@ struct mca_coll_portals4_component_t {
 
     ptl_ni_limits_t ni_limits;
 
+    int use_binomial_gather_algorithm;
+
 };
 typedef struct mca_coll_portals4_component_t mca_coll_portals4_component_t;
 OMPI_MODULE_DECLSPEC extern mca_coll_portals4_component_t mca_coll_portals4_component;
+
+
+/*
+ * Borrowed with thanks from the coll-tuned component, then modified for Portals4.
+ */
+typedef struct ompi_coll_portals4_tree_t {
+    int32_t tree_root;
+    int32_t tree_fanout;
+    int32_t tree_bmtree;
+    int32_t tree_prev;
+    int32_t tree_next[MAXTREEFANOUT];
+    int32_t tree_nextsize;
+    int32_t tree_numdescendants;
+} ompi_coll_portals4_tree_t;
+
 
 struct mca_coll_portals4_module_t {
     mca_coll_base_module_t super;
@@ -79,6 +101,13 @@ struct mca_coll_portals4_module_t {
     mca_coll_base_module_t *previous_allreduce_module;
     mca_coll_base_module_iallreduce_fn_t previous_iallreduce;
     mca_coll_base_module_t *previous_iallreduce_module;
+
+    /* binomial tree */
+    ompi_coll_portals4_tree_t *cached_in_order_bmtree;
+    int                        cached_in_order_bmtree_root;
+
+    size_t barrier_count;
+    size_t gather_count;
 };
 typedef struct mca_coll_portals4_module_t mca_coll_portals4_module_t;
 OBJ_CLASS_DECLARATION(mca_coll_portals4_module_t);
@@ -135,6 +164,22 @@ int
 opal_stderr(const char *msg, const char *file,
         const int line, const int ret);
 
+/*
+ * Borrowed with thanks from the coll-tuned component.
+ */
+#define COLL_PORTALS4_UPDATE_IN_ORDER_BMTREE( OMPI_COMM, PORTALS4_MODULE, ROOT ) \
+do {                                                                                         \
+    if( !( ((PORTALS4_MODULE)->cached_in_order_bmtree)                                               \
+           && ((PORTALS4_MODULE)->cached_in_order_bmtree_root == (ROOT)) ) ) {                       \
+        if( (PORTALS4_MODULE)->cached_in_order_bmtree ) { /* destroy previous binomial if defined */ \
+            ompi_coll_portals4_destroy_tree( &((PORTALS4_MODULE)->cached_in_order_bmtree) );       \
+        }                                                                                    \
+        (PORTALS4_MODULE)->cached_in_order_bmtree = ompi_coll_portals4_build_in_order_bmtree( (OMPI_COMM), (ROOT) ); \
+        (PORTALS4_MODULE)->cached_in_order_bmtree_root = (ROOT);                                     \
+    }                                                                                        \
+} while (0)
+
+
 int ompi_coll_portals4_barrier_intra(struct ompi_communicator_t *comm,
         mca_coll_base_module_t *module);
 int ompi_coll_portals4_ibarrier_intra(struct ompi_communicator_t *comm,
@@ -176,6 +221,20 @@ int ompi_coll_portals4_iallreduce_intra(const void* sendbuf, void* recvbuf, int 
         struct mca_coll_base_module_2_1_0_t *module);
 int
 ompi_coll_portals4_iallreduce_intra_fini(struct ompi_coll_portals4_request_t *request);
+
+int ompi_coll_portals4_gather_intra(const void *sbuf, int scount, struct ompi_datatype_t *sdtype,
+                                    void *rbuf, int rcount, struct ompi_datatype_t *rdtype,
+                                    int root,
+                                    struct ompi_communicator_t *comm,
+                                    mca_coll_base_module_t *module);
+int ompi_coll_portals4_igather_intra(const void *sbuf, int scount, struct ompi_datatype_t *sdtype,
+                                     void *rbuf, int rcount, struct ompi_datatype_t *rdtype,
+                                     int root,
+                                     struct ompi_communicator_t *comm,
+                                     ompi_request_t **request,
+                                     mca_coll_base_module_t *module);
+int ompi_coll_portals4_igather_intra_fini(struct ompi_coll_portals4_request_t *request);
+
 
 static inline ptl_process_t
 ompi_coll_portals4_get_peer(struct ompi_communicator_t *comm, int rank)
@@ -355,6 +414,43 @@ void get_k_ary_tree(const unsigned int k_ary,
     }
 
     return;
+}
+
+
+static inline void
+ompi_coll_portals4_create_recv_converter (opal_convertor_t *converter,
+                                          void *target,
+                                          ompi_proc_t *proc,
+                                          int count,
+                                          ompi_datatype_t *datatype)
+{
+    /* create converter */
+    OBJ_CONSTRUCT(converter, opal_convertor_t);
+
+    /* initialize converter */
+    opal_convertor_copy_and_prepare_for_recv(proc->super.proc_convertor,
+                                             &datatype->super,
+                                             count,
+                                             target,
+                                             0,
+                                             converter);
+}
+
+static inline void
+ompi_coll_portals4_create_send_converter (opal_convertor_t *converter,
+                                          const void *source,
+                                          ompi_proc_t *proc,
+                                          int count,
+                                          ompi_datatype_t *datatype)
+{
+    OBJ_CONSTRUCT(converter, opal_convertor_t);
+
+    opal_convertor_copy_and_prepare_for_send(proc->super.proc_convertor,
+                                             &datatype->super,
+                                             count,
+                                             source,
+                                             0,
+                                             converter);
 }
 
 END_C_DECLS
