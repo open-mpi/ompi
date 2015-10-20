@@ -202,9 +202,6 @@ struct ompi_osc_rdma_aggregation_t {
 
     /** type */
     int type;
-
-    /** list of associated requests */
-    opal_list_t requests;
 };
 typedef struct ompi_osc_rdma_aggregation_t ompi_osc_rdma_aggregation_t;
 

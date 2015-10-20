@@ -606,6 +606,10 @@ static int allocate_state_shared (ompi_osc_rdma_module_t *module, void **base, s
                     ex_peer->size = temp[i].size;
                 }
 
+                if (my_rank == peer_rank) {
+                    peer->flags |= OMPI_OSC_RDMA_PEER_LOCAL_BASE;
+                }
+
                 if (MPI_WIN_FLAVOR_ALLOCATE == module->flavor) {
                     if (temp[i].size) {
                         ex_peer->super.base = (uint64_t) (uintptr_t) module->segment_base + offset;
@@ -1172,6 +1176,7 @@ static int ompi_osc_rdma_set_info (struct ompi_win_t *win, struct ompi_info_t *i
         OBJ_CONSTRUCT(&module->outstanding_locks, opal_hash_table_t);
 
         module->no_locks = true;
+        win->w_flags |= OMPI_WIN_NO_LOCKS;
     } else if (!temp && module->no_locks) {
         int world_size = ompi_comm_size (module->comm);
         int init_limit = world_size > 256 ? 256 : world_size;
@@ -1183,6 +1188,7 @@ static int ompi_osc_rdma_set_info (struct ompi_win_t *win, struct ompi_info_t *i
         }
 
         module->no_locks = false;
+        win->w_flags &= ~OMPI_WIN_NO_LOCKS;
     }
 
     /* enforce collectiveness... */
@@ -1204,16 +1210,4 @@ static int ompi_osc_rdma_get_info (struct ompi_win_t *win, struct ompi_info_t **
     return OMPI_SUCCESS;
 }
 
-static void ompi_osc_rdma_aggregation_construct (ompi_osc_rdma_aggregation_t *aggregation)
-{
-    OBJ_CONSTRUCT(&aggregation->requests, opal_list_t);
-    aggregation->buffer_used = 0;
-}
-
-static void ompi_osc_rdma_aggregation_destruct (ompi_osc_rdma_aggregation_t *aggregation)
-{
-    OBJ_DESTRUCT(&aggregation->requests);
-}
-
-OBJ_CLASS_INSTANCE(ompi_osc_rdma_aggregation_t, opal_list_item_t, ompi_osc_rdma_aggregation_construct,
-                   ompi_osc_rdma_aggregation_destruct);
+OBJ_CLASS_INSTANCE(ompi_osc_rdma_aggregation_t, opal_list_item_t, NULL, NULL);
