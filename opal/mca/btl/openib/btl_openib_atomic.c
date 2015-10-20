@@ -22,7 +22,7 @@
 static int mca_btl_openib_atomic_internal (struct mca_btl_base_module_t *btl, struct mca_btl_base_endpoint_t *endpoint,
 					   void *local_address, uint64_t remote_address, mca_btl_base_registration_handle_t *local_handle,
 					   mca_btl_base_registration_handle_t *remote_handle, enum ibv_wr_opcode opcode,
-					   int64_t operand, int operand2, int flags, int order, mca_btl_base_rdma_completion_fn_t cbfunc,
+					   int64_t operand, int64_t operand2, int flags, int order, mca_btl_base_rdma_completion_fn_t cbfunc,
 					   void *cbcontext, void *cbdata)
 {
     mca_btl_openib_get_frag_t* frag = NULL;
