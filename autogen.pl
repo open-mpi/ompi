@@ -4,6 +4,8 @@
 # Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
 # Copyright (c) 2013      Mellanox Technologies, Inc.
 #                         All rights reserved.
+# Copyright (c) 2015      IBM Corporation.  All rights reserved.
+#
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -179,7 +181,6 @@ sub process_subdir {
         print "--- Found configure.in|ac; running autoreconf...\n";
         safe_system("autoreconf -ivf");
         print "--- Patching autotools output... :-(\n";
-        patch_autotools_output($start);
     } else {
         my_die "Found subdir, but no autogen.sh or configure.in|ac to do anything";
     }
@@ -187,6 +188,9 @@ sub process_subdir {
     # Ensure that we got a good configure executable.
     my_die "Did not generate a \"configure\" executable in $dir.\n"
         if (! -x "configure");
+
+    # Fix known issues in Autotools output
+    patch_autotools_output($start);
 
     # Chdir back to where we came from
     chdir($start);
@@ -969,6 +973,19 @@ sub patch_autotools_output {
     verbose "$indent_str"."Patching configure for IBM xlf libtool bug\n";
     $c =~ s/(\$LD -shared \$libobjs \$deplibs \$)compiler_flags( -soname \$soname)/$1linker_flags$2/g;
 
+    #Check if we are using a recent enough libtool that supports PowerPC little endian
+    if(index($c, 'powerpc64le-*linux*)') == -1) {
+        verbose "$indent_str"."Patching configure for PowerPC little endian support\n";
+        my $replace_string = "x86_64-*kfreebsd*-gnu|x86_64-*linux*|powerpc*-*linux*|";
+        $c =~ s/x86_64-\*kfreebsd\*-gnu\|x86_64-\*linux\*\|ppc\*-\*linux\*\|powerpc\*-\*linux\*\|/$replace_string/g;
+        $replace_string =
+        "powerpc64le-*linux*)\n\t    LD=\"\${LD-ld} -m elf32lppclinux\"\n\t    ;;\n\t  powerpc64-*linux*)";
+        $c =~ s/ppc64-\*linux\*\|powerpc64-\*linux\*\)/$replace_string/g;
+        $replace_string =
+        "powerpcle-*linux*)\n\t    LD=\"\${LD-ld} -m elf64lppc\"\n\t    ;;\n\t  powerpc-*linux*)";
+        $c =~ s/ppc\*-\*linux\*\|powerpc\*-\*linux\*\)/$replace_string/g;
+    }
+
     open(OUT, ">configure.patched") || my_die "Can't open configure.patched";
     print OUT $c;
     close(OUT);
@@ -1275,6 +1292,8 @@ foreach my $project (@{$projects}) {
         if (-d "$project->{dir}/config");
 }
 safe_system($cmd);
+
+patch_autotools_output(".");
 
 #---------------------------------------------------------------------------
 
