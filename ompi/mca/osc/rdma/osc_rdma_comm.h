@@ -77,7 +77,7 @@ static inline int osc_rdma_get_remote_segment (ompi_osc_rdma_module_t *module, o
         int disp_unit = (module->same_disp_unit) ? module->disp_unit : ex_peer->disp_unit;
         size_t size = (module->same_size) ? module->size : (size_t) ex_peer->size;
 
-        *remote_address = ex_peer->super.base +disp_unit * target_disp;
+        *remote_address = ex_peer->super.base + disp_unit * target_disp;
         if (OPAL_UNLIKELY(*remote_address + length > (ex_peer->super.base + size))) {
             OPAL_OUTPUT_VERBOSE((10, ompi_osc_base_framework.framework_output, "remote address range 0x%" PRIx64 " - 0x%" PRIx64
                                  " is out of range. Valid address range is 0x%" PRIx64 " - 0x%" PRIx64 " (%" PRIu64 " bytes)",

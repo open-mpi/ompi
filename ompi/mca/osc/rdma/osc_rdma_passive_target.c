@@ -182,6 +182,11 @@ int ompi_osc_rdma_lock_atomic (int lock_type, int target, int assert, ompi_win_t
     ompi_osc_rdma_sync_t *lock;
     int ret = OMPI_SUCCESS;
 
+    if (module->no_locks) {
+        OPAL_OUTPUT_VERBOSE((25, ompi_osc_base_framework.framework_output, "osc/rdma: attemoted to lock with no_locks set"));
+        return OMPI_ERR_RMA_SYNC;
+    }
+
     OPAL_OUTPUT_VERBOSE((60, ompi_osc_base_framework.framework_output, "osc rdma: lock %d %d", target, lock_type));
 
     if (module->all_sync.epoch_active && (OMPI_OSC_RDMA_SYNC_TYPE_LOCK != module->all_sync.type || MPI_LOCK_EXCLUSIVE == lock_type)) {
@@ -275,10 +280,12 @@ int ompi_osc_rdma_lock_all_atomic (int assert, struct ompi_win_t *win)
     ompi_osc_rdma_sync_t *lock;
     int ret = OMPI_SUCCESS;
 
-    OPAL_THREAD_LOCK(&module->lock);
+    if (module->no_locks) {
+        OPAL_OUTPUT_VERBOSE((25, ompi_osc_base_framework.framework_output, "osc/rdma: attemoted to lock with no_locks set"));
+        return OMPI_ERR_RMA_SYNC;
+    }
 
-    /* Check if no_locks is set. TODO: we also need to track whether we are in an
-     * active target epoch. Fence can make this tricky to track. */
+    OPAL_THREAD_LOCK(&module->lock);
     if (module->all_sync.epoch_active) {
         OPAL_OUTPUT_VERBOSE((25, ompi_osc_base_framework.framework_output, "osc/rdma: attempted "
                              "to lock all when active target epoch is %s and lock all epoch is %s",

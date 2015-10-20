@@ -146,6 +146,8 @@ static void ompi_osc_rdma_acc_get_complete (struct mca_btl_base_module_t *btl, s
     /* accumulate the data */
     if (&ompi_mpi_op_replace.op != request->op) {
         ompi_op_reduce (request->op, request->origin_addr, (void *) source, request->origin_count, request->origin_dt);
+    } else {
+        memcpy ((void *) source, request->origin_addr, request->len);
     }
 
     /* initiate the put of the accumulated data */
@@ -214,7 +216,7 @@ static inline int ompi_osc_rdma_gacc_contig (ompi_osc_rdma_sync_t *sync, const v
 
     ompi_osc_rdma_sync_rdma_inc (sync);
 
-    if (&ompi_mpi_op_replace.op != op || result) {
+    if (&ompi_mpi_op_replace.op != op || OMPI_OSC_RDMA_TYPE_GET_ACC == request->type) {
         /* align the target address */
         target_address = target_address & ~btl_alignment_mask;
 
@@ -283,8 +285,9 @@ static inline int ompi_osc_rdma_gacc_master (ompi_osc_rdma_sync_t *sync, const v
         if (NULL == request) {
             OMPI_OSC_RDMA_REQUEST_ALLOC(module, peer, request);
             request->internal = true;
-            request->type = result_datatype ? OMPI_OSC_RDMA_TYPE_GET_ACC : OMPI_OSC_RDMA_TYPE_ACC;
         }
+
+        request->type = result_datatype ? OMPI_OSC_RDMA_TYPE_GET_ACC : OMPI_OSC_RDMA_TYPE_ACC;
 
         if (source_datatype) {
             (void) ompi_datatype_get_extent (source_datatype, &lb, &extent);

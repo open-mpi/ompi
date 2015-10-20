@@ -342,7 +342,7 @@ static inline void _ompi_osc_rdma_deregister (ompi_osc_rdma_module_t *module, mc
 #define ompi_osc_rdma_deregister(...) _ompi_osc_rdma_deregister(__VA_ARGS__, __LINE__, __FILE__)
 
 static inline void ompi_osc_rdma_progress (ompi_osc_rdma_module_t *module) {
-    module->selected_btl->btl_component->btl_progress ();
+    opal_progress ();
 }
 
 /**
@@ -475,7 +475,7 @@ static inline void ompi_osc_rdma_sync_rdma_complete (ompi_osc_rdma_sync_t *sync)
     }
 
     do {
-        module->selected_btl->btl_component->btl_progress ();
+        opal_progress ();
     }  while (sync->outstanding_rdma);
 }
 
