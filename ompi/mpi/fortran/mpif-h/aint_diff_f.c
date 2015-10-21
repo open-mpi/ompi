@@ -30,35 +30,35 @@
  * manually.
  */
 #if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
-#pragma weak PMPI_WTIME = ompi_wtime_f
-#pragma weak pmpi_wtime = ompi_wtime_f
-#pragma weak pmpi_wtime_ = ompi_wtime_f
-#pragma weak pmpi_wtime__ = ompi_wtime_f
+#pragma weak PMPI_AINT_DIFF = ompi_aint_diff_f
+#pragma weak pmpi_aint_diff = ompi_aint_diff_f
+#pragma weak pmpi_aint_diff_ = ompi_aint_diff_f
+#pragma weak pmpi_aint_diff__ = ompi_aint_diff_f
 
-#pragma weak PMPI_Wtime_f = ompi_wtime_f
-#pragma weak PMPI_Wtime_f08 = ompi_wtime_f
+#pragma weak PMPI_Aint_diff_f = ompi_aint_diff_f
+#pragma weak PMPI_Aint_diff_f08 = ompi_aint_diff_f
 #elif OMPI_PROFILE_LAYER
-double PMPI_WTIME(void) { return pompi_wtime_f(); }
-double pmpi_wtime(void) { return pompi_wtime_f(); }
-double pmpi_wtime_(void) { return pompi_wtime_f(); }
-double pmpi_wtime__(void) { return pompi_wtime_f(); }
+MPI_Aint PMPI_AINT_DIFF(MPI_Aint *addr1, MPI_Aint *addr2) { return pompi_aint_diff_f(addr1, addr2); }
+MPI_Aint pmpi_aint_diff(MPI_Aint *addr1, MPI_Aint *addr2) { return pompi_aint_diff_f(addr1, addr2); }
+MPI_Aint pmpi_aint_diff_(MPI_Aint *addr1, MPI_Aint *addr2) { return pompi_aint_diff_f(addr1, addr2); }
+MPI_Aint pmpi_aint_diff__(MPI_Aint *addr1, MPI_Aint *addr2) { return pompi_aint_diff_f(addr1, addr2); }
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
-#pragma weak MPI_WTIME = ompi_wtime_f
-#pragma weak mpi_wtime = ompi_wtime_f
-#pragma weak mpi_wtime_ = ompi_wtime_f
-#pragma weak mpi_wtime__ = ompi_wtime_f
+#pragma weak MPI_AINT_DIFF = ompi_aint_diff_f
+#pragma weak mpi_aint_diff = ompi_aint_diff_f
+#pragma weak mpi_aint_diff_ = ompi_aint_diff_f
+#pragma weak mpi_aint_diff__ = ompi_aint_diff_f
 
-#pragma weak MPI_Wtime_f = ompi_wtime_f
-#pragma weak MPI_Wtime_f08 = ompi_wtime_f
+#pragma weak MPI_Aint_diff_f = ompi_aint_diff_f
+#pragma weak MPI_Aint_diff_f08 = ompi_aint_diff_f
 #endif
 
 #if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
-double MPI_WTIME(void) { return ompi_wtime_f(); }
-double mpi_wtime(void) { return ompi_wtime_f(); }
-double mpi_wtime_(void) { return ompi_wtime_f(); }
-double mpi_wtime__(void) { return ompi_wtime_f(); }
+MPI_Aint MPI_AINT_DIFF(MPI_Aint *addr1, MPI_Aint *addr2) { return ompi_aint_diff_f(addr1, addr2); }
+MPI_Aint mpi_aint_diff(MPI_Aint *addr1, MPI_Aint *addr2) { return ompi_aint_diff_f(addr1, addr2); }
+MPI_Aint mpi_aint_diff_(MPI_Aint *addr1, MPI_Aint *addr2) { return ompi_aint_diff_f(addr1, addr2); }
+MPI_Aint mpi_aint_diff__(MPI_Aint *addr1, MPI_Aint *addr2) { return ompi_aint_diff_f(addr1, addr2); }
 #endif
 
 
@@ -66,7 +66,7 @@ double mpi_wtime__(void) { return ompi_wtime_f(); }
 #include "ompi/mpi/fortran/mpif-h/profile/defines.h"
 #endif
 
-double ompi_wtime_f(void)
+MPI_Aint ompi_aint_diff_f(MPI_Aint *addr1, MPI_Aint *addr2)
 {
-    return MPI_Wtime();
+    return MPI_Aint_diff (*addr1, *addr2);
 }
