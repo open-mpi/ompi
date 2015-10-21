@@ -158,17 +158,15 @@ static void ompi_osc_rdma_handle_post (ompi_osc_rdma_module_t *module, int rank,
     /* look for the posting peer in the group */
     for (int j = 0 ; j < npeers ; ++j) {
         if (rank == peers[j]->rank) {
-            OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
-                                 "got expected post from %d. still expecting posts from %d processes",
-                                 rank, (int) (npeers - state->num_post_msgs - 1)));
+            OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_INFO, "got expected post from %d. still expecting posts from %d processes",
+                             rank, (int) (npeers - state->num_post_msgs - 1));
             ++state->num_post_msgs;
             return;
         }
     }
 
     /* post does not belong to this start epoch. save it for later */
-    OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output, "got unexpected post from %d "
-                         ". queueing for later", rank));
+    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_INFO, "got unexpected post from %d . queueing for later", rank);
     pending_post = OBJ_NEW(ompi_osc_rdma_pending_post_t);
     pending_post->rank = rank;
     OPAL_THREAD_SCOPED_LOCK(&module->lock, opal_list_append (&module->pending_posts, &pending_post->super));
@@ -185,8 +183,7 @@ int ompi_osc_rdma_post_atomic (ompi_group_t *group, int assert, ompi_win_t *win)
     osc_rdma_counter_t *temp;
     int ret;
 
-    OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
-                         "ompi_osc_rdma_post_atomic entering..."));
+    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "post: %p, %d, %s", group, assert, win->w_name);
 
     /* check if we are already in a post epoch */
     if (module->pw_group) {
@@ -230,8 +227,7 @@ int ompi_osc_rdma_post_atomic (ompi_group_t *group, int assert, ompi_win_t *win)
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
-    OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
-                         "sending post messages"));
+    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "sending post messages");
 
     /* send a hello counter to everyone in group */
     for (int i = 0 ; i < ompi_group_size(module->pw_group) ; ++i) {
@@ -272,8 +268,7 @@ int ompi_osc_rdma_post_atomic (ompi_group_t *group, int assert, ompi_win_t *win)
             sizeof (osc_rdma_counter_t) * post_index;
 
         do {
-            OPAL_OUTPUT_VERBOSE((80, ompi_osc_base_framework.framework_output,
-                                 "Attempting to post to index %d @ rank %d", post_index, peer->rank));
+            OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "attempting to post to index %d @ rank %d", post_index, peer->rank);
 
             /* try to post. if the value isn't 0 then another rank is occupying this index */
             if (!ompi_osc_rdma_peer_local_state (peer)) {
@@ -319,8 +314,7 @@ int ompi_osc_rdma_post_atomic (ompi_group_t *group, int assert, ompi_win_t *win)
 
     ompi_osc_rdma_release_peers (peers, ompi_group_size(module->pw_group));
 
-    OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
-                         "post complete"));
+    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "post complete");
 
     return OMPI_SUCCESS;
 }
@@ -333,8 +327,8 @@ int ompi_osc_rdma_start_atomic (ompi_group_t *group, int assert, ompi_win_t *win
     ompi_osc_rdma_sync_t *sync = &module->all_sync;
     int group_size = ompi_group_size (group);
 
-    OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
-                         "ompi_osc_rdma_start entering..."));
+    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "start: %p, %d, %s", group, assert,
+                     win->w_name);
 
     OPAL_THREAD_LOCK(&module->lock);
 
@@ -351,9 +345,7 @@ int ompi_osc_rdma_start_atomic (ompi_group_t *group, int assert, ompi_win_t *win
     /* haven't processed any post messaes yet */
     state->num_post_msgs = 0;
 
-    OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
-                         "ompi_osc_rdma_start entering with group size %d...",
-                         sync->num_peers));
+    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "start group size %d", sync->num_peers);
 
     if (0 == ompi_group_size (group)) {
         /* nothing more to do. this is an empty start epoch */
@@ -387,9 +379,8 @@ int ompi_osc_rdma_start_atomic (ompi_group_t *group, int assert, ompi_win_t *win
                 ompi_osc_rdma_peer_t *peer = sync->peer_list.peers[i];
 
                 if (pending_post->rank == peer->rank) {
-                    OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
-                                         "found queued post from %d. still expecting posts from %d processes",
-                                         peer->rank, (int) (group_size - state->num_post_msgs - 1)));
+                    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "found queued post from %d. still expecting posts "
+                                     "from %d processes", peer->rank, (int) (group_size - state->num_post_msgs - 1));
                     opal_list_remove_item (&module->pending_posts, &pending_post->super);
                     OBJ_RELEASE(pending_post);
                     /* only one thread can process post messages so there is no need of atomics here */
@@ -401,9 +392,8 @@ int ompi_osc_rdma_start_atomic (ompi_group_t *group, int assert, ompi_win_t *win
 
         /* wait for all post messages to arrive */
         while (state->num_post_msgs != group_size) {
-            OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
-                                 "Waiting for post messages. Have %d of %d",
-                                 (int) state->num_post_msgs, group_size));
+            OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "waiting for post messages. have %d of %d",
+                             (int) state->num_post_msgs, group_size);
             for (int i = 0 ; i < OMPI_OSC_RDMA_POST_PEER_MAX ; ++i) {
                 /* no post at this index (yet) */
                 if (0 == state->post_peers[i]) {
@@ -420,7 +410,7 @@ int ompi_osc_rdma_start_atomic (ompi_group_t *group, int assert, ompi_win_t *win
         state->num_post_msgs = group_size;
     }
 
-    OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output, "ompi_osc_rdma_start complete"));
+    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "start complete");
 
     OPAL_THREAD_UNLOCK(&module->lock);
     return OMPI_SUCCESS;
@@ -434,7 +424,7 @@ int ompi_osc_rdma_complete_atomic (ompi_win_t *win)
     ompi_group_t *group;
     int group_size;
 
-    OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output, "ompi_osc_rdma_complete entering..."));
+    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "complete: %s", win->w_name);
 
     OPAL_THREAD_LOCK(&module->lock);
     if (OMPI_OSC_RDMA_SYNC_TYPE_PSCW != sync->type) {
@@ -497,8 +487,7 @@ int ompi_osc_rdma_complete_atomic (ompi_win_t *win)
     /* release our reference to peers in this group */
     ompi_osc_rdma_release_peers (peers, group_size);
 
-    OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
-                         "ompi_osc_rdma_complete complete"));
+    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "complete complete");
 
     return OMPI_SUCCESS;
 }
@@ -510,13 +499,11 @@ int ompi_osc_rdma_wait_atomic (ompi_win_t *win)
     ompi_group_t *group;
     int group_size;
 
-    OPAL_OUTPUT_VERBOSE((25, ompi_osc_base_framework.framework_output,
-                         "ompi_osc_rdma_wait entering..."));
+    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "wait: %s", win->w_name);
 
     OPAL_THREAD_LOCK(&module->lock);
     if (NULL == module->pw_group) {
-        OPAL_OUTPUT_VERBOSE((25, ompi_osc_base_framework.framework_output,
-                             "ompi_osc_rdma_wait_atomic no post group"));
+        OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_INFO, "no matching post");
         OPAL_THREAD_UNLOCK(&module->lock);
         return OMPI_ERR_RMA_SYNC;
     }
@@ -524,9 +511,8 @@ int ompi_osc_rdma_wait_atomic (ompi_win_t *win)
     group_size = ompi_group_size (module->pw_group);
     OPAL_THREAD_UNLOCK(&module->lock);
 
-    OPAL_OUTPUT_VERBOSE((25, ompi_osc_base_framework.framework_output,
-                         "ompi_osc_rdma_wait_atomic group size %d, complete messages %d",
-                         group_size, (int) state->num_complete_msgs));
+    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "waiting on complete message. have %d of %d",
+                     (int) state->num_complete_msgs, group_size);
 
     while (group_size != state->num_complete_msgs) {
         ompi_osc_rdma_progress (module);
@@ -542,8 +528,7 @@ int ompi_osc_rdma_wait_atomic (ompi_win_t *win)
     ompi_group_decrement_proc_count(group);
     OBJ_RELEASE(group);
 
-    OPAL_OUTPUT_VERBOSE((25, ompi_osc_base_framework.framework_output,
-                         "ompi_osc_rdma_wait complete"));
+    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "wait complete");
 
     return OMPI_SUCCESS;
 }
@@ -556,13 +541,11 @@ int ompi_osc_rdma_test_atomic (ompi_win_t *win, int *flag)
     ompi_group_t *group;
     int group_size;
 
-    OPAL_OUTPUT_VERBOSE((25, ompi_osc_base_framework.framework_output,
-                         "ompi_osc_rdma_test_atomic entering..."));
+    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "test: %s", win->w_name);
 
     OPAL_THREAD_LOCK(&module->lock);
     if (NULL == module->pw_group) {
-        OPAL_OUTPUT_VERBOSE((25, ompi_osc_base_framework.framework_output,
-                             "ompi_osc_rdma_test_atomic no post group"));
+        OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_INFO, "no matching post");
         OPAL_THREAD_UNLOCK(&module->lock);
         return OMPI_ERR_RMA_SYNC;
     }
@@ -572,8 +555,8 @@ int ompi_osc_rdma_test_atomic (ompi_win_t *win, int *flag)
     *flag = (group_size == state->num_complete_msgs);
     OPAL_THREAD_UNLOCK(&module->lock);
 
-    OPAL_OUTPUT_VERBOSE((25, ompi_osc_base_framework.framework_output,
-                         "ompi_osc_rdma_test_atomic flag %d", *flag));
+    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "checking on complete message. have %d of %d",
+                     (int) state->num_complete_msgs, group_size);
 
     if (!*flag) {
         ompi_osc_rdma_progress (module);
@@ -598,13 +581,11 @@ int ompi_osc_rdma_fence_atomic (int assert, ompi_win_t *win)
     ompi_osc_rdma_module_t *module = GET_MODULE(win);
     int ret = OMPI_SUCCESS;
 
-    OPAL_OUTPUT_VERBOSE((25, ompi_osc_base_framework.framework_output,
-                         "osc rdma: fence start"));
+    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "fence: %d, %s", assert, win->w_name);
 
     /* can't enter an active target epoch while a lock is active */
-    if (ompi_osc_rdma_in_passive_epoch (module)) {
-        OPAL_OUTPUT_VERBOSE((25, ompi_osc_base_framework.framework_output,
-                             "osc rdma: could not enter fence. already in an access epoch"));
+    if (ompi_osc_rdma_in_passive_epoch (module) || module->pw_group) {
+        OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_INFO, "can not start fence epoch due to conflicting epoch");
         return OMPI_ERR_RMA_SYNC;
     }
 
@@ -624,8 +605,7 @@ int ompi_osc_rdma_fence_atomic (int assert, ompi_win_t *win)
 
     /* short-circuit the noprecede case */
     if (0 != (assert & MPI_MODE_NOPRECEDE)) {
-        OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
-                             "osc rdma: fence end (short circuit)"));
+        OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "fence complete (short circuit)");
         /* no communication can occur until a peer has entered the same fence epoch. for now
          * a barrier is used to ensure this is the case. */
         ret = module->comm->c_coll.coll_barrier(module->comm, module->comm->c_coll.coll_barrier_module);
@@ -644,8 +624,7 @@ int ompi_osc_rdma_fence_atomic (int assert, ompi_win_t *win)
         module->all_sync.type = OMPI_OSC_RDMA_SYNC_TYPE_NONE;
     }
 
-    OPAL_OUTPUT_VERBOSE((25, ompi_osc_base_framework.framework_output,
-                         "osc rdma: fence end: %d", ret));
+    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "fence complete");
 
     OPAL_THREAD_UNLOCK(&module->lock);
 

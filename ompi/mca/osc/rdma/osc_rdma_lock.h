@@ -53,8 +53,8 @@ static inline int ompi_osc_rdma_lock_release_shared (ompi_osc_rdma_module_t *mod
     volatile bool atomic_complete = false;
     int ret;
 
-    OPAL_OUTPUT_VERBOSE((25, ompi_osc_base_framework.framework_output, "decrementing shared lock %" PRIx64 " by %lx\n", lock,
-                         (unsigned long) value));
+    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_DEBUG, "releasing shared lock %" PRIx64 " on peer %d. value 0x%lx", lock,
+                     peer->rank, (unsigned long) value);
 
     /* spin until the lock has been acquired */
     if (!ompi_osc_rdma_peer_local_state (peer)) {
@@ -103,10 +103,13 @@ static inline int ompi_osc_rdma_lock_acquire_shared (ompi_osc_rdma_module_t *mod
                                                      ompi_osc_rdma_lock_t value, ptrdiff_t offset,
                                                      ompi_osc_rdma_lock_t check)
 {
-    intptr_t lock = (intptr_t) peer->state + offset;
+    uint64_t lock = (uint64_t) peer->state + offset;
     volatile bool atomic_complete;
     ompi_osc_rdma_lock_t *temp;
     int ret;
+
+    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_DEBUG, "acquiring shared lock %" PRIx64 " on peer %d. value 0x%lx", lock,
+                     peer->rank, (unsigned long) value);
 
     /* spin until the lock has been acquired */
     if (!ompi_osc_rdma_peer_local_state (peer)) {
@@ -123,7 +126,7 @@ static inline int ompi_osc_rdma_lock_acquire_shared (ompi_osc_rdma_module_t *mod
                                                         peer->state_handle, MCA_BTL_ATOMIC_ADD, value, 0, MCA_BTL_NO_ORDER,
                                                         ompi_osc_rdma_atomic_complete, (void *) &atomic_complete, NULL);
             if (OPAL_UNLIKELY(OPAL_SUCCESS > ret)) {
-                OPAL_OUTPUT_VERBOSE((10, ompi_osc_base_framework.framework_output, "failed to increment shared lock. ret: %d", ret));
+                OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_DEBUG, "failed to increment shared lock. opal error code %d", ret);
                 return ret;
             }
 
@@ -134,12 +137,13 @@ static inline int ompi_osc_rdma_lock_acquire_shared (ompi_osc_rdma_module_t *mod
                 }
             }
 
-            OPAL_OUTPUT_VERBOSE((25, ompi_osc_base_framework.framework_output, "incremented shared lock 0x%lx by 0x%lx. Old value 0x%lx",
-                                 (unsigned long) lock, (unsigned long) value, (unsigned long) *temp));
+            OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_DEBUG, "shared lock incremented. old value 0x%lx", (unsigned long) *temp);
 
             if (!(*temp & check)) {
                 break;
             }
+
+            OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_DEBUG, "another peer has exclusive access to lock");
 
             /* NTH: i think this is correct. backoff! */
             ompi_osc_rdma_lock_release_shared (module, peer, -value, offset);
@@ -151,8 +155,8 @@ static inline int ompi_osc_rdma_lock_acquire_shared (ompi_osc_rdma_module_t *mod
         ompi_osc_rdma_lock_t lock_state;
         do {
             lock_state = ompi_osc_rdma_lock_add ((volatile ompi_osc_rdma_lock_t *) lock, value);
-            OPAL_OUTPUT_VERBOSE((25, ompi_osc_base_framework.framework_output, "incremented local shared lock by 0x%lx. Old value 0x%lx",
-                                 (unsigned long) value, (unsigned long) lock_state));
+            OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_DEBUG, "local shared lock incremented. old value 0x%lx",
+                             (unsigned long) lock_state);
             if (!(lock_state & check)) {
                 break;
             }
@@ -161,6 +165,8 @@ static inline int ompi_osc_rdma_lock_acquire_shared (ompi_osc_rdma_module_t *mod
             ompi_osc_rdma_progress (module);
         } while (1);
     }
+
+    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_DEBUG, "shared lock acquired");
 
     return OMPI_SUCCESS;
 }
@@ -187,6 +193,9 @@ static inline int ompi_osc_rdma_lock_try_acquire_exclusive (ompi_osc_rdma_module
     volatile bool atomic_complete;
     int ret;
 
+    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_DEBUG, "trying to acquire exclusive lock %" PRIx64 " on peer %d", lock,
+                     peer->rank);
+
     if (!ompi_osc_rdma_peer_local_state (peer)) {
         ompi_osc_rdma_frag_t *frag = NULL;
         int result;
@@ -198,6 +207,7 @@ static inline int ompi_osc_rdma_lock_try_acquire_exclusive (ompi_osc_rdma_module
 
         /* set the temporary value so we can detect success. note that a lock should never be -1 */
         atomic_complete = false;
+        *temp = 1;
         ret = module->selected_btl->btl_atomic_cswap (module->selected_btl, peer->state_endpoint, temp, lock, frag->handle,
                                                       peer->state_handle, 0, OMPI_OSC_RDMA_LOCK_EXCLUSIVE, 0, 0,
                                                       ompi_osc_rdma_atomic_complete, (void *) &atomic_complete, NULL);
@@ -212,8 +222,13 @@ static inline int ompi_osc_rdma_lock_try_acquire_exclusive (ompi_osc_rdma_module
             }
         }
 
-        OPAL_OUTPUT_VERBOSE((25, ompi_osc_base_framework.framework_output, "got %lx when attempting compare and swap %" PRIx64 " on %p",
-                             (unsigned long) *temp, lock, (void *) peer));
+#if OPAL_ENABLE_DEBUG
+        if (*temp == 0) {
+            OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_DEBUG, "exclusive lock acquired");
+        } else {
+            OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_DEBUG, "could not acquire exclusive lock");
+        }
+#endif
         result = (*temp != 0);
 
         ompi_osc_rdma_frag_complete (frag);
@@ -268,6 +283,8 @@ static inline int ompi_osc_rdma_lock_release_exclusive (ompi_osc_rdma_module_t *
     volatile bool atomic_complete = false;
     int ret;
 
+    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_DEBUG, "releasing exclusive lock %" PRIx64 " on peer %d", lock, peer->rank);
+
     if (!ompi_osc_rdma_peer_local_state (peer)) {
         if (module->selected_btl->btl_flags & MCA_BTL_FLAGS_ATOMIC_OPS) {
             ret = module->selected_btl->btl_atomic_op (module->selected_btl, peer->state_endpoint, lock, peer->state_handle, MCA_BTL_ATOMIC_ADD,
@@ -280,6 +297,7 @@ static inline int ompi_osc_rdma_lock_release_exclusive (ompi_osc_rdma_module_t *
         }
 
         if (OPAL_UNLIKELY(OMPI_SUCCESS > ret)) {
+            OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_DEBUG, "error releasing exclusive lock");
             return ret;
         }
 
@@ -288,13 +306,11 @@ static inline int ompi_osc_rdma_lock_release_exclusive (ompi_osc_rdma_module_t *
                 ompi_osc_rdma_progress (module);
             }
         }
-
-        OPAL_OUTPUT_VERBOSE((25, ompi_osc_base_framework.framework_output, "unlocked target lock on peer %p %" PRIx64 " using value 0x%lx"
-                             PRIx64, (void *) peer, lock, (unsigned long) -OMPI_OSC_RDMA_LOCK_EXCLUSIVE));
     } else {
         ompi_osc_rdma_unlock_local ((volatile ompi_osc_rdma_lock_t *)(intptr_t) lock);
     }
 
+    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_DEBUG, "exclusive lock released");
 
     return OMPI_SUCCESS;
 }
