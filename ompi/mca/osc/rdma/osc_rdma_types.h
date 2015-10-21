@@ -207,4 +207,6 @@ typedef struct ompi_osc_rdma_aggregation_t ompi_osc_rdma_aggregation_t;
 
 OBJ_CLASS_DECLARATION(ompi_osc_rdma_aggregation_t);
 
+#define OSC_RDMA_VERBOSE(x, ...) OPAL_OUTPUT_VERBOSE((x, ompi_osc_base_framework.framework_output, __VA_ARGS__))
+
 #endif /* OMPI_OSC_RDMA_TYPES_H */
