@@ -195,6 +195,12 @@ static int smcuda_register(void)
     mca_btl_base_param_register(&mca_btl_smcuda_component.super.btl_version,
                                 &mca_btl_smcuda.super);
 
+    /* If user has not set the value, then set to magic number which will be converted to the minimum
+     * size needed to fit the PML header (see pml_ob1.c) */
+    if (0 == mca_btl_smcuda.super.btl_cuda_eager_limit) {
+        mca_btl_smcuda.super.btl_cuda_eager_limit = SIZE_MAX; /* magic number */
+    }
+
     return mca_btl_smcuda_component_verify();
 }
 
