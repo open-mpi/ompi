@@ -71,7 +71,7 @@ static int state_orted_close(void)
 
 static int state_orted_component_query(mca_base_module_t **module, int *priority)
 {
-    if (ORTE_PROC_IS_DAEMON) {
+    if (ORTE_PROC_IS_DAEMON && !ORTE_PROC_IS_CM) {
         /* set our priority high as we are the default for orteds */
         *priority = my_priority;
         *module = (mca_base_module_t *)&orte_state_orted_module;

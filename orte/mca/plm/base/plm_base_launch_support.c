@@ -1265,9 +1265,11 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
         opal_argv_append(argc, argv, "orte_report_bindings");
         opal_argv_append(argc, argv, "1");
     }
-    /* pass our topology signature */
-    opal_argv_append(argc, argv, "--hnp-topo-sig");
-    opal_argv_append(argc, argv, orte_topo_signature);
+    if (!ORTE_PROC_IS_CM) {
+       /* pass our topology signature */
+        opal_argv_append(argc, argv, "--hnp-topo-sig");
+        opal_argv_append(argc, argv, orte_topo_signature);
+    }
     if (orte_hetero_nodes) {
         opal_argv_append(argc, argv, "-"OPAL_MCA_CMD_LINE_ID);
         opal_argv_append(argc, argv, "orte_hetero_nodes");
@@ -1307,7 +1309,7 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
 
     /* pass the daemon jobid */
     opal_argv_append(argc, argv, "-"OPAL_MCA_CMD_LINE_ID);
-    opal_argv_append(argc, argv, "orte_ess_jobid");
+    opal_argv_append(argc, argv, "ess_base_jobid");
     if (ORTE_SUCCESS != (rc = orte_util_convert_jobid_to_string(&param, ORTE_PROC_MY_NAME->jobid))) {
         ORTE_ERROR_LOG(rc);
         return rc;
@@ -1318,7 +1320,7 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
     /* setup to pass the vpid */
     if (NULL != proc_vpid_index) {
         opal_argv_append(argc, argv, "-"OPAL_MCA_CMD_LINE_ID);
-        opal_argv_append(argc, argv, "orte_ess_vpid");
+        opal_argv_append(argc, argv, "ess_base_vpid");
         *proc_vpid_index = *argc;
         opal_argv_append(argc, argv, "<template>");
     }
@@ -1331,7 +1333,7 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
         num_procs = orte_process_info.num_procs;
     }
     opal_argv_append(argc, argv, "-"OPAL_MCA_CMD_LINE_ID);
-    opal_argv_append(argc, argv, "orte_ess_num_procs");
+    opal_argv_append(argc, argv, "ess_base_num_procs");
     asprintf(&param, "%lu", num_procs);
     opal_argv_append(argc, argv, param);
     free(param);
@@ -1364,13 +1366,6 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
         opal_argv_append(argc, argv, "orte_node_regex");
         opal_argv_append(argc, argv, param);
         free(param);
-    }
-
-    /* warn the daemons if we are using a tree spawn pattern so they
-     * know they shouldn't do a rollup on their callback
-     */
-    if (NULL != orte_tree_launch_cmd) {
-        opal_argv_append(argc, argv, "--tree-spawn");
     }
 
     /* if output-filename was specified, pass that along */

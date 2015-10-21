@@ -96,7 +96,6 @@ static struct {
     bool help;
     bool version;
     char *report_uri;
-    char *basename;
     char *prefix;
     bool run_as_root;
 } myglobals;
@@ -150,7 +149,7 @@ int main(int argc, char *argv[])
     memset(&myglobals, 0, sizeof(myglobals));
     /* find our basename (the name of the executable) so that we can
        use it in pretty-print error messages */
-    myglobals.basename = opal_basename(argv[0]);
+    orte_basename = opal_basename(argv[0]);
 
     opal_cmd_line_create(&cmd_line, cmd_line_init);
     mca_base_cmd_line_setup(&cmd_line);
@@ -174,7 +173,7 @@ int main(int argc, char *argv[])
                                          OPAL_REPO_REV);
         if (NULL != str) {
             fprintf(stdout, "%s %s\n\nReport bugs to %s\n",
-                    myglobals.basename, str, PACKAGE_BUGREPORT);
+                    orte_basename, str, PACKAGE_BUGREPORT);
             free(str);
         }
         exit(0);
@@ -187,10 +186,10 @@ int main(int argc, char *argv[])
     if (0 == geteuid() && !myglobals.run_as_root) {
         fprintf(stderr, "--------------------------------------------------------------------------\n");
         if (myglobals.help) {
-            fprintf(stderr, "%s cannot provide the help message when run as root\n", myglobals.basename);
+            fprintf(stderr, "%s cannot provide the help message when run as root\n", orte_basename);
         } else {
             /* show_help is not yet available, so print an error manually */
-            fprintf(stderr, "%s has detected an attempt to run as root.\n", myglobals.basename);
+            fprintf(stderr, "%s has detected an attempt to run as root.\n", orte_basename);
         }
         fprintf(stderr, " This is *strongly* discouraged as any mistake (e.g., in defining TMPDIR) or bug can\n");
         fprintf(stderr, "result in catastrophic damage to the OS file system, leaving\n");
@@ -222,15 +221,15 @@ int main(int argc, char *argv[])
     if (myglobals.help) {
         char *str, *args = NULL;
         char *project_name = NULL;
-        if (0 == strcmp(myglobals.basename, "mpirun")) {
+        if (0 == strcmp(orte_basename, "mpirun")) {
             project_name = "Open MPI";
         } else {
             project_name = "OpenRTE";
         }
         args = opal_cmd_line_get_usage_msg(&cmd_line);
         str = opal_show_help_string("help-orterun.txt", "orterun:usage", false,
-                                    myglobals.basename, project_name, OPAL_VERSION,
-                                    myglobals.basename, args,
+                                    orte_basename, project_name, OPAL_VERSION,
+                                    orte_basename, args,
                                     PACKAGE_BUGREPORT);
         if (NULL != str) {
             printf("%s", str);
@@ -242,17 +241,19 @@ int main(int argc, char *argv[])
         exit(0);
     }
 
-    /* flag that I am the HNP */
-    orte_process_info.proc_type = ORTE_PROC_HNP;
-
     /* Setup MCA params */
     orte_register_params();
 
-    /* specify the DVM state machine */
-    opal_setenv("OMPI_MCA_state", "dvm", true, &environ);
+    /* save the environment for launch purposes. This MUST be
+     * done so that we can pass it to any local procs we
+     * spawn - otherwise, those local procs won't see any
+     * non-MCA envars were set in the enviro prior to calling
+     * orterun
+     */
+    orte_launch_environ = opal_argv_copy(environ);
 
     /* Intialize our Open RTE environment */
-    if (ORTE_SUCCESS != (rc = orte_init(&argc, &argv, ORTE_PROC_HNP))) {
+    if (ORTE_SUCCESS != (rc = orte_init(&argc, &argv, ORTE_PROC_MASTER))) {
         /* cannot call ORTE_ERROR_LOG as it could be the errmgr
          * never got loaded!
          */
@@ -279,7 +280,7 @@ int main(int argc, char *argv[])
             fp = fopen(ptr, "w");
             if (NULL == fp) {
                 orte_show_help("help-orterun.txt", "orterun:write_file", false,
-                               myglobals.basename, "pid", ptr);
+                               orte_basename, "pid", ptr);
                 exit(0);
             }
             fprintf(fp, "%s\n", uri);
@@ -288,7 +289,7 @@ int main(int argc, char *argv[])
             fp = fopen(myglobals.report_uri, "w");
             if (NULL == fp) {
                 orte_show_help("help-orterun.txt", "orterun:write_file", false,
-                               myglobals.basename, "pid", myglobals.report_uri);
+                               orte_basename, "pid", myglobals.report_uri);
                 exit(0);
             }
             fprintf(fp, "%s\n", uri);
@@ -302,13 +303,13 @@ int main(int argc, char *argv[])
     /* get the daemon job object - was created by ess/hnp component */
     if (NULL == (jdata = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid))) {
         orte_show_help("help-orterun.txt", "bad-job-object", true,
-                       myglobals.basename);
+                       orte_basename);
         exit(0);
     }
     /* also should have created a daemon "app" */
     if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, 0))) {
         orte_show_help("help-orterun.txt", "bad-app-object", true,
-                       myglobals.basename);
+                       orte_basename);
         exit(0);
     }
 
@@ -332,7 +333,7 @@ int main(int argc, char *argv[])
             }
             if (0 != strcmp(param, value)) {
                 orte_show_help("help-orterun.txt", "orterun:app-prefix-conflict",
-                               true, myglobals.basename, value, param);
+                               true, orte_basename, value, param);
                 /* let the global-level prefix take precedence since we
                  * know that one is being used
                  */
@@ -358,7 +359,7 @@ int main(int argc, char *argv[])
                 param_len--;
                 if (0 == param_len) {
                     orte_show_help("help-orterun.txt", "orterun:empty-prefix",
-                                   true, myglobals.basename, myglobals.basename);
+                                   true, orte_basename, orte_basename);
                     return ORTE_ERR_FATAL;
                 }
             }
@@ -374,7 +375,7 @@ int main(int argc, char *argv[])
     if (0 < (j = opal_cmd_line_get_ninsts(&cmd_line, "hostfile"))) {
         if(1 < j) {
             orte_show_help("help-orterun.txt", "orterun:multiple-hostfiles",
-                           true, myglobals.basename, NULL);
+                           true, orte_basename, NULL);
             return ORTE_ERR_FATAL;
         } else {
             value = opal_cmd_line_get_param(&cmd_line, "hostfile", 0, 0);
@@ -384,7 +385,7 @@ int main(int argc, char *argv[])
     if (0 < (j = opal_cmd_line_get_ninsts(&cmd_line, "machinefile"))) {
         if(1 < j || orte_get_attribute(&app->attributes, ORTE_APP_HOSTFILE, NULL, OPAL_STRING)) {
             orte_show_help("help-orterun.txt", "orterun:multiple-hostfiles",
-                           true, myglobals.basename, NULL);
+                           true, orte_basename, NULL);
             return ORTE_ERR_FATAL;
         } else {
             value = opal_cmd_line_get_param(&cmd_line, "machinefile", 0, 0);
