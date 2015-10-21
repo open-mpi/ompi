@@ -72,13 +72,8 @@ int MPI_Ineighbor_alltoall(const void *sendbuf, int sendcount, MPI_Datatype send
                                          OMPI_COMM_IS_DIST_GRAPH(comm))) {
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM,
                                           FUNC_NAME);
-        } else if (MPI_IN_PLACE == recvbuf) {
+        } else if (MPI_IN_PLACE == sendbuf || MPI_IN_PLACE == recvbuf) {
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,
-                                          FUNC_NAME);
-        } else if (MPI_IN_PLACE == sendbuf) {
-            /* MPI_IN_PLACE is not fully implemented yet,
-               return MPI_ERR_INTERN for now */
-            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INTERN,
                                           FUNC_NAME);
         } else {
             OMPI_CHECK_DATATYPE_FOR_SEND(err, sendtype, sendcount);

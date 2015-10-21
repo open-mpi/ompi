@@ -99,13 +99,8 @@ int MPI_Ineighbor_alltoallv(const void *sendbuf, const int sendcounts[], const i
 
         if ((NULL == sendcounts) || (NULL == sdispls) ||
             (NULL == recvcounts) || (NULL == rdispls) ||
-            MPI_IN_PLACE == recvbuf) {
+            MPI_IN_PLACE == sendbuf || MPI_IN_PLACE == recvbuf) {
             return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
-        } else if (MPI_IN_PLACE == sendbuf) {
-            /* MPI_IN_PLACE is not fully implemented yet,
-               return MPI_ERR_INTERN for now */
-            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INTERN,
-                                          FUNC_NAME);
         }
 
         err = ompi_comm_neighbors_count(comm, &indegree, &outdegree, &weighted);
