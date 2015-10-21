@@ -325,7 +325,7 @@ mca_coll_basic_reduce_log_intra(void *sbuf, void *rbuf, int count,
 {
     int i, size, rank, vrank;
     int err, peer, dim, mask;
-    ptrdiff_t true_lb, true_extent, lb, extent;
+    ptrdiff_t lb, extent, dsize, gap;
     char *free_buffer = NULL;
     char *free_rbuf = NULL;
     char *pml_buffer = NULL;
@@ -353,14 +353,14 @@ mca_coll_basic_reduce_log_intra(void *sbuf, void *rbuf, int count,
      * rationale above. */
 
     ompi_datatype_get_extent(dtype, &lb, &extent);
-    ompi_datatype_get_true_extent(dtype, &true_lb, &true_extent);
+    dsize = opal_datatype_span(&dtype->super, count, &gap);
 
-    free_buffer = (char*)malloc(true_extent + (count - 1) * extent);
+    free_buffer = (char*)malloc(dsize);
     if (NULL == free_buffer) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
-    pml_buffer = free_buffer - lb;
+    pml_buffer = free_buffer - gap;
     /* read the comment about commutative operations (few lines down
      * the page) */
     if (ompi_op_is_commute(op)) {
@@ -371,12 +371,12 @@ mca_coll_basic_reduce_log_intra(void *sbuf, void *rbuf, int count,
      * rationale above. */
 
     if (MPI_IN_PLACE == sbuf) {
-        inplace_temp = (char*)malloc(true_extent + (count - 1) * extent);
+        inplace_temp = (char*)malloc(dsize);
         if (NULL == inplace_temp) {
             err = OMPI_ERR_OUT_OF_RESOURCE;
             goto cleanup_and_return;
         }
-        sbuf = inplace_temp - lb;
+        sbuf = inplace_temp - gap;
         err = ompi_datatype_copy_content_same_ddt(dtype, count, (char*)sbuf, (char*)rbuf);
     }
     snd_buffer = (char*)sbuf;
@@ -385,12 +385,12 @@ mca_coll_basic_reduce_log_intra(void *sbuf, void *rbuf, int count,
         /* root is the only one required to provide a valid rbuf.
          * Assume rbuf is invalid for all other ranks, so fix it up
          * here to be valid on all non-leaf ranks */
-        free_rbuf = (char*)malloc(true_extent + (count - 1) * extent);
+        free_rbuf = (char*)malloc(dsize);
         if (NULL == free_rbuf) {
             err = OMPI_ERR_OUT_OF_RESOURCE;
             goto cleanup_and_return;
         }
-        rbuf = free_rbuf - lb;
+        rbuf = free_rbuf - gap;
     }
 
     /* Loop over cube dimensions. High processes send to low ones in the
@@ -521,7 +521,7 @@ mca_coll_basic_reduce_lin_inter(void *sbuf, void *rbuf, int count,
                                 mca_coll_base_module_t *module)
 {
     int i, err, size;
-    ptrdiff_t true_lb, true_extent, lb, extent;
+    ptrdiff_t dsize, gap;
     char *free_buffer = NULL;
     char *pml_buffer = NULL;
 
@@ -538,14 +538,13 @@ mca_coll_basic_reduce_lin_inter(void *sbuf, void *rbuf, int count,
                                 MCA_PML_BASE_SEND_STANDARD, comm));
     } else {
         /* Root receives and reduces messages  */
-        ompi_datatype_get_extent(dtype, &lb, &extent);
-        ompi_datatype_get_true_extent(dtype, &true_lb, &true_extent);
+        dsize = opal_datatype_span(&dtype->super, count, &gap);
 
-        free_buffer = (char*)malloc(true_extent + (count - 1) * extent);
+        free_buffer = (char*)malloc(dsize);
         if (NULL == free_buffer) {
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
-        pml_buffer = free_buffer - lb;
+        pml_buffer = free_buffer - gap;
 
 
         /* Initialize the receive buffer. */

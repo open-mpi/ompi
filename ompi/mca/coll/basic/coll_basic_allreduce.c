@@ -78,8 +78,8 @@ mca_coll_basic_allreduce_inter(void *sbuf, void *rbuf, int count,
                                struct ompi_communicator_t *comm,
                                mca_coll_base_module_t *module)
 {
-    int err, i, rank, root = 0, rsize;
-    ptrdiff_t lb, extent;
+    int err, i, rank, root = 0, rsize, line;
+    ptrdiff_t extent, dsize, gap;
     char *tmpbuf = NULL, *pml_buffer = NULL;
     ompi_request_t *req[2];
     mca_coll_basic_module_t *basic_module = (mca_coll_basic_module_t*) module;
@@ -98,16 +98,14 @@ mca_coll_basic_allreduce_inter(void *sbuf, void *rbuf, int count,
      * simultaniously. */
     /*****************************************************************/
     if (rank == root) {
-        err = ompi_datatype_get_extent(dtype, &lb, &extent);
+        err = ompi_datatype_type_extent(dtype, &extent);
         if (OMPI_SUCCESS != err) {
             return OMPI_ERROR;
         }
-
-        tmpbuf = (char *) malloc(count * extent);
-        if (NULL == tmpbuf) {
-            return OMPI_ERR_OUT_OF_RESOURCE;
-        }
-        pml_buffer = tmpbuf - lb;
+        dsize = opal_datatype_span(&dtype->super, count, &gap);
+        tmpbuf = (char *) malloc(dsize);
+        if (NULL == tmpbuf) { err = OMPI_ERR_OUT_OF_RESOURCE; line = __LINE__; goto exit; }
+        pml_buffer = tmpbuf - gap;
 
         /* Do a send-recv between the two root procs. to avoid deadlock */
         err = MCA_PML_CALL(irecv(rbuf, count, dtype, 0,

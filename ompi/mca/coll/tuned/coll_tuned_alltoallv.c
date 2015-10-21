@@ -60,7 +60,7 @@ mca_coll_tuned_alltoallv_intra_basic_inplace(void *rbuf, const int *rcounts, con
     MPI_Request *preq;
     char *tmp_buffer;
     size_t max_size, rdtype_size;
-    ptrdiff_t ext;
+    OPAL_PTRDIFF_TYPE ext, gap;
 
     /* Initialize. */
 
@@ -76,16 +76,17 @@ mca_coll_tuned_alltoallv_intra_basic_inplace(void *rbuf, const int *rcounts, con
     /* Find the largest receive amount */
     ompi_datatype_type_extent (rdtype, &ext);
     for (i = 0, max_size = 0 ; i < size ; ++i) {
-        size_t size = ext * rcounts[i];
-
+        size_t size = opal_datatype_span(&rdtype->super, rcounts[i], &gap);
         max_size = size > max_size ? size : max_size;
     }
+    /* The gap will always be the same as we are working on the same datatype */
 
     /* Allocate a temporary buffer */
     tmp_buffer = calloc (max_size, 1);
     if (NULL == tmp_buffer) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
+    tmp_buffer += gap;
 
     /* in-place alltoallv slow algorithm (but works) */
     for (i = 0 ; i < size ; ++i) {
