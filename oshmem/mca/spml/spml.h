@@ -112,6 +112,20 @@ typedef int (*mca_spml_base_module_wait_fn_t)(void* addr,
                                               int datatype);
 
 /**
+ * deserialize remote mkey
+ *
+ * @param mkey remote mkey
+ */
+typedef void (*mca_spml_base_module_mkey_unpack_fn_t)(sshmem_mkey_t *, int remote_pe);
+
+/**
+ * free resources used by deserialized remote mkey
+ *
+ * @param mkey remote mkey
+ */
+typedef void (*mca_spml_base_module_mkey_free_fn_t)(sshmem_mkey_t *);
+
+/**
  * Register (Pinn) a buffer of 'size' bits starting in address addr
  *
  * @param addr   base address of the registered buffer.
@@ -267,6 +281,8 @@ struct mca_spml_base_module_1_0_0_t {
     mca_spml_base_module_wait_nb_fn_t spml_wait_nb;
     mca_spml_base_module_fence_fn_t spml_fence;
 
+    mca_spml_base_module_mkey_unpack_fn_t spml_rmkey_unpack;
+    mca_spml_base_module_mkey_free_fn_t   spml_rmkey_free;
     void *self;
 };
 
