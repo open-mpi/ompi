@@ -80,7 +80,7 @@ The committed state of returned derived data types is undefined, that is, the da
 .sp
 Note that MPI_Type_get_contents can be invoked with a data-type argument that was constructed using MPI_Type_create_f90_real, MPI_Type_create_f90_integer, or MPI_Type_create_f90_complex (an unnamed predefined data type). In such a case, an empty \fIarray_of_datatypes\fP is returned.
 .sp
-In the MPI-1 data-type constructor calls, the address arguments in Fortran are of type INTEGER. In the new MPI-2 calls, the address arguments are of type INTEGER(KIND=MPI ADDRESS KIND). The call MPI_Type_get_contents returns all addresses in an argument of type INTEGER(KIND=MPI ADDRESS KIND). This is true even if the old MPI-1 calls were used. Thus, the location of values returned can be thought of as being returned by the C bindings. It can also be determined by examining the new MPI-2 calls for data-type constructors for the deprecated MPI-1 calls that involve addresses.
+In the MPI-1 data-type constructor calls, the address arguments in Fortran are of type INTEGER. In the new MPI-2 calls, the address arguments are of type INTEGER(KIND=MPI_ADDRESS_KIND). The call MPI_Type_get_contents returns all addresses in an argument of type INTEGER(KIND=MPI_ADDRESS_KIND). This is true even if the old MPI-1 calls were used. Thus, the location of values returned can be thought of as being returned by the C bindings. It can also be determined by examining the new MPI-2 calls for data-type constructors for the deprecated MPI-1 calls that involve addresses.
 
 .SH FORTRAN 77 NOTES
 .ft R
