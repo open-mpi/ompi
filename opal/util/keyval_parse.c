@@ -55,6 +55,8 @@ int
 opal_util_keyval_parse_finalize(void)
 {
     if (NULL != key_buffer) free(key_buffer);
+    key_buffer = NULL;
+    key_buffer_len = 0;
 
     OBJ_DESTRUCT(&keyval_mutex);
 
