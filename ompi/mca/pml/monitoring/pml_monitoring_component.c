@@ -24,10 +24,6 @@ static char* mca_pml_monitoring_current_filename = NULL;
 mca_pml_base_component_t pml_selected_component;
 mca_pml_base_module_t pml_selected_module;
 
-extern void finalize_monitoring( void );
-extern int  ompi_mca_pml_monitoring_flush(char* filename);
-extern void mca_pml_monitoring_reset( void );
-
 /* Return the current status of the monitoring system 0 if off, 1 if the
  * seperation between internal tags and external tags is enabled. Any other
  * positive value if the segregation between point-to-point and collective is

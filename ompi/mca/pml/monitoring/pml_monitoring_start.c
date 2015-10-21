@@ -15,9 +15,7 @@
 #include <opal/class/opal_hash_table.h>
 #include <ompi/mca/pml/base/pml_base_request.h>
 
-extern void monitor_send_data(int dest_rank, size_t data_size, int tag);
 extern opal_hash_table_t *translation_ht;
-
 
 /* manage persistant requests*/
 int mca_pml_monitoring_start(size_t count,

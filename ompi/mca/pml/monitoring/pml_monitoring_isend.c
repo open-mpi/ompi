@@ -13,8 +13,6 @@
 #include <ompi_config.h>
 #include <pml_monitoring.h>
 
-extern void monitor_send_data(int dest_rank, size_t data_size, int tag);
-extern opal_hash_table_t *get_hashtable(void);
 extern opal_hash_table_t *translation_ht;
 
 int mca_pml_monitoring_isend_init(const void *buf,

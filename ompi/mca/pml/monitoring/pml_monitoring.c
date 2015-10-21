@@ -15,8 +15,6 @@
 #include <pml_monitoring.h>
 #include "opal/class/opal_hash_table.h"
 
-int filter_monitoring( void );
-
 /* array for stroring monitoring data*/
 uint64_t* sent_data = NULL;
 uint64_t* messages_count = NULL;
@@ -65,6 +63,7 @@ int mca_pml_monitoring_add_procs(struct ompi_proc_t **procs,
     if(NULL == translation_ht) {
         size_t i;
         uint64_t key;
+        opal_process_name_t tmp;
 
         nbprocs = nprocs;
 
@@ -76,7 +75,13 @@ int mca_pml_monitoring_add_procs(struct ompi_proc_t **procs,
             /* rank : ompi_proc_local_proc in procs */
             if( procs[i] == ompi_proc_local_proc)
                 my_rank = i;
-            key = *((uint64_t*)&(procs[i]->super.proc_name));
+            /* Extract the peer procname from the procs array */
+            if( ompi_proc_is_sentinel(procs[i]) ) {
+                tmp = ompi_proc_sentinel_to_name((intptr_t)procs[i]);
+            } else {
+                tmp = procs[i]->super.proc_name;
+            }
+            key = *((uint64_t*)&tmp);
             /* store the rank (in COMM_WORLD) of the process
                with its name (a uniq opal ID) as key  in the hash table*/
             opal_hash_table_set_value_uint64(translation_ht,
@@ -111,7 +116,8 @@ void finalize_monitoring( void )
     free(translation_ht);
 
 }
-void initialize_monitoring( void )
+
+static void initialize_monitoring( void )
 {
     sent_data      = (uint64_t*)calloc(nbprocs, sizeof(uint64_t));
     messages_count = (uint64_t*)calloc(nbprocs, sizeof(uint64_t));
@@ -193,7 +199,7 @@ static void output_monitoring( FILE *pf )
     }
 
     if( 1 == filter_monitoring() ) return;
-    
+
     for (int i = 0 ; i < nbprocs ; i++) {
         if(filtered_sent_data[i] > 0) {
             fprintf(pf, "E\t%d\t%d\t%" PRIu64 " bytes\t%" PRIu64 " msgs sent\n",

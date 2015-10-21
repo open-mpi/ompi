@@ -146,6 +146,12 @@ int mca_pml_monitoring_get_messages_size (const struct mca_base_pvar_t *pvar,
                                           void *value,
                                           void *obj_handle);
 
+void finalize_monitoring( void );
+int filter_monitoring( void );
+void mca_pml_monitoring_reset( void );
+int ompi_mca_pml_monitoring_flush(char* filename);
+void monitor_send_data(int world_rank, size_t data_size, int tag);
+
 END_C_DECLS
 
 #endif  /* MCA_PML_MONITORING_H */
