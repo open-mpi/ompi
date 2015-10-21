@@ -138,8 +138,8 @@ static inline void ompi_osc_rdma_sync_rdma_inc (ompi_osc_rdma_sync_t *rdma_sync)
 {
     ompi_osc_rdma_counter_add (&rdma_sync->outstanding_rdma, 1);
 
-    OPAL_OUTPUT_VERBOSE((60, ompi_osc_base_framework.framework_output, "INC: there are %ld outstanding RDMA operations",
-                         (unsigned long) rdma_sync->outstanding_rdma));
+    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_INFO, "inc: there are %ld outstanding rdma operations",
+                     (unsigned long) rdma_sync->outstanding_rdma);
 }
 
 /**
@@ -151,8 +151,8 @@ static inline void ompi_osc_rdma_sync_rdma_dec (ompi_osc_rdma_sync_t *rdma_sync)
 {
     ompi_osc_rdma_counter_add (&rdma_sync->outstanding_rdma, -1);
 
-    OPAL_OUTPUT_VERBOSE((60, ompi_osc_base_framework.framework_output, "DEC: there are %ld outstanding RDMA operations",
-                         (unsigned long) rdma_sync->outstanding_rdma));
+    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_INFO, "dec: there are %ld outstanding rdma operations",
+                     (unsigned long) rdma_sync->outstanding_rdma);
 }
 
 #endif /* OSC_RDMA_SYNC_H */
