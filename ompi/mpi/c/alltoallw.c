@@ -91,7 +91,8 @@ int MPI_Alltoallw(const void *sendbuf, const int sendcounts[],
 
         if ((NULL == sendcounts) || (NULL == sdispls) || (NULL == sendtypes) ||
             (NULL == recvcounts) || (NULL == rdispls) || (NULL == recvtypes) ||
-             MPI_IN_PLACE == recvbuf) {
+            (MPI_IN_PLACE == sendbuf && OMPI_COMM_IS_INTER(comm)) ||
+            MPI_IN_PLACE == recvbuf) {
             return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
         }
 

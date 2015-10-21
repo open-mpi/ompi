@@ -79,7 +79,8 @@ int MPI_Allreduce(const void *sendbuf, void *recvbuf, int count,
             int ret = OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_OP, msg);
             free(msg);
             return ret;
-        } else if( MPI_IN_PLACE == recvbuf ) {
+        } else if ((MPI_IN_PLACE == sendbuf && OMPI_COMM_IS_INTER(comm)) ||
+                   MPI_IN_PLACE == recvbuf ) {
 	    return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_BUFFER,
                                           FUNC_NAME);
         } else if( (sendbuf == recvbuf) &&
