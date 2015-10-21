@@ -78,8 +78,10 @@ int MPI_Neighbor_allgather(const void *sendbuf, int sendcount, MPI_Datatype send
 
         err = MPI_SUCCESS;
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-        if (ompi_comm_invalid(comm)) {
+        if (ompi_comm_invalid(comm) || OMPI_COMM_IS_INTER(comm)) {
           OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, FUNC_NAME);
+        } else if (! OMPI_COMM_IS_TOPO(comm)) {
+          OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_TOPOLOGY, FUNC_NAME);
         } else if (MPI_DATATYPE_NULL == recvtype || NULL == recvtype) {
           err = MPI_ERR_TYPE;
         } else if (recvcount < 0) {
@@ -94,21 +96,9 @@ int MPI_Neighbor_allgather(const void *sendbuf, int sendcount, MPI_Datatype send
 
     /* Do we need to do anything?  Everyone had to give the same send
        signature, which means that everyone must have given a
-       sendcount > 0 if there's anything to send for the intra-communicator
-       case. */
-    if ( OMPI_COMM_IS_INTRA(comm) ) {
-       if ((0 == sendcount) || (0 == recvcount)) {
-            return MPI_SUCCESS;
-        }
-    } else if ( OMPI_COMM_IS_INTER(comm) ){
-        /* for inter communicators, the communication pattern
-           need not be symmetric. Specifically, one group is
-           allows to have sendcount=0, while the other has
-           a valid sendcount. Thus, the only way not to do
-           anything is if both sendcount and recvcount are zero. */
-        if ( 0 == sendcount && 0 == recvcount ) {
-            return MPI_SUCCESS;
-        }
+       sendcount > 0. */
+    if ((0 == sendcount) || (0 == recvcount)) {
+        return MPI_SUCCESS;
     }
 
     OPAL_CR_ENTER_LIBRARY();
