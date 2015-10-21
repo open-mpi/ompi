@@ -101,10 +101,18 @@ AC_DEFUN([OPAL_LOAD_PLATFORM], [
             AC_SUBST(OPAL_PARAM_FROM_PLATFORM, "no")
         fi
 
-        if test -d "$with_platform_patches_dir"; then
-            patch_dir=$with_platform_patches_dir
-        else
-            patch_dir="${with_platform}.patches"
+        patch_dir="${with_platform}.patches"
+        if test -n "$with_platform_patches_dir"; then
+            if test "$with_platform_patches_dir" = "yes"; then
+                patch_dir="${with_platform}.patches"
+            elif test "$with_platform_patches_dir" = "no"; then
+                AC_MSG_NOTICE([Disabling platform patches on user request])
+                patch_dir=""
+            elif test -d "$with_platform_patches_dir"; then
+                patch_dir=$with_platform_patches_dir
+            else
+                AC_MSG_ERROR([User provided patches directory: $with_platform_patches_dir not found])
+            fi
         fi
 
         patch_done="${srcdir}/.platform_patches"
@@ -164,15 +172,16 @@ AC_DEFUN([OPAL_LOAD_PLATFORM], [
 
                     AC_MSG_NOTICE([Platform patches applied, created stamp file ${patch_done}])
                     touch ${patch_done}
+                else
+                    AC_MSG_NOTICE([No platform patches in ${patch_dir}])
                 fi
 
             else
                 AC_MSG_WARN([Platform patches already applied, skipping. ${patch_done} can be removed to re-apply ])
             fi
-        else
-            AC_MSG_NOTICE([No platform patches in ${patch_dir}])
+        elif test -n "${patch_dir}"; then
+          AC_MSG_NOTICE([No platform patches in ${patch_dir}])
         fi
-
     else
         AC_SUBST(OPAL_DEFAULT_MCA_PARAM_CONF, [openmpi-mca-params.conf])
     fi
