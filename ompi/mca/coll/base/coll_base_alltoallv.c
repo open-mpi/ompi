@@ -38,16 +38,16 @@
 
 int
 mca_coll_base_alltoallv_intra_basic_inplace(const void *rbuf, const int *rcounts, const int *rdisps,
-                                             struct ompi_datatype_t *rdtype,
-                                             struct ompi_communicator_t *comm,
-                                             mca_coll_base_module_t *module)
+                                            struct ompi_datatype_t *rdtype,
+                                            struct ompi_communicator_t *comm,
+                                            mca_coll_base_module_t *module)
 {
     mca_coll_base_module_t *base_module = (mca_coll_base_module_t*) module;
     int i, j, size, rank, err=MPI_SUCCESS;
     ompi_request_t **preq, **reqs;
     char *tmp_buffer;
     size_t max_size, rdtype_size;
-    ptrdiff_t ext;
+    OPAL_PTRDIFF_TYPE ext, gap;
 
     /* Initialize. */
 
@@ -63,16 +63,17 @@ mca_coll_base_alltoallv_intra_basic_inplace(const void *rbuf, const int *rcounts
     /* Find the largest receive amount */
     ompi_datatype_type_extent (rdtype, &ext);
     for (i = 0, max_size = 0 ; i < size ; ++i) {
-        size_t size = ext * rcounts[i];
-
+        size_t size = opal_datatype_span(&rdtype->super, rcounts[i], &gap);
         max_size = size > max_size ? size : max_size;
     }
+    /* The gap will always be the same as we are working on the same datatype */
 
     /* Allocate a temporary buffer */
     tmp_buffer = calloc (max_size, 1);
     if (NULL == tmp_buffer) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
+    tmp_buffer += gap;
 
     /* Initiate all send/recv to/from others. */
     reqs = preq = coll_base_comm_get_reqs(base_module->base_data, 2);

@@ -167,19 +167,16 @@ int ompi_coll_base_allgather_intra_bruck(const void *sbuf, int scount,
        - copy blocks from shift buffer starting at block [rank] in rbuf.
     */
     if (0 != rank) {
-        ptrdiff_t true_extent, true_lb;
         char *free_buf = NULL, *shift_buf = NULL;
+        ptrdiff_t span, gap;
 
-        err = ompi_datatype_get_true_extent(rdtype, &true_lb, &true_extent);
-        if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
+        span = opal_datatype_span(&rdtype->super, (size - rank) * rcount, &gap);
 
-        free_buf = (char*) calloc(((true_extent +
-                                    ((ptrdiff_t)(size - rank) * (ptrdiff_t)rcount - 1) * rext)),
-                                  sizeof(char));
+        free_buf = (char*)calloc(span, sizeof(char));
         if (NULL == free_buf) {
             line = __LINE__; err = OMPI_ERR_OUT_OF_RESOURCE; goto err_hndl;
         }
-        shift_buf = free_buf - true_lb;
+        shift_buf = free_buf - gap;
 
         /* 1. copy blocks [0 .. (size - rank - 1)] from rbuf to shift buffer */
         err = ompi_datatype_copy_content_same_ddt(rdtype, ((ptrdiff_t)(size - rank) * (ptrdiff_t)rcount),

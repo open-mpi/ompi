@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC. All Rights
  *                         reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -55,19 +55,17 @@ int ompi_coll_base_reduce_generic( const void* sendbuf, void* recvbuf, int origi
     char *inbuf[2] = {NULL, NULL}, *inbuf_free[2] = {NULL, NULL};
     char *accumbuf = NULL, *accumbuf_free = NULL;
     char *local_op_buffer = NULL, *sendtmpbuf = NULL;
-    ptrdiff_t extent, lower_bound, segment_increment;
+    ptrdiff_t extent, size, gap, segment_increment;
     ompi_request_t **sreq = NULL, *reqs[2] = {MPI_REQUEST_NULL, MPI_REQUEST_NULL};
     int num_segments, line, ret, segindex, i, rank;
     int recvcount, prevcount, inbi;
-    size_t typelng;
 
     /**
      * Determine number of segments and number of elements
      * sent per operation
      */
-    ompi_datatype_get_extent( datatype, &lower_bound, &extent );
-    ompi_datatype_type_size( datatype, &typelng );
-    num_segments = (int)(((size_t)original_count + (size_t)count_by_segment - (size_t)1) / (size_t)count_by_segment);
+    ompi_datatype_type_extent( datatype, &extent );
+    num_segments = (original_count + count_by_segment - 1) / count_by_segment;
     segment_increment = (ptrdiff_t)count_by_segment * extent;
 
     sendtmpbuf = (char*) sendbuf;
@@ -84,21 +82,19 @@ int ompi_coll_base_reduce_generic( const void* sendbuf, void* recvbuf, int origi
     /* non-leaf nodes - wait for children to send me data & forward up
        (if needed) */
     if( tree->tree_nextsize > 0 ) {
-        ptrdiff_t true_lower_bound, true_extent, real_segment_size;
-        ompi_datatype_get_true_extent( datatype, &true_lower_bound,
-                                       &true_extent );
+        ptrdiff_t real_segment_size;
 
         /* handle non existant recv buffer (i.e. its NULL) and
            protect the recv buffer on non-root nodes */
         accumbuf = (char*)recvbuf;
         if( (NULL == accumbuf) || (root != rank) ) {
             /* Allocate temporary accumulator buffer. */
-            accumbuf_free = (char*)malloc(true_extent +
-                                          (ptrdiff_t)(original_count - 1) * extent);
+            size = opal_datatype_span(&datatype->super, original_count, &gap);
+            accumbuf_free = (char*)malloc(size);
             if (accumbuf_free == NULL) {
                 line = __LINE__; ret = -1; goto error_hndl;
             }
-            accumbuf = accumbuf_free - lower_bound;
+            accumbuf = accumbuf_free - gap;
         }
 
         /* If this is a non-commutative operation we must copy
@@ -109,12 +105,12 @@ int ompi_coll_base_reduce_generic( const void* sendbuf, void* recvbuf, int origi
                                                 (char*)sendtmpbuf);
         }
         /* Allocate two buffers for incoming segments */
-        real_segment_size = true_extent + (ptrdiff_t)(count_by_segment - 1) * extent;
+        real_segment_size = opal_datatype_span(&datatype->super, count_by_segment, &gap);
         inbuf_free[0] = (char*) malloc(real_segment_size);
         if( inbuf_free[0] == NULL ) {
             line = __LINE__; ret = -1; goto error_hndl;
         }
-        inbuf[0] = inbuf_free[0] - lower_bound;
+        inbuf[0] = inbuf_free[0] - gap;
         /* if there is chance to overlap communication -
            allocate second buffer */
         if( (num_segments > 1) || (tree->tree_nextsize > 1) ) {
@@ -122,7 +118,7 @@ int ompi_coll_base_reduce_generic( const void* sendbuf, void* recvbuf, int origi
             if( inbuf_free[1] == NULL ) {
                 line = __LINE__; ret = -1; goto error_hndl;
             }
-            inbuf[1] = inbuf_free[1] - lower_bound;
+            inbuf[1] = inbuf_free[1] - gap;
         }
 
         /* reset input buffer index and receive count */
@@ -517,14 +513,13 @@ int ompi_coll_base_reduce_intra_in_order_binary( const void *sendbuf, void *recv
     use_this_sendbuf = (void *)sendbuf;
     use_this_recvbuf = recvbuf;
     if (io_root != root) {
-        ptrdiff_t tlb, text, lb, ext;
+        ptrdiff_t dsize, gap;
         char *tmpbuf = NULL;
 
-        ompi_datatype_get_extent(datatype, &lb, &ext);
-        ompi_datatype_get_true_extent(datatype, &tlb, &text);
+        dsize = opal_datatype_span(&datatype->super, count, &gap);
 
         if ((root == rank) && (MPI_IN_PLACE == sendbuf)) {
-            tmpbuf = (char *) malloc(text + (ptrdiff_t)(count - 1) * ext);
+            tmpbuf = (char *) malloc(dsize);
             if (NULL == tmpbuf) {
                 return MPI_ERR_INTERN;
             }
@@ -533,7 +528,7 @@ int ompi_coll_base_reduce_intra_in_order_binary( const void *sendbuf, void *recv
                                                 (char*)recvbuf);
             use_this_sendbuf = tmpbuf;
         } else if (io_root == rank) {
-            tmpbuf = (char *) malloc(text + (ptrdiff_t)(count - 1) * ext);
+            tmpbuf = (char *) malloc(dsize);
             if (NULL == tmpbuf) {
                 return MPI_ERR_INTERN;
             }
@@ -585,8 +580,6 @@ int ompi_coll_base_reduce_intra_in_order_binary( const void *sendbuf, void *recv
  * GEF Oct05 after asking Jeff.
  */
 
-/* copied function (with appropriate renaming) starts here */
-
 /*
  *  reduce_lin_intra
  *
@@ -603,7 +596,7 @@ ompi_coll_base_reduce_intra_basic_linear(const void *sbuf, void *rbuf, int count
                                          mca_coll_base_module_t *module)
 {
     int i, rank, err, size;
-    ptrdiff_t true_lb, true_extent, lb, extent;
+    ptrdiff_t extent, dsize, gap;
     char *free_buffer = NULL;
     char *pml_buffer = NULL;
     char *inplace_temp = NULL;
@@ -623,151 +616,27 @@ ompi_coll_base_reduce_intra_basic_linear(const void *sbuf, void *rbuf, int count
         return err;
     }
 
-    /* Root receives and reduces messages.  Allocate buffer to receive
-     * messages.  This comment applies to all collectives in this basic
-     * module where we allocate a temporary buffer.  For the next few
-     * lines of code, it's tremendously complicated how we decided that
-     * this was the Right Thing to do.  Sit back and enjoy.  And prepare
-     * to have your mind warped. :-)
-     *
-     * Recall some definitions (I always get these backwards, so I'm
-     * going to put them here):
-     *
-     * extent: the length from the lower bound to the upper bound -- may
-     * be considerably larger than the buffer required to hold the data
-     * (or smaller!  But it's easiest to think about when it's larger).
-     *
-     * true extent: the exact number of bytes required to hold the data
-     * in the layout pattern in the datatype.
-     *
-     * For example, consider the following buffer (just talking about
-     * true_lb, extent, and true extent -- extrapolate for true_ub:
-     *
-     * A              B                                       C
-     * --------------------------------------------------------
-     * |              |                                       |
-     * --------------------------------------------------------
-     *
-     * There are multiple cases:
-     *
-     * 1. A is what we give to MPI_Send (and friends), and A is where
-     * the data starts, and C is where the data ends.  In this case:
-     *
-     * - extent: C-A
-     * - true extent: C-A
-     * - true_lb: 0
-     *
-     * A                                                      C
-     * --------------------------------------------------------
-     * |                                                      |
-     * --------------------------------------------------------
-     * <=======================extent=========================>
-     * <======================true extent=====================>
-     *
-     * 2. A is what we give to MPI_Send (and friends), B is where the
-     * data starts, and C is where the data ends.  In this case:
-     *
-     * - extent: C-A
-     * - true extent: C-B
-     * - true_lb: positive
-     *
-     * A              B                                       C
-     * --------------------------------------------------------
-     * |              |           User buffer                 |
-     * --------------------------------------------------------
-     * <=======================extent=========================>
-     * <===============true extent=============>
-     *
-     * 3. B is what we give to MPI_Send (and friends), A is where the
-     * data starts, and C is where the data ends.  In this case:
-     *
-     * - extent: C-A
-     * - true extent: C-A
-     * - true_lb: negative
-     *
-     * A              B                                       C
-     * --------------------------------------------------------
-     * |              |           User buffer                 |
-     * --------------------------------------------------------
-     * <=======================extent=========================>
-     * <======================true extent=====================>
-     *
-     * 4. MPI_BOTTOM is what we give to MPI_Send (and friends), B is
-     * where the data starts, and C is where the data ends.  In this
-     * case:
-     *
-     * - extent: C-MPI_BOTTOM
-     * - true extent: C-B
-     * - true_lb: [potentially very large] positive
-     *
-     * MPI_BOTTOM     B                                       C
-     * --------------------------------------------------------
-     * |              |           User buffer                 |
-     * --------------------------------------------------------
-     * <=======================extent=========================>
-     * <===============true extent=============>
-     *
-     * So in all cases, for a temporary buffer, all we need to malloc()
-     * is a buffer of size true_extent.  We therefore need to know two
-     * pointer values: what value to give to MPI_Send (and friends) and
-     * what value to give to free(), because they might not be the same.
-     *
-     * Clearly, what we give to free() is exactly what was returned from
-     * malloc().  That part is easy.  :-)
-     *
-     * What we give to MPI_Send (and friends) is a bit more complicated.
-     * Let's take the 4 cases from above:
-     *
-     * 1. If A is what we give to MPI_Send and A is where the data
-     * starts, then clearly we give to MPI_Send what we got back from
-     * malloc().
-     *
-     * 2. If B is what we get back from malloc, but we give A to
-     * MPI_Send, then the buffer range [A,B) represents "dead space"
-     * -- no data will be put there.  So it's safe to give B-true_lb to
-     * MPI_Send.  More specifically, the true_lb is positive, so B-true_lb is
-     * actually A.
-     *
-     * 3. If A is what we get back from malloc, and B is what we give to
-     * MPI_Send, then the true_lb is negative, so A-true_lb will actually equal
-     * B.
-     *
-     * 4. Although this seems like the weirdest case, it's actually
-     * quite similar to case #2 -- the pointer we give to MPI_Send is
-     * smaller than the pointer we got back from malloc().
-     *
-     * Hence, in all cases, we give (return_from_malloc - true_lb) to MPI_Send.
-     *
-     * This works fine and dandy if we only have (count==1), which we
-     * rarely do.  ;-) So we really need to allocate (true_extent +
-     * ((count - 1) * extent)) to get enough space for the rest.  This may
-     * be more than is necessary, but it's ok.
-     *
-     * Simple, no?  :-)
-     *
-     */
-
-    ompi_datatype_get_extent(dtype, &lb, &extent);
-    ompi_datatype_get_true_extent(dtype, &true_lb, &true_extent);
+    dsize = opal_datatype_span(&dtype->super, count, &gap);
+    ompi_datatype_type_extent(dtype, &extent);
 
     if (MPI_IN_PLACE == sbuf) {
         sbuf = rbuf;
-        inplace_temp = (char*)malloc(true_extent + (count - 1) * extent);
+        inplace_temp = (char*)malloc(dsize);
         if (NULL == inplace_temp) {
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
-        rbuf = inplace_temp - true_lb;
+        rbuf = inplace_temp - gap;
     }
 
     if (size > 1) {
-        free_buffer = (char*)malloc(true_extent + (count - 1) * extent);
+        free_buffer = (char*)malloc(dsize);
         if (NULL == free_buffer) {
             if (NULL != inplace_temp) {
                 free(inplace_temp);
             }
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
-        pml_buffer = free_buffer - true_lb;
+        pml_buffer = free_buffer - gap;
     }
 
     /* Initialize the receive buffer. */
@@ -823,4 +692,3 @@ ompi_coll_base_reduce_intra_basic_linear(const void *sbuf, void *rbuf, int count
     return MPI_SUCCESS;
 }
 
-/* copied function (with appropriate renaming) ends here */
