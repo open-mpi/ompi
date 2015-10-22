@@ -56,7 +56,7 @@ mca_mtl_ofi_component_t mca_mtl_ofi_component = {
 static int
 ompi_mtl_ofi_component_register(void)
 {
-    param_priority = 10;   /* for now give a lower priority than the psm mtl and ob1 */
+    param_priority = 25;   /* for now give a lower priority than the psm mtl */
     mca_base_component_var_register(&mca_mtl_ofi_component.super.mtl_version,
                                     "priority", "Priority of the OFI MTL component",
                                     MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
