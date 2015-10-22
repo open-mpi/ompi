@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2013-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  * 
@@ -108,11 +108,20 @@ OPAL_DECLSPEC int mca_base_close(void);
 /**
  * A generic select function
  *
+ * The _new version is a 1.10.x only function. It is the version available
+ * 2.0.0 and beyond. The old version calls the new version with NULL for
+ * priority_out.
  */
-OPAL_DECLSPEC int mca_base_select(const char *type_name, int output_id,
-                                  opal_list_t *components_available,
-                                  mca_base_module_t **best_module,
-                                  mca_base_component_t **best_component);
+OPAL_DECLSPEC int mca_base_select_new (const char *type_name, int output_id,
+                                       opal_list_t *components_available,
+                                       mca_base_module_t **best_module,
+                                       mca_base_component_t **best_component,
+                                       int *priority_out);
+
+OPAL_DECLSPEC int mca_base_select (const char *type_name, int output_id,
+                                   opal_list_t *components_available,
+                                   mca_base_module_t **best_module,
+                                   mca_base_component_t **best_component);
 
 /**
  * A function for component query functions to discover if they have
