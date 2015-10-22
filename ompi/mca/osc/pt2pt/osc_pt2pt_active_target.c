@@ -321,6 +321,9 @@ int ompi_osc_pt2pt_complete (ompi_win_t *win)
 
     peers = sync->peer_list.peers;
 
+    /* need to reset the sync here to avoid processing incorrect post messages */
+    ompi_osc_pt2pt_sync_reset (sync);
+
     OPAL_THREAD_UNLOCK(&module->lock);
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
@@ -395,8 +398,6 @@ int ompi_osc_pt2pt_complete (ompi_win_t *win)
     while (module->outgoing_frag_count != module->outgoing_frag_signal_count) {
         opal_condition_wait(&module->cond, &module->lock);
     }
-
-    ompi_osc_pt2pt_sync_reset (sync);
 
     /* unlock here, as group cleanup can take a while... */
     OPAL_THREAD_UNLOCK(&module->lock);
