@@ -316,7 +316,7 @@ static void *udcm_cq_event_dispatch(int fd, int flags, void *context);
 static void *udcm_message_callback (int fd, int flags, void *context);
 
 static void udcm_set_message_timeout (udcm_message_sent_t *message);
-static void udcm_cancel_message_timeout (udcm_message_sent_t *message);
+static void udcm_free_message (udcm_message_sent_t *message);
 
 static int udcm_module_init (udcm_module_t *m, mca_btl_openib_module_t *btl);
 
@@ -1660,7 +1660,7 @@ static int udcm_send_request (mca_btl_base_endpoint_t *lcl_ep,
     if (0 != (rc = udcm_post_send (lcl_ep, msg->data, m->msg_length, 0))) {
         BTL_VERBOSE(("error posting REQ"));
 
-        udcm_cancel_message_timeout (msg);
+        udcm_free_message (msg);
 
         return rc;
     }
@@ -1683,7 +1683,7 @@ static int udcm_send_complete (mca_btl_base_endpoint_t *lcl_ep,
     if (0 != rc) {
         BTL_VERBOSE(("error posting complete"));
 
-        udcm_cancel_message_timeout (msg);
+        udcm_free_message (msg);
 
         return rc;
     }
@@ -1709,7 +1709,7 @@ static int udcm_send_reject (mca_btl_base_endpoint_t *lcl_ep,
     if (0 != rc) {
         BTL_VERBOSE(("error posting rejection"));
 
-        udcm_cancel_message_timeout (msg);
+        udcm_free_message (msg);
 
         return rc;
     }
@@ -2185,10 +2185,8 @@ static void udcm_sent_message_destructor (udcm_message_sent_t *message)
         free (message->data);
     }
 
-    if (message->event_active) {
-        opal_event_evtimer_del (&message->event);
-        message->event_active = false;
-    }
+    opal_event_evtimer_del (&message->event);
+    message->event_active = false;
 }
 
 /* mark: message timeout code */
@@ -2266,21 +2264,22 @@ static void udcm_set_message_timeout (udcm_message_sent_t *message)
     opal_mutex_unlock (&m->cm_timeout_lock);
 }
 
-static void udcm_cancel_message_timeout (udcm_message_sent_t *message)
+static void udcm_free_message (udcm_message_sent_t *message)
 {
     udcm_module_t *m = UDCM_ENDPOINT_MODULE(message->endpoint);
 
-    BTL_VERBOSE(("cancelling timeout for message %p", (void *) message));
+    BTL_VERBOSE(("releasing message %p", (void *) message));
 
     opal_mutex_lock (&m->cm_timeout_lock);
 
-    opal_list_remove_item (&m->flying_messages, &message->super);
-
-    /* start the event */
-    opal_event_evtimer_del (&message->event);
-    message->event_active = false;
+    if (message->event_active) {
+        opal_list_remove_item (&m->flying_messages, &message->super);
+        message->event_active = false;
+    }
 
     opal_mutex_unlock (&m->cm_timeout_lock);
+
+    OBJ_RELEASE(message);
 }
 
 /* mark: xrc connection support */
@@ -2798,7 +2797,7 @@ static int udcm_xrc_send_request (mca_btl_base_endpoint_t *lcl_ep, mca_btl_base_
     if (0 != (rc = udcm_post_send (lcl_ep, msg->data, sizeof (udcm_msg_hdr_t), 0))) {
         BTL_VERBOSE(("error posting XREQ"));
 
-        udcm_cancel_message_timeout (msg);
+        udcm_free_message (msg);
 
         return rc;
     }
@@ -2851,7 +2850,7 @@ static int udcm_xrc_send_xresponse (mca_btl_base_endpoint_t *lcl_ep, mca_btl_bas
     if (0 != rc) {
         BTL_VERBOSE(("error posting complete"));
 
-        udcm_cancel_message_timeout (msg);
+        udcm_free_message (msg);
 
         return rc;
     }
