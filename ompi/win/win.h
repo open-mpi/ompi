@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
- * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2013-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * $COPYRIGHT$
  * 
@@ -56,6 +56,9 @@ struct ompi_win_t {
 
     /* Information about the state of the window.  */
     uint16_t w_flags;
+
+    /* Window flavor (chocolate, vanilla, etc) */
+    int16_t w_flavor;
 
     /* Attributes */
     opal_hash_table_t *w_keyhash;
