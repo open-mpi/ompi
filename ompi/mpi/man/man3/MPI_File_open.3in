@@ -82,9 +82,10 @@ communicator group. MPI_File_open is a collective routine; all processes
 must provide the same value for
 .I amode,
 and all processes must provide filenames that reference the same
-file and which are textually identical. A process can open a file
-independently of other processes by using the MPI_COMM_SELF
-communicator. The file handle returned,
+file and which are textually identical. Depending on OpenMPI configuration
+some characters (in addition to e.g. zero byte) cannot appear in a filename.
+A process can open a file independently of other processes by using the
+MPI_COMM_SELF communicator. The file handle returned,
 .I fh,
 can be subsequently used to access the file until the file is closed
 using MPI_File_close. Before calling MPI_Finalize, the user is required to
