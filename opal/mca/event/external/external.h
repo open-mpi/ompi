@@ -1,6 +1,7 @@
 /*
- * Copyright (c) 2011-2013 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2011-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights reserved.
+ * Copyright (c) 2015      Intel, Inc. All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -27,7 +28,7 @@ BEGIN_C_DECLS
 typedef struct event_base opal_event_base_t;
 typedef struct event opal_event_t;
 
-OPAL_DECLSPEC extern opal_event_base_t *opal_event_base;
+OPAL_DECLSPEC extern opal_event_base_t *opal_sync_event_base;
 
 #define OPAL_EV_TIMEOUT EV_TIMEOUT
 #define OPAL_EV_READ    EV_READ

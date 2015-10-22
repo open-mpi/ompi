@@ -238,10 +238,10 @@ int main(int argc, char *argv[])
     /* Set signal handlers to catch kill signals so we can properly clean up
      * after ourselves.
      */
-    opal_event_set(opal_event_base, &term_handler, SIGTERM, OPAL_EV_SIGNAL,
+    opal_event_set(orte_event_base, &term_handler, SIGTERM, OPAL_EV_SIGNAL,
                    shutdown_callback, NULL);
     opal_event_add(&term_handler, NULL);
-    opal_event_set(opal_event_base, &int_handler, SIGINT, OPAL_EV_SIGNAL,
+    opal_event_set(orte_event_base, &int_handler, SIGINT, OPAL_EV_SIGNAL,
                    shutdown_callback, NULL);
     opal_event_add(&int_handler, NULL);
 
