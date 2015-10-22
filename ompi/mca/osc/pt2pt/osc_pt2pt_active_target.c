@@ -339,8 +339,7 @@ int ompi_osc_pt2pt_complete (ompi_win_t *win)
     for (size_t i = 0 ; i < group_size ; ++i) {
         ompi_osc_pt2pt_header_complete_t complete_req;
         int rank = peers[i]->rank;
-        ompi_proc_t *proc = ompi_comm_peer_lookup (module->comm, rank);
-        
+
         if (my_rank == rank) {
             /* shortcut for self */
             osc_pt2pt_incoming_complete (module, rank, 0);
@@ -349,12 +348,14 @@ int ompi_osc_pt2pt_complete (ompi_win_t *win)
 
         complete_req.base.type = OMPI_OSC_PT2PT_HDR_TYPE_COMPLETE;
         complete_req.base.flags = OMPI_OSC_PT2PT_HDR_FLAG_VALID;
-#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT && OPAL_ENABLE_DEBUG
+        complete_req.frag_count = module->epoch_outgoing_frag_count[rank];
+#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
+#if OPAL_ENABLE_DEBUG
         complete_req.padding[0] = 0;
         complete_req.padding[1] = 0;
 #endif
-        complete_req.frag_count = module->epoch_outgoing_frag_count[rank];
-        osc_pt2pt_hton(&complete_req, proc);
+        osc_pt2pt_hton(&complete_req, ompi_comm_peer_lookup (module->comm, rank));
+#endif
 
         ompi_osc_pt2pt_peer_t *peer = ompi_osc_pt2pt_peer_lookup (module, rank);
 
