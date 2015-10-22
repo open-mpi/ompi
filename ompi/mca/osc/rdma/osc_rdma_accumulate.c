@@ -668,7 +668,7 @@ static inline int cas_rdma (ompi_osc_rdma_sync_t *sync, const void *source_buffe
             break;
         }
 
-        if (OPAL_UNLIKELY(OPAL_ERR_OUT_OF_RESOURCE != ret || OPAL_ERR_TEMP_OUT_OF_RESOURCE != ret)) {
+        if (OPAL_UNLIKELY(OPAL_ERR_OUT_OF_RESOURCE != ret && OPAL_ERR_TEMP_OUT_OF_RESOURCE != ret)) {
             ompi_osc_rdma_frag_complete (frag);
             return ret;
         }
