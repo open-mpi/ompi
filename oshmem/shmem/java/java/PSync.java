@@ -10,6 +10,7 @@ private long handle;
 /**
  * Allocates a symmetric work array.
  * @param size Number of elements in the work array.
+ * @throws ShMemException Allocation error.
  */
 public PSync(int size) throws ShMemException
 {
