@@ -91,6 +91,7 @@ int ompi_osc_rdma_attach (struct ompi_win_t *win, void *base, size_t len)
     ompi_osc_rdma_region_t *region;
     osc_rdma_counter_t region_count;
     osc_rdma_counter_t region_id;
+    void *bound;
     intptr_t page_size = getpagesize ();
     int region_index;
     int ret;
@@ -116,9 +117,15 @@ int ompi_osc_rdma_attach (struct ompi_win_t *win, void *base, size_t len)
         return OMPI_ERR_RMA_ATTACH;
     }
 
+    /* it is wasteful to register less than a page. this may allow the remote side to access more
+     * memory but the MPI standard covers this with calling the calling behavior erroneous */
+    bound = (void *)OPAL_ALIGN((intptr_t) base + len, page_size, intptr_t);
+    base = (void *)((intptr_t) base & ~(page_size - 1));
+    len = (size_t)((intptr_t) bound - (intptr_t) base);
+
     /* see if a matching region already exists */
     region = ompi_osc_rdma_find_region_containing ((ompi_osc_rdma_region_t *) module->state->regions, 0, region_count - 1, (intptr_t) base,
-                                                   (intptr_t) base + len, module->region_size, &region_index);
+                                                   (intptr_t) bound, module->region_size, &region_index);
     if (NULL != region) {
         ++module->dynamic_handles[region_index].refcnt;
         OPAL_THREAD_UNLOCK(&module->lock);
@@ -150,10 +157,8 @@ int ompi_osc_rdma_attach (struct ompi_win_t *win, void *base, size_t len)
         region = (ompi_osc_rdma_region_t *) module->state->regions;
     }
 
-    /* it is wasteful to register less than a page. this may allow the remote side to access more
-     * memory but the MPI standard covers this with calling the calling behavior erroneous */
-    region->base = OPAL_ALIGN((intptr_t) base - page_size + 1, page_size, intptr_t);
-    region->len  = OPAL_ALIGN(len, page_size, size_t);
+    region->base = (intptr_t) base;
+    region->len  = len;
 
     OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_DEBUG, "attaching dynamic memory region {%p, %p} at index %d",
                      base, (void *)((intptr_t) base + len), region_index);
@@ -365,13 +370,19 @@ int ompi_osc_rdma_find_dynamic_region (ompi_osc_rdma_module_t *module, ompi_osc_
     OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "locating dynamic memory region matching: {%" PRIx64 ", %" PRIx64 "}"
                      " (len %lu)", base, base + len, (unsigned long) len);
 
-    ret = ompi_osc_rdma_refresh_dynamic_region (module, dy_peer);
-    if (OMPI_SUCCESS != ret) {
-        return ret;
-    }
+    if (!ompi_osc_rdma_peer_local_state (peer)) {
+        ret = ompi_osc_rdma_refresh_dynamic_region (module, dy_peer);
+        if (OMPI_SUCCESS != ret) {
+            return ret;
+        }
 
-    regions = dy_peer->regions;
-    region_count = dy_peer->region_count;
+        regions = dy_peer->regions;
+        region_count = dy_peer->region_count;
+    } else {
+        ompi_osc_rdma_state_t *peer_state = (ompi_osc_rdma_state_t *) peer->state;
+        regions = (ompi_osc_rdma_region_t *) peer_state->regions;
+        region_count = peer_state->region_count;
+    }
 
     *region = ompi_osc_rdma_find_region_containing (regions, 0, region_count - 1, (intptr_t) base, bound, module->region_size, NULL);
     if (!*region) {
