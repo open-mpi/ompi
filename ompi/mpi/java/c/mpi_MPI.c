@@ -78,7 +78,7 @@
 
 ompi_java_globals_t ompi_java = {0};
 int ompi_mpi_java_eager = 65536;
-opal_free_list_t ompi_java_buffers = {{0}};
+opal_free_list_t ompi_java_buffers = {{{0}}};
 static void *libmpi = NULL;
 
 static void bufferConstructor(ompi_java_buffer_t *item)
@@ -1021,7 +1021,7 @@ void ompi_java_getDatatypeArray(JNIEnv *env, jlongArray array,
 void ompi_java_forgetDatatypeArray(JNIEnv *env, jlongArray array,
                               jlong *jptr, MPI_Datatype *cptr)
 {
-    if(jptr != cptr)
+    if((long)jptr != (long)cptr)
         free(cptr);
 
     (*env)->ReleaseLongArrayElements(env, array, jptr, JNI_ABORT);

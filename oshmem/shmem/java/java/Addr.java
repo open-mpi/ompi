@@ -26,6 +26,7 @@ private Addr()
  * Allocates a block of memory in the symmetric heap of the calling PE.
  * <p>Java binding of {@code shmalloc}.
  * @param size Size of the requested memory block, in bytes.
+ * @throws ShMemException Allocation error.
  */
 public Addr(int size) throws ShMemException
 {
@@ -41,6 +42,7 @@ private native ByteBuffer malloc(int size);
  * <p>Java binding of {@code shmemalign}.
  * @param align Size of the alignment block, in bytes.
  * @param size  Size for the memory block, in bytes.
+ * @throws ShMemException Allocation error.
  */
 public Addr(int align, int size) throws ShMemException
 {
@@ -54,6 +56,7 @@ private native ByteBuffer memalign(int align, int size);
  * Expands or reduces the size of the block.
  * <p>Java binding of {@code shrealloc}.
  * @param size New size for the memory block, in bytes.
+ * @throws ShMemException Allocation error.
  */
 public void realloc(int size) throws ShMemException
 {
