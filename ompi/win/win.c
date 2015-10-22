@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc. All rights reserved.
  * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2013-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -119,7 +119,7 @@ int ompi_win_finalize(void)
     return OMPI_SUCCESS;
 }
 
-static int alloc_window(struct ompi_communicator_t *comm, ompi_info_t *info, ompi_win_t **win_out)
+static int alloc_window(struct ompi_communicator_t *comm, ompi_info_t *info, int flavor, ompi_win_t **win_out)
 {
     ompi_win_t *win;
     ompi_group_t *group;
@@ -140,6 +140,7 @@ static int alloc_window(struct ompi_communicator_t *comm, ompi_info_t *info, omp
     }
 
     win->w_acc_ops = acc_ops;
+    win->w_flavor = flavor;
 
     /* setup data that is independent of osc component */
     group = comm->c_local_group;
@@ -199,7 +200,7 @@ ompi_win_create(void *base, size_t size,
     int model;
     int ret;
 
-    ret = alloc_window (comm, info, &win);
+    ret = alloc_window (comm, info, MPI_WIN_FLAVOR_CREATE, &win);
     if (OMPI_SUCCESS != ret) {
         return ret;
     }
@@ -231,7 +232,7 @@ ompi_win_allocate(size_t size, int disp_unit, ompi_info_t *info,
     int ret;
     void *base;
 
-    ret = alloc_window (comm, info, &win);
+    ret = alloc_window (comm, info, MPI_WIN_FLAVOR_ALLOCATE, &win);
     if (OMPI_SUCCESS != ret) {
         return ret;
     }
@@ -264,7 +265,7 @@ ompi_win_allocate_shared(size_t size, int disp_unit, ompi_info_t *info,
     int ret;
     void *base;
 
-    ret = alloc_window (comm, info, &win);
+    ret = alloc_window (comm, info, MPI_WIN_FLAVOR_SHARED, &win);
     if (OMPI_SUCCESS != ret) {
         return ret;
     }
@@ -295,7 +296,7 @@ ompi_win_create_dynamic(ompi_info_t *info, ompi_communicator_t *comm, ompi_win_t
     int model;
     int ret;
 
-    ret = alloc_window (comm, info, &win);
+    ret = alloc_window (comm, info, MPI_WIN_FLAVOR_DYNAMIC, &win);
     if (OMPI_SUCCESS != ret) {
         return ret;
     }
