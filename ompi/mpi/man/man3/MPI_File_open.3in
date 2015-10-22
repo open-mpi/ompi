@@ -1,6 +1,6 @@
 .\" -*- nroff -*-
 .\" Copyright 2013 Los Alamos National Security, LLC. All rights reserved.
-.\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
+.\" Copyright (c) 2010-2015 Cisco Systems, Inc.  All rights reserved.
 .\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .\" Copyright 2015      Research Organization for Information Science
@@ -82,9 +82,12 @@ communicator group. MPI_File_open is a collective routine; all processes
 must provide the same value for
 .I amode,
 and all processes must provide filenames that reference the same
-file and which are textually identical. A process can open a file
-independently of other processes by using the MPI_COMM_SELF
-communicator. The file handle returned,
+file which are textually identical (note: Open MPI I/O plugins may
+have restrictions on characters that can be used in filenames. For
+example, the ROMIO plugin may disallow the colon (":") character from
+appearing in a filename). A process can open a file independently of
+other processes by using the MPI_COMM_SELF communicator. The file
+handle returned,
 .I fh,
 can be subsequently used to access the file until the file is closed
 using MPI_File_close. Before calling MPI_Finalize, the user is required to
