@@ -13,6 +13,7 @@
  * Copyright (c) 2009      Sun Microsystems, Inc. All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Bull SAS.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -271,7 +272,10 @@ int32_t ompi_datatype_create_darray(int size,
 
             rc = ompi_datatype_create_struct(3, blength, displs, types, newtype);
         } else {
-            ompi_datatype_create_resized(lastType, displs[1], displs[2], newtype);
+            MPI_Aint displs_hindexed[1]={displs[1]};
+            int blength_hindexed[1]={1};
+
+            rc = ompi_datatype_create_hindexed( 1, blength_hindexed, displs_hindexed, lastType, newtype);
         }
         ompi_datatype_destroy(&lastType);
         /* need to destroy the old type even in error condition, so
