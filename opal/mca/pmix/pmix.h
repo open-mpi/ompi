@@ -140,8 +140,12 @@ extern int opal_pmix_base_exchange(opal_value_t *info,
         _info->data.flag = true;                                                         \
         opal_list_append(&(_ilist), &(_info)->super);                                    \
         if (OPAL_SUCCESS == ((r) = opal_pmix.get((p), (s), &(_ilist), &(_kv)))) {        \
-            (r) = opal_value_unload(_kv, (void**)(d), (t));                              \
-            OBJ_RELEASE(_kv);                                                            \
+            if (NULL == _kv) {                                                           \
+                (r) = OPAL_ERR_NOT_FOUND;                                                \
+            } else {                                                                     \
+                (r) = opal_value_unload(_kv, (void**)(d), (t));                          \
+                OBJ_RELEASE(_kv);                                                        \
+            }                                                                            \
         }                                                                                \
         OPAL_LIST_DESTRUCT(&(_ilist));                                                   \
     } while(0);
@@ -167,8 +171,12 @@ extern int opal_pmix_base_exchange(opal_value_t *info,
                             __FILE__, __LINE__,                                 \
                             OPAL_NAME_PRINT(*(p)), (s)));                       \
         if (OPAL_SUCCESS == ((r) = opal_pmix.get((p), (s), NULL, &(_kv)))) {    \
-            (r) = opal_value_unload(_kv, (void**)(d), (t));                     \
-            OBJ_RELEASE(_kv);                                                   \
+            if (NULL == _kv) {                                                  \
+                (r) = OPAL_ERR_NOT_FOUND;                                       \
+            } else {                                                            \
+                (r) = opal_value_unload(_kv, (void**)(d), (t));                 \
+                OBJ_RELEASE(_kv);                                               \
+           }                                                                    \
         }                                                                       \
     } while(0);
 
@@ -193,14 +201,19 @@ extern int opal_pmix_base_exchange(opal_value_t *info,
                             OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),                 \
                             __FILE__, __LINE__,                                 \
                             OPAL_NAME_PRINT(*(p)), (s)));                       \
-        if (OPAL_SUCCESS == ((r) = opal_pmix.get((p), (s), NULL, &(_kv))) &&    \
-            NULL != _kv) {                                                      \
-            *(d) = _kv->data.bo.bytes;                                          \
-            *(sz) = _kv->data.bo.size;                                          \
-            _kv->data.bo.bytes = NULL; /* protect the data */                   \
-            OBJ_RELEASE(_kv);                                                   \
+        if (OPAL_SUCCESS == ((r) = opal_pmix.get((p), (s), NULL, &(_kv)))) {    \
+            if (NULL == _kv) {                                                  \
+                *(sz) = 0;                                                      \
+                (r) = OPAL_ERR_NOT_FOUND;                                       \
+            } else {                                                            \
+                *(d) = _kv->data.bo.bytes;                                      \
+                *(sz) = _kv->data.bo.size;                                      \
+                _kv->data.bo.bytes = NULL; /* protect the data */               \
+                OBJ_RELEASE(_kv);                                               \
+            }                                                                   \
         } else {                                                                \
             *(sz) = 0;                                                          \
+            (r) = OPAL_ERR_NOT_FOUND;                                           \
         }                                                                       \
     } while(0);
 
