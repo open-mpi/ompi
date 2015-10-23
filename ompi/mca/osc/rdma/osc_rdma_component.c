@@ -326,7 +326,7 @@ static int ompi_osc_rdma_initialize_region (ompi_osc_rdma_module_t *module, void
     region->len = size;
 
     if (module->selected_btl->btl_register_mem && size) {
-        if (MPI_WIN_FLAVOR_ALLOCATE != module->flavor) {
+        if (MPI_WIN_FLAVOR_ALLOCATE != module->flavor || NULL == module->state_handle) {
             ret = ompi_osc_rdma_register (module, MCA_BTL_ENDPOINT_ANY, *base, size, MCA_BTL_REG_FLAG_ACCESS_ANY,
                                           &module->base_handle);
             if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
@@ -450,6 +450,7 @@ static int allocate_state_shared (ompi_osc_rdma_module_t *module, void **base, s
     size_t local_rank_array_size, leader_peer_data_size;
     int my_rank = ompi_comm_rank (module->comm);
     int global_size = ompi_comm_size (module->comm);
+    ompi_osc_rdma_region_t *state_region;
     int my_base_offset = 0;
     struct _local_data *temp;
     char *data_file;
@@ -470,8 +471,8 @@ static int allocate_state_shared (ompi_osc_rdma_module_t *module, void **base, s
     leader_peer_data_size = module->region_size * module->node_count;
 
     /* calculate base offsets */
-    module->state_offset = state_base = local_rank_array_size;
-    data_base = local_rank_array_size + leader_peer_data_size + module->state_size * local_size;
+    module->state_offset = state_base = local_rank_array_size + module->region_size;
+    data_base = state_base + leader_peer_data_size + module->state_size * local_size;
 
     do {
         temp = calloc (local_size, sizeof (temp[0]));
@@ -533,12 +534,13 @@ static int allocate_state_shared (ompi_osc_rdma_module_t *module, void **base, s
             break;
         }
 
-        module->rank_array = (ompi_osc_rdma_rank_data_t *) module->segment_base;
-
         if (size && MPI_WIN_FLAVOR_ALLOCATE == module->flavor) {
             *base = (void *)((intptr_t) module->segment_base + my_base_offset);
         }
 
+        module->rank_array = (ompi_osc_rdma_rank_data_t *) module->segment_base;
+        /* put local state region data after the rank array */
+        state_region = (ompi_osc_rdma_region_t *) ((uintptr_t) module->segment_base + local_rank_array_size);
         module->state = (ompi_osc_rdma_state_t *) ((uintptr_t) module->segment_base + state_base + module->state_size * local_rank);
 
         /* all local ranks share the array containing the peer data of leader ranks */
@@ -547,11 +549,18 @@ static int allocate_state_shared (ompi_osc_rdma_module_t *module, void **base, s
         /* initialize my state */
         memset (module->state, 0, module->state_size);
 
-        /* just go ahead and register the whole segment */
-        ret = ompi_osc_rdma_register (module, MCA_BTL_ENDPOINT_ANY, module->segment_base, total_size, MCA_BTL_REG_FLAG_ACCESS_ANY,
-                                      &module->state_handle);
-        if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
-            break;
+        if (0 == local_rank) {
+            /* just go ahead and register the whole segment */
+            ret = ompi_osc_rdma_register (module, MCA_BTL_ENDPOINT_ANY, module->segment_base, total_size, MCA_BTL_REG_FLAG_ACCESS_ANY,
+                                          &module->state_handle);
+            if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
+                break;
+            }
+
+            state_region->base = (intptr_t) module->segment_base;
+            if (module->state_handle) {
+                memcpy (state_region->btl_handle_data, module->state_handle, module->selected_btl->btl_registration_handle_size);
+            }
         }
 
         if (MPI_WIN_FLAVOR_DYNAMIC != module->flavor) {
@@ -572,6 +581,7 @@ static int allocate_state_shared (ompi_osc_rdma_module_t *module, void **base, s
         offset = data_base;
         for (int i = 0 ; i < local_size ; ++i) {
             ompi_osc_rdma_peer_extended_t *ex_peer;
+            ompi_osc_rdma_state_t *peer_state;
             ompi_osc_rdma_peer_t *peer;
             int peer_rank = temp[i].rank;
 
@@ -582,21 +592,24 @@ static int allocate_state_shared (ompi_osc_rdma_module_t *module, void **base, s
 
             ex_peer = (ompi_osc_rdma_peer_extended_t *) peer;
 
-            peer->state = (osc_rdma_counter_t) ((uintptr_t) module->segment_base + state_base + module->state_size * i);
+            /* peer state local pointer */
+            peer_state = (ompi_osc_rdma_state_t *) ((uintptr_t) module->segment_base + state_base + module->state_size * i);
 
             if (local_size == global_size || (module->selected_btl->btl_flags & MCA_BTL_ATOMIC_SUPPORTS_GLOB)) {
                 /* all peers are local or it is safe to mix cpu and nic atomics */
                 peer->flags |= OMPI_OSC_RDMA_PEER_LOCAL_STATE;
+                peer->state = (osc_rdma_counter_t) peer_state;
             } else {
                 /* use my endpoint handle to modify the peer's state */
-                peer->state_handle = module->state_handle;
-                peer->state_endpoint = ompi_osc_rdma_peer_btl_endpoint (module, my_rank);
+                if (module->selected_btl->btl_register_mem) {
+                    peer->state_handle = (mca_btl_base_registration_handle_t *) state_region->btl_handle_data;
+                }
+                peer->state = (osc_rdma_counter_t) ((uintptr_t) state_region->base + state_base + module->state_size * i);
+                peer->state_endpoint = ompi_osc_rdma_peer_btl_endpoint (module, peer_rank);
             }
 
             /* finish setting up the local peer structure */
             if (MPI_WIN_FLAVOR_DYNAMIC != module->flavor) {
-                ompi_osc_rdma_state_t *peer_state = (ompi_osc_rdma_state_t *) (intptr_t) peer->state;
-
                 if (!module->same_disp_unit) {
                     ex_peer->disp_unit = peer_state->disp_unit;
                 }
@@ -1050,8 +1063,6 @@ static int ompi_osc_rdma_component_select (struct ompi_win_t *win, void **base, 
 
     /* calculate and store various structure sizes */
 
-    /* the following two structures have similar usage but the later is meant to be a small as possible. they may
-     * be merged into a single structure in a later version of this component. */
     module->region_size = module->selected_btl->btl_registration_handle_size + sizeof (ompi_osc_rdma_region_t);
 
     module->state_size = sizeof (ompi_osc_rdma_state_t);
