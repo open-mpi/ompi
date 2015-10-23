@@ -12,6 +12,7 @@
  *                         reserved.
  * Copyright (c) 2010      IBM Corporation.  All rights reserved.
  * Copyright (c) 2012-2013 Sandia National Laboratories.  All rights reserved.
+ * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -183,7 +184,7 @@ int ompi_osc_rdma_post_atomic (ompi_group_t *group, int assert, ompi_win_t *win)
     osc_rdma_counter_t *temp;
     int ret;
 
-    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "post: %p, %d, %s", group, assert, win->w_name);
+    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "post: %p, %d, %s", (void*) group, assert, win->w_name);
 
     /* check if we are already in a post epoch */
     if (module->pw_group) {
@@ -327,7 +328,7 @@ int ompi_osc_rdma_start_atomic (ompi_group_t *group, int assert, ompi_win_t *win
     ompi_osc_rdma_sync_t *sync = &module->all_sync;
     int group_size = ompi_group_size (group);
 
-    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "start: %p, %d, %s", group, assert,
+    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "start: %p, %d, %s", (void*) group, assert,
                      win->w_name);
 
     OPAL_THREAD_LOCK(&module->lock);
