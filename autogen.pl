@@ -7,6 +7,8 @@
 # Copyright (c) 2013-2014 Intel, Inc.  All rights reserved.
 # Copyright (c) 2015      Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
+# Copyright (c) 2015      IBM Corporation.  All rights reserved.
+#
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -979,6 +981,19 @@ sub patch_autotools_output {
 
     push(@verbose_out, $indent_str . "Patching configure for IBM xlf libtool bug\n");
     $c =~ s/(\$LD -shared \$libobjs \$deplibs \$)compiler_flags( -soname \$soname)/$1linker_flags$2/g;
+
+    #Check if we are using a recent enough libtool that supports PowerPC little endian
+    if(index($c, 'powerpc64le-*linux*)') == -1) {
+        push(@verbose_out, $indent_str . "Patching configure for PowerPC little endian support\n");
+        my $replace_string = "x86_64-*kfreebsd*-gnu|x86_64-*linux*|powerpc*-*linux*|";
+        $c =~ s/x86_64-\*kfreebsd\*-gnu\|x86_64-\*linux\*\|ppc\*-\*linux\*\|powerpc\*-\*linux\*\|/$replace_string/g;
+        $replace_string =
+        "powerpc64le-*linux*)\n\t    LD=\"\${LD-ld} -m elf32lppclinux\"\n\t    ;;\n\t  powerpc64-*linux*)";
+        $c =~ s/ppc64-\*linux\*\|powerpc64-\*linux\*\)/$replace_string/g;
+        $replace_string =
+        "powerpcle-*linux*)\n\t    LD=\"\${LD-ld} -m elf64lppc\"\n\t    ;;\n\t  powerpc-*linux*)";
+        $c =~ s/ppc\*-\*linux\*\|powerpc\*-\*linux\*\)/$replace_string/g;
+    }
 
     # Fix consequence of broken libtool.m4
     # see http://lists.gnu.org/archive/html/bug-libtool/2015-07/msg00002.html and
