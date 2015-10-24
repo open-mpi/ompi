@@ -79,7 +79,7 @@ void mca_mpool_gpusm_module_init(mca_mpool_gpusm_module_t* mpool)
     mpool->super.mpool_deregister = mca_mpool_gpusm_deregister;
     mpool->super.mpool_release_memory = NULL;
     mpool->super.mpool_finalize = mca_mpool_gpusm_finalize;
-    mpool->super.mpool_ft_event = mca_mpool_gpusm_ft_event;
+    mpool->super.mpool_ft_event = NULL;
     mpool->super.rcache = NULL;
     mpool->super.flags = 0;
 
@@ -193,8 +193,4 @@ void mca_mpool_gpusm_finalize(struct mca_mpool_base_module_t *mpool)
 
     OBJ_DESTRUCT(&mpool_gpusm->reg_list);
     return;
-}
-
-int mca_mpool_gpusm_ft_event(int state) {
-    return OPAL_SUCCESS;
 }

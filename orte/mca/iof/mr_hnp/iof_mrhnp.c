@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2012-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
@@ -59,8 +59,6 @@ static void mrhnp_complete(const orte_job_t *jdata);
 
 static int finalize(void);
 
-static int mrhnp_ft_event(int state);
-
 /* The API's in this module are solely used to support LOCAL
  * procs - i.e., procs that are co-located to the HNP. Remote
  * procs interact with the HNP's IOF via the HNP's receive function,
@@ -74,7 +72,7 @@ orte_iof_base_module_t orte_iof_mrhnp_module = {
     mrhnp_close,
     mrhnp_complete,
     finalize,
-    mrhnp_ft_event
+    NULL
 };
 
 /* Initialize the module */
@@ -580,14 +578,6 @@ static int finalize(void)
 
     return ORTE_SUCCESS;
 }
-
-int mrhnp_ft_event(int state) {
-    /*
-     * Replica doesn't need to do anything for a checkpoint
-     */
-    return ORTE_SUCCESS;
-}
-
 
 static void stdin_write_handler(int fd, short event, void *cbdata)
 {

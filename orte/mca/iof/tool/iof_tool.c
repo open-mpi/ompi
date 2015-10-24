@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2011-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
@@ -54,8 +54,6 @@ static int tool_close(const orte_process_name_t* peer,
 
 static int finalize(void);
 
-static int tool_ft_event(int state);
-
 orte_iof_base_module_t orte_iof_tool_module = {
     init,
     tool_push,
@@ -63,7 +61,7 @@ orte_iof_base_module_t orte_iof_tool_module = {
     tool_close,
     NULL,
     finalize,
-    tool_ft_event
+    NULL
 };
 
 
@@ -274,11 +272,3 @@ static int finalize(void)
     return ORTE_SUCCESS;
 }
 
-/*
- * FT event
- */
-
-static int tool_ft_event(int state)
-{
-    return ORTE_ERR_NOT_IMPLEMENTED;
-}

@@ -96,7 +96,7 @@ void mca_mpool_grdma_module_init(mca_mpool_grdma_module_t* mpool, mca_mpool_grdm
     mpool->super.mpool_deregister = mca_mpool_grdma_deregister;
     mpool->super.mpool_release_memory = mca_mpool_grdma_release_memory;
     mpool->super.mpool_finalize = mca_mpool_grdma_finalize;
-    mpool->super.mpool_ft_event = mca_mpool_grdma_ft_event;
+    mpool->super.mpool_ft_event = NULL;
     mpool->super.flags = MCA_MPOOL_FLAGS_MPI_ALLOC_MEM;
     mpool->super.rcache = pool->rcache;
 
@@ -587,6 +587,3 @@ void mca_mpool_grdma_finalize(struct mca_mpool_base_module_t *mpool)
     free(mpool);
 }
 
-int mca_mpool_grdma_ft_event(int state) {
-    return OPAL_SUCCESS;
-}

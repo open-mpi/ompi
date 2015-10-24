@@ -107,7 +107,7 @@ mca_btl_openib_module_t mca_btl_openib_module = {
         .btl_get = mca_btl_openib_get,
         .btl_dump = mca_btl_base_dump,
         .btl_register_error = mca_btl_openib_register_error_cb, /* error call back registration */
-        .btl_ft_event = mca_btl_openib_ft_event,
+        .btl_ft_event = NULL,
         .btl_register_mem = mca_btl_openib_register_mem,
         .btl_deregister_mem = mca_btl_openib_deregister_mem,
 #if HAVE_DECL_IBV_ATOMIC_HCA

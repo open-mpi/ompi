@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012      Los Alamos National Security, LLC.
+ * Copyright (c) 2012-2015 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
  *
@@ -60,8 +60,6 @@ static void mrorted_complete(const orte_job_t *jdata);
 
 static int finalize(void);
 
-static int mrorted_ft_event(int state);
-
 /* The API's in this module are solely used to support LOCAL
  * procs - i.e., procs that are co-located to the daemon. Output
  * from local procs is automatically sent to the HNP for output
@@ -77,7 +75,7 @@ orte_iof_base_module_t orte_iof_mrorted_module = {
     mrorted_close,
     mrorted_complete,
     finalize,
-    mrorted_ft_event
+    NULL
 };
 
 static int init(void)
@@ -363,15 +361,6 @@ static int finalize(void)
     /* Cancel the RML receive */
     orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_IOF_PROXY);
     return ORTE_SUCCESS;
-}
-
-/*
- * FT event
- */
-
-static int mrorted_ft_event(int state)
-{
-    return ORTE_ERR_NOT_IMPLEMENTED;
 }
 
 static void stdin_write_handler(int fd, short event, void *cbdata)

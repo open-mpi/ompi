@@ -13,7 +13,7 @@
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
  * Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2014-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2014-2015 Intel, Inc. All rights reserved
  * $COPYRIGHT$
@@ -2306,12 +2306,6 @@ int opal_btl_usnic_module_init(opal_btl_usnic_module_t *module)
 }
 
 
-static int usnic_ft_event(int state)
-{
-    return OPAL_SUCCESS;
-}
-
-
 opal_btl_usnic_module_t opal_btl_usnic_module_template = {
     .super = {
         .btl_component = &mca_btl_usnic_component.super,
@@ -2354,6 +2348,6 @@ opal_btl_usnic_module_t opal_btl_usnic_module_template = {
 
         .btl_mpool = NULL,
         .btl_register_error = usnic_register_pml_err_cb,
-        .btl_ft_event = usnic_ft_event
+        .btl_ft_event = NULL
     }
 };

@@ -79,7 +79,7 @@ mca_btl_sm_t mca_btl_sm = {
         .btl_sendi = mca_btl_sm_sendi,
         .btl_dump = mca_btl_sm_dump,
         .btl_register_error = mca_btl_sm_register_error_cb, /* register error */
-        .btl_ft_event = mca_btl_sm_ft_event
+        .btl_ft_event = NULL
     }
 };
 

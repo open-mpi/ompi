@@ -185,13 +185,6 @@ int mca_btl_self_send(
     mca_btl_base_tag_t tag
 );
 
-/**
- * Fault Tolerance Event Notification Function
- * @param state Checkpoint Stae
- * @return OPAL_SUCCESS or failure status
- */
-int mca_btl_self_ft_event(int state);
-
 END_C_DECLS
 
 #endif

@@ -839,15 +839,6 @@ extern void mca_btl_openib_frag_progress_pending_put_get(
         struct mca_btl_base_endpoint_t*, const int);
 
 /**
- * Fault Tolerance Event Notification Function
- *
- * @param state (IN)  Checkpoint State
- * @return OPAL_SUCCESS or failure status
- */
-extern int mca_btl_openib_ft_event(int state);
-
-
-/**
  * Show an error during init, particularly when running out of
  * registered memory.
  */

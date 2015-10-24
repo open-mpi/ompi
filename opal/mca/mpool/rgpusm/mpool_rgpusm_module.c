@@ -152,7 +152,7 @@ void mca_mpool_rgpusm_module_init(mca_mpool_rgpusm_module_t* mpool)
     mpool->super.mpool_deregister = mca_mpool_rgpusm_deregister;
     mpool->super.mpool_release_memory = NULL;
     mpool->super.mpool_finalize = mca_mpool_rgpusm_finalize;
-    mpool->super.mpool_ft_event = mca_mpool_rgpusm_ft_event;
+    mpool->super.mpool_ft_event = NULL;
     mpool->super.rcache =
         mca_rcache_base_module_create(mca_mpool_rgpusm_component.rcache_name);
     mpool->super.flags = 0;
@@ -665,6 +665,3 @@ void mca_mpool_rgpusm_finalize(struct mca_mpool_base_module_t *mpool)
 
 }
 
-int mca_mpool_rgpusm_ft_event(int state) {
-    return OPAL_SUCCESS;
-}

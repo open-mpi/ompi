@@ -6,6 +6,8 @@
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -146,9 +148,6 @@ extern int mca_pml_example_mrecv(void *buf,
 extern int mca_pml_example_progress(void);
 
 extern int mca_pml_example_start( size_t count, ompi_request_t** requests );
-
-extern int mca_pml_example_ft_event(int state);
-
 
 END_C_DECLS
 

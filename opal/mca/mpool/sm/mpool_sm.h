@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2010-2012 Los Alamos National Security, LLC.
+ * Copyright (c) 2010-2015 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * $COPYRIGHT$
  *
@@ -100,13 +100,6 @@ void mca_mpool_sm_free(
     mca_mpool_base_module_t* mpool,
     void * addr,
     mca_mpool_base_registration_t* registration);
-
-/**
- * Fault Tolerance Event Notification Function
- * @param state Checkpoint Stae
- * @return OPAL_SUCCESS or failure status
- */
-int mca_mpool_sm_ft_event(int state);
 
 END_C_DECLS
 

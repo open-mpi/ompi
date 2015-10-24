@@ -290,12 +290,5 @@ mca_btl_base_descriptor_t* mca_btl_tcp_prepare_src(
 );
 
 
-/**
-  * Fault Tolerance Event Notification Function
-  * @param state Checkpoint Stae
-  * @return OPAL_SUCCESS or failure status
-  */
-int mca_btl_tcp_ft_event(int state);
-
 END_C_DECLS
 #endif
