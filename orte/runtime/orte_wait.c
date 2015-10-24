@@ -147,37 +147,11 @@ int orte_wait_finalize(void)
     return ORTE_SUCCESS;
 }
 
-static void register_callback(int fd, short args, void *cbdata)
-{
-    orte_wait_tracker_t *trk = (orte_wait_tracker_t*)cbdata;
-    orte_wait_tracker_t *t2;
-
-    /* see if this proc is still alive */
-    if (!ORTE_FLAG_TEST(trk->child, ORTE_PROC_FLAG_ALIVE)) {
-        /* already heard this proc is dead, so just do the callback */
-        if (NULL != trk->cbfunc) {
-            trk->cbfunc(trk->child, trk->cbdata);
-            OBJ_RELEASE(trk);
-            return;
-        }
-    }
-
-   /* we just override any existing registration */
-    OPAL_LIST_FOREACH(t2, &pending_cbs, orte_wait_tracker_t) {
-        if (t2->child == trk->child) {
-            t2->cbfunc = trk->cbfunc;
-            t2->cbdata = trk->cbdata;
-            OBJ_RELEASE(trk);
-            return;
-        }
-    }
-    /* get here if this is a new registration */
-    opal_list_append(&pending_cbs, &trk->super);
-}
-
+/* this function *must* always be called from
+ * within an event in the orte_event_base */
 void orte_wait_cb(orte_proc_t *child, orte_wait_fn_t callback, void *data)
 {
-    orte_wait_tracker_t *trk;
+    orte_wait_tracker_t *t2;
 
     if (NULL == child || NULL == callback) {
         /* bozo protection */
@@ -185,15 +159,28 @@ void orte_wait_cb(orte_proc_t *child, orte_wait_fn_t callback, void *data)
         return;
     }
 
-    /* push this into the event library for handling */
-    trk = OBJ_NEW(orte_wait_tracker_t);
+    /* see if this proc is still alive */
+    if (!ORTE_FLAG_TEST(child, ORTE_PROC_FLAG_ALIVE)) {
+        /* already heard this proc is dead, so just do the callback */
+        callback(child, data);
+        return;
+    }
+
+   /* we just override any existing registration */
+    OPAL_LIST_FOREACH(t2, &pending_cbs, orte_wait_tracker_t) {
+        if (t2->child == child) {
+            t2->cbfunc = callback;
+            t2->cbdata = data;
+            return;
+        }
+    }
+    /* get here if this is a new registration */
+    t2 = OBJ_NEW(orte_wait_tracker_t);
     OBJ_RETAIN(child);  // protect against race conditions
-    trk->child = child;
-    trk->cbfunc = callback;
-    trk->cbdata = data;
-    opal_event_set(orte_event_base, &trk->ev, -1, OPAL_EV_WRITE, register_callback, trk);
-    opal_event_set_priority(&trk->ev, ORTE_SYS_PRI);
-    opal_event_active(&trk->ev, OPAL_EV_WRITE, 1);
+    t2->child = child;
+    t2->cbfunc = callback;
+    t2->cbdata = data;
+    opal_list_append(&pending_cbs, &t2->super);
 }
 
 static void cancel_callback(int fd, short args, void *cbdata)
