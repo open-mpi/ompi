@@ -1025,7 +1025,7 @@ void orte_odls_base_default_launch_local(int fd, short sd, void *cbdata)
             }
 
             if (5 < opal_output_get_verbosity(orte_odls_base_framework.framework_output)) {
-                opal_output(orte_odls_base_framework.framework_output, "%s odls:launch: spawning child %s",
+                opal_output(orte_odls_base_framework.framework_output, "%s odls:launch spawning child %s",
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                             ORTE_NAME_PRINT(&child->name));
 
