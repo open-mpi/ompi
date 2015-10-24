@@ -148,12 +148,13 @@ static int ompi_proc_complete_init_single (ompi_proc_t *proc)
     }
 
     /* we can retrieve the hostname at no cost because it
-     * was provided at startup */
+     * was provided at startup - but make it optional so
+     * we don't chase after it if some system doesn't
+     * provide it */
+    proc->super.proc_hostname = NULL;
     OPAL_MODEX_RECV_VALUE_OPTIONAL(ret, OPAL_PMIX_HOSTNAME, &proc->super.proc_name,
-			  (char**)&(proc->super.proc_hostname), OPAL_STRING);
-    if (OPAL_SUCCESS != ret) {
-	return ret;
-    }
+                                   (char**)&(proc->super.proc_hostname), OPAL_STRING);
+
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
     /* get the remote architecture - this might force a modex except
      * for those environments where the RM provides it */
@@ -498,7 +499,7 @@ ompi_proc_t **ompi_proc_world (size_t *size)
          * count which cannot be released until ompi_proc_finalize is
          * called.
          */
-        procs[i] = ompi_proc_for_name (name);
+        procs[i] = (ompi_proc_t*)ompi_proc_for_name (name);
     }
 
     *size = count;
