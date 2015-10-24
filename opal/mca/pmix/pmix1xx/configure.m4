@@ -46,11 +46,9 @@ AC_DEFUN([MCA_opal_pmix_pmix1xx_CONFIG],[
         CFLAGS="$OPAL_CFLAGS_BEFORE_PICKY $OPAL_VISIBILITY_CFLAGS"
     fi
     CPPFLAGS="-I$OPAL_TOP_SRCDIR -I$OPAL_TOP_BUILDDIR -I$OPAL_TOP_SRCDIR/opal/include -I$OPAL_TOP_BUILDDIR/opal/include $CPPFLAGS"
-    export CFLAGS
-    export CPPFLAGS
 
     OPAL_CONFIG_SUBDIR([$opal_pmix_pmix1xx_basedir/pmix],
-        [$opal_pmix_pmix1xx_args $opal_subdir_args],
+        [$opal_pmix_pmix1xx_args $opal_subdir_args 'CFLAGS=$CFLAGS' 'CPPFLAGS=$CPPFLAGS'],
         [opal_pmix_pmix1xx_happy=1], [opal_pmix_pmix1xx_happy=0])
 
     if test $opal_pmix_pmix1xx_happy -eq 1; then
