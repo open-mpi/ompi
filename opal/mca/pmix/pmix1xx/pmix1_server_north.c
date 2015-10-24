@@ -415,7 +415,7 @@ static void opal_lkupcbfunc(int status,
             n=0;
             OPAL_LIST_FOREACH(p, data, opal_pmix_pdata_t) {
                 /* convert the jobid */
-                (void)snprintf(d[n].proc.nspace, PMIX_MAX_NSLEN, opal_convert_jobid_to_string(p->proc.jobid));
+                (void)snprintf(d[n].proc.nspace, PMIX_MAX_NSLEN, "%s", opal_convert_jobid_to_string(p->proc.jobid));
                 d[n].proc.rank = p->proc.vpid;
                 (void)strncpy(d[n].key, p->value.key, PMIX_MAX_KEYLEN);
                 pmix1_value_load(&d[n].value, &p->value);
@@ -534,7 +534,7 @@ static void opal_spncbfunc(int status, opal_jobid_t jobid, void *cbdata)
     if (NULL != opalcaddy->spwncbfunc) {
         rc = pmix1_convert_opalrc(status);
         /* convert the jobid */
-        (void)snprintf(nspace, PMIX_MAX_NSLEN, opal_convert_jobid_to_string(jobid));
+        (void)snprintf(nspace, PMIX_MAX_NSLEN, "%s", opal_convert_jobid_to_string(jobid));
         opalcaddy->spwncbfunc(rc, nspace, opalcaddy->cbdata);
     }
     OBJ_RELEASE(opalcaddy);
