@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2012 The University of Tennessee and The University
+ * Copyright (c) 2004-2015 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
@@ -48,7 +48,6 @@ int MPI_Ialltoallw(const void *sendbuf, const int sendcounts[], const int sdispl
                    MPI_Request *request)
 {
     int i, size, err;
-    size_t sendtype_size, recvtype_size;
 
     MEMCHECKER(
         ptrdiff_t recv_ext;
@@ -100,14 +99,17 @@ int MPI_Ialltoallw(const void *sendbuf, const int sendcounts[], const int sdispl
 
         size = OMPI_COMM_IS_INTER(comm)?ompi_comm_remote_size(comm):ompi_comm_size(comm);
         for (i = 0; i < size; ++i) {
-            OMPI_CHECK_DATATYPE_FOR_SEND(err, sendtypes[i], sendcounts[i]);
-            OMPI_ERRHANDLER_CHECK(err, comm, err, FUNC_NAME);
+            if (MPI_IN_PLACE != sendbuf) {
+                OMPI_CHECK_DATATYPE_FOR_SEND(err, sendtypes[i], sendcounts[i]);
+                OMPI_ERRHANDLER_CHECK(err, comm, err, FUNC_NAME);
+            }
             OMPI_CHECK_DATATYPE_FOR_RECV(err, recvtypes[i], recvcounts[i]);
             OMPI_ERRHANDLER_CHECK(err, comm, err, FUNC_NAME);
         }
 
         if (MPI_IN_PLACE != sendbuf && !OMPI_COMM_IS_INTER(comm)) {
             int me = ompi_comm_rank(comm);
+            size_t sendtype_size, recvtype_size;
             ompi_datatype_type_size(sendtypes[me], &sendtype_size);
             ompi_datatype_type_size(recvtypes[me], &recvtype_size);
             if ((sendtype_size*sendcounts[me]) != (recvtype_size*recvcounts[me])) {
