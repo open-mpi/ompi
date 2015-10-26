@@ -3261,7 +3261,7 @@ subroutine MPI_Win_attach_f08(win,base,size,ierror)
    !IBM* IGNORE_TKR base
    OMPI_FORTRAN_IGNORE_TKR_TYPE :: base
    INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: size
-   TYPE(MPI_Win), INTENT(OUT) :: win
+   TYPE(MPI_Win), INTENT(IN) :: win
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 end subroutine MPI_Win_attach_f08
 end interface  MPI_Win_attach
@@ -3276,7 +3276,7 @@ subroutine MPI_Win_detach_f08(win,base,ierror)
    !DIR$ IGNORE_TKR base
    !IBM* IGNORE_TKR base
    OMPI_FORTRAN_IGNORE_TKR_TYPE :: base
-   TYPE(MPI_Win), INTENT(OUT) :: win
+   TYPE(MPI_Win), INTENT(IN) :: win
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 end subroutine MPI_Win_detach_f08
 end interface  MPI_Win_detach
