@@ -27,6 +27,13 @@
  * More specifically: the userspace side of usNIC is exposed through
  * libfabric; we don't need libibverbs warnings about not being able
  * to find a usnic driver.
+ *
+ * Note: this code is statically linked into libopen-pal.  It is
+ * registered via ibv_register_driver(), and there is no corresponding
+ * *un*register IBV API.  Hence, we cannot allow this code to be
+ * dlclosed (e.g., if it is a DSO or a dependent common library) -- it
+ * must be in libopen-pal itself, which will stay resident in the MPI
+ * application.
  */
 
 #include "opal_config.h"
@@ -39,7 +46,7 @@
 #include <infiniband/driver.h>
 #endif
 
-#include "common_verbs.h"
+#include "common_verbs_usnic.h"
 
 /***********************************************************************/
 
@@ -95,7 +102,7 @@ static struct ibv_device *fake_driver_init(const char *uverbs_sys_path,
 }
 
 
-void opal_common_verbs_register_fake_drivers(void)
+void opal_common_verbs_usnic_register_fake_drivers(void)
 {
     /* No need to do this more than once */
     static bool already_done = false;
