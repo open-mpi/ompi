@@ -98,9 +98,10 @@ ompi_mtl_ofi_progress(void)
             ret = fi_cq_readerr(ompi_mtl_ofi.cq,
                                 &error,
                                 0);
-            if (ret) {
+            if (0 > ret) {
                 opal_output(ompi_mtl_base_framework.framework_output,
                             "Error returned from fi_cq_readerr: %zd", ret);
+                abort();
             }
 
             assert(error.op_context);
