@@ -239,7 +239,7 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
     hints->rx_attr->msg_order = FI_ORDER_SAS;
 
     hints->domain_attr->threading        = FI_THREAD_UNSPEC;
-    hints->domain_attr->control_progress = FI_PROGRESS_UNSPEC;
+    hints->domain_attr->control_progress = FI_PROGRESS_MANUAL;
 
     /**
      * FI_VERSION provides binary backward and forward compatibility support
