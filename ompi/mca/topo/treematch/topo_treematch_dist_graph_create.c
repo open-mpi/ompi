@@ -328,9 +328,12 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* topo_module,
         int array_size = effective_depth + 1;
         int *myhierarchy = (int *)calloc(array_size,sizeof(int));
 
-        for (i = 0; i < array_size ; i++)
+        for (i = 0; i < array_size ; i++) {
             myhierarchy[i] = hwloc_get_nbobjs_by_depth(opal_hwloc_topology,i);
-
+#ifdef __DEBUG__
+            fprintf(stdout,"hierarchy[%i] = %i\n",i,myhierarchy[i]);
+#endif
+        }
         numlevels = 1;
         for (i = 1; i < array_size; i++)
             if ((myhierarchy[i] != 0) && (myhierarchy[i] != myhierarchy[i-1]))
@@ -338,18 +341,13 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* topo_module,
 
         tracker = (hwloc_obj_t *)calloc(numlevels,sizeof(hwloc_obj_t));
         idx = 0;
-        tracker[idx++] = root_obj;
         i = 1;
         while (i < array_size){
-            if ( myhierarchy[i] != myhierarchy[i-1]) {
-                j = i;
-                while(myhierarchy[j] == myhierarchy[i])
-                    if (++j > effective_depth)
-                        break;
-                tracker[idx++] = hwloc_get_obj_by_depth(opal_hwloc_topology,j-1,0);
-                i = j;
-            } else i++;
+            if(myhierarchy[i] != myhierarchy[i-1])
+                tracker[idx++] = hwloc_get_obj_by_depth(opal_hwloc_topology,i-1,0);
+            i++;
         }
+        tracker[idx] = hwloc_get_obj_by_depth(opal_hwloc_topology,effective_depth,0);
         free(myhierarchy);
 
 #ifdef __DEBUG__
@@ -590,15 +588,35 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* topo_module,
                 }else{
                     tm_topology->arity = (int *)calloc(tm_topology->nb_levels,sizeof(int));
                     for(i = 0; i < tm_topology->nb_levels; i++)
-                        tm_topology->arity[i] = hierarchies[i+1];
+                        tm_topology->arity[i] = hierarchies[i+1];  /* fixme !!!*/
                 }
                 free(hierarchies);
-
+#ifdef __DEBUG__
+                for(i = 0; i < tm_topology->nb_levels; i++)
+                    fprintf(stdout,"topo_arity[%i] = %i\n",i,tm_topology->arity[i]);
+#endif
                 /* compute the number of processing elements */
                 tm_topology->nb_nodes = (int *)calloc(tm_topology->nb_levels,sizeof(int));
                 tm_topology->nb_nodes[0] = 1;
                 for(i = 1 ; i < tm_topology->nb_levels; i++)
                     tm_topology->nb_nodes[i] = tm_topology->nb_nodes[i-1]*tm_topology->arity[i-1];
+
+                /* Build process id tab */
+                tm_topology->node_id  = (int **)calloc(tm_topology->nb_levels,sizeof(int*));
+                for(i = 0; i < tm_topology->nb_levels ; i++) {
+                    tm_topology->node_id[i] = (int *)calloc(tm_topology->nb_nodes[i],sizeof(int));
+                    for (j = 0; j < tm_topology->nb_nodes[i] ; j++)
+                        tm_topology->node_id[i][j] = obj_mapping[j];
+                }
+#ifdef __DEBUG__
+                for(i = 0; i < tm_topology->nb_levels ; i++) {
+                    fprintf(stdout,"tm topo node_id for level [%i] : ",i);
+                    for(j = 0 ; j < tm_topology->nb_nodes[i] ; j++)
+                        fprintf(stdout," [%i:%i] ",j,obj_mapping[j]);
+                    fprintf(stdout,"\n");
+                }
+                display_topology(tm_topology);
+#endif
 
                 comm_pattern = (double **)malloc(size*sizeof(double *));
                 for(i = 0 ; i < size ; i++)
@@ -620,30 +638,12 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* topo_module,
                     fprintf(stdout,"\n");
                 }
 #endif
-                /* Build process id tab */
-                tm_topology->node_id  = (int **)calloc(tm_topology->nb_levels,sizeof(int*));
-                for(i = 0; i < tm_topology->nb_levels ; i++) {
-                    tm_topology->node_id[i] = (int *)calloc(tm_topology->nb_nodes[i],sizeof(int));
-                    for (j = 0; j < tm_topology->nb_nodes[i] ; j++)
-                        tm_topology->node_id[i][j] = obj_mapping[j];
-                }
-
-#ifdef __DEBUG__
-                for(i = 0; i < tm_topology->nb_levels ; i++) {
-                    fprintf(stdout,"tm topo node_id for level [%i] : ",i);
-                    for(j = 0 ; j < tm_topology->nb_nodes[i] ; j++)
-                        fprintf(stdout," [%i:%i] ",j,obj_mapping[j]);
-                    fprintf(stdout,"\n");
-                }
-                display_topology(tm_topology);
-#endif
                 k = (int *)calloc(num_objs_total,sizeof(int));
                 matching = (int *)calloc(size,sizeof(int));
 
                 tm_opt_topology = optimize_topology(tm_topology);
                 comm_tree = build_tree_from_topology(tm_opt_topology,comm_pattern,size,NULL,NULL);
                 map_topology_simple(tm_opt_topology,comm_tree,matching,size,k);
-
 #ifdef __DEBUG__
 
                 fprintf(stdout,"====> nb levels : %i\n",tm_topology->nb_levels);
@@ -880,9 +880,11 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* topo_module,
         (void)opal_pmix.store_local((opal_process_name_t*)ORTE_PROC_MY_NAME, &kv);
         OBJ_DESTRUCT(&kv);
 
-        if( OMPI_SUCCESS == (err = ompi_comm_create(comm_old,
+        if( OMPI_SUCCESS != (err = ompi_comm_create(comm_old,
                                                     comm_old->c_local_group,
                                                     newcomm))) {
+            ERR_EXIT(err);
+        } else {
             /* Attach the dist_graph to the newly created communicator */
             (*newcomm)->c_flags        |= OMPI_COMM_DIST_GRAPH;
             (*newcomm)->c_topo          = topo_module;
