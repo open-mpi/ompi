@@ -458,9 +458,9 @@ ompi_mtl_ofi_recv_callback(struct fi_cq_tagged_entry *wc,
          * If the recv request was posted for any source,
          * we need to extract the source's actual address.
          */
-        if (!ofi_req->remote_addr) {
+        if (ompi_mtl_ofi.any_addr == ofi_req->remote_addr) {
             src = MTL_OFI_GET_SOURCE(wc->tag);
-            ompi_proc = ompi_comm_peer_lookup(ofi_req->comm, src );
+            ompi_proc = ompi_comm_peer_lookup(ofi_req->comm, src);
             endpoint = ompi_proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_MTL];
             ofi_req->remote_addr = endpoint->peer_fiaddr;
         }
