@@ -1,5 +1,5 @@
 # -*- makefile -*-
-# Copyright (c) 2008-2014 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2008-2015 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
 # $COPYRIGHT$
 #
@@ -9,13 +9,13 @@
 #
 
 TRIM_OPTIONS=
-if ! OMPI_BUILD_MPI_CXX_BINDINGS
+if ! MAN_PAGE_BUILD_MPI_CXX_BINDINGS
     TRIM_OPTIONS += --nocxx
 endif
-if ! OMPI_BUILD_FORTRAN_MPIFH_BINDINGS
+if ! MAN_PAGE_BUILD_MPIFH_BINDINGS
     TRIM_OPTIONS += --nofortran
 endif
-if ! OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS
+if ! MAN_PAGE_BUILD_USEMPIF08_BINDINGS
     TRIM_OPTIONS += --nof08
 endif
 

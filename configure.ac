@@ -502,8 +502,12 @@ OPAL_CHECK_OFFSETOF
 # sets up the C++ MPI bindings, etc.).  Perhaps it was moved to OPAL
 # just on the rationale that all compiler setup should be done in
 # OPAL...?  Shrug.
+WANT_MPI_CXX_SUPPORT=0
 m4_ifdef([project_ompi], [OPAL_SETUP_CXX
                           OMPI_SETUP_CXX])
+# Used in Makefile.ompi-rules
+AM_CONDITIONAL(MAN_PAGE_BUILD_MPI_CXX_BINDINGS,
+               [test "$WANT_MPI_CXX_SUPPORT" = 1])
 
 ##################################
 # Only after setting up both
@@ -547,7 +551,15 @@ OPAL_CONFIG_ASM
 # Fortran
 ##################################
 
+OMPI_BUILD_FORTRAN_BINDINGS=0
+
 m4_ifdef([project_ompi], [OMPI_SETUP_MPI_FORTRAN], [ompi_fortran_happy=0])
+
+# Used in Makefile.ompi-rules
+AM_CONDITIONAL(MAN_PAGE_BUILD_MPIFH_BINDINGS,
+              [test $OMPI_BUILD_FORTRAN_BINDINGS -gt $OMPI_FORTRAN_NO_BINDINGS])
+AM_CONDITIONAL(MAN_PAGE_BUILD_USEMPIF08_BINDINGS,
+              [test $OMPI_BUILD_FORTRAN_BINDINGS -ge $OMPI_FORTRAN_USEMPIF08_BINDINGS])
 
 AM_CONDITIONAL(OSHMEM_BUILD_FORTRAN_BINDINGS,
     [test "$enable_oshmem" = "yes" && \
