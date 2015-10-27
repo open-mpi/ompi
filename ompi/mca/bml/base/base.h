@@ -63,10 +63,15 @@ OMPI_DECLSPEC  int mca_bml_base_ft_event(int state);
 OMPI_DECLSPEC extern mca_bml_base_component_t mca_bml_component;
 OMPI_DECLSPEC extern mca_bml_base_module_t mca_bml;
 OMPI_DECLSPEC extern mca_base_framework_t ompi_bml_base_framework;
+OMPI_DECLSPEC extern opal_mutex_t mca_bml_lock;
 
 static inline struct mca_bml_base_endpoint_t *mca_bml_base_get_endpoint (struct ompi_proc_t *proc) {
     if (OPAL_UNLIKELY(NULL == proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML])) {
-        mca_bml.bml_add_proc (proc);
+        OPAL_THREAD_LOCK(&mca_bml_lock);
+        if (NULL == proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML]) {
+            mca_bml.bml_add_proc (proc);
+        }
+        OPAL_THREAD_UNLOCK(&mca_bml_lock);
     }
 
     return (struct mca_bml_base_endpoint_t *) proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML];
