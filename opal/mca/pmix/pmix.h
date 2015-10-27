@@ -36,6 +36,8 @@ BEGIN_C_DECLS
 /* provide access to the framework verbose output without
  * exposing the entire base */
 extern int opal_pmix_verbose_output;
+extern bool opal_pmix_collect_all_data;
+extern bool opal_pmix_base_async_modex;
 extern int opal_pmix_base_exchange(opal_value_t *info,
                                    opal_pmix_pdata_t *pdat,
                                    int timeout);
@@ -254,10 +256,13 @@ extern int opal_pmix_base_exchange(opal_value_t *info,
  * that takes into account directives and availability of
  * non-blocking operations
  */
-#define OPAL_MODEX(p, s)              \
-    do {                              \
-        opal_pmix.commit();           \
-        opal_pmix.fence((p), (s));    \
+#define OPAL_MODEX()                                    \
+    do {                                                \
+        opal_pmix.commit();                             \
+        if (!opal_pmix_base_async_modex) {              \
+            opal_pmix.fence(NULL,                       \
+                opal_pmix_collect_all_data);            \
+        }                                               \
     } while(0);
 
 /**

@@ -217,6 +217,7 @@ int pmix1_store_local(const opal_process_name_t *proc, opal_value_t *val)
             }
         }
         if (NULL == job) {
+            OPAL_ERROR_LOG(OPAL_ERR_NOT_FOUND);
             return OPAL_ERR_NOT_FOUND;
         }
         (void)strncpy(p.nspace, job->nspace, PMIX_MAX_NSLEN);

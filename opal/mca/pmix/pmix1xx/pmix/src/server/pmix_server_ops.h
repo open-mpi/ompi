@@ -183,10 +183,7 @@ void pmix_stop_listening(void);
 
 bool pmix_server_trk_update(pmix_server_trkr_t *trk);
 
-pmix_status_t pmix_pending_request(pmix_nspace_t *nptr, int rank,
-                                   pmix_info_t *info, size_t ninfo,
-                                   pmix_modex_cbfunc_t cbfunc, void *cbdata);
-void pmix_pending_nspace_fix(pmix_nspace_t *nptr);
+void pmix_pending_nspace_requests(pmix_nspace_t *nptr);
 pmix_status_t pmix_pending_resolve(pmix_nspace_t *nptr, int rank,
                                    pmix_status_t status, pmix_dmdx_local_t *lcd);
 

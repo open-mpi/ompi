@@ -505,7 +505,6 @@ static void pmix_server_dmdx_resp(int status, orte_process_name_t* sender,
     int rc, ret, room_num;
     int32_t cnt;
     opal_process_name_t target;
-    opal_value_t kv;
     pmix_server_req_t *req;
     uint8_t *data = NULL;
     int32_t ndata = 0;
@@ -542,29 +541,14 @@ static void pmix_server_dmdx_resp(int status, orte_process_name_t* sender,
         return;
     }
 
-    /* if we got something, store the blobs locally so we can
-     * meet any further requests without doing a remote fetch.
-     * This must be done as a single blob for later retrieval */
-    if (ORTE_SUCCESS == ret && NULL != data) {
-        OBJ_CONSTRUCT(&kv, opal_value_t);
-        kv.key = strdup("modex");
-        kv.type = OPAL_BYTE_OBJECT;
-        kv.data.bo.bytes = data;
-        kv.data.bo.size = ndata;
-        if (OPAL_SUCCESS != (rc = opal_pmix.store_local(&target, &kv))) {
-            ORTE_ERROR_LOG(rc);
-        }
-        kv.data.bo.bytes = NULL;  // protect the data
-        kv.data.bo.size = 0;
-        OBJ_DESTRUCT(&kv);
-    }
-
     /* check the request out of the tracking hotel */
     opal_hotel_checkout_and_return_occupant(&orte_pmix_server_globals.reqs, room_num, (void**)&req);
     /* return the returned data to the requestor */
     if (NULL != req) {
         if (NULL != req->mdxcbfunc) {
             req->mdxcbfunc(ret, (char*)data, ndata, req->cbdata, relcbfunc, data);
+        } else {
+            free(data);
         }
         OBJ_RELEASE(req);
     }

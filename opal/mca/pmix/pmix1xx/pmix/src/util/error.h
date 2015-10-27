@@ -28,9 +28,13 @@
 
 BEGIN_C_DECLS
 
-#define PMIX_ERROR_LOG(r)                                       \
-    pmix_output(0, "PMIX ERROR: %s in file %s at line %d",      \
-                PMIx_Error_string((r)), __FILE__, __LINE__);
+#define PMIX_ERROR_LOG(r)                                               \
+    do {                                                                \
+        if (PMIX_ERR_SILENT != (r)) {                                   \
+            pmix_output(0, "PMIX ERROR: %s in file %s at line %d",      \
+                        PMIx_Error_string((r)), __FILE__, __LINE__);    \
+        }                                                               \
+    }while(0);
 
 #define PMIX_REPORT_ERROR(e)                            \
     do {                                                \

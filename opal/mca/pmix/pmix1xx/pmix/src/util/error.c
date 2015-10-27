@@ -123,6 +123,8 @@ const char* PMIx_Error_string(pmix_status_t errnum)
     case PMIX_EXISTS:
         return "EXISTS";
 
+    case PMIX_ERR_SILENT:
+        return "SILENT";
     case PMIX_ERROR:
         return "ERROR";
     case PMIX_SUCCESS:

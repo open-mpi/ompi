@@ -197,6 +197,12 @@ static void dmodex_req(int sd, short args, void *cbdata)
         goto callback;
     }
 
+    /* if we are the host daemon, then this is a local request, so
+     * just wait for the data to come in */
+    if (ORTE_PROC_MY_NAME->vpid == dmn->name.vpid) {
+        return;
+    }
+
     /* construct a request message */
     buf = OBJ_NEW(opal_buffer_t);
     if (OPAL_SUCCESS != (rc = opal_dss.pack(buf, &req->target, 1, OPAL_NAME))) {
