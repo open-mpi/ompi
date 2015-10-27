@@ -108,11 +108,10 @@ static void mca_pml_ucx_request_init_common(ompi_request_t* ompi_req,
                                             ompi_request_free_fn_t req_free,
                                             ompi_request_cancel_fn_t req_cancel)
 {
+    OBJ_CONSTRUCT(ompi_req, ompi_request_t);
     OMPI_REQUEST_INIT(ompi_req, req_persistent);
     ompi_req->req_type             = OMPI_REQUEST_PML;
     ompi_req->req_state            = state;
-    ompi_req->req_complete_cb      = NULL;
-    ompi_req->req_complete_cb_data = NULL;
     ompi_req->req_free             = req_free;
     ompi_req->req_cancel           = req_cancel;
 }
@@ -128,6 +127,7 @@ void mca_pml_ucx_request_cleanup(void *request)
 {
     ompi_request_t* ompi_req = request;
     OMPI_REQUEST_FINI(ompi_req);
+    OBJ_DESTRUCT(ompi_req);
 }
 
 static int mca_pml_ucx_persistent_request_free(ompi_request_t **rptr)
