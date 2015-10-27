@@ -21,6 +21,8 @@
 #include <unistd.h>
 #endif
 
+#include "opal/mca/common/verbs_usnic/common_verbs_usnic.h"
+
 /* This is crummy, but <infiniband/driver.h> doesn't work on all
    platforms with all compilers.  Specifically, trying to include it
    on RHEL4U3 with the PGI 32 bit compiler will cause problems because
@@ -89,10 +91,12 @@ int opal_common_verbs_fork_test(void)
     }
 #endif
 
-    /* Now rgister any necessary fake libibverbs drivers.  We
+    /* Now register any necessary fake libibverbs drivers.  We
        piggyback loading these fake drivers on the fork test because
-       they must be loaded before ibv_get_device_list() is invoked. */
-    opal_common_verbs_register_fake_drivers();
+       they must be loaded before ibv_get_device_list() is invoked.
+       Note that this routine is in a different common component (see
+       comments over there for an explanation why).  */
+    opal_common_verbs_usnic_register_fake_drivers();
 
     return ret;
 }
