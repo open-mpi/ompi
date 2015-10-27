@@ -114,7 +114,6 @@ struct ompi_coll_portals4_request_t {
             MPI_Aint                pack_src_lb;
             MPI_Aint                pack_src_true_lb;
             MPI_Aint                pack_src_offset;
-            uint64_t                unpack_bytes;
             char                   *unpack_dst_buf;
             int                     unpack_dst_count;
             struct ompi_datatype_t *unpack_dst_dtype;
