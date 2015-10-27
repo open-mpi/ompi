@@ -1,5 +1,7 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2012      Los Alamos National Security, Inc.  All rights reserved.
+ * Copyright (c) 2012-2015 Los Alamos National Security, Inc.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -31,7 +33,7 @@ int orte_dfs_base_select(void)
     if (OPAL_SUCCESS != mca_base_select("dfs", orte_dfs_base_framework.framework_output,
                                         &orte_dfs_base_framework.framework_components,
                                         (mca_base_module_t **) &best_module,
-                                        (mca_base_component_t **) &best_component)) {
+                                        (mca_base_component_t **) &best_component, NULL)) {
         /* This will only happen if no component was selected, which
          * is okay - we don't have to select anything
          */

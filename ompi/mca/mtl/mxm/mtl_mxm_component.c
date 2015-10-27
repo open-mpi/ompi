@@ -130,7 +130,8 @@ static int ompi_mtl_mxm_component_register(void)
     free(runtime_version);
 #endif
 
-    param_priority = 100;
+    /* set high enought to defeat ob1's default */
+    param_priority = 30;
     (void) mca_base_component_var_register (c,
                                             "priority", "Priority of the MXM MTL component",
                                             MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
