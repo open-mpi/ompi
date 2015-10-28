@@ -32,8 +32,8 @@ typedef enum {
 struct mca_mtl_psm2_request_t {
     struct mca_mtl_request_t super;
     mca_mtl_psm2_request_type_t type;
-    psm_mq_req_t psm_request;
-    /* psm_segment_t psm_segment[1]; */
+    psm2_mq_req_t psm2_request;
+    /* psm2_segment_t psm2_segment[1]; */
     void *buf;
     size_t length;
     struct opal_convertor_t *convertor;
