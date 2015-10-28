@@ -502,7 +502,6 @@ OPAL_CHECK_OFFSETOF
 # sets up the C++ MPI bindings, etc.).  Perhaps it was moved to OPAL
 # just on the rationale that all compiler setup should be done in
 # OPAL...?  Shrug.
-WANT_MPI_CXX_SUPPORT=0
 m4_ifdef([project_ompi], [OPAL_SETUP_CXX
                           OMPI_SETUP_CXX])
 # Used in Makefile.ompi-rules
