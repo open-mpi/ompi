@@ -257,6 +257,7 @@ int mca_pml_ucx_del_procs(struct ompi_proc_t **procs, size_t nprocs)
         }
         procs[i]->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_PML] = NULL;
     }
+    opal_pmix.fence(NULL, 0);
     return OMPI_SUCCESS;
 }
 
