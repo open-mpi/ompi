@@ -458,6 +458,7 @@ static void getnb_cbfunc(struct pmix_peer_t *pr, pmix_usock_hdr_t *hdr,
         PMIX_RELEASE(bptr);  // free's the data region
         if (PMIX_ERR_UNPACK_READ_PAST_END_OF_BUFFER != rc) {
             PMIX_ERROR_LOG(rc);
+            rc = PMIX_ERR_SILENT; // avoid error-logging twice
             break;
         }
     }

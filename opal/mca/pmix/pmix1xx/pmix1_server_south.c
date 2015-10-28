@@ -156,10 +156,10 @@ static void opcbfunc(pmix_status_t status, void *cbdata)
 }
 
 int pmix1_server_register_nspace(opal_jobid_t jobid,
-                                   int nlocalprocs,
-                                   opal_list_t *info,
-                                   opal_pmix_op_cbfunc_t cbfunc,
-                                   void *cbdata)
+                                 int nlocalprocs,
+                                 opal_list_t *info,
+                                 opal_pmix_op_cbfunc_t cbfunc,
+                                 void *cbdata)
 {
     opal_value_t *kv, *k2;
     pmix_info_t *pinfo, *pmap;
@@ -168,9 +168,16 @@ int pmix1_server_register_nspace(opal_jobid_t jobid,
     pmix_status_t rc;
     pmix1_opcaddy_t *op;
     opal_list_t *pmapinfo;
+    opal_pmix1_jobid_trkr_t *job;
 
     /* convert the jobid */
     (void)snprintf(nspace, PMIX_MAX_NSLEN, opal_convert_jobid_to_string(jobid));
+
+    /* store this job in our list of known nspaces */
+    job = OBJ_NEW(opal_pmix1_jobid_trkr_t);
+    (void)strncpy(job->nspace, nspace, PMIX_MAX_NSLEN);
+    job->jobid = jobid;
+    opal_list_append(&mca_pmix_pmix1xx_component.jobids, &job->super);
 
     /* convert the list to an array of pmix_info_t */
     if (NULL != info) {
@@ -220,10 +227,10 @@ int pmix1_server_register_nspace(opal_jobid_t jobid,
 
 
 int pmix1_server_register_client(const opal_process_name_t *proc,
-                                   uid_t uid, gid_t gid,
-                                   void *server_object,
-                                   opal_pmix_op_cbfunc_t cbfunc,
-                                   void *cbdata)
+                                 uid_t uid, gid_t gid,
+                                 void *server_object,
+                                 opal_pmix_op_cbfunc_t cbfunc,
+                                 void *cbdata)
 {
     pmix_status_t rc;
     pmix1_opcaddy_t *op;
@@ -275,7 +282,7 @@ static void dmdx_response(pmix_status_t status, char *data, size_t sz, void *cbd
 }
 
 int pmix1_server_dmodex(const opal_process_name_t *proc,
-                          opal_pmix_modex_cbfunc_t cbfunc, void *cbdata)
+                        opal_pmix_modex_cbfunc_t cbfunc, void *cbdata)
 {
     pmix1_opcaddy_t *op;
     pmix_status_t rc;

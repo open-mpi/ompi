@@ -639,10 +639,9 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
 
     /* exchange connection info - this function may also act as a barrier
      * if data exchange is required. The modex occurs solely across procs
-     * in our job, so no proc array is passed. If a barrier is required,
-     * the "modex" function will perform it internally
-     */
-    OPAL_MODEX(NULL, 1);
+     * in our job. If a barrier is required, the "modex" function will
+     * perform it internally */
+    OPAL_MODEX();
 
     OPAL_TIMING_MNEXT((&tm,"time from modex to first barrier"));
 

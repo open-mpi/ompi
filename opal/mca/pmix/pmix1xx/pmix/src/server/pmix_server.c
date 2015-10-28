@@ -141,8 +141,7 @@ static void _queue_message(int fd, short args, void *cbdata)
     pmix_usock_queue_t *queue = (pmix_usock_queue_t*)cbdata;
     pmix_usock_send_t *snd;
     pmix_output_verbose(2, pmix_globals.debug_output,
-                        "[%s:%d] queue callback called: reply to %s:%d on tag %d,"
-                        "event_is_active=%d",
+                        "[%s:%d] queue callback called: reply to %s:%d on tag %d",
                         __FILE__, __LINE__,
                         (queue->peer)->info->nptr->nspace,
                         (queue->peer)->info->rank, (queue->tag),
@@ -179,12 +178,10 @@ static void _queue_message(int fd, short args, void *cbdata)
         queue->buf  = (b);                                              \
         queue->tag  = (t);                                              \
         pmix_output_verbose(2, pmix_globals.debug_output,               \
-                        "[%s:%d] queue reply to %s:%d on tag %d,"       \
-                        "event_is_active=%d",                           \
+                        "[%s:%d] queue reply to %s:%d on tag %d",       \
                         __FILE__, __LINE__,                             \
                         (queue->peer)->info->nptr->nspace,              \
-                        (queue->peer)->info->rank, (queue->tag),        \
-                        (queue->peer)->send_ev_active);                 \
+                        (queue->peer)->info->rank, (queue->tag));       \
         event_assign(&queue->ev, pmix_globals.evbase, -1,               \
                        EV_WRITE, _queue_message, queue);                \
         event_priority_set(&queue->ev, 0);                              \
@@ -723,7 +720,7 @@ static void _register_client(int sd, short args, void *cbdata)
          * someone has been waiting for a request on a remote proc
          * in one of our nspaces, but we didn't know all the local procs
          * and so couldn't determine the proc was remote */
-        pmix_pending_nspace_fix(nptr);
+        pmix_pending_nspace_requests(nptr);
     }
     /* let the caller know we are done */
     if (NULL != cd->opcbfunc) {
