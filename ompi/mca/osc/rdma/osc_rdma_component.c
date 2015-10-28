@@ -14,6 +14,7 @@
  * Copyright (c) 2006-2008 University of Houston.  All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2012-2015 Sandia National Laboratories.  All rights reserved.
+ * Copyright (c) 2015      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -37,6 +38,9 @@
 #include "opal/threads/mutex.h"
 #include "opal/util/arch.h"
 #include "opal/align.h"
+#if OPAL_CUDA_SUPPORT
+#include "opal/datatype/opal_datatype_cuda.h"
+#endif /* OPAL_CUDA_SUPPORT */
 
 #include "ompi/info/info.h"
 #include "ompi/communicator/communicator.h"
@@ -302,6 +306,15 @@ static int ompi_osc_rdma_component_query (struct ompi_win_t *win, void **base, s
     if (MPI_WIN_FLAVOR_SHARED == flavor) {
         return -1;
     }
+
+#if OPAL_CUDA_SUPPORT
+    /* GPU buffers are not supported by the rdma component */
+    if (MPI_WIN_FLAVOR_CREATE == flavor) {
+        if (opal_cuda_check_bufs(*base, NULL)) {
+            return -1;
+        }
+    }
+#endif /* OPAL_CUDA_SUPPORT */
 
     if (OMPI_SUCCESS != ompi_osc_rdma_query_btls (comm, NULL)) {
         return -1;
