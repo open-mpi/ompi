@@ -144,6 +144,11 @@ static int mca_pml_monitoring_component_close(void)
     if( !mca_pml_monitoring_enabled )
         return OMPI_SUCCESS;
 
+    /**
+     * If this component is already active, then we are currently monitoring the execution
+     * and this close if the one from MPI_Finalize. Do the clean up and release the extra
+     * reference on ourselves.
+     */
     if( mca_pml_monitoring_active ) {  /* Already active, turn off */
         pml_selected_component.pmlm_version.mca_close_component();
         memset(&pml_selected_component, 0, sizeof(mca_base_component_t));
@@ -153,7 +158,11 @@ static int mca_pml_monitoring_component_close(void)
         return OMPI_SUCCESS;
     }
 
-    /* Bump my ref count up to avoid getting released too early */
+    /**
+     * We are supposed to monitor the execution. Save the winner PML component and
+     * module, and swap it with ourselves. Increase our refcount so that we are
+     * not dlclose.
+     */
     if( OPAL_SUCCESS != mca_base_component_repository_retain_component(mca_pml_monitoring_component.pmlm_version.mca_type_name,
                                                                        mca_pml_monitoring_component.pmlm_version.mca_component_name) ) {
         return OMPI_ERROR;
@@ -162,10 +171,14 @@ static int mca_pml_monitoring_component_close(void)
     /* Save a copy of the selected PML */
     pml_selected_component = mca_pml_base_selected_component;
     pml_selected_module = mca_pml;
-    /* And now install the interception layer */
+    /* Install our interception layer */
     mca_pml_base_selected_component = mca_pml_monitoring_component;
     mca_pml = mca_pml_monitoring;
+    /* Restore some of the original valued: progress, flags, tags and context id */
     mca_pml.pml_progress = pml_selected_module.pml_progress;
+    mca_pml.pml_max_contextid = pml_selected_module.pml_max_contextid;
+    mca_pml.pml_max_tag = pml_selected_module.pml_max_tag;
+    mca_pml.pml_flags = pml_selected_module.pml_flags;
 
     mca_pml_monitoring_active = 1;
 
@@ -223,25 +236,24 @@ mca_pml_base_component_2_0_0_t mca_pml_monitoring_component = {
     /* First, the mca_base_component_t struct containing meta
        information about the component itself */
 
-    {
+    .pmlm_version = {
         MCA_PML_BASE_VERSION_2_0_0,
 
-        "monitoring", /* MCA component name */
-        OMPI_MAJOR_VERSION,  /* MCA component major version */
-        OMPI_MINOR_VERSION,  /* MCA component minor version */
-        OMPI_RELEASE_VERSION,  /* MCA component release version */
-        mca_pml_monitoring_component_open,  /* component open */
-        mca_pml_monitoring_component_close, /* component close */
-        NULL,
-        mca_pml_monitoring_component_register
+        .mca_component_name = "monitoring", /* MCA component name */
+        .mca_component_major_version = OMPI_MAJOR_VERSION,  /* MCA component major version */
+        .mca_component_minor_version = OMPI_MINOR_VERSION,  /* MCA component minor version */
+        .mca_component_release_version = OMPI_RELEASE_VERSION,  /* MCA component release version */
+        .mca_open_component = mca_pml_monitoring_component_open,  /* component open */
+        .mca_close_component = mca_pml_monitoring_component_close, /* component close */
+        .mca_register_component_params = mca_pml_monitoring_component_register
     },
-    {
+    .pmlm_data = {
         /* The component is checkpoint ready */
         MCA_BASE_METADATA_PARAM_CHECKPOINT
     },
 
-    mca_pml_monitoring_component_init,  /* component init */
-    mca_pml_monitoring_component_finish   /* component finalize */
+    .pmlm_init = mca_pml_monitoring_component_init,  /* component init */
+    .pmlm_finalize = mca_pml_monitoring_component_finish   /* component finalize */
 
 };
 
