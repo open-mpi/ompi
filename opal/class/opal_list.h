@@ -168,22 +168,26 @@ typedef struct opal_list_t opal_list_t;
  *
  * @param[in] list List to destruct or release
  */
-#define OPAL_LIST_DESTRUCT(list)                                \
-    do {                                                        \
-        opal_list_item_t *it;                                   \
-        while (NULL != (it = opal_list_remove_first(list))) {   \
-            OBJ_RELEASE(it);                                    \
-        }                                                       \
-        OBJ_DESTRUCT(list);                                     \
+#define OPAL_LIST_DESTRUCT(list)                                  \
+    do {                                                          \
+        opal_list_item_t *it;                                     \
+        if (1 == ((opal_object_t*)(list))->obj_reference_count) { \
+          while (NULL != (it = opal_list_remove_first(list))) {   \
+              OBJ_RELEASE(it);                                    \
+          }                                                       \
+        }                                                         \
+        OBJ_DESTRUCT(list);                                       \
     } while(0);
 
-#define OPAL_LIST_RELEASE(list)                                 \
-    do {                                                        \
-        opal_list_item_t *it;                                   \
-        while (NULL != (it = opal_list_remove_first(list))) {   \
-            OBJ_RELEASE(it);                                    \
-        }                                                       \
-        OBJ_RELEASE(list);                                      \
+#define OPAL_LIST_RELEASE(list)                                   \
+    do {                                                          \
+        opal_list_item_t *it;                                     \
+        if (1 == ((opal_object_t*)(list))->obj_reference_count) { \
+          while (NULL != (it = opal_list_remove_first(list))) {   \
+              OBJ_RELEASE(it);                                    \
+          }                                                       \
+        }                                                         \
+        OBJ_RELEASE(list);                                        \
     } while(0);
 
 

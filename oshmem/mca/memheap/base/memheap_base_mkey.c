@@ -452,11 +452,6 @@ void memheap_oob_destruct(void)
         PMPI_Request_free(&r->recv_req);
     }
 
-    /*clear these list object as they don't belong here */
-    while (NULL != opal_list_remove_first(&memheap_oob.req_list)) {
-        continue;
-    }
-
     OBJ_DESTRUCT(&memheap_oob.req_list);
     OBJ_DESTRUCT(&memheap_oob.lck);
     OBJ_DESTRUCT(&memheap_oob.cond);
