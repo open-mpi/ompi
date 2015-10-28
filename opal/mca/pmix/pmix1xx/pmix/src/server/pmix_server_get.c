@@ -20,6 +20,7 @@
 #include <private/pmix_stdint.h>
 #include <private/pmix_socket_errno.h>
 
+#include <pmix_common.h>
 #include <pmix_server.h>
 #include "src/include/pmix_globals.h"
 
