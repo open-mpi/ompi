@@ -42,7 +42,6 @@
 #include <sys/types.h>
 #include <dirent.h>
 #include <string.h>
-#include <stdio.h>
 #include <infiniband/verbs.h>
 #ifdef HAVE_INFINIBAND_DRIVER_H
 #include <infiniband/driver.h>
