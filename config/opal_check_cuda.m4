@@ -16,7 +16,7 @@ dnl Copyright (c) 2009      IBM Corporation.  All rights reserved.
 dnl Copyright (c) 2009      Los Alamos National Security, LLC.  All rights
 dnl                         reserved.
 dnl Copyright (c) 2009-2011 Oak Ridge National Labs.  All rights reserved.
-dnl Copyright (c) 2011-2014 NVIDIA Corporation.  All rights reserved.
+dnl Copyright (c) 2011-2015 NVIDIA Corporation.  All rights reserved.
 dnl Copyright (c) 2015      Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
 dnl
@@ -79,10 +79,13 @@ dnl common framework, and likely configured first).  So we have to
 dnl defer this check until later (see the OPAL_CHECK_CUDA_AFTER_OPAL_DL m4
 dnl macro, below).  :-(
 
-# If we have CUDA support, check to see if we have CUDA 4.1 support
-AS_IF([test "$opal_check_cuda_happy"="yes"],
-    AC_CHECK_MEMBER([struct CUipcMemHandle_st.reserved], [CUDA_SUPPORT_41=1], [CUDA_SUPPORT_41=0],
-        [#include <$opal_cuda_incdir/cuda.h>]),
+# We require CUDA IPC support which started in CUDA 4.1. Error
+# out if the support is not there.
+AS_IF([test "$opal_check_cuda_happy" = "yes"],
+    [AC_CHECK_MEMBER([struct CUipcMemHandle_st.reserved],
+        [],
+        [AC_MSG_ERROR([Cannot continue because CUDA 4.1 or later is required])],
+        [#include <$opal_cuda_incdir/cuda.h>])],
     [])
 
 # If we have CUDA support, check to see if we have support for SYNC_MEMOPS
@@ -124,10 +127,6 @@ fi
 AM_CONDITIONAL([OPAL_cuda_support], [test "x$CUDA_SUPPORT" = "x1"])
 AC_DEFINE_UNQUOTED([OPAL_CUDA_SUPPORT],$CUDA_SUPPORT,
                    [Whether we want cuda device pointer support])
-
-AM_CONDITIONAL([OPAL_cuda_support_41], [test "x$CUDA_SUPPORT_41" = "x1"])
-AC_DEFINE_UNQUOTED([OPAL_CUDA_SUPPORT_41],$CUDA_SUPPORT_41,
-                   [Whether we have CUDA 4.1 support available])
 
 AM_CONDITIONAL([OPAL_cuda_sync_memops], [test "x$CUDA_SYNC_MEMOPS" = "x1"])
 AC_DEFINE_UNQUOTED([OPAL_CUDA_SYNC_MEMOPS],$CUDA_SYNC_MEMOPS,
