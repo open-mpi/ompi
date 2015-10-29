@@ -144,8 +144,7 @@ static void _queue_message(int fd, short args, void *cbdata)
                         "[%s:%d] queue callback called: reply to %s:%d on tag %d",
                         __FILE__, __LINE__,
                         (queue->peer)->info->nptr->nspace,
-                        (queue->peer)->info->rank, (queue->tag),
-                        (queue->peer)->send_ev_active);
+                        (queue->peer)->info->rank, (queue->tag));
     snd = PMIX_NEW(pmix_usock_send_t);
     snd->hdr.pindex = pmix_globals.pindex;
     snd->hdr.tag = (queue->tag);
