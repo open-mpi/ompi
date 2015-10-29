@@ -41,7 +41,7 @@
 !     don't need another interface for MPI_COMM_SPAWN.
       character MPI_ARGV_NULL(1)
 !     Ditto for MPI_ARGVS_NULL / MPI_COMM_SPAWN_MULTIPLE.
-      character MPI_ARGVS_NULL(1)
+      character MPI_ARGVS_NULL(1, 1)
 !     MPI_ERRCODES_IGNORE has similar rationale to MPI_ARGV_NULL.  The
 !     F77 functions are all smart enough to check that the errcodes
 !     parameter is not ERRCODES_IGNORE before assigning values into it
