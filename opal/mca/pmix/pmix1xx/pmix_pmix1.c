@@ -171,6 +171,8 @@ pmix_status_t pmix1_convert_opalrc(int rc)
     case OPAL_EXISTS:
         return PMIX_EXISTS;
 
+    case OPAL_ERR_SILENT:
+        return PMIX_ERR_SILENT;
     case OPAL_ERROR:
         return PMIX_ERROR;
     case OPAL_SUCCESS:
@@ -254,6 +256,8 @@ int pmix1_convert_rc(pmix_status_t rc)
     case PMIX_EXISTS:
         return OPAL_EXISTS;
 
+    case PMIX_ERR_SILENT:
+        return OPAL_ERR_SILENT;
     case PMIX_ERROR:
         return OPAL_ERROR;
     case PMIX_SUCCESS:
