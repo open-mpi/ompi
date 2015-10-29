@@ -26,8 +26,7 @@
 !
 !     - the "mpi" module bindings
 !     - the "mpi_f08" module bindings
-!     - ompi/mpi/fortran/base/constants.h
-!     - ompi/mpi/runtime/ompi_init.c
+!     - ompi/mpi/fortran/base/gen-mpi-mangling.pl
 !
 
 !     MPI_BOTTOM is only used where choice buffers can be used (meaning
