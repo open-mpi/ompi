@@ -3379,7 +3379,7 @@ subroutine MPI_Dist_graph_create(comm_old, n, sources, degrees, destinations, &
   integer, dimension(n), intent(in) :: degrees
   integer, dimension(n), intent(in) :: destinations
   integer, dimension(n), intent(in) :: weights
-  logical, intent(in) :: info
+  integer, intent(in) :: info
   logical, intent(in) :: reorder
   integer, intent(out) :: comm_dist_graph
   integer, intent(out) :: ierror
@@ -3400,7 +3400,7 @@ subroutine MPI_Dist_graph_create_adjacent(comm_old, indegree, sources, sourcewei
   integer, intent(in) :: outdegree
   integer, dimension(outdegree), intent(in) :: destinations
   integer, dimension(outdegree), intent(in) :: destweights
-  logical, intent(in) :: info
+  integer, intent(in) :: info
   logical, intent(in) :: reorder
   integer, intent(out) :: comm_dist_graph
   integer, intent(out) :: ierror
