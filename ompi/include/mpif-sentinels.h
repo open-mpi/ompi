@@ -53,8 +53,10 @@
       integer MPI_STATUS_IGNORE(MPI_STATUS_SIZE)
 !     Ditto for MPI_STATUSES_IGNORE
       integer MPI_STATUSES_IGNORE(MPI_STATUS_SIZE, 1)
-      integer MPI_UNWEIGHTED
-      integer MPI_WEIGHTS_EMPTY
+!     Ditto for MPI_UNWEIGHTED
+      integer MPI_UNWEIGHTED(1)
+!     Ditto for MPI_WEIGHTS_EMPTY
+      integer MPI_WEIGHTS_EMPTY(1)
 
       common/mpi_fortran_bottom/MPI_BOTTOM
       common/mpi_fortran_in_place/MPI_IN_PLACE
