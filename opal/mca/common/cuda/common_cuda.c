@@ -20,9 +20,7 @@
 
 /**
  * This file contains various support functions for doing CUDA
- * operations.  Some of the features are only available in CUDA 4.1
- * and later, so some code is conditionalized around the
- * OPAL_CUDA_SUPPORT_41 macro.
+ * operations.
  */
 #include "opal_config.h"
 

@@ -1,6 +1,6 @@
 # -*- shell-script -*-
 #
-# Copyright (c) 2012      NVIDIA Corporation.  All rights reserved.
+# Copyright (c) 2012-2015 NVIDIA Corporation.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -18,7 +18,7 @@ AC_DEFUN([MCA_opal_mpool_gpusm_CONFIG],[
     AC_CONFIG_FILES([opal/mca/mpool/gpusm/Makefile])
 
     # Use CUDA_SUPPORT which was filled in by the opal configure code.
-    AS_IF([test "x$CUDA_SUPPORT_41" = "x1"],
+    AS_IF([test "x$CUDA_SUPPORT" = "x1"],
           [$1],
           [$2])
 
