@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -9,6 +10,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -51,13 +54,10 @@ OBJ_CLASS_DECLARATION(mca_pml_ob1_comm_proc_t);
  */
 struct mca_pml_comm_t {
     opal_object_t super;
-#if OPAL_ENABLE_MULTI_THREADS
     volatile uint32_t recv_sequence;  /**< recv request sequence number - receiver side */
-#else
-    uint32_t recv_sequence;  /**< recv request sequence number - receiver side */
-#endif
     opal_mutex_t matching_lock;   /**< matching lock */
     opal_list_t wild_receives;    /**< queue of unmatched wild (source process not specified) receives */
+    opal_mutex_t proc_lock;
     mca_pml_ob1_comm_proc_t **procs;
     size_t num_procs;
     size_t last_probed;
@@ -71,9 +71,14 @@ static inline mca_pml_ob1_comm_proc_t *mca_pml_ob1_peer_lookup (struct ompi_comm
     mca_pml_ob1_comm_t *pml_comm = (mca_pml_ob1_comm_t *)comm->c_pml_comm;
 
     if (OPAL_UNLIKELY(NULL == pml_comm->procs[rank])) {
-        pml_comm->procs[rank] = OBJ_NEW(mca_pml_ob1_comm_proc_t);
-        pml_comm->procs[rank]->ompi_proc = ompi_comm_peer_lookup (comm, rank);
-        OBJ_RETAIN(pml_comm->procs[rank]->ompi_proc);
+        OPAL_THREAD_LOCK(&pml_comm->proc_lock);
+        if (NULL == pml_comm->procs[rank]) {
+            pml_comm->procs[rank] = OBJ_NEW(mca_pml_ob1_comm_proc_t);
+            pml_comm->procs[rank]->ompi_proc = ompi_comm_peer_lookup (comm, rank);
+            OBJ_RETAIN(pml_comm->procs[rank]->ompi_proc);
+            opal_atomic_wmb ();
+        }
+        OPAL_THREAD_UNLOCK(&pml_comm->proc_lock);
     }
 
     return pml_comm->procs[rank];

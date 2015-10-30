@@ -50,6 +50,8 @@ static bool mca_bml_base_srand;
 opal_rng_buff_t mca_bml_base_rand_buff;
 #endif
 
+opal_mutex_t mca_bml_lock = OPAL_MUTEX_STATIC_INIT;
+
 static int mca_bml_base_register(mca_base_register_flag_t flags)
 {
 #if OPAL_ENABLE_DEBUG_RELIABILITY
