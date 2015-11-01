@@ -540,6 +540,7 @@ ORTE_DECLSPEC extern bool orte_default_hostfile_given;
 ORTE_DECLSPEC extern char *orte_rankfile;
 ORTE_DECLSPEC extern int orte_num_allocated_nodes;
 ORTE_DECLSPEC extern char *orte_node_regex;
+ORTE_DECLSPEC extern char *orte_default_dash_host;
 
 /* PMI version control */
 ORTE_DECLSPEC extern int orted_pmi_version;

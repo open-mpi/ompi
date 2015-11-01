@@ -171,7 +171,7 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
             OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base_framework.framework_output,
                                  "%s using dash_host %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), hosts));
-            if (ORTE_SUCCESS != (rc = orte_util_add_dash_host_nodes(&nodes, hosts))) {
+            if (ORTE_SUCCESS != (rc = orte_util_add_dash_host_nodes(&nodes, hosts, false))) {
                 ORTE_ERROR_LOG(rc);
                 free(hosts);
                 return rc;
