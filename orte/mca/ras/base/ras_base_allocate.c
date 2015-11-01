@@ -312,7 +312,7 @@ void orte_ras_base_allocate(int fd, short args, void *cbdata)
             OPAL_OUTPUT_VERBOSE((5, orte_ras_base_framework.framework_output,
                                  "%s ras:base:allocate adding dash_hosts",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-            if (ORTE_SUCCESS != (rc = orte_util_add_dash_host_nodes(&nodes, hosts))) {
+            if (ORTE_SUCCESS != (rc = orte_util_add_dash_host_nodes(&nodes, hosts, true))) {
                 free(hosts);
                 OBJ_DESTRUCT(&nodes);
                 ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
@@ -511,7 +511,7 @@ int orte_ras_base_add_hosts(orte_job_t *jdata)
             opal_output_verbose(5, orte_ras_base_framework.framework_output,
                                 "%s ras:base:add_hosts checking add-host %s",
                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), hosts);
-            if (ORTE_SUCCESS != (rc = orte_util_add_dash_host_nodes(&nodes, hosts))) {
+            if (ORTE_SUCCESS != (rc = orte_util_add_dash_host_nodes(&nodes, hosts, true))) {
                 ORTE_ERROR_LOG(rc);
                 OBJ_DESTRUCT(&nodes);
                 free(hosts);
