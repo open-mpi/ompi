@@ -155,6 +155,7 @@ bool orte_default_hostfile_given = false;
 char *orte_rankfile = NULL;
 int orte_num_allocated_nodes = 0;
 char *orte_node_regex = NULL;
+char *orte_default_dash_host = NULL;
 
 /* tool communication controls */
 bool orte_report_events = false;
