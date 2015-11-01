@@ -108,6 +108,8 @@ included in the vX.Y.Z section and be denoted as:
   to our attention.
 - Fix linking issues on some platforms (e.g., SLES 12).
 - Fix hang on some corner cases when MPI applications abort.
+- Add missing options to mpirun man page. Thanks to Daniel Letai
+  for bringing this to our attention.
 
 
 1.10.0
@@ -116,7 +118,11 @@ included in the vX.Y.Z section and be denoted as:
 ** version numbering scheme.  The v1.10.x release series is based on
 ** the v1.8.x series, but with a few new features.  v2.x will be the
 ** next series after the v1.10.x series, and complete the transition
-** to the new version numbering scheme.  See README for more details.
+** to the new version numbering scheme.  See README for more details
+** on the new versioning scheme.
+**
+** NOTE: In accordance with OMPI version numbering, the v1.10 is *not*
+** API compatible with the v1.8 release series.
 
 - Added libfabric support (see README for more details):
   - usNIC BTL updated to use libfabric.

@@ -147,6 +147,24 @@ cause orterun to exit.
 .
 .
 .
+.TP
+.B -display-map\fR,\fP --display-map
+Display a table showing the mapped location of each process prior to launch.
+.
+.
+.
+.TP
+.B -display-devel-map\fR,\fP --display-devel-map
+Display a more detailed table showing the mapped location of each process prior to launch (usually of interest to developers).
+.
+.
+.
+.TP
+.B -display-allocation\fR,\fP --display-allocation
+Display the detected resource allocation.
+.
+.
+.
 .P
 Use one of the following options to specify which hosts (nodes) of the cluster to run on. Note
 that as of the start of the v1.8 release, mpirun will launch a daemon onto each host in the
@@ -174,6 +192,14 @@ Provide a hostfile to use.
 .B -machinefile\fR,\fP --machinefile \fR<machinefile>\fP
 Synonym for \fI-hostfile\fP.
 .
+.
+.
+.
+.TP
+.B -cpu-set\fR,\fP --cpu-set
+Restrict launched processes to the specified logical cpus on each node. Note that the
+binding options will still apply within the specified envelope - e.g., you can elect
+to bind each process to only one cpu within the specified cpu set.
 .
 .
 .
