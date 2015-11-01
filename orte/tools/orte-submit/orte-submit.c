@@ -425,14 +425,13 @@ int main(int argc, char *argv[])
     if (myglobals.help) {
         char *str, *args = NULL;
         char *project_name = NULL;
-        opal_output(0, "GETTING HELP");
+
         if (0 == strcmp(orte_basename, "mpirun")) {
             project_name = "Open MPI";
         } else {
             project_name = "OpenRTE";
         }
         args = opal_cmd_line_get_usage_msg(&cmd_line);
-        opal_output(0, "CMD LINE %s", args);
         str = opal_show_help_string("help-orterun.txt", "orterun:usage", false,
                                     orte_basename, project_name, OPAL_VERSION,
                                     orte_basename, args,
