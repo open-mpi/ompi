@@ -590,6 +590,8 @@ test/event/signal-test
 test/event/event-test
 test/event/time-test
 
+test/monitoring/monitoring_test
+
 test/mpi/environment/chello
 
 test/runtime/parse_context
