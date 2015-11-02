@@ -15,6 +15,7 @@
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015      Bull SAS.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -96,14 +97,8 @@ int32_t ompi_datatype_create_subarray(int ndims,
      * data inside. Thus, in case the original data contains the hard markers
      * (MPI_LB or MPI_UB) we must force the displacement of the data upward to
      * the right position AND set the hard markers LB and UB.
-     *
-     * NTH: ompi_datatype_create_resized() does not do enough for the general
-     * pack/unpack functions to work correctly. Until this is fixed always use
-     * ompi_datatype_create_struct(). Once this is fixed remove 1 || below. To
-     * verify that the regression is fixed run the subarray test in the Open MPI
-     * ibm testsuite.
      */
-    if(1 || oldtype->super.flags & (OPAL_DATATYPE_FLAG_USER_LB | OPAL_DATATYPE_FLAG_USER_UB) ) {
+    if(oldtype->super.flags & (OPAL_DATATYPE_FLAG_USER_LB | OPAL_DATATYPE_FLAG_USER_UB) ) {
         MPI_Aint displs[3];
         MPI_Datatype types[3];
         int blength[3] = { 1, 1, 1 };
@@ -112,7 +107,10 @@ int32_t ompi_datatype_create_subarray(int ndims,
         types[0] = MPI_LB; types[1] = last_type; types[2] = MPI_UB;
         ompi_datatype_create_struct( 3, blength, displs, types, newtype );
     } else {
-        ompi_datatype_create_resized(last_type, displ * extent, size * extent, newtype);
+        MPI_Aint displs[1]={displ * extent};
+        int blength[1]={1};
+
+        ompi_datatype_create_hindexed( 1, blength, displs, last_type, newtype);
     }
     ompi_datatype_destroy( &last_type );
 
