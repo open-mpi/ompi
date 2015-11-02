@@ -192,7 +192,7 @@ int mca_spml_ucx_add_procs(oshmem_proc_t** procs, size_t nprocs)
     }
 
     err = ucp_worker_get_address(mca_spml_ucx.ucp_worker, &wk_local_addr, &wk_addr_len);
-    if (err == UCS_OK) {
+    if (err != UCS_OK) {
         goto error;
     }
     dump_address(my_rank, (char *)wk_local_addr, wk_addr_len);
