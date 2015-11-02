@@ -15,6 +15,11 @@
 #include "btl_ugni_rdma.h"
 #include "btl_ugni_smsg.h"
 
+#include "opal/util/sys_limits.h"
+
+#include <stdlib.h>
+#include <fcntl.h>
+
 #include "opal/memoryhooks/memory.h"
 #include "opal/runtime/opal_params.h"
 
@@ -25,6 +30,7 @@ static int btl_ugni_component_open(void);
 static int btl_ugni_component_close(void);
 static mca_btl_base_module_t **mca_btl_ugni_component_init(int *, bool, bool);
 static int mca_btl_ugni_component_progress(void);
+static unsigned long mca_btl_ugni_ugni_page_size = 0;
 
 mca_btl_ugni_component_t mca_btl_ugni_component = {
     .super = {
@@ -44,9 +50,9 @@ mca_btl_ugni_component_t mca_btl_ugni_component = {
     }
 };
 
-mca_base_var_enum_value_t mpool_values[] = {
-    {MCA_BTL_UGNI_MPOOL_UDREG, "udreg"},
-    {MCA_BTL_UGNI_MPOOL_GRDMA, "grdma"},
+mca_base_var_enum_value_t rcache_values[] = {
+    {MCA_BTL_UGNI_RCACHE_UDREG, "udreg"},
+    {MCA_BTL_UGNI_RCACHE_GRDMA, "grdma"},
     {-1, NULL} /* sentinal */
 };
 
@@ -55,6 +61,7 @@ btl_ugni_component_register(void)
 {
     mca_base_var_enum_t *new_enum;
     gni_nic_device_t device_type;
+    char *mpool_hints_tmp = NULL;
     int rc;
 
     (void) mca_base_var_group_component_register(&mca_btl_ugni_component.super.btl_version,
@@ -174,10 +181,29 @@ btl_ugni_component_register(void)
                                            MCA_BASE_VAR_FLAG_SETTABLE, OPAL_INFO_LVL_3,
                                            MCA_BASE_VAR_SCOPE_LOCAL, &mca_btl_ugni_component.mbox_increment);
 
+    /* determine if there are get alignment restrictions */
+    GNI_GetDeviceType (&device_type);
+
+
     mca_btl_ugni_component.smsg_page_size = 2 << 20;
+    if (GNI_DEVICE_GEMINI == device_type) {
+        if (access ("/sys/class/gemini/ghal0/mrt", R_OK)) {
+            int fd = open ("/sys/class/gemini/ghal0/mrt", O_RDONLY);
+            char buffer[10];
+
+            if (0 <= fd) {
+                memset (buffer, 0, sizeof (buffer));
+                read (fd, buffer, sizeof (buffer) - 1);
+                close (fd);
+                mca_btl_ugni_ugni_page_size = strtol (buffer, NULL, 10) * 1024;
+                mca_btl_ugni_component.smsg_page_size = mca_btl_ugni_ugni_page_size;
+            }
+        }
+    }
+
     (void) mca_base_component_var_register(&mca_btl_ugni_component.super.btl_version,
                                            "smsg_page_size", "Page size to use for SMSG "
-                                           "mailbox allocation (default 2M)",
+                                           "mailbox allocation (default: detect)",
                                            MCA_BASE_VAR_TYPE_INT, NULL, 0,
                                            MCA_BASE_VAR_FLAG_SETTABLE, OPAL_INFO_LVL_3,
                                            MCA_BASE_VAR_SCOPE_LOCAL,
@@ -202,19 +228,37 @@ btl_ugni_component_register(void)
                                             MCA_BASE_PVAR_FLAG_READONLY | MCA_BASE_PVAR_FLAG_CONTINUOUS, NULL,
                                             NULL, NULL, &mca_btl_ugni_progress_thread_wakeups);
 
-    /* btl/ugni can only support only a fixed set of mpools (these mpools have compatible resource
+    /* btl/ugni can only support only a fixed set of rcache components (these rcache components have compatible resource
      * structures) */
-    rc = mca_base_var_enum_create ("btl_ugni_mpool", mpool_values, &new_enum);
+    rc = mca_base_var_enum_create ("btl_ugni_rcache", rcache_values, &new_enum);
     if (OPAL_SUCCESS != rc) {
         return rc;
     }
 
-    mca_btl_ugni_component.mpool_type = MCA_BTL_UGNI_MPOOL_UDREG;
+    mca_btl_ugni_component.rcache_type = MCA_BTL_UGNI_RCACHE_UDREG;
     (void) mca_base_component_var_register(&mca_btl_ugni_component.super.btl_version,
-                                           "mpool", "mpool to use", MCA_BASE_VAR_TYPE_INT, new_enum,
+                                           "rcache", "registration cache to use", MCA_BASE_VAR_TYPE_INT, new_enum,
                                            0, MCA_BASE_VAR_FLAG_SETTABLE, OPAL_INFO_LVL_3,
-                                           MCA_BASE_VAR_SCOPE_LOCAL, &mca_btl_ugni_component.mpool_type);
+                                           MCA_BASE_VAR_SCOPE_LOCAL, &mca_btl_ugni_component.rcache_type);
     OBJ_RELEASE(new_enum);
+
+    if (mca_btl_ugni_ugni_page_size) {
+        rc = asprintf (&mpool_hints_tmp, "page_size=%lu", mca_btl_ugni_ugni_page_size);
+        if (rc < 0) {
+            return OPAL_ERR_OUT_OF_RESOURCE;
+        }
+
+        mca_btl_ugni_component.mpool_hints = mpool_hints_tmp;
+    } else {
+        mca_btl_ugni_component.mpool_hints = "page_size=2M";
+    }
+
+    (void) mca_base_component_var_register(&mca_btl_ugni_component.super.btl_version,
+                                           "mpool_hints", "hints to use when selecting a memory pool (default: "
+                                           "\"page_size=2M\")", MCA_BASE_VAR_TYPE_STRING, NULL, 0,
+                                           MCA_BASE_VAR_FLAG_SETTABLE, OPAL_INFO_LVL_3,
+                                           MCA_BASE_VAR_SCOPE_LOCAL, &mca_btl_ugni_component.mpool_hints);
+    free (mpool_hints_tmp);
 
     /* ensure we loose send exclusivity to sm and vader if they are enabled */
     mca_btl_ugni_module.super.btl_exclusivity = MCA_BTL_EXCLUSIVITY_HIGH - 2;
@@ -227,9 +271,6 @@ btl_ugni_component_register(void)
     mca_btl_ugni_module.super.btl_rdma_pipeline_send_length = 8 * 1024;
 
     mca_btl_ugni_module.super.btl_get_limit = 1 * 1024 * 1024;
-
-    /* determine if there are get alignment restrictions */
-    GNI_GetDeviceType (&device_type);
 
     /*
      * see def. of ALIGNMENT_MASK to figure this one out
@@ -291,7 +332,7 @@ btl_ugni_component_close(void)
 }
 
 static void mca_btl_ugni_autoset_leave_pinned (void) {
-    if (MCA_BTL_UGNI_MPOOL_UDREG != mca_btl_ugni_component.mpool_type) {
+    if (MCA_BTL_UGNI_RCACHE_UDREG != mca_btl_ugni_component.rcache_type) {
         int value = opal_mem_hooks_support_level();
         if ((OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT) ==
             ((OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT) & value)) {
@@ -360,6 +401,12 @@ mca_btl_ugni_component_init (int *num_btl_modules,
     if (OPAL_UNLIKELY(NULL == base_modules)) {
         BTL_ERROR(("Malloc failed : %s:%d", __FILE__, __LINE__));
         return NULL;
+    }
+
+    if (mca_btl_ugni_component.smsg_page_size != (unsigned long) opal_getpagesize ()) {
+        if (mca_btl_ugni_ugni_page_size > mca_btl_ugni_component.smsg_page_size) {
+            mca_btl_ugni_component.smsg_page_size = mca_btl_ugni_ugni_page_size;
+        }
     }
 
     mca_btl_ugni_autoset_leave_pinned ();

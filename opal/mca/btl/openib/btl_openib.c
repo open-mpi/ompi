@@ -57,7 +57,7 @@
 #include "opal/datatype/opal_convertor.h"
 #include "opal/mca/mpool/base/base.h"
 #include "opal/mca/mpool/mpool.h"
-#include "opal/mca/mpool/grdma/mpool_grdma.h"
+#include "opal/mca/rcache/rcache.h"
 
 #if OPAL_CUDA_SUPPORT
 #include "opal/datatype/opal_datatype_cuda.h"
@@ -733,7 +733,7 @@ static int prepare_device_for_use (mca_btl_openib_device_t *device)
                 mca_btl_openib_component.buffer_alignment,
                 mca_btl_openib_component.ib_free_list_num, -1,
                 mca_btl_openib_component.ib_free_list_inc,
-                device->mpool, 0, NULL, mca_btl_openib_frag_init,
+                device->mpool, 0, device->rcache, mca_btl_openib_frag_init,
                 init_data);
     if (OPAL_SUCCESS != rc) {
         /* If we're "out of memory", this usually means that we ran
@@ -774,7 +774,7 @@ static int prepare_device_for_use (mca_btl_openib_device_t *device)
                     mca_btl_openib_component.ib_free_list_num,
                     mca_btl_openib_component.ib_free_list_max,
                     mca_btl_openib_component.ib_free_list_inc,
-                    device->mpool, 0, NULL, mca_btl_openib_frag_init,
+                    device->mpool, 0, device->rcache, mca_btl_openib_frag_init,
                     init_data);
         if (OPAL_SUCCESS != rc) {
             /* If we're "out of memory", this usually means that we
@@ -807,7 +807,7 @@ static int prepare_device_for_use (mca_btl_openib_device_t *device)
                     mca_btl_openib_component.ib_free_list_num,
                     mca_btl_openib_component.ib_free_list_max,
                     mca_btl_openib_component.ib_free_list_inc,
-                    device->mpool, 0, NULL, mca_btl_openib_frag_init,
+                    device->mpool, 0, device->rcache, mca_btl_openib_frag_init,
                     init_data)) {
             rc = OPAL_ERROR;
             goto exit;
@@ -1903,6 +1903,7 @@ static mca_btl_base_registration_handle_t *mca_btl_openib_register_mem (mca_btl_
                                                                         mca_btl_base_endpoint_t *endpoint,
                                                                         void *base, size_t size, uint32_t flags)
 {
+    mca_btl_openib_module_t *openib_module = (mca_btl_openib_module_t *) btl;
     mca_btl_openib_reg_t *reg;
     uint32_t mflags = 0;
     int access_flags = flags & MCA_BTL_REG_FLAG_ACCESS_ANY;
@@ -1910,12 +1911,12 @@ static mca_btl_base_registration_handle_t *mca_btl_openib_register_mem (mca_btl_
 
 #if OPAL_CUDA_GDR_SUPPORT
     if (flags & MCA_BTL_REG_FLAG_CUDA_GPU_MEM) {
-        mflags |= MCA_MPOOL_FLAGS_CUDA_GPU_MEM;
+        mflags |= MCA_RCACHE_FLAGS_CUDA_GPU_MEM;
     }
 #endif /* OPAL_CUDA_GDR_SUPPORT */
 
-    rc = btl->btl_mpool->mpool_register (btl->btl_mpool, base, size, mflags, access_flags,
-                                         (mca_mpool_base_registration_t **) &reg);
+    rc = openib_module->device->rcache->rcache_register (openib_module->device->rcache, base, size, mflags,
+                                                         access_flags, (mca_rcache_base_registration_t **) &reg);
     if (OPAL_UNLIKELY(OPAL_SUCCESS != rc || NULL == reg)) {
         return NULL;
     }
@@ -1925,9 +1926,10 @@ static mca_btl_base_registration_handle_t *mca_btl_openib_register_mem (mca_btl_
 
 static int mca_btl_openib_deregister_mem (mca_btl_base_module_t *btl, mca_btl_base_registration_handle_t *handle)
 {
+    mca_btl_openib_module_t *openib_module = (mca_btl_openib_module_t *) btl;
     mca_btl_openib_reg_t *reg = (mca_btl_openib_reg_t *)((intptr_t) handle - offsetof (mca_btl_openib_reg_t, btl_handle));
 
-    btl->btl_mpool->mpool_deregister (btl->btl_mpool, (mca_mpool_base_registration_t *) reg);
+    openib_module->device->rcache->rcache_deregister (openib_module->device->rcache, (mca_rcache_base_registration_t *) reg);
 
     return OPAL_SUCCESS;
 }

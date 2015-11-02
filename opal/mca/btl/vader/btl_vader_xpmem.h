@@ -25,6 +25,9 @@
   typedef int64_t xpmem_apid_t;
 #endif
 
+#include <opal/mca/rcache/base/rcache_base_vma.h>
+#include <opal/mca/rcache/rcache.h>
+
 /* look up the remote pointer in the peer rcache and attach if
  * necessary */
 
@@ -33,15 +36,15 @@
 
 int mca_btl_vader_xpmem_init (void);
 
-mca_mpool_base_registration_t *vader_get_registation (struct mca_btl_base_endpoint_t *endpoint, void *rem_ptr,
- 						      size_t size, int flags, void **local_ptr);
+mca_rcache_base_registration_t *vader_get_registation (struct mca_btl_base_endpoint_t *endpoint, void *rem_ptr,
+                                                       size_t size, int flags, void **local_ptr);
 
-void vader_return_registration (mca_mpool_base_registration_t *reg, struct mca_btl_base_endpoint_t *endpoint);
+void vader_return_registration (mca_rcache_base_registration_t *reg, struct mca_btl_base_endpoint_t *endpoint);
 
 #else
 
-static inline mca_mpool_base_registration_t *vader_get_registation (struct mca_btl_base_endpoint_t *endpoint, void *rem_ptr,
-                                                                        size_t size, int flags, void **local_ptr)
+static inline mca_rcache_base_registration_t *vader_get_registation (struct mca_btl_base_endpoint_t *endpoint, void *rem_ptr,
+                                                                     size_t size, int flags, void **local_ptr)
 {
     (void) endpoint;
     (void) rem_ptr;
@@ -51,7 +54,7 @@ static inline mca_mpool_base_registration_t *vader_get_registation (struct mca_b
     return NULL;
 }
 
-static inline void vader_return_registration (mca_mpool_base_registration_t *reg, struct mca_btl_base_endpoint_t *endpoint)
+static inline void vader_return_registration (mca_rcache_base_registration_t *reg, struct mca_btl_base_endpoint_t *endpoint)
 {
     (void) reg;
     (void) endpoint;

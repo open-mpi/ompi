@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -9,8 +10,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2012-2013 Los Alamos National Security, LLC.
- *                         All rights reserved
+ * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -34,7 +35,8 @@ BEGIN_C_DECLS
 /*
  * create a module by name
  */
-OPAL_DECLSPEC mca_rcache_base_module_t* mca_rcache_base_module_create(const char* name);
+OPAL_DECLSPEC mca_rcache_base_module_t *mca_rcache_base_module_create (const char *name, void *user_data,
+                                                                       mca_rcache_base_resources_t *rcache_resources);
 
 /*
  * MCA framework
@@ -45,13 +47,18 @@ struct mca_rcache_base_selected_module_t {
     opal_list_item_t super;
     mca_rcache_base_component_t *rcache_component;
     mca_rcache_base_module_t *rcache_module;
+    void *user_data;
 };
 typedef struct mca_rcache_base_selected_module_t mca_rcache_base_selected_module_t;
 
 OPAL_DECLSPEC OBJ_CLASS_DECLARATION(mca_rcache_base_selected_module_t);
 
-OPAL_DECLSPEC mca_rcache_base_component_t* mca_rcache_base_component_lookup(const char* name);
-OPAL_DECLSPEC mca_rcache_base_module_t* mca_rcache_base_module_lookup(const char* name);
+OPAL_DECLSPEC mca_rcache_base_component_t *mca_rcache_base_component_lookup(const char *name);
+OPAL_DECLSPEC mca_rcache_base_module_t *mca_rcache_base_module_lookup (const char *name);
+OPAL_DECLSPEC int mca_rcache_base_module_destroy(mca_rcache_base_module_t *module);
+
+/* only used within base -- no need to DECLSPEC */
+extern int mca_rcache_base_used_mem_hooks;
 
 /*
  * Globals

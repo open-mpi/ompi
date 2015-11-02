@@ -24,7 +24,7 @@ struct mca_btl_base_registration_handle_t {
 };
 
 struct mca_btl_vader_registration_handle_t {
-    mca_mpool_base_registration_t base;
+    mca_rcache_base_registration_t base;
     mca_btl_base_registration_handle_t btl_handle;
 };
 typedef struct mca_btl_vader_registration_handle_t mca_btl_vader_registration_handle_t;

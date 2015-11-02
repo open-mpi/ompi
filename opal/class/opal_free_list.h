@@ -77,6 +77,8 @@ struct opal_free_list_t {
     /** mpool to use for free list buffer allocation (posix_memalign/malloc
      * are used if this is NULL) */
     struct mca_mpool_base_module_t *fl_mpool;
+    /** registration cache */
+    struct mca_rcache_base_module_t *fl_rcache;
     /** Multi-threaded lock. Used when the free list is empty. */
     opal_mutex_t fl_lock;
     /** Multi-threaded condition. Used when threads are waiting on free
@@ -84,8 +86,8 @@ struct opal_free_list_t {
     opal_condition_t fl_condition;
     /** List of free list allocation */
     opal_list_t fl_allocations;
-    /** Flags to pass to the mpool register function */
-    int fl_mpool_reg_flags;
+    /** Flags to pass to the rcache register function */
+    int fl_rcache_reg_flags;
     /** Free list item initialization function */
     opal_free_list_item_init_fn_t item_init;
     /** Initialization function context */
@@ -98,7 +100,7 @@ struct mca_mpool_base_registration_t;
 struct opal_free_list_item_t
 {
     opal_list_item_t super;
-    struct mca_mpool_base_registration_t *registration;
+    struct mca_rcache_base_registration_t *registration;
     void *ptr;
 };
 typedef struct opal_free_list_item_t opal_free_list_item_t;
@@ -118,8 +120,8 @@ OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_free_list_item_t);
  * @param max_elements_to_alloc    (IN)  Maximum number of elements to allocate.
  * @param num_elements_per_alloc   (IN)  Number of elements to grow by per allocation.
  * @param mpool                    (IN)  Optional memory pool for allocations.
- * @param mpool_reg_flags          (IN)  Flags to pass to mpool registration function.
- * @param unused0                  (IN)  Future. Must be NULL.
+ * @param rcache_reg_flags         (IN)  Flags to pass to rcache registration function.
+ * @param rcache                   (IN)  Optional registration cache.
  * @param item_init                (IN)  Optional item initialization function
  * @param ctx                      (IN)  Initialization function context.
  */
@@ -134,8 +136,8 @@ OPAL_DECLSPEC int opal_free_list_init (opal_free_list_t *free_list,
                                        int max_elements_to_alloc,
                                        int num_elements_per_alloc,
                                        struct mca_mpool_base_module_t *mpool,
-                                       int mpool_reg_flags,
-                                       void *unused0,
+                                       int rcache_reg_flags,
+                                       struct mca_rcache_base_module_t *rcache,
                                        opal_free_list_item_init_fn_t item_init,
                                        void *ctx);
 
