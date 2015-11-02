@@ -66,14 +66,6 @@ typedef uint64_t (*mca_memheap_base_module_find_offset_fn_t)(int pe,
                                                              void* va,
                                                              void* rva);
 
-/**
- * @return mkey suitable to access pe via given transport id. rva is set to virtual address mapping of (va)
- * on remote pe.
- */
-typedef sshmem_mkey_t * (*mca_memheap_base_module_get_cached_mkey_fn_t)(int pe,
-                                                                          void* va,
-                                                                          int transport_id,
-                                                                          void** rva);
 typedef sshmem_mkey_t * (*mca_memheap_base_module_get_local_mkey_fn_t)(void* va,
                                                                          int transport_id);
 
@@ -118,7 +110,6 @@ struct mca_memheap_base_module_t {
     mca_memheap_base_module_alloc_fn_t              memheap_private_alloc;
     mca_memheap_base_module_free_fn_t               memheap_private_free;
 
-    mca_memheap_base_module_get_cached_mkey_fn_t    memheap_get_cached_mkey;
     mca_memheap_base_module_get_local_mkey_fn_t     memheap_get_local_mkey;
     mca_memheap_base_module_find_offset_fn_t        memheap_find_offset;
     mca_memheap_base_is_memheap_addr_fn_t           memheap_is_symmetric_addr;

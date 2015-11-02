@@ -35,6 +35,7 @@ static void __ompi_datatype_allocate( ompi_datatype_t* datatype )
     datatype->d_keyhash          = NULL;
     datatype->name[0]            = '\0';
     datatype->packed_description = NULL;
+    datatype->pml_data           = 0;
 }
 
 static void __ompi_datatype_release(ompi_datatype_t * datatype)

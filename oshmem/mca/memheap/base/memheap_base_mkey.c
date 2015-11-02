@@ -56,9 +56,7 @@ struct oob_comm {
     opal_list_t req_list;
 };
 
-#define MEMHEAP_VERBOSE_FASTPATH(...)
-
-static mca_memheap_map_t* memheap_map = NULL;
+mca_memheap_map_t* memheap_map = NULL;
 
 struct oob_comm memheap_oob = {{{0}}};
 
@@ -71,12 +69,12 @@ static int memheap_oob_get_mkeys(int pe,
                                  uint32_t va_seg_num,
                                  sshmem_mkey_t *mkey);
 
-static inline void* __seg2base_va(int seg)
+static inline void* mca_memheap_seg2base_va(int seg)
 {
     return memheap_map->mem_segs[seg].seg_base_addr;
 }
 
-static int _seg_cmp(const void *k, const void *v)
+int mca_memheap_seg_cmp(const void *k, const void *v)
 {
     uintptr_t va = (uintptr_t) k;
     map_segment_t *s = (map_segment_t *) v;
@@ -87,34 +85,6 @@ static int _seg_cmp(const void *k, const void *v)
         return 1;
 
     return 0;
-}
-
-static inline map_segment_t *__find_va(const void* va)
-{
-    map_segment_t *s;
-
-    if (OPAL_LIKELY((uintptr_t)va >= (uintptr_t)memheap_map->mem_segs[HEAP_SEG_INDEX].seg_base_addr &&
-                    (uintptr_t)va < (uintptr_t)memheap_map->mem_segs[HEAP_SEG_INDEX].end)) {
-        s = &memheap_map->mem_segs[HEAP_SEG_INDEX];
-    } else {
-        s = bsearch(va,
-                    &memheap_map->mem_segs[SYMB_SEG_INDEX],
-                    memheap_map->n_segments - 1,
-                    sizeof(*s),
-                    _seg_cmp);
-    }
-
-#if MEMHEAP_BASE_DEBUG == 1
-    if (s) {
-        MEMHEAP_VERBOSE(5, "match seg#%02ld: 0x%llX - 0x%llX %llu bytes va=%p",
-                s - memheap_map->mem_segs,
-                (long long)s->seg_base_addr,
-                (long long)s->end,
-                (long long)(s->end - s->seg_base_addr),
-                (void *)va);
-    }
-#endif
-    return s;
 }
 
 /**
@@ -147,7 +117,7 @@ static int pack_local_mkeys(opal_buffer_t *msg, int pe, int seg, int all_trs)
         else {
             tr_id = i;
         }
-        mkey = mca_memheap_base_get_mkey(__seg2base_va(seg), tr_id);
+        mkey = mca_memheap_base_get_mkey(mca_memheap_seg2base_va(seg), tr_id);
         if (!mkey) {
             MEMHEAP_ERROR("seg#%d tr_id: %d failed to find local mkey",
                           seg, tr_id);
@@ -233,6 +203,7 @@ static void unpack_remote_mkeys(opal_buffer_t *msg, int remote_pe)
                 }
                 cnt = memheap_oob.mkeys[tr_id].len;
                 opal_dss.unpack(msg, memheap_oob.mkeys[tr_id].u.data, &cnt, OPAL_BYTE);
+                MCA_SPML_CALL(rmkey_unpack(&memheap_oob.mkeys[tr_id], remote_pe));
             } else {
                 memheap_oob.mkeys[tr_id].u.key = MAP_SEGMENT_SHM_INVALID;
             }
@@ -511,7 +482,7 @@ static int memheap_oob_get_mkeys(int pe, uint32_t seg, sshmem_mkey_t *mkeys)
 
     if (OSHMEM_SUCCESS == MCA_SPML_CALL(oob_get_mkeys(pe, seg, mkeys))) {
         for (i = 0; i < memheap_map->num_transports; i++) {
-            mkeys[i].va_base = __seg2base_va(seg);
+            mkeys[i].va_base = mca_memheap_seg2base_va(seg);
             MEMHEAP_VERBOSE(5,
                             "MKEY CALCULATED BY LOCAL SPML: pe: %d tr_id: %d %s",
                             pe,
@@ -721,45 +692,14 @@ exit_fatal:
     }
 }
 
-static inline void* va2rva(void* va,
-                              void* local_base,
-                              void* remote_base)
+sshmem_mkey_t * mca_memheap_base_get_cached_mkey_slow(map_segment_t *s,
+                                                      int pe,
+                                                      void* va,
+                                                      int btl_id,
+                                                      void** rva)
 {
-    return (void*) (remote_base > local_base ?
-        (uintptr_t)va + ((uintptr_t)remote_base - (uintptr_t)local_base) :
-        (uintptr_t)va - ((uintptr_t)local_base - (uintptr_t)remote_base));
-}
-
-sshmem_mkey_t * mca_memheap_base_get_cached_mkey(int pe,
-                                                   void* va,
-                                                   int btl_id,
-                                                   void** rva)
-{
-    map_segment_t *s;
     int rc;
     sshmem_mkey_t *mkey;
-
-    MEMHEAP_VERBOSE_FASTPATH(10, "rkey: pe=%d va=%p", pe, va);
-    s = __find_va(va);
-    if (NULL == s)
-        return NULL ;
-
-    if (!MAP_SEGMENT_IS_VALID(s))
-        return NULL ;
-
-    if (pe == oshmem_my_proc_id()) {
-        *rva = va;
-        MEMHEAP_VERBOSE_FASTPATH(10, "rkey: pe=%d va=%p -> (local) %lx %p", pe, va,
-                s->mkeys[btl_id].u.key, *rva);
-        return &s->mkeys[btl_id];
-    }
-
-    if (OPAL_LIKELY(s->mkeys_cache[pe])) {
-        mkey = &s->mkeys_cache[pe][btl_id];
-        *rva = va2rva(va, s->seg_base_addr, mkey->va_base);
-        MEMHEAP_VERBOSE_FASTPATH(10, "rkey: pe=%d va=%p -> (cached) %lx %p", pe, (void *)va, mkey->u.key, (void *)*rva);
-        return mkey;
-    }
 
     s->mkeys_cache[pe] = (sshmem_mkey_t *) calloc(memheap_map->num_transports,
                                                     sizeof(sshmem_mkey_t));
@@ -773,7 +713,7 @@ sshmem_mkey_t * mca_memheap_base_get_cached_mkey(int pe,
         return NULL ;
 
     mkey = &s->mkeys_cache[pe][btl_id];
-    *rva = va2rva(va, s->seg_base_addr, mkey->va_base);
+    *rva = memheap_va2rva(va, s->seg_base_addr, mkey->va_base);
 
     MEMHEAP_VERBOSE_FASTPATH(5, "rkey: pe=%d va=%p -> (remote lookup) %lx %p", pe, (void *)va, mkey->u.key, (void *)*rva);
     return mkey;
@@ -783,7 +723,7 @@ sshmem_mkey_t *mca_memheap_base_get_mkey(void* va, int tr_id)
 {
     map_segment_t *s;
 
-    s = __find_va(va);
+    s = memheap_find_va(va);
 
     return ((s && MAP_SEGMENT_IS_VALID(s)) ? &s->mkeys[tr_id] : NULL );
 }
@@ -796,7 +736,7 @@ uint64_t mca_memheap_base_find_offset(int pe,
     map_segment_t *s;
     int my_pe = oshmem_my_proc_id();
 
-    s = __find_va(va);
+    s = memheap_find_va(va);
 
     if (my_pe == pe) {
         return (uintptr_t)va - (uintptr_t)s->seg_base_addr;
@@ -808,7 +748,7 @@ uint64_t mca_memheap_base_find_offset(int pe,
 
 int mca_memheap_base_is_symmetric_addr(const void* va)
 {
-    return (__find_va(va) ? 1 : 0);
+    return (memheap_find_va(va) ? 1 : 0);
 }
 
 int mca_memheap_base_detect_addr_type(void* va)
@@ -816,7 +756,7 @@ int mca_memheap_base_detect_addr_type(void* va)
     int addr_type = ADDR_INVALID;
     map_segment_t *s;
 
-    s = __find_va(va);
+    s = memheap_find_va(va);
 
     if (s) {
         if (s->type == MAP_SEGMENT_STATIC) {
