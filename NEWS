@@ -53,6 +53,74 @@ included in the vX.Y.Z section and be denoted as:
    (** also appeared: A.B.C)  -- indicating that this item was previously
                                  included in release version vA.B.C.
 
+Master (not on release branches yet)
+------------------------------------
+
+- ompi_info parsable output now escapes double quotes in values, and
+  also quotes values can contains colons.  Thanks to Lev Givon for the
+  suggestion.
+- CUDA-aware support can now handle GPUs within a node that do not
+  support CUDA IPC.  Earlier versions would get error and abort.
+- Do not build the MPI C++ bindings by default.  They must be enabled
+  via --enable-mpi-cxx.
+- Removed embedded VampirTrace.  It is in maintenance mode since 2013.
+  Please consider Score-P (score-p.org) as an external replacement.
+
+
+1.10.1
+------
+
+- Fix use of MPI_LB and MPI_UB in subarray and darray datatypes.
+  Thanks to Gus Correa and Dimitar Pashov for pointing out the issue.
+- Minor updates to mpi_show_mpi_alloc_mem_leaks and
+  ompi_debug_show_handle_leaks functionality.
+- Fix segv when invoking non-blocking reductions with a user-defined
+  operation.  Thanks to Rupert Nash and Georg Geiser for identifying
+  the issue.
+- No longer probe for PCI topology on Solaris (unless running as root).
+- Fix for Intel Parallel Studio 2016 ifort partial support of the
+  !GCC$ pragma.  Thanks to Fabrice Roy for reporting the problem.
+- Bunches of Coverity / static analysis fixes.
+- Fixed ROMIO to look for lstat in <sys/stat.h>.  Thanks to William
+  Throwe for submitting the patch both upstream and to Open MPI.
+- Fixed minor memory leak when attempting to open plugins.
+- Fixed type in MPI_IBARRIER C prototype.  Thanks to Harald Servat for
+  reporting the issue.
+- Add missing man pages for MPI_WIN_CREATE_DYNAMIC, MPI_WIN_ATTACH,
+  MPI_WIN_DETACH, MPI_WIN_ALLOCATE, MPI_WIN_ALLOCATE_SHARED.
+- When mpirun-launching new applications, only close file descriptors
+  that are actually open (resulting in a faster launch in some
+  environments).
+- Fix "test ==" issues in Open MPI's configure script.  Thank to Kevin
+  Buckley for pointing out the issue.
+- Fix performance issue in usnic BTL: ensure progress thread is
+  throttled back to not aggressively steal CPU cycles.
+- Fix cache line size detection on POWER architectures.
+- Add missing #include in a few places.  Thanks to Orion Poplawski for
+  supplying the patch.
+- When OpenSHMEM building is disabled, no longer install its header
+  files, help files, or man pages.  Add man pages for oshrun, oshcc,
+  and oshfort.
+- Fix mpi_f08 implementations of MPI_COMM_SET_INFO, and profiling
+  versions of MPI_BUFFER_DETACH, MPI_WIN_ALLOCATE,
+  MPI_WIN_ALLOCATE_SHARED, MPI_WTICK, and MPI_WTIME.
+- Add orte_rmaps_dist_device MCA param, allowing users to map near a
+  specific device.
+- Various updates/fixes to the openib BTL.
+- Add missing defaults for the Mellanox ConnectX 3 card to the openib BTL.
+- Minor bug fixes in the OFI MTL.
+- Various updates to Mellanox's MXM, hcoll, and FCA components.
+- Add OpenSHMEM man pages.  Thanks to Tony Curtis for sharing the man
+  pages files from openshmem.org.
+- Add missing "const" attributes to MPI_COMPARE_AND_SWAP,
+  MPI_FETCH_AND_OP, MPI_RACCUMULATE, and MPI_WIN_DETACH prototypes.
+  Thanks to Michael Knobloch and Takahiro Kawashima for bringing this
+  to our attention.
+- Fix linking issues on some platforms (e.g., SLES 12).
+- Fix hang on some corner cases when MPI applications abort.
+- Add missing options to mpirun man page. Thanks to Daniel Letai
+  for bringing this to our attention.
+
 
 1.10.0
 ------
@@ -60,7 +128,11 @@ included in the vX.Y.Z section and be denoted as:
 ** version numbering scheme.  The v1.10.x release series is based on
 ** the v1.8.x series, but with a few new features.  v2.x will be the
 ** next series after the v1.10.x series, and complete the transition
-** to the new version numbering scheme.  See README for more details.
+** to the new version numbering scheme.  See README for more details
+** on the new versioning scheme.
+**
+** NOTE: In accordance with OMPI version numbering, the v1.10 is *not*
+** API compatible with the v1.8 release series.
 
 - Added libfabric support (see README for more details):
   - usNIC BTL updated to use libfabric.
