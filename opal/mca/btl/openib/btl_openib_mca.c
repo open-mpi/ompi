@@ -316,9 +316,12 @@ int btl_openib_register_mca_params(void)
                   "(must be >= 1)",
                   32, &mca_btl_openib_component.ib_free_list_inc,
                   REGINT_GE_ONE));
-    CHECK(reg_string("mpool", NULL,
-                     "Name of the memory pool to be used (it is unlikely that you will ever want to change this)",
-                     "grdma", &mca_btl_openib_component.ib_mpool_name,
+    CHECK(reg_string("mpool_hints", NULL, "hints for selecting a memory pool (default: none)",
+                     NULL, &mca_btl_openib_component.ib_mpool_hints,
+                     0));
+    CHECK(reg_string("rcache", NULL,
+                     "Name of the registration cache to be used (it is unlikely that you will ever want to change this)",
+                     "grdma", &mca_btl_openib_component.ib_rcache_name,
                      0));
     CHECK(reg_int("reg_mru_len", NULL,
                   "Length of the registration cache most recently used list "

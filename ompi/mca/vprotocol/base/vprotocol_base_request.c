@@ -42,8 +42,8 @@ int mca_vprotocol_base_request_parasite(void)
                                    pml_fl_save.fl_max_to_alloc,
                                    pml_fl_save.fl_num_per_alloc,
                                    pml_fl_save.fl_mpool,
-                                   pml_fl_save.fl_mpool_reg_flags,
-                                   0,
+                                   pml_fl_save.fl_rcache_reg_flags,
+                                   pml_fl_save.fl_rcache,
                                    pml_fl_save.item_init,
                                    pml_fl_save.ctx);
         if(OMPI_SUCCESS != ret) return ret;
@@ -71,8 +71,8 @@ int mca_vprotocol_base_request_parasite(void)
                                    pml_fl_save.fl_max_to_alloc,
                                    pml_fl_save.fl_num_per_alloc,
                                    pml_fl_save.fl_mpool,
-                                   pml_fl_save.fl_mpool_reg_flags,
-                                   0,
+                                   pml_fl_save.fl_rcache_reg_flags,
+                                   pml_fl_save.fl_rcache,
                                    pml_fl_save.item_init,
                                    pml_fl_save.ctx);
         if(OMPI_SUCCESS != ret) return ret;

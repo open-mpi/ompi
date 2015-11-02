@@ -71,10 +71,8 @@ mca_allocator_bucket_t * mca_allocator_bucket_init(
    * region or NULL if there was an error
    *
    */
-void * mca_allocator_bucket_alloc(
-    mca_allocator_base_module_t * mem,
-    size_t size,
-    mca_mpool_base_registration_t** registration)
+void * mca_allocator_bucket_alloc(mca_allocator_base_module_t * mem,
+                                  size_t size)
 {
     mca_allocator_bucket_t * mem_options = (mca_allocator_bucket_t *) mem;
     /* initialize for the later bit shifts */
@@ -113,7 +111,7 @@ void * mca_allocator_bucket_alloc(
     allocated_size += sizeof(mca_allocator_bucket_segment_head_t);
     /* attempt to get the memory */
     segment_header = (mca_allocator_bucket_segment_head_t *)
-                   mem_options->get_mem_fn(mem_options->super.alc_mpool, &allocated_size, registration);
+                   mem_options->get_mem_fn(mem_options->super.alc_context, &allocated_size);
     if(NULL == segment_header) {
         /* release the lock */
         OPAL_THREAD_UNLOCK(&(mem_options->buckets[bucket_num].lock));
@@ -153,11 +151,8 @@ void * mca_allocator_bucket_alloc(
 /*
   * allocates an aligned region of memory
   */
-void * mca_allocator_bucket_alloc_align(
-    mca_allocator_base_module_t * mem,
-    size_t size,
-    size_t alignment,
-    mca_mpool_base_registration_t** registration)
+void * mca_allocator_bucket_alloc_align(mca_allocator_base_module_t * mem,
+                                        size_t size, size_t alignment)
 {
     mca_allocator_bucket_t * mem_options = (mca_allocator_bucket_t *) mem;
     int bucket_num = 1;
@@ -177,7 +172,7 @@ void * mca_allocator_bucket_alloc_align(
     bucket_size = size + sizeof(mca_allocator_bucket_chunk_header_t);
     allocated_size = aligned_max_size;
     /* get some memory */
-    ptr = mem_options->get_mem_fn(mem_options->super.alc_mpool, &allocated_size, registration);
+    ptr = mem_options->get_mem_fn(mem_options->super.alc_context, &allocated_size);
     if(NULL == ptr) {
         return(NULL);
     }
@@ -236,11 +231,8 @@ void * mca_allocator_bucket_alloc_align(
 /*
   * function to reallocate the segment of memory
   */
-void * mca_allocator_bucket_realloc(
-    mca_allocator_base_module_t * mem,
-    void * ptr,
-    size_t size,
-    mca_mpool_base_registration_t** registration)
+void * mca_allocator_bucket_realloc(mca_allocator_base_module_t * mem,
+                                    void * ptr, size_t size)
 {
     mca_allocator_bucket_t * mem_options = (mca_allocator_bucket_t *) mem;
     /* initialize for later bit shifts */
@@ -261,7 +253,7 @@ void * mca_allocator_bucket_realloc(
         return(ptr);
     }
     /* we need a new space in memory, so let's get it */
-    ret_ptr = mca_allocator_bucket_alloc((mca_allocator_base_module_t *) mem_options, size, registration);
+    ret_ptr = mca_allocator_bucket_alloc((mca_allocator_base_module_t *) mem_options, size);
     if(NULL == ret_ptr) {
         /* we were unable to get a larger area of memory */
         return(NULL);
@@ -341,7 +333,7 @@ int mca_allocator_bucket_cleanup(mca_allocator_base_module_t * mem)
                 next_segment = segment->next_segment;
                 /* free the memory */
                 if(mem_options->free_mem_fn)
-                    mem_options->free_mem_fn(mem->alc_mpool, segment);
+                    mem_options->free_mem_fn(mem->alc_context, segment);
                 segment = next_segment;
             }
             mem_options->buckets[i].free_chunk = NULL;
@@ -378,7 +370,7 @@ int mca_allocator_bucket_cleanup(mca_allocator_base_module_t * mem)
                     *segment_header = segment->next_segment;
                     /* free the memory */
                     if(mem_options->free_mem_fn)
-                        mem_options->free_mem_fn(mem->alc_mpool, segment);
+                        mem_options->free_mem_fn(mem->alc_context, segment);
                 } else {
                     /* go to next segment */
                     segment_header = &((*segment_header)->next_segment);

@@ -23,10 +23,6 @@
  *
  * $HEADER$
  */
-/**
- * @file
- * Description of the Registration Cache framework
- */
 
 #include "opal_config.h"
 

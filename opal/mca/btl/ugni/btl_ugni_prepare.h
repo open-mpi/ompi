@@ -57,6 +57,7 @@ mca_btl_ugni_prepare_src_send_inplace (struct mca_btl_base_module_t *btl,
                                        uint32_t flags)
 {
     bool use_eager_get = (*size + reserve) > mca_btl_ugni_component.smsg_max_data;
+    mca_btl_ugni_module_t *ugni_module = (mca_btl_ugni_module_t *) btl;
     mca_btl_ugni_base_frag_t *frag = NULL;
     mca_btl_ugni_reg_t *registration = NULL;
     void *data_ptr;
@@ -74,9 +75,9 @@ mca_btl_ugni_prepare_src_send_inplace (struct mca_btl_base_module_t *btl,
                  (unsigned int)(*size + reserve)));
 
     if (OPAL_UNLIKELY(true == use_eager_get)) {
-        rc = btl->btl_mpool->mpool_register(btl->btl_mpool, data_ptr, *size, 0,
-                                            MCA_MPOOL_ACCESS_REMOTE_READ,
-                                            (mca_mpool_base_registration_t **)&registration);
+        rc = ugni_module->rcache->rcache_register (ugni_module->rcache, data_ptr, *size, 0,
+                                                   MCA_RCACHE_ACCESS_REMOTE_READ,
+                                                   (mca_rcache_base_registration_t **)&registration);
         if (OPAL_UNLIKELY(OPAL_SUCCESS != rc)) {
             mca_btl_ugni_frag_return (frag);
             return NULL;

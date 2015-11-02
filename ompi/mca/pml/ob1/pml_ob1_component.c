@@ -80,12 +80,9 @@ mca_pml_base_component_2_0_0_t mca_pml_ob1_component = {
     .pmlm_finalize = mca_pml_ob1_component_fini,
 };
 
-void *mca_pml_ob1_seg_alloc( struct mca_mpool_base_module_t* mpool,
-                             size_t* size,
-                             mca_mpool_base_registration_t** registration);
+void *mca_pml_ob1_seg_alloc (void *ctx, size_t* size);
 
-void mca_pml_ob1_seg_free( struct mca_mpool_base_module_t* mpool,
-                           void* segment );
+void mca_pml_ob1_seg_free (void *ctx, void *segment);
 
 static inline int mca_pml_ob1_param_register_int(
     const char* param_name,
@@ -366,13 +363,12 @@ int mca_pml_ob1_component_fini(void)
     return OMPI_SUCCESS;
 }
 
-void *mca_pml_ob1_seg_alloc( struct mca_mpool_base_module_t* mpool,
-                             size_t* size,
-                             mca_mpool_base_registration_t** registration) {
+void *mca_pml_ob1_seg_alloc (void *ctx, size_t *size)
+{
     return malloc(*size);
 }
 
-void mca_pml_ob1_seg_free( struct mca_mpool_base_module_t* mpool,
-                           void* segment ) {
+void mca_pml_ob1_seg_free (void *ctx, void *segment)
+{
     free(segment);
 }

@@ -47,6 +47,7 @@
 #include "opal/mca/event/event.h"
 #include "opal/threads/threads.h"
 #include "opal/mca/btl/btl.h"
+#include "opal/mca/rcache/rcache.h"
 #include "opal/mca/mpool/mpool.h"
 #include "opal/mca/btl/base/btl_base_error.h"
 #include "opal/mca/btl/base/base.h"
@@ -192,8 +193,11 @@ struct mca_btl_openib_component_t {
     opal_mutex_t                            ib_lock;
     /**< lock for accessing module state */
 
-    char* ib_mpool_name;
-    /**< name of ib memory pool */
+    char* ib_mpool_hints;
+    /**< hints for selecting an mpool component */
+
+    char *ib_rcache_name;
+    /**< name of ib registration cache */
 
     uint8_t num_pp_qps;          /**< number of pp qp's */
     uint8_t num_srq_qps;         /**< number of srq qp's */
@@ -386,6 +390,7 @@ typedef struct mca_btl_openib_device_t {
     struct ibv_cq *ib_cq[BTL_OPENIB_MAX_CQ];
     uint32_t cq_size[BTL_OPENIB_MAX_CQ];
     mca_mpool_base_module_t *mpool;
+    mca_rcache_base_module_t *rcache;
     /* MTU for this device */
     uint32_t mtu;
     /* Whether this device supports eager RDMA */
@@ -514,7 +519,7 @@ struct mca_btl_base_registration_handle_t {
 };
 
 struct mca_btl_openib_reg_t {
-    mca_mpool_base_registration_t base;
+    mca_rcache_base_registration_t base;
     struct ibv_mr *mr;
     mca_btl_base_registration_handle_t btl_handle;
 };

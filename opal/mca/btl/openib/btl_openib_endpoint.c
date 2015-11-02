@@ -347,14 +347,17 @@ static void mca_btl_openib_endpoint_destruct(mca_btl_base_endpoint_t* endpoint)
          * was not in "connect" or "bad" flow (failed to allocate memory)
          * and changed the pointer back to NULL
          */
-        if(!opal_atomic_cmpset_ptr(&endpoint->eager_rdma_local.base.pval, NULL,
-                    (void*)1)) {
-            if ((void*)1 != endpoint->eager_rdma_local.base.pval &&
-                    NULL != endpoint->eager_rdma_local.base.pval) {
-                endpoint->endpoint_btl->super.btl_mpool->mpool_free(endpoint->endpoint_btl->super.btl_mpool,
-                        endpoint->eager_rdma_local.base.pval,
-                        (mca_mpool_base_registration_t*)endpoint->eager_rdma_local.reg);
-                pval_clean=true;
+        if(!opal_atomic_cmpset_ptr(&endpoint->eager_rdma_local.base.pval, NULL, (void*)1)) {
+            if (NULL != endpoint->eager_rdma_local.reg) {
+                endpoint->endpoint_btl->device->rcache->rcache_deregister (endpoint->endpoint_btl->device->rcache,
+                                                                           &endpoint->eager_rdma_local.reg->base);
+                endpoint->eager_rdma_local.reg = NULL;
+            }
+
+            void *alloc_base = opal_atomic_swap_ptr (&endpoint->eager_rdma_local.alloc_base, NULL);
+            if (alloc_base) {
+                endpoint->endpoint_btl->super.btl_mpool->mpool_free (endpoint->endpoint_btl->super.btl_mpool, alloc_base);
+                pval_clean = true;
             }
         } else {
             pval_clean=true;
@@ -861,10 +864,10 @@ void mca_btl_openib_endpoint_connect_eager_rdma(
         mca_btl_openib_endpoint_t* endpoint)
 {
     mca_btl_openib_module_t* openib_btl = endpoint->endpoint_btl;
-    char *buf;
+    char *buf, *alloc_base;
     mca_btl_openib_recv_frag_t *headers_buf;
-    int i;
-    uint32_t flag = MCA_MPOOL_FLAGS_CACHE_BYPASS;
+    int i, rc;
+    uint32_t flag = MCA_RCACHE_FLAGS_CACHE_BYPASS;
 
     /* Set local rdma pointer to 1 temporarily so other threads will not try
      * to enter the function */
@@ -890,18 +893,25 @@ void mca_btl_openib_endpoint_connect_eager_rdma(
        The following flag will be interpreted and the appropriate
        steps will be taken when the memory is registered in
        openib_reg_mr(). */
-    flag |= MCA_MPOOL_FLAGS_SO_MEM;
+    flag |= MCA_RCACHE_FLAGS_SO_MEM;
 #endif
 
-    buf = (char *) openib_btl->super.btl_mpool->mpool_alloc(openib_btl->super.btl_mpool,
-            openib_btl->eager_rdma_frag_size *
-            mca_btl_openib_component.eager_rdma_num,
-            mca_btl_openib_component.buffer_alignment,
-            flag,
-            (mca_mpool_base_registration_t**)&endpoint->eager_rdma_local.reg);
+    alloc_base = buf = (char *) openib_btl->super.btl_mpool->mpool_alloc(openib_btl->super.btl_mpool,
+                                                            openib_btl->eager_rdma_frag_size *
+                                                            mca_btl_openib_component.eager_rdma_num,
+                                                            mca_btl_openib_component.buffer_alignment,
+                                                            0);
 
     if(!buf)
        goto free_headers_buf;
+
+    rc = openib_btl->device->rcache->rcache_register (openib_btl->device->rcache, buf, openib_btl->eager_rdma_frag_size *
+                                                      mca_btl_openib_component.eager_rdma_num, flag, MCA_RCACHE_ACCESS_ANY,
+                                                      (mca_rcache_base_registration_t**)&endpoint->eager_rdma_local.reg);
+    if (OPAL_SUCCESS != rc) {
+        openib_btl->super.btl_mpool->mpool_free (openib_btl->super.btl_mpool, alloc_base);
+        goto free_headers_buf;
+    }
 
     buf = buf + openib_btl->eager_rdma_frag_size -
         sizeof(mca_btl_openib_footer_t) - openib_btl->super.btl_eager_limit -
@@ -913,7 +923,7 @@ void mca_btl_openib_endpoint_connect_eager_rdma(
         mca_btl_openib_frag_init_data_t init_data;
 
         item = (opal_free_list_item_t*)&headers_buf[i];
-        item->registration = (mca_mpool_base_registration_t *)endpoint->eager_rdma_local.reg;
+        item->registration = (mca_rcache_base_registration_t *)endpoint->eager_rdma_local.reg;
         item->ptr = buf + i * openib_btl->eager_rdma_frag_size;
         OBJ_CONSTRUCT(item, mca_btl_openib_recv_frag_t);
 
@@ -941,6 +951,7 @@ void mca_btl_openib_endpoint_connect_eager_rdma(
     /* set local rdma pointer to real value */
     (void)opal_atomic_cmpset_ptr(&endpoint->eager_rdma_local.base.pval,
                                  (void*)1, buf);
+    endpoint->eager_rdma_local.alloc_base = alloc_base;
 
     if(mca_btl_openib_endpoint_send_eager_rdma(endpoint) == OPAL_SUCCESS) {
         mca_btl_openib_device_t *device = endpoint->endpoint_btl->device;
@@ -957,8 +968,9 @@ void mca_btl_openib_endpoint_connect_eager_rdma(
         return;
     }
 
-    openib_btl->super.btl_mpool->mpool_free(openib_btl->super.btl_mpool,
-           buf, (mca_mpool_base_registration_t*)endpoint->eager_rdma_local.reg);
+    openib_btl->device->rcache->rcache_deregister (openib_btl->device->rcache,
+                                                   (mca_rcache_base_registration_t*)endpoint->eager_rdma_local.reg);
+    openib_btl->super.btl_mpool->mpool_free(openib_btl->super.btl_mpool, buf);
 free_headers_buf:
     free(headers_buf);
 unlock_rdma_local:

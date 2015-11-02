@@ -171,9 +171,9 @@ static int init_vader_endpoint (struct mca_btl_base_endpoint_t *ep, struct opal_
         if (MCA_BTL_VADER_XPMEM == mca_btl_vader_component.single_copy_mechanism) {
             /* always use xpmem if it is available */
             ep->segment_data.xpmem.apid = xpmem_get (modex->xpmem.seg_id, XPMEM_RDWR, XPMEM_PERMIT_MODE, (void *) 0666);
-            ep->segment_data.xpmem.rcache = mca_rcache_base_module_create("vma");
+            ep->segment_data.xpmem.vma_module = mca_rcache_base_vma_module_alloc ();
             (void) vader_get_registation (ep, modex->xpmem.segment_base, mca_btl_vader_component.segment_size,
-                                          MCA_MPOOL_FLAGS_PERSIST, (void **) &ep->segment_base);
+                                          MCA_RCACHE_FLAGS_PERSIST, (void **) &ep->segment_base);
         } else {
 #endif
             /* store a copy of the segment information for detach */
@@ -434,6 +434,7 @@ static struct mca_btl_base_descriptor_t *vader_prepare_src (struct mca_btl_base_
     int rc;
 
     opal_convertor_get_current_pointer (convertor, &data_ptr);
+    assert (NULL != data_ptr);
 
     /* in place send fragment */
     if (OPAL_UNLIKELY(opal_convertor_need_buffers(convertor))) {
@@ -535,16 +536,15 @@ static void mca_btl_vader_endpoint_destructor (mca_btl_vader_endpoint_t *ep)
 
 #if OPAL_BTL_VADER_HAVE_XPMEM
     if (MCA_BTL_VADER_XPMEM == mca_btl_vader_component.single_copy_mechanism) {
-        if (ep->segment_data.xpmem.rcache) {
+        if (ep->segment_data.xpmem.vma_module) {
             /* clean out the registration cache */
             const int nregs = 100;
-            mca_mpool_base_registration_t *regs[nregs];
+            mca_rcache_base_registration_t *regs[nregs];
             int reg_cnt;
 
             do {
-                reg_cnt = ep->segment_data.xpmem.rcache->rcache_find_all(ep->segment_data.xpmem.rcache, 0, (size_t)-1,
-                                                                          regs, nregs);
-
+                reg_cnt = mca_rcache_base_vma_find_all (ep->segment_data.xpmem.vma_module,
+                                                        0, (size_t) -1, regs, nregs);
                 for (int i = 0 ; i < reg_cnt ; ++i) {
                     /* otherwise dereg will fail on assert */
                     regs[i]->ref_count = 0;
@@ -552,7 +552,7 @@ static void mca_btl_vader_endpoint_destructor (mca_btl_vader_endpoint_t *ep)
                 }
             } while (reg_cnt == nregs);
 
-            ep->segment_data.xpmem.rcache = NULL;
+            ep->segment_data.xpmem.vma_module = NULL;
         }
 
         if (ep->segment_base) {

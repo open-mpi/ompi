@@ -265,11 +265,12 @@ struct mca_btl_base_endpoint_t *mca_btl_ugni_get_ep (struct mca_btl_base_module_
 }
 
 
-static int ugni_reg_rdma_mem (void *reg_data, void *base, size_t size,
-                              mca_mpool_base_registration_t *reg)
+static int ugni_reg_mem (void *reg_data, void *base, size_t size,
+                         mca_rcache_base_registration_t *reg)
 {
     mca_btl_ugni_module_t *ugni_module = (mca_btl_ugni_module_t *) reg_data;
     mca_btl_ugni_reg_t *ugni_reg = (mca_btl_ugni_reg_t *) reg;
+    gni_cq_handle_t cq = NULL;
     gni_return_t rc;
     int flags;
 
@@ -277,18 +278,24 @@ static int ugni_reg_rdma_mem (void *reg_data, void *base, size_t size,
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
 
-    if (reg->access_flags & (MCA_MPOOL_ACCESS_REMOTE_WRITE | MCA_MPOOL_ACCESS_LOCAL_WRITE |
-                             MCA_MPOOL_ACCESS_REMOTE_ATOMIC)) {
+    if (reg->access_flags & (MCA_RCACHE_ACCESS_REMOTE_WRITE | MCA_RCACHE_ACCESS_LOCAL_WRITE |
+                             MCA_RCACHE_ACCESS_REMOTE_ATOMIC)) {
         flags = GNI_MEM_READWRITE;
     } else {
         flags = GNI_MEM_READ_ONLY;
     }
 
-    flags |= GNI_MEM_RELAXED_PI_ORDERING;
+    if (!(reg->flags & MCA_RCACHE_FLAGS_SO_MEM)) {
+        flags |= GNI_MEM_RELAXED_PI_ORDERING;
+    }
+
+    if (reg->flags & MCA_RCACHE_FLAGS_RESV0) {
+        cq = ugni_module->smsg_remote_cq;
+    }
 
     OPAL_THREAD_LOCK(&ugni_module->device->dev_lock);
     rc = GNI_MemRegister (ugni_module->device->dev_handle, (uint64_t) base,
-                          size, NULL, flags, -1, &(ugni_reg->handle.gni_handle));
+                          size, cq, flags, -1, &(ugni_reg->handle.gni_handle));
     OPAL_THREAD_UNLOCK(&ugni_module->device->dev_lock);
 
     if (OPAL_UNLIKELY(GNI_RC_SUCCESS != rc)) {
@@ -300,24 +307,8 @@ static int ugni_reg_rdma_mem (void *reg_data, void *base, size_t size,
     return OPAL_SUCCESS;
 }
 
-
-static int ugni_reg_smsg_mem (void *reg_data, void *base, size_t size,
-                              mca_mpool_base_registration_t *reg)
-{
-    mca_btl_ugni_module_t *ugni_module = (mca_btl_ugni_module_t *) reg_data;
-    mca_btl_ugni_reg_t *ugni_reg = (mca_btl_ugni_reg_t *) reg;
-    gni_return_t rc;
-
-    OPAL_THREAD_LOCK(&ugni_module->device->dev_lock);
-    rc = GNI_MemRegister (ugni_module->device->dev_handle, (uint64_t) base,
-                          size, ugni_module->smsg_remote_cq, GNI_MEM_READWRITE, -1,
-                          &(ugni_reg->handle.gni_handle));
-    OPAL_THREAD_UNLOCK(&ugni_module->device->dev_lock);
-    return opal_common_rc_ugni_to_opal (rc);
-}
-
 static int
-ugni_dereg_mem (void *reg_data, mca_mpool_base_registration_t *reg)
+ugni_dereg_mem (void *reg_data, mca_rcache_base_registration_t *reg)
 {
     mca_btl_ugni_module_t *ugni_module = (mca_btl_ugni_module_t *) reg_data;
     mca_btl_ugni_reg_t *ugni_reg = (mca_btl_ugni_reg_t *)reg;
@@ -338,10 +329,10 @@ ugni_dereg_mem (void *reg_data, mca_mpool_base_registration_t *reg)
 static int
 mca_btl_ugni_setup_mpools (mca_btl_ugni_module_t *ugni_module)
 {
-    struct mca_mpool_base_resources_t mpool_resources;
+    mca_rcache_udreg_resources_t rcache_resources;
     unsigned int mbox_increment;
     uint32_t nprocs, *u32;
-    const char *mpool_name;
+    char *rcache_name;
     int rc;
 
     rc = opal_pointer_array_init (&ugni_module->pending_smsg_frags_bb, 0,
@@ -403,43 +394,35 @@ mca_btl_ugni_setup_mpools (mca_btl_ugni_module_t *ugni_module)
         return rc;
     }
 
-    mpool_resources.pool_name      = "ompi.ugni";
-    mpool_resources.reg_data       = (void *) ugni_module;
-    mpool_resources.sizeof_reg     = sizeof (mca_btl_ugni_reg_t);
-    mpool_resources.register_mem   = ugni_reg_rdma_mem;
-    mpool_resources.deregister_mem = ugni_dereg_mem;
-
-    if (MCA_BTL_UGNI_MPOOL_UDREG == mca_btl_ugni_component.mpool_type) {
-        /* additional settings for the udreg mpool */
-        /* 4k should be large enough for any Gemini/Ares system */
-        mpool_resources.max_entries       = 4096;
-        mpool_resources.use_kernel_cache  = true;
-
-        /* request a specific page size. this request may not be honored if the
-         * page size does not exist. */
-        mpool_resources.page_size         = mca_btl_ugni_component.smsg_page_size;
-
-        mpool_resources.use_evict_w_unreg = false;
-        mpool_name = "udreg";
-    } else {
-        mpool_name = "grdma";
-    }
-
-    ugni_module->super.btl_mpool =
-        mca_mpool_base_module_create(mpool_name, ugni_module->device, &mpool_resources);
-
-    mpool_resources.register_mem   = ugni_reg_smsg_mem;
-
-    ugni_module->smsg_mpool =
-        mca_mpool_base_module_create(mpool_name, ugni_module->device, &mpool_resources);
-
+    ugni_module->super.btl_mpool = mca_mpool_base_module_lookup (mca_btl_ugni_component.mpool_hints);
     if (NULL == ugni_module->super.btl_mpool) {
-        BTL_ERROR(("error creating rdma mpool"));
+        BTL_ERROR(("could not find mpool matching hints %s", mca_btl_ugni_component.mpool_hints));
         return OPAL_ERROR;
     }
 
-    if (NULL == ugni_module->smsg_mpool) {
-        BTL_ERROR(("error creating smsg mpool"));
+    rcache_resources.base.cache_name     = "ompi.ugni";
+    rcache_resources.base.reg_data       = (void *) ugni_module;
+    rcache_resources.base.sizeof_reg     = sizeof (mca_btl_ugni_reg_t);
+    rcache_resources.base.register_mem   = ugni_reg_mem;
+    rcache_resources.base.deregister_mem = ugni_dereg_mem;
+
+    if (MCA_BTL_UGNI_RCACHE_UDREG == mca_btl_ugni_component.rcache_type) {
+        /* additional settings for the udreg mpool */
+        /* 4k should be large enough for any Gemini/Ares system */
+        rcache_resources.max_entries       = 4096;
+        rcache_resources.use_kernel_cache  = true;
+
+        rcache_resources.use_evict_w_unreg = false;
+        rcache_name = "udreg";
+    } else {
+        rcache_name = "grdma";
+    }
+
+    ugni_module->rcache =
+        mca_rcache_base_module_create (rcache_name, ugni_module->device, &rcache_resources.base);
+
+    if (NULL == ugni_module->rcache) {
+        BTL_ERROR(("error creating registration cache"));
         return OPAL_ERROR;
     }
 
@@ -450,7 +433,7 @@ mca_btl_ugni_setup_mpools (mca_btl_ugni_module_t *ugni_module)
                               mca_btl_ugni_component.ugni_eager_num,
                               mca_btl_ugni_component.ugni_eager_max,
                               mca_btl_ugni_component.ugni_eager_inc,
-                              ugni_module->super.btl_mpool, 0, NULL,
+                              ugni_module->super.btl_mpool, 0, ugni_module->rcache,
                               (opal_free_list_item_init_fn_t) mca_btl_ugni_frag_init,
                               (void *) ugni_module);
     if (OPAL_UNLIKELY(OPAL_SUCCESS != rc)) {
@@ -465,7 +448,7 @@ mca_btl_ugni_setup_mpools (mca_btl_ugni_module_t *ugni_module)
                               mca_btl_ugni_component.ugni_eager_num,
                               mca_btl_ugni_component.ugni_eager_max,
                               mca_btl_ugni_component.ugni_eager_inc,
-                              ugni_module->super.btl_mpool, 0, NULL,
+                              ugni_module->super.btl_mpool, 0, ugni_module->rcache,
                               (opal_free_list_item_init_fn_t) mca_btl_ugni_frag_init,
                               (void *) ugni_module);
     if (OPAL_UNLIKELY(OPAL_SUCCESS != rc)) {
@@ -486,12 +469,14 @@ mca_btl_ugni_setup_mpools (mca_btl_ugni_module_t *ugni_module)
         mbox_increment = mca_btl_ugni_component.mbox_increment;
     }
 
+    /* use the MCA_RCACHE_FLAGS_RESV0 to signal this is smsg memory */
     rc = opal_free_list_init (&ugni_module->smsg_mboxes,
                               sizeof (mca_btl_ugni_smsg_mbox_t), 8,
                               OBJ_CLASS(mca_btl_ugni_smsg_mbox_t),
                               mca_btl_ugni_component.smsg_mbox_size, 128,
-                              32, -1, mbox_increment, ugni_module->smsg_mpool,
-                              0, NULL, NULL, NULL);
+                              32, -1, mbox_increment, ugni_module->super.btl_mpool,
+                              MCA_RCACHE_FLAGS_SO_MEM | MCA_RCACHE_FLAGS_RESV0,
+                              ugni_module->rcache, NULL, NULL);
     if (OPAL_UNLIKELY(OPAL_SUCCESS != rc)) {
         BTL_ERROR(("error creating smsg mailbox free list"));
         return rc;

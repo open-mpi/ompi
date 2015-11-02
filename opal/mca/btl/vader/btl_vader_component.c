@@ -573,13 +573,14 @@ void mca_btl_vader_poll_handle_frag (mca_btl_vader_hdr_t *hdr, struct mca_btl_ba
     segments[0].seg_len       = hdr->len;
 
     if (hdr->flags & MCA_BTL_VADER_FLAG_SINGLE_COPY) {
-        mca_mpool_base_registration_t *xpmem_reg;
+        mca_rcache_base_registration_t *xpmem_reg;
 
         xpmem_reg = vader_get_registation (endpoint, hdr->sc_iov.iov_base,
                                            hdr->sc_iov.iov_len, 0,
                                            &segments[1].seg_addr.pval);
+        assert (NULL != xpmem_reg);
 
-        segments[1].seg_len       = hdr->sc_iov.iov_len;
+        segments[1].seg_len = hdr->sc_iov.iov_len;
         frag.des_segment_count = 2;
 
         /* recv upcall */

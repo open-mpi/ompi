@@ -206,6 +206,8 @@ struct mca_btl_smcuda_component_t {
     int use_cuda_ipc;
     int use_cuda_ipc_same_gpu;
 #endif /* OPAL_CUDA_SUPPORT */
+    unsigned long mpool_min_size;
+    char *allocator;
 };
 typedef struct mca_btl_smcuda_component_t mca_btl_smcuda_component_t;
 OPAL_MODULE_DECLSPEC extern mca_btl_smcuda_component_t mca_btl_smcuda_component;
@@ -217,7 +219,7 @@ struct mca_btl_smcuda_t {
     mca_btl_base_module_t  super;       /**< base BTL interface */
     bool btl_inited;  /**< flag indicating if btl has been inited */
     mca_btl_base_module_error_cb_fn_t error_cb;
-
+    mca_rcache_base_module_t *rcache;
 };
 typedef struct mca_btl_smcuda_t mca_btl_smcuda_t;
 OPAL_MODULE_DECLSPEC extern mca_btl_smcuda_t mca_btl_smcuda;
@@ -254,7 +256,7 @@ static inline int sm_fifo_init(int fifo_size, mca_mpool_base_module_t *mpool,
 
     /* allocate the queue in the receiver's address space */
     fifo->queue_recv = (volatile void **)mpool->mpool_alloc(
-            mpool, sizeof(void *) * qsize, opal_cache_line_size, 0, NULL);
+            mpool, sizeof(void *) * qsize, opal_cache_line_size, 0);
     if(NULL == fifo->queue_recv) {
         return OPAL_ERR_OUT_OF_RESOURCE;
     }

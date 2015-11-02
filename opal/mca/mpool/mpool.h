@@ -29,135 +29,67 @@
 #include "opal_config.h"
 #include "opal/mca/mca.h"
 #include "opal/class/opal_free_list.h"
+#include "opal/mca/rcache/base/rcache_base_vma.h"
 
-#define MCA_MPOOL_FLAGS_CACHE_BYPASS      0x01
-#define MCA_MPOOL_FLAGS_PERSIST           0x02
-#define MCA_MPOOL_FLAGS_MPI_ALLOC_MEM     0x04
-#define MCA_MPOOL_FLAGS_INVALID           0x08
-#define MCA_MPOOL_FLAGS_SO_MEM            0x10
-#define MCA_MPOOL_FLAGS_CUDA_REGISTER_MEM 0x20
+#define MCA_MPOOL_ALLOC_FLAG_DEFAULT      0x00
+#define MCA_MPOOL_ALLOC_FLAG_USER         0x01
+
+#define MCA_MPOOL_FLAGS_MPI_ALLOC_MEM     0x80
 
 struct opal_info_t;
-
-#define MCA_MPOOL_FLAGS_CUDA_GPU_MEM      0x40
-
-/* Only valid in mpool flags. Used to indicate that no external memory
- * hooks (ptmalloc2, etc) are required. */
-#define MCA_MPOOL_FLAGS_NO_HOOKS          0x80
-
-/* access flags */
-enum {
-    MCA_MPOOL_ACCESS_LOCAL_WRITE   = 0x01,
-    MCA_MPOOL_ACCESS_REMOTE_READ   = 0x02,
-    MCA_MPOOL_ACCESS_REMOTE_WRITE  = 0x04,
-    MCA_MPOOL_ACCESS_REMOTE_ATOMIC = 0x08,
-    MCA_MPOOL_ACCESS_ANY           = 0x0f,
-};
-
-struct mca_mpool_base_resources_t;
-
-struct mca_mpool_base_registration_t {
-    opal_free_list_item_t super;
-    struct mca_mpool_base_module_t *mpool;
-    unsigned char* base;
-    unsigned char* bound;
-    unsigned char* alloc_base;
-    int32_t ref_count;
-    uint32_t flags;
-    void *mpool_context;
-#if OPAL_CUDA_GDR_SUPPORT
-    unsigned long long gpu_bufID;
-#endif /* OPAL_CUDA_GDR_SUPPORT */
-    int32_t access_flags;
-};
-
-typedef struct mca_mpool_base_registration_t mca_mpool_base_registration_t;
-
-OPAL_DECLSPEC OBJ_CLASS_DECLARATION(mca_mpool_base_registration_t);
+struct mca_mpool_base_module_t;
+typedef struct mca_mpool_base_module_t mca_mpool_base_module_t;
 
 /**
- * component initialize
+ * component query function
+ *
+ * @param[in]  hints      memory pool hints in order of priority. this should
+ *                        be replaced by opal_info_t when the work to move
+ *                        info down to opal is complete.
+ * @param[out] priority   relative priority of this memory pool component
+ * @param[out] module     best match module
+ *
+ * This function should parse the provided hints and return a relative priority
+ * of the component based on the number of hints matched. For example, if the
+ * hints are "page_size=2M,high-bandwidth" and a pool matches the page_size but
+ * not the high-bandwidth hint then the component should return a lower priority
+ * than if both matched but a higher priority than if a pool matches only the
+ * high-bandwidth hint.
+ *
+ * Memory pools should try to support at a minimum name=value but can define
+ * any additional keys.
  */
-typedef struct mca_mpool_base_module_t* (*mca_mpool_base_component_init_fn_t)(
-    struct mca_mpool_base_resources_t*);
+typedef int (*mca_mpool_base_component_query_fn_t) (const char *hints, int *priority,
+                                                    mca_mpool_base_module_t **module);
 
 /**
   * allocate function typedef
   */
-typedef void* (*mca_mpool_base_module_alloc_fn_t)(
-    struct mca_mpool_base_module_t* mpool,
-    size_t size,
-    size_t align,
-    uint32_t flags,
-    mca_mpool_base_registration_t** registration);
+typedef void *(*mca_mpool_base_module_alloc_fn_t) (mca_mpool_base_module_t *mpool,
+                                                   size_t size, size_t align,
+                                                   uint32_t flags);
 
 /**
-  * realloc function typedef
+  * allocate function typedef
   */
-typedef void* (*mca_mpool_base_module_realloc_fn_t)(
-    struct mca_mpool_base_module_t* mpool,
-    void* addr,
-    size_t size,
-    mca_mpool_base_registration_t** registration);
+typedef void *(*mca_mpool_base_module_realloc_fn_t) (mca_mpool_base_module_t *mpool,
+                                                     void *addr, size_t size);
 
 /**
   * free function typedef
   */
-typedef void (*mca_mpool_base_module_free_fn_t)(
-    struct mca_mpool_base_module_t* mpool,
-    void *addr,
-    mca_mpool_base_registration_t* registration);
-
-/**
-  * register memory
-  */
-typedef int (*mca_mpool_base_module_register_fn_t)(
-    struct mca_mpool_base_module_t* mpool,
-    void * addr,
-    size_t size,
-    uint32_t flags,
-    int32_t access_flags,
-    mca_mpool_base_registration_t** registration);
-
-/**
-  * deregister memory
-  */
-typedef int (*mca_mpool_base_module_deregister_fn_t)(
-    struct mca_mpool_base_module_t* mpool,
-    mca_mpool_base_registration_t* registration);
-
-/**
- * find registration in this memory pool
- */
-
-typedef int (*mca_mpool_base_module_find_fn_t) (
-        struct mca_mpool_base_module_t* mpool, void* addr, size_t size,
-        mca_mpool_base_registration_t **reg);
-
-/**
- * release registration
- */
-
-typedef int (*mca_mpool_base_module_release_fn_t) (
-                                            struct mca_mpool_base_module_t* mpool,
-                                            mca_mpool_base_registration_t* registration);
-
-
-/**
- * release memory region
- */
-typedef int (*mca_mpool_base_module_release_memory_fn_t) (
-        struct mca_mpool_base_module_t* mpool, void *base, size_t size);
+typedef void (*mca_mpool_base_module_free_fn_t) (mca_mpool_base_module_t *mpool,
+                                                 void *addr);
 
 /**
   * if appropriate - returns base address of memory pool
   */
-typedef void* (*mca_mpool_base_module_address_fn_t)(struct mca_mpool_base_module_t* mpool);
+typedef void* (*mca_mpool_base_module_address_fn_t) (mca_mpool_base_module_t *mpool);
 
 /**
   * finalize
   */
-typedef void (*mca_mpool_base_module_finalize_fn_t)(struct mca_mpool_base_module_t*);
+typedef void (*mca_mpool_base_module_finalize_fn_t)(mca_mpool_base_module_t *mpool);
 
 
 /**
@@ -173,10 +105,10 @@ typedef int (*mca_mpool_base_module_ft_event_fn_t)(int state);
  * and open/close/init functions.
  */
 struct mca_mpool_base_component_2_0_0_t {
-  mca_base_component_t mpool_version;        /**< version */
-  mca_base_component_data_t mpool_data;/**< metadata */
+    mca_base_component_t mpool_version;        /**< version */
+    mca_base_component_data_t mpool_data;/**< metadata */
 
-  mca_mpool_base_component_init_fn_t mpool_init;    /**< init function */
+    mca_mpool_base_component_query_fn_t mpool_query;  /**< query for matching pools */
 };
 /**
  * Convenience typedef.
@@ -193,25 +125,19 @@ typedef struct mca_mpool_base_component_2_0_0_t mca_mpool_base_component_t;
  *  details.
  */
 struct mca_mpool_base_module_t {
-    mca_mpool_base_component_t *mpool_component;  /**< component stuct */
+    mca_mpool_base_component_t *mpool_component;         /**< component stuct */
     mca_mpool_base_module_address_fn_t mpool_base;       /**< returns the base address */
     mca_mpool_base_module_alloc_fn_t mpool_alloc;        /**< allocate function */
     mca_mpool_base_module_realloc_fn_t mpool_realloc;    /**< reallocate function */
     mca_mpool_base_module_free_fn_t mpool_free;          /**< free function */
-    mca_mpool_base_module_register_fn_t mpool_register;  /**< register memory */
-    mca_mpool_base_module_deregister_fn_t mpool_deregister; /**< deregister memory */
-    mca_mpool_base_module_find_fn_t mpool_find; /**< find regisrations in the cache */
-    mca_mpool_base_module_release_fn_t mpool_release; /**< release a registration from the cache */
-    mca_mpool_base_module_release_memory_fn_t mpool_release_memory; /**< release memor region from the cache  */
+
     mca_mpool_base_module_finalize_fn_t mpool_finalize;  /**< finalize */
     mca_mpool_base_module_ft_event_fn_t mpool_ft_event;  /**< ft_event */
-    struct mca_rcache_base_module_t *rcache; /* the rcache associated with this mpool */
     uint32_t flags; /**< mpool flags */
+
+    size_t mpool_allocation_unit;                        /**< allocation unit used by this mpool */
+    char *mpool_name; /**< name of this pool module */
 };
-/**
- * Convenience typedef
- */
-typedef struct mca_mpool_base_module_t mca_mpool_base_module_t;
 
 
 /**
@@ -234,7 +160,7 @@ typedef struct mca_mpool_base_module_t mca_mpool_base_module_t;
  * @retval pointer to the allocated memory
  * @retval NULL on failure
  */
-OPAL_DECLSPEC void * mca_mpool_base_alloc(size_t size, struct opal_info_t * info);
+OPAL_DECLSPEC void * mca_mpool_base_alloc(size_t size, struct opal_info_t * info, const char *hints);
 
 /**
  * Function to free memory previously allocated by mca_mpool_base_alloc
@@ -258,21 +184,11 @@ OPAL_DECLSPEC int mca_mpool_base_free(void * base);
  */
 OPAL_DECLSPEC int mca_mpool_base_tree_node_compare(void * key1, void * key2);
 
-
-OPAL_DECLSPEC int mca_mpool_base_insert(
-    void * addr,
-    size_t size,
-    mca_mpool_base_module_t* mpool,
-    void* user_in,
-    mca_mpool_base_registration_t* registration);
-
-OPAL_DECLSPEC int mca_mpool_base_remove(void * base);
-
 /**
  * Macro for use in components that are of type mpool
  */
-#define MCA_MPOOL_BASE_VERSION_2_0_0 \
-    OPAL_MCA_BASE_VERSION_2_1_0("mpool", 2, 0, 0)
+#define MCA_MPOOL_BASE_VERSION_3_0_0 \
+    OPAL_MCA_BASE_VERSION_2_1_0("mpool", 3, 0, 0)
 
 #endif /* MCA_MPOOL_H */
 

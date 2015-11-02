@@ -28,6 +28,7 @@
 #define MCA_MPOOL_BASE_TREE_MAX 8
 #include "opal/mca/mca.h"
 #include "opal/mca/mpool/mpool.h"
+#include "opal/mca/rcache/rcache.h"
 
 BEGIN_C_DECLS
 
@@ -46,8 +47,9 @@ struct mca_mpool_base_tree_item_t
     size_t num_bytes; /**< the number of bytes in this alloc, only for
                            debugging reporting with
                            mpi_show_mpi_alloc_mem_leaks */
-    mca_mpool_base_module_t* mpools[MCA_MPOOL_BASE_TREE_MAX]; /**< the mpools */
-    mca_mpool_base_registration_t* regs[MCA_MPOOL_BASE_TREE_MAX]; /**< the registrations */
+    mca_mpool_base_module_t *mpool;
+    mca_rcache_base_module_t *rcaches[MCA_MPOOL_BASE_TREE_MAX]; /**< the registration caches */
+    mca_rcache_base_registration_t *regs[MCA_MPOOL_BASE_TREE_MAX]; /**< the registrations */
     uint8_t count; /**< length of the mpools/regs array */
 };
 typedef struct mca_mpool_base_tree_item_t mca_mpool_base_tree_item_t;
