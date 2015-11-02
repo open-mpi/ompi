@@ -151,8 +151,8 @@ static int mca_pml_monitoring_component_close(void)
      */
     if( mca_pml_monitoring_active ) {  /* Already active, turn off */
         pml_selected_component.pmlm_version.mca_close_component();
-        memset(&pml_selected_component, 0, sizeof(mca_base_component_t));
-        memset(&pml_selected_module, 0, sizeof(mca_base_module_t));
+        memset(&pml_selected_component, 0, sizeof(mca_pml_base_component_t));
+        memset(&pml_selected_module, 0, sizeof(mca_pml_base_module_t));
         mca_base_component_repository_release((mca_base_component_t*)&mca_pml_monitoring_component);
         mca_pml_monitoring_active = 0;
         return OMPI_SUCCESS;

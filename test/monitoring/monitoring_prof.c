@@ -242,9 +242,9 @@ int write_mat(char * filename, uint64_t * mat, unsigned int dim)
 
     for (i = 0; i < comm_world_size; ++i) {
         for (j = 0; j < comm_world_size - 1; ++j) {
-            fprintf(matrix_file, "%u ", mat[i * comm_world_size + j]);
+            fprintf(matrix_file, "%lu ", mat[i * comm_world_size + j]);
         }
-        fprintf(matrix_file, "%u\n", mat[i * comm_world_size + j]);
+        fprintf(matrix_file, "%lu\n", mat[i * comm_world_size + j]);
     }
     fflush(matrix_file);
     fclose(matrix_file);
