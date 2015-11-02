@@ -54,6 +54,7 @@ my $help_arg = 0;
 my $platform_arg = 0;
 my $include_arg = 0;
 my $exclude_arg = 0;
+my $force_arg = 0;
 
 # Include/exclude lists
 my $include_list;
@@ -1020,6 +1021,24 @@ sub patch_autotools_output {
     unlink("configure.patched");
 }
 
+sub in_tarball {
+    my $tarball = 0;
+    open(IN, "VERSION") || my_die "Can't open VERSION";
+    # If repo_rev is not an empty string, we are in a tarball
+    while (<IN>) {
+          my $line = $_;
+          my @fields = split(/=/,$line);
+          if ($fields[0] eq "repo_rev") {
+              if ($fields[1] ne "\n") {
+                  $tarball = 1;
+                  last;
+              }
+          }
+    }
+    close(IN);
+    return $tarball;
+}
+
 ##############################################################################
 ##############################################################################
 ## main - do the real work...
@@ -1037,6 +1056,7 @@ my $ok = Getopt::Long::GetOptions("no-ompi" => \$no_ompi_arg,
                                   "platform=s" => \$platform_arg,
                                   "include=s" => \$include_arg,
                                   "exclude=s" => \$exclude_arg,
+                                  "force|f" => \$force_arg,
     );
 
 if (!$ok || $help_arg) {
@@ -1056,7 +1076,9 @@ if (!$ok || $help_arg) {
                                 will be ignored and only those specified will be marked
                                 to build
   --exclude | -e                Comma-separated list of framework or framework-component
-                                to be excluded from the build\n";
+                                to be excluded from the build
+  --force | -f                  Run even if invoked from the source tree of an expanded
+                                distribution tarball\n";
     my_exit($ok ? 0 : 1);
 }
 
@@ -1119,6 +1141,11 @@ $dnl_line\n\n";
 
 my_die "Not at the root directory of an OMPI source tree"
     if (! -f "config/opal_try_assemble.m4");
+
+my_die "autogen.pl has been invoked in the source tree of an Open MPI distribution tarball; aborting...
+You likely do not need to invoke \"autogen.pl\" -- you can probably run \"configure\" directly.
+If you really know what you are doing, and really need to run autogen.pl, use the \"--force\" flag."
+    if (!$force_arg && in_tarball());
 
 # Now that we've verified that we're in the top-level OMPI directory,
 # set the sentinel file to remove if we abort.
