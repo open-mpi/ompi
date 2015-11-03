@@ -268,11 +268,11 @@ int32_t ompi_datatype_create_darray(int size,
         displs[0] *= orig_extent;
 
         *newtype = ompi_datatype_create(lastType->super.desc.used);
-        ompi_datatype_add(*newtype, lastType, 1, displs[0], displs[1]);
+        rc = ompi_datatype_add(*newtype, lastType, 1, displs[0], displs[1]);
         ompi_datatype_destroy(&lastType);
         /* need to destroy the old type even in error condition, so
            don't check return code from above until after cleanup. */
-        if (MPI_SUCCESS != rc) goto cleanup;
+        if (MPI_SUCCESS != rc) newtype = NULL;
     }
 
  cleanup:
