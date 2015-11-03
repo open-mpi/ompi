@@ -108,7 +108,6 @@ static void mca_pml_ucx_request_init_common(ompi_request_t* ompi_req,
                                             ompi_request_free_fn_t req_free,
                                             ompi_request_cancel_fn_t req_cancel)
 {
-    OBJ_CONSTRUCT(ompi_req, ompi_request_t);
     OMPI_REQUEST_INIT(ompi_req, req_persistent);
     ompi_req->req_type             = OMPI_REQUEST_PML;
     ompi_req->req_state            = state;
@@ -119,6 +118,7 @@ static void mca_pml_ucx_request_init_common(ompi_request_t* ompi_req,
 void mca_pml_ucx_request_init(void *request)
 {
     ompi_request_t* ompi_req = request;
+    OBJ_CONSTRUCT(ompi_req, ompi_request_t);
     mca_pml_ucx_request_init_common(ompi_req, false, OMPI_REQUEST_ACTIVE,
                                     mca_pml_ucx_request_free, NULL);
 }
@@ -126,6 +126,7 @@ void mca_pml_ucx_request_init(void *request)
 void mca_pml_ucx_request_cleanup(void *request)
 {
     ompi_request_t* ompi_req = request;
+    ompi_req->req_state = OMPI_REQUEST_INVALID;
     OMPI_REQUEST_FINI(ompi_req);
     OBJ_DESTRUCT(ompi_req);
 }
@@ -148,6 +149,7 @@ static void mca_pml_ucx_persisternt_request_construct(mca_pml_ucx_persistent_req
 
 static void mca_pml_ucx_persisternt_request_destruct(mca_pml_ucx_persistent_request_t* req)
 {
+    req->ompi.req_state = OMPI_REQUEST_INVALID;
     OMPI_REQUEST_FINI(&req->ompi);
 }
 
