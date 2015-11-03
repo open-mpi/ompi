@@ -175,6 +175,7 @@ int mca_pml_ucx_init(void)
     OBJ_CONSTRUCT(&ompi_pml_ucx.convs,           mca_pml_ucx_freelist_t);
 
     /* Create a completed request to be returned from isend */
+    OBJ_CONSTRUCT(&ompi_pml_ucx.completed_send_req, ompi_request_t);
     mca_pml_ucx_completed_request_init(&ompi_pml_ucx.completed_send_req);
 
     opal_progress_register(mca_pml_ucx_progress);
@@ -191,7 +192,10 @@ int mca_pml_ucx_cleanup(void)
 
     opal_progress_unregister(mca_pml_ucx_progress);
 
+    ompi_pml_ucx.completed_send_req.req_state = OMPI_REQUEST_INVALID;
     OMPI_REQUEST_FINI(&ompi_pml_ucx.completed_send_req);
+    OBJ_DESTRUCT(&ompi_pml_ucx.completed_send_req);
+
     OBJ_DESTRUCT(&ompi_pml_ucx.convs);
     OBJ_DESTRUCT(&ompi_pml_ucx.persistent_reqs);
 
@@ -558,7 +562,7 @@ int mca_pml_ucx_improbe(int src, int tag, struct ompi_communicator_t* comm,
                                1, &info);
     if (ucp_msg != NULL) {
         PML_UCX_MESSAGE_NEW(comm, ucp_msg, &info, message);
-        PML_UCX_VERBOSE(8, "got message %p (%p)", (void*)*message, ucp_msg);
+        PML_UCX_VERBOSE(8, "got message %p (%p)", (void*)*message, (void*)ucp_msg);
         *matched         = 1;
         mca_pml_ucx_set_recv_status_safe(mpi_status, UCS_OK, &info);
     } else if (UCS_PTR_STATUS(ucp_msg) == UCS_ERR_NO_MESSAGE) {
@@ -583,7 +587,7 @@ int mca_pml_ucx_mprobe(int src, int tag, struct ompi_communicator_t* comm,
                                    1, &info);
         if (ucp_msg != NULL) {
             PML_UCX_MESSAGE_NEW(comm, ucp_msg, &info, message);
-            PML_UCX_VERBOSE(8, "got message %p (%p)", (void*)*message, ucp_msg);
+            PML_UCX_VERBOSE(8, "got message %p (%p)", (void*)*message, (void*)ucp_msg);
             mca_pml_ucx_set_recv_status_safe(mpi_status, UCS_OK, &info);
             return OMPI_SUCCESS;
         }
