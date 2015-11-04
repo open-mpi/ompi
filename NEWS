@@ -120,6 +120,10 @@ Master (not on release branches yet)
 - Fix hang on some corner cases when MPI applications abort.
 - Add missing options to mpirun man page. Thanks to Daniel Letai
   for bringing this to our attention.
+- Add new --with-platform-patches-dir configure option
+- Adjust relative selection priorities to ensure that MTL
+  support is favored over BTL support when both are available
+- Use CUDA IPC for all sized messages for performance
 
 
 1.10.0
