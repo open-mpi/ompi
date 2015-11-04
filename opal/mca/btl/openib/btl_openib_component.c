@@ -573,7 +573,7 @@ static int openib_reg_mr(void *reg_data, void *base, size_t size,
     }
 
     if (reg->access_flags & MCA_MPOOL_ACCESS_REMOTE_WRITE) {
-        access_flag |= IBV_ACCESS_REMOTE_WRITE;
+        access_flag |= IBV_ACCESS_REMOTE_WRITE | IBV_ACCESS_LOCAL_WRITE;
     }
 
     if (reg->access_flags & MCA_MPOOL_ACCESS_LOCAL_WRITE) {
@@ -582,7 +582,7 @@ static int openib_reg_mr(void *reg_data, void *base, size_t size,
 
 #if HAVE_DECL_IBV_ATOMIC_HCA
     if (reg->access_flags & MCA_MPOOL_ACCESS_REMOTE_ATOMIC) {
-        access_flag |= IBV_ACCESS_REMOTE_ATOMIC;
+        access_flag |= IBV_ACCESS_REMOTE_ATOMIC | IBV_ACCESS_LOCAL_WRITE;
     }
 #endif
 
