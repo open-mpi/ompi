@@ -81,8 +81,8 @@ int orte_util_add_dash_host_nodes(opal_list_t *nodes,
                     goto cleanup;
                 }
             }
-            opal_argv_free(mini_map);
         }
+        opal_argv_free(mini_map);
     }
     opal_argv_free(host_argv);
     mini_map = NULL;
@@ -127,6 +127,13 @@ int orte_util_add_dash_host_nodes(opal_list_t *nodes,
                     /* they want a specific relative node #, so
                      * look it up on global pool
                      */
+                    if ('\0' == mapped_nodes[i][2]) {
+                        /* they forgot to tell us the # */
+                        orte_show_help("help-dash-host.txt", "dash-host:invalid-relative-node-syntax",
+                                       true, mapped_nodes[i]);
+                        rc = ORTE_ERR_SILENT;
+                        goto cleanup;
+                    }
                     nodeidx = strtol(&mapped_nodes[i][2], NULL, 10);
                     if (nodeidx < 0 ||
                         nodeidx > (int)orte_node_pool->size) {
