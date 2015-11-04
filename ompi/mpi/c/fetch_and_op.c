@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -11,6 +12,8 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
+ *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -56,7 +59,7 @@ int MPI_Fetch_and_op(const void *origin_addr, void *result_addr, MPI_Datatype da
         } else if (ompi_win_peer_invalid(win, target_rank) &&
                    (MPI_PROC_NULL != target_rank)) {
             rc = MPI_ERR_RANK;
-        } else if ( target_disp < 0 ) {
+        } else if ( MPI_WIN_FLAVOR_DYNAMIC != win->w_flavor && target_disp < 0 ) {
             rc = MPI_ERR_DISP;
         } else {
             OMPI_CHECK_DATATYPE_FOR_ONE_SIDED(rc, datatype, 1);
