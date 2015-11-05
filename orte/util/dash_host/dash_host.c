@@ -81,8 +81,8 @@ int orte_util_add_dash_host_nodes(opal_list_t *nodes,
                     goto cleanup;
                 }
             }
+            opal_argv_free(mini_map);
         }
-        opal_argv_free(mini_map);
     }
     opal_argv_free(host_argv);
     mini_map = NULL;
