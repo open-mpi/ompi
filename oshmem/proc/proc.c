@@ -38,6 +38,7 @@ opal_convertor_t* oshmem_shmem_local_convertor = NULL;
 opal_list_t oshmem_proc_list;
 static opal_mutex_t oshmem_proc_lock;
 oshmem_proc_t* oshmem_proc_local_proc = NULL;
+static ompi_proc_t* oshmem_mpi_local_proc = NULL;
 
 static void oshmem_proc_construct(oshmem_proc_t* proc);
 static void oshmem_proc_destruct(oshmem_proc_t* proc);
@@ -113,6 +114,12 @@ int oshmem_proc_init(void)
     if (ompi_procs)
         free(ompi_procs);
 
+    /* We need to do this anyway.
+     * This place requires to be reviewed and more elegant way is expected
+     */
+    oshmem_mpi_local_proc = ompi_proc_local_proc;
+    ompi_proc_local_proc = (ompi_proc_t*) oshmem_proc_local_proc;
+
     return OSHMEM_SUCCESS;
 }
 
@@ -170,6 +177,8 @@ int oshmem_proc_set_arch(void)
 int oshmem_proc_finalize(void)
 {
     opal_list_item_t *item;
+
+    ompi_proc_local_proc = oshmem_mpi_local_proc;
 
     /* Destroy all groups */
     oshmem_proc_group_finalize();
