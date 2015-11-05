@@ -3636,12 +3636,12 @@ subroutine MPI_Ineighbor_alltoallw(sendbuf, sendcounts, sdispls, sendtypes, recv
   @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ sendbuf
   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(in) :: sendbuf
   integer, dimension(*), intent(in) :: sendcounts
-  integer(kind=MPI_ADDRESS_KIND), intent(in) :: sdispls
+  integer(kind=MPI_ADDRESS_KIND), dimension(*), intent(in) :: sdispls
   integer, dimension(*), intent(in) :: sendtypes
   @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ recvbuf
   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: recvbuf
   integer, dimension(*), intent(in) :: recvcounts
-  integer(kind=MPI_ADDRESS_KIND), intent(in) :: rdispls
+  integer(kind=MPI_ADDRESS_KIND), dimension(*), intent(in) :: rdispls
   integer, dimension(*), intent(in) :: recvtypes
   integer, intent(in) :: comm
   integer, intent(out) :: request
@@ -3658,12 +3658,12 @@ subroutine PMPI_Ineighbor_alltoallw(sendbuf, sendcounts, sdispls, sendtypes, rec
   @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ sendbuf
   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(in) :: sendbuf
   integer, dimension(*), intent(in) :: sendcounts
-  integer(kind=MPI_ADDRESS_KIND), intent(in) :: sdispls
+  integer(kind=MPI_ADDRESS_KIND), dimension(*), intent(in) :: sdispls
   integer, dimension(*), intent(in) :: sendtypes
   @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ recvbuf
   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: recvbuf
   integer, dimension(*), intent(in) :: recvcounts
-  integer(kind=MPI_ADDRESS_KIND), intent(in) :: rdispls
+  integer(kind=MPI_ADDRESS_KIND), dimension(*), intent(in) :: rdispls
   integer, dimension(*), intent(in) :: recvtypes
   integer, intent(in) :: comm
   integer, intent(out) :: request
@@ -4698,12 +4698,12 @@ subroutine MPI_Neighbor_alltoallw(sendbuf, sendcounts, sdispls, sendtypes, recvb
   @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ sendbuf
   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(in) :: sendbuf
   integer, dimension(*), intent(in) :: sendcounts
-  integer(kind=MPI_ADDRESS_KIND), intent(in) :: sdispls
+  integer(kind=MPI_ADDRESS_KIND), dimension(*), intent(in) :: sdispls
   integer, dimension(*), intent(in) :: sendtypes
   @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ recvbuf
   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: recvbuf
   integer, dimension(*), intent(in) :: recvcounts
-  integer(kind=MPI_ADDRESS_KIND), intent(in) :: rdispls
+  integer(kind=MPI_ADDRESS_KIND), dimension(*), intent(in) :: rdispls
   integer, dimension(*), intent(in) :: recvtypes
   integer, intent(in) :: comm
   integer, intent(out) :: ierror
@@ -4719,12 +4719,12 @@ subroutine PMPI_Neighbor_alltoallw(sendbuf, sendcounts, sdispls, sendtypes, recv
   @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ sendbuf
   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(in) :: sendbuf
   integer, dimension(*), intent(in) :: sendcounts
-  integer(kind=MPI_ADDRESS_KIND), intent(in) :: sdispls
+  integer(kind=MPI_ADDRESS_KIND), dimension(*), intent(in) :: sdispls
   integer, dimension(*), intent(in) :: sendtypes
   @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ recvbuf
   @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: recvbuf
   integer, dimension(*), intent(in) :: recvcounts
-  integer(kind=MPI_ADDRESS_KIND), intent(in) :: rdispls
+  integer(kind=MPI_ADDRESS_KIND), dimension(*), intent(in) :: rdispls
   integer, dimension(*), intent(in) :: recvtypes
   integer, intent(in) :: comm
   integer, intent(out) :: ierror
