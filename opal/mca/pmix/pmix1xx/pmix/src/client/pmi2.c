@@ -507,7 +507,7 @@ int PMI2_Job_Connect(const char jobid[], PMI2_Connect_comm_t *conn)
 
     PMI2_CHECK();
 
-    if (NULL == jobid || NULL == conn) {
+    if (NULL == conn) {
         return PMI2_ERR_INVALID_ARGS;
     }
 
@@ -523,10 +523,6 @@ int PMI2_Job_Disconnect(const char jobid[])
     pmix_proc_t proc;
 
     PMI2_CHECK();
-
-    if (NULL == jobid) {
-        return PMI2_ERR_INVALID_ARGS;
-    }
 
     (void)strncpy(proc.nspace, (jobid ? jobid : myproc.nspace), sizeof(myproc.nspace));
     proc.rank = PMIX_RANK_WILDCARD;

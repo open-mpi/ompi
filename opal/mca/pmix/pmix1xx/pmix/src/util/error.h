@@ -23,7 +23,7 @@
 #include <private/autogen/config.h>
 #include <pmix/rename.h>
 
-#include <pmix_common.h>
+#include <pmix/pmix_common.h>
 #include "src/util/output.h"
 
 BEGIN_C_DECLS

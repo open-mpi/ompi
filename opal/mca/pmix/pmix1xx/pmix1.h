@@ -131,7 +131,8 @@ OPAL_MODULE_DECLSPEC int pmix1_store_local(const opal_process_name_t *proc,
                                              opal_value_t *val);
 
 /****  SERVER SOUTHBOUND FUNCTIONS  ****/
-OPAL_MODULE_DECLSPEC int pmix1_server_init(opal_pmix_server_module_t *module);
+OPAL_MODULE_DECLSPEC int pmix1_server_init(opal_pmix_server_module_t *module,
+                                           opal_list_t *info);
 OPAL_MODULE_DECLSPEC int pmix1_server_finalize(void);
 OPAL_MODULE_DECLSPEC int pmix1_server_gen_regex(const char *input, char **regex);
 OPAL_MODULE_DECLSPEC int pmix1_server_gen_ppn(const char *input, char **ppn);
@@ -140,11 +141,13 @@ OPAL_MODULE_DECLSPEC int pmix1_server_register_nspace(opal_jobid_t jobid,
                                                       opal_list_t *info,
                                                       opal_pmix_op_cbfunc_t cbfunc,
                                                       void *cbdata);
+OPAL_MODULE_DECLSPEC void pmix1_server_deregister_nspace(opal_jobid_t jobid);
 OPAL_MODULE_DECLSPEC int pmix1_server_register_client(const opal_process_name_t *proc,
                                                       uid_t uid, gid_t gid,
                                                       void *server_object,
                                                       opal_pmix_op_cbfunc_t cbfunc,
                                                       void *cbdata);
+OPAL_MODULE_DECLSPEC void pmix1_server_deregister_client(const opal_process_name_t *proc);
 OPAL_MODULE_DECLSPEC int pmix1_server_setup_fork(const opal_process_name_t *proc, char ***env);
 OPAL_MODULE_DECLSPEC int pmix1_server_dmodex(const opal_process_name_t *proc,
                                              opal_pmix_modex_cbfunc_t cbfunc, void *cbdata);

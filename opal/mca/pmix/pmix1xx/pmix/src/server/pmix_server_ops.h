@@ -13,7 +13,7 @@
 
 #include <private/autogen/config.h>
 #include <pmix/rename.h>
-#include <pmix_common.h>
+#include <pmix/pmix_common.h>
 #include <pmix_server.h>
 #include "src/usock/usock.h"
 #include "src/util/hash.h"
@@ -145,6 +145,7 @@ typedef struct {
     bool listen_thread_active;     // listen thread is running
     int listen_socket;             // socket listener is watching
     int stop_thread[2];            // pipe used to stop listener thread
+    pmix_buffer_t gdata;           // cache of data given to me for passing to all clients
 } pmix_server_globals_t;
 
 #define PMIX_PEER_CADDY(c, p, t)                \

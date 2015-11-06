@@ -49,47 +49,49 @@ static void pmix1_register_jobid(opal_jobid_t jobid, const char *nspace);
 
 const opal_pmix_base_module_t opal_pmix_pmix1xx_module = {
     /* client APIs */
-    pmix1_client_init,
-    pmix1_client_finalize,
-    pmix1_initialized,
-    pmix1_abort,
-    pmix1_commit,
-    pmix1_fence,
-    pmix1_fencenb,
-    pmix1_put,
-    pmix1_get,
-    pmix1_getnb,
-    pmix1_publish,
-    pmix1_publishnb,
-    pmix1_lookup,
-    pmix1_lookupnb,
-    pmix1_unpublish,
-    pmix1_unpublishnb,
-    pmix1_spawn,
-    pmix1_spawnnb,
-    pmix1_connect,
-    pmix1_connectnb,
-    pmix1_disconnect,
-    pmix1_disconnectnb,
-    pmix1_resolve_peers,
-    pmix1_resolve_nodes,
+    .init = pmix1_client_init,
+    .finalize = pmix1_client_finalize,
+    .initialized = pmix1_initialized,
+    .abort = pmix1_abort,
+    .commit = pmix1_commit,
+    .fence = pmix1_fence,
+    .fence_nb = pmix1_fencenb,
+    .put = pmix1_put,
+    .get = pmix1_get,
+    .get_nb = pmix1_getnb,
+    .publish = pmix1_publish,
+    .publish_nb = pmix1_publishnb,
+    .lookup = pmix1_lookup,
+    .lookup_nb = pmix1_lookupnb,
+    .unpublish = pmix1_unpublish,
+    .unpublish_nb = pmix1_unpublishnb,
+    .spawn = pmix1_spawn,
+    .spawn_nb = pmix1_spawnnb,
+    .connect = pmix1_connect,
+    .connect_nb = pmix1_connectnb,
+    .disconnect = pmix1_disconnect,
+    .disconnect_nb = pmix1_disconnectnb,
+    .resolve_peers = pmix1_resolve_peers,
+    .resolve_nodes = pmix1_resolve_nodes,
     /* server APIs */
-    pmix1_server_init,
-    pmix1_server_finalize,
-    pmix1_server_gen_regex,
-    pmix1_server_gen_ppn,
-    pmix1_server_register_nspace,
-    pmix1_server_register_client,
-    pmix1_server_setup_fork,
-    pmix1_server_dmodex,
-    pmix1_server_notify_error,
+    .server_init = pmix1_server_init,
+    .server_finalize = pmix1_server_finalize,
+    .generate_regex = pmix1_server_gen_regex,
+    .generate_ppn = pmix1_server_gen_ppn,
+    .server_register_nspace = pmix1_server_register_nspace,
+    .server_deregister_nspace = pmix1_server_deregister_nspace,
+    .server_register_client = pmix1_server_register_client,
+    .server_deregister_client = pmix1_server_deregister_client,
+    .server_setup_fork = pmix1_server_setup_fork,
+    .server_dmodex_request = pmix1_server_dmodex,
+    .server_notify_error = pmix1_server_notify_error,
     /* utility APIs */
-    PMIx_Get_version,
-    opal_pmix_base_register_handler,
-    opal_pmix_base_deregister_handler,
-    pmix1_store_local,
-    pmix1_get_nspace,
-    pmix1_register_jobid
+    .get_version = PMIx_Get_version,
+    .register_errhandler = opal_pmix_base_register_handler,
+    .deregister_errhandler = opal_pmix_base_deregister_handler,
+    .store_local = pmix1_store_local,
+    .get_nspace = pmix1_get_nspace,
+    .register_jobid = pmix1_register_jobid
 };
 
 static const char *pmix1_get_nspace(opal_jobid_t jobid)
@@ -455,7 +457,8 @@ int pmix1_value_unload(opal_value_t *kv,
     case PMIX_BYTE_OBJECT:
         kv->type = OPAL_BYTE_OBJECT;
         if (NULL != v->data.bo.bytes && 0 < v->data.bo.size) {
-            kv->data.bo.bytes = (uint8_t*)v->data.bo.bytes;
+            kv->data.bo.bytes = (uint8_t*)malloc(v->data.bo.size);
+            memcpy(kv->data.bo.bytes, v->data.bo.bytes, v->data.bo.size);
             kv->data.bo.size = (int)v->data.bo.size;
         } else {
             kv->data.bo.bytes = NULL;

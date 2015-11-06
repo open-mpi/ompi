@@ -40,7 +40,7 @@
 
 #include "src/class/pmix_list.h"
 
-#include <pmix_common.h>
+#include <pmix/pmix_common.h>
 
 BEGIN_C_DECLS
 
