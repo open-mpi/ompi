@@ -669,7 +669,7 @@ static int s2_store_local(const opal_process_name_t *proc,
 
 static const char *s2_get_nspace(opal_jobid_t jobid)
 {
-    return NULL;
+    return "N/A";
 }
 static void s2_register_jobid(opal_jobid_t jobid, const char *nspace)
 {
