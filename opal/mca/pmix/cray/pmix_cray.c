@@ -821,7 +821,7 @@ static int cray_store_local(const opal_process_name_t *proc,
 
 static const char *cray_get_nspace(opal_jobid_t jobid)
 {
-    return NULL;
+    return "N/A";
 }
 
 static void cray_register_jobid(opal_jobid_t jobid, const char *nspace)
