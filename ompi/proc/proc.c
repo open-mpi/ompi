@@ -613,6 +613,7 @@ ompi_proc_pack(ompi_proc_t **proclist, int proclistsize,
                opal_buffer_t* buf)
 {
     int rc;
+    char *nspace;
 
     OPAL_THREAD_LOCK(&ompi_proc_lock);
 
@@ -629,18 +630,30 @@ ompi_proc_pack(ompi_proc_t **proclist, int proclistsize,
      * can be sent.
      */
     for (int i = 0 ; i < proclistsize ; ++i) {
+        /* send proc name */
         rc = opal_dss.pack(buf, &(proclist[i]->super.proc_name), 1, OMPI_NAME);
         if(rc != OPAL_SUCCESS) {
             OMPI_ERROR_LOG(rc);
             OPAL_THREAD_UNLOCK(&ompi_proc_lock);
             return rc;
         }
+        /* retrieve and send the corresponding nspace for this job
+         * as the remote side may not know the translation */
+        nspace = (char*)opal_pmix.get_nspace(proclist[i]->super.proc_name.jobid);
+        rc = opal_dss.pack(buf, &nspace, 1, OPAL_STRING);
+        if(rc != OPAL_SUCCESS) {
+            OMPI_ERROR_LOG(rc);
+            OPAL_THREAD_UNLOCK(&ompi_proc_lock);
+            return rc;
+        }
+        /* pack architecture flag */
         rc = opal_dss.pack(buf, &(proclist[i]->super.proc_arch), 1, OPAL_UINT32);
         if(rc != OPAL_SUCCESS) {
             OMPI_ERROR_LOG(rc);
             OPAL_THREAD_UNLOCK(&ompi_proc_lock);
             return rc;
         }
+        /* pass the name of the host this proc is on */
         rc = opal_dss.pack(buf, &(proclist[i]->super.proc_hostname), 1, OPAL_STRING);
         if(rc != OPAL_SUCCESS) {
             OMPI_ERROR_LOG(rc);
@@ -720,6 +733,7 @@ ompi_proc_unpack(opal_buffer_t* buf,
         char *new_hostname;
         bool isnew = false;
         int rc;
+        char *nspace;
 
         rc = opal_dss.unpack(buf, &new_name, &count, OMPI_NAME);
         if (rc != OPAL_SUCCESS) {
@@ -728,6 +742,15 @@ ompi_proc_unpack(opal_buffer_t* buf,
             free(newprocs);
             return rc;
         }
+        rc = opal_dss.unpack(buf, &nspace, &count, OPAL_STRING);
+        if (rc != OPAL_SUCCESS) {
+            OMPI_ERROR_LOG(rc);
+            free(plist);
+            free(newprocs);
+            return rc;
+        }
+        opal_pmix.register_jobid(new_name.jobid, nspace);
+        free(nspace);
         rc = opal_dss.unpack(buf, &new_arch, &count, OPAL_UINT32);
         if (rc != OPAL_SUCCESS) {
             OMPI_ERROR_LOG(rc);
