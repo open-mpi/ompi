@@ -11,6 +11,7 @@ use Getopt::Long;
 my $myfile;
 my $mylib;
 my $myprefix;
+my $mysuffix;
 
 # Set to true if the script should merely check for symbols in
 # the library that are not in the provided output file - useful
@@ -28,6 +29,7 @@ GetOptions(
     "quiet" => \$QUIET,
     "check-only" => \$CHECK_ONLY,
     "prefix=s" => \$myprefix,
+    "suffix=s" => \$mysuffix,
     "lib=s" => \$mylib,
     "file=s" => \$myfile,
 ) or die "unable to parse options, stopped";
@@ -40,6 +42,7 @@ $0 [options]
 --quiet | -q         Only output critical messages to stdout
 --check-only         Output the symbols we would have prefixed, but don't do anything
 --prefix=NAME        Add NAME to the front of all found symbols
+--suffix=NAME        Add NAME to the end of all found symbols
 --lib=NAME           Library containing symbols that are to be "hidden"
 --file=NAME          Output file for results, or existing file to be updated
 EOT
@@ -99,7 +102,7 @@ foreach my $sym (@symbols) {
     for (my $i=0; $i < $diff; $i++) {
        $out = $out . " ";
     }
-    $out = $out . $myprefix . $sym . "\n";
+    $out = $out . $myprefix . $sym . $mysuffix . "\n";
     if ($myfile ne "") {
         print FILE $out;
     } else {
