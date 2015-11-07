@@ -10,6 +10,8 @@ my $showme_arg = 0;
 my $num_nodes = 0;
 my $my_arg;
 my $reps = 1;
+my $usedvm = 0;
+my $srun = 0;
 
 my @tests = qw(/bin/true ./orte_no_op ./mpi_no_op ./mpi_no_op);
 my @options = ("", "", "", "-mca mpi_preconnect_mpi 1");
@@ -27,6 +29,8 @@ foreach $my_arg (@ARGV) {
   --showme                      Show the actual commands without executing them
   --nodes                       Number of nodes to run the test across
   --reps                        Number of times to run each test (for statistics)
+  --dvm                         Use orte-dvm instead of mpirun
+  --srun                        Use srun instead of mpirun
   --help | -h                   This help list\n";
         exit;
     } elsif ($my_arg eq "-showme" ||
@@ -38,13 +42,28 @@ foreach $my_arg (@ARGV) {
     } elsif ($my_arg eq "--reps" ||
              $my_arg eq "-reps") {
         $reps = @ARGV[$i+1];
+    } elsif ($my_arg eq "--dvm" ||
+             $my_arg eq "-dvm") {
+        $usedvm = 1;
+    } elsif ($my_arg eq "--srun" ||
+             $my_arg eq "-srun") {
+        $srun = 1;
+    } else {
+        print "Argument " . $my_arg . " is not recognized\n";
+        exit;
     }
     $i++;
 }
 
+# bozo test
+if (1 == $srun && 1 == $usedvm) {
+    print "Cannot specify both srun and DVM\n";
+    exit(1);
+}
+
 my $n = 1;
 my $cmd;
-
+my $starter;
 my $test;
 my $output;
 my @lines;
@@ -55,15 +74,31 @@ my $toggle;
 my $idx;
 my $option;
 print "\n--------------------------------------------------\n";
+
+if (1 == $usedvm) {
+    $cmd = "orte-dvm --report-uri dvm_uri 2>&1 &";
+    print $cmd . "\n";
+    if (0 == $showme_arg) {
+        system($cmd);
+    }
+    $starter = "orte-submit --hnp file:dvm_uri --map-by ppr:1:node";
+} elsif (1 == $srun) {
+    $starter = "srun --distribution=cyclic";
+} else {
+    $starter = "mpirun -npernode 1 --novm"
+}
+
 foreach $test (@tests) {
     $option = shift(@options);
     if (-e $test) {
-        # pre-position the executable
-        $cmd = "mpirun -npernode 1 $test 2>&1";
-        system($cmd);
+        if (0 == $showme_arg) {
+            # pre-position the executable
+            $cmd = $starter . " $test 2>&1";
+            system($cmd);
+        }
         $n = 1;
         while ($n <= $num_nodes) {
-            $cmd = "time mpirun -npernode 1 -max-vm-size $n $option $test 2>&1";
+            $cmd = "time " . $starter . " -np $n $option $test 2>&1";
             print $cmd . "\n";
             if (0 == $showme_arg) {
                 for (1..$reps) {
@@ -99,7 +134,7 @@ foreach $test (@tests) {
             $n = 2 * $n;
         }
         if ($n != (2 * $num_nodes)) {
-            $cmd = "time mpirun -npernode 1 $option $test 2>&1";
+            $cmd = "time " . $starter . " $option $test 2>&1";
             print $cmd . "\n";
             if (0 == $showme_arg) {
                 for (1..$reps) {
@@ -115,4 +150,9 @@ foreach $test (@tests) {
         print "Test " . $test . " was not found - test skipped\n";
         print "\n--------------------------------------------------\n";
     }
+}
+
+if (1 == $usedvm && 0 == $showme_arg) {
+    $cmd = "orte-submit --hnp file:dvm_uri --terminate";
+    system($cmd);
 }
