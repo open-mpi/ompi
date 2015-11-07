@@ -96,19 +96,41 @@ static void errreg_cbfunc(pmix_status_t status,
                         status, errhandler_ref);
 }
 
-int pmix1_server_init(opal_pmix_server_module_t *module)
+int pmix1_server_init(opal_pmix_server_module_t *module,
+                      opal_list_t *info)
 {
     pmix_status_t rc;
     int dbg;
+    opal_value_t *kv;
+    pmix_info_t *pinfo;
+    size_t sz, n;
 
     if (0 < (dbg = opal_output_get_verbosity(opal_pmix_base_framework.framework_output))) {
         asprintf(&dbgvalue, "PMIX_DEBUG=%d", dbg);
         putenv(dbgvalue);
     }
 
-    if (PMIX_SUCCESS != (rc = PMIx_server_init(&mymodule))) {
+    /* convert the list to an array of pmix_info_t */
+    if (NULL != info) {
+        sz = opal_list_get_size(info);
+        PMIX_INFO_CREATE(pinfo, sz);
+        n = 0;
+        OPAL_LIST_FOREACH(kv, info, opal_value_t) {
+            (void)strncpy(pinfo[n].key, kv->key, PMIX_MAX_KEYLEN);
+            pmix1_value_load(&pinfo[n].value, kv);
+            ++n;
+        }
+    } else {
+        sz = 0;
+        pinfo = NULL;
+    }
+
+    if (PMIX_SUCCESS != (rc = PMIx_server_init(&mymodule, pinfo, sz))) {
+        PMIX_INFO_FREE(pinfo, sz);
         return pmix1_convert_rc(rc);
     }
+    PMIX_INFO_FREE(pinfo, sz);
+
     /* record the host module */
     host_module = module;
 
@@ -225,6 +247,22 @@ int pmix1_server_register_nspace(opal_jobid_t jobid,
     return pmix1_convert_rc(rc);
 }
 
+void pmix1_server_deregister_nspace(opal_jobid_t jobid)
+{
+    opal_pmix1_jobid_trkr_t *jptr;
+
+    /* if we don't already have it, we can ignore this */
+    OPAL_LIST_FOREACH(jptr, &mca_pmix_pmix1xx_component.jobids, opal_pmix1_jobid_trkr_t) {
+        if (jptr->jobid == jobid) {
+            /* found it - tell the server to deregister */
+            PMIx_server_deregister_nspace(jptr->nspace);
+            /* now get rid of it from our list */
+            opal_list_remove_item(&mca_pmix_pmix1xx_component.jobids, &jptr->super);
+            OBJ_RELEASE(jptr);
+            return;
+        }
+    }
+}
 
 int pmix1_server_register_client(const opal_process_name_t *proc,
                                  uid_t uid, gid_t gid,
@@ -250,6 +288,23 @@ int pmix1_server_register_client(const opal_process_name_t *proc,
         OBJ_RELEASE(op);
     }
     return pmix1_convert_rc(rc);
+}
+
+void pmix1_server_deregister_client(const opal_process_name_t *proc)
+{
+    opal_pmix1_jobid_trkr_t *jptr;
+    pmix_proc_t p;
+
+    /* if we don't already have it, we can ignore this */
+    OPAL_LIST_FOREACH(jptr, &mca_pmix_pmix1xx_component.jobids, opal_pmix1_jobid_trkr_t) {
+        if (jptr->jobid == proc->jobid) {
+            /* found it - tell the server to deregister */
+            (void)strncpy(p.nspace, jptr->nspace, PMIX_MAX_NSLEN);
+            p.rank = proc->vpid;
+            PMIx_server_deregister_client(&p);
+            return;
+        }
+    }
 }
 
 

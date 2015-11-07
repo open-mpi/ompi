@@ -18,11 +18,19 @@ include_HEADERS = \
         include/pmix_server.h \
         include/pmi.h \
         include/pmi2.h
+
+headers += \
+        include/private/align.h \
+        include/private/hash_string.h \
+        include/private/pmix_socket_errno.h \
+        include/private/pmix_stdint.h \
+        include/private/prefetch.h \
+        include/private/types.h \
+        include/private/autogen/config.h
 include_pmixdir = $(includedir)/pmix
 include_pmix_HEADERS = \
-	include/pmix/rename.h
-nodist_include_pmix_HEADERS = \
-	include/pmix/pmix_common.h
+    include/pmix/rename.h \
+    include/pmix/pmix_common.h
 
 include_pmix_autogendir = $(includedir)/pmix/autogen
 include_pmix_autogen_HEADERS = \
@@ -30,13 +38,5 @@ include_pmix_autogen_HEADERS = \
         include/pmix/autogen/pmix_config_bottom.h
 nodist_include_pmix_autogen_HEADERS = \
         include/pmix/autogen/config.h
-
-noinst_HEADERS = \
-	include/private/align.h \
-	include/private/hash_string.h \
-	include/private/pmix_socket_errno.h \
-	include/private/pmix_stdint.h \
-	include/private/prefetch.h \
-	include/private/types.h
 
 endif ! PMIX_EMBEDDED_MODE

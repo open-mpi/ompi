@@ -81,7 +81,7 @@ int main(int argc, char **argv)
     }
 
     /* setup the server library */
-    if (PMIX_SUCCESS != (rc = PMIx_server_init(&mymodule))) {
+    if (PMIX_SUCCESS != (rc = PMIx_server_init(&mymodule, NULL, 0))) {
         TEST_ERROR(("Init failed with error %d", rc));
         FREE_TEST_PARAMS(params);
         return rc;

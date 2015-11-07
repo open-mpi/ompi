@@ -308,8 +308,13 @@ typedef struct pmix_server_module_1_0_0_t {
 
 /* Initialize the server support library, and provide a
  *  pointer to a pmix_server_module_t structure
- * containing the caller's callback functions */
-pmix_status_t PMIx_server_init(pmix_server_module_t *module);
+ * containing the caller's callback functions. The
+ * array of pmix_info_t structs is used to pass
+ * additional info that may be required by the server
+ * when initializing - e.g., a user/group ID to set
+ * on the rendezvous file for the Unix Domain Socket */
+pmix_status_t PMIx_server_init(pmix_server_module_t *module,
+                               pmix_info_t info[], size_t ninfo);
 
 /* Finalize the server support library. If internal comm is
  * in-use, the server will shut it down at this time. All
@@ -376,6 +381,13 @@ pmix_status_t PMIx_server_register_nspace(const char nspace[], int nlocalprocs,
                                           pmix_info_t info[], size_t ninfo,
                                           pmix_op_cbfunc_t cbfunc, void *cbdata);
 
+/* Deregister an nspace and purge all objects relating to
+ * it, including any client info from that nspace. This is
+ * intended to support persistent PMIx servers by providing
+ * an opportunity for the host RM to tell the PMIx server
+ * library to release all memory for a completed job */
+void PMIx_server_deregister_nspace(const char nspace[]);
+
 /* Register a client process with the PMIx server library. The
  * expected user ID and group ID of the child process helps the
  * server library to properly authenticate clients as they connect
@@ -393,6 +405,12 @@ pmix_status_t PMIx_server_register_client(const pmix_proc_t *proc,
                                           uid_t uid, gid_t gid,
                                           void *server_object,
                                           pmix_op_cbfunc_t cbfunc, void *cbdata);
+
+/* Deregister a client and purge all data relating to it. The
+ * deregister_nspace API will automatically delete all client
+ * info for that nspace - this API is therefore intended solely
+ * for use in exception cases */
+void PMIx_server_deregister_client(const pmix_proc_t *proc);
 
 /* Setup the environment of a child process to be forked
  * by the host so it can correctly interact with the PMIx

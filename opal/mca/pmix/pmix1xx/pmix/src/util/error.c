@@ -31,7 +31,7 @@
 #include <stdlib.h>
 #endif
 
-#include <pmix_common.h>
+#include <pmix/pmix_common.h>
 
 #include "src/util/error.h"
 #include "src/include/pmix_globals.h"

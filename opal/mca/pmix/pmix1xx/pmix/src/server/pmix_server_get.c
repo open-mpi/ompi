@@ -20,7 +20,6 @@
 #include <private/pmix_stdint.h>
 #include <private/pmix_socket_errno.h>
 
-#include <pmix_common.h>
 #include <pmix_server.h>
 #include "src/include/pmix_globals.h"
 
@@ -115,7 +114,7 @@ pmix_status_t pmix_server_get(pmix_buffer_t *buf,
     pmix_nspace_t *ns, *nptr;
     pmix_info_t *info=NULL;
     size_t ninfo=0;
-    pmix_dmdx_local_t *lcd, *cd;
+    pmix_dmdx_local_t *lcd;
     pmix_rank_info_t *iptr;
     pmix_hash_table_t *ht;
     bool local;
@@ -458,7 +457,6 @@ static void _process_dmdx_reply(int fd, short args, void *cbdata)
     pmix_kval_t *kp;
     pmix_nspace_t *ns, *nptr;
     pmix_status_t rc;
-    pmix_buffer_t xfer, pbkt, *xptr;
 
     pmix_output_verbose(2, pmix_globals.debug_output,
                     "[%s:%d] process dmdx reply from %s:%d",

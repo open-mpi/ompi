@@ -32,7 +32,7 @@
 #include <private/autogen/config.h>
 #include <pmix/rename.h>
 #include <private/types.h>
-#include <pmix_common.h>
+#include <pmix/pmix_common.h>
 
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>

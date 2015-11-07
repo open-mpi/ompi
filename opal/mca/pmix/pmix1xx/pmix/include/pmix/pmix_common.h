@@ -1,3 +1,4 @@
+/* include/pmix/pmix_common.h.  Generated from pmix_common.h.in by configure.  */
 /*
  * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
  *
@@ -53,25 +54,6 @@
 #include <string.h>
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h> /* for struct timeval */
-#endif
-
-#ifndef PMIX_CONFIG_H
-
-/* ensure we have the version info available for external users */
-#undef PMIX_MAJOR_VERSION
-#undef PMIX_MINOR_VERSION
-#undef PMIX_RELEASE_VERSION
-
-#endif
-
-#undef BEGIN_C_DECLS
-#undef END_C_DECLS
-#if defined(c_plusplus) || defined(__cplusplus)
-# define BEGIN_C_DECLS extern "C" {
-# define END_C_DECLS }
-#else
-#define BEGIN_C_DECLS          /* empty */
-#define END_C_DECLS            /* empty */
 #endif
 
 BEGIN_C_DECLS
@@ -418,8 +400,29 @@ typedef struct {
 /* release the memory in the value struct data field */
 #define PMIX_VALUE_DESTRUCT(m)                                          \
     do {                                                                \
-        if (PMIX_STRING == (m)->type && NULL != (m)->data.string) {     \
-            free((m)->data.string);                                     \
+        if (PMIX_STRING == (m)->type) {                                 \
+            if (NULL != (m)->data.string) {                             \
+                free((m)->data.string);                                 \
+            }                                                           \
+        } else if (PMIX_BYTE_OBJECT == (m)->type) {                     \
+            if (NULL != (m)->data.bo.bytes) {                           \
+                free((m)->data.bo.bytes);                               \
+            }                                                           \
+        } else if (PMIX_INFO_ARRAY == (m)->type) {                      \
+            size_t _n;                                                  \
+            pmix_info_t *_p = (pmix_info_t*)((m)->data.array.array);    \
+            for (_n=0; _n < (m)->data.array.size; _n++) {               \
+                if (PMIX_STRING == _p[_n].value.type) {                 \
+                    if (NULL != _p[_n].value.data.string) {             \
+                        free(_p[_n].value.data.string);                 \
+                    }                                                   \
+                } else if (PMIX_BYTE_OBJECT == _p[_n].value.type) {     \
+                    if (NULL != _p[_n].value.data.bo.bytes) {           \
+                        free(_p[_n].value.data.bo.bytes);               \
+                    }                                                   \
+                }                                                       \
+            }                                                           \
+            free(_p);                                                   \
         }                                                               \
     } while(0);
 

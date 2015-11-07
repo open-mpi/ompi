@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
- * Copyright (c) 2014      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2015 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -15,6 +15,7 @@
 
 #include "opal/class/opal_list.h"
 #include "opal/mca/event/event.h"
+#include "opal/mca/pmix/pmix.h"
 
 #include "orte/runtime/orte_globals.h"
 #include "orte/mca/errmgr/errmgr.h"
@@ -709,6 +710,10 @@ void orte_state_base_check_all_complete(int fd, short args, void *cbdata)
         }
         OBJ_RELEASE(map);
         jdata->map = NULL;
+        /* tell the PMIx server to release its data */
+        if (NULL != opal_pmix.server_deregister_nspace) {
+            opal_pmix.server_deregister_nspace(jdata->jobid);
+        }
     }
 
  CHECK_ALIVE:

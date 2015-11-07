@@ -25,7 +25,7 @@
 #include "src/util/error.h"
 #include "src/util/fd.h"
 
-#include <pmix_common.h>
+#include <pmix/pmix_common.h>
 #include "src/util/progress_threads.h"
 
 static volatile bool evlib_active;

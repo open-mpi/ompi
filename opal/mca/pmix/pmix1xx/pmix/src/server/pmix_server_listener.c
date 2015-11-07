@@ -41,6 +41,7 @@
 #include <sys/types.h>
 #endif
 #include <ctype.h>
+#include <sys/stat.h>
 #include PMIX_EVENT_HEADER
 #include <pthread.h>
 
@@ -84,6 +85,11 @@ pmix_status_t pmix_start_listening(struct sockaddr_un *address)
     addrlen = sizeof(struct sockaddr_un);
     if (bind(pmix_server_globals.listen_socket, (struct sockaddr*)address, addrlen) < 0) {
         printf("%s:%d bind() failed", __FILE__, __LINE__);
+        return PMIX_ERROR;
+    }
+    /* set the mode as required */
+    if (0 != chmod(address->sun_path, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP)) {
+        pmix_output(0, "CANNOT CHMOD %s", address->sun_path);
         return PMIX_ERROR;
     }
 

@@ -1,4 +1,4 @@
-.TH "pmix_init" "3" "2015\-09\-09" "PMIx Programmer\[aq]s Manual" "\@VERSION\@"
+.TH "pmix_init" "3" "2015\-10\-25" "PMIx Programmer\[aq]s Manual" "\@VERSION\@"
 .SH NAME
 .PP
 PMIx_Init \- Initialize the PMIx Client
@@ -13,7 +13,8 @@ pmix_status_t\ PMIx_Init(pmix_proc_t\ *proc);
 .fi
 .SH ARGUMENTS
 .PP
-\f[I]proc\f[] : Fabric endpoint on which to initiate atomic operation.
+\f[I]proc\f[] : Pointer to a pmix_proc_t object in which the
+client\[aq]s namespace and rank are to be returned.
 .SH DESCRIPTION
 .PP
 Initialize the PMIx client, returning the process identifier assigned to
@@ -35,67 +36,14 @@ Note that the PMIx client library is referenced counted, and so multiple
 calls to PMIx_Init are allowed.
 Thus, one way to obtain the namespace and rank of the process is to
 simply call PMIx_Init with a non\-NULL parameter.
-.SS Atomic Data Types
-.PP
-Atomic functions may operate on one of the following identified data
-types.
-A given atomic function may support any datatype, subject to provider
-implementation constraints.
-.PP
-\f[I]FI_INT8\f[] : Signed 8\-bit integer.
-.PP
-\f[I]FI_UINT8\f[] : Unsigned 8\-bit integer.
-.PP
-\f[I]FI_INT16\f[] : Signed 16\-bit integer.
-.PP
-\f[I]FI_UINT16\f[] : Unsigned 16\-bit integer.
-.PP
-\f[I]FI_INT32\f[] : Signed 32\-bit integer.
-.PP
-\f[I]FI_UINT32\f[] : Unsigned 32\-bit integer.
-.PP
-\f[I]FI_INT64\f[] : Signed 64\-bit integer.
-.PP
-\f[I]FI_UINT64\f[] : Unsigned 64\-bit integer.
-.PP
-\f[I]FI_FLOAT\f[] : A single\-precision floating point value (IEEE 754).
-.PP
-\f[I]FI_DOUBLE\f[] : A double\-precision floating point value (IEEE
-754).
-.PP
-\f[I]FI_FLOAT_COMPLEX\f[] : An ordered pair of single\-precision
-floating point values (IEEE 754), with the first value representing the
-real portion of a complex number and the second representing the
-imaginary portion.
-.PP
-\f[I]FI_DOUBLE_COMPLEX\f[] : An ordered pair of double\-precision
-floating point values (IEEE 754), with the first value representing the
-real portion of a complex number and the second representing the
-imaginary portion.
-.PP
-\f[I]FI_LONG_DOUBLE\f[] : A double\-extended precision floating point
-value (IEEE 754).
-.PP
-\f[I]FI_LONG_DOUBLE_COMPLEX\f[] : An ordered pair of double\-extended
-precision floating point values (IEEE 754), with the first value
-representing the real portion of a complex number and the second
-representing the imaginary portion.
 .SH RETURN VALUE
 .PP
 Returns PMIX_SUCCESS on success.
 On error, a negative value corresponding to a PMIx errno is returned.
-PMIx errno values are defined in \f[C]pmix_common.h\f[].
 .SH ERRORS
 .PP
-\f[I]\-FI_EOPNOTSUPP\f[] : The requested atomic operation is not
-supported on this endpoint.
-.PP
-\f[I]\-FI_EMSGSIZE\f[] : The number of atomic operations in a single
-request exceeds that supported by the underlying provider.
+PMIx errno values are defined in \f[C]pmix_common.h\f[].
 .SH NOTES
 .SH SEE ALSO
-.PP
-\f[C]fi_getinfo\f[](3), \f[C]fi_endpoint\f[](3), \f[C]fi_domain\f[](3),
-\f[C]fi_cq\f[](3), \f[C]fi_rma\f[](3)
 .SH AUTHORS
 PMIx.

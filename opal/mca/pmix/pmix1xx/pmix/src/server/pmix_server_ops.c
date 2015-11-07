@@ -132,7 +132,7 @@ pmix_status_t pmix_server_commit(pmix_peer_t *peer, pmix_buffer_t *buf)
     pmix_nspace_t *nptr;
     pmix_rank_info_t *info;
     pmix_dmdx_remote_t *dcd, *dcdnext;
-    pmix_buffer_t pbkt, xfer;
+    pmix_buffer_t pbkt;
     pmix_value_t *val;
     char *data;
     size_t sz;

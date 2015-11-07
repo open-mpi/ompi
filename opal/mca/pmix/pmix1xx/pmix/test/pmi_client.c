@@ -336,23 +336,8 @@ static int test_item5(void)
 static int test_item6(void)
 {
     int rc = 0;
-    char nspace[100];
 
     log_error("pmix does not support this functionality\n");
-    return rc;
-    if (0 == rank) {
-        if (PMI_SUCCESS != (rc = PMI_KVS_Create(nspace, sizeof(nspace)))) {
-            log_fatal("PMI_KVS_Create failed: %d\n", rc);
-            return rc;
-        }
-        log_info("nspace=%s\n", nspace);
-
-        if (PMI_SUCCESS != (rc = PMI_KVS_Destroy(nspace))) {
-            log_fatal("PMI_KVS_Destroy failed: %d\n", rc);
-            return rc;
-        }
-    }
-
     return rc;
 }
 

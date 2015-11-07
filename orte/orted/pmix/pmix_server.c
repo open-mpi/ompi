@@ -180,6 +180,7 @@ static void eviction_cbfunc(struct opal_hotel_t *hotel,
 int pmix_server_init(void)
 {
     int rc;
+    opal_list_t info;
 
     if (orte_pmix_server_globals.initialized) {
         return ORTE_SUCCESS;
@@ -215,11 +216,32 @@ int pmix_server_init(void)
     /* ensure the PMIx server uses the proper rendezvous directory */
     opal_setenv("PMIX_SERVER_TMPDIR", orte_process_info.proc_session_dir, true, &environ);
 
+    /* pass the server the local topology - we do this so the procs won't read the
+     * topology themselves as this could overwhelm the local
+     * system on large-scale SMPs */
+    OBJ_CONSTRUCT(&info, opal_list_t);
+    if (NULL != opal_hwloc_topology) {
+        char *xmlbuffer=NULL;
+        int len;
+        opal_value_t *kv;
+        kv = OBJ_NEW(opal_value_t);
+        kv->key = strdup(OPAL_PMIX_LOCAL_TOPO);
+        if (0 != hwloc_topology_export_xmlbuffer(opal_hwloc_topology, &xmlbuffer, &len)) {
+            OBJ_RELEASE(kv);
+            OBJ_DESTRUCT(&info);
+            return ORTE_ERROR;
+        }
+        kv->data.string = xmlbuffer;
+        kv->type = OPAL_STRING;
+        opal_list_append(&info, &kv->super);
+    }
+
     /* setup the local server */
-    if (ORTE_SUCCESS != (rc = opal_pmix.server_init(&pmix_server))) {
+    if (ORTE_SUCCESS != (rc = opal_pmix.server_init(&pmix_server, &info))) {
         ORTE_ERROR_LOG(rc);
         /* memory cleanup will occur when finalize is called */
     }
+    OPAL_LIST_DESTRUCT(&info);
 
     /* if the universal server wasn't specified, then we use
      * our own HNP for that purpose */
