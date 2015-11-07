@@ -1035,12 +1035,11 @@ void orte_odls_base_default_launch_local(int fd, short sd, void *cbdata)
                 }
             }
 
-            orte_wait_cb(child, odls_base_default_wait_local_proc, NULL);
             if (ORTE_SUCCESS != (rc = fork_local(app, child, app->env, jobdat))) {
-                orte_wait_cb_cancel(child);
                 child->exit_code = ORTE_ERR_SILENT; /* error message already output */
                 ORTE_ACTIVATE_PROC_STATE(&child->name, ORTE_PROC_STATE_FAILED_TO_START);
             }
+            orte_wait_cb(child, odls_base_default_wait_local_proc, NULL);
             /* if we indexed the argv, we need to restore it to
              * its original form
              */

@@ -75,7 +75,7 @@ typedef uint32_t orte_proc_type_t;
 #define ORTE_PROC_IS_DVM            (ORTE_PROC_DVM & orte_process_info.proc_type)
 #define ORTE_PROC_IS_IOF_ENDPT      (ORTE_PROC_IOF_ENDPT & orte_process_info.proc_type)
 #define ORTE_PROC_IS_SCHEDULER      (ORTE_PROC_SCHEDULER & orte_process_info.proc_type)
-#define ORTE_PROC_IS_MASTER         (ORTE_PROC_MASTER & orte_process_info.proc_type)
+#define ORTE_PROC_IS_MASTER         (0x4000 & orte_process_info.proc_type)
 
 
 /**
