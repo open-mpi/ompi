@@ -22,6 +22,8 @@ my $CHECK_ONLY = 0;
 my $QUIET = 0;
 # Set to true if we just want to see the help message
 my $HELP = 0;
+# Set to true if we want to reverse the hiding direction
+my $REVERSE = 0;
 
 
 GetOptions(
@@ -32,6 +34,7 @@ GetOptions(
     "suffix=s" => \$mysuffix,
     "lib=s" => \$mylib,
     "file=s" => \$myfile,
+    "reverse" => \$REVERSE,
 ) or die "unable to parse options, stopped";
 
 if ($HELP) {
@@ -45,6 +48,7 @@ $0 [options]
 --suffix=NAME        Add NAME to the end of all found symbols
 --lib=NAME           Library containing symbols that are to be "hidden"
 --file=NAME          Output file for results, or existing file to be updated
+--reverse            Reverse the direction of hiding (i.e., #define prefix_foo to be foo)
 EOT
     exit(0);
 }
@@ -97,12 +101,21 @@ if ($myfile ne "") {
     open FILE, ">$myfile" || die "file could not be opened";
 }
 foreach my $sym (@symbols) {
-    my $out = "#define " . $sym;
+    my $out;
+    if ($REVERSE) {
+        $out = "#define " . $myprefix . $sym . $mysuffix;
+    } else {
+        $out = "#define " . $sym;
+    }
     my $diff = $len - length($sym);
     for (my $i=0; $i < $diff; $i++) {
        $out = $out . " ";
     }
-    $out = $out . $myprefix . $sym . $mysuffix . "\n";
+    if ($REVERSE) {
+        $out = $out . $sym . "\n";
+    } else {
+        $out = $out . $myprefix . $sym . $mysuffix . "\n";
+    }
     if ($myfile ne "") {
         print FILE $out;
     } else {
