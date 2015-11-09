@@ -25,6 +25,7 @@
 #include "opal/mca/base/base.h"
 
 #include "oshmem/constants.h"
+#include "oshmem/util/oshmem_util.h"
 #include "oshmem/mca/spml/spml.h"
 #include "oshmem/mca/spml/base/base.h"
 #include "oshmem/mca/spml/base/spml_base_request.h"
@@ -107,6 +108,8 @@ static int mca_spml_base_open(mca_base_open_flag_t flags)
     OBJ_CONSTRUCT(&mca_spml_base_get_requests, opal_free_list_t);
 
     OBJ_CONSTRUCT(&mca_spml_base_spml, opal_pointer_array_t);
+
+    oshmem_framework_open_output(&oshmem_spml_base_framework);
 
     /* Open up all available components */
     if (OPAL_SUCCESS !=
