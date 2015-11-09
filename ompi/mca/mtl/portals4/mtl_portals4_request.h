@@ -70,6 +70,8 @@ struct ompi_mtl_portals4_recv_request_t {
     void *buffer_ptr;
     ptl_handle_md_t md_h;
     ptl_handle_me_t me_h;
+    ptl_handle_ct_t ct_h;
+    bool is_triggered;
     struct opal_convertor_t *convertor;
     void *delivery_ptr;
     size_t delivery_len;
