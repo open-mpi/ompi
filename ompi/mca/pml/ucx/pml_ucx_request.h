@@ -89,6 +89,7 @@ enum {
 
 struct pml_ucx_persistent_request {
     ompi_request_t                    ompi;
+    ompi_request_t                    *tmp_req;
     unsigned                          flags;
     void                              *buffer;
     size_t                            count;

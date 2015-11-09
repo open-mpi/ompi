@@ -384,6 +384,7 @@ int mca_pml_ucx_recv(void *buf, size_t count, ompi_datatype_t *datatype, int src
         return OMPI_ERROR;
     }
 
+    ucp_worker_progress(ompi_pml_ucx.ucp_worker);
     while (!req->req_complete) {
         opal_progress();
     }
@@ -490,10 +491,11 @@ int mca_pml_ucx_send(void *buf, size_t count, ompi_datatype_t *datatype, int dst
                                            mca_pml_ucx_get_datatype(datatype),
                                            PML_UCX_MAKE_SEND_TAG(tag, comm),
                                            mca_pml_ucx_send_completion);
-    if (req == NULL) {
+    if (OPAL_LIKELY(req == NULL)) {
         return OMPI_SUCCESS;
     } else if (!UCS_PTR_IS_ERR(req)) {
         PML_UCX_VERBOSE(8, "got request %p", (void*)req);
+        ucp_worker_progress(ompi_pml_ucx.ucp_worker);
         ompi_request_wait(&req, MPI_STATUS_IGNORE);
         return OMPI_SUCCESS;
     } else {
@@ -696,6 +698,7 @@ int mca_pml_ucx_start(size_t count, ompi_request_t** requests)
                 PML_UCX_VERBOSE(8, "temporary request %p will complete persistent request %p",
                                 (void*)tmp_req, (void*)preq);
                 tmp_req->req_complete_cb_data = preq;
+                preq->tmp_req                 = tmp_req;
             }
             OPAL_THREAD_UNLOCK(&ompi_request_lock);
         } else {
