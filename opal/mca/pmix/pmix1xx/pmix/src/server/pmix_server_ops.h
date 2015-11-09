@@ -138,14 +138,14 @@ typedef struct {
 PMIX_CLASS_DECLARATION(pmix_pending_connection_t);
 
 typedef struct {
-    pmix_pointer_array_t clients;  // array of pmix_peer_t local clients
-    pmix_list_t collectives;       // list of active pmix_server_trkr_t
-    pmix_list_t remote_pnd;        // list of pmix_dmdx_remote_t awaiting arrival of data fror servicing remote req's
-    pmix_list_t local_reqs;        // list of pmix_dmdx_local_t awaiting arrival of data from local neighbours
-    bool listen_thread_active;     // listen thread is running
-    int listen_socket;             // socket listener is watching
-    int stop_thread[2];            // pipe used to stop listener thread
-    pmix_buffer_t gdata;           // cache of data given to me for passing to all clients
+    pmix_pointer_array_t clients;           // array of pmix_peer_t local clients
+    pmix_list_t collectives;                // list of active pmix_server_trkr_t
+    pmix_list_t remote_pnd;                 // list of pmix_dmdx_remote_t awaiting arrival of data fror servicing remote req's
+    pmix_list_t local_reqs;                 // list of pmix_dmdx_local_t awaiting arrival of data from local neighbours
+    volatile bool listen_thread_active;     // listen thread is running
+    int listen_socket;                      // socket listener is watching
+    int stop_thread[2];                     // pipe used to stop listener thread
+    pmix_buffer_t gdata;                    // cache of data given to me for passing to all clients
 } pmix_server_globals_t;
 
 #define PMIX_PEER_CADDY(c, p, t)                \
