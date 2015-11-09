@@ -93,7 +93,16 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
         nprocs = 0;
         for (i=0; i < jdata->apps->size; i++) {
             if (NULL != (app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, i))) {
-                nprocs += app->num_procs;
+                if (0 == app->num_procs) {
+                    opal_list_t nodes;
+                    orte_std_cntr_t slots;
+                    OBJ_CONSTRUCT(&nodes, opal_list_t);
+                    orte_rmaps_base_get_target_nodes(&nodes, &slots, app, ORTE_MAPPING_BYNODE, true, true);
+                    OPAL_LIST_DESTRUCT(&nodes);
+                    nprocs += slots;
+                } else {
+                    nprocs += app->num_procs;
+                }
             }
         }
         opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
