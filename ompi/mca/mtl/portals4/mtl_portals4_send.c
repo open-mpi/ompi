@@ -189,8 +189,7 @@ ompi_mtl_portals4_short_isend(mca_pml_base_send_mode_t mode,
     MTL_PORTALS4_SET_SEND_BITS(match_bits, contextid, localrank, tag,
                                MTL_PORTALS4_SHORT_MSG);
 
-    MTL_PORTALS4_SET_HDR_DATA(hdr_data, ptl_request->opcount, length,
-                              (MCA_PML_BASE_SEND_SYNCHRONOUS == mode) ? 1 : 0);
+    MTL_PORTALS4_SET_HDR_DATA(hdr_data, tag, contextid, (MCA_PML_BASE_SEND_SYNCHRONOUS == mode) ? 1 : 0);
 
     if (MCA_PML_BASE_SEND_SYNCHRONOUS == mode) {
         me.start = NULL;
@@ -274,7 +273,7 @@ ompi_mtl_portals4_long_isend(void *start, size_t length, int contextid, int tag,
     MTL_PORTALS4_SET_SEND_BITS(match_bits, contextid, localrank, tag,
                                MTL_PORTALS4_LONG_MSG);
 
-    MTL_PORTALS4_SET_HDR_DATA(hdr_data, ptl_request->opcount, length, 0);
+    MTL_PORTALS4_SET_HDR_DATA(hdr_data, tag, contextid, 0);
 
     me.start = start;
     me.length = length;
