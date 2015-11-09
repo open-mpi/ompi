@@ -37,7 +37,7 @@
 #include <crt_externs.h>
 #endif
 
-#include <pmix_common.h>
+#include <pmix/pmix_common.h>
 
 BEGIN_C_DECLS
 

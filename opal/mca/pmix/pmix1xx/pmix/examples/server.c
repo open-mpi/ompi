@@ -173,7 +173,7 @@ int main(int argc, char **argv)
     fprintf(stderr, "Running version %s\n", PMIx_Get_version());
 
     /* setup the server library */
-    if (PMIX_SUCCESS != (rc = PMIx_server_init(&mymodule))) {
+    if (PMIX_SUCCESS != (rc = PMIx_server_init(&mymodule, NULL, 0))) {
         fprintf(stderr, "Init failed with error %d\n", rc);
         return rc;
     }

@@ -105,7 +105,6 @@ AC_DEFUN([PMIX_SETUP_CORE],[
     # replaced, not the entire file.
     AC_CONFIG_HEADERS(pmix_config_prefix[include/private/autogen/config.h])
     AC_CONFIG_HEADERS(pmix_config_prefix[include/pmix/autogen/config.h])
-    AC_CONFIG_HEADERS(pmix_config_prefix[include/pmix/pmix_common.h])
 
     # What prefix are we using?
     AC_MSG_CHECKING([for pmix symbol prefix])

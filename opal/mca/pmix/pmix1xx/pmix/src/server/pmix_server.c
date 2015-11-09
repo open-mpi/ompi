@@ -21,7 +21,7 @@
 #include <private/pmix_socket_errno.h>
 
 #include <pmix_server.h>
-#include <pmix_common.h>
+#include <pmix/pmix_common.h>
 #include "src/include/pmix_globals.h"
 
 #ifdef HAVE_STRING_H
@@ -44,6 +44,7 @@
 #include <sys/types.h>
 #endif
 #include <ctype.h>
+#include <sys/stat.h>
 #include PMIX_EVENT_HEADER
 
 #include "src/util/argv.h"
@@ -140,11 +141,13 @@ static void _queue_message(int fd, short args, void *cbdata)
 {
     pmix_usock_queue_t *queue = (pmix_usock_queue_t*)cbdata;
     pmix_usock_send_t *snd;
+
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "[%s:%d] queue callback called: reply to %s:%d on tag %d",
                         __FILE__, __LINE__,
                         (queue->peer)->info->nptr->nspace,
                         (queue->peer)->info->rank, (queue->tag));
+
     snd = PMIX_NEW(pmix_usock_send_t);
     snd->hdr.pindex = pmix_globals.pindex;
     snd->hdr.tag = (queue->tag);
@@ -222,12 +225,16 @@ static pmix_status_t initialize_server_base(pmix_server_module_t *module)
         pmix_globals.myid.rank = strtol(evar, NULL, 10);
     }
 
+    /* initialize the datatype support */
+    pmix_bfrop_open();
+
     /* setup the server-specific globals */
     PMIX_CONSTRUCT(&pmix_server_globals.clients, pmix_pointer_array_t);
     pmix_pointer_array_init(&pmix_server_globals.clients, 1, INT_MAX, 1);
     PMIX_CONSTRUCT(&pmix_server_globals.collectives, pmix_list_t);
     PMIX_CONSTRUCT(&pmix_server_globals.remote_pnd, pmix_list_t);
     PMIX_CONSTRUCT(&pmix_server_globals.local_reqs, pmix_list_t);
+    PMIX_CONSTRUCT(&pmix_server_globals.gdata, pmix_buffer_t);
 
     /* see if debug is requested */
     if (NULL != (evar = getenv("PMIX_DEBUG"))) {
@@ -242,9 +249,6 @@ static pmix_status_t initialize_server_base(pmix_server_module_t *module)
     /* setup the function pointers */
     memset(&pmix_host_server, 0, sizeof(pmix_server_module_t));
     pmix_host_server = *module;
-
-    /* initialize the datatype support */
-    pmix_bfrop_open();
 
     /* init security */
     pmix_sec_init();
@@ -267,17 +271,19 @@ static pmix_status_t initialize_server_base(pmix_server_module_t *module)
     snprintf(myaddress.sun_path, sizeof(myaddress.sun_path)-1, "%s/pmix-%d", tdir, pid);
     asprintf(&myuri, "%s:%lu:%s", pmix_globals.myid.nspace, (unsigned long)pmix_globals.myid.rank, myaddress.sun_path);
 
-
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "pmix:server constructed uri %s", myuri);
 
     return PMIX_SUCCESS;
 }
 
-pmix_status_t PMIx_server_init(pmix_server_module_t *module)
+pmix_status_t PMIx_server_init(pmix_server_module_t *module,
+                               pmix_info_t info[], size_t ninfo)
 {
     pmix_usock_posted_recv_t *req;
     pmix_status_t rc;
+    size_t n;
+    pmix_kval_t kv;
 
     ++pmix_globals.init_cntr;
     if (1 < pmix_globals.init_cntr) {
@@ -297,6 +303,34 @@ pmix_status_t PMIx_server_init(pmix_server_module_t *module)
     /* create an event base and progress thread for us */
     if (NULL == (pmix_globals.evbase = pmix_start_progress_thread())) {
         return PMIX_ERR_INIT;
+    }
+    /* check the info keys for a directive about the uid/gid
+     * to be set for the rendezvous file, and any info we
+     * need to provide to every client */
+    if (NULL != info) {
+        PMIX_CONSTRUCT(&kv, pmix_kval_t);
+        for (n=0; n < ninfo; n++) {
+            if (0 == strcmp(info[n].key, PMIX_USERID)) {
+                /* the userid is in the uint32_t storage */
+                chown(myaddress.sun_path, info[n].value.data.uint32, -1);
+            } else if (0 == strcmp(info[n].key, PMIX_GRPID)) {
+                /* the grpid is in the uint32_t storage */
+                chown(myaddress.sun_path, -1, info[n].value.data.uint32);
+            } else {
+                /* store and pass along to every client */
+                kv.key = info[n].key;
+                kv.value = &info[n].value;
+                if (PMIX_SUCCESS != (rc = pmix_bfrop.pack(&pmix_server_globals.gdata, &kv, 1, PMIX_KVAL))) {
+                    PMIX_ERROR_LOG(rc);
+                    PMIX_DESTRUCT(&kv);
+                    return rc;
+                }
+            }
+        }
+        /* protect the incoming data */
+        kv.key = NULL;
+        kv.value = NULL;
+        PMIX_DESTRUCT(&kv);
     }
 
     /* setup the wildcard recv for inbound messages from clients */
@@ -329,9 +363,13 @@ static void cleanup_server_state(void)
     PMIX_LIST_DESTRUCT(&pmix_server_globals.collectives);
     PMIX_LIST_DESTRUCT(&pmix_server_globals.remote_pnd);
     PMIX_LIST_DESTRUCT(&pmix_server_globals.local_reqs);
+    PMIX_DESTRUCT(&pmix_server_globals.gdata);
 
     if (NULL != myuri) {
         free(myuri);
+    }
+    if (NULL != security_mode) {
+        free(security_mode);
     }
 
     pmix_bfrop_close();
@@ -571,6 +609,45 @@ pmix_status_t PMIx_server_register_nspace(const char nspace[], int nlocalprocs,
     return PMIX_SUCCESS;
 }
 
+static void _deregister_nspace(int sd, short args, void *cbdata)
+{
+    pmix_setup_caddy_t *cd = (pmix_setup_caddy_t*)cbdata;
+    pmix_nspace_t *tmp;
+
+    pmix_output_verbose(2, pmix_globals.debug_output,
+                        "pmix:server _deregister_nspace %s",
+                        cd->proc.nspace);
+
+    /* see if we already have this nspace */
+    PMIX_LIST_FOREACH(tmp, &pmix_globals.nspaces, pmix_nspace_t) {
+        if (0 == strcmp(tmp->nspace, cd->proc.nspace)) {
+            pmix_list_remove_item(&pmix_globals.nspaces, &tmp->super);
+            PMIX_RELEASE(tmp);
+            break;
+        }
+    }
+
+    PMIX_RELEASE(cd);
+}
+
+void PMIx_server_deregister_nspace(const char nspace[])
+{
+    pmix_setup_caddy_t *cd;
+
+    pmix_output_verbose(2, pmix_globals.debug_output,
+                        "pmix:server deregister nspace %s",
+                        nspace);
+
+     cd = PMIX_NEW(pmix_setup_caddy_t);
+    (void)strncpy(cd->proc.nspace, nspace, PMIX_MAX_NSLEN);
+
+    /* we have to push this into our event library to avoid
+     * potential threading issues */
+    event_assign(&cd->ev, pmix_globals.evbase, -1,
+                 EV_WRITE, _deregister_nspace, cd);
+    event_active(&cd->ev, EV_WRITE, 1);
+}
+
 static void _execute_collective(int sd, short args, void *cbdata)
 {
     pmix_trkr_caddy_t *tcd = (pmix_trkr_caddy_t*)cbdata;
@@ -753,6 +830,60 @@ pmix_status_t PMIx_server_register_client(const pmix_proc_t *proc,
                  EV_WRITE, _register_client, cd);
     event_active(&cd->ev, EV_WRITE, 1);
     return PMIX_SUCCESS;
+}
+
+static void _deregister_client(int sd, short args, void *cbdata)
+{
+    pmix_setup_caddy_t *cd = (pmix_setup_caddy_t*)cbdata;
+    pmix_rank_info_t *info;
+    pmix_nspace_t *nptr, *tmp;
+
+    pmix_output_verbose(2, pmix_globals.debug_output,
+                        "pmix:server _deregister_client for nspace %s rank %d",
+                        cd->proc.nspace, cd->proc.rank);
+
+    /* see if we already have this nspace */
+    nptr = NULL;
+    PMIX_LIST_FOREACH(tmp, &pmix_globals.nspaces, pmix_nspace_t) {
+        if (0 == strcmp(tmp->nspace, cd->proc.nspace)) {
+            nptr = tmp;
+            break;
+        }
+    }
+    if (NULL == nptr) {
+        /* nothing to do */
+        goto cleanup;
+    }
+    /* find an remove this client */
+    PMIX_LIST_FOREACH(info, &nptr->server->ranks, pmix_rank_info_t) {
+        if (info->rank == cd->proc.rank) {
+            pmix_list_remove_item(&nptr->server->ranks, &info->super);
+            PMIX_RELEASE(info);
+            break;
+        }
+    }
+
+  cleanup:
+    PMIX_RELEASE(cd);
+}
+
+void PMIx_server_deregister_client(const pmix_proc_t *proc)
+{
+    pmix_setup_caddy_t *cd;
+
+    pmix_output_verbose(2, pmix_globals.debug_output,
+                        "pmix:server deregister client %s:%d",
+                        proc->nspace, proc->rank);
+
+     cd = PMIX_NEW(pmix_setup_caddy_t);
+    (void)strncpy(cd->proc.nspace, proc->nspace, PMIX_MAX_NSLEN);
+    cd->proc.rank = proc->rank;
+
+    /* we have to push this into our event library to avoid
+     * potential threading issues */
+    event_assign(&cd->ev, pmix_globals.evbase, -1,
+                 EV_WRITE, _deregister_client, cd);
+    event_active(&cd->ev, EV_WRITE, 1);
 }
 
 /* setup the envars for a child process */
@@ -1940,6 +2071,7 @@ static pmix_status_t server_switchyard(pmix_peer_t *peer, uint32_t tag,
     if (PMIX_REQ_CMD == cmd) {
         reply = PMIX_NEW(pmix_buffer_t);
         pmix_bfrop.copy_payload(reply, &(peer->info->nptr->server->job_info));
+        pmix_bfrop.copy_payload(reply, &(pmix_server_globals.gdata));
         PMIX_SERVER_QUEUE_REPLY(peer, tag, reply);
         return PMIX_SUCCESS;
     }

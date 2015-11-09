@@ -14,7 +14,7 @@
 #include <private/pmix_socket_errno.h>
 
 #include <pmix.h>
-#include <pmix_common.h>
+#include <pmix/pmix_common.h>
 #include <pmix_server.h>
 #include "src/include/pmix_globals.h"
 

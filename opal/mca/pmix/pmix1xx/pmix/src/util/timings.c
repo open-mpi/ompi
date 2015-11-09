@@ -10,7 +10,7 @@
 
 #include <private/autogen/config.h>
 #include <pmix/rename.h>
-#include <pmix_common.h>
+#include <pmix/pmix_common.h>
 
 #include <stdlib.h>
 #include <stdarg.h>

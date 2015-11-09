@@ -12,7 +12,7 @@
 
 #include <private/autogen/config.h>
 #include <pmix/rename.h>
-#include <pmix_common.h>
+#include <pmix/pmix_common.h>
 
 #include "src/include/pmix_globals.h"
 #include "src/util/argv.h"

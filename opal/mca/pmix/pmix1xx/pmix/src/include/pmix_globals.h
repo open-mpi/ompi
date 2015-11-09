@@ -30,7 +30,7 @@
 #endif
 #include PMIX_EVENT_HEADER
 
-#include <pmix_common.h>
+#include <pmix/pmix_common.h>
 
 #include "src/buffer_ops/types.h"
 #include "src/class/pmix_hash_table.h"
