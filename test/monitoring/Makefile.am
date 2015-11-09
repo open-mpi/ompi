@@ -21,6 +21,6 @@ if PROJECT_OMPI
     monitoring_test_LDADD = $(top_builddir)/ompi/libmpi.la $(top_builddir)/opal/libopen-pal.la
 
     monitoring_prof_la_SOURCES = monitoring_prof.c
-    monitoring_prof_la_LDFLAGS=-module -avoid-version -shared $(WRAPPER_EXTRA_LDFLAGS)
+    monitoring_prof_la_LDFLAGS=-module -avoid-version $(WRAPPER_EXTRA_LDFLAGS)
     monitoring_prof_la_LIBADD = $(top_builddir)/ompi/libmpi.la $(top_builddir)/opal/libopen-pal.la
 endif
