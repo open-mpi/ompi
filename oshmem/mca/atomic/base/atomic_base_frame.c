@@ -18,6 +18,7 @@
 #include "opal/util/output.h"
 #include "opal/mca/base/base.h"
 
+#include "oshmem/util/oshmem_util.h"
 #include "oshmem/mca/atomic/atomic.h"
 #include "oshmem/mca/atomic/base/base.h"
 
@@ -73,6 +74,8 @@ static int mca_atomic_base_close(void)
 
 static int mca_atomic_base_open(mca_base_open_flag_t flags)
 {
+    oshmem_framework_open_output(&oshmem_atomic_base_framework);
+
     /* Open up all available components */
     if (OPAL_SUCCESS !=
         mca_base_framework_components_open(&oshmem_atomic_base_framework, flags)) {
