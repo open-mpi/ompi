@@ -904,13 +904,13 @@ the following additional options:
  [...] ... binding child [...,2] to cpus 0004
  [...] ... binding child [...,3] to cpus 0008
 
- % ompi-submit ... --map-by socket -0bind-to socket
+ % ompi-submit ... --map-by socket --bind-to socket
  [...] ... binding child [...,0] to socket 0 cpus 000f
  [...] ... binding child [...,1] to socket 1 cpus 00f0
  [...] ... binding child [...,2] to socket 0 cpus 000f
  [...] ... binding child [...,3] to socket 1 cpus 00f0
 
- % ompi-submit ... --map-by core:PE=2 -bind-to core
+ % ompi-submit ... --map-by core:PE=2 --bind-to core
  [...] ... binding child [...,0] to cpus 0003
  [...] ... binding child [...,1] to cpus 000c
  [...] ... binding child [...,2] to cpus 0030
