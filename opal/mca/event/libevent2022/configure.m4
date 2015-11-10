@@ -163,10 +163,6 @@ AC_DEFUN([MCA_opal_event_libevent2022_DO_THE_CONFIG], [
         event_args="$event_args --enable-debug-mode"
     fi
 
-    if test "$WANT_DEBUG" = 1; then
-      CFLAGS="-DOPAL_DEBUG $CFLAGS"
-    fi
-
     AC_MSG_RESULT([$event_args])
 
     OPAL_CONFIG_SUBDIR([$libevent_basedir/libevent],

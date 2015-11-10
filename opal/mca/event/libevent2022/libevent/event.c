@@ -1567,7 +1567,7 @@ event_base_loop(struct event_base *base, int flags)
 
 	if (base->running_loop) {
 /*****   OMPI change   ****/
-#ifdef OPAL_DEBUG
+#if OPAL_ENABLE_DEBUG
 		event_warnx("%s: reentrant invocation.  Only one event_base_loop"
 		    " can run on each event_base at once.", __func__);
 #endif
