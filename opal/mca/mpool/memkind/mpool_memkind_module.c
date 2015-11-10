@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2011 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -10,8 +11,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
- *                         All rights reserved.
+ * Copyright (c) 2011-2015 Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * Copyright (c) 2011-2014 NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -28,22 +29,23 @@
 #endif
 #include "opal/mca/mpool/base/base.h"
 
-
+size_t partition_page_sizes[MEMKIND_NUM_BASE_KIND] = {
+    4096, 4069, 2097152, 4096, 2097152, 2097152,
+    1073741824, 1073741824, 1073741824, 4096, 4096,
+};
 
 /*
  *  Initializes the mpool module.
  */
-void mca_mpool_memkind_module_init(mca_mpool_memkind_module_t* mpool)
+void mca_mpool_memkind_module_init(mca_mpool_memkind_module_t *mpool, int partition)
 {
     mpool->super.mpool_component = &mca_mpool_memkind_component.super;
     mpool->super.mpool_alloc = mca_mpool_memkind_alloc;
     mpool->super.mpool_realloc = mca_mpool_memkind_realloc;
     mpool->super.mpool_free = mca_mpool_memkind_free;
-    mpool->super.mpool_find = NULL;
-    mpool->super.mpool_register = NULL;
-    mpool->super.mpool_deregister = NULL;
-    mpool->super.mpool_release_memory = NULL;
-    mpool->super.flags = 0;
+    mpool->super.flags = MCA_MPOOL_FLAGS_MPI_ALLOC_MEM;
+    memkind_get_kind_by_partition (partition, &mpool->kind);
+    mpool->page_size = partition_page_sizes[partition];
 }
 
 
@@ -51,33 +53,31 @@ void* mca_mpool_memkind_alloc(
     mca_mpool_base_module_t* mpool,
     size_t size,
     size_t align,
-    uint32_t flags,
-    mca_mpool_base_registration_t** registration)
+    uint32_t flags)
 {
-
+    mca_mpool_memkind_module_t *memkind_module = (mca_mpool_memkind_module_t *) mpool;
     void *addr;
 
-    if(0 == align)
-        align = mca_mpool_base_page_size;
+    if (0 == align) {
+        align = memkind_module->page_size;
+    }
 
-    if ((errno = memkind_posix_memalign(mca_mpool_memkind_component.kind,
-                                        &addr, align, size))!= 0){
+    if ((errno = memkind_posix_memalign(memkind_module->kind, &addr, align, size))!= 0){
         return NULL;
     }
+
     return addr;
 }
 
 void* mca_mpool_memkind_realloc(mca_mpool_base_module_t *mpool, void *addr,
-    size_t size, mca_mpool_base_registration_t **registration)
+                                size_t size)
 {
-    return memkind_realloc(mca_mpool_memkind_component.kind,
-                           addr, size);
-
+    mca_mpool_memkind_module_t *memkind_module = (mca_mpool_memkind_module_t *) mpool;
+    return memkind_realloc (memkind_module->kind, addr, size);
 }
 
-void mca_mpool_memkind_free(mca_mpool_base_module_t *mpool, void *addr,
-                            mca_mpool_base_registration_t *registration)
+void mca_mpool_memkind_free(mca_mpool_base_module_t *mpool, void *addr)
 {
-    memkind_free(mca_mpool_memkind_component.kind,
-                 addr);
+    mca_mpool_memkind_module_t *memkind_module = (mca_mpool_memkind_module_t *) mpool;
+    memkind_free(memkind_module->kind, addr);
 }

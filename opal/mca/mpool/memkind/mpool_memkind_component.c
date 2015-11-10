@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -11,8 +12,8 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2009 Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2008-2009 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2010-2013 Los Alamos National Security, LLC.
- *                         All rights reserved.
+ * Copyright (c) 2010-2015 Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * Copyright (c) 2014      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -48,161 +49,80 @@ mca_mpool_memkind_open(void);
 static int
 mca_mpool_memkind_close(void);
 
-static mca_mpool_base_module_t*
-mca_mpool_memkind_init(struct mca_mpool_base_resources_t* resources);
-
+static int mca_mpool_memkind_query (const char *hints, int *priority,
+                                    mca_mpool_base_module_t **module);
 
 mca_mpool_memkind_component_t mca_mpool_memkind_component = {
     {
         /* First, the mca_base_component_t struct containing meta
          information about the component itself */
-        {
-          MCA_MPOOL_BASE_VERSION_2_0_0,
-          "memkind", /* MCA component name */
-          OPAL_MAJOR_VERSION,  /* MCA component major version */
-          OPAL_MINOR_VERSION,  /* MCA component minor version */
-          OPAL_RELEASE_VERSION,  /* MCA component release version */
-          mca_mpool_memkind_open,  /* component open  */
-          mca_mpool_memkind_close,
-          NULL,
-          mca_mpool_memkind_register
+        .mpool_version = {
+            MCA_MPOOL_BASE_VERSION_3_0_0,
+            "memkind", /* MCA component name */
+             MCA_BASE_MAKE_VERSION(component, OPAL_MAJOR_VERSION, OPAL_MINOR_VERSION,
+                                   OPAL_RELEASE_VERSION),
+            .mca_open_component = mca_mpool_memkind_open,
+            .mca_close_component = mca_mpool_memkind_close,
+            .mca_register_component_params = mca_mpool_memkind_register
         },
-        {
+        .mpool_data = {
             /* The component is checkpoint ready */
             MCA_BASE_METADATA_PARAM_CHECKPOINT
         },
 
-       mca_mpool_memkind_init
+        .mpool_query = mca_mpool_memkind_query,
     }
 };
 
+static mca_base_var_enum_value_t memory_kinds[] = {
+  {.value = MEMKIND_PARTITION_DEFAULT, .string = "memkind_default"},
+  {.value = MEMKIND_PARTITION_HBW, .string = "memkind_hbw"},
+  {.value = MEMKIND_PARTITION_HBW_HUGETLB, .string = "memkind_hwb_hugetlb"},
+  {.value = MEMKIND_PARTITION_HBW_PREFERRED, .string = "memkind_hbw_preferred"},
+  {.value = MEMKIND_PARTITION_HBW_PREFERRED_HUGETLB, .string = "memkind_hbw_preferred_hugetlb"},
+  {.value = MEMKIND_PARTITION_HUGETLB, .string = "memkind_hugetlb"},
+  {.value = MEMKIND_PARTITION_HBW_GBTLB, .string = "memkind_hbw_gbtlb"},
+  {.value = MEMKIND_PARTITION_HBW_PREFERRED_GBTLB, .string = "memkind_hbw_preferred_gbtlb"},
+  {.value = MEMKIND_PARTITION_GBTLB, .string = "memkind_gbtlb"},
+  {.value = MEMKIND_PARTITION_HBW_INTERLEAVE, .string = "memkind_hbw_interleave"},
+  {.value = MEMKIND_PARTITION_INTERLEAVE, .string = "memkind_interleave"},
+  {.string = NULL},
+};
+
+static mca_base_var_enum_t *mca_mpool_memkind_enum = NULL;
 
 static int opal_mpool_memkind_verbose;
 static int mca_mpool_memkind_register(void)
 {
+    int rc;
 
-    char *memkind_names;
     /* register MEMKIND component parameters */
-    mca_mpool_memkind_component.hbw = 1;
-    mca_mpool_memkind_component.bind = 0;
-    mca_mpool_memkind_component.pagesize = mca_mpool_memkind_default_pagesize;
+    mca_mpool_memkind_component.default_partition = memory_kinds[0].value;
 
-    memkind_names = (char *) malloc (2048 * sizeof(char));
-    if (NULL == memkind_names){
-      return OPAL_ERROR;
+    rc = mca_base_var_enum_create ("memkind partition types", memory_kinds, &mca_mpool_memkind_enum);
+    if (OPAL_SUCCESS != rc) {
+        return rc;
     }
-
-    mca_mpool_memkind_component.memkind_name = (char *) malloc (4096 * sizeof(char));
-    if (NULL == mca_mpool_memkind_component.memkind_name){
-      return OPAL_ERROR;
-    }
-
-    mca_mpool_memkind_component.memkind_file = (char *) malloc (4096 * sizeof(char));
-    if (NULL ==mca_mpool_memkind_component.memkind_file){
-      return OPAL_ERROR;
-    }
-
-    strncpy (mca_mpool_memkind_component.memkind_name, "memkind_default", 17);
-    sprintf(memkind_names, "Use a specific kind of memory from (memkind_default, memkind_hugetlb, memkind_hbw, memkind_hbw_preferred, memkind_hbw_hugetlb, memkind_hbw_preferred_hugetlb, memkind_hbw_gbtlb memkind_hbw_preferred_gbtlb, memkind_gbtlb)");
-
-    (void) mca_base_component_var_register(&mca_mpool_memkind_component.super.mpool_version,"high_bandwidth",
-                                           "Allocate in high bandwidth node (0-> no, 1 -> yes)",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                           OPAL_INFO_LVL_9,
-                                           MCA_BASE_VAR_SCOPE_READONLY,
-                                           &mca_mpool_memkind_component.hbw);
-
-    (void) mca_base_component_var_register(&mca_mpool_memkind_component.super.mpool_version,"page_size",
-                                           "Allocate with different page size (4096, 2097152, 1073741824)",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                           OPAL_INFO_LVL_9,
-                                           MCA_BASE_VAR_SCOPE_READONLY,
-                                           &mca_mpool_memkind_component.pagesize);
-
-    (void) mca_base_component_var_register(&mca_mpool_memkind_component.super.mpool_version, "bind",
-                                           "Bind allocations to specific nodes (0->preferred, 1-> bind)",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                           OPAL_INFO_LVL_9,
-                                           MCA_BASE_VAR_SCOPE_READONLY,
-                                           &mca_mpool_memkind_component.bind);
 
     (void) mca_base_component_var_register(&mca_mpool_memkind_component.super.mpool_version,
-                                           "verbose", "Enable verbose output for mpool memkind component",
+                                           "default_partition", "Default memkind partition to use",
+                                           MCA_BASE_VAR_TYPE_INT, mca_mpool_memkind_enum, 0, 0,
+                                           OPAL_INFO_LVL_5, MCA_BASE_VAR_SCOPE_LOCAL,
+                                           &mca_mpool_memkind_component.default_partition);
+
+    mca_mpool_memkind_component.priority = 10;
+    (void) mca_base_component_var_register(&mca_mpool_memkind_component.super.mpool_version,
+                                           "priority", "Default priority of the memkind component",
                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                           OPAL_INFO_LVL_9,
-                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           OPAL_INFO_LVL_5, MCA_BASE_VAR_SCOPE_LOCAL,
+                                           &mca_mpool_memkind_component.priority);
+
+    opal_mpool_memkind_verbose = 0;
+    (void) mca_base_component_var_register(&mca_mpool_memkind_component.super.mpool_version,
+                                           "verbose", "Verbosity of the memkind mpool component",
+                                           MCA_BASE_VAR_TYPE_INT, &mca_base_var_enum_verbose, 0, 0,
+                                           OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_LOCAL,
                                            &opal_mpool_memkind_verbose);
-
-    (void) mca_base_component_var_register(&mca_mpool_memkind_component.super.mpool_version,
-                                           "name",
-                                           memkind_names,
-                                           MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
-                                           OPAL_INFO_LVL_9,
-                                           MCA_BASE_VAR_SCOPE_READONLY,
-                                           &mca_mpool_memkind_component.memkind_name);
-
-    (void) mca_base_component_var_register(&mca_mpool_memkind_component.super.mpool_version,
-                                           "config",
-                                           "Config file user defined hints",
-                                           MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
-                                           OPAL_INFO_LVL_9,
-                                           MCA_BASE_VAR_SCOPE_READONLY,
-                                           &mca_mpool_memkind_component.memkind_file);
-
-
-    opal_output(mca_mpool_memkind_component.verbose,
-                "mca_mpool_memkind_register: Allocating with hbw: %d, pagesize: %d",
-                mca_mpool_memkind_component.hbw, mca_mpool_memkind_component.pagesize);
-
-    /*Setting the appropriate based on mca parameters
-      default allocates with 4K pages on high bandwidth memory on preferred mode.
-      For more information about the kinds, (refer to the manpage of memkind)
-      www.github.com/memkind
-     */
-    if (!mca_mpool_memkind_component.hbw) {
-        switch (mca_mpool_memkind_component.pagesize) {
-        case 4096:
-            mca_mpool_memkind_component.kind = MEMKIND_DEFAULT;
-            break;
-        case 2097152:
-            mca_mpool_memkind_component.kind = MEMKIND_HUGETLB;
-            break;
-        case 1073741824:
-            mca_mpool_memkind_component.kind = MEMKIND_GBTLB;
-            break;
-        }
-    }
-    else if (1 == mca_mpool_memkind_component.hbw){
-        switch(mca_mpool_memkind_component.pagesize) {
-        case 4096:
-            mca_mpool_memkind_component.kind = MEMKIND_HBW;
-            break;
-        case 2097152:
-            mca_mpool_memkind_component.kind = MEMKIND_HBW_HUGETLB;
-            break;
-        case 1073741824:
-            mca_mpool_memkind_component.kind = MEMKIND_HBW_GBTLB;
-            break;
-        }
-    }
-    else {
-        switch (mca_mpool_memkind_component.pagesize) {
-        case 4096:
-            mca_mpool_memkind_component.kind = MEMKIND_HBW_PREFERRED;
-            break;
-        case 2097152:
-            mca_mpool_memkind_component.kind = MEMKIND_HBW_PREFERRED_HUGETLB;
-            break;
-        case 1073741824:
-            mca_mpool_memkind_component.kind = MEMKIND_HBW_PREFERRED_GBTLB;
-            break;
-        }
-    }
-
-    if(NULL != memkind_names){
-      free (memkind_names);
-      memkind_names = NULL;
-    }
 
     return OPAL_SUCCESS;
 }
@@ -210,13 +130,36 @@ static int mca_mpool_memkind_register(void)
 /**
   * component open/close/init function
   */
-static int mca_mpool_memkind_open(void)
+static int mca_mpool_memkind_open (void)
 {
+    memkind_t default_kind;
+    int rc;
+
     if (opal_mpool_memkind_verbose != 0) {
-        mca_mpool_memkind_component.verbose = opal_output_open(NULL);
+        mca_mpool_memkind_component.output = opal_output_open(NULL);
+    } else {
+        mca_mpool_memkind_component.output = -1;
     }
-    else {
-        mca_mpool_memkind_component.verbose = -1;
+
+    rc = memkind_get_kind_by_partition (mca_mpool_memkind_component.default_partition,
+                                        &default_kind);
+    if (0 != rc) {
+        return OPAL_ERR_NOT_AVAILABLE;
+    }
+
+    if (memkind_check_available (default_kind)) {
+        const char *kind_string;
+
+        mca_mpool_memkind_enum->string_from_value (mca_mpool_memkind_enum,
+                                                   mca_mpool_memkind_component.default_partition,
+                                                   &kind_string);
+        opal_output_verbose (MCA_BASE_VERBOSE_WARN, mca_mpool_memkind_component.output,
+                             "default kind %s not available", kind_string);
+        return OPAL_ERR_NOT_AVAILABLE;
+    }
+
+    for (int i = 0 ; i < MEMKIND_NUM_BASE_KIND ; ++i) {
+        mca_mpool_memkind_module_init (mca_mpool_memkind_component.modules + i, i);
     }
 
     return OPAL_SUCCESS;
@@ -224,33 +167,100 @@ static int mca_mpool_memkind_open(void)
 
 static int mca_mpool_memkind_close(void)
 {
+    opal_output_close (mca_mpool_memkind_component.output);
+    mca_mpool_memkind_component.output = -1;
+
+    if (mca_mpool_memkind_enum) {
+        OBJ_RELEASE(mca_mpool_memkind_enum);
+        mca_mpool_memkind_enum = NULL;
+    }
+
     return OPAL_SUCCESS;
 }
 
-static mca_mpool_base_module_t*
-mca_mpool_memkind_init(struct mca_mpool_base_resources_t* resources)
+static int mca_mpool_memkind_query (const char *hints, int *priority_out,
+                                    mca_mpool_base_module_t **module)
 {
-    mca_mpool_memkind_module_t* mpool_module;
-    mca_mpool_base_module_t* ret_val;
+    int my_priority = mca_mpool_memkind_component.priority;
+    char **hint_array, *partition_name;
+    int partition = -1, rc;
 
-    /*Check if the high bandwidth node is available ?*/
-    if (!memkind_check_available(MEMKIND_HBW)) {
-        opal_output(mca_mpool_memkind_component.verbose,
-                    "mca_mpool_memkind_init: High bandwidth node not available");
-        ret_val = NULL;
-    }
-    else {
-        mpool_module =
-            (mca_mpool_memkind_module_t*)malloc(sizeof(mca_mpool_memkind_module_t));
-        mca_mpool_memkind_module_init(mpool_module);
-
-        mpool_module->alloc_size = resources->size;
-        opal_output(mca_mpool_memkind_component.verbose,
-                    "mca_mpool_memkind_init: allocation size requested: (%ld)",
-                    mpool_module->alloc_size);
-
-        ret_val = &mpool_module->super;
+    if (module) {
+        *module = &mca_mpool_memkind_component.modules[mca_mpool_memkind_component.default_partition].super;
     }
 
-    return ret_val;
+    if (NULL == hints) {
+        if (priority_out) {
+            *priority_out = my_priority;
+        }
+        return OPAL_SUCCESS;
+    }
+
+    hint_array = opal_argv_split (hints, ',');
+    if (NULL == hint_array) {
+        if (priority_out) {
+            *priority_out = my_priority;
+        }
+        return OPAL_SUCCESS;
+    }
+
+    for (int i = 0 ; hint_array[i] ; ++i) {
+        char *tmp, *key, *value;
+
+        key = hint_array[i];
+        tmp = strchr (key, '=');
+        if (tmp) {
+            *tmp = '\0';
+            value = tmp + 1;
+        }
+
+        if (0 == strcasecmp (key, "mpool")) {
+            if (0 == strcasecmp (value, "memkind")) {
+                /* specifically selected */
+
+                my_priority = 100;
+            } else {
+                if (priority_out) {
+                    *priority_out = 0;
+                }
+                return OPAL_SUCCESS;
+            }
+        } else if (0 == strcasecmp (key, "partition")) {
+            rc = mca_mpool_memkind_enum->value_from_string (mca_mpool_memkind_enum,
+                                                            value, &partition);
+            if (OPAL_SUCCESS != rc) {
+                opal_output_verbose (MCA_BASE_VERBOSE_WARN, mca_mpool_memkind_component.output,
+                                     "invalid partition %s specified", value);
+            }
+
+            partition_name = value;
+        }
+    }
+
+    if (-1 != partition) {
+        memkind_t kind;
+
+        my_priority = 0;
+
+        if (!memkind_get_kind_by_partition (partition, &kind)) {
+            if (memkind_check_available (kind)) {
+                opal_output_verbose (MCA_BASE_VERBOSE_WARN, mca_mpool_memkind_component.output,
+                                     "kind %s not available", partition_name);
+            } else {
+                my_priority = 100;
+            }
+        }
+
+        if (module) {
+            *module = &mca_mpool_memkind_component.modules[partition].super;
+        }
+    }
+
+    opal_argv_free (hint_array);
+
+    if (priority_out) {
+        *priority_out = my_priority;
+    }
+
+    return OPAL_SUCCESS;
 }

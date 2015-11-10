@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -11,8 +12,8 @@
  *                         All rights reserved.
  * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2010-2012 Los Alamos National Security, LLC.
- *                         All rights reserved.
+ * Copyright (c) 2010-2015 Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -31,24 +32,16 @@
 #include "opal/mca/mpool/mpool.h"
 
 #include "opal/mca/allocator/allocator.h"
-#include "memkind.h"
+#include <memkind.h>
 
 BEGIN_C_DECLS
 
-struct mca_mpool_base_resources_t {
-    char *pool_name;
-    void *reg_data;
-    size_t size;
-};
 static const int mca_mpool_memkind_default_pagesize = 4096;
-
-
-typedef struct mca_mpool_base_resources_t mca_mpool_base_resources_t;
 
 struct mca_mpool_memkind_module_t {
     mca_mpool_base_module_t super;
-    size_t alloc_size;
-    struct mca_mpool_base_resources_t resources;
+    memkind_t kind;
+    int page_size;
 };
 typedef struct mca_mpool_memkind_module_t mca_mpool_memkind_module_t;
 
@@ -57,10 +50,11 @@ struct mca_mpool_memkind_component_t {
     int  hbw;
     int  pagesize;
     int  bind;
-    memkind_t kind;
-    char *memkind_name;
+    int  default_partition;
+    int  priority;
     char *memkind_file;
-    int  verbose;
+    int  output;
+    mca_mpool_memkind_module_t modules[MEMKIND_NUM_BASE_KIND];
 };
 typedef struct mca_mpool_memkind_component_t mca_mpool_memkind_component_t;
 OPAL_MODULE_DECLSPEC extern mca_mpool_memkind_component_t mca_mpool_memkind_component;
@@ -69,7 +63,7 @@ OPAL_MODULE_DECLSPEC extern mca_mpool_memkind_component_t mca_mpool_memkind_comp
  *  Initializes the mpool module.
 */
 
-void mca_mpool_memkind_module_init(mca_mpool_memkind_module_t *mpool);
+void mca_mpool_memkind_module_init(mca_mpool_memkind_module_t *mpool, int partition);
 
 /**
   *  Allocate block of high bandwidth memory.
@@ -78,8 +72,7 @@ void* mca_mpool_memkind_alloc(
     mca_mpool_base_module_t* mpool,
     size_t size,
     size_t align,
-    uint32_t flags,
-    mca_mpool_base_registration_t** registration);
+    uint32_t flags);
 
 /**
   * realloc function typedef
@@ -87,16 +80,14 @@ void* mca_mpool_memkind_alloc(
 void* mca_mpool_memkind_realloc(
     mca_mpool_base_module_t* mpool,
     void* addr,
-    size_t size,
-    mca_mpool_base_registration_t** registration);
+    size_t size);
 
 /**
   * free function typedef
   */
 void mca_mpool_memkind_free(
     mca_mpool_base_module_t* mpool,
-    void * addr,
-    mca_mpool_base_registration_t* registration);
+    void * addr);
 
 END_C_DECLS
 
