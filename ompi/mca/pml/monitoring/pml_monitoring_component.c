@@ -4,6 +4,8 @@
  *                         reserved.
  * Copyright (c) 2013-2015 Inria.  All rights reserved.
  * Copyright (c) 2015      Bull SAS.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -21,8 +23,8 @@ static int mca_pml_monitoring_enabled = 0;
 static int mca_pml_monitoring_active = 0;
 static int mca_pml_monitoring_current_state = 0;
 static char* mca_pml_monitoring_current_filename = NULL;
-mca_pml_base_component_t pml_selected_component;
-mca_pml_base_module_t pml_selected_module;
+mca_pml_base_component_t pml_selected_component = {{0}};
+mca_pml_base_module_t pml_selected_module = {0};
 
 /* Return the current status of the monitoring system 0 if off, 1 if the
  * seperation between internal tags and external tags is enabled. Any other
