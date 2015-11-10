@@ -5,6 +5,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014      Artem Y. Polyakov <artpol84@gmail.com>.
  *                         All rights reserved.
+ * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -404,10 +405,6 @@ pmix_status_t PMIx_Finalize(void)
     }
 
     pmix_stop_progress_thread(pmix_globals.evbase);
-    event_base_free(pmix_globals.evbase);
-#ifdef HAVE_LIBEVENT_GLOBAL_SHUTDOWN
-    libevent_global_shutdown();
-#endif
 
     pmix_usock_finalize();
     PMIX_DESTRUCT(&pmix_client_globals.myserver);
@@ -416,6 +413,12 @@ pmix_status_t PMIx_Finalize(void)
     if (0 <= pmix_client_globals.myserver.sd) {
         CLOSE_THE_SOCKET(pmix_client_globals.myserver.sd);
     }
+
+    event_base_free(pmix_globals.evbase);
+#ifdef HAVE_LIBEVENT_GLOBAL_SHUTDOWN
+    libevent_global_shutdown();
+#endif
+
     pmix_bfrop_close();
     pmix_sec_finalize();
 
