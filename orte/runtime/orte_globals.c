@@ -469,6 +469,12 @@ char* orte_get_proc_hostname(orte_process_name_t *proc)
     char *hostname;
     int rc;
 
+    /* if we are a tool, then we have no way of obtaining
+     * this info */
+    if (ORTE_PROC_IS_TOOL) {
+        return NULL;
+    }
+
     /* don't bother error logging any not-found situations
      * as the layer above us will have something to say
      * about it */
