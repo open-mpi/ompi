@@ -39,25 +39,7 @@ read_msg(void *start, ptl_size_t length, ptl_process_t target,
          ptl_match_bits_t match_bits, ptl_size_t remote_offset,
          ompi_mtl_portals4_recv_request_t *request)
 {
-    ptl_md_t md;
     int ret;
-
-    /* FIX ME: This needs to be on the send eq... */
-    md.start = start;
-    md.length = length;
-    md.options = 0;
-    md.eq_handle = ompi_mtl_portals4.send_eq_h;
-    md.ct_handle = PTL_CT_NONE;
-
-    ret = PtlMDBind(ompi_mtl_portals4.ni_h,
-                    &md,
-                    &request->md_h);
-    if (OPAL_UNLIKELY(PTL_OK != ret)) {
-        opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
-                            "%s:%d: PtlMDBind failed: %d",
-                            __FILE__, __LINE__, ret);
-        return OMPI_ERR_OUT_OF_RESOURCE;
-    }
 
 #if OMPI_MTL_PORTALS4_FLOW_CONTROL
     while (OPAL_UNLIKELY(OPAL_THREAD_ADD32(&ompi_mtl_portals4.flowctl.send_slots, -1) < 0)) {
@@ -66,9 +48,9 @@ read_msg(void *start, ptl_size_t length, ptl_process_t target,
     }
 #endif
 
-    ret = PtlGet(request->md_h,
-                 0,
-                 md.length,
+    ret = PtlGet(ompi_mtl_portals4.send_md_h,
+                 (ptl_size_t) start,
+                 length,
                  target,
                  ompi_mtl_portals4.read_idx,
                  match_bits,
@@ -78,7 +60,6 @@ read_msg(void *start, ptl_size_t length, ptl_process_t target,
         opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                             "%s:%d: PtlGet failed: %d",
                             __FILE__, __LINE__, ret);
-        PtlMDRelease(request->md_h);
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
@@ -178,7 +159,6 @@ ompi_mtl_portals4_recv_progress(ptl_event_t *ev,
             opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                                 "%s:%d: PTL_EVENT_REPLY with ni_fail_type: %d",
                                 __FILE__, __LINE__, ev->ni_fail_type);
-            PtlMDRelease(ptl_request->md_h);
             goto callback_error;
         }
 
@@ -208,7 +188,6 @@ ompi_mtl_portals4_recv_progress(ptl_event_t *ev,
                                 __FILE__, __LINE__, ret);
             ptl_request->super.super.ompi_req->req_status.MPI_ERROR = ret;
         }
-        PtlMDRelease(ptl_request->md_h);
 
         OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_framework.framework_output,
                              "Recv %lu (0x%lx) completed, reply",
