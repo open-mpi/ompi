@@ -145,10 +145,11 @@ pmix_status_t pmix_start_listening(struct sockaddr_un *address)
             return PMIX_ERR_OUT_OF_RESOURCE;
         }
         /* fork off the listener thread */
+        pmix_server_globals.listen_thread_active = true;
         if (0 > pthread_create(&engine, NULL, listen_thread, NULL)) {
+            pmix_server_globals.listen_thread_active = false;
             return PMIX_ERROR;
         }
-        pmix_server_globals.listen_thread_active = true;
     }
 
     return PMIX_SUCCESS;
