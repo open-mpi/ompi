@@ -20,9 +20,20 @@ BEGIN_C_DECLS
  */
 
 /**
- * Whether an MPI_ABORT should print out a stack trace or not.
+ * Whether an abort should print out a stack trace or not.
  */
-OSHMEM_DECLSPEC extern bool ompi_mpi_abort_print_stack;
+OSHMEM_DECLSPEC extern bool oshmem_shmem_abort_print_stack;
+
+/**
+ * Whether  abort  should  print  out an  identifying  message
+ * (e.g., hostname  and PID)  and loop waiting  for a  debugger to
+ * attach.  The value of the integer is how many seconds to wait:
+ *
+ * 0 = do not print the message and do not loop
+ * negative value = print the message and loop forever
+ * positive value = print the message and delay for that many seconds
+ */
+OSHMEM_DECLSPEC extern int oshmem_shmem_abort_delay;
 
 /**
  * Whether or not the lock routines are recursive
