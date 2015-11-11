@@ -108,7 +108,7 @@ static inline int set_mxm_tls()
     tls = getenv("MXM_TLS");
     if (NULL == tls) {
         opal_setenv("MXM_OSHMEM_TLS", mca_spml_ikrit.mxm_tls, 1, &environ);
-        return OSHMEM_SUCCESS;
+        return check_mxm_tls("MXM_OSHMEM_TLS");
     }
     if (OSHMEM_SUCCESS == check_mxm_tls("MXM_TLS")) {
         opal_setenv("MXM_OSHMEM_TLS", tls, 1, &environ);
@@ -120,12 +120,14 @@ static inline int set_mxm_tls()
 static inline int check_mxm_hw_tls(char *v, char *tls)
 {
     if ((0 == strcmp(tls, "rc") || 0 == strcmp(tls, "dc"))) {
+        mca_spml_ikrit.ud_only = 0;
         return OSHMEM_SUCCESS;
     }
 
     if (strstr(tls, "ud") &&
             (NULL == strstr(tls, "rc") && NULL == strstr(tls, "dc") &&
              NULL == strstr(tls, "shm"))) {
+        mca_spml_ikrit.ud_only = 1;
         return OSHMEM_SUCCESS;
     }
 
@@ -141,6 +143,8 @@ static inline int set_mxm_hw_rdma_tls()
     }
     opal_setenv("MXM_OSHMEM_HW_RDMA_RC_QP_LIMIT", "-1", 0, &environ);
     opal_setenv("MXM_OSHMEM_HW_RDMA_TLS", "rc", 0, &environ);
+    SPML_VERBOSE(5, "Additional communication channel is enabled. Transports are: %s",
+            getenv("MXM_OSHMEM_HW_RDMA_TLS"));
 
     return check_mxm_hw_tls("MXM_OSHMEM_HW_RDMA_TLS", 
             getenv("MXM_OSHMEM_HW_RDMA_TLS"));
@@ -295,6 +299,8 @@ static int mca_spml_ikrit_component_open(void)
     mca_spml_ikrit.ud_only = 1;
     mca_spml_ikrit.mxm_ctx_opts->ptl_bitmap = (MXM_BIT(MXM_PTL_SELF) | MXM_BIT(MXM_PTL_RDMA));
 #endif
+    SPML_VERBOSE(5, "UD only mode is %s",
+                 mca_spml_ikrit.ud_only ? "enabled" : "disabled");
 
     err = mxm_init(mca_spml_ikrit.mxm_ctx_opts, &mca_spml_ikrit.mxm_context);
     if (MXM_OK != err) {
