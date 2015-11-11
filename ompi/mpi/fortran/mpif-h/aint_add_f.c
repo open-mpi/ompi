@@ -13,6 +13,8 @@
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -63,7 +65,7 @@ MPI_Aint mpi_aint_add__(MPI_Aint *base, MPI_Aint *diff) { return ompi_aint_add_f
 
 
 #if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
+#define ompi_aint_add_f pompi_aint_add_f
 #endif
 
 MPI_Aint ompi_aint_add_f(MPI_Aint *base, MPI_Aint *diff)

@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -61,7 +63,11 @@ OMPI_GENERATE_F77_BINDINGS (MPI_GREQUEST_START,
 
 
 #if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
+#define ompi_grequest_start_f pompi_grequest_start_f
+#endif
+
+#if OMPI_ENABLE_MPI_PROFILING
+#define MPI_Grequest_start PMPI_Grequest_start
 #endif
 
 void ompi_grequest_start_f(MPI_F_Grequest_query_function* query_fn,

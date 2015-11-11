@@ -52,7 +52,11 @@ OMPI_GENERATE_F77_BINDINGS (MPI_WIN_CREATE_DYNAMIC,
 
 
 #if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
+#define ompi_win_create_dynamic_f pompi_win_create_dynamic_f
+#endif
+
+#if OMPI_ENABLE_MPI_PROFILING
+#define MPI_Win_create_dynamic PMPI_Win_create_dynamic
 #endif
 
 void ompi_win_create_dynamic_f(MPI_Fint *info, MPI_Fint *comm, MPI_Fint *win,

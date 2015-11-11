@@ -1,5 +1,7 @@
 /*
  * Copyright (c) 2011-2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -53,7 +55,11 @@ OMPI_GENERATE_F77_BINDINGS (MPI_COMM_GET_INFO,
 
 
 #if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
+#define ompi_comm_get_info_f pompi_comm_get_info_f
+#endif
+
+#if OMPI_ENABLE_MPI_PROFILING
+#define MPI_Comm_get_info PMPI_Comm_get_info
 #endif
 
 void ompi_comm_get_info_f(MPI_Fint *comm, MPI_Fint *info_used, MPI_Fint *ierr)

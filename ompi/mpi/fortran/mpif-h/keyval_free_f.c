@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -61,7 +63,11 @@ OMPI_GENERATE_F77_BINDINGS (MPI_KEYVAL_FREE,
 
 
 #if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
+#define ompi_keyval_free_f pompi_keyval_free_f
+#endif
+
+#if OMPI_ENABLE_MPI_PROFILING
+#define MPI_Keyval_free PMPI_Keyval_free
 #endif
 
 void ompi_keyval_free_f(MPI_Fint *keyval, MPI_Fint *ierr)

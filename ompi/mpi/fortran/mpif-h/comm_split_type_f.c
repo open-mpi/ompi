@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2012      Sandia National Laboratories. All rights reserved.
  * Copyright (c) 2012      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -62,7 +64,11 @@ OMPI_GENERATE_F77_BINDINGS (MPI_COMM_SPLIT_TYPE,
 
 
 #if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
+#define ompi_comm_split_type_f pompi_comm_split_type_f
+#endif
+
+#if OMPI_ENABLE_MPI_PROFILING
+#define MPI_Comm_split_type PMPI_Comm_split_type
 #endif
 
 void ompi_comm_split_type_f(MPI_Fint *comm, MPI_Fint *split_type, MPI_Fint *key,

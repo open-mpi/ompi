@@ -30,12 +30,18 @@
 #include "ompi/proc/proc.h"
 #include "ompi/memchecker.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
+#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_BUILD_MPI_PROFILING
 #pragma weak MPI_Sendrecv_replace = PMPI_Sendrecv_replace
 #endif
 
-#if OMPI_PROFILING_DEFINES
-#include "ompi/mpi/c/profile/defines.h"
+#if OMPI_BUILD_MPI_PROFILING
+#define MPI_Sendrecv_replace PMPI_Sendrecv_replace
+#endif
+
+#if OMPI_ENABLE_MPI_PROFILING
+#define MPI_Alloc_mem PMPI_Alloc_mem
+#define MPI_Free_mem PMPI_Free_mem
+#define MPI_Sendrecv PMPI_Sendrecv
 #endif
 
 static const char FUNC_NAME[] = "MPI_Sendrecv_replace";

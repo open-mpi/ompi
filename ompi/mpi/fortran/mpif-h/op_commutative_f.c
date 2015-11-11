@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -61,7 +63,11 @@ OMPI_GENERATE_F77_BINDINGS (MPI_OP_COMMUTATIVE,
 
 
 #if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
+#define ompi_op_commutative_f pompi_op_commutative_f
+#endif
+
+#if OMPI_ENABLE_MPI_PROFILING
+#define MPI_Op_commutative PMPI_Op_commutative
 #endif
 
 void ompi_op_commutative_f(MPI_Fint *op, MPI_Fint *commute, MPI_Fint *ierr)

@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -62,7 +64,11 @@ OMPI_GENERATE_F77_BINDINGS (MPI_SENDRECV_REPLACE,
 
 
 #if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
+#define ompi_sendrecv_replace_f pompi_sendrecv_replace_f
+#endif
+
+#if OMPI_ENABLE_MPI_PROFILING
+#define MPI_Sendrecv_replace PMPI_Sendrecv_replace
 #endif
 
 void ompi_sendrecv_replace_f(char *buf, MPI_Fint *count, MPI_Fint *datatype,

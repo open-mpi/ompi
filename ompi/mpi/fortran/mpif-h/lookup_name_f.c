@@ -64,7 +64,11 @@ OMPI_GENERATE_F77_BINDINGS (MPI_LOOKUP_NAME,
 
 
 #if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
+#define ompi_lookup_name_f pompi_lookup_name_f
+#endif
+
+#if OMPI_ENABLE_MPI_PROFILING
+#define MPI_Lookup_name PMPI_Lookup_name
 #endif
 
 void ompi_lookup_name_f(char *service_name, MPI_Fint *info,

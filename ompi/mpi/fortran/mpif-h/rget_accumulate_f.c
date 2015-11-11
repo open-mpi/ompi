@@ -14,6 +14,8 @@
  * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2015      FUJITSU LIMITED.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -67,7 +69,11 @@ OMPI_GENERATE_F77_BINDINGS (MPI_RGET_ACCUMULATE,
 
 
 #if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
+#define ompi_rget_accumulate_f pompi_rget_accumulate_f
+#endif
+
+#if OMPI_ENABLE_MPI_PROFILING
+#define MPI_Rget_accumulate PMPI_Rget_accumulate
 #endif
 
 void ompi_rget_accumulate_f(char *origin_addr, MPI_Fint *origin_count,

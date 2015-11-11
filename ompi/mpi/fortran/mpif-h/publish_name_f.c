@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -62,7 +64,11 @@ OMPI_GENERATE_F77_BINDINGS (MPI_PUBLISH_NAME,
 
 
 #if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
+#define ompi_publish_name_f pompi_publish_name_f
+#endif
+
+#if OMPI_ENABLE_MPI_PROFILING
+#define MPI_Publish_name PMPI_Publish_name
 #endif
 
 void ompi_publish_name_f(char *service_name, MPI_Fint *info,

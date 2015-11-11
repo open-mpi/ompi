@@ -7,6 +7,8 @@
  * Copyright (c) 2011-2013 Université Bordeaux 1
  * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -58,7 +60,11 @@ OMPI_GENERATE_F77_BINDINGS (MPI_DIST_GRAPH_CREATE,
 #endif
 
 #if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
+#define ompi_dist_graph_create_f pompi_dist_graph_create_f
+#endif
+
+#if OMPI_ENABLE_MPI_PROFILING
+#define MPI_Dist_graph_create PMPI_Dist_graph_create
 #endif
 
 void ompi_dist_graph_create_f(MPI_Fint *comm_old, MPI_Fint *n, MPI_Fint *sources,

@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -65,7 +67,11 @@ OMPI_GENERATE_F77_BINDINGS (MPI_RECV,
 
 
 #if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
+#define ompi_recv_f pompi_recv_f
+#endif
+
+#if OMPI_ENABLE_MPI_PROFILING
+#define MPI_Recv PMPI_Recv
 #endif
 
 void ompi_recv_f(char *buf, MPI_Fint *count, MPI_Fint *datatype,

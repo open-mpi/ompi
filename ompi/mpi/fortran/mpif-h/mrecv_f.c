@@ -9,9 +9,11 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2012      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2015      FUJITSU LIMITED.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -68,7 +70,11 @@ OMPI_GENERATE_F77_BINDINGS (MPI_MRECV,
 
 
 #if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
+#define ompi_mrecv_f pompi_mrecv_f
+#endif
+
+#if OMPI_ENABLE_MPI_PROFILING
+#define MPI_Mrecv PMPI_Mrecv
 #endif
 
 void ompi_mrecv_f(char *buf, MPI_Fint *count, MPI_Fint *datatype,
