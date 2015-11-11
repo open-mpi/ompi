@@ -22,6 +22,7 @@
 
 #include "oshmem_config.h"
 #include "opal/datatype/opal_convertor.h"
+#include "opal/mca/memchecker/base/base.h"
 #include "orte/include/orte/types.h"
 #include "orte/runtime/orte_globals.h"
 #include "oshmem/mca/spml/ikrit/spml_ikrit.h"
@@ -118,6 +119,7 @@ static int mca_spml_ikrit_put_request_free(struct oshmem_request_t** request)
     put_req->req_put.req_base.req_free_called = true;
     opal_free_list_return (&mca_spml_base_put_requests,
                            (opal_free_list_item_t*)put_req);
+    opal_memchecker_base_mem_noaccess(put_req, sizeof(*put_req));
     OPAL_THREAD_UNLOCK(&oshmem_request_lock);
 
     *request = SHMEM_REQUEST_NULL; /*MPI_REQUEST_NULL;*/
@@ -166,6 +168,7 @@ static int mca_spml_ikrit_get_request_free(struct oshmem_request_t** request)
     get_req->req_get.req_base.req_free_called = true;
     opal_free_list_return (&mca_spml_base_get_requests,
                            (opal_free_list_item_t*)get_req);
+    opal_memchecker_base_mem_noaccess(get_req, sizeof(*get_req));
     OPAL_THREAD_UNLOCK(&oshmem_request_lock);
 
     *request = SHMEM_REQUEST_NULL; /*MPI_REQUEST_NULL;*/
@@ -259,6 +262,10 @@ static inline mca_spml_ikrit_put_request_t *alloc_put_req(void)
     item = opal_free_list_wait (&mca_spml_base_put_requests);
 
     req = (mca_spml_ikrit_put_request_t *) item;
+    opal_memchecker_base_mem_undefined(req, sizeof(*req));
+    opal_memchecker_base_mem_defined(&req->req_put.req_base,
+                                     sizeof(req->req_put.req_base));
+
     req->req_put.req_base.req_free_called = false;
     req->req_put.req_base.req_oshmem.req_complete = false;
 
@@ -273,6 +280,10 @@ static inline mca_spml_ikrit_get_request_t *alloc_get_req(void)
     item = opal_free_list_wait (&mca_spml_base_get_requests);
 
     req = (mca_spml_ikrit_get_request_t *) item;
+    opal_memchecker_base_mem_undefined(req, sizeof(*req));
+    opal_memchecker_base_mem_defined(&req->req_get.req_base,
+                                     sizeof(req->req_get.req_base));
+
     req->req_get.req_base.req_free_called = false;
     req->req_get.req_base.req_oshmem.req_complete = false;
 
