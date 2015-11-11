@@ -71,11 +71,11 @@ int oshmem_shmem_abort(int errcode)
 
     /* Should we print a stack trace?  Not aggregated because they
      might be different on all processes. */
-    if (ompi_mpi_abort_print_stack) {
+    if (oshmem_shmem_abort_print_stack) {
         char **messages;
         int len, i;
 
-        if (OSHMEM_SUCCESS == opal_backtrace_buffer(&messages, &len)) {
+        if (OPAL_SUCCESS == opal_backtrace_buffer(&messages, &len)) {
             for (i = 0; i < len; ++i) {
                 fprintf(stderr,
                         "[%s:%d] [%d] func:%s\n",
@@ -91,6 +91,24 @@ int oshmem_shmem_abort(int errcode)
              backtrace, so we don't need an additional "else" clause
              if opal_backtrace_print() is not supported. */
             opal_backtrace_print(stderr, NULL, 1);
+        }
+    }
+
+    /* Should we wait for a while before aborting? */
+    if (0 != oshmem_shmem_abort_delay) {
+        if (oshmem_shmem_abort_delay < 0) {
+            fprintf(stderr ,"[%s:%d] Looping forever (MCA parameter mpi_abort_delay is < 0)\n",
+                    host, (int) pid);
+            fflush(stderr);
+            while (1) {
+                sleep(5);
+            }
+        } else {
+            fprintf(stderr, "[%s:%d] Delaying for %d seconds before aborting\n",
+                    host, (int) pid, oshmem_shmem_abort_delay);
+            do {
+                sleep(1);
+            } while (--oshmem_shmem_abort_delay > 0);
         }
     }
 
