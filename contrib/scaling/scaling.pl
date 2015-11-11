@@ -14,14 +14,16 @@ my $reps = 1;
 my $usedvm = 0;
 my $usesrun = 0;
 my $usempirun = 0;
+my $useaprun = 0;
 my $runall = 0;
 
 my @tests = qw(/bin/true ./orte_no_op ./mpi_no_op ./mpi_no_op);
 my @options = ("", "", "", "-mca mpi_add_procs_cutoff 0 -mca pmix_base_async_modex 1");
-my @starters = qw(mpirun orte-submit srun orterun);
+my @starters = qw(mpirun orte-submit srun aprun orterun);
 my @starteroptions = ("-npernode 1 --novm",
                       "--hnp file:dvm_uri -pernode",
                       "--distribution=cyclic",
+                      "-N 1"
                       "-npernode 1 --novm");
 
 # Set to true if the script should merely print the cmds
@@ -39,6 +41,7 @@ GetOptions(
     "reps=s" => \$reps,
     "dvm" => \$usedvm,
     "srun" => \$usesrun,
+    "aprun" => \$useaprun,
     "mpirun" => \$usempirun,
     "all" => \$runall,
 ) or die "unable to parse options, stopped";
@@ -53,7 +56,8 @@ $0 [options]
 --reps               Number of times to run each test (for statistics)
 --mpirun             Use only mpirun (or its equivalent orterun)
 --dvm                Use only orte-dvm to execute the test
---srun               Use only srun to execute the test
+--srun               Use only srun (if available) to execute the test
+--arpun              Use only aprun (if available) to execute the test
 --all                Use all available start commands [default]
 EOT
     exit(0);
@@ -99,6 +103,12 @@ while ($idx <= $#starters) {
         # adjust the index
         $idx = $idx - 1;
     } elsif ($usesrun && $starter ne "srun") {
+        # remove this one from the list
+        splice @starters, $idx, 1;
+        splice @starteroptions, $idx, 1;
+        # adjust the index
+        $idx = $idx - 1;
+    } elsif ($useaprun && $starter ne "aprun") {
         # remove this one from the list
         splice @starters, $idx, 1;
         splice @starteroptions, $idx, 1;
@@ -184,7 +194,7 @@ foreach $starter (@starters) {
             }
             $n = 1;
             while ($n <= $num_nodes) {
-                $cmd = "time " . $starter . " " . $starteroptions[$index] . " -np $n $option $test 2>&1";
+                $cmd = "time " . $starter . " " . $starteroptions[$index] . " -n $n $option $test 2>&1";
                 print $cmd . "\n";
                 if (!$SHOWME) {
                     for (1..$reps) {
@@ -220,7 +230,7 @@ foreach $starter (@starters) {
                 }
                 $n = 2 * $n;
             }
-            if ($n < $num_nodes) {
+            if ($n > $num_nodes) {
                 $cmd = "time " . $starter . " " . $starteroptions[$index] . " $option $test 2>&1";
                 print $cmd . "\n";
                 if (!$SHOWME) {
