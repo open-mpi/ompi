@@ -101,12 +101,17 @@ OMPI_DECLSPEC extern int mca_io_ompio_coll_timing_info;
 #define OMPIO_MERGE                     1
 #define OMPIO_SPLIT                     2
 #define OMPIO_RETAIN                    3
+
 #define DATA_VOLUME                     1
 #define UNIFORM_DISTRIBUTION            2
-#define OMPIO_UNIFORM_DIST_THRESHOLD  0.5
 #define CONTIGUITY                      3
-#define OMPIO_CONTG_THRESHOLD     1048576
 #define OPTIMIZE_GROUPING               4
+#define SIMPLE                          5
+#define NO_REFINEMENT                   6
+
+
+#define OMPIO_UNIFORM_DIST_THRESHOLD  0.5
+#define OMPIO_CONTG_THRESHOLD     1048576
 #define OMPIO_PROCS_PER_GROUP_TAG       0
 #define OMPIO_PROCS_IN_GROUP_TAG        1
 #define OMPIO_MERGE_THRESHOLD         0.5
