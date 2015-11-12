@@ -1031,13 +1031,29 @@ int ompi_io_ompio_set_aggregator_props (struct mca_io_ompio_file_t *fh,
     fh->f_flags |= OMPIO_AGGREGATOR_IS_SET;
 
     if (-1 == num_aggregators) {
-        mca_io_ompio_create_groups(fh,bytes_per_proc);
+        if ( SIMPLE == mca_io_ompio_grouping_option ||
+            NO_REFINEMENT == mca_io_ompio_grouping_option ) {
+            fh->f_aggregator_index = 0;
+            fh->f_final_num_aggrs  = fh->f_init_num_aggrs;
+            fh->f_procs_per_group  = fh->f_init_procs_per_group;
+
+            fh->f_procs_in_group = (int*)malloc (fh->f_procs_per_group * sizeof(int));
+            if (NULL == fh->f_procs_in_group) {
+                opal_output (1, "OUT OF MEMORY\n");
+                return OMPI_ERR_OUT_OF_RESOURCE;
+            }
+
+            for (j=0 ; j<fh->f_procs_per_group ; j++) {
+                fh->f_procs_in_group[j] = fh->f_init_procs_in_group[j];
+            }
+        }
+        else {
+            mca_io_ompio_create_groups(fh,bytes_per_proc);
+        }
         return OMPI_SUCCESS;
     }
 
    //Forced number of aggregators
-   else
-   {
     /* calculate the offset at which each group of processes will start */
     procs_per_group = ceil ((float)fh->f_size/num_aggregators);
 
@@ -1063,7 +1079,6 @@ int ompi_io_ompio_set_aggregator_props (struct mca_io_ompio_file_t *fh,
     fh->f_final_num_aggrs  = num_aggregators;
 
     return OMPI_SUCCESS;
-   }
  }
 
 
