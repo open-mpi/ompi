@@ -33,4 +33,22 @@ extern char *opal_set_max_sys_limits;
 extern bool opal_progress_debug;
 #endif
 
+/**
+ * Whether an abort operation should print out a stack trace or not.
+ */
+OPAL_DECLSPEC extern bool opal_abort_print_stack;
+OPAL_DECLSPEC extern int opal_abort_print_stack_var_index;
+
+/**
+ * Whether  abort operation  should  print  out an  identifying  message
+ * (e.g., hostname  and PID)  and loop waiting  for a  debugger to
+ * attach.  The value of the integer is how many seconds to wait:
+ *
+ * 0 = do not print the message and do not loop
+ * negative value = print the message and loop forever
+ * positive value = print the message and delay for that many seconds
+ */
+OPAL_DECLSPEC extern int opal_abort_delay;
+OPAL_DECLSPEC extern int opal_abort_delay_var_index;
+
 #endif

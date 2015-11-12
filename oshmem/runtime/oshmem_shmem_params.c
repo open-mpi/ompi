@@ -8,8 +8,12 @@
  * $HEADER$
  */
 
-#include "params.h"
-#include "runtime.h"
+#include "oshmem_config.h"
+
+#include "opal/runtime/opal_params.h"
+
+#include "oshmem/runtime/params.h"
+#include "oshmem/runtime/runtime.h"
 #include "oshmem/constants.h"
 
 
@@ -62,6 +66,14 @@ int oshmem_shmem_register_params(void)
                                  OPAL_INFO_LVL_9,
                                  MCA_BASE_VAR_SCOPE_READONLY,
                                  &oshmem_preconnect_all);
+
+    (void) mca_base_var_register_synonym(opal_abort_delay_var_index, "oshmem", "oshmem", NULL,
+                                         "abort_delay",
+                                         MCA_BASE_VAR_SYN_FLAG_DEPRECATED);
+
+    (void) mca_base_var_register_synonym(opal_abort_print_stack_var_index, "oshmem", "oshmem", NULL,
+                                         "abort_print_stack",
+                                         MCA_BASE_VAR_SYN_FLAG_DEPRECATED);
 
     return OSHMEM_SUCCESS;
 }
