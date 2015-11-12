@@ -18,6 +18,7 @@ my $useaprun = 0;
 my $useaprun = 0;
 my $myapp;
 my $runall = 0;
+my $rawoutput = 0;
 my $myresults;
 my @csvrow;
 
@@ -50,6 +51,7 @@ GetOptions(
     "myapp=s" => \$myapp,
     "all" => \$runall,
     "results=s" => \$myresults,
+    "rawout" => \$rawoutput,
 ) or die "unable to parse options, stopped";
 
 if ($HELP) {
@@ -67,6 +69,7 @@ $0 [options]
 --myapp=s            In addition to the standard tests, run this specific application (including any args)
 --all                Use all available start commands [default]
 --results=file       File where results are to stored in comma-separated value format
+--rawout             Provide raw timing output to the file
 EOT
     exit(0);
 }
@@ -168,26 +171,6 @@ if ($myresults) {
     open FILE, ">$myresults" || die "file could not be opened";
 }
 
-# if we are going to use the dvm, then we
-# need to start it
-if (-e "dvm_uri") {
-    system("rm -f dvm_uri");
-}
-foreach $starter (@starters) {
-    if ($starter eq "orte-submit") {
-        $cmd = "orte-dvm --report-uri dvm_uri 2>&1 &";
-        print $cmd . "\n";
-        if (!$SHOWME) {
-            system($cmd);
-            # wait for the rendezvous file to appear
-            while (! -e "dvm_uri") {
-                sleep(1);
-            }
-            $havedvm = 1;
-        }
-    }
-}
-
 # determine the number of nodes - doesn't
 # matter which starter we use
 $cmd = $starters[0] . " " . $starteroptions[0] . " hostname";
@@ -226,7 +209,106 @@ if ($myresults) {
 }
 
 my $index = 0;
+
+sub runcmd()
+{
+    for (1..$reps) {
+        $output = `$cmd`;
+        if ($myresults && $rawoutput) {
+            print FILE $n . " " . $output . "\n";
+        }
+        @lines = split(/\n/, $output);
+        foreach $line (@lines) {
+            if (0 <= index($line, "real") ||
+                0 <= index($line, "elapsed")) {
+                # we know that at least one item of interest is
+                # in this line, so let's look for it - start
+                # by getting rid of any leading whitespace
+                $line =~ s/^\s+//;
+                @results = split (/ +/,$line);
+                $idx = 0;
+                foreach $res (@results) {
+                    # we are only interested in the real or elapsed time
+                    my $strloc = index($res, "real");
+                    if (0 <= $strloc) {
+                        # some systems put the number in front of
+                        # this word, and some append the word to
+                        # the number - consider both cases
+                        if (0 == $strloc) {
+                            if (0 == $idx) {
+                                # it must be in the next location
+                                push @csvrow,$results[1];
+                            } else {
+                                # it must be in the prior location
+                                push @csvrow,$results[$idx-1];
+                            }
+                        } else {
+                            # take the portion of the string up to the tag
+                            push @csvrow,substr($res, 0, $strloc);
+                        }
+                    } else {
+                        $strloc = index($res, "elapsed");
+                        if (0 <= $strloc) {
+                            # some systems put the number in front of
+                            # this word, and some append the word to
+                            # the number - consider both cases
+                            if (0 == $strloc) {
+                                if (0 == $idx) {
+                                    # it must be in the next location
+                                    push @csvrow,$results[1];
+                                } else {
+                                    # it must be in the prior location
+                                    push @csvrow,$results[$idx-1];
+                                }
+                            } else {
+                                # take the portion of the string up to the tag
+                                push @csvrow,substr($res, 0, $strloc);
+                            }
+                        }
+                    }
+                    $idx = $idx + 1;
+                }
+            }
+        }
+    }
+    # we have now completed all the reps, so log the results
+    if ($myresults) {
+        my $myout;
+        my $mycnt=0;
+        while ($mycnt <= $#csvrow) {
+            if (0 == $mycnt) {
+                $myout = $csvrow[$mycnt];
+            } else {
+                $myout = $myout . "," . $csvrow[$mycnt];
+            }
+            $mycnt = $mycnt + 1;
+        }
+        print FILE "$myout\n";
+        # clear the output
+        @csvrow = ();
+    }
+    print "\n";
+}
+
 foreach $starter (@starters) {
+    # if we are going to use the dvm, then we
+    if ($starter eq "orte-submit") {
+        # need to start it
+        if (-e "dvm_uri") {
+            system("rm -f dvm_uri");
+        }
+        $cmd = "orte-dvm --report-uri dvm_uri 2>&1 &";
+        print $cmd . "\n";
+        if (!$SHOWME) {
+            system($cmd);
+            # wait for the rendezvous file to appear
+            while (! -e "dvm_uri") {
+                sleep(1);
+            }
+            $havedvm = 1;
+        }
+    }
+
     if ($myresults) {
         print FILE "\n\n$starter\n\n";
     }
@@ -248,136 +330,15 @@ foreach $starter (@starters) {
                 $cmd = "time " . $starter . " " . $starteroptions[$index] . " -n $n $option $test 2>&1";
                 print $cmd . "\n";
                 if (!$SHOWME) {
-                    for (1..$reps) {
-                        $output = `$cmd`;
-                        # print $output . "\n";
-                        @lines = split(/\n/, $output);
-                        foreach $line (@lines) {
-                            if (0 <= index($line, "real") ||
-                                0 <= index($line, "elapsed")) {
-                                # we know that at least one item of interest is
-                                # in this line, so let's look for it - start
-                                # by getting rid of any leading whitespace
-                                $line =~ s/^\s+//;
-                                @results = split (/ +/,$line);
-                                $idx = 0;
-                                foreach $res (@results) {
-                                    # we are only interested in the real or elapsed time
-                                    my $strloc = index($res, "real");
-                                    if (0 <= $strloc) {
-                                        # some systems put the number in front of
-                                        # this word, and some append the word to
-                                        # the number - consider both cases
-                                        if (0 == $strloc) {
-                                            # it must be in the prior location
-                                            push @csvrow,$results[$idx-1];
-                                        } else {
-                                            # take the portion of the string up to the tag
-                                            push @csvrow,substr($res, 0, $strloc);
-                                        }
-                                    } else {
-                                        $strloc = index($res, "elapsed");
-                                        if (0 <= $strloc) {
-                                            # some systems put the number in front of
-                                            # this word, and some append the word to
-                                            # the number - consider both cases
-                                            if (0 == $strloc) {
-                                                # it must be in the prior location
-                                                push @csvrow,$results[$idx-1];
-                                            } else {
-                                                # take the portion of the string up to the tag
-                                                push @csvrow,substr($res, 0, $strloc);
-                                            }
-                                        }
-                                    }
-                                    $idx = $idx + 1;
-                                }
-                            }
-                        }
-                    }
-                    # we have now completed all the reps, so log the results
-                    if ($myresults) {
-                        my $myout;
-                        my $mycnt=1;
-                        $myout = $csvrow[0];
-                        while ($mycnt < $#csvrow) {
-                            $myout = $myout . "," . $csvrow[$mycnt];
-                            $mycnt = $mycnt + 1;
-                        }
-                        print FILE "$myout\n";
-                        # clear the array
-                        @csvrow = ();
-                    }
-                    print "\n";
+                    runcmd();
                 }
                 $n = 2 * $n;
             }
-            if ($n > $num_nodes) {
+            if (0 != $num_nodes & $n) {
                 $cmd = "time " . $starter . " " . $starteroptions[$index] . " $option $test 2>&1";
                 print $cmd . "\n";
                 if (!$SHOWME) {
-                    push @csvrow,$num_nodes;
-                    for (1..$reps) {
-                        $output = `$cmd`;
-                        # print $output . "\n";
-                        @lines = split(/\n/, $output);
-                        foreach $line (@lines) {
-                            if (0 <= index($line, "real") ||
-                                0 <= index($line, "elapsed")) {
-                                # we know that at least one item of interest is
-                                # in this line, so let's look for it - start
-                                # by getting rid of any leading whitespace
-                                $line =~ s/^\s+//;
-                                @results = split (/ +/,$line);
-                                $idx = 0;
-                                foreach $res (@results) {
-                                    # we are only interested in the real or elapsed time
-                                    my $strloc = index($res, "real");
-                                    if (0 <= $strloc) {
-                                        # some systems put the number in front of
-                                        # this word, and some append the word to
-                                        # the number - consider both cases
-                                        if (0 == $strloc) {
-                                            # it must be in the prior location
-                                            push @csvrow,$results[$idx-1];
-                                        } else {
-                                            # take the portion of the string up to the tag
-                                            push @csvrow,substr($res, 0, $strloc);
-                                        }
-                                    } else {
-                                        $strloc = index($res, "elapsed");
-                                        if (0 <= $strloc) {
-                                            # some systems put the number in front of
-                                            # this word, and some append the word to
-                                            # the number - consider both cases
-                                            if (0 == $strloc) {
-                                                # it must be in the prior location
-                                                push @csvrow,$results[$idx-1];
-                                            } else {
-                                                # take the portion of the string up to the tag
-                                                push @csvrow,substr($res, 0, $strloc);
-                                            }
-                                        }
-                                    }
-                                    $idx = $idx + 1;
-                                }
-                            }
-                        }
-                    }
-                    # we have now completed all the reps, so log the results
-                    if ($myresults) {
-                        my $myout;
-                        my $mycnt=1;
-                        $myout = $csvrow[0];
-                        while ($mycnt <= $#csvrow) {
-                            $myout = $myout . "," . $csvrow[$mycnt];
-                            $mycnt = $mycnt + 1;
-                        }
-                        print FILE "$myout\n";
-                        # clear the output
-                        @csvrow = ();
-                    }
-                    print "\n";
+                    runcmd();
                 }
             }
             print "\n--------------------------------------------------\n";
@@ -387,15 +348,19 @@ foreach $starter (@starters) {
         }
         $testnum = $testnum + 1;
     }
+    if ($havedvm) {
+        if (!$SHOWME) {
+            $cmd = "orte-submit --hnp file:dvm_uri --terminate";
+            system($cmd);
+        }
+        if (-e "dvm_uri") {
+            system("rm -f dvm_uri");
+        }
+    }
     $index = $index + 1;
 }
 
-if ($havedvm) {
-    if (!$SHOWME) {
-        $cmd = "orte-submit --hnp file:dvm_uri --terminate";
-        system($cmd);
-    }
-    if (-e "dvm_uri") {
-        system("rm -f dvm_uri");
-    }
+if ($myresults) {
+    close(FILE);
 }
+
