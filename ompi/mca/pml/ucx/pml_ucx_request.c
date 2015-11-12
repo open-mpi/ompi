@@ -61,19 +61,19 @@ void mca_pml_ucx_recv_completion(void *request, ucs_status_t status,
     OPAL_THREAD_UNLOCK(&ompi_request_lock);
 }
 
-static void mca_pml_ucx_persistent_requset_detach(mca_pml_ucx_persistent_request_t *preq,
+static void mca_pml_ucx_persistent_request_detach(mca_pml_ucx_persistent_request_t *preq,
                                                   ompi_request_t *tmp_req)
 {
     tmp_req->req_complete_cb_data = NULL;
     preq->tmp_req                 = NULL;
 }
 
-void mca_pml_ucx_persistent_requset_complete(mca_pml_ucx_persistent_request_t *preq,
+void mca_pml_ucx_persistent_request_complete(mca_pml_ucx_persistent_request_t *preq,
                                              ompi_request_t *tmp_req)
 {
     preq->ompi.req_status = tmp_req->req_status;
     ompi_request_complete(&preq->ompi, true);
-    mca_pml_ucx_persistent_requset_detach(preq, tmp_req);
+    mca_pml_ucx_persistent_request_detach(preq, tmp_req);
     mca_pml_ucx_request_reset(tmp_req);
     ucp_request_release(tmp_req);
 }
@@ -87,7 +87,7 @@ static inline void mca_pml_ucx_preq_completion(ompi_request_t *tmp_req)
     preq = (mca_pml_ucx_persistent_request_t*)tmp_req->req_complete_cb_data;
     if (preq != NULL) {
         PML_UCX_ASSERT(preq->tmp_req != NULL);
-        mca_pml_ucx_persistent_requset_complete(preq, tmp_req);
+        mca_pml_ucx_persistent_request_complete(preq, tmp_req);
     }
     OPAL_THREAD_UNLOCK(&ompi_request_lock);
 }
@@ -153,7 +153,7 @@ static int mca_pml_ucx_persistent_request_free(ompi_request_t **rptr)
 
     preq->ompi.req_state = OMPI_REQUEST_INVALID;
     if (tmp_req != NULL) {
-        mca_pml_ucx_persistent_requset_detach(preq, tmp_req);
+        mca_pml_ucx_persistent_request_detach(preq, tmp_req);
         ucp_request_release(tmp_req);
     }
     PML_UCX_FREELIST_RETURN(&ompi_pml_ucx.persistent_reqs, &preq->ompi.super);
