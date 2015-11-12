@@ -110,11 +110,13 @@ OMPI_DECLSPEC extern int mca_io_ompio_coll_timing_info;
 #define NO_REFINEMENT                   6
 
 
-#define OMPIO_UNIFORM_DIST_THRESHOLD  0.5
-#define OMPIO_CONTG_THRESHOLD     1048576
-#define OMPIO_PROCS_PER_GROUP_TAG       0
-#define OMPIO_PROCS_IN_GROUP_TAG        1
-#define OMPIO_MERGE_THRESHOLD         0.5
+#define OMPIO_UNIFORM_DIST_THRESHOLD     0.5
+#define OMPIO_CONTG_THRESHOLD        1048576
+#define OMPIO_CONTG_FACTOR                 4
+#define OMPIO_DEFAULT_STRIPE_SIZE    1048576
+#define OMPIO_PROCS_PER_GROUP_TAG          0
+#define OMPIO_PROCS_IN_GROUP_TAG           1
+#define OMPIO_MERGE_THRESHOLD            0.5
 
 /*---------------------------*/
 
@@ -548,6 +550,9 @@ int mca_io_ompio_cart_based_grouping(mca_io_ompio_file_t *ompio_fh);
 int mca_io_ompio_fview_based_grouping(mca_io_ompio_file_t *fh,
 		                                    int *num_groups,
 						    contg *contg_groups);
+int mca_io_ompio_simple_grouping(mca_io_ompio_file_t *fh,
+                                 int *num_groups,
+                                 contg *contg_groups);
 
 int mca_io_ompio_finalize_initial_grouping(mca_io_ompio_file_t *fh,
                                            int num_groups,

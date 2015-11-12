@@ -148,13 +148,25 @@ int mca_io_ompio_set_view_internal(mca_io_ompio_file_t *fh,
        }
     }
 
-    if( OMPI_SUCCESS != mca_io_ompio_fview_based_grouping(fh,
+    if ( SIMPLE != mca_io_ompio_grouping_option ) {
+        if( OMPI_SUCCESS != mca_io_ompio_fview_based_grouping(fh,
                                                           &num_groups,
                                                           contg_groups)){
-       opal_output(1, "mca_io_ompio_fview_based_grouping() failed\n");
-       free(contg_groups);
-       return OMPI_ERROR;
+            opal_output(1, "mca_io_ompio_fview_based_grouping() failed\n");
+            free(contg_groups);
+            return OMPI_ERROR;
+        }
     }
+    else {
+        if( OMPI_SUCCESS != mca_io_ompio_simple_grouping(fh,
+                                                         &num_groups,
+                                                         contg_groups)){
+            opal_output(1, "mca_io_ompio_simple_grouping() failed\n");
+            free(contg_groups);
+            return OMPI_ERROR;
+        }
+    }
+    
     
     mca_io_ompio_finalize_initial_grouping(fh,
                                            num_groups,
@@ -297,6 +309,49 @@ OMPI_MPI_OFFSET_TYPE get_contiguous_chunk_size (mca_io_ompio_file_t *fh)
     }
 #endif
     return global_avg[0];
+}
+
+int mca_io_ompio_simple_grouping(mca_io_ompio_file_t *fh,
+                                 int *num_groups,
+                                 contg *contg_groups)
+{
+    size_t stripe_size = (size_t) fh->f_stripe_size;
+    int group_size  = 0;
+    int k=0, p=0, g=0;
+    int total_procs = 0; 
+
+    if ( 0 < fh->f_stripe_size ) {
+        stripe_size = OMPIO_DEFAULT_STRIPE_SIZE;
+    }
+
+    if ( stripe_size > fh->f_cc_size ) {
+        group_size  = (((int)stripe_size/(int)fh->f_cc_size) > fh->f_size ) ? fh->f_size : ((int)stripe_size/(int)fh->f_cc_size);
+        *num_groups = fh->f_size / group_size;
+    }
+    else if ( fh->f_cc_size < OMPIO_CONTG_FACTOR * stripe_size) {
+        *num_groups = fh->f_size / OMPIO_CONTG_FACTOR;
+        group_size  = OMPIO_CONTG_FACTOR;
+    } 
+    else {
+        *num_groups = fh->f_size;
+        group_size  = 1;
+    }
+
+    for ( k=0, p=0; p<*num_groups; p++ ) {
+        if ( p == (*num_groups - 1) ) {
+            contg_groups[p].procs_per_contg_group = fh->f_size - total_procs;
+        }
+        else {
+            contg_groups[p].procs_per_contg_group = group_size;
+            total_procs +=group_size;
+        }
+        for ( g=0; g<contg_groups[p].procs_per_contg_group; g++ ) {
+            contg_groups[p].procs_in_contg_group[g] = k;
+            k++;
+        }
+    }
+    
+    return OMPI_SUCCESS;
 }
 
 int mca_io_ompio_fview_based_grouping(mca_io_ompio_file_t *fh,
