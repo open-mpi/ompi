@@ -311,6 +311,11 @@ static int create_dmns(orte_grpcomm_signature_t *sig,
             return ORTE_ERR_NOT_FOUND;
         }
         /* get the array */
+        if (0 == jdata->map->num_nodes) {
+            ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
+            ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
+            return ORTE_ERR_SILENT;
+        }
         dns = (orte_vpid_t*)malloc(jdata->map->num_nodes * sizeof(vpid));
         nds = 0;
         for (i=0; i < jdata->map->nodes->size && (int)nds < jdata->map->num_nodes; i++) {
