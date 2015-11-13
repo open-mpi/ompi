@@ -73,9 +73,7 @@ static inline int ompi_osc_rdma_frag_alloc (ompi_osc_rdma_module_t *module, size
             module->rdma_frag = NULL;
 
             if (curr) {
-                OPAL_THREAD_UNLOCK(&module->lock);
                 ompi_osc_rdma_frag_complete (curr);
-                OPAL_THREAD_LOCK(&module->lock);
             }
 
             item = opal_free_list_get (&mca_osc_rdma_component.frags);
