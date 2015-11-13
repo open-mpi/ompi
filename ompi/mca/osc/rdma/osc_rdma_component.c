@@ -998,7 +998,7 @@ static int ompi_osc_rdma_component_select (struct ompi_win_t *win, void **base, 
     }
 
     /* initialize the objects, so that always free in cleanup */
-    OBJ_CONSTRUCT(&module->lock, opal_mutex_t);
+    OBJ_CONSTRUCT(&module->lock, opal_recursive_mutex_t);
     OBJ_CONSTRUCT(&module->outstanding_locks, opal_hash_table_t);
     OBJ_CONSTRUCT(&module->pending_posts, opal_list_t);
     OBJ_CONSTRUCT(&module->peer_lock, opal_mutex_t);
