@@ -1,0 +1,35 @@
+Copyright (c) 2015      Intel, Inc. All rights reserved.
+$COPYRIGHT$
+
+Additional copyrights may follow
+
+$HEADER$
+
+===========================================================================
+
+Running the Launch-Scaling Test Script
+
+This script will execute a series of very fast tests to measure
+relative timing behavior, including the time required to simply
+launch an application, and the time required to launch and wireup
+an MPI job. The latter will be tested both using the traditional full
+synchronous modex, and using the new "instant on" methodology.
+
+Tests will be conducted at all powers-of-two intervals up to the
+fully available allocation. The script will automatically detect
+the availability of direct launch tools such as "srun" and "aprun",
+and will include those in the tests. You may select the specific
+starting tools to be included via the cmd line options.
+
+If you are willing to share the results of the tests, please save
+them in a CSV file (using the --results=<file> option) and email
+the file to either:
+
+* the PMIx mailing list: pmix@googlegropups.com, or
+* the OMPI developers mailing list: devel@open-mpi.org
+
+Please include info on the out-of-band network on your system - e.g.,
+1Gb Ethernet, IPoIB, or IP-over-Gemini. This will greatly assist us
+in improving the launch performance of Open MPI.
+
+Thank you!

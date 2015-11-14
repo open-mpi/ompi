@@ -21,15 +21,18 @@ my $runall = 0;
 my $rawoutput = 0;
 my $myresults;
 my @csvrow;
+my $timecmd = "time";
 
-my @tests = qw(/bin/true ./orte_no_op ./mpi_no_op ./mpi_no_op);
-my @options = ("", "", "", "-mca mpi_add_procs_cutoff 0 -mca pmix_base_async_modex 1");
-my @starters = qw(mpirun orte-submit srun aprun orterun);
-my @starteroptions = ("-npernode 1 --novm",
-                      "--hnp file:dvm_uri -pernode",
-                      "--distribution=cyclic",
-                      "-N 1",
-                      "-npernode 1 --novm");
+my @tests = qw(/bin/true /usr/bin/true ./orte_no_op ./mpi_no_op ./mpi_no_op);
+my @options = ("", "", , "", "-mca mpi_add_procs_cutoff 0 -mca pmix_base_async_modex 1");
+my @availablestarters = qw(mpirun orte-submit srun aprun orterun);
+my @options = ("-npernode 1 --novm",
+               "--hnp file:dvm_uri -pernode",
+               "--distribution=cyclic",
+               "-N 1",
+               "-npernode 1 --novm");
+my @starters = ();
+my @starteroptions = ();
 
 # Set to true if the script should merely print the cmds
 # it would run, but don't run them
@@ -52,6 +55,7 @@ GetOptions(
     "all" => \$runall,
     "results=s" => \$myresults,
     "rawout" => \$rawoutput,
+    "timecmd" => \$timecmd,
 ) or die "unable to parse options, stopped";
 
 if ($HELP) {
@@ -70,6 +74,7 @@ $0 [options]
 --all                Use all available start commands [default]
 --results=file       File where results are to stored in comma-separated value format
 --rawout             Provide raw timing output to the file
+--timecmd=cmd        Command to use for timing the executions
 EOT
     exit(0);
 }
@@ -87,12 +92,25 @@ my $idx;
 my $option;
 my $havedvm = 0;
 
+# if they told us to run everything, or they
+# gave us no directives at all, then run all
+if ($runall ||
+    ((0 == $usempirun) &&
+     (0 == $usesrun) &&
+     (0 == $useaprun) &&
+     (0 == $usedvm))) {
+    $usedvm = 1;
+    $useaprun = 1;
+    $usesrun = 1;
+    $usempirun = 1;
+}
+
 # see which starters are available
 my @path = split(":", $ENV{PATH});
 my $exists = 0;
 $idx=0;
-while ($idx <= $#starters) {
-    $starter = $starters[$idx];
+while ($idx <= $#availablestarters) {
+    $starter = $availablestarters[$idx];
     $exists = 0;
     foreach my $path (@path) {
         if ( -x "$path/$starter") {
@@ -100,36 +118,24 @@ while ($idx <= $#starters) {
             last;
         }
     }
-    unless ($exists) {
-        # remove this one from the list
-        splice @starters, $idx, 1;
-        splice @starteroptions, $idx, 1;
-        # adjust the index
-        $idx = $idx - 1;
-    } elsif ($usedvm && $starter ne "orte-submit") {
-        # remove this one from the list
-        splice @starters, $idx, 1;
-        splice @starteroptions, $idx, 1;
-        # adjust the index
-        $idx = $idx - 1;
-    } elsif ($usesrun && $starter ne "srun") {
-        # remove this one from the list
-        splice @starters, $idx, 1;
-        splice @starteroptions, $idx, 1;
-        # adjust the index
-        $idx = $idx - 1;
-    } elsif ($useaprun && $starter ne "aprun") {
-        # remove this one from the list
-        splice @starters, $idx, 1;
-        splice @starteroptions, $idx, 1;
-        # adjust the index
-        $idx = $idx - 1;
-    } elsif ($usempirun && (($starter ne "mpirun") && ($starter ne "orterun"))) {
-        # remove this one from the list
-        splice @starters, $idx, 1;
-        splice @starteroptions, $idx, 1;
-        # adjust the index
-        $idx = $idx - 1;
+    if ($exists) {
+        if ($usedvm && $starter eq "orte-submit") {
+            # push this one to the list
+            push @starters, $starter;
+            push @starteroptions, $options[$idx];
+        } elsif ($usesrun && $starter eq "srun") {
+            # push this one to the list
+            push @starters, $starter;
+            push @starteroptions, $options[$idx];
+        } elsif ($useaprun && $starter eq "aprun") {
+            # push this one to the list
+            push @starters, $starter;
+            push @starteroptions, $options[$idx];
+        } elsif ($usempirun && (($starter eq "mpirun") || ($starter eq "orterun"))) {
+            # push this one to the list
+            push @starters, $starter;
+            push @starteroptions, $options[$idx];
+        }
     }
     $idx = $idx + 1;
 }
@@ -174,9 +180,7 @@ if ($myresults) {
 # determine the number of nodes - doesn't
 # matter which starter we use
 $cmd = $starters[0] . " " . $starteroptions[0] . " hostname";
-print "CMD: $cmd\n";
 $output = `$cmd`;
-print "$output\n";
 @lines = split(/\n/, $output);
 $num_nodes = $#lines + 1;
 
@@ -193,12 +197,14 @@ while ($idx < $#starters) {
 my ($sec,$min,$hour,$day,$month,$yr19,@rest) =   localtime(time);
 
 # start by printing out the resulting configuration
-print "\n--------------------------------------------------\n";
-print "\nTest configuration:\n";
-print "\tDate:\t" . "$day-".++$month. "-".($yr19+1900) . " " . sprintf("%02d",$hour).":".sprintf("%02d",$min).":".sprintf("%02d",$sec) . "\n";;
-print "\tNum nodes:\t" . $num_nodes . "\n";
-print "\tStarters:\t" . $mystarters . "\n";
-print "\n--------------------------------------------------\n";
+if (!$QUIET) {
+    print "\n--------------------------------------------------\n";
+    print "\nTest configuration:\n";
+    print "\tDate:\t" . "$day-".++$month. "-".($yr19+1900) . " " . sprintf("%02d",$hour).":".sprintf("%02d",$min).":".sprintf("%02d",$sec) . "\n";;
+    print "\tNum nodes:\t" . $num_nodes . "\n";
+    print "\tStarters:\t" . $mystarters . "\n";
+    print "\n--------------------------------------------------\n";
+}
 
 # and tag the output file as well
 if ($myresults) {
@@ -272,22 +278,18 @@ sub runcmd()
         }
     }
     # we have now completed all the reps, so log the results
+    my $myout;
+    $myout = join(',', @csvrow);
     if ($myresults) {
-        my $myout;
-        my $mycnt=0;
-        while ($mycnt <= $#csvrow) {
-            if (0 == $mycnt) {
-                $myout = $csvrow[$mycnt];
-            } else {
-                $myout = $myout . "," . $csvrow[$mycnt];
-            }
-            $mycnt = $mycnt + 1;
-        }
         print FILE "$myout\n";
-        # clear the output
-        @csvrow = ();
+    } elsif (!$QUIET) {
+        print "$myout\n";
     }
-    print "\n";
+    # clear the output
+    @csvrow = ();
+    if (!$QUIET) {
+        print "\n";
+    }
 }
 
 foreach $starter (@starters) {
@@ -297,8 +299,10 @@ foreach $starter (@starters) {
         if (-e "dvm_uri") {
             system("rm -f dvm_uri");
         }
-        $cmd = "orte-dvm --report-uri dvm_uri 2>&1 &";
-        print $cmd . "\n";
+        $cmd = "orte-dvm --report-uri dvm_uri &> /dev/null &";
+        if (!$QUIET) {
+            print $cmd . "\n";
+        }
         if (!$SHOWME) {
             system($cmd);
             # wait for the rendezvous file to appear
@@ -327,24 +331,28 @@ foreach $starter (@starters) {
             $n = 1;
             while ($n <= $num_nodes) {
                 push @csvrow,$n;
-                $cmd = "time " . $starter . " " . $starteroptions[$index] . " -n $n $option $test 2>&1";
-                print $cmd . "\n";
+                $cmd = $timecmd . " " . $starter . " " . $starteroptions[$index] . " -n $n $option $test 2>&1";
+                if (!$QUIET) {
+                    print $cmd . "\n";
+                }
                 if (!$SHOWME) {
                     runcmd();
                 }
                 $n = 2 * $n;
             }
-            if (0 != $num_nodes & $n) {
-                $cmd = "time " . $starter . " " . $starteroptions[$index] . " $option $test 2>&1";
-                print $cmd . "\n";
+            if (0 != $num_nodes % $n) {
+                $cmd = $timecmd . " " . $starter . " " . $starteroptions[$index] . " $option $test 2>&1";
+                if (!$QUIET) {
+                    print $cmd . "\n";
+                }
                 if (!$SHOWME) {
+                    push @csvrow,$num_nodes;
                     runcmd();
                 }
             }
-            print "\n--------------------------------------------------\n";
-        } else {
-            print "Test " . $test . " was not found - test skipped\n";
-            print "\n--------------------------------------------------\n";
+            if (!$QUIET) {
+                print "\n--------------------------------------------------\n";
+            }
         }
         $testnum = $testnum + 1;
     }
