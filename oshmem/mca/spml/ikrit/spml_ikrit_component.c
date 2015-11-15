@@ -127,7 +127,6 @@ static inline int check_mxm_hw_tls(char *v, char *tls)
     if (strstr(tls, "ud") &&
             (NULL == strstr(tls, "rc") && NULL == strstr(tls, "dc") &&
              NULL == strstr(tls, "shm"))) {
-        mca_spml_ikrit.ud_only = 1;
         return OSHMEM_SUCCESS;
     }
 

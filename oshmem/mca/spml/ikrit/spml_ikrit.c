@@ -102,8 +102,13 @@ static inline mxm_mem_key_t *to_mxm_mkey(sshmem_mkey_t *mkey) {
 
 static inline void mca_spml_irkit_req_wait(mxm_req_base_t *req)
 {
-    while (!mxm_req_test(req))
+    do {
+        /* do at least one progress since
+         * with some TLs (self, shm) request
+         * can be completed immediately
+         */
         opal_progress();
+    } while (!mxm_req_test(req));
 }
 
 static int mca_spml_ikrit_put_request_free(struct oshmem_request_t** request)
