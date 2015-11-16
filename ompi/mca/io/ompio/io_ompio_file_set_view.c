@@ -350,7 +350,6 @@ int mca_io_ompio_simple_grouping(mca_io_ompio_file_t *fh,
             k++;
         }
     }
-    sleep (10); 
     return OMPI_SUCCESS;
 }
 
