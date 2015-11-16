@@ -501,7 +501,14 @@ static inline int NBC_Copy(void *src, int srccount, MPI_Datatype srctype, void *
   } else {
     /* we have to pack and unpack */
     res = MPI_Pack_size(srccount, srctype, comm, &size);
-    if (MPI_SUCCESS != res || 0 == size) { printf("MPI Error in MPI_Pack_size() (%i:%i)\n", res, size); return (MPI_SUCCESS == res) ? MPI_ERR_SIZE : res;}
+    if (MPI_SUCCESS != res) {
+      printf ("MPI Error in MPI_Pack_size() (%i:%i)", res, size);
+      return res;
+    }
+
+    if (0 == size) {
+        return OMPI_SUCCESS;
+    }
     packbuf = malloc(size);
     if (NULL == packbuf) { printf("Error in malloc()\n"); return res; }
     pos=0;
