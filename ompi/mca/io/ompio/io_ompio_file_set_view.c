@@ -328,8 +328,8 @@ int mca_io_ompio_simple_grouping(mca_io_ompio_file_t *fh,
         group_size  = (((int)stripe_size/(int)fh->f_cc_size) > fh->f_size ) ? fh->f_size : ((int)stripe_size/(int)fh->f_cc_size);
         *num_groups = fh->f_size / group_size;
     }
-    else if ( fh->f_cc_size < OMPIO_CONTG_FACTOR * stripe_size) {
-        *num_groups = fh->f_size / OMPIO_CONTG_FACTOR;
+    else if ( fh->f_cc_size <= OMPIO_CONTG_FACTOR * stripe_size) {
+        *num_groups = fh->f_size/OMPIO_CONTG_FACTOR > 0 ? (fh->f_size/OMPIO_CONTG_FACTOR) : 1 ;
         group_size  = OMPIO_CONTG_FACTOR;
     } 
     else {
@@ -350,7 +350,7 @@ int mca_io_ompio_simple_grouping(mca_io_ompio_file_t *fh,
             k++;
         }
     }
-    
+    sleep (10); 
     return OMPI_SUCCESS;
 }
 
