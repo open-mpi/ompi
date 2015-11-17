@@ -15,28 +15,33 @@
 
 #if OSHMEM_PROFILING
 #include "oshmem/shmem/fortran/profile/pbindings.h"
-SHMEM_GENERATE_WEAK_BINDINGS(MY_PE, my_pe)
-#pragma weak _my_pe_ = p_my_pe_
+SHMEM_GENERATE_WEAK_BINDINGS(SHMEM_INIT, shmem_init)
+SHMEM_GENERATE_WEAK_BINDINGS(START_PES, start_pes)
 #include "oshmem/shmem/fortran/profile/defines.h"
 #endif
 
-SHMEM_GENERATE_FORTRAN_BINDINGS_FUNCTION (MPI_Fint,
-        MY_PE,
-        my_pe_,
-        my_pe__,
-        my_pe_f,
+SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
+        SHMEM_INIT,
+        shmem_init_,
+        shmem_init__,
+        shmem_init_f,
         (void),
         () )
 
-MPI_Fint _my_pe_(void)
+void shmem_init_f(void)
 {
-    return my_pe_f();
+    shmem_init();
 }
 
-MPI_Fint my_pe_f(void)
-{
-    MPI_Fint rc;
-    rc = OMPI_INT_2_FINT(my_pe());
-    return rc;
-}
+SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
+        START_PES,
+        start_pes_,
+        start_pes__,
+        start_pes_f,
+        (MPI_Fint npes),
+        (npes) )
 
+void start_pes_f(MPI_Fint npes)
+{
+    shmem_init();
+}
