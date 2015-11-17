@@ -1,6 +1,6 @@
 /* oshmem/include/shmemx.h. This file contains vendor extension functions  */
 /*
- * Copyright (c) 2014      Mellanox Technologies, Inc.
+ * Copyright (c) 2014-2015 Mellanox Technologies, Inc.
  *                         All rights reserved.
  * $COPYRIGHT$
  *
@@ -26,7 +26,6 @@ OSHMEM_DECLSPEC  void shmem_int64_p(int64_t* addr, int64_t value, int pe);
 /*
  * Elemental put routines
  */
-OSHMEM_DECLSPEC  void shmem_char_p(char* addr, char value, int pe);
 
 /*
  * Block data put routines
