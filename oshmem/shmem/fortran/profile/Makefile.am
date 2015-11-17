@@ -25,9 +25,10 @@ headers = prototypes_pshmem.h \
 	defines.h
 
 nodist_liboshmem_fortran_pshmem_la_SOURCES = \
-	pstart_pes_f.c \
-	pnum_pes_f.c \
-	pmy_pe_f.c \
+	pshmem_init_f.c \
+	pshmem_global_exit_f.c \
+	pshmem_n_pes_f.c \
+	pshmem_my_pe_f.c \
 	pshmem_barrier_all_f.c \
 	pshpalloc_f.c \
 	pshpdeallc_f.c \

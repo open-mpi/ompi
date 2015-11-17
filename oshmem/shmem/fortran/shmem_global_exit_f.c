@@ -3,9 +3,9 @@
  *                         All rights reserved.
  * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -15,28 +15,19 @@
 
 #if OSHMEM_PROFILING
 #include "oshmem/shmem/fortran/profile/pbindings.h"
-SHMEM_GENERATE_WEAK_BINDINGS(MY_PE, my_pe)
-#pragma weak _my_pe_ = p_my_pe_
+SHMEM_GENERATE_WEAK_BINDINGS(SHMEM_GLOBAL_EXIT, shmem_global_exit)
 #include "oshmem/shmem/fortran/profile/defines.h"
 #endif
 
-SHMEM_GENERATE_FORTRAN_BINDINGS_FUNCTION (MPI_Fint,
-        MY_PE,
-        my_pe_,
-        my_pe__,
-        my_pe_f,
-        (void), 
-        () )
+SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
+        SHMEM_GLOBAL_EXIT,
+        shmem_global_exit_,
+        shmem_global_exit__,
+        shmem_global_exit_f,
+        (MPI_Fint status),
+        (status) )
 
-MPI_Fint _my_pe_(void)
+void shmem_global_exit_f(MPI_Fint status)
 {
-    return my_pe_f();
+    shmem_global_exit(status);
 }
-
-MPI_Fint my_pe_f(void)
-{
-    MPI_Fint rc;
-    rc = OMPI_INT_2_FINT(my_pe());
-    return rc;
-}
-
