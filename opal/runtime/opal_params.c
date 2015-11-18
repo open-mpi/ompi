@@ -44,6 +44,10 @@
 char *opal_signal_string = NULL;
 char *opal_net_private_ipv4 = NULL;
 char *opal_set_max_sys_limits = NULL;
+bool opal_abort_print_stack = false;
+int opal_abort_print_stack_var_index = -1;
+int opal_abort_delay = 0;
+int opal_abort_delay_var_index = -1;
 
 static bool opal_register_done = false;
 
@@ -152,6 +156,40 @@ int opal_register_params(void)
     if (0 > ret) {
 	return ret;
     }
+
+    opal_abort_delay = 0;
+    ret = mca_base_var_register("opal", "opal", NULL, "abort_delay",
+                                "If nonzero, print out an identifying message when abort operation is invoked (hostname, PID of the process that called abort) and delay for that many seconds before exiting (a negative delay value means to never abort).  This allows attaching of a debugger before quitting the job.",
+                                 MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                 OPAL_INFO_LVL_5,
+                                 MCA_BASE_VAR_SCOPE_READONLY,
+                                 &opal_abort_delay);
+    if (0 > ret) {
+	return ret;
+    }
+    opal_abort_delay_var_index = ret;
+
+    opal_abort_print_stack = false;
+    ret = mca_base_var_register("opal", "opal", NULL, "abort_print_stack",
+                                 "If nonzero, print out a stack trace when abort is invoked",
+                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0,
+                                /* If we do not have stack trace
+                                   capability, make this a constant
+                                   MCA variable */
+#if OPAL_WANT_PRETTY_PRINT_STACKTRACE
+                                 0,
+                                 OPAL_INFO_LVL_5,
+                                 MCA_BASE_VAR_SCOPE_READONLY,
+#else
+                                 MCA_BASE_VAR_FLAG_DEFAULT_ONLY,
+                                 OPAL_INFO_LVL_5,
+                                 MCA_BASE_VAR_SCOPE_CONSTANT,
+#endif
+                                 &opal_abort_print_stack);
+    if (0 > ret) {
+	return ret;
+    }
+    opal_abort_print_stack_var_index = ret;
 
     /* The ddt engine has a few parameters */
     ret = opal_datatype_register_params();
