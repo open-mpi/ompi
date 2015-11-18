@@ -181,6 +181,7 @@ void mca_pml_yalla_init_reqs(void);
                 (_mpi_status)->MPI_ERROR  = OMPI_SUCCESS; \
                 break; \
             case MXM_ERR_CANCELED: \
+                (_mpi_status)->MPI_ERROR  = OMPI_SUCCESS; \
                 (_mpi_status)->_cancelled = true; \
                 break; \
             case MXM_ERR_MESSAGE_TRUNCATED: \
