@@ -326,11 +326,19 @@ int orte_util_encode_nodemap(opal_byte_object_t *boptr, bool update)
         }
         /* pack the name of the node */
         if (!orte_keep_fqdn_hostnames) {
-            nodename = strdup(node->name);
+            /* handle nodename is <login>@<host>
+             * the real nodename is <host> */
+            char * real_nodename = nodename = strdup(node->name);
+            real_nodename = strchr(nodename, '@');
+            if (NULL != real_nodename) {
+                real_nodename++;
+            } else {
+                real_nodename = nodename;
+            }
             /* if the nodename is an IP address, do not mess with it! */
-            if (!opal_net_isaddr(nodename)) {
+            if (!opal_net_isaddr(real_nodename)) {
                 /* not an IP address */
-                if (NULL != (ptr = strchr(nodename, '.'))) {
+                if (NULL != (ptr = strchr(real_nodename, '.'))) {
                     *ptr = '\0';
                 }
             }
