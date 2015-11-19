@@ -108,6 +108,11 @@ AC_DEFUN([_OMPI_CHECK_COMPILER_VENDOR], [
           [OMPI_IF_IFELSE([defined(__INTEL_COMPILER) || defined(__ICC)], 
                [ompi_check_compiler_vendor_result="intel"])])
 
+    # Fujitsu
+    AS_IF([test "$ompi_check_compiler_vendor_result" = "unknown"],
+          [OMPI_IF_IFELSE([defined(__FUJITSU)], 
+               [ompi_check_compiler_vendor_result="fujitsu"])])
+
     # GNU
     AS_IF([test "$ompi_check_compiler_vendor_result" = "unknown"],
           [OMPI_IFDEF_IFELSE([__GNUC__], 
