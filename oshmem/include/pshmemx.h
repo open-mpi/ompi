@@ -16,10 +16,29 @@
 extern "C" {
 #endif
 
+
+/*
+ * Legacy API
+ * old init/destruct functions - not in the open shmem spec but still supported
+ */
+OSHMEM_DECLSPEC  void pstart_pes(int npes);
+
+OSHMEM_DECLSPEC  int p_num_pes(void);
+OSHMEM_DECLSPEC  int p_my_pe(void);
+
+OSHMEM_DECLSPEC  void* pshmalloc(size_t size);
+OSHMEM_DECLSPEC  void* pshmemalign(size_t align, size_t size);
+OSHMEM_DECLSPEC  void* pshrealloc(void *ptr, size_t size);
+OSHMEM_DECLSPEC  void pshfree(void* ptr);
+
+OSHMEM_DECLSPEC  void pshmem_char_put(char *target, const char *source, size_t len, int pe);
+OSHMEM_DECLSPEC  void pshmem_char_get(char *target, const char *source, size_t len, int pe);
+
+
+
 /*
  * Elemental put routines
  */
-OSHMEM_DECLSPEC  void pshmem_char_p(char* addr, char value, int pe);
 OSHMEM_DECLSPEC  void pshmem_int16_p(int16_t* addr, int16_t value, int pe);
 OSHMEM_DECLSPEC  void pshmem_int32_p(int32_t* addr, int32_t value, int pe);
 OSHMEM_DECLSPEC  void pshmem_int64_p(int64_t* addr, int64_t value, int pe);
@@ -37,7 +56,6 @@ OSHMEM_DECLSPEC void pshmem_iput16(void* target, const void* source, ptrdiff_t t
 /*
  * Elemental get routines
  */
-OSHMEM_DECLSPEC  char pshmem_char_g(char* addr, int pe);
 OSHMEM_DECLSPEC  int16_t pshmem_int16_g(int16_t* addr, int pe);
 OSHMEM_DECLSPEC  int32_t pshmem_int32_g(int32_t* addr, int pe);
 OSHMEM_DECLSPEC  int64_t pshmem_int64_g(int64_t* addr, int pe);
