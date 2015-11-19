@@ -13,13 +13,22 @@
 !
 ! TODO: exact values should be found during configuration
 !
+      integer SHMEM_MAJOR_VERSION
+      parameter ( SHMEM_MAJOR_VERSION = 1 )
+
+      integer SHMEM_MINOR_VERSION
+      parameter ( SHMEM_MINOR_VERSION = 2 )
+
+      CHARACTER(LEN = 256), PARAMETER :: SHMEM_VENDOR_STRING = "http://www.open-mpi.org/"
+
+      integer SHMEM_MAX_NAME_LEN
+      parameter ( SHMEM_MAX_NAME_LEN = 256-1 )
 
       integer SHMEM_BARRIER_SYNC_SIZE
       parameter ( SHMEM_BARRIER_SYNC_SIZE = 4 )
 
       integer SHMEM_BCAST_SYNC_SIZE
       parameter ( SHMEM_BCAST_SYNC_SIZE = 8 )
-
 
       integer SHMEM_COLLECT_SYNC_SIZE
       parameter ( SHMEM_COLLECT_SYNC_SIZE = 8 )

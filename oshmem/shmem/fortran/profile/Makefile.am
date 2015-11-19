@@ -117,7 +117,8 @@ nodist_liboshmem_fortran_pshmem_la_SOURCES = \
 	pshmem_int4_inc_f.c \
 	pshmem_int8_inc_f.c \
 	pshmem_quiet_f.c \
-	pshmem_fence_f.c
+	pshmem_fence_f.c \
+	pshmem_info_f.c
 
 #
 # Sym link in the sources from the real OSHMEM directory

@@ -125,7 +125,8 @@ liboshmem_fortran_la_SOURCES += \
                     shmem_int4_inc_f.c \
                     shmem_int8_inc_f.c \
                     shmem_quiet_f.c \
-                    shmem_fence_f.c
+                    shmem_fence_f.c \
+                    shmem_info_f.c
 
 AM_CPPFLAGS     = -DOSHMEM_PROFILING=0
 endif
