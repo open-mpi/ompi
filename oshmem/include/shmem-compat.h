@@ -18,11 +18,11 @@ extern "C" {
 
 /*
  * Legacy API
+ * old init/destruct functions - not in the open shmem spec but still supported
  */
 OSHMEM_DECLSPEC  int num_pes(void);
 OSHMEM_DECLSPEC  int my_pe(void);
 
-/* old init/destruct functions - not in the open shmem spec but still supported */
 OSHMEM_DECLSPEC  void start_pes(int npes);
 
 OSHMEM_DECLSPEC  int _num_pes(void);
