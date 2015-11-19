@@ -45,10 +45,9 @@ struct mca_btl_portals4_frag_t {
     mca_btl_base_header_t hdr;
     /* handle to use for communication */
     ptl_handle_me_t me_h;
-    /* handle to use for communication */
-    ptl_handle_md_t md_h;
     /* size of the allocated memory region -- not the amount of data
        we need to send */
+    void *addr;
     size_t size;
     /* match bits for retransmit case */
     ptl_match_bits_t match_bits;
