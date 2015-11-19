@@ -13,11 +13,17 @@ program hello_oshmem
     include 'shmem.fh'
 
     integer proc, nproc
-    integer my_pe, num_pes
+    integer shmem_my_pe, shmem_n_pes
+    integer major, minor, len
+    character(len=SHMEM_MAX_NAME_LEN) name
 
-    call START_PES(0)
-    proc = MY_PE()
-    nproc = NUM_PES()
+    call SHMEM_INIT()
+    proc = SHMEM_MY_PE()
+    nproc = SHMEM_N_PES()
+    call SHMEM_INFO_GET_VERSION(major, minor)
+    call SHMEM_INFO_GET_NAME(name)
 
-    write(*, '("Hello, world, I am ", i2, " of ", i2)') proc, nproc
+    write(*, '("Hello, world, I am ", i2, " of ", i2, ": (version: ", i0, ".", i0, ")")') proc, nproc, major, minor
+    call SHMEM_FINALIZE()
+
 end program hello_oshmem
