@@ -29,6 +29,8 @@ PN (MPI_Fint, num_pes, NUM_PES, (void));
 PN (MPI_Fint, shmem_my_pe, SHMEM_MY_PE, (void));
 PN (MPI_Fint, my_pe, MY_PE, (void));
 OSHMEM_DECLSPEC MPI_Fint _my_pe_(void);
+PN (void, shmem_info_get_version, SHMEM_INFO_GET_VERSION, (MPI_Fint *major, MPI_Fint *minor));
+PN (void, shmem_info_get_name, SHMEM_INFO_GET_NAME, (char *name));
 PN (void, shmem_finalize, SHMEM_FINALIZE, (void));
 PN (void, shmem_barrier_all, SHMEM_BARRIER_ALL, (void));
 PN (void, shpalloc, SHPALLOC, (FORTRAN_POINTER_T *addr, MPI_Fint *length, MPI_Fint *errcode, MPI_Fint *abort));

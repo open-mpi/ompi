@@ -79,6 +79,11 @@ extern "C" {
 /*
  * Constants and definitions
  */
+#define SHMEM_MAJOR_VERSION             1
+#define SHMEM_MINOR_VERSION             2
+#define SHMEM_VENDOR_STRING             "http://www.open-mpi.org/"
+#define SHMEM_MAX_NAME_LEN              sizeof(SHMEM_VENDOR_STRING)
+
 enum shmem_wait_ops {
     SHMEM_CMP_EQ,
     SHMEM_CMP_NE,
@@ -110,13 +115,17 @@ OSHMEM_DECLSPEC  void shmem_init(void);
 OSHMEM_DECLSPEC  void shmem_finalize(void) OSHMEM_DESTRUCTOR;
 OSHMEM_DECLSPEC  void shmem_global_exit(int status);
 
-
 /*
  * Query routines
  */
 OSHMEM_DECLSPEC  int shmem_n_pes(void);
 OSHMEM_DECLSPEC  int shmem_my_pe(void);
 
+/*
+ * Info routines
+ */
+OSHMEM_DECLSPEC void shmem_info_get_version(int *major, int *minor);
+OSHMEM_DECLSPEC void shmem_info_get_name(char *name);
 
 /*
  * Accessability routines
