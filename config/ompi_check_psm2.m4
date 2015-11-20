@@ -48,7 +48,7 @@ AC_DEFUN([OMPI_CHECK_PSM2],[
            OPAL_CHECK_PACKAGE([$1],
                               [psm2.h],
                               [psm2],
-                              [psm_mq_irecv2],
+                              [psm2_mq_irecv2],
 			      [],
                               [$ompi_check_psm2_dir],
                               [$ompi_check_psm2_libdir],
