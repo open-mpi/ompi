@@ -692,8 +692,8 @@ mca_btl_portals4_component_progress(void)
 
                     /* The distant PtlMEAppend is not finished (distant PTL_EVENT_LINK not received) */
                     /* Re-issue the PtlGet (see btl_portals4_rdma.c) */
-                    ret = PtlGet(frag->md_h,
-                                 0,
+                    ret = PtlGet(portals4_btl->send_md_h,
+                                 (ptl_size_t) frag->addr,
                                  frag->length,
                                  frag->peer_proc,
                                  portals4_btl->recv_idx,
@@ -704,8 +704,6 @@ mca_btl_portals4_component_progress(void)
                         opal_output_verbose(1, opal_btl_base_framework.framework_output,
                                             "%s:%d: Re-issued PtlGet failed: %d",
                                             __FILE__, __LINE__, ret);
-                        PtlMDRelease(frag->md_h);
-                        frag->md_h = PTL_INVALID_HANDLE;
                         return OPAL_ERROR;
                     }
 
@@ -724,8 +722,6 @@ mca_btl_portals4_component_progress(void)
                                  frag->rdma_cb.context,
                                  frag->rdma_cb.data,
                                  OPAL_SUCCESS);
-                    PtlMDRelease(frag->md_h);
-                    frag->md_h = PTL_INVALID_HANDLE;
 
                     OPAL_BTL_PORTALS4_FRAG_RETURN_USER(&portals4_btl->super, frag);
                     OPAL_THREAD_ADD32(&portals4_btl->portals_outstanding_ops, -1);
