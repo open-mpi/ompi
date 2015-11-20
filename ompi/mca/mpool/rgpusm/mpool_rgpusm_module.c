@@ -412,12 +412,35 @@ int mca_mpool_rgpusm_register(mca_mpool_base_module_t *mpool, void *addr,
     opal_output_verbose(80, mca_mpool_rgpusm_component.output,
                         "RGPUSM: About to insert in rgpusm cache addr=%p, size=%d", addr, (int)size);
     SET_PAGE_ALIGNMENT_TO_ZERO();
-    while((rc = mpool->rcache->rcache_insert(mpool->rcache, (mca_mpool_base_registration_t *)rgpusm_reg,
-             mca_mpool_rgpusm_component.rcache_size_limit)) ==
-            OMPI_ERR_TEMP_OUT_OF_RESOURCE) {
-        opal_output(-1, "No room in the cache - boot one out");
-        if (!mca_mpool_rgpusm_deregister_lru(mpool)) {
-            break;
+    rc = mpool->rcache->rcache_insert(mpool->rcache, (mca_mpool_base_registration_t *)rgpusm_reg,
+                                      mca_mpool_rgpusm_component.rcache_size_limit);
+    if (OPAL_ERR_TEMP_OUT_OF_RESOURCE == rc) {
+        opal_output_verbose(40, mca_mpool_rgpusm_component.output,
+                            "RGPUSM: No room in the cache - boot the first one out");
+        (void)mca_mpool_rgpusm_deregister_lru(mpool);
+        if (mca_mpool_rgpusm_component.empty_cache) {
+            int remNum = 1;
+            /* Empty out every registration from LRU until it is empty */
+            opal_output_verbose(40, mca_mpool_rgpusm_component.output,
+                                "RGPUSM: About to delete all the unused entries in the cache");
+            while (mca_mpool_rgpusm_deregister_lru(mpool)) {
+                remNum++;
+            }
+            opal_output_verbose(40, mca_mpool_rgpusm_component.output,
+                                "RGPUSM: Deleted and deregistered %d entries", remNum);
+            rc = mpool->rcache->rcache_insert(mpool->rcache, (mca_mpool_base_registration_t *)rgpusm_reg,
+                                              mca_mpool_rgpusm_component.rcache_size_limit);
+        } else {
+            /* Check for room after one removal. If not, remove another one until there is space */
+            while((rc = mpool->rcache->rcache_insert(mpool->rcache, (mca_mpool_base_registration_t *)rgpusm_reg,
+                                                     mca_mpool_rgpusm_component.rcache_size_limit)) ==
+                  OPAL_ERR_TEMP_OUT_OF_RESOURCE) {
+                opal_output_verbose(40, mca_mpool_rgpusm_component.output,
+                                    "RGPUSM: No room in the cache - boot one out");
+                if (!mca_mpool_rgpusm_deregister_lru(mpool)) {
+                    break;
+                }
+            }
         }
     }
     RESTORE_PAGE_ALIGNMENT();
