@@ -44,7 +44,8 @@ int ompi_coll_libnbc_ibcast(void *buffer, int count, MPI_Datatype datatype, int 
                             struct ompi_communicator_t *comm, ompi_request_t ** request,
                             struct mca_coll_base_module_2_1_0_t *module)
 {
-  int rank, p, res, size, segsize;
+  int rank, p, res, segsize;
+  size_t size;
   NBC_Schedule *schedule;
 #ifdef NBC_CACHE_SCHEDULE
   NBC_Bcast_args *args, *found, search;
@@ -56,9 +57,9 @@ int ompi_coll_libnbc_ibcast(void *buffer, int count, MPI_Datatype datatype, int 
   rank = ompi_comm_rank (comm);
   p = ompi_comm_size (comm);
 
-  res = MPI_Type_size(datatype, &size);
+  res = ompi_datatype_type_size(datatype, &size);
   if (MPI_SUCCESS != res) {
-    NBC_Error("MPI Error in MPI_Type_size() (%i)", res);
+    NBC_Error("MPI Error in ompi_datatype_type_size() (%i)", res);
     return res;
   }
 
@@ -259,9 +260,9 @@ static inline int bcast_sched_chain(int rank, int p, int root, NBC_Schedule *sch
   RANK2VRANK(rank, vrank, root);
   VRANK2RANK(rpeer, vrank-1, root);
   VRANK2RANK(speer, vrank+1, root);
-  res = MPI_Type_extent(datatype, &ext);
+  res = ompi_datatype_type_extent(datatype, &ext);
   if (MPI_SUCCESS != res) {
-    NBC_Error("MPI Error in MPI_Type_extent() (%i)", res);
+    NBC_Error("MPI Error in ompi_datatype_type_extent() (%i)", res);
     return res;
   }
 
