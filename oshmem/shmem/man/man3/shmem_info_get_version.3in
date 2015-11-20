@@ -1,0 +1,43 @@
+.\" -*- nroff -*-
+.\" Copyright (c) 2015      University of Houston.  All rights reserved.
+.\" Copyright (c) 2015      Mellanox Technologies, Inc.
+.\" $COPYRIGHT$
+.de Vb
+.ft CW
+.nf
+..
+.de Ve
+.ft R
+
+.fi
+..
+.TH "SHMEM\\_INFO\\_GET\\_VERSION" "3" "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
+.SH NAME
+
+shmem_info_get_version
+\- Returns the major and minor version of the library implementation.
+.SH SYNOPSIS
+
+C or C++:
+.Vb
+#include <mpp/shmem.h>
+void shmem_info_get_version(int *major, int *minor);
+.Ve
+Fortran:
+.Vb
+include 'mpp/shmem.fh'
+SHMEM_INFO_GET_VERSION(MAJOR, MINOR)
+INTEGER MAJOR, MINOR
+.Ve
+.SH DESCRIPTION
+
+shmem_info_get_version()
+This routine returns the major and minor version of the OpenSHMEM standard in use. For a given library
+implementation, the major and minor version returned by these calls is consistent with the compile-time
+constants, SHMEM_MAJOR_VERSION and SHMEM_MINOR_VERSION, defined in its shmem.h. The
+valid major version value is 1, and the valid minor version value is 2.
+.SH SEE ALSO
+
+\fIintro_shmem\fP(3),
+\fIshmem_my_pe\fP(3),
+\fIshmem_init\fP(3)
