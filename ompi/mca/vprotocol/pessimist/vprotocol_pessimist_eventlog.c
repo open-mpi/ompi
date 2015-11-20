@@ -47,7 +47,7 @@ int vprotocol_pessimist_event_logger_connect(int el_rank, ompi_communicator_t **
     }
 
     /* Send Rank, receive max buffer size and max_clock back */
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    rank = ompi_comm_rank(&ompi_mpi_comm_world.comm);
     rc = mca_pml_v.host_pml.pml_send(&rank, 1, MPI_INTEGER, 0,
                                      VPROTOCOL_PESSIMIST_EVENTLOG_NEW_CLIENT_CMD,
                                      MCA_PML_BASE_SEND_STANDARD,
