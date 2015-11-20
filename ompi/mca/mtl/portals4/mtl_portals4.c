@@ -552,15 +552,31 @@ ompi_mtl_portals4_finalize(struct mca_mtl_base_module_t *mtl)
 #endif
     ompi_mtl_portals4_recv_short_fini();
 
-    PtlMEUnlink(ompi_mtl_portals4.long_overflow_me_h);
-    PtlMDRelease(ompi_mtl_portals4.zero_md_h);
-    PtlMDRelease(ompi_mtl_portals4.send_md_h);
+    if (!PtlHandleIsEqual(ompi_mtl_portals4.long_overflow_me_h, PTL_INVALID_HANDLE)) {
+        PtlMEUnlink(ompi_mtl_portals4.long_overflow_me_h);
+    }
+    if (!PtlHandleIsEqual(ompi_mtl_portals4.zero_md_h, PTL_INVALID_HANDLE)) {
+        PtlMDRelease(ompi_mtl_portals4.zero_md_h);
+    }
+    if (!PtlHandleIsEqual(ompi_mtl_portals4.send_md_h, PTL_INVALID_HANDLE)) {
+        PtlMDRelease(ompi_mtl_portals4.send_md_h);
+    }
+    if (ompi_mtl_portals4.read_idx != (ptl_pt_index_t) ~0UL) {
+        PtlPTFree(ompi_mtl_portals4.ni_h, ompi_mtl_portals4.read_idx);
+    }
+    if (ompi_mtl_portals4.recv_idx != (ptl_pt_index_t) ~0UL) {
+        PtlPTFree(ompi_mtl_portals4.ni_h, ompi_mtl_portals4.recv_idx);
+    }
+    if (!PtlHandleIsEqual(ompi_mtl_portals4.send_eq_h, PTL_INVALID_HANDLE)) {
+        PtlEQFree(ompi_mtl_portals4.send_eq_h);
+    }
+    if (!PtlHandleIsEqual(ompi_mtl_portals4.recv_eq_h, PTL_INVALID_HANDLE)) {
+        PtlEQFree(ompi_mtl_portals4.recv_eq_h);
+    }
+    if (!PtlHandleIsEqual(ompi_mtl_portals4.ni_h, PTL_INVALID_HANDLE)) {
+        PtlNIFini(ompi_mtl_portals4.ni_h);
+    }
 
-    PtlPTFree(ompi_mtl_portals4.ni_h, ompi_mtl_portals4.read_idx);
-    PtlPTFree(ompi_mtl_portals4.ni_h, ompi_mtl_portals4.recv_idx);
-    PtlEQFree(ompi_mtl_portals4.send_eq_h);
-    PtlEQFree(ompi_mtl_portals4.recv_eq_h);
-    PtlNIFini(ompi_mtl_portals4.ni_h);
     PtlFini();
 
     return OMPI_SUCCESS;
