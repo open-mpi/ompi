@@ -18,14 +18,15 @@
 int ompi_coll_libnbc_ibcast_inter(void *buffer, int count, MPI_Datatype datatype, int root,
                                   struct ompi_communicator_t *comm, ompi_request_t ** request,
                                   struct mca_coll_base_module_2_1_0_t *module) {
-  int res, size;
+  int res;
+  size_t size;
   NBC_Schedule *schedule;
   NBC_Handle *handle;
   ompi_coll_libnbc_module_t *libnbc_module = (ompi_coll_libnbc_module_t*) module;
 
-  res = MPI_Type_size(datatype, &size);
+  res = ompi_datatype_type_size(datatype, &size);
   if (MPI_SUCCESS != res) {
-    NBC_Error("MPI Error in MPI_Type_size() (%i)", res);
+    NBC_Error("MPI Error in ompi_datatype_type_size() (%i)", res);
     return res;
   }
 
