@@ -1,0 +1,47 @@
+.\" -*- nroff -*-
+.\" Copyright (c) 2015      University of Houston.  All rights reserved.
+.\" Copyright (c) 2015      Mellanox Technologies, Inc.
+.\" $COPYRIGHT$
+.de Vb
+.ft CW
+.nf
+..
+.de Ve
+.ft R
+
+.fi
+..
+.TH "SHMEM\\_GLOBAL\\_EXIT" "3" "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
+.SH NAME
+
+shmem_global_exit
+\- A routine that allows any PE to force termination of an entire program.
+.SH SYNOPSIS
+
+C or C++:
+.Vb
+#include <mpp/shmem.h>
+void shmem_global_exit(int status);
+.Ve
+Fortran:
+.Vb
+include 'mpp/shmem.fh'
+INTEGER STATUS
+CALL SHMEM_GLOBAL_EXIT(status)
+.Ve
+.SH DESCRIPTION
+
+shmem_global_exit()
+shmem_global_exit is a non-collective routine that allows any one PE to force termination of an Open-
+SHMEM program for all PEs, passing an exit status to the execution environment. This routine terminates
+the entire program, not just the OpenSHMEM portion. When any PE calls shmem_global_exit, it results in
+the immediate notification to all PEs to terminate. shmem_global_exit flushes I/O and releases resources
+in accordance with C/C++/Fortran language requirements for normal program termination. If more than
+one PE calls shmem_global_exit, then the exit status returned to the environment shall be one of the values
+passed to shmem_global_exit as the status argument. There is no return to the caller of shmem_global_exit;
+control is returned from the OpenSHMEM program to the execution environment for all PEs.
+.SH SEE ALSO
+
+\fIintro_shmem\fP(3),
+\fIshmem_my_pe\fP(3),
+\fIshmem_init\fP(3)
