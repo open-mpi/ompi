@@ -225,7 +225,7 @@ USER="ompibuilder"
 export USER
 
 # autogen is our friend
-do_command "./autogen.pl"
+do_command "./autogen.pl --force"
 
 # do config
 do_command "./configure"
