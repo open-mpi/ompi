@@ -73,6 +73,7 @@ mca_coll_basic_scan_intra(void *sbuf, void *rbuf, int count,
          * receive into, later. */
 
         dsize = opal_datatype_span(&dtype->super, count, &gap);
+        free_buffer = malloc(dsize);
         if (NULL == free_buffer) {
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
