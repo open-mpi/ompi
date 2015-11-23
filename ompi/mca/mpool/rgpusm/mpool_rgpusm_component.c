@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Voltaire. All rights reserved.
  * Copyright (c) 2007-2009 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2012      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2012-2015 NVIDIA Corporation.  All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -125,6 +125,15 @@ static int rgpusm_register(void)
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &ompi_mpool_rgpusm_verbose);
+
+    /* Force emptying of entire registration cache when it gets full */
+    mca_mpool_rgpusm_component.empty_cache = false;
+    (void) mca_base_component_var_register(&mca_mpool_rgpusm_component.super.mpool_version,
+                                           "empty_cache", "When set, empty entire registration cache when it is full",
+                                           MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                           OPAL_INFO_LVL_5,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_mpool_rgpusm_component.empty_cache);
 
     return OMPI_SUCCESS;
 }
