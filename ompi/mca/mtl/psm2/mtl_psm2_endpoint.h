@@ -45,10 +45,10 @@ struct mca_mtl_psm2_endpoint_t {
     struct mca_mtl_psm2_module_t* mtl_psm2_module;
     /**< MTL instance that created this connection */
 
-    psm_epid_t	    peer_epid;
+    psm2_epid_t	    peer_epid;
     /**< The unique epid for the opened port */
 
-    psm_epaddr_t    peer_addr;
+    psm2_epaddr_t    peer_addr;
     /**< The connected endpoint handle*/
 };
 
