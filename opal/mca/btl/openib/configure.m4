@@ -46,6 +46,7 @@ AC_DEFUN([MCA_opal_btl_openib_CONFIG],[
                      [btl_openib_happy="yes"
                       OPAL_CHECK_OPENFABRICS_CM([btl_openib])],
                      [btl_openib_happy="no"])
+    OPAL_CHECK_EXP_VERBS([btl_openib], [], [])
 
     AS_IF([test "$btl_openib_happy" = "yes"],
           [# With the new openib flags, look for ibv_fork_init

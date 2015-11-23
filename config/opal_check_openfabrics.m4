@@ -387,6 +387,23 @@ AC_DEFUN([OPAL_CHECK_OPENFABRICS_CM],[
     fi
 ])dnl
 
+AC_DEFUN([OPAL_CHECK_EXP_VERBS],[
+    OPAL_VAR_SCOPE_PUSH([have_struct_ibv_exp_send_wr])
+
+    AC_MSG_CHECKING([whether expanded verbs are available])
+    AC_TRY_COMPILE([#include <infiniband/verbs_exp.h>], [struct ibv_exp_send_wr;],
+                   [have_struct_ibv_exp_send_wr=1
+                    AC_MSG_RESULT([yes])],
+                   [have_struct_ibv_exp_send_wr=0
+                    AC_MSG_RESULT([no])])
+
+    AC_DEFINE_UNQUOTED([HAVE_EXP_VERBS], [$have_struct_ibv_exp_send_wr], [Expanded verbs])
+    AC_CHECK_DECLS([IBV_EXP_ATOMIC_HCA_REPLY_BE, IBV_EXP_QP_CREATE_ATOMIC_BE_REPLY, ibv_exp_create_qp], [], [], [#include <infiniband/verbs_exp.h>])
+    AC_CHECK_HEADERS([infiniband/verbs_exp.h])
+    AS_IF([test '$have_struct_ibv_exp_send_wr' = 1], [$1], [$2])
+    OPAL_VAR_SCOPE_POP
+])dnl
+
 AC_DEFUN([OPAL_CHECK_MLNX_OPENFABRICS],[
      $1_have_mverbs=0
      $1_have_mqe=0

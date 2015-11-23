@@ -56,6 +56,9 @@
 #include <sys/types.h>
 #include <fcntl.h>
 #include <infiniband/verbs.h>
+#ifdef HAVE_INFINIBAND_VERBS_EXP_H
+#include <infiniband/verbs_exp.h>
+#endif
 #include <signal.h>
 
 #include <pthread.h>
@@ -1307,7 +1310,11 @@ static int udcm_rc_qp_create_one(udcm_module_t *m, mca_btl_base_endpoint_t* lcl_
                               uint32_t max_send_wr)
 {
     udcm_endpoint_t *udep = UDCM_ENDPOINT_DATA(lcl_ep);
+#if HAVE_DECL_IBV_EXP_CREATE_QP
+    struct ibv_exp_qp_init_attr init_attr;
+#else
     struct ibv_qp_init_attr init_attr;
+#endif
     size_t req_inline;
     int rc;
 
@@ -1328,6 +1335,32 @@ static int udcm_rc_qp_create_one(udcm_module_t *m, mca_btl_base_endpoint_t* lcl_
     }
     init_attr.cap.max_send_wr  = max_send_wr;
 
+#if HAVE_DECL_IBV_EXP_CREATE_QP
+    /* use expanded verbs qp create to enable use of mlx5 atomics */
+    init_attr.comp_mask = IBV_EXP_QP_INIT_ATTR_PD;
+    init_attr.pd = m->btl->device->ib_pd;
+
+    init_attr.comp_mask |= IBV_EXP_QP_INIT_ATTR_ATOMICS_ARG;
+    init_attr.max_atomic_arg = 8;
+
+#if HAVE_DECL_IBV_EXP_ATOMIC_HCA_REPLY_BE
+    if (IBV_EXP_ATOMIC_HCA_REPLY_BE == m->btl->device->ib_dev_attr.atomic_cap) {
+        init_attr.exp_create_flags = IBV_EXP_QP_CREATE_ATOMIC_BE_REPLY;
+        init_attr.comp_mask |= IBV_EXP_QP_INIT_ATTR_CREATE_FLAGS;
+    }
+#endif
+
+    while (NULL == (lcl_ep->qps[qp].qp->lcl_qp = ibv_exp_create_qp (m->btl->device->ib_dev_context,
+                                                                    &init_attr))) {
+        /* NTH: this process may be out of registered memory. try evicting an item from
+           the lru of this btl's mpool */
+        if (false == mca_mpool_grdma_evict (m->btl->super.btl_mpool)) {
+            break;
+        }
+    }
+
+#else
+
     while (NULL == (lcl_ep->qps[qp].qp->lcl_qp = ibv_create_qp(m->btl->device->ib_pd,
                                                                &init_attr))) {
         /* NTH: this process may be out of registered memory. try evicting an item from
@@ -1336,6 +1369,8 @@ static int udcm_rc_qp_create_one(udcm_module_t *m, mca_btl_base_endpoint_t* lcl_
             break;
         }
     }
+
+#endif
 
     if (NULL == lcl_ep->qps[qp].qp->lcl_qp) {
         opal_show_help("help-mpi-btl-openib-cpc-base.txt",
