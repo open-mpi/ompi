@@ -11,15 +11,19 @@
 #include <shmem.h>
 #include <stdio.h>
 
+#if !defined(OSHMEM_SPEC_VERSION) || OSHMEM_SPEC_VERSION < 10200
+#error This application uses API 1.2 and up
+#endif
+
 int main (int argc, char * argv[])
 {
     static int rbuf = -1;
     int proc, nproc, next;
     int message = 10;
 
-    start_pes(0);
-    proc = _my_pe();
-    nproc = _num_pes();
+    shmem_init();
+    nproc = shmem_n_pes();
+    proc = shmem_my_pe();
 
     /* Calculate the PE number of the next process in the ring.  Use the
        modulus operator so that the last process "wraps around" to PE 0. */
@@ -51,6 +55,7 @@ int main (int argc, char * argv[])
             --message;
         }
     }
+    shmem_finalize();
 
     /* All done */
 
