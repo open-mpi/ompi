@@ -141,6 +141,70 @@ OSHMEM_DECLSPEC void pshmemx_int16_prod_to_all(int16_t *target, int16_t *source,
 OSHMEM_DECLSPEC void pshmemx_int32_prod_to_all(int32_t *target, int32_t *source, int nreduce, int PE_start, int logPE_stride, int PE_size, int32_t *pWrk, long *pSync);
 OSHMEM_DECLSPEC void pshmemx_int64_prod_to_all(int64_t *target, int64_t *source, int nreduce, int PE_start, int logPE_stride, int PE_size, int64_t *pWrk, long *pSync);
 
+/*
+ * Backward compatibility section
+ */
+#define pshmem_int16_p               pshmemx_int16_p
+#define pshmem_int32_p               pshmemx_int32_p
+#define pshmem_int64_p               pshmemx_int64_p
+
+#define pshmem_put16                 pshmemx_put16
+#define pshmem_iput16                pshmemx_iput16
+
+#define pshmem_int16_g               pshmemx_int16_g
+#define pshmem_int32_g               pshmemx_int32_g
+#define pshmem_int64_g               pshmemx_int64_g
+
+#define pshmem_get16                 pshmemx_get16
+#define pshmem_iget16                pshmemx_iget16
+
+#define pshmem_int32_swap            pshmemx_int32_swap
+#define pshmem_int64_swap            pshmemx_int64_swap
+#define pshmem_int32_cswap           pshmemx_int32_cswap
+#define pshmem_int64_cswap           pshmemx_int64_cswap
+
+#define pshmem_int32_fadd            pshmemx_int32_fadd
+#define pshmem_int64_fadd            pshmemx_int64_fadd
+#define pshmem_int32_finc            pshmemx_int32_finc
+#define pshmem_int64_finc            pshmemx_int64_finc
+#define pshmem_int32_add             pshmemx_int32_add
+#define pshmem_int64_add             pshmemx_int64_add
+#define pshmem_int32_inc             pshmemx_int32_inc
+#define pshmem_int64_inc             pshmemx_int64_inc
+
+#define pshmem_int32_wait            pshmemx_int32_wait
+#define pshmem_int64_wait            pshmemx_int64_wait
+#define pshmem_int32_wait_until      pshmemx_int32_wait_until
+#define pshmem_int64_wait_until      pshmemx_int64_wait_until
+
+#define pshmem_int16_and_to_all      pshmemx_int16_and_to_all
+#define pshmem_int32_and_to_all      pshmemx_int32_and_to_all
+#define pshmem_int64_and_to_all      pshmemx_int64_and_to_all
+
+#define pshmem_int16_or_to_all       pshmemx_int16_or_to_all
+#define pshmem_int32_or_to_all       pshmemx_int32_or_to_all
+#define pshmem_int64_or_to_all       pshmemx_int64_or_to_all
+
+#define pshmem_int16_xor_to_all      pshmemx_int16_xor_to_all
+#define pshmem_int32_xor_to_all      pshmemx_int32_xor_to_all
+#define pshmem_int64_xor_to_all      pshmemx_int64_xor_to_all
+
+#define pshmem_int16_max_to_all      pshmemx_int16_max_to_all
+#define pshmem_int32_max_to_all      pshmemx_int32_max_to_all
+#define pshmem_int64_max_to_all      pshmemx_int64_max_to_all
+
+#define pshmem_int16_min_to_all      pshmemx_int16_min_to_all
+#define pshmem_int32_min_to_all      pshmemx_int32_min_to_all
+#define pshmem_int64_min_to_all      pshmemx_int64_min_to_all
+
+#define pshmem_int16_sum_to_all      pshmemx_int16_sum_to_all
+#define pshmem_int32_sum_to_all      pshmemx_int32_sum_to_all
+#define pshmem_int64_sum_to_all      pshmemx_int64_sum_to_all
+
+#define pshmem_int16_prod_to_all     pshmemx_int16_prod_to_all
+#define pshmem_int32_prod_to_all     pshmemx_int32_prod_to_all
+#define pshmem_int64_prod_to_all     pshmemx_int64_prod_to_all
+
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
