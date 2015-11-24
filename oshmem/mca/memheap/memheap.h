@@ -20,8 +20,6 @@
 #include "oshmem/mca/sshmem/sshmem.h"
 #include "oshmem/mca/spml/spml.h"
 
-#define DEFAULT_SYMMETRIC_HEAP_SIZE      256
-#define SIZE_IN_MEGA_BYTES(size_in_mb)  size_in_mb * 1024 * 1024
 
 BEGIN_C_DECLS
 struct mca_memheap_base_module_t;
