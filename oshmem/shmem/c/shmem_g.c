@@ -21,8 +21,8 @@
  * double, long) from symmetric data objects on remote PEs.
  * Retrieves the value at the symmetric address addr of the remote PE pe.
  */
-#define SHMEM_TYPE_G(type_name, type)    \
-    type shmem##type_name##_g(type *addr, int pe) \
+#define SHMEM_TYPE_G(type_name, type, ...)    \
+    type shmem##__VA_ARGS__##type_name##_g(type *addr, int pe) \
     {                                                               \
         int rc = OSHMEM_SUCCESS;                                    \
         size_t size = 0;                                            \
@@ -53,9 +53,9 @@
 #pragma weak shmem_float_g = pshmem_float_g
 #pragma weak shmem_double_g = pshmem_double_g
 #pragma weak shmem_longdouble_g = pshmem_longdouble_g
-#pragma weak shmem_int16_g = pshmem_int16_g
-#pragma weak shmem_int32_g = pshmem_int32_g
-#pragma weak shmem_int64_g = pshmem_int64_g
+#pragma weak shmemx_int16_g = pshmemx_int16_g
+#pragma weak shmemx_int32_g = pshmemx_int32_g
+#pragma weak shmemx_int64_g = pshmemx_int64_g
 #include "oshmem/shmem/c/profile/defines.h"
 #endif
 
@@ -67,6 +67,6 @@ SHMEM_TYPE_G(_longlong, long long)
 SHMEM_TYPE_G(_float, float)
 SHMEM_TYPE_G(_double, double)
 SHMEM_TYPE_G(_longdouble, long double)
-SHMEM_TYPE_G(_int16, int16_t)
-SHMEM_TYPE_G(_int32, int32_t)
-SHMEM_TYPE_G(_int64, int64_t)
+SHMEM_TYPE_G(_int16, int16_t, x)
+SHMEM_TYPE_G(_int32, int32_t, x)
+SHMEM_TYPE_G(_int64, int64_t, x)
