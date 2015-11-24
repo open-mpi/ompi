@@ -410,7 +410,7 @@ int mca_spml_ikrit_add_procs(oshmem_proc_t** procs, size_t nprocs)
 {
     spml_ikrit_mxm_ep_conn_info_t *ep_info = NULL;
     spml_ikrit_mxm_ep_conn_info_t *ep_hw_rdma_info = NULL;
-    spml_ikrit_mxm_ep_conn_info_t my_ep_info;
+    spml_ikrit_mxm_ep_conn_info_t my_ep_info = {0,};
 #if MXM_API < MXM_VERSION(2,0)
     mxm_conn_req_t *conn_reqs;
     int timeout;
