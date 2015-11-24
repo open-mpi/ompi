@@ -986,6 +986,15 @@ sub patch_autotools_output {
         $c =~ s/ppc\*-\*linux\*\|powerpc\*-\*linux\*\)/$replace_string/g;
     }
 
+    # Fix consequence of broken libtool.m4
+    # see http://lists.gnu.org/archive/html/bug-libtool/2015-07/msg00002.html and
+    # https://github.com/open-mpi/ompi/issues/751
+    verbose "$indent_str"."Patching configure for libtool.m4 bug\n";
+    # patch for libtool < 2.4.3
+    $c =~ s/# Some compilers place space between "-{L,R}" and the path.\n       # Remove the space.\n       if test \$p = \"-L\" \|\|/# Some compilers place space between "-{L,-l,R}" and the path.\n       # Remove the spaces.\n       if test \$p = \"-L\" \|\|\n          test \$p = \"-l\" \|\|/g;
+    # patch for libtool >= 2.4.3
+    $c =~ s/# Some compilers place space between "-{L,R}" and the path.\n       # Remove the space.\n       if test x-L = \"\$p\" \|\|\n          test x-R = \"\$p\"\; then/# Some compilers place space between "-{L,-l,R}" and the path.\n       # Remove the spaces.\n       if test x-L = \"x\$p\" \|\|\n          test x-l = \"x\$p\" \|\|\n          test x-R = \"x\$p\"\; then/g;
+
     open(OUT, ">configure.patched") || my_die "Can't open configure.patched";
     print OUT $c;
     close(OUT);
