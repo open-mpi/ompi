@@ -84,6 +84,10 @@ extern "C" {
 #define SHMEM_VENDOR_STRING             "http://www.open-mpi.org/"
 #define SHMEM_MAX_NAME_LEN              256
 
+#ifndef OSHMEM_SPEC_VERSION
+#define OSHMEM_SPEC_VERSION (SHMEM_MAJOR_VERSION * 10000 + SHMEM_MINOR_VERSION * 100)
+#endif
+
 enum shmem_wait_ops {
     SHMEM_CMP_EQ,
     SHMEM_CMP_NE,
