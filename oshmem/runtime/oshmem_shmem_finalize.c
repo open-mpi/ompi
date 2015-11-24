@@ -49,6 +49,7 @@
 #include "oshmem/mca/atomic/base/base.h"
 #include "oshmem/mca/memheap/base/base.h"
 #include "oshmem/mca/sshmem/base/base.h"
+#include "oshmem/info/info.h"
 #include "oshmem/proc/proc.h"
 #include "oshmem/proc/proc_group_cache.h"
 #include "oshmem/op/op.h"
@@ -155,6 +156,11 @@ static int _shmem_finalize(void)
 
     /* free proc resources */
     if (OSHMEM_SUCCESS != (ret = oshmem_proc_finalize())) {
+        return ret;
+    }
+
+    /* free info resources */
+    if (OSHMEM_SUCCESS != (ret = oshmem_info_finalize())) {
         return ret;
     }
 
