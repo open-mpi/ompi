@@ -490,6 +490,8 @@ struct mca_btl_openib_module_t {
     mca_btl_openib_module_qp_t * qps;
 
     int local_procs;                   /** number of local procs */
+
+    bool atomic_ops_be;                /** atomic result is big endian */
 };
 typedef struct mca_btl_openib_module_t mca_btl_openib_module_t;
 
