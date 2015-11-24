@@ -11,6 +11,10 @@
 #include <stdio.h>
 #include "shmem.h"
 
+#if !defined(OSHMEM_SPEC_VERSION) || OSHMEM_SPEC_VERSION < 10200
+#error This application uses API 1.2 and up
+#endif
+
 int main(int argc, char* argv[])
 {
     int proc, nproc;
