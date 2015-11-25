@@ -202,18 +202,26 @@ extern mca_mtl_portals4_module_t ompi_mtl_portals4;
     ((int)((match_bits & MTL_PORTALS4_SOURCE_MASK) >> 24))
 
 
+/* hda_data bit manipulation
+ *
+ * 0 1234567 01234567 01234567 0123 4567 01234567 01234567 01234567 01234567
+ *  |                              |             |
+ * ^|                              | context id  |        message tag
+ * ||                              |             |
+ * +---- is_sync
+ */
+
 #define MTL_PORTALS4_SYNC_MSG       0x8000000000000000ULL
 
-#define MTL_PORTALS4_SET_HDR_DATA(hdr_data, opcount, length, sync)   \
+#define MTL_PORTALS4_SET_HDR_DATA(hdr_data, tag, contextid, sync)    \
     {                                                                \
         hdr_data = (sync) ? 1 : 0;                                   \
-        hdr_data = (hdr_data << 15);                                 \
-        hdr_data |= opcount & 0x7FFFULL;                             \
-        hdr_data = (hdr_data << 48);                                 \
-        hdr_data |= (length & 0xFFFFFFFFFFFFULL);                    \
+        hdr_data = (hdr_data << 39);                                 \
+        hdr_data |= contextid;                                       \
+        hdr_data = (hdr_data << 24);                                 \
+        hdr_data |= (MTL_PORTALS4_TAG_MASK & tag);                   \
     }
 
-#define MTL_PORTALS4_GET_LENGTH(hdr_data) ((size_t)(hdr_data & 0xFFFFFFFFFFFFULL))
 #define MTL_PORTALS4_IS_SYNC_MSG(hdr_data)            \
     (0 != (MTL_PORTALS4_SYNC_MSG & hdr_data))
 
