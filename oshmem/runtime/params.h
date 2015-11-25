@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013      Mellanox Technologies, Inc.
+ * Copyright (c) 2013-2015 Mellanox Technologies, Inc.
  *                         All rights reserved.
  * $COPYRIGHT$
  *
@@ -19,10 +19,6 @@ BEGIN_C_DECLS
  * Global variables
  */
 
-/**
- * Whether an MPI_ABORT should print out a stack trace or not.
- */
-OSHMEM_DECLSPEC extern bool ompi_mpi_abort_print_stack;
 
 /**
  * Whether or not the lock routines are recursive

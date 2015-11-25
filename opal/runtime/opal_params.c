@@ -19,6 +19,8 @@
  * Copyright (c) 2014      Hochschule Esslingen.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015      Mellanox Technologies, Inc.
+ *                         All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -65,6 +67,8 @@ bool opal_base_distill_checkpoint_ready = false;
  */
 int opal_leave_pinned = -1;
 bool opal_leave_pinned_pipeline = false;
+bool opal_abort_print_stack = false;
+int opal_abort_delay = 0;
 
 static bool opal_register_done = false;
 
@@ -279,6 +283,38 @@ int opal_register_params(void)
                                  OPAL_INFO_LVL_9,
                                  MCA_BASE_VAR_SCOPE_READONLY,
                                  &opal_warn_on_fork);
+
+    opal_abort_delay = 0;
+    ret = mca_base_var_register("opal", "opal", NULL, "abort_delay",
+                                "If nonzero, print out an identifying message when abort operation is invoked (hostname, PID of the process that called abort) and delay for that many seconds before exiting (a negative delay value means to never abort).  This allows attaching of a debugger before quitting the job.",
+                                 MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                 OPAL_INFO_LVL_5,
+                                 MCA_BASE_VAR_SCOPE_READONLY,
+                                 &opal_abort_delay);
+    if (0 > ret) {
+	return ret;
+    }
+
+    opal_abort_print_stack = false;
+    ret = mca_base_var_register("opal", "opal", NULL, "abort_print_stack",
+                                 "If nonzero, print out a stack trace when abort is invoked",
+                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0,
+                                /* If we do not have stack trace
+                                   capability, make this a constant
+                                   MCA variable */
+#if OPAL_WANT_PRETTY_PRINT_STACKTRACE
+                                 0,
+                                 OPAL_INFO_LVL_5,
+                                 MCA_BASE_VAR_SCOPE_READONLY,
+#else
+                                 MCA_BASE_VAR_FLAG_DEFAULT_ONLY,
+                                 OPAL_INFO_LVL_5,
+                                 MCA_BASE_VAR_SCOPE_CONSTANT,
+#endif
+                                 &opal_abort_print_stack);
+    if (0 > ret) {
+	return ret;
+    }
 
     /* The ddt engine has a few parameters */
     ret = opal_datatype_register_params();
