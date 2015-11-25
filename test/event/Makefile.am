@@ -43,3 +43,6 @@ event_test_LDFLAGS = $(OPAL_PKG_CONFIG_LDFLAGS)
 event_test_LDADD = \
         $(top_builddir)/opal/libopen-pal.la
 event_test_DEPENDENCIES = $(event_test_LDADD)
+
+distclean:
+	rm -rf *.dSYM .deps .libs *.log *.o *.trs $(check_PROGRAMS) Makefile

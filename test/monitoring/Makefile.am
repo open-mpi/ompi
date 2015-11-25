@@ -28,3 +28,6 @@ if MCA_BUILD_ompi_pml_monitoring_DSO
 endif
 
 endif
+
+distclean:
+	rm -rf *.dSYM .deps .libs *.la *.lo monitoring_test *.log *.o *.trs Makefile

@@ -27,3 +27,6 @@ chello_LDADD = \
 	$(top_builddir)/src/libompi.la
 chello_DEPENDENCIES = $(chello_LDADD)
 
+
+distclean:
+	rm -rf *.dSYM .deps *.log *.o *.trs $(noinst_PROGRAMS) Makefile

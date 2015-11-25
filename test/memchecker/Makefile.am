@@ -59,3 +59,6 @@ non_blocking_recv_test_LDFLAGS = $(OMPI_PKG_CONFIG_LDFLAGS)
 non_blocking_recv_test_LDADD = \
         $(top_builddir)/ompi/libmpi.la
 non_blocking_recv_test_DEPENDENCIES = $(non_blocking_recv_test_LDADD)
+
+distclean:
+	rm -rf *.dSYM .deps *.log *.o *.trs $(check_PROGRAMS) Makefile
