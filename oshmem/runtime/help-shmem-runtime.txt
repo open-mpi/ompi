@@ -29,3 +29,14 @@ double check that everything has shut down cleanly.
 
 Local host: %s
 PID:        %d
+#
+[oshmem_init:print-version]
+Open SHMEM version:
+%s
+#
+[oshmem_init:print-info]
+Open SHMEM environment variables:
+%s - print the library version at start-up
+%s - print helpful text about all these environment variables
+%s - number of bytes to allocate for symmetric heap
+%s - enable debugging messages

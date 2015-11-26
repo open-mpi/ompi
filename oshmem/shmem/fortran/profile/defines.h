@@ -17,10 +17,30 @@
  * pshmem_* symbols
  */
 
+#define SHMEM_INIT PSHMEM_INIT
+#define shmem_init_ pshmem_init_
+#define shmem_init__ pshmem_init__
+
+#define START_PES PSTART_PES
+#define start_pes_ pstart_pes_
+#define start_pes__ pstart_pes__
+
+#define SHMEM_GLOBAL_EXIT PSHMEM_GLOBAL_EXIT
+#define shmem_global_exit_ pshmem_global_exit_
+#define shmem_global_exit__ pshmem_global_exit__
+
+#define SHMEM_MY_PE PSHMEM_MY_PE
+#define shmem_my_pe_ pshmem_my_pe_
+#define shmem_my_pe__ pshmem_my_pe__
+
 #define MY_PE PMY_PE
 #define my_pe_ pmy_pe_
 #define my_pe__ pmy_pe__
 #define _my_pe_ p_my_pe_
+
+#define SHMEM_N_PES PSHMEM_N_PES
+#define shmem_n_pes_ pshmem_n_pes_
+#define shmem_n_pes__ pshmem_n_pes__
 
 #define NUM_PES PNUM_PES
 #define num_pes_ pnum_pes_
@@ -569,9 +589,5 @@
 #define SHPDEALLC PSHPDEALLC
 #define shpdeallc_ pshpdeallc_
 #define shpdeallc__ pshpdeallc__
-
-#define START_PES PSTART_PES
-#define start_pes_ pstart_pes_
-#define start_pes__ pstart_pes__
 
 #endif /* OSHMEM_FORTRAN_PROFILE_DEFINES_H */

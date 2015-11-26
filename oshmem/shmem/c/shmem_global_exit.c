@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012      Mellanox Technologies, Inc.
+ * Copyright (c) 2012-2015 Mellanox Technologies, Inc.
  *                         All rights reserved.
  * $COPYRIGHT$
  *
@@ -14,9 +14,27 @@
 
 #include "orte/mca/errmgr/errmgr.h"
 
+#if OSHMEM_PROFILING
+#include "oshmem/include/pshmem.h"
+#pragma weak shmem_global_exit = pshmem_global_exit
+#include "oshmem/shmem/c/profile/defines.h"
+#endif
+
 extern int oshmem_shmem_inglobalexit;
 
+static inline void _globalexit(int status);
+
+void shmem_global_exit(int status)
+{
+    _globalexit(status);
+}
+
 void globalexit(int status)
+{
+    _globalexit(status);
+}
+
+static inline void _globalexit(int status)
 {
     oshmem_shmem_inglobalexit++;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013      Mellanox Technologies, Inc.
+ * Copyright (c) 2013-2015 Mellanox Technologies, Inc.
  *                         All rights reserved.
  * $COPYRIGHT$
  *
@@ -25,16 +25,25 @@
 
 #if OSHMEM_PROFILING
 #include "oshmem/include/pshmem.h"
+#pragma weak shmem_init = pshmem_init
 #pragma weak start_pes = pstart_pes
 #include "oshmem/shmem/c/profile/defines.h"
 #endif
 
 extern int oshmem_shmem_globalexit_status;
 
+static inline void _shmem_init(void);
+
+void shmem_init(void)
+{
+    /* spec says that npes are ignored for now */
+    _shmem_init();
+}
+
 void start_pes(int npes)
 {
     /* spec says that npes are ignored for now */
-    shmem_init();
+    _shmem_init();
 }
 
 static void shmem_onexit(int exitcode, void *arg)
@@ -42,7 +51,7 @@ static void shmem_onexit(int exitcode, void *arg)
     oshmem_shmem_globalexit_status = exitcode;
 }
 
-void shmem_init(void)
+static inline void _shmem_init(void)
 {
     int err = OSHMEM_SUCCESS;
     int provided;

@@ -644,12 +644,6 @@ JNIEXPORT jboolean JNICALL Java_shmem_Addr_testLock(
     abort();
 }
 
-JNIEXPORT void JNICALL Java_shmem_Addr_waitShort(
-        JNIEnv *env, jobject jthis, jlong addr, jshort value)
-{
-    shmem_int16_wait((void*)addr, value);
-}
-
 JNIEXPORT void JNICALL Java_shmem_Addr_waitInt(
         JNIEnv *env, jobject jthis, jlong addr, jint value)
 {
@@ -660,12 +654,6 @@ JNIEXPORT void JNICALL Java_shmem_Addr_waitLong(
         JNIEnv *env, jobject jthis, jlong addr, jlong value)
 {
     shmem_int64_wait((void*)addr, value);
-}
-
-JNIEXPORT void JNICALL Java_shmem_Addr_waitUntilShort(
-        JNIEnv *env, jobject jthis, jlong addr, jint cmp, jshort value)
-{
-    shmem_int16_wait_until((void*)addr, cmp, value);
 }
 
 JNIEXPORT void JNICALL Java_shmem_Addr_waitUntilInt(

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014      Mellanox Technologies, Inc.
+ * Copyright (c) 2014-2015 Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved
  * $COPYRIGHT$
@@ -79,6 +79,15 @@ extern "C" {
 /*
  * Constants and definitions
  */
+#define SHMEM_MAJOR_VERSION             1
+#define SHMEM_MINOR_VERSION             2
+#define SHMEM_VENDOR_STRING             "http://www.open-mpi.org/"
+#define SHMEM_MAX_NAME_LEN              256
+
+#ifndef OSHMEM_SPEC_VERSION
+#define OSHMEM_SPEC_VERSION (SHMEM_MAJOR_VERSION * 10000 + SHMEM_MINOR_VERSION * 100)
+#endif
+
 enum shmem_wait_ops {
     SHMEM_CMP_EQ,
     SHMEM_CMP_NE,
@@ -106,15 +115,21 @@ enum shmem_wait_ops {
 /*
  * Initialization routines
  */
-OSHMEM_DECLSPEC  void start_pes(int npes);
-
+OSHMEM_DECLSPEC  void shmem_init(void);
+OSHMEM_DECLSPEC  void shmem_finalize(void) OSHMEM_DESTRUCTOR;
+OSHMEM_DECLSPEC  void shmem_global_exit(int status);
 
 /*
  * Query routines
  */
-OSHMEM_DECLSPEC  int _num_pes(void);
-OSHMEM_DECLSPEC  int _my_pe(void);
+OSHMEM_DECLSPEC  int shmem_n_pes(void);
+OSHMEM_DECLSPEC  int shmem_my_pe(void);
 
+/*
+ * Info routines
+ */
+OSHMEM_DECLSPEC void shmem_info_get_version(int *major, int *minor);
+OSHMEM_DECLSPEC void shmem_info_get_name(char *name);
 
 /*
  * Accessability routines
@@ -125,10 +140,10 @@ OSHMEM_DECLSPEC int shmem_addr_accessible(void *addr, int pe);
 /*
  * Symmetric heap routines
  */
-OSHMEM_DECLSPEC  void* shmalloc(size_t size);
-OSHMEM_DECLSPEC  void* shmemalign(size_t align, size_t size);
-OSHMEM_DECLSPEC  void* shrealloc(void *ptr, size_t size);
-OSHMEM_DECLSPEC  void shfree(void* ptr);
+OSHMEM_DECLSPEC  void* shmem_malloc(size_t size);
+OSHMEM_DECLSPEC  void* shmem_align(size_t align, size_t size);
+OSHMEM_DECLSPEC  void* shmem_realloc(void *ptr, size_t size);
+OSHMEM_DECLSPEC  void shmem_free(void* ptr);
 
 /*
  * Remote pointer operations
@@ -138,6 +153,7 @@ OSHMEM_DECLSPEC  void *shmem_ptr(void *ptr, int pe);
 /*
  * Elemental put routines
  */
+OSHMEM_DECLSPEC  void shmem_char_p(char* addr, char value, int pe);
 OSHMEM_DECLSPEC  void shmem_short_p(short* addr, short value, int pe);
 OSHMEM_DECLSPEC  void shmem_int_p(int* addr, int value, int pe);
 OSHMEM_DECLSPEC  void shmem_long_p(long* addr, long value, int pe);
@@ -149,7 +165,6 @@ OSHMEM_DECLSPEC  void shmem_longdouble_p(long double* addr, long double value, i
 /*
  * Block data put routines
  */
-OSHMEM_DECLSPEC  void shmem_char_put(char *target, const char *source, size_t len, int pe);
 OSHMEM_DECLSPEC  void shmem_short_put(short *target, const short *source, size_t len, int pe);
 OSHMEM_DECLSPEC  void shmem_int_put(int* target, const int* source, size_t len, int pe);
 OSHMEM_DECLSPEC  void shmem_long_put(long *target, const long *source, size_t len, int pe);
@@ -165,8 +180,8 @@ OSHMEM_DECLSPEC  void shmem_putmem(void *target, const void *source, size_t len,
 /*
  * Strided put routines
  */
-OSHMEM_DECLSPEC void shmem_int_iput(int* target, const int* source, ptrdiff_t tst, ptrdiff_t sst,size_t len, int pe);
 OSHMEM_DECLSPEC void shmem_short_iput(short* target, const short* source, ptrdiff_t tst, ptrdiff_t sst,size_t len, int pe);
+OSHMEM_DECLSPEC void shmem_int_iput(int* target, const int* source, ptrdiff_t tst, ptrdiff_t sst,size_t len, int pe);
 OSHMEM_DECLSPEC void shmem_float_iput(float* target, const float* source, ptrdiff_t tst, ptrdiff_t sst,size_t len, int pe);
 OSHMEM_DECLSPEC void shmem_double_iput(double* target, const double* source, ptrdiff_t tst, ptrdiff_t sst,size_t len, int pe);
 OSHMEM_DECLSPEC void shmem_longlong_iput(long long* target, const long long* source, ptrdiff_t tst, ptrdiff_t sst,size_t len, int pe);
@@ -191,7 +206,6 @@ OSHMEM_DECLSPEC  long double shmem_longdouble_g(long double* addr, int pe);
 /*
  * Block data get routines
  */
-OSHMEM_DECLSPEC  void shmem_char_get(char *target, const char *source, size_t len, int pe);
 OSHMEM_DECLSPEC  void shmem_short_get(short *target, const short *source, size_t len, int pe);
 OSHMEM_DECLSPEC  void shmem_int_get(int *target, const int *source, size_t len, int pe);
 OSHMEM_DECLSPEC  void shmem_long_get(long *target, const long *source, size_t len, int pe);
@@ -207,8 +221,8 @@ OSHMEM_DECLSPEC  void shmem_getmem(void *target, const void *source, size_t len,
 /*
  * Strided get routines
  */
-OSHMEM_DECLSPEC void shmem_int_iget(int* target, const int* source, ptrdiff_t tst, ptrdiff_t sst,size_t len, int pe);
 OSHMEM_DECLSPEC void shmem_short_iget(short* target, const short* source, ptrdiff_t tst, ptrdiff_t sst,size_t len, int pe);
+OSHMEM_DECLSPEC void shmem_int_iget(int* target, const int* source, ptrdiff_t tst, ptrdiff_t sst,size_t len, int pe);
 OSHMEM_DECLSPEC void shmem_float_iget(float* target, const float* source, ptrdiff_t tst, ptrdiff_t sst,size_t len, int pe);
 OSHMEM_DECLSPEC void shmem_double_iget(double* target, const double* source, ptrdiff_t tst, ptrdiff_t sst,size_t len, int pe);
 OSHMEM_DECLSPEC void shmem_longlong_iget(long long* target, const long long* source, ptrdiff_t tst, ptrdiff_t sst,size_t len, int pe);

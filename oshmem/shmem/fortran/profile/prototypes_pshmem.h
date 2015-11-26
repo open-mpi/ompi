@@ -21,8 +21,12 @@ BEGIN_C_DECLS
   OSHMEM_DECLSPEC ret lower_name##__ args;    \
   OSHMEM_DECLSPEC ret upper_name args
 
+PN (void, pshmem_init, PSHMEM_INIT, (void));
 PN (void, pstart_pes, PSTART_PES, (MPI_Fint npes));
+PN (void, pshmem_global_exit, PSHMEM_GLOBAL_EXIT, (MPI_Fint npes));
+PN (MPI_Fint, pshmem_n_pes, PSHMEM_N_PES, (void));
 PN (MPI_Fint, pnum_pes, PNUM_PES, (void));
+PN (MPI_Fint, pshmem_my_pe, PSHMEM_MY_PE, (void));
 PN (MPI_Fint, pmy_pe, PMY_PE, (void));
 OSHMEM_DECLSPEC MPI_Fint p_my_pe_(void);
 PN (void, pshmem_barrier_all, PSHMEM_BARRIER_ALL, (void));
