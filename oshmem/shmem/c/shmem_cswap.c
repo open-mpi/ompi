@@ -24,8 +24,8 @@
  * of target. The operation must be completed without the possibility of another process updating
  * target between the time of the fetch and the update.
  */
-#define SHMEM_TYPE_CSWAP(type_name, type, ...)    \
-    type shmem##__VA_ARGS__##type_name##_cswap(type *target, type cond, type value, int pe) \
+#define SHMEM_TYPE_CSWAP(type_name, type, prefix)    \
+    type prefix##type_name##_cswap(type *target, type cond, type value, int pe) \
     {                                                               \
         int rc = OSHMEM_SUCCESS;                                    \
         size_t size = 0;                                            \
@@ -58,9 +58,9 @@
 #include "oshmem/shmem/c/profile/defines.h"
 #endif
 
-SHMEM_TYPE_CSWAP(_int, int)
-SHMEM_TYPE_CSWAP(_long, long)
-SHMEM_TYPE_CSWAP(_longlong, long long)
-SHMEM_TYPE_CSWAP(_int32, int32_t, x)
-SHMEM_TYPE_CSWAP(_int64, int64_t, x)
+SHMEM_TYPE_CSWAP(_int, int, shmem)
+SHMEM_TYPE_CSWAP(_long, long, shmem)
+SHMEM_TYPE_CSWAP(_longlong, long long, shmem)
+SHMEM_TYPE_CSWAP(_int32, int32_t, shmemx)
+SHMEM_TYPE_CSWAP(_int64, int64_t, shmemx)
 
