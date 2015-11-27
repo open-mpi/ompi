@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013      Mellanox Technologies, Inc.
+ * Copyright (c) 2013-2015 Mellanox Technologies, Inc.
  *                         All rights reserved.
  * $COPYRIGHT$
  *
@@ -8,8 +8,12 @@
  * $HEADER$
  */
 
-#include "params.h"
-#include "runtime.h"
+#include "oshmem_config.h"
+
+#include "opal/runtime/opal_params.h"
+
+#include "oshmem/runtime/params.h"
+#include "oshmem/runtime/runtime.h"
 #include "oshmem/constants.h"
 
 
@@ -19,6 +23,8 @@ int oshmem_preconnect_all = 0;
 
 int oshmem_shmem_register_params(void)
 {
+    int value;
+
     (void) mca_base_var_register("oshmem",
                                  "oshmem",
                                  NULL,
@@ -62,6 +68,18 @@ int oshmem_shmem_register_params(void)
                                  OPAL_INFO_LVL_9,
                                  MCA_BASE_VAR_SCOPE_READONLY,
                                  &oshmem_preconnect_all);
+
+    value = mca_base_var_find ("opal", "opal", NULL, "abort_delay");
+    if (0 <= value) {
+        (void) mca_base_var_register_synonym(value, "oshmem", "oshmem", NULL, "abort_delay",
+                                      MCA_BASE_VAR_SYN_FLAG_DEPRECATED);
+    }
+
+    value = mca_base_var_find ("opal", "opal", NULL, "abort_print_stack");
+    if (0 <= value) {
+        (void) mca_base_var_register_synonym(value, "oshmem", "oshmem", NULL, "abort_print_stack",
+                                      MCA_BASE_VAR_SYN_FLAG_DEPRECATED);
+    }
 
     return OSHMEM_SUCCESS;
 }
