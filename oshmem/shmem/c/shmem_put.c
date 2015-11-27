@@ -73,8 +73,8 @@ SHMEM_TYPE_PUT(_float, float)
 SHMEM_TYPE_PUT(_double, double)
 SHMEM_TYPE_PUT(_longdouble, long double)
 
-#define SHMEM_TYPE_PUTMEM(name, element_size, ...)    \
-    void shmem##__VA_ARGS__##name(void *target, const void *source, size_t nelems, int pe) \
+#define SHMEM_TYPE_PUTMEM(name, element_size, prefix)    \
+    void prefix##name(void *target, const void *source, size_t nelems, int pe) \
     {                                                               \
         int rc = OSHMEM_SUCCESS;                                    \
         size_t size = 0;                                            \
@@ -94,10 +94,10 @@ SHMEM_TYPE_PUT(_longdouble, long double)
         return ;                                                    \
     }
 
-SHMEM_TYPE_PUTMEM(_putmem, 1)
-SHMEM_TYPE_PUTMEM(_put16, 2, x)
-SHMEM_TYPE_PUTMEM(_put32, 4)
-SHMEM_TYPE_PUTMEM(_put64, 8)
-SHMEM_TYPE_PUTMEM(_put128, 16)
+SHMEM_TYPE_PUTMEM(_putmem, 1, shmem)
+SHMEM_TYPE_PUTMEM(_put16, 2, shmemx)
+SHMEM_TYPE_PUTMEM(_put32, 4, shmem)
+SHMEM_TYPE_PUTMEM(_put64, 8, shmem)
+SHMEM_TYPE_PUTMEM(_put128, 16, shmem)
 
-SHMEM_TYPE_PUTMEM(_put, sizeof(long))
+SHMEM_TYPE_PUTMEM(_put, sizeof(long), shmem)

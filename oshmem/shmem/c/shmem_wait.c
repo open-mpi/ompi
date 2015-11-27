@@ -21,8 +21,8 @@
  * A call to any shmem_wait() routine does not return until some other processor makes the
  * value at address var not equal to value.
  */
-#define SHMEM_TYPE_WAIT(type_name, type, code, ...)    \
-    void shmem##__VA_ARGS__##type_name##_wait(type *addr, type value) \
+#define SHMEM_TYPE_WAIT(type_name, type, code, prefix)    \
+    void prefix##type_name##_wait(type *addr, type value) \
     {                                                               \
         int rc = OSHMEM_SUCCESS;                                    \
                                                                     \
@@ -57,16 +57,16 @@
 #include "oshmem/shmem/c/profile/defines.h"
 #endif
 
-SHMEM_TYPE_WAIT(, long, SHMEM_LONG)
-SHMEM_TYPE_WAIT(_short, short, SHMEM_SHORT)
-SHMEM_TYPE_WAIT(_int, int, SHMEM_INT)
-SHMEM_TYPE_WAIT(_long, long, SHMEM_LONG)
-SHMEM_TYPE_WAIT(_longlong, long long, SHMEM_LLONG)
-SHMEM_TYPE_WAIT(_int32, int32_t, SHMEM_INT32_T, x)
-SHMEM_TYPE_WAIT(_int64, int64_t, SHMEM_INT64_T, x)
+SHMEM_TYPE_WAIT(, long, SHMEM_LONG, shmem)
+SHMEM_TYPE_WAIT(_short, short, SHMEM_SHORT, shmem)
+SHMEM_TYPE_WAIT(_int, int, SHMEM_INT, shmem)
+SHMEM_TYPE_WAIT(_long, long, SHMEM_LONG, shmem)
+SHMEM_TYPE_WAIT(_longlong, long long, SHMEM_LLONG, shmem)
+SHMEM_TYPE_WAIT(_int32, int32_t, SHMEM_INT32_T, shmemx)
+SHMEM_TYPE_WAIT(_int64, int64_t, SHMEM_INT64_T, shmemx)
 
-#define SHMEM_TYPE_WAIT_UNTIL(type_name, type, code, ...)    \
-    void shmem##__VA_ARGS__##type_name##_wait_until(type *addr, int cmp, type value)   \
+#define SHMEM_TYPE_WAIT_UNTIL(type_name, type, code, prefix)    \
+    void prefix##type_name##_wait_until(type *addr, int cmp, type value)   \
     {                                                               \
         int rc = OSHMEM_SUCCESS;                                    \
                                                                     \
@@ -82,10 +82,10 @@ SHMEM_TYPE_WAIT(_int64, int64_t, SHMEM_INT64_T, x)
         return ;                                                    \
     }
 
-SHMEM_TYPE_WAIT_UNTIL(, long, SHMEM_LONG)
-SHMEM_TYPE_WAIT_UNTIL(_short, short, SHMEM_SHORT)
-SHMEM_TYPE_WAIT_UNTIL(_int, int, SHMEM_INT)
-SHMEM_TYPE_WAIT_UNTIL(_long, long, SHMEM_LONG)
-SHMEM_TYPE_WAIT_UNTIL(_longlong, long long, SHMEM_LLONG)
-SHMEM_TYPE_WAIT_UNTIL(_int32, int32_t, SHMEM_INT32_T, x)
-SHMEM_TYPE_WAIT_UNTIL(_int64, int64_t, SHMEM_INT64_T, x)
+SHMEM_TYPE_WAIT_UNTIL(, long, SHMEM_LONG, shmem)
+SHMEM_TYPE_WAIT_UNTIL(_short, short, SHMEM_SHORT, shmem)
+SHMEM_TYPE_WAIT_UNTIL(_int, int, SHMEM_INT, shmem)
+SHMEM_TYPE_WAIT_UNTIL(_long, long, SHMEM_LONG, shmem)
+SHMEM_TYPE_WAIT_UNTIL(_longlong, long long, SHMEM_LLONG, shmem)
+SHMEM_TYPE_WAIT_UNTIL(_int32, int32_t, SHMEM_INT32_T, shmemx)
+SHMEM_TYPE_WAIT_UNTIL(_int64, int64_t, SHMEM_INT64_T, shmemx)

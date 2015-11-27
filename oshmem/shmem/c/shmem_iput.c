@@ -72,8 +72,8 @@ SHMEM_TYPE_IPUT(_float, float)
 SHMEM_TYPE_IPUT(_double, double)
 SHMEM_TYPE_IPUT(_longdouble, long double)
 
-#define SHMEM_TYPE_IPUTMEM(name, element_size, ...)    \
-    void shmem##__VA_ARGS__##name(void *target, const void *source, ptrdiff_t tst, ptrdiff_t sst, size_t nelems, int pe) \
+#define SHMEM_TYPE_IPUTMEM(name, element_size, prefix)    \
+    void prefix##name(void *target, const void *source, ptrdiff_t tst, ptrdiff_t sst, size_t nelems, int pe) \
     {                                                               \
         int rc = OSHMEM_SUCCESS;                                    \
         size_t i = 0;                                               \
@@ -95,7 +95,7 @@ SHMEM_TYPE_IPUT(_longdouble, long double)
         return ;                                                    \
     }
 
-SHMEM_TYPE_IPUTMEM(_iput16, 2, x)
-SHMEM_TYPE_IPUTMEM(_iput32, 4)
-SHMEM_TYPE_IPUTMEM(_iput64, 8)
-SHMEM_TYPE_IPUTMEM(_iput128, 16)
+SHMEM_TYPE_IPUTMEM(_iput16, 2, shmemx)
+SHMEM_TYPE_IPUTMEM(_iput32, 4, shmem)
+SHMEM_TYPE_IPUTMEM(_iput64, 8, shmem)
+SHMEM_TYPE_IPUTMEM(_iput128, 16, shmem)
