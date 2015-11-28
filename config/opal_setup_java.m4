@@ -186,6 +186,11 @@ AC_DEFUN([OPAL_SETUP_JAVA],[
                           # too.  Ugh.
                           AS_IF([test -d "$with_jdk_headers/solaris"],
                                 [OPAL_JDK_CPPFLAGS="$OPAL_JDK_CPPFLAGS -I$with_jdk_headers/solaris"])
+                          # Darwin JDK also require -I<blah>/darwin.
+                          # See if that's there, and if so, add a -I for that,
+                          # too.  Ugh.
+                          AS_IF([test -d "$with_jdk_headers/darwin"],
+                                [OPAL_JDK_CPPFLAGS="$OPAL_JDK_CPPFLAGS -I$with_jdk_headers/darwin"])
 
                           CPPFLAGS="$CPPFLAGS $OPAL_JDK_CPPFLAGS"])
                    AC_CHECK_HEADER([jni.h], [],
