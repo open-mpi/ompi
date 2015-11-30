@@ -45,17 +45,17 @@ struct mca_mtl_psm2_endpoint_t {
     struct mca_mtl_psm2_module_t* mtl_psm2_module;
     /**< MTL instance that created this connection */
 
-    psm_epid_t	    peer_epid;
+    psm2_epid_t	    peer_epid;
     /**< The unique epid for the opened port */
 
-    psm_epaddr_t    peer_addr;
+    psm2_epaddr_t    peer_addr;
     /**< The connected endpoint handle*/
 };
 
 typedef struct mca_mtl_psm2_endpoint_t  mca_mtl_psm2_endpoint_t;
 OBJ_CLASS_DECLARATION(mca_mtl_psm2_endpoint);
 
-static inline mca_mtl_psm_endpoint_t *ompi_mtl_psm2_get_endpoint (struct mca_mtl_base_module_t* mtl, ompi_proc_t *ompi_proc)
+static inline mca_mtl_psm2_endpoint_t *ompi_mtl_psm2_get_endpoint (struct mca_mtl_base_module_t* mtl, ompi_proc_t *ompi_proc)
 {
     if (OPAL_UNLIKELY(NULL == ompi_proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_MTL])) {
 	ompi_mtl_psm2_add_procs (mtl, 1, &ompi_proc);

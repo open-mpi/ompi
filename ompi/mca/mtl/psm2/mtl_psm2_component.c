@@ -32,7 +32,7 @@
 #include "mtl_psm2_types.h"
 #include "mtl_psm2_request.h"
 
-#include "psm.h"
+#include "psm2.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -80,7 +80,7 @@ ompi_mtl_psm2_component_register(void)
     ompi_mtl_psm2.connect_timeout = 180;
     (void) mca_base_component_var_register(&mca_mtl_psm2_component.super.mtl_version,
                                            "connect_timeout",
-                                           "PSM connection timeout value in seconds",
+                                           "PSM2 connection timeout value in seconds",
                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY,
@@ -116,7 +116,7 @@ static int
 ompi_mtl_psm2_component_query(mca_base_module_t **module, int *priority)
 {
     /*
-     * if we get here it means that PSM is available so give high priority
+     * if we get here it means that PSM2 is available so give high priority
      */
 
     *priority = param_priority;
@@ -165,14 +165,14 @@ static mca_mtl_base_module_t *
 ompi_mtl_psm2_component_init(bool enable_progress_threads,
                             bool enable_mpi_threads)
 {
-    psm_error_t	err;
-    int	verno_major = PSM_VERNO_MAJOR;
-    int verno_minor = PSM_VERNO_MINOR;
+    psm2_error_t	err;
+    int	verno_major = PSM2_VERNO_MAJOR;
+    int verno_minor = PSM2_VERNO_MINOR;
     int local_rank = -1, num_local_procs = 0;
     int num_total_procs = 0;
 
     /* Compute the total number of processes on this host and our local rank
-     * on that node. We need to provide PSM with these values so it can
+     * on that node. We need to provide PSM2 with these values so it can
      * allocate hardware contexts appropriately across processes.
      */
     if (OMPI_SUCCESS != get_num_local_procs(&num_local_procs)) {
@@ -190,27 +190,27 @@ ompi_mtl_psm2_component_init(bool enable_progress_threads,
         return NULL;
     }
 
-    err = psm_error_register_handler(NULL /* no ep */,
-			             PSM_ERRHANDLER_NOP);
+    err = psm2_error_register_handler(NULL /* no ep */,
+			             PSM2_ERRHANDLER_NOP);
     if (err) {
-        opal_output(0, "Error in psm_error_register_handler (error %s)\n",
-		    psm_error_get_string(err));
+        opal_output(0, "Error in psm2_error_register_handler (error %s)\n",
+		    psm2_error_get_string(err));
 	return NULL;
     }
 
     if (num_local_procs == num_total_procs) {
-      setenv("PSM_DEVICES", "self,shm", 0);
+      setenv("PSM2_DEVICES", "self,shm", 0);
     }
 
-    err = psm_init(&verno_major, &verno_minor);
+    err = psm2_init(&verno_major, &verno_minor);
     if (err) {
-      opal_show_help("help-mtl-psm.txt",
-		     "psm init", true,
-		     psm_error_get_string(err));
+      opal_show_help("help-mtl-psm2.txt",
+		     "psm2 init", true,
+		     psm2_error_get_string(err));
       return NULL;
     }
 
-    /* Complete PSM initialization */
+    /* Complete PSM2 initialization */
     ompi_mtl_psm2_module_init(local_rank, num_local_procs);
 
     ompi_mtl_psm2.super.mtl_request_size =
