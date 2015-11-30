@@ -101,7 +101,7 @@ int mca_topo_base_dist_graph_create_adjacent(mca_topo_base_module_t* module,
         if( MPI_UNWEIGHTED != destweights ) {
             if( NULL != topo->outw ) free(topo->outw);
         }
-        free(topo);
+        OBJ_RELEASE(topo);
     }
     ompi_comm_free(newcomm);
     return err;
