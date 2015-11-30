@@ -123,9 +123,7 @@ opal_event_base_t *orte_event_base = {0};
 bool orte_event_base_active = true;
 bool orte_proc_is_bound = false;
 int orte_progress_thread_debug = -1;
-#if OPAL_HAVE_HWLOC
 hwloc_cpuset_t orte_proc_applied_binding = NULL;
-#endif
 
 orte_process_name_t orte_name_wildcard = {ORTE_JOBID_WILDCARD, ORTE_VPID_WILDCARD};
 
@@ -246,9 +244,7 @@ int orte_init(int* pargc, char*** pargv, orte_proc_type_t flags)
     opal_process_info.proc_session_dir = orte_process_info.proc_session_dir;
     opal_process_info.num_local_peers  = (int32_t)orte_process_info.num_local_peers;
     opal_process_info.my_local_rank    = (int32_t)orte_process_info.my_local_rank;
-#if OPAL_HAVE_HWLOC
     opal_process_info.cpuset           = orte_process_info.cpuset;
-#endif  /* OPAL_HAVE_HWLOC */
 
 #if OPAL_ENABLE_TIMING
     opal_timing_set_jobid(ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));

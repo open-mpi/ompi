@@ -1485,7 +1485,6 @@ static uint64_t read_module_param(char *file, uint64_t value, uint64_t max)
 /* calculate memory registation limits */
 static uint64_t calculate_total_mem (void)
 {
-#if OPAL_HAVE_HWLOC
     hwloc_obj_t machine;
 
     machine = hwloc_get_next_obj_by_type (opal_hwloc_topology, HWLOC_OBJ_MACHINE, NULL);
@@ -1494,9 +1493,6 @@ static uint64_t calculate_total_mem (void)
     }
 
     return machine->memory.total_memory;
-#else
-    return 0;
-#endif
 }
 
 
@@ -2306,7 +2302,6 @@ static float get_ib_dev_distance(struct ibv_device *dev)
         return distance;
     }
 
-#if OPAL_HAVE_HWLOC
     float a, b;
     int i;
     hwloc_cpuset_t my_cpuset = NULL, ibv_cpuset = NULL;
@@ -2445,7 +2440,6 @@ static float get_ib_dev_distance(struct ibv_device *dev)
     if (NULL != my_cpuset) {
         hwloc_bitmap_free(my_cpuset);
     }
-#endif
 
     return distance;
 }
@@ -2465,13 +2459,11 @@ sort_devs_by_distance(struct ibv_device **ib_devs, int count)
                             "Checking distance from this process to device=%s", ibv_get_device_name(ib_devs[i]));
         /* If we're not bound, just assume that the device is close. */
         devs[i].distance = 0;
-#if OPAL_HAVE_HWLOC
         if (opal_process_info.cpuset) {
             /* If this process is bound to one or more PUs, we can get
                an accurate distance. */
             devs[i].distance = get_ib_dev_distance(ib_devs[i]);
         }
-#endif
         opal_output_verbose(5, opal_btl_base_framework.framework_output,
                             "Process is %s: distance to device is %f",
                             (opal_process_info.cpuset ? "bound" : "not bound"), devs[i].distance);

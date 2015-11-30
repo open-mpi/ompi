@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2008      Voltaire. All rights reserved
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
@@ -106,11 +106,7 @@ static int orte_rmaps_rank_file_register(void)
 static int orte_rmaps_rank_file_open(void)
 {
     /* ensure we flag mapping by user */
-#if OPAL_HAVE_HWLOC
     if (NULL != opal_hwloc_base_slot_list || NULL != orte_rankfile) {
-#else
-    if (NULL != orte_rankfile) {
-#endif
         if (ORTE_MAPPING_GIVEN & ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping)) {
             /* if a non-default mapping is already specified, then we
              * have an error

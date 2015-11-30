@@ -46,7 +46,6 @@
 
 int orte_ess_base_proc_binding(void)
 {
-#if OPAL_HAVE_HWLOC
     hwloc_obj_t node, obj;
     hwloc_cpuset_t cpus, nodeset;
     hwloc_obj_type_t target;
@@ -308,8 +307,4 @@ int orte_ess_base_proc_binding(void)
     }
 
     return ORTE_ERR_SILENT;
-
-#else
-    return ORTE_SUCCESS;
-#endif
 }

@@ -762,10 +762,7 @@ static void orte_node_construct(orte_node_t* node)
     node->slots = 0;
     node->slots_inuse = 0;
     node->slots_max = 0;
-
-#if OPAL_HAVE_HWLOC
     node->topology = NULL;
-#endif
 
     node->flags = 0;
     OBJ_CONSTRUCT(&node->attributes, opal_list_t);
@@ -852,9 +849,7 @@ static void orte_job_map_construct(orte_job_map_t* map)
     map->last_mapper = NULL;
     map->mapping = 0;
     map->ranking = 0;
-#if OPAL_HAVE_HWLOC
     map->binding = 0;
-#endif
     map->ppr = NULL;
     map->cpus_per_rank = 1;
     map->display_map = false;
@@ -918,7 +913,6 @@ OBJ_CLASS_INSTANCE(orte_attribute_t,
                    opal_list_item_t,
                    orte_attr_cons, orte_attr_des);
 
-#if OPAL_HAVE_HWLOC
 static void tcon(orte_topology_t *t)
 {
     t->topo = NULL;
@@ -936,4 +930,3 @@ static void tdes(orte_topology_t *t)
 OBJ_CLASS_INSTANCE(orte_topology_t,
                    opal_object_t,
                    tcon, tdes);
-#endif

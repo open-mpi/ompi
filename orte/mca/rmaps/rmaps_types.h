@@ -12,7 +12,7 @@
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -55,9 +55,7 @@ struct orte_job_map_t {
     char *last_mapper; /* last mapper used */
     orte_mapping_policy_t mapping;
     orte_ranking_policy_t ranking;
-#if OPAL_HAVE_HWLOC
     opal_binding_policy_t binding;
-#endif
     /* mapping options */
     char *ppr;
     int16_t cpus_per_rank;
