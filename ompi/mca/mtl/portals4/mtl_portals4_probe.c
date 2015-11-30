@@ -41,7 +41,7 @@ completion_fn(ptl_event_t *ev, ompi_mtl_portals4_base_request_t *ptl_base_reques
         ptl_request->status.MPI_SOURCE = MTL_PORTALS4_GET_SOURCE(ev->match_bits);
         ptl_request->status.MPI_TAG = MTL_PORTALS4_GET_TAG(ev->match_bits);
         ptl_request->status.MPI_ERROR = MPI_SUCCESS;
-        ptl_request->status._ucount = MTL_PORTALS4_GET_LENGTH(ev->hdr_data);
+        ptl_request->status._ucount += ev->mlength;
         if (ev->type != PTL_EVENT_SEARCH) {
             ptl_request->message = ompi_mtl_portals4_message_alloc(ev);
         }
