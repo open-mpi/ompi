@@ -61,6 +61,30 @@ AC_DEFUN([OMPI_CHECK_LUSTRE],[
                        [$ompi_check_lustre_dir], [$ompi_check_lustre_libdir], [ompi_check_lustre_happy="yes"],
                        [ompi_check_lustre_happy="no"])
 
+    AC_MSG_CHECKING([for required lustre data structures])
+   cat > conftest.c <<EOF
+#include "lustre/liblustreapi.h"
+void alloc_lum()
+{
+  int v1, v3;
+  v1 = sizeof(struct lov_user_md_v1) +
+   LOV_MAX_STRIPE_COUNT * sizeof(struct lov_user_ost_data_v1);
+  v3 = sizeof(struct lov_user_md_v3) +
+    LOV_MAX_STRIPE_COUNT * sizeof(struct lov_user_ost_data_v1);
+}
+EOF
+
+# Try the compile
+OPAL_LOG_COMMAND(
+    [$CC $CFLAGS -I$with_lustre/include -c conftest.c],
+    [ompi_check_lustre_struct_happy="yes"],
+    [ompi_check_lustre_struct_happy="no"
+     ompi_check_lustre_happy="no"]
+)
+    rm -f conftest.c conftest.o
+    AC_MSG_RESULT([$ompi_check_lustre_struct_happy])
+
+
     AS_IF([test "$ompi_check_lustre_happy" = "yes"],
           [$2],
           [AS_IF([test ! -z "$with_lustre" && test "$with_lustre" != "no"],
