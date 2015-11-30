@@ -824,6 +824,16 @@ static int init_one_port(opal_list_t *btl_list, mca_btl_openib_device_t *device,
 #if HAVE_DECL_IBV_ATOMIC_HCA
             openib_btl->atomic_ops_be = false;
 
+#if HAVE_DECL_IBV_EXP_QUERY_DEVICE
+            /* check that 8-byte atomics are supported */
+            if (!(device->dev_attr.ext_atom.log_atomic_arg_sizes & (1<<3ull))) {
+                openib_btl->super.btl_flags &= ~MCA_BTL_FLAGS_ATOMIC_FOPS;
+                openib_btl->super.btl_atomic_flags = 0;
+                openib_btl->super.btl_atomic_fop = NULL;
+                openib_btl->super.btl_atomic_cswap = NULL;
+            }
+#endif
+
             switch (openib_btl->device->ib_dev_attr.atomic_cap) {
             case IBV_ATOMIC_GLOB:
                 openib_btl->super.btl_flags |= MCA_BTL_ATOMIC_SUPPORTS_GLOB;
@@ -1639,12 +1649,19 @@ static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
                     ibv_get_device_name(device->ib_dev), strerror(errno)));
         goto error;
     }
-
+#if HAVE_DECL_IBV_EXP_QUERY_DEVICE
+    if(ibv_exp_query_device(device->ib_dev_context, &device->ib_dev_attr)){
+        BTL_ERROR(("error obtaining device attributes for %s errno says %s",
+                    ibv_get_device_name(device->ib_dev), strerror(errno)));
+        goto error;
+    }
+#else
     if(ibv_query_device(device->ib_dev_context, &device->ib_dev_attr)){
         BTL_ERROR(("error obtaining device attributes for %s errno says %s",
                     ibv_get_device_name(device->ib_dev), strerror(errno)));
         goto error;
     }
+#endif
     /* If mca_btl_if_include/exclude were specified, get usable ports */
     allowed_ports = (int*)malloc(device->ib_dev_attr.phys_port_cnt * sizeof(int));
     if (NULL == allowed_ports) {
