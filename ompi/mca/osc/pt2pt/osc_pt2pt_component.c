@@ -28,25 +28,12 @@
 #include <string.h>
 
 #include "osc_pt2pt.h"
-#include "osc_pt2pt_data_move.h"
 #include "osc_pt2pt_frag.h"
 #include "osc_pt2pt_request.h"
+#include "osc_pt2pt_data_move.h"
 
-#include "opal/threads/condition.h"
-#include "opal/threads/mutex.h"
-#include "opal/util/arch.h"
-#include "opal/align.h"
-#include "opal/mca/btl/btl.h"
-
-#include "ompi/info/info.h"
-#include "ompi/communicator/communicator.h"
-#include "ompi/mca/osc/osc.h"
-#include "ompi/mca/osc/base/base.h"
 #include "ompi/mca/osc/base/osc_base_obj_convert.h"
-#include "opal/mca/btl/btl.h"
-#include "ompi/mca/pml/pml.h"
 
-static int component_open(void);
 static int component_register(void);
 static int component_init(bool enable_progress_threads, bool enable_mpi_threads);
 static int component_finalize(void);
@@ -64,7 +51,6 @@ ompi_osc_pt2pt_component_t mca_osc_pt2pt_component = {
             .mca_component_name = "pt2pt",
             MCA_BASE_MAKE_VERSION(component, OMPI_MAJOR_VERSION, OMPI_MINOR_VERSION,
                                   OMPI_RELEASE_VERSION),
-            .mca_open_component = component_open,
             .mca_register_component_params = component_register,
         },
         .osc_data = {
@@ -128,53 +114,15 @@ bool ompi_osc_pt2pt_no_locks = false;
 /* look up parameters for configuring this window.  The code first
    looks in the info structure passed by the user, then through mca
    parameters. */
-static bool
-check_config_value_bool(char *key, ompi_info_t *info)
+static bool check_config_value_bool(char *key, ompi_info_t *info, bool result)
 {
-    char *value_string;
-    int value_len, ret, flag, param;
-    const bool *flag_value;
-    bool result;
+    int flag;
 
-    ret = ompi_info_get_valuelen(info, key, &value_len, &flag);
-    if (OMPI_SUCCESS != ret) goto info_not_found;
-    if (flag == 0) goto info_not_found;
-    value_len++;
-
-    value_string = (char*)malloc(sizeof(char) * value_len + 1); /* Should malloc 1 char for NUL-termination */
-    if (NULL == value_string) goto info_not_found;
-
-    ret = ompi_info_get(info, key, value_len, value_string, &flag);
-    if (OMPI_SUCCESS != ret) {
-        free(value_string);
-        goto info_not_found;
-    }
-    assert(flag != 0);
-    ret = ompi_info_value_to_bool(value_string, &result);
-    free(value_string);
-    if (OMPI_SUCCESS != ret) goto info_not_found;
+    (void) ompi_info_get_bool (info, key, &result, &flag);
     return result;
-
- info_not_found:
-    param = mca_base_var_find("ompi", "osc", "pt2pt", key);
-    if (0 > param) return false;
-
-    ret = mca_base_var_get_value(param, &flag_value, NULL, NULL);
-    if (OMPI_SUCCESS != ret) return false;
-
-    return flag_value[0];
 }
 
-
-static int
-component_open(void)
-{
-    return OMPI_SUCCESS;
-}
-
-
-static int
-component_register(void)
+static int component_register (void)
 {
     ompi_osc_pt2pt_no_locks = false;
     (void) mca_base_component_var_register(&mca_osc_pt2pt_component.super.osc_version,
@@ -346,15 +294,26 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
     /* initialize the objects, so that always free in cleanup */
     OBJ_CONSTRUCT(&module->lock, opal_mutex_t);
     OBJ_CONSTRUCT(&module->cond, opal_condition_t);
-    OBJ_CONSTRUCT(&module->acc_lock, opal_mutex_t);
     OBJ_CONSTRUCT(&module->locks_pending, opal_list_t);
     OBJ_CONSTRUCT(&module->locks_pending_lock, opal_mutex_t);
-    OBJ_CONSTRUCT(&module->outstanding_locks, opal_list_t);
+    OBJ_CONSTRUCT(&module->outstanding_locks, opal_hash_table_t);
     OBJ_CONSTRUCT(&module->pending_acc, opal_list_t);
-    OBJ_CONSTRUCT(&module->pending_posts, opal_list_t);
     OBJ_CONSTRUCT(&module->request_gc, opal_list_t);
     OBJ_CONSTRUCT(&module->buffer_gc, opal_list_t);
     OBJ_CONSTRUCT(&module->gc_lock, opal_mutex_t);
+    OBJ_CONSTRUCT(&module->all_sync, ompi_osc_pt2pt_sync_t);
+    OBJ_CONSTRUCT(&module->peer_hash, opal_hash_table_t);
+    OBJ_CONSTRUCT(&module->peer_lock, opal_mutex_t);
+
+    ret = opal_hash_table_init (&module->outstanding_locks, 64);
+    if (OPAL_SUCCESS != ret) {
+        goto cleanup;
+    }
+
+    ret = opal_hash_table_init (&module->peer_hash, 128);
+    if (OPAL_SUCCESS != ret) {
+        goto cleanup;
+    }
 
     /* options */
     /* FIX ME: should actually check this value... */
@@ -388,17 +347,6 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
     /* record my displacement unit.  Always resolved at target */
     module->disp_unit = disp_unit;
 
-    /* peer data */
-    module->peers = calloc(ompi_comm_size(comm), sizeof(ompi_osc_pt2pt_peer_t));
-    if (NULL == module->peers) {
-        ret = OMPI_ERR_TEMP_OUT_OF_RESOURCE;
-        goto cleanup;
-    }
-
-    for (int i = 0 ; i < ompi_comm_size (comm) ; ++i) {
-        OBJ_CONSTRUCT(module->peers + i, ompi_osc_pt2pt_peer_t);
-    }
-
     /* peer op count data */
     module->epoch_outgoing_frag_count = calloc (ompi_comm_size(comm), sizeof(uint32_t));
     if (NULL == module->epoch_outgoing_frag_count) {
@@ -408,18 +356,16 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
 
     /* the statement below (from Brian) does not seem correct so disable active target on the
      * window. if this end up being incorrect please revert this one change */
-    module->active_eager_send_active = false;
 #if 0
     /* initially, we're in that pseudo-fence state, so we allow eager
        sends (yay for Fence).  Other protocols will disable before
        they start their epochs, so this isn't a problem. */
-    module->active_eager_send_active = true;
+    module->all_sync.type = OMPI_OSC_PT2PT_SYNC_TYPE_FENCE;
+    module->all_sync.eager_send_active = true;
 #endif
 
     /* lock data */
-    if (check_config_value_bool("no_locks", info)) {
-        win->w_flags |= OMPI_WIN_NO_LOCKS;
-    }
+    module->no_locks = check_config_value_bool ("no_locks", info, ompi_osc_pt2pt_no_locks);
 
     /* update component data */
     OPAL_THREAD_LOCK(&mca_osc_pt2pt_component.lock);
@@ -458,6 +404,10 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
     if (!mca_osc_pt2pt_component.progress_enable) {
 	opal_progress_register (component_progress);
 	mca_osc_pt2pt_component.progress_enable = true;
+    }
+
+    if (module->no_locks) {
+        win->w_flags |= OMPI_WIN_NO_LOCKS;
     }
 
     OPAL_OUTPUT_VERBOSE((10, ompi_osc_base_framework.framework_output,
@@ -503,6 +453,9 @@ static void ompi_osc_pt2pt_peer_construct (ompi_osc_pt2pt_peer_t *peer)
 {
     OBJ_CONSTRUCT(&peer->queued_frags, opal_list_t);
     OBJ_CONSTRUCT(&peer->lock, opal_mutex_t);
+    peer->active_frag = NULL;
+    peer->passive_incoming_frag_count = 0;
+    peer->unexpected_post = false;
 }
 
 static void ompi_osc_pt2pt_peer_destruct (ompi_osc_pt2pt_peer_t *peer)

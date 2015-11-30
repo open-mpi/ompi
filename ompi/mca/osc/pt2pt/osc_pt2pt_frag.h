@@ -51,6 +51,7 @@ static inline int ompi_osc_pt2pt_frag_alloc (ompi_osc_pt2pt_module_t *module, in
                                              size_t request_len, ompi_osc_pt2pt_frag_t **buffer,
                                              char **ptr)
 {
+    ompi_osc_pt2pt_peer_t *peer = ompi_osc_pt2pt_peer_lookup (module, target);
     ompi_osc_pt2pt_frag_t *curr;
     int ret;
 
@@ -64,13 +65,13 @@ static inline int ompi_osc_pt2pt_frag_alloc (ompi_osc_pt2pt_module_t *module, in
     }
 
     OPAL_THREAD_LOCK(&module->lock);
-    curr = module->peers[target].active_frag;
+    curr = peer->active_frag;
     if (NULL == curr || curr->remain_len < request_len) {
         opal_free_list_item_t *item = NULL;
 
         if (NULL != curr) {
             curr->remain_len = 0;
-            module->peers[target].active_frag = NULL;
+            peer->active_frag = NULL;
             opal_atomic_mb ();
 
             /* If there's something pending, the pending finish will
@@ -87,8 +88,7 @@ static inline int ompi_osc_pt2pt_frag_alloc (ompi_osc_pt2pt_module_t *module, in
         if (OPAL_UNLIKELY(NULL == item)) {
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
-        curr = module->peers[target].active_frag =
-            (ompi_osc_pt2pt_frag_t*) item;
+        curr = peer->active_frag = (ompi_osc_pt2pt_frag_t*) item;
 
         curr->target = target;
 
@@ -105,7 +105,6 @@ static inline int ompi_osc_pt2pt_frag_alloc (ompi_osc_pt2pt_module_t *module, in
         }
         curr->header->source = ompi_comm_rank(module->comm);
         curr->header->num_ops = 0;
-        curr->header->windx = ompi_comm_get_cid(module->comm);
 
         if (curr->remain_len < request_len) {
             OPAL_THREAD_UNLOCK(&module->lock);

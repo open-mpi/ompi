@@ -8,7 +8,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2014 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2010      IBM Corporation.  All rights reserved.
  * Copyright (c) 2012-2013 Sandia National Laboratories.  All rights reserved.
@@ -35,74 +35,95 @@
 #include "ompi/mca/osc/base/base.h"
 
 /**
- * ompi_osc_pt2pt_pending_post_t:
+ * compare_ranks:
  *
- * Describes a post operation that was encountered outside its
- * matching start operation.
+ * @param[in] ptra    Pointer to integer item
+ * @param[in] ptrb    Pointer to integer item
+ *
+ * @returns 0 if *ptra == *ptrb
+ * @returns -1 if *ptra < *ptrb
+ * @returns 1 otherwise
+ *
+ * This function is used to sort the rank list. It can be removed if
+ * groups are always in order.
  */
-struct ompi_osc_pt2pt_pending_post_t {
-    opal_list_item_t super;
-    int rank;
-};
-typedef struct ompi_osc_pt2pt_pending_post_t ompi_osc_pt2pt_pending_post_t;
-OBJ_CLASS_DECLARATION(ompi_osc_pt2pt_pending_post_t);
-
-OBJ_CLASS_INSTANCE(ompi_osc_pt2pt_pending_post_t, opal_list_item_t, NULL, NULL);
-
-static bool group_contains_proc (ompi_group_t *group, ompi_proc_t *proc)
+static int compare_ranks (const void *ptra, const void *ptrb)
 {
-    int group_size = ompi_group_size (group);
+    int a = *((int *) ptra);
+    int b = *((int *) ptrb);
 
-    for (int i = 0 ; i < group_size ; ++i) {
-        ompi_proc_t *group_proc = ompi_group_peer_lookup (group, i);
-
-        /* it is safe to compare procs by pointer */
-        if (group_proc == proc) {
-            return true;
-        }
+    if (a < b) {
+        return -1;
+    } else if (a > b) {
+        return 1;
     }
 
-    return false;
+    return 0;
 }
 
-static int*
-get_comm_ranks(ompi_osc_pt2pt_module_t *module,
-               ompi_group_t *sub_group)
+/**
+ * ompi_osc_pt2pt_get_comm_ranks:
+ *
+ * @param[in] module    - OSC PT2PT module
+ * @param[in] sub_group - Group with ranks to translate
+ *
+ * @returns an array of translated ranks on success or NULL on failure
+ *
+ * Translate the ranks given in {sub_group} into ranks in the
+ * communicator used to create {module}.
+ */
+static ompi_osc_pt2pt_peer_t **ompi_osc_pt2pt_get_peers (ompi_osc_pt2pt_module_t *module, ompi_group_t *sub_group)
 {
-    int *ranks1 = NULL, *ranks2 = NULL;
-    bool success = false;
-    int i, ret;
+    int size = ompi_group_size(sub_group);
+    ompi_osc_pt2pt_peer_t **peers;
+    int *ranks1, *ranks2;
+    int ret;
 
-    ranks1 = malloc(sizeof(int) * ompi_group_size(sub_group));
-    if (NULL == ranks1) goto cleanup;
-    ranks2 = malloc(sizeof(int) * ompi_group_size(sub_group));
-    if (NULL == ranks2) goto cleanup;
+    ranks1 = calloc (size, sizeof(int));
+    ranks2 = calloc (size, sizeof(int));
+    peers = calloc (size, sizeof (ompi_osc_pt2pt_peer_t *));
+    if (NULL == ranks1 || NULL == ranks2 || NULL == peers) {
+        free (ranks1);
+        free (ranks2);
+        free (peers);
+        return NULL;
+    }
 
-    for (i = 0 ; i < ompi_group_size(sub_group) ; ++i) {
+    for (int i = 0 ; i < size ; ++i) {
         ranks1[i] = i;
     }
 
-    ret = ompi_group_translate_ranks(sub_group,
-                                     ompi_group_size(sub_group),
-                                     ranks1,
-                                     module->comm->c_local_group,
-                                     ranks2);
-    if (OMPI_SUCCESS != ret) goto cleanup;
-
-    success = true;
-
- cleanup:
-    if (NULL != ranks1) free(ranks1);
-    if (!success) {
-        if (NULL != ranks2) free(ranks2);
-        ranks2 = NULL;
+    ret = ompi_group_translate_ranks (sub_group, size, ranks1, module->comm->c_local_group,
+                                      ranks2);
+    free (ranks1);
+    if (OMPI_SUCCESS != ret) {
+        free (ranks2);
+        free (peers);
+        return NULL;
     }
 
-    return ranks2;
+    qsort (ranks2, size, sizeof (int), compare_ranks);
+    for (int i = 0 ; i < size ; ++i) {
+        peers[i] = ompi_osc_pt2pt_peer_lookup (module, ranks2[i]);
+        OBJ_RETAIN(peers[i]);
+    }
+    free (ranks2);
+
+    return peers;
 }
 
-int
-ompi_osc_pt2pt_fence(int assert, ompi_win_t *win)
+static void ompi_osc_pt2pt_release_peers (ompi_osc_pt2pt_peer_t **peers, int npeers)
+{
+    if (peers) {
+        for (int i = 0 ; i < npeers ; ++i) {
+            OBJ_RELEASE(peers[i]);
+        }
+
+        free (peers);
+    }
+}
+
+int ompi_osc_pt2pt_fence(int assert, ompi_win_t *win)
 {
     ompi_osc_pt2pt_module_t *module = GET_MODULE(win);
     uint32_t incoming_reqs;
@@ -112,14 +133,16 @@ ompi_osc_pt2pt_fence(int assert, ompi_win_t *win)
                          "osc pt2pt: fence start"));
 
     /* can't enter an active target epoch when in a passive target epoch */
-    if (module->passive_target_access_epoch) {
+    if (ompi_osc_pt2pt_in_passive_epoch (module)) {
+        OPAL_OUTPUT_VERBOSE((25, ompi_osc_base_framework.framework_output,
+                             "osc pt2pt: could not enter fence. already in an access epoch"));
         return OMPI_ERR_RMA_SYNC;
     }
 
     /* active sends are now active (we will close the epoch if NOSUCCEED is specified) */
     if (0 == (assert & MPI_MODE_NOSUCCEED)) {
-        module->active_eager_send_active = true;
-        module->all_access_epoch = true;
+        module->all_sync.type = OMPI_OSC_PT2PT_SYNC_TYPE_FENCE;
+        module->all_sync.eager_send_active = true;
     }
 
     /* short-circuit the noprecede case */
@@ -168,9 +191,11 @@ ompi_osc_pt2pt_fence(int assert, ompi_win_t *win)
     if (assert & MPI_MODE_NOSUCCEED) {
         /* as specified in MPI-3 p 438 3-5 the fence can end an epoch. it isn't explicitly
          * stated that MPI_MODE_NOSUCCEED ends the epoch but it is a safe assumption. */
-        module->active_eager_send_active = false;
-        module->all_access_epoch = false;
+        ompi_osc_pt2pt_sync_reset (&module->all_sync);
     }
+
+    module->all_sync.epoch_active = false;
+
     opal_condition_broadcast (&module->cond);
     OPAL_THREAD_UNLOCK(&module->lock);
 
@@ -181,124 +206,128 @@ ompi_osc_pt2pt_fence(int assert, ompi_win_t *win)
 }
 
 
-int
-ompi_osc_pt2pt_start(ompi_group_t *group,
-                    int assert,
-                    ompi_win_t *win)
+int ompi_osc_pt2pt_start (ompi_group_t *group, int assert, ompi_win_t *win)
 {
     ompi_osc_pt2pt_module_t *module = GET_MODULE(win);
-    ompi_osc_pt2pt_pending_post_t *pending_post, *next;
-    int group_size;
-    int *ranks;
+    ompi_osc_pt2pt_sync_t *sync = &module->all_sync;
 
-    OPAL_THREAD_LOCK(&module->lock);
+    OPAL_THREAD_LOCK(&sync->lock);
 
-    /* ensure we're not already in a start or passive target. we can no check for all
-     * access here due to fence */
-    if (NULL != module->sc_group || module->passive_target_access_epoch) {
+    /* check if we are already in an access epoch */
+    if (ompi_osc_pt2pt_access_epoch_active (module)) {
         OPAL_THREAD_UNLOCK(&module->lock);
         return OMPI_ERR_RMA_SYNC;
     }
 
-    /* save the group */
-    OBJ_RETAIN(group);
-    ompi_group_increment_proc_count(group);
-
-    module->sc_group = group;
-
     /* mark all procs in this group as being in an access epoch */
-    group_size = ompi_group_size (module->sc_group);
+    sync->num_peers = ompi_group_size (group);
+    sync->sync.pscw.group = group;
+
+    /* haven't processed any post messages yet */
+    sync->sync_expected = sync->num_peers;
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
                          "ompi_osc_pt2pt_start entering with group size %d...",
-                         group_size));
+                         sync->num_peers));
 
-    ranks = get_comm_ranks(module, module->sc_group);
-    if (NULL == ranks) return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
+    sync->type = OMPI_OSC_PT2PT_SYNC_TYPE_PSCW;
 
-    for (int i = 0 ; i < group_size ; ++i) {
-        /* when the post comes in we will be in an access epoch with this proc */
-        module->peers[ranks[i]].access_epoch = true;
+    /* prevent us from entering a passive-target, fence, or another pscw access epoch until
+     * the matching complete is called */
+    sync->epoch_active = true;
+
+    /* save the group */
+    OBJ_RETAIN(group);
+
+    if (0 == ompi_group_size (group)) {
+        /* nothing more to do. this is an empty start epoch */
+        sync->eager_send_active = true;
+        OPAL_THREAD_UNLOCK(&module->lock);
+        return OMPI_SUCCESS;
     }
 
-    free (ranks);
+    opal_atomic_wmb ();
 
-    OPAL_LIST_FOREACH_SAFE(pending_post, next, &module->pending_posts, ompi_osc_pt2pt_pending_post_t) {
-        ompi_proc_t *pending_proc = ompi_comm_peer_lookup (module->comm, pending_post->rank);
+    /* translate the group ranks into the communicator */
+    sync->peer_list.peers = ompi_osc_pt2pt_get_peers (module, group);
+    if (NULL == sync->peer_list.peers) {
+        OPAL_THREAD_UNLOCK(&module->lock);
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
 
-        if (group_contains_proc (module->sc_group, pending_proc)) {
-            ompi_osc_pt2pt_peer_t *peer = module->peers + pending_post->rank;
+    if (!(assert & MPI_MODE_NOCHECK)) {
+        OPAL_THREAD_LOCK(&sync->lock);
+        for (int i = 0 ; i < sync->num_peers ; ++i) {
+            ompi_osc_pt2pt_peer_t *peer = sync->peer_list.peers[i];
 
-            OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output, "Consumed unexpected post message from %d",
-                                 pending_post->rank));
-            ++module->num_post_msgs;
-            peer->eager_send_active = true;
-
-            opal_list_remove_item (&module->pending_posts, &pending_post->super);
-            OBJ_RELEASE(pending_post);
+            if (peer->unexpected_post) {
+                /* the peer already sent a post message for this pscw access epoch */
+                OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
+                                     "found unexpected post from %d",
+                                     peer->rank));
+                OPAL_THREAD_ADD32 (&sync->sync_expected, -1);
+                peer->unexpected_post = false;
+            }
         }
+        OPAL_THREAD_UNLOCK(&sync->lock);
+    } else {
+        sync->sync_expected = 0;
     }
-
-    /* disable eager sends until we've receved the proper number of
-       post messages, at which time we know all our peers are ready to
-       receive messages. */
-    module->active_eager_send_active = false;
-
-    /* possible we've already received a couple in messages, so
-       add however many we're going to wait for */
-    module->num_post_msgs -= ompi_group_size(module->sc_group);
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
-                         "num_post_msgs = %d", module->num_post_msgs));
+                         "post messages still needed: %d", sync->sync_expected));
 
     /* if we've already received all the post messages, we can eager
        send.  Otherwise, eager send will be enabled when
        numb_post_messages reaches 0 */
-    if (0 == module->num_post_msgs) {
-        module->active_eager_send_active = true;
+    if (0 == sync->sync_expected) {
+        sync->eager_send_active = true;
     }
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
-                         "ompi_osc_pt2pt_start complete"));
+                         "ompi_osc_pt2pt_start complete. eager sends active: %d",
+                         sync->eager_send_active));
 
     OPAL_THREAD_UNLOCK(&module->lock);
     return OMPI_SUCCESS;
 }
 
 
-int
-ompi_osc_pt2pt_complete(ompi_win_t *win)
+int ompi_osc_pt2pt_complete (ompi_win_t *win)
 {
     ompi_osc_pt2pt_module_t *module = GET_MODULE(win);
-    ompi_osc_pt2pt_header_complete_t complete_req;
-    ompi_osc_pt2pt_peer_t *peer;
+    ompi_osc_pt2pt_sync_t *sync = &module->all_sync;
+    int my_rank = ompi_comm_rank (module->comm);
+    ompi_osc_pt2pt_peer_t **peers;
     int ret = OMPI_SUCCESS;
-    int i;
-    int *ranks = NULL;
     ompi_group_t *group;
+    size_t group_size;
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
                          "ompi_osc_pt2pt_complete entering..."));
 
-    if (NULL == module->sc_group) {
+    OPAL_THREAD_LOCK(&module->lock);
+    if (OMPI_OSC_PT2PT_SYNC_TYPE_PSCW != sync->type) {
+        OPAL_THREAD_UNLOCK(&module->lock);
         return OMPI_ERR_RMA_SYNC;
     }
 
-    ranks = get_comm_ranks(module, module->sc_group);
-    if (NULL == ranks) return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
-
-    OPAL_THREAD_LOCK(&module->lock);
-
     /* wait for all the post messages */
-    while (0 != module->num_post_msgs) {
-        OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
-                             "waiting for post messages. num_post_msgs = %d", module->num_post_msgs));
-        opal_condition_wait(&module->cond, &module->lock);
-    }
+    ompi_osc_pt2pt_sync_wait (sync);
+
+    /* phase 1 cleanup sync object */
+    group = sync->sync.pscw.group;
+    group_size = sync->num_peers;
+
+    peers = sync->peer_list.peers;
+
+    /* need to reset the sync here to avoid processing incorrect post messages */
+    ompi_osc_pt2pt_sync_reset (sync);
+
     OPAL_THREAD_UNLOCK(&module->lock);
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
-                         "ompi_osc_pt2pt_complete sending complete messages"));
+                         "ompi_osc_pt2pt_complete all posts received. sending complete messages..."));
 
     /* for each process in group, send a control message with number
        of updates coming, then start all the requests.  Note that the
@@ -307,25 +336,28 @@ ompi_osc_pt2pt_complete(ompi_win_t *win)
 
        At the same time, clean out the outgoing count for the next
        round. */
-    for (i = 0 ; i < ompi_group_size(module->sc_group) ; ++i) {
-        ompi_proc_t *proc = ompi_comm_peer_lookup(module->comm, ranks[i]);
-        if (ompi_proc_local() == proc) {
+    for (size_t i = 0 ; i < group_size ; ++i) {
+        ompi_osc_pt2pt_header_complete_t complete_req;
+        int rank = peers[i]->rank;
+
+        if (my_rank == rank) {
             /* shortcut for self */
-            OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output, "ompi_osc_pt2pt_complete self complete"));
-            module->num_complete_msgs++;
+            osc_pt2pt_incoming_complete (module, rank, 0);
             continue;
         }
 
         complete_req.base.type = OMPI_OSC_PT2PT_HDR_TYPE_COMPLETE;
         complete_req.base.flags = OMPI_OSC_PT2PT_HDR_FLAG_VALID;
-#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT && OPAL_ENABLE_DEBUG
+        complete_req.frag_count = module->epoch_outgoing_frag_count[rank];
+#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
+#if OPAL_ENABLE_DEBUG
         complete_req.padding[0] = 0;
         complete_req.padding[1] = 0;
 #endif
-        complete_req.frag_count = module->epoch_outgoing_frag_count[ranks[i]];
-        osc_pt2pt_hton(&complete_req, proc);
+        osc_pt2pt_hton(&complete_req, ompi_comm_peer_lookup (module->comm, rank));
+#endif
 
-        peer = module->peers + ranks[i];
+        ompi_osc_pt2pt_peer_t *peer = ompi_osc_pt2pt_peer_lookup (module, rank);
 
         /* XXX -- TODO -- since fragment are always delivered in order we do not need to count anything but long
          * requests. once that is done this can be removed. */
@@ -335,66 +367,58 @@ ompi_osc_pt2pt_complete(ompi_win_t *win)
 
         OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
                              "ompi_osc_pt2pt_complete sending complete message to %d. frag_count: %u",
-                             ranks[i], complete_req.frag_count));
+                             rank, complete_req.frag_count));
 
-
-        peer->access_epoch = false;
-
-        ret = ompi_osc_pt2pt_control_send (module, ranks[i], &complete_req,
+        ret = ompi_osc_pt2pt_control_send (module, rank, &complete_req,
                                            sizeof(ompi_osc_pt2pt_header_complete_t));
-        if (OMPI_SUCCESS != ret) goto cleanup;
+        if (OMPI_SUCCESS != ret) {
+            break;
+        }
 
-        ret = ompi_osc_pt2pt_frag_flush_target (module, ranks[i]);
-        if (OMPI_SUCCESS != ret) goto cleanup;
+        ret = ompi_osc_pt2pt_frag_flush_target (module, rank);
+        if (OMPI_SUCCESS != ret) {
+            break;
+        }
+
+        /* zero the fragment counts here to ensure they are zerod */
+        module->epoch_outgoing_frag_count[rank] = 0;
+    }
+
+    if (peers) {
+        /* release our reference to peers in this group */
+        ompi_osc_pt2pt_release_peers (peers, group_size);
+    }
+
+    if (OMPI_SUCCESS != ret) {
+        return ret;
     }
 
     OPAL_THREAD_LOCK(&module->lock);
-    /* zero the fragment counts here to ensure they are zerod */
-    for (i = 0 ; i < ompi_group_size(module->sc_group) ; ++i) {
-        peer = module->peers + ranks[i];
-        module->epoch_outgoing_frag_count[ranks[i]] = 0;
-        peer->eager_send_active = false;
-    }
-
     /* wait for outgoing requests to complete.  Don't wait for incoming, as
        we're only completing the access epoch, not the exposure epoch */
     while (module->outgoing_frag_count != module->outgoing_frag_signal_count) {
         opal_condition_wait(&module->cond, &module->lock);
     }
 
-    /* phase 1 cleanup group */
-    group = module->sc_group;
-    module->sc_group = NULL;
-
     /* unlock here, as group cleanup can take a while... */
     OPAL_THREAD_UNLOCK(&module->lock);
 
     /* phase 2 cleanup group */
-    ompi_group_decrement_proc_count(group);
     OBJ_RELEASE(group);
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
                          "ompi_osc_pt2pt_complete complete"));
-    free (ranks);
 
     return OMPI_SUCCESS;
-
- cleanup:
-    if (NULL != ranks) free(ranks);
-
-    return ret;
 }
 
 
-int
-ompi_osc_pt2pt_post(ompi_group_t *group,
-                   int assert,
-                   ompi_win_t *win)
+int ompi_osc_pt2pt_post (ompi_group_t *group, int assert, ompi_win_t *win)
 {
-    int *ranks;
     int ret = OMPI_SUCCESS;
     ompi_osc_pt2pt_module_t *module = GET_MODULE(win);
     ompi_osc_pt2pt_header_post_t post_req;
+    ompi_osc_pt2pt_peer_t **peers;
 
     /* can't check for all access epoch here due to fence */
     if (module->pw_group) {
@@ -405,17 +429,17 @@ ompi_osc_pt2pt_post(ompi_group_t *group,
                          "ompi_osc_pt2pt_post entering with group size %d...",
                          ompi_group_size (group)));
 
-    /* save the group */
-    OBJ_RETAIN(group);
-    ompi_group_increment_proc_count(group);
-
-    OPAL_THREAD_LOCK(&(module->lock));
+    OPAL_THREAD_LOCK(&module->lock);
 
     /* ensure we're not already in a post */
     if (NULL != module->pw_group) {
         OPAL_THREAD_UNLOCK(&(module->lock));
         return OMPI_ERR_RMA_SYNC;
     }
+
+    /* save the group */
+    OBJ_RETAIN(group);
+
     module->pw_group = group;
 
     /* Update completion counter.  Can't have received any completion
@@ -425,18 +449,26 @@ ompi_osc_pt2pt_post(ompi_group_t *group,
 
     OPAL_THREAD_UNLOCK(&(module->lock));
 
+    if ((assert & MPI_MODE_NOCHECK) || 0 == ompi_group_size (group)) {
+        return OMPI_SUCCESS;
+    }
+
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
                          "sending post messages"));
 
-    ranks = get_comm_ranks(module, module->pw_group);
-    if (NULL == ranks) {
+    /* translate group ranks into the communicator */
+    peers = ompi_osc_pt2pt_get_peers (module, module->pw_group);
+    if (OPAL_UNLIKELY(NULL == peers)) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
     /* send a hello counter to everyone in group */
     for (int i = 0 ; i < ompi_group_size(module->pw_group) ; ++i) {
-        OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output, "Sending post message to rank %d", ranks[i]));
-        ompi_proc_t *proc = ompi_comm_peer_lookup(module->comm, ranks[i]);
+        ompi_osc_pt2pt_peer_t *peer = peers[i];
+        int rank = peer->rank;
+
+        OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output, "Sending post message to rank %d", rank));
+        ompi_proc_t *proc = ompi_comm_peer_lookup (module->comm, rank);
 
         /* shortcut for self */
         if (ompi_proc_local() == proc) {
@@ -447,26 +479,24 @@ ompi_osc_pt2pt_post(ompi_group_t *group,
 
         post_req.base.type = OMPI_OSC_PT2PT_HDR_TYPE_POST;
         post_req.base.flags = OMPI_OSC_PT2PT_HDR_FLAG_VALID;
-        post_req.windx = ompi_comm_get_cid(module->comm);
         osc_pt2pt_hton(&post_req, proc);
 
         /* we don't want to send any data, since we're the exposure
            epoch only, so use an unbuffered send */
-        ret = ompi_osc_pt2pt_control_send_unbuffered(module, ranks[i], &post_req,
-                                                    sizeof(ompi_osc_pt2pt_header_post_t));
+        ret = ompi_osc_pt2pt_control_send_unbuffered(module, rank, &post_req,
+                                                     sizeof(ompi_osc_pt2pt_header_post_t));
         if (OMPI_SUCCESS != ret) {
             break;
         }
     }
 
-    free (ranks);
+    ompi_osc_pt2pt_release_peers (peers, ompi_group_size(module->pw_group));
 
     return ret;
 }
 
 
-int
-ompi_osc_pt2pt_wait(ompi_win_t *win)
+int ompi_osc_pt2pt_wait (ompi_win_t *win)
 {
     ompi_osc_pt2pt_module_t *module = GET_MODULE(win);
     ompi_group_t *group;
@@ -481,9 +511,10 @@ ompi_osc_pt2pt_wait(ompi_win_t *win)
     OPAL_THREAD_LOCK(&module->lock);
     while (0 != module->num_complete_msgs ||
              module->active_incoming_frag_count != module->active_incoming_frag_signal_count) {
-        OPAL_OUTPUT_VERBOSE((25, ompi_osc_base_framework.framework_output,
-                             "num_complete_msgs = %d, active_incoming_frag_count = %d, active_incoming_frag_signal_count = %d",
-                             module->num_complete_msgs, module->active_incoming_frag_count, module->active_incoming_frag_signal_count));
+        OPAL_OUTPUT_VERBOSE((25, ompi_osc_base_framework.framework_output, "num_complete_msgs = %d, "
+                             "active_incoming_frag_count = %d, active_incoming_frag_signal_count = %d",
+                             module->num_complete_msgs, module->active_incoming_frag_count,
+                             module->active_incoming_frag_signal_count));
         opal_condition_wait(&module->cond, &module->lock);
     }
 
@@ -491,7 +522,6 @@ ompi_osc_pt2pt_wait(ompi_win_t *win)
     module->pw_group = NULL;
     OPAL_THREAD_UNLOCK(&module->lock);
 
-    ompi_group_decrement_proc_count(group);
     OBJ_RELEASE(group);
 
     OPAL_OUTPUT_VERBOSE((25, ompi_osc_base_framework.framework_output,
@@ -501,9 +531,7 @@ ompi_osc_pt2pt_wait(ompi_win_t *win)
 }
 
 
-int
-ompi_osc_pt2pt_test(ompi_win_t *win,
-                   int *flag)
+int ompi_osc_pt2pt_test (ompi_win_t *win, int *flag)
 {
     ompi_osc_pt2pt_module_t *module = GET_MODULE(win);
     ompi_group_t *group;
@@ -531,7 +559,6 @@ ompi_osc_pt2pt_test(ompi_win_t *win,
 
         OPAL_THREAD_UNLOCK(&(module->lock));
 
-        ompi_group_decrement_proc_count(group);
         OBJ_RELEASE(group);
 
         return OMPI_SUCCESS;
@@ -542,41 +569,45 @@ ompi_osc_pt2pt_test(ompi_win_t *win,
     return ret;
 }
 
-int osc_pt2pt_incoming_post (ompi_osc_pt2pt_module_t *module, int source)
+void osc_pt2pt_incoming_complete (ompi_osc_pt2pt_module_t *module, int source, int frag_count)
 {
-    ompi_proc_t *source_proc = ompi_comm_peer_lookup (module->comm, source);
-    ompi_osc_pt2pt_peer_t *peer = module->peers + source;
+    OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
+                         "osc pt2pt:  process_complete got complete message from %d. expected fragment count %d. "
+                         "current signal count %d. current incomming count: %d. expected complete msgs: %d",
+                         source, frag_count, module->active_incoming_frag_signal_count,
+                         module->active_incoming_frag_count, module->num_complete_msgs));
 
-    OPAL_THREAD_LOCK(&module->lock);
+    /* the current fragment is not part of the frag_count so we need to add it here */
+    OPAL_THREAD_ADD32((int32_t *) &module->active_incoming_frag_signal_count, frag_count);
+
+    if (0 == OPAL_THREAD_ADD32((int32_t *) &module->num_complete_msgs, 1)) {
+        opal_condition_broadcast (&module->cond);
+    }
+}
+
+void osc_pt2pt_incoming_post (ompi_osc_pt2pt_module_t *module, int source)
+{
+    ompi_osc_pt2pt_sync_t *sync = &module->all_sync;
+
+    OPAL_THREAD_LOCK(&sync->lock);
 
     /* verify that this proc is part of the current start group */
-    if (!module->sc_group || !group_contains_proc (module->sc_group, source_proc)) {
-        ompi_osc_pt2pt_pending_post_t *pending_post = OBJ_NEW(ompi_osc_pt2pt_pending_post_t);
+    if (!ompi_osc_pt2pt_sync_pscw_peer (module, source, NULL)) {
+        ompi_osc_pt2pt_peer_t *peer = ompi_osc_pt2pt_peer_lookup (module, source);
 
         OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
-                             "received unexpected post message from %d. module->sc_group = %p, size = %d",
-                             source, (void*)module->sc_group, module->sc_group ? ompi_group_size (module->sc_group) : 0));
+                             "received unexpected post message from %d for future PSCW synchronization",
+                             source));
 
-        pending_post->rank = source;
+        peer->unexpected_post = true;
+        OPAL_THREAD_UNLOCK(&sync->lock);
+    } else {
+        OPAL_THREAD_UNLOCK(&sync->lock);
 
-        opal_list_append (&module->pending_posts, &pending_post->super);
+        ompi_osc_pt2pt_sync_expected (sync);
 
-        OPAL_THREAD_UNLOCK(&module->lock);
-        return OMPI_SUCCESS;
+        OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
+                             "received post message for PSCW synchronization. post messages still needed: %d",
+                             sync->sync_expected));
     }
-
-    assert (!peer->eager_send_active);
-    peer->eager_send_active = true;
-
-    module->num_post_msgs++;
-    OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
-                         "received post message. num_post_msgs = %d", module->num_post_msgs));
-
-    if (0 == module->num_post_msgs) {
-        module->active_eager_send_active = true;
-    }
-    opal_condition_broadcast (&module->cond);
-    OPAL_THREAD_UNLOCK(&module->lock);
-
-    return OMPI_SUCCESS;
 }
