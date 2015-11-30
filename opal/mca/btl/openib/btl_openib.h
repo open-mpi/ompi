@@ -371,7 +371,11 @@ typedef struct mca_btl_openib_device_t {
 #endif
     opal_mutex_t device_lock;          /* device level lock */
     struct ibv_context *ib_dev_context;
+#if HAVE_DECL_IBV_EXP_QUERY_DEVICE
+    struct ibv_exp_device_attr ib_dev_attr;
+#else
     struct ibv_device_attr ib_dev_attr;
+#endif
     struct ibv_pd *ib_pd;
     struct ibv_cq *ib_cq[2];
     uint32_t cq_size[2];

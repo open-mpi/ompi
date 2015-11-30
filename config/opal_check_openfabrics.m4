@@ -397,9 +397,9 @@ AC_DEFUN([OPAL_CHECK_EXP_VERBS],[
                    [have_struct_ibv_exp_send_wr=0
                     AC_MSG_RESULT([no])])
 
-    AC_DEFINE_UNQUOTED([HAVE_EXP_VERBS], [$have_struct_ibv_exp_send_wr], [Expanded verbs])
-    AC_CHECK_DECLS([IBV_EXP_ATOMIC_HCA_REPLY_BE, IBV_EXP_QP_CREATE_ATOMIC_BE_REPLY, ibv_exp_create_qp], [], [], [#include <infiniband/verbs_exp.h>])
-    AC_CHECK_HEADERS([infiniband/verbs_exp.h])
+    AC_DEFINE_UNQUOTED([HAVE_EXP_VERBS], [$have_struct_ibv_exp_send_wr], [Experimental verbs])
+    AC_CHECK_DECLS([IBV_EXP_ATOMIC_HCA_REPLY_BE, IBV_EXP_QP_CREATE_ATOMIC_BE_REPLY, ibv_exp_create_qp, ibv_exp_query_device],
+                   [], [], [#include <infiniband/verbs_exp.h>])
     AS_IF([test '$have_struct_ibv_exp_send_wr' = 1], [$1], [$2])
     OPAL_VAR_SCOPE_POP
 ])dnl

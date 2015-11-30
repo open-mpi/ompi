@@ -56,9 +56,6 @@
 #include <sys/types.h>
 #include <fcntl.h>
 #include <infiniband/verbs.h>
-#ifdef HAVE_INFINIBAND_VERBS_EXP_H
-#include <infiniband/verbs_exp.h>
-#endif
 #include <signal.h>
 
 #include <pthread.h>
@@ -1341,7 +1338,7 @@ static int udcm_rc_qp_create_one(udcm_module_t *m, mca_btl_base_endpoint_t* lcl_
     init_attr.pd = m->btl->device->ib_pd;
 
     init_attr.comp_mask |= IBV_EXP_QP_INIT_ATTR_ATOMICS_ARG;
-    init_attr.max_atomic_arg = 8;
+    init_attr.max_atomic_arg = sizeof (int64_t);
 
 #if HAVE_DECL_IBV_EXP_ATOMIC_HCA_REPLY_BE
     if (IBV_EXP_ATOMIC_HCA_REPLY_BE == m->btl->device->ib_dev_attr.atomic_cap) {
