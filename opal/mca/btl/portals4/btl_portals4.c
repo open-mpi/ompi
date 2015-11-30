@@ -500,7 +500,6 @@ mca_btl_portals4_alloc(struct mca_btl_base_module_t* btl_base,
             size : portals4_btl->super.btl_max_send_size ;
     }
 
-    frag->md_h = PTL_INVALID_HANDLE;
     frag->base.des_segment_count = 1;
     frag->base.des_flags = flags | MCA_BTL_DES_SEND_ALWAYS_CALLBACK;
     frag->base.order = MCA_BTL_NO_ORDER;
