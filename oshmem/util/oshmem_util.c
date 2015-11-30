@@ -13,8 +13,6 @@
 #include <stdarg.h>
 #include <stdio.h>
 
-#include "opal/util/output.h"
-
 #include "oshmem/constants.h"
 #include "oshmem/util/oshmem_util.h"
 
@@ -44,6 +42,7 @@ void oshmem_output_verbose(int level, int output_id, const char* prefix,
         free(str);
     }
 }
+
 
 void oshmem_output(int output_id, const char* prefix, const char* file,
     int line, const char* function, const char* format, ...)
