@@ -177,10 +177,6 @@ setup_gather_buffers_binomial(struct ompi_communicator_t   *comm,
     /* Setup Gather Buffers           */
     /**********************************/
     if (vrank == 0) {
-        request->u.gather.unpack_bytes=
-            request->u.gather.unpack_dst_true_extent +
-            ((ptrdiff_t)request->u.gather.unpack_dst_count * (ptrdiff_t)request->u.gather.size - 1) * request->u.gather.unpack_dst_extent;
-
         request->u.gather.gather_bytes=request->u.gather.packed_size * (ptrdiff_t)request->u.gather.size;
 
         /*
@@ -282,10 +278,6 @@ setup_gather_buffers_linear(struct ompi_communicator_t   *comm,
     /* Setup Gather Buffers           */
     /**********************************/
     if (i_am_root) {
-        request->u.gather.unpack_bytes=
-            request->u.gather.unpack_dst_true_extent +
-            ((ptrdiff_t)request->u.gather.unpack_dst_count * (ptrdiff_t)request->u.gather.size - 1) * request->u.gather.unpack_dst_extent;
-
         request->u.gather.gather_bytes=request->u.gather.packed_size * (ptrdiff_t)request->u.gather.size;
 
         /*
@@ -1005,8 +997,6 @@ ompi_coll_portals4_gather_intra_linear_top(const void *sbuf, int scount, struct 
                 "completed CTWait(expected_ops=%d)\n", expected_ops);
     }
 
-    ompi_coll_portals4_destroy_tree(&(portals4_module->cached_in_order_bmtree));
-
     OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
                  "coll:portals4:gather_intra_linear_top exit rank %d", request->u.gather.my_rank));
 
@@ -1015,8 +1005,6 @@ ompi_coll_portals4_gather_intra_linear_top(const void *sbuf, int scount, struct 
 err_hdlr:
     if (NULL != request->u.gather.gather_buf)
         free(request->u.gather.gather_buf);
-
-    ompi_coll_portals4_destroy_tree(&(portals4_module->cached_in_order_bmtree));
 
     opal_output(ompi_coll_base_framework.framework_output,
                 "%s:%4d:%4d\tError occurred ret=%d, rank %2d",
