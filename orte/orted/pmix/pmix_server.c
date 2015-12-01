@@ -381,58 +381,75 @@ static void send_error(int status, opal_process_name_t *idreq,
     return;
 }
 
-static void modex_resp(int status,
-                       const char *data, size_t sz, void *cbdata,
-                       opal_pmix_release_cbfunc_t relcbfunc, void *relcbdata)
+static void _mdxresp(int sd, short args, void *cbdata)
 {
     pmix_server_req_t *req = (pmix_server_req_t*)cbdata;
-    opal_buffer_t *reply, xfer;
     int rc;
+    opal_buffer_t *reply;
 
     /* check us out of the hotel */
     opal_hotel_checkout(&orte_pmix_server_globals.reqs, req->room_num);
 
     reply = OBJ_NEW(opal_buffer_t);
     /* return the status */
-    if (OPAL_SUCCESS != (rc = opal_dss.pack(reply, &status, 1, OPAL_INT))) {
+    if (OPAL_SUCCESS != (rc = opal_dss.pack(reply, &req->status, 1, OPAL_INT))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(reply);
-        OBJ_RELEASE(req);
-        return;
+        goto done;
     }
     /* pack the id of the requested proc */
     if (OPAL_SUCCESS != (rc = opal_dss.pack(reply, &req->target, 1, OPAL_NAME))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(reply);
-        OBJ_RELEASE(req);
-        return;
+        goto done;
     }
     /* pack the remote daemon's request room number */
     if (OPAL_SUCCESS != (rc = opal_dss.pack(reply, &req->remote_room_num, 1, OPAL_INT))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(reply);
-        OBJ_RELEASE(req);
-        return;
+        goto done;
     }
     /* return any provided data */
-    if (NULL != data) {
-        OBJ_CONSTRUCT(&xfer, opal_buffer_t);
-        opal_dss.load(&xfer, (void*)data, sz);
-        opal_dss.copy_payload(reply, &xfer);
-        xfer.base_ptr = NULL; // protect the incoming data
-        OBJ_DESTRUCT(&xfer);
-    }
+    opal_dss.copy_payload(reply, &req->msg);
 
     /* send the response */
     orte_rml.send_buffer_nb(&req->proxy, reply,
                             ORTE_RML_TAG_DIRECT_MODEX_RESP,
                             orte_rml_send_callback, NULL);
-    OBJ_RELEASE(req);
+
+  done:
     /* if they asked for a release, give it to them */
-    if (NULL != relcbfunc) {
-        relcbfunc(relcbdata);
+    if (NULL != req->rlcbfunc) {
+        req->rlcbfunc(req->cbdata);
     }
+    OBJ_RELEASE(req);
     return;
+}
+/* the modex_resp function takes place in the local PMIx server's
+ * progress thread - we must therefore thread-shift it so we can
+ * access our global data */
+static void modex_resp(int status,
+                       const char *data, size_t sz, void *cbdata,
+                       opal_pmix_release_cbfunc_t relcbfunc, void *relcbdata)
+{
+    pmix_server_req_t *req = (pmix_server_req_t*)cbdata;
+    opal_buffer_t xfer;
+
+    req->status = status;
+    /* we need to preserve the data as the caller
+     * will free it upon our return */
+    OBJ_CONSTRUCT(&xfer, opal_buffer_t);
+    opal_dss.load(&xfer, (void*)data, sz);
+    opal_dss.copy_payload(&req->msg, &xfer);
+    xfer.base_ptr = NULL; // protect the incoming data
+    OBJ_DESTRUCT(&xfer);
+    /* point to the callback */
+    req->rlcbfunc = relcbfunc;
+    req->cbdata = relcbdata;
+    opal_event_set(orte_event_base, &(req->ev),
+                   -1, OPAL_EV_WRITE, _mdxresp, req);
+    opal_event_set_priority(&(req->ev), ORTE_MSG_PRI);
+    opal_event_active(&(req->ev), OPAL_EV_WRITE, 1);
 }
 static void pmix_server_dmdx_recv(int status, orte_process_name_t* sender,
                                   opal_buffer_t *buffer,
@@ -446,10 +463,6 @@ static void pmix_server_dmdx_recv(int status, orte_process_name_t* sender,
     orte_proc_t *proc;
     pmix_server_req_t *req;
 
-    opal_output_verbose(2, orte_pmix_server_globals.output,
-                        "%s dmdx:recv request from proc %s",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                        ORTE_NAME_PRINT(sender));
 
     /* unpack the id of the proc whose data is being requested */
     cnt = 1;
@@ -457,6 +470,11 @@ static void pmix_server_dmdx_recv(int status, orte_process_name_t* sender,
         ORTE_ERROR_LOG(rc);
         return;
     }
+    opal_output_verbose(2, orte_pmix_server_globals.output,
+                        "%s dmdx:recv request from proc %s for proc %s",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                        ORTE_NAME_PRINT(sender),
+                        ORTE_NAME_PRINT(&idreq));
     /* and the remote daemon's tracking room number */
     cnt = 1;
     if (OPAL_SUCCESS != (rc = opal_dss.unpack(buffer, &room_num, &cnt, OPAL_INT))) {
@@ -513,24 +531,41 @@ static void pmix_server_dmdx_recv(int status, orte_process_name_t* sender,
     return;
 }
 
+typedef struct {
+    opal_object_t super;
+    char *data;
+    int32_t ndata;
+} datacaddy_t;
+static void dccon(datacaddy_t *p)
+{
+    p->data = NULL;
+}
+static void dcdes(datacaddy_t *p)
+{
+    if (NULL != p->data) {
+        free(p->data);
+    }
+}
+static OBJ_CLASS_INSTANCE(datacaddy_t,
+                          opal_object_t,
+                          dccon, dcdes);
+
 static void relcbfunc(void *relcbdata)
 {
-    uint8_t *data = (uint8_t*)relcbdata;
-    if (NULL != data) {
-        free(data);
-    }
+    datacaddy_t *d = (datacaddy_t*)relcbdata;
+
+    OBJ_RELEASE(d);
 }
 
 static void pmix_server_dmdx_resp(int status, orte_process_name_t* sender,
                                   opal_buffer_t *buffer,
                                   orte_rml_tag_t tg, void *cbdata)
 {
-    int rc, ret, room_num;
+    int rc, ret, room_num, rnum;
     int32_t cnt;
     opal_process_name_t target;
     pmix_server_req_t *req;
-    uint8_t *data = NULL;
-    int32_t ndata = 0;
+    datacaddy_t *d;
 
     opal_output_verbose(2, orte_pmix_server_globals.output,
                         "%s dmdx:recv response from proc %s",
@@ -559,7 +594,8 @@ static void pmix_server_dmdx_resp(int status, orte_process_name_t* sender,
     }
 
     /* unload the remainder of the buffer */
-    if (OPAL_SUCCESS != (rc = opal_dss.unload(buffer, (void**)&data, &ndata))) {
+    d = OBJ_NEW(datacaddy_t);
+    if (OPAL_SUCCESS != (rc = opal_dss.unload(buffer, (void**)&d->data, &d->ndata))) {
         ORTE_ERROR_LOG(rc);
         return;
     }
@@ -569,12 +605,29 @@ static void pmix_server_dmdx_resp(int status, orte_process_name_t* sender,
     /* return the returned data to the requestor */
     if (NULL != req) {
         if (NULL != req->mdxcbfunc) {
-            req->mdxcbfunc(ret, (char*)data, ndata, req->cbdata, relcbfunc, data);
-        } else {
-            free(data);
+            OBJ_RETAIN(d);
+            req->mdxcbfunc(ret, d->data, d->ndata, req->cbdata, relcbfunc, d);
         }
         OBJ_RELEASE(req);
     }
+
+    /* now see if anyone else was waiting for data from this target */
+    for (rnum=0; rnum < orte_pmix_server_globals.reqs.num_rooms; rnum++) {
+        opal_hotel_knock(&orte_pmix_server_globals.reqs, rnum, (void**)&req);
+        if (NULL == req) {
+            continue;
+        }
+        if (req->target.jobid == target.jobid &&
+            req->target.vpid == target.vpid) {
+            if (NULL != req->mdxcbfunc) {
+                OBJ_RETAIN(d);
+                req->mdxcbfunc(ret, d->data, d->ndata, req->cbdata, relcbfunc, d);
+            }
+            opal_hotel_checkout(&orte_pmix_server_globals.reqs, rnum);
+            OBJ_RELEASE(req);
+        }
+    }
+    OBJ_RELEASE(d);  // maintain accounting
 }
 
 static void opcon(orte_pmix_server_op_caddy_t *p)
@@ -589,6 +642,8 @@ OBJ_CLASS_INSTANCE(orte_pmix_server_op_caddy_t,
 
 static void rqcon(pmix_server_req_t *p)
 {
+    p->target = *ORTE_NAME_INVALID;
+    p->proxy = *ORTE_NAME_INVALID;
     p->timeout = orte_pmix_server_globals.timeout;
     p->jdata = NULL;
     OBJ_CONSTRUCT(&p->msg, opal_buffer_t);
@@ -596,6 +651,7 @@ static void rqcon(pmix_server_req_t *p)
     p->mdxcbfunc = NULL;
     p->spcbfunc = NULL;
     p->lkcbfunc = NULL;
+    p->rlcbfunc = NULL;
     p->cbdata = NULL;
 }
 static void rqdes(pmix_server_req_t *p)

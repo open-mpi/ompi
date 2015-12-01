@@ -300,9 +300,9 @@ opal/mca/hwloc/hwloc*/hwloc/include/private/autogen/config.h
 
 opal/mca/installdirs/config/install_dirs.h
 
-opal/mca/pmix/pmix1xx/pmix/include/pmix/autogen/config.h
-opal/mca/pmix/pmix1xx/pmix/include/private/autogen/config.h
-opal/mca/pmix/pmix1xx/pmix/include/private/autogen/config.h.in
+opal/mca/pmix/pmix111/pmix/include/pmix/autogen/config.h
+opal/mca/pmix/pmix111/pmix/include/private/autogen/config.h
+opal/mca/pmix/pmix111/pmix/include/private/autogen/config.h.in
 
 opal/tools/opal-checkpoint/opal-checkpoint
 opal/tools/opal-checkpoint/opal-checkpoint.1
@@ -363,6 +363,7 @@ orte/test/mpi/parallel_w64
 orte/test/mpi/pubsub
 orte/test/mpi/read_write
 orte/test/mpi/reduce-hang
+orte/test/mpi/ring
 orte/test/mpi/segv
 orte/test/mpi/simple_spawn
 orte/test/mpi/slave
