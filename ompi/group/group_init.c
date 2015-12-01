@@ -266,6 +266,8 @@ static void ompi_group_destruct(ompi_group_t *group)
        the proc counts are not increased during the constructor,
        either). */
 
+    ompi_group_decrement_proc_count (group);
+
     /* release thegrp_proc_pointers memory */
     if (NULL != group->grp_proc_pointers) {
         free(group->grp_proc_pointers);

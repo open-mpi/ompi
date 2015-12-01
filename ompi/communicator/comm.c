@@ -172,7 +172,6 @@ int ompi_comm_set_nb ( ompi_communicator_t **ncomm,
     } else {
         newcomm->c_local_group = local_group;
         OBJ_RETAIN(newcomm->c_local_group);
-        ompi_group_increment_proc_count(newcomm->c_local_group);
     }
     newcomm->c_my_rank = newcomm->c_local_group->grp_my_rank;
 
@@ -189,7 +188,6 @@ int ompi_comm_set_nb ( ompi_communicator_t **ncomm,
         } else {
             newcomm->c_remote_group = remote_group;
             OBJ_RETAIN(newcomm->c_remote_group);
-            ompi_group_increment_proc_count(newcomm->c_remote_group);
         }
 
         newcomm->c_flags |= OMPI_COMM_INTER;
@@ -255,9 +253,6 @@ int ompi_comm_group ( ompi_communicator_t* comm, ompi_group_t **group )
 {
     /* increment reference counters for the group */
     OBJ_RETAIN(comm->c_local_group);
-
-    /* increase also the reference counter for the procs */
-    ompi_group_increment_proc_count(comm->c_local_group);
 
     *group = comm->c_local_group;
     return OMPI_SUCCESS;
@@ -570,8 +565,6 @@ int ompi_comm_split( ompi_communicator_t* comm, int color, int key,
             goto exit;
         }
 
-        ompi_group_increment_proc_count(local_group);
-
         mode = OMPI_COMM_CID_INTER;
     } else {
         rranks = NULL;
@@ -603,7 +596,6 @@ int ompi_comm_split( ompi_communicator_t* comm, int color, int key,
     }
 
     if ( inter ) {
-        ompi_group_decrement_proc_count (local_group);
         OBJ_RELEASE(local_group);
         if (NULL != newcomp->c_local_comm) {
             snprintf(newcomp->c_local_comm->c_name, MPI_MAX_OBJECT_NAME,
@@ -2005,9 +1997,6 @@ static int ompi_comm_fill_rest(ompi_communicator_t *comm,
     /* set the remote group to be the same as local group */
     comm->c_remote_group = comm->c_local_group;
     OBJ_RETAIN( comm->c_remote_group );
-
-    /* retain these proc pointers */
-    ompi_group_increment_proc_count(comm->c_local_group);
 
     /* set the rank information */
     comm->c_local_group->grp_my_rank = my_rank;

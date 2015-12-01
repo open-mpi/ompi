@@ -145,7 +145,6 @@ static int alloc_window(struct ompi_communicator_t *comm, ompi_info_t *info, int
     /* setup data that is independent of osc component */
     group = comm->c_local_group;
     OBJ_RETAIN(group);
-    ompi_group_increment_proc_count(group);
     win->w_group = group;
 
     *win_out = win;
@@ -366,7 +365,6 @@ ompi_win_get_name(ompi_win_t *win, char *win_name, int *length)
 int
 ompi_win_group(ompi_win_t *win, ompi_group_t **group) {
     OBJ_RETAIN(win->w_group);
-    ompi_group_increment_proc_count(win->w_group);
     *group = win->w_group;
 
     return OMPI_SUCCESS;
@@ -406,7 +404,6 @@ ompi_win_destruct(ompi_win_t *win)
     }
 
     if (NULL != win->w_group) {
-        ompi_group_decrement_proc_count(win->w_group);
         OBJ_RELEASE(win->w_group);
     }
 
