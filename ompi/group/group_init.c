@@ -100,6 +100,7 @@ ompi_group_t *ompi_group_allocate(int group_size)
     return new_group;
 }
 
+#if OMPI_GROUP_SPARSE
 ompi_group_t *ompi_group_allocate_sporadic(int group_size)
 {
     /* local variables */
@@ -204,6 +205,7 @@ ompi_group_t *ompi_group_allocate_bmap(int orig_group_size , int group_size)
     /* return */
     return new_group;
 }
+#endif
 
 /*
  * increment the reference count of the proc structures
@@ -213,6 +215,7 @@ void ompi_group_increment_proc_count(ompi_group_t *group)
     ompi_proc_t * proc_pointer;
     for (int proc = 0 ; proc < group->grp_proc_count ; ++proc) {
 	proc_pointer = ompi_group_peer_lookup_existing (group, proc);
+	// proc_pointer = ompi_group_peer_lookup (group, proc);
 	if (proc_pointer) {
 	    OBJ_RETAIN(proc_pointer);
 	}
@@ -271,6 +274,7 @@ static void ompi_group_destruct(ompi_group_t *group)
         free(group->grp_proc_pointers);
     }
 
+#if OMPI_GROUP_SPARSE
     if (OMPI_GROUP_IS_SPORADIC(group)) {
         if (NULL != group->sparse_data.grp_sporadic.grp_sporadic_list) {
             free(group->sparse_data.grp_sporadic.grp_sporadic_list);
@@ -282,6 +286,7 @@ static void ompi_group_destruct(ompi_group_t *group)
             free(group->sparse_data.grp_bitmap.grp_bitmap_array);
         }
     }
+#endif
 
     if (NULL != group->grp_parent_group_ptr){
         ompi_group_decrement_proc_count(group->grp_parent_group_ptr);

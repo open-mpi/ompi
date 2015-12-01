@@ -11,6 +11,8 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2006-2007 University of Houston. All rights reserved.
+# Copyright (c) 2015      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -28,7 +30,11 @@ libmpi_la_SOURCES += \
         group/group.c \
         group/group_init.c \
         group/group_set_rank.c \
-        group/group_plist.c \
+        group/group_plist.c
+
+if OMPI_GROUP_SPARSE
+libmpi_la_SOURCES += \
 	group/group_sporadic.c \
 	group/group_strided.c \
  	group/group_bitmap.c
+endif
