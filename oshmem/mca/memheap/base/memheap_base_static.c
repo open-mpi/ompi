@@ -183,7 +183,7 @@ static int _load_segments(void)
 
     while (NULL != fgets(line, sizeof(line), fp)) {
         memset(&seg, 0, sizeof(seg));
-        sscanf(line,
+        if (3 > sscanf(line,
                "%llx-%llx %s %llx %s %llx %s",
                (unsigned long long *) &seg.start,
                (unsigned long long *) &seg.end,
@@ -191,7 +191,11 @@ static int _load_segments(void)
                (unsigned long long *) &seg.offset,
                seg.dev,
                (unsigned long long *) &seg.inode,
-               seg.pathname);
+               seg.pathname)) {
+            MEMHEAP_ERROR("Failed to sscanf /proc/self/maps output %s", line);
+            fclose(fp);
+            return OSHMEM_ERROR;
+        }
 
         if (OSHMEM_ERROR == _check_address(&seg))
             continue;
