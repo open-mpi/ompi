@@ -11,6 +11,8 @@
  * Copyright (c) 2014      The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -1773,8 +1775,12 @@ static int event_handler(struct rdma_cm_event *event)
            the device INI values, then just treat this CONNECT_ERROR
            as if it were the REJECT. */
         if (NULL != context->contents->dummy_cq) {
-            struct ibv_device_attr *attr =
-                &(context->endpoint->endpoint_btl->device->ib_dev_attr);
+#if HAVE_DECL_IBV_EXP_QUERY_DEVICE
+            struct ibv_exp_device_attr *attr;
+#else
+            struct ibv_device_attr *attr;
+#endif
+            attr = &(context->endpoint->endpoint_btl->device->ib_dev_attr);
             found = false;
             if (OPAL_SUCCESS == opal_btl_openib_ini_query(attr->vendor_id,
                                                           attr->vendor_part_id,

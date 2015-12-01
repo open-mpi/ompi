@@ -655,7 +655,11 @@ static int prepare_device_for_use (mca_btl_openib_device_t *device)
      * support it - we should ignore this device. Maybe we have another
      * one that has XRC support
      */
+#if HAVE_DECL_IBV_EXP_QUERY_DEVICE
+    if (!(device->ib_dev_attr.exp_device_cap_flags & IBV_DEVICE_XRC) &&
+#else
     if (!(device->ib_dev_attr.device_cap_flags & IBV_DEVICE_XRC) &&
+#endif
             MCA_BTL_XRC_ENABLED) {
         opal_show_help("help-mpi-btl-openib.txt",
                 "XRC on device without XRC support", true,

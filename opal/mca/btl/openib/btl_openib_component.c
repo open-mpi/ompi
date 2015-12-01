@@ -826,7 +826,7 @@ static int init_one_port(opal_list_t *btl_list, mca_btl_openib_device_t *device,
 
 #if HAVE_DECL_IBV_EXP_QUERY_DEVICE
             /* check that 8-byte atomics are supported */
-            if (!(device->dev_attr.ext_atom.log_atomic_arg_sizes & (1<<3ull))) {
+            if (!(device->ib_dev_attr.ext_atom.log_atomic_arg_sizes & (1<<3ull))) {
                 openib_btl->super.btl_flags &= ~MCA_BTL_FLAGS_ATOMIC_FOPS;
                 openib_btl->super.btl_atomic_flags = 0;
                 openib_btl->super.btl_atomic_fop = NULL;
@@ -834,7 +834,11 @@ static int init_one_port(opal_list_t *btl_list, mca_btl_openib_device_t *device,
             }
 #endif
 
+#if HAVE_DECL_IBV_EXP_QUERY_DEVICE
+            switch (openib_btl->device->ib_dev_attr.exp_atomic_cap) {
+#else
             switch (openib_btl->device->ib_dev_attr.atomic_cap) {
+#endif
             case IBV_ATOMIC_GLOB:
                 openib_btl->super.btl_flags |= MCA_BTL_ATOMIC_SUPPORTS_GLOB;
                 break;
