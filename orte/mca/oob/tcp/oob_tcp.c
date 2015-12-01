@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2013 Los Alamos National Security, LLC.
+ * Copyright (c) 2006-2015 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
@@ -79,7 +79,6 @@ static void set_peer(const orte_process_name_t* name,
 static void ping(const orte_process_name_t *proc);
 static void send_nb(orte_rml_send_t *msg);
 static void resend(struct mca_oob_tcp_msg_error_t *mop);
-static void ft_event(int state);
 
 mca_oob_tcp_module_t mca_oob_tcp_module = {
     {
@@ -89,8 +88,7 @@ mca_oob_tcp_module_t mca_oob_tcp_module = {
         set_peer,
         ping,
         send_nb,
-        resend,
-        ft_event
+        resend
     }
 };
 
@@ -606,72 +604,3 @@ static void recv_handler(int sd, short flg, void *cbdata)
     OBJ_RELEASE(op);
 }
 
-/* Dummy function for when we are not using FT. */
-#if OPAL_ENABLE_FT_CR == 0
-static void ft_event(int state)
-{
-    return;
-}
-
-#else
-static void ft_event(int state) {
-#if 0
-    opal_list_item_t *item;
-#endif
-
-    if(OPAL_CRS_CHECKPOINT == state) {
-#if 0
-        /*
-         * Disable event processing while we are working
-         */
-        opal_event_disable();
-#endif
-    }
-    else if(OPAL_CRS_CONTINUE == state) {
-#if 0
-        /*
-         * Resume event processing
-         */
-        opal_event_enable();
-    }
-    else if(OPAL_CRS_RESTART == state) {
-        /*
-         * Clean out cached connection information
-         * Select pieces of finalize/init
-         */
-        for (item = opal_list_remove_first(&mca_oob_tcp_module.peer_list);
-            item != NULL;
-            item = opal_list_remove_first(&mca_oob_tcp_module.peer_list)) {
-            mca_oob_tcp_peer_t* peer = (mca_oob_tcp_peer_t*)item;
-            /* JJH: Use the below command for debugging restarts with invalid sockets
-             * mca_oob_tcp_peer_dump(peer, "RESTART CLEAN")
-             */
-            MCA_OOB_TCP_PEER_RETURN(peer);
-        }
-
-        OBJ_DESTRUCT(&mca_oob_tcp_module.peer_free);
-        OBJ_DESTRUCT(&mca_oob_tcp_module.peer_names);
-        OBJ_DESTRUCT(&mca_oob_tcp_module.peers);
-        OBJ_DESTRUCT(&mca_oob_tcp_module.peer_list);
-
-        OBJ_CONSTRUCT(&mca_oob_tcp_module.peer_list,     opal_list_t);
-        OBJ_CONSTRUCT(&mca_oob_tcp_module.peers,         opal_hash_table_t);
-        OBJ_CONSTRUCT(&mca_oob_tcp_module.peer_names,    opal_hash_table_t);
-        OBJ_CONSTRUCT(&mca_oob_tcp_module.peer_free,     opal_free_list_t);
-
-        /*
-         * Resume event processing
-         */
-        opal_event_enable();
-#endif
-    }
-    else if(OPAL_CRS_TERM == state ) {
-        ;
-    }
-    else {
-        ;
-    }
-
-    return;
-}
-#endif

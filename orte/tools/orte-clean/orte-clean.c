@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2008 Sun Microsystems, Inc.  All rights reserved.
- * Copyright (c) 2007-2013 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2011-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
@@ -64,9 +64,6 @@
 #include "orte/util/show_help.h"
 
 #include "opal/runtime/opal.h"
-#if OPAL_ENABLE_FT_CR == 1
-#include "opal/runtime/opal_cr.h"
-#endif
 #include "orte/runtime/runtime.h"
 
 /******************
@@ -123,9 +120,6 @@ int
 main(int argc, char *argv[])
 {
     int ret = ORTE_SUCCESS;
-#if OPAL_ENABLE_FT_CR == 1
-    char *tmp_env_var;
-#endif
 
     /* This is needed so we can print the help message */
     if (ORTE_SUCCESS != (ret = opal_init_util(&argc, &argv))) {
@@ -135,27 +129,6 @@ main(int argc, char *argv[])
     if (ORTE_SUCCESS != (ret = parse_args(argc, argv))) {
         return ret;
     }
-
-#if OPAL_ENABLE_FT_CR == 1
-    /* Disable the checkpoint notification routine for this
-     * tool. As we will never need to checkpoint this tool.
-     * Note: This must happen before opal_init().
-     */
-    opal_cr_set_enabled(false);
-
-    /* Select the none component, since we don't actually use a checkpointer */
-    (void) mca_base_var_env_name("crs", &tmp_env_var);
-    opal_setenv(tmp_env_var,
-                "none",
-                true, &environ);
-    free(tmp_env_var);
-    tmp_env_var = NULL;
-
-    (void) mca_base_var_env_name("opal_cr_is_tool", &tmp_env_var);
-    opal_setenv(tmp_env_var,
-                "1", true, NULL);
-    free(tmp_env_var);
-#endif
 
     if (ORTE_SUCCESS != (ret = orte_init(&argc, &argv, ORTE_PROC_TOOL))) {
         return ret;

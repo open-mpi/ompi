@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2015       Los Alamos National Security, LLC. All rights
+ *                         reserved.
+ */
+
 #include "oshmem_config.h"
 
 #include <stdio.h>
@@ -11,6 +16,7 @@
 #include "shmem.h"
 #include "shmem_ShMem.h"
 #include "shmemJava.h"  /* must come AFTER the related .h so JNI is included */
+#include "opal/mca/base/mca_base_var.h"
 
 shmem_java_globals_t shmem_java;
 int oshmem_shmem_java_eager = 65536;

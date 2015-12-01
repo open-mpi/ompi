@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2012-2013 Inria.  All rights reserved.
- * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2014-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -60,7 +60,7 @@ mca_btl_base_module_t mca_btl_self = {
     .btl_put = mca_btl_self_put,
     .btl_get = mca_btl_self_get,
     .btl_dump = mca_btl_base_dump,
-    .btl_ft_event = mca_btl_self_ft_event,
+    .btl_ft_event = NULL
 };
 
 
@@ -285,26 +285,6 @@ static int mca_btl_self_get (mca_btl_base_module_t *btl, struct mca_btl_base_end
     memcpy (local_address, (void *)(intptr_t) remote_address, size);
 
     cbfunc (btl, endpoint, local_address, NULL, cbcontext, cbdata, OPAL_SUCCESS);
-
-    return OPAL_SUCCESS;
-}
-
-int mca_btl_self_ft_event(int state) {
-    if(OPAL_CRS_CHECKPOINT == state) {
-        ;
-    }
-    else if(OPAL_CRS_CONTINUE == state) {
-        ;
-    }
-    else if(OPAL_CRS_RESTART == state) {
-        ;
-    }
-    else if(OPAL_CRS_TERM == state ) {
-        ;
-    }
-    else {
-        ;
-    }
 
     return OPAL_SUCCESS;
 }

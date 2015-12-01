@@ -45,7 +45,7 @@ mca_btl_tcp_module_t mca_btl_tcp_module = {
         .btl_send = mca_btl_tcp_send,
         .btl_put = mca_btl_tcp_put,
         .btl_dump = mca_btl_base_dump,
-        .btl_ft_event = mca_btl_tcp_ft_event
+        .btl_ft_event = NULL
     }
 };
 

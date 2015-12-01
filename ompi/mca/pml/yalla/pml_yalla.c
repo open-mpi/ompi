@@ -2,6 +2,8 @@
  * Copyright (C) Mellanox Technologies Ltd. 2001-2011.  ALL RIGHTS RESERVED.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -14,6 +16,7 @@
 
 #include "opal/runtime/opal.h"
 #include "opal/memoryhooks/memory.h"
+#include "opal/util/opal_environ.h"
 #include "opal/mca/pmix/pmix.h"
 #include "ompi/mca/pml/base/pml_base_bsend.h"
 #include "ompi/message/message.h"

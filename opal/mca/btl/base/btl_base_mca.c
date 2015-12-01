@@ -14,6 +14,8 @@
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  *
  * $COPYRIGHT$
  *
@@ -28,6 +30,7 @@
 
 #include "opal/util/output.h"
 #include "opal/constants.h"
+#include "opal/mca/base/mca_base_var.h"
 #include "opal/mca/btl/btl.h"
 #include "opal/mca/btl/base/base.h"
 

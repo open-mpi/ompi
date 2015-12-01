@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2013 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2007-2013 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2009      Institut National de Recherche en Informatique
  *                         et Automatique. All rights reserved.
@@ -236,9 +236,6 @@ int orte_daemon(int argc, char *argv[])
     int i;
     opal_buffer_t *buffer;
     char hostname[100];
-#if OPAL_ENABLE_FT_CR == 1
-    char *tmp_env_var = NULL;
-#endif
     char *coprocessors;
     uint8_t tflag;
 
@@ -329,15 +326,6 @@ int orte_daemon(int argc, char *argv[])
         i++;
         if (1000 < i) i=0;
     }
-
-#if OPAL_ENABLE_FT_CR == 1
-    /* Mark as a tool program */
-    (void) mca_base_var_env_name ("opal_cr_is_tool", &tmp_env_var);
-    opal_setenv(tmp_env_var,
-                "1",
-                true, &environ);
-    free(tmp_env_var);
-#endif
 
     /* if mapreduce set, flag it */
     if (orted_globals.mapreduce) {

@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
+ * Copyright (c) 2011-2015 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2013-2015 Intel, Inc. All rights reserved.
  * Copyright (c) 2014      Hochschule Esslingen.  All rights reserved.
@@ -36,7 +36,6 @@
 
 #include "opal/mca/event/event.h"
 #include "opal/runtime/opal.h"
-#include "opal/runtime/opal_cr.h"
 #include "opal/runtime/opal_progress_threads.h"
 #include "opal/util/arch.h"
 #include "opal/util/proc.h"

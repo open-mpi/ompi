@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2012      Sandia National Laboratories. All rights reserved.
- * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2013-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -108,7 +108,7 @@ mca_coll_basic_comm_query(struct ompi_communicator_t *comm,
     /* Choose whether to use [intra|inter], and [linear|log]-based
      * algorithms. */
     basic_module->super.coll_module_enable = mca_coll_basic_module_enable;
-    basic_module->super.ft_event = mca_coll_basic_ft_event;
+    basic_module->super.ft_event = NULL;
 
     if (OMPI_COMM_IS_INTER(comm)) {
         basic_module->super.coll_allgather  = mca_coll_basic_allgather_inter;
@@ -188,24 +188,3 @@ mca_coll_basic_module_enable(mca_coll_base_module_t *module,
     return OMPI_SUCCESS;
 }
 
-
-int
-mca_coll_basic_ft_event(int state) {
-    if(OPAL_CRS_CHECKPOINT == state) {
-        ;
-    }
-    else if(OPAL_CRS_CONTINUE == state) {
-        ;
-    }
-    else if(OPAL_CRS_RESTART == state) {
-        ;
-    }
-    else if(OPAL_CRS_TERM == state ) {
-        ;
-    }
-    else {
-        ;
-    }
-
-    return OMPI_SUCCESS;
-}

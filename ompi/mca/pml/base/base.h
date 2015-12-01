@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights reserved.
+ * Copyright (c) 2013-2015 Los Alamos National Security, LLC.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -61,8 +61,6 @@ OMPI_DECLSPEC int mca_pml_base_pml_check_selected(const char *my_pml,
                                                   size_t nprocs);
 
 OMPI_DECLSPEC int mca_pml_base_finalize(void);
-
-OMPI_DECLSPEC int mca_pml_base_ft_event(int state);
 
 /*
  * Globals

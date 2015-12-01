@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
+ * Copyright (c) 2011-2015 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2011-2014 NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2015      Intel, Inc. All rights reserved
@@ -31,12 +31,6 @@
 #endif
 #include "opal/mca/hwloc/base/base.h"
 
-#if OPAL_ENABLE_FT_CR    == 1
-#include "orte/mca/sstore/sstore.h"
-#include "opal/mca/mpool/base/base.h"
-#include "ompi/runtime/ompi_cr.h" /* TODO */
-#endif
-
 static void sm_module_finalize(mca_mpool_base_module_t* module);
 
 /*
@@ -54,7 +48,7 @@ void mca_mpool_sm_module_init(mca_mpool_sm_module_t* mpool)
     mpool->super.mpool_deregister = NULL;
     mpool->super.mpool_release_memory = NULL;
     mpool->super.mpool_finalize = sm_module_finalize;
-    mpool->super.mpool_ft_event = mca_mpool_sm_ft_event;
+    mpool->super.mpool_ft_event = NULL;
     mpool->super.flags = 0;
 
     mpool->sm_size = 0;
@@ -138,81 +132,9 @@ static void sm_module_finalize(mca_mpool_base_module_t* module)
     if (NULL != sm_module->sm_common_module) {
         if (OPAL_SUCCESS ==
             mca_common_sm_fini(sm_module->sm_common_module)) {
-#if OPAL_ENABLE_FT_CR == 1
-            /* Only unlink the file if we are *not* restarting.  If we
-               are restarting the file will be unlinked at a later
-               time. */
-            if (OPAL_CR_STATUS_RESTART_PRE  != opal_cr_checkpointing_state &&
-                OPAL_CR_STATUS_RESTART_POST != opal_cr_checkpointing_state ) {
-                unlink(sm_module->sm_common_module->shmem_ds.seg_name);
-            }
-#else
             unlink(sm_module->sm_common_module->shmem_ds.seg_name);
-#endif
         }
         OBJ_RELEASE(sm_module->sm_common_module);
         sm_module->sm_common_module = NULL;
     }
 }
-
-#if OPAL_ENABLE_FT_CR    == 0
-int mca_mpool_sm_ft_event(int state) {
-    return OPAL_SUCCESS;
-}
-#else
-int mca_mpool_sm_ft_event(int state) {
-    mca_mpool_base_module_t *self_module = NULL;
-    mca_mpool_sm_module_t   *self_sm_module = NULL;
-    char * file_name = NULL;
-
-    if(OPAL_CRS_CHECKPOINT == state) {
-        /* Record the shared memory filename */
-        asprintf( &file_name, "%s"OPAL_PATH_SEP"shared_mem_pool.%s",
-                  opal_process_info.job_session_dir,
-                  opal_proc_local_get()->proc_hostname );
-        /* Disabled to get FT code compiled again
-         * TODO: FIXIT soon
-        orte_sstore.set_attr(orte_sstore_handle_current, SSTORE_METADATA_LOCAL_TOUCH, file_name);
-         */
-        free(file_name);
-        file_name = NULL;
-    }
-    else if(OPAL_CRS_CONTINUE == state) {
-        if (opal_cr_continue_like_restart) {
-            /* Find the sm module */
-            self_module = mca_mpool_base_module_lookup("sm");
-            self_sm_module = (mca_mpool_sm_module_t*) self_module;
-
-            /* Mark the old sm file for eventual removal via CRS */
-            if (NULL != self_sm_module->sm_common_module) {
-                opal_crs_base_cleanup_append(self_sm_module->sm_common_module->shmem_ds.seg_name, false);
-            }
-
-            /* Remove self from the list of all modules */
-            mca_mpool_base_module_destroy(self_module);
-        }
-    }
-    else if(OPAL_CRS_RESTART == state ||
-            OPAL_CRS_RESTART_PRE == state) {
-        /* Find the sm module */
-        self_module = mca_mpool_base_module_lookup("sm");
-        self_sm_module = (mca_mpool_sm_module_t*) self_module;
-
-        /* Mark the old sm file for eventual removal via CRS */
-        if (NULL != self_sm_module->sm_common_module) {
-            opal_crs_base_cleanup_append(self_sm_module->sm_common_module->shmem_ds.seg_name, false);
-        }
-
-        /* Remove self from the list of all modules */
-        mca_mpool_base_module_destroy(self_module);
-    }
-    else if(OPAL_CRS_TERM == state ) {
-        ;
-    }
-    else {
-        ;
-    }
-
-    return OPAL_SUCCESS;
-}
-#endif /* OPAL_ENABLE_FT_CR */

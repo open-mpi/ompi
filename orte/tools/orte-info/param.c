@@ -13,6 +13,8 @@
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC.
+ *                         All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -343,7 +345,6 @@ void orte_info_do_config(bool want_all)
     char *orterun_prefix_by_default;
     char *wtime_support;
     char *symbol_visibility;
-    char *ft_support;
 
     /* setup the strings that don't require allocations*/
     heterogeneous = OPAL_ENABLE_HETEROGENEOUS_SUPPORT ? "yes" : "no";
@@ -359,9 +360,6 @@ void orte_info_do_config(bool want_all)
     asprintf(&threads, "%s (OPAL: %s, ORTE progress: yes, Event lib: yes)",
              "posix",
              OPAL_ENABLE_MULTI_THREADS ? "yes" : "no");
-
-    asprintf(&ft_support, "%s (checkpoint thread: %s)",
-             OPAL_ENABLE_FT ? "yes" : "no", OPAL_ENABLE_FT_THREAD ? "yes" : "no");;
 
     /* output values */
     orte_info_out("Configured by", "config:user", OPAL_CONFIGURE_USER);
@@ -427,8 +425,5 @@ void orte_info_do_config(bool want_all)
                   orterun_prefix_by_default);
     orte_info_out("MPI_WTIME support", "options:mpi-wtime", wtime_support);
     orte_info_out("Symbol vis. support", "options:visibility", symbol_visibility);
-
-    orte_info_out("FT Checkpoint support", "options:ft_support", ft_support);
-    free(ft_support);
 
 }

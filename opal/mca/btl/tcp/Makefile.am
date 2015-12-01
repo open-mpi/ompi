@@ -11,6 +11,8 @@
 #                         All rights reserved.
 # Copyright (c) 2009-2014 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
+# Copyright (c) 2015      Los Alamos National Security, LLC.
+#                         All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -31,9 +33,7 @@ sources = \
     btl_tcp_frag.h \
     btl_tcp_hdr.h \
     btl_tcp_proc.c \
-    btl_tcp_proc.h \
-    btl_tcp_ft.c \
-    btl_tcp_ft.h
+    btl_tcp_proc.h
 
 # Make the output library in this directory, and name it either
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la

@@ -79,7 +79,7 @@ orte_rml_module_t orte_rml_ftrm_module = {
     orte_rml_ftrm_add_exception_handler,
     orte_rml_ftrm_del_exception_handler,
 
-    orte_rml_ftrm_ft_event,
+    NULL,
 
     orte_rml_ftrm_purge
 };
@@ -122,9 +122,6 @@ orte_rml_module_t* orte_rml_ftrm_component_init(int* priority)
 
 static int orte_rml_ftrm_register(void)
 {
-#if OPAL_ENABLE_FT_CR != 1
-    return ORTE_ERR_NOT_AVAILABLE;
-#endif
 
     ftrm_priority = RML_SELECT_WRAPPER_PRIORITY;
     (void) mca_base_component_var_register(&mca_rml_ftrm_component.rml_version,
@@ -153,9 +150,6 @@ static int orte_rml_ftrm_register(void)
  */
 static int orte_rml_ftrm_open(void)
 {
-#if OPAL_ENABLE_FT_CR != 1
-    return ORTE_ERR_NOT_AVAILABLE;
-#endif
 
     /* If there is a custom verbose level for this component than use it
      * otherwise take our parents level and output channel

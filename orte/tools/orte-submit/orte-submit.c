@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007-2009 Sun Microsystems, Inc. All rights reserved.
- * Copyright (c) 2007-2013 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2013-2015 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
@@ -70,9 +70,6 @@
 #include "opal/util/show_help.h"
 #include "opal/util/fd.h"
 #include "opal/sys/atomic.h"
-#if OPAL_ENABLE_FT_CR == 1
-#include "opal/runtime/opal_cr.h"
-#endif
 
 #include "opal/version.h"
 #include "opal/runtime/opal.h"

@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -31,8 +31,6 @@
 
 #include "opal/threads/mutex.h"
 #include "opal/runtime/opal_progress.h"
-
-#include "opal/runtime/opal_cr.h"
 
 BEGIN_C_DECLS
 
@@ -61,20 +59,17 @@ static inline int opal_condition_wait(opal_condition_t *c, opal_mutex_t *m)
             c->c_waiting--;
             opal_mutex_unlock(m);
             opal_progress();
-            OPAL_CR_TEST_CHECKPOINT_READY_STALL();
             opal_mutex_lock(m);
             return 0;
         }
         while (c->c_signaled == 0) {
             opal_mutex_unlock(m);
             opal_progress();
-            OPAL_CR_TEST_CHECKPOINT_READY_STALL();
             opal_mutex_lock(m);
         }
     } else {
         while (c->c_signaled == 0) {
             opal_progress();
-            OPAL_CR_TEST_CHECKPOINT_READY_STALL();
         }
     }
 

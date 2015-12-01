@@ -7,7 +7,7 @@
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2011      Oracle and/or all its affiliates.  All rights reserved.
- * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
+ * Copyright (c) 2011-2015 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2014      Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
@@ -71,8 +71,6 @@ static int suggest_map_targets(orte_proc_t *proc,
                                orte_node_t *oldnode,
                                opal_list_t *node_list);
 
-static int ft_event(int state);
-
 
 /******************
  * default_hnp module
@@ -85,7 +83,7 @@ orte_errmgr_base_module_t orte_errmgr_default_hnp_module = {
     orte_errmgr_base_abort_peers,
     predicted_fault,
     suggest_map_targets,
-    ft_event,
+    NULL,
     orte_errmgr_base_register_migration_warning,
     NULL,
     orte_errmgr_base_execute_error_callbacks
@@ -657,11 +655,6 @@ static int suggest_map_targets(orte_proc_t *proc,
                                opal_list_t *node_list)
 {
     return ORTE_ERR_NOT_IMPLEMENTED;
-}
-
-static int ft_event(int state)
-{
-    return ORTE_SUCCESS;
 }
 
 /*****************

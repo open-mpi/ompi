@@ -12,6 +12,8 @@
  * Copyright (c) 2006-2008 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010-2012 Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -25,8 +27,6 @@
 #include "ompi/request/request_default.h"
 #include "ompi/request/grequest.h"
 
-#include "opal/runtime/opal_cr.h"
-#include "ompi/mca/crcp/crcp.h"
 #include "ompi/mca/pml/base/pml_base_request.h"
 
 #if OPAL_ENABLE_PROGRESS_THREADS
@@ -41,9 +41,6 @@ int ompi_request_default_wait(
 
     ompi_request_wait_completion(req);
 
-#if OPAL_ENABLE_FT_CR == 1
-    OMPI_CRCP_REQUEST_COMPLETE(req);
-#endif
 
     /* return status.  If it's a generalized request, we *have* to
        invoke the query_fn, even if the user procided STATUS_IGNORE.
@@ -201,18 +198,6 @@ finished:
         *index = completed;
     }
 
-#if OPAL_ENABLE_FT_CR == 1
-    if( opal_cr_is_enabled) {
-        rptr = requests;
-        for (i = 0; i < count; i++, rptr++) {
-            request = *rptr;
-            if( true == request->req_complete) {
-                OMPI_CRCP_REQUEST_COMPLETE(request);
-            }
-        }
-    }
-#endif
-
     return rc;
 }
 
@@ -314,18 +299,6 @@ int ompi_request_default_wait_all( size_t count,
         ompi_request_waiting--;
         OPAL_THREAD_UNLOCK(&ompi_request_lock);
     }
-
-#if OPAL_ENABLE_FT_CR == 1
-    if( opal_cr_is_enabled) {
-        rptr = requests;
-        for (i = 0; i < count; i++, rptr++) {
-            request = *rptr;
-            if( true == request->req_complete) {
-                OMPI_CRCP_REQUEST_COMPLETE(request);
-            }
-        }
-    }
-#endif
 
  finish:
     rptr = requests;
@@ -528,18 +501,6 @@ int ompi_request_default_wait_some(
 #if OPAL_ENABLE_PROGRESS_THREADS
 finished:
 #endif  /* OPAL_ENABLE_PROGRESS_THREADS */
-
-#if OPAL_ENABLE_FT_CR == 1
-    if( opal_cr_is_enabled) {
-        rptr = requests;
-        for (i = 0; i < count; i++, rptr++) {
-            request = *rptr;
-            if( true == request->req_complete) {
-                OMPI_CRCP_REQUEST_COMPLETE(request);
-            }
-        }
-    }
-#endif
 
     if(num_requests_null_inactive == count) {
         *outcount = MPI_UNDEFINED;

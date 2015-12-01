@@ -43,6 +43,7 @@
 #include "opal/dss/dss.h"
 #include "opal/mca/hwloc/base/base.h"
 #include "opal/mca/pmix/pmix.h"
+#include "opal/util/opal_environ.h"
 
 #include "ompi/communicator/communicator.h"
 #include "ompi/group/group.h"

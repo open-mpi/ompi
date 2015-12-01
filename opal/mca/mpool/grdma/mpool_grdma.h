@@ -144,13 +144,6 @@ int mca_mpool_grdma_release_memory(mca_mpool_base_module_t* mpool, void *base,
 void mca_mpool_grdma_finalize(struct mca_mpool_base_module_t *mpool);
 
 /**
- * Fault Tolerance Event Notification Function
- * @param state Checkpoint Stae
- * @return OPAL_SUCCESS or failure status
- */
-int mca_mpool_grdma_ft_event(int state);
-
-/**
  * evict one unused registration from the mpool's lru.
  * @return true on success, false on failure
  */

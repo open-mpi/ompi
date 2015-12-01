@@ -54,10 +54,6 @@
 #include "opal/mca/common/sm/common_sm.h"
 #include "opal/mca/btl/base/btl_base_error.h"
 
-#if OPAL_ENABLE_FT_CR    == 1
-#include "opal/runtime/opal_cr.h"
-#endif
-
 #include "btl_sm.h"
 #include "btl_sm_frag.h"
 #include "btl_sm_fifo.h"
@@ -367,17 +363,7 @@ static int mca_btl_sm_component_close(void)
          * to it are gone - no error checking, since we want all procs
          * to call this, so that in an abnormal termination scenario,
          * this file will still get cleaned up */
-#if OPAL_ENABLE_FT_CR    == 1
-        /* Only unlink the file if we are *not* restarting
-         * If we are restarting the file will be unlinked at a later time.
-         */
-        if(OPAL_CR_STATUS_RESTART_PRE  != opal_cr_checkpointing_state &&
-           OPAL_CR_STATUS_RESTART_POST != opal_cr_checkpointing_state ) {
-            unlink(mca_btl_sm_component.sm_seg->shmem_ds.seg_name);
-        }
-#else
         unlink(mca_btl_sm_component.sm_seg->shmem_ds.seg_name);
-#endif
         OBJ_RELEASE(mca_btl_sm_component.sm_seg);
     }
 

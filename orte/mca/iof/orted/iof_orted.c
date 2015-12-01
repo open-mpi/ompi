@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2011-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -67,8 +67,6 @@ static int orted_close(const orte_process_name_t* peer,
 
 static int finalize(void);
 
-static int orted_ft_event(int state);
-
 /* The API's in this module are solely used to support LOCAL
  * procs - i.e., procs that are co-located to the daemon. Output
  * from local procs is automatically sent to the HNP for output
@@ -84,7 +82,7 @@ orte_iof_base_module_t orte_iof_orted_module = {
     orted_close,
     NULL,
     finalize,
-    orted_ft_event
+    NULL
 };
 
 static int init(void)
@@ -313,15 +311,6 @@ static int finalize(void)
     /* Cancel the RML receive */
     orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_IOF_PROXY);
     return ORTE_SUCCESS;
-}
-
-/*
- * FT event
- */
-
-static int orted_ft_event(int state)
-{
-    return ORTE_ERR_NOT_IMPLEMENTED;
 }
 
 static void stdin_write_handler(int fd, short event, void *cbdata)

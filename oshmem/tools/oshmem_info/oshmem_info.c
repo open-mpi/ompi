@@ -2,6 +2,8 @@
  * Copyright (c) 2013-2015 Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
+ *                         reserved.
  *
  * $COPYRIGHT$
  *
@@ -32,9 +34,6 @@
 #include "opal/class/opal_object.h"
 #include "opal/class/opal_pointer_array.h"
 #include "opal/runtime/opal.h"
-#if OPAL_ENABLE_FT_CR == 1
-#include "opal/runtime/opal_cr.h"
-#endif
 #include "opal/mca/base/base.h"
 #include "opal/runtime/opal_info_support.h"
 #include "opal/util/argv.h"

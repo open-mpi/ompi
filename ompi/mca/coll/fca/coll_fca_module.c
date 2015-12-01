@@ -2,6 +2,7 @@
  * Copyright (c) 2011      Mellanox Technologies. All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -515,11 +516,6 @@ static int mca_coll_fca_module_enable(mca_coll_base_module_t *module,
 }
 
 
-static int mca_coll_fca_ft_event(int state)
-{
-    return OMPI_SUCCESS;
-}
-
 static void mca_coll_fca_module_clear(mca_coll_fca_module_t *fca_module)
 {
     fca_module->num_local_procs = 0;
@@ -607,7 +603,7 @@ mca_coll_fca_comm_query(struct ompi_communicator_t *comm, int *priority)
         goto exit;
 
     fca_module->super.coll_module_enable = mca_coll_fca_module_enable;
-    fca_module->super.ft_event        = mca_coll_fca_ft_event;
+    fca_module->super.ft_event        = NULL;
     fca_module->super.coll_allgather  = mca_coll_fca_component.fca_enable_allgather?  mca_coll_fca_allgather  : NULL;
     fca_module->super.coll_allgatherv = mca_coll_fca_component.fca_enable_allgatherv? mca_coll_fca_allgatherv : NULL;
     fca_module->super.coll_allreduce  = mca_coll_fca_component.fca_enable_allreduce?  mca_coll_fca_allreduce  : NULL;

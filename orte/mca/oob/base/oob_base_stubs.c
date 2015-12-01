@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2012-2014 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2013-2015 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
@@ -23,9 +23,6 @@
 #include "orte/mca/rml/rml.h"
 
 #include "orte/mca/oob/base/base.h"
-#if OPAL_ENABLE_FT_CR == 1
-#include "orte/mca/state/base/base.h"
-#endif
 
 static void process_uri(char *uri);
 
@@ -400,35 +397,3 @@ static void process_uri(char *uri)
     opal_argv_free(uris);
 }
 
-#if OPAL_ENABLE_FT_CR == 1
-void orte_oob_base_ft_event(int sd, short argc, void *cbdata)
-{
-    int rc;
-    mca_base_component_list_item_t *cli;
-    mca_oob_base_component_t *component;
-    orte_state_caddy_t *state = (orte_state_caddy_t*)cbdata;
-
-    opal_output_verbose(5, orte_oob_base_framework.framework_output,
-                        "%s oob:base:ft_event %s(%d)",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                        orte_job_state_to_str(state->job_state),
-                        state->job_state);
-
-    /* loop across all available modules in priority order
-     * and call each one's ft_event handler
-     */
-    OPAL_LIST_FOREACH(cli, &orte_oob_base.actives, mca_base_component_list_item_t) {
-        component = (mca_oob_base_component_t*)cli->cli_component;
-        if (NULL == component->ft_event) {
-            /* doesn't support this ability */
-            continue;
-        }
-
-        if (ORTE_SUCCESS != (rc = component->ft_event(state->job_state))) {
-            ORTE_ERROR_LOG(rc);
-        }
-    }
-    OBJ_RELEASE(state);
-}
-
-#endif

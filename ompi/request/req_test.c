@@ -12,6 +12,8 @@
  * Copyright (c) 2006-2008 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010-2012 Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -24,8 +26,6 @@
 #include "ompi/request/request.h"
 #include "ompi/request/request_default.h"
 #include "ompi/request/grequest.h"
-
-#include "ompi/mca/crcp/crcp.h"
 
 int ompi_request_default_test( ompi_request_t ** rptr,
                        int *completed,
@@ -47,7 +47,6 @@ int ompi_request_default_test( ompi_request_t ** rptr,
     }
 
     if (request->req_complete) {
-        OMPI_CRCP_REQUEST_COMPLETE(request);
 
         *completed = true;
         /* For a generalized request, we *have* to call the query_fn
@@ -118,7 +117,6 @@ int ompi_request_default_test_any(
         }
 
         if( request->req_complete ) {
-            OMPI_CRCP_REQUEST_COMPLETE(request);
 
             *index = i;
             *completed = true;
@@ -194,7 +192,6 @@ int ompi_request_default_test_all(
 
         if( request->req_state == OMPI_REQUEST_INACTIVE ||
             request->req_complete) {
-            OMPI_CRCP_REQUEST_COMPLETE(request);
             num_completed++;
         }
     }
@@ -296,7 +293,6 @@ int ompi_request_default_test_some(
             continue;
         }
         if (true == request->req_complete) {
-            OMPI_CRCP_REQUEST_COMPLETE(request);
             indices[num_requests_done++] = i;
         }
     }

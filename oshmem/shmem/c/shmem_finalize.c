@@ -1,6 +1,8 @@
 /*
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC.
+ *                         All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -9,8 +11,6 @@
  */
 
 #include "oshmem_config.h"
-
-#include "opal/runtime/opal_cr.h"
 
 #include "oshmem/constants.h"
 #include "oshmem/include/shmem.h"
@@ -26,7 +26,6 @@ extern int oshmem_shmem_globalexit_status;
 
 void shmem_finalize(void)
 {
-    OPAL_CR_FINALIZE_LIBRARY();
     if (oshmem_shmem_globalexit_status != 0)
     {
         return;

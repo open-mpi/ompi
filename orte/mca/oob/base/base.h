@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2012-2013 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -180,10 +180,6 @@ OBJ_CLASS_DECLARATION(mca_oob_uri_req_t);
         opal_event_active(&(rq)->ev, OPAL_EV_WRITE, 1);         \
     }while(0);
 ORTE_DECLSPEC void orte_oob_base_set_addr(int fd, short args, void *cbdata);
-
-#if OPAL_ENABLE_FT_CR == 1
-ORTE_DECLSPEC void orte_oob_base_ft_event(int fd, short args, void *cbdata);
-#endif
 
 END_C_DECLS
 #endif

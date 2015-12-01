@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -256,60 +258,6 @@ int orte_rml_ftrm_del_exception_handler(orte_rml_exception_callback_t cbfunc)
         if( ORTE_SUCCESS != (ret = orte_rml_ftrm_wrapped_module.del_exception_handler(cbfunc) ) ) {
             return ret;
         }
-    }
-
-    return ORTE_SUCCESS;
-}
-
-/*
- * FT Event
- */
-int orte_rml_ftrm_ft_event(int state)
-{
-    int ret;
-
-    opal_output_verbose(20, rml_ftrm_output_handle,
-                        "orte_rml_ftrm: ft_event()");
-
-    if(OPAL_CRS_CHECKPOINT == state) {
-        ;
-    }
-    else if(OPAL_CRS_CONTINUE == state) {
-        ;
-    }
-    else if(OPAL_CRS_RESTART == state) {
-        ;
-    }
-    else if(OPAL_CRS_TERM == state ) {
-        ;
-    }
-    else {
-        ;
-    }
-
-    /*
-     * The wrapped component is responsible for calling the OOB modules
-     */
-    if( NULL != orte_rml_ftrm_wrapped_module.ft_event ) {
-        if( ORTE_SUCCESS != (ret = orte_rml_ftrm_wrapped_module.ft_event(state))) {
-            return ret;
-        }
-    }
-
-    if(OPAL_CRS_CHECKPOINT == state) {
-        ;
-    }
-    else if(OPAL_CRS_CONTINUE == state) {
-        ;
-    }
-    else if(OPAL_CRS_RESTART == state) {
-        ;
-    }
-    else if(OPAL_CRS_TERM == state ) {
-        ;
-    }
-    else {
-        ;
     }
 
     return ORTE_SUCCESS;

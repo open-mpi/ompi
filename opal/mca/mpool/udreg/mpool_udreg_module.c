@@ -132,7 +132,7 @@ int mca_mpool_udreg_module_init(mca_mpool_udreg_module_t* mpool)
     /* This module relies on udreg for notification of memory release */
     mpool->super.mpool_release_memory = NULL;
     mpool->super.mpool_finalize = mca_mpool_udreg_finalize;
-    mpool->super.mpool_ft_event = mca_mpool_udreg_ft_event;
+    mpool->super.mpool_ft_event = NULL;
     mpool->super.flags = MCA_MPOOL_FLAGS_MPI_ALLOC_MEM | MCA_MPOOL_FLAGS_NO_HOOKS;
 
     if (4096 < mpool->resources.page_size) {
@@ -529,10 +529,6 @@ void mca_mpool_udreg_finalize(struct mca_mpool_base_module_t *mpool)
     UDREG_CacheRelease (mpool_udreg->udreg_handle);
     OBJ_DESTRUCT(&mpool_udreg->reg_list);
     OBJ_DESTRUCT(&mpool_udreg->lock);
-}
-
-int mca_mpool_udreg_ft_event(int state) {
-    return OPAL_SUCCESS;
 }
 
 

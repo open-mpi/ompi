@@ -35,10 +35,6 @@
 #include "opal/mca/backtrace/backtrace.h"
 #include "opal/mca/event/event.h"
 
-#if OPAL_ENABLE_FT_CR == 1
-#include "orte/mca/rml/rml.h"
-#include "orte/mca/state/state.h"
-#endif
 #include "orte/mca/rml/base/base.h"
 #include "orte/mca/rml/rml_types.h"
 #include "orte/mca/routed/routed.h"
@@ -98,7 +94,7 @@ orte_rml_oob_module_t orte_rml_oob_module = {
         orte_rml_oob_add_exception,
         orte_rml_oob_del_exception,
 
-        orte_rml_oob_ft_event,
+        NULL,
 
         orte_rml_oob_purge
     }
@@ -162,64 +158,3 @@ orte_rml_oob_fini(void)
 
     return ORTE_SUCCESS;
 }
-
-#if OPAL_ENABLE_FT_CR == 1
-int
-orte_rml_oob_ft_event(int state) {
-    int exit_status = ORTE_SUCCESS;
-    int ret;
-
-    if(OPAL_CRS_CHECKPOINT == state) {
-        ORTE_ACTIVATE_JOB_STATE(NULL, ORTE_JOB_STATE_FT_CHECKPOINT);
-    }
-    else if(OPAL_CRS_CONTINUE == state) {
-        ORTE_ACTIVATE_JOB_STATE(NULL, ORTE_JOB_STATE_FT_CONTINUE);
-    }
-    else if(OPAL_CRS_RESTART == state) {
-        ORTE_ACTIVATE_JOB_STATE(NULL, ORTE_JOB_STATE_FT_RESTART);
-    }
-    else if(OPAL_CRS_TERM == state ) {
-        ;
-    }
-    else {
-        ;
-    }
-
-
-    if(OPAL_CRS_CHECKPOINT == state) {
-        ;
-    }
-    else if(OPAL_CRS_CONTINUE == state) {
-        ;
-    }
-    else if(OPAL_CRS_RESTART == state) {
-        (void) mca_base_framework_close(&orte_oob_base_framework);
-
-        if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_oob_base_framework, 0))) {
-            ORTE_ERROR_LOG(ret);
-            exit_status = ret;
-            goto cleanup;
-        }
-
-        if( ORTE_SUCCESS != (ret = orte_oob_base_select())) {
-            ORTE_ERROR_LOG(ret);
-            exit_status = ret;
-            goto cleanup;
-        }
-    }
-    else if(OPAL_CRS_TERM == state ) {
-        ;
-    }
-    else {
-        ;
-    }
-
- cleanup:
-    return exit_status;
-}
-#else
-int
-orte_rml_oob_ft_event(int state) {
-    return ORTE_SUCCESS;
-}
-#endif

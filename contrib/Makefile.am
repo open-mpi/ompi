@@ -12,7 +12,7 @@
 # Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2010      IBM Corporation.  All rights reserved.
 # Copyright (c) 2010-2011 Oak Ridge National Labs.  All rights reserved.
-# Copyright (c) 2013      Los Alamos National Security, Inc.  All rights reserved.
+# Copyright (c) 2013-2015 Los Alamos National Security, Inc.  All rights reserved.
 # Copyright (c) 2013      Intel Corporation.  All rights reserved.
 # $COPYRIGHT$
 #
@@ -23,12 +23,6 @@
 
 amca_paramdir = $(AMCA_PARAM_SETS_DIR)
 dist_amca_param_DATA = amca-param-sets/example.conf
-
-if WANT_FT_CR
-dist_amca_param_DATA += \
-	amca-param-sets/ft-enable-cr \
-	amca-param-sets/ft-enable-cr-recovery
-endif # WANT_FT_CR
 
 EXTRA_DIST = \
         completion/mpirun.sh \

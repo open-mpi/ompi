@@ -16,6 +16,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#include "opal/util/opal_environ.h"
 #include "oshmem_config.h"
 #include "orte/util/show_help.h"
 #include "shmem.h"

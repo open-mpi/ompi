@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -118,10 +120,6 @@ BEGIN_C_DECLS
     int orte_rml_ftrm_add_exception_handler(orte_rml_exception_callback_t cbfunc);
     int orte_rml_ftrm_del_exception_handler(orte_rml_exception_callback_t cbfunc);
 
-    /*
-     * FT Event
-     */
-    int orte_rml_ftrm_ft_event(int state);
 
     void orte_rml_ftrm_purge(orte_process_name_t *peer);
 

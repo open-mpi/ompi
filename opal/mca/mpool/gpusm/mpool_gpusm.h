@@ -94,12 +94,5 @@ int mca_mpool_gpusm_find(struct mca_mpool_base_module_t* mpool, void* addr,
  */
 void mca_mpool_gpusm_finalize(struct mca_mpool_base_module_t *mpool);
 
-/**
- * Fault Tolerance Event Notification Function
- * @param state Checkpoint Stae
- * @return OPAL_SUCCESS or failure status
- */
-int mca_mpool_gpusm_ft_event(int state);
-
 END_C_DECLS
 #endif

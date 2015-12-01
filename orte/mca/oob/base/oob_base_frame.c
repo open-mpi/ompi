@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2013-2014 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2013-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -33,10 +33,6 @@
 
 #include "orte/mca/rml/base/base.h"
 #include "orte/mca/oob/base/base.h"
-
-#if OPAL_ENABLE_FT_CR == 1
-#include "orte/mca/state/state.h"
-#endif
 
 /*
  * The following file was created by configure.  It contains extern
@@ -125,13 +121,6 @@ static int orte_oob_base_open(mca_base_open_flag_t flags)
     OBJ_CONSTRUCT(&orte_oob_base.peers, opal_hash_table_t);
     opal_hash_table_init(&orte_oob_base.peers, 128);
     OBJ_CONSTRUCT(&orte_oob_base.actives, opal_list_t);
-
-#if OPAL_ENABLE_FT_CR == 1
-    /* register the FT events callback */
-    orte_state.add_job_state(ORTE_JOB_STATE_FT_CHECKPOINT, orte_oob_base_ft_event, ORTE_ERROR_PRI);
-    orte_state.add_job_state(ORTE_JOB_STATE_FT_CONTINUE, orte_oob_base_ft_event, ORTE_ERROR_PRI);
-    orte_state.add_job_state(ORTE_JOB_STATE_FT_RESTART, orte_oob_base_ft_event, ORTE_ERROR_PRI);
-#endif
 
     OPAL_TIMING_INIT(&tm_oob);
 
