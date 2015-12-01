@@ -43,6 +43,7 @@ AC_DEFUN([MCA_opal_pmix_pmix1xx_CONFIG],[
         opal_pmix_pmix1xx_args="--enable-debug $opal_pmix_pmix1xx_args"
         CFLAGS="$OPAL_CFLAGS_BEFORE_PICKY $OPAL_VISIBILITY_CFLAGS -g"
     else
+        opal_pmix_pmix111_args="--disable-debug $opal_pmix_pmix111_args"
         CFLAGS="$OPAL_CFLAGS_BEFORE_PICKY $OPAL_VISIBILITY_CFLAGS"
     fi
     CPPFLAGS="-I$OPAL_TOP_SRCDIR -I$OPAL_TOP_BUILDDIR -I$OPAL_TOP_SRCDIR/opal/include -I$OPAL_TOP_BUILDDIR/opal/include $CPPFLAGS"
