@@ -24,6 +24,7 @@
 #endif
 
 #include "opal/mca/backtrace/backtrace.h"
+#include "opal/runtime/opal_params.h"
 
 #include "orte/util/proc_info.h"
 #include "orte/runtime/runtime.h"
@@ -71,7 +72,7 @@ int oshmem_shmem_abort(int errcode)
 
     /* Should we print a stack trace?  Not aggregated because they
      might be different on all processes. */
-    if (oshmem_shmem_abort_print_stack) {
+    if (opal_abort_print_stack) {
         char **messages;
         int len, i;
 
@@ -95,9 +96,10 @@ int oshmem_shmem_abort(int errcode)
     }
 
     /* Should we wait for a while before aborting? */
-    if (0 != oshmem_shmem_abort_delay) {
-        if (oshmem_shmem_abort_delay < 0) {
-            fprintf(stderr ,"[%s:%d] Looping forever (MCA parameter mpi_abort_delay is < 0)\n",
+
+    if (0 != opal_abort_delay) {
+        if (opal_abort_delay < 0) {
+            fprintf(stderr ,"[%s:%d] Looping forever (MCA parameter opal_abort_delay is < 0)\n",
                     host, (int) pid);
             fflush(stderr);
             while (1) {
@@ -105,10 +107,10 @@ int oshmem_shmem_abort(int errcode)
             }
         } else {
             fprintf(stderr, "[%s:%d] Delaying for %d seconds before aborting\n",
-                    host, (int) pid, oshmem_shmem_abort_delay);
+                    host, (int) pid, opal_abort_delay);
             do {
                 sleep(1);
-            } while (--oshmem_shmem_abort_delay > 0);
+            } while (--opal_abort_delay > 0);
         }
     }
 
