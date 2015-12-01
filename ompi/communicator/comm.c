@@ -1980,19 +1980,16 @@ static int ompi_comm_fill_rest(ompi_communicator_t *comm,
        count on the proc pointers
        This is just a quick fix, and will be looking for a
        better solution */
-    OBJ_RELEASE( comm->c_local_group );
-    /* silence clang warning about a NULL pointer dereference */
-    assert (NULL != comm->c_local_group);
-    OBJ_RELEASE( comm->c_local_group );
+    if (comm->c_local_group) {
+        OBJ_RELEASE( comm->c_local_group );
+    }
+
+    if (comm->c_remote_group) {
+        OBJ_RELEASE( comm->c_remote_group );
+    }
 
     /* allocate a group structure for the new communicator */
-    comm->c_local_group = ompi_group_allocate(num_procs);
-
-    /* free the malloced  proc pointers */
-    free(comm->c_local_group->grp_proc_pointers);
-
-    /* set the group information */
-    comm->c_local_group->grp_proc_pointers = proc_pointers;
+    comm->c_local_group = ompi_group_allocate_plist_w_procs (proc_pointers, num_procs);
 
     /* set the remote group to be the same as local group */
     comm->c_remote_group = comm->c_local_group;

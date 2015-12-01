@@ -153,6 +153,7 @@ OMPI_DECLSPEC extern struct ompi_predefined_group_t *ompi_mpi_group_null_addr;
  * @return Pointer to new group structure
  */
 OMPI_DECLSPEC ompi_group_t *ompi_group_allocate(int group_size);
+ompi_group_t *ompi_group_allocate_plist_w_procs (ompi_proc_t **procs, int group_size);
 ompi_group_t *ompi_group_allocate_sporadic(int group_size);
 ompi_group_t *ompi_group_allocate_strided(void);
 ompi_group_t *ompi_group_allocate_bmap(int orig_group_size, int group_size);
