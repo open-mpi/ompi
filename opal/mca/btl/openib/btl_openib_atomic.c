@@ -27,6 +27,7 @@ static int mca_btl_openib_atomic_internal (struct mca_btl_base_module_t *btl, st
 {
     mca_btl_openib_get_frag_t* frag = NULL;
     int qp = order;
+    int32_t rkey;
     int rc;
 
     frag = to_get_frag(alloc_recv_user_frag());
@@ -61,15 +62,16 @@ static int mca_btl_openib_atomic_internal (struct mca_btl_base_module_t *btl, st
     frag->sr_desc.wr.atomic.compare_add = operand;
     frag->sr_desc.wr.atomic.swap = operand2;
 
+    rkey = remote_handle->rkey;
+
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
     if((endpoint->endpoint_proc->proc_opal->proc_arch & OPAL_ARCH_ISBIGENDIAN)
             != (opal_proc_local_get()->proc_arch & OPAL_ARCH_ISBIGENDIAN)) {
-        frag->sr_desc.wr.atomic.rkey = opal_swap_bytes4 (remote_handle->rkey);
-    } else
-#endif
-    {
-        frag->sr_desc.wr.atomic.rkey = remote_handle->rkey;
+        rkey = opal_swap_bytes4 (rkey);
     }
+#endif
+
+    frag->sr_desc.wr.atomic.rkey = rkey;
 
 #if HAVE_XRC
     if (MCA_BTL_XRC_ENABLED && BTL_OPENIB_QP_TYPE_XRC(qp)) {
