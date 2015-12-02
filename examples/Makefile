@@ -53,8 +53,7 @@ EXAMPLES = \
 	 hello_oshmem \
 	 hello_oshmemfh \
 	 Hello.class \
-	 Hello_oshmem.class \
-         ring_c \
+	 ring_c \
 	 ring_cxx \
 	 ring_mpifh \
 	 ring_usempi \
@@ -62,17 +61,12 @@ EXAMPLES = \
 	 ring_oshmem \
 	 ring_oshmemfh \
 	 Ring.class \
-	 Ring_oshmem.class \
 	 connectivity_c \
 	 oshmem_shmalloc \
 	 oshmem_circular_shift \
-	 oshmem_circular_shift.class \
 	 oshmem_max_reduction \
-	 oshmem_max_reduction.class \
 	 oshmem_strided_puts \
-	 oshmem_strided_puts.class \
-	 oshmem_symmetric_data \
-	 oshmem_symmetric_data.class
+	 oshmem_symmetric_data
 
 
 # Default target.  Always build the C MPI examples.  Only build the
@@ -122,14 +116,6 @@ oshmem:
 	    $(MAKE) hello_oshmemfh; \
 	    $(MAKE) ring_oshmemfh; \
 	fi
-	@ if oshmem_info --parsable | grep bindings:java:yes >/dev/null; then \
-	    $(MAKE) Hello_oshmem.class; \
-	    $(MAKE) Ring_oshmem.class; \
-	    $(MAKE) oshmem_circular_shift.class; \
-	    $(MAKE) oshmem_max_reduction.class; \
-	    $(MAKE) oshmem_strided_puts.class; \
-	    $(MAKE) oshmem_symmetric_data.class; \
-	fi
 
 # The usual "clean" target
 
@@ -162,35 +148,23 @@ hello_oshmem: hello_oshmem_c.c
 	$(SHMEMCC) $(CFLAGS) $? -o $@
 hello_oshmemfh: hello_oshmemfh.f90
 	$(SHMEMFC) $(FCFLAGS) $? -o $@
-Hello_oshmem.class: Hello_oshmem.java
-	$(JAVAC) Hello_oshmem.java
 
 ring_oshmem: ring_oshmem_c.c
 	$(SHMEMCC) $(CFLAGS) $? -o $@
 ring_oshmemfh: ring_oshmemfh.f90
 	$(SHMEMFC) $(FCFLAGS) $? -o $@
-Ring_oshmem.class: Ring_oshmem.java
-	$(JAVAC) Ring_oshmem.java
 
 oshmem_shmalloc: oshmem_shmalloc.c
 	$(SHMEMCC) $(CCFLAGS) $? -o $@
 
 oshmem_circular_shift: oshmem_circular_shift.c
 	$(SHMEMCC) $(CFLAGS) $? -o $@
-oshmem_circular_shift.class: oshmem_circular_shift.java
-	$(JAVAC) oshmem_circular_shift.java
 
 oshmem_max_reduction: oshmem_max_reduction.c
 	$(SHMEMCC) $(CFLAGS) $? -o $@
-oshmem_max_reduction.class: oshmem_max_reduction.java
-	$(JAVAC) oshmem_max_reduction.java
 
 oshmem_strided_puts: oshmem_strided_puts.c
 	$(SHMEMCC) $(CFLAGS) $? -o $@
-oshmem_strided_puts.class: oshmem_strided_puts.java
-	$(JAVAC) oshmem_strided_puts.java
 
 oshmem_symmetric_data: oshmem_symmetric_data.c
 	$(SHMEMCC) $(CFLAGS) $? -o $@
-oshmem_symmetric_data.class: oshmem_symmetric_data.java
-	$(JAVAC) oshmem_symmetric_data.java
