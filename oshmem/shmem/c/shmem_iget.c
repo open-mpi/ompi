@@ -61,6 +61,9 @@
 #pragma weak shmem_iget32 = pshmem_iget32
 #pragma weak shmem_iget64 = pshmem_iget64
 #pragma weak shmem_iget128 = pshmem_iget128
+
+/* Deprecated */
+#pragma weak shmem_iget16 = pshmem_iget16
 #include "oshmem/shmem/c/profile/defines.h"
 #endif
 
@@ -99,3 +102,6 @@ SHMEM_TYPE_IGETMEM(_iget16, 2, shmemx)
 SHMEM_TYPE_IGETMEM(_iget32, 4, shmem)
 SHMEM_TYPE_IGETMEM(_iget64, 8, shmem)
 SHMEM_TYPE_IGETMEM(_iget128, 16, shmem)
+
+/* Deprecated */
+SHMEM_TYPE_IGETMEM(_iget16, 2, shmem)

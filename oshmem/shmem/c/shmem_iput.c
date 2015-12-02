@@ -61,6 +61,9 @@
 #pragma weak shmem_iput32 = pshmem_iput32
 #pragma weak shmem_iput64 = pshmem_iput64
 #pragma weak shmem_iput128 = pshmem_iput128
+
+/* Deprecated */
+#pragma weak shmem_iput16 = pshmem_iput16
 #include "oshmem/shmem/c/profile/defines.h"
 #endif
 
@@ -99,3 +102,6 @@ SHMEM_TYPE_IPUTMEM(_iput16, 2, shmemx)
 SHMEM_TYPE_IPUTMEM(_iput32, 4, shmem)
 SHMEM_TYPE_IPUTMEM(_iput64, 8, shmem)
 SHMEM_TYPE_IPUTMEM(_iput128, 16, shmem)
+
+/* Deprecated */
+SHMEM_TYPE_IPUTMEM(_iput16, 2, shmem)

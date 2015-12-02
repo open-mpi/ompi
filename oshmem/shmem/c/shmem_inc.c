@@ -56,6 +56,10 @@
 #pragma weak shmem_longlong_inc = pshmem_longlong_inc
 #pragma weak shmemx_int32_inc = pshmemx_int32_inc
 #pragma weak shmemx_int64_inc = pshmemx_int64_inc
+
+/* Deprecated */
+#pragma weak shmem_int32_inc = pshmem_int32_inc
+#pragma weak shmem_int64_inc = pshmem_int64_inc
 #include "oshmem/shmem/c/profile/defines.h"
 #endif
 
@@ -64,3 +68,7 @@ SHMEM_TYPE_INC(_long, long, shmem)
 SHMEM_TYPE_INC(_longlong, long long, shmem)
 SHMEM_TYPE_INC(_int32, int32_t, shmemx)
 SHMEM_TYPE_INC(_int64, int64_t, shmemx)
+
+/* Deprecated */
+SHMEM_TYPE_INC(_int32, int32_t, shmem)
+SHMEM_TYPE_INC(_int64, int64_t, shmem)

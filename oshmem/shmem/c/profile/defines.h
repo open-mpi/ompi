@@ -334,4 +334,69 @@
 #define shmem_clear_cache_inv       pshmem_clear_cache_inv
 #define shmem_clear_cache_line_inv  pshmem_clear_cache_line_inv
 
+
+/*
+ * Backward compatibility section
+ */
+#define shmem_int16_p               pshmem_int16_p
+#define shmem_int32_p               pshmem_int32_p
+#define shmem_int64_p               pshmem_int64_p
+
+#define shmem_put16                 pshmem_put16
+#define shmem_iput16                pshmem_iput16
+
+#define shmem_int16_g               pshmem_int16_g
+#define shmem_int32_g               pshmem_int32_g
+#define shmem_int64_g               pshmem_int64_g
+
+#define shmem_get16                 pshmem_get16
+#define shmem_iget16                pshmem_iget16
+
+#define shmem_int32_swap            pshmem_int32_swap
+#define shmem_int64_swap            pshmem_int64_swap
+#define shmem_int32_cswap           pshmem_int32_cswap
+#define shmem_int64_cswap           pshmem_int64_cswap
+
+#define shmem_int32_fadd            pshmem_int32_fadd
+#define shmem_int64_fadd            pshmem_int64_fadd
+#define shmem_int32_finc            pshmem_int32_finc
+#define shmem_int64_finc            pshmem_int64_finc
+#define shmem_int32_add             pshmem_int32_add
+#define shmem_int64_add             pshmem_int64_add
+#define shmem_int32_inc             pshmem_int32_inc
+#define shmem_int64_inc             pshmem_int64_inc
+
+#define shmem_int32_wait            pshmem_int32_wait
+#define shmem_int64_wait            pshmem_int64_wait
+#define shmem_int32_wait_until      pshmem_int32_wait_until
+#define shmem_int64_wait_until      pshmem_int64_wait_until
+
+#define shmem_int16_and_to_all      pshmem_int16_and_to_all
+#define shmem_int32_and_to_all      pshmem_int32_and_to_all
+#define shmem_int64_and_to_all      pshmem_int64_and_to_all
+
+#define shmem_int16_or_to_all       pshmem_int16_or_to_all
+#define shmem_int32_or_to_all       pshmem_int32_or_to_all
+#define shmem_int64_or_to_all       pshmem_int64_or_to_all
+
+#define shmem_int16_xor_to_all      pshmem_int16_xor_to_all
+#define shmem_int32_xor_to_all      pshmem_int32_xor_to_all
+#define shmem_int64_xor_to_all      pshmem_int64_xor_to_all
+
+#define shmem_int16_max_to_all      pshmem_int16_max_to_all
+#define shmem_int32_max_to_all      pshmem_int32_max_to_all
+#define shmem_int64_max_to_all      pshmem_int64_max_to_all
+
+#define shmem_int16_min_to_all      pshmem_int16_min_to_all
+#define shmem_int32_min_to_all      pshmem_int32_min_to_all
+#define shmem_int64_min_to_all      pshmem_int64_min_to_all
+
+#define shmem_int16_sum_to_all      pshmem_int16_sum_to_all
+#define shmem_int32_sum_to_all      pshmem_int32_sum_to_all
+#define shmem_int64_sum_to_all      pshmem_int64_sum_to_all
+
+#define shmem_int16_prod_to_all     pshmem_int16_prod_to_all
+#define shmem_int32_prod_to_all     pshmem_int32_prod_to_all
+#define shmem_int64_prod_to_all     pshmem_int64_prod_to_all
+
 #endif /* OSHMEM_C_PROFILE_DEFINES_H */

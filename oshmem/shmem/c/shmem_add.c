@@ -54,6 +54,10 @@
 #pragma weak shmem_longlong_add = pshmem_longlong_add
 #pragma weak shmemx_int32_add = pshmemx_int32_add
 #pragma weak shmemx_int64_add = pshmemx_int64_add
+
+/* Deprecated */
+#pragma weak shmem_int32_add = pshmem_int32_add
+#pragma weak shmem_int64_add = pshmem_int64_add
 #include "oshmem/shmem/c/profile/defines.h"
 #endif
 
@@ -62,3 +66,7 @@ SHMEM_TYPE_ADD(_long, long, shmem)
 SHMEM_TYPE_ADD(_longlong, long long, shmem)
 SHMEM_TYPE_ADD(_int32, int32_t, shmemx)
 SHMEM_TYPE_ADD(_int64, int64_t, shmemx)
+
+/* Deprecated */
+SHMEM_TYPE_ADD(_int32, int32_t, shmem)
+SHMEM_TYPE_ADD(_int64, int64_t, shmem)

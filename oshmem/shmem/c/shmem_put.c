@@ -61,6 +61,9 @@
 #pragma weak shmem_put32 = pshmem_put32
 #pragma weak shmem_put64 = pshmem_put64
 #pragma weak shmem_put128 = pshmem_put128
+
+/* Deprecated */
+#pragma weak shmem_put16 = pshmem_put16
 #include "oshmem/shmem/c/profile/defines.h"
 #endif
 
@@ -101,3 +104,6 @@ SHMEM_TYPE_PUTMEM(_put64, 8, shmem)
 SHMEM_TYPE_PUTMEM(_put128, 16, shmem)
 
 SHMEM_TYPE_PUTMEM(_put, sizeof(long), shmem)
+
+/* Deprecated */
+SHMEM_TYPE_PUTMEM(_put16, 2, shmem)

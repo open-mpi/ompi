@@ -56,6 +56,10 @@
 #pragma weak shmem_double_swap = pshmem_double_swap
 #pragma weak shmemx_int32_swap = pshmemx_int32_swap
 #pragma weak shmemx_int64_swap = pshmemx_int64_swap
+
+/* Deprecated */
+#pragma weak shmem_int32_swap = pshmem_int32_swap
+#pragma weak shmem_int64_swap = pshmem_int64_swap
 #include "oshmem/shmem/c/profile/defines.h"
 #endif
 
@@ -67,3 +71,7 @@ SHMEM_TYPE_SWAP(_float, float, shmem)
 SHMEM_TYPE_SWAP(_double, double, shmem)
 SHMEM_TYPE_SWAP(_int32, int32_t, shmemx)
 SHMEM_TYPE_SWAP(_int64, int64_t, shmemx)
+
+/* Deprecated */
+SHMEM_TYPE_SWAP(_int32, int32_t, shmem)
+SHMEM_TYPE_SWAP(_int64, int64_t, shmem)

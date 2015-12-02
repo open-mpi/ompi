@@ -55,6 +55,10 @@
 #pragma weak shmem_longlong_cswap = pshmem_longlong_cswap
 #pragma weak shmemx_int32_cswap = pshmemx_int32_cswap
 #pragma weak shmemx_int64_cswap = pshmemx_int64_cswap
+
+/* Deprecated */
+#pragma weak shmem_int32_cswap = pshmem_int32_cswap
+#pragma weak shmem_int64_cswap = pshmem_int64_cswap
 #include "oshmem/shmem/c/profile/defines.h"
 #endif
 
@@ -64,3 +68,6 @@ SHMEM_TYPE_CSWAP(_longlong, long long, shmem)
 SHMEM_TYPE_CSWAP(_int32, int32_t, shmemx)
 SHMEM_TYPE_CSWAP(_int64, int64_t, shmemx)
 
+/* Deprecated */
+SHMEM_TYPE_CSWAP(_int32, int32_t, shmem)
+SHMEM_TYPE_CSWAP(_int64, int64_t, shmem)

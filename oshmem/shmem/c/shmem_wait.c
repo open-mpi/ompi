@@ -54,6 +54,13 @@
 #pragma weak shmem_longlong_wait_until = pshmem_longlong_wait_until
 #pragma weak shmemx_int32_wait_until = pshmemx_int32_wait_until
 #pragma weak shmemx_int64_wait_until = pshmemx_int64_wait_until
+
+/* Deprecated */
+#pragma weak shmem_int32_wait = pshmem_int32_wait
+#pragma weak shmem_int64_wait = pshmem_int64_wait
+
+#pragma weak shmem_int32_wait_until = pshmem_int32_wait_until
+#pragma weak shmem_int64_wait_until = pshmem_int64_wait_until
 #include "oshmem/shmem/c/profile/defines.h"
 #endif
 
@@ -64,6 +71,10 @@ SHMEM_TYPE_WAIT(_long, long, SHMEM_LONG, shmem)
 SHMEM_TYPE_WAIT(_longlong, long long, SHMEM_LLONG, shmem)
 SHMEM_TYPE_WAIT(_int32, int32_t, SHMEM_INT32_T, shmemx)
 SHMEM_TYPE_WAIT(_int64, int64_t, SHMEM_INT64_T, shmemx)
+
+/* Deprecated */
+SHMEM_TYPE_WAIT(_int32, int32_t, SHMEM_INT32_T, shmem)
+SHMEM_TYPE_WAIT(_int64, int64_t, SHMEM_INT64_T, shmem)
 
 #define SHMEM_TYPE_WAIT_UNTIL(type_name, type, code, prefix)    \
     void prefix##type_name##_wait_until(type *addr, int cmp, type value)   \
@@ -89,3 +100,7 @@ SHMEM_TYPE_WAIT_UNTIL(_long, long, SHMEM_LONG, shmem)
 SHMEM_TYPE_WAIT_UNTIL(_longlong, long long, SHMEM_LLONG, shmem)
 SHMEM_TYPE_WAIT_UNTIL(_int32, int32_t, SHMEM_INT32_T, shmemx)
 SHMEM_TYPE_WAIT_UNTIL(_int64, int64_t, SHMEM_INT64_T, shmemx)
+
+/* Deprecated */
+SHMEM_TYPE_WAIT_UNTIL(_int32, int32_t, SHMEM_INT32_T, shmem)
+SHMEM_TYPE_WAIT_UNTIL(_int64, int64_t, SHMEM_INT64_T, shmem)

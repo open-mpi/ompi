@@ -57,6 +57,11 @@
 #pragma weak shmemx_int16_p = pshmemx_int16_p
 #pragma weak shmemx_int32_p = pshmemx_int32_p
 #pragma weak shmemx_int64_p = pshmemx_int64_p
+
+/* Deprecated */
+#pragma weak shmem_int16_p = pshmem_int16_p
+#pragma weak shmem_int32_p = pshmem_int32_p
+#pragma weak shmem_int64_p = pshmem_int64_p
 #include "oshmem/shmem/c/profile/defines.h"
 #endif
 
@@ -71,3 +76,8 @@ SHMEM_TYPE_P(_longdouble, long double, shmem)
 SHMEM_TYPE_P(_int16, int16_t, shmemx)
 SHMEM_TYPE_P(_int32, int32_t, shmemx)
 SHMEM_TYPE_P(_int64, int64_t, shmemx)
+
+/* Deprecated */
+SHMEM_TYPE_P(_int16, int16_t, shmem)
+SHMEM_TYPE_P(_int32, int32_t, shmem)
+SHMEM_TYPE_P(_int64, int64_t, shmem)

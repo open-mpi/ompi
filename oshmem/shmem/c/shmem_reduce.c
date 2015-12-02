@@ -168,6 +168,35 @@ static bool __group_cache_enabled = true;
 #pragma weak shmemx_int16_prod_to_all   =  pshmemx_int16_prod_to_all
 #pragma weak shmemx_int32_prod_to_all   =  pshmemx_int32_prod_to_all
 #pragma weak shmemx_int64_prod_to_all   =  pshmemx_int64_prod_to_all
+
+/* Deprecated */
+#pragma weak shmem_int16_and_to_all    =  pshmem_int16_and_to_all
+#pragma weak shmem_int32_and_to_all    =  pshmem_int32_and_to_all
+#pragma weak shmem_int64_and_to_all    =  pshmem_int64_and_to_all
+
+#pragma weak shmem_int16_or_to_all     =  pshmem_int16_or_to_all
+#pragma weak shmem_int32_or_to_all     =  pshmem_int32_or_to_all
+#pragma weak shmem_int64_or_to_all     =  pshmem_int64_or_to_all
+
+#pragma weak shmem_int16_xor_to_all    =  pshmem_int16_xor_to_all
+#pragma weak shmem_int32_xor_to_all    =  pshmem_int32_xor_to_all
+#pragma weak shmem_int64_xor_to_all    =  pshmem_int64_xor_to_all
+
+#pragma weak shmem_int16_max_to_all    =  pshmem_int16_max_to_all
+#pragma weak shmem_int32_max_to_all    =  pshmem_int32_max_to_all
+#pragma weak shmem_int64_max_to_all    =  pshmem_int64_max_to_all
+
+#pragma weak shmem_int16_min_to_all    =  pshmem_int16_min_to_all
+#pragma weak shmem_int32_min_to_all    =  pshmem_int32_min_to_all
+#pragma weak shmem_int64_min_to_all    =  pshmem_int64_min_to_all
+
+#pragma weak shmem_int16_sum_to_all    =  pshmem_int16_sum_to_all
+#pragma weak shmem_int32_sum_to_all    =  pshmem_int32_sum_to_all
+#pragma weak shmem_int64_sum_to_all    =  pshmem_int64_sum_to_all
+
+#pragma weak shmem_int16_prod_to_all   =  pshmem_int16_prod_to_all
+#pragma weak shmem_int32_prod_to_all   =  pshmem_int32_prod_to_all
+#pragma weak shmem_int64_prod_to_all   =  pshmem_int64_prod_to_all
 #include "oshmem/shmem/c/profile/defines.h"
 #endif /* OSHMEM_PROFILING */
 
@@ -242,3 +271,32 @@ SHMEM_TYPE_REDUCE_OP(prod, _complexd, double complex, shmem)
 SHMEM_TYPE_REDUCE_OP(prod, _int16, int16_t, shmemx)
 SHMEM_TYPE_REDUCE_OP(prod, _int32, int32_t, shmemx)
 SHMEM_TYPE_REDUCE_OP(prod, _int64, int64_t, shmemx)
+
+/* Deprecated */
+SHMEM_TYPE_REDUCE_OP(and, _int16, int16_t, shmem)
+SHMEM_TYPE_REDUCE_OP(and, _int32, int32_t, shmem)
+SHMEM_TYPE_REDUCE_OP(and, _int64, int64_t, shmem)
+
+SHMEM_TYPE_REDUCE_OP(or, _int16, int16_t, shmem)
+SHMEM_TYPE_REDUCE_OP(or, _int32, int32_t, shmem)
+SHMEM_TYPE_REDUCE_OP(or, _int64, int64_t, shmem)
+
+SHMEM_TYPE_REDUCE_OP(xor, _int16, int16_t, shmem)
+SHMEM_TYPE_REDUCE_OP(xor, _int32, int32_t, shmem)
+SHMEM_TYPE_REDUCE_OP(xor, _int64, int64_t, shmem)
+
+SHMEM_TYPE_REDUCE_OP(max, _int16, int16_t, shmem)
+SHMEM_TYPE_REDUCE_OP(max, _int32, int32_t, shmem)
+SHMEM_TYPE_REDUCE_OP(max, _int64, int64_t, shmem)
+
+SHMEM_TYPE_REDUCE_OP(min, _int16, int16_t, shmem)
+SHMEM_TYPE_REDUCE_OP(min, _int32, int32_t, shmem)
+SHMEM_TYPE_REDUCE_OP(min, _int64, int64_t, shmem)
+
+SHMEM_TYPE_REDUCE_OP(sum, _int16, int16_t, shmem)
+SHMEM_TYPE_REDUCE_OP(sum, _int32, int32_t, shmem)
+SHMEM_TYPE_REDUCE_OP(sum, _int64, int64_t, shmem)
+
+SHMEM_TYPE_REDUCE_OP(prod, _int16, int16_t, shmem)
+SHMEM_TYPE_REDUCE_OP(prod, _int32, int32_t, shmem)
+SHMEM_TYPE_REDUCE_OP(prod, _int64, int64_t, shmem)
