@@ -151,6 +151,7 @@ oshmem_group_t* oshmem_proc_group_create(int pe_start,
         /* allocate an array */
         proc_array = (oshmem_proc_t**) malloc(pe_size * sizeof(oshmem_proc_t*));
         if (NULL == proc_array) {
+            OBJ_RELEASE(group);
             OPAL_THREAD_UNLOCK(&oshmem_proc_lock);
             return NULL ;
         }
@@ -162,6 +163,9 @@ oshmem_group_t* oshmem_proc_group_create(int pe_start,
             if (NULL == proc) {
                 opal_output(0,
                              "Error: Can not find proc object for pe = %d", i);
+                free(proc_array);
+                OBJ_RELEASE(group);
+                OPAL_THREAD_UNLOCK(&oshmem_proc_lock);
                 return NULL;
             }
             if (count_pe >= (int) pe_size) {
@@ -200,8 +204,9 @@ oshmem_group_t* oshmem_proc_group_create(int pe_start,
                         "Error: No collective modules are available: group is not created, returning NULL");
             oshmem_proc_group_destroy(group);
             OPAL_THREAD_UNLOCK(&oshmem_proc_lock);
-            return NULL ;
-        } OPAL_THREAD_UNLOCK(&oshmem_proc_lock);
+            return NULL;
+        }
+        OPAL_THREAD_UNLOCK(&oshmem_proc_lock);
     }
 
     return group;
