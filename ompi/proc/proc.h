@@ -13,6 +13,8 @@
  * Copyright (c) 2007-2012 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -375,6 +377,7 @@ static inline intptr_t ompi_proc_name_to_sentinel (opal_process_name_t name)
 static inline opal_process_name_t ompi_proc_sentinel_to_name (intptr_t sentinel)
 {
   sentinel >>= 1;
+  sentinel &= 0x7FFFFFFFFFFFFFFF;
   return *((opal_process_name_t *) &sentinel);
 }
 
