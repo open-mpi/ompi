@@ -54,10 +54,4 @@ EXTRA_DIST += \
         examples/oshmem_strided_puts.c \
         examples/oshmem_symmetric_data.c \
         examples/Hello.java \
-        examples/Ring.java \
-        examples/Hello_oshmem.java \
-        examples/Ring_oshmem.java \
-        examples/oshmem_circular_shift.java \
-        examples/oshmem_max_reduction.java \
-        examples/oshmem_strided_puts.java \
-        examples/oshmem_symmetric_data.java
+        examples/Ring.java

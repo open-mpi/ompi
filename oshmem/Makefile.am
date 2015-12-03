@@ -43,8 +43,7 @@ SUBDIRS += \
 	$(MCA_oshmem_FRAMEWORKS_SUBDIRS) \
 	$(MCA_oshmem_FRAMEWORK_COMPONENT_STATIC_SUBDIRS) \
 	. \
-	$(MCA_oshmem_FRAMEWORK_COMPONENT_DSO_SUBDIRS) \
-	shmem/java
+	$(MCA_oshmem_FRAMEWORK_COMPONENT_DSO_SUBDIRS)
 endif
 
 DIST_SUBDIRS = \
@@ -52,8 +51,7 @@ DIST_SUBDIRS = \
 	shmem/c \
 	shmem/fortran \
 	$(MCA_oshmem_FRAMEWORKS_SUBDIRS) \
-	$(MCA_oshmem_FRAMEWORK_COMPONENT_ALL_SUBDIRS) \
-	shmem/java
+	$(MCA_oshmem_FRAMEWORK_COMPONENT_ALL_SUBDIRS)
 
 # Build The main OSHMEM library, but only if we're building OSHMEM
 lib_LTLIBRARIES =
@@ -92,6 +90,7 @@ endif
 include op/Makefile.am
 include proc/Makefile.am
 include request/Makefile.am
+include info/Makefile.am
 include runtime/Makefile.am
 include shmem/Makefile.am
 include shmem/man/man3/Makefile.extra

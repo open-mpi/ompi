@@ -22,8 +22,8 @@
  * must be completed without the possibility of another process updating target between the
  * time of the fetch and the update.
  */
-#define SHMEM_TYPE_ADD(type_name, type)    \
-    void shmem##type_name##_add(type *target, type value, int pe) \
+#define SHMEM_TYPE_ADD(type_name, type, prefix)    \
+    void prefix##type_name##_add(type *target, type value, int pe) \
     {                                                               \
         int rc = OSHMEM_SUCCESS;                                    \
         size_t size = 0;                                            \
@@ -52,13 +52,13 @@
 #pragma weak shmem_int_add = pshmem_int_add
 #pragma weak shmem_long_add = pshmem_long_add
 #pragma weak shmem_longlong_add = pshmem_longlong_add
-#pragma weak shmem_int32_add = pshmem_int32_add
-#pragma weak shmem_int64_add = pshmem_int64_add
+#pragma weak shmemx_int32_add = pshmemx_int32_add
+#pragma weak shmemx_int64_add = pshmemx_int64_add
 #include "oshmem/shmem/c/profile/defines.h"
 #endif
 
-SHMEM_TYPE_ADD(_int, int)
-SHMEM_TYPE_ADD(_long, long)
-SHMEM_TYPE_ADD(_longlong, long long)
-SHMEM_TYPE_ADD(_int32, int32_t)
-SHMEM_TYPE_ADD(_int64, int64_t)
+SHMEM_TYPE_ADD(_int, int, shmem)
+SHMEM_TYPE_ADD(_long, long, shmem)
+SHMEM_TYPE_ADD(_longlong, long long, shmem)
+SHMEM_TYPE_ADD(_int32, int32_t, shmemx)
+SHMEM_TYPE_ADD(_int64, int64_t, shmemx)

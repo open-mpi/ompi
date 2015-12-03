@@ -24,8 +24,8 @@
  * completed without the possibility of another process updating target between the time of
  * the fetch and the update.
  */
-#define SHMEM_TYPE_FINC(type_name, type)    \
-    type shmem##type_name##_finc(type *target, int pe) \
+#define SHMEM_TYPE_FINC(type_name, type, prefix)    \
+    type prefix##type_name##_finc(type *target, int pe) \
     {                                                               \
         int rc = OSHMEM_SUCCESS;                                    \
         size_t size;                                                \
@@ -55,13 +55,13 @@
 #pragma weak shmem_int_finc = pshmem_int_finc
 #pragma weak shmem_long_finc = pshmem_long_finc
 #pragma weak shmem_longlong_finc = pshmem_longlong_finc
-#pragma weak shmem_int32_finc = pshmem_int32_finc
-#pragma weak shmem_int64_finc = pshmem_int64_finc
+#pragma weak shmemx_int32_finc = pshmemx_int32_finc
+#pragma weak shmemx_int64_finc = pshmemx_int64_finc
 #include "oshmem/shmem/c/profile/defines.h"
 #endif
 
-SHMEM_TYPE_FINC(_int, int)
-SHMEM_TYPE_FINC(_long, long)
-SHMEM_TYPE_FINC(_longlong, long long)
-SHMEM_TYPE_FINC(_int32, int32_t)
-SHMEM_TYPE_FINC(_int64, int64_t)
+SHMEM_TYPE_FINC(_int, int, shmem)
+SHMEM_TYPE_FINC(_long, long, shmem)
+SHMEM_TYPE_FINC(_longlong, long long, shmem)
+SHMEM_TYPE_FINC(_int32, int32_t, shmemx)
+SHMEM_TYPE_FINC(_int64, int64_t, shmemx)

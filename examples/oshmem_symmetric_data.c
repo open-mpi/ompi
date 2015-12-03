@@ -11,6 +11,8 @@
 #include <stdio.h>
 #include <shmem.h>
 
+#warning This application uses deprecated API see http://www.open-mpi.org/
+
 #define SIZE 16
 
 int main(int argc, char* argv[])

@@ -54,7 +54,7 @@
 #pragma weak shmem_double_get = pshmem_double_get
 #pragma weak shmem_longdouble_get = pshmem_longdouble_get
 #pragma weak shmem_getmem = pshmem_getmem
-#pragma weak shmem_get16 = pshmem_get16
+#pragma weak shmemx_get16 = pshmemx_get16
 #pragma weak shmem_get32 = pshmem_get32
 #pragma weak shmem_get64 = pshmem_get64
 #pragma weak shmem_get128 = pshmem_get128
@@ -70,8 +70,8 @@ SHMEM_TYPE_GET(_float, float)
 SHMEM_TYPE_GET(_double, double)
 SHMEM_TYPE_GET(_longdouble, long double)
 
-#define SHMEM_TYPE_GETMEM(name, element_size)    \
-    void shmem##name(void *target, const void *source, size_t nelems, int pe) \
+#define SHMEM_TYPE_GETMEM(name, element_size, prefix)    \
+    void prefix##name(void *target, const void *source, size_t nelems, int pe) \
     {                                                               \
         int rc = OSHMEM_SUCCESS;                                    \
         size_t size = 0;                                            \
@@ -91,10 +91,10 @@ SHMEM_TYPE_GET(_longdouble, long double)
         return ;                                                    \
     }
 
-SHMEM_TYPE_GETMEM(_getmem, 1)
-SHMEM_TYPE_GETMEM(_get16, 2)
-SHMEM_TYPE_GETMEM(_get32, 4)
-SHMEM_TYPE_GETMEM(_get64, 8)
-SHMEM_TYPE_GETMEM(_get128, 16)
+SHMEM_TYPE_GETMEM(_getmem, 1, shmem)
+SHMEM_TYPE_GETMEM(_get16, 2, shmemx)
+SHMEM_TYPE_GETMEM(_get32, 4, shmem)
+SHMEM_TYPE_GETMEM(_get64, 8, shmem)
+SHMEM_TYPE_GETMEM(_get128, 16, shmem)
 
-SHMEM_TYPE_GETMEM(_get, sizeof(long))
+SHMEM_TYPE_GETMEM(_get, sizeof(long), shmem)

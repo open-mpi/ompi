@@ -57,7 +57,7 @@
 #pragma weak shmem_double_put = pshmem_double_put
 #pragma weak shmem_longdouble_put = pshmem_longdouble_put
 #pragma weak shmem_putmem = pshmem_putmem
-#pragma weak shmem_put16 = pshmem_put16
+#pragma weak shmemx_put16 = pshmemx_put16
 #pragma weak shmem_put32 = pshmem_put32
 #pragma weak shmem_put64 = pshmem_put64
 #pragma weak shmem_put128 = pshmem_put128
@@ -73,8 +73,8 @@ SHMEM_TYPE_PUT(_float, float)
 SHMEM_TYPE_PUT(_double, double)
 SHMEM_TYPE_PUT(_longdouble, long double)
 
-#define SHMEM_TYPE_PUTMEM(name, element_size)    \
-    void shmem##name(void *target, const void *source, size_t nelems, int pe) \
+#define SHMEM_TYPE_PUTMEM(name, element_size, prefix)    \
+    void prefix##name(void *target, const void *source, size_t nelems, int pe) \
     {                                                               \
         int rc = OSHMEM_SUCCESS;                                    \
         size_t size = 0;                                            \
@@ -94,10 +94,10 @@ SHMEM_TYPE_PUT(_longdouble, long double)
         return ;                                                    \
     }
 
-SHMEM_TYPE_PUTMEM(_putmem, 1)
-SHMEM_TYPE_PUTMEM(_put16, 2)
-SHMEM_TYPE_PUTMEM(_put32, 4)
-SHMEM_TYPE_PUTMEM(_put64, 8)
-SHMEM_TYPE_PUTMEM(_put128, 16)
+SHMEM_TYPE_PUTMEM(_putmem, 1, shmem)
+SHMEM_TYPE_PUTMEM(_put16, 2, shmemx)
+SHMEM_TYPE_PUTMEM(_put32, 4, shmem)
+SHMEM_TYPE_PUTMEM(_put64, 8, shmem)
+SHMEM_TYPE_PUTMEM(_put128, 16, shmem)
 
-SHMEM_TYPE_PUTMEM(_put, sizeof(long))
+SHMEM_TYPE_PUTMEM(_put, sizeof(long), shmem)

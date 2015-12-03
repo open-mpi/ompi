@@ -24,8 +24,8 @@
  * of target. The operation must be completed without the possibility of another process updating
  * target between the time of the fetch and the update.
  */
-#define SHMEM_TYPE_CSWAP(type_name, type)    \
-    type shmem##type_name##_cswap(type *target, type cond, type value, int pe) \
+#define SHMEM_TYPE_CSWAP(type_name, type, prefix)    \
+    type prefix##type_name##_cswap(type *target, type cond, type value, int pe) \
     {                                                               \
         int rc = OSHMEM_SUCCESS;                                    \
         size_t size = 0;                                            \
@@ -53,14 +53,14 @@
 #pragma weak shmem_int_cswap = pshmem_int_cswap
 #pragma weak shmem_long_cswap = pshmem_long_cswap
 #pragma weak shmem_longlong_cswap = pshmem_longlong_cswap
-#pragma weak shmem_int32_cswap = pshmem_int32_cswap
-#pragma weak shmem_int64_cswap = pshmem_int64_cswap
+#pragma weak shmemx_int32_cswap = pshmemx_int32_cswap
+#pragma weak shmemx_int64_cswap = pshmemx_int64_cswap
 #include "oshmem/shmem/c/profile/defines.h"
 #endif
 
-SHMEM_TYPE_CSWAP(_int, int)
-SHMEM_TYPE_CSWAP(_long, long)
-SHMEM_TYPE_CSWAP(_longlong, long long)
-SHMEM_TYPE_CSWAP(_int32, int32_t)
-SHMEM_TYPE_CSWAP(_int64, int64_t)
+SHMEM_TYPE_CSWAP(_int, int, shmem)
+SHMEM_TYPE_CSWAP(_long, long, shmem)
+SHMEM_TYPE_CSWAP(_longlong, long long, shmem)
+SHMEM_TYPE_CSWAP(_int32, int32_t, shmemx)
+SHMEM_TYPE_CSWAP(_int64, int64_t, shmemx)
 
