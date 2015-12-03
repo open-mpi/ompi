@@ -190,7 +190,7 @@ static void mca_pml_ob1_put_completion (mca_pml_ob1_rdma_frag_t *frag, int64_t r
     mca_pml_ob1_recv_request_t* recvreq = (mca_pml_ob1_recv_request_t *) frag->rdma_req;
     mca_bml_base_btl_t *bml_btl = frag->rdma_bml;
 
-    OPAL_THREAD_SUB_SIZE_T(&recvreq->req_pipeline_depth, 1);
+    OPAL_THREAD_ADD32(&recvreq->req_pipeline_depth, -1);
 
     MCA_PML_OB1_RDMA_FRAG_RETURN(frag);
 
@@ -198,7 +198,7 @@ static void mca_pml_ob1_put_completion (mca_pml_ob1_rdma_frag_t *frag, int64_t r
         assert ((uint64_t) rdma_size == frag->rdma_length);
 
         /* check completion status */
-        OPAL_THREAD_ADD_SIZE_T(&recvreq->req_bytes_received, (size_t) rdma_size);
+        OPAL_THREAD_ADD_SIZE_T(&recvreq->req_bytes_received, rdma_size);
         if (recv_request_pml_complete_check(recvreq) == false &&
             recvreq->req_rdma_offset < recvreq->req_send_offset) {
             /* schedule additional rdma operations */
@@ -951,7 +951,7 @@ int mca_pml_ob1_recv_request_schedule_once( mca_pml_ob1_recv_request_t* recvreq,
     }
 
     while(bytes_remaining > 0 &&
-           recvreq->req_pipeline_depth < mca_pml_ob1.recv_pipeline_depth) {
+          recvreq->req_pipeline_depth < mca_pml_ob1.recv_pipeline_depth) {
         mca_pml_ob1_rdma_frag_t *frag = NULL;
         mca_btl_base_module_t *btl;
         int rc, rdma_idx;
@@ -1028,7 +1028,7 @@ int mca_pml_ob1_recv_request_schedule_once( mca_pml_ob1_recv_request_t* recvreq,
         if (OPAL_LIKELY(OMPI_SUCCESS == rc)) {
             /* update request state */
             recvreq->req_rdma_offset += size;
-            OPAL_THREAD_ADD_SIZE_T(&recvreq->req_pipeline_depth, 1);
+            OPAL_THREAD_ADD32(&recvreq->req_pipeline_depth, 1);
             recvreq->req_rdma[rdma_idx].length -= size;
             bytes_remaining -= size;
         } else {
