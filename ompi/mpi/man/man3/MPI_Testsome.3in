@@ -13,7 +13,8 @@
 .nf
 #include <mpi.h>
 int MPI_Testsome(int \fIincount\fP, MPI_Request \fIarray_of_requests[]\fP,
-	int\fI *outcount\fP, int\fI array_of_indices[]\fP, MPI_Status\fI array_of_statuses[]\fP)
+	int\fI *outcount\fP, int\fI array_of_indices[]\fP,
+	MPI_Status\fI array_of_statuses[]\fP)
 
 .fi
 .SH Fortran Syntax
@@ -29,8 +30,9 @@ MPI_TESTSOME(\fIINCOUNT, ARRAY_OF_REQUESTS, OUTCOUNT,
 .SH C++ Syntax
 .nf
 #include <mpi.h>
-static int Request::Testsome(int \fIincount\fP, Request 
-	\fIarray_of_requests\fP[], int \fIarray_of_indices\fP[], Status \fIarray_of_statuses\fP[]) 
+static int Request::Testsome(int \fIincount\fP, Request
+	\fIarray_of_requests\fP[], int \fIarray_of_indices\fP[],
+	Status \fIarray_of_statuses\fP[])
 
 static int Request::Testsome(int \fIincount\fP, Request 
 	\fIarray_of_requests\fP[], int \fIarray_of_indices\fP[]) 
