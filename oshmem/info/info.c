@@ -17,6 +17,7 @@
 #include "orte/runtime/orte_globals.h"
 #include "orte/util/show_help.h"
 
+#include "opal/util/opal_environ.h"
 #include "opal/util/output.h"
 
 #include "oshmem/version.h"
@@ -220,6 +221,17 @@ static int oshmem_info_get_heap_size(char *value, size_t *interp)
     long long size = 0;
 
     p = value;
+    *interp = 0;
+
+    if (!p) {
+        return OSHMEM_ERR_BAD_PARAM;
+    }
+
+    /* Sanity check for buffer overflow attack (coverity issue: Use of untrusted string value) */
+    if (16 < strlen(p)) {
+        return OSHMEM_ERR_BAD_PARAM;
+    }
+
     if (1 == sscanf(p, "%lld%n", &size, &idx)) {
         if (p[idx] != '\0') {
             if (p[idx + 1] == '\0') {
@@ -243,6 +255,10 @@ static int oshmem_info_get_heap_size(char *value, size_t *interp)
     if (size <= 0) {
         return OSHMEM_ERR_BAD_PARAM;
     } else {
+        opal_setenv(OSHMEM_ENV_SYMMETRIC_SIZE, p, true, &environ);
+        opal_setenv(SHMEM_HEAP_SIZE, p, true, &environ);
+/* Probably needless code */
+#if 0
         char *tmp = p;
 
         if(!p) {
@@ -250,13 +266,14 @@ static int oshmem_info_get_heap_size(char *value, size_t *interp)
         }
 
         if (tmp) {
-            setenv(OSHMEM_ENV_SYMMETRIC_SIZE, tmp, 1);
-            setenv(SHMEM_HEAP_SIZE, tmp, 1);
+            opal_setenv(OSHMEM_ENV_SYMMETRIC_SIZE, p, true, &environ);
+            opal_setenv(SHMEM_HEAP_SIZE, p, true, &environ);
         }
 
         if (!p && tmp) {
             free(tmp);
         }
+#endif
     }
 
     *interp = size * factor;
