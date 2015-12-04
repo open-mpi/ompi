@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014      The University of Tennessee and The University
+ * Copyright (c) 2014-2015 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2014-2015 NVIDIA Corporation.  All rights reserved.
@@ -34,15 +34,14 @@ mca_coll_cuda_allreduce(const void *sbuf, void *rbuf, int count,
                         mca_coll_base_module_t *module)
 {
     mca_coll_cuda_module_t *s = (mca_coll_cuda_module_t*) module;
-    ptrdiff_t true_lb, true_extent, lb, extent;
+    ptrdiff_t gap;
     char *rbuf1 = NULL, *sbuf1 = NULL, *rbuf2 = NULL;
     const char *sbuf2;
     size_t bufsize;
     int rc;
 
-    ompi_datatype_get_extent(dtype, &lb, &extent);
-    ompi_datatype_get_true_extent(dtype, &true_lb, &true_extent);
-    bufsize = true_extent + (ptrdiff_t)(count - 1) * extent;
+    bufsize = opal_datatype_span(&dtype->super, count, &gap);
+
     if ((MPI_IN_PLACE != sbuf) && (opal_cuda_check_bufs((char *)sbuf, NULL))) {
         sbuf1 = (char*)malloc(bufsize);
         if (NULL == sbuf1) {
@@ -50,7 +49,7 @@ mca_coll_cuda_allreduce(const void *sbuf, void *rbuf, int count,
         }
         opal_cuda_memcpy_sync(sbuf1, sbuf, bufsize);
         sbuf2 = sbuf; /* save away original buffer */
-        sbuf = sbuf1 - true_lb;
+        sbuf = sbuf1 - gap;
     }
 
     if (opal_cuda_check_bufs(rbuf, NULL)) {
@@ -61,7 +60,7 @@ mca_coll_cuda_allreduce(const void *sbuf, void *rbuf, int count,
         }
         opal_cuda_memcpy_sync(rbuf1, rbuf, bufsize);
         rbuf2 = rbuf; /* save away original buffer */
-        rbuf = rbuf1 - true_lb;
+        rbuf = rbuf1 - gap;
     }
     rc = s->c_coll.coll_allreduce(sbuf, rbuf, count, dtype, op, comm, s->c_coll.coll_allreduce_module);
     if (NULL != sbuf1) {

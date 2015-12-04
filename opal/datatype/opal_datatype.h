@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2010 The University of Tennessee and The University
+ * Copyright (c) 2004-2015 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart,
@@ -328,6 +328,25 @@ struct opal_proc_t;
 OPAL_DECLSPEC opal_datatype_t*
 opal_datatype_create_from_packed_description( void** packed_buffer,
                                               struct opal_proc_t* remote_processor );
+
+/* Compute the span in memory of count datatypes. This function help with temporary
+ * memory allocations for receiving already typed data (such as those used for reduce
+ * operations). This span is the distance between the minimum and the maximum byte
+ * in the memory layout of count datatypes, or in other terms the memory needed to
+ * allocate count times the datatype without the gap in the beginning and at the end.
+ *
+ * Returns: the memory span of count repetition of the datatype, and in the gap
+ *          argument, the number of bytes of the gap at the beginning.
+ */
+static inline OPAL_PTRDIFF_TYPE
+opal_datatype_span( const opal_datatype_t* pData, int64_t count,
+                    OPAL_PTRDIFF_TYPE* gap)
+{
+    OPAL_PTRDIFF_TYPE extent = (pData->ub - pData->lb);
+    OPAL_PTRDIFF_TYPE true_extent = (pData->true_ub - pData->true_lb);
+    *gap = pData->true_lb;
+    return true_extent + (count - 1) * extent;
+}
 
 #if OPAL_ENABLE_DEBUG
 /*

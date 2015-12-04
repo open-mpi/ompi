@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2014 The University of Tennessee and The University
+ * Copyright (c) 2004-2015 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -187,9 +187,9 @@ static int reduce_inorder(const void *sbuf, void* rbuf, int count,
     size_t total_size, max_data, bytes;
     mca_coll_sm_in_use_flag_t *flag;
     mca_coll_sm_data_index_t *index;
-    size_t ddt_size;
+    size_t ddt_size, segsize;
     size_t segment_ddt_count, segment_ddt_bytes, zero = 0;
-    ptrdiff_t true_lb, true_extent, lb, extent;
+    ptrdiff_t extent, gap;
 
     /* Setup some identities */
 
@@ -205,10 +205,7 @@ static int reduce_inorder(const void *sbuf, void* rbuf, int count,
     /* ddt_size is the packed size (e.g., MPI_SHORT_INT is 6) */
     ompi_datatype_type_size(dtype, &ddt_size);
     /* extent is from lb to ub (e.g., MPI_SHORT_INT is 8) */
-    ompi_datatype_get_extent(dtype, &lb, &extent);
-    /* true_extent is extent of actual type map, ignoring lb and ub
-       (e.g., MPI_SHORT_INT is 8) */
-    ompi_datatype_get_true_extent(dtype, &true_lb, &true_extent);
+    ompi_datatype_type_extent(dtype, &extent);
     segment_ddt_count = mca_coll_sm_component.sm_fragment_size / ddt_size;
     iov.iov_len = segment_ddt_bytes = segment_ddt_count * ddt_size;
     total_size = ddt_size * count;
@@ -266,12 +263,13 @@ static int reduce_inorder(const void *sbuf, void* rbuf, int count,
                "segment_ddt_count" instances (i.e., the number of
                instances that can be held in a single fragment) */
 
-            free_buffer = (char*)malloc(true_extent +
-                                        (segment_ddt_count - 1) * extent);
+            segsize = opal_datatype_span(&dtype->super, segment_ddt_count, &gap);
+
+            free_buffer = (char*)malloc(segsize);
             if (NULL == free_buffer) {
                 return OMPI_ERR_OUT_OF_RESOURCE;
             }
-            reduce_temp_buffer = free_buffer - true_lb;
+            reduce_temp_buffer = free_buffer - gap;
 
             /* Trickery here: we use a potentially smaller count than
                the user count -- use the largest count that is <=
@@ -312,15 +310,16 @@ static int reduce_inorder(const void *sbuf, void* rbuf, int count,
            as the sbuf */
 
         if (MPI_IN_PLACE == sbuf && (size - 1) != rank) {
-            inplace_temp = (char*)malloc(true_extent + (count - 1) * extent);
+            segsize = opal_datatype_span(&dtype->super, count, &gap);
+            inplace_temp = (char*)malloc(segsize);
             if (NULL == inplace_temp) {
                 if (NULL != free_buffer) {
                     free(free_buffer);
                 }
                 return OMPI_ERR_OUT_OF_RESOURCE;
             }
-            sbuf = inplace_temp - true_lb;
-            ompi_datatype_copy_content_same_ddt(dtype, count, (char *) sbuf, (char *) rbuf);
+            sbuf = inplace_temp - gap;
+            ompi_datatype_copy_content_same_ddt(dtype, count, (char *)sbuf, (char *)rbuf);
         } else {
             inplace_temp = NULL;
         }

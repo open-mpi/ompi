@@ -81,8 +81,7 @@ mca_coll_basic_allreduce_inter(const void *sbuf, void *rbuf, int count,
                                mca_coll_base_module_t *module)
 {
     int err, i, rank, root = 0, rsize, line;
-    ptrdiff_t lb, extent;
-    ptrdiff_t true_lb, true_extent;
+    ptrdiff_t extent, dsize, gap;
     char *tmpbuf = NULL, *pml_buffer = NULL;
     ompi_request_t *req[2];
     ompi_request_t **reqs = NULL;
@@ -100,18 +99,14 @@ mca_coll_basic_allreduce_inter(const void *sbuf, void *rbuf, int count,
      * simultaniously. */
     /*****************************************************************/
     if (rank == root) {
-        err = ompi_datatype_get_extent(dtype, &lb, &extent);
+        err = ompi_datatype_type_extent(dtype, &extent);
         if (OMPI_SUCCESS != err) {
             return OMPI_ERROR;
         }
-        err = ompi_datatype_get_true_extent(dtype, &true_lb, &true_extent);
-        if (OMPI_SUCCESS != err) {
-            return OMPI_ERROR;
-        }
-
-        tmpbuf = (char *) malloc(true_extent + (count - 1) * extent);
+        dsize = opal_datatype_span(&dtype->super, count, &gap);
+        tmpbuf = (char *) malloc(dsize);
         if (NULL == tmpbuf) { err = OMPI_ERR_OUT_OF_RESOURCE; line = __LINE__; goto exit; }
-        pml_buffer = tmpbuf - true_lb;
+        pml_buffer = tmpbuf - gap;
 
         reqs = coll_base_comm_get_reqs(module->base_data, rsize - 1);
         if( NULL == reqs ) { err = OMPI_ERR_OUT_OF_RESOURCE; line = __LINE__; goto exit; }
