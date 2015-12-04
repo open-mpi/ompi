@@ -1,7 +1,7 @@
 .\" -*- nroff -*-
 .\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
-.\" Copyright (c) 2011 Cisco Systems, Inc.  All rights reserved.
+.\" Copyright (c) 2011-2015 Cisco Systems, Inc.  All rights reserved.
 .\" $COPYRIGHT$
 .TH MPI_Testsome 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
@@ -13,7 +13,8 @@
 .nf
 #include <mpi.h>
 int MPI_Testsome(int \fIincount\fP, MPI_Request \fIarray_of_requests[]\fP,
-	int\fI *outcount\fP, int\fI array_of_indices[]\fP, MPI_Status\fI array_of_statuses[]\fP)
+	int\fI *outcount\fP, int\fI array_of_indices[]\fP,
+	MPI_Status\fI array_of_statuses[]\fP)
 
 .fi
 .SH Fortran Syntax
@@ -43,7 +44,8 @@ MPI_Testsome(\fIincount\fP, \fIarray_of_requests\fP, \fIoutcount\fP, \fIarray_of
 .nf
 #include <mpi.h>
 static int Request::Testsome(int \fIincount\fP, Request
-	\fIarray_of_requests\fP[], int \fIarray_of_indices\fP[], Status \fIarray_of_statuses\fP[])
+	\fIarray_of_requests\fP[], int \fIarray_of_indices\fP[],
+	Status \fIarray_of_statuses\fP[])
 
 static int Request::Testsome(int \fIincount\fP, Request
 	\fIarray_of_requests\fP[], int \fIarray_of_indices\fP[])
@@ -76,7 +78,20 @@ Fortran only: Error status (integer).
 
 .SH DESCRIPTION
 .ft R
-Behaves like MPI_Waitsome, except that it returns immediately. If no operation has completed it returns outcount = 0. If there is no active handle in the list, it returns outcount = MPI_UNDEFINED.
+Behaves like MPI_Waitsome, except that it returns immediately.
+.sp
+Returns in outcount the number of requests from the list
+array_of_requests that have completed. Returns in the first outcount
+locations of the array array_of_indices the indices of these
+operations (index within the array array_of_requests; the array is
+indexed from 0 in C and from 1 in Fortran). Returns in the first
+outcount locations of the array array_of_status the status for these
+completed operations. If a request that completed was allocated by a
+nonblocking communication call, then it is deallocated, and the
+associated handle is set to MPI_REQUEST_NULL.
+.sp
+If no operation has completed it returns outcount = 0. If there is no
+active handle in the list, it returns outcount = MPI_UNDEFINED.
 .sp
 MPI_Testsome is a local operation, which returns immediately, whereas MPI_Waitsome blocks until a communication completes, if it was passed a list that contains at least one active handle. Both calls fulfill a fairness requirement: If a request for a receive repeatedly appears in a list of requests passed to MPI_Waitsome or MPI_Testsome, and a matching send has been posted, then the receive will eventually succeed unless the send is satisfied by another receive; send requests also fulfill this fairness requirement.
 .sp
