@@ -238,13 +238,9 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
     hints->tx_attr->msg_order = FI_ORDER_SAS;
     hints->rx_attr->msg_order = FI_ORDER_SAS;
 
-    /**
-     * Refine filter for additional capabilities
-     * threading:  Disable locking
-     * control_progress:  enable async progress
-     */
-    hints->domain_attr->threading        = FI_THREAD_ENDPOINT;
-    hints->domain_attr->control_progress = FI_PROGRESS_AUTO;
+    hints->domain_attr->threading        = FI_THREAD_UNSPEC;
+    hints->domain_attr->control_progress = FI_PROGRESS_MANUAL;
+    hints->domain_attr->resource_mgmt    = FI_RM_ENABLED;
 
     /**
      * FI_VERSION provides binary backward and forward compatibility support
