@@ -222,7 +222,7 @@ int ompi_coll_base_alltoall_intra_bruck(const void *sbuf, int scount,
     err = ompi_datatype_type_extent (rdtype, &rext);
     if (err != MPI_SUCCESS) { line = __LINE__; goto err_hndl; }
 
-    span = opal_datatype_span(&sdtype->super, size * scount, &gap);
+    span = opal_datatype_span(&sdtype->super, (int64_t)size * scount, &gap);
 
     displs = (int *) malloc(size * sizeof(int));
     if (displs == NULL) { line = __LINE__; err = -1; goto err_hndl; }
