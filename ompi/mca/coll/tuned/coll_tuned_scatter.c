@@ -78,8 +78,8 @@ ompi_coll_tuned_scatter_intra_binomial(void *sbuf, int scount,
     ompi_datatype_type_extent(sdtype, &sextent);
     ompi_datatype_type_extent(rdtype, &rextent);
 
-    ssize = opal_datatype_span(&sdtype->super, scount * size, &sgap);
-    rsize = opal_datatype_span(&rdtype->super, rcount * size, &rgap);
+    ssize = opal_datatype_span(&sdtype->super, (int64_t)scount * size, &sgap);
+    rsize = opal_datatype_span(&rdtype->super, (int64_t)rcount * size, &rgap);
 
     vrank = (rank - root + size) % size;
     ptmp = (char *) rbuf;  /* by default suppose leaf nodes, just use rbuf */

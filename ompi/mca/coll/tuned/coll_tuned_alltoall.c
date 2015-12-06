@@ -237,7 +237,7 @@ int ompi_coll_tuned_alltoall_intra_bruck(void *sbuf, int scount,
     err = ompi_datatype_type_extent (rdtype, &rext);
     if (err != MPI_SUCCESS) { line = __LINE__; goto err_hndl; }
 
-    span = opal_datatype_span(&sdtype->super, size * scount, &gap);
+    span = opal_datatype_span(&sdtype->super, (int64_t)size * scount, &gap);
 
 #ifdef blahblah
     /* try and SAVE memory by using the data segment hung off 
