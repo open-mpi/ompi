@@ -170,7 +170,7 @@ int ompi_coll_base_allgather_intra_bruck(const void *sbuf, int scount,
         char *free_buf = NULL, *shift_buf = NULL;
         ptrdiff_t span, gap;
 
-        span = opal_datatype_span(&rdtype->super, (size - rank) * rcount, &gap);
+        span = opal_datatype_span(&rdtype->super, (int64_t)(size - rank) * rcount, &gap);
 
         free_buf = (char*)calloc(span, sizeof(char));
         if (NULL == free_buf) {
