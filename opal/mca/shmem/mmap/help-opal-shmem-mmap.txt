@@ -31,7 +31,8 @@ Open MPI to be much slower than expected.
 
 You may want to check what the typical temporary directory is on your
 node.  Possible sources of the location of this temporary directory
-include the $TEMPDIR, $TEMP, and $TMP environment variables.
+include the $TMPDIR (most likely on Unix), $TEMP, and $TMP environment
+variables.  See also the MCA parameter "orte_tmpdir_base".
 
 Note, too, that system administrators can set a list of filesystems
 where Open MPI is disallowed from creating temporary files by setting
