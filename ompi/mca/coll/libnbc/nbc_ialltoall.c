@@ -51,8 +51,8 @@ int ompi_coll_libnbc_ialltoall(const void* sendbuf, int sendcount, MPI_Datatype 
                                MPI_Datatype recvtype, struct ompi_communicator_t *comm, ompi_request_t ** request,
                                struct mca_coll_base_module_2_1_0_t *module)
 {
-  int rank, p, res, a2asize, datasize;
-  size_t sndsize;
+  int rank, p, res, datasize;
+  size_t a2asize, sndsize;
   NBC_Schedule *schedule;
   MPI_Aint rcvext, sndext;
 #ifdef NBC_CACHE_SCHEDULE
@@ -94,7 +94,7 @@ int ompi_coll_libnbc_ialltoall(const void* sendbuf, int sendcount, MPI_Datatype 
      * total communicated size is smaller than 1<<17 *and* if we don't
      * have eager messages (msgsize < 1<<13) */
     alg = NBC_A2A_LINEAR;
-  } else if(a2asize < (1<<12)*p) {
+  } else if(a2asize < (1<<12)*(unsigned int)p) {
     /*alg = NBC_A2A_DISS;*/
     alg = NBC_A2A_LINEAR;
   } else
