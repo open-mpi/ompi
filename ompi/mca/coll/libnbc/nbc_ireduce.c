@@ -18,7 +18,7 @@
 static inline int red_sched_binomial (int rank, int p, int root, const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
                                       MPI_Op op, void *redbuf, NBC_Schedule *schedule, NBC_Handle *handle);
 static inline int red_sched_chain (int rank, int p, int root, const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
-                                   MPI_Op op, int ext, int size, NBC_Schedule *schedule, NBC_Handle *handle, int fragsize);
+                                   MPI_Op op, int ext, size_t size, NBC_Schedule *schedule, NBC_Handle *handle, int fragsize);
 
 static inline int red_sched_linear (int rank, int rsize, int root, const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
                                     MPI_Op op, NBC_Schedule *schedule, NBC_Handle *handle);
@@ -360,7 +360,7 @@ static inline int red_sched_binomial (int rank, int p, int root, const void *sen
 
 /* chain send ... */
 static inline int red_sched_chain (int rank, int p, int root, const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
-                                   MPI_Op op, int ext, int size, NBC_Schedule *schedule, NBC_Handle *handle, int fragsize) {
+                                   MPI_Op op, int ext, size_t size, NBC_Schedule *schedule, NBC_Handle *handle, int fragsize) {
   int res, vrank, rpeer, speer, numfrag, fragcount, thiscount;
   long offset;
 

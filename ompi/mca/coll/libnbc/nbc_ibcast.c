@@ -1,11 +1,11 @@
 /* -*- Mode: C; c-basic-offset:2 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2006 The Trustees of Indiana University and Indiana
- *                    University Research and Technology
- *                    Corporation.  All rights reserved.
- * Copyright (c) 2006 The Technical University of Chemnitz. All
- *                    rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2006      The Trustees of Indiana University and Indiana
+ *                         University Research and Technology
+ *                         Corporation.  All rights reserved.
+ * Copyright (c) 2006      The Technical University of Chemnitz. All
+ *                         rights reserved.
+ * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
@@ -20,7 +20,7 @@ static inline int bcast_sched_binomial(int rank, int p, int root, NBC_Schedule *
 static inline int bcast_sched_linear(int rank, int p, int root, NBC_Schedule *schedule, void *buffer, int count,
                                      MPI_Datatype datatype);
 static inline int bcast_sched_chain(int rank, int p, int root, NBC_Schedule *schedule, void *buffer, int count,
-                                    MPI_Datatype datatype, int fragsize, int size);
+                                    MPI_Datatype datatype, int fragsize, size_t size);
 
 #ifdef NBC_CACHE_SCHEDULE
 /* tree comparison function for schedule cache */
@@ -252,7 +252,7 @@ static inline int bcast_sched_linear(int rank, int p, int root, NBC_Schedule *sc
 }
 
 /* simple chained MPI_Ibcast */
-static inline int bcast_sched_chain(int rank, int p, int root, NBC_Schedule *schedule, void *buffer, int count, MPI_Datatype datatype, int fragsize, int size) {
+static inline int bcast_sched_chain(int rank, int p, int root, NBC_Schedule *schedule, void *buffer, int count, MPI_Datatype datatype, int fragsize, size_t size) {
   int res, vrank, rpeer, speer, numfrag, fragcount, thiscount;
   MPI_Aint ext;
   char *buf;
