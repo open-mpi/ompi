@@ -134,6 +134,7 @@ int ompi_group_dump (ompi_group_t* group)
     i=0;
     printf("Group Proc Count: %d\n",group->grp_proc_count);
     printf("Group My Rank: %d\n",group->grp_my_rank);
+#if OMPI_GROUP_SPARSE
     if (OMPI_GROUP_IS_SPORADIC(group)) {
         ompi_group_translate_ranks( group,1,&group->grp_my_rank,
                                     group->grp_parent_group_ptr,
@@ -169,6 +170,7 @@ int ompi_group_dump (ompi_group_t* group)
             printf("%d\t",group->sparse_data.grp_bitmap.grp_bitmap_array[i]);
         }
     }
+#endif
     printf("*********************************************************\n");
     return OMPI_SUCCESS;
 }
@@ -205,12 +207,13 @@ int ompi_group_incl(ompi_group_t* group, int n, const int *ranks, ompi_group_t *
         /* determin minimum length */
         method = ompi_group_minloc ( len, 4 );
     }
-#endif
 
     switch (method)
         {
         case 0:
+#endif
             result = ompi_group_incl_plist(group, n, ranks, new_group);
+#if OMPI_GROUP_SPARSE
             break;
         case 1:
             result = ompi_group_incl_strided(group, n, ranks, new_group);
@@ -222,6 +225,7 @@ int ompi_group_incl(ompi_group_t* group, int n, const int *ranks, ompi_group_t *
             result = ompi_group_incl_bmap(group, n, ranks, new_group);
             break;
         }
+#endif
 
     return result;
 }

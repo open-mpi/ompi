@@ -16,6 +16,8 @@
  * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2013-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -41,6 +43,7 @@ BEGIN_C_DECLS
 
 #define BSIZE ((int)sizeof(unsigned char)*8)
 
+#if OMPI_GROUP_SPARSE
 struct ompi_group_sporadic_list_t
 {
   int rank_first;
@@ -64,6 +67,7 @@ struct ompi_group_bitmap_data_t
     unsigned char *grp_bitmap_array;     /* the bit map array for sparse groups of type BMAP */
     int            grp_bitmap_array_len; /* length of the bit array */
 };
+#endif
 
 /**
  * Group structure
@@ -89,12 +93,14 @@ struct ompi_group_t {
     uint32_t grp_flags;     /**< flags, e.g. freed, cannot be freed etc.*/
     /** pointer to the original group when using sparse storage */
     struct ompi_group_t *grp_parent_group_ptr;
+#if OMPI_GROUP_SPARSE
     union
     {
         struct ompi_group_sporadic_data_t grp_sporadic;
         struct ompi_group_strided_data_t  grp_strided;
         struct ompi_group_bitmap_data_t   grp_bitmap;
     } sparse_data;
+#endif
 };
 
 typedef struct ompi_group_t ompi_group_t;
@@ -123,15 +129,19 @@ typedef struct ompi_predefined_group_t ompi_predefined_group_t;
 
 #define OMPI_GROUP_IS_INTRINSIC(_group) ((_group)->grp_flags&OMPI_GROUP_INTRINSIC)
 #define OMPI_GROUP_IS_DENSE(_group) ((_group)->grp_flags & OMPI_GROUP_DENSE)
+#if OMPI_GROUP_SPARSE
 #define OMPI_GROUP_IS_SPORADIC(_group) ((_group)->grp_flags & OMPI_GROUP_SPORADIC)
 #define OMPI_GROUP_IS_STRIDED(_group) ((_group)->grp_flags & OMPI_GROUP_STRIDED)
 #define OMPI_GROUP_IS_BITMAP(_group) ((_group)->grp_flags & OMPI_GROUP_BITMAP)
+#endif
 
 #define OMPI_GROUP_SET_INTRINSIC(_group) ( (_group)->grp_flags |= OMPI_GROUP_INTRINSIC)
 #define OMPI_GROUP_SET_DENSE(_group) ( (_group)->grp_flags |= OMPI_GROUP_DENSE)
+#if OMPI_GROUP_SPARSE
 #define OMPI_GROUP_SET_SPORADIC(_group) ( (_group)->grp_flags |= OMPI_GROUP_SPORADIC)
 #define OMPI_GROUP_SET_STRIDED(_group) ( (_group)->grp_flags |= OMPI_GROUP_STRIDED)
 #define OMPI_GROUP_SET_BITMAP(_group) ( (_group)->grp_flags |= OMPI_GROUP_BITMAP)
+#endif
 
 /**
  * Table for Fortran <-> C group handle conversion
@@ -153,9 +163,11 @@ OMPI_DECLSPEC extern struct ompi_predefined_group_t *ompi_mpi_group_null_addr;
  * @return Pointer to new group structure
  */
 OMPI_DECLSPEC ompi_group_t *ompi_group_allocate(int group_size);
+#if OMPI_GROUP_SPARSE
 ompi_group_t *ompi_group_allocate_sporadic(int group_size);
 ompi_group_t *ompi_group_allocate_strided(void);
 ompi_group_t *ompi_group_allocate_bmap(int orig_group_size, int group_size);
+#endif
 
 /**
  * Increment the reference count of the proc structures.
@@ -249,6 +261,7 @@ OMPI_DECLSPEC int ompi_group_compare(ompi_group_t *group1,
  */
 int ompi_group_free (ompi_group_t **group);
 
+#if OMPI_GROUP_SPARSE
 /**
  * Functions to handle process pointers for sparse group formats
  */
@@ -276,6 +289,7 @@ int ompi_group_translate_ranks_bmap_reverse ( ompi_group_t *group1,
                                  int n_ranks, const int *ranks1,
                                  ompi_group_t *group2,
                                  int *ranks2);
+#endif
 
 /**
  *  Prototypes for the group back-end functions. Argument lists
@@ -302,6 +316,7 @@ int ompi_group_difference(ompi_group_t* group1, ompi_group_t* group2,
  */
 int ompi_group_incl_plist(ompi_group_t* group, int n, const int *ranks,
                           ompi_group_t **new_group);
+#if OMPI_GROUP_SPARSE
 int ompi_group_incl_spor(ompi_group_t* group, int n, const int *ranks,
                          ompi_group_t **new_group);
 int ompi_group_incl_strided(ompi_group_t* group, int n, const int *ranks,
@@ -316,6 +331,7 @@ int ompi_group_calc_plist ( int n, const int *ranks );
 int ompi_group_calc_strided ( int n, const int *ranks );
 int ompi_group_calc_sporadic ( int n, const int *ranks );
 int ompi_group_calc_bmap ( int n, int orig_size , const int *ranks );
+#endif
 
 /**
  * Function to return the minimum value in an array
@@ -427,6 +443,11 @@ int ompi_group_dump (ompi_group_t* group);
  * Ceil Function so not to include the math.h lib
  */
 int ompi_group_div_ceil (int num, int den);
+
+/**
+ * Duplicate (kind of) a group
+ */
+ompi_group_t* ompi_group_dup (ompi_group_t *group);
 
 END_C_DECLS
 #endif /* OMPI_GROUP_H */

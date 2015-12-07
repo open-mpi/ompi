@@ -76,6 +76,7 @@ else
 fi
 AC_DEFINE_UNQUOTED([OMPI_GROUP_SPARSE],$GROUP_SPARSE,
     [Wether we want sparse process groups])
+AM_CONDITIONAL(OMPI_GROUP_SPARSE, test "$GROUP_SPARSE" = "1")
 
 
 #
