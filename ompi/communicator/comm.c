@@ -148,7 +148,7 @@ int ompi_comm_set_nb ( ompi_communicator_t **ncomm,
         local_size = ompi_group_size (local_group);
     }
 
-    if (NULL != remote_group) {
+    if ( (NULL != remote_group) && (&ompi_mpi_group_null.group != remote_group) ) {
         remote_size = ompi_group_size (remote_group);
     }
 
@@ -177,10 +177,10 @@ int ompi_comm_set_nb ( ompi_communicator_t **ncomm,
     newcomm->c_my_rank = newcomm->c_local_group->grp_my_rank;
 
     /* Set remote group and duplicate the local comm, if applicable */
-    if (0 < remote_size) {
+    if ( NULL != remote_group ) {
         ompi_communicator_t *old_localcomm;
 
-        if (NULL == remote_group) {
+        if (&ompi_mpi_group_null.group == remote_group) {
             ret = ompi_group_incl(oldcomm->c_remote_group, remote_size,
                                   remote_ranks, &newcomm->c_remote_group);
             if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
@@ -432,7 +432,7 @@ int ompi_comm_split( ompi_communicator_t* comm, int color, int key,
     int rc=OMPI_SUCCESS;
     ompi_communicator_t *newcomp = NULL;
     int *lranks=NULL, *rranks=NULL;
-    ompi_group_t * local_group=NULL;
+    ompi_group_t * local_group=NULL, *remote_group=NULL;
 
     ompi_comm_allgatherfct *allgatherfct=NULL;
 
@@ -508,6 +508,7 @@ int ompi_comm_split( ompi_communicator_t* comm, int color, int key,
     /* Step 2: determine all the information for the remote group */
     /* --------------------------------------------------------- */
     if ( inter ) {
+        remote_group = &ompi_mpi_group_null.group;
         rsize    = comm->c_remote_group->grp_proc_count;
         rresults = (int *) malloc ( rsize * 2 * sizeof(int));
         if ( NULL == rresults ) {
@@ -591,7 +592,7 @@ int ompi_comm_split( ompi_communicator_t* comm, int color, int key,
                          comm->error_handler,/* error handler */
                          pass_on_topo,
                          local_group,       /* local group */
-                         NULL);             /* remote group */
+                         remote_group);     /* remote group */
 
     if ( NULL == newcomp ) {
         rc =  MPI_ERR_INTERN;
