@@ -315,6 +315,8 @@ ompi_osc_sm_test(struct ompi_win_t *win,
         OBJ_RELEASE(module->post_group);
         module->post_group = NULL;
         *flag = 1;
+    } else {
+        *flag = 0;
     }
 
     OPAL_THREAD_UNLOCK(&module->lock);
