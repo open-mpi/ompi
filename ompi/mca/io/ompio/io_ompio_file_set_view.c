@@ -323,7 +323,7 @@ int mca_io_ompio_simple_grouping(mca_io_ompio_file_t *fh,
         stripe_size = OMPIO_DEFAULT_STRIPE_SIZE;
     }
 
-    if ( stripe_size > fh->f_cc_size ) {
+    if ( 0 != fh->f_cc_size && stripe_size > fh->f_cc_size ) {
         group_size  = (((int)stripe_size/(int)fh->f_cc_size) > fh->f_size ) ? fh->f_size : ((int)stripe_size/(int)fh->f_cc_size);
         *num_groups = fh->f_size / group_size;
     }
