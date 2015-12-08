@@ -198,7 +198,7 @@ int mca_pml_ob1_send(const void *buf,
             return rc;
         }
 
-        /* free the request and return. don't care if it completes now */
+        ompi_request_wait_completion (brequest);
         ompi_request_free (&brequest);
         return OMPI_SUCCESS;
     }
