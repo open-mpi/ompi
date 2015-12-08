@@ -1650,6 +1650,7 @@ static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
         goto error;
     }
 #if HAVE_DECL_IBV_EXP_QUERY_DEVICE
+    device->ib_exp_dev_attr.comp_mask = IBV_EXP_DEVICE_ATTR_RESERVED - 1;
     if(ibv_exp_query_device(device->ib_dev_context, &device->ib_exp_dev_attr)){
         BTL_ERROR(("error obtaining device attributes for %s errno says %s",
                     ibv_get_device_name(device->ib_dev), strerror(errno)));
