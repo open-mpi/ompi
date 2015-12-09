@@ -278,6 +278,7 @@ int ompi_comm_create ( ompi_communicator_t *comm, ompi_group_t *group,
     int *allranks=NULL;
     int *rranks=NULL;
     int rc = OMPI_SUCCESS;
+    ompi_group_t *remote_group = NULL;
 
     /* silence clang warning. newcomm should never be NULL */
     if (OPAL_UNLIKELY(NULL == newcomm)) {
@@ -286,6 +287,7 @@ int ompi_comm_create ( ompi_communicator_t *comm, ompi_group_t *group,
 
     if ( OMPI_COMM_IS_INTER(comm) ) {
         int tsize;
+        remote_group = &ompi_mpi_group_null.group;
 
         tsize = ompi_comm_remote_size(comm);
         allranks = (int *) malloc ( tsize * sizeof(int));
@@ -348,8 +350,8 @@ int ompi_comm_create ( ompi_communicator_t *comm, ompi_group_t *group,
                          comm->error_handler,      /* error handler */
                          false,                    /* dont copy the topo */
                          group,                    /* local group */
-                         NULL                      /* remote group */
-                         );
+                         remote_group);            /* remote group */
+
     if ( OMPI_SUCCESS != rc ) {
         goto exit;
     }
