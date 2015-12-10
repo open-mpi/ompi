@@ -55,7 +55,7 @@ void mca_pml_ucx_recv_completion(void *request, ucs_status_t status,
     OPAL_THREAD_UNLOCK(&ompi_request_lock);
 }
 
-void mca_pml_ucx_persistent_requset_complete(mca_pml_ucx_persistent_request_t *preq,
+void mca_pml_ucx_persistent_request_complete(mca_pml_ucx_persistent_request_t *preq,
                                              ompi_request_t *tmp_req)
 {
     preq->ompi.req_status = tmp_req->req_status;
@@ -73,7 +73,7 @@ static inline void mca_pml_ucx_preq_completion(ompi_request_t *tmp_req)
     ompi_request_complete(tmp_req, false);
     preq = (mca_pml_ucx_persistent_request_t*)tmp_req->req_complete_cb_data;
     if (preq != NULL) {
-        mca_pml_ucx_persistent_requset_complete(preq, tmp_req);
+        mca_pml_ucx_persistent_request_complete(preq, tmp_req);
     }
     OPAL_THREAD_UNLOCK(&ompi_request_lock);
 }
