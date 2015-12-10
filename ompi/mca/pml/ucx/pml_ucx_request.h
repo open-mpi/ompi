@@ -115,7 +115,7 @@ void mca_pml_ucx_psend_completion(void *request, ucs_status_t status);
 void mca_pml_ucx_precv_completion(void *request, ucs_status_t status,
                                   ucp_tag_recv_info_t *info);
 
-void mca_pml_ucx_persistent_requset_complete(mca_pml_ucx_persistent_request_t *preq,
+void mca_pml_ucx_persistent_request_complete(mca_pml_ucx_persistent_request_t *preq,
                                              ompi_request_t *tmp_req);
 
 void mca_pml_ucx_completed_request_init(ompi_request_t *ompi_req);
