@@ -86,7 +86,7 @@ int ompi_coll_tuned_reduce_generic( void* sendbuf, void* recvbuf, int original_c
      */
     ompi_datatype_get_extent( datatype, &lower_bound, &extent );
     ompi_datatype_type_size( datatype, &typelng );
-    num_segments = (original_count + count_by_segment - 1) / count_by_segment;
+    num_segments = (int)(((size_t)original_count + (size_t)count_by_segment - (size_t)1) / (size_t)count_by_segment);
     segment_increment = (ptrdiff_t)count_by_segment * extent;
 
     sendtmpbuf = (char*) sendbuf; 
