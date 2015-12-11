@@ -46,7 +46,9 @@ install:
 script:
     - pushd test/datatype ; ldd .libs/opal_datatype_test || true ; make check ; popd
     - make check
+    - env
     - make distcheck
+    - cd _build/test/datatype ; ldd .libs/opal_datatype_test ; make check-am ; ldd .libs/opal_datatype_test ; ./libs/opal_datatype_test ; make check 
 
 notifications:
   email:
