@@ -37,5 +37,3 @@ install-exec-hook:
 	    --objext=$(OBJEXT)
 
 ACLOCAL_AMFLAGS = -I config
-
-DISTCHECK_CONFIGURE_FLAGS = --enable-mpirun-prefix-by-default
