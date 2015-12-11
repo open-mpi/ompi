@@ -26,11 +26,10 @@ env:
         - CPPFLAGS=-I$HOME/include
         - LDFLAGS=-L$HOME/lib
         - LD_LIBRARY_PATH=$HOME/lib
-        - CONFIGURE_ARGS="--prefix=$HOME --enable-usnic"
-        - CONFIGURE_ARGS="--prefix=$HOME --enable-usnic"
+        - CONFIGURE_ARGS="--prefix=$HOME --enable-mpirun-prefix-by-default --enable-debug --enable-picky --enable-usnic"
 
 before_install:
-    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get update -qq; fi
+    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get update -qq; elif [[ "$TRAVIS_OS_NAME" == "osx" ]]; then glibtool --version; fi
     - ifconfig
 
 install:
@@ -43,6 +42,7 @@ install:
     - make -j4
     - make install > /dev/null
 script:
+    - cd test/datatype; make check-am; ldd .libs/opal_datatype_test || true ; ./opal_datatype_test
     - make check
     - make distcheck
 
