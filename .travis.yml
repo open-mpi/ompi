@@ -30,14 +30,14 @@ env:
         - CONFIGURE_ARGS="--prefix=$HOME --enable-usnic"
 
 before_install:
-    - if [[ "$TRAVIS_OS_NAME" == linux ]]; then sudo apt-get update -qq; fi
+    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get update -qq; fi
     - ifconfig
 
 install:
     - m4 --version
     - automake --version
     - autoconf --version
-    - libtool --version
+    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then libtool --version; fi
     - ./autogen.pl
     - if [[ "$TRAVIS_OS_NAME" == "linux" && "$CC" == "gcc" ]]; then ./configure $CONFIGURE_ARGS --enable-verbs; else ./configure $CONFIGURE_ARGS; fi
     - make -j4
