@@ -1,0 +1,63 @@
+sudo: required
+dist: trusty
+language: c
+compiler:
+    - gcc
+os:
+    - linux
+    - osx
+
+addons:
+    apt:
+        packages:
+            - rpm
+            - libnl-3-200
+            - libnl-3-dev
+            - libnl-route-3-200
+            - libnl-route-3-dev
+            - autoconf
+            - automake
+            - libtool
+            - libibverbs-dev
+            - librdmacm-dev
+
+env:
+    global:
+        - CPPFLAGS=-I$HOME/include
+        - LDFLAGS=-L$HOME/lib
+        - LD_LIBRARY_PATH=$HOME/lib
+        - CONFIGURE_ARGS="--prefix=$HOME --enable-mpirun-prefix-by-default --enable-debug --enable-picky --enable-usnic"
+        - DISTCHECK_CONFIGURE_FLAGS="$CONFIGURE_ARGS"
+
+before_install:
+    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get update -qq; elif [[ "$TRAVIS_OS_NAME" == "osx" ]]; then glibtool --version; fi
+    - ifconfig
+
+install:
+    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then dpkg -l ; fi
+    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then dpkg -l | grep -i mpi; fi
+    - m4 --version
+    - automake --version
+    - autoconf --version
+    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then libtool --version; fi
+    - ./autogen.pl
+    - if [[ "$TRAVIS_OS_NAME" == "linux" && "$CC" == "gcc" ]]; then ./configure $CONFIGURE_ARGS --enable-verbs; else ./configure $CONFIGURE_ARGS; fi
+    - make -j4
+    - make install > /dev/null
+script:
+    - pushd test/datatype ; ldd .libs/opal_datatype_test || true ; make check ; popd
+    - make check
+    - env
+    - make distcheck
+    - cd _build/test/datatype ; ldd .libs/opal_datatype_test ; make check-am ; ldd .libs/opal_datatype_test ; ./libs/opal_datatype_test ; make check 
+
+notifications:
+  email:
+    recipients:
+      - jsquyres@cisco.com
+    on_success: [change]
+    on_failure: [always]
+
+matrix:
+  allow_failures:
+    - os: osx
