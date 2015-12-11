@@ -42,6 +42,7 @@ install:
     - make -j4
     - make install > /dev/null
 script:
+    - pushd test/datatype ; ldd .libs/opal_datatype_test || true ; make check ; popd
     - make check
     - make distcheck
 
