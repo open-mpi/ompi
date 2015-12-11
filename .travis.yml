@@ -33,6 +33,8 @@ before_install:
     - ifconfig
 
 install:
+    - dpkg -l
+    - dpkg -l | grep -i mpi
     - m4 --version
     - automake --version
     - autoconf --version
