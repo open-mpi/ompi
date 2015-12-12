@@ -2120,7 +2120,6 @@ static int process(char *orig_line, char *basename, opal_cmd_line_t *cmd_line,
         else {
             goto out;
         }
-        free(tmp);
     }
 
     /* All done -- didn't find it */
