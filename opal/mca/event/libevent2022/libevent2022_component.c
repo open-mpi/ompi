@@ -123,7 +123,7 @@ const opal_event_component_t mca_event_libevent2022_component = {
 static int libevent2022_register (void)
 {
     const struct eventop** _eventop = eventops;
-    char available_eventops[1024] = "none";
+    char available_eventops[BUFSIZ] = "none";
     char *help_msg = NULL;
     int ret;
 

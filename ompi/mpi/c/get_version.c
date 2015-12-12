@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015      Intel, Inc. All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -37,8 +38,6 @@ static const char FUNC_NAME[] = "MPI_Get_version";
 
 int MPI_Get_version(int *version, int *subversion)
 {
-    MPI_Comm null = NULL;
-
     OPAL_CR_NOOP_PROGRESS();
 
     if (MPI_PARAM_CHECK) {
@@ -59,7 +58,10 @@ int MPI_Get_version(int *version, int *subversion)
                 return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,
                                               FUNC_NAME);
             } else {
-                return OMPI_ERRHANDLER_INVOKE(null, MPI_ERR_ARG,
+                /* We have no MPI object here so call ompi_errhandle_invoke
+                 * directly */
+                return ompi_errhandler_invoke(NULL, NULL, -1,
+                                              ompi_errcode_get_mpi_code(MPI_ERR_ARG),
                                               FUNC_NAME);
             }
         }
