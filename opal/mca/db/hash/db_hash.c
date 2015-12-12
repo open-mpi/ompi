@@ -627,6 +627,7 @@ static int fetch_multiple(const opal_identifier_t *uid,
             (0 == len && 0 == strcmp(key, kv->key))) {
             if (OPAL_SUCCESS != (rc = opal_dss.copy((void**)&kvnew, kv, OPAL_VALUE))) {
                 OPAL_ERROR_LOG(rc);
+                free(srchkey);
                 return rc;
             }
             opal_list_append(kvs, &kvnew->super);
