@@ -36,6 +36,7 @@ before_install:
     - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then dpkg -l | grep -i libibverbs; fi
     - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then git clone https://github.com/ofiwg/libfabric.git ; fi
     - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then cd libfabric && ./autogen.sh && ./configure --prefix=$HOME/bogus --enable-usnic --disable-verbs && make install && cd .. ; fi
+    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then xcodebuild -version || true ; fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then gcc-5 --version || true ; fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update; fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew unlink gcc; fi
