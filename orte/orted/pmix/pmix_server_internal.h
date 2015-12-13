@@ -53,6 +53,7 @@
  typedef struct {
     opal_object_t super;
     opal_event_t ev;
+    int status;
     int timeout;
     int room_num;
     int remote_room_num;
@@ -64,6 +65,7 @@
     opal_pmix_modex_cbfunc_t mdxcbfunc;
     opal_pmix_spawn_cbfunc_t spcbfunc;
     opal_pmix_lookup_cbfunc_t lkcbfunc;
+    opal_pmix_release_cbfunc_t rlcbfunc;
     void *cbdata;
 } pmix_server_req_t;
 OBJ_CLASS_DECLARATION(pmix_server_req_t);

@@ -146,6 +146,27 @@ static void dmodex_req(int sd, short args, void *cbdata)
         return;
     }
 
+    /* has anyone already requested data for this target? If so,
+     * then the data is already on its way */
+    for (rnum=0; rnum < orte_pmix_server_globals.reqs.num_rooms; rnum++) {
+        opal_hotel_knock(&orte_pmix_server_globals.reqs, rnum, (void**)&r);
+        if (NULL == r) {
+            continue;
+        }
+        if (r->target.jobid == req->target.jobid &&
+            r->target.vpid == req->target.vpid) {
+            /* save the request in the hotel until the
+             * data is returned */
+            if (OPAL_SUCCESS != (rc = opal_hotel_checkin(&orte_pmix_server_globals.reqs, req, &req->room_num))) {
+                ORTE_ERROR_LOG(rc);
+                /* can't just return as that would cause the requestor
+                 * to hang, so instead execute the callback */
+                goto callback;
+            }
+            return;
+        }
+    }
+
     /* lookup who is hosting this proc */
     if (NULL == (jdata = orte_get_job_data_object(req->target.jobid))) {
         /* if we don't know the job, then it could be a race
@@ -175,20 +196,9 @@ static void dmodex_req(int sd, short args, void *cbdata)
         rc = ORTE_ERR_NOT_FOUND;
         goto callback;
     }
-
-    /* has anyone already requested data for this job from this node? If so,
-     * then the data is already on its way */
-    for (rnum=0; rnum < orte_pmix_server_globals.reqs.num_rooms; rnum++) {
-        opal_hotel_knock(&orte_pmix_server_globals.reqs, rnum, (void**)&r);
-        if (NULL == r) {
-            continue;
-        }
-        if (r->target.jobid == req->target.jobid &&
-            r->proxy.vpid == dmn->name.vpid) {
-            /* we have this request, so just wait for the return */
-            return;
-        }
-    }
+    /* point the request to the daemon that is hosting the
+     * target process */
+    req->proxy.vpid = dmn->name.vpid;
 
     /* track the request so we know the function and cbdata
      * to callback upon completion */
