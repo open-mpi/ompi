@@ -535,7 +535,6 @@ static int cray_fence(opal_list_t *procs, int collect_data)
     opal_hwloc_locality_t locality;
     opal_list_t vals;
     char *cpuset = NULL;
-    opal_process_name_t pname;
 
     opal_output_verbose(2, opal_pmix_base_framework.framework_output,
                         "%s pmix:cray executing fence cache_global %p cache_local %p",
@@ -543,10 +542,6 @@ static int cray_fence(opal_list_t *procs, int collect_data)
                         (void *)mca_pmix_cray_component.cache_global,
                         (void *)mca_pmix_cray_component.cache_local);
 
-    /* get the modex data from each local process and set the
-     * localities to avoid having the MPI layer fetch data
-     * for every process in the job */
-    pname.jobid = OPAL_PROC_MY_NAME.jobid;
 
     /*
      * "unload" the cache_local/cache_global buffers, first copy
@@ -669,8 +664,14 @@ static int cray_fence(opal_list_t *procs, int collect_data)
     }
     OPAL_LIST_DESTRUCT(&vals);
 
-    /* we only need to set locality for each local rank as "not found"
-     * equates to "non-local" */
+    /* Get the modex data from each local process and set the
+     * localities to avoid having the MPI layer fetch data
+     * for every process in the job.
+     *
+     *  we only need to set locality for each local rank as "not found"
+     * equates to "non-local" 
+     */
+
     for (i=0; i < pmix_nlranks; i++) {
         id.vpid = pmix_lranks[i];
         id.jobid = pmix_jobid;
@@ -715,7 +716,7 @@ static int cray_fence(opal_list_t *procs, int collect_data)
         kvn.key = strdup(OPAL_PMIX_LOCALITY);
         kvn.type = OPAL_UINT16;
         kvn.data.uint16 = locality;
-        opal_pmix_base_store(&pname, &kvn);
+        opal_pmix_base_store(&id, &kvn);
         OBJ_DESTRUCT(&kvn);
     }
 
