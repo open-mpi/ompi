@@ -171,9 +171,8 @@ int MPI_Intercomm_create(MPI_Comm local_comm, int local_leader,
     /* put group elements in the list */
     for (j = 0; j < rsize; j++) {
         new_group_pointer->grp_proc_pointers[j] = rprocs[j];
+        OBJ_RETAIN(rprocs[j]);
     }
-
-    ompi_group_increment_proc_count(new_group_pointer);
 
     rc = ompi_comm_set ( &newcomp,                                     /* new comm */
                          local_comm,                                   /* old comm */
@@ -196,7 +195,6 @@ int MPI_Intercomm_create(MPI_Comm local_comm, int local_leader,
         goto err_exit;
     }
 
-    ompi_group_decrement_proc_count (new_group_pointer);
     OBJ_RELEASE(new_group_pointer);
     new_group_pointer = MPI_GROUP_NULL;
 

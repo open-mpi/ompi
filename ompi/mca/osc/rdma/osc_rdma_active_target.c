@@ -193,7 +193,6 @@ int ompi_osc_rdma_post_atomic (ompi_group_t *group, int assert, ompi_win_t *win)
 
     /* save the group */
     OBJ_RETAIN(group);
-    ompi_group_increment_proc_count(group);
 
     OPAL_THREAD_LOCK(&module->lock);
 
@@ -371,7 +370,6 @@ int ompi_osc_rdma_start_atomic (ompi_group_t *group, int assert, ompi_win_t *win
 
     /* save the group */
     OBJ_RETAIN(group);
-    ompi_group_increment_proc_count(group);
 
     if (!(assert & MPI_MODE_NOCHECK)) {
         /* look through list of pending posts */
@@ -440,7 +438,6 @@ int ompi_osc_rdma_complete_atomic (ompi_win_t *win)
     sync->epoch_active = false;
 
     /* phase 2 cleanup group */
-    ompi_group_decrement_proc_count(group);
     OBJ_RELEASE(group);
 
     peers = sync->peer_list.peers;
@@ -526,7 +523,6 @@ int ompi_osc_rdma_wait_atomic (ompi_win_t *win)
     module->pw_group = NULL;
     OPAL_THREAD_UNLOCK(&module->lock);
 
-    ompi_group_decrement_proc_count(group);
     OBJ_RELEASE(group);
 
     OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "wait complete");
@@ -571,7 +567,6 @@ int ompi_osc_rdma_test_atomic (ompi_win_t *win, int *flag)
     module->pw_group = NULL;
     OPAL_THREAD_UNLOCK(&(module->lock));
 
-    ompi_group_decrement_proc_count(group);
     OBJ_RELEASE(group);
 
     return OMPI_SUCCESS;

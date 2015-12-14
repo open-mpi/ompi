@@ -114,7 +114,6 @@ int MPI_Intercomm_merge(MPI_Comm intercomm, int high,
         goto exit;
     }
 
-    ompi_group_decrement_proc_count(new_group_pointer);
     OBJ_RELEASE(new_group_pointer);
     new_group_pointer = MPI_GROUP_NULL;
 

@@ -629,8 +629,14 @@ ompi_proc_pack(ompi_proc_t **proclist, int proclistsize,
      * can be sent.
      */
     for (int i = 0 ; i < proclistsize ; ++i) {
+        ompi_proc_t *proc = proclist[i];
+
+        if (ompi_proc_is_sentinel (proc)) {
+            proc = ompi_proc_for_name (ompi_proc_sentinel_to_name ((intptr_t) proc));
+        }
+
         /* send proc name */
-        rc = opal_dss.pack(buf, &(proclist[i]->super.proc_name), 1, OMPI_NAME);
+        rc = opal_dss.pack(buf, &(proc->super.proc_name), 1, OMPI_NAME);
         if(rc != OPAL_SUCCESS) {
             OMPI_ERROR_LOG(rc);
             opal_mutex_unlock (&ompi_proc_lock);
@@ -638,7 +644,7 @@ ompi_proc_pack(ompi_proc_t **proclist, int proclistsize,
         }
         /* retrieve and send the corresponding nspace for this job
          * as the remote side may not know the translation */
-        nspace = (char*)opal_pmix.get_nspace(proclist[i]->super.proc_name.jobid);
+        nspace = (char*)opal_pmix.get_nspace(proc->super.proc_name.jobid);
         rc = opal_dss.pack(buf, &nspace, 1, OPAL_STRING);
         if(rc != OPAL_SUCCESS) {
             OMPI_ERROR_LOG(rc);
@@ -646,14 +652,14 @@ ompi_proc_pack(ompi_proc_t **proclist, int proclistsize,
             return rc;
         }
         /* pack architecture flag */
-        rc = opal_dss.pack(buf, &(proclist[i]->super.proc_arch), 1, OPAL_UINT32);
+        rc = opal_dss.pack(buf, &(proc->super.proc_arch), 1, OPAL_UINT32);
         if(rc != OPAL_SUCCESS) {
             OMPI_ERROR_LOG(rc);
             opal_mutex_unlock (&ompi_proc_lock);
             return rc;
         }
         /* pass the name of the host this proc is on */
-        rc = opal_dss.pack(buf, &(proclist[i]->super.proc_hostname), 1, OPAL_STRING);
+        rc = opal_dss.pack(buf, &(proc->super.proc_hostname), 1, OPAL_STRING);
         if(rc != OPAL_SUCCESS) {
             OMPI_ERROR_LOG(rc);
             opal_mutex_unlock (&ompi_proc_lock);
