@@ -439,15 +439,15 @@ AC_DEFUN([OMPI_SETUP_MPI_FORTRAN],[
                 OMPI_BUILD_FORTRAN_BINDINGS=$OMPI_FORTRAN_USEMPI_BINDINGS])])
 
     # Per https://github.com/open-mpi/ompi/issues/857, if the Fortran
-    # compiler doesn't properly support "USE ... ONLY" notation,
+    # compiler doesn't properly support symbol being both a common block and a subprogram
     # disable the mpi_f08 module.
-    OMPI_FORTRAN_HAVE_USE_ONLY=0
+    OMPI_FORTRAN_HAVE_COMMON_AND_SUBPROGRAM=0
     AS_IF([test $OMPI_TRY_FORTRAN_BINDINGS -ge $OMPI_FORTRAN_USEMPIF08_BINDINGS && \
            test $OMPI_BUILD_FORTRAN_BINDINGS -ge $OMPI_FORTRAN_USEMPIF08_BINDINGS],
-          [ # Does the compiler support "USE ... ONLY"
-           OMPI_FORTRAN_CHECK_USE_ONLY(
-               [OMPI_FORTRAN_HAVE_USE_ONLY=1],
-               [OMPI_FORTRAN_HAVE_USE_ONLY=0
+          [ # Does the compiler support both common and subprogram
+           OMPI_FORTRAN_CHECK_COMMON_AND_SUBPROGRAM(
+               [OMPI_FORTRAN_HAVE_COMMON_AND_SUBPROGRAM=1],
+               [OMPI_FORTRAN_HAVE_COMMON_AND_SUBPROGRAM=0
                 OMPI_BUILD_FORTRAN_BINDINGS=$OMPI_FORTRAN_USEMPI_BINDINGS])])
 
     OMPI_FORTRAN_HAVE_OPTIONAL_ARGS=0
@@ -794,9 +794,9 @@ end type test_mpi_handle],
 
     # For configure-fortran-output.h, various files in
     # ompi/mpi/fortran/use-mpi-f08/*.F90 and *.h files (and ompi_info)
-    AC_SUBST([OMPI_FORTRAN_HAVE_USE_ONLY])
-    AC_DEFINE_UNQUOTED([OMPI_FORTRAN_HAVE_USE_ONLY],
-                       [$OMPI_FORTRAN_HAVE_USE_ONLY],
+    AC_SUBST([OMPI_FORTRAN_HAVE_COMMON_AND_SUBPROGRAM])
+    AC_DEFINE_UNQUOTED([OMPI_FORTRAN_HAVE_COMMON_AND_SUBPROGRAM],
+                       [$OMPI_FORTRAN_HAVE_COMMON_AND_SUBPROGRAM],
                        [For ompi/mpi/fortran/use-mpi-f08/blah.F90 and blah.h and ompi_info: whether the compiler supports "USE ... ONLY" notation properly or not])
 
     # For configure-fortran-output.h, various files in
