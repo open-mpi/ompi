@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -61,16 +63,17 @@ OMPI_GENERATE_F77_BINDINGS (MPI_START,
 
 
 #if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
+#define ompi_start_f pompi_start_f
 #endif
+
 
 void ompi_start_f(MPI_Fint *request, MPI_Fint *ierr)
 {
     int c_ierr;
-    MPI_Request c_req = MPI_Request_f2c(*request);
+    MPI_Request c_req = PMPI_Request_f2c(*request);
     MPI_Request tmp_req = c_req;
 
-    c_ierr = MPI_Start(&c_req);
+    c_ierr = PMPI_Start(&c_req);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {
@@ -80,7 +83,7 @@ void ompi_start_f(MPI_Fint *request, MPI_Fint *ierr)
            So commit new descriptor.
         */
         if ( tmp_req != c_req ) {
-            *request = MPI_Request_c2f(c_req);
+            *request = PMPI_Request_c2f(c_req);
         }
     }
 }

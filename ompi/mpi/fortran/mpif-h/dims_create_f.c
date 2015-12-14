@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -61,8 +63,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_DIMS_CREATE,
 
 
 #if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
+#define ompi_dims_create_f pompi_dims_create_f
 #endif
+
 
 void ompi_dims_create_f(MPI_Fint *nnodes, MPI_Fint *ndims,
 		       MPI_Fint *dims, MPI_Fint *ierr)
@@ -72,7 +75,7 @@ void ompi_dims_create_f(MPI_Fint *nnodes, MPI_Fint *ndims,
 
     OMPI_ARRAY_FINT_2_INT(dims, *ndims);
 
-    c_ierr = MPI_Dims_create(OMPI_FINT_2_INT(*nnodes),
+    c_ierr = PMPI_Dims_create(OMPI_FINT_2_INT(*nnodes),
                              OMPI_FINT_2_INT(*ndims),
                              OMPI_ARRAY_NAME_CONVERT(dims));
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);

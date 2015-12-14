@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -65,8 +67,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_PROBE,
 
 
 #if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
+#define ompi_probe_f pompi_probe_f
 #endif
+
 
 void ompi_probe_f(MPI_Fint *source, MPI_Fint *tag, MPI_Fint *comm, MPI_Fint *status, MPI_Fint *ierr)
 {
@@ -74,11 +77,11 @@ void ompi_probe_f(MPI_Fint *source, MPI_Fint *tag, MPI_Fint *comm, MPI_Fint *sta
     MPI_Comm c_comm;
     OMPI_FORTRAN_STATUS_DECLARATION(c_status,c_status2)
 
-    c_comm = MPI_Comm_f2c (*comm);
+    c_comm = PMPI_Comm_f2c (*comm);
 
     OMPI_FORTRAN_STATUS_SET_POINTER(c_status,c_status2,status)
 
-    c_ierr = MPI_Probe(OMPI_FINT_2_INT(*source),
+    c_ierr = PMPI_Probe(OMPI_FINT_2_INT(*source),
                        OMPI_FINT_2_INT(*tag),
                        c_comm, c_status);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);

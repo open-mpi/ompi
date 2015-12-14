@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -64,19 +66,20 @@ OMPI_GENERATE_F77_BINDINGS (MPI_FILE_WRITE_AT_ALL_END,
 
 
 #if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
+#define ompi_file_write_at_all_end_f pompi_file_write_at_all_end_f
 #endif
+
 
 void ompi_file_write_at_all_end_f(MPI_Fint *fh, char *buf,
 				 MPI_Fint *status, MPI_Fint *ierr)
 {
     int c_ierr;
-    MPI_File c_fh = MPI_File_f2c(*fh);
+    MPI_File c_fh = PMPI_File_f2c(*fh);
     OMPI_FORTRAN_STATUS_DECLARATION(c_status,c_status2)
 
     OMPI_FORTRAN_STATUS_SET_POINTER(c_status,c_status2,status)
 
-    c_ierr = MPI_File_write_at_all_end(c_fh, buf, c_status);
+    c_ierr = PMPI_File_write_at_all_end(c_fh, buf, c_status);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     OMPI_FORTRAN_STATUS_RETURN(c_status,c_status2,status,c_ierr)

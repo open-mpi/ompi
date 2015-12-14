@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -91,14 +91,15 @@ OMPI_GENERATE_F77_BINDINGS (MPI_ALLOC_MEM_CPTR,
 
 
 #if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
+#define ompi_alloc_mem_f pompi_alloc_mem_f
 #endif
+
 
 void ompi_alloc_mem_f(MPI_Aint *size, MPI_Fint *info, char *baseptr, MPI_Fint *ierr)
 {
     int ierr_c;
-    MPI_Info c_info = MPI_Info_f2c(*info);
+    MPI_Info c_info = PMPI_Info_f2c(*info);
 
-    ierr_c = MPI_Alloc_mem(*size, c_info, baseptr);
+    ierr_c = PMPI_Alloc_mem(*size, c_info, baseptr);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(ierr_c);
 }

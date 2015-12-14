@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -61,8 +63,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_CREATE_SUBARRAY,
 
 
 #if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
+#define ompi_type_create_subarray_f pompi_type_create_subarray_f
 #endif
+
 
 void ompi_type_create_subarray_f(MPI_Fint *ndims, MPI_Fint *size_array,
 				MPI_Fint *subsize_array,
@@ -77,13 +80,13 @@ void ompi_type_create_subarray_f(MPI_Fint *ndims, MPI_Fint *size_array,
     OMPI_ARRAY_NAME_DECL(subsize_array);
     OMPI_ARRAY_NAME_DECL(start_array);
 
-    c_old = MPI_Type_f2c(*oldtype);
+    c_old = PMPI_Type_f2c(*oldtype);
 
     OMPI_ARRAY_FINT_2_INT(size_array, *ndims);
     OMPI_ARRAY_FINT_2_INT(subsize_array, *ndims);
     OMPI_ARRAY_FINT_2_INT(start_array, *ndims);
 
-    c_ierr = MPI_Type_create_subarray(OMPI_FINT_2_INT(*ndims),
+    c_ierr = PMPI_Type_create_subarray(OMPI_FINT_2_INT(*ndims),
                                       OMPI_ARRAY_NAME_CONVERT(size_array),
                                       OMPI_ARRAY_NAME_CONVERT(subsize_array),
                                       OMPI_ARRAY_NAME_CONVERT(start_array),
@@ -91,7 +94,7 @@ void ompi_type_create_subarray_f(MPI_Fint *ndims, MPI_Fint *size_array,
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {
-        *newtype = MPI_Type_c2f(c_new);
+        *newtype = PMPI_Type_c2f(c_new);
     }
 
     OMPI_ARRAY_FINT_2_INT_CLEANUP(size_array);

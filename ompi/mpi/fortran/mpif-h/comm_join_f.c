@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -61,18 +63,19 @@ OMPI_GENERATE_F77_BINDINGS (MPI_COMM_JOIN,
 
 
 #if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
+#define ompi_comm_join_f pompi_comm_join_f
 #endif
+
 
 void ompi_comm_join_f(MPI_Fint *fd, MPI_Fint *intercomm, MPI_Fint *ierr)
 {
     int c_ierr;
     MPI_Comm c_intercomm;
 
-    c_ierr = MPI_Comm_join(OMPI_FINT_2_INT(*fd), &c_intercomm);
+    c_ierr = PMPI_Comm_join(OMPI_FINT_2_INT(*fd), &c_intercomm);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {
-        *intercomm = MPI_Comm_c2f(c_intercomm);
+        *intercomm = PMPI_Comm_c2f(c_intercomm);
     }
 }

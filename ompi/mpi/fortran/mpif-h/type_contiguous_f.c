@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -61,20 +63,21 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_CONTIGUOUS,
 
 
 #if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
+#define ompi_type_contiguous_f pompi_type_contiguous_f
 #endif
+
 
 void ompi_type_contiguous_f(MPI_Fint *count, MPI_Fint *oldtype,
 			   MPI_Fint *newtype, MPI_Fint *ierr)
 {
     int c_ierr;
-    MPI_Datatype c_old = MPI_Type_f2c(*oldtype);
+    MPI_Datatype c_old = PMPI_Type_f2c(*oldtype);
     MPI_Datatype c_new;
 
-    c_ierr = MPI_Type_contiguous(OMPI_FINT_2_INT(*count), c_old, &c_new);
+    c_ierr = PMPI_Type_contiguous(OMPI_FINT_2_INT(*count), c_old, &c_new);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {
-        *newtype = MPI_Type_c2f(c_new);
+        *newtype = PMPI_Type_c2f(c_new);
     }
 }

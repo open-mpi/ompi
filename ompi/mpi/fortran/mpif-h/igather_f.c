@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -62,8 +64,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_IGATHER,
 
 
 #if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
+#define ompi_igather_f pompi_igather_f
 #endif
+
 
 void ompi_igather_f(char *sendbuf, MPI_Fint *sendcount, MPI_Fint *sendtype,
                     char *recvbuf, MPI_Fint *recvcount, MPI_Fint *recvtype,
@@ -75,20 +78,20 @@ void ompi_igather_f(char *sendbuf, MPI_Fint *sendcount, MPI_Fint *sendtype,
     MPI_Datatype c_sendtype, c_recvtype;
     MPI_Request c_request;
 
-    c_comm = MPI_Comm_f2c(*comm);
-    c_sendtype = MPI_Type_f2c(*sendtype);
-    c_recvtype = MPI_Type_f2c(*recvtype);
+    c_comm = PMPI_Comm_f2c(*comm);
+    c_sendtype = PMPI_Type_f2c(*sendtype);
+    c_recvtype = PMPI_Type_f2c(*recvtype);
 
     sendbuf = (char *) OMPI_F2C_IN_PLACE(sendbuf);
     sendbuf = (char *) OMPI_F2C_BOTTOM(sendbuf);
     recvbuf = (char *) OMPI_F2C_BOTTOM(recvbuf);
 
-    c_ierr = MPI_Igather(sendbuf, OMPI_FINT_2_INT(*sendcount),
+    c_ierr = PMPI_Igather(sendbuf, OMPI_FINT_2_INT(*sendcount),
                          c_sendtype, recvbuf,
                          OMPI_FINT_2_INT(*recvcount),
                          c_recvtype,
                          OMPI_FINT_2_INT(*root),
                          c_comm, &c_request);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
-    if (MPI_SUCCESS == c_ierr) *request = MPI_Request_c2f(c_request);
+    if (MPI_SUCCESS == c_ierr) *request = PMPI_Request_c2f(c_request);
 }

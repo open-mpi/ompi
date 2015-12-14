@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -62,18 +64,19 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TEST,
 
 
 #if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
+#define ompi_test_f pompi_test_f
 #endif
+
 
 void ompi_test_f(MPI_Fint *request, ompi_fortran_logical_t *flag,
                 MPI_Fint *status, MPI_Fint *ierr)
 {
     int c_ierr;
-    MPI_Request c_req = MPI_Request_f2c(*request);
+    MPI_Request c_req = PMPI_Request_f2c(*request);
     MPI_Status c_status;
     OMPI_LOGICAL_NAME_DECL(flag);
 
-    c_ierr = MPI_Test(&c_req,
+    c_ierr = PMPI_Test(&c_req,
                       OMPI_LOGICAL_SINGLE_NAME_CONVERT(flag),
                       &c_status);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
@@ -86,7 +89,7 @@ void ompi_test_f(MPI_Fint *request, ompi_fortran_logical_t *flag,
     if (MPI_SUCCESS == c_ierr && *flag) {
         *request = OMPI_INT_2_FINT(c_req->req_f_to_c_index);
         if (!OMPI_IS_FORTRAN_STATUS_IGNORE(status)) {
-            MPI_Status_c2f(&c_status, status);
+            PMPI_Status_c2f(&c_status, status);
         }
     }
 }

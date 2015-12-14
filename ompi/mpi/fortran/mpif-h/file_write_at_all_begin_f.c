@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -62,18 +64,19 @@ OMPI_GENERATE_F77_BINDINGS (MPI_FILE_WRITE_AT_ALL_BEGIN,
 
 
 #if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
+#define ompi_file_write_at_all_begin_f pompi_file_write_at_all_begin_f
 #endif
+
 
 void ompi_file_write_at_all_begin_f(MPI_Fint *fh, MPI_Offset *offset,
 				   char *buf, MPI_Fint *count,
 				   MPI_Fint *datatype, MPI_Fint *ierr)
 {
    int c_ierr;
-   MPI_File c_fh = MPI_File_f2c(*fh);
-   MPI_Datatype c_type = MPI_Type_f2c(*datatype);
+   MPI_File c_fh = PMPI_File_f2c(*fh);
+   MPI_Datatype c_type = PMPI_Type_f2c(*datatype);
 
-   c_ierr = MPI_File_write_at_all_begin(c_fh,
+   c_ierr = PMPI_File_write_at_all_begin(c_fh,
                                         (MPI_Offset) *offset,
                                         OMPI_F2C_BOTTOM(buf),
                                         OMPI_FINT_2_INT(*count),

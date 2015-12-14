@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -64,21 +66,22 @@ OMPI_GENERATE_F77_BINDINGS (MPI_FILE_READ_AT,
 
 
 #if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
+#define ompi_file_read_at_f pompi_file_read_at_f
 #endif
+
 
 void ompi_file_read_at_f(MPI_Fint *fh, MPI_Offset *offset, char *buf,
 			MPI_Fint *count, MPI_Fint *datatype,
 			MPI_Fint *status, MPI_Fint *ierr)
 {
     int c_ierr;
-    MPI_File c_fh = MPI_File_f2c(*fh);
-    MPI_Datatype c_type = MPI_Type_f2c(*datatype);
+    MPI_File c_fh = PMPI_File_f2c(*fh);
+    MPI_Datatype c_type = PMPI_Type_f2c(*datatype);
     OMPI_FORTRAN_STATUS_DECLARATION(c_status,c_status2)
 
     OMPI_FORTRAN_STATUS_SET_POINTER(c_status,c_status2,status)
 
-    c_ierr = MPI_File_read_at(c_fh,
+    c_ierr = PMPI_File_read_at(c_fh,
                               (MPI_Offset) *offset,
                               buf,
                               OMPI_FINT_2_INT(*count),

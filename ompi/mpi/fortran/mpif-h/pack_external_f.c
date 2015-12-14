@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -65,8 +67,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_PACK_EXTERNAL,
 
 
 #if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
+#define ompi_pack_external_f pompi_pack_external_f
 #endif
+
 
 void ompi_pack_external_f(char *datarep, char *inbuf, MPI_Fint *incount,
 			 MPI_Fint *datatype, char *outbuf,
@@ -75,7 +78,7 @@ void ompi_pack_external_f(char *datarep, char *inbuf, MPI_Fint *incount,
 {
     int ret, c_ierr;
     char *c_datarep;
-    MPI_Datatype type = MPI_Type_f2c(*datatype);
+    MPI_Datatype type = PMPI_Type_f2c(*datatype);
 
     /* Convert the fortran string */
 
@@ -87,7 +90,7 @@ void ompi_pack_external_f(char *datarep, char *inbuf, MPI_Fint *incount,
         return;
     }
 
-    c_ierr = MPI_Pack_external(c_datarep, OMPI_F2C_BOTTOM(inbuf),
+    c_ierr = PMPI_Pack_external(c_datarep, OMPI_F2C_BOTTOM(inbuf),
                                OMPI_FINT_2_INT(*incount),
                                type, outbuf,
                                *outsize,

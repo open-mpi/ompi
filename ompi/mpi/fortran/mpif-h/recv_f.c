@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -65,22 +67,23 @@ OMPI_GENERATE_F77_BINDINGS (MPI_RECV,
 
 
 #if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
+#define ompi_recv_f pompi_recv_f
 #endif
+
 
 void ompi_recv_f(char *buf, MPI_Fint *count, MPI_Fint *datatype,
                 MPI_Fint *source, MPI_Fint *tag, MPI_Fint *comm,
                 MPI_Fint *status, MPI_Fint *ierr)
 {
     OMPI_FORTRAN_STATUS_DECLARATION(c_status,c_status2)
-   MPI_Comm c_comm = MPI_Comm_f2c(*comm);
-   MPI_Datatype c_type = MPI_Type_f2c(*datatype);
+   MPI_Comm c_comm = PMPI_Comm_f2c(*comm);
+   MPI_Datatype c_type = PMPI_Type_f2c(*datatype);
    int c_ierr;
 
     OMPI_FORTRAN_STATUS_SET_POINTER(c_status,c_status2,status)
 
    /* Call the C function */
-   c_ierr = MPI_Recv(OMPI_F2C_BOTTOM(buf), OMPI_FINT_2_INT(*count),
+   c_ierr = PMPI_Recv(OMPI_F2C_BOTTOM(buf), OMPI_FINT_2_INT(*count),
                      c_type, OMPI_FINT_2_INT(*source),
                      OMPI_FINT_2_INT(*tag), c_comm,
                      c_status);

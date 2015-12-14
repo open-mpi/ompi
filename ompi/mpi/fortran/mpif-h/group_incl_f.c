@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -62,8 +64,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_GROUP_INCL,
 
 
 #if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
+#define ompi_group_incl_f pompi_group_incl_f
 #endif
+
 
 void ompi_group_incl_f(MPI_Fint *group, MPI_Fint *n, MPI_Fint *ranks, MPI_Fint *newgroup, MPI_Fint *ierr)
 {
@@ -73,10 +76,10 @@ void ompi_group_incl_f(MPI_Fint *group, MPI_Fint *n, MPI_Fint *ranks, MPI_Fint *
     OMPI_ARRAY_NAME_DECL(ranks);
 
     /* make the fortran to c representation conversion */
-    c_group = MPI_Group_f2c(*group);
+    c_group = PMPI_Group_f2c(*group);
 
     OMPI_ARRAY_FINT_2_INT(ranks, *n);
-    c_ierr = MPI_Group_incl(c_group,
+    c_ierr = PMPI_Group_incl(c_group,
                             OMPI_FINT_2_INT(*n),
                             OMPI_ARRAY_NAME_CONVERT(ranks),
                             &c_newgroup);

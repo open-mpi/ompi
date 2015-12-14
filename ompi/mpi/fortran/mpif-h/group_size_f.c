@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -62,8 +64,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_GROUP_SIZE,
 
 
 #if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
+#define ompi_group_size_f pompi_group_size_f
 #endif
+
 
 void ompi_group_size_f(MPI_Fint *group, MPI_Fint *size, MPI_Fint *ierr)
 {
@@ -72,9 +75,9 @@ void ompi_group_size_f(MPI_Fint *group, MPI_Fint *size, MPI_Fint *ierr)
   OMPI_SINGLE_NAME_DECL(size);
 
   /* Make the fortran to c representation conversion */
-  c_group = MPI_Group_f2c(*group);
+  c_group = PMPI_Group_f2c(*group);
 
-  c_ierr = MPI_Group_size(c_group, OMPI_SINGLE_NAME_CONVERT(size));
+  c_ierr = PMPI_Group_size(c_group, OMPI_SINGLE_NAME_CONVERT(size));
   if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
   if (MPI_SUCCESS == c_ierr) {

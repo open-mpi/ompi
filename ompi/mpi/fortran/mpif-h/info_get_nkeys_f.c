@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -61,8 +63,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_INFO_GET_NKEYS,
 
 
 #if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
+#define ompi_info_get_nkeys_f pompi_info_get_nkeys_f
 #endif
+
 
 void ompi_info_get_nkeys_f(MPI_Fint *info, MPI_Fint *nkeys, MPI_Fint *ierr)
 {
@@ -70,9 +73,9 @@ void ompi_info_get_nkeys_f(MPI_Fint *info, MPI_Fint *nkeys, MPI_Fint *ierr)
     MPI_Info c_info;
     OMPI_SINGLE_NAME_DECL(nkeys);
 
-    c_info = MPI_Info_f2c(*info);
+    c_info = PMPI_Info_f2c(*info);
 
-    c_ierr = MPI_Info_get_nkeys(c_info, OMPI_SINGLE_NAME_CONVERT(nkeys));
+    c_ierr = PMPI_Info_get_nkeys(c_info, OMPI_SINGLE_NAME_CONVERT(nkeys));
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {

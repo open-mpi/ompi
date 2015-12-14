@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -62,8 +64,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_REDUCE_SCATTER,
 
 
 #if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
+#define ompi_reduce_scatter_f pompi_reduce_scatter_f
 #endif
+
 
 void ompi_reduce_scatter_f(char *sendbuf, char *recvbuf,
 			  MPI_Fint *recvcounts, MPI_Fint *datatype,
@@ -76,18 +79,18 @@ void ompi_reduce_scatter_f(char *sendbuf, char *recvbuf,
     int size;
     OMPI_ARRAY_NAME_DECL(recvcounts);
 
-    c_comm = MPI_Comm_f2c(*comm);
-    c_type = MPI_Type_f2c(*datatype);
-    c_op = MPI_Op_f2c(*op);
+    c_comm = PMPI_Comm_f2c(*comm);
+    c_type = PMPI_Type_f2c(*datatype);
+    c_op = PMPI_Op_f2c(*op);
 
-    MPI_Comm_size(c_comm, &size);
+    PMPI_Comm_size(c_comm, &size);
     OMPI_ARRAY_FINT_2_INT(recvcounts, size);
 
     sendbuf = (char *) OMPI_F2C_IN_PLACE(sendbuf);
     sendbuf = (char *) OMPI_F2C_BOTTOM(sendbuf);
     recvbuf = (char *) OMPI_F2C_BOTTOM(recvbuf);
 
-    c_ierr = MPI_Reduce_scatter(sendbuf, recvbuf,
+    c_ierr = PMPI_Reduce_scatter(sendbuf, recvbuf,
                                 OMPI_ARRAY_NAME_CONVERT(recvcounts),
                                 c_type, c_op, c_comm);
    if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);

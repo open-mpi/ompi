@@ -15,6 +15,8 @@
 # Copyright (c) 2012-2013 Inria.  All rights reserved.
 # Copyright (c) 2013      Los Alamos National Security, LLC. All rights
 #                         reserved.
+# Copyright (c) 2015      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -24,15 +26,11 @@
 
 SUBDIRS = profile
 
-#
-# OMPI_PRPOFILING_DEFINES flag s enabled when we want our MPI_* symbols
-# to be replaced by PMPI_*. In other words, this flag decides
-# whether "profile/defines.h" is included or not. "profile/defines.h"
-# replaces all MPI_* symbols with PMPI_* symbols. In this directory,
-# we need it to be 0
-#
+# OMPI_BUILD_MPI_PROFILING is enabled when we want our generated MPI_* symbols
+# to be replaced by PMPI_*.
+# In this directory, we need it to be 0
 
-AM_CPPFLAGS     = -DOMPI_PROFILING_DEFINES=0
+AM_CPPFLAGS     = -DOMPI_BUILD_MPI_PROFILING=0
 
 #
 # The top directory always builds MPI_* bindings. The bottom directory

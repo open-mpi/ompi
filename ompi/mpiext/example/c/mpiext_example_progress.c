@@ -4,6 +4,8 @@
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -44,11 +46,7 @@ int OMPI_Progress(int count, MPI_Comm comm)
     /* Just as an example, get the name of the communicator and print
        it out.  Use the PMPI name when possible so that these
        invocations don't show up in profiling tools. */
-#if OMPI_ENABLE_MPI_PROFILING
     PMPI_Comm_get_name(comm, name, &len);
-#else
-    MPI_Comm_get_name(comm, name, &len);
-#endif
 
     printf("Count = %d, comm = %s\n", count, name);
 

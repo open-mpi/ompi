@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -62,8 +64,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_REDUCE_LOCAL,
 
 
 #if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
+#define ompi_reduce_local_f pompi_reduce_local_f
 #endif
+
 
 void ompi_reduce_local_f(char *inbuf, char *inoutbuf, MPI_Fint *count,
                         MPI_Fint *datatype, MPI_Fint *op, MPI_Fint *ierr)
@@ -72,13 +75,13 @@ void ompi_reduce_local_f(char *inbuf, char *inoutbuf, MPI_Fint *count,
     MPI_Datatype c_type;
     MPI_Op c_op;
 
-    c_type = MPI_Type_f2c(*datatype);
-    c_op = MPI_Op_f2c(*op);
+    c_type = PMPI_Type_f2c(*datatype);
+    c_op = PMPI_Op_f2c(*op);
 
     inbuf = (char *) OMPI_F2C_BOTTOM(inbuf);
     inoutbuf = (char *) OMPI_F2C_BOTTOM(inoutbuf);
 
-    c_ierr = MPI_Reduce_local(inbuf, inoutbuf,
+    c_ierr = PMPI_Reduce_local(inbuf, inoutbuf,
                               OMPI_FINT_2_INT(*count),
                               c_type, c_op);
    if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);

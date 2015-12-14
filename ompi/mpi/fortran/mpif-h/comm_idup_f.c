@@ -13,6 +13,8 @@
  * Copyright (c) 2011-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -64,21 +66,22 @@ OMPI_GENERATE_F77_BINDINGS (MPI_COMM_IDUP,
 
 
 #if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
+#define ompi_comm_idup_f pompi_comm_idup_f
 #endif
+
 
 void ompi_comm_idup_f(MPI_Fint *comm, MPI_Fint *newcomm, MPI_Fint *request, MPI_Fint *ierr)
 {
     int c_ierr;
     MPI_Comm c_newcomm;
-    MPI_Comm c_comm = MPI_Comm_f2c(*comm);
+    MPI_Comm c_comm = PMPI_Comm_f2c(*comm);
     MPI_Request c_req;
 
-    c_ierr = MPI_Comm_idup(c_comm, &c_newcomm, &c_req);
+    c_ierr = PMPI_Comm_idup(c_comm, &c_newcomm, &c_req);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {
-        *newcomm = MPI_Comm_c2f(c_newcomm);
-        *request = MPI_Request_c2f(c_req);
+        *newcomm = PMPI_Comm_c2f(c_newcomm);
+        *request = PMPI_Request_c2f(c_req);
     }
 }

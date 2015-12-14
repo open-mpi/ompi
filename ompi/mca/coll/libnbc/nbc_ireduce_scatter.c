@@ -50,9 +50,9 @@ int ompi_coll_libnbc_ireduce_scatter(const void* sendbuf, void* recvbuf, const i
   rank = ompi_comm_rank (comm);
   p = ompi_comm_size (comm);
 
-  res = MPI_Type_extent (datatype, &ext);
+  res = ompi_datatype_type_extent (datatype, &ext);
   if (MPI_SUCCESS != res) {
-    NBC_Error("MPI Error in MPI_Type_extent() (%i)", res);
+    NBC_Error("MPI Error in ompi_datatype_type_extent() (%i)", res);
     return res;
   }
 
@@ -208,9 +208,9 @@ int ompi_coll_libnbc_ireduce_scatter_inter (const void* sendbuf, void* recvbuf, 
   rank = ompi_comm_rank (comm);
   rsize = ompi_comm_remote_size (comm);
 
-  res = MPI_Type_extent (datatype, &ext);
+  res = ompi_datatype_type_extent (datatype, &ext);
   if (MPI_SUCCESS != res) {
-    NBC_Error("MPI Error in MPI_Type_extent() (%i)", res);
+    NBC_Error("MPI Error in ompi_datatype_type_extent() (%i)", res);
     return res;
   }
 

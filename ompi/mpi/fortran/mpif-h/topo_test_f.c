@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -62,8 +64,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TOPO_TEST,
 
 
 #if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
+#define ompi_topo_test_f pompi_topo_test_f
 #endif
+
 
 void ompi_topo_test_f(MPI_Fint *comm, MPI_Fint *topo_type, MPI_Fint *ierr)
 {
@@ -71,9 +74,9 @@ void ompi_topo_test_f(MPI_Fint *comm, MPI_Fint *topo_type, MPI_Fint *ierr)
     MPI_Comm c_comm;
     OMPI_SINGLE_NAME_DECL(topo_type);
 
-    c_comm = MPI_Comm_f2c(*comm);
+    c_comm = PMPI_Comm_f2c(*comm);
 
-    c_ierr = MPI_Topo_test(c_comm, OMPI_SINGLE_NAME_CONVERT(topo_type));
+    c_ierr = PMPI_Topo_test(c_comm, OMPI_SINGLE_NAME_CONVERT(topo_type));
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {

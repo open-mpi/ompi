@@ -52,8 +52,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_WIN_ATTACH,
 
 
 #if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
+#define ompi_win_attach_f pompi_win_attach_f
 #endif
+
 
 void ompi_win_attach_f(MPI_Fint *win, char *base, MPI_Aint *size,
 		      MPI_Fint *ierr)
@@ -61,7 +62,7 @@ void ompi_win_attach_f(MPI_Fint *win, char *base, MPI_Aint *size,
     int c_ierr;
     MPI_Win c_win;
 
-    c_win = MPI_Win_f2c(*win);
-    c_ierr = MPI_Win_attach(c_win, base, *size);
+    c_win = PMPI_Win_f2c(*win);
+    c_ierr = PMPI_Win_attach(c_win, base, *size);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 }

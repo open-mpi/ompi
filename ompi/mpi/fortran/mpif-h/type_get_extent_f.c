@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -61,15 +63,16 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_GET_EXTENT,
 
 
 #if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
+#define ompi_type_get_extent_f pompi_type_get_extent_f
 #endif
+
 
 void ompi_type_get_extent_f(MPI_Fint *type, MPI_Aint *lb,
 			   MPI_Aint *extent, MPI_Fint *ierr)
 {
     int c_ierr;
-    MPI_Datatype c_type = MPI_Type_f2c(*type);
+    MPI_Datatype c_type = PMPI_Type_f2c(*type);
 
-    c_ierr = MPI_Type_get_extent(c_type, lb, extent);
+    c_ierr = PMPI_Type_get_extent(c_type, lb, extent);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 }

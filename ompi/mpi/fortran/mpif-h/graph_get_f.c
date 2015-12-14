@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -61,8 +63,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_GRAPH_GET,
 
 
 #if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
+#define ompi_graph_get_f pompi_graph_get_f
 #endif
+
 
 void ompi_graph_get_f(MPI_Fint *comm, MPI_Fint *maxindex,
 		     MPI_Fint *maxedges, MPI_Fint *indx,
@@ -73,11 +76,11 @@ void ompi_graph_get_f(MPI_Fint *comm, MPI_Fint *maxindex,
     OMPI_ARRAY_NAME_DECL(indx);
     OMPI_ARRAY_NAME_DECL(edges);
 
-    c_comm = MPI_Comm_f2c(*comm);
+    c_comm = PMPI_Comm_f2c(*comm);
     OMPI_ARRAY_FINT_2_INT_ALLOC(indx, *maxindex);
     OMPI_ARRAY_FINT_2_INT_ALLOC(edges, *maxedges);
 
-    c_ierr = MPI_Graph_get(c_comm,
+    c_ierr = PMPI_Graph_get(c_comm,
                            OMPI_FINT_2_INT(*maxindex),
                            OMPI_FINT_2_INT(*maxedges),
                            OMPI_ARRAY_NAME_CONVERT(indx),

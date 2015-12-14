@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -62,8 +64,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_IBCAST,
 
 
 #if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
+#define ompi_ibcast_f pompi_ibcast_f
 #endif
+
 
 void ompi_ibcast_f(char *buffer, MPI_Fint *count, MPI_Fint *datatype,
                    MPI_Fint *root, MPI_Fint *comm, MPI_Fint *request,
@@ -74,15 +77,15 @@ void ompi_ibcast_f(char *buffer, MPI_Fint *count, MPI_Fint *datatype,
     MPI_Request c_req;
     MPI_Datatype c_type;
 
-    c_comm = MPI_Comm_f2c(*comm);
-    c_type = MPI_Type_f2c(*datatype);
+    c_comm = PMPI_Comm_f2c(*comm);
+    c_type = PMPI_Type_f2c(*datatype);
 
-    c_ierr = MPI_Ibcast(OMPI_F2C_BOTTOM(buffer),
+    c_ierr = PMPI_Ibcast(OMPI_F2C_BOTTOM(buffer),
                         OMPI_FINT_2_INT(*count),
                         c_type,
                         OMPI_FINT_2_INT(*root),
                         c_comm,
                         &c_req);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
-    if (MPI_SUCCESS == c_ierr) *request = MPI_Request_c2f(c_req);
+    if (MPI_SUCCESS == c_ierr) *request = PMPI_Request_c2f(c_req);
 }

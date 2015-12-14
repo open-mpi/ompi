@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -61,11 +63,12 @@ OMPI_GENERATE_F77_BINDINGS (MPI_BUFFER_ATTACH,
 
 
 #if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
+#define ompi_buffer_attach_f pompi_buffer_attach_f
 #endif
+
 
 void ompi_buffer_attach_f(char *buffer, MPI_Fint *size, MPI_Fint *ierr)
 {
-   int c_ierr = MPI_Buffer_attach(buffer, OMPI_FINT_2_INT(*size));
+   int c_ierr = PMPI_Buffer_attach(buffer, OMPI_FINT_2_INT(*size));
    if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 }

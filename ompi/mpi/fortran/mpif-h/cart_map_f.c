@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -61,8 +63,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_CART_MAP,
 
 
 #if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
+#define ompi_cart_map_f pompi_cart_map_f
 #endif
+
 
 void ompi_cart_map_f(MPI_Fint *comm, MPI_Fint *ndims, MPI_Fint *dims,
                     ompi_fortran_logical_t *periods, MPI_Fint *newrank, MPI_Fint *ierr)
@@ -73,13 +76,13 @@ void ompi_cart_map_f(MPI_Fint *comm, MPI_Fint *ndims, MPI_Fint *dims,
     OMPI_LOGICAL_ARRAY_NAME_DECL(periods);
     OMPI_SINGLE_NAME_DECL(newrank);
 
-    c_comm = MPI_Comm_f2c(*comm);
+    c_comm = PMPI_Comm_f2c(*comm);
 
     size = OMPI_FINT_2_INT(*ndims);
     OMPI_ARRAY_FINT_2_INT(dims, size);
     OMPI_ARRAY_LOGICAL_2_INT(periods, size);
 
-    c_ierr = MPI_Cart_map(c_comm,
+    c_ierr = PMPI_Cart_map(c_comm,
                           size,
                           OMPI_ARRAY_NAME_CONVERT(dims),
                           OMPI_LOGICAL_ARRAY_NAME_CONVERT(periods),

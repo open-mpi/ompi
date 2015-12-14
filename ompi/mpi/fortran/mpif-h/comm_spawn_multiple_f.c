@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2010-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -65,8 +67,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_COMM_SPAWN_MULTIPLE,
 
 
 #if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
+#define ompi_comm_spawn_multiple_f pompi_comm_spawn_multiple_f
 #endif
+
 
 void ompi_comm_spawn_multiple_f(MPI_Fint *count, char *array_commands,
 			       char *array_argv,
@@ -85,9 +88,9 @@ void ompi_comm_spawn_multiple_f(MPI_Fint *count, char *array_commands,
     OMPI_ARRAY_NAME_DECL(array_maxprocs);
     OMPI_ARRAY_NAME_DECL(array_errcds);
 
-    c_comm = MPI_Comm_f2c(*comm);
+    c_comm = PMPI_Comm_f2c(*comm);
 
-    MPI_Comm_size(c_comm, &size);
+    PMPI_Comm_size(c_comm, &size);
 
     array_size = OMPI_FINT_2_INT(*count);
 
@@ -116,10 +119,10 @@ void ompi_comm_spawn_multiple_f(MPI_Fint *count, char *array_commands,
 
     c_info = (MPI_Info *) malloc (array_size * sizeof(MPI_Info));
     for (i = 0; i < array_size; ++i) {
-	c_info[i] = MPI_Info_f2c(array_info[i]);
+	c_info[i] = PMPI_Info_f2c(array_info[i]);
     }
 
-    c_ierr = MPI_Comm_spawn_multiple(OMPI_FINT_2_INT(*count),
+    c_ierr = PMPI_Comm_spawn_multiple(OMPI_FINT_2_INT(*count),
                                      c_array_commands,
                                      c_array_argv,
                                      OMPI_ARRAY_NAME_CONVERT(array_maxprocs),
@@ -130,7 +133,7 @@ void ompi_comm_spawn_multiple_f(MPI_Fint *count, char *array_commands,
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {
-        *intercomm = MPI_Comm_c2f(c_new_comm);
+        *intercomm = PMPI_Comm_c2f(c_new_comm);
     }
 
     if (!OMPI_IS_FORTRAN_ERRCODES_IGNORE(array_errcds)) {

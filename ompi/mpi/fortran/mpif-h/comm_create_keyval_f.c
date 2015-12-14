@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -62,10 +64,11 @@ OMPI_GENERATE_F77_BINDINGS (MPI_COMM_CREATE_KEYVAL,
 
 
 #if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
+#define ompi_comm_create_keyval_f pompi_comm_create_keyval_f
 #endif
 
-     static const char FUNC_NAME[] = "MPI_Comm_create_keyval_f";
+static const char FUNC_NAME[] = "MPI_Comm_create_keyval_f";
+
 
 void ompi_comm_create_keyval_f(ompi_mpi2_fortran_copy_attr_function* comm_copy_attr_fn,
                               ompi_mpi2_fortran_delete_attr_function* comm_delete_attr_fn,

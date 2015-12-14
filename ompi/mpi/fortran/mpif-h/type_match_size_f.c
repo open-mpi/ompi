@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc. All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -68,7 +70,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_MATCH_SIZE,
 
 
 #if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
+#define ompi_type_match_size_f pompi_type_match_size_f
 #endif
 
 static const char FUNC_NAME[] = "MPI_Type_match_size_f";
@@ -99,7 +101,7 @@ void ompi_type_match_size_f(MPI_Fint *typeclass, MPI_Fint *size, MPI_Fint *type,
     default:
         c_type = &ompi_mpi_datatype_null.dt;
     }
-    *type = MPI_Type_c2f( c_type );
+    *type = PMPI_Type_c2f( c_type );
     if ( c_type != &ompi_mpi_datatype_null.dt ) {
         c_ierr = MPI_SUCCESS;
     } else {

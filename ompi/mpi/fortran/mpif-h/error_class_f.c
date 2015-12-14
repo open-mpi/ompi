@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -61,8 +63,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_ERROR_CLASS,
 
 
 #if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
+#define ompi_error_class_f pompi_error_class_f
 #endif
+
 
 void ompi_error_class_f(MPI_Fint *errorcode, MPI_Fint *errorclass,
 		       MPI_Fint *ierr)
@@ -70,7 +73,7 @@ void ompi_error_class_f(MPI_Fint *errorcode, MPI_Fint *errorclass,
     int c_ierr;
     OMPI_SINGLE_NAME_DECL(errorclass);
 
-    c_ierr = MPI_Error_class(OMPI_FINT_2_INT(*errorcode),
+    c_ierr = PMPI_Error_class(OMPI_FINT_2_INT(*errorcode),
                              OMPI_SINGLE_NAME_CONVERT(errorclass));
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 

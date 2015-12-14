@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -61,8 +63,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_GRAPHDIMS_GET,
 
 
 #if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
+#define ompi_graphdims_get_f pompi_graphdims_get_f
 #endif
+
 
 void ompi_graphdims_get_f(MPI_Fint *comm, MPI_Fint *nnodes,
 			 MPI_Fint *nedges, MPI_Fint *ierr)
@@ -72,9 +75,9 @@ void ompi_graphdims_get_f(MPI_Fint *comm, MPI_Fint *nnodes,
     OMPI_SINGLE_NAME_DECL(nnodes);
     OMPI_SINGLE_NAME_DECL(nedges);
 
-    c_comm = MPI_Comm_f2c(*comm);
+    c_comm = PMPI_Comm_f2c(*comm);
 
-    c_ierr = MPI_Graphdims_get(c_comm,
+    c_ierr = PMPI_Graphdims_get(c_comm,
                                OMPI_SINGLE_NAME_CONVERT(nnodes),
                                OMPI_SINGLE_NAME_CONVERT(nedges)
                                );

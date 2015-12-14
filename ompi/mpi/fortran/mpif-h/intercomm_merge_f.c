@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -61,7 +63,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_INTERCOMM_MERGE,
 
 
 #if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
+#define ompi_intercomm_merge_f pompi_intercomm_merge_f
 #endif
 
 void ompi_intercomm_merge_f(MPI_Fint *intercomm, ompi_fortran_logical_t *high,
@@ -70,13 +72,13 @@ void ompi_intercomm_merge_f(MPI_Fint *intercomm, ompi_fortran_logical_t *high,
 {
     int c_ierr;
     MPI_Comm c_newcomm;
-    MPI_Comm c_intercomm = MPI_Comm_f2c(*intercomm);
+    MPI_Comm c_intercomm = PMPI_Comm_f2c(*intercomm);
 
-    c_ierr = MPI_Intercomm_merge (c_intercomm, OMPI_LOGICAL_2_INT(*high),
+    c_ierr = PMPI_Intercomm_merge(c_intercomm, OMPI_LOGICAL_2_INT(*high),
                                   &c_newcomm);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {
-        *newintracomm = MPI_Comm_c2f (c_newcomm);
+        *newintracomm = PMPI_Comm_c2f (c_newcomm);
     }
 }

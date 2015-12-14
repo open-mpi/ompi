@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -62,8 +64,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TEST_CANCELLED,
 
 
 #if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
+#define ompi_test_cancelled_f pompi_test_cancelled_f
 #endif
+
 
 void ompi_test_cancelled_f(MPI_Fint *status, ompi_fortran_logical_t *flag, MPI_Fint *ierr)
 {
@@ -77,10 +80,10 @@ void ompi_test_cancelled_f(MPI_Fint *status, ompi_fortran_logical_t *flag, MPI_F
         *flag = OMPI_INT_2_LOGICAL(0);
         c_ierr = MPI_SUCCESS;
     } else {
-        c_ierr = MPI_Status_f2c( status, &c_status );
+        c_ierr = PMPI_Status_f2c( status, &c_status );
 
         if (MPI_SUCCESS == c_ierr) {
-            c_ierr = MPI_Test_cancelled(&c_status,
+            c_ierr = PMPI_Test_cancelled(&c_status,
                                         OMPI_LOGICAL_SINGLE_NAME_CONVERT(flag));
 
             OMPI_SINGLE_INT_2_LOGICAL(flag);

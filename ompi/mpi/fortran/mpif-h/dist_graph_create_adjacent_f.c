@@ -8,6 +8,8 @@
  * Copyright (c) 2013-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -59,8 +61,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_DIST_GRAPH_CREATE_ADJACENT,
 #endif
 
 #if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
+#define ompi_dist_graph_create_adjacent_f pompi_dist_graph_create_adjacent_f
 #endif
+
 
 
 void ompi_dist_graph_create_adjacent_f(MPI_Fint *comm_old, MPI_Fint *indegree,
@@ -77,8 +80,8 @@ void ompi_dist_graph_create_adjacent_f(MPI_Fint *comm_old, MPI_Fint *indegree,
     OMPI_ARRAY_NAME_DECL(sources);
     OMPI_ARRAY_NAME_DECL(destinations);
 
-    c_comm_old = MPI_Comm_f2c(*comm_old);
-    c_info = MPI_Info_f2c(*info);
+    c_comm_old = PMPI_Comm_f2c(*comm_old);
+    c_info = PMPI_Info_f2c(*info);
 
     OMPI_ARRAY_FINT_2_INT(sources, *indegree);
     if (OMPI_IS_FORTRAN_UNWEIGHTED(sourceweights)) {
@@ -100,17 +103,17 @@ void ompi_dist_graph_create_adjacent_f(MPI_Fint *comm_old, MPI_Fint *indegree,
         c_destweights = OMPI_ARRAY_NAME_CONVERT(destweights);
     }
 
-    *ierr = OMPI_INT_2_FINT(MPI_Dist_graph_create_adjacent(c_comm_old, OMPI_FINT_2_INT(*indegree),
-                                                           OMPI_ARRAY_NAME_CONVERT(sources),
-                                                           c_sourceweights,
-                                                           OMPI_FINT_2_INT(*outdegree),
-                                                           OMPI_ARRAY_NAME_CONVERT(destinations),
-                                                           c_destweights,
-                                                           c_info,
-                                                           OMPI_LOGICAL_2_INT(*reorder),
-                                                           &c_comm_graph));
+    *ierr = OMPI_INT_2_FINT(PMPI_Dist_graph_create_adjacent(c_comm_old, OMPI_FINT_2_INT(*indegree),
+                                                            OMPI_ARRAY_NAME_CONVERT(sources),
+                                                            c_sourceweights,
+                                                            OMPI_FINT_2_INT(*outdegree),
+                                                            OMPI_ARRAY_NAME_CONVERT(destinations),
+                                                            c_destweights,
+                                                            c_info,
+                                                            OMPI_LOGICAL_2_INT(*reorder),
+                                                            &c_comm_graph));
     if (OMPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
-        *comm_graph = MPI_Comm_c2f(c_comm_graph);
+        *comm_graph = PMPI_Comm_c2f(c_comm_graph);
     }
 
     OMPI_ARRAY_FINT_2_INT_CLEANUP(sources);

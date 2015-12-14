@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -63,7 +65,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_COMM_CREATE_ERRHANDLER,
 
 
 #if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
+#define ompi_comm_create_errhandler_f pompi_comm_create_errhandler_f
 #endif
 
 static const char FUNC_NAME[] = "MPI_COMM_CREATE_ERRHANDLER";
@@ -78,7 +80,7 @@ void ompi_comm_create_errhandler_f(ompi_errhandler_fortran_handler_fn_t *functio
                                (ompi_errhandler_generic_handler_fn_t*) function,
                                OMPI_ERRHANDLER_LANG_FORTRAN);
     if (MPI_ERRHANDLER_NULL != c_errhandler) {
-        *errhandler = MPI_Errhandler_c2f(c_errhandler);
+        *errhandler = PMPI_Errhandler_c2f(c_errhandler);
         c_ierr = MPI_SUCCESS;
     } else {
         c_ierr = MPI_ERR_INTERN;

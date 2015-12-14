@@ -12,6 +12,8 @@
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Inria.  All rights reserved.
  * Copyright (c) 2011-2013 Universite Bordeaux 1
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -63,8 +65,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_GRAPH_NEIGHBORS,
 
 
 #if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
+#define ompi_graph_neighbors_f pompi_graph_neighbors_f
 #endif
+
 
 void ompi_graph_neighbors_f(MPI_Fint *comm, MPI_Fint *rank,
 			   MPI_Fint *maxneighbors, MPI_Fint *neighbors,
@@ -74,11 +77,11 @@ void ompi_graph_neighbors_f(MPI_Fint *comm, MPI_Fint *rank,
     MPI_Comm c_comm;
     OMPI_ARRAY_NAME_DECL(neighbors);
 
-    c_comm = MPI_Comm_f2c(*comm);
+    c_comm = PMPI_Comm_f2c(*comm);
 
     OMPI_ARRAY_FINT_2_INT_ALLOC(neighbors, *maxneighbors);
 
-    c_ierr = MPI_Graph_neighbors(c_comm,
+    c_ierr = PMPI_Graph_neighbors(c_comm,
                                  OMPI_FINT_2_INT(*rank),
                                  OMPI_FINT_2_INT(*maxneighbors),
                                  OMPI_ARRAY_NAME_CONVERT(neighbors)

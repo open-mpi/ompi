@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -61,8 +63,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_CREATE_HINDEXED,
 
 
 #if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
+#define ompi_type_create_hindexed_f pompi_type_create_hindexed_f
 #endif
+
 
 
 void ompi_type_create_hindexed_f(MPI_Fint *count,
@@ -72,20 +75,20 @@ void ompi_type_create_hindexed_f(MPI_Fint *count,
 				MPI_Fint *ierr)
 {
     int c_ierr;
-    MPI_Datatype c_old = MPI_Type_f2c(*oldtype);
-    MPI_Datatype c_new = MPI_Type_f2c(*newtype);
+    MPI_Datatype c_old = PMPI_Type_f2c(*oldtype);
+    MPI_Datatype c_new = PMPI_Type_f2c(*newtype);
     OMPI_ARRAY_NAME_DECL(array_of_blocklengths);
 
     OMPI_ARRAY_FINT_2_INT(array_of_blocklengths, *count);
 
-    c_ierr = MPI_Type_create_hindexed(OMPI_FINT_2_INT(*count),
+    c_ierr = PMPI_Type_create_hindexed(OMPI_FINT_2_INT(*count),
                                 OMPI_ARRAY_NAME_CONVERT(array_of_blocklengths),
                                 array_of_displacements, c_old,
                                 &c_new);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {
-        *newtype = MPI_Type_c2f(c_new);
+        *newtype = PMPI_Type_c2f(c_new);
     }
 
     OMPI_ARRAY_FINT_2_INT_CLEANUP(array_of_blocklengths);

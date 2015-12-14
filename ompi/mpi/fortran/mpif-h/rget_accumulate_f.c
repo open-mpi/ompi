@@ -14,6 +14,8 @@
  * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2015      FUJITSU LIMITED.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -67,8 +69,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_RGET_ACCUMULATE,
 
 
 #if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
+#define ompi_rget_accumulate_f pompi_rget_accumulate_f
 #endif
+
 
 void ompi_rget_accumulate_f(char *origin_addr, MPI_Fint *origin_count,
                             MPI_Fint *origin_datatype, char *result_addr,
@@ -79,14 +82,14 @@ void ompi_rget_accumulate_f(char *origin_addr, MPI_Fint *origin_count,
                             MPI_Fint *ierr)
 {
     int c_ierr;
-    MPI_Datatype c_origin_datatype = MPI_Type_f2c(*origin_datatype);
-    MPI_Datatype c_result_datatype = MPI_Type_f2c(*result_datatype);
-    MPI_Datatype c_target_datatype = MPI_Type_f2c(*target_datatype);
-    MPI_Win c_win = MPI_Win_f2c(*win);
-    MPI_Op c_op = MPI_Op_f2c(*op);
+    MPI_Datatype c_origin_datatype = PMPI_Type_f2c(*origin_datatype);
+    MPI_Datatype c_result_datatype = PMPI_Type_f2c(*result_datatype);
+    MPI_Datatype c_target_datatype = PMPI_Type_f2c(*target_datatype);
+    MPI_Win c_win = PMPI_Win_f2c(*win);
+    MPI_Op c_op = PMPI_Op_f2c(*op);
     MPI_Request c_req;
 
-    c_ierr = MPI_Rget_accumulate(OMPI_F2C_BOTTOM(origin_addr),
+    c_ierr = PMPI_Rget_accumulate(OMPI_F2C_BOTTOM(origin_addr),
                                  OMPI_FINT_2_INT(*origin_count),
                                  c_origin_datatype,
                                  OMPI_F2C_BOTTOM(result_addr),
@@ -99,6 +102,6 @@ void ompi_rget_accumulate_f(char *origin_addr, MPI_Fint *origin_count,
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS != c_ierr) {
-        *request = MPI_Request_c2f(c_req);
+        *request = PMPI_Request_c2f(c_req);
     }
 }

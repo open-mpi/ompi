@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -62,8 +64,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_SENDRECV_REPLACE,
 
 
 #if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
+#define ompi_sendrecv_replace_f pompi_sendrecv_replace_f
 #endif
+
 
 void ompi_sendrecv_replace_f(char *buf, MPI_Fint *count, MPI_Fint *datatype,
 			    MPI_Fint *dest, MPI_Fint *sendtag,
@@ -71,13 +74,13 @@ void ompi_sendrecv_replace_f(char *buf, MPI_Fint *count, MPI_Fint *datatype,
 			    MPI_Fint *comm, MPI_Fint *status, MPI_Fint *ierr)
 {
    int c_ierr;
-   MPI_Datatype c_type = MPI_Type_f2c(*datatype);
+   MPI_Datatype c_type = PMPI_Type_f2c(*datatype);
    MPI_Comm c_comm;
    MPI_Status c_status;
 
-   c_comm = MPI_Comm_f2c (*comm);
+   c_comm = PMPI_Comm_f2c (*comm);
 
-   c_ierr = MPI_Sendrecv_replace(OMPI_F2C_BOTTOM(buf),
+   c_ierr = PMPI_Sendrecv_replace(OMPI_F2C_BOTTOM(buf),
                                  OMPI_FINT_2_INT(*count),
                                  c_type,
                                  OMPI_FINT_2_INT(*dest),
@@ -89,6 +92,6 @@ void ompi_sendrecv_replace_f(char *buf, MPI_Fint *count, MPI_Fint *datatype,
 
    if (MPI_SUCCESS == c_ierr &&
         !OMPI_IS_FORTRAN_STATUS_IGNORE(status)) {
-      MPI_Status_c2f(&c_status, status);
+      PMPI_Status_c2f(&c_status, status);
    }
 }

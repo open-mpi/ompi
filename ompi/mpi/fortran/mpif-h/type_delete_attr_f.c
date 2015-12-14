@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -61,15 +63,16 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_DELETE_ATTR,
 
 
 #if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
+#define ompi_type_delete_attr_f pompi_type_delete_attr_f
 #endif
+
 
 void ompi_type_delete_attr_f(MPI_Fint *type, MPI_Fint *type_keyval,
 			    MPI_Fint *ierr)
 {
     int c_ierr;
-    MPI_Datatype c_type = MPI_Type_f2c(*type);
+    MPI_Datatype c_type = PMPI_Type_f2c(*type);
 
-    c_ierr = MPI_Type_delete_attr(c_type, OMPI_FINT_2_INT(*type_keyval));
+    c_ierr = PMPI_Type_delete_attr(c_type, OMPI_FINT_2_INT(*type_keyval));
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 }

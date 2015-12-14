@@ -9,8 +9,10 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2012      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      FUJITSU LIMITED.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -65,26 +67,27 @@ OMPI_GENERATE_F77_BINDINGS (MPI_IMRECV,
 
 
 #if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
+#define ompi_imrecv_f pompi_imrecv_f
 #endif
+
 
 void ompi_imrecv_f(char *buf, MPI_Fint *count, MPI_Fint *datatype,
                    MPI_Fint *message, MPI_Fint *request, MPI_Fint *ierr)
 {
    int c_ierr;
-   MPI_Datatype c_type = MPI_Type_f2c(*datatype);
+   MPI_Datatype c_type = PMPI_Type_f2c(*datatype);
    MPI_Request c_req;
    MPI_Message c_message;
 
-   c_message = MPI_Message_f2c(*message);
+   c_message = PMPI_Message_f2c(*message);
 
-   c_ierr = OMPI_INT_2_FINT(MPI_Imrecv(OMPI_F2C_BOTTOM(buf), OMPI_FINT_2_INT(*count),
-                                       c_type, &c_message, &c_req));
+   c_ierr = OMPI_INT_2_FINT(PMPI_Imrecv(OMPI_F2C_BOTTOM(buf), OMPI_FINT_2_INT(*count),
+                                        c_type, &c_message, &c_req));
    if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
    if (MPI_SUCCESS == c_ierr) {
-      *request = MPI_Request_c2f(c_req);
+      *request = PMPI_Request_c2f(c_req);
       /* message is an INOUT, and may be updated by the recv */
-      *message = MPI_Message_c2f(c_message);
+      *message = PMPI_Message_c2f(c_message);
    }
 }

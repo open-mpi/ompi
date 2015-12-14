@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -101,8 +103,10 @@ OMPI_GENERATE_F77_BINDINGS (MPI_WIN_ALLOCATE_SHARED_CPTR,
 
 
 #if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
+#define ompi_win_allocate_shared_f pompi_win_allocate_shared_f
+#define ompi_win_allocate_shared_cptr_f pompi_win_allocate_shared_cptr_f
 #endif
+
 
 void ompi_win_allocate_shared_f(MPI_Aint *size, MPI_Fint *disp_unit,
                                 MPI_Fint *info, MPI_Fint *comm, char *baseptr,
@@ -113,13 +117,13 @@ void ompi_win_allocate_shared_f(MPI_Aint *size, MPI_Fint *disp_unit,
     MPI_Comm c_comm;
     MPI_Win c_win;
 
-    c_info = MPI_Info_f2c(*info);
-    c_comm = MPI_Comm_f2c(*comm);
+    c_info = PMPI_Info_f2c(*info);
+    c_comm = PMPI_Comm_f2c(*comm);
 
-    c_ierr = MPI_Win_allocate_shared(*size, OMPI_FINT_2_INT(*disp_unit),
+    c_ierr = PMPI_Win_allocate_shared(*size, OMPI_FINT_2_INT(*disp_unit),
                                      c_info, c_comm,
                                      baseptr, &c_win);
-    *win = MPI_Win_c2f(c_win);
+    *win = PMPI_Win_c2f(c_win);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 }
 

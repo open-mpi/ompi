@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -64,8 +66,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TESTALL,
 
 
 #if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
+#define ompi_testall_f pompi_testall_f
 #endif
+
 
 static const char FUNC_NAME[] = "MPI_TESTALL";
 
@@ -95,10 +98,10 @@ void ompi_testall_f(MPI_Fint *count, MPI_Fint *array_of_requests, ompi_fortran_l
     }
     c_status = (MPI_Status*) (c_req + OMPI_FINT_2_INT(*count));
     for (i = 0; i < OMPI_FINT_2_INT(*count); ++i) {
-        c_req[i] = MPI_Request_f2c(array_of_requests[i]);
+        c_req[i] = PMPI_Request_f2c(array_of_requests[i]);
     }
 
-    c_ierr = MPI_Testall(OMPI_FINT_2_INT(*count), c_req,
+    c_ierr = PMPI_Testall(OMPI_FINT_2_INT(*count), c_req,
                          OMPI_LOGICAL_SINGLE_NAME_CONVERT(flag),
                          c_status);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
@@ -112,7 +115,7 @@ void ompi_testall_f(MPI_Fint *count, MPI_Fint *array_of_requests, ompi_fortran_l
             array_of_requests[i] = c_req[i]->req_f_to_c_index;
             if (!OMPI_IS_FORTRAN_STATUSES_IGNORE(array_of_statuses) &&
                 !OMPI_IS_FORTRAN_STATUS_IGNORE(&array_of_statuses[i])) {
-                MPI_Status_c2f(&c_status[i], &array_of_statuses[i * (sizeof(MPI_Status) / sizeof(int))]);
+                PMPI_Status_c2f(&c_status[i], &array_of_statuses[i * (sizeof(MPI_Status) / sizeof(int))]);
             }
         }
     }

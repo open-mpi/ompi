@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -62,20 +64,21 @@ OMPI_GENERATE_F77_BINDINGS (MPI_SSEND,
 
 
 #if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
+#define ompi_ssend_f pompi_ssend_f
 #endif
+
 
 void ompi_ssend_f(char *buf, MPI_Fint *count, MPI_Fint *datatype,
 		 MPI_Fint *dest, MPI_Fint *tag,
 		 MPI_Fint *comm, MPI_Fint *ierr)
 {
    int c_ierr;
-   MPI_Datatype c_type = MPI_Type_f2c(*datatype);
+   MPI_Datatype c_type = PMPI_Type_f2c(*datatype);
    MPI_Comm c_comm;
 
-   c_comm = MPI_Comm_f2c (*comm);
+   c_comm = PMPI_Comm_f2c (*comm);
 
-   c_ierr = MPI_Ssend(OMPI_F2C_BOTTOM(buf), OMPI_FINT_2_INT(*count),
+   c_ierr = PMPI_Ssend(OMPI_F2C_BOTTOM(buf), OMPI_FINT_2_INT(*count),
                       c_type, OMPI_FINT_2_INT(*dest),
                       OMPI_FINT_2_INT(*tag), c_comm);
    if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);

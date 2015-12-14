@@ -37,15 +37,15 @@ int ompi_coll_libnbc_ialltoallv(const void* sendbuf, const int *sendcounts, cons
   rank = ompi_comm_rank (comm);
   p = ompi_comm_size (comm);
 
-  res = MPI_Type_extent (sendtype, &sndext);
+  res = ompi_datatype_type_extent (sendtype, &sndext);
   if (MPI_SUCCESS != res) {
-    NBC_Error("MPI Error in MPI_Type_extent() (%i)", res);
+    NBC_Error("MPI Error in ompi_datatype_type_extent() (%i)", res);
     return res;
   }
 
-  res = MPI_Type_extent (recvtype, &rcvext);
+  res = ompi_datatype_type_extent (recvtype, &rcvext);
   if (MPI_SUCCESS != res) {
-    NBC_Error("MPI Error in MPI_Type_extent() (%i)", res);
+    NBC_Error("MPI Error in ompi_datatype_type_extent() (%i)", res);
     return res;
   }
 
@@ -128,15 +128,15 @@ int ompi_coll_libnbc_ialltoallv_inter (const void* sendbuf, const int *sendcount
   ompi_coll_libnbc_module_t *libnbc_module = (ompi_coll_libnbc_module_t*) module;
 
 
-  res = MPI_Type_extent(sendtype, &sndext);
+  res = ompi_datatype_type_extent(sendtype, &sndext);
   if (MPI_SUCCESS != res) {
-    NBC_Error("MPI Error in MPI_Type_extent() (%i)", res);
+    NBC_Error("MPI Error in ompi_datatype_type_extent() (%i)", res);
     return res;
   }
 
-  res = MPI_Type_extent(recvtype, &rcvext);
+  res = ompi_datatype_type_extent(recvtype, &rcvext);
   if (MPI_SUCCESS != res) {
-    NBC_Error("MPI Error in MPI_Type_extent() (%i)", res);
+    NBC_Error("MPI Error in ompi_datatype_type_extent() (%i)", res);
     return res;
   }
 

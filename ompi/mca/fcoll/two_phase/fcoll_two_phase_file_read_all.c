@@ -677,8 +677,8 @@ static int two_phase_read_and_exch(mca_io_ompio_file_t *fh,
 		    }
 		    if (req_off < real_off + real_size) {
 			count[i]++;
-			MPI_Address(read_buf+req_off-real_off,
-				    &(others_req[i].mem_ptrs[j]));
+			PMPI_Address(read_buf+req_off-real_off,
+				     &(others_req[i].mem_ptrs[j]));
 
 			send_size[i] += (int)(OMPIO_MIN(real_off + real_size - req_off,
 							(OMPI_MPI_OFFSET_TYPE)req_len));

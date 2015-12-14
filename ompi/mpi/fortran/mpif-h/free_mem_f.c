@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -61,11 +63,12 @@ OMPI_GENERATE_F77_BINDINGS (MPI_FREE_MEM,
 
 
 #if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
+#define ompi_free_mem_f pompi_free_mem_f
 #endif
+
 
 void ompi_free_mem_f(char *base, MPI_Fint *ierr)
 {
-    int c_ierr = MPI_Free_mem(base);
+    int c_ierr = PMPI_Free_mem(base);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 }

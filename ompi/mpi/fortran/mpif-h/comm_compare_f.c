@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -61,17 +63,18 @@ OMPI_GENERATE_F77_BINDINGS (MPI_COMM_COMPARE,
 
 
 #if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
+#define ompi_comm_compare_f pompi_comm_compare_f
 #endif
+
 
 void ompi_comm_compare_f(MPI_Fint *comm1, MPI_Fint *comm2, MPI_Fint *result, MPI_Fint *ierr)
 {
     int c_ierr;
-    MPI_Comm c_comm1 = MPI_Comm_f2c(*comm1);
-    MPI_Comm c_comm2 = MPI_Comm_f2c(*comm2);
+    MPI_Comm c_comm1 = PMPI_Comm_f2c(*comm1);
+    MPI_Comm c_comm2 = PMPI_Comm_f2c(*comm2);
     OMPI_SINGLE_NAME_DECL(result);
 
-    c_ierr = MPI_Comm_compare(c_comm1, c_comm2,
+    c_ierr = PMPI_Comm_compare(c_comm1, c_comm2,
                               OMPI_SINGLE_NAME_CONVERT(result));
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 

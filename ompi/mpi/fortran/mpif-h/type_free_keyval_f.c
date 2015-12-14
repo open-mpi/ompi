@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -61,8 +63,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_FREE_KEYVAL,
 
 
 #if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
+#define ompi_type_free_keyval_f pompi_type_free_keyval_f
 #endif
+
 
 void ompi_type_free_keyval_f(MPI_Fint *type_keyval, MPI_Fint *ierr)
 {
@@ -71,7 +74,7 @@ void ompi_type_free_keyval_f(MPI_Fint *type_keyval, MPI_Fint *ierr)
 
     OMPI_SINGLE_FINT_2_INT(type_keyval);
 
-    c_ierr = MPI_Type_free_keyval(OMPI_SINGLE_NAME_CONVERT(type_keyval));
+    c_ierr = PMPI_Type_free_keyval(OMPI_SINGLE_NAME_CONVERT(type_keyval));
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {

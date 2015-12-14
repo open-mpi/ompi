@@ -4,6 +4,8 @@
  *                         reserved.
  * Copyright (c) 2011-2013 Inria.  All rights reserved.
  * Copyright (c) 2011-2013 Université Bordeaux 1
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -56,8 +58,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_DIST_GRAPH_NEIGHBORS_COUNT,
 
 
 #if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
+#define ompi_dist_graph_neighbors_count_f pompi_dist_graph_neighbors_count_f
 #endif
+
 
 void ompi_dist_graph_neighbors_count_f(MPI_Fint *comm, MPI_Fint *inneighbors,
                                        MPI_Fint *outneighbors, ompi_fortran_logical_t *weighted,
@@ -68,12 +71,12 @@ void ompi_dist_graph_neighbors_count_f(MPI_Fint *comm, MPI_Fint *inneighbors,
     OMPI_SINGLE_NAME_DECL(outneighbors);
     OMPI_LOGICAL_NAME_DECL(weighted);
 
-    c_comm = MPI_Comm_f2c(*comm);
+    c_comm = PMPI_Comm_f2c(*comm);
 
-    *ierr = OMPI_INT_2_FINT(MPI_Dist_graph_neighbors_count(c_comm,
-                                                           OMPI_SINGLE_NAME_CONVERT(inneighbors),
-                                                           OMPI_SINGLE_NAME_CONVERT(outneighbors),
-                                                           OMPI_LOGICAL_SINGLE_NAME_CONVERT(weighted)));
+    *ierr = OMPI_INT_2_FINT(PMPI_Dist_graph_neighbors_count(c_comm,
+                                                            OMPI_SINGLE_NAME_CONVERT(inneighbors),
+                                                            OMPI_SINGLE_NAME_CONVERT(outneighbors),
+                                                            OMPI_LOGICAL_SINGLE_NAME_CONVERT(weighted)));
     OMPI_SINGLE_INT_2_LOGICAL(weighted);
     if (OMPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
           OMPI_SINGLE_INT_2_FINT(inneighbors);

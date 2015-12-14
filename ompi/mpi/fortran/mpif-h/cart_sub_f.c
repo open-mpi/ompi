@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -61,8 +63,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_CART_SUB,
 
 
 #if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
+#define ompi_cart_sub_f pompi_cart_sub_f
 #endif
+
 
 void ompi_cart_sub_f(MPI_Fint *comm, ompi_fortran_logical_t *remain_dims,
                     MPI_Fint *new_comm, MPI_Fint *ierr)
@@ -79,8 +82,8 @@ void ompi_cart_sub_f(MPI_Fint *comm, ompi_fortran_logical_t *remain_dims,
 #endif
     OMPI_LOGICAL_ARRAY_NAME_DECL(remain_dims);
 
-    c_comm = MPI_Comm_f2c(*comm);
-    c_new_comm = MPI_Comm_f2c(*new_comm);
+    c_comm = PMPI_Comm_f2c(*comm);
+    c_new_comm = PMPI_Comm_f2c(*new_comm);
 
 #if OMPI_FORTRAN_MUST_CONVERT_LOGICAL_2_INT == 1
     *ierr = OMPI_INT_2_FINT(MPI_Cartdim_get(c_comm, &ndims));
@@ -90,13 +93,13 @@ void ompi_cart_sub_f(MPI_Fint *comm, ompi_fortran_logical_t *remain_dims,
 #endif
     OMPI_ARRAY_LOGICAL_2_INT(remain_dims, ndims);
 
-    c_ierr = MPI_Cart_sub(c_comm,
+    c_ierr = PMPI_Cart_sub(c_comm,
                           OMPI_LOGICAL_ARRAY_NAME_CONVERT(remain_dims),
                           &c_new_comm);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {
-        *new_comm = MPI_Comm_c2f(c_new_comm);
+        *new_comm = PMPI_Comm_c2f(c_new_comm);
     }
 
     OMPI_ARRAY_INT_2_LOGICAL(remain_dims, ndims);

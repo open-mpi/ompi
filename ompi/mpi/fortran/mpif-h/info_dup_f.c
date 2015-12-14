@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -61,20 +63,21 @@ OMPI_GENERATE_F77_BINDINGS (MPI_INFO_DUP,
 
 
 #if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
+#define ompi_info_dup_f pompi_info_dup_f
 #endif
+
 
 void ompi_info_dup_f(MPI_Fint *info, MPI_Fint *newinfo, MPI_Fint *ierr)
 {
     int c_ierr;
     MPI_Info c_info, c_new_info;
 
-    c_info = MPI_Info_f2c(*info);
+    c_info = PMPI_Info_f2c(*info);
 
-    c_ierr = MPI_Info_dup(c_info, &c_new_info);
+    c_ierr = PMPI_Info_dup(c_info, &c_new_info);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {
-        *newinfo = MPI_Info_c2f(c_new_info);
+        *newinfo = PMPI_Info_c2f(c_new_info);
     }
 }

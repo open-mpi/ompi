@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -62,8 +64,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_GET_LIBRARY_VERSION,
 
 
 #if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
+#define ompi_get_library_version_f pompi_get_library_version_f
 #endif
+
 
 void ompi_get_library_version_f(char *version, MPI_Fint *resultlen,
                                 MPI_Fint *ierr, MPI_Fint version_len)
@@ -71,7 +74,7 @@ void ompi_get_library_version_f(char *version, MPI_Fint *resultlen,
     int c_ierr, c_resultlen;
     char c_version[MPI_MAX_LIBRARY_VERSION_STRING];
 
-    c_ierr = MPI_Get_library_version(c_version, &c_resultlen);
+    c_ierr = PMPI_Get_library_version(c_version, &c_resultlen);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {

@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -62,8 +64,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_ALLREDUCE,
 
 
 #if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
+#define ompi_allreduce_f pompi_allreduce_f
 #endif
+
 
 void ompi_allreduce_f(char *sendbuf, char *recvbuf, MPI_Fint *count,
 		     MPI_Fint *datatype, MPI_Fint *op, MPI_Fint *comm,
@@ -74,16 +77,16 @@ void ompi_allreduce_f(char *sendbuf, char *recvbuf, MPI_Fint *count,
     MPI_Datatype c_type;
     MPI_Op c_op;
 
-    c_comm = MPI_Comm_f2c(*comm);
-    c_type = MPI_Type_f2c(*datatype);
-    c_op = MPI_Op_f2c(*op);
+    c_comm = PMPI_Comm_f2c(*comm);
+    c_type = PMPI_Type_f2c(*datatype);
+    c_op = PMPI_Op_f2c(*op);
 
     sendbuf = (char *) OMPI_F2C_IN_PLACE(sendbuf);
     sendbuf = (char *) OMPI_F2C_BOTTOM(sendbuf);
     recvbuf = (char *) OMPI_F2C_BOTTOM(recvbuf);
 
-    ierr_c = MPI_Allreduce(sendbuf, recvbuf,
-                           OMPI_FINT_2_INT(*count),
-                           c_type, c_op, c_comm);
+    ierr_c = PMPI_Allreduce(sendbuf, recvbuf,
+                            OMPI_FINT_2_INT(*count),
+                            c_type, c_op, c_comm);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(ierr_c);
 }

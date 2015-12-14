@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -61,15 +63,16 @@ OMPI_GENERATE_F77_BINDINGS (MPI_FILE_SET_ATOMICITY,
 
 
 #if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
+#define ompi_file_set_atomicity_f pompi_file_set_atomicity_f
 #endif
+
 
 void ompi_file_set_atomicity_f(MPI_Fint *fh, ompi_fortran_logical_t *flag, MPI_Fint *ierr)
 {
     int c_ierr;
-    MPI_File c_fh = MPI_File_f2c(*fh);
+    MPI_File c_fh = PMPI_File_f2c(*fh);
 
-    c_ierr = MPI_File_set_atomicity(c_fh,
+    c_ierr = PMPI_File_set_atomicity(c_fh,
                                     OMPI_LOGICAL_2_INT(*flag));
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 }

@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -61,8 +63,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_FILE_GET_BYTE_OFFSET,
 
 
 #if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
+#define ompi_file_get_byte_offset_f pompi_file_get_byte_offset_f
 #endif
+
 
 void ompi_file_get_byte_offset_f(MPI_Fint *fh, MPI_Offset *offset,
 				MPI_Offset *disp, MPI_Fint *ierr)
@@ -70,9 +73,9 @@ void ompi_file_get_byte_offset_f(MPI_Fint *fh, MPI_Offset *offset,
     int c_ierr;
     MPI_File c_fh;
 
-    c_fh = MPI_File_f2c(*fh);
+    c_fh = PMPI_File_f2c(*fh);
 
-    c_ierr = MPI_File_get_byte_offset(c_fh,
+    c_ierr = PMPI_File_get_byte_offset(c_fh,
                                       (MPI_Offset) *offset,
                                       disp);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);

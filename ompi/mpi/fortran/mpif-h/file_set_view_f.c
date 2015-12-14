@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -63,18 +65,19 @@ OMPI_GENERATE_F77_BINDINGS (MPI_FILE_SET_VIEW,
 
 
 #if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
+#define ompi_file_set_view_f pompi_file_set_view_f
 #endif
+
 
 void ompi_file_set_view_f(MPI_Fint *fh, MPI_Offset *disp,
 			 MPI_Fint *etype, MPI_Fint *filetype,
 			 char *datarep, MPI_Fint *info, MPI_Fint *ierr,
                          int datarep_len)
 {
-   MPI_File c_fh = MPI_File_f2c(*fh);
-   MPI_Datatype c_etype = MPI_Type_f2c(*etype);
-   MPI_Datatype c_filetype = MPI_Type_f2c(*filetype);
-   MPI_Info c_info = MPI_Info_f2c(*info);
+   MPI_File c_fh = PMPI_File_f2c(*fh);
+   MPI_Datatype c_etype = PMPI_Type_f2c(*etype);
+   MPI_Datatype c_filetype = PMPI_Type_f2c(*filetype);
+   MPI_Info c_info = PMPI_Info_f2c(*info);
    char *c_datarep;
    int c_ierr, ret;
 
@@ -86,7 +89,7 @@ void ompi_file_set_view_f(MPI_Fint *fh, MPI_Offset *disp,
         return;
    }
 
-   c_ierr = MPI_File_set_view(c_fh, (MPI_Offset) *disp,
+   c_ierr = PMPI_File_set_view(c_fh, (MPI_Offset) *disp,
                               c_etype, c_filetype,
                               c_datarep, c_info);
    if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);

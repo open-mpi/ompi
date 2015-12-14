@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -70,8 +72,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_INIT,
 
 
 #if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
+#define ompi_init_f pompi_init_f
 #endif
+
 
 void ompi_init_f( MPI_Fint *ierr )
 {
@@ -79,6 +82,6 @@ void ompi_init_f( MPI_Fint *ierr )
     int argc = 0;
     char **argv = NULL;
 
-    c_ierr = MPI_Init( &argc, &argv );
+    c_ierr = PMPI_Init( &argc, &argv );
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 }

@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -62,8 +64,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_GROUP_DIFFERENCE,
 
 
 #if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
+#define ompi_group_difference_f pompi_group_difference_f
 #endif
+
 
 void ompi_group_difference_f(MPI_Fint *group1, MPI_Fint *group2, MPI_Fint *newgroup, MPI_Fint *ierr)
 {
@@ -71,10 +74,10 @@ void ompi_group_difference_f(MPI_Fint *group1, MPI_Fint *group2, MPI_Fint *newgr
   ompi_group_t *c_group1, *c_group2, *c_newgroup;
 
   /* Make the fortran to c representation conversion */
-  c_group1 = MPI_Group_f2c(*group1);
-  c_group2 = MPI_Group_f2c(*group2);
+  c_group1 = PMPI_Group_f2c(*group1);
+  c_group2 = PMPI_Group_f2c(*group2);
 
-  c_ierr = MPI_Group_difference(c_group1, c_group2, &c_newgroup);
+  c_ierr = PMPI_Group_difference(c_group1, c_group2, &c_newgroup);
   if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
   /* translate the results from c to fortran */

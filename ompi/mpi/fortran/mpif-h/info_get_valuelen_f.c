@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -64,8 +66,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_INFO_GET_VALUELEN,
 
 
 #if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
+#define ompi_info_get_valuelen_f pompi_info_get_valuelen_f
 #endif
+
 
 static const char FUNC_NAME[] = "MPI_INFO_GET_VALUELEN";
 
@@ -89,8 +92,8 @@ void ompi_info_get_valuelen_f(MPI_Fint *info, char *key,
         if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
         return;
     }
-    c_info = MPI_Info_f2c(*info);
-    c_ierr = MPI_Info_get_valuelen(c_info, c_key,
+    c_info = PMPI_Info_f2c(*info);
+    c_ierr = PMPI_Info_get_valuelen(c_info, c_key,
                                    OMPI_SINGLE_NAME_CONVERT(valuelen),
                                    OMPI_LOGICAL_SINGLE_NAME_CONVERT(flag));
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);

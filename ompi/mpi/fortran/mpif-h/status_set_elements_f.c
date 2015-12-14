@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -62,14 +64,15 @@ OMPI_GENERATE_F77_BINDINGS (MPI_STATUS_SET_ELEMENTS,
 
 
 #if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
+#define ompi_status_set_elements_f pompi_status_set_elements_f
 #endif
+
 
 void ompi_status_set_elements_f(MPI_Fint *status, MPI_Fint *datatype,
 			       MPI_Fint *count, MPI_Fint *ierr)
 {
     int c_ierr;
-    MPI_Datatype c_type = MPI_Type_f2c(*datatype);
+    MPI_Datatype c_type = PMPI_Type_f2c(*datatype);
     MPI_Status c_status;
 
     /* This seems silly, but someone will do it */
@@ -77,15 +80,15 @@ void ompi_status_set_elements_f(MPI_Fint *status, MPI_Fint *datatype,
     if (OMPI_IS_FORTRAN_STATUS_IGNORE(status)) {
         c_ierr = MPI_SUCCESS;
     } else {
-        MPI_Status_f2c( status, &c_status );
+        PMPI_Status_f2c( status, &c_status );
 
-        c_ierr = MPI_Status_set_elements(&c_status, c_type,
+        c_ierr = PMPI_Status_set_elements(&c_status, c_type,
                                          OMPI_FINT_2_INT(*count));
 
         /* If datatype is really being set, then that needs to be
            converted.... */
         if (MPI_SUCCESS == c_ierr) {
-            MPI_Status_c2f(&c_status, status);
+            PMPI_Status_c2f(&c_status, status);
         }
     }
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
