@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2011-2014 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2011-2015 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2011      Los Alamos National Security, LLC.
 #                         All rights reserved.
 # Copyright (c) 2014      Intel, Inc.  All rights reserved.
@@ -158,9 +158,31 @@ Please check your allocation.
 A request was made to bind a process, but at least one node does NOT
 support binding processes to cpus.
 
-  Node:  %s
-This usually is due to not having libnumactl and libnumactl-devel
-installed on the node.
+Node: %s
+
+Open MPI uses the "hwloc" library to perform process and memory
+binding. This error message means that hwloc has indicated that
+processor binding support is not available on this machine.
+
+On OS X, processor and memory binding is not available at all (i.e.,
+the OS does not expose this functionality).
+
+On Linux, lack of the functionality can mean that you are on a
+platform where processor and memory affinity is not supported in Linux
+itself, or that hwloc was built without NUMA and/or processor affinity
+support. When building hwloc (which, depending on your Open MPI
+installation, may be embedded in Open MPI itself), it is important to
+have the libnuma header and library files available. Different linux
+distributions package these files under different names; look for
+packages with the word "numa" in them. You may also need a developer
+version of the package (e.g., with "dev" or "devel" in the name) to
+obtain the relevant header files.
+
+If you are getting this message on a non-OS X, non-Linux platform,
+then hwloc does not support processor / memory affinity on this
+platform. If the OS/platform does actually support processor / memory
+affinity, then you should contact the hwloc maintainers:
+https://github.com/open-mpi/hwloc.
 #
 [rmaps:membind-not-supported]
 WARNING: a request was made to bind a process. While the system
@@ -169,10 +191,32 @@ support binding memory to the process location.
 
   Node:  %s
 
-This usually is due to not having the required NUMA support installed
-on the node. In some Linux distributions, the required support is
-contained in the libnumactl and libnumactl-devel packages.
-This is a warning only; your job will continue, though performance may be degraded.
+Open MPI uses the "hwloc" library to perform process and memory
+binding. This error message means that hwloc has indicated that
+processor binding support is not available on this machine.
+
+On OS X, processor and memory binding is not available at all (i.e.,
+the OS does not expose this functionality).
+
+On Linux, lack of the functionality can mean that you are on a
+platform where processor and memory affinity is not supported in Linux
+itself, or that hwloc was built without NUMA and/or processor affinity
+support. When building hwloc (which, depending on your Open MPI
+installation, may be embedded in Open MPI itself), it is important to
+have the libnuma header and library files available. Different linux
+distributions package these files under different names; look for
+packages with the word "numa" in them. You may also need a developer
+version of the package (e.g., with "dev" or "devel" in the name) to
+obtain the relevant header files.
+
+If you are getting this message on a non-OS X, non-Linux platform,
+then hwloc does not support processor / memory affinity on this
+platform. If the OS/platform does actually support processor / memory
+affinity, then you should contact the hwloc maintainers:
+https://github.com/open-mpi/hwloc.
+
+This is a warning only; your job will continue, though performance may
+be degraded.
 #
 [rmaps:membind-not-supported-fatal]
 A request was made to bind a process. While the system
@@ -181,10 +225,32 @@ support binding memory to the process location.
 
   Node:  %s
 
-This usually is due to not having the required NUMA support installed
-on the node. In some Linux distributions, the required support is
-contained in the libnumactl and libnumactl-devel packages.
-The provided memory binding policy requires that we abort the job at this time.
+Open MPI uses the "hwloc" library to perform process and memory
+binding. This error message means that hwloc has indicated that
+processor binding support is not available on this machine.
+
+On OS X, processor and memory binding is not available at all (i.e.,
+the OS does not expose this functionality).
+
+On Linux, lack of the functionality can mean that you are on a
+platform where processor and memory affinity is not supported in Linux
+itself, or that hwloc was built without NUMA and/or processor affinity
+support. When building hwloc (which, depending on your Open MPI
+installation, may be embedded in Open MPI itself), it is important to
+have the libnuma header and library files available. Different linux
+distributions package these files under different names; look for
+packages with the word "numa" in them. You may also need a developer
+version of the package (e.g., with "dev" or "devel" in the name) to
+obtain the relevant header files.
+
+If you are getting this message on a non-OS X, non-Linux platform,
+then hwloc does not support processor / memory affinity on this
+platform. If the OS/platform does actually support processor / memory
+affinity, then you should contact the hwloc maintainers:
+https://github.com/open-mpi/hwloc.
+
+The provided memory binding policy requires that Open MPI abort the
+job at this time.
 #
 [rmaps:no-bindable-objects]
 No bindable objects of the specified type were available
