@@ -37,14 +37,22 @@ AC_DEFUN([OMPI_FORTRAN_CHECK_COMMON_AND_SUBPROGRAM],[
        [AC_LANG_PUSH([Fortran])
         cat > aaa.f90 << EOF
 MODULE aaa
-INTEGER CMON(1)
+INTEGER :: CMON(1)
 COMMON/CMMON/CMON
+INTEGER :: global_aaa
 END MODULE aaa
 EOF
         OPAL_LOG_COMMAND([$FC $FCFLAGS -c aaa.f90],
                          [AC_COMPILE_IFELSE([AC_LANG_SOURCE([[ MODULE bbb
 integer, bind(C, name="cmmon_") :: CMON
-END MODULE bbb]])],
+INTEGER :: global_bbb
+END MODULE bbb
+
+PROGRAM test
+USE aaa, ONLY : global_aaa
+USE bbb, ONLY : global_bbb
+implicit none
+END PROGRAM]])],
                                             [AS_VAR_SET(common_and_subprogram_var, yes)],
                                             [AS_VAR_SET(common_and_subprogram_var, no)])],
                          [AS_VAR_SET(common_and_subprogram_var, no)])
