@@ -118,7 +118,7 @@ int ompi_coll_libnbc_igatherv_inter (const void* sendbuf, int sendcount, MPI_Dat
   NBC_Handle *handle;
   ompi_coll_libnbc_module_t *libnbc_module = (ompi_coll_libnbc_module_t*) module;
 
-  rsize = ompi_comm_size (comm);
+  rsize = ompi_comm_remote_size (comm);
 
   if (MPI_ROOT == root) {
     res = ompi_datatype_type_extent(recvtype, &rcvext);
