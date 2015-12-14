@@ -35,18 +35,20 @@ AC_DEFUN([OMPI_FORTRAN_CHECK_COMMON_AND_SUBPROGRAM],[
 
     AC_CACHE_CHECK([if Fortran compiler supports both common and subprogram], common_and_subprogram_var,
        [AC_LANG_PUSH([Fortran])
-        AC_COMPILE_IFELSE([AC_LANG_SOURCE([[MODULE aaa
+        cat > aaa.f90 << EOF
+MODULE aaa
 INTEGER CMON(1)
 COMMON/CMMON/CMON
 END MODULE aaa
-
-MODULE bbb
+EOF
+        OPAL_LOG_COMMAND([$FC $FCFLAGS -c aaa.f90],
+                         [AC_COMPILE_IFELSE([AC_LANG_SOURCE([[ MODULE bbb
 integer, bind(C, name="cmmon_") :: CMON
 END MODULE bbb]])],
-             [AS_VAR_SET(common_and_subprogram_var, yes)],
-             [AS_VAR_SET(common_and_subprogram_var, no)])
-        touch conftest_foo.mod
-        rm -rf *.mod 2>/dev/null
+                                            [AS_VAR_SET(common_and_subprogram_var, yes)],
+                                            [AS_VAR_SET(common_and_subprogram_var, no)])],
+                         [AS_VAR_SET(common_and_subprogram_var, no)])
+        rm -rf aaa.f90 aaa.o *.mod 2>/dev/null
         AC_LANG_POP([Fortran])
        ])
 
