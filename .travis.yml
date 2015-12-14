@@ -40,7 +40,6 @@ before_install:
     - cat .git/config || true
     - git branch -av || true
     - git remote show || true
-    - git log || true
     - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then dpkg -l | grep -i rdma; fi
     - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then dpkg -l | grep -i libibverbs; fi
     - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then git clone https://github.com/ofiwg/libfabric.git ; fi
