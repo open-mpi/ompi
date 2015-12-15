@@ -136,7 +136,7 @@ int ompi_coll_libnbc_ibarrier_inter(struct ompi_communicator_t *comm, ompi_reque
     if (NBC_OK != res) { printf("Error in NBC_Sched_barrier() (%i)\n", res); return res; }
 
     /* inform remote peers that all local peers have entered the barrier */
-    for (peer = 0 ; peer < rsize ; ++peer) {
+    for (peer = 1 ; peer < rsize ; ++peer) {
       res = NBC_Sched_send (0, true, 1, MPI_BYTE, peer, schedule);
       if (NBC_OK != res) { printf("Error in NBC_Sched_send() (%i)\n", res); return res; }
     }
