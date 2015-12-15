@@ -92,7 +92,8 @@ int MPI_Alltoall(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
         }
     }
 
-    if( !OMPI_COMM_IS_INTER(comm) ){
+    if (! OMPI_COMM_IS_INTER(comm)) {
+        ompi_datatype_type_size(recvtype, &recvtype_size);
         if( (0 == recvcount) || (0 == recvtype_size) ) {
             return MPI_SUCCESS;
         }
