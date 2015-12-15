@@ -480,7 +480,7 @@ sshmem_mkey_t *mca_spml_yoda_register(void* addr,
 
         SPML_VERBOSE(5,
                      "rank %d btl %s va_base: 0x%p len: %d key %llx size %llu",
-                     oshmem_proc_local_proc->proc_name.vpid, btl_type2str(ybtl->btl_type),
+		     oshmem_proc_pe(oshmem_proc_local()), btl_type2str(ybtl->btl_type),
                      mkeys[i].va_base, mkeys[i].len, (unsigned long long)mkeys[i].u.key, (unsigned long long)size);
     }
     OBJ_DESTRUCT(&convertor);
@@ -851,7 +851,7 @@ static inline int mca_spml_yoda_put_internal(void *dst_addr,
 
         /* Preparing destination buffer */
 
-        assert( NULL != r_mkey->u.data && 0 != r_mkey->len);
+        /*assert( NULL != r_mkey->u.data && 0 != r_mkey->len);*/
 
         memcpy(&frag->rdma_segs[0].base_seg,
                 r_mkey->u.data,

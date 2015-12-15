@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013      Mellanox Technologies, Inc.
+ * Copyright (c) 2013-2015 Mellanox Technologies, Inc.
  *                         All rights reserved.
  *
  * $COPYRIGHT$
@@ -373,11 +373,8 @@ static int _shmem_init(int argc, char **argv, int requested, int *provided)
         goto error;
     }
 
-    /* identify the architectures of remote procs and setup
-     * their datatype convertors, if required
-     */
-    if (OSHMEM_SUCCESS != (ret = oshmem_proc_set_arch())) {
-        error = "oshmem_proc_set_arch failed";
+    if (OSHMEM_SUCCESS != (ret = oshmem_proc_group_init())) {
+	error = "oshmem_proc_group_init() failed";
         goto error;
     }
 
@@ -386,20 +383,6 @@ static int _shmem_init(int argc, char **argv, int requested, int *provided)
     if (OSHMEM_SUCCESS != ret) {
         error = "SPML control failed";
         goto error;
-    }
-
-    /* There is issue with call add_proc twice so
-     * we need to use btl info got from PML add_procs() before call of SPML add_procs()
-     */
-    {
-        ompi_proc_t** procs = NULL;
-        size_t nprocs = 0;
-        procs = ompi_proc_world(&nprocs);
-        while (nprocs--) {
-            oshmem_group_all->proc_array[nprocs]->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML] =
-                    procs[nprocs]->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML];
-        }
-        free(procs);
     }
 
     ret =
