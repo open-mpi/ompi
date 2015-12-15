@@ -264,7 +264,8 @@ int oshmem_shmem_preconnect_all(void)
     /* force qp creation and rkey exchange for memheap. Does not force exchange of static vars */
     if (oshmem_preconnect_all) {
         long val;
-        int nproc = 0;
+        int nproc;
+        int my_pe;
         int i;
 
         val = 0xdeadbeaf;
@@ -277,11 +278,12 @@ int oshmem_shmem_preconnect_all(void)
             SHMEM_API_ERROR("shmem_preconnect_all failed");
             return OSHMEM_ERR_OUT_OF_RESOURCE;
         }
-        nproc = _num_pes();
+
+        nproc = oshmem_num_procs();
+        my_pe = oshmem_my_proc_id();
         for (i = 0; i < nproc; i++) {
-            shmem_long_p(preconnect_value, val, i);
+            shmem_long_p(preconnect_value, val, (my_pe + i) % nproc);
         }
-        shmem_fence();
         shmem_barrier_all();
         SHMEM_API_VERBOSE(5, "Preconnected all PEs");
     }
