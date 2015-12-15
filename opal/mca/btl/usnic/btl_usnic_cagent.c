@@ -300,7 +300,10 @@ static void agent_sendto(int fd, char *buffer, ssize_t numbytes,
                 continue;
             }
 
-            ABORT("Unexpected sendto() error");
+            char *msg;
+            asprintf(&msg, "Unexpected sendto() error: errno=%d (%s)",
+                     errno, strerror(errno));
+            ABORT(msg);
             /* Will not return */
         }
 
