@@ -23,6 +23,9 @@
 
 #include "orte/mca/mca.h"
 #include "orte/mca/plm/plm.h"
+#if CRAY_WLM_DETECT
+#include "wlm_detect.h"
+#endif
 
 BEGIN_C_DECLS
 
