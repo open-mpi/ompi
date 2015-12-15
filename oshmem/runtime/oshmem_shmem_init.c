@@ -61,6 +61,7 @@
 #include "oshmem/mca/atomic/base/base.h"
 #include "oshmem/mca/memheap/base/base.h"
 #include "oshmem/mca/sshmem/base/base.h"
+#include "oshmem/info/info.h"
 #include "oshmem/proc/proc.h"
 #include "oshmem/proc/proc_group_cache.h"
 #include "oshmem/op/op.h"
@@ -306,11 +307,6 @@ static int _shmem_init(int argc, char **argv, int requested, int *provided)
     int ret = OSHMEM_SUCCESS;
     char *error = NULL;
 
-    if (OSHMEM_SUCCESS != (ret = oshmem_proc_init())) {
-        error = "oshmem_proc_init() failed";
-        goto error;
-    }
-
     /* Register the OSHMEM layer's MCA parameters */
     if (OSHMEM_SUCCESS != (ret = oshmem_shmem_register_params())) {
         error = "oshmem_info_register: oshmem_register_params failed";
@@ -322,6 +318,18 @@ static int _shmem_init(int argc, char **argv, int requested, int *provided)
     shmem_api_logger_output = opal_output_open(NULL);
     opal_output_set_verbosity(shmem_api_logger_output,
                               oshmem_shmem_api_verbose);
+
+    /* initialize info */
+    if (OSHMEM_SUCCESS != (ret = oshmem_info_init())) {
+        error = "oshmem_info_init() failed";
+        goto error;
+    }
+
+    /* initialize proc */
+    if (OSHMEM_SUCCESS != (ret = oshmem_proc_init())) {
+        error = "oshmem_proc_init() failed";
+        goto error;
+    }
 
     if (OSHMEM_SUCCESS != (ret = oshmem_group_cache_list_init())) {
         error = "oshmem_group_cache_list_init() failed";

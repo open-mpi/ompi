@@ -1,8 +1,8 @@
 /*
- * Copyright (c) 2013      Mellanox Technologies, Inc.
+ * Copyright (c) 2013-2015 Mellanox Technologies, Inc.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
  * 
  * $HEADER$
@@ -20,11 +20,24 @@
 
 #if OSHMEM_PROFILING
 #include "oshmem/include/pshmem.h"
+#pragma weak shmem_free = pshmem_free
 #pragma weak shfree = pshfree
 #include "oshmem/shmem/c/profile/defines.h"
 #endif
 
+static inline void _shfree(void* ptr);
+
+void shmem_free(void* ptr)
+{
+    _shfree(ptr);
+}
+
 void shfree(void* ptr)
+{
+    _shfree(ptr);
+}
+
+static inline void _shfree(void* ptr)
 {
     int rc;
 

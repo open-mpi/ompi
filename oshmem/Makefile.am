@@ -88,6 +88,7 @@ endif
 include op/Makefile.am
 include proc/Makefile.am
 include request/Makefile.am
+include info/Makefile.am
 include runtime/Makefile.am
 include shmem/Makefile.am
 include shmem/man/man3/Makefile.extra
