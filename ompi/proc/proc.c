@@ -39,7 +39,7 @@
 #include "ompi/runtime/ompi_module_exchange.h"
 #include "ompi/runtime/params.h"
 
-static opal_list_t  ompi_proc_list;
+opal_list_t  ompi_proc_list;
 static opal_mutex_t ompi_proc_lock;
 ompi_proc_t* ompi_proc_local_proc = NULL;
 

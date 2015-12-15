@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2015 Mellanox Technologies, Inc.
+ * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
  *
  * $COPYRIGHT$
@@ -146,6 +146,11 @@ static int _shmem_finalize(void)
 
     /* free op resources */
     if (OSHMEM_SUCCESS != (ret = oshmem_op_finalize())) {
+        return ret;
+    }
+
+    /* free proc_group resources */
+    if (OSHMEM_SUCCESS != (ret = oshmem_proc_group_finalize())) {
         return ret;
     }
 
