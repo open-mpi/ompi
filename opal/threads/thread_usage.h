@@ -91,7 +91,7 @@ static inline bool opal_set_using_threads(bool have)
 #if OMPI_ENABLE_THREAD_MULTIPLE
     opal_uses_threads = have;
 #else
-    have = true;               /* just shut up the compiler */
+    (void)have;               /* just shut up the compiler */
 #endif
     return opal_using_threads();
 }
