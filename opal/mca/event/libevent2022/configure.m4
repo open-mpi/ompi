@@ -161,6 +161,7 @@ AC_DEFUN([MCA_opal_event_libevent2022_DO_THE_CONFIG], [
                   AC_HELP_STRING([--enable-event-debug], [enable event library debug output]))
     if test "$enable_event_debug" = "yes"; then
         event_args="$event_args --enable-debug-mode"
+        CFLAGS="-DUSE_DEBUG $CFLAGS"
     fi
 
     AC_MSG_RESULT([$event_args])

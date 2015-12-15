@@ -21,6 +21,12 @@
 extern "C" {
 #endif
 
+/* It is difficult to guarantee coverage of all visible symbols
+ * And missing at least single uncovered can potentially bring to not obvious bug.
+ * Let use exported names as is
+ */
+#if 0
+
 #define _bufferevent_add_event                                opal_libevent2022__bufferevent_add_event
 #define bufferevent_add_to_rate_limit_group                   opal_libevent2022_bufferevent_add_to_rate_limit_group
 #define bufferevent_base_set                                  opal_libevent2022_bufferevent_base_set
@@ -557,6 +563,8 @@ extern "C" {
 #endif
 #ifdef WIN32
 #define win32ops                                             opal_libevent2022_win32ops
+#endif
+
 #endif
 
 #ifdef __cplusplus

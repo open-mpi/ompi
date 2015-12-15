@@ -81,7 +81,10 @@ AC_DEFUN([MCA_opal_hwloc_hwloc1111_CONFIG],[
 
         # Run the hwloc configuration - set the prefix to minimize
         # the chance that someone will use the internal symbols
-        HWLOC_SET_SYMBOL_PREFIX([opal_hwloc1111_])
+        # Note: setting to 'hwloc_' is some kind of trick to ignore
+        # --with-hwloc-symbol-prefix option and keep original hwloc symbol names.
+        # This trick allows to avoid changes in hwloc original config files.
+        HWLOC_SET_SYMBOL_PREFIX([hwloc_])
 
         # save XML or graphical options
         opal_hwloc_hwloc1111_save_cairo=$enable_cairo
