@@ -689,7 +689,7 @@ int mca_pml_ucx_start(size_t count, ompi_request_t** requests)
             if (tmp_req->req_complete) {
                 /* tmp_req is already completed */
                 PML_UCX_VERBOSE(8, "completing persistent request %p", (void*)preq);
-                mca_pml_ucx_persistent_requset_complete(preq, tmp_req);
+                mca_pml_ucx_persistent_request_complete(preq, tmp_req);
             } else {
                 /* tmp_req would be completed by callback and trigger completion
                  * of preq */
