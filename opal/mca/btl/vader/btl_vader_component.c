@@ -297,9 +297,12 @@ static int mca_btl_vader_component_close(void)
     OBJ_DESTRUCT(&mca_btl_vader_component.pending_endpoints);
     OBJ_DESTRUCT(&mca_btl_vader_component.pending_fragments);
 
-    if (NULL != mca_btl_vader_component.my_segment) {
+    if (MCA_BTL_VADER_XPMEM == mca_btl_vader_component.single_copy_mechanism &&
+        NULL != mca_btl_vader_component.my_segment) {
         munmap (mca_btl_vader_component.my_segment, mca_btl_vader_component.segment_size);
     }
+
+    mca_btl_vader_component.my_segment = NULL;
 
 #if OPAL_BTL_VADER_HAVE_KNEM
     mca_btl_vader_knem_fini ();
