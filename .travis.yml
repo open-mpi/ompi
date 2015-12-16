@@ -30,11 +30,9 @@ env:
         - CONFIGURE_ARGS="--prefix=$HOME/bogus"
         - DISTCHECK_CONFIGURE_FLAGS="$CONFIGURE_ARGS"
 
-# Install dependencies for the verbs and usnic providers.  Note that
-# the libfabric verbs provider cannot currently build on Travis, so we
-# disable it with --disable-verbs (see
-# https://github.com/ofiwg/libfabric/issues/1553 for a description of
-# the RAI_FAMILY issue).
+# Install dependencies for the verbs and usnic providers.  Open MPI is
+# not currently using the verbs provider in Libfabric, so we might as
+# well not build it.
 before_install:
     - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then git clone https://github.com/ofiwg/libfabric.git ; fi
     - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then cd libfabric && ./autogen.sh && ./configure --prefix=$HOME/bogus --enable-usnic --disable-verbs && make install && cd .. ; fi
