@@ -16,6 +16,7 @@ local_sources = \
 	coll_portals4_bcast.c \
 	coll_portals4_reduce.c \
 	coll_portals4_gather.c \
+	coll_portals4_scatter.c \
 	coll_portals4_request.h \
 	coll_portals4_request.c
 
