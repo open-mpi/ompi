@@ -78,13 +78,6 @@ mca_btl_portals4_get(struct mca_btl_base_module_t* btl_base,
     frag->endpoint = btl_peer;
     frag->hdr.tag = MCA_BTL_TAG_MAX;
 
-    if (OPAL_UNLIKELY(PTL_OK != ret)) {
-        opal_output_verbose(1, opal_btl_base_framework.framework_output,
-                            "%s:%d: PtlMDBind failed: %d",
-                            __FILE__, __LINE__, ret);
-        return OPAL_ERROR;
-    }
-
     frag->match_bits = remote_handle->key;
     frag->addr = local_address;
     frag->length = size;
