@@ -74,6 +74,9 @@ AC_DEFUN([OMPI_SETUP_JAVA_BINDINGS],[
         # header file needs this file, so we need to check for
         # it/include it in our sources when compiling on Mac).
         AC_CHECK_HEADERS([TargetConditionals.h])
+
+        # dladdr and Dl_info are required to build the full path to libmpi on OS X 10.11 aka El Capitan
+        AC_CHECK_TYPES([Dl_info], [], [], [[#include <dlfcn.h>]])
     else
         AC_MSG_RESULT([no])
         WANT_MPI_JAVA_SUPPORT=0
