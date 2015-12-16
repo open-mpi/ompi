@@ -36,6 +36,7 @@ env:
 # install dependencies for the verbs and usnic providers
 # libfbric verbs provider cannot current build without RAI_FAMILY
 # see https://github.com/ofiwg/libfabric/issues/1553
+# bla
 before_install:
     - cat .git/config || true
     - git branch -av || true
