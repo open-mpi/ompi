@@ -30,6 +30,7 @@
 #include <sys/time.h>
 #endif
 
+#include "opal/util/argv.h"
 #include "opal/util/output.h"
 #include "opal/class/opal_pointer_array.h"
 #include "opal/dss/dss.h"
