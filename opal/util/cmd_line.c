@@ -14,6 +14,7 @@
  * Copyright (c) 2012-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016      Intel, Inc. All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -146,7 +147,7 @@ static int qsort_callback(const void *a, const void *b);
 int opal_cmd_line_create(opal_cmd_line_t *cmd,
                          opal_cmd_line_init_t *table)
 {
-    int i, ret = OPAL_SUCCESS;
+    int ret = OPAL_SUCCESS;
 
     /* Check bozo case */
 
@@ -155,8 +156,17 @@ int opal_cmd_line_create(opal_cmd_line_t *cmd,
     }
     OBJ_CONSTRUCT(cmd, opal_cmd_line_t);
 
-    /* Ensure we got a table */
+    ret = opal_cmd_line_add(cmd, table);
+    return ret;
+}
 
+/* Add a table to an existing cmd line object */
+int opal_cmd_line_add(opal_cmd_line_t *cmd,
+                      opal_cmd_line_init_t *table)
+{
+    int i, ret;
+
+    /* Ensure we got a table */
     if (NULL == table) {
         return OPAL_SUCCESS;
     }
@@ -164,9 +174,7 @@ int opal_cmd_line_create(opal_cmd_line_t *cmd,
     /* Loop through the table */
 
     for (i = 0; ; ++i) {
-
         /* Is this the end? */
-
         if ('\0' == table[i].ocl_cmd_short_name &&
             NULL == table[i].ocl_cmd_single_dash_name &&
             NULL == table[i].ocl_cmd_long_name) {
@@ -174,16 +182,14 @@ int opal_cmd_line_create(opal_cmd_line_t *cmd,
         }
 
         /* Nope -- it's an entry.  Process it. */
-
         ret = make_opt(cmd, &table[i]);
         if (OPAL_SUCCESS != ret) {
             return ret;
         }
     }
 
-    return ret;
+    return OPAL_SUCCESS;
 }
-
 /*
  * Append a command line entry to the previously constructed command line
  */
@@ -965,8 +971,19 @@ static int make_opt(opal_cmd_line_t *cmd, opal_cmd_line_init_t *e)
         return OPAL_ERR_BAD_PARAM;
     }
 
-    /* Allocate and fill an option item */
+    /* see if the option already exists */
+    if (NULL != e->ocl_cmd_single_dash_name &&
+        NULL != find_option(cmd, e->ocl_cmd_single_dash_name)) {
+        opal_output(0, "Duplicate cmd line entry %s", e->ocl_cmd_single_dash_name);
+        return OPAL_ERR_BAD_PARAM;
+    }
+    if (NULL != e->ocl_cmd_long_name &&
+        NULL != find_option(cmd, e->ocl_cmd_long_name)) {
+        opal_output(0, "Duplicate cmd line entry %s", e->ocl_cmd_long_name);
+        return OPAL_ERR_BAD_PARAM;
+    }
 
+    /* Allocate and fill an option item */
     option = OBJ_NEW(cmd_line_option_t);
     if (NULL == option) {
         return OPAL_ERR_OUT_OF_RESOURCE;

@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2012      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2015      Intel, Inc. All rights reserved.
+ * Copyright (c) 2015-2016 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -267,6 +267,16 @@ BEGIN_C_DECLS
      */
     OPAL_DECLSPEC int opal_cmd_line_create(opal_cmd_line_t *cmd,
                                            opal_cmd_line_init_t *table);
+
+    /* Add a table of opal_cmd_line_init_t instances
+     * to an existing OPAL command line handle.
+     *
+     * Multiple calls to opal_cmd_line_add are permitted - each
+     * subsequent call will simply append new options to the existing
+     * handle. Note that any duplicates will return an error.
+     */
+     OPAL_DECLSPEC int opal_cmd_line_add(opal_cmd_line_t *cmd,
+                                         opal_cmd_line_init_t *table);
 
     /**
      * Create a command line option.

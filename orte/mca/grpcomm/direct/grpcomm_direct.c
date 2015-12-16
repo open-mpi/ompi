@@ -299,6 +299,8 @@ static void xcast_recv(int status, orte_process_name_t* sender,
      * the initial message, minus the headers inserted by xcast itself */
     relay = OBJ_NEW(opal_buffer_t);
     opal_dss.copy_payload(relay, buffer);
+    /* setup the relay list */
+    OBJ_CONSTRUCT(&coll, opal_list_t);
 
     /* if this is headed for the daemon command processor,
      * then we first need to check for add_local_procs
@@ -308,14 +310,8 @@ static void xcast_recv(int status, orte_process_name_t* sender,
         cnt=1;
         if (ORTE_SUCCESS == (ret = opal_dss.unpack(buffer, &command, &cnt, ORTE_DAEMON_CMD))) {
             /* if it is add_procs, then... */
-            if (ORTE_DAEMON_ADD_LOCAL_PROCS == command) {
-                OBJ_RELEASE(relay);
-                relay = OBJ_NEW(opal_buffer_t);
-                /* repack the command */
-                if (OPAL_SUCCESS != (ret = opal_dss.pack(relay, &command, 1, ORTE_DAEMON_CMD))) {
-                    ORTE_ERROR_LOG(ret);
-                    goto relay;
-                }
+            if (ORTE_DAEMON_ADD_LOCAL_PROCS == command ||
+                ORTE_DAEMON_DVM_NIDMAP_CMD == command) {
                 /* extract the byte object holding the daemonmap */
                 cnt=1;
                 if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &bo, &cnt, OPAL_BYTE_OBJECT))) {
@@ -354,11 +350,21 @@ static void xcast_recv(int status, orte_process_name_t* sender,
                     ORTE_ERROR_LOG(ret);
                     goto relay;
                 }
-                if (0 == flag) {
-                    /* copy the remainder of the payload */
-                    opal_dss.copy_payload(relay, buffer);
-                    /* no - just return */
-                    goto relay;
+
+                if (ORTE_DAEMON_ADD_LOCAL_PROCS == command) {
+                    OBJ_RELEASE(relay);
+                    relay = OBJ_NEW(opal_buffer_t);
+                    /* repack the command */
+                    if (OPAL_SUCCESS != (ret = opal_dss.pack(relay, &command, 1, ORTE_DAEMON_CMD))) {
+                        ORTE_ERROR_LOG(ret);
+                        goto relay;
+                    }
+                    if (0 == flag) {
+                        /* copy the remainder of the payload */
+                        opal_dss.copy_payload(relay, buffer);
+                        /* no - just return */
+                        goto relay;
+                    }
                 }
 
                 /* unpack the byte object */
@@ -381,8 +387,10 @@ static void xcast_recv(int status, orte_process_name_t* sender,
                     OBJ_DESTRUCT(&wireup);
                 }
                 free(bo);
-                /* copy the remainder of the payload */
-                opal_dss.copy_payload(relay, buffer);
+                if (ORTE_DAEMON_ADD_LOCAL_PROCS == command) {
+                    /* copy the remainder of the payload */
+                    opal_dss.copy_payload(relay, buffer);
+                }
             }
         } else {
             ORTE_ERROR_LOG(ret);
@@ -391,8 +399,6 @@ static void xcast_recv(int status, orte_process_name_t* sender,
     }
 
  relay:
-    /* setup the relay list */
-    OBJ_CONSTRUCT(&coll, opal_list_t);
 
     /* get the list of next recipients from the routed module */
     orte_routed.get_routing_list(&coll);
@@ -420,18 +426,14 @@ static void xcast_recv(int status, orte_process_name_t* sender,
          */
         jdata = orte_get_job_data_object(nm->name.jobid);
         if (NULL == (rec = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, nm->name.vpid))) {
-            OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_framework.framework_output,
-                                 "%s grpcomm:direct:send_relay proc %s not found - cannot relay",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 ORTE_NAME_PRINT(&nm->name)));
+            opal_output(0, "%s grpcomm:direct:send_relay proc %s not found - cannot relay",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_NAME_PRINT(&nm->name));
             OBJ_RELEASE(rly);
             continue;
         }
         if (ORTE_PROC_STATE_RUNNING < rec->state) {
-            OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_framework.framework_output,
-                                 "%s grpcomm:direct:send_relay proc %s not running - cannot relay",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 ORTE_NAME_PRINT(&nm->name)));
+            opal_output(0, "%s grpcomm:direct:send_relay proc %s not running - cannot relay",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_NAME_PRINT(&nm->name));
             OBJ_RELEASE(rly);
             continue;
         }
@@ -449,10 +451,12 @@ static void xcast_recv(int status, orte_process_name_t* sender,
     OBJ_DESTRUCT(&coll);
 
     /* now send the relay buffer to myself for processing */
-    if (ORTE_SUCCESS != (ret = orte_rml.send_buffer_nb(ORTE_PROC_MY_NAME, relay, tag,
-                                                       orte_rml_send_callback, NULL))) {
-        ORTE_ERROR_LOG(ret);
-        OBJ_RELEASE(relay);
+    if (ORTE_DAEMON_DVM_NIDMAP_CMD != command) {
+        if (ORTE_SUCCESS != (ret = orte_rml.send_buffer_nb(ORTE_PROC_MY_NAME, relay, tag,
+                                                           orte_rml_send_callback, NULL))) {
+            ORTE_ERROR_LOG(ret);
+            OBJ_RELEASE(relay);
+        }
     }
 }
 

@@ -14,7 +14,7 @@
  * Copyright (c) 2007-2009 Sun Microsystems, Inc. All rights reserved.
  * Copyright (c) 2007-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2013-2015 Intel, Inc. All rights reserved.
+ * Copyright (c) 2013-2016 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -74,6 +74,7 @@
 #include "opal/class/opal_pointer_array.h"
 
 #include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/odls/odls.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/rml/base/rml_contact.h"
 #include "orte/mca/state/state.h"
@@ -128,6 +129,31 @@ static opal_cmd_line_init_t cmd_line_init[] = {
     { NULL, '\0', "allow-run-as-root", "allow-run-as-root", 0,
       &myglobals.run_as_root, OPAL_CMD_LINE_TYPE_BOOL,
       "Allow execution as root (STRONGLY DISCOURAGED)" },
+
+    /* Specify the launch agent to be used */
+    { "orte_launch_agent", '\0', "launch-agent", "launch-agent", 1,
+      NULL, OPAL_CMD_LINE_TYPE_STRING,
+      "Command used to start processes on remote nodes (default: orted)" },
+
+    /* maximum size of VM - typically used to subdivide an allocation */
+    { "orte_max_vm_size", '\0', "max-vm-size", "max-vm-size", 1,
+      NULL, OPAL_CMD_LINE_TYPE_INT,
+      "Maximum size of VM" },
+
+    /* Set a hostfile */
+    { NULL, '\0', "hostfile", "hostfile", 1,
+      NULL, OPAL_CMD_LINE_TYPE_STRING,
+      "Provide a hostfile" },
+    { NULL, '\0', "machinefile", "machinefile", 1,
+      NULL, OPAL_CMD_LINE_TYPE_STRING,
+      "Provide a hostfile" },
+    { "orte_default_hostfile", '\0', "default-hostfile", "default-hostfile", 1,
+      NULL, OPAL_CMD_LINE_TYPE_STRING,
+      "Provide a default hostfile" },
+
+    { NULL, 'H', "host", "host", 1,
+      NULL, OPAL_CMD_LINE_TYPE_STRING,
+      "List of hosts to invoke processes on" },
 
     /* End of list */
     { NULL, '\0', NULL, NULL, 0,
@@ -454,24 +480,48 @@ static void send_callback(int status, orte_process_name_t *peer,
     opal_pointer_array_set_item(orte_job_data, ORTE_LOCAL_JOBID(jdata->jobid), NULL);
     OBJ_RELEASE(jdata);
 }
+
 static void notify_requestor(int sd, short args, void *cbdata)
 {
     orte_state_caddy_t *caddy = (orte_state_caddy_t*)cbdata;
     orte_job_t *jdata = caddy->jdata;
     orte_proc_t *pptr;
-    int ret;
+    int ret, id, *idptr;
     opal_buffer_t *reply;
 
     /* notify the requestor */
     reply = OBJ_NEW(opal_buffer_t);
+
     /* see if there was any problem */
     if (orte_get_attribute(&jdata->attributes, ORTE_JOB_ABORTED_PROC, (void**)&pptr, OPAL_PTR) && NULL != pptr) {
         ret = pptr->exit_code;
+    /* or whether we got cancelled by the user */
+    } else if (orte_get_attribute(&jdata->attributes, ORTE_JOB_CANCELLED, NULL, OPAL_BOOL)) {
+        ret = ORTE_ERR_JOB_CANCELLED;
     } else {
         ret = 0;
     }
+    /* return the completion status */
     opal_dss.pack(reply, &ret, 1, OPAL_INT);
-    orte_rml.send_buffer_nb(&jdata->originator, reply, ORTE_RML_TAG_TOOL, send_callback, jdata);
+
+    /* pack the jobid to be returned */
+    opal_dss.pack(reply, &jdata->jobid, 1, ORTE_JOBID);
+
+    /* return the tracker ID */
+    idptr = &id;
+    if (orte_get_attribute(&jdata->attributes, ORTE_JOB_ROOM_NUM, (void**)&idptr, OPAL_INT)) {
+        /* pack the sender's index to the tracking object */
+        opal_dss.pack(reply, idptr, 1, OPAL_INT);
+    }
+
+    /* if there was a problem, we need to send the requestor more info about what happened */
+    if (0 < ret) {
+        opal_dss.pack(reply, &jdata->state, 1, ORTE_JOB_STATE_T);
+        opal_dss.pack(reply, &pptr, 1, ORTE_PROC);
+        opal_dss.pack(reply, &pptr->node, 1, ORTE_NODE);
+    }
+
+    orte_rml.send_buffer_nb(&jdata->originator, reply, ORTE_RML_TAG_NOTIFY_COMPLETE, send_callback, jdata);
 
     /* we cannot cleanup the job object as we might
      * hit an error during transmission, so clean it

@@ -285,8 +285,9 @@ static int hostfile_parse_line(int token, opal_list_t* updates,
             free(node_name);
         }
         OPAL_OUTPUT_VERBOSE((1, orte_ras_base_framework.framework_output,
-                             "%s hostfile: node %s slots %d",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), node->name, node->slots));
+                             "%s hostfile: node %s slots %d nodes-given %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), node->name, node->slots,
+                             ORTE_FLAG_TEST(node, ORTE_NODE_FLAG_SLOTS_GIVEN) ? "TRUE" : "FALSE"));
         /* mark the slots as "given" since we take them as being the
          * number specified via the rankfile
          */

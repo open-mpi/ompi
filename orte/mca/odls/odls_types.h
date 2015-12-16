@@ -12,7 +12,7 @@
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -48,7 +48,6 @@ typedef uint8_t orte_daemon_cmd_flag_t;
 #define ORTE_DAEMON_HEARTBEAT_CMD           (orte_daemon_cmd_flag_t) 6
 #define ORTE_DAEMON_EXIT_CMD                (orte_daemon_cmd_flag_t) 7
 #define ORTE_DAEMON_PROCESS_AND_RELAY_CMD   (orte_daemon_cmd_flag_t) 9
-#define ORTE_DAEMON_MESSAGE_LOCAL_PROCS     (orte_daemon_cmd_flag_t) 10
 #define ORTE_DAEMON_NULL_CMD                (orte_daemon_cmd_flag_t) 11
 
 /* commands for use by tools */
@@ -59,6 +58,8 @@ typedef uint8_t orte_daemon_cmd_flag_t;
 #define ORTE_DAEMON_TERMINATE_JOB_CMD       (orte_daemon_cmd_flag_t) 18
 #define ORTE_DAEMON_HALT_VM_CMD             (orte_daemon_cmd_flag_t) 19
 #define ORTE_DAEMON_HALT_DVM_CMD            (orte_daemon_cmd_flag_t) 20
+#define ORTE_DAEMON_REPORT_JOB_COMPLETE     (orte_daemon_cmd_flag_t) 21
+
 
 /* request proc resource usage */
 #define ORTE_DAEMON_TOP_CMD                 (orte_daemon_cmd_flag_t) 22
@@ -74,9 +75,10 @@ typedef uint8_t orte_daemon_cmd_flag_t;
 /* process called "errmgr.abort_procs" */
 #define ORTE_DAEMON_ABORT_PROCS_CALLED      (orte_daemon_cmd_flag_t) 28
 
-/* new daemon collective id */
-#define ORTE_DAEMON_NEW_COLL_ID             (orte_daemon_cmd_flag_t) 29
-
+/* nidmap for the DVM */
+#define ORTE_DAEMON_DVM_NIDMAP_CMD          (orte_daemon_cmd_flag_t) 29
+/* add procs for the DVM */
+#define ORTE_DAEMON_DVM_ADD_PROCS           (orte_daemon_cmd_flag_t) 30
 
 /*
  * Struct written up the pipe from the child to the parent.

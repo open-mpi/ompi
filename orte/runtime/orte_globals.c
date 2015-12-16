@@ -212,6 +212,11 @@ bool orte_in_parallel_debugger = false;
 
 char *orte_daemon_cores = NULL;
 
+/**
+ * Global struct for catching orte command line options.
+ */
+orte_cmd_line_t orte_cmd_line = {0};
+
 int orte_dt_init(void)
 {
     int rc;

@@ -757,10 +757,10 @@ void orte_state_base_check_all_complete(int fd, short args, void *cbdata)
                  * is maintained!
                  */
                 if (1 < j) {
-		    if (ORTE_FLAG_TEST(jdata, ORTE_JOB_FLAG_DEBUGGER_DAEMON)) {
-			/* this was a debugger daemon. notify that a debugger has detached */
-			ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_DEBUGGER_DETACH);
-		    }
+                    if (ORTE_FLAG_TEST(jdata, ORTE_JOB_FLAG_DEBUGGER_DAEMON)) {
+                        /* this was a debugger daemon. notify that a debugger has detached */
+                        ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_DEBUGGER_DETACH);
+                    }
                     opal_pointer_array_set_item(orte_job_data, j, NULL);  /* ensure the array has a NULL */
                     OBJ_RELEASE(jdata);
                 }
