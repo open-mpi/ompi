@@ -124,6 +124,7 @@ mca_coll_base_alltoall_intra_basic_inplace(const void *rbuf, int rcount,
         OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
                      "%s:%4d\tError occurred %d, rank %2d", __FILE__, line, err,
                      rank));
+        (void)line;  // silence compiler warning
         ompi_coll_base_free_reqs(base_module->base_data->mcct_reqs, 2);
     }
 
@@ -185,6 +186,7 @@ int ompi_coll_base_alltoall_intra_pairwise(const void *sbuf, int scount,
     OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
                  "%s:%4d\tError occurred %d, rank %2d", __FILE__, line,
                  err, rank));
+    (void)line;  // silence compiler warning
     return err;
 }
 
@@ -307,6 +309,7 @@ int ompi_coll_base_alltoall_intra_bruck(const void *sbuf, int scount,
     OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
                  "%s:%4d\tError occurred %d, rank %2d", __FILE__, line, err,
                  rank));
+    (void)line;  // silence compiler warning
     if (tmpbuf != NULL) free(tmpbuf_free);
     if (displs != NULL) free(displs);
     if (blen != NULL) free(blen);
@@ -468,6 +471,7 @@ int ompi_coll_base_alltoall_intra_linear_sync(const void *sbuf, int scount,
     OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
                  "%s:%4d\tError occurred %d, rank %2d", __FILE__, line, error,
                  rank));
+    (void)line;  // silence compiler warning
     ompi_coll_base_free_reqs(reqs, 2 * total_reqs);
     return error;
 }
@@ -528,6 +532,7 @@ int ompi_coll_base_alltoall_intra_two_procs(const void *sbuf, int scount,
     OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
                  "%s:%4d\tError occurred %d, rank %2d", __FILE__, line, err,
                  rank));
+    (void)line;  // silence compiler warning
     return err;
 }
 
@@ -650,6 +655,7 @@ int ompi_coll_base_alltoall_intra_basic_linear(const void *sbuf, int scount,
     if( MPI_SUCCESS != err ) {
         OPAL_OUTPUT( (ompi_coll_base_framework.framework_output,"%s:%4d\tError occurred %d, rank %2d",
                       __FILE__, line, err, rank) );
+        (void)line;  // silence compiler warning
     }
     /* Free the reqs in all cases as they are persistent requests */
     ompi_coll_base_free_reqs(req, nreqs);

@@ -180,8 +180,8 @@ int ompi_osc_rdma_post_atomic (ompi_group_t *group, int assert, ompi_win_t *win)
     int my_rank = ompi_comm_rank (module->comm);
     ompi_osc_rdma_state_t *state = module->state;
     volatile bool atomic_complete;
-    ompi_osc_rdma_frag_t *frag;
-    osc_rdma_counter_t *temp;
+    ompi_osc_rdma_frag_t *frag = NULL;
+    osc_rdma_counter_t *temp = NULL;
     int ret;
 
     OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "post: %p, %d, %s", (void*) group, assert, win->w_name);

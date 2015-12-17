@@ -607,6 +607,7 @@ ompi_coll_base_reduce_scatter_intra_ring( const void *sbuf, void *rbuf, const in
  error_hndl:
     OPAL_OUTPUT((ompi_coll_base_framework.framework_output, "%s:%4d\tRank %d Error occurred %d\n",
                  __FILE__, line, rank, ret));
+    (void)line;  // silence compiler warning
     if (NULL != displs) free(displs);
     if (NULL != accumbuf_free) free(accumbuf_free);
     if (NULL != inbuf_free[0]) free(inbuf_free[0]);
