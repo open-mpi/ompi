@@ -1,0 +1,35 @@
+.TH "pmix_commit" "3" "2015\-10\-27" "PMIx Programmer\[aq]s Manual" "\@VERSION\@"
+.SH NAME
+.PP
+PMIx_Commit \- Push all previously \f[I]PMIx\f[]Put_ values to the local
+PMIx server.
+.SH SYNOPSIS
+.IP
+.nf
+\f[C]
+#include\ <pmix.h>
+
+pmix_status_t\ PMIx_Commit(void);
+\f[]
+.fi
+.SH ARGUMENTS
+.PP
+\f[I]none\f[]
+.SH DESCRIPTION
+.PP
+This is an asynchronous operation \- the library will immediately return
+to the caller while the data is transmitted to the local server in the
+background
+.SH RETURN VALUE
+.PP
+Returns PMIX_SUCCESS on success.
+On error, a negative value corresponding to a PMIx errno is returned.
+.SH ERRORS
+.PP
+PMIx errno values are defined in \f[C]pmix_common.h\f[].
+.SH NOTES
+.SH SEE ALSO
+.PP
+\f[C]PMIx_Put\f[](3)
+.SH AUTHORS
+PMIx.
