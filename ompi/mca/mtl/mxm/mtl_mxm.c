@@ -220,8 +220,8 @@ static int ompi_mtl_mxm_recv_ep_address(ompi_proc_t *source_proc, void **address
 {
     char *modex_component_name = mca_base_component_to_string(&mca_mtl_mxm_component.super.mtl_version);
     char *modex_name = malloc(strlen(modex_component_name) + 5);
-    unsigned char *modex_buf_ptr;
-    size_t modex_cur_size;
+    uint8_t *modex_buf_ptr;
+    int32_t modex_cur_size;
     size_t modex_buf_size;
     size_t *address_len_buf_ptr;
     int modex_name_id = 0;
@@ -233,7 +233,7 @@ static int ompi_mtl_mxm_recv_ep_address(ompi_proc_t *source_proc, void **address
     /* Receive address length */
     sprintf(modex_name, "%s-len", modex_component_name);
     OPAL_MODEX_RECV_STRING(rc, modex_name, &source_proc->super.proc_name,
-                           (char**)&address_len_buf_ptr,
+                           (uint8_t **)&address_len_buf_ptr,
                            &modex_cur_size);
     if (OMPI_SUCCESS != rc) {
         MXM_ERROR("Failed to receive ep address length");
@@ -254,7 +254,7 @@ static int ompi_mtl_mxm_recv_ep_address(ompi_proc_t *source_proc, void **address
     while (modex_buf_size < *address_len_p) {
         sprintf(modex_name, "%s-%d", modex_component_name, modex_name_id);
         OPAL_MODEX_RECV_STRING(rc, modex_name, &source_proc->super.proc_name,
-                               (char**)&modex_buf_ptr,
+                               &modex_buf_ptr,
                                &modex_cur_size);
         if (OMPI_SUCCESS != rc) {
             MXM_ERROR("Open MPI couldn't distribute EP connection details");
@@ -598,7 +598,7 @@ int ompi_mtl_mxm_del_procs(struct mca_mtl_base_module_t *mtl, size_t nprocs,
     size_t i;
 
 #if MXM_API >= MXM_VERSION(3,1)
-    if (ompi_mtl_mxm.bulk_disconnect && nprocs == ompi_proc_world_size ()) {
+    if (ompi_mtl_mxm.bulk_disconnect && ((int)nprocs) == ompi_proc_world_size ()) {
         mxm_ep_powerdown(ompi_mtl_mxm.ep);
     }
 #endif

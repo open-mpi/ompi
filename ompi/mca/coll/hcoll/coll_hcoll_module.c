@@ -157,7 +157,7 @@ static int mca_coll_hcoll_save_coll_handlers(mca_coll_hcoll_module_t *hcoll_modu
 /*
 ** Communicator free callback
 */
-int hcoll_comm_attr_del_fn(MPI_Comm comm, int keyval, void *attr_val, void *extra)
+static int hcoll_comm_attr_del_fn(MPI_Comm comm, int keyval, void *attr_val, void *extra)
 {
 
     mca_coll_hcoll_module_t *hcoll_module;
