@@ -236,7 +236,7 @@ ucp_ep_h mca_pml_ucx_add_proc(ompi_communicator_t *comm, int dst)
     free(address);
     if (UCS_OK != status) {
         PML_UCX_ERROR("Failed to connect to proc: %d, %s", proc_peer->super.proc_name.vpid,
-                                                           ucx_status_string(status));
+                                                           ucs_status_string(status));
         return NULL;
     }
 
@@ -278,7 +278,7 @@ int mca_pml_ucx_add_procs(struct ompi_proc_t **procs, size_t nprocs)
 
         if (UCS_OK != status) {
             PML_UCX_ERROR("Failed to connect to proc: %d, %s", procs[i]->super.proc_name.vpid,
-                                                               ucx_status_string(status));
+                                                               ucs_status_string(status));
             return OMPI_ERROR;
         }
 
