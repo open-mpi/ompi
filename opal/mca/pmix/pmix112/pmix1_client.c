@@ -36,41 +36,49 @@ static pmix_proc_t my_proc;
 static char *dbgvalue=NULL;
 static int errhdler_ref = 0;
 
+static void release_cbfunc(void *cbdata)
+{
+    pmix1_opalcaddy_t *cd = (pmix1_opalcaddy_t*)cbdata;
+    OBJ_RELEASE(cd);
+}
 static void myerr(pmix_status_t status,
                   pmix_proc_t procs[], size_t nprocs,
                   pmix_info_t info[], size_t ninfo)
 {
     int rc;
-    opal_list_t plist, ilist;
     opal_namelist_t *nm;
     opal_value_t *iptr;
     size_t n;
+    pmix1_opalcaddy_t *cd;
 
     /* convert the incoming status */
     rc = pmix1_convert_rc(status);
 
+    /* setup the caddy */
+    cd = OBJ_NEW(pmix1_opalcaddy_t);
+
     /* convert the array of procs */
-    OBJ_CONSTRUCT(&plist, opal_list_t);
     for (n=0; n < nprocs; n++) {
         nm = OBJ_NEW(opal_namelist_t);
-        nm->name.jobid = strtoul(procs[n].nspace, NULL, 10);
+        if (OPAL_SUCCESS != (rc = opal_convert_string_to_jobid(&nm->name.jobid, procs[n].nspace))) {
+            OPAL_ERROR_LOG(rc);
+            OBJ_RELEASE(cd);
+            return;
+        }
         nm->name.vpid = procs[n].rank;
-        opal_list_append(&plist, &nm->super);
+        opal_list_append(&cd->procs, &nm->super);
     }
 
     /* convert the array of info */
-    OBJ_CONSTRUCT(&ilist, opal_list_t);
     for (n=0; n < ninfo; n++) {
         iptr = OBJ_NEW(opal_value_t);
         iptr->key = strdup(info[n].key);
         pmix1_value_unload(iptr, &info[n].value);
-        opal_list_append(&plist, &iptr->super);
+        opal_list_append(&cd->info, &iptr->super);
     }
 
     /* call the base errhandler */
-    opal_pmix_base_errhandler(rc, &plist, &ilist);
-    OPAL_LIST_DESTRUCT(&plist);
-    OPAL_LIST_DESTRUCT(&ilist);
+    opal_pmix_base_errhandler(rc, &cd->procs, &cd->info, release_cbfunc, cd);
 }
 
 static void errreg_cbfunc (pmix_status_t status,
