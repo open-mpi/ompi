@@ -24,6 +24,7 @@
 #endif
 
 #include "opal/hash_string.h"
+#include "opal/util/argv.h"
 #include "opal/util/proc.h"
 
 #include "opal/mca/pmix/base/base.h"
