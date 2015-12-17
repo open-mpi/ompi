@@ -523,7 +523,9 @@ hwloc_topology_dup(hwloc_topology_t *newp,
     return -1;
   }
 
-  hwloc_topology_init(&new);
+  if (0 != hwloc_topology_init(&new)) {
+    return -1;
+  }
 
   new->flags = old->flags;
   memcpy(new->ignored_types, old->ignored_types, sizeof(old->ignored_types));
@@ -3128,6 +3130,7 @@ hwloc__check_children(struct hwloc_obj *parent)
       assert(prev_firstchild < firstchild);
       prev_firstchild = firstchild;
     }
+    (void)prev_firstchild;  // silence compiler warning
   }
 
   /* checks for all children */

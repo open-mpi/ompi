@@ -40,8 +40,10 @@ AC_DEFUN([MCA_orte_plm_slurm_CONFIG],[
 
     # check to see if this is a Cray nativized slurm env.
 
+    slurm_cray_env=0
     ORTE_CHECK_ALPS([plm_slurm_cray],
-                    [AC_DEFINE_UNQUOTED([SLURM_CRAY_ENV],[1],
-                    [defined to 1 if slurm cray env, 0 otherwise])])
+                    [slurm_cray_env=1])
 
+    AC_DEFINE_UNQUOTED([SLURM_CRAY_ENV],[$slurm_cray_env],
+                       [defined to 1 if slurm cray env, 0 otherwise])
 ])dnl
