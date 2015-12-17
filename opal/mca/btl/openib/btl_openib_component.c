@@ -1630,7 +1630,8 @@ static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
     }
 
     device->mem_reg_active = 0;
-    device->mem_reg_max    = calculate_max_reg(ibv_get_device_name(ib_dev));
+    device->mem_reg_max_total = calculate_max_reg(ibv_get_device_name(ib_dev));
+    device->mem_reg_max = device->mem_reg_max_total;
     if(( 0 == device->mem_reg_max) && mca_btl_openib_component.abort_not_enough_reg_mem) {
         return OPAL_ERROR;
     }
