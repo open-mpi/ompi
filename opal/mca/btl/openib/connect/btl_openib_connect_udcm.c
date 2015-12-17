@@ -1355,7 +1355,7 @@ static int udcm_rc_qp_create_one(udcm_module_t *m, mca_btl_base_endpoint_t* lcl_
     init_attr.max_atomic_arg = sizeof (int64_t);
 
 #if HAVE_DECL_IBV_EXP_ATOMIC_HCA_REPLY_BE
-    if (IBV_EXP_ATOMIC_HCA_REPLY_BE == m->btl->device->ib_dev_attr.atomic_cap) {
+    if (IBV_EXP_ATOMIC_HCA_REPLY_BE == m->btl->device->ib_exp_dev_attr.exp_atomic_cap) {
         init_attr.exp_create_flags = IBV_EXP_QP_CREATE_ATOMIC_BE_REPLY;
         init_attr.comp_mask |= IBV_EXP_QP_INIT_ATTR_CREATE_FLAGS;
     }
