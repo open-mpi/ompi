@@ -45,6 +45,14 @@
 #endif
 #include PMIX_EVENT_HEADER
 
+#if PMIX_CC_USE_PRAGMA_IDENT
+#pragma ident PMIX_VERSION
+#elif PMIX_CC_USE_IDENT
+#ident PMIX_VERSION
+#endif
+static const char pmix_version_string[] = PMIX_VERSION;
+
+
 #include "src/class/pmix_list.h"
 #include "src/buffer_ops/buffer_ops.h"
 #include "src/util/argv.h"

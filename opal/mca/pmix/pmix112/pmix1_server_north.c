@@ -80,11 +80,11 @@ static pmix_status_t server_disconnect_fn(const pmix_proc_t procs[], size_t npro
 static pmix_status_t server_register_events(const pmix_info_t info[], size_t ninfo,
                                             pmix_op_cbfunc_t cbfunc, void *cbdata);
 static pmix_status_t server_deregister_events(const pmix_info_t info[], size_t ninfo,
-                                           pmix_op_cbfunc_t cbfunc, void *cbdata);
+                                              pmix_op_cbfunc_t cbfunc, void *cbdata);
 static pmix_status_t server_listener_fn(int listening_sd,
                                         pmix_connection_cbfunc_t cbfunc);
 
-pmix_server_module_t mymodule = {
+pmix_server_module_t pmix112_module = {
     server_client_connected_fn,
     server_client_finalized_fn,
     server_abort_fn,
@@ -101,7 +101,7 @@ pmix_server_module_t mymodule = {
     server_listener_fn
 };
 
-opal_pmix_server_module_t *host_module = NULL;
+opal_pmix_server_module_t *pmix112_host_module = NULL;
 
 
 static void opal_opcbfunc(int status, void *cbdata)
@@ -119,7 +119,7 @@ static pmix_status_t server_client_connected_fn(const pmix_proc_t *p, void *serv
     int rc;
     opal_process_name_t proc;
 
-    if (NULL == host_module || NULL == host_module->client_connected) {
+    if (NULL == pmix112_host_module || NULL == pmix112_host_module->client_connected) {
         return PMIX_SUCCESS;
     }
 
@@ -130,7 +130,7 @@ static pmix_status_t server_client_connected_fn(const pmix_proc_t *p, void *serv
     proc.vpid = p->rank;
 
     /* pass it up */
-    rc = host_module->client_connected(&proc, server_object);
+    rc = pmix112_host_module->client_connected(&proc, server_object);
     return pmix1_convert_opalrc(rc);
 }
 
@@ -141,7 +141,7 @@ static pmix_status_t server_client_finalized_fn(const pmix_proc_t *p, void* serv
     pmix1_opalcaddy_t *opalcaddy;
     opal_process_name_t proc;
 
-    if (NULL == host_module || NULL == host_module->client_finalized) {
+    if (NULL == pmix112_host_module || NULL == pmix112_host_module->client_finalized) {
         return PMIX_SUCCESS;
     }
 
@@ -157,7 +157,7 @@ static pmix_status_t server_client_finalized_fn(const pmix_proc_t *p, void* serv
     opalcaddy->cbdata = cbdata;
 
     /* pass it up */
-    rc = host_module->client_finalized(&proc, server_object, opal_opcbfunc, opalcaddy);
+    rc = pmix112_host_module->client_finalized(&proc, server_object, opal_opcbfunc, opalcaddy);
     if (OPAL_SUCCESS != rc) {
         OBJ_RELEASE(opalcaddy);
     }
@@ -175,7 +175,7 @@ static pmix_status_t server_abort_fn(const pmix_proc_t *p, void *server_object,
     int rc;
     pmix1_opalcaddy_t *opalcaddy;
 
-    if (NULL == host_module || NULL == host_module->abort) {
+    if (NULL == pmix112_host_module || NULL == pmix112_host_module->abort) {
         return PMIX_ERR_NOT_SUPPORTED;
     }
 
@@ -206,7 +206,7 @@ static pmix_status_t server_abort_fn(const pmix_proc_t *p, void *server_object,
     }
 
     /* pass it up */
-    rc = host_module->abort(&proc, server_object, status, msg,
+    rc = pmix112_host_module->abort(&proc, server_object, status, msg,
                             &opalcaddy->procs, opal_opcbfunc, opalcaddy);
     if (OPAL_SUCCESS != rc) {
         OBJ_RELEASE(opalcaddy);
@@ -252,7 +252,7 @@ static pmix_status_t server_fencenb_fn(const pmix_proc_t procs[], size_t nprocs,
     opal_value_t *iptr;
     int rc;
 
-    if (NULL == host_module || NULL == host_module->fence_nb) {
+    if (NULL == pmix112_host_module || NULL == pmix112_host_module->fence_nb) {
         return PMIX_ERR_NOT_SUPPORTED;
     }
 
@@ -288,7 +288,7 @@ static pmix_status_t server_fencenb_fn(const pmix_proc_t procs[], size_t nprocs,
     }
 
     /* pass it up */
-    rc = host_module->fence_nb(&opalcaddy->procs, &opalcaddy->info,
+    rc = pmix112_host_module->fence_nb(&opalcaddy->procs, &opalcaddy->info,
                                data, ndata, opmdx_response, opalcaddy);
     if (OPAL_SUCCESS != rc) {
         OBJ_RELEASE(opalcaddy);
@@ -306,7 +306,7 @@ static pmix_status_t server_dmodex_req_fn(const pmix_proc_t *p,
     opal_value_t *iptr;
     size_t n;
 
-    if (NULL == host_module || NULL == host_module->direct_modex) {
+    if (NULL == pmix112_host_module || NULL == pmix112_host_module->direct_modex) {
         return PMIX_ERR_NOT_SUPPORTED;
     }
 
@@ -337,7 +337,7 @@ static pmix_status_t server_dmodex_req_fn(const pmix_proc_t *p,
     }
 
     /* pass it up */
-    rc = host_module->direct_modex(&proc, &opalcaddy->info, opmdx_response, opalcaddy);
+    rc = pmix112_host_module->direct_modex(&proc, &opalcaddy->info, opmdx_response, opalcaddy);
     if (OPAL_SUCCESS != rc && OPAL_ERR_IN_PROCESS != rc) {
         OBJ_RELEASE(opalcaddy);
     }
@@ -357,7 +357,7 @@ static pmix_status_t server_publish_fn(const pmix_proc_t *p,
     opal_process_name_t proc;
     opal_value_t *oinfo;
 
-    if (NULL == host_module || NULL == host_module->publish) {
+    if (NULL == pmix112_host_module || NULL == pmix112_host_module->publish) {
         return PMIX_ERR_NOT_SUPPORTED;
     }
 
@@ -388,7 +388,7 @@ static pmix_status_t server_publish_fn(const pmix_proc_t *p,
     }
 
     /* pass it up */
-    rc = host_module->publish(&proc, &opalcaddy->info, opal_opcbfunc, opalcaddy);
+    rc = pmix112_host_module->publish(&proc, &opalcaddy->info, opal_opcbfunc, opalcaddy);
     if (OPAL_SUCCESS != rc) {
         OBJ_RELEASE(opalcaddy);
     }
@@ -436,7 +436,7 @@ static pmix_status_t server_lookup_fn(const pmix_proc_t *p, char **keys,
     opal_value_t *iptr;
     size_t n;
 
-    if (NULL == host_module || NULL == host_module->lookup) {
+    if (NULL == pmix112_host_module || NULL == pmix112_host_module->lookup) {
         return PMIX_ERR_NOT_SUPPORTED;
     }
 
@@ -467,7 +467,7 @@ static pmix_status_t server_lookup_fn(const pmix_proc_t *p, char **keys,
     }
 
     /* pass it up */
-    rc = host_module->lookup(&proc, keys, &opalcaddy->info, opal_lkupcbfunc, opalcaddy);
+    rc = pmix112_host_module->lookup(&proc, keys, &opalcaddy->info, opal_lkupcbfunc, opalcaddy);
     if (OPAL_SUCCESS != rc) {
         OBJ_RELEASE(opalcaddy);
     }
@@ -486,7 +486,7 @@ static pmix_status_t server_unpublish_fn(const pmix_proc_t *p, char **keys,
     opal_value_t *iptr;
     size_t n;
 
-    if (NULL == host_module || NULL == host_module->unpublish) {
+    if (NULL == pmix112_host_module || NULL == pmix112_host_module->unpublish) {
         return PMIX_SUCCESS;
     }
 
@@ -517,7 +517,7 @@ static pmix_status_t server_unpublish_fn(const pmix_proc_t *p, char **keys,
     }
 
     /* pass it up */
-    rc = host_module->unpublish(&proc, keys, &opalcaddy->info, opal_opcbfunc, opalcaddy);
+    rc = pmix112_host_module->unpublish(&proc, keys, &opalcaddy->info, opal_opcbfunc, opalcaddy);
     if (OPAL_SUCCESS != rc) {
         OBJ_RELEASE(opalcaddy);
     }
@@ -552,7 +552,7 @@ static pmix_status_t server_spawn_fn(const pmix_proc_t *p,
     size_t k, n;
     int rc;
 
-    if (NULL == host_module || NULL == host_module->spawn) {
+    if (NULL == pmix112_host_module || NULL == pmix112_host_module->spawn) {
         return PMIX_ERR_NOT_SUPPORTED;
     }
 
@@ -609,7 +609,7 @@ static pmix_status_t server_spawn_fn(const pmix_proc_t *p,
     }
 
     /* pass it up */
-    rc = host_module->spawn(&proc, &opalcaddy->info, &opalcaddy->apps, opal_spncbfunc, opalcaddy);
+    rc = pmix112_host_module->spawn(&proc, &opalcaddy->info, &opalcaddy->apps, opal_spncbfunc, opalcaddy);
     if (OPAL_SUCCESS != rc) {
         OPAL_ERROR_LOG(rc);
         OBJ_RELEASE(opalcaddy);
@@ -629,7 +629,7 @@ static pmix_status_t server_connect_fn(const pmix_proc_t procs[], size_t nprocs,
     size_t n;
     opal_value_t *oinfo;
 
-    if (NULL == host_module || NULL == host_module->connect) {
+    if (NULL == pmix112_host_module || NULL == pmix112_host_module->connect) {
         return PMIX_ERR_NOT_SUPPORTED;
     }
 
@@ -665,7 +665,7 @@ static pmix_status_t server_connect_fn(const pmix_proc_t procs[], size_t nprocs,
     }
 
     /* pass it up */
-    rc = host_module->connect(&opalcaddy->procs, &opalcaddy->info, opal_opcbfunc, opalcaddy);
+    rc = pmix112_host_module->connect(&opalcaddy->procs, &opalcaddy->info, opal_opcbfunc, opalcaddy);
     if (OPAL_SUCCESS != rc) {
         OBJ_RELEASE(opalcaddy);
     }
@@ -684,7 +684,7 @@ static pmix_status_t server_disconnect_fn(const pmix_proc_t procs[], size_t npro
     size_t n;
     opal_value_t *oinfo;
 
-    if (NULL == host_module || NULL == host_module->disconnect) {
+    if (NULL == pmix112_host_module || NULL == pmix112_host_module->disconnect) {
         return PMIX_ERR_NOT_SUPPORTED;
     }
 
@@ -720,7 +720,7 @@ static pmix_status_t server_disconnect_fn(const pmix_proc_t procs[], size_t npro
     }
 
     /* pass it up */
-    rc = host_module->disconnect(&opalcaddy->procs, &opalcaddy->info, opal_opcbfunc, opalcaddy);
+    rc = pmix112_host_module->disconnect(&opalcaddy->procs, &opalcaddy->info, opal_opcbfunc, opalcaddy);
     if (OPAL_SUCCESS != rc) {
         OBJ_RELEASE(opalcaddy);
     }
@@ -753,7 +753,7 @@ static pmix_status_t server_register_events(const pmix_info_t info[], size_t nin
     }
 
     /* pass it up */
-    rc = host_module->register_events(&opalcaddy->info, opal_opcbfunc, opalcaddy);
+    rc = pmix112_host_module->register_events(&opalcaddy->info, opal_opcbfunc, opalcaddy);
     if (OPAL_SUCCESS != rc) {
         OBJ_RELEASE(opalcaddy);
     }
@@ -771,10 +771,10 @@ static pmix_status_t server_listener_fn(int listening_sd,
 {
     int rc;
 
-    if (NULL == host_module || NULL == host_module->listener) {
+    if (NULL == pmix112_host_module || NULL == pmix112_host_module->listener) {
         return PMIX_ERR_NOT_SUPPORTED;
     }
 
-    rc = host_module->listener(listening_sd, cbfunc);
+    rc = pmix112_host_module->listener(listening_sd, cbfunc);
     return pmix1_convert_opalrc(rc);
 }

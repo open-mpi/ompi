@@ -280,10 +280,6 @@ extern int opal_pmix_base_exchange(opal_value_t *info,
     } while(0);
 
 
-/* callback handler for errors */
-typedef void (*opal_pmix_errhandler_fn_t)(int error);
-
-
 /************************************************************
  *                       CLIENT APIs                        *
  ************************************************************/
@@ -690,17 +686,6 @@ typedef int (*opal_pmix_base_module_server_dmodex_request_fn_t)(const opal_proce
  * The info array contains any further info the RM can and/or chooses
  * to provide.
  *
- * If the payload and size parameters are non-NULL, then the function
- * will assume that the caller intends to send the message itself. In
- * this situation, the convenience library will simply pack the message
- * for transmission, and return the payload and size in the provided
- * variables (external comm should have been indicated during server_init).
- * The caller will be responsible for thread protection.
- *
- * Otherwise, the convenience library will transmit the message to
- * the identified target processes, and the function call will be
- * internally thread protected.
- *
  * The callback function will be called upon completion of the
  * notify_error function's actions. Note that any messages will
  * have been queued, but may not have been transmitted by this
@@ -720,11 +705,92 @@ typedef int (*opal_pmix_base_module_server_notify_error_fn_t)(int status,
 /* get the version of the embedded library */
 typedef const char* (*opal_pmix_base_module_get_version_fn_t)(void);
 
-/* register an errhandler to report loss of connection to the server */
-typedef void (*opal_pmix_base_module_register_fn_t)(opal_pmix_errhandler_fn_t errhandler);
+/* Register an errhandler to report errors. Three types of errors
+ * can be reported:
+ *
+ * (a) those that occur within the client library, but are not
+ *     reportable via the API itself (e.g., loss of connection to
+ *     the server). These errors typically occur during behind-the-scenes
+ *     non-blocking operations.
+ *
+ * (b) job-related errors such as the failure of another process in
+ *     the job or in any connected job, impending failure of hardware
+ *     within the job's usage footprint, etc.
+ *
+ * (c) system notifications that are made available by the local
+ *     administrators
+ *
+ * By default, only errors that directly affect the process and/or
+ * any process to which it is connected (via the PMIx_Connect call)
+ * will be reported. Options to modify that behavior can be provided
+ * in the info array
+ *
+ * Both the client application and the resource manager can register
+ * err handlers for specific errors. PMIx client/server calls the registered
+ * err handler upon receiving error notify notification (via PMIx_Notify_error)
+ * from the other end (Resource Manager/Client application).
+ *
+ * Multiple err handlers can be registered for different errors. PMIX returns
+ * an integer reference to each register handler in the callback fn. The caller
+ * must retain the reference in order to deregister the errhandler.
+ * Modification of the notification behavior can be accomplished by
+ * deregistering the current errhandler, and then registering it
+ * using a new set of info values.
+ *
+ * See pmix_types.h for a description of the notification function */
+typedef void (*opal_pmix_base_module_register_fn_t)(opal_list_t *info,
+                                                    opal_pmix_notification_fn_t errhandler,
+                                                    opal_pmix_errhandler_reg_cbfunc_t cbfunc,
+                                                    void *cbdata);
 
-/* deregister the errhandler */
-typedef void (*opal_pmix_base_module_deregister_fn_t)(void);
+/* deregister the errhandler
+ * errhandler_ref is the reference returned by PMIx for the errhandler
+ * to pmix_errhandler_reg_cbfunc_t */
+typedef void (*opal_pmix_base_module_deregister_fn_t)(int errhandler,
+                                                      opal_pmix_op_cbfunc_t cbfunc,
+                                                      void *cbdata);
+
+/* Report an error to a process for notification via any
+ * registered errhandler. The errhandler registration can be
+ * called by both the server and the client application. On the
+ * server side, the errhandler is used to report errors detected
+ * by PMIx to the host server for handling. On the client side,
+ * the errhandler is used to notify the process of errors
+ * reported by the server - e.g., the failure of another process.
+ *
+ * This function allows the host server to direct the server
+ * convenience library to notify all indicated local procs of
+ * an error. The error can be local, or anywhere in the cluster.
+ * The status indicates the error being reported.
+ *
+ * The client application can also call this function to notify the
+ * resource manager of an error it encountered. It can request the host
+ * server to notify the indicated processes about the error.
+ *
+ * The first array  of procs informs the server library as to which
+ * processes should be alerted - e.g., the processes that are in
+ * a directly-affected job or are connected to one that is affected.
+ * Passing a NULL for this array will indicate that all local procs
+ * are to be notified.
+ *
+ * The second array identifies the processes that will be impacted
+ * by the error. This could consist of a single process, or a number
+ * of processes.
+ *
+ * The info array contains any further info the RM can and/or chooses
+ * to provide.
+ *
+ * The callback function will be called upon completion of the
+ * notify_error function's actions. Note that any messages will
+ * have been queued, but may not have been transmitted by this
+ * time. Note that the caller is required to maintain the input
+ * data until the callback function has been executed!
+*/
+typedef int (*opal_pmix_base_module_notify_error_fn_t)(int status,
+                                                       opal_list_t *procs,
+                                                       opal_list_t *error_procs,
+                                                       opal_list_t *info,
+                                                       opal_pmix_op_cbfunc_t cbfunc, void *cbdata);
 
 /* store data internally, but don't push it out to be shared - this is
  * intended solely for storage of info on other procs that comes thru
@@ -784,6 +850,7 @@ typedef struct {
     opal_pmix_base_module_get_version_fn_t                  get_version;
     opal_pmix_base_module_register_fn_t                     register_errhandler;
     opal_pmix_base_module_deregister_fn_t                   deregister_errhandler;
+    opal_pmix_base_module_notify_error_fn_t                 notify_error;
     opal_pmix_base_module_store_fn_t                        store_local;
     opal_pmix_base_module_get_nspace_fn_t                   get_nspace;
     opal_pmix_base_module_register_jobid_fn_t               register_jobid;
