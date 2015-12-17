@@ -378,6 +378,7 @@ void orte_data_server(int status, orte_process_name_t* sender,
 
         /* unpack any info elements */
         count = 1;
+        uid = UINT32_MAX;
         while (ORTE_SUCCESS == (rc = opal_dss.unpack(buffer, &iptr, &count, OPAL_VALUE))) {
             /* if this is the userid, separate it out */
             if (0 == strcmp(iptr->key, OPAL_PMIX_USERID)) {
@@ -389,7 +390,7 @@ void orte_data_server(int status, orte_process_name_t* sender,
             /* ignore anything else for now */
             OBJ_RELEASE(iptr);
         }
-        if (ORTE_ERR_UNPACK_READ_PAST_END_OF_BUFFER != rc) {
+        if (ORTE_ERR_UNPACK_READ_PAST_END_OF_BUFFER != rc || UINT32_MAX == uid) {
             ORTE_ERROR_LOG(rc);
             opal_argv_free(keys);
             goto SEND_ERROR;
@@ -539,6 +540,7 @@ void orte_data_server(int status, orte_process_name_t* sender,
 
         /* unpack any info elements */
         count = 1;
+        uid = UINT32_MAX;
         while (ORTE_SUCCESS == (rc = opal_dss.unpack(buffer, &iptr, &count, OPAL_VALUE))) {
             /* if this is the userid, separate it out */
             if (0 == strcmp(iptr->key, OPAL_PMIX_USERID)) {
@@ -547,7 +549,7 @@ void orte_data_server(int status, orte_process_name_t* sender,
             /* ignore anything else for now */
             OBJ_RELEASE(iptr);
         }
-        if (ORTE_ERR_UNPACK_READ_PAST_END_OF_BUFFER != rc) {
+        if (ORTE_ERR_UNPACK_READ_PAST_END_OF_BUFFER != rc || UINT32_MAX == uid) {
             ORTE_ERROR_LOG(rc);
             opal_argv_free(keys);
             goto SEND_ERROR;

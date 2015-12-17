@@ -329,7 +329,9 @@ static inline int process_out_of_order_msg ( orte_qos_ack_channel_t *ack_chan,
         rc = ORTE_ERR_DUPLICATE_MSG;
     }
     else {
-        opal_hotel_checkin(&ack_chan->outstanding_msgs, (void*)msg, &room_num);
+        if (OPAL_SUCCESS != (rc = opal_hotel_checkin(&ack_chan->outstanding_msgs, (void*)msg, &room_num))) {
+            return rc;
+        }
         OPAL_OUTPUT_VERBOSE((1, orte_qos_base_framework.framework_output,
                              "process_out_of_order_msg checked in msg %d in room %d\n",
                               msg->seq_num, room_num));
@@ -484,17 +486,19 @@ static int ack_cmp (void *channel, opal_list_t *attributes) {
 
 static void ack_send_callback (orte_rml_send_t *msg)
 {
-    orte_qos_ack_channel_t *ack_chan;
     /* complete the request back to the user only upon receiving the ack
        nothing to do here, just make sure that the request is in the hotel */
     OPAL_OUTPUT_VERBOSE((1, orte_qos_base_framework.framework_output,
                          "%s ack_send_callback for msg = %p seq num =%d\n",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          (void*)msg, msg->seq_num));
-    ack_chan = (orte_qos_ack_channel_t *) msg->channel->qos_channel_ptr;
     /* if msg->status != SUCCESS - then evict all messages in the window and
        complete them?? */
     if(ORTE_SUCCESS == msg->status) {
+#if OPAL_ENABLE_DEBUG
+    orte_qos_ack_channel_t *ack_chan;
+    ack_chan = (orte_qos_ack_channel_t *) msg->channel->qos_channel_ptr;
+#endif
         // nothing to do
         assert((orte_qos_ack_channel_get_msg_room(ack_chan, msg->seq_num)) != -1);
     } else {
@@ -531,7 +535,9 @@ void orte_qos_ack_msg_ack_timeout_callback (struct opal_hotel_t *hotel,
 void orte_qos_ack_recv_msg_timeout_callback (struct opal_hotel_t *hotel,
                                              int room_num, void *occupant)
 {
+#if OPAL_ENABLE_DEBUG
     orte_rml_recv_t *msg = (orte_rml_recv_t *) occupant;
+#endif
 #if 0
     orte_qos_ack_channel_t *ack_chan;
     orte_rml_channel_t *channel;
@@ -664,7 +670,9 @@ void orte_qos_ack_msg_send_callback ( int status,
                                       orte_rml_tag_t tag,
                                       void* cbdata)
 {
+#if OPAL_ENABLE_DEBUG
     orte_rml_channel_t *channel = (orte_rml_channel_t*) cbdata;
+#endif
     OPAL_OUTPUT_VERBOSE ((0, orte_qos_base_framework.framework_output,
                           " orte_qos_ack_msg_send_callback channel num =%d status =%d",
                           channel->channel_num, status));
