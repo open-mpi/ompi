@@ -189,11 +189,15 @@ struct mca_rcache_base_module_t {
     opal_mutex_t lock;
 };
 
+#define RCACHE_MAJOR_VERSION 3
+#define RCACHE_MINOR_VERSION 0
+#define RCACHE_RELEASE_VERSION 0
+
 /**
  * Macro for use in components that are of type rcache
  */
 #define MCA_RCACHE_BASE_VERSION_3_0_0 \
-    OPAL_MCA_BASE_VERSION_2_1_0("rcache", 3, 0, 0)
+    OPAL_MCA_BASE_VERSION_2_1_0("rcache", RCACHE_MAJOR_VERSION, RCACHE_MAJOR_VERSION, RCACHE_RELEASE_VERSION)
 
 #endif /* MCA_RCACHE_H */
 
