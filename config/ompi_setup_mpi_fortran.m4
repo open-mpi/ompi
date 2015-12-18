@@ -419,6 +419,18 @@ AC_DEFUN([OMPI_SETUP_MPI_FORTRAN],[
                [OMPI_FORTRAN_HAVE_PROCEDURE=0
                 OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS=0])])
 
+    # Per https://github.com/open-mpi/ompi/issues/857, if the Fortran
+    # compiler doesn't properly support "USE ... ONLY" notation,
+    # disable the mpi_f08 module.
+    OMPI_FORTRAN_HAVE_USE_ONLY=0
+    AS_IF([test $OMPI_WANT_FORTRAN_USEMPIF08_BINDINGS -eq 1 -a \
+           $OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS -eq 1],
+          [ # Does the compiler support "USE ... ONLY"
+           OMPI_FORTRAN_CHECK_USE_ONLY(
+               [OMPI_FORTRAN_HAVE_USE_ONLY=1],
+               [OMPI_FORTRAN_HAVE_USE_ONLY=0
+                OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS=0])])
+
     OMPI_FORTRAN_HAVE_OPTIONAL_ARGS=0
     AS_IF([test $OMPI_WANT_FORTRAN_USEMPIF08_BINDINGS -eq 1 -a \
            $OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS -eq 1],
@@ -769,6 +781,13 @@ end type test_mpi_handle],
     AC_DEFINE_UNQUOTED([OMPI_FORTRAN_HAVE_PROCEDURE], 
                        [$OMPI_FORTRAN_HAVE_PROCEDURE],
                        [For ompi/mpi/fortran/use-mpi-f08/blah.F90 and blah.h and ompi_info: whether the compiler supports the "procedure" keyword or not])
+
+    # For configure-fortran-output.h, various files in
+    # ompi/mpi/fortran/use-mpi-f08/*.F90 and *.h files (and ompi_info)
+    AC_SUBST([OMPI_FORTRAN_HAVE_USE_ONLY])
+    AC_DEFINE_UNQUOTED([OMPI_FORTRAN_HAVE_USE_ONLY],
+                       [$OMPI_FORTRAN_HAVE_USE_ONLY],
+                       [For ompi/mpi/fortran/use-mpi-f08/blah.F90 and blah.h and ompi_info: whether the compiler supports "USE ... ONLY" notation properly or not])
 
     # For configure-fortran-output.h, various files in
     # ompi/mpi/fortran/use-mpi-f08/*.F90 and *.h files (and ompi_info)
