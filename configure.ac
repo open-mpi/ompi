@@ -144,12 +144,11 @@ AC_SUBST(libopen_pal_so_version)
 # and/or opal_mca.m4, but I don't have the cycles to do this
 # right now.
 AC_SUBST(libmca_opal_common_libfabric_so_version)
-AC_SUBST(libmca_common_cuda_so_version)
-AC_SUBST(libmca_common_ofacm_so_version)
-AC_SUBST(libmca_common_sm_so_version)
-AC_SUBST(libmca_common_ugni_so_version)
-AC_SUBST(libmca_common_verbs_so_version)
-AC_SUBST(libmca_common_alps_so_version)
+AC_SUBST(libmca_opal_common_cuda_so_version)
+AC_SUBST(libmca_opal_common_sm_so_version)
+AC_SUBST(libmca_opal_common_ugni_so_version)
+AC_SUBST(libmca_opal_common_verbs_so_version)
+AC_SUBST(libmca_orte_common_alps_so_version)
 
 #
 # Get the versions of the autotools that were used to bootstrap us
