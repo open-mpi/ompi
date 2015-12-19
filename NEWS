@@ -53,6 +53,39 @@ included in the vX.Y.Z section and be denoted as:
    (** also appeared: A.B.C)  -- indicating that this item was previously
                                  included in release version vA.B.C.
 
+1.10.2
+------
+
+ **********************************************************************
+ *  OSHMEM is now 1.2 compliant
+ **********************************************************************
+
+- Fix NBC_Copy for legitimate zero-size messages
+- Fix multiple bugs in OSHMEM
+- Correctly handle mpirun --host <user>@<ip-address>
+- Centralize two MCA params to avoid duplication between OMPI and
+  OSHMEM layers: opal_abort_delay and opal_abort_print_stack
+- Add support for Fujitsu compilers
+- Add UCX support for OMPI and OSHMEM
+- Correctly handle oversubscription when not given directives
+  to permit it
+- Add Intel HFI1 default parameters for the openib BTL
+- Resolve symbol conflicts in the PSM2 library
+- Add ability to empty the rgpusm cache when full if requested
+- Fix another libtool bug when -L requires a space between it
+  and the path. Thanks to Eric Schnetter for the patch.
+- Add support for OSHMEM v1.2 APIs
+- Improve efficiency of oshmem_preconnect_all algorithm
+- Fix bug in buffered sends support
+- Multiple one-sided support fixes
+- Fix integer overflow in the tuned "reduce" collective when
+  using buffers larger than INT_MAX in size
+- Performance improvements in PSM2 support
+- Fix NBS iBarrier for inter-communicators
+- Fix bug in vader BTL during finalize
+- Improved configure support for Fortran compilers
+
+
 1.10.1
 ------
 
