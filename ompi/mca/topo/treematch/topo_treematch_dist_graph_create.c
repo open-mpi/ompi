@@ -171,8 +171,8 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* topo_module,
         OPAL_MODEX_RECV_VALUE(err, OPAL_PMIX_NODEID, &(proc->super.proc_name), &pval, OPAL_UINT32);
         if( OPAL_SUCCESS != err ) {
             opal_output(0, "Unable to extract peer %s nodeid from the modex.\n",
-                        OMPI_NAME_PRINT(&(proc->super.proc_name)));
-            vpids[i] = colors[i] = -1;
+                        OMPI_NAME_PRINT(&(proc->super)));
+            colors[i] = -1;
             continue;
         }
         vpids[i] = colors[i] = (int)val;
@@ -396,38 +396,37 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* topo_module,
          * If weights have been provided take them in account. Otherwise rely
          * solely on HWLOC information.
          */
-        if(0 == rank) {
+        if( 0 == rank ) {
 
+#ifdef __DEBUG__
             fprintf(stderr,"========== Centralized Reordering ========= \n");
-
+#endif
             local_pattern = (double *)calloc(size*size,sizeof(double));
-            if( true == topo->weighted ) {
-                for(i = 0; i < topo->indegree ; i++)
-                    local_pattern[topo->in[i]] += topo->inw[i];
-                for(i = 0; i < topo->outdegree ; i++)
-                    local_pattern[topo->out[i]] += topo->outw[i];
-                if (OMPI_SUCCESS != (err = comm_old->c_coll->coll_gather(MPI_IN_PLACE, size, MPI_DOUBLE,
-                                                                        local_pattern, size, MPI_DOUBLE,
-                                                                        0, comm_old,
-                                                                        comm_old->c_coll->coll_gather_module)))
-                    return err;
-            }
         } else {
             local_pattern = (double *)calloc(size,sizeof(double));
-            if( true == topo->weighted ) {
-                for(i = 0; i < topo->indegree ; i++)
-                    local_pattern[topo->in[i]] += topo->inw[i];
-                for(i = 0; i < topo->outdegree ; i++)
-                    local_pattern[topo->out[i]] += topo->outw[i];
-                if (OMPI_SUCCESS != (err = comm_old->c_coll->coll_gather(local_pattern, size, MPI_DOUBLE,
-                                                                        NULL,0,0,
-                                                                        0, comm_old,
-                                                                        comm_old->c_coll->coll_gather_module)))
-                    return err;
-            }
+        }
+        if( true == topo->weighted ) {
+            for(i = 0; i < topo->indegree ; i++)
+                local_pattern[topo->in[i]] += topo->inw[i];
+            for(i = 0; i < topo->outdegree ; i++)
+                local_pattern[topo->out[i]] += topo->outw[i];
+        }
+        if(0 == rank) {
+            err = comm_old->c_coll->coll_gather(MPI_IN_PLACE, size, MPI_DOUBLE,
+                                                local_pattern, size, MPI_DOUBLE,
+                                                0, comm_old,
+                                                comm_old->c_coll->coll_gather_module);
+        } else {
+            err = comm_old->c_coll->coll_gather(local_pattern, size, MPI_DOUBLE,
+                                                NULL,0,0,
+                                                0, comm_old,
+                                                comm_old->c_coll->coll_gather_module);
+        }
+        if (OMPI_SUCCESS != err) {
+            return err;
         }
 
-        if( rank == local_procs[0]) {
+        if( rank == local_procs[0] ) {
             tm_topology_t *tm_topology = NULL;
             tm_topology_t *tm_opt_topology = NULL;
             int *obj_to_rank_in_comm = NULL;
@@ -708,7 +707,9 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* topo_module,
         char set_as_string[64];
         opal_value_t kv;
 
-        if (OMPI_SUCCESS != (err = ompi_comm_split(comm_old,colors[rank],ompi_process_info.my_local_rank,&localcomm, false)))
+        if (OMPI_SUCCESS != (err = ompi_comm_split(comm_old, colors[rank],
+                                                   ompi_process_info.my_local_rank,
+                                                   &localcomm, false)))
             return err;
 
         for(i = 0 ; i < num_procs_in_node ; i++)
@@ -718,64 +719,64 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* topo_module,
         for(i = 0 ; i < size ; i++)
             grank_to_lrank[i] = -1;
 
-        if (OMPI_SUCCESS != (err = localcomm->c_coll->coll_allgather(&rank,1,MPI_INT,
-                                                                    lrank_to_grank,1,MPI_INT,
-                                                                    localcomm,
-                                                                    localcomm->c_coll->coll_allgather_module)))
+        if (OMPI_SUCCESS != (err = localcomm->c_coll->coll_allgather(&rank, 1, MPI_INT,
+                                                                     lrank_to_grank, 1, MPI_INT,
+                                                                     localcomm,
+                                                                     localcomm->c_coll->coll_allgather_module)))
             return err;
 
         for(i = 0 ; i < num_procs_in_node ; i++)
             grank_to_lrank[lrank_to_grank[i]] = i;
 
-        if (rank == local_procs[0]){
+        /* Discover the local patterns */
+        if (rank == local_procs[0]) {
+#ifdef __DEBUG__
+            fprintf(stderr,"========== Partially Distributed Reordering ========= \n");
+#endif
+            local_pattern = (double *)calloc(num_procs_in_node * num_procs_in_node,sizeof(double));
+        } else {
+            local_pattern = (double *)calloc(num_procs_in_node,sizeof(double));
+        }
+        for(i = 0; i < topo->indegree ; i++)
+            if (grank_to_lrank[topo->in[i]] != -1)
+                local_pattern[grank_to_lrank[topo->in[i]]] += topo->inw[i];
+        for(i = 0; i < topo->outdegree ; i++)
+            if (grank_to_lrank[topo->out[i]] != -1)
+                local_pattern[grank_to_lrank[topo->out[i]]] += topo->outw[i];
+        if (OMPI_SUCCESS != (err = localcomm->c_coll->coll_gather((rank == local_procs[0] ? MPI_IN_PLACE : local_pattern),
+                                                                  num_procs_in_node, MPI_DOUBLE,
+                                                                  local_pattern, num_procs_in_node, MPI_DOUBLE,
+                                                                  0, localcomm,
+                                                                  localcomm->c_coll->coll_gather_module)))
+            ERR_EXIT(err);
+
+        /* The root has now the entire information, so let's crunch it */
+        if (rank == local_procs[0]) {
             tm_topology_t  *tm_topology = NULL;
             tm_topology_t  *tm_opt_topology = NULL;
             tree_t *comm_tree = NULL;
             double **comm_pattern = NULL;
 
-#ifdef __DEBUG__
-            fprintf(stderr,"========== Partially Distributed Reordering ========= \n");
-#endif
-
-            local_pattern = (double *)calloc(num_procs_in_node*num_procs_in_node,sizeof(double));
-            for(i = 0 ; i < num_procs_in_node*num_procs_in_node ; i++)
-                local_pattern[i] = 0.0;
-
-            if( true == topo->weighted ) {
-                for(i = 0; i < topo->indegree ; i++)
-                    if (grank_to_lrank[topo->in[i]] != -1)
-                        local_pattern[grank_to_lrank[topo->in[i]]] += topo->inw[i];
-                for(i = 0; i < topo->outdegree ; i++)
-                    if (grank_to_lrank[topo->out[i]] != -1)
-                        local_pattern[grank_to_lrank[topo->out[i]]] += topo->outw[i];
-                if (OMPI_SUCCESS != (err = localcomm->c_coll->coll_gather(MPI_IN_PLACE, num_procs_in_node, MPI_DOUBLE,
-                                                                         local_pattern, num_procs_in_node, MPI_DOUBLE,
-                                                                         0,localcomm,
-                                                                         localcomm->c_coll->coll_gather_module)))
-                    ERR_EXIT(err);
-            }
-
             comm_pattern = (double **)malloc(num_procs_in_node*sizeof(double *));
             for(i = 0 ; i < num_procs_in_node ; i++){
-                comm_pattern[i] = (double *)calloc(num_procs_in_node,sizeof(double));
-                memcpy((void *)comm_pattern[i],(void *)(local_pattern + i*num_procs_in_node),num_procs_in_node*sizeof(double));
+                comm_pattern[i] = (double *)calloc(num_procs_in_node, sizeof(double));
+                memcpy((void *)comm_pattern[i],
+                       (void *)(local_pattern + i*num_procs_in_node),
+                       num_procs_in_node*sizeof(double));
             }
             /* Matrix needs to be symmetric */
             for( i = 0 ; i < num_procs_in_node ; i++)
                 for(j = i ; j < num_procs_in_node ; j++){
-                    comm_pattern[i][j] += comm_pattern[j][i];
-                    comm_pattern[j][i]  = comm_pattern[i][j];
+                    comm_pattern[i][j] = (comm_pattern[i][j] + comm_pattern[j][i]) / 2;
+                    comm_pattern[j][i] = comm_pattern[i][j];
                 }
-            for( i = 0 ; i < num_procs_in_node ; i++)
-                for(j = 0 ; j < num_procs_in_node ; j++)
-                    comm_pattern[i][j] /= 2;
 
 #ifdef __DEBUG__
             fprintf(stdout,"========== COMM PATTERN ============= \n");
             for(i = 0 ; i < num_procs_in_node ; i++){
                 fprintf(stdout," %i : ",i);
                 for(j = 0; j < num_procs_in_node ; j++)
-                    fprintf(stdout,"  %f  ",comm_pattern[i][j]);
+                    fprintf(stdout,"  %f  ", comm_pattern[i][j]);
                 fprintf(stdout,"\n");
             }
             fprintf(stdout,"======================= \n");
@@ -830,24 +831,6 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* topo_module,
             free(tm_topology->arity);
             free(tm_topology);
             FREE_topology(tm_opt_topology);
-        } else {
-            local_pattern = (double *)calloc(num_procs_in_node,sizeof(double));
-            for(i = 0 ; i < num_procs_in_node ; i++)
-                local_pattern[i] = 0.0;
-
-            if( true == topo->weighted ) {
-                for(i = 0; i < topo->indegree ; i++)
-                    if (grank_to_lrank[topo->in[i]] != -1)
-                        local_pattern[grank_to_lrank[topo->in[i]]] += topo->inw[i];
-                for(i = 0; i < topo->outdegree ; i++)
-                    if (grank_to_lrank[topo->out[i]] != -1)
-                        local_pattern[grank_to_lrank[topo->out[i]]] += topo->outw[i];
-                if (OMPI_SUCCESS != (err = localcomm->c_coll->coll_gather(local_pattern, num_procs_in_node, MPI_DOUBLE,
-                                                                         NULL,0,0,
-                                                                         0,localcomm,
-                                                                         localcomm->c_coll->coll_gather_module)))
-                    ERR_EXIT(err);
-            }
         }
 
         if (OMPI_SUCCESS != (err = localcomm->c_coll->coll_bcast(matching, num_procs_in_node,

@@ -1614,7 +1614,8 @@ tree_t * build_tree_from_topology(tm_topology_t *topology, double **com_mat, int
 
   nb_constraints = check_constraints (topology, &constraints);
 
-  printf("nb_constraints = %d, N= %d; nb_processing units = %d\n",nb_constraints, N, nb_processing_units(topology));
+  if(verbose_level>=INFO)
+    printf("nb_constraints = %d, N= %d; nb_processing units = %d\n",nb_constraints, N, nb_processing_units(topology));
 
   if(N>nb_constraints){
     if(verbose_level >= CRITICAL){
