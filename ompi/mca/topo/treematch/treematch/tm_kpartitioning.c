@@ -427,8 +427,7 @@ tree_t *kpartition_build_tree_from_topology(tm_topology_t *topology,double **com
   verbose_level = get_verbose_level();
 
   if(verbose_level>=INFO)
-    printf("Number of constraints: %d\n", nb_constraints);
-  printf("Number of constraints: %d, N=%d\n", nb_constraints, N);
+    printf("Number of constraints: %d, N=%d\n", nb_constraints, N);
 
   nb_cores=nb_processing_units(topology);
 
