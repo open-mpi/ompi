@@ -72,10 +72,10 @@ struct mca_btl_openib_proc_t {
     uint8_t proc_port_count;
 
     /** array of endpoints that have been created to access this proc */
-    struct mca_btl_base_endpoint_t **proc_endpoints;
+    volatile struct mca_btl_base_endpoint_t **proc_endpoints;
 
     /** number of endpoints (length of proc_endpoints array) */
-    size_t proc_endpoint_count;
+    volatile size_t proc_endpoint_count;
 
     /** lock to protect against concurrent access to proc state */
     opal_mutex_t proc_lock;
