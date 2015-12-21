@@ -425,8 +425,9 @@ static int setup_fork(orte_job_t *jdata,
      */
     opal_setenv("OMPI_MCA_ess", "^singleton", false, &app->env);
 
-    /* ensure that the spawned process ignores direct launch components */
-    opal_setenv("OMPI_MCA_pmix", "^s1,s2,cray", true, &app->env);
+    /* ensure that the spawned process ignores direct launch components,
+     * but do not overrride anything we were given */
+    opal_setenv("OMPI_MCA_pmix", "^s1,s2,cray", false, &app->env);
 
     /* since we want to pass the name as separate components, make sure
      * that the "name" environmental variable is cleared!

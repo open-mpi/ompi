@@ -621,8 +621,9 @@ static int rte_init(void)
         free(contact_path);
     }
 
-    /* setup the PMIx framework - ensure it skips all non-PMIx components */
-    putenv("OMPI_MCA_pmix=^s1,s2,cray");
+    /* setup the PMIx framework - ensure it skips all non-PMIx components, but
+     * do not override anything we were given */
+    opal_setenv("OMPI_MCA_pmix", "^s1,s2,cray", false, &environ);
     if (OPAL_SUCCESS != (ret = mca_base_framework_open(&opal_pmix_base_framework, 0))) {
         ORTE_ERROR_LOG(ret);
         error = "orte_pmix_base_open";
