@@ -96,13 +96,13 @@ static mca_btl_openib_proc_t* ibproc_lookup_and_lock(opal_proc_t* proc)
     mca_btl_openib_proc_t* ib_proc;
 
     /* get the process from the list */
-    OPAL_THREAD_LOCK(&mca_btl_openib_component.ib_lock);
+    opal_mutex_lock(&mca_btl_openib_component.ib_lock);
     ib_proc = ibproc_lookup_no_lock(proc);
-    OPAL_THREAD_UNLOCK(&mca_btl_openib_component.ib_lock);
+    opal_mutex_unlock(&mca_btl_openib_component.ib_lock);
     if( NULL != ib_proc ){
         /* if we were able to find it - lock it.
          * NOTE: we want to lock it outside of list locked region */
-        OPAL_THREAD_LOCK(&ib_proc->proc_lock);
+        opal_mutex_lock(&ib_proc->proc_lock);
     }
     return ib_proc;
 }
@@ -263,14 +263,14 @@ mca_btl_openib_proc_t* mca_btl_openib_proc_get_locked(opal_proc_t* proc, bool *i
     BTL_VERBOSE(("unpacking done!"));
 
     /* Finally add this process to the initialized procs list */
-    OPAL_THREAD_LOCK(&mca_btl_openib_component.ib_lock);
+    opal_mutex_lock(&mca_btl_openib_component.ib_lock);
 
     ib_proc_ret = ibproc_lookup_no_lock(proc);
     if (NULL == ib_proc_ret) {
         /* if process can't be found in this list - insert it locked
          * it is safe to lock ib_proc here because this thread is
          * the only one who knows about it so far */
-        OPAL_THREAD_LOCK(&ib_proc->proc_lock);
+        opal_mutex_lock(&ib_proc->proc_lock);
         opal_list_append(&mca_btl_openib_component.ib_procs, &ib_proc->super);
         ib_proc_ret = ib_proc;
         *is_new = true;
@@ -278,12 +278,12 @@ mca_btl_openib_proc_t* mca_btl_openib_proc_get_locked(opal_proc_t* proc, bool *i
         /* otherwise - release module_proc */
         OBJ_RELEASE(ib_proc);
     }
-    OPAL_THREAD_UNLOCK(&mca_btl_openib_component.ib_lock);
+    opal_mutex_unlock(&mca_btl_openib_component.ib_lock);
 
     /* if we haven't insert the process - lock it here so we
      * won't lock mca_btl_openib_component.ib_lock */
     if( !(*is_new) ){
-        OPAL_THREAD_LOCK(&ib_proc_ret->proc_lock);
+        opal_mutex_lock(&ib_proc_ret->proc_lock);
     }
 
     return ib_proc_ret;

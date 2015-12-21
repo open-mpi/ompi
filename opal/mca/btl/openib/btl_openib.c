@@ -981,21 +981,21 @@ int mca_btl_openib_add_procs(
 #endif
 
     /* protect the device */
-    OPAL_THREAD_LOCK(&mca_btl_openib_component.ib_lock);
+    opal_mutex_lock(&mca_btl_openib_component.ib_lock);
     rc = prepare_device_for_use (openib_btl->device);
     if (OPAL_SUCCESS != rc) {
         BTL_ERROR(("could not prepare openib device for use"));
-        OPAL_THREAD_UNLOCK(&mca_btl_openib_component.ib_lock);
+        opal_mutex_unlock(&mca_btl_openib_component.ib_lock);
         return rc;
     }
 
     rc = mca_btl_openib_size_queues(openib_btl, nprocs);
     if (OPAL_SUCCESS != rc) {
         BTL_ERROR(("error creating cqs"));
-        OPAL_THREAD_UNLOCK(&mca_btl_openib_component.ib_lock);
+        opal_mutex_unlock(&mca_btl_openib_component.ib_lock);
         return rc;
     }
-    OPAL_THREAD_UNLOCK(&mca_btl_openib_component.ib_lock);
+    opal_mutex_unlock(&mca_btl_openib_component.ib_lock);
 
     for (i = 0, local_procs = 0 ; i < (int) nprocs; i++) {
         struct opal_proc_t* proc = procs[i];
@@ -1047,7 +1047,7 @@ int mca_btl_openib_add_procs(
                 found_existing = true;
             }
         }
-        OPAL_THREAD_UNLOCK( &ib_proc->proc_lock );
+        opal_mutex_unlock( &ib_proc->proc_lock );
 
         if (found_existing) {
             if (reachable) {
@@ -1075,21 +1075,21 @@ struct mca_btl_base_endpoint_t *mca_btl_openib_get_ep (struct mca_btl_base_modul
 
     // TODO: shift to the separate function
     /* protect the device */
-    OPAL_THREAD_LOCK(&mca_btl_openib_component.ib_lock);
+    opal_mutex_lock(&mca_btl_openib_component.ib_lock);
     rc = prepare_device_for_use (openib_btl->device);
     if (OPAL_SUCCESS != rc) {
         BTL_ERROR(("could not prepare openib device for use"));
-        OPAL_THREAD_UNLOCK(&mca_btl_openib_component.ib_lock);
+        opal_mutex_unlock(&mca_btl_openib_component.ib_lock);
         return NULL;
     }
 
     rc = mca_btl_openib_size_queues(openib_btl, 1);
     if (OPAL_SUCCESS != rc) {
         BTL_ERROR(("error creating cqs"));
-        OPAL_THREAD_UNLOCK(&mca_btl_openib_component.ib_lock);
+        opal_mutex_unlock(&mca_btl_openib_component.ib_lock);
         return NULL;
     }
-    OPAL_THREAD_UNLOCK(&mca_btl_openib_component.ib_lock);
+    opal_mutex_unlock(&mca_btl_openib_component.ib_lock);
 
 
     if (NULL == (ib_proc = mca_btl_openib_proc_get_locked(proc, &is_new))) {
@@ -1122,7 +1122,7 @@ struct mca_btl_base_endpoint_t *mca_btl_openib_get_ep (struct mca_btl_base_modul
     (void)init_ib_proc_nolock(openib_btl, ib_proc, &endpoint,
                             local_port_cnt, btl_rank);
 exit:
-    OPAL_THREAD_UNLOCK(&ib_proc->proc_lock);
+    opal_mutex_unlock(&ib_proc->proc_lock);
     return endpoint;
 }
 
