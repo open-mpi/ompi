@@ -278,6 +278,7 @@ int32_t ompi_datatype_create_darray(int size,
             rc = ompi_datatype_create_hindexed( 1, blength_hindexed, displs_hindexed, lastType, newtype);
         }
         ompi_datatype_destroy(&lastType);
+        opal_datatype_resize( &(*newtype)->super, 0, displs[1] );
         /* need to destroy the old type even in error condition, so
            don't check return code from above until after cleanup. */
         if (MPI_SUCCESS != rc) goto cleanup;
