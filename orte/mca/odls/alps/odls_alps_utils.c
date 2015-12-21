@@ -72,7 +72,8 @@ int orte_odls_alps_get_rdma_creds(void)
      * application processes can actually use the HSN API (uGNI).
      */
 
-    if (ORTE_PROC_IS_DAEMON) {
+    if (ORTE_PROC_IS_DAEMON || ORTE_PROC_IS_HNP) {
+
 
         ret = alps_app_lli_lock();
 
