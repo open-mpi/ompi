@@ -123,7 +123,7 @@ static void inline unpack8(char **src, uint8_t *value)
  * associated w/ a given destination on this datastructure.
  */
 
-mca_btl_openib_proc_t* mca_btl_openib_proc_get_locked(opal_proc_t* proc)
+mca_btl_openib_proc_t* mca_btl_openib_proc_get_locked(opal_proc_t* proc, bool *is_new)
 {
     mca_btl_openib_proc_t *ib_proc = NULL, *ib_proc_ret = NULL;
     size_t msg_size;
@@ -133,7 +133,7 @@ mca_btl_openib_proc_t* mca_btl_openib_proc_get_locked(opal_proc_t* proc)
     char *offset;
     int modex_message_size;
     mca_btl_openib_modex_message_t dummy;
-    bool found = false;
+    *is_new = false;
 
     /* Check if we have already created a IB proc
      * structure for this ompi process */
@@ -273,17 +273,16 @@ mca_btl_openib_proc_t* mca_btl_openib_proc_get_locked(opal_proc_t* proc)
         OPAL_THREAD_LOCK(&ib_proc->proc_lock);
         opal_list_append(&mca_btl_openib_component.ib_procs, &ib_proc->super);
         ib_proc_ret = ib_proc;
-        found = true;
+        *is_new = true;
     } else {
         /* otherwise - release module_proc */
         OBJ_RELEASE(ib_proc);
-        found = false;
     }
     OPAL_THREAD_UNLOCK(&mca_btl_openib_component.ib_lock);
 
     /* if we haven't insert the process - lock it here so we
      * won't lock mca_btl_openib_component.ib_lock */
-    if( !found ){
+    if( !(*is_new) ){
         OPAL_THREAD_LOCK(&ib_proc_ret->proc_lock);
     }
 
