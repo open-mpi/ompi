@@ -19,6 +19,7 @@
 #include "src/client/pmix_client_ops.h"
 #include "src/server/pmix_server_ops.h"
 #include "src/include/pmix_globals.h"
+#include "src/util/output.h"
 
 void PMIx_Register_errhandler(pmix_info_t info[], size_t ninfo,
                               pmix_notification_fn_t errhandler,
