@@ -796,6 +796,165 @@ static int prepare_device_for_use (mca_btl_openib_device_t *device)
     return OPAL_SUCCESS;
 }
 
+static int init_ib_proc(mca_btl_openib_module_t* openib_btl, mca_btl_openib_proc_t* ib_proc,
+                        mca_btl_base_endpoint_t **endpoint_ptr,
+                        int local_port_cnt, int btl_rank, bool *is_reachable)
+{
+    int rem_port_cnt, matching_port = -1, i, j, rc;
+    mca_btl_base_endpoint_t *endpoint;
+    opal_btl_openib_connect_base_module_t *local_cpc;
+    opal_btl_openib_connect_base_module_data_t *remote_cpc_data;
+
+
+    *endpoint_ptr = NULL;
+    *is_reachable = false;
+
+    /* check if the remote proc has any ports that:
+       - on the same subnet as the local proc, and
+       - on that subnet, has a CPC in common with the local proc
+    */
+
+    rem_port_cnt = 0;
+    BTL_VERBOSE(("got %d port_infos ", ib_proc->proc_port_count));
+    for (j = 0; j < (int) ib_proc->proc_port_count; j++){
+        BTL_VERBOSE(("got a subnet %016" PRIx64,
+                     ib_proc->proc_ports[j].pm_port_info.subnet_id));
+        if (ib_proc->proc_ports[j].pm_port_info.subnet_id ==
+            openib_btl->port_info.subnet_id) {
+            BTL_VERBOSE(("Got a matching subnet!"));
+            if (rem_port_cnt == btl_rank) {
+                matching_port = j;
+            }
+            rem_port_cnt++;
+        }
+    }
+
+    if (0 == rem_port_cnt) {
+        /* no use trying to communicate with this endpoint */
+        BTL_VERBOSE(("No matching subnet id/CPC was found, moving on.. "));
+        return OPAL_ERROR;
+    }
+
+    /* If this process has multiple ports on a single subnet ID,
+       and the report proc also has multiple ports on this same
+       subnet ID, the default connection pattern is:
+
+                  LOCAL                   REMOTE PEER
+             1st port on subnet X <--> 1st port on subnet X
+             2nd port on subnet X <--> 2nd port on subnet X
+             3nd port on subnet X <--> 3nd port on subnet X
+             ...etc.
+
+       Note that the port numbers may not be contiguous, and they
+       may not be the same on either side.  Hence the "1st", "2nd",
+       "3rd, etc. notation, above.
+
+       Hence, if the local "rank" of this module's port on the
+       subnet ID is greater than the total number of ports on the
+       peer on this same subnet, then we have no match.  So skip
+       this connection.  */
+    if (rem_port_cnt < local_port_cnt && btl_rank >= rem_port_cnt) {
+        BTL_VERBOSE(("Not enough remote ports on this subnet id, moving on.. "));
+        return OPAL_ERROR;
+    }
+
+    /* Now that we have verified that we're on the same subnet and
+       the remote peer has enough ports, see if that specific port
+       on the peer has a matching CPC. */
+    assert(btl_rank <= ib_proc->proc_port_count);
+    assert(matching_port != -1);
+    if (OPAL_SUCCESS !=
+        opal_btl_openib_connect_base_find_match(openib_btl,
+                                                &(ib_proc->proc_ports[matching_port]),
+                                                &local_cpc,
+                                                &remote_cpc_data)) {
+        return OPAL_ERROR;
+    }
+
+    OPAL_THREAD_LOCK(&ib_proc->proc_lock);
+
+    /* The btl_proc datastructure is shared by all IB BTL
+     * instances that are trying to reach this destination.
+     * Cache the peer instance on the btl_proc.
+     */
+    endpoint = OBJ_NEW(mca_btl_openib_endpoint_t);
+    assert(((opal_object_t*)endpoint)->obj_reference_count == 1);
+    if(NULL == endpoint) {
+        OPAL_THREAD_UNLOCK(&ib_proc->proc_lock);
+        return OPAL_ERR_OUT_OF_RESOURCE;
+    }
+
+
+#if HAVE_XRC
+    if (MCA_BTL_XRC_ENABLED) {
+        int rem_port_cnt = 0;
+        for(j = 0; j < (int) ib_proc->proc_port_count; j++) {
+            if(ib_proc->proc_ports[j].pm_port_info.subnet_id ==
+                    openib_btl->port_info.subnet_id) {
+                if (rem_port_cnt == btl_rank)
+                    break;
+                else
+                    rem_port_cnt ++;
+            }
+        }
+
+        assert(rem_port_cnt == btl_rank);
+        /* Push the subnet/lid/jobid to xrc hash */
+        rc = mca_btl_openib_ib_address_add_new(
+                ib_proc->proc_ports[j].pm_port_info.lid,
+                ib_proc->proc_ports[j].pm_port_info.subnet_id,
+                ib_proc->proc_opal->proc_name.jobid, endpoint);
+        if (OPAL_SUCCESS != rc ) {
+            OPAL_THREAD_UNLOCK(&ib_proc->proc_lock);
+            return OPAL_ERROR;
+        }
+    }
+#endif
+    mca_btl_openib_endpoint_init(openib_btl, endpoint,
+                                 local_cpc,
+                                 &(ib_proc->proc_ports[matching_port]),
+                                 remote_cpc_data);
+
+    rc = mca_btl_openib_proc_insert(ib_proc, endpoint);
+    if (OPAL_SUCCESS != rc) {
+        OBJ_RELEASE(endpoint);
+        OPAL_THREAD_UNLOCK(&ib_proc->proc_lock);
+        return OPAL_ERROR;
+    }
+
+     if(OPAL_SUCCESS != mca_btl_openib_tune_endpoint(openib_btl, endpoint)) {
+        OBJ_RELEASE(endpoint);
+        OPAL_THREAD_UNLOCK(&ib_proc->proc_lock);
+        return OPAL_ERROR;
+    }
+
+    endpoint->index = opal_pointer_array_add(openib_btl->device->endpoints, (void*)endpoint);
+    if( 0 > endpoint->index ) {
+        OBJ_RELEASE(endpoint);
+        OPAL_THREAD_UNLOCK(&ib_proc->proc_lock);
+        return OPAL_ERROR;
+    }
+
+    /* Tell the selected CPC that it won.  NOTE: This call is
+       outside of / separate from mca_btl_openib_endpoint_init()
+       because this function likely needs the endpoint->index. */
+    if (NULL != local_cpc->cbm_endpoint_init) {
+        rc = local_cpc->cbm_endpoint_init(endpoint);
+        if (OPAL_SUCCESS != rc) {
+            OBJ_RELEASE(endpoint);
+            OPAL_THREAD_UNLOCK(&ib_proc->proc_lock);
+            return OPAL_ERROR;
+        }
+    }
+
+    OPAL_THREAD_UNLOCK(&ib_proc->proc_lock);
+
+    *is_reachable = true;
+    *endpoint_ptr = endpoint;
+
+    return OPAL_SUCCESS;
+}
+
 /*
  *  add a proc to this btl module
  *    creates an endpoint that is setup on the
@@ -810,12 +969,9 @@ int mca_btl_openib_add_procs(
 {
     mca_btl_openib_module_t* openib_btl = (mca_btl_openib_module_t*)btl;
     int i,j, rc, local_procs;
-    int rem_subnet_id_port_cnt;
     int lcl_subnet_id_port_cnt = 0;
     int btl_rank = 0;
     mca_btl_base_endpoint_t* endpoint;
-    opal_btl_openib_connect_base_module_t *local_cpc;
-    opal_btl_openib_connect_base_module_data_t *remote_cpc_data;
 
     for(j=0; j < mca_btl_openib_component.ib_num_btls; j++){
         if(mca_btl_openib_component.openib_btls[j]->port_info.subnet_id
@@ -854,7 +1010,7 @@ int mca_btl_openib_add_procs(
         struct opal_proc_t* proc = procs[i];
         mca_btl_openib_proc_t* ib_proc;
         bool found_existing = false;
-        int remote_matching_port;
+        bool is_reachable;
 
         opal_output(-1, "add procs: adding proc %d", i);
 
@@ -899,148 +1055,14 @@ int mca_btl_openib_add_procs(
             continue;
         }
 
-        /* check if the remote proc has any ports that:
-           - on the same subnet as the local proc, and
-           - on that subnet, has a CPC in common with the local proc
-        */
-        remote_matching_port = -1;
-        rem_subnet_id_port_cnt = 0;
-        BTL_VERBOSE(("got %d port_infos ", ib_proc->proc_port_count));
-        for (j = 0; j < (int) ib_proc->proc_port_count; j++){
-            BTL_VERBOSE(("got a subnet %016" PRIx64,
-                         ib_proc->proc_ports[j].pm_port_info.subnet_id));
-            if (ib_proc->proc_ports[j].pm_port_info.subnet_id ==
-                openib_btl->port_info.subnet_id) {
-                BTL_VERBOSE(("Got a matching subnet!"));
-                if (rem_subnet_id_port_cnt == btl_rank) {
-                    remote_matching_port = j;
-                }
-                rem_subnet_id_port_cnt++;
+        rc = init_ib_proc(openib_btl, ib_proc, &endpoint, lcl_subnet_id_port_cnt,
+                          btl_rank, &is_reachable);
+        if( OPAL_SUCCESS == rc ){
+            peers[i] = endpoint;
+            if( is_reachable && NULL != reachable ){
+                opal_bitmap_set_bit(reachable, i);
             }
         }
-
-        if (0 == rem_subnet_id_port_cnt) {
-            /* no use trying to communicate with this endpoint */
-            BTL_VERBOSE(("No matching subnet id/CPC was found, moving on.. "));
-            continue;
-        }
-
-        /* If this process has multiple ports on a single subnet ID,
-           and the report proc also has multiple ports on this same
-           subnet ID, the default connection pattern is:
-
-                      LOCAL                   REMOTE PEER
-                 1st port on subnet X <--> 1st port on subnet X
-                 2nd port on subnet X <--> 2nd port on subnet X
-                 3nd port on subnet X <--> 3nd port on subnet X
-                 ...etc.
-
-           Note that the port numbers may not be contiguous, and they
-           may not be the same on either side.  Hence the "1st", "2nd",
-           "3rd, etc. notation, above.
-
-           Hence, if the local "rank" of this module's port on the
-           subnet ID is greater than the total number of ports on the
-           peer on this same subnet, then we have no match.  So skip
-           this connection.  */
-        if (rem_subnet_id_port_cnt < lcl_subnet_id_port_cnt &&
-            btl_rank >= rem_subnet_id_port_cnt) {
-            BTL_VERBOSE(("Not enough remote ports on this subnet id, moving on.. "));
-            continue;
-        }
-
-        /* Now that we have verified that we're on the same subnet and
-           the remote peer has enough ports, see if that specific port
-           on the peer has a matching CPC. */
-        assert(btl_rank <= ib_proc->proc_port_count);
-        assert(remote_matching_port != -1);
-        if (OPAL_SUCCESS !=
-            opal_btl_openib_connect_base_find_match(openib_btl,
-                                                    &(ib_proc->proc_ports[remote_matching_port]),
-                                                    &local_cpc,
-                                                    &remote_cpc_data)) {
-            continue;
-        }
-
-        OPAL_THREAD_LOCK(&ib_proc->proc_lock);
-
-        /* The btl_proc datastructure is shared by all IB BTL
-         * instances that are trying to reach this destination.
-         * Cache the peer instance on the btl_proc.
-         */
-        endpoint = OBJ_NEW(mca_btl_openib_endpoint_t);
-        assert(((opal_object_t*)endpoint)->obj_reference_count == 1);
-        if(NULL == endpoint) {
-            OPAL_THREAD_UNLOCK(&ib_proc->proc_lock);
-            return OPAL_ERR_OUT_OF_RESOURCE;
-        }
-
-#if HAVE_XRC
-        if (MCA_BTL_XRC_ENABLED) {
-            int rem_port_cnt = 0;
-            for(j = 0; j < (int) ib_proc->proc_port_count; j++) {
-                if(ib_proc->proc_ports[j].pm_port_info.subnet_id ==
-                        openib_btl->port_info.subnet_id) {
-                    if (rem_port_cnt == btl_rank)
-                        break;
-                    else
-                        rem_port_cnt ++;
-                }
-            }
-
-            assert(rem_port_cnt == btl_rank);
-            /* Push the subnet/lid/jobid to xrc hash */
-            rc = mca_btl_openib_ib_address_add_new(
-                    ib_proc->proc_ports[j].pm_port_info.lid,
-                    ib_proc->proc_ports[j].pm_port_info.subnet_id,
-                    proc->proc_name.jobid, endpoint);
-            if (OPAL_SUCCESS != rc ) {
-                OPAL_THREAD_UNLOCK(&ib_proc->proc_lock);
-                return OPAL_ERROR;
-            }
-        }
-#endif
-        mca_btl_openib_endpoint_init(openib_btl, endpoint,
-                                     local_cpc,
-                                     &(ib_proc->proc_ports[remote_matching_port]),
-                                     remote_cpc_data);
-
-        rc = mca_btl_openib_proc_insert(ib_proc, endpoint);
-        if (OPAL_SUCCESS != rc) {
-            OBJ_RELEASE(endpoint);
-            OPAL_THREAD_UNLOCK(&ib_proc->proc_lock);
-            continue;
-        }
-
-         if(OPAL_SUCCESS != mca_btl_openib_tune_endpoint(openib_btl, endpoint)) {
-            OBJ_RELEASE(endpoint);
-            OPAL_THREAD_UNLOCK(&ib_proc->proc_lock);
-            return OPAL_ERROR;
-        }
-
-        endpoint->index = opal_pointer_array_add(openib_btl->device->endpoints, (void*)endpoint);
-        if( 0 > endpoint->index ) {
-            OBJ_RELEASE(endpoint);
-            OPAL_THREAD_UNLOCK(&ib_proc->proc_lock);
-            continue;
-        }
-
-        /* Tell the selected CPC that it won.  NOTE: This call is
-           outside of / separate from mca_btl_openib_endpoint_init()
-           because this function likely needs the endpoint->index. */
-        if (NULL != local_cpc->cbm_endpoint_init) {
-            rc = local_cpc->cbm_endpoint_init(endpoint);
-            if (OPAL_SUCCESS != rc) {
-                OBJ_RELEASE(endpoint);
-                OPAL_THREAD_UNLOCK(&ib_proc->proc_lock);
-                continue;
-            }
-        }
-
-        opal_bitmap_set_bit(reachable, i);
-        OPAL_THREAD_UNLOCK(&ib_proc->proc_lock);
-
-        peers[i] = endpoint;
     }
 
     openib_btl->local_procs += local_procs;
