@@ -35,6 +35,7 @@ dnl ----------------------------------------------------
 AC_DEFUN([OMPI_FORTRAN_CHECK_USE_ONLY],[
     AS_VAR_PUSHDEF([use_only_var], [ompi_cv_fortran_use_only])
     OPAL_VAR_SCOPE_PUSH([FCFLAGS_save])
+    FCFLAGS_save=$FCFLAGS
     FCFLAGS="-I. $FCFLAGS"
 
     AC_CACHE_CHECK([if Fortran compiler supports USE...ONLY], use_only_var,
