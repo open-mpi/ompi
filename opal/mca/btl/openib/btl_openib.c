@@ -796,11 +796,11 @@ static int prepare_device_for_use (mca_btl_openib_device_t *device)
     return OPAL_SUCCESS;
 }
 
-static int init_ib_proc(mca_btl_openib_module_t* openib_btl, mca_btl_openib_proc_t* ib_proc,
+static int init_ib_proc_nolock(mca_btl_openib_module_t* openib_btl, mca_btl_openib_proc_t* ib_proc,
                         mca_btl_base_endpoint_t **endpoint_ptr,
                         int local_port_cnt, int btl_rank, bool *is_reachable)
 {
-    int rem_port_cnt, matching_port = -1, i, j, rc;
+    int rem_port_cnt, matching_port = -1, j, rc;
     mca_btl_base_endpoint_t *endpoint;
     opal_btl_openib_connect_base_module_t *local_cpc;
     opal_btl_openib_connect_base_module_data_t *remote_cpc_data;
@@ -871,8 +871,6 @@ static int init_ib_proc(mca_btl_openib_module_t* openib_btl, mca_btl_openib_proc
         return OPAL_ERROR;
     }
 
-    OPAL_THREAD_LOCK(&ib_proc->proc_lock);
-
     /* The btl_proc datastructure is shared by all IB BTL
      * instances that are trying to reach this destination.
      * Cache the peer instance on the btl_proc.
@@ -880,7 +878,6 @@ static int init_ib_proc(mca_btl_openib_module_t* openib_btl, mca_btl_openib_proc
     endpoint = OBJ_NEW(mca_btl_openib_endpoint_t);
     assert(((opal_object_t*)endpoint)->obj_reference_count == 1);
     if(NULL == endpoint) {
-        OPAL_THREAD_UNLOCK(&ib_proc->proc_lock);
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
 
@@ -905,7 +902,6 @@ static int init_ib_proc(mca_btl_openib_module_t* openib_btl, mca_btl_openib_proc
                 ib_proc->proc_ports[j].pm_port_info.subnet_id,
                 ib_proc->proc_opal->proc_name.jobid, endpoint);
         if (OPAL_SUCCESS != rc ) {
-            OPAL_THREAD_UNLOCK(&ib_proc->proc_lock);
             return OPAL_ERROR;
         }
     }
@@ -918,20 +914,17 @@ static int init_ib_proc(mca_btl_openib_module_t* openib_btl, mca_btl_openib_proc
     rc = mca_btl_openib_proc_insert(ib_proc, endpoint);
     if (OPAL_SUCCESS != rc) {
         OBJ_RELEASE(endpoint);
-        OPAL_THREAD_UNLOCK(&ib_proc->proc_lock);
         return OPAL_ERROR;
     }
 
      if(OPAL_SUCCESS != mca_btl_openib_tune_endpoint(openib_btl, endpoint)) {
         OBJ_RELEASE(endpoint);
-        OPAL_THREAD_UNLOCK(&ib_proc->proc_lock);
         return OPAL_ERROR;
     }
 
     endpoint->index = opal_pointer_array_add(openib_btl->device->endpoints, (void*)endpoint);
     if( 0 > endpoint->index ) {
         OBJ_RELEASE(endpoint);
-        OPAL_THREAD_UNLOCK(&ib_proc->proc_lock);
         return OPAL_ERROR;
     }
 
@@ -942,12 +935,9 @@ static int init_ib_proc(mca_btl_openib_module_t* openib_btl, mca_btl_openib_proc
         rc = local_cpc->cbm_endpoint_init(endpoint);
         if (OPAL_SUCCESS != rc) {
             OBJ_RELEASE(endpoint);
-            OPAL_THREAD_UNLOCK(&ib_proc->proc_lock);
             return OPAL_ERROR;
         }
     }
-
-    OPAL_THREAD_UNLOCK(&ib_proc->proc_lock);
 
     *is_reachable = true;
     *endpoint_ptr = endpoint;
@@ -1011,6 +1001,7 @@ int mca_btl_openib_add_procs(
         mca_btl_openib_proc_t* ib_proc;
         bool found_existing = false;
         bool is_reachable;
+        bool is_new;
 
         opal_output(-1, "add procs: adding proc %d", i);
 
@@ -1030,14 +1021,13 @@ int mca_btl_openib_add_procs(
         }
 #endif
 
-        if(NULL == (ib_proc = mca_btl_openib_proc_create(proc))) {
+        if(NULL == (ib_proc = mca_btl_openib_proc_get_locked(proc))) {
             /* if we don't have connection info for this process, it's
              * okay because some other method might be able to reach it,
              * so just mark it as unreachable by us */
             continue;
         }
 
-        OPAL_THREAD_LOCK(&ib_proc->proc_lock);
         for (j = 0 ; j < (int) ib_proc->proc_endpoint_count ; ++j) {
             endpoint = ib_proc->proc_endpoints[j];
             if (endpoint->endpoint_btl == openib_btl) {
@@ -1045,18 +1035,19 @@ int mca_btl_openib_add_procs(
                 break;
             }
         }
-        OPAL_THREAD_UNLOCK(&ib_proc->proc_lock);
 
         if (found_existing) {
             if (reachable) {
                 opal_bitmap_set_bit(reachable, i);
             }
             peers[i] = endpoint;
+            OPAL_THREAD_UNLOCK( &ib_proc->proc_lock );
             continue;
         }
 
-        rc = init_ib_proc(openib_btl, ib_proc, &endpoint, lcl_subnet_id_port_cnt,
-                          btl_rank, &is_reachable);
+        rc = init_ib_proc_nolock(openib_btl, ib_proc, &endpoint, lcl_subnet_id_port_cnt,
+                                 btl_rank, &is_reachable);
+        OPAL_THREAD_UNLOCK( &ib_proc->proc_lock );
         if( OPAL_SUCCESS == rc ){
             peers[i] = endpoint;
             if( is_reachable && NULL != reachable ){
@@ -1076,15 +1067,18 @@ struct mca_btl_base_endpoint_t *mca_btl_openib_get_ep (struct mca_btl_base_modul
     mca_btl_openib_module_t *openib_btl = (mca_btl_openib_module_t *) btl;
     mca_btl_base_endpoint_t *endpoint;
     mca_btl_openib_proc_t *ib_proc;
+    int j;
+    int local_port_cnt = 0, btl_rank;
+    bool is_reachable;
 
-    if (NULL == (ib_proc = mca_btl_openib_proc_create(proc))) {
+    if (NULL == (ib_proc = mca_btl_openib_proc_get_locked(proc))) {
         /* if we don't have connection info for this process, it's
          * okay because some other method might be able to reach it,
          * so just mark it as unreachable by us */
         return NULL;
     }
 
-    OPAL_THREAD_LOCK(&ib_proc->proc_lock);
+
     for (size_t j = 0 ; j < ib_proc->proc_endpoint_count ; ++j) {
         endpoint = ib_proc->proc_endpoints[j];
         if (endpoint->endpoint_btl == openib_btl) {
@@ -1092,13 +1086,19 @@ struct mca_btl_base_endpoint_t *mca_btl_openib_get_ep (struct mca_btl_base_modul
             return endpoint;
         }
     }
-    OPAL_THREAD_UNLOCK(&ib_proc->proc_lock);
 
-    BTL_VERBOSE(("creating new endpoint for remote process {.jobid = 0x%x, .vpid = 0x%x}",
-                 proc->proc_name.jobid, proc->proc_name.vpid));
+    for(j=0; j < mca_btl_openib_component.ib_num_btls; j++){
+        if(mca_btl_openib_component.openib_btls[j]->port_info.subnet_id
+           == openib_btl->port_info.subnet_id) {
+            if(openib_btl == mca_btl_openib_component.openib_btls[j]) {
+                btl_rank = local_port_cnt;
+            }
+            local_port_cnt++;
+        }
+    }
 
-    endpoint = NULL;
-    (void) mca_btl_openib_add_procs (btl, 1, &proc, &endpoint, NULL);
+    (void)init_ib_proc_nolock(openib_btl, ib_proc, &endpoint,
+                            local_port_cnt, btl_rank, &is_reachable);
     return endpoint;
 }
 

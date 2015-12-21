@@ -84,7 +84,7 @@ typedef struct mca_btl_openib_proc_t mca_btl_openib_proc_t;
 
 OBJ_CLASS_DECLARATION(mca_btl_openib_proc_t);
 
-mca_btl_openib_proc_t* mca_btl_openib_proc_create(opal_proc_t* proc);
+mca_btl_openib_proc_t* mca_btl_openib_proc_get_locked(opal_proc_t* proc);
 int mca_btl_openib_proc_insert(mca_btl_openib_proc_t*, mca_btl_base_endpoint_t*);
 int mca_btl_openib_proc_remove(opal_proc_t* proc,
                                mca_btl_base_endpoint_t* module_endpoint);
