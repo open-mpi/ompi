@@ -313,6 +313,7 @@ int mca_btl_openib_proc_remove(opal_proc_t *proc,
                 if (i == ib_proc->proc_endpoint_count - 1) {
                     --ib_proc->proc_endpoint_count;
                 }
+                opal_mutex_unlock(&ib_proc->proc_lock);
                 return OPAL_SUCCESS;
             }
         }
