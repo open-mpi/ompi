@@ -75,7 +75,7 @@ void mca_btl_openib_proc_destruct(mca_btl_openib_proc_t* ib_proc)
  * Look for an existing IB process instances based on the associated
  * opal_proc_t instance.
  */
-static mca_btl_openib_proc_t* mca_btl_openib_proc_lookup_proc_nolock(opal_proc_t* proc)
+static mca_btl_openib_proc_t* ibproc_lookup_no_lock(opal_proc_t* proc)
 {
     mca_btl_openib_proc_t* ib_proc;
 
@@ -91,13 +91,19 @@ static mca_btl_openib_proc_t* mca_btl_openib_proc_lookup_proc_nolock(opal_proc_t
     return NULL;
 }
 
-static mca_btl_openib_proc_t* mca_btl_openib_proc_lookup_proc(opal_proc_t* proc)
+static mca_btl_openib_proc_t* ibproc_lookup_and_lock(opal_proc_t* proc)
 {
     mca_btl_openib_proc_t* ib_proc;
 
+    /* get the process from the list */
     OPAL_THREAD_LOCK(&mca_btl_openib_component.ib_lock);
-    ib_proc = mca_btl_openib_proc_lookup_proc_nolock(proc);
+    ib_proc = ibproc_lookup_no_lock(proc);
     OPAL_THREAD_UNLOCK(&mca_btl_openib_component.ib_lock);
+    if( NULL != ib_proc ){
+        /* if we were able to find it - lock it.
+         * NOTE: we want to lock it outside of list locked region */
+        OPAL_THREAD_LOCK(&ib_proc->proc_lock);
+    }
     return ib_proc;
 }
 
@@ -117,7 +123,7 @@ static void inline unpack8(char **src, uint8_t *value)
  * associated w/ a given destination on this datastructure.
  */
 
-mca_btl_openib_proc_t* mca_btl_openib_proc_create(opal_proc_t* proc)
+mca_btl_openib_proc_t* mca_btl_openib_proc_get_locked(opal_proc_t* proc)
 {
     mca_btl_openib_proc_t *ib_proc = NULL, *ib_proc_ret = NULL;
     size_t msg_size;
@@ -127,10 +133,11 @@ mca_btl_openib_proc_t* mca_btl_openib_proc_create(opal_proc_t* proc)
     char *offset;
     int modex_message_size;
     mca_btl_openib_modex_message_t dummy;
+    bool found = false;
 
     /* Check if we have already created a IB proc
      * structure for this ompi process */
-    ib_proc = mca_btl_openib_proc_lookup_proc(proc);
+    ib_proc = ibproc_lookup_and_lock(proc);
     if (NULL != ib_proc) {
         /* Gotcha! */
         return ib_proc;
@@ -258,16 +265,27 @@ mca_btl_openib_proc_t* mca_btl_openib_proc_create(opal_proc_t* proc)
     /* Finally add this process to the initialized procs list */
     OPAL_THREAD_LOCK(&mca_btl_openib_component.ib_lock);
 
-    ib_proc_ret = mca_btl_openib_proc_lookup_proc_nolock(proc);
+    ib_proc_ret = ibproc_lookup_no_lock(proc);
     if (NULL == ib_proc_ret) {
-        /* if process can't be found in this list - insert it */
+        /* if process can't be found in this list - insert it locked
+         * it is safe to lock ib_proc here because this thread is
+         * the only one who knows about it so far */
+        OPAL_THREAD_LOCK(&ib_proc->proc_lock);
         opal_list_append(&mca_btl_openib_component.ib_procs, &ib_proc->super);
         ib_proc_ret = ib_proc;
+        found = true;
     } else {
         /* otherwise - release module_proc */
         OBJ_RELEASE(ib_proc);
+        found = false;
     }
     OPAL_THREAD_UNLOCK(&mca_btl_openib_component.ib_lock);
+
+    /* if we haven't insert the process - lock it here so we
+     * won't lock mca_btl_openib_component.ib_lock */
+    if( !found ){
+        OPAL_THREAD_LOCK(&ib_proc_ret->proc_lock);
+    }
 
     return ib_proc_ret;
 
@@ -288,7 +306,7 @@ int mca_btl_openib_proc_remove(opal_proc_t *proc,
 
     /* Remove endpoint from the openib BTL version of the proc as
        well */
-    ib_proc = mca_btl_openib_proc_lookup_proc(proc);
+    ib_proc = ibproc_lookup_and_lock(proc);
     if (NULL != ib_proc) {
         for (i = 0; i < ib_proc->proc_endpoint_count; ++i) {
             if (ib_proc->proc_endpoints[i] == endpoint) {
