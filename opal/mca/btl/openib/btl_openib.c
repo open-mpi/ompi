@@ -984,17 +984,22 @@ int mca_btl_openib_add_procs(
     }
 #endif
 
+    /* protect the device */
+    OPAL_THREAD_LOCK(&mca_btl_openib_component.ib_lock);
     rc = prepare_device_for_use (openib_btl->device);
     if (OPAL_SUCCESS != rc) {
         BTL_ERROR(("could not prepare openib device for use"));
+        OPAL_THREAD_UNLOCK(&mca_btl_openib_component.ib_lock);
         return rc;
     }
 
     rc = mca_btl_openib_size_queues(openib_btl, nprocs);
     if (OPAL_SUCCESS != rc) {
         BTL_ERROR(("error creating cqs"));
+        OPAL_THREAD_UNLOCK(&mca_btl_openib_component.ib_lock);
         return rc;
     }
+    OPAL_THREAD_UNLOCK(&mca_btl_openib_component.ib_lock);
 
     for (i = 0, local_procs = 0 ; i < (int) nprocs; i++) {
         struct opal_proc_t* proc = procs[i];
@@ -1067,9 +1072,28 @@ struct mca_btl_base_endpoint_t *mca_btl_openib_get_ep (struct mca_btl_base_modul
     mca_btl_openib_module_t *openib_btl = (mca_btl_openib_module_t *) btl;
     mca_btl_base_endpoint_t *endpoint;
     mca_btl_openib_proc_t *ib_proc;
-    int j;
+    int j, rc;
     int local_port_cnt = 0, btl_rank;
     bool is_reachable;
+
+    // TODO: shift to the separate function
+    /* protect the device */
+    OPAL_THREAD_LOCK(&mca_btl_openib_component.ib_lock);
+    rc = prepare_device_for_use (openib_btl->device);
+    if (OPAL_SUCCESS != rc) {
+        BTL_ERROR(("could not prepare openib device for use"));
+        OPAL_THREAD_UNLOCK(&mca_btl_openib_component.ib_lock);
+        return rc;
+    }
+
+    rc = mca_btl_openib_size_queues(openib_btl, 1);
+    if (OPAL_SUCCESS != rc) {
+        BTL_ERROR(("error creating cqs"));
+        OPAL_THREAD_UNLOCK(&mca_btl_openib_component.ib_lock);
+        return rc;
+    }
+    OPAL_THREAD_UNLOCK(&mca_btl_openib_component.ib_lock);
+
 
     if (NULL == (ib_proc = mca_btl_openib_proc_get_locked(proc))) {
         /* if we don't have connection info for this process, it's
