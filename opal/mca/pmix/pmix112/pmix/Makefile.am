@@ -57,10 +57,10 @@ include src/server/Makefile.am
 include src/sec/Makefile.am
 include src/common/Makefile.am
 
-lib_LTLIBRARIES = libpmix.la
+lib_LTLIBRARIES = libpmix112.la
 
-libpmix_la_SOURCES = $(headers) $(sources)
-libpmix_la_LDFLAGS = -version-info $(libpmix_so_version)
+libpmix112_la_SOURCES = $(headers) $(sources)
+libpmix112_la_LDFLAGS = -version-info $(libpmix112_so_version)
 
 if ! PMIX_EMBEDDED_MODE
 SUBDIRS = . test

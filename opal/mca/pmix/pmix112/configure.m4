@@ -59,7 +59,7 @@ AC_DEFUN([MCA_opal_pmix_pmix112_CONFIG],[
             if test $opal_pmix_pmix112_happy -eq 1; then
                 PMIX_VERSION="internal v`$srcdir/$opal_pmix_pmix112_basedir/pmix/config/pmix_get_version.sh $srcdir/$opal_pmix_pmix112_basedir/pmix/VERSION`"
                 # Build flags for our Makefile.am
-                opal_pmix_pmix112_LIBS='$(OPAL_TOP_BUILDDIR)/'"$opal_pmix_pmix112_basedir"'/pmix/libpmix.la'
+                opal_pmix_pmix112_LIBS='$(OPAL_TOP_BUILDDIR)/'"$opal_pmix_pmix112_basedir"'/pmix/libpmix112.la'
                 opal_pmix_pmix112_CPPFLAGS='-I$(OPAL_TOP_BUILDDIR)/opal/mca/pmix/pmix112/pmix/include/pmix -I$(OPAL_TOP_BUILDDIR)/opal/mca/pmix/pmix112/pmix/include -I$(OPAL_TOP_BUILDDIR)/opal/mca/pmix/pmix112/pmix -I$(OPAL_TOP_SRCDIR)/opal/mca/pmix/pmix112/pmix'
                 AC_SUBST([opal_pmix_pmix112_LIBS])
                 AC_SUBST([opal_pmix_pmix112_CPPFLAGS])

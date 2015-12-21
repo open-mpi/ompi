@@ -75,4 +75,4 @@ date="Dec 12, 2015"
 # Version numbers are described in the Libtool current:revision:age
 # format.
 
-libpmix_so_version=2:1:0
+libpmix112_so_version=2:1:0
