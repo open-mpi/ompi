@@ -170,6 +170,7 @@ ompi_coll_base_scatter_intra_binomial( const void *sbuf, int scount,
 
     OPAL_OUTPUT((ompi_coll_base_framework.framework_output,  "%s:%4d\tError occurred %d, rank %2d",
                  __FILE__, line, err, rank));
+    (void)line;  // silence compiler warning
     return err;
 }
 

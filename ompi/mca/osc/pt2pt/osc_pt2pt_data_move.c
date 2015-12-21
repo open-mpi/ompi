@@ -1618,6 +1618,7 @@ static int ompi_osc_pt2pt_callback (ompi_request_t *request)
     OPAL_THREAD_UNLOCK(&ompi_request_lock);
 
     assert(incoming_length >= sizeof(ompi_osc_pt2pt_header_base_t));
+    (void)incoming_length;  // silence compiler warning
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
                          "received pt2pt callback for fragment. source = %d, count = %u, type = 0x%x",

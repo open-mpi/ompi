@@ -47,7 +47,7 @@ mca_coll_base_alltoallv_intra_basic_inplace(const void *rbuf, const int *rcounts
     MPI_Request *preq;
     char *tmp_buffer;
     size_t max_size, rdtype_size;
-    OPAL_PTRDIFF_TYPE ext, gap;
+    OPAL_PTRDIFF_TYPE ext, gap = 0;
 
     /* Initialize. */
 
@@ -184,6 +184,7 @@ ompi_coll_base_alltoallv_intra_pairwise(const void *sbuf, const int *scounts, co
     OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
                  "%s:%4d\tError occurred %d, rank %2d at step %d", __FILE__, line,
                  err, rank, step));
+    (void)line;  // silence compiler warning
     return err;
 }
 
