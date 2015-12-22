@@ -66,8 +66,8 @@ ompi_coll_base_gather_intra_binomial(const void *sbuf, int scount,
 
     ompi_datatype_type_extent(sdtype, &sextent);
     ompi_datatype_type_extent(rdtype, &rextent);
-    ssize = opal_datatype_span(&sdtype->super, scount * size, &sgap);
-    rsize = opal_datatype_span(&rdtype->super, rcount * size, &rgap);
+    ssize = opal_datatype_span(&sdtype->super, (int64_t)scount * size, &sgap);
+    rsize = opal_datatype_span(&rdtype->super, (int64_t)rcount * size, &rgap);
 
     vrank = (rank - root + size) % size;
 
@@ -193,6 +193,7 @@ ompi_coll_base_gather_intra_binomial(const void *sbuf, int scount,
 
     OPAL_OUTPUT((ompi_coll_base_framework.framework_output,  "%s:%4d\tError occurred %d, rank %2d",
                  __FILE__, line, err, rank));
+    (void)line;  // silence compiler warning
     return err;
 }
 
@@ -330,6 +331,7 @@ ompi_coll_base_gather_intra_linear_sync(const void *sbuf, int scount,
     OPAL_OUTPUT (( ompi_coll_base_framework.framework_output,
                    "ERROR_HNDL: node %d file %s line %d error %d\n",
                    rank, __FILE__, line, ret ));
+    (void)line;  // silence compiler warning
     return ret;
 }
 

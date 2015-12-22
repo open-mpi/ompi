@@ -195,6 +195,7 @@ mca_coll_basic_allreduce_inter(const void *sbuf, void *rbuf, int count,
     if( MPI_SUCCESS != err ) {
         OPAL_OUTPUT((ompi_coll_base_framework.framework_output,"%s:%4d\tError occurred %d, rank %2d", __FILE__,
                      line, err, rank));
+        (void)line;  // silence compiler warning
         ompi_coll_base_free_reqs(reqs, rsize - 1);
     }
     if (NULL != tmpbuf) {

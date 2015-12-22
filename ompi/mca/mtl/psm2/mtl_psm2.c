@@ -419,9 +419,9 @@ int ompi_mtl_psm2_progress( void ) {
 	if (mtl_psm2_request->type == OMPI_mtl_psm2_IRECV) {
 
         mtl_psm2_request->super.ompi_req->req_status.MPI_SOURCE =
-            psm2_status.msg_tag.tag2;
+            psm2_status.msg_tag.tag1;
 	    mtl_psm2_request->super.ompi_req->req_status.MPI_TAG =
-		    psm2_status.msg_tag.tag1;
+		    psm2_status.msg_tag.tag0;
             mtl_psm2_request->super.ompi_req->req_status._ucount =
                 psm2_status.nbytes;
 

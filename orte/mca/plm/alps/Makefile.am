@@ -10,6 +10,8 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2008-2010 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
+#                         reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -39,8 +41,13 @@ endif
 mcacomponentdir = $(ortelibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_plm_alps_la_SOURCES = $(sources)
-mca_plm_alps_la_LDFLAGS = -module -avoid-version
+mca_plm_alps_la_CPPFLAGS = $(plm_alps_CPPFLAGS)
+mca_plm_alps_la_LDFLAGS = -module -avoid-version $(plm_alps_LDFLAGS)
+mca_plm_alps_la_LIBADD = $(plm_alps_LIBS) \
+    $(ORTE_TOP_BUILDDIR)/orte/mca/common/alps/lib@ORTE_LIB_PREFIX@mca_common_alps.la
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_plm_alps_la_SOURCES =$(sources)
-libmca_plm_alps_la_LDFLAGS = -module -avoid-version
+libmca_plm_alps_la_CPPFLAGS = $(plm_alps_CPPFLAGS)
+libmca_plm_alps_la_LDFLAGS = -module -avoid-version $(plm_alps_LDFLAGS)
+libmca_plm_alps_la_LIBADD = $(plm_alps_LIBS)

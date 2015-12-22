@@ -30,6 +30,7 @@ static inline void V_OUTPUT_ERR(const char *fmt, ... )
     va_start(list, fmt);
     ret = vasprintf(&str, fmt, list);
     assert(-1 != ret);
+    (void)ret;  // silence compiler warning
     opal_output(0, "%s", str);
     free(str);
     va_end(list);

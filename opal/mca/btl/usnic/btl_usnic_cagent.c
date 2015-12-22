@@ -298,9 +298,16 @@ static void agent_sendto(int fd, char *buffer, ssize_t numbytes,
         } else if (rc < 0) {
             if (errno == EAGAIN || errno == EINTR) {
                 continue;
+            } else if (errno == EPERM) {
+                // We're sending too fast
+                usleep(5);
+                continue;
             }
 
-            ABORT("Unexpected sendto() error");
+            char *msg;
+            asprintf(&msg, "Unexpected sendto() error: errno=%d (%s)",
+                     errno, strerror(errno));
+            ABORT(msg);
             /* Will not return */
         }
 

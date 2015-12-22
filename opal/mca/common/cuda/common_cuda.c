@@ -10,7 +10,9 @@
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2015 NVIDIA Corporation.  All rights reserved.
- * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -34,6 +36,7 @@
 #include "opal/util/output.h"
 #include "opal/util/show_help.h"
 #include "opal/util/proc.h"
+#include "opal/util/argv.h"
 
 #include "opal/mca/mpool/base/base.h"
 #include "opal/runtime/opal_params.h"

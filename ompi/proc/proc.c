@@ -50,6 +50,7 @@ ompi_proc_t* ompi_proc_local_proc = NULL;
 
 static void ompi_proc_construct(ompi_proc_t* proc);
 static void ompi_proc_destruct(ompi_proc_t* proc);
+static ompi_proc_t *ompi_proc_for_name_nolock (const opal_process_name_t proc_name);
 
 OBJ_CLASS_INSTANCE(
     ompi_proc_t,
@@ -84,10 +85,10 @@ void ompi_proc_destruct(ompi_proc_t* proc)
     if (NULL != proc->super.proc_hostname) {
         free(proc->super.proc_hostname);
     }
-    OPAL_THREAD_LOCK(&ompi_proc_lock);
+    opal_mutex_lock (&ompi_proc_lock);
     opal_list_remove_item(&ompi_proc_list, (opal_list_item_t*)proc);
     opal_hash_table_remove_value_ptr (&ompi_proc_hash, &proc->super.proc_name, sizeof (proc->super.proc_name));
-    OPAL_THREAD_UNLOCK(&ompi_proc_lock);
+    opal_mutex_unlock (&ompi_proc_lock);
 }
 
 /**
@@ -198,6 +199,33 @@ opal_proc_t *ompi_proc_lookup (const opal_process_name_t proc_name)
     return NULL;
 }
 
+static ompi_proc_t *ompi_proc_for_name_nolock (const opal_process_name_t proc_name)
+{
+    ompi_proc_t *proc = NULL;
+    int ret;
+
+    /* double-check that another competing thread has not added this proc */
+    ret = opal_hash_table_get_value_ptr (&ompi_proc_hash, &proc_name, sizeof (proc_name), (void **) &proc);
+    if (OPAL_SUCCESS == ret) {
+        goto exit;
+    }
+
+    /* allocate a new ompi_proc_t object for the process and insert it into the process table */
+    ret = ompi_proc_allocate (proc_name.jobid, proc_name.vpid, &proc);
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
+        /* allocation fail */
+        goto exit;
+    }
+
+    /* finish filling in the important proc data fields */
+    ret = ompi_proc_complete_init_single (proc);
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
+        goto exit;
+    }
+exit:
+    return proc;
+}
+
 opal_proc_t *ompi_proc_for_name (const opal_process_name_t proc_name)
 {
     ompi_proc_t *proc = NULL;
@@ -209,29 +237,9 @@ opal_proc_t *ompi_proc_for_name (const opal_process_name_t proc_name)
         return &proc->super;
     }
 
-    OPAL_THREAD_LOCK(&ompi_proc_lock);
-    do {
-        /* double-check that another competing thread has not added this proc */
-        ret = opal_hash_table_get_value_ptr (&ompi_proc_hash, &proc_name, sizeof (proc_name), (void **) &proc);
-        if (OPAL_SUCCESS == ret) {
-            break;
-        }
-
-        /* allocate a new ompi_proc_t object for the process and insert it into the process table */
-        ret = ompi_proc_allocate (proc_name.jobid, proc_name.vpid, &proc);
-        if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
-            /* allocation fail */
-            break;
-        }
-
-        /* finish filling in the important proc data fields */
-        ret = ompi_proc_complete_init_single (proc);
-        if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
-            proc = NULL;
-            break;
-        }
-    } while (0);
-    OPAL_THREAD_UNLOCK(&ompi_proc_lock);
+    opal_mutex_lock (&ompi_proc_lock);
+    proc = ompi_proc_for_name_nolock (proc_name);
+    opal_mutex_unlock (&ompi_proc_lock);
 
     return (opal_proc_t *) proc;
 }
@@ -319,7 +327,7 @@ int ompi_proc_complete_init(void)
     ompi_proc_t *proc;
     int ret, errcode = OMPI_SUCCESS;
 
-    OPAL_THREAD_LOCK(&ompi_proc_lock);
+    opal_mutex_lock (&ompi_proc_lock);
 
     OPAL_LIST_FOREACH(proc, &ompi_proc_list, ompi_proc_t) {
         ret = ompi_proc_complete_init_single (proc);
@@ -328,7 +336,7 @@ int ompi_proc_complete_init(void)
             break;
         }
     }
-    OPAL_THREAD_UNLOCK(&ompi_proc_lock);
+    opal_mutex_unlock (&ompi_proc_lock);
 
     if (ompi_process_info.num_procs >= ompi_add_procs_cutoff) {
         uint16_t u16, *u16ptr;
@@ -419,7 +427,7 @@ ompi_proc_t **ompi_proc_get_allocated (size_t *size)
     my_name = *OMPI_CAST_RTE_NAME(&ompi_proc_local_proc->super.proc_name);
 
     /* First count how many match this jobid */
-    OPAL_THREAD_LOCK(&ompi_proc_lock);
+    opal_mutex_lock (&ompi_proc_lock);
     OPAL_LIST_FOREACH(proc, &ompi_proc_list, ompi_proc_t) {
         if (OPAL_EQUAL == ompi_rte_compare_name_fields(mask, OMPI_CAST_RTE_NAME(&proc->super.proc_name), &my_name)) {
             ++count;
@@ -429,7 +437,7 @@ ompi_proc_t **ompi_proc_get_allocated (size_t *size)
     /* allocate an array */
     procs = (ompi_proc_t**) malloc(count * sizeof(ompi_proc_t*));
     if (NULL == procs) {
-        OPAL_THREAD_UNLOCK(&ompi_proc_lock);
+        opal_mutex_unlock (&ompi_proc_lock);
         return NULL;
     }
 
@@ -454,7 +462,7 @@ ompi_proc_t **ompi_proc_get_allocated (size_t *size)
             procs[count++] = proc;
         }
     }
-    OPAL_THREAD_UNLOCK(&ompi_proc_lock);
+    opal_mutex_unlock (&ompi_proc_lock);
 
     *size = count;
     return procs;
@@ -518,7 +526,7 @@ ompi_proc_t** ompi_proc_all(size_t* size)
         return NULL;
     }
 
-    OPAL_THREAD_LOCK(&ompi_proc_lock);
+    opal_mutex_lock (&ompi_proc_lock);
     OPAL_LIST_FOREACH(proc, &ompi_proc_list, ompi_proc_t) {
         /* We know this isn't consistent with the behavior in ompi_proc_world,
          * but we are leaving the RETAIN for now because the code using this function
@@ -529,7 +537,7 @@ ompi_proc_t** ompi_proc_all(size_t* size)
         OBJ_RETAIN(proc);
         procs[count++] = proc;
     }
-    OPAL_THREAD_UNLOCK(&ompi_proc_lock);
+    opal_mutex_unlock (&ompi_proc_lock);
     *size = count;
     return procs;
 }
@@ -560,14 +568,14 @@ ompi_proc_t * ompi_proc_find ( const ompi_process_name_t * name )
 
     /* return the proc-struct which matches this jobid+process id */
     mask = OMPI_RTE_CMP_JOBID | OMPI_RTE_CMP_VPID;
-    OPAL_THREAD_LOCK(&ompi_proc_lock);
+    opal_mutex_lock (&ompi_proc_lock);
     OPAL_LIST_FOREACH(proc, &ompi_proc_list, ompi_proc_t) {
         if (OPAL_EQUAL == ompi_rte_compare_name_fields(mask, &proc->super.proc_name, name)) {
             rproc = proc;
             break;
         }
     }
-    OPAL_THREAD_UNLOCK(&ompi_proc_lock);
+    opal_mutex_unlock (&ompi_proc_lock);
 
     return rproc;
 }
@@ -579,7 +587,7 @@ int ompi_proc_refresh(void)
     ompi_vpid_t i = 0;
     int ret=OMPI_SUCCESS;
 
-    OPAL_THREAD_LOCK(&ompi_proc_lock);
+    opal_mutex_lock (&ompi_proc_lock);
 
     OPAL_LIST_FOREACH(proc, &ompi_proc_list, ompi_proc_t) {
         /* Does not change: proc->super.proc_name.vpid */
@@ -602,7 +610,7 @@ int ompi_proc_refresh(void)
         }
     }
 
-    OPAL_THREAD_UNLOCK(&ompi_proc_lock);
+    opal_mutex_unlock (&ompi_proc_lock);
 
     return ret;
 }
@@ -614,7 +622,7 @@ ompi_proc_pack(ompi_proc_t **proclist, int proclistsize,
     int rc;
     char *nspace;
 
-    OPAL_THREAD_LOCK(&ompi_proc_lock);
+    opal_mutex_lock (&ompi_proc_lock);
 
     /* cycle through the provided array, packing the OMPI level
      * data for each proc. This data may or may not be included
@@ -629,38 +637,44 @@ ompi_proc_pack(ompi_proc_t **proclist, int proclistsize,
      * can be sent.
      */
     for (int i = 0 ; i < proclistsize ; ++i) {
+        ompi_proc_t *proc = proclist[i];
+
+        if (ompi_proc_is_sentinel (proc)) {
+            proc = ompi_proc_for_name_nolock (ompi_proc_sentinel_to_name ((intptr_t) proc));
+        }
+
         /* send proc name */
-        rc = opal_dss.pack(buf, &(proclist[i]->super.proc_name), 1, OMPI_NAME);
+        rc = opal_dss.pack(buf, &(proc->super.proc_name), 1, OMPI_NAME);
         if(rc != OPAL_SUCCESS) {
             OMPI_ERROR_LOG(rc);
-            OPAL_THREAD_UNLOCK(&ompi_proc_lock);
+            opal_mutex_unlock (&ompi_proc_lock);
             return rc;
         }
         /* retrieve and send the corresponding nspace for this job
          * as the remote side may not know the translation */
-        nspace = (char*)opal_pmix.get_nspace(proclist[i]->super.proc_name.jobid);
+        nspace = (char*)opal_pmix.get_nspace(proc->super.proc_name.jobid);
         rc = opal_dss.pack(buf, &nspace, 1, OPAL_STRING);
         if(rc != OPAL_SUCCESS) {
             OMPI_ERROR_LOG(rc);
-            OPAL_THREAD_UNLOCK(&ompi_proc_lock);
+            opal_mutex_unlock (&ompi_proc_lock);
             return rc;
         }
         /* pack architecture flag */
-        rc = opal_dss.pack(buf, &(proclist[i]->super.proc_arch), 1, OPAL_UINT32);
+        rc = opal_dss.pack(buf, &(proc->super.proc_arch), 1, OPAL_UINT32);
         if(rc != OPAL_SUCCESS) {
             OMPI_ERROR_LOG(rc);
-            OPAL_THREAD_UNLOCK(&ompi_proc_lock);
+            opal_mutex_unlock (&ompi_proc_lock);
             return rc;
         }
         /* pass the name of the host this proc is on */
-        rc = opal_dss.pack(buf, &(proclist[i]->super.proc_hostname), 1, OPAL_STRING);
+        rc = opal_dss.pack(buf, &(proc->super.proc_hostname), 1, OPAL_STRING);
         if(rc != OPAL_SUCCESS) {
             OMPI_ERROR_LOG(rc);
-            OPAL_THREAD_UNLOCK(&ompi_proc_lock);
+            opal_mutex_unlock (&ompi_proc_lock);
             return rc;
         }
     }
-    OPAL_THREAD_UNLOCK(&ompi_proc_lock);
+    opal_mutex_unlock (&ompi_proc_lock);
     return OMPI_SUCCESS;
 }
 
@@ -672,7 +686,7 @@ ompi_proc_find_and_add(const ompi_process_name_t * name, bool* isnew)
 
     /* return the proc-struct which matches this jobid+process id */
     mask = OMPI_RTE_CMP_JOBID | OMPI_RTE_CMP_VPID;
-    OPAL_THREAD_LOCK(&ompi_proc_lock);
+    opal_mutex_lock (&ompi_proc_lock);
     OPAL_LIST_FOREACH(proc, &ompi_proc_list, ompi_proc_t) {
         if (OPAL_EQUAL == ompi_rte_compare_name_fields(mask, &proc->super.proc_name, name)) {
             rproc = proc;
@@ -690,7 +704,7 @@ ompi_proc_find_and_add(const ompi_process_name_t * name, bool* isnew)
         ompi_proc_allocate (name->jobid, name->vpid, &rproc);
     }
 
-    OPAL_THREAD_UNLOCK(&ompi_proc_lock);
+    opal_mutex_unlock (&ompi_proc_lock);
 
     return rproc;
 }

@@ -474,7 +474,10 @@ int32_t opal_convertor_set_position_nocheck( opal_convertor_t* convertor,
 }
 #else
 #define OPAL_CONVERTOR_COMPUTE_REMOTE_SIZE(convertor, datatype, bdt_mask) \
-    assert(0 == (bdt_mask))
+{                                                                         \
+    assert(0 == (bdt_mask));                                              \
+    (void)bdt_mask;  /* silence compiler warning */                       \
+}
 #endif  /* OPAL_ENABLE_HETEROGENEOUS_SUPPORT */
 
 /**

@@ -82,17 +82,22 @@ foreach my $line (split /[\r\n]+/, $output) {
     }
     # this is a line of interest - see if the
     # next token indicates a public symbol by
-    # being a 'T'
+    # being a 'T' or a 'B'
     $val = shift(@values);
-    if ("T" ne $val) {
-        quiet_print "NOT T\n";
-        next;
-    }
-    $val = shift(@values);
-    quiet_print "GOT: " . $val . "\n";
-    push @symbols, $val;
-    if ($len < length($val)) {
-        $len = length($val);
+    if ("T" eq $val || "B" eq $val || "D" eq $val ||
+        "t" eq $val || "b" eq $val || "d" eq $val) {
+        $val = shift(@values);
+        # if this symbol contains a '.', then we
+        # need to ignore it
+        if (index($val, ".") != -1) {
+            quiet_print "skipping $val\n";
+            next;
+        }
+        quiet_print "GOT: " . $val . "\n";
+        push @symbols, $val;
+        if ($len < length($val)) {
+            $len = length($val);
+        }
     }
 }
 

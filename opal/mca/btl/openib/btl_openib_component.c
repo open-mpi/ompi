@@ -834,7 +834,12 @@ static int init_one_port(opal_list_t *btl_list, mca_btl_openib_device_t *device,
             }
 #endif
 
-            switch (openib_btl->device->ib_dev_attr.atomic_cap) {
+#if HAVE_DECL_IBV_EXP_QUERY_DEVICE
+            switch (openib_btl->device->ib_exp_dev_attr.exp_atomic_cap)
+#else
+            switch (openib_btl->device->ib_dev_attr.atomic_cap)
+#endif
+            {
             case IBV_ATOMIC_GLOB:
                 openib_btl->super.btl_flags |= MCA_BTL_ATOMIC_SUPPORTS_GLOB;
                 break;
@@ -1630,7 +1635,8 @@ static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
     }
 
     device->mem_reg_active = 0;
-    device->mem_reg_max    = calculate_max_reg(ibv_get_device_name(ib_dev));
+    device->mem_reg_max_total = calculate_max_reg(ibv_get_device_name(ib_dev));
+    device->mem_reg_max = device->mem_reg_max_total;
     if(( 0 == device->mem_reg_max) && mca_btl_openib_component.abort_not_enough_reg_mem) {
         return OPAL_ERROR;
     }
@@ -1650,6 +1656,7 @@ static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
         goto error;
     }
 #if HAVE_DECL_IBV_EXP_QUERY_DEVICE
+    device->ib_exp_dev_attr.comp_mask = IBV_EXP_DEVICE_ATTR_RESERVED - 1;
     if(ibv_exp_query_device(device->ib_dev_context, &device->ib_exp_dev_attr)){
         BTL_ERROR(("error obtaining device attributes for %s errno says %s",
                     ibv_get_device_name(device->ib_dev), strerror(errno)));

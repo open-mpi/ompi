@@ -105,6 +105,8 @@ int mca_io_ompio_set_view_internal(mca_io_ompio_file_t *fh,
     fh->f_disp        = disp;
     fh->f_offset      = disp;
     fh->f_total_bytes = 0;
+    fh->f_index_in_file_view=0;
+    fh->f_position_in_file_view=0;
 
     ompi_io_ompio_decode_datatype (fh,
                                    newfiletype,
@@ -324,7 +326,7 @@ int mca_io_ompio_simple_grouping(mca_io_ompio_file_t *fh,
         stripe_size = OMPIO_DEFAULT_STRIPE_SIZE;
     }
 
-    if ( stripe_size > fh->f_cc_size ) {
+    if ( 0 != fh->f_cc_size && stripe_size > fh->f_cc_size ) {
         group_size  = (((int)stripe_size/(int)fh->f_cc_size) > fh->f_size ) ? fh->f_size : ((int)stripe_size/(int)fh->f_cc_size);
         *num_groups = fh->f_size / group_size;
     }

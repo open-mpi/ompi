@@ -10,8 +10,8 @@ dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
-dnl Copyright (c) 2014      Intel, Inc. All rights reserved.
-dnl Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
+dnl Copyright (c) 2015      Cisco Systems, Inc.  All rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -30,7 +30,9 @@ OPAL_VAR_SCOPE_PUSH([subdirs_str subdirs_skip subdirs_args subdirs_arg])
 #
 # Make a list of command line args --eliminate the --srcdir and
 # --cache-file args, because we need to replace them with our own
-# values when invoking the sub-configure script.
+# values when invoking the sub-configure script. Also eliminate
+# the --with-platform as this will confuse any subdir with
+# similar options
 #
 
 subdirs_args=
@@ -55,6 +57,8 @@ do
 	    subdirs_skip=yes
 	    ;;
 	-srcdir=* | --srcdir=*)
+	    ;;
+	-with-platform=* | --with-platform=*)
 	    ;;
 	*)
 	    case $subdir_arg in

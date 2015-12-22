@@ -69,6 +69,5 @@ int MPI_Comm_remote_group(MPI_Comm comm, MPI_Group *group)
     }
 
     *group = (MPI_Group) comm->c_remote_group;
-    ompi_group_increment_proc_count(*group);
     return MPI_SUCCESS;
 }

@@ -269,6 +269,7 @@ ompi_coll_base_allreduce_intra_recursivedoubling(const void *sbuf, void *rbuf,
  error_hndl:
     OPAL_OUTPUT((ompi_coll_base_framework.framework_output, "%s:%4d\tRank %d Error occurred %d\n",
                  __FILE__, line, rank, ret));
+    (void)line;  // silence compiler warning
     if (NULL != inplacebuf) free(inplacebuf);
     return ret;
 }
@@ -528,6 +529,7 @@ ompi_coll_base_allreduce_intra_ring(const void *sbuf, void *rbuf, int count,
  error_hndl:
     OPAL_OUTPUT((ompi_coll_base_framework.framework_output, "%s:%4d\tRank %d Error occurred %d\n",
                  __FILE__, line, rank, ret));
+    (void)line;  // silence compiler warning
     if (NULL != inbuf[0]) free(inbuf[0]);
     if (NULL != inbuf[1]) free(inbuf[1]);
     return ret;
@@ -846,6 +848,7 @@ ompi_coll_base_allreduce_intra_ring_segmented(const void *sbuf, void *rbuf, int 
  error_hndl:
     OPAL_OUTPUT((ompi_coll_base_framework.framework_output, "%s:%4d\tRank %d Error occurred %d\n",
                  __FILE__, line, rank, ret));
+    (void)line;  // silence compiler warning
     if (NULL != inbuf[0]) free(inbuf[0]);
     if (NULL != inbuf[1]) free(inbuf[1]);
     return ret;

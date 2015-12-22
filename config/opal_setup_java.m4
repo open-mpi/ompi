@@ -95,7 +95,9 @@ AC_DEFUN([OPAL_SETUP_JAVA],[
               [ # OS X Snow Leopard and Lion (10.6 and 10.7 -- did not
                 # check prior versions)
                opal_java_found=0
-               opal_java_dir=/System/Library/Frameworks/JavaVM.framework/Versions/Current/Headers
+               AS_IF([test -x /usr/libexec/java_home],
+                    [opal_java_dir=`/usr/libexec/java_home`/include],
+                    [opal_java_dir=/System/Library/Frameworks/JavaVM.framework/Versions/Current/Headers])
                AC_MSG_CHECKING([OSX locations])
                AS_IF([test -d $opal_java_dir],
                      [AC_MSG_RESULT([found ($opal_java_dir)])
@@ -186,6 +188,11 @@ AC_DEFUN([OPAL_SETUP_JAVA],[
                           # too.  Ugh.
                           AS_IF([test -d "$with_jdk_headers/solaris"],
                                 [OPAL_JDK_CPPFLAGS="$OPAL_JDK_CPPFLAGS -I$with_jdk_headers/solaris"])
+                          # Darwin JDK also require -I<blah>/darwin.
+                          # See if that's there, and if so, add a -I for that,
+                          # too.  Ugh.
+                          AS_IF([test -d "$with_jdk_headers/darwin"],
+                                [OPAL_JDK_CPPFLAGS="$OPAL_JDK_CPPFLAGS -I$with_jdk_headers/darwin"])
 
                           CPPFLAGS="$CPPFLAGS $OPAL_JDK_CPPFLAGS"])
                    AC_CHECK_HEADER([jni.h], [],

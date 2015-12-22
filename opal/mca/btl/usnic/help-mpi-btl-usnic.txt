@@ -1,6 +1,6 @@
 # -*- text -*-
 #
-# Copyright (c) 2012-2014 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2012-2015 Cisco Systems, Inc.  All rights reserved.
 #
 # $COPYRIGHT$
 #
@@ -77,10 +77,9 @@ something wrong with the usNIC or OpenFabrics configuration on this
 server.
 
   Server:       %s
-  Message:      %s
   File:         %s
   Line:         %d
-  Error:        %s
+  Message:      %s
 #
 [check_reg_mem_basics fail]
 The usNIC BTL failed to initialize while trying to register some

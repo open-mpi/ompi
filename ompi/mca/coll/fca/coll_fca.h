@@ -286,7 +286,7 @@ int mca_coll_fca_get_fca_lib(struct ompi_communicator_t *comm);
 
 
 /* Collective functions */
-int mca_coll_fca_allreduce(void *sbuf, void *rbuf, int count,
+int mca_coll_fca_allreduce(const void *sbuf, void *rbuf, int count,
                            struct ompi_datatype_t *dtype, struct ompi_op_t *op,
                            struct ompi_communicator_t *comm,
                            mca_coll_base_module_t *module);
@@ -294,7 +294,7 @@ int mca_coll_fca_bcast(void *buff, int count, struct ompi_datatype_t *datatype,
                        int root, struct ompi_communicator_t *comm,
                        mca_coll_base_module_t *module);
 
-int mca_coll_fca_reduce(void *sbuf, void* rbuf, int count,
+int mca_coll_fca_reduce(const void *sbuf, void* rbuf, int count,
                         struct ompi_datatype_t *dtype, struct ompi_op_t *op,
                         int root, struct ompi_communicator_t *comm,
                         mca_coll_base_module_t *module);
@@ -302,54 +302,54 @@ int mca_coll_fca_reduce(void *sbuf, void* rbuf, int count,
 int mca_coll_fca_barrier(struct ompi_communicator_t *comm,
                          mca_coll_base_module_t *module);
 
-int mca_coll_fca_allgather(void *sbuf, int scount, struct ompi_datatype_t *sdtype,
+int mca_coll_fca_allgather(const void *sbuf, int scount, struct ompi_datatype_t *sdtype,
                            void *rbuf, int rcount, struct ompi_datatype_t *rdtype,
                            struct ompi_communicator_t *comm,
                            mca_coll_base_module_t *module);
 
-int mca_coll_fca_allgatherv(void *sbuf, int scount,
+int mca_coll_fca_allgatherv(const void *sbuf, int scount,
                            struct ompi_datatype_t *sdtype,
-                           void *rbuf, int *rcounts, int *disps,
+                           void *rbuf, const int *rcounts, const int *disps,
                            struct ompi_datatype_t *rdtype,
                            struct ompi_communicator_t *comm,
                            mca_coll_base_module_t *module);
 
-int mca_coll_fca_alltoall(void *sbuf, int scount,
+int mca_coll_fca_alltoall(const void *sbuf, int scount,
                             struct ompi_datatype_t *sdtype,
                             void *rbuf, int rcount,
                             struct ompi_datatype_t *rdtype,
                             struct ompi_communicator_t *comm,
                             mca_coll_base_module_t *module);
 
-int mca_coll_fca_alltoallv(void *sbuf, int *scounts, int *sdisps,
+int mca_coll_fca_alltoallv(const void *sbuf, const int *scounts, const int *sdisps,
                            struct ompi_datatype_t *sdtype,
-                           void *rbuf, int *rcounts, int *rdisps,
+                           void *rbuf, const int *rcounts, const int *rdisps,
                            struct ompi_datatype_t *rdtype,
                            struct ompi_communicator_t *comm,
                            mca_coll_base_module_t *module);
 
-int mca_coll_fca_alltoallw(void *sbuf, int *scounts, int *sdisps,
-                           struct ompi_datatype_t **sdtypes,
-                           void *rbuf, int *rcounts, int *rdisps,
-                           struct ompi_datatype_t **rdtypes,
+int mca_coll_fca_alltoallw(const void *sbuf, const int *scounts, const int *sdisps,
+                           struct ompi_datatype_t * const *sdtypes,
+                           void *rbuf, const int *rcounts, const int *rdisps,
+                           struct ompi_datatype_t * const *rdtypes,
                            struct ompi_communicator_t *comm,
                            mca_coll_base_module_t *module);
 
-int mca_coll_fca_gather(void *sbuf, int scount,
+int mca_coll_fca_gather(const void *sbuf, int scount,
                         struct ompi_datatype_t *sdtype,
                         void *rbuf, int rcount,
                         struct ompi_datatype_t *rdtype,
                         int root, struct ompi_communicator_t *comm,
                         mca_coll_base_module_t *module);
 
-int mca_coll_fca_gatherv(void *sbuf, int scount,
+int mca_coll_fca_gatherv(const void *sbuf, int scount,
                          struct ompi_datatype_t *sdtype,
-                         void *rbuf, int *rcounts, int *disps,
+                         void *rbuf, const int *rcounts, const int *disps,
                          struct ompi_datatype_t *rdtype, int root,
                          struct ompi_communicator_t *comm,
                          mca_coll_base_module_t *module);
 
-int mca_coll_fca_reduce_scatter(void *sbuf, void *rbuf, int *rcounts,
+int mca_coll_fca_reduce_scatter(const void *sbuf, void *rbuf, const int *rcounts,
                                 struct ompi_datatype_t *dtype,
                                 struct ompi_op_t *op,
                                 struct ompi_communicator_t *comm,

@@ -170,7 +170,7 @@ int ompi_coll_base_allgather_intra_bruck(const void *sbuf, int scount,
         char *free_buf = NULL, *shift_buf = NULL;
         ptrdiff_t span, gap;
 
-        span = opal_datatype_span(&rdtype->super, (size - rank) * rcount, &gap);
+        span = opal_datatype_span(&rdtype->super, (int64_t)(size - rank) * rcount, &gap);
 
         free_buf = (char*)calloc(span, sizeof(char));
         if (NULL == free_buf) {
@@ -203,6 +203,7 @@ int ompi_coll_base_allgather_intra_bruck(const void *sbuf, int scount,
  err_hndl:
     OPAL_OUTPUT((ompi_coll_base_framework.framework_output,  "%s:%4d\tError occurred %d, rank %2d",
                  __FILE__, line, err, rank));
+    (void)line;  // silence compiler warning
     return err;
 }
 
@@ -339,6 +340,7 @@ ompi_coll_base_allgather_intra_recursivedoubling(const void *sbuf, int scount,
  err_hndl:
     OPAL_OUTPUT((ompi_coll_base_framework.framework_output,  "%s:%4d\tError occurred %d, rank %2d",
                  __FILE__, line, err, rank));
+    (void)line;  // silence compiler warning
     return err;
 }
 
@@ -426,6 +428,7 @@ int ompi_coll_base_allgather_intra_ring(const void *sbuf, int scount,
  err_hndl:
     OPAL_OUTPUT((ompi_coll_base_framework.framework_output,  "%s:%4d\tError occurred %d, rank %2d",
                  __FILE__, line, err, rank));
+    (void)line;  // silence compiler warning
     return err;
 }
 
@@ -599,6 +602,7 @@ ompi_coll_base_allgather_intra_neighborexchange(const void *sbuf, int scount,
  err_hndl:
     OPAL_OUTPUT((ompi_coll_base_framework.framework_output,  "%s:%4d\tError occurred %d, rank %2d",
                  __FILE__, line, err, rank));
+    (void)line;  // silence compiler warning
     return err;
 }
 
@@ -658,6 +662,7 @@ int ompi_coll_base_allgather_intra_two_procs(const void *sbuf, int scount,
  err_hndl:
     OPAL_OUTPUT((ompi_coll_base_framework.framework_output, "%s:%4d\tError occurred %d, rank %2d",
                  __FILE__, line, err, rank));
+    (void)line;  // silence compiler warning
     return err;
 }
 

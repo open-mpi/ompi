@@ -88,7 +88,7 @@ static inline int check_mxm_tls(char *var)
     return OSHMEM_SUCCESS;
 }
 
-static inline int set_mxm_tls()
+static inline int set_mxm_tls(void)
 {
     char *tls;
 
@@ -136,7 +136,7 @@ static inline int check_mxm_hw_tls(char *v, char *tls)
     return OSHMEM_ERROR;
 }
 
-static inline int set_mxm_hw_rdma_tls()
+static inline int set_mxm_hw_rdma_tls(void)
 {
     if (!mca_spml_ikrit.hw_rdma_channel) {
         return check_mxm_hw_tls("MXM_OSHMEM_TLS", getenv("MXM_OSHMEM_TLS"));

@@ -420,13 +420,14 @@ static int setup_fork(orte_job_t *jdata,
      */
     opal_setenv("OMPI_MCA_orte_bound_at_launch", "1", true, &app->env);
 
-    /* tell the ESS to select the pmi component - but don't override
+    /* tell the ESS to avoid the singleton component - but don't override
      * anything that may have been provided elsewhere
      */
-    opal_setenv("OMPI_MCA_ess", "pmi", false, &app->env);
+    opal_setenv("OMPI_MCA_ess", "^singleton", false, &app->env);
 
-    /* ensure that the spawned process ignores direct launch components */
-    opal_setenv("OMPI_MCA_pmix", "^s1,s2,cray", true, &app->env);
+    /* ensure that the spawned process ignores direct launch components,
+     * but do not overrride anything we were given */
+    opal_setenv("OMPI_MCA_pmix", "^s1,s2,cray", false, &app->env);
 
     /* since we want to pass the name as separate components, make sure
      * that the "name" environmental variable is cleared!

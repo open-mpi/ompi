@@ -71,7 +71,8 @@ int orte_ess_lsf_component_query(mca_base_module_t **module, int *priority)
      * by mpirun in an LSF world
      */
 
-    if (NULL != getenv("LSB_JOBID") &&
+    if (ORTE_PROC_IS_DAEMON &&
+        NULL != getenv("LSB_JOBID") &&
         NULL != orte_process_info.my_hnp_uri) {
         *priority = 40;
         *module = (mca_base_module_t *)&orte_ess_lsf_module;

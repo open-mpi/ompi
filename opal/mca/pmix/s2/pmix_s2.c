@@ -6,7 +6,7 @@
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC. All
  *                         rights reserved.
  * Copyright (c) 2013-2015 Intel, Inc.  All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -21,6 +21,7 @@
 
 #include "opal_stdint.h"
 #include "opal/mca/hwloc/base/base.h"
+#include "opal/util/argv.h"
 #include "opal/util/opal_environ.h"
 #include "opal/util/output.h"
 #include "opal/util/proc.h"

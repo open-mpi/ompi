@@ -11,7 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Intel, Inc. All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -38,8 +39,6 @@ static const char FUNC_NAME[] = "MPI_Initialized";
 
 int MPI_Initialized(int *flag)
 {
-    MPI_Comm null = NULL;
-
     OPAL_CR_NOOP_PROGRESS();
 
     /* We must obtain the lock to guarnatee consistent values of
@@ -63,7 +62,10 @@ int MPI_Initialized(int *flag)
                                               FUNC_NAME);
             } else {
                 opal_mutex_unlock(&ompi_mpi_bootstrap_mutex);
-                return OMPI_ERRHANDLER_INVOKE(null, MPI_ERR_ARG,
+                /* We have no MPI object here so call ompi_errhandle_invoke
+                 * directly */
+                return ompi_errhandler_invoke(NULL, NULL, -1,
+                                              ompi_errcode_get_mpi_code(MPI_ERR_ARG),
                                               FUNC_NAME);
             }
         }

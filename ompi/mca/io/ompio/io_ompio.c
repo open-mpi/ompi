@@ -2002,6 +2002,7 @@ int ompi_io_ompio_empty_print_queue(int queue_type){
     ret =  ompi_io_ompio_set_print_queue(&q, queue_type);
 
     assert (ret != OMPI_ERROR);
+    (void)ret;  // silence compiler warning
     if (q->count == 0)
 	    return 1;
     else
@@ -2018,6 +2019,7 @@ int ompi_io_ompio_full_print_queue(int queue_type){
     ret =  ompi_io_ompio_set_print_queue(&q, queue_type);
 
     assert ( ret != OMPI_ERROR);
+    (void)ret;  // silence compiler warning
     if (q->count < QUEUESIZE)
 	    return 0;
     else
