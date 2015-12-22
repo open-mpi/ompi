@@ -16,6 +16,10 @@
 #ifndef PML_CM_H
 #define PML_CM_H
 
+#ifdef HAVE_ALLOCA_H
+#include <alloca.h>
+#endif
+
 #include "ompi_config.h"
 #include "ompi/request/request.h"
 #include "ompi/mca/pml/pml.h"
