@@ -206,7 +206,6 @@ static int adjust_cq(mca_btl_openib_device_t *device, const int cq)
             return OPAL_ERROR;
         }
 
-        OPAL_THREAD_LOCK(&device->device_lock);
         if (!device->progress) {
             int rc;
             device->progress = true;
@@ -215,7 +214,6 @@ static int adjust_cq(mca_btl_openib_device_t *device, const int cq)
                 return rc;
             }
         }
-        OPAL_THREAD_UNLOCK(&device->device_lock);
 #endif
     }
 #ifdef HAVE_IBV_RESIZE_CQ
@@ -402,7 +400,7 @@ static int create_srq(mca_btl_openib_module_t *openib_btl)
     return OPAL_SUCCESS;
 }
 
-static int mca_btl_openib_size_queues(struct mca_btl_openib_module_t* openib_btl, size_t nprocs)
+static int mca_btl_openib_size_queues_nolock(struct mca_btl_openib_module_t* openib_btl, size_t nprocs)
 {
     uint32_t send_cqes, recv_cqes;
     int rc = OPAL_SUCCESS, qp;
@@ -599,7 +597,7 @@ static int mca_btl_openib_tune_endpoint(mca_btl_openib_module_t* openib_btl,
     return OPAL_SUCCESS;
 }
 
-static int prepare_device_for_use (mca_btl_openib_device_t *device)
+static int prepare_device_for_use_nolock (mca_btl_openib_device_t *device)
 {
     mca_btl_openib_frag_init_data_t *init_data;
     int rc, length;
@@ -916,7 +914,12 @@ static int init_ib_proc_nolock(mca_btl_openib_module_t* openib_btl, mca_btl_open
         return OPAL_ERROR;
     }
 
+    /* protect device because several endpoints for different ib_proc's
+     * may be simultaneously initialized */
+    opal_mutex_lock(&openib_btl->device->device_lock);
     endpoint->index = opal_pointer_array_add(openib_btl->device->endpoints, (void*)endpoint);
+    opal_mutex_unlock(&openib_btl->device->device_lock);
+
     if( 0 > endpoint->index ) {
         OBJ_RELEASE(endpoint);
         return OPAL_ERROR;
@@ -977,21 +980,21 @@ int mca_btl_openib_add_procs(
 #endif
 
     /* protect the device */
-    opal_mutex_lock(&mca_btl_openib_component.ib_lock);
-    rc = prepare_device_for_use (openib_btl->device);
+    opal_mutex_lock(&openib_btl->device->device_lock);
+    rc = prepare_device_for_use_nolock (openib_btl->device);
     if (OPAL_SUCCESS != rc) {
         BTL_ERROR(("could not prepare openib device for use"));
-        opal_mutex_unlock(&mca_btl_openib_component.ib_lock);
+        opal_mutex_unlock(&openib_btl->device->device_lock);
         return rc;
     }
 
-    rc = mca_btl_openib_size_queues(openib_btl, nprocs);
+    rc = mca_btl_openib_size_queues_nolock(openib_btl, nprocs);
     if (OPAL_SUCCESS != rc) {
         BTL_ERROR(("error creating cqs"));
-        opal_mutex_unlock(&mca_btl_openib_component.ib_lock);
+        opal_mutex_unlock(&openib_btl->device->device_lock);
         return rc;
     }
-    opal_mutex_unlock(&mca_btl_openib_component.ib_lock);
+    opal_mutex_unlock(&openib_btl->device->device_lock);
 
     for (i = 0, local_procs = 0 ; i < (int) nprocs; i++) {
         struct opal_proc_t* proc = procs[i];
@@ -1071,21 +1074,21 @@ struct mca_btl_base_endpoint_t *mca_btl_openib_get_ep (struct mca_btl_base_modul
 
     // TODO: shift to the separate function
     /* protect the device */
-    opal_mutex_lock(&mca_btl_openib_component.ib_lock);
-    rc = prepare_device_for_use (openib_btl->device);
+    opal_mutex_lock(&openib_btl->device->device_lock);
+    rc = prepare_device_for_use_nolock (openib_btl->device);
     if (OPAL_SUCCESS != rc) {
         BTL_ERROR(("could not prepare openib device for use"));
-        opal_mutex_unlock(&mca_btl_openib_component.ib_lock);
+        opal_mutex_unlock(&openib_btl->device->device_lock);
         return NULL;
     }
 
-    rc = mca_btl_openib_size_queues(openib_btl, 1);
+    rc = mca_btl_openib_size_queues_nolock(openib_btl, 1);
     if (OPAL_SUCCESS != rc) {
         BTL_ERROR(("error creating cqs"));
-        opal_mutex_unlock(&mca_btl_openib_component.ib_lock);
+        opal_mutex_unlock(&openib_btl->device->device_lock);
         return NULL;
     }
-    opal_mutex_unlock(&mca_btl_openib_component.ib_lock);
+    opal_mutex_unlock(&openib_btl->device->device_lock);
 
 
     if (NULL == (ib_proc = mca_btl_openib_proc_get_locked(proc, &is_new))) {
