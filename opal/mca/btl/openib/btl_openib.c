@@ -1061,8 +1061,10 @@ int mca_btl_openib_add_procs(
 
     }
 
+    opal_mutex_lock(&openib_btl->ib_lock);
     openib_btl->local_procs += local_procs;
     openib_btl->device->mem_reg_max = openib_btl->device->mem_reg_max_total / openib_btl->local_procs;
+    opal_mutex_unlock(&openib_btl->ib_lock);
 
     return OPAL_SUCCESS;
 }
@@ -1124,8 +1126,17 @@ struct mca_btl_base_endpoint_t *mca_btl_openib_get_ep (struct mca_btl_base_modul
 
     (void)init_ib_proc_nolock(openib_btl, ib_proc, &endpoint,
                             local_port_cnt, btl_rank);
+
 exit:
     opal_mutex_unlock(&ib_proc->proc_lock);
+
+    if (is_new && OPAL_PROC_ON_LOCAL_NODE(proc->proc_flags)) {
+        opal_mutex_lock(&openib_btl->ib_lock);
+        openib_btl->local_procs += 1;
+        openib_btl->device->mem_reg_max = openib_btl->device->mem_reg_max_total / openib_btl->local_procs;
+        opal_mutex_unlock(&openib_btl->ib_lock);
+    }
+
     return endpoint;
 }
 
