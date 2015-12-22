@@ -84,6 +84,8 @@ included in the vX.Y.Z section and be denoted as:
 - Fix NBS iBarrier for inter-communicators
 - Fix bug in vader BTL during finalize
 - Improved configure support for Fortran compilers
+- Fix rank_file mapper to support default --slot-set. Thanks
+  to Matt Thompson for reporting it
 
 
 1.10.1
