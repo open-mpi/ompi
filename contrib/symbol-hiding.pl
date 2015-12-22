@@ -12,6 +12,7 @@ my $myfile;
 my $mylib;
 my $myprefix;
 my $mysuffix;
+my $mycapprefix;
 
 # Set to true if the script should merely check for symbols in
 # the library that are not in the provided output file - useful
@@ -63,6 +64,8 @@ sub quiet_print {
 
 #-------------------------------------------------------------------------------
 
+$mycapprefix = uc $myprefix;
+
 # get the symbol output for this lib
 my $output = qx(nm $mylib);
 
@@ -84,8 +87,7 @@ foreach my $line (split /[\r\n]+/, $output) {
     # next token indicates a public symbol by
     # being a 'T' or a 'B'
     $val = shift(@values);
-    if ("T" eq $val || "B" eq $val || "D" eq $val ||
-        "t" eq $val || "b" eq $val || "d" eq $val) {
+    if ("T" eq $val || "B" eq $val || "D" eq $val) {
         $val = shift(@values);
         # if this symbol contains a '.', then we
         # need to ignore it
@@ -105,10 +107,24 @@ $len = $len + 5;
 if ($myfile ne "") {
     open FILE, ">$myfile" || die "file could not be opened";
 }
+sub checkCase {
+    if ($_[0] =~ /^[[:upper:]]/) {
+        return 1;
+    }
+    else {
+        return 0;
+    }
+}
+
 foreach my $sym (@symbols) {
     my $out;
     if ($REVERSE) {
-        $out = "#define " . $myprefix . $sym . $mysuffix;
+        # if the first char is a cap, then use the cap prefix
+        if (checkCase($sym)) {
+            $out = "#define " . $mycapprefix . $sym . $mysuffix;
+        } else {
+            $out = "#define " . $myprefix . $sym . $mysuffix;
+        }
     } else {
         $out = "#define " . $sym;
     }
@@ -119,7 +135,12 @@ foreach my $sym (@symbols) {
     if ($REVERSE) {
         $out = $out . $sym . "\n";
     } else {
-        $out = $out . $myprefix . $sym . $mysuffix . "\n";
+        # if the first char is a cap, then use the cap prefix
+        if (checkCase($sym)) {
+            $out = $out . $mycapprefix . $sym . $mysuffix . "\n";
+        } else {
+            $out = $out . $myprefix . $sym . $mysuffix . "\n";
+        }
     }
     if ($myfile ne "") {
         print FILE $out;
