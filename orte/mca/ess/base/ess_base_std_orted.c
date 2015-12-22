@@ -236,8 +236,143 @@ int orte_ess_base_orted_setup(char **hosts)
         }
     }
 
+        /* take a pass thru the session directory code to fillin the
+         * tmpdir names - don't create anything yet
+         */
+        if (ORTE_SUCCESS != (ret = orte_session_dir(false,
+                                                    orte_process_info.tmpdir_base,
+                                                    orte_process_info.nodename, NULL,
+                                                    ORTE_PROC_MY_NAME))) {
+            ORTE_ERROR_LOG(ret);
+            error = "orte_session_dir define";
+            goto error;
+        }
+        /* clear the session directory just in case there are
+         * stale directories laying around
+         */
+        orte_session_dir_cleanup(ORTE_JOBID_WILDCARD);
+        /* now actually create the directory tree */
+        if (ORTE_SUCCESS != (ret = orte_session_dir(true,
+                                                    orte_process_info.tmpdir_base,
+                                                    orte_process_info.nodename, NULL,
+                                                    ORTE_PROC_MY_NAME))) {
+            ORTE_ERROR_LOG(ret);
+            error = "orte_session_dir";
+            goto error;
+        }
+        /* set the opal_output env file location to be in the
+         * proc-specific session directory. */
+        opal_output_set_output_file_info(orte_process_info.proc_session_dir,
+                                         "output-", NULL, NULL);
+        /* setup stdout/stderr */
+        if (orte_debug_daemons_file_flag) {
+            /* if we are debugging to a file, then send stdout/stderr to
+             * the orted log file
+             */
+            /* get my jobid */
+            if (ORTE_SUCCESS != (ret = orte_util_convert_jobid_to_string(&jobidstring,
+                                                                         ORTE_PROC_MY_NAME->jobid))) {
+                ORTE_ERROR_LOG(ret);
+                error = "convert_jobid";
+                goto error;
+            }
+            /* define a log file name in the session directory */
+            snprintf(log_file, PATH_MAX, "output-orted-%s-%s.log",
+                     jobidstring, orte_process_info.nodename);
+            log_path = opal_os_path(false,
+                                    orte_process_info.tmpdir_base,
+                                    orte_process_info.top_session_dir,
+                                    log_file,
+                                    NULL);
+
+            fd = open(log_path, O_RDWR|O_CREAT|O_TRUNC, 0640);
+            if (fd < 0) {
+                /* couldn't open the file for some reason, so
+                 * just connect everything to /dev/null
+                 */
+                fd = open("/dev/null", O_RDWR|O_CREAT|O_TRUNC, 0666);
+            } else {
+                dup2(fd, STDOUT_FILENO);
+                dup2(fd, STDERR_FILENO);
+                if(fd != STDOUT_FILENO && fd != STDERR_FILENO) {
+                    close(fd);
+                }
+            }
+        }
+    }
+    /* setup the global job and node arrays */
+    orte_job_data = OBJ_NEW(opal_pointer_array_t);
+    if (ORTE_SUCCESS != (ret = opal_pointer_array_init(orte_job_data,
+                               1,
+                               ORTE_GLOBAL_ARRAY_MAX_SIZE,
+                               1))) {
+        ORTE_ERROR_LOG(ret);
+        error = "setup job array";
+        goto error;
+    }
+    orte_node_pool = OBJ_NEW(opal_pointer_array_t);
+    if (ORTE_SUCCESS != (ret = opal_pointer_array_init(orte_node_pool,
+                               ORTE_GLOBAL_ARRAY_BLOCK_SIZE,
+                               ORTE_GLOBAL_ARRAY_MAX_SIZE,
+                               ORTE_GLOBAL_ARRAY_BLOCK_SIZE))) {
+        ORTE_ERROR_LOG(ret);
+        error = "setup node array";
+        goto error;
+    }
+    orte_node_topologies = OBJ_NEW(opal_pointer_array_t);
+    if (ORTE_SUCCESS != (ret = opal_pointer_array_init(orte_node_topologies,
+                               ORTE_GLOBAL_ARRAY_BLOCK_SIZE,
+                               ORTE_GLOBAL_ARRAY_MAX_SIZE,
+                               ORTE_GLOBAL_ARRAY_BLOCK_SIZE))) {
+        ORTE_ERROR_LOG(ret);
+        error = "setup node topologies array";
+        goto error;
+    }
+    /* Setup the job data object for the daemons */
+    /* create and store the job data object */
+    jdata = OBJ_NEW(orte_job_t);
+    jdata->jobid = ORTE_PROC_MY_NAME->jobid;
+    opal_pointer_array_set_item(orte_job_data, 0, jdata);
+    /* every job requires at least one app */
+    app = OBJ_NEW(orte_app_context_t);
+    opal_pointer_array_set_item(jdata->apps, 0, app);
+    jdata->num_apps++;
+    /* create and store a node object where we are */
+    node = OBJ_NEW(orte_node_t);
+    node->name = strdup(orte_process_info.nodename);
+    node->index = opal_pointer_array_set_item(orte_node_pool, ORTE_PROC_MY_NAME->vpid, node);
+    /* point our topology to the one detected locally */
+    node->topology = opal_hwloc_topology;
+
+    /* create and store a proc object for us */
+    proc = OBJ_NEW(orte_proc_t);
+    proc->name.jobid = ORTE_PROC_MY_NAME->jobid;
+    proc->name.vpid = ORTE_PROC_MY_NAME->vpid;
+    proc->pid = orte_process_info.pid;
+    proc->rml_uri = orte_rml.get_contact_info();
+    proc->state = ORTE_PROC_STATE_RUNNING;
+    opal_pointer_array_set_item(jdata->procs, proc->name.vpid, proc);
+    /* record that the daemon (i.e., us) is on this node
+     * NOTE: we do not add the proc object to the node's
+     * proc array because we are not an application proc.
+     * Instead, we record it in the daemon field of the
+     * node object
+     */
+    OBJ_RETAIN(proc);   /* keep accounting straight */
+    node->daemon = proc;
+    ORTE_FLAG_SET(node, ORTE_NODE_FLAG_DAEMON_LAUNCHED);
+    node->state = ORTE_NODE_STATE_UP;
+    /* now point our proc node field to the node */
+    OBJ_RETAIN(node);   /* keep accounting straight */
+    proc->node = node;
+    /* record that the daemon job is running */
+    jdata->num_procs = 1;
+    jdata->state = ORTE_JOB_STATE_RUNNING;
+    /* obviously, we have "reported" */
+    jdata->num_reported = 1;
+
     /* Setup the communication infrastructure */
-        if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_oob_base_framework, 0))) {
+    if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_oob_base_framework, 0))) {
         ORTE_ERROR_LOG(ret);
         error = "orte_oob_base_open";
         goto error;
@@ -374,165 +509,6 @@ int orte_ess_base_orted_setup(char **hosts)
             goto error;
         }
     }
-
-    /* setup my session directory */
-    if (orte_create_session_dirs) {
-        OPAL_OUTPUT_VERBOSE((2, orte_ess_base_framework.framework_output,
-                             "%s setting up session dir with\n\ttmpdir: %s\n\thost %s",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             (NULL == orte_process_info.tmpdir_base) ? "UNDEF" : orte_process_info.tmpdir_base,
-                             orte_process_info.nodename));
-
-        /* take a pass thru the session directory code to fillin the
-         * tmpdir names - don't create anything yet
-         */
-        if (ORTE_SUCCESS != (ret = orte_session_dir(false,
-                                                    orte_process_info.tmpdir_base,
-                                                    orte_process_info.nodename, NULL,
-                                                    ORTE_PROC_MY_NAME))) {
-            ORTE_ERROR_LOG(ret);
-            error = "orte_session_dir define";
-            goto error;
-        }
-        /* clear the session directory just in case there are
-         * stale directories laying around
-         */
-        orte_session_dir_cleanup(ORTE_JOBID_WILDCARD);
-
-        /* now actually create the directory tree */
-        if (ORTE_SUCCESS != (ret = orte_session_dir(true,
-                                                    orte_process_info.tmpdir_base,
-                                                    orte_process_info.nodename, NULL,
-                                                    ORTE_PROC_MY_NAME))) {
-            ORTE_ERROR_LOG(ret);
-            error = "orte_session_dir";
-            goto error;
-        }
-        /* Once the session directory location has been established, set
-           the opal_output env file location to be in the
-           proc-specific session directory. */
-        opal_output_set_output_file_info(orte_process_info.proc_session_dir,
-                                         "output-", NULL, NULL);
-
-        /* setup stdout/stderr */
-        if (orte_debug_daemons_file_flag) {
-            /* if we are debugging to a file, then send stdout/stderr to
-             * the orted log file
-             */
-
-            /* get my jobid */
-            if (ORTE_SUCCESS != (ret = orte_util_convert_jobid_to_string(&jobidstring,
-                                                                         ORTE_PROC_MY_NAME->jobid))) {
-                ORTE_ERROR_LOG(ret);
-                error = "convert_jobid";
-                goto error;
-            }
-
-            /* define a log file name in the session directory */
-            snprintf(log_file, PATH_MAX, "output-orted-%s-%s.log",
-                     jobidstring, orte_process_info.nodename);
-            log_path = opal_os_path(false,
-                                    orte_process_info.tmpdir_base,
-                                    orte_process_info.top_session_dir,
-                                    log_file,
-                                    NULL);
-
-            fd = open(log_path, O_RDWR|O_CREAT|O_TRUNC, 0640);
-            if (fd < 0) {
-                /* couldn't open the file for some reason, so
-                 * just connect everything to /dev/null
-                 */
-                fd = open("/dev/null", O_RDWR|O_CREAT|O_TRUNC, 0666);
-            } else {
-                dup2(fd, STDOUT_FILENO);
-                dup2(fd, STDERR_FILENO);
-                if(fd != STDOUT_FILENO && fd != STDERR_FILENO) {
-                    close(fd);
-                }
-            }
-        }
-    }
-
-    /* setup the global job and node arrays */
-    orte_job_data = OBJ_NEW(opal_pointer_array_t);
-    if (ORTE_SUCCESS != (ret = opal_pointer_array_init(orte_job_data,
-                                                       1,
-                                                       ORTE_GLOBAL_ARRAY_MAX_SIZE,
-                                                       1))) {
-        ORTE_ERROR_LOG(ret);
-        error = "setup job array";
-        goto error;
-    }
-
-    orte_node_pool = OBJ_NEW(opal_pointer_array_t);
-    if (ORTE_SUCCESS != (ret = opal_pointer_array_init(orte_node_pool,
-                                                       ORTE_GLOBAL_ARRAY_BLOCK_SIZE,
-                                                       ORTE_GLOBAL_ARRAY_MAX_SIZE,
-                                                       ORTE_GLOBAL_ARRAY_BLOCK_SIZE))) {
-        ORTE_ERROR_LOG(ret);
-        error = "setup node array";
-        goto error;
-    }
-    orte_node_topologies = OBJ_NEW(opal_pointer_array_t);
-    if (ORTE_SUCCESS != (ret = opal_pointer_array_init(orte_node_topologies,
-                                                       ORTE_GLOBAL_ARRAY_BLOCK_SIZE,
-                                                       ORTE_GLOBAL_ARRAY_MAX_SIZE,
-                                                       ORTE_GLOBAL_ARRAY_BLOCK_SIZE))) {
-        ORTE_ERROR_LOG(ret);
-        error = "setup node topologies array";
-        goto error;
-    }
-
-    /* Setup the job data object for the daemons */
-    /* create and store the job data object */
-    jdata = OBJ_NEW(orte_job_t);
-    jdata->jobid = ORTE_PROC_MY_NAME->jobid;
-    opal_pointer_array_set_item(orte_job_data, 0, jdata);
-
-    /* every job requires at least one app */
-    app = OBJ_NEW(orte_app_context_t);
-    opal_pointer_array_set_item(jdata->apps, 0, app);
-    jdata->num_apps++;
-
-    /* create and store a node object where we are */
-    node = OBJ_NEW(orte_node_t);
-    node->name = strdup(orte_process_info.nodename);
-    node->index = opal_pointer_array_set_item(orte_node_pool, ORTE_PROC_MY_NAME->vpid, node);
-#if OPAL_HAVE_HWLOC
-    /* point our topology to the one detected locally */
-    node->topology = opal_hwloc_topology;
-#endif
-
-    /* create and store a proc object for us */
-    proc = OBJ_NEW(orte_proc_t);
-    proc->name.jobid = ORTE_PROC_MY_NAME->jobid;
-    proc->name.vpid = ORTE_PROC_MY_NAME->vpid;
-
-    proc->pid = orte_process_info.pid;
-    proc->rml_uri = orte_rml.get_contact_info();
-    proc->state = ORTE_PROC_STATE_RUNNING;
-    opal_pointer_array_set_item(jdata->procs, proc->name.vpid, proc);
-
-    /* record that the daemon (i.e., us) is on this node
-     * NOTE: we do not add the proc object to the node's
-     * proc array because we are not an application proc.
-     * Instead, we record it in the daemon field of the
-     * node object
-     */
-    OBJ_RETAIN(proc);   /* keep accounting straight */
-    node->daemon = proc;
-    node->daemon_launched = true;
-    node->state = ORTE_NODE_STATE_UP;
-
-    /* now point our proc node field to the node */
-    OBJ_RETAIN(node);   /* keep accounting straight */
-    proc->node = node;
-
-    /* record that the daemon job is running */
-    jdata->num_procs = 1;
-    jdata->state = ORTE_JOB_STATE_RUNNING;
-    /* obviously, we have "reported" */
-    jdata->num_reported = 1;
 
     /* setup the routed info - the selected routed component
      * will know what to do.
