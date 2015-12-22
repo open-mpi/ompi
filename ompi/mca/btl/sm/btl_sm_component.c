@@ -680,6 +680,8 @@ create_rndv_file(mca_btl_sm_component_t *comp_ptr,
         /* only do this for the mpool case */
         OBJ_RELEASE(tmp_modp);
     }
+    (void)close(fd);
+    fd = -1;
     if (0 != rename(tmpfname, fname)) {
         rc = OMPI_ERR_IN_ERRNO;
         goto out;
