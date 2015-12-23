@@ -14,6 +14,8 @@
  *                         reserved.
  * Copyright (c) 2015      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Intel, Inc. All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -62,8 +64,13 @@
 #ifdef HAVE_SYS_STAT_H
 #include <sys/stat.h>
 #endif
+#ifdef HAVE_DLFCN_H
 #include <dlfcn.h>
+#endif
 #include <poll.h>
+#ifdef HAVE_LIBGEN_H
+#include <libgen.h>
+#endif
 
 #include "opal/util/output.h"
 #include "opal/datatype/opal_convertor.h"
@@ -126,7 +133,27 @@ jint JNI_OnLoad(JavaVM *vm, void *reserved)
 {
     libmpi = dlopen("libmpi." OPAL_DYN_LIB_SUFFIX, RTLD_NOW | RTLD_GLOBAL);
 
-    if(libmpi == NULL)
+#if defined(HAVE_DL_INFO) && defined(HAVE_LIBGEN_H)
+    /*
+     * OS X El Capitan does not propagate DYLD_LIBRARY_PATH to children any more
+     * so if previous dlopen failed, try to open libmpi in the same directory
+     * than the current libmpi_java
+     */
+    if(NULL == libmpi) {
+        Dl_info info;
+        if(0 != dladdr((void *)JNI_OnLoad, &info)) {
+            char libmpipath[OPAL_PATH_MAX];
+            char *libmpijavapath = strdup(info.dli_fname);
+            if (NULL != libmpijavapath) {
+                snprintf(libmpipath, OPAL_PATH_MAX-1, "%s/libmpi." OPAL_DYN_LIB_SUFFIX, dirname(libmpijavapath));
+                free(libmpijavapath);
+                libmpi = dlopen(libmpipath, RTLD_NOW | RTLD_GLOBAL);
+            }
+        }
+    }
+#endif
+
+    if(NULL == libmpi)
     {
         fprintf(stderr, "Java bindings failed to load libmpi: %s\n",dlerror());
         exit(1);
