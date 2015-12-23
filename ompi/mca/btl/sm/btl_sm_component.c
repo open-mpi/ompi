@@ -591,6 +591,7 @@ create_rndv_file(mca_btl_sm_component_t *comp_ptr,
     int rc = OMPI_SUCCESS;
     int fd = -1;
     char *fname = NULL;
+    char *tmpfname = NULL;
     /* used as a temporary store so we can extract shmem_ds info */
     mca_common_sm_module_t *tmp_modp = NULL;
 
@@ -648,7 +649,12 @@ create_rndv_file(mca_btl_sm_component_t *comp_ptr,
 
     /* now just write the contents of tmp_modp->shmem_ds to the full
      * sizeof(opal_shmem_ds_t), so we know where the mpool_res_size starts. */
-    if (-1 == (fd = open(fname, O_CREAT | O_RDWR, 0600))) {
+    asprintf(&tmpfname, "%s.tmp", fname);
+    if (NULL == tmpfname) {
+        rc = OMPI_ERR_OUT_OF_RESOURCE;
+        goto out;
+    }
+    if (-1 == (fd = open(tmpfname, O_CREAT | O_RDWR, 0600))) {
         int err = errno;
         opal_show_help("help-mpi-btl-sm.txt", "sys call fail", true,
                        "open(2)", strerror(err), err);
@@ -674,10 +680,19 @@ create_rndv_file(mca_btl_sm_component_t *comp_ptr,
         /* only do this for the mpool case */
         OBJ_RELEASE(tmp_modp);
     }
+    (void)close(fd);
+    fd = -1;
+    if (0 != rename(tmpfname, fname)) {
+        rc = OMPI_ERR_IN_ERRNO;
+        goto out;
+    }
 
 out:
     if (-1 != fd) {
         (void)close(fd);
+    }
+    if (NULL != tmpfname) {
+        free(tmpfname);
     }
     return rc;
 }
