@@ -791,7 +791,7 @@ static int prepare_device_for_use_nolock (mca_btl_openib_device_t *device)
 }
 
 static int init_ib_proc_nolock(mca_btl_openib_module_t* openib_btl, mca_btl_openib_proc_t* ib_proc,
-                        mca_btl_base_endpoint_t **endpoint_ptr,
+                        volatile mca_btl_base_endpoint_t **endpoint_ptr,
                         int local_port_cnt, int btl_rank)
 {
     int rem_port_cnt, matching_port = -1, j, rc;
@@ -940,6 +940,22 @@ static int init_ib_proc_nolock(mca_btl_openib_module_t* openib_btl, mca_btl_open
     return OPAL_SUCCESS;
 }
 
+static int get_openib_btl_params(mca_btl_openib_module_t* openib_btl, int *port_cnt_ptr)
+{
+    int port_cnt = 0, rank = -1, j;
+    for(j=0; j < mca_btl_openib_component.ib_num_btls; j++){
+        if(mca_btl_openib_component.openib_btls[j]->port_info.subnet_id
+           == openib_btl->port_info.subnet_id) {
+            if(openib_btl == mca_btl_openib_component.openib_btls[j]) {
+                rank = port_cnt;
+            }
+            port_cnt++;
+        }
+    }
+    *port_cnt_ptr = port_cnt;
+    return rank;
+}
+
 /*
  *  add a proc to this btl module
  *    creates an endpoint that is setup on the
@@ -956,16 +972,11 @@ int mca_btl_openib_add_procs(
     int i,j, rc, local_procs;
     int lcl_subnet_id_port_cnt = 0;
     int btl_rank = 0;
-    mca_btl_base_endpoint_t* endpoint;
+    volatile mca_btl_base_endpoint_t* endpoint;
 
-    for(j=0; j < mca_btl_openib_component.ib_num_btls; j++){
-        if(mca_btl_openib_component.openib_btls[j]->port_info.subnet_id
-           == openib_btl->port_info.subnet_id) {
-            if(openib_btl == mca_btl_openib_component.openib_btls[j]) {
-                btl_rank = lcl_subnet_id_port_cnt;
-            }
-            lcl_subnet_id_port_cnt++;
-        }
+    btl_rank = get_openib_btl_params(openib_btl, &lcl_subnet_id_port_cnt);
+    if( 0 > btl_rank ){
+        return OPAL_ERR_NOT_FOUND;
     }
 
 #if HAVE_XRC
@@ -1052,7 +1063,7 @@ int mca_btl_openib_add_procs(
             if (reachable) {
                 opal_bitmap_set_bit(reachable, i);
             }
-            peers[i] = endpoint;
+            peers[i] = (mca_btl_base_endpoint_t*)endpoint;
         }
 
     }
@@ -1068,9 +1079,9 @@ int mca_btl_openib_add_procs(
 struct mca_btl_base_endpoint_t *mca_btl_openib_get_ep (struct mca_btl_base_module_t *btl, struct opal_proc_t *proc)
 {
     mca_btl_openib_module_t *openib_btl = (mca_btl_openib_module_t *) btl;
-    mca_btl_base_endpoint_t *endpoint = NULL;
+    volatile mca_btl_base_endpoint_t *endpoint = NULL;
     mca_btl_openib_proc_t *ib_proc;
-    int j, rc;
+    int rc;
     int local_port_cnt = 0, btl_rank;
     bool is_new;
 
@@ -1110,14 +1121,10 @@ struct mca_btl_base_endpoint_t *mca_btl_openib_get_ep (struct mca_btl_base_modul
     }
 
     endpoint = NULL;
-    for(j=0; j < mca_btl_openib_component.ib_num_btls; j++){
-        if(mca_btl_openib_component.openib_btls[j]->port_info.subnet_id
-           == openib_btl->port_info.subnet_id) {
-            if(openib_btl == mca_btl_openib_component.openib_btls[j]) {
-                btl_rank = local_port_cnt;
-            }
-            local_port_cnt++;
-        }
+
+    btl_rank = get_openib_btl_params(openib_btl, &local_port_cnt);
+    if( 0 > btl_rank ){
+        goto exit;
     }
 
     (void)init_ib_proc_nolock(openib_btl, ib_proc, &endpoint,
@@ -1126,14 +1133,15 @@ struct mca_btl_base_endpoint_t *mca_btl_openib_get_ep (struct mca_btl_base_modul
 exit:
     opal_mutex_unlock(&ib_proc->proc_lock);
 
-    if (is_new && OPAL_PROC_ON_LOCAL_NODE(proc->proc_flags)) {
+    if ( (NULL != endpoint) && is_new &&
+         OPAL_PROC_ON_LOCAL_NODE(proc->proc_flags)) {
         opal_mutex_lock(&openib_btl->ib_lock);
         openib_btl->local_procs += 1;
         openib_btl->device->mem_reg_max = openib_btl->device->mem_reg_max_total / openib_btl->local_procs;
         opal_mutex_unlock(&openib_btl->ib_lock);
     }
 
-    return endpoint;
+    return (struct mca_btl_base_endpoint_t *)endpoint;
 }
 
 /*
