@@ -236,6 +236,14 @@ int orte_ess_base_orted_setup(char **hosts)
         }
     }
 
+    /* setup my session directory here as the OOB may need it */
+    if (orte_create_session_dirs) {
+        OPAL_OUTPUT_VERBOSE((2, orte_ess_base_framework.framework_output,
+                             "%s setting up session dir with\n\ttmpdir: %s\n\thost %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             (NULL == orte_process_info.tmpdir_base) ? "UNDEF" : orte_process_info.tmpdir_base,
+                             orte_process_info.nodename));
+
         /* take a pass thru the session directory code to fillin the
          * tmpdir names - don't create anything yet
          */
@@ -300,6 +308,7 @@ int orte_ess_base_orted_setup(char **hosts)
             }
         }
     }
+
     /* setup the global job and node arrays */
     orte_job_data = OBJ_NEW(opal_pointer_array_t);
     if (ORTE_SUCCESS != (ret = opal_pointer_array_init(orte_job_data,
@@ -360,7 +369,7 @@ int orte_ess_base_orted_setup(char **hosts)
      */
     OBJ_RETAIN(proc);   /* keep accounting straight */
     node->daemon = proc;
-    ORTE_FLAG_SET(node, ORTE_NODE_FLAG_DAEMON_LAUNCHED);
+    node->daemon_launched = true;
     node->state = ORTE_NODE_STATE_UP;
     /* now point our proc node field to the node */
     OBJ_RETAIN(node);   /* keep accounting straight */
