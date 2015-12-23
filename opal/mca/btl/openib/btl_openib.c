@@ -350,8 +350,10 @@ static int create_srq(mca_btl_openib_module_t *openib_btl)
             } else
 #endif
             {
+               opal_mutex_lock(&openib_btl->device->device_lock);
                openib_btl->qps[qp].u.srq_qp.srq =
                    ibv_create_srq(openib_btl->device->ib_pd, &attr);
+               opal_mutex_unlock(&openib_btl->device->device_lock);
             }
             if (NULL == openib_btl->qps[qp].u.srq_qp.srq) {
                 mca_btl_openib_show_init_error(__FILE__, __LINE__,
@@ -400,12 +402,32 @@ static int create_srq(mca_btl_openib_module_t *openib_btl)
     return OPAL_SUCCESS;
 }
 
-static int mca_btl_openib_size_queues_nolock(struct mca_btl_openib_module_t* openib_btl, size_t nprocs)
+static int openib_btl_prepare(struct mca_btl_openib_module_t* openib_btl)
+{
+    int rc = OPAL_SUCCESS;
+    opal_mutex_lock(&openib_btl->ib_lock);
+    if (0 == openib_btl->num_peers &&
+            (mca_btl_openib_component.num_srq_qps > 0 ||
+             mca_btl_openib_component.num_xrc_qps > 0)) {
+        rc = create_srq(openib_btl);
+    }
+    opal_mutex_unlock(&openib_btl->ib_lock);
+    return rc;
+}
+
+
+static int openib_btl_size_queues(struct mca_btl_openib_module_t* openib_btl, size_t nprocs)
 {
     uint32_t send_cqes, recv_cqes;
     int rc = OPAL_SUCCESS, qp;
     mca_btl_openib_device_t *device = openib_btl->device;
 
+    if( 0 == nprocs){
+        /* nothing to do */
+        return OPAL_SUCCESS;
+    }
+
+    opal_mutex_lock(&openib_btl->ib_lock);
     /* figure out reasonable sizes for completion queues */
     for(qp = 0; qp < mca_btl_openib_component.num_qps; qp++) {
         if(BTL_OPENIB_QP_TYPE_SRQ(qp)) {
@@ -416,8 +438,11 @@ static int mca_btl_openib_size_queues_nolock(struct mca_btl_openib_module_t* ope
                 mca_btl_openib_component.qp_infos[qp].u.pp_qp.rd_rsv) * nprocs;
             recv_cqes = send_cqes;
         }
+
+        opal_mutex_lock(&openib_btl->device->device_lock);
         openib_btl->device->cq_size[qp_cq_prio(qp)] += recv_cqes;
         openib_btl->device->cq_size[BTL_OPENIB_LP_CQ] += send_cqes;
+        opal_mutex_unlock(&openib_btl->device->device_lock);
     }
 
     rc = adjust_cq(device, BTL_OPENIB_HP_CQ);
@@ -430,14 +455,9 @@ static int mca_btl_openib_size_queues_nolock(struct mca_btl_openib_module_t* ope
         goto out;
     }
 
-    if (0 == openib_btl->num_peers &&
-            (mca_btl_openib_component.num_srq_qps > 0 ||
-             mca_btl_openib_component.num_xrc_qps > 0)) {
-        rc = create_srq(openib_btl);
-    }
-
     openib_btl->num_peers += nprocs;
 out:
+    opal_mutex_unlock(&openib_btl->ib_lock);
     return rc;
 }
 
@@ -597,13 +617,15 @@ static int mca_btl_openib_tune_endpoint(mca_btl_openib_module_t* openib_btl,
     return OPAL_SUCCESS;
 }
 
-static int prepare_device_for_use_nolock (mca_btl_openib_device_t *device)
+static int prepare_device_for_use (mca_btl_openib_device_t *device)
 {
     mca_btl_openib_frag_init_data_t *init_data;
-    int rc, length;
+    int rc = OPAL_SUCCESS, length;
+
+    opal_mutex_lock(&device->device_lock);
 
     if (device->ready_for_use) {
-        return OPAL_SUCCESS;
+        goto exit;
     }
 
     /* For each btl module that we made - find every
@@ -624,7 +646,8 @@ static int prepare_device_for_use_nolock (mca_btl_openib_device_t *device)
                sizeof(mca_btl_openib_device_qp_t));
     if (NULL == device->qps) {
         BTL_ERROR(("Failed malloc: %s:%d", __FILE__, __LINE__));
-        return OPAL_ERR_OUT_OF_RESOURCE;
+        rc = OPAL_ERR_OUT_OF_RESOURCE;
+        goto exit;
     }
 
     for (int qp_index = 0 ; qp_index < mca_btl_openib_component.num_qps ; qp_index++) {
@@ -656,13 +679,15 @@ static int prepare_device_for_use_nolock (mca_btl_openib_device_t *device)
                 mca_btl_openib_component.num_xrc_qps,
                 ibv_get_device_name(device->ib_dev),
                 opal_process_info.nodename);
-        return OPAL_ERROR;
+        rc = OPAL_ERROR;
+        goto exit;
     }
 
     if (MCA_BTL_XRC_ENABLED) {
         if (OPAL_SUCCESS != mca_btl_openib_open_xrc_domain(device)) {
             BTL_ERROR(("XRC Internal error. Failed to open xrc domain"));
-            return OPAL_ERROR;
+            rc = OPAL_ERROR;
+            goto exit;
         }
     }
 #endif
@@ -677,7 +702,8 @@ static int prepare_device_for_use_nolock (mca_btl_openib_device_t *device)
                                             sizeof(mca_btl_openib_endpoint_t*));
         if(NULL == device->eager_rdma_buffers) {
             BTL_ERROR(("Memory allocation fails"));
-            return OPAL_ERR_OUT_OF_RESOURCE;
+            rc = OPAL_ERR_OUT_OF_RESOURCE;
+            goto exit;
         }
     }
 
@@ -690,7 +716,8 @@ static int prepare_device_for_use_nolock (mca_btl_openib_device_t *device)
             device->eager_rdma_buffers = NULL;
         }
         BTL_ERROR(("Memory allocation fails"));
-        return OPAL_ERR_OUT_OF_RESOURCE;
+        rc = OPAL_ERR_OUT_OF_RESOURCE;
+        goto exit;
     }
 
     length = sizeof(mca_btl_openib_header_t) +
@@ -718,7 +745,7 @@ static int prepare_device_for_use_nolock (mca_btl_openib_device_t *device)
                                            "opal_free_list_init",
                                            ibv_get_device_name(device->ib_dev));
         }
-        return rc;
+        goto exit;
     }
 
     /* setup all the qps */
@@ -726,7 +753,8 @@ static int prepare_device_for_use_nolock (mca_btl_openib_device_t *device)
         init_data = (mca_btl_openib_frag_init_data_t *) malloc(sizeof(mca_btl_openib_frag_init_data_t));
         if (NULL == init_data) {
             BTL_ERROR(("Memory allocation fails"));
-            return OPAL_ERR_OUT_OF_RESOURCE;
+            rc = OPAL_ERR_OUT_OF_RESOURCE;
+            goto exit;
         }
 
         /* Initialize pool of send fragments */
@@ -759,7 +787,7 @@ static int prepare_device_for_use_nolock (mca_btl_openib_device_t *device)
                                                "opal_free_list_init",
                                                ibv_get_device_name(device->ib_dev));
             }
-            return OPAL_ERROR;
+            goto exit;
         }
 
         init_data = (mca_btl_openib_frag_init_data_t *) malloc(sizeof(mca_btl_openib_frag_init_data_t));
@@ -781,13 +809,16 @@ static int prepare_device_for_use_nolock (mca_btl_openib_device_t *device)
                     mca_btl_openib_component.ib_free_list_inc,
                     device->mpool, 0, NULL, mca_btl_openib_frag_init,
                     init_data)) {
-            return OPAL_ERROR;
+            rc = OPAL_ERROR;
+            goto exit;
         }
     }
 
     device->ready_for_use = true;
 
-    return OPAL_SUCCESS;
+exit:
+    opal_mutex_unlock(&device->device_lock);
+    return rc;
 }
 
 static int init_ib_proc_nolock(mca_btl_openib_module_t* openib_btl, mca_btl_openib_proc_t* ib_proc,
@@ -990,22 +1021,23 @@ int mca_btl_openib_add_procs(
     }
 #endif
 
-    /* protect the device */
-    opal_mutex_lock(&openib_btl->device->device_lock);
-    rc = prepare_device_for_use_nolock (openib_btl->device);
+    rc = prepare_device_for_use (openib_btl->device);
     if (OPAL_SUCCESS != rc) {
         BTL_ERROR(("could not prepare openib device for use"));
-        opal_mutex_unlock(&openib_btl->device->device_lock);
         return rc;
     }
 
-    rc = mca_btl_openib_size_queues_nolock(openib_btl, nprocs);
+    rc = openib_btl_prepare(openib_btl);
     if (OPAL_SUCCESS != rc) {
-        BTL_ERROR(("error creating cqs"));
-        opal_mutex_unlock(&openib_btl->device->device_lock);
+        BTL_ERROR(("could not prepare openib btl structure for usel"));
         return rc;
     }
-    opal_mutex_unlock(&openib_btl->device->device_lock);
+
+    rc = openib_btl_size_queues(openib_btl, nprocs);
+    if (OPAL_SUCCESS != rc) {
+        BTL_ERROR(("error creating cqs"));
+        return rc;
+    }
 
     for (i = 0, local_procs = 0 ; i < (int) nprocs; i++) {
         struct opal_proc_t* proc = procs[i];
@@ -1085,24 +1117,23 @@ struct mca_btl_base_endpoint_t *mca_btl_openib_get_ep (struct mca_btl_base_modul
     int local_port_cnt = 0, btl_rank;
     bool is_new;
 
-    // TODO: shift to the separate function
-    /* protect the device */
-    opal_mutex_lock(&openib_btl->device->device_lock);
-    rc = prepare_device_for_use_nolock (openib_btl->device);
+    rc = prepare_device_for_use (openib_btl->device);
     if (OPAL_SUCCESS != rc) {
         BTL_ERROR(("could not prepare openib device for use"));
-        opal_mutex_unlock(&openib_btl->device->device_lock);
         return NULL;
     }
 
-    rc = mca_btl_openib_size_queues_nolock(openib_btl, 1);
+    rc = openib_btl_prepare(openib_btl);
+    if (OPAL_SUCCESS != rc) {
+        BTL_ERROR(("could not prepare openib btl structure for use"));
+        return NULL;
+    }
+
+    rc = openib_btl_size_queues(openib_btl, 1);
     if (OPAL_SUCCESS != rc) {
         BTL_ERROR(("error creating cqs"));
-        opal_mutex_unlock(&openib_btl->device->device_lock);
         return NULL;
     }
-    opal_mutex_unlock(&openib_btl->device->device_lock);
-
 
     if (NULL == (ib_proc = mca_btl_openib_proc_get_locked(proc, &is_new))) {
         /* if we don't have connection info for this process, it's
