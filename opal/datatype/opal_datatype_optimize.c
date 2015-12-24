@@ -11,7 +11,9 @@
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2014      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -22,9 +24,6 @@
 #include "opal_config.h"
 
 #include <stddef.h>
-#ifdef HAVE_ALLOCA_H
-#include <alloca.h>
-#endif
 #include <stdlib.h>
 
 #include "opal/datatype/opal_datatype.h"

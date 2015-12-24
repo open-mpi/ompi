@@ -34,6 +34,7 @@
 
 /* need to include our own topo prototypes so we can malloc data on the comm correctly */
 #include "coll_tuned_topo.h"
+#include "opal/util/output.h"
 
 /* also need the dynamic rule structures */
 #include "coll_tuned_dynamic_rules.h"
