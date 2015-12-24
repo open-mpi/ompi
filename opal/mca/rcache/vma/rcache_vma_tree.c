@@ -18,6 +18,8 @@
  * Copyright (c) 2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -32,6 +34,7 @@
 #include "opal_config.h"
 
 #include "opal/mca/mca.h"
+#include "opal/util/output.h"
 #include "rcache_vma_tree.h"
 
 OBJ_CLASS_INSTANCE(mca_rcache_vma_reg_list_item_t, opal_list_item_t, NULL, NULL);
