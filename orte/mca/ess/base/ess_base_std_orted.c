@@ -358,7 +358,6 @@ int orte_ess_base_orted_setup(char **hosts)
     proc->name.jobid = ORTE_PROC_MY_NAME->jobid;
     proc->name.vpid = ORTE_PROC_MY_NAME->vpid;
     proc->pid = orte_process_info.pid;
-    proc->rml_uri = orte_rml.get_contact_info();
     proc->state = ORTE_PROC_STATE_RUNNING;
     opal_pointer_array_set_item(jdata->procs, proc->name.vpid, proc);
     /* record that the daemon (i.e., us) is on this node
@@ -401,6 +400,8 @@ int orte_ess_base_orted_setup(char **hosts)
         error = "orte_rml_base_select";
         goto error;
     }
+    /* add our contact info */
+    proc->rml_uri = orte_rml.get_contact_info();
 
     /* select the errmgr */
     if (ORTE_SUCCESS != (ret = orte_errmgr_base_select())) {
