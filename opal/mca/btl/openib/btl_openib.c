@@ -1000,7 +1000,8 @@ int mca_btl_openib_add_procs(
     opal_bitmap_t* reachable)
 {
     mca_btl_openib_module_t* openib_btl = (mca_btl_openib_module_t*)btl;
-    int i,j, rc, local_procs;
+    size_t nprocs_new_loc = 0, nprocs_new = 0;
+    int i,j, rc;
     int lcl_subnet_id_port_cnt = 0;
     int btl_rank = 0;
     volatile mca_btl_base_endpoint_t* endpoint;
@@ -1033,23 +1034,10 @@ int mca_btl_openib_add_procs(
         return rc;
     }
 
-    rc = openib_btl_size_queues(openib_btl, nprocs);
-    if (OPAL_SUCCESS != rc) {
-        BTL_ERROR(("error creating cqs"));
-        return rc;
-    }
-
-    for (i = 0, local_procs = 0 ; i < (int) nprocs; i++) {
+    /* prepare all proc's and account them properly */
+    for (i = 0, nprocs_new_loc = 0 ; i < (int) nprocs; i++) {
         struct opal_proc_t* proc = procs[i];
         mca_btl_openib_proc_t* ib_proc;
-        bool found_existing = false;
-        bool is_new;
-
-        opal_output(-1, "add procs: adding proc %d", i);
-
-        if (OPAL_PROC_ON_LOCAL_NODE(proc->proc_flags)) {
-            local_procs ++;
-        }
 
 #if defined(HAVE_STRUCT_IBV_DEVICE_TRANSPORT_TYPE)
         /* Most current iWARP adapters (June 2008) cannot handle
@@ -1063,7 +1051,70 @@ int mca_btl_openib_add_procs(
         }
 #endif
 
-        if(NULL == (ib_proc = mca_btl_openib_proc_get_locked(proc, &is_new)) ) {
+        if(NULL == (ib_proc = mca_btl_openib_proc_get_locked(proc)) ) {
+            /* if we don't have connection info for this process, it's
+             * okay because some other method might be able to reach it,
+             * so just mark it as unreachable by us */
+            continue;
+        }
+
+        /* account this openib_btl in this proc */
+        rc = mca_btl_openib_proc_reg_btl(ib_proc, openib_btl);
+
+        opal_mutex_unlock( &ib_proc->proc_lock );
+
+        switch( rc ){
+        case OPAL_SUCCESS:
+            /* this is a new process to this openib btl */
+            nprocs_new++;
+            if (OPAL_PROC_ON_LOCAL_NODE(proc->proc_flags)) {
+                nprocs_new_loc ++;
+            }
+            break;
+        case OPAL_ERR_RESOURCE_BUSY:
+            /* process was accounted earlier in this openib btl */
+            break;
+        default:
+            /* unexpected error, e.g. out of mem */
+            return rc;
+        }
+    }
+
+    /* account this procs if need */
+    rc = openib_btl_size_queues(openib_btl, nprocs_new);
+    if (OPAL_SUCCESS != rc) {
+        BTL_ERROR(("error creating cqs"));
+        return rc;
+    }
+
+    opal_mutex_lock(&openib_btl->device->device_lock);
+    openib_btl->local_procs += nprocs_new_loc;
+    if( 0 < nprocs_new_loc ){
+        openib_btl->device->mem_reg_max = openib_btl->device->mem_reg_max_total / openib_btl->local_procs;
+    }
+    opal_mutex_unlock(&openib_btl->device->device_lock);
+
+    /* prepare endpoints */
+    for (i = 0, nprocs_new_loc = 0 ; i < (int) nprocs; i++) {
+        struct opal_proc_t* proc = procs[i];
+        mca_btl_openib_proc_t* ib_proc;
+        bool found_existing = false;
+
+        opal_output(-1, "add procs: adding proc %d", i);
+
+#if defined(HAVE_STRUCT_IBV_DEVICE_TRANSPORT_TYPE)
+        /* Most current iWARP adapters (June 2008) cannot handle
+           talking to other processes on the same host (!) -- so mark
+           them as unreachable (need to use sm).  So for the moment,
+           we'll just mark any local peer on an iWARP NIC as
+           unreachable.  See trac ticket #1352. */
+        if (IBV_TRANSPORT_IWARP == openib_btl->device->ib_dev->transport_type &&
+            OPAL_PROC_ON_LOCAL_NODE(proc->proc_flags)) {
+            continue;
+        }
+#endif
+
+        if(NULL == (ib_proc = mca_btl_openib_proc_get_locked(proc)) ) {
             /* if we don't have connection info for this process, it's
              * okay because some other method might be able to reach it,
              * so just mark it as unreachable by us */
@@ -1072,13 +1123,11 @@ int mca_btl_openib_add_procs(
 
         found_existing = false;
 
-        if( !is_new ){
-            for (j = 0 ; j < (int) ib_proc->proc_endpoint_count ; ++j) {
-                endpoint = ib_proc->proc_endpoints[j];
-                if (endpoint->endpoint_btl == openib_btl) {
-                    found_existing = true;
-                    break;
-                }
+        for (j = 0 ; j < (int) ib_proc->proc_endpoint_count ; ++j) {
+            endpoint = ib_proc->proc_endpoints[j];
+            if (endpoint->endpoint_btl == openib_btl) {
+                found_existing = true;
+                break;
             }
         }
 
@@ -1100,11 +1149,6 @@ int mca_btl_openib_add_procs(
 
     }
 
-    opal_mutex_lock(&openib_btl->ib_lock);
-    openib_btl->local_procs += local_procs;
-    openib_btl->device->mem_reg_max = openib_btl->device->mem_reg_max_total / openib_btl->local_procs;
-    opal_mutex_unlock(&openib_btl->ib_lock);
-
     return OPAL_SUCCESS;
 }
 
@@ -1115,7 +1159,7 @@ struct mca_btl_base_endpoint_t *mca_btl_openib_get_ep (struct mca_btl_base_modul
     mca_btl_openib_proc_t *ib_proc;
     int rc;
     int local_port_cnt = 0, btl_rank;
-    bool is_new;
+    size_t nprocs_new = 0;
 
     rc = prepare_device_for_use (openib_btl->device);
     if (OPAL_SUCCESS != rc) {
@@ -1129,25 +1173,51 @@ struct mca_btl_base_endpoint_t *mca_btl_openib_get_ep (struct mca_btl_base_modul
         return NULL;
     }
 
-    rc = openib_btl_size_queues(openib_btl, 1);
-    if (OPAL_SUCCESS != rc) {
-        BTL_ERROR(("error creating cqs"));
-        return NULL;
-    }
-
-    if (NULL == (ib_proc = mca_btl_openib_proc_get_locked(proc, &is_new))) {
+    if (NULL == (ib_proc = mca_btl_openib_proc_get_locked(proc))) {
         /* if we don't have connection info for this process, it's
          * okay because some other method might be able to reach it,
          * so just mark it as unreachable by us */
         return NULL;
     }
 
-    if( !is_new ){
-        for (size_t j = 0 ; j < ib_proc->proc_endpoint_count ; ++j) {
-            endpoint = ib_proc->proc_endpoints[j];
-            if (endpoint->endpoint_btl == openib_btl) {
-                goto exit;
-            }
+    rc = mca_btl_openib_proc_reg_btl(ib_proc, openib_btl);
+
+    switch( rc ){
+    case OPAL_SUCCESS:
+        /* unlock first to avoid possible deadlocks */
+        opal_mutex_unlock(&ib_proc->proc_lock);
+
+        /* this is a new process to this openib btl
+         * account this procs if need */
+        rc = openib_btl_size_queues(openib_btl, nprocs_new);
+        if (OPAL_SUCCESS != rc) {
+            BTL_ERROR(("error creating cqs"));
+            return NULL;
+        }
+
+        if( OPAL_PROC_ON_LOCAL_NODE(proc->proc_flags) ) {
+            opal_mutex_lock(&openib_btl->ib_lock);
+            openib_btl->local_procs += 1;
+            openib_btl->device->mem_reg_max = openib_btl->device->mem_reg_max_total / openib_btl->local_procs;
+            opal_mutex_unlock(&openib_btl->ib_lock);
+        }
+
+        /* lock process back */
+        opal_mutex_lock(&ib_proc->proc_lock);
+        break;
+    case OPAL_ERR_RESOURCE_BUSY:
+        /* process was accounted earlier in this openib btl */
+        break;
+    default:
+        /* unexpected error, e.g. out of mem */
+        BTL_ERROR(("Unexpected OPAL error %d", rc));
+        return NULL;
+    }
+
+    for (size_t j = 0 ; j < ib_proc->proc_endpoint_count ; ++j) {
+        endpoint = ib_proc->proc_endpoints[j];
+        if (endpoint->endpoint_btl == openib_btl) {
+            goto exit;
         }
     }
 
@@ -1163,14 +1233,6 @@ struct mca_btl_base_endpoint_t *mca_btl_openib_get_ep (struct mca_btl_base_modul
 
 exit:
     opal_mutex_unlock(&ib_proc->proc_lock);
-
-    if ( (NULL != endpoint) && is_new &&
-         OPAL_PROC_ON_LOCAL_NODE(proc->proc_flags)) {
-        opal_mutex_lock(&openib_btl->ib_lock);
-        openib_btl->local_procs += 1;
-        openib_btl->device->mem_reg_max = openib_btl->device->mem_reg_max_total / openib_btl->local_procs;
-        opal_mutex_unlock(&openib_btl->ib_lock);
-    }
 
     return (struct mca_btl_base_endpoint_t *)endpoint;
 }

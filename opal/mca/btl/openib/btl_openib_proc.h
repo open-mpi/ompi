@@ -53,6 +53,19 @@ typedef struct mca_btl_openib_proc_modex_t {
 } mca_btl_openib_proc_modex_t;
 
 /**
+ * The list element to hold pointers to openin_btls that are using this
+ * ib_proc.
+ */
+
+struct mca_btl_openib_proc_btlptr_t {
+    opal_list_item_t super;
+    mca_btl_openib_module_t* openib_btl;
+};
+typedef struct mca_btl_openib_proc_btlptr_t mca_btl_openib_proc_btlptr_t;
+
+OBJ_CLASS_DECLARATION(mca_btl_openib_proc_btlptr_t);
+
+/**
  * Represents the state of a remote process and the set of addresses
  * that it exports. Also cache an instance of mca_btl_base_endpoint_t for
  * each
@@ -71,6 +84,9 @@ struct mca_btl_openib_proc_t {
     /** length of proc_ports array */
     uint8_t proc_port_count;
 
+    /** list of openib_btl's that touched this proc **/
+    opal_list_t openib_btls;
+
     /** array of endpoints that have been created to access this proc */
     volatile struct mca_btl_base_endpoint_t **proc_endpoints;
 
@@ -84,10 +100,13 @@ typedef struct mca_btl_openib_proc_t mca_btl_openib_proc_t;
 
 OBJ_CLASS_DECLARATION(mca_btl_openib_proc_t);
 
-mca_btl_openib_proc_t* mca_btl_openib_proc_get_locked(opal_proc_t* proc, bool *is_new);
+mca_btl_openib_proc_t* mca_btl_openib_proc_get_locked(opal_proc_t* proc);
 int mca_btl_openib_proc_insert(mca_btl_openib_proc_t*, mca_btl_base_endpoint_t*);
 int mca_btl_openib_proc_remove(opal_proc_t* proc,
                                mca_btl_base_endpoint_t* module_endpoint);
+int mca_btl_openib_proc_reg_btl(mca_btl_openib_proc_t* ib_proc,
+                                mca_btl_openib_module_t* openib_btl);
+
 
 END_C_DECLS
 
