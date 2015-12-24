@@ -27,6 +27,10 @@
 
 /** @file **/
 
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+
 #include "opal_config.h"
 
 #include "opal/util/malloc.h"
