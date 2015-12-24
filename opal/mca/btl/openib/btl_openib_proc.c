@@ -29,6 +29,23 @@
 #include "connect/base.h"
 #include "connect/connect.h"
 
+static void mca_btl_openib_proc_btl_construct(mca_btl_openib_proc_btlptr_t* elem);
+static void mca_btl_openib_proc_btl_destruct(mca_btl_openib_proc_btlptr_t* elem);
+
+OBJ_CLASS_INSTANCE(mca_btl_openib_proc_btlptr_t,
+        opal_list_item_t, mca_btl_openib_proc_btl_construct,
+        mca_btl_openib_proc_btl_destruct);
+
+static void mca_btl_openib_proc_btl_construct(mca_btl_openib_proc_btlptr_t* elem)
+{
+    elem->openib_btl = NULL;
+}
+
+static void mca_btl_openib_proc_btl_destruct(mca_btl_openib_proc_btlptr_t* elem)
+{
+    elem->openib_btl = NULL;
+}
+
 static void mca_btl_openib_proc_construct(mca_btl_openib_proc_t* proc);
 static void mca_btl_openib_proc_destruct(mca_btl_openib_proc_t* proc);
 
@@ -44,6 +61,7 @@ void mca_btl_openib_proc_construct(mca_btl_openib_proc_t* ib_proc)
     ib_proc->proc_endpoints      = 0;
     ib_proc->proc_endpoint_count = 0;
     OBJ_CONSTRUCT(&ib_proc->proc_lock, opal_mutex_t);
+    OBJ_CONSTRUCT(&ib_proc->openib_btls, opal_list_t);
 }
 
 /*
@@ -52,6 +70,8 @@ void mca_btl_openib_proc_construct(mca_btl_openib_proc_t* ib_proc)
 
 void mca_btl_openib_proc_destruct(mca_btl_openib_proc_t* ib_proc)
 {
+    mca_btl_openib_proc_btlptr_t* elem;
+
     /* release resources */
     if(NULL != ib_proc->proc_endpoints) {
         free(ib_proc->proc_endpoints);
@@ -68,6 +88,13 @@ void mca_btl_openib_proc_destruct(mca_btl_openib_proc_t* ib_proc)
         free(ib_proc->proc_ports);
     }
     OBJ_DESTRUCT(&ib_proc->proc_lock);
+
+    elem = (mca_btl_openib_proc_btlptr_t*)opal_list_remove_first(&ib_proc->openib_btls);
+    while( NULL != elem ){
+            OBJ_RELEASE(elem);
+            elem = (mca_btl_openib_proc_btlptr_t*)opal_list_remove_first(&ib_proc->openib_btls);
+    }
+    OBJ_DESTRUCT(&ib_proc->openib_btls);
 }
 
 
@@ -123,7 +150,7 @@ static void inline unpack8(char **src, uint8_t *value)
  * associated w/ a given destination on this datastructure.
  */
 
-mca_btl_openib_proc_t* mca_btl_openib_proc_get_locked(opal_proc_t* proc, bool *is_new)
+mca_btl_openib_proc_t* mca_btl_openib_proc_get_locked(opal_proc_t* proc)
 {
     mca_btl_openib_proc_t *ib_proc = NULL, *ib_proc_ret = NULL;
     size_t msg_size;
@@ -133,7 +160,7 @@ mca_btl_openib_proc_t* mca_btl_openib_proc_get_locked(opal_proc_t* proc, bool *i
     char *offset;
     int modex_message_size;
     mca_btl_openib_modex_message_t dummy;
-    *is_new = false;
+    bool is_new = false;
 
     /* Check if we have already created a IB proc
      * structure for this ompi process */
@@ -252,7 +279,7 @@ mca_btl_openib_proc_t* mca_btl_openib_proc_get_locked(opal_proc_t* proc, bool *i
     if (0 == ib_proc->proc_port_count) {
         ib_proc->proc_endpoints = NULL;
     } else {
-        ib_proc->proc_endpoints = (mca_btl_base_endpoint_t**)
+        ib_proc->proc_endpoints = (volatile mca_btl_base_endpoint_t**)
             malloc(ib_proc->proc_port_count *
                    sizeof(mca_btl_base_endpoint_t*));
     }
@@ -273,7 +300,7 @@ mca_btl_openib_proc_t* mca_btl_openib_proc_get_locked(opal_proc_t* proc, bool *i
         opal_mutex_lock(&ib_proc->proc_lock);
         opal_list_append(&mca_btl_openib_component.ib_procs, &ib_proc->super);
         ib_proc_ret = ib_proc;
-        *is_new = true;
+        is_new = true;
     } else {
         /* otherwise - release module_proc */
         OBJ_RELEASE(ib_proc);
@@ -282,7 +309,7 @@ mca_btl_openib_proc_t* mca_btl_openib_proc_get_locked(opal_proc_t* proc, bool *i
 
     /* if we haven't insert the process - lock it here so we
      * won't lock mca_btl_openib_component.ib_lock */
-    if( !(*is_new) ){
+    if( !is_new ){
         opal_mutex_lock(&ib_proc_ret->proc_lock);
     }
 
@@ -352,5 +379,29 @@ int mca_btl_openib_proc_insert(mca_btl_openib_proc_t* module_proc,
 
     module_endpoint->endpoint_proc = module_proc;
     module_proc->proc_endpoints[module_proc->proc_endpoint_count++] = module_endpoint;
+    return OPAL_SUCCESS;
+}
+
+int mca_btl_openib_proc_reg_btl(mca_btl_openib_proc_t* ib_proc,
+                                mca_btl_openib_module_t* openib_btl)
+{
+    mca_btl_openib_proc_btlptr_t* elem;
+
+
+    for(elem = (mca_btl_openib_proc_btlptr_t*)opal_list_get_first(&ib_proc->openib_btls);
+            elem != (mca_btl_openib_proc_btlptr_t*)opal_list_get_end(&ib_proc->openib_btls);
+            elem  = (mca_btl_openib_proc_btlptr_t*)opal_list_get_next(elem)) {
+        if(elem->openib_btl == openib_btl) {
+            /* this is normal return meaning that this BTL has already touched this ib_proc */
+            return OPAL_ERR_RESOURCE_BUSY;
+        }
+    }
+
+    elem = OBJ_NEW(mca_btl_openib_proc_btlptr_t);
+    if( NULL == elem ){
+        return OPAL_ERR_OUT_OF_RESOURCE;
+    }
+    elem->openib_btl = openib_btl;
+    opal_list_append(&ib_proc->openib_btls, &elem->super);
     return OPAL_SUCCESS;
 }
