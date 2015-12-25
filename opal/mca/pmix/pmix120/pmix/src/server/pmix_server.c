@@ -626,9 +626,7 @@ pmix_status_t PMIx_server_register_nspace(const char nspace[], int nlocalprocs,
 
     /* we have to push this into our event library to avoid
      * potential threading issues */
-    event_assign(&cd->ev, pmix_globals.evbase, -1,
-                 EV_WRITE, _register_nspace, cd);
-    event_active(&cd->ev, EV_WRITE, 1);
+    PMIX_THREADSHIFT(cd, _register_nspace);
     return PMIX_SUCCESS;
 }
 
@@ -666,9 +664,7 @@ void PMIx_server_deregister_nspace(const char nspace[])
 
     /* we have to push this into our event library to avoid
      * potential threading issues */
-    event_assign(&cd->ev, pmix_globals.evbase, -1,
-                 EV_WRITE, _deregister_nspace, cd);
-    event_active(&cd->ev, EV_WRITE, 1);
+    PMIX_THREADSHIFT(cd, _deregister_nspace);
 }
 
 static void _execute_collective(int sd, short args, void *cbdata)
@@ -847,9 +843,7 @@ pmix_status_t PMIx_server_register_client(const pmix_proc_t *proc,
 
     /* we have to push this into our event library to avoid
      * potential threading issues */
-    event_assign(&cd->ev, pmix_globals.evbase, -1,
-                 EV_WRITE, _register_client, cd);
-    event_active(&cd->ev, EV_WRITE, 1);
+    PMIX_THREADSHIFT(cd, _register_client);
     return PMIX_SUCCESS;
 }
 
@@ -902,9 +896,7 @@ void PMIx_server_deregister_client(const pmix_proc_t *proc)
 
     /* we have to push this into our event library to avoid
      * potential threading issues */
-    event_assign(&cd->ev, pmix_globals.evbase, -1,
-                 EV_WRITE, _deregister_client, cd);
-    event_active(&cd->ev, EV_WRITE, 1);
+    PMIX_THREADSHIFT(cd, _deregister_client);
 }
 
 /* setup the envars for a child process */
@@ -1049,9 +1041,8 @@ pmix_status_t PMIx_server_dmodex_request(const pmix_proc_t *proc,
 
     /* we have to push this into our event library to avoid
      * potential threading issues */
-    event_assign(&cd->ev, pmix_globals.evbase, -1,
-                 EV_WRITE, _dmodex_req, cd);
-    event_active(&cd->ev, EV_WRITE, 1);
+    PMIX_THREADSHIFT(cd, _dmodex_req);
+
     PMIX_WAIT_FOR_COMPLETION(cd->active);
     PMIX_RELEASE(cd);
     return PMIX_SUCCESS;
@@ -1227,9 +1218,7 @@ pmix_status_t pmix_server_notify_error(pmix_status_t status,
 
     /* we have to push this into our event library to avoid
      * potential threading issues */
-    event_assign(&cd->ev, pmix_globals.evbase, -1,
-                 EV_WRITE, _notify_error, cd);
-    event_active(&cd->ev, EV_WRITE, 1);
+    PMIX_THREADSHIFT(cd, _notify_error);
     return PMIX_SUCCESS;
 }
 

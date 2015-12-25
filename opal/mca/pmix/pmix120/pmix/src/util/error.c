@@ -152,51 +152,67 @@ void pmix_errhandler_invoke(pmix_status_t status,
                             pmix_proc_t procs[], size_t nprocs,
                             pmix_info_t info[], size_t ninfo)
 {
-#if 0
     /* We need to parse thru each registered handler and determine
      * which one to call for the specific error */
-    int i;
+    int i, idflt;
     size_t j, k;
-    bool exact_match = false;
+    bool fired = false;
+    bool exact_match;
     int allerrhandler_ind = -1;
-    pmix_error_reg_info_t *errreg;
+    pmix_error_reg_info_t *errreg, *errdflt=NULL;
+    pmix_info_t *iptr;
 
-    for (i = 0; i < pmix_globals.errregs.size && !exact_match; i++) {
+    PMIX_INFO_CREATE(iptr, ninfo+1);
+    (void)strncpy(iptr[0].key, PMIX_ERROR_HANDLER_ID, PMIX_MAX_KEYLEN);
+    iptr[0].value.type = PMIX_INT;
+    for (j=0; j < ninfo; j++) {
+        PMIX_INFO_LOAD(&iptr[j+1], info[j].key, &info[j].value.data, info[j].value.type);
+    }
+
+    for (i = 0; i < pmix_globals.errregs.size; i++) {
         if (NULL == (errreg = (pmix_error_reg_info_t*) pmix_pointer_array_get_item(&pmix_globals.errregs, i))) {
             continue;
         }
-        if (0 == errreg->ninfo) {
-            // this is a general err handler we will call it if there is no better match
-            allerrhandler_ind = i;
-        } else {
-            /* match error name key first */
-            for (j = 0; j < errreg->ninfo; j++) {
-                if ((0 == strcmp(errreg->info[j].key, PMIX_ERROR_NAME)) &&
-                        (status == errreg->info[j].value.data.int32)) {
-                     exact_match = true;
-                     break;
-                } else {
-                    for (k = 0; k < errreg->ninfo; k++) {
-                        if ((0 == strcmp(errreg->info[j].key, info[k].key)) &&
-                            (pmix_value_cmp(&errreg->info[j].value, &info[k].value))) {
-                            break;
-                        }
-                    }
+        if (NULL == errreg->info || 0 == errreg->ninfo) {
+            // this is a general err handler - we will call it if there is no better match
+            errdflt = errreg;
+            idflt = i;
+            continue;
+        }
+        iptr[0].value.data.integer = i;
+        /* match error name key first */
+        exact_match = false;
+        for (j = 0; j < errreg->ninfo; j++) {
+            if ((0 == strcmp(errreg->info[j].key, PMIX_ERROR_NAME)) &&
+                (status == errreg->info[j].value.data.int32)) {
+                    iptr[0].value.data.integer = i;
+                    errreg->errhandler(status, procs, nprocs, iptr, ninfo+1);
+                    fired = true;
+                    exact_match = true;
+                    break;
+            }
+        }
+        if (!exact_match) {
+            /* if no exact match was found, then we will fire the errhandler
+             * for any matching info key. This may be too lax and need to be adjusted
+             * later */
+            for (k = 0; k < errreg->ninfo; k++) {
+                if ((0 == strcmp(errreg->info[j].key, info[k].key)) &&
+                    (pmix_value_cmp(&errreg->info[j].value, &info[k].value))) {
+                    errreg->errhandler(status, procs, nprocs, iptr, ninfo+1);
+                    fired = true;
                 }
             }
         }
     }
-    for ( i =0 ;i < nmatched; i++) {
-        errreg = (pmix_error_reg_info_t*) pmix_pointer_array_get_item (&pmix_globals.errregs,
-                                                                        matched_errregs[i]);
-        errreg->errhandler(status, procs, nprocs, info, ninfo);
+
+    /* if nothing fired and we found a general err handler, then fire it */
+    if (!fired && NULL != errdflt) {
+        iptr[0].value.data.integer = idflt;
+        errdflt->errhandler(status, procs, nprocs, iptr, ninfo+1);
     }
-    if ( 0 == nmatched && 0 <= allerrhandler_ind) {
-        errreg = (pmix_error_reg_info_t*) pmix_pointer_array_get_item (&pmix_globals.errregs,
-                  allerrhandler_ind);
-        errreg->errhandler(status, procs, nprocs, info, ninfo);
-    }
-#endif
+    /* cleanup */
+    PMIX_INFO_FREE(iptr, ninfo+1);
 }
 
 pmix_status_t pmix_lookup_errhandler(pmix_notification_fn_t err,
