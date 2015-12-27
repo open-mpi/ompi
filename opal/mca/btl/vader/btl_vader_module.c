@@ -43,8 +43,6 @@ static int vader_register_error_cb (struct mca_btl_base_module_t* btl,
 
 static int vader_finalize (struct mca_btl_base_module_t* btl);
 
-static int vader_free (struct mca_btl_base_module_t* btl, mca_btl_base_descriptor_t* des);
-
 static struct mca_btl_base_descriptor_t *vader_prepare_src (
                                                             struct mca_btl_base_module_t *btl,
                                                             struct mca_btl_base_endpoint_t *endpoint,
@@ -69,7 +67,7 @@ mca_btl_vader_t mca_btl_vader = {
         .btl_del_procs = vader_del_procs,
         .btl_finalize = vader_finalize,
         .btl_alloc = mca_btl_vader_alloc,
-        .btl_free = vader_free,
+        .btl_free = mca_btl_vader_free,
         .btl_prepare_src = vader_prepare_src,
         .btl_send = mca_btl_vader_send,
         .btl_sendi = mca_btl_vader_sendi,
@@ -411,7 +409,7 @@ mca_btl_base_descriptor_t *mca_btl_vader_alloc(struct mca_btl_base_module_t *btl
  * @param btl (IN)      BTL module
  * @param segment (IN)  Allocated segment.
  */
-static int vader_free (struct mca_btl_base_module_t *btl, mca_btl_base_descriptor_t *des)
+int mca_btl_vader_free (struct mca_btl_base_module_t *btl, mca_btl_base_descriptor_t *des)
 {
     MCA_BTL_VADER_FRAG_RETURN((mca_btl_vader_frag_t *) des);
 

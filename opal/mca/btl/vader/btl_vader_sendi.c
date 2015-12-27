@@ -105,6 +105,8 @@ int mca_btl_vader_sendi (struct mca_btl_base_module_t *btl,
     if (!vader_fifo_write_ep (frag->hdr, endpoint)) {
         if (descriptor) {
             *descriptor = &frag->base;
+        } else {
+            mca_btl_vader_free (btl, &frag->base);
         }
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
