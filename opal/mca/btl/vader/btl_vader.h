@@ -263,6 +263,14 @@ mca_btl_base_descriptor_t* mca_btl_vader_alloc (struct mca_btl_base_module_t* bt
                                                 struct mca_btl_base_endpoint_t* endpoint,
                                                 uint8_t order, size_t size, uint32_t flags);
 
+/**
+ * Return a segment allocated by this BTL.
+ *
+ * @param btl (IN)      BTL module
+ * @param segment (IN)  Allocated segment.
+ */
+int mca_btl_vader_free (struct mca_btl_base_module_t *btl, mca_btl_base_descriptor_t *des);
+
 
 END_C_DECLS
 
