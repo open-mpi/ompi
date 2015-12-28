@@ -872,11 +872,11 @@ AC_DEFUN([OPAL_CONFIG_ASM],[
          [], [enable_osx_builtin_atomics="yes"])
 
     opal_cv_asm_builtin="BUILTIN_NO"
-    if test "$opal_cv_asm_builtin" = "BUILTIN_NO" -a "$enable_builtin_atomics" = "yes" ; then
+    if test "$opal_cv_asm_builtin" = "BUILTIN_NO" && test "$enable_builtin_atomics" = "yes" ; then
        OPAL_CHECK_SYNC_BUILTINS([opal_cv_asm_builtin="BUILTIN_SYNC"], [])
        OPAL_CHECK_SYNC_BUILTIN_CSWAP_INT128
     fi
-    if test "$opal_cv_asm_builtin" = "BUILTIN_NO" -a "$enable_osx_builtin_atomics" = "yes" ; then
+    if test "$opal_cv_asm_builtin" = "BUILTIN_NO" && test "$enable_osx_builtin_atomics" = "yes" ; then
        AC_CHECK_HEADER([libkern/OSAtomic.h],
                        [opal_cv_asm_builtin="BUILTIN_OSX"])
     else

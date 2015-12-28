@@ -13,6 +13,8 @@
 # Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2010-2011 Los Alamos National Security, LLC.
 #                         All rights reserved.
+# Copyright (c) 2015      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -38,7 +40,7 @@ AC_DEFUN([MCA_opal_shmem_sysv_CONFIG],[
           AC_CHECK_FUNC(shmget,
                   [shmem_sysv_sm_build_sysv=1],
                   [shmem_sysv_sm_build_sysv=0])])
-    AS_IF([test "$enable_sysv_shmem" = "yes" -a "$shmem_sysv_sm_build_sysv" = "0"],
+    AS_IF([test "$enable_sysv_shmem" = "yes" && test "$shmem_sysv_sm_build_sysv" = "0"],
           [AC_MSG_WARN([SYSV shared memory support requested but not found])
            AC_MSG_ERROR([Cannot continue])])
 

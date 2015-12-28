@@ -26,10 +26,10 @@
 # MCA_btl_openib_POST_CONFIG([should_build])
 # ------------------------------------------
 AC_DEFUN([MCA_opal_btl_openib_POST_CONFIG], [
-    AM_CONDITIONAL([MCA_btl_openib_have_xrc], [test $1 -eq 1 -a "x$btl_openib_have_xrc" = "x1"])
-    AM_CONDITIONAL([MCA_btl_openib_have_rdmacm], [test $1 -eq 1 -a "x$btl_openib_have_rdmacm" = "x1"])
-    AM_CONDITIONAL([MCA_btl_openib_have_dynamic_sl], [test $1 -eq 1 -a "x$btl_openib_have_opensm_devel" = "x1"])
-    AM_CONDITIONAL([MCA_btl_openib_have_udcm], [test $1 -eq 1 -a "x$btl_openib_have_udcm" = "x1"])
+    AM_CONDITIONAL([MCA_btl_openib_have_xrc], [test $1 -eq 1 && test "x$btl_openib_have_xrc" = "x1"])
+    AM_CONDITIONAL([MCA_btl_openib_have_rdmacm], [test $1 -eq 1 && test "x$btl_openib_have_rdmacm" = "x1"])
+    AM_CONDITIONAL([MCA_btl_openib_have_dynamic_sl], [test $1 -eq 1 && test "x$btl_openib_have_opensm_devel" = "x1"])
+    AM_CONDITIONAL([MCA_btl_openib_have_udcm], [test $1 -eq 1 && test "x$btl_openib_have_udcm" = "x1"])
 ])
 
 
@@ -132,7 +132,7 @@ AC_DEFUN([MCA_opal_btl_openib_CONFIG],[
                        [AC_CHECK_FUNC([__free_hook],
                             [btl_openib_malloc_hooks_enabled=1])])])])])
 
-    AS_IF([test "$enable_btl_openib_malloc_alignment" = "yes" -a "$btl_openib_malloc_hooks_enabled" = "0"],
+    AS_IF([test "$enable_btl_openib_malloc_alignment" = "yes" && test "$btl_openib_malloc_hooks_enabled" = "0"],
           [AC_MSG_ERROR([openib malloc alignment is requested but __malloc_hook is not available])])
     AC_MSG_CHECKING([whether the openib BTL will use malloc hooks])
     AS_IF([test "$btl_openib_malloc_hooks_enabled" = "0"],

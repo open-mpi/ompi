@@ -2,6 +2,8 @@
 #
 # Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
 # Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
+# Copyright (c) 2015      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -26,7 +28,7 @@ AC_DEFUN([MCA_ompi_bcol_iboffload_CONFIG],[
     OPAL_CHECK_OPENFABRICS([bcol_iboffload], [bcol_ofa_happy="yes"])
     OPAL_CHECK_MLNX_OPENFABRICS([bcol_iboffload], [bcol_mlnx_ofed_happy="yes"])
 
-    AS_IF([test "$bcol_ofa_happy" = "yes" -a "$bcol_mlnx_ofed_happy" = "yes"],
+    AS_IF([test "$bcol_ofa_happy" = "yes" && test "$bcol_mlnx_ofed_happy" = "yes"],
           [$1],
           [$2])
 
