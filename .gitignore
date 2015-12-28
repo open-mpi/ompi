@@ -303,6 +303,10 @@ opal/mca/installdirs/config/install_dirs.h
 opal/mca/pmix/pmix112/pmix/include/pmix/autogen/config.h
 opal/mca/pmix/pmix112/pmix/include/private/autogen/config.h
 opal/mca/pmix/pmix112/pmix/include/private/autogen/config.h.in
+opal/mca/pmix/pmix120/pmix/include/pmix/autogen/config.h
+opal/mca/pmix/pmix120/pmix/include/private/autogen/config.h
+opal/mca/pmix/pmix120/pmix/include/private/autogen/config.h.in
+
 
 opal/tools/opal-checkpoint/opal-checkpoint
 opal/tools/opal-checkpoint/opal-checkpoint.1

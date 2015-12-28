@@ -78,7 +78,7 @@ static void myerr(pmix_status_t status,
         iptr = OBJ_NEW(opal_value_t);
         iptr->key = strdup(info[n].key);
         pmix1_value_unload(iptr, &info[n].value);
-        opal_list_append(&plist, &nm->super);
+        opal_list_append(&plist, &iptr->super);
     }
 
     /* call the base errhandler */

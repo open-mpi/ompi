@@ -378,6 +378,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     size_t nprocs;
     char *error = NULL;
     char *cmd=NULL, *av=NULL;
+    ompi_errhandler_errtrk_t errtrk;
     OPAL_TIMING_DECLARE(tm);
     OPAL_TIMING_INIT_EXT(&tm, OPAL_TIMING_GET_TIME_OF_DAY);
 
@@ -504,11 +505,18 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         }
     }
 
-    /* Register the default errhandler callback - RTE will ignore if it
-     * doesn't support this capability
-     */
-    ompi_rte_register_errhandler(ompi_errhandler_runtime_callback,
-                                 OMPI_RTE_ERRHANDLER_LAST);
+    /* Register the default errhandler callback  */
+    errtrk.status = OPAL_ERROR;
+    errtrk.active = true;
+    opal_pmix.register_errhandler(NULL, ompi_errhandler_callback,
+                                  ompi_errhandler_registration_callback,
+                                  (void*)&errtrk);
+    OMPI_WAIT_FOR_COMPLETION(errtrk.active);
+    if (OPAL_SUCCESS != errtrk.status) {
+        error = "Error handler registration";
+        ret = errtrk.status;
+        goto error;
+    }
 
     /* Figure out the final MPI thread levels.  If we were not
        compiled for support for MPI threads, then don't allow

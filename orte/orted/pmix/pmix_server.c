@@ -96,6 +96,7 @@ static opal_pmix_server_module_t pmix_server = {
     pmix_server_connect_fn,
     pmix_server_disconnect_fn,
     pmix_server_register_events_fn,
+    pmix_server_deregister_events_fn,
     NULL
 };
 
