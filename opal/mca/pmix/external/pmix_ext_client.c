@@ -36,6 +36,18 @@ static pmix_proc_t my_proc;
 static char *dbgvalue=NULL;
 static int errhdler_ref = 0;
 
+static void completion_handler (void * cbdata) {
+    int * cond = (int *)cbdata;
+    *cond = 0;
+}
+
+#define PMIX_WAIT_FOR_COMPLETION(a)             \
+    do {                                        \
+        while ((a)) {                           \
+            usleep(10);                         \
+        }                                       \
+    } while (0);
+
 static void myerr(pmix_status_t status,
                   pmix_proc_t procs[], size_t nprocs,
                   pmix_info_t info[], size_t ninfo)
@@ -45,6 +57,7 @@ static void myerr(pmix_status_t status,
     opal_namelist_t *nm;
     opal_value_t *iptr;
     size_t n;
+    volatile int cond = 1;
 
     /* convert the incoming status */
     rc = pmix1_convert_rc(status);
@@ -68,7 +81,9 @@ static void myerr(pmix_status_t status,
     }
 
     /* call the base errhandler */
-    opal_pmix_base_errhandler(rc, &plist, &ilist);
+    opal_pmix_base_errhandler(rc, &plist, &ilist, completion_handler, (void *)&cond);
+    PMIX_WAIT_FOR_COMPLETION(cond);
+
     OPAL_LIST_DESTRUCT(&plist);
     OPAL_LIST_DESTRUCT(&ilist);
 }
