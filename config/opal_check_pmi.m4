@@ -232,20 +232,25 @@ AC_DEFUN([OPAL_CHECK_PMIX],[
 
     OPAL_VAR_SCOPE_PUSH([pmix_ext_install_dir])
 
-    AC_ARG_WITH([external-pmix],
-                [AC_HELP_STRING([--with-external-pmix(=DIR)],
-                                [Use external PMIx support, optionally adding DIR to the search path (default: no)])],
-                                [], with_external_pmix=no)
+    AC_ARG_WITH([pmix],
+                [AC_HELP_STRING([--with-pmix(=DIR)],
+                                [Build PMIx support.  DIR can take one of three values: "internal", "external", or a valid directory name.  "internal" (or no DIR value) forces Open MPI to use its internal copy of PMIx.  "external" forces Open MPI to use an external installation of PMIx.  Supplying a valid directory name also forces Open MPI to use an external installation of PMIx, and adds DIR/include, DIR/lib, and DIR/lib64 to the search path for headers and libraries. Note that Open MPI does not support --without-pmix.])])
 
-    AC_MSG_CHECKING([if user requested PMIx support])
-    AS_IF([test "$with_external_pmix" = "no"],
+    AS_IF([test "$with_pmix" = "no"],
+          [AC_MSG_WARN([Open MPI requires PMIx support. It can be built])
+           AC_MSG_WARN([with either its own internal copy of PMIx, or with])
+           AC_MSG_WARN([an external copy that you supply.])
+           AC_MSG_ERROR([Cannot continue])])
+
+    AC_MSG_CHECKING([if user requested PMIx support($with_pmix)])
+    AS_IF([test -z "$with_pmix" || test "$with_pmix" = "yes" || test "$with_mpix" = "internal"],
           [AC_MSG_RESULT([no])
            opal_external_pmix_happy="no"],
           [AC_MSG_RESULT([yes])
            # check for external pmix lib */
-           AS_IF([test "$with_external_pmix" == "yes" || test -z "$with_external_pmix"],
+           AS_IF([test "$with_pmix" = "external"],
                  [pmix_ext_install_dir=/usr],
-                 [pmix_ext_install_dir=$with_external_pmix])
+                 [pmix_ext_install_dir=$with_pmix])
 
            # cannot use check_package because there are
            # external dependencies to make the headers
