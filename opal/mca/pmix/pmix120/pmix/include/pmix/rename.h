@@ -319,6 +319,7 @@ BEGIN_C_DECLS
 #define pmix_list_sort                           PMIX_NAME(list_sort)
 #define pmix_list_splice                         PMIX_NAME(list_splice)
 #define pmix_list_t_class                        PMIX_NAME(list_t_class)
+#define pmix_munge_module                        PMIX_NAME(munge_module)
 #define pmix_native_module                       PMIX_NAME(native_module)
 #define pmix_notify_caddy_t_class                PMIX_NAME(notify_caddy_t_class)
 #define pmix_nrec_t_class                        PMIX_NAME(nrec_t_class)
