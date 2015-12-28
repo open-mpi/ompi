@@ -2,6 +2,8 @@
  * Copyright (c) 2011-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights reserved.
  * Copyright (c) 2015      Intel, Inc. All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -16,6 +18,8 @@
 
 #ifndef MCA_OPAL_EVENT_EXTERNAL_H
 #define MCA_OPAL_EVENT_EXTERNAL_H
+
+#include "opal_config.h"
 
 #include "event.h"
 #include "event2/event.h"
