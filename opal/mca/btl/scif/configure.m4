@@ -2,6 +2,8 @@
 #
 # Copyright (c) 2013-2014 Los Alamos National Security, LLC. All rights
 #                         reserved.
+# Copyright (c) 2015      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -20,14 +22,14 @@ AC_DEFUN([MCA_opal_btl_scif_CONFIG],[
     opal_btl_scif_happy="no"
 
     if test "$with_scif" != "no" ; then
-	if test -n "$with_scif" -a "$with_scif" != "yes" ; then
+	if test -n "$with_scif" && test "$with_scif" != "yes" ; then
 	    opal_check_scif_dir=$with_scif
 	fi
 
 	OPAL_CHECK_PACKAGE([btl_scif], [scif.h], [scif], [scif_open], [],
 	                   [$opal_check_scif_dir], [], [opal_btl_scif_happy="yes"], [])
 
-	if test "$opal_btl_scif_happy" != "yes" -a -n "$with_scif" ; then
+	if test "$opal_btl_scif_happy" != "yes" && test -n "$with_scif" ; then
 	    AC_MSG_ERROR([SCIF support requested but not found.  Aborting])
 	fi
     fi

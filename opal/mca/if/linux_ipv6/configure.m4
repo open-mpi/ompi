@@ -1,6 +1,8 @@
 # -*- shell-script -*-
 #
 # Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2015      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -25,7 +27,7 @@ AC_DEFUN([MCA_opal_if_linux_ipv6_CONFIG], [
     AC_MSG_CHECKING([if we are on Linux with TCP])
     # If we have struct sockaddr and we're on Linux, then we're
     # happy.
-    AS_IF([test "$opal_found_sockaddr" = "yes" -a "$opal_found_linux" = "yes"],
+    AS_IF([test "$opal_found_sockaddr" = "yes" && test "$opal_found_linux" = "yes"],
           [AC_MSG_RESULT([yes])
            $1],
           [AC_MSG_RESULT([no])
