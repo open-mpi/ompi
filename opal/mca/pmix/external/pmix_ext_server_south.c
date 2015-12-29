@@ -50,6 +50,18 @@ extern opal_pmix_server_module_t *host_module;
 static char *dbgvalue=NULL;
 static int errhdler_ref = 0;
 
+static void completion_handler (void * cbdata) {
+    int * cond = (int *)cbdata;
+    *cond = 0;
+}
+
+#define PMIX_WAIT_FOR_COMPLETION(a)             \
+    do {                                        \
+        while ((a)) {                           \
+            usleep(10);                         \
+        }                                       \
+    } while (0);
+
 static void myerr(pmix_status_t status,
                   pmix_proc_t procs[], size_t nprocs,
                   pmix_info_t info[], size_t ninfo)
@@ -58,6 +70,7 @@ static void myerr(pmix_status_t status,
     opal_list_t plist, ilist;
     opal_namelist_t *nm;
     opal_value_t *iptr;
+    volatile int cond = 1;
     size_t n;
 
     /* convert the incoming status */
@@ -78,11 +91,13 @@ static void myerr(pmix_status_t status,
         iptr = OBJ_NEW(opal_value_t);
         iptr->key = strdup(info[n].key);
         pmix1_value_unload(iptr, &info[n].value);
-        opal_list_append(&plist, &nm->super);
+        opal_list_append(&plist, &iptr->super);
     }
 
     /* call the base errhandler */
-    opal_pmix_base_errhandler(rc, &plist, &ilist);
+    opal_pmix_base_errhandler(rc, &plist, &ilist, completion_handler, (void *)&cond);
+    PMIX_WAIT_FOR_COMPLETION(cond);
+
     OPAL_LIST_DESTRUCT(&plist);
     OPAL_LIST_DESTRUCT(&ilist);
 }

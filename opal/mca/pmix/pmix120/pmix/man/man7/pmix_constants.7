@@ -1,0 +1,92 @@
+.TH "pmix_constants" "7" "2015\-10\-25" "PMIx Programmer\[aq]s Manual" "\@VERSION\@"
+.SH NAME
+.PP
+PMIx Constants
+.SH SYNOPSIS
+.IP
+.nf
+\f[C]
+#include\ <pmix_common.h>
+\f[]
+.fi
+.SH OVERVIEW
+.PP
+PMIx relies on the following types of constants:
+.PP
+\f[I]Maximum Sizes\f[] : In order to minimize malloc performance
+penalties, PMIx utilizes constant\-sized arrays wherever possible.
+These constants provide the user with the maximum size of the various
+array types.
+.PP
+\f[I]Attributes\f[] : .
+.PP
+\f[I]Errors\f[] : PMIx uses negative error constants, with 0 indicating
+"success".
+.SH MAXIMUM SIZES
+.PP
+The .
+.PP
+\f[I]PMIX_MAX_NSLEN\f[] : The maximum length of a namespace.
+Note that any declaration of an array to hold a key string must include
+one extra space for the terminating \f[I]NULL\f[].
+.PP
+\f[I]PMIX_MAX_KEYLEN\f[] : Maximum length of the key string used in
+structures such as the \f[I]pmix\f[]info_t_.
+Note that any declaration of an array to hold a key string must include
+one extra space for the terminating \f[I]NULL\f[].
+.SH ATTRIBUTES
+.PP
+Define a set of "standard" PMIx attributes that can be queried using the
+PMIx_Get function.
+Implementations (and users) are free to extend as desired \- thus,
+functions calling PMIx_Get must be capable of handling the "not found"
+condition.
+Note that these are attributes of the system and the job as opposed to
+values the application (or underlying programming library) might choose
+to expose \- i.e., they are values provided by the resource manager as
+opposed to the application.
+Thus, these keys are RESERVED for use by PMIx, and users should avoid
+defining any attribute starting with the keyword \f[I]PMIX\f[].
+.PP
+A list of the current PMIx attributes, and the type of their associated
+data value, is provided here.
+.PP
+\f[I]PMIX_ATTR_UNDEF (NULL)\f[] : Used to initialize an attribute field,
+indicating that the attribute has not yet been assigned.
+.PP
+\f[I]PMIX_USERID (uint32_t)\f[] : .
+.PP
+\f[I]PMIX_GRPID (uint32_t)\f[] : An access domain represents a single
+logical connection into a fabric.
+It may map to a single physical or virtual NIC or a port.
+An access domain defines the boundary across which fabric resources may
+be associated.
+Each access domain belongs to a single fabric domain.
+.PP
+\f[I]PMIX_CPUSET (char*)\f[] : .
+.SH ERROR CONSTANTS
+.PP
+\&.
+.PP
+\f[I]PMIX_SUCCESS\f[] : Indicates that the operation was successful.
+.PP
+\f[I]PMIX_ERROR\f[] : A general error code \- an error occurred, but no
+specific reason can be provided.
+.PP
+\f[I]fi_rma \- Remote Memory Access\f[] : RMA transfers are one\-sided
+operations that read or write data directly to a remote memory region.
+Other than defining the appropriate memory region, RMA operations do not
+require interaction at the target side for the data transfer to
+complete.
+.PP
+\f[I]fi_atomic \- Atomic\f[] : Atomic operations can perform one of
+several operations on a remote memory region.
+Atomic operations include well\-known functionality, such as atomic\-add
+and compare\-and\-swap, plus several other pre\-defined calls.
+Unlike other data transfer interfaces, atomic operations are aware of
+the data formatting at the target memory region.
+.SH SEE ALSO
+.PP
+\f[C]pmix\f[](7)
+.SH AUTHORS
+PMIx.

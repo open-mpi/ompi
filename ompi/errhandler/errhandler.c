@@ -14,6 +14,7 @@
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -30,6 +31,7 @@
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/errhandler/errhandler_predefined.h"
 #include "opal/class/opal_pointer_array.h"
+#include "opal/mca/pmix/pmix.h"
 
 
 /*
@@ -37,6 +39,10 @@
  */
 opal_pointer_array_t ompi_errhandler_f_to_c_table = {{0}};
 
+/*
+ * default errhandler id
+ */
+static int default_errhandler_id = -1;
 
 /*
  * Class information
@@ -157,6 +163,7 @@ int ompi_errhandler_finalize(void)
 
     /* JMS Add stuff here checking for unreleased errorhandlers,
        similar to communicators, info handles, etc. */
+    opal_pmix.deregister_errhandler(default_errhandler_id, NULL, NULL);
 
     /* Remove errhandler F2C table */
 
@@ -169,7 +176,7 @@ int ompi_errhandler_finalize(void)
 
 
 ompi_errhandler_t *ompi_errhandler_create(ompi_errhandler_type_t object_type,
-					  ompi_errhandler_generic_handler_fn_t *func,
+					                      ompi_errhandler_generic_handler_fn_t *func,
                                           ompi_errhandler_lang_t lang)
 {
   ompi_errhandler_t *new_errhandler;
@@ -213,20 +220,33 @@ ompi_errhandler_t *ompi_errhandler_create(ompi_errhandler_type_t object_type,
   return new_errhandler;
 }
 
+/* registration callback */
+void ompi_errhandler_registration_callback(int status,
+                                           int errhandler_ref,
+                                           void *cbdata)
+{
+    ompi_errhandler_errtrk_t *errtrk = (ompi_errhandler_errtrk_t*)cbdata;
+
+    default_errhandler_id = errhandler_ref;
+    errtrk->status = status;
+    errtrk->active = false;
+}
+
 /**
- * Default runtime errhandler callback
+ * Default errhandler callback
  */
-int ompi_errhandler_runtime_callback(opal_pointer_array_t *errors) {
-    ompi_rte_error_report_t *err;
-    int errcode = 1;
-
-    if (NULL != errors &&
-        (NULL != (err = (ompi_rte_error_report_t*)opal_pointer_array_get_item(errors, 0)))) {
-        errcode = err->errcode;
+void ompi_errhandler_callback(int status,
+                              opal_list_t *procs,
+                              opal_list_t *info,
+                              opal_pmix_release_cbfunc_t cbfunc,
+                              void *cbdata)
+{
+    /* allow the caller to release its data */
+    if (NULL != cbfunc) {
+        cbfunc(cbdata);
     }
-
-    ompi_mpi_abort(MPI_COMM_WORLD, errcode);
-    return OMPI_SUCCESS;
+    /* our default action is to abort */
+    ompi_mpi_abort(MPI_COMM_WORLD, status);
 }
 
 /**************************************************************************

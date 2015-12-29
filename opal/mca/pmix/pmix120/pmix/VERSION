@@ -1,0 +1,65 @@
+# Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
+# Copyright (c) 2008-2011 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
+# Copyright (c) 2013      Mellanox Technologies, Inc.
+#                         All rights reserved.
+# Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
+
+# This is the VERSION file for PMIx, describing the precise
+# version of PMIx in this distribution.  The various components of
+# the version number below are combined to form a single version
+# number string.
+
+# major, minor, and release are generally combined in the form
+# <major>.<minor>.<release>.
+
+major=1
+minor=2
+release=0
+
+# greek is used for alpha or beta release tags.  If it is non-empty,
+# it will be appended to the version number.  It does not have to be
+# numeric.  Common examples include a1 (alpha release 1), b1 or (beta release 1).
+# The only requirement is that it must be entirely printable ASCII
+# characters and have no white space.
+
+greek=a1
+
+# If repo_rev is empty, then the repository version number will be
+# obtained during "make dist" via the "git describe --tags --always"
+# command, or with the date (if "git describe" fails) in the form of
+# "date<date>".
+
+repo_rev=git843fa89
+
+# If tarball_version is not empty, it is used as the version string in
+# the tarball filename, regardless of all other versions listed in
+# this file.  For example, if tarball_version is empty, the tarball
+# filename will be of the form
+# openmpi-<major>.<minor>.<release><greek>.tar.*.  However, if
+# tarball_version is not empty, the tarball filename will be of the
+# form openmpi-<tarball_version>.tar.*.
+
+tarball_version=
+
+# The date when this release was created
+
+date="Dec 08, 2015"
+
+# The shared library version of each of PMIx's public libraries.
+# These versions are maintained in accordance with the "Library
+# Interface Versions" chapter from the GNU Libtool documentation.
+# All changes in these version numbers are dictated by the PMIx
+# release managers (not individual developers).  Notes:
+
+# 1. Since these version numbers are associated with *releases*, the
+# version numbers maintained on the PMIx Github trunk (and developer
+# branches) is always 0:0:0 for all libraries.
+
+# 2. The version number of libpmix refers to the public pmix interfaces.
+# It does not refer to any internal interfaces.
+
+# Version numbers are described in the Libtool current:revision:age
+# format.
+
+libpmix_so_version=0:0:0
