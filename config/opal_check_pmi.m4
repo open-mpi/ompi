@@ -243,7 +243,7 @@ AC_DEFUN([OPAL_CHECK_PMIX],[
            AC_MSG_ERROR([Cannot continue])])
 
     AC_MSG_CHECKING([if user requested PMIx support($with_pmix)])
-    AS_IF([test -z "$with_pmix" || test "$with_pmix" = "yes" || test "$with_mpix" = "internal"],
+    AS_IF([test -z "$with_pmix" || test "$with_pmix" = "yes" || test "$with_pmix" = "internal"],
           [AC_MSG_RESULT([no])
            opal_external_pmix_happy="no"],
           [AC_MSG_RESULT([yes])
