@@ -92,4 +92,16 @@ ORTE_MODULE_DECLSPEC void mca_oob_tcp_component_failed_to_connect(int fd, short 
 ORTE_MODULE_DECLSPEC void mca_oob_tcp_component_no_route(int fd, short args, void *cbdata);
 ORTE_MODULE_DECLSPEC void mca_oob_tcp_component_hop_unknown(int fd, short args, void *cbdata);
 
+/* provide a macro for handling errors reported during shutdown */
+#define MCA_OOB_TCP_CHECK_SHUTDOWN(a)       \
+    do {                                    \
+        if (!orte_enable_recovery ||        \
+            orte_orteds_term_ordered ||     \
+            orte_finalizing ||              \
+            orte_abnormal_term_ordered) {   \
+            OBJ_RELEASE(a);                 \
+            return;                         \
+        }                                   \
+    } while(0);
+
 #endif /* _MCA_OOB_TCP_COMPONENT_H_ */
