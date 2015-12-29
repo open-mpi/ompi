@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Mellanox Technologies. All rights reserved.
+ *
  * $COPYRIGHT$
  *
  * Additional copyrights may follow

@@ -12,6 +12,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
  *                         reserved.
+ * Copyright (c) 2015      Mellanox Technologies. All rights reserved.
  *
  * Author(s): Torsten Hoefler <htor@cs.indiana.edu>
  *
