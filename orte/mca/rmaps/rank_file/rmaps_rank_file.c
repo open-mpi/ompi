@@ -216,7 +216,7 @@ static int orte_rmaps_rf_map(orte_job_t *jdata)
                         /* all would be oversubscribed, so take the least loaded one */
                         k = UINT32_MAX;
                         OPAL_LIST_FOREACH(nd, &node_list, orte_node_t) {
-                            if (nd->num_procs < k) {
+                            if (nd->num_procs < (orte_vpid_t)k) {
                                 k = nd->num_procs;
                                 node = nd;
                             }
