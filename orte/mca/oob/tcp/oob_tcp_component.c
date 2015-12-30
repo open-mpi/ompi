@@ -970,8 +970,6 @@ void mca_oob_tcp_component_lost_connection(int fd, short args, void *cbdata)
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                         ORTE_NAME_PRINT(&pop->peer));
 
-    MCA_OOB_TCP_CHECK_SHUTDOWN(pop);
-
     /* Mark that we no longer support this peer */
     memcpy(&ui64, (char*)&pop->peer, sizeof(uint64_t));
     if (OPAL_SUCCESS != opal_hash_table_get_value_uint64(&orte_oob_base.peers,
@@ -979,18 +977,19 @@ void mca_oob_tcp_component_lost_connection(int fd, short args, void *cbdata)
         bpr = OBJ_NEW(orte_oob_base_peer_t);
     }
     opal_bitmap_clear_bit(&bpr->addressable, mca_oob_tcp_component.super.idx);
-   if (OPAL_SUCCESS != (rc = opal_hash_table_set_value_uint64(&orte_oob_base.peers,
+    if (OPAL_SUCCESS != (rc = opal_hash_table_set_value_uint64(&orte_oob_base.peers,
                                                                ui64, NULL))) {
         ORTE_ERROR_LOG(rc);
     }
 
-    /* activate the proc state */
-    if (ORTE_SUCCESS != orte_routed.route_lost(&pop->peer)) {
-        ORTE_ACTIVATE_PROC_STATE(&pop->peer, ORTE_PROC_STATE_LIFELINE_LOST);
-    } else {
-        ORTE_ACTIVATE_PROC_STATE(&pop->peer, ORTE_PROC_STATE_COMM_FAILED);
+    if (!orte_finalizing) {
+        /* activate the proc state */
+        if (ORTE_SUCCESS != orte_routed.route_lost(&pop->peer)) {
+            ORTE_ACTIVATE_PROC_STATE(&pop->peer, ORTE_PROC_STATE_LIFELINE_LOST);
+        } else {
+            ORTE_ACTIVATE_PROC_STATE(&pop->peer, ORTE_PROC_STATE_COMM_FAILED);
+        }
     }
-
     OBJ_RELEASE(pop);
 }
 
@@ -1006,8 +1005,6 @@ void mca_oob_tcp_component_no_route(int fd, short args, void *cbdata)
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                         ORTE_NAME_PRINT(&mop->hop));
 
-    MCA_OOB_TCP_CHECK_SHUTDOWN(mop);
-
     /* mark that we cannot reach this hop */
     memcpy(&ui64, (char*)&(mop->hop), sizeof(uint64_t));
     if (OPAL_SUCCESS != opal_hash_table_get_value_uint64(&orte_oob_base.peers,
@@ -1020,11 +1017,16 @@ void mca_oob_tcp_component_no_route(int fd, short args, void *cbdata)
         ORTE_ERROR_LOG(rc);
     }
 
-    /* if this was a lifeline, then alert */
-    if (ORTE_SUCCESS != orte_routed.route_lost(&mop->hop)) {
-        ORTE_ACTIVATE_PROC_STATE(&mop->hop, ORTE_PROC_STATE_LIFELINE_LOST);
-    } else {
-        ORTE_ACTIVATE_PROC_STATE(&mop->hop, ORTE_PROC_STATE_COMM_FAILED);
+    /* report the error back to the OOB and let it try other components
+     * or declare a problem
+     */
+    if (!orte_finalizing && !orte_abnormal_term_ordered) {
+        /* if this was a lifeline, then alert */
+        if (ORTE_SUCCESS != orte_routed.route_lost(&mop->hop)) {
+            ORTE_ACTIVATE_PROC_STATE(&mop->hop, ORTE_PROC_STATE_LIFELINE_LOST);
+        } else {
+            ORTE_ACTIVATE_PROC_STATE(&mop->hop, ORTE_PROC_STATE_COMM_FAILED);
+        }
     }
 
     OBJ_RELEASE(mop);
@@ -1042,7 +1044,11 @@ void mca_oob_tcp_component_hop_unknown(int fd, short args, void *cbdata)
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                         ORTE_NAME_PRINT(&mop->hop));
 
-    MCA_OOB_TCP_CHECK_SHUTDOWN(mop);
+    if (orte_finalizing || orte_abnormal_term_ordered) {
+        /* just ignore the problem */
+        OBJ_RELEASE(mop);
+        return;
+    }
 
    /* mark that this component cannot reach this hop */
     memcpy(&ui64, (char*)&(mop->hop), sizeof(uint64_t));
@@ -1110,7 +1116,11 @@ void mca_oob_tcp_component_failed_to_connect(int fd, short args, void *cbdata)
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                         ORTE_NAME_PRINT(&pop->peer));
 
-    MCA_OOB_TCP_CHECK_SHUTDOWN(pop);
+   /* if we are terminating, then don't attempt to reconnect */
+    if (orte_orteds_term_ordered || orte_finalizing || orte_abnormal_term_ordered) {
+        OBJ_RELEASE(pop);
+        return;
+    }
 
     /* activate the proc state */
     opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
