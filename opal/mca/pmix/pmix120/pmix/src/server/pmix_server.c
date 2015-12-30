@@ -1056,30 +1056,55 @@ static bool match_error_registration(pmix_regevents_info_t *reginfoptr, pmix_not
     size_t ninfo = reginfoptr->ninfo;
     pmix_status_t error = cd->status;
 
+    if (NULL == info || ninfo <= 0) {
+        /* this is a general errhandler, and so it always matches.
+         * however, here we are looking for an exact match, and
+         * so we ignore general errhandlers unless the incoming
+         * one is also general */
+         if (NULL == cd->info || 0 == cd->ninfo) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    /* since this errhandler has info keys, it is not a general errhandler.
+     * If the incoming errhandler *is* a general one, then we must not
+     * match so we can store the general case */
+    if (NULL == cd->info || 0 == cd->ninfo) {
+        return false;
+    }
+
+    /* try to match using error name or error group keys - this indicates
+     * a request for a specific error state */
     pmix_get_errorgroup(error, errgroup);
-    /* try to match using error name or error group keys */
     for (i=0; i < ninfo; i++) {
         // if we get a match on any key then we abort the search and return true.
-        if ((0 == strcmp(info[i].key, PMIX_ERROR_NAME)) &&
+        if ((0 == strncmp(info[i].key, PMIX_ERROR_NAME, PMIX_MAX_KEYLEN)) &&
             (error == info[i].value.data.int32)) {
             return true;
-        } else if ((0 == strcmp(info[i].key, errgroup)) &&
+        } else if ((0 == strncmp(info[i].key, errgroup, PMIX_MAX_KEYLEN)) &&
                    (true == info[i].value.data.flag)) {
             return true;
         }
     }
-    /* search by node (error location) key if it is specified in the notify info list*/
-    for (i=0; i<cd->ninfo ; i++) {
-        if (0 == strcmp (cd->info[i].key, PMIX_ERROR_NODE_NAME)) {
-            for (j=0; j<ninfo; j++) {
-                if ((0 == strcmp (info[j].key, PMIX_ERROR_NODE_NAME)) &&
-                    (0 == strcmp (info[j].value.data.string, cd->info[i].value.data.string))) {
+
+    /* if we get here, then they haven't asked for a specific error state.
+     * It is possible, however, that they are asking for all errors from a
+     * specific node, so search by node (error location) key if it is
+     * specified in the notify info list */
+    for (i=0; i < cd->ninfo ; i++) {
+        if (0 == strncmp(cd->info[i].key, PMIX_ERROR_NODE_NAME, PMIX_MAX_KEYLEN)) {
+            for (j=0; j < ninfo; j++) {
+                if ((0 == strncmp(info[j].key, PMIX_ERROR_NODE_NAME, PMIX_MAX_KEYLEN)) &&
+                    (0 == strcmp(info[j].value.data.string, cd->info[i].value.data.string))) {
                     return true;
                 }
             }
         }
     }
-    /* end of search return false*/
+
+    /* end of search and nothing matched, so return false */
     return false;
 }
 
@@ -1093,9 +1118,11 @@ static void _notify_error(int sd, short args, void *cbdata)
     pmix_peer_t *peer;
     pmix_regevents_info_t *reginfoptr;
     bool notify, notifyall;
+
     pmix_output_verbose(0, pmix_globals.debug_output,
                         "pmix_server: _notify_error notifying client of error %d",
                         cd->status);
+
     /* pack the command */
     if (PMIX_SUCCESS != (rc = pmix_bfrop.pack(cd->buf, &cmd, 1, PMIX_CMD))) {
         PMIX_ERROR_LOG(rc);
@@ -1157,6 +1184,8 @@ static void _notify_error(int sd, short args, void *cbdata)
                 }
             }
             if (!notify) {
+                /* if we are not notifying everyone, and this proc isn't to
+                 * be notified, then just continue the main loop */
                 continue;
             }
         }
@@ -1173,8 +1202,9 @@ static void _notify_error(int sd, short args, void *cbdata)
                 pmix_output_verbose(2, pmix_globals.debug_output,
                                     "pmix_server _notify_error - match error registration returned notify =%d ", notify);
             }
-            if (notify)
+            if (notify) {
                 break;
+            }
         }
         if (notify) {
             pmix_output_verbose(2, pmix_globals.debug_output,
@@ -1212,6 +1242,7 @@ pmix_status_t pmix_server_notify_error(pmix_status_t status,
     cd->ninfo = ninfo;
     cd->cbfunc = cbfunc;
     cd->cbdata = cbdata;
+
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "pmix_server_notify_error status =%d, nprocs = %lu, ninfo =%lu",
                          status, nprocs, ninfo);
@@ -1227,18 +1258,19 @@ static void reg_errhandler(int sd, short args, void *cbdata)
     int index = 0;
     pmix_status_t rc;
     pmix_shift_caddy_t *cd = (pmix_shift_caddy_t*)cbdata;
+
     /* check if this handler is already registered if so return error */
-   if (PMIX_SUCCESS ==  pmix_lookup_errhandler (cd->err, &index)) {
+   if (PMIX_SUCCESS == pmix_lookup_errhandler(cd->err, &index)) {
         /* complete request with error status and  return its original reference */
         pmix_output_verbose(2, pmix_globals.debug_output,
                            "pmix_server_register_errhandler error - hdlr already registered index = %d",
                            index);
-        cd->cbfunc.errregcbfn (PMIX_EXISTS, index, cd->cbdata);
+        cd->cbfunc.errregcbfn(PMIX_EXISTS, index, cd->cbdata);
     } else {
-         rc = pmix_add_errhandler (cd->err, cd->info, cd->ninfo, &index);
+         rc = pmix_add_errhandler(cd->err, cd->info, cd->ninfo, &index);
          pmix_output_verbose(2, pmix_globals.debug_output,
                              "pmix_server_register_errhandler - success index =%d", index);
-         cd->cbfunc.errregcbfn (rc, index, cd->cbdata);
+         cd->cbfunc.errregcbfn(rc, index, cd->cbdata);
     }
     cd->active = false;
     PMIX_RELEASE(cd);
@@ -1250,6 +1282,7 @@ void pmix_server_register_errhandler(pmix_info_t info[], size_t ninfo,
                               void *cbdata)
 {
     pmix_shift_caddy_t *cd;
+
     /* need to thread shift this request */
     cd = PMIX_NEW(pmix_shift_caddy_t);
     cd->info = info;
@@ -1257,8 +1290,10 @@ void pmix_server_register_errhandler(pmix_info_t info[], size_t ninfo,
     cd->err = errhandler;
     cd->cbfunc.errregcbfn = cbfunc;
     cd->cbdata = cbdata;
+
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "pmix_server_register_errhandler shifting to server thread");
+
     PMIX_THREADSHIFT(cd, reg_errhandler);
 }
 
@@ -1266,8 +1301,11 @@ static void dereg_errhandler(int sd, short args, void *cbdata)
 {
     pmix_status_t rc;
     pmix_shift_caddy_t *cd = (pmix_shift_caddy_t*)cbdata;
-    rc = pmix_remove_errhandler (cd->ref);
-    cd->cbfunc.opcbfn(rc, cd->cbdata);
+
+    rc = pmix_remove_errhandler(cd->ref);
+    if (NULL != cd->cbfunc.opcbfn) {
+        cd->cbfunc.opcbfn(rc, cd->cbdata);
+    }
     cd->active = false;
 }
 
@@ -1276,12 +1314,14 @@ void pmix_server_deregister_errhandler(int errhandler_ref,
                                 void *cbdata)
 {
     pmix_shift_caddy_t *cd;
+
     /* need to thread shift this request */
     cd = PMIX_NEW(pmix_shift_caddy_t);
     cd->cbfunc.opcbfn = cbfunc;
     cd->cbdata = cbdata;
     cd->ref = errhandler_ref;
     PMIX_THREADSHIFT(cd, dereg_errhandler);
+
     PMIX_WAIT_FOR_COMPLETION(cd->active);
     PMIX_RELEASE(cd);
  }

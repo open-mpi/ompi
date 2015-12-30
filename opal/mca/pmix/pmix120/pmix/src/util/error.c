@@ -165,8 +165,10 @@ void pmix_errhandler_invoke(pmix_status_t status,
     PMIX_INFO_CREATE(iptr, ninfo+1);
     (void)strncpy(iptr[0].key, PMIX_ERROR_HANDLER_ID, PMIX_MAX_KEYLEN);
     iptr[0].value.type = PMIX_INT;
-    for (j=0; j < ninfo; j++) {
-        PMIX_INFO_LOAD(&iptr[j+1], info[j].key, &info[j].value.data, info[j].value.type);
+    if (NULL != info) {
+        for (j=0; j < ninfo; j++) {
+            PMIX_INFO_LOAD(&iptr[j+1], info[j].key, &info[j].value.data, info[j].value.type);
+        }
     }
 
     for (i = 0; i < pmix_globals.errregs.size; i++) {
@@ -221,9 +223,10 @@ pmix_status_t pmix_lookup_errhandler(pmix_notification_fn_t err,
     int i;
     pmix_status_t rc = PMIX_ERR_NOT_FOUND;
     pmix_error_reg_info_t *errreg = NULL;
+
     for (i = 0; i < pmix_pointer_array_get_size(&pmix_globals.errregs) ; i++) {
-        errreg = (pmix_error_reg_info_t*) pmix_pointer_array_get_item (&pmix_globals.errregs, i);
-        if((NULL != errreg) && (err == errreg->errhandler)) {
+        errreg = (pmix_error_reg_info_t*)pmix_pointer_array_get_item(&pmix_globals.errregs, i);
+        if ((NULL != errreg) && (err == errreg->errhandler)) {
             *index = i;
             rc = PMIX_SUCCESS;
             break;
@@ -238,19 +241,25 @@ pmix_status_t pmix_add_errhandler(pmix_notification_fn_t err,
 {
     int i;
     pmix_status_t rc = PMIX_SUCCESS;
-    pmix_error_reg_info_t *errreg = PMIX_NEW(pmix_error_reg_info_t);
+    pmix_error_reg_info_t *errreg;
+
+    errreg = PMIX_NEW(pmix_error_reg_info_t);
     errreg->errhandler = err;
     errreg->ninfo = ninfo;
-    PMIX_INFO_CREATE(errreg->info, ninfo);
-    for (i=0; i < ninfo; i++) {
-        memcpy(errreg->info[i].key, info[i].key, PMIX_MAX_KEYLEN);
-        pmix_value_xfer(&errreg->info[i].value, &info[i].value);
+    if (NULL != info && 0 < ninfo) {
+        PMIX_INFO_CREATE(errreg->info, ninfo);
+        for (i=0; i < ninfo; i++) {
+            (void)strncpy(errreg->info[i].key, info[i].key, PMIX_MAX_KEYLEN);
+            pmix_value_xfer(&errreg->info[i].value, &info[i].value);
+        }
     }
-    *index = pmix_pointer_array_add (&pmix_globals.errregs, errreg);
+    *index = pmix_pointer_array_add(&pmix_globals.errregs, errreg);
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "pmix_add_errhandler index =%d", *index);
-    if (-1 == *index)
+    if (*index < 0) {
+        PMIX_RELEASE(errreg);
         rc = PMIX_ERROR;
+    }
     return rc;
 }
 
@@ -258,16 +267,19 @@ pmix_status_t pmix_remove_errhandler(int errhandler_ref)
 {
     int rc = PMIX_SUCCESS;
     pmix_error_reg_info_t *errreg;
-    errreg = (pmix_error_reg_info_t*) pmix_pointer_array_get_item (&pmix_globals.errregs,
-                                                                   errhandler_ref);
-    if (NULL != errreg)
+
+    errreg = (pmix_error_reg_info_t*)pmix_pointer_array_get_item(&pmix_globals.errregs,
+                                                                 errhandler_ref);
+    if (NULL != errreg) {
         PMIX_RELEASE(errreg);
-    else
+        pmix_pointer_array_set_item(&pmix_globals.errregs, errhandler_ref, NULL);
+    } else {
         rc = PMIX_ERR_NOT_FOUND;
+    }
     return rc;
 }
 
-void pmix_get_errorgroup ( pmix_status_t status, char *pmix_error_group)
+void pmix_get_errorgroup(pmix_status_t status, char *pmix_error_group)
 {
     switch(status) {
         case PMIX_ERR_UNREACH:
@@ -276,24 +288,24 @@ void pmix_get_errorgroup ( pmix_status_t status, char *pmix_error_group)
         case PMIX_ERR_TIMEOUT:
         case PMIX_ERR_PACK_FAILURE:
         case PMIX_ERR_UNPACK_FAILURE:
-            strcpy(pmix_error_group, PMIX_ERROR_GROUP_COMM);
+            (void)strncpy(pmix_error_group, PMIX_ERROR_GROUP_COMM, PMIX_MAX_KEYLEN);
             break;
         case PMIX_ERR_OUT_OF_RESOURCE:
         case PMIX_ERR_RESOURCE_BUSY:
         case PMIX_ERR_NOMEM:
-            strcpy(pmix_error_group, PMIX_ERROR_GROUP_RESOURCE);
+            (void)strncpy(pmix_error_group, PMIX_ERROR_GROUP_RESOURCE, PMIX_MAX_KEYLEN);
             break;
         case PMIX_ERR_PROC_MIGRATE:
         case PMIX_ERR_PROC_CHECKPOINT:
         case PMIX_ERR_PROC_RESTART:
-            strcpy(pmix_error_group, PMIX_ERROR_GROUP_MIGRATE);
+            (void)strncpy(pmix_error_group, PMIX_ERROR_GROUP_MIGRATE, PMIX_MAX_KEYLEN);
             break;
         case PMIX_ERR_PROC_ABORTING:
         case PMIX_ERR_PROC_REQUESTED_ABORT:
         case PMIX_ERR_PROC_ABORTED:
-            strcpy(pmix_error_group, PMIX_ERROR_GROUP_ABORT);
+            (void)strncpy(pmix_error_group, PMIX_ERROR_GROUP_ABORT, PMIX_MAX_KEYLEN);
             break;
         default:
-            strcpy(pmix_error_group, PMIX_ERROR_GROUP_GENERAL);
+            (void)strncpy(pmix_error_group, PMIX_ERROR_GROUP_GENERAL, PMIX_MAX_KEYLEN);
     }
 }
