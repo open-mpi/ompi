@@ -1088,7 +1088,6 @@ pmix_status_t pmix_server_notify_error_client(pmix_peer_t *peer,
         PMIX_PROC_CREATE(procs, nprocs);
         cnt = nprocs;
         if (PMIX_SUCCESS != (rc = pmix_bfrop.unpack(buf, procs, &cnt, PMIX_PROC))) {
-            PMIX_PROC_FREE(procs, nprocs);
             PMIX_ERROR_LOG(rc);
             goto exit;
         }

@@ -196,7 +196,7 @@ static void notify(pmix_status_t status,
     for (n=1; n < ninfo; n++) {
         iptr = OBJ_NEW(opal_value_t);
         iptr->key = strdup(info[n].key);
-        pmix120_value_unload(iptr, &info[n].value);
+        (void)pmix120_value_unload(iptr, &info[n].value);
         opal_list_append(&cd->info, &iptr->super);
     }
 

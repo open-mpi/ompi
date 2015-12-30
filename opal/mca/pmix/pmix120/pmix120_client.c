@@ -129,6 +129,7 @@ int pmix120_abort(int flag, const char *msg,
                 }
             }
             if (NULL == job) {
+                PMIX_PROC_FREE(parray, cnt);
                 return OPAL_ERR_NOT_FOUND;
             }
             (void)strncpy(parray[n].nspace, job->nspace, PMIX_MAX_NSLEN);
@@ -230,6 +231,7 @@ int pmix120_fence(opal_list_t *procs, int collect_data)
                 }
             }
             if (NULL == job) {
+                PMIX_PROC_FREE(parray, cnt);
                 return OPAL_ERR_NOT_FOUND;
             }
             (void)strncpy(parray[n].nspace, job->nspace, PMIX_MAX_NSLEN);
@@ -292,6 +294,7 @@ int pmix120_fencenb(opal_list_t *procs, int collect_data,
                 }
             }
             if (NULL == job) {
+                PMIX_PROC_FREE(parray, cnt);
                 return OPAL_ERR_NOT_FOUND;
             }
             (void)strncpy(parray[n].nspace, job->nspace, PMIX_MAX_NSLEN);
@@ -999,6 +1002,7 @@ int pmix120_connect(opal_list_t *procs)
             }
         }
         if (NULL == job) {
+            PMIX_PROC_FREE(parray, cnt);
             OPAL_ERROR_LOG(OPAL_ERR_NOT_FOUND);
             return OPAL_ERR_NOT_FOUND;
         }
@@ -1205,7 +1209,7 @@ int pmix120_resolve_peers(const char *nodename, opal_jobid_t jobid,
             }
             if (NULL == job) {
                 job = OBJ_NEW(opal_pmix120_jobid_trkr_t);
-                (void)strncpy(job->nspace, nspace, PMIX_MAX_NSLEN);
+                (void)strncpy(job->nspace, array[n].nspace, PMIX_MAX_NSLEN);
                 job->jobid = jobid;
                 opal_list_append(&mca_pmix_pmix120_component.jobids, &job->super);
             }
