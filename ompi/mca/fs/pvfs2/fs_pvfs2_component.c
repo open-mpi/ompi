@@ -13,6 +13,8 @@
  * Copyright (c) 2008-2013 University of Houston. All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -68,7 +70,7 @@ mca_fs_base_component_2_0_0_t mca_fs_pvfs2_component = {
     .fsm_init_query = mca_fs_pvfs2_component_init_query,      /* get thread level */
     .fsm_file_query = mca_fs_pvfs2_component_file_query,      /* get priority and actions */
     .fsm_file_unquery =  mca_fs_pvfs2_component_file_unquery, /* undo what was done by previous function */
-};.
+};
 
 static int
 pvfs2_register(void)
