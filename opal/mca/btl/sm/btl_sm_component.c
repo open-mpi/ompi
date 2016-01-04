@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Voltaire. All rights reserved.
- * Copyright (c) 2009-2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2009-2016 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010-2015 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2011-2014 NVIDIA Corporation.  All rights reserved.
@@ -664,7 +664,13 @@ create_rndv_file(mca_btl_sm_component_t *comp_ptr,
      * file containing all the meta info required for attach. */
 
     /* now just write the contents of tmp_modp->shmem_ds to the full
-     * sizeof(opal_shmem_ds_t), so we know where the mpool_res_size starts. */
+     * sizeof(opal_shmem_ds_t), so we know where the mpool_res_size
+     * starts.  Note that we write into a temporary file first and
+     * then do a rename(2) to move the full file into its final
+     * destination.  This avoids a race condition where a peer process
+     * might open/read part of the file before this processes finishes
+     * writing it (see
+     * https://github.com/open-mpi/ompi/issues/1230). */
     asprintf(&tmpfname, "%s.tmp", fname);
     if (NULL == tmpfname) {
         rc = OPAL_ERR_OUT_OF_RESOURCE;
