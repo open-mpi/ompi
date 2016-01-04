@@ -24,7 +24,8 @@
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 #include "ompi/mpi/fortran/base/constants.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_IREDUCE_SCATTER = ompi_ireduce_scatter_f
 #pragma weak pmpi_ireduce_scatter = ompi_ireduce_scatter_f
 #pragma weak pmpi_ireduce_scatter_ = ompi_ireduce_scatter_f
@@ -32,7 +33,7 @@
 
 #pragma weak PMPI_Ireduce_scatter_f = ompi_ireduce_scatter_f
 #pragma weak PMPI_Ireduce_scatter_f08 = ompi_ireduce_scatter_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_IREDUCE_SCATTER,
                             pmpi_ireduce_scatter,
                             pmpi_ireduce_scatter_,
@@ -40,6 +41,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_IREDUCE_SCATTER,
                             pompi_ireduce_scatter_f,
                             (char *sendbuf, char *recvbuf, MPI_Fint *recvcounts, MPI_Fint *datatype, MPI_Fint *op, MPI_Fint *comm, MPI_Fint *request, MPI_Fint *ierr),
                             (sendbuf, recvbuf, recvcounts, datatype, op, comm, request, ierr) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -50,9 +52,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_IREDUCE_SCATTER,
 
 #pragma weak MPI_Ireduce_scatter_f = ompi_ireduce_scatter_f
 #pragma weak MPI_Ireduce_scatter_f08 = ompi_ireduce_scatter_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_IREDUCE_SCATTER,
                             mpi_ireduce_scatter,
                             mpi_ireduce_scatter_,
@@ -60,11 +61,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_IREDUCE_SCATTER,
                             ompi_ireduce_scatter_f,
                             (char *sendbuf, char *recvbuf, MPI_Fint *recvcounts, MPI_Fint *datatype, MPI_Fint *op, MPI_Fint *comm, MPI_Fint *request, MPI_Fint *ierr),
                             (sendbuf, recvbuf, recvcounts, datatype, op, comm, request, ierr) )
-#endif
-
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
+#else
 #define ompi_ireduce_scatter_f pompi_ireduce_scatter_f
+#endif
 #endif
 
 

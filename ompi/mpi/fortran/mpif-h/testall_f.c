@@ -26,7 +26,8 @@
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/communicator/communicator.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_TESTALL = ompi_testall_f
 #pragma weak pmpi_testall = ompi_testall_f
 #pragma weak pmpi_testall_ = ompi_testall_f
@@ -34,7 +35,7 @@
 
 #pragma weak PMPI_Testall_f = ompi_testall_f
 #pragma weak PMPI_Testall_f08 = ompi_testall_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_TESTALL,
                            pmpi_testall,
                            pmpi_testall_,
@@ -42,6 +43,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_TESTALL,
                            pompi_testall_f,
                            (MPI_Fint *count, MPI_Fint *array_of_requests, ompi_fortran_logical_t *flag, MPI_Fint *array_of_statuses, MPI_Fint *ierr),
                            (count, array_of_requests, flag, array_of_statuses, ierr) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -52,9 +54,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_TESTALL,
 
 #pragma weak MPI_Testall_f = ompi_testall_f
 #pragma weak MPI_Testall_f08 = ompi_testall_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_TESTALL,
                            mpi_testall,
                            mpi_testall_,
@@ -62,11 +63,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TESTALL,
                            ompi_testall_f,
                            (MPI_Fint *count, MPI_Fint *array_of_requests, ompi_fortran_logical_t *flag, MPI_Fint *array_of_statuses, MPI_Fint *ierr),
                            (count, array_of_requests, flag, array_of_statuses, ierr) )
-#endif
-
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
+#else
 #define ompi_testall_f pompi_testall_f
+#endif
 #endif
 
 

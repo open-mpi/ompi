@@ -23,7 +23,8 @@
 
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_ADD_ERROR_CLASS = ompi_add_error_class_f
 #pragma weak pmpi_add_error_class = ompi_add_error_class_f
 #pragma weak pmpi_add_error_class_ = ompi_add_error_class_f
@@ -31,7 +32,7 @@
 
 #pragma weak PMPI_Add_error_class_f = ompi_add_error_class_f
 #pragma weak PMPI_Add_error_class_f08 = ompi_add_error_class_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_ADD_ERROR_CLASS,
                            pmpi_add_error_class,
                            pmpi_add_error_class_,
@@ -39,6 +40,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_ADD_ERROR_CLASS,
                            pompi_add_error_class_f,
                            (MPI_Fint *errorclass, MPI_Fint *ierr),
                            (errorclass, ierr) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -49,9 +51,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_ADD_ERROR_CLASS,
 
 #pragma weak MPI_Add_error_class_f = ompi_add_error_class_f
 #pragma weak MPI_Add_error_class_f08 = ompi_add_error_class_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_ADD_ERROR_CLASS,
                            mpi_add_error_class,
                            mpi_add_error_class_,
@@ -59,11 +60,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_ADD_ERROR_CLASS,
                            ompi_add_error_class_f,
                            (MPI_Fint *errorclass, MPI_Fint *ierr),
                            (errorclass, ierr) )
-#endif
-
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
+#else
 #define ompi_add_error_class_f pompi_add_error_class_f
+#endif
 #endif
 
 

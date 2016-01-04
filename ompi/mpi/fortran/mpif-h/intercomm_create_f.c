@@ -23,7 +23,8 @@
 
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_INTERCOMM_CREATE = ompi_intercomm_create_f
 #pragma weak pmpi_intercomm_create = ompi_intercomm_create_f
 #pragma weak pmpi_intercomm_create_ = ompi_intercomm_create_f
@@ -31,7 +32,7 @@
 
 #pragma weak PMPI_Intercomm_create_f = ompi_intercomm_create_f
 #pragma weak PMPI_Intercomm_create_f08 = ompi_intercomm_create_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_INTERCOMM_CREATE,
                            pmpi_intercomm_create,
                            pmpi_intercomm_create_,
@@ -39,6 +40,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_INTERCOMM_CREATE,
                            pompi_intercomm_create_f,
                            (MPI_Fint *local_comm, MPI_Fint *local_leader, MPI_Fint *bridge_comm, MPI_Fint *remote_leader, MPI_Fint *tag, MPI_Fint *newintercomm, MPI_Fint *ierr),
                            (local_comm, local_leader, bridge_comm, remote_leader, tag, newintercomm, ierr) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -49,9 +51,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_INTERCOMM_CREATE,
 
 #pragma weak MPI_Intercomm_create_f = ompi_intercomm_create_f
 #pragma weak MPI_Intercomm_create_f08 = ompi_intercomm_create_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_INTERCOMM_CREATE,
                            mpi_intercomm_create,
                            mpi_intercomm_create_,
@@ -59,11 +60,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_INTERCOMM_CREATE,
                            ompi_intercomm_create_f,
                            (MPI_Fint *local_comm, MPI_Fint *local_leader, MPI_Fint *bridge_comm, MPI_Fint *remote_leader, MPI_Fint *tag, MPI_Fint *newintercomm, MPI_Fint *ierr),
                            (local_comm, local_leader, bridge_comm, remote_leader, tag, newintercomm, ierr) )
-#endif
-
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
+#else
 #define ompi_intercomm_create_f pompi_intercomm_create_f
+#endif
 #endif
 
 

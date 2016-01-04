@@ -21,7 +21,8 @@
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 #include "ompi/mpi/fortran/base/constants.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_DIST_GRAPH_CREATE = ompi_dist_graph_create_f
 #pragma weak pmpi_dist_graph_create = ompi_dist_graph_create_f
 #pragma weak pmpi_dist_graph_create_ = ompi_dist_graph_create_f
@@ -29,7 +30,7 @@
 
 #pragma weak PMPI_Dist_graph_create_f = ompi_dist_graph_create_f
 #pragma weak PMPI_Dist_graph_create_f08 = ompi_dist_graph_create_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_DIST_GRAPH_CREATE,
                             pmpi_dist_graph_create,
                             pmpi_dist_graph_create_,
@@ -37,6 +38,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_DIST_GRAPH_CREATE,
                             pompi_dist_graph_create_f,
                             (MPI_Fint *comm_old, MPI_Fint *n, MPI_Fint *sources, MPI_Fint *degrees, MPI_Fint *destinations, MPI_Fint *weights, MPI_Fint *info,  ompi_fortran_logical_t *reorder, MPI_Fint *comm_graph,  MPI_Fint *ierr),
                             (comm_old, n, sources, degrees, destinations, weights, info,  reorder, comm_graph, ierr) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -47,9 +49,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_DIST_GRAPH_CREATE,
 
 #pragma weak MPI_Dist_graph_create_f = ompi_dist_graph_create_f
 #pragma weak MPI_Dist_graph_create_f08 = ompi_dist_graph_create_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_DIST_GRAPH_CREATE,
                             mpi_dist_graph_create,
                             mpi_dist_graph_create_,
@@ -59,8 +60,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_DIST_GRAPH_CREATE,
                             (comm_old, n, sources, degrees, destinations, weights, info, reorder, comm_graph, ierr) )
 #endif
 
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
+#if OMPI_BUILD_MPI_PROFILING && ! OPAL_HAVE_WEAK_SYMBOLS
 #define ompi_dist_graph_create_f pompi_dist_graph_create_f
+#endif
 #endif
 
 

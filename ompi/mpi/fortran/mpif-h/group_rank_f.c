@@ -24,7 +24,8 @@
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 #include "ompi/group/group.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_GROUP_RANK = ompi_group_rank_f
 #pragma weak pmpi_group_rank = ompi_group_rank_f
 #pragma weak pmpi_group_rank_ = ompi_group_rank_f
@@ -32,7 +33,7 @@
 
 #pragma weak PMPI_Group_rank_f = ompi_group_rank_f
 #pragma weak PMPI_Group_rank_f08 = ompi_group_rank_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_GROUP_RANK,
                            pmpi_group_rank,
                            pmpi_group_rank_,
@@ -40,6 +41,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_GROUP_RANK,
                            pompi_group_rank_f,
                            (MPI_Fint *group, MPI_Fint *rank, MPI_Fint *ierr),
                            (group, rank, ierr) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -50,9 +52,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_GROUP_RANK,
 
 #pragma weak MPI_Group_rank_f = ompi_group_rank_f
 #pragma weak MPI_Group_rank_f08 = ompi_group_rank_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_GROUP_RANK,
                            mpi_group_rank,
                            mpi_group_rank_,
@@ -60,11 +61,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_GROUP_RANK,
                            ompi_group_rank_f,
                            (MPI_Fint *group, MPI_Fint *rank, MPI_Fint *ierr),
                            (group, rank, ierr) )
-#endif
-
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
+#else
 #define ompi_group_rank_f pompi_group_rank_f
+#endif
 #endif
 
 

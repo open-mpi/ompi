@@ -24,7 +24,8 @@
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 #include "ompi/mpi/fortran/base/constants.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_FILE_IWRITE_AT_ALL = ompi_file_iwrite_at_all_f
 #pragma weak pmpi_file_iwrite_at_all = ompi_file_iwrite_at_all_f
 #pragma weak pmpi_file_iwrite_at_all_ = ompi_file_iwrite_at_all_f
@@ -32,7 +33,7 @@
 
 #pragma weak PMPI_File_iwrite_at_all_f = ompi_file_iwrite_at_all_f
 #pragma weak PMPI_File_iwrite_at_all_f08 = ompi_file_iwrite_at_all_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_FILE_IWRITE_AT_ALL,
                            pmpi_file_iwrite_at_all,
                            pmpi_file_iwrite_at_all_,
@@ -40,6 +41,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_FILE_IWRITE_AT_ALL,
                            pompi_file_iwrite_at_all_f,
                            (MPI_Fint *fh, MPI_Offset *offset, char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *request, MPI_Fint *ierr),
                            (fh, offset, buf, count, datatype, request, ierr) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -50,9 +52,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_FILE_IWRITE_AT_ALL,
 
 #pragma weak MPI_File_iwrite_at_all_f = ompi_file_iwrite_at_all_f
 #pragma weak MPI_File_iwrite_at_all_f08 = ompi_file_iwrite_at_all_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_FILE_IWRITE_AT_ALL,
                            mpi_file_iwrite_at_all,
                            mpi_file_iwrite_at_all_,
@@ -60,11 +61,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_FILE_IWRITE_AT_ALL,
                            ompi_file_iwrite_at_all_f,
                            (MPI_Fint *fh, MPI_Offset *offset, char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *request, MPI_Fint *ierr),
                            (fh, offset, buf, count, datatype, request, ierr) )
-#endif
-
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
+#else
 #define ompi_file_iwrite_at_all_f pompi_file_iwrite_at_all_f
+#endif
 #endif
 
 

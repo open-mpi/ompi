@@ -15,15 +15,15 @@
 .nf
 #include <mpi.h>
 int MPI_Neighbor_alltoallv(const void *\fIsendbuf\fP, const int \fIsendcounts\fP[],
-	const int \fIsdispls\f[]P, MPI_Datatype \fIsendtype\fP,
+	const int \fIsdispls\fP[], MPI_Datatype \fIsendtype\fP,
 	void *\fIrecvbuf\fP, const int\fI recvcounts\fP[],
 	const int \fIrdispls\fP[], MPI_Datatype \fIrecvtype\fP, MPI_Comm \fIcomm\fP)
 
 int MPI_Ineighbor_alltoallv(const void *\fIsendbuf\fP, const int \fIsendcounts\fP[],
-	const int \fIsdispls\f[]P, MPI_Datatype \fIsendtype\fP,
+	const int \fIsdispls\fP[], MPI_Datatype \fIsendtype\fP,
 	void *\fIrecvbuf\fP, const int\fI recvcounts\fP[],
 	const int \fIrdispls\fP[], MPI_Datatype \fIrecvtype\fP, MPI_Comm \fIcomm\fP,
-        MPI_Request \fI*request\fP)
+	MPI_Request \fI*request\fP)
 
 .fi
 .SH Fortran Syntax

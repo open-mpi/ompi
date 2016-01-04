@@ -2682,15 +2682,13 @@ end interface  MPI_Finalized
 ! be okay once the Interop TR is implemented.
 interface  MPI_Free_mem
 subroutine MPI_Free_mem_f08(base,ierror)
-   use :: mpi_f08_types, only : MPI_ADDRESS_KIND
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: base
    !GCC$ ATTRIBUTES NO_ARG_CHECK :: base
    !$PRAGMA IGNORE_TKR base
    !DIR$ IGNORE_TKR base
    !IBM* IGNORE_TKR base
-!   INTEGER(MPI_ADDRESS_KIND), DIMENSION(*) OMPI_ASYNCHRONOUS :: base
-   INTEGER(MPI_ADDRESS_KIND), DIMENSION(*) :: base
+   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: base
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 end subroutine MPI_Free_mem_f08
 end interface  MPI_Free_mem
@@ -3263,7 +3261,7 @@ subroutine MPI_Win_attach_f08(win,base,size,ierror)
    !IBM* IGNORE_TKR base
    OMPI_FORTRAN_IGNORE_TKR_TYPE :: base
    INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: size
-   TYPE(MPI_Win), INTENT(OUT) :: win
+   TYPE(MPI_Win), INTENT(IN) :: win
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 end subroutine MPI_Win_attach_f08
 end interface  MPI_Win_attach
@@ -3278,7 +3276,7 @@ subroutine MPI_Win_detach_f08(win,base,ierror)
    !DIR$ IGNORE_TKR base
    !IBM* IGNORE_TKR base
    OMPI_FORTRAN_IGNORE_TKR_TYPE :: base
-   TYPE(MPI_Win), INTENT(OUT) :: win
+   TYPE(MPI_Win), INTENT(IN) :: win
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 end subroutine MPI_Win_detach_f08
 end interface  MPI_Win_detach

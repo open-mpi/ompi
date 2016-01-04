@@ -32,11 +32,10 @@
 #include "opal/datatype/opal_convertor.h"
 #include "ompi/memchecker.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_BUILD_MPI_PROFILING
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_Pack_external_size = PMPI_Pack_external_size
 #endif
-
-#if OMPI_BUILD_MPI_PROFILING
 #define MPI_Pack_external_size PMPI_Pack_external_size
 #endif
 

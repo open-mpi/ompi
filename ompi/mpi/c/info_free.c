@@ -26,11 +26,10 @@
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/info/info.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_BUILD_MPI_PROFILING
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_Info_free = PMPI_Info_free
 #endif
-
-#if OMPI_BUILD_MPI_PROFILING
 #define MPI_Info_free PMPI_Info_free
 #endif
 

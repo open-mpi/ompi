@@ -24,7 +24,8 @@
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 #include "ompi/mpi/fortran/base/constants.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_ALLTOALLW = ompi_alltoallw_f
 #pragma weak pmpi_alltoallw = ompi_alltoallw_f
 #pragma weak pmpi_alltoallw_ = ompi_alltoallw_f
@@ -32,7 +33,7 @@
 
 #pragma weak PMPI_Alltoallw_f = ompi_alltoallw_f
 #pragma weak PMPI_Alltoallw_f08 = ompi_alltoallw_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_ALLTOALLW,
                            pmpi_alltoallw,
                            pmpi_alltoallw_,
@@ -40,6 +41,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_ALLTOALLW,
                            pompi_alltoallw_f,
                            (char *sendbuf, MPI_Fint *sendcounts, MPI_Fint *sdispls, MPI_Fint *sendtypes, char *recvbuf, MPI_Fint *recvcounts, MPI_Fint *rdispls, MPI_Fint *recvtypes, MPI_Fint *comm, MPI_Fint *ierr),
                            (sendbuf, sendcounts, sdispls, sendtypes, recvbuf, recvcounts, rdispls, recvtypes, comm, ierr) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -50,9 +52,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_ALLTOALLW,
 
 #pragma weak MPI_Alltoallw_f = ompi_alltoallw_f
 #pragma weak MPI_Alltoallw_f08 = ompi_alltoallw_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_ALLTOALLW,
                            mpi_alltoallw,
                            mpi_alltoallw_,
@@ -60,11 +61,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_ALLTOALLW,
                            ompi_alltoallw_f,
                            (char *sendbuf, MPI_Fint *sendcounts, MPI_Fint *sdispls, MPI_Fint *sendtypes, char *recvbuf, MPI_Fint *recvcounts, MPI_Fint *rdispls, MPI_Fint *recvtypes, MPI_Fint *comm, MPI_Fint *ierr),
                            (sendbuf, sendcounts, sdispls, sendtypes, recvbuf, recvcounts, rdispls, recvtypes, comm, ierr) )
-#endif
-
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
+#else
 #define ompi_alltoallw_f pompi_alltoallw_f
+#endif
 #endif
 
 

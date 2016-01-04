@@ -25,7 +25,8 @@
 #include "ompi/mpi/fortran/base/strings.h"
 #include "ompi/file/file.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_FILE_OPEN = ompi_file_open_f
 #pragma weak pmpi_file_open = ompi_file_open_f
 #pragma weak pmpi_file_open_ = ompi_file_open_f
@@ -33,7 +34,7 @@
 
 #pragma weak PMPI_File_open_f = ompi_file_open_f
 #pragma weak PMPI_File_open_f08 = ompi_file_open_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_FILE_OPEN,
                            pmpi_file_open,
                            pmpi_file_open_,
@@ -41,6 +42,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_FILE_OPEN,
                            pompi_file_open_f,
                            (MPI_Fint *comm, char *filename, MPI_Fint *amode, MPI_Fint *info, MPI_Fint *fh, MPI_Fint *ierr, int name_len),
                            (comm, filename, amode, info, fh, ierr, name_len) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -51,9 +53,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_FILE_OPEN,
 
 #pragma weak MPI_File_open_f = ompi_file_open_f
 #pragma weak MPI_File_open_f08 = ompi_file_open_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_FILE_OPEN,
                            mpi_file_open,
                            mpi_file_open_,
@@ -61,11 +62,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_FILE_OPEN,
                            ompi_file_open_f,
                            (MPI_Fint *comm, char *filename, MPI_Fint *amode, MPI_Fint *info, MPI_Fint *fh, MPI_Fint *ierr, int name_len),
                            (comm, filename, amode, info, fh, ierr, name_len) )
-#endif
-
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
+#else
 #define ompi_file_open_f pompi_file_open_f
+#endif
 #endif
 
 

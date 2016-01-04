@@ -23,7 +23,8 @@
 
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_TYPE_GET_ENVELOPE = ompi_type_get_envelope_f
 #pragma weak pmpi_type_get_envelope = ompi_type_get_envelope_f
 #pragma weak pmpi_type_get_envelope_ = ompi_type_get_envelope_f
@@ -31,7 +32,7 @@
 
 #pragma weak PMPI_Type_get_envelope_f = ompi_type_get_envelope_f
 #pragma weak PMPI_Type_get_envelope_f08 = ompi_type_get_envelope_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_TYPE_GET_ENVELOPE,
                            pmpi_type_get_envelope,
                            pmpi_type_get_envelope_,
@@ -39,6 +40,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_TYPE_GET_ENVELOPE,
                            pompi_type_get_envelope_f,
                            (MPI_Fint *type, MPI_Fint *num_integers, MPI_Fint *num_addresses, MPI_Fint *num_datatypes, MPI_Fint *combiner, MPI_Fint *ierr),
                            (type, num_integers, num_addresses, num_datatypes, combiner, ierr) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -49,9 +51,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_TYPE_GET_ENVELOPE,
 
 #pragma weak MPI_Type_get_envelope_f = ompi_type_get_envelope_f
 #pragma weak MPI_Type_get_envelope_f08 = ompi_type_get_envelope_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_GET_ENVELOPE,
                            mpi_type_get_envelope,
                            mpi_type_get_envelope_,
@@ -59,11 +60,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_GET_ENVELOPE,
                            ompi_type_get_envelope_f,
                            (MPI_Fint *type, MPI_Fint *num_integers, MPI_Fint *num_addresses, MPI_Fint *num_datatypes, MPI_Fint *combiner, MPI_Fint *ierr),
                            (type, num_integers, num_addresses, num_datatypes, combiner, ierr) )
-#endif
-
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
+#else
 #define ompi_type_get_envelope_f pompi_type_get_envelope_f
+#endif
 #endif
 
 

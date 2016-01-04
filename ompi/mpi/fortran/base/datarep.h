@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -84,13 +86,7 @@ OMPI_DATAREP_FORTRAN_DECLARE(mpi_conversion_fn_null, MPI_CONVERSION_FN_NULL, (ch
  * convenient way to check whether an argument is the sentinel value
  * MPI_CONVERSION_FN_NULL.
  */
-#if OPAL_HAVE_WEAK_SYMBOLS
-#define OMPI_IS_FORTRAN_CONVERSION_FN_NULL(addr) \
-  (MPI_CONVERSION_FN_NULL == addr || \
-   mpi_conversion_fn_null == addr || \
-   mpi_conversion_fn_null_ == addr || \
-   mpi_conversion_fn_null__ == addr)
-#elif OMPI_FORTRAN_CAPS
+#if OMPI_FORTRAN_CAPS
 #define OMPI_IS_FORTRAN_CONVERSION_FN_NULL(addr) \
   (MPI_CONVERSION_FN_NULL == addr)
 #elif OMPI_FORTRAN_PLAIN
@@ -99,9 +95,11 @@ OMPI_DATAREP_FORTRAN_DECLARE(mpi_conversion_fn_null, MPI_CONVERSION_FN_NULL, (ch
 #elif OMPI_FORTRAN_SINGLE_UNDERSCORE
 #define OMPI_IS_FORTRAN_CONVERSION_FN_NULL(addr) \
   (mpi_conversion_fn_null_ == addr)
-#else
+#elif OMPI_FORTRAN_DOUBLE_UNDERSCORE
 #define OMPI_IS_FORTRAN_CONVERSION_FN_NULL(addr) \
   (mpi_conversion_fn_null__ == addr)
+#else
+#error Unrecognized Fortran name mangling scheme
 #endif
 
 END_C_DECLS

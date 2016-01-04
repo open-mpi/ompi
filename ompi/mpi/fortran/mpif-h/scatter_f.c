@@ -24,7 +24,8 @@
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 #include "ompi/mpi/fortran/base/constants.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_SCATTER = ompi_scatter_f
 #pragma weak pmpi_scatter = ompi_scatter_f
 #pragma weak pmpi_scatter_ = ompi_scatter_f
@@ -32,7 +33,7 @@
 
 #pragma weak PMPI_Scatter_f = ompi_scatter_f
 #pragma weak PMPI_Scatter_f08 = ompi_scatter_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_SCATTER,
                            pmpi_scatter,
                            pmpi_scatter_,
@@ -40,6 +41,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_SCATTER,
                            pompi_scatter_f,
                            (char *sendbuf, MPI_Fint *sendcount, MPI_Fint *sendtype, char *recvbuf, MPI_Fint *recvcount, MPI_Fint *recvtype, MPI_Fint *root, MPI_Fint *comm, MPI_Fint *ierr),
                            (sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm, ierr) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -50,9 +52,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_SCATTER,
 
 #pragma weak MPI_Scatter_f = ompi_scatter_f
 #pragma weak MPI_Scatter_f08 = ompi_scatter_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_SCATTER,
                            mpi_scatter,
                            mpi_scatter_,
@@ -60,11 +61,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_SCATTER,
                            ompi_scatter_f,
                            (char *sendbuf, MPI_Fint *sendcount, MPI_Fint *sendtype, char *recvbuf, MPI_Fint *recvcount, MPI_Fint *recvtype, MPI_Fint *root, MPI_Fint *comm, MPI_Fint *ierr),
                            (sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm, ierr) )
-#endif
-
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
+#else
 #define ompi_scatter_f pompi_scatter_f
+#endif
 #endif
 
 

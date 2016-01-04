@@ -25,7 +25,8 @@
 #include "ompi/mpi/fortran/base/strings.h"
 #include "ompi/file/file.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_FILE_GET_VIEW = ompi_file_get_view_f
 #pragma weak pmpi_file_get_view = ompi_file_get_view_f
 #pragma weak pmpi_file_get_view_ = ompi_file_get_view_f
@@ -33,7 +34,7 @@
 
 #pragma weak PMPI_File_get_view_f = ompi_file_get_view_f
 #pragma weak PMPI_File_get_view_f08 = ompi_file_get_view_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_FILE_GET_VIEW,
                            pmpi_file_get_view,
                            pmpi_file_get_view_,
@@ -41,6 +42,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_FILE_GET_VIEW,
                            pompi_file_get_view_f,
                            (MPI_Fint *fh, MPI_Offset *disp, MPI_Fint *etype, MPI_Fint *filetype, char *datarep, MPI_Fint *ierr, int datarep_len),
                            (fh, disp, etype, filetype, datarep, ierr, datarep_len) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -51,9 +53,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_FILE_GET_VIEW,
 
 #pragma weak MPI_File_get_view_f = ompi_file_get_view_f
 #pragma weak MPI_File_get_view_f08 = ompi_file_get_view_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_FILE_GET_VIEW,
                            mpi_file_get_view,
                            mpi_file_get_view_,
@@ -61,11 +62,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_FILE_GET_VIEW,
                            ompi_file_get_view_f,
                            (MPI_Fint *fh, MPI_Offset *disp, MPI_Fint *etype, MPI_Fint *filetype, char *datarep, MPI_Fint *ierr, int datarep_len),
                            (fh, disp, etype, filetype, datarep, ierr, datarep_len) )
-#endif
-
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
+#else
 #define ompi_file_get_view_f pompi_file_get_view_f
+#endif
 #endif
 
 

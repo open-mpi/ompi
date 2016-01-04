@@ -9,11 +9,11 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2012      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
- * Copyright (c) 2015      FUJITSU LIMITED.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015      FUJITSU LIMITED.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -28,7 +28,8 @@
 #include "ompi/mpi/fortran/base/constants.h"
 #include "ompi/communicator/communicator.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_IMPROBE = ompi_improbe_f
 #pragma weak pmpi_improbe = ompi_improbe_f
 #pragma weak pmpi_improbe_ = ompi_improbe_f
@@ -36,7 +37,7 @@
 
 #pragma weak PMPI_Improbe_f = ompi_improbe_f
 #pragma weak PMPI_Improbe_f08 = ompi_improbe_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_IMPROBE,
                             pmpi_improbe,
                             pmpi_improbe_,
@@ -45,6 +46,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_IMPROBE,
                             (MPI_Fint *source, MPI_Fint *tag, MPI_Fint *comm, ompi_fortran_logical_t *flag,
                              MPI_Fint *message, MPI_Fint *status, MPI_Fint *ierr),
                             (source, tag, comm, flag, message, status, ierr) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -55,9 +57,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_IMPROBE,
 
 #pragma weak MPI_Improbe_f = ompi_improbe_f
 #pragma weak MPI_Improbe_f08 = ompi_improbe_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_IMPROBE,
                             mpi_improbe,
                             mpi_improbe_,
@@ -66,11 +67,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_IMPROBE,
                             (MPI_Fint *source, MPI_Fint *tag, MPI_Fint *comm, ompi_fortran_logical_t *flag,
                              MPI_Fint *message, MPI_Fint *status, MPI_Fint *ierr),
                             (source, tag, comm, flag, message, status, ierr) )
-#endif
-
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
+#else
 #define ompi_improbe_f pompi_improbe_f
+#endif
 #endif
 
 

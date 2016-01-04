@@ -26,7 +26,8 @@
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/communicator/communicator.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_WAITSOME = ompi_waitsome_f
 #pragma weak pmpi_waitsome = ompi_waitsome_f
 #pragma weak pmpi_waitsome_ = ompi_waitsome_f
@@ -34,7 +35,7 @@
 
 #pragma weak PMPI_Waitsome_f = ompi_waitsome_f
 #pragma weak PMPI_Waitsome_f08 = ompi_waitsome_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_WAITSOME,
                            pmpi_waitsome,
                            pmpi_waitsome_,
@@ -42,6 +43,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_WAITSOME,
                            pompi_waitsome_f,
                            (MPI_Fint *incount, MPI_Fint *array_of_requests, MPI_Fint *outcount, MPI_Fint *array_of_indices, MPI_Fint *array_of_statuses, MPI_Fint *ierr),
                            (incount, array_of_requests, outcount, array_of_indices, array_of_statuses, ierr) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -52,9 +54,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_WAITSOME,
 
 #pragma weak MPI_Waitsome_f = ompi_waitsome_f
 #pragma weak MPI_Waitsome_f08 = ompi_waitsome_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_WAITSOME,
                            mpi_waitsome,
                            mpi_waitsome_,
@@ -62,11 +63,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_WAITSOME,
                            ompi_waitsome_f,
                            (MPI_Fint *incount, MPI_Fint *array_of_requests, MPI_Fint *outcount, MPI_Fint *array_of_indices, MPI_Fint *array_of_statuses, MPI_Fint *ierr),
                            (incount, array_of_requests, outcount, array_of_indices, array_of_statuses, ierr) )
-#endif
-
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
+#else
 #define ompi_waitsome_f pompi_waitsome_f
+#endif
 #endif
 
 

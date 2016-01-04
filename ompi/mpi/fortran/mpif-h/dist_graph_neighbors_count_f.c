@@ -18,7 +18,8 @@
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 #include "ompi/mpi/fortran/base/constants.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_DIST_GRAPH_NEIGHBORS_COUNT = ompi_dist_graph_neighbors_count_f
 #pragma weak pmpi_dist_graph_neighbors_count = ompi_dist_graph_neighbors_count_f
 #pragma weak pmpi_dist_graph_neighbors_count_ = ompi_dist_graph_neighbors_count_f
@@ -26,7 +27,7 @@
 
 #pragma weak PMPI_Dist_graph_neighbors_count_f = ompi_dist_graph_neighbors_count_f
 #pragma weak PMPI_Dist_graph_neighbors_count_f08 = ompi_dist_graph_neighbors_count_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_DIST_GRAPH_NEIGHBORS_COUNT,
                             pmpi_dist_graph_neighbors_count,
                             pmpi_dist_graph_neighbors_count_,
@@ -34,6 +35,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_DIST_GRAPH_NEIGHBORS_COUNT,
                             pompi_dist_graph_neighbors_count_f,
                             (MPI_Fint *comm, MPI_Fint *inneighbors, MPI_Fint *outneighbors, ompi_fortran_logical_t *weighted, MPI_Fint *ierr),
                             (comm, inneighbors, outneighbors, weighted, ierr) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -44,9 +46,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_DIST_GRAPH_NEIGHBORS_COUNT,
 
 #pragma weak MPI_Dist_graph_neighbors_count_f = ompi_dist_graph_neighbors_count_f
 #pragma weak MPI_Dist_graph_neighbors_count_f08 = ompi_dist_graph_neighbors_count_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_DIST_GRAPH_NEIGHBORS_COUNT,
                             mpi_dist_graph_neighbors_count,
                             mpi_dist_graph_neighbors_count_,
@@ -54,11 +55,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_DIST_GRAPH_NEIGHBORS_COUNT,
                             ompi_dist_graph_neighbors_count_f,
                             (MPI_Fint *comm, MPI_Fint *inneighbors, MPI_Fint *outneighbors, ompi_fortran_logical_t *weighted, MPI_Fint *ierr),
                             (comm, inneighbors, outneighbors, weighted, ierr) )
-#endif
-
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
+#else
 #define ompi_dist_graph_neighbors_count_f pompi_dist_graph_neighbors_count_f
+#endif
 #endif
 
 

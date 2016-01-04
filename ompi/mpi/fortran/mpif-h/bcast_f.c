@@ -24,7 +24,8 @@
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 #include "ompi/mpi/fortran/base/constants.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_BCAST = ompi_bcast_f
 #pragma weak pmpi_bcast = ompi_bcast_f
 #pragma weak pmpi_bcast_ = ompi_bcast_f
@@ -32,7 +33,7 @@
 
 #pragma weak PMPI_Bcast_f = ompi_bcast_f
 #pragma weak PMPI_Bcast_f08 = ompi_bcast_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_BCAST,
                            pmpi_bcast,
                            pmpi_bcast_,
@@ -40,6 +41,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_BCAST,
                            pompi_bcast_f,
                            (char *buffer, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *root, MPI_Fint *comm, MPI_Fint *ierr),
                            (buffer, count, datatype, root, comm, ierr) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -50,9 +52,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_BCAST,
 
 #pragma weak MPI_Bcast_f = ompi_bcast_f
 #pragma weak MPI_Bcast_f08 = ompi_bcast_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_BCAST,
                            mpi_bcast,
                            mpi_bcast_,
@@ -60,11 +61,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_BCAST,
                            ompi_bcast_f,
                            (char *buffer, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *root, MPI_Fint *comm, MPI_Fint *ierr),
                            (buffer, count, datatype, root, comm, ierr) )
-#endif
-
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
+#else
 #define ompi_bcast_f pompi_bcast_f
+#endif
 #endif
 
 

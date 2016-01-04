@@ -25,7 +25,8 @@
 #include "ompi/attribute/attribute.h"
 #include "ompi/win/win.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_WIN_GET_ATTR = ompi_win_get_attr_f
 #pragma weak pmpi_win_get_attr = ompi_win_get_attr_f
 #pragma weak pmpi_win_get_attr_ = ompi_win_get_attr_f
@@ -33,7 +34,7 @@
 
 #pragma weak PMPI_Win_get_attr_f = ompi_win_get_attr_f
 #pragma weak PMPI_Win_get_attr_f08 = ompi_win_get_attr_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_WIN_GET_ATTR,
                            pmpi_win_get_attr,
                            pmpi_win_get_attr_,
@@ -41,6 +42,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_WIN_GET_ATTR,
                            pompi_win_get_attr_f,
                            (MPI_Fint *win, MPI_Fint *win_keyval, MPI_Aint *attribute_val, ompi_fortran_logical_t *flag, MPI_Fint *ierr),
                            (win, win_keyval, attribute_val, flag, ierr) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -51,9 +53,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_WIN_GET_ATTR,
 
 #pragma weak MPI_Win_get_attr_f = ompi_win_get_attr_f
 #pragma weak MPI_Win_get_attr_f08 = ompi_win_get_attr_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_WIN_GET_ATTR,
                            mpi_win_get_attr,
                            mpi_win_get_attr_,
@@ -61,11 +62,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_WIN_GET_ATTR,
                            ompi_win_get_attr_f,
                            (MPI_Fint *win, MPI_Fint *win_keyval, MPI_Aint *attribute_val, ompi_fortran_logical_t *flag, MPI_Fint *ierr),
                            (win, win_keyval, attribute_val, flag, ierr) )
-#endif
-
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
+#else
 #define ompi_win_get_attr_f pompi_win_get_attr_f
+#endif
 #endif
 
 void ompi_win_get_attr_f(MPI_Fint *win, MPI_Fint *win_keyval,

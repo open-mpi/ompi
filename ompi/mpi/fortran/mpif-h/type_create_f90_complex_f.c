@@ -23,7 +23,8 @@
 
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_TYPE_CREATE_F90_COMPLEX = ompi_type_create_f90_complex_f
 #pragma weak pmpi_type_create_f90_complex = ompi_type_create_f90_complex_f
 #pragma weak pmpi_type_create_f90_complex_ = ompi_type_create_f90_complex_f
@@ -31,7 +32,7 @@
 
 #pragma weak PMPI_Type_create_f90_complex_f = ompi_type_create_f90_complex_f
 #pragma weak PMPI_Type_create_f90_complex_f08 = ompi_type_create_f90_complex_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_TYPE_CREATE_F90_COMPLEX,
                            pmpi_type_create_f90_complex,
                            pmpi_type_create_f90_complex_,
@@ -39,6 +40,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_TYPE_CREATE_F90_COMPLEX,
                            pompi_type_create_f90_complex_f,
                            (MPI_Fint *p, MPI_Fint *r, MPI_Fint *newtype, MPI_Fint *ierr),
                            (p, r, newtype, ierr) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -49,9 +51,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_TYPE_CREATE_F90_COMPLEX,
 
 #pragma weak MPI_Type_create_f90_complex_f = ompi_type_create_f90_complex_f
 #pragma weak MPI_Type_create_f90_complex_f08 = ompi_type_create_f90_complex_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_CREATE_F90_COMPLEX,
                            mpi_type_create_f90_complex,
                            mpi_type_create_f90_complex_,
@@ -59,11 +60,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_CREATE_F90_COMPLEX,
                            ompi_type_create_f90_complex_f,
                            (MPI_Fint *p, MPI_Fint *r, MPI_Fint *newtype, MPI_Fint *ierr),
                            (p, r, newtype, ierr) )
-#endif
-
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
+#else
 #define ompi_type_create_f90_complex_f pompi_type_create_f90_complex_f
+#endif
 #endif
 
 

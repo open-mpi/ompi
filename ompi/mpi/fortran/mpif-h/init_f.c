@@ -32,7 +32,8 @@ static const char ident[] = OMPI_IDENT_STRING;
 
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_INIT = ompi_init_f
 #pragma weak pmpi_init = ompi_init_f
 #pragma weak pmpi_init_ = ompi_init_f
@@ -40,7 +41,7 @@ static const char ident[] = OMPI_IDENT_STRING;
 
 #pragma weak PMPI_Init_f = ompi_init_f
 #pragma weak PMPI_Init_f08 = ompi_init_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_INIT,
                            pmpi_init,
                            pmpi_init_,
@@ -48,6 +49,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_INIT,
                            pompi_init_f,
                            (MPI_Fint *ierr),
                            (ierr) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -58,9 +60,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_INIT,
 
 #pragma weak MPI_Init_f = ompi_init_f
 #pragma weak MPI_Init_f08 = ompi_init_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_INIT,
                            mpi_init,
                            mpi_init_,
@@ -68,11 +69,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_INIT,
                            ompi_init_f,
                            (MPI_Fint *ierr),
                            (ierr) )
-#endif
-
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
+#else
 #define ompi_init_f pompi_init_f
+#endif
 #endif
 
 

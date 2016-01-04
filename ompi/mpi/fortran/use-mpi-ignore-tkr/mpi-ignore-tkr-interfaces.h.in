@@ -7491,7 +7491,7 @@ subroutine MPI_Win_attach(win, base, size, ierror)
   @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ base
   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(in) :: base
   integer(kind=MPI_ADDRESS_KIND), intent(in) :: size
-  integer, intent(out) :: win
+  integer, intent(in) :: win
   integer, intent(out) :: ierror
 end subroutine MPI_Win_attach
 
@@ -7504,7 +7504,7 @@ subroutine PMPI_Win_attach(win, base, size, ierror)
   @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ base
   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(in) :: base
   integer(kind=MPI_ADDRESS_KIND), intent(in) :: size
-  integer, intent(out) :: win
+  integer, intent(in) :: win
   integer, intent(out) :: ierror
 end subroutine PMPI_Win_attach
 
@@ -7517,7 +7517,7 @@ subroutine MPI_Win_detach(win, base, ierror)
   include 'mpif-config.h'
   @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ base
   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(in) :: base
-  integer, intent(out) :: win
+  integer, intent(in) :: win
   integer, intent(out) :: ierror
 end subroutine MPI_Win_detach
 
@@ -7529,7 +7529,7 @@ subroutine PMPI_Win_detach(win, base, ierror)
   include 'mpif-config.h'
   @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ base
   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(in) :: base
-  integer, intent(out) :: win
+  integer, intent(in) :: win
   integer, intent(out) :: ierror
 end subroutine PMPI_Win_detach
 

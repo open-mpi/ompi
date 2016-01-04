@@ -1954,9 +1954,8 @@ end subroutine ompi_finalize_f
 
 subroutine ompi_free_mem_f(base,ierror) &
    BIND(C, name="ompi_free_mem_f")
-   use :: mpi_f08_types, only : MPI_ADDRESS_KIND
    implicit none
-   INTEGER(MPI_ADDRESS_KIND), DIMENSION(*) OMPI_ASYNCHRONOUS :: base
+   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: base
    INTEGER, INTENT(OUT) :: ierror
 end subroutine ompi_free_mem_f
 
@@ -2153,7 +2152,8 @@ end subroutine ompi_comm_spawn_f
 ! TODO - FIXME to use arrays of strings and pass strlen
 subroutine ompi_comm_spawn_multiple_f(count,array_of_commands, &
                                       array_of_argv, array_of_maxprocs,array_of_info,root, &
-                                      comm,intercomm,array_of_errcodes,ierror) &
+                                      comm,intercomm,array_of_errcodes,ierror, &
+                                      cmd_len, argv_len) &
    BIND(C, name="ompi_comm_spawn_multiple_f")
    use, intrinsic :: ISO_C_BINDING, only : C_CHAR
    implicit none
@@ -2165,6 +2165,7 @@ subroutine ompi_comm_spawn_multiple_f(count,array_of_commands, &
    INTEGER, INTENT(OUT) :: intercomm
    INTEGER, INTENT(OUT) :: array_of_errcodes(*)
    INTEGER, INTENT(OUT) :: ierror
+   INTEGER, VALUE, INTENT(IN) :: cmd_len, argv_len
 end subroutine ompi_comm_spawn_multiple_f
 
 subroutine ompi_lookup_name_f(service_name,info,port_name,ierror, &
@@ -2411,7 +2412,7 @@ subroutine ompi_win_attach_f(win,base,size,ierror) &
    implicit none
    OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: base
    INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: size
-   INTEGER, INTENT(OUT) :: win
+   INTEGER, INTENT(IN) :: win
    INTEGER, INTENT(OUT) :: ierror
 end subroutine ompi_win_attach_f
 
@@ -2420,7 +2421,7 @@ subroutine ompi_win_detach_f(win,base,ierror) &
    use :: mpi_f08_types, only : MPI_ADDRESS_KIND
    implicit none
    OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: base
-   INTEGER, INTENT(OUT) :: win
+   INTEGER, INTENT(IN) :: win
    INTEGER, INTENT(OUT) :: ierror
 end subroutine ompi_win_detach_f
 

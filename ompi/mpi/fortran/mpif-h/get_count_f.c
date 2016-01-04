@@ -24,7 +24,8 @@
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 #include "ompi/mpi/fortran/base/constants.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_GET_COUNT = ompi_get_count_f
 #pragma weak pmpi_get_count = ompi_get_count_f
 #pragma weak pmpi_get_count_ = ompi_get_count_f
@@ -32,7 +33,7 @@
 
 #pragma weak PMPI_Get_count_f = ompi_get_count_f
 #pragma weak PMPI_Get_count_f08 = ompi_get_count_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_GET_COUNT,
                            pmpi_get_count,
                            pmpi_get_count_,
@@ -40,6 +41,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_GET_COUNT,
                            pompi_get_count_f,
                            (MPI_Fint *status, MPI_Fint *datatype, MPI_Fint *count, MPI_Fint *ierr),
                            (status, datatype, count, ierr) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -50,9 +52,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_GET_COUNT,
 
 #pragma weak MPI_Get_count_f = ompi_get_count_f
 #pragma weak MPI_Get_count_f08 = ompi_get_count_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_GET_COUNT,
                            mpi_get_count,
                            mpi_get_count_,
@@ -60,11 +61,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_GET_COUNT,
                            ompi_get_count_f,
                            (MPI_Fint *status, MPI_Fint *datatype, MPI_Fint *count, MPI_Fint *ierr),
                            (status, datatype, count, ierr) )
-#endif
-
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
+#else
 #define ompi_get_count_f pompi_get_count_f
+#endif
 #endif
 
 

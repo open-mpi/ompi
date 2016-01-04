@@ -9,10 +9,10 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2012      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2015      FUJITSU LIMITED.  All rights reserved.
+ * Copyright (c) 2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015      FUJITSU LIMITED.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -25,7 +25,8 @@
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 #include "ompi/mpi/fortran/base/constants.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_IMRECV = ompi_imrecv_f
 #pragma weak pmpi_imrecv = ompi_imrecv_f
 #pragma weak pmpi_imrecv_ = ompi_imrecv_f
@@ -33,7 +34,7 @@
 
 #pragma weak PMPI_Imrecv_f = ompi_imrecv_f
 #pragma weak PMPI_Imrecv_f08 = ompi_imrecv_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_IMRECV,
                             pmpi_imrecv,
                             pmpi_imrecv_,
@@ -42,6 +43,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_IMRECV,
                             (char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *message,
                              MPI_Fint *request, MPI_Fint *ierr),
                             (buf, count, datatype, message, request, ierr) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -52,9 +54,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_IMRECV,
 
 #pragma weak MPI_Imrecv_f = ompi_imrecv_f
 #pragma weak MPI_Imrecv_f08 = ompi_imrecv_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_IMRECV,
                             mpi_imrecv,
                             mpi_imrecv_,
@@ -63,11 +64,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_IMRECV,
                             (char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *message,
                              MPI_Fint *request, MPI_Fint *ierr),
                             (buf, count, datatype, message, request, ierr) )
-#endif
-
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
+#else
 #define ompi_imrecv_f pompi_imrecv_f
+#endif
 #endif
 
 

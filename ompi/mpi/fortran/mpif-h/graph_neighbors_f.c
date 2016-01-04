@@ -25,7 +25,8 @@
 
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_GRAPH_NEIGHBORS = ompi_graph_neighbors_f
 #pragma weak pmpi_graph_neighbors = ompi_graph_neighbors_f
 #pragma weak pmpi_graph_neighbors_ = ompi_graph_neighbors_f
@@ -33,7 +34,7 @@
 
 #pragma weak PMPI_Graph_neighbors_f = ompi_graph_neighbors_f
 #pragma weak PMPI_Graph_neighbors_f08 = ompi_graph_neighbors_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_GRAPH_NEIGHBORS,
                            pmpi_graph_neighbors,
                            pmpi_graph_neighbors_,
@@ -41,6 +42,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_GRAPH_NEIGHBORS,
                            pompi_graph_neighbors_f,
                            (MPI_Fint *comm, MPI_Fint *rank, MPI_Fint *maxneighbors, MPI_Fint *neighbors, MPI_Fint *ierr),
                            (comm, rank, maxneighbors, neighbors, ierr) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -51,9 +53,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_GRAPH_NEIGHBORS,
 
 #pragma weak MPI_Graph_neighbors_f = ompi_graph_neighbors_f
 #pragma weak MPI_Graph_neighbors_f08 = ompi_graph_neighbors_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_GRAPH_NEIGHBORS,
                            mpi_graph_neighbors,
                            mpi_graph_neighbors_,
@@ -61,11 +62,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_GRAPH_NEIGHBORS,
                            ompi_graph_neighbors_f,
                            (MPI_Fint *comm, MPI_Fint *rank, MPI_Fint *maxneighbors, MPI_Fint *neighbors, MPI_Fint *ierr),
                            (comm, rank, maxneighbors, neighbors, ierr) )
-#endif
-
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
+#else
 #define ompi_graph_neighbors_f pompi_graph_neighbors_f
+#endif
 #endif
 
 

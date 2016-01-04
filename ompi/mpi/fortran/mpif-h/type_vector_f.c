@@ -23,7 +23,8 @@
 
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_TYPE_VECTOR = ompi_type_vector_f
 #pragma weak pmpi_type_vector = ompi_type_vector_f
 #pragma weak pmpi_type_vector_ = ompi_type_vector_f
@@ -31,7 +32,7 @@
 
 #pragma weak PMPI_Type_vector_f = ompi_type_vector_f
 #pragma weak PMPI_Type_vector_f08 = ompi_type_vector_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_TYPE_VECTOR,
                            pmpi_type_vector,
                            pmpi_type_vector_,
@@ -39,6 +40,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_TYPE_VECTOR,
                            pompi_type_vector_f,
                            (MPI_Fint *count, MPI_Fint *blocklength, MPI_Fint *stride, MPI_Fint *oldtype, MPI_Fint *newtype, MPI_Fint *ierr),
                            (count, blocklength, stride, oldtype, newtype, ierr) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -49,9 +51,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_TYPE_VECTOR,
 
 #pragma weak MPI_Type_vector_f = ompi_type_vector_f
 #pragma weak MPI_Type_vector_f08 = ompi_type_vector_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_VECTOR,
                            mpi_type_vector,
                            mpi_type_vector_,
@@ -59,11 +60,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_VECTOR,
                            ompi_type_vector_f,
                            (MPI_Fint *count, MPI_Fint *blocklength, MPI_Fint *stride, MPI_Fint *oldtype, MPI_Fint *newtype, MPI_Fint *ierr),
                            (count, blocklength, stride, oldtype, newtype, ierr) )
-#endif
-
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
+#else
 #define ompi_type_vector_f pompi_type_vector_f
+#endif
 #endif
 
 

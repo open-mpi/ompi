@@ -23,7 +23,8 @@
 
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_WIN_ALLOCATE_SHARED = ompi_win_allocate_shared_f
 #pragma weak pmpi_win_allocate_shared = ompi_win_allocate_shared_f
 #pragma weak pmpi_win_allocate_shared_ = ompi_win_allocate_shared_f
@@ -39,7 +40,7 @@
 
 #pragma weak PMPI_Win_allocate_shared_cptr_f = ompi_win_allocate_shared_f
 #pragma weak PMPI_Win_allocate_shared_cptr_f08 = ompi_win_allocate_shared_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_WIN_ALLOCATE_SHARED,
                             pmpi_win_allocate_shared,
                             pmpi_win_allocate_shared_,
@@ -60,6 +61,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_WIN_ALLOCATE_SHARED_CPTR,
                              MPI_Fint *win, MPI_Fint *ierr),
                             (size, disp_unit, info, comm, baseptr, win, ierr) )
 #endif
+#endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_WIN_ALLOCATE_SHARED = ompi_win_allocate_shared_f
@@ -77,9 +79,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_WIN_ALLOCATE_SHARED_CPTR,
 
 #pragma weak MPI_Win_allocate_shared_cptr_f = ompi_win_allocate_shared_f
 #pragma weak MPI_Win_allocate_shared_cptr_f08 = ompi_win_allocate_shared_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_WIN_ALLOCATE_SHARED,
                             mpi_win_allocate_shared,
                             mpi_win_allocate_shared_,
@@ -99,12 +100,10 @@ OMPI_GENERATE_F77_BINDINGS (MPI_WIN_ALLOCATE_SHARED_CPTR,
                              MPI_Fint *info, MPI_Fint *comm, char *baseptr,
                              MPI_Fint *win, MPI_Fint *ierr),
                             (size, disp_unit, info, comm, baseptr, win, ierr) )
-#endif
-
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
+#else
 #define ompi_win_allocate_shared_f pompi_win_allocate_shared_f
 #define ompi_win_allocate_shared_cptr_f pompi_win_allocate_shared_cptr_f
+#endif
 #endif
 
 

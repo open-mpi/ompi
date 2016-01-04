@@ -27,7 +27,8 @@
 #include "ompi/mpi/fortran/base/constants.h"
 #include "ompi/communicator/communicator.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_RECV = ompi_recv_f
 #pragma weak pmpi_recv = ompi_recv_f
 #pragma weak pmpi_recv_ = ompi_recv_f
@@ -35,7 +36,7 @@
 
 #pragma weak PMPI_Recv_f = ompi_recv_f
 #pragma weak PMPI_Recv_f08 = ompi_recv_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_RECV,
                            pmpi_recv,
                            pmpi_recv_,
@@ -43,6 +44,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_RECV,
                            pompi_recv_f,
                            (char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *source, MPI_Fint *tag, MPI_Fint *comm, MPI_Fint *status, MPI_Fint *ierr),
                            (buf, count, datatype, source, tag, comm, status, ierr) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -53,9 +55,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_RECV,
 
 #pragma weak MPI_Recv_f = ompi_recv_f
 #pragma weak MPI_Recv_f08 = ompi_recv_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_RECV,
                            mpi_recv,
                            mpi_recv_,
@@ -63,11 +64,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_RECV,
                            ompi_recv_f,
                            (char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *source, MPI_Fint *tag, MPI_Fint *comm, MPI_Fint *status, MPI_Fint *ierr),
                            (buf, count, datatype, source, tag, comm, status, ierr) )
-#endif
-
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
+#else
 #define ompi_recv_f pompi_recv_f
+#endif
 #endif
 
 

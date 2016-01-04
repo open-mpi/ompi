@@ -27,7 +27,7 @@ include $(top_srcdir)/Makefile.ompi-rules
 
 SUBDIRS = profile
 
-AM_CPPFLAGS = -DOMPI_PROFILE_LAYER=0 -DOMPI_COMPILING_FORTRAN_WRAPPERS=1
+AM_CPPFLAGS = -DOMPI_BUILD_MPI_PROFILING=0 -DOMPI_COMPILING_FORTRAN_WRAPPERS=1
 
 # The top directory only builds MPI_* bindings and some support
 # glue. The bottom directory only builds PMPI_* bindings.  Each

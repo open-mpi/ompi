@@ -28,11 +28,10 @@
 #include "ompi/request/grequest.h"
 #include "ompi/memchecker.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_BUILD_MPI_PROFILING
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_Grequest_complete = PMPI_Grequest_complete
 #endif
-
-#if OMPI_BUILD_MPI_PROFILING
 #define MPI_Grequest_complete PMPI_Grequest_complete
 #endif
 

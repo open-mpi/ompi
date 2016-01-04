@@ -7,6 +7,8 @@
 !                         of Tennessee Research Foundation.  All rights
 !                         reserved.
 ! Copyright (c) 2012      Inria.  All rights reserved.
+! Copyright (c) 2015      Research Organization for Information Science
+!                         and Technology (RIST). All rights reserved.
 ! $COPYRIGHT$
 !
 ! This file provides the interface specifications for the MPI Fortran
@@ -93,9 +95,8 @@ end subroutine pompi_buffer_attach_f
 ! PMPI_BUFFER_DETACH (i.e., it is different than the mpif.h / mpi
 ! module C implementation function).
 !
-! Note, too, we don't need a "p" version of the C implementation
-! function -- Fortran's interfaces provide MPI_ and PMPI_ names for
-! us; they can just both be bound to the same back-end
+! Note, too, the "p" version of the C implementation
+! function is a 1-line routine. It calls
 ! ompi_buffer_detach_f08 C function.
 subroutine pompi_buffer_detach_f(buffer_addr,size,ierror) &
    BIND(C, name="pompi_buffer_detach_f08")
@@ -1790,9 +1791,8 @@ end subroutine pompi_finalize_f
 
 subroutine pompi_free_mem_f(base,ierror) &
    BIND(C, name="pompi_free_mem_f")
-   use :: mpi_f08_types, only : MPI_ADDRESS_KIND
    implicit none
-   INTEGER(MPI_ADDRESS_KIND), DIMENSION(*) OMPI_ASYNCHRONOUS :: base
+   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: base
    INTEGER, INTENT(OUT) :: ierror
 end subroutine pompi_free_mem_f
 
@@ -1989,7 +1989,8 @@ end subroutine pompi_comm_spawn_f
 ! TODO - FIXME to use arrays of strings and pass strlen
 subroutine pompi_comm_spawn_multiple_f(count,array_of_commands, &
                                       array_of_argv, array_of_maxprocs,array_of_info,root, &
-                                      comm,intercomm,array_of_errcodes,ierror) &
+                                      comm,intercomm,array_of_errcodes,ierror, &
+                                      cmd_len, argv_len) &
    BIND(C, name="pompi_comm_spawn_multiple_f")
    use, intrinsic :: ISO_C_BINDING, only : C_CHAR
    implicit none
@@ -2001,6 +2002,7 @@ subroutine pompi_comm_spawn_multiple_f(count,array_of_commands, &
    INTEGER, INTENT(OUT) :: intercomm
    INTEGER, INTENT(OUT) :: array_of_errcodes(*)
    INTEGER, INTENT(OUT) :: ierror
+   INTEGER, INTENT(IN) :: cmd_len, argv_len
 end subroutine pompi_comm_spawn_multiple_f
 
 subroutine pompi_lookup_name_f(service_name,info,port_name,ierror, &

@@ -24,7 +24,8 @@
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 #include "ompi/mpi/fortran/base/constants.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_BSEND_INIT = ompi_bsend_init_f
 #pragma weak pmpi_bsend_init = ompi_bsend_init_f
 #pragma weak pmpi_bsend_init_ = ompi_bsend_init_f
@@ -32,7 +33,7 @@
 
 #pragma weak PMPI_Bsend_init_f = ompi_bsend_init_f
 #pragma weak PMPI_Bsend_init_f08 = ompi_bsend_init_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_BSEND_INIT,
                            pmpi_bsend_init,
                            pmpi_bsend_init_,
@@ -40,6 +41,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_BSEND_INIT,
                            pompi_bsend_init_f,
                            (char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *dest, MPI_Fint *tag, MPI_Fint *comm, MPI_Fint *request, MPI_Fint *ierr),
                            (buf, count, datatype, dest, tag, comm, request, ierr) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -50,9 +52,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_BSEND_INIT,
 
 #pragma weak MPI_Bsend_init_f = ompi_bsend_init_f
 #pragma weak MPI_Bsend_init_f08 = ompi_bsend_init_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_BSEND_INIT,
                            mpi_bsend_init,
                            mpi_bsend_init_,
@@ -60,11 +61,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_BSEND_INIT,
                            ompi_bsend_init_f,
                            (char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *dest, MPI_Fint *tag, MPI_Fint *comm, MPI_Fint *request, MPI_Fint *ierr),
                            (buf, count, datatype, dest, tag, comm, request, ierr) )
-#endif
-
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
+#else
 #define ompi_bsend_init_f pompi_bsend_init_f
+#endif
 #endif
 
 

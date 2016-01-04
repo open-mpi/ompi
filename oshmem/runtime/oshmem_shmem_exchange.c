@@ -1,6 +1,8 @@
 /*
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -13,6 +15,12 @@
 #include "oshmem/constants.h"
 #include "oshmem/runtime/runtime.h"
 #include "oshmem/runtime/params.h"
+
+#if OMPI_ENABLE_MPI_PROFILING
+#define MPI_Allgather PMPI_Allgather
+#define MPI_Allgatherv PMPI_Allgatherv
+#define MPI_Barrier PMPI_Barrier
+#endif
 
 int oshmem_shmem_allgather(void *send_buf, void *rcv_buf, int elem_size)
 {

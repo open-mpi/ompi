@@ -28,7 +28,8 @@
 #include "ompi/mpi/fortran/base/constants.h"
 
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_RGET = ompi_rget_f
 #pragma weak pmpi_rget = ompi_rget_f
 #pragma weak pmpi_rget_ = ompi_rget_f
@@ -36,7 +37,7 @@
 
 #pragma weak PMPI_Rget_f = ompi_rget_f
 #pragma weak PMPI_Rget_f08 = ompi_rget_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_RGET,
                             pmpi_rget,
                             pmpi_rget_,
@@ -44,6 +45,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_RGET,
                             pompi_rget_f,
                             (char *origin_addr, MPI_Fint *origin_count, MPI_Fint *origin_datatype, MPI_Fint *target_rank, MPI_Aint *target_disp, MPI_Fint *target_count, MPI_Fint *target_datatype, MPI_Fint *win, MPI_Fint *request, MPI_Fint *ierr),
                             (origin_addr, origin_count, origin_datatype, target_rank, target_disp, target_count, target_datatype, win, request, ierr) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -54,9 +56,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_RGET,
 
 #pragma weak MPI_Rget_f = ompi_rget_f
 #pragma weak MPI_Rget_f08 = ompi_rget_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_RGET,
                             mpi_rget,
                             mpi_rget_,
@@ -64,11 +65,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_RGET,
                             ompi_rget_f,
                             (char *origin_addr, MPI_Fint *origin_count, MPI_Fint *origin_datatype, MPI_Fint *target_rank, MPI_Aint *target_disp, MPI_Fint *target_count, MPI_Fint *target_datatype, MPI_Fint *win, MPI_Fint *request, MPI_Fint *ierr),
                             (origin_addr, origin_count, origin_datatype, target_rank, target_disp, target_count, target_datatype, win, request, ierr) )
-#endif
-
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
+#else
 #define ompi_rget_f pompi_rget_f
+#endif
 #endif
 
 

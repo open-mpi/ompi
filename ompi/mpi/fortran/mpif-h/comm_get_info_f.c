@@ -15,7 +15,8 @@
 #include "ompi/attribute/attribute.h"
 #include "ompi/communicator/communicator.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_COMM_GET_INFO = ompi_comm_get_info_f
 #pragma weak pmpi_comm_get_info = ompi_comm_get_info_f
 #pragma weak pmpi_comm_get_info_ = ompi_comm_get_info_f
@@ -23,7 +24,7 @@
 
 #pragma weak PMPI_Comm_get_info_f = ompi_comm_get_info_f
 #pragma weak PMPI_Comm_get_info_f08 = ompi_comm_get_info_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_COMM_GET_INFO,
                            pmpi_comm_get_info,
                            pmpi_comm_get_info_,
@@ -31,6 +32,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_COMM_GET_INFO,
                            pompi_comm_get_info_f,
                            (MPI_Fint *comm, MPI_Fint *info_used, MPI_Fint *ierr),
                            (comm, info_used, ierr) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -41,9 +43,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_COMM_GET_INFO,
 
 #pragma weak MPI_Comm_get_info_f = ompi_comm_get_info_f
 #pragma weak MPI_Comm_get_info_f08 = ompi_comm_get_info_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_COMM_GET_INFO,
                            mpi_comm_get_info,
                            mpi_comm_get_info_,
@@ -51,11 +52,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_COMM_GET_INFO,
                            ompi_comm_get_info_f,
                            (MPI_Fint *comm, MPI_Fint *info_used, MPI_Fint *ierr),
                            (comm, info_used, ierr) )
-#endif
-
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
+#else
 #define ompi_comm_get_info_f pompi_comm_get_info_f
+#endif
 #endif
 
 

@@ -23,7 +23,8 @@
 
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_INFO_FREE = ompi_info_free_f
 #pragma weak pmpi_info_free = ompi_info_free_f
 #pragma weak pmpi_info_free_ = ompi_info_free_f
@@ -31,7 +32,7 @@
 
 #pragma weak PMPI_Info_free_f = ompi_info_free_f
 #pragma weak PMPI_Info_free_f08 = ompi_info_free_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_INFO_FREE,
                            pmpi_info_free,
                            pmpi_info_free_,
@@ -39,6 +40,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_INFO_FREE,
                            pompi_info_free_f,
                            (MPI_Fint *info, MPI_Fint *ierr),
                            (info, ierr) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -49,9 +51,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_INFO_FREE,
 
 #pragma weak MPI_Info_free_f = ompi_info_free_f
 #pragma weak MPI_Info_free_f08 = ompi_info_free_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_INFO_FREE,
                            mpi_info_free,
                            mpi_info_free_,
@@ -59,11 +60,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_INFO_FREE,
                            ompi_info_free_f,
                            (MPI_Fint *info, MPI_Fint *ierr),
                            (info, ierr) )
-#endif
-
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
+#else
 #define ompi_info_free_f pompi_info_free_f
+#endif
 #endif
 
 
