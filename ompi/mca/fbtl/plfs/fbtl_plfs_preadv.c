@@ -87,11 +87,12 @@ ssize_t  mca_fbtl_plfs_preadv (mca_io_ompio_file_t *fh )
 	}
 
 	// Allocate a temporary buffer to hold the data
-	char *buffer;
+	char *buffer, *org_buffer=NULL;
 	buffer = (char *) malloc (bytes);
 	if (buffer == NULL) {
 	    return OMPI_ERROR;
 	}
+        org_buffer = buffer;
 
 	// Read the data
 	ssize_t bytes_read;
@@ -116,16 +117,10 @@ ssize_t  mca_fbtl_plfs_preadv (mca_io_ompio_file_t *fh )
 	    }
 	}
 	iov_count = 0;
-	if ( NULL != buffer ) {
-	    free (buffer);
-	    buffer=NULL;
-	}
+        free (org_buffer);
     }
 
-    if (NULL != iov) {
-	free (iov);
-	iov = NULL;
-    }
+    free (iov);
 
     return total_bytes_read;
 }

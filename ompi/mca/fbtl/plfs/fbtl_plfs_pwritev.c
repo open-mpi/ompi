@@ -87,11 +87,12 @@ ssize_t  mca_fbtl_plfs_pwritev (mca_io_ompio_file_t *fh )
 	}
 
 	// Allocate a temporary buffer to hold the data
-	char *buffer=NULL;
+	char *buffer=NULL, *org_buffer=NULL;
 	buffer = (char *) malloc (bytes);
 	if (buffer == NULL) {
 	    return OMPI_ERROR;
 	}
+        org_buffer=buffer;
 
 	// Copy the data into BUFFER.
 	size_t to_copy = bytes;
@@ -115,16 +116,9 @@ ssize_t  mca_fbtl_plfs_pwritev (mca_io_ompio_file_t *fh )
 	}
 	total_bytes_written += bytes_written;
 	iov_count = 0;
-	if ( NULL != buffer ) {
-	    free ( buffer );
-	    buffer=NULL;
-	}
+        free ( org_buffer );
     }
 
-    if (NULL != iov) {
-	free (iov);
-	iov = NULL;
-    }
-
+    free (iov);        
     return total_bytes_written;
 }
