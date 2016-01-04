@@ -15,6 +15,7 @@
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2012-2015 Sandia National Laboratories.  All rights reserved.
  * Copyright (c) 2015      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2015      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -37,6 +38,7 @@
 
 #include "opal/threads/mutex.h"
 #include "opal/util/arch.h"
+#include "opal/util/argv.h"
 #include "opal/align.h"
 #if OPAL_CUDA_SUPPORT
 #include "opal/datatype/opal_datatype_cuda.h"

@@ -103,23 +103,6 @@ int orte_pmix_server_register_nspace(orte_job_t *jdata)
     uid = geteuid();
     gid = getegid();
 
-    /* local topology - we do this so the procs won't read the
-     * topology themselves as this could overwhelm the local
-     * system on large-scale SMPs */
-    if (NULL != opal_hwloc_topology) {
-        char *xmlbuffer=NULL;
-        int len;
-        kv = OBJ_NEW(opal_value_t);
-        kv->key = strdup(OPAL_PMIX_LOCAL_TOPO);
-        if (0 != hwloc_topology_export_xmlbuffer(opal_hwloc_topology, &xmlbuffer, &len)) {
-            OBJ_RELEASE(kv);
-            return OPAL_ERROR;
-        }
-        kv->data.string = xmlbuffer;
-        kv->type = OPAL_STRING;
-        opal_list_append(info, &kv->super);
-    }
-
     /* jobid */
     kv = OBJ_NEW(opal_value_t);
     kv->key = strdup(OPAL_PMIX_JOBID);
@@ -262,6 +245,7 @@ int orte_pmix_server_register_nspace(orte_job_t *jdata)
                 if (orte_get_attribute(&pptr->attributes, ORTE_PROC_CPU_BITMAP, (void**)&tmp, OPAL_STRING)) {
                     if (NULL != tmp) {
                         opal_argv_append_nosize(&procs, tmp);
+                        free(tmp);
                     } else {
                         opal_argv_append_nosize(&procs, "UNBOUND");
                     }

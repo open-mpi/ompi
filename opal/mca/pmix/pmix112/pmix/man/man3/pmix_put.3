@@ -1,0 +1,60 @@
+.TH "pmix_put" "3" "2015\-10\-25" "PMIx Programmer\[aq]s Manual" "\@VERSION\@"
+.SH NAME
+.PP
+PMIx_Put \- Push a value into the client\[aq]s namespace
+.SH SYNOPSIS
+.IP
+.nf
+\f[C]
+#include\ <pmix.h>
+
+pmix_status_t\ PMIx_Init(pmix_scope_t\ scope,\ const\ char\ key[],\ pmix_value_t\ *val);
+\f[]
+.fi
+.SH ARGUMENTS
+.PP
+\f[I]scope\f[] : Defines a scope for data "put" by PMI per the
+following:
+.IP
+.nf
+\f[C]
+*\ PMI_LOCAL\ \-\ the\ data\ is\ intended\ only\ for\ other\ application
+\ \ \ \ \ \ \ \ \ \ \ \ \ \ processes\ on\ the\ same\ node.\ Data\ marked\ in\ this\ way
+\ \ \ \ \ \ \ \ \ \ \ \ \ \ will\ not\ be\ included\ in\ data\ packages\ sent\ to\ remote\ requestors
+*\ PMI_REMOTE\ \-\ the\ data\ is\ intended\ solely\ for\ applications\ processes\ on
+\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ remote\ nodes.\ Data\ marked\ in\ this\ way\ will\ not\ be\ shared\ with
+\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ other\ processes\ on\ the\ same\ node
+*\ PMI_GLOBAL\ \-\ the\ data\ is\ to\ be\ shared\ with\ all\ other\ requesting\ processes,
+\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ regardless\ of\ location
+\f[]
+.fi
+.PP
+\f[I]key\f[] String key identifying the information.
+This can be either one of the PMIx defined attributes, or a
+user\-defined value
+.PP
+\f[I]val\f[] Pointer to a pmix_value_t structure containing the data to
+be pushed along with the type of the provided data.
+.SH DESCRIPTION
+.PP
+Push a value into the client\[aq]s namespace.
+The client library will cache the information locally until
+\f[I]PMIx\f[]Commit_ is called.
+The provided scope value is passed to the local PMIx server, which will
+distribute the data as directed.
+.SH RETURN VALUE
+.PP
+Returns PMIX_SUCCESS on success.
+On error, a negative value corresponding to a PMIx errno is returned.
+.SH ERRORS
+.PP
+PMIx errno values are defined in \f[C]pmix_common.h\f[].
+.SH NOTES
+.PP
+See \[aq]pmix_common.h\[aq] for definition of the pmix_value_t
+structure.
+.SH SEE ALSO
+.PP
+\f[C]PMIx_Constants\f[](7), \f[C]PMIx_Structures\f[](7)
+.SH AUTHORS
+PMIx.

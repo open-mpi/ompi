@@ -629,7 +629,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
      * in our job, so no proc array is passed. If a barrier is required,
      * the "modex" function will perform it internally
      */
-    OPAL_MODEX(NULL, 1);
+    OPAL_MODEX();
 
     OPAL_TIMING_MNEXT((&tm,"time from modex to first barrier"));
 

@@ -36,6 +36,8 @@ BEGIN_C_DECLS
 /* provide access to the framework verbose output without
  * exposing the entire base */
 extern int opal_pmix_verbose_output;
+extern bool opal_pmix_collect_all_data;
+extern bool opal_pmix_base_async_modex;
 extern int opal_pmix_base_exchange(opal_value_t *info,
                                    opal_pmix_pdata_t *pdat,
                                    int timeout);
@@ -254,10 +256,13 @@ extern int opal_pmix_base_exchange(opal_value_t *info,
  * that takes into account directives and availability of
  * non-blocking operations
  */
-#define OPAL_MODEX(p, s)              \
-    do {                              \
-        opal_pmix.commit();           \
-        opal_pmix.fence((p), (s));    \
+#define OPAL_MODEX()                                    \
+    do {                                                \
+        opal_pmix.commit();                             \
+        if (!opal_pmix_base_async_modex) {              \
+            opal_pmix.fence(NULL,                       \
+                opal_pmix_collect_all_data);            \
+        }                                               \
     } while(0);
 
 /**
@@ -533,8 +538,11 @@ typedef int (*opal_pmix_base_module_resolve_nodes_fn_t)(opal_jobid_t jobid, char
  *                       SERVER APIs                        *
  ************************************************************/
 
-/* Initialize the server support library */
-typedef int (*opal_pmix_base_module_server_init_fn_t)(opal_pmix_server_module_t *module);
+/* Initialize the server support library - must pass the callback
+ * module for the server to use, plus any attributes we want to
+ * pass down to it */
+typedef int (*opal_pmix_base_module_server_init_fn_t)(opal_pmix_server_module_t *module,
+                                                      opal_list_t *info);
 
 /* Finalize the server support library */
 typedef int (*opal_pmix_base_module_server_finalize_fn_t)(void);
@@ -601,6 +609,13 @@ typedef int (*opal_pmix_base_module_server_register_nspace_fn_t)(opal_jobid_t jo
                                                                  opal_pmix_op_cbfunc_t cbfunc,
                                                                  void *cbdata);
 
+/* Deregister an nspace. Instruct the PMIx server to purge
+ * all info relating to the provided jobid so that memory
+ * can be freed. Note that the server will automatically
+ * purge all info relating to any clients it has from
+ * this nspace */
+typedef void (*opal_pmix_base_module_server_deregister_nspace_fn_t)(opal_jobid_t jobid);
+
 /* Register a client process with the PMIx server library. The
  * expected user ID and group ID of the child process helps the
  * server library to properly authenticate clients as they connect
@@ -619,6 +634,15 @@ typedef int (*opal_pmix_base_module_server_register_client_fn_t)(const opal_proc
                                                                  void *server_object,
                                                                  opal_pmix_op_cbfunc_t cbfunc,
                                                                  void *cbdata);
+
+/* Deregister a client. Instruct the PMIx server to purge
+ * all info relating to the provided client so that memory
+ * can be freed. As per above note, the server will automatically
+ * free all client-related data when the nspace is deregistered,
+ * so there is no need to call this function during normal
+ * finalize operations. Instead, this is provided for use
+ * during exception operations */
+typedef void (*opal_pmix_base_module_server_deregister_client_fn_t)(const opal_process_name_t *proc);
 
 /* Setup the environment of a child process to be forked
  * by the host so it can correctly interact with the PMIx
@@ -720,47 +744,49 @@ typedef void (*opal_pmix_base_module_register_jobid_fn_t)(opal_jobid_t jobid, co
  */
 typedef struct {
     /* client APIs */
-    opal_pmix_base_module_init_fn_t                   init;
-    opal_pmix_base_module_fini_fn_t                   finalize;
-    opal_pmix_base_module_initialized_fn_t            initialized;
-    opal_pmix_base_module_abort_fn_t                  abort;
-    opal_pmix_base_module_commit_fn_t                 commit;
-    opal_pmix_base_module_fence_fn_t                  fence;
-    opal_pmix_base_module_fence_nb_fn_t               fence_nb;
-    opal_pmix_base_module_put_fn_t                    put;
-    opal_pmix_base_module_get_fn_t                    get;
-    opal_pmix_base_module_get_nb_fn_t                 get_nb;
-    opal_pmix_base_module_publish_fn_t                publish;
-    opal_pmix_base_module_publish_nb_fn_t             publish_nb;
-    opal_pmix_base_module_lookup_fn_t                 lookup;
-    opal_pmix_base_module_lookup_nb_fn_t              lookup_nb;
-    opal_pmix_base_module_unpublish_fn_t              unpublish;
-    opal_pmix_base_module_unpublish_nb_fn_t           unpublish_nb;
-    opal_pmix_base_module_spawn_fn_t                  spawn;
-    opal_pmix_base_module_spawn_nb_fn_t               spawn_nb;
-    opal_pmix_base_module_connect_fn_t                connect;
-    opal_pmix_base_module_connect_nb_fn_t             connect_nb;
-    opal_pmix_base_module_disconnect_fn_t             disconnect;
-    opal_pmix_base_module_disconnect_nb_fn_t          disconnect_nb;
-    opal_pmix_base_module_resolve_peers_fn_t          resolve_peers;
-    opal_pmix_base_module_resolve_nodes_fn_t          resolve_nodes;
+    opal_pmix_base_module_init_fn_t                         init;
+    opal_pmix_base_module_fini_fn_t                         finalize;
+    opal_pmix_base_module_initialized_fn_t                  initialized;
+    opal_pmix_base_module_abort_fn_t                        abort;
+    opal_pmix_base_module_commit_fn_t                       commit;
+    opal_pmix_base_module_fence_fn_t                        fence;
+    opal_pmix_base_module_fence_nb_fn_t                     fence_nb;
+    opal_pmix_base_module_put_fn_t                          put;
+    opal_pmix_base_module_get_fn_t                          get;
+    opal_pmix_base_module_get_nb_fn_t                       get_nb;
+    opal_pmix_base_module_publish_fn_t                      publish;
+    opal_pmix_base_module_publish_nb_fn_t                   publish_nb;
+    opal_pmix_base_module_lookup_fn_t                       lookup;
+    opal_pmix_base_module_lookup_nb_fn_t                    lookup_nb;
+    opal_pmix_base_module_unpublish_fn_t                    unpublish;
+    opal_pmix_base_module_unpublish_nb_fn_t                 unpublish_nb;
+    opal_pmix_base_module_spawn_fn_t                        spawn;
+    opal_pmix_base_module_spawn_nb_fn_t                     spawn_nb;
+    opal_pmix_base_module_connect_fn_t                      connect;
+    opal_pmix_base_module_connect_nb_fn_t                   connect_nb;
+    opal_pmix_base_module_disconnect_fn_t                   disconnect;
+    opal_pmix_base_module_disconnect_nb_fn_t                disconnect_nb;
+    opal_pmix_base_module_resolve_peers_fn_t                resolve_peers;
+    opal_pmix_base_module_resolve_nodes_fn_t                resolve_nodes;
     /* server APIs */
-    opal_pmix_base_module_server_init_fn_t            server_init;
-    opal_pmix_base_module_server_finalize_fn_t        server_finalize;
-    opal_pmix_base_module_generate_regex_fn_t         generate_regex;
-    opal_pmix_base_module_generate_ppn_fn_t           generate_ppn;
-    opal_pmix_base_module_server_register_nspace_fn_t server_register_nspace;
-    opal_pmix_base_module_server_register_client_fn_t server_register_client;
-    opal_pmix_base_module_server_setup_fork_fn_t      server_setup_fork;
-    opal_pmix_base_module_server_dmodex_request_fn_t  server_dmodex_request;
-    opal_pmix_base_module_server_notify_error_fn_t    server_notify_error;
+    opal_pmix_base_module_server_init_fn_t                  server_init;
+    opal_pmix_base_module_server_finalize_fn_t              server_finalize;
+    opal_pmix_base_module_generate_regex_fn_t               generate_regex;
+    opal_pmix_base_module_generate_ppn_fn_t                 generate_ppn;
+    opal_pmix_base_module_server_register_nspace_fn_t       server_register_nspace;
+    opal_pmix_base_module_server_deregister_nspace_fn_t     server_deregister_nspace;
+    opal_pmix_base_module_server_register_client_fn_t       server_register_client;
+    opal_pmix_base_module_server_deregister_client_fn_t     server_deregister_client;
+    opal_pmix_base_module_server_setup_fork_fn_t            server_setup_fork;
+    opal_pmix_base_module_server_dmodex_request_fn_t        server_dmodex_request;
+    opal_pmix_base_module_server_notify_error_fn_t          server_notify_error;
     /* Utility APIs */
-    opal_pmix_base_module_get_version_fn_t            get_version;
-    opal_pmix_base_module_register_fn_t               register_errhandler;
-    opal_pmix_base_module_deregister_fn_t             deregister_errhandler;
-    opal_pmix_base_module_store_fn_t                  store_local;
-    opal_pmix_base_module_get_nspace_fn_t             get_nspace;
-    opal_pmix_base_module_register_jobid_fn_t         register_jobid;
+    opal_pmix_base_module_get_version_fn_t                  get_version;
+    opal_pmix_base_module_register_fn_t                     register_errhandler;
+    opal_pmix_base_module_deregister_fn_t                   deregister_errhandler;
+    opal_pmix_base_module_store_fn_t                        store_local;
+    opal_pmix_base_module_get_nspace_fn_t                   get_nspace;
+    opal_pmix_base_module_register_jobid_fn_t               register_jobid;
 } opal_pmix_base_module_t;
 
 typedef struct {
