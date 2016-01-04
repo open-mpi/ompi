@@ -441,11 +441,10 @@ int ompi_dpm_connect_accept(ompi_communicator_t *comm, int root,
     i=0;
     OPAL_LIST_FOREACH(cd, &rlist, ompi_dpm_proct_caddy_t) {
         new_group_pointer->grp_proc_pointers[i++] = cd->p;
+        /* retain the proc */
+        OBJ_RETAIN(cd->p);
     }
     OPAL_LIST_DESTRUCT(&rlist);
-
-    /* increment proc reference counters */
-    ompi_group_increment_proc_count(new_group_pointer);
 
     /* set up communicator structure */
     rc = ompi_comm_set ( &newcomp,                 /* new comm */
@@ -465,7 +464,6 @@ int ompi_dpm_connect_accept(ompi_communicator_t *comm, int root,
         goto exit;
     }
 
-    ompi_group_decrement_proc_count (new_group_pointer);
     OBJ_RELEASE(new_group_pointer);
     new_group_pointer = MPI_GROUP_NULL;
 
