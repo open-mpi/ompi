@@ -89,7 +89,7 @@ mca_fs_plfs_file_open (struct ompi_communicator_t *comm,
         if (access_mode & MPI_MODE_CREATE)
 	    amode = amode | O_CREAT;
 
-	plfs_ret = plfs_open( &pfd, wpath, amode, 0, perm, NULL );
+	plfs_ret = plfs_open( &pfd, wpath, amode, fh->f_rank, perm, NULL );
 	fh->f_fs_ptr = pfd;
     }
 
@@ -99,7 +99,7 @@ mca_fs_plfs_file_open (struct ompi_communicator_t *comm,
     }
 
     if (0 != rank) {
-        plfs_ret = plfs_open( &pfd, wpath, amode, 0, perm, NULL );
+        plfs_ret = plfs_open( &pfd, wpath, amode, fh->f_rank, perm, NULL );
 	if (PLFS_SUCCESS != plfs_ret) {
 	    opal_output(0, "fs_plfs_file_open: Error in plfs_open:\n%s\n", strplfserr(plfs_ret));
 	    return OMPI_ERROR;
