@@ -21,6 +21,7 @@
 #include "ompi/mca/mca.h"
 #include "ompi/request/request.h"
 #include "ompi/mca/coll/base/coll_base_functions.h"
+#include "opal/util/output.h"
 
 /* also need the dynamic rule structures */
 #include "coll_tuned_dynamic_rules.h"
