@@ -53,7 +53,6 @@ mca_fs_plfs_file_open (struct ompi_communicator_t *comm,
     plfs_error_t plfs_ret;
     Plfs_fd *pfd = NULL;
     char wpath[1024];
-    size_t len = sizeof(int);
     char key[] = "num_hostdirs";
 
     rank = ompi_comm_rank ( comm );
@@ -110,7 +109,7 @@ mca_fs_plfs_file_open (struct ompi_communicator_t *comm,
     }
 
     if (mca_fs_plfs_num_hostdir > 0) {
-        plfs_ret = plfs_setxattr( pfd, &mca_fs_plfs_num_hostdir, key, len );
+        plfs_ret = plfs_setxattr( pfd, &mca_fs_plfs_num_hostdir, key );
         if (PLFS_SUCCESS != plfs_ret) {
 	    opal_output(0, "fs_plfs_file_open: Error in plfs_setxattr:\n%s\n", strplfserr(plfs_ret));
 	    return OMPI_ERROR;
