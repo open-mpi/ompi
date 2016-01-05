@@ -30,7 +30,6 @@
 #include <plfs.h>
 
 extern int mca_fs_plfs_priority;
-extern int mca_fs_plfs_num_hostdir;
 
 BEGIN_C_DECLS
 
