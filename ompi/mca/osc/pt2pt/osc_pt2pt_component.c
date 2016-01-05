@@ -290,6 +290,7 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
     /* fill in the function pointer part */
     memcpy(module, &ompi_osc_pt2pt_module_template,
            sizeof(ompi_osc_base_module_t));
+    module->rtag_counter = 2;
 
     /* initialize the objects, so that always free in cleanup */
     OBJ_CONSTRUCT(&module->lock, opal_mutex_t);
