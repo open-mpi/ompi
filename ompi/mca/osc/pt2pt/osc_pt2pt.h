@@ -150,6 +150,7 @@ struct ompi_osc_pt2pt_module_t {
 
     /** cyclic counter for a unique tage for long messages. */
     unsigned int tag_counter;
+    unsigned int rtag_counter;
 
     /* Number of outgoing fragments that have completed since the
        begining of time */
@@ -659,11 +660,22 @@ static inline int get_tag(ompi_osc_pt2pt_module_t *module)
        completion). */
     int tmp = module->tag_counter + !!(module->passive_target_access_epoch);
 
-    module->tag_counter = (module->tag_counter + 2) & OSC_PT2PT_FRAG_MASK;
+    module->tag_counter = (module->tag_counter + 4) & OSC_PT2PT_FRAG_MASK;
 
     return tmp;
 }
 
+static inline int get_rtag(ompi_osc_pt2pt_module_t *module)
+{
+    /* the LSB of the tag is used be the receiver to determine if the
+       message is a passive or active target (ie, where to mark
+       completion). */
+    int tmp = module->rtag_counter + !!(module->passive_target_access_epoch);
+
+    module->rtag_counter = (module->rtag_counter + 4) & OSC_PT2PT_FRAG_MASK;
+
+    return tmp;
+}
 /**
  * ompi_osc_pt2pt_accumulate_lock:
  *

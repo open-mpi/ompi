@@ -475,7 +475,7 @@ ompi_osc_pt2pt_accumulate_w_req (const void *origin_addr, int origin_count,
          }
 
         is_long_msg = true;
-        tag = get_tag (module);
+        tag = get_rtag (module);
     }
 
     /* flush will be called at the end of this function. make sure all post messages have
