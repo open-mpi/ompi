@@ -16,7 +16,7 @@
  * Copyright (c) 2011-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2013-2015 Intel, Inc. All rights reserved
- * Copyright (c) 2014-2015 Research Organization for Information Science
+ * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -168,7 +168,13 @@ int ompi_dpm_connect_accept(ompi_communicator_t *comm, int root,
             dense = false;
         }
         for (i=0; i < size; i++) {
-            rc = opal_convert_process_name_to_string(&nstring, &(proc_list[i]->super.proc_name));
+            opal_process_name_t proc_name;
+            if (ompi_proc_is_sentinel (proc_list[i])) {
+                proc_name = ompi_proc_sentinel_to_name ((intptr_t) proc_list[i]);
+            } else {
+                proc_name = proc_list[i]->super.proc_name;
+            }
+            rc = opal_convert_process_name_to_string(&nstring, &proc_name);
             if (OPAL_SUCCESS != rc) {
                 if (!dense) {
                     free(proc_list);
