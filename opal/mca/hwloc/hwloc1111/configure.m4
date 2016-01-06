@@ -2,6 +2,8 @@
 #
 # Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
+# Copyright (c) 2015      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 #
 # $COPYRIGHT$
 #
@@ -74,7 +76,7 @@ AC_DEFUN([MCA_opal_hwloc_hwloc1111_CONFIG],[
     opal_hwloc_hwloc1111_basedir=opal/mca/hwloc/hwloc1111
     opal_hwloc_hwloc1111_support=no
 
-    if test "$with_hwloc" = "internal" -o "$with_hwloc" = "" -o "$with_hwloc" = "yes"; then
+    if test "$with_hwloc" = "internal" || test -z "$with_hwloc" || test "$with_hwloc" = "yes"; then
         opal_hwloc_hwloc1111_save_CPPFLAGS=$CPPFLAGS
         opal_hwloc_hwloc1111_save_LDFLAGS=$LDFLAGS
         opal_hwloc_hwloc1111_save_LIBS=$LIBS

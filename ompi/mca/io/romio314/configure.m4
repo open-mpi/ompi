@@ -52,7 +52,7 @@ AC_DEFUN([MCA_ompi_io_romio314_CONFIG],[
                    $2],
                   [AC_MSG_RESULT([yes])
 
-                   AS_IF([test -n "$with_io_romio_flags" -a "$with_io_romio_flags" != "no"],
+                   AS_IF([test -n "$with_io_romio_flags" && test "$with_io_romio_flags" != "no"],
                          [io_romio314_flags="$with_io_romio_flags $io_romio314_flags"],
                          [io_romio314_flags=])
                    # If ROMIO is going to end up in a DSO, all we need is
@@ -69,7 +69,7 @@ AC_DEFUN([MCA_ompi_io_romio314_CONFIG],[
                           AS_IF([test "$enable_static" = "yes"],
                                 [io_romio314_static=enable],
                                 [io_romio314_static=disable])])
-                   AS_IF([test -n "$prefix" -a "$prefix" != "NONE"],
+                   AS_IF([test -n "$prefix" && test "$prefix" != "NONE"],
                          [io_romio314_prefix_arg="--prefix=$prefix"],
                          [io_romio314_prefix_arg=])
 

@@ -1,6 +1,8 @@
 # -*- shell-script -*-
 #
-# Copyright (C) Mellanox Technologies Ltd. 2015.  ALL RIGHTS RESERVED.
+# Copyright (C) 2015      Mellanox Technologies Ltd. ALL RIGHTS RESERVED.
+# Copyright (c) 2015      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -28,12 +30,12 @@ AC_DEFUN([OMPI_CHECK_UCX],[
     ompi_check_ucx_$1_save_LIBS="$LIBS"
 
     AS_IF([test "$with_ucx" != "no"],
-          [AS_IF([test ! -z "$with_ucx" -a "$with_ucx" != "yes"],
+          [AS_IF([test ! -z "$with_ucx" && test "$with_ucx" != "yes"],
                  [
                     ompi_check_ucx_dir="$with_ucx"
                     ompi_check_ucx_libdir="$with_ucx/lib"
                  ])
-           AS_IF([test ! -z "$with_ucx_libdir" -a "$with_ucx_libdir" != "yes"],
+           AS_IF([test ! -z "$with_ucx_libdir" && test "$with_ucx_libdir" != "yes"],
                  [ompi_check_ucx_libdir="$with_ucx_libdir"])
 
            ompi_check_ucx_extra_libs="-L$ompi_check_ucx_libdir"
@@ -73,7 +75,7 @@ AC_DEFUN([OMPI_CHECK_UCX],[
 
     AS_IF([test "$ompi_check_ucx_happy" = "yes"],
           [$2],
-          [AS_IF([test ! -z "$with_ucx" -a "$with_ucx" != "no"],
+          [AS_IF([test ! -z "$with_ucx" && test "$with_ucx" != "no"],
                  [AC_MSG_ERROR([UCX support requested but not found.  Aborting])])
            $3])
 ])
