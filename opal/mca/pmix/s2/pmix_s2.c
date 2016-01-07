@@ -139,7 +139,7 @@ static int kvs_get(const char key[], char value [], int maxvalue)
      * been inserted, so suppress warning message if this is the
      * case
      */
-    if (PMI_SUCCESS != rc) {
+    if (PMI2_SUCCESS != rc) {
         return OPAL_ERROR;
     }
     return OPAL_SUCCESS;
