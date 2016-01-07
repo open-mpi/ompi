@@ -1,6 +1,6 @@
 /*
  * Copyright © 2009 CNRS
- * Copyright © 2009-2015 Inria.  All rights reserved.
+ * Copyright © 2009-2016 Inria.  All rights reserved.
  * Copyright © 2009-2013, 2015 Université Bordeaux
  * Copyright © 2009-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright © 2015 Intel, Inc.  All rights reserved.
@@ -36,12 +36,14 @@
 #include <pthread.h>
 #include <sys/mman.h>
 #include <sys/syscall.h>
+#include <mntent.h>
 #if defined HWLOC_HAVE_SET_MEMPOLICY || defined HWLOC_HAVE_MBIND
 #define migratepages migrate_pages /* workaround broken migratepages prototype in numaif.h before libnuma 2.0.2 */
 #include <numaif.h>
 #endif
 
 struct hwloc_linux_backend_data_s {
+  char *root_path; /* NULL if unused */
   int root_fd; /* The file descriptor for the file system root, used when browsing, e.g., Linux' sysfs and procfs. */
   int is_real_fsroot; /* Boolean saying whether root_fd points to the real filesystem root of the system */
 #ifdef HAVE_LIBUDEV_H
@@ -1652,96 +1654,40 @@ hwloc_parse_cpumap(const char *mappath, int fsroot_fd)
   return set;
 }
 
-static char *
-hwloc_strdup_mntpath(const char *escapedpath, size_t length)
-{
-  char *path = malloc(length+1);
-  const char *src = escapedpath, *tmp;
-  char *dst = path;
-
-  while ((tmp = strchr(src, '\\')) != NULL) {
-    strncpy(dst, src, tmp-src);
-    dst += tmp-src;
-    if (!strncmp(tmp+1, "040", 3))
-      *dst = ' ';
-    else if (!strncmp(tmp+1, "011", 3))
-      *dst = '	';
-    else if (!strncmp(tmp+1, "012", 3))
-      *dst = '\n';
-    else
-      *dst = '\\';
-    dst++;
-    src = tmp+4;
-  }
-
-  strcpy(dst, src);
-
-  return path;
-}
-
 static void
-hwloc_find_linux_cpuset_mntpnt(char **cgroup_mntpnt, char **cpuset_mntpnt, int fsroot_fd)
+hwloc_find_linux_cpuset_mntpnt(char **cgroup_mntpnt, char **cpuset_mntpnt, const char *root_path)
 {
-#define PROC_MOUNT_LINE_LEN 512
-  char line[PROC_MOUNT_LINE_LEN];
+  char *mount_path;
+  struct mntent *mntent;
   FILE *fd;
+  int err;
 
   *cgroup_mntpnt = NULL;
   *cpuset_mntpnt = NULL;
 
-  /* ideally we should use setmntent, getmntent, hasmntopt and endmntent,
-   * but they do not support fsroot_fd.
-   */
-
-  fd = hwloc_fopen("/proc/mounts", "r", fsroot_fd);
+  if (root_path) {
+    /* setmntent() doesn't support openat(), so use the root_path directly */
+    err = asprintf(&mount_path, "%s/proc/mounts", root_path);
+    if (err < 0)
+      return;
+    fd = setmntent(mount_path, "r");
+    free(mount_path);
+  } else {
+    fd = setmntent("/proc/mounts", "r");
+  }
   if (!fd)
     return;
 
-  while (fgets(line, sizeof(line), fd)) {
-    char *path;
-    char *type;
-    char *tmp;
-
-    /* remove the ending " 0 0\n" that the kernel always adds */
-    tmp = line + strlen(line) - 5;
-    if (tmp < line || strcmp(tmp, " 0 0\n"))
-      fprintf(stderr, "Unexpected end of /proc/mounts line `%s'\n", line);
-    else
-      *tmp = '\0';
-
-    /* path is after first field and a space */
-    tmp = strchr(line, ' ');
-    if (!tmp)
-      continue;
-    path = tmp+1;
-
-    /* type is after path, which may not contain spaces since the kernel escaped them to \040
-     * (see the manpage of getmntent) */
-    tmp = strchr(path, ' ');
-    if (!tmp)
-      continue;
-    type = tmp+1;
-    /* mark the end of path to ease upcoming strdup */
-    *tmp = '\0';
-
-    if (!strncmp(type, "cpuset ", 7)) {
-      /* found a cpuset mntpnt */
-      hwloc_debug("Found cpuset mount point on %s\n", path);
-      *cpuset_mntpnt = hwloc_strdup_mntpath(path, type-path);
+  while ((mntent = getmntent(fd)) != NULL) {
+    if (!strcmp(mntent->mnt_type, "cpuset")) {
+      hwloc_debug("Found cpuset mount point on %s\n", mntent->mnt_dir);
+      *cpuset_mntpnt = strdup(mntent->mnt_dir);
       break;
-
-    } else if (!strncmp(type, "cgroup ", 7)) {
+    } else if (!strcmp(mntent->mnt_type, "cgroup")) {
       /* found a cgroup mntpnt */
-      char *opt, *opts;
+      char *opt, *opts = mntent->mnt_opts;
       int cpuset_opt = 0;
       int noprefix_opt = 0;
-
-      /* find options */
-      tmp = strchr(type, ' ');
-      if (!tmp)
-	continue;
-      opts = tmp+1;
-
       /* look at options */
       while ((opt = strsep(&opts, ",")) != NULL) {
 	if (!strcmp(opt, "cpuset"))
@@ -1751,19 +1697,18 @@ hwloc_find_linux_cpuset_mntpnt(char **cgroup_mntpnt, char **cpuset_mntpnt, int f
       }
       if (!cpuset_opt)
 	continue;
-
       if (noprefix_opt) {
-	hwloc_debug("Found cgroup emulating a cpuset mount point on %s\n", path);
-	*cpuset_mntpnt = hwloc_strdup_mntpath(path, type-path);
+	hwloc_debug("Found cgroup emulating a cpuset mount point on %s\n", mntent->mnt_dir);
+	*cpuset_mntpnt = strdup(mntent->mnt_dir);
       } else {
-	hwloc_debug("Found cgroup/cpuset mount point on %s\n", path);
-	*cgroup_mntpnt = hwloc_strdup_mntpath(path, type-path);
+	hwloc_debug("Found cgroup/cpuset mount point on %s\n", mntent->mnt_dir);
+	*cgroup_mntpnt = strdup(mntent->mnt_dir);
       }
       break;
     }
   }
 
-  fclose(fd);
+  endmntent(fd);
 }
 
 /*
@@ -4130,7 +4075,7 @@ hwloc_look_linuxfs(struct hwloc_backend *backend)
   /**********************
    * Gather the list of admin-disabled cpus and mems
    */
-  hwloc_find_linux_cpuset_mntpnt(&cgroup_mntpnt, &cpuset_mntpnt, data->root_fd);
+  hwloc_find_linux_cpuset_mntpnt(&cgroup_mntpnt, &cpuset_mntpnt, data->root_path);
   if (cgroup_mntpnt || cpuset_mntpnt) {
     cpuset_name = hwloc_read_linux_cpuset_name(data->root_fd, topology->pid);
     if (cpuset_name) {
@@ -5157,6 +5102,8 @@ hwloc_linux_backend_disable(struct hwloc_backend *backend)
 {
   struct hwloc_linux_backend_data_s *data = backend->private_data;
 #ifdef HAVE_OPENAT
+  if (data->root_path)
+    free(data->root_path);
   close(data->root_fd);
 #endif
 #ifdef HAVE_LIBUDEV_H
@@ -5197,6 +5144,7 @@ hwloc_linux_component_instantiate(struct hwloc_disc_component *component,
   /* default values */
   data->is_knl = 0;
   data->is_real_fsroot = 1;
+  data->root_path = NULL;
   if (!fsroot_path)
     fsroot_path = "/";
 
@@ -5208,6 +5156,7 @@ hwloc_linux_component_instantiate(struct hwloc_disc_component *component,
   if (strcmp(fsroot_path, "/")) {
     backend->is_thissystem = 0;
     data->is_real_fsroot = 0;
+    data->root_path = strdup(fsroot_path);
   }
 
   /* Since this fd stays open after hwloc returns, mark it as
@@ -5246,6 +5195,10 @@ hwloc_linux_component_instantiate(struct hwloc_disc_component *component,
   return backend;
 
  out_with_data:
+#ifdef HAVE_OPENAT
+  if (data->root_path)
+    free(data->root_path);
+#endif
   free(data);
  out_with_backend:
   free(backend);

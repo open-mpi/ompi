@@ -1,5 +1,5 @@
 Copyright © 2009 CNRS
-Copyright © 2009-2015 Inria.  All rights reserved.
+Copyright © 2009-2016 Inria.  All rights reserved.
 Copyright © 2009-2013 Université Bordeaux
 Copyright © 2009-2011 Cisco Systems, Inc.  All rights reserved.
 
@@ -15,6 +15,12 @@ This file contains the main features as well as overviews of specific
 bug fixes (and other actions) for each version of hwloc since version
 0.9 (as initially released as "libtopology", then re-branded to "hwloc"
 in v0.9.1).
+
+
+Version 1.11.3
+--------------
+* Fix /proc/mounts parsing on Linux by using mntent.h.
+  Thanks to Nathan Hjelm for reporting the issue.
 
 
 Version 1.11.2
