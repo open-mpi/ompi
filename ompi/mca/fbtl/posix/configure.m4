@@ -32,6 +32,9 @@ AC_DEFUN([MCA_ompi_fbtl_posix_CONFIG],[
                                     [aio_write], [rt],
                                     [fbtl_posix_happy="yes"])])
 
+    AC_CHECK_FUNCS([pwritev],[],[])
+    AC_CHECK_FUNCS([preadv],[],[])
+
     AS_IF([test "$fbtl_posix_happy" = "yes"],
           [$1],
           [$2])
