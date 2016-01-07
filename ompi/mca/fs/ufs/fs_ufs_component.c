@@ -31,6 +31,9 @@
 #include "mpi.h"
 
 int mca_fs_ufs_priority = 10;
+int mca_fs_ufs_use_directio=0;
+
+static int ufs_register(void);
 
 /*
  * Public string showing the fs ufs component version number
@@ -54,6 +57,7 @@ mca_fs_base_component_2_0_0_t mca_fs_ufs_component = {
         .mca_component_name = "ufs",
         MCA_BASE_MAKE_VERSION(component, OMPI_MAJOR_VERSION, OMPI_MINOR_VERSION,
                               OMPI_RELEASE_VERSION),
+        .mca_register_component_params = ufs_register,
     },
     .fsm_data = {
         /* This component is checkpointable */
@@ -63,3 +67,21 @@ mca_fs_base_component_2_0_0_t mca_fs_ufs_component = {
     .fsm_file_query = mca_fs_ufs_component_file_query,      /* get priority and actions */
     .fsm_file_unquery = mca_fs_ufs_component_file_unquery,  /* undo what was done by previous function */
 };
+
+static int ufs_register(void)
+{
+    mca_fs_ufs_priority = 10;
+    (void) mca_base_component_var_register (&mca_fs_ufs_component.fsm_version,
+                                            "priority", "Priority of the ufs2 fs component",
+                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                            OPAL_INFO_LVL_9,
+                                            MCA_BASE_VAR_SCOPE_READONLY, &mca_fs_ufs_priority);
+    mca_fs_ufs_use_directio = 0;
+    (void) mca_base_component_var_register (&mca_fs_ufs_component.fsm_version,
+                                            "use_directio", "whether to use direct I/O",
+                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                            OPAL_INFO_LVL_9,
+                                            MCA_BASE_VAR_SCOPE_READONLY, &mca_fs_ufs_use_directio);
+
+    return OMPI_SUCCESS;
+}

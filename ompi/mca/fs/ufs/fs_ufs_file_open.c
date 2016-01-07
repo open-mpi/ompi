@@ -45,9 +45,10 @@ mca_fs_ufs_file_open (struct ompi_communicator_t *comm,
 		      struct ompi_info_t *info,
 		      mca_io_ompio_file_t *fh)
 {
-    int amode;
+    int amode, amode_direct;
     int old_mask, perm;
     int rank, ret;
+    int fd_direct;
 
     rank = ompi_comm_rank ( comm );
 
@@ -69,6 +70,8 @@ mca_fs_ufs_file_open (struct ompi_communicator_t *comm,
     if (access_mode & MPI_MODE_RDWR)
         amode = amode | O_RDWR;
 
+    amode_direct = amode | O_DIRECT;
+
     if ( 0 == rank ) {
 	/* MODE_CREATE and MODE_EXCL can only be set by one process */
 	if ( access_mode & MPI_MODE_CREATE )
@@ -89,6 +92,14 @@ mca_fs_ufs_file_open (struct ompi_communicator_t *comm,
 	if (-1 == fh->fd) {
 	    return OMPI_ERROR;
 	}
+    }
+
+
+    if ( mca_fs_ufs_use_directio ) {
+        fd_direct = open ( filename, amode_direct, perm);
+        if ( -1 != fd_direct ) {
+            memcpy ( &fh->f_fs_ptr, &fd_direct, sizeof(int));
+        }
     }
 
     return OMPI_SUCCESS;
