@@ -169,6 +169,22 @@ ompio_io_ompio_file_open (ompi_communicator_t *comm,
         opal_output(1, "mca_fs_base_file_select() failed\n");
         goto fn_fail;
     }
+
+    ret = ompio_fh->f_fs->fs_file_open (comm,
+					filename,
+					amode,
+					info,
+					ompio_fh);
+
+
+
+
+    if ( OMPI_SUCCESS != ret ) {
+	ret = MPI_ERR_FILE;
+        goto fn_fail;
+    }
+
+
     if (OMPI_SUCCESS != (ret = mca_fbtl_base_file_select (ompio_fh,
                                                           NULL))) {
         opal_output(1, "mca_fbtl_base_file_select() failed\n");
@@ -231,19 +247,6 @@ ompio_io_ompio_file_open (ompi_communicator_t *comm,
 	}
     }
 
-    ret = ompio_fh->f_fs->fs_file_open (comm,
-					filename,
-					amode,
-					info,
-					ompio_fh);
-
-
-
-
-    if ( OMPI_SUCCESS != ret ) {
-	ret = MPI_ERR_FILE;
-        goto fn_fail;
-    }
 
 
     /* If file has been opened in the append mode, move the internal

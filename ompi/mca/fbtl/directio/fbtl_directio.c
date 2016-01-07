@@ -62,13 +62,16 @@ int mca_fbtl_directio_component_init_query(bool enable_progress_threads,
 
 struct mca_fbtl_base_module_1_0_0_t *
 mca_fbtl_directio_component_file_query (mca_io_ompio_file_t *fh, int *priority) {
-   *priority = mca_fbtl_directio_priority;
+    int fd_direct;
+    *priority = mca_fbtl_directio_priority;
 
-   if ( 0 != fh->f_fs_ptr   && 
-        PVFS2 != fh->f_fstype) {
-   }
+    memcpy (&fd_direct, &fh->f_fs_ptr, sizeof(int) );
+    if ( 0 < fd_direct        && 
+         PVFS2 != fh->f_fstype) {
+        *priority = 100;
+    }
 
-   return &directio;
+    return &directio;
 }
 
 int mca_fbtl_directio_component_file_unquery (mca_io_ompio_file_t *file) {
