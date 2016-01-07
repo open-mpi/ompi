@@ -585,7 +585,7 @@ hwloc_aix_alloc_membind(hwloc_topology_t topology, size_t len, hwloc_const_nodes
   ret = ra_mmap(NULL, len, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0, R_RSET, rsid, aix_policy);
 
   rs_free(rsid.at_rset);
-  return ret;
+  return ret == (void*)-1 ? NULL : ret;
 }
 #endif /* P_DEFAULT */
 

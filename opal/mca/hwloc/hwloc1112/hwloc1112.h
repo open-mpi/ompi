@@ -1,6 +1,9 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2011-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
+ * Copyright (c) 2016      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  *
  * $COPYRIGHT$
  *
@@ -13,8 +16,8 @@
  * this header represents the public interface to this static component.
  */
 
-#ifndef MCA_OPAL_HWLOC_HWLOC1111_H
-#define MCA_OPAL_HWLOC_HWLOC1111_H
+#ifndef MCA_OPAL_HWLOC_HWLOC1112_H
+#define MCA_OPAL_HWLOC_HWLOC1112_H
 
 BEGIN_C_DECLS
 
@@ -42,4 +45,4 @@ BEGIN_C_DECLS
 
 END_C_DECLS
 
-#endif /* MCA_OPAL_HWLOC_HWLOC1111_H */
+#endif /* MCA_OPAL_HWLOC_HWLOC1112_H */

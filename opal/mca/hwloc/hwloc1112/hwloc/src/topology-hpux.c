@@ -142,6 +142,7 @@ static void*
 hwloc_hpux_alloc_membind(hwloc_topology_t topology, size_t len, hwloc_const_nodeset_t nodeset, hwloc_membind_policy_t policy, int flags)
 {
   int mmap_flags;
+  void *p;
 
   /* Can not give a set of nodes.  */
   if (!hwloc_bitmap_isequal(nodeset, hwloc_topology_get_complete_nodeset(topology))) {
@@ -165,7 +166,8 @@ hwloc_hpux_alloc_membind(hwloc_topology_t topology, size_t len, hwloc_const_node
       return NULL;
   }
 
-  return mmap(NULL, len, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS | mmap_flags, -1, 0);
+  p = mmap(NULL, len, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS | mmap_flags, -1, 0);
+  return p == MAP_FAILED ? NULL : p;
 }
 #endif /* MAP_MEM_FIRST_TOUCH */
 

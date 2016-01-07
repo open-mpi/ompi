@@ -17,6 +17,48 @@ bug fixes (and other actions) for each version of hwloc since version
 in v0.9.1).
 
 
+Version 1.11.2
+--------------
+* Improve support for Intel Knights Landing Xeon Phi on Linux:
+  + Group local NUMA nodes of normal memory (DDR) and high-bandwidth memory
+    (MCDRAM) together through "Cluster" groups so that the local MCDRAM is
+    easy to find.
+    - See "How do I find the local MCDRAM NUMA node on Intel Knights
+      Landing Xeon Phi?" in the documentation.
+    - For uniformity across all KNL configurations, always have a NUMA node
+      object even if the host is UMA.
+  + Fix the detection of the memory-side cache:
+    - Add the hwloc-dump-hwdata superuser utility to dump SMBIOS information
+      into /var/run/hwloc/ as root during boot, and load this dumped
+      information from the hwloc library at runtime.
+    - See "Why do I need hwloc-dump-hwdata for caches on Intel Knights
+      Landing Xeon Phi?" in the documentation.
+  Thanks to Grzegorz Andrejczuk for the patches and for the help.
+* The x86 and linux backends may now be combined for discovering CPUs
+  through x86 CPUID and memory from the Linux kernel.
+  This is useful for working around buggy CPU information reported by Linux
+  (for instance the AMD Bulldozer/Piledriver bug below).
+  Combination is enabled by passing HWLOC_COMPONENTS=x86 in the environment.
+* Fix L3 cache sharing on AMD Opteron 63xx (Piledriver) and 62xx (Bulldozer)
+  in the x86 backend. Thanks to many users who helped.
+* Fix the overzealous L3 cache sharing fix added to the x86 backend in 1.11.1
+  for AMD Opteron 61xx (Magny-Cours) processors.
+* The x86 backend may now add the info attribute Inclusive=0 or 1 to caches
+  it discovers, or to caches discovered by other backends earlier.
+  Thanks to Guillaume Beauchamp for the patch.
+* Fix the management on alloc_membind() allocation failures on AIX, HP-UX
+  and OSF/Tru64.
+* Fix spurious failures to load with ENOMEM on AIX in case of Misc objects
+  below PUs.
+* lstopo improvements in X11 and Windows graphical mode:
+  + Add + - f 1 shortcuts to manually zoom-in, zoom-out, reset the scale,
+    or fit the entire window.
+  + Display all keyboard shortcuts in the console.
+* Debug messages may be disabled at runtime by passing HWLOC_DEBUG_VERBOSE=0
+  in the environment when --enable-debug was passed to configure.
+* Add a FAQ entry "What are these Group objects in my topology?".
+
+
 Version 1.11.1
 --------------
 * Detection fixes

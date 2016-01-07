@@ -257,7 +257,8 @@ hwloc_libxml_import_diff(struct hwloc__xml_import_state_s *state, const char *xm
     if (state->global->next_attr(state, &attrname, &attrvalue) < 0)
       break;
     if (!strcmp(attrname, "refname")) {
-      free(refname);
+      if (refname)
+	free(refname);
       refname = strdup(attrvalue);
     } else
       goto out_with_doc;
@@ -266,13 +267,15 @@ hwloc_libxml_import_diff(struct hwloc__xml_import_state_s *state, const char *xm
   ret = hwloc__xml_import_diff(state, firstdiffp);
   if (refnamep && !ret)
     *refnamep = refname;
-  else
+  else if (refname)
     free(refname);
 
   xmlFreeDoc(doc);
   return ret;
 
 out_with_doc:
+  if (refname)
+    free(refname);
   xmlFreeDoc(doc);
 out:
   return -1; /* failed */
