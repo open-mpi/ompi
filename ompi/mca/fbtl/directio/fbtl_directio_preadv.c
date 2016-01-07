@@ -34,12 +34,14 @@ ssize_t mca_fbtl_directio_preadv (mca_io_ompio_file_t *fh )
     ssize_t bytes_read=0, total_bytes_read=0;
     size_t nbytes, rem, diff;
     char *newbuf=NULL;
-
+    int fs_ptr;
+    
     if (NULL == fh->f_io_array) {
         return OMPI_ERROR;
     }
 
-    
+    memcpy ( &fs_ptr, &fh->f_fs_ptr, sizeof(int));
+
     for (i=0 ; i<fh->f_num_of_io_entries ; i++) {
         /* 
         ** To use direct I/O :
@@ -53,16 +55,22 @@ ssize_t mca_fbtl_directio_preadv (mca_io_ompio_file_t *fh )
         */
         if ( (OMPI_MPI_OFFSET_TYPE ) fh->f_io_array[i].offset % FBTL_DIRECTIO_BLOCK_SIZE) {
             diff = FBTL_DIRECTIO_BLOCK_SIZE - ( (OMPI_MPI_OFFSET_TYPE) fh->f_io_array[i].offset % FBTL_DIRECTIO_BLOCK_SIZE);
-            diff = OMPIO_MIN(diff, fh->f_io_array[i].length);
+            if ( fh->f_io_array[i].length < diff) {
+                diff = fh->f_io_array[i].length;
+            }
             /* 
             ** Use regular, bufferd I/O to write a partial block. This is represented in the
             ** fh->f_fd handle.
             */
-            nbytes = pread(fh->fd, (void *)fh->f_io_array[i].memory_address, 
-                           diff, 
-                           (OMPI_MPI_OFFSET_TYPE) fh->f_io_array[i].offset);
+            total_bytes_read = pread(fh->fd, (void *)fh->f_io_array[i].memory_address, 
+                                     diff, 
+                                     (off_t) fh->f_io_array[i].offset);
+            if ( 0 > total_bytes_read ){
+                opal_output (1, "fbtl_directio_preadv: could not read\n" );
+                return OMPI_ERROR;
+            }
             fh->f_io_array[i].memory_address = ((char *) fh->f_io_array[i].memory_address) + diff;
-            fh->f_io_array[i].offset = ((char *)fh->f_io_array[i].offset + diff);
+            fh->f_io_array[i].offset = (IOVBASE_TYPE *)(intptr_t)((off_t)fh->f_io_array[i].offset + diff);
             fh->f_io_array[i].length -= diff;
         }
 
@@ -72,31 +80,38 @@ ssize_t mca_fbtl_directio_preadv (mca_io_ompio_file_t *fh )
         rem = fh->f_io_array[i].length % FBTL_DIRECTIO_BLOCK_SIZE;
         nbytes = fh->f_io_array[i].length -rem;
 
-        if ( !(((long)fh->f_io_array[i].memory_address) % FBTL_DIRECTIO_MEMALIGN_SIZE ) ) {
-            /* 
-            ** This is step 3. Make sure the buffer that we use starts at a page boundary 
-            */
-            newbuf = (void *) aligned_alloc(FBTL_DIRECTIO_MEMALIGN_SIZE, nbytes);
-            if (NULL == newbuf) {
-                opal_output(0, "ARGH, memalign failed ");
+        if ( 0 < nbytes ) {
+            if ( (((long)fh->f_io_array[i].memory_address) % FBTL_DIRECTIO_MEMALIGN_SIZE ) ) {
+                /* 
+                ** This is step 3. Make sure the buffer that we use starts at a page boundary 
+                */
+                posix_memalign( (void **)&newbuf, FBTL_DIRECTIO_MEMALIGN_SIZE, nbytes);
+                if (NULL == newbuf) {
+                    opal_output(1, "fbtl_directio:preadv:  memalign failed ");
+                }
             }
             else {
-                memcpy(newbuf, fh->f_io_array[i].memory_address,nbytes);
+                newbuf = fh->f_io_array[i].memory_address;
+            }
+            
+            /* 
+            ** Write a multiple of block sizes using direct I/O 
+            ** This is achieved using the fh->f_fdirect handle 
+            */
+            bytes_read = pread( fs_ptr, 
+                                newbuf, 
+                                nbytes,
+                                (off_t )fh->f_io_array[i].offset );
+            
+            if ( (((long)fh->f_io_array[i].memory_address) % FBTL_DIRECTIO_MEMALIGN_SIZE ) ) {
+                memcpy(fh->f_io_array[i].memory_address, newbuf, nbytes);
+                free ( newbuf );
+            }
+            if (bytes_read < 0) {
+                opal_output (1, "fbtl_directio_preadv: could not read on directio descriptor\n" );
+                return OMPI_ERROR;
             }
         }
-        else {
-            newbuf = fh->f_io_array[i].memory_address;
-        }
-
-        /* 
-        ** Write a multiple of block sizes using direct I/O 
-        ** This is achieved using the fh->f_fdirect handle 
-        */
-        bytes_read = pread( (int) fh->f_fs_ptr, 
-                            newbuf, 
-                            nbytes,
-                            (OMPI_MPI_OFFSET_TYPE )fh->f_io_array[i].offset );
-
         /* 
         ** Write the remaining portion using buffered I/O 
         */
@@ -104,10 +119,11 @@ ssize_t mca_fbtl_directio_preadv (mca_io_ompio_file_t *fh )
             bytes_read += pread (fh->fd, 
                                  ((char *)fh->f_io_array[i].memory_address) + nbytes, 
                                  rem,
-                                 (OMPI_MPI_OFFSET_TYPE )fh->f_io_array[i].offset + nbytes );
+                                 (off_t )fh->f_io_array[i].offset + nbytes );
         }
         
 	if (bytes_read < 0) {
+            opal_output (1, "fbtl_directio_preadv: could not read\n" );
 	    return OMPI_ERROR;
         }
 	total_bytes_read += bytes_read;

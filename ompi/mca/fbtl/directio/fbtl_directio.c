@@ -64,10 +64,8 @@ struct mca_fbtl_base_module_1_0_0_t *
 mca_fbtl_directio_component_file_query (mca_io_ompio_file_t *fh, int *priority) {
    *priority = mca_fbtl_directio_priority;
 
-   if (UFS == fh->f_fstype) {
-       if (*priority < 50) {
-           *priority = 50;
-       }
+   if ( 0 != fh->f_fs_ptr   && 
+        PVFS2 != fh->f_fstype) {
    }
 
    return &directio;
