@@ -30,6 +30,7 @@
 extern int mca_fs_lustre_priority;
 extern int mca_fs_lustre_stripe_size;
 extern int mca_fs_lustre_stripe_width;
+extern int mca_fs_lustre_use_directio;
 
 BEGIN_C_DECLS
 

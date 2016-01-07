@@ -40,5 +40,12 @@ mca_fs_lustre_file_close (mca_io_ompio_file_t *fh)
     fh->f_comm->c_coll.coll_barrier (fh->f_comm,
                                      fh->f_comm->c_coll.coll_barrier_module);
     close (fh->fd);
+
+    if (0 != fh->f_fs_ptr ) {
+        int fs_ptr;
+        memcpy ( &fs_ptr, &fh->f_fs_ptr, sizeof(int));
+//        fsync ( fs_ptr );
+        close (fs_ptr );
+    }
     return OMPI_SUCCESS;
 }

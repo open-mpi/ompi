@@ -69,6 +69,7 @@ mca_fs_lustre_file_open (struct ompi_communicator_t *comm,
     int fs_lustre_stripe_size = -1;
     int fs_lustre_stripe_width = -1;
     char char_stripe[MPI_MAX_INFO_KEY];
+    int fd_direct;
 
     struct lov_user_md *lump=NULL;
 
@@ -93,6 +94,7 @@ mca_fs_lustre_file_open (struct ompi_communicator_t *comm,
     if (access_mode & MPI_MODE_EXCL)
         amode = amode | O_EXCL;
 
+    amode_direct = amode | O_DIRECT;
 
     ompi_info_get (info, "stripe_size", MPI_MAX_INFO_VAL, char_stripe, &flag);
     if ( flag ) {
@@ -159,5 +161,14 @@ mca_fs_lustre_file_open (struct ompi_communicator_t *comm,
       //	free ( lump );
       //      }
     }
+
+    if ( mca_fs_lustre_use_directio ) {
+        fd_direct = open ( filename, amode_direct, perm);
+        if ( -1 != fd_direct ) {
+            memcpy ( &fh->f_fs_ptr, &fd_direct, sizeof(int));
+        }
+    }
+
+
     return OMPI_SUCCESS;
 }
