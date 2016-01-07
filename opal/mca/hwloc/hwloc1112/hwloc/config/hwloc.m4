@@ -1213,6 +1213,7 @@ AC_DEFUN([HWLOC_DO_AM_CONDITIONALS],[
         AM_CONDITIONAL([HWLOC_HAVE_WINDOWS], [test "x$hwloc_windows" = "xyes"])
         AM_CONDITIONAL([HWLOC_HAVE_MINGW32], [test "x$target_os" = "xmingw32"])
 
+        AM_CONDITIONAL([HWLOC_HAVE_X86], [test "x$hwloc_x86_32" = "xyes" -o "x$hwloc_x86_64" = "xyes"])
         AM_CONDITIONAL([HWLOC_HAVE_X86_32], [test "x$hwloc_x86_32" = "xyes"])
         AM_CONDITIONAL([HWLOC_HAVE_X86_64], [test "x$hwloc_x86_64" = "xyes"])
         AM_CONDITIONAL([HWLOC_HAVE_X86_CPUID], [test "x$hwloc_have_x86_cpuid" = "xyes"])

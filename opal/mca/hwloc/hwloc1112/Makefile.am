@@ -1,6 +1,8 @@
 #
 # Copyright (c) 2011-2014 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2014-2015 Intel, Inc. All right reserved.
+# Copyright (c) 2016      Los Alamos National Security, LLC. All rights
+#                         reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -25,16 +27,16 @@ EXTRA_DIST = \
 SUBDIRS = hwloc
 
 # Headers and sources
-headers = hwloc1111.h
-sources = hwloc1111_component.c
+headers = hwloc1112.h
+sources = hwloc1112_component.c
 
 # We only ever build this component statically
-noinst_LTLIBRARIES = libmca_hwloc_hwloc1111.la
-libmca_hwloc_hwloc1111_la_SOURCES = $(headers) $(sources)
-nodist_libmca_hwloc_hwloc1111_la_SOURCES = $(nodist_headers)
-libmca_hwloc_hwloc1111_la_LDFLAGS = -module -avoid-version $(opal_hwloc_hwloc1111_LDFLAGS)
-libmca_hwloc_hwloc1111_la_LIBADD = $(opal_hwloc_hwloc1111_LIBS)
-libmca_hwloc_hwloc1111_la_DEPENDENCIES = \
+noinst_LTLIBRARIES = libmca_hwloc_hwloc1112.la
+libmca_hwloc_hwloc1112_la_SOURCES = $(headers) $(sources)
+nodist_libmca_hwloc_hwloc1112_la_SOURCES = $(nodist_headers)
+libmca_hwloc_hwloc1112_la_LDFLAGS = -module -avoid-version $(opal_hwloc_hwloc1112_LDFLAGS)
+libmca_hwloc_hwloc1112_la_LIBADD = $(opal_hwloc_hwloc1112_LIBS)
+libmca_hwloc_hwloc1112_la_DEPENDENCIES = \
     $(HWLOC_top_builddir)/src/libhwloc_embedded.la
 
 # Since the rest of the code base includes the underlying hwloc.h, we
