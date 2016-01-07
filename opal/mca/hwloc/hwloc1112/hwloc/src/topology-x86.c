@@ -26,6 +26,7 @@ struct hwloc_x86_backend_data_s {
   unsigned nbprocs;
   hwloc_bitmap_t apicid_set;
   int apicid_unique;
+  int is_knl;
 };
 
 #define has_topoext(features) ((features)[6] & (1 << 22))
@@ -35,9 +36,11 @@ struct cacheinfo {
   unsigned type;
   unsigned level;
   unsigned nbthreads_sharing;
+  unsigned cacheid;
 
   unsigned linesize;
   unsigned linepart;
+  int inclusive;
   int ways;
   unsigned sets;
   unsigned long size;
@@ -99,6 +102,8 @@ static void fill_amd_cache(struct procinfo *infos, unsigned level, int type, uns
     cache->nbthreads_sharing = infos->max_log_proc;
   cache->linesize = cpuid & 0xff;
   cache->linepart = 0;
+  cache->inclusive = 0; /* old AMD (K8-K10) supposed to have exclusive caches */
+
   if (level == 1) {
     cache->ways = (cpuid >> 16) & 0xff;
     if (cache->ways == 0xff)
@@ -111,20 +116,6 @@ static void fill_amd_cache(struct procinfo *infos, unsigned level, int type, uns
   }
   cache->size = size;
   cache->sets = 0;
-
-  if (infos->cpufamilynumber== 0x10 && infos->cpumodelnumber == 0x9
-      && level == 3
-      && (cache->ways == -1 || (cache->ways % 2 == 0)) && cache->nbthreads_sharing >= 8) {
-    /* Fix AMD family 0x10 model 0x9 (Magny-Cours) with 8 or 12 cores.
-     * The L3 (and its associativity) is actually split into two halves).
-     */
-    if (cache->nbthreads_sharing == 16)
-      cache->nbthreads_sharing = 12; /* nbthreads_sharing is a power of 2 but the processor actually has 8 or 12 cores */
-    cache->nbthreads_sharing /= 2;
-    cache->size /= 2;
-    if (cache->ways != -1)
-      cache->ways /= 2;
-  }
 
   hwloc_debug("cache L%u t%u linesize %u ways %u size %luKB\n", cache->level, cache->nbthreads_sharing, cache->linesize, cache->ways, cache->size >> 10);
 }
@@ -182,6 +173,9 @@ static void look_proc(struct hwloc_backend *backend, struct procinfo *infos, uns
     infos->cpumodelnumber = _model;
   }
   infos->cpustepping = eax & 0xf;
+
+  if (cpuid_type == intel && infos->cpufamilynumber == 0x6 && infos->cpumodelnumber == 0x57)
+    data->is_knl = 1;
 
   /* Get cpu vendor string from cpuid 0x00 */
   memset(regs, 0, sizeof(regs));
@@ -297,6 +291,7 @@ static void look_proc(struct hwloc_backend *backend, struct procinfo *infos, uns
 	cache->ways = ways;
       cache->sets = sets = ecx + 1;
       cache->size = linesize * linepart * ways * sets;
+      cache->inclusive = edx & 0x2;
 
       hwloc_debug("cache %u type %u L%u t%u c%u linesize %lu linepart %lu ways %lu sets %lu, size %uKB\n", cachenum, cache->type, cache->level, cache->nbthreads_sharing, infos->max_nbcores, linesize, linepart, ways, sets, cache->size >> 10);
 
@@ -331,6 +326,7 @@ static void look_proc(struct hwloc_backend *backend, struct procinfo *infos, uns
    * (not supported on AMD)
    */
   if (cpuid_type != amd && highest_cpuid >= 0x04) {
+    unsigned level;
     for (cachenum = 0; ; cachenum++) {
       unsigned type;
       eax = 0x04;
@@ -342,6 +338,10 @@ static void look_proc(struct hwloc_backend *backend, struct procinfo *infos, uns
       hwloc_debug("cache %u type %u\n", cachenum, type);
 
       if (type == 0)
+	break;
+      level = (eax >> 5) & 0x7;
+      if (data->is_knl && level == 3)
+	/* KNL reports wrong L3 information (size always 0, cpuset always the entire machine, ignore it */
 	break;
       infos->numcaches++;
 
@@ -369,9 +369,13 @@ static void look_proc(struct hwloc_backend *backend, struct procinfo *infos, uns
 
       if (type == 0)
 	break;
+      level = (eax >> 5) & 0x7;
+      if (data->is_knl && level == 3)
+	/* KNL reports wrong L3 information (size always 0, cpuset always the entire machine, ignore it */
+	break;
 
       cache->type = type;
-      cache->level = (eax >> 5) & 0x7;
+      cache->level = level;
       cache->nbthreads_sharing = ((eax >> 14) & 0xfff) + 1;
 
       cache->linesize = linesize = (ebx & 0xfff) + 1;
@@ -384,6 +388,7 @@ static void look_proc(struct hwloc_backend *backend, struct procinfo *infos, uns
         cache->ways = ways;
       cache->sets = sets = ecx + 1;
       cache->size = linesize * linepart * ways * sets;
+      cache->inclusive = edx & 0x2;
 
       hwloc_debug("cache %u type %u L%u t%u c%u linesize %lu linepart %lu ways %lu sets %lu, size %uKB\n", cachenum, cache->type, cache->level, cache->nbthreads_sharing, infos->max_nbcores, linesize, linepart, ways, sets, cache->size >> 10);
 
@@ -438,6 +443,48 @@ static void look_proc(struct hwloc_backend *backend, struct procinfo *infos, uns
       infos->packageid = apic_id >> apic_shift;
       hwloc_debug("x2APIC remainder: %d\n", infos->packageid);
       hwloc_debug("this is thread %u of core %u\n", infos->threadid, infos->coreid);
+    }
+  }
+
+  /* Now that we have all info, compute cacheids and apply quirks */
+  for (cachenum = 0; cachenum < infos->numcaches; cachenum++) {
+    struct cacheinfo *cache = &infos->cache[cachenum];
+
+    /* default cacheid value */
+    cache->cacheid = infos->apicid / cache->nbthreads_sharing;
+
+    /* AMD quirk */
+    if (cpuid_type == amd
+	&& infos->cpufamilynumber== 0x10 && infos->cpumodelnumber == 0x9
+	&& cache->level == 3
+	&& (cache->ways == -1 || (cache->ways % 2 == 0)) && cache->nbthreads_sharing >= 8) {
+      /* Fix AMD family 0x10 model 0x9 (Magny-Cours) with 8 or 12 cores.
+       * The L3 (and its associativity) is actually split into two halves).
+       */
+      if (cache->nbthreads_sharing == 16)
+	cache->nbthreads_sharing = 12; /* nbthreads_sharing is a power of 2 but the processor actually has 8 or 12 cores */
+      cache->nbthreads_sharing /= 2;
+      cache->size /= 2;
+      if (cache->ways != -1)
+	cache->ways /= 2;
+      /* AMD Magny-Cours 12-cores processor reserve APIC ids as AAAAAABBBBBB....
+       * among first L3 (A), second L3 (B), and unexisting cores (.).
+       * On multi-socket servers, L3 in non-first sockets may have APIC id ranges
+       * such as [16-21] that are not aligned on multiple of nbthreads_sharing (6).
+       * That means, we can't just compare apicid/nbthreads_sharing to identify siblings.
+       */
+      cache->cacheid = (infos->apicid % infos->max_log_proc) / cache->nbthreads_sharing /* cacheid within the package */
+	+ 2 * (infos->apicid / infos->max_log_proc); /* add 2 caches per previous package */
+
+    } else if (cpuid_type == amd
+	       && infos->cpufamilynumber == 0x15
+	       && (infos->cpumodelnumber == 0x1 /* Bulldozer */ || infos->cpumodelnumber == 0x2 /* Piledriver */)
+	       && cache->level == 3 && cache->nbthreads_sharing == 6) {
+      /* AMD Bulldozer and Piledriver 12-core processors have same APIC ids as Magny-Cours above,
+       * but we can't merge the checks because the original nbthreads_sharing must be exactly 6 here.
+       */
+      cache->cacheid = (infos->apicid % infos->max_log_proc) / cache->nbthreads_sharing /* cacheid within the package */
+	+ 2 * (infos->apicid / infos->max_log_proc); /* add 2 cache per previous package */
     }
   }
 
@@ -631,6 +678,7 @@ static void summarize(struct hwloc_backend *backend, struct procinfo *infos, int
       }
       unit = hwloc_alloc_setup_object(HWLOC_OBJ_GROUP, unitid);
       unit->cpuset = unit_cpuset;
+      hwloc_obj_add_info(unit, "Type", "ComputeUnit");
       hwloc_debug_1arg_bitmap("os unit %u has cpuset %s\n",
           unitid, unit_cpuset);
       hwloc_insert_object_by_cpuset(topology, unit);
@@ -728,18 +776,14 @@ static void summarize(struct hwloc_backend *backend, struct procinfo *infos, int
     for (j = 0; j < infos[i].numcaches; j++)
       if (infos[i].cache[j].level > level)
         level = infos[i].cache[j].level;
-
-  /* Look for known types */
-  if (fulldiscovery) while (level > 0) {
+  while (level > 0) {
     for (type = 1; type <= 3; type++) {
       /* Look for caches of that type at level level */
       {
 	hwloc_bitmap_t caches_cpuset = hwloc_bitmap_dup(complete_cpuset);
-	hwloc_bitmap_t cache_cpuset;
 	hwloc_obj_t cache;
 
 	while ((i = hwloc_bitmap_first(caches_cpuset)) != (unsigned) -1) {
-	  unsigned packageid = infos[i].packageid;
 
 	  for (l = 0; l < infos[i].numcaches; l++) {
 	    if (infos[i].cache[l].level == level && infos[i].cache[l].type == type)
@@ -751,17 +795,12 @@ static void summarize(struct hwloc_backend *backend, struct procinfo *infos, int
 	    continue;
 	  }
 
-	  /* Found a matching cache, now look for others sharing it */
-	  {
-	    /* AMD Magny-Cours 12-cores processor reserve APIC ids as AAAAAABBBBBB....
-	     * among first L3 (A), second L3 (B), and unexisting cores (.).
-	     * On multi-socket servers, L3 in non-first sockets may have APIC id ranges
-	     * such as [16-21] that are not aligned on multiple of nbthreads_sharing (6).
-	     * That means, we can't just compare apicid/nbthreads_sharing to identify siblings.
-	     * Hence we use apicid%max_log_proc instead of apicid to restore the alignment.
-	     * Works because we also compare packageid to identify siblings.
-	     */
-	    unsigned cacheid = (infos[i].apicid % infos[i].max_log_proc) / infos[i].cache[l].nbthreads_sharing;
+	  if (fulldiscovery) {
+	    /* Add caches */
+	    hwloc_bitmap_t cache_cpuset;
+	    unsigned packageid = infos[i].packageid;
+	    unsigned cacheid = infos[i].cache[l].cacheid;
+	    /* Found a matching cache, now look for others sharing it */
 
 	    cache_cpuset = hwloc_bitmap_alloc();
 	    for (j = i; j < nbprocs; j++) {
@@ -775,7 +814,7 @@ static void summarize(struct hwloc_backend *backend, struct procinfo *infos, int
 		hwloc_bitmap_clr(caches_cpuset, j);
 		continue;
 	      }
-	      if (infos[j].packageid == packageid && (infos[j].apicid % infos[j].max_log_proc) / infos[j].cache[l2].nbthreads_sharing == cacheid) {
+	      if (infos[j].packageid == packageid && infos[j].cache[l2].cacheid == cacheid) {
 		hwloc_bitmap_set(cache_cpuset, j);
 		hwloc_bitmap_clr(caches_cpuset, j);
 	      }
@@ -797,9 +836,31 @@ static void summarize(struct hwloc_backend *backend, struct procinfo *infos, int
 		break;
 	    }
 	    cache->cpuset = cache_cpuset;
+	    hwloc_obj_add_info(cache, "Inclusive", infos[i].cache[l].inclusive ? "1" : "0");
 	    hwloc_debug_2args_bitmap("os L%u cache %u has cpuset %s\n",
 		level, cacheid, cache_cpuset);
 	    hwloc_insert_object_by_cpuset(topology, cache);
+
+	  } else {
+	    /* Annotate existing caches */
+	    hwloc_bitmap_t set = hwloc_bitmap_alloc();
+	    hwloc_obj_t cache = NULL;
+	    int depth;
+	    hwloc_bitmap_set(set, i);
+	    depth = hwloc_get_cache_type_depth(topology, level,
+					       type == 1 ? HWLOC_OBJ_CACHE_DATA : type == 2 ? HWLOC_OBJ_CACHE_INSTRUCTION : HWLOC_OBJ_CACHE_UNIFIED);
+	    if (depth != HWLOC_TYPE_DEPTH_UNKNOWN)
+	      cache = hwloc_get_next_obj_covering_cpuset_by_depth(topology, set, depth, NULL);
+	    hwloc_bitmap_free(set);
+	    if (cache) {
+	      /* Found cache above that PU, annotate if no such attribute yet */
+	      if (!hwloc_obj_get_info_by_name(cache, "Inclusive"))
+		hwloc_obj_add_info(cache, "Inclusive", infos[i].cache[l].inclusive ? "1" : "0");
+	      hwloc_bitmap_andnot(caches_cpuset, caches_cpuset, cache->cpuset);
+	    } else {
+	      /* No cache above that PU?! */
+	      hwloc_bitmap_clr(caches_cpuset, i);
+	    }
 	  }
 	}
 	hwloc_bitmap_free(caches_cpuset);
@@ -981,6 +1042,7 @@ int hwloc_look_x86(struct hwloc_backend *backend, int fulldiscovery)
 
   if (highest_cpuid >= 0x7) {
     eax = 0x7;
+    ecx = 0;
     hwloc_x86_cpuid(&eax, &ebx, &ecx, &edx);
     features[9] = ebx;
   }
@@ -1108,6 +1170,7 @@ hwloc_x86_component_instantiate(struct hwloc_disc_component *component,
   backend->disable = hwloc_x86_backend_disable;
 
   /* default values */
+  data->is_knl = 0;
   data->apicid_set = hwloc_bitmap_alloc();
   data->apicid_unique = 1;
 

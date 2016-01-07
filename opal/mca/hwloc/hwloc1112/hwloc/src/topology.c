@@ -349,9 +349,8 @@ void hwloc_obj_add_info_nodup(hwloc_obj_t obj, const char *name, const char *val
        /* Get pointer to next childect.  */ \
         child = *pchild)
 
-/* Free an object and all its content.  */
-void
-hwloc_free_unlinked_object(hwloc_obj_t obj)
+static void
+hwloc__free_object_contents(hwloc_obj_t obj)
 {
   switch (obj->type) {
   default:
@@ -370,7 +369,32 @@ hwloc_free_unlinked_object(hwloc_obj_t obj)
   hwloc_bitmap_free(obj->nodeset);
   hwloc_bitmap_free(obj->complete_nodeset);
   hwloc_bitmap_free(obj->allowed_nodeset);
+}
+
+/* Free an object and all its content.  */
+void
+hwloc_free_unlinked_object(hwloc_obj_t obj)
+{
+  hwloc__free_object_contents(obj);
   free(obj);
+}
+
+/* Replace old with contents of new object, and make new freeable by the caller.
+ * Only updates next_sibling/first_child pointers,
+ * so may only be used during early discovery.
+ */
+static void
+hwloc_replace_linked_object(hwloc_obj_t old, hwloc_obj_t new)
+{
+  /* drop old fields */
+  hwloc__free_object_contents(old);
+  /* copy old tree pointers to new */
+  new->next_sibling = old->next_sibling;
+  new->first_child = old->first_child;
+  /* copy new contents to old now that tree pointers are OK */
+  memcpy(old, new, sizeof(*old));
+  /* clear new to that we may free it */
+  memset(new, 0,sizeof(*new));
 }
 
 /* insert the (non-empty) list of sibling starting at firstnew as new children of newparent,
@@ -753,21 +777,56 @@ static int
 hwloc_obj_cmp_sets(hwloc_obj_t obj1, hwloc_obj_t obj2)
 {
   hwloc_bitmap_t set1, set2;
+  int res = HWLOC_OBJ_DIFFERENT;
 
-  /* compare cpusets if possible, or fallback to nodeset, or return */
-  if (obj1->cpuset && !hwloc_bitmap_iszero(obj1->cpuset)
-      && obj2->cpuset && !hwloc_bitmap_iszero(obj2->cpuset)) {
+  /* compare cpusets first */
+  if (obj1->complete_cpuset && obj2->complete_cpuset) {
+    set1 = obj1->complete_cpuset;
+    set2 = obj2->complete_cpuset;
+  } else {
     set1 = obj1->cpuset;
     set2 = obj2->cpuset;
-  } else if (obj1->nodeset && !hwloc_bitmap_iszero(obj1->nodeset)
-	     && obj2->nodeset && !hwloc_bitmap_iszero(obj2->nodeset)) {
-    set1 = obj1->nodeset;
-    set2 = obj2->nodeset;
-  } else {
-    return HWLOC_OBJ_DIFFERENT;
+  }
+  if (set1 && set2 && !hwloc_bitmap_iszero(set1) && !hwloc_bitmap_iszero(set2)) {
+    res = hwloc_bitmap_compare_inclusion(set1, set2);
+    if (res == HWLOC_OBJ_INTERSECTS)
+      return HWLOC_OBJ_INTERSECTS;
   }
 
-  return hwloc_bitmap_compare_inclusion(set1, set2);
+  /* then compare nodesets, and combine the results */
+  if (obj1->complete_nodeset && obj2->complete_nodeset) {
+    set1 = obj1->complete_nodeset;
+    set2 = obj2->complete_nodeset;
+  } else {
+    set1 = obj1->nodeset;
+    set2 = obj2->nodeset;
+  }
+  if (set1 && set2 && !hwloc_bitmap_iszero(set1) && !hwloc_bitmap_iszero(set2)) {
+    int noderes = hwloc_bitmap_compare_inclusion(set1, set2);
+    /* deal with conflicting cpusets/nodesets inclusions */
+    if (noderes == HWLOC_OBJ_INCLUDED) {
+      if (res == HWLOC_OBJ_CONTAINS)
+	/* contradicting order for cpusets and nodesets */
+	return HWLOC_OBJ_INTERSECTS;
+      res = HWLOC_OBJ_INCLUDED;
+
+    } else if (noderes == HWLOC_OBJ_CONTAINS) {
+      if (res == HWLOC_OBJ_INCLUDED)
+	/* contradicting order for cpusets and nodesets */
+	return HWLOC_OBJ_INTERSECTS;
+      res = HWLOC_OBJ_CONTAINS;
+
+    } else if (noderes == HWLOC_OBJ_INTERSECTS) {
+      return HWLOC_OBJ_INTERSECTS;
+
+    } else {
+      /* nodesets are different, keep the cpuset order */
+      /* FIXME: with upcoming multiple levels of NUMA, we may have to report INCLUDED or CONTAINED here */
+
+    }
+  }
+
+  return res;
 }
 
 /* Compare object cpusets based on complete_cpuset if defined (always correctly ordered),
@@ -847,9 +906,7 @@ merge_insert_equal(hwloc_obj_t new, hwloc_obj_t old)
 		      &new->infos, &new->infos_count);
   }
 
-  if (new->name) {
-    if (old->name)
-      free(old->name);
+  if (new->name && !old->name) {
     old->name = new->name;
     new->name = NULL;
   }
@@ -858,21 +915,17 @@ merge_insert_equal(hwloc_obj_t new, hwloc_obj_t old)
 
   switch(new->type) {
   case HWLOC_OBJ_NUMANODE:
-    /* Do not check these, it may change between calls */
-    merge_sizes(new, old, memory.local_memory);
-    merge_sizes(new, old, memory.total_memory);
-    /* if both newects have a page_types array, just keep the biggest one for now */
-    if (new->memory.page_types_len && old->memory.page_types_len)
-      hwloc_debug("%s", "merging page_types by keeping the biggest one only\n");
-    if (new->memory.page_types_len < old->memory.page_types_len) {
-      free(new->memory.page_types);
-    } else {
-      free(old->memory.page_types);
+    if (new->memory.local_memory && !old->memory.local_memory) {
+      /* no memory in old, use new memory */
+      old->memory.local_memory = new->memory.local_memory;
+      if (old->memory.page_types)
+	free(old->memory.page_types);
       old->memory.page_types_len = new->memory.page_types_len;
       old->memory.page_types = new->memory.page_types;
       new->memory.page_types = NULL;
       new->memory.page_types_len = 0;
     }
+    /* old->memory.total_memory will be updated by propagate_total_memory() */
     break;
   case HWLOC_OBJ_CACHE:
     merge_sizes(new, old, attr->cache.size);
@@ -922,8 +975,18 @@ hwloc___insert_object_by_cpuset(struct hwloc_topology *topology, hwloc_obj_t cur
 	assert(topology->ignored_types[HWLOC_OBJ_GROUP] != HWLOC_IGNORE_TYPE_NEVER);
         /* Remove the Group now. The normal ignore code path wouldn't tell us whether the Group was removed or not.
 	 *
-	 * Keep EQUAL so that the Group gets merged.
+	 * The Group doesn't contain anything to keep, just let the caller free it.
 	 */
+	return child;
+
+      } else if (child->type == HWLOC_OBJ_GROUP) {
+
+	/* Replace the Group with the new object contents
+	 * and let the caller free the new object
+	 */
+	hwloc_replace_linked_object(child, obj);
+	return child;
+
       } else {
 	/* otherwise compare actual types to decide of the inclusion */
 	res = hwloc_type_cmp(obj, child);
@@ -950,7 +1013,9 @@ hwloc___insert_object_by_cpuset(struct hwloc_topology *topology, hwloc_obj_t cur
 	  }
           return NULL;
         }
-	/* Can be two objects with same type. Or one Group and anything else. */
+	/* Two objects with same type.
+	 * Groups are handled above.
+	 */
 	if (obj->type == child->type
 	    && (obj->type == HWLOC_OBJ_PU || obj->type == HWLOC_OBJ_NUMANODE)
 	    && obj->os_index != child->os_index) {
@@ -2129,6 +2194,12 @@ hwloc_level_filter_objects(hwloc_topology_t topology,
   /* count interesting objects and allocate the new array */
   for(i=0, nnew=0; i<nold; i++)
     nnew += hwloc_level_filter_object(topology, NULL, old[i]);
+  if (!nnew) {
+    *objs = NULL;
+    *n_objs = 0;
+    free(old);
+    return 0;
+  }
   new = malloc(nnew * sizeof(hwloc_obj_t));
   if (!new) {
     free(old);
@@ -2195,7 +2266,7 @@ hwloc_connect_levels(hwloc_topology_t topology)
   /* don't touch next_group_depth, the Group objects are still here */
 
   /* initialize all depth to unknown */
-  for (l = HWLOC_OBJ_SYSTEM; l < HWLOC_OBJ_TYPE_MAX; l++)
+  for (l = HWLOC_OBJ_SYSTEM; l < HWLOC_OBJ_MISC; l++)
     topology->type_depth[l] = HWLOC_TYPE_DEPTH_UNKNOWN;
   /* initialize root type depth */
   topology->type_depth[topology->levels[0][0]->type] = 0;
@@ -2205,17 +2276,14 @@ hwloc_connect_levels(hwloc_topology_t topology)
   topology->bridge_level = NULL;
   topology->bridge_nbobjects = 0;
   topology->first_bridge = topology->last_bridge = NULL;
-  topology->type_depth[HWLOC_OBJ_BRIDGE] = HWLOC_TYPE_DEPTH_BRIDGE;
   free(topology->pcidev_level);
   topology->pcidev_level = NULL;
   topology->pcidev_nbobjects = 0;
   topology->first_pcidev = topology->last_pcidev = NULL;
-  topology->type_depth[HWLOC_OBJ_PCI_DEVICE] = HWLOC_TYPE_DEPTH_PCI_DEVICE;
   free(topology->osdev_level);
   topology->osdev_level = NULL;
   topology->osdev_nbobjects = 0;
   topology->first_osdev = topology->last_osdev = NULL;
-  topology->type_depth[HWLOC_OBJ_OS_DEVICE] = HWLOC_TYPE_DEPTH_OS_DEVICE;
 
   /* Start with children of the whole system.  */
   n_objs = topology->levels[0][0]->arity;
@@ -2343,13 +2411,20 @@ hwloc_connect_levels(hwloc_topology_t topology)
 
 void hwloc_alloc_obj_cpusets(hwloc_obj_t obj)
 {
-  obj->cpuset = hwloc_bitmap_alloc_full();
-  obj->complete_cpuset = hwloc_bitmap_alloc();
-  obj->online_cpuset = hwloc_bitmap_alloc_full();
-  obj->allowed_cpuset = hwloc_bitmap_alloc_full();
-  obj->nodeset = hwloc_bitmap_alloc();
-  obj->complete_nodeset = hwloc_bitmap_alloc();
-  obj->allowed_nodeset = hwloc_bitmap_alloc_full();
+  if (!obj->cpuset)
+    obj->cpuset = hwloc_bitmap_alloc_full();
+  if (!obj->complete_cpuset)
+    obj->complete_cpuset = hwloc_bitmap_alloc();
+  if (!obj->online_cpuset)
+    obj->online_cpuset = hwloc_bitmap_alloc_full();
+  if (!obj->allowed_cpuset)
+    obj->allowed_cpuset = hwloc_bitmap_alloc_full();
+  if (!obj->nodeset)
+    obj->nodeset = hwloc_bitmap_alloc();
+  if (!obj->complete_nodeset)
+    obj->complete_nodeset = hwloc_bitmap_alloc();
+  if (!obj->allowed_nodeset)
+    obj->allowed_nodeset = hwloc_bitmap_alloc_full();
 }
 
 /* Main discovery loop */
@@ -2595,6 +2670,7 @@ void
 hwloc_topology_setup_defaults(struct hwloc_topology *topology)
 {
   struct hwloc_obj *root_obj;
+  unsigned l;
 
   /* reset support */
   memset(&topology->binding_hooks, 0, sizeof(topology->binding_hooks));
@@ -2615,6 +2691,12 @@ hwloc_topology_setup_defaults(struct hwloc_topology *topology)
   topology->first_bridge = topology->last_bridge = NULL;
   topology->first_pcidev = topology->last_pcidev = NULL;
   topology->first_osdev = topology->last_osdev = NULL;
+  /* sane values to type_depth */
+  for (l = HWLOC_OBJ_SYSTEM; l < HWLOC_OBJ_MISC; l++)
+    topology->type_depth[l] = HWLOC_TYPE_DEPTH_UNKNOWN;
+  topology->type_depth[HWLOC_OBJ_BRIDGE] = HWLOC_TYPE_DEPTH_BRIDGE;
+  topology->type_depth[HWLOC_OBJ_PCI_DEVICE] = HWLOC_TYPE_DEPTH_PCI_DEVICE;
+  topology->type_depth[HWLOC_OBJ_OS_DEVICE] = HWLOC_TYPE_DEPTH_OS_DEVICE;
 
   /* Create the actual machine object, but don't touch its attributes yet
    * since the OS backend may still change the object into something else
