@@ -9,8 +9,8 @@ dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
-dnl Copyright (c) 2012 Cisco Systems, Inc.  All rights reserved.
-dnl Copyright (c) 2014      Research Organization for Information Science
+dnl Copyright (c) 2012      Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2014-2016 Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
 dnl $COPYRIGHT$
 dnl 
@@ -117,7 +117,7 @@ void pthreadtest_f(void)
     pthread_attr_init(&attr); 
     pthread_cleanup_push(cleanup_routine, 0);
     pthread_create(&newthread, &attr, thread_main, 0); 
-    pthread_join(&newthread, 0);
+    pthread_join(newthread, 0);
     pthread_cleanup_pop(0); 
 }
 
