@@ -28,6 +28,7 @@
 #include "ompi/mca/io/ompio/io_ompio.h"
 
 extern int mca_fs_ufs_priority;
+extern int mca_fs_ufs_use_directio;
 
 BEGIN_C_DECLS
 

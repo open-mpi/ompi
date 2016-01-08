@@ -45,6 +45,7 @@ int mca_fs_lustre_priority = 20;
    runtime also*/
 int mca_fs_lustre_stripe_size = 0;
 int mca_fs_lustre_stripe_width = 0;
+int mca_fs_lustre_use_directio = 0;
 /*
  * Instantiate the public struct with all of our public information
  * and pointers to our public functions in it
@@ -93,6 +94,13 @@ lustre_register(void)
                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY, &mca_fs_lustre_stripe_width);
+
+    mca_fs_lustre_use_directio = 0;
+    (void) mca_base_component_var_register(&mca_fs_lustre_component.fsm_version,
+                                           "use_directio", "whether to use direct I/O",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY, &mca_fs_lustre_use_directio);
 
     return OMPI_SUCCESS;
 }

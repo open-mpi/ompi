@@ -9,7 +9,9 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2011 University of Houston. All rights reserved.
+ * Copyright (c) 2008-2015 University of Houston. All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -17,35 +19,17 @@
  * $HEADER$
  */
 
-
 #include "ompi_config.h"
-#include "fs_lustre.h"
+#include "fbtl_directio.h"
 
-#include <fcntl.h>
 #include <unistd.h>
+
 #include "mpi.h"
 #include "ompi/constants.h"
-#include "ompi/mca/fs/fs.h"
+#include "ompi/mca/fbtl/fbtl.h"
 
-/*
- *	file_close_lustre
- *
- *	Function:	- closes a new file
- *	Accepts:	- file handle
- *	Returns:	- Success if file closed
- */
-int
-mca_fs_lustre_file_close (mca_io_ompio_file_t *fh)
+ssize_t  mca_fbtl_directio_ipwritev (mca_io_ompio_file_t *fh,
+				 ompi_request_t *request)
 {
-    fh->f_comm->c_coll.coll_barrier (fh->f_comm,
-                                     fh->f_comm->c_coll.coll_barrier_module);
-    close (fh->fd);
-
-    if (0 != fh->f_fs_ptr ) {
-        int fs_ptr;
-        memcpy ( &fs_ptr, &fh->f_fs_ptr, sizeof(int));
-//        fsync ( fs_ptr );
-        close (fs_ptr );
-    }
     return OMPI_SUCCESS;
 }

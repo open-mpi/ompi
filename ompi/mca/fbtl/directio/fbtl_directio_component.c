@@ -27,61 +27,39 @@
  */
 
 #include "ompi_config.h"
-#include "fs_ufs.h"
+#include "fbtl_directio.h"
 #include "mpi.h"
 
-int mca_fs_ufs_priority = 10;
-int mca_fs_ufs_use_directio=0;
-
-static int ufs_register(void);
-
 /*
- * Public string showing the fs ufs component version number
+ * Public string showing the fbtl directio component version number
  */
-const char *mca_fs_ufs_component_version_string =
-  "OMPI/MPI ufs FS MCA component version " OMPI_VERSION;
+const char *mca_fbtl_directio_component_version_string =
+  "OMPI/MPI directio FBTL MCA component version " OMPI_VERSION;
+
+int mca_fbtl_directio_priority = 10;
 
 /*
  * Instantiate the public struct with all of our public information
  * and pointers to our public functions in it
  */
-mca_fs_base_component_2_0_0_t mca_fs_ufs_component = {
+mca_fbtl_base_component_2_0_0_t mca_fbtl_directio_component = {
 
     /* First, the mca_component_t struct containing meta information
        about the component itself */
 
-    .fsm_version = {
-        MCA_FS_BASE_VERSION_2_0_0,
+    .fbtlm_version = {
+        MCA_FBTL_BASE_VERSION_2_0_0,
 
         /* Component name and version */
-        .mca_component_name = "ufs",
+        .mca_component_name = "directio",
         MCA_BASE_MAKE_VERSION(component, OMPI_MAJOR_VERSION, OMPI_MINOR_VERSION,
                               OMPI_RELEASE_VERSION),
-        .mca_register_component_params = ufs_register,
     },
-    .fsm_data = {
+    .fbtlm_data = {
         /* This component is checkpointable */
       MCA_BASE_METADATA_PARAM_CHECKPOINT
     },
-    .fsm_init_query = mca_fs_ufs_component_init_query,      /* get thread level */
-    .fsm_file_query = mca_fs_ufs_component_file_query,      /* get priority and actions */
-    .fsm_file_unquery = mca_fs_ufs_component_file_unquery,  /* undo what was done by previous function */
+    .fbtlm_init_query = mca_fbtl_directio_component_init_query,      /* get thread level */
+    .fbtlm_file_query = mca_fbtl_directio_component_file_query,      /* get priority and actions */
+    .fbtlm_file_unquery = mca_fbtl_directio_component_file_unquery,  /* undo what was done by previous function */
 };
-
-static int ufs_register(void)
-{
-    mca_fs_ufs_priority = 10;
-    (void) mca_base_component_var_register (&mca_fs_ufs_component.fsm_version,
-                                            "priority", "Priority of the ufs2 fs component",
-                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                            OPAL_INFO_LVL_9,
-                                            MCA_BASE_VAR_SCOPE_READONLY, &mca_fs_ufs_priority);
-    mca_fs_ufs_use_directio = 0;
-    (void) mca_base_component_var_register (&mca_fs_ufs_component.fsm_version,
-                                            "use_directio", "whether to use direct I/O",
-                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                            OPAL_INFO_LVL_9,
-                                            MCA_BASE_VAR_SCOPE_READONLY, &mca_fs_ufs_use_directio);
-
-    return OMPI_SUCCESS;
-}
