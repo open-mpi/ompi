@@ -62,7 +62,7 @@ mca_fs_lustre_file_open (struct ompi_communicator_t *comm,
                      struct ompi_info_t *info,
                      mca_io_ompio_file_t *fh)
 {
-    int amode;
+    int amode, amode_direct;
     int old_mask, perm;
     int rc;
     int flag;

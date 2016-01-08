@@ -45,7 +45,7 @@ int mca_fs_lustre_priority = 20;
    runtime also*/
 int mca_fs_lustre_stripe_size = 0;
 int mca_fs_lustre_stripe_width = 0;
-int mca_fs_lustre_use_drectio = 0;
+int mca_fs_lustre_use_directio = 0;
 /*
  * Instantiate the public struct with all of our public information
  * and pointers to our public functions in it
