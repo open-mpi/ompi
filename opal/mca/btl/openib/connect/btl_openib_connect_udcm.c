@@ -9,6 +9,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * Copyright (c) 2014      Bull SAS.  All rights reserved.
+ * Copyright (c) 2016      Mellanox Technologies. All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -2101,6 +2102,8 @@ static int udcm_process_messages (struct ibv_cq *event_cq, udcm_module_t *m)
         udcm_module_post_one_recv (m, msg_num);
     }
 
+    opal_atomic_wmb ();
+
     if (0 == opal_atomic_swap_32 (&m->cm_message_event_active, 1)) {
         opal_event_active (&m->cm_message_event, OPAL_EV_READ, 1);
     }
@@ -2158,6 +2161,10 @@ static void *udcm_message_callback (int fd, int flags, void *context)
 
     BTL_VERBOSE(("running message thread"));
 
+    /* Mark that the callback was started */
+    opal_atomic_swap_32 (&m->cm_message_event_active, 0);
+    opal_atomic_wmb ();
+
     while ((item = (udcm_message_recv_t *) opal_fifo_pop_atomic (&m->cm_recv_msg_fifo))) {
         mca_btl_openib_endpoint_t *lcl_ep = item->msg_hdr.lcl_ep;
 
@@ -2198,8 +2205,6 @@ static void *udcm_message_callback (int fd, int flags, void *context)
     }
 
     BTL_VERBOSE(("exiting message thread"));
-
-    opal_atomic_swap_32 (&m->cm_message_event_active, 0);
 
     return NULL;
 }
