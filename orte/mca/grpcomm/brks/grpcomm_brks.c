@@ -210,7 +210,7 @@ static void brks_allgather_process_data(orte_grpcomm_coll_t *coll, uint32_t dist
      - receives message containing all data collected so far from rank (r + distance)
      */
     uint32_t log2ndmns = (uint32_t) log2 (coll->ndmns);
-    uint32_t last_round, remainder;
+    uint32_t last_round;
     orte_process_name_t peer;
     orte_vpid_t nv;
     int rc;
