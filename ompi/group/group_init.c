@@ -295,7 +295,6 @@ static void ompi_group_destruct(ompi_group_t *group)
     }
 
     if (NULL != group->grp_parent_group_ptr){
-        ompi_group_decrement_proc_count(group->grp_parent_group_ptr);
         OBJ_RELEASE(group->grp_parent_group_ptr);
     }
 
