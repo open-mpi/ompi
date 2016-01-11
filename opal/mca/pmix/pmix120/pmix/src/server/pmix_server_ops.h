@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2015      Intel, Inc. All rights reserved
+ * Copyright (c) 2015-2016 Intel, Inc. All rights reserved
  * Copyright (c) 2015      Artem Y. Polyakov <artpol84@gmail.com>.
  *                         All rights reserved.
  * Copyright (c) 2015      Mellanox Technologies, Inc.
@@ -15,6 +15,7 @@
 #include <private/autogen/config.h>
 #include <pmix/rename.h>
 #include <pmix/pmix_common.h>
+#include <src/class/pmix_ring_buffer.h>
 #include <pmix_server.h>
 #include "src/usock/usock.h"
 #include "src/util/hash.h"
@@ -157,6 +158,7 @@ typedef struct {
     int stop_thread[2];                     // pipe used to stop listener thread
     pmix_buffer_t gdata;                    // cache of data given to me for passing to all clients
     pmix_list_t client_eventregs;           // list of registered events per client.
+    pmix_ring_buffer_t notifications;       // ring buffer of pending notifications
 } pmix_server_globals_t;
 
 #define PMIX_PEER_CADDY(c, p, t)                \
@@ -272,6 +274,8 @@ pmix_status_t pmix_server_notify_error_client(pmix_peer_t *peer,
                                               pmix_buffer_t *buf,
                                               pmix_op_cbfunc_t cbfunc,
                                               void *cbdata);
+void pmix_server_check_notifications(pmix_regevents_info_t *reginfo,
+                                     pmix_notify_caddy_t *cd);
 
 void regevents_cbfunc (pmix_status_t status, void *cbdata);
 

@@ -540,6 +540,7 @@ void orte_plm_base_launch_apps(int fd, short args, void *cbdata)
     sig->signature = (orte_process_name_t*)malloc(sizeof(orte_process_name_t));
     sig->signature[0].jobid = ORTE_PROC_MY_NAME->jobid;
     sig->signature[0].vpid = ORTE_VPID_WILDCARD;
+    sig->sz = 1;
     if (ORTE_SUCCESS != (rc = orte_grpcomm.xcast(sig, ORTE_RML_TAG_DAEMON, buffer))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(buffer);
@@ -693,9 +694,6 @@ void orte_plm_base_post_launch(int fd, short args, void *cbdata)
     }
 
  cleanup:
-    /* need to init_after_spawn for debuggers */
-    ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_READY_FOR_DEBUGGERS);
-
     /* cleanup */
     OBJ_RELEASE(caddy);
 }

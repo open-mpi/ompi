@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -137,10 +137,16 @@ const char* PMIx_Error_string(pmix_status_t errnum)
         return "PROC-ABORT-REQUESTED";
     case PMIX_ERR_PROC_ABORTED:
         return "PROC-ABORTED";
+    case PMIX_ERR_DEBUGGER_RELEASE:
+        return "DEBUGGER-RELEASE";
     case PMIX_ERR_SILENT:
         return "SILENT_ERROR";
     case PMIX_ERROR:
         return "ERROR";
+    case PMIX_ERR_GRP_FOUND:
+        return "GROUP-FOUND";
+    case PMIX_ERR_DFLT_FOUND:
+        return "DEFAULT-FOUND";
     case PMIX_SUCCESS:
         return "SUCCESS";
 
@@ -162,15 +168,26 @@ void pmix_errhandler_invoke(pmix_status_t status,
     pmix_error_reg_info_t *errreg, *errdflt=NULL;
     pmix_info_t *iptr;
 
+    /* we will need to provide the errhandler reference id when
+     * we provide the callback. Since the callback function doesn't
+     * provide a param for that purpose, we have to add it to any
+     * info array that came from the RM, so extend the array by 1 */
     PMIX_INFO_CREATE(iptr, ninfo+1);
+    /* put the reference id in the first location */
     (void)strncpy(iptr[0].key, PMIX_ERROR_HANDLER_ID, PMIX_MAX_KEYLEN);
     iptr[0].value.type = PMIX_INT;
+    /* we don't know the reference id yet, but we'll fill that in
+     * later - for now, just copy the incoming info array across */
     if (NULL != info) {
         for (j=0; j < ninfo; j++) {
             PMIX_INFO_LOAD(&iptr[j+1], info[j].key, &info[j].value.data, info[j].value.type);
         }
     }
 
+    /* search our array of errhandlers for a match. We take any specific
+     * error status first, then take the group of the incoming status next.
+     * If neither of those have been registered, then use any default
+     * errhandler - otherwise, ignore it */
     for (i = 0; i < pmix_globals.errregs.size; i++) {
         if (NULL == (errreg = (pmix_error_reg_info_t*) pmix_pointer_array_get_item(&pmix_globals.errregs, i))) {
             continue;
@@ -194,7 +211,7 @@ void pmix_errhandler_invoke(pmix_status_t status,
                     break;
             }
         }
-        if (!exact_match) {
+        if (!exact_match && NULL != info) {
             /* if no exact match was found, then we will fire the errhandler
              * for any matching info key. This may be too lax and need to be adjusted
              * later */
@@ -217,22 +234,102 @@ void pmix_errhandler_invoke(pmix_status_t status,
     PMIX_INFO_FREE(iptr, ninfo+1);
 }
 
-pmix_status_t pmix_lookup_errhandler(pmix_notification_fn_t err,
+/* lookup an errhandler during registration */
+pmix_status_t pmix_lookup_errhandler(pmix_info_t info[], size_t ninfo,
                                      int *index)
 {
-    int i;
-    pmix_status_t rc = PMIX_ERR_NOT_FOUND;
-    pmix_error_reg_info_t *errreg = NULL;
+    int i, idflt=-1, igrp=-1;
+    pmix_error_reg_info_t *errreg;
+    size_t sz, n;
+    char errgrp[PMIX_MAX_KEYLEN];
+    bool exact_given = false;
+    int given = -1;
+    pmix_status_t status;
+    char *grp;
 
-    for (i = 0; i < pmix_pointer_array_get_size(&pmix_globals.errregs) ; i++) {
-        errreg = (pmix_error_reg_info_t*)pmix_pointer_array_get_item(&pmix_globals.errregs, i);
-        if ((NULL != errreg) && (err == errreg->errhandler)) {
-            *index = i;
-            rc = PMIX_SUCCESS;
-            break;
+    /* scan the incoming specification to see if it is a general errhandler,
+     * a group errhandler, or an error handler for a specific status. Only
+     * one of these options can be specified! */
+    if (NULL == info) {
+        /* this is the general error handler */
+        given = 0;
+    } else {
+        for (n=0; n < ninfo; n++) {
+            if (0 == strncmp(info[n].key, PMIX_ERROR_NAME, PMIX_MAX_KEYLEN)) {
+                /* this is a specific errhandler */
+                given = 1;
+                status = info[n].value.data.integer;
+                break;
+            } else if (0 == strcmp(info[n].key, "pmix.errgroup")) {
+                /* this is a group errhandler */
+                given = 2;
+                grp = info[n].value.data.string;
+                break;
+            }
         }
     }
-    return rc;
+
+    /* search our array of errhandlers for a match */
+    for (i = 0; i < pmix_globals.errregs.size ; i++) {
+        errreg = (pmix_error_reg_info_t*)pmix_pointer_array_get_item(&pmix_globals.errregs, i);
+        if (NULL == errreg) {
+            continue;
+        }
+        if (NULL == errreg->info) {
+            /* this is the general errhandler - if they gave us
+             * another general errhandler, then we should
+             * replace it */
+            if (0 == given) {
+                *index = i;
+                return PMIX_ERR_DFLT_FOUND;
+            }
+            /* save this spot as we will default to it if nothing else is found */
+            idflt = i;
+            continue;
+        }
+        if (0 == given) {
+            /* they are looking for the general errhandler */
+            continue;
+        }
+        /* if this registration is for a single specific errhandler, then
+         * see if the incoming one matches */
+        if (1 == given && errreg->sglhdlr) {
+            for (sz=0; sz < errreg->ninfo; sz++) {
+                if (0 == strncmp(errreg->info[sz].key, PMIX_ERROR_NAME, PMIX_MAX_KEYLEN)) {
+                    if (status == errreg->info[sz].value.data.integer) {
+                        /* we have an exact match - return this errhandler and
+                         * let the caller know it was an exact match */
+                        *index = i;
+                        return PMIX_EXISTS;
+                    }
+                }
+            }
+        } else if (2 == given && !errreg->sglhdlr) {
+            /* this registration is for a group, so check that case */
+
+        }
+    }
+
+    /* if we get here, then no match was found. If they
+     * gave us a specific error, then we have to return not_found */
+    if (exact_given) {
+        return PMIX_ERR_NOT_FOUND;
+    }
+
+    /* If we have a group match, then that takes precedence */
+    if (0 <= igrp) {
+        *index = igrp;
+        return PMIX_ERR_GRP_FOUND;
+    }
+
+    /* if we found a default errhandler, then use it */
+    if (0 <= idflt) {
+        *index = idflt;
+        return PMIX_ERR_DFLT_FOUND;
+    }
+
+    /* otherwise, it wasn't found */
+    return PMIX_ERR_NOT_FOUND;
 }
 
 pmix_status_t pmix_add_errhandler(pmix_notification_fn_t err,
@@ -242,25 +339,45 @@ pmix_status_t pmix_add_errhandler(pmix_notification_fn_t err,
     int i;
     pmix_status_t rc = PMIX_SUCCESS;
     pmix_error_reg_info_t *errreg;
+    bool sglhdlr = false;
 
-    errreg = PMIX_NEW(pmix_error_reg_info_t);
-    errreg->errhandler = err;
-    errreg->ninfo = ninfo;
+    if (0 != *index) {
+        /* overwrite an existing entry */
+        errreg = (pmix_error_reg_info_t*)pmix_pointer_array_get_item(&pmix_globals.errregs, *index);
+        if (NULL == errreg) {
+            return PMIX_ERR_NOT_FOUND;
+        }
+        errreg->errhandler = err;
+        PMIX_INFO_FREE(errreg->info, errreg->ninfo);
+        errreg->ninfo = ninfo;
+    } else {
+        errreg = PMIX_NEW(pmix_error_reg_info_t);
+        errreg->errhandler = err;
+        errreg->ninfo = ninfo;
+        *index = pmix_pointer_array_add(&pmix_globals.errregs, errreg);
+        pmix_output_verbose(2, pmix_globals.debug_output,
+                            "pmix_add_errhandler index =%d", *index);
+        if (*index < 0) {
+            PMIX_RELEASE(errreg);
+            return PMIX_ERROR;
+        }
+    }
+    /* sadly, we have to copy the info objects as we cannot
+     * rely on them to remain in-memory */
     if (NULL != info && 0 < ninfo) {
         PMIX_INFO_CREATE(errreg->info, ninfo);
         for (i=0; i < ninfo; i++) {
+            /* if this is a specific, single errhandler, then
+             * mark it accordingly */
+            if (0 == strncmp(info[i].key, PMIX_ERROR_NAME, PMIX_MAX_KEYLEN)) {
+                errreg->sglhdlr = true;
+            }
             (void)strncpy(errreg->info[i].key, info[i].key, PMIX_MAX_KEYLEN);
             pmix_value_xfer(&errreg->info[i].value, &info[i].value);
         }
     }
-    *index = pmix_pointer_array_add(&pmix_globals.errregs, errreg);
-    pmix_output_verbose(2, pmix_globals.debug_output,
-                        "pmix_add_errhandler index =%d", *index);
-    if (*index < 0) {
-        PMIX_RELEASE(errreg);
-        rc = PMIX_ERROR;
-    }
-    return rc;
+
+    return PMIX_SUCCESS;
 }
 
 pmix_status_t pmix_remove_errhandler(int errhandler_ref)

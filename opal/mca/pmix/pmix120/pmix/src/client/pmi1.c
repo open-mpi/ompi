@@ -44,6 +44,7 @@
 #define PMI_MAX_KVSNAME_LEN  PMIX_MAX_NSLEN  /* Maximum size of KVS name */
 #define PMI_MAX_VAL_LEN      4096            /* Maximum size of a PMI value */
 
+
 #define PMI_CHECK() \
 	do {                     \
         if (!pmi_init) {     \
@@ -55,25 +56,37 @@
 static pmix_status_t convert_int(int *value, pmix_value_t *kv);
 static int convert_err(pmix_status_t rc);
 static pmix_proc_t myproc;
-static bool data_commited = false;
 static int pmi_init = 0;
 
 int PMI_Init(int *spawned)
 {
+    pmix_status_t rc = PMIX_SUCCESS;
     pmix_value_t *val;
-    pmix_status_t rc;
+    pmix_proc_t proc;
+    pmix_info_t info[1];
+    bool  val_optinal = 1;
 
     if (PMIX_SUCCESS != PMIx_Init(&myproc)) {
         return PMI_ERR_INIT;
     }
 
+    /* getting internal key requires special rank value */
+    memcpy(&proc, &myproc, sizeof(myproc));
+    proc.rank = PMIX_RANK_UNDEF;
+
+    /* set controlling parameters
+     * PMIX_OPTIONAL - expect that these keys should be available on startup
+     */
+    PMIX_INFO_CONSTRUCT(&info[0]);
+    PMIX_INFO_LOAD(&info[0], PMIX_OPTIONAL, &val_optinal, PMIX_BOOL);
+
     if (NULL != spawned) {
         /* get the spawned flag */
-        if (PMIX_SUCCESS == PMIx_Get(&myproc, PMIX_SPAWNED, NULL, 0, &val)) {
+        if (PMIX_SUCCESS == PMIx_Get(&proc, PMIX_SPAWNED, info, 1, &val)) {
             rc = convert_int(spawned, val);
             PMIX_VALUE_RELEASE(val);
             if (PMIX_SUCCESS != rc) {
-                return convert_err(rc);
+                goto error;
             }
         } else {
             /* if not found, default to not spawned */
@@ -82,7 +95,12 @@ int PMI_Init(int *spawned)
     }
     pmi_init = 1;
 
-    return PMI_SUCCESS;
+    rc = PMIX_SUCCESS;
+
+error:
+    PMIX_INFO_DESTRUCT(&info[0]);
+
+    return convert_err(rc);
 }
 
 int PMI_Initialized(PMI_BOOL *initialized)
@@ -160,8 +178,6 @@ int PMI_KVS_Commit(const char kvsname[])
             kvsname);
 
     rc = PMIx_Commit();
-    /* PMIx permits only one data commit! */
-    data_commited = true;
     return convert_err(rc);
 }
 
@@ -169,17 +185,14 @@ int PMI_KVS_Get( const char kvsname[], const char key[], char value[], int lengt
 {
     pmix_status_t rc = PMIX_SUCCESS;
     pmix_value_t *val;
-    uint32_t i;
-    static pmix_proc_t proc;
-    uint32_t procnum;
-    proc = myproc;
+    pmix_proc_t proc;
 
     PMI_CHECK();
 
     if ((kvsname == NULL) || (strlen(kvsname) > PMI_MAX_KVSNAME_LEN)) {
         return PMI_ERR_INVALID_KVS;
     }
-    if ((key == NULL) || (strlen(key) >PMI_MAX_KEY_LEN)) {
+    if ((key == NULL) || (strlen(key) > PMI_MAX_KEY_LEN)) {
         return PMI_ERR_INVALID_KEY;
     }
     if (value == NULL) {
@@ -189,60 +202,22 @@ int PMI_KVS_Get( const char kvsname[], const char key[], char value[], int lengt
     pmix_output_verbose(2, pmix_globals.debug_output,
             "PMI_KVS_Get: KVS=%s, key=%s value=%s", kvsname, key, value);
 
-    /* PMI-1 expects resource manager to set
-     * process mapping in ANL notation. */
-    if (!strcmp(key, ANL_MAPPING)) {
-        /* we are looking in the job-data. If there is nothing there
-         * we don't want to look in rank's data, thus set rank to widcard */
-        proc.rank = PMIX_RANK_WILDCARD;
-        if (PMIX_SUCCESS == PMIx_Get(&proc, PMIX_ANL_MAP, NULL, 0, &val) &&
-               (NULL != val) && (PMIX_STRING == val->type)) {
-            strncpy(value, val->data.string, length);
-            PMIX_VALUE_FREE(val, 1);
-            return PMI_SUCCESS;
-        } else {
-            /* artpol:
-             * Some RM's (i.e. SLURM) already have ANL precomputed. The export it
-             * through PMIX_ANL_MAP variable.
-             * If we haven't found it we want to have our own packing functionality
-             * since it's common.
-             * Somebody else has to write it since I've already done that for
-             * GPL'ed SLURM :) */
-            return PMI_FAIL;
+    /* retrieve the data from PMIx - since we don't have a rank,
+     * we indicate that by passing the UNDEF value */
+    (void)strncpy(proc.nspace, kvsname, PMIX_MAX_NSLEN);
+    proc.rank = PMIX_RANK_UNDEF;
+
+    rc = PMIx_Get(&proc, key, NULL, 0, &val);
+    if (PMIX_SUCCESS == rc && NULL != val) {
+        if (PMIX_STRING != val->type) {
+            rc = PMIX_ERROR;
+        } else if (NULL != val->data.string) {
+            (void)strncpy(value, val->data.string, length);
         }
+        PMIX_VALUE_RELEASE(val);
     }
 
-    /* We don't know what process keeps this data. So it looks like we need to
-     * check each process.
-     * TODO: Is there any beter way?
-     * WARNING: this may lead to the VERY long HANG's if we ask for the unknown key
-     * before we've done Commit on all nodes. We need a workaround for that.
-     *
-     * SOLUTION: perhaps rovide "OK if nothing" info flag to tell PMIx that
-     * the key supposed to already be there and if nothing there - gave up with
-     * an error and don't try to use direct modex.
-     */
-
-    if (PMIX_SUCCESS != (rc = PMIx_Get(&myproc, PMIX_JOB_SIZE, NULL, 0, &val))) {
-        pmix_output_verbose(2, pmix_globals.debug_output,
-                "pmi1: executing put for KVS %s, key %s value %s", kvsname, key,
-                value);
-        return convert_err(rc);
-    }
-    procnum = val->data.uint32;
-    PMIX_VALUE_FREE(val, 1);
-
-    for (i = 0; i < procnum; i++) {
-        proc.rank = i;
-        if (PMIX_SUCCESS == PMIx_Get(&proc, key, NULL, 0, &val) && (NULL != val)
-                && (PMIX_STRING == val->type)) {
-            strncpy(value, val->data.string, length);
-            PMIX_VALUE_FREE(val, 1);
-            return PMI_SUCCESS;
-        }
-        PMIX_VALUE_FREE(val, 1);
-    }
-    return PMI_FAIL;
+    return convert_err(rc);
 }
 
 /* Barrier only applies to our own nspace, and we want all
@@ -253,28 +228,28 @@ int PMI_Barrier(void)
     pmix_info_t buf;
     int ninfo = 0;
     pmix_info_t *info = NULL;
+    bool val = 1;
 
     PMI_CHECK();
 
-    if (data_commited) {
-        bool val = 1;
-        info = &buf;
-        PMIX_INFO_CONSTRUCT(info);
-        PMIX_INFO_LOAD(info, PMIX_COLLECT_DATA, &val, PMIX_BOOL);
-        ninfo = 1;
-    }
+    info = &buf;
+    PMIX_INFO_CONSTRUCT(info);
+    PMIX_INFO_LOAD(info, PMIX_COLLECT_DATA, &val, PMIX_BOOL);
+    ninfo = 1;
     rc = PMIx_Fence(NULL, 0, info, ninfo);
 
-    if (NULL != info) {
-        PMIX_INFO_DESTRUCT(info);
-    }
-    return rc;
+    PMIX_INFO_DESTRUCT(info);
+
+    return convert_err(rc);
 }
 
 int PMI_Get_size(int *size)
 {
     pmix_status_t rc = PMIX_SUCCESS;
     pmix_value_t *val;
+    pmix_proc_t proc;
+    pmix_info_t info[1];
+    bool  val_optinal = 1;
 
     PMI_CHECK();
 
@@ -282,13 +257,23 @@ int PMI_Get_size(int *size)
         return PMI_ERR_INVALID_ARG;
     }
 
-    if (PMIX_SUCCESS == PMIx_Get(&myproc, PMIX_JOB_SIZE, NULL, 0, &val)) {
+    (void)strncpy(proc.nspace, myproc.nspace, PMIX_MAX_NSLEN);
+    proc.rank = PMIX_RANK_UNDEF;
+
+    /* set controlling parameters
+     * PMIX_OPTIONAL - expect that these keys should be available on startup
+     */
+    PMIX_INFO_CONSTRUCT(&info[0]);
+    PMIX_INFO_LOAD(&info[0], PMIX_OPTIONAL, &val_optinal, PMIX_BOOL);
+
+    if (PMIX_SUCCESS == PMIx_Get(&proc, PMIX_JOB_SIZE, info, 1, &val)) {
         rc = convert_int(size, val);
         PMIX_VALUE_RELEASE(val);
-        return convert_err(rc);
     }
 
-    return PMI_FAIL;
+    PMIX_INFO_DESTRUCT(&info[0]);
+
+    return convert_err(rc);
 }
 
 int PMI_Get_rank(int *rk)
@@ -307,6 +292,9 @@ int PMI_Get_universe_size(int *size)
 {
     pmix_status_t rc = PMIX_SUCCESS;
     pmix_value_t *val;
+    pmix_proc_t proc;
+    pmix_info_t info[1];
+    bool  val_optinal = 1;
 
     PMI_CHECK();
 
@@ -314,29 +302,56 @@ int PMI_Get_universe_size(int *size)
         return PMI_ERR_INVALID_ARG;
     }
 
-    if (PMIX_SUCCESS == PMIx_Get(&myproc, PMIX_UNIV_SIZE, NULL, 0, &val)) {
+    (void)strncpy(proc.nspace, myproc.nspace, PMIX_MAX_NSLEN);
+    proc.rank = PMIX_RANK_UNDEF;
+
+    /* set controlling parameters
+     * PMIX_OPTIONAL - expect that these keys should be available on startup
+     */
+    PMIX_INFO_CONSTRUCT(&info[0]);
+    PMIX_INFO_LOAD(&info[0], PMIX_OPTIONAL, &val_optinal, PMIX_BOOL);
+
+    if (PMIX_SUCCESS == PMIx_Get(&proc, PMIX_UNIV_SIZE, info, 1, &val)) {
         rc = convert_int(size, val);
         PMIX_VALUE_RELEASE(val);
-        return convert_err(rc);
     }
-    return PMI_FAIL;
+
+    PMIX_INFO_DESTRUCT(&info[0]);
+
+    return convert_err(rc);
 }
 
 int PMI_Get_appnum(int *appnum)
 {
     pmix_status_t rc = PMIX_SUCCESS;
     pmix_value_t *val;
+    pmix_proc_t proc;
+    pmix_info_t info[1];
+    bool  val_optinal = 1;
 
     PMI_CHECK();
 
-    if (NULL != appnum &&
-        PMIX_SUCCESS == PMIx_Get(&myproc, PMIX_APPNUM, NULL, 0, &val)) {
-        rc = convert_int(appnum, val);
-        PMIX_VALUE_RELEASE(val);
-        return convert_err(rc);
+    if (NULL == appnum) {
+        return PMI_ERR_INVALID_ARG;
     }
 
-    return PMI_FAIL;
+    (void)strncpy(proc.nspace, myproc.nspace, PMIX_MAX_NSLEN);
+    proc.rank = PMIX_RANK_UNDEF;
+
+    /* set controlling parameters
+     * PMIX_OPTIONAL - expect that these keys should be available on startup
+     */
+    PMIX_INFO_CONSTRUCT(&info[0]);
+    PMIX_INFO_LOAD(&info[0], PMIX_OPTIONAL, &val_optinal, PMIX_BOOL);
+
+    if (PMIX_SUCCESS == PMIx_Get(&proc, PMIX_APPNUM, info, 1, &val)) {
+        rc = convert_int(appnum, val);
+        PMIX_VALUE_RELEASE(val);
+    }
+
+    PMIX_INFO_DESTRUCT(&info[0]);
+
+    return convert_err(rc);
 }
 
 int PMI_Publish_name(const char service_name[], const char port[])
@@ -461,24 +476,34 @@ int PMI_Get_clique_size(int *size)
 {
     pmix_status_t rc = PMIX_SUCCESS;
     pmix_value_t *val;
+    pmix_info_t info[1];
+    bool  val_optinal = 1;
 
     PMI_CHECK();
 
     if (NULL == size) {
-        return PMI_ERR_INVALID_ARGS;
+        return PMI_ERR_INVALID_ARG;
     }
 
-    if (PMIX_SUCCESS == PMIx_Get(&myproc, PMIX_LOCAL_SIZE, NULL, 0, &val)) {
+    /* set controlling parameters
+     * PMIX_OPTIONAL - expect that these keys should be available on startup
+     */
+    PMIX_INFO_CONSTRUCT(&info[0]);
+    PMIX_INFO_LOAD(&info[0], PMIX_OPTIONAL, &val_optinal, PMIX_BOOL);
+
+    if (PMIX_SUCCESS == PMIx_Get(&myproc, PMIX_LOCAL_SIZE, info, 1, &val)) {
         rc = convert_int(size, val);
         PMIX_VALUE_RELEASE(val);
-        return convert_err(rc);
     }
 
-    return PMI_FAIL;
+    PMIX_INFO_DESTRUCT(&info[0]);
+
+    return convert_err(rc);
 }
 
 int PMI_Get_clique_ranks(int ranks[], int length)
 {
+    pmix_status_t rc = PMIX_SUCCESS;
     pmix_value_t *val;
     char **rks;
     int i;
@@ -498,9 +523,9 @@ int PMI_Get_clique_ranks(int ranks[], int length)
         }
         pmix_argv_free(rks);
         PMIX_VALUE_RELEASE(val);
-        return PMI_SUCCESS;
     }
-    return PMI_FAIL;
+
+    return convert_err(rc);
 }
 
 int PMI_KVS_Get_my_name(char kvsname[], int length)

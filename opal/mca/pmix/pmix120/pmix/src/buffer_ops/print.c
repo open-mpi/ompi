@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, Inc.  All rights reserved.
- * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -27,6 +27,7 @@
 #include <time.h>
 #endif
 
+#include "src/util/error.h"
 #include "src/buffer_ops/internal.h"
 
 int pmix_bfrop_print(char **output, char *prefix, void *src, pmix_data_type_t type)
@@ -540,6 +541,32 @@ int pmix_bfrop_print_timeval(char **output, char *prefix,
     return PMIX_SUCCESS;
 }
 
+int pmix_bfrop_print_status(char **output, char *prefix,
+                            pmix_status_t *src, pmix_data_type_t type)
+{
+    char *prefx;
+
+    /* deal with NULL prefix */
+    if (NULL == prefix) asprintf(&prefx, " ");
+    else prefx = prefix;
+
+    /* if src is NULL, just print data type and return */
+    if (NULL == src) {
+        asprintf(output, "%sData type: PMIX_STATUS\tValue: NULL pointer", prefx);
+        if (prefx != prefix) {
+            free(prefx);
+        }
+        return PMIX_SUCCESS;
+    }
+
+    asprintf(output, "%sData type: PMIX_STATUS\tValue: %s", prefx, PMIx_Error_string(*src));
+    if (prefx != prefix) {
+        free(prefx);
+    }
+
+    return PMIX_SUCCESS;
+}
+
 /* PRINT FUNCTIONS FOR GENERIC PMIX TYPES */
 
 /*
@@ -632,6 +659,10 @@ int pmix_bfrop_print_value(char **output, char *prefix,
         asprintf(output, "%sPMIX_VALUE: Data type: PMIX_TIMEVAL\tValue: %ld.%06ld", prefx,
                  (long)src->data.tv.tv_sec, (long)src->data.tv.tv_usec);
         break;
+    case PMIX_STATUS:
+        asprintf(output, "%sPMIX_VALUE: Data type: PMIX_STATUS\tValue: %s", prefx,
+                 PMIx_Error_string(src->data.status));
+        break;
     default:
         asprintf(output, "%sPMIX_VALUE: Data type: UNKNOWN\tValue: UNPRINTABLE", prefx);
         break;
@@ -648,8 +679,8 @@ int pmix_bfrop_print_info(char **output, char *prefix,
     char *tmp;
 
     pmix_bfrop_print_value(&tmp, NULL, &src->value, PMIX_VALUE);
-    asprintf(output, "%sKEY: %s %s", prefix, src->key,
-             (NULL == tmp) ? "NULL" : tmp);
+    asprintf(output, "%sKEY: %s REQD: %s %s", prefix, src->key,
+             src->required ? "Y" : "N", (NULL == tmp) ? "PMIX_VALUE: NULL" : tmp);
     if (NULL != tmp) {
         free(tmp);
     }

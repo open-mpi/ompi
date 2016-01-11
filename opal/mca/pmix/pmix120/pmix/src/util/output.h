@@ -507,6 +507,12 @@ struct pmix_output_stream_t {
                                                         char **olddir,
                                                         char **oldprefix);
 
+    /**
+     * Same as pmix_output_verbose(), but pointer to buffer and size.
+     */
+    PMIX_DECLSPEC void pmix_output_hexdump(int verbose_level, int output_id,
+                                           void *ptr, int buflen);
+
 #if PMIX_ENABLE_DEBUG
     /**
      * Main macro for use in sending debugging output to output streams;

@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014-2015 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014      Artem Y. Polyakov <artpol84@gmail.com>.
@@ -273,13 +273,13 @@ int PMIx_Init(pmix_proc_t *proc)
     /* get our effective id's */
     pmix_globals.uid = geteuid();
     pmix_globals.gid = getegid();
-    /* default to our internal errhandler */
-    pmix_add_errhandler(myerrhandler, NULL, 0, &errhandler_ref);
     /* initialize the output system */
     if (!pmix_output_init()) {
         return PMIX_ERROR;
     }
 
+    /* default to our internal errhandler */
+    pmix_add_errhandler(myerrhandler, NULL, 0, &errhandler_ref);
     /* see if debug is requested */
     if (NULL != (evar = getenv("PMIX_DEBUG"))) {
         debug_level = strtol(evar, NULL, 10);
@@ -1270,6 +1270,7 @@ static void regevents_cbfunc(struct pmix_peer_t *peer, pmix_usock_hdr_t *hdr,
     pmix_cb_t *cb = (pmix_cb_t*)cbdata;
     pmix_status_t rc;
     int ret, cnt;
+
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "pmix: regevents callback recvd");
 
@@ -1286,8 +1287,7 @@ static void regevents_cbfunc(struct pmix_peer_t *peer, pmix_usock_hdr_t *hdr,
         rc = pmix_remove_errhandler(cb->errhandler_ref);
         /* call the callback with error */
         cb->errreg_cbfunc(PMIX_ERR_SERVER_FAILED_REQUEST, -1, cb->cbdata);
-    }
-    else {
+    } else {
         /* complete err handler registration with success status*/
         pmix_output_verbose(2, pmix_globals.debug_output,
                             "client:reg events cbfunc received status %d for errhandler %d",
@@ -1303,28 +1303,36 @@ void pmix_client_register_errhandler(pmix_info_t info[], size_t ninfo,
                                      void *cbdata)
 {
     /* add err handler, process info keys and register for events and call the callback */
-    int rc, index = 0;
+    int index = 0;
     pmix_buffer_t *msg;
     pmix_cb_t *cb;
+    pmix_status_t rc;
+
     pmix_output_verbose(2, pmix_globals.debug_output,
-                        "pmix: register errhandler");
+                        "pmix: register errhandler with %d infos", (int)ninfo);
+
     /* check if this handler is already registered if so return error */
-    if (PMIX_SUCCESS ==  pmix_lookup_errhandler (errhandler, &index)) {
-        /* complete request with error status and  return its original reference */
+    if (PMIX_EXISTS == (rc = pmix_lookup_errhandler(info, ninfo, &index))) {
+        /* complete request with error status and return its original reference */
         pmix_output_verbose(2, pmix_globals.debug_output,
                             "pmix: register errhandler - already registered");
         cbfunc(PMIX_EXISTS, index, cbdata);
-
+    } else if (PMIX_ERR_GRP_FOUND == rc) {
+        /* just acknowledge it */
+        cbfunc(PMIX_SUCCESS, index, cbdata);
+    } else if (PMIX_ERR_DFLT_FOUND == rc && NULL == info) {
+        /* if they are registering a default errhandler, then
+         * overwrite the existing one with it - the index will
+         * contain its location */
+        pmix_add_errhandler(errhandler, info, ninfo, &index);
     } else {
-        if(PMIX_SUCCESS != (rc = pmix_add_errhandler (errhandler, info, ninfo, &index))) {
+        /* need to add this errhandler */
+        if (PMIX_SUCCESS != (rc = pmix_add_errhandler(errhandler, info, ninfo, &index))) {
             pmix_output_verbose(2, pmix_globals.debug_output,
                         "pmix: register errhandler - error status rc=%d", rc);
             /* complete request with error*/
             cbfunc(rc, index, cbdata);
-        }
-        else {
-            /* To do: need to determine if the client needs to process the info keys before passing it to
-               server */
+        } else {
             pmix_output_verbose(10, pmix_globals.debug_output,
                         "pmix: register errhandler - added index=%d, ninfo =%lu", index, ninfo);
             msg = PMIX_NEW(pmix_buffer_t);
@@ -1334,11 +1342,10 @@ void pmix_client_register_errhandler(pmix_info_t info[], size_t ninfo,
                 PMIX_RELEASE(msg);
                 pmix_remove_errhandler(index);
                 cbfunc(PMIX_ERR_PACK_FAILURE, -1, cbdata);
-            }
-            else {
+            } else {
                /* create a callback object as we need to pass it to the
                 * recv routine so we know which callback to use when
-                * the server acks/nacks the register events request*/
+                * the server acks/nacks the register events request */
                 pmix_output_verbose(10, pmix_globals.debug_output,
                             "pmix: register errhandler - pack events success status=%d", rc);
                 cb = PMIX_NEW(pmix_cb_t);
@@ -1358,6 +1365,7 @@ static void deregevents_cbfunc(struct pmix_peer_t *peer, pmix_usock_hdr_t *hdr,
     pmix_cb_t *cb = (pmix_cb_t*)cbdata;
     pmix_status_t rc;
     int ret, cnt =1;
+
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "pmix: deregevents_cbfunc  recvd");
 
@@ -1371,7 +1379,7 @@ static void deregevents_cbfunc(struct pmix_peer_t *peer, pmix_usock_hdr_t *hdr,
         PMIX_ERROR_LOG(rc);
 
     }
-    /* remove the err handler and call the error handler reg completion callback fn.*/
+    /* remove the err handler and call the error handler dereg completion callback fn.*/
     pmix_remove_errhandler(cb->errhandler_ref);
     pmix_output_verbose(2, pmix_globals.debug_output,
                            "client:dereg events cbfunc received status %d for errhandler %d",
@@ -1388,17 +1396,18 @@ void pmix_client_deregister_errhandler(int errhandler_ref,
     pmix_error_reg_info_t *errreg;
     pmix_buffer_t *msg;
     pmix_cb_t *cb;
+
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "pmix_client_deregister_errhandler errhandler_ref = %d", errhandler_ref);
-    errreg = (pmix_error_reg_info_t *) pmix_pointer_array_get_item (&pmix_globals.errregs, errhandler_ref);
+
+    errreg = (pmix_error_reg_info_t *)pmix_pointer_array_get_item(&pmix_globals.errregs, errhandler_ref);
     if (NULL != errreg ) {
         msg = PMIX_NEW(pmix_buffer_t);
         if (PMIX_SUCCESS != (rc = pack_regevents(msg, PMIX_DEREGEVENTS_CMD, errreg->info, errreg->ninfo))) {
             PMIX_RELEASE(msg);
             pmix_remove_errhandler(errhandler_ref);
             cbfunc(PMIX_ERR_PACK_FAILURE, cbdata);
-        }
-        else {
+        } else {
             /* create a callback object as we need to pass it to the
              * recv routine so we know which callback to use when
              * the server acks/nacks the register events request*/
@@ -1409,17 +1418,18 @@ void pmix_client_deregister_errhandler(int errhandler_ref,
             /* push the message into our event base to send to the server */
             PMIX_ACTIVATE_SEND_RECV(&pmix_client_globals.myserver, msg, deregevents_cbfunc, cb);
         }
-    }
-    else
+    } else {
         cbfunc(PMIX_ERR_NOT_FOUND, cbdata);
+    }
 }
 
 static void notifyerror_cbfunc(struct pmix_peer_t *peer, pmix_usock_hdr_t *hdr,
-                              pmix_buffer_t *buf, void *cbdata)
+                               pmix_buffer_t *buf, void *cbdata)
 {
     pmix_cb_t *cb = (pmix_cb_t*)cbdata;
     pmix_status_t rc;
     int ret, cnt;
+
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "pmix: notifyerror_cbfunc  recvd");
 
@@ -1427,14 +1437,15 @@ static void notifyerror_cbfunc(struct pmix_peer_t *peer, pmix_usock_hdr_t *hdr,
         PMIX_ERROR_LOG(PMIX_ERR_BAD_PARAM);
         return;
     }
+
     /* unpack the status code */
     if ((PMIX_SUCCESS != (rc = pmix_bfrop.unpack(buf, &ret, &cnt, PMIX_INT))) ||
             (PMIX_SUCCESS != ret)) {
         PMIX_ERROR_LOG(rc);
 
     }
-    /* call the notify error completion callback fn.*/
 
+    /* call the notify error completion callback fn.*/
     pmix_output_verbose(2, pmix_globals.debug_output,
                         "client: notified error cbfunc received status %d ",
                         ret);
@@ -1449,9 +1460,13 @@ pmix_status_t pmix_client_notify_error(pmix_status_t status,
                                        pmix_op_cbfunc_t cbfunc, void *cbdata)
 {
     pmix_status_t rc;
-    pmix_buffer_t *msg = PMIX_NEW(pmix_buffer_t);
+    pmix_buffer_t *msg;
     pmix_cmd_t cmd = PMIX_NOTIFY_CMD;
     pmix_cb_t *cb;
+
+    /* get the message buffer */
+    msg = PMIX_NEW(pmix_buffer_t);
+
     /* pack the command */
     if (PMIX_SUCCESS != (rc = pmix_bfrop.pack(msg, &cmd, 1, PMIX_CMD))) {
         PMIX_ERROR_LOG(rc);
@@ -1484,17 +1499,22 @@ pmix_status_t pmix_client_notify_error(pmix_status_t status,
             goto cleanup;
         }
     }
+
     /* create a callback object as we need to pass it to the
      * recv routine so we know which callback to use when
      * the server acks/nacks the register events request*/
     cb = PMIX_NEW(pmix_cb_t);
     cb->op_cbfunc = cbfunc;
     cb->cbdata = cbdata;
+
     /* push the message into our event base to send to the server */
     PMIX_ACTIVATE_SEND_RECV(&pmix_client_globals.myserver, msg, notifyerror_cbfunc, cb);
     return PMIX_SUCCESS;
+
   cleanup:
     PMIX_RELEASE(msg);
-    cbfunc(rc, cbdata);
+    /* never call a callback function when returning an error as
+     * the error tells the caller that they will never recv a
+     * callback */
     return rc;
 }

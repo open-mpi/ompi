@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -44,6 +44,7 @@ BEGIN_C_DECLS
 /* define a structure for tracking error registrations */
 typedef struct {
     pmix_object_t super;
+    bool sglhdlr;                      // registers a specific error status handler
     pmix_notification_fn_t errhandler; /* registered err handler callback fn */
     pmix_info_t *info;                 /* error info keys registered with the handler */
     size_t ninfo;                      /* size of info */

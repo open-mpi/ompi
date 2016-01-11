@@ -215,6 +215,20 @@ pmix_status_t pmix_server_get(pmix_buffer_t *buf,
         return rc;
     }
 
+    /* do not force dmodex logic for non-specific ranks
+     * let return not found status instead of doing fence with
+     * data exchange. User can make a decision to do such call getting
+     * not found status
+     */
+    if (PMIX_RANK_UNDEF == rank || PMIX_RANK_WILDCARD == rank) {
+        pmix_output_verbose(2, pmix_globals.debug_output,
+                            "%s:%d not found data for namespace = %s, rank = %d "
+                            "(do not request resource manager server for non-specified rank)",
+                            pmix_globals.myid.nspace,
+                            pmix_globals.myid.rank, nspace, rank);
+        return PMIX_ERR_NOT_FOUND;
+    }
+
     /* If we get here, then we don't have the data at this time. Check
      * to see if we already have a pending request for the data - if
      * we do, then we can just wait for it to arrive */
@@ -362,31 +376,52 @@ static pmix_status_t _satisfy_request(pmix_hash_table_t *ht, int rank,
     pmix_value_t *val;
     char *data;
     size_t sz;
+    int cur_rank;
+    int found = 0;
     pmix_buffer_t xfer, pbkt, *xptr;
+    void *last;
 
     /* check to see if this data already has been
      * obtained as a result of a prior direct modex request from
      * a remote peer, or due to data from a local client
      * having been committed */
-    rc = pmix_hash_fetch(ht, rank, "modex", &val);
-    if (PMIX_SUCCESS == rc && NULL != val) {
-        /* the client is expecting this to arrive as a byte object
-         * containing a buffer, so package it accordingly */
-        PMIX_CONSTRUCT(&pbkt, pmix_buffer_t);
-        PMIX_CONSTRUCT(&xfer, pmix_buffer_t);
-        xptr = &xfer;
-        PMIX_LOAD_BUFFER(&xfer, val->data.bo.bytes, val->data.bo.size);
-        pmix_bfrop.pack(&pbkt, &xptr, 1, PMIX_BUFFER);
-        xfer.base_ptr = NULL; // protect the passed data
-        xfer.bytes_used = 0;
-        PMIX_DESTRUCT(&xfer);
-        PMIX_UNLOAD_BUFFER(&pbkt, data, sz);
-        PMIX_DESTRUCT(&pbkt);
-        PMIX_VALUE_RELEASE(val);
-        /* pass it back */
-        cbfunc(rc, data, sz, cbdata, relfn, data);
-        return rc;
+    cur_rank = rank;
+    if (PMIX_RANK_UNDEF == rank) {
+        rc = pmix_hash_fetch_by_key(ht, "modex", &cur_rank, &val, &last);
+    } else {
+        rc = pmix_hash_fetch(ht, cur_rank, "modex", &val);
     }
+    PMIX_CONSTRUCT(&pbkt, pmix_buffer_t);
+    while (PMIX_SUCCESS == rc) {
+        if (NULL != val) {
+            pmix_bfrop.pack(&pbkt, &cur_rank, 1, PMIX_INT);
+            /* the client is expecting this to arrive as a byte object
+             * containing a buffer, so package it accordingly */
+            PMIX_CONSTRUCT(&xfer, pmix_buffer_t);
+            xptr = &xfer;
+            PMIX_LOAD_BUFFER(&xfer, val->data.bo.bytes, val->data.bo.size);
+            PMIX_VALUE_RELEASE(val);
+            pmix_bfrop.pack(&pbkt, &xptr, 1, PMIX_BUFFER);
+            xfer.base_ptr = NULL; // protect the passed data
+            xfer.bytes_used = 0;
+            PMIX_DESTRUCT(&xfer);
+            found++;
+        }
+        if (PMIX_RANK_UNDEF == rank) {
+            rc = pmix_hash_fetch_by_key(ht, NULL, &cur_rank, &val, &last);
+        } else {
+            break;
+        }
+    }
+    PMIX_UNLOAD_BUFFER(&pbkt, data, sz);
+    PMIX_DESTRUCT(&pbkt);
+
+    if (found) {
+        /* pass it back */
+        cbfunc(PMIX_SUCCESS, data, sz, cbdata, relfn, data);
+        return PMIX_SUCCESS;
+    }
+
     return PMIX_ERR_NOT_FOUND;
 }
 

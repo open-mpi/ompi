@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2015 Intel, Inc. All rights reserved
+ * Copyright (c) 2013-2016 Intel, Inc. All rights reserved
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -63,8 +63,18 @@ BEGIN_C_DECLS
 #define PMIX_MAX_NSLEN     255
 #define PMIX_MAX_KEYLEN    511
 
-/* define a *wildcard* value for requests involving rank */
-#define PMIX_RANK_WILDCARD -1
+/* define a value for requests for job-level data
+ * where the info itself isn't associated with any
+ * specific rank, or when a request involves
+ * a rank that isn't known - e.g., when someone requests
+ * info thru one of the legacy interfaces where the rank
+ * is typically encoded into the key itself since there is
+ * no rank parameter in the API itself */
+#define PMIX_RANK_UNDEF     INT32_MAX
+/* define a value to indicate that the user wants the
+ * data for the given key from every rank that posted
+ * that key */
+#define PMIX_RANK_WILDCARD  INT32_MAX-1
 
 /* define a set of "standard" PMIx attributes that can
  * be queried. Implementations (and users) are free to extend as
@@ -163,7 +173,7 @@ BEGIN_C_DECLS
 
 /* error handler registration  and notification info keys */
 #define PMIX_ERROR_NAME            "pmix.errname"           // enum pmix_status_t specific error to be notified
-#define PMIX_ERROR_GROUP_COMM      "pmix.errgroup.comm"     // bool - set true to get comm  errors notification
+#define PMIX_ERROR_GROUP_COMM      "pmix.errgroup.comm"     // bool - set true to get comm errors notification
 #define PMIX_ERROR_GROUP_ABORT     "pmix.errgroup.abort"    // bool -set true to get abort errors notification
 #define PMIX_ERROR_GROUP_MIGRATE   "pmix.errgroup.migrate"  // bool -set true to get migrate errors notification
 #define PMIX_ERROR_GROUP_RESOURCE  "pmix.errgroup.resource" // bool -set true to get resource errors notification
@@ -199,7 +209,7 @@ BEGIN_C_DECLS
 
 /****    PMIX ERROR CONSTANTS    ****/
 /* PMIx errors are always negative, with 0 reserved for success */
-#define PMIX_ERROR_MIN  -50  // set equal to number of non-zero entries in enum
+#define PMIX_ERROR_MIN  -52  // set equal to number of non-zero entries in enum
 
 typedef enum {
     PMIX_ERR_UNPACK_READ_PAST_END_OF_BUFFER = PMIX_ERROR_MIN,
@@ -257,6 +267,8 @@ typedef enum {
     PMIX_ERR_SILENT,
     PMIX_ERROR,
 
+    PMIX_ERR_GRP_FOUND,
+    PMIX_ERR_DFLT_FOUND,
     PMIX_SUCCESS
 } pmix_status_t;
 
@@ -288,6 +300,9 @@ typedef enum {
     PMIX_TIMEVAL,
     PMIX_TIME,
 
+    PMIX_STATUS,            // needs to be tracked separately from integer for those times
+                            // when we are embedded and it needs to be converted to the
+                            // host error definitions
     PMIX_HWLOC_TOPO,
     PMIX_VALUE,
     PMIX_INFO_ARRAY,
@@ -411,6 +426,7 @@ typedef struct {
         float fval;
         double dval;
         struct timeval tv;
+        pmix_status_t status;
         pmix_info_array_t array;
         pmix_byte_object_t bo;
     } data;
@@ -494,6 +510,7 @@ extern void pmix_value_load(pmix_value_t *v, void *data,
 /****    PMIX INFO STRUCT    ****/
 typedef struct {
     char key[PMIX_MAX_KEYLEN+1];  // ensure room for the NULL terminator
+    bool required;                // defaults to optional (i.e., required=false)
     pmix_value_t value;
 } pmix_info_t;
 
@@ -531,6 +548,10 @@ typedef struct {
         (void)strncpy((m)->key, (k), PMIX_MAX_KEYLEN);  \
         pmix_value_load(&((m)->value), (v), (t));       \
     } while(0);
+#define PMIX_INFO_REQUIRED(m)       \
+    (m)->required = true;
+#define PMIX_INFO_OPTIONAL(m)       \
+    (m)->required = false;
 
 
 /****    PMIX LOOKUP RETURN STRUCT    ****/

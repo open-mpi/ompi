@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2013 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015      Mellanox Technologies, Inc.
@@ -406,6 +406,26 @@ int pmix_bfrop_pack_time(pmix_buffer_t *buffer, const void *src,
 }
 
 
+/* STATUS */
+int pmix_bfrop_pack_status(pmix_buffer_t *buffer, const void *src,
+                           int32_t num_vals, pmix_data_type_t type)
+{
+    int ret = PMIX_SUCCESS;
+    int32_t i;
+    pmix_status_t *ssrc = (pmix_status_t *)src;
+    int32_t status;
+
+    for (i = 0; i < num_vals; ++i) {
+        status = (int32_t)ssrc[i];
+        if (PMIX_SUCCESS != (ret = pmix_bfrop_pack_int32(buffer, &status, 1, PMIX_INT32))) {
+            return ret;
+        }
+    }
+
+    return PMIX_SUCCESS;
+}
+
+
 /* PACK FUNCTIONS FOR GENERIC PMIX TYPES */
 static int pack_val(pmix_buffer_t *buffer,
                     pmix_value_t *p)
@@ -503,6 +523,11 @@ static int pack_val(pmix_buffer_t *buffer,
             return ret;
         }
         break;
+    case PMIX_STATUS:
+        if (PMIX_SUCCESS != (ret = pmix_bfrop_pack_buffer(buffer, &p->data.status, 1, PMIX_STATUS))) {
+            return ret;
+        }
+        break;
     case PMIX_INFO_ARRAY:
         if (PMIX_SUCCESS != (ret = pmix_bfrop_pack_buffer(buffer, &p->data.array, 1, PMIX_INFO_ARRAY))) {
             return ret;
@@ -561,6 +586,10 @@ int pmix_bfrop_pack_info(pmix_buffer_t *buffer, const void *src,
         /* pack key */
         foo = info[i].key;
         if (PMIX_SUCCESS != (ret = pmix_bfrop_pack_string(buffer, &foo, 1, PMIX_STRING))) {
+            return ret;
+        }
+        /* pack required flag */
+        if (PMIX_SUCCESS != (ret = pmix_bfrop_pack_bool(buffer, &info[i].required, 1, PMIX_BOOL))) {
             return ret;
         }
         /* pack the type */

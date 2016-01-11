@@ -91,7 +91,7 @@ OMPI_DECLSPEC void __opal_attribute_noreturn__
 #define OMPI_ERROR_LOG ORTE_ERROR_LOG
 
 /* Init and finalize objects and operations */
-#define ompi_rte_init(a, b) orte_init(a, b, ORTE_PROC_MPI)
+OMPI_DECLSPEC int ompi_rte_init(int *pargc, char ***pargv);
 #define ompi_rte_finalize() orte_finalize()
 OMPI_DECLSPEC void ompi_rte_wait_for_debugger(void);
 

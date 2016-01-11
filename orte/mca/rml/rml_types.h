@@ -110,8 +110,8 @@ BEGIN_C_DECLS
 /* show help */
 #define ORTE_RML_TAG_SHOW_HELP              36
 
-/* debugger release */
-#define ORTE_RML_TAG_DEBUGGER_RELEASE       37
+/* error notifications */
+#define ORTE_RML_TAG_NOTIFICATION           37
 
 /* bootstrap */
 #define ORTE_RML_TAG_BOOTSTRAP              38

@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, Inc.  All rights reserved.
- * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -275,6 +275,8 @@ int pmix_bfrop_pack_timeval(pmix_buffer_t *buffer, const void *src,
                             int32_t num_vals, pmix_data_type_t type);
 int pmix_bfrop_pack_time(pmix_buffer_t *buffer, const void *src,
                          int32_t num_vals, pmix_data_type_t type);
+int pmix_bfrop_pack_status(pmix_buffer_t *buffer, const void *src,
+                           int32_t num_vals, pmix_data_type_t type);
 
 #if PMIX_HAVE_HWLOC
 int pmix_bfrop_pack_topo(pmix_buffer_t *buffer, const void *src,
@@ -337,6 +339,8 @@ int pmix_bfrop_unpack_timeval(pmix_buffer_t *buffer, void *dest,
                               int32_t *num_vals, pmix_data_type_t type);
 int pmix_bfrop_unpack_time(pmix_buffer_t *buffer, void *dest,
                            int32_t *num_vals, pmix_data_type_t type);
+int pmix_bfrop_unpack_status(pmix_buffer_t *buffer, void *dest,
+                             int32_t *num_vals, pmix_data_type_t type);
 
 #if PMIX_HAVE_HWLOC
 int pmix_bfrop_unpack_topo(pmix_buffer_t *buffer, void *dest,
@@ -427,6 +431,7 @@ int pmix_bfrop_print_double(char **output, char *prefix, double *src, pmix_data_
 
 int pmix_bfrop_print_timeval(char **output, char *prefix, struct timeval *src, pmix_data_type_t type);
 int pmix_bfrop_print_time(char **output, char *prefix, time_t *src, pmix_data_type_t type);
+int pmix_bfrop_print_status(char **output, char *prefix, pmix_status_t *src, pmix_data_type_t type);
 
 #if PMIX_HAVE_HWLOC
 int pmix_bfrop_print_topo(char **output, char *prefix,

@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -136,6 +136,10 @@ int pmix_bfrop_std_copy(void **dest, void *src, pmix_data_type_t type)
         datasize = sizeof(time_t);
         break;
 
+    case PMIX_STATUS:
+        datasize = sizeof(pmix_status_t);
+        break;
+
     default:
         return PMIX_ERR_UNKNOWN_DATA_TYPE;
     }
@@ -166,7 +170,7 @@ int pmix_bfrop_copy_string(char **dest, char *src, pmix_data_type_t type)
 
     return PMIX_SUCCESS;
 }
-/* compare function for pmix_value_t*/
+/* compare function for pmix_value_t */
 bool pmix_value_cmp(pmix_value_t *p, pmix_value_t *p1)
 {
     bool rc = false;
@@ -212,6 +216,9 @@ bool pmix_value_cmp(pmix_value_t *p, pmix_value_t *p1)
             break;
         case PMIX_STRING:
             rc = strcmp(p->data.string, p1->data.string);
+            break;
+        case PMIX_STATUS:
+            rc = (p->data.status == p1->data.status);
             break;
         default:
             pmix_output(0, "COMPARE-PMIX-VALUE: UNSUPPORTED TYPE %d", (int)p->type);
@@ -293,6 +300,9 @@ pmix_status_t pmix_value_xfer(pmix_value_t *p, pmix_value_t *src)
         p->data.tv.tv_sec = src->data.tv.tv_sec;
         p->data.tv.tv_usec = src->data.tv.tv_usec;
         break;
+    case PMIX_STATUS:
+        memcpy(&p->data.status, &src->data.status, sizeof(pmix_status_t));
+        break;
     case PMIX_INFO_ARRAY:
         p->data.array.size = src->data.array.size;
         if (0 < src->data.array.size) {
@@ -343,6 +353,7 @@ int pmix_bfrop_copy_info(pmix_info_t **dest, pmix_info_t *src,
 {
     *dest = (pmix_info_t*)malloc(sizeof(pmix_info_t));
     (void)strncpy((*dest)->key, src->key, PMIX_MAX_KEYLEN);
+    (*dest)->required = src->required;
     return pmix_value_xfer(&(*dest)->value, &src->value);
 }
 

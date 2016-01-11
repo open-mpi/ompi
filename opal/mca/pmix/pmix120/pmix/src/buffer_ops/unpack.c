@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, Inc.  All rights reserved.
- * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015      Mellanox Technologies, Inc.
@@ -500,6 +500,20 @@ int pmix_bfrop_unpack_time(pmix_buffer_t *buffer, void *dest,
 }
 
 
+int pmix_bfrop_unpack_status(pmix_buffer_t *buffer, void *dest,
+                             int32_t *num_vals, pmix_data_type_t type)
+{
+     pmix_output_verbose(20, pmix_globals.debug_output, "pmix_bfrop_unpack_status * %d\n", (int)*num_vals);
+    /* check to see if there's enough data in buffer */
+    if (pmix_bfrop_too_small(buffer, (*num_vals)*(sizeof(pmix_status_t)))) {
+        return PMIX_ERR_UNPACK_READ_PAST_END_OF_BUFFER;
+    }
+
+    /* unpack the data */
+    return pmix_bfrop_unpack_int32(buffer, dest, num_vals, PMIX_INT32);
+}
+
+
 /* UNPACK FUNCTIONS FOR GENERIC PMIX TYPES */
 
 /*
@@ -672,6 +686,11 @@ int pmix_bfrop_unpack_info(pmix_buffer_t *buffer, void *dest,
         }
         (void)strncpy(ptr[i].key, tmp, PMIX_MAX_KEYLEN);
         free(tmp);
+        /* unpack the required flag */
+        m=1;
+        if (PMIX_SUCCESS != (ret = pmix_bfrop_unpack_bool(buffer, &ptr[i].required, &m, PMIX_BOOL))) {
+            return ret;
+        }
         /* unpack value - since the value structure is statically-defined
          * instead of a pointer in this struct, we directly unpack it to
          * avoid the malloc */

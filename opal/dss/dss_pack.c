@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2013 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -1234,6 +1234,23 @@ int opal_dss_pack_vpid(opal_buffer_t *buffer, const void *src,
     /* Turn around and pack the real type */
     if (OPAL_SUCCESS != (
                          ret = opal_dss_pack_buffer(buffer, src, num_vals, OPAL_VPID_T))) {
+        OPAL_ERROR_LOG(ret);
+    }
+
+    return ret;
+}
+
+/*
+ * STATUS
+ */
+int opal_dss_pack_status(opal_buffer_t *buffer, const void *src,
+                         int32_t num_vals, opal_data_type_t type)
+{
+    int ret;
+
+    /* Turn around and pack the real type */
+    ret = opal_dss_pack_buffer(buffer, src, num_vals, OPAL_INT);
+    if (OPAL_SUCCESS != ret) {
         OPAL_ERROR_LOG(ret);
     }
 
