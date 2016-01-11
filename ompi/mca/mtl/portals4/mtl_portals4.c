@@ -280,7 +280,7 @@ create_maptable(size_t        nprocs,
         maptable[i].phys.pid = modex_id->phys.pid;
         maptable[i].phys.nid = modex_id->phys.nid;
         opal_output_verbose(50, ompi_mtl_base_framework.framework_output,
-            "logical: global rank=%d pid=%d nid=%d\n",
+            "logical: global rank=%d pid=%x nid=%x\n",
             (int)i, maptable[i].phys.pid, maptable[i].phys.nid);
     }
 
@@ -312,6 +312,8 @@ create_endpoint(ompi_proc_t *proc)
         return OMPI_ERR_OUT_OF_RESOURCE;
     } else {
         if (ompi_mtl_portals4.use_logical) {
+            endpoint->phys.nid = 0;
+            endpoint->phys.pid = 0;
             endpoint->rank = proc->super.proc_name.vpid;
         } else {
             int ret;
