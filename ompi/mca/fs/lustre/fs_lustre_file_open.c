@@ -139,8 +139,9 @@ mca_fs_lustre_file_open (struct ompi_communicator_t *comm,
         return OMPI_ERROR;
     }
 
-    if (mca_fs_lustre_stripe_size > 0) {
-        fh->f_stripe_size = mca_fs_lustre_stripe_size;
+    if (fs_lustre_stripe_size > 0 && fs_lustre_stripe_width>0) {
+        fh->f_stripe_size  = fs_lustre_stripe_size;
+        fh->f_stripe_count = fs_lustre_stripe_width;
     }
     else {
       lump = alloc_lum();
@@ -154,6 +155,7 @@ mca_fs_lustre_file_open (struct ompi_communicator_t *comm,
 	  return OMPI_ERROR;
       }
       fh->f_stripe_size = lump->lmm_stripe_size;
+      fh->f_stripe_count = lump->lmm_stripe_count;
 
       //      if ( NULL != lump ) {
       //	free ( lump );
