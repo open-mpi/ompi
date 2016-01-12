@@ -14,7 +14,7 @@ dnl Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
 dnl                         reserved.
 dnl Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
 dnl Copyright (c) 2009-2014 Cisco Systems, Inc.  All rights reserved.
-dnl Copyright (c) 2015      Research Organization for Information Science
+dnl Copyright (c) 2015-2016 Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
 dnl $COPYRIGHT$
 dnl
@@ -114,12 +114,18 @@ AC_DEFUN([OMPI_SETUP_FC],[
     # "ignore TKR" comment pragmas that it doesn't understand, and
     # will warn about them.  From Tony Goetz at Absoft, we can use the
     # -Z790 flag to quell these warnings.
+    # The NAG compiler is too picky about naming conventions, so use the
+    # -mismatch flag to keep it happy
     AC_MSG_CHECKING([for $FC warnings flags])
     fc_version=`$FC --version 2>&1`
     case "$fc_version" in
     *Absoft*)
         AC_MSG_RESULT([-Z790])
         FCFLAGS="$FCFLAGS -Z790"
+        ;;
+    *NAG*)
+        AC_MSG_RESULT([-mismatch])
+        FCFLAGS="$FCFLAGS -mismatch"
         ;;
     *)
         AC_MSG_RESULT([none])
