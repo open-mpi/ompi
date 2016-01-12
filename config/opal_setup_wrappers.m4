@@ -12,7 +12,7 @@ dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2006-2010 Oracle and/or its affiliates.  All rights reserved.
 dnl Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
-dnl Copyright (c) 2015      Research Organization for Information Science
+dnl Copyright (c) 2015-2016 Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
 dnl $COPYRIGHT$
 dnl
@@ -420,6 +420,7 @@ AC_DEFUN([OPAL_SETUP_WRAPPER_FINAL],[
        OMPI_WRAPPER_EXTRA_LIBS="$ompi_mca_wrapper_extra_libs"
        OPAL_FLAGS_APPEND_UNIQ([OMPI_WRAPPER_EXTRA_LIBS], [$wrapper_extra_libs])
        OMPI_WRAPPER_EXTRA_LIBS="$OMPI_WRAPPER_EXTRA_LIBS $with_wrapper_libs"
+       OPAL_FLAGS_APPEND_UNIQ([OMPI_WRAPPER_EXTRA_LIBS], [$LIBS])
        AC_SUBST([OMPI_WRAPPER_EXTRA_LIBS])
        AC_MSG_RESULT([$OMPI_WRAPPER_EXTRA_LIBS])
 
