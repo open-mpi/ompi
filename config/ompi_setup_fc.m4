@@ -14,6 +14,8 @@ dnl Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
 dnl                         reserved. 
 dnl Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
 dnl Copyright (c) 2009-2014 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2016      Research Organization for Information Science
+dnl                         and Technology (RIST). All rights reserved.
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -107,7 +109,29 @@ AC_DEFUN([OMPI_SETUP_FC],[
                ;;
            esac])
     AC_SUBST(OMPI_FORTRAN_EXTRA_SHARED_LIBRARY_FLAGS)
-    
+
+    # The Absoft compiler does not like the fact that we use lots of
+    # "ignore TKR" comment pragmas that it doesn't understand, and
+    # will warn about them.  From Tony Goetz at Absoft, we can use the
+    # -Z790 flag to quell these warnings.
+    # The NAG compiler is too picky about naming conventions, so use the
+    # -mismatch flag to keep it happy
+    AC_MSG_CHECKING([for $FC warnings flags])
+    fc_version=`$FC --version 2>&1`
+    case "$fc_version" in
+    *Absoft*)
+        AC_MSG_RESULT([-Z790])
+        FCFLAGS="$FCFLAGS -Z790"
+        ;;
+    *NAG*)
+        AC_MSG_RESULT([-mismatch])
+        FCFLAGS="$FCFLAGS -mismatch"
+        ;;
+    *)
+        AC_MSG_RESULT([none])
+        ;;
+    esac
+
     # If we're still good, then save the extra file types.  Do this last
     # because it implies tests that should be invoked by the above tests
     # (e.g., running the fortran compiler).
