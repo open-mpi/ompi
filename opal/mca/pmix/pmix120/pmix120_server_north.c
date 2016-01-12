@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2014-2015 Intel, Inc.  All rights reserved.
- * Copyright (c) 2014-2015 Research Organization for Information Science
+ * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014      Mellanox Technologies, Inc.
  *                         All rights reserved.
@@ -415,7 +415,9 @@ static void opal_lkupcbfunc(int status,
             n=0;
             OPAL_LIST_FOREACH(p, data, opal_pmix_pdata_t) {
                 /* convert the jobid */
-                (void)snprintf(d[n].proc.nspace, PMIX_MAX_NSLEN, "%s", opal_convert_jobid_to_string(p->proc.jobid));
+                char *str = opal_convert_jobid_to_string(p->proc.jobid);
+                (void)strncpy(d[n].proc.nspace, str, PMIX_MAX_NSLEN);
+                free(str);
                 d[n].proc.rank = p->proc.vpid;
                 (void)strncpy(d[n].key, p->value.key, PMIX_MAX_KEYLEN);
                 pmix120_value_load(&d[n].value, &p->value);
@@ -532,9 +534,12 @@ static void opal_spncbfunc(int status, opal_jobid_t jobid, void *cbdata)
     char nspace[PMIX_MAX_NSLEN];
 
     if (NULL != opalcaddy->spwncbfunc) {
+        char *str;
         rc = pmix120_convert_opalrc(status);
         /* convert the jobid */
-        (void)snprintf(nspace, PMIX_MAX_NSLEN, "%s", opal_convert_jobid_to_string(jobid));
+        str = opal_convert_jobid_to_string(jobid);
+        (void)strncpy(nspace, str, PMIX_MAX_NSLEN);
+        free(str);
         opalcaddy->spwncbfunc(rc, nspace, opalcaddy->cbdata);
     }
     OBJ_RELEASE(opalcaddy);
