@@ -103,7 +103,7 @@ struct mca_sharedfp_base_module_1_0_0_t * mca_sharedfp_individual_component_file
     info = fh->f_info;
     if ( info != MPI_INFO_NULL ){
         valuelen = MPI_MAX_INFO_VAL;
-        ompi_info_get ( info,"OMPIO_SHAREDFP_RELAXED_ORDERING", valuelen, value, &flag);
+        opal_info_get ( info,"OMPIO_SHAREDFP_RELAXED_ORDERING", valuelen, value, &flag);
         if ( flag ) {
            if ( mca_sharedfp_individual_verbose ) {
                 opal_output(ompi_sharedfp_base_framework.framework_output,

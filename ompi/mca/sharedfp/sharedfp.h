@@ -176,7 +176,7 @@ typedef int (*mca_sharedfp_base_module_read_ordered_end_fn_t)(
         ompi_status_public_t *status);
 typedef int (*mca_sharedfp_base_module_file_open_fn_t)(
         struct ompi_communicator_t *comm, const char *filename, int amode,
-        struct ompi_info_t *info, struct mca_io_ompio_file_t *fh);
+        struct opal_info_t *info, struct mca_io_ompio_file_t *fh);
 typedef int (*mca_sharedfp_base_module_file_close_fn_t)(struct mca_io_ompio_file_t *fh);
 
 

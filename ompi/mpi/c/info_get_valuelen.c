@@ -89,6 +89,6 @@ int MPI_Info_get_valuelen(MPI_Info info, const char *key, int *valuelen,
 
     OPAL_CR_ENTER_LIBRARY();
 
-    err = ompi_info_get_valuelen (info, key, valuelen, flag);
+    err = opal_info_get_valuelen (info, key, valuelen, flag);
     OMPI_ERRHANDLER_RETURN(err, MPI_COMM_WORLD, err, FUNC_NAME);
 }

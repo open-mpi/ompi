@@ -29,6 +29,7 @@
 
 #include "opal/class/opal_object.h"
 #include "opal/class/opal_hash_table.h"
+#include "opal/util/info_subscriber.h"
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/info/info.h"
 #include "ompi/communicator/communicator.h"
@@ -55,12 +56,12 @@ OMPI_DECLSPEC extern mca_base_var_enum_t *ompi_win_accumulate_ops;
 OMPI_DECLSPEC extern opal_pointer_array_t ompi_mpi_windows;
 
 struct ompi_win_t {
-    opal_object_t w_base;
+    opal_infosubscriber_t super;
 
     opal_mutex_t  w_lock;
 
     char w_name[MPI_MAX_OBJECT_NAME];
-
+  
     /* Group associated with this window. */
     ompi_group_t *w_group;
 
@@ -108,13 +109,13 @@ int ompi_win_init(void);
 int ompi_win_finalize(void);
 
 int ompi_win_create(void *base, size_t size, int disp_unit,
-                    ompi_communicator_t *comm, ompi_info_t *info,
+                    ompi_communicator_t *comm, opal_info_t *info,
                     ompi_win_t **newwin);
-int ompi_win_allocate(size_t size, int disp_unit, ompi_info_t *info,
+int ompi_win_allocate(size_t size, int disp_unit, opal_info_t *info,
                       ompi_communicator_t *comm, void *baseptr, ompi_win_t **newwin);
-int ompi_win_allocate_shared(size_t size, int disp_unit, ompi_info_t *info,
+int ompi_win_allocate_shared(size_t size, int disp_unit, opal_info_t *info,
                       ompi_communicator_t *comm, void *baseptr, ompi_win_t **newwin);
-int ompi_win_create_dynamic(ompi_info_t *info, ompi_communicator_t *comm, ompi_win_t **newwin);
+int ompi_win_create_dynamic(opal_info_t *info, ompi_communicator_t *comm, ompi_win_t **newwin);
 
 int ompi_win_free(ompi_win_t *win);
 

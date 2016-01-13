@@ -66,11 +66,11 @@ typedef struct mca_io_romio314_data_t mca_io_romio314_data_t;
 int mca_io_romio314_file_open (struct ompi_communicator_t *comm,
                             const char *filename,
                             int amode,
-                            struct ompi_info_t *info,
+                            struct opal_info_t *info,
                             ompi_file_t *fh);
 int mca_io_romio314_file_close (struct ompi_file_t *fh);
 int mca_io_romio314_file_delete (const char *filename,
-                              struct ompi_info_t *info);
+                              struct opal_info_t *info);
 int mca_io_romio314_file_set_size (struct ompi_file_t *fh,
                                 MPI_Offset size);
 int mca_io_romio314_file_preallocate (struct ompi_file_t *fh,
@@ -80,9 +80,9 @@ int mca_io_romio314_file_get_size (struct ompi_file_t *fh,
 int mca_io_romio314_file_get_amode (struct ompi_file_t *fh,
                                  int *amode);
 int mca_io_romio314_file_set_info (struct ompi_file_t *fh,
-                                struct ompi_info_t *info);
+                                struct opal_info_t *info);
 int mca_io_romio314_file_get_info (struct ompi_file_t *fh,
-                                struct ompi_info_t ** info_used);
+                                struct opal_info_t ** info_used);
 
 /* Section 9.3 */
 int mca_io_romio314_file_set_view (struct ompi_file_t *fh,
@@ -90,7 +90,7 @@ int mca_io_romio314_file_set_view (struct ompi_file_t *fh,
                                 struct ompi_datatype_t *etype,
                                 struct ompi_datatype_t *filetype,
                                 const char *datarep,
-                                struct ompi_info_t *info);
+                                struct opal_info_t *info);
 int mca_io_romio314_file_get_view (struct ompi_file_t *fh,
                                 MPI_Offset * disp,
                                 struct ompi_datatype_t ** etype,

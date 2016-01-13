@@ -30,6 +30,8 @@
 
 #include "ompi_config.h"
 #include "opal/class/opal_object.h"
+#include "opal/class/opal_hash_table.h"
+#include "opal/util/info_subscriber.h"
 #include "ompi/errhandler/errhandler.h"
 #include "opal/threads/mutex.h"
 #include "ompi/communicator/comm_request.h"
@@ -111,7 +113,7 @@ OMPI_DECLSPEC extern opal_pointer_array_t ompi_mpi_communicators;
 OMPI_DECLSPEC extern opal_pointer_array_t ompi_comm_f_to_c_table;
 
 struct ompi_communicator_t {
-    opal_object_t              c_base;
+    opal_infosubscriber_t      super;
     opal_mutex_t               c_lock; /* mutex for name and potentially
                                           attributes */
     char  c_name[MPI_MAX_OBJECT_NAME];
@@ -416,7 +418,7 @@ OMPI_DECLSPEC int ompi_comm_split (ompi_communicator_t *comm, int color, int key
  */
 OMPI_DECLSPEC int ompi_comm_split_type(ompi_communicator_t *comm,
                                        int split_type, int key,
-                                       struct ompi_info_t *info,
+                                       struct opal_info_t *info,
                                        ompi_communicator_t** newcomm);
 
 /**
@@ -447,7 +449,7 @@ OMPI_DECLSPEC int ompi_comm_idup (ompi_communicator_t *comm, ompi_communicator_t
  * @param comm:      input communicator
  * @param newcomm:   the new communicator or MPI_COMM_NULL if any error is detected.
  */
-OMPI_DECLSPEC int ompi_comm_dup_with_info (ompi_communicator_t *comm, ompi_info_t *info, ompi_communicator_t **newcomm);
+OMPI_DECLSPEC int ompi_comm_dup_with_info (ompi_communicator_t *comm, opal_info_t *info, ompi_communicator_t **newcomm);
 
 /**
  * dup a communicator (non-blocking) with info.
@@ -457,7 +459,7 @@ OMPI_DECLSPEC int ompi_comm_dup_with_info (ompi_communicator_t *comm, ompi_info_
  * @param comm:      input communicator
  * @param newcomm:   the new communicator or MPI_COMM_NULL if any error is detected.
  */
-OMPI_DECLSPEC int ompi_comm_idup_with_info (ompi_communicator_t *comm, ompi_info_t *info, ompi_communicator_t **newcomm, ompi_request_t **req);
+OMPI_DECLSPEC int ompi_comm_idup_with_info (ompi_communicator_t *comm, opal_info_t *info, ompi_communicator_t **newcomm, ompi_request_t **req);
 
 /**
  * compare two communicators.

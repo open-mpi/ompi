@@ -38,7 +38,7 @@
  */
 int
 mca_fs_pvfs2_file_delete (char* file_name,
-                          struct ompi_info_t *info)
+                          struct opal_info_t *info)
 {
     PVFS_credentials credentials;
     PVFS_sysresp_getparent resp_getparent;

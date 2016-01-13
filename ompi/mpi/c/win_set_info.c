@@ -13,6 +13,8 @@
 #include "ompi/runtime/params.h"
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/win/win.h"
+#include "ompi/communicator/communicator.h"
+#include "opal/util/info_subscriber.h"
 
 #if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Win_set_info = PMPI_Win_set_info
@@ -44,6 +46,7 @@ int MPI_Win_set_info(MPI_Win win, MPI_Info info)
 
     OPAL_CR_ENTER_LIBRARY();
 
-    ret = win->w_osc_module->osc_set_info(win, info);
+    ret = opal_infosubscribe_change_info(win, info);
+
     OMPI_ERRHANDLER_RETURN(ret, win, ret, FUNC_NAME);
 }

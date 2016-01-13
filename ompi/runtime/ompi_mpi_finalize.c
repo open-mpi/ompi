@@ -375,7 +375,7 @@ int ompi_mpi_finalize(void)
     }
 
     /* free info resources */
-    if (OMPI_SUCCESS != (ret = ompi_info_finalize())) {
+    if (OMPI_SUCCESS != (ret = ompi_mpiinfo_finalize())) {
         return ret;
     }
 

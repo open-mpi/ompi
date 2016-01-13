@@ -30,6 +30,7 @@
 #include "ompi/file/file.h"
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
+#include "opal/util/info.h"
 #include "opal/class/opal_list.h"
 #include "opal/class/opal_object.h"
 #include "ompi/mca/mca.h"
@@ -455,7 +456,7 @@ static int module_init(ompi_file_t *file)
     case MCA_IO_BASE_V_2_0_0:
         iom_200 = &(file->f_io_selected_module.v2_0_0);
         return iom_200->io_module_file_open(file->f_comm, file->f_filename,
-                                            file->f_amode, file->f_info,
+                                            file->f_amode, file->super.s_info,
                                             file);
         break;
 

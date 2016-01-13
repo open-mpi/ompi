@@ -101,7 +101,7 @@ int MPI_Comm_spawn_multiple(int count, char *array_of_commands[], char **array_o
                    be set to true on all of them.  Note that not
                    setting ompi_non_mpi is the same as setting it to
                    false. */
-                ompi_info_get_bool(array_of_info[i], "ompi_non_mpi", &non_mpi,
+                opal_info_get_bool(array_of_info[i], "ompi_non_mpi", &non_mpi,
                                    &flag);
                 if (flag && 0 == i) {
                     /* If this is the first info, save its
@@ -133,7 +133,7 @@ int MPI_Comm_spawn_multiple(int count, char *array_of_commands[], char **array_o
         if (MPI_INFO_NULL == array_of_info[0]) {
             non_mpi = false;
         } else {
-            ompi_info_get_bool(array_of_info[0], "ompi_non_mpi", &non_mpi,
+            opal_info_get_bool(array_of_info[0], "ompi_non_mpi", &non_mpi,
                                &flag);
             if (!flag) {
                 non_mpi = false;

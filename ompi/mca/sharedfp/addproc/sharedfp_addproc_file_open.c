@@ -34,7 +34,7 @@
 int mca_sharedfp_addproc_file_open (struct ompi_communicator_t *comm,
                                     char* filename,
                                     int amode,
-                                    struct ompi_info_t *info,
+                                    struct opal_info_t *info,
                                     mca_io_ompio_file_t *fh)
 {
     int ret = OMPI_SUCCESS, err;

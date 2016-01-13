@@ -76,6 +76,6 @@ int MPI_Info_delete(MPI_Info info, const char *key) {
 
     OPAL_CR_ENTER_LIBRARY();
 
-    err = ompi_info_delete (info, key);
+    err = opal_info_delete (info, key);
     OMPI_ERRHANDLER_RETURN(err, MPI_COMM_WORLD, err, FUNC_NAME);
 }

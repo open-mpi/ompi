@@ -99,6 +99,6 @@ int MPI_Info_get(MPI_Info info, const char *key, int valuelen,
 
     OPAL_CR_ENTER_LIBRARY();
 
-    err = ompi_info_get (info, key, valuelen, value, flag);
+    err = opal_info_get(info, key, valuelen, value, flag);
     OMPI_ERRHANDLER_RETURN(err, MPI_COMM_WORLD, err, FUNC_NAME);
 }
