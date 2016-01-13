@@ -13,6 +13,8 @@
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -317,6 +319,9 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
                                         "mca:rmaps[%d] binding not given - using bysocket", __LINE__);
                     OPAL_SET_DEFAULT_BINDING_POLICY(jdata->map->binding, OPAL_BIND_TO_SOCKET);
                 }
+            }
+            if (OPAL_BIND_OVERLOAD_ALLOWED(opal_hwloc_binding_policy)) {
+                jdata->map->binding |= OPAL_BIND_ALLOW_OVERLOAD;
             }
         }
     }
