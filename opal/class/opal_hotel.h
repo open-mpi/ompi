@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2013 Cisco Systems, Inc. All rights reserved.
+ * Copyright (c) 2012-2016 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, LLC. All rights reserved
  * Copyright (c) 2015      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
@@ -146,6 +146,11 @@ OBJ_CLASS_DECLARATION(opal_hotel_t);
  * will be set - occupants will remain checked into the hotel until
  * explicitly checked out.
  *
+ * Also note: the eviction_callback_fn should absolutely not call any
+ * of the hotel checkout functions.  Specifically: the occupant has
+ * already been ("forcibly") checked out *before* the
+ * eviction_callback_fn is invoked.
+ *
  * @return OPAL_SUCCESS if all initializations were succesful. Otherwise,
  *  the error indicate what went wrong in the function.
  */
@@ -244,6 +249,9 @@ static inline void opal_hotel_checkout(opal_hotel_t *hotel, int room_num)
     /* If there's an occupant in the room, check them out */
     room = &(hotel->rooms[room_num]);
     if (OPAL_LIKELY(NULL != room->occupant)) {
+        /* Do not change this logic without also changing the same
+           logic in opal_hotel_checkout_and_return_occupant() and
+           opal_hotel.c:local_eviction_callback(). */
         room->occupant = NULL;
         if (NULL != hotel->evbase) {
             opal_event_del(&(room->eviction_timer_event));
@@ -280,6 +288,9 @@ static inline void opal_hotel_checkout_and_return_occupant(opal_hotel_t *hotel, 
     room = &(hotel->rooms[room_num]);
     if (OPAL_LIKELY(NULL != room->occupant)) {
         opal_output (10, "checking out occupant %p from room num %d", room->occupant, room_num);
+        /* Do not change this logic without also changing the same
+           logic in opal_hotel_checkout() and
+           opal_hotel.c:local_eviction_callback(). */
         *occupant = room->occupant;
         room->occupant = NULL;
         if (NULL != hotel->evbase) {
