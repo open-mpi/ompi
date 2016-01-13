@@ -217,7 +217,7 @@ EOF
 # If DT_RUNPATH is supported, then we'll use *both* the RPATH and
 # RUNPATH flags in the LDFLAGS.
 AC_DEFUN([OPAL_SETUP_RUNPATH],[
-    OPAL_VAR_SCOPE_PUSH([LDFLAGS_save])
+    OPAL_VAR_SCOPE_PUSH([LDFLAGS_save rpath_script rpath_outfile wl_fc])
 
     AC_MSG_CHECKING([if linker supports RUNPATH])
     # Set the output in $runpath_args
@@ -231,6 +231,44 @@ AC_DEFUN([OPAL_SETUP_RUNPATH],[
                     AC_MSG_RESULT([yes (-Wl,--enable-new-dtags)])],
                    [AC_MSG_RESULT([no])])
     AC_LANG_POP([C])
+    # Output goes into globally-visible $rpath_args.  Run this in a
+    # sub-process so that we don't pollute the current process
+    # environment.
+    rpath_script=conftest.$$.sh
+    rpath_outfile=conftest.$$.out
+    rm -f $rpath_script $rpath_outfile
+    cat > $rpath_script <<EOF
+#!/bin/sh
+
+# Slurp in the libtool config into my environment
+
+# Apparently, "libtoool --config" calls "exit", so we can't source it
+# (because if script A sources script B, and B calls "exit", then both
+# B and A will exit).  Instead, we have to send the output to a file
+# and then source that.
+$OPAL_TOP_BUILDDIR/libtool --tag=FC--config > $rpath_outfile
+
+chmod +x $rpath_outfile
+. ./$rpath_outfile
+rm -f $rpath_outfile
+
+wl="\`eval echo \$wl\`"
+echo \$wl
+
+# Done
+exit 0
+EOF
+    chmod +x $rpath_script
+    wl_fc=`./$rpath_script`
+    rm -f $rpath_script
+    
+    LDFLAGS="$LDFLAGS_save ${wl_fc}--enable-new-dtags"
+    AC_LANG_PUSH([Fortran])
+    AC_LINK_IFELSE([AC_LANG_SOURCE([[program test
+end program]])],
+                   [runpath_fc_args="${wl_fc}--enable-new-dtags"],
+                   [runpath_fc_args=""])
+    AC_LANG_POP([Fortran])
     LDFLAGS=$LDFLAGS_save
 
     OPAL_VAR_SCOPE_POP
@@ -256,14 +294,14 @@ AC_DEFUN([RPATHIFY_LDFLAGS_INTERNAL],[
 
            # Now add in the RPATH args for @{libdir}, and the RUNPATH args
            rpath_tmp=`echo ${$2} | sed -e s/LIBDIR/@{libdir}/`
-           $1="${$1} $rpath_out $rpath_tmp $runpath_args"
+           $1="${$1} $rpath_out $rpath_tmp ${$3}"
           ])
     OPAL_VAR_SCOPE_POP
 ])
 
-AC_DEFUN([RPATHIFY_LDFLAGS],[RPATHIFY_LDFLAGS_INTERNAL([$1], [rpath_args])])
+AC_DEFUN([RPATHIFY_LDFLAGS],[RPATHIFY_LDFLAGS_INTERNAL([$1], [rpath_args], [runpath_args])])
 
-AC_DEFUN([RPATHIFY_FC_LDFLAGS],[RPATHIFY_LDFLAGS_INTERNAL([$1], [rpath_fc_args])])
+AC_DEFUN([RPATHIFY_FC_LDFLAGS],[RPATHIFY_LDFLAGS_INTERNAL([$1], [rpath_fc_args], [runpath_fc_args])])
 
 
 dnl
