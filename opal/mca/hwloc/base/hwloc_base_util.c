@@ -579,16 +579,10 @@ unsigned int opal_hwloc_base_get_npus(hwloc_topology_t topo,
              * one bit for each available pu. We could just
              * subtract the first and last indices, but there
              * may be "holes" in the bitmap corresponding to
-             * offline or unallowed cpus - so we have to
-             * search for them
+             * offline or unallowed cpus - so we count them with
+             * the bitmap "weight" (a.k.a. population count) function
              */
-            for (i=hwloc_bitmap_first(cpuset), cnt=0;
-                 i <= hwloc_bitmap_last(cpuset);
-                 i++) {
-                if (hwloc_bitmap_isset(cpuset, i)) {
-                    cnt++;
-                }
-            }
+            cnt = hwloc_bitmap_weight(cpuset);
         }
         /* cache the info */
         data = (opal_hwloc_obj_data_t*)obj->userdata;  // in case it was added
