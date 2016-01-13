@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2014-2015 Intel, Inc.  All rights reserved.
- * Copyright (c) 2014-2015 Research Organization for Information Science
+ * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014      Mellanox Technologies, Inc.
  *                         All rights reserved.
@@ -133,14 +133,14 @@ int pmix120_server_register_nspace(opal_jobid_t jobid,
     opal_value_t *kv, *k2;
     pmix_info_t *pinfo, *pmap;
     size_t sz, szmap, m, n;
-    char nspace[PMIX_MAX_NSLEN];
+    char *nspace;
     pmix_status_t rc;
     pmix120_opcaddy_t *op;
     opal_list_t *pmapinfo;
     opal_pmix120_jobid_trkr_t *job;
 
     /* convert the jobid */
-    (void)snprintf(nspace, PMIX_MAX_NSLEN, opal_convert_jobid_to_string(jobid));
+    nspace = opal_convert_jobid_to_string(jobid);
 
     /* store this job in our list of known nspaces */
     job = OBJ_NEW(opal_pmix120_jobid_trkr_t);
@@ -191,6 +191,7 @@ int pmix120_server_register_nspace(opal_jobid_t jobid,
     if (PMIX_SUCCESS != rc) {
         OBJ_RELEASE(op);
     }
+    free(nspace);
     return pmix120_convert_rc(rc);
 }
 
@@ -219,6 +220,7 @@ int pmix120_server_register_client(const opal_process_name_t *proc,
 {
     pmix_status_t rc;
     pmix120_opcaddy_t *op;
+    char *str;
 
     /* setup the caddy */
     op = OBJ_NEW(pmix120_opcaddy_t);
@@ -226,7 +228,9 @@ int pmix120_server_register_client(const opal_process_name_t *proc,
     op->cbdata = cbdata;
 
     /* convert the jobid */
-    (void)strncpy(op->p.nspace, opal_convert_jobid_to_string(proc->jobid), PMIX_MAX_NSLEN);
+    str = opal_convert_jobid_to_string(proc->jobid);
+    (void)strncpy(op->p.nspace, str, PMIX_MAX_NSLEN);
+    free(str);
     op->p.rank = proc->vpid;
 
     rc = PMIx_server_register_client(&op->p, uid, gid, server_object,
@@ -259,9 +263,12 @@ int pmix120_server_setup_fork(const opal_process_name_t *proc, char ***env)
 {
     pmix_status_t rc;
     pmix_proc_t p;
+    char *str;
 
     /* convert the jobid */
-    (void)strncpy(p.nspace, opal_convert_jobid_to_string(proc->jobid), PMIX_MAX_NSLEN);
+    str = opal_convert_jobid_to_string(proc->jobid);
+    (void)strncpy(p.nspace, str, PMIX_MAX_NSLEN);
+    free(str);
     p.rank = proc->vpid;
 
     rc = PMIx_server_setup_fork(&p, env);
@@ -288,6 +295,7 @@ int pmix120_server_dmodex(const opal_process_name_t *proc,
 {
     pmix120_opcaddy_t *op;
     pmix_status_t rc;
+    char *str;
 
     /* setup the caddy */
     op = OBJ_NEW(pmix120_opcaddy_t);
@@ -295,7 +303,9 @@ int pmix120_server_dmodex(const opal_process_name_t *proc,
     op->cbdata = cbdata;
 
     /* convert the jobid */
-    (void)strncpy(op->p.nspace, opal_convert_jobid_to_string(proc->jobid), PMIX_MAX_NSLEN);
+    str = opal_convert_jobid_to_string(proc->jobid);
+    (void)strncpy(op->p.nspace, str, PMIX_MAX_NSLEN);
+    free(str);
     op->p.rank = proc->vpid;
 
     /* find the internally-cached data for this proc */
@@ -326,7 +336,9 @@ int pmix120_server_notify_error(int status,
         PMIX_PROC_CREATE(ps, psz);
         n = 0;
         OPAL_LIST_FOREACH(nm, procs, opal_namelist_t) {
-            (void)snprintf(ps[n].nspace, PMIX_MAX_NSLEN, opal_convert_jobid_to_string(nm->name.jobid));
+            char * str = opal_convert_jobid_to_string(nm->name.jobid);
+            (void)strncpy(ps[n].nspace, str, PMIX_MAX_NSLEN);
+            free(str);
             ps[n].rank = (int)nm->name.vpid;
             ++n;
         }
@@ -339,7 +351,9 @@ int pmix120_server_notify_error(int status,
         PMIX_PROC_CREATE(eps, esz);
         n = 0;
         OPAL_LIST_FOREACH(nm, error_procs, opal_namelist_t) {
-            (void)snprintf(eps[n].nspace, PMIX_MAX_NSLEN, opal_convert_jobid_to_string(nm->name.jobid));
+            char *str = opal_convert_jobid_to_string(nm->name.jobid);
+            (void)strncpy(eps[n].nspace, str, PMIX_MAX_NSLEN);
+            free(str);
             eps[n].rank = (int)nm->name.vpid;
             ++n;
         }
