@@ -215,18 +215,19 @@ ucp_ep_h mca_pml_ucx_add_proc(ompi_communicator_t *comm, int dst)
     ucp_ep_h ep;
     int ret;
 
-    ompi_proc_t *proc      = ompi_comm_peer_lookup(comm, 0);
+    ompi_proc_t *proc0      = ompi_comm_peer_lookup(comm, 0);
     ompi_proc_t *proc_peer = ompi_comm_peer_lookup(comm, dst);
 
     /* Note, mca_pml_base_pml_check_selected, doesn't use 3rd argument */
     if (OMPI_SUCCESS != (ret = mca_pml_base_pml_check_selected("ucx",
-                                                              &proc,
+                                                              &proc0,
                                                               dst))) {
         return NULL;
     }
 
     ret = mca_pml_ucx_recv_worker_address(proc_peer, &address, &addrlen);
     if (ret < 0) {
+        PML_UCX_ERROR("Failed to receive worker address from proc: %d", proc_peer->super.proc_name.vpid);
         return NULL;
     }
 
@@ -234,7 +235,8 @@ ucp_ep_h mca_pml_ucx_add_proc(ompi_communicator_t *comm, int dst)
     status = ucp_ep_create(ompi_pml_ucx.ucp_worker, address, &ep);
     free(address);
     if (UCS_OK != status) {
-        PML_UCX_ERROR("Failed to connect");
+        PML_UCX_ERROR("Failed to connect to proc: %d, %s", proc_peer->super.proc_name.vpid,
+                                                           ucx_status_string(status));
         return NULL;
     }
 
@@ -261,6 +263,7 @@ int mca_pml_ucx_add_procs(struct ompi_proc_t **procs, size_t nprocs)
     for (i = 0; i < nprocs; ++i) {
         ret = mca_pml_ucx_recv_worker_address(procs[i], &address, &addrlen);
         if (ret < 0) {
+            PML_UCX_ERROR("Failed to receive worker address from proc: %d", procs[i]->super.proc_name.vpid);
             return ret;
         }
 
@@ -274,7 +277,8 @@ int mca_pml_ucx_add_procs(struct ompi_proc_t **procs, size_t nprocs)
         free(address);
 
         if (UCS_OK != status) {
-            PML_UCX_ERROR("Failed to connect");
+            PML_UCX_ERROR("Failed to connect to proc: %d, %s", procs[i]->super.proc_name.vpid,
+                                                               ucx_status_string(status));
             return OMPI_ERROR;
         }
 
@@ -474,7 +478,7 @@ int mca_pml_ucx_isend_init(const void *buf, size_t count, ompi_datatype_t *datat
 
     ep = mca_pml_ucx_get_ep(comm, dst);
     if (OPAL_UNLIKELY(NULL == ep)) {
-        PML_UCX_ERROR("Failed to get ep");
+        PML_UCX_ERROR("Failed to get ep for rank %d", dst);
         return OMPI_ERROR;
     }
 
@@ -506,7 +510,7 @@ int mca_pml_ucx_isend(const void *buf, size_t count, ompi_datatype_t *datatype,
 
     ep = mca_pml_ucx_get_ep(comm, dst);
     if (OPAL_UNLIKELY(NULL == ep)) {
-        PML_UCX_ERROR("Failed to get ep");
+        PML_UCX_ERROR("Failed to get ep for rank %d", dst);
         return OMPI_ERROR;
     }
 
@@ -541,7 +545,7 @@ int mca_pml_ucx_send(const void *buf, size_t count, ompi_datatype_t *datatype, i
 
     ep = mca_pml_ucx_get_ep(comm, dst);
     if (OPAL_UNLIKELY(NULL == ep)) {
-        PML_UCX_ERROR("Failed to get ep");
+        PML_UCX_ERROR("Failed to get ep for rank %d", dst);
         return OMPI_ERROR;
     }
 
