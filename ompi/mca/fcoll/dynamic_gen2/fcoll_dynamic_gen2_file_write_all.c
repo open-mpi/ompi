@@ -530,7 +530,14 @@ exit :
     }
     free(displs);
     free(decoded_iov);
-    
+    free(broken_counts);
+    free(broken_iov_counts);
+    free(broken_decoded_iovs); // decoded_iov arrays[i] were freed as aggr_data[i]->decoded_iov;
+    for (i=0; i<dynamic_gen2_num_io_procs; i++ ) {
+      free(broken_iov_arrays[i]);
+    }
+    free(broken_iov_arrays);
+     
     return OMPI_SUCCESS;
 }
 
