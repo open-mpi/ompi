@@ -541,7 +541,6 @@ unsigned int opal_hwloc_base_get_npus(hwloc_topology_t topo,
                                       hwloc_obj_t obj)
 {
     opal_hwloc_obj_data_t *data;
-    int i;
     unsigned int cnt = 0;
     hwloc_cpuset_t cpuset;
 
