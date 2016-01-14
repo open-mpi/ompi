@@ -4,7 +4,7 @@
  *                         reserved.
  * Copyright (c) 2013      Inria.  All rights reserved.
  * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -133,7 +133,7 @@ OPAL_DECLSPEC extern int (*opal_convert_process_name_to_string)(char** name_stri
                                                                 const opal_process_name_t *name);
 OPAL_DECLSPEC extern char* (*opal_vpid_print)(const opal_vpid_t);
 OPAL_DECLSPEC extern char* (*opal_jobid_print)(const opal_jobid_t);
-OPAL_DECLSPEC extern char* (*opal_convert_jobid_to_string)(opal_jobid_t jobid);
+OPAL_DECLSPEC extern int (*opal_snprintf_jobid)(char* name_string, size_t size, opal_jobid_t jobid);
 OPAL_DECLSPEC extern int (*opal_convert_string_to_jobid)(opal_jobid_t *jobid, const char *jobid_string);
 
 /**
