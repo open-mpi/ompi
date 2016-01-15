@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2014-2015 Intel, Inc.  All rights reserved.
- * Copyright (c) 2014-2015 Research Organization for Information Science
+ * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014-2015 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014      Mellanox Technologies, Inc.
@@ -209,7 +209,7 @@ int pmix1_server_register_nspace(opal_jobid_t jobid,
     opal_pmix1_jobid_trkr_t *job;
 
     /* convert the jobid */
-    (void)snprintf(nspace, PMIX_MAX_NSLEN, opal_convert_jobid_to_string(jobid));
+    (void)opal_snprintf_jobid(nspace, PMIX_MAX_NSLEN, jobid);
 
     /* store this job in our list of known nspaces */
     job = OBJ_NEW(opal_pmix1_jobid_trkr_t);
@@ -295,7 +295,7 @@ int pmix1_server_register_client(const opal_process_name_t *proc,
     op->cbdata = cbdata;
 
     /* convert the jobid */
-    (void)strncpy(op->p.nspace, opal_convert_jobid_to_string(proc->jobid), PMIX_MAX_NSLEN);
+    (void)opal_snprintf_jobid(op->p.nspace, PMIX_MAX_NSLEN, proc->jobid);
     op->p.rank = proc->vpid;
 
     rc = PMIx_server_register_client(&op->p, uid, gid, server_object,
@@ -330,7 +330,7 @@ int pmix1_server_setup_fork(const opal_process_name_t *proc, char ***env)
     pmix_proc_t p;
 
     /* convert the jobid */
-    (void)strncpy(p.nspace, opal_convert_jobid_to_string(proc->jobid), PMIX_MAX_NSLEN);
+    (void)opal_snprintf_jobid(p.nspace, PMIX_MAX_NSLEN, proc->jobid);
     p.rank = proc->vpid;
 
     rc = PMIx_server_setup_fork(&p, env);
@@ -364,7 +364,7 @@ int pmix1_server_dmodex(const opal_process_name_t *proc,
     op->cbdata = cbdata;
 
     /* convert the jobid */
-    (void)strncpy(op->p.nspace, opal_convert_jobid_to_string(proc->jobid), PMIX_MAX_NSLEN);
+    (void)opal_snprintf_jobid(op->p.nspace, PMIX_MAX_NSLEN, proc->jobid);
     op->p.rank = proc->vpid;
 
     /* find the internally-cached data for this proc */
@@ -395,7 +395,7 @@ int pmix1_server_notify_error(int status,
         PMIX_PROC_CREATE(ps, psz);
         n = 0;
         OPAL_LIST_FOREACH(nm, procs, opal_namelist_t) {
-            (void)snprintf(ps[n].nspace, PMIX_MAX_NSLEN, opal_convert_jobid_to_string(nm->name.jobid));
+            (void)opal_snprintf_jobid(ps[n].nspace, PMIX_MAX_NSLEN, nm->name.jobid);
             ps[n].rank = (int)nm->name.vpid;
             ++n;
         }
@@ -408,7 +408,7 @@ int pmix1_server_notify_error(int status,
         PMIX_PROC_CREATE(eps, esz);
         n = 0;
         OPAL_LIST_FOREACH(nm, error_procs, opal_namelist_t) {
-            (void)snprintf(eps[n].nspace, PMIX_MAX_NSLEN, opal_convert_jobid_to_string(nm->name.jobid));
+            (void)opal_snprintf_jobid(eps[n].nspace, PMIX_MAX_NSLEN, nm->name.jobid);
             eps[n].rank = (int)nm->name.vpid;
             ++n;
         }

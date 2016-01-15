@@ -14,7 +14,7 @@
  * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007-2008 Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
- * Copyright (c) 2014-2015 Research Organization for Information Science
+ * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  *
  * $COPYRIGHT$
@@ -97,14 +97,6 @@ static int _convert_process_name_to_string(char** name_string,
     return orte_util_convert_process_name_to_string(name_string, name);
 }
 
-static char*
-_convert_jobid_to_string(opal_jobid_t jobid)
-{
-    char *str;
-    orte_util_convert_jobid_to_string(&str, jobid);
-    return str;
-}
-
 static int
 _convert_string_to_jobid(opal_jobid_t *jobid, const char *jobid_string)
 {
@@ -156,7 +148,7 @@ int orte_init(int* pargc, char*** pargv, orte_proc_type_t flags)
     opal_compare_proc = _process_name_compare;
     opal_convert_string_to_process_name = _convert_string_to_process_name;
     opal_convert_process_name_to_string = _convert_process_name_to_string;
-    opal_convert_jobid_to_string = _convert_jobid_to_string;
+    opal_snprintf_jobid = orte_util_snprintf_jobid;
     opal_convert_string_to_jobid = _convert_string_to_jobid;
 
     /* initialize the opal layer */
