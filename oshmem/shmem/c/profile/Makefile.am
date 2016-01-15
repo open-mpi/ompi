@@ -67,7 +67,9 @@ OSHMEM_API_SOURCES = \
 	pshmem_inc.c \
 	pshmem_clear_lock.c \
 	pshmem_set_lock.c \
-	pshmem_test_lock.c
+	pshmem_test_lock.c \
+	pshmem_global_exit.c \
+	pshmem_info.c
 
 nodist_liboshmem_c_pshmem_la_SOURCES = \
 	$(OSHMEM_API_SOURCES)

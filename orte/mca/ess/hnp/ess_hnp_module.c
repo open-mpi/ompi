@@ -224,31 +224,26 @@ static int rte_init(void)
      * process stats if requested
      */
     if (ORTE_SUCCESS != (ret = mca_base_framework_open(&opal_pstat_base_framework, 0))) {
-        ORTE_ERROR_LOG(ret);
         error = "opal_pstat_base_open";
         goto error;
     }
     if (ORTE_SUCCESS != (ret = opal_pstat_base_select())) {
-        ORTE_ERROR_LOG(ret);
         error = "opal_pstat_base_select";
         goto error;
     }
 
     /* open and setup the state machine */
     if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_state_base_framework, 0))) {
-        ORTE_ERROR_LOG(ret);
         error = "orte_state_base_open";
         goto error;
     }
     if (ORTE_SUCCESS != (ret = orte_state_base_select())) {
-        ORTE_ERROR_LOG(ret);
         error = "orte_state_base_select";
         goto error;
     }
 
     /* open the errmgr */
     if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_errmgr_base_framework, 0))) {
-        ORTE_ERROR_LOG(ret);
         error = "orte_errmgr_base_open";
         goto error;
     }
@@ -259,26 +254,26 @@ static int rte_init(void)
      * first and select that component.
      */
     if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_plm_base_framework, 0))) {
-        ORTE_ERROR_LOG(ret);
         error = "orte_plm_base_open";
         goto error;
     }
     if (ORTE_SUCCESS != (ret = orte_plm_base_select())) {
-        ORTE_ERROR_LOG(ret);
         error = "orte_plm_base_select";
+        if (ORTE_ERR_FATAL == ret) {
+            /* we already output a show_help - so keep down the verbage */
+            ret = ORTE_ERR_SILENT;
+        }
         goto error;
     }
     /* if we were spawned by a singleton, our jobid was given to us */
     if (NULL != orte_ess_base_jobid) {
         if (ORTE_SUCCESS != (ret = orte_util_convert_string_to_jobid(&ORTE_PROC_MY_NAME->jobid, orte_ess_base_jobid))) {
-            ORTE_ERROR_LOG(ret);
             error = "convert_string_to_jobid";
             goto error;
         }
         ORTE_PROC_MY_NAME->vpid = 0;
     } else {
         if (ORTE_SUCCESS != (ret = orte_plm.set_hnp_name())) {
-            ORTE_ERROR_LOG(ret);
             error = "orte_plm_set_hnp_name";
             goto error;
         }
@@ -304,7 +299,6 @@ static int rte_init(void)
                                                     orte_process_info.tmpdir_base,
                                                     orte_process_info.nodename, NULL,
                                                     ORTE_PROC_MY_NAME))) {
-            ORTE_ERROR_LOG(ret);
             error = "orte_session_dir define";
             goto error;
         }
@@ -318,7 +312,6 @@ static int rte_init(void)
                                                     orte_process_info.tmpdir_base,
                                                     orte_process_info.nodename, NULL,
                                                     ORTE_PROC_MY_NAME))) {
-            ORTE_ERROR_LOG(ret);
             error = "orte_session_dir";
             goto error;
         }
@@ -329,12 +322,10 @@ static int rte_init(void)
      * OOB Layer
      */
     if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_oob_base_framework, 0))) {
-        ORTE_ERROR_LOG(ret);
         error = "orte_oob_base_open";
         goto error;
     }
     if (ORTE_SUCCESS != (ret = orte_oob_base_select())) {
-        ORTE_ERROR_LOG(ret);
         error = "orte_oob_base_select";
         goto error;
     }
@@ -343,30 +334,25 @@ static int rte_init(void)
      * Runtime Messaging Layer
      */
     if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_rml_base_framework, 0))) {
-        ORTE_ERROR_LOG(ret);
         error = "orte_rml_base_open";
         goto error;
     }
     if (ORTE_SUCCESS != (ret = orte_rml_base_select())) {
-        ORTE_ERROR_LOG(ret);
         error = "orte_rml_base_select";
         goto error;
     }
 
     /* Messaging QoS Layer */
     if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_qos_base_framework, 0))) {
-        ORTE_ERROR_LOG(ret);
         error = "orte_qos_base_open";
         goto error;
     }
     if (ORTE_SUCCESS != (ret = orte_qos_base_select())) {
-        ORTE_ERROR_LOG(ret);
         error = "orte_qos_base_select";
         goto error;
     }
 
     if (ORTE_SUCCESS != (ret = orte_errmgr_base_select())) {
-        ORTE_ERROR_LOG(ret);
         error = "orte_errmgr_base_select";
         goto error;
     }
@@ -635,8 +621,9 @@ static int rte_init(void)
         free(contact_path);
     }
 
-    /* setup the PMIx framework - ensure it skips all non-PMIx components */
-    putenv("OMPI_MCA_pmix=^s1,s2,cray");
+    /* setup the PMIx framework - ensure it skips all non-PMIx components, but
+     * do not override anything we were given */
+    opal_setenv("OMPI_MCA_pmix", "^s1,s2,cray", false, &environ);
     if (OPAL_SUCCESS != (ret = mca_base_framework_open(&opal_pmix_base_framework, 0))) {
         ORTE_ERROR_LOG(ret);
         error = "orte_pmix_base_open";

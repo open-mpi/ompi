@@ -10,11 +10,13 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2009 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
+ * Copyright (c) 2015      Mellanox Technologies, Inc.
+ *                         All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -53,8 +55,6 @@ int ompi_debug_show_mpi_alloc_mem_leaks = 0;
 bool ompi_debug_no_free_handles = false;
 bool ompi_mpi_show_mca_params = false;
 char *ompi_mpi_show_mca_params_file = NULL;
-bool ompi_mpi_abort_print_stack = false;
-int ompi_mpi_abort_delay = 0;
 bool ompi_mpi_keep_fqdn_hostnames = false;
 bool ompi_have_sparse_group_storage = OPAL_INT_TO_BOOL(OMPI_GROUP_SPARSE);
 bool ompi_use_sparse_group_storage = OPAL_INT_TO_BOOL(OMPI_GROUP_SPARSE);
@@ -65,6 +65,7 @@ char *ompi_mpi_show_mca_params_string = NULL;
 bool ompi_mpi_have_sparse_group_storage = !!(OMPI_GROUP_SPARSE);
 bool ompi_mpi_preconnect_mpi = false;
 uint32_t ompi_add_procs_cutoff = 1024;
+bool ompi_mpi_dynamics_enabled = true;
 
 static bool show_default_mca_params = false;
 static bool show_file_mca_params = false;
@@ -205,33 +206,6 @@ int ompi_mpi_register_params(void)
 
     /* User-level process pinning controls */
 
-    /* MPI_ABORT controls */
-    ompi_mpi_abort_delay = 0;
-    (void) mca_base_var_register("ompi", "mpi", NULL, "abort_delay",
-                                "If nonzero, print out an identifying message when MPI_ABORT is invoked (hostname, PID of the process that called MPI_ABORT) and delay for that many seconds before exiting (a negative delay value means to never abort).  This allows attaching of a debugger before quitting the job.",
-                                 MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                 OPAL_INFO_LVL_9,
-                                 MCA_BASE_VAR_SCOPE_READONLY,
-                                 &ompi_mpi_abort_delay);
-
-    ompi_mpi_abort_print_stack = false;
-    (void) mca_base_var_register("ompi", "mpi", NULL, "abort_print_stack",
-                                 "If nonzero, print out a stack trace when MPI_ABORT is invoked",
-                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0,
-                                /* If we do not have stack trace
-                                   capability, make this a constant
-                                   MCA variable */
-#if OPAL_WANT_PRETTY_PRINT_STACKTRACE
-                                 0,
-                                 OPAL_INFO_LVL_9,
-                                 MCA_BASE_VAR_SCOPE_READONLY,
-#else
-                                 MCA_BASE_VAR_FLAG_DEFAULT_ONLY,
-                                 OPAL_INFO_LVL_9,
-                                 MCA_BASE_VAR_SCOPE_CONSTANT,
-#endif
-                                 &ompi_mpi_abort_print_stack);
-
     ompi_mpi_preconnect_mpi = false;
     value = mca_base_var_register("ompi", "mpi", NULL, "preconnect_mpi",
                                   "Whether to force MPI processes to fully "
@@ -298,6 +272,25 @@ int ompi_mpi_register_params(void)
                                   0, 0, OPAL_INFO_LVL_3, MCA_BASE_VAR_SCOPE_LOCAL,
                                   &ompi_add_procs_cutoff);
 
+    ompi_mpi_dynamics_enabled = true;
+    (void) mca_base_var_register("ompi", "mpi", NULL, "dynamics_enabled",
+                                 "Is the MPI dynamic process functionality enabled (e.g., MPI_COMM_SPAWN)?  Default is yes, but certain transports and/or environments may disable it.",
+                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                 OPAL_INFO_LVL_4,
+                                 MCA_BASE_VAR_SCOPE_READONLY,
+                                 &ompi_mpi_dynamics_enabled);
+
+    value = mca_base_var_find ("opal", "opal", NULL, "abort_delay");
+    if (0 <= value) {
+        (void) mca_base_var_register_synonym(value, "ompi", "mpi", NULL, "abort_delay",
+                                      MCA_BASE_VAR_SYN_FLAG_DEPRECATED);
+    }
+
+    value = mca_base_var_find ("opal", "opal", NULL, "abort_print_stack");
+    if (0 <= value) {
+        (void) mca_base_var_register_synonym(value, "ompi", "mpi", NULL, "abort_print_stack",
+                                      MCA_BASE_VAR_SYN_FLAG_DEPRECATED);
+    }
 
     return OMPI_SUCCESS;
 }

@@ -41,8 +41,7 @@ int ompi_osc_rdma_flush (int target, struct ompi_win_t *win)
 
     assert (0 <= target);
 
-    OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
-                         "ompi_osc_rdma_flush starting..."));
+    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "flush: %d, %s", target, win->w_name);
 
     if (ompi_comm_rank (module->comm) == target) {
         /* nothing to flush. call one round of progress */
@@ -54,9 +53,8 @@ int ompi_osc_rdma_flush (int target, struct ompi_win_t *win)
 
     lock = ompi_osc_rdma_module_sync_lookup (module, target, &peer);
     if (OPAL_UNLIKELY(NULL == lock || OMPI_OSC_RDMA_SYNC_TYPE_LOCK != lock->type)) {
-        OPAL_OUTPUT_VERBOSE((25, ompi_osc_base_framework.framework_output,
-                             "ompi_osc_rdma_flush: target %d is not locked in window %s",
-                             target, win->w_name));
+        OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_INFO, "flush: target %d is not locked in window %s",
+                         target, win->w_name);
         OPAL_THREAD_UNLOCK(&module->lock);
         return OMPI_ERR_RMA_SYNC;
     }
@@ -64,6 +62,8 @@ int ompi_osc_rdma_flush (int target, struct ompi_win_t *win)
 
     /* finish all outstanding fragments */
     ompi_osc_rdma_sync_rdma_complete (lock);
+
+    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "flush on target %d complete", target);
 
     return OMPI_SUCCESS;
 }
@@ -82,8 +82,7 @@ int ompi_osc_rdma_flush_all (struct ompi_win_t *win)
         return OMPI_ERR_RMA_SYNC;
     }
 
-    OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
-                         "ompi_osc_rdma_flush_all entering..."));
+    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "flush_all: %s", win->w_name);
 
     /* globally complete all outstanding rdma requests */
     if (OMPI_OSC_RDMA_SYNC_TYPE_LOCK == module->all_sync.type) {
@@ -93,13 +92,13 @@ int ompi_osc_rdma_flush_all (struct ompi_win_t *win)
     /* flush all locks */
     ret = opal_hash_table_get_first_key_uint32 (&module->outstanding_locks, &key, (void **) &lock, &node);
     while (OPAL_SUCCESS == ret) {
+        OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_DEBUG, "flushing lock %p", (void *) lock);
         ompi_osc_rdma_sync_rdma_complete (lock);
         ret = opal_hash_table_get_next_key_uint32 (&module->outstanding_locks, &key, (void **) &lock,
                                                    node, &node);
     }
 
-    OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
-                         "ompi_osc_rdma_flush_all complete"));
+    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "flush_all complete");
 
     return OPAL_SUCCESS;
 }
@@ -124,7 +123,7 @@ static inline int ompi_osc_rdma_lock_atomic_internal (ompi_osc_rdma_module_t *mo
 
     if (MPI_LOCK_EXCLUSIVE == lock->sync.lock.type) {
         do {
-            OPAL_OUTPUT_VERBOSE((25, ompi_osc_base_framework.framework_output, "Incrementing global exclusive lock"));
+            OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_DEBUG, "incrementing global exclusive lock");
             /* lock the master lock. this requires no rank has a global shared lock */
             ret = ompi_osc_rdma_lock_acquire_shared (module, module->leader, 1, offsetof (ompi_osc_rdma_state_t, global_lock), 0xffffffff00000000L);
             if (OMPI_SUCCESS != ret) {
@@ -132,7 +131,7 @@ static inline int ompi_osc_rdma_lock_atomic_internal (ompi_osc_rdma_module_t *mo
                 continue;
             }
 
-            OPAL_OUTPUT_VERBOSE((25, ompi_osc_base_framework.framework_output, "Acquiring exclusive lock from peer"));
+            OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_DEBUG, "acquiring exclusive lock on peer");
             ret = ompi_osc_rdma_lock_try_acquire_exclusive (module, peer,  offsetof (ompi_osc_rdma_state_t, local_lock));
             if (ret) {
                 /* release the global lock */
@@ -147,7 +146,7 @@ static inline int ompi_osc_rdma_lock_atomic_internal (ompi_osc_rdma_module_t *mo
     } else {
         do {
             /* go right to the target to acquire a shared lock */
-            OPAL_OUTPUT_VERBOSE((25, ompi_osc_base_framework.framework_output, "Incrementing local shared lock"));
+            OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_DEBUG, "incrementing global shared lock");
             ret = ompi_osc_rdma_lock_acquire_shared (module, peer, 1, offsetof (ompi_osc_rdma_state_t, local_lock),
                                                      OMPI_OSC_RDMA_LOCK_EXCLUSIVE);
             if (OMPI_SUCCESS == ret) {
@@ -165,10 +164,13 @@ static inline int ompi_osc_rdma_unlock_atomic_internal (ompi_osc_rdma_module_t *
                                                         ompi_osc_rdma_sync_t *lock)
 {
     if (MPI_LOCK_EXCLUSIVE == lock->sync.lock.type) {
+        OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_DEBUG, "releasing exclusive lock on peer");
         ompi_osc_rdma_lock_release_exclusive (module, peer, offsetof (ompi_osc_rdma_state_t, local_lock));
+        OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_DEBUG, "decrementing global exclusive lock");
         ompi_osc_rdma_lock_release_shared (module, module->leader, -1, offsetof (ompi_osc_rdma_state_t, global_lock));
         peer->flags &= ~OMPI_OSC_RDMA_PEER_EXCLUSIVE;
     } else {
+        OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_DEBUG, "decrementing global shared lock");
         ompi_osc_rdma_lock_release_shared (module, peer, -1, offsetof (ompi_osc_rdma_state_t, local_lock));
     }
 
@@ -182,7 +184,12 @@ int ompi_osc_rdma_lock_atomic (int lock_type, int target, int assert, ompi_win_t
     ompi_osc_rdma_sync_t *lock;
     int ret = OMPI_SUCCESS;
 
-    OPAL_OUTPUT_VERBOSE((60, ompi_osc_base_framework.framework_output, "osc rdma: lock %d %d", target, lock_type));
+    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "lock: %d, %d, %d, %s", lock_type, target, assert, win->w_name);
+
+    if (module->no_locks) {
+        OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_INFO, "attempted to lock with no_locks set");
+        return OMPI_ERR_RMA_SYNC;
+    }
 
     if (module->all_sync.epoch_active && (OMPI_OSC_RDMA_SYNC_TYPE_LOCK != module->all_sync.type || MPI_LOCK_EXCLUSIVE == lock_type)) {
         /* impossible to get an exclusive lock while holding a global shared lock or in a active
@@ -220,6 +227,8 @@ int ompi_osc_rdma_lock_atomic (int lock_type, int target, int assert, ompi_win_t
         OBJ_RELEASE(lock);
     }
 
+    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "lock %d complete", target);
+
     return ret;
 }
 
@@ -233,11 +242,12 @@ int ompi_osc_rdma_unlock_atomic (int target, ompi_win_t *win)
 
     OPAL_THREAD_LOCK(&module->lock);
 
+    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "unlock: %d, %s", target, win->w_name);
+
     lock = ompi_osc_rdma_module_lock_find (module, target, &peer);
     if (OPAL_UNLIKELY(NULL == lock)) {
-        OPAL_OUTPUT_VERBOSE((25, ompi_osc_base_framework.framework_output,
-                             "ompi_osc_rdma_unlock: target %d is not locked in window %s",
-                             target, win->w_name));
+        OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_INFO, "target %d is not locked in window %s",
+                         target, win->w_name);
         OPAL_THREAD_UNLOCK(&module->lock);
         return OMPI_ERR_RMA_SYNC;
     }
@@ -254,8 +264,7 @@ int ompi_osc_rdma_unlock_atomic (int target, ompi_win_t *win)
     /* release our reference to this peer */
     OBJ_RELEASE(peer);
 
-    OPAL_OUTPUT_VERBOSE((60, ompi_osc_base_framework.framework_output,
-                         "ompi_osc_rdma_unlock: unlock of %d complete", target));
+    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "unlock %d complete", target);
 
     --module->passive_target_access_epoch;
 
@@ -275,16 +284,20 @@ int ompi_osc_rdma_lock_all_atomic (int assert, struct ompi_win_t *win)
     ompi_osc_rdma_sync_t *lock;
     int ret = OMPI_SUCCESS;
 
-    OPAL_THREAD_LOCK(&module->lock);
+    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "lock_all: %d, %s", assert, win->w_name);
 
-    /* Check if no_locks is set. TODO: we also need to track whether we are in an
-     * active target epoch. Fence can make this tricky to track. */
+    if (module->no_locks) {
+        OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_INFO, "attempted to lock with no_locks set");
+        return OMPI_ERR_RMA_SYNC;
+    }
+
+    OPAL_THREAD_LOCK(&module->lock);
     if (module->all_sync.epoch_active) {
-        OPAL_OUTPUT_VERBOSE((25, ompi_osc_base_framework.framework_output, "osc/rdma: attempted "
-                             "to lock all when active target epoch is %s and lock all epoch is %s",
-                             (OMPI_OSC_RDMA_SYNC_TYPE_LOCK != module->all_sync.type && module->all_sync.epoch_active) ?
-                             "active" : "inactive",
-                             (OMPI_OSC_RDMA_SYNC_TYPE_LOCK == module->all_sync.type) ? "active" : "inactive"));
+        OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_INFO, "attempted lock_all when active target epoch is %s "
+                         "and lock all epoch is %s",
+                         (OMPI_OSC_RDMA_SYNC_TYPE_LOCK != module->all_sync.type && module->all_sync.epoch_active) ?
+                         "active" : "inactive",
+                         (OMPI_OSC_RDMA_SYNC_TYPE_LOCK == module->all_sync.type) ? "active" : "inactive");
         OPAL_THREAD_UNLOCK(&module->lock);
         return OMPI_ERR_RMA_SYNC;
     }
@@ -323,6 +336,8 @@ int ompi_osc_rdma_lock_all_atomic (int assert, struct ompi_win_t *win)
 
     OPAL_THREAD_UNLOCK(&module->lock);
 
+    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "lock_all complete");
+
     return ret;
 }
 
@@ -331,16 +346,13 @@ int ompi_osc_rdma_unlock_all_atomic (struct ompi_win_t *win)
     ompi_osc_rdma_module_t *module = GET_MODULE(win);
     ompi_osc_rdma_sync_t *lock;
 
-    OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
-                         "ompi_osc_rdma_unlock_all entering..."));
+    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "unlock_all: %s", win->w_name);
 
     OPAL_THREAD_LOCK(&module->lock);
 
     lock = &module->all_sync;
     if (OMPI_OSC_RDMA_SYNC_TYPE_LOCK != lock->type) {
-        OPAL_OUTPUT_VERBOSE((25, ompi_osc_base_framework.framework_output,
-                             "ompi_osc_rdma_unlock_all: not locked in window %s",
-                             win->w_name));
+        OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_INFO, "not locked in window %s", win->w_name);
         OPAL_THREAD_UNLOCK(&module->lock);
         return OMPI_ERR_RMA_SYNC;
     }
@@ -363,7 +375,7 @@ int ompi_osc_rdma_unlock_all_atomic (struct ompi_win_t *win)
 
     OPAL_THREAD_UNLOCK(&module->lock);
 
-    OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output, "ompi_osc_rdma_unlock_all complete"));
+    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "unlock_all complete");
 
     return OMPI_SUCCESS;
 }

@@ -10,6 +10,8 @@
 #                         All rights reserved.
 # Copyright (c) 2009-2014 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
+# Copyright (c) 2015      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -40,14 +42,14 @@ AC_DEFUN([MCA_opal_crs_blcr_CONFIG],[
     AS_IF([test "$opal_want_ft_cr" = "0"],
           [$2
            check_crs_blcr_good="no"
-           AS_IF([test ! -z "$with_blcr" -a "$with_blcr" != "no"],
+           AS_IF([test ! -z "$with_blcr" && test "$with_blcr" != "no"],
                  [AC_MSG_WARN([BLCR support requested, but FT support not requested. You need to specify the --with-ft=cr configure option.])
                   AC_MSG_ERROR([Aborting.])])
           ],
           [check_crs_blcr_good="yes"])
 
     # If we do not want BLCR, then do not compile it
-    AS_IF([test "$with_blcr" = "no" -o "$check_crs_blcr_good" = "no"],
+    AS_IF([test "$with_blcr" = "no" || test "$check_crs_blcr_good" = "no"],
           [$2
            check_crs_blcr_good="no"],
           [check_crs_blcr_good="yes"])
@@ -60,10 +62,10 @@ AC_DEFUN([MCA_opal_crs_blcr_CONFIG],[
 
     # Determine the search paths for the headers and libraries
     AS_IF([test "$check_crs_blcr_good" != "yes"], [$2],
-          [AS_IF([test ! -z "$with_blcr" -a "$with_blcr" != "yes"],
+          [AS_IF([test ! -z "$with_blcr" && test "$with_blcr" != "yes"],
                  [check_crs_blcr_dir="$with_blcr"
                   check_crs_blcr_dir_msg="$with_blcr (from --with-blcr)"])
-           AS_IF([test ! -z "$with_blcr_libdir" -a "$with_blcr_libdir" != "yes"],
+           AS_IF([test ! -z "$with_blcr_libdir" && test "$with_blcr_libdir" != "yes"],
                  [check_crs_blcr_libdir="$with_blcr_libdir"
                   check_crs_blcr_libdir_msg="$with_blcr_libdir (from --with-blcr-libdir)"])
           ])
@@ -174,7 +176,7 @@ AC_DEFUN([MCA_opal_crs_blcr_CONFIG],[
     #
     # Require either a working cr_request_file() or cr_request_checkpoint() function
     #
-    AS_IF([test "$crs_blcr_have_working_cr_request" = "0" -a "$crs_blcr_have_cr_request_checkpoint" = "0"],
+    AS_IF([test "$crs_blcr_have_working_cr_request" = "0" && test "$crs_blcr_have_cr_request_checkpoint" = "0"],
         [$2
          check_crs_blcr_good="no"
          AC_MSG_WARN([The BLCR CRS component requires either the cr_request_checkpoint() or cr_request_file() functions])])
@@ -194,7 +196,7 @@ AC_DEFUN([MCA_opal_crs_blcr_CONFIG],[
             AC_SUBST([crs_blcr_LDFLAGS])
             AC_SUBST([crs_blcr_LIBS])
             $1],
-          [AS_IF([test ! -z "$with_blcr" -a "$with_blcr" != "no"],
+          [AS_IF([test ! -z "$with_blcr" && test "$with_blcr" != "no"],
                  [AC_MSG_WARN([BLCR support requested but not found.  Perhaps you need to specify the location of the BLCR libraries.])
                   AC_MSG_ERROR([Aborting.])])
            $3])

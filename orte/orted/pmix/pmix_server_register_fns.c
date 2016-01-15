@@ -42,15 +42,22 @@
 
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_globals.h"
+#include "orte/runtime/orte_wait.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/rmaps/rmaps_types.h"
 
 #include "pmix_server_internal.h"
 #include "pmix_server.h"
 
+typedef struct {
+    volatile bool active;
+    opal_list_t *info;
+} myxfer_t;
+
 static void opcbfunc(int status, void *cbdata)
 {
-    opal_list_t *lt = (opal_list_t*)cbdata;
+    myxfer_t *p = (myxfer_t*)cbdata;
+    opal_list_t *lt = p->info;
     opal_value_t *k1, *k2;
     opal_list_t *pmap;
 
@@ -65,6 +72,7 @@ static void opcbfunc(int status, void *cbdata)
         }
         OBJ_RELEASE(lt);
     }
+    p->active = false;
 }
 
 /* stuff proc attributes for sending back to a proc */
@@ -83,6 +91,7 @@ int orte_pmix_server_register_nspace(orte_job_t *jdata)
     orte_app_context_t *app;
     uid_t uid;
     gid_t gid;
+    myxfer_t *p;
 
     opal_output_verbose(2, orte_pmix_server_globals.output,
                         "%s register nspace for %s",
@@ -93,23 +102,6 @@ int orte_pmix_server_register_nspace(orte_job_t *jdata)
     info = OBJ_NEW(opal_list_t);
     uid = geteuid();
     gid = getegid();
-
-    /* local topology - we do this so the procs won't read the
-     * topology themselves as this could overwhelm the local
-     * system on large-scale SMPs */
-    if (NULL != opal_hwloc_topology) {
-        char *xmlbuffer=NULL;
-        int len;
-        kv = OBJ_NEW(opal_value_t);
-        kv->key = strdup(OPAL_PMIX_LOCAL_TOPO);
-        if (0 != hwloc_topology_export_xmlbuffer(opal_hwloc_topology, &xmlbuffer, &len)) {
-            OBJ_RELEASE(kv);
-            return OPAL_ERROR;
-        }
-        kv->data.string = xmlbuffer;
-        kv->type = OPAL_STRING;
-        opal_list_append(info, &kv->super);
-    }
 
     /* jobid */
     kv = OBJ_NEW(opal_value_t);
@@ -253,6 +245,7 @@ int orte_pmix_server_register_nspace(orte_job_t *jdata)
                 if (orte_get_attribute(&pptr->attributes, ORTE_PROC_CPU_BITMAP, (void**)&tmp, OPAL_STRING)) {
                     if (NULL != tmp) {
                         opal_argv_append_nosize(&procs, tmp);
+                        free(tmp);
                     } else {
                         opal_argv_append_nosize(&procs, "UNBOUND");
                     }
@@ -406,11 +399,17 @@ int orte_pmix_server_register_nspace(orte_job_t *jdata)
     orte_set_attribute(&jdata->attributes, ORTE_JOB_NSPACE_REGISTERED, ORTE_ATTR_LOCAL, NULL, OPAL_BOOL);
 
     /* pass it down */
+    p = (myxfer_t*)malloc(sizeof(myxfer_t));
+    p->active = true;
+    p->info = info;
     if (OPAL_SUCCESS != opal_pmix.server_register_nspace(jdata->jobid,
                                                          jdata->num_local_procs,
-                                                         info, opcbfunc, (void*)info)) {
-        rc = ORTE_ERROR;
+                                                         info, opcbfunc, (void*)p)) {
+        OPAL_LIST_RELEASE(info);
+        return ORTE_ERROR;
     }
+    ORTE_WAIT_FOR_COMPLETION(p->active);
+    free(p);
 
-    return rc;
+    return ORTE_SUCCESS;
 }

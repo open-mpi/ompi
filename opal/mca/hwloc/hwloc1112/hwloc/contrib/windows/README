@@ -1,0 +1,36 @@
+This Visual Studio support is experimental.
+Thanks to Eloi Gaudry for contributing the first draft of files.
+
+
+No PlatformToolset is specified, so that the default target is always
+used during build.
+That means your build may not be compatible with older systems.
+Enforce a specific toolset before building if needed.
+
+
+hwloc-assembler-remote is not built because it requires a hardwired
+path to hwloc-assembler and it uses ssh.
+
+hwloc-compress-dir not built because needs work.
+
+hwloc-gather-topology is Linux specific.
+
+hwloc-ps is not built because it does nothing on Windows anyway.
+Possible code proposed by Eloi Gaudry:
+  // Get the process list snapshot
+  HANDLE hProcessSnapShot = CreateToolhelp32Snapshot(TH32CS_SNAPALL, 0);
+  // Initialize the process entry structure
+  PROCESSENTRY32 ProcessEntry = { 0 } ;
+  ProcessEntry.dwSize = sizeof(ProcessEntry);
+  // Get the first process info
+  if (Process32First( hProcessSnapShot, &ProcessEntry)) {
+    do {
+      HANDLE hProcess = OpenProcess(PROCESS_QUERY_INFORMATION, FALSE, ProcessEntry.th32ProcessID) ;
+      if (hProcess) {
+        std::cerr << ProcessEntry.th32ProcessID << "(" << ProcessEntry.szExeFile << ")" << std::endl ;
+      }
+      // check the PROCESSENTRY32 for other members.
+    } while (Process32Next(hProcessSnapShot, &ProcessEntry));
+    // Close the handle
+    CloseHandle( hProcessSnapShot ) ;
+  }

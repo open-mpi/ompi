@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -24,7 +26,8 @@
 #include "ompi/constants.h"
 #include "ompi/communicator/communicator.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_ERROR_STRING = ompi_error_string_f
 #pragma weak pmpi_error_string = ompi_error_string_f
 #pragma weak pmpi_error_string_ = ompi_error_string_f
@@ -32,7 +35,7 @@
 
 #pragma weak PMPI_Error_string_f = ompi_error_string_f
 #pragma weak PMPI_Error_string_f08 = ompi_error_string_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_ERROR_STRING,
                             pmpi_error_string,
                             pmpi_error_string_,
@@ -40,6 +43,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_ERROR_STRING,
                             pompi_error_string_f,
                             (MPI_Fint *errorcode, char *string, MPI_Fint *resultlen, MPI_Fint *ierr, int string_len),
                             (errorcode, string, resultlen, ierr, string_len) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -50,9 +54,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_ERROR_STRING,
 
 #pragma weak MPI_Error_string_f = ompi_error_string_f
 #pragma weak MPI_Error_string_f08 = ompi_error_string_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_ERROR_STRING,
                             mpi_error_string,
                             mpi_error_string_,
@@ -60,12 +63,11 @@ OMPI_GENERATE_F77_BINDINGS (MPI_ERROR_STRING,
                             ompi_error_string_f,
                             (MPI_Fint *errorcode, char *string, MPI_Fint *resultlen, MPI_Fint *ierr, int string_len),
                             (errorcode, string, resultlen, ierr, string_len) )
+#else
+#define ompi_error_string_f pompi_error_string_f
+#endif
 #endif
 
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
-#endif
 
 static const char FUNC_NAME[] = "MPI_ERROR_STRING";
 
@@ -81,7 +83,7 @@ void ompi_error_string_f(MPI_Fint *errorcode, char *string,
     char c_string[MPI_MAX_ERROR_STRING + 1];
     OMPI_SINGLE_NAME_DECL(resultlen);
 
-    c_ierr = MPI_Error_string(OMPI_FINT_2_INT(*errorcode),
+    c_ierr = PMPI_Error_string(OMPI_FINT_2_INT(*errorcode),
                               c_string,
                               OMPI_SINGLE_NAME_CONVERT(resultlen)
                               );

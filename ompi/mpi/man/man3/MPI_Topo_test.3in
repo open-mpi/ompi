@@ -17,9 +17,21 @@ int MPI_Topo_test(MPI_Comm \fIcomm\fP, int\fI *top_type\fP)
 .fi
 .SH Fortran Syntax
 .nf
-INCLUDE 'mpif.h'
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
 MPI_TOPO_TEST(\fICOMM, TOP_TYPE, IERROR\fP)
 	INTEGER	\fICOMM, TOP_TYPE, IERROR\fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Topo_test(\fIcomm\fP, \fIstatus\fP, \fIierror\fP)
+	TYPE(MPI_Comm), INTENT(IN) :: \fIcomm\fP
+	INTEGER, INTENT(OUT) :: \fIstatus\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
+		\fIDOUBLE PRECISION MPI_Wtick(\fP)
+		\fIDOUBLE PRECISION MPI_Wtime(\fP)
 
 .fi
 .SH C++ Syntax
@@ -53,6 +65,7 @@ The output value \fItop_type\fP is one of the following:
 .nf
     MPI_GRAPH		graph topology
     MPI_CART		Cartesian topology
+    MPI_DIST_GRAPH	distributed graph topology
     MPI_UNDEFINED	no topology
 
 .fi

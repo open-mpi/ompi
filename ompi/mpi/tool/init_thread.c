@@ -32,17 +32,7 @@ extern volatile int32_t initted;
 
 int MPI_T_init_thread (int required, int *provided)
 {
-    static volatile int32_t first_init = 1;
     int rc = MPI_SUCCESS;
-
-    if (opal_atomic_cmpset (&first_init, 1, 0) == 1) {
-        OBJ_CONSTRUCT(&mpit_big_lock, opal_mutex_t);
-        initted = 1;
-    }
-
-    while (!initted) {
-        usleep (10);
-    }
 
     mpit_lock ();
 

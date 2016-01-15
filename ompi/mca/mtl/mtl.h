@@ -56,6 +56,12 @@ struct mca_mtl_request_t {
 };
 typedef struct mca_mtl_request_t mca_mtl_request_t;
 
+
+/**
+ * MTL module flags
+ */
+#define MCA_MTL_BASE_FLAG_REQUIRE_WORLD 0x00000001
+
 /**
  * Initialization routine for MTL component
  *

@@ -3,6 +3,8 @@
 .\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
 .\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
+.\" Copyright 2015      Research Organization for Information Science
+.\"                     and Technology (RIST). All rights reserved.
 .\" $COPYRIGHT$
 .TH MPI_File_write_ordered_end 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
@@ -11,18 +13,29 @@
 .SH SYNTAX
 .ft R
 .nf
-C Syntax
-    #include <mpi.h>
-    int MPI_File_write_ordered_end(MPI_File \fIfh\fP, const void \fI*buf\fP,
-    	      MPI_Status \fI*status\fP)
+.SH C Syntax
+#include <mpi.h>
+int MPI_File_write_ordered_end(MPI_File \fIfh\fP, const void \fI*buf\fP,
+	MPI_Status \fI*status\fP)
 
 .fi
 .SH Fortran Syntax
 .nf
-    INCLUDE 'mpif.h'
-    MPI_FILE_WRITE_ORDERED_END(\fIFH\fP, \fIBUF\fP, \fISTATUS\fP,\fI IERROR\fP)
-		<type>		BUF(*)
-        	INTEGER		FH, STATUS(MPI_STATUS_SIZE), IERROR
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
+MPI_FILE_WRITE_ORDERED_END(\fIFH\fP, \fIBUF\fP, \fISTATUS\fP, \fIIERROR\fP)
+	<type>	\fIBUF(*)\fP
+	INTEGER	\fIFH, STATUS(MPI_STATUS_SIZE), IERROR\fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_File_write_ordered_end(\fIfh\fP, \fIbuf\fP, \fIstatus\fP, \fIierror\fP)
+	TYPE(MPI_File), INTENT(IN) :: \fIfh\fP
+	TYPE(*), DIMENSION(..), INTENT(IN), ASYNCHRONOUS :: \fIbuf\fP
+	TYPE(MPI_Status) :: \fIstatus\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
 .SH C++ Syntax

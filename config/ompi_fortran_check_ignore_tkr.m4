@@ -13,7 +13,7 @@ dnl                         All rights reserved.
 dnl Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
 dnl                         reserved.
 dnl Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
-dnl Copyright (c) 2009-2014 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -156,6 +156,7 @@ AC_DEFUN([OMPI_FORTRAN_CHECK_IGNORE_TKR_SUB], [
   complex :: buffer3(4,4)
   complex, pointer, dimension(:,:) :: ptr
   target :: buffer3
+  integer :: buffer4
   ptr => buffer3
 
 ! Set some known values (somewhat irrelevant for this test, but just be
@@ -174,6 +175,11 @@ AC_DEFUN([OMPI_FORTRAN_CHECK_IGNORE_TKR_SUB], [
   call force_assumed_shape(buffer3, count)
 ! Force a pointer call through an assumed shape (!)
   ptr => buffer3
+! Also try with a simple scalar integer
+! (Intel 2016 compiler suite only partially supports GCC pragmas;
+! they work with all the above buffer types, but fail with a
+! simple scalar integer)
+  call foo(buffer4, count)
 
   end program
 

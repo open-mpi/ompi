@@ -47,10 +47,10 @@ ompi_coll_base_scatter_intra_binomial( const void *sbuf, int scount,
     char *ptmp, *tempbuf = NULL;
     ompi_coll_tree_t* bmtree;
     MPI_Status status;
-    MPI_Aint sextent, slb, strue_lb, strue_extent;
-    MPI_Aint rextent, rlb, rtrue_lb, rtrue_extent;
     mca_coll_base_module_t *base_module = (mca_coll_base_module_t*) module;
     mca_coll_base_comm_t *data = base_module->base_data;
+    ptrdiff_t sextent, rextent, ssize, rsize, sgap, rgap;
+
 
     size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
@@ -62,10 +62,11 @@ ompi_coll_base_scatter_intra_binomial( const void *sbuf, int scount,
     COLL_BASE_UPDATE_IN_ORDER_BMTREE( comm, base_module, root );
     bmtree = data->cached_in_order_bmtree;
 
-    ompi_datatype_get_extent(sdtype, &slb, &sextent);
-    ompi_datatype_get_true_extent(sdtype, &strue_lb, &strue_extent);
-    ompi_datatype_get_extent(rdtype, &rlb, &rextent);
-    ompi_datatype_get_true_extent(rdtype, &rtrue_lb, &rtrue_extent);
+    ompi_datatype_type_extent(sdtype, &sextent);
+    ompi_datatype_type_extent(rdtype, &rextent);
+
+    ssize = opal_datatype_span(&sdtype->super, (int64_t)scount * size, &sgap);
+    rsize = opal_datatype_span(&rdtype->super, (int64_t)rcount * size, &rgap);
 
     vrank = (rank - root + size) % size;
     ptmp = (char *) rbuf;  /* by default suppose leaf nodes, just use rbuf */
@@ -82,12 +83,11 @@ ompi_coll_base_scatter_intra_binomial( const void *sbuf, int scount,
             }
         } else {
             /* root is not on 0, allocate temp buffer for send */
-            tempbuf = (char *) malloc(strue_extent + ((ptrdiff_t)scount * (ptrdiff_t)size - 1) * sextent);
+            tempbuf = (char *) malloc(ssize);
             if (NULL == tempbuf) {
                 err = OMPI_ERR_OUT_OF_RESOURCE; line = __LINE__; goto err_hndl;
             }
-
-            ptmp = tempbuf - strue_lb;
+            ptmp = tempbuf - sgap;
 
             /* and rotate data so they will eventually in the right place */
             err = ompi_datatype_copy_content_same_ddt(sdtype, (ptrdiff_t)scount * (ptrdiff_t)(size - root),
@@ -110,12 +110,11 @@ ompi_coll_base_scatter_intra_binomial( const void *sbuf, int scount,
     } else if (!(vrank % 2)) {
         /* non-root, non-leaf nodes, allocte temp buffer for recv
          * the most we need is rcount*size/2 */
-        tempbuf = (char *) malloc(rtrue_extent + ((ptrdiff_t)rcount * (ptrdiff_t)size - 1) * rextent);
+        tempbuf = (char *) malloc(rsize);
         if (NULL == tempbuf) {
             err= OMPI_ERR_OUT_OF_RESOURCE; line = __LINE__; goto err_hndl;
         }
-
-        ptmp = tempbuf - rtrue_lb;
+        ptmp = tempbuf - rgap;
 
         sdtype = rdtype;
         scount = rcount;
@@ -171,6 +170,7 @@ ompi_coll_base_scatter_intra_binomial( const void *sbuf, int scount,
 
     OPAL_OUTPUT((ompi_coll_base_framework.framework_output,  "%s:%4d\tError occurred %d, rank %2d",
                  __FILE__, line, err, rank));
+    (void)line;  // silence compiler warning
     return err;
 }
 
@@ -204,7 +204,7 @@ ompi_coll_base_scatter_intra_basic_linear(const void *sbuf, int scount,
                                           mca_coll_base_module_t *module)
 {
     int i, rank, size, err;
-    ptrdiff_t lb, incr;
+    ptrdiff_t incr;
     char *ptmp;
 
     /* Initialize */
@@ -223,7 +223,7 @@ ompi_coll_base_scatter_intra_basic_linear(const void *sbuf, int scount,
 
     /* I am the root, loop sending data. */
 
-    err = ompi_datatype_get_extent(sdtype, &lb, &incr);
+    err = ompi_datatype_type_extent(sdtype, &incr);
     if (OMPI_SUCCESS != err) {
         return OMPI_ERROR;
     }

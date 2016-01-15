@@ -153,6 +153,7 @@ OMPI_DECLSPEC extern struct ompi_predefined_group_t *ompi_mpi_group_null_addr;
  * @return Pointer to new group structure
  */
 OMPI_DECLSPEC ompi_group_t *ompi_group_allocate(int group_size);
+ompi_group_t *ompi_group_allocate_plist_w_procs (ompi_proc_t **procs, int group_size);
 ompi_group_t *ompi_group_allocate_sporadic(int group_size);
 ompi_group_t *ompi_group_allocate_strided(void);
 ompi_group_t *ompi_group_allocate_bmap(int orig_group_size, int group_size);
@@ -333,6 +334,8 @@ int ompi_group_minloc (int list[], int length);
  */
 static inline struct ompi_proc_t *ompi_group_dense_lookup (ompi_group_t *group, const int peer_id, const bool allocate)
 {
+    ompi_proc_t *proc;
+
 #if OPAL_ENABLE_DEBUG
     if (peer_id >= group->grp_proc_count) {
         opal_output(0, "ompi_group_dense_lookup: invalid peer index (%d)", peer_id);
@@ -340,18 +343,25 @@ static inline struct ompi_proc_t *ompi_group_dense_lookup (ompi_group_t *group, 
     }
 #endif
 
-    if (OPAL_UNLIKELY(ompi_proc_is_sentinel (group->grp_proc_pointers[peer_id]))) {
+    proc = group->grp_proc_pointers[peer_id];
+
+    if (OPAL_UNLIKELY(ompi_proc_is_sentinel (proc))) {
         if (!allocate) {
             return NULL;
         }
 
         /* replace sentinel value with an actual ompi_proc_t */
-        group->grp_proc_pointers[peer_id] =
-            (ompi_proc_t *) ompi_proc_for_name (ompi_proc_sentinel_to_name ((intptr_t) group->grp_proc_pointers[peer_id]));
-        OBJ_RETAIN(group->grp_proc_pointers[peer_id]);
+        ompi_proc_t *real_proc =
+            (ompi_proc_t *) ompi_proc_for_name (ompi_proc_sentinel_to_name ((intptr_t) proc));
+
+        if (opal_atomic_cmpset_ptr (group->grp_proc_pointers + peer_id, proc, real_proc)) {
+            OBJ_RETAIN(real_proc);
+        }
+
+        proc = real_proc;
     }
 
-    return group->grp_proc_pointers[peer_id];
+    return proc;
 }
 
 /*

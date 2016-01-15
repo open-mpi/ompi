@@ -21,13 +21,30 @@ int MPI_Comm_spawn_multiple(int \fIcount\fP, char *\fIarray_of_commands\fP[],
 .fi
 .SH Fortran Syntax
 .nf
-INCLUDE 'mpif.h'
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
 MPI_COMM_SPAWN_MULTIPLE(\fICOUNT, ARRAY_OF_COMMANDS, ARRAY_OF_ARGV,
 	ARRAY_OF_MAXPROCS, ARRAY_OF_INFO, ROOT, COMM, INTERCOMM,
 	ARRAY_OF_ERRCODES, IERROR\fP)
 	INTEGER	\fICOUNT, ARRAY_OF_INFO(*), ARRAY_OF_MAXPROCS(*), ROOT,
 		COMM, INTERCOMM, ARRAY_OF_ERRCODES(*), IERROR\fP
 	CHARACTER*(*) \fIARRAY_OF_COMMANDS\fP(*), \fIARRAY_OF_ARGV\fP(\fICOUNT\fP, *)
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Comm_spawn_multiple(\fIcount\fP, \fIarray_of_commands\fP, \fIarray_of_argv\fP,
+	\fIarray_of_maxprocs\fP, \fIarray_of_info\fP, \fIroot\fP, \fIcomm\fP, \fIintercomm,\fP
+		\fIarray_of_errcodes\fP, \fIierror\fP)
+	INTEGER, INTENT(IN) :: \fIcount\fP, \fIarray_of_maxprocs(*)\fP, \fIroot\fP
+	CHARACTER(LEN=*), INTENT(IN) :: \fIarray_of_commands(*)\fP
+	CHARACTER(LEN=*), INTENT(IN) :: \fIarray_of_argv(count\fP, \fI*)\fP
+	TYPE(MPI_Info), INTENT(IN) :: \fIarray_of_info(*)\fP
+	TYPE(MPI_Comm), INTENT(IN) :: \fIcomm\fP
+	TYPE(MPI_Comm), INTENT(OUT) :: \fIintercomm\fP
+	INTEGER :: \fIarray_of_errcodes(*)\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
 .SH C++ Syntax

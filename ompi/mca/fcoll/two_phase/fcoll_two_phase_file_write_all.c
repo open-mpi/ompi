@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -12,6 +13,8 @@
  * Copyright (c) 2008-2014 University of Houston. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -220,7 +223,7 @@ mca_fcoll_two_phase_file_write_all (mca_io_ompio_file_t *fh,
 					  two_phase_num_io_procs,
 					  max_data);
 	if ( OMPI_SUCCESS != ret){
-	    return  ret;
+            goto exit;
 	}
 
 	two_phase_num_io_procs = fh->f_final_num_aggrs;
@@ -237,7 +240,8 @@ mca_fcoll_two_phase_file_write_all (mca_io_ompio_file_t *fh,
 
     aggregator_list = (int *) malloc (two_phase_num_io_procs *sizeof(int));
     if ( NULL == aggregator_list ) {
-	return OMPI_ERR_OUT_OF_RESOURCE;
+        ret = OMPI_ERR_OUT_OF_RESOURCE;
+        goto exit;
     }
 
     for (i =0; i< two_phase_num_io_procs; i++){
@@ -270,8 +274,8 @@ mca_fcoll_two_phase_file_write_all (mca_io_ompio_file_t *fh,
     total_bytes = (size_t) long_total_bytes;
 
     if ( 0 == total_bytes ) {
-        free(aggregator_list);
-	return OMPI_SUCCESS;
+        ret = OMPI_SUCCESS;
+        goto exit;
     }
 
     if (!(fh->f_flags & OMPIO_CONTIGUOUS_MEMORY)) {
@@ -560,17 +564,16 @@ exit :
     }
 
 
-
-    if (start_offsets != NULL) {
-	free(start_offsets);
-    }
-
-    if (end_offsets != NULL){
-	free(end_offsets);
-    }
-    if (aggregator_list != NULL){
-	free(aggregator_list);
-    }
+    free (start_offsets);
+    free (end_offsets);
+    free (aggregator_list);
+    free (decoded_iov);
+    free (fd_start);
+    free (fd_end);
+    free (others_req);
+    free (my_req);
+    free (buf_indices);
+    free (count_my_req_per_proc);
 
     return ret;
 }
@@ -657,61 +660,71 @@ static int two_phase_exch_and_write(mca_io_ompio_file_t *fh,
     curr_offlen_ptr = (int *) calloc(fh->f_size, sizeof(int));
 
     if ( NULL == curr_offlen_ptr ){
-	return OMPI_ERR_OUT_OF_RESOURCE;
+        ret = OMPI_ERR_OUT_OF_RESOURCE;
+        goto exit;
     }
 
     count = (int *) malloc(fh->f_size*sizeof(int));
 
     if ( NULL == count ){
-	return OMPI_ERR_OUT_OF_RESOURCE;
+        ret = OMPI_ERR_OUT_OF_RESOURCE;
+        goto exit;
     }
 
     partial_recv = (int *)calloc(fh->f_size, sizeof(int));
 
     if ( NULL == partial_recv ){
-	return OMPI_ERR_OUT_OF_RESOURCE;
+        ret = OMPI_ERR_OUT_OF_RESOURCE;
+        goto exit;
     }
 
     send_size = (int *) calloc(fh->f_size,sizeof(int));
 
     if ( NULL == send_size ){
-	return OMPI_ERR_OUT_OF_RESOURCE;
+        ret = OMPI_ERR_OUT_OF_RESOURCE;
+        goto exit;
     }
 
     recv_size = (int *) calloc(fh->f_size,sizeof(int));
 
     if ( NULL == recv_size ){
-	return OMPI_ERR_OUT_OF_RESOURCE;
+        ret = OMPI_ERR_OUT_OF_RESOURCE;
+        goto exit;
     }
 
     send_buf_idx = (int *) malloc(fh->f_size*sizeof(int));
 
     if ( NULL == send_buf_idx ){
-	return OMPI_ERR_OUT_OF_RESOURCE;
+        ret = OMPI_ERR_OUT_OF_RESOURCE;
+        goto exit;
     }
 
     sent_to_proc = (int *) calloc(fh->f_size, sizeof(int));
 
     if ( NULL == sent_to_proc){
-	return OMPI_ERR_OUT_OF_RESOURCE;
+        ret = OMPI_ERR_OUT_OF_RESOURCE;
+        goto exit;
     }
 
     curr_to_proc = (int *) malloc(fh->f_size*sizeof(int));
 
     if ( NULL == curr_to_proc ){
-	return OMPI_ERR_OUT_OF_RESOURCE;
+        ret = OMPI_ERR_OUT_OF_RESOURCE;
+        goto exit;
     }
 
     done_to_proc = (int *) malloc(fh->f_size*sizeof(int));
 
     if ( NULL == done_to_proc ){
-	return OMPI_ERR_OUT_OF_RESOURCE;
+        ret = OMPI_ERR_OUT_OF_RESOURCE;
+        goto exit;
     }
 
     start_pos = (int *) malloc(fh->f_size*sizeof(int));
 
     if ( NULL == start_pos ){
-	return OMPI_ERR_OUT_OF_RESOURCE;
+      ret = OMPI_ERR_OUT_OF_RESOURCE;
+      goto exit;
     }
 
 
@@ -753,8 +766,8 @@ static int two_phase_exch_and_write(mca_io_ompio_file_t *fh,
 			       size,i,
 			       count[i]);
 #endif
-			MPI_Address(write_buf+req_off-off,
-				    &(others_req[i].mem_ptrs[j]));
+			PMPI_Address(write_buf+req_off-off,
+				     &(others_req[i].mem_ptrs[j]));
 #if DEBUG_ON
 			printf("%d : mem_ptrs : %ld\n", fh->f_rank,
 			       others_req[i].mem_ptrs[j]);
@@ -818,7 +831,8 @@ static int two_phase_exch_and_write(mca_io_ompio_file_t *fh,
 		(sizeof(mca_io_ompio_io_array_t));
 	    if (NULL == fh->f_io_array) {
 		opal_output(1, "OUT OF MEMORY\n");
-		return OMPI_ERR_OUT_OF_RESOURCE;
+		ret = OMPI_ERR_OUT_OF_RESOURCE;
+                goto exit;
 	    }
 
 	    fh->f_io_array[0].offset  =(IOVBASE_TYPE *)(intptr_t) off;
@@ -839,7 +853,8 @@ static int two_phase_exch_and_write(mca_io_ompio_file_t *fh,
 	    if (fh->f_num_of_io_entries){
 		if ( 0 > fh->f_fbtl->fbtl_pwritev (fh)) {
 		    opal_output(1, "WRITE FAILED\n");
-		    return OMPI_ERROR;
+                    ret = OMPI_ERROR;
+                    goto exit;
 		}
 	    }
 #if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
@@ -883,41 +898,17 @@ static int two_phase_exch_and_write(mca_io_ompio_file_t *fh,
 
 exit:
 
-    if (ntimes){
-	if ( NULL != write_buf ){
-	    free(write_buf);
-	}
-    }
-    if ( NULL != curr_offlen_ptr ){
-	free(curr_offlen_ptr);
-    }
-    if ( NULL != count ){
-	free(count);
-    }
-    if ( NULL != partial_recv ){
-	free(partial_recv);
-    }
-    if ( NULL != send_size ){
-	free(send_size);
-    }
-    if ( NULL != recv_size ){
-	free(recv_size);
-    }
-    if ( NULL != sent_to_proc ){
-	free(sent_to_proc);
-    }
-    if ( NULL != start_pos ){
-	free(start_pos);
-    }
-    if ( NULL != send_buf_idx ){
-	free(send_buf_idx);
-    }
-    if ( NULL != curr_to_proc ){
-	free(curr_to_proc);
-    }
-    if ( NULL != done_to_proc ){
-	free(done_to_proc);
-    }
+    free (write_buf);
+    free (curr_offlen_ptr);
+    free (count);
+    free (partial_recv);
+    free (send_size);
+    free (recv_size);
+    free (sent_to_proc);
+    free (start_pos);
+    free (send_buf_idx);
+    free (curr_to_proc);
+    free (done_to_proc);
 
     return ret;
 }
@@ -986,7 +977,8 @@ static int two_phase_exchage_data(mca_io_ompio_file_t *fh,
     tmp_len = (int *) malloc(fh->f_size*sizeof(int));
 
     if ( NULL == tmp_len ) {
-	return OMPI_ERR_OUT_OF_RESOURCE;
+        ret = OMPI_ERR_OUT_OF_RESOURCE;
+        goto exit;
     }
 
     j = 0;
@@ -1076,7 +1068,8 @@ static int two_phase_exchage_data(mca_io_ompio_file_t *fh,
 		if (fh->f_num_of_io_entries){
 		    if ( 0 >  fh->f_fbtl->fbtl_preadv (fh)) {
 			opal_output(1, "READ FAILED\n");
-			return OMPI_ERROR;
+                        ret = OMPI_ERROR;
+                        goto exit;
 		    }
 		}
 
@@ -1100,7 +1093,8 @@ static int two_phase_exchage_data(mca_io_ompio_file_t *fh,
 	malloc((nprocs_send+nprocs_recv+1)*sizeof(MPI_Request));
 
     if ( NULL == requests ){
-	return OMPI_ERR_OUT_OF_RESOURCE;
+        ret = OMPI_ERR_OUT_OF_RESOURCE;
+        goto exit;
     }
 
     j = 0;
@@ -1145,7 +1139,7 @@ static int two_phase_exchage_data(mca_io_ompio_file_t *fh,
 	    }
     }
     else if(nprocs_send && (!(fh->f_flags & OMPIO_CONTIGUOUS_MEMORY))){
-	send_buf = (char **) malloc(fh->f_size*sizeof(char*));
+	send_buf = (char **) calloc (fh->f_size, sizeof(char*));
 	if ( NULL == send_buf ){
 	    ret = OMPI_ERR_OUT_OF_RESOURCE;
 	    goto exit;
@@ -1177,20 +1171,10 @@ static int two_phase_exchage_data(mca_io_ompio_file_t *fh,
     }
 
 
-    for (i=0; i<nprocs_recv; i++) ompi_datatype_destroy(recv_types+i);
-    if (NULL != recv_types){
-	free(recv_types);
-	recv_types = NULL;
-    }
-
     ret = ompi_request_wait_all (nprocs_send+nprocs_recv,
 				 requests,
 				 MPI_STATUS_IGNORE);
 
-
-    if ( NULL != requests ){
-	free(requests);
-    }
 
 #if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
     end_comm_time = MPI_Wtime();
@@ -1198,6 +1182,18 @@ static int two_phase_exchage_data(mca_io_ompio_file_t *fh,
 #endif
 
 exit:
+    for (i=0; i<nprocs_recv; i++) ompi_datatype_destroy(recv_types+i);
+    free (recv_types);
+
+    free (requests);
+    if (send_buf) {
+        for (i=0; i < fh->f_size; i++){
+            free (send_buf[i]);
+        }
+
+        free (send_buf);
+    }
+
     return ret;
 }
 

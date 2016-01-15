@@ -294,7 +294,7 @@ static inline void NBC_Free (NBC_Handle* handle) {
  * to be called *only* from the progress thread !!! */
 int NBC_Progress(NBC_Handle *handle) {
   int flag, res, ret=NBC_CONTINUE;
-  unsigned long size;
+  unsigned long size = 0;
   char *delim;
 
   /* the handle is done if there is no schedule attached */

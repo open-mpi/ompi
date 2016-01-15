@@ -1,8 +1,10 @@
 .\" -*- nroff -*-
 .\" Copyright 2013 Los Alamos National Security, LLC. All rights reserved.
-.\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
+.\" Copyright (c) 2010-2015 Cisco Systems, Inc.  All rights reserved.
 .\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
+.\" Copyright 2015      Research Organization for Information Science
+.\"                     and Technology (RIST). All rights reserved.
 .\" $COPYRIGHT$
 .TH MPI_File_open 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
@@ -10,19 +12,32 @@
 .SH SYNTAX
 .ft R
 .nf
-C Syntax
-    #include <mpi.h>
-    int MPI_File_open(MPI_Comm \fIcomm\fP, const char \fI*filename\fP,
-    	      int \fIamode\fP, MPI_Info \fIinfo\fP,
-	      MPI_File \fI*fh\fP)
+.SH C Syntax
+#include <mpi.h>
+int MPI_File_open(MPI_Comm \fIcomm\fP, const char \fI*filename\fP,
+	int \fIamode\fP, MPI_Info \fIinfo\fP,
+	MPI_File \fI*fh\fP)
 
 .fi
 .SH Fortran Syntax
 .nf
-    INCLUDE 'mpif.h'
-    MPI_FILE_OPEN(\fICOMM\fP,\fI FILENAME\fP,\fI AMODE\fP, \fIINFO\fP,\fI FH\fP,\fI IERROR\fP)
-   	 CHARACTER*(*)    FILENAME
-    	 INTEGER      COMM, AMODE, INFO, FH, IERROR
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
+MPI_FILE_OPEN(\fICOMM\fP, \fIFILENAME\fP, \fIAMODE\fP, \fIINFO\fP, \fIFH\fP, \fIIERROR\fP)
+	CHARACTER*(*)	\fIFILENAME\fP
+	INTEGER	\fICOMM, AMODE, INFO, FH, IERROR\fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_File_open(\fIcomm\fP, \fIfilename\fP, \fIamode\fP, \fIinfo\fP, \fIfh\fP, \fIierror\fP)
+	TYPE(MPI_Comm), INTENT(IN) :: \fIcomm\fP
+	CHARACTER(LEN=*), INTENT(IN) :: \fIfilename\fP
+	INTEGER, INTENT(IN) :: \fIamode\fP
+	TYPE(MPI_Info), INTENT(IN) :: \fIinfo\fP
+	TYPE(MPI_File), INTENT(OUT) :: \fIfh\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
 .SH C++ Syntax
@@ -67,9 +82,12 @@ communicator group. MPI_File_open is a collective routine; all processes
 must provide the same value for
 .I amode,
 and all processes must provide filenames that reference the same
-file and which are textually identical. A process can open a file
-independently of other processes by using the MPI_COMM_SELF
-communicator. The file handle returned,
+file which are textually identical (note: Open MPI I/O plugins may
+have restrictions on characters that can be used in filenames. For
+example, the ROMIO plugin may disallow the colon (":") character from
+appearing in a filename). A process can open a file independently of
+other processes by using the MPI_COMM_SELF communicator. The file
+handle returned,
 .I fh,
 can be subsequently used to access the file until the file is closed
 using MPI_File_close. Before calling MPI_Finalize, the user is required to

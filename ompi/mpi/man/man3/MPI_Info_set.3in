@@ -17,10 +17,20 @@ int MPI_Info_set(MPI_Info \fIinfo\fP, char \fI*key\fP, char \fI*value\fP)
 .fi
 .SH Fortran Syntax
 .nf
-INCLUDE 'mpif.h'
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
 MPI_INFO_SET(\fIINFO, KEY, VALUE, IERROR\fP)
 	INTEGER		\fIINFO, IERROR\fP
 	CHARACTER*(*)	\fIKEY, VALUE\fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Info_set(\fIinfo\fP, \fIkey\fP, \fIvalue\fP, \fIierror\fP)
+	TYPE(MPI_Info), INTENT(IN) :: \fIinfo\fP
+	CHARACTER(LEN=*), INTENT(IN) :: \fIkey\fP, \fIvalue\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
 .SH C++ Syntax

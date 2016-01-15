@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -22,7 +24,8 @@
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 #include "ompi/mpi/fortran/base/constants.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_EXSCAN = ompi_exscan_f
 #pragma weak pmpi_exscan = ompi_exscan_f
 #pragma weak pmpi_exscan_ = ompi_exscan_f
@@ -30,7 +33,7 @@
 
 #pragma weak PMPI_Exscan_f = ompi_exscan_f
 #pragma weak PMPI_Exscan_f08 = ompi_exscan_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_EXSCAN,
                            pmpi_exscan,
                            pmpi_exscan_,
@@ -38,6 +41,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_EXSCAN,
                            pompi_exscan_f,
                            (char *sendbuf, char *recvbuf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *op, MPI_Fint *comm, MPI_Fint *ierr),
                            (sendbuf, recvbuf, count, datatype, op, comm, ierr) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -48,9 +52,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_EXSCAN,
 
 #pragma weak MPI_Exscan_f = ompi_exscan_f
 #pragma weak MPI_Exscan_f08 = ompi_exscan_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_EXSCAN,
                            mpi_exscan,
                            mpi_exscan_,
@@ -58,12 +61,11 @@ OMPI_GENERATE_F77_BINDINGS (MPI_EXSCAN,
                            ompi_exscan_f,
                            (char *sendbuf, char *recvbuf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *op, MPI_Fint *comm, MPI_Fint *ierr),
                            (sendbuf, recvbuf, count, datatype, op, comm, ierr) )
+#else
+#define ompi_exscan_f pompi_exscan_f
+#endif
 #endif
 
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
-#endif
 
 void ompi_exscan_f(char *sendbuf, char *recvbuf, MPI_Fint *count,
 		  MPI_Fint *datatype, MPI_Fint *op, MPI_Fint *comm,
@@ -74,15 +76,15 @@ void ompi_exscan_f(char *sendbuf, char *recvbuf, MPI_Fint *count,
     MPI_Datatype c_type;
     MPI_Op c_op;
 
-    c_comm = MPI_Comm_f2c(*comm);
-    c_type = MPI_Type_f2c(*datatype);
-    c_op = MPI_Op_f2c(*op);
+    c_comm = PMPI_Comm_f2c(*comm);
+    c_type = PMPI_Type_f2c(*datatype);
+    c_op = PMPI_Op_f2c(*op);
 
     /* MPI_IN_PLACE is not supported */
     sendbuf = (char *) OMPI_F2C_BOTTOM (sendbuf);
     recvbuf = (char *) OMPI_F2C_BOTTOM (recvbuf);
 
-    c_ierr = MPI_Exscan(sendbuf, recvbuf,
+    c_ierr = PMPI_Exscan(sendbuf, recvbuf,
                         OMPI_FINT_2_INT(*count),
                         c_type, c_op, c_comm);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);

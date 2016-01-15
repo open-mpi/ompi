@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -21,7 +23,8 @@
 
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_FILE_SEEK_SHARED = ompi_file_seek_shared_f
 #pragma weak pmpi_file_seek_shared = ompi_file_seek_shared_f
 #pragma weak pmpi_file_seek_shared_ = ompi_file_seek_shared_f
@@ -29,7 +32,7 @@
 
 #pragma weak PMPI_File_seek_shared_f = ompi_file_seek_shared_f
 #pragma weak PMPI_File_seek_shared_f08 = ompi_file_seek_shared_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_FILE_SEEK_SHARED,
                            pmpi_file_seek_shared,
                            pmpi_file_seek_shared_,
@@ -37,6 +40,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_FILE_SEEK_SHARED,
                            pompi_file_seek_shared_f,
                            (MPI_Fint *fh, MPI_Offset *offset, MPI_Fint *whence, MPI_Fint *ierr),
                            (fh, offset, whence, ierr) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -47,9 +51,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_FILE_SEEK_SHARED,
 
 #pragma weak MPI_File_seek_shared_f = ompi_file_seek_shared_f
 #pragma weak MPI_File_seek_shared_f08 = ompi_file_seek_shared_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_FILE_SEEK_SHARED,
                            mpi_file_seek_shared,
                            mpi_file_seek_shared_,
@@ -57,20 +60,19 @@ OMPI_GENERATE_F77_BINDINGS (MPI_FILE_SEEK_SHARED,
                            ompi_file_seek_shared_f,
                            (MPI_Fint *fh, MPI_Offset *offset, MPI_Fint *whence, MPI_Fint *ierr),
                            (fh, offset, whence, ierr) )
+#else
+#define ompi_file_seek_shared_f pompi_file_seek_shared_f
+#endif
 #endif
 
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
-#endif
 
 void ompi_file_seek_shared_f(MPI_Fint *fh, MPI_Offset *offset,
 			    MPI_Fint *whence, MPI_Fint *ierr)
 {
     int c_ierr;
-    MPI_File c_fh = MPI_File_f2c(*fh);
+    MPI_File c_fh = PMPI_File_f2c(*fh);
 
-    c_ierr = MPI_File_seek_shared(c_fh, (MPI_Offset) *offset,
+    c_ierr = PMPI_File_seek_shared(c_fh, (MPI_Offset) *offset,
                                   OMPI_FINT_2_INT(*whence));
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 }

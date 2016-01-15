@@ -16,6 +16,7 @@
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_var.h"
 
+#include "oshmem/util/oshmem_util.h"
 #include "oshmem/mca/sshmem/sshmem.h"
 #include "oshmem/mca/sshmem/base/base.h"
 
@@ -86,6 +87,8 @@ mca_sshmem_base_register (mca_base_register_flag_t flags)
 
 static int mca_sshmem_base_open(mca_base_open_flag_t flags)
 {
+    oshmem_framework_open_output(&oshmem_sshmem_base_framework);
+
     /* Open up all available components */
     if (OPAL_SUCCESS !=
         mca_base_framework_components_open(&oshmem_sshmem_base_framework, flags)) {

@@ -9,6 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -24,5 +25,3 @@ libmca_filem_la_SOURCES += \
         base/filem_base_select.c \
         base/filem_base_receive.c \
         base/filem_base_fns.c
-
-dist_ortedata_DATA = base/help-orte-filem-base.txt

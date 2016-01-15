@@ -13,6 +13,8 @@
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -29,7 +31,8 @@
  * MPI_Aint_add, and MPI_Aint_diff. For these 4 we can insert the bindings
  * manually.
  */
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_AINT_DIFF = ompi_aint_diff_f
 #pragma weak pmpi_aint_diff = ompi_aint_diff_f
 #pragma weak pmpi_aint_diff_ = ompi_aint_diff_f
@@ -37,11 +40,12 @@
 
 #pragma weak PMPI_Aint_diff_f = ompi_aint_diff_f
 #pragma weak PMPI_Aint_diff_f08 = ompi_aint_diff_f
-#elif OMPI_PROFILE_LAYER
+#else
 MPI_Aint PMPI_AINT_DIFF(MPI_Aint *addr1, MPI_Aint *addr2) { return pompi_aint_diff_f(addr1, addr2); }
 MPI_Aint pmpi_aint_diff(MPI_Aint *addr1, MPI_Aint *addr2) { return pompi_aint_diff_f(addr1, addr2); }
 MPI_Aint pmpi_aint_diff_(MPI_Aint *addr1, MPI_Aint *addr2) { return pompi_aint_diff_f(addr1, addr2); }
 MPI_Aint pmpi_aint_diff__(MPI_Aint *addr1, MPI_Aint *addr2) { return pompi_aint_diff_f(addr1, addr2); }
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -52,18 +56,15 @@ MPI_Aint pmpi_aint_diff__(MPI_Aint *addr1, MPI_Aint *addr2) { return pompi_aint_
 
 #pragma weak MPI_Aint_diff_f = ompi_aint_diff_f
 #pragma weak MPI_Aint_diff_f08 = ompi_aint_diff_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 MPI_Aint MPI_AINT_DIFF(MPI_Aint *addr1, MPI_Aint *addr2) { return ompi_aint_diff_f(addr1, addr2); }
 MPI_Aint mpi_aint_diff(MPI_Aint *addr1, MPI_Aint *addr2) { return ompi_aint_diff_f(addr1, addr2); }
 MPI_Aint mpi_aint_diff_(MPI_Aint *addr1, MPI_Aint *addr2) { return ompi_aint_diff_f(addr1, addr2); }
 MPI_Aint mpi_aint_diff__(MPI_Aint *addr1, MPI_Aint *addr2) { return ompi_aint_diff_f(addr1, addr2); }
+#else
+#define ompi_aint_diff_f pompi_aint_diff_f
 #endif
-
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
 #endif
 
 MPI_Aint ompi_aint_diff_f(MPI_Aint *addr1, MPI_Aint *addr2)

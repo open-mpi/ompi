@@ -13,6 +13,8 @@
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -29,7 +31,8 @@
  * MPI_Aint_add, and MPI_Aint_diff. For these 4 we can insert the bindings
  * manually.
  */
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_WTIME = ompi_wtime_f
 #pragma weak pmpi_wtime = ompi_wtime_f
 #pragma weak pmpi_wtime_ = ompi_wtime_f
@@ -37,11 +40,12 @@
 
 #pragma weak PMPI_Wtime_f = ompi_wtime_f
 #pragma weak PMPI_Wtime_f08 = ompi_wtime_f
-#elif OMPI_PROFILE_LAYER
+#else
 double PMPI_WTIME(void) { return pompi_wtime_f(); }
 double pmpi_wtime(void) { return pompi_wtime_f(); }
 double pmpi_wtime_(void) { return pompi_wtime_f(); }
 double pmpi_wtime__(void) { return pompi_wtime_f(); }
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -52,21 +56,19 @@ double pmpi_wtime__(void) { return pompi_wtime_f(); }
 
 #pragma weak MPI_Wtime_f = ompi_wtime_f
 #pragma weak MPI_Wtime_f08 = ompi_wtime_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 double MPI_WTIME(void) { return ompi_wtime_f(); }
 double mpi_wtime(void) { return ompi_wtime_f(); }
 double mpi_wtime_(void) { return ompi_wtime_f(); }
 double mpi_wtime__(void) { return ompi_wtime_f(); }
+#else
+#define ompi_wtime_f pompi_wtime_f
+#endif
 #endif
 
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
-#endif
 
 double ompi_wtime_f(void)
 {
-    return MPI_Wtime();
+    return PMPI_Wtime();
 }

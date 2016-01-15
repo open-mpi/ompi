@@ -231,11 +231,14 @@ typedef uint8_t mca_btl_base_tag_t;
  */
 #define MCA_BTL_FLAGS_SIGNALED        0x4000
 
-
 /** The BTL supports network atomic operations */
 #define MCA_BTL_FLAGS_ATOMIC_OPS      0x08000
 /** The BTL supports fetching network atomic operations */
 #define MCA_BTL_FLAGS_ATOMIC_FOPS     0x10000
+
+/** The BTL requires add_procs to be with all procs including non-local. Shared-memory
+ * BTLs should not set this flag. */
+#define MCA_BTL_FLAGS_SINGLE_ADD_PROCS 0x20000
 
 /* Default exclusivity levels */
 #define MCA_BTL_EXCLUSIVITY_HIGH     (64*1024) /* internal loopback */
@@ -247,28 +250,29 @@ typedef uint8_t mca_btl_base_tag_t;
 #define MCA_BTL_ERROR_FLAGS_NONFATAL 0x2
 #define MCA_BTL_ERROR_FLAGS_ADD_CUDA_IPC 0x4
 
-/** registration flags */
+/** registration flags. the access flags are a 1-1 mapping with the mpool
+ * access flags. */
 enum {
     /** Allow local write on the registered region. If a region is registered
      * with this flag the registration can be used as the local handle for a
      * btl_get operation. */
-    MCA_BTL_REG_FLAG_LOCAL_WRITE   = 0x00000001,
+    MCA_BTL_REG_FLAG_LOCAL_WRITE   = MCA_MPOOL_ACCESS_LOCAL_WRITE,
     /** Allow remote read on the registered region. If a region is registered
      * with this flag the registration can be used as the remote handle for a
      * btl_get operation. */
-    MCA_BTL_REG_FLAG_REMOTE_READ   = 0x00000002,
+    MCA_BTL_REG_FLAG_REMOTE_READ   = MCA_MPOOL_ACCESS_REMOTE_READ,
     /** Allow remote write on the registered region. If a region is registered
      * with this flag the registration can be used as the remote handle for a
      * btl_put operation. */
-    MCA_BTL_REG_FLAG_REMOTE_WRITE  = 0x00000004,
+    MCA_BTL_REG_FLAG_REMOTE_WRITE  = MCA_MPOOL_ACCESS_REMOTE_WRITE,
     /** Allow remote atomic operations on the registered region. If a region is
      * registered with this flag the registration can be used as the remote
      * handle for a btl_atomic_op or btl_atomic_fop operation. */
-    MCA_BTL_REG_FLAG_REMOTE_ATOMIC = 0x00000008,
+    MCA_BTL_REG_FLAG_REMOTE_ATOMIC = MCA_MPOOL_ACCESS_REMOTE_ATOMIC,
     /** Allow any btl operation on the registered region. If a region is registered
      * with this flag the registration can be used as the local or remote handle for
      * any btl operation. */
-    MCA_BTL_REG_FLAG_ACCESS_ANY    = 0x0000000f,
+    MCA_BTL_REG_FLAG_ACCESS_ANY    = MCA_MPOOL_ACCESS_ANY,
 #if OPAL_CUDA_GDR_SUPPORT
     /** Region is in GPU memory */
     MCA_BTL_REG_FLAG_CUDA_GPU_MEM  = 0x00010000,

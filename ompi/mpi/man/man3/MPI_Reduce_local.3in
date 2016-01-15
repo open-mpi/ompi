@@ -19,10 +19,23 @@ int MPI_Reduce_local(const void *\fIinbuf\fP, void *\fIinoutbuf\fP, int\fI count
 .fi
 .SH Fortran Syntax
 .nf
-INCLUDE 'mpif.h'
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
 MPI_REDUCE_LOCAL(\fIINBUF, INOUTBUF, COUNT, DATATYPE, OP, IERROR\fP)
 	<type>	\fIINBUF(*), INOUTBUF(*)\fP
 	INTEGER	\fICOUNT, DATATYPE, OP, IERROR\fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Reduce_local(\fIinbuf\fP, \fIinoutbuf\fP, \fIcount\fP, \fIdatatype\fP, \fIop\fP, \fIierror\fP)
+	TYPE(*), DIMENSION(..), INTENT(IN) :: \fIinbuf\fP
+	TYPE(*), DIMENSION(..) :: \fIinoutbuf\fP
+	INTEGER, INTENT(IN) :: \fIcount\fP
+	TYPE(MPI_Datatype), INTENT(IN) :: \fIdatatype\fP
+	TYPE(MPI_Op), INTENT(IN) :: \fIop\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
 .SH C++ Syntax
@@ -59,8 +72,6 @@ Fortran only: Error status (integer).
 
 .SH DESCRIPTION
 .ft R
-.I The MPI_Reduce_local function is proposed for MPI-2.2 and (as of 10 Jan 2009) has not yet been ratified.  Use at your own risk.  See https://svn.mpi-forum.org/trac/mpi-forum-web/ticket/24.
-.sp
 The global reduce functions (MPI_Reduce_local, MPI_Op_create, MPI_Op_free, MPI_Allreduce, MPI_Reduce_local_scatter, MPI_Scan) perform a global reduce operation (such as sum, max, logical AND, etc.) across all the members of a group. The reduction operation can be either one of a predefined list of operations, or a user-defined operation. The global reduction functions come in several flavors: a reduce that returns the result of the reduction at one node, an all-reduce that returns this result at all nodes, and a scan (parallel prefix) operation. In addition, a reduce-scatter operation combines the functionality of a reduce and a scatter operation.
 .sp
 MPI_Reduce_local combines the elements provided in the input and input/output buffers of the local process, using the operation op, and returns the combined value in the inout/output buffer. The input buffer is defined by the arguments inbuf, count, and datatype; the output buffer is defined by the arguments inoutbuf, count, and datatype; both have the same number of elements, with the same type. The routine is a local call.  The process can provide one element, or a sequence of elements, in which case the combine operation is executed element-wise on each entry of the sequence. For example, if the operation is MPI_MAX and the input buffer contains two elements that are floating-point numbers (count = 2 and datatype = MPI_FLOAT), then inoutbuf(1) = global max (inbuf(1)) and inoutbuf(2) = global max(inbuf(2)).

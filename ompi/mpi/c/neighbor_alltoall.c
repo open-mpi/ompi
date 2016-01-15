@@ -32,12 +32,11 @@
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/memchecker.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_Neighbor_alltoall = PMPI_Neighbor_alltoall
 #endif
-
-#if OMPI_PROFILING_DEFINES
-#include "ompi/mpi/c/profile/defines.h"
+#define MPI_Neighbor_alltoall PMPI_Neighbor_alltoall
 #endif
 
 static const char FUNC_NAME[] = "MPI_Neighbor_alltoall";
@@ -65,18 +64,15 @@ int MPI_Neighbor_alltoall(const void *sendbuf, int sendcount, MPI_Datatype sendt
         /* Unrooted operation -- same checks for all ranks on both
            intracommunicators and intercommunicators */
 
-        if (MPI_IN_PLACE == sendbuf) {
-            sendcount = recvcount;
-            sendtype = recvtype;
-        }
-
         err = MPI_SUCCESS;
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-        if (ompi_comm_invalid(comm) || !(OMPI_COMM_IS_CART(comm) || OMPI_COMM_IS_GRAPH(comm) ||
-                                         OMPI_COMM_IS_DIST_GRAPH(comm))) {
+        if (ompi_comm_invalid(comm) || OMPI_COMM_IS_INTER(comm)) {
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM,
                                           FUNC_NAME);
-        } else if (MPI_IN_PLACE == recvbuf) {
+        } else if (! OMPI_COMM_IS_TOPO(comm)) {
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_TOPOLOGY,
+                                          FUNC_NAME);
+        } else if (MPI_IN_PLACE == sendbuf || MPI_IN_PLACE == recvbuf) {
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,
                                           FUNC_NAME);
         } else {
@@ -86,12 +82,10 @@ int MPI_Neighbor_alltoall(const void *sendbuf, int sendcount, MPI_Datatype sendt
             OMPI_ERRHANDLER_CHECK(err, comm, err, FUNC_NAME);
         }
 
-        if (MPI_IN_PLACE != sendbuf && !OMPI_COMM_IS_INTER(comm)) {
-            ompi_datatype_type_size(sendtype, &sendtype_size);
-            ompi_datatype_type_size(recvtype, &recvtype_size);
-            if ((sendtype_size*sendcount) != (recvtype_size*recvcount)) {
-                return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_TRUNCATE, FUNC_NAME);
-            }
+        ompi_datatype_type_size(sendtype, &sendtype_size);
+        ompi_datatype_type_size(recvtype, &recvtype_size);
+        if ((sendtype_size*sendcount) != (recvtype_size*recvcount)) {
+            return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_TRUNCATE, FUNC_NAME);
         }
     }
 
@@ -99,8 +93,7 @@ int MPI_Neighbor_alltoall(const void *sendbuf, int sendcount, MPI_Datatype sendt
 
     ompi_datatype_type_size(sendtype, &sendtype_size);
     ompi_datatype_type_size(recvtype, &recvtype_size);
-    if (((MPI_IN_PLACE == sendbuf) ||
-         (0 == sendcount) || (0 == sendtype_size)) &&
+    if (((0 == sendcount) || (0 == sendtype_size)) &&
         ((0 == recvcount) || 0 == (recvtype_size))) {
         return MPI_SUCCESS;
     }

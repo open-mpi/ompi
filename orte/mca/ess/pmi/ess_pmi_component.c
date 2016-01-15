@@ -71,33 +71,24 @@ static int pmi_component_query(mca_base_module_t **module, int *priority)
 
     /* all APPS must use pmix */
     if (ORTE_PROC_IS_APP) {
-        /* open and setup pmix */
-        if (OPAL_SUCCESS != (ret = mca_base_framework_open(&opal_pmix_base_framework, 0))) {
-            ORTE_ERROR_LOG(ret);
-            *priority = -1;
-            *module = NULL;
-            return ret;
+        if (NULL == opal_pmix.initialized) {
+            /* open and setup pmix */
+            if (OPAL_SUCCESS != (ret = mca_base_framework_open(&opal_pmix_base_framework, 0))) {
+                ORTE_ERROR_LOG(ret);
+                *priority = -1;
+                *module = NULL;
+                return ret;
+            }
+            if (OPAL_SUCCESS != (ret = opal_pmix_base_select())) {
+                /* don't error log this as it might not be an error at all */
+                *priority = -1;
+                *module = NULL;
+                (void) mca_base_framework_close(&opal_pmix_base_framework);
+                return ret;
+            }
         }
-        if (OPAL_SUCCESS != (ret = opal_pmix_base_select())) {
-            /* don't error log this as it might not be an error at all */
-            *priority = -1;
-            *module = NULL;
-            (void) mca_base_framework_close(&opal_pmix_base_framework);
-            return ret;
-        }
-        /* initialize the selected module */
-        if (OPAL_SUCCESS != (ret = opal_pmix.init())) {
-            /* cannot run */
-            *priority = -1;
-            *module = NULL;
-            (void) mca_base_framework_close(&opal_pmix_base_framework);
-            return ret;
-        }
-        if (!opal_pmix.initialized()) {
-            /* we may have everything setup, but we are not
-             * in a PMIx environment and so we need to disqualify
-             * ourselves - we are likely a singleton and will
-             * pick things up from there */
+        if (!opal_pmix.initialized() && (OPAL_SUCCESS != (ret = opal_pmix.init()))) {
+            /* we cannot be in a PMI environment */
             *priority = -1;
             *module = NULL;
             return ORTE_ERROR;

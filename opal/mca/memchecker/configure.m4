@@ -3,6 +3,8 @@ dnl
 dnl Copyright (c) 2004-2006 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2015      Research Organization for Information Science
+dnl                         and Technology (RIST). All rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -43,10 +45,10 @@ AC_DEFUN([MCA_opal_memchecker_CONFIG],[
     # first, compile all the components
     MCA_CONFIGURE_FRAMEWORK($1, $2, 1)
 
-    AS_IF([test "$MCA_opal_memchecker_STATIC_COMPONENTS" != "" -o "$MCA_opal_memchecker_DSO_COMPONENTS" != ""],
+    AS_IF([test "$MCA_opal_memchecker_STATIC_COMPONENTS" != "" || test "$MCA_opal_memchecker_DSO_COMPONENTS" != ""],
           [memchecker_base_found=1],
           [memchecker_base_found=0])
-    AS_IF([test $WANT_MEMCHECKER -eq 1 -a $memchecker_base_found -eq 0],
+    AS_IF([test $WANT_MEMCHECKER -eq 1 && test $memchecker_base_found -eq 0],
           [AC_MSG_WARN([Memchecker support requested, but no memchecker])
            AC_MSG_WARN([components configured successfully.  Did you])
            AC_MSG_WARN([forget --with-valgrind?])

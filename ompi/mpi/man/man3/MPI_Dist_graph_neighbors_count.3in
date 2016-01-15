@@ -19,10 +19,21 @@ int MPI_Dist_graph_neighbors_count(MPI_Comm \fIcomm\fP, int\fI *indegree\fP,
 .fi
 .SH Fortran Syntax
 .nf
-INCLUDE 'mpif.h'
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
 MPI_DIST_GRAPH_NEIGHBORS_COUNT(\fICOMM, INDEGREE, OUTDEGREE, WEIGHTED, IERROR\fP)
 	INTEGER	\fICOMM, INDEGREE, OUTDEGREE, IERROR\fP
         LOGICAL \fIWEIGHTED\fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Dist_graph_neighbors_count(\fIcomm\fP, \fIindegree\fP, \fIoutdegree\fP, \fIweighted\fP, \fIierror\fP)
+	TYPE(MPI_Comm), INTENT(IN) :: \fIcomm\fP
+	INTEGER, INTENT(IN) :: \fIindegree\fP, \fIoutdegree\fP
+	INTEGER, INTENT(OUT) :: \fIweighted\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
 .SH INPUT PARAMETERS

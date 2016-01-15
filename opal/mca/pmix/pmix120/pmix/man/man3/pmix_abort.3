@@ -1,0 +1,62 @@
+.TH "pmix_abort" "3" "2015\-10\-25" "PMIx Programmer\[aq]s Manual" "\@VERSION\@"
+.SH NAME
+.PP
+PMIx_Abort \- Abort the specified processes
+.SH SYNOPSIS
+.IP
+.nf
+\f[C]
+#include\ <pmix.h>
+
+pmix_status_t\ PMIx_Abort(int\ status,\ const\ char\ msg[],
+\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ pmix_proc_t\ procs[],\ size_t\ nprocs);
+\f[]
+.fi
+.SH ARGUMENTS
+.PP
+\f[I]status\f[] : Status value to be returned.
+A value of zero is permitted by PMIx, but may not be returned by some
+resource managers.
+.PP
+\f[I]msg\f[] : A string message to be displayed
+.PP
+\f[I]procs\f[] : An array of pmix_proc_t structures defining the
+processes to be aborted.
+A \f[I]NULL\f[] for the proc array indicates that all processes in the
+caller\[aq]s nspace are to be aborted.
+A wildcard value for the rank in any structure indicates that all
+processes in that nspace are to be aborted.
+.PP
+\f[I]nprocs\f[] : Number of pmix_proc_t structures in the \f[I]procs\f[]
+array
+.SH DESCRIPTION
+.PP
+Request that the provided array of procs be aborted, returning the
+provided \f[I]status\f[] and printing the provided message.
+A \f[I]NULL\f[] for the proc array indicates that all processes in the
+caller\[aq]s nspace are to be aborted.
+.PP
+The response to this request is somewhat dependent on the specific
+resource manager and its configuration (e.g., some resource managers
+will not abort the application if the provided \f[I]status\f[] is zero
+unless specifically configured to do so), and thus lies outside the
+control of PMIx itself.
+However, the client will inform the RM of the request that the
+application be aborted, regardless of the value of the provided
+\f[I]status\f[].
+.PP
+Passing a \f[I]NULL\f[] msg parameter is allowed.
+Note that race conditions caused by multiple processes calling
+PMIx_Abort are left to the server implementation to resolve with regard
+to which status is returned and what messages (if any) are printed.
+.SH RETURN VALUE
+.PP
+Returns PMIX_SUCCESS on success.
+On error, a negative value corresponding to a PMIx errno is returned.
+.SH ERRORS
+.PP
+PMIx errno values are defined in \f[C]pmix_common.h\f[].
+.SH NOTES
+.SH SEE ALSO
+.SH AUTHORS
+PMIx.

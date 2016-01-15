@@ -19,13 +19,27 @@ int MPI_Sendrecv_replace(void *\fIbuf\fP, int\fI count\fP, MPI_Datatype\fI datat
 .fi
 .SH Fortran Syntax
 .nf
-INCLUDE 'mpif.h'
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
 MPI_SENDRECV_REPLACE(\fIBUF, COUNT, DATATYPE, DEST, SENDTAG, SOURCE,
 		RECVTAG, COMM, STATUS, IERROR\fP)
 	<type>	\fIBUF\fP(*)
 	INTEGER	\fICOUNT, DATATYPE, DEST, SENDTAG\fP
 	INTEGER	\fISOURCE, RECVTAG, COMM\fP
 	INTEGER	\fISTATUS(MPI_STATUS_SIZE), IERROR\fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Sendrecv_replace(\fIbuf\fP, \fIcount\fP, \fIdatatype\fP, \fIdest\fP, \fIsendtag\fP, \fIsource\fP, \fIrecvtag\fP,
+		\fIcomm\fP, \fIstatus\fP, \fIierror\fP)
+	TYPE(*), DIMENSION(..) :: \fIbuf\fP
+	INTEGER, INTENT(IN) :: \fIcount\fP, \fIdest\fP, \fIsendtag\fP, \fIsource\fP, \fIrecvtag\fP
+	TYPE(MPI_Datatype), INTENT(IN) :: \fIdatatype\fP
+	TYPE(MPI_Comm), INTENT(IN) :: \fIcomm\fP
+	TYPE(MPI_Status) :: \fIstatus\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
 .SH C++ Syntax

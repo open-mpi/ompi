@@ -22,10 +22,20 @@ int MPI_Add_error_string(int \fIerrorcode\fP, const char *\fIstring\fP)
 .fi
 .SH Fortran Syntax
 .nf
-INCLUDE 'mpif.h'
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
 MPI_ADD_ERROR_STRING(\fIERRORCODE, STRING, IERROR\fP)
 	INTEGER		\fIERRORCODE, IERROR\fP
 	CHARACTER*(*)	\fISTRING\fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Add_error_string(\fIerrorcode\fP, \fIstring\fP, \fIierror\fP)
+	INTEGER, INTENT(IN) :: \fIerrorcode\fP
+	CHARACTER(LEN=*), INTENT(IN) :: \fIstring\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
 .SH C++ Syntax

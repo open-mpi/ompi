@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2006-2009 Mellanox Technologies. All rights reserved.
+ * Copyright (c) 2006-2015 Mellanox Technologies. All rights reserved.
  * Copyright (c) 2006-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
@@ -97,7 +97,6 @@
 #include "btl_openib_ini.h"
 #include "btl_openib_mca.h"
 #include "btl_openib_xrc.h"
-#include "btl_openib_fd.h"
 #if BTL_OPENIB_FAILOVER_ENABLED
 #include "btl_openib_failover.h"
 #endif
@@ -245,32 +244,13 @@ static int btl_openib_component_close(void)
 {
     int rc = OPAL_SUCCESS;
 
-    /* Tell the async thread to shutdown */
-    if (mca_btl_openib_component.use_async_event_thread &&
-        0 != mca_btl_openib_component.async_thread) {
-	mca_btl_openib_async_cmd_t async_command = {.a_cmd = OPENIB_ASYNC_THREAD_EXIT,
-                                                    .fd = -1, .qp = NULL};
-        if (write(mca_btl_openib_component.async_pipe[1], &async_command,
-                  sizeof(mca_btl_openib_async_cmd_t)) < 0) {
-            BTL_ERROR(("Failed to communicate with async event thread"));
-            rc = OPAL_ERROR;
-        } else {
-            if (pthread_join(mca_btl_openib_component.async_thread, NULL)) {
-                BTL_ERROR(("Failed to stop OpenIB async event thread"));
-                rc = OPAL_ERROR;
-            }
-        }
-        close(mca_btl_openib_component.async_pipe[0]);
-        close(mca_btl_openib_component.async_pipe[1]);
-        close(mca_btl_openib_component.async_comp_pipe[0]);
-        close(mca_btl_openib_component.async_comp_pipe[1]);
-    }
+    /* remove the async event from the event base */
+    mca_btl_openib_async_fini ();
 
     OBJ_DESTRUCT(&mca_btl_openib_component.srq_manager.lock);
     OBJ_DESTRUCT(&mca_btl_openib_component.srq_manager.srq_addr_table);
 
     opal_btl_openib_connect_base_finalize();
-    opal_btl_openib_fd_finalize();
     opal_btl_openib_ini_finalize();
 
     if (NULL != mca_btl_openib_component.default_recv_qps) {
@@ -586,11 +566,24 @@ static int openib_reg_mr(void *reg_data, void *base, size_t size,
 {
     mca_btl_openib_device_t *device = (mca_btl_openib_device_t*)reg_data;
     mca_btl_openib_reg_t *openib_reg = (mca_btl_openib_reg_t*)reg;
-    enum ibv_access_flags access_flag = (enum ibv_access_flags) (IBV_ACCESS_LOCAL_WRITE |
-        IBV_ACCESS_REMOTE_WRITE | IBV_ACCESS_REMOTE_READ);
+    enum ibv_access_flags access_flag = 0;
+
+    if (reg->access_flags & MCA_MPOOL_ACCESS_REMOTE_READ) {
+        access_flag |= IBV_ACCESS_REMOTE_READ;
+    }
+
+    if (reg->access_flags & MCA_MPOOL_ACCESS_REMOTE_WRITE) {
+        access_flag |= IBV_ACCESS_REMOTE_WRITE | IBV_ACCESS_LOCAL_WRITE;
+    }
+
+    if (reg->access_flags & MCA_MPOOL_ACCESS_LOCAL_WRITE) {
+        access_flag |= IBV_ACCESS_LOCAL_WRITE;
+    }
 
 #if HAVE_DECL_IBV_ATOMIC_HCA
-    access_flag |= IBV_ACCESS_REMOTE_ATOMIC;
+    if (reg->access_flags & MCA_MPOOL_ACCESS_REMOTE_ATOMIC) {
+        access_flag |= IBV_ACCESS_REMOTE_ATOMIC | IBV_ACCESS_LOCAL_WRITE;
+    }
 #endif
 
     if (device->mem_reg_max &&
@@ -829,13 +822,41 @@ static int init_one_port(opal_list_t *btl_list, mca_btl_openib_device_t *device,
             openib_btl->super.btl_get_local_registration_threshold = 0;
 
 #if HAVE_DECL_IBV_ATOMIC_HCA
-            if (openib_btl->device->ib_dev_attr.atomic_cap == IBV_ATOMIC_NONE) {
+            openib_btl->atomic_ops_be = false;
+
+#if HAVE_DECL_IBV_EXP_QUERY_DEVICE
+            /* check that 8-byte atomics are supported */
+            if (!(device->ib_exp_dev_attr.ext_atom.log_atomic_arg_sizes & (1<<3ull))) {
                 openib_btl->super.btl_flags &= ~MCA_BTL_FLAGS_ATOMIC_FOPS;
                 openib_btl->super.btl_atomic_flags = 0;
                 openib_btl->super.btl_atomic_fop = NULL;
                 openib_btl->super.btl_atomic_cswap = NULL;
-            } else if (IBV_ATOMIC_GLOB == openib_btl->device->ib_dev_attr.atomic_cap) {
+            }
+#endif
+
+#if HAVE_DECL_IBV_EXP_QUERY_DEVICE
+            switch (openib_btl->device->ib_exp_dev_attr.exp_atomic_cap)
+#else
+            switch (openib_btl->device->ib_dev_attr.atomic_cap)
+#endif
+            {
+            case IBV_ATOMIC_GLOB:
                 openib_btl->super.btl_flags |= MCA_BTL_ATOMIC_SUPPORTS_GLOB;
+                break;
+#if HAVE_DECL_IBV_EXP_ATOMIC_HCA_REPLY_BE
+            case IBV_EXP_ATOMIC_HCA_REPLY_BE:
+                openib_btl->atomic_ops_be = true;
+                break;
+#endif
+            case IBV_ATOMIC_HCA:
+                break;
+            case IBV_ATOMIC_NONE:
+            default:
+                /* no atomics or an unsupported atomic type */
+                openib_btl->super.btl_flags &= ~MCA_BTL_FLAGS_ATOMIC_FOPS;
+                openib_btl->super.btl_atomic_flags = 0;
+                openib_btl->super.btl_atomic_fop = NULL;
+                openib_btl->super.btl_atomic_cswap = NULL;
             }
 #endif
 
@@ -906,7 +927,7 @@ static void device_construct(mca_btl_openib_device_t *device)
     device->ib_dev_context = NULL;
     device->ib_pd = NULL;
     device->mpool = NULL;
-#if OPAL_ENABLE_PROGRESS_THREADS
+#if OPAL_ENABLE_PROGRESS_THREADS == 1
     device->ib_channel = NULL;
 #endif
     device->btls = 0;
@@ -926,10 +947,6 @@ static void device_construct(mca_btl_openib_device_t *device)
     device->xrc_fd = -1;
 #endif
     device->qps = NULL;
-    mca_btl_openib_component.async_pipe[0] =
-        mca_btl_openib_component.async_pipe[1] = -1;
-    mca_btl_openib_component.async_comp_pipe[0] =
-        mca_btl_openib_component.async_comp_pipe[1] = -1;
     OBJ_CONSTRUCT(&device->device_lock, opal_mutex_t);
     OBJ_CONSTRUCT(&device->send_free_control, opal_free_list_t);
     device->max_inline_data = 0;
@@ -940,8 +957,8 @@ static void device_destruct(mca_btl_openib_device_t *device)
 {
     int i;
 
-#if OPAL_ENABLE_PROGRESS_THREADS
-    if(device->progress) {
+#if OPAL_ENABLE_PROGRESS_THREADS == 1
+    if (device->progress) {
         device->progress = false;
         if (pthread_cancel(device->thread.t_handle)) {
             BTL_ERROR(("Failed to cancel OpenIB progress thread"));
@@ -949,27 +966,15 @@ static void device_destruct(mca_btl_openib_device_t *device)
         }
         opal_thread_join(&device->thread, NULL);
     }
+
     if (ibv_destroy_comp_channel(device->ib_channel)) {
         BTL_VERBOSE(("Failed to close comp_channel"));
         goto device_error;
     }
 #endif
+
     /* signaling to async_tread to stop poll for this device */
-    if (mca_btl_openib_component.use_async_event_thread &&
-        -1 != mca_btl_openib_component.async_pipe[1]) {
-	mca_btl_openib_async_cmd_t async_command = {.a_cmd = OPENIB_ASYNC_CMD_FD_REMOVE,
-                                                    .fd = device->ib_dev_context->async_fd,
-                                                    .qp = NULL};
-        if (write(mca_btl_openib_component.async_pipe[1], &async_command,
-                    sizeof(mca_btl_openib_async_cmd_t)) < 0){
-            BTL_ERROR(("Failed to write to pipe"));
-            goto device_error;
-        }
-        /* wait for ok from thread */
-        if (OPAL_SUCCESS != btl_openib_async_command_done(device->ib_dev_context->async_fd)){
-            goto device_error;
-        }
-    }
+    mca_btl_openib_async_rem_device (device);
 
     if(device->eager_rdma_buffers) {
         int i;
@@ -1630,7 +1635,8 @@ static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
     }
 
     device->mem_reg_active = 0;
-    device->mem_reg_max    = calculate_max_reg(ibv_get_device_name(ib_dev));
+    device->mem_reg_max_total = calculate_max_reg(ibv_get_device_name(ib_dev));
+    device->mem_reg_max = device->mem_reg_max_total;
     if(( 0 == device->mem_reg_max) && mca_btl_openib_component.abort_not_enough_reg_mem) {
         return OPAL_ERROR;
     }
@@ -1649,7 +1655,14 @@ static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
                     ibv_get_device_name(device->ib_dev), strerror(errno)));
         goto error;
     }
-
+#if HAVE_DECL_IBV_EXP_QUERY_DEVICE
+    device->ib_exp_dev_attr.comp_mask = IBV_EXP_DEVICE_ATTR_RESERVED - 1;
+    if(ibv_exp_query_device(device->ib_dev_context, &device->ib_exp_dev_attr)){
+        BTL_ERROR(("error obtaining device attributes for %s errno says %s",
+                    ibv_get_device_name(device->ib_dev), strerror(errno)));
+        goto error;
+    }
+#endif
     if(ibv_query_device(device->ib_dev_context, &device->ib_dev_attr)){
         BTL_ERROR(("error obtaining device attributes for %s errno says %s",
                     ibv_get_device_name(device->ib_dev), strerror(errno)));
@@ -2562,11 +2575,6 @@ btl_openib_component_init(int *num_btl_modules,
         goto no_btls;
     }
 
-    /* Initialize FD listening */
-    if (OPAL_SUCCESS != opal_btl_openib_fd_init()) {
-        goto no_btls;
-    }
-
     /* If we are using ptmalloc2 and there are no posix threads
        available, this will cause memory corruption.  Refuse to run.
        Right now, ptmalloc2 is the only memory manager that we have on
@@ -2741,7 +2749,7 @@ btl_openib_component_init(int *num_btl_modules,
 
     OBJ_CONSTRUCT(&btl_list, opal_list_t);
     OBJ_CONSTRUCT(&mca_btl_openib_component.ib_lock, opal_mutex_t);
-    mca_btl_openib_component.async_thread = 0;
+
     distance = dev_sorted[0].distance;
     for (found = false, i = 0;
          i < num_devs && (-1 == mca_btl_openib_component.ib_max_btls ||
@@ -3474,6 +3482,11 @@ static void handle_wc(mca_btl_openib_device_t* device, const uint32_t cq,
 
             mca_btl_openib_get_frag_t *get_frag = to_get_frag(des);
 
+            /* check if atomic result needs to be byte swapped (mlx5) */
+            if (openib_btl->atomic_ops_be && IBV_WC_RDMA_READ != wc->opcode) {
+                *((int64_t *) frag->sg_entry.addr) = ntoh64 (*((int64_t *) frag->sg_entry.addr));
+            }
+
             get_frag->cb.func (&openib_btl->super, endpoint, (void *)(intptr_t) frag->sg_entry.addr,
                                get_frag->cb.local_handle, get_frag->cb.context, get_frag->cb.data,
                                OPAL_SUCCESS);
@@ -3925,3 +3938,42 @@ int mca_btl_openib_post_srr(mca_btl_openib_module_t* openib_btl, const int qp)
     return OPAL_ERROR;
 }
 
+
+struct mca_btl_openib_event_t {
+    opal_event_t super;
+    void *(*fn)(void *);
+    void *arg;
+    opal_event_t *event;
+};
+
+typedef struct mca_btl_openib_event_t mca_btl_openib_event_t;
+
+static void *mca_btl_openib_run_once_cb (int fd, int flags, void *context)
+{
+    mca_btl_openib_event_t *event = (mca_btl_openib_event_t *) context;
+    void *ret;
+
+    ret = event->fn (event->arg);
+    opal_event_del (&event->super);
+    free (event);
+    return ret;
+}
+
+int mca_btl_openib_run_in_main (void *(*fn)(void *), void *arg)
+{
+    mca_btl_openib_event_t *event = malloc (sizeof (mca_btl_openib_event_t));
+
+    if (OPAL_UNLIKELY(NULL == event)) {
+        return OPAL_ERR_OUT_OF_RESOURCE;
+    }
+
+    event->fn = fn;
+    event->arg = arg;
+
+    opal_event_set (opal_sync_event_base, &event->super, -1, OPAL_EV_READ,
+                    mca_btl_openib_run_once_cb, event);
+
+    opal_event_active (&event->super, OPAL_EV_READ, 1);
+
+    return OPAL_SUCCESS;
+}

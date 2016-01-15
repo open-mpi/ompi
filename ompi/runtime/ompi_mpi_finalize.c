@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2013 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006-2014 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2006      University of Houston. All rights reserved.
@@ -92,33 +92,44 @@ extern bool ompi_enable_timing_ext;
 
 int ompi_mpi_finalize(void)
 {
-    int ret;
-    static int32_t finalize_has_already_started = 0;
+    int ret = MPI_SUCCESS;
     opal_list_item_t *item;
     ompi_proc_t** procs;
     size_t nprocs;
     OPAL_TIMING_DECLARE(tm);
     OPAL_TIMING_INIT_EXT(&tm, OPAL_TIMING_GET_TIME_OF_DAY);
 
-
     /* Be a bit social if an erroneous program calls MPI_FINALIZE in
        two different threads, otherwise we may deadlock in
        ompi_comm_free() (or run into other nasty lions, tigers, or
-       bears) */
+       bears).
 
-    if (! opal_atomic_cmpset_32(&finalize_has_already_started, 0, 1)) {
-        /* Note that if we're already finalized, we cannot raise an
-           MPI exception.  The best that we can do is write something
-           to stderr. */
+       This lock is held for the duration of ompi_mpi_init() and
+       ompi_mpi_finalize().  Hence, if we get it, then no other thread
+       is inside the critical section (and we don't have to check the
+       *_started bool variables). */
+    opal_mutex_lock(&ompi_mpi_bootstrap_mutex);
+    if (!ompi_mpi_initialized || ompi_mpi_finalized) {
+        /* Note that if we're not initialized or already finalized, we
+           cannot raise an MPI exception.  The best that we can do is
+           write something to stderr. */
         char hostname[MAXHOSTNAMELEN];
         pid_t pid = getpid();
         gethostname(hostname, sizeof(hostname));
 
-        opal_show_help("help-mpi-runtime.txt",
-                       "mpi_finalize:invoked_multiple_times",
-                       true, hostname, pid);
+        if (ompi_mpi_initialized) {
+            opal_show_help("help-mpi-runtime.txt",
+                           "mpi_finalize: not initialized",
+                           true, hostname, pid);
+        } else if (ompi_mpi_finalized) {
+            opal_show_help("help-mpi-runtime.txt",
+                           "mpi_finalize:invoked_multiple_times",
+                           true, hostname, pid);
+        }
+        opal_mutex_unlock(&ompi_mpi_bootstrap_mutex);
         return MPI_ERR_OTHER;
     }
+    ompi_mpi_finalize_started = true;
 
     ompi_mpiext_fini();
 
@@ -268,40 +279,43 @@ int ompi_mpi_finalize(void)
 
     /* free file resources */
     if (OMPI_SUCCESS != (ret = ompi_file_finalize())) {
-        return ret;
+        goto done;
     }
 
     /* free window resources */
     if (OMPI_SUCCESS != (ret = ompi_win_finalize())) {
-        return ret;
+        goto done;
     }
     if (OMPI_SUCCESS != (ret = ompi_osc_base_finalize())) {
-        return ret;
+        goto done;
     }
 
     /* free communicator resources. this MUST come before finalizing the PML
      * as this will call into the pml */
     if (OMPI_SUCCESS != (ret = ompi_comm_finalize())) {
-        return ret;
+        goto done;
     }
 
+    /* call del_procs on all allocated procs even though some may not be known
+     * to the pml layer. the pml layer is expected to be resilient and ignore
+     * any unknown procs. */
     nprocs = 0;
-    procs = ompi_proc_world(&nprocs);
+    procs = ompi_proc_get_allocated (&nprocs);
     MCA_PML_CALL(del_procs(procs, nprocs));
     free(procs);
 
     /* free pml resource */
     if(OMPI_SUCCESS != (ret = mca_pml_base_finalize())) {
-      return ret;
+        goto done;
     }
 
     /* free requests */
     if (OMPI_SUCCESS != (ret = ompi_request_finalize())) {
-        return ret;
+        goto done;
     }
 
     if (OMPI_SUCCESS != (ret = ompi_message_finalize())) {
-        return ret;
+        goto done;
     }
 
     /* If requested, print out a list of memory allocated by ALLOC_MEM
@@ -314,7 +328,7 @@ int ompi_mpi_finalize(void)
        shut down MCA types having to do with communications */
     if (OMPI_SUCCESS != (ret = mca_base_framework_close(&ompi_pml_base_framework) ) ) {
         OMPI_ERROR_LOG(ret);
-        return ret;
+        goto done;
     }
 
     /* shut down buffered send code */
@@ -326,7 +340,7 @@ int ompi_mpi_finalize(void)
      */
     if (OMPI_SUCCESS != (ret = mca_base_framework_close(&ompi_crcp_base_framework) ) ) {
         OMPI_ERROR_LOG(ret);
-        return ret;
+        goto done;
     }
 #endif
 
@@ -334,49 +348,50 @@ int ompi_mpi_finalize(void)
 
     /* free attr resources */
     if (OMPI_SUCCESS != (ret = ompi_attr_finalize())) {
-        return ret;
+        goto done;
     }
 
     /* free group resources */
     if (OMPI_SUCCESS != (ret = ompi_group_finalize())) {
-        return ret;
+        goto done;
     }
 
     /* finalize the DPM subsystem */
     if ( OMPI_SUCCESS != (ret = ompi_dpm_finalize())) {
-        return ret;
+        goto done;
     }
 
     /* free internal error resources */
     if (OMPI_SUCCESS != (ret = ompi_errcode_intern_finalize())) {
-        return ret;
+        goto done;
     }
 
     /* free error code resources */
     if (OMPI_SUCCESS != (ret = ompi_mpi_errcode_finalize())) {
-        return ret;
+        goto done;
     }
 
     /* free errhandler resources */
     if (OMPI_SUCCESS != (ret = ompi_errhandler_finalize())) {
-        return ret;
+        goto done;
     }
 
     /* Free all other resources */
 
     /* free op resources */
     if (OMPI_SUCCESS != (ret = ompi_op_finalize())) {
-        return ret;
+        goto done;
     }
 
     /* free ddt resources */
     if (OMPI_SUCCESS != (ret = ompi_datatype_finalize())) {
-        return ret;
+        goto done;
     }
 
     /* free info resources */
+
     if (OMPI_SUCCESS != (ret = ompi_mpiinfo_finalize())) {
-        return ret;
+        goto done;
     }
 
     /* Close down MCA modules */
@@ -388,32 +403,32 @@ int ompi_mpi_finalize(void)
         ompi_io_base_framework.framework_refcnt = 1;
 
         if (OMPI_SUCCESS != mca_base_framework_close(&ompi_io_base_framework)) {
-            return ret;
+            goto done;
         }
     }
     (void) mca_base_framework_close(&ompi_topo_base_framework);
     if (OMPI_SUCCESS != (ret = mca_base_framework_close(&ompi_osc_base_framework))) {
-        return ret;
+        goto done;
     }
     if (OMPI_SUCCESS != (ret = mca_base_framework_close(&ompi_coll_base_framework))) {
-        return ret;
+        goto done;
     }
     if (OMPI_SUCCESS != (ret = mca_base_framework_close(&ompi_bml_base_framework))) {
-        return ret;
+        goto done;
     }
     if (OMPI_SUCCESS != (ret = mca_base_framework_close(&opal_mpool_base_framework))) {
-        return ret;
+        goto done;
     }
     if (OMPI_SUCCESS != (ret = mca_base_framework_close(&opal_rcache_base_framework))) {
-        return ret;
+        goto done;
     }
     if (OMPI_SUCCESS != (ret = mca_base_framework_close(&opal_allocator_base_framework))) {
-        return ret;
+        goto done;
     }
 
     /* free proc resources */
     if ( OMPI_SUCCESS != (ret = ompi_proc_finalize())) {
-        return ret;
+        goto done;
     }
 
     if (NULL != ompi_mpi_main_thread) {
@@ -421,24 +436,31 @@ int ompi_mpi_finalize(void)
         ompi_mpi_main_thread = NULL;
     }
 
+    /* Clean up memory/resources from the MPI dynamic process
+       functionality checker */
+    ompi_mpi_dynamics_finalize();
+
     /* Leave the RTE */
 
     if (OMPI_SUCCESS != (ret = ompi_rte_finalize())) {
-        return ret;
+        goto done;
     }
     ompi_rte_initialized = false;
 
     /* now close the rte framework */
     if (OMPI_SUCCESS != (ret = mca_base_framework_close(&ompi_rte_base_framework) ) ) {
         OMPI_ERROR_LOG(ret);
-        return ret;
+        goto done;
     }
 
     if (OPAL_SUCCESS != (ret = opal_finalize_util())) {
-        return ret;
+        goto done;
     }
 
     /* All done */
 
-    return MPI_SUCCESS;
+ done:
+    opal_mutex_unlock(&ompi_mpi_bootstrap_mutex);
+
+    return ret;
 }

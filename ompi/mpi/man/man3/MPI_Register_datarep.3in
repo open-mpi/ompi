@@ -3,6 +3,8 @@
 .\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
 .\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
+.\" Copyright 2015      Research Organization for Information Science
+.\"                     and Technology (RIST). All rights reserved.
 .\" $COPYRIGHT$
 .TH MPI_Register_datarep 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
@@ -11,25 +13,40 @@
 .SH SYNTAX
 .ft R
 .nf
-C Syntax
-    #include <mpi.h>
-    int MPI_Register_datarep(const char \fI*datarep\fP,
-    	      MPI_Datarep_conversion_function \fI*read_conversion_fn\fP,
-    	      MPI_Datarep_conversion_function \fI*write_conversion_fn\fP,
-    	      MPI_Datarep_extent_function \fI*dtype_file_extent_fn\fP,
-    	      void \fI*extra_state\fP)
+.SH C Syntax
+#include <mpi.h>
+int MPI_Register_datarep(const char \fI*datarep\fP,
+	MPI_Datarep_conversion_function \fI*read_conversion_fn\fP,
+	MPI_Datarep_conversion_function \fI*write_conversion_fn\fP,
+	MPI_Datarep_extent_function \fI*dtype_file_extent_fn\fP,
+	void \fI*extra_state\fP)
+
 .fi
 .SH Fortran Syntax
 .nf
-    INCLUDE 'mpif.h'
-    MPI_REGISTER_DATAREP(\fIDATAREP\fP, \fIREAD_CONVERSION_FN\fP,
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
+MPI_REGISTER_DATAREP(\fIDATAREP\fP, \fIREAD_CONVERSION_FN\fP,
 	\fIWRITE_CONVERSION_FN\fP, \fIDTYPE_FILE_EXTENT_FN\fP,
-	\fIEXTRA_STATE\fP,\fI IERROR\fP)
-		CHARACTER*(*) \fIDATAREP\fP
-		EXTERNAL \fIREAD_CONVERSION_FN, WRITE_CONVERSION_FN,
-		         DTYPE_FILE_EXTENT_FN\fP
-        	INTEGER	\fIIERROR\fP
-		INTEGER(KIND=MPI_ADDRESS_KIND) \fIEXTRA_STATE\fP
+	\fIEXTRA_STATE\fP, \fIIERROR\fP)
+	CHARACTER*(*)	\fIDATAREP\fP
+	EXTERNAL	\fIREAD_CONVERSION_FN, WRITE_CONVERSION_FN, DTYPE_FILE_EXTENT_FN\fP
+	INTEGER	\fIIERROR\fP
+	INTEGER(KIND=MPI_ADDRESS_KIND)	\fIEXTRA_STATE\fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Register_datarep(\fIdatarep\fP, \fIread_conversion_fn\fP, \fIwrite_conversion_fn\fP,
+		\fIdtype_file_extent_fn\fP, \fIextra_state\fP, \fIierror\fP)
+	CHARACTER(LEN=*), INTENT(IN) :: \fIdatarep\fP
+	PROCEDURE(MPI_Datarep_conversion_function) :: \fIread_conversion_fn\fP
+	PROCEDURE(MPI_Datarep_conversion_function) :: \fIwrite_conversion_fn\fP
+	PROCEDURE(MPI_Datarep_extent_function) :: \fIdtype_file_extent_fn\fP
+	INTEGER(KIND=MPI_ADDRESS_KIND), INTENT(IN) :: \fIextra_state\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
+
 .fi
 .SH C++ Syntax
 .nf

@@ -1,5 +1,7 @@
 /*
  * Copyright (c) 2014-2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -16,7 +18,9 @@
 #include <sys/types.h>
 #include <string.h>
 #include <unistd.h>
+#ifdef HAVE_ALLOCA_H
 #include <alloca.h>
+#endif
 #include <time.h>
 
 #include "opal_stdint.h"

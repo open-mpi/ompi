@@ -97,9 +97,10 @@ ompi_mtl_ofi_progress(void)
             ret = fi_cq_readerr(ompi_mtl_ofi.cq,
                                 &error,
                                 0);
-            if (ret) {
+            if (0 > ret) {
                 opal_output(ompi_mtl_base_framework.framework_output,
                             "Error returned from fi_cq_readerr: %zd", ret);
+                abort();
             }
 
             assert(error.op_context);
@@ -456,9 +457,9 @@ ompi_mtl_ofi_recv_callback(struct fi_cq_tagged_entry *wc,
          * If the recv request was posted for any source,
          * we need to extract the source's actual address.
          */
-        if (!ofi_req->remote_addr) {
+        if (ompi_mtl_ofi.any_addr == ofi_req->remote_addr) {
             src = MTL_OFI_GET_SOURCE(wc->tag);
-            ompi_proc = ompi_comm_peer_lookup(ofi_req->comm, src );
+            ompi_proc = ompi_comm_peer_lookup(ofi_req->comm, src);
             endpoint = ompi_proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_MTL];
             ofi_req->remote_addr = endpoint->peer_fiaddr;
         }

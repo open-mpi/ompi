@@ -21,6 +21,7 @@
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
+ * Copyright (c) 2015      Mellanox Technologies. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -148,7 +149,7 @@ int ompi_comm_set_nb ( ompi_communicator_t **ncomm,
         local_size = ompi_group_size (local_group);
     }
 
-    if (NULL != remote_group) {
+    if ( (NULL != remote_group) && (&ompi_mpi_group_null.group != remote_group) ) {
         remote_size = ompi_group_size (remote_group);
     }
 
@@ -172,15 +173,14 @@ int ompi_comm_set_nb ( ompi_communicator_t **ncomm,
     } else {
         newcomm->c_local_group = local_group;
         OBJ_RETAIN(newcomm->c_local_group);
-        ompi_group_increment_proc_count(newcomm->c_local_group);
     }
     newcomm->c_my_rank = newcomm->c_local_group->grp_my_rank;
 
     /* Set remote group and duplicate the local comm, if applicable */
-    if (0 < remote_size) {
+    if ( NULL != remote_group ) {
         ompi_communicator_t *old_localcomm;
 
-        if (NULL == remote_group || &ompi_mpi_group_null.group == remote_group) {
+        if (&ompi_mpi_group_null.group == remote_group) {
             ret = ompi_group_incl(oldcomm->c_remote_group, remote_size,
                                   remote_ranks, &newcomm->c_remote_group);
             if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
@@ -189,7 +189,6 @@ int ompi_comm_set_nb ( ompi_communicator_t **ncomm,
         } else {
             newcomm->c_remote_group = remote_group;
             OBJ_RETAIN(newcomm->c_remote_group);
-            ompi_group_increment_proc_count(newcomm->c_remote_group);
         }
 
         newcomm->c_flags |= OMPI_COMM_INTER;
@@ -256,9 +255,6 @@ int ompi_comm_group ( ompi_communicator_t* comm, ompi_group_t **group )
     /* increment reference counters for the group */
     OBJ_RETAIN(comm->c_local_group);
 
-    /* increase also the reference counter for the procs */
-    ompi_group_increment_proc_count(comm->c_local_group);
-
     *group = comm->c_local_group;
     return OMPI_SUCCESS;
 }
@@ -278,6 +274,7 @@ int ompi_comm_create ( ompi_communicator_t *comm, ompi_group_t *group,
     int *allranks=NULL;
     int *rranks=NULL;
     int rc = OMPI_SUCCESS;
+    ompi_group_t *remote_group = NULL;
 
     /* silence clang warning. newcomm should never be NULL */
     if (OPAL_UNLIKELY(NULL == newcomm)) {
@@ -286,6 +283,7 @@ int ompi_comm_create ( ompi_communicator_t *comm, ompi_group_t *group,
 
     if ( OMPI_COMM_IS_INTER(comm) ) {
         int tsize;
+        remote_group = &ompi_mpi_group_null.group;
 
         tsize = ompi_comm_remote_size(comm);
         allranks = (int *) malloc ( tsize * sizeof(int));
@@ -348,8 +346,8 @@ int ompi_comm_create ( ompi_communicator_t *comm, ompi_group_t *group,
                          comm->error_handler,      /* error handler */
                          false,                    /* dont copy the topo */
                          group,                    /* local group */
-                         NULL                      /* remote group */
-                         );
+                         remote_group);            /* remote group */
+
     if ( OMPI_SUCCESS != rc ) {
         goto exit;
     }
@@ -432,7 +430,7 @@ int ompi_comm_split( ompi_communicator_t* comm, int color, int key,
     int rc=OMPI_SUCCESS;
     ompi_communicator_t *newcomp = NULL;
     int *lranks=NULL, *rranks=NULL;
-    ompi_group_t * local_group=NULL, * remote_group=NULL;
+    ompi_group_t * local_group=NULL, *remote_group=NULL;
 
     ompi_comm_allgatherfct *allgatherfct=NULL;
 
@@ -565,8 +563,10 @@ int ompi_comm_split( ompi_communicator_t* comm, int color, int key,
             }
         }
 
-        ompi_group_incl(comm->c_local_group, my_size, lranks, &local_group);
-        ompi_group_increment_proc_count(local_group);
+        rc = ompi_group_incl(comm->c_local_group, my_size, lranks, &local_group);
+        if (OMPI_SUCCESS != rc) {
+            goto exit;
+        }
 
         mode = OMPI_COMM_CID_INTER;
     } else {
@@ -588,8 +588,7 @@ int ompi_comm_split( ompi_communicator_t* comm, int color, int key,
                          comm->error_handler,/* error handler */
                          pass_on_topo,
                          local_group,       /* local group */
-                         remote_group       /* remote group */
-                         );
+                         remote_group);     /* remote group */
 
     if ( NULL == newcomp ) {
         rc =  MPI_ERR_INTERN;
@@ -600,7 +599,6 @@ int ompi_comm_split( ompi_communicator_t* comm, int color, int key,
     }
 
     if ( inter ) {
-        ompi_group_decrement_proc_count (local_group);
         OBJ_RELEASE(local_group);
         if (NULL != newcomp->c_local_comm) {
             snprintf(newcomp->c_local_comm->c_name, MPI_MAX_OBJECT_NAME,
@@ -918,7 +916,7 @@ ompi_comm_split_type(ompi_communicator_t *comm,
                          NULL,               /* local group */
                          NULL );             /* remote group */
 
-    if ( NULL == newcomm ) {
+    if ( NULL == newcomp ) {
         rc =  MPI_ERR_INTERN;
         goto exit;
     }
@@ -1985,26 +1983,20 @@ static int ompi_comm_fill_rest(ompi_communicator_t *comm,
        count on the proc pointers
        This is just a quick fix, and will be looking for a
        better solution */
-    OBJ_RELEASE( comm->c_local_group );
-    /* silence clang warning about a NULL pointer dereference */
-    assert (NULL != comm->c_local_group);
-    OBJ_RELEASE( comm->c_local_group );
+    if (comm->c_local_group) {
+        OBJ_RELEASE( comm->c_local_group );
+    }
+
+    if (comm->c_remote_group) {
+        OBJ_RELEASE( comm->c_remote_group );
+    }
 
     /* allocate a group structure for the new communicator */
-    comm->c_local_group = ompi_group_allocate(num_procs);
-
-    /* free the malloced  proc pointers */
-    free(comm->c_local_group->grp_proc_pointers);
-
-    /* set the group information */
-    comm->c_local_group->grp_proc_pointers = proc_pointers;
+    comm->c_local_group = ompi_group_allocate_plist_w_procs (proc_pointers, num_procs);
 
     /* set the remote group to be the same as local group */
     comm->c_remote_group = comm->c_local_group;
     OBJ_RETAIN( comm->c_remote_group );
-
-    /* retain these proc pointers */
-    ompi_group_increment_proc_count(comm->c_local_group);
 
     /* set the rank information */
     comm->c_local_group->grp_my_rank = my_rank;

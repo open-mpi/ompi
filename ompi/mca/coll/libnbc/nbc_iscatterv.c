@@ -46,9 +46,9 @@ int ompi_coll_libnbc_iscatterv(const void* sendbuf, const int *sendcounts, const
 
   /* receive from root */
   if (rank == root) {
-    res = MPI_Type_extent (sendtype, &sndext);
+    res = ompi_datatype_type_extent (sendtype, &sndext);
     if (MPI_SUCCESS != res) {
-      NBC_Error("MPI Error in MPI_Type_extent() (%i)", res);
+      NBC_Error("MPI Error in ompi_datatype_type_extent() (%i)", res);
       OBJ_RELEASE(schedule);
       return res;
     }
@@ -131,9 +131,9 @@ int ompi_coll_libnbc_iscatterv_inter (const void* sendbuf, const int *sendcounts
             return res;
         }
     } else if (MPI_ROOT == root) {
-        res = MPI_Type_extent(sendtype, &sndext);
+        res = ompi_datatype_type_extent(sendtype, &sndext);
         if (MPI_SUCCESS != res) {
-            NBC_Error("MPI Error in MPI_Type_extent() (%i)", res);
+            NBC_Error("MPI Error in ompi_datatype_type_extent() (%i)", res);
             OBJ_RELEASE(schedule);
             return res;
         }

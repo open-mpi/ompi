@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -22,14 +24,12 @@
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_Errhandler_create = PMPI_Errhandler_create
 #endif
-
-#if OMPI_PROFILING_DEFINES
-#include "ompi/mpi/c/profile/defines.h"
+#define MPI_Errhandler_create PMPI_Errhandler_create
 #endif
-
 
 int MPI_Errhandler_create(MPI_Handler_function *function,
                           MPI_Errhandler *errhandler)
@@ -38,5 +38,5 @@ int MPI_Errhandler_create(MPI_Handler_function *function,
     /* This is a deprecated -- just turn around and call the real
        function */
 
-    return MPI_Comm_create_errhandler(function, errhandler);
+    return PMPI_Comm_create_errhandler(function, errhandler);
 }

@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -21,7 +23,8 @@
 
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_CART_GET = ompi_cart_get_f
 #pragma weak pmpi_cart_get = ompi_cart_get_f
 #pragma weak pmpi_cart_get_ = ompi_cart_get_f
@@ -29,7 +32,7 @@
 
 #pragma weak PMPI_Cart_get_f = ompi_cart_get_f
 #pragma weak PMPI_Cart_get_f08 = ompi_cart_get_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_CART_GET,
                            pmpi_cart_get,
                            pmpi_cart_get_,
@@ -37,6 +40,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_CART_GET,
                            pompi_cart_get_f,
                            (MPI_Fint *comm, MPI_Fint *maxdims, MPI_Fint *dims, ompi_fortran_logical_t *periods, MPI_Fint *coords, MPI_Fint *ierr),
                            (comm, maxdims, dims, periods, coords, ierr) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -47,9 +51,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_CART_GET,
 
 #pragma weak MPI_Cart_get_f = ompi_cart_get_f
 #pragma weak MPI_Cart_get_f08 = ompi_cart_get_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_CART_GET,
                            mpi_cart_get,
                            mpi_cart_get_,
@@ -57,12 +60,11 @@ OMPI_GENERATE_F77_BINDINGS (MPI_CART_GET,
                            ompi_cart_get_f,
                            (MPI_Fint *comm, MPI_Fint *maxdims, MPI_Fint *dims, ompi_fortran_logical_t *periods, MPI_Fint *coords, MPI_Fint *ierr),
                            (comm, maxdims, dims, periods, coords, ierr) )
+#else
+#define ompi_cart_get_f pompi_cart_get_f
+#endif
 #endif
 
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
-#endif
 
 void ompi_cart_get_f(MPI_Fint *comm, MPI_Fint *maxdims, MPI_Fint *dims,
 		    ompi_fortran_logical_t *periods, MPI_Fint *coords, MPI_Fint *ierr)
@@ -73,14 +75,14 @@ void ompi_cart_get_f(MPI_Fint *comm, MPI_Fint *maxdims, MPI_Fint *dims,
     OMPI_ARRAY_NAME_DECL(coords);
     OMPI_LOGICAL_ARRAY_NAME_DECL(periods);
 
-    c_comm = MPI_Comm_f2c(*comm);
+    c_comm = PMPI_Comm_f2c(*comm);
 
     size = OMPI_FINT_2_INT(*maxdims);
     OMPI_ARRAY_FINT_2_INT_ALLOC(dims, size);
     OMPI_ARRAY_FINT_2_INT_ALLOC(coords, size);
     OMPI_ARRAY_LOGICAL_2_INT_ALLOC(periods, size);
 
-    c_ierr = MPI_Cart_get(c_comm,
+    c_ierr = PMPI_Cart_get(c_comm,
                           size,
                           OMPI_ARRAY_NAME_CONVERT(dims),
                           OMPI_LOGICAL_ARRAY_NAME_CONVERT(periods),

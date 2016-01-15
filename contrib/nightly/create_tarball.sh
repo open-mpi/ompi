@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -70,13 +70,13 @@ send_error_mail() {
     rm -f "$outfile"
     touch "$outfile"
     for file in `/bin/ls $logdir/* | sort`; do
-        len="`wc -l $file | awk '{ print $1}'`"
-        if test "`expr $len \> $max_log_len`" = "1"; then
-            echo "[... previous lines snipped ...]" >> "$outfile"
-            tail -n $max_log_len "$file" >> "$outfile"
-        else
-            cat "$file" >> "$outfile"
-        fi
+	len="`wc -l $file | awk '{ print $1}'`"
+	if test "`expr $len \> $max_log_len`" = "1"; then
+	    echo "[... previous lines snipped ...]" >> "$outfile"
+	    tail -n $max_log_len "$file" >> "$outfile"
+	else
+	    cat "$file" >> "$outfile"
+	fi
     done
     Mail -s "=== CREATE FAILURE ($version) ===" "$email" < "$outfile"
     rm -f "$outfile"
@@ -101,16 +101,16 @@ do_command() {
     logfile="$logdir/20-command.txt"
     rm -f "$logfile"
     if test -n "$debug"; then
-        echo "*** Running command: $cmd"
-        eval $cmd > "$logfile" 2>&1
-        st=$?
-        echo "*** Command complete: exit status: $st"
+	echo "*** Running command: $cmd"
+	eval $cmd > "$logfile" 2>&1
+	st=$?
+	echo "*** Command complete: exit status: $st"
     else
-        eval $cmd > "$logfile" 2>&1
-        st=$?
+	eval $cmd > "$logfile" 2>&1
+	st=$?
     fi
     if test "$st" != "0"; then
-        cat > "$logdir/15-error.txt" <<EOF
+	cat > "$logdir/15-error.txt" <<EOF
 
 ERROR: Command returned a non-zero exist status ($version):
        $cmd
@@ -120,14 +120,14 @@ End time:   `date`
 
 =======================================================================
 EOF
-        cat > "$logdir/25-error.txt" <<EOF
+	cat > "$logdir/25-error.txt" <<EOF
 =======================================================================
 
 Your friendly daemon,
 Cyrador
 EOF
-        send_error_mail
-        exit 1
+	send_error_mail
+	exit 1
     fi
     rm -f "$logfile"
 }
@@ -187,21 +187,21 @@ version=$describe
 if test -f "$destdir/latest_snapshot.txt"; then
     snapshot_describe=`cat $destdir/latest_snapshot.txt`
     if test -n "$debug"; then
-        echo "** last snapshot describe: $snapshot_describe"
+	echo "** last snapshot describe: $snapshot_describe"
     fi
 
     # Do we need a new snapshot?
     if test "$describe" = "$snapshot_describe"; then
-        if test -n "$debug"; then
-            echo "** git $gitbranch describe is same as latest_snapshot -- not doing anything"
-        fi
-        # Since we didn't do anything, there's no point in leaving the clone we
-        # just created
-        cd ..
-        rm -rf $clone_root
+	if test -n "$debug"; then
+	    echo "** git $gitbranch describe is same as latest_snapshot -- not doing anything"
+	fi
+	# Since we didn't do anything, there's no point in leaving the clone we
+	# just created
+	cd ..
+	rm -rf $clone_root
 
-        # All done... nothing to see here...
-        exit 0
+	# All done... nothing to see here...
+	exit 0
     fi
 fi
 
@@ -225,7 +225,7 @@ USER="ompibuilder"
 export USER
 
 # autogen is our friend
-do_command "./autogen.pl"
+do_command "./autogen.pl --force"
 
 # do config
 do_command "./configure"
@@ -273,9 +273,9 @@ echo $version > latest_snapshot.txt
 for ext in gz bz2; do
     count="`ls openmpi*.tar.$ext | wc -l | awk '{ print $1 }'`"
     if test "`expr $count \> $max_snapshots`" = "1"; then
-        num_old="`expr $count - $max_snapshots`"
-        old="`ls -rt openmpi*.tar.$ext | head -n $num_old`"
-        rm -f $old
+	num_old="`expr $count - $max_snapshots`"
+	old="`ls -rt openmpi*.tar.$ext | head -n $num_old`"
+	rm -f $old
     fi
 done
 

@@ -229,8 +229,18 @@ ompi_mtl_portals4_component_open(void)
     ompi_mtl_portals4.recv_idx = (ptl_pt_index_t) ~0UL;
     ompi_mtl_portals4.read_idx = (ptl_pt_index_t) ~0UL;
 
+    ompi_mtl_portals4.need_init=1;
+
+#if OMPI_MTL_PORTALS4_FLOW_CONTROL
+    ompi_mtl_portals4.use_flowctl=1;
+#else
+    ompi_mtl_portals4.use_flowctl=0;
+#endif
+
     return OMPI_SUCCESS;
 }
+
+#define NEED_ALL_PROCS (ompi_mtl_portals4.use_logical || ompi_mtl_portals4.use_flowctl)
 
 static int
 ompi_mtl_portals4_component_query(mca_base_module_t **module, int *priority)
@@ -241,6 +251,13 @@ ompi_mtl_portals4_component_query(mca_base_module_t **module, int *priority)
 
     *priority = param_priority;
     *module = (mca_base_module_t *)&ompi_mtl_portals4.base;
+
+    if (NEED_ALL_PROCS) {
+        /* let the pml know we need add_procs to be calls with all the
+         * procs in the job */
+        ompi_mtl_portals4.base.mtl_flags |= MCA_MTL_BASE_FLAG_REQUIRE_WORLD;
+    }
+
     return OMPI_SUCCESS;
 }
 

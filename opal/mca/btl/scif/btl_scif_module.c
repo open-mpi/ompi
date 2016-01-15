@@ -181,6 +181,7 @@ static mca_btl_base_registration_handle_t *mca_btl_scif_register_mem (struct mca
                                                                       void *base, size_t size, uint32_t flags)
 {
     mca_btl_scif_reg_t *scif_reg;
+    int access_flags = flags & MCA_BTL_REG_FLAG_ACCESS_ANY;
     int rc;
 
     if (MCA_BTL_ENDPOINT_ANY == endpoint) {
@@ -199,7 +200,7 @@ static mca_btl_base_registration_handle_t *mca_btl_scif_register_mem (struct mca
         }
     }
 
-    rc = btl->btl_mpool->mpool_register(btl->btl_mpool, base, size, 0,
+    rc = btl->btl_mpool->mpool_register(btl->btl_mpool, base, size, 0, access_flags,
                                         (mca_mpool_base_registration_t **) &scif_reg);
     if (OPAL_UNLIKELY(OPAL_SUCCESS != rc)) {
         return NULL;

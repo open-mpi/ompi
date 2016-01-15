@@ -1,0 +1,145 @@
+# Copyright © 2012      Inria.  All rights reserved.
+# See COPYING in top-level directory.
+
+# suppressions file to be passed to valgrind with
+#   --suppressions=/path/to/hwloc-valgrind.supp
+
+# zlib (brought by libpci or libxml2) doesn't cleanup its global state
+{
+   inflate_init
+   Memcheck:Cond
+   fun:inflateReset2
+   fun:inflateInit2_
+}
+
+# hwloc cannot free the global parser (with xmlCleanupParser()) because other threads may be using it
+{
+   xml_init_parser
+   Memcheck:Leak
+   ...
+   fun:xmlInitParser
+}
+
+# hwloc cannot free the global xml dict RMutex because it cannot call xmlCleanupParser() as explained above
+{
+   xml_dict_create_new_rmutex
+   Memcheck:Leak
+   fun:malloc
+   fun:xmlNewRMutex
+   ...
+   fun:xmlDictCreate
+}
+
+# ltdl dlopen global state?
+{
+   ltdl_dlopen_doit_leak
+   Memcheck:Leak
+   ...
+   fun:dl_open_worker
+   fun:_dl_catch_error
+   fun:_dl_open
+   fun:dlopen_doit
+}
+
+# ltdl_dlclose_leak
+{
+   ltdl_dlclose_leak
+   Memcheck:Leak
+   ...
+   fun:_dl_close_worker
+   fun:_dl_close
+   ...
+   fun:dlclose
+}
+
+# lt_dlforeachfile abusing paths
+{
+   lt_dlforeachfile_addr8
+   Memcheck:Addr8
+   fun:_wordcopy_fwd_dest_aligned
+   fun:__GI_memmove
+   fun:argz_insert
+   ...
+   fun:lt_dlforeachfile
+}
+
+# cuda
+{
+   cuda_leak
+   Memcheck:Leak
+   ...
+   obj:*libcuda*
+}
+
+# nvml
+{
+   nvmlInit_cond
+   Memcheck:Cond
+   ...
+   obj:*nvidia-ml*
+   ...
+   fun:nvmlInit
+}
+
+# amd opencl
+{
+   atical_leak
+   Memcheck:Leak
+   ...
+   obj:*libatical*
+}
+{
+   atical_cond
+   Memcheck:Cond
+   ...
+   obj:*libatical*
+}
+{
+   amdocl_leak
+   Memcheck:Leak
+   ...
+   obj:*libamdocl*
+}
+{
+   amdocl_param
+   Memcheck:Param
+   write(buf)
+   fun:*write*
+   obj:*libamdocl*
+}
+{
+   opencl_leak
+   Memcheck:Leak
+   ...
+   obj:*libOpenCL*
+   ...
+   fun:clGetPlatformIDs
+}
+{
+   libatiadl_xcb_leak
+   Memcheck:Leak
+   ...
+   obj:*libxcb*
+   ...
+   fun:XOpenDisplay
+   ...
+   obj:*libatiadl*
+}
+
+# 
+{
+   libpciaccess_device_name_leak
+   Memcheck:Leak
+   ...
+   fun:pci_device_get_device_name
+   fun:hwloc_look_libpci
+}
+{
+   libpciaccess_leak
+   Memcheck:Leak
+   ...
+   obj:*libpciaccess*
+   ...
+   fun:hwloc_look_libpci
+}
+

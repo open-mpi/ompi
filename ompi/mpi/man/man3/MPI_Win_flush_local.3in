@@ -20,12 +20,26 @@ int MPI_Win_flush_local_all (MPI_Win \fIwin\fP)
 .fi
 .SH Fortran Syntax
 .nf
-INCLUDE 'mpif.h'
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
 MPI_WIN_FLUSH_LOCAL(\fIRANK, WIN, IERROR\fP)
 	INTEGER \fIRANK, WIN, IERROR\fP
 
 MPI_WIN_FLUSH_LOCAL_ALL(\fWIN, IERROR\fP)
 	INTEGER \fIWIN, IERROR\fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Win_flush_local(\fIrank\fP, \fIwin\fP, \fIierror\fP)
+	INTEGER, INTENT(IN) :: \fIrank\fP
+	TYPE(MPI_Win), INTENT(IN) :: \fIwin\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
+
+MPI_Win_flush_local_all(\fIwin\fP, \fIierror\fP)
+	TYPE(MPI_Win), INTENT(IN) :: \fIwin\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
 .SH INPUT PARAMETERS

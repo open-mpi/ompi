@@ -90,7 +90,8 @@ ompi_mtl_psm_component_register(void)
 #endif
 
 
-    param_priority = 100;
+    /* set priority high enough to beat ob1's default */
+    param_priority = 30;
     (void) mca_base_component_var_register (&mca_mtl_psm_component.super.mtl_version,
                                             "priority", "Priority of the PSM MTL component",
                                             MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,

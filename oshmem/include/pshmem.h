@@ -53,7 +53,8 @@ extern "C" {
 /*
  * Initialization routines
  */
-OSHMEM_DECLSPEC  void pstart_pes(int npes);
+OSHMEM_DECLSPEC  void pshmem_init(void);
+OSHMEM_DECLSPEC  void pshmem_global_exit(int status);
 
 /*
  * Finalization routines
@@ -63,8 +64,8 @@ OSHMEM_DECLSPEC  void pshmem_finalize(void) OSHMEM_DESTRUCTOR;
 /*
  * Query routines
  */
-OSHMEM_DECLSPEC  int p_num_pes(void);
-OSHMEM_DECLSPEC  int p_my_pe(void);
+OSHMEM_DECLSPEC  int pshmem_n_pes(void);
+OSHMEM_DECLSPEC  int pshmem_my_pe(void);
 
 
 /*
@@ -76,10 +77,10 @@ OSHMEM_DECLSPEC int pshmem_addr_accessible(void *addr, int pe);
 /*
  * Symmetric heap routines
  */
-OSHMEM_DECLSPEC  void* pshmalloc(size_t size);
-OSHMEM_DECLSPEC  void* pshmemalign(size_t align, size_t size);
-OSHMEM_DECLSPEC  void* pshrealloc(void *ptr, size_t size);
-OSHMEM_DECLSPEC  void pshfree(void* ptr);
+OSHMEM_DECLSPEC  void* pshmem_malloc(size_t size);
+OSHMEM_DECLSPEC  void* pshmem_align(size_t align, size_t size);
+OSHMEM_DECLSPEC  void* pshmem_realloc(void *ptr, size_t size);
+OSHMEM_DECLSPEC  void pshmem_free(void* ptr);
 
 /*
  * Remote pointer operations
@@ -89,6 +90,7 @@ OSHMEM_DECLSPEC  void *pshmem_ptr(void *ptr, int pe);
 /*
  * Elemental put routines
  */
+OSHMEM_DECLSPEC  void pshmem_char_p(char* addr, char value, int pe);
 OSHMEM_DECLSPEC  void pshmem_short_p(short* addr, short value, int pe);
 OSHMEM_DECLSPEC  void pshmem_int_p(int* addr, int value, int pe);
 OSHMEM_DECLSPEC  void pshmem_long_p(long* addr, long value, int pe);
@@ -100,7 +102,6 @@ OSHMEM_DECLSPEC  void pshmem_longdouble_p(long double* addr, long double value, 
 /*
  * Block data put routines
  */
-OSHMEM_DECLSPEC  void pshmem_char_put(char *target, const char *source, size_t len, int pe);
 OSHMEM_DECLSPEC  void pshmem_short_put(short *target, const short *source, size_t len, int pe);
 OSHMEM_DECLSPEC  void pshmem_int_put(int* target, const int* source, size_t len, int pe);
 OSHMEM_DECLSPEC  void pshmem_long_put(long *target, const long *source, size_t len, int pe);
@@ -116,8 +117,8 @@ OSHMEM_DECLSPEC  void pshmem_putmem(void *target, const void *source, size_t len
 /*
  * Strided put routines
  */
-OSHMEM_DECLSPEC void pshmem_int_iput(int* target, const int* source, ptrdiff_t tst, ptrdiff_t sst,size_t len, int pe);
 OSHMEM_DECLSPEC void pshmem_short_iput(short* target, const short* source, ptrdiff_t tst, ptrdiff_t sst,size_t len, int pe);
+OSHMEM_DECLSPEC void pshmem_int_iput(int* target, const int* source, ptrdiff_t tst, ptrdiff_t sst,size_t len, int pe);
 OSHMEM_DECLSPEC void pshmem_float_iput(float* target, const float* source, ptrdiff_t tst, ptrdiff_t sst,size_t len, int pe);
 OSHMEM_DECLSPEC void pshmem_double_iput(double* target, const double* source, ptrdiff_t tst, ptrdiff_t sst,size_t len, int pe);
 OSHMEM_DECLSPEC void pshmem_longlong_iput(long long* target, const long long* source, ptrdiff_t tst, ptrdiff_t sst,size_t len, int pe);
@@ -130,6 +131,7 @@ OSHMEM_DECLSPEC void pshmem_iput128(void* target, const void* source, ptrdiff_t 
 /*
  * Elemental get routines
  */
+OSHMEM_DECLSPEC  char pshmem_char_g(char* addr, int pe);
 OSHMEM_DECLSPEC  short pshmem_short_g(short* addr, int pe);
 OSHMEM_DECLSPEC  int pshmem_int_g(int* addr, int pe);
 OSHMEM_DECLSPEC  long pshmem_long_g(long* addr, int pe);
@@ -141,7 +143,6 @@ OSHMEM_DECLSPEC  long double pshmem_longdouble_g(long double* addr, int pe);
 /*
  * Block data get routines
  */
-OSHMEM_DECLSPEC  void pshmem_char_get(char *target, const char *source, size_t len, int pe);
 OSHMEM_DECLSPEC  void pshmem_short_get(short *target, const short *source, size_t len, int pe);
 OSHMEM_DECLSPEC  void pshmem_int_get(int *target, const int *source, size_t len, int pe);
 OSHMEM_DECLSPEC  void pshmem_long_get(long *target, const long *source, size_t len, int pe);

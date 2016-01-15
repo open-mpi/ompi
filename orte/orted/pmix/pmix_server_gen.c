@@ -115,5 +115,20 @@ int pmix_server_register_events_fn(opal_list_t *info,
                                    opal_pmix_op_cbfunc_t cbfunc,
                                    void *cbdata)
 {
-    return OPAL_ERR_NOT_IMPLEMENTED;
+    /* for now, just execute the cbfunc */
+    if (NULL != cbfunc) {
+        cbfunc(OPAL_SUCCESS, cbdata);
+    }
+    return OPAL_SUCCESS;
+}
+
+int pmix_server_deregister_events_fn(opal_list_t *info,
+                                     opal_pmix_op_cbfunc_t cbfunc,
+                                     void *cbdata)
+{
+    /* for now, just execute the cbfunc */
+    if (NULL != cbfunc) {
+        cbfunc(OPAL_SUCCESS, cbdata);
+    }
+    return OPAL_SUCCESS;
 }

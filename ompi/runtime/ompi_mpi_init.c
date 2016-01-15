@@ -124,10 +124,12 @@ const char ompi_version_string[] = OMPI_IDENT_STRING;
  * Global variables and symbols for the MPI layer
  */
 
-bool ompi_mpi_init_started = false;
-bool ompi_mpi_initialized = false;
-bool ompi_mpi_finalized = false;
-bool ompi_rte_initialized = false;
+opal_mutex_t ompi_mpi_bootstrap_mutex = OPAL_MUTEX_STATIC_INIT;
+volatile bool ompi_mpi_init_started = false;
+volatile bool ompi_mpi_initialized = false;
+volatile bool ompi_mpi_finalize_started = false;
+volatile bool ompi_mpi_finalized = false;
+volatile bool ompi_rte_initialized = false;
 
 bool ompi_mpi_thread_multiple = false;
 int ompi_mpi_thread_requested = MPI_THREAD_SINGLE;
@@ -376,6 +378,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     size_t nprocs;
     char *error = NULL;
     char *cmd=NULL, *av=NULL;
+    ompi_errhandler_errtrk_t errtrk;
     OPAL_TIMING_DECLARE(tm);
     OPAL_TIMING_INIT_EXT(&tm, OPAL_TIMING_GET_TIME_OF_DAY);
 
@@ -383,9 +386,26 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
      * for the modex in order to work in heterogeneous environments. */
     uint8_t threadlevel_bf;
 
-    /* Indicate that we have *started* MPI_INIT*.  MPI_FINALIZE has
-       something sorta similar in a static local variable in
-       ompi_mpi_finalize(). */
+    /* Ensure that we were not already initialized or finalized.
+
+       This lock is held for the duration of ompi_mpi_init() and
+       ompi_mpi_finalize().  Hence, if we get it, then no other thread
+       is inside the critical section (and we don't have to check the
+       *_started bool variables). */
+    opal_mutex_lock(&ompi_mpi_bootstrap_mutex);
+    if (ompi_mpi_finalized) {
+        opal_show_help("help-mpi-runtime.txt",
+                       "mpi_init: already finalized", true);
+        opal_mutex_unlock(&ompi_mpi_bootstrap_mutex);
+        return MPI_ERR_OTHER;
+    } else if (ompi_mpi_initialized) {
+        opal_show_help("help-mpi-runtime.txt",
+                       "mpi_init: invoked multiple times", true);
+        opal_mutex_unlock(&ompi_mpi_bootstrap_mutex);
+        return MPI_ERR_OTHER;
+    }
+
+    /* Indicate that we have *started* MPI_INIT* */
     ompi_mpi_init_started = true;
 
     /* Setup enough to check get/set MCA params */
@@ -485,11 +505,18 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         }
     }
 
-    /* Register the default errhandler callback - RTE will ignore if it
-     * doesn't support this capability
-     */
-    ompi_rte_register_errhandler(ompi_errhandler_runtime_callback,
-                                 OMPI_RTE_ERRHANDLER_LAST);
+    /* Register the default errhandler callback  */
+    errtrk.status = OPAL_ERROR;
+    errtrk.active = true;
+    opal_pmix.register_errhandler(NULL, ompi_errhandler_callback,
+                                  ompi_errhandler_registration_callback,
+                                  (void*)&errtrk);
+    OMPI_WAIT_FOR_COMPLETION(errtrk.active);
+    if (OPAL_SUCCESS != errtrk.status) {
+        error = "Error handler registration";
+        ret = errtrk.status;
+        goto error;
+    }
 
     /* Figure out the final MPI thread levels.  If we were not
        compiled for support for MPI threads, then don't allow
@@ -620,10 +647,9 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
 
     /* exchange connection info - this function may also act as a barrier
      * if data exchange is required. The modex occurs solely across procs
-     * in our job, so no proc array is passed. If a barrier is required,
-     * the "modex" function will perform it internally
-     */
-    OPAL_MODEX(NULL, 1);
+     * in our job. If a barrier is required, the "modex" function will
+     * perform it internally */
+    OPAL_MODEX();
 
     OPAL_TIMING_MNEXT((&tm,"time from modex to first barrier"));
 
@@ -739,10 +765,21 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         goto error;
     }
 
-    /* add all ompi_proc_t's to PML */
-    if (NULL == (procs = ompi_proc_world(&nprocs))) {
-        error = "ompi_proc_world() failed";
-        goto error;
+    /* some btls/mtls require we call add_procs with all procs in the job.
+     * since the btls/mtls have no visibility here it is up to the pml to
+     * convey this requirement */
+    if (mca_pml_base_requires_world ()) {
+        if (NULL == (procs = ompi_proc_world (&nprocs))) {
+            error = "ompi_proc_get_allocated () failed";
+            goto error;
+        }
+    } else {
+        /* add all allocated ompi_proc_t's to PML (below the add_procs limit this
+         * behaves identically to ompi_proc_world ()) */
+        if (NULL == (procs = ompi_proc_get_allocated (&nprocs))) {
+            error = "ompi_proc_get_allocated () failed";
+            goto error;
+        }
     }
     ret = MCA_PML_CALL(add_procs(procs, nprocs));
     free(procs);
@@ -892,6 +929,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
                            "mpi_init:startup:internal-failure", true,
                            "MPI_INIT", "MPI_INIT", error, err_msg, ret);
         }
+        opal_mutex_unlock(&ompi_mpi_bootstrap_mutex);
         return ret;
     }
 
@@ -921,5 +959,6 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     OPAL_TIMING_REPORT(ompi_enable_timing_ext, &tm);
     OPAL_TIMING_RELEASE(&tm);
 
+    opal_mutex_unlock(&ompi_mpi_bootstrap_mutex);
     return MPI_SUCCESS;
 }

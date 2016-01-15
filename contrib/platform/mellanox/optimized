@@ -18,6 +18,11 @@ fi
 
 if [ "$mellanox_autodetect" == "yes" ]; then
 
+    ucx_dir=${ucx_dir:="$(pkg-config --variable=prefix ucx)"}
+    if [ -d $ucx_dir ]; then
+        with_ucx=$ucx_dir
+    fi
+
     mxm_dir=${mxm_dir:="$(pkg-config --variable=prefix mxm)"}
     if [ -d $mxm_dir ]; then
         with_mxm=$mxm_dir

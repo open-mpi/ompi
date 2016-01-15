@@ -235,6 +235,8 @@ mpi_api_man_pages = \
         mpi/man/man3/MPI_Keyval_create.3 \
         mpi/man/man3/MPI_Keyval_free.3 \
         mpi/man/man3/MPI_Lookup_name.3 \
+        mpi/man/man3/MPI_Message_c2f.3 \
+        mpi/man/man3/MPI_Message_f2c.3 \
         mpi/man/man3/MPI_Mprobe.3 \
         mpi/man/man3/MPI_Mrecv.3 \
         mpi/man/man3/MPI_Neighbor_allgather.3 \
@@ -248,6 +250,7 @@ mpi_api_man_pages = \
         mpi/man/man3/MPI_Neighbor_alltoallw.3 \
         mpi/man/man3/MPI_Ineighbor_alltoallw.3 \
         mpi/man/man3/MPI_Op_c2f.3 \
+        mpi/man/man3/MPI_Op_commutative.3 \
         mpi/man/man3/MPI_Op_create.3 \
         mpi/man/man3/MPI_Open_port.3 \
         mpi/man/man3/MPI_Op_f2c.3 \

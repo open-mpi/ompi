@@ -10,11 +10,13 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2015      Intel, Inc. All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -24,20 +26,22 @@
 #include "ompi_config.h"
 #include <stdio.h>
 
+#include "opal/util/show_help.h"
+
 #include "ompi/info/info.h"
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/runtime/params.h"
+#include "ompi/runtime/mpiruntime.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/dpm/dpm.h"
 #include "ompi/memchecker.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_Comm_spawn = PMPI_Comm_spawn
 #endif
-
-#if OMPI_PROFILING_DEFINES
-#include "ompi/mpi/c/profile/defines.h"
+#define MPI_Comm_spawn PMPI_Comm_spawn
 #endif
 
 static const char FUNC_NAME[] = "MPI_Comm_spawn";
@@ -96,6 +100,10 @@ int MPI_Comm_spawn(const char *command, char *argv[], int maxprocs, MPI_Info inf
         }
     }
 
+    if (!ompi_mpi_dynamics_is_enabled(FUNC_NAME)) {
+        return OMPI_ERRHANDLER_INVOKE(comm, OMPI_ERR_NOT_SUPPORTED, FUNC_NAME);
+    }
+
     /* initialize the port name to avoid problems */
     memset(port_name, 0, MPI_MAX_PORT_NAME);
 
@@ -131,12 +139,20 @@ int MPI_Comm_spawn(const char *command, char *argv[], int maxprocs, MPI_Info inf
     }
 
 error:
-    OPAL_CR_EXIT_LIBRARY();
+    if (OPAL_ERR_NOT_SUPPORTED == rc) {
+        opal_show_help("help-mpi-api.txt",
+                       "MPI function not supported",
+                       true,
+                       FUNC_NAME,
+                       "Underlying runtime environment does not support spawn functionality");
+    }
 
     /* close the port */
     if (rank == root && !non_mpi) {
         ompi_dpm_close_port(port_name);
     }
+
+    OPAL_CR_EXIT_LIBRARY();
 
     /* set error codes */
     if (MPI_ERRCODES_IGNORE != array_of_errcodes) {

@@ -9,6 +9,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * Copyright (c) 2014      Bull SAS.  All rights reserved.
+ * Copyright (c) 2016      Mellanox Technologies. All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -66,10 +67,10 @@
 #include "opal/util/error.h"
 #include "opal/util/alfg.h"
 #include "opal_stdint.h"
+#include "opal/class/opal_fifo.h"
 
 #include "btl_openib_endpoint.h"
 #include "btl_openib_proc.h"
-#include "btl_openib_fd.h"
 #include "btl_openib_async.h"
 #include "connect/connect.h"
 
@@ -149,9 +150,7 @@ typedef struct udcm_module {
     opal_mutex_t cm_send_lock;
 
     /* Receive queue */
-    opal_mutex_t cm_recv_msg_queue_lock;
-    opal_list_t  cm_recv_msg_queue;
-    bool         cm_message_event_active;
+    opal_fifo_t  cm_recv_msg_fifo;
 
     /* The associated BTL */
     struct mca_btl_openib_module_t *btl;
@@ -159,8 +158,20 @@ typedef struct udcm_module {
     /* This module's modex message */
     modex_msg_t modex;
 
-    /** The channel is being monitored */
-    bool channel_monitored;
+    /* channel monitoring */
+
+    /** channel event base */
+    opal_event_base_t *channel_evbase;
+
+    /** channel monitoring event */
+    opal_event_t       channel_event;
+
+    /* message processing */
+    /** mesage event is active */
+    int32_t      cm_message_event_active;
+
+    /** message event */
+    opal_event_t cm_message_event;
 } udcm_module_t;
 
 /*
@@ -303,10 +314,10 @@ static int udcm_module_finalize(mca_btl_openib_module_t *btl,
                                 opal_btl_openib_connect_base_module_t *cpc);
 
 static void *udcm_cq_event_dispatch(int fd, int flags, void *context);
-static void *udcm_message_callback (void *context);
+static void *udcm_message_callback (int fd, int flags, void *context);
 
 static void udcm_set_message_timeout (udcm_message_sent_t *message);
-static void udcm_cancel_message_timeout (udcm_message_sent_t *message);
+static void udcm_free_message (udcm_message_sent_t *message);
 
 static int udcm_module_init (udcm_module_t *m, mca_btl_openib_module_t *btl);
 
@@ -660,8 +671,7 @@ static int udcm_module_init (udcm_module_t *m, mca_btl_openib_module_t *btl)
 
     OBJ_CONSTRUCT(&m->cm_lock, opal_mutex_t);
     OBJ_CONSTRUCT(&m->cm_send_lock, opal_mutex_t);
-    OBJ_CONSTRUCT(&m->cm_recv_msg_queue, opal_list_t);
-    OBJ_CONSTRUCT(&m->cm_recv_msg_queue_lock, opal_mutex_t);
+    OBJ_CONSTRUCT(&m->cm_recv_msg_fifo, opal_fifo_t);
     OBJ_CONSTRUCT(&m->flying_messages, opal_list_t);
     OBJ_CONSTRUCT(&m->cm_timeout_lock, opal_mutex_t);
 
@@ -733,15 +743,23 @@ static int udcm_module_init (udcm_module_t *m, mca_btl_openib_module_t *btl)
     m->cm_exiting = false;
 
     /* Monitor the fd associated with the completion channel */
-    opal_btl_openib_fd_monitor(m->cm_channel->fd, OPAL_EV_READ,
-                               udcm_cq_event_dispatch, m);
-    m->channel_monitored = true;
+    m->channel_evbase = opal_progress_thread_init (NULL);
+
+    opal_event_set (m->channel_evbase, &m->channel_event,
+                    m->cm_channel->fd, OPAL_EV_READ | OPAL_EV_PERSIST,
+                    udcm_cq_event_dispatch, m);
+
+    opal_event_add (&m->channel_event, 0);
 
     udcm_timeout_tv.tv_sec  = udcm_timeout / 1000000;
     udcm_timeout_tv.tv_usec = udcm_timeout - 1000000 *
         udcm_timeout_tv.tv_sec;
 
-    m->cm_message_event_active = false;
+    m->cm_message_event_active = 0;
+
+    /* set up the message event */
+    opal_event_set (opal_sync_event_base, &m->cm_message_event, -1,
+                    OPAL_EV_READ, udcm_message_callback, m);
 
     /* Finally, request CQ notification */
     if (0 != ibv_req_notify_cq (m->cm_recv_cq, 0)) {
@@ -804,21 +822,11 @@ udcm_module_start_connect(opal_btl_openib_connect_base_module_t *cpc,
     return rc;
 }
 
-static void *udcm_unmonitor(int fd, int flags, void *context)
-{
-    volatile int *barrier = (volatile int *)context;
-
-    *barrier = 1;
-
-    return NULL;
-}
-
 static int udcm_module_finalize(mca_btl_openib_module_t *btl,
                                 opal_btl_openib_connect_base_module_t *cpc)
 {
     udcm_module_t *m = (udcm_module_t *) cpc;
     opal_list_item_t *item;
-    volatile int barrier = 0;
 
     if (NULL == m) {
         return OPAL_SUCCESS;
@@ -826,27 +834,19 @@ static int udcm_module_finalize(mca_btl_openib_module_t *btl,
 
     m->cm_exiting = true;
 
-    if (m->channel_monitored) {
-        /* stop monitoring the channel's fd before destroying the listen qp */
-        opal_btl_openib_fd_unmonitor(m->cm_channel->fd, udcm_unmonitor, (void *)&barrier);
-
-        while (0 == barrier) {
-            sched_yield();
-        }
+    if (m->channel_evbase) {
+        opal_event_del (&m->channel_event);
+        opal_progress_thread_finalize (NULL);
     }
 
     opal_mutex_lock (&m->cm_lock);
 
-    opal_mutex_lock (&m->cm_recv_msg_queue_lock);
-
     /* clear message queue */
-    while ((item = opal_list_remove_first(&m->cm_recv_msg_queue))) {
+    while (NULL != (item = opal_fifo_pop_atomic (&m->cm_recv_msg_fifo))) {
         OBJ_RELEASE(item);
     }
 
-    opal_mutex_unlock (&m->cm_recv_msg_queue_lock);
-
-    OBJ_DESTRUCT(&m->cm_recv_msg_queue);
+    OBJ_DESTRUCT(&m->cm_recv_msg_fifo);
 
     opal_mutex_lock (&m->cm_timeout_lock);
     while ((item = opal_list_remove_first(&m->flying_messages))) {
@@ -890,7 +890,6 @@ static int udcm_module_finalize(mca_btl_openib_module_t *btl,
     opal_mutex_unlock (&m->cm_lock);
     OBJ_DESTRUCT(&m->cm_send_lock);
     OBJ_DESTRUCT(&m->cm_lock);
-    OBJ_DESTRUCT(&m->cm_recv_msg_queue_lock);
     OBJ_DESTRUCT(&m->cm_timeout_lock);
 
     return OPAL_SUCCESS;
@@ -979,24 +978,7 @@ static void udcm_module_destroy_listen_qp (udcm_module_t *m)
         return;
     }
 
-    if (mca_btl_openib_component.use_async_event_thread &&
-        -1 != mca_btl_openib_component.async_pipe[1]) {
-        /* Tell the openib async thread to ignore ERR state on the QP
-           we are about to manually set the ERR state on */
-        mca_btl_openib_async_cmd_t async_command;
-        async_command.a_cmd = OPENIB_ASYNC_IGNORE_QP_ERR;
-        async_command.qp = m->listen_qp;
-        if (write(mca_btl_openib_component.async_pipe[1],
-                  &async_command, sizeof(mca_btl_openib_async_cmd_t))<0){
-            BTL_ERROR(("Failed to write to pipe [%d]",errno));
-            return;
-        }
-        /* wait for ok from thread */
-        if (OPAL_SUCCESS !=
-                        btl_openib_async_command_done(OPENIB_ASYNC_IGNORE_QP_ERR)) {
-            BTL_ERROR(("Command to openib async thread to ignore QP ERR state failed"));
-        }
-    }
+    mca_btl_openib_async_add_qp_ignore (m->listen_qp);
 
     do {
         /* Move listen QP into the ERR state to cancel all outstanding
@@ -1326,7 +1308,11 @@ static int udcm_rc_qp_create_one(udcm_module_t *m, mca_btl_base_endpoint_t* lcl_
                               uint32_t max_send_wr)
 {
     udcm_endpoint_t *udep = UDCM_ENDPOINT_DATA(lcl_ep);
+#if HAVE_DECL_IBV_EXP_CREATE_QP
+    struct ibv_exp_qp_init_attr init_attr;
+#else
     struct ibv_qp_init_attr init_attr;
+#endif
     size_t req_inline;
     int rc;
 
@@ -1347,6 +1333,34 @@ static int udcm_rc_qp_create_one(udcm_module_t *m, mca_btl_base_endpoint_t* lcl_
     }
     init_attr.cap.max_send_wr  = max_send_wr;
 
+#if HAVE_DECL_IBV_EXP_CREATE_QP
+    /* use expanded verbs qp create to enable use of mlx5 atomics */
+    init_attr.comp_mask = IBV_EXP_QP_INIT_ATTR_PD;
+    init_attr.pd = m->btl->device->ib_pd;
+
+#if HAVE_DECL_IBV_EXP_QP_INIT_ATTR_ATOMICS_ARG
+    init_attr.comp_mask |= IBV_EXP_QP_INIT_ATTR_ATOMICS_ARG;
+    init_attr.max_atomic_arg = sizeof (int64_t);
+#endif
+
+#if HAVE_DECL_IBV_EXP_ATOMIC_HCA_REPLY_BE
+    if (IBV_EXP_ATOMIC_HCA_REPLY_BE == m->btl->device->ib_exp_dev_attr.exp_atomic_cap) {
+        init_attr.exp_create_flags = IBV_EXP_QP_CREATE_ATOMIC_BE_REPLY;
+        init_attr.comp_mask |= IBV_EXP_QP_INIT_ATTR_CREATE_FLAGS;
+    }
+#endif
+
+    while (NULL == (lcl_ep->qps[qp].qp->lcl_qp = ibv_exp_create_qp (m->btl->device->ib_dev_context,
+                                                                    &init_attr))) {
+        /* NTH: this process may be out of registered memory. try evicting an item from
+           the lru of this btl's mpool */
+        if (false == mca_mpool_grdma_evict (m->btl->super.btl_mpool)) {
+            break;
+        }
+    }
+
+#else
+
     while (NULL == (lcl_ep->qps[qp].qp->lcl_qp = ibv_create_qp(m->btl->device->ib_pd,
                                                                &init_attr))) {
         /* NTH: this process may be out of registered memory. try evicting an item from
@@ -1355,6 +1369,8 @@ static int udcm_rc_qp_create_one(udcm_module_t *m, mca_btl_base_endpoint_t* lcl_
             break;
         }
     }
+
+#endif
 
     if (NULL == lcl_ep->qps[qp].qp->lcl_qp) {
         opal_show_help("help-mpi-btl-openib-cpc-base.txt",
@@ -1679,7 +1695,7 @@ static int udcm_send_request (mca_btl_base_endpoint_t *lcl_ep,
     if (0 != (rc = udcm_post_send (lcl_ep, msg->data, m->msg_length, 0))) {
         BTL_VERBOSE(("error posting REQ"));
 
-        udcm_cancel_message_timeout (msg);
+        udcm_free_message (msg);
 
         return rc;
     }
@@ -1702,7 +1718,7 @@ static int udcm_send_complete (mca_btl_base_endpoint_t *lcl_ep,
     if (0 != rc) {
         BTL_VERBOSE(("error posting complete"));
 
-        udcm_cancel_message_timeout (msg);
+        udcm_free_message (msg);
 
         return rc;
     }
@@ -1728,7 +1744,7 @@ static int udcm_send_reject (mca_btl_base_endpoint_t *lcl_ep,
     if (0 != rc) {
         BTL_VERBOSE(("error posting rejection"));
 
-        udcm_cancel_message_timeout (msg);
+        udcm_free_message (msg);
 
         return rc;
     }
@@ -2078,9 +2094,7 @@ static int udcm_process_messages (struct ibv_cq *event_cq, udcm_module_t *m)
         /* Copy just the message header */
         memcpy (&item->msg_hdr, &message->hdr, sizeof (message->hdr));
 
-        opal_mutex_lock(&m->cm_recv_msg_queue_lock);
-        opal_list_append (&m->cm_recv_msg_queue, &item->super);
-        opal_mutex_unlock(&m->cm_recv_msg_queue_lock);
+        opal_fifo_push_atomic (&m->cm_recv_msg_fifo, &item->super);
 
         udcm_send_ack (lcl_ep, message->hdr.rem_ctx);
 
@@ -2088,13 +2102,11 @@ static int udcm_process_messages (struct ibv_cq *event_cq, udcm_module_t *m)
         udcm_module_post_one_recv (m, msg_num);
     }
 
-    opal_mutex_lock (&m->cm_recv_msg_queue_lock);
-    if (opal_list_get_size (&m->cm_recv_msg_queue) &&
-        !m->cm_message_event_active) {
-        m->cm_message_event_active = true;
-        opal_btl_openib_fd_run_in_main (udcm_message_callback, (void *) m);
+    opal_atomic_wmb ();
+
+    if (0 == opal_atomic_swap_32 (&m->cm_message_event_active, 1)) {
+        opal_event_active (&m->cm_message_event, OPAL_EV_READ, 1);
     }
-    opal_mutex_unlock (&m->cm_recv_msg_queue_lock);
 
     return count;
 }
@@ -2142,18 +2154,19 @@ static void *udcm_cq_event_dispatch(int fd, int flags, void *context)
     return NULL;
 }
 
-static void *udcm_message_callback (void *context)
+static void *udcm_message_callback (int fd, int flags, void *context)
 {
     udcm_module_t *m = (udcm_module_t *) context;
     udcm_message_recv_t *item;
 
     BTL_VERBOSE(("running message thread"));
 
-    opal_mutex_lock(&m->cm_recv_msg_queue_lock);
-    while ((item = (udcm_message_recv_t *)
-            opal_list_remove_first (&m->cm_recv_msg_queue))) {
+    /* Mark that the callback was started */
+    opal_atomic_swap_32 (&m->cm_message_event_active, 0);
+    opal_atomic_wmb ();
+
+    while ((item = (udcm_message_recv_t *) opal_fifo_pop_atomic (&m->cm_recv_msg_fifo))) {
         mca_btl_openib_endpoint_t *lcl_ep = item->msg_hdr.lcl_ep;
-        opal_mutex_unlock(&m->cm_recv_msg_queue_lock);
 
         OPAL_THREAD_LOCK(&lcl_ep->endpoint_lock);
 
@@ -2189,14 +2202,9 @@ static void *udcm_message_callback (void *context)
         }
 
         OBJ_RELEASE (item);
-
-        opal_mutex_lock(&m->cm_recv_msg_queue_lock);
     }
 
     BTL_VERBOSE(("exiting message thread"));
-
-    m->cm_message_event_active = false;
-    opal_mutex_unlock(&m->cm_recv_msg_queue_lock);
 
     return NULL;
 }
@@ -2216,10 +2224,8 @@ static void udcm_sent_message_destructor (udcm_message_sent_t *message)
         free (message->data);
     }
 
-    if (message->event_active) {
-        opal_event_evtimer_del (&message->event);
-        message->event_active = false;
-    }
+    opal_event_evtimer_del (&message->event);
+    message->event_active = false;
 }
 
 /* mark: message timeout code */
@@ -2262,9 +2268,9 @@ static void udcm_send_timeout (evutil_socket_t fd, short event, void *arg)
                          UDCM_ENDPOINT_REM_MODEX(lcl_ep)->mm_qp_num);
 
             /* We are running in the timeout thread. Invoke the error in the
-               main thread */
-            opal_btl_openib_fd_run_in_main(mca_btl_openib_endpoint_invoke_error,
-                                           lcl_ep);
+             * "main thread" because it may call up into the pml or another
+             * component that may not have threading support enabled. */
+            mca_btl_openib_run_in_main (mca_btl_openib_endpoint_invoke_error, lcl_ep);
             break;
         }
 
@@ -2274,8 +2280,7 @@ static void udcm_send_timeout (evutil_socket_t fd, short event, void *arg)
 
         if (0 != udcm_post_send (lcl_ep, msg->data, msg->length, 0)) {
             BTL_VERBOSE(("error reposting message"));
-            opal_btl_openib_fd_run_in_main(mca_btl_openib_endpoint_invoke_error,
-                                           lcl_ep);
+            mca_btl_openib_run_in_main (mca_btl_openib_endpoint_invoke_error, lcl_ep);
             break;
         }
     } while (0);
@@ -2298,21 +2303,22 @@ static void udcm_set_message_timeout (udcm_message_sent_t *message)
     opal_mutex_unlock (&m->cm_timeout_lock);
 }
 
-static void udcm_cancel_message_timeout (udcm_message_sent_t *message)
+static void udcm_free_message (udcm_message_sent_t *message)
 {
     udcm_module_t *m = UDCM_ENDPOINT_MODULE(message->endpoint);
 
-    BTL_VERBOSE(("cancelling timeout for message %p", (void *) message));
+    BTL_VERBOSE(("releasing message %p", (void *) message));
 
     opal_mutex_lock (&m->cm_timeout_lock);
 
-    opal_list_remove_item (&m->flying_messages, &message->super);
-
-    /* start the event */
-    opal_event_evtimer_del (&message->event);
-    message->event_active = false;
+    if (message->event_active) {
+        opal_list_remove_item (&m->flying_messages, &message->super);
+        message->event_active = false;
+    }
 
     opal_mutex_unlock (&m->cm_timeout_lock);
+
+    OBJ_RELEASE(message);
 }
 
 /* mark: xrc connection support */
@@ -2830,7 +2836,7 @@ static int udcm_xrc_send_request (mca_btl_base_endpoint_t *lcl_ep, mca_btl_base_
     if (0 != (rc = udcm_post_send (lcl_ep, msg->data, sizeof (udcm_msg_hdr_t), 0))) {
         BTL_VERBOSE(("error posting XREQ"));
 
-        udcm_cancel_message_timeout (msg);
+        udcm_free_message (msg);
 
         return rc;
     }
@@ -2883,7 +2889,7 @@ static int udcm_xrc_send_xresponse (mca_btl_base_endpoint_t *lcl_ep, mca_btl_bas
     if (0 != rc) {
         BTL_VERBOSE(("error posting complete"));
 
-        udcm_cancel_message_timeout (msg);
+        udcm_free_message (msg);
 
         return rc;
     }

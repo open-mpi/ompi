@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -13,6 +14,8 @@
  * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -30,12 +33,11 @@
 #include "ompi/mca/osc/osc.h"
 #include "ompi/datatype/ompi_datatype.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_Compare_and_swap = PMPI_Compare_and_swap
 #endif
-
-#if OMPI_PROFILING_DEFINES
-#include "ompi/mpi/c/profile/defines.h"
+#define MPI_Compare_and_swap PMPI_Compare_and_swap
 #endif
 
 static const char FUNC_NAME[] = "MPI_Compare_and_swap";
@@ -56,7 +58,7 @@ int MPI_Compare_and_swap(const void *origin_addr, const void *compare_addr, void
         } else if (ompi_win_peer_invalid(win, target_rank) &&
                    (MPI_PROC_NULL != target_rank)) {
             rc = MPI_ERR_RANK;
-        } else if ( target_disp < 0 ) {
+        } else if ( MPI_WIN_FLAVOR_DYNAMIC != win->w_flavor && target_disp < 0 ) {
             rc = MPI_ERR_DISP;
         } else {
             OMPI_CHECK_DATATYPE_FOR_ONE_SIDED(rc, datatype, 1);

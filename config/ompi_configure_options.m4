@@ -167,27 +167,6 @@ case "x$enable_mpi_fortran" in
 esac
 
 #
-# MPI profiling
-#
-
-AC_MSG_CHECKING([if want PMPI])
-AC_ARG_ENABLE(mpi-profile,
-    AC_HELP_STRING([--enable-mpi-profile],
-                   [enable MPI profiling (default: enabled)]))
-if test "$enable_mpi_profile" != "no"; then
-    AC_MSG_RESULT([yes])
-    WANT_MPI_PROFILING=1
-    MPIF_H_PMPI_W_FUNCS=", PMPI_WTICK, PMPI_WTIME"
-else
-    AC_MSG_RESULT([no])
-    WANT_MPI_PROFILING=0
-    MPIF_H_PMPI_W_FUNCS=
-fi
-AC_SUBST(MPIF_H_PMPI_W_FUNCS)
-AM_CONDITIONAL(WANT_MPI_PROFILING, test "$WANT_MPI_PROFILING" = 1)
-
-
-#
 # C++
 #
 

@@ -195,16 +195,16 @@ main()
 {
   long source[10] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
   static long target[10];
-  start_pes(2);
+  shmem_init();
 
-  if (_my_pe() == 0) {
+  if (shmem_my_pe() == 0) {
     /* put 10 words into target on PE 1 */
     shmem_long_put(target, source, 10, 1);
   }
   shmem_barrier_all();  /* sync sender and receiver */
-  if (_my_pe() == 1)
+  if (shmem_my_pe() == 1)
     shmem_udcflush();  /* not required on Altix systems */
-  printf("target[0] on PE %d is %d\\n", _my_pe(), target[0]);
+  printf("target[0] on PE %d is %d\\n", shmem_my_pe(), target[0]);
 }
 .Ve
 .SH SEE ALSO

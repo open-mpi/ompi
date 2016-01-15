@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
@@ -35,6 +35,7 @@
 
 #include "opal/class/opal_list.h"
 #include "opal/class/opal_hash_table.h"
+#include "opal/threads/mutex.h"
 
 BEGIN_C_DECLS
 
@@ -47,14 +48,18 @@ struct ompi_predefined_datatype_t;
 
 /* Global variables and symbols for the MPI layer */
 
-/** Did mpi start to initialize? */
-OMPI_DECLSPEC extern bool ompi_mpi_init_started;
-/** Is mpi initialized? */
-OMPI_DECLSPEC extern bool ompi_mpi_initialized;
-/** Has mpi been finalized? */
-OMPI_DECLSPEC extern bool ompi_mpi_finalized;
+/** Mutex to protect all the _init and _finalize variables */
+OMPI_DECLSPEC extern opal_mutex_t ompi_mpi_bootstrap_mutex;
+/** Did MPI start to initialize? */
+OMPI_DECLSPEC extern volatile bool ompi_mpi_init_started;
 /** Has the RTE been initialized? */
-OMPI_DECLSPEC extern bool ompi_rte_initialized;
+OMPI_DECLSPEC extern volatile bool ompi_rte_initialized;
+/** Is MPI fully initialized? */
+OMPI_DECLSPEC extern volatile bool ompi_mpi_initialized;
+/** Did MPI start to finalize? */
+OMPI_DECLSPEC extern volatile bool ompi_mpi_finalize_started;
+/** Has MPI been fully finalized? */
+OMPI_DECLSPEC extern volatile bool ompi_mpi_finalized;
 
 /** Do we have multiple threads? */
 OMPI_DECLSPEC extern bool ompi_mpi_thread_multiple;
@@ -188,6 +193,37 @@ OMPI_DECLSPEC int ompi_mpi_abort(struct ompi_communicator_t* comm,
  * be made if they will be made).
  */
 int ompi_init_preconnect_mpi(void);
+
+/**
+ * Called to disable MPI dynamic process support.  It should be called
+ * by transports and/or environments where MPI dynamic process
+ * functionality cannot be supported, and provide a string indicating
+ * why the functionality is disabled (because it will be shown in a
+ * user help message).  For example, "<TRANSPORT> does not support MPI
+ * dynamic process functionality."
+ *
+ * This first-order functionality is fairly coarse-grained and simple:
+ * it presents a friendly show-help message to tell users why their
+ * MPI dynamic process functionality failed (vs. a potentially-cryptic
+ * network or hardware failure message).
+ *
+ * Someone may choose to implement a more fine-grained approach in the
+ * future.
+ */
+void ompi_mpi_dynamics_disable(const char *msg);
+
+/**
+ * Called by the MPI dynamic process functions (e.g., MPI_Comm_spawn)
+ * to see if MPI dynamic process support is enabled.  If it's not,
+ * this function will opal_show_help() a message and return false.
+ */
+bool ompi_mpi_dynamics_is_enabled(const char *function);
+
+/**
+ * Clean up memory / resources by the MPI dynamics process
+ * functionality checker
+ */
+void ompi_mpi_dynamics_finalize(void);
 
 END_C_DECLS
 

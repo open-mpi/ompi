@@ -27,7 +27,7 @@
 #include "ompi/mca/sharedfp/base/base.h"
 
 int mca_sharedfp_addproc_write (mca_io_ompio_file_t *fh,
-                                void *buf,
+                                const void *buf,
                                 int count,
                                 struct ompi_datatype_t *datatype,
                                 ompi_status_public_t *status)
@@ -72,7 +72,7 @@ int mca_sharedfp_addproc_write (mca_io_ompio_file_t *fh,
 }
 
 int mca_sharedfp_addproc_write_ordered (mca_io_ompio_file_t *fh,
-                                        void *buf,
+                                        const void *buf,
                                         int count,
                                         struct ompi_datatype_t *datatype,
                                         ompi_status_public_t *status)

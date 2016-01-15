@@ -10,6 +10,8 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2015      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -18,6 +20,7 @@
 #
 
 EXTRA_DIST = \
-        mpi/fortran/configure-fortran-output-bottom.h
+        mpi/fortran/configure-fortran-output-bottom.h \
+        mpi/man/make_manpage.pl
 
 dist_ompidata_DATA += mpi/help-mpi-api.txt

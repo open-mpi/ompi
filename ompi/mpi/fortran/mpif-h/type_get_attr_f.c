@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -23,7 +25,8 @@
 #include "ompi/attribute/attribute.h"
 #include "ompi/datatype/ompi_datatype.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_TYPE_GET_ATTR = ompi_type_get_attr_f
 #pragma weak pmpi_type_get_attr = ompi_type_get_attr_f
 #pragma weak pmpi_type_get_attr_ = ompi_type_get_attr_f
@@ -31,7 +34,7 @@
 
 #pragma weak PMPI_Type_get_attr_f = ompi_type_get_attr_f
 #pragma weak PMPI_Type_get_attr_f08 = ompi_type_get_attr_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_TYPE_GET_ATTR,
                            pmpi_type_get_attr,
                            pmpi_type_get_attr_,
@@ -39,6 +42,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_TYPE_GET_ATTR,
                            pompi_type_get_attr_f,
                            (MPI_Fint *type, MPI_Fint *type_keyval, MPI_Aint *attribute_val, ompi_fortran_logical_t *flag, MPI_Fint *ierr),
                            (type, type_keyval, attribute_val, flag, ierr) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -49,9 +53,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_TYPE_GET_ATTR,
 
 #pragma weak MPI_Type_get_attr_f = ompi_type_get_attr_f
 #pragma weak MPI_Type_get_attr_f08 = ompi_type_get_attr_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_GET_ATTR,
                            mpi_type_get_attr,
                            mpi_type_get_attr_,
@@ -59,11 +62,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_GET_ATTR,
                            ompi_type_get_attr_f,
                            (MPI_Fint *type, MPI_Fint *type_keyval, MPI_Aint *attribute_val, ompi_fortran_logical_t *flag, MPI_Fint *ierr),
                            (type, type_keyval, attribute_val, flag, ierr) )
+#else
+#define ompi_type_get_attr_f pompi_type_get_attr_f
 #endif
-
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
 #endif
 
 void ompi_type_get_attr_f(MPI_Fint *type, MPI_Fint *type_keyval,
@@ -71,7 +72,7 @@ void ompi_type_get_attr_f(MPI_Fint *type, MPI_Fint *type_keyval,
                          MPI_Fint *ierr)
 {
     int c_ierr;
-    MPI_Datatype c_type = MPI_Type_f2c(*type);
+    MPI_Datatype c_type = PMPI_Type_f2c(*type);
     OMPI_LOGICAL_NAME_DECL(flag);
 
     /* This stuff is very confusing.  Be sure to see the comment at

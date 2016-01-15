@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -11,6 +12,8 @@
  *                         All rights reserved.
  * Copyright (c) 2008-2014 University of Houston. All rights reserved.
  * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -186,7 +189,7 @@ mca_fcoll_two_phase_file_read_all (mca_io_ompio_file_t *fh,
 					  two_phase_num_io_procs,
 					  max_data);
 	if (OMPI_SUCCESS != ret){
-	    return ret;
+            goto exit;
 	}
 
 	two_phase_num_io_procs = fh->f_final_num_aggrs;
@@ -497,21 +500,19 @@ exit:
 	if (flat_buf->indices != NULL){
 	    free (flat_buf->indices);
 	}
-	free(flat_buf);
-	flat_buf = NULL;
+        free (flat_buf);
     }
-    if (start_offsets != NULL){
-	free(start_offsets);
-	start_offsets = NULL;
-    }
-    if (end_offsets != NULL){
-	free(end_offsets);
-	end_offsets = NULL;
-    }
-    if (aggregator_list != NULL){
-	free(aggregator_list);
-	aggregator_list = NULL;
-    }
+
+    free (start_offsets);
+    free (end_offsets);
+    free (aggregator_list);
+    free (fd_start);
+    free (decoded_iov);
+    free (buf_indices);
+    free (count_my_req_per_proc);
+    free (my_req);
+    free (others_req);
+    free (fd_end);
 
     return ret;
 }
@@ -634,8 +635,8 @@ static int two_phase_read_and_exch(mca_io_ompio_file_t *fh,
 
     start_pos = (int *) calloc(fh->f_size, sizeof(int));
     if ( NULL == start_pos ){
-	ret = OMPI_ERR_OUT_OF_RESOURCE;
-	return ret;
+        ret = OMPI_ERR_OUT_OF_RESOURCE;
+        goto exit;
     }
 
     done = 0;
@@ -676,8 +677,8 @@ static int two_phase_read_and_exch(mca_io_ompio_file_t *fh,
 		    }
 		    if (req_off < real_off + real_size) {
 			count[i]++;
-			MPI_Address(read_buf+req_off-real_off,
-				    &(others_req[i].mem_ptrs[j]));
+			PMPI_Address(read_buf+req_off-real_off,
+				     &(others_req[i].mem_ptrs[j]));
 
 			send_size[i] += (int)(OMPIO_MIN(real_off + real_size - req_off,
 							(OMPI_MPI_OFFSET_TYPE)req_len));
@@ -717,7 +718,8 @@ static int two_phase_read_and_exch(mca_io_ompio_file_t *fh,
 		(1,sizeof(mca_io_ompio_io_array_t));
 	    if (NULL == fh->f_io_array) {
 		opal_output(1, "OUT OF MEMORY\n");
-		return OMPI_ERR_OUT_OF_RESOURCE;
+                ret = OMPI_ERR_OUT_OF_RESOURCE;
+                goto exit;
 	    }
 	    fh->f_io_array[0].offset = (IOVBASE_TYPE *)(intptr_t)off;
 	    fh->f_io_array[0].length = len;
@@ -728,7 +730,8 @@ static int two_phase_read_and_exch(mca_io_ompio_file_t *fh,
 	    if (fh->f_num_of_io_entries){
 		if ( 0 > fh->f_fbtl->fbtl_preadv (fh)) {
 		    opal_output(1, "READ FAILED\n");
-		    return OMPI_ERROR;
+                    ret = OMPI_ERROR;
+                    goto exit;
 		}
 	    }
 
@@ -797,40 +800,17 @@ static int two_phase_read_and_exch(mca_io_ompio_file_t *fh,
 				flat_buf, others_req, m, buf_idx,
 				buftype_extent, striping_unit, two_phase_num_io_procs,
 				aggregator_list);
-    if (ntimes){
-	free(read_buf);
-	read_buf = NULL;
-    }
-    if (NULL != curr_offlen_ptr){
-	free(curr_offlen_ptr);
-	curr_offlen_ptr = NULL;
-    }
-    if (NULL != count){
-	free(count);
-	count = NULL;
-    }
-    if (NULL != partial_send){
-	free(partial_send);
-	partial_send = NULL;
-    }
-    if (NULL != send_size){
-	free(send_size);
-	send_size = NULL;
-    }
-    if (NULL != recv_size){
-	free(recv_size);
-	recv_size = NULL;
-    }
-    if (NULL != recd_from_proc){
-	free(recd_from_proc);
-	recd_from_proc = NULL;
-    }
-    if (NULL != start_pos){
-	free(start_pos);
-	start_pos = NULL;
-    }
 
 exit:
+    free (read_buf);
+    free (curr_offlen_ptr);
+    free (count);
+    free (partial_send);
+    free (send_size);
+    free (recv_size);
+    free (recd_from_proc);
+    free (start_pos);
+
     return ret;
 
 }
@@ -919,7 +899,7 @@ static int two_phase_exchange_data(mca_io_ompio_file_t *fh,
     }
     else{
 
-	recv_buf = (char **)malloc(fh->f_size * sizeof(char *));
+	recv_buf = (char **) calloc (fh->f_size, sizeof(char *));
 	if (NULL == recv_buf){
 	    ret = OMPI_ERR_OUT_OF_RESOURCE;
 	    goto exit;
@@ -983,7 +963,9 @@ static int two_phase_exchange_data(mca_io_ompio_file_t *fh,
 	ret = ompi_request_wait_all(nprocs_recv,
 				    requests,
 				    MPI_STATUS_IGNORE);
-
+        if (OMPI_SUCCESS != ret) {
+            goto exit;
+        }
 
 	if (! (fh->f_flags & OMPIO_CONTIGUOUS_MEMORY)) {
 
@@ -1001,26 +983,23 @@ static int two_phase_exchange_data(mca_io_ompio_file_t *fh,
 				requests+nprocs_recv,
 				MPI_STATUS_IGNORE);
 
-    if (NULL != requests){
-	free(requests);
-	requests = NULL;
-    }
-
-    if (! (fh->f_flags & OMPIO_CONTIGUOUS_MEMORY)){
-	for (i=0; i< fh->f_size; i++){
-	    if (recv_size[i]){
-		free(recv_buf[i]);
-	    }
-	}
-	free(recv_buf);
-    }
-
 #if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
     end_rcomm_time = MPI_Wtime();
     rcomm_time += (end_rcomm_time - start_rcomm_time);
 #endif
 
 exit:
+
+    if (recv_buf) {
+	for (i=0; i< fh->f_size; i++){
+            free(recv_buf[i]);
+	}
+
+	free(recv_buf);
+    }
+
+    free(requests);
+
     return ret;
 
 }

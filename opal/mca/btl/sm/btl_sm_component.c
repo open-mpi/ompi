@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Voltaire. All rights reserved.
- * Copyright (c) 2009-2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2009-2016 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010-2015 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2011-2014 NVIDIA Corporation.  All rights reserved.
@@ -607,6 +607,7 @@ create_rndv_file(mca_btl_sm_component_t *comp_ptr,
     int rc = OPAL_SUCCESS;
     int fd = -1;
     char *fname = NULL;
+    char *tmpfname = NULL;
     /* used as a temporary store so we can extract shmem_ds info */
     mca_common_sm_module_t *tmp_modp = NULL;
 
@@ -663,8 +664,19 @@ create_rndv_file(mca_btl_sm_component_t *comp_ptr,
      * file containing all the meta info required for attach. */
 
     /* now just write the contents of tmp_modp->shmem_ds to the full
-     * sizeof(opal_shmem_ds_t), so we know where the mpool_res_size starts. */
-    if (-1 == (fd = open(fname, O_CREAT | O_RDWR, 0600))) {
+     * sizeof(opal_shmem_ds_t), so we know where the mpool_res_size
+     * starts.  Note that we write into a temporary file first and
+     * then do a rename(2) to move the full file into its final
+     * destination.  This avoids a race condition where a peer process
+     * might open/read part of the file before this processes finishes
+     * writing it (see
+     * https://github.com/open-mpi/ompi/issues/1230). */
+    asprintf(&tmpfname, "%s.tmp", fname);
+    if (NULL == tmpfname) {
+        rc = OPAL_ERR_OUT_OF_RESOURCE;
+        goto out;
+    }
+    if (-1 == (fd = open(tmpfname, O_CREAT | O_RDWR, 0600))) {
         int err = errno;
         opal_show_help("help-mpi-btl-sm.txt", "sys call fail", true,
                        "open(2)", strerror(err), err);
@@ -690,10 +702,19 @@ create_rndv_file(mca_btl_sm_component_t *comp_ptr,
         /* only do this for the mpool case */
         OBJ_RELEASE(tmp_modp);
     }
+    (void)close(fd);
+    fd = -1;
+    if (0 != rename(tmpfname, fname)) {
+        rc = OPAL_ERR_IN_ERRNO;
+        goto out;
+    }
 
 out:
     if (-1 != fd) {
         (void)close(fd);
+    }
+    if (NULL != tmpfname) {
+        free(tmpfname);
     }
     return rc;
 }

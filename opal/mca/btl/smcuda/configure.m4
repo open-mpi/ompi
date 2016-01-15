@@ -4,7 +4,7 @@
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
 # Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
-# Copyright (c) 2012-2013 NVIDIA Corporation.  All rights reserved.
+# Copyright (c) 2012-2015 NVIDIA Corporation.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -21,8 +21,8 @@ AC_DEFUN([MCA_opal_btl_smcuda_CONFIG],[
     # make sure that CUDA-aware checks have been done
     AC_REQUIRE([OPAL_CHECK_CUDA])
 
-    # Only build if CUDA 4.1 support is available
-    AS_IF([test "x$CUDA_SUPPORT_41" = "x1"],
+    # Only build if CUDA support is available
+    AS_IF([test "x$CUDA_SUPPORT" = "x1"],
           [$1],
           [$2])
 

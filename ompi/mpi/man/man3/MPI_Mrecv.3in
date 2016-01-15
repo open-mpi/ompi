@@ -18,11 +18,24 @@ int MPI_Mrecv(void \fI*buf\fP, int\fI count\fP, MPI_Datatype\fI type\fP,
 .fi
 .SH Fortran Syntax
 .nf
-INCLUDE 'mpif.h'
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
 MPI_MRECV(\fIBUF, COUNT, DATATYPE, MESSAGE, STATUS, IERROR\fP)
 	<type>	\fIBUF(*)\fP
 	INTEGER	\fCOUNT, DATATYPE, MESSAGE\fP
 	INTEGER	\fISTATUS(MPI_STATUS_SIZE), IERROR\fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Mrecv(\fIbuf\fP, \fIcount\fP, \fIdatatype\fP, \fImessage\fP, \fIstatus\fP, \fIierror\fP)
+	TYPE(*), DIMENSION(..) :: \fIbuf\fP
+	INTEGER, INTENT(IN) :: \fIcount\fP
+	TYPE(MPI_Datatype), INTENT(IN) :: \fIdatatype\fP
+	TYPE(MPI_Message), INTENT(INOUT) :: \fImessage\fP
+	TYPE(MPI_Status) :: \fIstatus\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
 .SH C++ Syntax

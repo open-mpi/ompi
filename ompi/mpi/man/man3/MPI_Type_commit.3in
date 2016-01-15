@@ -17,9 +17,18 @@ int MPI_Type_commit(MPI_Datatype *\fIdatatype\fP)
 .fi
 .SH Fortran Syntax
 .nf
-INCLUDE 'mpif.h'
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
 MPI_TYPE_COMMIT(\fIDATATYPE, IERROR\fP)
 	INTEGER	\fIDATATYPE, IERROR\fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Type_commit(\fIdatatype\fP, \fIierror\fP)
+	TYPE(MPI_Datatype), INTENT(INOUT) :: \fIdatatype\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
 .SH C++ Syntax

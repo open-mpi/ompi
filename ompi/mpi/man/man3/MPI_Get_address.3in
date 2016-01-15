@@ -18,10 +18,21 @@ int MPI_Get_address(const void *\fIlocation\fP, MPI_Aint *\fIaddress\fP)
 .fi
 .SH Fortran Syntax
 .nf
-INCLUDE 'mpif.h'
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
 MPI_GET_ADDRESS(\fILOCATION, ADDRESS, IERROR\fP)
 	<type> \fILOCATION\fP(*)
-	INTEGER	\fIADDRESS, IERROR\fP
+	INTEGER(KIND=MPI_ADDRESS_KIND) \fIADDRESS\fP
+	INTEGER	\fIIERROR\fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Get_address(\fIlocation\fP, \fIaddress\fP, \fIierror\fP)
+	TYPE(*), DIMENSION(..), ASYNCHRONOUS :: \fIlocation\fP
+	INTEGER(KIND=MPI_ADDRESS_KIND), INTENT(OUT) :: \fIaddress\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
 .SH C++ Syntax

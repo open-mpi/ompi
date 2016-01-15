@@ -19,11 +19,25 @@ int MPI_Pack(const void *\fIinbuf\fP, int\fI incount\fP, MPI_Datatype\fI datatyp
 .fi
 .SH Fortran Syntax
 .nf
-INCLUDE 'mpif.h'
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
 MPI_PACK(\fIINBUF, INCOUNT, DATATYPE, OUTBUF,OUTSIZE, POSITION,
 		COMM, IERROR\fP)
 	<type>	\fIINBUF(*), OUTBUF(*)\fP
 	INTEGER	\fIINCOUNT, DATATYPE, OUTSIZE, POSITION, COMM, IERROR\fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Pack(\fIinbuf\fP, \fIincount\fP, \fIdatatype\fP, \fIoutbuf\fP, \fIoutsize\fP, \fIposition\fP, \fIcomm\fP, \fIierror\fP)
+	TYPE(*), DIMENSION(..), INTENT(IN) :: \fIinbuf\fP
+	TYPE(*), DIMENSION(..) :: \fIoutbuf\fP
+	INTEGER, INTENT(IN) :: \fIincount\fP, \fIoutsize\fP
+	TYPE(MPI_Datatype), INTENT(IN) :: \fIdatatype\fP
+	INTEGER, INTENT(INOUT) :: \fIposition\fP
+	TYPE(MPI_Comm), INTENT(IN) :: \fIcomm\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
 .SH C++ Syntax

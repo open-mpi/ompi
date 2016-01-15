@@ -19,9 +19,20 @@ int MPI_Graph_map(MPI_Comm \fIcomm\fP, int\fI nnodes\fP, const int\fI index\fP[]
 .fi
 .SH Fortran Syntax
 .nf
-INCLUDE 'mpif.h'
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
 MPI_GRAPH_MAP(\fICOMM, NNODES, INDEX, EDGES, NEWRANK, IERROR\fP)
 	INTEGER	\fICOMM, NNODES, INDEX(*), EDGES(*), NEWRANK, IERROR\fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Graph_map(\fIcomm\fP, \fInnodes\fP, \fIindex\fP, \fIedges\fP, \fInewrank\fP, \fIierror\fP)
+	TYPE(MPI_Comm), INTENT(IN) :: \fIcomm\fP
+	INTEGER, INTENT(IN) :: \fInnodes\fP, \fIindex(nnodes)\fP, \fIedges(*)\fP
+	INTEGER, INTENT(OUT) :: \fInewrank\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
 .SH C++ Syntax

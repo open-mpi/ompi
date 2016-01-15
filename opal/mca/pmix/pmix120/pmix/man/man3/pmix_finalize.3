@@ -1,0 +1,31 @@
+.TH "pmix_finalize" "3" "2015\-10\-27" "PMIx Programmer\[aq]s Manual" "\@VERSION\@"
+.SH NAME
+.PP
+PMIx_Finalize \- Finalize the PMIx Client
+.SH SYNOPSIS
+.IP
+.nf
+\f[C]
+#include\ <pmix.h>
+
+pmix_status_t\ PMIx_Finalize(void);
+\f[]
+.fi
+.SH ARGUMENTS
+.SH DESCRIPTION
+.PP
+Finalize the PMIx client, closing the connection with the local PMIx
+server.
+.SH RETURN VALUE
+.PP
+Returns PMIX_SUCCESS on success.
+On error, a negative value corresponding to a PMIx errno is returned.
+.SH ERRORS
+.PP
+PMIx errno values are defined in \f[C]pmix_common.h\f[].
+.SH NOTES
+.SH SEE ALSO
+.PP
+\f[C]PMIx_Init\f[](3)
+.SH AUTHORS
+PMIx.

@@ -1,10 +1,11 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2007-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007-2008 Chelsio, Inc. All rights reserved.
  * Copyright (c) 2008      Mellanox Technologies. All rights reserved.
  * Copyright (c) 2009      Sandia National Laboratories. All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
- * Copyright (c) 2012-2013 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2012-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
  * Copyright (c) 2014      The University of Tennessee and The University
@@ -54,8 +55,8 @@
 #include "opal/util/error.h"
 #include "opal/util/show_help.h"
 #include "opal/util/proc.h"
+#include "opal/runtime/opal_progress_threads.h"
 
-#include "btl_openib_fd.h"
 #include "btl_openib_proc.h"
 #include "btl_openib_endpoint.h"
 #include "connect/connect.h"
@@ -211,8 +212,12 @@ static uint32_t rdmacm_addr = 0;
 static int rdmacm_resolve_timeout = 30000;
 static int rdmacm_resolve_max_retry_count = 20;
 static bool rdmacm_reject_causes_connect_error = false;
+static pthread_cond_t rdmacm_disconnect_cond;
+static pthread_mutex_t rdmacm_disconnect_lock;
 static volatile int disconnect_callbacks = 0;
 static bool rdmacm_component_initialized = false;
+static opal_event_base_t *rdmacm_event_base = NULL;
+static opal_event_t rdmacm_event;
 
 /* Calculate the *real* length of the message (not aligned/rounded
    up) */
@@ -1011,7 +1016,7 @@ static int handle_connect_request(struct rdma_cm_event *event)
                 ((struct sockaddr_in *)peeraddr)->sin_addr.s_addr;
             c->peer_tcp_port = rdma_get_dst_port(event->id);
         }
-        opal_btl_openib_fd_run_in_main(show_help_cant_find_endpoint, c);
+        show_help_cant_find_endpoint (c);
 #else
         BTL_ERROR(("Cannot find endpoint."));
 #endif
@@ -1161,19 +1166,6 @@ out:
 }
 
 /*
- * Invoked by service thread
- */
-static void *rdmacm_unmonitor(int fd, int flags, void *context)
-{
-    volatile int *barrier = (volatile int *) context;
-
-    OPAL_OUTPUT((-1, "SERVICE rdmacm unlocking main thread"));
-    *barrier = 1;
-
-    return NULL;
-}
-
-/*
  * Runs in service thread
  *
  * We call rdma_disconnect() here in the service thread so that there
@@ -1181,24 +1173,36 @@ static void *rdmacm_unmonitor(int fd, int flags, void *context)
  * in the service thread while rdma_disconnect() is still running in
  * the main thread (which causes all manner of Bad Things to occur).
  */
-static void *call_disconnect_callback(void *v)
+static void *call_disconnect_callback(int fd, int flags, void *v)
 {
+    rdmacm_contents_t *contents = (rdmacm_contents_t *) v;
     void *tmp = NULL;
     id_context_t *context = (id_context_t*) v;
-    OPAL_OUTPUT((-1, "SERVICE Service thread calling disconnect on ID %p",
-                 (void*) context->id));
+    opal_list_item_t *item;
 
-    if (!context->already_disconnected) {
-        tmp = context->id;
-        rdma_disconnect(context->id);
-        context->already_disconnected = true;
+    pthread_mutex_lock (&rdmacm_disconnect_lock);
+    while (NULL != (item = opal_list_remove_first(&contents->ids))) {
+        context = (id_context_t *) item;
+
+        OPAL_OUTPUT((-1, "RDMACM Event thread calling disconnect on ID %p",
+                     (void*) context->id));
+
+        if (!context->already_disconnected) {
+            tmp = context->id;
+            rdma_disconnect(context->id);
+            context->already_disconnected = true;
+        }
+
+        OBJ_RELEASE(context);
+
+        OPAL_OUTPUT((-1, "RDMACM Event thread disconnect on ID %p done",
+                     (void*) tmp));
     }
-    OBJ_RELEASE(context);
 
     /* Tell the main thread that we're done */
-    (void)opal_atomic_add(&disconnect_callbacks, 1);
-    OPAL_OUTPUT((-1, "SERVICE Service thread disconnect on ID %p done; count=%d",
-                 (void*) tmp, disconnect_callbacks));
+    pthread_cond_signal(&rdmacm_disconnect_cond);
+    pthread_mutex_unlock(&rdmacm_disconnect_lock);
+
     return NULL;
 }
 
@@ -1212,8 +1216,8 @@ static void *call_disconnect_callback(void *v)
  */
 static int rdmacm_endpoint_finalize(struct mca_btl_base_endpoint_t *endpoint)
 {
-    int num_to_wait_for;
-    opal_list_item_t *item, *item2;
+    rdmacm_contents_t *contents;
+    opal_event_t event;
 
     BTL_VERBOSE(("Start disconnecting..."));
     OPAL_OUTPUT((-1, "MAIN Endpoint finalizing"));
@@ -1232,35 +1236,28 @@ static int rdmacm_endpoint_finalize(struct mca_btl_base_endpoint_t *endpoint)
      * main thread and service thread.
      */
     opal_mutex_lock(&client_list_lock);
-    num_to_wait_for = disconnect_callbacks = 0;
-    for (item = opal_list_get_first(&client_list);
-         item != opal_list_get_end(&client_list);
-         item = opal_list_get_next(item)) {
-        rdmacm_contents_t *contents = (rdmacm_contents_t *) item;
-
+    OPAL_LIST_FOREACH(contents, &client_list, rdmacm_contents_t) {
         if (endpoint == contents->endpoint) {
-            while (NULL !=
-                   (item2 = opal_list_remove_first(&(contents->ids)))) {
-                /* Fun race condition: we cannot call
-                   rdma_disconnect() here in the main thread, because
-                   if we do, there is a nonzero chance that the
-                   DISCONNECT event will be delivered and get executed
-                   in the service thread immediately.  If this all
-                   happens before rdma_disconnect() returns, all
-                   manner of Bad Things can/will occur.  So just
-                   invoke rdma_disconnect() in the service thread
-                   where we guarantee that we won't be processing an
-                   event when it is called. */
-                OPAL_OUTPUT((-1, "MAIN Main thread calling disconnect on ID %p",
-                             (void*) ((id_context_t*) item2)->id));
-                ++num_to_wait_for;
-                opal_btl_openib_fd_run_in_service(call_disconnect_callback,
-                                                  item2);
-            }
+            opal_list_remove_item(&client_list, (opal_list_item_t *) contents);
+            contents->on_client_list = false;
+
+            /* Fun race condition: we cannot call
+               rdma_disconnect() in this thread, because
+               if we do, there is a nonzero chance that the
+               DISCONNECT event will be delivered and get executed
+               in the rdcm event thread immediately.  If this all
+               happens before rdma_disconnect() returns, all
+               manner of Bad Things can/will occur.  So just
+               invoke rdma_disconnect() in the rdmacm event thread
+               where we guarantee that we won't be processing an
+               event when it is called. */
+
+            opal_event_set (rdmacm_event_base, &event, -1, OPAL_EV_READ,
+                            call_disconnect_callback, contents);
+            opal_event_active (&event, OPAL_EV_READ, 1);
+
 	    /* remove_item returns the item before the item removed,
 	       meaning that the for list is still safe */
-            item = opal_list_remove_item(&client_list, item);
-            contents->on_client_list = false;
             break;
         }
     }
@@ -1270,10 +1267,11 @@ static int rdmacm_endpoint_finalize(struct mca_btl_base_endpoint_t *endpoint)
     opal_mutex_unlock(&client_list_lock);
 
     /* Now wait for all the disconnect callbacks to occur */
-    while (num_to_wait_for != disconnect_callbacks) {
-        opal_btl_openib_fd_main_thread_drain();
-        sched_yield();
+    pthread_mutex_lock(&rdmacm_disconnect_lock);
+    while (opal_list_get_size (&contents->ids)) {
+        pthread_cond_wait (&rdmacm_disconnect_cond, &rdmacm_disconnect_lock);
     }
+    pthread_mutex_unlock(&rdmacm_disconnect_lock);
 
     OPAL_OUTPUT((-1, "MAIN Endpoint finished finalizing"));
     return OPAL_SUCCESS;
@@ -1355,7 +1353,7 @@ static int rdmacm_connect_endpoint(id_context_t *context,
     /* Ensure that all the writes back to the endpoint and associated
        data structures have completed */
     opal_atomic_wmb();
-    opal_btl_openib_fd_run_in_main(local_endpoint_cpc_complete, endpoint);
+    mca_btl_openib_run_in_main (local_endpoint_cpc_complete, endpoint);
 
     return OPAL_SUCCESS;
 }
@@ -1668,9 +1666,8 @@ out:
 /*
  * Runs in main thread
  */
-static void *show_help_rdmacm_event_error(void *c)
+static void *show_help_rdmacm_event_error (struct rdma_cm_event *event)
 {
-    struct rdma_cm_event *event = (struct rdma_cm_event*) c;
     id_context_t *context = (id_context_t*) event->id->context;
 
     if (RDMA_CM_EVENT_DEVICE_REMOVAL == event->event) {
@@ -1802,7 +1799,7 @@ static int event_handler(struct rdma_cm_event *event)
     case RDMA_CM_EVENT_CONNECT_RESPONSE:
     case RDMA_CM_EVENT_ADDR_ERROR:
     case RDMA_CM_EVENT_DEVICE_REMOVAL:
-        opal_btl_openib_fd_run_in_main(show_help_rdmacm_event_error, event);
+        show_help_rdmacm_event_error (event);
         rc = OPAL_ERROR;
         break;
 
@@ -1817,7 +1814,7 @@ static int event_handler(struct rdma_cm_event *event)
 		rc = resolve_route(context);
 		break;
 	}
-        opal_btl_openib_fd_run_in_main(show_help_rdmacm_event_error, event);
+        show_help_rdmacm_event_error (event);
         rc = OPAL_ERROR;
         break;
 
@@ -1833,7 +1830,7 @@ static int event_handler(struct rdma_cm_event *event)
 }
 
 /*
- * Runs in service thread
+ * Runs in event thread
  */
 static inline void rdmamcm_event_error(struct rdma_cm_event *event)
 {
@@ -1843,12 +1840,12 @@ static inline void rdmamcm_event_error(struct rdma_cm_event *event)
         endpoint = ((id_context_t *)event->id->context)->contents->endpoint;
     }
 
-    opal_btl_openib_fd_run_in_main(mca_btl_openib_endpoint_invoke_error,
-                                   endpoint);
+    mca_btl_openib_run_in_main (mca_btl_openib_endpoint_invoke_error,
+                                endpoint);
 }
 
 /*
- * Runs in service thread
+ * Runs in event thread
  */
 static void *rdmacm_event_dispatch(int fd, int flags, void *context)
 {
@@ -2051,6 +2048,11 @@ static int rdmacm_component_query(mca_btl_openib_module_t *openib_btl, opal_btl_
         rc = OPAL_ERR_NOT_SUPPORTED;
         goto out;
     }
+    if (!BTL_OPENIB_QP_TYPE_PP(0)) {
+        BTL_VERBOSE(("rdmacm CPC only supported when the first QP is a PP QP; skipped"));
+        rc = OPAL_ERR_NOT_SUPPORTED;
+        goto out;
+    }
 
     BTL_VERBOSE(("rdmacm_component_query"));
 
@@ -2072,6 +2074,7 @@ static int rdmacm_component_query(mca_btl_openib_module_t *openib_btl, opal_btl_
        selected if QP 0 is PP */
     (*cpc)->cbm_uses_cts = true;
 
+    /* Start monitoring the fd associated with the cm_device */
     server = OBJ_NEW(rdmacm_contents_t);
     if (NULL == server) {
         rc = OPAL_ERR_OUT_OF_RESOURCE;
@@ -2220,9 +2223,7 @@ out:
  */
 static int rdmacm_component_finalize(void)
 {
-    volatile int barrier = 0;
     opal_list_item_t *item, *item2;
-    int rc;
 
     BTL_VERBOSE(("rdmacm_component_finalize"));
 
@@ -2232,36 +2233,20 @@ static int rdmacm_component_finalize(void)
         return OPAL_SUCCESS;
     }
 
-    if (NULL != event_channel) {
-        rc = opal_btl_openib_fd_unmonitor(event_channel->fd,
-                                          rdmacm_unmonitor, (void*) &barrier);
-        if (OPAL_SUCCESS != rc) {
-            BTL_ERROR(("Error disabling fd monitor"));
-        }
-
-        /* Wait for the service thread to stop monitoring the fd */
-        OPAL_OUTPUT((-1, "MAIN rdmacm_component_finalize: waiting for thread to finish"));
-        while (0 == barrier) {
-            sched_yield();
-        }
-        OPAL_OUTPUT((-1, "MAIN rdmacm_component_finalize: thread finished"));
+    if (rdmacm_event_base) {
+        opal_event_del (&rdmacm_event);
+        opal_progress_thread_finalize (NULL);
+        rdmacm_event_base = NULL;
     }
 
-    /* The service thread is no longer running; no need to lock access
+    /* The event thread is no longer running; no need to lock access
        to the client_list */
-    for (item = opal_list_remove_first(&client_list);
-         NULL != item;
-         item = opal_list_remove_first(&client_list)) {
-        OBJ_RELEASE(item);
-    }
-    OBJ_DESTRUCT(&client_list);
+    OPAL_LIST_DESTRUCT(&client_list);
 
     /* For each of the items in the server list, there's only one item
        in the "ids" list -- the server listener.  So explicitly
        destroy its RDMA ID context. */
-    for (item = opal_list_remove_first(&server_listener_list);
-         NULL != item;
-         item = opal_list_remove_first(&server_listener_list)) {
+    while (NULL != (item = opal_list_remove_first(&server_listener_list))) {
         rdmacm_contents_t *contents = (rdmacm_contents_t*) item;
         item2 = opal_list_remove_first(&(contents->ids));
         OBJ_RELEASE(item2);
@@ -2276,6 +2261,9 @@ static int rdmacm_component_finalize(void)
     }
 
     mca_btl_openib_free_rdma_addr_list();
+
+    pthread_cond_destroy (&rdmacm_disconnect_cond);
+    pthread_mutex_destroy (&rdmacm_disconnect_lock);
 
     return OPAL_SUCCESS;
 }
@@ -2326,10 +2314,22 @@ static int rdmacm_component_init(void)
         return OPAL_ERR_UNREACH;
     }
 
-    /* Start monitoring the fd associated with the cm_device */
-    opal_btl_openib_fd_monitor(event_channel->fd, OPAL_EV_READ,
-                               rdmacm_event_dispatch, NULL);
+    rdmacm_event_base = opal_progress_thread_init (NULL);
+    if (NULL == rdmacm_event_base) {
+        opal_output_verbose (5, opal_btl_base_framework.framework_output,
+                             "openib BTL: could not create rdmacm event thread");
+        return OPAL_ERR_UNREACH;
+    }
+
+    opal_event_set (rdmacm_event_base, &rdmacm_event, event_channel->fd,
+                    OPAL_EV_READ | OPAL_EV_PERSIST,  rdmacm_event_dispatch, NULL);
+
+    opal_event_add (&rdmacm_event, 0);
+
+    pthread_cond_init (&rdmacm_disconnect_cond, NULL);
+    pthread_mutex_init (&rdmacm_disconnect_lock, NULL);
 
     rdmacm_component_initialized = true;
+
     return OPAL_SUCCESS;
 }

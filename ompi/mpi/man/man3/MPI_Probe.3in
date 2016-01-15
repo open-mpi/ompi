@@ -17,9 +17,20 @@ int MPI_Probe(int \fIsource\fP, int\fI tag\fP, MPI_Comm\fI comm\fP, MPI_Status\f
 .fi
 .SH Fortran Syntax
 .nf
-INCLUDE 'mpif.h'
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
 MPI_PROBE(\fISOURCE, TAG, COMM, STATUS, IERROR\fP)
 	INTEGER	\fISOURCE, TAG, COMM, STATUS(MPI_STATUS_SIZE), IERROR\fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Probe(\fIsource\fP, \fItag\fP, \fIcomm\fP, \fIstatus\fP, \fIierror\fP)
+	INTEGER, INTENT(IN) :: \fIsource\fP, \fItag\fP
+	TYPE(MPI_Comm), INTENT(IN) :: \fIcomm\fP
+	TYPE(MPI_Status) :: \fIstatus\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
 .SH C++ Syntax

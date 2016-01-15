@@ -25,7 +25,15 @@ struct pml_yalla_base_request {
     ompi_request_t               ompi;
     mca_pml_yalla_convertor_t    *convertor;
     int                          flags;
-    mxm_req_base_t               mxm_base[0]; /* overlaps with base of send/recv */
+    /* overlaps with base of send/recv
+     * In ISO C90, you would have to give contents a length of 1,
+     * which means either you waste space or complicate the argument to malloc.
+     * Note:
+     *  - 1 was the portable way to go, though it was rather strange
+     *  - 0 was better at indicating intent, but not legal as far as
+     *  the Standard was concerned and supported as an extension by some compilers (including gcc)
+     */
+    mxm_req_base_t               mxm_base[1];
 };
 
 struct pml_yalla_send_request {
@@ -126,28 +134,26 @@ void mca_pml_yalla_init_reqs(void);
         } \
     }
 
-#define MCA_PML_YALLA_RREQ_INIT(_buf, _count, _datatype, _src, _tag, _comm, _state) \
-    ({ \
-        mca_pml_yalla_recv_request_t *rreq = (mca_pml_yalla_recv_request_t *)PML_YALLA_FREELIST_GET(&ompi_pml_yalla.recv_reqs); \
-        \
-        PML_YALLA_INIT_OMPI_REQ(&rreq->super.ompi, _comm, _state); \
-        PML_YALLA_INIT_MXM_RECV_REQ(&rreq->mxm, _buf, _count, _datatype, _src, _tag, \
-                                 _comm, irecv, rreq); \
-        rreq; \
-    })
+static inline mca_pml_yalla_recv_request_t* MCA_PML_YALLA_RREQ_INIT(void *_buf, size_t _count, ompi_datatype_t *_datatype,
+        int _src, int _tag, struct ompi_communicator_t* _comm, int _state)
+{
+    mca_pml_yalla_recv_request_t *rreq = (mca_pml_yalla_recv_request_t *)PML_YALLA_FREELIST_GET(&ompi_pml_yalla.recv_reqs);
+    PML_YALLA_INIT_OMPI_REQ(&rreq->super.ompi, _comm, _state);
+    PML_YALLA_INIT_MXM_RECV_REQ(&rreq->mxm, _buf, _count, _datatype, _src, _tag, _comm, irecv, rreq);
+    return rreq;
+}
 
-#define MCA_PML_YALLA_SREQ_INIT(_buf, _count, _datatype, _dst, _tag, _mode, _comm, _state) \
-    ({ \
-        mca_pml_yalla_send_request_t *sreq = (mca_pml_yalla_send_request_t *)PML_YALLA_FREELIST_GET(&ompi_pml_yalla.send_reqs); \
-        \
-        PML_YALLA_INIT_OMPI_REQ(&sreq->super.ompi, _comm, _state); \
-        PML_YALLA_INIT_MXM_SEND_REQ(&sreq->mxm, _buf, _count, _datatype, _dst, _tag, \
-                                    mode, _comm, isend, sreq); \
-        sreq->super.ompi.req_status.MPI_TAG    = _tag; \
-        sreq->super.ompi.req_status.MPI_SOURCE = (_comm)->c_my_rank; \
-        sreq->super.ompi.req_status._ucount    = _count; \
-        sreq; \
-    })
+static inline mca_pml_yalla_send_request_t* MCA_PML_YALLA_SREQ_INIT(void *_buf, size_t _count, ompi_datatype_t *_datatype,
+        int _dst, int _tag, mca_pml_base_send_mode_t _mode, struct ompi_communicator_t* _comm, int _state)
+{
+    mca_pml_yalla_send_request_t *sreq = (mca_pml_yalla_send_request_t *)PML_YALLA_FREELIST_GET(&ompi_pml_yalla.send_reqs);
+    PML_YALLA_INIT_OMPI_REQ(&sreq->super.ompi, _comm, _state);
+    PML_YALLA_INIT_MXM_SEND_REQ(&sreq->mxm, _buf, _count, _datatype, _dst, _tag, _mode, _comm, isend, sreq);
+    sreq->super.ompi.req_status.MPI_TAG    = _tag;
+    sreq->super.ompi.req_status.MPI_SOURCE = (_comm)->c_my_rank;
+    sreq->super.ompi.req_status._ucount    = _count;
+    return sreq;
+}
 
 #define PML_YALLA_INIT_MXM_PROBE_REQ(_rreq, _rank, _tag, _comm) \
     { \
@@ -184,6 +190,7 @@ void mca_pml_yalla_init_reqs(void);
                 (_mpi_status)->MPI_ERROR  = OMPI_SUCCESS; \
                 break; \
             case MXM_ERR_CANCELED: \
+                (_mpi_status)->MPI_ERROR  = OMPI_SUCCESS; \
                 (_mpi_status)->_cancelled = true; \
                 break; \
             case MXM_ERR_MESSAGE_TRUNCATED: \

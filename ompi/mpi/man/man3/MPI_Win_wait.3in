@@ -17,9 +17,18 @@ int MPI_Win_wait(MPI_Win \fIwin\fP)
 .fi
 .SH Fortran Syntax
 .nf
-INCLUDE 'mpif.h'
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
 MPI_WIN_WAIT(\fI WIN, IERROR\fP)
 	INTEGER \fI WIN, IERROR\fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Win_wait(\fIwin\fP, \fIierror\fP)
+	TYPE(MPI_Win), INTENT(IN) :: \fIwin\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
 .SH C++ Syntax

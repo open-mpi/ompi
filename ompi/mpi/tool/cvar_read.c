@@ -56,7 +56,7 @@ int MPI_T_cvar_read (MPI_T_cvar_handle handle, void *buf)
             ((unsigned long long *) buf)[0] = value->ullval;
             break;
         case MCA_BASE_VAR_TYPE_SIZE_T:
-            ((int *) buf)[0] = value->sizetval;
+            ((size_t *) buf)[0] = value->sizetval;
             break;
         case MCA_BASE_VAR_TYPE_BOOL:
             ((int *) buf)[0] = value->boolval;

@@ -1,5 +1,5 @@
 # -*- makefile -*-
-# Copyright (c) 2008-2014 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2008-2015 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
 # $COPYRIGHT$
 #
@@ -8,32 +8,50 @@
 # $HEADER$
 #
 
+TRIM_OPTIONS=
+if ! MAN_PAGE_BUILD_MPI_CXX_BINDINGS
+    TRIM_OPTIONS += --nocxx
+endif
+if ! MAN_PAGE_BUILD_MPIFH_BINDINGS
+    TRIM_OPTIONS += --nofortran
+endif
+if ! MAN_PAGE_BUILD_USEMPIF08_BINDINGS
+    TRIM_OPTIONS += --nof08
+endif
+
 .1in.1:
-	@ echo "  SED      $@"
-	@ sed -e 's/#PACKAGE_NAME#/@PACKAGE_NAME@/g' \
-	  -e 's/#PACKAGE_VERSION#/@PACKAGE_VERSION@/g' \
-	  -e 's/#OMPI_DATE#/@OMPI_RELEASE_DATE@/g' \
-	  -e 's/#OPAL_DATE#/@OMPI_RELEASE_DATE@/g' \
-	  -e 's/#ORTE_DATE#/@OMPI_RELEASE_DATE@/g' \
-	  > $@ < $<
+	@ echo "  BUILDING $@"
+	@ $(top_srcdir)/ompi/mpi/man/make_manpage.pl \
+	  --package-name='@PACKAGE_NAME@' \
+	  --package-version='@PACKAGE_VERSION@' \
+	  --ompi-date='@OMPI_RELEASE_DATE@' \
+	  --opal-date='@OPAL_RELEASE_DATE@' \
+	  --orte-date='@ORTE_RELEASE_DATE@' \
+	  --input=$< \
+	  --output=$@
 
 .3in.3:
-	@ echo "  SED      $@"
-	@ sed -e 's/#PACKAGE_NAME#/@PACKAGE_NAME@/g' \
-	  -e 's/#PACKAGE_VERSION#/@PACKAGE_VERSION@/g' \
-	  -e 's/#OMPI_DATE#/@OMPI_RELEASE_DATE@/g' \
-	  -e 's/#OPAL_DATE#/@OMPI_RELEASE_DATE@/g' \
-	  -e 's/#ORTE_DATE#/@OMPI_RELEASE_DATE@/g' \
-	  > $@ < $<
+	@ echo "  BUILDING $@"
+	@ $(top_srcdir)/ompi/mpi/man/make_manpage.pl \
+	  --package-name='@PACKAGE_NAME@' \
+	  --package-version='@PACKAGE_VERSION@' \
+	  --ompi-date='@OMPI_RELEASE_DATE@' \
+	  --opal-date='@OPAL_RELEASE_DATE@' \
+	  --orte-date='@ORTE_RELEASE_DATE@' \
+	  $(TRIM_OPTIONS) \
+	  --input=$< \
+	  --output=$@
 
 .7in.7:
-	@ echo "  SED      $@"
-	@ sed -e 's/#PACKAGE_NAME#/@PACKAGE_NAME@/g' \
-	  -e 's/#PACKAGE_VERSION#/@PACKAGE_VERSION@/g' \
-	  -e 's/#OMPI_DATE#/@OMPI_RELEASE_DATE@/g' \
-	  -e 's/#OPAL_DATE#/@OMPI_RELEASE_DATE@/g' \
-	  -e 's/#ORTE_DATE#/@OMPI_RELEASE_DATE@/g' \
-	  > $@ < $<
+	@ echo "  BUILDING $@"
+	@ $(top_srcdir)/ompi/mpi/man/make_manpage.pl \
+	  --package-name='@PACKAGE_NAME@' \
+	  --package-version='@PACKAGE_VERSION@' \
+	  --ompi-date='@OMPI_RELEASE_DATE@' \
+	  --opal-date='@OPAL_RELEASE_DATE@' \
+	  --orte-date='@ORTE_RELEASE_DATE@' \
+	  --input=$< \
+	  --output=$@
 
 # A little verbosity magic; "make" will show the terse output.  "make
 # V=1" will show the actual commands used (just like the other

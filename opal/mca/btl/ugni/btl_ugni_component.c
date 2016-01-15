@@ -216,7 +216,8 @@ btl_ugni_component_register(void)
                                            MCA_BASE_VAR_SCOPE_LOCAL, &mca_btl_ugni_component.mpool_type);
     OBJ_RELEASE(new_enum);
 
-    mca_btl_ugni_module.super.btl_exclusivity = MCA_BTL_EXCLUSIVITY_HIGH;
+    /* ensure we loose send exclusivity to sm and vader if they are enabled */
+    mca_btl_ugni_module.super.btl_exclusivity = MCA_BTL_EXCLUSIVITY_HIGH - 2;
 
     /* smsg threshold */
     mca_btl_ugni_module.super.btl_eager_limit               = 8 * 1024;
@@ -230,6 +231,9 @@ btl_ugni_component_register(void)
     /* determine if there are get alignment restrictions */
     GNI_GetDeviceType (&device_type);
 
+    /*
+     * see def. of ALIGNMENT_MASK to figure this one out
+     */
     if (GNI_DEVICE_GEMINI == device_type) {
         mca_btl_ugni_module.super.btl_get_alignment = 4;
     } else {

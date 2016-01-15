@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -25,13 +27,7 @@
 #include "mpi.h"
 #include "ompi/request/grequest.h"
 
-/*
- * We now build all four fortran bindings and dont care too much about
- * which convention (lowercase, underscore, double underscore or
- * all uppercase) is supported by the compiler. The policy now is to
- * have the ompi_*_f functions be the default symbols and then wrap
- * the four signature types around it. The macro below achieves this.
- */
+#if OMPI_FORTRAN_CAPS
 #define OMPI_GENERATE_F77_BINDINGS(upper_case, \
                                   lower_case, \
                                   single_underscore, \
@@ -39,10 +35,37 @@
                                   wrapper_function, \
                                   signature, \
                                   params) \
-            void upper_case signature { wrapper_function params; } \
-            void lower_case signature { wrapper_function params; } \
-            void single_underscore signature { wrapper_function params; } \
+            void upper_case signature { wrapper_function params; }
+#elif OMPI_FORTRAN_PLAIN
+#define OMPI_GENERATE_F77_BINDINGS(upper_case, \
+                                  lower_case, \
+                                  single_underscore, \
+                                  double_underscore, \
+                                  wrapper_function, \
+                                  signature, \
+                                  params) \
+            void lower_case signature { wrapper_function params; }
+#elif OMPI_FORTRAN_DOUBLE_UNDERSCORE
+#define OMPI_GENERATE_F77_BINDINGS(upper_case, \
+                                  lower_case, \
+                                  single_underscore, \
+                                  double_underscore, \
+                                  wrapper_function, \
+                                  signature, \
+                                  params) \
             void double_underscore signature { wrapper_function params; }
+#elif OMPI_FORTRAN_SINGLE_UNDERSCORE
+#define OMPI_GENERATE_F77_BINDINGS(upper_case, \
+                                  lower_case, \
+                                  single_underscore, \
+                                  double_underscore, \
+                                  wrapper_function, \
+                                  signature, \
+                                  params) \
+            void single_underscore signature { wrapper_function params; }
+#else
+#error Unrecognized Fortran name mangling scheme
+#endif
 /*
  * We maintain 2 separate sets of defines and prototypes. This ensures
  * that we can build MPI_* bindings or PMPI_* bindings as needed. The

@@ -180,11 +180,6 @@ OPAL_DECLSPEC int opal_common_verbs_qp_test(struct ibv_context *device_context,
  */
 int opal_common_verbs_fork_test(void);
 
-/*
- * Register fake verbs drivers
- */
-void opal_common_verbs_register_fake_drivers(void);
-
 END_C_DECLS
 
 #endif

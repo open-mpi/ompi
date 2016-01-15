@@ -32,12 +32,11 @@
 #include "ompi/request/request.h"
 #include "ompi/memchecker.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_Ssend_init = PMPI_Ssend_init
 #endif
-
-#if OMPI_PROFILING_DEFINES
-#include "ompi/mpi/c/profile/defines.h"
+#define MPI_Ssend_init PMPI_Ssend_init
 #endif
 
 static const char FUNC_NAME[] = "MPI_Ssend_init";

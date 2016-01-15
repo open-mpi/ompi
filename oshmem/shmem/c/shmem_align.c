@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013      Mellanox Technologies, Inc.
+ * Copyright (c) 2013-2015 Mellanox Technologies, Inc.
  *                         All rights reserved.
  * $COPYRIGHT$
  *
@@ -19,11 +19,24 @@
 
 #if OSHMEM_PROFILING
 #include "oshmem/include/pshmem.h"
+#pragma weak shmem_align = pshmem_align
 #pragma weak shmemalign = pshmemalign
 #include "oshmem/shmem/c/profile/defines.h"
 #endif
 
+static inline void* _shmemalign(size_t align, size_t size);
+
+void* shmem_align(size_t align, size_t size)
+{
+    return _shmemalign(align, size);
+}
+
 void* shmemalign(size_t align, size_t size)
+{
+    return _shmemalign(align, size);
+}
+
+static inline void* _shmemalign(size_t align, size_t size)
 {
     int rc;
     void* pBuff = NULL;

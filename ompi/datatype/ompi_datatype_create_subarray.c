@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2014 The University of Tennessee and The University
+ * Copyright (c) 2004-2015 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart,
@@ -13,7 +13,7 @@
  * Copyright (c) 2009      Sun Microsystems, Inc. All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -36,7 +36,7 @@ int32_t ompi_datatype_create_subarray(int ndims,
                                       const ompi_datatype_t* oldtype,
                                       ompi_datatype_t** newtype)
 {
-    MPI_Datatype last_type;
+    ompi_datatype_t *last_type;
     int32_t i, step, end_loop;
     MPI_Aint size, displ, extent;
 
@@ -91,30 +91,18 @@ int32_t ompi_datatype_create_subarray(int ndims,
     }
 
  replace_subarray_type:
-    /*
-     * Resized will only set the soft lb and ub markers without moving the real
-     * data inside. Thus, in case the original data contains the hard markers
-     * (MPI_LB or MPI_UB) we must force the displacement of the data upward to
-     * the right position AND set the hard markers LB and UB.
-     *
-     * NTH: ompi_datatype_create_resized() does not do enough for the general
-     * pack/unpack functions to work correctly. Until this is fixed always use
-     * ompi_datatype_create_struct(). Once this is fixed remove 1 || below. To
-     * verify that the regression is fixed run the subarray test in the Open MPI
-     * ibm testsuite.
-     */
-    if(1 || oldtype->super.flags & (OPAL_DATATYPE_FLAG_USER_LB | OPAL_DATATYPE_FLAG_USER_UB) ) {
-        MPI_Aint displs[3];
-        MPI_Datatype types[3];
-        int blength[3] = { 1, 1, 1 };
-
-        displs[0] = 0; displs[1] = displ * extent; displs[2] = size * extent;
-        types[0] = MPI_LB; types[1] = last_type; types[2] = MPI_UB;
-        ompi_datatype_create_struct( 3, blength, displs, types, newtype );
-    } else {
-        ompi_datatype_create_resized(last_type, displ * extent, size * extent, newtype);
-    }
+    /**
+      * We need to shift the content (useful data) of the datatype, so
+      * we need to force the displacement to be moved. Therefore, we
+      * cannot use resize as it will only set the soft lb and ub
+      * markers without moving the data. Instead, we have to create a
+      * new data, and insert the last_Type with the correct
+      * displacement.
+      */
+    *newtype = ompi_datatype_create( last_type->super.desc.used );
+    ompi_datatype_add( *newtype, last_type, 1, displ * extent, size * extent);
     ompi_datatype_destroy( &last_type );
+    opal_datatype_resize( &(*newtype)->super, 0, size * extent );
 
     return OMPI_SUCCESS;
 }

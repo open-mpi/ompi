@@ -1,7 +1,7 @@
 .\" -*- nroff -*-
 .\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
-.\" Copyright (c) 2010 Cisco Systems, Inc.  All rights reserved.
+.\" Copyright (c) 2010-2015 Cisco Systems, Inc.  All rights reserved.
 .\" $COPYRIGHT$
 .TH MPI_Init_thread 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .
@@ -20,9 +20,19 @@ int MPI_Init_thread(int *\fIargc\fP, char ***\fIargv\fP,
 .fi
 .SH Fortran Syntax
 .nf
-INCLUDE 'mpif.h'
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
 MPI_INIT_THREAD(\fIREQUIRED, PROVIDED, IERROR\fP)
 	INTEGER	\fIREQUIRED, PROVIDED, IERROR\fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Init_thread(\fIrequired\fP, \fIprovided\fP, \fIierror\fP)
+	INTEGER, INTENT(IN) :: \fIrequired\fP
+	INTEGER, INTENT(OUT) :: \fIprovided\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
 .SH C++ Syntax
@@ -57,8 +67,9 @@ Fortran only: Error status (integer).
 .
 .SH DESCRIPTION
 .ft R
-This routine, or MPI_Init, must be called before any other MPI routine
-(apart from MPI_Initialized) is called. MPI can be initialized at most
+This routine, or MPI_Init, must be called before most other MPI
+routines are called. There are a small number of exceptions, such as
+MPI_Initialized and MPI_Finalized.  MPI can be initialized at most
 once; subsequent calls to MPI_Init or MPI_Init_thread are erroneous.
 .sp
 MPI_Init_thread, as compared to MPI_Init, has a provision to request a
@@ -193,4 +204,4 @@ guarantee that an MPI program can continue past an error.
 MPI_Init
 MPI_Initialized
 MPI_Finalize
-
+MPI_Finalized

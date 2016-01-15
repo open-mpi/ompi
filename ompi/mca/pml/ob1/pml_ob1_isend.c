@@ -29,6 +29,13 @@
 #include "pml_ob1_recvreq.h"
 #include "ompi/peruse/peruse-internal.h"
 
+/**
+ * Single usage request. As we allow recursive calls (as an
+ * example from the request completion callback), we cannot rely
+ * on using a global request. Thus, once a send acquires ownership
+ * of this global request, it should set it to NULL to prevent
+ * the reuse until the first user completes.
+ */
 mca_pml_ob1_send_request_t *mca_pml_ob1_sendreq = NULL;
 
 int mca_pml_ob1_isend_init(const void *buf,
@@ -191,7 +198,7 @@ int mca_pml_ob1_send(const void *buf,
             return rc;
         }
 
-        /* free the request and return. don't care if it completes now */
+        ompi_request_wait_completion (brequest);
         ompi_request_free (&brequest);
         return OMPI_SUCCESS;
     }
@@ -217,15 +224,13 @@ int mca_pml_ob1_send(const void *buf,
 
 #if !OMPI_ENABLE_THREAD_MULTIPLE
     sendreq = mca_pml_ob1_sendreq;
+    mca_pml_ob1_sendreq = NULL;
     if( OPAL_UNLIKELY(NULL == sendreq) )
 #endif  /* !OMPI_ENABLE_THREAD_MULTIPLE */
         {
             MCA_PML_OB1_SEND_REQUEST_ALLOC(comm, dst, sendreq);
             if (NULL == sendreq)
                 return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
-#if !OMPI_ENABLE_THREAD_MULTIPLE
-            mca_pml_ob1_sendreq = sendreq;
-#endif  /* !OMPI_ENABLE_THREAD_MULTIPLE */
         }
     sendreq->req_send.req_base.req_proc = dst_proc;
     sendreq->rdma_frag = NULL;
@@ -251,7 +256,12 @@ int mca_pml_ob1_send(const void *buf,
 #if OMPI_ENABLE_THREAD_MULTIPLE
     MCA_PML_OB1_SEND_REQUEST_RETURN(sendreq);
 #else
-    mca_pml_ob1_send_request_fini (sendreq);
+    if( NULL != mca_pml_ob1_sendreq ) {
+        MCA_PML_OB1_SEND_REQUEST_RETURN(sendreq);
+    } else {
+        mca_pml_ob1_send_request_fini (sendreq);
+        mca_pml_ob1_sendreq = sendreq;
+    }
 #endif
 
     return rc;

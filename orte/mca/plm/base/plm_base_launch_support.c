@@ -1652,6 +1652,7 @@ int orte_plm_base_setup_virtual_machine(orte_job_t *jdata)
                                      "%s plm:base:setup_vm only HNP in use",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
                 OBJ_DESTRUCT(&nodes);
+                map->num_nodes = 1;
                 /* mark that the daemons have reported so we can proceed */
                 daemons->state = ORTE_JOB_STATE_DAEMONS_REPORTED;
                 return ORTE_SUCCESS;
@@ -1714,7 +1715,7 @@ int orte_plm_base_setup_virtual_machine(orte_job_t *jdata)
                 OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
                                      "%s using dash_host",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-                if (ORTE_SUCCESS != (rc = orte_util_add_dash_host_nodes(&tnodes, hosts))) {
+                if (ORTE_SUCCESS != (rc = orte_util_add_dash_host_nodes(&tnodes, hosts, false))) {
                     ORTE_ERROR_LOG(rc);
                     free(hosts);
                     return rc;

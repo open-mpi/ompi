@@ -18,11 +18,22 @@ int MPI_Op_create(MPI_User_function *\fIfunction\fP, int\fI commute\fP,
 .fi
 .SH Fortran Syntax
 .nf
-INCLUDE 'mpif.h'
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
 MPI_OP_CREATE(\fIFUNCTION, COMMUTE, OP, IERROR\fP)
 	EXTERNAL	\fIFUNCTION\fP
 	LOGICAL	\fICOMMUTE\fP
 	INTEGER	\fIOP, IERROR\fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Op_create(\fIuser_fn\fP, \fIcommute\fP, \fIop\fP, \fIierror\fP)
+	PROCEDURE(MPI_User_function) :: \fIuser_fn\fP
+	LOGICAL, INTENT(IN) :: \fIcommute\fP
+	TYPE(MPI_Op), INTENT(OUT) :: \fIop\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
 .SH C++ Syntax

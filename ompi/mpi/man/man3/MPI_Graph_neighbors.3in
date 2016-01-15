@@ -18,9 +18,20 @@ int MPI_Graph_neighbors(MPI_Comm \fIcomm\fP, int\fI rank\fP, int\fI maxneighbors
 .fi
 .SH Fortran Syntax
 .nf
-INCLUDE 'mpif.h'
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
 MPI_GRAPH_NEIGHBORS(\fICOMM, RANK, MAXNEIGHBORS, NEIGHBORS, IERROR\fP)
 	INTEGER	\fICOMM, RANK, MAXNEIGHBORS, NEIGHBORS(*), IERROR\fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Graph_neighbors(\fIcomm\fP, \fIrank\fP, \fImaxneighbors\fP, \fIneighbors\fP, \fIierror\fP)
+	TYPE(MPI_Comm), INTENT(IN) :: \fIcomm\fP
+	INTEGER, INTENT(IN) :: \fIrank\fP, \fImaxneighbors\fP
+	INTEGER, INTENT(OUT) :: \fIneighbors(maxneighbors)\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
 .SH C++ Syntax

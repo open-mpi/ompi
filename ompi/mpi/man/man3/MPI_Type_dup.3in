@@ -17,9 +17,19 @@ int MPI_Type_dup(MPI_Datatype \fItype\fP, MPI_Datatype *\fInewtype\fP)
 .fi
 .SH Fortran Syntax
 .nf
-INCLUDE 'mpif.h'
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
 MPI_TYPE_DUP(\fITYPE, NEWTYPE, IERROR\fP)
 	INTEGER	\fITYPE, NEWTYPE, IERROR \fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Type_dup(\fIoldtype\fP, \fInewtype\fP, \fIierror\fP)
+	TYPE(MPI_Datatype), INTENT(IN) :: \fIoldtype\fP
+	TYPE(MPI_Datatype), INTENT(OUT) :: \fInewtype\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
 .SH C++ Syntax

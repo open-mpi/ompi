@@ -283,25 +283,14 @@ BEGIN_C_DECLS
     int mca_coll_basic_ft_event(int status);
 
 
-/* Utility functions */
-
-    static inline void mca_coll_basic_free_reqs(ompi_request_t ** reqs,
-                                                int count)
-    {
-        int i;
-        for (i = 0; i < count; ++i)
-             ompi_request_free(&reqs[i]);
-    }
-
-
 struct mca_coll_basic_module_t {
     mca_coll_base_module_t super;
-
-    ompi_request_t **mccb_reqs;
-    int mccb_num_reqs;
 };
 typedef struct mca_coll_basic_module_t mca_coll_basic_module_t;
-OBJ_CLASS_DECLARATION(mca_coll_basic_module_t);
+OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_coll_basic_module_t);
+
+typedef mca_coll_base_comm_t mca_coll_basic_comm_t;
+OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_coll_basic_comm_t);
 
 END_C_DECLS
 

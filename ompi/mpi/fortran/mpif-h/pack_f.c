@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -22,7 +24,8 @@
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 #include "ompi/mpi/fortran/base/constants.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_PACK = ompi_pack_f
 #pragma weak pmpi_pack = ompi_pack_f
 #pragma weak pmpi_pack_ = ompi_pack_f
@@ -30,7 +33,7 @@
 
 #pragma weak PMPI_Pack_f = ompi_pack_f
 #pragma weak PMPI_Pack_f08 = ompi_pack_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_PACK,
                            pmpi_pack,
                            pmpi_pack_,
@@ -38,6 +41,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_PACK,
                            pompi_pack_f,
                            (char *inbuf, MPI_Fint *incount, MPI_Fint *datatype, char *outbuf, MPI_Fint *outsize, MPI_Fint *position, MPI_Fint *comm, MPI_Fint *ierr),
                            (inbuf, incount, datatype, outbuf, outsize, position, comm, ierr) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -48,9 +52,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_PACK,
 
 #pragma weak MPI_Pack_f = ompi_pack_f
 #pragma weak MPI_Pack_f08 = ompi_pack_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_PACK,
                            mpi_pack,
                            mpi_pack_,
@@ -58,12 +61,11 @@ OMPI_GENERATE_F77_BINDINGS (MPI_PACK,
                            ompi_pack_f,
                            (char *inbuf, MPI_Fint *incount, MPI_Fint *datatype, char *outbuf, MPI_Fint *outsize, MPI_Fint *position, MPI_Fint *comm, MPI_Fint *ierr),
                            (inbuf, incount, datatype, outbuf, outsize, position, comm, ierr) )
+#else
+#define ompi_pack_f pompi_pack_f
+#endif
 #endif
 
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
-#endif
 
 void ompi_pack_f(char *inbuf, MPI_Fint *incount, MPI_Fint *datatype,
 		char *outbuf, MPI_Fint *outsize, MPI_Fint *position,
@@ -74,11 +76,11 @@ void ompi_pack_f(char *inbuf, MPI_Fint *incount, MPI_Fint *datatype,
    MPI_Datatype c_type;
    OMPI_SINGLE_NAME_DECL(position);
 
-   c_comm = MPI_Comm_f2c(*comm);
-   c_type = MPI_Type_f2c(*datatype);
+   c_comm = PMPI_Comm_f2c(*comm);
+   c_type = PMPI_Type_f2c(*datatype);
    OMPI_SINGLE_FINT_2_INT(position);
 
-   c_ierr = MPI_Pack(OMPI_F2C_BOTTOM(inbuf), OMPI_FINT_2_INT(*incount),
+   c_ierr = PMPI_Pack(OMPI_F2C_BOTTOM(inbuf), OMPI_FINT_2_INT(*incount),
                      c_type, outbuf,
                      OMPI_FINT_2_INT(*outsize),
                      OMPI_SINGLE_NAME_CONVERT(position),

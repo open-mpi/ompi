@@ -150,7 +150,7 @@ ompi_osc_sm_start(struct ompi_group_t *group,
 
         for (int i = 0 ; i < size ; ++i) {
             int rank_byte = ranks[i] >> 6;
-            uint64_t old, rank_bit = 1 << (ranks[i] & 0x3f);
+            uint64_t old, rank_bit = ((uint64_t) 1) << (ranks[i] & 0x3f);
 
             /* wait for rank to post */
             while (!(module->posts[my_rank][rank_byte] & rank_bit)) {
@@ -219,7 +219,7 @@ ompi_osc_sm_post(struct ompi_group_t *group,
         (ompi_osc_sm_module_t*) win->w_osc_module;
     int my_rank = ompi_comm_rank (module->comm);
     int my_byte = my_rank >> 6;
-    uint64_t my_bit = 1 << (my_rank & 0x3f);
+    uint64_t my_bit = ((uint64_t) 1) << (my_rank & 0x3f);
     int gsize;
 
     OPAL_THREAD_LOCK(&module->lock);
@@ -315,6 +315,8 @@ ompi_osc_sm_test(struct ompi_win_t *win,
         OBJ_RELEASE(module->post_group);
         module->post_group = NULL;
         *flag = 1;
+    } else {
+        *flag = 0;
     }
 
     OPAL_THREAD_UNLOCK(&module->lock);

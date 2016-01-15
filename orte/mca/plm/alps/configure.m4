@@ -27,5 +27,11 @@ AC_DEFUN([MCA_orte_plm_alps_CONFIG],[
 
 	ORTE_CHECK_ALPS([plm_alps], [plm_alps_happy="yes"], [plm_alps_happy="no"])
 
-    AS_IF([test "$plm_alps_happy" = "yes"], [$1], [$2])
+    AS_IF([test "$plm_alps_happy" = "yes"],
+          [$1
+           AC_SUBST([plm_alps_CPPFLAGS])
+           AC_SUBST([plm_alps_LDFLAGS])
+           AC_SUBST([plm_alps_LIBS])],
+          [$2])
+
 ])dnl

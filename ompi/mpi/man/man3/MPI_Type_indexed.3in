@@ -25,7 +25,8 @@ int MPI_Type_create_hindexed(int \fIcount\fP,
 .fi
 .SH Fortran Syntax
 .nf
-INCLUDE 'mpif.h'
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
 MPI_TYPE_INDEXED(\fICOUNT, ARRAY_OF_BLOCKLENGTHS,
 		ARRAY_OF_DISPLACEMENTS, OLDTYPE, NEWTYPE, IERROR\fP)
 	INTEGER	\fICOUNT, ARRAY_OF_BLOCKLENGTHS(*)\fP
@@ -38,6 +39,27 @@ MPI_TYPE_CREATE_HINDEXED(\fICOUNT, ARRAY_OF_BLOCKLENGTHS,
 	INTEGER	\fIOLDTYPE, NEWTYPE\fP
 	INTEGER(KIND=MPI_ADDRESS_KIND) \fIARRAY_OF_DISPLACEMENTS(*)\fP
 	INTEGER	\fIIERROR\fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Type_indexed(\fIcount\fP, \fIarray_of_blocklengths\fP, \fIarray_of_displacements\fP,
+		\fIoldtype\fP, \fInewtype\fP, \fIierror\fP)
+	INTEGER, INTENT(IN) :: \fIcount\fP, \fIarray_of_blocklengths(count),\fP
+	\fIarray_of_displacements(count)\fP
+	TYPE(MPI_Datatype), INTENT(IN) :: \fIoldtype\fP
+	TYPE(MPI_Datatype), INTENT(OUT) :: \fInewtype\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
+
+MPI_Type_create_hindexed(\fIcount\fP, \fIarray_of_blocklengths\fP,
+		\fIarray_of_displacements\fP, \fIoldtype\fP, \fInewtype\fP, \fIierror\fP)
+	INTEGER, INTENT(IN) :: \fIcount\fP, \fIarray_of_blocklengths(count)\fP
+	INTEGER(KIND=MPI_ADDRESS_KIND), INTENT(IN) ::
+	\fIarray_of_displacements(count)\fP
+	TYPE(MPI_Datatype), INTENT(IN) :: \fIoldtype\fP
+	TYPE(MPI_Datatype), INTENT(OUT) :: \fInewtype\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
 .SH C++ Syntax

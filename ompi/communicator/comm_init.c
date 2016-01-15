@@ -426,7 +426,6 @@ static void ompi_comm_destruct(ompi_communicator_t* comm)
     }
 
     if (NULL != comm->c_local_group) {
-        ompi_group_decrement_proc_count (comm->c_local_group);
         OBJ_RELEASE ( comm->c_local_group );
         comm->c_local_group = NULL;
         if ( OMPI_COMM_IS_INTRA(comm) ) {
@@ -439,7 +438,6 @@ static void ompi_comm_destruct(ompi_communicator_t* comm)
     }
 
     if (NULL != comm->c_remote_group) {
-        ompi_group_decrement_proc_count (comm->c_remote_group);
         OBJ_RELEASE ( comm->c_remote_group );
         comm->c_remote_group = NULL;
     }

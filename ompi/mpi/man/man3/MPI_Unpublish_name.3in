@@ -23,10 +23,20 @@ int MPI_Unpublish_name(const char *\fIservice_name\fP, MPI_Info \fIinfo\fP,
 .fi
 .SH Fortran Syntax
 .nf
-INCLUDE 'mpif.h'
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
 MPI_UNPUBLISH_NAME(\fISERVICE_NAME, INFO, PORT_NAME, IERROR\fP)
 	CHARACTER*(*)	\fISERVICE_NAME, PORT_NAME\fP
 	INTEGER		\fIINFO, IERROR\fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Unpublish_name(\fIservice_name\fP, \fIinfo\fP, \fIport_name\fP, \fIierror\fP)
+	CHARACTER(LEN=*), INTENT(IN) :: \fIservice_name\fP, \fIport_name\fP
+	TYPE(MPI_Info), INTENT(IN) :: \fIinfo\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
 .SH C++ Syntax

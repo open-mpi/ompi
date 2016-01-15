@@ -55,8 +55,6 @@ sources = \
     btl_openib_async.h \
     btl_openib_xrc.c \
     btl_openib_xrc.h \
-    btl_openib_fd.h \
-    btl_openib_fd.c \
     btl_openib_ip.h \
     btl_openib_ip.c \
     btl_openib_put.c \

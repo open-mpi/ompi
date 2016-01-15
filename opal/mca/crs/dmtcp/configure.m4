@@ -1,8 +1,10 @@
 # -*- shell-script -*-
 #
-# Copyright (c)      2010 The Trustees of Indiana University.
+# Copyright (c) 2010      The Trustees of Indiana University.
 #                         All rights reserved.
-# Copyright (c)      2010 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2015      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -47,7 +49,7 @@ AC_DEFUN([MCA_opal_crs_dmtcp_CONFIG],[
     # Check if the user explicitly requested -not- to build the DMTCP component
     # If so, the we do not compile this component
     #
-    AS_IF([test "$with_dmtcp" = "no" -o "$opal_check_crs_dmtcp_good" = "no"],
+    AS_IF([test "$with_dmtcp" = "no" || test "$opal_check_crs_dmtcp_good" = "no"],
           [opal_check_crs_dmtcp_good="no"],
           [opal_check_crs_dmtcp_good="yes"])
 
@@ -66,10 +68,10 @@ AC_DEFUN([MCA_opal_crs_dmtcp_CONFIG],[
 
     # Determine the search paths for the headers and libraries
     AS_IF([test "$opal_check_crs_dmtcp_good" = "yes"],
-          [AS_IF([test ! -z "$with_dmtcp" -a "$with_dmtcp" != "yes"],
+          [AS_IF([test ! -z "$with_dmtcp" && test "$with_dmtcp" != "yes"],
                  [opal_check_crs_dmtcp_dir="$with_dmtcp"
                   opal_check_crs_dmtcp_dir_msg="$with_dmtcp (from --with-dmtcp)"])
-           AS_IF([test ! -z "$with_dmtcp_libdir" -a "$with_dmtcp_libdir" != "yes"],
+           AS_IF([test ! -z "$with_dmtcp_libdir" && test "$with_dmtcp_libdir" != "yes"],
                  [opal_check_crs_dmtcp_libdir="$with_dmtcp_libdir"
                   opal_check_crs_dmtcp_libdir_msg="$with_dmtcp_libdir (from --with-dmtcp-libdir)"])
           ])
@@ -97,7 +99,7 @@ AC_DEFUN([MCA_opal_crs_dmtcp_CONFIG],[
     AC_CHECK_PROG([mtcp_restart_command_exists], ["mtcp_restart"], ["yes"], ["no"])
     AS_IF([test "$mtcp_restart_command_exists" = "no"],
           [opal_check_crs_dmtcp_good="no"
-           AS_IF([test ! -z "$with_dmtcp" -a "$with_dmtcp" != "no"],
+           AS_IF([test ! -z "$with_dmtcp" && test "$with_dmtcp" != "no"],
                  [AC_MSG_WARN([mtcp_restart not found in PATH.])
                   AC_MSG_ERROR([Aborting.])])])
 
@@ -130,7 +132,7 @@ AC_DEFUN([MCA_opal_crs_dmtcp_CONFIG],[
 
     AS_IF([test "$opal_check_crs_dmtcp_good" = "yes"],
           [$1],
-          [AS_IF([test ! -z "$with_dmtcp" -a "$with_dmtcp" != "no"],
+          [AS_IF([test ! -z "$with_dmtcp" && test "$with_dmtcp" != "no"],
                  [AC_MSG_WARN([DMTCP support requested but not found.  Perhaps you need to specify the location of the DMTCP libraries.])
                   AC_MSG_ERROR([Aborting.])])
            $2])

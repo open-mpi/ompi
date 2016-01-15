@@ -19,11 +19,24 @@ int MPI_Improbe(int \fIsource\fP, int\fI tag\fP, MPI_Comm\fI comm\fP,
 .fi
 .SH Fortran Syntax
 .nf
-INCLUDE 'mpif.h'
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
 MPI_IMPROBE(\fISOURCE, TAG, COMM, FLAG, MESSAGE, STATUS, IERROR\fP)
 	LOGICAL	\fIFLAG\fP
 	INTEGER	\fISOURCE, TAG, COMM, MESSAGE\fP
 	INTEGER	\fISTATUS(MPI_STATUS_SIZE), IERROR\fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Improbe(\fIsource\fP, \fItag\fP, \fIcomm\fP, \fIflag\fP, \fImessage\fP, \fIstatus\fP, \fIierror\fP)
+	INTEGER, INTENT(IN) :: \fIsource\fP, \fItag\fP
+	TYPE(MPI_Comm), INTENT(IN) :: \fIcomm\fP
+	INTEGER, INTENT(OUT) :: \fIflag\fP
+	TYPE(MPI_Message), INTENT(OUT) :: \fImessage\fP
+	TYPE(MPI_Status) :: \fIstatus\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
 .SH C++ Syntax

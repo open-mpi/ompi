@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2007-2015 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
 # $COPYRIGHT$
 #
@@ -50,20 +50,30 @@ You may wish to try to narrow down the problem;
 WARNING: The MCA parameter mpi_param_check has been set to true, but
 parameter checking has been compiled out of Open MPI.  The
 mpi_param_check value has therefore been ignored.
+#
+[mpi_init: invoked multiple times]
+Open MPI has detected that this process has attempted to initialize
+MPI (via MPI_INIT or MPI_INIT_THREAD) more than once.  This is
+erroneous.
+#
+[mpi_init: already finalized]
+Open MPI has detected that this process has attempted to initialize
+MPI (via MPI_INIT or MPI_INIT_THREAD) after MPI_FINALIZE has been
+called.  This is erroneous.
+#
+[mpi_finalize: not initialized]
+The function MPI_FINALIZE was invoked before MPI was initialized in a
+process on host %s, PID %d.
+
+This indicates an erroneous MPI program; MPI must be initialized
+before it can be finalized.
+#
 [mpi_finalize:invoked_multiple_times]
 The function MPI_FINALIZE was invoked multiple times in a single
 process on host %s, PID %d.
 
 This indicates an erroneous MPI program; MPI_FINALIZE is only allowed
 to be invoked exactly once in a process.
-#
-[proc:heterogeneous-support-unavailable]
-The build of Open MPI running on host %s was not
-compiled with heterogeneous support.  A process running on host
-%s appears to have a different architecture,
-which will not work.  Please recompile Open MPI with the
-configure option --enable-heterogeneous or use a homogeneous
-environment.
 #
 [sparse groups enabled but compiled out]
 WARNING: The MCA parameter mpi_use_sparse_group_storage has been set
@@ -79,15 +89,6 @@ Node: %s
 
 In order to operate in a heterogeneous environment, please reconfigure
 Open MPI with --enable-heterogeneous.
-#
-[ompi mpi abort:cannot guarantee all killed]
-An MPI process is aborting at a time when it cannot guarantee that all
-of its peer processes in the job will be killed properly.  You should
-double check that everything has shut down cleanly.
-
-  Reason:     %s
-  Local host: %s
-  PID:        %d
 #
 [no cuda support]
 The user requested CUDA support with the --mca mpi_cuda_support 1 flag

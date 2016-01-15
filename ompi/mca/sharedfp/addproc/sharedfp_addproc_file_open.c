@@ -32,7 +32,7 @@
 
 
 int mca_sharedfp_addproc_file_open (struct ompi_communicator_t *comm,
-                                    char* filename,
+                                    const char* filename,
                                     int amode,
                                     struct opal_info_t *info,
                                     mca_io_ompio_file_t *fh)

@@ -3,6 +3,7 @@
  * Copyright (C) Mellanox Technologies Ltd. 2001-2011.  ALL RIGHTS RESERVED.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -11,6 +12,8 @@
  */
 
 #include "pml_yalla.h"
+
+#include "ompi/runtime/mpiruntime.h"
 
 
 static int mca_pml_yalla_component_register(void);
@@ -95,6 +98,8 @@ mca_pml_yalla_component_init(int* priority, bool enable_progress_threads,
     if ( (ret = mca_pml_yalla_init()) != 0) {
         return NULL;
     }
+
+    ompi_mpi_dynamics_disable("the Yalla (MXM) PML does not support MPI dynamic process functionality");
 
     *priority = ompi_pml_yalla.priority;
     return &ompi_pml_yalla.super;

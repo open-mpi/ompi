@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2014 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  *
  * $COPYRIGHT$
@@ -217,10 +217,14 @@ opal_progress_set_event_flag(int flag)
 void
 opal_progress_event_users_increment(void)
 {
+#if OPAL_ENABLE_DEBUG
     int32_t val;
     val = opal_atomic_add_32(&num_event_users, 1);
 
     OPAL_OUTPUT((debug_output, "progress: event_users_increment setting count to %d", val));
+#else
+    (void)opal_atomic_add_32(&num_event_users, 1);
+#endif
 
 #if OPAL_PROGRESS_USE_TIMERS
     /* force an update next round (we'll be past the delta) */
@@ -235,10 +239,14 @@ opal_progress_event_users_increment(void)
 void
 opal_progress_event_users_decrement(void)
 {
+#if OPAL_ENABLE_DEBUG || ! OPAL_PROGRESS_USE_TIMERS
     int32_t val;
     val = opal_atomic_sub_32(&num_event_users, 1);
 
     OPAL_OUTPUT((debug_output, "progress: event_users_decrement setting count to %d", val));
+#else
+    (void)opal_atomic_sub_32(&num_event_users, 1);
+#endif
 
 #if !OPAL_PROGRESS_USE_TIMERS
    /* start now in delaying if it's easy */

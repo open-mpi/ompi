@@ -1,0 +1,48 @@
+# -*- text -*-
+#
+# Copyright (c) 2015      Intel, Inc. All rights reserved.
+# $COPYRIGHT$
+# 
+# Additional copyrights may follow
+# 
+# $HEADER$
+#
+
+{
+   fin1
+   Memcheck:Leak
+   fun:malloc
+   fun:evthread_posix_lock_alloc
+   fun:evutil_secure_rng_global_setup_locks_
+   fun:event_global_setup_locks_
+   fun:evthread_use_pthreads
+   fun:pmix_start_progress_thread
+   fun:PMIx_server_init
+   fun:main
+}
+{
+   fin2
+   Memcheck:Leak
+   fun:malloc
+   fun:evthread_posix_lock_alloc
+   fun:evsig_global_setup_locks_
+   fun:event_global_setup_locks_
+   fun:evthread_use_pthreads
+   fun:pmix_start_progress_thread
+   fun:PMIx_Init
+   fun:main
+}
+{
+   fin3
+   Memcheck:Leak
+   fun:malloc
+   fun:evthread_posix_lock_alloc
+   fun:evutil_secure_rng_global_setup_locks_
+   fun:event_global_setup_locks_
+   fun:evthread_use_pthreads
+   fun:pmix_start_progress_thread
+   fun:PMIx_init
+   fun:main
+}
+
+

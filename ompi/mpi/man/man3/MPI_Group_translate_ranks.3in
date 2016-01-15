@@ -19,10 +19,21 @@ int MPI_Group_translate_ranks(MPI_Group \fIgroup1\fP, int\fI n\fP,
 .fi
 .SH Fortran Syntax
 .nf
-INCLUDE 'mpif.h'
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
 MPI_GROUP_TRANSLATE_RANKS(\fIGROUP1, N, RANKS1, GROUP2, RANKS2,
 		IERROR\fP)
 	INTEGER	\fIGROUP1, N, RANKS1(*), GROUP2, RANKS2(*), IERROR\fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Group_translate_ranks(\fIgroup1\fP, \fIn\fP, \fIranks1\fP, \fIgroup2\fP, \fIranks2\fP, \fIierror\fP)
+	TYPE(MPI_Group), INTENT(IN) :: \fIgroup1\fP, \fIgroup2\fP
+	INTEGER, INTENT(IN) :: \fIn\fP, \fIranks1(n)\fP
+	INTEGER, INTENT(OUT) :: \fIranks2(n)\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
 .SH C++ Syntax

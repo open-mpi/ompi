@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -21,7 +23,8 @@
 
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_WIN_ALLOCATE_SHARED = ompi_win_allocate_shared_f
 #pragma weak pmpi_win_allocate_shared = ompi_win_allocate_shared_f
 #pragma weak pmpi_win_allocate_shared_ = ompi_win_allocate_shared_f
@@ -37,7 +40,7 @@
 
 #pragma weak PMPI_Win_allocate_shared_cptr_f = ompi_win_allocate_shared_f
 #pragma weak PMPI_Win_allocate_shared_cptr_f08 = ompi_win_allocate_shared_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_WIN_ALLOCATE_SHARED,
                             pmpi_win_allocate_shared,
                             pmpi_win_allocate_shared_,
@@ -58,6 +61,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_WIN_ALLOCATE_SHARED_CPTR,
                              MPI_Fint *win, MPI_Fint *ierr),
                             (size, disp_unit, info, comm, baseptr, win, ierr) )
 #endif
+#endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_WIN_ALLOCATE_SHARED = ompi_win_allocate_shared_f
@@ -75,9 +79,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_WIN_ALLOCATE_SHARED_CPTR,
 
 #pragma weak MPI_Win_allocate_shared_cptr_f = ompi_win_allocate_shared_f
 #pragma weak MPI_Win_allocate_shared_cptr_f08 = ompi_win_allocate_shared_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_WIN_ALLOCATE_SHARED,
                             mpi_win_allocate_shared,
                             mpi_win_allocate_shared_,
@@ -97,12 +100,12 @@ OMPI_GENERATE_F77_BINDINGS (MPI_WIN_ALLOCATE_SHARED_CPTR,
                              MPI_Fint *info, MPI_Fint *comm, char *baseptr,
                              MPI_Fint *win, MPI_Fint *ierr),
                             (size, disp_unit, info, comm, baseptr, win, ierr) )
+#else
+#define ompi_win_allocate_shared_f pompi_win_allocate_shared_f
+#define ompi_win_allocate_shared_cptr_f pompi_win_allocate_shared_cptr_f
+#endif
 #endif
 
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
-#endif
 
 void ompi_win_allocate_shared_f(MPI_Aint *size, MPI_Fint *disp_unit,
                                 MPI_Fint *info, MPI_Fint *comm, char *baseptr,
@@ -113,13 +116,13 @@ void ompi_win_allocate_shared_f(MPI_Aint *size, MPI_Fint *disp_unit,
     MPI_Comm c_comm;
     MPI_Win c_win;
 
-    c_info = MPI_Info_f2c(*info);
-    c_comm = MPI_Comm_f2c(*comm);
+    c_info = PMPI_Info_f2c(*info);
+    c_comm = PMPI_Comm_f2c(*comm);
 
-    c_ierr = MPI_Win_allocate_shared(*size, OMPI_FINT_2_INT(*disp_unit),
+    c_ierr = PMPI_Win_allocate_shared(*size, OMPI_FINT_2_INT(*disp_unit),
                                      c_info, c_comm,
                                      baseptr, &c_win);
-    *win = MPI_Win_c2f(c_win);
+    *win = PMPI_Win_c2f(c_win);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 }
 

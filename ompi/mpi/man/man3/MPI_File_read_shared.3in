@@ -2,6 +2,8 @@
 .\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
 .\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
+.\" Copyright 2015      Research Organization for Information Science
+.\"                     and Technology (RIST). All rights reserved.
 .\" $COPYRIGHT$
 .TH MPI_File_read_shared 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
@@ -10,20 +12,32 @@
 .SH SYNTAX
 .ft R
 .nf
-C Syntax
-    #include <mpi.h>
-    int MPI_File_read_shared(MPI_File \fIfh\fP, void \fI*buf\fP, int \fIcount\fP,
-MPI_Datatype \fIdatatype\fP, MPI_Status \fI*status\fP)
+.SH C Syntax
+#include <mpi.h>
+int MPI_File_read_shared(MPI_File \fIfh\fP, void \fI*buf\fP, int \fIcount\fP,
+	MPI_Datatype \fIdatatype\fP, MPI_Status \fI*status\fP)
 
 .fi
 .SH Fortran Syntax
 .nf
-    INCLUDE 'mpif.h'
-    MPI_FILE_READ_SHARED(\fIFH\fP, \fIBUF\fP, \fICOUNT\fP, \fIDATATYPE\fP, \fISTATUS\fP,
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
+MPI_FILE_READ_SHARED(\fIFH\fP, \fIBUF\fP, \fICOUNT\fP, \fIDATATYPE\fP, \fISTATUS\fP,
 	\fIIERROR\fP)
-		<TYPE>		BUF(*)
-        	INTEGER		FH, COUNT, DATATYPE,
-				STATUS(MPI_STATUS_SIZE), IERROR
+	<type>	\fIBUF(*)\fP
+	INTEGER	\fIFH, COUNT, DATATYPE,STATUS(MPI_STATUS_SIZE), IERROR\fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_File_read_shared(\fIfh\fP, \fIbuf\fP, \fIcount\fP, \fIdatatype\fP, \fIstatus\fP, \fIierror\fP)
+	TYPE(MPI_File), INTENT(IN) :: \fIfh\fP
+	TYPE(*), DIMENSION(..) :: \fIbuf\fP
+	INTEGER, INTENT(IN) :: \fIcount\fP
+	TYPE(MPI_Datatype), INTENT(IN) :: \fIdatatype\fP
+	TYPE(MPI_Status) :: \fIstatus\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
 .SH C++ Syntax

@@ -48,6 +48,14 @@ struct opal_info_t;
  * hooks (ptmalloc2, etc) are required. */
 #define MCA_MPOOL_FLAGS_NO_HOOKS          0x80
 
+/* access flags */
+enum {
+    MCA_MPOOL_ACCESS_LOCAL_WRITE   = 0x01,
+    MCA_MPOOL_ACCESS_REMOTE_READ   = 0x02,
+    MCA_MPOOL_ACCESS_REMOTE_WRITE  = 0x04,
+    MCA_MPOOL_ACCESS_REMOTE_ATOMIC = 0x08,
+    MCA_MPOOL_ACCESS_ANY           = 0x0f,
+};
 
 struct mca_mpool_base_resources_t;
 
@@ -63,6 +71,7 @@ struct mca_mpool_base_registration_t {
 #if OPAL_CUDA_GDR_SUPPORT
     unsigned long long gpu_bufID;
 #endif /* OPAL_CUDA_GDR_SUPPORT */
+    int32_t access_flags;
 };
 
 typedef struct mca_mpool_base_registration_t mca_mpool_base_registration_t;
@@ -110,6 +119,7 @@ typedef int (*mca_mpool_base_module_register_fn_t)(
     void * addr,
     size_t size,
     uint32_t flags,
+    int32_t access_flags,
     mca_mpool_base_registration_t** registration);
 
 /**

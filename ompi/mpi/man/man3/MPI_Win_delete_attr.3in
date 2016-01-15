@@ -17,9 +17,19 @@ int MPI_Win_delete_attr(MPI_Win \fIwin\fP, int \fIwin_keyval\fP)
 .fi
 .SH Fortran Syntax
 .nf
-INCLUDE 'mpif.h'
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
 MPI_WIN_DELETE_ATTR(\fIWIN, WIN_KEYVAL, IERROR\fP)
 	INTEGER \fIWIN, WIN_KEYVAL, IERROR\fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Win_delete_attr(\fIwin\fP, \fIwin_keyval\fP, \fIierror\fP)
+	TYPE(MPI_Win), INTENT(IN) :: \fIwin\fP
+	INTEGER, INTENT(IN) :: \fIwin_keyval\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
 .SH C++ Syntax

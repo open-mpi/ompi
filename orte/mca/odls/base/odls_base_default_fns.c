@@ -861,6 +861,8 @@ void orte_odls_base_default_launch_local(int fd, short sd, void *cbdata)
                 ORTE_ERROR_LOG(rc);
                 continue;
             }
+            /* tell the child that it is being launched via ORTE */
+            opal_setenv(OPAL_MCA_PREFIX"orte_launch", "1", true, &app->env);
 
             /* ensure we clear any prior info regarding state or exit status in
              * case this is a restart
@@ -1023,7 +1025,7 @@ void orte_odls_base_default_launch_local(int fd, short sd, void *cbdata)
             }
 
             if (5 < opal_output_get_verbosity(orte_odls_base_framework.framework_output)) {
-                opal_output(orte_odls_base_framework.framework_output, "%s odls:launch: spawning child %s",
+                opal_output(orte_odls_base_framework.framework_output, "%s odls:launch spawning child %s",
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                             ORTE_NAME_PRINT(&child->name));
 
@@ -1033,12 +1035,11 @@ void orte_odls_base_default_launch_local(int fd, short sd, void *cbdata)
                 }
             }
 
-            orte_wait_cb(child, odls_base_default_wait_local_proc, NULL);
             if (ORTE_SUCCESS != (rc = fork_local(app, child, app->env, jobdat))) {
-                orte_wait_cb_cancel(child);
                 child->exit_code = ORTE_ERR_SILENT; /* error message already output */
                 ORTE_ACTIVATE_PROC_STATE(&child->name, ORTE_PROC_STATE_FAILED_TO_START);
             }
+            orte_wait_cb(child, odls_base_default_wait_local_proc, NULL);
             /* if we indexed the argv, we need to restore it to
              * its original form
              */

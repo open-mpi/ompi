@@ -19,7 +19,8 @@ int MPI_Bsend_init(const void \fI*buf\fP, int\fI count\fP, MPI_Datatype\fI datat
 .fi
 .SH Fortran Syntax
 .nf
-INCLUDE 'mpif.h'
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
 MPI_BSEND_INIT(\fIBUF\fP,\fI COUNT\fP, \fIDATATYPE\fP,\fI DEST\fP,\fI TAG\fP,\fI COMM\fP,\fI REQUEST\fP,
 		\fIIERROR\fP)
 	<type>	\fIBUF\fP(\fI*\fP)
@@ -27,10 +28,22 @@ MPI_BSEND_INIT(\fIBUF\fP,\fI COUNT\fP, \fIDATATYPE\fP,\fI DEST\fP,\fI TAG\fP,\fI
 	INTEGER	\fICOMM\fP,\fI REQUEST\fP,\fI IERROR
 
 .fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Bsend_init(\fIbuf\fP, \fIcount\fP, \fIdatatype\fP, \fIdest\fP, \fItag\fP, \fIcomm\fP, \fIrequest\fP, \fIierror\fP)
+	TYPE(*), DIMENSION(..), INTENT(IN), ASYNCHRONOUS :: \fIbuf\fP
+	INTEGER, INTENT(IN) :: \fIcount\fP, \fIdest\fP, \fItag\fP
+	TYPE(MPI_Datatype), INTENT(IN) :: \fIdatatype\fP
+	TYPE(MPI_Comm), INTENT(IN) :: \fIcomm\fP
+	TYPE(MPI_Request), INTENT(OUT) :: \fIrequest\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
+
+.fi
 .SH C++ Syntax
 .nf
-import mpi.*;
-Prequest MPI.COMM_WORLD.Bsend_init(const void* \fIbuf\fP, int \fIcount\fP, const
+#include <mpi.h>
+Prequest Comm::Bsend_init(const void* \fIbuf\fP, int \fIcount\fP, const
 	Datatype& \fIdatatype\fP, int \fIdest\fP, int \fItag\fP) const
 
 .fi

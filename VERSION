@@ -91,7 +91,6 @@ libopen_rte_so_version=0:0:0
 libopen_pal_so_version=0:0:0
 libmpi_java_so_version=0:0:0
 liboshmem_so_version=0:0:0
-liboshmem_java_so_version=0:0:0
 
 # "Common" components install standalone libraries that are run-time
 # linked by one or more components.  So they need to be versioned as
@@ -99,14 +98,13 @@ liboshmem_java_so_version=0:0:0
 # components-don't-affect-the-build-system abstraction.
 
 # OMPI layer
-libmca_common_cuda_so_version=0:0:0
-libmca_common_ofacm_so_version=0:0:0
-libmca_common_sm_so_version=0:0:0
-libmca_common_ugni_so_version=0:0:0
-libmca_common_verbs_so_version=0:0:0
-
-# OPAL layer
-libmca_opal_common_libfabric_so_version=0:0:0
 
 # ORTE layer
-libmca_common_alps_so_version=0:0:0
+libmca_orte_common_alps_so_version=0:0:0
+
+# OPAL layer
+libmca_opal_common_cuda_so_version=0:0:0
+libmca_opal_common_libfabric_so_version=0:0:0
+libmca_opal_common_sm_so_version=0:0:0
+libmca_opal_common_ugni_so_version=0:0:0
+libmca_opal_common_verbs_so_version=0:0:0

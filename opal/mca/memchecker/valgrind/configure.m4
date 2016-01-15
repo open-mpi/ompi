@@ -3,6 +3,8 @@
 # Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2008-2014 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2015      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -35,7 +37,7 @@ AC_DEFUN([MCA_opal_memchecker_valgrind_CONFIG],[
     opal_memchecker_valgrind_save_CPPFLAGS="$CPPFLAGS"
     opal_memchecker_valgrind_happy=no
     AS_IF([test "$with_valgrind" != "no"],
-          [AS_IF([test ! -z "$with_valgrind" -a "$with_valgrind" != "yes"],
+          [AS_IF([test -n "$with_valgrind" && test "$with_valgrind" != "yes"],
                  [opal_memchecker_valgrind_CPPFLAGS="-I$with_valgrind/include"
                   # We need this -I to stay in CPPFLAGS when we're done
                   CPPFLAGS="$CPPFLAGS -I$with_valgrind/include"
@@ -60,7 +62,7 @@ AC_DEFUN([MCA_opal_memchecker_valgrind_CONFIG],[
     CPPFLAGS="$opal_memchecker_valgrind_save_CPPFLAGS"
 
     # If we specifically requested this component and can't build it, error
-    AS_IF([test "$with_valgrind" != "no" -a "$with_valgrind" != "" -a "$opal_memchecker_valgrind_happy" != "yes"],
+    AS_IF([test "$with_valgrind" != "no" && test -n "$with_valgrind" && test "$opal_memchecker_valgrind_happy" != "yes"],
           [AC_MSG_ERROR([Cannot continue])])
 
     AS_IF([test "$opal_memchecker_valgrind_happy" = "yes"],

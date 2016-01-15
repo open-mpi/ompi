@@ -36,6 +36,8 @@ BEGIN_C_DECLS
 /* provide access to the framework verbose output without
  * exposing the entire base */
 extern int opal_pmix_verbose_output;
+extern bool opal_pmix_collect_all_data;
+extern bool opal_pmix_base_async_modex;
 extern int opal_pmix_base_exchange(opal_value_t *info,
                                    opal_pmix_pdata_t *pdat,
                                    int timeout);
@@ -139,11 +141,13 @@ extern int opal_pmix_base_exchange(opal_value_t *info,
         _info->type = OPAL_BOOL;                                                         \
         _info->data.flag = true;                                                         \
         opal_list_append(&(_ilist), &(_info)->super);                                    \
-        if (OPAL_SUCCESS != ((r) = opal_pmix.get((p), (s), &(_ilist), &(_kv)))) {        \
-            *(d) = NULL;                                                                 \
-        } else {                                                                         \
-            (r) = opal_value_unload(_kv, (void**)(d), (t));                              \
-            OBJ_RELEASE(_kv);                                                            \
+        if (OPAL_SUCCESS == ((r) = opal_pmix.get((p), (s), &(_ilist), &(_kv)))) {        \
+            if (NULL == _kv) {                                                           \
+                (r) = OPAL_ERR_NOT_FOUND;                                                \
+            } else {                                                                     \
+                (r) = opal_value_unload(_kv, (void**)(d), (t));                          \
+                OBJ_RELEASE(_kv);                                                        \
+            }                                                                            \
         }                                                                                \
         OPAL_LIST_DESTRUCT(&(_ilist));                                                   \
     } while(0);
@@ -168,11 +172,13 @@ extern int opal_pmix_base_exchange(opal_value_t *info,
                             OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),                 \
                             __FILE__, __LINE__,                                 \
                             OPAL_NAME_PRINT(*(p)), (s)));                       \
-        if (OPAL_SUCCESS != ((r) = opal_pmix.get((p), (s), NULL, &(_kv)))) {    \
-            *(d) = NULL;                                                        \
-        } else {                                                                \
-            (r) = opal_value_unload(_kv, (void**)(d), (t));                     \
-            OBJ_RELEASE(_kv);                                                   \
+        if (OPAL_SUCCESS == ((r) = opal_pmix.get((p), (s), NULL, &(_kv)))) {    \
+            if (NULL == _kv) {                                                  \
+                (r) = OPAL_ERR_NOT_FOUND;                                       \
+            } else {                                                            \
+                (r) = opal_value_unload(_kv, (void**)(d), (t));                 \
+                OBJ_RELEASE(_kv);                                               \
+           }                                                                    \
         }                                                                       \
     } while(0);
 
@@ -197,15 +203,19 @@ extern int opal_pmix_base_exchange(opal_value_t *info,
                             OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),                 \
                             __FILE__, __LINE__,                                 \
                             OPAL_NAME_PRINT(*(p)), (s)));                       \
-        if (OPAL_SUCCESS == ((r) = opal_pmix.get((p), (s), NULL, &(_kv))) &&    \
-            NULL != _kv) {                                                      \
-            *(d) = _kv->data.bo.bytes;                                          \
-            *(sz) = _kv->data.bo.size;                                          \
-            _kv->data.bo.bytes = NULL; /* protect the data */                   \
-            OBJ_RELEASE(_kv);                                                   \
+        if (OPAL_SUCCESS == ((r) = opal_pmix.get((p), (s), NULL, &(_kv)))) {    \
+            if (NULL == _kv) {                                                  \
+                *(sz) = 0;                                                      \
+                (r) = OPAL_ERR_NOT_FOUND;                                       \
+            } else {                                                            \
+                *(d) = _kv->data.bo.bytes;                                      \
+                *(sz) = _kv->data.bo.size;                                      \
+                _kv->data.bo.bytes = NULL; /* protect the data */               \
+                OBJ_RELEASE(_kv);                                               \
+            }                                                                   \
         } else {                                                                \
-            *(d) = NULL;                                                        \
             *(sz) = 0;                                                          \
+            (r) = OPAL_ERR_NOT_FOUND;                                           \
         }                                                                       \
     } while(0);
 
@@ -246,10 +256,13 @@ extern int opal_pmix_base_exchange(opal_value_t *info,
  * that takes into account directives and availability of
  * non-blocking operations
  */
-#define OPAL_MODEX(p, s)              \
-    do {                              \
-        opal_pmix.commit();           \
-        opal_pmix.fence((p), (s));    \
+#define OPAL_MODEX()                                    \
+    do {                                                \
+        opal_pmix.commit();                             \
+        if (!opal_pmix_base_async_modex) {              \
+            opal_pmix.fence(NULL,                       \
+                opal_pmix_collect_all_data);            \
+        }                                               \
     } while(0);
 
 /**
@@ -265,10 +278,6 @@ extern int opal_pmix_base_exchange(opal_value_t *info,
                             (i)->key, (p)->value.key));          \
         (r) = opal_pmix_base_exchange((i), (p), (t));            \
     } while(0);
-
-
-/* callback handler for errors */
-typedef void (*opal_pmix_errhandler_fn_t)(int error);
 
 
 /************************************************************
@@ -525,8 +534,11 @@ typedef int (*opal_pmix_base_module_resolve_nodes_fn_t)(opal_jobid_t jobid, char
  *                       SERVER APIs                        *
  ************************************************************/
 
-/* Initialize the server support library */
-typedef int (*opal_pmix_base_module_server_init_fn_t)(opal_pmix_server_module_t *module);
+/* Initialize the server support library - must pass the callback
+ * module for the server to use, plus any attributes we want to
+ * pass down to it */
+typedef int (*opal_pmix_base_module_server_init_fn_t)(opal_pmix_server_module_t *module,
+                                                      opal_list_t *info);
 
 /* Finalize the server support library */
 typedef int (*opal_pmix_base_module_server_finalize_fn_t)(void);
@@ -593,6 +605,13 @@ typedef int (*opal_pmix_base_module_server_register_nspace_fn_t)(opal_jobid_t jo
                                                                  opal_pmix_op_cbfunc_t cbfunc,
                                                                  void *cbdata);
 
+/* Deregister an nspace. Instruct the PMIx server to purge
+ * all info relating to the provided jobid so that memory
+ * can be freed. Note that the server will automatically
+ * purge all info relating to any clients it has from
+ * this nspace */
+typedef void (*opal_pmix_base_module_server_deregister_nspace_fn_t)(opal_jobid_t jobid);
+
 /* Register a client process with the PMIx server library. The
  * expected user ID and group ID of the child process helps the
  * server library to properly authenticate clients as they connect
@@ -611,6 +630,15 @@ typedef int (*opal_pmix_base_module_server_register_client_fn_t)(const opal_proc
                                                                  void *server_object,
                                                                  opal_pmix_op_cbfunc_t cbfunc,
                                                                  void *cbdata);
+
+/* Deregister a client. Instruct the PMIx server to purge
+ * all info relating to the provided client so that memory
+ * can be freed. As per above note, the server will automatically
+ * free all client-related data when the nspace is deregistered,
+ * so there is no need to call this function during normal
+ * finalize operations. Instead, this is provided for use
+ * during exception operations */
+typedef void (*opal_pmix_base_module_server_deregister_client_fn_t)(const opal_process_name_t *proc);
 
 /* Setup the environment of a child process to be forked
  * by the host so it can correctly interact with the PMIx
@@ -658,17 +686,6 @@ typedef int (*opal_pmix_base_module_server_dmodex_request_fn_t)(const opal_proce
  * The info array contains any further info the RM can and/or chooses
  * to provide.
  *
- * If the payload and size parameters are non-NULL, then the function
- * will assume that the caller intends to send the message itself. In
- * this situation, the convenience library will simply pack the message
- * for transmission, and return the payload and size in the provided
- * variables (external comm should have been indicated during server_init).
- * The caller will be responsible for thread protection.
- *
- * Otherwise, the convenience library will transmit the message to
- * the identified target processes, and the function call will be
- * internally thread protected.
- *
  * The callback function will be called upon completion of the
  * notify_error function's actions. Note that any messages will
  * have been queued, but may not have been transmitted by this
@@ -688,11 +705,92 @@ typedef int (*opal_pmix_base_module_server_notify_error_fn_t)(int status,
 /* get the version of the embedded library */
 typedef const char* (*opal_pmix_base_module_get_version_fn_t)(void);
 
-/* register an errhandler to report loss of connection to the server */
-typedef void (*opal_pmix_base_module_register_fn_t)(opal_pmix_errhandler_fn_t errhandler);
+/* Register an errhandler to report errors. Three types of errors
+ * can be reported:
+ *
+ * (a) those that occur within the client library, but are not
+ *     reportable via the API itself (e.g., loss of connection to
+ *     the server). These errors typically occur during behind-the-scenes
+ *     non-blocking operations.
+ *
+ * (b) job-related errors such as the failure of another process in
+ *     the job or in any connected job, impending failure of hardware
+ *     within the job's usage footprint, etc.
+ *
+ * (c) system notifications that are made available by the local
+ *     administrators
+ *
+ * By default, only errors that directly affect the process and/or
+ * any process to which it is connected (via the PMIx_Connect call)
+ * will be reported. Options to modify that behavior can be provided
+ * in the info array
+ *
+ * Both the client application and the resource manager can register
+ * err handlers for specific errors. PMIx client/server calls the registered
+ * err handler upon receiving error notify notification (via PMIx_Notify_error)
+ * from the other end (Resource Manager/Client application).
+ *
+ * Multiple err handlers can be registered for different errors. PMIX returns
+ * an integer reference to each register handler in the callback fn. The caller
+ * must retain the reference in order to deregister the errhandler.
+ * Modification of the notification behavior can be accomplished by
+ * deregistering the current errhandler, and then registering it
+ * using a new set of info values.
+ *
+ * See pmix_types.h for a description of the notification function */
+typedef void (*opal_pmix_base_module_register_fn_t)(opal_list_t *info,
+                                                    opal_pmix_notification_fn_t errhandler,
+                                                    opal_pmix_errhandler_reg_cbfunc_t cbfunc,
+                                                    void *cbdata);
 
-/* deregister the errhandler */
-typedef void (*opal_pmix_base_module_deregister_fn_t)(void);
+/* deregister the errhandler
+ * errhandler_ref is the reference returned by PMIx for the errhandler
+ * to pmix_errhandler_reg_cbfunc_t */
+typedef void (*opal_pmix_base_module_deregister_fn_t)(int errhandler,
+                                                      opal_pmix_op_cbfunc_t cbfunc,
+                                                      void *cbdata);
+
+/* Report an error to a process for notification via any
+ * registered errhandler. The errhandler registration can be
+ * called by both the server and the client application. On the
+ * server side, the errhandler is used to report errors detected
+ * by PMIx to the host server for handling. On the client side,
+ * the errhandler is used to notify the process of errors
+ * reported by the server - e.g., the failure of another process.
+ *
+ * This function allows the host server to direct the server
+ * convenience library to notify all indicated local procs of
+ * an error. The error can be local, or anywhere in the cluster.
+ * The status indicates the error being reported.
+ *
+ * The client application can also call this function to notify the
+ * resource manager of an error it encountered. It can request the host
+ * server to notify the indicated processes about the error.
+ *
+ * The first array  of procs informs the server library as to which
+ * processes should be alerted - e.g., the processes that are in
+ * a directly-affected job or are connected to one that is affected.
+ * Passing a NULL for this array will indicate that all local procs
+ * are to be notified.
+ *
+ * The second array identifies the processes that will be impacted
+ * by the error. This could consist of a single process, or a number
+ * of processes.
+ *
+ * The info array contains any further info the RM can and/or chooses
+ * to provide.
+ *
+ * The callback function will be called upon completion of the
+ * notify_error function's actions. Note that any messages will
+ * have been queued, but may not have been transmitted by this
+ * time. Note that the caller is required to maintain the input
+ * data until the callback function has been executed!
+*/
+typedef int (*opal_pmix_base_module_notify_error_fn_t)(int status,
+                                                       opal_list_t *procs,
+                                                       opal_list_t *error_procs,
+                                                       opal_list_t *info,
+                                                       opal_pmix_op_cbfunc_t cbfunc, void *cbdata);
 
 /* store data internally, but don't push it out to be shared - this is
  * intended solely for storage of info on other procs that comes thru
@@ -701,50 +799,61 @@ typedef void (*opal_pmix_base_module_deregister_fn_t)(void);
 typedef int (*opal_pmix_base_module_store_fn_t)(const opal_process_name_t *proc,
                                                 opal_value_t *val);
 
+/* retrieve the nspace corresponding to a given jobid */
+typedef const char* (*opal_pmix_base_module_get_nspace_fn_t)(opal_jobid_t jobid);
+
+/* register a jobid-to-nspace pair */
+typedef void (*opal_pmix_base_module_register_jobid_fn_t)(opal_jobid_t jobid, const char *nspace);
+
 /*
  * the standard public API data structure
  */
 typedef struct {
     /* client APIs */
-    opal_pmix_base_module_init_fn_t                   init;
-    opal_pmix_base_module_fini_fn_t                   finalize;
-    opal_pmix_base_module_initialized_fn_t            initialized;
-    opal_pmix_base_module_abort_fn_t                  abort;
-    opal_pmix_base_module_commit_fn_t                 commit;
-    opal_pmix_base_module_fence_fn_t                  fence;
-    opal_pmix_base_module_fence_nb_fn_t               fence_nb;
-    opal_pmix_base_module_put_fn_t                    put;
-    opal_pmix_base_module_get_fn_t                    get;
-    opal_pmix_base_module_get_nb_fn_t                 get_nb;
-    opal_pmix_base_module_publish_fn_t                publish;
-    opal_pmix_base_module_publish_nb_fn_t             publish_nb;
-    opal_pmix_base_module_lookup_fn_t                 lookup;
-    opal_pmix_base_module_lookup_nb_fn_t              lookup_nb;
-    opal_pmix_base_module_unpublish_fn_t              unpublish;
-    opal_pmix_base_module_unpublish_nb_fn_t           unpublish_nb;
-    opal_pmix_base_module_spawn_fn_t                  spawn;
-    opal_pmix_base_module_spawn_nb_fn_t               spawn_nb;
-    opal_pmix_base_module_connect_fn_t                connect;
-    opal_pmix_base_module_connect_nb_fn_t             connect_nb;
-    opal_pmix_base_module_disconnect_fn_t             disconnect;
-    opal_pmix_base_module_disconnect_nb_fn_t          disconnect_nb;
-    opal_pmix_base_module_resolve_peers_fn_t          resolve_peers;
-    opal_pmix_base_module_resolve_nodes_fn_t          resolve_nodes;
+    opal_pmix_base_module_init_fn_t                         init;
+    opal_pmix_base_module_fini_fn_t                         finalize;
+    opal_pmix_base_module_initialized_fn_t                  initialized;
+    opal_pmix_base_module_abort_fn_t                        abort;
+    opal_pmix_base_module_commit_fn_t                       commit;
+    opal_pmix_base_module_fence_fn_t                        fence;
+    opal_pmix_base_module_fence_nb_fn_t                     fence_nb;
+    opal_pmix_base_module_put_fn_t                          put;
+    opal_pmix_base_module_get_fn_t                          get;
+    opal_pmix_base_module_get_nb_fn_t                       get_nb;
+    opal_pmix_base_module_publish_fn_t                      publish;
+    opal_pmix_base_module_publish_nb_fn_t                   publish_nb;
+    opal_pmix_base_module_lookup_fn_t                       lookup;
+    opal_pmix_base_module_lookup_nb_fn_t                    lookup_nb;
+    opal_pmix_base_module_unpublish_fn_t                    unpublish;
+    opal_pmix_base_module_unpublish_nb_fn_t                 unpublish_nb;
+    opal_pmix_base_module_spawn_fn_t                        spawn;
+    opal_pmix_base_module_spawn_nb_fn_t                     spawn_nb;
+    opal_pmix_base_module_connect_fn_t                      connect;
+    opal_pmix_base_module_connect_nb_fn_t                   connect_nb;
+    opal_pmix_base_module_disconnect_fn_t                   disconnect;
+    opal_pmix_base_module_disconnect_nb_fn_t                disconnect_nb;
+    opal_pmix_base_module_resolve_peers_fn_t                resolve_peers;
+    opal_pmix_base_module_resolve_nodes_fn_t                resolve_nodes;
     /* server APIs */
-    opal_pmix_base_module_server_init_fn_t            server_init;
-    opal_pmix_base_module_server_finalize_fn_t        server_finalize;
-    opal_pmix_base_module_generate_regex_fn_t         generate_regex;
-    opal_pmix_base_module_generate_ppn_fn_t           generate_ppn;
-    opal_pmix_base_module_server_register_nspace_fn_t server_register_nspace;
-    opal_pmix_base_module_server_register_client_fn_t server_register_client;
-    opal_pmix_base_module_server_setup_fork_fn_t      server_setup_fork;
-    opal_pmix_base_module_server_dmodex_request_fn_t  server_dmodex_request;
-    opal_pmix_base_module_server_notify_error_fn_t    server_notify_error;
+    opal_pmix_base_module_server_init_fn_t                  server_init;
+    opal_pmix_base_module_server_finalize_fn_t              server_finalize;
+    opal_pmix_base_module_generate_regex_fn_t               generate_regex;
+    opal_pmix_base_module_generate_ppn_fn_t                 generate_ppn;
+    opal_pmix_base_module_server_register_nspace_fn_t       server_register_nspace;
+    opal_pmix_base_module_server_deregister_nspace_fn_t     server_deregister_nspace;
+    opal_pmix_base_module_server_register_client_fn_t       server_register_client;
+    opal_pmix_base_module_server_deregister_client_fn_t     server_deregister_client;
+    opal_pmix_base_module_server_setup_fork_fn_t            server_setup_fork;
+    opal_pmix_base_module_server_dmodex_request_fn_t        server_dmodex_request;
+    opal_pmix_base_module_server_notify_error_fn_t          server_notify_error;
     /* Utility APIs */
-    opal_pmix_base_module_get_version_fn_t            get_version;
-    opal_pmix_base_module_register_fn_t               register_errhandler;
-    opal_pmix_base_module_deregister_fn_t             deregister_errhandler;
-    opal_pmix_base_module_store_fn_t                  store_local;
+    opal_pmix_base_module_get_version_fn_t                  get_version;
+    opal_pmix_base_module_register_fn_t                     register_errhandler;
+    opal_pmix_base_module_deregister_fn_t                   deregister_errhandler;
+    opal_pmix_base_module_notify_error_fn_t                 notify_error;
+    opal_pmix_base_module_store_fn_t                        store_local;
+    opal_pmix_base_module_get_nspace_fn_t                   get_nspace;
+    opal_pmix_base_module_register_jobid_fn_t               register_jobid;
 } opal_pmix_base_module_t;
 
 typedef struct {

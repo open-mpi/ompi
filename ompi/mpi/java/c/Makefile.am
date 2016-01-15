@@ -1,9 +1,11 @@
 # -*- makefile -*-
 #
 # Copyright (c) 2011-2013 Cisco Systems, Inc.  All rights reserved.
-# Copyright (c) 2012	Oracle and/or its affiliates.  All rights reserved.
+# Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
 # Copyright (c) 2015      Los Alamos National Security, LLC. All rights
 #                         reserved.
+# Copyright (c) 2015      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -44,7 +46,7 @@ libmpi_java_la_SOURCES = \
 	mpi_Status.c \
 	mpi_Win.c
 
-libmpi_java_la_LIBADD = $(top_builddir)/ompi/libmpi.la
+libmpi_java_la_LIBADD = -ldl $(top_builddir)/ompi/libmpi.la
 libmpi_java_la_LDFLAGS = -version-info $(libmpi_java_so_version)
 
 endif

@@ -13,6 +13,8 @@
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -29,7 +31,8 @@
  * MPI_Aint_add, and MPI_Aint_diff. For these 4 we can insert the bindings
  * manually.
  */
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_WTICK = ompi_wtick_f
 #pragma weak pmpi_wtick = ompi_wtick_f
 #pragma weak pmpi_wtick_ = ompi_wtick_f
@@ -37,11 +40,12 @@
 
 #pragma weak PMPI_Wtick_f = ompi_wtick_f
 #pragma weak PMPI_Wtick_f08 = ompi_wtick_f
-#elif OMPI_PROFILE_LAYER
+#else
 double PMPI_WTICK(void) { return pompi_wtick_f(); }
 double pmpi_wtick(void) { return pompi_wtick_f(); }
 double pmpi_wtick_(void) { return pompi_wtick_f(); }
 double pmpi_wtick__(void) { return pompi_wtick_f(); }
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -52,21 +56,19 @@ double pmpi_wtick__(void) { return pompi_wtick_f(); }
 
 #pragma weak MPI_Wtick_f = ompi_wtick_f
 #pragma weak MPI_Wtick_f08 = ompi_wtick_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 double MPI_WTICK(void) { return ompi_wtick_f(); }
 double mpi_wtick(void) { return ompi_wtick_f(); }
 double mpi_wtick_(void) { return ompi_wtick_f(); }
 double mpi_wtick__(void) { return ompi_wtick_f(); }
+#else
+#define ompi_wtick_f pompi_wtick_f
+#endif
 #endif
 
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
-#endif
 
 double ompi_wtick_f(void)
 {
-    return MPI_Wtick();
+    return PMPI_Wtick();
 }

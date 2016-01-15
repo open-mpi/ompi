@@ -101,14 +101,6 @@ mca_pml_cm_component_register(void)
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &ompi_pml_cm.free_list_inc);
 
-    ompi_pml_cm.default_priority = 10;
-    (void) mca_base_component_var_register(&mca_pml_cm_component.pmlm_version, "priority",
-                                           "CM PML selection priority",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                           OPAL_INFO_LVL_9,
-                                           MCA_BASE_VAR_SCOPE_READONLY,
-                                           &ompi_pml_cm.default_priority);
-
     return OPAL_SUCCESS;
 }
 
@@ -143,31 +135,19 @@ mca_pml_cm_component_init(int* priority,
 {
     int ret;
 
-    if((*priority) > ompi_pml_cm.default_priority) {
-        *priority = ompi_pml_cm.default_priority;
-        return NULL;
-    }
-    *priority = ompi_pml_cm.default_priority;
+    *priority = -1;
+
     opal_output_verbose( 10, 0,
                          "in cm pml priority is %d\n", *priority);
     /* find a useable MTL */
-    ret = ompi_mtl_base_select(enable_progress_threads, enable_mpi_threads);
+    ret = ompi_mtl_base_select(enable_progress_threads, enable_mpi_threads, priority);
     if (OMPI_SUCCESS != ret) {
-        *priority = -1;
         return NULL;
-    } else if((strcmp(ompi_mtl_base_selected_component->mtl_version.mca_component_name, "psm") == 0) ||
-              (strcmp(ompi_mtl_base_selected_component->mtl_version.mca_component_name, "psm2") == 0) ||
-              (strcmp(ompi_mtl_base_selected_component->mtl_version.mca_component_name, "mxm") == 0) ||
-              (strcmp(ompi_mtl_base_selected_component->mtl_version.mca_component_name, "ofi") == 0) ||
-              (strcmp(ompi_mtl_base_selected_component->mtl_version.mca_component_name, "portals4") == 0)) {
-        /*
-         * If MTL is MXM or PSM then up our priority
-         * For every other communication layer having MTLs and BTLs, the user/admin
-         * may still select PML/ob1 (BTLs) or PML/cm (MTLs) if preferable for the app/site.
-         */
-        *priority = 30;
     }
 
+    if (ompi_mtl->mtl_flags & MCA_MTL_BASE_FLAG_REQUIRE_WORLD) {
+        ompi_pml_cm.super.pml_flags |= MCA_PML_BASE_FLAG_REQUIRE_WORLD;
+    }
 
     /* update our tag / context id max values based on MTL
        information */

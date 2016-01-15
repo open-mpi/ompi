@@ -33,7 +33,6 @@ mca_memheap_buddy_module_t memheap_buddy = {
         mca_memheap_buddy_private_alloc,
         mca_memheap_buddy_private_free,
 
-        mca_memheap_base_get_cached_mkey,
         mca_memheap_base_get_mkey,
         mca_memheap_base_find_offset,
         mca_memheap_base_is_symmetric_addr,

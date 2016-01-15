@@ -18,9 +18,19 @@ int MPI_Group_union(MPI_Group \fIgroup1\fP, MPI_Group \fIgroup2\fP,
 .fi
 .SH Fortran Syntax
 .nf
-INCLUDE 'mpif.h'
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
 MPI_GROUP_UNION(\fIGROUP1, GROUP2, NEWGROUP, IERROR\fP)
 	INTEGER	\fIGROUP1, GROUP2, NEWGROUP, IERROR\fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Group_union(\fIgroup1\fP, \fIgroup2\fP, \fInewgroup\fP, \fIierror\fP)
+	TYPE(MPI_Group), INTENT(IN) :: \fIgroup1\fP, \fIgroup2\fP
+	TYPE(MPI_Group), INTENT(OUT) :: \fInewgroup\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
 .SH C++ Syntax

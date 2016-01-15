@@ -10,8 +10,10 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2014      Los Alamos National Security, LLC. ALl rights
+ * Copyright (c) 2014-2015 Los Alamos National Security, LLC. ALl rights
  *                         reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -29,12 +31,11 @@
 #include "ompi/mca/osc/osc.h"
 #include "ompi/datatype/ompi_datatype.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_Rget = PMPI_Rget
 #endif
-
-#if OMPI_PROFILING_DEFINES
-#include "ompi/mpi/c/profile/defines.h"
+#define MPI_Rget PMPI_Rget
 #endif
 
 static const char FUNC_NAME[] = "MPI_Rget";
@@ -59,7 +60,7 @@ int MPI_Rget(void *origin_addr, int origin_count,
         } else if (ompi_win_peer_invalid(win, target_rank) &&
                    (MPI_PROC_NULL != target_rank)) {
             rc = MPI_ERR_RANK;
-        } else if ( target_disp < 0 ) {
+        } else if ( MPI_WIN_FLAVOR_DYNAMIC != win->w_flavor && target_disp < 0 ) {
             rc = MPI_ERR_DISP;
         } else {
             OMPI_CHECK_DATATYPE_FOR_ONE_SIDED(rc, origin_datatype, origin_count);

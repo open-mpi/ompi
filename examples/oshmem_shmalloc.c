@@ -15,6 +15,8 @@
 
 #include <shmem.h>
 
+#warning This application uses deprecated API see http://www.open-mpi.org/
+
 int main(void)
 {
     long *x;

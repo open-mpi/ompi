@@ -17,10 +17,22 @@ int MPI_Alloc_mem(MPI_Aint \fIsize\fP, MPI_Info \fIinfo\fP, void *\fIbaseptr\fP)
 .fi
 .SH Fortran Syntax (see FORTRAN NOTES)
 .nf
-INCLUDE 'mpif.h'
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
 MPI_ALLOC_MEM(\fISIZE, INFO, BASEPTR, IERROR\fP)
 	INTEGER \fIINFO, IERROR\fP
 	INTEGER(KIND=MPI_ADDRESS_KIND) \fISIZE, BASEPTR\fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Alloc_mem(\fIsize\fP, \fIinfo\fP, \fIbaseptr\fP, \fIierror\fP)
+	USE, INTRINSIC :: \fIISO_C_BINDING\fP, \fIONLY \fP
+	INTEGER(KIND=MPI_ADDRESS_KIND), INTENT(IN) :: \fIsize\fP
+	TYPE(MPI_Info), INTENT(IN) :: \fIinfo\fP
+	TYPE(C_PTR), INTENT(OUT) :: \fIbaseptr\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
 .SH C++ Syntax

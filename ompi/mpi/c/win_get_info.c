@@ -3,6 +3,8 @@
  * Copyright (c) 2013      Sandia National Laboratories.  All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -19,12 +21,11 @@
 #include "opal/util/info.h"
 #include "opal/util/info_subscriber.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_Win_get_info = PMPI_Win_get_info
 #endif
-
-#if OMPI_PROFILING_DEFINES
-#include "ompi/mpi/c/profile/defines.h"
+#define MPI_Win_get_info PMPI_Win_get_info
 #endif
 
 static const char FUNC_NAME[] = "MPI_Win_get_info";

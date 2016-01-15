@@ -72,10 +72,11 @@ OSHMEM_DECLSPEC uint64_t mca_memheap_base_find_offset(int pe,
 OSHMEM_DECLSPEC int mca_memheap_base_is_symmetric_addr(const void* va);
 OSHMEM_DECLSPEC sshmem_mkey_t *mca_memheap_base_get_mkey(void* va,
                                                            int tr_id);
-OSHMEM_DECLSPEC sshmem_mkey_t * mca_memheap_base_get_cached_mkey(int pe,
-                                                                   void* va,
-                                                                   int btl_id,
-                                                                   void** rva);
+OSHMEM_DECLSPEC sshmem_mkey_t * mca_memheap_base_get_cached_mkey_slow(map_segment_t *s,
+                                                                      int pe,
+                                                                      void* va,
+                                                                      int btl_id,
+                                                                      void** rva);
 OSHMEM_DECLSPEC void mca_memheap_modex_recv_all(void);
 
 /* This function is for internal usage only
@@ -146,6 +147,84 @@ OSHMEM_DECLSPEC extern mca_base_framework_t oshmem_memheap_base_framework;
 #define MEMHEAP_WARN(...) \
     oshmem_output_verbose(0, oshmem_memheap_base_framework.framework_output, \
         "Warning %s:%d - %s()", __SPML_FILE__, __LINE__, __func__, __VA_ARGS__)
+
+extern int mca_memheap_seg_cmp(const void *k, const void *v);
+
+/* Turn ON/OFF debug output from build (default 0) */
+#ifndef MEMHEAP_BASE_DEBUG
+#define MEMHEAP_BASE_DEBUG    0
+#endif
+#define MEMHEAP_VERBOSE_FASTPATH(...)
+
+extern mca_memheap_map_t* memheap_map;
+
+static inline map_segment_t *memheap_find_va(const void* va)
+{
+    map_segment_t *s;
+
+    if (OPAL_LIKELY((uintptr_t)va >= (uintptr_t)memheap_map->mem_segs[HEAP_SEG_INDEX].seg_base_addr &&
+                    (uintptr_t)va < (uintptr_t)memheap_map->mem_segs[HEAP_SEG_INDEX].end)) {
+        s = &memheap_map->mem_segs[HEAP_SEG_INDEX];
+    } else {
+        s = bsearch(va,
+                    &memheap_map->mem_segs[SYMB_SEG_INDEX],
+                    memheap_map->n_segments - 1,
+                    sizeof(*s),
+                    mca_memheap_seg_cmp);
+    }
+
+#if MEMHEAP_BASE_DEBUG == 1
+    if (s) {
+        MEMHEAP_VERBOSE(5, "match seg#%02ld: 0x%llX - 0x%llX %llu bytes va=%p",
+                s - memheap_map->mem_segs,
+                (long long)s->seg_base_addr,
+                (long long)s->end,
+                (long long)(s->end - s->seg_base_addr),
+                (void *)va);
+    }
+#endif
+    return s;
+}
+
+static inline void* memheap_va2rva(void* va, void* local_base, void* remote_base)
+{
+    return (void*) (remote_base > local_base ?
+            (uintptr_t)va + ((uintptr_t)remote_base - (uintptr_t)local_base) :
+            (uintptr_t)va - ((uintptr_t)local_base - (uintptr_t)remote_base));
+}
+
+static inline  sshmem_mkey_t *mca_memheap_base_get_cached_mkey(int pe,
+                                                                void* va,
+                                                                int btl_id,
+                                                                void** rva)
+{
+    map_segment_t *s;
+    sshmem_mkey_t *mkey;
+
+    MEMHEAP_VERBOSE_FASTPATH(10, "rkey: pe=%d va=%p", pe, va);
+    s = memheap_find_va(va);
+    if (OPAL_UNLIKELY(NULL == s))
+        return NULL ;
+
+    if (OPAL_UNLIKELY(!MAP_SEGMENT_IS_VALID(s)))
+        return NULL ;
+
+    if (OPAL_UNLIKELY(pe == oshmem_my_proc_id())) {
+        *rva = va;
+        MEMHEAP_VERBOSE_FASTPATH(10, "rkey: pe=%d va=%p -> (local) %lx %p", pe, va, 
+                s->mkeys[btl_id].u.key, *rva);
+        return &s->mkeys[btl_id];
+    }
+
+    if (OPAL_LIKELY(s->mkeys_cache[pe])) {
+        mkey = &s->mkeys_cache[pe][btl_id];
+        *rva = memheap_va2rva(va, s->seg_base_addr, mkey->va_base);
+        MEMHEAP_VERBOSE_FASTPATH(10, "rkey: pe=%d va=%p -> (cached) %lx %p", pe, (void *)va, mkey->u.key, (void *)*rva);
+        return mkey;
+    }
+
+    return mca_memheap_base_get_cached_mkey_slow(s, pe, va, btl_id, rva);
+}
 
 END_C_DECLS
 

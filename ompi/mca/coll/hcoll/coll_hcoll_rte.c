@@ -79,7 +79,9 @@ static int get_ec_handles( int num_ec ,
                            rte_grp_handle_t ,
                            rte_ec_handle_t * ec_handles );
 
+#if 0 /* This callback is not used */
 static int get_my_ec(rte_grp_handle_t , rte_ec_handle_t *ec_handle);
+#endif
 
 static int group_size ( rte_grp_handle_t group );
 static int my_rank (rte_grp_handle_t grp_h);
@@ -181,7 +183,6 @@ static int recv_nb(struct dte_data_representation_t data,
         /*do inline nb recv*/
         size_t size;
         ompi_request_t *ompi_req;
-        opal_free_list_item_t *item;
 
         if (!buffer && !HCOL_DTE_IS_ZERO(data)) {
             fprintf(stderr, "***Error in hcolrte_rml_recv_nb: buffer pointer is NULL"
@@ -339,6 +340,7 @@ static int get_ec_handles( int num_ec ,
     return HCOLL_SUCCESS;
 }
 
+#if 0 /* This callback is not used */
 static int get_my_ec ( rte_grp_handle_t grp_h, rte_ec_handle_t *ec_handle)
 {
     ompi_communicator_t *comm = (ompi_communicator_t *)grp_h;
@@ -348,7 +350,7 @@ static int get_my_ec ( rte_grp_handle_t grp_h, rte_ec_handle_t *ec_handle)
     ec_handle->rank = my_rank;
     return HCOLL_SUCCESS;
 }
-
+#endif
 
 static int group_size ( rte_grp_handle_t grp_h )
 {

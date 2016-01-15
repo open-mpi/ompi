@@ -88,7 +88,7 @@ static inline int check_mxm_tls(char *var)
     return OSHMEM_SUCCESS;
 }
 
-static inline int set_mxm_tls()
+static inline int set_mxm_tls(void)
 {
     char *tls;
 
@@ -106,11 +106,11 @@ static inline int set_mxm_tls()
 
     tls = getenv("MXM_TLS");
     if (NULL == tls) {
-        setenv("MXM_OSHMEM_TLS", mca_spml_ikrit.mxm_tls, 1);
-        return OSHMEM_SUCCESS;
+        opal_setenv("MXM_OSHMEM_TLS", mca_spml_ikrit.mxm_tls, 1, &environ);
+        return check_mxm_tls("MXM_OSHMEM_TLS");
     }
     if (OSHMEM_SUCCESS == check_mxm_tls("MXM_TLS")) {
-        setenv("MXM_OSHMEM_TLS", tls, 1);
+        opal_setenv("MXM_OSHMEM_TLS", tls, 1, &environ);
         return OSHMEM_SUCCESS;
     }
     return OSHMEM_ERROR;
@@ -120,6 +120,7 @@ static inline int check_mxm_hw_tls(char *v, char *tls)
 {
 	if (v && tls) {
         if ((0 == strcmp(tls, "rc") || 0 == strcmp(tls, "dc"))) {
+            mca_spml_ikrit.ud_only = 0;
             return OSHMEM_SUCCESS;
         }
 
@@ -135,13 +136,15 @@ static inline int check_mxm_hw_tls(char *v, char *tls)
     return OSHMEM_ERROR;
 }
 
-static inline int set_mxm_hw_rdma_tls()
+static inline int set_mxm_hw_rdma_tls(void)
 {
     if (!mca_spml_ikrit.hw_rdma_channel) {
         return check_mxm_hw_tls("MXM_OSHMEM_TLS", getenv("MXM_OSHMEM_TLS"));
     }
-    setenv("MXM_OSHMEM_HW_RDMA_RC_QP_LIMIT", "-1", 0);
-    setenv("MXM_OSHMEM_HW_RDMA_TLS", "rc", 0);
+    opal_setenv("MXM_OSHMEM_HW_RDMA_RC_QP_LIMIT", "-1", 0, &environ);
+    opal_setenv("MXM_OSHMEM_HW_RDMA_TLS", "rc", 0, &environ);
+    SPML_VERBOSE(5, "Additional communication channel is enabled. Transports are: %s",
+                 getenv("MXM_OSHMEM_HW_RDMA_TLS"));
 
     return check_mxm_hw_tls("MXM_OSHMEM_HW_RDMA_TLS",
             getenv("MXM_OSHMEM_HW_RDMA_TLS"));
@@ -295,6 +298,8 @@ static int mca_spml_ikrit_component_open(void)
     mca_spml_ikrit.ud_only = 1;
     mca_spml_ikrit.mxm_ctx_opts->ptl_bitmap = (MXM_BIT(MXM_PTL_SELF) | MXM_BIT(MXM_PTL_RDMA));
 #endif
+    SPML_VERBOSE(5, "UD only mode is %s",
+                 mca_spml_ikrit.ud_only ? "enabled" : "disabled");
 
     err = mxm_init(mca_spml_ikrit.mxm_ctx_opts, &mca_spml_ikrit.mxm_context);
     if (MXM_OK != err) {

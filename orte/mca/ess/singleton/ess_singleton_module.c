@@ -165,18 +165,20 @@ static int rte_init(void)
     }
 
     /* open and setup pmix */
-    if (OPAL_SUCCESS != (rc = mca_base_framework_open(&opal_pmix_base_framework, 0))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-    if (OPAL_SUCCESS != (rc = opal_pmix_base_select())) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
+    if (NULL == opal_pmix.initialized) {
+        if (OPAL_SUCCESS != (ret = mca_base_framework_open(&opal_pmix_base_framework, 0))) {
+            error = "opening pmix";
+            goto error;
+        }
+        if (OPAL_SUCCESS != (ret = opal_pmix_base_select())) {
+            error = "select pmix";
+            goto error;
+        }
     }
     /* initialize the selected module */
-    if (OPAL_SUCCESS != (rc = opal_pmix.init())) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
+    if (!opal_pmix.initialized() && (OPAL_SUCCESS != (ret = opal_pmix.init()))) {
+        error = "init pmix";
+        goto error;
     }
 
     /* pmix.init set our process name down in the OPAL layer,

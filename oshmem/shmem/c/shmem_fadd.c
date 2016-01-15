@@ -24,8 +24,8 @@
  * without the possibility of another process updating target between the time of the
  * fetch and the update.
  */
-#define SHMEM_TYPE_FADD(type_name, type)    \
-    type shmem##type_name##_fadd(type *target, type value, int pe) \
+#define SHMEM_TYPE_FADD(type_name, type, prefix)    \
+    type prefix##type_name##_fadd(type *target, type value, int pe) \
     {                                                               \
         int rc = OSHMEM_SUCCESS;                                    \
         size_t size = 0;                                            \
@@ -54,13 +54,13 @@
 #pragma weak shmem_int_fadd = pshmem_int_fadd
 #pragma weak shmem_long_fadd = pshmem_long_fadd
 #pragma weak shmem_longlong_fadd = pshmem_longlong_fadd
-#pragma weak shmem_int32_fadd = pshmem_int32_fadd
-#pragma weak shmem_int64_fadd = pshmem_int64_fadd
+#pragma weak shmemx_int32_fadd = pshmemx_int32_fadd
+#pragma weak shmemx_int64_fadd = pshmemx_int64_fadd
 #include "oshmem/shmem/c/profile/defines.h"
 #endif
 
-SHMEM_TYPE_FADD(_int, int)
-SHMEM_TYPE_FADD(_long, long)
-SHMEM_TYPE_FADD(_longlong, long long)
-SHMEM_TYPE_FADD(_int32, int32_t)
-SHMEM_TYPE_FADD(_int64, int64_t)
+SHMEM_TYPE_FADD(_int, int, shmem)
+SHMEM_TYPE_FADD(_long, long, shmem)
+SHMEM_TYPE_FADD(_longlong, long long, shmem)
+SHMEM_TYPE_FADD(_int32, int32_t, shmemx)
+SHMEM_TYPE_FADD(_int64, int64_t, shmemx)

@@ -25,7 +25,8 @@ int MPI_Iexscan(const void *\fIsendbuf\fP, void *\fIrecvbuf\fP, int \fIcount\fP,
 .fi
 .SH Fortran Syntax
 .nf
-INCLUDE 'mpif.h'
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
 MPI_EXSCAN(\fISENDBUF, RECVBUF, COUNT, DATATYPE, OP, COMM, IERROR\fP)
 	<type>	\fISENDBUF(*), RECVBUF(*)\fP
 	INTEGER	\fICOUNT, DATATYPE, OP, COMM, IERROR\fP
@@ -33,6 +34,29 @@ MPI_EXSCAN(\fISENDBUF, RECVBUF, COUNT, DATATYPE, OP, COMM, IERROR\fP)
 MPI_IEXSCAN(\fISENDBUF, RECVBUF, COUNT, DATATYPE, OP, COMM, REQUEST, IERROR\fP)
 	<type>	\fISENDBUF(*), RECVBUF(*)\fP
 	INTEGER	\fICOUNT, DATATYPE, OP, COMM, REQUEST, IERROR\fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Exscan(\fIsendbuf\fP, \fIrecvbuf\fP, \fIcount\fP, \fIdatatype\fP, \fIop\fP, \fIcomm\fP, \fIierror\fP)
+	TYPE(*), DIMENSION(..), INTENT(IN) :: \fIsendbuf\fP
+	TYPE(*), DIMENSION(..) :: \fIrecvbuf\fP
+	INTEGER, INTENT(IN) :: \fIcount\fP
+	TYPE(MPI_Datatype), INTENT(IN) :: \fIdatatype\fP
+	TYPE(MPI_Op), INTENT(IN) :: \fIop\fP
+	TYPE(MPI_Comm), INTENT(IN) :: \fIcomm\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
+
+MPI_Iexscan(\fIsendbuf\fP, \fIrecvbuf\fP, \fIcount\fP, \fIdatatype\fP, \fIop\fP, \fIcomm\fP, \fIrequest\fP, \fIierror\fP)
+	TYPE(*), DIMENSION(..), INTENT(IN), ASYNCHRONOUS :: \fIsendbuf\fP
+	TYPE(*), DIMENSION(..), ASYNCHRONOUS :: \fIrecvbuf\fP
+	INTEGER, INTENT(IN) :: \fIcount\fP
+	TYPE(MPI_Datatype), INTENT(IN) :: \fIdatatype\fP
+	TYPE(MPI_Op), INTENT(IN) :: \fIop\fP
+	TYPE(MPI_Comm), INTENT(IN) :: \fIcomm\fP
+	TYPE(MPI_Request), INTENT(OUT) :: \fIrequest\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
 .SH C++ Syntax
@@ -90,7 +114,13 @@ as \fIrecvbuf\fP is not significant for process 0. The value of
 \fIrecvbuf\fP on process 1 is always the value in \fIsendbuf\fP on
 process 0.
 .sp
-No MPI_IN_PLACE operation is supported.
+.SH USE OF IN-PLACE OPTION
+The `in place' option for intracommunicators is specified by passing MPI_IN_PLACE in the \fIsendbuf\fP argument. In this case, the input data is taken from the receive buffer, and replaced by the output data.
+.sp
+Note that MPI_IN_PLACE is a special kind of value; it has the same restrictions on its use as MPI_BOTTOM.
+.sp
+Because the in-place option converts the receive buffer into a send-and-receive buffer, a Fortran binding that includes INTENT must mark these as INOUT, not OUT.
+.sp
 
 .SH NOTES
 .ft R

@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -21,7 +23,8 @@
 
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_FILE_GET_AMODE = ompi_file_get_amode_f
 #pragma weak pmpi_file_get_amode = ompi_file_get_amode_f
 #pragma weak pmpi_file_get_amode_ = ompi_file_get_amode_f
@@ -29,7 +32,7 @@
 
 #pragma weak PMPI_File_get_amode_f = ompi_file_get_amode_f
 #pragma weak PMPI_File_get_amode_f08 = ompi_file_get_amode_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_FILE_GET_AMODE,
                            pmpi_file_get_amode,
                            pmpi_file_get_amode_,
@@ -37,6 +40,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_FILE_GET_AMODE,
                            pompi_file_get_amode_f,
                            (MPI_Fint *fh, MPI_Fint *amode, MPI_Fint *ierr),
                            (fh, amode, ierr) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -47,9 +51,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_FILE_GET_AMODE,
 
 #pragma weak MPI_File_get_amode_f = ompi_file_get_amode_f
 #pragma weak MPI_File_get_amode_f08 = ompi_file_get_amode_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_FILE_GET_AMODE,
                            mpi_file_get_amode,
                            mpi_file_get_amode_,
@@ -57,12 +60,11 @@ OMPI_GENERATE_F77_BINDINGS (MPI_FILE_GET_AMODE,
                            ompi_file_get_amode_f,
                            (MPI_Fint *fh, MPI_Fint *amode, MPI_Fint *ierr),
                            (fh, amode, ierr) )
+#else
+#define ompi_file_get_amode_f pompi_file_get_amode_f
+#endif
 #endif
 
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
-#endif
 
 void ompi_file_get_amode_f(MPI_Fint *fh, MPI_Fint *amode, MPI_Fint *ierr)
 {
@@ -70,8 +72,8 @@ void ompi_file_get_amode_f(MPI_Fint *fh, MPI_Fint *amode, MPI_Fint *ierr)
     MPI_File c_fh;
     OMPI_SINGLE_NAME_DECL(amode);
 
-    c_fh = MPI_File_f2c(*fh);
-    c_ierr = MPI_File_get_amode(c_fh, OMPI_SINGLE_NAME_CONVERT(amode));
+    c_fh = PMPI_File_f2c(*fh);
+    c_ierr = PMPI_File_get_amode(c_fh, OMPI_SINGLE_NAME_CONVERT(amode));
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {

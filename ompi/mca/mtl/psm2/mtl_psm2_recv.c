@@ -39,10 +39,10 @@ ompi_mtl_psm2_irecv(struct mca_mtl_base_module_t* mtl,
                   struct mca_mtl_request_t *mtl_request)
 {
     int ret;
-    psm_error_t err;
+    psm2_error_t err;
     mca_mtl_psm2_request_t * mtl_psm2_request = (mca_mtl_psm2_request_t*) mtl_request;
-    psm_mq_tag_t mqtag;
-    psm_mq_tag_t tagsel;
+    psm2_mq_tag_t mqtag;
+    psm2_mq_tag_t tagsel;
     size_t length;
 
     ret = ompi_mtl_datatype_recv_buf(convertor,
@@ -56,22 +56,22 @@ ompi_mtl_psm2_irecv(struct mca_mtl_base_module_t* mtl,
     mtl_psm2_request->convertor = convertor;
     mtl_psm2_request->type = OMPI_mtl_psm2_IRECV;
 
-    PSM_MAKE_TAGSEL(src, tag, comm->c_contextid, mqtag, tagsel);
+    PSM2_MAKE_TAGSEL(src, tag, comm->c_contextid, mqtag, tagsel);
 
-    err = psm_mq_irecv2(ompi_mtl_psm2.mq,
-		       PSM_MQ_ANY_ADDR,
+    err = psm2_mq_irecv2(ompi_mtl_psm2.mq,
+		       PSM2_MQ_ANY_ADDR,
 		       &mqtag,
 		       &tagsel,
 		       0,
 		       mtl_psm2_request->buf,
 		       length,
 		       mtl_psm2_request,
-		       &mtl_psm2_request->psm_request);
+		       &mtl_psm2_request->psm2_request);
 
     if (err) {
-      opal_show_help("help-mtl-psm.txt",
+      opal_show_help("help-mtl-psm2.txt",
 		     "error posting receive", true,
-		     psm_error_get_string(err),
+		     psm2_error_get_string(err),
 		     mtl_psm2_request->buf, length);
       return OMPI_ERROR;
     }
@@ -89,11 +89,11 @@ ompi_mtl_psm2_imrecv(struct mca_mtl_base_module_t* mtl,
     mca_mtl_psm2_request_t *mtl_psm2_request =
 	    (mca_mtl_psm2_request_t*) mtl_request;
     size_t length;
-    psm_error_t err;
+    psm2_error_t err;
     int ret;
 
-    mtl_psm2_request->psm_request =
-	    (psm_mq_req_t)(*message)->req_ptr;
+    mtl_psm2_request->psm2_request =
+	    (psm2_mq_req_t)(*message)->req_ptr;
 
     ret = ompi_mtl_datatype_recv_buf(convertor,
                                      &mtl_psm2_request->buf,
@@ -107,14 +107,14 @@ ompi_mtl_psm2_imrecv(struct mca_mtl_base_module_t* mtl,
     mtl_psm2_request->type = OMPI_mtl_psm2_IRECV;
 
 
-    err = psm_mq_imrecv(ompi_mtl_psm2.mq, 0,
+    err = psm2_mq_imrecv(ompi_mtl_psm2.mq, 0,
 	    mtl_psm2_request->buf, length, mtl_psm2_request,
-	    &mtl_psm2_request->psm_request);
+	    &mtl_psm2_request->psm2_request);
 
     if(err) {
-      opal_show_help("help-mtl-psm.txt",
+      opal_show_help("help-mtl-psm2.txt",
 		     "error posting receive", true,
-		     psm_error_get_string(err),
+		     psm2_error_get_string(err),
 		     mtl_psm2_request->buf, length);
       return OMPI_ERROR;
     }

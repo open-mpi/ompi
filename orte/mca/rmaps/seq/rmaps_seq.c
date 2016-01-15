@@ -370,6 +370,22 @@ static int orte_rmaps_seq_map(orte_job_t *jdata)
                  * properly set
                  */
                 ORTE_FLAG_SET(node, ORTE_NODE_FLAG_OVERSUBSCRIBED);
+                /* check for permission */
+                if (ORTE_FLAG_TEST(node, ORTE_NODE_FLAG_SLOTS_GIVEN)) {
+                    /* if we weren't given a directive either way, then we will error out
+                     * as the #slots were specifically given, either by the host RM or
+                     * via hostfile/dash-host */
+                    if (!(ORTE_MAPPING_SUBSCRIBE_GIVEN & ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping))) {
+                        orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:alloc-error",
+                                       true, app->num_procs, app->app);
+                        return ORTE_ERR_SILENT;
+                    } else if (ORTE_MAPPING_NO_OVERSUBSCRIBE & ORTE_GET_MAPPING_DIRECTIVE(jdata->map->mapping)) {
+                        /* if we were explicitly told not to oversubscribe, then don't */
+                        orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:alloc-error",
+                                       true, app->num_procs, app->app);
+                        return ORTE_ERR_SILENT;
+                    }
+                }
             }
             /* assign the vpid */
             proc->name.vpid = vpid++;

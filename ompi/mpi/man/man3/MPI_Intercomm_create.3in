@@ -18,11 +18,23 @@ int MPI_Intercomm_create(MPI_Comm \fIlocal_comm\fP, int\fI local_leader\fP,
 .fi
 .SH Fortran Syntax
 .nf
-INCLUDE 'mpif.h'
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
 MPI_INTERCOMM_CREATE(\fILOCAL_COMM, LOCAL_LEADER, PEER_COMM,
 		REMOTE_LEADER, TAG, NEWINTERCOMM, IERROR\fP)
 	INTEGER	\fILOCAL_COMM, LOCAL_LEADER, PEER_COMM, REMOTE_LEADER\fP
 	INTEGER	\fITAG, NEWINTERCOMM, IERROR\fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Intercomm_create(\fIlocal_comm\fP, \fIlocal_leader\fP, \fIpeer_comm\fP, \fIremote_leader\fP,
+		\fItag\fP, \fInewintercomm\fP, \fIierror\fP)
+	TYPE(MPI_Comm), INTENT(IN) :: \fIlocal_comm\fP, \fIpeer_comm\fP
+	INTEGER, INTENT(IN) :: \fIlocal_leader\fP, \fIremote_leader\fP, \fItag\fP
+	TYPE(MPI_Comm), INTENT(OUT) :: \fInewintercomm\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
 .SH C++ Syntax

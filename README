@@ -1561,7 +1561,6 @@ Here's how we apply those rules specifically to Open MPI:
     * libmpi_cxx
     * libmpi_java
     * liboshmem
-    * liboshmem_java
 
 ===========================================================================
 

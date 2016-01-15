@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -21,7 +23,8 @@
 
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_WIN_SHARED_QUERY = ompi_win_shared_query_f
 #pragma weak pmpi_win_shared_query = ompi_win_shared_query_f
 #pragma weak pmpi_win_shared_query_ = ompi_win_shared_query_f
@@ -37,7 +40,7 @@
 
 #pragma weak PMPI_Win_shared_query_cptr_f = ompi_win_shared_query_f
 #pragma weak PMPI_Win_shared_query_cptr_f08 = ompi_win_shared_query_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_WIN_SHARED_QUERY,
                             pmpi_win_shared_query,
                             pmpi_win_shared_query_,
@@ -58,6 +61,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_WIN_SHARED_QUERY_CPTR,
                              MPI_Fint *ierr),
                             (win, rank, size, disp_unit, baseptr, ierr) )
 #endif
+#endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_WIN_SHARED_QUERY = ompi_win_shared_query_f
@@ -75,9 +79,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_WIN_SHARED_QUERY_CPTR,
 
 #pragma weak MPI_Win_shared_query_cptr_f = ompi_win_shared_query_f
 #pragma weak MPI_Win_shared_query_cptr_f08 = ompi_win_shared_query_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_WIN_SHARED_QUERY,
                             mpi_win_shared_query,
                             mpi_win_shared_query_,
@@ -97,12 +100,12 @@ OMPI_GENERATE_F77_BINDINGS (MPI_WIN_SHARED_QUERY_CPTR,
                              MPI_Fint *disp_unit, char *baseptr,
                              MPI_Fint *ierr),
                             (win, rank, size, disp_unit, baseptr, ierr) )
+#else
+#define ompi_win_shared_query_f pompi_win_shared_query_f
+#define ompi_win_shared_query_cptr_f pompi_win_shared_query_cptr_f
+#endif
 #endif
 
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
-#endif
 
 void ompi_win_shared_query_f(MPI_Fint *win, MPI_Fint *rank, MPI_Aint *size,
                              MPI_Fint *disp_unit, char *baseptr,
@@ -111,9 +114,9 @@ void ompi_win_shared_query_f(MPI_Fint *win, MPI_Fint *rank, MPI_Aint *size,
     int c_ierr;
     MPI_Win c_win;
 
-    c_win = MPI_Win_f2c(*win);
+    c_win = PMPI_Win_f2c(*win);
 
-    c_ierr = MPI_Win_shared_query(c_win, OMPI_FINT_2_INT(*rank), size,
+    c_ierr = PMPI_Win_shared_query(c_win, OMPI_FINT_2_INT(*rank), size,
                                   OMPI_FINT_2_INT(disp_unit), baseptr);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 }

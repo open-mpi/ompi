@@ -18,12 +18,24 @@ int MPI_Testall(int \fIcount\fP, MPI_Request\fI array_of_requests[]\fP,
 .fi
 .SH Fortran Syntax
 .nf
-INCLUDE 'mpif.h'
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
 MPI_TESTALL(\fICOUNT, ARRAY_OF_REQUESTS, FLAG, ARRAY_OF_STATUSES,
 		IERROR\fP)
 	LOGICAL	\fIFLAG\fP
 	INTEGER	\fICOUNT, ARRAY_OF_REQUESTS(*)\fP
 	INTEGER	\fIARRAY_OF_STATUSES(MPI_STATUS_SIZE,*), IERROR\fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Testall(\fIcount\fP, \fIarray_of_requests\fP, \fIflag\fP, \fIarray_of_statuses\fP, \fIierror\fP)
+	INTEGER, INTENT(IN) :: \fIcount\fP
+	TYPE(MPI_Request), INTENT(INOUT) :: \fIarray_of_requests(count)\fP
+	LOGICAL, INTENT(OUT) :: \fIflag\fP
+	TYPE(MPI_Status) :: \fIarray_of_statuses(*)\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
 .SH C++ Syntax

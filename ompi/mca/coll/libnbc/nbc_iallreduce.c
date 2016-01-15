@@ -70,13 +70,13 @@ int ompi_coll_libnbc_iallreduce(const void* sendbuf, void* recvbuf, int count, M
 
   res = ompi_datatype_get_extent(datatype, &lb, &ext);
   if (OMPI_SUCCESS != res) {
-    NBC_Error ("MPI Error in MPI_Type_extent() (%i)", res);
+    NBC_Error ("MPI Error in ompi_datatype_type_extent() (%i)", res);
     return res;
   }
 
   res = ompi_datatype_type_size (datatype, &size);
   if (OMPI_SUCCESS != res) {
-    NBC_Error ("MPI Error in MPI_Type_size() (%i)", res);
+    NBC_Error ("MPI Error in ompi_datatype_type_size() (%i)", res);
     return res;
   }
 
@@ -193,7 +193,8 @@ int ompi_coll_libnbc_iallreduce_inter(const void* sendbuf, void* recvbuf, int co
                                       struct ompi_communicator_t *comm, ompi_request_t ** request,
                                       struct mca_coll_base_module_2_1_0_t *module)
 {
-  int rank, res, size, rsize;
+  int rank, res, rsize;
+  size_t size;
   MPI_Aint ext;
   NBC_Schedule *schedule;
   NBC_Handle *handle;
@@ -202,15 +203,15 @@ int ompi_coll_libnbc_iallreduce_inter(const void* sendbuf, void* recvbuf, int co
   rank = ompi_comm_rank (comm);
   rsize = ompi_comm_remote_size (comm);
 
-  res = MPI_Type_extent(datatype, &ext);
+  res = ompi_datatype_type_extent(datatype, &ext);
   if (MPI_SUCCESS != res) {
-    NBC_Error("MPI Error in MPI_Type_extent() (%i)", res);
+    NBC_Error("MPI Error in ompi_datatype_type_extent() (%i)", res);
     return res;
   }
 
-  res = MPI_Type_size(datatype, &size);
+  res = ompi_datatype_type_size(datatype, &size);
   if (MPI_SUCCESS != res) {
-    NBC_Error("MPI Error in MPI_Type_size() (%i)", res);
+    NBC_Error("MPI Error in ompi_datatype_type_size() (%i)", res);
     return res;
   }
 

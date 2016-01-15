@@ -19,13 +19,27 @@ int MPI_Type_size_x(MPI_Datatype \fIdatatype\fP, MPI_Count\fI *size\fP)
 .fi
 .SH Fortran Syntax
 .nf
-INCLUDE 'mpif.h'
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
 MPI_TYPE_SIZE(\fIDATATYPE, SIZE, IERROR\fP)
 	INTEGER	\fIDATATYPE, SIZE, IERROR\fP
 MPI_TYPE_SIZE_X(\fIDATATYPE, SIZE, IERROR\fP)
 	INTEGER	\fIDATATYPE\fP
         INTEGER(KIND=MPI_COUNT_KIND) \fISIZE\fP
         INTEGER \fIIERROR\fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Type_size(\fIdatatype\fP, \fIsize\fP, \fIierror\fP)
+	TYPE(MPI_Datatype), INTENT(IN) :: \fIdatatype\fP
+	INTEGER, INTENT(OUT) :: \fIsize\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
+MPI_Type_size_x(\fIdatatype\fP, \fIsize\fP, \fIierror\fP)
+	TYPE(MPI_Datatype), INTENT(IN) :: \fIdatatype\fP
+	INTEGER(KIND=MPI_COUNT_KIND), INTENT(OUT) :: \fIsize\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
 .SH C++ Syntax

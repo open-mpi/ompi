@@ -28,6 +28,7 @@
 #include "ompi/mca/mtl/base/mtl_base_datatype.h"
 
 #include "mtl_portals4.h"
+#include "mtl_portals4_endpoint.h"
 #include "mtl_portals4_request.h"
 #if OMPI_MTL_PORTALS4_FLOW_CONTROL
 #include "mtl_portals4_flowctl.h"
@@ -188,8 +189,7 @@ ompi_mtl_portals4_short_isend(mca_pml_base_send_mode_t mode,
     MTL_PORTALS4_SET_SEND_BITS(match_bits, contextid, localrank, tag,
                                MTL_PORTALS4_SHORT_MSG);
 
-    MTL_PORTALS4_SET_HDR_DATA(hdr_data, ptl_request->opcount, length,
-                              (MCA_PML_BASE_SEND_SYNCHRONOUS == mode) ? 1 : 0);
+    MTL_PORTALS4_SET_HDR_DATA(hdr_data, tag, contextid, (MCA_PML_BASE_SEND_SYNCHRONOUS == mode) ? 1 : 0);
 
     if (MCA_PML_BASE_SEND_SYNCHRONOUS == mode) {
         me.start = NULL;
@@ -273,7 +273,7 @@ ompi_mtl_portals4_long_isend(void *start, size_t length, int contextid, int tag,
     MTL_PORTALS4_SET_SEND_BITS(match_bits, contextid, localrank, tag,
                                MTL_PORTALS4_LONG_MSG);
 
-    MTL_PORTALS4_SET_HDR_DATA(hdr_data, ptl_request->opcount, length, 0);
+    MTL_PORTALS4_SET_HDR_DATA(hdr_data, tag, contextid, 0);
 
     me.start = start;
     me.length = length;
@@ -405,7 +405,7 @@ ompi_mtl_portals4_send_start(struct mca_mtl_base_module_t* mtl,
         ptl_proc.rank = dest;
     } else {
         ompi_proc_t *ompi_proc = ompi_comm_peer_lookup(comm, dest);
-        ptl_proc = *((ptl_process_t*) ompi_proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_PORTALS4]);
+        ptl_proc = *((ptl_process_t*) ompi_mtl_portals4_get_endpoint (mtl, ompi_proc));
     }
 
     ret = ompi_mtl_datatype_pack(convertor, &start, &length, &free_after);

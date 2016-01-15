@@ -12,6 +12,8 @@
 #                         All rights reserved.
 # Copyright (c) 2007-2011 Oracle and/or its affiliates.  All rights reserved.
 # Copyright (c) 2010-2011 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2015      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -93,8 +95,8 @@ AC_DEFUN([MCA_opal_memory_malloc_solaris_CONFIG],[
                                   [Whether to use the legacy Solaris munmap prototype or not])
                ])
 
-        AS_IF([test "$memory_malloc_solaris_happy" = "no" -a \
-                "$memory_malloc_solaris_should_use" = "1"],
+        AS_IF([test "$memory_malloc_solaris_happy" = "no" && \
+               test "$memory_malloc_solaris_should_use" = "1"],
               [AC_MSG_ERROR([malloc_solaris memory management requested but not available.  Aborting.])])
 
         AC_SUBST(memory_malloc_solaris_LIBS)

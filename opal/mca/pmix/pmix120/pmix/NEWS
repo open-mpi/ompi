@@ -1,0 +1,46 @@
+Copyright (c) 2015      Intel, Inc.  All rights reserved.
+$COPYRIGHT$
+
+Additional copyrights may follow
+
+$HEADER$
+
+===========================================================================
+
+This file contains the main features as well as overviews of specific
+bug fixes (and other actions) for each version of PMIx since
+version 1.0.
+
+As more fully described in the "Software Version Number" section in
+the README file, PMIx typically maintains two separate version
+series simultaneously - the current release and one that is locked
+to only bug fixes.  Since these series are semi-independent of each
+other, a single NEWS-worthy item might apply to different series. For
+example, a bug might be fixed in the master, and then moved to the
+current release as well as the "stable" bug fix release branch.
+
+
+Master (not on release branches yet)
+------------------------------------
+
+
+
+1.1.1
+-----
+- Fix an issue where the example and test programs
+  were incorrectly being installed. Thanks to Orion
+  Poplawski for reporting it
+
+1.1.0
+-----
+- major update of APIs to reflect comments received from 1.0.0
+  non-production release
+- fixed thread-safety issues
+- fixed a range of pack/unpack issues
+- added unit tests for all APIs
+
+
+1.0.0
+------
+Initial public release of draft APIs for comment - not production
+intended

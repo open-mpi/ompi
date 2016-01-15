@@ -16,7 +16,7 @@
  * Copyright (c) 2011-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2013-2015 Intel, Inc. All rights reserved
- * Copyright (c) 2014-2015 Research Organization for Information Science
+ * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -139,7 +139,13 @@ int ompi_dpm_connect_accept(ompi_communicator_t *comm, int root,
         opal_argv_append_nosize(&members, nstring);
         free(nstring);
         /* have to add the number of procs in the job so the remote side
-         * can correctly add the procs by computing their names */
+         * can correctly add the procs by computing their names, and our nspace
+         * so they can update their records */
+        if (NULL == (nstring = (char*)opal_pmix.get_nspace(OMPI_PROC_MY_NAME->jobid))) {
+            opal_argv_free(members);
+            return OMPI_ERR_NOT_SUPPORTED;
+        }
+        opal_argv_append_nosize(&members, nstring);
         (void)asprintf(&nstring, "%d", size);
         opal_argv_append_nosize(&members, nstring);
         free(nstring);
@@ -161,7 +167,13 @@ int ompi_dpm_connect_accept(ompi_communicator_t *comm, int root,
             dense = false;
         }
         for (i=0; i < size; i++) {
-            rc = opal_convert_process_name_to_string(&nstring, &(proc_list[i]->super.proc_name));
+            opal_process_name_t proc_name;
+            if (ompi_proc_is_sentinel (proc_list[i])) {
+                proc_name = ompi_proc_sentinel_to_name ((intptr_t) proc_list[i]);
+            } else {
+                proc_name = proc_list[i]->super.proc_name;
+            }
+            rc = opal_convert_process_name_to_string(&nstring, &proc_name);
             if (OPAL_SUCCESS != rc) {
                 if (!dense) {
                     free(proc_list);
@@ -171,6 +183,12 @@ int ompi_dpm_connect_accept(ompi_communicator_t *comm, int root,
             }
             opal_argv_append_nosize(&members, nstring);
             free(nstring);
+            if (NULL == (nstring = (char*)opal_pmix.get_nspace(proc_name.jobid))) {
+                opal_argv_free(members);
+                free (proc_list);
+                return OMPI_ERR_NOT_SUPPORTED;
+            }
+            opal_argv_append_nosize(&members, nstring);
         }
         if (!dense) {
             free(proc_list);
@@ -246,6 +264,17 @@ int ompi_dpm_connect_accept(ompi_communicator_t *comm, int root,
             OPAL_LIST_DESTRUCT(&mlist);
             goto exit;
         }
+        /* step over the nspace */
+        ++i;
+        if (NULL == members[i]) {
+            /* this shouldn't happen and is an error */
+            OMPI_ERROR_LOG(OMPI_ERR_BAD_PARAM);
+            OPAL_LIST_DESTRUCT(&mlist);
+            opal_argv_free(members);
+            free(rport);
+            rc = OMPI_ERR_BAD_PARAM;
+            goto exit;
+        }
         /* if the rank is wildcard, then we need to add all procs
          * in that job to the list */
         if (OPAL_VPID_WILDCARD == nm->name.vpid) {
@@ -295,6 +324,16 @@ int ompi_dpm_connect_accept(ompi_communicator_t *comm, int root,
             OPAL_LIST_DESTRUCT(&rlist);
             goto exit;
         }
+        /* next entry is the nspace - register it */
+        ++i;
+        if (NULL == members[i]) {
+            OMPI_ERROR_LOG(OMPI_ERR_NOT_SUPPORTED);
+            opal_argv_free(members);
+            OPAL_LIST_DESTRUCT(&ilist);
+            OPAL_LIST_DESTRUCT(&rlist);
+            goto exit;
+        }
+        opal_pmix.register_jobid(nm->name.jobid, members[i]);
         if (OPAL_VPID_WILDCARD == nm->name.vpid) {
             jobid = nm->name.jobid;
             OBJ_RELEASE(nm);
@@ -408,11 +447,10 @@ int ompi_dpm_connect_accept(ompi_communicator_t *comm, int root,
     i=0;
     OPAL_LIST_FOREACH(cd, &rlist, ompi_dpm_proct_caddy_t) {
         new_group_pointer->grp_proc_pointers[i++] = cd->p;
+        /* retain the proc */
+        OBJ_RETAIN(cd->p);
     }
     OPAL_LIST_DESTRUCT(&rlist);
-
-    /* increment proc reference counters */
-    ompi_group_increment_proc_count(new_group_pointer);
 
     /* set up communicator structure */
     rc = ompi_comm_set ( &newcomp,                 /* new comm */
@@ -432,7 +470,6 @@ int ompi_dpm_connect_accept(ompi_communicator_t *comm, int root,
         goto exit;
     }
 
-    ompi_group_decrement_proc_count (new_group_pointer);
     OBJ_RELEASE(new_group_pointer);
     new_group_pointer = MPI_GROUP_NULL;
 

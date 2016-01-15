@@ -2,6 +2,8 @@
 #
 # Copyright (c) 2009-2013 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2013      Los Alamos National Security, LLC.  All rights reserved.
+# Copyright (c) 2015      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 #
 # $COPYRIGHT$
 #
@@ -71,7 +73,7 @@ AC_DEFUN([MCA_opal_event_external_CONFIG],[
     # Make sure the user didn't specify --with-libevent=internal and
     # --with-libevent-libdir=whatever (because you can only specify
     # --with-libevent-libdir when external libevent is being used).
-    AS_IF([test "$with_libevent" = "internal" -a "$with_libevent_libdir" != ""],
+    AS_IF([test "$with_libevent" = "internal" && test -n "$with_libevent_libdir"],
           [AC_MSG_WARN([Both --with-libevent=internal and --with-libevent-libdir=DIR])
            AC_MSG_WARN([were specified, which does not make sense.])
            AC_MSG_ERROR([Cannot continue])])
@@ -80,8 +82,8 @@ AC_DEFUN([MCA_opal_event_external_CONFIG],[
     # but hopefully slightly more clear...)
     opal_event_external_want=no
     AS_IF([test "$with_libevent" = "external"], [opal_event_external_want=yes])
-    AS_IF([test "$with_libevent_libdir" != ""], [opal_event_external_want=yes])
-    AS_IF([test "$with_libevent" != "" -a "$with_libevent" != "no" -a "$with_libevent" != "internal"], [opal_event_external_want=yes])
+    AS_IF([test -n "$with_libevent_libdir"], [opal_event_external_want=yes])
+    AS_IF([test -n "$with_libevent" && test "$with_libevent" != "no" && test "$with_libevent" != "internal"], [opal_event_external_want=yes])
 
     # If we want external support, try it
     AS_IF([test "$opal_event_external_want" = "yes"],
@@ -90,14 +92,14 @@ AC_DEFUN([MCA_opal_event_external_CONFIG],[
                               [libevent.*])
 
            AC_MSG_CHECKING([for external libevent in])
-           AS_IF([test "$with_libevent" != "external" -a "$with_libevent" != "yes"],
+           AS_IF([test "$with_libevent" != "external" && test "$with_libevent" != "yes"],
                  [opal_event_dir=$with_libevent
                   AC_MSG_RESULT([$opal_event_dir])
                   OPAL_CHECK_WITHDIR([libevent], [$with_libdir],
                                      [include/event.h])
                  ],
                  [AC_MSG_RESULT([(default search paths)])])
-           AS_IF([test ! -z "$with_libevent_libdir" -a "$with_libevent_libdir" != "yes"],
+           AS_IF([test ! -z "$with_libevent_libdir" && test "$with_libevent_libdir" != "yes"],
                  [opal_event_libdir="$with_libevent_libdir"])
 
            opal_event_external_CPPFLAGS_save=$CPPFLAGS

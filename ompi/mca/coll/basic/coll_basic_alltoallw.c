@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2015 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -41,11 +41,10 @@ mca_coll_basic_alltoallw_intra_inplace(const void *rbuf, const int *rcounts, con
                                        struct ompi_communicator_t *comm,
                                        mca_coll_base_module_t *module)
 {
-    mca_coll_basic_module_t *basic_module = (mca_coll_basic_module_t*) module;
-    int i, j, size, rank, err=MPI_SUCCESS, max_size;
-    MPI_Request *preq;
-    char *tmp_buffer;
-    ptrdiff_t ext;
+    int i, j, size, rank, err = MPI_SUCCESS, max_size;
+    MPI_Request *preq, *reqs = NULL;
+    char *tmp_buffer, *save_buffer = NULL;
+    ptrdiff_t ext, gap;
 
     /* Initialize. */
 
@@ -59,18 +58,19 @@ mca_coll_basic_alltoallw_intra_inplace(const void *rbuf, const int *rcounts, con
 
     /* Find the largest receive amount */
     for (i = 0, max_size = 0 ; i < size ; ++i) {
-        ompi_datatype_type_extent (rdtypes[i], &ext);
-        ext *= rcounts[i];
+        ext = opal_datatype_span(&rdtypes[i]->super, rcounts[i], &gap);
 
         max_size = ext > max_size ? ext : max_size;
     }
 
     /* Allocate a temporary buffer */
-    tmp_buffer = calloc (max_size, 1);
+    tmp_buffer = save_buffer = calloc (max_size, 1);
     if (NULL == tmp_buffer) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
+    tmp_buffer -= gap;
 
+    reqs = coll_base_comm_get_reqs( module->base_data, 2);
     /* in-place alltoallw slow algorithm (but works) */
     for (i = 0 ; i < size ; ++i) {
         size_t msg_size_i;
@@ -82,7 +82,7 @@ mca_coll_basic_alltoallw_intra_inplace(const void *rbuf, const int *rcounts, con
             msg_size_j *= rcounts[j];
 
             /* Initiate all send/recv to/from others. */
-            preq = basic_module->mccb_reqs;
+            preq = reqs;
 
             if (i == rank && msg_size_j != 0) {
                 /* Copy the data into the temporary buffer */
@@ -119,17 +119,19 @@ mca_coll_basic_alltoallw_intra_inplace(const void *rbuf, const int *rcounts, con
             }
 
             /* Wait for the requests to complete */
-            err = ompi_request_wait_all (2, basic_module->mccb_reqs, MPI_STATUSES_IGNORE);
+            err = ompi_request_wait_all (2, reqs, MPI_STATUSES_IGNORE);
             if (MPI_SUCCESS != err) { goto error_hndl; }
-
-            /* Free the requests. */
-            mca_coll_basic_free_reqs(basic_module->mccb_reqs, 2);
         }
     }
 
  error_hndl:
     /* Free the temporary buffer */
-    free (tmp_buffer);
+    free (save_buffer);
+    if( MPI_SUCCESS != err ) {  /* Free the requests. */
+        if( NULL != reqs ) {
+            ompi_coll_base_free_reqs(reqs, 2);
+        }
+    }
 
     /* All done */
 
@@ -159,8 +161,7 @@ mca_coll_basic_alltoallw_intra(const void *sbuf, const int *scounts, const int *
     char *psnd;
     char *prcv;
     int nreqs;
-    MPI_Request *preq;
-    mca_coll_basic_module_t *basic_module = (mca_coll_basic_module_t*) module;
+    MPI_Request *preq, *reqs;
 
     /* Initialize. */
     if (MPI_IN_PLACE == sbuf) {
@@ -191,7 +192,7 @@ mca_coll_basic_alltoallw_intra(const void *sbuf, const int *scounts, const int *
     /* Initiate all send/recv to/from others. */
 
     nreqs = 0;
-    preq = basic_module->mccb_reqs;
+    reqs = preq = coll_base_comm_get_reqs(module->base_data, 2 * size);
 
     /* Post all receives first -- a simple optimization */
 
@@ -209,8 +210,7 @@ mca_coll_basic_alltoallw_intra(const void *sbuf, const int *scounts, const int *
                                       preq++));
         ++nreqs;
         if (MPI_SUCCESS != err) {
-            mca_coll_basic_free_reqs(basic_module->mccb_reqs,
-                                     nreqs);
+            ompi_coll_base_free_reqs(reqs, nreqs);
             return err;
         }
     }
@@ -232,15 +232,14 @@ mca_coll_basic_alltoallw_intra(const void *sbuf, const int *scounts, const int *
                                       preq++));
         ++nreqs;
         if (MPI_SUCCESS != err) {
-            mca_coll_basic_free_reqs(basic_module->mccb_reqs,
-                                     nreqs);
+            ompi_coll_base_free_reqs(reqs, nreqs);
             return err;
         }
     }
 
     /* Start your engines.  This will never return an error. */
 
-    MCA_PML_CALL(start(nreqs, basic_module->mccb_reqs));
+    MCA_PML_CALL(start(nreqs, reqs));
 
     /* Wait for them all.  If there's an error, note that we don't care
      * what the error was -- just that there *was* an error.  The PML
@@ -249,15 +248,11 @@ mca_coll_basic_alltoallw_intra(const void *sbuf, const int *scounts, const int *
      * So free them anyway -- even if there was an error, and return the
      * error after we free everything. */
 
-    err = ompi_request_wait_all(nreqs, basic_module->mccb_reqs,
-                                MPI_STATUSES_IGNORE);
-
-    /* Free the requests. */
-
-    mca_coll_basic_free_reqs(basic_module->mccb_reqs, nreqs);
+    err = ompi_request_wait_all(nreqs, reqs, MPI_STATUSES_IGNORE);
+    /* Free the requests in all cases as they are persistent */
+    ompi_coll_base_free_reqs(reqs, nreqs);
 
     /* All done */
-
     return err;
 }
 
@@ -283,15 +278,14 @@ mca_coll_basic_alltoallw_inter(const void *sbuf, const int *scounts, const int *
     char *psnd;
     char *prcv;
     int nreqs;
-    MPI_Request *preq;
-    mca_coll_basic_module_t *basic_module = (mca_coll_basic_module_t*) module;
+    MPI_Request *preq, *reqs;
 
     /* Initialize. */
     size = ompi_comm_remote_size(comm);
 
     /* Initiate all send/recv to/from others. */
     nreqs = 0;
-    preq = basic_module->mccb_reqs;
+    reqs = preq = coll_base_comm_get_reqs(module->base_data, 2 * size);
 
     /* Post all receives first -- a simple optimization */
     for (i = 0; i < size; ++i) {
@@ -308,8 +302,7 @@ mca_coll_basic_alltoallw_inter(const void *sbuf, const int *scounts, const int *
                                       comm, preq++));
         ++nreqs;
         if (OMPI_SUCCESS != err) {
-            mca_coll_basic_free_reqs(basic_module->mccb_reqs,
-                                     nreqs);
+            ompi_coll_base_free_reqs(reqs, nreqs);
             return err;
         }
     }
@@ -330,14 +323,13 @@ mca_coll_basic_alltoallw_inter(const void *sbuf, const int *scounts, const int *
                                       preq++));
         ++nreqs;
         if (OMPI_SUCCESS != err) {
-            mca_coll_basic_free_reqs(basic_module->mccb_reqs,
-                                     nreqs);
+            ompi_coll_base_free_reqs(reqs, nreqs);
             return err;
         }
     }
 
     /* Start your engines.  This will never return an error. */
-    MCA_PML_CALL(start(nreqs, basic_module->mccb_reqs));
+    MCA_PML_CALL(start(nreqs, reqs));
 
     /* Wait for them all.  If there's an error, note that we don't care
      * what the error was -- just that there *was* an error.  The PML
@@ -345,11 +337,10 @@ mca_coll_basic_alltoallw_inter(const void *sbuf, const int *scounts, const int *
      * i.e., by the end of this call, all the requests are free-able.
      * So free them anyway -- even if there was an error, and return the
      * error after we free everything. */
-    err = ompi_request_wait_all(nreqs, basic_module->mccb_reqs,
-                                MPI_STATUSES_IGNORE);
+    err = ompi_request_wait_all(nreqs, reqs, MPI_STATUSES_IGNORE);
 
-    /* Free the requests. */
-    mca_coll_basic_free_reqs(basic_module->mccb_reqs, nreqs);
+    /* Free the requests in all cases as they are persistent */
+    ompi_coll_base_free_reqs(reqs, nreqs);
 
     /* All done */
     return err;

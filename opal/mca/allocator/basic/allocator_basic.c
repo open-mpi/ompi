@@ -359,6 +359,10 @@ int mca_allocator_basic_compact(mca_allocator_base_module_t * mem)
 int mca_allocator_basic_finalize(mca_allocator_base_module_t * base)
 {
     mca_allocator_basic_module_t* module = (mca_allocator_basic_module_t*)base;
+    // clear the list as we don't own these bits
+    while (NULL != opal_list_remove_first(&module->seg_list)) {
+      continue;
+    }
     OBJ_DESTRUCT(&module->seg_list);
     OBJ_DESTRUCT(&module->seg_lock);
     OBJ_DESTRUCT(&module->seg_descriptors);

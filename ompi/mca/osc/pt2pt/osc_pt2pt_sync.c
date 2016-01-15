@@ -34,7 +34,10 @@ OBJ_CLASS_INSTANCE(ompi_osc_pt2pt_sync_t, opal_free_list_item_t,
 ompi_osc_pt2pt_sync_t *ompi_osc_pt2pt_sync_allocate (struct ompi_osc_pt2pt_module_t *module)
 {
     ompi_osc_pt2pt_sync_t *sync;
-#pragma unused (module)
+
+    /* module is not used yet */
+    (void) module;
+
     sync = OBJ_NEW (ompi_osc_pt2pt_sync_t);
     if (OPAL_UNLIKELY(NULL == sync)) {
         return NULL;

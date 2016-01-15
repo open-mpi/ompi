@@ -9,18 +9,28 @@
 
 include $(top_srcdir)/Makefile.ompi-rules
 
-shmem_api_man_pages = \
-        shmem/man/man3/intro_shmem.3 \
-        shmem/man/man3/OpenSHMEM.3 \
+shmem_legacy_api_man_pages = \
         shmem/man/man3/start_pes.3 \
         shmem/man/man3/_num_pes.3 \
         shmem/man/man3/_my_pe.3 \
-        shmem/man/man3/shmem_pe_accessible.3 \
-        shmem/man/man3/shmem_addr_accessible.3 \
         shmem/man/man3/shmalloc.3 \
         shmem/man/man3/shmemalign.3 \
         shmem/man/man3/shrealloc.3 \
-        shmem/man/man3/shfree.3 \
+        shmem/man/man3/shfree.3
+
+shmem_api_man_pages = \
+        shmem/man/man3/intro_shmem.3 \
+        shmem/man/man3/OpenSHMEM.3 \
+        shmem/man/man3/shmem_init.3 \
+        shmem/man/man3/shmem_finalize.3 \
+        shmem/man/man3/shmem_n_pes.3 \
+        shmem/man/man3/shmem_my_pe.3 \
+        shmem/man/man3/shmem_pe_accessible.3 \
+        shmem/man/man3/shmem_addr_accessible.3 \
+        shmem/man/man3/shmem_malloc.3 \
+        shmem/man/man3/shmem_align.3 \
+        shmem/man/man3/shmem_realloc.3 \
+        shmem/man/man3/shmem_free.3 \
         shmem/man/man3/shmem_ptr.3 \
         shmem/man/man3/shmem_char_p.3 \
         shmem/man/man3/shmem_short_p.3 \
@@ -174,10 +184,15 @@ shmem_api_man_pages = \
         shmem/man/man3/shmem_set_cache_inv.3 \
         shmem/man/man3/shmem_set_cache_line_inv.3 \
         shmem/man/man3/shmem_clear_cache_inv.3 \
-        shmem/man/man3/shmem_clear_cache_line_inv.3
+        shmem/man/man3/shmem_clear_cache_line_inv.3 \
+        shmem/man/man3/shmem_info_get_name.3 \
+        shmem/man/man3/shmem_info_get_version.3 \
+        shmem/man/man3/shmem_global_exit.3
 
 if PROJECT_OSHMEM
 nodist_man_MANS += $(shmem_api_man_pages)
-EXTRA_DIST += $(shmem_api_man_pages:.3=.3in)
+nodist_man_MANS += $(shmem_legacy_api_man_pages)
 endif  # PROJECT_OSHMEM
+EXTRA_DIST += $(shmem_api_man_pages:.3=.3in)
+EXTRA_DIST += $(shmem_legacy_api_man_pages:.3=.3in)
 

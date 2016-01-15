@@ -13,23 +13,18 @@
 
 #include "ompi/mpi/tool/mpit-internal.h"
 
-opal_mutex_t mpit_big_lock = {{0}};
+opal_mutex_t mpit_big_lock = OPAL_MUTEX_STATIC_INIT;
 
 volatile uint32_t mpit_init_count = 0;
-volatile int32_t initted = 0;
 
 void mpit_lock (void)
 {
-    if (initted) {
-        opal_mutex_lock (&mpit_big_lock);
-    }
+    opal_mutex_lock (&mpit_big_lock);
 }
 
 void mpit_unlock (void)
 {
-    if (initted) {
-        opal_mutex_unlock (&mpit_big_lock);
-    }
+    opal_mutex_unlock (&mpit_big_lock);
 }
 
 int ompit_var_type_to_datatype (mca_base_var_type_t type, MPI_Datatype *datatype)
@@ -90,8 +85,6 @@ int ompit_opal_to_mpit_error (int rc)
     }
 
     switch (rc) {
-    case OPAL_SUCCESS:
-        return MPI_SUCCESS;
     case OPAL_ERR_OUT_OF_RESOURCE:
         return MPI_T_ERR_MEMORY;
     case OPAL_ERR_VALUE_OUT_OF_BOUNDS:

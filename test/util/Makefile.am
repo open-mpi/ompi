@@ -119,3 +119,7 @@ opal_path_nfs_DEPENDENCIES = $(opal_path_nfs_LDADD)
 
 clean-local:
 	rm -f test_session_dir_out test-file opal_path_nfs.out
+
+distclean:
+	rm -rf *.dSYM .deps .libs *.out *.log *.o *.trs $(check_PROGRAMS) Makefile
+

@@ -17,9 +17,19 @@ int MPI_Group_compare(MPI_Group \fIgroup1\fP, MPI_Group\fI group2\fP,
 .fi
 .SH Fortran Syntax
 .nf
-INCLUDE 'mpif.h'
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
 MPI_GROUP_COMPARE(\fIGROUP1, GROUP2, RESULT, IERROR\fP)
 	INTEGER	\fIGROUP1, GROUP2, RESULT, IERROR\fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Group_compare(\fIgroup1\fP, \fIgroup2\fP, \fIresult\fP, \fIierror\fP)
+	TYPE(MPI_Group), INTENT(IN) :: \fIgroup1\fP, \fIgroup2\fP
+	INTEGER, INTENT(OUT) :: \fIresult\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
 .SH C++ Syntax

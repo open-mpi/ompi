@@ -11,6 +11,8 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2015      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -66,8 +68,8 @@ AC_DEFUN([MCA_opal_timer_aix_CONFIG],[
            AC_CHECK_HEADERS([pmapi.h])])
    LIBS="$timer_aix_LIBS_SAVE"
 
-    AS_IF([test "$timer_aix_happy" = "no" -a \
-                "$timer_aix_should_use" = "1"],
+    AS_IF([test "$timer_aix_happy" = "no" && \
+           test "$timer_aix_should_use" = "1"],
           [AC_MSG_ERROR([AIX timer requested but not available.  Aborting.])])
 
     AC_SUBST(timer_aix_LIBS)

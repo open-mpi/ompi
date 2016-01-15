@@ -37,7 +37,6 @@
 #include "opal/mca/event/event.h"
 #include "opal/runtime/opal.h"
 #include "opal/runtime/opal_cr.h"
-#include "opal/runtime/opal_progress_threads.h"
 #include "opal/util/arch.h"
 #include "opal/util/proc.h"
 
@@ -64,7 +63,6 @@
 
 #include "orte/mca/ess/base/base.h"
 
-static bool progress_thread_running = false;
 
 int orte_ess_base_tool_setup(void)
 {
@@ -275,10 +273,5 @@ int orte_ess_base_tool_finalize(void)
     (void) mca_base_framework_close(&orte_schizo_base_framework);
     (void) mca_base_framework_close(&orte_errmgr_base_framework);
 
-    /* release the event base */
-    if (progress_thread_running) {
-        opal_progress_thread_finalize("orte");
-        progress_thread_running = false;
-    }
     return ORTE_SUCCESS;
 }

@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -21,7 +23,8 @@
 
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_OP_FREE = ompi_op_free_f
 #pragma weak pmpi_op_free = ompi_op_free_f
 #pragma weak pmpi_op_free_ = ompi_op_free_f
@@ -29,7 +32,7 @@
 
 #pragma weak PMPI_Op_free_f = ompi_op_free_f
 #pragma weak PMPI_Op_free_f08 = ompi_op_free_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_OP_FREE,
                            pmpi_op_free,
                            pmpi_op_free_,
@@ -37,6 +40,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_OP_FREE,
                            pompi_op_free_f,
                            (MPI_Fint *op, MPI_Fint *ierr),
                            (op, ierr) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -47,9 +51,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_OP_FREE,
 
 #pragma weak MPI_Op_free_f = ompi_op_free_f
 #pragma weak MPI_Op_free_f08 = ompi_op_free_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_OP_FREE,
                            mpi_op_free,
                            mpi_op_free_,
@@ -57,24 +60,23 @@ OMPI_GENERATE_F77_BINDINGS (MPI_OP_FREE,
                            ompi_op_free_f,
                            (MPI_Fint *op, MPI_Fint *ierr),
                            (op, ierr) )
+#else
+#define ompi_op_free_f pompi_op_free_f
+#endif
 #endif
 
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
-#endif
 
 void ompi_op_free_f(MPI_Fint *op, MPI_Fint *ierr)
 {
     int c_ierr;
     MPI_Op c_op;
 
-    c_op = MPI_Op_f2c(*op);
+    c_op = PMPI_Op_f2c(*op);
 
-    c_ierr = MPI_Op_free(&c_op);
+    c_ierr = PMPI_Op_free(&c_op);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {
-        *op = MPI_Op_c2f(c_op);
+        *op = PMPI_Op_c2f(c_op);
     }
 }

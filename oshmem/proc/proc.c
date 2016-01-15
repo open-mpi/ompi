@@ -3,6 +3,7 @@
  *                         All rights reserved.
  * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -64,7 +65,7 @@ int oshmem_proc_group_init(void)
 {
     if (orte_process_info.num_procs != opal_list_get_size(&ompi_proc_list)) {
         opal_output(0,
-                "Error: oshmem_group_all is not created: orte_process_info.num_procs = %d ompi_proc_list = %d",
+                "Error: oshmem_group_all is not created: orte_process_info.num_procs = %d ompi_proc_list = %" PRIsize_t,
 		orte_process_info.num_procs,
 		opal_list_get_size(&ompi_proc_list));
         return OSHMEM_ERROR;
@@ -150,6 +151,7 @@ oshmem_group_t* oshmem_proc_group_create(int pe_start,
         /* allocate an array */
         proc_array = (oshmem_proc_t**) malloc(pe_size * sizeof(oshmem_proc_t*));
         if (NULL == proc_array) {
+            OBJ_RELEASE(group);
             OPAL_THREAD_UNLOCK(&oshmem_proc_lock);
             return NULL ;
         }
@@ -161,6 +163,9 @@ oshmem_group_t* oshmem_proc_group_create(int pe_start,
             if (NULL == proc) {
                 opal_output(0,
                              "Error: Can not find proc object for pe = %d", i);
+                free(proc_array);
+                OBJ_RELEASE(group);
+                OPAL_THREAD_UNLOCK(&oshmem_proc_lock);
                 return NULL;
             }
             if (count_pe >= (int) pe_size) {
@@ -199,8 +204,9 @@ oshmem_group_t* oshmem_proc_group_create(int pe_start,
                         "Error: No collective modules are available: group is not created, returning NULL");
             oshmem_proc_group_destroy(group);
             OPAL_THREAD_UNLOCK(&oshmem_proc_lock);
-            return NULL ;
-        } OPAL_THREAD_UNLOCK(&oshmem_proc_lock);
+            return NULL;
+        }
+        OPAL_THREAD_UNLOCK(&oshmem_proc_lock);
     }
 
     return group;

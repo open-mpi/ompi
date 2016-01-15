@@ -14,6 +14,8 @@
  * Copyright (c) 2010-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -595,7 +597,7 @@ opal_ifislocal(const char *hostname)
     return false;
 }
 
-static uint32_t parse_ipv4_dots(const char *addr, uint32_t* net, int* dots)
+static int parse_ipv4_dots(const char *addr, uint32_t* net, int* dots)
 {
     const char *start = addr, *end;
     uint32_t n[]={0,0,0,0};

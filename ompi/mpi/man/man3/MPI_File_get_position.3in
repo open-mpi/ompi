@@ -2,6 +2,8 @@
 .\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
 .\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
+.\" Copyright 2015      Research Organization for Information Science
+.\"                     and Technology (RIST). All rights reserved.
 .\" $COPYRIGHT$
 .TH MPI_File_get_position 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
@@ -10,17 +12,27 @@
 .SH SYNTAX
 .ft R
 .nf
-C Syntax
-    #include <mpi.h>
-    int MPI_File_get_position(MPI_File \fIfh\fP, MPI_Offset \fI*offset\fP)
+.SH C Syntax
+#include <mpi.h>
+int MPI_File_get_position(MPI_File \fIfh\fP, MPI_Offset \fI*offset\fP)
 
 .fi
 .SH Fortran Syntax (see FORTRAN 77 NOTES)
 .nf
-    INCLUDE 'mpif.h'
-    MPI_FILE_GET_POSITION(\fIFH\fP,\fI OFFSET\fP,\fI IERROR\fP)
-    	      INTEGER \fIFH, IERROR\fP
-    	      INTEGER(KIND=MPI_OFFSET_KIND) \fIOFFSET\fP
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
+MPI_FILE_GET_POSITION(\fIFH\fP, \fIOFFSET\fP, \fIIERROR\fP)
+	INTEGER	\fIFH, IERROR\fP
+	INTEGER(KIND=MPI_OFFSET_KIND)	\fIOFFSET\fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_File_get_position(\fIfh\fP, \fIoffset\fP, \fIierror\fP)
+	TYPE(MPI_File), INTENT(IN) :: \fIfh\fP
+	INTEGER(KIND=MPI_OFFSET_KIND), INTENT(OUT) :: \fIoffset\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
 .SH C++ Syntax

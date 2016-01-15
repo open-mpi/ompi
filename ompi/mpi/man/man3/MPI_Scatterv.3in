@@ -24,7 +24,8 @@ int MPI_Iscatterv(const void *\fIsendbuf\fP, const int\fI sendcounts[]\fP, const
 .fi
 .SH Fortran Syntax
 .nf
-INCLUDE 'mpif.h'
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
 MPI_SCATTERV(\fISENDBUF, SENDCOUNTS, DISPLS, SENDTYPE, RECVBUF,
 		RECVCOUNT, RECVTYPE, ROOT, COMM, IERROR\fP)
 	<type>	\fISENDBUF(*), RECVBUF(*)\fP
@@ -36,6 +37,29 @@ MPI_ISCATTERV(\fISENDBUF, SENDCOUNTS, DISPLS, SENDTYPE, RECVBUF,
 	<type>	\fISENDBUF(*), RECVBUF(*)\fP
 	INTEGER	\fISENDCOUNTS(*), DISPLS(*), SENDTYPE\fP
 	INTEGER	\fIRECVCOUNT, RECVTYPE, ROOT, COMM, REQUEST, IERROR\fP
+
+.fi
+.SH Fortran 2008 Syntax
+USE mpi_f08
+MPI_Scatterv(\fIsendbuf\fP, \fIsendcounts\fP, \fIdispls\fP, \fIsendtype\fP, \fIrecvbuf\fP, \fIrecvcount\fP,
+		\fIrecvtype\fP, \fIroot\fP, \fIcomm\fP, \fIierror\fP)
+	TYPE(*), DIMENSION(..), INTENT(IN) :: \fIsendbuf\fP
+	TYPE(*), DIMENSION(..) :: \fIrecvbuf\fP
+	INTEGER, INTENT(IN) :: \fIsendcounts(*)\fP, \fIdispls(*)\fP, \fIrecvcount\fP, \fIroot\fP
+	TYPE(MPI_Datatype), INTENT(IN) :: \fIsendtype\fP, \fIrecvtype\fP
+	TYPE(MPI_Comm), INTENT(IN) :: \fIcomm\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
+
+MPI_Iscatterv(\fIsendbuf\fP, \fIsendcounts\fP, \fIdispls\fP, \fIsendtype\fP, \fIrecvbuf\fP, \fIrecvcount\fP,
+		\fIrecvtype\fP, \fIroot\fP, \fIcomm\fP, \fIrequest\fP, \fIierror\fP)
+	TYPE(*), DIMENSION(..), INTENT(IN), ASYNCHRONOUS :: \fIsendbuf\fP
+	TYPE(*), DIMENSION(..), ASYNCHRONOUS :: \fIrecvbuf\fP
+	INTEGER, INTENT(IN), ASYNCHRONOUS :: \fIsendcounts(*)\fP, \fIdispls(*)\fP
+	INTEGER, INTENT(IN) :: \fIrecvcount\fP, \fIroot\fP
+	TYPE(MPI_Datatype), INTENT(IN) :: \fIsendtype\fP, \fIrecvtype\fP
+	TYPE(MPI_Comm), INTENT(IN) :: \fIcomm\fP
+	TYPE(MPI_Request), INTENT(OUT) :: \fIrequest\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
 .SH C++ Syntax

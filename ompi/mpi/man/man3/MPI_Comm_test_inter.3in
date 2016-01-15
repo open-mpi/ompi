@@ -17,10 +17,20 @@ int MPI_Comm_test_inter(MPI_Comm \fIcomm\fP, int\fI *flag\fP)
 .fi
 .SH Fortran Syntax
 .nf
-INCLUDE 'mpif.h'
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
 MPI_COMM_TEST_INTER(\fICOMM, FLAG, IERROR\fP)
 	INTEGER	\fICOMM, IERROR\fP
 	LOGICAL	\fIFLAG \fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Comm_test_inter(\fIcomm\fP, \fIflag\fP, \fIierror\fP)
+	TYPE(MPI_Comm), INTENT(IN) :: \fIcomm\fP
+	LOGICAL, INTENT(OUT) :: \fIflag\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
 .SH C++ Syntax

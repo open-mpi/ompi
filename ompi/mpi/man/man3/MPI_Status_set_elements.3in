@@ -19,13 +19,29 @@ int MPI_Status_set_elements_x(MPI_Status *\fIstatus\fP, MPI_Datatype \fIdatatype
 .fi
 .SH Fortran Syntax
 .nf
-INCLUDE 'mpif.h'
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
 MPI_STATUS_SET_ELEMENTS(\fISTATUS, DATATYPE, COUNT, IERROR\fP)
 	INTEGER	\fISTATUS\fP(MPI_STATUS_SIZE), DATATYPE, COUNT, IERROR\fP
 MPI_STATUS_SET_ELEMENTS_X(\fISTATUS, DATATYPE, COUNT, IERROR\fP)
 	INTEGER	\fISTATUS\fP(MPI_STATUS_SIZE), DATATYPE\fP
         INTEGER(KIND=MPI_COUNT_KIND) \fICOUNT\fP
         INTEGER \fIIERROR\fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Status_set_elements(\fIstatus\fP, \fIdatatype\fP, \fIcount\fP, \fIierror\fP)
+	TYPE(MPI_Status), INTENT(INOUT) :: \fIstatus\fP
+	TYPE(MPI_Datatype), INTENT(IN) :: \fIdatatype\fP
+	INTEGER, INTENT(IN) :: \fIcount\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
+MPI_Status_set_elements_x(\fIstatus\fP, \fIdatatype\fP, \fIcount\fP, \fIierror\fP)
+	TYPE(MPI_Status), INTENT(INOUT) :: \fIstatus\fP
+	TYPE(MPI_Datatype), INTENT(IN) :: \fIdatatype\fP
+	INTEGER(KIND = MPI_COUNT_KIND), INTENT(IN) :: \fIcount\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
 .SH C++ Syntax

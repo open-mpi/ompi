@@ -356,21 +356,15 @@ static void send_error_show_help(int fd, int exit_status,
 
 static int close_open_file_descriptors(int write_fd, orte_iof_base_io_conf_t opts)
 {
-    int pid, rc, fd;
-    char *fds_dir = NULL;
+    int rc, fd;
     DIR *dir = NULL;
     struct dirent *files;
-    int app_alps_filedes[2],alps_app_filedes[2];
+    int app_alps_filedes[2], alps_app_filedes[2];
 
-    pid = getpid();
-
-    rc = asprintf(&fds_dir, "/proc/%d/fd", pid);
-    if (rc < 0) return ORTE_ERR_OUT_OF_RESOURCE;
-
-    dir = opendir(fds_dir);
-    free(fds_dir);
-
-    if (dir == NULL) return ORTE_ERR_FILE_OPEN_FAILURE;
+    dir = opendir("/proc/self/fd");
+    if (NULL == dir) {
+        return ORTE_ERR_FILE_OPEN_FAILURE;
+    }
 
     /* close all file descriptors w/ exception of stdin/stdout/stderr,
        the pipe used for the IOF INTERNAL messages, and the pipe up to
@@ -380,6 +374,7 @@ static int close_open_file_descriptors(int write_fd, orte_iof_base_io_conf_t opt
 
     rc = alps_app_lli_pipes(app_alps_filedes,alps_app_filedes);
     if (0 != rc) {
+        closedir(dir);
         return ORTE_ERR_FILE_OPEN_FAILURE;
     }
 
@@ -387,7 +382,10 @@ static int close_open_file_descriptors(int write_fd, orte_iof_base_io_conf_t opt
         if(!strncmp(files->d_name,".",1) || !strncmp(files->d_name,"..",2)) continue;
 
         fd = strtoul(files->d_name, NULL, 10);
-        if (errno == EINVAL || errno == ERANGE) return ORTE_ERR_TYPE_MISMATCH;
+        if (EINVAL == errno || ERANGE == errno) {
+            closedir(dir);
+            return ORTE_ERR_TYPE_MISMATCH;
+        }
 
         /*
          * skip over the pipes we have open to apshepherd or slurmd
@@ -404,6 +402,8 @@ static int close_open_file_descriptors(int write_fd, orte_iof_base_io_conf_t opt
                         close(fd);
         }
     }
+
+    closedir(dir);
     return ORTE_SUCCESS;
 }
 
@@ -765,7 +765,7 @@ int orte_odls_alps_launch_local_procs(opal_buffer_t *data)
     /* construct the list of children we are to launch */
     if (ORTE_SUCCESS != (rc = orte_odls_base_default_construct_child_list(data, &job))) {
         OPAL_OUTPUT_VERBOSE((2, orte_odls_base_framework.framework_output,
-                             "%s odls:default:launch:local failed to construct child list on error %s",
+                             "%s odls:alps:launch:local failed to construct child list on error %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_ERROR_NAME(rc)));
         return rc;
     }
@@ -845,7 +845,7 @@ static int orte_odls_alps_restart_proc(orte_proc_t *child)
     /* restart the local proc */
     if (ORTE_SUCCESS != (rc = orte_odls_base_default_restart_proc(child, odls_alps_fork_local_proc))) {
         OPAL_OUTPUT_VERBOSE((2, orte_odls_base_framework.framework_output,
-                             "%s odls:default:restart_proc failed to launch on error %s",
+                             "%s odls:alps:restart_proc failed to launch on error %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_ERROR_NAME(rc)));
     }
     return rc;

@@ -22,6 +22,14 @@ MPI_REQUEST_FREE(REQUEST, IERROR)
 	INTEGER	REQUEST, IERROR
 
 .fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Request_free(\fIrequest\fP, \fIierror\fP)
+	TYPE(MPI_Request), INTENT(INOUT) :: \fIrequest\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
+
+.fi
 .SH C++ Syntax
 .nf
 #include <mpi.h>

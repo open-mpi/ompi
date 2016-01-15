@@ -13,6 +13,8 @@
  * Copyright (c) 2011-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -24,7 +26,8 @@
 
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_COMM_IDUP = ompi_comm_idup_f
 #pragma weak pmpi_comm_idup = ompi_comm_idup_f
 #pragma weak pmpi_comm_idup_ = ompi_comm_idup_f
@@ -32,7 +35,7 @@
 
 #pragma weak PMPI_Comm_idup_f = ompi_comm_idup_f
 #pragma weak PMPI_Comm_idup_f08 = ompi_comm_idup_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_COMM_IDUP,
                            pmpi_comm_idup,
                            pmpi_comm_idup_,
@@ -40,6 +43,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_COMM_IDUP,
                            pompi_comm_idup_f,
                             (MPI_Fint *comm, MPI_Fint *newcomm, MPI_Fint *request, MPI_Fint *ierr),
                             (comm, newcomm, request, ierr) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -50,9 +54,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_COMM_IDUP,
 
 #pragma weak MPI_Comm_idup_f = ompi_comm_idup_f
 #pragma weak MPI_Comm_idup_f08 = ompi_comm_idup_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_COMM_IDUP,
                             mpi_comm_idup,
                             mpi_comm_idup_,
@@ -60,25 +63,24 @@ OMPI_GENERATE_F77_BINDINGS (MPI_COMM_IDUP,
                             ompi_comm_idup_f,
                             (MPI_Fint *comm, MPI_Fint *newcomm, MPI_Fint *request, MPI_Fint *ierr),
                             (comm, newcomm, request, ierr) )
+#else
+#define ompi_comm_idup_f pompi_comm_idup_f
+#endif
 #endif
 
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
-#endif
 
 void ompi_comm_idup_f(MPI_Fint *comm, MPI_Fint *newcomm, MPI_Fint *request, MPI_Fint *ierr)
 {
     int c_ierr;
     MPI_Comm c_newcomm;
-    MPI_Comm c_comm = MPI_Comm_f2c(*comm);
+    MPI_Comm c_comm = PMPI_Comm_f2c(*comm);
     MPI_Request c_req;
 
-    c_ierr = MPI_Comm_idup(c_comm, &c_newcomm, &c_req);
+    c_ierr = PMPI_Comm_idup(c_comm, &c_newcomm, &c_req);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {
-        *newcomm = MPI_Comm_c2f(c_newcomm);
-        *request = MPI_Request_c2f(c_req);
+        *newcomm = PMPI_Comm_c2f(c_newcomm);
+        *request = PMPI_Request_c2f(c_req);
     }
 }

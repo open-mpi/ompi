@@ -2,12 +2,18 @@
 /*
  * Copyright (c) 2007-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
  *
  * $HEADER$
  */
+
+#ifdef HAVE_ALLOCA_H
+#include <alloca.h>
+#endif
 
 #include "osc_rdma_comm.h"
 
@@ -96,7 +102,7 @@ static int ompi_osc_rdma_peer_setup (ompi_osc_rdma_module_t *module, ompi_osc_rd
     int ret, disp_unit;
     char *peer_data;
 
-    OPAL_OUTPUT_VERBOSE((10, ompi_osc_base_framework.framework_output, "configuring peer for rank %d", peer->rank));
+    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_DEBUG, "configuring peer for rank %d", peer->rank);
 
     if (module->selected_btl->btl_register_mem) {
         registration_handle_size = module->selected_btl->btl_registration_handle_size;
@@ -117,8 +123,8 @@ static int ompi_osc_rdma_peer_setup (ompi_osc_rdma_module_t *module, ompi_osc_rd
         return OMPI_ERR_UNREACH;
     }
 
-    OPAL_OUTPUT_VERBOSE((10, ompi_osc_base_framework.framework_output, "reading rank data from array rank: %d pointer: 0x%"
-                         PRIx64 ", size: %lu", node_rank, array_pointer, sizeof (rank_data)));
+    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_DEBUG, "reading region data from rank: %d pointer: 0x%" PRIx64
+                     ", size: %lu", node_rank, array_pointer, sizeof (rank_data));
 
     ret = ompi_osc_get_data_blocking (module, array_endpoint, array_pointer, (mca_btl_base_registration_handle_t *) array_peer_data->btl_handle_data,
                                       &rank_data, sizeof (rank_data));
@@ -176,9 +182,10 @@ static int ompi_osc_rdma_peer_setup (ompi_osc_rdma_module_t *module, ompi_osc_rd
 
     ompi_osc_rdma_region_t *base_region = (ompi_osc_rdma_region_t *) peer_data;
 
-    OPAL_OUTPUT_VERBOSE((10, ompi_osc_base_framework.framework_output, "peer %d: remote base region: 0x%" PRIx64
-                         ", size: %" PRId64 ", flags: 0x%x, disp_unit: %d", peer->rank, base_region->base, base_region->len,
-                         peer->flags, disp_unit));
+    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_DEBUG, "peer %d: remote base region: 0x%" PRIx64 ", size: %" PRId64
+                     ", flags: 0x%x, disp_unit: %d", peer->rank, base_region->base, base_region->len,
+                     peer->flags, disp_unit);
+    (void)disp_unit;  // silence compiler warning
 
     if (ompi_osc_rdma_peer_local_base (peer)) {
         /* for now we store the local address in the standard place. do no overwrite it */
@@ -226,7 +233,7 @@ static struct ompi_osc_rdma_peer_t *ompi_osc_rdma_peer_lookup_internal (struct o
     ompi_osc_rdma_peer_t *peer;
     int ret;
 
-    OPAL_OUTPUT_VERBOSE((10, ompi_osc_base_framework.framework_output, "looking up peer data for rank %d", peer_id));
+    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_DEBUG, "looking up peer data for rank %d", peer_id);
 
     peer = ompi_osc_module_get_peer (module, peer_id);
     if (NULL != peer) {

@@ -18,11 +18,24 @@ int MPI_Info_get(MPI_Info \fIinfo\fP, const char \fI*key\fP, int \fIvaluelen\fP,
 .fi
 .SH Fortran Syntax
 .nf
-INCLUDE 'mpif.h'
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
 MPI_INFO_GET(\fIINFO, KEY, VALUELEN, VALUE, FLAG, IERROR\fP)
 	INTEGER	\fIINFO, VALUELEN, IERROR\fP
 	CHARACTER*(*) \fIKEY, VALUE\fP
 	LOGICAL \fIFLAG\fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Info_get(\fIinfo\fP, \fIkey\fP, \fIvaluelen\fP, \fIvalue\fP, \fIflag\fP, \fIierror\fP)
+	TYPE(MPI_Info), INTENT(IN) :: \fIinfo\fP
+	CHARACTER(LEN=*), INTENT(IN) :: \fIkey\fP
+	INTEGER, INTENT(IN) :: \fIvaluelen\fP
+	CHARACTER(LEN=valuelen), INTENT(OUT) :: \fIvalue\fP
+	LOGICAL, INTENT(OUT) :: \fIflag\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
 .SH C++ Syntax

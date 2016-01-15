@@ -224,3 +224,52 @@ AC_DEFUN([OPAL_CHECK_PMI],[
     OPAL_VAR_SCOPE_POP
 ])
 
+AC_DEFUN([OPAL_CHECK_PMIX],[
+
+    opal_pmix_ext_CPPFLAGS=
+    opal_pmix_ext_LDFLAGS=
+    opal_pmix_ext_LIBS=
+
+    OPAL_VAR_SCOPE_PUSH([pmix_ext_install_dir])
+
+    AC_ARG_WITH([pmix],
+                [AC_HELP_STRING([--with-pmix(=DIR)],
+                                [Build PMIx support.  DIR can take one of three values: "internal", "external", or a valid directory name.  "internal" (or no DIR value) forces Open MPI to use its internal copy of PMIx.  "external" forces Open MPI to use an external installation of PMIx.  Supplying a valid directory name also forces Open MPI to use an external installation of PMIx, and adds DIR/include, DIR/lib, and DIR/lib64 to the search path for headers and libraries. Note that Open MPI does not support --without-pmix.])])
+
+    AS_IF([test "$with_pmix" = "no"],
+          [AC_MSG_WARN([Open MPI requires PMIx support. It can be built])
+           AC_MSG_WARN([with either its own internal copy of PMIx, or with])
+           AC_MSG_WARN([an external copy that you supply.])
+           AC_MSG_ERROR([Cannot continue])])
+
+    AC_MSG_CHECKING([if user requested PMIx support($with_pmix)])
+    AS_IF([test -z "$with_pmix" || test "$with_pmix" = "yes" || test "$with_pmix" = "internal"],
+          [AC_MSG_RESULT([no])
+           opal_external_pmix_happy="no"],
+          [AC_MSG_RESULT([yes])
+           # check for external pmix lib */
+           AS_IF([test "$with_pmix" = "external"],
+                 [pmix_ext_install_dir=/usr],
+                 [pmix_ext_install_dir=$with_pmix])
+
+           # cannot use check_package because there are
+           # external dependencies to make the headers
+           # build, so just check for presence of header
+           # and library files - these checks will error
+           # out if the files aren't found, which is okay
+           # as we are only executing here if the user
+           # specified external pmix
+           OPAL_CHECK_WITHDIR([external-pmix], [$pmix_ext_install_dir/include], [pmix.h])
+           OPAL_CHECK_WITHDIR([external-libpmix], [$pmix_ext_install_dir/lib], [libpmix.*])
+
+           opal_pmix_ext_CPPFLAGS="-I$pmix_ext_install_dir -I$pmix_ext_install_dir/include -I$pmix_ext_install_dir/include/pmix -I$pmix_ext_install_dir/include/pmix/include"
+           opal_pmix_ext_LDFLAGS="-L$pmix_ext_install_dir/lib"
+           opal_pmix_ext_LIBS="-lpmix"
+           opal_external_pmix_happy="yes"
+          ])
+    AC_SUBST(opal_pmix_ext_CPPFLAGS)
+    AC_SUBST(opal_pmix_ext_LDFLAGS)
+    AC_SUBST(opal_pmix_ext_LIBS)
+
+    OPAL_VAR_SCOPE_POP
+])

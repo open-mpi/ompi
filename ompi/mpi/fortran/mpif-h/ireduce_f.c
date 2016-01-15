@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -22,7 +24,8 @@
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 #include "ompi/mpi/fortran/base/constants.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_IREDUCE = ompi_ireduce_f
 #pragma weak pmpi_ireduce = ompi_ireduce_f
 #pragma weak pmpi_ireduce_ = ompi_ireduce_f
@@ -30,7 +33,7 @@
 
 #pragma weak PMPI_Ireduce_f = ompi_ireduce_f
 #pragma weak PMPI_Ireduce_f08 = ompi_ireduce_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_IREDUCE,
                             pmpi_ireduce,
                             pmpi_ireduce_,
@@ -38,6 +41,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_IREDUCE,
                             pompi_ireduce_f,
                             (char *sendbuf, char *recvbuf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *op, MPI_Fint *root, MPI_Fint *comm, MPI_Fint *request, MPI_Fint *ierr),
                             (sendbuf, recvbuf, count, datatype, op, root, comm, request, ierr) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -48,9 +52,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_IREDUCE,
 
 #pragma weak MPI_Ireduce_f = ompi_ireduce_f
 #pragma weak MPI_Ireduce_f08 = ompi_ireduce_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_IREDUCE,
                             mpi_ireduce,
                             mpi_ireduce_,
@@ -58,12 +61,11 @@ OMPI_GENERATE_F77_BINDINGS (MPI_IREDUCE,
                             ompi_ireduce_f,
                             (char *sendbuf, char *recvbuf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *op, MPI_Fint *root, MPI_Fint *comm, MPI_Fint *request, MPI_Fint *ierr),
                             (sendbuf, recvbuf, count, datatype, op, root, comm, request, ierr) )
+#else
+#define ompi_ireduce_f pompi_ireduce_f
+#endif
 #endif
 
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
-#endif
 
 void ompi_ireduce_f(char *sendbuf, char *recvbuf, MPI_Fint *count,
                     MPI_Fint *datatype, MPI_Fint *op,
@@ -76,19 +78,19 @@ void ompi_ireduce_f(char *sendbuf, char *recvbuf, MPI_Fint *count,
     MPI_Op c_op;
     MPI_Comm c_comm;
 
-    c_type = MPI_Type_f2c(*datatype);
-    c_op = MPI_Op_f2c(*op);
-    c_comm = MPI_Comm_f2c(*comm);
+    c_type = PMPI_Type_f2c(*datatype);
+    c_op = PMPI_Op_f2c(*op);
+    c_comm = PMPI_Comm_f2c(*comm);
 
     sendbuf = (char *) OMPI_F2C_IN_PLACE(sendbuf);
     sendbuf = (char *) OMPI_F2C_BOTTOM(sendbuf);
     recvbuf = (char *) OMPI_F2C_BOTTOM(recvbuf);
 
-    c_ierr = MPI_Ireduce(sendbuf, recvbuf,
+    c_ierr = PMPI_Ireduce(sendbuf, recvbuf,
                          OMPI_FINT_2_INT(*count),
                          c_type, c_op,
                          OMPI_FINT_2_INT(*root),
                          c_comm, &c_request);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
-    if (MPI_SUCCESS == c_ierr) *request = MPI_Request_c2f(c_request);
+    if (MPI_SUCCESS == c_ierr) *request = PMPI_Request_c2f(c_request);
 }

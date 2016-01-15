@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2010-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -24,7 +26,8 @@
 #include "ompi/mpi/fortran/base/strings.h"
 #include "opal/util/argv.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_COMM_SPAWN = ompi_comm_spawn_f
 #pragma weak pmpi_comm_spawn = ompi_comm_spawn_f
 #pragma weak pmpi_comm_spawn_ = ompi_comm_spawn_f
@@ -32,7 +35,7 @@
 
 #pragma weak PMPI_Comm_spawn_f = ompi_comm_spawn_f
 #pragma weak PMPI_Comm_spawn_f08 = ompi_comm_spawn_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_COMM_SPAWN,
                             pmpi_comm_spawn,
                             pmpi_comm_spawn_,
@@ -40,6 +43,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_COMM_SPAWN,
                             pompi_comm_spawn_f,
                             (char *command, char *argv, MPI_Fint *maxprocs, MPI_Fint *info, MPI_Fint *root, MPI_Fint *comm, MPI_Fint *intercomm, MPI_Fint *array_of_errcodes, MPI_Fint *ierr, int cmd_len, int string_len),
                             (command, argv, maxprocs, info, root, comm, intercomm, array_of_errcodes, ierr, cmd_len, string_len) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -50,9 +54,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_COMM_SPAWN,
 
 #pragma weak MPI_Comm_spawn_f = ompi_comm_spawn_f
 #pragma weak MPI_Comm_spawn_f08 = ompi_comm_spawn_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_COMM_SPAWN,
                             mpi_comm_spawn,
                             mpi_comm_spawn_,
@@ -60,12 +63,11 @@ OMPI_GENERATE_F77_BINDINGS (MPI_COMM_SPAWN,
                             ompi_comm_spawn_f,
                             (char *command, char *argv, MPI_Fint *maxprocs, MPI_Fint *info, MPI_Fint *root, MPI_Fint *comm, MPI_Fint *intercomm, MPI_Fint *array_of_errcodes, MPI_Fint *ierr, int cmd_len, int string_len),
                             (command, argv, maxprocs, info, root, comm, intercomm, array_of_errcodes, ierr, cmd_len, string_len) )
+#else
+#define ompi_comm_spawn_f pompi_comm_spawn_f
+#endif
 #endif
 
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
-#endif
 
 void ompi_comm_spawn_f(char *command, char *argv, MPI_Fint *maxprocs,
 		      MPI_Fint *info, MPI_Fint *root, MPI_Fint *comm,
@@ -80,9 +82,9 @@ void ompi_comm_spawn_f(char *command, char *argv, MPI_Fint *maxprocs,
     char *c_command;
     OMPI_ARRAY_NAME_DECL(array_of_errcodes);
 
-    c_comm = MPI_Comm_f2c(*comm);
-    c_info = MPI_Info_f2c(*info);
-    MPI_Comm_size(c_comm, &size);
+    c_comm = PMPI_Comm_f2c(*comm);
+    c_info = PMPI_Info_f2c(*info);
+    PMPI_Comm_size(c_comm, &size);
     ompi_fortran_string_f2c(command, cmd_len, &c_command);
 
     /* It's allowed to ignore the errcodes */
@@ -102,7 +104,7 @@ void ompi_comm_spawn_f(char *command, char *argv, MPI_Fint *maxprocs,
         ompi_fortran_argv_f2c(argv, string_len, string_len, &c_argv);
     }
 
-    c_ierr = MPI_Comm_spawn(c_command, c_argv,
+    c_ierr = PMPI_Comm_spawn(c_command, c_argv,
                             OMPI_FINT_2_INT(*maxprocs),
                             c_info,
                             OMPI_FINT_2_INT(*root),
@@ -110,7 +112,7 @@ void ompi_comm_spawn_f(char *command, char *argv, MPI_Fint *maxprocs,
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {
-        *intercomm = MPI_Comm_c2f(c_new_comm);
+        *intercomm = PMPI_Comm_c2f(c_new_comm);
     }
     free(c_command);
     if (MPI_ARGV_NULL != c_argv && NULL != c_argv) {

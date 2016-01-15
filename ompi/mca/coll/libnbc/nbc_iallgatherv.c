@@ -45,9 +45,9 @@ int ompi_coll_libnbc_iallgatherv(const void* sendbuf, int sendcount, MPI_Datatyp
   rank = ompi_comm_rank (comm);
   p = ompi_comm_size (comm);
 
-  res = MPI_Type_extent (recvtype, &rcvext);
+  res = ompi_datatype_type_extent (recvtype, &rcvext);
   if (OPAL_UNLIKELY(MPI_SUCCESS != res)) {
-    NBC_Error ("MPI Error in MPI_Type_extent() (%i)", res);
+    NBC_Error ("MPI Error in ompi_datatype_type_extent() (%i)", res);
     return res;
   }
 
@@ -124,9 +124,9 @@ int ompi_coll_libnbc_iallgatherv_inter(const void* sendbuf, int sendcount, MPI_D
 
   rsize = ompi_comm_remote_size (comm);
 
-  res = MPI_Type_extent(recvtype, &rcvext);
+  res = ompi_datatype_type_extent(recvtype, &rcvext);
   if (OPAL_UNLIKELY(MPI_SUCCESS != res)) {
-    NBC_Error ("MPI Error in MPI_Type_extent() (%i)", res);
+    NBC_Error ("MPI Error in ompi_datatype_type_extent() (%i)", res);
     return res;
   }
 

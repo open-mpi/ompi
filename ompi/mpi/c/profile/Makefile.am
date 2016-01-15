@@ -16,6 +16,8 @@
 # Copyright (c) 2012-2013 Inria.  All rights reserved.
 # Copyright (c) 2013      Los Alamos National Security, LLC. All rights
 #                         reserved.
+# Copyright (c) 2015      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -25,26 +27,18 @@
 
 include $(top_srcdir)/Makefile.ompi-rules
 
-#
-# OMPI_PROFILING_DEFINES flag s enabled when we want our MPI_* symbols
-# to be replaced by PMPI_*. In other words, this flag decides
-# whether "profile/defines.h" is included or not. "profile/defines.h"
-# replaces all MPI_* symbols with PMPI_* symbols. In this directory
-# we definately need it to be 1.
-#
-AM_CPPFLAGS = -DOMPI_PROFILING_DEFINES=1
+# If OMPI_BUILD_MPI_PROFILING is enabled when we want our generated MPI_* symbols
+# to be replaced by PMPI_*.
+# In this directory, we definately need it to be 1.
+
+AM_CPPFLAGS = -DOMPI_BUILD_MPI_PROFILING=1
 
 #
 # This build needs to go through only if profiling is required.
 # Further, this build HAS to go through if profiling is required.
 #
 
-noinst_LTLIBRARIES =
-if BUILD_PMPI_BINDINGS_LAYER
-noinst_LTLIBRARIES += libmpi_c_pmpi.la
-endif
-
-headers = defines.h
+noinst_LTLIBRARIES = libmpi_c_pmpi.la
 
 nodist_libmpi_c_pmpi_la_SOURCES = \
         pabort.c \
@@ -449,7 +443,6 @@ $(nodist_libmpi_c_pmpi_la_SOURCES):
 
 if WANT_INSTALL_HEADERS
 ompidir = $(ompiincludedir)/$(subdir)
-ompi_HEADERS = $(headers)
 endif
 
 # These files were created by targets above

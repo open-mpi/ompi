@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2012 The University of Tennessee and The University
+ * Copyright (c) 2004-2015 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
@@ -32,12 +32,11 @@
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/memchecker.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_Ialltoallv = PMPI_Ialltoallv
 #endif
-
-#if OMPI_PROFILING_DEFINES
-#include "ompi/mpi/c/profile/defines.h"
+#define MPI_Ialltoallv PMPI_Ialltoallv
 #endif
 
 static const char FUNC_NAME[] = "MPI_Ialltoallv";
@@ -49,7 +48,6 @@ int MPI_Ialltoallv(const void *sendbuf, const int sendcounts[], const int sdispl
                    MPI_Request *request)
 {
     int i, size, err;
-    size_t sendtype_size, recvtype_size;
 
     MEMCHECKER(
         ptrdiff_t recv_ext;
@@ -93,20 +91,29 @@ int MPI_Ialltoallv(const void *sendbuf, const int sendcounts[], const int sdispl
 
         if ((NULL == sendcounts) || (NULL == sdispls) ||
             (NULL == recvcounts) || (NULL == rdispls) ||
-            MPI_IN_PLACE == sendbuf || MPI_IN_PLACE == recvbuf) {
+            (MPI_IN_PLACE == sendbuf && OMPI_COMM_IS_INTER(comm)) ||
+            MPI_IN_PLACE == recvbuf) {
             return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
+        } else if (MPI_IN_PLACE == sendbuf) {
+            /* MPI_IN_PLACE is not fully implemented yet,
+               return MPI_ERR_INTERN for now */
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INTERN,
+                                          FUNC_NAME);
         }
 
         size = OMPI_COMM_IS_INTER(comm)?ompi_comm_remote_size(comm):ompi_comm_size(comm);
         for (i = 0; i < size; ++i) {
-            OMPI_CHECK_DATATYPE_FOR_SEND(err, sendtype, sendcounts[i]);
-            OMPI_ERRHANDLER_CHECK(err, comm, err, FUNC_NAME);
+            if (MPI_IN_PLACE != sendbuf) {
+                OMPI_CHECK_DATATYPE_FOR_SEND(err, sendtype, sendcounts[i]);
+                OMPI_ERRHANDLER_CHECK(err, comm, err, FUNC_NAME);
+            }
             OMPI_CHECK_DATATYPE_FOR_RECV(err, recvtype, recvcounts[i]);
             OMPI_ERRHANDLER_CHECK(err, comm, err, FUNC_NAME);
         }
 
         if (MPI_IN_PLACE != sendbuf && !OMPI_COMM_IS_INTER(comm)) {
             int me = ompi_comm_rank(comm);
+            size_t sendtype_size, recvtype_size;
             ompi_datatype_type_size(sendtype, &sendtype_size);
             ompi_datatype_type_size(recvtype, &recvtype_size);
             if ((sendtype_size*sendcounts[me]) != (recvtype_size*recvcounts[me])) {

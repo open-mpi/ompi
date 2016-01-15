@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2011-2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -22,14 +24,15 @@
 
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_BUFFER_DETACH = ompi_buffer_detach_f
 #pragma weak pmpi_buffer_detach = ompi_buffer_detach_f
 #pragma weak pmpi_buffer_detach_ = ompi_buffer_detach_f
 #pragma weak pmpi_buffer_detach__ = ompi_buffer_detach_f
 
 #pragma weak PMPI_Buffer_detach_f = ompi_buffer_detach_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_BUFFER_DETACH,
                            pmpi_buffer_detach,
                            pmpi_buffer_detach_,
@@ -37,6 +40,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_BUFFER_DETACH,
                            pompi_buffer_detach_f,
                            (char *buffer, MPI_Fint *size, MPI_Fint *ierr),
                            (buffer, size, ierr) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -46,9 +50,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_BUFFER_DETACH,
 #pragma weak mpi_buffer_detach__ = ompi_buffer_detach_f
 
 #pragma weak MPI_Buffer_detach_f = ompi_buffer_detach_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_BUFFER_DETACH,
                            mpi_buffer_detach,
                            mpi_buffer_detach_,
@@ -56,12 +59,11 @@ OMPI_GENERATE_F77_BINDINGS (MPI_BUFFER_DETACH,
                            ompi_buffer_detach_f,
                            (char *buffer, MPI_Fint *size, MPI_Fint *ierr),
                            (buffer, size, ierr) )
+#else
+#define ompi_buffer_detach_f pompi_buffer_detach_f
+#endif
 #endif
 
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
-#endif
 
 /* (this comment is repeated in ompi/mpi/fortran/use-mpi-f08/buffer_detach.c)
  *
@@ -82,7 +84,7 @@ void ompi_buffer_detach_f(char *buffer, MPI_Fint *size, MPI_Fint *ierr)
     void *dummy;
     OMPI_SINGLE_NAME_DECL(size);
 
-    c_ierr = MPI_Buffer_detach(&dummy, OMPI_SINGLE_NAME_CONVERT(size));
+    c_ierr = PMPI_Buffer_detach(&dummy, OMPI_SINGLE_NAME_CONVERT(size));
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {

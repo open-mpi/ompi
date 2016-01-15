@@ -30,6 +30,9 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
 
 #include "opal/class/opal_list.h"
 #include "opal/mca/mca.h"
@@ -280,30 +283,57 @@ static void mca_base_component_repository_release_internal (mca_base_component_r
 }
 #endif
 
-void mca_base_component_repository_release(const mca_base_component_t *component)
-{
 #if OPAL_HAVE_DL_SUPPORT
+static mca_base_component_repository_item_t *find_component (const char *type, const char *name)
+{
     mca_base_component_repository_item_t *ri;
     opal_list_t *component_list;
     int ret;
 
-    ret = opal_hash_table_get_value_ptr (&mca_base_component_repository, component->mca_type_name,
-                                         strlen (component->mca_type_name), (void **) &component_list);
+    ret = opal_hash_table_get_value_ptr (&mca_base_component_repository, type,
+                                         strlen (type), (void **) &component_list);
     if (OPAL_SUCCESS != ret) {
         /* component does not exist in the repository */
-        return;
+        return NULL;
     }
 
     OPAL_LIST_FOREACH(ri, component_list, mca_base_component_repository_item_t) {
-        if (0 == strcmp (ri->ri_name, component->mca_component_name)) {
-            /* go ahead and dlclose the component if it is open */
-            mca_base_component_repository_release_internal (ri);
-            break;
+        if (0 == strcmp (ri->ri_name, name)) {
+            return ri;
         }
+    }
+
+    return NULL;
+}
+#endif
+
+void mca_base_component_repository_release(const mca_base_component_t *component)
+{
+#if OPAL_HAVE_DL_SUPPORT
+    mca_base_component_repository_item_t *ri;
+
+    ri = find_component (component->mca_type_name, component->mca_component_name);
+    if (NULL != ri && !(--ri->ri_refcnt)) {
+        mca_base_component_repository_release_internal (ri);
     }
 #endif
 }
 
+int mca_base_component_repository_retain_component (const char *type, const char *name)
+{
+#if OPAL_HAVE_DL_SUPPORT
+    mca_base_component_repository_item_t *ri = find_component(type, name);
+
+    if (NULL != ri) {
+        ++ri->ri_refcnt;
+        return OPAL_SUCCESS;
+    }
+
+    return OPAL_ERR_NOT_FOUND;
+#else
+    return OPAL_ERR_NOT_SUPPORTED;
+#endif
+}
 
 int mca_base_component_repository_open (mca_base_framework_t *framework,
                                         mca_base_component_repository_item_t *ri)
@@ -443,6 +473,7 @@ int mca_base_component_repository_open (mca_base_framework_t *framework,
            component to be closed later. */
 
         ri->ri_component_struct = mitem->cli_component = component_struct;
+        ri->ri_refcnt = 1;
         opal_list_append(&framework->framework_components, &mitem->super);
 
         opal_output_verbose (MCA_BASE_VERBOSE_INFO, 0, "mca_base_component_repository_open: opened dynamic %s MCA "

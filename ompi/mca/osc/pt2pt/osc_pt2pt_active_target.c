@@ -321,6 +321,9 @@ int ompi_osc_pt2pt_complete (ompi_win_t *win)
 
     peers = sync->peer_list.peers;
 
+    /* need to reset the sync here to avoid processing incorrect post messages */
+    ompi_osc_pt2pt_sync_reset (sync);
+
     OPAL_THREAD_UNLOCK(&module->lock);
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
@@ -345,12 +348,14 @@ int ompi_osc_pt2pt_complete (ompi_win_t *win)
 
         complete_req.base.type = OMPI_OSC_PT2PT_HDR_TYPE_COMPLETE;
         complete_req.base.flags = OMPI_OSC_PT2PT_HDR_FLAG_VALID;
-#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT && OPAL_ENABLE_DEBUG
+        complete_req.frag_count = module->epoch_outgoing_frag_count[rank];
+#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
+#if OPAL_ENABLE_DEBUG
         complete_req.padding[0] = 0;
         complete_req.padding[1] = 0;
 #endif
-        complete_req.frag_count = module->epoch_outgoing_frag_count[rank];
-        osc_pt2pt_hton(&complete_req, proc);
+        osc_pt2pt_hton(&complete_req, ompi_comm_peer_lookup (module->comm, rank));
+#endif
 
         ompi_osc_pt2pt_peer_t *peer = ompi_osc_pt2pt_peer_lookup (module, rank);
 
@@ -394,8 +399,6 @@ int ompi_osc_pt2pt_complete (ompi_win_t *win)
     while (module->outgoing_frag_count != module->outgoing_frag_signal_count) {
         opal_condition_wait(&module->cond, &module->lock);
     }
-
-    ompi_osc_pt2pt_sync_reset (sync);
 
     /* unlock here, as group cleanup can take a while... */
     OPAL_THREAD_UNLOCK(&module->lock);

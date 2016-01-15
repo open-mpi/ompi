@@ -12,6 +12,8 @@
 # Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2013      Mellanox Technologies, Inc.
 #                         All rights reserved.
+# Copyright (c) 2015      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -670,7 +672,14 @@ test "x$RPM_BUILD_ROOT" != "x" && rm -rf $RPM_BUILD_ROOT
 
 %files
 %defattr(-, root, root, -)
+%if %(test "%{_prefix}" = "/usr" && echo 1 || echo 0)
+%{_bindir}/*
+%{_includedir}/*
+%{_libdir}/*
+%{_datadir}
+%else
 %{_prefix}
+%endif
 # If the sysconfdir is not under the prefix, then list it explicitly.
 %if !%{sysconfdir_in_prefix}
 %{_sysconfdir}
@@ -706,7 +715,13 @@ test "x$RPM_BUILD_ROOT" != "x" && rm -rf $RPM_BUILD_ROOT
 
 %files runtime -f runtime.files
 %defattr(-, root, root, -)
-%dir %{_prefix}
+%if %(test "%{_prefix}" = "/usr" && echo 1 || echo 0)
+%{_bindir}/*
+%{_libdir}/*
+%{_datadir}
+%else
+%{_prefix}
+%endif
 # If the sysconfdir is not under the prefix, then list it explicitly.
 %if !%{sysconfdir_in_prefix}
 %{_sysconfdir}
@@ -729,9 +744,6 @@ test "x$RPM_BUILD_ROOT" != "x" && rm -rf $RPM_BUILD_ROOT
 %{shell_scripts_path}/%{shell_scripts_basename}.sh
 %{shell_scripts_path}/%{shell_scripts_basename}.csh
 %endif
-%dir %{_bindir}
-%dir %{_libdir}
-%dir %{_libdir}/openmpi
 %doc README INSTALL LICENSE
 %{_pkgdatadir}
 
@@ -756,6 +768,9 @@ test "x$RPM_BUILD_ROOT" != "x" && rm -rf $RPM_BUILD_ROOT
 #
 #############################################################################
 %changelog
+* Thu Nov 12 2015 Gilles Gouaillardet <gilles@rist.or.jp>
+- Revamp packaging when prefix is /usr
+
 * Tue Jan 20 2015 Bert Wesarg <bert.wesarg@tu-dresden.de>
 - Remove VampirTrace wrapper from package.
 

@@ -503,9 +503,9 @@ static inline int NBC_Copy(const void *src, int srccount, MPI_Datatype srctype, 
     memcpy(tgt, src, srccount*ext);
   } else {
     /* we have to pack and unpack */
-    res = MPI_Pack_size(srccount, srctype, comm, &size);
+    res = PMPI_Pack_size(srccount, srctype, comm, &size);
     if (MPI_SUCCESS != res) {
-      NBC_Error ("MPI Error in MPI_Pack_size() (%i:%i)", res, size);
+      NBC_Error ("MPI Error in PMPI_Pack_size() (%i:%i)", res, size);
       return res;
     }
 
@@ -519,19 +519,19 @@ static inline int NBC_Copy(const void *src, int srccount, MPI_Datatype srctype, 
     }
 
     pos=0;
-    res = MPI_Pack(src, srccount, srctype, packbuf, size, &pos, comm);
+    res = PMPI_Pack(src, srccount, srctype, packbuf, size, &pos, comm);
 
     if (MPI_SUCCESS != res) {
-      NBC_Error ("MPI Error in MPI_Pack() (%i)", res);
+      NBC_Error ("MPI Error in PMPI_Pack() (%i)", res);
       free (packbuf);
       return res;
     }
 
     pos=0;
-    res = MPI_Unpack(packbuf, size, &pos, tgt, tgtcount, tgttype, comm);
+    res = PMPI_Unpack(packbuf, size, &pos, tgt, tgtcount, tgttype, comm);
     free(packbuf);
     if (MPI_SUCCESS != res) {
-      NBC_Error ("MPI Error in MPI_Unpack() (%i)", res);
+      NBC_Error ("MPI Error in PMPI_Unpack() (%i)", res);
       return res;
     }
   }
@@ -560,15 +560,15 @@ static inline int NBC_Unpack(void *src, int srccount, MPI_Datatype srctype, void
 
   } else {
     /* we have to unpack */
-    res = MPI_Pack_size(srccount, srctype, comm, &size);
+    res = PMPI_Pack_size(srccount, srctype, comm, &size);
     if (MPI_SUCCESS != res) {
-      NBC_Error ("MPI Error in MPI_Pack_size() (%i)", res);
+      NBC_Error ("MPI Error in PMPI_Pack_size() (%i)", res);
       return res;
     }
     pos = 0;
-    res = MPI_Unpack(src, size, &pos, tgt, srccount, srctype, comm);
+    res = PMPI_Unpack(src, size, &pos, tgt, srccount, srctype, comm);
     if (MPI_SUCCESS != res) {
-      NBC_Error ("MPI Error in MPI_Unpack() (%i)", res);
+      NBC_Error ("MPI Error in PMPI_Unpack() (%i)", res);
       return res;
     }
   }

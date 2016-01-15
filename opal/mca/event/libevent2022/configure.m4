@@ -1,8 +1,10 @@
 # -*- shell-script -*-
 #
-# Copyright (c) 2009-2013 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2012-2013 Los Alamos National Security, LLC.  All rights reserved.
 # Copyright (c) 2015      Intel, Inc. All rights reserved.
+# Copyright (c) 2015      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 #
 # $COPYRIGHT$
 #
@@ -90,7 +92,7 @@ AC_DEFUN([MCA_opal_event_libevent2022_CONFIG],[
     libevent_basedir="opal/mca/event/libevent2022"
 
     # If we're not building externally, configure this component
-    AS_IF([test "$with_libevent" = "internal" -o "$with_libevent" = "" -o "$with_libevent" = "yes"],
+    AS_IF([test "$with_libevent" = "internal" || test -z "$with_libevent" || test "$with_libevent" = "yes"],
           [MCA_opal_event_libevent2022_DO_THE_CONFIG],
           [AC_MSG_WARN([using an external libevent; disqualifiying this component])
            $2])
@@ -161,6 +163,7 @@ AC_DEFUN([MCA_opal_event_libevent2022_DO_THE_CONFIG], [
                   AC_HELP_STRING([--enable-event-debug], [enable event library debug output]))
     if test "$enable_event_debug" = "yes"; then
         event_args="$event_args --enable-debug-mode"
+        CFLAGS="-DUSE_DEBUG $CFLAGS"
     fi
 
     AC_MSG_RESULT([$event_args])
@@ -176,7 +179,7 @@ AC_DEFUN([MCA_opal_event_libevent2022_DO_THE_CONFIG], [
     # Finally, add some flags to the wrapper compiler if we're
     # building with developer headers so that our headers can
     # be found.
-    event_libevent2022_WRAPPER_EXTRA_CPPFLAGS='-I${includedir}/openmpi/opal/mca/event/libevent2022/libevent -I${includedir}/openmpi/opal/mca/event/libevent2022/libevent/include'
+    event_libevent2022_WRAPPER_EXTRA_CPPFLAGS='-I${pkgincludedir}/opal/mca/event/libevent2022/libevent -I${pkgincludedir}/opal/mca/event/libevent2022/libevent/include'
 
     CFLAGS="$CFLAGS_save"
     CPPFLAGS="$CPPFLAGS_save"
@@ -186,7 +189,7 @@ AC_DEFUN([MCA_opal_event_libevent2022_DO_THE_CONFIG], [
     # libevent/include/event2/event-config.h!).  Otherwise, set it to
     # 0.
     libevent_file=$libevent_basedir/libevent/config.h
-    AS_IF([test "$libevent_happy" = "yes" -a -r $libevent_file],
+    AS_IF([test "$libevent_happy" = "yes" && test -r $libevent_file],
           [OPAL_HAVE_WORKING_EVENTOPS=`grep HAVE_WORKING_EVENTOPS $libevent_file | awk '{print [$]3 }'`
            $1],
           [$2

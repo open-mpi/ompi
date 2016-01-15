@@ -13,6 +13,10 @@
 
 #include "oshmem_config.h"
 
+#include "opal/util/output.h"
+#include "opal/mca/base/base.h"
+#include "opal/mca/base/mca_base_framework.h"
+
 /*
  * Environment variables
  */
@@ -31,5 +35,19 @@ void oshmem_output_verbose(int level, int output_id, const char* prefix,
  */
 void oshmem_output(int output_id, const char* prefix, const char* file,
     int line, const char* function, const char* format, ...);
+
+
+/* Force opening output for framework
+ * We would like to display error messages in any case (debug/release mode,
+ * set/unset verbose level)
+ * Setting verbose level is not a way because it enables non error messages
+ */
+static inline void oshmem_framework_open_output(struct mca_base_framework_t *framework)
+{
+    if (-1 == framework->framework_output) {
+        framework->framework_output = opal_output_open(NULL);
+    }
+}
+
 
 #endif /* OSHMEM_UTIL_H */

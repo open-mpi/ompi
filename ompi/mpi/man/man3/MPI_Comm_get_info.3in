@@ -17,10 +17,20 @@ int MPI_Comm_get_info(MPI_Comm \fIcomm\fP, MPI_Info \fI*info_used\fP)
 .fi
 .SH Fortran Syntax
 .nf
-INCLUDE 'mpif.h'
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
 MPI_COMM_GET_INFO(\fICOMM, INFO_USED, IERROR\fP)
 	INTEGER	\fICOMM, INFO_USED, IERROR \fP
 .
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Comm_get_info(\fIcomm\fP, \fIinfo_used\fP, \fIierror\fP)
+	TYPE(MPI_Comm), INTENT(IN) :: \fIcomm\fP
+	TYPE(MPI_Info), INTENT(OUT) :: \fIinfo_used\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
+
 .fi
 .SH INPUT PARAMETERS
 .ft R

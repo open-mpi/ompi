@@ -22,7 +22,7 @@ EXTRA_DIST = post_configure.sh
 
 AM_CPPFLAGS = $(mtl_psm2_CPPFLAGS)
 
-dist_ompidata_DATA = help-mtl-psm.txt
+dist_ompidata_DATA = help-mtl-psm2.txt
 
 mtl_psm2_sources = \
 	       mtl_psm2.c \

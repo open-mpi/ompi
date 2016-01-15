@@ -18,9 +18,20 @@ int MPI_Graph_neighbors_count(MPI_Comm \fIcomm\fP, int\fI rank\fP,
 .fi
 .SH Fortran Syntax
 .nf
-INCLUDE 'mpif.h'
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
 MPI_GRAPH_NEIGHBORS_COUNT(\fICOMM, RANK, NNEIGHBORS, IERROR\fP)
 	INTEGER	\fICOMM, RANK, NNEIGHBORS, IERROR\fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Graph_neighbors_count(\fIcomm\fP, \fIrank\fP, \fInneighbors\fP, \fIierror\fP)
+	TYPE(MPI_Comm), INTENT(IN) :: \fIcomm\fP
+	INTEGER, INTENT(IN) :: \fIrank\fP
+	INTEGER, INTENT(OUT) :: \fInneighbors\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
 .SH C++ Syntax

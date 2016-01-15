@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013      Mellanox Technologies, Inc.
+ * Copyright (c) 2013-2015 Mellanox Technologies, Inc.
  *                         All rights reserved.
  * $COPYRIGHT$
  *
@@ -21,11 +21,24 @@
 
 #if OSHMEM_PROFILING
 #include "oshmem/include/pshmem.h"
+#pragma weak shmem_realloc = pshmem_realloc
 #pragma weak shrealloc = pshrealloc
 #include "oshmem/shmem/c/profile/defines.h"
 #endif
 
+static inline void* _shrealloc(void *ptr, size_t size);
+
+void* shmem_realloc(void *ptr, size_t size)
+{
+    return _shrealloc(ptr, size);
+}
+
 void* shrealloc(void *ptr, size_t size)
+{
+    return _shrealloc(ptr, size);
+}
+
+static inline void* _shrealloc(void *ptr, size_t size)
 {
     int rc;
     void* pBuff = NULL;

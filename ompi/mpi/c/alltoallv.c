@@ -32,12 +32,11 @@
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/memchecker.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_Alltoallv = PMPI_Alltoallv
 #endif
-
-#if OMPI_PROFILING_DEFINES
-#include "ompi/mpi/c/profile/defines.h"
+#define MPI_Alltoallv PMPI_Alltoallv
 #endif
 
 static const char FUNC_NAME[] = "MPI_Alltoallv";
@@ -97,6 +96,7 @@ int MPI_Alltoallv(const void *sendbuf, const int sendcounts[],
 
         if ((NULL == sendcounts) || (NULL == sdispls) ||
             (NULL == recvcounts) || (NULL == rdispls) ||
+            (MPI_IN_PLACE == sendbuf && OMPI_COMM_IS_INTER(comm)) ||
             MPI_IN_PLACE == recvbuf) {
             return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
         }

@@ -10,6 +10,9 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2010      Oak Ridge National Labs.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -26,12 +29,11 @@
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/constants.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_Init_thread = PMPI_Init_thread
 #endif
-
-#if OMPI_PROFILING_DEFINES
-#include "ompi/mpi/c/profile/defines.h"
+#define MPI_Init_thread PMPI_Init_thread
 #endif
 
 static const char FUNC_NAME[] = "MPI_Init_thread";
@@ -58,23 +60,6 @@ int MPI_Init_thread(int *argc, char ***argv, int required,
 #else
     *provided = MPI_THREAD_SINGLE;
 #endif
-
-    /* Ensure that we were not already initialized or finalized */
-
-    if (ompi_mpi_finalized) {
-        if (0 == ompi_comm_rank(MPI_COMM_WORLD)) {
-            opal_show_help("help-mpi-api.txt", "mpi-function-after-finalize",
-                           true, FUNC_NAME);
-        }
-        return ompi_errhandler_invoke(NULL, NULL, OMPI_ERRHANDLER_TYPE_COMM,
-                                      MPI_ERR_OTHER, FUNC_NAME);
-    } else if (ompi_mpi_initialized) {
-        if (0 == ompi_comm_rank(MPI_COMM_WORLD)) {
-            opal_show_help("help-mpi-api.txt", "mpi-initialize-twice",
-                           true, FUNC_NAME);
-        }
-        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_OTHER, FUNC_NAME);
-    }
 
     /* Call the back-end initialization function (we need to put as
        little in this function as possible so that if it's profiled, we

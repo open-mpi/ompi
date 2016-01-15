@@ -78,34 +78,17 @@ mca_btl_portals4_get(struct mca_btl_base_module_t* btl_base,
     frag->endpoint = btl_peer;
     frag->hdr.tag = MCA_BTL_TAG_MAX;
 
-    /* Bind the memory */
-    md.start = (void *)local_address;
-    md.length = size;
-    md.options = 0;
-    md.eq_handle = portals4_btl->recv_eq_h;
-    md.ct_handle = PTL_CT_NONE;
-
-    ret = PtlMDBind(portals4_btl->portals_ni_h,
-                    &md,
-                    &frag->md_h);
-
-    if (OPAL_UNLIKELY(PTL_OK != ret)) {
-        opal_output_verbose(1, opal_btl_base_framework.framework_output,
-                            "%s:%d: PtlMDBind failed: %d",
-                            __FILE__, __LINE__, ret);
-        return OPAL_ERROR;
-    }
-
     frag->match_bits = remote_handle->key;
-    frag->length = md.length;
+    frag->addr = local_address;
+    frag->length = size;
     frag->peer_proc = btl_peer->ptl_proc;
 
     OPAL_OUTPUT_VERBOSE((90, opal_btl_base_framework.framework_output, "PtlGet start=%p length=%ld nid=%x pid=%x match_bits=%lx\n",
         md.start, md.length, btl_peer->ptl_proc.phys.nid, btl_peer->ptl_proc.phys.pid, frag->match_bits));
 
-    ret = PtlGet(frag->md_h,
-                 0,
-                 md.length,
+    ret = PtlGet(portals4_btl->send_md_h,
+                 (ptl_size_t) local_address,
+                 size,
                  btl_peer->ptl_proc,
                  portals4_btl->recv_idx,
                  frag->match_bits, /* match bits */
@@ -115,8 +98,6 @@ mca_btl_portals4_get(struct mca_btl_base_module_t* btl_base,
         opal_output_verbose(1, opal_btl_base_framework.framework_output,
                             "%s:%d: PtlGet failed: %d",
                             __FILE__, __LINE__, ret);
-        PtlMDRelease(frag->md_h);
-        frag->md_h = PTL_INVALID_HANDLE;
         return OPAL_ERROR;
     }
     OPAL_OUTPUT_VERBOSE((90, opal_btl_base_framework.framework_output, "SUCCESS: PtlGet start=%p length=%ld nid=%x pid=%x match_bits=%lx\n",

@@ -23,7 +23,7 @@
  * These functions are normally invoked by the back-ends of:
  *
  * - The back-ends of MPI_Init() and MPI_Finalize()
- * - Communuicactor constructors (e.g., MPI_Comm_split()) and
+ * - Communicator constructors (e.g., MPI_Comm_split()) and
  *   destructors (e.g., MPI_Comm_free())
  * - The laminfo command
  */

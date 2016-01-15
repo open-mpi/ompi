@@ -31,7 +31,6 @@ mca_memheap_ptmalloc_module_t memheap_ptmalloc = {
         mca_memheap_ptmalloc_alloc,
         mca_memheap_ptmalloc_free,
 
-        mca_memheap_base_get_cached_mkey,
         mca_memheap_base_get_mkey,
         mca_memheap_base_find_offset,
         mca_memheap_base_is_symmetric_addr,

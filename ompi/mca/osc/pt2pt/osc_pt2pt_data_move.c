@@ -76,10 +76,6 @@ static void osc_pt2pt_accumulate_data_destructor (osc_pt2pt_accumulate_data_t *a
     if (acc_data->datatype) {
         OBJ_RELEASE(acc_data->datatype);
     }
-
-    if (acc_data->op) {
-        OBJ_RELEASE(acc_data->op);
-    }
 }
 
 OBJ_CLASS_DECLARATION(osc_pt2pt_accumulate_data_t);
@@ -644,7 +640,6 @@ static int osc_pt2pt_accumulate_allocate (ompi_osc_pt2pt_module_t *module, int p
     acc_data->datatype = datatype;
     OBJ_RETAIN(datatype);
     acc_data->op = op;
-    OBJ_RETAIN(op);
     acc_data->request_count = request_count;
 
     *acc_data_out = acc_data;
@@ -813,8 +808,6 @@ static int ompi_osc_pt2pt_acc_start (ompi_osc_pt2pt_module_t *module, int source
     ret = osc_pt2pt_accumulate_buffer (target, data, data_len, proc, acc_header->count,
                                       datatype, op);
 
-    OBJ_RELEASE(op);
-
     ompi_osc_pt2pt_accumulate_unlock (module);
 
     return ret;
@@ -890,8 +883,6 @@ static int ompi_osc_pt2pt_acc_long_start (ompi_osc_pt2pt_module_t *module, int s
         }
     } while (0);
 
-    OBJ_RELEASE(op);
-
     if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
         ompi_osc_pt2pt_accumulate_unlock (module);
     }
@@ -940,8 +931,6 @@ static int ompi_osc_pt2pt_gacc_start (ompi_osc_pt2pt_module_t *module, int sourc
             OBJ_RELEASE(acc_data);
         }
     } while (0);
-
-    OBJ_RELEASE(op);
 
     if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
         ompi_osc_pt2pt_accumulate_unlock (module);
@@ -1021,8 +1010,6 @@ static int ompi_osc_gacc_long_start (ompi_osc_pt2pt_module_t *module, int source
             break;
         }
     } while (0);
-
-    OBJ_RELEASE(op);
 
     if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
         ompi_osc_pt2pt_accumulate_unlock (module);
@@ -1631,6 +1618,7 @@ static int ompi_osc_pt2pt_callback (ompi_request_t *request)
     OPAL_THREAD_UNLOCK(&ompi_request_lock);
 
     assert(incoming_length >= sizeof(ompi_osc_pt2pt_header_base_t));
+    (void)incoming_length;  // silence compiler warning
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
                          "received pt2pt callback for fragment. source = %d, count = %u, type = 0x%x",

@@ -76,7 +76,7 @@ static inline
 ompi_op_t *
 ompi_osc_base_op_create(int op_id)
 {
-    ompi_op_t *op = MPI_Op_f2c(op_id);
+    ompi_op_t *op = PMPI_Op_f2c(op_id);
     OBJ_RETAIN(op);
     return op;
 }

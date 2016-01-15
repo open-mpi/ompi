@@ -94,7 +94,7 @@ static inline int opal_condition_timedwait(opal_condition_t *c,
     c->c_waiting++;
     if (opal_using_threads()) {
         absolute.tv_sec = abstime->tv_sec;
-        absolute.tv_usec = abstime->tv_nsec * 1000;
+        absolute.tv_usec = abstime->tv_nsec / 1000;
         gettimeofday(&tv,NULL);
         if (c->c_signaled == 0) {
             do {
@@ -108,7 +108,7 @@ static inline int opal_condition_timedwait(opal_condition_t *c,
         }
     } else {
         absolute.tv_sec = abstime->tv_sec;
-        absolute.tv_usec = abstime->tv_nsec * 1000;
+        absolute.tv_usec = abstime->tv_nsec / 1000;
         gettimeofday(&tv,NULL);
         if (c->c_signaled == 0) {
             do {

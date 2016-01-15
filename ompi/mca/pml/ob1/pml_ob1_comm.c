@@ -55,6 +55,7 @@ static void mca_pml_ob1_comm_construct(mca_pml_ob1_comm_t* comm)
 {
     OBJ_CONSTRUCT(&comm->wild_receives, opal_list_t);
     OBJ_CONSTRUCT(&comm->matching_lock, opal_mutex_t);
+    OBJ_CONSTRUCT(&comm->proc_lock, opal_mutex_t);
     comm->recv_sequence = 0;
     comm->procs = NULL;
     comm->last_probed = 0;
@@ -76,6 +77,7 @@ static void mca_pml_ob1_comm_destruct(mca_pml_ob1_comm_t* comm)
 
     OBJ_DESTRUCT(&comm->wild_receives);
     OBJ_DESTRUCT(&comm->matching_lock);
+    OBJ_DESTRUCT(&comm->proc_lock);
 }
 
 

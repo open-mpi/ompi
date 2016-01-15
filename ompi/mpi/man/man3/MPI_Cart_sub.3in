@@ -18,10 +18,21 @@ int MPI_Cart_sub(MPI_Comm \fIcomm\fP, const int\fI remain_dims\fP[], MPI_Comm\fI
 .fi
 .SH Fortran Syntax
 .nf
-INCLUDE 'mpif.h'
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
 MPI_CART_SUB(\fICOMM, REMAIN_DIMS, COMM_NEW, IERROR\fP)
 	INTEGER	\fICOMM, COMM_NEW, IERROR\fP
 	LOGICAL	\fIREMAIN_DIMS\fP(*)
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Cart_sub(\fIcomm\fP, \fIremain_dims\fP, \fInewcomm\fP, \fIierror\fP)
+	TYPE(MPI_Comm), INTENT(IN) :: \fIcomm\fP
+	LOGICAL, INTENT(IN) :: \fIremain_dims(*)\fP
+	TYPE(MPI_Comm), INTENT(OUT) :: \fInewcomm\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
 .SH C++ Syntax

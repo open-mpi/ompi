@@ -17,9 +17,18 @@ int MPI_Op_free(MPI_Op *\fIop\fP)
 .fi
 .SH Fortran Syntax
 .nf
-INCLUDE 'mpif.h'
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
 MPI_OP_FREE(\fIOP, IERROR\fP)
 	INTEGER	\fIOP, IERROR\fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Op_free(\fIop\fP, \fIierror\fP)
+	TYPE(MPI_Op), INTENT(INOUT) :: \fIop\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
 .SH C++ Syntax

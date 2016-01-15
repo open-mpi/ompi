@@ -21,6 +21,9 @@
 
 #include <time.h>
 #include <string.h>
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
 
 #include "opal_stdint.h"
 #include "opal/class/opal_pointer_array.h"
@@ -35,26 +38,40 @@
 
 #define OPAL_PMI_PAD  10
 
-/********     ERRHANDLER SUPPORT     ********/
-static opal_pmix_errhandler_fn_t errhandler = NULL;
+/********     ERRHANDLER SUPPORT FOR COMPONENTS THAT
+ ********     DO NOT NATIVELY SUPPORT IT
+ ********/
+static opal_pmix_notification_fn_t errhandler = NULL;
 
-void opal_pmix_base_register_handler(opal_pmix_errhandler_fn_t err)
+void opal_pmix_base_register_handler(opal_list_t *info,
+                                     opal_pmix_notification_fn_t err,
+                                     opal_pmix_errhandler_reg_cbfunc_t cbfunc,
+                                     void *cbdata)
 {
     errhandler = err;
+    if (NULL != cbfunc) {
+        cbfunc(OPAL_SUCCESS, 0, cbdata);
+    }
 }
 
 void opal_pmix_base_errhandler(int status,
                                opal_list_t *procs,
-                               opal_list_t *info)
+                               opal_list_t *info,
+                               opal_pmix_release_cbfunc_t cbfunc, void *cbdata)
 {
     if (NULL != errhandler) {
-        errhandler(status);
+        errhandler(status, procs, info, cbfunc, cbdata);
     }
 }
 
-void opal_pmix_base_deregister_handler(void)
+void opal_pmix_base_deregister_handler(int errid,
+                                       opal_pmix_op_cbfunc_t cbfunc,
+                                       void *cbdata)
 {
     errhandler = NULL;
+    if (NULL != cbfunc) {
+        cbfunc(OPAL_SUCCESS, cbdata);
+    }
 }
 
 struct lookup_caddy_t {

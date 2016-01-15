@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc. All rights reserved.
  * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2013-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -36,6 +36,7 @@
 #include "ompi/mca/osc/osc.h"
 #include "opal/util/info_subscriber.h"
 
+#include "ompi/runtime/params.h"
 
 /*
  * Table for Fortran <-> C communicator handle conversion.  Note that
@@ -89,10 +90,29 @@ ompi_win_init(void)
     return OMPI_SUCCESS;
 }
 
-
-int
-ompi_win_finalize(void)
+static void ompi_win_dump (ompi_win_t *win)
 {
+    opal_output(0, "Dumping information for window: %s\n", win->w_name);
+    opal_output(0,"  Fortran window handle: %d, window size: %d\n",
+                win->w_f_to_c_index, ompi_group_size (win->w_group));
+}
+
+int ompi_win_finalize(void)
+{
+    size_t size = opal_pointer_array_get_size (&ompi_mpi_windows);
+    /* start at 1 to skip win null */
+    for (size_t i = 1 ; i < size ; ++i) {
+        ompi_win_t *win =
+            (ompi_win_t *) opal_pointer_array_get_item (&ompi_mpi_windows, i);
+        if (NULL != win) {
+            if (ompi_debug_show_handle_leaks && !ompi_win_invalid(win)){
+                opal_output(0,"WARNING: MPI_Win still allocated in MPI_Finalize\n");
+                ompi_win_dump (win);
+            }
+            ompi_win_free (win);
+        }
+    }
+
     OBJ_DESTRUCT(&ompi_mpi_win_null.win);
     OBJ_DESTRUCT(&ompi_mpi_windows);
     OBJ_RELEASE(ompi_win_accumulate_ops);
@@ -100,7 +120,7 @@ ompi_win_finalize(void)
     return OMPI_SUCCESS;
 }
 
-static int alloc_window(struct ompi_communicator_t *comm, opal_info_t *info, ompi_win_t **win_out)
+static int alloc_window(struct ompi_communicator_t *comm, opal_info_t *info, int flavor, ompi_win_t **win_out)
 {
     ompi_win_t *win;
     ompi_group_t *group;
@@ -121,11 +141,11 @@ static int alloc_window(struct ompi_communicator_t *comm, opal_info_t *info, omp
     }
 
     win->w_acc_ops = acc_ops;
+    win->w_flavor = flavor;
 
     /* setup data that is independent of osc component */
     group = comm->c_local_group;
     OBJ_RETAIN(group);
-    ompi_group_increment_proc_count(group);
     win->w_group = group;
 
     *win_out = win;
@@ -180,7 +200,7 @@ ompi_win_create(void *base, size_t size,
     int model;
     int ret;
 
-    ret = alloc_window (comm, info, &win);
+    ret = alloc_window (comm, info, MPI_WIN_FLAVOR_CREATE, &win);
     if (OMPI_SUCCESS != ret) {
         return ret;
     }
@@ -212,7 +232,7 @@ ompi_win_allocate(size_t size, int disp_unit, opal_info_t *info,
     int ret;
     void *base;
 
-    ret = alloc_window (comm, info, &win);
+    ret = alloc_window (comm, info, MPI_WIN_FLAVOR_ALLOCATE, &win);
     if (OMPI_SUCCESS != ret) {
         return ret;
     }
@@ -245,7 +265,7 @@ ompi_win_allocate_shared(size_t size, int disp_unit, opal_info_t *info,
     int ret;
     void *base;
 
-    ret = alloc_window (comm, info, &win);
+    ret = alloc_window (comm, info, MPI_WIN_FLAVOR_SHARED, &win);
     if (OMPI_SUCCESS != ret) {
         return ret;
     }
@@ -276,7 +296,7 @@ ompi_win_create_dynamic(opal_info_t *info, ompi_communicator_t *comm, ompi_win_t
     int model;
     int ret;
 
-    ret = alloc_window (comm, info, &win);
+    ret = alloc_window (comm, info, MPI_WIN_FLAVOR_DYNAMIC, &win);
     if (OMPI_SUCCESS != ret) {
         return ret;
     }
@@ -346,7 +366,6 @@ ompi_win_get_name(ompi_win_t *win, char *win_name, int *length)
 int
 ompi_win_group(ompi_win_t *win, ompi_group_t **group) {
     OBJ_RETAIN(win->w_group);
-    ompi_group_increment_proc_count(win->w_group);
     *group = win->w_group;
 
     return OMPI_SUCCESS;
@@ -386,7 +405,6 @@ ompi_win_destruct(ompi_win_t *win)
     }
 
     if (NULL != win->w_group) {
-        ompi_group_decrement_proc_count(win->w_group);
         OBJ_RELEASE(win->w_group);
     }
 

@@ -100,6 +100,7 @@ int ompi_coll_base_sendrecv_nonzero_actual( void* sendbuf, size_t scount,
      */
     OPAL_OUTPUT ((ompi_coll_base_framework.framework_output, "%s:%d: Error %d occurred\n",
                   __FILE__, line, err));
+    (void)line;  // silence compiler warning
     if (MPI_STATUS_IGNORE != status) {
         status->MPI_ERROR = err;
     }

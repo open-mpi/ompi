@@ -73,21 +73,21 @@ AC_DEFUN([OPAL_CHECK_OPENFABRICS],[
                        [Add padding bytes to the openib BTL control header])
 
     AS_IF([test "$opal_want_verbs" = "no"],
-          [ompi_check_openib_happy="no"],
-          [ompi_check_openib_happy="yes"])
+          [opal_check_openib_happy="no"],
+          [opal_check_openib_happy="yes"])
 
     ompi_check_openib_$1_save_CPPFLAGS="$CPPFLAGS"
     ompi_check_openib_$1_save_LDFLAGS="$LDFLAGS"
     ompi_check_openib_$1_save_LIBS="$LIBS"
 
-    AS_IF([test "$ompi_check_openib_happy" = "yes"],
+    AS_IF([test "$opal_check_openib_happy" = "yes"],
             [AC_CHECK_HEADERS(
                 fcntl.h sys/poll.h,
                     [],
                     [AC_MSG_WARN([fcntl.h sys/poll.h not found.  Can not build component.])
-                    ompi_check_openib_happy="no"])])
+                    opal_check_openib_happy="no"])])
 
-    AS_IF([test "$ompi_check_openib_happy" = "yes"],
+    AS_IF([test "$opal_check_openib_happy" = "yes"],
           [OPAL_CHECK_PACKAGE([$1],
                               [infiniband/verbs.h],
                               [ibverbs],
@@ -95,14 +95,14 @@ AC_DEFUN([OPAL_CHECK_OPENFABRICS],[
                               [],
                               [$opal_verbs_dir],
                               [$opal_verbs_libdir],
-                              [ompi_check_openib_happy="yes"],
-                              [ompi_check_openib_happy="no"])])
+                              [opal_check_openib_happy="yes"],
+                              [opal_check_openib_happy="no"])])
 
     CPPFLAGS="$CPPFLAGS $$1_CPPFLAGS"
     LDFLAGS="$LDFLAGS $$1_LDFLAGS"
     LIBS="$LIBS $$1_LIBS"
 
-    AS_IF([test "$ompi_check_openib_happy" = "yes"],
+    AS_IF([test "$opal_check_openib_happy" = "yes"],
           [AC_CACHE_CHECK(
               [number of arguments to ibv_create_cq],
               [ompi_cv_func_ibv_create_cq_args],
@@ -120,7 +120,7 @@ AC_DEFUN([OPAL_CHECK_OPENFABRICS],[
            AS_IF([test "$ompi_cv_func_ibv_create_cq_args" = "unknown"],
                  [AC_MSG_WARN([Can not determine number of args to ibv_create_cq.])
                   AC_MSG_WARN([Not building component.])
-                  ompi_check_openib_happy="no"],
+                  opal_check_openib_happy="no"],
                  [AC_DEFINE_UNQUOTED([OPAL_IBV_CREATE_CQ_ARGS],
                                      [$ompi_cv_func_ibv_create_cq_args],
                                      [Number of arguments to ibv_create_cq])])])
@@ -139,7 +139,7 @@ AC_DEFUN([OPAL_CHECK_OPENFABRICS],[
     $1_have_opensm_devel=0
 
     # If we have the openib stuff available, find out what we've got
-    AS_IF([test "$ompi_check_openib_happy" = "yes"],
+    AS_IF([test "$opal_check_openib_happy" = "yes"],
           [AC_CHECK_DECLS([IBV_EVENT_CLIENT_REREGISTER, IBV_ACCESS_SO, IBV_ATOMIC_HCA], [], [],
                           [#include <infiniband/verbs.h>])
            AC_CHECK_FUNCS([ibv_get_device_list ibv_resize_cq])
@@ -235,7 +235,7 @@ AC_DEFUN([OPAL_CHECK_OPENFABRICS],[
     # will fail if the header is present but not compilable, *but it
     # will not print the big scary warning*.  See
     # http://lists.gnu.org/archive/html/autoconf/2008-10/msg00143.html.
-    AS_IF([test "$ompi_check_openib_happy" = "yes"],
+    AS_IF([test "$opal_check_openib_happy" = "yes"],
           [AC_CHECK_HEADERS([infiniband/driver.h], [], [],
                             [AC_INCLUDES_DEFAULT])])
 
@@ -276,7 +276,7 @@ AC_DEFUN([OPAL_CHECK_OPENFABRICS],[
     LDFLAGS="$ompi_check_openib_$1_save_LDFLAGS"
     LIBS="$ompi_check_openib_$1_save_LIBS"
 
-    AS_IF([test "$ompi_check_openib_happy" = "yes"],
+    AS_IF([test "$opal_check_openib_happy" = "yes"],
           [$2],
           [AS_IF([test "$opal_want_verbs" = "yes"],
                  [AC_MSG_WARN([Verbs support requested (via --with-verbs) but not found.])
@@ -332,7 +332,7 @@ AC_DEFUN([OPAL_CHECK_OPENFABRICS_CM],[
     LDFLAGS="$LDFLAGS $$1_LDFLAGS"
     LIBS="$LIBS $$1_LIBS"
 
-    AS_IF([test "$ompi_check_openib_happy" = "yes"],
+    AS_IF([test "$opal_check_openib_happy" = "yes"],
           [# Do we have a recent enough RDMA CM?  Need to have the
            # rdma_get_peer_addr (inline) function (originally appeared
            # in OFED v1.3).
@@ -387,11 +387,28 @@ AC_DEFUN([OPAL_CHECK_OPENFABRICS_CM],[
     fi
 ])dnl
 
+AC_DEFUN([OPAL_CHECK_EXP_VERBS],[
+    OPAL_VAR_SCOPE_PUSH([have_struct_ibv_exp_send_wr])
+
+    AC_MSG_CHECKING([whether expanded verbs are available])
+    AC_TRY_COMPILE([#include <infiniband/verbs_exp.h>], [struct ibv_exp_send_wr;],
+                   [have_struct_ibv_exp_send_wr=1
+                    AC_MSG_RESULT([yes])],
+                   [have_struct_ibv_exp_send_wr=0
+                    AC_MSG_RESULT([no])])
+
+    AC_DEFINE_UNQUOTED([HAVE_EXP_VERBS], [$have_struct_ibv_exp_send_wr], [Experimental verbs])
+    AC_CHECK_DECLS([IBV_EXP_ATOMIC_HCA_REPLY_BE, IBV_EXP_QP_CREATE_ATOMIC_BE_REPLY, ibv_exp_create_qp, ibv_exp_query_device, IBV_EXP_QP_INIT_ATTR_ATOMICS_ARG],
+                   [], [], [#include <infiniband/verbs_exp.h>])
+    AS_IF([test '$have_struct_ibv_exp_send_wr' = 1], [$1], [$2])
+    OPAL_VAR_SCOPE_POP
+])dnl
+
 AC_DEFUN([OPAL_CHECK_MLNX_OPENFABRICS],[
      $1_have_mverbs=0
      $1_have_mqe=0
 
-    AS_IF([test "$ompi_check_openib_happy" = "yes"],
+    AS_IF([test "$opal_check_openib_happy" = "yes"],
            [OPAL_CHECK_PACKAGE([$1],
                                [infiniband/mverbs.h],
                                [mverbs],
@@ -402,7 +419,7 @@ AC_DEFUN([OPAL_CHECK_MLNX_OPENFABRICS],[
                                [$1_have_mverbs=1],
                                [])])
 
-    AS_IF([test "$ompi_check_openib_happy" = "yes"],
+    AS_IF([test "$opal_check_openib_happy" = "yes"],
            [OPAL_CHECK_PACKAGE([$1],
                                [infiniband/mqe.h],
                                [mqe],

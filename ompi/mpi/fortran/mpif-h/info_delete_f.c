@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -24,7 +26,8 @@
 #include "ompi/communicator/communicator.h"
 #include "ompi/mpi/fortran/base/strings.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_INFO_DELETE = ompi_info_delete_f
 #pragma weak pmpi_info_delete = ompi_info_delete_f
 #pragma weak pmpi_info_delete_ = ompi_info_delete_f
@@ -32,7 +35,7 @@
 
 #pragma weak PMPI_Info_delete_f = ompi_info_delete_f
 #pragma weak PMPI_Info_delete_f08 = ompi_info_delete_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_INFO_DELETE,
                             pmpi_info_delete,
                             pmpi_info_delete_,
@@ -40,6 +43,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_INFO_DELETE,
                             pompi_info_delete_f,
                             (MPI_Fint *info, char *key, MPI_Fint *ierr, int key_len),
                             (info, key, ierr, key_len) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -50,9 +54,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_INFO_DELETE,
 
 #pragma weak MPI_Info_delete_f = ompi_info_delete_f
 #pragma weak MPI_Info_delete_f08 = ompi_info_delete_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_INFO_DELETE,
                             mpi_info_delete,
                             mpi_info_delete_,
@@ -60,12 +63,11 @@ OMPI_GENERATE_F77_BINDINGS (MPI_INFO_DELETE,
                             ompi_info_delete_f,
                             (MPI_Fint *info, char *key, MPI_Fint *ierr, int key_len),
                             (info, key, ierr, key_len) )
+#else
+#define ompi_info_delete_f pompi_info_delete_f
+#endif
 #endif
 
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
-#endif
 
 static const char FUNC_NAME[] = "MPI_INFO_DELETE";
 
@@ -85,9 +87,9 @@ void ompi_info_delete_f(MPI_Fint *info, char *key, MPI_Fint *ierr, int key_len)
         if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
         return;
     }
-    c_info = MPI_Info_f2c(*info);
+    c_info = PMPI_Info_f2c(*info);
 
-    c_ierr = MPI_Info_delete(c_info, c_key);
+    c_ierr = PMPI_Info_delete(c_info, c_key);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     free(c_key);

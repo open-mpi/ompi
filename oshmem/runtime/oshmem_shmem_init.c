@@ -3,8 +3,7 @@
  *                         All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- *
- * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -64,6 +63,7 @@
 #include "oshmem/mca/atomic/base/base.h"
 #include "oshmem/mca/memheap/base/base.h"
 #include "oshmem/mca/sshmem/base/base.h"
+#include "oshmem/info/info.h"
 #include "oshmem/proc/proc.h"
 #include "oshmem/proc/proc_group_cache.h"
 #include "oshmem/op/op.h"
@@ -149,7 +149,7 @@ int oshmem_shmem_init(int argc, char **argv, int requested, int *provided)
         if (!ompi_mpi_initialized && !ompi_mpi_finalized) {
             ret = ompi_mpi_init(argc, argv, requested, provided);
         }
-        MPI_Comm_dup(MPI_COMM_WORLD, &oshmem_comm_world);
+        PMPI_Comm_dup(MPI_COMM_WORLD, &oshmem_comm_world);
 
         if (OSHMEM_SUCCESS == ret) {
             ret = _shmem_init(argc, argv, requested, provided);
@@ -193,7 +193,8 @@ int oshmem_shmem_preconnect_all(void)
     /* force qp creation and rkey exchange for memheap. Does not force exchange of static vars */
     if (oshmem_preconnect_all) {
         long val;
-        int nproc = 0;
+        int nproc;
+        int my_pe;
         int i;
 
         val = 0xdeadbeaf;
@@ -206,11 +207,12 @@ int oshmem_shmem_preconnect_all(void)
             SHMEM_API_ERROR("shmem_preconnect_all failed");
             return OSHMEM_ERR_OUT_OF_RESOURCE;
         }
-        nproc = _num_pes();
+
+        nproc = oshmem_num_procs();
+        my_pe = oshmem_my_proc_id();
         for (i = 0; i < nproc; i++) {
-            shmem_long_p(preconnect_value, val, i);
+            shmem_long_p(preconnect_value, val, (my_pe + i) % nproc);
         }
-        shmem_fence();
         shmem_barrier_all();
         SHMEM_API_VERBOSE(5, "Preconnected all PEs");
     }
@@ -233,11 +235,6 @@ static int _shmem_init(int argc, char **argv, int requested, int *provided)
     int ret = OSHMEM_SUCCESS;
     char *error = NULL;
 
-    if (OSHMEM_SUCCESS != (ret = oshmem_proc_init())) {
-        error = "oshmem_proc_init() failed";
-        goto error;
-    }
-
     /* Register the OSHMEM layer's MCA parameters */
     if (OSHMEM_SUCCESS != (ret = oshmem_shmem_register_params())) {
         error = "oshmem_info_register: oshmem_register_params failed";
@@ -249,6 +246,18 @@ static int _shmem_init(int argc, char **argv, int requested, int *provided)
     shmem_api_logger_output = opal_output_open(NULL);
     opal_output_set_verbosity(shmem_api_logger_output,
                               oshmem_shmem_api_verbose);
+
+    /* initialize info */
+    if (OSHMEM_SUCCESS != (ret = oshmem_info_init())) {
+        error = "oshmem_info_init() failed";
+        goto error;
+    }
+
+    /* initialize proc */
+    if (OSHMEM_SUCCESS != (ret = oshmem_proc_init())) {
+        error = "oshmem_proc_init() failed";
+        goto error;
+    }
 
     if (OSHMEM_SUCCESS != (ret = oshmem_group_cache_list_init())) {
         error = "oshmem_group_cache_list_init() failed";

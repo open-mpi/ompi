@@ -56,7 +56,6 @@ int mca_pml_ob1_send_request_start_cuda(mca_pml_ob1_send_request_t* sendreq,
                                         mca_bml_base_btl_t* bml_btl,
                                         size_t size) {
     int rc;
-#if OPAL_CUDA_SUPPORT_41
 #if OPAL_CUDA_GDR_SUPPORT
     /* With some BTLs, switch to RNDV from RGET at large messages */
     if ((sendreq->req_send.req_base.req_convertor.flags & CONVERTOR_CUDA) &&
@@ -95,10 +94,6 @@ int mca_pml_ob1_send_request_start_cuda(mca_pml_ob1_send_request_t* sendreq,
         sendreq->req_send.req_base.req_convertor.flags |= CONVERTOR_CUDA;
         rc = mca_pml_ob1_send_request_start_rndv(sendreq, bml_btl, 0, 0);
     }
-#else
-    /* Just do the rendezvous but set initial data to be sent to zero */
-    rc = mca_pml_ob1_send_request_start_rndv(sendreq, bml_btl, 0, 0);
-#endif /* OPAL_CUDA_SUPPORT_41 */
     return rc;
 }
 

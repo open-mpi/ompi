@@ -18,11 +18,23 @@ int MPI_Type_get_envelope(MPI_Datatype \fIdatatype\fP, int *\fInum_integers\fP,
 .fi
 .SH Fortran Syntax
 .nf
-INCLUDE 'mpif.h'
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
 MPI_TYPE_GET_ENVELOPE(\fIDATATYPE, NUM_INTEGERS, NUM_ADDRESSES,
 		NUM_DATATYPES, COMBINER, IERROR\fP)
 	INTEGER	\fIDATATYPE, NUM_INTEGERS, NUM_ADDRESSES\fP
 	INTEGER	\fINUM_DATATYPES, COMBINER, IERROR\fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Type_get_envelope(\fIdatatype\fP, \fInum_integers\fP, \fInum_addresses\fP, \fInum_datatypes\fP,
+		\fIcombiner\fP, \fIierror\fP)
+	TYPE(MPI_Datatype), INTENT(IN) :: \fIdatatype\fP
+	INTEGER, INTENT(OUT) :: \fInum_integers\fP, \fInum_addresses\fP, \fInum_datatypes,\fP
+	\fIcombiner\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
 .SH C++ Syntax

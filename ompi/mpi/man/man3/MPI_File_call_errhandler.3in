@@ -20,9 +20,19 @@ int MPI_File_call_errhandler(MPI_File \fIfh\fP, int \fIerrorcode\fP)
 .fi
 .SH Fortran Syntax
 .nf
-INCLUDE 'mpif.h'
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
 MPI_FILE_CALL_ERRHANDLER(\fIFH, ERRORCODE, IERROR\fP)
 	INTEGER	\fIFH, IERRORCODE, IERROR\fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_File_call_errhandler(\fIfh\fP, \fIerrorcode\fP, \fIierror\fP)
+	TYPE(MPI_File), INTENT(IN) :: \fIfh\fP
+	INTEGER, INTENT(IN) :: \fIerrorcode\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
 .SH C++ Syntax

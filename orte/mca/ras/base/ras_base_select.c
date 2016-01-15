@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -9,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2011-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -45,7 +46,7 @@ int orte_ras_base_select(void)
     if( OPAL_SUCCESS != mca_base_select("ras", orte_ras_base_framework.framework_output,
                                         &orte_ras_base_framework.framework_components,
                                         (mca_base_module_t **) &best_module,
-                                        (mca_base_component_t **) &best_component) ) {
+                                        (mca_base_component_t **) &best_component, NULL) ) {
         /* This will only happen if no component was selected */
         /* If we didn't find one to select, that is okay */
         return ORTE_SUCCESS;

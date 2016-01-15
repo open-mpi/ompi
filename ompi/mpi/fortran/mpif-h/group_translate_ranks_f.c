@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -22,7 +24,8 @@
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 #include "ompi/group/group.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_GROUP_TRANSLATE_RANKS = ompi_group_translate_ranks_f
 #pragma weak pmpi_group_translate_ranks = ompi_group_translate_ranks_f
 #pragma weak pmpi_group_translate_ranks_ = ompi_group_translate_ranks_f
@@ -30,7 +33,7 @@
 
 #pragma weak PMPI_Group_translate_ranks_f = ompi_group_translate_ranks_f
 #pragma weak PMPI_Group_translate_ranks_f08 = ompi_group_translate_ranks_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_GROUP_TRANSLATE_RANKS,
                            pmpi_group_translate_ranks,
                            pmpi_group_translate_ranks_,
@@ -38,6 +41,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_GROUP_TRANSLATE_RANKS,
                            pompi_group_translate_ranks_f,
                            (MPI_Fint *group1, MPI_Fint *n, MPI_Fint *ranks1, MPI_Fint *group2, MPI_Fint *ranks2, MPI_Fint *ierr),
                            (group1, n, ranks1, group2, ranks2, ierr) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -48,9 +52,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_GROUP_TRANSLATE_RANKS,
 
 #pragma weak MPI_Group_translate_ranks_f = ompi_group_translate_ranks_f
 #pragma weak MPI_Group_translate_ranks_f08 = ompi_group_translate_ranks_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_GROUP_TRANSLATE_RANKS,
                            mpi_group_translate_ranks,
                            mpi_group_translate_ranks_,
@@ -58,12 +61,11 @@ OMPI_GENERATE_F77_BINDINGS (MPI_GROUP_TRANSLATE_RANKS,
                            ompi_group_translate_ranks_f,
                            (MPI_Fint *group1, MPI_Fint *n, MPI_Fint *ranks1, MPI_Fint *group2, MPI_Fint *ranks2, MPI_Fint *ierr),
                            (group1, n, ranks1, group2, ranks2, ierr) )
+#else
+#define ompi_group_translate_ranks_f pompi_group_translate_ranks_f
+#endif
 #endif
 
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
-#endif
 
 void ompi_group_translate_ranks_f(MPI_Fint *group1, MPI_Fint *n,
 				  MPI_Fint *ranks1, MPI_Fint *group2,
@@ -75,13 +77,13 @@ void ompi_group_translate_ranks_f(MPI_Fint *group1, MPI_Fint *n,
   OMPI_ARRAY_NAME_DECL(ranks2);
 
   /* Make the fortran to c representation conversion */
-  c_group1 = MPI_Group_f2c(*group1);
-  c_group2 = MPI_Group_f2c(*group2);
+  c_group1 = PMPI_Group_f2c(*group1);
+  c_group2 = PMPI_Group_f2c(*group2);
 
   OMPI_ARRAY_FINT_2_INT(ranks1, *n);
   OMPI_ARRAY_FINT_2_INT_ALLOC(ranks2, *n);
 
-  c_ierr = MPI_Group_translate_ranks(c_group1,
+  c_ierr = PMPI_Group_translate_ranks(c_group1,
                                      OMPI_FINT_2_INT(*n),
                                      OMPI_ARRAY_NAME_CONVERT(ranks1),
                                      c_group2,

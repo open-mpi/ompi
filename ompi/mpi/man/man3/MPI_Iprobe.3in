@@ -18,10 +18,22 @@ int MPI_Iprobe(int \fIsource\fP, int\fI tag\fP, MPI_Comm\fI comm\fP, int\fI *fla
 .fi
 .SH Fortran Syntax
 .nf
-INCLUDE 'mpif.h'
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
 MPI_IPROBE(\fISOURCE, TAG, COMM, FLAG, STATUS, IERROR\fP)
 	LOGICAL	\fIFLAG\fP
 	INTEGER	\fISOURCE, TAG, COMM, STATUS(MPI_STATUS_SIZE), IERROR\fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Iprobe(\fIsource\fP, \fItag\fP, \fIcomm\fP, \fIflag\fP, \fIstatus\fP, \fIierror\fP)
+	INTEGER, INTENT(IN) :: \fIsource\fP, \fItag\fP
+	TYPE(MPI_Comm), INTENT(IN) :: \fIcomm\fP
+	LOGICAL, INTENT(OUT) :: \fIflag\fP
+	TYPE(MPI_Status) :: \fIstatus\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
 .SH C++ Syntax

@@ -17,10 +17,21 @@ int MPI_Win_get_name(MPI_Win \fIwin\fP, char *\fIwin_name\fP, int *\fIresultlen\
 .fi
 .SH Fortran Syntax
 .nf
-INCLUDE 'mpif.h'
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
 MPI_WIN_GET_NAME(\fIWIN, WIN_NAME, RESULTLEN, IERROR\fP)
 	INTEGER \fIWIN, RESULTLEN, IERROR\fP
 	CHARACTER*(*) \fIWIN_NAME\fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Win_get_name(\fIwin\fP, \fIwin_name\fP, \fIresultlen\fP, \fIierror\fP)
+	TYPE(MPI_Win), INTENT(IN) :: \fIwin\fP
+	CHARACTER(LEN=MPI_MAX_OBJECT_NAME), INTENT(OUT) :: \fIwin_name\fP
+	INTEGER, INTENT(OUT) :: \fIresultlen\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
 .SH C++ Syntax

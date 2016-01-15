@@ -10,7 +10,13 @@
 #
 # $HEADER$
 
+include $(top_srcdir)/Makefile.ompi-rules
+
+man_pages = oshcc.1 shmemcc.1 oshfort.1 shmemfort.1 oshrun.1 shmemrun.1
+
 if PROJECT_OSHMEM
+man_MANS = $(man_pages)
+
 nodist_oshmemdata_DATA =  \
 	shmemcc-wrapper-data.txt \
 	shmemfort-wrapper-data.txt
@@ -24,10 +30,6 @@ install-exec-hook:
 	(cd $(DESTDIR)$(bindir); rm -f oshcc$(EXEEXT); $(LN_S) mpicc$(EXEEXT) oshcc$(EXEEXT))
 	(cd $(DESTDIR)$(bindir); rm -f shmemfort$(EXEEXT); $(LN_S) mpifort$(EXEEXT) shmemfort$(EXEEXT))
 	(cd $(DESTDIR)$(bindir); rm -f oshfort$(EXEEXT); $(LN_S) mpifort$(EXEEXT) oshfort$(EXEEXT))
-if OSHMEM_WANT_JAVA_BINDINGS
-	(cd $(DESTDIR)$(bindir); rm -f shmemjavac$(EXEEXT); $(LN_S) mpijavac$(EXEEXT) shmemjavac$(EXEEXT))
-	(cd $(DESTDIR)$(bindir); rm -f oshjavac$(EXEEXT); $(LN_S) mpijavac$(EXEEXT) oshjavac$(EXEEXT))
-endif
 
 install-data-hook:
 	(cd $(DESTDIR)$(pkgdatadir); rm -f oshcc-wrapper-data.txt; $(LN_S) shmemcc-wrapper-data.txt oshcc-wrapper-data.txt)
@@ -40,13 +42,46 @@ uninstall-local:
 	$(DESTDIR)$(bindir)/oshcc$(EXEEXT) \
 	$(DESTDIR)$(bindir)/shmemfort$(EXEEXT) \
 	$(DESTDIR)$(bindir)/oshfort$(EXEEXT) \
-	$(DESTDIR)$(bindir)/shmemjavac$(EXEEXT) \
-	$(DESTDIR)$(bindir)/oshjavac$(EXEEXT) \
 	$(DESTDIR)$(pkgdatadir)/shmemcc-wrapper-data.txt \
 	$(DESTDIR)$(pkgdatadir)/oshcc-wrapper-data.txt \
 	$(DESTDIR)$(pkgdatadir)/shmemfort-wrapper-data.txt \
-	$(DESTDIR)$(pkgdatadir)/oshfort-wrapper-data.txt \
-	$(DESTDIR)$(bindir)/oshjavac \
-	$(DESTDIR)$(bindir)/shmemjavac
+	$(DESTDIR)$(pkgdatadir)/oshfort-wrapper-data.txt
+
+
+########################################################
+#
+# Man page generation / handling
+#
+########################################################
+distclean-local:
+	rm -f $(man_pages)
+
+$(top_builddir)/opal/tools/wrappers/generic_wrapper.1:
+	(cd $(top_builddir)/opal/tools/wrappers && $(MAKE) $(AM_MAKEFLAGS) generic_wrapper.1)
+
+oshcc.1: $(top_builddir)/opal/tools/wrappers/generic_wrapper.1
+	rm -f oshcc.1
+	sed -e 's/#COMMAND#/oshcc/g' -e 's/#PROJECT#/Open SHMEM/g' -e 's/#PROJECT_SHORT#/OSHMEM/g' -e 's/#LANGUAGE#/C/g' < $(top_builddir)/opal/tools/wrappers/generic_wrapper.1 > oshcc.1
+
+shmemcc.1: $(top_builddir)/opal/tools/wrappers/generic_wrapper.1
+	rm -f shmemcc.1
+	sed -e 's/#COMMAND#/shmemcc/g' -e 's/#PROJECT#/Open SHMEM/g' -e 's/#PROJECT_SHORT#/OSHMEM/g' -e 's/#LANGUAGE#/C/g' < $(top_builddir)/opal/tools/wrappers/generic_wrapper.1 > shmemcc.1
+
+oshfort.1: $(top_builddir)/opal/tools/wrappers/generic_wrapper.1
+	rm -f oshfort.1
+	sed -e 's/#COMMAND#/oshfort/g' -e 's/#PROJECT#/Open SHMEM/g' -e 's/#PROJECT_SHORT#/OSHMEM/g' -e 's/#LANGUAGE#/Fortran/g' < $(top_builddir)/opal/tools/wrappers/generic_wrapper.1 > oshfort.1
+
+shmemfort.1: $(top_builddir)/opal/tools/wrappers/generic_wrapper.1
+	rm -f shmemfort.1
+	sed -e 's/#COMMAND#/shmemfort/g' -e 's/#PROJECT#/Open SHMEM/g' -e 's/#PROJECT_SHORT#/OSHMEM/g' -e 's/#LANGUAGE#/Fortran/g' < $(top_builddir)/opal/tools/wrappers/generic_wrapper.1 > shmemfort.1
+
+$(top_builddir)/orte/tools/orterun/orterun.1:
+	(cd $(top_builddir)/orte/tools/orterun && $(MAKE) $(AM_MAKEFLAGS) orterun.1)
+
+oshrun.1: $(top_builddir)/orte/tools/orterun/orterun.1
+	cp -f $(top_builddir)/orte/tools/orterun/orterun.1 oshrun.1
+
+shmemrun.1: $(top_builddir)/orte/tools/orterun/orterun.1
+	cp -f $(top_builddir)/orte/tools/orterun/orterun.1 shmemrun.1
 
 endif # PROJECT_OSHMEM

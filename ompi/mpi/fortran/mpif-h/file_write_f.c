@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -24,7 +26,8 @@
 #include "ompi/mpi/fortran/mpif-h/status-conversion.h"
 #include "ompi/mpi/fortran/base/constants.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_FILE_WRITE = ompi_file_write_f
 #pragma weak pmpi_file_write = ompi_file_write_f
 #pragma weak pmpi_file_write_ = ompi_file_write_f
@@ -32,7 +35,7 @@
 
 #pragma weak PMPI_File_write_f = ompi_file_write_f
 #pragma weak PMPI_File_write_f08 = ompi_file_write_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_FILE_WRITE,
                            pmpi_file_write,
                            pmpi_file_write_,
@@ -40,6 +43,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_FILE_WRITE,
                            pompi_file_write_f,
                            (MPI_Fint *fh, char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *status, MPI_Fint *ierr),
                            (fh, buf, count, datatype, status, ierr) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -50,9 +54,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_FILE_WRITE,
 
 #pragma weak MPI_File_write_f = ompi_file_write_f
 #pragma weak MPI_File_write_f08 = ompi_file_write_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_FILE_WRITE,
                            mpi_file_write,
                            mpi_file_write_,
@@ -60,24 +63,23 @@ OMPI_GENERATE_F77_BINDINGS (MPI_FILE_WRITE,
                            ompi_file_write_f,
                            (MPI_Fint *fh, char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *status, MPI_Fint *ierr),
                            (fh, buf, count, datatype, status, ierr) )
+#else
+#define ompi_file_write_f pompi_file_write_f
+#endif
 #endif
 
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
-#endif
 
 void ompi_file_write_f(MPI_Fint *fh, char *buf, MPI_Fint *count,
 		      MPI_Fint *datatype, MPI_Fint *status, MPI_Fint *ierr)
 {
    int c_ierr;
-   MPI_File c_fh = MPI_File_f2c(*fh);
-   MPI_Datatype c_type = MPI_Type_f2c(*datatype);
+   MPI_File c_fh = PMPI_File_f2c(*fh);
+   MPI_Datatype c_type = PMPI_Type_f2c(*datatype);
     OMPI_FORTRAN_STATUS_DECLARATION(c_status,c_status2)
 
     OMPI_FORTRAN_STATUS_SET_POINTER(c_status,c_status2,status)
 
-   c_ierr = MPI_File_write(c_fh, OMPI_F2C_BOTTOM(buf),
+   c_ierr = PMPI_File_write(c_fh, OMPI_F2C_BOTTOM(buf),
                            OMPI_FINT_2_INT(*count),
                            c_type, c_status);
    if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);

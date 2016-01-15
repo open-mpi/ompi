@@ -1,0 +1,315 @@
+Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
+                        University Research and Technology
+                        Corporation.  All rights reserved.
+Copyright (c) 2004-2007 The University of Tennessee and The University
+                        of Tennessee Research Foundation.  All rights
+                        reserved.
+Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
+                        University of Stuttgart.  All rights reserved.
+Copyright (c) 2004-2007 The Regents of the University of California.
+                        All rights reserved.
+Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
+Copyright (c) 2006-2011 Mellanox Technologies. All rights reserved.
+Copyright (c) 2006-2012 Oracle and/or its affiliates.  All rights reserved.
+Copyright (c) 2007      Myricom, Inc.  All rights reserved.
+Copyright (c) 2008      IBM Corporation.  All rights reserved.
+Copyright (c) 2010      Oak Ridge National Labs.  All rights reserved.
+Copyright (c) 2011      University of Houston. All rights reserved.
+Copyright (c) 2013-2015 Intel, Inc. All rights reserved
+$COPYRIGHT$
+
+Additional copyrights may follow
+
+$HEADER$
+
+===========================================================================
+
+When submitting questions and problems, be sure to include as much
+extra information as possible.  This web page details all the
+information that we request in order to provide assistance:
+
+     http://pmix.github.io/master/community/help/
+
+The best way to report bugs, send comments, or ask questions is to
+sign up on the PMIx mailing list, which is hosted by GoogleGroups:
+
+        pmix@googlegroups.com
+
+Because of spam, only subscribers are allowed to post to this list
+(ensure that you subscribe with and post from exactly the same e-mail
+address -- joe@example.com is considered different than
+joe@mycomputer.example.com!).  You can subscribe to the list here:
+
+     https://groups.google.com/d/forum/pmix
+
+Thanks for your time.
+
+===========================================================================
+
+More information is available in the PMIx FAQ:
+
+    http://pmix.github.io/master/faq/
+
+We are in early days, so please be patient - info will grow as questions
+are addressed.
+
+===========================================================================
+
+The following abbreviated list of release notes applies to this code
+base as of this writing (12 November 2015):
+
+General notes
+-------------
+
+- The majority of PMIx's documentation is here in this file, the
+  included man pages, and on the web site FAQ
+  (http://pmix.github.io/master/faq).  This will eventually be
+  supplemented with cohesive installation and user documentation files.
+
+- Systems that have been tested are:
+  - Linux (various flavors/distros), 32 bit, with gcc
+  - Linux (various flavors/distros), 64 bit (x86), with gcc, Intel,
+    and Portland (*)
+  - OS X (10.7 and above), 32 and 64 bit (x86_64), with gcc (*)
+
+(*) Compiler Notes
+--------------
+
+- The Portland Group compilers prior to version 7.0 require the
+  "-Msignextend" compiler flag to extend the sign bit when converting
+  from a shorter to longer integer.  This is is different than other
+  compilers (such as GNU).  When compiling PMIx with the Portland
+  compiler suite, the following flags should be passed to PMIx's
+  configure script:
+
+  shell$ ./configure CFLAGS=-Msignextend ...
+
+  This will compile PMIx with the proper compile flags
+
+- Running on nodes with different endian and/or different datatype
+  sizes within a single parallel job is supported in this release.
+  However, PMIx does not resize data when datatypes differ in size
+  (for example, sending a 4 byte double and receiving an 8 byte
+  double will fail).
+
+
+===========================================================================
+
+Building PMIx
+-----------------
+
+PMIx uses a traditional configure script paired with "make" to
+build.  Typical installs can be of the pattern:
+
+---------------------------------------------------------------------------
+shell$ ./configure [...options...]
+shell$ make all install
+---------------------------------------------------------------------------
+
+There are many available configure options (see "./configure --help"
+for a full list); a summary of the more commonly used ones follows:
+
+INSTALLATION OPTIONS
+
+--prefix=<directory>
+  Install PMIx into the base directory named <directory>.  Hence,
+  PMIx will place its executables in <directory>/bin, its header
+  files in <directory>/include, its libraries in <directory>/lib, etc.
+
+--disable-shared
+  By default, libpmix is built as a shared library.  This switch disables
+  this default; it is really only useful when used with
+  --enable-static.  Specifically, this option does *not* imply
+  --enable-static; enabling static libraries and disabling shared
+  libraries are two independent options.
+
+--enable-static
+  Build libpmix as a static library.  Note that this option does *not* imply
+  --disable-shared; enabling static libraries and disabling shared
+  libraries are two independent options.
+
+--with-platform=FILE
+  Load configure options for the build from FILE.  Options on the
+  command line that are not in FILE are also used.  Options on the
+  command line and in FILE are replaced by what is in FILE.
+
+Once PMIx has been built and installed, it is safe to run "make
+clean" and/or remove the entire build tree.
+
+VPATH and parallel builds are fully supported.
+
+Generally speaking, the only thing that users need to do to use PMIx
+is ensure that <prefix>/lib is in their LD_LIBRARY_PATH.  Users may
+need to ensure to set LD_LIBRARY_PATH in their shell setup files (e.g.,
+.bashrc, .cshrc) so that non-interactive rsh/ssh-based logins will
+be able to find the PMIx library.
+
+===========================================================================
+
+PMIx Version Numbers and Binary Compatibility
+-------------------------------------------------
+
+PMIx has two sets of version numbers that are likely of interest
+to end users / system administrator:
+
+    * Software version number
+    * Shared library version numbers
+
+Both are described below, followed by a discussion of application
+binary interface (ABI) compatibility implications.
+
+Software Version Number
+-----------------------
+
+PMIx's version numbers are the union of several different values:
+major, minor, release, and an optional quantifier.
+
+  * Major: The major number is the first integer in the version string
+    (e.g., v1.2.3). Changes in the major number typically indicate a
+    significant change in the code base and/or end-user
+    functionality. The major number is always included in the version
+    number.
+
+  * Minor: The minor number is the second integer in the version
+    string (e.g., v1.2.3). Changes in the minor number typically
+    indicate a incremental change in the code base and/or end-user
+    functionality. The minor number is always included in the version
+    number:
+
+  * Release: The release number is the third integer in the version
+    string (e.g., v1.2.3). Changes in the release number typically
+    indicate a bug fix in the code base and/or end-user
+    functionality.
+
+  * Quantifier: PMIx version numbers sometimes have an arbitrary
+    string affixed to the end of the version number. Common strings
+    include:
+
+    o aX: Indicates an alpha release. X is an integer indicating
+      the number of the alpha release (e.g., v1.2.3a5 indicates the
+      5th alpha release of version 1.2.3).
+    o bX: Indicates a beta release. X is an integer indicating
+      the number of the beta release (e.g., v1.2.3b3 indicates the 3rd
+      beta release of version 1.2.3).
+    o rcX: Indicates a release candidate. X is an integer
+      indicating the number of the release candidate (e.g., v1.2.3rc4
+      indicates the 4th release candidate of version 1.2.3).
+
+Although the major, minor, and release values (and optional
+quantifiers) are reported in PMIx nightly snapshot tarballs, the
+filenames of these snapshot tarballs follow a slightly different
+convention.
+
+Specifically, the snapshot tarball filename contains three distinct
+values:
+
+   * Most recent Git tag name on the branch from which the tarball was
+     created.
+
+   * An integer indicating how many Git commits have occurred since
+     that Git tag.
+
+   * The Git hash of the tip of the branch.
+
+For example, a snapshot tarball filename of
+"pmix-v1.0.2-57-gb9f1fd9.tar.bz2" indicates that this tarball was
+created from the v1.0 branch, 57 Git commits after the "v1.0.2" tag,
+specifically at Git hash gb9f1fd9.
+
+PMIx's Git master branch contains a single "dev" tag.  For example,
+"pmix-dev-8-gf21c349.tar.bz2" represents a snapshot tarball created
+from the master branch, 8 Git commits after the "dev" tag,
+specifically at Git hash gf21c349.
+
+The exact value of the "number of Git commits past a tag" integer is
+fairly meaningless; its sole purpose is to provide an easy,
+human-recognizable ordering for snapshot tarballs.
+
+Shared Library Version Number
+-----------------------------
+
+PMIx uses the GNU Libtool shared library versioning scheme.
+
+NOTE: Only official releases of PMIx adhere to this versioning
+      scheme. "Beta" releases, release candidates, and nightly
+      tarballs, developer snapshots, and Git snapshot tarballs likely
+      will all have arbitrary/meaningless shared library version
+      numbers.
+
+The GNU Libtool official documentation details how the versioning
+scheme works.  The quick version is that the shared library versions
+are a triple of integers: (current,revision,age), or "c:r:a".  This
+triple is not related to the PMIx software version number.  There
+are six simple rules for updating the values (taken almost verbatim
+from the Libtool docs):
+
+ 1. Start with version information of "0:0:0" for each shared library.
+
+ 2. Update the version information only immediately before a public
+    release of your software. More frequent updates are unnecessary,
+    and only guarantee that the current interface number gets larger
+    faster.
+
+ 3. If the library source code has changed at all since the last
+    update, then increment revision ("c:r:a" becomes "c:r+1:a").
+
+ 4. If any interfaces have been added, removed, or changed since the
+    last update, increment current, and set revision to 0.
+
+ 5. If any interfaces have been added since the last public release,
+    then increment age.
+
+ 6. If any interfaces have been removed since the last public release,
+    then set age to 0.
+
+Application Binary Interface (ABI) Compatibility
+------------------------------------------------
+
+PMIx provides forward ABI compatibility in all versions of a given
+feature release series and its corresponding
+super stable series.  For example, on a single platform, an pmix
+application linked against PMIx v1.3.2 shared libraries can be
+updated to point to the shared libraries in any successive v1.3.x or
+v1.4 release and still work properly (e.g., via the LD_LIBRARY_PATH
+environment variable or other operating system mechanism).
+
+PMIx reserves the right to break ABI compatibility at new feature
+release series.  For example, the same pmix application from above
+(linked against PMIx v1.3.2 shared libraries) will *not* work with
+PMIx v1.5 shared libraries.
+
+===========================================================================
+
+Common Questions
+----------------
+
+Many common questions about building and using PMIx are answered
+on the FAQ:
+
+    http://pmix.github.io/master/faq/
+
+===========================================================================
+
+Got more questions?
+-------------------
+
+Found a bug?  Got a question?  Want to make a suggestion?  Want to
+contribute to PMIx?  Please let us know!
+
+When submitting questions and problems, be sure to include as much
+extra information as possible.  This web page details all the
+information that we request in order to provide assistance:
+
+     http://pmix.github.io/master/community/help/
+
+Questions and comments should generally be sent to the PMIx mailing
+list (pmix@googlegroups.com).  Because of spam, only
+subscribers are allowed to post to this list (ensure that you
+subscribe with and post from *exactly* the same e-mail address --
+joe@example.com is considered different than
+joe@mycomputer.example.com!).  Visit this page to subscribe to the
+user's list:
+
+     https://groups.google.com/d/forum/pmix
+
+Make today an PMIx day!

@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2014 The University of Tennessee and The University
+ * Copyright (c) 2004-2015 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart,
@@ -247,36 +247,33 @@ int32_t ompi_datatype_create_darray(int size,
     }
 
 
-    /* set displacement and UB correctly. Please read the comment in subarray */
+    /**
+     * We need to shift the content (useful data) of the datatype, so
+     * we need to force the displacement to be moved. Therefore, we
+     * cannot use resize as it will only set the soft lb and ub
+     * markers without moving the data. Instead, we have to create a
+     * new data, and insert the last_Type with the correct
+     * displacement.
+     */
     {
-        ptrdiff_t displs[3], tmp_size;
-        ompi_datatype_t *types[3];
-        int blength[3] = { 1, 1, 1};
+        ptrdiff_t displs[2], tmp_size = 1;
 
-        displs[1] = st_offsets[start_loop];
-        tmp_size = 1;
-        for (i = start_loop + step ; i != end_loop ; i += step) {
+        displs[0] = st_offsets[start_loop];
+        displs[1] = orig_extent;
+        for (i = start_loop + step; i != end_loop; i += step) {
             tmp_size *= gsize_array[i - step];
-            displs[1] += tmp_size * st_offsets[i];
+            displs[0] += tmp_size * st_offsets[i];
+            displs[1] *= gsize_array[i];
         }
+        displs[0] *= orig_extent;
 
-        displs[0] = 0;
-        displs[1] *= orig_extent;
-        displs[2] = orig_extent;
-        for (i = 0 ; i < ndims ; i++) {
-            displs[2] *= gsize_array[i];
-        }
-        if(oldtype->super.flags & (OPAL_DATATYPE_FLAG_USER_LB | OPAL_DATATYPE_FLAG_USER_UB) ) {
-            types[0] = MPI_LB; types[1] = lastType; types[2] = MPI_UB;
-
-            rc = ompi_datatype_create_struct(3, blength, displs, types, newtype);
-        } else {
-            ompi_datatype_create_resized(lastType, displs[1], displs[2], newtype);
-        }
+        *newtype = ompi_datatype_create(lastType->super.desc.used);
+        rc = ompi_datatype_add(*newtype, lastType, 1, displs[0], displs[1]);
         ompi_datatype_destroy(&lastType);
+        opal_datatype_resize( &(*newtype)->super, 0, displs[1] );
         /* need to destroy the old type even in error condition, so
            don't check return code from above until after cleanup. */
-        if (MPI_SUCCESS != rc) goto cleanup;
+        if (MPI_SUCCESS != rc) newtype = NULL;
     }
 
  cleanup:

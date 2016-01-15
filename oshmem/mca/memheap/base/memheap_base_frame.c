@@ -18,6 +18,7 @@
 #include "opal/util/output.h"
 #include "opal/mca/base/base.h"
 
+#include "oshmem/util/oshmem_util.h"
 #include "oshmem/mca/memheap/memheap.h"
 #include "oshmem/mca/memheap/base/base.h"
 
@@ -41,7 +42,6 @@ mca_memheap_map_t mca_memheap_base_map = {{{0}}};
 
 static int mca_memheap_base_register(mca_base_register_flag_t flags)
 {
-
     (void) mca_base_var_register("oshmem",
                                  "memheap",
                                  "base",
@@ -123,6 +123,8 @@ static int mca_memheap_base_open(mca_base_open_flag_t flags)
     memset(&mca_memheap_base_map, 0, sizeof(mca_memheap_base_map));
     mca_memheap_base_map.n_segments = 0;
     mca_memheap_base_map.num_transports = 0;
+
+    oshmem_framework_open_output(&oshmem_memheap_base_framework);
 
     /* Open up all available components */
     if (OPAL_SUCCESS !=

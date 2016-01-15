@@ -1,5 +1,5 @@
 .\" -*- nroff -*-
-.\" Copyright 2013-2014 Los Alamos National Security, LLC. All rights reserved.
+.\" Copyright 2013-2015 Los Alamos National Security, LLC. All rights reserved.
 .\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
 .\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
@@ -13,19 +13,34 @@
 .SH C Syntax
 .nf
 #include <mpi.h>
-int MPI_Compare_and_swap(const void *\fIorigin_addr\fP, const void *\fIcompar_addr\fP,
-	void *\fresult_addr\fP, MPI_Datatype \fdatatype\fP, int \fItarget_rank\fP,
+int MPI_Compare_and_swap(const void *\fIorigin_addr\fP, const void *\fIcompare_addr\fP,
+	void *\fIresult_addr\fP, MPI_Datatype \fIdatatype\fP, int \fItarget_rank\fP,
 	MPI_Aint \fItarget_disp\fP, MPI_Win \fIwin\fP)
 
 .fi
 .SH Fortran Syntax (see FORTRAN 77 NOTES)
 .nf
-INCLUDE 'mpif.h'
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
 MPI_COMPARE_AND_SWAP(\fIORIGIN_ADDR, COMPARE_ADDR, RESULT_ADDR, DATATYPE, TARGET_RANK,
 	TARGET_DISP, WIN, IERROR\fP)
 	<type> \fIORIGIN_ADDR\fP, \fICOMPARE_ADDR\fP, \fIRESULT_ADDR\fP(*)
 	INTEGER(KIND=MPI_ADDRESS_KIND) \fITARGET_DISP\fP
 	INTEGER \fIDATATYPE, TARGET_RANK, WIN, IERROR \fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Compare_and_swap(\fIorigin_addr\fP, \fIcompare_addr\fP, \fIresult_addr\fP, \fIdatatype\fP,
+		\fItarget_rank\fP, \fItarget_disp\fP, \fIwin\fP, \fIierror\fP)
+	TYPE(*), DIMENSION(..), INTENT(IN) :: \fIorigin_addr\fP, \fIcompare_addr\fP
+	TYPE(*), DIMENSION(..) :: \fIresult_addr\fP
+	TYPE(MPI_Datatype), INTENT(IN) :: \fIdatatype\fP
+	INTEGER, INTENT(IN) :: \fItarget_rank\fP
+	INTEGER(KIND=MPI_ADDRESS_KIND), INTENT(IN) :: \fItarget_disp\fP
+	TYPE(MPI_Win), INTENT(IN) :: \fIwin\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
 .SH INPUT PARAMETERS

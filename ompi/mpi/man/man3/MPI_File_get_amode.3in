@@ -2,6 +2,8 @@
 .\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
 .\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
+.\" Copyright 2015      Research Organization for Information Science
+.\"                     and Technology (RIST). All rights reserved.
 .\" $COPYRIGHT$
 .TH MPI_File_get_amode 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
@@ -10,16 +12,26 @@
 .SH SYNTAX
 .ft R
 .nf
-C Syntax
-    #include <mpi.h>
-    int MPI_File_get_amode(MPI_File \fIfh\fP, int \fI*amode\fP)
+.SH C Syntax
+#include <mpi.h>
+int MPI_File_get_amode(MPI_File \fIfh\fP, int \fI*amode\fP)
 
 .fi
 .SH Fortran Syntax
 .nf
-    INCLUDE 'mpif.h'
-    MPI_FILE_GET_AMODE(\fIFH\fP,\fI AMODE\fP, \fI IERROR\fP)
-        	 INTEGER	FH, AMODE, IERROR
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
+MPI_FILE_GET_AMODE(\fIFH\fP, \fIAMODE\fP, \fIIERROR\fP)
+	INTEGER	\fIFH, AMODE, IERROR\fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_File_get_amode(\fIfh\fP, \fIamode\fP, \fIierror\fP)
+	TYPE(MPI_File), INTENT(IN) :: \fIfh\fP
+	INTEGER, INTENT(OUT) :: \fIamode\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
 .SH C++ Syntax

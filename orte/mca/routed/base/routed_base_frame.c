@@ -1,6 +1,7 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2007-2013 Los Alamos National Security, LLC.
- *                         All rights reserved.
+ * Copyright (c) 2007-2015 Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2004-2010 The Trustees of Indiana University.
  *                         All rights reserved.
@@ -130,7 +131,7 @@ int orte_routed_base_select(void)
     if( OPAL_SUCCESS != mca_base_select("routed", orte_routed_base_framework.framework_output,
                                         &orte_routed_base_framework.framework_components,
                                         (mca_base_module_t **) &best_module,
-                                        (mca_base_component_t **) &best_component) ) {
+                                        (mca_base_component_t **) &best_component, NULL) ) {
         /* This will only happen if no component was selected */
         exit_status = ORTE_ERR_NOT_FOUND;
         goto cleanup;

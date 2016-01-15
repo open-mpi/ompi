@@ -12,6 +12,8 @@
  * Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006-2009 University of Houston.  All rights reserved.
  * Copyright (c) 2012-2013 Inria.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -29,12 +31,11 @@
 #include "ompi/proc/proc.h"
 #include "ompi/memchecker.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_Intercomm_merge = PMPI_Intercomm_merge
 #endif
-
-#if OMPI_PROFILING_DEFINES
-#include "ompi/mpi/c/profile/defines.h"
+#define MPI_Intercomm_merge PMPI_Intercomm_merge
 #endif
 
 static const char FUNC_NAME[] = "MPI_Intercomm_merge";
@@ -113,7 +114,6 @@ int MPI_Intercomm_merge(MPI_Comm intercomm, int high,
         goto exit;
     }
 
-    ompi_group_decrement_proc_count(new_group_pointer);
     OBJ_RELEASE(new_group_pointer);
     new_group_pointer = MPI_GROUP_NULL;
 

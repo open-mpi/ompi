@@ -33,12 +33,11 @@
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/memchecker.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_Ineighbor_allgather = PMPI_Ineighbor_allgather
 #endif
-
-#if OMPI_PROFILING_DEFINES
-#include "ompi/mpi/c/profile/defines.h"
+#define MPI_Ineighbor_allgather PMPI_Ineighbor_allgather
 #endif
 
 static const char FUNC_NAME[] = "MPI_Ineighbor_allgather";
@@ -79,16 +78,17 @@ int MPI_Ineighbor_allgather(const void *sendbuf, int sendcount, MPI_Datatype sen
 
         err = MPI_SUCCESS;
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-        if (ompi_comm_invalid(comm) || !(OMPI_COMM_IS_CART(comm) || OMPI_COMM_IS_GRAPH(comm) ||
-                                         OMPI_COMM_IS_DIST_GRAPH(comm))) {
+        if (ompi_comm_invalid(comm) || OMPI_COMM_IS_INTER(comm)) {
           OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, FUNC_NAME);
+        } else if (! OMPI_COMM_IS_TOPO(comm)) {
+          OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_TOPOLOGY, FUNC_NAME);
         } else if (MPI_DATATYPE_NULL == recvtype || NULL == recvtype) {
           err = MPI_ERR_TYPE;
         } else if (recvcount < 0) {
           err = MPI_ERR_COUNT;
-        } else if (MPI_IN_PLACE == recvbuf) {
+        } else if (MPI_IN_PLACE == sendbuf || MPI_IN_PLACE == recvbuf) {
           return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
-        } else if (MPI_IN_PLACE != sendbuf) {
+        } else {
             OMPI_CHECK_DATATYPE_FOR_SEND(err, sendtype, sendcount);
         }
         OMPI_ERRHANDLER_CHECK(err, comm, err, FUNC_NAME);

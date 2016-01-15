@@ -193,12 +193,12 @@ static opal_cmd_line_init_t cmd_line_init[] = {
       &myglobals.num_procs, OPAL_CMD_LINE_TYPE_INT,
       "Number of processes to run" },
 
-    /* uri of Open MPI HNP, or at least where to get it */
+    /* uri of the dvm, or at least where to get it */
     { NULL, '\0', "hnp", "hnp", 1,
       &myglobals.hnp, OPAL_CMD_LINE_TYPE_STRING,
       "Specify the URI of the Open MPI server, or the name of the file (specified as file:filename) that contains that info" },
 
-    /* uri of Open MPI HNP, or at least where to get it */
+    /* tell the dvm to terminate */
     { NULL, '\0', "terminate", "terminate", 0,
       &myglobals.terminate, OPAL_CMD_LINE_TYPE_BOOL,
       "Terminate the DVM" },
@@ -345,7 +345,6 @@ int main(int argc, char *argv[])
        use it in pretty-print error messages */
     orte_basename = opal_basename(argv[0]);
 
-
     opal_cmd_line_create(&cmd_line, cmd_line_init);
     mca_base_cmd_line_setup(&cmd_line);
     if (OPAL_SUCCESS != (rc = opal_cmd_line_parse(&cmd_line, true,
@@ -404,6 +403,12 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
+    /* if they didn't point us at an HNP, that's an error */
+    if (NULL == myglobals.hnp) {
+        fprintf(stderr, "orte-submit: required option --hnp not provided\n");
+        exit(1);
+    }
+
     /* Ensure that enough of OPAL is setup for us to be able to run */
     /*
      * NOTE: (JJH)
@@ -425,14 +430,13 @@ int main(int argc, char *argv[])
     if (myglobals.help) {
         char *str, *args = NULL;
         char *project_name = NULL;
-        opal_output(0, "GETTING HELP");
+
         if (0 == strcmp(orte_basename, "mpirun")) {
             project_name = "Open MPI";
         } else {
             project_name = "OpenRTE";
         }
         args = opal_cmd_line_get_usage_msg(&cmd_line);
-        opal_output(0, "CMD LINE %s", args);
         str = opal_show_help_string("help-orterun.txt", "orterun:usage", false,
                                     orte_basename, project_name, OPAL_VERSION,
                                     orte_basename, args,
@@ -449,12 +453,6 @@ int main(int argc, char *argv[])
 
     /* Check for some "global" command line params */
     parse_globals(argc, argv, &cmd_line);
-
-    /* if they didn't point us at an HNP, that's an error */
-    if (NULL == myglobals.hnp) {
-        fprintf(stderr, "orte-submit: required option --hnp not provided\n");
-        exit(1);
-    }
     OBJ_DESTRUCT(&cmd_line);
 
     if (0 == strncasecmp(myglobals.hnp, "file", strlen("file"))) {
@@ -612,6 +610,16 @@ int main(int argc, char *argv[])
             ORTE_ERROR_LOG(rc);
             exit(rc);
         }
+    } else if (myglobals.pernode) {
+        ORTE_SET_MAPPING_POLICY(jdata->map->mapping, ORTE_MAPPING_PPR);
+        ORTE_SET_MAPPING_DIRECTIVE(jdata->map->mapping, ORTE_MAPPING_GIVEN);
+        /* define the ppr */
+        jdata->map->ppr = strdup("1:node");
+    } else if (0 < myglobals.npernode) {
+        ORTE_SET_MAPPING_POLICY(jdata->map->mapping, ORTE_MAPPING_PPR);
+        ORTE_SET_MAPPING_DIRECTIVE(jdata->map->mapping, ORTE_MAPPING_GIVEN);
+        /* define the ppr */
+        (void)asprintf(&jdata->map->ppr, "%d:node", myglobals.npernode);
     }
     if (NULL != myglobals.ranking_policy) {
         if (ORTE_SUCCESS != (rc = orte_rmaps_base_set_ranking_policy(&jdata->map->ranking,
@@ -702,7 +710,9 @@ int main(int argc, char *argv[])
     while (myspawn) {
         opal_event_loop(orte_event_base, OPAL_EVLOOP_ONCE);
     }
-    opal_output(0, "Job %s has launched", ORTE_JOBID_PRINT(jdata->jobid));
+    if (orte_debug_flag) {
+        opal_output(0, "Job %s has launched", ORTE_JOBID_PRINT(jdata->jobid));
+    }
 
  waiting:
     while (mywait) {
@@ -1169,6 +1179,9 @@ static int create_app(int argc, char* argv[],
         orte_set_attribute(&app->attributes, ORTE_APP_DASH_HOST, ORTE_ATTR_GLOBAL, tval, OPAL_STRING);
         opal_argv_free(targ);
         free(tval);
+    } else if (NULL != orte_default_dash_host) {
+        orte_set_attribute(&app->attributes, ORTE_APP_DASH_HOST, ORTE_ATTR_LOCAL,
+                           orte_default_dash_host, OPAL_STRING);
     }
 
     /* check for bozo error */

@@ -93,6 +93,13 @@ ssize_t  mca_fbtl_posix_pwritev(mca_io_ompio_file_t *fh )
 	  }
 
 	*/
+#if defined (HAVE_PWRITEV) 
+	ret_code = pwritev (fh->fd, iov, iov_count, iov_offset);
+	if ( 0 < ret_code ) {
+	    bytes_written += ret_code;
+	}
+
+#else
 	if (-1 == lseek (fh->fd, iov_offset, SEEK_SET)) {
 	    opal_output(1, "lseek:%s", strerror(errno));
             free(iov);
@@ -102,6 +109,7 @@ ssize_t  mca_fbtl_posix_pwritev(mca_io_ompio_file_t *fh )
 	if ( 0 < ret_code ) {
 	    bytes_written += ret_code;
 	}
+#endif
 	else if (-1 == ret_code ) {
 	    opal_output(1, "writev:%s", strerror(errno));
             free (iov);

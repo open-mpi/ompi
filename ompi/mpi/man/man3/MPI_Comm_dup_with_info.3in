@@ -18,9 +18,20 @@ int MPI_Comm_dup_with_info(MPI_Comm \fIcomm\fP, MPI_Info \fIinfo\fP, MPI_Comm\fI
 .fi
 .SH Fortran Syntax
 .nf
-INCLUDE 'mpif.h'
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
 MPI_COMM_DUP_WITH_INFO(\fICOMM, INFO, NEWCOMM, IERROR\fP)
 	INTEGER	\fICOMM, INFO, NEWCOMM, IERROR\fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Comm_dup_with_info(\fIcomm\fP, \fIinfo\fP, \fInewcomm\fP, \fIierror\fP)
+	TYPE(MPI_Comm), INTENT(IN) :: \fIcomm\fP
+	TYPE(MPI_Info), INTENT(IN) :: \fIinfo\fP
+	TYPE(MPI_Comm), INTENT(OUT) :: \fInewcomm\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
 .SH INPUT PARAMETER

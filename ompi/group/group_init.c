@@ -57,6 +57,24 @@ ompi_predefined_group_t *ompi_mpi_group_null_addr = &ompi_mpi_group_null;
 ompi_group_t *ompi_group_allocate(int group_size)
 {
     /* local variables */
+    ompi_proc_t **procs = calloc (group_size, sizeof (ompi_proc_t *));
+    ompi_group_t *new_group;
+
+    if (NULL == procs) {
+        return NULL;
+    }
+
+    new_group = ompi_group_allocate_plist_w_procs (procs, group_size);
+    if (NULL == new_group) {
+        free (procs);
+    }
+
+    return new_group;
+}
+
+ompi_group_t *ompi_group_allocate_plist_w_procs (ompi_proc_t **procs, int group_size)
+{
+    /* local variables */
     ompi_group_t * new_group = NULL;
 
     assert (group_size >= 0);
@@ -65,28 +83,19 @@ ompi_group_t *ompi_group_allocate(int group_size)
     new_group = OBJ_NEW(ompi_group_t);
 
     if (NULL == new_group) {
-        goto error_exit;
+        return NULL;
     }
 
     if (0 > new_group->grp_f_to_c_index) {
         OBJ_RELEASE (new_group);
-        new_group = NULL;
-        goto error_exit;
+        return NULL;
     }
 
     /*
      * Allocate array of (ompi_proc_t *)'s, one for each
      * process in the group.
      */
-    new_group->grp_proc_pointers = (struct ompi_proc_t **)
-        malloc(sizeof(struct ompi_proc_t *) * group_size);
-
-    if (NULL == new_group->grp_proc_pointers) {
-        /* grp_proc_pointers allocation failed */
-        OBJ_RELEASE (new_group);
-        new_group = NULL;
-        goto error_exit;
-    }
+    new_group->grp_proc_pointers = procs;
 
     /* set the group size */
     new_group->grp_proc_count = group_size;
@@ -95,8 +104,8 @@ ompi_group_t *ompi_group_allocate(int group_size)
     new_group->grp_my_rank = MPI_UNDEFINED;
     OMPI_GROUP_SET_DENSE(new_group);
 
- error_exit:
-    /* return */
+    ompi_group_increment_proc_count (new_group);
+
     return new_group;
 }
 
@@ -266,6 +275,8 @@ static void ompi_group_destruct(ompi_group_t *group)
        the proc counts are not increased during the constructor,
        either). */
 
+    ompi_group_decrement_proc_count (group);
+
     /* release thegrp_proc_pointers memory */
     if (NULL != group->grp_proc_pointers) {
         free(group->grp_proc_pointers);
@@ -284,7 +295,6 @@ static void ompi_group_destruct(ompi_group_t *group)
     }
 
     if (NULL != group->grp_parent_group_ptr){
-        ompi_group_decrement_proc_count(group->grp_parent_group_ptr);
         OBJ_RELEASE(group->grp_parent_group_ptr);
     }
 

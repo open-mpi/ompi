@@ -1,0 +1,30 @@
+.TH "pmix_initialized" "3" "2015\-10\-25" "PMIx Programmer\[aq]s Manual" "\@VERSION\@"
+.SH NAME
+.PP
+PMIx_Initialized \- Check if \f[I]PMIx\f[]Init_ has been called
+.SH SYNOPSIS
+.IP
+.nf
+\f[C]
+#include\ <pmix.h>
+
+int\ PMIx_Initialized(void);
+\f[]
+.fi
+.SH ARGUMENTS
+.PP
+\f[I]none\f[]
+.SH DESCRIPTION
+.PP
+Check to see if the PMIx Client library has been intialized
+.SH RETURN VALUE
+.PP
+Returns \f[I]true\f[] if the PMIx Client has been initialized, and
+\f[I]false\f[] if not.
+.SH ERRORS
+.SH NOTES
+.SH SEE ALSO
+.PP
+\f[C]PMIx_Init\f[](3)
+.SH AUTHORS
+PMIx.

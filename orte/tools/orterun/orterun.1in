@@ -13,10 +13,12 @@
 .SH NAME
 .
 orterun, mpirun, mpiexec \- Execute serial and parallel jobs in Open MPI.
+oshrun, shmemrun \- Execute serial and parallel jobs in Open SHMEM.
 
 .B Note:
 \fImpirun\fP, \fImpiexec\fP, and \fIorterun\fP are all synonyms for each
-other.  Using any of the names will produce the same behavior.
+other as well as \fIoshrun\fP, \fIshmemrun\fP in case Open SHMEM is installed.
+Using any of the names will produce the same behavior.
 .
 .\" **************************
 .\"    Synopsis Section
@@ -145,6 +147,24 @@ cause orterun to exit.
 .
 .
 .
+.TP
+.B -display-map\fR,\fP --display-map
+Display a table showing the mapped location of each process prior to launch.
+.
+.
+.
+.TP
+.B -display-devel-map\fR,\fP --display-devel-map
+Display a more detailed table showing the mapped location of each process prior to launch (usually of interest to developers).
+.
+.
+.
+.TP
+.B -display-allocation\fR,\fP --display-allocation
+Display the detected resource allocation.
+.
+.
+.
 .P
 Use one of the following options to specify which hosts (nodes) of the cluster to run on. Note
 that as of the start of the v1.8 release, mpirun will launch a daemon onto each host in the
@@ -172,6 +192,14 @@ Provide a hostfile to use.
 .B -machinefile\fR,\fP --machinefile \fR<machinefile>\fP
 Synonym for \fI-hostfile\fP.
 .
+.
+.
+.
+.TP
+.B -cpu-set\fR,\fP --cpu-set
+Restrict launched processes to the specified logical cpus on each node. Note that the
+binding options will still apply within the specified envelope - e.g., you can elect
+to bind each process to only one cpu within the specified cpu set.
 .
 .
 .
@@ -983,13 +1011,13 @@ the following additional options:
  [...] ... binding child [...,2] to cpus 0004
  [...] ... binding child [...,3] to cpus 0008
 
- % mpirun ... --map-by socket -0bind-to socket
+ % mpirun ... --map-by socket --bind-to socket
  [...] ... binding child [...,0] to socket 0 cpus 000f
  [...] ... binding child [...,1] to socket 1 cpus 00f0
  [...] ... binding child [...,2] to socket 0 cpus 000f
  [...] ... binding child [...,3] to socket 1 cpus 00f0
 
- % mpirun ... --map-by core:PE=2 -bind-to core
+ % mpirun ... --map-by core:PE=2 --bind-to core
  [...] ... binding child [...,0] to cpus 0003
  [...] ... binding child [...,1] to cpus 000c
  [...] ... binding child [...,2] to cpus 0030

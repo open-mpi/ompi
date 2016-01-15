@@ -90,7 +90,7 @@ static int pmix_s2_component_query(mca_base_module_t **module, int *priority)
 {
     /* disqualify ourselves if we are not under slurm, and
      * if they didn't set mpi=pmix2 */
-    if (NULL == getenv("SLURM_JOBID") ||
+    if (NULL == getenv("SLURM_STEP_NUM_TASKS") ||
         NULL == getenv("PMI_FD")) {
         *priority = 0;
         *module = NULL;

@@ -21,9 +21,19 @@ int MPI_Type_create_f90_integer(int \fIr\fP, MPI_Datatype *\fInewtype\fP)
 .fi
 .SH Fortran Syntax
 .nf
-INCLUDE 'mpif.h'
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
 MPI_TYPE_CREATE_F90_INTEGER (\fIR, NEWTYPE, IERROR\fP)
 	INTEGER	\fIR, NEWTYPE, IERROR\fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Type_create_f90_integer(\fIr\fP, \fInewtype\fP, \fIierror\fP)
+	INTEGER, INTENT(IN) :: \fIr\fP
+	TYPE(MPI_Datatype), INTENT(OUT) :: \fInewtype\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
 .SH C++ Syntax

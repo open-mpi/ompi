@@ -16,6 +16,8 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2015      Mellanox Technologies, Inc.
+ *                         All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -40,6 +42,7 @@
 #include <errno.h>
 
 #include "opal/mca/backtrace/backtrace.h"
+#include "opal/runtime/opal_params.h"
 
 #include "ompi/communicator/communicator.h"
 #include "ompi/runtime/mpiruntime.h"
@@ -137,11 +140,11 @@ ompi_mpi_abort(struct ompi_communicator_t* comm,
 
     /* Should we print a stack trace?  Not aggregated because they
        might be different on all processes. */
-    if (ompi_mpi_abort_print_stack) {
+    if (opal_abort_print_stack) {
         char **messages;
         int len, i;
 
-        if (OMPI_SUCCESS == opal_backtrace_buffer(&messages, &len)) {
+        if (OPAL_SUCCESS == opal_backtrace_buffer(&messages, &len)) {
             for (i = 0; i < len; ++i) {
                 fprintf(stderr, "[%s:%d] [%d] func:%s\n", host, (int) pid,
                         i, messages[i]);
@@ -161,7 +164,7 @@ ompi_mpi_abort(struct ompi_communicator_t* comm,
     if (errcode < 0 ||
         asprintf(&msg, "[%s:%d] aborting with MPI error %s%s",
                  host, (int) pid, ompi_mpi_errnum_get_string(errcode),
-                 ompi_mpi_abort_print_stack ?
+                 opal_abort_print_stack ?
                  " (stack trace available on stderr)" : "") < 0) {
         msg = NULL;
     }
@@ -172,9 +175,9 @@ ompi_mpi_abort(struct ompi_communicator_t* comm,
 
     /* Should we wait for a while before aborting? */
 
-    if (0 != ompi_mpi_abort_delay) {
-        if (ompi_mpi_abort_delay < 0) {
-            fprintf(stderr ,"[%s:%d] Looping forever (MCA parameter mpi_abort_delay is < 0)\n",
+    if (0 != opal_abort_delay) {
+        if (opal_abort_delay < 0) {
+            fprintf(stderr ,"[%s:%d] Looping forever (MCA parameter opal_abort_delay is < 0)\n",
                     host, (int) pid);
             fflush(stderr);
             while (1) {
@@ -182,10 +185,10 @@ ompi_mpi_abort(struct ompi_communicator_t* comm,
             }
         } else {
             fprintf(stderr, "[%s:%d] Delaying for %d seconds before aborting\n",
-                    host, (int) pid, ompi_mpi_abort_delay);
+                    host, (int) pid, opal_abort_delay);
             do {
                 sleep(1);
-            } while (--ompi_mpi_abort_delay > 0);
+            } while (--opal_abort_delay > 0);
         }
     }
 

@@ -15,8 +15,6 @@
 
 #include "osc_portals4.h"
 
-#include "ompi/mca/mtl/portals4/mtl_portals4_endpoint.h"
-
 
 int
 ompi_osc_portals4_fence(int assert, struct ompi_win_t *win)

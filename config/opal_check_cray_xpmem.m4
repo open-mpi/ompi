@@ -14,7 +14,7 @@
 # Copyright (c) 2011-2014 Los Alamos National Security, LLC. All rights
 #                         reserved.
 # Copyright (c) 2014      Intel, Inc. All rights reserved.
-# Copyright (c) 2014      Research Organization for Information Science
+# Copyright (c) 2014-2015 Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 #
@@ -38,7 +38,7 @@ AC_DEFUN([OPAL_CHECK_CRAY_XPMEM],[
    AS_IF([test "$with_cray_xpmem" = "no"],
          [AC_MSG_RESULT([no])
           $3],
-         [AS_IF([test "$with_cray_xpmem" = "auto" -o "$with_cray_xpmem" = "yes"],
+         [AS_IF([test "$with_cray_xpmem" = "auto" || test "$with_cray_xpmem" = "yes"],
                  [PKG_CHECK_MODULES_STATIC([CRAY_XPMEM], [cray-xpmem],
                                     [opal_check_cray_xpmem_happy="yes"],
                                     [opal_check_cray_xpmem_happy="no"]
@@ -49,7 +49,7 @@ AC_DEFUN([OPAL_CHECK_CRAY_XPMEM],[
                  [])
          ])
 
-    AS_IF([test "$opal_check_cray_xpmem_happy" = "yes" -a "$enable_static" = "yes"],
+    AS_IF([test "$opal_check_cray_xpmem_happy" = "yes" && test "$enable_static" = "yes"],
           [CRAY_XPMEM_LIBS = $CRAY_XPMEM_STATIC_LIBS],[])
 
     AS_IF([test "$opal_check_cray_xpmem_happy" = "yes"],

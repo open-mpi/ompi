@@ -1566,8 +1566,11 @@ event_base_loop(struct event_base *base, int flags)
 	EVBASE_ACQUIRE_LOCK(base, th_base_lock);
 
 	if (base->running_loop) {
-		event_warnx("%s: reentrant invocation.  Only one event_base_loop"
-		    " can run on each event_base at once.", __func__);
+/*****   OMPI change   ****/
+#if OPAL_ENABLE_DEBUG
+ 		event_warnx("%s: reentrant invocation.  Only one event_base_loop"
+ 		    " can run on each event_base at once.", __func__);
+#endif
 		EVBASE_RELEASE_LOCK(base, th_base_lock);
 		return -1;
 	}

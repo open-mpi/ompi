@@ -18,10 +18,21 @@ int MPI_Type_set_attr(MPI_Datatype \fItype\fP, int \fItype_keyval\fP,
 .fi
 .SH Fortran Syntax (see FORTRAN 77 NOTES)
 .nf
-INCLUDE 'mpif.h'
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
 MPI_TYPE_SET_ATTR(\fITYPE, TYPE_KEYVAL, ATTRIBUTE_VAL, IERROR\fP)
 	INTEGER	\fITYPE, TYPE_KEYVAL, IERROR\fP
 	INTEGER(KIND=MPI_ADDRESS_KIND) \fIATTRIBUTE_VAL\fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Type_set_attr(\fIdatatype\fP, \fItype_keyval\fP, \fIattribute_val\fP, \fIierror\fP)
+	TYPE(MPI_Datatype), INTENT(IN) :: \fIdatatype\fP
+	INTEGER, INTENT(IN) :: \fItype_keyval\fP
+	INTEGER(KIND=MPI_ADDRESS_KIND), INTENT(IN) :: \fIattribute_val\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
 .SH C++ Syntax

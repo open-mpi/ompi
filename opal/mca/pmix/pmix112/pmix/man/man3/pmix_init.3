@@ -1,0 +1,49 @@
+.TH "pmix_init" "3" "2015\-10\-25" "PMIx Programmer\[aq]s Manual" "\@VERSION\@"
+.SH NAME
+.PP
+PMIx_Init \- Initialize the PMIx Client
+.SH SYNOPSIS
+.IP
+.nf
+\f[C]
+#include\ <pmix.h>
+
+pmix_status_t\ PMIx_Init(pmix_proc_t\ *proc);
+\f[]
+.fi
+.SH ARGUMENTS
+.PP
+\f[I]proc\f[] : Pointer to a pmix_proc_t object in which the
+client\[aq]s namespace and rank are to be returned.
+.SH DESCRIPTION
+.PP
+Initialize the PMIx client, returning the process identifier assigned to
+this client\[aq]s application in the provided pmix_proc_t struct.
+Passing a parameter of \f[I]NULL\f[] for this parameter is allowed if
+the user wishes solely to initialize the PMIx system and does not
+require return of the identifier at that time.
+.PP
+When called, the PMIx client will check for the required connection
+information of the local PMIx server and will establish the connection.
+If the information is not found, or the server connection fails, then an
+appropriate error constant will be returned.
+.PP
+If successful, the function will return PMIX_SUCCESS and will fill the
+provided structure with the server\-assigned namespace and rank of the
+process within the application.
+.PP
+Note that the PMIx client library is referenced counted, and so multiple
+calls to PMIx_Init are allowed.
+Thus, one way to obtain the namespace and rank of the process is to
+simply call PMIx_Init with a non\-NULL parameter.
+.SH RETURN VALUE
+.PP
+Returns PMIX_SUCCESS on success.
+On error, a negative value corresponding to a PMIx errno is returned.
+.SH ERRORS
+.PP
+PMIx errno values are defined in \f[C]pmix_common.h\f[].
+.SH NOTES
+.SH SEE ALSO
+.SH AUTHORS
+PMIx.

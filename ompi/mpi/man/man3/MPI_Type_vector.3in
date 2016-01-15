@@ -18,11 +18,22 @@ int MPI_Type_vector(int \fIcount\fP, int\fI blocklength\fP, int\fI stride\fP,
 .fi
 .SH Fortran Syntax
 .nf
-INCLUDE 'mpif.h'
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
 MPI_TYPE_VECTOR(\fICOUNT, BLOCKLENGTH, STRIDE, OLDTYPE, NEWTYPE,
 		IERROR\fP)
 	INTEGER	\fICOUNT, BLOCKLENGTH, STRIDE, OLDTYPE\fP
 	INTEGER	\fINEWTYPE, IERROR\fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Type_vector(\fIcount\fP, \fIblocklength\fP, \fIstride\fP, \fIoldtype\fP, \fInewtype\fP, \fIierror\fP)
+	INTEGER, INTENT(IN) :: \fIcount\fP, \fIblocklength\fP, \fIstride\fP
+	TYPE(MPI_Datatype), INTENT(IN) :: \fIoldtype\fP
+	TYPE(MPI_Datatype), INTENT(OUT) :: \fInewtype\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
 .SH C++ Syntax

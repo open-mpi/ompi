@@ -317,10 +317,13 @@ static inline int _ompi_osc_rdma_register (ompi_osc_rdma_module_t *module, struc
                                            size_t size, uint32_t flags, mca_btl_base_registration_handle_t **handle, int line, const char *file)
 {
     if (module->selected_btl->btl_register_mem) {
+        OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_INFO, "registering segment with btl. range: %p - %p (%lu bytes)",
+                         ptr, (char *) ptr + size, size);
+
         *handle = module->selected_btl->btl_register_mem (module->selected_btl, endpoint, ptr, size, flags);
         if (OPAL_UNLIKELY(NULL == *handle)) {
-            OPAL_OUTPUT_VERBOSE((20, ompi_osc_base_framework.framework_output, "failed to register pointer with selected BTL. base: %p, "
-                                 "size: %lu. file: %s, line: %d", ptr, (unsigned long) size, file, line));
+            OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_DEBUG, "failed to register pointer with selected BTL. base: %p, "
+                             "size: %lu. file: %s, line: %d", ptr, (unsigned long) size, file, line);
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
     } else {
@@ -342,7 +345,7 @@ static inline void _ompi_osc_rdma_deregister (ompi_osc_rdma_module_t *module, mc
 #define ompi_osc_rdma_deregister(...) _ompi_osc_rdma_deregister(__VA_ARGS__, __LINE__, __FILE__)
 
 static inline void ompi_osc_rdma_progress (ompi_osc_rdma_module_t *module) {
-    module->selected_btl->btl_component->btl_progress ();
+    opal_progress ();
 }
 
 /**
@@ -426,8 +429,7 @@ static inline void ompi_osc_rdma_module_lock_remove (struct ompi_osc_rdma_module
  */
 static inline ompi_osc_rdma_sync_t *ompi_osc_rdma_module_sync_lookup (ompi_osc_rdma_module_t *module, int target, struct ompi_osc_rdma_peer_t **peer)
 {
-    OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
-                         "osc/rdma: looking for synchronization object for target %d", target));
+    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "looking for synchronization object for target %d", target);
 
     switch (module->all_sync.type) {
     case OMPI_OSC_RDMA_SYNC_TYPE_NONE:
@@ -438,8 +440,7 @@ static inline ompi_osc_rdma_sync_t *ompi_osc_rdma_module_sync_lookup (ompi_osc_r
         return NULL;
     case OMPI_OSC_RDMA_SYNC_TYPE_FENCE:
     case OMPI_OSC_RDMA_SYNC_TYPE_LOCK:
-        OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
-                             "osc/rdma: found fence/lock_all access epoch for target %d", target));
+        OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "found fence/lock_all access epoch for target %d", target);
 
         /* fence epoch is now active */
         module->all_sync.epoch_active = true;
@@ -448,11 +449,12 @@ static inline ompi_osc_rdma_sync_t *ompi_osc_rdma_module_sync_lookup (ompi_osc_r
         return &module->all_sync;
     case OMPI_OSC_RDMA_SYNC_TYPE_PSCW:
         if (ompi_osc_rdma_sync_pscw_peer (module, target, peer)) {
-            OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
-                                 "osc/rdma: found PSCW access epoch target for %d", target));
+            OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "found PSCW access epoch target for %d", target);
             return &module->all_sync;
         }
     }
+
+    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_INFO, "no access epoch found for target %d", target);
 
     return NULL;
 }
@@ -465,7 +467,6 @@ static inline ompi_osc_rdma_sync_t *ompi_osc_rdma_module_sync_lookup (ompi_osc_r
 static inline void ompi_osc_rdma_sync_rdma_complete (ompi_osc_rdma_sync_t *sync)
 {
     ompi_osc_rdma_aggregation_t *aggregation, *next;
-    ompi_osc_rdma_module_t *module = sync->module;
 
     if (opal_list_get_size (&sync->aggregations)) {
         OPAL_THREAD_SCOPED_LOCK(&sync->lock,
@@ -475,7 +476,7 @@ static inline void ompi_osc_rdma_sync_rdma_complete (ompi_osc_rdma_sync_t *sync)
     }
 
     do {
-        module->selected_btl->btl_component->btl_progress ();
+        opal_progress ();
     }  while (sync->outstanding_rdma);
 }
 

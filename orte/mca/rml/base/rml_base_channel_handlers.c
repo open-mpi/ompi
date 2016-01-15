@@ -93,10 +93,10 @@ void orte_rml_base_close_channel_send_callback ( int status,
     // this is the send call back for open channel request
     orte_rml_close_channel_t *req = (orte_rml_close_channel_t*) cbdata;
     orte_process_name_t peer = req->channel->peer;
-    OPAL_OUTPUT_VERBOSE((1, orte_rml_base_framework.framework_output,
+    opal_output_verbose(5, orte_rml_base_framework.framework_output,
                          "%s rml_close_channel_send_callback to peer %s status = %d",
                          ORTE_NAME_PRINT(sender),
-                         ORTE_NAME_PRINT(&peer), status));
+                         ORTE_NAME_PRINT(&peer), status);
     req->status = status;
     // if the message could not be sent log error
     if  (ORTE_SUCCESS != req->status)

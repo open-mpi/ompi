@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -21,7 +23,8 @@
 
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_ATTR_DELETE = ompi_attr_delete_f
 #pragma weak pmpi_attr_delete = ompi_attr_delete_f
 #pragma weak pmpi_attr_delete_ = ompi_attr_delete_f
@@ -29,7 +32,7 @@
 
 #pragma weak PMPI_Attr_delete_f = ompi_attr_delete_f
 #pragma weak PMPI_Attr_delete_f08 = ompi_attr_delete_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_ATTR_DELETE,
                            pmpi_attr_delete,
                            pmpi_attr_delete_,
@@ -37,6 +40,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_ATTR_DELETE,
                            pompi_attr_delete_f,
                            (MPI_Fint *comm, MPI_Fint *keyval, MPI_Fint *ierr),
                            (comm, keyval, ierr) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -47,9 +51,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_ATTR_DELETE,
 
 #pragma weak MPI_Attr_delete_f = ompi_attr_delete_f
 #pragma weak MPI_Attr_delete_f08 = ompi_attr_delete_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_ATTR_DELETE,
                            mpi_attr_delete,
                            mpi_attr_delete_,
@@ -57,19 +60,18 @@ OMPI_GENERATE_F77_BINDINGS (MPI_ATTR_DELETE,
                            ompi_attr_delete_f,
                            (MPI_Fint *comm, MPI_Fint *keyval, MPI_Fint *ierr),
                            (comm, keyval, ierr) )
+#else
+#define ompi_attr_delete_f pompi_attr_delete_f
+#endif
 #endif
 
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
-#endif
 
 void ompi_attr_delete_f(MPI_Fint *comm, MPI_Fint *keyval, MPI_Fint *ierr)
 {
     int c_ierr;
     MPI_Comm c_comm;
-    c_comm = MPI_Comm_f2c(*comm);
+    c_comm = PMPI_Comm_f2c(*comm);
 
-    c_ierr = MPI_Attr_delete(c_comm, OMPI_FINT_2_INT(*keyval));
+    c_ierr = PMPI_Attr_delete(c_comm, OMPI_FINT_2_INT(*keyval));
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 }

@@ -31,12 +31,11 @@
 #include "ompi/mca/pml/pml.h"
 #include "ompi/memchecker.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_Ssend = PMPI_Ssend
 #endif
-
-#if OMPI_PROFILING_DEFINES
-#include "ompi/mpi/c/profile/defines.h"
+#define MPI_Ssend PMPI_Ssend
 #endif
 
 static const char FUNC_NAME[] = "MPI_Ssend";

@@ -42,9 +42,8 @@ headers = \
         crc.h \
         daemon_init.h \
         error.h \
-        few.h \
         fd.h \
-        fd.c \
+        few.h \
         if.h \
         keyval_parse.h \
         malloc.h \
@@ -80,6 +79,7 @@ libopalutil_la_SOURCES = \
         crc.c \
         daemon_init.c \
         error.c \
+        fd.c \
         few.c \
         if.c \
         keyval_parse.c \

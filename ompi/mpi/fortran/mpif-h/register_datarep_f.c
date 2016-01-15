@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -29,7 +31,8 @@
 #include "ompi/runtime/mpiruntime.h"
 #include "ompi/file/file.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_REGISTER_DATAREP = ompi_register_datarep_f
 #pragma weak pmpi_register_datarep = ompi_register_datarep_f
 #pragma weak pmpi_register_datarep_ = ompi_register_datarep_f
@@ -37,7 +40,7 @@
 
 #pragma weak PMPI_Register_datarep_f = ompi_register_datarep_f
 #pragma weak PMPI_Register_datarep_f08 = ompi_register_datarep_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_REGISTER_DATAREP,
                            pmpi_register_datarep,
                            pmpi_register_datarep_,
@@ -45,6 +48,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_REGISTER_DATAREP,
                            pompi_register_datarep_f,
                            (char *datarep, ompi_mpi2_fortran_datarep_conversion_fn_t *read_conversion_fn, ompi_mpi2_fortran_datarep_conversion_fn_t *write_conversion_fn, ompi_mpi2_fortran_datarep_extent_fn_t *dtype_file_extent_fn, MPI_Aint *extra_state, MPI_Fint *ierr, int datarep_len),
                            (datarep, read_conversion_fn, write_conversion_fn, dtype_file_extent_fn, extra_state, ierr, datarep_len) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -55,9 +59,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_REGISTER_DATAREP,
 
 #pragma weak MPI_Register_datarep_f = ompi_register_datarep_f
 #pragma weak MPI_Register_datarep_f08 = ompi_register_datarep_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_REGISTER_DATAREP,
                            mpi_register_datarep,
                            mpi_register_datarep_,
@@ -65,11 +68,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_REGISTER_DATAREP,
                            ompi_register_datarep_f,
                            (char *datarep, ompi_mpi2_fortran_datarep_conversion_fn_t *read_conversion_fn, ompi_mpi2_fortran_datarep_conversion_fn_t *write_conversion_fn, ompi_mpi2_fortran_datarep_extent_fn_t *dtype_file_extent_fn, MPI_Aint *extra_state, MPI_Fint *ierr, int datarep_len),
                            (datarep, read_conversion_fn, write_conversion_fn, dtype_file_extent_fn, extra_state, ierr, datarep_len) )
+#else
+#define ompi_register_datarep_f pompi_register_datarep_f
 #endif
-
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
 #endif
 
 static const char FUNC_NAME[] = "MPI_REGISTER_DATAREP";
@@ -98,7 +99,7 @@ typedef struct intercept_extra_state {
 
 OBJ_CLASS_DECLARATION(intercept_extra_state_t);
 
-#if !OMPI_PROFILE_LAYER || OPAL_HAVE_WEAK_SYMBOLS
+#if !OMPI_BUILD_MPI_PROFILING || OPAL_HAVE_WEAK_SYMBOLS
 static void intercept_extra_state_constructor(intercept_extra_state_t *obj)
 {
     obj->read_fn_f77 = NULL;
@@ -110,7 +111,7 @@ static void intercept_extra_state_constructor(intercept_extra_state_t *obj)
 OBJ_CLASS_INSTANCE(intercept_extra_state_t,
                    opal_list_item_t,
                    intercept_extra_state_constructor, NULL);
-#endif  /* !OMPI_PROFILE_LAYER */
+#endif  /* !OMPI_BUILD_MPI_PROFILING */
 
 /*
  * This function works by calling the C version of
@@ -164,9 +165,9 @@ void ompi_register_datarep_f(char *datarep,
 
     /* Convert the Fortran function callbacks to C equivalents.  Use
        local intercepts if they're not MPI_CONVERSION_FN_NULL so that
-       we can just call the C MPI API MPI_Register_datarep().  If they
+       we can just call the C MPI API PMPI_Register_datarep().  If they
        *are* MPI_CONVERSION_FN_NULL, then just pass that to
-       MPI_Register_datarep so that it becomes a no-op (i.e., no
+       PMPI_Register_datarep so that it becomes a no-op (i.e., no
        callback is ever triggered). */
     if (OMPI_IS_FORTRAN_CONVERSION_FN_NULL(read_fn_f77)) {
         /* Can't use the MPI_CONVERSION_FN_NULL macro here because it
@@ -192,7 +193,7 @@ void ompi_register_datarep_f(char *datarep,
     /* Now that the intercept data has been setup, call the C function
        with the setup intercept routines and the intercept-specific
        data/extra state. */
-    c_ierr = MPI_Register_datarep(c_datarep,
+    c_ierr = PMPI_Register_datarep(c_datarep,
                                   read_fn_c, write_fn_c,
                                   extent_intercept_fn,
                                   intercept);
@@ -208,7 +209,7 @@ static int read_intercept_fn(void *userbuf, MPI_Datatype type_c, int count_c,
                              void *extra_state)
 {
     MPI_Fint ierr, count_f77 = OMPI_FINT_2_INT(count_c);
-    MPI_Fint type_f77 = MPI_Type_c2f(type_c);
+    MPI_Fint type_f77 = PMPI_Type_c2f(type_c);
     intercept_extra_state_t *intercept_data =
         (intercept_extra_state_t*) extra_state;
 
@@ -226,7 +227,7 @@ static int write_intercept_fn(void *userbuf, MPI_Datatype type_c, int count_c,
                              void *extra_state)
 {
     MPI_Fint ierr, count_f77 = OMPI_FINT_2_INT(count_c);
-    MPI_Fint type_f77 = MPI_Type_c2f(type_c);
+    MPI_Fint type_f77 = PMPI_Type_c2f(type_c);
     intercept_extra_state_t *intercept_data =
         (intercept_extra_state_t*) extra_state;
 
@@ -242,7 +243,7 @@ static int write_intercept_fn(void *userbuf, MPI_Datatype type_c, int count_c,
 static int extent_intercept_fn(MPI_Datatype type_c, MPI_Aint *file_extent_f77,
                                void *extra_state)
 {
-    MPI_Fint ierr, type_f77 = MPI_Type_c2f(type_c);
+    MPI_Fint ierr, type_f77 = PMPI_Type_c2f(type_c);
     intercept_extra_state_t *intercept_data =
         (intercept_extra_state_t*) extra_state;
 

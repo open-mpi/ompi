@@ -9,10 +9,12 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -75,6 +77,8 @@ struct options_data_t {
     char *req_file;
     char *path_includedir;
     char *path_libdir;
+    char *path_opalincludedir;
+    char *path_opallibdir;
 };
 
 static struct options_data_t *options_data = NULL;
@@ -124,6 +128,8 @@ options_data_init(struct options_data_t *data)
     data->req_file = NULL;
     data->path_includedir = NULL;
     data->path_libdir = NULL;
+    data->path_opalincludedir = NULL;
+    data->path_opallibdir = NULL;
 }
 
 static void
@@ -150,6 +156,8 @@ options_data_free(struct options_data_t *data)
     if (NULL != data->req_file) free(data->req_file);
     if (NULL != data->path_includedir) free(data->path_includedir);
     if (NULL != data->path_libdir) free(data->path_libdir);
+    if (NULL != data->path_opalincludedir) free(data->path_opalincludedir);
+    if (NULL != data->path_opallibdir) free(data->path_opallibdir);
 }
 
 static void
@@ -325,6 +333,30 @@ data_callback(const char *key, const char *value)
             char *line;
             asprintf(&line, OPAL_LIBDIR_FLAG"%s",
                      options_data[parse_options_idx].path_libdir);
+            opal_argv_append_nosize(&options_data[parse_options_idx].link_flags, line);
+            free(line);
+        }
+    } else if (0 == strcmp(key, "opalincludedir")) {
+        printf("EXPANDING!\n");
+        if (NULL != value) {
+            options_data[parse_options_idx].path_opalincludedir =
+                opal_install_dirs_expand(value);
+            if (0 != strcmp(options_data[parse_options_idx].path_opalincludedir, "/usr/include") ||
+                0 == strncmp(options_data[parse_options_idx].language, "Fortran", strlen("Fortran"))) {
+                char *line;
+                asprintf(&line, OPAL_INCLUDE_FLAG"%s",
+                         options_data[parse_options_idx].path_opalincludedir);
+                opal_argv_append_nosize(&options_data[parse_options_idx].preproc_flags, line);
+                free(line);
+            }
+        }
+    } else if (0 == strcmp(key, "opallibdir")) {
+        if (NULL != value) options_data[parse_options_idx].path_opallibdir =
+                               opal_install_dirs_expand(value);
+        if (0 != strcmp(options_data[parse_options_idx].path_opallibdir, "/usr/lib")) {
+            char *line;
+            asprintf(&line, OPAL_LIBDIR_FLAG"%s",
+                     options_data[parse_options_idx].path_opallibdir);
             opal_argv_append_nosize(&options_data[parse_options_idx].link_flags, line);
             free(line);
         }
@@ -713,15 +745,6 @@ main(int argc, char *argv[])
     if (disable_flags && !((flags & COMP_DRY_RUN) && !real_flag)) {
         flags &= ~(COMP_WANT_PREPROC|COMP_WANT_COMPILE|COMP_WANT_LINK);
     }
-
-#if !OMPI_ENABLE_MPI_PROFILING
-    /* sanity check */
-    if (flags & COMP_WANT_PMPI) {
-	    opal_show_help("help-opal-wrapper.txt", "no-profiling-support", true,
-		               argv[0], NULL);
-    }
-#endif
-
 
     /****************************************************
      *

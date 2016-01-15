@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -22,7 +24,8 @@
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 #include "ompi/mpi/fortran/base/constants.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_STATUS_SET_CANCELLED = ompi_status_set_cancelled_f
 #pragma weak pmpi_status_set_cancelled = ompi_status_set_cancelled_f
 #pragma weak pmpi_status_set_cancelled_ = ompi_status_set_cancelled_f
@@ -30,7 +33,7 @@
 
 #pragma weak PMPI_Status_set_cancelled_f = ompi_status_set_cancelled_f
 #pragma weak PMPI_Status_set_cancelled_f08 = ompi_status_set_cancelled_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_STATUS_SET_CANCELLED,
                            pmpi_status_set_cancelled,
                            pmpi_status_set_cancelled_,
@@ -38,6 +41,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_STATUS_SET_CANCELLED,
                            pompi_status_set_cancelled_f,
                            (MPI_Fint *status, ompi_fortran_logical_t *flag, MPI_Fint *ierr),
                            (status, flag, ierr) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -48,9 +52,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_STATUS_SET_CANCELLED,
 
 #pragma weak MPI_Status_set_cancelled_f = ompi_status_set_cancelled_f
 #pragma weak MPI_Status_set_cancelled_f08 = ompi_status_set_cancelled_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_STATUS_SET_CANCELLED,
                            mpi_status_set_cancelled,
                            mpi_status_set_cancelled_,
@@ -58,12 +61,11 @@ OMPI_GENERATE_F77_BINDINGS (MPI_STATUS_SET_CANCELLED,
                            ompi_status_set_cancelled_f,
                            (MPI_Fint *status, ompi_fortran_logical_t *flag, MPI_Fint *ierr),
                            (status, flag, ierr) )
+#else
+#define ompi_status_set_cancelled_f pompi_status_set_cancelled_f
+#endif
 #endif
 
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
-#endif
 
 void ompi_status_set_cancelled_f(MPI_Fint *status, ompi_fortran_logical_t *flag, MPI_Fint *ierr)
 {
@@ -75,12 +77,12 @@ void ompi_status_set_cancelled_f(MPI_Fint *status, ompi_fortran_logical_t *flag,
     if (OMPI_IS_FORTRAN_STATUS_IGNORE(status)) {
         c_ierr = MPI_SUCCESS;
     } else {
-        MPI_Status_f2c( status, &c_status );
+        PMPI_Status_f2c( status, &c_status );
 
-        c_ierr = MPI_Status_set_cancelled(&c_status,
+        c_ierr = PMPI_Status_set_cancelled(&c_status,
                                           OMPI_LOGICAL_2_INT(*flag));
         if (MPI_SUCCESS == c_ierr) {
-            MPI_Status_c2f(&c_status, status);
+            PMPI_Status_c2f(&c_status, status);
         }
     }
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);

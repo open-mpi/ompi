@@ -14,6 +14,8 @@
  * Copyright (c) 2006-2008 University of Houston.  All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2012-2015 Sandia National Laboratories.  All rights reserved.
+ * Copyright (c) 2015      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2015      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -36,8 +38,12 @@
 
 #include "opal/threads/mutex.h"
 #include "opal/util/arch.h"
+#include "opal/util/argv.h"
 #include "opal/align.h"
 #include "opal/util/info_subscriber.h"
+#if OPAL_CUDA_SUPPORT
+#include "opal/datatype/opal_datatype_cuda.h"
+#endif /* OPAL_CUDA_SUPPORT */
 
 #include "ompi/info/info.h"
 #include "ompi/communicator/communicator.h"
@@ -303,6 +309,15 @@ static int ompi_osc_rdma_component_query (struct ompi_win_t *win, void **base, s
         return -1;
     }
 
+#if OPAL_CUDA_SUPPORT
+    /* GPU buffers are not supported by the rdma component */
+    if (MPI_WIN_FLAVOR_CREATE == flavor) {
+        if (opal_cuda_check_bufs(*base, NULL)) {
+            return -1;
+        }
+    }
+#endif /* OPAL_CUDA_SUPPORT */
+
     if (OMPI_SUCCESS != ompi_osc_rdma_query_btls (comm, NULL)) {
         return -1;
     }
@@ -326,7 +341,7 @@ static int ompi_osc_rdma_initialize_region (ompi_osc_rdma_module_t *module, void
     region->len = size;
 
     if (module->selected_btl->btl_register_mem && size) {
-        if (MPI_WIN_FLAVOR_ALLOCATE != module->flavor) {
+        if (MPI_WIN_FLAVOR_ALLOCATE != module->flavor || NULL == module->state_handle) {
             ret = ompi_osc_rdma_register (module, MCA_BTL_ENDPOINT_ANY, *base, size, MCA_BTL_REG_FLAG_ACCESS_ANY,
                                           &module->base_handle);
             if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
@@ -347,6 +362,8 @@ static int allocate_state_single (ompi_osc_rdma_module_t *module, void **base, s
     size_t total_size, local_rank_array_size, leader_peer_data_size;
     ompi_osc_rdma_peer_t *my_peer;
     int ret, my_rank;
+
+    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "allocating private internal state");
 
     my_rank = ompi_comm_rank (module->comm);
 
@@ -407,7 +424,15 @@ static int allocate_state_single (ompi_osc_rdma_module_t *module, void **base, s
     module->free_after = module->rank_array;
     my_peer->flags |= OMPI_OSC_RDMA_PEER_LOCAL_BASE;
     my_peer->state = (uint64_t) (uintptr_t) module->state;
-    my_peer->state_handle = module->state_handle;
+
+    if (module->selected_btl->btl_flags & MCA_BTL_ATOMIC_SUPPORTS_GLOB) {
+        /* all peers are local or it is safe to mix cpu and nic atomics */
+        my_peer->flags |= OMPI_OSC_RDMA_PEER_LOCAL_STATE;
+    } else {
+        /* use my endpoint handle to modify the peer's state */
+        my_peer->state_handle = module->state_handle;
+        my_peer->state_endpoint = ompi_osc_rdma_peer_btl_endpoint (module, my_rank);
+    }
 
     if (MPI_WIN_FLAVOR_DYNAMIC != module->flavor) {
         ompi_osc_rdma_peer_extended_t *ex_peer = (ompi_osc_rdma_peer_extended_t *) my_peer;
@@ -440,6 +465,7 @@ static int allocate_state_shared (ompi_osc_rdma_module_t *module, void **base, s
     size_t local_rank_array_size, leader_peer_data_size;
     int my_rank = ompi_comm_rank (module->comm);
     int global_size = ompi_comm_size (module->comm);
+    ompi_osc_rdma_region_t *state_region;
     int my_base_offset = 0;
     struct _local_data *temp;
     char *data_file;
@@ -454,12 +480,14 @@ static int allocate_state_shared (ompi_osc_rdma_module_t *module, void **base, s
         return allocate_state_single (module, base, size);
     }
 
+    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "allocating shared internal state");
+
     local_rank_array_size = sizeof (ompi_osc_rdma_rank_data_t) * RANK_ARRAY_COUNT (module);
     leader_peer_data_size = module->region_size * module->node_count;
 
     /* calculate base offsets */
-    module->state_offset = state_base = local_rank_array_size;
-    data_base = local_rank_array_size + leader_peer_data_size + module->state_size * local_size;
+    module->state_offset = state_base = local_rank_array_size + module->region_size;
+    data_base = state_base + leader_peer_data_size + module->state_size * local_size;
 
     do {
         temp = calloc (local_size, sizeof (temp[0]));
@@ -503,8 +531,7 @@ static int allocate_state_shared (ompi_osc_rdma_module_t *module, void **base, s
             ret = opal_shmem_segment_create (&module->seg_ds, data_file, total_size);
             free (data_file);
             if (OPAL_SUCCESS != ret) {
-                OPAL_OUTPUT_VERBOSE((1, ompi_osc_base_framework.framework_output,
-                                     "failed to create shared memory segment"));
+                OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_ERROR, "failed to create shared memory segment");
                 break;
             }
         }
@@ -517,18 +544,18 @@ static int allocate_state_shared (ompi_osc_rdma_module_t *module, void **base, s
 
         module->segment_base = opal_shmem_segment_attach (&module->seg_ds);
         if (NULL == module->segment_base) {
-            OPAL_OUTPUT_VERBOSE((1, ompi_osc_base_framework.framework_output,
-                                 "failed to attach to the shared memory segment"));
+            OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_ERROR, "failed to attach to the shared memory segment");
             ret = OPAL_ERROR;
             break;
         }
-
-        module->rank_array = (ompi_osc_rdma_rank_data_t *) module->segment_base;
 
         if (size && MPI_WIN_FLAVOR_ALLOCATE == module->flavor) {
             *base = (void *)((intptr_t) module->segment_base + my_base_offset);
         }
 
+        module->rank_array = (ompi_osc_rdma_rank_data_t *) module->segment_base;
+        /* put local state region data after the rank array */
+        state_region = (ompi_osc_rdma_region_t *) ((uintptr_t) module->segment_base + local_rank_array_size);
         module->state = (ompi_osc_rdma_state_t *) ((uintptr_t) module->segment_base + state_base + module->state_size * local_rank);
 
         /* all local ranks share the array containing the peer data of leader ranks */
@@ -537,14 +564,18 @@ static int allocate_state_shared (ompi_osc_rdma_module_t *module, void **base, s
         /* initialize my state */
         memset (module->state, 0, module->state_size);
 
-        OPAL_OUTPUT_VERBOSE((10, ompi_osc_base_framework.framework_output, "registering segment range: %p - %p (%lu bytes)",
-                             module->segment_base, (char *) module->segment_base + total_size, total_size));
+        if (0 == local_rank) {
+            /* just go ahead and register the whole segment */
+            ret = ompi_osc_rdma_register (module, MCA_BTL_ENDPOINT_ANY, module->segment_base, total_size, MCA_BTL_REG_FLAG_ACCESS_ANY,
+                                          &module->state_handle);
+            if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
+                break;
+            }
 
-        /* just go ahead and register the whole segment */
-        ret = ompi_osc_rdma_register (module, MCA_BTL_ENDPOINT_ANY, module->segment_base, total_size, MCA_BTL_REG_FLAG_ACCESS_ANY,
-                                      &module->state_handle);
-        if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
-            break;
+            state_region->base = (intptr_t) module->segment_base;
+            if (module->state_handle) {
+                memcpy (state_region->btl_handle_data, module->state_handle, module->selected_btl->btl_registration_handle_size);
+            }
         }
 
         if (MPI_WIN_FLAVOR_DYNAMIC != module->flavor) {
@@ -565,6 +596,7 @@ static int allocate_state_shared (ompi_osc_rdma_module_t *module, void **base, s
         offset = data_base;
         for (int i = 0 ; i < local_size ; ++i) {
             ompi_osc_rdma_peer_extended_t *ex_peer;
+            ompi_osc_rdma_state_t *peer_state;
             ompi_osc_rdma_peer_t *peer;
             int peer_rank = temp[i].rank;
 
@@ -575,27 +607,34 @@ static int allocate_state_shared (ompi_osc_rdma_module_t *module, void **base, s
 
             ex_peer = (ompi_osc_rdma_peer_extended_t *) peer;
 
-            peer->state = (osc_rdma_counter_t) ((uintptr_t) module->segment_base + state_base + module->state_size * i);
+            /* peer state local pointer */
+            peer_state = (ompi_osc_rdma_state_t *) ((uintptr_t) module->segment_base + state_base + module->state_size * i);
 
             if (local_size == global_size || (module->selected_btl->btl_flags & MCA_BTL_ATOMIC_SUPPORTS_GLOB)) {
                 /* all peers are local or it is safe to mix cpu and nic atomics */
                 peer->flags |= OMPI_OSC_RDMA_PEER_LOCAL_STATE;
+                peer->state = (osc_rdma_counter_t) peer_state;
             } else {
                 /* use my endpoint handle to modify the peer's state */
-                peer->state_handle = module->state_handle;
-                peer->state_endpoint = ompi_osc_rdma_peer_btl_endpoint (module, my_rank);
+                if (module->selected_btl->btl_register_mem) {
+                    peer->state_handle = (mca_btl_base_registration_handle_t *) state_region->btl_handle_data;
+                }
+                peer->state = (osc_rdma_counter_t) ((uintptr_t) state_region->base + state_base + module->state_size * i);
+                peer->state_endpoint = ompi_osc_rdma_peer_btl_endpoint (module, peer_rank);
             }
 
             /* finish setting up the local peer structure */
             if (MPI_WIN_FLAVOR_DYNAMIC != module->flavor) {
-                ompi_osc_rdma_state_t *peer_state = (ompi_osc_rdma_state_t *) (intptr_t) peer->state;
-
                 if (!module->same_disp_unit) {
                     ex_peer->disp_unit = peer_state->disp_unit;
                 }
 
                 if (!module->same_size) {
                     ex_peer->size = temp[i].size;
+                }
+
+                if (my_rank == peer_rank) {
+                    peer->flags |= OMPI_OSC_RDMA_PEER_LOCAL_BASE;
                 }
 
                 if (MPI_WIN_FLAVOR_ALLOCATE == module->flavor) {
@@ -665,8 +704,8 @@ static int ompi_osc_rdma_query_btls (ompi_communicator_t *comm, struct mca_btl_b
     }
 
     if (NULL != selected_btl) {
-        OPAL_OUTPUT_VERBOSE((11, ompi_osc_base_framework.framework_output, "Selected BTL: %s",
-                             selected_btl->btl_component->btl_version.mca_component_name));
+        OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_INFO, "selected btl: %s",
+                         selected_btl->btl_component->btl_version.mca_component_name);
         return OMPI_SUCCESS;
     }
 
@@ -757,12 +796,13 @@ static int ompi_osc_rdma_query_btls (ompi_communicator_t *comm, struct mca_btl_b
     }
 
     if (NULL == selected_btl) {
+        OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_INFO, "no suitable btls found");
         /* no btl = no rdma/atomics */
         return OMPI_ERR_NOT_AVAILABLE;
     }
 
-    OPAL_OUTPUT_VERBOSE((11, ompi_osc_base_framework.framework_output, "Selected BTL: %s",
-                         selected_btl->btl_component->btl_version.mca_component_name));
+    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_INFO, "selected btl: %s",
+                     selected_btl->btl_component->btl_version.mca_component_name);
 
     return OMPI_SUCCESS;
 }
@@ -809,7 +849,7 @@ static int ompi_osc_rdma_share_data (ompi_osc_rdma_module_t *module)
                                                                     module->region_size, MPI_BYTE, module->local_leaders,
                                                                     module->local_leaders->c_coll.coll_gather_module);
                 if (OMPI_SUCCESS != ret) {
-                    OPAL_OUTPUT_VERBOSE((11, ompi_osc_base_framework.framework_output, "Gather failed %d", ret));
+                    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_ERROR, "leader allgather failed with ompi error code %d", ret);
                     break;
                 }
             }
@@ -855,9 +895,8 @@ static int ompi_osc_rdma_create_groups (ompi_osc_rdma_module_t *module)
 
     /* create a shared communicator to handle communication about the local segment */
     ret = ompi_comm_split_type (module->comm, MPI_COMM_TYPE_SHARED, 0, NULL, &module->shared_comm);
-    if (OMPI_SUCCESS != ret) {
-        OPAL_OUTPUT_VERBOSE((1, ompi_osc_base_framework.framework_output,
-                             "failed to create a shared memory communicator. ret = %d", ret));
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
+        OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_ERROR, "failed to create a shared memory communicator. error code %d", ret);
         return ret;
     }
 
@@ -867,9 +906,8 @@ static int ompi_osc_rdma_create_groups (ompi_osc_rdma_module_t *module)
 
     ret = ompi_comm_split (module->comm, (0 == local_rank) ? 0 : MPI_UNDEFINED, comm_rank, &module->local_leaders,
                            false);
-    if (OMPI_SUCCESS != ret) {
-        OPAL_OUTPUT_VERBOSE((1, ompi_osc_base_framework.framework_output,
-                             "failed to create local leaders communicator. ret = %d", ret));
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
+        OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_ERROR, "failed to create local leaders communicator. error code %d", ret);
         return ret;
     }
 
@@ -882,7 +920,7 @@ static int ompi_osc_rdma_create_groups (ompi_osc_rdma_module_t *module)
         ret = module->shared_comm->c_coll.coll_bcast (values, 2, MPI_INT, 0, module->shared_comm,
                                                       module->shared_comm->c_coll.coll_bcast_module);
         if (OMPI_SUCCESS != ret) {
-            OPAL_OUTPUT_VERBOSE((1, ompi_osc_base_framework.framework_output, "failed to broadcast local data"));
+            OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_ERROR, "failed to broadcast local data. error code %d", ret);
             return ret;
         }
     }
@@ -962,7 +1000,7 @@ static int ompi_osc_rdma_component_select (struct ompi_win_t *win, void **base, 
     }
 
     /* initialize the objects, so that always free in cleanup */
-    OBJ_CONSTRUCT(&module->lock, opal_mutex_t);
+    OBJ_CONSTRUCT(&module->lock, opal_recursive_mutex_t);
     OBJ_CONSTRUCT(&module->outstanding_locks, opal_hash_table_t);
     OBJ_CONSTRUCT(&module->pending_posts, opal_list_t);
     OBJ_CONSTRUCT(&module->peer_lock, opal_mutex_t);
@@ -1012,8 +1050,8 @@ static int ompi_osc_rdma_component_select (struct ompi_win_t *win, void **base, 
         return ret;
     }
 
-    OPAL_OUTPUT_VERBOSE((11, ompi_osc_base_framework.framework_output, "creating RDMA window of flavor %d with id %d",
-                         flavor, ompi_comm_get_cid(module->comm)));
+    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_INFO, "creating osc/rdma window of flavor %d with id %d",
+                     flavor, ompi_comm_get_cid(module->comm));
 
     /* peer data */
     if (world_size > init_limit) {
@@ -1034,15 +1072,12 @@ static int ompi_osc_rdma_component_select (struct ompi_win_t *win, void **base, 
     /* find rdma capable endpoints */
     ret = ompi_osc_rdma_query_btls (module->comm, &module->selected_btl);
     if (OMPI_SUCCESS != ret) {
-        OPAL_OUTPUT_VERBOSE((11, ompi_osc_base_framework.framework_output, "Failed finding RDMA endpoints"));
         ompi_osc_rdma_free (win);
         return ret;
     }
 
     /* calculate and store various structure sizes */
 
-    /* the following two structures have similar usage but the later is meant to be a small as possible. they may
-     * be merged into a single structure in a later version of this component. */
     module->region_size = module->selected_btl->btl_registration_handle_size + sizeof (ompi_osc_rdma_region_t);
 
     module->state_size = sizeof (ompi_osc_rdma_state_t);
@@ -1080,7 +1115,7 @@ static int ompi_osc_rdma_component_select (struct ompi_win_t *win, void **base, 
     /* fill in our part */
     ret = allocate_state_shared (module, base, size);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
-        OPAL_OUTPUT_VERBOSE((11, ompi_osc_base_framework.framework_output, "Failed to allocate state"));
+        OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_ERROR, "failed to allocate internal state");
         ompi_osc_rdma_free (win);
         return ret;
     }
@@ -1097,7 +1132,7 @@ static int ompi_osc_rdma_component_select (struct ompi_win_t *win, void **base, 
 
     ret = ompi_osc_rdma_share_data (module);
     if (OMPI_SUCCESS != ret) {
-        OPAL_OUTPUT_VERBOSE((11, ompi_osc_base_framework.framework_output, "Failed to share data"));
+        OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_ERROR, "failed to share window data with peers");
         ompi_osc_rdma_free (win);
         return ret;
     }
@@ -1105,10 +1140,6 @@ static int ompi_osc_rdma_component_select (struct ompi_win_t *win, void **base, 
 
     /* for now the leader is always rank 0 in the communicator */
     module->leader = ompi_osc_rdma_module_peer (module, 0);
-
-    OPAL_OUTPUT_VERBOSE((10, ompi_osc_base_framework.framework_output,
-                         "rdma component creating window with id %d",
-                         ompi_comm_get_cid(module->comm)));
 
     /* lock data */
     if (module->no_locks) {
@@ -1153,8 +1184,9 @@ static int ompi_osc_rdma_component_select (struct ompi_win_t *win, void **base, 
         return ret;
     }
 
-    OPAL_OUTPUT_VERBOSE((10, ompi_osc_base_framework.framework_output,
-                         "done creating rdma window %d", ompi_comm_get_cid(module->comm)));
+
+    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_INFO, "finished creating osc/rdma window with id %d",
+                     ompi_comm_get_cid(module->comm));
 
     return OMPI_SUCCESS;
 }
@@ -1208,6 +1240,7 @@ static int ompi_osc_rdma_set_info (struct ompi_win_t *win, struct opal_info_t *i
         OBJ_CONSTRUCT(&module->outstanding_locks, opal_hash_table_t);
 
         module->no_locks = true;
+        win->w_flags |= OMPI_WIN_NO_LOCKS;
     } else if (!temp && module->no_locks) {
         int world_size = ompi_comm_size (module->comm);
         int init_limit = world_size > 256 ? 256 : world_size;
@@ -1219,6 +1252,7 @@ static int ompi_osc_rdma_set_info (struct ompi_win_t *win, struct opal_info_t *i
         }
 
         module->no_locks = false;
+        win->w_flags &= ~OMPI_WIN_NO_LOCKS;
     }
 
     /* enforce collectiveness... */
@@ -1240,16 +1274,4 @@ static int ompi_osc_rdma_get_info (struct ompi_win_t *win, struct opal_info_t **
     return OMPI_SUCCESS;
 }
 
-static void ompi_osc_rdma_aggregation_construct (ompi_osc_rdma_aggregation_t *aggregation)
-{
-    OBJ_CONSTRUCT(&aggregation->requests, opal_list_t);
-    aggregation->buffer_used = 0;
-}
-
-static void ompi_osc_rdma_aggregation_destruct (ompi_osc_rdma_aggregation_t *aggregation)
-{
-    OBJ_DESTRUCT(&aggregation->requests);
-}
-
-OBJ_CLASS_INSTANCE(ompi_osc_rdma_aggregation_t, opal_list_item_t, ompi_osc_rdma_aggregation_construct,
-                   ompi_osc_rdma_aggregation_destruct);
+OBJ_CLASS_INSTANCE(ompi_osc_rdma_aggregation_t, opal_list_item_t, NULL, NULL);

@@ -68,8 +68,9 @@ typedef struct ompi_mtl_portals4_send_request_t ompi_mtl_portals4_send_request_t
 struct ompi_mtl_portals4_recv_request_t {
     ompi_mtl_portals4_base_request_t super;
     void *buffer_ptr;
-    ptl_handle_md_t md_h;
     ptl_handle_me_t me_h;
+    ptl_handle_ct_t ct_h;
+    bool is_triggered;
     struct opal_convertor_t *convertor;
     void *delivery_ptr;
     size_t delivery_len;

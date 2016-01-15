@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -21,7 +23,8 @@
 
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_TYPE_CREATE_DARRAY = ompi_type_create_darray_f
 #pragma weak pmpi_type_create_darray = ompi_type_create_darray_f
 #pragma weak pmpi_type_create_darray_ = ompi_type_create_darray_f
@@ -29,7 +32,7 @@
 
 #pragma weak PMPI_Type_create_darray_f = ompi_type_create_darray_f
 #pragma weak PMPI_Type_create_darray_f08 = ompi_type_create_darray_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_TYPE_CREATE_DARRAY,
                            pmpi_type_create_darray,
                            pmpi_type_create_darray_,
@@ -37,6 +40,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_TYPE_CREATE_DARRAY,
                            pompi_type_create_darray_f,
                            (MPI_Fint *size, MPI_Fint *rank, MPI_Fint *ndims, MPI_Fint *gsize_array, MPI_Fint *distrib_array, MPI_Fint *darg_array, MPI_Fint *psize_array, MPI_Fint *order, MPI_Fint *oldtype, MPI_Fint *newtype, MPI_Fint *ierr),
                            (size, rank, ndims, gsize_array, distrib_array, darg_array, psize_array, order, oldtype, newtype, ierr) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -47,9 +51,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_TYPE_CREATE_DARRAY,
 
 #pragma weak MPI_Type_create_darray_f = ompi_type_create_darray_f
 #pragma weak MPI_Type_create_darray_f08 = ompi_type_create_darray_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_CREATE_DARRAY,
                            mpi_type_create_darray,
                            mpi_type_create_darray_,
@@ -57,12 +60,11 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_CREATE_DARRAY,
                            ompi_type_create_darray_f,
                            (MPI_Fint *size, MPI_Fint *rank, MPI_Fint *ndims, MPI_Fint *gsize_array, MPI_Fint *distrib_array, MPI_Fint *darg_array, MPI_Fint *psize_array, MPI_Fint *order, MPI_Fint *oldtype, MPI_Fint *newtype, MPI_Fint *ierr),
                            (size, rank, ndims, gsize_array, distrib_array, darg_array, psize_array, order, oldtype, newtype, ierr) )
+#else
+#define ompi_type_create_darray_f pompi_type_create_darray_f
+#endif
 #endif
 
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
-#endif
 
 void ompi_type_create_darray_f(MPI_Fint *size, MPI_Fint *rank,
 			      MPI_Fint *ndims, MPI_Fint *gsize_array,
@@ -72,7 +74,7 @@ void ompi_type_create_darray_f(MPI_Fint *size, MPI_Fint *rank,
 			      MPI_Fint *ierr)
 {
     int c_ierr;
-    MPI_Datatype c_old = MPI_Type_f2c(*oldtype);
+    MPI_Datatype c_old = PMPI_Type_f2c(*oldtype);
     MPI_Datatype c_new;
     OMPI_ARRAY_NAME_DECL(gsize_array);
     OMPI_ARRAY_NAME_DECL(distrib_array);
@@ -84,7 +86,7 @@ void ompi_type_create_darray_f(MPI_Fint *size, MPI_Fint *rank,
     OMPI_ARRAY_FINT_2_INT(darg_array, *ndims);
     OMPI_ARRAY_FINT_2_INT(psize_array, *ndims);
 
-    c_ierr = MPI_Type_create_darray(OMPI_FINT_2_INT(*size),
+    c_ierr = PMPI_Type_create_darray(OMPI_FINT_2_INT(*size),
                                     OMPI_FINT_2_INT(*rank),
                                     OMPI_FINT_2_INT(*ndims),
                                     OMPI_ARRAY_NAME_CONVERT(gsize_array),
@@ -100,6 +102,6 @@ void ompi_type_create_darray_f(MPI_Fint *size, MPI_Fint *rank,
     OMPI_ARRAY_FINT_2_INT_CLEANUP(psize_array);
 
     if (MPI_SUCCESS == c_ierr) {
-      *newtype = MPI_Type_c2f(c_new);
+      *newtype = PMPI_Type_c2f(c_new);
     }
 }

@@ -13,6 +13,8 @@
 # Copyright (c) 2006      QLogic Corp. All rights reserved.
 # Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2014      Intel Corporation. All rights reserved.
+# Copyright (c) 2015      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -40,15 +42,15 @@ AC_DEFUN([OMPI_CHECK_PSM2],[
     ompi_check_psm2_$1_save_LIBS="$LIBS"
 
     AS_IF([test "$with_psm2" != "no"],
-          [AS_IF([test ! -z "$with_psm2" -a "$with_psm2" != "yes"],
+          [AS_IF([test ! -z "$with_psm2" && test "$with_psm2" != "yes"],
                  [ompi_check_psm2_dir="$with_psm2"])
-           AS_IF([test ! -z "$with_psm2_libdir" -a "$with_psm2_libdir" != "yes"],
+           AS_IF([test ! -z "$with_psm2_libdir" && test "$with_psm2_libdir" != "yes"],
                  [ompi_check_psm2_libdir="$with_psm2_libdir"])
 
            OPAL_CHECK_PACKAGE([$1],
                               [psm2.h],
                               [psm2],
-                              [psm_mq_irecv2],
+                              [psm2_mq_irecv2],
 			      [],
                               [$ompi_check_psm2_dir],
                               [$ompi_check_psm2_libdir],
@@ -60,13 +62,13 @@ AC_DEFUN([OMPI_CHECK_PSM2],[
     LDFLAGS="$ompi_check_psm2_$1_save_LDFLAGS"
     LIBS="$ompi_check_psm2_$1_save_LIBS"
 
-    AS_IF([test "$ompi_check_psm2_happy" = "yes" -a "$enable_progress_threads" = "yes"],
+    AS_IF([test "$ompi_check_psm2_happy" = "yes" && test "$enable_progress_threads" = "yes"],
           [AC_MSG_WARN([PSM2 driver does not currently support progress threads.  Disabling MTL.])
            ompi_check_psm2_happy="no"])
 
     AS_IF([test "$ompi_check_psm2_happy" = "yes"],
           [$2],
-          [AS_IF([test ! -z "$with_psm2" -a "$with_psm2" != "no"],
+          [AS_IF([test ! -z "$with_psm2" && test "$with_psm2" != "no"],
                  [AC_MSG_ERROR([PSM2 support requested but not found.  Aborting])])
            $3])
 ])

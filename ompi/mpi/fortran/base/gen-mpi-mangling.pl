@@ -62,13 +62,13 @@ $fortran->{in_place} = {
     f_name => "MPI_IN_PLACE",
 };
 $fortran->{unweighted} = {
-    c_type => "int",
+    c_type => "int *",
     c_name => "mpi_fortran_unweighted",
     f_type => "integer",
     f_name => "MPI_UNWEIGHTED",
 };
 $fortran->{weights_empty} = {
-    c_type => "int",
+    c_type => "int *",
     c_name => "mpi_fortran_weights_empty",
     f_type => "integer",
     f_name => "MPI_WEIGHTS_EMPTY",

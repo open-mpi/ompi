@@ -203,7 +203,7 @@ $io_handles->{MPI_FILE_NULL} = 0;
 my $constants;
 
 $constants->{MPI_VERSION} = 3;
-$constants->{MPI_SUBVERSION} = 0;
+$constants->{MPI_SUBVERSION} = 1;
 
 $constants->{MPI_ANY_SOURCE} = -1;
 $constants->{MPI_ANY_TAG} = -1;

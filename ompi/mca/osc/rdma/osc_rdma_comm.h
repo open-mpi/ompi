@@ -59,14 +59,14 @@ static inline int osc_rdma_get_remote_segment (ompi_osc_rdma_module_t *module, o
     ompi_osc_rdma_region_t *region;
     int ret;
 
-    OPAL_OUTPUT_VERBOSE((20, ompi_osc_base_framework.framework_output, "getting remote address for peer %d target_disp %lu",
-                         peer->rank, (unsigned long) target_disp));
+    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "getting remote address for peer %d target_disp %lu. peer flags: 0x%x",
+                     peer->rank, (unsigned long) target_disp, peer->flags);
 
     if (MPI_WIN_FLAVOR_DYNAMIC == module->flavor) {
         ret = ompi_osc_rdma_find_dynamic_region (module, peer, (uint64_t) target_disp, length, &region);
         if (OMPI_SUCCESS != ret) {
-            OPAL_OUTPUT_VERBOSE((10, ompi_osc_base_framework.framework_output,
-                                 "could not retrieve region for %" PRIx64 " from window rank %d", (uint64_t) target_disp, peer->rank));
+            OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_INFO, "could not retrieve region for %" PRIx64 " from window rank %d",
+                             (uint64_t) target_disp, peer->rank);
             return ret;
         }
 
@@ -77,20 +77,19 @@ static inline int osc_rdma_get_remote_segment (ompi_osc_rdma_module_t *module, o
         int disp_unit = (module->same_disp_unit) ? module->disp_unit : ex_peer->disp_unit;
         size_t size = (module->same_size) ? module->size : (size_t) ex_peer->size;
 
-        *remote_address = ex_peer->super.base +disp_unit * target_disp;
+        *remote_address = ex_peer->super.base + disp_unit * target_disp;
         if (OPAL_UNLIKELY(*remote_address + length > (ex_peer->super.base + size))) {
-            OPAL_OUTPUT_VERBOSE((10, ompi_osc_base_framework.framework_output, "remote address range 0x%" PRIx64 " - 0x%" PRIx64
-                                 " is out of range. Valid address range is 0x%" PRIx64 " - 0x%" PRIx64 " (%" PRIu64 " bytes)",
-                                 *remote_address, *remote_address + length, ex_peer->super.base, ex_peer->super.base + size,
-                                 (uint64_t) size));
+            OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_INFO, "remote address range 0x%" PRIx64 " - 0x%" PRIx64
+                             " is out of range. Valid address range is 0x%" PRIx64 " - 0x%" PRIx64 " (%" PRIu64 " bytes)",
+                             *remote_address, *remote_address + length, ex_peer->super.base, ex_peer->super.base + size,
+                             (uint64_t) size);
             return OMPI_ERR_RMA_RANGE;
         }
 
         *remote_handle = ex_peer->super.base_handle;
     }
 
-    OPAL_OUTPUT_VERBOSE((20, ompi_osc_base_framework.framework_output,
-                         "remote address: 0x%" PRIx64 ", handle: %p", *remote_address, (void *) *remote_handle));
+    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "remote address: 0x%" PRIx64 ", handle: %p", *remote_address, (void *) *remote_handle);
 
     return OMPI_SUCCESS;
 }

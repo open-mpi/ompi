@@ -2,7 +2,7 @@ dnl
 dnl Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
 dnl                         University Research and Technology
 dnl                         Corporation.  All rights reserved.
-dnl Copyright (c) 2004-2005 The University of Tennessee and The University
+dnl Copyright (c) 2004-2015 The University of Tennessee and The University
 dnl                         of Tennessee Research Foundation.  All rights
 dnl                         reserved.
 dnl Copyright (c) 2004-2006 High Performance Computing Center Stuttgart,
@@ -864,21 +864,21 @@ AC_DEFUN([OPAL_CONFIG_ASM],[
 
     AC_ARG_ENABLE([builtin-atomics],
       [AC_HELP_STRING([--enable-builtin-atomics],
-         [Enable use of __sync builtin atomics (default: disabled)])])
-
+         [Enable use of __sync builtin atomics (default: enabled)])],
+         [], [enable_builtin_atomics="yes"])
     AC_ARG_ENABLE([osx-builtin-atomics],
       [AC_HELP_STRING([--enable-osx-builtin-atomics],
-         [Enable use of OSX builtin atomics (default: disabled)])])
+         [Enable use of OSX builtin atomics (default: enabled)])],
+         [], [enable_osx_builtin_atomics="yes"])
 
-    if test "$enable_builtin_atomics" = "yes" ; then
-       OPAL_CHECK_SYNC_BUILTINS([opal_cv_asm_builtin="BUILTIN_SYNC"],
-         [AC_MSG_ERROR([__sync builtin atomics requested but not found.])])
-       AC_DEFINE([OPAL_C_GCC_INLINE_ASSEMBLY], [1],
-         [Whether C compiler supports GCC style inline assembly])
+    opal_cv_asm_builtin="BUILTIN_NO"
+    if test "$opal_cv_asm_builtin" = "BUILTIN_NO" && test "$enable_builtin_atomics" = "yes" ; then
+       OPAL_CHECK_SYNC_BUILTINS([opal_cv_asm_builtin="BUILTIN_SYNC"], [])
        OPAL_CHECK_SYNC_BUILTIN_CSWAP_INT128
-    elif test "$enable_osx_builtin_atomics" = "yes" ; then
-	   AC_CHECK_HEADER([libkern/OSAtomic.h],[opal_cv_asm_builtin="BUILTIN_OSX"],
-	    [AC_MSG_ERROR([OSX builtin atomics requested but not found.])])
+    fi
+    if test "$opal_cv_asm_builtin" = "BUILTIN_NO" && test "$enable_osx_builtin_atomics" = "yes" ; then
+       AC_CHECK_HEADER([libkern/OSAtomic.h],
+                       [opal_cv_asm_builtin="BUILTIN_OSX"])
     else
        opal_cv_asm_builtin="BUILTIN_NO"
     fi

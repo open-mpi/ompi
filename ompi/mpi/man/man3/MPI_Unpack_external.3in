@@ -23,14 +23,30 @@ int MPI_Unpack_external(const char \fIdatarep\fP[], const void *\fIinbuf\fP,
 .fi
 .SH Fortran Syntax
 .nf
-INCLUDE 'mpif.h'
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
 MPI_UNPACK_EXTERNAL(\fIDATAREP, INBUF, INSIZE, POSITION,
 	OUTBUF, OUTCOUNT, DATATYPE, IERROR\fP)
 
 	INTEGER		\fIOUTCOUNT, DATATYPE, IERROR\fP
-	INTEGER (KIND=MPI_ADDRESS_KIND) \fIINSIZE, POSITION\fP
+	INTEGER(KIND=MPI_ADDRESS_KIND) \fIINSIZE, POSITION\fP
 	CHARACTER*(*)	\fIDATAREP\fP
 	<type>		\fIINBUF(*), OUTBUF(*)\fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Unpack_external(\fIdatarep\fP, \fIinbuf\fP, \fIinsize\fP, \fIposition\fP, \fIoutbuf\fP, \fIoutcount\fP,
+		\fIdatatype\fP, \fIierror\fP)
+	CHARACTER(LEN=*), INTENT(IN) :: \fIdatarep\fP
+	TYPE(*), DIMENSION(..), INTENT(IN) :: \fIinbuf\fP
+	TYPE(*), DIMENSION(..) :: \fIoutbuf\fP
+	INTEGER(KIND=MPI_ADDRESS_KIND), INTENT(IN) :: \fIinsize\fP
+	INTEGER(KIND=MPI_ADDRESS_KIND), INTENT(INOUT) :: \fIposition\fP
+	INTEGER, INTENT(IN) :: \fIoutcount\fP
+	TYPE(MPI_Datatype), INTENT(IN) :: \fIdatatype\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
 .SH C++ Syntax

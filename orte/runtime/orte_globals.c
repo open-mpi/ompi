@@ -155,6 +155,7 @@ bool orte_default_hostfile_given = false;
 char *orte_rankfile = NULL;
 int orte_num_allocated_nodes = 0;
 char *orte_node_regex = NULL;
+char *orte_default_dash_host = NULL;
 
 /* tool communication controls */
 bool orte_report_events = false;
@@ -465,8 +466,14 @@ orte_vpid_t orte_get_proc_daemon_vpid(orte_process_name_t *proc)
 char* orte_get_proc_hostname(orte_process_name_t *proc)
 {
     orte_proc_t *proct;
-    char *hostname;
+    char *hostname = NULL;
     int rc;
+
+    /* if we are a tool, then we have no way of obtaining
+     * this info */
+    if (ORTE_PROC_IS_TOOL) {
+        return NULL;
+    }
 
     /* don't bother error logging any not-found situations
      * as the layer above us will have something to say
@@ -507,12 +514,13 @@ orte_node_rank_t orte_get_proc_node_rank(orte_process_name_t *proc)
     }
 
     /* if we are an app, get the value from the modex db */
+    noderank = &nd;
     OPAL_MODEX_RECV_VALUE(rc, OPAL_PMIX_NODE_RANK,
                           (opal_process_name_t*)proc,
                           &noderank, ORTE_NODE_RANK);
-
-    nd = *noderank;
-    free(noderank);
+    if (OPAL_SUCCESS != rc) {
+        nd = ORTE_NODE_RANK_INVALID;
+    }
     return nd;
 }
 

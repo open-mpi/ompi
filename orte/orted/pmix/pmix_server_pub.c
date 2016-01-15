@@ -32,6 +32,7 @@
 #include <unistd.h>
 #endif
 
+#include "opal/util/argv.h"
 #include "opal/util/output.h"
 #include "opal/dss/dss.h"
 

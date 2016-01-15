@@ -384,6 +384,12 @@ static int compare_nodes (opal_list_item_t **a, opal_list_item_t **b)
     return (launcha > launchb) ? 1 : -1;
 }
 
+#if ALPS_APPINFO_VERSION > 0 && ALPS_APPINFO_VERSION < 3
+    typedef placeNodeList_t orte_ras_alps_placeNodeList_t;
+#else
+    typedef placeNodeList_ver3_t orte_ras_alps_placeNodeList_t;
+#endif
+
 static int
 orte_ras_alps_read_appinfo_file(opal_list_t *nodes, char *filename,
                                 unsigned int *uMe)
@@ -409,7 +415,7 @@ orte_ras_alps_read_appinfo_file(opal_list_t *nodes, char *filename,
 #if ALPS_APPINFO_VERSION==0
     placeList_t     *apSlots;               /* ALPS node specific info        */
 #else
-    placeNodeList_t *apNodes;
+    orte_ras_alps_placeNodeList_t *apNodes;
 #endif
 
     orte_ras_alps_get_appinfo_attempts(&max_appinfo_read_attempts);
@@ -557,8 +563,8 @@ orte_ras_alps_read_appinfo_file(opal_list_t *nodes, char *filename,
          * allocation, and that struct directly carries the number of PEs
          * allocated on that node to this job.
          */
-        apNodes=(placeNodeList_t *)(cpBuf+oNow+oInfo+oDet+oSlots);
-        oEntry=sizeof(placeNodeList_t)*apInfo->numPlaces;
+        apNodes=(orte_ras_alps_placeNodeList_t *)(cpBuf+oNow+oInfo+oDet+oSlots);
+        oEntry=sizeof(orte_ras_alps_placeNodeList_t)*apInfo->numPlaces;
 
         oNow+=(oDet+oSlots+oEntry);         /* Target next entry               */
 

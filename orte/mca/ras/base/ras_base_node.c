@@ -12,6 +12,8 @@
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -32,31 +34,6 @@
 #include "orte/runtime/orte_globals.h"
 
 #include "orte/mca/ras/base/ras_private.h"
-
-static void orte_ras_base_proc_construct(orte_ras_proc_t* proc)
-{
-    proc->node_name = NULL;
-    proc->cpu_list = NULL;
-    proc->rank = ORTE_VPID_MAX;
-}
-
-static void orte_ras_base_proc_destruct(orte_ras_proc_t* proc)
-{
-    if (NULL != proc->node_name) {
-        free(proc->node_name);
-    }
-    if (NULL != proc->cpu_list) {
-        free(proc->cpu_list);
-    }
-}
-
-
-OBJ_CLASS_INSTANCE(
-    orte_ras_proc_t,
-    opal_list_item_t,
-    orte_ras_base_proc_construct,
-    orte_ras_base_proc_destruct);
-
 
 /*
  * Add the specified node definitions to the global data store

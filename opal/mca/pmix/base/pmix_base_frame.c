@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 2014      Intel, Inc. All rights reserved.
- * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
+ * Copyright (c) 2015      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -13,6 +13,7 @@
 #include "opal/constants.h"
 
 #include "opal/mca/mca.h"
+#include "opal/util/argv.h"
 #include "opal/util/output.h"
 #include "opal/mca/base/base.h"
 
@@ -31,12 +32,21 @@
 /* Note that this initializer is important -- do not remove it!  See
    https://github.com/open-mpi/ompi/issues/375 for details. */
 opal_pmix_base_module_t opal_pmix = { 0 };
-bool opal_pmix_collect_all_data = false;
+bool opal_pmix_collect_all_data = true;
 bool opal_pmix_base_allow_delayed_server = false;
 int opal_pmix_verbose_output = -1;
+bool opal_pmix_base_async_modex = false;
 
 static int opal_pmix_base_frame_register(mca_base_register_flag_t flags)
 {
+    opal_pmix_base_async_modex = false;
+    (void) mca_base_var_register("opal", "pmix", "base", "async_modex", "Use asynchronous modex mode",
+                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0, OPAL_INFO_LVL_9,
+                                 MCA_BASE_VAR_SCOPE_READONLY, &opal_pmix_base_async_modex);
+    opal_pmix_collect_all_data = true;
+    (void) mca_base_var_register("opal", "pmix", "base", "collect_data", "Collect all data during modex",
+                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0, OPAL_INFO_LVL_9,
+                                 MCA_BASE_VAR_SCOPE_READONLY, &opal_pmix_collect_all_data);
     return OPAL_SUCCESS;
 }
 

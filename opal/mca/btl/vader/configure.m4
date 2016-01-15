@@ -6,6 +6,8 @@
 # Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2011-2014 Los Alamos National Security, LLC. All rights
 #                         reserved.
+# Copyright (c) 2015      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -33,18 +35,18 @@ AC_DEFUN([OPAL_CHECK_XPMEM], [
     opal_check_xpmem_happy="no"
 
     if test ! "$with_xpmem" = "no" ; then
-	if test ! -z "$with_xpmem" -a "$with_xpmem" != "yes" ; then
+	if test ! -z "$with_xpmem" && test "$with_xpmem" != "yes" ; then
 	    opal_check_xpmem_dir="$with_xpmem"
 	fi
 
-	if test ! -z "$with_xpmem_libdir" -a "$with_xpmem_libdir" != "yes" ; then
+	if test ! -z "$with_xpmem_libdir" && test "$with_xpmem_libdir" != "yes" ; then
 	    opal_check_xpmem_libdir="$with_xpmem_libdir"
 	fi
 
 	OPAL_CHECK_PACKAGE([$1],[xpmem.h],[xpmem],[xpmem_make],[],
 	    [$opal_check_xpmem_dir],[$opal_check_xpmem_libdir], [opal_check_xpmem_happy="yes"], [])
 
-	if test "$opal_check_xpmem_happy" = "no" -a -n "$with_xpmem" -a "$with_xpmem" != "yes" ; then
+	if test "$opal_check_xpmem_happy" = "no" && test -n "$with_xpmem" && test "$with_xpmem" != "yes" ; then
 	    AC_MSG_ERROR([XPMEM support requested but not found.  Aborting])
 	fi
     fi

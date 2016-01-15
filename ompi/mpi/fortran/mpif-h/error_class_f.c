@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -21,7 +23,8 @@
 
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_ERROR_CLASS = ompi_error_class_f
 #pragma weak pmpi_error_class = ompi_error_class_f
 #pragma weak pmpi_error_class_ = ompi_error_class_f
@@ -29,7 +32,7 @@
 
 #pragma weak PMPI_Error_class_f = ompi_error_class_f
 #pragma weak PMPI_Error_class_f08 = ompi_error_class_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_ERROR_CLASS,
                            pmpi_error_class,
                            pmpi_error_class_,
@@ -37,6 +40,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_ERROR_CLASS,
                            pompi_error_class_f,
                            (MPI_Fint *errorcode, MPI_Fint *errorclass, MPI_Fint *ierr),
                            (errorcode, errorclass, ierr) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -47,9 +51,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_ERROR_CLASS,
 
 #pragma weak MPI_Error_class_f = ompi_error_class_f
 #pragma weak MPI_Error_class_f08 = ompi_error_class_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_ERROR_CLASS,
                            mpi_error_class,
                            mpi_error_class_,
@@ -57,12 +60,11 @@ OMPI_GENERATE_F77_BINDINGS (MPI_ERROR_CLASS,
                            ompi_error_class_f,
                            (MPI_Fint *errorcode, MPI_Fint *errorclass, MPI_Fint *ierr),
                            (errorcode, errorclass, ierr) )
+#else
+#define ompi_error_class_f pompi_error_class_f
+#endif
 #endif
 
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
-#endif
 
 void ompi_error_class_f(MPI_Fint *errorcode, MPI_Fint *errorclass,
 		       MPI_Fint *ierr)
@@ -70,7 +72,7 @@ void ompi_error_class_f(MPI_Fint *errorcode, MPI_Fint *errorclass,
     int c_ierr;
     OMPI_SINGLE_NAME_DECL(errorclass);
 
-    c_ierr = MPI_Error_class(OMPI_FINT_2_INT(*errorcode),
+    c_ierr = PMPI_Error_class(OMPI_FINT_2_INT(*errorcode),
                              OMPI_SINGLE_NAME_CONVERT(errorclass));
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 

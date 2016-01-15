@@ -1586,6 +1586,9 @@ static int create_app(int argc, char* argv[],
         orte_set_attribute(&app->attributes, ORTE_APP_DASH_HOST, ORTE_ATTR_LOCAL, tval, OPAL_STRING);
         opal_argv_free(targ);
         free(tval);
+    } else if (NULL != orte_default_dash_host) {
+        orte_set_attribute(&app->attributes, ORTE_APP_DASH_HOST, ORTE_ATTR_LOCAL,
+                           orte_default_dash_host, OPAL_STRING);
     }
 
     /* check for bozo error */
@@ -2117,7 +2120,6 @@ static int process(char *orig_line, char *basename, opal_cmd_line_t *cmd_line,
         else {
             goto out;
         }
-        free(tmp);
     }
 
     /* All done -- didn't find it */

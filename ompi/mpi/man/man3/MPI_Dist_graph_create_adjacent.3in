@@ -20,12 +20,28 @@ int MPI_Dist_graph_create_adjacent(MPI_Comm \fIcomm_old\fP, int\fI indegree\fP, 
 .fi
 .SH Fortran Syntax
 .nf
-INCLUDE 'mpif.h'
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
 MPI_DIST_GRAPH_CREATE_ADJACENT(\fICOMM_OLD, INDEGREE, SOURCES, SOURCEWEIGHTS, OUTDEGREE,
                 DESTINATIONS, DESTWEIGHTS, INFO, REORDER, COMM_DIST_GRAPH, IERROR\fP)
 	INTEGER	\fICOMM_OLD, INDEGREE, SOURCES(*), SOURCEWEIGHTS(*), OUTDEGREE, DESTINATIONS(*), DESTWEIGHTS(*), INFO\fP
 	INTEGER	\fICOMM_DIST_GRAPH, IERROR\fP
 	LOGICAL \fIREORDER\fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Dist_Graph_create_adjacent(\fIcomm_old\fP, \fIndegree\fP, \fIsources\fP, \fIsourceweights\fP,
+		\fIoutdegree\fP, \fIdestinations\fP, \fIdestweights\fP, \fIinfo\fP, \fIreorder\fP,
+		\fIcomm_dist_graph\fP, \fIierror\fP)
+	TYPE(MPI_Comm), INTENT(IN) :: \fIcomm_old\fP
+	INTEGER, INTENT(IN) :: \fIindegree\fP, \fIsources(indegree)\fP, \fIoutdegree\fP, \fIdestinations(outdegree)\fP
+	INTEGER, INTENT(IN) :: \fIsourceweights(*)\fP, \fIdestweights(*)\fP
+	TYPE(MPI_Info), INTENT(IN) :: \fIinfo\fP
+	LOGICAL, INTENT(IN) :: reorder
+	TYPE(MPI_Comm), INTENT(OUT) :: \fIcomm_dist_graph\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
 .SH INPUT PARAMETERS

@@ -39,3 +39,7 @@ the map for this application. This can be caused by a lack of
 an allocation, or by an error in the Open MPI code. Please check
 to ensure you have a ALPS allocation. If you do, then please pass
 the error to the Open MPI user's mailing list for assistance.
+#
+[slurm-not-supported]
+mpirun is not a supported launcher on Cray XC using Native SLURM.
+srun must be used to launch jobs on these systems.

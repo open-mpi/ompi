@@ -1,5 +1,8 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -32,7 +35,7 @@ int opal_reachable_base_select(void)
     if( OPAL_SUCCESS != mca_base_select("reachable", opal_reachable_base_framework.framework_output,
                                         &opal_reachable_base_framework.framework_components,
                                         (mca_base_module_t **) &best_module,
-                                        (mca_base_component_t **) &best_component) ) {
+                                        (mca_base_component_t **) &best_component, NULL) ) {
         /* notify caller that no available component found */
         return OPAL_ERR_NOT_FOUND;
     }

@@ -936,6 +936,7 @@ int opal_dss_unpack_node_stat(opal_buffer_t *buffer, void *dest,
             OPAL_ERROR_LOG(ret);
             return ret;
         }
+        OBJ_RELEASE(ptr[i]);
     }
 
     return OPAL_SUCCESS;

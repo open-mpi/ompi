@@ -23,6 +23,9 @@
 
 #include "orte/mca/mca.h"
 #include "orte/mca/plm/plm.h"
+#if CRAY_WLM_DETECT
+#include "wlm_detect.h"
+#endif
 
 BEGIN_C_DECLS
 
@@ -43,6 +46,7 @@ ORTE_MODULE_DECLSPEC extern orte_plm_alps_component_t
     mca_plm_alps_component;
 ORTE_DECLSPEC extern orte_plm_base_module_t
     orte_plm_alps_module;
+extern bool mca_plm_alps_using_aprun;
 
 END_C_DECLS
 

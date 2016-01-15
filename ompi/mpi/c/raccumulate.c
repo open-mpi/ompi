@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009      Sun Microsystmes, Inc.  All rights reserved.
  * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
- * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2014-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -35,12 +35,11 @@
 #include "ompi/datatype/ompi_datatype_internal.h"
 #include "ompi/memchecker.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_Raccumulate = PMPI_Raccumulate
 #endif
-
-#if OMPI_PROFILING_DEFINES
-#include "ompi/mpi/c/profile/defines.h"
+#define MPI_Raccumulate PMPI_Raccumulate
 #endif
 
 static const char FUNC_NAME[] = "MPI_Raccumulate";
@@ -74,7 +73,7 @@ int MPI_Raccumulate(const void *origin_addr, int origin_count, MPI_Datatype orig
             rc = MPI_ERR_OP;
         } else if (!ompi_op_is_intrinsic(op)) {
             rc = MPI_ERR_OP;
-        } else if ( target_disp < 0 ) {
+        } else if ( MPI_WIN_FLAVOR_DYNAMIC != win->w_flavor && target_disp < 0 ) {
             rc = MPI_ERR_DISP;
         } else {
             OMPI_CHECK_DATATYPE_FOR_ONE_SIDED(rc, origin_datatype, origin_count);

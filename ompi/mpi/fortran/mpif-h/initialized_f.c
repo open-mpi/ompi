@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -21,7 +23,8 @@
 
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_INITIALIZED = ompi_initialized_f
 #pragma weak pmpi_initialized = ompi_initialized_f
 #pragma weak pmpi_initialized_ = ompi_initialized_f
@@ -29,7 +32,7 @@
 
 #pragma weak PMPI_Initialized_f = ompi_initialized_f
 #pragma weak PMPI_Initialized_f08 = ompi_initialized_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_INITIALIZED,
                            pmpi_initialized,
                            pmpi_initialized_,
@@ -37,6 +40,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_INITIALIZED,
                            pompi_initialized_f,
                            (ompi_fortran_logical_t *flag, MPI_Fint *ierr),
                            (flag, ierr) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -47,9 +51,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_INITIALIZED,
 
 #pragma weak MPI_Initialized_f = ompi_initialized_f
 #pragma weak MPI_Initialized_f08 = ompi_initialized_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_INITIALIZED,
                            mpi_initialized,
                            mpi_initialized_,
@@ -57,18 +60,17 @@ OMPI_GENERATE_F77_BINDINGS (MPI_INITIALIZED,
                            ompi_initialized_f,
                            (ompi_fortran_logical_t *flag, MPI_Fint *ierr),
                            (flag, ierr) )
+#else
+#define ompi_initialized_f pompi_initialized_f
+#endif
 #endif
 
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
-#endif
 
 void ompi_initialized_f(ompi_fortran_logical_t *flag, MPI_Fint *ierr)
 {
     int c_ierr;
     OMPI_LOGICAL_NAME_DECL(flag);
-    c_ierr = MPI_Initialized(OMPI_LOGICAL_SINGLE_NAME_CONVERT(flag));
+    c_ierr = PMPI_Initialized(OMPI_LOGICAL_SINGLE_NAME_CONVERT(flag));
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {

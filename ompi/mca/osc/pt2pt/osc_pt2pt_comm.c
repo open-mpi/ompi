@@ -63,9 +63,9 @@ static int ompi_osc_pt2pt_dt_send_complete (ompi_request_t *request)
     OBJ_RELEASE(datatype);
 
     OPAL_THREAD_LOCK(&mca_osc_pt2pt_component.lock);
-    opal_hash_table_get_value_uint32(&mca_osc_pt2pt_component.modules,
-                                     ompi_comm_get_cid(request->req_mpi_object.comm),
-                                     (void **) &module);
+    (void) opal_hash_table_get_value_uint32(&mca_osc_pt2pt_component.modules,
+                                            ompi_comm_get_cid(request->req_mpi_object.comm),
+                                            (void **) &module);
     OPAL_THREAD_UNLOCK(&mca_osc_pt2pt_component.lock);
     assert (NULL != module);
 
@@ -475,7 +475,7 @@ ompi_osc_pt2pt_accumulate_w_req (const void *origin_addr, int origin_count,
          }
 
         is_long_msg = true;
-        tag = get_tag (module);
+        tag = get_rtag (module);
     }
 
     /* flush will be called at the end of this function. make sure all post messages have
@@ -619,9 +619,6 @@ int ompi_osc_pt2pt_compare_and_swap (const void *origin_addr, const void *compar
 
     /* compare-and-swaps are always request based, so that we know where to land the data */
     OMPI_OSC_PT2PT_REQUEST_ALLOC(win, request);
-    if (NULL == request) {
-        return OMPI_ERR_OUT_OF_RESOURCE;
-    }
 
     request->type = OMPI_OSC_PT2PT_HDR_TYPE_CSWAP;
     request->origin_addr = origin_addr;
@@ -705,9 +702,6 @@ int ompi_osc_pt2pt_rput(const void *origin_addr, int origin_count,
                          target_count, target_dt->name, win->w_name));
 
     OMPI_OSC_PT2PT_REQUEST_ALLOC(win, pt2pt_request);
-    if (NULL == pt2pt_request) {
-        return OMPI_ERR_OUT_OF_RESOURCE;
-    }
 
     /* short-circuit case */
     if (0 == origin_count || 0 == target_count) {
@@ -764,9 +758,6 @@ static inline int ompi_osc_pt2pt_rget_internal (void *origin_addr, int origin_co
 
     /* gets are always request based, so that we know where to land the data */
     OMPI_OSC_PT2PT_REQUEST_ALLOC(win, pt2pt_request);
-    if (NULL == pt2pt_request) {
-        return OMPI_ERR_OUT_OF_RESOURCE;
-    }
 
     pt2pt_request->internal = release_req;
 
@@ -914,9 +905,6 @@ int ompi_osc_pt2pt_raccumulate(const void *origin_addr, int origin_count,
                          win->w_name));
 
     OMPI_OSC_PT2PT_REQUEST_ALLOC(win, pt2pt_request);
-    if (NULL == pt2pt_request) {
-        return OMPI_ERR_OUT_OF_RESOURCE;
-    }
 
     /* short-circuit case */
     if (0 == origin_count || 0 == target_count) {
@@ -979,9 +967,6 @@ int ompi_osc_pt2pt_rget_accumulate_internal (const void *origin_addr, int origin
 
     /* get_accumulates are always request based, so that we know where to land the data */
     OMPI_OSC_PT2PT_REQUEST_ALLOC(win, pt2pt_request);
-    if (OPAL_UNLIKELY(NULL == pt2pt_request)) {
-        return OMPI_ERR_OUT_OF_RESOURCE;
-    }
 
     pt2pt_request->internal = release_req;
 

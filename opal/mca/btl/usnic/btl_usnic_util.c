@@ -65,7 +65,7 @@ void opal_btl_usnic_util_abort(const char *msg, const char *file, int line)
     opal_show_help("help-mpi-btl-usnic.txt", "internal error after init",
                    true,
                    opal_process_info.nodename,
-                   msg, file, line);
+                   file, line, msg);
 
     opal_btl_usnic_exit(NULL);
     /* Never returns */

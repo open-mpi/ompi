@@ -24,7 +24,8 @@ int MPI_Igather(const void \fI*sendbuf\fP, int\fI sendcount\fP, MPI_Datatype\fI 
 .fi
 .SH Fortran Syntax
 .nf
-INCLUDE 'mpif.h'
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
 MPI_GATHER(\fISENDBUF, SENDCOUNT, SENDTYPE, RECVBUF, RECVCOUNT,
 		RECVTYPE, ROOT, COMM, IERROR\fP)
 	<type>	\fISENDBUF(*), RECVBUF(*)\fP
@@ -36,6 +37,29 @@ MPI_IGATHER(\fISENDBUF, SENDCOUNT, SENDTYPE, RECVBUF, RECVCOUNT,
 	<type>	\fISENDBUF(*), RECVBUF(*)\fP
 	INTEGER	\fISENDCOUNT, SENDTYPE, RECVCOUNT, RECVTYPE, ROOT\fP
 	INTEGER	\fICOMM, REQUEST, IERROR\fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Gather(\fIsendbuf\fP, \fIsendcount\fP, \fIsendtype\fP, \fIrecvbuf\fP, \fIrecvcount\fP, \fIrecvtype\fP,
+		\fIroot\fP, \fIcomm\fP, \fIierror\fP)
+	TYPE(*), DIMENSION(..), INTENT(IN) :: \fIsendbuf\fP
+	TYPE(*), DIMENSION(..) :: \fIrecvbuf\fP
+	INTEGER, INTENT(IN) :: \fIsendcount\fP, \fIrecvcount\fP, \fIroot\fP
+	TYPE(MPI_Datatype), INTENT(IN) :: \fIsendtype\fP, \fIrecvtype\fP
+	TYPE(MPI_Comm), INTENT(IN) :: \fIcomm\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
+
+MPI_Igather(\fIsendbuf\fP, \fIsendcount\fP, \fIsendtype\fP, \fIrecvbuf\fP, \fIrecvcount\fP, \fIrecvtype\fP,
+		\fIroot\fP, \fIcomm\fP, \fIrequest\fP, \fIierror\fP)
+	TYPE(*), DIMENSION(..), INTENT(IN), ASYNCHRONOUS :: \fIsendbuf\fP
+	TYPE(*), DIMENSION(..), ASYNCHRONOUS :: \fIrecvbuf\fP
+	INTEGER, INTENT(IN) :: \fIsendcount\fP, \fIrecvcount\fP, \fIroot\fP
+	TYPE(MPI_Datatype), INTENT(IN) :: \fIsendtype\fP, \fIrecvtype\fP
+	TYPE(MPI_Comm), INTENT(IN) :: \fIcomm\fP
+	TYPE(MPI_Request), INTENT(OUT) :: \fIrequest\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
 .SH C++ Syntax

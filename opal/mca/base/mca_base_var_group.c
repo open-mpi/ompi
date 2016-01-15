@@ -274,12 +274,6 @@ static int group_register (const char *project_name, const char *framework_name,
         }
     }
 
-    /* avoid groups of the form opal_opal, ompi_ompi, etc */
-    if (NULL != project_name && NULL != framework_name &&
-        (0 == strcmp (project_name, framework_name))) {
-        project_name = NULL;
-    }
-
     /* build the group name */
     ret = mca_base_var_generate_full_name4 (NULL, project_name, framework_name, component_name,
                                             &group->group_full_name);

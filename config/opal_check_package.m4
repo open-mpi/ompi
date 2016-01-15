@@ -13,6 +13,8 @@ dnl                         All rights reserved.
 dnl Copyright (c) 2012-2015 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
 dnl Copyright (c) 2014      Intel, Inc. All rights reserved.
+dnl Copyright (c) 2015      Research Organization for Information Science
+dnl                         and Technology (RIST). All rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -139,7 +141,7 @@ AC_DEFUN([_OPAL_CHECK_PACKAGE_LIB], [
 ])
 
 
-dnl FI_CHECK_PACKAGE(prefix,
+dnl OPAL_CHECK_PACKAGE(prefix,
 dnl                    header,
 dnl                    library,
 dnl                    function,

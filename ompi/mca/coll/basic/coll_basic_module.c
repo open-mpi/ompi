@@ -13,7 +13,7 @@
  * Copyright (c) 2012      Sandia National Laboratories. All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -30,8 +30,6 @@
 #include "mpi.h"
 #include "ompi/mca/coll/coll.h"
 #include "ompi/mca/coll/base/base.h"
-#include "ompi/mca/topo/topo.h"
-#include "ompi/mca/topo/base/base.h"
 #include "coll_basic.h"
 
 
@@ -59,51 +57,12 @@ mca_coll_base_module_t *
 mca_coll_basic_comm_query(struct ompi_communicator_t *comm,
                           int *priority)
 {
-    int size;
     mca_coll_basic_module_t *basic_module;
 
     basic_module = OBJ_NEW(mca_coll_basic_module_t);
     if (NULL == basic_module) return NULL;
 
     *priority = mca_coll_basic_priority;
-
-    /* Allocate the data that hangs off the communicator */
-
-    if (OMPI_COMM_IS_INTER(comm)) {
-        size = ompi_comm_remote_size(comm);
-    } else {
-        size = ompi_comm_size(comm);
-    }
-    size *= 2;
-    if (OMPI_COMM_IS_CART(comm)) {
-        int cart_size, ndims;
-        assert (NULL != comm->c_topo);
-        comm->c_topo->topo.cart.cartdim_get(comm, &ndims);
-        cart_size = ndims * 4;
-        if (cart_size > size) {
-            size = cart_size;
-        }
-    } else if (OMPI_COMM_IS_GRAPH(comm)) {
-        int rank, degree;
-        assert (NULL != comm->c_topo);
-        rank = ompi_comm_rank (comm);
-        comm->c_topo->topo.graph.graph_neighbors_count (comm, rank, &degree);
-        degree *= 2;
-        if (degree > size) {
-            size = degree;
-        }
-    } else if (OMPI_COMM_IS_DIST_GRAPH(comm)) {
-        int dist_graph_size, inneighbors, outneighbors, weighted;
-        assert (NULL != comm->c_topo);
-        comm->c_topo->topo.dist_graph.dist_graph_neighbors_count(comm, &inneighbors, &outneighbors, &weighted);
-        dist_graph_size = inneighbors + outneighbors;
-        if (dist_graph_size > size) {
-            size = dist_graph_size;
-        }
-    }
-    basic_module->mccb_num_reqs = size;
-    basic_module->mccb_reqs = (ompi_request_t**)
-        malloc(sizeof(ompi_request_t *) * basic_module->mccb_num_reqs);
 
     /* Choose whether to use [intra|inter], and [linear|log]-based
      * algorithms. */
@@ -184,10 +143,15 @@ int
 mca_coll_basic_module_enable(mca_coll_base_module_t *module,
                              struct ompi_communicator_t *comm)
 {
+    /* prepare the placeholder for the array of request* */
+    module->base_data = OBJ_NEW(mca_coll_basic_comm_t);
+    if (NULL == module->base_data) {
+        return OMPI_ERROR;
+    }
+
     /* All done */
     return OMPI_SUCCESS;
 }
-
 
 int
 mca_coll_basic_ft_event(int state) {

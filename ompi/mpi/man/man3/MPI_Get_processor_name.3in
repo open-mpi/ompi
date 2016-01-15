@@ -17,10 +17,20 @@ int MPI_Get_processor_name(char *\fIname\fP, int *\fIresultlen\fP)
 .fi
 .SH Fortran Syntax
 .nf
-INCLUDE 'mpif.h'
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
 MPI_GET_PROCESSOR_NAME(\fINAME, RESULTLEN, IERROR\fP)
 	CHARACTER*(*)	\fINAME\fP
 	INTEGER		\fIRESULTLEN, IERROR \fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Get_processor_name(\fIname\fP, \fIresultlen\fP, \fIierror\fP)
+	CHARACTER(LEN=MPI_MAX_PROCESSOR_NAME), INTENT(OUT) :: \fIname\fP
+	INTEGER, INTENT(OUT) :: \fIresultlen\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
 .SH C++ Syntax

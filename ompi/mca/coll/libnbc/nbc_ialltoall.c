@@ -51,7 +51,8 @@ int ompi_coll_libnbc_ialltoall(const void* sendbuf, int sendcount, MPI_Datatype 
                                MPI_Datatype recvtype, struct ompi_communicator_t *comm, ompi_request_t ** request,
                                struct mca_coll_base_module_2_1_0_t *module)
 {
-  int rank, p, res, a2asize, sndsize, datasize;
+  int rank, p, res, datasize;
+  size_t a2asize, sndsize;
   NBC_Schedule *schedule;
   MPI_Aint rcvext, sndext;
 #ifdef NBC_CACHE_SCHEDULE
@@ -67,21 +68,21 @@ int ompi_coll_libnbc_ialltoall(const void* sendbuf, int sendcount, MPI_Datatype 
   rank = ompi_comm_rank (comm);
   p = ompi_comm_size (comm);
 
-  res = MPI_Type_extent(sendtype, &sndext);
+  res = ompi_datatype_type_extent(sendtype, &sndext);
   if (MPI_SUCCESS != res) {
-    NBC_Error("MPI Error in MPI_Type_extent() (%i)", res);
+    NBC_Error("MPI Error in ompi_datatype_type_extent() (%i)", res);
     return res;
   }
 
-  res = MPI_Type_extent(recvtype, &rcvext);
+  res = ompi_datatype_type_extent(recvtype, &rcvext);
   if (MPI_SUCCESS != res) {
-    NBC_Error("MPI Error in MPI_Type_extent() (%i)", res);
+    NBC_Error("MPI Error in ompi_datatype_type_extent() (%i)", res);
     return res;
   }
 
-  res = MPI_Type_size(sendtype, &sndsize);
+  res = ompi_datatype_type_size(sendtype, &sndsize);
   if (MPI_SUCCESS != res) {
-    NBC_Error("MPI Error in MPI_Type_size() (%i)", res);
+    NBC_Error("MPI Error in ompi_datatype_type_size() (%i)", res);
     return res;
   }
 
@@ -93,7 +94,7 @@ int ompi_coll_libnbc_ialltoall(const void* sendbuf, int sendcount, MPI_Datatype 
      * total communicated size is smaller than 1<<17 *and* if we don't
      * have eager messages (msgsize < 1<<13) */
     alg = NBC_A2A_LINEAR;
-  } else if(a2asize < (1<<12)*p) {
+  } else if(a2asize < (1<<12)*(unsigned int)p) {
     /*alg = NBC_A2A_DISS;*/
     alg = NBC_A2A_LINEAR;
   } else
@@ -120,9 +121,9 @@ int ompi_coll_libnbc_ialltoall(const void* sendbuf, int sendcount, MPI_Datatype 
     if(NBC_Type_intrinsic(sendtype)) {
       datasize = sndext * sendcount;
     } else {
-      res = MPI_Pack_size (sendcount, sendtype, comm, &datasize);
+      res = PMPI_Pack_size (sendcount, sendtype, comm, &datasize);
       if (MPI_SUCCESS != res) {
-        NBC_Error("MPI Error in MPI_Pack_size() (%i)", res);
+        NBC_Error("MPI Error in PMPI_Pack_size() (%i)", res);
         NBC_Return_handle (handle);
         return res;
       }
@@ -156,20 +157,20 @@ int ompi_coll_libnbc_ialltoall(const void* sendbuf, int sendcount, MPI_Datatype 
       int pos=0;
 
       /* non-contiguous - pack */
-      res = MPI_Pack ((char *) sendbuf + rank * sendcount * sndext, (p - rank) * sendcount, sendtype, handle->tmpbuf,
+      res = PMPI_Pack ((char *) sendbuf + rank * sendcount * sndext, (p - rank) * sendcount, sendtype, handle->tmpbuf,
                       (p - rank) * datasize, &pos, comm);
       if (OPAL_UNLIKELY(MPI_SUCCESS != res)) {
-        NBC_Error("MPI Error in MPI_Pack() (%i)", res);
+        NBC_Error("MPI Error in PMPI_Pack() (%i)", res);
         NBC_Return_handle (handle);
         return res;
       }
 
       if (rank != 0) {
         pos = 0;
-        res = MPI_Pack(sendbuf, rank * sendcount, sendtype, (char *) handle->tmpbuf + datasize * (p - rank),
+        res = PMPI_Pack(sendbuf, rank * sendcount, sendtype, (char *) handle->tmpbuf + datasize * (p - rank),
                        rank * datasize, &pos, comm);
         if (OPAL_UNLIKELY(MPI_SUCCESS != res)) {
-          NBC_Error("MPI Error in MPI_Pack() (%i)", res);
+          NBC_Error("MPI Error in PMPI_Pack() (%i)", res);
           NBC_Return_handle (handle);
           return res;
         }
@@ -277,15 +278,15 @@ int ompi_coll_libnbc_ialltoall_inter (const void* sendbuf, int sendcount, MPI_Da
 
   rsize = ompi_comm_remote_size (comm);
 
-  res = MPI_Type_extent (sendtype, &sndext);
+  res = ompi_datatype_type_extent (sendtype, &sndext);
   if (MPI_SUCCESS != res) {
-    NBC_Error("MPI Error in MPI_Type_extent() (%i)", res);
+    NBC_Error("MPI Error in ompi_datatype_type_extent() (%i)", res);
     return res;
   }
 
-  res = MPI_Type_extent (recvtype, &rcvext);
+  res = ompi_datatype_type_extent (recvtype, &rcvext);
   if (MPI_SUCCESS != res) {
-    NBC_Error("MPI Error in MPI_Type_extent() (%i)", res);
+    NBC_Error("MPI Error in ompi_datatype_type_extent() (%i)", res);
     return res;
   }
 
@@ -414,9 +415,9 @@ static inline int a2a_sched_diss(int rank, int p, MPI_Aint sndext, MPI_Aint rcve
   if(NBC_Type_intrinsic(sendtype)) {
     datasize = sndext*sendcount;
   } else {
-    res = MPI_Pack_size(sendcount, sendtype, comm, &datasize);
+    res = PMPI_Pack_size(sendcount, sendtype, comm, &datasize);
     if (MPI_SUCCESS != res) {
-      NBC_Error("MPI Error in MPI_Pack_size() (%i)", res);
+      NBC_Error("MPI Error in PMPI_Pack_size() (%i)", res);
       return res;
     }
   }

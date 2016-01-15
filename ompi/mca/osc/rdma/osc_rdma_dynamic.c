@@ -47,9 +47,9 @@ static inline ompi_osc_rdma_region_t *ompi_osc_rdma_find_region_containing (ompi
 
     region_bound = (intptr_t) (region->base + region->len);
 
-    OPAL_OUTPUT_VERBOSE((5, ompi_osc_base_framework.framework_output, "Checking memory region %p-%p against %p-%p (index %d) (min_index = %d, max_index = %d)",
+    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_DEBUG, "checking memory region %p-%p against %p-%p (index %d) (min_index = %d, max_index = %d)",
                          (void *) base, (void *) bound, (void *) region->base, (void *)(region->base + region->len), mid_index,
-                         min_index, max_index));
+                         min_index, max_index);
 
     if (region->base > base) {
         return ompi_osc_rdma_find_region_containing (regions, min_index, mid_index-1, base, bound, region_size, region_index);
@@ -91,6 +91,7 @@ int ompi_osc_rdma_attach (struct ompi_win_t *win, void *base, size_t len)
     ompi_osc_rdma_region_t *region;
     osc_rdma_counter_t region_count;
     osc_rdma_counter_t region_id;
+    void *bound;
     intptr_t page_size = getpagesize ();
     int region_index;
     int ret;
@@ -104,6 +105,8 @@ int ompi_osc_rdma_attach (struct ompi_win_t *win, void *base, size_t len)
         return OMPI_SUCCESS;
     }
 
+    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "attach: %s, %p, %lu", win->w_name, base, (unsigned long) len);
+
     OPAL_THREAD_LOCK(&module->lock);
 
     region_count = module->state->region_count & 0xffffffffL;
@@ -114,9 +117,15 @@ int ompi_osc_rdma_attach (struct ompi_win_t *win, void *base, size_t len)
         return OMPI_ERR_RMA_ATTACH;
     }
 
+    /* it is wasteful to register less than a page. this may allow the remote side to access more
+     * memory but the MPI standard covers this with calling the calling behavior erroneous */
+    bound = (void *)OPAL_ALIGN((intptr_t) base + len, page_size, intptr_t);
+    base = (void *)((intptr_t) base & ~(page_size - 1));
+    len = (size_t)((intptr_t) bound - (intptr_t) base);
+
     /* see if a matching region already exists */
     region = ompi_osc_rdma_find_region_containing ((ompi_osc_rdma_region_t *) module->state->regions, 0, region_count - 1, (intptr_t) base,
-                                                   (intptr_t) base + len, module->region_size, &region_index);
+                                                   (intptr_t) bound, module->region_size, &region_index);
     if (NULL != region) {
         ++module->dynamic_handles[region_index].refcnt;
         OPAL_THREAD_UNLOCK(&module->lock);
@@ -148,13 +157,11 @@ int ompi_osc_rdma_attach (struct ompi_win_t *win, void *base, size_t len)
         region = (ompi_osc_rdma_region_t *) module->state->regions;
     }
 
-    /* it is wasteful to register less than a page. this may allow the remote side to access more
-     * memory but the MPI standard covers this with calling the calling behavior erroneous */
-    region->base = OPAL_ALIGN((intptr_t) base - page_size + 1, page_size, intptr_t);
-    region->len  = OPAL_ALIGN(len, page_size, size_t);
+    region->base = (intptr_t) base;
+    region->len  = len;
 
-    OPAL_OUTPUT_VERBOSE((5, ompi_osc_base_framework.framework_output, "Attaching memory region %p-%p at index %d",
-                         base, (void *)((intptr_t) base + len), region_index));
+    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_DEBUG, "attaching dynamic memory region {%p, %p} at index %d",
+                     base, (void *)((intptr_t) base + len), region_index);
 
     if (module->selected_btl->btl_register_mem) {
         mca_btl_base_registration_handle_t *handle;
@@ -174,13 +181,14 @@ int ompi_osc_rdma_attach (struct ompi_win_t *win, void *base, size_t len)
 
     module->dynamic_handles[region_index].refcnt = 1;
 
+#if OPAL_ENABLE_DEBUG
     for (int i = 0 ; i < region_count + 1 ; ++i) {
         region = (ompi_osc_rdma_region_t *) ((intptr_t) module->state->regions + i * module->region_size);
 
-        OPAL_OUTPUT_VERBOSE((5, ompi_osc_base_framework.framework_output, "Cache[%d] = {%p, %lu}",
-                             i, (void *) region->base, (unsigned long) region->len));
+        OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_DEBUG, " dynamic region %d: {%p, %lu}", i,
+                         (void *) region->base, (unsigned long) region->len);
     }
-
+#endif
 
     opal_atomic_mb ();
     /* the region state has changed */
@@ -188,6 +196,8 @@ int ompi_osc_rdma_attach (struct ompi_win_t *win, void *base, size_t len)
 
     ompi_osc_rdma_lock_release_exclusive (module, my_peer, offsetof (ompi_osc_rdma_state_t, regions_lock));
     OPAL_THREAD_UNLOCK(&module->lock);
+
+    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "attach complete");
 
     return OMPI_SUCCESS;
 }
@@ -208,6 +218,8 @@ int ompi_osc_rdma_detach (struct ompi_win_t *win, const void *base)
 
     OPAL_THREAD_LOCK(&module->lock);
 
+    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "detach: %s, %p", win->w_name, base);
+
     /* the upper 4 bytes of the region count are an instance counter */
     region_count = module->state->region_count & 0xffffffffL;
     region_id    = module->state->region_count >> 32;
@@ -216,20 +228,22 @@ int ompi_osc_rdma_detach (struct ompi_win_t *win, const void *base)
                                                    region_count - 1, (intptr_t) base, (intptr_t) base + 1,
                                                    module->region_size, &region_index);
     if (NULL == region) {
+        OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_INFO, "could not find dynamic memory region starting at %p", base);
         OPAL_THREAD_UNLOCK(&module->lock);
         return OMPI_ERROR;
     }
 
     if (--module->dynamic_handles[region_index].refcnt > 0) {
         OPAL_THREAD_UNLOCK(&module->lock);
+        OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "detach complete");
         return OMPI_SUCCESS;
     }
 
     /* lock the region so it can't change while a peer is reading it */
     ompi_osc_rdma_lock_acquire_exclusive (module, &my_peer->super, offsetof (ompi_osc_rdma_state_t, regions_lock));
 
-    OPAL_OUTPUT_VERBOSE((5, ompi_osc_base_framework.framework_output, "Detaching memory region %p-%p at index %d",
-                         base, (void *)((intptr_t) base + region->len), region_index));
+    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_DEBUG, "detaching dynamic memory region {%p, %p} from index %d",
+                     base, (void *)((intptr_t) base + region->len), region_index);
 
     if (module->selected_btl->btl_register_mem) {
         ompi_osc_rdma_deregister (module, module->dynamic_handles[region_index].btl_handle);
@@ -253,6 +267,8 @@ int ompi_osc_rdma_detach (struct ompi_win_t *win, const void *base)
 
     OPAL_THREAD_UNLOCK(&module->lock);
 
+    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "detach complete");
+
     return OMPI_SUCCESS;
 }
 
@@ -274,6 +290,8 @@ static int ompi_osc_rdma_refresh_dynamic_region (ompi_osc_rdma_module_t *module,
     uint64_t source_address;
     int ret;
 
+    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "refreshing dynamic memory regions for target %d", peer->super.rank);
+
     /* this loop is meant to prevent us from reading data while the remote side is in attach */
     do {
         osc_rdma_counter_t remote_value;
@@ -287,15 +305,11 @@ static int ompi_osc_rdma_refresh_dynamic_region (ompi_osc_rdma_module_t *module,
 
         region_id = remote_value >> 32;
         region_count = remote_value & 0xffffffffl;
-
-        OPAL_OUTPUT_VERBOSE((20, ompi_osc_base_framework.framework_output, "remote memory region: 0x%lx, 0x%lx",
-                             (unsigned long) region_id, (unsigned long) region_count));
         /* check if the region is changing */
     } while (0xffffffffl == region_count);
 
-    OPAL_OUTPUT_VERBOSE((20, ompi_osc_base_framework.framework_output, "target has region_id 0x%lx, region_count 0x%lx "
-                         "(cached: 0x%x, 0x%x)", (unsigned long) region_id, (unsigned long) region_count, peer->region_id,
-                         peer->region_count));
+    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_DEBUG, "target region: id 0x%lx, count 0x%lx (cached: 0x%x, 0x%x)",
+                     (unsigned long) region_id, (unsigned long) region_count, peer->region_id, peer->region_count);
 
     if (0 == region_count) {
         return OMPI_ERR_RMA_RANGE;
@@ -308,7 +322,7 @@ static int ompi_osc_rdma_refresh_dynamic_region (ompi_osc_rdma_module_t *module,
         unsigned region_len = module->region_size * region_count;
         void *temp;
 
-        OPAL_OUTPUT_VERBOSE((20, ompi_osc_base_framework.framework_output, "dynamic memory cache is out of data. reloading from peer"));
+        OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_DEBUG, "dynamic memory cache is out of data. reloading from peer");
 
         /* allocate only enough space for the remote regions */
         temp = realloc (peer->regions, region_len);
@@ -340,6 +354,8 @@ static int ompi_osc_rdma_refresh_dynamic_region (ompi_osc_rdma_module_t *module,
 
     OPAL_THREAD_UNLOCK(&module->lock);
 
+    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "finished refreshing dynamic memory regions for target %d", peer->super.rank);
+
     return OMPI_SUCCESS;
 }
 
@@ -351,16 +367,22 @@ int ompi_osc_rdma_find_dynamic_region (ompi_osc_rdma_module_t *module, ompi_osc_
     ompi_osc_rdma_region_t *regions;
     int ret, region_count;
 
-    OPAL_OUTPUT_VERBOSE((20, ompi_osc_base_framework.framework_output, "locating dynamic memory region matching: %"
-                         PRIx64 "-%" PRIx64 " (len %lu)", base, base + len, (unsigned long) len));
+    OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "locating dynamic memory region matching: {%" PRIx64 ", %" PRIx64 "}"
+                     " (len %lu)", base, base + len, (unsigned long) len);
 
-    ret = ompi_osc_rdma_refresh_dynamic_region (module, dy_peer);
-    if (OMPI_SUCCESS != ret) {
-        return ret;
+    if (!ompi_osc_rdma_peer_local_state (peer)) {
+        ret = ompi_osc_rdma_refresh_dynamic_region (module, dy_peer);
+        if (OMPI_SUCCESS != ret) {
+            return ret;
+        }
+
+        regions = dy_peer->regions;
+        region_count = dy_peer->region_count;
+    } else {
+        ompi_osc_rdma_state_t *peer_state = (ompi_osc_rdma_state_t *) peer->state;
+        regions = (ompi_osc_rdma_region_t *) peer_state->regions;
+        region_count = peer_state->region_count;
     }
-
-    regions = dy_peer->regions;
-    region_count = dy_peer->region_count;
 
     *region = ompi_osc_rdma_find_region_containing (regions, 0, region_count - 1, (intptr_t) base, bound, module->region_size, NULL);
     if (!*region) {

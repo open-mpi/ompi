@@ -1,7 +1,8 @@
 /*
  * Copyright (c) 2013      Mellanox Technologies, Inc.
  *                         All rights reserved.
- *
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -49,6 +50,7 @@
 #include "oshmem/mca/atomic/base/base.h"
 #include "oshmem/mca/memheap/base/base.h"
 #include "oshmem/mca/sshmem/base/base.h"
+#include "oshmem/info/info.h"
 #include "oshmem/proc/proc.h"
 #include "oshmem/proc/proc_group_cache.h"
 #include "oshmem/op/op.h"
@@ -70,7 +72,7 @@ int oshmem_shmem_finalize(void)
 
         if ((OSHMEM_SUCCESS == ret) && ompi_mpi_initialized
                 && !ompi_mpi_finalized) {
-            MPI_Comm_free(&oshmem_comm_world);
+            PMPI_Comm_free(&oshmem_comm_world);
             ret = ompi_mpi_finalize();
         }
 
@@ -155,6 +157,11 @@ static int _shmem_finalize(void)
 
     /* free proc resources */
     if (OSHMEM_SUCCESS != (ret = oshmem_proc_finalize())) {
+        return ret;
+    }
+
+    /* free info resources */
+    if (OSHMEM_SUCCESS != (ret = oshmem_info_finalize())) {
         return ret;
     }
 

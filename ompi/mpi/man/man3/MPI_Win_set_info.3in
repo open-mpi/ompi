@@ -16,10 +16,20 @@ int MPI_Win_set_info(MPI_Win \fIwin\fP, MPI_Info \fIinfo\fP)
 .fi
 .SH Fortran Syntax
 .nf
-INCLUDE 'mpif.h'
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
 MPI_WIN_SET_INFO(\fIWIN, INFO, IERROR\fP)
 	INTEGER	\fIWIN, INFO, IERROR \fP
 .
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Win_set_info(\fIwin\fP, \fIinfo\fP, \fIierror\fP)
+	TYPE(MPI_Win), INTENT(IN) :: \fIwin\fP
+	TYPE(MPI_Info), INTENT(IN) :: \fIinfo\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
+
 .fi
 .SH INPUT PARAMETERS
 .ft R

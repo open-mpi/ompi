@@ -6,7 +6,7 @@
  * Copyright (c) 2011-2015 Los Alamos National Security, LLC. All
  *                         rights reserved.
  * Copyright (c) 2013-2015 Intel, Inc.  All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -21,6 +21,7 @@
 
 #include "opal_stdint.h"
 #include "opal/mca/hwloc/base/base.h"
+#include "opal/util/argv.h"
 #include "opal/util/opal_environ.h"
 #include "opal/util/output.h"
 #include "opal/util/proc.h"
@@ -78,6 +79,9 @@ static int cray_unpublish_nb(char **keys, opal_list_t *info,
 static const char *cray_get_version(void);
 static int cray_store_local(const opal_process_name_t *proc,
                           opal_value_t *val);
+static const char *cray_get_nspace(opal_jobid_t jobid);
+static void cray_register_jobid(opal_jobid_t jobid, const char *nspace);
+
 #if 0
 static bool cray_get_attr(const char *attr, opal_value_t **kv);
 #endif
@@ -109,7 +113,9 @@ const opal_pmix_base_module_t opal_pmix_cray_module = {
     .get_version = cray_get_version,
     .register_errhandler = opal_pmix_base_register_handler,
     .deregister_errhandler = opal_pmix_base_deregister_handler,
-    .store_local = cray_store_local
+    .store_local = cray_store_local,
+    .get_nspace = cray_get_nspace,
+    .register_jobid = cray_register_jobid
 };
 
 // usage accounting
@@ -530,7 +536,6 @@ static int cray_fence(opal_list_t *procs, int collect_data)
     opal_hwloc_locality_t locality;
     opal_list_t vals;
     char *cpuset = NULL;
-    opal_process_name_t pname;
 
     opal_output_verbose(2, opal_pmix_base_framework.framework_output,
                         "%s pmix:cray executing fence cache_global %p cache_local %p",
@@ -538,10 +543,6 @@ static int cray_fence(opal_list_t *procs, int collect_data)
                         (void *)mca_pmix_cray_component.cache_global,
                         (void *)mca_pmix_cray_component.cache_local);
 
-    /* get the modex data from each local process and set the
-     * localities to avoid having the MPI layer fetch data
-     * for every process in the job */
-    pname.jobid = OPAL_PROC_MY_NAME.jobid;
 
     /*
      * "unload" the cache_local/cache_global buffers, first copy
@@ -664,8 +665,14 @@ static int cray_fence(opal_list_t *procs, int collect_data)
     }
     OPAL_LIST_DESTRUCT(&vals);
 
-    /* we only need to set locality for each local rank as "not found"
-     * equates to "non-local" */
+    /* Get the modex data from each local process and set the
+     * localities to avoid having the MPI layer fetch data
+     * for every process in the job.
+     *
+     *  we only need to set locality for each local rank as "not found"
+     * equates to "non-local" 
+     */
+
     for (i=0; i < pmix_nlranks; i++) {
         id.vpid = pmix_lranks[i];
         id.jobid = pmix_jobid;
@@ -710,7 +717,7 @@ static int cray_fence(opal_list_t *procs, int collect_data)
         kvn.key = strdup(OPAL_PMIX_LOCALITY);
         kvn.type = OPAL_UINT16;
         kvn.data.uint16 = locality;
-        opal_pmix_base_store(&pname, &kvn);
+        opal_pmix_base_store(&id, &kvn);
         OBJ_DESTRUCT(&kvn);
     }
 
@@ -812,6 +819,16 @@ static int cray_store_local(const opal_process_name_t *proc,
     opal_pmix_base_store(proc, val);
 
     return OPAL_SUCCESS;
+}
+
+static const char *cray_get_nspace(opal_jobid_t jobid)
+{
+    return "N/A";
+}
+
+static void cray_register_jobid(opal_jobid_t jobid, const char *nspace)
+{
+    return;
 }
 
 static char* pmix_error(int pmix_err)

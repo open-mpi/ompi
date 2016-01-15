@@ -27,6 +27,8 @@
 #include <stdio.h>
 #include <shmem.h>
 
+#warning This application uses deprecated API see http://www.open-mpi.org/
+
 int main(void)
 {
     short source[10] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };

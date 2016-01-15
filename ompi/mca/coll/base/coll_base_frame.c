@@ -68,25 +68,14 @@ OBJ_CLASS_INSTANCE(mca_coll_base_module_t, opal_object_t,
 static void
 coll_base_comm_construct(mca_coll_base_comm_t *data)
 {
-    data->mcct_reqs = NULL;
-    data->mcct_num_reqs = 0;
-    data->cached_ntree = NULL;
-    data->cached_bintree = NULL;
-    data->cached_bmtree = NULL;
-    data->cached_in_order_bmtree = NULL;
-    data->cached_chain = NULL;
-    data->cached_pipeline = NULL;
-    data->cached_in_order_bintree = NULL;
+    memset ((char *) data + sizeof (data->super), 0, sizeof (*data) - sizeof (data->super));
 }
 
 static void
 coll_base_comm_destruct(mca_coll_base_comm_t *data)
 {
     if( NULL != data->mcct_reqs ) {
-        for( int i = 0; i < data->mcct_num_reqs; ++i ) {
-            if( MPI_REQUEST_NULL != data->mcct_reqs[i] )
-                ompi_request_free(&data->mcct_reqs[i]);
-        }
+        ompi_coll_base_free_reqs( data->mcct_reqs, data->mcct_num_reqs );
         free(data->mcct_reqs);
         data->mcct_reqs = NULL;
         data->mcct_num_reqs = 0;
@@ -122,18 +111,15 @@ OBJ_CLASS_INSTANCE(mca_coll_base_comm_t, opal_object_t,
 
 ompi_request_t** coll_base_comm_get_reqs(mca_coll_base_comm_t* data, int nreqs)
 {
-    int startfrom = data->mcct_num_reqs;
+    if( 0 == nreqs ) return NULL;
 
-    if( NULL == data->mcct_reqs ) {
-        assert(0 == data->mcct_num_reqs);
-        data->mcct_reqs = (ompi_request_t**)malloc(sizeof(ompi_request_t*) * nreqs);
-    } else if( data->mcct_num_reqs <= nreqs ) {
+    if( data->mcct_num_reqs <= nreqs )
         data->mcct_reqs = (ompi_request_t**)realloc(data->mcct_reqs, sizeof(ompi_request_t*) * nreqs);
-    }
+
     if( NULL != data->mcct_reqs ) {
-        data->mcct_num_reqs = nreqs;
-        for( int i = startfrom; i < data->mcct_num_reqs; i++ )
+        for( int i = data->mcct_num_reqs; i < nreqs; i++ )
             data->mcct_reqs[i] = MPI_REQUEST_NULL;
+        data->mcct_num_reqs = nreqs;
     } else
         data->mcct_num_reqs = 0;  /* nothing to return */
     return data->mcct_reqs;

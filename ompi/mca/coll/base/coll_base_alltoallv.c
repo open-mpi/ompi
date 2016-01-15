@@ -38,16 +38,16 @@
 
 int
 mca_coll_base_alltoallv_intra_basic_inplace(const void *rbuf, const int *rcounts, const int *rdisps,
-                                             struct ompi_datatype_t *rdtype,
-                                             struct ompi_communicator_t *comm,
-                                             mca_coll_base_module_t *module)
+                                            struct ompi_datatype_t *rdtype,
+                                            struct ompi_communicator_t *comm,
+                                            mca_coll_base_module_t *module)
 {
     mca_coll_base_module_t *base_module = (mca_coll_base_module_t*) module;
     int i, j, size, rank, err=MPI_SUCCESS;
     MPI_Request *preq;
     char *tmp_buffer;
     size_t max_size, rdtype_size;
-    ptrdiff_t ext;
+    OPAL_PTRDIFF_TYPE ext, gap = 0;
 
     /* Initialize. */
 
@@ -63,16 +63,17 @@ mca_coll_base_alltoallv_intra_basic_inplace(const void *rbuf, const int *rcounts
     /* Find the largest receive amount */
     ompi_datatype_type_extent (rdtype, &ext);
     for (i = 0, max_size = 0 ; i < size ; ++i) {
-        size_t size = ext * rcounts[i];
-
+        size_t size = opal_datatype_span(&rdtype->super, rcounts[i], &gap);
         max_size = size > max_size ? size : max_size;
     }
+    /* The gap will always be the same as we are working on the same datatype */
 
     /* Allocate a temporary buffer */
     tmp_buffer = calloc (max_size, 1);
     if (NULL == tmp_buffer) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
+    tmp_buffer += gap;
 
     /* in-place alltoallv slow algorithm (but works) */
     for (i = 0 ; i < size ; ++i) {
@@ -123,9 +124,11 @@ mca_coll_base_alltoallv_intra_basic_inplace(const void *rbuf, const int *rcounts
  error_hndl:
     /* Free the temporary buffer */
     free (tmp_buffer);
+    if( MPI_SUCCESS != err ) {
+        ompi_coll_base_free_reqs(base_module->base_data->mcct_reqs, 2 );
+    }
 
     /* All done */
-
     return err;
 }
 
@@ -181,6 +184,7 @@ ompi_coll_base_alltoallv_intra_pairwise(const void *sbuf, const int *scounts, co
     OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
                  "%s:%4d\tError occurred %d, rank %2d at step %d", __FILE__, line,
                  err, rank, step));
+    (void)line;  // silence compiler warning
     return err;
 }
 
@@ -253,8 +257,7 @@ ompi_coll_base_alltoallv_intra_basic_linear(const void *sbuf, const int *scounts
                                       preq++));
         ++nreqs;
         if (MPI_SUCCESS != err) {
-            ompi_coll_base_free_reqs(data->mcct_reqs, nreqs);
-            return err;
+            goto err_hndl;
         }
     }
 
@@ -271,8 +274,7 @@ ompi_coll_base_alltoallv_intra_basic_linear(const void *sbuf, const int *scounts
                                       preq++));
         ++nreqs;
         if (MPI_SUCCESS != err) {
-            ompi_coll_base_free_reqs(data->mcct_reqs, nreqs);
-            return err;
+            goto err_hndl;
         }
     }
 
@@ -287,8 +289,8 @@ ompi_coll_base_alltoallv_intra_basic_linear(const void *sbuf, const int *scounts
      * error after we free everything. */
     err = ompi_request_wait_all(nreqs, data->mcct_reqs,
                                 MPI_STATUSES_IGNORE);
-
-    /* Free the requests. */
+ err_hndl:
+    /* Free the requests in all cases as they are persistent */
     ompi_coll_base_free_reqs(data->mcct_reqs, nreqs);
 
     return err;

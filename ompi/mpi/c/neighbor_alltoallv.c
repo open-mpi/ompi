@@ -33,12 +33,11 @@
 #include "ompi/memchecker.h"
 #include "ompi/communicator/comm_helpers.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_Neighbor_alltoallv = PMPI_Neighbor_alltoallv
 #endif
-
-#if OMPI_PROFILING_DEFINES
-#include "ompi/mpi/c/profile/defines.h"
+#define MPI_Neighbor_alltoallv PMPI_Neighbor_alltoallv
 #endif
 
 static const char FUNC_NAME[] = "MPI_Neighbor_alltoallv";
@@ -91,21 +90,15 @@ int MPI_Neighbor_alltoallv(const void *sendbuf, const int sendcounts[], const in
 
         err = MPI_SUCCESS;
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-        if (ompi_comm_invalid(comm) || !(OMPI_COMM_IS_CART(comm) || OMPI_COMM_IS_GRAPH(comm) ||
-                                         OMPI_COMM_IS_DIST_GRAPH(comm))) {
+        if (ompi_comm_invalid(comm) || OMPI_COMM_IS_INTER(comm)) {
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM,
                                           FUNC_NAME);
-        }
-
-        if (MPI_IN_PLACE == sendbuf) {
-            sendcounts = recvcounts;
-            sdispls = rdispls;
-            sendtype = recvtype;
-        }
-
-        if ((NULL == sendcounts) || (NULL == sdispls) ||
+        } else if (! OMPI_COMM_IS_TOPO(comm)) {
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM,
+                                          FUNC_NAME);
+        } else if ((NULL == sendcounts) || (NULL == sdispls) ||
             (NULL == recvcounts) || (NULL == rdispls) ||
-            MPI_IN_PLACE == recvbuf) {
+            MPI_IN_PLACE == sendbuf || MPI_IN_PLACE == recvbuf) {
             return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
         }
 

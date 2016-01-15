@@ -45,10 +45,10 @@ struct mca_mtl_psm2_module_t {
 
     int32_t      connect_timeout;
 
-    psm_ep_t	 ep;
-    psm_mq_t	 mq;
-    psm_epid_t	 epid;
-    psm_epaddr_t epaddr;
+    psm2_ep_t	 ep;
+    psm2_mq_t	 mq;
+    psm2_epid_t  epid;
+    psm2_epaddr_t epaddr;
 };
 
 typedef struct mca_mtl_psm2_module_t mca_mtl_psm2_module_t;
@@ -62,29 +62,29 @@ typedef struct mca_mtl_psm2_component_t mca_mtl_psm2_component_t;
 
 OMPI_DECLSPEC extern mca_mtl_psm2_component_t mca_mtl_psm2_component;
 
-#define PSM_MAKE_MQTAG(ctxt,rank,utag,tag)  \
+#define PSM2_MAKE_MQTAG(ctxt,rank,utag,tag) \
     do {                                    \
-      (tag).tag0 = ctxt;                      \
-      (tag).tag1 = utag;                      \
-      (tag).tag2 = rank;                      \
+      (tag).tag0 = utag;                    \
+      (tag).tag1 = rank;                    \
+      (tag).tag2 = ctxt;                    \
     } while (0)
 
-#define PSM_MAKE_TAGSEL(user_rank, user_tag, user_ctxt, tag, _tagsel)   \
-    do {                                                                \
-        (tag).tag0 = user_ctxt;                                         \
-        (tag).tag1 = user_tag;                                          \
-        (tag).tag2 = user_rank;                                         \
+#define PSM2_MAKE_TAGSEL(user_rank, user_tag, user_ctxt, tag, _tagsel)  \
+	do {								\
+        (tag).tag0 = user_tag;                                          \
+        (tag).tag1 = user_rank;                                         \
+        (tag).tag2 = user_ctxt;                                         \
         (_tagsel).tag0 = 0xffffffffULL;                                 \
         (_tagsel).tag1 = 0xffffffffULL;                                 \
         (_tagsel).tag2 = 0xffffffffULL;                                 \
         if((user_tag) == MPI_ANY_TAG)                                   \
         {                                                               \
-            (_tagsel).tag1 = 0x80000000ULL;                             \
-            (tag).tag1 = 0x00000000ULL;                                 \
+            (_tagsel).tag0 = 0x80000000ULL;                             \
+            (tag).tag0 = 0x00000000ULL;                                 \
         }                                                               \
         if((user_rank) == MPI_ANY_SOURCE)                               \
         {                                                               \
-            (_tagsel).tag2 = 0x00000000ULL;                             \
+            (_tagsel).tag1 = 0x00000000ULL;                             \
         }                                                               \
     } while (0)
 

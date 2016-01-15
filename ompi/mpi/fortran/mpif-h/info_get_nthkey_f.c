@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -24,7 +26,8 @@
 #include "ompi/communicator/communicator.h"
 #include "ompi/mpi/fortran/base/strings.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_INFO_GET_NTHKEY = ompi_info_get_nthkey_f
 #pragma weak pmpi_info_get_nthkey = ompi_info_get_nthkey_f
 #pragma weak pmpi_info_get_nthkey_ = ompi_info_get_nthkey_f
@@ -32,7 +35,7 @@
 
 #pragma weak PMPI_Info_get_nthkey_f = ompi_info_get_nthkey_f
 #pragma weak PMPI_Info_get_nthkey_f08 = ompi_info_get_nthkey_f
-#elif OMPI_PROFILE_LAYER
+#else
 OMPI_GENERATE_F77_BINDINGS (PMPI_INFO_GET_NTHKEY,
                             pmpi_info_get_nthkey,
                             pmpi_info_get_nthkey_,
@@ -40,6 +43,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_INFO_GET_NTHKEY,
                             pompi_info_get_nthkey_f,
                             (MPI_Fint *info, MPI_Fint *n, char *key, MPI_Fint *ierr, int key_len),
                             (info, n, key, ierr, key_len) )
+#endif
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -50,9 +54,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_INFO_GET_NTHKEY,
 
 #pragma weak MPI_Info_get_nthkey_f = ompi_info_get_nthkey_f
 #pragma weak MPI_Info_get_nthkey_f08 = ompi_info_get_nthkey_f
-#endif
-
-#if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+#else
+#if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_INFO_GET_NTHKEY,
                             mpi_info_get_nthkey,
                             mpi_info_get_nthkey_,
@@ -60,12 +63,11 @@ OMPI_GENERATE_F77_BINDINGS (MPI_INFO_GET_NTHKEY,
                             ompi_info_get_nthkey_f,
                             (MPI_Fint *info, MPI_Fint *n, char *key, MPI_Fint *ierr, int key_len),
                             (info, n, key, ierr, key_len) )
+#else
+#define ompi_info_get_nthkey_f pompi_info_get_nthkey_f
+#endif
 #endif
 
-
-#if OMPI_PROFILE_LAYER && ! OPAL_HAVE_WEAK_SYMBOLS
-#include "ompi/mpi/fortran/mpif-h/profile/defines.h"
-#endif
 
 static const char FUNC_NAME[] = "MPI_INFO_GET_NTHKEY";
 
@@ -81,9 +83,9 @@ void ompi_info_get_nthkey_f(MPI_Fint *info, MPI_Fint *n, char *key,
     MPI_Info c_info;
     char c_key[MPI_MAX_INFO_KEY + 1];
 
-    c_info = MPI_Info_f2c(*info);
+    c_info = PMPI_Info_f2c(*info);
 
-    c_ierr = MPI_Info_get_nthkey(c_info,
+    c_ierr = PMPI_Info_get_nthkey(c_info,
                                  OMPI_FINT_2_INT(*n),
                                  c_key);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);

@@ -48,6 +48,9 @@ struct mca_btl_portals4_component_t {
 
     struct mca_btl_portals4_module_t** btls; /* array of available BTL modules */
 
+    /* add_procs() can get called multiple times.  this prevents multiple calls to portals4_init_interface(). */
+    int need_init;
+
     /* Use the logical to physical table to accelerate portals4 adressing: 1 (true) : 0 (false) */
     int use_logical;
 

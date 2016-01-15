@@ -1,5 +1,5 @@
 .\" -*- nroff -*-
-.\" Copyright 2013-2014 Los Alamos National Security, LLC. All rights reserved.
+.\" Copyright 2013-2015 Los Alamos National Security, LLC. All rights reserved.
 .\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
 .\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
@@ -13,19 +13,35 @@
 .SH C Syntax
 .nf
 #include <mpi.h>
-int MPI_Fetch_and_op(const void *\fIorigin_addr\fP, void *\fresult_addr\fP,
-	MPI_Datatype \fdatatype\fP, int \fItarget_rank\fP, MPI_Aint \fItarget_disp\fP,
+int MPI_Fetch_and_op(const void *\fIorigin_addr\fP, void *\fIresult_addr\fP,
+	MPI_Datatype \fIdatatype\fP, int \fItarget_rank\fP, MPI_Aint \fItarget_disp\fP,
 	MPI_Op \fIop\fP, MPI_Win \fIwin\fP)
 
 .fi
 .SH Fortran Syntax (see FORTRAN 77 NOTES)
 .nf
-INCLUDE 'mpif.h'
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
 MPI_FETCH_AND_OP(\fIORIGIN_ADDR, RESULT_ADDR, DATATYPE, TARGET_RANK,
                  TARGET_DISP, OP, WIN, IERROR\fP)
 	<type> \fIORIGIN_ADDR\fP, \fIRESULT_ADDR\fP(*)
 	INTEGER(KIND=MPI_ADDRESS_KIND) \fITARGET_DISP\fP
 	INTEGER \fIDATATYPE, TARGET_RANK, OP, WIN, IERROR \fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Fetch_and_op(\fIorigin_addr\fP, \fIresult_addr\fP, \fIdatatype\fP, \fItarget_rank\fP,
+		\fItarget_disp\fP, \fIop\fP, \fIwin\fP, \fIierror\fP)
+	TYPE(*), DIMENSION(..), INTENT(IN) :: \fIorigin_addr\fP
+	TYPE(*), DIMENSION(..) :: \fIresult_addr\fP
+	TYPE(MPI_Datatype), INTENT(IN) :: \fIdatatype\fP
+	INTEGER, INTENT(IN) :: \fItarget_rank\fP
+	INTEGER(KIND=MPI_ADDRESS_KIND), INTENT(IN) :: \fItarget_disp\fP
+	TYPE(MPI_Op), INTENET(IN) :: \fIop\fP
+	TYPE(MPI_Win), INTENT(IN) :: \fIwin\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
 .SH INPUT PARAMETERS

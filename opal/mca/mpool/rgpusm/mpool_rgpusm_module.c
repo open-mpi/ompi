@@ -180,9 +180,9 @@ void mca_mpool_rgpusm_module_init(mca_mpool_rgpusm_module_t* mpool)
  * from the remote memory.  It uses the addr and size of the remote
  * memory for caching the registration.
  */
-int mca_mpool_rgpusm_register(mca_mpool_base_module_t *mpool, void *addr,
-                             size_t size, uint32_t flags,
-                             mca_mpool_base_registration_t **reg)
+int mca_mpool_rgpusm_register (mca_mpool_base_module_t *mpool, void *addr,
+                               size_t size, uint32_t flags, int32_t access_flags,
+                               mca_mpool_base_registration_t **reg)
 {
     mca_mpool_rgpusm_module_t *mpool_rgpusm = (mca_mpool_rgpusm_module_t*)mpool;
     mca_mpool_common_cuda_reg_t *rgpusm_reg;

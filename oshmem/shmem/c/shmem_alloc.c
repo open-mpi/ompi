@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013      Mellanox Technologies, Inc.
+ * Copyright (c) 2013-2015 Mellanox Technologies, Inc.
  *                         All rights reserved.
  * $COPYRIGHT$
  *
@@ -19,11 +19,24 @@
 
 #if OSHMEM_PROFILING
 #include "oshmem/include/pshmem.h"
+#pragma weak shmem_malloc = pshmem_malloc
 #pragma weak shmalloc = pshmalloc
 #include "oshmem/shmem/c/profile/defines.h"
 #endif
 
+static inline void* _shmalloc(size_t size);
+
+void* shmem_malloc(size_t size)
+{
+    return _shmalloc(size);
+}
+
 void* shmalloc(size_t size)
+{
+    return _shmalloc(size);
+}
+
+static inline void* _shmalloc(size_t size)
 {
     int rc;
     void* pBuff = NULL;

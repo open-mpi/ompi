@@ -86,6 +86,7 @@ static int _dereg_segment(map_segment_t *s)
                 continue;
             if (s->mkeys_cache[j]) {
                 if (s->mkeys_cache[j]->len) {
+                    MCA_SPML_CALL(rmkey_free(s->mkeys_cache[j]));
                     free(s->mkeys_cache[j]->u.data);
                     s->mkeys_cache[j]->len = 0;
                 }

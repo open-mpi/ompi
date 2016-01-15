@@ -26,8 +26,7 @@
 !
 !     - the "mpi" module bindings
 !     - the "mpi_f08" module bindings
-!     - ompi/mpi/fortran/base/constants.h
-!     - ompi/mpi/runtime/ompi_init.c
+!     - ompi/mpi/fortran/base/gen-mpi-mangling.pl
 !
 
 !     MPI_BOTTOM is only used where choice buffers can be used (meaning
@@ -41,7 +40,7 @@
 !     don't need another interface for MPI_COMM_SPAWN.
       character MPI_ARGV_NULL(1)
 !     Ditto for MPI_ARGVS_NULL / MPI_COMM_SPAWN_MULTIPLE.
-      character MPI_ARGVS_NULL(1)
+      character MPI_ARGVS_NULL(1, 1)
 !     MPI_ERRCODES_IGNORE has similar rationale to MPI_ARGV_NULL.  The
 !     F77 functions are all smart enough to check that the errcodes
 !     parameter is not ERRCODES_IGNORE before assigning values into it
@@ -53,8 +52,10 @@
       integer MPI_STATUS_IGNORE(MPI_STATUS_SIZE)
 !     Ditto for MPI_STATUSES_IGNORE
       integer MPI_STATUSES_IGNORE(MPI_STATUS_SIZE, 1)
-      integer MPI_UNWEIGHTED
-      integer MPI_WEIGHTS_EMPTY
+!     Ditto for MPI_UNWEIGHTED
+      integer MPI_UNWEIGHTED(1)
+!     Ditto for MPI_WEIGHTS_EMPTY
+      integer MPI_WEIGHTS_EMPTY(1)
 
       common/mpi_fortran_bottom/MPI_BOTTOM
       common/mpi_fortran_in_place/MPI_IN_PLACE

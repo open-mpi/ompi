@@ -304,9 +304,10 @@ mca_btl_ugni_register_mem (mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *
                            size_t size, uint32_t flags)
 {
     mca_btl_ugni_reg_t *reg;
+    int access_flags = flags & MCA_BTL_REG_FLAG_ACCESS_ANY;
     int rc;
 
-    rc = btl->btl_mpool->mpool_register(btl->btl_mpool, base, size, 0,
+    rc = btl->btl_mpool->mpool_register(btl->btl_mpool, base, size, 0, access_flags,
                                         (mca_mpool_base_registration_t **) &reg);
     if (OPAL_UNLIKELY(OPAL_SUCCESS != rc)) {
         return NULL;

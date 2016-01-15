@@ -30,12 +30,11 @@
 #include "ompi/mca/io/base/base.h"
 #include "ompi/file/file.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_Register_datarep = PMPI_Register_datarep
 #endif
-
-#if OMPI_PROFILING_DEFINES
-#include "ompi/mpi/c/profile/defines.h"
+#define MPI_Register_datarep PMPI_Register_datarep
 #endif
 
 static const char FUNC_NAME[] = "MPI_Register_datarep";

@@ -19,10 +19,24 @@ int MPI_Win_shared_query (MPI_Win \fIwin\fP, int \fIrank\fP, MPI_Aint *\fIsize\f
 .fi
 .SH Fortran Syntax
 .nf
-INCLUDE 'mpif.h'
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
 MPI_WIN_SHARED_QUERY(WIN, RANK, SIZE, DISP_UNIT, BASEPTR, IERROR)
         INTEGER WIN, RANK, DISP_UNIT, IERROR
-        INTEGER (KIND=MPI_ADDRESS_KIND) SIZE, BASEPTR
+        INTEGER(KIND=MPI_ADDRESS_KIND) SIZE, BASEPTR
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Win_shared_query(\fIwin\fP, \fIrank\fP, \fIsize\fP, \fIdisp_unit\fP, \fIbaseptr\fP, \fIierror\fP)
+	USE, INTRINSIC :: ISO_C_BINDING, ONLY : C_PTR
+	TYPE(MPI_Win), INTENT(IN) :: \fIwin\fP
+	INTEGER, INTENT(IN) :: \fIrank\fP
+	INTEGER(KIND=MPI_ADDRESS_KIND), INTENT(OUT) :: \fIsize\fP
+	INTEGER, INTENT(OUT) :: \fIdisp_unit\fP
+	TYPE(C_PTR), INTENT(OUT) :: \fIbaseptr\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
 .SH INPUT PARAMETERS

@@ -1,6 +1,8 @@
 # -*- shell-script -*-
 #
 # Copyright (c) 2015      Intel, Inc. All rights reserved
+# Copyright (c) 2015      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -26,7 +28,7 @@ AC_DEFUN([MCA_opal_sec_munge_CONFIG],[
     sec_munge_support=0
     if test "$with_munge" != "no"; then
         AC_MSG_CHECKING([for munge in])
-        if test ! -z "$with_munge" -a "$with_munge" != "yes"; then
+        if test -n "$with_munge" && test "$with_munge" != "yes"; then
             if test -d $with_munge/include/munge; then
                 sec_munge_dir=$with_munge/include/munge
             else
@@ -45,7 +47,7 @@ AC_DEFUN([MCA_opal_sec_munge_CONFIG],[
             AC_MSG_RESULT([(default search paths)])
             sec_munge_dir=
         fi
-        AS_IF([test ! -z "$with_munge_libdir" && test "$with_munge_libdir" != "yes"],
+        AS_IF([test -n "$with_munge_libdir" && test "$with_munge_libdir" != "yes"],
               [sec_munge_libdir="$with_munge_libdir"])
 
         save_cpp=$CPPFLAGS
@@ -65,7 +67,7 @@ AC_DEFUN([MCA_opal_sec_munge_CONFIG],[
         LDFLAGS=$save_ld
     fi
 
-    if test ! -z "$with_munge" && test "$with_munge" != "no" && test "$sec_munge_support" != "1"; then
+    if test -n "$with_munge" && test "$with_munge" != "no" && test "$sec_munge_support" != "1"; then
         AC_MSG_WARN([MUNGE SUPPORT REQUESTED AND NOT FOUND.])
         AC_MSG_ERROR([CANNOT CONTINUE])
     fi

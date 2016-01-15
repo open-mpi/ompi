@@ -27,9 +27,10 @@ headers = prototypes_pshmem.h \
 	defines.h
 
 nodist_liboshmem_fortran_pshmem_la_SOURCES = \
-	pstart_pes_f.c \
-	pnum_pes_f.c \
-	pmy_pe_f.c \
+	pshmem_init_f.c \
+	pshmem_global_exit_f.c \
+	pshmem_n_pes_f.c \
+	pshmem_my_pe_f.c \
 	pshmem_barrier_all_f.c \
 	pshpalloc_f.c \
 	pshpdeallc_f.c \
@@ -116,7 +117,8 @@ nodist_liboshmem_fortran_pshmem_la_SOURCES = \
 	pshmem_int4_inc_f.c \
 	pshmem_int8_inc_f.c \
 	pshmem_quiet_f.c \
-	pshmem_fence_f.c
+	pshmem_fence_f.c \
+	pshmem_info_f.c
 
 #
 # Sym link in the sources from the real OSHMEM directory

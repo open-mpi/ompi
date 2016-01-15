@@ -16,6 +16,7 @@
 #include <string.h>
 
 #include "opal/util/output.h"
+#include "opal/mca/pmix/pmix.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/filem/filem.h"
@@ -381,6 +382,10 @@ void check_complete(int fd, short args, void *cbdata)
         }
         OBJ_RELEASE(map);
         jdata->map = NULL;
+        /* tell the PMIx server to release its data */
+        if (NULL != opal_pmix.server_deregister_nspace) {
+            opal_pmix.server_deregister_nspace(jdata->jobid);
+        }
     }
 
  CHECK_ALIVE:

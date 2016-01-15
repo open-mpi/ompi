@@ -3,7 +3,7 @@
  *                         All rights reserved.
  *
  * Copyright (c) 2014-2015 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -227,12 +227,12 @@ void oshmem_info_do_config(bool want_all)
     memdebug = OPAL_ENABLE_MEM_DEBUG ? "yes" : "no";
     debug = OPAL_ENABLE_DEBUG ? "yes" : "no";
     mpi_interface_warning = OMPI_WANT_MPI_INTERFACE_WARNING ? "yes" : "no";
-    cprofiling = OMPI_ENABLE_MPI_PROFILING ? "yes" : "no";
-    cxxprofiling = (OMPI_BUILD_CXX_BINDINGS && OMPI_ENABLE_MPI_PROFILING) ? "yes" : "no";
+    cprofiling = "yes";
+    cxxprofiling = OMPI_BUILD_CXX_BINDINGS ? "yes" : "no";
     cxxexceptions = (OMPI_BUILD_CXX_BINDINGS && OMPI_HAVE_CXX_EXCEPTION_SUPPORT) ? "yes" : "no";
-    fortran_mpifh_profiling = (OMPI_ENABLE_MPI_PROFILING && OMPI_BUILD_FORTRAN_BINDINGS >= OMPI_FORTRAN_MPIFH_BINDINGS) ? "yes" : "no";
-    fortran_usempi_profiling = (OMPI_ENABLE_MPI_PROFILING && OMPI_BUILD_FORTRAN_BINDINGS >= OMPI_FORTRAN_USEMPI_BINDINGS) ? "yes" : "no";
-    fortran_usempif08_profiling = (OMPI_ENABLE_MPI_PROFILING && OMPI_BUILD_FORTRAN_BINDINGS >= OMPI_FORTRAN_USEMPIF08_BINDINGS) ? "yes" : "no";
+    fortran_mpifh_profiling = (OMPI_BUILD_FORTRAN_BINDINGS >= OMPI_FORTRAN_MPIFH_BINDINGS) ? "yes" : "no";
+    fortran_usempi_profiling = (OMPI_BUILD_FORTRAN_BINDINGS >= OMPI_FORTRAN_USEMPI_BINDINGS) ? "yes" : "no";
+    fortran_usempif08_profiling = (OMPI_BUILD_FORTRAN_BINDINGS >= OMPI_FORTRAN_USEMPIF08_BINDINGS) ? "yes" : "no";
     have_dl = OPAL_HAVE_DL_SUPPORT ? "yes" : "no";
 #if OMPI_RTE_ORTE
     mpirun_prefix_by_default = ORTE_WANT_ORTERUN_PREFIX_BY_DEFAULT ? "yes" : "no";

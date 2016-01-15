@@ -121,6 +121,10 @@ int opal_free_list_init (opal_free_list_t *flist, size_t frag_size, size_t frag_
             return OPAL_ERROR;
     }
 
+    if (frag_class && frag_size < frag_class->cls_sizeof) {
+        frag_size = frag_class->cls_sizeof;
+    }
+
     if (frag_size > flist->fl_frag_size) {
         flist->fl_frag_size = frag_size;
     }
@@ -164,9 +168,7 @@ int opal_free_list_grow_st (opal_free_list_t* flist, size_t num_elements)
         return OPAL_ERR_TEMP_OUT_OF_RESOURCE;
     }
 
-    head_size = (NULL == flist->fl_mpool) ? flist->fl_frag_size:
-        flist->fl_frag_class->cls_sizeof;
-    head_size = OPAL_ALIGN(head_size, flist->fl_frag_alignment, size_t);
+    head_size = OPAL_ALIGN(flist->fl_frag_size, flist->fl_frag_alignment, size_t);
 
     /* calculate head allocation size */
     alloc_size = num_elements * head_size + sizeof(opal_free_list_memory_t) +

@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -9,8 +10,9 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
+ * Copyright (c) 2011-2015 Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2015      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -32,43 +34,26 @@
 
 
 /**
-* Function for selecting one component from all those that are
+ * Function for selecting one component from all those that are
  * available.
  */
 
 int orte_plm_base_select(void)
 {
-    int exit_status = ORTE_SUCCESS;
+    int rc;
     orte_plm_base_component_t *best_component = NULL;
     orte_plm_base_module_t *best_module = NULL;
 
     /*
      * Select the best component
      */
-    if( OPAL_SUCCESS != mca_base_select("plm", orte_plm_base_framework.framework_output,
-                                        &orte_plm_base_framework.framework_components,
-                                        (mca_base_module_t **) &best_module,
-                                        (mca_base_component_t **) &best_component) ) {
-        /* This will only happen if no component was selected
-         *
-         * If we didn't find one, and we are a daemon, then default to retaining the proxy.
-         * Otherwise, if we didn't find one to select, that is unacceptable.
-         */
-        if (ORTE_PROC_IS_DAEMON) {
-            /* don't record a selected component or flag selected
-             * so we finalize correctly - just leave the plm alone
-             * as it defaults to pointing at the proxy
-             */
-            goto cleanup;
-        } else {
-            exit_status = ORTE_ERR_NOT_FOUND;
-            goto cleanup;
-        }
+    if (OPAL_SUCCESS == (rc = mca_base_select("plm", orte_plm_base_framework.framework_output,
+                                              &orte_plm_base_framework.framework_components,
+                                              (mca_base_module_t **) &best_module,
+                                              (mca_base_component_t **) &best_component, NULL))) {
+        /* Save the winner */
+        orte_plm = *best_module;
     }
 
-    /* Save the winner */
-    orte_plm = *best_module;
-
- cleanup:
-    return exit_status;
+    return rc;
 }

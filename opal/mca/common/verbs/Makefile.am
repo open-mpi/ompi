@@ -17,7 +17,6 @@ headers = \
 sources = \
 	common_verbs_basics.c \
 	common_verbs_devlist.c \
-	common_verbs_fake.c \
 	common_verbs_find_max_inline.c \
 	common_verbs_find_ports.c \
 	common_verbs_mca.c \
@@ -50,7 +49,7 @@ endif
 lib@OPAL_LIB_PREFIX@mca_common_verbs_la_SOURCES = $(headers) $(sources)
 lib@OPAL_LIB_PREFIX@mca_common_verbs_la_CPPFLAGS = $(common_verbs_CPPFLAGS)
 lib@OPAL_LIB_PREFIX@mca_common_verbs_la_LDFLAGS =  \
-        -version-info $(libmca_common_verbs_so_version) \
+        -version-info $(libmca_opal_common_verbs_so_version) \
         $(common_verbs_LDFLAGS)
 lib@OPAL_LIB_PREFIX@mca_common_verbs_la_LIBADD = $(common_verbs_LIBS)
 lib@OPAL_LIB_PREFIX@mca_common_verbs_noinst_la_SOURCES = $(headers) $(sources)

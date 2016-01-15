@@ -922,7 +922,16 @@ static void recv_data(int fd, short args, void *cbdata)
     OBJ_DESTRUCT(&ndtmp);
     if (NULL != dash_host) {
         tpn = opal_argv_join(dash_host, ',');
-        orte_set_attribute(&app->attributes, ORTE_APP_DASH_HOST, ORTE_ATTR_LOCAL, (void*)tpn, OPAL_STRING);
+        for (idx=0; idx < jdata->apps->size; idx++) {
+            if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, idx))) {
+                orte_show_help("help-ras-slurm.txt", "slurm-dyn-alloc-failed", true, jtrk->cmd);
+                ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_ALLOC_FAILED);
+                opal_argv_free(dash_host);
+                free(tpn);
+                return;
+            }
+            orte_set_attribute(&app->attributes, ORTE_APP_DASH_HOST, ORTE_ATTR_LOCAL, (void*)tpn, OPAL_STRING);
+        }
         opal_argv_free(dash_host);
         free(tpn);
     }

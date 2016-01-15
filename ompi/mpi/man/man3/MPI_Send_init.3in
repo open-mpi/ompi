@@ -19,12 +19,25 @@ int MPI_Send_init(const void *\fIbuf\fP, int\fI count\fP, MPI_Datatype\fI dataty
 .fi
 .SH Fortran Syntax
 .nf
-INCLUDE 'mpif.h'
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
 MPI_SEND_INIT(\fIBUF, COUNT, DATATYPE, DEST, TAG, COMM, REQUEST,
 		IERROR\fP)
 	<type>	\fIBUF\fP(*)
 	INTEGER	\fIREQUEST, COUNT, DATATYPE, DEST, TAG\fP
 	INTEGER	\fICOMM, REQUEST, IERROR\fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Send_init(\fIbuf\fP, \fIcount\fP, \fIdatatype\fP, \fIdest\fP, \fItag\fP, \fIcomm\fP, \fIrequest\fP, \fIierror\fP)
+	TYPE(*), DIMENSION(..), INTENT(IN), ASYNCHRONOUS :: \fIbuf\fP
+	INTEGER, INTENT(IN) :: \fIcount\fP, \fIdest\fP, \fItag\fP
+	TYPE(MPI_Datatype), INTENT(IN) :: \fIdatatype\fP
+	TYPE(MPI_Comm), INTENT(IN) :: \fIcomm\fP
+	TYPE(MPI_Request), INTENT(OUT) :: \fIrequest\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
 .SH C++ Syntax

@@ -42,11 +42,11 @@ mca_coll_base_alltoall_intra_basic_inplace(const void *rbuf, int rcount,
                                            mca_coll_base_module_t *module)
 {
     mca_coll_base_module_t *base_module = (mca_coll_base_module_t*) module;
-    int i, j, size, rank, err=MPI_SUCCESS;
+    int i, j, size, rank, err = MPI_SUCCESS, line;
+    OPAL_PTRDIFF_TYPE ext, gap;
     MPI_Request *preq;
     char *tmp_buffer;
     size_t max_size;
-    ptrdiff_t ext;
 
     /* Initialize. */
 
@@ -60,13 +60,15 @@ mca_coll_base_alltoall_intra_basic_inplace(const void *rbuf, int rcount,
 
     /* Find the largest receive amount */
     ompi_datatype_type_extent (rdtype, &ext);
-    max_size = ext * rcount;
+    max_size = opal_datatype_span(&rdtype->super, rcount, &gap);
 
     /* Allocate a temporary buffer */
     tmp_buffer = calloc (max_size, 1);
     if (NULL == tmp_buffer) {
       return OMPI_ERR_OUT_OF_RESOURCE;
     }
+    tmp_buffer -= gap;
+    max_size = ext * rcount;
 
     /* in-place alltoall slow algorithm (but works) */
     for (i = 0 ; i < size ; ++i) {
@@ -78,39 +80,39 @@ mca_coll_base_alltoall_intra_basic_inplace(const void *rbuf, int rcount,
                 /* Copy the data into the temporary buffer */
                 err = ompi_datatype_copy_content_same_ddt (rdtype, rcount, tmp_buffer,
                                                        (char *) rbuf + j * max_size);
-                if (MPI_SUCCESS != err) { goto error_hndl; }
+                if (MPI_SUCCESS != err) { line = __LINE__; goto error_hndl; }
 
                 /* Exchange data with the peer */
                 err = MCA_PML_CALL(irecv ((char *) rbuf + max_size * j, rcount, rdtype,
                                           j, MCA_COLL_BASE_TAG_ALLTOALL, comm, preq++));
-                if (MPI_SUCCESS != err) { goto error_hndl; }
+                if (MPI_SUCCESS != err) { line = __LINE__; goto error_hndl; }
 
                 err = MCA_PML_CALL(isend ((char *) tmp_buffer,  rcount, rdtype,
                                           j, MCA_COLL_BASE_TAG_ALLTOALL, MCA_PML_BASE_SEND_STANDARD,
                                           comm, preq++));
-                if (MPI_SUCCESS != err) { goto error_hndl; }
+                if (MPI_SUCCESS != err) { line = __LINE__; goto error_hndl; }
             } else if (j == rank) {
                 /* Copy the data into the temporary buffer */
                 err = ompi_datatype_copy_content_same_ddt (rdtype, rcount, tmp_buffer,
                                                        (char *) rbuf + i * max_size);
-                if (MPI_SUCCESS != err) { goto error_hndl; }
+                if (MPI_SUCCESS != err) { line = __LINE__; goto error_hndl; }
 
                 /* Exchange data with the peer */
                 err = MCA_PML_CALL(irecv ((char *) rbuf + max_size * i, rcount, rdtype,
                                           i, MCA_COLL_BASE_TAG_ALLTOALL, comm, preq++));
-                if (MPI_SUCCESS != err) { goto error_hndl; }
+                if (MPI_SUCCESS != err) { line = __LINE__; goto error_hndl; }
 
                 err = MCA_PML_CALL(isend ((char *) tmp_buffer,  rcount, rdtype,
                                           i, MCA_COLL_BASE_TAG_ALLTOALL, MCA_PML_BASE_SEND_STANDARD,
                                           comm, preq++));
-                if (MPI_SUCCESS != err) { goto error_hndl; }
+                if (MPI_SUCCESS != err) { line = __LINE__; goto error_hndl; }
             } else {
                 continue;
             }
 
             /* Wait for the requests to complete */
             err = ompi_request_wait_all (2, base_module->base_data->mcct_reqs, MPI_STATUSES_IGNORE);
-            if (MPI_SUCCESS != err) { goto error_hndl; }
+            if (MPI_SUCCESS != err) { line = __LINE__; goto error_hndl; }
         }
     }
 
@@ -118,8 +120,15 @@ mca_coll_base_alltoall_intra_basic_inplace(const void *rbuf, int rcount,
     /* Free the temporary buffer */
     free (tmp_buffer);
 
-    /* All done */
+    if( MPI_SUCCESS != err ) {
+        OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
+                     "%s:%4d\tError occurred %d, rank %2d", __FILE__, line, err,
+                     rank));
+        (void)line;  // silence compiler warning
+        ompi_coll_base_free_reqs(base_module->base_data->mcct_reqs, 2);
+    }
 
+    /* All done */
     return err;
 }
 
@@ -177,6 +186,7 @@ int ompi_coll_base_alltoall_intra_pairwise(const void *sbuf, int scount,
     OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
                  "%s:%4d\tError occurred %d, rank %2d", __FILE__, line,
                  err, rank));
+    (void)line;  // silence compiler warning
     return err;
 }
 
@@ -191,7 +201,7 @@ int ompi_coll_base_alltoall_intra_bruck(const void *sbuf, int scount,
     int i, k, line = -1, rank, size, err = 0;
     int sendto, recvfrom, distance, *displs = NULL, *blen = NULL;
     char *tmpbuf = NULL, *tmpbuf_free = NULL;
-    ptrdiff_t rlb, slb, tlb, sext, rext, tsext;
+    OPAL_PTRDIFF_TYPE sext, rext, span, gap;
     struct ompi_datatype_t *new_ddt;
 
     if (MPI_IN_PLACE == sbuf) {
@@ -205,15 +215,13 @@ int ompi_coll_base_alltoall_intra_bruck(const void *sbuf, int scount,
     OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
                  "coll:base:alltoall_intra_bruck rank %d", rank));
 
-    err = ompi_datatype_get_extent (sdtype, &slb, &sext);
+    err = ompi_datatype_type_extent (sdtype, &sext);
     if (err != MPI_SUCCESS) { line = __LINE__; goto err_hndl; }
 
-    err = ompi_datatype_get_true_extent(sdtype, &tlb,  &tsext);
+    err = ompi_datatype_type_extent (rdtype, &rext);
     if (err != MPI_SUCCESS) { line = __LINE__; goto err_hndl; }
 
-    err = ompi_datatype_get_extent (rdtype, &rlb, &rext);
-    if (err != MPI_SUCCESS) { line = __LINE__; goto err_hndl; }
-
+    span = opal_datatype_span(&sdtype->super, (int64_t)size * scount, &gap);
 
     displs = (int *) malloc(size * sizeof(int));
     if (displs == NULL) { line = __LINE__; err = -1; goto err_hndl; }
@@ -221,9 +229,9 @@ int ompi_coll_base_alltoall_intra_bruck(const void *sbuf, int scount,
     if (blen == NULL) { line = __LINE__; err = -1; goto err_hndl; }
 
     /* tmp buffer allocation for message data */
-    tmpbuf_free = (char *) malloc(tsext + ((ptrdiff_t)scount * (ptrdiff_t)size - 1) * sext);
+    tmpbuf_free = (char *)malloc(span);
     if (tmpbuf_free == NULL) { line = __LINE__; err = -1; goto err_hndl; }
-    tmpbuf = tmpbuf_free - slb;
+    tmpbuf = tmpbuf_free - gap;
 
     /* Step 1 - local rotation - shift up by rank */
     err = ompi_datatype_copy_content_same_ddt (sdtype,
@@ -301,6 +309,7 @@ int ompi_coll_base_alltoall_intra_bruck(const void *sbuf, int scount,
     OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
                  "%s:%4d\tError occurred %d, rank %2d", __FILE__, line, err,
                  rank));
+    (void)line;  // silence compiler warning
     if (tmpbuf != NULL) free(tmpbuf_free);
     if (displs != NULL) free(displs);
     if (blen != NULL) free(blen);
@@ -383,8 +392,7 @@ int ompi_coll_base_alltoall_intra_linear_sync(const void *sbuf, int scount,
     total_reqs =  (((max_outstanding_reqs > (size - 1)) ||
                     (max_outstanding_reqs <= 0)) ?
                    (size - 1) : (max_outstanding_reqs));
-    reqs = (ompi_request_t**) malloc( 2 * total_reqs *
-                                      sizeof(ompi_request_t*));
+    reqs = coll_base_comm_get_reqs(module->base_data, 2 * total_reqs);
     if (NULL == reqs) { error = -1; line = __LINE__; goto error_hndl; }
 
     prcv = (char *) rbuf;
@@ -456,9 +464,6 @@ int ompi_coll_base_alltoall_intra_linear_sync(const void *sbuf, int scount,
         }
     }
 
-    /* Free the reqs */
-    free(reqs);
-
     /* All done */
     return MPI_SUCCESS;
 
@@ -466,7 +471,8 @@ int ompi_coll_base_alltoall_intra_linear_sync(const void *sbuf, int scount,
     OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
                  "%s:%4d\tError occurred %d, rank %2d", __FILE__, line, error,
                  rank));
-    if (NULL != reqs) free(reqs);
+    (void)line;  // silence compiler warning
+    ompi_coll_base_free_reqs(reqs, 2 * total_reqs);
     return error;
 }
 
@@ -526,6 +532,7 @@ int ompi_coll_base_alltoall_intra_two_procs(const void *sbuf, int scount,
     OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
                  "%s:%4d\tError occurred %d, rank %2d", __FILE__, line, err,
                  rank));
+    (void)line;  // silence compiler warning
     return err;
 }
 
@@ -552,7 +559,7 @@ int ompi_coll_base_alltoall_intra_basic_linear(const void *sbuf, int scount,
                                                struct ompi_communicator_t *comm,
                                                mca_coll_base_module_t *module)
 {
-    int i, rank, size, err, nreqs;
+    int i, rank, size, err, nreqs, line;
     char *psnd, *prcv;
     MPI_Aint lb, sndinc, rcvinc;
     ompi_request_t **req, **sreq, **rreq;
@@ -614,10 +621,7 @@ int ompi_coll_base_alltoall_intra_basic_linear(const void *sbuf, int scount,
         err = MCA_PML_CALL(irecv_init
                            (prcv + (ptrdiff_t)i * rcvinc, rcount, rdtype, i,
                            MCA_COLL_BASE_TAG_ALLTOALL, comm, rreq));
-        if (MPI_SUCCESS != err) {
-            ompi_coll_base_free_reqs(req, nreqs);
-            return err;
-        }
+        if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
     }
 
     /* Now post all sends in reverse order
@@ -631,10 +635,7 @@ int ompi_coll_base_alltoall_intra_basic_linear(const void *sbuf, int scount,
                            (psnd + (ptrdiff_t)i * sndinc, scount, sdtype, i,
                            MCA_COLL_BASE_TAG_ALLTOALL,
                            MCA_PML_BASE_SEND_STANDARD, comm, sreq));
-        if (MPI_SUCCESS != err) {
-            ompi_coll_base_free_reqs(req, nreqs);
-            return err;
-        }
+        if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
     }
 
     /* Start your engines.  This will never return an error. */
@@ -650,7 +651,13 @@ int ompi_coll_base_alltoall_intra_basic_linear(const void *sbuf, int scount,
 
     err = ompi_request_wait_all(nreqs, req, MPI_STATUSES_IGNORE);
 
-    /* Free the reqs */
+ err_hndl:
+    if( MPI_SUCCESS != err ) {
+        OPAL_OUTPUT( (ompi_coll_base_framework.framework_output,"%s:%4d\tError occurred %d, rank %2d",
+                      __FILE__, line, err, rank) );
+        (void)line;  // silence compiler warning
+    }
+    /* Free the reqs in all cases as they are persistent requests */
     ompi_coll_base_free_reqs(req, nreqs);
 
     /* All done */

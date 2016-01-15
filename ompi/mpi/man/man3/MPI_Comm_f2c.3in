@@ -4,7 +4,7 @@
 .\" $COPYRIGHT$
 .TH MPI_Comm_f2c 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
-\fBMPI_Comm_f2c, MPI_Comm_c2f, MPI_File_f2c, MPI_File_c2f, MPI_Info_f2c, MPI_Info_c2f, MPI_Op_f2c, MPI_Op_c2f, MPI_Request_f2c, MPI_Request_c2f, MPI_Type_f2c, MPI_Type_c2f, MPI_Win_f2c, MPI_Win_c2f \fP \- Translates a C handle into a Fortran handle, or vice versa.
+\fBMPI_Comm_f2c, MPI_Comm_c2f, MPI_File_f2c, MPI_File_c2f, MPI_Info_f2c, MPI_Info_c2f, MPI_Message_f2c, MPI_Message_c2f, MPI_Op_f2c, MPI_Op_c2f, MPI_Request_f2c, MPI_Request_c2f, MPI_Type_f2c, MPI_Type_c2f, MPI_Win_f2c, MPI_Win_c2f \fP \- Translates a C handle into a Fortran handle, or vice versa.
 
 .SH SYNTAX
 .ft R
@@ -22,6 +22,9 @@ MPI_Fint MPI_Group_c2f(MPI Group \fIgroup\fP)
 
 MPI_Info MPI_Info_f2c(MPI_Fint \fIinfo\fP)
 MPI_Fint MPI_Info_c2f(MPI_Info \fIinfo\fP)
+
+MPI_Message MPI_Message_f2c(MPI_Fint \fImessage\fP)
+MPI_Fint MPI_Message_c2f(MPI_Message \fImessage\fP)
 
 MPI_Op MPI_Op_f2c(MPI_Fint \fIop\fP)
 MPI_Fint MPI_Op_c2f(MPI_Op \fIop\fP)

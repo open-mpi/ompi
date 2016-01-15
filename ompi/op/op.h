@@ -1,4 +1,4 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -13,6 +13,8 @@
  * Copyright (c) 2008      UT-Battelle, LLC
  * Copyright (c) 2008-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -594,6 +596,13 @@ static inline void ompi_op_reduce(ompi_op_t * op, void *source,
     return;
 }
 
+static inline void ompi_3buff_op_user (ompi_op_t *op, void * restrict source1, void * restrict source2,
+                                       void * restrict result, int count, struct ompi_datatype_t *dtype)
+{
+    ompi_datatype_copy_content_same_ddt (dtype, count, result, source1);
+    op->o_func.c_fn (source2, result, &count, &dtype);
+}
+
 /**
  * Perform a reduction operation.
  *
@@ -628,10 +637,14 @@ static inline void ompi_3buff_op_reduce(ompi_op_t * op, void *source1,
     src2 = source2;
     tgt = target;
 
-    op->o_3buff_intrinsic.fns[ompi_op_ddt_map[dtype->id]](src1, src2,
-                                                          tgt, &count,
-                                                          &dtype,
-                                                          op->o_3buff_intrinsic.modules[ompi_op_ddt_map[dtype->id]]);
+    if (OPAL_LIKELY(ompi_op_is_intrinsic (op))) {
+        op->o_3buff_intrinsic.fns[ompi_op_ddt_map[dtype->id]](src1, src2,
+                                                              tgt, &count,
+                                                              &dtype,
+                                                              op->o_3buff_intrinsic.modules[ompi_op_ddt_map[dtype->id]]);
+    } else {
+        ompi_3buff_op_user (op, src1, src2, tgt, count, dtype);
+    }
 }
 
 END_C_DECLS

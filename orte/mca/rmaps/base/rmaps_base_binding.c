@@ -912,7 +912,7 @@ int orte_rmaps_base_compute_bindings(orte_job_t *jdata)
                 /* must use a unique function because blasted hwloc
                  * just doesn't deal with caches very well...sigh
                  */
-                bind_depth = hwloc_get_cache_type_depth(node->topology, clvl, -1);
+                bind_depth = hwloc_get_cache_type_depth(node->topology, clvl, (hwloc_obj_cache_type_t)-1);
             } else {
                 bind_depth = hwloc_get_type_depth(node->topology, hwb);
             }
@@ -926,7 +926,7 @@ int orte_rmaps_base_compute_bindings(orte_job_t *jdata)
                 /* must use a unique function because blasted hwloc
                  * just doesn't deal with caches very well...sigh
                  */
-                map_depth = hwloc_get_cache_type_depth(node->topology, clvm, -1);
+                map_depth = hwloc_get_cache_type_depth(node->topology, clvm, (hwloc_obj_cache_type_t)-1);
             } else {
                 map_depth = hwloc_get_type_depth(node->topology, hwm);
             }

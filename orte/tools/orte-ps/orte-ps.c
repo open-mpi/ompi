@@ -72,7 +72,6 @@
 #include "orte/util/proc_info.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/util/comm/comm.h"
-#include "orte/mca/ras/ras_types.h"
 #if OPAL_ENABLE_FT_CR == 1
 #include "orte/mca/snapc/base/base.h"
 #endif

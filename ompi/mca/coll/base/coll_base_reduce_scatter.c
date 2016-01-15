@@ -76,13 +76,11 @@ int ompi_coll_base_reduce_scatter_intra_nonoverlapping(const void *sbuf, void *r
         if (root == rank) {
             /* We must allocate temporary receive buffer on root to ensure that
                rbuf is big enough */
-            ptrdiff_t lb, extent, tlb, textent;
+            ptrdiff_t dsize, gap;
+            dsize = opal_datatype_span(&dtype->super, total_count, &gap);
 
-            ompi_datatype_get_extent(dtype, &lb, &extent);
-            ompi_datatype_get_true_extent(dtype, &tlb, &textent);
-
-            tmprbuf_free = (char*) malloc(textent + (ptrdiff_t)(total_count - 1) * extent);
-            tmprbuf = tmprbuf_free - lb;
+            tmprbuf_free = (char*) malloc(dsize);
+            tmprbuf = tmprbuf_free - gap;
         }
         err = comm->c_coll.coll_reduce (sbuf, tmprbuf, total_count,
                                         dtype, op, root, comm, comm->c_coll.coll_reduce_module);
@@ -134,7 +132,7 @@ ompi_coll_base_reduce_scatter_intra_basic_recursivehalving( const void *sbuf,
 {
     int i, rank, size, count, err = OMPI_SUCCESS;
     int tmp_size, remain = 0, tmp_rank, *disps = NULL;
-    ptrdiff_t true_lb, true_extent, lb, extent, buf_size;
+    ptrdiff_t extent, buf_size, gap;
     char *recv_buf = NULL, *recv_buf_free = NULL;
     char *result_buf = NULL, *result_buf_free = NULL;
 
@@ -161,9 +159,8 @@ ompi_coll_base_reduce_scatter_intra_basic_recursivehalving( const void *sbuf,
     }
 
     /* get datatype information */
-    ompi_datatype_get_extent(dtype, &lb, &extent);
-    ompi_datatype_get_true_extent(dtype, &true_lb, &true_extent);
-    buf_size = true_extent + (ptrdiff_t)(count - 1) * extent;
+    ompi_datatype_type_extent(dtype, &extent);
+    buf_size = opal_datatype_span(&dtype->super, count, &gap);
 
     /* Handle MPI_IN_PLACE */
     if (MPI_IN_PLACE == sbuf) {
@@ -172,7 +169,7 @@ ompi_coll_base_reduce_scatter_intra_basic_recursivehalving( const void *sbuf,
 
     /* Allocate temporary receive buffer. */
     recv_buf_free = (char*) malloc(buf_size);
-    recv_buf = recv_buf_free - true_lb;
+    recv_buf = recv_buf_free - gap;
     if (NULL == recv_buf_free) {
         err = OMPI_ERR_OUT_OF_RESOURCE;
         goto cleanup;
@@ -180,7 +177,7 @@ ompi_coll_base_reduce_scatter_intra_basic_recursivehalving( const void *sbuf,
 
     /* allocate temporary buffer for results */
     result_buf_free = (char*) malloc(buf_size);
-    result_buf = result_buf_free - true_lb;
+    result_buf = result_buf_free - gap;
 
     /* copy local buffer into the temporary results */
     err = ompi_datatype_sndrcv(sbuf, count, dtype, result_buf, count, dtype);
@@ -459,9 +456,8 @@ ompi_coll_base_reduce_scatter_intra_ring( const void *sbuf, void *rbuf, const in
     int inbi, *displs = NULL;
     char *tmpsend = NULL, *tmprecv = NULL, *accumbuf = NULL, *accumbuf_free = NULL;
     char *inbuf_free[2] = {NULL, NULL}, *inbuf[2] = {NULL, NULL};
-    ptrdiff_t true_lb, true_extent, lb, extent, max_real_segsize;
+    ptrdiff_t extent, max_real_segsize, dsize, gap;
     ompi_request_t *reqs[2] = {NULL, NULL};
-    size_t typelng;
 
     size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
@@ -500,26 +496,23 @@ ompi_coll_base_reduce_scatter_intra_ring( const void *sbuf, void *rbuf, const in
        rbuf can be of rcounts[rank] size.
        - up to two temporary buffers used for communication/computation overlap.
     */
-    ret = ompi_datatype_get_extent(dtype, &lb, &extent);
-    if (MPI_SUCCESS != ret) { line = __LINE__; goto error_hndl; }
-    ret = ompi_datatype_get_true_extent(dtype, &true_lb, &true_extent);
-    if (MPI_SUCCESS != ret) { line = __LINE__; goto error_hndl; }
-    ret = ompi_datatype_type_size( dtype, &typelng);
+    ret = ompi_datatype_type_extent(dtype, &extent);
     if (MPI_SUCCESS != ret) { line = __LINE__; goto error_hndl; }
 
-    max_real_segsize = true_extent + (ptrdiff_t)(max_block_count - 1) * extent;
+    max_real_segsize = opal_datatype_span(&dtype->super, max_block_count, &gap);
+    dsize = opal_datatype_span(&dtype->super, total_count, &gap);
 
-    accumbuf_free = (char*)malloc(true_extent + (ptrdiff_t)(total_count - 1) * extent);
+    accumbuf_free = (char*)malloc(dsize);
     if (NULL == accumbuf_free) { ret = -1; line = __LINE__; goto error_hndl; }
-    accumbuf = accumbuf_free - lb;
+    accumbuf = accumbuf_free - gap;
 
     inbuf_free[0] = (char*)malloc(max_real_segsize);
     if (NULL == inbuf_free[0]) { ret = -1; line = __LINE__; goto error_hndl; }
-    inbuf[0] = inbuf_free[0] - lb;
+    inbuf[0] = inbuf_free[0] - gap;
     if (size > 2) {
         inbuf_free[1] = (char*)malloc(max_real_segsize);
         if (NULL == inbuf_free[1]) { ret = -1; line = __LINE__; goto error_hndl; }
-        inbuf[1] = inbuf_free[1] - lb;
+        inbuf[1] = inbuf_free[1] - gap;
     }
 
     /* Handle MPI_IN_PLACE for size > 1 */
@@ -614,6 +607,7 @@ ompi_coll_base_reduce_scatter_intra_ring( const void *sbuf, void *rbuf, const in
  error_hndl:
     OPAL_OUTPUT((ompi_coll_base_framework.framework_output, "%s:%4d\tRank %d Error occurred %d\n",
                  __FILE__, line, rank, ret));
+    (void)line;  // silence compiler warning
     if (NULL != displs) free(displs);
     if (NULL != accumbuf_free) free(accumbuf_free);
     if (NULL != inbuf_free[0]) free(inbuf_free[0]);

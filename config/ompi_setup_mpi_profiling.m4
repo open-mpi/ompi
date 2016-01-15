@@ -15,6 +15,8 @@
 # Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
 #                         reserved.
 # Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
+# Copyright (c) 2015      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -39,14 +41,10 @@ AC_DEFUN([OMPI_SETUP_MPI_PROFILING],[
     #
 
     AM_CONDITIONAL(BUILD_MPI_BINDINGS_LAYER,
-        test "$WANT_MPI_PROFILING" = 0 -o "$OMPI_PROFILING_COMPILE_SEPARATELY" = 1)
+        test "$OMPI_PROFILING_COMPILE_SEPARATELY" = 1)
 
-    AM_CONDITIONAL(BUILD_PMPI_BINDINGS_LAYER,
-        test "$WANT_MPI_PROFILING" = 1)
     AM_CONDITIONAL(COMPILE_PROFILING_SEPARATELY,
         test "$OMPI_PROFILING_COMPILE_SEPARATELY" = 1)
-    AC_DEFINE_UNQUOTED(OMPI_ENABLE_MPI_PROFILING, $WANT_MPI_PROFILING,
-        [Whether we want MPI profiling or not])
     AC_DEFINE_UNQUOTED(OPAL_HAVE_WEAK_SYMBOLS, $OPAL_C_HAVE_WEAK_SYMBOLS,
         [Whether we have weak symbols or not])
 ])

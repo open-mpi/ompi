@@ -18,9 +18,21 @@ int MPI_Pack_size(int \fIincount\fP, MPI_Datatype\fI datatype\fP, MPI_Comm\fI co
 .fi
 .SH Fortran Syntax
 .nf
-INCLUDE 'mpif.h'
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
 MPI_PACK_SIZE(\fIINCOUNT, DATATYPE, COMM, SIZE, IERROR\fP)
 	INTEGER	\fIINCOUNT, DATATYPE, COMM, SIZE, IERROR\fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Pack_size(\fIincount\fP, \fIdatatype\fP, \fIcomm\fP, \fIsize\fP, \fIierror\fP)
+	INTEGER, INTENT(IN) :: \fIincount\fP
+	TYPE(MPI_Datatype), INTENT(IN) :: \fIdatatype\fP
+	TYPE(MPI_Comm), INTENT(IN) :: \fIcomm\fP
+	INTEGER, INTENT(OUT) :: \fIsize\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
 .SH C++ Syntax

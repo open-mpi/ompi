@@ -54,3 +54,6 @@ opal_init_finalize_LDADD = \
 	$(top_builddir)/opal/libopen-pal.la \
 	$(top_builddir)/test/support/libsupport.a
 opal_init_finalize_DEPENDENCIES = $(opal_init_finalize_LDADD)
+
+distclean:
+	rm -rf *.dSYM .deps *.log *.o *.trs $(check_PROGRAMS) Makefile

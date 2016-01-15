@@ -44,6 +44,15 @@
 #include "opal/mca/mpool/base/base.h"
 #include "mpool_grdma.h"
 
+static inline bool registration_is_cacheable(mca_mpool_base_registration_t *reg)
+{
+    return (mca_mpool_grdma_component.leave_pinned &&
+            !(reg->flags &
+              (MCA_MPOOL_FLAGS_CACHE_BYPASS |
+               MCA_MPOOL_FLAGS_PERSIST |
+               MCA_MPOOL_FLAGS_INVALID)));
+}
+
 #if OPAL_CUDA_GDR_SUPPORT
 static int check_for_cuda_freed_memory(mca_mpool_base_module_t *mpool, void *addr, size_t size);
 #endif /* OPAL_CUDA_GDR_SUPPORT */
@@ -155,7 +164,8 @@ void* mca_mpool_grdma_alloc(mca_mpool_base_module_t *mpool, size_t size,
     addr = (void*)OPAL_ALIGN((uintptr_t)base_addr, align, uintptr_t);
 #endif
 
-    if(OPAL_SUCCESS != mca_mpool_grdma_register(mpool, addr, size, flags, reg)) {
+    if(OPAL_SUCCESS != mca_mpool_grdma_register(mpool, addr, size, flags,
+                                                MCA_MPOOL_ACCESS_ANY, reg)) {
         free(base_addr);
         return NULL;
     }
@@ -213,8 +223,8 @@ bool mca_mpool_grdma_evict (struct mca_mpool_base_module_t *mpool)
 /*
  * register memory
  */
-int mca_mpool_grdma_register(mca_mpool_base_module_t *mpool, void *addr,
-                              size_t size, uint32_t flags,
+int mca_mpool_grdma_register (mca_mpool_base_module_t *mpool, void *addr,
+                              size_t size, uint32_t flags, int32_t access_flags,
                               mca_mpool_base_registration_t **reg)
 {
     mca_mpool_grdma_module_t *mpool_grdma = (mca_mpool_grdma_module_t*)mpool;
@@ -226,6 +236,8 @@ int mca_mpool_grdma_register(mca_mpool_base_module_t *mpool, void *addr,
     int rc;
 
     OPAL_THREAD_LOCK(&mpool->rcache->lock);
+
+    *reg = NULL;
 
     /* if cache bypass is requested don't use the cache */
     base = (unsigned char *) down_align_addr(addr, mca_mpool_base_page_size_log);
@@ -249,23 +261,43 @@ int mca_mpool_grdma_register(mca_mpool_base_module_t *mpool, void *addr,
      * Persistent registration are always registered and placed in the cache */
     if(!(bypass_cache || persist)) {
         /* check to see if memory is registered */
-        mpool->rcache->rcache_find(mpool->rcache, base, bound - base + 1, reg);
-        if (*reg && !(flags & MCA_MPOOL_FLAGS_INVALID)) {
-            if (0 == (*reg)->ref_count) {
-                /* Leave pinned must be set for this to still be in the rcache. */
-                opal_list_remove_item(&mpool_grdma->pool->lru_list,
-                                      (opal_list_item_t *)(*reg));
-            }
+        mpool->rcache->rcache_find(mpool->rcache, base, bound - base + 1, &grdma_reg);
+        if (grdma_reg && !(flags & MCA_MPOOL_FLAGS_INVALID)) {
+            if (OPAL_UNLIKELY((access_flags & grdma_reg->access_flags) != access_flags)) {
+                access_flags |= grdma_reg->access_flags;
 
-            /* This segment fits fully within an existing segment. */
-            mpool_grdma->stat_cache_hit++;
-            (*reg)->ref_count++;
-            OPAL_THREAD_UNLOCK(&mpool->rcache->lock);
-            return OPAL_SUCCESS;
+                if (0 != grdma_reg->ref_count) {
+                    if (!(grdma_reg->flags & MCA_MPOOL_FLAGS_CACHE_BYPASS)) {
+                        grdma_reg->mpool->rcache->rcache_delete(grdma_reg->mpool->rcache, grdma_reg);
+                    }
+
+                    /* mark the registration to go away when it is deregistered */
+                    grdma_reg->flags |= MCA_MPOOL_FLAGS_INVALID | MCA_MPOOL_FLAGS_CACHE_BYPASS;
+                } else {
+                    if (registration_is_cacheable (grdma_reg)) {
+                        /* pull the item out of the lru */
+                        opal_list_remove_item (&mpool_grdma->pool->lru_list, (opal_list_item_t *) grdma_reg);
+                    }
+
+                    (void) dereg_mem (grdma_reg);
+                }
+            } else {
+                *reg = grdma_reg;
+                if (0 == grdma_reg->ref_count) {
+                    /* Leave pinned must be set for this to still be in the rcache. */
+                    opal_list_remove_item(&mpool_grdma->pool->lru_list,
+                                          (opal_list_item_t *) grdma_reg);
+                }
+
+                /* This segment fits fully within an existing segment. */
+                mpool_grdma->stat_cache_hit++;
+                grdma_reg->ref_count++;
+                OPAL_THREAD_UNLOCK(&mpool->rcache->lock);
+                return OPAL_SUCCESS;
+            }
         }
 
         mpool_grdma->stat_cache_miss++;
-        *reg = NULL; /* in case previous find found something */
 
         /* Unless explicitly requested by the caller always store the
          * registration in the rcache. This will speed up the case where
@@ -285,6 +317,7 @@ int mca_mpool_grdma_register(mca_mpool_base_module_t *mpool, void *addr,
     grdma_reg->base = base;
     grdma_reg->bound = bound;
     grdma_reg->flags = flags;
+    grdma_reg->access_flags = access_flags;
 #if OPAL_CUDA_GDR_SUPPORT
     if (flags & MCA_MPOOL_FLAGS_CUDA_GPU_MEM) {
         mca_common_cuda_get_buffer_id(grdma_reg);
@@ -389,15 +422,6 @@ int mca_mpool_grdma_find(struct mca_mpool_base_module_t *mpool, void *addr,
     return rc;
 }
 
-static inline bool registration_is_cacheable(mca_mpool_base_registration_t *reg)
-{
-    return (mca_mpool_grdma_component.leave_pinned &&
-            !(reg->flags &
-              (MCA_MPOOL_FLAGS_CACHE_BYPASS |
-               MCA_MPOOL_FLAGS_PERSIST |
-               MCA_MPOOL_FLAGS_INVALID)));
-}
-
 int mca_mpool_grdma_deregister(struct mca_mpool_base_module_t *mpool,
                                mca_mpool_base_registration_t *reg)
 {
@@ -412,7 +436,7 @@ int mca_mpool_grdma_deregister(struct mca_mpool_base_module_t *mpool,
         return OPAL_SUCCESS;
     }
 
-    if(registration_is_cacheable(reg)) {
+    if (registration_is_cacheable(reg)) {
         opal_list_append(&mpool_grdma->pool->lru_list, (opal_list_item_t *) reg);
     } else {
         rc = dereg_mem (reg);

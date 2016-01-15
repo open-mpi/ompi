@@ -102,3 +102,6 @@ opal_fifo_DEPENDENCIES = $(opal_fifo_LDADD)
 
 clean-local:
 	rm -f opal_bitmap_test_out.txt opal_hash_table_test_out.txt opal_proc_table_test_out.txt
+
+distclean:
+	rm -rf *.dSYM .deps .libs *.log *.txt *.o *.trs $(check_PROGRAMS) Makefile

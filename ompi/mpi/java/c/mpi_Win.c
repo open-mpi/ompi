@@ -446,7 +446,8 @@ JNIEXPORT void JNICALL Java_mpi_Win_compareAndSwap (JNIEnv *env, jobject jthis, 
     void *compPtr = (*env)->GetDirectBufferAddress(env, compareAddr);
     void *resultPtr = (*env)->GetDirectBufferAddress(env, resultAddr);
 
-    int rc = MPI_Compare_and_swap(orgPtr, compPtr, resultPtr, dataType, targetRank, targetDisp, (MPI_Win)win);
+    int rc = MPI_Compare_and_swap(orgPtr, compPtr, resultPtr, (MPI_Datatype)dataType, 
+	targetRank, targetDisp, (MPI_Win)win);
     ompi_java_exceptionCheck(env, rc);
 }
 
@@ -457,7 +458,8 @@ JNIEXPORT void JNICALL Java_mpi_Win_fetchAndOp(JNIEnv *env, jobject jthis, jlong
     void *resultPtr = (*env)->GetDirectBufferAddress(env, resultAddr);
     MPI_Op op = ompi_java_op_getHandle(env, jOp, hOp, baseType);
 
-    int rc = MPI_Fetch_and_op(orgPtr, resultPtr, dataType, targetRank, targetDisp, op, (MPI_Win)win);
+    int rc = MPI_Fetch_and_op(orgPtr, resultPtr, (MPI_Datatype)dataType, targetRank, 
+	targetDisp, op, (MPI_Win)win);
     ompi_java_exceptionCheck(env, rc);
 }
 
@@ -477,7 +479,7 @@ JNIEXPORT void JNICALL Java_mpi_Win_setName(
         JNIEnv *env, jobject jthis, jlong handle, jstring jname)
 {
     const char *name = (*env)->GetStringUTFChars(env, jname, NULL);
-    int rc = MPI_Win_set_name((MPI_Comm)handle, (char*)name);
+    int rc = MPI_Win_set_name((MPI_Win)handle, (char*)name);
     ompi_java_exceptionCheck(env, rc);
     (*env)->ReleaseStringUTFChars(env, jname, name);
 }
@@ -487,7 +489,7 @@ JNIEXPORT jstring JNICALL Java_mpi_Win_getName(
 {
     char name[MPI_MAX_OBJECT_NAME];
     int len;
-    int rc = MPI_Win_get_name((MPI_Comm)handle, name, &len);
+    int rc = MPI_Win_get_name((MPI_Win)handle, name, &len);
 
     if(ompi_java_exceptionCheck(env, rc))
         return NULL;

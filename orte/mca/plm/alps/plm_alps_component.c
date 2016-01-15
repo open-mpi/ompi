@@ -43,6 +43,7 @@
  */
 const char *mca_plm_alps_component_version_string =
   "Open MPI alps plm MCA component version " ORTE_VERSION;
+bool mca_plm_alps_using_aprun = {true};
 
 
 /*
@@ -136,8 +137,20 @@ static int plm_alps_open(void)
 
 static int orte_plm_alps_component_query(mca_base_module_t **module, int *priority)
 {
+#if CRAY_WLM_DETECT
+    char slurm[]="SLURM";
+
+    if(!strcmp(slurm,wlm_detect_get_active())) {
+        mca_plm_alps_using_aprun = false;
+    }
+#endif
+
     *priority = mca_plm_alps_component.priority;
     *module = (mca_base_module_t *) &orte_plm_alps_module;
+    OPAL_OUTPUT_VERBOSE((1, orte_plm_base_framework.framework_output,
+                        "%s plm:alps: available for selection",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+
     return ORTE_SUCCESS;
 }
 

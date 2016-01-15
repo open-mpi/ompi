@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2014-2015 Intel, Inc.  All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -16,6 +16,7 @@
 
 #include "opal_stdint.h"
 #include "opal/mca/hwloc/base/base.h"
+#include "opal/util/argv.h"
 #include "opal/util/opal_environ.h"
 #include "opal/util/output.h"
 #include "opal/util/proc.h"
@@ -49,47 +50,29 @@ static int s1_job_connect(opal_list_t *procs);
 static int s1_job_disconnect(opal_list_t *procs);
 static int s1_store_local(const opal_process_name_t *proc,
                           opal_value_t *val);
+static const char *s1_get_nspace(opal_jobid_t jobid);
+static void s1_register_jobid(opal_jobid_t jobid, const char *nspace);
 
 const opal_pmix_base_module_t opal_pmix_s1_module = {
-    s1_init,
-    s1_fini,
-    s1_initialized,
-    s1_abort,
-    s1_commit,
-    s1_fence,
-    NULL,
-    s1_put,
-    s1_get,
-    NULL,
-    s1_publish,
-    NULL,
-    s1_lookup,
-    NULL,
-    s1_unpublish,
-    NULL,
-    s1_spawn,
-    NULL,
-    s1_job_connect,
-    NULL,
-    s1_job_disconnect,
-    NULL,
-    NULL,
-    NULL,
-    /* server APIs */
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    /* utility APIs */
-    NULL,
-    opal_pmix_base_register_handler,
-    opal_pmix_base_deregister_handler,
-    s1_store_local
+    .init = s1_init,
+    .finalize = s1_fini,
+    .initialized = s1_initialized,
+    .abort = s1_abort,
+    .commit = s1_commit,
+    .fence = s1_fence,
+    .put = s1_put,
+    .get = s1_get,
+    .publish = s1_publish,
+    .lookup = s1_lookup,
+    .unpublish = s1_unpublish,
+    .spawn = s1_spawn,
+    .connect = s1_job_connect,
+    .disconnect = s1_job_disconnect,
+    .register_errhandler = opal_pmix_base_register_handler,
+    .deregister_errhandler = opal_pmix_base_deregister_handler,
+    .store_local = s1_store_local,
+    .get_nspace = s1_get_nspace,
+    .register_jobid = s1_register_jobid
 };
 
 // usage accounting
@@ -233,8 +216,8 @@ static int s1_init(void)
 
     OBJ_CONSTRUCT(&kv, opal_value_t);
     kv.key = strdup(OPAL_PMIX_JOBID);
-    kv.type = OPAL_STRING;
-    kv.data.string = pmix_id;
+    kv.type = OPAL_UINT32;
+    kv.data.uint32 = s1_pname.jobid;
     if (OPAL_SUCCESS != (ret = opal_pmix_base_store(&OPAL_PROC_MY_NAME, &kv))) {
         OPAL_ERROR_LOG(ret);
         OBJ_DESTRUCT(&kv);
@@ -644,6 +627,14 @@ static int s1_store_local(const opal_process_name_t *proc,
     return OPAL_SUCCESS;
 }
 
+static const char *s1_get_nspace(opal_jobid_t jobid)
+{
+    return "N/A";
+}
+static void s1_register_jobid(opal_jobid_t jobid, const char *nspace)
+{
+    return;
+}
 
 static char* pmix_error(int pmix_err)
 {

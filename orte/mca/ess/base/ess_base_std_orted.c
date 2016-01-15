@@ -300,8 +300,78 @@ int orte_ess_base_orted_setup(char **hosts)
             }
         }
     }
+    /* setup the global job and node arrays */
+    orte_job_data = OBJ_NEW(opal_pointer_array_t);
+    if (ORTE_SUCCESS != (ret = opal_pointer_array_init(orte_job_data,
+                               1,
+                               ORTE_GLOBAL_ARRAY_MAX_SIZE,
+                               1))) {
+        ORTE_ERROR_LOG(ret);
+        error = "setup job array";
+        goto error;
+    }
+    orte_node_pool = OBJ_NEW(opal_pointer_array_t);
+    if (ORTE_SUCCESS != (ret = opal_pointer_array_init(orte_node_pool,
+                               ORTE_GLOBAL_ARRAY_BLOCK_SIZE,
+                               ORTE_GLOBAL_ARRAY_MAX_SIZE,
+                               ORTE_GLOBAL_ARRAY_BLOCK_SIZE))) {
+        ORTE_ERROR_LOG(ret);
+        error = "setup node array";
+        goto error;
+    }
+    orte_node_topologies = OBJ_NEW(opal_pointer_array_t);
+    if (ORTE_SUCCESS != (ret = opal_pointer_array_init(orte_node_topologies,
+                               ORTE_GLOBAL_ARRAY_BLOCK_SIZE,
+                               ORTE_GLOBAL_ARRAY_MAX_SIZE,
+                               ORTE_GLOBAL_ARRAY_BLOCK_SIZE))) {
+        ORTE_ERROR_LOG(ret);
+        error = "setup node topologies array";
+        goto error;
+    }
+    /* Setup the job data object for the daemons */
+    /* create and store the job data object */
+    jdata = OBJ_NEW(orte_job_t);
+    jdata->jobid = ORTE_PROC_MY_NAME->jobid;
+    opal_pointer_array_set_item(orte_job_data, 0, jdata);
+    /* every job requires at least one app */
+    app = OBJ_NEW(orte_app_context_t);
+    opal_pointer_array_set_item(jdata->apps, 0, app);
+    jdata->num_apps++;
+    /* create and store a node object where we are */
+    node = OBJ_NEW(orte_node_t);
+    node->name = strdup(orte_process_info.nodename);
+    node->index = opal_pointer_array_set_item(orte_node_pool, ORTE_PROC_MY_NAME->vpid, node);
+    /* point our topology to the one detected locally */
+    node->topology = opal_hwloc_topology;
+
+    /* create and store a proc object for us */
+    proc = OBJ_NEW(orte_proc_t);
+    proc->name.jobid = ORTE_PROC_MY_NAME->jobid;
+    proc->name.vpid = ORTE_PROC_MY_NAME->vpid;
+    proc->pid = orte_process_info.pid;
+    proc->state = ORTE_PROC_STATE_RUNNING;
+    opal_pointer_array_set_item(jdata->procs, proc->name.vpid, proc);
+    /* record that the daemon (i.e., us) is on this node
+     * NOTE: we do not add the proc object to the node's
+     * proc array because we are not an application proc.
+     * Instead, we record it in the daemon field of the
+     * node object
+     */
+    OBJ_RETAIN(proc);   /* keep accounting straight */
+    node->daemon = proc;
+    ORTE_FLAG_SET(node, ORTE_NODE_FLAG_DAEMON_LAUNCHED);
+    node->state = ORTE_NODE_STATE_UP;
+    /* now point our proc node field to the node */
+    OBJ_RETAIN(node);   /* keep accounting straight */
+    proc->node = node;
+    /* record that the daemon job is running */
+    jdata->num_procs = 1;
+    jdata->state = ORTE_JOB_STATE_RUNNING;
+    /* obviously, we have "reported" */
+    jdata->num_reported = 1;
+
     /* Setup the communication infrastructure */
-        if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_oob_base_framework, 0))) {
+    if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_oob_base_framework, 0))) {
         ORTE_ERROR_LOG(ret);
         error = "orte_oob_base_open";
         goto error;
@@ -321,6 +391,9 @@ int orte_ess_base_orted_setup(char **hosts)
         error = "orte_rml_base_select";
         goto error;
     }
+    /* add our contact info */
+    proc->rml_uri = orte_rml.get_contact_info();
+
     /* Messaging QoS Layer */
     if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_qos_base_framework, 0))) {
         ORTE_ERROR_LOG(ret);
@@ -439,79 +512,10 @@ int orte_ess_base_orted_setup(char **hosts)
             goto error;
         }
     }
-    /* setup the global job and node arrays */
-    orte_job_data = OBJ_NEW(opal_pointer_array_t);
-    if (ORTE_SUCCESS != (ret = opal_pointer_array_init(orte_job_data,
-                                                       1,
-                                                       ORTE_GLOBAL_ARRAY_MAX_SIZE,
-                                                       1))) {
-        ORTE_ERROR_LOG(ret);
-        error = "setup job array";
-        goto error;
-    }
-    orte_node_pool = OBJ_NEW(opal_pointer_array_t);
-    if (ORTE_SUCCESS != (ret = opal_pointer_array_init(orte_node_pool,
-                                                       ORTE_GLOBAL_ARRAY_BLOCK_SIZE,
-                                                       ORTE_GLOBAL_ARRAY_MAX_SIZE,
-                                                       ORTE_GLOBAL_ARRAY_BLOCK_SIZE))) {
-        ORTE_ERROR_LOG(ret);
-        error = "setup node array";
-        goto error;
-    }
-    orte_node_topologies = OBJ_NEW(opal_pointer_array_t);
-    if (ORTE_SUCCESS != (ret = opal_pointer_array_init(orte_node_topologies,
-                                                       ORTE_GLOBAL_ARRAY_BLOCK_SIZE,
-                                                       ORTE_GLOBAL_ARRAY_MAX_SIZE,
-                                                       ORTE_GLOBAL_ARRAY_BLOCK_SIZE))) {
-        ORTE_ERROR_LOG(ret);
-        error = "setup node topologies array";
-        goto error;
-    }
-    /* Setup the job data object for the daemons */
-    /* create and store the job data object */
-    jdata = OBJ_NEW(orte_job_t);
-    jdata->jobid = ORTE_PROC_MY_NAME->jobid;
-    opal_pointer_array_set_item(orte_job_data, 0, jdata);
-    /* every job requires at least one app */
-    app = OBJ_NEW(orte_app_context_t);
-    opal_pointer_array_set_item(jdata->apps, 0, app);
-    jdata->num_apps++;
-    /* create and store a node object where we are */
-    node = OBJ_NEW(orte_node_t);
-    node->name = strdup(orte_process_info.nodename);
-    node->index = opal_pointer_array_set_item(orte_node_pool, ORTE_PROC_MY_NAME->vpid, node);
-    /* point our topology to the one detected locally */
-    node->topology = opal_hwloc_topology;
 
-    /* create and store a proc object for us */
-    proc = OBJ_NEW(orte_proc_t);
-    proc->name.jobid = ORTE_PROC_MY_NAME->jobid;
-    proc->name.vpid = ORTE_PROC_MY_NAME->vpid;
-    proc->pid = orte_process_info.pid;
-    proc->rml_uri = orte_rml.get_contact_info();
-    proc->state = ORTE_PROC_STATE_RUNNING;
-    opal_pointer_array_set_item(jdata->procs, proc->name.vpid, proc);
-    /* record that the daemon (i.e., us) is on this node
-     * NOTE: we do not add the proc object to the node's
-     * proc array because we are not an application proc.
-     * Instead, we record it in the daemon field of the
-     * node object
-     */
-    OBJ_RETAIN(proc);   /* keep accounting straight */
-    node->daemon = proc;
-    ORTE_FLAG_SET(node, ORTE_NODE_FLAG_DAEMON_LAUNCHED);
-    node->state = ORTE_NODE_STATE_UP;
-    /* now point our proc node field to the node */
-    OBJ_RETAIN(node);   /* keep accounting straight */
-    proc->node = node;
-    /* record that the daemon job is running */
-    jdata->num_procs = 1;
-    jdata->state = ORTE_JOB_STATE_RUNNING;
-    /* obviously, we have "reported" */
-    jdata->num_reported = 1;
-
-    /* setup the PMIx framework - ensure it skips all non-PMIx components */
-    putenv("OMPI_MCA_pmix=^s1,s2,cray");
+    /* setup the PMIx framework - ensure it skips all non-PMIx components,
+     * but do not override anything we were given */
+    opal_setenv("OMPI_MCA_pmix", "^s1,s2,cray", false, &environ);
     if (OPAL_SUCCESS != (ret = mca_base_framework_open(&opal_pmix_base_framework, 0))) {
         ORTE_ERROR_LOG(ret);
         error = "orte_pmix_base_open";

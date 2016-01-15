@@ -35,26 +35,26 @@ int ompi_mtl_psm2_iprobe(struct mca_mtl_base_module_t* mtl,
                               int *flag,
                               struct ompi_status_public_t *status)
 {
-    psm_mq_tag_t mqtag, tagsel;
-    psm_mq_status2_t mqstat;
-    psm_error_t err;
+    psm2_mq_tag_t mqtag, tagsel;
+    psm2_mq_status2_t mqstat;
+    psm2_error_t err;
 
-    PSM_MAKE_TAGSEL(src, tag, comm->c_contextid, mqtag, tagsel);
+    PSM2_MAKE_TAGSEL(src, tag, comm->c_contextid, mqtag, tagsel);
 
-    err = psm_mq_iprobe2(ompi_mtl_psm2.mq,
-            PSM_MQ_ANY_ADDR, &mqtag, &tagsel, &mqstat);
-    if (err == PSM_OK) {
+    err = psm2_mq_iprobe2(ompi_mtl_psm2.mq,
+            PSM2_MQ_ANY_ADDR, &mqtag, &tagsel, &mqstat);
+    if (err == PSM2_OK) {
 	*flag = 1;
 	if(MPI_STATUS_IGNORE != status) {
-            status->MPI_SOURCE = mqstat.msg_tag.tag2;
-            status->MPI_TAG = mqstat.msg_tag.tag1;
+            status->MPI_SOURCE = mqstat.msg_tag.tag1;
+            status->MPI_TAG = mqstat.msg_tag.tag0;
             status->_ucount = mqstat.nbytes;
 
             switch (mqstat.error_code) {
-	    case PSM_OK:
+	    case PSM2_OK:
 		status->MPI_ERROR = OMPI_SUCCESS;
 		break;
-	    case PSM_MQ_TRUNCATION:
+	    case PSM2_MQ_TRUNCATION:
 		status->MPI_ERROR = MPI_ERR_TRUNCATE;
 		break;
 	    default:
@@ -64,7 +64,7 @@ int ompi_mtl_psm2_iprobe(struct mca_mtl_base_module_t* mtl,
 
         return OMPI_SUCCESS;
     }
-    else if (err == PSM_MQ_INCOMPLETE) {
+    else if (err == PSM2_MQ_INCOMPLETE) {
 	*flag = 0;
 	return OMPI_SUCCESS;
     }
@@ -83,27 +83,27 @@ ompi_mtl_psm2_improbe(struct mca_mtl_base_module_t *mtl,
                      struct ompi_status_public_t *status)
 {
     struct ompi_message_t* msg;
-    psm_mq_tag_t mqtag, tagsel;
-    psm_mq_status2_t mqstat;
-    psm_mq_req_t mqreq;
-    psm_error_t err;
+    psm2_mq_tag_t mqtag, tagsel;
+    psm2_mq_status2_t mqstat;
+    psm2_mq_req_t mqreq;
+    psm2_error_t err;
 
-    PSM_MAKE_TAGSEL(src, tag, comm->c_contextid, mqtag, tagsel);
+    PSM2_MAKE_TAGSEL(src, tag, comm->c_contextid, mqtag, tagsel);
 
-    err = psm_mq_improbe2(ompi_mtl_psm2.mq,
-            PSM_MQ_ANY_ADDR, &mqtag, &tagsel, &mqreq, &mqstat);
-    if (err == PSM_OK) {
+    err = psm2_mq_improbe2(ompi_mtl_psm2.mq,
+            PSM2_MQ_ANY_ADDR, &mqtag, &tagsel, &mqreq, &mqstat);
+    if (err == PSM2_OK) {
 
 	if(MPI_STATUS_IGNORE != status) {
-            status->MPI_SOURCE = mqstat.msg_tag.tag2;
-            status->MPI_TAG = mqstat.msg_tag.tag1;
+            status->MPI_SOURCE = mqstat.msg_tag.tag1;
+            status->MPI_TAG = mqstat.msg_tag.tag0;
             status->_ucount = mqstat.nbytes;
 
             switch (mqstat.error_code) {
-	    case PSM_OK:
+	    case PSM2_OK:
 		status->MPI_ERROR = OMPI_SUCCESS;
 		break;
-	    case PSM_MQ_TRUNCATION:
+	    case PSM2_MQ_TRUNCATION:
 		status->MPI_ERROR = MPI_ERR_TRUNCATE;
 		break;
 	    default:
@@ -118,13 +118,13 @@ ompi_mtl_psm2_improbe(struct mca_mtl_base_module_t *mtl,
 
 	msg->comm = comm;
 	msg->req_ptr = mqreq;
-	msg->peer = mqstat.msg_tag.tag2;
+	msg->peer = mqstat.msg_tag.tag1;
 	msg->count = mqstat.nbytes;
 
 	*message = msg;
 	*matched = 1;
 	return OMPI_SUCCESS;
-    } else if(err == PSM_MQ_INCOMPLETE) {
+    } else if(err == PSM2_MQ_INCOMPLETE) {
 	*matched = 0;
 	*message = MPI_MESSAGE_NULL;
 	return OMPI_SUCCESS;

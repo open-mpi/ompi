@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -9,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -62,6 +63,54 @@ struct opal_mutex_t {
 };
 OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_mutex_t);
 OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_recursive_mutex_t);
+
+#if defined(PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP)
+#define OPAL_PTHREAD_RECURSIVE_MUTEX_INITIALIZER PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP
+#elif defined(PTHREAD_RECURSIVE_MUTEX_INITIALIZER)
+#define OPAL_PTHREAD_RECURSIVE_MUTEX_INITIALIZER PTHREAD_RECURSIVE_MUTEX_INITIALIZER
+#endif
+
+#if OPAL_ENABLE_DEBUG
+#define OPAL_MUTEX_STATIC_INIT                                          \
+    {                                                                   \
+        .super = OPAL_OBJ_STATIC_INIT(opal_mutex_t),                    \
+        .m_lock_pthread = PTHREAD_MUTEX_INITIALIZER,                    \
+        .m_lock_debug = 0,                                              \
+        .m_lock_file = NULL,                                            \
+        .m_lock_line = 0,                                               \
+        .m_lock_atomic = { .u = { .lock = OPAL_ATOMIC_UNLOCKED } },     \
+    }
+#else
+#define OPAL_MUTEX_STATIC_INIT                                          \
+    {                                                                   \
+        .super = OPAL_OBJ_STATIC_INIT(opal_mutex_t),                    \
+        .m_lock_pthread = PTHREAD_MUTEX_INITIALIZER,                    \
+        .m_lock_atomic = { .u = { .lock = OPAL_ATOMIC_UNLOCKED } },     \
+    }
+#endif
+
+#if defined(OPAL_PTHREAD_RECURSIVE_MUTEX_INITIALIZER)
+
+#if OPAL_ENABLE_DEBUG
+#define OPAL_RECURSIVE_MUTEX_STATIC_INIT                                \
+    {                                                                   \
+        .super = OPAL_OBJ_STATIC_INIT(opal_mutex_t),                    \
+        .m_lock_pthread = OPAL_PTHREAD_RECURSIVE_MUTEX_INITIALIZER,     \
+        .m_lock_debug = 0,                                              \
+        .m_lock_file = NULL,                                            \
+        .m_lock_line = 0,                                               \
+        .m_lock_atomic = { .u = { .lock = OPAL_ATOMIC_UNLOCKED } },     \
+    }
+#else
+#define OPAL_RECURSIVE_MUTEX_STATIC_INIT                                \
+    {                                                                   \
+        .super = OPAL_OBJ_STATIC_INIT(opal_mutex_t),                    \
+        .m_lock_pthread = OPAL_PTHREAD_RECURSIVE_MUTEX_INITIALIZER,     \
+        .m_lock_atomic = { .u = { .lock = OPAL_ATOMIC_UNLOCKED } },     \
+    }
+#endif
+
+#endif
 
 /************************************************************************
  *

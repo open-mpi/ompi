@@ -18,13 +18,29 @@ int MPI_Type_get_contents(MPI_Datatype \fIdatatype\fP, int \fImax_integers\fP,
 .fi
 .SH Fortran Syntax (see FORTRAN 77 NOTES)
 .nf
-INCLUDE 'mpif.h'
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
 MPI_TYPE_GET_CONTENTS(\fIDATATYPE, MAX_INTEGERS, MAX_ADDRESSES,
 		MAX_DATATYPES, ARRAY_OF_INTEGERS, ARRAY_OF_ADDRESSES,
 		ARRAY_OF_DATATYPES, IERROR\fP)
 	INTEGER	\fIDATATYPE, MAX_INTEGERS, MAX_ADDRESSES, MAX_DATATYPES\fP
 	INTEGER	\fIARRAY_OF_INTEGERS(*), ARRAY_OF_DATATYPES(*), IERROR\fP
 	INTEGER(KIND=MPI_ADDRESS_KIND) \fIARRAY_OF_ADDRESSES\fP(*)
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Type_get_contents(\fIdatatype\fP, \fImax_integers\fP, \fImax_addresses\fP, \fImax_datatypes\fP,
+	\fIarray_of_integers\fP, \fIarray_of_addresses\fP, \fIarray_of_datatypes,\fP
+		\fIierror\fP)
+	TYPE(MPI_Datatype), INTENT(IN) :: \fIdatatype\fP
+	INTEGER, INTENT(IN) :: \fImax_integers\fP, \fImax_addresses\fP, \fImax_datatypes\fP
+	INTEGER, INTENT(OUT) :: \fIarray_of_integers(max_integers)\fP
+	INTEGER(KIND=MPI_ADDRESS_KIND), INTENT(OUT) ::
+	\fIarray_of_addresses(max_addresses)\fP
+	TYPE(MPI_Datatype), INTENT(OUT) :: \fIarray_of_datatypes(max_datatypes)\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
 .SH C++ Syntax
@@ -80,7 +96,7 @@ The committed state of returned derived data types is undefined, that is, the da
 .sp
 Note that MPI_Type_get_contents can be invoked with a data-type argument that was constructed using MPI_Type_create_f90_real, MPI_Type_create_f90_integer, or MPI_Type_create_f90_complex (an unnamed predefined data type). In such a case, an empty \fIarray_of_datatypes\fP is returned.
 .sp
-In the MPI-1 data-type constructor calls, the address arguments in Fortran are of type INTEGER. In the new MPI-2 calls, the address arguments are of type INTEGER(KIND=MPI ADDRESS KIND). The call MPI_Type_get_contents returns all addresses in an argument of type INTEGER(KIND=MPI ADDRESS KIND). This is true even if the old MPI-1 calls were used. Thus, the location of values returned can be thought of as being returned by the C bindings. It can also be determined by examining the new MPI-2 calls for data-type constructors for the deprecated MPI-1 calls that involve addresses.
+In the MPI-1 data-type constructor calls, the address arguments in Fortran are of type INTEGER. In the new MPI-2 calls, the address arguments are of type INTEGER(KIND=MPI_ADDRESS_KIND). The call MPI_Type_get_contents returns all addresses in an argument of type INTEGER(KIND=MPI_ADDRESS_KIND). This is true even if the old MPI-1 calls were used. Thus, the location of values returned can be thought of as being returned by the C bindings. It can also be determined by examining the new MPI-2 calls for data-type constructors for the deprecated MPI-1 calls that involve addresses.
 
 .SH FORTRAN 77 NOTES
 .ft R

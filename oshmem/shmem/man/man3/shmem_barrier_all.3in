@@ -44,7 +44,7 @@ functions such as \fIshmem_put32\fP(3)\&.
 .Vb
 setup_data()
 {
-  if (_my_pe() == 0) {
+  if (shmem_my_pe() == 0) {
     setup();
   }
 
@@ -56,4 +56,4 @@ setup_data()
 .SH SEE ALSO
 
 \fIshmem_barrier\fP(3),
-\fIstart_pes\fP(3)
+\fIshmem_init\fP(3)

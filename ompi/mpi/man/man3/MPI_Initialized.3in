@@ -1,11 +1,11 @@
 .\" -*- nroff -*-
-.\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
+.\" Copyright (c) 2010-2015 Cisco Systems, Inc.  All rights reserved.
 .\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .\" $COPYRIGHT$
 .TH MPI_Initialized 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
-\fBMPI_Initialized\fP \- Indicates whether MPI_Init has been called.
+\fBMPI_Initialized\fP \- Checks whether MPI has been initialized
 
 .SH SYNTAX
 .ft R
@@ -17,10 +17,19 @@ int MPI_Initialized(int *\fIflag\fP)
 .fi
 .SH Fortran Syntax
 .nf
-INCLUDE 'mpif.h'
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
 MPI_INITIALIZED(\fIFLAG, IERROR\fP)
 	LOGICAL	\fIFLAG\fP
 	INTEGER	\fIIERROR\fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Initialized(\fIflag\fP, \fIierror\fP)
+	LOGICAL, INTENT(OUT) :: \fIflag\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
 .SH C++ Syntax
@@ -33,7 +42,7 @@ bool Is_initialized()
 .ft R
 .TP 1i
 flag
-Flag is true if MPI_Init has been called and false otherwise.
+True if MPI has been initialized, and false otherwise (logical).
 .ft R
 .TP 1i
 IERROR
@@ -41,7 +50,10 @@ Fortran only: Error status (integer).
 
 .SH DESCRIPTION
 .ft R
-This routine may be used to determine whether MPI_Init has been called. It is the only routine that may be called before MPI_Init is called.
+This routine may be used to determine whether MPI has been
+initialized.  It is one of a small number of routines that may be
+called before MPI is initialized and after MPI has been finalized
+(MPI_Finalized is another).
 
 .SH ERRORS
 Almost all MPI routines return an error value; C routines as the value of the function and Fortran routines in the last argument. C++ functions do not return errors. If the default error handler is set to MPI::ERRORS_THROW_EXCEPTIONS, then on error the C++ exception mechanism will be used to throw an MPI::Exception object.
@@ -51,6 +63,8 @@ called. By default, this error handler aborts the MPI job, except for I/O functi
 
 .SH SEE ALSO
 .ft R
-.sp
+.nf
 MPI_Init
-
+MPI_Init_thread
+MPI_Finalize
+MPI_Finalized

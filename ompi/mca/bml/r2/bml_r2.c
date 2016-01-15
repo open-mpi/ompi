@@ -222,7 +222,7 @@ static int mca_bml_r2_endpoint_add_btl (struct ompi_proc_t *proc, mca_bml_base_e
         size = mca_bml_base_btl_array_get_size (&bml_endpoint->btl_send);
         bml_btl = mca_bml_base_btl_array_get_index (&bml_endpoint->btl_send, size - 1);
 
-        if (!bml_btl || bml_btl->btl->btl_exclusivity < btl->btl_exclusivity) {
+        if (!bml_btl || bml_btl->btl->btl_exclusivity <= btl->btl_exclusivity) {
             /* this btl has higher exclusivity than an existing btl or none exists */
 
             opal_output_verbose(1, opal_btl_base_framework.framework_output,

@@ -241,7 +241,7 @@
  * MPI version
  */
 #define MPI_VERSION 3
-#define MPI_SUBVERSION 0
+#define MPI_SUBVERSION 1
 
 
 /*

@@ -1,7 +1,7 @@
 #
 # Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
 # Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
-# Copyright (c) 2012-2014 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2012-2015 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -32,7 +32,7 @@ endif
 lib@ORTE_LIB_PREFIX@mca_common_alps_la_SOURCES = $(headers) $(sources)
 lib@ORTE_LIB_PREFIX@mca_common_alps_la_CPPFLAGS = $(common_alps_CPPFLAGS)
 lib@ORTE_LIB_PREFIX@mca_common_alps_la_LDFLAGS =  \
-        -version-info $(libmca_common_alps_so_version) \
+        -version-info $(libmca_orte_common_alps_so_version) \
         $(common_alps_LDFLAGS)
 lib@ORTE_LIB_PREFIX@mca_common_alps_la_LIBADD = $(common_alps_LIBS)
 lib@ORTE_LIB_PREFIX@mca_common_alps_noinst_la_SOURCES = $(headers) $(sources)

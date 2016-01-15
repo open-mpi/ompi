@@ -11,6 +11,9 @@
  *                         All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -34,19 +37,21 @@
 #include <netinet/in.h>
 #endif
 
+#include "opal/util/show_help.h"
+
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/runtime/params.h"
+#include "ompi/runtime/mpiruntime.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/dpm/dpm.h"
 
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_Comm_join = PMPI_Comm_join
 #endif
-
-#if OMPI_PROFILING_DEFINES
-#include "ompi/mpi/c/profile/defines.h"
+#define MPI_Comm_join PMPI_Comm_join
 #endif
 
 static const char FUNC_NAME[] = "MPI_Comm_join";
@@ -71,6 +76,11 @@ int MPI_Comm_join(int fd, MPI_Comm *intercomm)
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,
                                           FUNC_NAME);
         }
+    }
+
+    if (!ompi_mpi_dynamics_is_enabled(FUNC_NAME)) {
+        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, OMPI_ERR_NOT_SUPPORTED,
+                                      FUNC_NAME);
     }
 
     OPAL_CR_ENTER_LIBRARY();
@@ -112,8 +122,7 @@ int MPI_Comm_join(int fd, MPI_Comm *intercomm)
     if (send_first) {
         /* open a port */
         if (OMPI_SUCCESS != (rc = ompi_dpm_open_port(port_name))) {
-            OPAL_CR_EXIT_LIBRARY();
-            return rc;
+            goto error;
         }
         llen   = (uint32_t)(strlen(port_name)+1);
         len    = htonl(llen);
@@ -128,7 +137,21 @@ int MPI_Comm_join(int fd, MPI_Comm *intercomm)
     /* use the port to connect/accept */
     rc = ompi_dpm_connect_accept (MPI_COMM_SELF, 0, port_name, send_first, &newcomp);
 
+    OPAL_CR_EXIT_LIBRARY();
+
     *intercomm = newcomp;
+
+ error:
+    OPAL_CR_EXIT_LIBRARY();
+
+    if (OPAL_ERR_NOT_SUPPORTED == rc) {
+        opal_show_help("help-mpi-api.txt",
+                       "MPI function not supported",
+                       true,
+                       FUNC_NAME,
+                       "Underlying runtime environment does not support join functionality");
+    }
+
     OMPI_ERRHANDLER_RETURN (rc, MPI_COMM_SELF, rc, FUNC_NAME);
 }
 

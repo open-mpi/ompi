@@ -71,7 +71,7 @@ mca_coll_basic_reduce_scatter_intra(const void *sbuf, void *rbuf, const int *rco
                                     mca_coll_base_module_t *module)
 {
     int i, rank, size, count, err = OMPI_SUCCESS;
-    ptrdiff_t true_lb, true_extent, lb, extent, buf_size;
+    ptrdiff_t extent, buf_size, gap;
     int *disps = NULL;
     char *recv_buf = NULL, *recv_buf_free = NULL;
     char *result_buf = NULL, *result_buf_free = NULL;
@@ -96,9 +96,8 @@ mca_coll_basic_reduce_scatter_intra(const void *sbuf, void *rbuf, const int *rco
     }
 
     /* get datatype information */
-    ompi_datatype_get_extent(dtype, &lb, &extent);
-    ompi_datatype_get_true_extent(dtype, &true_lb, &true_extent);
-    buf_size = true_extent + (count - 1) * extent;
+    ompi_datatype_type_extent(dtype, &extent);
+    buf_size = opal_datatype_span(&dtype->super, count, &gap);
 
     /* Handle MPI_IN_PLACE */
     if (MPI_IN_PLACE == sbuf) {
@@ -111,7 +110,7 @@ mca_coll_basic_reduce_scatter_intra(const void *sbuf, void *rbuf, const int *rco
 
         /* temporary receive buffer.  See coll_basic_reduce.c for details on sizing */
         recv_buf_free = (char*) malloc(buf_size);
-        recv_buf = recv_buf_free - true_lb;
+        recv_buf = recv_buf_free - gap;
         if (NULL == recv_buf_free) {
             err = OMPI_ERR_OUT_OF_RESOURCE;
             goto cleanup;
@@ -119,7 +118,7 @@ mca_coll_basic_reduce_scatter_intra(const void *sbuf, void *rbuf, const int *rco
 
         /* allocate temporary buffer for results */
         result_buf_free = (char*) malloc(buf_size);
-        result_buf = result_buf_free - true_lb;
+        result_buf = result_buf_free - gap;
 
         /* copy local buffer into the temporary results */
         err = ompi_datatype_sndrcv(sbuf, count, dtype, result_buf, count, dtype);
@@ -323,7 +322,7 @@ mca_coll_basic_reduce_scatter_intra(const void *sbuf, void *rbuf, const int *rco
             /* temporary receive buffer.  See coll_basic_reduce.c for
                details on sizing */
             recv_buf_free = (char*) malloc(buf_size);
-            recv_buf = recv_buf_free - true_lb;
+            recv_buf = recv_buf_free - gap;
             if (NULL == recv_buf_free) {
                 err = OMPI_ERR_OUT_OF_RESOURCE;
                 goto cleanup;

@@ -12,7 +12,7 @@
  * Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006-2009 University of Houston.  All rights reserved.
  * Copyright (c) 2012-2013 Inria.  All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -31,12 +31,11 @@
 #include "ompi/request/request.h"
 #include "ompi/memchecker.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
+#if OMPI_BUILD_MPI_PROFILING
+#if OPAL_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_Intercomm_create = PMPI_Intercomm_create
 #endif
-
-#if OMPI_PROFILING_DEFINES
-#include "ompi/mpi/c/profile/defines.h"
+#define MPI_Intercomm_create PMPI_Intercomm_create
 #endif
 
 static const char FUNC_NAME[] = "MPI_Intercomm_create";
@@ -172,9 +171,8 @@ int MPI_Intercomm_create(MPI_Comm local_comm, int local_leader,
     /* put group elements in the list */
     for (j = 0; j < rsize; j++) {
         new_group_pointer->grp_proc_pointers[j] = rprocs[j];
+        OBJ_RETAIN(rprocs[j]);
     }
-
-    ompi_group_increment_proc_count(new_group_pointer);
 
     rc = ompi_comm_set ( &newcomp,                                     /* new comm */
                          local_comm,                                   /* old comm */
@@ -197,7 +195,6 @@ int MPI_Intercomm_create(MPI_Comm local_comm, int local_leader,
         goto err_exit;
     }
 
-    ompi_group_decrement_proc_count (new_group_pointer);
     OBJ_RELEASE(new_group_pointer);
     new_group_pointer = MPI_GROUP_NULL;
 

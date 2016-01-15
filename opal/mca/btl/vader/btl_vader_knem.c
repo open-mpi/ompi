@@ -35,8 +35,15 @@ static int mca_btl_vader_knem_reg (void *reg_data, void *base, size_t size,
 
     knem_cr.iovec_array = (uintptr_t) &knem_iov;
     knem_cr.iovec_nr = 1;
-    /* TODO -- set proper access flags when the protection is passed down */
-    knem_cr.protection = PROT_READ | PROT_WRITE;
+    knem_cr.protection = 0;
+
+    if (reg->access_flags & (MCA_MPOOL_ACCESS_LOCAL_WRITE | MCA_MPOOL_ACCESS_REMOTE_WRITE)) {
+        knem_cr.protection |= PROT_WRITE;
+    }
+
+    if (reg->access_flags & MCA_MPOOL_ACCESS_REMOTE_READ) {
+        knem_cr.protection |= PROT_READ;
+    }
 
     /* Vader will explicitly destroy this cookie */
     knem_cr.flags = 0;
@@ -66,9 +73,10 @@ mca_btl_vader_register_mem_knem (struct mca_btl_base_module_t* btl,
                                  void *base, size_t size, uint32_t flags)
 {
     mca_btl_vader_registration_handle_t *reg = NULL;
+    int access_flags = flags & MCA_BTL_REG_FLAG_ACCESS_ANY;
     int rc;
 
-    rc = btl->btl_mpool->mpool_register (btl->btl_mpool, base, size, 0,
+    rc = btl->btl_mpool->mpool_register (btl->btl_mpool, base, size, 0, access_flags,
                                          (mca_mpool_base_registration_t **) &reg);
     if (OPAL_UNLIKELY(OPAL_SUCCESS != rc)) {
         return NULL;

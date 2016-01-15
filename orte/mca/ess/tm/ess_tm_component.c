@@ -75,7 +75,8 @@ int orte_ess_tm_component_query(mca_base_module_t **module, int *priority)
      * by mpirun in a tm world
      */
 
-    if (NULL != getenv("PBS_JOBID") &&
+    if (ORTE_PROC_IS_DAEMON &&
+        NULL != getenv("PBS_JOBID") &&
         NULL != orte_process_info.my_hnp_uri) {
         *priority = 30;
         *module = (mca_base_module_t *)&orte_ess_tm_module;

@@ -1,9 +1,12 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2010 The Trustees of Indiana University.
  *                         All rights reserved.
  *
  * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  *
  * Additional copyrights may follow
  *
@@ -37,7 +40,7 @@ int opal_dl_base_select(void)
                                         opal_dl_base_framework.framework_output,
                                         &opal_dl_base_framework.framework_components,
                                         (mca_base_module_t **) &best_module,
-                                        (mca_base_component_t **) &best_component) ) {
+                                        (mca_base_component_t **) &best_component, NULL) ) {
         /* This will only happen if no component was selected */
         exit_status = OPAL_ERROR;
         goto cleanup;

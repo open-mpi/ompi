@@ -25,7 +25,8 @@ MPI_Rput(const void *\fIorigin_addr\fP, int \fIorigin_count\fP, MPI_Datatype
 .fi
 .SH Fortran Syntax (see FORTRAN 77 NOTES)
 .nf
-INCLUDE 'mpif.h'
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
 MPI_PUT(\fIORIGIN_ADDR, ORIGIN_COUNT, ORIGIN_DATATYPE, TARGET_RANK,
 	TARGET_DISP, TARGET_COUNT, TARGET_DATATYPE, WIN, IERROR\fP)
 	<type> \fIORIGIN_ADDR\fP(*)
@@ -39,6 +40,30 @@ MPI_RPUT(\fIORIGIN_ADDR, ORIGIN_COUNT, ORIGIN_DATATYPE, TARGET_RANK,
 	 INTEGER(KIND=MPI_ADDRESS_KIND) \fITARGET_DISP\fP
 	 INTEGER \fIORIGIN_COUNT, ORIGIN_DATATYPE, TARGET_RANK, TARGET_COUNT,
 	 TARGET_DATATYPE, WIN, REQUEST, IERROR\fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Put(\fIorigin_addr\fP, \fIorigin_count\fP, \fIorigin_datatype\fP, \fItarget_rank\fP,
+		\fItarget_disp\fP, \fItarget_count\fP, \fItarget_datatype\fP, \fIwin\fP, \fIierror\fP)
+	TYPE(*), DIMENSION(..), INTENT(IN), ASYNCHRONOUS :: \fIorigin_addr\fP
+	INTEGER, INTENT(IN) :: \fIorigin_count\fP, \fItarget_rank\fP, \fItarget_count\fP
+	TYPE(MPI_Datatype), INTENT(IN) :: \fIorigin_datatype\fP, \fItarget_datatype\fP
+	INTEGER(KIND=MPI_ADDRESS_KIND), INTENT(IN) :: \fItarget_disp\fP
+	TYPE(MPI_Win), INTENT(IN) :: \fIwin\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
+
+MPI_Rput(\fIorigin_addr\fP, \fIorigin_count\fP, \fIorigin_datatype\fP, \fItarget_rank\fP,
+	\fItarget_disp\fP, \fItarget_count\fP, \fItarget_datatype\fP, \fIwin\fP, \fIrequest,\fP
+		\fIierror\fP)
+	TYPE(*), DIMENSION(..), INTENT(IN), ASYNCHRONOUS :: \fIorigin_addr\fP
+	INTEGER, INTENT(IN) :: \fIorigin_count\fP, \fItarget_rank\fP, \fItarget_count\fP
+	TYPE(MPI_Datatype), INTENT(IN) :: \fIorigin_datatype\fP, \fItarget_datatype\fP
+	INTEGER(KIND=MPI_ADDRESS_KIND), INTENT(IN) :: \fItarget_disp\fP
+	TYPE(MPI_Win), INTENT(IN) :: \fIwin\fP
+	TYPE(MPI_Request), INTENT(OUT) :: \fIrequest\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
 .SH C++ Syntax
@@ -98,7 +123,7 @@ The communication must satisfy the same constraints as for a similar message-pas
 .sp
 The \fItarget_datatype\fP argument is a handle to a datatype object defined at the origin process. However, this object is interpreted at the target process: The outcome is as if the target datatype object were defined at the target process, by the same sequence of calls used to define it at the origin process. The target data type must contain only relative displacements, not absolute addresses. The same holds for get and accumulate.
 .sp
-\fBMPI_Rput\bP is similar to \fBMPI_Put\fI, except that it allocates a communication request object and associates it with the request handle (the argument \fIrequest\fP). The completion of an MPI_Rput operation (i.e., after the corresponding test or wait) indicates that the sender is now free to update the locations in the \fIorigin_addr\fP buffer. It does not indicate that the data is available at the target window. If remote completion is required, \fBMPI_Win_flush\fP, \fBMPI_Win_flush_all\fP, \fBMPI_Win_unlock\fP, or \fBMPI_Win_unlock_all\fP can be used.
+\fBMPI_Rput\fP is similar to \fBMPI_Put\fP, except that it allocates a communication request object and associates it with the request handle (the argument \fIrequest\fP). The completion of an MPI_Rput operation (i.e., after the corresponding test or wait) indicates that the sender is now free to update the locations in the \fIorigin_addr\fP buffer. It does not indicate that the data is available at the target window. If remote completion is required, \fBMPI_Win_flush\fP, \fBMPI_Win_flush_all\fP, \fBMPI_Win_unlock\fP, or \fBMPI_Win_unlock_all\fP can be used.
 
 .SH NOTES
 The \fItarget_datatype\fP argument is a handle to a datatype object that is defined at the origin process, even though it defines a data layout in the target process memory. This does not cause problems in a homogeneous or heterogeneous environment, as long as only portable data types are used (portable data types are defined in Section 2.4 of the MPI-2 Standard).

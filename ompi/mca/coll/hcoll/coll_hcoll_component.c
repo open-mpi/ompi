@@ -93,40 +93,6 @@ enum {
 
 
 /*
- * utility routine for string parameter registration
- */
-static int reg_string(const char* param_name,
-        const char* deprecated_param_name,
-        const char* param_desc,
-        const char* default_value, char **storage,
-        int flags)
-{
-    int index;
-
-    *storage = (char *) default_value;
-    index = mca_base_component_var_register(
-            &mca_coll_hcoll_component.super.collm_version,
-            param_name, param_desc, MCA_BASE_VAR_TYPE_STRING,
-            NULL, 0, 0, OPAL_INFO_LVL_9,
-            MCA_BASE_VAR_SCOPE_READONLY, storage);
-    if (NULL != deprecated_param_name) {
-        (void) mca_base_var_register_synonym(index,
-                "ompi", "coll", "hcoll", deprecated_param_name,
-                MCA_BASE_VAR_SYN_FLAG_DEPRECATED);
-    }
-
-    if (0 != (flags & REGSTR_EMPTY_OK) &&
-            (NULL == *storage || 0 == strlen(*storage))) {
-        opal_output(0, "Bad parameter value for parameter \"%s\"",
-                param_name);
-        return OMPI_ERR_BAD_PARAM;
-    }
-
-    return OMPI_SUCCESS;
-}
-
-
-/*
  * Utility routine for integer parameter registration
  */
 static int reg_int(const char* param_name,

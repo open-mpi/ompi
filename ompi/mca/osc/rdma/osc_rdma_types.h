@@ -151,8 +151,6 @@ struct ompi_osc_rdma_state_t {
     ompi_osc_rdma_lock_t local_lock;
     /** lock for the accumulate state to ensure ordering and consistency */
     ompi_osc_rdma_lock_t accumulate_lock;
-    /** persistent scratch space for fetch and op/cswap when the result is not needed */
-    ompi_osc_rdma_lock_t scratch_lock;
     /** current index to post to. compare-and-swap must be used to ensure
      * the index is free */
     osc_rdma_counter_t post_index;
@@ -202,12 +200,11 @@ struct ompi_osc_rdma_aggregation_t {
 
     /** type */
     int type;
-
-    /** list of associated requests */
-    opal_list_t requests;
 };
 typedef struct ompi_osc_rdma_aggregation_t ompi_osc_rdma_aggregation_t;
 
 OBJ_CLASS_DECLARATION(ompi_osc_rdma_aggregation_t);
+
+#define OSC_RDMA_VERBOSE(x, ...) OPAL_OUTPUT_VERBOSE((x, ompi_osc_base_framework.framework_output, __VA_ARGS__))
 
 #endif /* OMPI_OSC_RDMA_TYPES_H */

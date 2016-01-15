@@ -36,18 +36,18 @@ ompi_mtl_psm2_send(struct mca_mtl_base_module_t* mtl,
                  struct opal_convertor_t *convertor,
                  mca_pml_base_send_mode_t mode)
 {
-    psm_error_t err;
+    psm2_error_t err;
     mca_mtl_psm2_request_t mtl_psm2_request;
-    psm_mq_tag_t mqtag;
+    psm2_mq_tag_t mqtag;
     uint32_t flags = 0;
     int ret;
     size_t length;
     ompi_proc_t* ompi_proc = ompi_comm_peer_lookup( comm, dest );
-    mca_mtl_psm2_endpoint_t* psm_endpoint = ompi_mtl_psm2_get_endpoint (mtl, ompi_proc);
+    mca_mtl_psm2_endpoint_t* psm2_endpoint = ompi_mtl_psm2_get_endpoint (mtl, ompi_proc);
 
     assert(mtl == &ompi_mtl_psm2.super);
 
-    PSM_MAKE_MQTAG(comm->c_contextid, comm->c_my_rank, tag, mqtag);
+    PSM2_MAKE_MQTAG(comm->c_contextid, comm->c_my_rank, tag, mqtag);
 
     ret = ompi_mtl_datatype_pack(convertor,
                                  &mtl_psm2_request.buf,
@@ -62,10 +62,10 @@ ompi_mtl_psm2_send(struct mca_mtl_base_module_t* mtl,
     if (OMPI_SUCCESS != ret) return ret;
 
     if (mode == MCA_PML_BASE_SEND_SYNCHRONOUS)
-	flags |= PSM_MQ_FLAG_SENDSYNC;
+	flags |= PSM2_MQ_FLAG_SENDSYNC;
 
-    err = psm_mq_send2(ompi_mtl_psm2.mq,
-		      psm_endpoint->peer_addr,
+    err = psm2_mq_send2(ompi_mtl_psm2.mq,
+		      psm2_endpoint->peer_addr,
 		      flags,
 		      &mqtag,
 		      mtl_psm2_request.buf,
@@ -75,7 +75,7 @@ ompi_mtl_psm2_send(struct mca_mtl_base_module_t* mtl,
 	free(mtl_psm2_request.buf);
     }
 
-    return err == PSM_OK ? OMPI_SUCCESS : OMPI_ERROR;
+    return err == PSM2_OK ? OMPI_SUCCESS : OMPI_ERROR;
 }
 
 int
@@ -88,18 +88,18 @@ ompi_mtl_psm2_isend(struct mca_mtl_base_module_t* mtl,
                   bool blocking,
                   mca_mtl_request_t * mtl_request)
 {
-    psm_error_t psm_error;
-    psm_mq_tag_t mqtag;
+    psm2_error_t psm2_error;
+    psm2_mq_tag_t mqtag;
     uint32_t flags = 0;
     int ret;
     mca_mtl_psm2_request_t * mtl_psm2_request = (mca_mtl_psm2_request_t*) mtl_request;
     size_t length;
     ompi_proc_t* ompi_proc = ompi_comm_peer_lookup( comm, dest );
-    mca_mtl_psm2_endpoint_t* psm_endpoint = ompi_mtl_psm2_get_endpoint (mtl, ompi_proc);
+    mca_mtl_psm2_endpoint_t* psm2_endpoint = ompi_mtl_psm2_get_endpoint (mtl, ompi_proc);
 
     assert(mtl == &ompi_mtl_psm2.super);
 
-    PSM_MAKE_MQTAG(comm->c_contextid, comm->c_my_rank, tag, mqtag);
+    PSM2_MAKE_MQTAG(comm->c_contextid, comm->c_my_rank, tag, mqtag);
 
 
     ret = ompi_mtl_datatype_pack(convertor,
@@ -114,16 +114,16 @@ ompi_mtl_psm2_isend(struct mca_mtl_base_module_t* mtl,
     if (OMPI_SUCCESS != ret) return ret;
 
     if (mode == MCA_PML_BASE_SEND_SYNCHRONOUS)
-	flags |= PSM_MQ_FLAG_SENDSYNC;
+	flags |= PSM2_MQ_FLAG_SENDSYNC;
 
-    psm_error = psm_mq_isend2(ompi_mtl_psm2.mq,
-			     psm_endpoint->peer_addr,
+    psm2_error = psm2_mq_isend2(ompi_mtl_psm2.mq,
+			     psm2_endpoint->peer_addr,
 			     flags,
 			     &mqtag,
 			     mtl_psm2_request->buf,
 			     length,
 			     mtl_psm2_request,
-			     &mtl_psm2_request->psm_request);
+			     &mtl_psm2_request->psm2_request);
 
-    return psm_error == PSM_OK ? OMPI_SUCCESS : OMPI_ERROR;
+    return psm2_error == PSM2_OK ? OMPI_SUCCESS : OMPI_ERROR;
 }

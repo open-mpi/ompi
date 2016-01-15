@@ -16,9 +16,19 @@ int MPI_Wait(MPI_Request *\fIrequest\fP, MPI_Status\fI *status\fP)
 .fi
 .SH Fortran Syntax
 .nf
-INCLUDE 'mpif.h'
+USE MPI
+! or the older form: INCLUDE 'mpif.h'
 MPI_WAIT(\fIREQUEST, STATUS, IERROR\fP)
 	INTEGER	\fIREQUEST, STATUS(MPI_STATUS_SIZE), IERROR\fP
+
+.fi
+.SH Fortran 2008 Syntax
+.nf
+USE mpi_f08
+MPI_Wait(\fIrequest\fP, \fIstatus\fP, \fIierror\fP)
+	TYPE(MPI_Request), INTENT(INOUT) :: \fIrequest\fP
+	TYPE(MPI_Status) :: \fIstatus\fP
+	INTEGER, OPTIONAL, INTENT(OUT) :: \fIierror\fP
 
 .fi
 .SH C++ Syntax
