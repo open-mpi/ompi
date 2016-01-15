@@ -555,7 +555,7 @@ static int subroutine ( int index, int cycles, int aggregator, int rank, mca_io_
     int *sorted_file_offsets=NULL;
     int temp_index=0;
     MPI_Aint *memory_displacements=NULL;
-    mca_io_ompio_io_array_t *io_array;
+    mca_io_ompio_io_array_t *io_array=NULL;
     int num_of_io_entries;
     int *temp_disp_index=NULL;
     MPI_Aint global_count = 0;
@@ -1155,7 +1155,7 @@ int mca_fcoll_dynamic_gen2_break_file_view ( struct iovec *mem_iov, int mem_coun
     i=j=0;
 
     if ( 0 < mem_count ) {
-        memoffset = (off_t) mem_iov[j].iov_base;
+        memoffset = (off_t ) mem_iov[j].iov_base;
         memlen    = mem_iov[j].iov_len;
     }
     while ( i < file_count) {
@@ -1201,8 +1201,12 @@ int mca_fcoll_dynamic_gen2_break_file_view ( struct iovec *mem_iov, int mem_coun
 
                     if ( 0 == memlen ) {
                         j++;
-                        memoffset = (off_t ) mem_iov[j].iov_base;
-                        memlen    = mem_iov[j].iov_len;
+                        if ( j < mem_count ) {
+                            memoffset = (off_t) mem_iov[j].iov_base;
+                            memlen    = mem_iov[j].iov_len;
+                        }
+                        else
+                            break;
                     }
                 }                
                 else {
@@ -1211,8 +1215,12 @@ int mca_fcoll_dynamic_gen2_break_file_view ( struct iovec *mem_iov, int mem_coun
                     blocklen -= memlen;
                     
                     j++;
-                    memoffset = (off_t ) mem_iov[j].iov_base;
-                    memlen    = mem_iov[j].iov_len;
+                    if ( j < mem_count ) {
+                        memoffset = (off_t) mem_iov[j].iov_base;
+                        memlen    = mem_iov[j].iov_len;
+                    }
+                    else 
+                        break;
                 }
 #if DEBUG_ON
                 printf("%d: owner=%d b_mem_iovs[%d].base=%ld .len=%d\n", rank, owner,
