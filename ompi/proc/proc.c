@@ -694,12 +694,7 @@ ompi_proc_find_and_add(const ompi_process_name_t * name, bool* isnew)
     if (NULL == rproc) {
         *isnew = true;
         rproc = OBJ_NEW(ompi_proc_t);
-        if (NULL != rproc) {
-            opal_list_append(&ompi_proc_list, (opal_list_item_t*)rproc);
-            *OMPI_CAST_RTE_NAME(&rproc->super.proc_name) = *name;
-        }
-        /* caller had better fill in the rest of the proc, or there's
-         going to be pain later... */
+        ompi_proc_allocate (name->jobid, name->vpid, &rproc);
     }
 
     opal_mutex_unlock (&ompi_proc_lock);
