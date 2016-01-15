@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -37,38 +39,39 @@ BEGIN_C_DECLS
    doesn't work to simply list all of the pragmas in a top-level
    header file. */
 
-/* These macros have to be used to check the corectness of the datatype depending on the
+/* These macros have to be used to check the correctness of the datatype depending on the
  * operations that we have to do with them. They can be used on all functions, not only
  * on the top level MPI functions, as they does not trigger the error handler. Is the user
  * responsability to do it.
+ * Since MPI_DATATYPE_NULL is not a committed type, there is no need for an adhoc test.
  */
 #define OMPI_CHECK_DATATYPE_FOR_SEND( RC, DDT, COUNT )                  \
     do {                                                                \
         /* (RC) = MPI_SUCCESS; */                                       \
-        if( NULL == (DDT) || MPI_DATATYPE_NULL == (DDT) ) (RC) = MPI_ERR_TYPE; \
+        if( NULL == (DDT) ||                                            \
+            !opal_datatype_is_committed(&((DDT)->super)) ||             \
+            !opal_datatype_is_valid(&((DDT)->super)) ) (RC) = MPI_ERR_TYPE;       \
         else if( (COUNT) < 0 ) (RC) = MPI_ERR_COUNT;                    \
-        else if( !opal_datatype_is_committed(&((DDT)->super)) ) (RC) = MPI_ERR_TYPE; \
-        else if( !opal_datatype_is_valid(&((DDT)->super)) ) (RC) = MPI_ERR_TYPE;       \
     } while (0)
 
 #define OMPI_CHECK_DATATYPE_FOR_RECV( RC, DDT, COUNT )                  \
     do {                                                                \
-        /* (RC) = MPI_SUCCESS; */                                        \
-        if( NULL == (DDT) || MPI_DATATYPE_NULL == (DDT) ) (RC) = MPI_ERR_TYPE; \
+        /* (RC) = MPI_SUCCESS; */                                       \
+        if( NULL == (DDT) ||                                            \
+            !opal_datatype_is_committed(&((DDT)->super)) ||             \
+            /* XXX Fix flags ompi_datatype_is_overlapped((DDT)) || */   \
+            !opal_datatype_is_valid(&((DDT)->super)) ) (RC) = MPI_ERR_TYPE;       \
         else if( (COUNT) < 0 ) (RC) = MPI_ERR_COUNT;                    \
-        else if( !opal_datatype_is_committed(&((DDT)->super)) ) (RC) = MPI_ERR_TYPE;   \
-        /* XXX Fix flags else if( ompi_datatype_is_overlapped((DDT)) ) (RC) = MPI_ERR_TYPE; */ \
-        else if( !opal_datatype_is_valid(&((DDT)->super)) ) (RC) = MPI_ERR_TYPE;       \
     } while (0)
 
 #define OMPI_CHECK_DATATYPE_FOR_ONE_SIDED( RC, DDT, COUNT )                          \
     do {                                                                             \
         /*(RC) = MPI_SUCCESS; */                                                     \
-        if( NULL == (DDT) || MPI_DATATYPE_NULL == (DDT) ) (RC) = MPI_ERR_TYPE;       \
+        if( NULL == (DDT) ||                                                         \
+            !opal_datatype_is_committed(&((DDT)->super)) ||                          \
+            opal_datatype_is_overlapped(&((DDT)->super)) ||                          \
+            !opal_datatype_is_valid(&((DDT)->super)) ) (RC) = MPI_ERR_TYPE;          \
         else if( (COUNT) < 0 ) (RC) = MPI_ERR_COUNT;                                 \
-        else if( !opal_datatype_is_committed(&((DDT)->super)) ) (RC) = MPI_ERR_TYPE; \
-        else if( opal_datatype_is_overlapped(&((DDT)->super)) ) (RC) = MPI_ERR_TYPE; \
-        else if( !opal_datatype_is_valid(&((DDT)->super)) ) (RC) = MPI_ERR_TYPE;     \
     } while(0)
 
 
