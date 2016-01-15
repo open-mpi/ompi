@@ -76,7 +76,7 @@ int OMPI_CR_Quiesce_start(MPI_Comm commP, MPI_Info *info)
     /*
      * (Old) info logic
      */
-    /*ompi_info_set((ompi_info_t*)*info, "target", cur_datum.target_dir);*/
+    /*opal_info_set((opal_info_t*)*info, "target", cur_datum.target_dir);*/
 
     return ret;
 }
@@ -123,7 +123,7 @@ int OMPI_CR_Quiesce_start(MPI_Comm commP, MPI_Info *info)
  *   1 = Memory must be in user space (i.e., not on network card
  *
  */
-static int extract_info_into_datum(ompi_info_t *info, orte_snapc_base_quiesce_t *datum)
+static int extract_info_into_datum(opal_info_t *info, orte_snapc_base_quiesce_t *datum)
 {
     int info_flag = false;
     int max_crs_len = 32;
@@ -135,7 +135,7 @@ static int extract_info_into_datum(ompi_info_t *info, orte_snapc_base_quiesce_t 
     /*
      * Key: crs
      */
-    ompi_info_get(info, "crs", max_crs_len, info_char, &info_flag);
+    opal_info_get(info, "crs", max_crs_len, info_char, &info_flag);
     if( info_flag) {
         datum->crs_name = strdup(info_char);
     }
@@ -143,7 +143,7 @@ static int extract_info_into_datum(ompi_info_t *info, orte_snapc_base_quiesce_t 
     /*
      * Key: cmdline
      */
-    ompi_info_get(info, "cmdline", OPAL_PATH_MAX, info_char, &info_flag);
+    opal_info_get(info, "cmdline", OPAL_PATH_MAX, info_char, &info_flag);
     if( info_flag) {
         datum->cmdline = strdup(info_char);
     }
@@ -151,7 +151,7 @@ static int extract_info_into_datum(ompi_info_t *info, orte_snapc_base_quiesce_t 
     /*
      * Key: handle
      */
-    ompi_info_get(info, "handle", OPAL_PATH_MAX, info_char, &info_flag);
+    opal_info_get(info, "handle", OPAL_PATH_MAX, info_char, &info_flag);
     if( info_flag) {
         datum->handle = strdup(info_char);
     }
@@ -159,7 +159,7 @@ static int extract_info_into_datum(ompi_info_t *info, orte_snapc_base_quiesce_t 
     /*
      * Key: target
      */
-    ompi_info_get(info, "target", OPAL_PATH_MAX, info_char, &info_flag);
+    opal_info_get(info, "target", OPAL_PATH_MAX, info_char, &info_flag);
     if( info_flag) {
         datum->target_dir = strdup(info_char);
     }
@@ -167,7 +167,7 @@ static int extract_info_into_datum(ompi_info_t *info, orte_snapc_base_quiesce_t 
     /*
      * Key: restarting
      */
-    ompi_info_get_bool(info, "restarting", &info_bool, &info_flag);
+    opal_info_get_bool(info, "restarting", &info_bool, &info_flag);
     if( info_flag ) {
         datum->restarting = info_bool;
     } else {
@@ -177,7 +177,7 @@ static int extract_info_into_datum(ompi_info_t *info, orte_snapc_base_quiesce_t 
     /*
      * Key: checkpointing
      */
-    ompi_info_get_bool(info, "checkpointing", &info_bool, &info_flag);
+    opal_info_get_bool(info, "checkpointing", &info_bool, &info_flag);
     if( info_flag ) {
         datum->checkpointing = info_bool;
     } else {

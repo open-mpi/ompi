@@ -60,7 +60,7 @@ int
 mca_fs_pvfs2_file_open (struct ompi_communicator_t *comm,
                         const char* filename,
                         int access_mode,
-                        struct ompi_info_t *info,
+                        struct opal_info_t *info,
                         mca_io_ompio_file_t *fh)
 {
     int ret;
@@ -108,12 +108,12 @@ mca_fs_pvfs2_file_open (struct ompi_communicator_t *comm,
        update mca_fs_pvfs2_stripe_width and mca_fs_pvfs2_stripe_size
        before calling fake_an_open() */
 
-    ompi_info_get (info, "stripe_size", MPI_MAX_INFO_VAL, char_stripe, &flag);
+    opal_info_get (info, "stripe_size", MPI_MAX_INFO_VAL, char_stripe, &flag);
     if ( flag ) {
         sscanf ( char_stripe, "%d", &fs_pvfs2_stripe_size );
     }
 
-    ompi_info_get (info, "stripe_width", MPI_MAX_INFO_VAL, char_stripe, &flag);
+    opal_info_get (info, "stripe_width", MPI_MAX_INFO_VAL, char_stripe, &flag);
     if ( flag ) {
         sscanf ( char_stripe, "%d", &fs_pvfs2_stripe_width );
     }

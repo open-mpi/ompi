@@ -722,7 +722,7 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
         if ( array_of_info != NULL && array_of_info[i] != MPI_INFO_NULL ) {
 
             /* check for personality - this is a job-level key */
-            ompi_info_get (array_of_info[i], "personality", sizeof(host) - 1, host, &flag);
+            opal_info_get (array_of_info[i], "personality", sizeof(host) - 1, host, &flag);
             if ( flag ) {
                 personality = true;
                 info = OBJ_NEW(opal_value_t);
@@ -732,7 +732,7 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
             }
 
             /* check for 'host' */
-            ompi_info_get (array_of_info[i], "host", sizeof(host) - 1, host, &flag);
+            opal_info_get (array_of_info[i], "host", sizeof(host) - 1, host, &flag);
             if ( flag ) {
                 info = OBJ_NEW(opal_value_t);
                 info->key = strdup(OPAL_PMIX_HOST);
@@ -741,7 +741,7 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
             }
 
             /* check for 'hostfile' */
-            ompi_info_get (array_of_info[i], "hostfile", sizeof(host) - 1, host, &flag);
+            opal_info_get (array_of_info[i], "hostfile", sizeof(host) - 1, host, &flag);
             if ( flag ) {
                 info = OBJ_NEW(opal_value_t);
                 info->key = strdup(OPAL_PMIX_HOSTFILE);
@@ -750,7 +750,7 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
             }
 
             /* check for 'add-hostfile' */
-            ompi_info_get (array_of_info[i], "add-hostfile", sizeof(host) - 1, host, &flag);
+            opal_info_get (array_of_info[i], "add-hostfile", sizeof(host) - 1, host, &flag);
             if ( flag ) {
                 info = OBJ_NEW(opal_value_t);
                 info->key = strdup(OPAL_PMIX_ADD_HOSTFILE);
@@ -759,7 +759,7 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
             }
 
             /* check for 'add-host' */
-            ompi_info_get (array_of_info[i], "add-host", sizeof(host) - 1, host, &flag);
+            opal_info_get (array_of_info[i], "add-host", sizeof(host) - 1, host, &flag);
             if ( flag ) {
                 info = OBJ_NEW(opal_value_t);
                 info->key = strdup(OPAL_PMIX_ADD_HOST);
@@ -768,7 +768,7 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
             }
 
             /* check for env */
-            ompi_info_get (array_of_info[i], "env", sizeof(host)-1, host, &flag);
+            opal_info_get (array_of_info[i], "env", sizeof(host)-1, host, &flag);
             if ( flag ) {
                 envars = opal_argv_split(host, '\n');
                 for (j=0; NULL != envars[j]; j++) {
@@ -784,7 +784,7 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
              *
              * This is a job-level key
              */
-            ompi_info_get (array_of_info[i], "ompi_prefix", sizeof(prefix) - 1, prefix, &flag);
+            opal_info_get (array_of_info[i], "ompi_prefix", sizeof(prefix) - 1, prefix, &flag);
             if ( flag ) {
                 info = OBJ_NEW(opal_value_t);
                 info->key = strdup(OPAL_PMIX_PREFIX);
@@ -793,7 +793,7 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
             }
 
             /* check for 'wdir' */
-            ompi_info_get (array_of_info[i], "wdir", sizeof(cwd) - 1, cwd, &flag);
+            opal_info_get (array_of_info[i], "wdir", sizeof(cwd) - 1, cwd, &flag);
             if ( flag ) {
                 info = OBJ_NEW(opal_value_t);
                 info->key = strdup(OPAL_PMIX_WDIR);
@@ -803,7 +803,7 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
             }
 
             /* check for 'mapper' - a job-level key */
-            ompi_info_get(array_of_info[i], "mapper", sizeof(mapper) - 1, mapper, &flag);
+            opal_info_get(array_of_info[i], "mapper", sizeof(mapper) - 1, mapper, &flag);
             if ( flag ) {
                 info = OBJ_NEW(opal_value_t);
                 info->key = strdup(OPAL_PMIX_MAPPER);
@@ -812,7 +812,7 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
             }
 
             /* check for 'display_map' - a job-level key */
-            ompi_info_get_bool(array_of_info[i], "display_map", &local_spawn, &flag);
+            opal_info_get_bool(array_of_info[i], "display_map", &local_spawn, &flag);
             if ( flag ) {
                 info = OBJ_NEW(opal_value_t);
                 info->key = strdup(OPAL_PMIX_DISPLAY_MAP);
@@ -821,7 +821,7 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
             }
 
             /* check for 'npernode' and 'ppr' - job-level key */
-            ompi_info_get (array_of_info[i], "npernode", sizeof(slot_list) - 1, slot_list, &flag);
+            opal_info_get (array_of_info[i], "npernode", sizeof(slot_list) - 1, slot_list, &flag);
             if ( flag ) {
                 info = OBJ_NEW(opal_value_t);
                 info->key = strdup(OPAL_PMIX_PPR);
@@ -829,14 +829,14 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
                 (void)asprintf(&(info->data.string), "%s:n", slot_list);
                 opal_list_append(&job_info, &info->super);
             }
-            ompi_info_get (array_of_info[i], "pernode", sizeof(slot_list) - 1, slot_list, &flag);
+            opal_info_get (array_of_info[i], "pernode", sizeof(slot_list) - 1, slot_list, &flag);
             if ( flag ) {
                 info = OBJ_NEW(opal_value_t);
                 info->key = strdup(OPAL_PMIX_PPR);
                 opal_value_load(info, "1:n", OPAL_STRING);
                 opal_list_append(&job_info, &info->super);
             }
-            ompi_info_get (array_of_info[i], "ppr", sizeof(slot_list) - 1, slot_list, &flag);
+            opal_info_get (array_of_info[i], "ppr", sizeof(slot_list) - 1, slot_list, &flag);
             if ( flag ) {
                 info = OBJ_NEW(opal_value_t);
                 info->key = strdup(OPAL_PMIX_PPR);
@@ -845,7 +845,7 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
             }
 
             /* check for 'map_by' - job-level key */
-            ompi_info_get(array_of_info[i], "map_by", sizeof(slot_list) - 1, slot_list, &flag);
+            opal_info_get(array_of_info[i], "map_by", sizeof(slot_list) - 1, slot_list, &flag);
             if ( flag ) {
                 info = OBJ_NEW(opal_value_t);
                 info->key = strdup(OPAL_PMIX_MAPBY);
@@ -854,7 +854,7 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
             }
 
             /* check for 'rank_by' - job-level key */
-            ompi_info_get(array_of_info[i], "rank_by", sizeof(slot_list) - 1, slot_list, &flag);
+            opal_info_get(array_of_info[i], "rank_by", sizeof(slot_list) - 1, slot_list, &flag);
             if ( flag ) {
                 info = OBJ_NEW(opal_value_t);
                 info->key = strdup(OPAL_PMIX_RANKBY);
@@ -863,7 +863,7 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
             }
 
             /* check for 'bind_to' - job-level key */
-            ompi_info_get(array_of_info[i], "bind_to", sizeof(slot_list) - 1, slot_list, &flag);
+            opal_info_get(array_of_info[i], "bind_to", sizeof(slot_list) - 1, slot_list, &flag);
             if ( flag ) {
                 info = OBJ_NEW(opal_value_t);
                 info->key = strdup(OPAL_PMIX_BINDTO);
@@ -872,7 +872,7 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
             }
 
             /* check for 'preload_binary' - job-level key */
-            ompi_info_get_bool(array_of_info[i], "ompi_preload_binary", &local_spawn, &flag);
+            opal_info_get_bool(array_of_info[i], "ompi_preload_binary", &local_spawn, &flag);
             if ( flag ) {
                 info = OBJ_NEW(opal_value_t);
                 info->key = strdup(OPAL_PMIX_PRELOAD_BIN);
@@ -881,7 +881,7 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
             }
 
             /* check for 'preload_files' - job-level key */
-            ompi_info_get (array_of_info[i], "ompi_preload_files", sizeof(cwd) - 1, cwd, &flag);
+            opal_info_get (array_of_info[i], "ompi_preload_files", sizeof(cwd) - 1, cwd, &flag);
             if ( flag ) {
                 info = OBJ_NEW(opal_value_t);
                 info->key = strdup(OPAL_PMIX_PRELOAD_FILES);
@@ -892,7 +892,7 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
             /* see if this is a non-mpi job - if so, then set the flag so ORTE
              * knows what to do - job-level key
              */
-            ompi_info_get_bool(array_of_info[i], "ompi_non_mpi", &non_mpi, &flag);
+            opal_info_get_bool(array_of_info[i], "ompi_non_mpi", &non_mpi, &flag);
             if (flag && non_mpi) {
                 info = OBJ_NEW(opal_value_t);
                 info->key = strdup(OPAL_PMIX_NON_PMI);
@@ -901,7 +901,7 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
             }
 
             /* see if this is an MCA param that the user wants applied to the child job */
-            ompi_info_get (array_of_info[i], "ompi_param", sizeof(params) - 1, params, &flag);
+            opal_info_get (array_of_info[i], "ompi_param", sizeof(params) - 1, params, &flag);
             if ( flag ) {
                 opal_argv_append_unique_nosize(&app->env, params, true);
             }
@@ -909,7 +909,7 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
             /* see if user specified what to do with stdin - defaults to
              * not forwarding stdin to child processes - job-level key
              */
-            ompi_info_get (array_of_info[i], "ompi_stdin_target", sizeof(stdin_target) - 1, stdin_target, &flag);
+            opal_info_get (array_of_info[i], "ompi_stdin_target", sizeof(stdin_target) - 1, stdin_target, &flag);
             if ( flag ) {
                 if (0 == strcmp(stdin_target, "all")) {
                     ui32 = ORTE_VPID_WILDCARD;

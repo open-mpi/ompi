@@ -157,7 +157,7 @@ BEGIN_C_DECLS
      * module).  See io.h for details.
      */
     OMPI_DECLSPEC int mca_io_base_delete(const char *filename,
-                                         struct ompi_info_t *info);
+                                         struct opal_info_t *info);
 
     OMPI_DECLSPEC int mca_io_base_register_datarep(const char *,
                                               MPI_Datarep_conversion_function*,

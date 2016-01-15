@@ -67,7 +67,7 @@ int MPI_Comm_dup_with_info(MPI_Comm comm, MPI_Info info, MPI_Comm *newcomm)
 
     OPAL_CR_ENTER_LIBRARY();
 
-    rc = ompi_comm_dup_with_info (comm, info, newcomm);
+    rc = ompi_comm_dup_with_info (comm, &info->super, newcomm);
     OMPI_ERRHANDLER_RETURN(rc, comm, rc, FUNC_NAME);
 }
 

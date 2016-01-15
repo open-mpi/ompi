@@ -35,7 +35,7 @@
  */
 int
 mca_fs_plfs_file_delete (char* file_name,
-                       struct ompi_info_t *info)
+                       struct opal_info_t *info)
 {
     plfs_error_t plfs_ret;
     char wpath[1024];

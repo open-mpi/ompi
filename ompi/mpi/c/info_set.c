@@ -104,6 +104,6 @@ int MPI_Info_set(MPI_Info info, const char *key, const char *value)
      * allocator.
      */
 
-    err = ompi_info_set (info, key, value);
+    err = opal_info_set (info, key, value);
     OMPI_ERRHANDLER_RETURN(err, MPI_COMM_WORLD, err, FUNC_NAME);
 }

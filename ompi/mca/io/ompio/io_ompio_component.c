@@ -55,11 +55,11 @@ file_query (struct ompi_file_t *file,
 static int file_unquery(struct ompi_file_t *file,
                         struct mca_io_base_file_t *private_data);
 
-static int delete_query(const char *filename, struct ompi_info_t *info,
+static int delete_query(const char *filename, struct opal_info_t *info,
                         struct mca_io_base_delete_t **private_data,
                         bool *usable, int *priorty);
 
-static int delete_select(const char *filename, struct ompi_info_t *info,
+static int delete_select(const char *filename, struct opal_info_t *info,
                          struct mca_io_base_delete_t *private_data);
 
 static int register_datarep(const char *,
@@ -290,7 +290,7 @@ static int file_unquery(struct ompi_file_t *file,
 }
 
 
-static int delete_query(const char *filename, struct ompi_info_t *info,
+static int delete_query(const char *filename, struct opal_info_t *info,
                         struct mca_io_base_delete_t **private_data,
                         bool *usable, int *priority)
 {
@@ -301,7 +301,7 @@ static int delete_query(const char *filename, struct ompi_info_t *info,
     return OMPI_SUCCESS;
 }
 
-static int delete_select(const char *filename, struct ompi_info_t *info,
+static int delete_select(const char *filename, struct opal_info_t *info,
                          struct mca_io_base_delete_t *private_data)
 {
     int ret;

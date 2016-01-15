@@ -398,8 +398,8 @@ int ompi_osc_pt2pt_flush_local(int target,
                               struct ompi_win_t *win);
 int ompi_osc_pt2pt_flush_local_all(struct ompi_win_t *win);
 
-int ompi_osc_pt2pt_set_info(struct ompi_win_t *win, struct ompi_info_t *info);
-int ompi_osc_pt2pt_get_info(struct ompi_win_t *win, struct ompi_info_t **info_used);
+int ompi_osc_pt2pt_set_info(struct ompi_win_t *win, struct opal_info_t *info);
+int ompi_osc_pt2pt_get_info(struct ompi_win_t *win, struct opal_info_t **info_used);
 
 int ompi_osc_pt2pt_component_irecv(ompi_osc_pt2pt_module_t *module,
                                   void *buf,

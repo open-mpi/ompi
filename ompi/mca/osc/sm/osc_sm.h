@@ -235,7 +235,7 @@ int ompi_osc_sm_flush_local(int target,
                                   struct ompi_win_t *win);
 int ompi_osc_sm_flush_local_all(struct ompi_win_t *win);
 
-int ompi_osc_sm_set_info(struct ompi_win_t *win, struct ompi_info_t *info);
-int ompi_osc_sm_get_info(struct ompi_win_t *win, struct ompi_info_t **info_used);
+int ompi_osc_sm_set_info(struct ompi_win_t *win, struct opal_info_t *info);
+int ompi_osc_sm_get_info(struct ompi_win_t *win, struct opal_info_t **info_used);
 
 #endif

@@ -73,7 +73,7 @@ int MPI_Info_dup(MPI_Info info, MPI_Info *newinfo) {
         }
     }
 
-    *newinfo = OBJ_NEW(ompi_info_t);
+    *newinfo = OBJ_NEW(opal_info_t);
     if (NULL == *newinfo) {
         return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_NO_MEM,
                                       FUNC_NAME);
@@ -84,6 +84,6 @@ int MPI_Info_dup(MPI_Info info, MPI_Info *newinfo) {
     /*
      * Now to actually duplicate all the values
      */
-    err = ompi_info_dup (info, newinfo);
+    err = opal_info_dup (info, newinfo);
     OMPI_ERRHANDLER_RETURN(err, MPI_COMM_WORLD, err, FUNC_NAME);
 }

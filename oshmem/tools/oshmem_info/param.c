@@ -45,7 +45,7 @@
 #include "oshmem/tools/oshmem_info/oshmem_info.h"
 
 
-const char *ompi_info_deprecated_value = "deprecated-ompi-info-value";
+const char *opal_info_deprecated_value = "deprecated-ompi-info-value";
 
 static void append(char *dest, size_t max, int *first, char *src)
 {
@@ -301,7 +301,7 @@ void oshmem_info_do_config(bool want_all)
     opal_info_out("Fort use mpi", "bindings:use_mpi",
                   fortran_usempi);
     opal_info_out("Fort use mpi size", "bindings:use_mpi:size",
-                  ompi_info_deprecated_value);
+                  opal_info_deprecated_value);
     opal_info_out("Fort use mpi_f08", "bindings:use_mpi_f08",
                   fortran_usempif08);
     opal_info_out("Fort mpi_f08 compliance", "bindings:use_mpi_f08:compliance",

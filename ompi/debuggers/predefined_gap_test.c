@@ -45,7 +45,7 @@ int main(int argc, char **argv) {
     ompi_request_t test_req;
     ompi_op_t test_op;
     ompi_win_t test_win;
-    ompi_info_t test_info;
+    opal_info_t test_info;
     ompi_file_t test_file;
     size_t exp_offset, offset;
 
@@ -134,7 +134,7 @@ int main(int argc, char **argv) {
     /* Test Predefined info sizes */
     printf("=============================================\n");
     printf("ompi_predefined_info_t = %lu bytes\n", sizeof(ompi_predefined_info_t));
-    printf("ompi_info_t = %lu bytes\n", sizeof(ompi_info_t));
+    printf("opal_info_t = %lu bytes\n", sizeof(opal_info_t));
     GAP_CHECK("super", test_info, super, super, 0);
     GAP_CHECK("i_f_to_c_index", test_info, i_f_to_c_index, super, 1);
     GAP_CHECK("i_lock", test_info, i_lock, i_f_to_c_index, 1);

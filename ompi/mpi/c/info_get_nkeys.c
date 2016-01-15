@@ -69,6 +69,6 @@ int MPI_Info_get_nkeys(MPI_Info info, int *nkeys)
 
     OPAL_CR_ENTER_LIBRARY();
 
-    err = ompi_info_get_nkeys(info, nkeys);
+    err = opal_info_get_nkeys(info, nkeys);
     OMPI_ERRHANDLER_RETURN(err, MPI_COMM_WORLD, err, FUNC_NAME);
 }

@@ -16,7 +16,7 @@
 #include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
-#include "ompi/info/info.h"
+#include "opal/util/info_subscriber.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -47,7 +47,9 @@ int MPI_Comm_set_info(MPI_Comm comm, MPI_Info info)
         }
     }
 
-    /* At the moment, we do not support any communicator hints.
-       So... do nothing */
+    OPAL_CR_ENTER_LIBRARY();
+
+    opal_infosubscribe_change_info(comm, info);
+
     return MPI_SUCCESS;
 }

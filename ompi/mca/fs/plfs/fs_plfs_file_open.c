@@ -44,7 +44,7 @@ int
 mca_fs_plfs_file_open (struct ompi_communicator_t *comm,
                      const char* filename,
                      int access_mode,
-                     struct ompi_info_t *info,
+                     struct opal_info_t *info,
                      mca_io_ompio_file_t *fh)
 {
     int rank;

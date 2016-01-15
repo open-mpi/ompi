@@ -88,7 +88,7 @@ int MPI_Lookup_name(const char *service_name, MPI_Info info, char *port_name)
     /* OMPI supports info keys to pass the range to
      * be searched for the given key */
     if (MPI_INFO_NULL != info) {
-        ompi_info_get (info, "range", sizeof(range) - 1, range, &flag);
+        opal_info_get (info, "range", sizeof(range) - 1, range, &flag);
         if (flag) {
             if (0 == strcmp(range, "nspace")) {
                 rng = OBJ_NEW(opal_value_t);

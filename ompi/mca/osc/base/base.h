@@ -41,7 +41,7 @@ int ompi_osc_base_select(ompi_win_t *win,
                          size_t size,
                          int disp_unit,
                          ompi_communicator_t *comm,
-                         ompi_info_t *info,
+                         opal_info_t *info,
                          int flavor,
                          int *model);
 

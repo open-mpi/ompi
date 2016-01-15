@@ -37,7 +37,6 @@ struct opal_proc_t;
 #include "orte/util/name_fns.h"
 #include "orte/util/proc_info.h"
 
-#include "ompi/info/info.h"
 struct ompi_proc_t;
 struct ompi_communicator_t;
 
