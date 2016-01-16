@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
- * Copyright (c) 2008-2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2016 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2014 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
@@ -87,7 +87,7 @@
 #define OPAL_BTL_USNIC_NUM_COMPLETIONS 500
 
 /* RNG buffer definition */
-opal_rng_buff_t opal_btl_usnic_rand_buff;
+opal_rng_buff_t opal_btl_usnic_rand_buff = {0};
 
 /* simulated clock */
 uint64_t opal_btl_usnic_ticks = 0;
