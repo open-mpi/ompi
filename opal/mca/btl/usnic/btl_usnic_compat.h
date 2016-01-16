@@ -48,9 +48,11 @@
 /* JMS Really want to be able to get the job size somehow...  But for
    now, so that we can compile, just set it to a constant :-( */
 #  define USNIC_MCW_SIZE 2
-
-#  define proc_bound() (NULL != opal_process_info.cpuset ? 1 : 0)
-
+#if OPAL_HAVE_HWLOC
+#    define proc_bound() (NULL != opal_process_info.cpuset ? 1 : 0)
+#else
+#    define proc_bound() 0
+#endif
 #  define USNIC_BTL_DEFAULT_VERSION(name) MCA_BTL_DEFAULT_VERSION(name)
 
 #  define USNIC_SEND_LOCAL        des_segments

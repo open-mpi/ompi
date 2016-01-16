@@ -206,7 +206,7 @@ int opal_btl_usnic_component_register(void)
                      "grdma", &mca_btl_usnic_component.usnic_mpool_name, 0,
                      OPAL_INFO_LVL_5));
 
-    want_numa_device_assignment = 1;
+    want_numa_device_assignment = OPAL_HAVE_HWLOC ? 1 : -1;
     CHECK(reg_int("want_numa_device_assignment",
                   "If 1, use only Cisco VIC ports thare are a minimum NUMA distance from the MPI process for short messages.  If 0, use all available Cisco VIC ports for short messages.  This parameter is meaningless (and ignored) unless MPI proceses are bound to processor cores.  Defaults to 1 if NUMA support is included in Open MPI; -1 otherwise.",
                   want_numa_device_assignment,

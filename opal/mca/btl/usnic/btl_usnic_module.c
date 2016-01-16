@@ -13,9 +13,9 @@
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
  * Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2014-2015 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2014-2015 Intel, Inc. All rights reserved
+ * Copyright (c) 2014      Intel, Inc. All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -1940,6 +1940,7 @@ static void init_connectivity_checker(opal_btl_usnic_module_t *module)
 
 static void init_hwloc(opal_btl_usnic_module_t *module)
 {
+#if OPAL_HAVE_HWLOC
     /* If this process is bound to a single NUMA locality, calculate
        its NUMA distance from this usNIC device */
     if (mca_btl_usnic_component.want_numa_device_assignment) {
@@ -1948,6 +1949,10 @@ static void init_hwloc(opal_btl_usnic_module_t *module)
         opal_output_verbose(5, USNIC_OUT,
                             "btl:usnic: not sorting devices by NUMA distance (MCA btl_usnic_want_numa_device_assignment)");
     }
+#else
+    opal_output_verbose(5, USNIC_OUT,
+                        "btl:usnic: not sorting devices by NUMA distance (topology support not included)");
+#endif
 }
 
 static void init_procs(opal_btl_usnic_module_t *module)
