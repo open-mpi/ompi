@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013-2016 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -34,7 +34,14 @@
 /* Inclue the progress thread stuff */
 #  include "opal/runtime/opal_progress_threads.h"
 
-/* Hhwloc is now guaranteed */
+/* Hwloc support is now guaranteed, and the rest of the code base does
+   not define OPAL_HAVE_HWLOC any more (because it would always be 1).
+
+   Note: The usnic BTL still uses OPAL_HAVE_HWLOC because Cisco
+   continues to sync it against a v1.10-based tree (where
+   OPAL_HAVE_HWLOC may still be 0 or 1).  Once Cisco stops syncing the
+   usnic BTL against v1.10.x, all the OPAL_HAVE_HWLOC code in the
+   usnic BTL can go away. */
 #  define OPAL_HAVE_HWLOC 1
 
 #  define USNIC_OUT opal_btl_base_framework.framework_output
