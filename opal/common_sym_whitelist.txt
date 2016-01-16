@@ -1,0 +1,6 @@
+# Ignore symbols in libopen-pal that are auto-generated and we can't
+# do anything about them (e.g., flex/bison symbols).
+opal_show_help_yyleng
+opal_show_help_yytext
+opal_util_keyval_yyleng
+opal_util_keyval_yytext

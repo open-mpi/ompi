@@ -1,0 +1,4 @@
+# Ignore symbols in this component that are auto-generated and we
+# can't do anything about them (e.g., flex/bison symbols).
+coll_ml_config_yyleng
+coll_ml_config_yytext
