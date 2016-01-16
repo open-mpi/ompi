@@ -12,6 +12,7 @@
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -291,7 +292,8 @@ int orte_util_snprintf_jobid(char *jobid_string, size_t size, const orte_jobid_t
 
     /* check for wildcard value - handle appropriately */
     if (ORTE_JOBID_WILDCARD == jobid) {
-        return strncpy(jobid_string, ORTE_SCHEMA_WILDCARD_STRING, size);
+        (void)strncpy(jobid_string, ORTE_SCHEMA_WILDCARD_STRING, size);
+        return ORTE_SUCCESS;
     }
 
     rc = snprintf(jobid_string, size, "%ld", (long) jobid);

@@ -4,7 +4,7 @@
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2013      Inria.  All rights reserved.
- * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
  * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
@@ -156,7 +156,8 @@ static int opal_convert_process_name_to_string_should_never_be_called(char** nam
 
 static int opal_snprintf_jobid_should_never_be_called(char* name_string, size_t size, opal_jobid_t jobid)
 {
-    return strncpy(name_string, "My JOBID", size);
+    (void)strncpy(name_string, "My JOBID", size);
+    return OPAL_SUCCESS;
 }
 
 static int opal_convert_string_to_jobid_should_never_be_called(opal_jobid_t *jobid, const char *jobid_string)
