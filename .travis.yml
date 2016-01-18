@@ -33,6 +33,8 @@ addons:
             - libnl-route-3-dev
             - libibverbs-dev
             - librdmacm-dev
+        sources:
+            - ubuntu-toolchain-r-test
 
 env:
     global:
@@ -40,15 +42,21 @@ env:
         - CPPFLAGS="-I$HOME/bogus/include"
         - LDFLAGS="-I$HOME/bogus/lib"
         - LD_LIBRARY_PATH="$HOME/bogus/lib"
-        - CONFIGURE_ARGS="--prefix=$HOME/bogus"
-        - DISTCHECK_CONFIGURE_FLAGS="$CONFIGURE_ARGS"
+    matrix:
+        - GCC_VERSION=default
+        - GCC_VERSION=5
 
 # Install dependencies for the verbs and usnic providers.  Open MPI is
 # not currently using the verbs provider in Libfabric, so we might as
 # well not build it.
 before_install:
+    - if [[ "GCC_VERSION" == "5" ]]; then COMPILERS="CC=gcc-5 CXX=g++-5 FC=gfortran-5"; fi
+    - export CONFIGURE_ARGS="--prefix=$HOME/bogus $COMPILERS" DISTCHECK_CONFIGURE_FLAGS="$CONFIGURE_ARGS"
+    - export DISTCHECK_CONFIGURE_FLAGS="$CONFIGURE_ARGS"
     - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then git clone https://github.com/ofiwg/libfabric.git ; fi
-    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then cd libfabric && ./autogen.sh && ./configure --prefix=$HOME/bogus --enable-usnic --disable-verbs && make install && cd .. ; fi
+    - if [[ "$TRAVIS_OS_NAME" == "linux" ]] && [[ "$GCC_VERSION" == "5" ]] ; then sudo apt-get --assume-yes install gcc-5 g++-5 gfortran-5; fi
+    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then cd libfabric && ./autogen.sh && ./configure --prefix=$HOME/bogus --enable-usnic --disable-verbs $COMPILERS && make install && cd .. ; fi
+    - if [[ "$TRAVIS_OS_NAME" == "osx" ]] && [[ "$GCC_VERSION" == "5" ]] ; then brew update; brew unlink gcc ; brew install gcc; fi
 
 # Note that we use "make -k" to do the entire build, even if there was a
 # build error in there somewhere.  This prevents us from needing to submit
@@ -66,3 +74,8 @@ install:
 # a minor optimization to make the overall set of builds faster).
 script:
     - if [[ "$TRAVIS_OS_NAME" == "linux" && "$CC" == "gcc" ]]; then make distcheck; else make check; fi
+
+matrix:
+  exclude:
+    - env: GCC_VERSION=5
+      compiler: clang
