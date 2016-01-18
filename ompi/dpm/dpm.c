@@ -519,56 +519,42 @@ static int construct_peers(ompi_group_t *group, opal_list_t *peers)
     int i;
     opal_namelist_t *nm, *n2;
     ompi_proc_t *proct;
+    opal_process_name_t proc_name;
 
-    if (OMPI_GROUP_IS_DENSE(group)) {
-        for (i=0; i < group->grp_proc_count; i++) {
-            if (NULL == (proct = group->grp_proc_pointers[i])) {
-                OMPI_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-                return OMPI_ERR_NOT_FOUND;
-            }
-            /* add to the list of peers */
-            nm = OBJ_NEW(opal_namelist_t);
-            nm->name = proct->super.proc_name;
-            /* need to maintain an ordered list to ensure the tracker signatures
-             * match across all procs */
-            OPAL_LIST_FOREACH(n2, peers, opal_namelist_t) {
-                if (opal_compare_proc(nm->name, n2->name) < 0) {
-                    opal_list_insert_pos(peers, &n2->super, &nm->super);
-                    nm = NULL;
-                    break;
-                }
-            }
-            if (NULL != nm) {
-                /* append to the end */
-                opal_list_append(peers, &nm->super);
+    for (i=0; i < group->grp_proc_count; i++) {
+        if (OMPI_GROUP_IS_DENSE(group)) {
+            proct = group->grp_proc_pointers[i];
+        } else {
+            proct = ompi_group_peer_lookup(group, i);
+        }
+        if (NULL == proct) {
+            OMPI_ERROR_LOG(OMPI_ERR_NOT_FOUND);
+            return OMPI_ERR_NOT_FOUND;
+        }
+        if (ompi_proc_is_sentinel (proct)) {
+            proc_name = ompi_proc_sentinel_to_name ((intptr_t)proct);
+        } else {
+            proc_name = proct->super.proc_name;
+        }
+      
+        /* add to the list of peers */
+        nm = OBJ_NEW(opal_namelist_t);
+        nm->name = proc_name;
+        /* need to maintain an ordered list to ensure the tracker signatures
+         * match across all procs */
+        OPAL_LIST_FOREACH(n2, peers, opal_namelist_t) {
+            if (opal_compare_proc(nm->name, n2->name) < 0) {
+                opal_list_insert_pos(peers, &n2->super, &nm->super);
+                nm = NULL;
+                break;
             }
         }
-    } else {
-        for (i=0; i < group->grp_proc_count; i++) {
-            /* lookup this proc_t to get the process name */
-            if (NULL == (proct = ompi_group_peer_lookup(group, i))) {
-                OMPI_ERROR_LOG(OMPI_ERR_NOT_FOUND);
-                return OMPI_ERR_NOT_FOUND;
-            }
-            /* add to the list of peers */
-            nm = OBJ_NEW(opal_namelist_t);
-            nm->name = proct->super.proc_name;
-            /* need to maintain an ordered list to ensure the tracker signatures
-             * match across all procs */
-            OPAL_LIST_FOREACH(n2, peers, opal_namelist_t) {
-                if (opal_compare_proc(nm->name, n2->name) < 0) {
-                    opal_list_insert_pos(peers, &n2->super, &nm->super);
-                    nm = NULL;
-                    break;
-                }
-            }
-            if (NULL != nm) {
-                /* append to the end */
-                opal_list_append(peers, &nm->super);
-            }
+        if (NULL != nm) {
+            /* append to the end */
+            opal_list_append(peers, &nm->super);
         }
     }
-    return ORTE_SUCCESS;
+    return OMPI_SUCCESS;
 }
 
 int ompi_dpm_disconnect(ompi_communicator_t *comm)
