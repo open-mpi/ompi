@@ -1,0 +1,81 @@
+# Use "required" for sudo, because we want to use the "trusty" Debian
+# distro, which is (currently) only available in the legacy Travis
+# infrastructure (i.e., if we put "sudo: false" to use the new container-
+# based Travis infrastructure, then "trusty" is not available).  We
+# need the "trusty" distro because it has more recent versions of the
+# GNU Autotools (i.e., autogen.pl will fail if you use the regular
+# distro because the GNU Autotools are too old).
+sudo: required
+dist: trusty
+language: c
+
+# Iterate over 2 different compilers
+compiler:
+    - gcc
+    - clang
+
+# Iterate over 2 different OSs
+os:
+    - linux
+    - osx
+
+addons:
+    # For Linux, make sure we have some extra packages that we like to
+    # build with
+    apt:
+        packages:
+            - autoconf
+            - automake
+            - libtool
+            - libnl-3-200
+            - libnl-3-dev
+            - libnl-route-3-200
+            - libnl-route-3-dev
+            - libibverbs-dev
+            - librdmacm-dev
+        sources:
+            - ubuntu-toolchain-r-test
+
+env:
+    global:
+        - AM_MAKEFLAGS="-j4"
+        - CPPFLAGS="-I$HOME/bogus/include"
+        - LDFLAGS="-I$HOME/bogus/lib"
+        - LD_LIBRARY_PATH="$HOME/bogus/lib"
+    matrix:
+        - GCC_VERSION=default
+        - GCC_VERSION=5
+
+# Install dependencies for the verbs and usnic providers.  Open MPI is
+# not currently using the verbs provider in Libfabric, so we might as
+# well not build it.
+before_install:
+    - if [[ "GCC_VERSION" == "5" ]]; then COMPILERS="CC=gcc-5 CXX=g++-5 FC=gfortran-5"; fi
+    - export CONFIGURE_ARGS="--prefix=$HOME/bogus $COMPILERS" DISTCHECK_CONFIGURE_FLAGS="$CONFIGURE_ARGS"
+    - export DISTCHECK_CONFIGURE_FLAGS="$CONFIGURE_ARGS"
+    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then git clone https://github.com/ofiwg/libfabric.git ; fi
+    - if [[ "$TRAVIS_OS_NAME" == "linux" ]] && [[ "$GCC_VERSION" == "5" ]] ; then sudo apt-get --assume-yes install gcc-5 g++-5 gfortran-5; fi
+    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then cd libfabric && ./autogen.sh && ./configure --prefix=$HOME/bogus --enable-usnic --disable-verbs $COMPILERS && make install && cd .. ; fi
+    - if [[ "$TRAVIS_OS_NAME" == "osx" ]] && [[ "$GCC_VERSION" == "5" ]] ; then brew update; brew unlink gcc ; brew install gcc; fi
+
+# Note that we use "make -k" to do the entire build, even if there was a
+# build error in there somewhere.  This prevents us from needing to submit
+# to Travis, see the first error, fix that first error, submit again, ...etc.
+install:
+    - m4 --version
+    - autoconf --version
+    - automake --version
+    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then libtool --version; else glibtool --version; fi
+    - ./autogen.pl
+    - if [[ "$TRAVIS_OS_NAME" == "linux" && "$CC" == "gcc" ]]; then ./configure $CONFIGURE_ARGS --with-libfabric=$HOME/bogus --with-usnic --with-verbs; else ./configure $CONFIGURE_ARGS; fi
+    - make -k
+
+# We only need to distcheck on one OS / compiler combination (this is just
+# a minor optimization to make the overall set of builds faster).
+script:
+    - if [[ "$TRAVIS_OS_NAME" == "linux" && "$CC" == "gcc" ]]; then make distcheck; else make check; fi
+
+matrix:
+  exclude:
+    - env: GCC_VERSION=5
+      compiler: clang
