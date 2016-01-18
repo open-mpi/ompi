@@ -50,6 +50,7 @@ ompi_proc_t* ompi_proc_local_proc = NULL;
 
 static void ompi_proc_construct(ompi_proc_t* proc);
 static void ompi_proc_destruct(ompi_proc_t* proc);
+static ompi_proc_t *ompi_proc_for_name_nolock (const opal_process_name_t proc_name);
 
 OBJ_CLASS_INSTANCE(
     ompi_proc_t,
@@ -198,6 +199,33 @@ opal_proc_t *ompi_proc_lookup (const opal_process_name_t proc_name)
     return NULL;
 }
 
+static ompi_proc_t *ompi_proc_for_name_nolock (const opal_process_name_t proc_name)
+{
+    ompi_proc_t *proc = NULL;
+    int ret;
+
+    /* double-check that another competing thread has not added this proc */
+    ret = opal_hash_table_get_value_ptr (&ompi_proc_hash, &proc_name, sizeof (proc_name), (void **) &proc);
+    if (OPAL_SUCCESS == ret) {
+        goto exit;
+    }
+
+    /* allocate a new ompi_proc_t object for the process and insert it into the process table */
+    ret = ompi_proc_allocate (proc_name.jobid, proc_name.vpid, &proc);
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
+        /* allocation fail */
+        goto exit;
+    }
+
+    /* finish filling in the important proc data fields */
+    ret = ompi_proc_complete_init_single (proc);
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
+        goto exit;
+    }
+exit:
+    return proc;
+}
+
 opal_proc_t *ompi_proc_for_name (const opal_process_name_t proc_name)
 {
     ompi_proc_t *proc = NULL;
@@ -210,27 +238,7 @@ opal_proc_t *ompi_proc_for_name (const opal_process_name_t proc_name)
     }
 
     opal_mutex_lock (&ompi_proc_lock);
-    do {
-        /* double-check that another competing thread has not added this proc */
-        ret = opal_hash_table_get_value_ptr (&ompi_proc_hash, &proc_name, sizeof (proc_name), (void **) &proc);
-        if (OPAL_SUCCESS == ret) {
-            break;
-        }
-
-        /* allocate a new ompi_proc_t object for the process and insert it into the process table */
-        ret = ompi_proc_allocate (proc_name.jobid, proc_name.vpid, &proc);
-        if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
-            /* allocation fail */
-            break;
-        }
-
-        /* finish filling in the important proc data fields */
-        ret = ompi_proc_complete_init_single (proc);
-        if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
-            proc = NULL;
-            break;
-        }
-    } while (0);
+    proc = ompi_proc_for_name_nolock (proc_name);
     opal_mutex_unlock (&ompi_proc_lock);
 
     return (opal_proc_t *) proc;
@@ -633,7 +641,7 @@ ompi_proc_pack(ompi_proc_t **proclist, int proclistsize,
         ompi_proc_t *proc = proclist[i];
 
         if (ompi_proc_is_sentinel (proc)) {
-            proc = ompi_proc_for_name (ompi_proc_sentinel_to_name ((intptr_t) proc));
+            proc = ompi_proc_for_name_nolock (ompi_proc_sentinel_to_name ((intptr_t) proc));
         }
 
         /* send proc name */
