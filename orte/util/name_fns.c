@@ -293,16 +293,14 @@ int orte_util_snprintf_jobid(char *jobid_string, size_t size, const orte_jobid_t
     /* check for wildcard value - handle appropriately */
     if (ORTE_JOBID_WILDCARD == jobid) {
         (void)strncpy(jobid_string, ORTE_SCHEMA_WILDCARD_STRING, size);
-        return ORTE_SUCCESS;
+    } else {
+        rc = snprintf(jobid_string, size, "%ld", (long) jobid);
+        if (0 > rc) {
+            return ORTE_ERROR;
+        }
     }
 
-    rc = snprintf(jobid_string, size, "%ld", (long) jobid);
-    if (0 > rc) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-
-    return rc;
+    return ORTE_SUCCESS;
 }
 
 int orte_util_convert_jobid_to_string(char **jobid_string, const orte_jobid_t jobid)
