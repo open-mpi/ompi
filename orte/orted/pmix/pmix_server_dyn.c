@@ -16,7 +16,7 @@
  * Copyright (c) 2013-2015 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014      Mellanox Technologies, Inc.
  *                         All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -413,7 +413,7 @@ static void _cnct(int sd, short args, void *cbdata)
             }
             /* ask the global data server for the data - if we get it,
              * then we can complete the request */
-            key = opal_convert_jobid_to_string(nm->name.jobid);
+            orte_util_convert_jobid_to_string(&key, nm->name.jobid);
             opal_argv_append_nosize(&keys, key);
             free(key);
             if (ORTE_SUCCESS != (rc = pmix_server_lookup_fn(&nm->name, keys, cd->info, _cnlk, cd))) {

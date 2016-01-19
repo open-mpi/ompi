@@ -4,8 +4,8 @@
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2013      Inria.  All rights reserved.
- * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
@@ -154,10 +154,10 @@ static int opal_convert_process_name_to_string_should_never_be_called(char** nam
     return OPAL_ERR_NOT_SUPPORTED;
 }
 
-static char* opal_convert_jobid_to_string_should_never_be_called(opal_jobid_t jobid)
+static int opal_snprintf_jobid_should_never_be_called(char* name_string, size_t size, opal_jobid_t jobid)
 {
-    char *str = strdup("My JOBID");
-    return str;
+    (void)strncpy(name_string, "My JOBID", size);
+    return OPAL_SUCCESS;
 }
 
 static int opal_convert_string_to_jobid_should_never_be_called(opal_jobid_t *jobid, const char *jobid_string)
@@ -175,7 +175,7 @@ char* (*opal_vpid_print)(const opal_vpid_t) = opal_vpid_print_should_never_be_ca
 char* (*opal_jobid_print)(const opal_jobid_t) = opal_jobid_print_should_never_be_called;
 int (*opal_convert_string_to_process_name)(opal_process_name_t *name, const char* name_string) = opal_convert_string_to_process_name_should_never_be_called;
 int (*opal_convert_process_name_to_string)(char** name_string, const opal_process_name_t *name) = opal_convert_process_name_to_string_should_never_be_called;
-char* (*opal_convert_jobid_to_string)(opal_jobid_t jobid) = opal_convert_jobid_to_string_should_never_be_called;
+int (*opal_snprintf_jobid)(char* name_string, size_t size, opal_jobid_t jobid) = opal_snprintf_jobid_should_never_be_called;
 int (*opal_convert_string_to_jobid)(opal_jobid_t *jobid, const char *jobid_string) = opal_convert_string_to_jobid_should_never_be_called;
 struct opal_proc_t *(*opal_proc_for_name) (const opal_process_name_t name) = opal_proc_for_name_should_never_be_called;
 
