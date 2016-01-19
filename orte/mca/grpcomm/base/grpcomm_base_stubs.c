@@ -1,5 +1,5 @@
-/* -*- C -*-
- *
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
+/*
  * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
@@ -10,8 +10,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
- *                         All rights reserved.
+ * Copyright (c) 2011-2016 Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -422,27 +422,12 @@ CLEANUP:
     return ORTE_SUCCESS;
 }
 
-void orte_grpcomm_base_mark_distance_recv(orte_grpcomm_coll_t *coll,
-                                   uint32_t distance) {
-    uint32_t maskNumber = distance / 32;
-    uint32_t bitNumber = distance % 32;
-
-    coll->distance_mask_recv[maskNumber] |= (1 << bitNumber);
-
-    return;
+void orte_grpcomm_base_mark_distance_recv (orte_grpcomm_coll_t *coll,
+                                           uint32_t distance) {
+    opal_bitmap_set_bit (&coll->distance_mask_recv, distance);
 }
 
-unsigned int orte_grpcomm_base_check_distance_recv(orte_grpcomm_coll_t *coll,
-                                   uint32_t distance) {
-    uint32_t maskNumber = distance / 32;
-    uint32_t bitNumber = distance % 32;
-
-    if (NULL == coll->distance_mask_recv) {
-        return 0;
-    } else {
-        if (0 == distance) {
-            return 1;
-        }
-        return (((coll->distance_mask_recv[maskNumber] & (1 << bitNumber)) != 0) ? 1 : 0);
-    }
+unsigned int orte_grpcomm_base_check_distance_recv (orte_grpcomm_coll_t *coll,
+                                                    uint32_t distance) {
+    return opal_bitmap_is_set_bit (&coll->distance_mask_recv, distance);
 }

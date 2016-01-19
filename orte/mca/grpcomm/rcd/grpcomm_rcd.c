@@ -1,9 +1,9 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2007      The Trustees of Indiana University.
  *                         All rights reserved.
  * Copyright (c) 2011-2015 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2011-2013 Los Alamos National Security, LLC. All
+ * Copyright (c) 2011-2016 Los Alamos National Security, LLC. All
  *                         rights reserved.
  * Copyright (c) 2014-2015 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014      Mellanox Technologies, Inc.
@@ -76,35 +76,55 @@ static void finalize(void)
 {
     /* cancel the recv */
     orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_ALLGATHER_RCD);
-    return;
 }
 
 static int allgather(orte_grpcomm_coll_t *coll,
                      opal_buffer_t *sendbuf)
 {
+    uint32_t log2ndmns;
+
     /* check the number of involved daemons - if it is not a power of two,
      * then we cannot do it */
     if (0 == ((coll->ndmns != 0) && !(coll->ndmns & (coll->ndmns - 1)))) {
         return ORTE_ERR_TAKE_NEXT_OPTION;
     }
 
+    log2ndmns = log2 (coll->ndmns);
+
     OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_framework.framework_output,
                          "%s grpcomm:coll:recdub algo employed for %d daemons",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (int)coll->ndmns));
 
-    /* record that we contributed */
-    coll->nreported = 1;
-
     /* mark local data received */
-    if (coll->ndmns > 1) {
-	    coll->distance_mask_recv = (uint32_t *)calloc(sizeof(uint32_t), log2(coll->ndmns));
+    if (log2ndmns) {
+        opal_bitmap_init (&coll->distance_mask_recv, log2ndmns);
+    }
+
+    /* get my own rank */
+    coll->my_rank = ORTE_VPID_INVALID;
+    for (orte_vpid_t nv = 0 ; nv < coll->ndmns ; ++nv) {
+        if (coll->dmns[nv] == ORTE_PROC_MY_NAME->vpid) {
+            coll->my_rank = nv;
+            break;
+        }
+    }
+
+    /* check for bozo case */
+    if (ORTE_VPID_INVALID == coll->my_rank) {
+        OPAL_OUTPUT((orte_grpcomm_base_framework.framework_output,
+                     "My peer not found in daemons array"));
+        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+        rcd_finalize_coll(coll, ORTE_ERR_NOT_FOUND);
+        return ORTE_ERR_NOT_FOUND;
     }
 
     /* start by seeding the collection with our own data */
     opal_dss.copy_payload(&coll->bucket, sendbuf);
 
+    coll->nreported = 1;
+
     /* process data */
-    rcd_allgather_process_data(coll, 1);
+    rcd_allgather_process_data (coll, 0);
 
     return ORTE_SUCCESS;
 }
@@ -154,71 +174,54 @@ static void rcd_allgather_process_data(orte_grpcomm_coll_t *coll, uint32_t dista
      At every step i, rank r:
      - exchanges message containing all data collected so far with rank peer = (r ^ 2^i).
      */
+    uint32_t log2ndmns = log2(coll->ndmns);
     orte_process_name_t peer;
-    orte_vpid_t nv, rank;
-    uint32_t distance_index;
+    orte_vpid_t nv;
     int rc;
 
     peer.jobid = ORTE_PROC_MY_NAME->jobid;
 
-    /* get my own rank */
-    rank = ORTE_VPID_INVALID;
-    for (orte_vpid_t nv = 0; nv < coll->ndmns; nv++) {
-        if (coll->dmns[nv] == ORTE_PROC_MY_NAME->vpid) {
-            rank = nv;
-            break;
-        }
-    }
-    /* check for bozo case */
-    if (ORTE_VPID_INVALID == rank) {
-        OPAL_OUTPUT((orte_grpcomm_base_framework.framework_output,
-                     "Peer not found"));
-        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-        rcd_finalize_coll(coll, ORTE_ERR_NOT_FOUND);
-        return;
-    }
-
-   while (distance < coll->ndmns) {
+    while (distance < log2ndmns) {
         OPAL_OUTPUT_VERBOSE((80, orte_grpcomm_base_framework.framework_output,
              "%s grpcomm:coll:recdub process distance %u",
               ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), distance));
 
         /* first send my current contents */
-        nv = rank ^ distance;
+        nv = coll->my_rank ^ (1 << distance);
+        assert (nv < coll->ndmns);
         peer.vpid = coll->dmns[nv];
 
         rcd_allgather_send_dist(coll, &peer, distance);
 
-        /* check whether data for next distance is available*/
-        distance_index = log2(distance);
-        if ((NULL != coll->buffers) && (NULL != coll->buffers[distance_index])) {
-            OPAL_OUTPUT_VERBOSE((80, orte_grpcomm_base_framework.framework_output,
-                                 "%s grpcomm:coll:recdub %u distance data found",
-                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), distance));
-            if (OPAL_SUCCESS != (rc = opal_dss.copy_payload(&coll->bucket, coll->buffers[distance_index]))) {
-                ORTE_ERROR_LOG(rc);
-                rcd_finalize_coll(coll, rc);
-                return;
-            }
-            coll->nreported += distance;
-            orte_grpcomm_base_mark_distance_recv(coll, distance);
-            OBJ_RELEASE(coll->buffers[distance_index]);
-            coll->buffers[distance_index] = NULL;
-            distance = distance << 1;
-            continue;
+        /* check whether data for next distance is available */
+        if (NULL == coll->buffers || NULL == coll->buffers[distance]) {
+            break;
         }
-        break;
+
+        OPAL_OUTPUT_VERBOSE((80, orte_grpcomm_base_framework.framework_output,
+                             "%s grpcomm:coll:recdub %u distance data found",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), distance));
+        if (OPAL_SUCCESS != (rc = opal_dss.copy_payload(&coll->bucket, coll->buffers[distance]))) {
+            ORTE_ERROR_LOG(rc);
+            rcd_finalize_coll(coll, rc);
+            return;
+        }
+        coll->nreported += 1 << distance;
+        orte_grpcomm_base_mark_distance_recv(coll, distance);
+        OBJ_RELEASE(coll->buffers[distance]);
+        coll->buffers[distance] = NULL;
+        ++distance;
     }
+
     OPAL_OUTPUT_VERBOSE((80, orte_grpcomm_base_framework.framework_output,
                         "%s grpcomm:coll:recdub reported %lu process from %lu",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (unsigned long)coll->nreported,
                         (unsigned long)coll->ndmns));
 
     /* if we are done, then complete things */
-    if (coll->nreported >= coll->ndmns){
+    if (coll->nreported == coll->ndmns) {
         rcd_finalize_coll(coll, ORTE_SUCCESS);
     }
-    return;
 }
 
 static void rcd_allgather_recv_dist(int status, orte_process_name_t* sender,
@@ -226,7 +229,7 @@ static void rcd_allgather_recv_dist(int status, orte_process_name_t* sender,
                                     void* cbdata)
 {
     int32_t cnt;
-    uint32_t distance, distance_index;
+    uint32_t distance;
     int rc;
     orte_grpcomm_signature_t *sig;
     orte_grpcomm_coll_t *coll;
@@ -250,17 +253,17 @@ static void rcd_allgather_recv_dist(int status, orte_process_name_t* sender,
         return;
     }
     /* unpack the distance */
-    distance = 0;
+    distance = -1;
     if (OPAL_SUCCESS != (rc = opal_dss.unpack(buffer, &distance, &cnt, OPAL_UINT32))) {
         OBJ_RELEASE(sig);
         ORTE_ERROR_LOG(rc);
         rcd_finalize_coll(coll, rc);
         return;
     }
-    assert(0 == orte_grpcomm_base_check_distance_recv(coll, distance));
+    assert(distance >= 0 && 0 == orte_grpcomm_base_check_distance_recv(coll, distance));
 
     /* Check whether we can process next distance */
-    if (orte_grpcomm_base_check_distance_recv(coll, (distance >> 1))) {
+    if (coll->nreported && (!distance || orte_grpcomm_base_check_distance_recv(coll, (distance - 1)))) {
         OPAL_OUTPUT_VERBOSE((80, orte_grpcomm_base_framework.framework_output,
                      "%s grpcomm:coll:recdub data from %d distance received, "
                      "Process the next distance.",
@@ -272,32 +275,30 @@ static void rcd_allgather_recv_dist(int status, orte_process_name_t* sender,
             rcd_finalize_coll(coll, rc);
             return;
         }
-        coll->nreported += distance;
-        orte_grpcomm_base_mark_distance_recv(coll, distance);
-        rcd_allgather_process_data(coll, (uint32_t)(distance << 1));
+        coll->nreported += (1 << distance);
+        orte_grpcomm_base_mark_distance_recv (coll, distance);
+        rcd_allgather_process_data (coll, distance + 1);
     } else {
         OPAL_OUTPUT_VERBOSE((80, orte_grpcomm_base_framework.framework_output,
                              "%s grpcomm:coll:recdub data from %d distance received, "
                              "still waiting for data.",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), distance));
         if (NULL == coll->buffers) {
-            if (NULL == (coll->buffers = (opal_buffer_t **)calloc(sizeof(opal_buffer_t *), log2(coll->ndmns)))) {
-                rc = OPAL_ERR_OUT_OF_RESOURCE;
+            coll->buffers = (opal_buffer_t **) calloc (log2 (coll->ndmns), sizeof (coll->buffers[0]));
+            if (NULL == coll->buffers) {
                 OBJ_RELEASE(sig);
-                ORTE_ERROR_LOG(rc);
-                rcd_finalize_coll(coll, rc);
+                ORTE_ERROR_LOG(OPAL_ERR_OUT_OF_RESOURCE);
+                rcd_finalize_coll(coll, OPAL_ERR_OUT_OF_RESOURCE);
                 return;
             }
         }
-        distance_index = log2(distance);
-        if (NULL == (coll->buffers[distance_index] = OBJ_NEW(opal_buffer_t))) {
-            rc = OPAL_ERR_OUT_OF_RESOURCE;
+        if (NULL == (coll->buffers[distance] = OBJ_NEW(opal_buffer_t))) {
             OBJ_RELEASE(sig);
-            ORTE_ERROR_LOG(rc);
-            rcd_finalize_coll(coll, rc);
+            ORTE_ERROR_LOG(OPAL_ERR_OUT_OF_RESOURCE);
+            rcd_finalize_coll(coll, OPAL_ERR_OUT_OF_RESOURCE);
             return;
         }
-        if (OPAL_SUCCESS != (rc = opal_dss.copy_payload(coll->buffers[distance_index], buffer))) {
+        if (OPAL_SUCCESS != (rc = opal_dss.copy_payload(coll->buffers[distance], buffer))) {
             OBJ_RELEASE(sig);
             ORTE_ERROR_LOG(rc);
             rcd_finalize_coll(coll, rc);
@@ -306,8 +307,6 @@ static void rcd_allgather_recv_dist(int status, orte_process_name_t* sender,
     }
 
     OBJ_RELEASE(sig);
-
-    return;
 }
 
 static int rcd_finalize_coll(orte_grpcomm_coll_t *coll, int ret)
