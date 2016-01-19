@@ -211,6 +211,7 @@ typedef enum {
 			  * expose their arbitrary processors aggregation this
 			  * way.  And hwloc may insert such objects to group
 			  * NUMA nodes according to their distances.
+			  * See also \ref faq_groups.
 			  *
 			  * These objects are ignored when they do not bring
 			  * any structure.

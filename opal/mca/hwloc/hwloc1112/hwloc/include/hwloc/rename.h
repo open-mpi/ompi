@@ -1,6 +1,6 @@
 /*
  * Copyright © 2009-2011 Cisco Systems, Inc.  All rights reserved.
- * Copyright © 2010-2014 Inria.  All rights reserved.
+ * Copyright © 2010-2015 Inria.  All rights reserved.
  * See COPYING in top-level directory.
  */
 
@@ -510,6 +510,7 @@ extern "C" {
 
 /* private/debug.h */
 
+#define hwloc_debug_enabled HWLOC_NAME(debug_enabled)
 #define hwloc_debug HWLOC_NAME(debug)
 
 /* private/misc.h */
