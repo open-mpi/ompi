@@ -5,20 +5,20 @@
  * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2010-2012 Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
- *                         reserved. 
+ *                         reserved.
  * Copyright (c) 2013      Intel, Inc.  All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -73,6 +73,22 @@
 
 static void* orte_progress_thread_engine(opal_object_t *obj);
 static bool progress_thread_running = false;
+static struct timeval long_timeout = {
+    .tv_sec = 3600,
+    .tv_usec = 0
+};
+static opal_event_t block;
+/*
+ * If this event is fired, just restart it so that this event base
+ * continues to have something to block on.
+ */
+static void dummy_timeout_cb(int fd, short args, void *cbdata)
+{
+    opal_event_t *block = (opal_event_t*)cbdata;
+
+    opal_event_add(block, &long_timeout);
+}
+
 
 int orte_ess_base_app_setup(bool db_restrict_local)
 {
@@ -101,7 +117,12 @@ int orte_ess_base_app_setup(bool db_restrict_local)
 
     /* get a separate orte event base */
     orte_event_base = opal_event_base_create();
- 
+    /* add an event to the new event base (if there are no events,
+     * opal_event_loop() will return immediately) */
+    opal_event_set(orte_event_base, &block, -1, OPAL_EV_PERSIST,
+                   dummy_timeout_cb, &block);
+    opal_event_add(&block, &long_timeout);
+
     /* open and setup the state machine */
     if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_state_base_framework, 0))) {
         ORTE_ERROR_LOG(ret);
@@ -135,7 +156,7 @@ int orte_ess_base_app_setup(bool db_restrict_local)
         error = "orte_oob_base_select";
         goto error;
     }
-    
+
     /* Runtime Messaging Layer */
     if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_rml_base_framework, 0))) {
         ORTE_ERROR_LOG(ret);
@@ -147,7 +168,7 @@ int orte_ess_base_app_setup(bool db_restrict_local)
         error = "orte_rml_base_select";
         goto error;
     }
-    
+
     /* setup the errmgr */
     if (ORTE_SUCCESS != (ret = orte_errmgr_base_select())) {
         ORTE_ERROR_LOG(ret);
@@ -166,7 +187,7 @@ int orte_ess_base_app_setup(bool db_restrict_local)
         error = "orte_routed_base_select";
         goto error;
     }
-    
+
     /* database */
     if (ORTE_SUCCESS != (ret = mca_base_framework_open(&opal_db_base_framework, 0))) {
         ORTE_ERROR_LOG(ret);
@@ -194,7 +215,7 @@ int orte_ess_base_app_setup(bool db_restrict_local)
         error = "orte_grpcomm_base_select";
         goto error;
     }
-    
+
     /* non-daemon/HNP apps can only have the default proxy PLM
      * module open - provide a chance for it to initialize
      */
@@ -203,7 +224,7 @@ int orte_ess_base_app_setup(bool db_restrict_local)
         error = "orte_plm_init";
         goto error;
     }
-    
+
     /* construct the thread object */
     OBJ_CONSTRUCT(&orte_progress_thread, opal_thread_t);
     /* fork off a thread to progress it */
@@ -221,7 +242,7 @@ int orte_ess_base_app_setup(bool db_restrict_local)
         error = "orte_rml.enable_comm";
         goto error;
     }
-    
+
     /* setup my session directory */
     if (orte_create_session_dirs) {
         OPAL_OUTPUT_VERBOSE((2, orte_ess_base_framework.framework_output,
@@ -229,7 +250,7 @@ int orte_ess_base_app_setup(bool db_restrict_local)
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              (NULL == orte_process_info.tmpdir_base) ? "UNDEF" : orte_process_info.tmpdir_base,
                              orte_process_info.nodename));
-        
+
         if (ORTE_SUCCESS != (ret = orte_session_dir(true,
                                                     orte_process_info.tmpdir_base,
                                                     orte_process_info.nodename, NULL,
@@ -238,22 +259,22 @@ int orte_ess_base_app_setup(bool db_restrict_local)
             error = "orte_session_dir";
             goto error;
         }
-        
+
         /* Once the session directory location has been established, set
            the opal_output env file location to be in the
            proc-specific session directory. */
         opal_output_set_output_file_info(orte_process_info.proc_session_dir,
                                          "output-", NULL, NULL);
     }
-    
+
     /* setup the routed info  */
     if (ORTE_SUCCESS != (ret = orte_routed.init_routes(ORTE_PROC_MY_NAME->jobid, NULL))) {
         ORTE_ERROR_LOG(ret);
         error = "orte_routed.init_routes";
         goto error;
     }
-    
-    
+
+
 #if OPAL_ENABLE_FT_CR == 1
     /*
      * Setup the SnapC
@@ -284,7 +305,7 @@ int orte_ess_base_app_setup(bool db_restrict_local)
 #else
     opal_cr_set_enabled(false);
 #endif
-    
+
     /* Initalize the CR setup
      * Note: Always do this, even in non-FT builds.
      * If we don't some user level tools may hang.
@@ -308,7 +329,7 @@ int orte_ess_base_app_setup(bool db_restrict_local)
     }
 
     return ORTE_SUCCESS;
-    
+
  error:
     if (!progress_thread_running) {
         /* can't send the help message, so ensure it
@@ -319,7 +340,7 @@ int orte_ess_base_app_setup(bool db_restrict_local)
     orte_show_help("help-orte-runtime.txt",
                    "orte_init:startup:internal-failure",
                    true, error, ORTE_ERROR_NAME(ret), ret);
-    
+
     return ret;
 }
 
@@ -362,11 +383,12 @@ int orte_ess_base_app_finalize(void)
     (void) mca_base_framework_close(&orte_state_base_framework);
 
     /* release the event base */
+    opal_event_del(&block);
     opal_event_base_free(orte_event_base);
 
     orte_session_dir_finalize(ORTE_PROC_MY_NAME);
-        
-    return ORTE_SUCCESS;    
+
+    return ORTE_SUCCESS;
 }
 
 /*
@@ -396,16 +418,16 @@ void orte_ess_base_app_abort(int status, bool report)
 
     /* Exit - do NOT do a normal finalize as this will very likely
      * hang the process. We are aborting due to an abnormal condition
-     * that precludes normal cleanup 
+     * that precludes normal cleanup
      *
-     * We do need to do the following bits to make sure we leave a 
+     * We do need to do the following bits to make sure we leave a
      * clean environment. Taken from orte_finalize():
      * - Assume errmgr cleans up child processes before we exit.
      */
-    
+
     /* CRS cleanup since it may have a named pipe and thread active */
     orte_cr_finalize();
-    
+
     /* If we were asked to report this termination, do so.
      * Since singletons don't start an HNP unless necessary, and
      * direct-launched procs don't have daemons at all, only send
@@ -425,7 +447,7 @@ void orte_ess_base_app_abort(int status, bool report)
          * have a chance to be sent */
         nanosleep(&tp, NULL);                                           \
     }
-    
+
     /* Now Exit */
     _exit(status);
 }
