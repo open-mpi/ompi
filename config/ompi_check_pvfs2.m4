@@ -11,7 +11,7 @@ dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2006 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
-dnl Copyright (c) 2008-2012 University of Houston. All rights reserved.
+dnl Copyright (c) 2008-2016 University of Houston. All rights reserved.
 dnl Copyright (c) 2015      Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
 dnl $COPYRIGHT$
@@ -32,10 +32,6 @@ AC_DEFUN([OMPI_CHECK_PVFS2],[
     check_pvfs2_LDFLAGS=
     check_pvfs2_LIBS=
 
-    check_pvfs2_save_LIBS="$LIBS"
-    check_pvfs2_save_LDFLAGS="$LDFLAGS"
-    check_pvfs2_save_CPPFLAGS="$CPPFLAGS"
-
     check_pvfs2_configuration="none"
     ompi_check_pvfs2_happy="yes"
 
@@ -46,70 +42,27 @@ AC_DEFUN([OMPI_CHECK_PVFS2],[
              [Build Pvfs2 support, optionally adding DIR/include, DIR/lib, and DIR/lib64 to the search path for headers and libraries])])
     OPAL_CHECK_WITHDIR([pvfs2], [$with_pvfs2], [include/pvfs2.h])
 
-    AC_ARG_WITH([pvfs2-libs],
-        [AC_HELP_STRING([--with-pvfs2-libs=LIBS],
-                       [Libraries to link with for pvfs2])])
-
-    temp_with_pvfs2="$with_pvfs2"
     AS_IF([test -z "$with_pvfs2"],
-          [with_pvfs2="/usr/local"])
+          [ompi_check_pvfs2_dir="/usr/local"],
+          [ompi_check_pvfs2_dir=$with_pvfs2])
 
-    temp_with_pvfs2_libs="$with_pvfs2_libs"
-    AS_IF([test -z "$with_pvfs2_libs"],
-	[with_pvfs2_libs="pvfs2 pthread"])
+    if test -e "$ompi_check_pvfs2_dir/lib64" ; then
+        ompi_check_pvfs2_libdir="$ompi_check_pvfs2_dir/lib64"
+    else
+        ompi_check_pvfs2_libdir="$ompi_check_pvfs2_dir/lib"
+    fi
 
     # Add correct -I and -L flags
-    AS_IF([test -d "$with_pvfs2/include"],
-        [check_pvfs2_CPPFLAGS="-I$with_pvfs2/include"
-            $1_CPPFLAGS="$check_pvfs2_CPPFLAGS"
-            CPPFLAGS="$CPPFLAGS $check_pvfs2_CPPFLAGS"],
-	[ompi_check_pvfs2_happy="no"])
-
-    AS_IF([test "$ompi_check_pvfs2_happy" = "yes"],
-	[AS_IF([test -d "$with_pvfs2/lib"],
-		[check_pvfs2_LDFLAGS="-L$with_pvfs2/lib"
-		    $1_LDFLAGS="$check_pvfs2_LDFLAGS"
-		    LDFLAGS="$LDFLAGS $check_pvfs2_LDFLAGS"],
-		[ompi_check_pvfs2_happy="no"])
-    ],[])
-
-    # Try to find all the pvfs2 libraries
-    AS_IF([test "$ompi_check_pvfs2_happy" = "yes"],
-	[ AS_IF([test -n "$with_pvfs2_libs"]
-		[for lib in $with_pvfs2_libs ; do
-		    check_pvfs2_LIBS="$check_pvfs2_LIBS -l$lib"
-		    done])
-
-	    $1_LIBS="$check_pvfs2_LIBS"
-	    LIBS="$LIBS $check_pvfs2_LIBS"
-
-            # check for pvfs2
-	    AC_CHECK_HEADERS([pvfs2.h],
-		[AC_MSG_CHECKING([if possible to link PVFS2])
-		    AC_LINK_IFELSE(
-			[AC_LANG_PROGRAM(
-				[[#include <stdio.h>
-				  #include <pvfs2.h>]],
-				[[PVFS_util_resolve(NULL,NULL,NULL,0);]])],
-			[AC_MSG_RESULT([yes])
-			    ompi_check_pvfs2_happy="yes"],
-			[AC_MSG_RESULT([no])
-			    ompi_check_pvfs2_happy="no"])],
-		[ompi_check_pvfs2_happy="no"])
-    ])
+    OPAL_CHECK_PACKAGE([$1], [pvfs2.h], [pvfs2], [PVFS_util_resolve], [],
+                       [$ompi_check_pvfs2_dir], [$ompi_check_pvfs2_libdir], [ompi_check_pvfs2_happy="yes"],
+                       [ompi_check_pvfs2_happy="no"])
 
 
-    LDFLAGS="$check_pvfs2_save_LDFLAGS"
-    CPPFLAGS="$check_pvfs2_save_CPPFLAGS"
-    LIBS="$check_pvfs2_save_LIBS"
     AS_IF([test "$ompi_check_pvfs2_happy" = "yes"],
           [$2],
           [AS_IF([test ! -z "$with_pvfs2" && test "$with_pvfs2" != "no"],
                   [echo PVFS2 support not found])
               $3])
-
-    with_pvfs2="$temp_with_pvfs2"
-    with_pvfs2_libs="$temp_with_pvfs2_libs"
 
 ])
 
