@@ -128,7 +128,7 @@ sub is_whitelisted {
     my $line = shift;
 
     foreach my $wl_sym (@sym_whitelist) {
-        if ($line =~ m/\b\Q$wl_sym\E\b/) {
+        if ($line =~ m/\b_?\Q$wl_sym\E\b/) {
             return 1;
         }
     }
@@ -136,7 +136,7 @@ sub is_whitelisted {
     # Look for symbol names ending in one or more underscores and assume they
     # are "Fortran-shaped".  This won't match the hex output from most nm's and
     # shouldn't match the single characters that indicate symbol type.
-    if ($line =~ m/\b[A-Za-z_]+[A-Za-z0-9_]*_+\b/) {
+    if ($line =~ m/\b_?[A-Za-z_]+[A-Za-z0-9_]*_+\b/) {
         return 1;
     }
 
