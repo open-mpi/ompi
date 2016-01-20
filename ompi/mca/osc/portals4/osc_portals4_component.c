@@ -218,8 +218,6 @@ process:
         count++;
 
         if (NULL != ev.user_ptr) {
-            /* can't disable send events, but they don't count in ops */
-            if (ev.type == PTL_EVENT_SEND) continue;
             req = (ompi_osc_portals4_request_t*) ev.user_ptr;
             opal_atomic_add_size_t(&req->super.req_status._ucount, ev.mlength);
             ops = opal_atomic_add_32(&req->ops_committed, 1);
@@ -458,7 +456,7 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
 
     md.start = 0;
     md.length = PTL_SIZE_MAX;
-    md.options = PTL_MD_EVENT_CT_REPLY | PTL_MD_EVENT_CT_ACK;
+    md.options = PTL_MD_EVENT_SEND_DISABLE | PTL_MD_EVENT_CT_REPLY | PTL_MD_EVENT_CT_ACK;
     md.eq_handle = mca_osc_portals4_component.matching_eq_h;
     md.ct_handle = module->ct_h;
     ret = PtlMDBind(module->ni_h, &md, &module->req_md_h);
