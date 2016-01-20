@@ -180,6 +180,7 @@ mca_fs_pvfs2_file_open (struct ompi_communicator_t *comm,
 
     if (fs_pvfs2_stripe_size > 0 && fs_pvfs2_stripe_width > 0) {
         fh->f_stripe_size = fs_pvfs2_stripe_size;
+        fh->f_stripe_count = fs_pvfs2_stripe_width;
     }
 
     return OMPI_SUCCESS;

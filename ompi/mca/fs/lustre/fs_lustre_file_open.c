@@ -139,25 +139,21 @@ mca_fs_lustre_file_open (struct ompi_communicator_t *comm,
         return OMPI_ERROR;
     }
 
-    if (mca_fs_lustre_stripe_size > 0) {
-        fh->f_stripe_size = mca_fs_lustre_stripe_size;
-    }
-    else {
-      lump = alloc_lum();
-      if (NULL == lump ){
+    lump = alloc_lum();
+    if (NULL == lump ){
 	fprintf(stderr,"Cannot allocate memory for extracting stripe size\n");
 	return OMPI_ERROR;
-      }
-      rc = llapi_file_get_stripe(filename, lump);
-      if (rc != 0) {
-          opal_output(1, "get_stripe failed: %d (%s)\n", errno, strerror(errno));
-	  return OMPI_ERROR;
-      }
-      fh->f_stripe_size = lump->lmm_stripe_size;
-
+    }
+    rc = llapi_file_get_stripe(filename, lump);
+    if (rc != 0) {
+        opal_output(1, "get_stripe failed: %d (%s)\n", errno, strerror(errno));
+        return OMPI_ERROR;
+    }
+    fh->f_stripe_size = lump->lmm_stripe_size;
+    fh->f_stripe_count = lump->lmm_stripe_count;
+    
       //      if ( NULL != lump ) {
       //	free ( lump );
       //      }
-    }
     return OMPI_SUCCESS;
 }

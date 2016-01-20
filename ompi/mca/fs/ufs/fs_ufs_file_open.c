@@ -91,5 +91,8 @@ mca_fs_ufs_file_open (struct ompi_communicator_t *comm,
 	}
     }
 
+    fh->f_stripe_size=0;
+    fh->f_stripe_count=1;
+
     return OMPI_SUCCESS;
 }

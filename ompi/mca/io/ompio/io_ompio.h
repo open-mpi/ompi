@@ -306,6 +306,7 @@ struct mca_io_ompio_file_t {
     void                  *f_fs_ptr;
     int                    f_atomicity;
     size_t                 f_stripe_size;
+    int                    f_stripe_count;
     size_t                 f_cc_size;
     int                    f_bytes_per_agg;
     enum ompio_fs_type     f_fstype;
