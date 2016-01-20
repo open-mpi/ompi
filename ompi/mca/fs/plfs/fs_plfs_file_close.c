@@ -49,7 +49,9 @@ mca_fs_plfs_file_close (mca_io_ompio_file_t *fh)
     getcwd( wpath, sizeof(wpath) );
     sprintf( wpath,"%s/%s",wpath,fh->f_filename );
 
-    if(-1 == access(fh->f_filename, F_OK)) {
+    plfs_ret = plfs_access(wpath, F_OK); 
+    if ( PLFS_SUCCESS != plfs_ret ) {
+        opal_output(0, "fs_plfs_file_close: Error in plfs_access:\n%s\n", strplfserr(plfs_ret));
         return OMPI_ERROR; // file doesn't exist
     }
 
@@ -66,7 +68,14 @@ mca_fs_plfs_file_close (mca_io_ompio_file_t *fh)
         return OMPI_ERROR;
     }
 
-    plfs_ret = plfs_close(fh->f_fs_ptr, 0, 0, amode ,NULL, &flags);
+    plfs_ret = plfs_sync(fh->f_fs_ptr);
+    if (PLFS_SUCCESS != plfs_ret) {
+        opal_output(0, "fs_plfs_file_close: Error in plfs_sync:\n%s\n", strplfserr(plfs_ret));
+        return OMPI_ERROR;
+    }
+
+    
+    plfs_ret = plfs_close(fh->f_fs_ptr, fh->f_rank, 0, amode ,NULL, &flags);
     if (PLFS_SUCCESS != plfs_ret) {
         opal_output(0, "fs_plfs_file_close: Error in plfs_close:\n%s\n", strplfserr(plfs_ret));
         return OMPI_ERROR;
