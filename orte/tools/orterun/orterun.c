@@ -1147,7 +1147,16 @@ static int parse_globals(int argc, char* argv[], opal_cmd_line_t *cmd_line)
     /* Do we want a user-level debugger? */
 
     if (orterun_globals.debugger) {
+#if 0
+        /* see https://github.com/open-mpi/ompi/issues/1225
+         * Once things are fixed, the orte_show_help/exit can be removed
+         * and this code re-enabled.
+         */
         run_debugger(orte_basename, cmd_line, argc, argv, orterun_globals.num_procs);
+#else
+        orte_show_help("help-orterun.txt", "no_debugger_launch_support", false);
+        exit(-1);
+#endif
     }
 
      /* if recovery was disabled on the cmd line, do so */

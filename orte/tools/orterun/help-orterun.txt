@@ -660,3 +660,10 @@ method and try launching your job again.
 
 Your job will now abort.
 #
+[no_debugger_launch_support]
+This version of Open MPI is known to have a problem using the "--debug"
+option to mpirun, and has therefore disabled it. This functionality will
+be restored in a future version of Open MPI.
+
+Please see https://github.com/open-mpi/ompi/issues/1225 for details.
+
