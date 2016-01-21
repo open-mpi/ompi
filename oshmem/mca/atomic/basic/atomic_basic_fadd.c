@@ -27,32 +27,25 @@ int mca_atomic_basic_fadd(void *target,
                           struct oshmem_op_t *op)
 {
     int rc = OSHMEM_SUCCESS;
+    long long temp_value = 0;
 
-    if (!target || !value) {
-        rc = OSHMEM_ERROR;
-    }
+    atomic_basic_lock(pe);
+
+    rc = MCA_SPML_CALL(get(target, nlong, (void*)&temp_value, pe));
+
+    if (prev)
+        memcpy(prev, (void*) &temp_value, nlong);
+
+    op->o_func.c_fn((void*) value,
+            (void*) &temp_value,
+            nlong / op->dt_size);
 
     if (rc == OSHMEM_SUCCESS) {
-        long long temp_value = 0;
-
-        atomic_basic_lock(pe);
-
-        rc = MCA_SPML_CALL(get(target, nlong, (void*)&temp_value, pe));
-
-        if (prev)
-            memcpy(prev, (void*) &temp_value, nlong);
-
-        op->o_func.c_fn((void*) value,
-                        (void*) &temp_value,
-                        nlong / op->dt_size);
-
-        if (rc == OSHMEM_SUCCESS) {
-            rc = MCA_SPML_CALL(put(target, nlong, (void*)&temp_value, pe));
-            shmem_quiet();
-        }
-
-        atomic_basic_unlock(pe);
+        rc = MCA_SPML_CALL(put(target, nlong, (void*)&temp_value, pe));
+        shmem_quiet();
     }
+
+    atomic_basic_unlock(pe);
 
     return rc;
 }

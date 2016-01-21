@@ -97,7 +97,7 @@ static int ucx_open(void)
      */
     if (strcmp(mca_spml_base_selected_component.spmlm_version.mca_component_name, "ucx")) {
         ATOMIC_VERBOSE(5,
-                       "Can not use atomic/ucx because spml ikrit component disabled");
+                       "Can not use atomic/ucx because spml ucx component disabled");
         return OSHMEM_ERR_NOT_AVAILABLE;
     }
     mca_spml_self = (mca_spml_ucx_t *)mca_spml.self;
