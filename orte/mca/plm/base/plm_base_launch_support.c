@@ -55,9 +55,6 @@
 #include "orte/mca/routed/routed.h"
 #include "orte/mca/grpcomm/base/base.h"
 #include "orte/mca/odls/odls.h"
-#if OPAL_ENABLE_FT_CR == 1
-#include "orte/mca/snapc/base/base.h"
-#endif
 #include "orte/mca/filem/filem.h"
 #include "orte/mca/filem/base/base.h"
 #include "orte/mca/grpcomm/base/base.h"
