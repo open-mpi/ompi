@@ -15,7 +15,7 @@
 
 major=1
 minor=10
-release=2
+release=3
 
 # greek is generally used for alpha or beta release tags.  If it is
 # non-empty, it will be appended to the version number.  It does not
@@ -24,7 +24,7 @@ release=2
 # requirement is that it must be entirely printable ASCII characters
 # and have no white space.
 
-greek=rc4
+greek=a1
 
 # If repo_rev is empty, then the repository version number will be
 # obtained during "make dist" via the "git describe --tags --always"
@@ -82,20 +82,15 @@ date="Unreleased developer copy"
 # Version numbers are described in the Libtool current:revision:age
 # format.
 
-# libmpi changed 1.10.1 (12:1:0) --> 1.10.2
 libmpi_so_version=12:2:0
 libmpi_cxx_so_version=2:3:1
 libmpi_mpifh_so_version=12:0:0
-# All Fortran libraries changes 1.10.1 (5:1:4,6:0:0,11:1:0) --> 1.10.2 and added new symbols
 libmpi_usempi_tkr_so_version=6:0:1
 libmpi_usempi_ignore_tkr_so_version=7:0:1
 libmpi_usempif08_so_version=12:0:1
-# libopen_rte changed 1.10.1 (12:1:0) --> 1.10.2
 libopen_rte_so_version=12:2:0
-# libopen_pal changed 1.10.1 (13:1:0) --> 1.10.2
 libopen_pal_so_version=13:2:0
 libmpi_java_so_version=3:0:2
-# liboshmem changed 1.10.1 (8:1:0) --> 1.10.2 and added new symbols
 liboshmem_so_version=9:0:1
 
 # "Common" components install standalone libraries that are run-time
