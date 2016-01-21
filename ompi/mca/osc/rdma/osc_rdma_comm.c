@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014-2015 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2014-2016 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -484,7 +484,7 @@ static int ompi_osc_rdma_aggregate_alloc (ompi_osc_rdma_sync_t *sync, ompi_osc_r
 
     ompi_osc_rdma_aggregate_append (aggregation, request, source_buffer, size);
 
-    OPAL_THREAD_SCOPED_LOCK(&sync->lock, opal_list_append (&sync->aggregations, (opal_list_item_t *) aggregation));
+    opal_list_append (&sync->aggregations, (opal_list_item_t *) aggregation);
 
     return OMPI_SUCCESS;
 }
