@@ -53,7 +53,7 @@ mca_spml_ucx_t mca_spml_ucx = {
         mca_spml_ucx_deregister,
         mca_spml_base_oob_get_mkeys,
         mca_spml_ucx_put,
-        NULL, //mca_spml_ucx_put_nb,
+        NULL, /* todo: mca_spml_ucx_put_nb, */
         mca_spml_ucx_get,
         mca_spml_ucx_recv,
         mca_spml_ucx_send,
@@ -174,6 +174,8 @@ static void dump_address(int pe, char *addr, size_t len)
 #endif
 }
 
+static char spml_ucx_transport_ids[1] = { 0 };
+
 int mca_spml_ucx_add_procs(oshmem_proc_t** procs, size_t nprocs)
 {
     size_t i, n;
@@ -208,7 +210,6 @@ int mca_spml_ucx_add_procs(oshmem_proc_t** procs, size_t nprocs)
     /* Get the EP connection requests for all the processes from modex */
     for (n = 0; n < nprocs; ++n) {
         i = (my_rank + n) % nprocs;
-        //if (i == my_rank) continue;
         dump_address(i, (char *)(wk_raddrs + wk_roffs[i]), wk_rsizes[i]);
         err = ucp_ep_create(mca_spml_ucx.ucp_worker, 
                 (ucp_address_t *)(wk_raddrs + wk_roffs[i]),
@@ -217,6 +218,8 @@ int mca_spml_ucx_add_procs(oshmem_proc_t** procs, size_t nprocs)
             SPML_ERROR("ucp_ep_create failed!!!\n");
             goto error2;
         }
+        procs[i]->num_transports = 1;
+        procs[i]->transport_ids = spml_ucx_transport_ids;
     }
 
     ucp_worker_release_address(mca_spml_ucx.ucp_worker, wk_local_addr);
@@ -377,46 +380,27 @@ int mca_spml_ucx_deregister(sshmem_mkey_t *mkeys)
 int mca_spml_ucx_get(void *src_addr, size_t size, void *dst_addr, int src)
 {
     void *rva;
-    sshmem_mkey_t *r_mkey;
-    ucs_status_t err;
+    ucs_status_t status;
     spml_ucx_mkey_t *ucx_mkey;
 
-    r_mkey = mca_memheap_base_get_cached_mkey(src, src_addr, 0, &rva);
-    if (OPAL_UNLIKELY(!r_mkey)) {
-        SPML_ERROR("pe=%d: %p is not address of shared variable",
-                src, src_addr);
-        oshmem_shmem_abort(-1);
-        return OSHMEM_ERROR;
-    }
+    ucx_mkey = mca_spml_ucx_get_mkey(src, src_addr, &rva);
+    status = ucp_get(mca_spml_ucx.ucp_peers[src].ucp_conn, dst_addr, size,
+                     (uint64_t)rva, ucx_mkey->rkey);
 
-    ucx_mkey = (spml_ucx_mkey_t *)(r_mkey->spml_context);
-    err = ucp_get(mca_spml_ucx.ucp_peers[src].ucp_conn, dst_addr, size,
-                  (uint64_t)rva, ucx_mkey->rkey);
-
-    return OPAL_LIKELY(UCS_OK == err) ? OSHMEM_SUCCESS : OSHMEM_ERROR;
+    return ucx_status_to_oshmem(status);
 }
 
 int mca_spml_ucx_put(void* dst_addr, size_t size, void* src_addr, int dst)
 {
     void *rva;
-    sshmem_mkey_t *r_mkey;
-    ucs_status_t err;
+    ucs_status_t status;
     spml_ucx_mkey_t *ucx_mkey;
 
-    r_mkey = mca_memheap_base_get_cached_mkey(dst, dst_addr, 0, &rva);
-    if (OPAL_UNLIKELY(!r_mkey)) {
-        SPML_ERROR("pe=%d: %p is not address of shared variable",
-                dst, dst_addr);
-        oshmem_shmem_abort(-1);
-        return OSHMEM_ERROR;
-    }
+    ucx_mkey = mca_spml_ucx_get_mkey(dst, dst_addr, &rva);
+    status = ucp_put(mca_spml_ucx.ucp_peers[dst].ucp_conn, src_addr, size,
+                     (uint64_t)rva, ucx_mkey->rkey);
 
-    ucx_mkey = (spml_ucx_mkey_t *)(r_mkey->spml_context);
-
-    err = ucp_put(mca_spml_ucx.ucp_peers[dst].ucp_conn, src_addr, size,
-                  (uint64_t)rva, ucx_mkey->rkey);
-
-    return OPAL_LIKELY(UCS_OK == err) ? OSHMEM_SUCCESS : OSHMEM_ERROR;
+    return ucx_status_to_oshmem(status);
 }
 
 int mca_spml_ucx_fence(void)
