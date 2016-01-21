@@ -82,16 +82,21 @@ date="Unreleased developer copy"
 # Version numbers are described in the Libtool current:revision:age
 # format.
 
+# libmpi changed 1.10.1 (12:1:0) --> 1.10.2
 libmpi_so_version=12:2:0
 libmpi_cxx_so_version=2:3:1
 libmpi_mpifh_so_version=12:0:0
-libmpi_usempi_tkr_so_version=5:1:4
-libmpi_usempi_ignore_tkr_so_version=6:0:0
-libmpi_usempif08_so_version=11:1:0
-libopen_rte_so_version=12:1:0
+# All Fortran libraries changes 1.10.1 (5:1:4,6:0:0,11:1:0) --> 1.10.2 and added new symbols
+libmpi_usempi_tkr_so_version=6:0:1
+libmpi_usempi_ignore_tkr_so_version=7:0:1
+libmpi_usempif08_so_version=12:0:1
+# libopen_rte changed 1.10.1 (12:1:0) --> 1.10.2
+libopen_rte_so_version=12:2:0
+# libopen_pal changed 1.10.1 (13:1:0) --> 1.10.2
 libopen_pal_so_version=13:2:0
 libmpi_java_so_version=3:0:2
-liboshmem_so_version=9:0:0
+# liboshmem changed 1.10.1 (8:1:0) --> 1.10.2 and added new symbols
+liboshmem_so_version=9:0:1
 
 # "Common" components install standalone libraries that are run-time
 # linked by one or more components.  So they need to be versioned as
