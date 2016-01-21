@@ -559,8 +559,10 @@ exit :
     free(broken_total_lengths);
     free(broken_iov_counts);
     free(broken_decoded_iovs); // decoded_iov arrays[i] were freed as aggr_data[i]->decoded_iov;
-    for (i=0; i<dynamic_gen2_num_io_procs; i++ ) {
-      free(broken_iov_arrays[i]);
+    if ( NULL != broken_iov_arrays ) {
+        for (i=0; i<dynamic_gen2_num_io_procs; i++ ) {
+            free(broken_iov_arrays[i]);
+        }
     }
     free(broken_iov_arrays);
     free(aggregators);
@@ -1132,8 +1134,8 @@ int mca_fcoll_dynamic_gen2_break_file_view ( struct iovec *mem_iov, int mem_coun
         goto exit;
     }
     for ( i=0; i<stripe_count; i++ ) {
-        broken_mem_iovs[i]  = (struct iovec*) malloc (sizeof(struct iovec ));
-        broken_file_iovs[i] = (struct iovec*) malloc (sizeof(struct iovec ));
+        broken_mem_iovs[i]  = (struct iovec*) calloc (1, sizeof(struct iovec ));
+        broken_file_iovs[i] = (struct iovec*) calloc (1, sizeof(struct iovec ));
     }
     
     broken_mem_counts    = (int *) calloc ( stripe_count, sizeof(int));
@@ -1145,8 +1147,8 @@ int mca_fcoll_dynamic_gen2_break_file_view ( struct iovec *mem_iov, int mem_coun
         goto exit;
     }
 
-    block       = (int **) malloc ( stripe_count * sizeof(int *));
-    max_lengths = (int **) malloc ( stripe_count * sizeof(int *));
+    block       = (int **) calloc ( stripe_count, sizeof(int *));
+    max_lengths = (int **) calloc ( stripe_count,  sizeof(int *));
     if ( NULL == block || NULL == max_lengths ) {
         ret = OMPI_ERR_OUT_OF_RESOURCE;
         goto exit;
@@ -1168,8 +1170,8 @@ int mca_fcoll_dynamic_gen2_break_file_view ( struct iovec *mem_iov, int mem_coun
     }
     
     /* Step 1: separate the local_iov_array per aggregator */
-    int owner, rest, len, temp_len, blocklen, memlen;
-    off_t offset, temp_offset, start_offset, memoffset;
+    int owner, rest, len, temp_len, blocklen, memlen=0;
+    off_t offset, temp_offset, start_offset, memoffset=0;
 
     i=j=0;
 
