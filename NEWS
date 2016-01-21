@@ -173,6 +173,55 @@ Master (not on release branches yet)
   Thanks to Alexander Pozdneev for reporting.
 
 
+1.10.2
+------
+
+ **********************************************************************
+ *  OSHMEM is now 1.2 compliant
+ **********************************************************************
+
+- Fix NBC_Copy for legitimate zero-size messages
+- Fix multiple bugs in OSHMEM
+- Correctly handle mpirun --host <user>@<ip-address>
+- Centralize two MCA params to avoid duplication between OMPI and
+  OSHMEM layers: opal_abort_delay and opal_abort_print_stack
+- Add support for Fujitsu compilers
+- Add UCX support for OMPI and OSHMEM
+- Correctly handle oversubscription when not given directives
+  to permit it. Thanks to @ammore1 for reporting it
+- Fix rpm spec file to not include the /usr directory
+- Add Intel HFI1 default parameters for the openib BTL
+- Resolve symbol conflicts in the PSM2 library
+- Add ability to empty the rgpusm cache when full if requested
+- Fix another libtool bug when -L requires a space between it
+  and the path. Thanks to Eric Schnetter for the patch.
+- Add support for OSHMEM v1.2 APIs
+- Improve efficiency of oshmem_preconnect_all algorithm
+- Fix bug in buffered sends support
+- Fix double free in edge case of mpirun. Thanks to @jsharpe for 
+  the patch
+- Multiple one-sided support fixes
+- Fix integer overflow in the tuned "reduce" collective when
+  using buffers larger than INT_MAX in size
+- Fix parse of user environment variables in mpirun. Thanks to
+  Stefano Garzarella for the patch
+- Performance improvements in PSM2 support
+- Fix NBS iBarrier for inter-communicators
+- Fix bug in vader BTL during finalize
+- Improved configure support for Fortran compilers
+- Fix rank_file mapper to support default --slot-set. Thanks
+  to Matt Thompson for reporting it
+- Update MPI_Testsome man page. Thanks to Eric Schnetter for
+  the suggestion
+- Fix missing resize of the returned type for subarray and
+  darray types. Thanks to Keith Bennett and Dan Garmann for
+  reporting it
+- Fix Java support on OSX 10.11. Thanks to Alexander Daryin
+  for reporting the problem
+- Fix some compilation issues on Solaris 11.2. Thanks to
+  Paul Hargrove for his continued help in such areas
+
+
 1.10.1
 ------
 
