@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2015 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2016 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2006-2008 University of Houston.  All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
@@ -265,14 +265,21 @@ static int ompi_osc_rdma_component_init (bool enable_progress_threads,
     }
 
     OBJ_CONSTRUCT(&mca_osc_rdma_component.aggregate, opal_free_list_t);
-    ret = opal_free_list_init (&mca_osc_rdma_component.aggregate,
-                               sizeof(ompi_osc_rdma_aggregation_t), 8,
-                               OBJ_CLASS(ompi_osc_rdma_aggregation_t), 0, 0,
-                               32, 128, 32, NULL, 0, NULL, NULL, NULL);
-    if (OPAL_SUCCESS != ret) {
-        opal_output_verbose(1, ompi_osc_base_framework.framework_output,
-                            "%s:%d: opal_free_list_init failed: %d\n",
-                            __FILE__, __LINE__, ret);
+
+    if (!enable_mpi_threads && mca_osc_rdma_component.aggregation_limit) {
+        ret = opal_free_list_init (&mca_osc_rdma_component.aggregate,
+                                   sizeof(ompi_osc_rdma_aggregation_t), 8,
+                                   OBJ_CLASS(ompi_osc_rdma_aggregation_t), 0, 0,
+                                   32, 128, 32, NULL, 0, NULL, NULL, NULL);
+
+        if (OPAL_SUCCESS != ret) {
+            opal_output_verbose(1, ompi_osc_base_framework.framework_output,
+                                "%s:%d: opal_free_list_init failed: %d\n",
+                                __FILE__, __LINE__, ret);
+        }
+    } else {
+        /* only enable put aggregation when not using threads */
+        mca_osc_rdma_component.aggregation_limit = 0;
     }
 
     return ret;
