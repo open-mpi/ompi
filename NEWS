@@ -19,7 +19,7 @@ Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
 Copyright (c) 2012      Sandia National Laboratories.  All rights reserved.
 Copyright (c) 2012      University of Houston. All rights reserved.
 Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
-Copyright (c) 2013-2015 Intel, Inc.  All rights reserved.
+Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
 $COPYRIGHT$
 
 Additional copyrights may follow
@@ -68,7 +68,8 @@ included in the vX.Y.Z section and be denoted as:
 - Add support for Fujitsu compilers
 - Add UCX support for OMPI and OSHMEM
 - Correctly handle oversubscription when not given directives
-  to permit it
+  to permit it. Thanks to @ammore1 for reporting it
+- Fix rpm spec file to not include the /usr directory
 - Add Intel HFI1 default parameters for the openib BTL
 - Resolve symbol conflicts in the PSM2 library
 - Add ability to empty the rgpusm cache when full if requested
@@ -77,15 +78,28 @@ included in the vX.Y.Z section and be denoted as:
 - Add support for OSHMEM v1.2 APIs
 - Improve efficiency of oshmem_preconnect_all algorithm
 - Fix bug in buffered sends support
+- Fix double free in edge case of mpirun. Thanks to @jsharpe for
+  the patch
 - Multiple one-sided support fixes
 - Fix integer overflow in the tuned "reduce" collective when
   using buffers larger than INT_MAX in size
+- Fix parse of user environment variables in mpirun. Thanks to
+  Stefano Garzarella for the patch
 - Performance improvements in PSM2 support
 - Fix NBS iBarrier for inter-communicators
 - Fix bug in vader BTL during finalize
 - Improved configure support for Fortran compilers
 - Fix rank_file mapper to support default --slot-set. Thanks
   to Matt Thompson for reporting it
+- Update MPI_Testsome man page. Thanks to Eric Schnetter for
+  the suggestion
+- Fix missing resize of the returned type for subarray and
+  darray types. Thanks to Keith Bennett and Dan Garmann for
+  reporting it
+- Fix Java support on OSX 10.11. Thanks to Alexander Daryin
+  for reporting the problem
+- Fix some compilation issues on Solaris 11.2. Thanks to
+  Paul Hargrove for his continued help in such areas
 
 
 1.10.1
