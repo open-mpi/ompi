@@ -5,6 +5,7 @@
  *                         reserved.
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2012-2013 Inria.  All rights reserved.
+ * Copyright (c) 2016 IBM Corp.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -234,7 +235,7 @@ int mpidbg_init_per_image(mqs_image *image, const mqs_image_callbacks *icb,
         mqs_find_type(image, "ompi_file_t", mqs_lang_c);
     handle_types->hi_c_group = i_info->ompi_group_t.type;
     handle_types->hi_c_info =
-        mqs_find_type(image, "ompi_info_t", mqs_lang_c);
+        mqs_find_type(image, "opal_info_t", mqs_lang_c);
     /* JMS: "MPI_Offset" is a typedef (see comment about MPI_Aint above) */
     handle_types->hi_c_offset =
         mqs_find_type(image, "MPI_Offset", mqs_lang_c);

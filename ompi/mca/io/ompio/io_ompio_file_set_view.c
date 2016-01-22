@@ -12,6 +12,7 @@
  * Copyright (c) 2008-2015 University of Houston. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ *  Copyright (c) 2016 IBM Corp.  All rights reserved.
  *  $COPYRIGHT$
  *
  *  Additional copyrights may follow
@@ -46,7 +47,7 @@ int mca_io_ompio_set_view_internal(mca_io_ompio_file_t *fh,
 				   ompi_datatype_t *etype,
 				   ompi_datatype_t *filetype,
 				   const char *datarep,
-				   ompi_info_t *info)
+				   opal_info_t *info)
 {
 
     size_t max_data = 0;
@@ -198,7 +199,7 @@ int mca_io_ompio_file_set_view (ompi_file_t *fp,
                                 ompi_datatype_t *etype,
                                 ompi_datatype_t *filetype,
                                 const char *datarep,
-                                ompi_info_t *info)
+                                opal_info_t *info)
 {
     int ret=OMPI_SUCCESS;
     mca_io_ompio_data_t *data;

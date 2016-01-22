@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016 IBM Corp.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -31,7 +32,7 @@ int
 mca_io_romio314_file_open (ompi_communicator_t *comm,
                         const char *filename,
                         int amode,
-                        ompi_info_t *info,
+                        opal_info_t *info,
                         ompi_file_t *fh)
 {
     int ret;
@@ -149,7 +150,7 @@ mca_io_romio314_file_get_amode (ompi_file_t *fh,
 
 int
 mca_io_romio314_file_set_info (ompi_file_t *fh,
-                            ompi_info_t *info)
+                            opal_info_t *info)
 {
     int ret;
     mca_io_romio314_data_t *data;
@@ -165,7 +166,7 @@ mca_io_romio314_file_set_info (ompi_file_t *fh,
 
 int
 mca_io_romio314_file_get_info (ompi_file_t *fh,
-                            ompi_info_t ** info_used)
+                            opal_info_t ** info_used)
 {
     int ret;
     mca_io_romio314_data_t *data;
@@ -185,7 +186,7 @@ mca_io_romio314_file_set_view (ompi_file_t *fh,
                             struct ompi_datatype_t *etype,
                             struct ompi_datatype_t *filetype,
                             const char *datarep,
-                            ompi_info_t *info)
+                            opal_info_t *info)
 {
     int ret;
     mca_io_romio314_data_t *data;

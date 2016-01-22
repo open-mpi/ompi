@@ -5,6 +5,7 @@
  *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016 IBM Corp.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -18,6 +19,8 @@
 #include "ompi/runtime/params.h"
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/win/win.h"
+#include "opal/util/info.h"
+#include "opal/util/info_subscriber.h"
 
 #if OMPI_BUILD_MPI_PROFILING
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -28,14 +31,11 @@
 
 static const char FUNC_NAME[] = "MPI_Win_get_info";
 
-static void _win_info_set (ompi_info_t *info, const char *key, int set)
-{
-    ompi_info_set (info, key, set ? "true" : "false");
-}
-
 int MPI_Win_get_info(MPI_Win win, MPI_Info *info_used)
 {
     int ret;
+
+    OPAL_CR_NOOP_PROGRESS();
 
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
@@ -49,18 +49,19 @@ int MPI_Win_get_info(MPI_Win win, MPI_Info *info_used)
         }
     }
 
-    OPAL_CR_ENTER_LIBRARY();
-
-    ret = win->w_osc_module->osc_get_info(win, info_used);
-
-    if (OMPI_SUCCESS == ret && *info_used) {
-        /* set standard info keys based on what the OSC module is using */
-
-        _win_info_set (*info_used, "no_locks", win->w_flags & OMPI_WIN_NO_LOCKS);
-        _win_info_set (*info_used, "same_size", win->w_flags & OMPI_WIN_SAME_SIZE);
-        _win_info_set (*info_used, "same_disp_unit", win->w_flags & OMPI_WIN_SAME_DISP);
-        ompi_info_set_value_enum (*info_used, "accumulate_ops", win->w_acc_ops, ompi_win_accumulate_ops);
+    if (NULL == win->super.s_info) {
+/*
+ * Setup any defaults if MPI_Win_set_info was never called
+ */
+	opal_infosubscribe_change_info(win, &MPI_INFO_NULL->super); 	
     }
+
+    (*info_used) = OBJ_NEW(ompi_info_t);
+    if (NULL == (*info_used)) {
+       return OMPI_ERRHANDLER_INVOKE(win, MPI_ERR_NO_MEM, FUNC_NAME);
+    }
+
+    ret = opal_info_dup(&win->super.s_info, &(*info_used)->super);
 
     OMPI_ERRHANDLER_RETURN(ret, win, ret, FUNC_NAME);
 }

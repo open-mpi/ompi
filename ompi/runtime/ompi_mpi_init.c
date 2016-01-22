@@ -21,6 +21,7 @@
  * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  *
+ * Copyright (c) 2016 IBM Corp.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -697,7 +698,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     }
 
     /* initialize info */
-    if (OMPI_SUCCESS != (ret = ompi_info_init())) {
+    if (OMPI_SUCCESS != (ret = ompi_mpiinfo_init())) {
         error = "ompi_info_init() failed";
         goto error;
     }
