@@ -89,7 +89,7 @@ v2.0.0 final release; see:
 - Update the internal copy of ROMIO to that which shipped in MPICH
   3.1.4.
 - Update internal copy of libevent to v2.0.22.
-- Update internal copy of hwloc to v1.11.1.
+- Update internal copy of hwloc to v1.11.2.
 - Removed checkpoint/restart code due to loss of maintainer. :-(
 - Add a new MCA parameter - opal_common_verbs_want_fork_support. This
   replaces the btl_openib_want_fork_support parameter.
@@ -168,6 +168,15 @@ v2.0.0 final release; see:
   Servat for reporting and correcting.
 - Update man pages for non-blocking sends per MPI 3.1 standard.
   Thanks to Alexander Pozdneev for reporting.
+- Fix problems when building with plfs file system software present.
+- Fix problem when compiling againsts pvfs2.  Thanks to Dave Love for
+  reporting.
+- Fix problems with MPI_Neighbor_alltoall{v,w}.  Thanks to Willem
+  Vermin for reporting this issue.
+- Fix problem with java bindings on OX X 10.11.  Thanks to Alexander
+  Daryin for reporting this issue.
+- Fix various a compilation problems on Cygwin.  Thanks to Marco Atzeri
+  for supplying these fixes.
 
 
 1.10.1
