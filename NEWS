@@ -178,6 +178,9 @@ v2.0.0 final release; see:
 - Fix various a compilation problems on Cygwin.  Thanks to Marco Atzeri
   for supplying these fixes.
 
+Known issues:
+- There are problems using the --debug option to mpirun.  Refer to
+  https://github.com/open-mpi/ompi/issues/1225 for details.
 
 1.10.1
 ------
