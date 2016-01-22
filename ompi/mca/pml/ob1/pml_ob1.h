@@ -89,7 +89,7 @@ typedef struct mca_pml_ob1_t mca_pml_ob1_t;
 
 extern mca_pml_ob1_t mca_pml_ob1;
 extern int mca_pml_ob1_output;
-
+extern bool mca_pml_ob1_matching_protection;
 /*
  * PML interface functions.
  */
@@ -259,7 +259,25 @@ do {                                                            \
         OPAL_THREAD_UNLOCK(&mca_pml_ob1.lock);                      \
     } while(0)
 
+#define OB1_MATCHING_LOCK(lock)                                  \
+    do {                                                         \
+        if( mca_pml_ob1_matching_protection ) {                  \
+            opal_mutex_lock(lock);                               \
+        }                                                        \
+        else { OPAL_THREAD_LOCK(lock); }                         \
+    } while(0)                                                
 
+
+#define OB1_MATCHING_UNLOCK(lock)                                \
+    do {                                                         \
+        if( mca_pml_ob1_matching_protection ) {                  \
+            opal_mutex_unlock(lock);                             \
+        }                                                        \
+        else { OPAL_THREAD_UNLOCK(lock); }                       \
+    } while(0)                                                
+
+
+                                         
 int mca_pml_ob1_send_fin(ompi_proc_t* proc, mca_bml_base_btl_t* bml_btl,
         opal_ptr_t hdr_frag, uint64_t size, uint8_t order, int status);
 

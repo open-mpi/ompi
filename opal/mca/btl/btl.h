@@ -238,6 +238,9 @@ typedef uint8_t mca_btl_base_tag_t;
  * BTLs should not set this flag. */
 #define MCA_BTL_FLAGS_SINGLE_ADD_PROCS 0x20000
 
+/* The BTL is using progress thread and need the protection on matching */
+#define MCA_BTL_FLAGS_BTL_PROGRESS_THREAD_ENABLED 0x40000
+
 /* Default exclusivity levels */
 #define MCA_BTL_EXCLUSIVITY_HIGH     (64*1024) /* internal loopback */
 #define MCA_BTL_EXCLUSIVITY_DEFAULT  1024      /* GM/IB/etc. */

@@ -43,19 +43,20 @@
 
 /* Open MPI includes */
 #include "opal/mca/event/event.h"
-#include "ompi/class/ompi_free_list.h"
-#include "ompi/mca/btl/btl.h"
-#include "ompi/mca/btl/base/base.h"
-#include "ompi/mca/mpool/mpool.h"
+#include "opal/class/opal_free_list.h"
+#include "opal/mca/btl/btl.h"
+#include "opal/mca/btl/base/base.h"
+#include "opal/mca/mpool/mpool.h"
 #include "opal/class/opal_hash_table.h"
+#include "opal/util/fd.h"
 
 #define MCA_BTL_TCP_STATISTICS 0
 BEGIN_C_DECLS
 
 #if (HAVE_PTHREAD_H == 1)
-#define MCA_BTL_TCP_USES_PROGRESS_THREAD 1
+#define MCA_BTL_TCP_SUPPORT_PROGRESS_THREAD 1
 #else
-#define MCA_BTL_TCP_USES_PROGRESS_THREAD 0
+#define MCA_BTL_TCP_SUPPORT_PROGRESS_THREAD 0
 #endif  /* (HAVE_PTHREAD_H == 1) */
 
 extern opal_event_base_t* mca_btl_tcp_event_base;
@@ -80,10 +81,11 @@ extern opal_event_base_t* mca_btl_tcp_event_base;
         }                                                               \
     } while (0)
 
-#if MCA_BTL_TCP_USES_PROGRESS_THREAD
+#if MCA_BTL_TCP_SUPPORT_PROGRESS_THREAD
 extern opal_list_t mca_btl_tcp_ready_frag_pending_queue;
 extern opal_mutex_t mca_btl_tcp_ready_frag_mutex;
 extern int mca_btl_tcp_pipe_to_progress[2];
+extern int mca_btl_tcp_progress_thread_trigger;
 
 #define MCA_BTL_TCP_CRITICAL_SECTION_ENTER(name) \
     opal_mutex_atomic_lock((name))
@@ -109,9 +111,14 @@ extern int mca_btl_tcp_pipe_to_progress[2];
     } while (0)
 #define MCA_BTL_TCP_ACTIVATE_EVENT(event, value)                        \
     do {                                                                \
-        opal_event_t* _event = (opal_event_t*)(event);                  \
-        opal_fd_write( mca_btl_tcp_pipe_to_progress[1], sizeof(opal_event_t*), \
-                       &_event);                                        \
+        if(0 < mca_btl_tcp_progress_thread_trigger) {                   \
+            opal_event_t* _event = (opal_event_t*)(event);                  \
+            opal_fd_write( mca_btl_tcp_pipe_to_progress[1], sizeof(opal_event_t*), \
+                           &_event);                                        \
+        }                                                                   \
+        else {                                                          \
+            opal_event_add(event, (value));                             \
+        }                                                               \
     } while (0)
 #else
 #define MCA_BTL_TCP_CRITICAL_SECTION_ENTER(name)
@@ -124,7 +131,7 @@ extern int mca_btl_tcp_pipe_to_progress[2];
     do {                                                            \
         opal_event_add(event, (value));                             \
     } while (0)
-#endif  /* MCA_BTL_TCP_USES_PROGRESS_THREAD */
+#endif  /* MCA_BTL_TCP_SUPPORT_PROGRESS_THREAD */
 
 /**
  * TCP BTL component.
@@ -143,6 +150,7 @@ struct mca_btl_tcp_component_t {
     int tcp_endpoint_cache;                 /**< amount of cache on each endpoint */
     opal_proc_table_t tcp_procs;            /**< hash table of tcp proc structures */
     opal_mutex_t tcp_lock;                  /**< lock for accessing module state */
+    opal_list_t tcp_events;
 
     opal_event_t tcp_recv_event;            /**< recv event for IPv4 listen socket */
     int tcp_listen_sd;                      /**< IPv4 listen socket for incoming connection requests */
@@ -169,7 +177,9 @@ struct mca_btl_tcp_component_t {
     opal_free_list_t tcp_frag_max;
     opal_free_list_t tcp_frag_user;
 
-#if MCA_BTL_TCP_USES_PROGRESS_THREAD
+    int tcp_enable_progress_thread;         /** Support for tcp progress thread flag */
+
+#if MCA_BTL_TCP_SUPPORT_PROGRESS_THREAD
     opal_event_t tcp_recv_thread_async_event;
     opal_mutex_t tcp_frag_eager_mutex;
     opal_mutex_t tcp_frag_max_mutex;

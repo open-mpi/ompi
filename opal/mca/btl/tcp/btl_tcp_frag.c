@@ -46,6 +46,15 @@
 #include "btl_tcp_frag.h"
 #include "btl_tcp_endpoint.h"
 
+static void mca_btl_tcp_frag_common_constructor(mca_btl_tcp_frag_t* frag) 
+{ 
+    frag->base.des_src = NULL;
+    frag->base.des_src_cnt = 0;
+    frag->base.des_dst = NULL;
+    frag->base.des_dst_cnt = 0;
+    frag->next_step = MCA_BTL_TCP_FRAG_STEP_UNDEFINED;
+}
+
 static void mca_btl_tcp_frag_eager_constructor(mca_btl_tcp_frag_t* frag) 
 { 
     frag->size = mca_btl_tcp_module.super.btl_eager_limit;   
@@ -104,6 +113,7 @@ size_t mca_btl_tcp_frag_dump(mca_btl_tcp_frag_t* frag, char* msg, char* buf, siz
     }
     return used;
 }
+
 
 bool mca_btl_tcp_frag_send(mca_btl_tcp_frag_t* frag, int sd)
 {
@@ -270,7 +280,7 @@ bool mca_btl_tcp_frag_recv(mca_btl_tcp_frag_t* frag, int sd)
                 frag->iov[1].iov_len = frag->hdr.size;
                 frag->iov_cnt++;
 #ifndef __sparc
-#if !MCA_BTL_TCP_USES_PROGRESS_THREAD
+#if !MCA_BTL_TCP_SUPPORT_PROGRESS_THREAD
                 /* The following cannot be done for sparc code 
                  * because it causes alignment errors when accessing
                  * structures later on in the btl and pml code.
@@ -305,19 +315,3 @@ bool mca_btl_tcp_frag_recv(mca_btl_tcp_frag_t* frag, int sd)
     return false;
 }
 
-void mca_btl_tcp_dump_frag( mca_btl_tcp_frag_t* frag, char* msg )
-{
-    int i;
-
-    mca_btl_base_err("%s %s frag %p (endpoint %p) size %lu iov_cnt %d iov_idx %d next_step %s rc %d\n",
-                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), msg, (void*)frag, (void*)frag->endpoint, frag->size, frag->iov_cnt, frag->iov_idx,
-                     (MCA_BTL_TCP_FRAG_STEP_UNDEFINED == frag->next_step ? "undefined" :
-                  (MCA_BTL_TCP_FRAG_STEP_SEND_COMPLETE == frag->next_step ? "send_complete" :
-                   (MCA_BTL_TCP_FRAG_STEP_RECV_COMPLETE == frag->next_step ? "recv_complete" : "unknown"))),
-                     frag->rc);
-    for( i = 0; i < frag->iov_cnt; i++ ) {
-        mca_btl_base_err("%s %s |   iov[%d] = {%p, %lu}\n",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), msg, i, frag->iov[i].iov_base, frag->iov[i].iov_len);
-    }
-    mca_btl_base_err("%s +\n", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-}

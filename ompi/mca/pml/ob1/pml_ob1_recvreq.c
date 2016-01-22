@@ -104,7 +104,7 @@ static int mca_pml_ob1_recv_request_cancel(struct ompi_request_t* ompi_request, 
     mca_pml_ob1_comm_t *ob1_comm = comm->c_pml_comm;
 
     /* The rest should be protected behind the match logic lock */
-    OPAL_THREAD_LOCK(&ob1_comm->matching_lock);
+    OB1_MATCHING_LOCK(&ob1_comm->matching_lock);
     if( true == request->req_match_received ) { /* way to late to cancel this one */
         OPAL_THREAD_UNLOCK(&ob1_comm->matching_lock);
         assert( OMPI_ANY_TAG != ompi_request->req_status.MPI_TAG ); /* not matched isn't it */
@@ -124,7 +124,7 @@ static int mca_pml_ob1_recv_request_cancel(struct ompi_request_t* ompi_request, 
      * to true. Otherwise, the request will never be freed.
      */
     request->req_recv.req_base.req_pml_complete = true;
-    OPAL_THREAD_UNLOCK(&ob1_comm->matching_lock);
+    OB1_MATCHING_UNLOCK(&ob1_comm->matching_lock);
 
     OPAL_THREAD_LOCK(&ompi_request_lock);
     ompi_request->req_status._cancelled = true;
@@ -1177,7 +1177,7 @@ void mca_pml_ob1_recv_req_start(mca_pml_ob1_recv_request_t *req)
 
     MCA_PML_BASE_RECV_START(&req->req_recv.req_base);
 
-    OPAL_THREAD_LOCK(&ob1_comm->matching_lock);
+    OB1_MATCHING_LOCK(&ob1_comm->matching_lock);
     /**
      * The laps of time between the ACTIVATE event and the SEARCH_UNEX one include
      * the cost of the request lock.
@@ -1219,7 +1219,7 @@ void mca_pml_ob1_recv_req_start(mca_pml_ob1_recv_request_t *req)
            it when the message comes in. */
         append_recv_req_to_queue(queue, req);
         req->req_match_received = false;
-        OPAL_THREAD_UNLOCK(&ob1_comm->matching_lock);
+        OB1_MATCHING_UNLOCK(&ob1_comm->matching_lock);
     } else {
         if(OPAL_LIKELY(!IS_PROB_REQ(req))) {
             PERUSE_TRACE_COMM_EVENT(PERUSE_COMM_REQ_MATCH_UNEX,
@@ -1237,7 +1237,7 @@ void mca_pml_ob1_recv_req_start(mca_pml_ob1_recv_request_t *req)
 
             opal_list_remove_item(&proc->unexpected_frags,
                                   (opal_list_item_t*)frag);
-            OPAL_THREAD_UNLOCK(&ob1_comm->matching_lock);
+            OB1_MATCHING_UNLOCK(&ob1_comm->matching_lock);
 
             switch(hdr->hdr_common.hdr_type) {
             case MCA_PML_OB1_HDR_TYPE_MATCH:
@@ -1267,14 +1267,14 @@ void mca_pml_ob1_recv_req_start(mca_pml_ob1_recv_request_t *req)
                restarted with this request during mrecv */
             opal_list_remove_item(&proc->unexpected_frags,
                                   (opal_list_item_t*)frag);
-            OPAL_THREAD_UNLOCK(&ob1_comm->matching_lock);
+            OB1_MATCHING_UNLOCK(&ob1_comm->matching_lock);
 
             req->req_recv.req_base.req_addr = frag;
             mca_pml_ob1_recv_request_matched_probe(req, frag->btl,
                                                    frag->segments, frag->num_segments);
 
         } else {
-            OPAL_THREAD_UNLOCK(&ob1_comm->matching_lock);
+            OB1_MATCHING_UNLOCK(&ob1_comm->matching_lock);
             mca_pml_ob1_recv_request_matched_probe(req, frag->btl,
                                                    frag->segments, frag->num_segments);
         }

@@ -35,6 +35,7 @@
 #include <net/uio.h>
 #endif
 
+#include "orte/util/name_fns.h"
 #include "btl_tcp.h"
 #include "btl_tcp_hdr.h"
 
@@ -56,6 +57,7 @@ struct mca_btl_tcp_frag_t {
     size_t iov_cnt;
     size_t iov_idx;
     size_t size;
+    uint16_t next_step;
     int rc;
     opal_free_list_t* my_list;
     /* fake rdma completion */
@@ -126,8 +128,6 @@ do {                                                                       \
 
 bool mca_btl_tcp_frag_send(mca_btl_tcp_frag_t*, int sd);
 bool mca_btl_tcp_frag_recv(mca_btl_tcp_frag_t*, int sd);
-
-size_t mca_btl_tcp_frag_dump(mca_btl_tcp_frag_t*, char*, char*, size_t);
-
+size_t mca_btl_tcp_frag_dump(mca_btl_tcp_frag_t* frag, char* msg, char* buf, size_t length);
 END_C_DECLS
 #endif

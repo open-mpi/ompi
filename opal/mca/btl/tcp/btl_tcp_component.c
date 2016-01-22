@@ -72,10 +72,9 @@
 #include "opal/mca/pmix/pmix.h"
 
 #include "ompi/constants.h"
-#include "ompi/mca/btl/btl.h"
-#include "ompi/mca/btl/base/base.h" 
-#include "ompi/runtime/ompi_module_exchange.h"
-#include "ompi/mca/btl/base/btl_base_error.h"
+#include "opal/mca/btl/btl.h"
+#include "opal/mca/btl/base/base.h" 
+#include "opal/mca/btl/base/btl_base_error.h"
 #include "btl_tcp.h"
 #include "btl_tcp_addr.h"
 #include "btl_tcp_proc.h"
@@ -93,13 +92,13 @@ static int mca_btl_tcp_component_open(void);
 static int mca_btl_tcp_component_close(void);
 
 opal_event_base_t* mca_btl_tcp_event_base = NULL;
-#if MCA_BTL_TCP_USES_PROGRESS_THREAD
-static int mca_btl_tcp_progress_thread_trigger = -1;
+#if MCA_BTL_TCP_SUPPORT_PROGRESS_THREAD
+int mca_btl_tcp_progress_thread_trigger = -1;
 int mca_btl_tcp_pipe_to_progress[2] = { -1, -1 };
 static opal_thread_t mca_btl_tcp_progress_thread;
 opal_list_t mca_btl_tcp_ready_frag_pending_queue;
 opal_mutex_t mca_btl_tcp_ready_frag_mutex;
-#endif  /* MCA_BTL_TCP_USES_PROGRESS_THREAD */
+#endif  /* MCA_BTL_TCP_SUPPORT_PROGRESS_THREAD */
 static char *mca_btl_tcp_if_seq_string;
 
 mca_btl_tcp_component_t mca_btl_tcp_component = {
@@ -119,11 +118,11 @@ mca_btl_tcp_component_t mca_btl_tcp_component = {
         },
 
         .btl_init = mca_btl_tcp_component_init,
-#if MCA_BTL_TCP_USES_PROGRESS_THREAD
-        mca_btl_tcp_component_progress,
-#else
+//#if MCA_BTL_TCP_USES_PROGRESS_THREAD
+//        mca_btl_tcp_component_progress,
+//#else
         NULL,
-#endif  /* MCA_BTL_TCP_USES_PROGRESS_THREAD */
+//#endif  /* MCA_BTL_TCP_USES_PROGRESS_THREAD */
     }
 };
 
@@ -289,6 +288,20 @@ static int mca_btl_tcp_component_register(void)
     free(message);
 #endif
 
+    /* Check if we should support async progress */
+    mca_btl_tcp_param_register_int ("progress_thread", NULL, 0, OPAL_INFO_LVL_1,
+                                     &mca_btl_tcp_component.tcp_enable_progress_thread);
+#if !defined(MCA_BTL_TCP_SUPPORT_PROGRESS_THREAD)
+    if( mca_btl_tcp_component.tcp_enable_progress_thread ) {
+        opal_show_help("help-mpi-btl-tcp.txt",
+                       "unsuported progress thread",
+                       true, "progress thread",
+                       ompi_process_info.nodename,
+                       mca_btl_tcp_component.tcp_if_seq,
+                       "Progress thread support compiled out");
+     }
+#endif  /* !defined(MCA_BTL_TCP_SUPPORT_PROGRESS_THREAD) */
+
     mca_btl_tcp_component.report_all_unfound_interfaces = false;
     (void) mca_base_component_var_register(&mca_btl_tcp_component.super.btl_version,
                                            "warn_all_unfound_interfaces",
@@ -340,18 +353,19 @@ static int mca_btl_tcp_component_open(void)
     /* initialize objects */
     OBJ_CONSTRUCT(&mca_btl_tcp_component.tcp_lock, opal_mutex_t);
     OBJ_CONSTRUCT(&mca_btl_tcp_component.tcp_procs, opal_proc_table_t);
+    OBJ_CONSTRUCT(&mca_btl_tcp_component.tcp_events, opal_list_t);
     OBJ_CONSTRUCT(&mca_btl_tcp_component.tcp_frag_eager, opal_free_list_t);
     OBJ_CONSTRUCT(&mca_btl_tcp_component.tcp_frag_max, opal_free_list_t);
     OBJ_CONSTRUCT(&mca_btl_tcp_component.tcp_frag_user, opal_free_list_t);
     opal_proc_table_init(&mca_btl_tcp_component.tcp_procs, 16, 256);
 
-#if  MCA_BTL_TCP_USES_PROGRESS_THREAD
+#if  MCA_BTL_TCP_SUPPORT_PROGRESS_THREAD
     OBJ_CONSTRUCT(&mca_btl_tcp_component.tcp_frag_eager_mutex, opal_mutex_t);
     OBJ_CONSTRUCT(&mca_btl_tcp_component.tcp_frag_max_mutex, opal_mutex_t);
     OBJ_CONSTRUCT(&mca_btl_tcp_component.tcp_frag_user_mutex, opal_mutex_t);
     OBJ_CONSTRUCT(&mca_btl_tcp_ready_frag_mutex, opal_mutex_t);
     OBJ_CONSTRUCT(&mca_btl_tcp_ready_frag_pending_queue, opal_list_t);
-#endif  /*  MCA_BTL_TCP_USES_PROGRESS_THREAD */
+#endif  /*  MCA_BTL_TCP_SUPPORT_PROGRESS_THREAD */
 
     /* if_include and if_exclude need to be mutually exclusive */
     if (OPAL_SUCCESS !=
@@ -380,9 +394,6 @@ static int mca_btl_tcp_component_close(void)
     opal_list_item_t* item;
     opal_list_item_t* next;
 
-    if (NULL != mca_btl_tcp_component.tcp_if_seq) {
-        free(mca_btl_tcp_component.tcp_if_seq);
-    }
     if (NULL != mca_btl_tcp_component.tcp_btls) {
         free(mca_btl_tcp_component.tcp_btls);
     }
@@ -423,7 +434,7 @@ static int mca_btl_tcp_component_close(void)
     mca_common_cuda_fini();
 #endif /* OPAL_CUDA_SUPPORT */
 
-#if MCA_BTL_TCP_USES_PROGRESS_THREAD
+#if MCA_BTL_TCP_SUPPORT_PROGRESS_THREAD
     OBJ_DESTRUCT(&mca_btl_tcp_component.tcp_frag_eager_mutex);
     OBJ_DESTRUCT(&mca_btl_tcp_component.tcp_frag_max_mutex);
 
@@ -752,7 +763,7 @@ static int mca_btl_tcp_component_create_instances(void)
     return ret;
 }
 
-#if MCA_BTL_TCP_USES_PROGRESS_THREAD
+#if MCA_BTL_TCP_SUPPORT_PROGRESS_THREAD
 static void* mca_btl_tcp_progress_thread_engine(opal_object_t *obj)
 {
     opal_thread_t* current_thread = (opal_thread_t*)obj;
@@ -779,7 +790,7 @@ static void mca_btl_tcp_component_event_async_handler(int fd, short unused, void
         opal_event_add(event, 0);
     }
 }
-
+/*
 int mca_btl_tcp_component_progress( void )
 {
     mca_btl_tcp_frag_t* frag;
@@ -807,6 +818,7 @@ int mca_btl_tcp_component_progress( void )
     }
     return count;
 }
+*/
 #endif
 
 /*
@@ -971,67 +983,67 @@ static int mca_btl_tcp_component_create_listen(uint16_t af_family)
         }
     }
 
-#if MCA_BTL_TCP_USES_PROGRESS_THREAD
-    /* Declare our intent to use threads. */
-    opal_event_use_threads();
-    if( NULL == mca_btl_tcp_event_base ) {
-        /* fall back to only one event base (the one shared by the entire Open MPI framework) */
-        mca_btl_tcp_event_base = opal_sync_event_base;
+    if(mca_btl_tcp_component.tcp_enable_progress_thread){
+        /* Declare our intent to use threads. */
+        opal_event_use_threads();
+        if( NULL == mca_btl_tcp_event_base ) {
+            /* fall back to only one event base (the one shared by the entire Open MPI framework) */
 
-        if( NULL == (mca_btl_tcp_event_base = opal_sync_event_base_create()) ) {
-            BTL_ERROR(("BTL TCP failed to create progress event base"));
-            goto move_forward_with_no_thread;
-        }
-        opal_event_base_priority_init(mca_btl_tcp_event_base, OPAL_EVENT_NUM_PRI);
+            if( NULL == (mca_btl_tcp_event_base = opal_event_base_create()) ) {
+                BTL_ERROR(("BTL TCP failed to create progress event base"));
+                goto move_forward_with_no_thread;
+            }
+            opal_event_base_priority_init(mca_btl_tcp_event_base, OPAL_EVENT_NUM_PRI);
 
-        /* construct the thread object */
-        OBJ_CONSTRUCT(&mca_btl_tcp_progress_thread, opal_thread_t);
+            /* construct the thread object */
+            OBJ_CONSTRUCT(&mca_btl_tcp_progress_thread, opal_thread_t);
 
-        /**
-         * Create a pipe to communicate between the main thread and the progress thread.
-         */
-        if (0 != pipe(mca_btl_tcp_pipe_to_progress)) {
-            opal_event_base_free(mca_btl_tcp_event_base);
-            /* fall back to only one event base (the one shared by the entire Open MPI framework */
-            mca_btl_tcp_event_base = opal_sync_event_base;
-            mca_btl_tcp_progress_thread_trigger = -1;  /* thread not started */
-            goto move_forward_with_no_thread;
-        }
-        /* setup the receiving end of the pipe as non-blocking */
-        if((flags = fcntl(mca_btl_tcp_pipe_to_progress[0], F_GETFL, 0)) < 0) {
-            BTL_ERROR(("fcntl(F_GETFL) failed: %s (%d)", 
-                       strerror(opal_socket_errno), opal_socket_errno));
-        } else {
-            flags |= O_NONBLOCK;
-            if(fcntl(mca_btl_tcp_pipe_to_progress[0], F_SETFL, flags) < 0)
-                BTL_ERROR(("fcntl(F_SETFL) failed: %s (%d)", 
+            /**
+             * Create a pipe to communicate between the main thread and the progress thread.
+             */
+            if (0 != pipe(mca_btl_tcp_pipe_to_progress)) {
+                opal_event_base_free(mca_btl_tcp_event_base);
+                /* fall back to only one event base (the one shared by the entire Open MPI framework */
+                mca_btl_tcp_event_base = opal_sync_event_base;
+                mca_btl_tcp_progress_thread_trigger = -1;  /* thread not started */
+                goto move_forward_with_no_thread;
+            }
+            /* setup the receiving end of the pipe as non-blocking */
+            if((flags = fcntl(mca_btl_tcp_pipe_to_progress[0], F_GETFL, 0)) < 0) {
+                BTL_ERROR(("fcntl(F_GETFL) failed: %s (%d)", 
                            strerror(opal_socket_errno), opal_socket_errno));
-        }
-        /* Progress thread event */
-        opal_event_set(mca_btl_tcp_event_base, &mca_btl_tcp_component.tcp_recv_thread_async_event,
-                       mca_btl_tcp_pipe_to_progress[0],
-                       OPAL_EV_READ|OPAL_EV_PERSIST,
-                       mca_btl_tcp_component_event_async_handler,
-                       &mca_btl_tcp_progress_thread );
-        opal_event_add(&mca_btl_tcp_component.tcp_recv_thread_async_event, 0);
+            } else {
+                flags |= O_NONBLOCK;
+                if(fcntl(mca_btl_tcp_pipe_to_progress[0], F_SETFL, flags) < 0)
+                    BTL_ERROR(("fcntl(F_SETFL) failed: %s (%d)", 
+                               strerror(opal_socket_errno), opal_socket_errno));
+            }
+            /* Progress thread event */
+            opal_event_set(mca_btl_tcp_event_base, &mca_btl_tcp_component.tcp_recv_thread_async_event,
+                           mca_btl_tcp_pipe_to_progress[0],
+                           OPAL_EV_READ|OPAL_EV_PERSIST,
+                           mca_btl_tcp_component_event_async_handler,
+                           &mca_btl_tcp_progress_thread );
+            opal_event_add(&mca_btl_tcp_component.tcp_recv_thread_async_event, 0);
 
-        /* fork off a thread to progress it */
-        mca_btl_tcp_progress_thread.t_run = mca_btl_tcp_progress_thread_engine;
-        mca_btl_tcp_progress_thread.t_arg = &mca_btl_tcp_progress_thread_trigger;
-        mca_btl_tcp_progress_thread_trigger = 1;  /* thread up and running */
-        if( OPAL_SUCCESS != (rc = opal_thread_start(&mca_btl_tcp_progress_thread)) ) {
-            BTL_ERROR(("BTL TCP progress thread initialization failed (%d)", rc));
-            opal_event_base_free(mca_btl_tcp_event_base);
-            /* fall back to only one event base (the one shared by the entire Open MPI framework */
-            mca_btl_tcp_event_base = opal_sync_event_base;
-            mca_btl_tcp_progress_thread_trigger = -1;  /* thread not started */
-            goto move_forward_with_no_thread;
+            /* fork off a thread to progress it */
+            mca_btl_tcp_progress_thread.t_run = mca_btl_tcp_progress_thread_engine;
+            mca_btl_tcp_progress_thread.t_arg = &mca_btl_tcp_progress_thread_trigger;
+            mca_btl_tcp_progress_thread_trigger = 1;  /* thread up and running */
+            if( OPAL_SUCCESS != (rc = opal_thread_start(&mca_btl_tcp_progress_thread)) ) {
+                BTL_ERROR(("BTL TCP progress thread initialization failed (%d)", rc));
+                opal_event_base_free(mca_btl_tcp_event_base);
+                /* fall back to only one event base (the one shared by the entire Open MPI framework */
+                mca_btl_tcp_event_base = opal_sync_event_base;
+                mca_btl_tcp_progress_thread_trigger = -1;  /* thread not started */
+                goto move_forward_with_no_thread;
+            }
         }
     }
- move_forward_with_no_thread:
-#else
-    mca_btl_tcp_event_base = opal_sync_event_base;
-#endif
+    else {
+        move_forward_with_no_thread:
+            mca_btl_tcp_event_base = opal_sync_event_base;
+    }
 
     if (AF_INET == af_family) {
         opal_event_set(mca_btl_tcp_event_base, &mca_btl_tcp_component.tcp_recv_event,
@@ -1154,6 +1166,7 @@ mca_btl_base_module_t** mca_btl_tcp_component_init(int *num_btl_modules,
                                                    bool enable_mpi_threads)
 {
     int ret = OPAL_SUCCESS;
+    unsigned int i;
     mca_btl_base_module_t **btls;
     *num_btl_modules = 0;
 
@@ -1213,17 +1226,22 @@ mca_btl_base_module_t** mca_btl_tcp_component_init(int *num_btl_modules,
     if(OPAL_SUCCESS != (ret = mca_btl_tcp_component_exchange() )) {
         return 0;
     }
-
     btls = (mca_btl_base_module_t **)malloc(mca_btl_tcp_component.tcp_num_btls *
                   sizeof(mca_btl_base_module_t*));
     if(NULL == btls) {
         return NULL;
     }
 
+    /* Register the btl to support the progress_thread */
+    if (0 < mca_btl_tcp_progress_thread_trigger){
+        for(i=0;i<mca_btl_tcp_component.tcp_num_btls;i++){
+            mca_btl_tcp_component.tcp_btls[i]->super.btl_flags |= MCA_BTL_FLAGS_BTL_PROGRESS_THREAD_ENABLED;
+        }
+    }
+
 #if OPAL_CUDA_SUPPORT
     mca_common_cuda_stage_one_init();
 #endif /* OPAL_CUDA_SUPPORT */
-
     memcpy(btls, mca_btl_tcp_component.tcp_btls, mca_btl_tcp_component.tcp_num_btls*sizeof(mca_btl_tcp_module_t*));
     *num_btl_modules = mca_btl_tcp_component.tcp_num_btls;
     return btls;
