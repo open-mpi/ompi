@@ -12,6 +12,7 @@
  * Copyright (c) 2012-2013 Inria.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016 IBM Corp.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -104,6 +105,6 @@ int MPI_Info_set(MPI_Info info, const char *key, const char *value)
      * allocator.
      */
 
-    err = ompi_info_set (info, key, value);
+    err = opal_info_set (info, key, value);
     OMPI_ERRHANDLER_RETURN(err, MPI_COMM_WORLD, err, FUNC_NAME);
 }

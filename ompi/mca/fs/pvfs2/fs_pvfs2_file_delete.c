@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2011 University of Houston. All rights reserved.
+ * Copyright (c) 2016 IBM Corp.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -38,7 +39,7 @@
  */
 int
 mca_fs_pvfs2_file_delete (char* file_name,
-                          struct ompi_info_t *info)
+                          struct opal_info_t *info)
 {
     PVFS_credentials credentials;
     PVFS_sysresp_getparent resp_getparent;

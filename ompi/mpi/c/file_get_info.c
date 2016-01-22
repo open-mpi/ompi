@@ -12,6 +12,7 @@
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016 IBM Corp.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -24,6 +25,7 @@
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/runtime/params.h"
 #include "ompi/errhandler/errhandler.h"
+#include "ompi/communicator/communicator.h"
 #include "ompi/file/file.h"
 
 #if OMPI_BUILD_MPI_PROFILING
@@ -38,36 +40,33 @@ static const char FUNC_NAME[] = "MPI_File_get_info";
 
 int MPI_File_get_info(MPI_File fh, MPI_Info *info_used)
 {
-    int rc;
+    OPAL_CR_NOOP_PROGRESS();
 
     if (MPI_PARAM_CHECK) {
-        rc = MPI_SUCCESS;
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-        if (ompi_file_invalid(fh)) {
-            rc = MPI_ERR_FILE;
-            fh = MPI_FILE_NULL;
-        } else if (NULL == info_used) {
-            rc = MPI_ERR_ARG;
+        if (NULL == info_used) {
+            return OMPI_ERRHANDLER_INVOKE(fh, MPI_ERR_INFO, FUNC_NAME);
         }
-        OMPI_ERRHANDLER_CHECK(rc, fh, rc, FUNC_NAME);
+        if (ompi_file_invalid(fh)) {
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM,
+                                          FUNC_NAME);
+        }
     }
 
-    OPAL_CR_ENTER_LIBRARY();
-
-    /* Call the back-end io component function */
-
-    switch (fh->f_io_version) {
-    case MCA_IO_BASE_V_2_0_0:
-        rc = fh->f_io_selected_module.v2_0_0.
-            io_module_file_get_info(fh, info_used);
-        break;
-
-    default:
-        rc = MPI_ERR_INTERN;
-        break;
+    if (NULL == fh->super.s_info) {
+/*
+ * Setup any defaults if MPI_Win_set_info was never called
+ */
+        opal_infosubscribe_change_info(fh, &MPI_INFO_NULL->super);
     }
 
-    /* All done */
 
-    OMPI_ERRHANDLER_RETURN(rc, fh, rc, FUNC_NAME);
+    (*info_used) = OBJ_NEW(ompi_info_t);
+    if (NULL == (*info_used)) {
+       return OMPI_ERRHANDLER_INVOKE(fh, MPI_ERR_NO_MEM, FUNC_NAME);
+    }
+
+    opal_info_dup(fh->super.s_info, &(*info_used)->super);
+
+    return OMPI_SUCCESS;
 }

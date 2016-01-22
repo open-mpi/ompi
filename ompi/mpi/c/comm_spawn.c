@@ -17,6 +17,7 @@
  * Copyright (c) 2015      Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016 IBM Corp.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -109,7 +110,7 @@ int MPI_Comm_spawn(const char *command, char *argv[], int maxprocs, MPI_Info inf
 
     /* See if the info key "ompi_non_mpi" was set to true */
     if (rank == root) {
-        ompi_info_get_bool(info, "ompi_non_mpi", &non_mpi, &flag);
+        opal_info_get_bool(info, "ompi_non_mpi", &non_mpi, &flag);
     }
 
     OPAL_CR_ENTER_LIBRARY();

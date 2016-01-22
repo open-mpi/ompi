@@ -5,6 +5,7 @@
  *                         reserved.
  * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016 IBM Corp.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -281,8 +282,8 @@ int ompi_osc_portals4_flush_local(int target,
                                   struct ompi_win_t *win);
 int ompi_osc_portals4_flush_local_all(struct ompi_win_t *win);
 
-int ompi_osc_portals4_set_info(struct ompi_win_t *win, struct ompi_info_t *info);
-int ompi_osc_portals4_get_info(struct ompi_win_t *win, struct ompi_info_t **info_used);
+int ompi_osc_portals4_set_info(struct ompi_win_t *win, struct opal_info_t *info);
+int ompi_osc_portals4_get_info(struct ompi_win_t *win, struct opal_info_t **info_used);
 
 static inline int
 ompi_osc_portals4_complete_all(ompi_osc_portals4_module_t *module)

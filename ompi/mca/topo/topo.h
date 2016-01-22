@@ -16,6 +16,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2016 IBM Corp.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -252,7 +253,7 @@ typedef int (*mca_topo_base_module_dist_graph_create_fn_t)
                      struct ompi_communicator_t *old_comm,
                      int n, const int nodes[],
                      const int degrees[], const int targets[], const int weights[],
-                     struct ompi_info_t *info, int reorder,
+                     struct opal_info_t *info, int reorder,
                      struct ompi_communicator_t **new_comm);
 
 /* Back end for MPI_DIST_GRAPH_CREATE_ADJACENT */
@@ -264,7 +265,7 @@ typedef int (*mca_topo_base_module_dist_graph_create_adjacent_fn_t)
                      int outdegree,
                      const int destinations[],
                      const int destweights[],
-                     struct ompi_info_t *info, int reorder,
+                     struct opal_info_t *info, int reorder,
                      ompi_communicator_t **comm_dist_graph);
 
 /* Back end for MPI_DIST_GRAPH_NEIGHBORS */

@@ -15,6 +15,7 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016      University of Houston. All rights reserved.
+ * Copyright (c) 2016 IBM Corp.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -30,6 +31,7 @@
 #include "opal/class/opal_list.h"
 #include "ompi/errhandler/errhandler.h"
 #include "opal/threads/mutex.h"
+#include "opal/util/info_subscriber.h"
 #include "ompi/mca/io/io.h"
 
 /*
@@ -45,7 +47,7 @@ BEGIN_C_DECLS
  */
 struct ompi_file_t {
     /** Base of OBJ_* interface */
-    opal_object_t super;
+    opal_infosubscriber_t super;
 
     /** Communicator that this file was created with */
     struct ompi_communicator_t *f_comm;
@@ -55,10 +57,6 @@ struct ompi_file_t {
 
     /** Amode that this file was created with */
     int f_amode;
-
-    /** MPI_Info that this file was created with.  Note that this is
-        *NOT* what should be returned from OMPI_FILE_GET_INFO! */
-    struct ompi_info_t *f_info;
 
     /** Bit flags */
     int32_t f_flags;
@@ -153,7 +151,7 @@ int ompi_file_init(void);
  * handling as well.
  */
 int ompi_file_open(struct ompi_communicator_t *comm, const char *filename,
-                   int amode, struct ompi_info_t *info,
+                   int amode, struct opal_info_t *info,
                    ompi_file_t **fh);
 
 /**

@@ -13,6 +13,7 @@
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016 IBM Corp.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -45,7 +46,7 @@ BEGIN_C_DECLS
 
 
 struct ompi_win_t;
-struct ompi_info_t;
+struct opal_info_t;
 struct ompi_communicator_t;
 struct ompi_group_t;
 struct ompi_datatype_t;
@@ -116,7 +117,7 @@ typedef int (*ompi_osc_base_component_query_fn_t)(struct ompi_win_t *win,
                                                   size_t size,
                                                   int disp_unit,
                                                   struct ompi_communicator_t *comm,
-                                                  struct ompi_info_t *info,
+                                                  struct opal_info_t *info,
                                                   int flavor);
 
 /**
@@ -148,7 +149,7 @@ typedef int (*ompi_osc_base_component_select_fn_t)(struct ompi_win_t *win,
                                                    size_t size,
                                                    int disp_unit,
                                                    struct ompi_communicator_t *comm,
-                                                   struct ompi_info_t *info,
+                                                   struct opal_info_t *info,
                                                    int flavor,
                                                    int *model);
 
@@ -352,9 +353,6 @@ typedef int (*ompi_osc_base_module_flush_local_fn_t)(int target,
                                                struct ompi_win_t *win);
 typedef int (*ompi_osc_base_module_flush_local_all_fn_t)(struct ompi_win_t *win);
 
-typedef int (*ompi_osc_base_module_set_info_fn_t)(struct ompi_win_t *win, struct ompi_info_t *info);
-typedef int (*ompi_osc_base_module_get_info_fn_t)(struct ompi_win_t *win, struct ompi_info_t **info_used);
-
 
 
 /* ******************************************************************** */
@@ -406,9 +404,6 @@ struct ompi_osc_base_module_3_0_0_t {
     ompi_osc_base_module_flush_all_fn_t osc_flush_all;
     ompi_osc_base_module_flush_local_fn_t osc_flush_local;
     ompi_osc_base_module_flush_local_all_fn_t osc_flush_local_all;
-
-    ompi_osc_base_module_set_info_fn_t osc_set_info;
-    ompi_osc_base_module_get_info_fn_t osc_get_info;
 };
 typedef struct ompi_osc_base_module_3_0_0_t ompi_osc_base_module_3_0_0_t;
 typedef ompi_osc_base_module_3_0_0_t ompi_osc_base_module_t;

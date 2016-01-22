@@ -56,7 +56,7 @@ int mca_common_ompio_set_view (mca_io_ompio_file_t *fh,
                                ompi_datatype_t *etype,
                                ompi_datatype_t *filetype,
                                const char *datarep,
-                               ompi_info_t *info)
+                               opal_info_t *info)
 {
 
     size_t max_data = 0;

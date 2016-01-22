@@ -3,6 +3,7 @@
  *                         All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
  *
+ * Copyright (c) 2016 IBM Corp.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -111,7 +112,7 @@ int main(int argc, char *argv[])
 #endif
 
     /* add in the ompi frameworks */
-    ompi_info_register_types(&mca_types);
+    opal_info_register_types(&mca_types);
 
     /* add in the oshmem frameworks */
     oshmem_info_register_types(&mca_types);

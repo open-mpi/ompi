@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2013-2016 University of Houston. All rights reserved.
+ * Copyright (c) 2016 IBM Corp.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -34,7 +35,7 @@
 int mca_sharedfp_addproc_file_open (struct ompi_communicator_t *comm,
                                     const char* filename,
                                     int amode,
-                                    struct ompi_info_t *info,
+                                    struct opal_info_t *info,
                                     mca_io_ompio_file_t *fh)
 {
     int ret = OMPI_SUCCESS, err;

@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016 IBM Corp.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -82,7 +83,7 @@ int MPI_Info_get_nthkey(MPI_Info info, int n, char *key)
        1 from the value returned by get_nkeys().  So be sure to
        compare appropriately. */
 
-    err = ompi_info_get_nkeys(info, &nkeys);
+    err = opal_info_get_nkeys(info, &nkeys);
     OMPI_ERRHANDLER_CHECK(err, MPI_COMM_WORLD, err, FUNC_NAME);
     if (n > (nkeys - 1)) {
         OPAL_CR_EXIT_LIBRARY();
@@ -92,6 +93,6 @@ int MPI_Info_get_nthkey(MPI_Info info, int n, char *key)
 
     /* Everything seems alright. Call the back end key copy */
 
-    err = ompi_info_get_nthkey (info, n, key);
+    err = opal_info_get_nthkey (info, n, key);
     OMPI_ERRHANDLER_RETURN(err, MPI_COMM_WORLD, err, FUNC_NAME);
 }

@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2011 University of Houston. All rights reserved.
+ * Copyright (c) 2016 IBM Corp.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -35,8 +36,6 @@ mca_io_base_module_2_0_0_t mca_io_ompio_module = {
     mca_io_ompio_file_preallocate,
     mca_io_ompio_file_get_size,
     mca_io_ompio_file_get_amode,
-    mca_io_ompio_file_set_info,
-    mca_io_ompio_file_get_info,
 
     mca_io_ompio_file_set_view,
     mca_io_ompio_file_get_view,

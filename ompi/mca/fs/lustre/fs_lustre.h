@@ -12,6 +12,7 @@
  * Copyright (c) 2008-2016 University of Houston. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016 IBM Corp.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -60,13 +61,13 @@ OMPI_MODULE_DECLSPEC extern mca_fs_base_component_2_0_0_t mca_fs_lustre_componen
 int mca_fs_lustre_file_open (struct ompi_communicator_t *comm,
                              const char *filename,
                              int amode,
-                             struct ompi_info_t *info,
+                             struct opal_info_t *info,
                              mca_io_ompio_file_t *fh);
 
 int mca_fs_lustre_file_close (mca_io_ompio_file_t *fh);
 
 int mca_fs_lustre_file_delete (char *filename,
-                               struct ompi_info_t *info);
+                               struct opal_info_t *info);
 
 int mca_fs_lustre_file_set_size (mca_io_ompio_file_t *fh,
                                  OMPI_MPI_OFFSET_TYPE size);

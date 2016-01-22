@@ -16,6 +16,7 @@
  * Copyright (c) 2012-2013 Sandia National Laboratories.  All rights reserved.
  * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016 IBM Corp.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -38,10 +39,10 @@ static int component_register(void);
 static int component_init(bool enable_progress_threads, bool enable_mpi_threads);
 static int component_finalize(void);
 static int component_query(struct ompi_win_t *win, void **base, size_t size, int disp_unit,
-                           struct ompi_communicator_t *comm, struct ompi_info_t *info,
+                           struct ompi_communicator_t *comm, struct opal_info_t *info,
                            int flavor);
 static int component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit,
-                            struct ompi_communicator_t *comm, struct ompi_info_t *info,
+                            struct ompi_communicator_t *comm, struct opal_info_t *info,
                             int flavor, int *model);
 
 ompi_osc_pt2pt_component_t mca_osc_pt2pt_component = {
@@ -114,11 +115,11 @@ bool ompi_osc_pt2pt_no_locks = false;
 /* look up parameters for configuring this window.  The code first
    looks in the info structure passed by the user, then through mca
    parameters. */
-static bool check_config_value_bool(char *key, ompi_info_t *info, bool result)
+static bool check_config_value_bool(char *key, opal_info_t *info, bool result)
 {
     int flag;
 
-    (void) ompi_info_get_bool (info, key, &result, &flag);
+    (void) opal_info_get_bool (info, key, &result, &flag);
     return result;
 }
 
@@ -282,7 +283,7 @@ component_finalize(void)
 
 static int
 component_query(struct ompi_win_t *win, void **base, size_t size, int disp_unit,
-                struct ompi_communicator_t *comm, struct ompi_info_t *info,
+                struct ompi_communicator_t *comm, struct opal_info_t *info,
                 int flavor)
 {
     if (MPI_WIN_FLAVOR_SHARED == flavor) return -1;
@@ -293,7 +294,7 @@ component_query(struct ompi_win_t *win, void **base, size_t size, int disp_unit,
 
 static int
 component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit,
-                 struct ompi_communicator_t *comm, struct ompi_info_t *info,
+                 struct ompi_communicator_t *comm, struct opal_info_t *info,
                  int flavor, int *model)
 {
     ompi_osc_pt2pt_module_t *module = NULL;
@@ -442,7 +443,7 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
 
 
 int
-ompi_osc_pt2pt_set_info(struct ompi_win_t *win, struct ompi_info_t *info)
+ompi_osc_pt2pt_set_info(struct ompi_win_t *win, struct opal_info_t *info)
 {
     ompi_osc_pt2pt_module_t *module =
         (ompi_osc_pt2pt_module_t*) win->w_osc_module;
@@ -454,9 +455,9 @@ ompi_osc_pt2pt_set_info(struct ompi_win_t *win, struct ompi_info_t *info)
 
 
 int
-ompi_osc_pt2pt_get_info(struct ompi_win_t *win, struct ompi_info_t **info_used)
+ompi_osc_pt2pt_get_info(struct ompi_win_t *win, struct opal_info_t **info_used)
 {
-    ompi_info_t *info = OBJ_NEW(ompi_info_t);
+    opal_info_t *info = OBJ_NEW(opal_info_t);
     if (NULL == info) return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
 
     *info_used = info;

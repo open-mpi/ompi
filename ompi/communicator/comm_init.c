@@ -21,6 +21,7 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015      Intel, Inc. All rights reserved.
+ * Copyright (c) 2016 IBM Corp.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -33,6 +34,7 @@
 #include <stdio.h>
 
 #include "opal/util/bit_ops.h"
+#include "opal/util/info_subscriber.h"
 #include "ompi/constants.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/coll/base/base.h"
@@ -52,9 +54,9 @@
 opal_pointer_array_t ompi_mpi_communicators = {{0}};
 opal_pointer_array_t ompi_comm_f_to_c_table = {{0}};
 
-ompi_predefined_communicator_t  ompi_mpi_comm_world = {{{0}}};
-ompi_predefined_communicator_t  ompi_mpi_comm_self = {{{0}}};
-ompi_predefined_communicator_t  ompi_mpi_comm_null = {{{0}}};
+ompi_predefined_communicator_t  ompi_mpi_comm_world = {{{{0}}}};
+ompi_predefined_communicator_t  ompi_mpi_comm_self = {{{{0}}}};
+ompi_predefined_communicator_t  ompi_mpi_comm_null = {{{{0}}}};
 ompi_communicator_t  *ompi_mpi_comm_parent = NULL;
 
 ompi_predefined_communicator_t *ompi_mpi_comm_world_addr =
@@ -67,7 +69,7 @@ ompi_predefined_communicator_t *ompi_mpi_comm_null_addr =
 static void ompi_comm_construct(ompi_communicator_t* comm);
 static void ompi_comm_destruct(ompi_communicator_t* comm);
 
-OBJ_CLASS_INSTANCE(ompi_communicator_t, opal_object_t,
+OBJ_CLASS_INSTANCE(ompi_communicator_t, opal_infosubscriber_t,
                    ompi_comm_construct,
                    ompi_comm_destruct);
 

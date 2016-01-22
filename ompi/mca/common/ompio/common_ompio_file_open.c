@@ -43,7 +43,7 @@
 int mca_common_ompio_file_open (ompi_communicator_t *comm,
                               const char *filename,
                               int amode,
-                              ompi_info_t *info,
+                              opal_info_t *info,
                               mca_io_ompio_file_t *ompio_fh, bool use_sharedfp)
 {
     int ret = OMPI_SUCCESS;

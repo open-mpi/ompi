@@ -26,7 +26,7 @@ int mca_topo_base_dist_graph_create_adjacent(mca_topo_base_module_t* module,
                                              int outdegree,
                                              const int destinations[],
                                              const int destweights[],
-                                             ompi_info_t *info, int reorder,
+                                             opal_info_t *info, int reorder,
                                              ompi_communicator_t **newcomm)
 {
     mca_topo_base_comm_dist_graph_2_2_0_t *topo = NULL;

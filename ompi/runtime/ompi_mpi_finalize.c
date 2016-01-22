@@ -20,6 +20,7 @@
  * Copyright (c) 2016      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  *
+ * Copyright (c) 2016 IBM Corp.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -426,7 +427,7 @@ int ompi_mpi_finalize(void)
     }
 
     /* free info resources */
-    if (OMPI_SUCCESS != (ret = ompi_info_finalize())) {
+    if (OMPI_SUCCESS != (ret = ompi_mpiinfo_finalize())) {
         goto done;
     }
 
