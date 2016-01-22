@@ -286,7 +286,7 @@ int mca_coll_hcoll_ialltoallv(void *sbuf, int *scounts,
                             ompi_request_t **req,
                             mca_coll_base_module_t *module);
 
-int mca_coll_hcoll_igatherv(void* sbuf, int scount,
+int mca_coll_hcoll_igatherv(const void* sbuf, int scount,
                             struct ompi_datatype_t *sdtype,
                             void* rbuf, int *rcounts, int *displs,
                             struct ompi_datatype_t *rdtype,
