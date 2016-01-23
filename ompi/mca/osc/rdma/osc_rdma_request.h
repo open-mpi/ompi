@@ -60,6 +60,7 @@ struct ompi_osc_rdma_request_t {
 
     /** synchronization object */
     struct ompi_osc_rdma_sync_t *sync;
+    void *buffer;
 };
 typedef struct ompi_osc_rdma_request_t ompi_osc_rdma_request_t;
 OBJ_CLASS_DECLARATION(ompi_osc_rdma_request_t);
@@ -78,18 +79,19 @@ OBJ_CLASS_DECLARATION(ompi_osc_rdma_request_t);
         req = (ompi_osc_rdma_request_t*) item;                          \
         OMPI_REQUEST_INIT(&req->super, false);                          \
         req->super.req_mpi_object.win = module->win;                    \
-        req->super.req_complete = false;                                \
         req->super.req_state = OMPI_REQUEST_ACTIVE;                     \
         req->module = rmodule;                                          \
-        req->internal = false;                                          \
-        req->outstanding_requests = 0;                                  \
-        req->parent_request = NULL;                                     \
         req->peer = (rpeer);                                            \
     } while (0)
 
 #define OMPI_OSC_RDMA_REQUEST_RETURN(req)                               \
     do {                                                                \
         OMPI_REQUEST_FINI(&(req)->super);                               \
+        free ((req)->buffer);                                           \
+        (req)->buffer = NULL;                                           \
+        (req)->parent_request = NULL;                                   \
+        (req)->internal = false;                                        \
+        (req)->outstanding_requests = 0;                                \
         opal_free_list_return (&mca_osc_rdma_component.requests,        \
                                (opal_free_list_item_t *) (req));        \
     } while (0)
