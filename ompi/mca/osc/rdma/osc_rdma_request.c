@@ -59,7 +59,10 @@ static void request_construct(ompi_osc_rdma_request_t *request)
     request->super.req_free = request_free;
     request->super.req_cancel = request_cancel;
     request->super.req_complete_cb = request_complete;
-    request->parent_request = 0;
+    request->parent_request = NULL;
+    request->buffer = NULL;
+    request->internal = false;
+    request->outstanding_requests = 0;
     OBJ_CONSTRUCT(&request->convertor, opal_convertor_t);
 }
 
