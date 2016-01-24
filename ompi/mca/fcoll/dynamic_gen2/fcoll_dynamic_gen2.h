@@ -34,6 +34,7 @@ BEGIN_C_DECLS
 
 /* Globally exported variables */
 
+#define MCA_FCOLL_DYNAMIC_TAG -123
 extern int mca_fcoll_dynamic_gen2_priority;
 
 OMPI_MODULE_DECLSPEC extern mca_fcoll_base_component_2_0_0_t mca_fcoll_dynamic_gen2_component;
