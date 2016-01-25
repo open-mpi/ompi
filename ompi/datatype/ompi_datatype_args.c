@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2013-2016 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -481,39 +481,63 @@ int ompi_datatype_get_pack_description( ompi_datatype_t* datatype,
 {
     ompi_datatype_args_t* args = (ompi_datatype_args_t*)datatype->args;
     int next_index = OMPI_DATATYPE_MAX_PREDEFINED;
+    void *packed_description = datatype->packed_description;
     void* recursive_buffer;
 
-    if( NULL == datatype->packed_description ) {
-        if( ompi_datatype_is_predefined(datatype) ) {
-            datatype->packed_description = malloc(2 * sizeof(int));
-        } else if( NULL == args ) {
-            return OMPI_ERROR;
+    if (NULL == packed_description) {
+        if (opal_atomic_cmpset (&datatype->packed_description, NULL, (void *) 1)) {
+            if( ompi_datatype_is_predefined(datatype) ) {
+                packed_description = malloc(2 * sizeof(int));
+            } else if( NULL == args ) {
+                return OMPI_ERROR;
+            } else {
+                packed_description = malloc(args->total_pack_size);
+            }
+            recursive_buffer = packed_description;
+            __ompi_datatype_pack_description( datatype, &recursive_buffer, &next_index );
+
+            if (!ompi_datatype_is_predefined(datatype)) {
+                args->total_pack_size = (uintptr_t)((char*)recursive_buffer - (char *) packed_description);
+            }
+
+            opal_atomic_wmb ();
+            datatype->packed_description = packed_description;
         } else {
-            datatype->packed_description = malloc(args->total_pack_size);
-        }
-        recursive_buffer = datatype->packed_description;
-        __ompi_datatype_pack_description( datatype, &recursive_buffer, &next_index );
-        if( !ompi_datatype_is_predefined(datatype) ) {
-            args->total_pack_size = (uintptr_t)((char*)recursive_buffer - (char*)datatype->packed_description);
+            /* another thread beat us to it */
+            packed_description = datatype->packed_description;
         }
     }
 
-    *packed_buffer = (const void*)datatype->packed_description;
+    if ((void *) 1 == packed_description) {
+        struct timespec interval = {.tv_sec = 0, .tv_nsec = 1000};
+
+        /* wait until the packed description is updated */
+        while ((void *) 1 == datatype->packed_description) {
+            nanosleep (&interval, NULL);
+        }
+
+        packed_description = datatype->packed_description;
+    }
+
+    *packed_buffer = (const void *) packed_description;
     return OMPI_SUCCESS;
 }
 
 size_t ompi_datatype_pack_description_length( ompi_datatype_t* datatype )
 {
+    void *packed_description = datatype->packed_description;
+
     if( ompi_datatype_is_predefined(datatype) ) {
         return 2 * sizeof(int);
     }
-    if( NULL == datatype->packed_description ) {
+    if( NULL == packed_description || (void *) 1 == packed_description) {
         const void* buf;
         int rc;
 
         rc = ompi_datatype_get_pack_description(datatype, &buf);
-        if( OMPI_SUCCESS != rc )
+        if( OMPI_SUCCESS != rc ) {
             return 0;
+        }
     }
     assert( NULL != (ompi_datatype_args_t*)datatype->args );
     assert( NULL != (ompi_datatype_args_t*)datatype->packed_description );
