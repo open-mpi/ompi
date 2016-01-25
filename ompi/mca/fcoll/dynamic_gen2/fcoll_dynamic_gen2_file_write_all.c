@@ -932,7 +932,7 @@ static int shuffle_init ( int index, int cycles, int aggregator, int rank, mca_i
                                                  1,
                                                  data->recvtype[i],
                                                  data->procs_in_group[i],
-                                                 123,
+                                                 MCA_FCOLL_DYNAMIC_TAG+index,
                                                  data->comm,
                                                  &reqs[i]));
                         if (OMPI_SUCCESS != ret){
@@ -999,7 +999,7 @@ static int shuffle_init ( int index, int cycles, int aggregator, int rank, mca_i
                                  bytes_sent,
                                  MPI_BYTE,
                                  aggregator,
-                                 123,
+                                 MCA_FCOLL_DYNAMIC_TAG+index,
                                  MCA_PML_BASE_SEND_STANDARD,
                                  data->comm,
                                  &reqs[data->procs_per_group]));
