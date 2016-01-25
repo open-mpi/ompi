@@ -13,6 +13,8 @@
  * Copyright (c) 2009      Sun Microsystems, Inc. All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -36,9 +38,7 @@ int32_t ompi_datatype_create_indexed( int count, const int* pBlockLength, const 
     OPAL_PTRDIFF_TYPE extent;
 
     if( 0 == count ) {
-        *newType = ompi_datatype_create( 0 );
-        ompi_datatype_add( *newType, &ompi_mpi_datatype_null.dt, 0, 0, 0);
-        return OMPI_SUCCESS;
+        return ompi_datatype_duplicate( &ompi_mpi_datatype_null.dt, newType);
     }
 
     disp = pDisp[0];
@@ -113,12 +113,13 @@ int32_t ompi_datatype_create_indexed_block( int count, int bLength, const int* p
 
     ompi_datatype_type_extent( oldType, &extent );
     if( (count == 0) || (bLength == 0) ) {
-        *newType = ompi_datatype_create(1);
-        if( 0 == count )
-            ompi_datatype_add( *newType, &ompi_mpi_datatype_null.dt, 0, 0, 0 );
-        else
+        if( 0 == count ) {
+            return ompi_datatype_duplicate(&ompi_mpi_datatype_null.dt, newType);
+        } else {
+            *newType = ompi_datatype_create(1);
             ompi_datatype_add( *newType, oldType, 0, pDisp[0] * extent, extent );
-        return OMPI_SUCCESS;
+            return OMPI_SUCCESS;
+        }
     }
     pdt = ompi_datatype_create( count * (2 + oldType->super.desc.used) );
     disp = pDisp[0];
