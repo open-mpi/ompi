@@ -40,6 +40,7 @@ int mca_oob_ud_qp_init (mca_oob_ud_qp_t *qp, struct mca_oob_ud_port_t *port,
                         struct ibv_comp_channel *send_channel, bool onecq)
 {
     struct ibv_qp_init_attr init_attr;
+    int max_cqe = min(port->device->attr.max_cqe, 16384);
 
     opal_output_verbose(10, orte_oob_base_framework.framework_output,
                          "%s oob:ud:qp_init creating UD QP on port %d",
@@ -50,20 +51,19 @@ int mca_oob_ud_qp_init (mca_oob_ud_qp_t *qp, struct mca_oob_ud_port_t *port,
 
     init_attr.qp_type = IBV_QPT_UD;
 
-    int cqe = 16384;
-    qp->ib_recv_cq = ibv_create_cq (port->device->ib_context, cqe,
+    qp->ib_recv_cq = ibv_create_cq (port->device->ib_context, max_cqe,
                                     port, recv_channel, 0);
     if (NULL == qp->ib_recv_cq) {
         orte_show_help("help-oob-ud.txt", "create-cq-failed", true,
-                       orte_process_info.nodename, cqe, strerror(errno));
+                       orte_process_info.nodename, max_cqe, strerror(errno));
         return ORTE_ERROR;
     }
     if (false == onecq) {
-        qp->ib_send_cq = ibv_create_cq (port->device->ib_context, cqe,
+        qp->ib_send_cq = ibv_create_cq (port->device->ib_context, max_cqe,
                                         port, send_channel, 0);
         if (NULL == qp->ib_send_cq) {
             orte_show_help("help-oob-ud.txt", "create-cq-failed", true,
-                       orte_process_info.nodename, cqe, strerror(errno));
+                       orte_process_info.nodename, max_cqe, strerror(errno));
             return ORTE_ERROR;
         }
     } else {
