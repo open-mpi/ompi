@@ -13,7 +13,7 @@
  * Copyright (c) 2009      Sun Microsystems, Inc. All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -36,7 +36,7 @@ int32_t ompi_datatype_create_subarray(int ndims,
                                       const ompi_datatype_t* oldtype,
                                       ompi_datatype_t** newtype)
 {
-    MPI_Datatype last_type;
+    ompi_datatype_t *last_type;
     int32_t i, step, end_loop;
     MPI_Aint size, displ, extent;
 
@@ -102,6 +102,7 @@ int32_t ompi_datatype_create_subarray(int ndims,
     *newtype = ompi_datatype_create( last_type->super.desc.used );
     ompi_datatype_add( *newtype, last_type, 1, displ * extent, size * extent);
     ompi_datatype_destroy( &last_type );
+    opal_datatype_resize( &(*newtype)->super, 0, size * extent );
 
     return OMPI_SUCCESS;
 }
