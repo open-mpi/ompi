@@ -104,6 +104,8 @@ int mca_io_ompio_set_view_internal(mca_io_ompio_file_t *fh,
     fh->f_disp        = disp;
     fh->f_offset      = disp;
     fh->f_total_bytes = 0;
+    fh->f_index_in_file_view=0;
+    fh->f_position_in_file_view=0;
 
     ompi_io_ompio_decode_datatype (fh,
                                    newfiletype,
