@@ -137,8 +137,12 @@ struct mca_coll_hcoll_module_t {
     mca_coll_base_module_t *previous_ibarrier_module;
     mca_coll_base_module_iallgather_fn_t previous_iallgather;
     mca_coll_base_module_t *previous_iallgather_module;
+    mca_coll_base_module_iallgatherv_fn_t previous_iallgatherv;
+    mca_coll_base_module_t *previous_iallgatherv_module;
     mca_coll_base_module_iallreduce_fn_t previous_iallreduce;
     mca_coll_base_module_t *previous_iallreduce_module;
+    mca_coll_base_module_ireduce_fn_t previous_ireduce;
+    mca_coll_base_module_t *previous_ireduce_module;
     mca_coll_base_module_igatherv_fn_t previous_igatherv;
     mca_coll_base_module_t *previous_igatherv_module;
     mca_coll_base_module_ialltoall_fn_t previous_ialltoall;
@@ -175,6 +179,14 @@ int mca_coll_hcoll_allgather(const void *sbuf, int scount,
                             struct ompi_communicator_t *comm,
                             mca_coll_base_module_t *module);
 
+int mca_coll_hcoll_allgatherv(const void *sbuf, int scount,
+                            struct ompi_datatype_t *sdtype,
+                            void *rbuf, const int *rcount,
+                            const int *displs,
+                            struct ompi_datatype_t *rdtype,
+                            struct ompi_communicator_t *comm,
+                            mca_coll_base_module_t *module);
+
 int mca_coll_hcoll_gather(const void *sbuf, int scount,
                           struct ompi_datatype_t *sdtype,
                           void *rbuf, int rcount,
@@ -186,6 +198,13 @@ int mca_coll_hcoll_gather(const void *sbuf, int scount,
 int mca_coll_hcoll_allreduce(const void *sbuf, void *rbuf, int count,
                             struct ompi_datatype_t *dtype,
                             struct ompi_op_t *op,
+                            struct ompi_communicator_t *comm,
+                            mca_coll_base_module_t *module);
+
+int mca_coll_hcoll_reduce(const void *sbuf, void *rbuf, int count,
+                            struct ompi_datatype_t *dtype,
+                            struct ompi_op_t *op,
+                            int root,
                             struct ompi_communicator_t *comm,
                             mca_coll_base_module_t *module);
 
@@ -231,9 +250,26 @@ int mca_coll_hcoll_iallgather(const void *sbuf, int scount,
                             ompi_request_t** request,
                             mca_coll_base_module_t *module);
 
+int mca_coll_hcoll_iallgatherv(const void *sbuf, int scount,
+                            struct ompi_datatype_t *sdtype,
+                            void *rbuf, const int *rcount,
+                            const int *displs,
+                            struct ompi_datatype_t *rdtype,
+                            struct ompi_communicator_t *comm,
+                            ompi_request_t** request,
+                            mca_coll_base_module_t *module);
+
 int mca_coll_hcoll_iallreduce(const void *sbuf, void *rbuf, int count,
                             struct ompi_datatype_t *dtype,
                             struct ompi_op_t *op,
+                            struct ompi_communicator_t *comm,
+                            ompi_request_t** request,
+                            mca_coll_base_module_t *module);
+
+int mca_coll_hcoll_ireduce(const void *sbuf, void *rbuf, int count,
+                            struct ompi_datatype_t *dtype,
+                            struct ompi_op_t *op,
+                            int root,
                             struct ompi_communicator_t *comm,
                             ompi_request_t** request,
                             mca_coll_base_module_t *module);
