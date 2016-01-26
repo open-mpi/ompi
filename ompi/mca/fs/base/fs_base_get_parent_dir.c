@@ -103,7 +103,12 @@ int  mca_fs_base_get_fstype(char *fname )
     bool ret = opal_path_nfs ( fname, &fstype );
 
     if ( false == ret ) {
-        return ompio_type;
+        char *dir;
+        mca_fs_base_get_parent_dir (fname, &dir );
+        ret = opal_path_nfs (dir, &fstype);
+        if ( false == ret ) {
+            return ompio_type;
+        }
     }
     if ( 0 == strncasecmp(fstype, "lustre", sizeof("lustre")) ) {
         ompio_type = LUSTRE;
