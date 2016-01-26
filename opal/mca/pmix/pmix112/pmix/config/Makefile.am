@@ -1,5 +1,7 @@
 # PMIx copyrights:
 # Copyright (c) 2013-2015 Intel, Inc. All rights reserved
+# Copyright (c) 2016      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 #
 #########################
 #
@@ -31,6 +33,7 @@ EXTRA_DIST += \
 	config/pmix_check_attributes.m4 \
 	config/pmix_check_broken_qsort.m4 \
 	config/pmix_check_compiler_version.m4 \
+	config/pmix_check_icc.m4 \
 	config/pmix_check_ident.m4 \
 	config/pmix_check_munge.m4 \
 	config/pmix_check_package.m4 \
