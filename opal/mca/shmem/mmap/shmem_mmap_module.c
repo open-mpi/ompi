@@ -14,6 +14,7 @@
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2010-2014 Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2016      University of Houston. All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -363,7 +364,7 @@ segment_create(opal_shmem_ds_t *ds_buf,
      * this is an important check because if the backing store is located on
      * a network filesystem, the user may see a shared memory performance hit.
      */
-    if (opal_shmem_mmap_nfs_warning && opal_path_nfs(real_file_name)) {
+    if (opal_shmem_mmap_nfs_warning && opal_path_nfs(real_file_name, NULL)) {
         char hn[MAXHOSTNAMELEN];
         gethostname(hn, MAXHOSTNAMELEN - 1);
         hn[MAXHOSTNAMELEN - 1] = '\0';
