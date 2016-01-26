@@ -627,7 +627,7 @@ static int allocate_state_shared (ompi_osc_rdma_module_t *module, void **base, s
                     peer->state_handle = (mca_btl_base_registration_handle_t *) state_region->btl_handle_data;
                 }
                 peer->state = (osc_rdma_counter_t) ((uintptr_t) state_region->base + state_base + module->state_size * i);
-                peer->state_endpoint = ompi_osc_rdma_peer_btl_endpoint (module, peer_rank);
+                peer->state_endpoint = ompi_osc_rdma_peer_btl_endpoint (module, temp[0].rank);
             }
 
             /* finish setting up the local peer structure */
