@@ -4,7 +4,7 @@
 ! Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
 ! Copyright (c) 2013      Los Alamos National Security, LLC. All rights
 !                         reserved.
-! Copyright (c) 2015      Research Organization for Information Science
+! Copyright (c) 2015-2016 Research Organization for Information Science
 !                         and Technology (RIST). All rights reserved.
 ! $COPYRIGHT$
 !
@@ -45,7 +45,7 @@ interface
 
   subroutine MPI_COMM_NULL_COPY_FN( comm, comm_keyval, extra_state, &
                                     attribute_val_in, attribute_val_out, &
-                                    flag, ierr ) BIND(C,name="ompi_comm_null_copy_fn_f")
+                                    flag, ierr )
      use mpi_f08_types
      implicit none
      type(MPI_Comm) :: comm
@@ -57,7 +57,7 @@ interface
 
   subroutine MPI_COMM_DUP_FN( comm, comm_keyval, extra_state, &
                               attribute_val_in, attribute_val_out, &
-                              flag, ierr ) BIND(C,name="ompi_comm_dup_fn_f")
+                              flag, ierr )
      use mpi_f08_types
      implicit none
      type(MPI_Comm) :: comm
@@ -68,7 +68,7 @@ interface
   end subroutine MPI_COMM_DUP_FN
 
   subroutine MPI_COMM_NULL_DELETE_FN(comm, comm_keyval, attribute_val_out, &
-                                     extra_state, ierr ) BIND(C,name="ompi_comm_null_delete_fn_f")
+                                     extra_state, ierr )
      use mpi_f08_types
      implicit none
      type(MPI_Comm) :: comm
@@ -81,7 +81,7 @@ interface
 
   subroutine MPI_TYPE_NULL_COPY_FN( type, type_keyval, extra_state, &
                                     attribute_val_in, attribute_val_out, &
-                                    flag, ierr ) BIND(C,name="ompi_type_null_copy_fn_f")
+                                    flag, ierr )
      use mpi_f08_types
      implicit none
      type(MPI_Datatype) :: type
@@ -93,7 +93,7 @@ interface
 
   subroutine MPI_TYPE_DUP_FN( type, type_keyval, extra_state, &
                               attribute_val_in, attribute_val_out, &
-                              flag, ierr ) BIND(C,name="ompi_type_dup_fn_f")
+                              flag, ierr )
      use mpi_f08_types
      implicit none
      type(MPI_Datatype) :: type
@@ -104,7 +104,7 @@ interface
   end subroutine MPI_TYPE_DUP_FN
 
   subroutine MPI_TYPE_NULL_DELETE_FN( type, type_keyval, attribute_val_out, &
-                                      extra_state, ierr ) BIND(C,name="ompi_type_null_delete_fn_f")
+                                      extra_state, ierr )
      use mpi_f08_types
      implicit none
      type(MPI_Datatype) :: type
@@ -117,7 +117,7 @@ interface
 
   subroutine MPI_WIN_NULL_COPY_FN( window, win_keyval, extra_state, &
                                    attribute_val_in, attribute_val_out, &
-                                   flag, ierr ) BIND(C,name="ompi_win_null_copy_fn_f")
+                                   flag, ierr )
      use mpi_f08_types
      implicit none
      type(MPI_Win) :: window
@@ -129,7 +129,7 @@ interface
 
   subroutine MPI_WIN_DUP_FN( window, win_keyval, extra_state, &
                              attribute_val_in, attribute_val_out, &
-                             flag, ierr ) BIND(C,name="ompi_win_dup_fn_f")
+                             flag, ierr )
      use mpi_f08_types
      implicit none
      type(MPI_Win) :: window
@@ -140,7 +140,7 @@ interface
   end subroutine MPI_WIN_DUP_FN
 
   subroutine MPI_WIN_NULL_DELETE_FN( window, win_keyval, attribute_val_out, &
-                                     extra_state, ierr ) BIND(C,name="ompi_win_null_delete_fn_f")
+                                     extra_state, ierr )
      use mpi_f08_types
      implicit none
      type(MPI_Win) :: window
