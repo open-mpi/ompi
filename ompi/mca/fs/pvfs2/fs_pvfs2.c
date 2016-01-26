@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2015 University of Houston. All rights reserved.
+ * Copyright (c) 2008-2016 University of Houston. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -96,18 +96,7 @@ mca_fs_pvfs2_component_file_query (mca_io_ompio_file_t *fh, int *priority)
     tmp = strchr (fh->f_filename, ':');
     if (!tmp) {
         if (OMPIO_ROOT == fh->f_rank) {
-            do {
-                err = statfs (fh->f_filename, &fsbuf);
-            } while (err && (errno == ESTALE));
-
-            if (err && (errno == ENOENT)) {
-                mca_fs_base_get_parent_dir (fh->f_filename, &dir);
-                err = statfs (dir, &fsbuf);
-                free (dir);
-            }
-            if (fsbuf.f_type == PVFS2_SUPER_MAGIC) {
-                fh->f_fstype = PVFS2;
-            }
+            fh->f_fstype = mca_fs_base_get_fstype ( fh->f_filename );
 	}
 	fh->f_comm->c_coll.coll_bcast (&(fh->f_fstype),
 				       1,
