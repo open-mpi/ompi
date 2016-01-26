@@ -50,7 +50,7 @@ static inline int ompi_osc_rdma_lock_release_shared (ompi_osc_rdma_module_t *mod
 {
     uint64_t lock = (uint64_t) (intptr_t) peer->state + offset;
     volatile bool atomic_complete = false;
-    void *temp;
+    void *temp = NULL;
     int ret;
 
     OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_DEBUG, "releasing shared lock %" PRIx64 " on peer %d. value 0x%lx", lock,
@@ -117,7 +117,7 @@ static inline int ompi_osc_rdma_lock_acquire_shared (ompi_osc_rdma_module_t *mod
 {
     uint64_t lock = (uint64_t) peer->state + offset;
     volatile bool atomic_complete;
-    ompi_osc_rdma_lock_t *temp;
+    ompi_osc_rdma_lock_t *temp = NULL;
     int ret;
 
     OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_DEBUG, "acquiring shared lock %" PRIx64 " on peer %d. value 0x%lx", lock,
@@ -292,7 +292,7 @@ static inline int ompi_osc_rdma_lock_release_exclusive (ompi_osc_rdma_module_t *
 {
     uint64_t lock = (uint64_t) (intptr_t) peer->state + offset;
     volatile bool atomic_complete = false;
-    void *temp;
+    void *temp = NULL;
     int ret;
 
     OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_DEBUG, "releasing exclusive lock %" PRIx64 " on peer %d", lock, peer->rank);
