@@ -13,7 +13,7 @@
  * Copyright (c) 2007-2012 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -111,6 +111,17 @@ OMPI_DECLSPEC extern opal_list_t  ompi_proc_list;
  * @retval OMPI_ERROR   Initialization failed due to unspecified error
  */
 OMPI_DECLSPEC int ompi_proc_init(void);
+
+/**
+ * Complete filling up the proc information (arch, name and locality) for
+ * a given proc related to this job.
+ *
+ * @param[in] proc      ompi process structure.
+ * @param[in] optional  locality is optionally retrievedl
+ * @retval OMPI_SUCCESS All information correctly set.
+ * @retval OMPI_ERROR   Some info could not be initialized.
+ */
+OMPI_DECLSPEC int ompi_proc_complete_init_single(ompi_proc_t* proc, bool optional);
 
 /**
  * Complete filling up the proc information (arch, name and locality) for all

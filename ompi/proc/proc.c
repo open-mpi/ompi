@@ -14,7 +14,7 @@
  * Copyright (c) 2012-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2013-2015 Intel, Inc. All rights reserved
- * Copyright (c) 2014-2015 Research Organization for Information Science
+ * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015      Mellanox Technologies. All rights reserved.
  *
@@ -122,14 +122,15 @@ static int ompi_proc_allocate (ompi_jobid_t jobid, ompi_vpid_t vpid, ompi_proc_t
 /**
  * Finish setting up an ompi_proc_t
  *
- * @param[in] proc ompi process structure
+ * @param[in] proc ompi process structure.
+ * @param[in] optional  locality is optionally retrieved.
  *
  * This function contains the core code of ompi_proc_complete_init() and
  * ompi_proc_refresh(). The tasks performed by this function include
  * retrieving the hostname (if below the modex cutoff), determining the
  * remote architecture, and calculating the locality of the process.
  */
-static int ompi_proc_complete_init_single (ompi_proc_t *proc)
+int ompi_proc_complete_init_single (ompi_proc_t *proc, bool optional)
 {
     uint16_t u16, *u16ptr;
     int ret;
@@ -143,7 +144,11 @@ static int ompi_proc_complete_init_single (ompi_proc_t *proc)
 
     /* get the locality information - all RTEs are required
      * to provide this information at startup */
-    OPAL_MODEX_RECV_VALUE_OPTIONAL(ret, OPAL_PMIX_LOCALITY, &proc->super.proc_name, &u16ptr, OPAL_UINT16);
+    if (optional) {
+        OPAL_MODEX_RECV_VALUE_OPTIONAL(ret, OPAL_PMIX_LOCALITY, &proc->super.proc_name, &u16ptr, OPAL_UINT16);
+    } else {
+        OPAL_MODEX_RECV_VALUE(ret, OPAL_PMIX_LOCALITY, &proc->super.proc_name, &u16ptr, OPAL_UINT16);
+    }
     if (OPAL_SUCCESS != ret) {
         proc->super.proc_flags = OPAL_PROC_NON_LOCAL;
     } else {
@@ -220,7 +225,7 @@ static ompi_proc_t *ompi_proc_for_name_nolock (const opal_process_name_t proc_na
     }
 
     /* finish filling in the important proc data fields */
-    ret = ompi_proc_complete_init_single (proc);
+    ret = ompi_proc_complete_init_single (proc, true);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
         goto exit;
     }
@@ -332,7 +337,7 @@ int ompi_proc_complete_init(void)
     opal_mutex_lock (&ompi_proc_lock);
 
     OPAL_LIST_FOREACH(proc, &ompi_proc_list, ompi_proc_t) {
-        ret = ompi_proc_complete_init_single (proc);
+        ret = ompi_proc_complete_init_single (proc, true);
         if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
             errcode = ret;
             break;
@@ -605,7 +610,7 @@ int ompi_proc_refresh(void)
             proc->super.proc_arch = opal_local_arch;
             opal_proc_local_set(&proc->super);
         } else {
-            ret = ompi_proc_complete_init_single (proc);
+            ret = ompi_proc_complete_init_single (proc, true);
             if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
                 break;
             }
