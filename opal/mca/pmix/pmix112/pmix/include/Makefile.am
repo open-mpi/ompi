@@ -38,7 +38,9 @@ include_pmix_autogen_HEADERS = \
         include/pmix/autogen/pmix_config_top.h \
         include/pmix/autogen/pmix_config_bottom.h
 nodist_include_pmix_autogen_HEADERS = \
-        include/pmix/autogen/config.h \
+        include/pmix/autogen/config.h
+include_private_autogendir = $(includedir)/private/autogen
+nodist_include_private_autogen_HEADERS = \
         include/private/autogen/config.h
 
 endif ! PMIX_EMBEDDED_MODE
