@@ -13,7 +13,7 @@
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -749,7 +749,8 @@ static ompi_datatype_t* __ompi_datatype_create_from_args( int32_t* i, MPI_Aint* 
         break;
         /******************************************************************/
     case MPI_COMBINER_RESIZED:
-        /*ompi_datatype_set_args( datatype, 0, NULL, 2, a, 1, d, MPI_COMBINER_RESIZED );*/
+        ompi_datatype_create_resized(d[0], a[0], a[1], &datatype);
+        ompi_datatype_set_args( datatype, 0, NULL, 2, a, 1, d, MPI_COMBINER_RESIZED );
         break;
         /******************************************************************/
     case MPI_COMBINER_HINDEXED_BLOCK:
