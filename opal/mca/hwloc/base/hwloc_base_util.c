@@ -492,8 +492,11 @@ static void df_search_cores(hwloc_obj_t obj, unsigned int *cnt)
             obj->userdata = (void*)data;
         }
         if (NULL == opal_hwloc_base_cpu_set) {
-            if (!hwloc_bitmap_isincluded(obj->cpuset, obj->allowed_cpuset)) {
-                /* do not count not allowed cores */
+            if (!hwloc_bitmap_intersects(obj->cpuset, obj->allowed_cpuset)) {
+                /*
+                 * do not count not allowed cores (e.g. cores with zero allowed PU)
+                 * if SMT is enabled, do count cores with at least one allowed hwthread
+                 */
                 return;
             }
             data->npus = 1;
