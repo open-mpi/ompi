@@ -67,7 +67,7 @@ int main(int argc, char* argv[])
         printf("Interactive opal_path_nfs() test:\n");
         for (i = 1; i < argc; i++) {
             printf ("Is dir[%d]:%s one of the detected network file systems? %s\n",
-                    i, argv[i], opal_path_nfs (argv[i]) ? "Yes": "No");
+                    i, argv[i], opal_path_nfs (argv[i], NULL) ? "Yes": "No");
         }
 
         return 0;
@@ -100,7 +100,7 @@ int main(int argc, char* argv[])
         int i;
         for (i = 1; i < argc; i++)
             printf ("Is dir[%d]:%s one of the detected network file systems? %s\n",
-                    i, argv[i], opal_path_nfs (argv[i]) ? "Yes": "No");
+                    i, argv[i], opal_path_nfs (argv[i], NULL) ? "Yes": "No");
     }
 
     get_mounts (&num_dirs, &dirs, &nfs);
@@ -119,7 +119,7 @@ void test(char* file, bool expect)
     printf ("test(): file:%s bool:%d\n",
             file, expect);
 #endif
-    if (expect == opal_path_nfs (file)) {
+    if (expect == opal_path_nfs (file, NULL)) {
         test_success();
     } else {
         char * msg;

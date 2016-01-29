@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2016      University of Houston. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -126,19 +127,22 @@ OPAL_DECLSPEC char *opal_path_access(char *fname, char *path, int mode) __opal_a
 
 /**
  * @brief Figure out, whether fname is on network file system
+ * and return fstype if known
  *
  * Try to figure out, whether the file name specified through fname is
- * on any network file system (currently NFS, Lustre and Panasas).
+ * on any network file system (currently NFS, Lustre, GPFS,  Panasas
+ * and PVFS2 ).
  *
  * If the file is not created, the parent directory is checked.
  * This allows checking for NFS prior to opening the file.
  *
- * @param[in]     fname        File name to check
+ * @fname[in]     File name to check
+ * @fstype[out]   File system type if retval is true
  *
  * @retval true                If fname is on NFS, Lustre or Panasas
  * @retval false               otherwise
  */
-OPAL_DECLSPEC bool opal_path_nfs(char *fname) __opal_attribute_warn_unused_result__;
+OPAL_DECLSPEC bool opal_path_nfs(char *fname, char **fstype) __opal_attribute_warn_unused_result__;
 
 /**
  * @brief Returns the disk usage of path.
