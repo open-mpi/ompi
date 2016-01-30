@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013-2016 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -143,8 +143,9 @@ void opal_btl_usnic_print_stats(
             /* Number of un-acked sends (i.e., sends for which we're
                still waiting for ACK) */
             send_unacked =
-                endpoint->endpoint_next_seq_to_send -
-                endpoint->endpoint_ack_seq_rcvd - 1;
+                SEQ_DIFF(endpoint->endpoint_next_seq_to_send,
+                         SEQ_DIFF(endpoint->endpoint_ack_seq_rcvd, 1));
+
             if (send_unacked > su_max) su_max = send_unacked;
             if (send_unacked < su_min) su_min = send_unacked;
 

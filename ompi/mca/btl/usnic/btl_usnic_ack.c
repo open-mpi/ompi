@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013-2016 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -207,8 +207,7 @@ opal_btl_usnic_ack_send(
     /* send the seq of the lowest item in the window that
        we've received */
     ack->ss_base.us_btl_header->ack_seq =
-        endpoint->endpoint_next_contig_seq_to_recv - 1;
-
+        SEQ_DIFF(endpoint->endpoint_next_contig_seq_to_recv, 1);
     ack->ss_len = sizeof(opal_btl_usnic_btl_header_t);
 
 #if MSGDEBUG1
