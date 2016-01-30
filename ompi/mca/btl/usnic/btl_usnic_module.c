@@ -69,13 +69,14 @@ static void finalize_one_channel(opal_btl_usnic_module_t *module,
 
 
 /*
- * Loop over all procs sent to us in add_procs and see if we want to
- * add a proc/endpoint for them.
+ * Loop over a block of procs sent to us in add_procs and see if we
+ * want to add a proc/endpoint for them.
  */
-static int add_procs_create_endpoints(opal_btl_usnic_module_t *module,
-                                      size_t nprocs,
-                                      opal_proc_t **procs,
-                                      mca_btl_base_endpoint_t **endpoints)
+static int add_procs_block_create_endpoints(opal_btl_usnic_module_t *module,
+                                            size_t block_offset,
+                                            size_t block_len,
+                                            opal_proc_t **procs,
+                                            mca_btl_base_endpoint_t **endpoints)
 {
     int rc;
     opal_proc_t* my_proc;
@@ -87,8 +88,8 @@ static int add_procs_create_endpoints(opal_btl_usnic_module_t *module,
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
 
-    /* Loop over the procs we were given */
-    for (size_t i = 0; i < nprocs; i++) {
+    /* Loop over a block in the procs we were given */
+    for (size_t i = block_offset; i < (block_offset + block_len); i++) {
         struct opal_proc_t* opal_proc = procs[i];
         opal_btl_usnic_proc_t* usnic_proc;
         mca_btl_base_endpoint_t* usnic_endpoint;
@@ -195,9 +196,10 @@ static void add_procs_warn_unreachable(opal_btl_usnic_module_t *module,
  * invoked.  Go reap them all.
  */
 static int
-add_procs_reap_fi_av_inserts(opal_btl_usnic_module_t *module,
-                             size_t array_len,
-                             struct mca_btl_base_endpoint_t **endpoints)
+add_procs_block_reap_fi_av_inserts(opal_btl_usnic_module_t *module,
+                                   size_t block_offset,
+                                   size_t block_len,
+                                   struct mca_btl_base_endpoint_t **endpoints)
 {
     int ret = OPAL_SUCCESS;
     int num_left;
@@ -205,12 +207,11 @@ add_procs_reap_fi_av_inserts(opal_btl_usnic_module_t *module,
     uint32_t event;
     struct fi_eq_entry entry;
     struct fi_eq_err_entry err_entry;
-
     bool error_occurred = false;
 
     /* compute num fi_av_insert completions we are waiting for */
     num_left = 0;
-    for (i = 0; i < array_len; ++i) {
+    for (i = block_offset; i < (block_offset + block_len); ++i) {
         if (NULL != endpoints[i]) {
             num_left += USNIC_NUM_CHANNELS;
         }
@@ -266,7 +267,7 @@ add_procs_reap_fi_av_inserts(opal_btl_usnic_module_t *module,
                        We therefore only want to print a pretty
                        warning about (and OBJ_RELEASE) that endpoint
                        the *first* time it is reported. */
-                    for (i = 0; i < array_len; ++i) {
+                    for (i = block_offset; i < (block_offset + block_len); ++i) {
                         if (endpoints[i] == context->endpoint) {
                             add_procs_warn_unreachable(module,
                                                        context->endpoint);
@@ -348,7 +349,7 @@ add_procs_reap_fi_av_inserts(opal_btl_usnic_module_t *module,
        - If an otherwise-valid endpoint has no dest, that means we timed
          out trying to resolve it, so just release that endpoint. */
     size_t num_endpoints_created = 0;
-    for (i = 0; i < array_len; i++) {
+    for (i = block_offset; i < (block_offset + block_len); i++) {
         if (NULL != endpoints[i]) {
             bool happy;
 
@@ -383,6 +384,79 @@ add_procs_reap_fi_av_inserts(opal_btl_usnic_module_t *module,
 }
 
 /*
+ * Create endpoints for the procs we were given in add_procs.
+ */
+static int add_procs_create_endpoints(struct opal_btl_usnic_module_t* module,
+                                      size_t nprocs,
+                                      struct opal_proc_t **procs,
+                                      struct mca_btl_base_endpoint_t** endpoints)
+{
+    /* We need to ensure that we don't overrun the libfabric AV EQ.
+       Divide up all the peer address resolutions we need to do into a
+       series of blocks; insert and complete each block before moving
+       to the next (note: if performance mandates it, we can move to a
+       sliding window style of AV inserts to get better concurrency of
+       AV resolution). */
+
+    /* Leave a few empty slots in the AV EQ, just for good measure */
+    if (module->av_eq_size < 8) {
+        opal_show_help("help-mpi-btl-usnic.txt", "fi_av_eq too small",
+                       true,
+                       opal_process_info.nodename,
+                       module->av_eq_size,
+                       8);
+        return OPAL_ERR_OUT_OF_RESOURCE;
+    }
+
+    size_t eq_size = module->av_eq_size - 8;
+    size_t block_len = eq_size;
+    size_t num_av_inserts = nprocs * USNIC_NUM_CHANNELS;
+    size_t num_blocks = num_av_inserts / eq_size;
+    if (eq_size % num_av_inserts != 0) {
+        ++num_blocks;
+    }
+
+    /* Per above, the blocks are expressed in terms of number of AV
+       inserts.  Convert them to be expressed in terms of number of
+       procs. */
+    block_len /= USNIC_NUM_CHANNELS;
+
+    /* Per above, loop over creating the endpoints so that we do not
+       overrun the libfabric AV EQ. */
+    int rc;
+    for (size_t block_offset = 0, block = 0; block < num_blocks;
+         block_offset += block_len, ++block) {
+        /* Adjust for the last block */
+        if (block_len > (nprocs - block_offset)) {
+            block_len = nprocs - block_offset;
+        }
+
+        /* First, create endpoints (and procs, if they're not already
+           created) for the usnic-reachable procs we were given. */
+        rc = add_procs_block_create_endpoints(module,
+                                              block_offset, block_len,
+                                              procs, endpoints);
+        if (OPAL_SUCCESS != rc) {
+            return rc;
+        }
+
+        /* For each endpoint that was created, we initiated the
+           process to create NUM_CHANNELS fi_addrs.  Go finish all of
+           those.  This will be the final determination of whether we
+           can use the endpoint or not because we'll find out if each
+           endpoint is reachable or not. */
+        rc = add_procs_block_reap_fi_av_inserts(module,
+                                                block_offset, block_len,
+                                                endpoints);
+        if (OPAL_SUCCESS != rc) {
+            return rc;
+        }
+    }
+
+    return OPAL_SUCCESS;
+}
+
+/*
  * Add procs to this BTL module, receiving endpoint information from
  * the modex.  This is done in 2 phases:
  *
@@ -408,19 +482,9 @@ static int usnic_add_procs(struct mca_btl_base_module_t* base_module,
     opal_btl_usnic_module_t* module = (opal_btl_usnic_module_t*) base_module;
     int rc;
 
-    /* First, create endpoints (and procs, if they're not already
-       created) for all the usnic-reachable procs we were given. */
+    /* Go create the endpoints (including all relevant address
+       resolution) */
     rc = add_procs_create_endpoints(module, nprocs, procs, endpoints);
-    if (OPAL_SUCCESS != rc) {
-        goto fail;
-    }
-
-    /* For each endpoint that was created, we initiated the process to
-       create NUM_CHANNELS fi_addrs.  Go finish all of those.  This
-       will be the final determination of whether we can use the
-       endpoint or not because we'll find out if each endpoint is
-       reachable or not. */
-    rc = add_procs_reap_fi_av_inserts(module, nprocs, endpoints);
     if (OPAL_SUCCESS != rc) {
         goto fail;
     }
@@ -1831,6 +1895,11 @@ static void init_queue_lengths(opal_btl_usnic_module_t *module)
     } else {
         module->cq_num = mca_btl_usnic_component.cq_num;
     }
+    if (-1 == mca_btl_usnic_component.av_eq_num) {
+        module->av_eq_num = 1024;
+    } else {
+        module->av_eq_num = mca_btl_usnic_component.av_eq_num;
+    }
 
     /*
      * Queue sizes for priority channel scale with # of endpoint. A
@@ -2018,12 +2087,15 @@ static int init_channels(opal_btl_usnic_module_t *module)
     }
 
     memset(&eq_attr, 0, sizeof(eq_attr));
-    eq_attr.size = 1024;
+    eq_attr.size = module->av_eq_num;
     eq_attr.wait_obj = FI_WAIT_UNSPEC;
     rc = fi_eq_open(module->fabric, &eq_attr, &module->av_eq, NULL);
     if (rc != OPAL_SUCCESS) {
         goto destroy;
     }
+    // Save the size of the created EQ
+    module->av_eq_size = eq_attr.size;
+
     eq_attr.wait_obj = FI_WAIT_FD;
     rc = fi_eq_open(module->fabric, &eq_attr, &module->dom_eq, NULL);
     if (rc != OPAL_SUCCESS) {
