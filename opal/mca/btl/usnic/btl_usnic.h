@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
- * Copyright (c) 2011-2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2011-2016 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -180,6 +180,9 @@ typedef struct opal_btl_usnic_component_t {
 
     /** max completion queue entries per module */
     int32_t cq_num;
+
+    /** max number of entries in AV EQ */
+    int32_t av_eq_num;
 
     /** retrans characteristics */
     int retrans_timeout;
