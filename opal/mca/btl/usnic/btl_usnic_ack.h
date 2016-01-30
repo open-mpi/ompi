@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013-2016 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -92,7 +92,7 @@ opal_btl_usnic_piggyback_ack(
     if (endpoint->endpoint_ack_needed) {
         opal_btl_usnic_remove_from_endpoints_needing_ack(endpoint);
         sseg->ss_base.us_btl_header->ack_seq =
-            endpoint->endpoint_next_contig_seq_to_recv - 1;
+            SEQ_DIFF(endpoint->endpoint_next_contig_seq_to_recv, 1);
         sseg->ss_base.us_btl_header->ack_present = 1;
 #if MSGDEBUG1
         opal_output(0, "Piggy-backing ACK for sequence %"UDSEQ"\n",
