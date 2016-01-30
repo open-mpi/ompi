@@ -245,7 +245,7 @@ int opal_btl_usnic_component_register(void)
     mca_btl_usnic_component.udp_port_base = (int) udp_port_base;
 
     CHECK(reg_int("retrans_timeout", "Number of microseconds before retransmitting a frame",
-                  1000, &mca_btl_usnic_component.retrans_timeout,
+                  5000, &mca_btl_usnic_component.retrans_timeout,
                   REGINT_GE_ONE, OPAL_INFO_LVL_5));
 
     CHECK(reg_int("priority_limit", "Max size of \"priority\" messages (0 = use pre-set defaults; depends on number and type of devices available)",
