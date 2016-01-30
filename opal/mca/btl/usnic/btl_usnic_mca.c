@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
- * Copyright (c) 2008-2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2016 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2015      Intel, Inc. All rights reserved.
@@ -162,6 +162,7 @@ int opal_btl_usnic_component_register(void)
     static int prio_sd_num;
     static int prio_rd_num;
     static int cq_num;
+    static int av_eq_num;
     static int udp_port_base;
     static int max_tiny_msg_size;
     static int eager_limit;
@@ -234,6 +235,10 @@ int opal_btl_usnic_component_register(void)
     CHECK(reg_int("cq_num", "Number of completion queue entries (-1 = pre-set defaults; depends on number and type of devices available; will error if (sd_num+rd_num)>cq_num)",
                   -1, &cq_num, REGINT_NEG_ONE_OK, OPAL_INFO_LVL_5));
     mca_btl_usnic_component.cq_num = (int32_t) cq_num;
+
+    CHECK(reg_int("av_eq_num", "Number of event queue entries for peer address resolution (-1 = pre-set defaults; depends on number and type of devices available; will error if ac_eq_num < 8)",
+                  -1, &av_eq_num, REGINT_NEG_ONE_OK, OPAL_INFO_LVL_5));
+    mca_btl_usnic_component.av_eq_num = (int32_t) av_eq_num;
 
     CHECK(reg_int("base_udp_port", "Base UDP port to use for usNIC communications.  If 0, system will pick the port number.  If non-zero, it will be added to each process' local rank to obtain the final port number (default: 0)",
                   0, &udp_port_base, REGINT_GE_ZERO, OPAL_INFO_LVL_5));
