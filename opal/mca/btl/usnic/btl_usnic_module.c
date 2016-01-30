@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
- * Copyright (c) 2009-2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2009-2016 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved
@@ -1205,7 +1205,7 @@ usnic_send(
         /* assign length */
         sseg->ss_len = sizeof(opal_btl_usnic_btl_header_t) + frag->sf_size;
 
-        sseg->ss_channel = USNIC_PRIORITY_CHANNEL;
+        sseg->ss_channel = USNIC_DATA_CHANNEL;
         sseg->ss_base.us_btl_header->tag = tag;
 #if MSGDEBUG1
         opal_output(0, "INLINE send, sseg=%p", (void *)sseg);
