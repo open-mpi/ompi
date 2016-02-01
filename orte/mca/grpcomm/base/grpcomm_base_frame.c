@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2011-2016 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -122,6 +122,7 @@ static void ccon(orte_grpcomm_coll_t *p)
     OBJ_CONSTRUCT(&p->distance_mask_recv, opal_bitmap_t);
     p->dmns = NULL;
     p->ndmns = 0;
+    p->nexpected = 0;
     p->nreported = 0;
     p->cbfunc = NULL;
     p->cbdata = NULL;
