@@ -956,11 +956,12 @@ static mca_btl_base_module_t** usnic_component_init(int* num_btl_modules,
         /* Output all of this module's values. */
         const char *devname = module->fabric_info->fabric_attr->name;
         opal_output_verbose(5, USNIC_OUT,
-                            "btl:usnic: %s num sqe=%d, num rqe=%d, num cqe=%d",
+                            "btl:usnic: %s num sqe=%d, num rqe=%d, num cqe=%d, num aveqe=%d",
                             devname,
                             module->sd_num,
                             module->rd_num,
-                            module->cq_num);
+                            module->cq_num,
+                            module->av_eq_num);
         opal_output_verbose(5, USNIC_OUT,
                             "btl:usnic: %s priority MTU = %" PRIsize_t,
                             devname,
