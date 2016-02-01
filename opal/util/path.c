@@ -14,6 +14,7 @@
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2014      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2016      University of Houston. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -444,8 +445,9 @@ static char *opal_check_mtab(char *dev_path)
  * If the file is not created, the parent directory is checked.
  * This allows checking for NFS prior to opening the file.
  *
- * @param[in]     fname        File name to check
- *
+ * @fname[in]          File name to check
+ * @fstype[out]        File system type if retval is true
+ * 
  * @retval true                If fname is on NFS, Lustre, Panasas or GPFS
  * @retval false               otherwise
  *
@@ -493,11 +495,14 @@ static char *opal_check_mtab(char *dev_path)
 #ifndef AUTOFS_SUPER_MAGIC
 #define AUTOFS_SUPER_MAGIC 0x0187
 #endif
+#ifndef PVFS2_SUPER_MAGIC
+#define PVFS2_SUPER_MAGIC 0x20030528
+#endif
 
 #define MASK2        0xffff
 #define MASK4    0xffffffff
 
-bool opal_path_nfs(char *fname)
+bool opal_path_nfs(char *fname, char **ret_fstype)
 {
     int i;
     int fsrc = -1;
@@ -523,7 +528,8 @@ bool opal_path_nfs(char *fname)
         {NFS_SUPER_MAGIC,                  MASK2, "nfs"},
         {AUTOFS_SUPER_MAGIC,               MASK2, "autofs"},
         {PAN_KERNEL_FS_CLIENT_SUPER_MAGIC, MASK4, "panfs"},
-        {GPFS_SUPER_MAGIC,                 MASK4, "gpfs"}
+        {GPFS_SUPER_MAGIC,                 MASK4, "gpfs"},
+        {PVFS2_SUPER_MAGIC,                MASK4, "pvfs2"}
     };
 #define FS_TYPES_NUM (int)(sizeof (fs_types)/sizeof (fs_types[0]))
 
@@ -555,6 +561,9 @@ again:
                              fname, errno, file));
         if (EPERM == errno) {
             free(file);
+            if ( NULL != ret_fstype ) {
+                *ret_fstype = NULL;
+            }
             return false;
         }
 
@@ -563,6 +572,9 @@ again:
         if (NULL == last_sep || (1 == strlen(last_sep) &&
             OPAL_PATH_SEP[0] == *last_sep)) {
             free (file);
+            if ( NULL != ret_fstype ) {
+                *ret_fstype=NULL;
+            }
             return false;
         }
         *last_sep = '\0';
@@ -609,6 +621,9 @@ again:
     }
 
     free (file);
+    if ( NULL != ret_fstype ) {
+        *ret_fstype=NULL;
+    }
     return false;
 
 found:
@@ -625,16 +640,25 @@ found:
                 if (0 == strcasecmp(fs_types[x].f_fsname, fs_type)) {
                     OPAL_OUTPUT_VERBOSE((10, 0, "opal_path_nfs: file:%s on fs:%s\n", fname, fs_type));
                     free(fs_type);
+                    if ( NULL != ret_fstype ) {
+                        *ret_fstype = strdup(fs_types[x].f_fsname);
+                    }
                     return true;
                 }
             }
             free(fs_type);
+            if ( NULL != ret_fstype ) {
+                *ret_fstype=NULL;
+            }
             return false;
         }
     }
 
     OPAL_OUTPUT_VERBOSE((10, 0, "opal_path_nfs: file:%s on fs:%s\n",
                 fname, fs_types[i].f_fsname));
+    if ( NULL != ret_fstype ) {
+        *ret_fstype = strdup (fs_types[i].f_fsname);
+    }
     return true;
 
 #undef FS_TYPES_NUM

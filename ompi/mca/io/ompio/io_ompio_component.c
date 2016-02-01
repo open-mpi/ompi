@@ -281,22 +281,11 @@ file_query(struct ompi_file_t *file,
     rank = ompi_comm_rank ( file->f_comm);
     if (!tmp) {
         if ( 0 == rank) {
-            do {
-                err = statfs (file->f_filename, &fsbuf);
-            } while (err && (errno == ESTALE));
-            
-            if (err && (errno == ENOENT)) {
-                mca_fs_base_get_parent_dir (file->f_filename, &dir);
-                err = statfs (dir, &fsbuf);
-                free (dir);
-            }
-#ifndef LL_SUPER_MAGIC
-#define LL_SUPER_MAGIC 0x0BD00BD0
-#endif
-            if (fsbuf.f_type == LL_SUPER_MAGIC) {
+            if (LUSTRE == mca_fs_base_get_fstype(file->f_filename)) {
                 is_lustre = 1; //true
             }
 	}
+        
 	file->f_comm->c_coll.coll_bcast (&is_lustre,
                                          1,
                                          MPI_INT,

@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2011 University of Houston. All rights reserved.
+ * Copyright (c) 2008-2016 University of Houston. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -25,9 +25,11 @@
 
 #include "ompi/mca/mca.h"
 #include "opal/mca/base/base.h"
+#include "opal/util/path.h"
 
 #include "ompi/mca/fs/fs.h"
 #include "ompi/mca/fs/base/base.h"
+#include "ompi/mca/io/ompio/io_ompio.h"
 
 #ifdef HAVE_SYS_STATFS_H
 #include <sys/statfs.h> /* or <sys/vfs.h> */
@@ -93,3 +95,29 @@ void mca_fs_base_get_parent_dir ( char *filename, char **dirnamep)
     *dirnamep = dir;
     return;
 }
+
+int  mca_fs_base_get_fstype(char *fname )
+{
+    int ompio_type = UFS;
+    char *fstype=NULL;
+    bool ret = opal_path_nfs ( fname, &fstype );
+
+    if ( false == ret ) {
+        char *dir;
+        mca_fs_base_get_parent_dir (fname, &dir );
+        ret = opal_path_nfs (dir, &fstype);
+        if ( false == ret ) {
+            return ompio_type;
+        }
+    }
+    if ( 0 == strncasecmp(fstype, "lustre", sizeof("lustre")) ) {
+        ompio_type = LUSTRE;
+    }
+    else if ( 0 == strncasecmp(fstype, "pvfs2", sizeof("pvfs2"))) {
+        ompio_type = PVFS2;
+    }
+
+    free (fstype);
+    return ompio_type;
+}
+
