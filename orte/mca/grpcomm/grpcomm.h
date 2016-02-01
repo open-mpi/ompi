@@ -77,6 +77,8 @@ typedef struct {
     size_t ndmns;
     /** my index in the dmns array */
     unsigned long my_rank;
+    /* number of buckets expected */
+    size_t nexpected;
     /* number reported in */
     size_t nreported;
     /* distance masks for receive */
