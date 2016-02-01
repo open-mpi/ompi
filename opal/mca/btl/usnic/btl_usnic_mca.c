@@ -237,7 +237,7 @@ int opal_btl_usnic_component_register(void)
     mca_btl_usnic_component.cq_num = (int32_t) cq_num;
 
     CHECK(reg_int("av_eq_num", "Number of event queue entries for peer address resolution",
-                  1024, &av_eq_num, REGINT_NEG_ONE_OK, OPAL_INFO_LVL_5));
+                  1024, &av_eq_num, REGINT_GE_ONE, OPAL_INFO_LVL_5));
     mca_btl_usnic_component.av_eq_num = (int32_t) av_eq_num;
 
     CHECK(reg_int("base_udp_port", "Base UDP port to use for usNIC communications.  If 0, system will pick the port number.  If non-zero, it will be added to each process' local rank to obtain the final port number (default: 0)",

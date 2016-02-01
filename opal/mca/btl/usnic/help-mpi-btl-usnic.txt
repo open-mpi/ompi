@@ -241,7 +241,6 @@ abort.
   Current ARP timeout: %d (btl_usnic_arp_timeout MCA param)
 #
 [fi_av_eq too small]
-
 The usnic BTL was told to create an address resolution queue that was
 too small via the mca_btl_usnic_av_eq_num MCA parameter.  This
 parameter controls how many outstanding peer address resolutions can
