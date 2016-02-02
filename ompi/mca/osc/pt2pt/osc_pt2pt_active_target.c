@@ -8,7 +8,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2015 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2016 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2010      IBM Corporation.  All rights reserved.
  * Copyright (c) 2012-2013 Sandia National Laboratories.  All rights reserved.
@@ -211,7 +211,7 @@ int ompi_osc_pt2pt_start (ompi_group_t *group, int assert, ompi_win_t *win)
     ompi_osc_pt2pt_module_t *module = GET_MODULE(win);
     ompi_osc_pt2pt_sync_t *sync = &module->all_sync;
 
-    OPAL_THREAD_LOCK(&sync->lock);
+    OPAL_THREAD_LOCK(&module->lock);
 
     /* check if we are already in an access epoch */
     if (ompi_osc_pt2pt_access_epoch_active (module)) {
