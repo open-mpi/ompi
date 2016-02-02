@@ -41,18 +41,6 @@ int mca_atomic_mxm_cswap(void *target,
     ptl_id = -1;
     mxm_err = MXM_OK;
 
-    if (!prev || !target || !value) {
-        ATOMIC_ERROR("[#%d] Whether target, value or prev are not defined",
-                     my_pe);
-        oshmem_shmem_abort(-1);
-        return OSHMEM_ERR_BAD_PARAM;
-    }
-    if ((pe < 0) || (pe >= oshmem_num_procs())) {
-        ATOMIC_ERROR("[#%d] PE=%d not valid", my_pe, pe);
-        oshmem_shmem_abort(-1);
-        return OSHMEM_ERR_BAD_PARAM;
-    }
-
     switch (nlong) {
     case 1:
         nlong_order = 0;
