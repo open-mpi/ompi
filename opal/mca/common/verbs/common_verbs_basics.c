@@ -21,7 +21,7 @@
 #include <unistd.h>
 #endif
 
-#if OPAL_COMMON_VERSION_USNIC_HAPPY
+#if OPAL_COMMON_VERBS_USNIC_HAPPY
 #include "opal/mca/common/verbs_usnic/common_verbs_usnic.h"
 #endif
 
