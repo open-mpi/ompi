@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2011-2014 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2011-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2011      UT-Battelle, LLC. All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
@@ -76,9 +76,11 @@ int mca_btl_ugni_send (struct mca_btl_base_module_t *btl,
         /* queue up request */
         if (false == endpoint->wait_listed) {
             OPAL_THREAD_LOCK(&ugni_module->ep_wait_list_lock);
-            opal_list_append (&ugni_module->ep_wait_list, &endpoint->super);
+            if (false == endpoint->wait_listed) {
+                opal_list_append (&ugni_module->ep_wait_list, &endpoint->super);
+                endpoint->wait_listed = true;
+            }
             OPAL_THREAD_UNLOCK(&ugni_module->ep_wait_list_lock);
-            endpoint->wait_listed = true;
         }
 
         OPAL_THREAD_LOCK(&endpoint->lock);
