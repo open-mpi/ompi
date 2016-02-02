@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2011-2015 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2011-2016 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2011      UT-Battelle, LLC. All rights reserved.
  * $COPYRIGHT$
@@ -589,32 +589,21 @@ mca_btl_ugni_progress_wait_list (mca_btl_ugni_module_t *ugni_module)
     int count;
 
     OPAL_THREAD_LOCK(&ugni_module->ep_wait_list_lock);
-    count  = opal_list_get_size(&ugni_module->ep_wait_list);
-    OPAL_THREAD_UNLOCK(&ugni_module->ep_wait_list_lock);
+    count = opal_list_get_size(&ugni_module->ep_wait_list);
 
     do {
-        OPAL_THREAD_LOCK(&ugni_module->ep_wait_list_lock);
         endpoint = (mca_btl_base_endpoint_t *) opal_list_remove_first (&ugni_module->ep_wait_list);
-        OPAL_THREAD_UNLOCK(&ugni_module->ep_wait_list_lock);
         if (endpoint != NULL) {
-
-            endpoint->wait_listed = false;
-
             rc = mca_btl_ugni_progress_send_wait_list (endpoint);
 
-            if (OPAL_SUCCESS != rc && false == endpoint->wait_listed) {
-
-                endpoint->wait_listed = true;
-                OPAL_THREAD_LOCK(&ugni_module->ep_wait_list_lock);
+            if (OPAL_SUCCESS != rc) {
                 opal_list_append (&ugni_module->ep_wait_list, &endpoint->super);
-                OPAL_THREAD_UNLOCK(&ugni_module->ep_wait_list_lock);
+            } else {
+                endpoint->wait_listed = false;
             }
         }
-
-        --count;
-        if (count == 0) break;
-
-    } while (endpoint != NULL) ;
+    } while (endpoint != NULL && --count > 0) ;
+    OPAL_THREAD_UNLOCK(&ugni_module->ep_wait_list_lock);
 
     return rc;
 }
