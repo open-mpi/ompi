@@ -7,7 +7,7 @@
 # Copyright (c) 2012-2013 Inria.  All rights reserved.
 # Copyright (c) 2013      Los Alamos National Security, LLC. All rights
 #                         reserved.
-# Copyright (c) 2015      Research Organization for Information Science
+# Copyright (c) 2015-2016 Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 #
 # $COPYRIGHT$
@@ -803,10 +803,7 @@ libmpi_usempif08_la_SOURCES = \
         attr-fn-f08-callback-interfaces.h \
         conversion-fn-null-f08-interface.h \
         mpi-f08.F90 \
-        mpi-f-interfaces-bind.h pmpi-f-interfaces-bind.h \
-        attr-fn-f08-callback-interfaces.h \
         buffer_detach.c \
-        conversion-fn-null-f08-interface.h \
         constants.h \
         constants.c
 
