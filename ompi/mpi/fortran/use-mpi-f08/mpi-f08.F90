@@ -13,6 +13,8 @@
 ! Copyright (c) 2006-2014 Cisco Systems, Inc.  All rights reserved.
 ! Copyright (c) 2009-2012 Los Alamos National Security, LLC.
 !                         All rights reserved.
+! Copyright (c) 2016      Research Organization for Information Science
+!                         and Technology (RIST). All rights reserved.
 ! $COPYRIGHT$
 !
 ! Additional copyrights may follow
@@ -27,6 +29,7 @@ module mpi_f08
   use mpi_f08_types
   use mpi_f08_interfaces  ! this module contains the  mpi_f08 interface declarations
   use pmpi_f08_interfaces ! this module contains the pmpi_f08 interface declarations
+  use mpi_f08_callbacks   ! this module contains the mpi_f08 attribute callback subroutines
 
 !
 ! Declaration of the interfaces to the ompi impl files
@@ -34,14 +37,6 @@ module mpi_f08
 !
 #include "mpi-f-interfaces-bind.h"
 #include "pmpi-f-interfaces-bind.h"
-
-! The MPI attribute callback functions
-
-  include "attr-fn-f08-callback-interfaces.h"
-
-! The MPI_CONVERSION_FN_NULL function
-
-  include "conversion-fn-null-f08-interface.h"
 
 ! The sizeof interfaces
 
