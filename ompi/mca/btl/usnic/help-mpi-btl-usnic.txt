@@ -1,6 +1,6 @@
 # -*- text -*-
 #
-# Copyright (c) 2012-2015 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2012-2016 Cisco Systems, Inc.  All rights reserved.
 #
 # $COPYRIGHT$
 #
@@ -239,6 +239,19 @@ abort.
   Server:              %s
   usNIC interface:     %s
   Current ARP timeout: %d (btl_usnic_arp_timeout MCA param)
+#
+[fi_av_eq too small]
+The usnic BTL was told to create an address resolution queue that was
+too small via the mca_btl_usnic_av_eq_num MCA parameter.  This
+parameter controls how many outstanding peer address resolutions can
+be outstanding at a time.  Larger values allow more concurrent address
+resolutions, but consume more memory.
+
+  Server:                  %s
+  av_eq_num param value:   %d
+  av_eq_num minimum value: %d
+
+Your job will likely either perform poorly, or will abort.
 #
 [unreachable peer IP]
 WARNING: Open MPI failed to find a route to a peer IP address via a
