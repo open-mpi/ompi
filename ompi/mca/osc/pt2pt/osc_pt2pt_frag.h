@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2012      Sandia National Laboratories.  All rights reserved.
- * Copyright (c) 2014-2015 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2014-2016 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -33,7 +33,8 @@ struct ompi_osc_pt2pt_frag_t {
     char *top;
 
     /* Number of operations which have started writing into the frag, but not yet completed doing so */
-    int32_t pending;
+    volatile int32_t pending;
+    int32_t pending_long_sends;
     ompi_osc_pt2pt_frag_header_t *header;
     ompi_osc_pt2pt_module_t *module;
 };
@@ -44,12 +45,24 @@ extern int ompi_osc_pt2pt_frag_start(ompi_osc_pt2pt_module_t *module, ompi_osc_p
 extern int ompi_osc_pt2pt_frag_flush_target(ompi_osc_pt2pt_module_t *module, int target);
 extern int ompi_osc_pt2pt_frag_flush_all(ompi_osc_pt2pt_module_t *module);
 
+static inline int ompi_osc_pt2pt_frag_finish (ompi_osc_pt2pt_module_t *module,
+                                              ompi_osc_pt2pt_frag_t* buffer)
+{
+    opal_atomic_wmb ();
+    if (0 == OPAL_THREAD_ADD32(&buffer->pending, -1)) {
+        opal_atomic_mb ();
+        return ompi_osc_pt2pt_frag_start(module, buffer);
+    }
+
+    return OMPI_SUCCESS;
+}
+
 /*
  * Note: module lock must be held during this operation
  */
 static inline int ompi_osc_pt2pt_frag_alloc (ompi_osc_pt2pt_module_t *module, int target,
                                              size_t request_len, ompi_osc_pt2pt_frag_t **buffer,
-                                             char **ptr)
+                                             char **ptr, bool long_send)
 {
     ompi_osc_pt2pt_peer_t *peer = ompi_osc_pt2pt_peer_lookup (module, target);
     ompi_osc_pt2pt_frag_t *curr;
@@ -66,29 +79,21 @@ static inline int ompi_osc_pt2pt_frag_alloc (ompi_osc_pt2pt_module_t *module, in
 
     OPAL_THREAD_LOCK(&module->lock);
     curr = peer->active_frag;
-    if (NULL == curr || curr->remain_len < request_len) {
-        opal_free_list_item_t *item = NULL;
-
-        if (NULL != curr) {
-            curr->remain_len = 0;
-            peer->active_frag = NULL;
-            opal_atomic_mb ();
-
+    if (NULL == curr || curr->remain_len < request_len || (long_send && curr->pending_long_sends == 32)) {
+        if (NULL != curr && opal_atomic_cmpset (&peer->active_frag, curr, NULL)) {
             /* If there's something pending, the pending finish will
                start the buffer.  Otherwise, we need to start it now. */
-            if (0 == OPAL_THREAD_ADD32(&curr->pending, -1)) {
-                ret = ompi_osc_pt2pt_frag_start(module, curr);
-                if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
-                    return ret;
-                }
+            ret = ompi_osc_pt2pt_frag_finish (module, curr);
+            if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
+                OPAL_THREAD_UNLOCK(&module->lock);
+                return ret;
             }
         }
 
-        item = opal_free_list_get (&mca_osc_pt2pt_component.frags);
-        if (OPAL_UNLIKELY(NULL == item)) {
+        curr = (ompi_osc_pt2pt_frag_t *) opal_free_list_get (&mca_osc_pt2pt_component.frags);
+        if (OPAL_UNLIKELY(NULL == curr)) {
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
-        curr = peer->active_frag = (ompi_osc_pt2pt_frag_t*) item;
 
         curr->target = target;
 
@@ -96,7 +101,8 @@ static inline int ompi_osc_pt2pt_frag_alloc (ompi_osc_pt2pt_module_t *module, in
         curr->top = (char*) (curr->header + 1);
         curr->remain_len = mca_osc_pt2pt_component.buffer_size;
         curr->module = module;
-        curr->pending = 1;
+        curr->pending = 2;
+        curr->pending_long_sends = long_send;
 
         curr->header->base.type = OMPI_OSC_PT2PT_HDR_TYPE_FRAG;
         curr->header->base.flags = OMPI_OSC_PT2PT_HDR_FLAG_VALID;
@@ -104,12 +110,18 @@ static inline int ompi_osc_pt2pt_frag_alloc (ompi_osc_pt2pt_module_t *module, in
             curr->header->base.flags |= OMPI_OSC_PT2PT_HDR_FLAG_PASSIVE_TARGET;
         }
         curr->header->source = ompi_comm_rank(module->comm);
-        curr->header->num_ops = 0;
+        curr->header->num_ops = 1;
 
         if (curr->remain_len < request_len) {
             OPAL_THREAD_UNLOCK(&module->lock);
             return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
         }
+
+        peer->active_frag = curr;
+    } else {
+        OPAL_THREAD_ADD32(&curr->pending, 1);
+        OPAL_THREAD_ADD32(&curr->header->num_ops, 1);
+        curr->pending_long_sends += long_send;
     }
 
     *ptr = curr->top;
@@ -117,24 +129,8 @@ static inline int ompi_osc_pt2pt_frag_alloc (ompi_osc_pt2pt_module_t *module, in
 
     curr->top += request_len;
     curr->remain_len -= request_len;
+
     OPAL_THREAD_UNLOCK(&module->lock);
-
-    OPAL_THREAD_ADD32(&curr->pending, 1);
-    OPAL_THREAD_ADD32(&curr->header->num_ops, 1);
-
-    return OMPI_SUCCESS;
-}
-
-
-/*
- * Note: module lock must be held for this operation
- */
-static inline int ompi_osc_pt2pt_frag_finish(ompi_osc_pt2pt_module_t *module,
-                                            ompi_osc_pt2pt_frag_t* buffer)
-{
-    if (0 == OPAL_THREAD_ADD32(&buffer->pending, -1)) {
-        return ompi_osc_pt2pt_frag_start(module, buffer);
-    }
 
     return OMPI_SUCCESS;
 }
