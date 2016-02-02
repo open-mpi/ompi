@@ -40,8 +40,17 @@ AC_DEFUN([MCA_ompi_common_verbs_usnic_CONFIG],[
     AC_CONFIG_FILES([ompi/mca/common/verbs_usnic/Makefile])
     common_verbs_usnic_happy="no"
 
-    OMPI_CHECK_OPENFABRICS([common_verbs_usnic],
-                           [common_verbs_usnic_happy="yes"])
+    AC_ARG_WITH(verbs-usnic,
+                AC_HELP_STRING([--with-verbs-usnic],
+                               [Add support in Open MPI to defeat a seemingly dire warning message from libibverbs that Cisco usNIC devices are not supported.  This support is not compiled by default because you can also avoid this libibverbs bug by installing the libibverbs_usnic "no no" plugin, available from https://github.com/cisco/libusnic_verbs or in binary form from cisco.com]))
+
+    AS_IF([test "$with_verbs_usnic" = "yes"],
+          [common_verbs_usnic_happy=yes])
+
+    AS_IF([test "$common_verbs_usnic_happy" = "yes"],
+          [OMPI_CHECK_OPENFABRICS([common_verbs_usnic],
+                                  [common_verbs_usnic_happy="yes"])
+          ])
 
     AS_IF([test "$common_verbs_usnic_happy" = "yes"],
           [$1],

@@ -8,7 +8,7 @@ Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
                         University of Stuttgart.  All rights reserved.
 Copyright (c) 2004-2007 The Regents of the University of California.
                         All rights reserved.
-Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
+Copyright (c) 2006-2016 Cisco Systems, Inc.  All rights reserved.
 Copyright (c) 2006-2011 Mellanox Technologies. All rights reserved.
 Copyright (c) 2006-2012 Oracle and/or its affiliates.  All rights reserved.
 Copyright (c) 2007      Myricom, Inc.  All rights reserved.
@@ -957,6 +957,20 @@ NETWORKING SUPPORT / OPTIONS
   MPI will look in <openib directory>/lib and <openib
   directory>/lib64, which covers most cases.  This option is only
   needed for special configurations.
+
+--with-verbs-usnic
+  This option will activate support in Open MPI for disabling a
+  dire-sounding warning message from libibverbs that Cisco usNIC
+  devices are not supported (because Cisco usNIC devices are supported
+  through libfabric, not libibverbs).  This libibverbs warning can
+  also be suppressed by installing the "no op" libusnic_verbs plugin
+  for libibverbs (see https://github.com/cisco/libusnic_verbs, or
+  download binaries from cisco.com).  This option is disabled by
+  default because it causes libopen-pal.so to depend on libibverbs.so,
+  which is undesirable to many downstream packagers.
+
+--with-usnic
+  Abort configure if Cisco usNIC support cannot be built.
 
 RUN-TIME SYSTEM SUPPORT
 
