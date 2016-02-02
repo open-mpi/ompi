@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2015-2016 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -163,8 +163,10 @@ static inline void ompi_osc_pt2pt_sync_expected (ompi_osc_pt2pt_sync_t *sync)
 {
     int32_t new_value = OPAL_THREAD_ADD32 (&sync->sync_expected, -1);
     if (0 == new_value) {
+        OPAL_THREAD_LOCK(&sync->lock);
         sync->eager_send_active = true;
         opal_condition_broadcast (&sync->cond);
+        OPAL_THREAD_UNLOCK(&sync->lock);
     }
 }
 

@@ -51,6 +51,7 @@ request_construct(ompi_osc_pt2pt_request_t *request)
     request->super.req_status._cancelled = 0;
     request->super.req_free = request_free;
     request->super.req_cancel = request_cancel;
+    request->outstanding_requests = 0;
 }
 
 OBJ_CLASS_INSTANCE(ompi_osc_pt2pt_request_t,

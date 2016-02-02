@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2012      Sandia National Laboratories.  All rights reserved.
- * Copyright (c) 2014-2015 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2014-2016 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -57,6 +57,7 @@ OBJ_CLASS_DECLARATION(ompi_osc_pt2pt_request_t);
 #define OMPI_OSC_PT2PT_REQUEST_RETURN(req)                              \
     do {                                                                \
         OMPI_REQUEST_FINI(&(req)->super);                               \
+        (req)->outstanding_requests = 0;                                \
         opal_free_list_return (&mca_osc_pt2pt_component.requests,       \
                                  (opal_free_list_item_t *) (req));      \
     } while (0)
