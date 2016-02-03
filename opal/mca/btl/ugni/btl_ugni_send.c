@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2011-2014 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2011-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2011      UT-Battelle, LLC. All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
@@ -25,7 +25,6 @@ int mca_btl_ugni_send (struct mca_btl_base_module_t *btl,
     mca_btl_ugni_base_frag_t *frag = (mca_btl_ugni_base_frag_t *) descriptor;
     size_t size = frag->segments[0].seg_len + frag->segments[1].seg_len;
     mca_btl_ugni_module_t *ugni_module = (mca_btl_ugni_module_t *) btl;
-    int flags_save = frag->base.des_flags;
     int rc;
 
     /* tag and len are at the same location in eager and smsg frag hdrs */
@@ -43,42 +42,48 @@ int mca_btl_ugni_send (struct mca_btl_base_module_t *btl,
     BTL_VERBOSE(("btl/ugni sending descriptor %p from %d -> %d. length = %" PRIu64, (void *)descriptor,
                  OPAL_PROC_MY_NAME.vpid, endpoint->common->ep_rem_id, size));
 
-    /* temporarily disable ownership and callback flags so we can reliably check the complete flag */
-    frag->base.des_flags &= ~(MCA_BTL_DES_FLAGS_BTL_OWNERSHIP | MCA_BTL_DES_SEND_ALWAYS_CALLBACK);
+    /* add a reference to prevent the fragment from being returned until after the
+     * completion flag is checked. */
+    ++frag->ref_cnt;
     frag->flags &= ~MCA_BTL_UGNI_FRAG_COMPLETE;
 
     rc = mca_btl_ugni_send_frag (endpoint, frag);
-
-    if (OPAL_LIKELY(frag->flags & MCA_BTL_UGNI_FRAG_COMPLETE)) {
+    if (OPAL_LIKELY(mca_btl_ugni_frag_check_complete (frag))) {
         /* fast path: remote side has received the frag */
-        frag->base.des_flags = flags_save;
-        mca_btl_ugni_frag_complete (frag, OPAL_SUCCESS);
+        (void) mca_btl_ugni_frag_del_ref (frag, OPAL_SUCCESS);
 
         return 1;
     }
 
-    if ((OPAL_SUCCESS == rc) && (frag->flags & MCA_BTL_UGNI_FRAG_BUFFERED) && (flags_save & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP)) {
+    if ((OPAL_SUCCESS == rc) && (frag->flags & MCA_BTL_UGNI_FRAG_BUFFERED) && (frag->flags & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP)) {
         /* fast(ish) path: btl owned buffered frag. report send as complete */
-        frag->base.des_flags = flags_save & ~MCA_BTL_DES_SEND_ALWAYS_CALLBACK;
+        bool call_callback = !!(frag->flags & MCA_BTL_DES_SEND_ALWAYS_CALLBACK);
+        frag->flags &= ~MCA_BTL_DES_SEND_ALWAYS_CALLBACK;
 
-        if (OPAL_LIKELY(flags_save & MCA_BTL_DES_SEND_ALWAYS_CALLBACK)) {
+        if (call_callback) {
             frag->base.des_cbfunc(&frag->endpoint->btl->super, frag->endpoint, &frag->base, rc);
         }
+
+        (void) mca_btl_ugni_frag_del_ref (frag, OPAL_SUCCESS);
 
         return 1;
     }
 
     /* slow(ish) path: remote side hasn't received the frag. call the frag's callback when
        we get the local smsg/msgq or remote rdma completion */
-    frag->base.des_flags = flags_save | MCA_BTL_DES_SEND_ALWAYS_CALLBACK;
+    frag->base.des_flags |= MCA_BTL_DES_SEND_ALWAYS_CALLBACK;
+
+    mca_btl_ugni_frag_del_ref (frag, OPAL_SUCCESS);
 
     if (OPAL_UNLIKELY(OPAL_ERR_OUT_OF_RESOURCE == rc)) {
         /* queue up request */
         if (false == endpoint->wait_listed) {
             OPAL_THREAD_LOCK(&ugni_module->ep_wait_list_lock);
-            opal_list_append (&ugni_module->ep_wait_list, &endpoint->super);
+            if (false == endpoint->wait_listed) {
+                opal_list_append (&ugni_module->ep_wait_list, &endpoint->super);
+                endpoint->wait_listed = true;
+            }
             OPAL_THREAD_UNLOCK(&ugni_module->ep_wait_list_lock);
-            endpoint->wait_listed = true;
         }
 
         OPAL_THREAD_LOCK(&endpoint->lock);
