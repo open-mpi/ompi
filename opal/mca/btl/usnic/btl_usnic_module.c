@@ -412,7 +412,7 @@ static int add_procs_create_endpoints(struct opal_btl_usnic_module_t* module,
     size_t block_len = eq_size;
     size_t num_av_inserts = nprocs * USNIC_NUM_CHANNELS;
     size_t num_blocks = num_av_inserts / block_len;
-    if (eq_size % num_av_inserts != 0) {
+    if (num_av_inserts % block_len != 0) {
         ++num_blocks;
     }
 
