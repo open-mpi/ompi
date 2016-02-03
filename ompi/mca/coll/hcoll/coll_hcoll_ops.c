@@ -97,7 +97,52 @@ int mca_coll_hcoll_allgather(void *sbuf, int scount,
     return rc;
 }
 
-int mca_coll_hcoll_gather(void *sbuf, int scount,
+int mca_coll_hcoll_allgatherv(const void *sbuf, int scount,
+                            struct ompi_datatype_t *sdtype,
+                            void *rbuf, const int *rcount,
+                            const int *displs,
+                            struct ompi_datatype_t *rdtype,
+                            struct ompi_communicator_t *comm,
+                            mca_coll_base_module_t *module)
+{
+    dte_data_representation_t stype;
+    dte_data_representation_t rtype;
+    int rc;
+    HCOL_VERBOSE(20,"RUNNING HCOL ALLGATHERV");
+    mca_coll_hcoll_module_t *hcoll_module = (mca_coll_hcoll_module_t*)module;
+    stype = ompi_dtype_2_dte_dtype(sdtype);
+    rtype = ompi_dtype_2_dte_dtype(rdtype);
+    if (OPAL_UNLIKELY((HCOL_DTE_IS_ZERO(stype) || HCOL_DTE_IS_ZERO(rtype)
+                        || HCOL_DTE_IS_COMPLEX(stype) || HCOL_DTE_IS_COMPLEX(rtype)))
+                        && mca_coll_hcoll_component.hcoll_datatype_fallback){
+        /*If we are here then datatype is not simple predefined datatype */
+        /*In future we need to add more complex mapping to the dte_data_representation_t */
+        /* Now use fallback */
+        HCOL_VERBOSE(20,"Ompi_datatype is not supported: sdtype = %s, rdtype = %s; calling fallback allgatherv;",
+                     sdtype->super.name,
+                     rdtype->super.name);
+        rc = hcoll_module->previous_allgatherv(sbuf,scount,sdtype,
+                                             rbuf,rcount,
+                                             displs, 
+                                             rdtype,
+                                             comm,
+                                             hcoll_module->previous_allgatherv_module);
+        return rc;
+    }
+    rc = hcoll_collectives.coll_allgatherv((void *)sbuf,scount,stype,rbuf,rcount,displs,rtype,hcoll_module->hcoll_context);
+    if (HCOLL_SUCCESS != rc){
+        HCOL_VERBOSE(20,"RUNNING FALLBACK ALLGATHERV");
+        rc = hcoll_module->previous_allgatherv(sbuf,scount,sdtype,
+                                             rbuf,rcount,
+                                             displs, 
+                                             rdtype,
+                                             comm,
+                                             hcoll_module->previous_allgatherv_module);
+    }
+    return rc;
+}
+
+int mca_coll_hcoll_gather(const void *sbuf, int scount,
                           struct ompi_datatype_t *sdtype,
                           void *rbuf, int rcount,
                           struct ompi_datatype_t *rdtype,
@@ -186,7 +231,59 @@ int mca_coll_hcoll_allreduce(void *sbuf, void *rbuf, int count,
     return rc;
 }
 
-int mca_coll_hcoll_alltoall(void *sbuf, int scount,
+int mca_coll_hcoll_reduce(const void *sbuf, void *rbuf, int count,
+                            struct ompi_datatype_t *dtype,
+                            struct ompi_op_t *op,
+                            int root,
+                            struct ompi_communicator_t *comm,
+                            mca_coll_base_module_t *module)
+{
+    dte_data_representation_t Dtype;
+    hcoll_dte_op_t *Op;
+    int rc;
+    HCOL_VERBOSE(20,"RUNNING HCOL REDUCE");
+    mca_coll_hcoll_module_t *hcoll_module = (mca_coll_hcoll_module_t*)module;
+    Dtype = ompi_dtype_2_dte_dtype(dtype);
+    if (OPAL_UNLIKELY((HCOL_DTE_IS_ZERO(Dtype) || HCOL_DTE_IS_COMPLEX(Dtype)))
+                        && mca_coll_hcoll_component.hcoll_datatype_fallback){
+        /*If we are here then datatype is not simple predefined datatype */
+        /*In future we need to add more complex mapping to the dte_data_representation_t */
+        /* Now use fallback */
+        HCOL_VERBOSE(20,"Ompi_datatype is not supported: dtype = %s; calling fallback reduce;",
+                     dtype->super.name);
+        rc = hcoll_module->previous_reduce(sbuf,rbuf,
+                                             count,dtype,op,
+                                             root,
+                                             comm, hcoll_module->previous_reduce_module);
+        return rc;
+    }
+
+    Op = ompi_op_2_hcolrte_op(op);
+    if (OPAL_UNLIKELY(HCOL_DTE_OP_NULL == Op->id)){
+        /*If we are here then datatype is not simple predefined datatype */
+        /*In future we need to add more complex mapping to the dte_data_representation_t */
+        /* Now use fallback */
+        HCOL_VERBOSE(20,"ompi_op_t is not supported: op = %s; calling fallback reduce;",
+                     op->o_name);
+        rc = hcoll_module->previous_reduce(sbuf,rbuf,
+                                             count,dtype,op,
+                                             root,
+                                             comm, hcoll_module->previous_reduce_module);
+        return rc;
+    }
+
+    rc = hcoll_collectives.coll_reduce((void *)sbuf,rbuf,count,Dtype,Op,root,hcoll_module->hcoll_context);
+    if (HCOLL_SUCCESS != rc){
+        HCOL_VERBOSE(20,"RUNNING FALLBACK REDUCE");
+        rc = hcoll_module->previous_reduce(sbuf,rbuf,
+                                             count,dtype,op,
+                                             root,
+                                             comm, hcoll_module->previous_reduce_module);
+    }
+    return rc;
+}
+
+int mca_coll_hcoll_alltoall(const void *sbuf, int scount,
                            struct ompi_datatype_t *sdtype,
                            void* rbuf, int rcount,
                            struct ompi_datatype_t *rdtype,
@@ -397,7 +494,58 @@ int mca_coll_hcoll_iallgather(void *sbuf, int scount,
     return rc;
 }
 
-int mca_coll_hcoll_iallreduce(void *sbuf, void *rbuf, int count,
+#if HCOLL_API >= HCOLL_VERSION(3,5)
+int mca_coll_hcoll_iallgatherv(const void *sbuf, int scount,
+                            struct ompi_datatype_t *sdtype,
+                            void *rbuf, const int *rcount,
+                            const int *displs,
+                            struct ompi_datatype_t *rdtype,
+                            struct ompi_communicator_t *comm,
+                            ompi_request_t ** request,
+                            mca_coll_base_module_t *module)
+{
+    dte_data_representation_t stype;
+    dte_data_representation_t rtype;
+    int rc;
+    HCOL_VERBOSE(20,"RUNNING HCOL NON-BLOCKING ALLGATHERV");
+    mca_coll_hcoll_module_t *hcoll_module = (mca_coll_hcoll_module_t*)module;
+    stype = ompi_dtype_2_dte_dtype(sdtype);
+    rtype = ompi_dtype_2_dte_dtype(rdtype);
+    void **rt_handle = (void **) request;
+    if (OPAL_UNLIKELY((HCOL_DTE_IS_ZERO(stype) || HCOL_DTE_IS_ZERO(rtype)
+                        || HCOL_DTE_IS_COMPLEX(stype) || HCOL_DTE_IS_COMPLEX(rtype)))
+                        && mca_coll_hcoll_component.hcoll_datatype_fallback){
+        /*If we are here then datatype is not simple predefined datatype */
+        /*In future we need to add more complex mapping to the dte_data_representation_t */
+        /* Now use fallback */
+        HCOL_VERBOSE(20,"Ompi_datatype is not supported: sdtype = %s, rdtype = %s; calling fallback non-blocking allgatherv;",
+                     sdtype->super.name,
+                     rdtype->super.name);
+        rc = hcoll_module->previous_iallgatherv(sbuf,scount,sdtype,
+                                             rbuf,rcount,
+                                             displs, 
+                                             rdtype,
+                                             comm,
+                                             request,
+                                             hcoll_module->previous_iallgatherv_module);
+        return rc;
+    }
+    rc = hcoll_collectives.coll_iallgatherv((void *)sbuf,scount,stype,rbuf,rcount,displs,rtype,
+            hcoll_module->hcoll_context, rt_handle);
+    if (HCOLL_SUCCESS != rc){
+       HCOL_VERBOSE(20,"RUNNING FALLBACK NON-BLOCKING ALLGATHER");
+        rc = hcoll_module->previous_iallgatherv(sbuf,scount,sdtype,
+                                             rbuf,rcount,
+                                             displs, 
+                                             rdtype,
+                                             comm,
+                                             request,
+                                             hcoll_module->previous_iallgatherv_module);
+    }
+    return rc;
+}
+#endif
+int mca_coll_hcoll_iallreduce(const void *sbuf, void *rbuf, int count,
                             struct ompi_datatype_t *dtype,
                             struct ompi_op_t *op,
                             struct ompi_communicator_t *comm,
@@ -447,8 +595,65 @@ int mca_coll_hcoll_iallreduce(void *sbuf, void *rbuf, int count,
     }
     return rc;
 }
+#if HCOLL_API >= HCOLL_VERSION(3,5)
+int mca_coll_hcoll_ireduce(const void *sbuf, void *rbuf, int count,
+                            struct ompi_datatype_t *dtype,
+                            struct ompi_op_t *op,
+                            int root,
+                            struct ompi_communicator_t *comm,
+                            ompi_request_t ** request,
+                            mca_coll_base_module_t *module)
+{
+    dte_data_representation_t Dtype;
+    hcoll_dte_op_t *Op;
+    int rc;
+    HCOL_VERBOSE(20,"RUNNING HCOL NON-BLOCKING REDUCE");
+    mca_coll_hcoll_module_t *hcoll_module = (mca_coll_hcoll_module_t*)module;
+    Dtype = ompi_dtype_2_dte_dtype(dtype);
+    void **rt_handle = (void**) request;
+    if (OPAL_UNLIKELY((HCOL_DTE_IS_ZERO(Dtype) || HCOL_DTE_IS_COMPLEX(Dtype)))
+                        && mca_coll_hcoll_component.hcoll_datatype_fallback){
+        /*If we are here then datatype is not simple predefined datatype */
+        /*In future we need to add more complex mapping to the dte_data_representation_t */
+        /* Now use fallback */
+        HCOL_VERBOSE(20,"Ompi_datatype is not supported: dtype = %s; calling fallback non-blocking reduce;",
+                     dtype->super.name);
+        rc = hcoll_module->previous_ireduce(sbuf,rbuf,count,dtype,op,
+                                             root,
+                                             comm, request, 
+                                             hcoll_module->previous_ireduce_module);
+        return rc;
+    }
 
-int mca_coll_hcoll_igatherv(void* sbuf, int scount,
+    Op = ompi_op_2_hcolrte_op(op);
+    if (OPAL_UNLIKELY(HCOL_DTE_OP_NULL == Op->id)){
+        /*If we are here then datatype is not simple predefined datatype */
+        /*In future we need to add more complex mapping to the dte_data_representation_t */
+        /* Now use fallback */
+        HCOL_VERBOSE(20,"ompi_op_t is not supported: op = %s; calling fallback non-blocking reduce;",
+                     op->o_name);
+        rc = hcoll_module->previous_ireduce(sbuf,rbuf,
+                                             count,dtype,op,
+                                             root,
+                                             comm, request,
+                                             hcoll_module->previous_ireduce_module);
+        return rc;
+    }
+
+    rc = hcoll_collectives.coll_ireduce((void *)sbuf,rbuf,count,Dtype,Op,root,hcoll_module->hcoll_context,rt_handle);
+    if (HCOLL_SUCCESS != rc){
+        HCOL_VERBOSE(20,"RUNNING FALLBACK NON-BLOCKING REDUCE");
+        rc = hcoll_module->previous_ireduce(sbuf,rbuf,
+                                             count,dtype,op,
+                                             root,
+                                             comm, 
+                                             request,
+                                             hcoll_module->previous_ireduce_module);
+    }
+    return rc;
+}
+#endif
+int mca_coll_hcoll_igatherv(const void* sbuf, int scount,
                             struct ompi_datatype_t *sdtype,
                             void* rbuf, int *rcounts, int *displs,
                             struct ompi_datatype_t *rdtype,
