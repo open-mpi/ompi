@@ -33,7 +33,7 @@
 
 
 #define DEBUG_ON 0
-#define FCOLL_DYNAMIC_GEN2_SHUFFLE_TAG   -123
+#define FCOLL_DYNAMIC_GEN2_SHUFFLE_TAG   123
 
 /*Used for loading file-offsets per aggregator*/
 typedef struct mca_io_ompio_local_io_array{
@@ -502,11 +502,13 @@ int mca_fcoll_dynamic_gen2_file_write_all (mca_io_ompio_file_t *fh,
     prev_reqs = reqs2;
     
     /* Initialize communication for iteration 0 */
-    for ( i=0; i<dynamic_gen2_num_io_procs; i++ ) {
-        ret = shuffle_init ( 0, cycles, aggregators[i], fh->f_rank, aggr_data[i], 
-                             &curr_reqs[i*(fh->f_procs_per_group + 1)] );
-        if ( OMPI_SUCCESS != ret ) {
-            goto exit;
+    if ( cycles > 0 ) {
+        for ( i=0; i<dynamic_gen2_num_io_procs; i++ ) {
+            ret = shuffle_init ( 0, cycles, aggregators[i], fh->f_rank, aggr_data[i], 
+                                 &curr_reqs[i*(fh->f_procs_per_group + 1)] );
+            if ( OMPI_SUCCESS != ret ) {
+                goto exit;
+            }
         }
     }
 
@@ -548,27 +550,29 @@ int mca_fcoll_dynamic_gen2_file_write_all (mca_io_ompio_file_t *fh,
 
 
     /* Finish communication for iteration i = cycles-1 */
-    SWAP_REQUESTS(curr_reqs,prev_reqs);
-    SWAP_AGGR_POINTERS(aggr_data,dynamic_gen2_num_io_procs); 
-
-    ret = ompi_request_wait_all ( (fh->f_procs_per_group + 1 )*dynamic_gen2_num_io_procs, 
-                                  prev_reqs, MPI_STATUS_IGNORE);
-    if (OMPI_SUCCESS != ret){
-        goto exit;
-    }
-
-    /* Write data for iteration i=cycles-1 */
-    for ( i=0; i<dynamic_gen2_num_io_procs; i++ ) {
-        ret = write_init (fh, aggregators[i], aggr_data[i]);
+    if ( cycles > 0 ) {
+        SWAP_REQUESTS(curr_reqs,prev_reqs);
+        SWAP_AGGR_POINTERS(aggr_data,dynamic_gen2_num_io_procs); 
+        
+        ret = ompi_request_wait_all ( (fh->f_procs_per_group + 1 )*dynamic_gen2_num_io_procs, 
+                                      prev_reqs, MPI_STATUS_IGNORE);
         if (OMPI_SUCCESS != ret){
             goto exit;
-        }                    
-
-        if (!aggr_data[i]->prev_sendbuf_is_contiguous && aggr_data[i]->prev_bytes_sent) {
-            free (aggr_data[i]->prev_send_buf);
+        }
+        
+        /* Write data for iteration i=cycles-1 */
+        for ( i=0; i<dynamic_gen2_num_io_procs; i++ ) {
+            ret = write_init (fh, aggregators[i], aggr_data[i]);
+            if (OMPI_SUCCESS != ret){
+                goto exit;
+            }                    
+            
+            if (!aggr_data[i]->prev_sendbuf_is_contiguous && aggr_data[i]->prev_bytes_sent) {
+                free (aggr_data[i]->prev_send_buf);
+            }
         }
     }
-        
+
         
 #if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
     end_exch = MPI_Wtime();
@@ -706,6 +710,7 @@ static int shuffle_init ( int index, int cycles, int aggregator, int rank, mca_i
     MPI_Aint global_count = 0;
 
     data->num_io_entries = 0;
+    data->bytes_sent = 0;
     data->io_array=NULL;
     data->send_buf=NULL;
     /**********************************************************************
