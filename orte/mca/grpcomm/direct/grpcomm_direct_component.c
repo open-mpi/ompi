@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2011-2015 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2011-2016 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
@@ -55,7 +55,7 @@ static int direct_register(void)
     /* make the priority adjustable so users can select
      * direct for use by apps without affecting daemons
      */
-    my_priority = 1;
+    my_priority = 85;
     (void) mca_base_component_var_register(c, "priority",
                                            "Priority of the grpcomm direct component",
                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
