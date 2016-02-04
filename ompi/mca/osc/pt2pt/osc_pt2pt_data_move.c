@@ -213,7 +213,7 @@ int ompi_osc_pt2pt_control_send (ompi_osc_pt2pt_module_t *module, int target,
     char *ptr;
     int ret;
 
-    ret = ompi_osc_pt2pt_frag_alloc(module, target, len, &frag, &ptr, false);
+    ret = ompi_osc_pt2pt_frag_alloc(module, target, len, &frag, &ptr, false, true);
     if (OPAL_LIKELY(OMPI_SUCCESS == ret)) {
         memcpy (ptr, data, len);
 

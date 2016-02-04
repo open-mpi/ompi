@@ -147,6 +147,7 @@ int ompi_osc_pt2pt_fence(int assert, ompi_win_t *win)
 
     /* short-circuit the noprecede case */
     if (0 != (assert & MPI_MODE_NOPRECEDE)) {
+        module->comm->c_coll.coll_barrier (module->comm,  module->comm->c_coll.coll_barrier);
         OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
                              "osc pt2pt: fence end (short circuit)"));
         return ret;
