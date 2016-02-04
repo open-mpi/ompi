@@ -631,8 +631,8 @@ static inline void osc_pt2pt_add_pending (ompi_osc_pt2pt_pending_t *pending)
                             opal_list_append (&mca_osc_pt2pt_component.pending_operations, &pending->super));
 }
 
-#define OSC_PT2PT_FRAG_TAG   0x80000
-#define OSC_PT2PT_FRAG_MASK  0x7ffff
+#define OSC_PT2PT_FRAG_TAG   0x10000
+#define OSC_PT2PT_FRAG_MASK  0x0ffff
 
 /**
  * get_tag:
