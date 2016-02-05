@@ -139,8 +139,10 @@ static int add_procs_block_create_endpoints(opal_btl_usnic_module_t *module,
                                             &usnic_endpoint);
         if (OPAL_SUCCESS != rc) {
             opal_output_verbose(5, USNIC_OUT,
-                                "btl:usnic:%s: unable to create endpoint for module=%p proc=%p\n",
-                                __func__, (void *)module, (void *)usnic_proc);
+                                "btl:usnic:add_procs:%s: unable to create endpoint to peer %s on %s",
+                                module->fabric_info->fabric_attr->name,
+                                usnic_compat_proc_name_print(&opal_proc->proc_name),
+                                opal_get_proc_hostname(opal_proc));
             OBJ_RELEASE(usnic_proc);
             continue;
         }
@@ -156,7 +158,8 @@ static int add_procs_block_create_endpoints(opal_btl_usnic_module_t *module,
                                           modex->netmask);
 
         opal_output_verbose(5, USNIC_OUT,
-                            "btl:usnic: new usnic peer endpoint: %s, proirity port %d, data port %d",
+                            "btl:usnic:add_procs:%s: new usnic peer endpoint: %s, proirity port %d, data port %d",
+                            module->fabric_info->fabric_attr->name,
                             str,
                             modex->ports[USNIC_PRIORITY_CHANNEL],
                             modex->ports[USNIC_DATA_CHANNEL]);
