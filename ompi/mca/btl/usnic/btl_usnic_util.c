@@ -115,24 +115,27 @@ opal_btl_usnic_dump_hex(void *vaddr, int len)
  * using inet_ntop()).
  */
 void opal_btl_usnic_snprintf_ipv4_addr(char *out, size_t maxlen,
-                                       uint32_t addr, uint32_t netmask)
+                                       uint32_t addr_be, uint32_t netmask_be)
 {
     int prefixlen;
+    uint32_t netmask = ntohl(netmask_be);
+    uint32_t addr = ntohl(addr_be);
     uint8_t *p = (uint8_t*) &addr;
+
     if (netmask != 0) {
         prefixlen = 33 - ffs(netmask);
         snprintf(out, maxlen, "%u.%u.%u.%u/%u",
-                 p[0],
-                 p[1],
-                 p[2],
                  p[3],
+                 p[2],
+                 p[1],
+                 p[0],
                  prefixlen);
     } else {
         snprintf(out, maxlen, "%u.%u.%u.%u",
-                 p[0],
-                 p[1],
+                 p[3],
                  p[2],
-                 p[3]);
+                 p[1],
+                 p[0]);
     }
 }
 
