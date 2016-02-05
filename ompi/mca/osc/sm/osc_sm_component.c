@@ -5,7 +5,7 @@
  *                         reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -208,10 +208,9 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
         module->posts[0] = (uint64_t *) (module->posts + 1);
     } else {
         unsigned long total, *rbuf;
-        char *data_file;
         int i, flag;
         size_t pagesize;
-	size_t state_size;
+        size_t state_size;
         int posts_size, post_size = (comm_size + 63) / 64;
 
         OPAL_OUTPUT_VERBOSE((1, ompi_osc_base_framework.framework_output,
@@ -245,22 +244,24 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
             total += rbuf[i];
         }
 
-        if (asprintf(&data_file, "%s"OPAL_PATH_SEP"shared_window_%d.%s",
-                     ompi_process_info.job_session_dir,
-                     ompi_comm_get_cid(module->comm),
-                     ompi_process_info.nodename) < 0) {
-            return OMPI_ERR_OUT_OF_RESOURCE;
-        }
-
 	/* user opal/shmem directly to create a shared memory segment */
 	state_size = sizeof(ompi_osc_sm_global_state_t) + sizeof(ompi_osc_sm_node_state_t) * comm_size;
         posts_size = comm_size * post_size * sizeof (uint64_t);
-	if (0 == ompi_comm_rank (module->comm)) {
-	    ret = opal_shmem_segment_create (&module->seg_ds, data_file, total + pagesize + state_size + posts_size);
-	    if (OPAL_SUCCESS != ret) {
-		goto error;
-	    }
-	}
+        if (0 == ompi_comm_rank (module->comm)) {
+            char *data_file;
+            if (asprintf(&data_file, "%s"OPAL_PATH_SEP"shared_window_%d.%s",
+                         ompi_process_info.proc_session_dir,
+                         ompi_comm_get_cid(module->comm),
+                         ompi_process_info.nodename) < 0) {
+                return OMPI_ERR_OUT_OF_RESOURCE;
+            }
+
+            ret = opal_shmem_segment_create (&module->seg_ds, data_file, total + pagesize + state_size + posts_size);
+            free(data_file);
+            if (OPAL_SUCCESS != ret) {
+                goto error;
+            }
+        }
 
 	ret = module->comm->c_coll.coll_bcast (&module->seg_ds, sizeof (module->seg_ds), MPI_BYTE, 0,
 					       module->comm, module->comm->c_coll.coll_bcast_module);
