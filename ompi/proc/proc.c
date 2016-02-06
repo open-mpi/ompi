@@ -14,7 +14,7 @@
  * Copyright (c) 2012-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2013-2015 Intel, Inc. All rights reserved
- * Copyright (c) 2014-2015 Research Organization for Information Science
+ * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015      Mellanox Technologies. All rights reserved.
  *
@@ -643,7 +643,7 @@ ompi_proc_pack(ompi_proc_t **proclist, int proclistsize,
         ompi_proc_t *proc = proclist[i];
 
         if (ompi_proc_is_sentinel (proc)) {
-            proc = ompi_proc_for_name_nolock (ompi_proc_sentinel_to_name ((intptr_t) proc));
+            proc = ompi_proc_for_name_nolock (ompi_proc_sentinel_to_name ((uintptr_t) proc));
         }
 
         /* send proc name */

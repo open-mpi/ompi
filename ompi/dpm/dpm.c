@@ -170,7 +170,7 @@ int ompi_dpm_connect_accept(ompi_communicator_t *comm, int root,
         for (i=0; i < size; i++) {
             opal_process_name_t proc_name;
             if (ompi_proc_is_sentinel (proc_list[i])) {
-                proc_name = ompi_proc_sentinel_to_name ((intptr_t) proc_list[i]);
+                proc_name = ompi_proc_sentinel_to_name ((uintptr_t) proc_list[i]);
             } else {
                 proc_name = proc_list[i]->super.proc_name;
             }
@@ -532,7 +532,7 @@ static int construct_peers(ompi_group_t *group, opal_list_t *peers)
             return OMPI_ERR_NOT_FOUND;
         }
         if (ompi_proc_is_sentinel (proct)) {
-            proc_name = ompi_proc_sentinel_to_name ((intptr_t)proct);
+            proc_name = ompi_proc_sentinel_to_name ((uintptr_t)proct);
         } else {
             proc_name = proct->super.proc_name;
         }

@@ -14,6 +14,8 @@
  * Copyright (c) 2007      Cisco Systems, Inc. All rights reserved.
  * Copyright (c) 2013-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -61,7 +63,7 @@ static struct ompi_proc_t *ompi_group_dense_lookup_raw (ompi_group_t *group, con
 {
     if (OPAL_UNLIKELY(ompi_proc_is_sentinel (group->grp_proc_pointers[peer_id]))) {
         ompi_proc_t *proc =
-            (ompi_proc_t *) ompi_proc_lookup (ompi_proc_sentinel_to_name ((intptr_t) group->grp_proc_pointers[peer_id]));
+            (ompi_proc_t *) ompi_proc_lookup (ompi_proc_sentinel_to_name ((uintptr_t) group->grp_proc_pointers[peer_id]));
         if (NULL != proc) {
             /* replace sentinel value with an actual ompi_proc_t */
             group->grp_proc_pointers[peer_id] = proc;

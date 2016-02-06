@@ -18,7 +18,7 @@
  * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2012-2015 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Mellanox Technologies. All rights reserved.
@@ -699,7 +699,7 @@ static int ompi_comm_split_type_get_part (ompi_group_t *group, int *results, int
         int include = false;
 
         if (ompi_proc_is_sentinel (proc)) {
-            opal_process_name_t proc_name = ompi_proc_sentinel_to_name ((intptr_t) proc);
+            opal_process_name_t proc_name = ompi_proc_sentinel_to_name ((uintptr_t) proc);
 
             u16ptr = &locality;
 
