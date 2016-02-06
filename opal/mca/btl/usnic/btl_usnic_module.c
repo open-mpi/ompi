@@ -1895,6 +1895,7 @@ static void init_queue_lengths(opal_btl_usnic_module_t *module)
     } else {
         module->cq_num = mca_btl_usnic_component.cq_num;
     }
+    module->av_eq_num = mca_btl_usnic_component.av_eq_num;
 
     /*
      * Queue sizes for priority channel scale with # of endpoint. A
