@@ -8,7 +8,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2015 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2016 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2013 Sandia National Laboratories.  All rights reserved.
@@ -149,19 +149,20 @@ struct ompi_osc_pt2pt_module_t {
     uint32_t *epoch_outgoing_frag_count;
 
     /** cyclic counter for a unique tage for long messages. */
-    unsigned int tag_counter;
+    uint32_t tag_counter;
+    uint32_t rtag_counter;
 
     /* Number of outgoing fragments that have completed since the
        begining of time */
-    uint32_t outgoing_frag_count;
+    volatile uint32_t outgoing_frag_count;
     /* Next outgoing fragment count at which we want a signal on cond */
-    uint32_t outgoing_frag_signal_count;
+    volatile uint32_t outgoing_frag_signal_count;
 
     /* Number of incoming fragments that have completed since the
        begining of time */
-    uint32_t active_incoming_frag_count;
+    volatile uint32_t active_incoming_frag_count;
     /* Next incoming buffer count at which we want a signal on cond */
-    uint32_t active_incoming_frag_signal_count;
+    volatile uint32_t active_incoming_frag_signal_count;
 
     /** Number of targets locked/being locked */
     unsigned int passive_target_access_epoch;
@@ -408,14 +409,6 @@ int ompi_osc_pt2pt_component_irecv(ompi_osc_pt2pt_module_t *module,
                                   int tag,
                                   struct ompi_communicator_t *comm);
 
-int ompi_osc_pt2pt_component_isend(ompi_osc_pt2pt_module_t *module,
-                                  const void *buf,
-                                  size_t count,
-                                  struct ompi_datatype_t *datatype,
-                                  int dest,
-                                  int tag,
-                                  struct ompi_communicator_t *comm);
-
 /**
  * ompi_osc_pt2pt_progress_pending_acc:
  *
@@ -657,13 +650,18 @@ static inline int get_tag(ompi_osc_pt2pt_module_t *module)
     /* the LSB of the tag is used be the receiver to determine if the
        message is a passive or active target (ie, where to mark
        completion). */
-    int tmp = module->tag_counter + !!(module->passive_target_access_epoch);
-
-    module->tag_counter = (module->tag_counter + 2) & OSC_PT2PT_FRAG_MASK;
-
-    return tmp;
+    int32_t tmp = OPAL_THREAD_ADD32((volatile int32_t *) &module->tag_counter, 4);
+    return (tmp & OSC_PT2PT_FRAG_MASK) | !!(module->passive_target_access_epoch);
 }
 
+static inline int get_rtag(ompi_osc_pt2pt_module_t *module)
+{
+    /* the LSB of the tag is used be the receiver to determine if the
+       message is a passive or active target (ie, where to mark
+       completion). */
+    int32_t tmp = OPAL_THREAD_ADD32((volatile int32_t *) &module->rtag_counter, 4);
+    return (tmp & OSC_PT2PT_FRAG_MASK) | !!(module->passive_target_access_epoch);
+}
 /**
  * ompi_osc_pt2pt_accumulate_lock:
  *

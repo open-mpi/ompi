@@ -8,7 +8,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2015 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2016 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2013 Sandia National Laboratories.  All rights reserved.
@@ -34,26 +34,57 @@
 #include <stdio.h>
 
 /* progress an OSC request */
-static int ompi_osc_pt2pt_req_comm_complete (ompi_request_t *request)
+static int ompi_osc_pt2pt_comm_complete (ompi_request_t *request)
 {
-    ompi_osc_pt2pt_request_t *pt2pt_request = (ompi_osc_pt2pt_request_t *) request->req_complete_cb_data;
-    ompi_osc_pt2pt_module_t *module = pt2pt_request->module;
+    ompi_osc_pt2pt_module_t *module =
+        (ompi_osc_pt2pt_module_t*) request->req_complete_cb_data;
 
     OPAL_OUTPUT_VERBOSE((10, ompi_osc_base_framework.framework_output,
-                         "ompi_osc_pt2pt_req_comm_complete called tag = %d",
-                         request->req_status.MPI_TAG));
+                         "isend_completion_cb called"));
 
-    mark_outgoing_completion (module);
-
-    if (0 == OPAL_THREAD_ADD32(&pt2pt_request->outstanding_requests, -1)) {
-        ompi_osc_pt2pt_request_complete (pt2pt_request, request->req_status.MPI_ERROR);
-    }
+    mark_outgoing_completion(module);
 
     /* put this request on the garbage colletion list */
     osc_pt2pt_gc_add_request (module, request);
 
     return OMPI_SUCCESS;
 }
+
+static int ompi_osc_pt2pt_req_comm_complete (ompi_request_t *request)
+{
+    ompi_osc_pt2pt_request_t *pt2pt_request = (ompi_osc_pt2pt_request_t *) request->req_complete_cb_data;
+
+    OPAL_OUTPUT_VERBOSE((10, ompi_osc_base_framework.framework_output,
+                         "ompi_osc_pt2pt_req_comm_complete called tag = %d",
+                         request->req_status.MPI_TAG));
+
+    /* update the cbdata for ompi_osc_pt2pt_comm_complete */
+    request->req_complete_cb_data = pt2pt_request->module;
+
+    if (0 == OPAL_THREAD_ADD32(&pt2pt_request->outstanding_requests, -1)) {
+        ompi_osc_pt2pt_request_complete (pt2pt_request, request->req_status.MPI_ERROR);
+    }
+
+    return ompi_osc_pt2pt_comm_complete (request);
+}
+
+static inline int ompi_osc_pt2pt_data_isend (ompi_osc_pt2pt_module_t *module, const void *buf,
+                                             size_t count, ompi_datatype_t *datatype, int dest,
+                                             int tag, ompi_osc_pt2pt_request_t *request)
+{
+    /* increment the outgoing send count */
+    ompi_osc_signal_outgoing (module, dest, 1);
+
+    if (NULL != request) {
+        ++request->outstanding_requests;
+        return ompi_osc_pt2pt_isend_w_cb (buf, count, datatype, dest, tag, module->comm,
+                                          ompi_osc_pt2pt_req_comm_complete, request);
+    }
+
+    return ompi_osc_pt2pt_isend_w_cb (buf, count, datatype, dest, tag, module->comm,
+                                      ompi_osc_pt2pt_comm_complete, module);
+}
+
 
 static int ompi_osc_pt2pt_dt_send_complete (ompi_request_t *request)
 {
@@ -190,8 +221,8 @@ static inline int ompi_osc_pt2pt_gacc_self (ompi_osc_pt2pt_sync_t *pt2pt_sync, c
         ((unsigned long) target_disp * module->disp_unit);
     int ret;
 
-    /* if we are in active target mode wait until all post messages arrive */
-    ompi_osc_pt2pt_sync_wait (pt2pt_sync);
+    OPAL_OUTPUT_VERBOSE((MCA_BASE_VERBOSE_TRACE, ompi_osc_base_framework.framework_output, "ompi_osc_pt2pt_gacc_self: starting local "
+                         "get accumulate"));
 
     ompi_osc_pt2pt_accumulate_lock (module);
 
@@ -221,6 +252,9 @@ static inline int ompi_osc_pt2pt_gacc_self (ompi_osc_pt2pt_sync_t *pt2pt_sync, c
     } while (0);
 
     ompi_osc_pt2pt_accumulate_unlock (module);
+
+    OPAL_OUTPUT_VERBOSE((MCA_BASE_VERBOSE_TRACE, ompi_osc_base_framework.framework_output, "ompi_osc_pt2pt_gacc_self: local get "
+                         "accumulate complete"));
 
     if (request) {
         /* NTH: is it ok to use an ompi error code here? */
@@ -282,14 +316,14 @@ static inline int ompi_osc_pt2pt_put_w_req (const void *origin_addr, int origin_
     payload_len = origin_dt->super.size * origin_count;
     frag_len = sizeof(ompi_osc_pt2pt_header_put_t) + ddt_len + payload_len;
 
-    ret = ompi_osc_pt2pt_frag_alloc(module, target, frag_len, &frag, &ptr);
+    ret = ompi_osc_pt2pt_frag_alloc(module, target, frag_len, &frag, &ptr, false, true);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
         frag_len = sizeof(ompi_osc_pt2pt_header_put_t) + ddt_len;
-        ret = ompi_osc_pt2pt_frag_alloc(module, target, frag_len, &frag, &ptr);
+        ret = ompi_osc_pt2pt_frag_alloc(module, target, frag_len, &frag, &ptr, true, false);
         if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
             /* allocate space for the header plus space to store ddt_len */
             frag_len = sizeof(ompi_osc_pt2pt_header_put_t) + 8;
-            ret = ompi_osc_pt2pt_frag_alloc(module, target, frag_len, &frag, &ptr);
+            ret = ompi_osc_pt2pt_frag_alloc(module, target, frag_len, &frag, &ptr, true, false);
             if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
                 return OMPI_ERR_OUT_OF_RESOURCE;
             }
@@ -301,9 +335,8 @@ static inline int ompi_osc_pt2pt_put_w_req (const void *origin_addr, int origin_
         tag = get_tag(module);
     }
 
-    /* flush will be called at the end of this function. make sure all post messages have
-     * arrived. */
-    if ((is_long_msg || request) && OMPI_OSC_PT2PT_SYNC_TYPE_PSCW == pt2pt_sync->type) {
+    if (is_long_msg) {
+        /* wait for eager sends to be active before starting a long put */
         ompi_osc_pt2pt_sync_wait (pt2pt_sync);
     }
 
@@ -361,18 +394,8 @@ static inline int ompi_osc_pt2pt_put_w_req (const void *origin_addr, int origin_
             header->tag = tag;
             osc_pt2pt_hton(header, proc);
 
-            /* increase the outgoing signal count */
-            ompi_osc_signal_outgoing (module, target, 1);
-
-            if (request) {
-                request->outstanding_requests = 1;
-                ret = ompi_osc_pt2pt_isend_w_cb (origin_addr, origin_count, origin_dt,
-                                                target, tag, module->comm, ompi_osc_pt2pt_req_comm_complete,
-                                                request);
-            } else {
-                ret = ompi_osc_pt2pt_component_isend (module,origin_addr, origin_count, origin_dt, target, tag,
-                                                     module->comm);
-            }
+            ret = ompi_osc_pt2pt_data_isend (module,origin_addr, origin_count, origin_dt, target, tag,
+                                             request);
         }
     } while (0);
 
@@ -380,14 +403,7 @@ static inline int ompi_osc_pt2pt_put_w_req (const void *origin_addr, int origin_
         header->base.flags |= OMPI_OSC_PT2PT_HDR_FLAG_VALID;
     }
 
-    ret = ompi_osc_pt2pt_frag_finish(module, frag);
-
-    if (request || is_long_msg) {
-        /* need to flush now in case the caller decides to wait on the request */
-        ompi_osc_pt2pt_frag_flush_target (module, target);
-    }
-
-    return ret;
+    return ompi_osc_pt2pt_frag_finish(module, frag);
 }
 
 int
@@ -459,14 +475,14 @@ ompi_osc_pt2pt_accumulate_w_req (const void *origin_addr, int origin_count,
     payload_len = origin_dt->super.size * origin_count;
 
     frag_len = sizeof(*header) + ddt_len + payload_len;
-    ret = ompi_osc_pt2pt_frag_alloc(module, target, frag_len, &frag, &ptr);
+    ret = ompi_osc_pt2pt_frag_alloc(module, target, frag_len, &frag, &ptr, false, true);
     if (OMPI_SUCCESS != ret) {
         frag_len = sizeof(*header) + ddt_len;
-        ret = ompi_osc_pt2pt_frag_alloc(module, target, frag_len, &frag, &ptr);
+        ret = ompi_osc_pt2pt_frag_alloc(module, target, frag_len, &frag, &ptr, true, !request);
         if (OMPI_SUCCESS != ret) {
             /* allocate space for the header plus space to store ddt_len */
             frag_len = sizeof(*header) + 8;
-            ret = ompi_osc_pt2pt_frag_alloc(module, target, frag_len, &frag, &ptr);
+            ret = ompi_osc_pt2pt_frag_alloc(module, target, frag_len, &frag, &ptr, true, !request);
             if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
                 return OMPI_ERR_OUT_OF_RESOURCE;
             }
@@ -475,12 +491,11 @@ ompi_osc_pt2pt_accumulate_w_req (const void *origin_addr, int origin_count,
          }
 
         is_long_msg = true;
-        tag = get_tag (module);
+        tag = get_rtag (module);
     }
 
-    /* flush will be called at the end of this function. make sure all post messages have
-     * arrived. */
-    if ((is_long_msg || request) && OMPI_OSC_PT2PT_SYNC_TYPE_PSCW == pt2pt_sync->type) {
+    if (is_long_msg) {
+        /* wait for synchronization before posting a long message */
         ompi_osc_pt2pt_sync_wait (pt2pt_sync);
     }
 
@@ -538,18 +553,8 @@ ompi_osc_pt2pt_accumulate_w_req (const void *origin_addr, int origin_count,
             OPAL_OUTPUT_VERBOSE((25, ompi_osc_base_framework.framework_output,
                                  "acc: starting long accumulate with tag %d", tag));
 
-            /* increment the outgoing send count */
-            ompi_osc_signal_outgoing (module, target, 1);
-
-            if (request) {
-                request->outstanding_requests = 1;
-                ret = ompi_osc_pt2pt_isend_w_cb (origin_addr, origin_count, origin_dt,
-                                                target, tag, module->comm, ompi_osc_pt2pt_req_comm_complete,
-                                                request);
-            } else {
-                ret = ompi_osc_pt2pt_component_isend (module, origin_addr, origin_count, origin_dt, target, tag,
-                                                     module->comm);
-            }
+            ret = ompi_osc_pt2pt_data_isend (module, origin_addr, origin_count, origin_dt, target, tag,
+                                             request);
         }
     } while (0);
 
@@ -561,14 +566,7 @@ ompi_osc_pt2pt_accumulate_w_req (const void *origin_addr, int origin_count,
         header->base.flags |= OMPI_OSC_PT2PT_HDR_FLAG_VALID;
     }
 
-    ret = ompi_osc_pt2pt_frag_finish(module, frag);
-
-    if (is_long_msg || request) {
-        /* need to flush now in case the caller decides to wait on the request */
-        ompi_osc_pt2pt_frag_flush_target (module, target);
-    }
-
-    return ret;
+    return ompi_osc_pt2pt_frag_finish(module, frag);
 }
 
 int
@@ -639,7 +637,7 @@ int ompi_osc_pt2pt_compare_and_swap (const void *origin_addr, const void *compar
     }
 
     frag_len = sizeof(ompi_osc_pt2pt_header_cswap_t) + ddt_len + payload_len;
-    ret = ompi_osc_pt2pt_frag_alloc(module, target, frag_len, &frag, &ptr);
+    ret = ompi_osc_pt2pt_frag_alloc(module, target, frag_len, &frag, &ptr, false, false);
     if (OMPI_SUCCESS != ret) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
@@ -671,9 +669,7 @@ int ompi_osc_pt2pt_compare_and_swap (const void *origin_addr, const void *compar
         return ret;
     }
 
-    ret = ompi_osc_pt2pt_frag_finish(module, frag);
-
-    return ret;
+    return ompi_osc_pt2pt_frag_finish (module, frag);
 }
 
 
@@ -787,11 +783,11 @@ static inline int ompi_osc_pt2pt_rget_internal (void *origin_addr, int origin_co
     ddt_len = ompi_datatype_pack_description_length(target_dt);
 
     frag_len = sizeof(ompi_osc_pt2pt_header_get_t) + ddt_len;
-    ret = ompi_osc_pt2pt_frag_alloc(module, target, frag_len, &frag, &ptr);
+    ret = ompi_osc_pt2pt_frag_alloc(module, target, frag_len, &frag, &ptr, false, release_req);
     if (OMPI_SUCCESS != ret) {
         /* allocate space for the header plus space to store ddt_len */
         frag_len = sizeof(ompi_osc_pt2pt_header_put_t) + 8;
-        ret = ompi_osc_pt2pt_frag_alloc(module, target, frag_len, &frag, &ptr);
+        ret = ompi_osc_pt2pt_frag_alloc(module, target, frag_len, &frag, &ptr, false, release_req);
         if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
@@ -804,9 +800,8 @@ static inline int ompi_osc_pt2pt_rget_internal (void *origin_addr, int origin_co
     /* for bookkeeping the get is "outgoing" */
     ompi_osc_signal_outgoing (module, target, 1);
 
-    /* flush will be called at the end of this function. make sure all post messages have
-     * arrived. */
-    if (!release_req && OMPI_OSC_PT2PT_SYNC_TYPE_PSCW == pt2pt_sync->type) {
+    if (!release_req) {
+        /* wait for epoch to begin before starting rget operation */
         ompi_osc_pt2pt_sync_wait (pt2pt_sync);
     }
 
@@ -857,14 +852,7 @@ static inline int ompi_osc_pt2pt_rget_internal (void *origin_addr, int origin_co
         *request = &pt2pt_request->super;
     }
 
-    ret = ompi_osc_pt2pt_frag_finish(module, frag);
-
-    if (!release_req) {
-        /* need to flush now in case the caller decides to wait on the request */
-        ompi_osc_pt2pt_frag_flush_target (module, target);
-    }
-
-    return ret;
+    return ompi_osc_pt2pt_frag_finish(module, frag);
 }
 
 int ompi_osc_pt2pt_rget (void *origin_addr, int origin_count, struct ompi_datatype_t *origin_dt,
@@ -977,6 +965,11 @@ int ompi_osc_pt2pt_rget_accumulate_internal (const void *origin_addr, int origin
         return OMPI_SUCCESS;
     }
 
+    if (!release_req) {
+        /* wait for epoch to begin before starting operation */
+        ompi_osc_pt2pt_sync_wait (pt2pt_sync);
+    }
+
     /* optimize the self case. TODO: optimize the local case */
     if (ompi_comm_rank (module->comm) == target_rank) {
         *request = &pt2pt_request->super;
@@ -1003,14 +996,14 @@ int ompi_osc_pt2pt_rget_accumulate_internal (const void *origin_addr, int origin
     }
 
     frag_len = sizeof(*header) + ddt_len + payload_len;
-    ret = ompi_osc_pt2pt_frag_alloc(module, target_rank, frag_len, &frag, &ptr);
+    ret = ompi_osc_pt2pt_frag_alloc(module, target_rank, frag_len, &frag, &ptr, false, release_req);
     if (OMPI_SUCCESS != ret) {
         frag_len = sizeof(*header) + ddt_len;
-        ret = ompi_osc_pt2pt_frag_alloc(module, target_rank, frag_len, &frag, &ptr);
+        ret = ompi_osc_pt2pt_frag_alloc(module, target_rank, frag_len, &frag, &ptr, true, release_req);
         if (OMPI_SUCCESS != ret) {
             /* allocate space for the header plus space to store ddt_len */
             frag_len = sizeof(*header) + 8;
-            ret = ompi_osc_pt2pt_frag_alloc(module, target_rank, frag_len, &frag, &ptr);
+            ret = ompi_osc_pt2pt_frag_alloc(module, target_rank, frag_len, &frag, &ptr, true, release_req);
             if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
                 return OMPI_ERR_OUT_OF_RESOURCE;
             }
@@ -1029,12 +1022,6 @@ int ompi_osc_pt2pt_rget_accumulate_internal (const void *origin_addr, int origin
 
     /* increment the number of outgoing fragments */
     ompi_osc_signal_outgoing (module, target_rank, pt2pt_request->outstanding_requests);
-
-    /* flush will be called at the end of this function. make sure all post messages have
-     * arrived. */
-    if (!release_req && OMPI_OSC_PT2PT_SYNC_TYPE_PSCW == pt2pt_sync->type) {
-        ompi_osc_pt2pt_sync_wait (pt2pt_sync);
-    }
 
     header = (ompi_osc_pt2pt_header_acc_t *) ptr;
     header->base.flags = 0;
@@ -1100,14 +1087,7 @@ int ompi_osc_pt2pt_rget_accumulate_internal (const void *origin_addr, int origin
         *request = (ompi_request_t *) pt2pt_request;
     }
 
-    ret = ompi_osc_pt2pt_frag_finish(module, frag);
-
-    if (!release_req) {
-        /* need to flush now in case the caller decides to wait on the request */
-        ompi_osc_pt2pt_frag_flush_target (module, target_rank);
-    }
-
-    return ret;
+    return ompi_osc_pt2pt_frag_finish(module, frag);
 }
 
 int ompi_osc_pt2pt_get_accumulate(const void *origin_addr, int origin_count,
