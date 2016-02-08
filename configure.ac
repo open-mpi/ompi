@@ -20,7 +20,7 @@
 # Copyright (c) 2013      Mellanox Technologies, Inc.
 #                         All rights reserved.
 # Copyright (c) 2013-2014 Intel, Inc.  All rights reserved.
-# Copyright (c) 2014-2015 Research Organization for Information Science
+# Copyright (c) 2014-2016 Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 #
@@ -1372,6 +1372,7 @@ AC_CONFIG_FILES([
     test/event/Makefile
     test/asm/Makefile
     test/datatype/Makefile
+    test/dss/Makefile
     test/class/Makefile
     test/support/Makefile
     test/threads/Makefile
