@@ -269,6 +269,8 @@ int orte_util_add_dash_host_nodes(opal_list_t *nodes,
                 OPAL_OUTPUT_VERBOSE((1, orte_ras_base_framework.framework_output,
                                      "%s dashhost: found existing node %s on input list - ignoring",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), node->name));
+                /* transfer across the number of slots */
+                node->slots = nd->slots;
                 if (ORTE_FLAG_TEST(nd, ORTE_NODE_FLAG_SLOTS_GIVEN)) {
                     ORTE_FLAG_SET(node, ORTE_NODE_FLAG_SLOTS_GIVEN);
                 }
