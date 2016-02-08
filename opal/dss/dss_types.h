@@ -14,7 +14,7 @@
  * Copyright (c) 2012-2013 Los Alamos National Security, Inc. All rights
  *                         reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -47,6 +47,7 @@ typedef struct {
     opal_jobid_t jobid;
     opal_vpid_t vpid;
 } opal_process_name_t;
+#define OPAL_SIZEOF_PROCESS_NAME_T 8
 
 BEGIN_C_DECLS
 

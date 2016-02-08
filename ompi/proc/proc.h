@@ -369,6 +369,7 @@ static inline bool ompi_proc_is_sentinel (ompi_proc_t *proc)
     return (intptr_t) proc & 0x1;
 }
 
+#if OPAL_SIZEOF_PROCESS_NAME_T == SIZEOF_VOID_P
 /*
  * we assume an ompi_proc_t is at least aligned on two bytes,
  * so if the LSB of a pointer to an ompi_proc_t is 1, we have to handle
@@ -407,6 +408,27 @@ static inline opal_process_name_t ompi_proc_sentinel_to_name (uintptr_t sentinel
   name.vpid = vpid;
   return name;
 }
+#elif 4 == SIZEOF_VOID_P
+/*
+ * currently, a sentinel is only made from the current jobid aka OMPI_PROC_MY_NAME->jobid
+ * so we only store the first 31 bits of the vpid
+ */
+static inline uintptr_t ompi_proc_name_to_sentinel (opal_process_name_t name)
+{
+    assert(OMPI_PROC_MY_NAME->jobid == name.jobid);
+    return (uintptr_t)((name.vpid <<1) | 0x1);
+}
+
+static inline opal_process_name_t ompi_proc_sentinel_to_name (uintptr_t sentinel)
+{
+  opal_process_name_t name;
+  name.jobid = OMPI_PROC_MY_NAME->jobid;
+  name.vpid = sentinel >> 1;
+  return name;
+}
+#else
+#error unsupported pointer size
+#endif
 
 END_C_DECLS
 
