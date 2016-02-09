@@ -98,11 +98,18 @@ static int add_procs_block_create_endpoints(opal_btl_usnic_module_t *module,
 
         /* Do not create loopback usnic connections */
         if (opal_proc == my_proc) {
+            opal_output_verbose(75, USNIC_OUT,
+                                "btl:usnic:add_procs:%s: not connecting to self",
+                                module->fabric_info->fabric_attr->name);
             continue;
         }
 
         /* usNIC does not support loopback to the same machine */
         if (OPAL_PROC_ON_LOCAL_NODE(opal_proc->proc_flags)) {
+            opal_output_verbose(75, USNIC_OUT,
+                                "btl:usnic:add_procs:%s: not connecting to %s on same server",
+                                module->fabric_info->fabric_attr->name,
+                                usnic_compat_proc_name_print(&opal_proc->proc_name));
             continue;
         }
 
@@ -115,6 +122,11 @@ static int add_procs_block_create_endpoints(opal_btl_usnic_module_t *module,
         if (OPAL_ERR_UNREACH == rc) {
             /* If the peer doesn't have usnic modex info, then we just
                skip it */
+            opal_output_verbose(75, USNIC_OUT,
+                                "btl:usnic:add_procs:%s: peer %s on %s does not have usnic modex info; skipping",
+                                module->fabric_info->fabric_attr->name,
+                                usnic_compat_proc_name_print(&opal_proc->proc_name),
+                                opal_get_proc_hostname(opal_proc));
             continue;
         } else if (OPAL_SUCCESS != rc) {
             return OPAL_ERR_OUT_OF_RESOURCE;
@@ -127,8 +139,10 @@ static int add_procs_block_create_endpoints(opal_btl_usnic_module_t *module,
                                             &usnic_endpoint);
         if (OPAL_SUCCESS != rc) {
             opal_output_verbose(5, USNIC_OUT,
-                                "btl:usnic:%s: unable to create endpoint for module=%p proc=%p\n",
-                                __func__, (void *)module, (void *)usnic_proc);
+                                "btl:usnic:add_procs:%s: unable to create endpoint to peer %s on %s",
+                                module->fabric_info->fabric_attr->name,
+                                usnic_compat_proc_name_print(&opal_proc->proc_name),
+                                opal_get_proc_hostname(opal_proc));
             OBJ_RELEASE(usnic_proc);
             continue;
         }
@@ -144,7 +158,8 @@ static int add_procs_block_create_endpoints(opal_btl_usnic_module_t *module,
                                           modex->netmask);
 
         opal_output_verbose(5, USNIC_OUT,
-                            "btl:usnic: new usnic peer endpoint: %s, proirity port %d, data port %d",
+                            "btl:usnic:add_procs:%s: new usnic peer endpoint: %s, proirity port %d, data port %d",
+                            module->fabric_info->fabric_attr->name,
                             str,
                             modex->ports[USNIC_PRIORITY_CHANNEL],
                             modex->ports[USNIC_DATA_CHANNEL]);
@@ -1895,6 +1910,7 @@ static void init_queue_lengths(opal_btl_usnic_module_t *module)
     } else {
         module->cq_num = mca_btl_usnic_component.cq_num;
     }
+    module->av_eq_num = mca_btl_usnic_component.av_eq_num;
 
     /*
      * Queue sizes for priority channel scale with # of endpoint. A
