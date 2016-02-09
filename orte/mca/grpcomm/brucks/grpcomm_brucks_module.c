@@ -31,7 +31,7 @@
 #include "orte/util/proc_info.h"
 
 #include "orte/mca/grpcomm/base/base.h"
-#include "grpcomm_brks.h"
+#include "grpcomm_brucks.h"
 
 
 /* Static API's */
@@ -39,15 +39,15 @@ static int init(void);
 static void finalize(void);
 static int allgather(orte_grpcomm_coll_t *coll,
                      opal_buffer_t *buf);
-static void brks_allgather_process_data(orte_grpcomm_coll_t *coll, uint32_t distance);
-static int brks_allgather_send_dist(orte_grpcomm_coll_t *coll, orte_process_name_t *peer, uint32_t distance);
-static void brks_allgather_recv_dist(int status, orte_process_name_t* sender,
+static void brucks_allgather_process_data(orte_grpcomm_coll_t *coll, uint32_t distance);
+static int brucks_allgather_send_dist(orte_grpcomm_coll_t *coll, orte_process_name_t *peer, uint32_t distance);
+static void brucks_allgather_recv_dist(int status, orte_process_name_t* sender,
                                      opal_buffer_t* buffer, orte_rml_tag_t tag,
                                      void* cbdata);
-static int brks_finalize_coll(orte_grpcomm_coll_t *coll, int ret);
+static int brucks_finalize_coll(orte_grpcomm_coll_t *coll, int ret);
 
 /* Module def */
-orte_grpcomm_base_module_t orte_grpcomm_brks_module = {
+orte_grpcomm_base_module_t orte_grpcomm_brucks_module = {
     init,
     finalize,
     NULL,
@@ -61,9 +61,9 @@ static int init(void)
 {
     /* setup recv for distance data */
     orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
-                            ORTE_RML_TAG_ALLGATHER_BRKS,
+                            ORTE_RML_TAG_ALLGATHER_BRUCKS,
                             ORTE_RML_PERSISTENT,
-                            brks_allgather_recv_dist, NULL);
+                            brucks_allgather_recv_dist, NULL);
     return OPAL_SUCCESS;
 }
 
@@ -73,14 +73,14 @@ static int init(void)
 static void finalize(void)
 {
     /* cancel the recv */
-    orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_ALLGATHER_BRKS);
+    orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_ALLGATHER_BRUCKS);
 }
 
 static int allgather(orte_grpcomm_coll_t *coll,
                      opal_buffer_t *sendbuf)
 {
     OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_framework.framework_output,
-                         "%s grpcomm:coll:bruck algo employed for %d processes",
+                         "%s grpcomm:coll:brucks algo employed for %d processes",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (int)coll->ndmns));
     /* get my own rank */
     coll->my_rank = ORTE_VPID_INVALID;
@@ -96,7 +96,7 @@ static int allgather(orte_grpcomm_coll_t *coll,
         OPAL_OUTPUT((orte_grpcomm_base_framework.framework_output,
                      "Peer not found"));
         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-        brks_finalize_coll(coll, ORTE_ERR_NOT_FOUND);
+        brucks_finalize_coll(coll, ORTE_ERR_NOT_FOUND);
         return ORTE_ERR_NOT_FOUND;
     }
 
@@ -112,12 +112,12 @@ static int allgather(orte_grpcomm_coll_t *coll,
     opal_dss.copy_payload(&coll->bucket, sendbuf);
 
     /* process data */
-    brks_allgather_process_data (coll, 0);
+    brucks_allgather_process_data (coll, 0);
 
     return ORTE_SUCCESS;
 }
 
-static int brks_allgather_send_dist(orte_grpcomm_coll_t *coll, orte_process_name_t *peer, uint32_t distance) {
+static int brucks_allgather_send_dist(orte_grpcomm_coll_t *coll, orte_process_name_t *peer, uint32_t distance) {
     opal_buffer_t *send_buf;
     int rc;
 
@@ -149,13 +149,13 @@ static int brks_allgather_send_dist(orte_grpcomm_coll_t *coll, orte_process_name
     }
 
     OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_framework.framework_output,
-                         "%s grpcomm:coll:brks SENDING TO %s",
+                         "%s grpcomm:coll:brucks SENDING TO %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(peer)));
 
 
     if (0 > (rc = orte_rml.send_buffer_nb(peer, send_buf,
-                                          ORTE_RML_TAG_ALLGATHER_BRKS,
+                                          ORTE_RML_TAG_ALLGATHER_BRUCKS,
                                           orte_rml_send_callback, NULL))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(send_buf);
@@ -165,7 +165,7 @@ static int brks_allgather_send_dist(orte_grpcomm_coll_t *coll, orte_process_name
     return ORTE_SUCCESS;
 }
 
-static int brks_allgather_process_buffered (orte_grpcomm_coll_t *coll, uint32_t distance) {
+static int brucks_allgather_process_buffered (orte_grpcomm_coll_t *coll, uint32_t distance) {
     opal_buffer_t *buffer;
     size_t nreceived;
     int32_t cnt = 1;
@@ -180,18 +180,18 @@ static int brks_allgather_process_buffered (orte_grpcomm_coll_t *coll, uint32_t 
     coll->buffers[distance] = NULL;
 
     OPAL_OUTPUT_VERBOSE((80, orte_grpcomm_base_framework.framework_output,
-                         "%s grpcomm:coll:brks %u distance data found",
+                         "%s grpcomm:coll:brucks %u distance data found",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), distance));
     rc = opal_dss.unpack (buffer, &nreceived, &cnt, OPAL_SIZE);
     if (OPAL_SUCCESS != rc) {
         ORTE_ERROR_LOG(rc);
-        brks_finalize_coll(coll, rc);
+        brucks_finalize_coll(coll, rc);
         return rc;
     }
 
     if (OPAL_SUCCESS != (rc = opal_dss.copy_payload(&coll->bucket, buffer))) {
         ORTE_ERROR_LOG(rc);
-        brks_finalize_coll(coll, rc);
+        brucks_finalize_coll(coll, rc);
         return rc;
     }
 
@@ -202,7 +202,7 @@ static int brks_allgather_process_buffered (orte_grpcomm_coll_t *coll, uint32_t 
     return 1;
 }
 
-static void brks_allgather_process_data(orte_grpcomm_coll_t *coll, uint32_t distance) {
+static void brucks_allgather_process_data(orte_grpcomm_coll_t *coll, uint32_t distance) {
     /* Communication step:
      At every step i, rank r:
      - doubles the distance
@@ -225,23 +225,23 @@ static void brks_allgather_process_data(orte_grpcomm_coll_t *coll, uint32_t dist
 
     while (distance < log2ndmns) {
         OPAL_OUTPUT_VERBOSE((80, orte_grpcomm_base_framework.framework_output,
-             "%s grpcomm:coll:brks process distance %u)",
+             "%s grpcomm:coll:brucks process distance %u)",
               ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), distance));
 
         /* first send my current contents */
         nv = (coll->ndmns + coll->my_rank - (1 << distance)) % coll->ndmns;
         peer.vpid = coll->dmns[nv];
 
-        brks_allgather_send_dist(coll, &peer, distance);
+        brucks_allgather_send_dist(coll, &peer, distance);
 
         if (distance == last_round) {
             /* have enough data to send the final round now */
             nv = (coll->ndmns + coll->my_rank - (1 << log2ndmns)) % coll->ndmns;
             peer.vpid = coll->dmns[nv];
-            brks_allgather_send_dist(coll, &peer, log2ndmns);
+            brucks_allgather_send_dist(coll, &peer, log2ndmns);
         }
 
-        rc = brks_allgather_process_buffered (coll, distance);
+        rc = brucks_allgather_process_buffered (coll, distance);
         if (!rc) {
             break;
         } else if (rc < 0) {
@@ -256,28 +256,28 @@ static void brks_allgather_process_data(orte_grpcomm_coll_t *coll, uint32_t dist
             /* need to send the final round now */
             nv = (coll->ndmns + coll->my_rank - (1 << log2ndmns)) % coll->ndmns;
             peer.vpid = coll->dmns[nv];
-            brks_allgather_send_dist(coll, &peer, log2ndmns);
+            brucks_allgather_send_dist(coll, &peer, log2ndmns);
         }
 
         /* check if the final message is already queued */
-        rc = brks_allgather_process_buffered (coll, distance);
+        rc = brucks_allgather_process_buffered (coll, distance);
         if (rc < 0) {
             return;
         }
     }
 
     OPAL_OUTPUT_VERBOSE((80, orte_grpcomm_base_framework.framework_output,
-                        "%s grpcomm:coll:brks reported %lu process from %lu",
+                        "%s grpcomm:coll:brucks reported %lu process from %lu",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (unsigned long)coll->nreported,
                         (unsigned long)coll->ndmns));
 
     /* if we are done, then complete things. we may get data from more daemons than expected */
     if (coll->nreported >= coll->ndmns){
-        brks_finalize_coll(coll, ORTE_SUCCESS);
+        brucks_finalize_coll(coll, ORTE_SUCCESS);
     }
 }
 
-static void brks_allgather_recv_dist(int status, orte_process_name_t* sender,
+static void brucks_allgather_recv_dist(int status, orte_process_name_t* sender,
                                      opal_buffer_t* buffer, orte_rml_tag_t tag,
                                      void* cbdata)
 {
@@ -288,7 +288,7 @@ static void brks_allgather_recv_dist(int status, orte_process_name_t* sender,
     uint32_t distance;
 
     OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_framework.framework_output,
-                         "%s grpcomm:coll:brks RECEIVING FROM %s",
+                         "%s grpcomm:coll:brucks RECEIVING FROM %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(sender)));
 
@@ -310,7 +310,7 @@ static void brks_allgather_recv_dist(int status, orte_process_name_t* sender,
     if (OPAL_SUCCESS != (rc = opal_dss.unpack(buffer, &distance, &cnt, OPAL_INT32))) {
         OBJ_RELEASE(sig);
         ORTE_ERROR_LOG(rc);
-        brks_finalize_coll(coll, rc);
+        brucks_finalize_coll(coll, rc);
         return;
     }
     assert(0 == orte_grpcomm_base_check_distance_recv(coll, distance));
@@ -319,7 +319,7 @@ static void brks_allgather_recv_dist(int status, orte_process_name_t* sender,
     if (coll->nreported && (!distance || orte_grpcomm_base_check_distance_recv(coll, distance - 1))) {
         size_t nreceived;
         OPAL_OUTPUT_VERBOSE((80, orte_grpcomm_base_framework.framework_output,
-                     "%s grpcomm:coll:brks data from %d distance received, "
+                     "%s grpcomm:coll:brucks data from %d distance received, "
                      "Process the next distance.",
                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), distance));
         /* capture any provided content */
@@ -327,21 +327,21 @@ static void brks_allgather_recv_dist(int status, orte_process_name_t* sender,
         if (OPAL_SUCCESS != rc) {
             OBJ_RELEASE(sig);
             ORTE_ERROR_LOG(rc);
-            brks_finalize_coll(coll, rc);
+            brucks_finalize_coll(coll, rc);
             return;
         }
         if (OPAL_SUCCESS != (rc = opal_dss.copy_payload(&coll->bucket, buffer))) {
             OBJ_RELEASE(sig);
             ORTE_ERROR_LOG(rc);
-            brks_finalize_coll(coll, rc);
+            brucks_finalize_coll(coll, rc);
             return;
         }
         coll->nreported += nreceived;
         orte_grpcomm_base_mark_distance_recv(coll, distance);
-        brks_allgather_process_data(coll, distance + 1);
+        brucks_allgather_process_data(coll, distance + 1);
     } else {
         OPAL_OUTPUT_VERBOSE((80, orte_grpcomm_base_framework.framework_output,
-                             "%s grpcomm:coll:brks data from %d distance received, "
+                             "%s grpcomm:coll:brucks data from %d distance received, "
                              "still waiting for data.",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), distance));
         if (NULL == coll->buffers) {
@@ -349,7 +349,7 @@ static void brks_allgather_recv_dist(int status, orte_process_name_t* sender,
                 rc = OPAL_ERR_OUT_OF_RESOURCE;
                 OBJ_RELEASE(sig);
                 ORTE_ERROR_LOG(rc);
-                brks_finalize_coll(coll, rc);
+                brucks_finalize_coll(coll, rc);
                 return;
             }
         }
@@ -357,13 +357,13 @@ static void brks_allgather_recv_dist(int status, orte_process_name_t* sender,
             rc = OPAL_ERR_OUT_OF_RESOURCE;
             OBJ_RELEASE(sig);
             ORTE_ERROR_LOG(rc);
-            brks_finalize_coll(coll, rc);
+            brucks_finalize_coll(coll, rc);
             return;
         }
         if (OPAL_SUCCESS != (rc = opal_dss.copy_payload(coll->buffers[distance], buffer))) {
             OBJ_RELEASE(sig);
             ORTE_ERROR_LOG(rc);
-            brks_finalize_coll(coll, rc);
+            brucks_finalize_coll(coll, rc);
             return;
         }
     }
@@ -371,10 +371,10 @@ static void brks_allgather_recv_dist(int status, orte_process_name_t* sender,
     OBJ_RELEASE(sig);
 }
 
-static int brks_finalize_coll(orte_grpcomm_coll_t *coll, int ret)
+static int brucks_finalize_coll(orte_grpcomm_coll_t *coll, int ret)
 {
      OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base_framework.framework_output,
-                         "%s grpcomm:coll:brks declared collective complete",
+                         "%s grpcomm:coll:brucks declared collective complete",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
     /* execute the callback */

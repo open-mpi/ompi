@@ -19,28 +19,28 @@
 
 #include "orte/util/proc_info.h"
 
-#include "grpcomm_brks.h"
+#include "grpcomm_brucks.h"
 
 static int my_priority=5;
-static int brks_open(void);
-static int brks_close(void);
-static int brks_query(mca_base_module_t **module, int *priority);
-static int brks_register(void);
+static int brucks_open(void);
+static int brucks_close(void);
+static int brucks_query(mca_base_module_t **module, int *priority);
+static int brucks_register(void);
 
 /*
  * Struct of function pointers that need to be initialized
  */
-orte_grpcomm_base_component_t mca_grpcomm_brks_component = {
+orte_grpcomm_base_component_t mca_grpcomm_brucks_component = {
     .base_version = {
         ORTE_GRPCOMM_BASE_VERSION_3_0_0,
 
-        .mca_component_name = "brks",
+        .mca_component_name = "brucks",
         MCA_BASE_MAKE_VERSION(component, ORTE_MAJOR_VERSION, ORTE_MINOR_VERSION,
                               ORTE_RELEASE_VERSION),
-        .mca_open_component = brks_open,
-        .mca_close_component = brks_close,
-        .mca_query_component = brks_query,
-        .mca_register_component_params = brks_register,
+        .mca_open_component = brucks_open,
+        .mca_close_component = brucks_close,
+        .mca_query_component = brucks_query,
+        .mca_register_component_params = brucks_register,
     },
     .base_data = {
         /* The component is checkpoint ready */
@@ -48,16 +48,16 @@ orte_grpcomm_base_component_t mca_grpcomm_brks_component = {
     },
 };
 
-static int brks_register(void)
+static int brucks_register(void)
 {
-    mca_base_component_t *c = &mca_grpcomm_brks_component.base_version;
+    mca_base_component_t *c = &mca_grpcomm_brucks_component.base_version;
 
     /* make the priority adjustable so users can select
-     * brks for use by apps without affecting daemons
+     * brucks for use by apps without affecting daemons
      */
     my_priority = 50;
     (void) mca_base_component_var_register(c, "priority",
-                                           "Priority of the grpcomm brks component",
+                                           "Priority of the grpcomm brucks component",
                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
                                            OPAL_INFO_LVL_9,
                                            MCA_BASE_VAR_SCOPE_READONLY,
@@ -66,19 +66,19 @@ static int brks_register(void)
 }
 
 /* Open the component */
-static int brks_open(void)
+static int brucks_open(void)
 {
     return ORTE_SUCCESS;
 }
 
-static int brks_close(void)
+static int brucks_close(void)
 {
     return ORTE_SUCCESS;
 }
 
-static int brks_query(mca_base_module_t **module, int *priority)
+static int brucks_query(mca_base_module_t **module, int *priority)
 {
     *priority = my_priority;
-    *module = (mca_base_module_t *)&orte_grpcomm_brks_module;
+    *module = (mca_base_module_t *)&orte_grpcomm_brucks_module;
     return ORTE_SUCCESS;
 }

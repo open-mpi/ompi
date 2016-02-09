@@ -10,30 +10,30 @@
 # $HEADER$
 #
 
-AM_CPPFLAGS = $(grpcomm_brks_CPPFLAGS)
+AM_CPPFLAGS = $(grpcomm_brucks_CPPFLAGS)
 
 sources = \
-	grpcomm_brks.h \
-	grpcomm_brks.c \
-	grpcomm_brks_component.c
+	grpcomm_brucks.h \
+	grpcomm_brucks_module.c \
+	grpcomm_brucks_component.c
 
-# Make the output library in this brksory, and name it either
+# Make the output library in this brucksory, and name it either
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la
 # (for static builds).
 
-if MCA_BUILD_orte_grpcomm_brks_DSO
+if MCA_BUILD_orte_grpcomm_brucks_DSO
 component_noinst =
-component_install = mca_grpcomm_brks.la
+component_install = mca_grpcomm_brucks.la
 else
-component_noinst = libmca_grpcomm_brks.la
+component_noinst = libmca_grpcomm_brucks.la
 component_install =
 endif
 
 mcacomponentdir = $(ortelibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
-mca_grpcomm_brks_la_SOURCES = $(sources)
-mca_grpcomm_brks_la_LDFLAGS = -module -avoid-version
+mca_grpcomm_brucks_la_SOURCES = $(sources)
+mca_grpcomm_brucks_la_LDFLAGS = -module -avoid-version
 
 noinst_LTLIBRARIES = $(component_noinst)
-libmca_grpcomm_brks_la_SOURCES =$(sources)
-libmca_grpcomm_brks_la_LDFLAGS = -module -avoid-version
+libmca_grpcomm_brucks_la_SOURCES =$(sources)
+libmca_grpcomm_brucks_la_LDFLAGS = -module -avoid-version
