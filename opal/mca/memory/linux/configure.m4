@@ -61,6 +61,42 @@ AC_DEFUN([MCA_opal_memory_linux_CONFIG],[
                  [memory_linux_ptmalloc2_happy=no
                   memory_linux_ummu_happy=no])])
 
+
+    ######################################################################
+    # if memory hook available
+    ######################################################################
+    memory_hook_found=1
+    AS_IF([test "$memory_hook_found" -eq 1],
+        [memory_hook_found=0 AC_CHECK_HEADER([malloc.h],
+             [AC_CHECK_FUNC([__malloc_initialize_hook],
+                 [AC_CHECK_FUNC([__malloc_hook],
+                     [AC_CHECK_FUNC([__realloc_hook],
+                         [AC_CHECK_FUNC([__free_hook],
+                            [memory_hook_found=1])])])])])])
+    AC_MSG_CHECKING([whether the system can use malloc hooks])
+    AS_IF([test "$memory_hook_found" = "0"],
+          [AC_MSG_RESULT([no])],
+          [AC_MSG_RESULT([yes])])
+    AC_DEFINE_UNQUOTED([MEMORY_LINUX_HAVE_MALLOC_HOOK_SUPPORT], [$memory_hook_found],
+                   	   [Whether the system has Memory Allocation Hooks])
+
+    AC_ARG_ENABLE(memory-linux-malloc-alignment,
+        AC_HELP_STRING([--enable-memory-linux-malloc-alignment], [Enable support for allocated memory alignment. Default: enabled if supported, disabled otherwise.]))
+
+    malloc_align_enabled=0
+    AS_IF([test "$enable_memory_linux_malloc_alignment" != "no"],
+        [malloc_align_enabled=$memory_hook_found])
+
+    AS_IF([test "$enable_memory_linux_malloc_alignment" = "yes" && test "$malloc_align_enabled" = "0"],
+          [AC_MSG_ERROR([memory linux malloc alignment is requested but __malloc_hook is not available])])
+    AC_MSG_CHECKING([whether the memory linux will use malloc alignment])
+    AS_IF([test "$malloc_align_enabled" = "0"],
+          [AC_MSG_RESULT([no])],
+          [AC_MSG_RESULT([yes])])
+
+    AC_DEFINE_UNQUOTED(MEMORY_LINUX_MALLOC_ALIGN_ENABLED, [$malloc_align_enabled],
+                       [Whether the memory linux malloc alignment is enabled])
+
     ######################################################################
     # ptmalloc2
     ######################################################################

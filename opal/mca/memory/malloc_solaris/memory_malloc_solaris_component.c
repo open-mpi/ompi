@@ -11,10 +11,15 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2011 Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2009-2011 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015      Mellanox Technologies, Inc.
+ *                         All rights reserved.
+ *
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -68,6 +73,7 @@ const opal_memory_base_component_2_0_0_t mca_memory_malloc_solaris_component = {
     NULL,
     opal_memory_base_component_register_empty,
     opal_memory_base_component_deregister_empty,
+    opal_memory_base_component_set_alignment_empty,
 };
 
 /*

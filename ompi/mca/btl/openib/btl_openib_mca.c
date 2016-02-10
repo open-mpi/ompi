@@ -703,26 +703,18 @@ int btl_openib_register_mca_params(void)
                   0, &mca_btl_openib_component.gid_index,
                   REGINT_GE_ZERO));
 
-#if BTL_OPENIB_MALLOC_HOOKS_ENABLED
-    CHECK(reg_int("memalign", NULL,
-                  "[64 | 32 | 0] - Enable (64bit or 32bit)/Disable(0) memory"
-                  "alignment for all malloc calls if btl openib is used.",
-                  32, &mca_btl_openib_component.use_memalign,
-                  REGINT_GE_ZERO));
-
-    mca_btl_openib_component.memalign_threshold =
-        mca_btl_openib_module.super.btl_eager_limit;
-    tmp = mca_base_component_var_register(&mca_btl_openib_component.super.btl_version,
-                                          "memalign_threshold",
-                                          "Allocating memory more than btl_openib_memalign_threshhold"
-                                          "bytes will automatically be aligned to the value of btl_openib_memalign bytes."
-                                          "memalign_threshhold defaults to the same value as mca_btl_openib_eager_limit.",
-                                          MCA_BASE_VAR_TYPE_SIZE_T, NULL, 0, 0,
-                                          OPAL_INFO_LVL_9,
-                                          MCA_BASE_VAR_SCOPE_READONLY,
-                                          &mca_btl_openib_component.memalign_threshold);
-    if (0 > tmp) ret = tmp;
-#endif
+#if MEMORY_LINUX_MALLOC_ALIGN_ENABLED
+    tmp = mca_base_var_find ("opal", "memory", "linux", "memalign");
+    if (0 <= tmp) {
+        (void) mca_base_var_register_synonym(tmp, "ompi", "btl", "openib", "memalign",
+                                             MCA_BASE_VAR_SYN_FLAG_DEPRECATED);
+    }
+    tmp = mca_base_var_find ("opal", "memory", "linux", "memalign_threshold");
+    if (0 <= tmp) {
+        (void) mca_base_var_register_synonym(tmp, "opal", "btl", "openib", "memalign_threshold",
+                                             MCA_BASE_VAR_SYN_FLAG_DEPRECATED);
+    }
+#endif /* MEMORY_LINUX_MALLOC_ALIGN_ENABLED */
 
     /* Register any MCA params for the connect pseudo-components */
     if (OMPI_SUCCESS == ret) {
@@ -813,17 +805,6 @@ int btl_openib_verify_mca_params (void)
                              true, ompi_process_info.nodename);
               return OMPI_ERR_BAD_PARAM;
         }
-    }
-#endif
-
-#if BTL_OPENIB_MALLOC_HOOKS_ENABLED
-    if (mca_btl_openib_component.use_memalign != 32  
-        && mca_btl_openib_component.use_memalign != 64
-        && mca_btl_openib_component.use_memalign != 0){ 
-        opal_show_help("help-mpi-btl-openib.txt", "invalid mca param value",
-                       true, "Wrong btl_openib_memalign parameter value. Allowed values: 64, 32, 0.",
-                       "btl_openib_memalign is reset to 32");
-        mca_btl_openib_component.use_memalign = 32; 
     }
 #endif
 
