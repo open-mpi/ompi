@@ -31,6 +31,11 @@ typedef struct opal_memory_linux_component_t {
     int ummunotify_fd;
 #endif
 
+#if MEMORY_LINUX_MALLOC_ALIGN_ENABLED
+    int use_memalign;
+    size_t memalign_threshold;
+#endif
+
 #if MEMORY_LINUX_PTMALLOC2
     /* Ptmalloc2-specific data. Note that these variables are all marked as volatile.
      * This is needed because of what may be a buggy optimization in the GCC 4.9.2
@@ -64,12 +69,19 @@ int opal_memory_linux_ummunotify_close(void);
 /* memory_linux_ptmalloc2.c */
 int opal_memory_linux_ptmalloc2_open(void);
 int opal_memory_linux_ptmalloc2_close(void);
-OPAL_DECLSPEC void opal_memory_linux_malloc_init_hook(void);
 
 /* memory_linux_munmap.c */
 OPAL_DECLSPEC int opal_memory_linux_free_ptmalloc2_munmap(void *start, size_t length, int from_alloc);
 OPAL_DECLSPEC int munmap(void* addr, size_t len);
 #endif /* !MEMORY_LINUX_PTMALLOC2 */
+
+#if MEMORY_LINUX_HAVE_MALLOC_HOOK_SUPPORT
+OPAL_DECLSPEC void opal_memory_linux_malloc_init_hook(void);
+#endif /* MEMORY_LINUX_HAVE_MALLOC_HOOK_SUPPORT */
+
+#if MEMORY_LINUX_MALLOC_ALIGN_ENABLED
+OPAL_DECLSPEC void opal_memory_linux_malloc_set_alignment(int use_memalign, size_t memalign_threshold);
+#endif /* MEMORY_LINUX_MALLOC_ALIGN_ENABLED */
 
 END_C_DECLS
 
