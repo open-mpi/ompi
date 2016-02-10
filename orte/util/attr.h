@@ -29,22 +29,22 @@ typedef uint8_t orte_app_context_flags_t;
 
 
 /* APP_CONTEXT ATTRIBUTE KEYS */
-#define ORTE_APP_HOSTFILE         1    // string  - hostfile
-#define ORTE_APP_ADD_HOSTFILE     2    // string  - hostfile to be added
-#define ORTE_APP_DASH_HOST        3    // string  - hosts specified with -host option
-#define ORTE_APP_ADD_HOST         4    // string  - hosts to be added
-#define ORTE_APP_USER_CWD         5    // bool  - user specified cwd
-#define ORTE_APP_SSNDIR_CWD       6    // bool  - use session dir as cwd
-#define ORTE_APP_PRELOAD_BIN      7    // bool  - move binaries to remote nodes prior to exec
-#define ORTE_APP_PRELOAD_FILES    8    // string  - files to be moved to remote nodes prior to exec
-#define ORTE_APP_SSTORE_LOAD      9    // string
-#define ORTE_APP_RECOV_DEF       10    // bool  - whether or not a recovery policy was defined
-#define ORTE_APP_MAX_RESTARTS    11    // int32 - max number of times a process can be restarted
-#define ORTE_APP_MIN_NODES       12    // int64 - min number of nodes required
-#define ORTE_APP_MANDATORY       13    // bool - flag if nodes requested in -host are "mandatory" vs "optional"
-#define ORTE_APP_MAX_PPN         14    // uint32 - maximum number of procs/node for this app
-#define ORTE_APP_PREFIX_DIR      15    // string - prefix directory for this app, if override necessary
-#define ORTE_APP_NO_CACHEDIR     16    // bool - flag that a cache dir is not to be specified for a Singularity container
+#define ORTE_APP_HOSTFILE            1    // string  - hostfile
+#define ORTE_APP_ADD_HOSTFILE        2    // string  - hostfile to be added
+#define ORTE_APP_DASH_HOST           3    // string  - hosts specified with -host option
+#define ORTE_APP_ADD_HOST            4    // string  - hosts to be added
+#define ORTE_APP_USER_CWD            5    // bool  - user specified cwd
+#define ORTE_APP_SSNDIR_CWD          6    // bool  - use session dir as cwd
+#define ORTE_APP_PRELOAD_BIN         7    // bool  - move binaries to remote nodes prior to exec
+#define ORTE_APP_PRELOAD_FILES       8    // string  - files to be moved to remote nodes prior to exec
+#define ORTE_APP_SSTORE_LOAD         9    // string
+#define ORTE_APP_RECOV_DEF          10    // bool  - whether or not a recovery policy was defined
+#define ORTE_APP_MAX_RESTARTS       11    // int32 - max number of times a process can be restarted
+#define ORTE_APP_MIN_NODES          12    // int64 - min number of nodes required
+#define ORTE_APP_MANDATORY          13    // bool - flag if nodes requested in -host are "mandatory" vs "optional"
+#define ORTE_APP_MAX_PPN            14    // uint32 - maximum number of procs/node for this app
+#define ORTE_APP_PREFIX_DIR         15    // string - prefix directory for this app, if override necessary
+#define ORTE_APP_NO_CACHEDIR        16    // bool - flag that a cache dir is not to be specified for a Singularity container
 
 #define ORTE_APP_MAX_KEY        100
 

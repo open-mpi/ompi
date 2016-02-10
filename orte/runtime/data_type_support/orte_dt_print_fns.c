@@ -345,8 +345,8 @@ int orte_dt_print_node(char **output, char *prefix, orte_node_t *src, opal_data_
         goto PRINT_PROCS;
     }
 
-    asprintf(&tmp, "\n%sData for node: %s\tState: %0x",
-             pfx2, (NULL == src->name) ? "UNKNOWN" : src->name, src->state);
+    asprintf(&tmp, "\n%sData for node: %s\tState: %0x\tFlags: %02x",
+             pfx2, (NULL == src->name) ? "UNKNOWN" : src->name, src->state, src->flags);
     /* does this node have any aliases? */
     tmp3 = NULL;
     if (orte_get_attribute(&src->attributes, ORTE_NODE_ALIAS, (void**)&tmp3, OPAL_STRING)) {

@@ -12,7 +12,7 @@
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
  * Copyright (c) 2016      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -50,8 +50,9 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
 {
     orte_job_t *jdata;
     orte_job_map_t *map;
+    orte_node_t *node;
     int rc, i;
-    bool did_map;
+    bool did_map, given;
     orte_rmaps_base_selected_module_t *mod;
     orte_job_t *parent;
     orte_state_caddy_t *caddy = (orte_state_caddy_t*)cbdata;
@@ -70,6 +71,47 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
     opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                         "mca:rmaps: mapping job %s",
                         ORTE_JOBID_PRINT(jdata->jobid));
+
+    /* compute the number of procs and check validity */
+    nprocs = 0;
+    for (i=0; i < jdata->apps->size; i++) {
+        if (NULL != (app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, i))) {
+            if (0 == app->num_procs) {
+                opal_list_t nodes;
+                orte_std_cntr_t slots;
+                OBJ_CONSTRUCT(&nodes, opal_list_t);
+                orte_rmaps_base_get_target_nodes(&nodes, &slots, app, ORTE_MAPPING_BYNODE, true, true);
+                /* if we are in a managed allocation, then all is good - otherwise,
+                 * we have to do a little more checking */
+                if (!orte_managed_allocation) {
+                    /* if all the nodes have their slots given, then we are okay */
+                    given = true;
+                    OPAL_LIST_FOREACH(node, &nodes, orte_node_t) {
+                        if (!ORTE_FLAG_TEST(node, ORTE_NODE_FLAG_SLOTS_GIVEN)) {
+                            given = false;
+                            break;
+                        }
+                    }
+                    /* if -host or -hostfile was given, and the slots were not,
+                     * then this is no longer allowed */
+                    if (!given &&
+                        (orte_get_attribute(&app->attributes, ORTE_APP_DASH_HOST, NULL, OPAL_STRING) ||
+                         orte_get_attribute(&app->attributes, ORTE_APP_HOSTFILE, NULL, OPAL_STRING))) {
+                        /* inform the user of the error */
+                        orte_show_help("help-orte-rmaps-base.txt", "num-procs-not-specified", true);
+                        ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_MAP_FAILED);
+                        OBJ_RELEASE(caddy);
+                        OPAL_LIST_DESTRUCT(&nodes);
+                        return;
+                    }
+                }
+                OPAL_LIST_DESTRUCT(&nodes);
+                nprocs += slots;
+            } else {
+                nprocs += app->num_procs;
+            }
+        }
+    }
 
     /* NOTE: CHECK FOR JDATA->MAP == NULL. IF IT IS, THEN USE
      * THE VALUES THAT WERE READ BY THE LOCAL MCA PARAMS. THE
@@ -90,22 +132,6 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
             ORTE_FORCED_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
             OBJ_RELEASE(caddy);
             return;
-        }
-        /* compute the number of procs */
-        nprocs = 0;
-        for (i=0; i < jdata->apps->size; i++) {
-            if (NULL != (app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, i))) {
-                if (0 == app->num_procs) {
-                    opal_list_t nodes;
-                    orte_std_cntr_t slots;
-                    OBJ_CONSTRUCT(&nodes, opal_list_t);
-                    orte_rmaps_base_get_target_nodes(&nodes, &slots, app, ORTE_MAPPING_BYNODE, true, true);
-                    OPAL_LIST_DESTRUCT(&nodes);
-                    nprocs += slots;
-                } else {
-                    nprocs += app->num_procs;
-                }
-            }
         }
         opal_output_verbose(5, orte_rmaps_base_framework.framework_output,
                             "mca:rmaps: nprocs %s",
@@ -142,12 +168,7 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
             }
             /* check for oversubscribe directives */
             if (!(ORTE_MAPPING_SUBSCRIBE_GIVEN & ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping))) {
-                if (orte_managed_allocation) {
-                    /* by default, we do not allow oversubscription in managed environments */
-                    ORTE_SET_MAPPING_DIRECTIVE(map->mapping, ORTE_MAPPING_NO_OVERSUBSCRIBE);
-                } else {
-                    ORTE_UNSET_MAPPING_DIRECTIVE(map->mapping, ORTE_MAPPING_NO_OVERSUBSCRIBE);
-                }
+                ORTE_SET_MAPPING_DIRECTIVE(map->mapping, ORTE_MAPPING_NO_OVERSUBSCRIBE);
             } else {
                 /* pass along the directive */
                 if (ORTE_MAPPING_NO_OVERSUBSCRIBE & ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping)) {
@@ -179,13 +200,6 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
         if (!jdata->map->display_map) {
             jdata->map->display_map = orte_rmaps_base.display_map;
         }
-        /* compute the number of procs */
-        nprocs = 0;
-        for (i=0; i < jdata->apps->size; i++) {
-            if (NULL != (app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, i))) {
-                nprocs += app->num_procs;
-            }
-        }
         /* set the default mapping policy IFF it wasn't provided */
         if (!ORTE_MAPPING_POLICY_IS_SET(jdata->map->mapping)) {
             /* default based on number of procs */
@@ -215,12 +229,7 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
         }
         /* check for oversubscribe directives */
         if (!(ORTE_MAPPING_SUBSCRIBE_GIVEN & ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping))) {
-            if (orte_managed_allocation) {
-                /* by default, we do not allow oversubscription in managed environments */
-                ORTE_SET_MAPPING_DIRECTIVE(jdata->map->mapping, ORTE_MAPPING_NO_OVERSUBSCRIBE);
-            } else {
-                ORTE_UNSET_MAPPING_DIRECTIVE(jdata->map->mapping, ORTE_MAPPING_NO_OVERSUBSCRIBE);
-            }
+            ORTE_SET_MAPPING_DIRECTIVE(jdata->map->mapping, ORTE_MAPPING_NO_OVERSUBSCRIBE);
         } else {
             /* pass along the directive */
             if (ORTE_MAPPING_NO_OVERSUBSCRIBE & ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping)) {
