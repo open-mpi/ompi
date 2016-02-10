@@ -11,7 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2012 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2009-2011 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2009-2016 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -103,7 +104,7 @@ BEGIN_C_DECLS
 #define ORTE_RML_TAG_COLL_RELEASE           31
 #define ORTE_RML_TAG_DAEMON_COLL            32
 #define ORTE_RML_TAG_ALLGATHER_DIRECT       33
-#define ORTE_RML_TAG_ALLGATHER_BRKS         34
+#define ORTE_RML_TAG_ALLGATHER_BRUCKS       34
 #define ORTE_RML_TAG_ALLGATHER_RCD          35
 
 /* show help */
