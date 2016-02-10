@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
- * Copyright (c) 2013-2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013-2016 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -69,6 +69,7 @@ typedef struct opal_btl_usnic_modex_t {
     uint32_t ipv4_addr;
     /* Stored in host order */
     uint32_t ports[USNIC_NUM_CHANNELS];
+    /* Stored in network order */
     uint32_t netmask;
     /* Stored in host order */
     uint32_t connectivity_udp_port;

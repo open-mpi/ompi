@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2013-2016 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -113,7 +113,7 @@ void opal_btl_usnic_util_abort(const char *msg, const char *file, int line);
  * expected to be in network byte order.
  */
 void opal_btl_usnic_snprintf_ipv4_addr(char *out, size_t maxlen,
-                                       uint32_t addr, uint32_t netmask);
+                                       uint32_t addr_be, uint32_t netmask_be);
 
 void opal_btl_usnic_snprintf_bool_array(char *s, size_t slen, bool a[], size_t alen);
 
