@@ -16,7 +16,7 @@
  *                         All rights reserved.
  * Copyright (c) 2011-2014 NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2010-2012 IBM Corporation.  All rights reserved.
- * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
  * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -763,6 +763,11 @@ mca_btl_sm_component_init(int *num_btls,
 #if OPAL_BTL_SM_HAVE_KNEM | OPAL_BTL_SM_HAVE_CMA
     int rc;
 #endif /* OPAL_BTL_SM_HAVE_KNEM | OPAL_BTL_SM_HAVE_CMA */
+
+    /* if we are in a container, then we must disqualify ourselves */
+    if (NULL != getenv("OPAL_PROC_CONTAINER")) {
+        return NULL;
+    }
 
     *num_btls = 0;
     /* lookup/create shared memory pool only when used */

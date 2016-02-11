@@ -37,6 +37,7 @@
 *.exe
 *.log
 *.trs
+*.sapp
 *~
 *\\#
 
