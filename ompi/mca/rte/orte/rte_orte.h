@@ -3,7 +3,7 @@
  *                         All rights reserved.
  * Copyright (c) 2013-2015 Intel, Inc. All rights reserved
  * Copyright (c) 2014      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2014      Research Organization for Information Science
+ * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
@@ -59,6 +59,10 @@ typedef orte_ns_cmp_bitmask_t ompi_rte_cmp_bitmask_t;
 #define OMPI_RTE_CMP_JOBID  ORTE_NS_CMP_JOBID
 #define OMPI_RTE_CMP_VPID   ORTE_NS_CMP_VPID
 #define OMPI_RTE_CMP_ALL    ORTE_NS_CMP_ALL
+#define OMPI_LOCAL_JOBID(jobid) ORTE_LOCAL_JOBID(jobid)
+#define OMPI_JOB_FAMILY(jobid)  ORTE_JOB_FAMILY(jobid)
+#define OMPI_CONSTRUCT_JOBID(family,local) ORTE_CONSTRUCT_JOBID(family,local)
+
 /* This is the DSS tag to serialize a proc name */
 #define OMPI_NAME ORTE_NAME
 #define OMPI_PROCESS_NAME_HTON ORTE_PROCESS_NAME_HTON

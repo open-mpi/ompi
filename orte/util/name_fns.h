@@ -97,6 +97,9 @@ ORTE_DECLSPEC char *orte_pretty_print_timing(int64_t secs, int64_t usecs);
 #define ORTE_CONSTRUCT_LOCAL_JOBID(local, job) \
     ( ((local) & 0xffff0000) | ((job) & 0x0000ffff) )
 
+#define ORTE_CONSTRUCT_JOBID(family, local) \
+    ORTE_CONSTRUCT_LOCAL_JOBID(ORTE_CONSTRUCT_JOB_FAMILY(family), local)
+
 /* a macro for identifying that a proc is a daemon */
 #define ORTE_JOBID_IS_DAEMON(n)  \
     !((n) & 0x0000ffff)

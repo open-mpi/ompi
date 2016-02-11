@@ -4,6 +4,8 @@
  *                         reserved.
  * Copyright (c) 2013-2015 Inria.  All rights reserved.
  * Copyright (c) 2015      Bull SAS.  All rights reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -77,7 +79,7 @@ int mca_pml_monitoring_add_procs(struct ompi_proc_t **procs,
                 my_rank = i;
             /* Extract the peer procname from the procs array */
             if( ompi_proc_is_sentinel(procs[i]) ) {
-                tmp = ompi_proc_sentinel_to_name((intptr_t)procs[i]);
+                tmp = ompi_proc_sentinel_to_name((uintptr_t)procs[i]);
             } else {
                 tmp = procs[i]->super.proc_name;
             }
