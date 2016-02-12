@@ -11,9 +11,11 @@
 #ifndef OMPI_MTL_OFI_ENDPOINT_H
 #define OMPI_MTL_OFI_ENDPOINT_H
 
-#include "mtl_ofi.h"
-
 BEGIN_C_DECLS
+
+extern int ompi_mtl_ofi_add_procs(struct mca_mtl_base_module_t *mtl,
+                                  size_t nprocs,
+                                  struct ompi_proc_t **procs);
 
 OBJ_CLASS_DECLARATION(mca_mtl_ofi_endpoint_t);
 
@@ -36,6 +38,15 @@ struct mca_mtl_ofi_endpoint_t {
 
 typedef struct mca_mtl_ofi_endpoint_t  mca_mtl_ofi_endpoint_t;
 OBJ_CLASS_DECLARATION(mca_mtl_ofi_endpoint);
+
+static inline mca_mtl_ofi_endpoint_t *ompi_mtl_ofi_get_endpoint (struct mca_mtl_base_module_t* mtl, ompi_proc_t *ompi_proc)
+{
+    if (OPAL_UNLIKELY(NULL == ompi_proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_MTL])) {
+        ompi_mtl_ofi_add_procs(mtl, 1, &ompi_proc);
+    }
+
+    return ompi_proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_MTL];
+}
 
 END_C_DECLS
 #endif
