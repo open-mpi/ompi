@@ -241,6 +241,7 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
     hints->domain_attr->threading        = FI_THREAD_UNSPEC;
     hints->domain_attr->control_progress = FI_PROGRESS_MANUAL;
     hints->domain_attr->resource_mgmt    = FI_RM_ENABLED;
+    hints->domain_attr->av_type          = FI_AV_MAP;
 
     /**
      * FI_VERSION provides binary backward and forward compatibility support
