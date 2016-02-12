@@ -50,10 +50,6 @@ BEGIN_C_DECLS
 extern mca_mtl_ofi_module_t ompi_mtl_ofi;
 extern mca_base_framework_t ompi_mtl_base_framework;
 
-extern int ompi_mtl_ofi_add_procs(struct mca_mtl_base_module_t *mtl,
-                                  size_t nprocs,
-                                  struct ompi_proc_t **procs);
-
 extern int ompi_mtl_ofi_del_procs(struct mca_mtl_base_module_t *mtl,
                                   size_t nprocs,
                                   struct ompi_proc_t **procs);
@@ -235,7 +231,7 @@ ompi_mtl_ofi_send_start(struct mca_mtl_base_module_t *mtl,
     ompi_mtl_ofi_request_t *ack_req = NULL; /* For synchronous send */
 
     ompi_proc = ompi_comm_peer_lookup(comm, dest);
-    endpoint = ompi_proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_MTL];
+    endpoint = ompi_mtl_ofi_get_endpoint(mtl, ompi_proc);
 
     ompi_ret = ompi_mtl_datatype_pack(convertor, &start, &length, &free_after);
     if (OMPI_SUCCESS != ompi_ret) return ompi_ret;
@@ -460,7 +456,7 @@ ompi_mtl_ofi_recv_callback(struct fi_cq_tagged_entry *wc,
         if (ompi_mtl_ofi.any_addr == ofi_req->remote_addr) {
             src = MTL_OFI_GET_SOURCE(wc->tag);
             ompi_proc = ompi_comm_peer_lookup(ofi_req->comm, src);
-            endpoint = ompi_proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_MTL];
+            endpoint = ompi_mtl_ofi_get_endpoint(ofi_req->mtl, ompi_proc);
             ofi_req->remote_addr = endpoint->peer_fiaddr;
         }
 	    MTL_OFI_RETRY_UNTIL_DONE(fi_tsend(ompi_mtl_ofi.ep,
@@ -532,7 +528,7 @@ ompi_mtl_ofi_irecv(struct mca_mtl_base_module_t *mtl,
 
     if (MPI_ANY_SOURCE != src) {
         ompi_proc = ompi_comm_peer_lookup(comm, src);
-        endpoint = ompi_proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_MTL];
+        endpoint = ompi_mtl_ofi_get_endpoint(mtl, ompi_proc);
         remote_addr = endpoint->peer_fiaddr;
     } else {
         remote_addr = ompi_mtl_ofi.any_addr;
@@ -744,7 +740,7 @@ ompi_mtl_ofi_iprobe(struct mca_mtl_base_module_t *mtl,
      */
     if (MPI_ANY_SOURCE != src) {
         ompi_proc = ompi_comm_peer_lookup( comm, src );
-        endpoint = ompi_proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_MTL];
+        endpoint = ompi_mtl_ofi_get_endpoint(mtl, ompi_proc);
         remote_proc = endpoint->peer_fiaddr;
     }
 
@@ -829,7 +825,7 @@ ompi_mtl_ofi_improbe(struct mca_mtl_base_module_t *mtl,
      */
     if (MPI_ANY_SOURCE != src) {
         ompi_proc = ompi_comm_peer_lookup( comm, src );
-        endpoint = ompi_proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_MTL];
+        endpoint = ompi_mtl_ofi_get_endpoint(mtl, ompi_proc);
         remote_proc = endpoint->peer_fiaddr;
     }
 
@@ -960,7 +956,6 @@ ompi_mtl_ofi_del_comm(struct mca_mtl_base_module_t *mtl,
 {
     return OMPI_SUCCESS;
 }
-
 
 END_C_DECLS
 
