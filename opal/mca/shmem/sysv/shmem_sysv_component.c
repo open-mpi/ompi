@@ -16,6 +16,7 @@
  * Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -209,6 +210,13 @@ out:
 static int
 sysv_query(mca_base_module_t **module, int *priority)
 {
+    /* if we are in a container, then we must disqualify ourselves */
+    if (NULL != getenv("OPAL_PROC_CONTAINER")) {
+        *priority = 0;
+        *module = NULL;
+        return OPAL_ERROR;
+    }
+
     *priority = mca_shmem_sysv_component.priority;
     *module = (mca_base_module_t *)&opal_shmem_sysv_module.super;
     return OPAL_SUCCESS;

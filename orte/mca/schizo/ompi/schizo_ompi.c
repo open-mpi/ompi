@@ -82,6 +82,10 @@ static int parse_cli(char *personality,
         NULL
     };
 
+    if (0 != strcmp(personality, "ompi")) {
+        return ORTE_ERR_TAKE_NEXT_OPTION;
+    }
+
     for (i = 0; i < (argc-start); ++i) {
         if (0 == strcmp("-mca",  argv[i]) ||
             0 == strcmp("--mca", argv[i]) ) {
@@ -161,6 +165,10 @@ static int parse_env(char *personality,
     char *value;
     char *env_set_flag;
     char **vars;
+
+    if (0 != strcmp(personality, "ompi")) {
+        return ORTE_ERR_TAKE_NEXT_OPTION;
+    }
 
     for (i = 0; NULL != srcenv[i]; ++i) {
         if (0 == strncmp("OMPI_", srcenv[i], 5)) {
@@ -281,6 +289,10 @@ static int setup_fork(orte_job_t *jdata,
     char **envcpy, **nps, **firstranks;
     char *npstring, *firstrankstring;
     char *num_app_ctx;
+
+    if (0 != strcmp(jdata->personality, "ompi")) {
+        return ORTE_ERR_TAKE_NEXT_OPTION;
+    }
 
     /* see if the mapper thinks we are oversubscribed */
     oversubscribed = false;
@@ -501,6 +513,10 @@ static int setup_child(orte_job_t *jdata,
     char *param, *value;
     int rc;
     int32_t nrestarts=0, *nrptr;
+
+    if (0 != strcmp(jdata->personality, "ompi")) {
+        return ORTE_ERR_TAKE_NEXT_OPTION;
+    }
 
     /* setup the jobid */
     if (ORTE_SUCCESS != (rc = orte_util_convert_jobid_to_string(&value, child->name.jobid))) {

@@ -13,6 +13,7 @@
  * Copyright (c) 2007-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2016      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -175,6 +176,13 @@ mmap_open(void)
 static int
 mmap_query(mca_base_module_t **module, int *priority)
 {
+    /* if we are in a container, then we must disqualify ourselves */
+    if (NULL != getenv("OPAL_PROC_CONTAINER")) {
+        *priority = 0;
+        *module = NULL;
+        return OPAL_ERROR;
+    }
+
     *priority = mca_shmem_mmap_component.priority;
     *module = (mca_base_module_t *)&opal_shmem_mmap_module.super;
     return OPAL_SUCCESS;

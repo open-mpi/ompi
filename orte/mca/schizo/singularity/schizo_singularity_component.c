@@ -1,8 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2016      Intel, Inc.  All rights reserved.
- * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
- *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -17,17 +15,17 @@
 #include "opal/util/show_help.h"
 
 #include "orte/mca/schizo/schizo.h"
-#include "schizo_ompi.h"
+#include "schizo_singularity.h"
 
 static int component_query(mca_base_module_t **module, int *priority);
 
 /*
  * Struct of function pointers and all that to let us be initialized
  */
-orte_schizo_base_component_t mca_schizo_ompi_component = {
+orte_schizo_base_component_t mca_schizo_singularity_component = {
     .base_version = {
         MCA_SCHIZO_BASE_VERSION_1_0_0,
-        .mca_component_name = "ompi",
+        .mca_component_name = "singularity",
         MCA_BASE_MAKE_VERSION(component, ORTE_MAJOR_VERSION, ORTE_MINOR_VERSION,
                               ORTE_RELEASE_VERSION),
         .mca_query_component = component_query,
@@ -40,8 +38,8 @@ orte_schizo_base_component_t mca_schizo_ompi_component = {
 
 static int component_query(mca_base_module_t **module, int *priority)
 {
-    *module = (mca_base_module_t*)&orte_schizo_ompi_module;
-    *priority = 10;
+    *module = (mca_base_module_t*)&orte_schizo_singularity_module;
+    *priority = 5;
     return ORTE_SUCCESS;
 }
 
