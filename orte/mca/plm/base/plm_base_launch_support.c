@@ -13,7 +13,7 @@
  * Copyright (c) 2009      Institut National de Recherche en Informatique
  *                         et Automatique. All rights reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
- * Copyright (c) 2013-2015 Intel, Inc. All rights reserved.
+ * Copyright (c) 2013-2016 Intel, Inc. All rights reserved.
  * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -104,6 +104,9 @@ void orte_plm_base_daemons_reported(int fd, short args, void *cbdata)
         if (NULL == (node = dmn1->node) ||
             NULL == (t = node->topology)) {
             /* something is wrong */
+            opal_output(0, "NODE IS %s T IS %s",
+                        (NULL == node) ? "NULL" : "NOT-NULL",
+                        (NULL == t) ? "NULL" : "NOT-NULL");
             ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
             ORTE_FORCED_TERMINATE(ORTE_ERR_NOT_FOUND);
             OBJ_RELEASE(caddy);
@@ -512,8 +515,12 @@ void orte_plm_base_launch_apps(int fd, short args, void *cbdata)
     /* setup the buffer */
     buffer = OBJ_NEW(opal_buffer_t);
 
-    /* pack the add_local_procs command */
-    command = ORTE_DAEMON_ADD_LOCAL_PROCS;
+    /* pack the appropriate add_local_procs command */
+    if (orte_get_attribute(&jdata->attributes, ORTE_JOB_FIXED_DVM, NULL, OPAL_BOOL)) {
+        command = ORTE_DAEMON_DVM_ADD_PROCS;
+    } else {
+        command = ORTE_DAEMON_ADD_LOCAL_PROCS;
+    }
     if (ORTE_SUCCESS != (rc = opal_dss.pack(buffer, &command, 1, ORTE_DAEMON_CMD))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(buffer);
@@ -637,9 +644,10 @@ void orte_plm_base_post_launch(int fd, short args, void *cbdata)
      * it won't register and we need to send the response now.
      * Otherwise, it is an MPI job and we should wait for it
      * to register */
-    if (!orte_get_attribute(&jdata->attributes, ORTE_JOB_NON_ORTE_JOB, NULL, OPAL_BOOL)) {
+    if (!orte_get_attribute(&jdata->attributes, ORTE_JOB_NON_ORTE_JOB, NULL, OPAL_BOOL) &&
+        !orte_get_attribute(&jdata->attributes, ORTE_JOB_DVM_JOB, NULL, OPAL_BOOL)) {
         OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
-                             "%s plm:base:launch job %s is not MPI",
+                             "%s plm:base:launch job %s is MPI",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_JOBID_PRINT(jdata->jobid)));
         goto cleanup;
@@ -724,13 +732,16 @@ void orte_plm_base_registered(int fd, short args, void *cbdata)
     caddy->jdata->state = caddy->job_state;
 
     /* if this isn't a dynamic spawn, just cleanup */
-    if (ORTE_JOBID_INVALID == jdata->originator.jobid) {
+    if (ORTE_JOBID_INVALID == jdata->originator.jobid ||
+        orte_get_attribute(&jdata->attributes, ORTE_JOB_NON_ORTE_JOB, NULL, OPAL_BOOL) ||
+        orte_get_attribute(&jdata->attributes, ORTE_JOB_DVM_JOB, NULL, OPAL_BOOL)) {
         OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
                              "%s plm:base:launch job %s is not a dynamic spawn",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_JOBID_PRINT(jdata->jobid)));
         goto cleanup;
     }
+
     /* if it was a dynamic spawn, send the response */
     rc = ORTE_SUCCESS;
     answer = OBJ_NEW(opal_buffer_t);
@@ -1528,6 +1539,15 @@ int orte_plm_base_setup_virtual_machine(orte_job_t *jdata)
         return ORTE_ERR_NOT_FOUND;
     }
     map = daemons->map;
+
+    /* if this job is being launched against a fixed DVM, then there is
+     * nothing for us to do - the DVM will stand as is */
+    if (orte_get_attribute(&jdata->attributes, ORTE_JOB_FIXED_DVM, NULL, OPAL_BOOL)) {
+        /* mark that the daemons have reported so we can proceed */
+        daemons->state = ORTE_JOB_STATE_DAEMONS_REPORTED;
+        map->num_new_daemons = 0;
+        return ORTE_SUCCESS;
+    }
 
     /* if this is a dynamic spawn, then we don't make any changes to
      * the virtual machine unless specifically requested to do so

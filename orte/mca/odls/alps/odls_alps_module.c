@@ -15,7 +15,7 @@
  * Copyright (c) 2010      IBM Corporation.  All rights reserved.
  * Copyright (c) 2011-2014 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
+ * Copyright (c) 2013-2016 Intel, Inc. All rights reserved
  *
  * $COPYRIGHT$
  *
@@ -160,7 +160,6 @@ orte_odls_base_module_t orte_odls_alps_module = {
     orte_odls_alps_launch_local_procs,
     orte_odls_alps_kill_local_procs,
     orte_odls_alps_signal_local_procs,
-    orte_odls_base_default_deliver_message,
     orte_odls_alps_restart_proc
 };
 

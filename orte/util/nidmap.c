@@ -220,7 +220,6 @@ int orte_util_encode_nodemap(opal_byte_object_t *boptr, bool update)
         }
         /* if the daemon doesn't have a node, that's an error */
         if (NULL == (node = dmn->node)) {
-            opal_output(0, "DAEMON %s HAS NO NODE", ORTE_NAME_PRINT(&dmn->name));
             ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
             return ORTE_ERR_NOT_FOUND;
         }

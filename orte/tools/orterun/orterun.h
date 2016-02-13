@@ -32,45 +32,6 @@ BEGIN_C_DECLS
  */
 int orterun(int argc, char *argv[]);
 
-/**
- * Global struct for catching orterun command line options.
- */
-struct orterun_globals_t {
-    bool help;
-    bool version;
-    bool verbose;
-    char *report_pid;
-    char *report_uri;
-    bool exit;
-    bool debugger;
-    int num_procs;
-    char *env_val;
-    char *appfile;
-    char *wdir;
-    bool set_cwd_to_session_dir;
-    char *path;
-    char *preload_files;
-    bool sleep;
-    char *stdin_target;
-    char *prefix;
-    char *path_to_mpirun;
-#if OPAL_ENABLE_FT_CR == 1
-    char *sstore_load;
-#endif
-    bool disable_recovery;
-    bool preload_binaries;
-    bool index_argv;
-    bool run_as_root;
-    char *personality;
-    bool dvm;
-};
-
-/**
- * Struct holding values gleaned from the orterun command line -
- * needed by debugger init
- */
-ORTE_DECLSPEC extern struct orterun_globals_t orterun_globals;
-
 END_C_DECLS
 
 #endif /* ORTERUN_ORTERUN_H */

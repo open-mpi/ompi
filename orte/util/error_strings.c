@@ -231,6 +231,9 @@ int orte_err2str(int errnum, const char **errmsg)
     case ORTE_ERR_FORCE_SELECT:
         retval = "Force select";
         break;
+    case ORTE_ERR_JOB_CANCELLED:
+        retval = "Job cancelled";
+        break;
     default:
         if (orte_report_silent_errors) {
             retval = "Unknown error";
