@@ -37,7 +37,6 @@ struct mca_mtl_ofi_endpoint_t {
 };
 
 typedef struct mca_mtl_ofi_endpoint_t  mca_mtl_ofi_endpoint_t;
-OBJ_CLASS_DECLARATION(mca_mtl_ofi_endpoint);
 
 static inline mca_mtl_ofi_endpoint_t *ompi_mtl_ofi_get_endpoint (struct mca_mtl_base_module_t* mtl, ompi_proc_t *ompi_proc)
 {
