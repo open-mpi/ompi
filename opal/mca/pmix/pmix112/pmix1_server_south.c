@@ -44,46 +44,50 @@
 /* These are the interfaces used by the OMPI/ORTE/OPAL layer to call
  * down into the embedded PMIx server. */
 
-extern pmix_server_module_t mymodule;
-extern opal_pmix_server_module_t *host_module;
+extern pmix_server_module_t pmix112_module;
+extern opal_pmix_server_module_t *pmix112_host_module;
 static char *dbgvalue=NULL;
 static int errhdler_ref = 0;
 
+static void release_cbfunc(void *cbdata)
+{
+    pmix1_opalcaddy_t *cd = (pmix1_opalcaddy_t*)cbdata;
+    OBJ_RELEASE(cd);
+}
 static void myerr(pmix_status_t status,
                   pmix_proc_t procs[], size_t nprocs,
                   pmix_info_t info[], size_t ninfo)
 {
     int rc;
-    opal_list_t plist, ilist;
     opal_namelist_t *nm;
     opal_value_t *iptr;
     size_t n;
+    pmix1_opalcaddy_t *cd;
 
     /* convert the incoming status */
     rc = pmix1_convert_rc(status);
 
+    /* setup the caddy */
+    cd = OBJ_NEW(pmix1_opalcaddy_t);
+
     /* convert the array of procs */
-    OBJ_CONSTRUCT(&plist, opal_list_t);
     for (n=0; n < nprocs; n++) {
         nm = OBJ_NEW(opal_namelist_t);
         nm->name.jobid = strtoul(procs[n].nspace, NULL, 10);
         nm->name.vpid = procs[n].rank;
-        opal_list_append(&plist, &nm->super);
+        opal_list_append(&cd->procs, &nm->super);
     }
 
     /* convert the array of info */
-    OBJ_CONSTRUCT(&ilist, opal_list_t);
     for (n=0; n < ninfo; n++) {
         iptr = OBJ_NEW(opal_value_t);
         iptr->key = strdup(info[n].key);
         pmix1_value_unload(iptr, &info[n].value);
-        opal_list_append(&plist, &iptr->super);
+        opal_list_append(&cd->info, &iptr->super);
     }
 
     /* call the base errhandler */
-    opal_pmix_base_errhandler(rc, &plist, &ilist);
-    OPAL_LIST_DESTRUCT(&plist);
-    OPAL_LIST_DESTRUCT(&ilist);
+    opal_pmix_base_errhandler(rc, &cd->procs, &cd->info, release_cbfunc, cd);
 }
 
 static void errreg_cbfunc(pmix_status_t status,
@@ -125,14 +129,14 @@ int pmix1_server_init(opal_pmix_server_module_t *module,
         pinfo = NULL;
     }
 
-    if (PMIX_SUCCESS != (rc = PMIx_server_init(&mymodule, pinfo, sz))) {
+    if (PMIX_SUCCESS != (rc = PMIx_server_init(&pmix112_module, pinfo, sz))) {
         PMIX_INFO_FREE(pinfo, sz);
         return pmix1_convert_rc(rc);
     }
     PMIX_INFO_FREE(pinfo, sz);
 
     /* record the host module */
-    host_module = module;
+    pmix112_host_module = module;
 
     /* register the errhandler */
     PMIx_Register_errhandler(NULL, 0, myerr, errreg_cbfunc, NULL);
@@ -428,7 +432,7 @@ int pmix1_server_notify_error(int status,
 
     rc = pmix1_convert_opalrc(status);
     rc = PMIx_Notify_error(rc, ps, psz, eps, esz,
-                                  pinfo, sz, opcbfunc, op);
+                           pinfo, sz, opcbfunc, op);
     if (PMIX_SUCCESS != rc) {
         OBJ_RELEASE(op);
     }

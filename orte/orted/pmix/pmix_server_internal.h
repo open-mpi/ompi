@@ -162,6 +162,9 @@ extern int pmix_server_disconnect_fn(opal_list_t *procs, opal_list_t *info,
 extern int pmix_server_register_events_fn(opal_list_t *info,
                                           opal_pmix_op_cbfunc_t cbfunc,
                                           void *cbdata);
+extern int pmix_server_deregister_events_fn(opal_list_t *info,
+                                            opal_pmix_op_cbfunc_t cbfunc,
+                                            void *cbdata);
 
 /* declare the RML recv functions for responses */
 extern void pmix_server_launch_resp(int status, orte_process_name_t* sender,

@@ -118,6 +118,22 @@ BEGIN_C_DECLS
 #define OPAL_PMIX_PROC_BLOB             "pmix.pblob"        // (pmix_byte_object_t) packed blob of process data
 #define OPAL_PMIX_MAP_BLOB              "pmix.mblob"        // (pmix_byte_object_t) packed blob of process location
 
+/* error handler registration  and notification info keys */
+#define OPAL_PMIX_ERROR_NAME            "pmix.errname"           /* enum pmix_status_t specific error to be notified */
+#define OPAL_PMIX_ERROR_GROUP_COMM      "pmix.errgroup.comm"     /* bool - set true to get comm  errors notification */
+#define OPAL_PMIX_ERROR_GROUP_ABORT     "pmix.errgroup.abort"    /* bool -set true to get abort errors notification */
+#define OPAL_PMIX_ERROR_GROUP_MIGRATE   "pmix.errgroup.migrate"  /* bool -set true to get migrate errors notification  */
+#define OPAL_PMIX_ERROR_GROUP_RESOURCE  "pmix.errgroup.resource" /* bool -set true to get resource errors notification */
+#define OPAL_PMIX_ERROR_GROUP_SPAWN     "pmix.errgroup.spawn"    /* bool - set true to get spawn errors notification */
+#define OPAL_PMIX_ERROR_GROUP_NODE      "pmix.errgroup.node"     /* bool -set true to get node status errors */
+#define OPAL_PMIX_ERROR_GROUP_LOCAL     "pmix.errgroup.local"    /* bool set true to get local errors */
+#define OPAL_PMIX_ERROR_GROUP_GENERAL   "pmix.errgroup.gen"      /* bool set true to get notified af generic errors */
+
+/* error notification keys */
+#define OPAL_PMIX_ERROR_SCOPE           "pmix.errscope"       /* int (enum pmix_scope_t) scope of error notification*/
+#define OPAL_PMIX_ERROR_NODE_NAME       "pmix.errnode.name"   /* name of the node that is in error or which reported the error.*/
+#define OPAL_PMIX_ERROR_SEVERITY        "pmix.errseverity"    /* the severity of the notified (reported) error */
+
 /* attributes used to describe "spawm" attributes */
 #define OPAL_PMIX_PERSONALITY           "pmix.pers"         // (char*) name of personality to use
 #define OPAL_PMIX_HOST                  "pmix.host"         // (char*) comma-delimited list of hosts to use for spawned procs
@@ -265,6 +281,9 @@ typedef void (*opal_pmix_lookup_cbfunc_t)(int status,
  *          value indicates that the error occurred in the module
  *          library within this process itself
  * info - any additional info provided regarding the error.
+ * cbfunc - callback function to execute when the errhandler is
+ *          finished with the provided data so it can be released
+ * cbdata - pointer to be returned in cbfunc
  *
  * Note that different resource managers may provide differing levels
  * of support for error notification to application processes. Thus, the
@@ -296,7 +315,18 @@ typedef void (*opal_pmix_lookup_cbfunc_t)(int status,
  * server of a detected error in the PMIx subsystem and/or client */
 typedef void (*opal_pmix_notification_fn_t)(int status,
                                             opal_list_t *procs,
-                                            opal_list_t *info);
+                                            opal_list_t *info,
+                                            opal_pmix_release_cbfunc_t cbfunc,
+                                            void *cbdata);
+
+/* define a callback function for calls to register_errhandler. The
+ * status indicates if the request was successful or not, errhandler_ref is
+ * an integer reference assigned to the errhandler by PMIX, this reference
+ * must be used to deregister the err handler. A ptr to the original
+ * cbdata is returned. */
+typedef void (*opal_pmix_errhandler_reg_cbfunc_t)(int status,
+                                                  int errhandler_ref,
+                                                  void *cbdata);
 
 /* define a callback function for calls to get_nb. The status
  * indicates if the requested data was found or not - a pointer to the

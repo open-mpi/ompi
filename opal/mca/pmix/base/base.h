@@ -32,11 +32,17 @@ OPAL_DECLSPEC int opal_pmix_base_select(void);
 
 OPAL_DECLSPEC extern bool opal_pmix_base_allow_delayed_server;
 
-OPAL_DECLSPEC void opal_pmix_base_register_handler(opal_pmix_errhandler_fn_t err);
-OPAL_DECLSPEC void opal_pmix_base_deregister_handler(void);
+OPAL_DECLSPEC void opal_pmix_base_register_handler(opal_list_t *info,
+                                                   opal_pmix_notification_fn_t errhandler,
+                                                   opal_pmix_errhandler_reg_cbfunc_t cbfunc,
+                                                   void *cbdata);
+OPAL_DECLSPEC void opal_pmix_base_deregister_handler(int errhandler,
+                                                     opal_pmix_op_cbfunc_t cbfunc,
+                                                     void *cbdata);
 OPAL_DECLSPEC void opal_pmix_base_errhandler(int status,
                                              opal_list_t *procs,
-                                             opal_list_t *info);
+                                             opal_list_t *info,
+                                             opal_pmix_release_cbfunc_t cbfunc, void *cbdata);
 OPAL_DECLSPEC int opal_pmix_base_exchange(opal_value_t *info,
                                           opal_pmix_pdata_t *pdat,
                                           int timeout);

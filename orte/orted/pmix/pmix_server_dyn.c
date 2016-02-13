@@ -263,6 +263,10 @@ int pmix_server_spawn_fn(opal_process_name_t *requestor,
                            true, "spawn", "job level", info->key);
         }
     }
+    /* if the job is missing a personality setting, add it */
+    if (NULL == jdata->personality) {
+        jdata->personality = strdup("ompi");
+    }
 
     /* transfer the apps across */
     OPAL_LIST_FOREACH(papp, apps, opal_pmix_app_t) {

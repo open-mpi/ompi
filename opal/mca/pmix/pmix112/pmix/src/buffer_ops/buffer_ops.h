@@ -38,8 +38,6 @@
 
 BEGIN_C_DECLS
 
-PMIX_DECLSPEC extern const char pmix_version_string[];
-
 /* internally used object for transferring data
  * to/from the server and for storing in the
  * hash tables */
