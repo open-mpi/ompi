@@ -68,8 +68,9 @@ static void mca_pml_ucx_persistent_request_detach(mca_pml_ucx_persistent_request
     preq->tmp_req                 = NULL;
 }
 
-void mca_pml_ucx_persistent_request_complete(mca_pml_ucx_persistent_request_t *preq,
-                                             ompi_request_t *tmp_req)
+inline void
+mca_pml_ucx_persistent_request_complete(mca_pml_ucx_persistent_request_t *preq,
+                                        ompi_request_t *tmp_req)
 {
     preq->ompi.req_status = tmp_req->req_status;
     ompi_request_complete(&preq->ompi, true);

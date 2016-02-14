@@ -120,7 +120,7 @@ mca_spml_ucx_get_mkey(int pe, void *va, void **rva)
     return (spml_ucx_mkey_t *)(r_mkey->spml_context);
 }
 
-static inline ucx_status_to_oshmem(ucs_status_t status)
+static inline int ucx_status_to_oshmem(ucs_status_t status)
 {
     return OPAL_LIKELY(UCS_OK == status) ? OSHMEM_SUCCESS : OSHMEM_ERROR;
 }
