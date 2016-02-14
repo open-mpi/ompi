@@ -743,31 +743,9 @@ static void* listen_thread(opal_object_t *obj)
                                                 (struct sockaddr*)&(pending_connection->addr),
                                                 &addrlen);
 
-                /* if we are on a privileged port, we only accept connections
-                 * from other privileged sockets. A privileged port is one
-                 * whose port is less than 1024 on Linux, so we'll check for that. */
-                if (1024 >= listener->port) {
-                    uint16_t inport;
-                    if (listener->tcp6) {
-                        inport = ntohs(((struct sockaddr_in6*)&pending_connection->addr)->sin6_port);
-                    } else {
-                        inport = ntohs(((struct sockaddr_in*)&pending_connection->addr)->sin_port);
-                    }
-                    if (1024 < inport) {
-                        /* someone tried to cross-connect privileges,
-                         * say something */
-                        orte_show_help("help-oob-tcp.txt",
-                                       "privilege failure",
-                                       true, opal_process_info.nodename,
-                                       listener->port, inport);
-                        CLOSE_THE_SOCKET(pending_connection->fd);
-                        OBJ_RELEASE(pending_connection);
-                        continue;
-                    }
-                }
                 /* check for < 0 as indicating an error upon accept */
                 if (pending_connection->fd < 0) {
-                    OBJ_RELEASE(pending_connection);  // this closes the incoming fd
+                    OBJ_RELEASE(pending_connection);
 
                     /* Non-fatal errors */
                     if (EAGAIN == opal_socket_errno ||
@@ -806,12 +784,33 @@ static void* listen_thread(opal_object_t *obj)
                 }
 
                 opal_output_verbose(OOB_TCP_DEBUG_CONNECT, orte_oob_base_framework.framework_output,
-                                    "%s mca_oob_tcp_listen_thread: new connection: "
+                                    "%s mca_oob_tcp_listen_thread: incoming connection: "
                                     "(%d, %d) %s:%d\n",
                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                     pending_connection->fd, opal_socket_errno,
                                     opal_net_get_hostname((struct sockaddr*) &pending_connection->addr),
                                     opal_net_get_port((struct sockaddr*) &pending_connection->addr));
+
+                /* if we are on a privileged port, we only accept connections
+                 * from other privileged sockets. A privileged port is one
+                 * whose port is less than 1024 on Linux, so we'll check for that. */
+                if (1024 >= listener->port) {
+                    uint16_t inport;
+                    inport = opal_net_get_port((struct sockaddr*) &pending_connection->addr);
+                    if (1024 < inport) {
+                        /* someone tried to cross-connect privileges,
+                         * say something */
+                        orte_show_help("help-oob-tcp.txt",
+                                       "privilege failure", true,
+                                       opal_process_info.nodename, listener->port,
+                                       opal_net_get_hostname((struct sockaddr*) &pending_connection->addr),
+                                       inport);
+                        CLOSE_THE_SOCKET(pending_connection->fd);
+                        OBJ_RELEASE(pending_connection);
+                        continue;
+                    }
+                }
+
                 /* activate the event */
                 opal_event_active(&pending_connection->ev, OPAL_EV_WRITE, 1);
                 accepted_connections++;
