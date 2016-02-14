@@ -102,7 +102,9 @@ unprivileged source while we are operating at privileged
 levels.
 
   Local host:      %s
-  Inbound port:    %d
   Listening port:  %d
+  Remote host:     %s
+  Remote port:    %d
+  
 
 The connection was rejected.
