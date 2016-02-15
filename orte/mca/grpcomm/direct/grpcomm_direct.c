@@ -259,7 +259,7 @@ static void xcast_recv(int status, orte_process_name_t* sender,
     orte_namelist_t *nm;
     int ret, cnt;
     opal_buffer_t *relay, *rly;
-    orte_daemon_cmd_flag_t command;
+    orte_daemon_cmd_flag_t command = ORTE_DAEMON_NULL_CMD;
     opal_buffer_t wireup;
     opal_byte_object_t *bo;
     int8_t flag;
@@ -429,20 +429,24 @@ static void xcast_recv(int status, orte_process_name_t* sender,
             opal_output(0, "%s grpcomm:direct:send_relay proc %s not found - cannot relay",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_NAME_PRINT(&nm->name));
             OBJ_RELEASE(rly);
+            OBJ_RELEASE(item);
             continue;
         }
         if (ORTE_PROC_STATE_RUNNING < rec->state) {
             opal_output(0, "%s grpcomm:direct:send_relay proc %s not running - cannot relay",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_NAME_PRINT(&nm->name));
             OBJ_RELEASE(rly);
+            OBJ_RELEASE(item);
             continue;
         }
         if (ORTE_SUCCESS != (ret = orte_rml.send_buffer_nb(&nm->name, rly, ORTE_RML_TAG_XCAST,
                                                            orte_rml_send_callback, NULL))) {
             ORTE_ERROR_LOG(ret);
             OBJ_RELEASE(rly);
+            OBJ_RELEASE(item);
             continue;
         }
+        OBJ_RELEASE(item);
     }
     OBJ_RELEASE(rly);  // retain accounting
 

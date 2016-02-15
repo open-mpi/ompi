@@ -835,6 +835,7 @@ static void radix_tree(int rank, int *num_children,
                 }
                 /* point to this relations */
                 relations = relatives;
+                OBJ_RELEASE(child);
             }
             /* search for this child's relatives */
             radix_tree(peer, NULL, NULL, relations);

@@ -381,6 +381,11 @@ static void check_complete(int fd, short args, void *cbdata)
         orte_iof.complete(jdata);
     }
 
+    /* tell the PMIx subsystem the job is complete */
+    if (NULL != opal_pmix.server_deregister_nspace) {
+        opal_pmix.server_deregister_nspace(jdata->jobid);
+    }
+
     /* Release the resources used by this job. Since some errmgrs may want
      * to continue using resources allocated to the job as part of their
      * fault recovery procedure, we only do this once the job is "complete".
@@ -427,10 +432,6 @@ static void check_complete(int fd, short args, void *cbdata)
         }
         OBJ_RELEASE(map);
         jdata->map = NULL;
-        /* tell the PMIx server to release its data */
-        if (NULL != opal_pmix.server_deregister_nspace) {
-            opal_pmix.server_deregister_nspace(jdata->jobid);
-        }
     }
 
     if (ORTE_FLAG_TEST(jdata, ORTE_JOB_FLAG_DEBUGGER_DAEMON)) {
