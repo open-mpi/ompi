@@ -27,3 +27,10 @@ alternate memory hook manager *may* be used instead (if available).
   Local host:  %s
   UMMU device: %s
   Error:       %s (%d)
+#
+[invalid mca param value]
+WARNING: An invalid MCA parameter value was found for memory/linux
+component.
+
+  Problem:    %s
+  Resolution: %s

@@ -33,6 +33,7 @@
 #include "opal/mca/mca.h"
 #include "opal/mca/memory/memory.h"
 #include "opal/constants.h"
+#include "opal/memoryhooks/memory.h"
 
 #include "opal/mca/memory/linux/memory_linux.h"
 
@@ -734,7 +735,10 @@ static check_result_t check(const char *name)
     }
 }
 
-/* OMPI's init function */
+
+/* This function is called on loading libmpi in case system has Memory Allocation Hooks
+ * (see ompi/runtime/ompi_mpi_init.c for details)
+ */
 void opal_memory_linux_malloc_init_hook(void)
 {
     check_result_t r1, lp, lpp;
