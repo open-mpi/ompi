@@ -25,9 +25,9 @@
 #include "opal/mca/timer/darwin/timer_darwin.h"
 #include "opal/constants.h"
 
-opal_timer_t opal_timer_darwin_freq;
+opal_timer_t opal_timer_darwin_freq = {0};
 mach_timebase_info_data_t opal_timer_darwin_info = {.denom = 0};
-opal_timer_t opal_timer_darwin_bias;
+opal_timer_t opal_timer_darwin_bias = {0};
 
 static int opal_timer_darwin_open(void);
 
