@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2011 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006-2009 Mellanox Technologies. All rights reserved.
- * Copyright (c) 2006-2015 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2006-2016 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
  * Copyright (c) 2009-2010 Oracle and/or its affiliates.  All rights reserved.
@@ -458,6 +458,7 @@ struct mca_btl_openib_module_t {
     mca_btl_base_module_t  super;
 
     bool btl_inited;
+    bool srqs_created;
 
     /** Common information about all ports */
     mca_btl_openib_modex_message_t port_info;

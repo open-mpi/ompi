@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006-2015 Mellanox Technologies. All rights reserved.
- * Copyright (c) 2006-2015 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2006-2016 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
  * Copyright (c) 2008-2012 Oracle and/or its affiliates.  All rights reserved.
@@ -403,6 +403,8 @@ static int create_srq(mca_btl_openib_module_t *openib_btl)
         }
     }
 
+    openib_btl->srqs_created = true;
+
     return OPAL_SUCCESS;
 }
 
@@ -410,7 +412,7 @@ static int openib_btl_prepare(struct mca_btl_openib_module_t* openib_btl)
 {
     int rc = OPAL_SUCCESS;
     opal_mutex_lock(&openib_btl->ib_lock);
-    if (0 == openib_btl->num_peers &&
+    if (!openib_btl->srqs_created &&
             (mca_btl_openib_component.num_srq_qps > 0 ||
              mca_btl_openib_component.num_xrc_qps > 0)) {
         rc = create_srq(openib_btl);
@@ -420,16 +422,11 @@ static int openib_btl_prepare(struct mca_btl_openib_module_t* openib_btl)
 }
 
 
-static int openib_btl_size_queues(struct mca_btl_openib_module_t* openib_btl, size_t nprocs)
+static int openib_btl_size_queues(struct mca_btl_openib_module_t* openib_btl)
 {
     uint32_t send_cqes, recv_cqes;
     int rc = OPAL_SUCCESS, qp;
     mca_btl_openib_device_t *device = openib_btl->device;
-
-    if( 0 == nprocs){
-        /* nothing to do */
-        return OPAL_SUCCESS;
-    }
 
     opal_mutex_lock(&openib_btl->ib_lock);
     /* figure out reasonable sizes for completion queues */
@@ -439,7 +436,7 @@ static int openib_btl_size_queues(struct mca_btl_openib_module_t* openib_btl, si
             recv_cqes = mca_btl_openib_component.qp_infos[qp].rd_num;
         } else {
             send_cqes = (mca_btl_openib_component.qp_infos[qp].rd_num +
-                mca_btl_openib_component.qp_infos[qp].u.pp_qp.rd_rsv) * nprocs;
+                mca_btl_openib_component.qp_infos[qp].u.pp_qp.rd_rsv) * openib_btl->num_peers;
             recv_cqes = send_cqes;
         }
 
@@ -459,7 +456,6 @@ static int openib_btl_size_queues(struct mca_btl_openib_module_t* openib_btl, si
         goto out;
     }
 
-    openib_btl->num_peers += nprocs;
 out:
     opal_mutex_unlock(&openib_btl->ib_lock);
     return rc;
@@ -1032,10 +1028,14 @@ int mca_btl_openib_add_procs(
         return rc;
     }
 
-    rc = openib_btl_prepare(openib_btl);
-    if (OPAL_SUCCESS != rc) {
-        BTL_ERROR(("could not prepare openib btl structure for usel"));
-        return rc;
+    if (0 == openib_btl->num_peers) {
+        /* ensure completion queues are created before attempting to
+         * make a loop-back queue pair */
+        rc = openib_btl_size_queues(openib_btl);
+        if (OPAL_SUCCESS != rc) {
+            BTL_ERROR(("error creating cqs"));
+            return rc;
+        }
     }
 
     /* prepare all proc's and account them properly */
@@ -1084,10 +1084,20 @@ int mca_btl_openib_add_procs(
         }
     }
 
-    /* account this procs if need */
-    rc = openib_btl_size_queues(openib_btl, nprocs_new);
+    if (nprocs_new) {
+        OPAL_THREAD_ADD32(&openib_btl->num_peers, nprocs_new);
+
+        /* adjust cq sizes given the new procs */
+        rc = openib_btl_size_queues (openib_btl);
+        if (OPAL_SUCCESS != rc) {
+            BTL_ERROR(("error creating cqs"));
+            return rc;
+        }
+    }
+
+    rc = openib_btl_prepare (openib_btl);
     if (OPAL_SUCCESS != rc) {
-        BTL_ERROR(("error creating cqs"));
+        BTL_ERROR(("could not prepare openib btl module for use"));
         return rc;
     }
 
@@ -1160,20 +1170,12 @@ struct mca_btl_base_endpoint_t *mca_btl_openib_get_ep (struct mca_btl_base_modul
 {
     mca_btl_openib_module_t *openib_btl = (mca_btl_openib_module_t *) btl;
     volatile mca_btl_base_endpoint_t *endpoint = NULL;
+    int local_port_cnt = 0, btl_rank, rc;
     mca_btl_openib_proc_t *ib_proc;
-    int rc;
-    int local_port_cnt = 0, btl_rank;
-    size_t nprocs_new = 0;
 
     rc = prepare_device_for_use (openib_btl->device);
     if (OPAL_SUCCESS != rc) {
         BTL_ERROR(("could not prepare openib device for use"));
-        return NULL;
-    }
-
-    rc = openib_btl_prepare(openib_btl);
-    if (OPAL_SUCCESS != rc) {
-        BTL_ERROR(("could not prepare openib btl structure for use"));
         return NULL;
     }
 
@@ -1193,7 +1195,8 @@ struct mca_btl_base_endpoint_t *mca_btl_openib_get_ep (struct mca_btl_base_modul
 
         /* this is a new process to this openib btl
          * account this procs if need */
-        rc = openib_btl_size_queues(openib_btl, nprocs_new);
+        OPAL_THREAD_ADD32(&openib_btl->num_peers, 1);
+        rc = openib_btl_size_queues(openib_btl);
         if (OPAL_SUCCESS != rc) {
             BTL_ERROR(("error creating cqs"));
             return NULL;
@@ -1216,6 +1219,12 @@ struct mca_btl_base_endpoint_t *mca_btl_openib_get_ep (struct mca_btl_base_modul
         /* unexpected error, e.g. out of mem */
         BTL_ERROR(("Unexpected OPAL error %d", rc));
         return NULL;
+    }
+
+    rc = openib_btl_prepare(openib_btl);
+    if (OPAL_SUCCESS != rc) {
+        BTL_ERROR(("could not prepare openib btl structure for use"));
+        goto exit;
     }
 
     for (size_t j = 0 ; j < ib_proc->proc_endpoint_count ; ++j) {
