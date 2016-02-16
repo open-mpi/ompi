@@ -14,7 +14,7 @@
  * Copyright (c) 2007-2009 Sun Microsystems, Inc. All rights reserved.
  * Copyright (c) 2007-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2013-2015 Intel, Inc. All rights reserved.
+ * Copyright (c) 2013-2016 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -110,7 +110,7 @@
 
 /* ensure I can behave like a daemon */
 #include "orte/orted/orted.h"
-
+#include "orte/orted/orted_submit.h"
 #include "orterun.h"
 
 /* instance the standard MPIR interfaces */
@@ -207,7 +207,10 @@ static opal_cmd_line_init_t cmd_line_init[] = {
       "Timestamp all application process output" },
     { "orte_output_filename", '\0', "output-filename", "output-filename", 1,
       NULL, OPAL_CMD_LINE_TYPE_STRING,
-      "Redirect output from application processes into filename.rank" },
+      "Redirect output from application processes into filename/job/rank/std[out,err,diag]" },
+    { NULL, '\0', "merge-stderr-to-stdout", "merge-stderr-to-stdout", 0,
+      &orte_cmd_line.merge, OPAL_CMD_LINE_TYPE_BOOL,
+      "Merge stderr to stdout for each process"},
     { "orte_xterm", '\0', "xterm", "xterm", 1,
       NULL, OPAL_CMD_LINE_TYPE_STRING,
       "Create a new xterm window and display output from the specified ranks there" },
@@ -994,6 +997,22 @@ int orterun(int argc, char *argv[])
         goto DONE;
     }
 
+    /* if we were asked to tag output, mark it so */
+    if (orte_tag_output) {
+        orte_set_attribute(&jdata->attributes, ORTE_JOB_TAG_OUTPUT, ORTE_ATTR_GLOBAL, NULL, OPAL_BOOL);
+    }
+    /* if we were asked to timestamp output, mark it so */
+    if (orte_timestamp_output) {
+        orte_set_attribute(&jdata->attributes, ORTE_JOB_TIMESTAMP_OUTPUT, ORTE_ATTR_GLOBAL, NULL, OPAL_BOOL);
+    }
+    /* if we were asked to output to files, pass it along */
+    if (NULL != orte_output_filename) {
+        orte_set_attribute(&jdata->attributes, ORTE_JOB_OUTPUT_TO_FILE, ORTE_ATTR_GLOBAL, orte_output_filename, OPAL_STRING);
+    }
+    /* if we were asked to merge stderr to stdout, mark it so */
+    if (orte_cmd_line.merge) {
+        orte_set_attribute(&jdata->attributes, ORTE_JOB_MERGE_STDERR_STDOUT, ORTE_ATTR_GLOBAL, NULL, OPAL_BOOL);
+    }
     /* setup to listen for commands sent specifically to me, even though I would probably
      * be the one sending them! Unfortunately, since I am a participating daemon,
      * there are times I need to send a command to "all daemons", and that means *I* have

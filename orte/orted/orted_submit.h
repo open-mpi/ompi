@@ -29,6 +29,62 @@ ORTE_DECLSPEC int orte_submit_job(char *cmd[], int *index,
                                   orte_submit_cbfunc_t complete_cb, void *complete_cbdata);
 ORTE_DECLSPEC int orte_submit_halt(void);
 
+/**
+ * Global struct for catching orte command line options.
+ */
+struct orte_cmd_line_t {
+    bool help;
+    bool version;
+    bool verbose;
+    char *report_pid;
+    char *report_uri;
+    bool terminate;
+    bool debugger;
+    int num_procs;
+    char *env_val;
+    char *appfile;
+    char *wdir;
+    bool set_cwd_to_session_dir;
+    char *path;
+    char *preload_files;
+    bool sleep;
+    char *stdin_target;
+    char *prefix;
+    char *path_to_mpirun;
+#if OPAL_ENABLE_FT_CR == 1
+    char *sstore_load;
+#endif
+    bool disable_recovery;
+    bool preload_binaries;
+    bool index_argv;
+    bool run_as_root;
+    char *personality;
+    bool create_dvm;
+    bool terminate_dvm;
+    bool nolocal;
+    bool no_oversubscribe;
+    bool oversubscribe;
+    int cpus_per_proc;
+    bool pernode;
+    int npernode;
+    bool use_hwthreads_as_cpus;
+    int npersocket;
+    char *mapping_policy;
+    char *ranking_policy;
+    char *binding_policy;
+    bool report_bindings;
+    char *slot_list;
+    bool debug;
+    bool tag_output;
+    bool timestamp_output;
+    char *output_filename;
+    bool merge;
+    bool enable_recovery;
+    char *hnp;
+};
+typedef struct orte_cmd_line_t orte_cmd_line_t;
+ORTE_DECLSPEC extern orte_cmd_line_t orte_cmd_line;
+
 
 END_C_DECLS
 

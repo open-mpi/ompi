@@ -413,42 +413,6 @@ typedef struct {
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_topology_t);
 
 /**
- * Global struct for catching orte command line options.
- */
-struct orte_cmd_line_t {
-    bool help;
-    bool version;
-    bool verbose;
-    char *report_pid;
-    char *report_uri;
-    bool exit;
-    bool debugger;
-    int num_procs;
-    char *env_val;
-    char *appfile;
-    char *wdir;
-    bool set_cwd_to_session_dir;
-    char *path;
-    char *preload_files;
-    bool sleep;
-    char *stdin_target;
-    char *prefix;
-    char *path_to_mpirun;
-#if OPAL_ENABLE_FT_CR == 1
-    char *sstore_load;
-#endif
-    bool disable_recovery;
-    bool preload_binaries;
-    bool index_argv;
-    bool run_as_root;
-    char *personality;
-    bool create_dvm;
-    bool terminate_dvm;
-};
-typedef struct orte_cmd_line_t orte_cmd_line_t;
-ORTE_DECLSPEC extern orte_cmd_line_t orte_cmd_line;
-
-/**
  * Get a job data object
  * We cannot just reference a job data object with its jobid as
  * the jobid is no longer an index into the array. This change

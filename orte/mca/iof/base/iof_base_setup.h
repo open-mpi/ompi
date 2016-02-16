@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2016      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -23,6 +24,8 @@
 
 #include "orte_config.h"
 #include "orte/types.h"
+
+#include "orte/mca/iof/base/base.h"
 
 struct orte_iof_base_io_conf_t {
     int usepty;
@@ -50,5 +53,13 @@ ORTE_DECLSPEC int orte_iof_base_setup_child(orte_iof_base_io_conf_t *opts,
 
 ORTE_DECLSPEC int orte_iof_base_setup_parent(const orte_process_name_t* name,
                                              orte_iof_base_io_conf_t *opts);
+
+/* setup output files */
+ORTE_DECLSPEC int orte_iof_base_setup_output_files(const orte_process_name_t* dst_name,
+                                                   orte_job_t *jobdat,
+                                                   orte_iof_proc_t *proct,
+                                                   orte_iof_sink_t **stdoutsink,
+                                                   orte_iof_sink_t **stderrsink,
+                                                   orte_iof_sink_t **stddiagsink);
 
 #endif
