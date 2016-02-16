@@ -21,7 +21,9 @@
 #include <unistd.h>
 #endif
 
+#if OPAL_COMMON_VERBS_USNIC_HAPPY
 #include "ompi/mca/common/verbs_usnic/common_verbs_usnic.h"
+#endif
 
 /* This is crummy, but <infiniband/driver.h> doesn't work on all
    platforms with all compilers.  Specifically, trying to include it
@@ -93,12 +95,14 @@ int opal_common_verbs_fork_test(void)
     }
 #endif
 
+#if OPAL_COMMON_VERBS_USNIC_HAPPY
     /* Now register any necessary fake libibverbs drivers.  We
        piggyback loading these fake drivers on the fork test because
        they must be loaded before ibv_get_device_list() is invoked.
        Note that this routine is in a different common component (see
        comments over there for an explanation why).  */
     ompi_common_verbs_usnic_register_fake_drivers();
+#endif
 
     return ret;
 }
