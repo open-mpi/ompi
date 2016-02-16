@@ -13,7 +13,7 @@
  * Copyright (c) 2011-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2013-2015 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -357,11 +357,8 @@ static int rte_init(void)
         goto error;
     }
     /* setup the global job and node arrays */
-    orte_job_data = OBJ_NEW(opal_pointer_array_t);
-    if (ORTE_SUCCESS != (ret = opal_pointer_array_init(orte_job_data,
-                                                       1,
-                                                       ORTE_GLOBAL_ARRAY_MAX_SIZE,
-                                                       1))) {
+    orte_job_data = OBJ_NEW(opal_hash_table_t);
+    if (ORTE_SUCCESS != (ret = opal_hash_table_init(orte_job_data, 128))) {
         ORTE_ERROR_LOG(ret);
         error = "setup job array";
         goto error;
@@ -388,7 +385,7 @@ static int rte_init(void)
     /* create and store the job data object */
     jdata = OBJ_NEW(orte_job_t);
     jdata->jobid = ORTE_PROC_MY_NAME->jobid;
-    opal_pointer_array_set_item(orte_job_data, 0, jdata);
+    opal_hash_table_set_value_uint32(orte_job_data, jdata->jobid, jdata);
     /* mark that the daemons have reported as we are the
      * only ones in the system right now, and we definitely
      * are running!

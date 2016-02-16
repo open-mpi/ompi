@@ -477,7 +477,6 @@ static void send_callback(int status, orte_process_name_t *peer,
 
     OBJ_RELEASE(buffer);
     /* cleanup the job object */
-    opal_pointer_array_set_item(orte_job_data, ORTE_LOCAL_JOBID(jdata->jobid), NULL);
     OBJ_RELEASE(jdata);
 }
 

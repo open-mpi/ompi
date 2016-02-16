@@ -130,7 +130,7 @@ orte_timer_t *orte_mpiexec_timeout = NULL;
 opal_buffer_t *orte_tree_launch_cmd = NULL;
 
 /* global arrays for data storage */
-opal_pointer_array_t *orte_job_data = NULL;
+opal_hash_table_t *orte_job_data = NULL;
 opal_pointer_array_t *orte_node_pool = NULL;
 opal_pointer_array_t *orte_node_topologies = NULL;
 opal_pointer_array_t *orte_local_children = NULL;
@@ -416,22 +416,16 @@ int orte_dt_init(void)
 
 orte_job_t* orte_get_job_data_object(orte_jobid_t job)
 {
-    int32_t ljob;
+    orte_job_t *jdata;
 
     /* if the job data wasn't setup, we cannot provide the data */
     if (NULL == orte_job_data) {
         return NULL;
     }
 
-    /* the job is indexed by its local jobid, so we can
-     * just look it up here. it is not an error for this
-     * to not be found - could just be
-     * a race condition whereby the job has already been
-     * removed from the array. The get_item function
-     * will just return NULL in that case.
-     */
-    ljob = ORTE_LOCAL_JOBID(job);
-    return (orte_job_t*)opal_pointer_array_get_item(orte_job_data, ljob);
+    jdata = NULL;
+    opal_hash_table_get_value_uint32(orte_job_data, job, (void**)&jdata);
+    return jdata;
 }
 
 orte_proc_t* orte_get_proc_object(orte_process_name_t *proc)
@@ -667,7 +661,6 @@ static void orte_job_destruct(orte_job_t* job)
 {
     orte_proc_t *proc;
     orte_app_context_t *app;
-    orte_job_t *jdata;
     int n;
     orte_timer_t *evtimer;
 
@@ -724,18 +717,9 @@ static void orte_job_destruct(orte_job_t* job)
     /* release the attributes */
     OPAL_LIST_DESTRUCT(&job->attributes);
 
-    /* find the job in the global array */
-    if (NULL != orte_job_data && ORTE_JOBID_INVALID != job->jobid) {
-        for (n=0; n < orte_job_data->size; n++) {
-            if (NULL == (jdata = (orte_job_t*)opal_pointer_array_get_item(orte_job_data, n))) {
-                continue;
-            }
-            if (jdata->jobid == job->jobid) {
-                /* set the entry to NULL */
-                opal_pointer_array_set_item(orte_job_data, n, NULL);
-                break;
-            }
-        }
+    if (ORTE_JOBID_INVALID != job->jobid) {
+        /* remove the job from the global array */
+        opal_hash_table_remove_value_uint32(orte_job_data, job->jobid);
     }
 }
 

@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
- * Copyright (c) 2014-2015 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -522,13 +522,13 @@ void orte_state_base_track_procs(int fd, short argc, void *cbdata)
         /* update the proc state */
         ORTE_FLAG_UNSET(pdata, ORTE_PROC_FLAG_ALIVE);
         pdata->state = state;
-	if (ORTE_FLAG_TEST(pdata, ORTE_PROC_FLAG_LOCAL)) {
+        if (ORTE_FLAG_TEST(pdata, ORTE_PROC_FLAG_LOCAL)) {
             /* Clean up the session directory as if we were the process
              * itself.  This covers the case where the process died abnormally
              * and didn't cleanup its own session directory.
              */
             orte_session_dir_finalize(proc);
-	}
+        }
         /* if we are trying to terminate and our routes are
          * gone, then terminate ourselves IF no local procs
          * remain (might be some from another job)
@@ -551,11 +551,11 @@ void orte_state_base_track_procs(int fd, short argc, void *cbdata)
         }
         /* return the allocated slot for reuse */
         cleanup_node(pdata);
-	/* track job status */
-	jdata->num_terminated++;
-	if (jdata->num_terminated == jdata->num_procs) {
+        /* track job status */
+        jdata->num_terminated++;
+        if (jdata->num_terminated == jdata->num_procs) {
             ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_TERMINATED);
-	}
+        }
     }
 
  cleanup:
@@ -577,6 +577,8 @@ void orte_state_base_check_all_complete(int fd, short args, void *cbdata)
     bool one_still_alive;
     orte_vpid_t lowest=0;
     int32_t i32, *i32ptr;
+    uint32_t u32;
+    void *nptr;
 
     opal_output_verbose(2, orte_state_base_framework.framework_output,
                         "%s state:base:check_job_complete on job %s",
@@ -722,13 +724,11 @@ void orte_state_base_check_all_complete(int fd, short args, void *cbdata)
      * object when we find it
      */
     one_still_alive = false;
-    for (j=1; j < orte_job_data->size; j++) {
-        if (NULL == (job = (orte_job_t*)opal_pointer_array_get_item(orte_job_data, j))) {
-            /* since we are releasing jdata objects as we
-             * go, we can no longer assume that the job_data
-             * array is left justified
-             */
-            continue;
+    j = opal_hash_table_get_first_key_uint32(orte_job_data, &u32, (void **)&job, &nptr);
+    while (OPAL_SUCCESS == j) {
+        /* skip the daemon job */
+        if (job->jobid == ORTE_PROC_MY_NAME->jobid) {
+            goto next;
         }
         /* if this is the job we are checking AND it normally terminated,
          * then activate the "notify_completed" state - this will release
@@ -762,20 +762,19 @@ void orte_state_base_check_all_complete(int fd, short args, void *cbdata)
                         /* this was a debugger daemon. notify that a debugger has detached */
                         ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_DEBUGGER_DETACH);
                     }
-                    opal_pointer_array_set_item(orte_job_data, j, NULL);  /* ensure the array has a NULL */
                     OBJ_RELEASE(jdata);
                 }
             }
-            continue;
+            goto next;
         }
         /* if the job is flagged to not be monitored, skip it */
         if (ORTE_FLAG_TEST(job, ORTE_JOB_FLAG_DO_NOT_MONITOR)) {
-            continue;
+            goto next;
         }
         /* when checking for job termination, we must be sure to NOT check
          * our own job as it - rather obviously - has NOT terminated!
          */
-        if (job->num_terminated < job->num_procs) {
+        if (ORTE_JOB_STATE_NOTIFIED != job->state) {
             /* we have at least one job that is not done yet - we cannot
              * just return, though, as we need to ensure we cleanout the
              * job data for the job that just completed
@@ -795,7 +794,10 @@ void orte_state_base_check_all_complete(int fd, short args, void *cbdata)
                                  job->num_terminated, job->num_procs,
                                  (NULL == jdata) ? "UNKNOWN" : orte_job_state_to_str(jdata->state) ));
         }
+      next:
+        j = opal_hash_table_get_next_key_uint32(orte_job_data, &u32, (void **)&job, nptr, &nptr);
     }
+
     /* if a job is still alive, we just return */
     if (one_still_alive) {
         OPAL_OUTPUT_VERBOSE((2, orte_state_base_framework.framework_output,

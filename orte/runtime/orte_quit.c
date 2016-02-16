@@ -15,7 +15,7 @@
  * Copyright (c) 2007-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -339,17 +339,15 @@ static void dump_aborted_procs(void)
     orte_proc_t *proc, *pptr;
     orte_app_context_t *approc;
     orte_node_t *node;
+    uint32_t key;
+    void *nptr;
 
-    /* find the job that caused the problem - be sure to start the loop
-     * at 1 as the daemons are in 0 and will clearly be "running", so no
-     * point in checking them
-     */
-    for (n=1; n < orte_job_data->size; n++) {
-        if (NULL == (job = (orte_job_t*)opal_pointer_array_get_item(orte_job_data, n))) {
-            /* the array is no longer left-justified, so we have to continue */
-            continue;
+    /* find the job that caused the problem */
+    n = opal_hash_table_get_first_key_uint32(orte_job_data, &key, (void **)&job, &nptr);
+    while (OPAL_SUCCESS == n) {
+        if (job->jobid == ORTE_PROC_MY_NAME->jobid) {
+            goto next;
         }
-
         if (ORTE_JOB_STATE_UNDEF != job->state &&
             ORTE_JOB_STATE_INIT != job->state &&
             ORTE_JOB_STATE_RUNNING != job->state &&
@@ -378,7 +376,7 @@ static void dump_aborted_procs(void)
             proc = NULL;
             if (!orte_get_attribute(&job->attributes, ORTE_JOB_ABORTED_PROC, (void**)&proc, OPAL_PTR) ||
                 NULL == proc) {
-                continue;
+                goto next;
             }
 
             approc = (orte_app_context_t*)opal_pointer_array_get_item(job->apps, proc->app_idx);
@@ -387,5 +385,7 @@ static void dump_aborted_procs(void)
                 break;
             }
         }
+      next:
+        n = opal_hash_table_get_next_key_uint32(orte_job_data, &key, (void **)&job, nptr, &nptr);
     }
 }

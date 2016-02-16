@@ -515,7 +515,7 @@ ORTE_DECLSPEC extern orte_timer_t *orte_mpiexec_timeout;
 ORTE_DECLSPEC extern opal_buffer_t *orte_tree_launch_cmd;
 
 /* global arrays for data storage */
-ORTE_DECLSPEC extern opal_pointer_array_t *orte_job_data;
+ORTE_DECLSPEC extern opal_hash_table_t *orte_job_data;
 ORTE_DECLSPEC extern opal_pointer_array_t *orte_node_pool;
 ORTE_DECLSPEC extern opal_pointer_array_t *orte_node_topologies;
 ORTE_DECLSPEC extern opal_pointer_array_t *orte_local_children;

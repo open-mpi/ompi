@@ -454,7 +454,7 @@ void orte_daemon_recv(int status, orte_process_name_t* sender,
                 break;
             }
             /* store it on the global job data pool */
-            opal_pointer_array_set_item(orte_job_data, ORTE_LOCAL_JOBID(jdata->jobid), jdata);
+            opal_hash_table_set_value_uint32(orte_job_data, jdata->jobid, jdata);
             /* before we launch it, tell the IOF to forward all output exclusively
              * to the requestor */
             {
@@ -590,7 +590,7 @@ void orte_daemon_recv(int status, orte_process_name_t* sender,
             }
         } else {
             /* if we are the HNP, process the request */
-            int32_t i, num_jobs;
+            int32_t rc, num_jobs;
             orte_job_t *jobdat;
 
             /* unpack the jobid */
@@ -628,17 +628,9 @@ void orte_daemon_recv(int status, orte_process_name_t* sender,
                     }
                 }
             } else {
-                /* since the job array is no longer
-                 * left-justified and may have holes, we have
-                 * to cnt the number of jobs. Be sure to include the daemon
-                 * job - the user can slice that info out if they don't care
-                 */
-                num_jobs = 0;
-                for (i=0; i < orte_job_data->size; i++) {
-                    if (NULL != opal_pointer_array_get_item(orte_job_data, i)) {
-                        num_jobs++;
-                    }
-                }
+                uint32_t u32;
+                void *nptr;
+                num_jobs = opal_hash_table_get_size(orte_job_data);
                 /* pack the number of jobs */
                 if (ORTE_SUCCESS != (ret = opal_dss.pack(answer, &num_jobs, 1, OPAL_INT32))) {
                     ORTE_ERROR_LOG(ret);
@@ -646,14 +638,18 @@ void orte_daemon_recv(int status, orte_process_name_t* sender,
                     goto CLEANUP;
                 }
                 /* now pack the data, one at a time */
-                for (i=0; i < orte_job_data->size; i++) {
-                    if (NULL != (jobdat = (orte_job_t*)opal_pointer_array_get_item(orte_job_data, i))) {
-                        if (ORTE_SUCCESS != (ret = opal_dss.pack(answer, &jobdat, 1, ORTE_JOB))) {
+                rc = opal_hash_table_get_first_key_uint32(orte_job_data, &u32, (void **)&jobdat, &nptr);
+                while (OPAL_SUCCESS == rc) {
+                    if (NULL != jobdat) {
+                        /* pack the job struct */
+                        if (ORTE_SUCCESS != (rc = opal_dss.pack(answer, &jobdat, 1, ORTE_JOB))) {
                             ORTE_ERROR_LOG(ret);
                             OBJ_RELEASE(answer);
                             goto CLEANUP;
                         }
+                        ++num_jobs;
                     }
+                    rc = opal_hash_table_get_next_key_uint32(orte_job_data, &u32, (void **)&jobdat, nptr, &nptr);
                 }
             }
             if (0 > (ret = orte_rml.send_buffer_nb(sender, answer, ORTE_RML_TAG_TOOL,

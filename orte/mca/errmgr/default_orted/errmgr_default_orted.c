@@ -8,7 +8,7 @@
  *                         reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2014      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -584,7 +584,6 @@ static void proc_errors(int fd, short args, void *cbdata)
         orte_session_dir_cleanup(jdata->jobid);
 
         /* remove this job from our local job data since it is complete */
-        opal_pointer_array_set_item(orte_job_data, ORTE_LOCAL_JOBID(jdata->jobid), NULL);
         OBJ_RELEASE(jdata);
 
         /* send it */

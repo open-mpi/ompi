@@ -2407,7 +2407,6 @@ static void setup_debugger_job(void)
 {
     orte_job_t *debugger;
     orte_app_context_t *app;
-    int32_t ljob;
     orte_proc_t *proc;
     int i, rc;
     orte_node_t *node;
@@ -2429,8 +2428,7 @@ static void setup_debugger_job(void)
     /* dont push stdin */
     debugger->stdin_target = ORTE_VPID_INVALID;
     /* add it to the global job pool */
-    ljob = ORTE_LOCAL_JOBID(debugger->jobid);
-    opal_pointer_array_set_item(orte_job_data, ljob, debugger);
+    opal_hash_table_set_value_uint32(orte_job_data, debugger->jobid, debugger);
     /* create an app_context for the debugger daemon */
     app = OBJ_NEW(orte_app_context_t);
     if (NULL != orte_debugger_test_daemon) {
