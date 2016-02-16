@@ -7,7 +7,7 @@
 # Copyright (c) 2012-2013 Inria.  All rights reserved.
 # Copyright (c) 2013      Los Alamos National Security, LLC. All rights
 #                         reserved.
-# Copyright (c) 2015      Research Organization for Information Science
+# Copyright (c) 2015-2016 Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 #
 # $COPYRIGHT$
@@ -43,8 +43,6 @@ noinst_LTLIBRARIES = $(module_sentinel_file)
 mpi-f08.lo: $(module_sentinel_file)
 mpi-f08.lo: mpi-f08.F90
 mpi-f08.lo: mpi-f-interfaces-bind.h pmpi-f-interfaces-bind.h
-mpi-f08.lo: attr-fn-f08-callback-interfaces.h
-mpi-f08.lo: conversion-fn-null-f08-interface.h
 mpi-f08.lo: sizeof_f08.h
 
 #
@@ -800,13 +798,8 @@ libmpi_usempif08_la_SOURCES = \
         $(pmpi_api_files) \
         mpi-f-interfaces-bind.h \
         pmpi-f-interfaces-bind.h \
-        attr-fn-f08-callback-interfaces.h \
-        conversion-fn-null-f08-interface.h \
         mpi-f08.F90 \
-        mpi-f-interfaces-bind.h pmpi-f-interfaces-bind.h \
-        attr-fn-f08-callback-interfaces.h \
         buffer_detach.c \
-        conversion-fn-null-f08-interface.h \
         constants.h \
         constants.c
 
@@ -846,8 +839,6 @@ $(pmpi_api_lo_files): mpi-f08.lo
 
 mpi-f08.lo: $(module_sentinel_file) $(SIZEOF_H)
 mpi-f08.lo: mpi-f-interfaces-bind.h pmpi-f-interfaces-bind.h
-mpi-f08.lo: attr-fn-f08-callback-interfaces.h
-mpi-f08.lo: conversion-fn-null-f08-interface.h
 
 ###########################################################################
 
@@ -857,6 +848,7 @@ libforce_usempif08_internal_modules_to_be_built_la_SOURCES = \
         mpi-f08-types.F90 \
         mpi-f08-interfaces.F90 \
         mpi-f08-interfaces-callbacks.F90 \
+        mpi-f08-callbacks.F90 \
         pmpi-f08-interfaces.F90
 
 config_h = \
@@ -876,6 +868,9 @@ mpi-f08-interfaces.lo: mpi-f08-interfaces-callbacks.lo
 mpi-f08-interfaces-callbacks.lo: $(config_h)
 mpi-f08-interfaces-callbacks.lo: mpi-f08-interfaces-callbacks.F90
 mpi-f08-interfaces-callbacks.lo: mpi-f08-types.lo
+mpi-f08-callbacks.lo: $(config_h)
+mpi-f08-callbacks.lo: mpi-f08-callbacks.F90
+mpi-f08-callbacks.lo: mpi-f08-types.lo
 pmpi-f08-interfaces.lo: $(config_h)
 pmpi-f08-interfaces.lo: pmpi-f08-interfaces.F90
 pmpi-f08-interfaces.lo: mpi-f08-interfaces-callbacks.lo
