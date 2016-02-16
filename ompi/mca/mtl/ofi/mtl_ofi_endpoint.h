@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2015 Intel, Inc. All rights reserved
+ * Copyright (c) 2013-2016 Intel, Inc. All rights reserved
  *
  * $COPYRIGHT$
  *
