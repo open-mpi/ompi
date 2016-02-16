@@ -5,7 +5,7 @@
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC. All
  *                         rights reserved.
- * Copyright (c) 2014-2015 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -124,7 +124,7 @@ static int xcast(orte_vpid_t *vpids,
 static int allgather(orte_grpcomm_coll_t *coll,
                      opal_buffer_t *buf)
 {
-    int rc, ret;
+    int rc;
     opal_buffer_t *relay;
 
     OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_framework.framework_output,
@@ -143,35 +143,16 @@ static int allgather(orte_grpcomm_coll_t *coll,
         return rc;
     }
 
-    /* if we are the HNP and nobody else is participating,
-     * then just execute the xcast */
-    if (ORTE_PROC_IS_HNP && 1 == coll->ndmns) {
-        /* pack the status - success since the allgather completed. This
-         * would be an error if we timeout instead */
-        ret = ORTE_SUCCESS;
-        if (OPAL_SUCCESS != (rc = opal_dss.pack(relay, &ret, 1, OPAL_INT))) {
-            ORTE_ERROR_LOG(rc);
-            OBJ_RELEASE(relay);
-            return rc;
-        }
-        /* pass along the payload */
-        opal_dss.copy_payload(relay, buf);
-        orte_grpcomm.xcast(coll->sig, ORTE_RML_TAG_COLL_RELEASE, relay);
-        OBJ_RELEASE(relay);
-        return ORTE_SUCCESS;
-    }
-
     /* pass along the payload */
     opal_dss.copy_payload(relay, buf);
 
-    /* otherwise, we need to send this to the HNP for
-     * processing */
+    /* send this to ourselves for processing */
     OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_framework.framework_output,
-                         "%s grpcomm:direct:allgather sending to HNP",
+                         "%s grpcomm:direct:allgather sending to ourself",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
-    /* send the info to the HNP for tracking */
-    rc = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, relay,
+    /* send the info to ourselves for tracking */
+    rc = orte_rml.send_buffer_nb(ORTE_PROC_MY_NAME, relay,
                                  ORTE_RML_TAG_ALLGATHER_DIRECT,
                                  orte_rml_send_callback, NULL);
     return rc;
@@ -212,35 +193,60 @@ static void allgather_recv(int status, orte_process_name_t* sender,
     opal_dss.copy_payload(&coll->bucket, buffer);
 
     OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_framework.framework_output,
-                         "%s grpcomm:direct allgather recv ndmns %d nrep %d",
+                         "%s grpcomm:direct allgather recv nexpected %d nrep %d",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         (int)coll->ndmns, (int)coll->nreported));
+                         (int)coll->nexpected, (int)coll->nreported));
 
-    /* if all participating daemons have reported */
-    if (coll->ndmns == coll->nreported) {
-        reply = OBJ_NEW(opal_buffer_t);
-        /* pack the signature */
-        if (OPAL_SUCCESS != (rc = opal_dss.pack(reply, &sig, 1, ORTE_SIGNATURE))) {
-            ORTE_ERROR_LOG(rc);
+    /* see if everyone has reported */
+    if (coll->nreported == coll->nexpected) {
+        if (ORTE_PROC_IS_HNP) {
+            OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_framework.framework_output,
+                                 "%s grpcomm:direct allgather HNP reports complete",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+            /* the allgather is complete - send the xcast */
+            reply = OBJ_NEW(opal_buffer_t);
+            /* pack the signature */
+            if (OPAL_SUCCESS != (rc = opal_dss.pack(reply, &sig, 1, ORTE_SIGNATURE))) {
+                ORTE_ERROR_LOG(rc);
+                OBJ_RELEASE(reply);
+                OBJ_RELEASE(sig);
+                return;
+            }
+            /* pack the status - success since the allgather completed. This
+             * would be an error if we timeout instead */
+            ret = ORTE_SUCCESS;
+            if (OPAL_SUCCESS != (rc = opal_dss.pack(reply, &ret, 1, OPAL_INT))) {
+                ORTE_ERROR_LOG(rc);
+                OBJ_RELEASE(reply);
+                OBJ_RELEASE(sig);
+                return;
+            }
+            /* transfer the collected bucket */
+            opal_dss.copy_payload(reply, &coll->bucket);
+            /* send the release via xcast */
+            (void)orte_grpcomm.xcast(sig, ORTE_RML_TAG_COLL_RELEASE, reply);
             OBJ_RELEASE(reply);
-            OBJ_RELEASE(sig);
-            return;
+        } else {
+            OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base_framework.framework_output,
+                                 "%s grpcomm:direct allgather rollup complete - sending to %s",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_PARENT)));
+            /* relay the bucket upward */
+            reply = OBJ_NEW(opal_buffer_t);
+            /* pack the signature */
+            if (OPAL_SUCCESS != (rc = opal_dss.pack(reply, &sig, 1, ORTE_SIGNATURE))) {
+                ORTE_ERROR_LOG(rc);
+                OBJ_RELEASE(reply);
+                OBJ_RELEASE(sig);
+                return;
+            }
+            /* transfer the collected bucket */
+            opal_dss.copy_payload(reply, &coll->bucket);
+            /* send the info to our parent */
+            rc = orte_rml.send_buffer_nb(ORTE_PROC_MY_PARENT, reply,
+                                         ORTE_RML_TAG_ALLGATHER_DIRECT,
+                                         orte_rml_send_callback, NULL);
         }
-        /* pack the status - success since the allgather completed. This
-         * would be an error if we timeout instead */
-        ret = ORTE_SUCCESS;
-        if (OPAL_SUCCESS != (rc = opal_dss.pack(reply, &ret, 1, OPAL_INT))) {
-            ORTE_ERROR_LOG(rc);
-            OBJ_RELEASE(reply);
-            OBJ_RELEASE(sig);
-            return;
-        }
-        /* transfer the collected bucket */
-        opal_dss.copy_payload(reply, &coll->bucket);
-
-        /* send the release via xcast */
-        (void)orte_grpcomm.xcast(sig, ORTE_RML_TAG_COLL_RELEASE, reply);
-        OBJ_RELEASE(reply);
     }
     OBJ_RELEASE(sig);
 }

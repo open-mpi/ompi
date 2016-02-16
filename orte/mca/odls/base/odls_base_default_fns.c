@@ -14,7 +14,7 @@
  * Copyright (c) 2011-2015 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2011-2013 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2013-2015 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -240,6 +240,7 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
     orte_app_context_t *app;
     bool found;
     orte_node_t *node;
+    bool newmap = false;
 
     OPAL_OUTPUT_VERBOSE((5, orte_odls_base_framework.framework_output,
                          "%s odls:constructing child list",
@@ -389,6 +390,7 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
     /* ensure the map object is present */
     if (NULL == jdata->map) {
         jdata->map = OBJ_NEW(orte_job_map_t);
+        newmap = true;
     }
 
     /* if we have a file map, then we need to load it */
@@ -446,7 +448,9 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
         if (!found) {
             OBJ_RETAIN(dmn->node);
             opal_pointer_array_add(jdata->map->nodes, dmn->node);
-            jdata->map->num_nodes++;
+            if (newmap) {
+                jdata->map->num_nodes++;
+            }
         }
 
         /* see if it belongs to us */
