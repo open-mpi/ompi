@@ -2,7 +2,7 @@
 ! Copyright (c) 2009-2013 Cisco Systems, Inc.  All rights reserved.
 ! Copyright (c) 2009-2012 Los Alamos National Security, LLC.
 !                         All rights reserved.
-! Copyright (c) 2015      Research Organization for Information Science
+! Copyright (c) 2015-2016 Research Organization for Information Science
 !                         and Technology (RIST). All rights reserved.
 ! $COPYRIGHT$
 
@@ -66,7 +66,7 @@ END INTERFACE
 
 OMPI_ABSTRACT INTERFACE
 SUBROUTINE MPI_Comm_copy_attr_function(oldcomm,comm_keyval,extra_state, &
-                                       attribute_val_in,attribute_val_out,flag,ierror) BIND(C)
+                                       attribute_val_in,attribute_val_out,flag,ierror)
    USE mpi_f08_types
    IMPLICIT NONE
    TYPE(MPI_Comm) :: oldcomm
@@ -78,7 +78,7 @@ END INTERFACE
 
 OMPI_ABSTRACT INTERFACE
 SUBROUTINE MPI_Comm_delete_attr_function(comm,comm_keyval, &
-                                         attribute_val, extra_state, ierror) BIND(C)
+                                         attribute_val, extra_state, ierror)
    USE mpi_f08_types
    IMPLICIT NONE
    TYPE(MPI_Comm) :: comm
@@ -89,7 +89,7 @@ END INTERFACE
 
 OMPI_ABSTRACT INTERFACE
 SUBROUTINE MPI_Win_copy_attr_function(oldwin,win_keyval,extra_state, &
-                                      attribute_val_in,attribute_val_out,flag,ierror) BIND(C)
+                                      attribute_val_in,attribute_val_out,flag,ierror)
    USE mpi_f08_types
    IMPLICIT NONE
    TYPE(MPI_Win) :: oldwin
@@ -101,7 +101,7 @@ END INTERFACE
 
 OMPI_ABSTRACT INTERFACE
 SUBROUTINE MPI_Win_delete_attr_function(win,win_keyval,attribute_val, &
-                                        extra_state,ierror) BIND(C)
+                                        extra_state,ierror)
    USE mpi_f08_types
    IMPLICIT NONE
    TYPE(MPI_Win) :: win
@@ -112,7 +112,7 @@ END INTERFACE
 
 OMPI_ABSTRACT INTERFACE
 SUBROUTINE MPI_Type_copy_attr_function(oldtype,type_keyval,extra_state, &
-                                       attribute_val_in,attribute_val_out,flag,ierror) BIND(C)
+                                       attribute_val_in,attribute_val_out,flag,ierror)
    USE mpi_f08_types
    IMPLICIT NONE
    TYPE(MPI_Datatype) :: oldtype
@@ -124,7 +124,7 @@ END INTERFACE
 
 OMPI_ABSTRACT INTERFACE
 SUBROUTINE MPI_Type_delete_attr_function(datatype,type_keyval, &
-                                         attribute_val,extra_state,ierror) BIND(C)
+                                         attribute_val,extra_state,ierror)
    USE mpi_f08_types
    IMPLICIT NONE
    TYPE(MPI_Datatype) :: datatype
