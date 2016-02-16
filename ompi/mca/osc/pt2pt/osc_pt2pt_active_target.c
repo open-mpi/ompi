@@ -12,7 +12,7 @@
  *                         reserved.
  * Copyright (c) 2010      IBM Corporation.  All rights reserved.
  * Copyright (c) 2012-2013 Sandia National Laboratories.  All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -213,15 +213,17 @@ ompi_osc_pt2pt_start(ompi_group_t *group,
                          "ompi_osc_pt2pt_start entering with group size %d...",
                          group_size));
 
-    ranks = get_comm_ranks(module, module->sc_group);
-    if (NULL == ranks) return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
+    if (OPAL_LIKELY(0 < group_size)) {
+        ranks = get_comm_ranks(module, module->sc_group);
+        if (NULL == ranks) return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
 
-    for (int i = 0 ; i < group_size ; ++i) {
-        /* when the post comes in we will be in an access epoch with this proc */
-        module->peers[ranks[i]].access_epoch = true;
+        for (int i = 0 ; i < group_size ; ++i) {
+            /* when the post comes in we will be in an access epoch with this proc */
+            module->peers[ranks[i]].access_epoch = true;
+        }
+        free (ranks);
     }
 
-    free (ranks);
 
     OPAL_LIST_FOREACH_SAFE(pending_post, next, &module->pending_posts, ompi_osc_pt2pt_pending_post_t) {
         ompi_proc_t *pending_proc = ompi_comm_peer_lookup (module->comm, pending_post->rank);
@@ -284,8 +286,10 @@ ompi_osc_pt2pt_complete(ompi_win_t *win)
         return OMPI_ERR_RMA_SYNC;
     }
 
-    ranks = get_comm_ranks(module, module->sc_group);
-    if (NULL == ranks) return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
+    if (OPAL_LIKELY(0 < ompi_group_size(module->sc_group))) {
+        ranks = get_comm_ranks(module, module->sc_group);
+        if (NULL == ranks) return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
+    }
 
     OPAL_THREAD_LOCK(&module->lock);
 
@@ -375,9 +379,7 @@ ompi_osc_pt2pt_complete(ompi_win_t *win)
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
                          "ompi_osc_pt2pt_complete complete"));
-    free (ranks);
-
-    return OMPI_SUCCESS;
+    ret = OMPI_SUCCESS;
 
  cleanup:
     if (NULL != ranks) free(ranks);
@@ -427,6 +429,10 @@ ompi_osc_pt2pt_post(ompi_group_t *group,
 
     OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
                          "sending post messages"));
+
+    if (OPAL_UNLIKELY(0 == ompi_group_size(module->pw_group))) {
+        return OMPI_SUCCESS;
+    }
 
     ranks = get_comm_ranks(module, module->pw_group);
     if (NULL == ranks) {
