@@ -18,7 +18,7 @@
  * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
  * Copyright (c) 2012-2013 Inria.  All rights reserved.
  * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
- * Copyright (c) 2014-2015 Research Organization for Information Science
+ * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  *
  * $COPYRIGHT$
@@ -98,7 +98,7 @@
 #endif
 #include "ompi/runtime/ompi_cr.h"
 
-#if MEMORY_LINUX_HAVE_MALLOC_HOOK_SUPPORT
+#if defined(MEMORY_LINUX_PTMALLOC2) && MEMORY_LINUX_PTMALLOC2 && MEMORY_LINUX_HAVE_MALLOC_HOOK_SUPPORT
 #include "opal/mca/memory/linux/memory_linux.h"
 /* So this sucks, but with OPAL in its own library that is brought in
    implicity from libmpi, there are times when the malloc initialize
@@ -106,7 +106,7 @@
    from here, since any MPI code is going to call MPI_Init... */
 OPAL_DECLSPEC void (*__malloc_initialize_hook) (void) =
     opal_memory_linux_malloc_init_hook;
-#endif /* MEMORY_LINUX_HAVE_MALLOC_HOOK_SUPPORT */
+#endif /* defined(MEMORY_LINUX_PTMALLOC2) && MEMORY_LINUX_PTMALLOC2 && MEMORY_LINUX_HAVE_MALLOC_HOOK_SUPPORT */
 
 /* This is required for the boundaries of the hash tables used to store
  * the F90 types returned by the MPI_Type_create_f90_XXX functions.
