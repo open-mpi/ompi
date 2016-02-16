@@ -101,6 +101,7 @@ void orte_plm_base_daemons_reported(int fd, short args, void *cbdata)
             OBJ_RELEASE(caddy);
             return;
         }
+        t = NULL;
         if (NULL == (node = dmn1->node) ||
             NULL == (t = node->topology)) {
             /* something is wrong */

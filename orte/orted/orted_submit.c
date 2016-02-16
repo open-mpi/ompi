@@ -486,6 +486,9 @@ int orte_submit_init(int argc, char *argv[],
             orte_show_help("help-orte-top.txt", "orte-top:hnp-filename-access", true, myglobals.hnp);
             exit(1);
         }
+        /* initialize the input to NULLs to ensure any input
+         * string is NULL-terminated */
+        memset(input, 0, 1024);
         if (NULL == fgets(input, 1024, fp)) {
             /* something malformed about file */
             fclose(fp);
