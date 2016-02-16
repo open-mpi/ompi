@@ -3,7 +3,7 @@
  * Copyright (c) 2007-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2008-2009 Mellanox Technologies. All rights reserved.
  * Copyright (c) 2009      IBM Corporation.  All rights reserved.
- * Copyright (c) 2011-2015 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2011-2016 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -240,6 +240,7 @@ typedef struct udcm_msg_hdr {
 #if HAVE_XRC
         /* UDCM_MESSAGE_XCONNECT, UDCM_MESSAGE_XCONNECT2 */
         struct msg_xrc_connect {
+            opal_process_name_t rem_name;
             int32_t  rem_ep_index;
             uint8_t  rem_port_num;
             uint32_t rem_qp_num;
@@ -343,11 +344,7 @@ static int udcm_xrc_start_connect (opal_btl_openib_connect_base_module_t *cpc,
 static int udcm_xrc_restart_connect (mca_btl_base_endpoint_t *lcl_ep);
 static int udcm_xrc_send_qp_connect (mca_btl_openib_endpoint_t *lcl_ep, uint32_t rem_qp_num, uint32_t rem_psn);
 static int udcm_xrc_send_qp_create (mca_btl_base_endpoint_t *lcl_ep);
-#if OPAL_HAVE_CONNECTX_XRC_DOMAINS
 static int udcm_xrc_recv_qp_connect (mca_btl_openib_endpoint_t *lcl_ep, uint32_t qp_num);
-#else
-static int udcm_xrc_recv_qp_connect (mca_btl_openib_endpoint_t *lcl_ep);
-#endif
 static int udcm_xrc_recv_qp_create (mca_btl_openib_endpoint_t *lcl_ep, uint32_t rem_qp_num, uint32_t rem_psn);
 static int udcm_xrc_send_request (mca_btl_base_endpoint_t *lcl_ep, mca_btl_base_endpoint_t *rem_ep,
                                   uint8_t msg_type);
@@ -529,26 +526,23 @@ static int udcm_component_finalize(void)
 static int udcm_endpoint_init_self_xrc (struct mca_btl_base_endpoint_t *lcl_ep)
 {
     udcm_endpoint_t *udep = UDCM_ENDPOINT_DATA(lcl_ep);
+    int32_t recv_qpn;
     int rc;
 
     opal_mutex_lock (&udep->udep_lock);
     do {
-#if OPAL_HAVE_CONNECTX_XRC_DOMAINS
-        rc = udcm_xrc_recv_qp_connect (lcl_ep, lcl_ep->qps[0].qp->lcl_qp->qp_num);
-#else
-        lcl_ep->xrc_recv_qp_num = lcl_ep->qps[0].qp->lcl_qp->qp_num;
-        rc = udcm_xrc_recv_qp_connect (lcl_ep);
-#endif
-        if (OPAL_SUCCESS != rc) {
-            BTL_VERBOSE(("error connecting loopback XRC receive queue pair"));
+        if (OPAL_SUCCESS != (rc = udcm_endpoint_init_data (lcl_ep))) {
+            BTL_VERBOSE(("error initializing loopback endpoint cpc data"));
             break;
         }
 
-        rc = mca_btl_openib_endpoint_post_recvs (lcl_ep);
+        rc = udcm_xrc_send_qp_create (lcl_ep);
         if (OPAL_SUCCESS != rc) {
-            BTL_VERBOSE(("error posting receives for loopback queue pair"));
+            BTL_VERBOSE(("error creating send queue pair for loopback endpoint"));
             break;
         }
+
+        lcl_ep->rem_info.rem_index = lcl_ep->index;
 
         rc = udcm_xrc_recv_qp_create (lcl_ep, lcl_ep->qps[0].qp->lcl_qp->qp_num,
                                       lcl_ep->qps[0].qp->lcl_psn);
@@ -557,14 +551,22 @@ static int udcm_endpoint_init_self_xrc (struct mca_btl_base_endpoint_t *lcl_ep)
             break;
         }
 
-        rc = udcm_xrc_send_qp_connect (lcl_ep, lcl_ep->qps[0].qp->lcl_qp->qp_num,
-                                       lcl_ep->qps[0].qp->lcl_psn);
+#if OPAL_HAVE_CONNECTX_XRC_DOMAINS
+        recv_qpn = lcl_ep->xrc_recv_qp->qp_num;
+#else
+        recv_qpn = lcl_ep->xrc_recv_qp_num;
+#endif
+
+        lcl_ep->rem_info.rem_qps[0].rem_psn = lcl_ep->xrc_recv_psn;
+        lcl_ep->rem_info.rem_qps[0].rem_qp_num = recv_qpn;
+
+        rc = udcm_xrc_send_qp_connect (lcl_ep, recv_qpn, lcl_ep->xrc_recv_psn);
         if (OPAL_SUCCESS != rc) {
-            BTL_VERBOSE(("error creating loopback XRC send queue pair"));
+            BTL_VERBOSE(("error connecting loopback XRC send queue pair"));
             break;
         }
 
-        lcl_ep->endpoint_state = MCA_BTL_IB_CONNECTED;
+        BTL_VERBOSE(("successfully created loopback queue pair"));
 
         /* need to hold the endpoint lock before calling udcm_finish_connection */
         OPAL_THREAD_LOCK(&lcl_ep->endpoint_lock);
@@ -605,8 +607,6 @@ static int udcm_endpoint_init_self (struct mca_btl_base_endpoint_t *lcl_ep)
             BTL_VERBOSE(("error moving loopback endpoint qps to RTS"));
             break;
         }
-
-        lcl_ep->endpoint_state = MCA_BTL_IB_CONNECTED;
 
         /* need to hold the endpoint lock before calling udcm_finish_connection */
         OPAL_THREAD_LOCK(&lcl_ep->endpoint_lock);
@@ -2609,11 +2609,7 @@ static int udcm_xrc_send_qp_create (mca_btl_base_endpoint_t *lcl_ep)
 /* mark: xrc receive qp */
 
 /* Recv qp connect */
-#if OPAL_HAVE_CONNECTX_XRC_DOMAINS
 static int udcm_xrc_recv_qp_connect (mca_btl_openib_endpoint_t *lcl_ep, uint32_t qp_num)
-#else
-static int udcm_xrc_recv_qp_connect (mca_btl_openib_endpoint_t *lcl_ep)
-#endif
 {
     mca_btl_openib_module_t *openib_btl = lcl_ep->endpoint_btl;
 
@@ -2627,9 +2623,9 @@ static int udcm_xrc_recv_qp_connect (mca_btl_openib_endpoint_t *lcl_ep)
     BTL_VERBOSE(("Connecting Recv QP\n"));
     lcl_ep->xrc_recv_qp = ibv_open_qp(openib_btl->device->ib_dev_context, &attr);
     if (NULL == lcl_ep->xrc_recv_qp) { /* failed to regester the qp, so it is already die and we should create new one */
-       /* Return NOT READY !!!*/
-        BTL_ERROR(("Failed to register qp_num: %d, get error: %s (%d)\n. Replying with RNR",
-                   qp_num, strerror(errno), errno));
+        /* Return NOT READY !!!*/
+        BTL_VERBOSE(("Failed to register qp_num: %d, get error: %s (%d)\n. Replying with RNR",
+                     qp_num, strerror(errno), errno));
         return OPAL_ERROR;
     } else {
         BTL_VERBOSE(("Connected to XRC Recv qp [%d]", lcl_ep->xrc_recv_qp->qp_num));
@@ -2637,13 +2633,16 @@ static int udcm_xrc_recv_qp_connect (mca_btl_openib_endpoint_t *lcl_ep)
     }
 #else
     int ret;
+    /* silence unused variable warning */
+    (void) qp_num;
+
     BTL_VERBOSE(("Connecting receive qp: %d", lcl_ep->xrc_recv_qp_num));
     ret = ibv_reg_xrc_rcv_qp(openib_btl->device->xrc_domain, lcl_ep->xrc_recv_qp_num);
     if (ret) { /* failed to regester the qp, so it is already die and we should create new one */
         /* Return NOT READY !!!*/
         lcl_ep->xrc_recv_qp_num = 0;
-        BTL_ERROR(("Failed to register qp_num: %d , get error: %s (%d). Replying with RNR",
-                   lcl_ep->xrc_recv_qp_num, strerror(ret), ret));
+        BTL_VERBOSE(("Failed to register qp_num: %d , get error: %s (%d). Replying with RNR",
+                     lcl_ep->xrc_recv_qp_num, strerror(ret), ret));
         return OPAL_ERROR;
     }
 #endif
@@ -2819,9 +2818,9 @@ static int udcm_xrc_send_request (mca_btl_base_endpoint_t *lcl_ep, mca_btl_base_
         return rc;
     }
 
-    msg->data->hdr.data.req.rem_ep_index = htonl(lcl_ep->index);
-    msg->data->hdr.data.req.rem_port_num = m->modex.mm_port_num;
-    msg->data->hdr.data.req.rem_name     = OPAL_PROC_MY_NAME;
+    msg->data->hdr.data.xreq.rem_ep_index = htonl(lcl_ep->index);
+    msg->data->hdr.data.xreq.rem_port_num = m->modex.mm_port_num;
+    msg->data->hdr.data.xreq.rem_name     = OPAL_PROC_MY_NAME;
 
     if (UDCM_MESSAGE_XCONNECT == msg_type) {
         BTL_VERBOSE(("Sending XConnect with qp: %d, psn: %d", lcl_ep->qps[0].qp->lcl_qp->qp_num,
@@ -2925,11 +2924,7 @@ static int udcm_xrc_handle_xconnect (mca_btl_openib_endpoint_t *lcl_ep, udcm_msg
 
         if (UDCM_MESSAGE_XCONNECT2 == msg_hdr->type) {
             response_type = UDCM_MESSAGE_XRESPONSE2;
-#if OPAL_HAVE_CONNECTX_XRC_DOMAINS
             rc = udcm_xrc_recv_qp_connect (lcl_ep, msg_hdr->data.xreq.rem_qp_num);
-#else
-            rc = udcm_xrc_recv_qp_connect (lcl_ep);
-#endif
             if (OPAL_SUCCESS != rc) {
                 /* return not ready. remote side will retry */
                 rej_reason = UDCM_REJ_NOT_READY;
