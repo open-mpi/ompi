@@ -12,7 +12,7 @@
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2015      Intel, Inc. All rights reserved.
+ * Copyright (c) 2015-2016 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -98,23 +98,26 @@ typedef struct {
 } orte_iof_sink_t;
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_iof_sink_t);
 
+struct orte_iof_proc_t;
 typedef struct {
     opal_object_t super;
-    orte_process_name_t name;
+    struct orte_iof_proc_t *proc;
     opal_event_t *ev;
     int fd;
     orte_iof_tag_t tag;
     bool active;
+    orte_iof_sink_t *sink;
 } orte_iof_read_event_t;
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_iof_read_event_t);
 
 typedef struct {
     opal_list_item_t super;
     orte_process_name_t name;
+    orte_iof_sink_t *stdin;
     orte_iof_read_event_t *revstdout;
     orte_iof_read_event_t *revstderr;
     orte_iof_read_event_t *revstddiag;
-    orte_iof_sink_t *sink;
+    opal_list_t subscribers;
 } orte_iof_proc_t;
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_iof_proc_t);
 
@@ -135,7 +138,9 @@ struct orte_iof_base_t {
 typedef struct orte_iof_base_t orte_iof_base_t;
 
 
-#define ORTE_IOF_SINK_DEFINE(snk, nm, fid, tg, wrthndlr, eplist)    \
+/* define an output "sink", adding it to the provided
+ * endpoint list for this proc */
+#define ORTE_IOF_SINK_DEFINE(snk, nm, fid, tg, wrthndlr)            \
     do {                                                            \
         orte_iof_sink_t *ep;                                        \
         OPAL_OUTPUT_VERBOSE((1, orte_iof_base_framework.framework_output,           \
@@ -153,9 +158,6 @@ typedef struct orte_iof_base_t orte_iof_base_t;
                            wrthndlr, ep);                           \
             opal_event_set_priority(ep->wev->ev, ORTE_MSG_PRI);     \
         }                                                           \
-        if (NULL != (eplist)) {                                     \
-            opal_list_append((eplist), &ep->super);                 \
-        }                                                           \
         *(snk) = ep;                                                \
     } while(0);
 
@@ -165,17 +167,17 @@ typedef struct orte_iof_base_t orte_iof_base_t;
  * when all flags = 0, then iof is complete - set message event to
  * daemon processor indicating proc iof is terminated
  */
-#define ORTE_IOF_READ_EVENT(rv, nm, fid, tg, cbfunc, actv)          \
+#define ORTE_IOF_READ_EVENT(rv, p, fid, tg, cbfunc, actv)           \
     do {                                                            \
         orte_iof_read_event_t *rev;                                 \
         OPAL_OUTPUT_VERBOSE((1, orte_iof_base_framework.framework_output,           \
                             "%s defining read event for %s: %s %d", \
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),     \
-                            ORTE_NAME_PRINT((nm)),                  \
+                            ORTE_NAME_PRINT(&(p)->name),            \
                             __FILE__, __LINE__));                   \
         rev = OBJ_NEW(orte_iof_read_event_t);                       \
-        rev->name.jobid = (nm)->jobid;                              \
-        rev->name.vpid = (nm)->vpid;                                \
+        OBJ_RETAIN((p));                                            \
+        rev->proc = (struct orte_iof_proc_t*)(p);                   \
         rev->tag = (tg);                                            \
         rev->fd = (fid);                                            \
         *(rv) = rev;                                                \

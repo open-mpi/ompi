@@ -265,6 +265,16 @@ const char *orte_attr_key_to_str(orte_attribute_key_t key)
             return "ORTE-JOB-FIXED-DVM";
         case ORTE_JOB_DVM_JOB:
             return "ORTE-JOB-DVM-JOB";
+        case ORTE_JOB_CANCELLED:
+            return "ORTE-JOB-CANCELLED";
+        case ORTE_JOB_OUTPUT_TO_FILE:
+            return "ORTE-JOB-OUTPUT-TO-FILE";
+        case ORTE_JOB_MERGE_STDERR_STDOUT:
+            return "ORTE-JOB-MERGE-STDERR-STDOUT";
+        case ORTE_JOB_TAG_OUTPUT:
+            return "ORTE-JOB-TAG-OUTPUT";
+        case ORTE_JOB_TIMESTAMP_OUTPUT:
+            return "ORTE-JOB-TIMESTAMP-OUTPUT";
 
         case ORTE_PROC_NOBARRIER:
             return "PROC-NOBARRIER";

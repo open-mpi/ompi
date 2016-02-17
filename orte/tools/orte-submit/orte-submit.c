@@ -77,16 +77,6 @@ static opal_cmd_line_init_t cmd_line_init[] = {
       NULL, OPAL_CMD_LINE_TYPE_STRING,
       "Provide all output in XML format to the specified file" },
 
-    /* tag output */
-    { "orte_tag_output", '\0', "tag-output", "tag-output", 0,
-      NULL, OPAL_CMD_LINE_TYPE_BOOL,
-      "Tag all output with [job,rank]" },
-    { "orte_timestamp_output", '\0', "timestamp-output", "timestamp-output", 0,
-      NULL, OPAL_CMD_LINE_TYPE_BOOL,
-      "Timestamp all application process output" },
-    { "orte_output_filename", '\0', "output-filename", "output-filename", 1,
-      NULL, OPAL_CMD_LINE_TYPE_STRING,
-      "Redirect output from application processes into filename.rank" },
     { "orte_xterm", '\0', "xterm", "xterm", 1,
       NULL, OPAL_CMD_LINE_TYPE_STRING,
       "Create a new xterm window and display output from the specified ranks there" },

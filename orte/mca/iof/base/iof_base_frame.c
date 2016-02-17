@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights reserved.
  * Copyright (c) 2013      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2015      Intel, Inc. All rights reserved.
+ * Copyright (c) 2015-2016 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -72,13 +72,17 @@ OBJ_CLASS_INSTANCE(orte_iof_job_t,
 
 static void orte_iof_base_proc_construct(orte_iof_proc_t* ptr)
 {
+    ptr->stdin = NULL;
     ptr->revstdout = NULL;
     ptr->revstderr = NULL;
     ptr->revstddiag = NULL;
-    ptr->sink = NULL;
+    OBJ_CONSTRUCT(&ptr->subscribers, opal_list_t);
 }
 static void orte_iof_base_proc_destruct(orte_iof_proc_t* ptr)
 {
+    if (NULL != ptr->stdin) {
+        OBJ_RELEASE(ptr->stdin);
+    }
     if (NULL != ptr->revstdout) {
         OBJ_RELEASE(ptr->revstdout);
     }
@@ -88,6 +92,7 @@ static void orte_iof_base_proc_destruct(orte_iof_proc_t* ptr)
     if (NULL != ptr->revstddiag) {
         OBJ_RELEASE(ptr->revstddiag);
     }
+    OPAL_LIST_DESTRUCT(&ptr->subscribers);
 }
 OBJ_CLASS_INSTANCE(orte_iof_proc_t,
                    opal_list_item_t,
@@ -121,20 +126,30 @@ OBJ_CLASS_INSTANCE(orte_iof_sink_t,
 
 static void orte_iof_base_read_event_construct(orte_iof_read_event_t* rev)
 {
+    rev->proc = NULL;
     rev->fd = -1;
     rev->active = false;
     rev->ev = opal_event_alloc();
+    rev->sink = NULL;
 }
 static void orte_iof_base_read_event_destruct(orte_iof_read_event_t* rev)
 {
+    orte_iof_proc_t *proct = (orte_iof_proc_t*)rev->proc;
+
     opal_event_free(rev->ev);
     if (0 <= rev->fd) {
         OPAL_OUTPUT_VERBOSE((20, orte_iof_base_framework.framework_output,
                              "%s iof: closing fd %d for process %s",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             rev->fd, ORTE_NAME_PRINT(&rev->name)));
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), rev->fd,
+                             (NULL == proct) ? "UNKNOWN" : ORTE_NAME_PRINT(&proct->name)));
         close(rev->fd);
         rev->fd = -1;
+    }
+    if (NULL != rev->sink) {
+        OBJ_RELEASE(rev->sink);
+    }
+    if (NULL != proct) {
+        OBJ_RELEASE(proct);
     }
 }
 OBJ_CLASS_INSTANCE(orte_iof_read_event_t,
@@ -261,17 +276,17 @@ static int orte_iof_base_open(mca_base_open_flag_t flags)
             }
             /* setup the stdout event */
             ORTE_IOF_SINK_DEFINE(&orte_iof_base.iof_write_stdout, ORTE_PROC_MY_NAME,
-                                 xmlfd, ORTE_IOF_STDOUT, orte_iof_base_write_handler, NULL);
+                                 xmlfd, ORTE_IOF_STDOUT, orte_iof_base_write_handler);
             /* don't create a stderr event - all output will go to
              * the stdout channel
              */
         } else {
             /* setup the stdout event */
             ORTE_IOF_SINK_DEFINE(&orte_iof_base.iof_write_stdout, ORTE_PROC_MY_NAME,
-                                 1, ORTE_IOF_STDOUT, orte_iof_base_write_handler, NULL);
+                                 1, ORTE_IOF_STDOUT, orte_iof_base_write_handler);
             /* setup the stderr event */
             ORTE_IOF_SINK_DEFINE(&orte_iof_base.iof_write_stderr, ORTE_PROC_MY_NAME,
-                                 2, ORTE_IOF_STDERR, orte_iof_base_write_handler, NULL);
+                                 2, ORTE_IOF_STDERR, orte_iof_base_write_handler);
         }
 
         /* do NOT set these file descriptors to non-blocking. If we do so,
