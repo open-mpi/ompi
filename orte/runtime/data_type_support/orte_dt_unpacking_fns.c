@@ -12,7 +12,7 @@
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -64,6 +64,7 @@ int orte_dt_unpack_job(opal_buffer_t *buffer, void *dest,
     orte_job_t **jobs;
     orte_app_idx_t j;
     orte_attribute_t *kv;
+    char *tmp;
 
     /* unpack into array of orte_job_t objects */
     jobs = (orte_job_t**) dest;
@@ -85,10 +86,20 @@ int orte_dt_unpack_job(opal_buffer_t *buffer, void *dest,
         }
         /* unpack the personality */
         n=1;
-        if (ORTE_SUCCESS != (rc = opal_dss_unpack_buffer(buffer, &jobs[i]->personality, &n, OPAL_STRING))) {
+        if (ORTE_SUCCESS != (rc = opal_dss_unpack_buffer(buffer, &count, &n, OPAL_INT32))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
+        for (k=0; k < count; k++) {
+            n=1;
+            if (ORTE_SUCCESS != (rc = opal_dss_unpack_buffer(buffer, &tmp, &n, OPAL_STRING))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
+            opal_argv_append_nosize(&jobs[i]->personality, tmp);
+            free(tmp);
+        }
+
         /* unpack the num apps */
         n = 1;
         if (ORTE_SUCCESS != (rc = opal_dss_unpack_buffer(buffer,

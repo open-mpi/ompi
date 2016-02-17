@@ -13,7 +13,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2013-2015 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2014-2016 Research Organization for Information Science
@@ -173,7 +173,7 @@ int pmix_server_spawn_fn(opal_process_name_t *requestor,
     /* transfer the job info across */
     OPAL_LIST_FOREACH(info, job_info, opal_value_t) {
         if (0 == strcmp(info->key, OPAL_PMIX_PERSONALITY)) {
-            jdata->personality = strdup(info->data.string);
+            jdata->personality = opal_argv_split(info->data.string, ',');
         } else if (0 == strcmp(info->key, OPAL_PMIX_MAPPER)) {
             if (NULL == jdata->map) {
                 jdata->map = OBJ_NEW(orte_job_map_t);
@@ -265,7 +265,7 @@ int pmix_server_spawn_fn(opal_process_name_t *requestor,
     }
     /* if the job is missing a personality setting, add it */
     if (NULL == jdata->personality) {
-        jdata->personality = strdup("ompi");
+        opal_argv_append_nosize(&jdata->personality, "ompi");
     }
 
     /* transfer the apps across */

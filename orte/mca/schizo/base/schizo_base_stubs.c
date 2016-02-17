@@ -19,7 +19,7 @@
 #include "orte/util/name_fns.h"
 #include "orte/mca/schizo/base/base.h"
 
-int orte_schizo_base_parse_cli(char *personality,
+int orte_schizo_base_parse_cli(char **personality,
                                int argc, int start, char **argv)
 {
     int rc;
@@ -41,7 +41,7 @@ int orte_schizo_base_parse_cli(char *personality,
     return ORTE_SUCCESS;
 }
 
-int orte_schizo_base_parse_env(char *personality,
+int orte_schizo_base_parse_env(char **personality,
                                char *path,
                                opal_cmd_line_t *cmd_line,
                                char **srcenv,

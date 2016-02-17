@@ -517,7 +517,7 @@ static opal_cmd_line_init_t cmd_line_init[] = {
 
     { NULL, '\0', "personality", "personality", 1,
       &orte_cmd_line.personality, OPAL_CMD_LINE_TYPE_STRING,
-      "Programming model/language being used (default=\"ompi\")" },
+      "Comma-separated list of programming model, languages, and containers being used (default=\"ompi\")" },
 
     { NULL, '\0', "dvm", "dvm", 0,
       &orte_cmd_line.create_dvm, OPAL_CMD_LINE_TYPE_BOOL,
@@ -842,9 +842,10 @@ int orterun(int argc, char *argv[])
 
     /* default our personality to OMPI */
     if (NULL == orte_cmd_line.personality) {
-        orte_cmd_line.personality = strdup("ompi");
+        opal_argv_append_nosize(&orte_cmd_line.personalities, "ompi");
+    } else {
+        orte_cmd_line.personalities = opal_argv_split(orte_cmd_line.personality, ',');
     }
-
     /* Check for some "global" command line params */
     parse_globals(argc, argv, &cmd_line);
     OBJ_DESTRUCT(&cmd_line);
@@ -860,7 +861,7 @@ int orterun(int argc, char *argv[])
          */
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
-    jdata->personality = strdup(orte_cmd_line.personality);
+    jdata->personality = opal_argv_copy(orte_cmd_line.personalities);
 
     /* check what user wants us to do with stdin */
     if (0 == strcmp(orte_cmd_line.stdin_target, "all")) {
@@ -1126,6 +1127,7 @@ static int init_globals(void)
         orte_cmd_line.index_argv = false;
         orte_cmd_line.run_as_root = false;
         orte_cmd_line.personality = NULL;
+        orte_cmd_line.personalities = NULL;
         orte_cmd_line.create_dvm = false;
     }
 
@@ -1401,7 +1403,7 @@ static int create_app(int argc, char* argv[],
      * Only pick up '-mca foo bar' on this pass.
      */
     if (NULL != orte_cmd_line.appfile) {
-        if (ORTE_SUCCESS != (rc = orte_schizo.parse_cli(orte_cmd_line.personality, argc, 0, argv))) {
+        if (ORTE_SUCCESS != (rc = orte_schizo.parse_cli(orte_cmd_line.personalities, argc, 0, argv))) {
             goto cleanup;
         }
     }
@@ -1446,7 +1448,7 @@ static int create_app(int argc, char* argv[],
      *   mpirun -np 2 -mca foo bar ./my-app -mca bip bop
      * We want to pick up '-mca foo bar' but not '-mca bip bop'
      */
-    if (ORTE_SUCCESS != (rc = orte_schizo.parse_cli(orte_cmd_line.personality,
+    if (ORTE_SUCCESS != (rc = orte_schizo.parse_cli(orte_cmd_line.personalities,
                                                     argc, count, argv))) {
         goto cleanup;
     }
@@ -1454,7 +1456,7 @@ static int create_app(int argc, char* argv[],
     /* Grab all OMPI_* environment variables */
 
     app->env = opal_argv_copy(*app_env);
-    if (ORTE_SUCCESS != (rc = orte_schizo.parse_env(orte_cmd_line.personality,
+    if (ORTE_SUCCESS != (rc = orte_schizo.parse_env(orte_cmd_line.personalities,
                                                     orte_cmd_line.path,
                                                     &cmd_line,
                                                     environ, &app->env))) {

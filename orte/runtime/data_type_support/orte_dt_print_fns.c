@@ -13,7 +13,7 @@
  * Copyright (c) 2011-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2013-2015 Intel, Inc. All rights reserved.
+ * Copyright (c) 2013-2016 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -186,14 +186,16 @@ int orte_dt_print_job(char **output, char *prefix, orte_job_t *src, opal_data_ty
         asprintf(&pfx2, "%s", prefix);
     }
 
+    tmp2 = opal_argv_join(src->personality, ',');
     asprintf(&tmp, "\n%sData for job: %s\tPersonality: %s\tRecovery: %s(%s)\n%s\tNum apps: %ld\tMPI allowed: %s\tStdin target: %s\tState: %s\tAbort: %s", pfx2,
-             ORTE_JOBID_PRINT(src->jobid), src->personality,
+             ORTE_JOBID_PRINT(src->jobid), tmp2,
              (ORTE_FLAG_TEST(src, ORTE_JOB_FLAG_RECOVERABLE)) ? "ENABLED" : "DISABLED",
              (orte_get_attribute(&src->attributes, ORTE_JOB_RECOVER_DEFINED, NULL, OPAL_BOOL)) ? "DEFINED" : "DEFAULT",
              pfx2,
              (long)src->num_apps,
              (ORTE_FLAG_TEST(src, ORTE_JOB_FLAG_GANG_LAUNCHED)) ? "YES" : "NO", ORTE_VPID_PRINT(src->stdin_target),
               orte_job_state_to_str(src->state), (ORTE_FLAG_TEST(src, ORTE_JOB_FLAG_ABORTED)) ? "True" : "False");
+    free(tmp2);
     asprintf(&pfx, "%s\t", pfx2);
     free(pfx2);
 

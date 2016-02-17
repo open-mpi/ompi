@@ -59,6 +59,7 @@ struct orte_cmd_line_t {
     bool index_argv;
     bool run_as_root;
     char *personality;
+    char **personalities;
     bool create_dvm;
     bool terminate_dvm;
     bool nolocal;
