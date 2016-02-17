@@ -557,6 +557,7 @@ static int udcm_endpoint_init_self_xrc (struct mca_btl_base_endpoint_t *lcl_ep)
         recv_qpn = lcl_ep->xrc_recv_qp_num;
 #endif
 
+        lcl_ep->ib_addr->remote_xrc_rcv_qp_num = recv_qpn;
         lcl_ep->rem_info.rem_qps[0].rem_psn = lcl_ep->xrc_recv_psn;
         lcl_ep->rem_info.rem_qps[0].rem_qp_num = recv_qpn;
 
