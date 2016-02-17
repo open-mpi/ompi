@@ -4,6 +4,8 @@
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
+ *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -32,6 +34,10 @@ opal_unpack_general_checksum( opal_convertor_t* pConvertor,
                               struct iovec* iov, uint32_t* out_size,
                               size_t* max_data );
 
+OPAL_DECLSPEC int32_t
+opal_pack_general( opal_convertor_t* pConvertor,
+                   struct iovec* iov, uint32_t* out_size,
+                   size_t* max_data );
 /*
  * Now the internal functions
  */

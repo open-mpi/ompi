@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
- * Copyright (c) 2013      Research Organization for Information Science
+ * Copyright (c) 2013-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -625,6 +625,35 @@ int32_t opal_convertor_prepare_for_send( opal_convertor_t* convertor,
             convertor->fAdvance = opal_generic_simple_pack;
         }
     }
+    return OPAL_SUCCESS;
+}
+
+int32_t opal_convertor_prepare_for_send_external( opal_convertor_t* convertor,
+                                                  const struct opal_datatype_t* datatype,
+                                                  int32_t count,
+                                                  const void* pUserBuf )
+{
+#if OPAL_CUDA_SUPPORT
+    mca_cuda_convertor_init(convertor, pUserBuf);
+#endif
+
+    OPAL_CONVERTOR_PREPARE( convertor, datatype, count, pUserBuf );
+    convertor->flags |= CONVERTOR_SEND;
+
+#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
+        if( !(convertor->flags & CONVERTOR_HOMOGENEOUS) ) {
+            convertor->fAdvance = opal_pack_general;
+        } else 
+#endif
+        if( datatype->flags & OPAL_DATATYPE_FLAG_CONTIGUOUS ) {
+            if( ((datatype->ub - datatype->lb) == (OPAL_PTRDIFF_TYPE)datatype->size)
+                || (1 >= convertor->count) )
+                convertor->fAdvance = opal_pack_homogeneous_contig;
+            else
+                convertor->fAdvance = opal_pack_homogeneous_contig_with_gaps;
+        } else {
+            convertor->fAdvance = opal_generic_simple_pack;
+        }
     return OPAL_SUCCESS;
 }
 

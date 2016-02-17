@@ -12,6 +12,8 @@
  *                         All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2014      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -247,6 +249,28 @@ static inline int32_t opal_convertor_copy_and_prepare_for_send( const opal_conve
     convertor->master     = pSrcConv->master;
 
     return opal_convertor_prepare_for_send( convertor, datatype, count, pUserBuf );
+}
+
+/*
+ *
+ */
+OPAL_DECLSPEC int32_t opal_convertor_prepare_for_send_external( opal_convertor_t* convertor,
+                                                                const struct opal_datatype_t* datatype,
+                                                                int32_t count,
+                                                                const void* pUserBuf);
+
+static inline int32_t opal_convertor_copy_and_prepare_for_send_external( const opal_convertor_t* pSrcConv,
+                                                                         const struct opal_datatype_t* datatype,
+                                                                         int32_t count,
+                                                                         const void* pUserBuf,
+                                                                         int32_t flags,
+                                                                         opal_convertor_t* convertor )
+{
+    convertor->remoteArch = pSrcConv->remoteArch;
+    convertor->flags      = pSrcConv->flags | flags;
+    convertor->master     = pSrcConv->master;
+
+    return opal_convertor_prepare_for_send_external( convertor, datatype, count, pUserBuf );
 }
 
 /*
