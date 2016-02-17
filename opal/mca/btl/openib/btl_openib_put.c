@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006-2009 Mellanox Technologies. All rights reserved.
- * Copyright (c) 2006-2014 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2006-2016 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
  * Copyright (c) 2008-2012 Oracle and/or its affiliates.  All rights reserved.
@@ -49,7 +49,7 @@ int mca_btl_openib_put (mca_btl_base_module_t *btl, struct mca_btl_base_endpoint
         qp = mca_btl_openib_component.rdma_qp;
     }
 
-    if (OPAL_UNLIKELY((ep->qps[qp].ib_inline_max < size && !local_handle) || !remote_handle ||
+    if (OPAL_UNLIKELY((btl->btl_put_local_registration_threshold < size && !local_handle) || !remote_handle ||
                       size > btl->btl_put_limit)) {
         return OPAL_ERR_BAD_PARAM;
     }
@@ -164,7 +164,7 @@ int mca_btl_openib_put_internal (mca_btl_base_module_t *btl, struct mca_btl_base
 
     if (0 != (rc = ibv_post_send(ep->qps[qp].qp->lcl_qp, &to_out_frag(frag)->sr_desc, &bad_wr))) {
         qp_put_wqe(ep, qp);
-        return OPAL_ERROR;;
+        return OPAL_ERROR;
     }
 
     return OPAL_SUCCESS;
