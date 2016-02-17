@@ -101,18 +101,15 @@ void orte_plm_base_daemons_reported(int fd, short args, void *cbdata)
             OBJ_RELEASE(caddy);
             return;
         }
-        t = NULL;
         if (NULL == (node = dmn1->node) ||
             NULL == (t = node->topology)) {
             /* something is wrong */
-            opal_output(0, "NODE IS %s T IS %s",
-                        (NULL == node) ? "NULL" : "NOT-NULL",
-                        (NULL == t) ? "NULL" : "NOT-NULL");
             ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
             ORTE_FORCED_TERMINATE(ORTE_ERR_NOT_FOUND);
             OBJ_RELEASE(caddy);
             return;
         }
+
         OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,
                              "%s plm:base:setting topo to that from node %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), node->name));
