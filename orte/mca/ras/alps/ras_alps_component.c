@@ -39,8 +39,8 @@ static int ras_alps_register(void);
 static int ras_alps_open(void);
 static int orte_ras_alps_component_query(mca_base_module_t **module,
                                          int *priority);
-unsigned long int orte_ras_alps_res_id;
-char *ras_alps_apstat_cmd;
+unsigned long int orte_ras_alps_res_id = 0UL;
+char *ras_alps_apstat_cmd = NULL;
 
 orte_ras_base_component_t mca_ras_alps_component = {
     /* First, the mca_base_component_t struct containing meta information about
