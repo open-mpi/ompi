@@ -75,6 +75,7 @@ nobase_opal_HEADERS = $(headers)
 endif
 
 include class/Makefile.am
+include errhandler/Makefile.am
 include memoryhooks/Makefile.am
 include runtime/Makefile.am
 include threads/Makefile.am

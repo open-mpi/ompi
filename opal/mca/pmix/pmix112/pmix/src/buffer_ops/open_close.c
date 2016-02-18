@@ -34,13 +34,6 @@
 #include "src/util/argv.h"
 #include "src/buffer_ops/internal.h"
 
-#if PMIX_CC_USE_PRAGMA_IDENT
-#pragma ident PMIX_VERSION
-#elif PMIX_CC_USE_IDENT
-#ident PMIX_VERSION
-#endif
-const char pmix_version_string[] = PMIX_VERSION;
-
 
 /**
  * globals

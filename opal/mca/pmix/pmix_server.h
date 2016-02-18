@@ -168,6 +168,11 @@ typedef int (*opal_pmix_server_disconnect_fn_t)(opal_list_t *procs, opal_list_t 
                                                       opal_pmix_op_cbfunc_t cbfunc,
                                                       void *cbdata);
 
+/* Deregister from the specified events. */
+ typedef int (*opal_pmix_server_deregister_events_fn_t)(opal_list_t *info,
+                                                        opal_pmix_op_cbfunc_t cbfunc,
+                                                        void *cbdata);
+
 /* Callback function for incoming connection requests from
  * local clients */
 typedef void (*opal_pmix_connection_cbfunc_t)(int incoming_sd);
@@ -186,19 +191,20 @@ typedef int (*opal_pmix_server_listener_fn_t)(int listening_sd,
                                               opal_pmix_connection_cbfunc_t cbfunc);
 
 typedef struct opal_pmix_server_module_1_0_0_t {
-    opal_pmix_server_client_connected_fn_t client_connected;
-    opal_pmix_server_client_finalized_fn_t client_finalized;
-    opal_pmix_server_abort_fn_t            abort;
-    opal_pmix_server_fencenb_fn_t          fence_nb;
-    opal_pmix_server_dmodex_req_fn_t       direct_modex;
-    opal_pmix_server_publish_fn_t          publish;
-    opal_pmix_server_lookup_fn_t           lookup;
-    opal_pmix_server_unpublish_fn_t        unpublish;
-    opal_pmix_server_spawn_fn_t            spawn;
-    opal_pmix_server_connect_fn_t          connect;
-    opal_pmix_server_disconnect_fn_t       disconnect;
-    opal_pmix_server_register_events_fn_t  register_events;
-    opal_pmix_server_listener_fn_t         listener;
+    opal_pmix_server_client_connected_fn_t      client_connected;
+    opal_pmix_server_client_finalized_fn_t      client_finalized;
+    opal_pmix_server_abort_fn_t                 abort;
+    opal_pmix_server_fencenb_fn_t               fence_nb;
+    opal_pmix_server_dmodex_req_fn_t            direct_modex;
+    opal_pmix_server_publish_fn_t               publish;
+    opal_pmix_server_lookup_fn_t                lookup;
+    opal_pmix_server_unpublish_fn_t             unpublish;
+    opal_pmix_server_spawn_fn_t                 spawn;
+    opal_pmix_server_connect_fn_t               connect;
+    opal_pmix_server_disconnect_fn_t            disconnect;
+    opal_pmix_server_register_events_fn_t       register_events;
+    opal_pmix_server_deregister_events_fn_t     deregister_events;
+    opal_pmix_server_listener_fn_t              listener;
 } opal_pmix_server_module_t;
 
 
