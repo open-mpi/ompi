@@ -102,7 +102,7 @@ static int pmix120_component_query(mca_base_module_t **module, int *priority)
     } else {
         /* we could be a server, so we still need to be considered,
          * but only if requested */
-        *priority = 0;
+        *priority = 2;
     }
     *module = (mca_base_module_t *)&opal_pmix_pmix120_module;
     return OPAL_SUCCESS;

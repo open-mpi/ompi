@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2015      Intel, Inc. All rights reserved
+ * Copyright (c) 2015-2016 Intel, Inc. All rights reserved
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
@@ -39,11 +39,11 @@ BEGIN_C_DECLS
 * SCHIZO module functions - the modules are accessed via
 * the base stub functions
 */
-typedef int (*orte_schizo_base_module_parse_cli_fn_t)(char *personality,
+typedef int (*orte_schizo_base_module_parse_cli_fn_t)(char **personality,
                                                       int argc, int start,
                                                       char **argv);
 
-typedef int (*orte_schizo_base_module_parse_env_fn_t)(char *personality,
+typedef int (*orte_schizo_base_module_parse_env_fn_t)(char **personality,
                                                       char *path,
                                                       opal_cmd_line_t *cmd_line,
                                                       char **srcenv,

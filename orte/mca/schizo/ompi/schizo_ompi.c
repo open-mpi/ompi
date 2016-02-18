@@ -49,9 +49,9 @@
 
 #include "orte/mca/schizo/schizo.h"
 
-static int parse_cli(char *personality,
+static int parse_cli(char **personality,
                      int argc, int start, char **argv);
-static int parse_env(char *personality,
+static int parse_env(char **personality,
                      char *path,
                      opal_cmd_line_t *cmd_line,
                      char **srcenv,
@@ -69,7 +69,7 @@ orte_schizo_base_module_t orte_schizo_ompi_module = {
     setup_child
 };
 
-static int parse_cli(char *personality,
+static int parse_cli(char **personality,
                      int argc, int start, char **argv)
 {
     int i, j, k;
@@ -81,8 +81,16 @@ static int parse_cli(char *personality,
         "routed",
         NULL
     };
+    bool takeus = false;
 
-    if (0 != strcmp(personality, "ompi")) {
+    /* see if we are included */
+    for (i=0; NULL != personality[i]; i++) {
+        if (0 == strcmp(personality[i], "ompi")) {
+            takeus = true;
+            break;
+        }
+    }
+    if (!takeus) {
         return ORTE_ERR_TAKE_NEXT_OPTION;
     }
 
@@ -154,7 +162,7 @@ static int parse_cli(char *personality,
     return ORTE_SUCCESS;
 }
 
-static int parse_env(char *personality,
+static int parse_env(char **personality,
                      char *path,
                      opal_cmd_line_t *cmd_line,
                      char **srcenv,
@@ -165,8 +173,16 @@ static int parse_env(char *personality,
     char *value;
     char *env_set_flag;
     char **vars;
+    bool takeus = false;
 
-    if (0 != strcmp(personality, "ompi")) {
+    /* see if we are included */
+    for (i=0; NULL != personality[i]; i++) {
+        if (0 == strcmp(personality[i], "ompi")) {
+            takeus = true;
+            break;
+        }
+    }
+    if (!takeus) {
         return ORTE_ERR_TAKE_NEXT_OPTION;
     }
 
@@ -289,8 +305,16 @@ static int setup_fork(orte_job_t *jdata,
     char **envcpy, **nps, **firstranks;
     char *npstring, *firstrankstring;
     char *num_app_ctx;
+    bool takeus = false;
 
-    if (0 != strcmp(jdata->personality, "ompi")) {
+    /* see if we are included */
+    for (i=0; NULL != jdata->personality[i]; i++) {
+        if (0 == strcmp(jdata->personality[i], "ompi")) {
+            takeus = true;
+            break;
+        }
+    }
+    if (!takeus) {
         return ORTE_ERR_TAKE_NEXT_OPTION;
     }
 
@@ -511,10 +535,18 @@ static int setup_child(orte_job_t *jdata,
                        orte_app_context_t *app)
 {
     char *param, *value;
-    int rc;
+    int rc, i;
     int32_t nrestarts=0, *nrptr;
+    bool takeus = false;
 
-    if (0 != strcmp(jdata->personality, "ompi")) {
+    /* see if we are included */
+    for (i=0; NULL != jdata->personality[i]; i++) {
+        if (0 == strcmp(jdata->personality[i], "ompi")) {
+            takeus = true;
+            break;
+        }
+    }
+    if (!takeus) {
         return ORTE_ERR_TAKE_NEXT_OPTION;
     }
 

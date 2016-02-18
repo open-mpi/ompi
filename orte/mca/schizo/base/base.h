@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2015-2016 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -60,9 +60,9 @@ typedef struct {
 OBJ_CLASS_DECLARATION(orte_schizo_base_active_module_t);
 
 /* the base stub functions */
-ORTE_DECLSPEC int orte_schizo_base_parse_cli(char *personality,
+ORTE_DECLSPEC int orte_schizo_base_parse_cli(char **personality,
                                              int argc, int start, char **argv);
-ORTE_DECLSPEC int orte_schizo_base_parse_env(char *personality,
+ORTE_DECLSPEC int orte_schizo_base_parse_env(char **personality,
                                              char *path,
                                              opal_cmd_line_t *cmd_line,
                                              char **srcenv,

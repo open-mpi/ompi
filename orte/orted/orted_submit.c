@@ -279,7 +279,7 @@ static opal_cmd_line_init_t cmd_line_init[] = {
 
     { NULL, '\0', "personality", "personality", 1,
       &orte_cmd_line.personality, OPAL_CMD_LINE_TYPE_STRING,
-      "Programming model/language being used (default=\"ompi\")" },
+      "Comma-separated list of programming model, languages, and containers being used (default=\"ompi\")" },
 
     { NULL, 'd', "debug-devel", "debug-devel", 0,
       &orte_cmd_line.debug, OPAL_CMD_LINE_TYPE_BOOL,
@@ -658,7 +658,9 @@ int orte_submit_job(char *argv[], int *index,
 
     /* default our personality to OMPI */
     if (NULL == orte_cmd_line.personality) {
-        orte_cmd_line.personality = strdup("ompi");
+        opal_argv_append_nosize(&orte_cmd_line.personalities, "ompi");
+    } else {
+        orte_cmd_line.personalities = opal_argv_split(orte_cmd_line.personality, ',');
     }
 
     /* create a new job object to hold the info for this one - the
@@ -672,7 +674,7 @@ int orte_submit_job(char *argv[], int *index,
          */
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
-    jdata->personality = strdup(orte_cmd_line.personality);
+    jdata->personality = opal_argv_copy(orte_cmd_line.personalities);
     trk = OBJ_NEW(trackr_t);
     trk->jdata = jdata;
     trk->launch_cb = launch_cb;
@@ -1091,7 +1093,7 @@ static int create_app(int argc, char* argv[],
      * Only pick up '-mca foo bar' on this pass.
      */
     if (NULL != orte_cmd_line.appfile) {
-        if (ORTE_SUCCESS != (rc = orte_schizo.parse_cli(orte_cmd_line.personality, argc, 0, argv))) {
+        if (ORTE_SUCCESS != (rc = orte_schizo.parse_cli(orte_cmd_line.personalities, argc, 0, argv))) {
             goto cleanup;
         }
     }
@@ -1132,15 +1134,14 @@ static int create_app(int argc, char* argv[],
      *   mpirun -np 2 -mca foo bar ./my-app -mca bip bop
      * We want to pick up '-mca foo bar' but not '-mca bip bop'
      */
-    if (ORTE_SUCCESS != (rc = orte_schizo.parse_cli(orte_cmd_line.personality,
-                                                    argc, count, argv))) {
+    if (ORTE_SUCCESS != (rc = orte_schizo.parse_cli(orte_cmd_line.personalities, argc, count, argv))) {
         goto cleanup;
     }
 
     /* Grab all OMPI_* environment variables */
 
     app->env = opal_argv_copy(*app_env);
-    if (ORTE_SUCCESS != (rc = orte_schizo.parse_env(orte_cmd_line.personality,
+    if (ORTE_SUCCESS != (rc = orte_schizo.parse_env(orte_cmd_line.personalities,
                                                     orte_cmd_line.path,
                                                     &cmd_line,
                                                     environ, &app->env))) {
