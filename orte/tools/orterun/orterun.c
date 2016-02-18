@@ -1,5 +1,5 @@
-/* -*- C -*-
- *
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
+/*
  * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007-2009 Sun Microsystems, Inc. All rights reserved.
- * Copyright (c) 2007-2013 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2016 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2013-2014 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
@@ -2433,8 +2433,8 @@ static int process(char *orig_line, char *basename, opal_cmd_line_t *cmd_line,
         } 
 
         /* Some debuggers do not support launching MPMD */
-        else if (single_app && NULL != strchr(tmp, ':')) {
-            orte_show_help("help-orterun.txt", 
+        else if (single_app && NULL != strstr(tmp, " : ")) {
+            orte_show_help("help-orterun.txt",
                            "debugger only accepts single app", true,
                            (*new_argv)[0], (*new_argv)[0]);
             /* Fall through to free / fail, below */
