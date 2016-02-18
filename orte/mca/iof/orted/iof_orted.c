@@ -270,19 +270,27 @@ static int orted_close(const orte_process_name_t* peer,
     OPAL_LIST_FOREACH(proct, &mca_iof_orted_component.procs, orte_iof_proc_t) {
         if (OPAL_EQUAL == orte_util_compare_name_fields(mask, &proct->name, peer)) {
             if (ORTE_IOF_STDIN & source_tag) {
-                OBJ_RELEASE(proct->stdin);
+                if (NULL != proct->stdin) {
+                    OBJ_RELEASE(proct->stdin);
+                }
                 ++cnt;
             }
             if (ORTE_IOF_STDOUT & source_tag) {
-                OBJ_RELEASE(proct->revstdout);
+                if (NULL != proct->revstdout) {
+                    OBJ_RELEASE(proct->revstdout);
+                }
                 ++cnt;
             }
             if (ORTE_IOF_STDERR & source_tag) {
-                OBJ_RELEASE(proct->revstderr);
+                if (NULL != proct->revstderr) {
+                    OBJ_RELEASE(proct->revstderr);
+                }
                 ++cnt;
             }
             if (ORTE_IOF_STDDIAG & source_tag) {
-                OBJ_RELEASE(proct->revstddiag);
+                if (NULL != proct->revstddiag) {
+                    OBJ_RELEASE(proct->revstddiag);
+                }
                 ++cnt;
             }
             /* if we closed them all, then remove this proc */

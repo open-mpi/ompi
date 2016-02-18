@@ -34,6 +34,7 @@ int main(int argc, char* argv[])
             MPI_Abort(MPI_COMM_WORLD, errcode);
         } else {
             errcode = 0;
+            sleep(99999999);
         }
     }
 
