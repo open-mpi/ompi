@@ -10,9 +10,9 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, Inc.  All rights reserved.
- * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -442,6 +442,15 @@ int opal_dss_compare_jobid(opal_jobid_t *value1,
     if (*value1 == OPAL_JOBID_WILDCARD ||
         *value2 == OPAL_JOBID_WILDCARD) return OPAL_EQUAL;
 
+    if (*value1 > *value2) return OPAL_VALUE1_GREATER;
+
+    if (*value2 > *value1) return OPAL_VALUE2_GREATER;
+
+    return OPAL_EQUAL;
+}
+
+int opal_dss_compare_status(int *value1, int *value2, opal_data_type_t type)
+{
     if (*value1 > *value2) return OPAL_VALUE1_GREATER;
 
     if (*value2 > *value1) return OPAL_VALUE2_GREATER;

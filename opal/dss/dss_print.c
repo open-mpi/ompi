@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, Inc.  All rights reserved.
- * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -25,6 +25,7 @@
 #include "opal_stdint.h"
 #include <stdio.h>
 
+#include "opal/util/error.h"
 #include "opal/dss/dss_internal.h"
 
 int opal_dss_print(char **output, char *prefix, void *src, opal_data_type_t type)
@@ -1054,6 +1055,32 @@ int opal_dss_print_vpid(char **output, char *prefix,
     }
 
     asprintf(output, "%sData type: OPAL_VPID\tValue: %s", prefx, opal_vpid_print(src->vpid));
+    if (prefx != prefix) {
+        free(prefx);
+    }
+
+    return OPAL_SUCCESS;
+}
+
+int opal_dss_print_status(char **output, char *prefix,
+                          int *src, opal_data_type_t type)
+{
+    char *prefx;
+
+    /* deal with NULL prefix */
+    if (NULL == prefix) asprintf(&prefx, " ");
+    else prefx = prefix;
+
+    /* if src is NULL, just print data type and return */
+    if (NULL == src) {
+        asprintf(output, "%sData type: OPAL_STATUS\tValue: NULL pointer", prefx);
+        if (prefx != prefix) {
+            free(prefx);
+        }
+        return OPAL_SUCCESS;
+    }
+
+    asprintf(output, "%sData type: OPAL_STATUS\tValue: %s", prefx, opal_strerror(*src));
     if (prefx != prefix) {
         free(prefx);
     }

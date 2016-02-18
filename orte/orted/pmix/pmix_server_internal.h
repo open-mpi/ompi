@@ -75,6 +75,7 @@ typedef struct {
     opal_object_t super;
     opal_event_t ev;
     opal_list_t *procs;
+    opal_list_t *eprocs;
     opal_list_t *info;
     opal_pmix_op_cbfunc_t cbfunc;
     void *cbdata;
@@ -175,6 +176,10 @@ extern void pmix_server_keyval_client(int status, orte_process_name_t* sender,
                                       opal_buffer_t *buffer,
                                       orte_rml_tag_t tg, void *cbdata);
 
+extern void pmix_server_notify(int status, orte_process_name_t* sender,
+                               opal_buffer_t *buffer,
+                               orte_rml_tag_t tg, void *cbdata);
+
 /* exposed shared variables */
 typedef struct {
     bool initialized;
@@ -186,6 +191,7 @@ typedef struct {
     char *server_uri;
     bool wait_for_server;
     orte_process_name_t server;
+    opal_list_t notifications;
 } pmix_server_globals_t;
 
 extern pmix_server_globals_t orte_pmix_server_globals;

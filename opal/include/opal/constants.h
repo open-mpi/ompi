@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2010-2012 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -80,7 +80,8 @@ enum {
     OPAL_ERR_AUTHENTICATION_FAILED          = (OPAL_ERR_BASE - 50),
     OPAL_ERR_COMM_FAILURE                   = (OPAL_ERR_BASE - 51),
     OPAL_ERR_SERVER_NOT_AVAIL               = (OPAL_ERR_BASE - 52),
-    OPAL_ERR_IN_PROCESS                     = (OPAL_ERR_BASE - 53)
+    OPAL_ERR_IN_PROCESS                     = (OPAL_ERR_BASE - 53),
+    OPAL_ERR_DEBUGGER_RELEASE               = (OPAL_ERR_BASE - 54)
 };
 
 #define OPAL_ERR_MAX                (OPAL_ERR_BASE - 100)

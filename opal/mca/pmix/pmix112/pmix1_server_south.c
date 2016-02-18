@@ -431,6 +431,7 @@ int pmix1_server_notify_error(int status,
     op->cbdata = cbdata;
 
     rc = pmix1_convert_opalrc(status);
+    opal_output(0, "CALLING NOTIFY ERROR");
     rc = PMIx_Notify_error(rc, ps, psz, eps, esz,
                            pinfo, sz, opcbfunc, op);
     if (PMIX_SUCCESS != rc) {

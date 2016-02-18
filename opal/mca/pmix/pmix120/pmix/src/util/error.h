@@ -42,11 +42,19 @@ BEGIN_C_DECLS
         pmix_errhandler_invoke(e, NULL, 0, NULL, 0);    \
     } while(0);
 
+/* invoke the error handler that is registered against the given
+ * status, passing it the provided info on the procs that were
+ * affected, plus any additional info provided by the server */
 PMIX_DECLSPEC void pmix_errhandler_invoke(pmix_status_t status,
                                           pmix_proc_t procs[], size_t nprocs,
                                           pmix_info_t info[], size_t ninfo);
 
-PMIX_DECLSPEC pmix_status_t pmix_lookup_errhandler(pmix_notification_fn_t err,
+/* lookup the errhandler registered against the given status. If there
+ * is none, but an errhandler has been registered against the group
+ * that this status belongs to, then return that errhandler. If neither
+ * of those is true, but a general errhandler has been registered, then
+ * return that errhandler. Otherwise, return NOT_FOUND */
+PMIX_DECLSPEC pmix_status_t pmix_lookup_errhandler(pmix_info_t info[], size_t ninfo,
                                                    int *index);
 
 PMIX_DECLSPEC pmix_status_t pmix_add_errhandler(pmix_notification_fn_t err,

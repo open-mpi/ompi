@@ -13,7 +13,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2013-2015 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2014-2015 Research Organization for Information Science
@@ -197,6 +197,7 @@ int pmix_server_init(void)
         ORTE_ERROR_LOG(rc);
         return rc;
     }
+    OBJ_CONSTRUCT(&orte_pmix_server_globals.notifications, opal_list_t);
 
    /* setup recv for direct modex requests */
     orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_DIRECT_MODEX,
@@ -213,6 +214,10 @@ int pmix_server_init(void)
     /* setup recv for replies from data server */
     orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_DATA_CLIENT,
                             ORTE_RML_PERSISTENT, pmix_server_keyval_client, NULL);
+
+    /* setup recv for notifications */
+    orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_NOTIFICATION,
+                            ORTE_RML_PERSISTENT, pmix_server_notify, NULL);
 
     /* ensure the PMIx server uses the proper rendezvous directory */
     opal_setenv("PMIX_SERVER_TMPDIR", orte_process_info.proc_session_dir, true, &environ);
@@ -348,12 +353,16 @@ void pmix_server_finalize(void)
     /* stop receives */
     orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_DIRECT_MODEX);
     orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_DIRECT_MODEX_RESP);
-
-    /* cleanup collectives */
-    OBJ_DESTRUCT(&orte_pmix_server_globals.reqs);
+    orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_LAUNCH_RESP);
+    orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_DATA_CLIENT);
+    orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_NOTIFICATION);
 
     /* shutdown the local server */
     opal_pmix.server_finalize();
+
+    /* cleanup collectives */
+    OBJ_DESTRUCT(&orte_pmix_server_globals.reqs);
+    OPAL_LIST_DESTRUCT(&orte_pmix_server_globals.notifications);
 }
 
 static void send_error(int status, opal_process_name_t *idreq,
@@ -634,6 +643,7 @@ static void pmix_server_dmdx_resp(int status, orte_process_name_t* sender,
 static void opcon(orte_pmix_server_op_caddy_t *p)
 {
     p->procs = NULL;
+    p->eprocs = NULL;
     p->info = NULL;
     p->cbdata = NULL;
 }

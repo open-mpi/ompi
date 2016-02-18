@@ -52,6 +52,79 @@
 
 extern ompi_rte_orte_component_t mca_rte_orte_component;
 
+typedef struct {
+    volatile bool active;
+    int status;
+    int errhandler;
+} errhandler_t;
+
+static void register_cbfunc(int status, int errhndler, void *cbdata)
+{
+    errhandler_t *cd = (errhandler_t*)cbdata;
+    cd->status = status;
+    cd->errhandler = errhndler;
+    cd->active = false;
+}
+
+static volatile bool wait_for_release = true;
+static int errhandler = -1;
+
+static void notify_cbfunc(int status,
+                          opal_list_t *procs,
+                          opal_list_t *info,
+                          opal_pmix_release_cbfunc_t cbfunc,
+                          void *cbdata)
+{
+    if (NULL != cbfunc) {
+        cbfunc(cbdata);
+    }
+    wait_for_release = false;
+}
+
+
+int ompi_rte_init(int *pargc, char ***pargv)
+{
+    int rc;
+    opal_list_t info;
+    opal_value_t val;
+    errhandler_t cd;
+
+    if (ORTE_SUCCESS != (rc = orte_init(pargc, pargv, ORTE_PROC_MPI))) {
+        return rc;
+    }
+
+    if (!orte_standalone_operation) {
+        /* register to receive any debugger release */
+        OBJ_CONSTRUCT(&info, opal_list_t);
+        OBJ_CONSTRUCT(&val, opal_value_t);
+        val.key = strdup(OPAL_PMIX_ERROR_NAME);
+        val.type = OPAL_INT;
+        val.data.integer = OPAL_ERR_DEBUGGER_RELEASE;
+        opal_list_append(&info, &val.super);
+        cd.status = ORTE_ERROR;
+        cd.errhandler = -1;
+        cd.active = true;
+
+        opal_pmix.register_errhandler(&info, notify_cbfunc, register_cbfunc, &cd);
+
+        /* let the MPI progress engine run while we wait for
+         * registration to complete */
+        OMPI_WAIT_FOR_COMPLETION(cd.active);
+        /* safely deconstruct the list */
+        opal_list_remove_first(&info);
+        OBJ_DESTRUCT(&val);
+        OBJ_DESTRUCT(&info);
+        if (OPAL_SUCCESS != cd.status) {
+            /* ouch - we are doomed */
+            ORTE_ERROR_LOG(cd.status);
+            return OMPI_ERROR;
+        }
+        errhandler = cd.errhandler;
+    }
+
+    return OMPI_SUCCESS;
+}
+
 void ompi_rte_abort(int error_code, char *fmt, ...)
 {
     va_list arglist;
@@ -100,10 +173,10 @@ void ompi_rte_abort(int error_code, char *fmt, ...)
  * attaching debuggers -- see big comment in
  * orte/tools/orterun/debuggers.c explaining the two scenarios.
  */
+
 void ompi_rte_wait_for_debugger(void)
 {
     int debugger;
-    orte_rml_recv_cb_t xfer;
 
     /* See lengthy comment in orte/tools/orterun/debuggers.c about
        orte_in_parallel_debugger */
@@ -117,12 +190,12 @@ void ompi_rte_wait_for_debugger(void)
         /* if not, just return */
         return;
     }
-
     /* if we are being debugged, then we need to find
      * the correct plug-ins
      */
     ompi_debugger_setup_dlls();
 
+    /* wait for the debugger to attach */
     if (orte_standalone_operation) {
         /* spin until debugger attaches and releases us */
         while (MPIR_debug_gate == 0) {
@@ -133,23 +206,9 @@ void ompi_rte_wait_for_debugger(void)
 #endif
         }
     } else {
-        /* only the rank=0 proc waits for either a message from the
-         * HNP or for the debugger to attach - everyone else will just
-         * spin in * the grpcomm barrier in ompi_mpi_init until rank=0
-         * joins them.
-         */
-        if (0 != ORTE_PROC_MY_NAME->vpid) {
-            return;
-        }
-
-        /* VPID 0 waits for a message from the HNP */
-        OBJ_CONSTRUCT(&xfer, orte_rml_recv_cb_t);
-        xfer.active = true;
-        orte_rml.recv_buffer_nb(OMPI_NAME_WILDCARD,
-                                ORTE_RML_TAG_DEBUGGER_RELEASE,
-                                ORTE_RML_NON_PERSISTENT,
-                                orte_rml_recv_callback, &xfer);
-        /* let the MPI progress engine run while we wait */
-        OMPI_WAIT_FOR_COMPLETION(xfer.active);
+        /* now wait for the notification to occur */
+        OMPI_WAIT_FOR_COMPLETION(wait_for_release);
+        /* deregister the errhandler */
+        opal_pmix.deregister_errhandler(errhandler, NULL, NULL);
     }
 }

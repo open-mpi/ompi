@@ -13,7 +13,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2013-2015 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
@@ -111,24 +111,204 @@ int pmix_server_abort_fn(opal_process_name_t *proc, void *server_object,
     return OPAL_SUCCESS;
 }
 
+static void _register_events(int sd, short args, void *cbdata)
+{
+    orte_pmix_server_op_caddy_t *cd = (orte_pmix_server_op_caddy_t*)cbdata;
+    opal_value_t *info;
+
+    /* the OPAL layer "owns" the list, but let's deconstruct it
+     * here so we don't have to duplicate the data */
+    while (NULL != (info = (opal_value_t*)opal_list_remove_first(cd->info))) {
+        /* don't worry about duplication as the underlying host
+         * server is already protecting us from it */
+        opal_list_append(&orte_pmix_server_globals.notifications, &info->super);
+    }
+
+    if (NULL != cd->cbfunc) {
+        cd->cbfunc(ORTE_SUCCESS, cd->cbdata);
+    }
+    OBJ_RELEASE(cd);
+}
+
+/* hook for the local PMIX server to pass event registrations
+ * up to us - we will assume the responsibility for providing
+ * notifications for registered events */
 int pmix_server_register_events_fn(opal_list_t *info,
                                    opal_pmix_op_cbfunc_t cbfunc,
                                    void *cbdata)
 {
-    /* for now, just execute the cbfunc */
-    if (NULL != cbfunc) {
-        cbfunc(OPAL_SUCCESS, cbdata);
-    }
-    return OPAL_SUCCESS;
+    /* need to thread-shift this request as we are going
+     * to access our global list of registered events */
+    ORTE_PMIX_OPERATION(NULL, info, _register_events, cbfunc, cbdata);
+    return ORTE_SUCCESS;
 }
 
+static void _deregister_events(int sd, short args, void *cbdata)
+{
+    orte_pmix_server_op_caddy_t *cd = (orte_pmix_server_op_caddy_t*)cbdata;
+    opal_value_t *info, *iptr, *nptr;
+
+    /* the OPAL layer "owns" the list, but let's deconstruct it
+     * here for consistency */
+    while (NULL != (info = (opal_value_t*)opal_list_remove_first(cd->info))) {
+        /* search for matching requests */
+        OPAL_LIST_FOREACH_SAFE(iptr, nptr, &orte_pmix_server_globals.notifications, opal_value_t) {
+            if (OPAL_EQUAL == opal_dss.compare(iptr, info, OPAL_VALUE)) {
+                opal_list_remove_item(&orte_pmix_server_globals.notifications, &iptr->super);
+                OBJ_RELEASE(iptr);
+                break;
+            }
+        }
+        OBJ_RELEASE(info);
+    }
+
+    if (NULL != cd->cbfunc) {
+        cd->cbfunc(ORTE_SUCCESS, cd->cbdata);
+    }
+    OBJ_RELEASE(cd);
+}
+/* hook for the local PMIX server to pass event deregistrations
+ * up to us */
 int pmix_server_deregister_events_fn(opal_list_t *info,
                                      opal_pmix_op_cbfunc_t cbfunc,
                                      void *cbdata)
 {
-    /* for now, just execute the cbfunc */
-    if (NULL != cbfunc) {
-        cbfunc(OPAL_SUCCESS, cbdata);
+    /* need to thread-shift this request as we are going
+     * to access our global list of registered events */
+    ORTE_PMIX_OPERATION(NULL, info, _deregister_events, cbfunc, cbdata);
+    return ORTE_SUCCESS;
+}
+
+static void _notify_release(int status, void *cbdata)
+{
+    orte_pmix_server_op_caddy_t *cd = (orte_pmix_server_op_caddy_t*)cbdata;
+
+    if (NULL != cd->procs) {
+        OPAL_LIST_RELEASE(cd->procs);
     }
-    return OPAL_SUCCESS;
+    if (NULL != cd->eprocs) {
+        OPAL_LIST_RELEASE(cd->eprocs);
+    }
+    if (NULL != cd->info) {
+        OPAL_LIST_RELEASE(cd->info);
+    }
+    OBJ_RELEASE(cd);
+}
+void pmix_server_notify(int status, orte_process_name_t* sender,
+                        opal_buffer_t *buffer,
+                        orte_rml_tag_t tg, void *cbdata)
+{
+    opal_list_t *procs = NULL, *eprocs = NULL, *info = NULL;
+    int cnt, rc, ret, nprocs, n;
+    opal_namelist_t *nm;
+    opal_value_t *val;
+    orte_pmix_server_op_caddy_t *cd;
+
+    opal_output_verbose(2, orte_pmix_server_globals.output,
+                        "%s Notification received",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+
+    /* unpack the status */
+    cnt = 1;
+    if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &ret, &cnt, OPAL_INT))) {
+        ORTE_ERROR_LOG(rc);
+        return;
+    }
+
+    /* unpack the target procs that are to be notified */
+    cnt = 1;
+    if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &nprocs, &cnt, OPAL_INT))) {
+        ORTE_ERROR_LOG(rc);
+        return;
+    }
+
+    /* if any were provided, add them to the list */
+    if (0 < nprocs) {
+        procs = OBJ_NEW(opal_list_t);
+        for (n=0; n < nprocs; n++) {
+            nm = OBJ_NEW(opal_namelist_t);
+            opal_list_append(procs, &nm->super);
+            if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &nm->name, &cnt, OPAL_NAME))) {
+                ORTE_ERROR_LOG(rc);
+                OPAL_LIST_RELEASE(procs);
+                return;
+            }
+        }
+    }
+
+    /* unpack the procs that were impacted by the error */
+    cnt = 1;
+    if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &nprocs, &cnt, OPAL_INT))) {
+        ORTE_ERROR_LOG(rc);
+        if (NULL != procs) {
+            OPAL_LIST_RELEASE(procs);
+        }
+        return;
+    }
+
+    /* if any were provided, add them to the list */
+    if (0 < nprocs) {
+        eprocs = OBJ_NEW(opal_list_t);
+        for (n=0; n < nprocs; n++) {
+            nm = OBJ_NEW(opal_namelist_t);
+            opal_list_append(eprocs, &nm->super);
+            if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &nm->name, &cnt, OPAL_NAME))) {
+                ORTE_ERROR_LOG(rc);
+                if (NULL != procs) {
+                    OPAL_LIST_RELEASE(procs);
+                }
+                OPAL_LIST_RELEASE(eprocs);
+                return;
+            }
+        }
+    }
+
+    /* unpack the infos that were provided */
+    cnt = 1;
+    if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &nprocs, &cnt, OPAL_INT))) {
+        ORTE_ERROR_LOG(rc);
+        if (NULL != procs) {
+            OPAL_LIST_RELEASE(procs);
+        }
+        return;
+    }
+
+    /* if any were provided, add them to the list */
+    if (0 < nprocs) {
+        info = OBJ_NEW(opal_list_t);
+        for (n=0; n < nprocs; n++) {
+            val = OBJ_NEW(opal_value_t);
+            opal_list_append(info, &val->super);
+            if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &val, &cnt, OPAL_VALUE))) {
+                ORTE_ERROR_LOG(rc);
+                if (NULL != procs) {
+                    OPAL_LIST_RELEASE(procs);
+                }
+                if (NULL != eprocs) {
+                    OPAL_LIST_RELEASE(eprocs);
+                }
+                OPAL_LIST_RELEASE(info);
+                return;
+            }
+        }
+    }
+
+    cd = OBJ_NEW(orte_pmix_server_op_caddy_t);
+    cd->procs = procs;
+    cd->eprocs = eprocs;
+    cd->info = info;
+
+    if (OPAL_SUCCESS != (rc = opal_pmix.server_notify_error(ret, procs, eprocs, info, _notify_release, cd))) {
+        ORTE_ERROR_LOG(rc);
+        if (NULL != procs) {
+            OPAL_LIST_RELEASE(procs);
+        }
+        if (NULL != eprocs) {
+            OPAL_LIST_RELEASE(eprocs);
+        }
+        if (NULL != info) {
+            OPAL_LIST_RELEASE(info);
+        }
+        OBJ_RELEASE(cd);
+    }
 }

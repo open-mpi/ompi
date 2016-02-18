@@ -211,6 +211,11 @@ static void reg_thread(int sd, short args, void *cbdata)
     int rc;
     opal_pmix120_etracker_t *trk;
 
+    opal_output_verbose(2, opal_pmix_base_framework.framework_output,
+                        "%s register complete with status %d",
+                        OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
+                        cd->status);
+
     /* convert the status */
     rc = pmix120_convert_rc(cd->status);
 
@@ -251,6 +256,11 @@ static void pmix120_register_errhandler(opal_list_t *info,
     size_t n;
     opal_value_t *ival;
 
+    opal_output_verbose(2, opal_pmix_base_framework.framework_output,
+                        "%s REGISTER ERRHDNLR INFO %s",
+                        OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
+                        (NULL == info) ? "NULL" : "NOT-NULL");
+
     /* setup a caddy for the operation so we can free
      * the array when done */
     cd = OBJ_NEW(pmix120_opcaddy_t);
@@ -266,7 +276,8 @@ static void pmix120_register_errhandler(opal_list_t *info,
             n=0;
             OPAL_LIST_FOREACH(ival, info, opal_value_t) {
                 (void)strncpy(cd->info[n].key, ival->key, PMIX_MAX_KEYLEN);
-                pmix120_value_load(&cd->info[n].value, ival);
+                cd->info[n].value.type = PMIX_INT;
+                cd->info[n].value.data.status = pmix120_convert_opalrc(ival->data.integer);
             }
         }
     }

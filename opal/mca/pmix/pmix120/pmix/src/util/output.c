@@ -25,6 +25,7 @@
 #include <pmix/pmix_common.h>
 
 #include <stdio.h>
+#include <ctype.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #ifdef HAVE_SYSLOG_H
@@ -465,6 +466,56 @@ void pmix_output_set_output_file_info(const char *dir,
     if (NULL != prefix) {
         free(output_prefix);
         output_prefix = strdup(prefix);
+    }
+}
+
+void pmix_output_hexdump(int verbose_level, int output_id,
+                         void *ptr, int buflen)
+{
+    unsigned char *buf = (unsigned char *) ptr;
+    char out_buf[120];
+    int ret = 0;
+    int out_pos = 0;
+    int i, j;
+
+    if (output_id >= 0 && output_id < PMIX_OUTPUT_MAX_STREAMS &&
+        info[output_id].ldi_verbose_level >= verbose_level) {
+        pmix_output_verbose(verbose_level, output_id, "dump data at %p %d bytes\n", ptr, buflen);
+        for (i = 0; i < buflen; i += 16) {
+            out_pos = 0;
+            ret = sprintf(out_buf + out_pos, "%06x: ", i);
+            if (ret < 0)
+            return;
+            out_pos += ret;
+            for (j = 0; j < 16; j++) {
+                if (i + j < buflen)
+                ret = sprintf(out_buf + out_pos, "%02x ",
+                        buf[i + j]);
+                else
+                ret = sprintf(out_buf + out_pos, "   ");
+                if (ret < 0)
+                return;
+                out_pos += ret;
+            }
+            ret = sprintf(out_buf + out_pos, " ");
+            if (ret < 0)
+            return;
+            out_pos += ret;
+            for (j = 0; j < 16; j++)
+            if (i + j < buflen) {
+                ret = sprintf(out_buf + out_pos, "%c",
+                        isprint(buf[i+j]) ?
+                        buf[i + j] :
+                        '.');
+                if (ret < 0)
+                return;
+                out_pos += ret;
+            }
+            ret = sprintf(out_buf + out_pos, "\n");
+            if (ret < 0)
+            return;
+            pmix_output_verbose(verbose_level, output_id, "%s", out_buf);
+        }
     }
 }
 
