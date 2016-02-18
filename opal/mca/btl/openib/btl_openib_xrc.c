@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2007-2008 Mellanox Technologies. All rights reserved.
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
@@ -5,6 +6,8 @@
  * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014      Bull SAS.  All rights reserved.
+ * Copyright (c) 2016      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -122,7 +125,10 @@ static void ib_address_constructor(ib_address_t *ib_addr)
     ib_addr->lid = 0;
     ib_addr->status = MCA_BTL_IB_ADDR_CLOSED;
     ib_addr->qp = NULL;
-    OBJ_CONSTRUCT(&ib_addr->addr_lock, opal_mutex_t);
+    /* NTH: make the addr_lock recursive because mca_btl_openib_endpoint_connected can call
+     * into the CPC with the lock held. The alternative would be to drop the lock but the
+     * lock is never obtained in a critical path. */
+    OBJ_CONSTRUCT(&ib_addr->addr_lock, opal_recursive_mutex_t);
     OBJ_CONSTRUCT(&ib_addr->pending_ep, opal_list_t);
 }
 
