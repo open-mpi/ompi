@@ -11,6 +11,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -54,6 +56,7 @@ static opal_memory_base_component_2_0_0_t empty_component = {
     empty_process,
     opal_memory_base_component_register_empty,
     opal_memory_base_component_deregister_empty,
+    opal_memory_base_component_set_alignment_empty,
 };
 
 

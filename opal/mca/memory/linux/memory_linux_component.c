@@ -13,6 +13,8 @@
  * Copyright (c) 2009-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -96,6 +98,11 @@ opal_memory_linux_component_t mca_memory_linux_component = {
            end up using ummunotify support. */
         .memoryc_register = opal_memory_base_component_register_empty,
         .memoryc_deregister = opal_memory_base_component_deregister_empty,
+#if MEMORY_LINUX_MALLOC_ALIGN_ENABLED
+        .memoryc_set_alignment = opal_memory_linux_malloc_set_alignment,
+#else
+        .memoryc_set_alignment = opal_memory_base_component_set_alignment_empty,
+#endif
     },
 
     /* Component-specific data, filled in later (compiler will 0/NULL

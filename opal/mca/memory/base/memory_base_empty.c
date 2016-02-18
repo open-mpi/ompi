@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -34,3 +36,9 @@ int opal_memory_base_component_deregister_empty(void *base, size_t len,
 {
     return OPAL_SUCCESS;
 }
+
+void opal_memory_base_component_set_alignment_empty(int use_memalign,
+                                                    size_t memalign_threshold)
+{
+}
+
