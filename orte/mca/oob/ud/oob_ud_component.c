@@ -19,6 +19,8 @@
 #include "orte_config.h"
 #include "orte/types.h"
 #include "opal/types.h"
+#include "opal/align.h"
+#include "opal/util/sys_limits.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/runtime/orte_globals.h"
@@ -678,15 +680,21 @@ static inline int mca_oob_ud_port_recv_start (mca_oob_ud_port_t *port)
 static inline int mca_oob_ud_alloc_reg_mem (struct ibv_pd *pd, mca_oob_ud_reg_mem_t *reg_mem,
                                             const int buffer_len)
 {
+    size_t buffer_len_aligned, page_size;
     reg_mem->len = buffer_len;
     reg_mem->ptr = NULL;
     reg_mem->mr  = NULL;
-
+    /* The allocated buffer should be a multiple of page size.
+       If ibv_fork_init() has been invoked the pages are marked MADV_DONTFORK.
+       If we only partially use a page, any data allocated on the remainder of
+       the page will be inaccessible to the child process */
+    page_size = opal_getpagesize();
+    buffer_len_aligned = OPAL_ALIGN(buffer_len, page_size, size_t);
     opal_output_verbose(5, orte_oob_base_framework.framework_output,
                           "%s oob:ud:alloc_reg_mem allocing and registering %d bytes of memory with pd %p",
                           ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), buffer_len, (void *) pd);
 
-    posix_memalign ((void **)&reg_mem->ptr, sysconf(_SC_PAGESIZE), buffer_len);
+    posix_memalign ((void **)&reg_mem->ptr, page_size, buffer_len_aligned);
     if (NULL == reg_mem->ptr) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return ORTE_ERR_OUT_OF_RESOURCE;
