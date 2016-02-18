@@ -13,7 +13,7 @@
  * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -72,8 +72,8 @@ int MPI_Unpack_external (const char datarep[], const void *inbuf, MPI_Aint insiz
     OBJ_CONSTRUCT(&local_convertor, opal_convertor_t);
 
     /* the resulting convertor will be set to the position ZERO */
-    opal_convertor_copy_and_prepare_for_recv( ompi_mpi_external32_convertor,
-                                              &(datatype->super), outcount, outbuf, 0, &local_convertor );
+    opal_convertor_copy_and_prepare_for_recv_external( ompi_mpi_external32_convertor,
+                                                       &(datatype->super), outcount, outbuf, 0, &local_convertor );
 
     /* Check for truncation */
     opal_convertor_get_packed_size( &local_convertor, &size );
