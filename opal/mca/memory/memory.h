@@ -13,6 +13,8 @@
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -92,7 +94,7 @@ typedef int (*opal_memory_base_component_register_fn_t)(void *base,
 
 
 /**
- *  Prototype for a function that is the opposite of
+ * Prototype for a function that is the opposite of
  * opal_memory_base_component_register_fn_t: this function is invoked
  * when Open MPI stops to "caring" about a specific memory region.
  * That is, Open MPI declares that it no longer wants to be notified
@@ -110,6 +112,12 @@ typedef int (*opal_memory_base_component_deregister_fn_t)(void *base,
                                                           size_t len,
                                                           uint64_t cookie);
 
+
+/**
+ * Prototype for a function that set the memory alignment
+ */
+typedef void (*opal_memory_base_component_set_alignment_fn_t)(int use_memalign,
+                                                              size_t memalign_threshold);
 
 /**
  * Structure for memory components.
@@ -132,6 +140,8 @@ typedef struct opal_memory_base_component_2_0_0_t {
     /** Function invoked when Open MPI stops "caring" about a
         specific memory region */
     opal_memory_base_component_deregister_fn_t memoryc_deregister;
+    /** Function invoked in order to set malloc'ed memory alignment */
+    opal_memory_base_component_set_alignment_fn_t memoryc_set_alignment;
 } opal_memory_base_component_2_0_0_t;
 
 OPAL_DECLSPEC extern opal_memory_base_component_2_0_0_t *opal_memory;
