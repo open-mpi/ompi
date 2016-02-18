@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2015      Intel, Inc. All rights reserved
+ * Copyright (c) 2015-2016 Intel, Inc. All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -36,11 +36,8 @@ BEGIN_C_DECLS
         }                                                               \
     }while(0);
 
-#define PMIX_REPORT_ERROR(e)                            \
-    do {                                                \
-        pmix_globals.connected = false;                 \
-        pmix_errhandler_invoke(e, NULL, 0, NULL, 0);    \
-    } while(0);
+#define PMIX_REPORT_ERROR(e)  \
+    pmix_errhandler_invoke(e, NULL, 0, NULL, 0)
 
 PMIX_DECLSPEC void pmix_errhandler_invoke(pmix_status_t status,
                                           pmix_proc_t procs[], size_t nprocs,

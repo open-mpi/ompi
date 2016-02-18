@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2015 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014      Artem Y. Polyakov <artpol84@gmail.com>.
  *                         All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
@@ -36,12 +36,45 @@
 #include <sys/types.h>
 #endif
 
+#include "src/class/pmix_pointer_array.h"
 #include "src/include/pmix_globals.h"
+#include "src/server/pmix_server_ops.h"
 #include "src/util/error.h"
 
 #include "usock.h"
 
 static uint32_t current_tag = 1;  // 0 is reserved for system purposes
+
+static void lost_connection(pmix_peer_t *peer, pmix_status_t err)
+{
+    /* stop all events */
+    if (peer->recv_ev_active) {
+        event_del(&peer->recv_event);
+        peer->recv_ev_active = false;
+    }
+    if (peer->send_ev_active) {
+        event_del(&peer->send_event);
+        peer->send_ev_active = false;
+    }
+    if (NULL != peer->recv_msg) {
+        PMIX_RELEASE(peer->recv_msg);
+        peer->recv_msg = NULL;
+    }
+    CLOSE_THE_SOCKET(peer->sd);
+    if (pmix_globals.server) {
+        /* if I am a server, then we need to
+         * do some cleanup as the client has
+         * left us */
+         pmix_pointer_array_set_item(&pmix_server_globals.clients,
+                                     peer->index, NULL);
+         PMIX_RELEASE(peer);
+     } else {
+        /* if I am a client, there is only
+         * one connection we can have */
+        pmix_globals.connected = false;
+    }
+    PMIX_REPORT_ERROR(err);
+}
 
 static pmix_status_t send_bytes(int sd, char **buf, size_t *remain)
 {
@@ -183,8 +216,7 @@ void pmix_usock_send_handler(int sd, short flags, void *cbdata)
                 peer->send_ev_active = false;
                 PMIX_RELEASE(msg);
                 peer->send_msg = NULL;
-                CLOSE_THE_SOCKET(peer->sd);
-                PMIX_REPORT_ERROR(rc);
+                lost_connection(peer, rc);
                 return;
             }
         }
@@ -212,8 +244,7 @@ void pmix_usock_send_handler(int sd, short flags, void *cbdata)
                 peer->send_ev_active = false;
                 PMIX_RELEASE(msg);
                 peer->send_msg = NULL;
-                CLOSE_THE_SOCKET(peer->sd);
-                PMIX_REPORT_ERROR(rc);
+                lost_connection(peer, rc);
                 return;
             }
         }
@@ -357,8 +388,7 @@ void pmix_usock_recv_handler(int sd, short flags, void *cbdata)
         PMIX_RELEASE(peer->recv_msg);
         peer->recv_msg = NULL;
     }
-    CLOSE_THE_SOCKET(peer->sd);
-    PMIX_REPORT_ERROR(PMIX_ERR_UNREACH);
+    lost_connection(peer, PMIX_ERR_UNREACH);
 }
 
 void pmix_usock_send_recv(int fd, short args, void *cbdata)
