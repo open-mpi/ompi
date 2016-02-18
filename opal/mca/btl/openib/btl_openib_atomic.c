@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2014-2016 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -73,16 +73,7 @@ static int mca_btl_openib_atomic_internal (struct mca_btl_base_module_t *btl, st
 
     frag->sr_desc.wr.atomic.rkey = rkey;
 
-#if HAVE_XRC
-    if (MCA_BTL_XRC_ENABLED && BTL_OPENIB_QP_TYPE_XRC(qp)) {
-#if OPAL_HAVE_CONNECTX_XRC_DOMAINS
-        frag->sr_desc.qp_type.xrc.remote_srqn = endpoint->rem_info.rem_srqs[qp].rem_srq_num;
-#else
-        frag->sr_desc.xrc_remote_srq_num = endpoint->rem_info.rem_srqs[qp].rem_srq_num;
-#endif
-
-    }
-#endif
+    /* NTH: the SRQ# is set in mca_btl_get_internal */
 
     if (endpoint->endpoint_state != MCA_BTL_IB_CONNECTED) {
         OPAL_THREAD_LOCK(&endpoint->endpoint_lock);

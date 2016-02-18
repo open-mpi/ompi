@@ -101,19 +101,6 @@ int mca_btl_openib_put (mca_btl_base_module_t *btl, struct mca_btl_base_endpoint
         to_out_frag(frag)->sr_desc.wr.rdma.rkey = remote_handle->rkey;
     }
 
-#if HAVE_XRC
-    if (MCA_BTL_XRC_ENABLED && BTL_OPENIB_QP_TYPE_XRC(qp)) {
-
-#if OPAL_HAVE_CONNECTX_XRC
-        to_out_frag(frag)->sr_desc.xrc_remote_srq_num = ep->rem_info.rem_srqs[qp].rem_srq_num;
-#elif OPAL_HAVE_CONNECTX_XRC_DOMAINS
-        to_out_frag(frag)->sr_desc.qp_type.xrc.remote_srqn = ep->rem_info.rem_srqs[qp].rem_srq_num;
-#else
-#error "that should never happen"
-#endif
-    }
-#endif
-
     if (ep->endpoint_state != MCA_BTL_IB_CONNECTED) {
         OPAL_THREAD_LOCK(&ep->endpoint_lock);
         rc = check_endpoint_state(ep, &to_base_frag(frag)->base, &ep->pending_put_frags);
@@ -152,6 +139,21 @@ int mca_btl_openib_put_internal (mca_btl_base_module_t *btl, struct mca_btl_base
     int qp = to_base_frag(frag)->base.order;
     struct ibv_send_wr *bad_wr;
     int rc;
+
+#if HAVE_XRC
+    if (MCA_BTL_XRC_ENABLED && BTL_OPENIB_QP_TYPE_XRC(qp)) {
+        /* NTH: the remote SRQ number is only available once the endpoint is connected. By
+         * setting the value here instead of mca_btl_openib_put we guarantee the rem_srqs
+         * array is initialized. */
+#if OPAL_HAVE_CONNECTX_XRC
+        to_out_frag(frag)->sr_desc.xrc_remote_srq_num = ep->rem_info.rem_srqs[qp].rem_srq_num;
+#elif OPAL_HAVE_CONNECTX_XRC_DOMAINS
+        to_out_frag(frag)->sr_desc.qp_type.xrc.remote_srqn = ep->rem_info.rem_srqs[qp].rem_srq_num;
+#else
+#error "that should never happen"
+#endif
+    }
+#endif
 
     /* check for a send wqe */
     if (qp_get_wqe(ep, qp) < 0) {
