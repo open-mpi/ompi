@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014-2015 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014      Mellanox Technologies, Inc.
@@ -431,7 +431,6 @@ int pmix1_server_notify_error(int status,
     op->cbdata = cbdata;
 
     rc = pmix1_convert_opalrc(status);
-    opal_output(0, "CALLING NOTIFY ERROR");
     rc = PMIx_Notify_error(rc, ps, psz, eps, esz,
                            pinfo, sz, opcbfunc, op);
     if (PMIX_SUCCESS != rc) {

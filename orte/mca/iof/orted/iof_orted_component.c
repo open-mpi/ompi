@@ -88,7 +88,7 @@ static int orte_iof_orted_query(mca_base_module_t **module, int *priority)
         return ORTE_ERROR;
     }
 
-    *priority = 100;
+    *priority = 80;
     *module = (mca_base_module_t *) &orte_iof_orted_module;
 
     return ORTE_SUCCESS;

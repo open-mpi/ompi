@@ -76,7 +76,8 @@ static void orte_iof_base_proc_construct(orte_iof_proc_t* ptr)
     ptr->revstdout = NULL;
     ptr->revstderr = NULL;
     ptr->revstddiag = NULL;
-    OBJ_CONSTRUCT(&ptr->subscribers, opal_list_t);
+    ptr->subscribers = NULL;
+    ptr->copy = true;
 }
 static void orte_iof_base_proc_destruct(orte_iof_proc_t* ptr)
 {
@@ -92,7 +93,9 @@ static void orte_iof_base_proc_destruct(orte_iof_proc_t* ptr)
     if (NULL != ptr->revstddiag) {
         OBJ_RELEASE(ptr->revstddiag);
     }
-    OPAL_LIST_DESTRUCT(&ptr->subscribers);
+    if (NULL != ptr->subscribers) {
+        OPAL_LIST_RELEASE(ptr->subscribers);
+    }
 }
 OBJ_CLASS_INSTANCE(orte_iof_proc_t,
                    opal_list_item_t,

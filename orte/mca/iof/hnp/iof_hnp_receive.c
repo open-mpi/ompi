@@ -61,7 +61,7 @@ void orte_iof_hnp_recv(int status, orte_process_name_t* sender,
     int rc;
     bool exclusive;
     orte_iof_proc_t *proct;
-    orte_ns_cmp_bitmask_t mask=ORTE_NS_CMP_ALL;
+    orte_ns_cmp_bitmask_t mask=ORTE_NS_CMP_ALL | ORTE_NS_CMP_WILD;
 
     OPAL_OUTPUT_VERBOSE((1, orte_iof_base_framework.framework_output,
                          "%s received IOF from proc %s",
@@ -102,9 +102,8 @@ void orte_iof_hnp_recv(int status, orte_process_name_t* sender,
     }
 
     OPAL_OUTPUT_VERBOSE((1, orte_iof_base_framework.framework_output,
-                         "%s received IOF cmd from sender %s for source %s",
+                         "%s received IOF cmd for source %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(&requestor),
                          ORTE_NAME_PRINT(&origin)));
 
     /* check to see if a tool has requested something */
@@ -144,26 +143,29 @@ void orte_iof_hnp_recv(int status, orte_process_name_t* sender,
         /* a tool is requesting that we send it a copy of the specified stream(s)
          * from the specified process(es), so create a sink for it
          */
+        if (NULL == proct->subscribers) {
+            proct->subscribers = OBJ_NEW(opal_list_t);
+        }
         if (ORTE_IOF_STDOUT & stream) {
             ORTE_IOF_SINK_DEFINE(&sink, &origin, -1, ORTE_IOF_STDOUT, NULL);
             sink->daemon.jobid = requestor.jobid;
             sink->daemon.vpid = requestor.vpid;
             sink->exclusive = exclusive;
-            opal_list_append(&proct->subscribers, &sink->super);
+            opal_list_append(proct->subscribers, &sink->super);
         }
         if (ORTE_IOF_STDERR & stream) {
             ORTE_IOF_SINK_DEFINE(&sink, &origin, -1, ORTE_IOF_STDERR, NULL);
             sink->daemon.jobid = requestor.jobid;
             sink->daemon.vpid = requestor.vpid;
             sink->exclusive = exclusive;
-            opal_list_append(&proct->subscribers, &sink->super);
+            opal_list_append(proct->subscribers, &sink->super);
         }
         if (ORTE_IOF_STDDIAG & stream) {
             ORTE_IOF_SINK_DEFINE(&sink, &origin, -1, ORTE_IOF_STDDIAG, NULL);
             sink->daemon.jobid = requestor.jobid;
             sink->daemon.vpid = requestor.vpid;
             sink->exclusive = exclusive;
-            opal_list_append(&proct->subscribers, &sink->super);
+            opal_list_append(proct->subscribers, &sink->super);
         }
         goto CLEAN_RETURN;
     }
@@ -181,7 +183,7 @@ void orte_iof_hnp_recv(int status, orte_process_name_t* sender,
             if (OPAL_EQUAL != orte_util_compare_name_fields(mask, &proct->name, &origin)) {
                 continue;
             }
-            OPAL_LIST_FOREACH_SAFE(sink, next, &proct->subscribers, orte_iof_sink_t) {
+            OPAL_LIST_FOREACH_SAFE(sink, next, proct->subscribers, orte_iof_sink_t) {
                  /* if the target isn't set, then this sink is for another purpose - ignore it */
                 if (ORTE_JOBID_INVALID == sink->daemon.jobid) {
                     continue;
@@ -196,7 +198,7 @@ void orte_iof_hnp_recv(int status, orte_process_name_t* sender,
                      * completed sending anything to that requestor before it exits
                      */
                     orte_iof_hnp_send_data_to_endpoint(&sink->daemon, &origin, ORTE_IOF_CLOSE, NULL, 0);
-                    opal_list_remove_item(&proct->subscribers, &sink->super);
+                    opal_list_remove_item(proct->subscribers, &sink->super);
                     OBJ_RELEASE(sink);
                 }
             }
@@ -233,20 +235,22 @@ void orte_iof_hnp_recv(int status, orte_process_name_t* sender,
   NSTEP:
     /* cycle through the endpoints to see if someone else wants a copy */
     exclusive = false;
-    OPAL_LIST_FOREACH(sink, &proct->subscribers, orte_iof_sink_t) {
-        /* if the target isn't set, then this sink is for another purpose - ignore it */
-        if (ORTE_JOBID_INVALID == sink->daemon.jobid) {
-            continue;
-        }
-        if ((stream & sink->tag) &&
-            sink->name.jobid == origin.jobid &&
-            (ORTE_VPID_WILDCARD == sink->name.vpid ||
-             ORTE_VPID_WILDCARD == origin.vpid ||
-             sink->name.vpid == origin.vpid)) {
-            /* send the data to the tool */
-            orte_iof_hnp_send_data_to_endpoint(&sink->daemon, &origin, stream, data, numbytes);
-            if (sink->exclusive) {
-                exclusive = true;
+    if (NULL != proct->subscribers) {
+        OPAL_LIST_FOREACH(sink, proct->subscribers, orte_iof_sink_t) {
+            /* if the target isn't set, then this sink is for another purpose - ignore it */
+            if (ORTE_JOBID_INVALID == sink->daemon.jobid) {
+                continue;
+            }
+            if ((stream & sink->tag) &&
+                sink->name.jobid == origin.jobid &&
+                (ORTE_VPID_WILDCARD == sink->name.vpid ||
+                 ORTE_VPID_WILDCARD == origin.vpid ||
+                 sink->name.vpid == origin.vpid)) {
+                /* send the data to the tool */
+                orte_iof_hnp_send_data_to_endpoint(&sink->daemon, &origin, stream, data, numbytes);
+                if (sink->exclusive) {
+                    exclusive = true;
+                }
             }
         }
     }

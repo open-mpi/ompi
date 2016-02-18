@@ -117,7 +117,8 @@ typedef struct {
     orte_iof_read_event_t *revstdout;
     orte_iof_read_event_t *revstderr;
     orte_iof_read_event_t *revstddiag;
-    opal_list_t subscribers;
+    opal_list_t *subscribers;
+    bool copy;
 } orte_iof_proc_t;
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_iof_proc_t);
 
