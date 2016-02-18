@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2015-2016 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -27,6 +27,7 @@
 #include "opal/util/output.h"
 #include "opal/threads/mutex.h"
 #include <string.h>
+#include <ctype.h>
 
 int opal_util_keyval_parse_lineno = 0;
 
@@ -200,53 +201,58 @@ int opal_util_keyval_save_internal_envars(opal_keyval_parse_fn_t callback)
     return OPAL_SUCCESS;
 }
 
-static int trim_name(char **buffer, const char* prefix, const char* suffix)
+static void trim_name(char *buffer, const char* prefix, const char* suffix)
 {
-    char *pchr, *echr, *tmp;
-    int size;
-    if (NULL == *buffer) {
-        return 1;
+    char *pchr, *echr;
+    size_t buffer_len;
+
+    if (NULL == buffer) {
+        return;
     }
-    pchr = *buffer;
+
+    buffer_len = strlen (buffer);
+
+    pchr = buffer;
     if (NULL != prefix) {
-        pchr = strstr(*buffer, prefix);
-        if (NULL != pchr) {
-            pchr += strlen(prefix);
-        } else {
-            pchr = *buffer;
+        size_t prefix_len = strlen (prefix);
+
+        if (0 == strncmp (buffer, prefix, prefix_len)) {
+            pchr += prefix_len;
         }
     }
+
     /* trim spaces at the beginning */
-    while (' ' == *pchr || '\t' == *pchr) {
+    while (isspace (*pchr)) {
         pchr++;
     }
+
     /* trim spaces at the end */
-    echr = *buffer+strlen(*buffer)-1;
-    while (' ' == *echr || '\t' == *echr || '\n' == *echr) {
+    echr = buffer + buffer_len - 1;
+    while (isspace (*echr)) {
         echr--;
     }
-    echr++;
-    *echr = '\0';
+    echr[1] = '\0';
+
     if (NULL != suffix) {
-        if (!strncmp(echr-strlen(suffix), suffix, strlen(suffix))) {
-            echr -= strlen(suffix)+1;
-            while (' ' == *echr || '\t' == *echr) {
+        size_t suffix_len = strlen (suffix);
+
+        echr -= suffix_len - 1;
+
+        if (0 == strncmp (echr, suffix, strlen(suffix))) {
+            do {
                 echr--;
-            }
-            echr++;
-            *echr = '\0';
+            } while (isspace (*echr));
+            echr[1] = '\0';
         }
     }
-    size = strlen(pchr)+1;
-    tmp = malloc(size);
-    strncpy(tmp, pchr, size);
-    *buffer = realloc(*buffer, size);
-    strncpy(*buffer, tmp, size);
-    free(tmp);
-    return 0;
+
+    if (buffer != pchr) {
+        /* move the trimmed string to the beginning of the buffer */
+        memmove (buffer, pchr, strlen (pchr) + 1);
+    }
 }
 
-static int save_param_name(const char* prefix, const char* suffix)
+static int save_param_name (void)
 {
     if (key_buffer_len < strlen(opal_util_keyval_yytext) + 1) {
         char *tmp;
@@ -261,8 +267,8 @@ static int save_param_name(const char* prefix, const char* suffix)
         key_buffer = tmp;
     }
 
-    strncpy(key_buffer, opal_util_keyval_yytext, key_buffer_len);
-    trim_name(&key_buffer, prefix, suffix);
+    strncpy (key_buffer, opal_util_keyval_yytext, key_buffer_len);
+
     return OPAL_SUCCESS;
 }
 
@@ -309,18 +315,26 @@ static int parse_line_new(opal_keyval_parse_state_t first_val)
 {
     opal_keyval_parse_state_t val;
     char *tmp;
+    int rc;
 
     val = first_val;
     while (OPAL_UTIL_KEYVAL_PARSE_NEWLINE != val && OPAL_UTIL_KEYVAL_PARSE_DONE != val) {
+        rc = save_param_name ();
+        if (OPAL_SUCCESS != rc) {
+            return rc;
+        }
+
         if (OPAL_UTIL_KEYVAL_PARSE_MCAVAR == val) {
-            save_param_name("-mca", NULL);
+            trim_name (key_buffer, "-mca", NULL);
+            trim_name (key_buffer, "--mca", NULL);
+
             val = opal_util_keyval_yylex();
             if (OPAL_UTIL_KEYVAL_PARSE_VALUE == val) {
                 if (NULL != opal_util_keyval_yytext) {
                     tmp = strdup(opal_util_keyval_yytext);
                     if ('\'' == tmp[0] || '\"' == tmp[0]) {
-                        trim_name(&tmp, "\'", "\'");
-                        trim_name(&tmp, "\"", "\"");
+                        trim_name (tmp, "\'", "\'");
+                        trim_name (tmp, "\"", "\"");
                     }
                     keyval_callback(key_buffer, tmp);
                     free(tmp);
@@ -330,7 +344,9 @@ static int parse_line_new(opal_keyval_parse_state_t first_val)
                 return OPAL_ERROR;
             }
         } else if (OPAL_UTIL_KEYVAL_PARSE_ENVEQL == val) {
-            save_param_name("-x", "=");
+            trim_name (key_buffer, "-x", "=");
+            trim_name (key_buffer, "--x", NULL);
+
             val = opal_util_keyval_yylex();
             if (OPAL_UTIL_KEYVAL_PARSE_VALUE == val) {
                 add_to_env_str(key_buffer, opal_util_keyval_yytext);
@@ -339,7 +355,8 @@ static int parse_line_new(opal_keyval_parse_state_t first_val)
                 return OPAL_ERROR;
             }
         } else if (OPAL_UTIL_KEYVAL_PARSE_ENVVAR == val) {
-            save_param_name("-x", "=");
+            trim_name (key_buffer, "-x", "=");
+            trim_name (key_buffer, "--x", NULL);
             add_to_env_str(key_buffer, NULL);
         } else {
             /* we got something unexpected.  Bonk! */
