@@ -10,6 +10,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
  *
+ * Copyright (c) 2016 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -97,6 +98,10 @@ static inline int memchecker_call (int (*f)(void *, size_t), const void * addr,
                                    size_t count, struct ompi_datatype_t * datatype)
 {
     if (!opal_memchecker_base_runindebugger()) {
+        return OMPI_SUCCESS;
+    }
+
+    if ((0 == count) || (0 == datatype->super.size)) {
         return OMPI_SUCCESS;
     }
 
