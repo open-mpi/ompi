@@ -68,6 +68,14 @@ int orte_ess_base_proc_binding(void)
         }
     }
 
+    /* direct launched: use whatever the extarnal launcher has set */
+    if (NULL == orte_process_info.my_daemon_uri) {
+        OPAL_OUTPUT_VERBOSE((5, orte_ess_base_framework.framework_output,
+                             "%s Process externally launched -- use their binding",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+        goto MOVEON;
+    }
+
     /* see if we were bound when launched */
     if (!orte_proc_is_bound) {
         OPAL_OUTPUT_VERBOSE((5, orte_ess_base_framework.framework_output,
