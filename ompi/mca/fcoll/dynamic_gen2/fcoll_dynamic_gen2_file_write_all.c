@@ -83,8 +83,7 @@ typedef struct mca_io_ompio_aggregator_data {
         _aggr[_i]->global_buf=_t;                                 \
         _t=(char *)_aggr[_i]->recvtype;                           \
         _aggr[_i]->recvtype=_aggr[_i]->prev_recvtype;             \
-        _aggr[_i]->prev_recvtype=(ompi_datatype_t **)_t;          \ 
-    }                                                             \
+        _aggr[_i]->prev_recvtype=(ompi_datatype_t **)_t;          }                                                             \
 }
 
 
@@ -92,7 +91,7 @@ typedef struct mca_io_ompio_aggregator_data {
 static int shuffle_init ( int index, int cycles, int aggregator, int rank, 
                           mca_io_ompio_aggregator_data *data, 
                           ompi_request_t **reqs );
-static int write_init (mca_io_ompio_file_t *fh, int aggregator, mca_io_ompio_aggregator_data *aggr_data );
+static int write_init (mca_io_ompio_file_t *fh, int aggregator, mca_io_ompio_aggregator_data *aggr_data, int write_chunksize );
 
 int mca_fcoll_dynamic_gen2_break_file_view ( struct iovec *decoded_iov, int iov_count, 
                                         struct iovec *local_iov_array, int local_count, 
@@ -145,6 +144,7 @@ int mca_fcoll_dynamic_gen2_file_write_all (mca_io_ompio_file_t *fh,
     MPI_Aint *broken_total_lengths=NULL;
 
     int *aggregators=NULL;
+    int write_chunksize;
     
 #if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
     double write_time = 0.0, start_write_time = 0.0, end_write_time = 0.0;
@@ -157,7 +157,6 @@ int mca_fcoll_dynamic_gen2_file_write_all (mca_io_ompio_file_t *fh,
     /**************************************************************************
      ** 1.  In case the data is not contigous in memory, decode it into an iovec
      **************************************************************************/
-    fh->f_get_num_aggregators ( &dynamic_gen2_num_io_procs );
     fh->f_get_bytes_per_agg ( (int *)&bytes_per_cycle );
     /* since we want to overlap 2 iterations, define the bytes_per_cycle to be half of what
        the user requested */
@@ -182,13 +181,23 @@ int mca_fcoll_dynamic_gen2_file_write_all (mca_io_ompio_file_t *fh,
     ** dynamic_gen2_num_io_procs should be the number of io_procs per group
     ** consequently.Initially, we will have only 1 group.
     */
+    if ( fh->f_stripe_count > 1 ) {
+        dynamic_gen2_num_io_procs =  fh->f_stripe_count;
+    }
+    else {
+        fh->f_get_num_aggregators ( &dynamic_gen2_num_io_procs );
+    }
 
-    // EDGAR: just a quick heck for testing 
+
     if ( fh->f_stripe_size == 0 ) {
+        // EDGAR: just a quick heck for testing 
         fh->f_stripe_size = 65536;
     }
-    if ( fh->f_stripe_count == 1 ) {
-        fh->f_stripe_count = 2;
+    if ( -1 == mca_fcoll_dynamic_gen2_write_chunksize  ) {
+        write_chunksize = fh->f_stripe_size;
+    }
+    else {
+        write_chunksize = mca_fcoll_dynamic_gen2_write_chunksize;
     }
 
 
@@ -536,7 +545,7 @@ int mca_fcoll_dynamic_gen2_file_write_all (mca_io_ompio_file_t *fh,
         
         /* Write data for iteration i-1 */
         for ( i=0; i<dynamic_gen2_num_io_procs; i++ ) {
-            ret = write_init (fh, aggregators[i], aggr_data[i]);
+            ret = write_init (fh, aggregators[i], aggr_data[i], write_chunksize );
             if (OMPI_SUCCESS != ret){
                 goto exit;
             }            
@@ -562,7 +571,7 @@ int mca_fcoll_dynamic_gen2_file_write_all (mca_io_ompio_file_t *fh,
         
         /* Write data for iteration i=cycles-1 */
         for ( i=0; i<dynamic_gen2_num_io_procs; i++ ) {
-            ret = write_init (fh, aggregators[i], aggr_data[i]);
+            ret = write_init (fh, aggregators[i], aggr_data[i], write_chunksize );
             if (OMPI_SUCCESS != ret){
                 goto exit;
             }                    
@@ -656,7 +665,7 @@ exit :
 }
 
 
-static int write_init (mca_io_ompio_file_t *fh, int aggregator, mca_io_ompio_aggregator_data *aggr_data )
+static int write_init (mca_io_ompio_file_t *fh, int aggregator, mca_io_ompio_aggregator_data *aggr_data, int write_chunksize )
 {
     int ret=OMPI_SUCCESS;
     int last_array_pos=0;
@@ -668,7 +677,7 @@ static int write_init (mca_io_ompio_file_t *fh, int aggregator, mca_io_ompio_agg
             aggr_data->prev_bytes_to_write -= mca_fcoll_dynamic_gen2_split_iov_array (fh, aggr_data->prev_io_array, 
                                                                                       aggr_data->prev_num_io_entries, 
                                                                                       &last_array_pos, &last_pos,
-                                                                                      fh->f_stripe_size );
+                                                                                      write_chunksize );
 #if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
             start_write_time = MPI_Wtime();
 #endif
