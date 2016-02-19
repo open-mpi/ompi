@@ -113,6 +113,17 @@ OMPI_DECLSPEC extern opal_list_t  ompi_proc_list;
 OMPI_DECLSPEC int ompi_proc_init(void);
 
 /**
+ * Complete filling up the proc information (arch, name and locality) for
+ * a given proc related to this job.
+ *
+ * @param[in] proc      ompi process structure.
+ * @param[in] optional  locality is optionally retrievedl
+ * @retval OMPI_SUCCESS All information correctly set.
+ * @retval OMPI_ERROR   Some info could not be initialized.
+ */
+OMPI_DECLSPEC int ompi_proc_complete_init_single(ompi_proc_t* proc, bool optional);
+
+/**
  * Complete filling up the proc information (arch, name and locality) for all
  * procs related to this job. This function is to be called only after
  * the modex exchange has been completed.
