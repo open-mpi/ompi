@@ -142,7 +142,7 @@ void orte_iof_hnp_read_local_handler(int fd, short event, void *cbdata)
             return;
         }
         /* if the daemon is me, then this is a local sink */
-        if (OPAL_EQUAL == orte_util_compare_name_fields(mask, ORTE_PROC_MY_NAME, &proct->stdin->daemon)) {
+        if (OPAL_EQUAL == orte_util_compare_name_fields(mask, ORTE_PROC_MY_NAME, &proct->stdinev->daemon)) {
             OPAL_OUTPUT_VERBOSE((1, orte_iof_base_framework.framework_output,
                                  "%s read %d bytes from stdin - writing to %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), numbytes,
@@ -151,8 +151,8 @@ void orte_iof_hnp_read_local_handler(int fd, short event, void *cbdata)
              * down the pipe so it forces out any preceding data before
              * closing the output stream
              */
-            if (NULL != proct->stdin->wev) {
-                if (ORTE_IOF_MAX_INPUT_BUFFERS < orte_iof_base_write_output(&proct->name, rev->tag, data, numbytes, proct->stdin->wev)) {
+            if (NULL != proct->stdinev->wev) {
+                if (ORTE_IOF_MAX_INPUT_BUFFERS < orte_iof_base_write_output(&proct->name, rev->tag, data, numbytes, proct->stdinev->wev)) {
                     /* getting too backed up - stop the read event for now if it is still active */
 
                     OPAL_OUTPUT_VERBOSE((1, orte_iof_base_framework.framework_output,
@@ -162,9 +162,9 @@ void orte_iof_hnp_read_local_handler(int fd, short event, void *cbdata)
             }
         } else {
             OPAL_OUTPUT_VERBOSE((1, orte_iof_base_framework.framework_output,
-                                 "%s sending %d bytes from stdin to daemon %s",
+                                 "%s sending %d bytes from stdinev to daemon %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), numbytes,
-                                 ORTE_NAME_PRINT(&proct->stdin->daemon)));
+                                 ORTE_NAME_PRINT(&proct->stdinev->daemon)));
 
             /* send the data to the daemon so it can
              * write it to the proc's fd - in this case,
@@ -174,7 +174,7 @@ void orte_iof_hnp_read_local_handler(int fd, short event, void *cbdata)
              * sent - this will tell the daemon to close
              * the fd for stdin to that proc
              */
-            if( ORTE_SUCCESS != (rc = orte_iof_hnp_send_data_to_endpoint(&proct->stdin->daemon, &proct->stdin->name, ORTE_IOF_STDIN, data, numbytes))) {
+            if( ORTE_SUCCESS != (rc = orte_iof_hnp_send_data_to_endpoint(&proct->stdinev->daemon, &proct->stdinev->name, ORTE_IOF_STDIN, data, numbytes))) {
                 /* if the addressee is unknown, remove the sink from the list */
                 if( ORTE_ERR_ADDRESSEE_UNKNOWN == rc ) {
                     OBJ_RELEASE(rev->sink);
@@ -244,10 +244,13 @@ void orte_iof_hnp_read_local_handler(int fd, short event, void *cbdata)
          * nothing to output - release the appropriate event.
          * This will delete the read event and close the file descriptor */
         if (rev->tag & ORTE_IOF_STDOUT) {
+            orte_iof_base_static_dump_output(proct->revstdout);
             OBJ_RELEASE(proct->revstdout);
         } else if (rev->tag & ORTE_IOF_STDERR) {
+            orte_iof_base_static_dump_output(proct->revstderr);
             OBJ_RELEASE(proct->revstderr);
         } else if (rev->tag & ORTE_IOF_STDDIAG) {
+            orte_iof_base_static_dump_output(proct->revstddiag);
             OBJ_RELEASE(proct->revstddiag);
         }
         /* check to see if they are all done */
@@ -262,11 +265,16 @@ void orte_iof_hnp_read_local_handler(int fd, short event, void *cbdata)
         return;
     }
 
-    if (!exclusive) {
-        /* see if the user wanted the output directed to files */
-        if (NULL != rev->sink && !(ORTE_IOF_STDIN & rev->sink->tag)) {
-            /* output to the corresponding file */
-            orte_iof_base_write_output(&proct->name, rev->tag, data, numbytes, rev->sink->wev);
+    if (proct->copy) {
+        if (NULL != proct->subscribers) {
+            if (!exclusive) {
+                /* output this to our local output */
+                if (ORTE_IOF_STDOUT & rev->tag || orte_xml_output) {
+                    orte_iof_base_write_output(&proct->name, rev->tag, data, numbytes, orte_iof_base.iof_write_stdout->wev);
+                } else {
+                    orte_iof_base_write_output(&proct->name, rev->tag, data, numbytes, orte_iof_base.iof_write_stderr->wev);
+                }
+            }
         } else {
             /* output this to our local output */
             if (ORTE_IOF_STDOUT & rev->tag || orte_xml_output) {
@@ -275,6 +283,11 @@ void orte_iof_hnp_read_local_handler(int fd, short event, void *cbdata)
                 orte_iof_base_write_output(&proct->name, rev->tag, data, numbytes, orte_iof_base.iof_write_stderr->wev);
             }
         }
+    }
+    /* see if the user wanted the output directed to files */
+    if (NULL != rev->sink && !(ORTE_IOF_STDIN & rev->sink->tag)) {
+        /* output to the corresponding file */
+        orte_iof_base_write_output(&proct->name, rev->tag, data, numbytes, rev->sink->wev);
     }
 
     /* re-add the event */

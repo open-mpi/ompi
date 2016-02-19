@@ -109,7 +109,11 @@ void orte_iof_orted_read_handler(int fd, short event, void *cbdata)
     if (NULL != rev->sink) {
         /* output to the corresponding file */
         orte_iof_base_write_output(&proct->name, rev->tag, data, numbytes, rev->sink->wev);
-        goto RESTART;
+    }
+    if (!proct->copy) {
+        /* re-add the event */
+        opal_event_add(rev->ev, 0);
+        return;
     }
 
     /* prep the buffer */
@@ -143,7 +147,6 @@ void orte_iof_orted_read_handler(int fd, short event, void *cbdata)
     orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, buf, ORTE_RML_TAG_IOF_HNP,
                             send_cb, NULL);
 
- RESTART:
     /* re-add the event */
     opal_event_add(rev->ev, 0);
 
@@ -156,14 +159,17 @@ void orte_iof_orted_read_handler(int fd, short event, void *cbdata)
      * the file descriptor */
     if (rev->tag & ORTE_IOF_STDOUT) {
         if( NULL != proct->revstdout ) {
+            orte_iof_base_static_dump_output(proct->revstdout);
             OBJ_RELEASE(proct->revstdout);
         }
     } else if (rev->tag & ORTE_IOF_STDERR) {
         if( NULL != proct->revstderr ) {
+            orte_iof_base_static_dump_output(proct->revstderr);
             OBJ_RELEASE(proct->revstderr);
         }
     } else if (rev->tag & ORTE_IOF_STDDIAG) {
         if( NULL != proct->revstddiag ) {
+            orte_iof_base_static_dump_output(proct->revstddiag);
             OBJ_RELEASE(proct->revstddiag);
         }
     }

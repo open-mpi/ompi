@@ -113,7 +113,7 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_iof_read_event_t);
 typedef struct {
     opal_list_item_t super;
     orte_process_name_t name;
-    orte_iof_sink_t *stdin;
+    orte_iof_sink_t *stdinev;
     orte_iof_read_event_t *revstdout;
     orte_iof_read_event_t *revstderr;
     orte_iof_read_event_t *revstddiag;
@@ -202,6 +202,7 @@ ORTE_DECLSPEC extern orte_iof_base_t orte_iof_base;
 ORTE_DECLSPEC int orte_iof_base_write_output(orte_process_name_t *name, orte_iof_tag_t stream,
                                              unsigned char *data, int numbytes,
                                              orte_iof_write_event_t *channel);
+ORTE_DECLSPEC void orte_iof_base_static_dump_output(orte_iof_read_event_t *rev);
 ORTE_DECLSPEC void orte_iof_base_write_handler(int fd, short event, void *cbdata);
 
 END_C_DECLS
