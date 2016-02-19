@@ -248,7 +248,7 @@ static int orted_pull(const orte_process_name_t* dst_name,
     opal_list_append(&mca_iof_orted_component.procs, &proct->super);
 
   SETUP:
-    ORTE_IOF_SINK_DEFINE(&proct->stdin, dst_name, fd, ORTE_IOF_STDIN,
+    ORTE_IOF_SINK_DEFINE(&proct->stdinev, dst_name, fd, ORTE_IOF_STDIN,
                          stdin_write_handler);
 
     return ORTE_SUCCESS;
@@ -270,25 +270,28 @@ static int orted_close(const orte_process_name_t* peer,
     OPAL_LIST_FOREACH(proct, &mca_iof_orted_component.procs, orte_iof_proc_t) {
         if (OPAL_EQUAL == orte_util_compare_name_fields(mask, &proct->name, peer)) {
             if (ORTE_IOF_STDIN & source_tag) {
-                if (NULL != proct->stdin) {
-                    OBJ_RELEASE(proct->stdin);
+                if (NULL != proct->stdinev) {
+                    OBJ_RELEASE(proct->stdinev);
                 }
                 ++cnt;
             }
             if (ORTE_IOF_STDOUT & source_tag) {
                 if (NULL != proct->revstdout) {
+                    orte_iof_base_static_dump_output(proct->revstdout);
                     OBJ_RELEASE(proct->revstdout);
                 }
                 ++cnt;
             }
             if (ORTE_IOF_STDERR & source_tag) {
                 if (NULL != proct->revstderr) {
+                    orte_iof_base_static_dump_output(proct->revstderr);
                     OBJ_RELEASE(proct->revstderr);
                 }
                 ++cnt;
             }
             if (ORTE_IOF_STDDIAG & source_tag) {
                 if (NULL != proct->revstddiag) {
+                    orte_iof_base_static_dump_output(proct->revstddiag);
                     OBJ_RELEASE(proct->revstddiag);
                 }
                 ++cnt;
@@ -307,7 +310,24 @@ static int orted_close(const orte_process_name_t* peer,
 
 static int finalize(void)
 {
-    OPAL_LIST_DESTRUCT(&mca_iof_orted_component.procs);
+    orte_iof_proc_t *proct;
+
+    /* cycle thru the procs and ensure all their output was delivered
+     * if they were writing to files */
+    while (NULL != (proct = (orte_iof_proc_t*)opal_list_remove_first(&mca_iof_orted_component.procs))) {
+        if (NULL != proct->revstdout) {
+            orte_iof_base_static_dump_output(proct->revstdout);
+        }
+        if (NULL != proct->revstderr) {
+            orte_iof_base_static_dump_output(proct->revstderr);
+        }
+        if (NULL != proct->revstddiag) {
+            orte_iof_base_static_dump_output(proct->revstddiag);
+        }
+        OBJ_RELEASE(proct);
+    }
+    OBJ_DESTRUCT(&mca_iof_orted_component.procs);
+
     /* Cancel the RML receive */
     orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_IOF_PROXY);
     return ORTE_SUCCESS;

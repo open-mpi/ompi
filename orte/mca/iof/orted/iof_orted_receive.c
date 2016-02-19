@@ -141,14 +141,14 @@ void orte_iof_orted_recv(int status, orte_process_name_t* sender,
                                      "%s writing data to local proc %s",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                      ORTE_NAME_PRINT(&proct->name)));
-                if (NULL == proct->stdin) {
+                if (NULL == proct->stdinev) {
                     continue;
                 }
                 /* send the bytes down the pipe - we even send 0 byte events
                  * down the pipe so it forces out any preceding data before
                  * closing the output stream
                  */
-                if (ORTE_IOF_MAX_INPUT_BUFFERS < orte_iof_base_write_output(&target, stream, data, numbytes, proct->stdin->wev)) {
+                if (ORTE_IOF_MAX_INPUT_BUFFERS < orte_iof_base_write_output(&target, stream, data, numbytes, proct->stdinev->wev)) {
                     /* getting too backed up - tell the HNP to hold off any more input if we
                      * haven't already told it
                      */

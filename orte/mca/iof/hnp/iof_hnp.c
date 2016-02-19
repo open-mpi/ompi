@@ -236,10 +236,10 @@ static int hnp_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_tag,
      */
     if (ORTE_VPID_WILDCARD == dst_name->vpid) {
         /* if wildcard, define a sink with that info so it gets sent out */
-        ORTE_IOF_SINK_DEFINE(&proct->stdin, dst_name, -1, ORTE_IOF_STDIN,
+        ORTE_IOF_SINK_DEFINE(&proct->stdinev, dst_name, -1, ORTE_IOF_STDIN,
                              stdin_write_handler);
-        proct->stdin->daemon.jobid = ORTE_PROC_MY_NAME->jobid;
-        proct->stdin->daemon.vpid = ORTE_VPID_WILDCARD;
+        proct->stdinev->daemon.jobid = ORTE_PROC_MY_NAME->jobid;
+        proct->stdinev->daemon.vpid = ORTE_VPID_WILDCARD;
      } else {
         /* no - lookup the proc's daemon and set that into sink */
         if (NULL == (jdata = orte_get_job_data_object(dst_name->jobid))) {
@@ -252,10 +252,10 @@ static int hnp_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_tag,
         }
         /* if it is me, then don't set this up - we'll get it on the pull */
         if (ORTE_PROC_MY_NAME->vpid != proc->node->daemon->name.vpid) {
-            ORTE_IOF_SINK_DEFINE(&proct->stdin, dst_name, -1, ORTE_IOF_STDIN,
+            ORTE_IOF_SINK_DEFINE(&proct->stdinev, dst_name, -1, ORTE_IOF_STDIN,
                                  stdin_write_handler);
-            proct->stdin->daemon.jobid = ORTE_PROC_MY_NAME->jobid;
-            proct->stdin->daemon.vpid = proc->node->daemon->name.vpid;
+            proct->stdinev->daemon.jobid = ORTE_PROC_MY_NAME->jobid;
+            proct->stdinev->daemon.vpid = proc->node->daemon->name.vpid;
         }
     }
 
@@ -370,10 +370,10 @@ static int hnp_pull(const orte_process_name_t* dst_name,
     opal_list_append(&mca_iof_hnp_component.procs, &proct->super);
 
   SETUP:
-    ORTE_IOF_SINK_DEFINE(&proct->stdin, dst_name, fd, ORTE_IOF_STDIN,
+    ORTE_IOF_SINK_DEFINE(&proct->stdinev, dst_name, fd, ORTE_IOF_STDIN,
                          stdin_write_handler);
-    proct->stdin->daemon.jobid = ORTE_PROC_MY_NAME->jobid;
-    proct->stdin->daemon.vpid = ORTE_PROC_MY_NAME->vpid;
+    proct->stdinev->daemon.jobid = ORTE_PROC_MY_NAME->jobid;
+    proct->stdinev->daemon.vpid = ORTE_PROC_MY_NAME->vpid;
 
     return ORTE_SUCCESS;
 }
@@ -392,25 +392,28 @@ static int hnp_close(const orte_process_name_t* peer,
     OPAL_LIST_FOREACH(proct, &mca_iof_hnp_component.procs, orte_iof_proc_t) {
         if (OPAL_EQUAL == orte_util_compare_name_fields(mask, &proct->name, peer)) {
             if (ORTE_IOF_STDIN & source_tag) {
-                if (NULL != proct->stdin) {
-                    OBJ_RELEASE(proct->stdin);
+                if (NULL != proct->stdinev) {
+                    OBJ_RELEASE(proct->stdinev);
                 }
                 ++cnt;
             }
             if (ORTE_IOF_STDOUT & source_tag) {
                 if (NULL != proct->revstdout) {
+                    orte_iof_base_static_dump_output(proct->revstdout);
                     OBJ_RELEASE(proct->revstdout);
                 }
                 ++cnt;
             }
             if (ORTE_IOF_STDERR & source_tag) {
                 if (NULL != proct->revstderr) {
+                    orte_iof_base_static_dump_output(proct->revstderr);
                     OBJ_RELEASE(proct->revstderr);
                 }
                 ++cnt;
             }
             if (ORTE_IOF_STDDIAG & source_tag) {
                 if (NULL != proct->revstddiag) {
+                    orte_iof_base_static_dump_output(proct->revstddiag);
                     OBJ_RELEASE(proct->revstddiag);
                 }
                 ++cnt;
@@ -428,19 +431,18 @@ static int hnp_close(const orte_process_name_t* peer,
 
 static int finalize(void)
 {
-    opal_list_item_t* item;
-    orte_iof_write_output_t *output;
     orte_iof_write_event_t *wev;
-    int num_written;
+    orte_iof_proc_t *proct;
     bool dump;
+    orte_iof_write_output_t *output;
+    int num_written;
 
     /* check if anything is still trying to be written out */
     wev = orte_iof_base.iof_write_stdout->wev;
     if (!opal_list_is_empty(&wev->outputs)) {
         dump = false;
         /* make one last attempt to write this out */
-        while (NULL != (item = opal_list_remove_first(&wev->outputs))) {
-            output = (orte_iof_write_output_t*)item;
+        while (NULL != (output = (orte_iof_write_output_t*)opal_list_remove_first(&wev->outputs))) {
             if (!dump) {
                 num_written = write(wev->fd, output->data, output->numbytes);
                 if (num_written < output->numbytes) {
@@ -457,8 +459,7 @@ static int finalize(void)
         if (!opal_list_is_empty(&wev->outputs)) {
             dump = false;
             /* make one last attempt to write this out */
-            while (NULL != (item = opal_list_remove_first(&wev->outputs))) {
-                output = (orte_iof_write_output_t*)item;
+            while (NULL != (output = (orte_iof_write_output_t*)opal_list_remove_first(&wev->outputs))) {
                 if (!dump) {
                     num_written = write(wev->fd, output->data, output->numbytes);
                     if (num_written < output->numbytes) {
@@ -471,6 +472,21 @@ static int finalize(void)
         }
     }
 
+    /* cycle thru the procs and ensure all their output was delivered
+     * if they were writing to files */
+    while (NULL != (proct = (orte_iof_proc_t*)opal_list_remove_first(&mca_iof_hnp_component.procs))) {
+        if (NULL != proct->revstdout) {
+            orte_iof_base_static_dump_output(proct->revstdout);
+        }
+        if (NULL != proct->revstderr) {
+            orte_iof_base_static_dump_output(proct->revstderr);
+        }
+        if (NULL != proct->revstddiag) {
+            orte_iof_base_static_dump_output(proct->revstddiag);
+        }
+        OBJ_RELEASE(proct);
+    }
+    OBJ_DESTRUCT(&mca_iof_hnp_component.procs);
     orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_IOF_HNP);
 
     return ORTE_SUCCESS;

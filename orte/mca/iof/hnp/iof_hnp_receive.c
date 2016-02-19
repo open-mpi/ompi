@@ -254,6 +254,10 @@ void orte_iof_hnp_recv(int status, orte_process_name_t* sender,
             }
         }
     }
+    /* if the user doesn't want a copy written to the screen, then we are done */
+    if (!proct->copy) {
+        return;
+    }
 
     /* output this to our local output unless one of the sinks was exclusive */
     if (!exclusive) {

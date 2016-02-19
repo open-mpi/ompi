@@ -72,7 +72,7 @@ OBJ_CLASS_INSTANCE(orte_iof_job_t,
 
 static void orte_iof_base_proc_construct(orte_iof_proc_t* ptr)
 {
-    ptr->stdin = NULL;
+    ptr->stdinev = NULL;
     ptr->revstdout = NULL;
     ptr->revstderr = NULL;
     ptr->revstddiag = NULL;
@@ -81,8 +81,8 @@ static void orte_iof_base_proc_construct(orte_iof_proc_t* ptr)
 }
 static void orte_iof_base_proc_destruct(orte_iof_proc_t* ptr)
 {
-    if (NULL != ptr->stdin) {
-        OBJ_RELEASE(ptr->stdin);
+    if (NULL != ptr->stdinev) {
+        OBJ_RELEASE(ptr->stdinev);
     }
     if (NULL != ptr->revstdout) {
         OBJ_RELEASE(ptr->revstdout);

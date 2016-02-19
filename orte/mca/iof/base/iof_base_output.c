@@ -268,6 +268,32 @@ process:
     return num_buffered;
 }
 
+void orte_iof_base_static_dump_output(orte_iof_read_event_t *rev)
+{
+    bool dump;
+    int num_written;
+    orte_iof_write_event_t *wev;
+    orte_iof_write_output_t *output;
+
+    if (NULL != rev->sink) {
+        wev = rev->sink->wev;
+        if (NULL != wev && !opal_list_is_empty(&wev->outputs)) {
+            dump = false;
+            /* make one last attempt to write this out */
+            while (NULL != (output = (orte_iof_write_output_t*)opal_list_remove_first(&wev->outputs))) {
+                if (!dump) {
+                    num_written = write(wev->fd, output->data, output->numbytes);
+                    if (num_written < output->numbytes) {
+                        /* don't retry - just cleanout the list and dump it */
+                        dump = true;
+                    }
+                }
+                OBJ_RELEASE(output);
+            }
+        }
+    }
+}
+
 void orte_iof_base_write_handler(int fd, short event, void *cbdata)
 {
     orte_iof_sink_t *sink = (orte_iof_sink_t*)cbdata;
