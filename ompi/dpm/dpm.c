@@ -378,7 +378,7 @@ int ompi_dpm_connect_accept(ompi_communicator_t *comm, int root,
                 opal_list_append(&ilist, &cd->super);
             }
             /* either way, add to the remote list */
-           cd = OBJ_NEW(ompi_dpm_proct_caddy_t);
+            cd = OBJ_NEW(ompi_dpm_proct_caddy_t);
             cd->p = proc;
             opal_list_append(&rlist, &cd->super);
         }
@@ -403,24 +403,19 @@ int ompi_dpm_connect_accept(ompi_communicator_t *comm, int root,
         i = 0;
         OPAL_LIST_FOREACH(cd, &ilist, ompi_dpm_proct_caddy_t) {
             opal_value_t *kv;
-            new_proc_list[i] = cd->p;
-            /* set the locality */
-            new_proc_list[i]->super.proc_flags = OPAL_PROC_NON_LOCAL;
-            /* have to save it for later */
+            proc = cd->p;
+            new_proc_list[i] = proc ;
+            /* ompi_proc_complete_init_single() initializes and optionally retrieves
+             * OPAL_PMIX_LOCALITY and OPAL_PMIX_HOSTNAME. since we can live without
+             * them, we are just fine */
+            ompi_proc_complete_init_single(proc);
+            /* save the locality for later */
             kv = OBJ_NEW(opal_value_t);
             kv->key = strdup(OPAL_PMIX_LOCALITY);
             kv->type = OPAL_UINT16;
-            kv->data.uint16 = OPAL_PROC_NON_LOCAL;
-            opal_pmix.store_local(&cd->p->super.proc_name, kv);
+            kv->data.uint16 = proc->super.proc_flags;
+            opal_pmix.store_local(&proc->super.proc_name, kv);
             OBJ_RELEASE(kv); // maintain accounting
-            /* we can retrieve the hostname at no cost because it
-             * was provided at connect */
-            OPAL_MODEX_RECV_VALUE(rc, OPAL_PMIX_HOSTNAME, &new_proc_list[i]->super.proc_name,
-                                  (char**)&(new_proc_list[i]->super.proc_hostname), OPAL_STRING);
-            if (OPAL_SUCCESS != rc) {
-                /* we can live without it */
-                new_proc_list[i]->super.proc_hostname = NULL;
-            }
             ++i;
         }
         /* call add_procs on the new ones */
