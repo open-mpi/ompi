@@ -137,7 +137,7 @@ static int hnp_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_tag,
 {
     orte_job_t *jdata;
     orte_proc_t *proc;
-    orte_iof_proc_t *proct;
+    orte_iof_proc_t *proct, *pptr;
     int flags, rc;
     orte_ns_cmp_bitmask_t mask = ORTE_NS_CMP_ALL;
     orte_iof_sink_t *stdoutsink=NULL, *stderrsink=NULL, *stddiagsink=NULL;
@@ -208,6 +208,19 @@ static int hnp_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_tag,
          * been defined!
          */
         if (NULL != proct->revstdout && NULL != proct->revstderr && NULL != proct->revstddiag) {
+            if (proct->copy) {
+                /* see if there are any wildcard subscribers out there that
+                 * apply to us */
+                OPAL_LIST_FOREACH(pptr, &mca_iof_hnp_component.procs, orte_iof_proc_t) {
+                    if (dst_name->jobid == pptr->name.jobid &&
+                        ORTE_VPID_WILDCARD == pptr->name.vpid &&
+                        NULL != pptr->subscribers) {
+                        OBJ_RETAIN(pptr->subscribers);
+                        proct->subscribers = pptr->subscribers;
+                        break;
+                    }
+                }
+            }
             proct->revstdout->active = true;
             opal_event_add(proct->revstdout->ev, 0);
             proct->revstderr->active = true;

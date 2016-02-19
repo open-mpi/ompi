@@ -13,6 +13,7 @@
  * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2016      Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -90,7 +91,7 @@ static int orte_iof_hnp_close(void)
 static int orte_iof_hnp_query(mca_base_module_t **module, int *priority)
 {
     /* if we are not the HNP, then don't use this module */
-    if (!ORTE_PROC_IS_HNP) {
+    if (!ORTE_PROC_IS_HNP && !ORTE_PROC_IS_MASTER) {
         *priority = -1;
         *module = NULL;
         return ORTE_ERROR;

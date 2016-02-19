@@ -113,7 +113,7 @@ void orte_ras_base_allocate(int fd, short args, void *cbdata)
     orte_std_cntr_t i;
     orte_app_context_t *app;
     orte_state_caddy_t *caddy = (orte_state_caddy_t*)cbdata;
-    char *hosts;
+    char *hosts=NULL;
 
     OPAL_OUTPUT_VERBOSE((5, orte_ras_base_framework.framework_output,
                          "%s ras:base:allocate",

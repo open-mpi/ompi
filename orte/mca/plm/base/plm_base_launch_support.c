@@ -1726,6 +1726,7 @@ int orte_plm_base_setup_virtual_machine(orte_job_t *jdata)
             /* if the app provided a dash-host, and we are not treating
              * them as requested or "soft" locations, then use those nodes
              */
+            hosts = NULL;
             if (!orte_soft_locations &&
                 orte_get_attribute(&app->attributes, ORTE_APP_DASH_HOST, (void**)&hosts, OPAL_STRING)) {
                 OPAL_OUTPUT_VERBOSE((5, orte_plm_base_framework.framework_output,

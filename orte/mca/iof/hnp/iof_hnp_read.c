@@ -202,30 +202,33 @@ void orte_iof_hnp_read_local_handler(int fd, short event, void *cbdata)
     }
 
     /* this must be output from one of my local procs - see
-     * if anyone else has requested a copy of this info
+     * if anyone else has requested a copy of this info. If
+     * we were directed to put it into a file, then
      */
     exclusive = false;
-    OPAL_LIST_FOREACH(sink, &proct->subscribers, orte_iof_sink_t) {
-        /* if the target isn't set, then this sink is for another purpose - ignore it */
-        if (ORTE_JOBID_INVALID == sink->daemon.jobid) {
-            continue;
-        }
-        if ((sink->tag & rev->tag) &&
-            sink->name.jobid == proct->name.jobid &&
-            (ORTE_VPID_WILDCARD == sink->name.vpid || sink->name.vpid == proct->name.vpid)) {
-            /* need to send the data to the remote endpoint - if
-             * the connection closed, numbytes will be zero, so
-             * the remote endpoint will know to close its local fd.
-             * In this case, we pass rev->name to indicate who the
-             * data came from.
-             */
-            OPAL_OUTPUT_VERBOSE((1, orte_iof_base_framework.framework_output,
-                                 "%s sending data to tool %s",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 ORTE_NAME_PRINT(&sink->daemon)));
-            orte_iof_hnp_send_data_to_endpoint(&sink->daemon, &proct->name, rev->tag, data, numbytes);
-            if (sink->exclusive) {
-                exclusive = true;
+    if (NULL != proct->subscribers) {
+        OPAL_LIST_FOREACH(sink, proct->subscribers, orte_iof_sink_t) {
+            /* if the target isn't set, then this sink is for another purpose - ignore it */
+            if (ORTE_JOBID_INVALID == sink->daemon.jobid) {
+                continue;
+            }
+            if ((sink->tag & rev->tag) &&
+                sink->name.jobid == proct->name.jobid &&
+                (ORTE_VPID_WILDCARD == sink->name.vpid || sink->name.vpid == proct->name.vpid)) {
+                /* need to send the data to the remote endpoint - if
+                 * the connection closed, numbytes will be zero, so
+                 * the remote endpoint will know to close its local fd.
+                 * In this case, we pass rev->name to indicate who the
+                 * data came from.
+                 */
+                OPAL_OUTPUT_VERBOSE((1, orte_iof_base_framework.framework_output,
+                                     "%s sending data to tool %s",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                     ORTE_NAME_PRINT(&sink->daemon)));
+                orte_iof_hnp_send_data_to_endpoint(&sink->daemon, &proct->name, rev->tag, data, numbytes);
+                if (sink->exclusive) {
+                    exclusive = true;
+                }
             }
         }
     }

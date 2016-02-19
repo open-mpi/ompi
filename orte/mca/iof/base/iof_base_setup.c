@@ -250,7 +250,9 @@ int orte_iof_base_setup_output_files(const orte_process_name_t* dst_name,
 {
     int rc;
     char *dirname, *outdir, *outfile;
-    int np, numdigs, fdout;
+    int np, numdigs, fdout, i;
+    char *p, **s;
+    bool usejobid = true;
 
     /* see if we are to output to a file */
     dirname = NULL;
@@ -263,11 +265,31 @@ int orte_iof_base_setup_output_files(const orte_process_name_t* dst_name,
             numdigs++;
             np = np / 10;
         }
-        /* construct the directory where the output files will go */
-        asprintf(&outdir, "%s/%d/rank.%0*lu", dirname,
-                 (int)ORTE_LOCAL_JOBID(proct->name.jobid),
-                 numdigs, (unsigned long)proct->name.vpid);
+        /* check for a conditional in the directory name */
+        if (NULL != (p = strchr(dirname, ':'))) {
+            *p = '\0';
+            ++p;
+            /* could me more than one directive */
+            s = opal_argv_split(p, ',');
+            for (i=0; NULL != s[i]; i++) {
+                if (0 == strcasecmp(s[i], "nojobid")) {
+                    usejobid = false;
+                } else if (0 == strcasecmp(s[i], "nocopy")) {
+                    proct->copy = false;
+                }
+            }
+        }
 
+        /* construct the directory where the output files will go */
+        if (usejobid) {
+            asprintf(&outdir, "%s/%d/rank.%0*lu", dirname,
+                     (int)ORTE_LOCAL_JOBID(proct->name.jobid),
+                     numdigs, (unsigned long)proct->name.vpid);
+        } else {
+            asprintf(&outdir, "%s/rank.%0*lu", dirname,
+                     numdigs, (unsigned long)proct->name.vpid);
+
+        }
         /* ensure the directory exists */
         if (OPAL_SUCCESS != (rc = opal_os_dirpath_create(outdir, S_IRWXU|S_IRGRP|S_IXGRP))) {
             ORTE_ERROR_LOG(rc);
@@ -319,20 +341,9 @@ int orte_iof_base_setup_output_files(const orte_process_name_t* dst_name,
             ORTE_IOF_SINK_DEFINE(stderrsink, dst_name, fdout, ORTE_IOF_STDERR,
                                  orte_iof_base_write_handler);
         }
-        /* always create a sink for stddiag */
-        asprintf(&outfile, "%s/stddiag", outdir);
-        fdout = open(outfile, O_CREAT|O_RDWR|O_TRUNC, 0644);
-        free(outfile);
-        if (fdout < 0) {
-            /* couldn't be opened */
-            ORTE_ERROR_LOG(ORTE_ERR_FILE_OPEN_FAILURE);
-            return ORTE_ERR_FILE_OPEN_FAILURE;
-        }
-        /* define a sink to that file descriptor */
-        ORTE_IOF_SINK_DEFINE(stddiagsink, dst_name, fdout, ORTE_IOF_STDDIAG,
-                             orte_iof_base_write_handler);
-        /* cleanup */
-        free(outdir);
+        /* always tie the sink for stddiag to stderr */
+        OBJ_RETAIN(*stderrsink);
+        *stddiagsink = *stderrsink;
     }
     return ORTE_SUCCESS;
 }
