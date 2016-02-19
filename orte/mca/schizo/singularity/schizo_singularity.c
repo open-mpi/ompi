@@ -40,7 +40,7 @@ static int setup_fork(orte_job_t *jdata,
     int i;
     char *newenv;
     bool takeus = false;
-    char *cmd, *tmp = NULL, *p, *t2;
+    char *cmd, *p, *t2;
 
     /* see if we are included */
     for (i=0; NULL != jdata->personality[i]; i++) {
@@ -93,7 +93,6 @@ static int setup_fork(orte_job_t *jdata,
         /* if the app contains .sapp, then we need to strip that
          * extension so singularity doesn't bark at us */
         if (NULL != (p = strstr(app->argv[0], ".sapp"))) {
-            tmp = strdup(app->argv[0]);
             t2 = opal_basename(app->argv[0]);
             p = strstr(t2, ".sapp");
             *p = '\0'; // strip the extension
@@ -102,16 +101,6 @@ static int setup_fork(orte_job_t *jdata,
         }
         opal_argv_prepend_nosize(&app->argv, "run");
         opal_argv_prepend_nosize(&app->argv, "singularity");
-    }
-    /* ensure this application has been "installed" */
-    if (NULL != tmp) {
-        opal_output_verbose(1, orte_schizo_base_framework.framework_output,
-                            "%s schizo:singularity: installing container %s",
-                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), tmp);
-        (void)asprintf(&cmd, "singularity install %s >> /dev/null", tmp);
-        system(cmd);
-        free(cmd);
-        free(tmp);
     }
 
     return ORTE_SUCCESS;
