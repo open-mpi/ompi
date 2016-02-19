@@ -144,7 +144,8 @@ int mca_fcoll_dynamic_gen2_file_write_all (mca_io_ompio_file_t *fh,
     MPI_Aint *broken_total_lengths=NULL;
 
     int *aggregators=NULL;
-    int write_chunksize;
+    int write_chunksize, *result_counts=NULL;
+    
     
 #if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
     double write_time = 0.0, start_write_time = 0.0, end_write_time = 0.0;
@@ -261,16 +262,28 @@ int mca_fcoll_dynamic_gen2_file_write_all (mca_io_ompio_file_t *fh,
 #if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
     start_comm_time = MPI_Wtime();
 #endif
-    ret = fh->f_allgather_array (broken_total_lengths,
-				 dynamic_gen2_num_io_procs,
-				 MPI_LONG,
-				 total_bytes_per_process,
-				 dynamic_gen2_num_io_procs,
-				 MPI_LONG,
-				 0,
-				 fh->f_procs_in_group,
-				 fh->f_procs_per_group,
-				 fh->f_comm);
+    if ( 1 == mca_fcoll_dynamic_gen2_num_groups ) {
+        ret = fh->f_comm->c_coll.coll_allgather (broken_total_lengths,
+                                                 dynamic_gen2_num_io_procs,
+                                                 MPI_LONG,
+                                                 total_bytes_per_process,
+                                                 dynamic_gen2_num_io_procs,
+                                                 MPI_LONG,
+                                                 fh->f_comm,
+                                                 fh->f_comm->c_coll.coll_allgather_module);
+    }
+    else {
+        ret = fh->f_allgather_array (broken_total_lengths,
+                                     dynamic_gen2_num_io_procs,
+                                     MPI_LONG,
+                                     total_bytes_per_process,
+                                     dynamic_gen2_num_io_procs,
+                                     MPI_LONG,
+                                     0,
+                                     fh->f_procs_in_group,
+                                     fh->f_procs_per_group,
+                                     fh->f_comm);
+    }
     
     if( OMPI_SUCCESS != ret){
 	goto exit;
@@ -298,8 +311,46 @@ int mca_fcoll_dynamic_gen2_file_write_all (mca_io_ompio_file_t *fh,
         free (total_bytes_per_process);
         total_bytes_per_process = NULL;
     }
-    
-    
+
+    result_counts = (int *) malloc ( dynamic_gen2_num_io_procs * fh->f_procs_per_group * sizeof(int) );
+    if ( NULL == result_counts ) {
+        ret = OMPI_ERR_OUT_OF_RESOURCE;
+        goto exit;
+    }
+
+#if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
+    start_comm_time = MPI_Wtime();
+#endif
+    if ( 1 == mca_fcoll_dynamic_gen2_num_groups ) {
+        ret = fh->f_comm->c_coll.coll_allgather(broken_counts,
+                                                dynamic_gen2_num_io_procs,
+                                                MPI_INT,
+                                                result_counts,
+                                                dynamic_gen2_num_io_procs,
+                                                MPI_INT,
+                                                fh->f_comm,
+                                                fh->f_comm->c_coll.coll_allgather_module);            
+    }
+    else {
+        ret = fh->f_allgather_array (broken_counts,
+                                     dynamic_gen2_num_io_procs,
+                                     MPI_INT,
+                                     result_counts,
+                                     dynamic_gen2_num_io_procs,
+                                     MPI_INT,
+                                     0,
+                                     fh->f_procs_in_group,
+                                     fh->f_procs_per_group,
+                                     fh->f_comm);
+    }
+    if( OMPI_SUCCESS != ret){
+        goto exit;
+    }
+#if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
+    end_comm_time = MPI_Wtime();
+    comm_time += (end_comm_time - start_comm_time);
+#endif
+
     /*************************************************************
      *** 4. Allgather the offset/lengths array from all processes
      *************************************************************/
@@ -312,28 +363,9 @@ int mca_fcoll_dynamic_gen2_file_write_all (mca_io_ompio_file_t *fh,
             ret = OMPI_ERR_OUT_OF_RESOURCE;
             goto exit;
         }
-#if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
-        start_comm_time = MPI_Wtime();
-#endif
-        ret = fh->f_allgather_array (&broken_counts[i],
-                                     1,
-                                     MPI_INT,
-                                     aggr_data[i]->fview_count,
-                                     1,
-                                     MPI_INT,
-                                     i,
-                                     fh->f_procs_in_group,
-                                     fh->f_procs_per_group,
-                                     fh->f_comm);
-    
-        if( OMPI_SUCCESS != ret){
-            goto exit;
+        for ( j=0; j <fh->f_procs_per_group; j++ ) {
+            aggr_data[i]->fview_count[j] = result_counts[dynamic_gen2_num_io_procs*j+i];
         }
-#if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
-        end_comm_time = MPI_Wtime();
-        comm_time += (end_comm_time - start_comm_time);
-#endif
-    
         displs = (int*) malloc (fh->f_procs_per_group * sizeof (int));
         if (NULL == displs) {
             opal_output (1, "OUT OF MEMORY\n");
@@ -375,17 +407,30 @@ int mca_fcoll_dynamic_gen2_file_write_all (mca_io_ompio_file_t *fh,
 #if OMPIO_FCOLL_WANT_TIME_BREAKDOWN
         start_comm_time = MPI_Wtime();
 #endif
-        ret = fh->f_allgatherv_array (broken_iov_arrays[i],
-                                      broken_counts[i],
-                                      fh->f_iov_type,
-                                      aggr_data[i]->global_iov_array,
-                                      aggr_data[i]->fview_count,
-                                      displs,
-                                      fh->f_iov_type,
-                                      i,
-                                      fh->f_procs_in_group,
-                                      fh->f_procs_per_group,
-                                      fh->f_comm);
+        if ( 1 == mca_fcoll_dynamic_gen2_num_groups ) {
+            ret = fh->f_comm->c_coll.coll_allgatherv (broken_iov_arrays[i],
+                                                      broken_counts[i],
+                                                      fh->f_iov_type,
+                                                      aggr_data[i]->global_iov_array,
+                                                      aggr_data[i]->fview_count,
+                                                      displs,
+                                                      fh->f_iov_type,
+                                                      fh->f_comm,
+                                                      fh->f_comm->c_coll.coll_allgatherv_module );
+        }
+        else {
+            ret = fh->f_allgatherv_array (broken_iov_arrays[i],
+                                          broken_counts[i],
+                                          fh->f_iov_type,
+                                          aggr_data[i]->global_iov_array,
+                                          aggr_data[i]->fview_count,
+                                          displs,
+                                          fh->f_iov_type,
+                                          aggregators[i],
+                                          fh->f_procs_in_group,
+                                          fh->f_procs_per_group,
+                                          fh->f_comm);
+        }
         if (OMPI_SUCCESS != ret){
             goto exit;
         }
@@ -659,6 +704,7 @@ exit :
     fh->f_procs_per_group=0;
     free(reqs1);
     free(reqs2);
+    free(result_counts);
 
      
     return OMPI_SUCCESS;
