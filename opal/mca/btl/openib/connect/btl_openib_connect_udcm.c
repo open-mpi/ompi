@@ -551,6 +551,18 @@ static int udcm_endpoint_init_self_xrc (struct mca_btl_base_endpoint_t *lcl_ep)
             break;
         }
 
+        for (int i = 0 ; i < mca_btl_openib_component.num_xrc_qps ; ++i) {
+            uint32_t srq_num;
+#if OPAL_HAVE_CONNECTX_XRC_DOMAINS
+            if (ibv_get_srq_num(lcl_ep->endpoint_btl->qps[i].u.srq_qp.srq, &srq_num)) {
+                BTL_ERROR(("BTL openib UDCM internal error: can't get srq num"));
+            }
+#else
+            srq_num = lcl_ep->endpoint_btl->qps[i].u.srq_qp.srq->xrc_srq_num;
+#endif
+            lcl_ep->rem_info.rem_srqs[i].rem_srq_num = srq_num;
+        }
+
 #if OPAL_HAVE_CONNECTX_XRC_DOMAINS
         recv_qpn = lcl_ep->xrc_recv_qp->qp_num;
 #else
