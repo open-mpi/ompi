@@ -123,6 +123,18 @@ OMPI_DECLSPEC int ompi_proc_init(void);
 OMPI_DECLSPEC int ompi_proc_complete_init(void);
 
 /**
+ * Complete filling up the proc information (arch, name and locality) for
+ * a given proc. This function is to be called only after the modex exchange
+ * has been completed.
+ *
+ * @param[in] proc the proc whose information will be filled up
+ *
+ * @retval OMPI_SUCCESS All information correctly set.
+ * @retval OMPI_ERROR   Some info could not be initialized.
+ */
+OMPI_DECLSPEC int ompi_proc_complete_init_single(ompi_proc_t* proc);
+
+/**
  * Finalize the OMPI Process subsystem
  *
  * Finalize the Open MPI process subsystem.  This function will

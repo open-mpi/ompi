@@ -129,14 +129,15 @@ static int ompi_proc_allocate (ompi_jobid_t jobid, ompi_vpid_t vpid, ompi_proc_t
  * retrieving the hostname (if below the modex cutoff), determining the
  * remote architecture, and calculating the locality of the process.
  */
-static int ompi_proc_complete_init_single (ompi_proc_t *proc)
+int ompi_proc_complete_init_single (ompi_proc_t *proc)
 {
     uint16_t u16, *u16ptr;
     int ret;
 
     u16ptr = &u16;
 
-    if (OMPI_CAST_RTE_NAME(&proc->super.proc_name)->vpid == OMPI_PROC_MY_NAME->vpid) {
+    if ((OMPI_CAST_RTE_NAME(&proc->super.proc_name)->jobid == OMPI_PROC_MY_NAME->jobid) &&
+        (OMPI_CAST_RTE_NAME(&proc->super.proc_name)->vpid  == OMPI_PROC_MY_NAME->vpid)) {
         /* nothing else to do */
         return OMPI_SUCCESS;
     }
