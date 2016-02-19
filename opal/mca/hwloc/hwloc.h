@@ -217,6 +217,7 @@ OPAL_DECLSPEC extern hwloc_cpuset_t opal_hwloc_my_cpuset;
 OPAL_DECLSPEC extern bool opal_hwloc_report_bindings;
 OPAL_DECLSPEC extern hwloc_obj_type_t opal_hwloc_levels[];
 OPAL_DECLSPEC extern bool opal_hwloc_use_hwthreads_as_cpus;
+OPAL_DECLSPEC extern bool opal_hwloc_base_bind_direct_launched;
 
 END_C_DECLS
 
