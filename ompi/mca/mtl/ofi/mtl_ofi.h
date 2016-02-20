@@ -861,11 +861,13 @@ ompi_mtl_ofi_improbe(struct mca_mtl_base_module_t *mtl,
          * The search request completed but no matching message was found.
          */
         *matched = 0;
+        free(ofi_req);
         return OMPI_SUCCESS;
     } else if (OPAL_UNLIKELY(0 > ret)) {
         opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                             "%s:%d: fi_trecvmsg failed: %s(%zd)",
                             __FILE__, __LINE__, fi_strerror(-ret), ret);
+        free(ofi_req);
         return ompi_mtl_ofi_get_error(ret);
     }
 
@@ -891,6 +893,7 @@ ompi_mtl_ofi_improbe(struct mca_mtl_base_module_t *mtl,
 
     } else {
         (*message) = MPI_MESSAGE_NULL;
+        free(ofi_req);
     }
 
     return OMPI_SUCCESS;
