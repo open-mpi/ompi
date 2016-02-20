@@ -262,6 +262,7 @@ ompi_mtl_ofi_send_start(struct mca_mtl_base_module_t *mtl,
             opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                                 "%s:%d: fi_trecv failed: %s(%zd)",
                                 __FILE__, __LINE__, fi_strerror(-ret), ret);
+            free(ack_req);
             return ompi_mtl_ofi_get_error(ret);
         }
     } else {
@@ -280,6 +281,10 @@ ompi_mtl_ofi_send_start(struct mca_mtl_base_module_t *mtl,
             opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
                                 "%s:%d: fi_tinject failed: %s(%zd)",
                                 __FILE__, __LINE__, fi_strerror(-ret), ret);
+            if (ack_req) {
+                fi_cancel((fid_t)ompi_mtl_ofi.ep, &ack_req->ctx);
+                free(ack_req);
+            }
             return ompi_mtl_ofi_get_error(ret);
         }
 
