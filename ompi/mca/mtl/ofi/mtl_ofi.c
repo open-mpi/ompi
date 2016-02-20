@@ -110,6 +110,15 @@ ompi_mtl_ofi_add_procs(struct mca_mtl_base_module_t *mtl,
      */
     for (i = 0; i < nprocs; ++i) {
         endpoint = OBJ_NEW(mca_mtl_ofi_endpoint_t);
+        if (NULL == endpoint) {
+            opal_output_verbose(1, ompi_mtl_base_framework.framework_output,
+                                "%s:%d: mtl/ofi: could not allocate endpoint"
+                                " structure\n",
+                                __FILE__, __LINE__);
+            ret = OMPI_ERROR;
+            goto bail;
+        }
+
         endpoint->mtl_ofi_module = &ompi_mtl_ofi;
         endpoint->peer_fiaddr = fi_addrs[i];
 
