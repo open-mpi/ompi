@@ -313,8 +313,8 @@ int orte_iof_base_setup_output_files(const orte_process_name_t* dst_name,
             ORTE_IOF_SINK_DEFINE(stdoutsink, dst_name, fdout, ORTE_IOF_STDMERGE,
                                  orte_iof_base_write_handler);
             /* point the stderr read event to it as well */
-            OBJ_RETAIN(stdoutsink);
-            stderrsink = stdoutsink;
+            OBJ_RETAIN(*stdoutsink);
+            *stderrsink = *stdoutsink;
         } else {
             /* create separate files for stderr and stdout */
             asprintf(&outfile, "%s/stdout", outdir);
