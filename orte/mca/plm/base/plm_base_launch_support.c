@@ -1106,10 +1106,14 @@ void orte_plm_base_daemon_callback(int status, orte_process_name_t* sender,
                  */
                 rc = opal_hash_table_get_first_key_uint32(orte_job_data, &key, (void **)&jdata, &nptr);
                 while (OPAL_SUCCESS == rc) {
+                    if (ORTE_PROC_MY_NAME->jobid == jdata->jobid) {
+                        goto next;
+                    }
                     dvm = false;
                     if (ORTE_JOB_STATE_DAEMONS_LAUNCHED == jdata->state) {
                         ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_DAEMONS_REPORTED);
                     }
+                  next:
                     rc = opal_hash_table_get_next_key_uint32(orte_job_data, &key, (void **)&jdata, nptr, &nptr);
                 }
                 if (dvm) {
