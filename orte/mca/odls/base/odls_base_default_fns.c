@@ -101,7 +101,7 @@
 int orte_odls_base_default_get_add_procs_data(opal_buffer_t *data,
                                               orte_jobid_t job)
 {
-    int rc, i;
+    int rc;
     orte_job_t *jdata=NULL, *jptr;
     orte_job_map_t *map=NULL;
     opal_buffer_t *wireup, jobdata;
@@ -191,33 +191,29 @@ int orte_odls_base_default_get_add_procs_data(opal_buffer_t *data,
      * properly work should a proc from one of the other jobs
      * interact with this one */
     if (orte_get_attribute(&jdata->attributes, ORTE_JOB_LAUNCHED_DAEMONS, NULL, OPAL_BOOL)) {
+        void *nptr;
+        uint32_t key;
         OBJ_CONSTRUCT(&jobdata, opal_buffer_t);
         numjobs = 0;
-        for (i=0; i < orte_job_data->size; i++) {
-            if (NULL == (jptr = (orte_job_t*)opal_pointer_array_get_item(orte_job_data, i))) {
-                continue;
+        rc = opal_hash_table_get_first_key_uint32(orte_job_data, &key, (void **)&jptr, &nptr);
+        while (OPAL_SUCCESS == rc) {
+            if (NULL != jptr && jptr != jdata &&
+                ORTE_PROC_MY_NAME->jobid != jptr->jobid) {
+                /* pack the job struct */
+                if (ORTE_SUCCESS != (rc = opal_dss.pack(&jobdata, &jptr, 1, ORTE_JOB))) {
+                    ORTE_ERROR_LOG(rc);
+                    return rc;
+                }
+                ++numjobs;
             }
-            if (ORTE_JOB_STATE_UNTERMINATED < jptr->state) {
-                /* job already terminated - ignore it */
-                continue;
-            }
-            if (jptr == jdata) {
-                /* ignore the job we are looking at - we'll get it separately */
-                continue;
-            }
-            /* pack the job struct */
-            if (ORTE_SUCCESS != (rc = opal_dss.pack(&jobdata, &jptr, 1, ORTE_JOB))) {
-                ORTE_ERROR_LOG(rc);
-                return rc;
-            }
-            ++numjobs;
+            rc = opal_hash_table_get_next_key_uint32(orte_job_data, &key, (void **)&jptr, nptr, &nptr);
+        }
+        /* pack the number of jobs */
+        if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &numjobs, 1, OPAL_INT32))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
         }
         if (0 < numjobs) {
-            /* pack the number of jobs */
-            if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &numjobs, 1, OPAL_INT32))) {
-                ORTE_ERROR_LOG(rc);
-                return rc;
-            }
             /* pack the jobdata buffer */
             wireup = &jobdata;
             if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &wireup, 1, OPAL_BUFFER))) {
@@ -302,7 +298,7 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
             /* check to see if we already have this one */
             if (NULL == orte_get_job_data_object(jdata->jobid)) {
                 /* nope - add it */
-                opal_pointer_array_set_item(orte_job_data, ORTE_LOCAL_JOBID(jdata->jobid), jdata);
+                opal_hash_table_set_value_uint32(orte_job_data, jdata->jobid, jdata);
                 /* connect each proc to its node object */
                 for (j=0; j < jdata->procs->size; j++) {
                     if (NULL == (pptr = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, j))) {
@@ -401,15 +397,9 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
             }
         }
         goto COMPLETE;
+    } else {
+        opal_hash_table_set_value_uint32(orte_job_data, jdata->jobid, jdata);
     }
-
-    if (NULL != orte_get_job_data_object(*job)) {
-        opal_output(0, "ERROR - JOB ALREADY EXISTS");
-        /* setup job object for this job */
-        rc = ORTE_ERR_FATAL;
-        goto REPORT_ERROR;
-    }
-    opal_pointer_array_set_item(orte_job_data, ORTE_LOCAL_JOBID(jdata->jobid), jdata);
 
     /* ensure the map object is present */
     if (NULL == jdata->map) {

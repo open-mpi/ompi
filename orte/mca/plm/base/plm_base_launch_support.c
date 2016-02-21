@@ -289,7 +289,7 @@ void orte_plm_base_setup_job(int fd, short args, void *cbdata)
          * the orte_rmaps_base_setup_virtual_machine routine to
          * search all apps for any hosts to be used by the vm
          */
-        opal_pointer_array_set_item(orte_job_data, ORTE_LOCAL_JOBID(caddy->jdata->jobid), caddy->jdata);
+        opal_hash_table_set_value_uint32(orte_job_data, caddy->jdata->jobid, caddy->jdata);
     }
 
     /* if job recovery is not enabled, set it to default */
@@ -1098,18 +1098,19 @@ void orte_plm_base_daemon_callback(int status, orte_process_name_t* sender,
                                  jdatorted->num_reported, jdatorted->num_procs));
             if (jdatorted->num_procs == jdatorted->num_reported) {
                 bool dvm = true;
+                uint32_t key;
+                void *nptr;
                 jdatorted->state = ORTE_JOB_STATE_DAEMONS_REPORTED;
                 /* activate the daemons_reported state for all jobs
                  * whose daemons were launched
                  */
-                for (idx=1; idx < orte_job_data->size; idx++) {
-                    if (NULL == (jdata = (orte_job_t*)opal_pointer_array_get_item(orte_job_data, idx))) {
-                        continue;
-                    }
+                rc = opal_hash_table_get_first_key_uint32(orte_job_data, &key, (void **)&jdata, &nptr);
+                while (OPAL_SUCCESS == rc) {
                     dvm = false;
                     if (ORTE_JOB_STATE_DAEMONS_LAUNCHED == jdata->state) {
                         ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_DAEMONS_REPORTED);
                     }
+                    rc = opal_hash_table_get_next_key_uint32(orte_job_data, &key, (void **)&jdata, nptr, &nptr);
                 }
                 if (dvm) {
                     /* must be launching a DVM - activate the state */
