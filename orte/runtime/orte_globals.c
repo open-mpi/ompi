@@ -717,7 +717,7 @@ static void orte_job_destruct(orte_job_t* job)
     /* release the attributes */
     OPAL_LIST_DESTRUCT(&job->attributes);
 
-    if (ORTE_JOBID_INVALID != job->jobid) {
+    if (NULL != orte_job_data && ORTE_JOBID_INVALID != job->jobid) {
         /* remove the job from the global array */
         opal_hash_table_remove_value_uint32(orte_job_data, job->jobid);
     }
