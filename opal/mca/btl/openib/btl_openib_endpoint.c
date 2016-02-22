@@ -502,6 +502,7 @@ void mca_btl_openib_endpoint_send_cts(mca_btl_openib_endpoint_t *endpoint)
     mca_btl_openib_frag_t *openib_frag;
     mca_btl_openib_com_frag_t *com_frag;
     mca_btl_openib_control_header_t *ctl_hdr;
+    int rc;
 
     OPAL_OUTPUT((-1, "SENDING CTS to %s on qp index %d (QP num %d)",
                  opal_get_proc_hostname(endpoint->endpoint_proc->proc_opal),
@@ -538,11 +539,14 @@ void mca_btl_openib_endpoint_send_cts(mca_btl_openib_endpoint_t *endpoint)
     ctl_hdr->type = MCA_BTL_OPENIB_CONTROL_CTS;
 
     /* Send the fragment */
-    if (OPAL_SUCCESS != mca_btl_openib_endpoint_post_send(endpoint, sc_frag)) {
-        BTL_ERROR(("Failed to post CTS send"));
-        mca_btl_openib_endpoint_invoke_error(endpoint);
+    if (OPAL_SUCCESS != (rc = mca_btl_openib_endpoint_post_send(endpoint, sc_frag))) {
+        if( OPAL_ERR_RESOURCE_BUSY != rc ) {
+            BTL_ERROR(("Failed to post CTS send"));
+            mca_btl_openib_endpoint_invoke_error(endpoint);
+        }
+    } else {
+        endpoint->endpoint_cts_sent = true;
     }
-    endpoint->endpoint_cts_sent = true;
 }
 
 /*
@@ -611,8 +615,8 @@ void mca_btl_openib_endpoint_connected(mca_btl_openib_endpoint_t *endpoint)
     mca_btl_openib_send_frag_t *frag;
     mca_btl_openib_endpoint_t *ep;
     bool master = false;
+    int rc;
 
-    opal_output(-1, "Now we are CONNECTED");
     if (MCA_BTL_XRC_ENABLED) {
         opal_mutex_lock (&endpoint->ib_addr->addr_lock);
         if (MCA_BTL_IB_ADDR_CONNECTED == endpoint->ib_addr->status) {
@@ -664,8 +668,11 @@ void mca_btl_openib_endpoint_connected(mca_btl_openib_endpoint_t *endpoint)
         frag = to_send_frag(frag_item);
         /* We need to post this one */
 
-        if (OPAL_ERROR == mca_btl_openib_endpoint_post_send(endpoint, frag)) {
-            BTL_ERROR(("Error posting send"));
+        if(OPAL_SUCCESS != (rc = mca_btl_openib_endpoint_post_send(endpoint, frag))) {
+            /* if we are out of resources, let's try to reschedule everything later */
+            if( OPAL_ERR_RESOURCE_BUSY != rc ) {
+                BTL_ERROR(("Error posting send"));
+            }
         }
     }
     OPAL_THREAD_UNLOCK(&endpoint->endpoint_lock);
@@ -1030,6 +1037,7 @@ void *mca_btl_openib_endpoint_invoke_error(void *context)
         }
     } else {
         btl = endpoint->endpoint_btl;
+        endpoint->endpoint_state = MCA_BTL_IB_FAILED;
     }
 
     /* If we didn't find a BTL, then just bail :-( */
