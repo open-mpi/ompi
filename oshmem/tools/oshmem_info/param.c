@@ -266,17 +266,11 @@ void oshmem_info_do_config(bool want_all)
     }
 
 #if OMPI_RTE_ORTE
-    (void)asprintf(&threads, "%s (MPI_THREAD_MULTIPLE: %s, OPAL support: %s, OMPI progress: %s, ORTE progress: yes, Event lib: yes)",
-                   "posix",
-                   OMPI_ENABLE_THREAD_MULTIPLE ? "yes" : "no",
-                   OPAL_ENABLE_MULTI_THREADS ? "yes" : "no",
-                   OPAL_ENABLE_PROGRESS_THREADS ? "yes" : "no");
+    (void)asprintf(&threads, "%s (MPI_THREAD_MULTIPLE: yes, OPAL support: yes, OMPI progress: %s, ORTE progress: yes, Event lib: yes)",
+                   "posix", OPAL_ENABLE_PROGRESS_THREADS ? "yes" : "no");
 #else
-    (void)asprintf(&threads, "%s (MPI_THREAD_MULTIPLE: %s, OPAL support: %s, OMPI progress: %s, Event lib: yes)",
-                   "posix",
-                   OMPI_ENABLE_THREAD_MULTIPLE ? "yes" : "no",
-                   OPAL_ENABLE_MULTI_THREADS ? "yes" : "no",
-                   OPAL_ENABLE_PROGRESS_THREADS ? "yes" : "no");
+    (void)asprintf(&threads, "%s (MPI_THREAD_MULTIPLE: yes, OPAL support: yes, OMPI progress: %s, Event lib: yes)",
+                   "posix", OPAL_ENABLE_PROGRESS_THREADS ? "yes" : "no");
 #endif
 
     (void)asprintf(&ft_support, "%s (checkpoint thread: %s)",

@@ -49,8 +49,7 @@ int mca_topo_base_lazy_init(void)
         }
 
         if (OMPI_SUCCESS !=
-            (err = mca_topo_base_find_available(OPAL_ENABLE_PROGRESS_THREADS,
-                                                OMPI_ENABLE_THREAD_MULTIPLE))) {
+            (err = mca_topo_base_find_available(OPAL_ENABLE_PROGRESS_THREADS, 1))) {
             return err;
         }
     }

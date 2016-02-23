@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -13,6 +14,8 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2016      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -50,16 +53,7 @@ int MPI_Init_thread(int *argc, char ***argv, int required,
         }
     }
 
-    /*
-     *   A thread compliant MPI implementation will be able to return provided
-     *   = MPI_THREAD_MULTIPLE. Such an implementation may always return provided
-     *   = MPI_THREAD_MULTIPLE, irrespective of the value of required.
-     */
-#if OMPI_ENABLE_THREAD_MULTIPLE
-    *provided = MPI_THREAD_MULTIPLE;
-#else
-    *provided = MPI_THREAD_SINGLE;
-#endif
+    *provided = required;
 
     /* Call the back-end initialization function (we need to put as
        little in this function as possible so that if it's profiled, we

@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2015 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2016 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2010-2012 Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
@@ -101,16 +101,16 @@ int mca_pml_ob1_recv(void *addr,
     mca_pml_ob1_recv_request_t *recvreq = NULL;
     int rc;
 
-#if !OMPI_ENABLE_THREAD_MULTIPLE
-    recvreq = mca_pml_ob1_recvreq;
-    mca_pml_ob1_recvreq = NULL;
-    if( OPAL_UNLIKELY(NULL == recvreq) )
-#endif  /* !OMPI_ENABLE_THREAD_MULTIPLE */
-        {
-            MCA_PML_OB1_RECV_REQUEST_ALLOC(recvreq);
-            if (NULL == recvreq)
-                return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
-        }
+    if (OPAL_LIKELY(!ompi_mpi_thread_multiple)) {
+        recvreq = mca_pml_ob1_recvreq;
+        mca_pml_ob1_recvreq = NULL;
+    }
+
+    if( OPAL_UNLIKELY(NULL == recvreq) ) {
+        MCA_PML_OB1_RECV_REQUEST_ALLOC(recvreq);
+        if (NULL == recvreq)
+            return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
+    }
 
     MCA_PML_OB1_RECV_REQUEST_INIT(recvreq, addr, count, datatype,
                                   src, tag, comm, false);
@@ -128,16 +128,12 @@ int mca_pml_ob1_recv(void *addr,
 
     rc = recvreq->req_recv.req_base.req_ompi.req_status.MPI_ERROR;
 
-#if OMPI_ENABLE_THREAD_MULTIPLE
-    MCA_PML_OB1_RECV_REQUEST_RETURN(recvreq);
-#else
-    if( NULL != mca_pml_ob1_recvreq ) {
+    if (OPAL_UNLIKELY(ompi_mpi_thread_multiple || NULL != mca_pml_ob1_recvreq)) {
         MCA_PML_OB1_RECV_REQUEST_RETURN(recvreq);
     } else {
         mca_pml_ob1_recv_request_fini (recvreq);
         mca_pml_ob1_recvreq = recvreq;
     }
-#endif
 
     return rc;
 }
