@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2015 The University of Tennessee and The University
+ * Copyright (c) 2013-2016 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2013-2015 Inria.  All rights reserved.
@@ -241,10 +241,10 @@ int write_mat(char * filename, uint64_t * mat, unsigned int dim)
     printf("writing %ux%u matrix to %s\n", dim, dim, filename);
 
     for (i = 0; i < comm_world_size; ++i) {
-        for (j = 0; j < comm_world_size - 1; ++j) {
-            fprintf(matrix_file, "%lu ", mat[i * comm_world_size + j]);
+        for (j = 0; j < comm_world_size; ++j) {
+            fprintf(matrix_file, "%llu ", mat[i * comm_world_size + j]);
         }
-        fprintf(matrix_file, "%lu\n", mat[i * comm_world_size + j]);
+        fprintf(matrix_file, "\n");
     }
     fflush(matrix_file);
     fclose(matrix_file);
