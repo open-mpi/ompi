@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006-2009 Mellanox Technologies. All rights reserved.
- * Copyright (c) 2006-2014 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2006-2016 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
  * Copyright (c) 2008-2012 Oracle and/or its affiliates.  All rights reserved.
@@ -49,7 +49,7 @@ int mca_btl_openib_put (mca_btl_base_module_t *btl, struct mca_btl_base_endpoint
         qp = mca_btl_openib_component.rdma_qp;
     }
 
-    if (OPAL_UNLIKELY((ep->qps[qp].ib_inline_max < size && !local_handle) || !remote_handle ||
+    if (OPAL_UNLIKELY((btl->btl_put_local_registration_threshold < size && !local_handle) || !remote_handle ||
                       size > btl->btl_put_limit)) {
         return OPAL_ERR_BAD_PARAM;
     }
@@ -101,19 +101,6 @@ int mca_btl_openib_put (mca_btl_base_module_t *btl, struct mca_btl_base_endpoint
         to_out_frag(frag)->sr_desc.wr.rdma.rkey = remote_handle->rkey;
     }
 
-#if HAVE_XRC
-    if (MCA_BTL_XRC_ENABLED && BTL_OPENIB_QP_TYPE_XRC(qp)) {
-
-#if OPAL_HAVE_CONNECTX_XRC
-        to_out_frag(frag)->sr_desc.xrc_remote_srq_num = ep->rem_info.rem_srqs[qp].rem_srq_num;
-#elif OPAL_HAVE_CONNECTX_XRC_DOMAINS
-        to_out_frag(frag)->sr_desc.qp_type.xrc.remote_srqn = ep->rem_info.rem_srqs[qp].rem_srq_num;
-#else
-#error "that should never happen"
-#endif
-    }
-#endif
-
     if (ep->endpoint_state != MCA_BTL_IB_CONNECTED) {
         OPAL_THREAD_LOCK(&ep->endpoint_lock);
         rc = check_endpoint_state(ep, &to_base_frag(frag)->base, &ep->pending_put_frags);
@@ -153,6 +140,21 @@ int mca_btl_openib_put_internal (mca_btl_base_module_t *btl, struct mca_btl_base
     struct ibv_send_wr *bad_wr;
     int rc;
 
+#if HAVE_XRC
+    if (MCA_BTL_XRC_ENABLED && BTL_OPENIB_QP_TYPE_XRC(qp)) {
+        /* NTH: the remote SRQ number is only available once the endpoint is connected. By
+         * setting the value here instead of mca_btl_openib_put we guarantee the rem_srqs
+         * array is initialized. */
+#if OPAL_HAVE_CONNECTX_XRC
+        to_out_frag(frag)->sr_desc.xrc_remote_srq_num = ep->rem_info.rem_srqs[qp].rem_srq_num;
+#elif OPAL_HAVE_CONNECTX_XRC_DOMAINS
+        to_out_frag(frag)->sr_desc.qp_type.xrc.remote_srqn = ep->rem_info.rem_srqs[qp].rem_srq_num;
+#else
+#error "that should never happen"
+#endif
+    }
+#endif
+
     /* check for a send wqe */
     if (qp_get_wqe(ep, qp) < 0) {
         qp_put_wqe(ep, qp);
@@ -164,7 +166,7 @@ int mca_btl_openib_put_internal (mca_btl_base_module_t *btl, struct mca_btl_base
 
     if (0 != (rc = ibv_post_send(ep->qps[qp].qp->lcl_qp, &to_out_frag(frag)->sr_desc, &bad_wr))) {
         qp_put_wqe(ep, qp);
-        return OPAL_ERROR;;
+        return OPAL_ERROR;
     }
 
     return OPAL_SUCCESS;
