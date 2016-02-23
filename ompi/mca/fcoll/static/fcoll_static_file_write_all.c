@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2015 University of Houston. All rights reserved.
+ * Copyright (c) 2008-2016 University of Houston. All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -469,15 +469,15 @@ mca_fcoll_static_file_write_all (mca_io_ompio_file_t *fh,
             }
 
         }
-        if (local_cycles > index) {
-            if ((index == local_cycles-1) && (max_data % bytes_per_cycle)) {
-                bytes_to_write_in_cycle = max_data % bytes_per_cycle;
+        if ( index < local_cycles ) {
+            if ((index == local_cycles-1) && (max_data % (bytes_per_cycle/fh->f_procs_per_group)) ) {
+                bytes_to_write_in_cycle = max_data - total_bytes_written;
             }
-            else if (max_data <= bytes_per_cycle) {
+            else if (max_data <= bytes_per_cycle/fh->f_procs_per_group) {
                 bytes_to_write_in_cycle = max_data;
             }
             else {
-                bytes_to_write_in_cycle = bytes_per_cycle;
+                bytes_to_write_in_cycle = bytes_per_cycle/ fh->f_procs_per_group;
             }
         }
         else {
@@ -527,8 +527,6 @@ mca_fcoll_static_file_write_all (mca_io_ompio_file_t *fh,
         */
         if (my_aggregator == fh->f_rank) {
             for (i=0;i<fh->f_procs_per_group; i++){
-/*	    printf("bytes_per_process[%d]: %d\n", i, bytes_per_process[i]);
- */
 
 #if DEBUG_ON
                 printf ("%d : bytes_per_process : %d\n",
@@ -835,7 +833,7 @@ mca_fcoll_static_file_write_all (mca_io_ompio_file_t *fh,
                                  MCA_PML_BASE_SEND_STANDARD,
                                  fh->f_comm,
                                  &send_req));
-
+        
         if ( OMPI_SUCCESS != ret ){
             fprintf(stderr,"isend error!\n");
             goto exit;
