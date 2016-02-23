@@ -175,9 +175,7 @@ static inline int opal_convertor_cleanup( opal_convertor_t* convertor )
  */
 static inline int32_t opal_convertor_need_buffers( const opal_convertor_t* pConvertor )
 {
-#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
     if (OPAL_UNLIKELY(0 == (pConvertor->flags & CONVERTOR_HOMOGENEOUS))) return 1;
-#endif
 #if OPAL_CUDA_SUPPORT
     if( pConvertor->flags & (CONVERTOR_CUDA | CONVERTOR_CUDA_UNIFIED)) return 1;
 #endif
