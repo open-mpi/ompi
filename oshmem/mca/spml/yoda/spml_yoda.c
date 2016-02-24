@@ -57,6 +57,7 @@ mca_spml_yoda_module_t mca_spml_yoda = {
         mca_spml_yoda_put,
         mca_spml_yoda_put_nb,
         mca_spml_yoda_get,
+        mca_spml_base_get_nb, /* todo: mca_spml_yoda_get_nb, */
         mca_spml_yoda_recv,
         mca_spml_yoda_send,
         mca_spml_base_wait,
