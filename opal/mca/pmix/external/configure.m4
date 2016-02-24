@@ -33,11 +33,15 @@ AC_DEFUN([MCA_opal_pmix_external_CONFIG],[
     AC_REQUIRE([OPAL_CHECK_PMIX])
 
     AS_IF([test "$opal_external_pmix_happy" = "yes"],
-          [AS_IF([test "$opal_event_external_want" != "yes" || test "$opal_hwloc_external_support" != "yes"],
+          [AS_IF([test "$opal_event_external_support" != "yes"],
                  [AC_MSG_WARN([EXTERNAL PMIX SUPPORT REQUIRES USE OF EXTERNAL LIBEVENT])
-                  AC_MSG_WARN([AND EXTERNAL HWLOC LIBRARIES. THESE LIBRARIES MUST POINT])
-                  AC_MSG_WARN([TO THE SAME ONES USED TO BUILD PMIX OR ELSE UNPREDICTABLE])
-                  AC_MSG_WARN([BEHAVIOR MAY RESULT])
+                  AC_MSG_WARN([LIBRARY. THIS LIBRARY MUST POINT TO THE SAME ONE USED])
+                  AC_MSG_WARN([TO BUILD PMIX OR ELSE UNPREDICTABLE BEHAVIOR MAY RESULT])
+                  AC_MSG_ERROR([PLEASE CORRECT THE CONFIGURE COMMAND LINE AND REBUILD])])
+           AS_IF([test "$opal_hwloc_external_support" != "yes"],
+                 [AC_MSG_WARN([EXTERNAL PMIX SUPPORT REQUIRES USE OF EXTERNAL HWLOC])
+                  AC_MSG_WARN([LIBRARY THIS LIBRARY MUST POINT TO THE SAME ONE USED ])
+                  AC_MSG_WARN([TO BUILD PMIX OR ELSE UNPREDICTABLE BEHAVIOR MAY RESULT])
                   AC_MSG_ERROR([PLEASE CORRECT THE CONFIGURE COMMAND LINE AND REBUILD])])
            external_WRAPPER_EXTRA_CPPFLAGS='-I${includedir}/openmpi/$opal_pmix_external_basedir/pmix -I${includedir}/openmpi/$opal_pmix_external_basedir/pmix/include'
            $1],
