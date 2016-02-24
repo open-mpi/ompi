@@ -12,95 +12,133 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <mpi.h>
-#include <arpa/inet.h>
 
-static int verbose = 0;
+#include "ompi_config.h"
+#include "ompi/datatype/ompi_datatype.h"
+#include "opal/runtime/opal.h"
+#include "opal/datatype/opal_convertor.h"
+#include "opal/datatype/opal_datatype_internal.h"
+// #include <mpi.h>
 
-void dump_hex(void* what, size_t length)
+static int pack_unpack_datatype( void* send_data, ompi_datatype_t *datatype, int count,
+                                 void* recv_data );
+
+static void dump_hex(void* what, size_t length);
+
+static void dump_hex(void* what, size_t length)
 {
-    int i;
+    size_t i;
     for( i = 0; i < length; i++ ) {
         printf("%02x", (unsigned int)(((unsigned char*)what)[i]));
     }
 }
 
-typedef int (*checker_t)(void*, void*, MPI_Datatype, int, void*);
-
-int check_contiguous( void* send_buffer, void* packed,
-                      MPI_Datatype datatype, int count, void* arg )
+int MPI_Pack_external_size(const char datarep[], int incount,
+                           ompi_datatype_t *datatype, MPI_Aint *size)
 {
-    int i, resultlen;
-    char typename[MPI_MAX_OBJECT_NAME];
+    opal_convertor_t local_convertor;
+    size_t length;
 
-    MPI_Type_get_name(datatype, typename, &resultlen);
+    OBJ_CONSTRUCT(&local_convertor, opal_convertor_t);
 
-    if( (datatype == MPI_INT) || (datatype == MPI_INT32_T) ) {
-        uint32_t val;
-        for( i = 0 ; i < count; i++ ) {
-            val = htonl(((uint32_t*)send_buffer)[i]);
-            if( val != ((uint32_t*)packed)[i] ) {
-                printf("Error at position %d expected %x found %x (type %s)\n",
-                       i, ((uint32_t*)packed)[i], ((uint32_t*)send_buffer)[i], typename);
-                return -1;
-            }
-        }
-    } else if( (datatype == MPI_SHORT) || (datatype == MPI_INT16_T) ) {
-        uint16_t val;
-        for( i = 0 ; i < count; i++ ) {
-            val = htons(((uint16_t*)send_buffer)[i]);
-            if( val != ((uint16_t*)packed)[i] ) {
-                printf("Error at position %d expected %x found %x (type %s)\n",
-                       i, ((uint16_t*)packed)[i], ((uint16_t*)send_buffer)[i], typename);
-                return -1;
-            }
-        }
-    } else {
-        printf("Unknown type\n");
-        return -1;
-    }
-    return 0;
+    /* the resulting convertor will be set to the position ZERO */
+    opal_convertor_copy_and_prepare_for_recv( ompi_mpi_external32_convertor,
+                                              &(datatype->super), incount, NULL,
+                                              CONVERTOR_SEND_CONVERSION,
+                                              &local_convertor );
+
+    opal_convertor_get_unpacked_size( &local_convertor, &length );
+    *size = (MPI_Aint)length;
+    OBJ_DESTRUCT( &local_convertor );
+
+    return OMPI_SUCCESS;
 }
 
-int check_vector( void* send_buffer, void* packed,
-                  MPI_Datatype datatype, int count, void* arg )
+int MPI_Pack_external(const char datarep[], const void *inbuf, int incount,
+                      ompi_datatype_t *datatype, void *outbuf,
+                      MPI_Aint outsize, MPI_Aint *position)
 {
-    int i, resultlen;
-    char typename[MPI_MAX_OBJECT_NAME];
-    MPI_Datatype origtype = (MPI_Datatype)arg;
+    int rc = MPI_SUCCESS;
+    opal_convertor_t local_convertor;
+    struct iovec invec;
+    unsigned int iov_count;
+    size_t size;
 
-    MPI_Type_get_name(datatype, typename, &resultlen);
+    OBJ_CONSTRUCT(&local_convertor, opal_convertor_t);
 
-    if( (origtype == MPI_INT) || (origtype == MPI_INT32_T) ) {
-        uint32_t val;
-        for( i = 0 ; i < count; i++ ) {
-            val = htonl(((uint32_t*)send_buffer)[2*i]);
-            if( val != ((uint32_t*)packed)[i] ) {
-                printf("Error at position %d expected %x found %x (type %s)\n",
-                       i, ((uint32_t*)packed)[i], ((uint32_t*)send_buffer)[2*i], typename);
-                return -1;
-            }
-        }
-    } else if( (origtype == MPI_SHORT) || (origtype == MPI_INT16_T) ) {
-        uint16_t val;
-        for( i = 0 ; i < count; i++ ) {
-            val = htons(((uint16_t*)send_buffer)[2*i]);
-            if( val != ((uint16_t*)packed)[i] ) {
-                printf("Error at position %d expected %x found %x (type %s)\n",
-                       i, ((uint16_t*)packed)[i], ((uint16_t*)send_buffer)[2*i], typename);
-                return -1;
-            }
-        }
-    } else {
-        printf("Unknown %s type\n", typename);
-        return -1;
+    /* The resulting convertor will be set to the position zero. We have to use
+     * CONVERTOR_SEND_CONVERSION in order to force the convertor to do anything
+     * more than just packing the data.
+     */
+    opal_convertor_copy_and_prepare_for_send( ompi_mpi_external32_convertor,
+                                              &(datatype->super), incount, (void *) inbuf,
+                                              CONVERTOR_SEND_CONVERSION,
+                                              &local_convertor );
+
+    /* Check for truncation */
+    opal_convertor_get_packed_size( &local_convertor, &size );
+    if( (*position + size) > (size_t)outsize ) {  /* we can cast as we already checked for < 0 */
+        OBJ_DESTRUCT( &local_convertor );
+        return MPI_ERR_TRUNCATE;
     }
-    return 0;
+
+    /* Prepare the iovec with all informations */
+    invec.iov_base = (char*) outbuf + (*position);
+    invec.iov_len = size;
+
+    /* Do the actual packing */
+    iov_count = 1;
+    rc = opal_convertor_pack( &local_convertor, &invec, &iov_count, &size );
+    *position += size;
+    OBJ_DESTRUCT( &local_convertor );
+
+    /* All done.  Note that the convertor returns 1 upon success, not
+       OMPI_SUCCESS. */
+    return (rc == 1) ? OMPI_SUCCESS : OMPI_ERROR;
 }
 
-int pack_unpack_datatype( void* send_data, MPI_Datatype datatype, int count,
-                          void* recv_data,
-                          checker_t validator, void* validator_arg)
+int MPI_Unpack_external (const char datarep[], const void *inbuf, MPI_Aint insize,
+                         MPI_Aint *position, void *outbuf, int outcount,
+                         ompi_datatype_t *datatype)
+{
+    int rc = MPI_SUCCESS;
+    opal_convertor_t local_convertor;
+    struct iovec outvec;
+    unsigned int iov_count;
+    size_t size;
+
+    OBJ_CONSTRUCT(&local_convertor, opal_convertor_t);
+
+    /* the resulting convertor will be set to the position ZERO */
+    opal_convertor_copy_and_prepare_for_recv( ompi_mpi_external32_convertor,
+                                              &(datatype->super), outcount, outbuf,
+                                              0,
+                                              &local_convertor );
+
+    /* Check for truncation */
+    opal_convertor_get_packed_size( &local_convertor, &size );
+    if( (*position + size) > (unsigned int)insize ) {
+        OBJ_DESTRUCT( &local_convertor );
+        return MPI_ERR_TRUNCATE;
+    }
+
+    /* Prepare the iovec with all informations */
+    outvec.iov_base = (char*) inbuf + (*position);
+    outvec.iov_len = size;
+
+    /* Do the actual unpacking */
+    iov_count = 1;
+    rc = opal_convertor_unpack( &local_convertor, &outvec, &iov_count, &size );
+    *position += size;
+    OBJ_DESTRUCT( &local_convertor );
+
+    /* All done.  Note that the convertor returns 1 upon success, not
+       OMPI_SUCCESS. */
+    return (rc == 1) ? OMPI_SUCCESS : OMPI_ERROR;
+}
+
+static int pack_unpack_datatype( void* send_data, ompi_datatype_t *datatype, int count,
+                                 void* recv_data )
 {
     MPI_Aint position = 0, buffer_size;
     void* buffer;
@@ -121,7 +159,7 @@ int pack_unpack_datatype( void* send_data, MPI_Datatype datatype, int count,
         return -1;
     }
 
-    printf("packed "); dump_hex(buffer, buffer_size); printf("\n");
+    printf("packed %ld bytes into a %ld bytes buffer ", position, buffer_size); dump_hex(buffer, position); printf("\n");
 
     position = 0;
     error = MPI_Unpack_external("external32", buffer, buffer_size, &position,
@@ -135,7 +173,8 @@ int pack_unpack_datatype( void* send_data, MPI_Datatype datatype, int count,
 
 int main(int argc, char *argv[])
 {
-    MPI_Init(&argc, &argv);
+    opal_init_util(&argc, &argv);
+    ompi_datatype_init();
 
     /* Simple contiguous data: MPI_INT32_T */
     {
@@ -173,7 +212,7 @@ int main(int argc, char *argv[])
             printf("recv data %08x %08x \n", recv_data[0], recv_data[1]);
         }
         if( (send_data[0] != recv_data[0]) || (send_data[1] != recv_data[1]) ) {
-            printf("Error during external32 pack/unack for contiguous types (MPI_INT16_T)\n");
+            printf("Error during external32 pack/unack for contiguous types\n");
             exit(-1);
         }
     }
@@ -181,51 +220,35 @@ int main(int argc, char *argv[])
     /* Vector datatype */
     printf("\n\nVector datatype\n\n");
     {
-        int32_t send_data[3] = {1234, 0, 5678};
-        int32_t recv_data[3] = {-1, -1, -1};
-        MPI_Datatype ddt;
+        int count=2, blocklength=1, stride=2;
+        int send_data[3] = {1234, 0, 5678};
+        int recv_data[3] = {-1, -1, -1};
+        ompi_datatype_t *ddt;
 
-        MPI_Type_vector(2, 1, 2, MPI_INT32_T, &ddt);
-        MPI_Type_commit(&ddt);
-        if( verbose ) {
-            printf("send data %08x %x08x %08x \n", send_data[0], send_data[1], send_data[2]);
-            printf("data "); dump_hex(&send_data, sizeof(int32_t) * 3); printf("\n");
-        }
-        (void)pack_unpack_datatype( send_data, ddt, 1, recv_data, check_vector, (void*)(ptrdiff_t)MPI_INT32_T );
-        if( verbose ) {
-            printf("recv "); dump_hex(&recv_data, sizeof(int32_t) * 3); printf("\n");
-            printf("recv data %08x %08x %08x \n", recv_data[0], recv_data[1], recv_data[2]);
-        }
-        MPI_Type_free(&ddt);
-        if( (send_data[0] != recv_data[0]) || (send_data[2] != recv_data[2]) ) {
-            printf("Error duing external32 pack/unack for vector types (MPI_INT32_T)\n");
-            exit(-1);
-        }
-    }
-    {
-        int16_t send_data[3] = {1234, 0, 5678};
-        int16_t recv_data[3] = {-1, -1, -1};
-        MPI_Datatype ddt;
+        ompi_datatype_create_vector ( count, blocklength, stride, &ompi_mpi_int.dt, &ddt );
+        {
+            const int* a_i[3] = {&count, &blocklength, &stride};
+            ompi_datatype_t *type = &ompi_mpi_int.dt;
 
-        MPI_Type_vector(2, 1, 2, MPI_INT16_T, &ddt);
-        MPI_Type_commit(&ddt);
-        if( verbose ) {
-            printf("send data %08x %x08x %08x \n", send_data[0], send_data[1], send_data[2]);
-            printf("data "); dump_hex(&send_data, sizeof(int16_t) * 3); printf("\n");
+            ompi_datatype_set_args( ddt, 3, a_i, 0, NULL, 1, &type, MPI_COMBINER_VECTOR );
         }
-        (void)pack_unpack_datatype( send_data, ddt, 1, recv_data, check_vector, (void*)(ptrdiff_t)MPI_INT16_T );
-        if( verbose ) {
-            printf("recv "); dump_hex(&recv_data, sizeof(int16_t) * 3); printf("\n");
-            printf("recv data %08x %08x %08x \n", recv_data[0], recv_data[1], recv_data[2]);
-        }
-        MPI_Type_free(&ddt);
+        ompi_datatype_commit(&ddt);
+
+        printf("send data %08x %x08x %08x \n", send_data[0], send_data[1], send_data[2]);
+        printf("data "); dump_hex(&send_data, sizeof(int) * 3); printf("\n");
+
+        (void)pack_unpack_datatype( send_data, ddt, 1, recv_data );
+
+        printf("recv "); dump_hex(&recv_data, sizeof(int) * 3); printf("\n");
+        printf("recv data %08x %08x %08x \n", recv_data[0], recv_data[1], recv_data[2]);
+        ompi_datatype_destroy(&ddt);
         if( (send_data[0] != recv_data[0]) || (send_data[2] != recv_data[2]) ) {
-            printf("Error duing external32 pack/unack for vector types (MPI_INT16_T)\n");
+            printf("Error during external32 pack/unack for vector types\n");
             exit(-1);
         }
     }
 
-    MPI_Finalize();
+    ompi_datatype_finalize();
 
     return 0;
 }
