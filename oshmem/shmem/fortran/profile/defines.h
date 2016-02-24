@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014      Mellanox Technologies, Inc.
+ * Copyright (c) 2014-2016 Mellanox Technologies, Inc.
  *                         All rights reserved.
  * $COPYRIGHT$
  *
@@ -134,6 +134,10 @@
 #define shmem_character_put_ pshmem_character_put_
 #define shmem_character_put__ pshmem_character_put__
 
+#define SHMEM_CHARACTER_PUT_NBI PSHMEM_CHARACTER_PUT_NBI
+#define shmem_character_put_nbi_ pshmem_character_put_nbi_
+#define shmem_character_put_nbi__ pshmem_character_put_nbi__
+
 #define SHMEM_COLLECT4 PSHMEM_COLLECT4
 #define shmem_collect4_ pshmem_collect4_
 #define shmem_collect4__ pshmem_collect4__
@@ -182,6 +186,10 @@
 #define shmem_complex_put_ pshmem_complex_put_
 #define shmem_complex_put__ pshmem_complex_put__
 
+#define SHMEM_COMPLEX_PUT_NBI PSHMEM_COMPLEX_PUT_NBI
+#define shmem_complex_put_nbi_ pshmem_complex_put_nbi_
+#define shmem_complex_put_nbi__ pshmem_complex_put_nbi__
+
 #define SHMEM_DOUBLE_GET PSHMEM_DOUBLE_GET
 #define shmem_double_get_ pshmem_double_get_
 #define shmem_double_get__ pshmem_double_get__
@@ -197,6 +205,10 @@
 #define SHMEM_DOUBLE_PUT PSHMEM_DOUBLE_PUT
 #define shmem_double_put_ pshmem_double_put_
 #define shmem_double_put__ pshmem_double_put__
+
+#define SHMEM_DOUBLE_PUT_NBI PSHMEM_DOUBLE_PUT_NBI
+#define shmem_double_put_nbi_ pshmem_double_put_nbi_
+#define shmem_double_put_nbi__ pshmem_double_put_nbi__
 
 #define SHMEM_FENCE PSHMEM_FENCE
 #define shmem_fence_ pshmem_fence_
@@ -245,6 +257,102 @@
 #define SHMEM_IGET8 PSHMEM_IGET8
 #define shmem_iget8_ pshmem_iget8_
 #define shmem_iget8__ pshmem_iget8__
+
+#define SHMEM_GETMEM_NBI PSHMEM_GETMEM_NBI
+#define shmem_getmem_nbi_ pshmem_getmem_nbi_
+#define shmem_getmem_nbi__ pshmem_getmem_nbi__
+
+#define SHMEM_CHARACTER_GET_NBI PSHMEM_CHARACTER_GET_NBI
+#define shmem_character_get_nbi_ pshmem_character_get_nbi_
+#define shmem_character_get_nbi__ pshmem_character_get_nbi__
+
+#define SHMEM_COMPLEX_GET_NBI PSHMEM_COMPLEX_GET_NBI
+#define shmem_complex_get_nbi_ pshmem_complex_get_nbi_
+#define shmem_complex_get_nbi__ pshmem_complex_get_nbi__
+
+#define SHMEM_DOUBLE_GET_NBI PSHMEM_DOUBLE_GET_NBI
+#define shmem_double_get_nbi_ pshmem_double_get_nbi_
+#define shmem_double_get_nbi__ pshmem_double_get_nbi__
+
+#define SHMEM_INTEGER_GET_NBI PSHMEM_INTEGER_GET_NBI
+#define shmem_integer_get_nbi_ pshmem_integer_get_nbi_
+#define shmem_integer_get_nbi__ pshmem_integer_get_nbi__
+
+#define SHMEM_LOGICAL_GET_NBI PSHMEM_LOGICAL_GET_NBI
+#define shmem_logical_get_nbi_ pshmem_logical_get_nbi_
+#define shmem_logical_get_nbi__ pshmem_logical_get_nbi__
+
+#define SHMEM_REAL_GET_NBI PSHMEM_REAL_GET_NBI
+#define shmem_real_get_nbi_ pshmem_real_get_nbi_
+#define shmem_real_get_nbi__ pshmem_real_get_nbi__
+
+#define SHMEM_GET4_NBI PSHMEM_GET4_NBI
+#define shmem_get4_nbi_ pshmem_get4_nbi_
+#define shmem_get4_nbi__ pshmem_get4_nbi__
+
+#define SHMEM_GET8_NBI PSHMEM_GET8_NBI
+#define shmem_get8_nbi_ pshmem_get8_nbi_
+#define shmem_get8_nbi__ pshmem_get8_nbi__
+
+#define SHMEM_GET32_NBI PSHMEM_GET32_NBI
+#define shmem_get32_nbi_ pshmem_get32_nbi_
+#define shmem_get32_nbi__ pshmem_get32_nbi__
+
+#define SHMEM_GET64_NBI PSHMEM_GET64_NBI
+#define shmem_get64_nbi_ pshmem_get64_nbi_
+#define shmem_get64_nbi__ pshmem_get64_nbi__
+
+#define SHMEM_GET128_NBI PSHMEM_GET128_NBI
+#define shmem_get128_nbi_ pshmem_get128_nbi_
+#define shmem_get128_nbi__ pshmem_get128_nbi__
+
+#define SHMEM_PUTMEM_NBI PSHMEM_PUTMEM_NBI
+#define shmem_putmem_nbi_ pshmem_putmem_nbi_
+#define shmem_putmem_nbi__ pshmem_putmem_nbi__
+
+#define SHMEM_CHARACTER_PUT_NBI PSHMEM_CHARACTER_PUT_NBI
+#define shmem_character_put_nbi_ pshmem_character_put_nbi_
+#define shmem_character_put_nbi__ pshmem_character_put_nbi__
+
+#define SHMEM_COMPLEX_PUT_NBI PSHMEM_COMPLEX_PUT_NBI
+#define shmem_complex_put_nbi_ pshmem_complex_put_nbi_
+#define shmem_complex_put_nbi__ pshmem_complex_put_nbi__
+
+#define SHMEM_DOUBLE_PUT_NBI PSHMEM_DOUBLE_PUT_NBI
+#define shmem_double_put_nbi_ pshmem_double_put_nbi_
+#define shmem_double_put_nbi__ pshmem_double_put_nbi__
+
+#define SHMEM_INTEGER_PUT_NBI PSHMEM_INTEGER_PUT_NBI
+#define shmem_integer_put_nbi_ pshmem_integer_put_nbi_
+#define shmem_integer_put_nbi__ pshmem_integer_put_nbi__
+
+#define SHMEM_LOGICAL_PUT_NBI PSHMEM_LOGICAL_PUT_NBI
+#define shmem_logical_put_nbi_ pshmem_logical_put_nbi_
+#define shmem_logical_put_nbi__ pshmem_logical_put_nbi__
+
+#define SHMEM_REAL_PUT_NBI PSHMEM_REAL_PUT_NBI
+#define shmem_real_put_nbi_ pshmem_real_put_nbi_
+#define shmem_real_put_nbi__ pshmem_real_put_nbi__
+
+#define SHMEM_PUT4_NBI PSHMEM_PUT4_NBI
+#define shmem_put4_nbi_ pshmem_put4_nbi_
+#define shmem_put4_nbi__ pshmem_put4_nbi__
+
+#define SHMEM_PUT8_NBI PSHMEM_PUT8_NBI
+#define shmem_put8_nbi_ pshmem_put8_nbi_
+#define shmem_put8_nbi__ pshmem_put8_nbi__
+
+#define SHMEM_PUT32_NBI PSHMEM_PUT32_NBI
+#define shmem_put32_nbi_ pshmem_put32_nbi_
+#define shmem_put32_nbi__ pshmem_put32_nbi__
+
+#define SHMEM_PUT64_NBI PSHMEM_PUT64_NBI
+#define shmem_put64_nbi_ pshmem_put64_nbi_
+#define shmem_put64_nbi__ pshmem_put64_nbi__
+
+#define SHMEM_PUT128_NBI PSHMEM_PUT128_NBI
+#define shmem_put128_nbi_ pshmem_put128_nbi_
+#define shmem_put128_nbi__ pshmem_put128_nbi__
 
 #define SHMEM_INT4_ADD PSHMEM_INT4_ADD
 #define shmem_int4_add_ pshmem_int4_add_
