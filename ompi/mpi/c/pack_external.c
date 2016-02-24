@@ -13,7 +13,7 @@
  * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -78,10 +78,10 @@ int MPI_Pack_external(const char datarep[], const void *inbuf, int incount,
      * CONVERTOR_SEND_CONVERSION in order to force the convertor to do anything
      * more than just packing the data.
      */
-    opal_convertor_copy_and_prepare_for_send( ompi_mpi_external32_convertor,
-                                              &(datatype->super), incount, (void *) inbuf,
-                                              CONVERTOR_SEND_CONVERSION,
-                                              &local_convertor );
+    opal_convertor_copy_and_prepare_for_send_external( ompi_mpi_external32_convertor,
+                                                       &(datatype->super), incount, (void *) inbuf,
+                                                       CONVERTOR_SEND_CONVERSION,
+                                                       &local_convertor );
 
     /* Check for truncation */
     opal_convertor_get_packed_size( &local_convertor, &size );
