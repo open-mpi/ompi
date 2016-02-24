@@ -53,8 +53,9 @@ mca_spml_ucx_t mca_spml_ucx = {
         mca_spml_ucx_deregister,
         mca_spml_base_oob_get_mkeys,
         mca_spml_ucx_put,
-        NULL, /* todo: mca_spml_ucx_put_nb, */
+        mca_spml_base_put_nb, /* todo: mca_spml_ucx_put_nb, */
         mca_spml_ucx_get,
+        mca_spml_base_get_nb, /* todo: mca_spml_ucx_get_nb, */
         mca_spml_ucx_recv,
         mca_spml_ucx_send,
         mca_spml_base_wait,
