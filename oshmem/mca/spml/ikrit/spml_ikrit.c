@@ -221,6 +221,7 @@ mca_spml_ikrit_t mca_spml_ikrit = {
         mca_spml_ikrit_put,
         mca_spml_ikrit_put_nb,
         mca_spml_ikrit_get,
+        mca_spml_base_get_nb, /* todo: mca_spml_ikrit_get_nb, */
         mca_spml_ikrit_recv,
         mca_spml_ikrit_send,
         mca_spml_base_wait,

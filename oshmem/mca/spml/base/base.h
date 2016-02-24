@@ -71,6 +71,16 @@ OSHMEM_DECLSPEC int mca_spml_base_oob_get_mkeys(int pe,
 
 OSHMEM_DECLSPEC void mca_spml_base_rmkey_unpack(sshmem_mkey_t *mkey, int pe);
 OSHMEM_DECLSPEC void mca_spml_base_rmkey_free(sshmem_mkey_t *mkey);
+OSHMEM_DECLSPEC int mca_spml_base_put_nb(void *dst_addr,
+                                         size_t size,
+                                         void *src_addr,
+                                         int dst,
+                                         void **handle);
+OSHMEM_DECLSPEC int mca_spml_base_get_nb(void *dst_addr,
+                                         size_t size,
+                                         void *src_addr,
+                                         int src,
+                                         void **handle);
 
 /*
  * MCA framework
