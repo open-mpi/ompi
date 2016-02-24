@@ -69,6 +69,7 @@ liboshmem_fortran_la_SOURCES += \
                     shmem_iput8_f.c \
                     shmem_logical_iput_f.c \
                     shmem_real_iput_f.c \
+                    shmem_put_nb_f.c \
                     shmem_character_get_f.c \
                     shmem_complex_get_f.c \
                     shmem_double_get_f.c \
@@ -91,6 +92,7 @@ liboshmem_fortran_la_SOURCES += \
                     shmem_integer_iget_f.c \
                     shmem_logical_iget_f.c \
                     shmem_real_iget_f.c \
+                    shmem_get_nb_f.c \
                     shmem_swap_f.c \
                     shmem_int4_swap_f.c \
                     shmem_int8_swap_f.c \
