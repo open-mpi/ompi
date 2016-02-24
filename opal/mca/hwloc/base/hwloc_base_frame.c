@@ -166,7 +166,7 @@ static int opal_hwloc_base_register(mca_base_register_flag_t flags)
                                  MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, OPAL_INFO_LVL_9,
                                  MCA_BASE_VAR_SCOPE_READONLY, &opal_hwloc_base_topo_file);
 
-    opal_hwloc_base_bind_direct_launched = false;
+    opal_hwloc_base_bind_direct_launched = true;
     (void) mca_base_var_register("opal", "hwloc", "base", "bind_direct_launched",
                                  "bind processes when direct launched ",
                                  MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0, OPAL_INFO_LVL_9,
