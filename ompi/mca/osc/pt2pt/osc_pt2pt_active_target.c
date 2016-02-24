@@ -8,7 +8,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2015 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2016 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2010      IBM Corporation.  All rights reserved.
  * Copyright (c) 2012-2013 Sandia National Laboratories.  All rights reserved.
@@ -124,6 +124,7 @@ ompi_osc_pt2pt_fence(int assert, ompi_win_t *win)
 
     /* short-circuit the noprecede case */
     if (0 != (assert & MPI_MODE_NOPRECEDE)) {
+        module->comm->c_coll.coll_barrier (module->comm, module->comm->c_coll.coll_barrier_module);
         OPAL_OUTPUT_VERBOSE((50, ompi_osc_base_framework.framework_output,
                              "osc pt2pt: fence end (short circuit)"));
         return ret;
