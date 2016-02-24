@@ -10,7 +10,9 @@
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2015 NVIDIA Corporation.  All rights reserved.
- * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -252,7 +254,7 @@ static int mca_common_cuda_init(opal_common_cuda_function_table_t *ftable)
 int mca_common_cuda_stage_one_init(void)
 {
     int retval, i, j;
-    char *cudalibs[] = {"libcuda.so.1", NULL};
+    char *cudalibs[] = {"libcuda.so.1", "libcuda.dylib", NULL};
     char *searchpaths[] = {"", "/usr/lib64", NULL};
     char **errmsgs = NULL;
     char *errmsg = NULL;
