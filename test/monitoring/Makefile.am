@@ -19,10 +19,10 @@
 if PROJECT_OMPI
     noinst_PROGRAMS = monitoring_test
     monitoring_test_SOURCES = monitoring_test.c
-    monitoring_test_LDFLAGS = $(WRAPPER_EXTRA_LDFLAGS)
+    monitoring_test_LDFLAGS = $(OMPI_PKG_CONFIG_LDFLAGS)
     monitoring_test_LDADD = \
         $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la \
-        $(top_builddir)/opal/libopen-pal.la
+        $(top_builddir)/opal/lib@OPAL_LIB_PREFIX@open-pal.la
 
 if MCA_BUILD_ompi_pml_monitoring_DSO
     lib_LTLIBRARIES = ompi_monitoring_prof.la
@@ -31,7 +31,7 @@ if MCA_BUILD_ompi_pml_monitoring_DSO
         -module -avoid-version -shared $(WRAPPER_EXTRA_LDFLAGS)
     ompi_monitoring_prof_la_LIBADD = \
         $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la \
-        $(top_builddir)/opal/libopen-pal.la
+        $(top_builddir)/opal/lib@OPAL_LIB_PREFIX@open-pal.la
 endif # MCA_BUILD_ompi_pml_monitoring_DSO
 
 endif # PROJECT_OMPI
