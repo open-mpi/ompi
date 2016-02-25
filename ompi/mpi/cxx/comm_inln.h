@@ -10,7 +10,7 @@
 //                         University of Stuttgart.  All rights reserved.
 // Copyright (c) 2004-2005 The Regents of the University of California.
 //                         All rights reserved.
-// Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
+// Copyright (c) 2007-2016 Cisco Systems, Inc.  All rights reserved.
 // Copyright (c) 2011      FUJITSU LIMITED.  All rights reserved.
 // $COPYRIGHT$
 //
@@ -271,9 +271,9 @@ MPI::Comm::Get_size() const
 inline int
 MPI::Comm::Get_rank() const
 {
-  int rank;
-  (void)MPI_Comm_rank (mpi_comm, &rank);
-  return rank;
+  int myrank;
+  (void)MPI_Comm_rank (mpi_comm, &myrank);
+  return myrank;
 }
 
 inline int
