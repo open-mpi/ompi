@@ -84,7 +84,7 @@ typedef struct mca_mtl_ofi_component_t {
     {                                                                   \
         match_bits = contextid;                                         \
         match_bits = (match_bits << 16);                                \
-        match_bits |= source;                                           \
+        match_bits |= (uint64_t)source;                                 \
         match_bits = (match_bits << 32);                                \
         match_bits |= (MTL_OFI_TAG_MASK & tag) | type;                  \
     }
@@ -106,7 +106,7 @@ typedef struct mca_mtl_ofi_component_t {
             match_bits = (match_bits << 32);                            \
             mask_bits |= MTL_OFI_SOURCE_MASK;                           \
         } else {                                                        \
-            match_bits |= source;                                       \
+            match_bits |= (uint64_t)source;                             \
             match_bits = (match_bits << 32);                            \
         }                                                               \
                                                                         \

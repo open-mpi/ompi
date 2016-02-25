@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2013-2015 Intel, Inc. All rights reserved
+ * Copyright (c) 2013-2016 Intel, Inc. All rights reserved
  *
  * Copyright (c) 2014-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
@@ -241,6 +241,7 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
     hints->domain_attr->threading        = FI_THREAD_UNSPEC;
     hints->domain_attr->control_progress = FI_PROGRESS_MANUAL;
     hints->domain_attr->resource_mgmt    = FI_RM_ENABLED;
+    hints->domain_attr->av_type          = FI_AV_MAP;
 
     /**
      * FI_VERSION provides binary backward and forward compatibility support

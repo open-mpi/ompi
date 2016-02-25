@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2015 Intel, Inc. All rights reserved
+ * Copyright (c) 2013-2016 Intel, Inc. All rights reserved
  *
  * $COPYRIGHT$
  *
@@ -54,6 +54,10 @@ struct ompi_mtl_ofi_request_t {
     /** Reference to the communicator used to  */
     /*  lookup source of an ANY_SOURCE Recv    */
     struct ompi_communicator_t *comm;
+
+    /** Reference to the MTL used to lookup */
+    /*  source of an ANY_SOURCE Recv        */
+    struct mca_mtl_base_module_t* mtl;
 
     /** Pack buffer */
     void *buffer;
