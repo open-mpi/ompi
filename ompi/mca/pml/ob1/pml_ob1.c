@@ -82,9 +82,9 @@ mca_pml_ob1_t mca_pml_ob1 = {
 };
 
 #if OPAL_CUDA_SUPPORT
-void mca_pml_ob1_cuda_add_ipc_support(struct mca_btl_base_module_t* btl,
-                                      int32_t flags, ompi_proc_t* errproc,
-                                      char* btlinfo);
+extern void mca_pml_ob1_cuda_add_ipc_support(struct mca_btl_base_module_t* btl,
+                                             int32_t flags, ompi_proc_t* errproc,
+                                             char* btlinfo);
 #endif /* OPAL_CUDA_SUPPORT */
 
 void mca_pml_ob1_error_handler( struct mca_btl_base_module_t* btl,
@@ -576,7 +576,7 @@ int mca_pml_ob1_dump(struct ompi_communicator_t* comm, int verbose)
             continue;
         }
 
-        mca_bml_base_endpoint_t* ep = (mca_bml_base_endpoint_t*)proc->ompi_proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML];
+        mca_bml_base_endpoint_t* ep = mca_bml_base_get_endpoint(proc->ompi_proc);
         size_t n;
 
         opal_output(0, "[Rank %d] expected_seq %d ompi_proc %p send_seq %d\n",
