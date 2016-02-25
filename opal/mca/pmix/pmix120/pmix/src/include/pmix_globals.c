@@ -175,3 +175,22 @@ static void errdes(pmix_error_reg_info_t *p)
 PMIX_CLASS_INSTANCE(pmix_error_reg_info_t,
                     pmix_object_t,
                     errcon, errdes);
+
+static void scon(pmix_shift_caddy_t *p)
+{
+    p->active = false;
+    p->kv = NULL;
+    p->cbfunc.relfn = NULL;
+    p->cbfunc.errregcbfn = NULL;
+    p->cbfunc.opcbfn = NULL;
+    p->cbdata = NULL;
+}
+static void scdes(pmix_shift_caddy_t *p)
+{
+    if (NULL != p->kv) {
+        PMIX_RELEASE(p->kv);
+    }
+}
+PMIX_CLASS_INSTANCE(pmix_shift_caddy_t,
+                    pmix_object_t,
+                    scon, scdes);

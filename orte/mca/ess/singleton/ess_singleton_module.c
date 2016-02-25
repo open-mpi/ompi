@@ -97,19 +97,19 @@ static int rte_init(void)
     u32ptr = &u32;
     u16ptr = &u16;
 
-    if (NULL != orte_ess_singleton_server_uri) {
+    if (NULL != mca_ess_singleton_component.server_uri) {
         /* we are going to connect to a server HNP */
-        if (0 == strncmp(orte_ess_singleton_server_uri, "file", strlen("file")) ||
-            0 == strncmp(orte_ess_singleton_server_uri, "FILE", strlen("FILE"))) {
+        if (0 == strncmp(mca_ess_singleton_component.server_uri, "file", strlen("file")) ||
+            0 == strncmp(mca_ess_singleton_component.server_uri, "FILE", strlen("FILE"))) {
             char input[1024], *filename;
             FILE *fp;
 
             /* it is a file - get the filename */
-            filename = strchr(orte_ess_singleton_server_uri, ':');
+            filename = strchr(mca_ess_singleton_component.server_uri, ':');
             if (NULL == filename) {
                 /* filename is not correctly formatted */
                 orte_show_help("help-orterun.txt", "orterun:ompi-server-filename-bad", true,
-                               "singleton", orte_ess_singleton_server_uri);
+                               "singleton", mca_ess_singleton_component.server_uri);
                 return ORTE_ERROR;
             }
             ++filename; /* space past the : */
@@ -117,7 +117,7 @@ static int rte_init(void)
             if (0 >= strlen(filename)) {
                 /* they forgot to give us the name! */
                 orte_show_help("help-orterun.txt", "orterun:ompi-server-filename-missing", true,
-                               "singleton", orte_ess_singleton_server_uri);
+                               "singleton", mca_ess_singleton_component.server_uri);
                 return ORTE_ERROR;
             }
 
@@ -125,7 +125,7 @@ static int rte_init(void)
             fp = fopen(filename, "r");
             if (NULL == fp) { /* can't find or read file! */
                 orte_show_help("help-orterun.txt", "orterun:ompi-server-filename-access", true,
-                               "singleton", orte_ess_singleton_server_uri);
+                               "singleton", mca_ess_singleton_component.server_uri);
                 return ORTE_ERROR;
             }
             memset(input, 0, 1024);  // initialize the array to ensure a NULL termination
@@ -133,14 +133,14 @@ static int rte_init(void)
                 /* something malformed about file */
                 fclose(fp);
                 orte_show_help("help-orterun.txt", "orterun:ompi-server-file-bad", true,
-                               "singleton", orte_ess_singleton_server_uri, "singleton");
+                               "singleton", mca_ess_singleton_component.server_uri, "singleton");
                 return ORTE_ERROR;
             }
             fclose(fp);
             input[strlen(input)-1] = '\0';  /* remove newline */
             orte_process_info.my_hnp_uri = strdup(input);
         } else {
-            orte_process_info.my_hnp_uri = strdup(orte_ess_singleton_server_uri);
+            orte_process_info.my_hnp_uri = strdup(mca_ess_singleton_component.server_uri);
         }
         /* save the daemon uri - we will process it later */
         orte_process_info.my_daemon_uri = strdup(orte_process_info.my_hnp_uri);
@@ -154,17 +154,21 @@ static int rte_init(void)
         ORTE_PROC_MY_NAME->vpid = 0;
 
         /* for convenience, push the pubsub version of this param into the environ */
-        opal_setenv (OPAL_MCA_PREFIX"pubsub_orte_server", orte_process_info.my_hnp_uri, 1, &environ);
+        opal_setenv (OPAL_MCA_PREFIX"pubsub_orte_server", orte_process_info.my_hnp_uri, true, &environ);
     } else if (NULL != getenv("SINGULARITY_CONTAINER")) {
          /* mark that we are in a container */
         opal_setenv("OPAL_PROC_CONTAINER", "1", true, &environ);
-    } else if (NULL != getenv("OPAL_ISOLATED")) {
+    } else if (mca_ess_singleton_component.isolated) {
+        /* ensure we use the isolated pmix component */
+        opal_setenv (OPAL_MCA_PREFIX"pmix", "isolated", true, &environ);
+    } else {
         /* spawn our very own HNP to support us */
         if (ORTE_SUCCESS != (rc = fork_hnp())) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
         /* our name was given to us by the HNP */
+        opal_setenv (OPAL_MCA_PREFIX"pmix", "^s1,s2,cray,isolated", true, &environ);
     }
 
     /* open and setup pmix */
@@ -484,6 +488,16 @@ static int fork_hnp(void)
     opal_argv_append(&argc, &argv, "-"OPAL_MCA_CMD_LINE_ID);
     opal_argv_append(&argc, &argv, "state_novm_select");
     opal_argv_append(&argc, &argv, "1");
+
+    /* direct the selection of the ess component */
+    opal_argv_append(&argc, &argv, "-"OPAL_MCA_CMD_LINE_ID);
+    opal_argv_append(&argc, &argv, "ess");
+    opal_argv_append(&argc, &argv, "hnp");
+
+    /* direct the selection of the pmix component */
+    opal_argv_append(&argc, &argv, "-"OPAL_MCA_CMD_LINE_ID);
+    opal_argv_append(&argc, &argv, "pmix");
+    opal_argv_append(&argc, &argv, "^s1,s2,cray,isolated");
 
     /* Fork off the child */
     orte_process_info.hnp_pid = fork();

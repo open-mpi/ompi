@@ -38,16 +38,6 @@
 
 BEGIN_C_DECLS
 
-/* internally used object for transferring data
- * to/from the server and for storing in the
- * hash tables */
-typedef struct {
-    pmix_list_item_t super;
-    char *key;
-    pmix_value_t *value;
-} pmix_kval_t;
-PMIX_CLASS_DECLARATION(pmix_kval_t);
-
 /* A non-API function for something that happens in a number
  * of places throughout the code base - transferring a value to
  * another pmix_value_t structure

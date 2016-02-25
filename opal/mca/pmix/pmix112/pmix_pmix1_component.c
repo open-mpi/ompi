@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2015 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -95,7 +95,7 @@ static int pmix112_component_query(mca_base_module_t **module, int *priority)
     if (NULL != (t = getenv("PMIX_SERVER_URI")) ||
         NULL != (id = getenv("PMIX_ID"))) {
         /* if PMIx is present, then we are a client and need to use it */
-        *priority = 100;
+        *priority = 80;
     } else {
         /* we could be a server, so we still need to be considered */
         *priority = 5;

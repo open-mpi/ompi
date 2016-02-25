@@ -41,7 +41,7 @@ AC_DEFUN([MCA_opal_pmix_pmix120_CONFIG],[
            opal_pmix_pmix120_save_LDFLAGS=$LDFLAGS
            opal_pmix_pmix120_save_LIBS=$LIBS
 
-           opal_pmix_pmix120_args="--enable-embedded-mode --with-pmix-symbol-prefix=opal_pmix_pmix120_ --with-libevent-header=\\\"opal/mca/event/$opal_event_base_include\\\" --with-hwloc-header=\\\"$opal_hwloc_base_include\\\""
+           opal_pmix_pmix120_args="--enable-embedded-mode --with-pmix-symbol-prefix=opal_pmix_pmix120_ --disable-visibility --with-libevent-header=\\\"opal/mca/event/$opal_event_base_include\\\" --with-hwloc-header=\\\"$opal_hwloc_base_include\\\""
            AS_IF([test "$enable_debug" = "yes"],
                  [opal_pmix_pmix120_args="--enable-debug $opal_pmix_pmix120_args"
                   CFLAGS="$OPAL_CFLAGS_BEFORE_PICKY $OPAL_VISIBILITY_CFLAGS -g"],

@@ -66,6 +66,9 @@ int orte_ess_base_proc_binding(void)
                 goto error;
             }
         }
+    } else if (NULL != getenv(OPAL_MCA_PREFIX"orte_externally_bound")) {
+        orte_proc_is_bound = true;
+        /* the topology system will pickup the binding pattern */
     }
 
     /* see if we were bound when launched */

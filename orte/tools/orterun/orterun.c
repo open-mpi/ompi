@@ -822,6 +822,8 @@ int orterun(int argc, char *argv[])
      * orterun
      */
     orte_launch_environ = opal_argv_copy(environ);
+    opal_unsetenv(OPAL_MCA_PREFIX"ess", &orte_launch_environ);
+    opal_unsetenv(OPAL_MCA_PREFIX"pmix", &orte_launch_environ);
 
     /* Intialize our Open RTE environment
      * Set the flag telling orte_init that I am NOT a
@@ -1106,6 +1108,9 @@ int orterun(int argc, char *argv[])
     /* cleanup and leave */
     orte_finalize();
 
+    if (NULL != orte_launch_environ) {
+        opal_argv_free(orte_launch_environ);
+    }
     if (orte_debug_flag) {
         fprintf(stderr, "exiting with status %d\n", orte_exit_status);
     }

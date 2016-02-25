@@ -14,6 +14,8 @@
 
 #include "opal/util/show_help.h"
 
+#include "orte/runtime/orte_globals.h"
+
 #include "orte/mca/schizo/schizo.h"
 #include "schizo_singularity.h"
 
@@ -38,6 +40,12 @@ orte_schizo_base_component_t mca_schizo_singularity_component = {
 
 static int component_query(mca_base_module_t **module, int *priority)
 {
+    /* if we are an app, ignore us */
+    if (ORTE_PROC_IS_APP) {
+        *module = NULL;
+        *priority = 0;
+        return ORTE_ERROR;
+    }
     *module = (mca_base_module_t*)&orte_schizo_singularity_module;
     *priority = 5;
     return ORTE_SUCCESS;

@@ -13,7 +13,7 @@
  *                         reserved.
  * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007-2008 Sun Microsystems, Inc.  All rights reserved.
- * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
  * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  *
@@ -45,6 +45,7 @@
 #include "orte/mca/ess/base/base.h"
 #include "orte/mca/ess/ess.h"
 #include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/schizo/base/base.h"
 #include "orte/util/listener.h"
 #include "orte/util/name_fns.h"
 #include "orte/util/proc_info.h"
@@ -200,6 +201,22 @@ int orte_init(int* pargc, char*** pargv, orte_proc_type_t flags)
     if (ORTE_PROC_IS_DAEMON || ORTE_PROC_IS_HNP) {
         /* let the pmix server register params */
         pmix_server_register_params();
+    }
+
+    /* open the SCHIZO framework as everyone needs it, and the
+     * ess will use it to help select its component */
+    if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_schizo_base_framework, 0))) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_schizo_base_open";
+        goto error;
+    }
+    if (ORTE_SUCCESS != (ret = orte_schizo_base_select())) {
+        error = "orte_schizo_base_select";
+        goto error;
+    }
+    /* if we are an app, let SCHIZO help us determine our environment */
+    if (ORTE_PROC_IS_APP) {
+        (void)orte_schizo.check_launch_environment();
     }
 
     /* open the ESS and select the correct module for this environment */

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2015 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -97,12 +97,12 @@ static int pmix120_component_query(mca_base_module_t **module, int *priority)
     if (NULL != (t = getenv("PMIX_SERVER_URI")) ||
         NULL != (id = getenv("PMIX_ID"))) {
         /* if PMIx is present, then we are a client and need to use it,
-         * but only if we are requested */
-        *priority = 5;
+         * and we are now the default */
+        *priority = 100;
     } else {
         /* we could be a server, so we still need to be considered,
-         * but only if requested */
-        *priority = 2;
+         * and we are now the default */
+        *priority = 15;
     }
     *module = (mca_base_module_t *)&opal_pmix_pmix120_module;
     return OPAL_SUCCESS;
