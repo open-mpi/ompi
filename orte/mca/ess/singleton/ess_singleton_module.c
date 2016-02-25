@@ -158,7 +158,7 @@ static int rte_init(void)
     } else if (NULL != getenv("SINGULARITY_CONTAINER")) {
          /* mark that we are in a container */
         opal_setenv("OPAL_PROC_CONTAINER", "1", true, &environ);
-    } else {
+    } else if (NULL != getenv("OPAL_ISOLATED")) {
         /* spawn our very own HNP to support us */
         if (ORTE_SUCCESS != (rc = fork_hnp())) {
             ORTE_ERROR_LOG(rc);
