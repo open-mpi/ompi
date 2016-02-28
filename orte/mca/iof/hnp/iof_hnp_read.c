@@ -133,6 +133,10 @@ void orte_iof_hnp_read_local_handler(int fd, short event, void *cbdata)
         /* The event has fired, so it's no longer active until we
            re-add it */
         rev->active = false;
+        if (NULL == proct->stdinev) {
+            /* nothing further to do */
+            return;
+        }
 
         /* if job termination has been ordered, just ignore the
          * data and delete the read event
@@ -185,7 +189,7 @@ void orte_iof_hnp_read_local_handler(int fd, short event, void *cbdata)
         /* if num_bytes was zero, or we read the last piece of the file, then we need to terminate the event */
         if (0 == numbytes) {
             /* this will also close our stdin file descriptor */
-            OBJ_RELEASE(rev);
+            OBJ_RELEASE(proct->stdinev);
         } else {
             /* if we are looking at a tty, then we just go ahead and restart the
              * read event assuming we are not backgrounded
