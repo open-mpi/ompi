@@ -14,6 +14,8 @@
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Mellanox Technologies. All rights reserved.
  *
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -223,7 +225,7 @@ mca_btl_openib_proc_t* mca_btl_openib_proc_get_locked(opal_proc_t* proc)
         size = modex_message_size;
         memcpy(&(ib_proc->proc_ports[i].pm_port_info), offset, size);
 #if !defined(WORDS_BIGENDIAN) && OPAL_ENABLE_HETEROGENEOUS_SUPPORT
-        MCA_BTL_OPENIB_MODEX_MSG_NTOH(module_proc->proc_ports[i].pm_port_info);
+        MCA_BTL_OPENIB_MODEX_MSG_NTOH(ib_proc->proc_ports[i].pm_port_info);
 #endif
         offset += size;
         BTL_VERBOSE(("unpacked btl %d: modex message, offset now %d",
