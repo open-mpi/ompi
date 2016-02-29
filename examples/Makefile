@@ -10,7 +10,7 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2006-2007 Sun Microsystems, Inc.  All rights reserved.
-# Copyright (c) 2011-2014 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2011-2016 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2012      Los Alamos National Security, Inc.  All rights reserved.
 # Copyright (c) 2013      Mellanox Technologies, Inc.  All rights reserved.
 # $COPYRIGHT$
@@ -90,7 +90,7 @@ mpi:
 	@ if ompi_info --parsable | grep bindings:mpif.h:yes >/dev/null; then \
 	    $(MAKE) hello_mpifh ring_mpifh; \
 	fi
-	@ if ompi_info --parsable | grep bindings:use_mpi:yes >/dev/null; then \
+	@ if ompi_info --parsable | grep bindings:use_mpi:\"yes >/dev/null; then \
 	    $(MAKE) hello_usempi ring_usempi; \
 	fi
 	@ if ompi_info --parsable | grep bindings:use_mpi_f08:yes >/dev/null; then \
