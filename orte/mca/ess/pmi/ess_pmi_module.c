@@ -97,6 +97,18 @@ static int rte_init(void)
         goto error;
     }
 
+    /* open and setup pmix */
+    if (OPAL_SUCCESS != (ret = mca_base_framework_open(&opal_pmix_base_framework, 0))) {
+        ORTE_ERROR_LOG(ret);
+        /* we cannot run */
+        error = "pmix init";
+        goto error;
+    }
+    if (OPAL_SUCCESS != (ret = opal_pmix_base_select())) {
+        /* we cannot run */
+        error = "pmix init";
+        goto error;
+    }
     /* initialize the selected module */
     if (!opal_pmix.initialized() && (OPAL_SUCCESS != (ret = opal_pmix.init()))) {
         /* we cannot run */

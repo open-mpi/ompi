@@ -62,6 +62,7 @@ static const char pmix_version_string[] = PMIX_VERSION;
 #include "src/util/progress_threads.h"
 #include "src/usock/usock.h"
 #include "src/sec/pmix_sec.h"
+#include "src/include/pmix_globals.h"
 
 #include "pmix_client_ops.h"
 
@@ -279,6 +280,7 @@ int PMIx_Init(pmix_proc_t *proc)
     }
 
     /* default to our internal errhandler */
+    errhandler_ref = 0;
     pmix_add_errhandler(myerrhandler, NULL, 0, &errhandler_ref);
     /* see if debug is requested */
     if (NULL != (evar = getenv("PMIX_DEBUG"))) {
@@ -631,7 +633,7 @@ pmix_status_t PMIx_Put(pmix_scope_t scope, const char key[], pmix_value_t *val)
     cb->value = val;
 
     /* pass this into the event library for thread protection */
-    PMIX_THREAD_SHIFT(cb, _putfn);
+    PMIX_THREADSHIFT(cb, _putfn);
 
     /* wait for the result */
     PMIX_WAIT_FOR_COMPLETION(cb->active);
@@ -715,7 +717,7 @@ pmix_status_t PMIx_Commit(void)
     cb->active = true;
 
     /* pass this into the event library for thread protection */
-    PMIX_THREAD_SHIFT(cb, _commitfn);
+    PMIX_THREADSHIFT(cb, _commitfn);
 
     /* wait for the result */
     PMIX_WAIT_FOR_COMPLETION(cb->active);
@@ -792,7 +794,7 @@ pmix_status_t PMIx_Resolve_peers(const char *nodename, const char *nspace,
     }
 
     /* pass this into the event library for thread protection */
-    PMIX_THREAD_SHIFT(cb, _peersfn);
+    PMIX_THREADSHIFT(cb, _peersfn);
 
     /* wait for the result */
     PMIX_WAIT_FOR_COMPLETION(cb->active);
@@ -850,7 +852,7 @@ pmix_status_t PMIx_Resolve_nodes(const char *nspace, char **nodelist)
     }
 
     /* pass this into the event library for thread protection */
-    PMIX_THREAD_SHIFT(cb, _nodesfn);
+    PMIX_THREADSHIFT(cb, _nodesfn);
 
     /* wait for the result */
     PMIX_WAIT_FOR_COMPLETION(cb->active);
@@ -1297,51 +1299,50 @@ static void regevents_cbfunc(struct pmix_peer_t *peer, pmix_usock_hdr_t *hdr,
     PMIX_RELEASE(cb);
 }
 
-void pmix_client_register_errhandler(pmix_info_t info[], size_t ninfo,
-                                     pmix_notification_fn_t errhandler,
-                                     pmix_errhandler_reg_cbfunc_t cbfunc,
-                                     void *cbdata)
+static void reg_errhandler(int sd, short args, void *cbdata)
 {
     /* add err handler, process info keys and register for events and call the callback */
+    pmix_shift_caddy_t *cd = (pmix_shift_caddy_t*)cbdata;
     int index = 0;
     pmix_buffer_t *msg;
     pmix_cb_t *cb;
     pmix_status_t rc;
 
     pmix_output_verbose(2, pmix_globals.debug_output,
-                        "pmix: register errhandler with %d infos", (int)ninfo);
+                        "pmix: register errhandler with %d infos", (int)cd->ninfo);
 
     /* check if this handler is already registered if so return error */
-    if (PMIX_EXISTS == (rc = pmix_lookup_errhandler(info, ninfo, &index))) {
+    if (PMIX_EXISTS == (rc = pmix_lookup_errhandler(cd->info, cd->ninfo, &index))) {
         /* complete request with error status and return its original reference */
         pmix_output_verbose(2, pmix_globals.debug_output,
                             "pmix: register errhandler - already registered");
-        cbfunc(PMIX_EXISTS, index, cbdata);
+        cd->cbfunc.errregcbfn(PMIX_EXISTS, index, cd->cbdata);
     } else if (PMIX_ERR_GRP_FOUND == rc) {
         /* just acknowledge it */
-        cbfunc(PMIX_SUCCESS, index, cbdata);
-    } else if (PMIX_ERR_DFLT_FOUND == rc && NULL == info) {
+        cd->cbfunc.errregcbfn(PMIX_SUCCESS, index, cd->cbdata);
+    } else if (PMIX_ERR_DFLT_FOUND == rc && NULL == cd->info) {
         /* if they are registering a default errhandler, then
          * overwrite the existing one with it - the index will
          * contain its location */
-        pmix_add_errhandler(errhandler, info, ninfo, &index);
+        rc = pmix_add_errhandler(cd->err, cd->info, cd->ninfo, &index);
+        cd->cbfunc.errregcbfn(rc, index, cd->cbdata);
     } else {
         /* need to add this errhandler */
-        if (PMIX_SUCCESS != (rc = pmix_add_errhandler(errhandler, info, ninfo, &index))) {
+        if (PMIX_SUCCESS != (rc = pmix_add_errhandler(cd->err, cd->info, cd->ninfo, &index))) {
             pmix_output_verbose(2, pmix_globals.debug_output,
                         "pmix: register errhandler - error status rc=%d", rc);
             /* complete request with error*/
-            cbfunc(rc, index, cbdata);
+            cd->cbfunc.errregcbfn(rc, index, cd->cbdata);
         } else {
             pmix_output_verbose(10, pmix_globals.debug_output,
-                        "pmix: register errhandler - added index=%d, ninfo =%lu", index, ninfo);
+                        "pmix: register errhandler - added index=%d, ninfo =%lu", index, cd->ninfo);
             msg = PMIX_NEW(pmix_buffer_t);
-            if (PMIX_SUCCESS != (rc = pack_regevents(msg, PMIX_REGEVENTS_CMD, info, ninfo))) {
+            if (PMIX_SUCCESS != (rc = pack_regevents(msg, PMIX_REGEVENTS_CMD, cd->info, cd->ninfo))) {
                 pmix_output_verbose(2, pmix_globals.debug_output,
                             "pmix: register errhandler - pack events failed status=%d", rc);
                 PMIX_RELEASE(msg);
                 pmix_remove_errhandler(index);
-                cbfunc(PMIX_ERR_PACK_FAILURE, -1, cbdata);
+                cd->cbfunc.errregcbfn(PMIX_ERR_PACK_FAILURE, -1, cd->cbdata);
             } else {
                /* create a callback object as we need to pass it to the
                 * recv routine so we know which callback to use when
@@ -1349,8 +1350,8 @@ void pmix_client_register_errhandler(pmix_info_t info[], size_t ninfo,
                 pmix_output_verbose(10, pmix_globals.debug_output,
                             "pmix: register errhandler - pack events success status=%d", rc);
                 cb = PMIX_NEW(pmix_cb_t);
-                cb->errreg_cbfunc = cbfunc;
-                cb->cbdata = cbdata;
+                cb->errreg_cbfunc = cd->cbfunc.errregcbfn;
+                cb->cbdata = cd->cbdata;
                 cb->errhandler_ref = index;
                 /* push the message into our event base to send to the server */
                 PMIX_ACTIVATE_SEND_RECV(&pmix_client_globals.myserver, msg, regevents_cbfunc, cb);
@@ -1358,6 +1359,28 @@ void pmix_client_register_errhandler(pmix_info_t info[], size_t ninfo,
         }
     }
 }
+
+void pmix_client_register_errhandler(pmix_info_t info[], size_t ninfo,
+                                     pmix_notification_fn_t errhandler,
+                                     pmix_errhandler_reg_cbfunc_t cbfunc,
+                                     void *cbdata)
+{
+    pmix_shift_caddy_t *cd;
+
+    /* need to thread shift this request */
+    cd = PMIX_NEW(pmix_shift_caddy_t);
+    cd->info = info;
+    cd->ninfo = ninfo;
+    cd->err = errhandler;
+    cd->cbfunc.errregcbfn = cbfunc;
+    cd->cbdata = cbdata;
+
+    pmix_output_verbose(2, pmix_globals.debug_output,
+                        "pmix_client_register_errhandler shifting to server thread");
+
+    PMIX_THREADSHIFT(cd, reg_errhandler);
+}
+
 
 static void deregevents_cbfunc(struct pmix_peer_t *peer, pmix_usock_hdr_t *hdr,
                                pmix_buffer_t *buf, void *cbdata)
@@ -1388,40 +1411,54 @@ static void deregevents_cbfunc(struct pmix_peer_t *peer, pmix_usock_hdr_t *hdr,
     PMIX_RELEASE(cb);
 }
 
-void pmix_client_deregister_errhandler(int errhandler_ref,
-                                       pmix_op_cbfunc_t cbfunc,
-                                       void *cbdata)
+static void dereg_errhandler(int sd, short args, void *cbdata)
 {
+    pmix_shift_caddy_t *cd = (pmix_shift_caddy_t*)cbdata;
     pmix_status_t rc;
     pmix_error_reg_info_t *errreg;
     pmix_buffer_t *msg;
     pmix_cb_t *cb;
 
     pmix_output_verbose(2, pmix_globals.debug_output,
-                        "pmix_client_deregister_errhandler errhandler_ref = %d", errhandler_ref);
+                        "pmix_client_deregister_errhandler errhandler_ref = %d", cd->ref);
 
-    errreg = (pmix_error_reg_info_t *)pmix_pointer_array_get_item(&pmix_globals.errregs, errhandler_ref);
+    errreg = (pmix_error_reg_info_t *)pmix_pointer_array_get_item(&pmix_globals.errregs, cd->ref);
     if (NULL != errreg ) {
         msg = PMIX_NEW(pmix_buffer_t);
         if (PMIX_SUCCESS != (rc = pack_regevents(msg, PMIX_DEREGEVENTS_CMD, errreg->info, errreg->ninfo))) {
             PMIX_RELEASE(msg);
-            pmix_remove_errhandler(errhandler_ref);
-            cbfunc(PMIX_ERR_PACK_FAILURE, cbdata);
+            pmix_remove_errhandler(cd->ref);
+            cd->cbfunc.opcbfn(PMIX_ERR_PACK_FAILURE, cd->cbdata);
         } else {
             /* create a callback object as we need to pass it to the
              * recv routine so we know which callback to use when
              * the server acks/nacks the register events request*/
             cb = PMIX_NEW(pmix_cb_t);
-            cb->op_cbfunc = cbfunc;
-            cb->cbdata = cbdata;
-            cb->errhandler_ref = errhandler_ref;
+            cb->op_cbfunc = cd->cbfunc.opcbfn;
+            cb->cbdata = cd->cbdata;
+            cb->errhandler_ref = cd->ref;
             /* push the message into our event base to send to the server */
             PMIX_ACTIVATE_SEND_RECV(&pmix_client_globals.myserver, msg, deregevents_cbfunc, cb);
         }
     } else {
-        cbfunc(PMIX_ERR_NOT_FOUND, cbdata);
+        cd->cbfunc.opcbfn(PMIX_ERR_NOT_FOUND, cd->cbdata);
     }
+    OBJ_RELEASE(cd);
 }
+
+void pmix_client_deregister_errhandler(int errhandler_ref,
+                                       pmix_op_cbfunc_t cbfunc,
+                                       void *cbdata)
+{
+    pmix_shift_caddy_t *cd;
+
+    /* need to thread shift this request */
+    cd = PMIX_NEW(pmix_shift_caddy_t);
+    cd->cbfunc.opcbfn = cbfunc;
+    cd->cbdata = cbdata;
+    cd->ref = errhandler_ref;
+    PMIX_THREADSHIFT(cd, dereg_errhandler);
+ }
 
 static void notifyerror_cbfunc(struct pmix_peer_t *peer, pmix_usock_hdr_t *hdr,
                                pmix_buffer_t *buf, void *cbdata)

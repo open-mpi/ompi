@@ -63,10 +63,10 @@ static int setup_child(orte_job_t *jobdat,
                        orte_app_context_t *app);
 
 orte_schizo_base_module_t orte_schizo_ompi_module = {
-    parse_cli,
-    parse_env,
-    setup_fork,
-    setup_child
+    .parse_cli = parse_cli,
+    .parse_env = parse_env,
+    .setup_fork = setup_fork,
+    .setup_child = setup_child
 };
 
 static int parse_cli(char **personality,

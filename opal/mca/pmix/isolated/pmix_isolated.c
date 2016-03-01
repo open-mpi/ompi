@@ -113,26 +113,26 @@ const opal_pmix_base_module_t opal_pmix_isolated_module = {
     .register_jobid = isolated_register_jobid
 };
 
-static int pmix_init_count = 0;
-static opal_process_name_t pmix_pname;
+static int isolated_init_count = 0;
+static opal_process_name_t isolated_pname;
 
 static int isolated_init(void)
 {
     int rc;
     opal_value_t kv;
 
-    ++pmix_init_count;
+    ++isolated_init_count;
 
     /* store our name in the opal_proc_t so that
      * debug messages will make sense - an upper
      * layer will eventually overwrite it, but that
      * won't do any harm */
-    pmix_pname.jobid = 1;
-    pmix_pname.vpid = 0;
-    opal_proc_set_name(&pmix_pname);
+    isolated_pname.jobid = 1;
+    isolated_pname.vpid = 0;
+    opal_proc_set_name(&isolated_pname);
     opal_output_verbose(10, opal_pmix_base_framework.framework_output,
                         "%s pmix:isolated: assigned tmp name %d %d",
-                        OPAL_NAME_PRINT(pmix_pname),pmix_pname.jobid,pmix_pname.vpid);
+                        OPAL_NAME_PRINT(isolated_pname),isolated_pname.jobid,isolated_pname.vpid);
 
     // setup hash table
     opal_pmix_base_hash_init();
@@ -248,11 +248,11 @@ err_exit:
 
 static int isolated_fini(void)
 {
-    if (0 == pmix_init_count) {
+    if (0 == isolated_init_count) {
         return OPAL_SUCCESS;
     }
 
-    if (0 != --pmix_init_count) {
+    if (0 != --isolated_init_count) {
         return OPAL_SUCCESS;
     }
     opal_pmix_base_hash_finalize();
@@ -261,7 +261,7 @@ static int isolated_fini(void)
 
 static int isolated_initialized(void)
 {
-    if (0 < pmix_init_count) {
+    if (0 < isolated_init_count) {
         return 1;
     }
     return 0;
@@ -323,11 +323,11 @@ static int isolated_put(opal_pmix_scope_t scope,
                         "%s pmix:isolated isolated_put key %s scope %d\n",
                          OPAL_NAME_PRINT(OPAL_PROC_MY_NAME), kv->key, scope);
 
-    if (!pmix_init_count) {
+    if (!isolated_init_count) {
         return OPAL_ERROR;
     }
 
-    rc = opal_pmix_base_store(&pmix_pname, kv);
+    rc = opal_pmix_base_store(&isolated_pname, kv);
 
     return rc;
 }

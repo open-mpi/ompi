@@ -164,7 +164,7 @@ pmix_status_t PMIx_Get_nb(const pmix_proc_t *proc, const char *key,
     cb->ninfo = ninfo;
     cb->value_cbfunc = cbfunc;
     cb->cbdata = cbdata;
-    PMIX_THREAD_SHIFT(cb, _getnbfn);
+    PMIX_THREADSHIFT(cb, _getnbfn);
 
     return PMIX_SUCCESS;
 }

@@ -19,6 +19,24 @@
 #include "orte/util/name_fns.h"
 #include "orte/mca/schizo/base/base.h"
 
+const char* orte_schizo_base_print_env(orte_schizo_launch_environ_t env)
+{
+    switch(env) {
+        case ORTE_SCHIZO_UNDETERMINED:
+            return "UNDETERMINED";
+        case ORTE_SCHIZO_NATIVE_LAUNCHED:
+            return "NATIVE_LAUNCHED";
+        case ORTE_SCHIZO_UNMANAGED_SINGLETON:
+            return "UNMANAGED_SINGLETON";
+        case ORTE_SCHIZO_DIRECT_LAUNCHED:
+            return "DIRECT_LAUNCHED";
+        case ORTE_SCHIZO_MANAGED_SINGLETON:
+            return "MANAGED_SINGLETON";
+        default:
+            return "INVALID_CODE";
+    }
+}
+
 int orte_schizo_base_parse_cli(char **personality,
                                int argc, int start, char **argv)
 {
@@ -97,4 +115,31 @@ int orte_schizo_base_setup_child(orte_job_t *jdata,
         }
     }
     return ORTE_SUCCESS;
+}
+
+orte_schizo_launch_environ_t orte_schizo_base_check_launch_environment(void)
+{
+    orte_schizo_launch_environ_t rc;
+    orte_schizo_base_active_module_t *mod;
+
+    OPAL_LIST_FOREACH(mod, &orte_schizo_base.active_modules, orte_schizo_base_active_module_t) {
+        if (NULL != mod->module->check_launch_environment) {
+            rc = mod->module->check_launch_environment();
+            if (ORTE_SCHIZO_UNDETERMINED != rc) {
+                return rc;
+            }
+        }
+    }
+    return ORTE_SCHIZO_UNDETERMINED;
+}
+
+void orte_schizo_base_finalize(void)
+{
+    orte_schizo_base_active_module_t *mod;
+
+    OPAL_LIST_FOREACH(mod, &orte_schizo_base.active_modules, orte_schizo_base_active_module_t) {
+        if (NULL != mod->module->finalize) {
+            mod->module->finalize();
+        }
+    }
 }

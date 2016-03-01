@@ -553,6 +553,7 @@ int orte_daemon(int argc, char *argv[])
         app->app = strdup("singleton");
         app->num_procs = 1;
         opal_pointer_array_add(jdata->apps, app);
+        jdata->num_apps = 1;
 
         /* setup a proc object for the singleton - since we
          * -must- be the HNP, and therefore we stored our

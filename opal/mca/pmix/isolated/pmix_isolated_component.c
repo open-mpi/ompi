@@ -79,16 +79,8 @@ static int isolated_close(void)
 
 static int isolated_component_query(mca_base_module_t **module, int *priority)
 {
-    /* if we are in a Singularity container, then we cannot spawn an
-     * HNP and are truly on our own and cannot call comm_spawn or
-     * any of its friends */
-    if (NULL != getenv("SINGULARITY_CONTAINER")) {
-        *priority = 100;
-        *module = (mca_base_module_t *)&opal_pmix_isolated_module;
-        return OPAL_SUCCESS;
-    }
-    /* otherwise, ignore us */
+    /* ignore us unless requested */
     *priority = 0;
-    *module = NULL;
-    return OPAL_ERR_TAKE_NEXT_OPTION;
+    *module = (mca_base_module_t *)&opal_pmix_isolated_module;
+    return OPAL_SUCCESS;
 }

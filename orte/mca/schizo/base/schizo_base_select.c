@@ -100,7 +100,7 @@ int orte_schizo_base_select(void)
     }
 
     if (4 < opal_output_get_verbosity(orte_schizo_base_framework.framework_output)) {
-        opal_output(0, "%s: Final schizo priorities", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+        opal_output(0, "Final schizo priorities");
         /* show the prioritized list */
         OPAL_LIST_FOREACH(mod, &orte_schizo_base.active_modules, orte_schizo_base_active_module_t) {
             opal_output(0, "\tSchizo: %s Priority: %d", mod->component->mca_component_name, mod->pri);

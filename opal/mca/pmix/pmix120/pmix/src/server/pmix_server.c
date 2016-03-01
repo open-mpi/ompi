@@ -80,63 +80,6 @@ PMIX_CLASS_INSTANCE(pmix_usock_queue_t,
                    pmix_object_t,
                    NULL, NULL);
 
-/* define a caddy for thread-shifting operations when
- * the host server executes a callback to us */
- typedef struct {
-    pmix_object_t super;
-    pmix_event_t ev;
-    volatile bool active;
-    pmix_status_t status;
-    const char *nspace;
-    int rank;
-    const char *data;
-    size_t ndata;
-    const char *key;
-    pmix_info_t *info;
-    size_t ninfo;
-    pmix_notification_fn_t err;
-    pmix_kval_t *kv;
-    pmix_value_t *vptr;
-    pmix_server_caddy_t *cd;
-    pmix_server_trkr_t *tracker;
-    union {
-       pmix_release_cbfunc_t relfn;
-       pmix_errhandler_reg_cbfunc_t errregcbfn;
-       pmix_op_cbfunc_t opcbfn;
-    }cbfunc;
-    void *cbdata;
-    int ref;
- } pmix_shift_caddy_t;
-static void scon(pmix_shift_caddy_t *p)
-{
-    p->active = false;
-    p->kv = NULL;
-    p->cbfunc.relfn = NULL;
-    p->cbfunc.errregcbfn = NULL;
-    p->cbfunc.opcbfn = NULL;
-    p->cbdata = NULL;
-}
-static void scdes(pmix_shift_caddy_t *p)
-{
-    if (NULL != p->kv) {
-        PMIX_RELEASE(p->kv);
-    }
-}
-PMIX_CLASS_INSTANCE(pmix_shift_caddy_t,
-                    pmix_object_t,
-                    scon, scdes);
-
-
- #define PMIX_THREADSHIFT(r, c)                       \
- do {                                                 \
-    (r)->active = true;                               \
-    event_assign(&((r)->ev), pmix_globals.evbase,     \
-                 -1, EV_WRITE, (c), (r));             \
-    event_priority_set(&((r)->ev), 0);                \
-    event_active(&((r)->ev), EV_WRITE, 1);            \
-} while(0);
-
-
 /* queue a message to be sent to one of our procs - must
  * provide the following params:
  *
@@ -1336,12 +1279,12 @@ static void dereg_errhandler(int sd, short args, void *cbdata)
     if (NULL != cd->cbfunc.opcbfn) {
         cd->cbfunc.opcbfn(rc, cd->cbdata);
     }
-    cd->active = false;
+    OBJ_RELEASE(cd);
 }
 
 void pmix_server_deregister_errhandler(int errhandler_ref,
-                                pmix_op_cbfunc_t cbfunc,
-                                void *cbdata)
+                                       pmix_op_cbfunc_t cbfunc,
+                                       void *cbdata)
 {
     pmix_shift_caddy_t *cd;
 
@@ -1351,9 +1294,6 @@ void pmix_server_deregister_errhandler(int errhandler_ref,
     cd->cbdata = cbdata;
     cd->ref = errhandler_ref;
     PMIX_THREADSHIFT(cd, dereg_errhandler);
-
-    PMIX_WAIT_FOR_COMPLETION(cd->active);
-    PMIX_RELEASE(cd);
  }
 
 static void _store_internal(int sd, short args, void *cbdata)
