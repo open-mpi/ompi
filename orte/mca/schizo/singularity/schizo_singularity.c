@@ -17,6 +17,7 @@
 #endif
 #include <ctype.h>
 
+#include "opal/util/argv.h"
 #include "opal/util/basename.h"
 #include "opal/util/opal_environ.h"
 
