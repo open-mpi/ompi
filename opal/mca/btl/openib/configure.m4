@@ -39,7 +39,7 @@ AC_DEFUN([MCA_opal_btl_openib_POST_CONFIG], [
 AC_DEFUN([MCA_opal_btl_openib_CONFIG],[
     AC_CONFIG_FILES([opal/mca/btl/openib/Makefile])
 
-    OPAL_VAR_SCOPE_PUSH([cpcs LDFLAGS_save LIBS_save])
+    OPAL_VAR_SCOPE_PUSH([cpcs btl_openib_LDFLAGS_save btl_openib_LIBS_save])
     cpcs="oob"
 
     OPAL_CHECK_OPENFABRICS([btl_openib],
@@ -50,13 +50,13 @@ AC_DEFUN([MCA_opal_btl_openib_CONFIG],[
 
     AS_IF([test "$btl_openib_happy" = "yes"],
           [# With the new openib flags, look for ibv_fork_init
-           LDFLAGS_save="$LDFLAGS"
-           LIBS_save="$LIBS"
+           btl_openib_LDFLAGS_save="$LDFLAGS"
+           btl_openib_LIBS_save="$LIBS"
            LDFLAGS="$LDFLAGS $btl_openib_LDFLAGS"
            LIBS="$LIBS $btl_openib_LIBS"
            AC_CHECK_FUNCS([ibv_fork_init])
-           LDFLAGS="$LDFLAGS_save"
-           LIBS="$LIBS_save"
+           LDFLAGS="$btl_openib_LDFLAGS_save"
+           LIBS="$btl_openib_LIBS_save"
            $1],
           [$2])
 
