@@ -10,7 +10,7 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2006-2007 Sun Microsystems, Inc.  All rights reserved.
-# Copyright (c) 2011-2014 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2011-2016 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2012      Los Alamos National Security, Inc.  All rights reserved.
 # Copyright (c) 2013      Mellanox Technologies, Inc.  All rights reserved.
 # $COPYRIGHT$
@@ -84,19 +84,19 @@ all: hello_c ring_c connectivity_c
 # MPI examples
 
 mpi:
-	@ if ompi_info --parsable | grep bindings:cxx:yes >/dev/null; then \
+	@ if ompi_info --parsable | grep -q bindings:cxx:yes >/dev/null; then \
 	    $(MAKE) hello_cxx ring_cxx; \
 	fi
-	@ if ompi_info --parsable | grep bindings:mpif.h:yes >/dev/null; then \
+	@ if ompi_info --parsable | grep -q bindings:mpif.h:yes >/dev/null; then \
 	    $(MAKE) hello_mpifh ring_mpifh; \
 	fi
-	@ if ompi_info --parsable | grep bindings:use_mpi:yes >/dev/null; then \
+	@ if ompi_info --parsable | egrep -q bindings:use_mpi:\"\?yes >/dev/null; then \
 	    $(MAKE) hello_usempi ring_usempi; \
 	fi
-	@ if ompi_info --parsable | grep bindings:use_mpi_f08:yes >/dev/null; then \
+	@ if ompi_info --parsable | grep -q bindings:use_mpi_f08:yes >/dev/null; then \
 	    $(MAKE) hello_usempif08 ring_usempif08; \
 	fi
-	@ if ompi_info --parsable | grep bindings:java:yes >/dev/null; then \
+	@ if ompi_info --parsable | grep -q bindings:java:yes >/dev/null; then \
 	    $(MAKE) Hello.class Ring.class; \
 	fi
 
