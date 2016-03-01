@@ -10,6 +10,7 @@
 //                         University of Stuttgart.  All rights reserved.
 // Copyright (c) 2004-2005 The Regents of the University of California.
 //                         All rights reserved.
+// Copyright (c) 2016 Cisco Systems, Inc.  All rights reserved.
 // $COPYRIGHT$
 //
 // Additional copyrights may follow
@@ -32,9 +33,9 @@ MPI::Group::Get_size() const
 inline int
 MPI::Group::Get_rank() const
 {
-  int rank;
-  (void)MPI_Group_rank(mpi_group, &rank);
-  return rank;
+  int myrank;
+  (void)MPI_Group_rank(mpi_group, &myrank);
+  return myrank;
 }
 
 inline void

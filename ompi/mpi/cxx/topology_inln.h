@@ -12,6 +12,7 @@
 //                         All rights reserved.
 // Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
 // Copyright (c) 2011      FUJITSU LIMITED.  All rights reserved.
+// Copyright (c) 2016 Cisco Systems, Inc.  All rights reserved.
 // $COPYRIGHT$
 //
 // Additional copyrights may follow
@@ -81,9 +82,9 @@ MPI::Cartcomm::Get_topo(int maxdims, int dims[], bool periods[],
 inline int
 MPI::Cartcomm::Get_cart_rank(const int coords[]) const
 {
-  int rank;
-  (void)MPI_Cart_rank(mpi_comm, const_cast<int *>(coords), &rank);
-  return rank;
+  int myrank;
+  (void)MPI_Cart_rank(mpi_comm, const_cast<int *>(coords), &myrank);
+  return myrank;
 }
 
 inline void
