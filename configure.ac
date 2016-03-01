@@ -1404,3 +1404,5 @@ m4_ifdef([project_ompi], [OMPI_CONFIG_FILES])
 m4_ifdef([project_oshmem], [OSHMEM_CONFIG_FILES])
 
 AC_OUTPUT
+
+OMPI_SUMMARY_PRINT

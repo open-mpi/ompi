@@ -11,6 +11,8 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2006-2009 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2016      Los Alamos National Security, LLC. All rights
+#                         reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -26,26 +28,30 @@
 # ORTE_CHECK_GRIDENGINE(prefix, [action-if-found], [action-if-not-found])
 # --------------------------------------------------------
 AC_DEFUN([ORTE_CHECK_GRIDENGINE],[
-    AC_ARG_WITH([sge],
-                [AC_HELP_STRING([--with-sge],
-                                [Build SGE or Grid Engine support (default: no)])])
+    if test -z "$orte_gridengine_build" ; then
+	AC_ARG_WITH([sge],
+                    [AC_HELP_STRING([--with-sge],
+                                    [Build SGE or Grid Engine support (default: no)])])
 
-    AC_MSG_CHECKING([if user requested SGE build])
-    orte_gridengine_build=
-    AS_IF([test "$with_sge" = "yes"],
-          [AC_MSG_RESULT([yes])
-           orte_gridengine_build=yes],
-          [AS_IF([test "$with_sge" = "no"],
-                 [AC_MSG_RESULT([no])],
-                 [AC_MSG_RESULT([not specified; checking environment])
-                  AC_CHECK_PROG([QRSH], [qrsh], [qrsh])
-                  AS_IF([test "$QRSH" != ""],
-                        [orte_gridengine_build=yes],
-                        [AC_MSG_CHECKING([for SGE_ROOT environment variable])
-                         AS_IF([test "$SGE_ROOT" != ""],
-                               [AC_MSG_RESULT([found])
-                                orte_gridengine_build=yes],
-                               [AC_MSG_RESULT([not found])])])])])
+	AC_MSG_CHECKING([if user requested SGE build])
+	orte_gridengine_build="no"
+	AS_IF([test "$with_sge" = "yes"],
+              [AC_MSG_RESULT([yes])
+               orte_gridengine_build=yes],
+              [AS_IF([test "$with_sge" = "no"],
+                     [AC_MSG_RESULT([no])],
+                     [AC_MSG_RESULT([not specified; checking environment])
+                      AC_CHECK_PROG([QRSH], [qrsh], [qrsh])
+                      AS_IF([test "$QRSH" != ""],
+                            [orte_gridengine_build=yes],
+                            [AC_MSG_CHECKING([for SGE_ROOT environment variable])
+                             AS_IF([test "$SGE_ROOT" != ""],
+				   [AC_MSG_RESULT([found])
+                                    orte_gridengine_build=yes],
+				   [AC_MSG_RESULT([not found])])])])])
+
+	OMPI_SUMMARY_ADD([[Resource Managers]],[[Grid Engine]],[$1],[$orte_gridengine_build])
+    fi
 
     AS_IF([test "$orte_gridengine_build" = "yes"],
           [$2],

@@ -13,6 +13,8 @@ dnl                         All rights reserved.
 dnl Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2015      Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
+dnl Copyright (c) 2016      Los Alamos National Security, LLC. All rights
+dnl                         reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -81,7 +83,7 @@ AC_DEFUN([ORTE_CHECK_ALPS_CLE4],[
 # ORTE_CHECK_ALPS(prefix, [action-if-found], [action-if-not-found])
 # --------------------------------------------------------
 AC_DEFUN([ORTE_CHECK_ALPS],[
-    if test -z "$orte_check_alps_happy"; then
+    if test -z "$orte_check_cray_alps_happy"; then
 
         AC_ARG_WITH([alps],
                     [AC_HELP_STRING([--with-alps(=DIR|yes|no)],
@@ -155,16 +157,15 @@ AC_DEFUN([ORTE_CHECK_ALPS],[
                CRAY_ALPSUTIL_LIBS = $CRAY_ALPSUTIL_STATIC_LIBS],
               [])
 
-        AS_IF([test "$orte_check_cray_alps_happy" = "yes"],
-              [$1_LDFLAGS="$CRAY_ALPSLLI_LIBS $CRAY_ALPSUTIL_LIBS"
-               $1_CPPFLAGS="$CRAY_ALPSLLI_CFLAGS $CRAY_ALPSUTIL_CFLAGS $CRAY_ALPS_CFLAGS $CRAY_WLM_DETECT_CFLAGS"
-               $1_LIBS="$CRAY_ALPSLLI_LIBS $CRAY_ALPSUTIL_LIBS $CRAY_WLM_DETECT_LIBS"
-               $1_WRAPPER_EXTRA_LDFLAGS="$CRAY_ALPSLLI_LIBS $CRAY_ALPSUTIL_LIBS $CRAY_WLM_DETECT_LIBS"
-               $1_WRAPPER_EXTRA_LIBS="$CRAY_ALPSLLI_LIBS $CRAY_ALPSUTIL_LIBS $CRAY_WLM_DETECT_LIBS"],
-              [])
-
+	OMPI_SUMMARY_ADD([[Resource Managers]],[[Cray Alps]],[$1],[$orte_check_cray_alps_happy])
     fi
 
     AS_IF([test "$orte_check_cray_alps_happy" = "yes"],
-          [$2], [$3])
+          [$1_LDFLAGS="[$]$1_LDFLAGS $CRAY_ALPSLLI_LIBS $CRAY_ALPSUTIL_LIBS"
+           $1_CPPFLAGS="[$]$1_CPPFLAGS $CRAY_ALPSLLI_CFLAGS $CRAY_ALPSUTIL_CFLAGS $CRAY_ALPS_CFLAGS $CRAY_WLM_DETECT_CFLAGS"
+           $1_LIBS="[$]$1_LIBS $CRAY_ALPSLLI_LIBS $CRAY_ALPSUTIL_LIBS $CRAY_WLM_DETECT_LIBS"
+           $1_WRAPPER_EXTRA_LDFLAGS="$CRAY_ALPSLLI_LIBS $CRAY_ALPSUTIL_LIBS $CRAY_WLM_DETECT_LIBS"
+           $1_WRAPPER_EXTRA_LIBS="$CRAY_ALPSLLI_LIBS $CRAY_ALPSUTIL_LIBS $CRAY_WLM_DETECT_LIBS"
+	   $2],
+	  [$3])
 ])
