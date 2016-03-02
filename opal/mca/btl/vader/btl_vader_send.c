@@ -57,7 +57,7 @@ int mca_btl_vader_send (struct mca_btl_base_module_t *btl,
     /* post the relative address of the descriptor into the peer's fifo */
     if (opal_list_get_size (&endpoint->pending_frags) || !vader_fifo_write_ep (frag->hdr, endpoint)) {
         frag->base.des_flags |= MCA_BTL_DES_SEND_ALWAYS_CALLBACK;
-        OPAL_THREAD_LOCK(&endpoint->lock);
+        OPAL_THREAD_LOCK(&endpoint->pending_frags_lock);
         opal_list_append (&endpoint->pending_frags, (opal_list_item_t *) frag);
         if (!endpoint->waiting) {
             OPAL_THREAD_LOCK(&mca_btl_vader_component.lock);
@@ -65,7 +65,7 @@ int mca_btl_vader_send (struct mca_btl_base_module_t *btl,
             OPAL_THREAD_UNLOCK(&mca_btl_vader_component.lock);
             endpoint->waiting = true;
         }
-        OPAL_THREAD_UNLOCK(&endpoint->lock);
+        OPAL_THREAD_UNLOCK(&endpoint->pending_frags_lock);
         return OPAL_SUCCESS;
     }
 

@@ -117,6 +117,7 @@ static inline unsigned char *mca_btl_vader_reserve_fbox (mca_btl_base_endpoint_t
 
         if (OPAL_UNLIKELY(buffer_free < size)) {
             ep->fbox_out.end = (hbs << 31) | end;
+            opal_atomic_wmb ();
             OPAL_THREAD_UNLOCK(&ep->lock);
             return NULL;
         }
@@ -141,6 +142,7 @@ static inline unsigned char *mca_btl_vader_reserve_fbox (mca_btl_base_endpoint_t
 
     /* align the buffer */
     ep->fbox_out.end = ((uint32_t) hbs << 31) | end;
+    opal_atomic_wmb ();
     OPAL_THREAD_UNLOCK(&ep->lock);
 
     return dst + sizeof (mca_btl_vader_fbox_hdr_t);
@@ -247,6 +249,7 @@ static inline bool mca_btl_vader_check_fboxes (void)
 
             /* save where we left off */
             /* let the sender know where we stopped */
+            opal_atomic_mb ();
             ep->fbox_in.start = ep->fbox_in.startp[0] = ((uint32_t) hbs << 31) | start;
             processed = true;
         }
@@ -258,8 +261,7 @@ static inline bool mca_btl_vader_check_fboxes (void)
 
 static inline void mca_btl_vader_try_fbox_setup (mca_btl_base_endpoint_t *ep, mca_btl_vader_hdr_t *hdr)
 {
-    if (NULL == ep->fbox_out.buffer && mca_btl_vader_component.fbox_threshold == ++ep->send_count) {
-
+    if (OPAL_UNLIKELY(NULL == ep->fbox_out.buffer && mca_btl_vader_component.fbox_threshold == OPAL_THREAD_ADD64 ((volatile int64_t *) &ep->send_count, 1))) {
         /* protect access to mca_btl_vader_component.segment_offset */
         OPAL_THREAD_LOCK(&mca_btl_vader_component.lock);
 
