@@ -108,6 +108,9 @@ void pmix_globals_init(void);
 void pmix_globals_finalize(void);
 
 extern pmix_globals_t pmix_globals;
+void pmix_default_errhdlr(pmix_status_t status,
+                          pmix_proc_t procs[], size_t nprocs,
+                          pmix_info_t info[], size_t ninfo);
 
 END_C_DECLS
 
