@@ -49,7 +49,7 @@ int mca_pml_ob1_start(size_t count, ompi_request_t** requests)
          */
 
 #if OPAL_ENABLE_MULTI_THREADS
-    opal_atomic_rmb();
+        opal_atomic_rmb();
 #endif
         reuse_old_request = true;
         switch(pml_request->req_ompi.req_state) {

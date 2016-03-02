@@ -158,47 +158,49 @@ recv_request_pml_complete(mca_pml_ob1_recv_request_t *recvreq)
 {
     size_t i;
 
-    assert(false == recvreq->req_recv.req_base.req_pml_complete);
+    if(false == recvreq->req_recv.req_base.req_pml_complete){
+        OPAL_THREAD_LOCK(&ompi_request_lock);
 
-    if(recvreq->req_recv.req_bytes_packed > 0) {
-        PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_XFER_END,
-                &recvreq->req_recv.req_base, PERUSE_RECV );
-    }
-
-    for(i = 0; i < recvreq->req_rdma_cnt; i++) {
-        struct mca_btl_base_registration_handle_t *handle = recvreq->req_rdma[i].btl_reg;
-        mca_bml_base_btl_t *bml_btl = recvreq->req_rdma[i].bml_btl;
-
-        if (NULL != handle) {
-            mca_bml_base_deregister_mem (bml_btl, handle);
+        if(recvreq->req_recv.req_bytes_packed > 0) {
+            PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_XFER_END,
+                    &recvreq->req_recv.req_base, PERUSE_RECV );
         }
-    }
-    recvreq->req_rdma_cnt = 0;
 
-    if(true == recvreq->req_recv.req_base.req_free_called) {
-        if( MPI_SUCCESS != recvreq->req_recv.req_base.req_ompi.req_status.MPI_ERROR ) {
-            ompi_mpi_abort(&ompi_mpi_comm_world.comm, MPI_ERR_REQUEST);
+        for(i = 0; i < recvreq->req_rdma_cnt; i++) {
+            struct mca_btl_base_registration_handle_t *handle = recvreq->req_rdma[i].btl_reg;
+            mca_bml_base_btl_t *bml_btl = recvreq->req_rdma[i].bml_btl;
+
+            if (NULL != handle) {
+                mca_bml_base_deregister_mem (bml_btl, handle);
+            }
         }
-        MCA_PML_OB1_RECV_REQUEST_RETURN(recvreq);
-    } else {
-        /* initialize request status */
-        recvreq->req_recv.req_base.req_pml_complete = true;
-        recvreq->req_recv.req_base.req_ompi.req_status._ucount =
-            recvreq->req_bytes_received;
-        if (recvreq->req_recv.req_bytes_packed > recvreq->req_bytes_expected) {
+        recvreq->req_rdma_cnt = 0;
+
+
+        if(true == recvreq->req_recv.req_base.req_free_called) {
+            if( MPI_SUCCESS != recvreq->req_recv.req_base.req_ompi.req_status.MPI_ERROR ) {
+                ompi_mpi_abort(&ompi_mpi_comm_world.comm, MPI_ERR_REQUEST);
+            }
+            MCA_PML_OB1_RECV_REQUEST_RETURN(recvreq);
+        } else {
+            /* initialize request status */
+            recvreq->req_recv.req_base.req_pml_complete = true;
             recvreq->req_recv.req_base.req_ompi.req_status._ucount =
-                recvreq->req_recv.req_bytes_packed;
-            recvreq->req_recv.req_base.req_ompi.req_status.MPI_ERROR =
-                MPI_ERR_TRUNCATE;
+                recvreq->req_bytes_received;
+            if (recvreq->req_recv.req_bytes_packed > recvreq->req_bytes_expected) {
+                recvreq->req_recv.req_base.req_ompi.req_status._ucount =
+                    recvreq->req_recv.req_bytes_packed;
+                recvreq->req_recv.req_base.req_ompi.req_status.MPI_ERROR =
+                    MPI_ERR_TRUNCATE;
+            }
+            if (OPAL_UNLIKELY(recvreq->local_handle)) {
+                mca_bml_base_deregister_mem (recvreq->rdma_bml, recvreq->local_handle);
+                recvreq->local_handle = NULL;
+            }
+            MCA_PML_OB1_RECV_REQUEST_MPI_COMPLETE(recvreq);
         }
-        if (OPAL_UNLIKELY(recvreq->local_handle)) {
-            mca_bml_base_deregister_mem (recvreq->rdma_bml, recvreq->local_handle);
-            recvreq->local_handle = NULL;
-        }
-#if OPAL_ENABLE_MULTI_THREADS
-        opal_atomic_wmb();
-#endif
-        MCA_PML_OB1_RECV_REQUEST_MPI_COMPLETE(recvreq);
+
+        OPAL_THREAD_UNLOCK(&ompi_request_lock);
     }
 }
 

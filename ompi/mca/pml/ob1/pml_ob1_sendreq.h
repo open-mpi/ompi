@@ -248,41 +248,36 @@ static inline void mca_pml_ob1_send_request_fini (mca_pml_ob1_send_request_t *se
 static inline void
 send_request_pml_complete(mca_pml_ob1_send_request_t *sendreq)
 {
-    assert(false == sendreq->req_send.req_base.req_pml_complete);
-    if(sendreq->req_send.req_bytes_packed > 0) {
-        PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_XFER_END,
-                                 &(sendreq->req_send.req_base), PERUSE_SEND);
-    }
-
-    /* return mpool resources */
-    mca_pml_ob1_free_rdma_resources(sendreq);
-
-    if (sendreq->req_send.req_send_mode == MCA_PML_BASE_SEND_BUFFERED &&
-        sendreq->req_send.req_addr != sendreq->req_send.req_base.req_addr) {
-        mca_pml_base_bsend_request_fini((ompi_request_t*)sendreq);
-    }
-
-#if OPAL_ENABLE_MULTI_THREADS
-    opal_atomic_wmb();
-#endif
-    sendreq->req_send.req_base.req_pml_complete = true;
-
-    if( !REQUEST_COMPLETE( &((sendreq->req_send).req_base.req_ompi)) ) {
-        /* Should only be called for long messages (maybe synchronous) */
-        MCA_PML_OB1_SEND_REQUEST_MPI_COMPLETE(sendreq, true);
-    } else {
-        if( MPI_SUCCESS != sendreq->req_send.req_base.req_ompi.req_status.MPI_ERROR ) {
-            ompi_mpi_abort(&ompi_mpi_comm_world.comm, MPI_ERR_REQUEST);
+    if(false == sendreq->req_send.req_base.req_pml_complete) {
+        if(sendreq->req_send.req_bytes_packed > 0) {
+            PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_XFER_END,
+                                     &(sendreq->req_send.req_base), PERUSE_SEND);
         }
-    }
-#if OPAL_ENABLE_MULTI_THREADS
-    if( opal_atomic_cmpset_32(&sendreq->req_send.req_base.req_free_called, 0, 1) )
-#else
-    if(1 == sendreq->req_send.req_base.req_free_called)
-#endif
-        {
+
+        /* return mpool resources */
+        mca_pml_ob1_free_rdma_resources(sendreq);
+
+        if (sendreq->req_send.req_send_mode == MCA_PML_BASE_SEND_BUFFERED &&
+            sendreq->req_send.req_addr != sendreq->req_send.req_base.req_addr) {
+            mca_pml_base_bsend_request_fini((ompi_request_t*)sendreq);
+        }
+
+        OPAL_THREAD_LOCK(&ompi_request_lock);
+        sendreq->req_send.req_base.req_pml_complete = true;
+
+        if( !REQUEST_COMPLETE( &((sendreq->req_send).req_base.req_ompi)) ) {
+            /* Should only be called for long messages (maybe synchronous) */
+            MCA_PML_OB1_SEND_REQUEST_MPI_COMPLETE(sendreq, true);
+        } else {
+            if( MPI_SUCCESS != sendreq->req_send.req_base.req_ompi.req_status.MPI_ERROR ) {
+                ompi_mpi_abort(&ompi_mpi_comm_world.comm, MPI_ERR_REQUEST);
+            }
+        }
+        if(true == sendreq->req_send.req_base.req_free_called) {
             MCA_PML_OB1_SEND_REQUEST_RETURN(sendreq);
         }
+        OPAL_THREAD_UNLOCK(&ompi_request_lock);
+    }
 }
 
 /* returns true if request was completed on PML level */

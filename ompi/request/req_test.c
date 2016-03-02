@@ -295,7 +295,7 @@ int ompi_request_default_test_some(
             num_requests_null_inactive++;
             continue;
         }
-        if (REQUEST_COMPLETED == request->req_complete) {
+        if( REQUEST_COMPLETE(request) ) {
             OMPI_CRCP_REQUEST_COMPLETE(request);
             indices[num_requests_done++] = i;
         }
