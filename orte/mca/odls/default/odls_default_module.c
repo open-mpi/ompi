@@ -415,14 +415,16 @@ static int do_child(orte_app_context_t* context,
            always outputs a nice, single message indicating what
            happened
         */
-        if (ORTE_SUCCESS != (i = orte_iof_base_setup_child(&opts,
-                                                           &environ_copy))) {
-            ORTE_ERROR_LOG(i);
-            send_error_show_help(write_fd, 1,
-                                 "help-orte-odls-default.txt",
-                                 "iof setup failed",
-                                 orte_process_info.nodename, context->app);
-            /* Does not return */
+        if (ORTE_FLAG_TEST(jobdat, ORTE_JOB_FLAG_FORWARD_OUTPUT)) {
+            if (ORTE_SUCCESS != (i = orte_iof_base_setup_child(&opts,
+                                                               &environ_copy))) {
+                ORTE_ERROR_LOG(i);
+                send_error_show_help(write_fd, 1,
+                                     "help-orte-odls-default.txt",
+                                     "iof setup failed",
+                                     orte_process_info.nodename, context->app);
+                /* Does not return */
+            }
         }
 
         /* now set any child-level controls such as binding */

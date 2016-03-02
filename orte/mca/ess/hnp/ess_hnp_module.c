@@ -630,6 +630,8 @@ static int rte_init(void)
         error = "opal_pmix_base_select";
         goto error;
     }
+    /* set the event base */
+    opal_pmix_base_set_evbase(orte_event_base);
 
     /* setup the routed info - the selected routed component
      * will know what to do.

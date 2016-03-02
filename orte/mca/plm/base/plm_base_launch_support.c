@@ -1282,18 +1282,9 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
         opal_argv_append(argc, argv, "1");
     }
 
-    /* the following two are not mca params */
-    if ((int)ORTE_VPID_INVALID != orted_debug_failure) {
-        opal_argv_append(argc, argv, "--debug-failure");
-        asprintf(&param, "%d", orted_debug_failure);
-        opal_argv_append(argc, argv, param);
-        free(param);
-    }
-    if (0 < orted_debug_failure_delay) {
-        opal_argv_append(argc, argv, "--debug-failure-delay");
-        asprintf(&param, "%d", orted_debug_failure_delay);
-        opal_argv_append(argc, argv, param);
-        free(param);
+    /* the following is not an mca param */
+    if (NULL != getenv("ORTE_TEST_ORTED_SUICIDE")) {
+        opal_argv_append(argc, argv, "--test-suicide");
     }
 
     /* tell the orted what ESS component to use */
