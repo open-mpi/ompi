@@ -97,7 +97,7 @@ int main(int argc, char *argv[])
     orte_submit_status_t launchst, completest;
     opal_cmd_line_t cmd_line;
 
-    orte_cmd_line.terminate_dvm = NULL;
+    memset(&orte_cmd_line, 0, sizeof(orte_cmd_line));
     /* setup our cmd line */
     opal_cmd_line_create(&cmd_line, cmd_line_init);
     mca_base_cmd_line_setup(&cmd_line);

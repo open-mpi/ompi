@@ -117,7 +117,7 @@ static void orte_iof_base_sink_destruct(orte_iof_sink_t* ptr)
                          "%s iof: closing sink for process %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(&ptr->name)));
-    if (NULL != ptr->wev) {
+    if (NULL != ptr->wev && 0 <= ptr->wev->fd) {
         OBJ_RELEASE(ptr->wev);
     }
 }
