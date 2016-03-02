@@ -477,10 +477,10 @@ int orte_submit_init(int argc, char *argv[],
         fclose(fp);
         input[strlen(input)-1] = '\0';  /* remove newline */
         /* construct the target hnp info */
-        opal_setenv("OMPI_MCA_orte_hnp_uri", input, true, &environ);
+        opal_setenv(OPAL_MCA_PREFIX"orte_hnp_uri", input, true, &environ);
     } else {
         /* should just be the uri itself - construct the target hnp info */
-        opal_setenv("OMPI_MCA_orte_hnp_uri", orte_cmd_line.hnp, true, &environ);
+        opal_setenv(OPAL_MCA_PREFIX"orte_hnp_uri", orte_cmd_line.hnp, true, &environ);
     }
 
     /* Setup MCA params */
@@ -488,7 +488,7 @@ int orte_submit_init(int argc, char *argv[],
 
     /* we are never allowed to operate as a distributed tool,
      * so insist on the ess/tool component */
-    opal_setenv("OMPI_MCA_ess", "tool", true, &environ);
+    opal_setenv(OPAL_MCA_PREFIX"ess", "tool", true, &environ);
 
     if (orte_cmd_line.debug) {
         orte_devel_level_output = true;
@@ -513,7 +513,7 @@ int orte_submit_init(int argc, char *argv[],
 
     /* clear the ess param from the environment so our children
      * don't pick it up */
-    opal_unsetenv("OMPI_MCA_ess", &environ);
+    opal_unsetenv(OPAL_MCA_PREFIX"ess", &environ);
 
     /* set the info in our contact table */
     orte_rml.set_contact_info(orte_process_info.my_hnp_uri);
@@ -1138,7 +1138,7 @@ static int create_app(int argc, char* argv[],
         goto cleanup;
     }
 
-    /* Grab all OMPI_* environment variables */
+    /* Grab all MCA environment variables */
 
     app->env = opal_argv_copy(*app_env);
     if (ORTE_SUCCESS != (rc = orte_schizo.parse_env(orte_cmd_line.personalities,
