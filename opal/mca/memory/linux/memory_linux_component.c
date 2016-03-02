@@ -135,6 +135,14 @@ static void *(*prev_malloc_hook)(size_t, const void *);
  * memalign which will be called through __malloc_hook instead of malloc.
  */
 static void *_opal_memory_linux_malloc_align_hook(size_t sz, const void* caller);
+
+static mca_base_var_enum_value_t align_values[] = {
+    {-1, "disabled"},
+    {0, "0"},
+    {32, "32"},
+    {64, "64"},
+    {0, NULL}
+};
 #endif /* MEMORY_LINUX_MALLOC_ALIGN_ENABLED */
 
 
@@ -143,6 +151,9 @@ static void *_opal_memory_linux_malloc_align_hook(size_t sz, const void* caller)
  */
 static int linux_register(void)
 {
+#if MEMORY_LINUX_MALLOC_ALIGN_ENABLED
+    mca_base_var_enum_t *new_enum;
+#endif
     int ret;
     /* Information only */
     ret = mca_base_component_var_register (&mca_memory_linux_component.super.memoryc_version,
@@ -205,17 +216,19 @@ static int linux_register(void)
     }
 
 #if MEMORY_LINUX_MALLOC_ALIGN_ENABLED
+    (void)mca_base_var_enum_create("memory_linux_memalign", align_values, &new_enum);
     mca_memory_linux_component.use_memalign = -1;
     ret = mca_base_component_var_register(&mca_memory_linux_component.super.memoryc_version,
                                  "memalign",
-                                 "[64 | 32 | 0] - Enable memory alignment for all malloc calls (default: disabled).",
+                                 "[64 | 32 | 0] - Enable memory alignment for all malloc calls.",
                                  MCA_BASE_VAR_TYPE_INT,
-                                 NULL,
+                                 new_enum,
                                  0,
                                  0,
                                  OPAL_INFO_LVL_5,
                                  MCA_BASE_VAR_SCOPE_READONLY,
                                  &mca_memory_linux_component.use_memalign);
+    OBJ_RELEASE(new_enum);
     if (0 > ret) {
         return ret;
     }
@@ -235,16 +248,6 @@ static int linux_register(void)
                                  &mca_memory_linux_component.memalign_threshold);
     if (0 > ret) {
         return ret;
-    }
-
-    if (mca_memory_linux_component.use_memalign != -1
-        && mca_memory_linux_component.use_memalign != 32
-        && mca_memory_linux_component.use_memalign != 64
-        && mca_memory_linux_component.use_memalign != 0){
-        opal_show_help("help-opal-memory-linux.txt", "invalid mca param value",
-                       true, "Wrong memalign parameter value. Allowed values: 64, 32, 0.",
-                       "memory_linux_memalign is reset to 32");
-        mca_memory_linux_component.use_memalign = 32;
     }
 #endif /* MEMORY_LINUX_MALLOC_ALIGN_ENABLED */
 
