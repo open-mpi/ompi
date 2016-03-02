@@ -524,12 +524,14 @@ static struct mca_btl_base_descriptor_t *vader_prepare_src (struct mca_btl_base_
 static void mca_btl_vader_endpoint_constructor (mca_btl_vader_endpoint_t *ep)
 {
     OBJ_CONSTRUCT(&ep->pending_frags, opal_list_t);
+    OBJ_CONSTRUCT(&ep->pending_frags_lock, opal_mutex_t);
     ep->fifo = NULL;
 }
 
 static void mca_btl_vader_endpoint_destructor (mca_btl_vader_endpoint_t *ep)
 {
     OBJ_DESTRUCT(&ep->pending_frags);
+    OBJ_DESTRUCT(&ep->pending_frags_lock);
 
 #if OPAL_BTL_VADER_HAVE_XPMEM
     if (MCA_BTL_VADER_XPMEM == mca_btl_vader_component.single_copy_mechanism) {
