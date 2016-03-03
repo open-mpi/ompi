@@ -33,9 +33,9 @@
    https://github.com/open-mpi/ompi/issues/375 for details. */
 opal_pmix_base_module_t opal_pmix = { 0 };
 bool opal_pmix_collect_all_data = true;
-bool opal_pmix_base_allow_delayed_server = false;
 int opal_pmix_verbose_output = -1;
 bool opal_pmix_base_async_modex = false;
+opal_pmix_base_t opal_pmix_base = {0};
 
 static int opal_pmix_base_frame_register(mca_base_register_flag_t flags)
 {

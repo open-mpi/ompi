@@ -38,6 +38,11 @@
 
 #define OPAL_PMI_PAD  10
 
+void opal_pmix_base_set_evbase(opal_event_base_t *evbase)
+{
+    opal_pmix_base.evbase = evbase;
+}
+
 /********     ERRHANDLER SUPPORT FOR COMPONENTS THAT
  ********     DO NOT NATIVELY SUPPORT IT
  ********/

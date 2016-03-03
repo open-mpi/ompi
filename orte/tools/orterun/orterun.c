@@ -1066,6 +1066,14 @@ int orterun(int argc, char *argv[])
         }
     }
 
+    /* check for suicide test directives */
+    if (NULL != getenv("ORTE_TEST_HNP_SUICIDE") ||
+        NULL != getenv("ORTE_TEST_ORTED_SUICIDE")) {
+        /* don't forward IO from this process so we can
+         * see any debug after daemon termination */
+        ORTE_FLAG_UNSET(jdata, ORTE_JOB_FLAG_FORWARD_OUTPUT);
+    }
+
     /* check for a job timeout specification, to be provided in seconds
      * as that is what MPICH used
      */
@@ -2862,6 +2870,11 @@ void orte_timeout_wakeup(int sd, short args, void *cbdata)
     orte_show_help("help-orterun.txt", "orterun:timeout",
                    true, (NULL == tm) ? "NULL" : tm);
     ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
+    /* if we are testing HNP suicide, then just exit */
+    if (NULL != getenv("ORTE_TEST_HNP_SUICIDE")) {
+        opal_output(0, "HNP exiting w/o cleanup");
+        exit(1);
+    }
     /* abort the job */
     ORTE_ACTIVATE_JOB_STATE(NULL, ORTE_JOB_STATE_ALL_JOBS_COMPLETE);
     /* set the global abnormal exit flag  */

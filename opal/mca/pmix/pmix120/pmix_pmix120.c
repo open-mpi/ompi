@@ -212,9 +212,9 @@ static void reg_thread(int sd, short args, void *cbdata)
     opal_pmix120_etracker_t *trk;
 
     opal_output_verbose(2, opal_pmix_base_framework.framework_output,
-                        "%s register complete with status %d",
+                        "%s register complete with status %d ref %d",
                         OPAL_NAME_PRINT(OPAL_PROC_MY_NAME),
-                        cd->status);
+                        cd->status, cd->errhandler_ref);
 
     /* convert the status */
     rc = pmix120_convert_rc(cd->status);
@@ -240,9 +240,10 @@ static void reg_cbfunc(pmix_status_t status,
                        void *cbdata)
 {
     pmix120_opcaddy_t *cd = (pmix120_opcaddy_t*)cbdata;
+
     cd->status = status;
     cd->errhandler_ref = errhandler_ref;
-    opal_event_set(opal_sync_event_base, &cd->ev,
+    opal_event_set(opal_pmix_base.evbase, &cd->ev,
                    -1, OPAL_EV_WRITE, reg_thread, cd);
     opal_event_set_priority(&cd->ev, OPAL_EV_MSG_HI_PRI);
     opal_event_active(&cd->ev, OPAL_EV_WRITE, 1);
