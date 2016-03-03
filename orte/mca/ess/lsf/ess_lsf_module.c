@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2011 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013      Intel, Inc. All rights reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -31,6 +33,7 @@
 #include <lsf/lsbatch.h>
 
 #include "opal/util/opal_environ.h"
+#include "opal/util/argv.h"
 
 #include "orte/util/show_help.h"
 #include "orte/util/name_fns.h"

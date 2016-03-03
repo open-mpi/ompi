@@ -10,6 +10,8 @@
 #include <stdio.h>
 #include <unistd.h>
 
+#include "opal/util/argv.h"
+
 #include "orte/util/proc_info.h"
 #include "orte/util/regex.h"
 #include "orte/mca/errmgr/errmgr.h"
