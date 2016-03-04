@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2014-2015 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2014-2016 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014-2015 Mellanox Technologies, Inc.
@@ -112,7 +112,7 @@ int pmix1_client_init(void)
         asprintf(&dbgvalue, "PMIX_DEBUG=%d", dbg);
         putenv(dbgvalue);
     }
-    rc = PMIx_Init(&my_proc);
+    rc = PMIx_Init(&my_proc, NULL, 0);
     if (PMIX_SUCCESS != rc) {
         return pmix1_convert_rc(rc);
     }
@@ -154,7 +154,7 @@ int pmix1_client_finalize(void)
     /* deregister the errhandler */
     PMIx_Deregister_errhandler(errhdler_ref, NULL, NULL);
 
-    rc = PMIx_Finalize();
+    rc = PMIx_Finalize(NULL, 0);
 
     return pmix1_convert_rc(rc);
 }
