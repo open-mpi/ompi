@@ -201,13 +201,6 @@ posix_runtime_query(mca_base_module_t **module,
 static int
 posix_query(mca_base_module_t **module, int *priority)
 {
-    /* if we are in a container, then we must disqualify ourselves */
-    if (NULL != getenv("OPAL_PROC_CONTAINER")) {
-        *priority = 0;
-        *module = NULL;
-        return OPAL_ERROR;
-    }
-
     *priority = mca_shmem_posix_component.priority;
     *module = (mca_base_module_t *)&opal_shmem_posix_module.super;
     return OPAL_SUCCESS;

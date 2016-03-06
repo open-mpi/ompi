@@ -40,21 +40,44 @@ BEGIN_C_DECLS
 * the base stub functions
 */
 
+/* initialize the module - allow it to do whatever one-time
+ * things it requires */
 typedef int (*orte_schizo_base_module_init_fn_t)(void);
 
+/* given an argv-array of personalities, parse a tool command line
+ * starting from the given location according to the cmd line options
+ * known to this module's personality. First, of course, check that
+ * this module is included in the specified array of personalities!
+ * Only one command-line parser is allowed to operate - i.e., if */
 typedef int (*orte_schizo_base_module_parse_cli_fn_t)(char **personality,
                                                       int argc, int start,
                                                       char **argv);
 
+/* given an argv-array of personalities, parse the environment of the
+ * tool to extract any personality-specific envars that need to be
+ * forward to the app's environment upon execution */
 typedef int (*orte_schizo_base_module_parse_env_fn_t)(char **personality,
                                                       char *path,
                                                       opal_cmd_line_t *cmd_line,
                                                       char **srcenv,
                                                       char ***dstenv);
 
+/* given an argv-array of personalities, do whatever preparation work
+ * is required to setup the app for execution. This is intended to be
+ * used by orterun and other launcher tools to, for example, change
+ * an executable's relative-path to an absolute-path, or add a command
+ * required for starting a particular kind of application (e.g., adding
+ * "java" to start a Java application) */
+typedef int (*orte_schizo_base_module_setup_app_fn_t)(char **personality,
+                                                      orte_app_context_t *app);
+
+/* add any personality-specific envars required at the job level prior
+ * to beginning to execute local procs */
 typedef int (*orte_schizo_base_module_setup_fork_fn_t)(orte_job_t *jdata,
                                                        orte_app_context_t *context);
 
+/* add any personality-specific envars required for this specific local
+ * proc upon execution */
 typedef int (*orte_schizo_base_module_setup_child_fn_t)(orte_job_t *jdata,
                                                         orte_proc_t *child,
                                                         orte_app_context_t *app);
@@ -86,6 +109,7 @@ typedef struct {
     orte_schizo_base_module_init_fn_t                   init;
     orte_schizo_base_module_parse_cli_fn_t              parse_cli;
     orte_schizo_base_module_parse_env_fn_t              parse_env;
+    orte_schizo_base_module_setup_app_fn_t              setup_app;
     orte_schizo_base_module_setup_fork_fn_t             setup_fork;
     orte_schizo_base_module_setup_child_fn_t            setup_child;
     orte_schizo_base_module_ck_launch_environ_fn_t      check_launch_environment;

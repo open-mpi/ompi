@@ -176,13 +176,6 @@ mmap_open(void)
 static int
 mmap_query(mca_base_module_t **module, int *priority)
 {
-    /* if we are in a container, then we must disqualify ourselves */
-    if (NULL != getenv("OPAL_PROC_CONTAINER")) {
-        *priority = 0;
-        *module = NULL;
-        return OPAL_ERROR;
-    }
-
     *priority = mca_shmem_mmap_component.priority;
     *module = (mca_base_module_t *)&opal_shmem_mmap_module.super;
     return OPAL_SUCCESS;

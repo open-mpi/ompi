@@ -39,6 +39,7 @@ orte_schizo_base_t orte_schizo_base = {{{0}}};
 orte_schizo_base_module_t orte_schizo = {
     .parse_cli = orte_schizo_base_parse_cli,
     .parse_env = orte_schizo_base_parse_env,
+    .setup_app = orte_schizo_base_setup_app,
     .setup_fork = orte_schizo_base_setup_fork,
     .setup_child = orte_schizo_base_setup_child,
     .check_launch_environment = orte_schizo_base_check_launch_environment,
