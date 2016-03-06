@@ -1258,6 +1258,9 @@ static int parse_locals(orte_job_t *jdata, int argc, char* argv[])
                     ++app_num;
                     opal_pointer_array_add(jdata->apps, app);
                     ++jdata->num_apps;
+                    if (ORTE_SUCCESS != (rc = orte_schizo.setup_app(jdata->personality, app))) {
+                        return rc;
+                    }
                 }
 
                 /* Reset the temps */
@@ -1284,6 +1287,9 @@ static int parse_locals(orte_job_t *jdata, int argc, char* argv[])
             ++app_num;
             opal_pointer_array_add(jdata->apps, app);
             ++jdata->num_apps;
+            if (ORTE_SUCCESS != (rc = orte_schizo.setup_app(jdata->personality, app))) {
+                return rc;
+            }
         }
     }
     if (NULL != env) {
@@ -1670,6 +1676,8 @@ static int create_app(int argc, char* argv[],
         rc = ORTE_ERR_NOT_FOUND;
         goto cleanup;
     }
+    free(app->argv[0]);
+    app->argv[0] = opal_basename(app->app);
 
     /* if this is a Java application, we have a bit more work to do. Such
      * applications actually need to be run under the Java virtual machine

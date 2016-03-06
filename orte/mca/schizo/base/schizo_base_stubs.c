@@ -19,8 +19,8 @@
 #include "orte/util/name_fns.h"
 #include "orte/mca/schizo/base/base.h"
 
-const char* orte_schizo_base_print_env(orte_schizo_launch_environ_t env)
-{
+ const char* orte_schizo_base_print_env(orte_schizo_launch_environ_t env)
+ {
     switch(env) {
         case ORTE_SCHIZO_UNDETERMINED:
             return "UNDETERMINED";
@@ -71,6 +71,24 @@ int orte_schizo_base_parse_env(char **personality,
     OPAL_LIST_FOREACH(mod, &orte_schizo_base.active_modules, orte_schizo_base_active_module_t) {
         if (NULL != mod->module->parse_env) {
             rc = mod->module->parse_env(personality, path, cmd_line, srcenv, dstenv);
+            if (ORTE_SUCCESS != rc && ORTE_ERR_TAKE_NEXT_OPTION != rc) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
+        }
+    }
+    return ORTE_SUCCESS;
+}
+
+int orte_schizo_base_setup_app(char **personality,
+                               orte_app_context_t *app)
+{
+    int rc;
+    orte_schizo_base_active_module_t *mod;
+
+    OPAL_LIST_FOREACH(mod, &orte_schizo_base.active_modules, orte_schizo_base_active_module_t) {
+        if (NULL != mod->module->setup_app) {
+            rc = mod->module->setup_app(personality, app);
             if (ORTE_SUCCESS != rc && ORTE_ERR_TAKE_NEXT_OPTION != rc) {
                 ORTE_ERROR_LOG(rc);
                 return rc;

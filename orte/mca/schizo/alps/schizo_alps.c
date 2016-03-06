@@ -29,9 +29,11 @@
 #include "schizo_alps.h"
 
 static orte_schizo_launch_environ_t check_launch_environment(void);
+static void finalize(void);
 
 orte_schizo_base_module_t orte_schizo_alps_module = {
-    .check_launch_environment = check_launch_environment
+    .check_launch_environment = check_launch_environment,
+    .finalize = finalize
 };
 
 static char **pushed_envs = NULL;

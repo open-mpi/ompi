@@ -68,6 +68,8 @@ ORTE_DECLSPEC int orte_schizo_base_parse_env(char **personality,
                                              opal_cmd_line_t *cmd_line,
                                              char **srcenv,
                                              char ***dstenv);
+ORTE_DECLSPEC int orte_schizo_base_setup_app(char **personality,
+                                             orte_app_context_t *app);
 ORTE_DECLSPEC int orte_schizo_base_setup_fork(orte_job_t *jdata,
                                               orte_app_context_t *context);
 ORTE_DECLSPEC int orte_schizo_base_setup_child(orte_job_t *jobdat,
