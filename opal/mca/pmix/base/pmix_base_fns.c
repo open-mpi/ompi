@@ -2,7 +2,7 @@
 /*
  * Copyright (c) 2012-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
  * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -31,6 +31,7 @@
 #include "opal/util/output.h"
 #include "opal/util/proc.h"
 #include "opal/util/show_help.h"
+#include "opal/errhandler/opal_errhandler.h"
 
 #include "opal/mca/pmix/base/base.h"
 #include "opal/mca/pmix/base/pmix_base_fns.h"
@@ -61,6 +62,8 @@ void opal_pmix_base_errhandler(int status,
 {
     if (NULL != errhandler) {
         errhandler(status, procs, info, cbfunc, cbdata);
+    } else {
+        opal_invoke_errhandler(OPAL_ERROR, NULL);
     }
 }
 
