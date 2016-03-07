@@ -227,16 +227,16 @@ static void trim_name(char *buffer, const char* prefix, const char* suffix)
     }
 
     /* trim spaces at the end */
-    echr = buffer + buffer_len - 1;
-    while (isspace (*echr)) {
+    echr = buffer + buffer_len;
+    while (isspace (*(echr - 1)) && echr > buffer) {
         echr--;
     }
-    echr[1] = '\0';
+    echr[0] = '\0';
 
-    if (NULL != suffix) {
+    if (NULL != suffix && (uintptr_t) (echr - buffer) > strlen (suffix)) {
         size_t suffix_len = strlen (suffix);
 
-        echr -= suffix_len - 1;
+        echr -= suffix_len;
 
         if (0 == strncmp (echr, suffix, strlen(suffix))) {
             do {
