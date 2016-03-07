@@ -416,13 +416,6 @@ static int do_child(orte_app_context_t* context,
     sigset_t sigs;
     char *param, *msg;
 
-    if (orte_forward_job_control) {
-        /* Set a new process group for this child, so that a
-           SIGSTOP can be sent to it without being sent to the
-           orted. */
-        setpgid(0, 0);
-    }
-
     /* Setup the pipe to be close-on-exec */
     opal_fd_set_cloexec(write_fd);
 
@@ -798,11 +791,6 @@ static int send_signal(pid_t pid, int signal)
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          signal, (long)pid));
 
-    if (orte_forward_job_control) {
-	/* Send the signal to the process group rather than the
-	   process.  The child is the leader of its process group. */
-	pid = -pid;
-    }
     if (kill(pid, signal) != 0) {
         switch(errno) {
             case EINVAL:

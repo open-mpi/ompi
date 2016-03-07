@@ -521,9 +521,6 @@ ORTE_DECLSPEC extern opal_pointer_array_t *orte_node_topologies;
 ORTE_DECLSPEC extern opal_pointer_array_t *orte_local_children;
 ORTE_DECLSPEC extern orte_vpid_t orte_total_procs;
 
-/* whether or not to forward SIGTSTP and SIGCONT signals */
-ORTE_DECLSPEC extern bool orte_forward_job_control;
-
 /* IOF controls */
 ORTE_DECLSPEC extern bool orte_tag_output;
 ORTE_DECLSPEC extern bool orte_timestamp_output;

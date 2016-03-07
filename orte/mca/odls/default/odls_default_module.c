@@ -193,18 +193,18 @@ static bool odls_default_child_died(orte_proc_t *child)
              * that occasionally causes us to incorrectly report a proc
              * as refusing to die. Unfortunately, errno may not be reset
              * by waitpid in this case, so we cannot check it.
-	     *
-	     * (note the previous fix to this, to return 'process dead'
-	     * here, fixes the race condition at the cost of reporting
-	     * all live processes have immediately died!  Better to
-	     * occasionally report a dead process as still living -
-	     * which will occasionally trip the timeout for cases that
-	     * are right on the edge.)
+             *
+             * (note the previous fix to this, to return 'process dead'
+             * here, fixes the race condition at the cost of reporting
+             * all live processes have immediately died!  Better to
+             * occasionally report a dead process as still living -
+             * which will occasionally trip the timeout for cases that
+             * are right on the edge.)
              */
             OPAL_OUTPUT_VERBOSE((20, orte_odls_base_framework.framework_output,
                                  "%s odls:default:WAITPID INDICATES PID %d MAY HAVE ALREADY EXITED",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (int)(child->pid)));
-	    /* Do nothing, process still alive */
+            /* Do nothing, process still alive */
         } else if (-1 == ret && ECHILD == errno) {
             /* The pid no longer exists, so we'll call this "good
                enough for government work" */
@@ -228,23 +228,10 @@ static bool odls_default_child_died(orte_proc_t *child)
     return false;
 }
 
+
+/* deliver a signal to a specified pid. */
 static int odls_default_kill_local(pid_t pid, int signum)
 {
-    pid_t pgrp;
-
-#if HAVE_SETPGID
-    pgrp = getpgid(pid);
-    if (-1 != pgrp) {
-        /* target the lead process of the process
-         * group so we ensure that the signal is
-         * seen by all members of that group. This
-         * ensures that the signal is seen by any
-         * child processes our child may have
-         * started
-         */
-        pid = pgrp;
-    }
-#endif
     if (0 != kill(pid, signum)) {
         if (ESRCH != errno) {
             OPAL_OUTPUT_VERBOSE((2, orte_odls_base_framework.framework_output,
@@ -390,13 +377,6 @@ static int do_child(orte_app_context_t* context,
     sigset_t sigs;
     long fd, fdmax = sysconf(_SC_OPEN_MAX);
     char *param, *msg;
-
-    if (orte_forward_job_control) {
-        /* Set a new process group for this child, so that a
-           SIGSTOP can be sent to it without being sent to the
-           orted. */
-        setpgid(0, 0);
-    }
 
     /* Setup the pipe to be close-on-exec */
     opal_fd_set_cloexec(write_fd);
@@ -720,10 +700,7 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
     }
 
     if (pid == 0) {
-	close(p[0]);
-#if HAVE_SETPGID
-        setpgid(0, 0);
-#endif
+        close(p[0]);
         do_child(context, child, environ_copy, jobdat, p[1], opts);
         /* Does not return */
     }
@@ -770,11 +747,6 @@ static int send_signal(pid_t pid, int signal)
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          signal, (long)pid));
 
-    if (orte_forward_job_control) {
-	/* Send the signal to the process group rather than the
-	   process.  The child is the leader of its process group. */
-	pid = -pid;
-    }
     if (kill(pid, signal) != 0) {
         switch(errno) {
             case EINVAL:

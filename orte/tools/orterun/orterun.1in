@@ -1240,9 +1240,7 @@ SIGUSR1 and SIGUSR2 signals received by orterun are propagated to
 all processes in the job.
 .
 .PP
-One can turn on forwarding of SIGSTOP and SIGCONT to the program executed
-by mpirun by setting the MCA parameter orte_forward_job_control to 1.
-A SIGTSTOP signal to mpirun will then cause a SIGSTOP signal to be sent
+A SIGTSTOP signal to mpirun will cause a SIGSTOP signal to be sent
 to all of the programs started by mpirun and likewise a SIGCONT signal
 to mpirun will cause a SIGCONT sent.
 .

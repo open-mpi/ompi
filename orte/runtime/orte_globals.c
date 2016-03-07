@@ -143,9 +143,6 @@ char *orte_output_filename = NULL;
 /* generate new xterm windows to display output from specified ranks */
 char *orte_xterm = NULL;
 
-/* whether or not to forward SIGTSTP and SIGCONT signals */
-bool orte_forward_job_control = false;
-
 /* report launch progress */
 bool orte_report_launch_progress = false;
 
