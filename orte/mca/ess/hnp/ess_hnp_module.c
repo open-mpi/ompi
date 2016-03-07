@@ -786,10 +786,8 @@ static int rte_finalize(void)
         /** Remove the USR signal handlers */
         opal_event_signal_del(&sigusr1_handler);
         opal_event_signal_del(&sigusr2_handler);
-        if (orte_forward_job_control) {
-            opal_event_signal_del(&sigtstp_handler);
-            opal_event_signal_del(&sigcont_handler);
-        }
+        opal_event_signal_del(&sigtstp_handler);
+        opal_event_signal_del(&sigcont_handler);
         signals_set = false;
     }
 

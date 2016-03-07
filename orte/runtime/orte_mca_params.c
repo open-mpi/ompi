@@ -543,14 +543,6 @@ int orte_register_params(void)
         orte_map_stddiag_to_stderr = true;
     }
 
-    /* whether or not to forward SIGTSTP and SIGCONT signals */
-    orte_forward_job_control = false;
-    (void) mca_base_var_register ("orte", "orte", NULL, "forward_job_control",
-                                  "Forward SIGTSTP (after converting to SIGSTOP) and SIGCONT signals to the application procs [default: no]",
-                                  MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
-                                  OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
-                                  &orte_forward_job_control);
-
     /* whether or not to report launch progress */
     orte_report_launch_progress = false;
     (void) mca_base_var_register ("orte", "orte", NULL, "report_launch_progress",

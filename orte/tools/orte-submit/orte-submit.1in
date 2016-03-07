@@ -1133,9 +1133,7 @@ SIGUSR1 and SIGUSR2 signals received by orte-submit are propagated to
 all processes in the job.
 .
 .PP
-One can turn on forwarding of SIGSTOP and SIGCONT to the program executed
-by ompi-submit by setting the MCA parameter orte_forward_job_control to 1.
-A SIGTSTOP signal to ompi-submit will then cause a SIGSTOP signal to be sent
+A SIGTSTOP signal to ompi-submit will cause a SIGSTOP signal to be sent
 to all of the programs started by ompi-submit and likewise a SIGCONT signal
 to ompi-submit will cause a SIGCONT sent.
 .
