@@ -58,7 +58,10 @@ bool mca_common_pmi_init (void) {
         }
         /* depending on slurm versions, we may get bad rank/size or bad jobid */
         if (size < 0 || rank < 0 || PMI2_SUCCESS != PMI2_Job_GetId(buf, PMI2_MAX_VALLEN)) {
-            opal_show_help("help-common-pmi.txt", "pmi2-init-returned-bad-values", true);
+            /* When no srun (singloton) fail quietly */
+            if (NULL != getenv("SLURM_STEP_NUM_TASKS")) {
+                opal_show_help("help-common-pmi.txt", "pmi2-init-returned-bad-values", true);
+            }
             mca_common_pmi_init_count--;
             return false;
         }
