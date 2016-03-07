@@ -13,6 +13,8 @@
  * Copyright (c) 2009-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2016      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -39,12 +41,17 @@
 
 #include "opal_config.h"
 
+#if HAVE_MALLOC_H
+#include <malloc.h>
+#endif
+
 #include "opal/constants.h"
 #include "opal/mca/base/mca_base_var.h"
 #include "opal/mca/memory/memory.h"
 #include "opal/mca/memory/base/empty.h"
 #include "opal/memoryhooks/memory.h"
 #include "opal/util/output.h"
+#include "opal/util/show_help.h"
 
 #include "opal/mca/memory/linux/memory_linux.h"
 #undef opal_memory_changed
@@ -91,6 +98,11 @@ opal_memory_linux_component_t mca_memory_linux_component = {
            end up using ummunotify support. */
         .memoryc_register = opal_memory_base_component_register_empty,
         .memoryc_deregister = opal_memory_base_component_deregister_empty,
+#if MEMORY_LINUX_MALLOC_ALIGN_ENABLED
+        .memoryc_set_alignment = opal_memory_linux_malloc_set_alignment,
+#else
+        .memoryc_set_alignment = opal_memory_base_component_set_alignment_empty,
+#endif
     },
 
     /* Component-specific data, filled in later (compiler will 0/NULL
@@ -100,11 +112,42 @@ opal_memory_linux_component_t mca_memory_linux_component = {
 static bool ptmalloc2_available = MEMORY_LINUX_PTMALLOC2;
 static bool ummunotify_available = MEMORY_LINUX_UMMUNOTIFY;
 
+#if MEMORY_LINUX_MALLOC_ALIGN_ENABLED
+
+static void *(*prev_malloc_hook)(size_t, const void *);
+
+/* This is a memory allocator hook. The purpose of this is to make
+ * every malloc aligned.
+ * There two basic cases here:
+ *
+ * 1. Memory manager for Open MPI is enabled. Then memalign below will
+ * be overridden by __memalign_hook which is set to
+ * opal_memory_linux_memalign_hook.  Thus, _malloc_hook is going to
+ * use opal_memory_linux_memalign_hook.
+ *
+ * 2. No memory manager support. The memalign below is just regular glibc
+ * memalign which will be called through __malloc_hook instead of malloc.
+ */
+static void *_opal_memory_linux_malloc_align_hook(size_t sz, const void* caller);
+
+static mca_base_var_enum_value_t align_values[] = {
+    {-1, "disabled"},
+    {0, "0"},
+    {32, "32"},
+    {64, "64"},
+    {0, NULL}
+};
+#endif /* MEMORY_LINUX_MALLOC_ALIGN_ENABLED */
+
+
 /*
  * Register MCA params
  */
 static int linux_register(void)
 {
+#if MEMORY_LINUX_MALLOC_ALIGN_ENABLED
+    mca_base_var_enum_t *new_enum;
+#endif
     int ret;
     /* Information only */
     ret = mca_base_component_var_register (&mca_memory_linux_component.super.memoryc_version,
@@ -162,6 +205,45 @@ static int linux_register(void)
                                             OPAL_INFO_LVL_3,
                                             MCA_BASE_VAR_SCOPE_READONLY,
                                             &opal_memory_linux_disable);
+    if (0 > ret) {
+        return ret;
+    }
+
+#if MEMORY_LINUX_MALLOC_ALIGN_ENABLED
+    (void)mca_base_var_enum_create("memory_linux_memalign", align_values, &new_enum);
+    mca_memory_linux_component.use_memalign = -1;
+    ret = mca_base_component_var_register(&mca_memory_linux_component.super.memoryc_version,
+                                 "memalign",
+                                 "[64 | 32 | 0] - Enable memory alignment for all malloc calls.",
+                                 MCA_BASE_VAR_TYPE_INT,
+                                 new_enum,
+                                 0,
+                                 0,
+                                 OPAL_INFO_LVL_5,
+                                 MCA_BASE_VAR_SCOPE_READONLY,
+                                 &mca_memory_linux_component.use_memalign);
+    OBJ_RELEASE(new_enum);
+    if (0 > ret) {
+        return ret;
+    }
+
+    mca_memory_linux_component.memalign_threshold = 12288;
+    ret = mca_base_component_var_register(&mca_memory_linux_component.super.memoryc_version,
+                                 "memalign_threshold",
+                                 "Allocating memory more than memory_linux_memalign_threshold"
+                                 "bytes will automatically be aligned to the value of memory_linux_memalign bytes."
+                                 "(default: 12288)",
+                                 MCA_BASE_VAR_TYPE_SIZE_T,
+                                 NULL,
+                                 0,
+                                 0,
+                                 OPAL_INFO_LVL_5,
+                                 MCA_BASE_VAR_SCOPE_READONLY,
+                                 &mca_memory_linux_component.memalign_threshold);
+    if (0 > ret) {
+        return ret;
+    }
+#endif /* MEMORY_LINUX_MALLOC_ALIGN_ENABLED */
 
     return (0 > ret) ? ret : OPAL_SUCCESS;
 }
@@ -188,7 +270,7 @@ static int linux_open(void)
             if (mca_memory_linux_component.verbose_level >= 10) {
                 opal_output(0, "memory:linux: ummunotify successfully initialized; we'll use that");
             }
-            return OPAL_SUCCESS;
+            goto done;
         }
         if (mca_memory_linux_component.verbose_level >= 10) {
             opal_output(0, "memory:linux: ummunotify failed to initialize");
@@ -206,7 +288,7 @@ static int linux_open(void)
             if (mca_memory_linux_component.verbose_level >= 10) {
                 opal_output(0, "memory:linux: ptmalloc2 successfully initialized; we'll use that");
             }
-            return OPAL_SUCCESS;
+            goto done;
         }
         if (mca_memory_linux_component.verbose_level >= 10) {
             opal_output(0, "memory:linux: ptmalloc2 failed to initialize");
@@ -222,11 +304,35 @@ static int linux_open(void)
         opal_output(0, "memory:linux: no memory hooks available in this process");
     }
     return OPAL_ERR_NOT_AVAILABLE;
+
+done:
+
+#if MEMORY_LINUX_MALLOC_ALIGN_ENABLED
+    /* save original call */
+    prev_malloc_hook = NULL;
+
+    if (mca_memory_linux_component.use_memalign > 0 &&
+        (opal_mem_hooks_support_level() &
+            (OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_CHUNK_SUPPORT)) != 0) {
+        prev_malloc_hook = __malloc_hook;
+        __malloc_hook = _opal_memory_linux_malloc_align_hook;
+    }
+#endif /* MEMORY_LINUX_MALLOC_ALIGN_ENABLED */
+
+    return OPAL_SUCCESS;
 }
 
 static int linux_close(void)
 {
     int v = mca_memory_linux_component.verbose_level;
+
+#if MEMORY_LINUX_MALLOC_ALIGN_ENABLED
+    /* restore original call */
+    if (prev_malloc_hook) {
+        __malloc_hook = prev_malloc_hook;
+        prev_malloc_hook = NULL;
+    }
+#endif /* MEMORY_LINUX_MALLOC_ALIGN_ENABLED */
 
 #if MEMORY_LINUX_UMMUNOTIFY
     if (ummunotify_opened) {
@@ -249,3 +355,32 @@ static int linux_close(void)
 
     return OPAL_SUCCESS;
 }
+
+#if MEMORY_LINUX_MALLOC_ALIGN_ENABLED
+void opal_memory_linux_malloc_set_alignment(int use_memalign, size_t memalign_threshold)
+{
+    /* ignore cases when this capability is enabled explicitly using
+     * mca variables
+     */
+    if ((NULL == prev_malloc_hook) && (-1 == mca_memory_linux_component.use_memalign)) {
+        if (use_memalign == 0 || use_memalign == 32 || use_memalign == 64) {
+            mca_memory_linux_component.use_memalign = use_memalign;
+            mca_memory_linux_component.memalign_threshold = memalign_threshold;
+            if ((opal_mem_hooks_support_level() &
+                    (OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_CHUNK_SUPPORT)) != 0) {
+                prev_malloc_hook = __malloc_hook;
+                __malloc_hook = _opal_memory_linux_malloc_align_hook;
+            }
+        }
+    }
+}
+
+static void *_opal_memory_linux_malloc_align_hook(size_t sz, const void* caller)
+{
+    if (sz < mca_memory_linux_component.memalign_threshold) {
+        return prev_malloc_hook(sz, caller);
+    } else {
+        return memalign(mca_memory_linux_component.use_memalign, sz);
+    }
+}
+#endif /* MEMORY_LINUX_MALLOC_ALIGN_ENABLED */

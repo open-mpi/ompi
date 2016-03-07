@@ -19,7 +19,7 @@
  * Copyright (c) 2011-2015 NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2012      Oak Ridge National Laboratory.  All rights reserved
  * Copyright (c) 2013-2015 Intel, Inc. All rights reserved
- * Copyright (c) 2014-2015 Research Organization for Information Science
+ * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014      Bull SAS.  All rights reserved.
  * $COPYRIGHT$
@@ -42,22 +42,8 @@
 #include <fcntl.h>
 #include <stdlib.h>
 #include <stddef.h>
-#if BTL_OPENIB_MALLOC_HOOKS_ENABLED
-/*
- * The include of malloc.h below breaks abstractions in OMPI (by
- * directly including a header file from another component), but has
- * been ruled "ok" because the openib component is only supported on
- * Linux.
- *
- * The malloc hooks in newer glibc were deprecated, including stock
- * malloc.h causes compilation warnings.  Instead, we use the internal
- * linux component malloc.h which does not cause these warnings.
- * Internally, OMPI uses the built-in ptmalloc from the linux memory
- * component anyway.
- */
-#include "opal/mca/memory/linux/malloc.h"
-#endif
 
+#include "opal/mca/memory/memory.h"
 #include "opal/mca/event/event.h"
 #include "opal/align.h"
 #include "opal/util/output.h"
@@ -123,7 +109,6 @@ static void btl_openib_handle_incoming_completion(mca_btl_base_module_t* btl,
  * Local variables
  */
 static mca_btl_openib_device_t *receive_queues_device = NULL;
-static bool malloc_hook_set = false;
 static int num_devices_intentionally_ignored = 0;
 
 mca_btl_openib_component_t mca_btl_openib_component = {
@@ -146,30 +131,6 @@ mca_btl_openib_component_t mca_btl_openib_component = {
         .btl_progress = btl_openib_component_progress,
     }
 };
-
-#if BTL_OPENIB_MALLOC_HOOKS_ENABLED
-/* This is a memory allocator hook. The purpose of this is to make
- * every malloc aligned since this speeds up IB HCA work.
- * There two basic cases here:
- *
- * 1. Memory manager for Open MPI is enabled. Then memalign below will
- * be overridden by __memalign_hook which is set to
- * opal_memory_linux_memalign_hook.  Thus, _malloc_hook is going to
- * use opal_memory_linux_memalign_hook.
- *
- * 2. No memory manager support. The memalign below is just regular glibc
- * memalign which will be called through __malloc_hook instead of malloc.
- */
-static void *btl_openib_malloc_hook(size_t sz, const void* caller)
-{
-    if (sz < mca_btl_openib_component.memalign_threshold &&
-        malloc_hook_set) {
-        return mca_btl_openib_component.previous_malloc_hook(sz, caller);
-    } else {
-        return memalign(mca_btl_openib_component.use_memalign, sz);
-    }
-}
-#endif
 
 static int btl_openib_component_register(void)
 {
@@ -256,16 +217,6 @@ static int btl_openib_component_close(void)
     if (NULL != mca_btl_openib_component.default_recv_qps) {
         free(mca_btl_openib_component.default_recv_qps);
     }
-
-#if BTL_OPENIB_MALLOC_HOOKS_ENABLED
-    /* Must check to see whether the malloc hook was set before
-       assigning it back because ompi_info will call _register() and
-       then _close() (which won't set the hook) */
-    if (malloc_hook_set) {
-        __malloc_hook = mca_btl_openib_component.previous_malloc_hook;
-        malloc_hook_set = false;
-    }
-#endif
 
     /* close memory registration debugging output */
     opal_output_close (mca_btl_openib_component.memory_registration_verbose);
@@ -2538,19 +2489,12 @@ btl_openib_component_init(int *num_btl_modules,
     *num_btl_modules = 0;
     num_devs = 0;
 
-#if BTL_OPENIB_MALLOC_HOOKS_ENABLED
     /* If we got this far, then setup the memory alloc hook (because
        we're most likely going to be using this component). The hook
        is to be set up as early as possible in this function since we
-       want most of the allocated resources be aligned.*/
-    if (mca_btl_openib_component.use_memalign > 0 &&
-        (opal_mem_hooks_support_level() &
-            (OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_CHUNK_SUPPORT)) != 0) {
-        mca_btl_openib_component.previous_malloc_hook = __malloc_hook;
-        __malloc_hook = btl_openib_malloc_hook;
-        malloc_hook_set = true;
-    }
-#endif
+       want most of the allocated resources be aligned.
+     */
+    opal_memory->memoryc_set_alignment(32, mca_btl_openib_module.super.btl_eager_limit);
 
     /* Per https://svn.open-mpi.org/trac/ompi/ticket/1305, check to
        see if $sysfsdir/class/infiniband exists.  If it does not,
@@ -2951,13 +2895,6 @@ btl_openib_component_init(int *num_btl_modules,
 
     mca_btl_openib_component.ib_num_btls = 0;
     btl_openib_modex_send();
-#if BTL_OPENIB_MALLOC_HOOKS_ENABLED
-    /*Unset malloc hook since the component won't start*/
-    if (malloc_hook_set) {
-        __malloc_hook = mca_btl_openib_component.previous_malloc_hook;
-        malloc_hook_set = false;
-    }
-#endif
     if (NULL != btls) {
         free(btls);
     }
