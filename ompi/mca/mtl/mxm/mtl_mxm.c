@@ -389,6 +389,9 @@ int ompi_mtl_mxm_module_init(void)
 
     /* Register the MXM progress function */
     opal_progress_register(ompi_mtl_mxm_progress);
+    
+    ompi_mtl_mxm.super.mtl_flags |= MCA_MTL_BASE_FLAG_REQUIRE_WORLD;
+
 
 #if MXM_API >= MXM_VERSION(2,0)
     if (ompi_mtl_mxm.using_mem_hooks) {
