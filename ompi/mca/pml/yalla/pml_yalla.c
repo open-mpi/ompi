@@ -184,6 +184,8 @@ int mca_pml_yalla_init(void)
     OBJ_CONSTRUCT(&ompi_pml_yalla.convs, mca_pml_yalla_freelist_t);
 
     opal_progress_register(mca_pml_yalla_progress);
+    
+    ompi_pml_yalla.super.pml_flags |= MCA_PML_BASE_FLAG_REQUIRE_WORLD;
 
     PML_YALLA_VERBOSE(2, "created mxm context %p ep %p", (void *)ompi_pml_yalla.mxm_context,
                       (void *)ompi_pml_yalla.mxm_ep);
