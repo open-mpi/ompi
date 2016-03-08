@@ -40,6 +40,7 @@
 #include "opal/util/argv.h"
 #include "opal/util/opal_environ.h"
 #include "opal/util/path.h"
+#include "opal/runtime/opal_progress_threads.h"
 #include "opal/mca/installdirs/installdirs.h"
 #include "opal/mca/pmix/base/base.h"
 #include "opal/mca/pmix/pmix.h"
@@ -74,6 +75,7 @@ static bool added_num_procs = false;
 static bool added_app_ctx = false;
 static bool added_pmix_envs = false;
 static char *pmixenvars[4];
+static bool progress_thread_running = false;
 
 static int fork_hnp(void);
 
@@ -171,20 +173,26 @@ static int rte_init(void)
         opal_setenv (OPAL_MCA_PREFIX"pmix", "^s1,s2,cray,isolated", true, &environ);
     }
 
+    /* get an async event base - we use the opal_async one so
+     * we don't startup extra threads if not needed */
+    orte_event_base = opal_progress_thread_init(NULL);
+    progress_thread_running = true;
+
     /* open and setup pmix */
-    if (NULL == opal_pmix.initialized) {
-        if (OPAL_SUCCESS != (ret = mca_base_framework_open(&opal_pmix_base_framework, 0))) {
-            error = "opening pmix";
-            goto error;
-        }
-        if (OPAL_SUCCESS != (ret = opal_pmix_base_select())) {
-            error = "select pmix";
-            goto error;
-        }
+    if (OPAL_SUCCESS != (ret = mca_base_framework_open(&opal_pmix_base_framework, 0))) {
+        error = "opening pmix";
+        goto error;
     }
+    if (OPAL_SUCCESS != (ret = opal_pmix_base_select())) {
+        error = "select pmix";
+        goto error;
+    }
+    /* set the event base */
+    opal_pmix_base_set_evbase(orte_event_base);
     /* initialize the selected module */
     if (!opal_pmix.initialized() && (OPAL_SUCCESS != (ret = opal_pmix.init()))) {
-        error = "init pmix";
+        /* we cannot run */
+        error = "pmix init";
         goto error;
     }
 
@@ -372,17 +380,22 @@ static int rte_finalize(void)
         unsetenv("PMIX_SERVER_URI");
         unsetenv("PMIX_SECURITY_MODE");
     }
+    /* use the default procedure to finish */
+    if (ORTE_SUCCESS != (ret = orte_ess_base_app_finalize())) {
+        ORTE_ERROR_LOG(ret);
+    }
+
     /* mark us as finalized */
     if (NULL != opal_pmix.finalize) {
         opal_pmix.finalize();
         (void) mca_base_framework_close(&opal_pmix_base_framework);
     }
 
-    /* use the default procedure to finish */
-    if (ORTE_SUCCESS != (ret = orte_ess_base_app_finalize())) {
-        ORTE_ERROR_LOG(ret);
+    /* release the event base */
+    if (progress_thread_running) {
+        opal_progress_thread_finalize(NULL);
+        progress_thread_running = false;
     }
-
     return ret;
 }
 
