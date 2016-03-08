@@ -8,7 +8,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2015 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2016 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2010      IBM Corporation.  All rights reserved.
  * Copyright (c) 2012-2013 Sandia National Laboratories.  All rights reserved.
@@ -331,12 +331,13 @@ static int ompi_osc_pt2pt_lock_internal (int lock_type, int target, int assert, 
     lock->target = target;
     lock->lock_acks_expected = 0;
     lock->unlock_acks_expected = 0;
-    lock->serial_number = OPAL_THREAD_ADD64((int64_t *) &module->lock_serial_number, 1);
     lock->type = lock_type;
     lock->assert = assert;
 
     /* delay all eager sends until we've heard back.. */
     OPAL_THREAD_LOCK(&module->lock);
+
+    lock->serial_number = module->lock_serial_number + 1;
 
     /* check for conflicting lock */
     if (find_outstanding_lock_st (module, target)) {
