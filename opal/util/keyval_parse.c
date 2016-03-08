@@ -228,7 +228,7 @@ static void trim_name(char *buffer, const char* prefix, const char* suffix)
 
     /* trim spaces at the end */
     echr = buffer + buffer_len;
-    while (isspace (*(echr - 1)) && echr > buffer) {
+    while (echr > buffer && isspace (*(echr - 1))) {
         echr--;
     }
     echr[0] = '\0';
