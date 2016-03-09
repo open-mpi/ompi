@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2013 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2012-2016 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -318,6 +318,31 @@ int mca_base_var_group_component_register (const mca_base_component_t *component
                            component->mca_component_name, description);
 }
 
+int mca_base_var_group_alias (int group1_id, int group2_id, bool deprecated)
+{
+    mca_base_var_group_t *group1, *group2;
+    int ret;
+
+    /* prevent aliasing a group to itself */
+    if (group1_id == group2_id || group1_id < 0 || group2_id < 0) {
+        return OPAL_ERR_BAD_PARAM;
+    }
+
+    ret = mca_base_var_group_get_internal (group1_id, &group1, false);
+    if (OPAL_SUCCESS != ret) {
+        return ret;
+    }
+
+    ret = mca_base_var_group_get_internal (group2_id, &group2, false);
+    if (OPAL_SUCCESS != ret) {
+        return ret;
+    }
+
+    group1->group_alias = group2_id;
+    group2->deprecated = deprecated;
+
+    return OPAL_SUCCESS;
+}
 
 int mca_base_var_group_deregister (int group_index)
 {
@@ -371,6 +396,11 @@ int mca_base_var_group_deregister (int group_index)
      * group is re-registered */
 
     mca_base_var_groups_timestamp++;
+
+    if (group->group_alias >= 0) {
+        /* deregister aliased group */
+        return mca_base_var_group_deregister (group->group_alias);
+    }
 
     return OPAL_SUCCESS;
 }
@@ -489,6 +519,8 @@ static void mca_base_var_group_constructor (mca_base_var_group_t *group)
 
     OBJ_CONSTRUCT(&group->group_pvars, opal_value_array_t);
     opal_value_array_init (&group->group_pvars, sizeof (int));
+
+    group->group_alias = -1;
 }
 
 static void mca_base_var_group_destructor (mca_base_var_group_t *group)
