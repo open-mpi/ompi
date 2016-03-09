@@ -97,6 +97,10 @@ typedef enum {
     AGENT_MSG_TYPE_ACK
 } agent_udp_message_type_t;
 
+// Arbitrary 64 bit numbers
+#define MAGIC_ORIGINATOR 0x9a9e2fbce63a11e5
+#define MAGIC_TARGET 0x60735c68f368aace
+
 /*
  * Ping and ACK messages
  */
@@ -109,6 +113,11 @@ typedef struct {
        check.  */
     uint32_t src_ipv4_addr;
     uint32_t src_udp_port;
+
+    /* A magic number that helps determine that the sender was Open
+       MPI */
+    uint64_t magic_number;
+    uint32_t major_version, minor_version;
 
     /* If this is a PING, the message should be this size.
        If this is an ACK, we are ACKing a ping of this size. */
@@ -369,6 +378,21 @@ static void agent_thread_handle_ping(agent_udp_port_listener_t *listener,
         return;
     }
 
+    if (msg->magic_number != MAGIC_ORIGINATOR) {
+        opal_output_verbose(20, USNIC_OUT,
+                            "usNIC connectivity got bad ping (magic number: %" PRIu64 ", discarded)",
+                            msg->magic_number);
+        return;
+    }
+    if (msg->major_version != OPAL_MAJOR_VERSION ||
+        msg->minor_version != OPAL_MINOR_VERSION) {
+        opal_output_verbose(20, USNIC_OUT,
+                            "usNIC connectivity got bad ping (originator version: %d.%d, expected %d.%d, discarded)",
+                            msg->major_version, msg->minor_version,
+                            OPAL_MAJOR_VERSION, OPAL_MINOR_VERSION);
+        return;
+    }
+
     /* Ok, this is a good ping.  Send the ACK back.  The PING sender
        will verify that the ACK came back from the IP address that it
        expected. */
@@ -383,6 +407,7 @@ static void agent_thread_handle_ping(agent_udp_port_listener_t *listener,
        in the msg (the sender will use the msg fields and the
        recvfrom() src_addr to check for a match). */
     msg->message_type = AGENT_MSG_TYPE_ACK;
+    msg->magic_number = MAGIC_TARGET;
 
     agent_sendto(listener->fd, (char*) listener->buffer, sizeof(*msg), from);
 }
@@ -404,6 +429,12 @@ static void agent_thread_handle_ack(agent_udp_port_listener_t *listener,
         opal_output_verbose(20, USNIC_OUT,
                             "usNIC connectivity got bad ACK: %d bytes from %s, expected %d (discarded)",
                             (int) numbytes, str, (int) sizeof(*msg));
+        return;
+    }
+    if (msg->magic_number != MAGIC_TARGET) {
+        opal_output_verbose(20, USNIC_OUT,
+                            "usNIC connectivity got bad ACK (magic number: %" PRIu64 ", discarded)",
+                            msg->magic_number);
         return;
     }
 
@@ -866,6 +897,9 @@ static void agent_thread_cmd_ping(agent_ipc_listener_t *ipc_listener)
         msg->message_type = AGENT_MSG_TYPE_PING;
         msg->src_ipv4_addr = ap->src_ipv4_addr;
         msg->src_udp_port = ap->src_udp_port;
+        msg->magic_number = MAGIC_ORIGINATOR;
+        msg->major_version = OPAL_MAJOR_VERSION;
+        msg->minor_version = OPAL_MINOR_VERSION;
         msg->size = ap->sizes[i];
     }
 
