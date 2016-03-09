@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2014 The University of Tennessee and The University
+ * Copyright (c) 2004-2016 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -87,9 +87,10 @@ ompi_coll_tuned_sendrecv_zero(int dest, int stag,
      */
     if( MPI_ERR_IN_STATUS == err ) {
         /* At least we know the error was detected during the wait_all */
-        int err_index = 1;
-        if( MPI_SUCCESS == statuses[0].MPI_ERROR ) {
-            err_index = 0;
+        int err_index = 0;
+        if( MPI_SUCCESS == statuses[0].MPI_ERROR
+         || MPI_ERR_PENDING == statuses[0].MPI_ERROR ) {
+            err_index = 1;
         }
         err = statuses[err_index].MPI_ERROR;
         opal_output_verbose(COLL_TUNED_VERBOSITY, ompi_coll_tuned_stream,
