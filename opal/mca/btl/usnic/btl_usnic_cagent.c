@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2014-2016 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -328,48 +328,6 @@ static void agent_sendto(int fd, char *buffer, ssize_t numbytes,
  **************************************************************************/
 
 /*
- * Check to ensure that we expected to receive a ping from this sender
- * on the interface in which it was received (i.e., did the usnic
- * module corresponding to the received interface choose to pair
- * itself with the sender's interface).  If not, discard it.
- *
- * Note that there may be a race condition here.  We may get a ping
- * before we've setup endpoints on the module in question.  It's no
- * problem -- if we don't find it, we'll drop the PING and let the
- * sender try again later.
- */
-static bool agent_thread_is_ping_expected(opal_btl_usnic_module_t *module,
-                                          uint32_t src_ipv4_addr)
-{
-    bool found = false;
-    opal_list_item_t *item;
-
-    /* If we have a NULL value for the module, it means that the MPI
-       process that is the agent hasn't submitted the LISTEN command
-       yet (which can happen for a fast sender / slow receiver).  So
-       just return "ping is not [yet] expected". */
-    if (NULL == module) {
-        return false;
-    }
-
-    opal_mutex_lock(&module->all_endpoints_lock);
-    if (module->all_endpoints_constructed) {
-        OPAL_LIST_FOREACH(item, &module->all_endpoints, opal_list_item_t) {
-            opal_btl_usnic_endpoint_t *ep;
-            ep = container_of(item, opal_btl_usnic_endpoint_t,
-                              endpoint_endpoint_li);
-            if (src_ipv4_addr == ep->endpoint_remote_modex.ipv4_addr) {
-                found = true;
-                break;
-            }
-        }
-    }
-    opal_mutex_unlock(&module->all_endpoints_lock);
-
-    return found;
-}
-
-/*
  * Handle an incoming PING message (send an ACK)
  */
 static void agent_thread_handle_ping(agent_udp_port_listener_t *listener,
@@ -411,18 +369,9 @@ static void agent_thread_handle_ping(agent_udp_port_listener_t *listener,
         return;
     }
 
-    /* Finally, check that the ping is from an interface that the
-       module expects */
-    if (!agent_thread_is_ping_expected(listener->module,
-                                       src_addr_in->sin_addr.s_addr)) {
-        opal_output_verbose(20, USNIC_OUT,
-                            "usNIC connectivity got bad ping (from unexpected address: listener %s not paired with peer interface %s, discarded)",
-                            listener->ipv4_addr_str,
-                            real_ipv4_addr_str);
-        return;
-    }
-
-    /* Ok, this is a good ping.  Send the ACK back */
+    /* Ok, this is a good ping.  Send the ACK back.  The PING sender
+       will verify that the ACK came back from the IP address that it
+       expected. */
 
     opal_output_verbose(20, USNIC_OUT,
                         "usNIC connectivity got PING (size=%ld) from %s; sending ACK",
@@ -430,10 +379,10 @@ static void agent_thread_handle_ping(agent_udp_port_listener_t *listener,
 
     /* Send back an ACK.  No need to allocate a new buffer; just
        re-use the same buffer we just got.  Note that msg->size is
-       already set. */
+       already set.  We simply echo back the sender's IP address/port
+       in the msg (the sender will use the msg fields and the
+       recvfrom() src_addr to check for a match). */
     msg->message_type = AGENT_MSG_TYPE_ACK;
-    msg->src_ipv4_addr = listener->ipv4_addr;
-    msg->src_udp_port = listener->udp_port;
 
     agent_sendto(listener->fd, (char*) listener->buffer, sizeof(*msg), from);
 }
@@ -458,11 +407,15 @@ static void agent_thread_handle_ack(agent_udp_port_listener_t *listener,
         return;
     }
 
-    /* Find the pending ping request that this ACK is for */
+    /* Find the pending ping request (on this interface) for this ACK.
+       If we don't find a match, we'll drop it. */
     agent_ping_t *ap;
+    uint32_t src_in_port = ntohs(src_addr_in->sin_port);
     OPAL_LIST_FOREACH(ap, &pings_pending, agent_ping_t) {
-        if (ap->dest_ipv4_addr == msg->src_ipv4_addr &&
-            ap->dest_udp_port == msg->src_udp_port) {
+        if (ap->dest_ipv4_addr == src_addr_in->sin_addr.s_addr &&
+            ap->dest_udp_port == src_in_port &&
+            ap->src_ipv4_addr == msg->src_ipv4_addr &&
+            ap->src_udp_port == msg->src_udp_port) {
             /* Found it -- indicate that it has been acked */
             for (int i = 0; i < NUM_PING_SIZES; ++i) {
                 if (ap->sizes[i] == msg->size) {
