@@ -101,9 +101,10 @@ static pmix_status_t send_bytes(int sd, char **buf, size_t *remain)
                 goto exit;
             }
             /* we hit an error and cannot progress this message */
-            pmix_output(0, "pmix_usock_msg_send_bytes: write failed: %s (%d) [sd = %d]",
-                        strerror(pmix_socket_errno),
-                        pmix_socket_errno, sd);
+            pmix_output_verbose(10, pmix_globals.debug_output,
+                                "pmix_usock_msg_send_bytes: write failed: %s (%d) [sd = %d]",
+                                strerror(pmix_socket_errno),
+                                pmix_socket_errno, sd);
             ret = PMIX_ERR_COMM_FAILURE;
             goto exit;
         }
@@ -147,7 +148,7 @@ static int read_bytes(int sd, char **buf, size_t *remain)
              * the error back to the RML and let the caller know
              * to abort this message
              */
-            pmix_output_verbose(2, pmix_globals.debug_output,
+            pmix_output_verbose(10, pmix_globals.debug_output,
                                 "pmix_usock_msg_recv: readv failed: %s (%d)",
                                 strerror(pmix_socket_errno),
                                 pmix_socket_errno);
