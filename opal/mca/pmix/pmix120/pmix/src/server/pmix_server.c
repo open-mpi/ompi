@@ -2298,6 +2298,11 @@ static pmix_status_t server_switchyard(pmix_peer_t *peer, uint32_t tag,
             event_del(&peer->recv_event);
             peer->recv_ev_active = false;
         }
+        /* remove this peer from the nspace ranks */
+        pmix_list_remove_item(&peer->info->nptr->server->ranks, &peer->info->super);
+        PMIX_RELEASE(peer->info);
+        pmix_pointer_array_set_item(&pmix_server_globals.clients, peer->index, NULL);
+        PMIX_RELEASE(peer);
         return rc;
     }
 
