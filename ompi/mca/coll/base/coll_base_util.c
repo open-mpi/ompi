@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2015 The University of Tennessee and The University
+ * Copyright (c) 2004-2016 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -64,13 +64,14 @@ int ompi_coll_base_sendrecv_nonzero_actual( void* sendbuf, size_t scount,
 
     if (0 != nreqs) {
         err = ompi_request_wait_all( nreqs, reqs, statuses );
-        if( MPI_ERR_IN_STATUS == err ) {
+        if( MPI_ERR_IN_STATUS == err ) { line == __LINE__;
             /* As we use wait_all we will get MPI_ERR_IN_STATUS which is not an error
              * code that we can propagate up the stack. Instead, look for the real
              * error code from the MPI_ERROR in the status.
              */
             int err_index = 0;
-            if( MPI_SUCCESS == statuses[0].MPI_ERROR ) {
+            if( MPI_SUCCESS == statuses[0].MPI_ERROR
+             || MPI_ERR_PENDING == statuses[0].MPI_ERROR ) {
                 err_index = 1;
             }
             if (MPI_STATUS_IGNORE != status) {
