@@ -47,6 +47,7 @@ struct mca_base_component_repository_item_t {
 
     char ri_type[MCA_BASE_MAX_TYPE_NAME_LEN + 1];
     char ri_name[MCA_BASE_MAX_COMPONENT_NAME_LEN + 1];
+    char ri_name_alias[MCA_BASE_MAX_COMPONENT_NAME_LEN + 1];
 
     char *ri_path;
     char *ri_base;

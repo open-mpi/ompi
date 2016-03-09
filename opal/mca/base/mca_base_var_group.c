@@ -313,9 +313,19 @@ int mca_base_var_group_register (const char *project_name, const char *framework
 int mca_base_var_group_component_register (const mca_base_component_t *component,
                                            const char *description)
 {
-    /* 1.7 components do not store the project */
-    return group_register (NULL, component->mca_type_name,
-                           component->mca_component_name, description);
+    int group_id;
+
+    group_id = group_register (component->mca_project_name, component->mca_type_name,
+                               component->mca_component_name, description);
+
+    if (strlen (component->mca_component_name_alias)) {
+        int alias_id;
+        alias_id = group_register (component->mca_project_name, component->mca_type_name,
+                                   component->mca_component_name_alias, description);
+        mca_base_var_group_alias (group_id, alias_id, false);
+    }
+
+    return group_id;
 }
 
 int mca_base_var_group_alias (int group1_id, int group2_id, bool deprecated)

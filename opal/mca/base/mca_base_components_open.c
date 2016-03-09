@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2012 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2011-2015 Los Alamos National Security, LLC.
+ * Copyright (c) 2011-2016 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2014      Hochschule Esslingen.  All rights reserved.
  * $COPYRIGHT$
@@ -54,7 +54,6 @@ struct mca_base_dummy_framework_list_item_t {
 int mca_base_framework_components_open (mca_base_framework_t *framework,
                                         mca_base_open_flag_t flags)
 {
-    /* Open flags are not used at this time. Suppress compiler warning. */
     if (flags & MCA_BASE_OPEN_FIND_COMPONENTS) {
         bool open_dso_components = !(flags & MCA_BASE_OPEN_STATIC_ONLY);
         /* Find and load requested components */
