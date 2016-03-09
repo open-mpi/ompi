@@ -25,7 +25,6 @@
 #include "ompi/mca/pml/pml.h"
 #include "opal/mca/btl/btl.h"
 #include "opal/mca/btl/base/base.h"
-#include "opal/mca/btl/sm/btl_sm_frag.h"
 
 #include "oshmem/proc/proc.h"
 #include "oshmem/mca/memheap/memheap.h"
