@@ -1,5 +1,6 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2006-2016 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
@@ -27,14 +28,12 @@ opal_installdirs_base_component_t mca_installdirs_env_component = {
         OPAL_INSTALLDIRS_BASE_VERSION_2_0_0,
 
         /* Component name and version */
-        "env",
-        OPAL_MAJOR_VERSION,
-        OPAL_MINOR_VERSION,
-        OPAL_RELEASE_VERSION,
+        .mca_component_name = "env",
+        MCA_BASE_MAKE_VERSION(component, OPAL_MAJOR_VERSION, OPAL_MINOR_VERSION,
+                              OPAL_RELEASE_VERSION),
 
         /* Component open and close functions */
-        installdirs_env_open,
-        NULL
+        .mca_open_component = installdirs_env_open,
     },
     {
         /* This component is checkpointable */

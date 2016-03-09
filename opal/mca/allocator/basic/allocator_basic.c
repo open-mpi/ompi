@@ -13,7 +13,7 @@
  * Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
- * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2015-2016 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -36,12 +36,11 @@ mca_allocator_base_component_t mca_allocator_basic_component = {
   {
     MCA_ALLOCATOR_BASE_VERSION_2_0_0,
 
-    "basic", /* MCA module name */
-    OPAL_MAJOR_VERSION,
-    OPAL_MINOR_VERSION,
-    OPAL_RELEASE_VERSION,
-    mca_allocator_basic_component_open,  /* module open */
-    mca_allocator_basic_component_close  /* module close */
+    .mca_component_name = "basic", /* MCA module name */
+    MCA_BASE_MAKE_VERSION(component, OPAL_MAJOR_VERSION, OPAL_MINOR_VERSION,
+                          OPAL_RELEASE_VERSION),
+    .mca_open_component = mca_allocator_basic_component_open,
+    .mca_close_component = mca_allocator_basic_component_close,
   },
   {
       /* The component is checkpoint ready */

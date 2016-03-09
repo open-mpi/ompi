@@ -1,6 +1,9 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2016      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -32,14 +35,12 @@ opal_if_base_component_t mca_if_bsdx_ipv4_component = {
         OPAL_IF_BASE_VERSION_2_0_0,
 
         /* Component name and version */
-        "bsdx_ipv4",
-        OPAL_MAJOR_VERSION,
-        OPAL_MINOR_VERSION,
-        OPAL_RELEASE_VERSION,
+        .mca_component_name = "bsdx_ipv4",
+        MCA_BASE_MAKE_VERSION(component, OPAL_MAJOR_VERSION, OPAL_MINOR_VERSION,
+                              OPAL_RELEASE_VERSION),
 
         /* Component open and close functions */
-        if_bsdx_open,
-        NULL
+        .mca_open_component = if_bsdx_open,
     },
     {
         /* This component is checkpointable */
