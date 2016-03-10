@@ -13,7 +13,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2013-2015 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -398,10 +398,10 @@ static void process_send(int fd, short args, void *cbdata)
     orte_process_name_t hop;
 
     opal_output_verbose(2, orte_oob_base_framework.framework_output,
-                        "%s:[%s:%d] processing send to peer %s:%d to channel =%d seq_num = %d",
+                        "%s:[%s:%d] processing send to peer %s:%d seq_num = %d",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                         __FILE__, __LINE__,
-                        ORTE_NAME_PRINT(&op->msg->dst), op->msg->tag, op->msg->dst_channel, op->msg->seq_num);
+                        ORTE_NAME_PRINT(&op->msg->dst), op->msg->tag, op->msg->seq_num);
 
     /* do we have a route to this peer (could be direct)? */
     hop = orte_routed.get_route(&op->msg->dst);

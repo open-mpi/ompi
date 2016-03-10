@@ -5,7 +5,7 @@
  * Copyright (c) 2011-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2013      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2014-2015 Intel Corporation.  All rights reserved.
+ * Copyright (c) 2014-2016 Intel Corporation.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -36,33 +36,34 @@
  * component's public mca_base_component_t struct. */
 #include "orte/mca/rml/base/static-components.h"
 
-orte_rml_module_t orte_rml = {0};
-orte_rml_base_t   orte_rml_base = {{{0}}};
+
+/* Initialising stub fns in the global var used by other modules */
+orte_rml_base_module_t orte_rml = {
+    orte_rml_API_enable_comm,
+    orte_rml_API_finalize,
+    orte_rml_API_get_contact_info,
+    orte_rml_API_set_contact_info,
+    orte_rml_API_ping,
+    orte_rml_API_send_nb,
+    orte_rml_API_send_buffer_nb,
+    orte_rml_API_recv_nb,
+    orte_rml_API_recv_buffer_nb,
+    orte_rml_API_recv_cancel,
+    orte_rml_API_add_exception_handler,
+    orte_rml_API_del_exception_handler,
+    orte_rml_API_ft_event,
+    orte_rml_API_purge
+};
+
+orte_rml_base_t orte_rml_base = {{{0}}};
 OPAL_TIMING_DECLARE(tm_rml)
 
 orte_rml_component_t *orte_rml_component = NULL;
 
 static bool selected = false;
-static char *orte_rml_base_wrapper = NULL;
 
 static int orte_rml_base_register(mca_base_register_flag_t flags)
 {
-    int var_id;
-
-    /*
-     * Which RML Wrapper component to use, if any
-     *  - NULL or "" = No wrapper
-     *  - ow. select that specific wrapper component
-     */
-    orte_rml_base_wrapper = NULL;
-    var_id = mca_base_var_register("orte", "rml", "base", "wrapper",
-                                   "Use a Wrapper component around the selected RML component",
-                                   MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
-                                   OPAL_INFO_LVL_9,
-                                   MCA_BASE_VAR_SCOPE_READONLY,
-                                   &orte_rml_base_wrapper);
-    (void) mca_base_var_register_synonym(var_id, "orte", "rml",NULL,"wrapper", 0);
-
 #if OPAL_ENABLE_TIMING
     orte_rml_base.timing = false;
     (void) mca_base_var_register ("orte", "rml", "base", "timing",
@@ -89,6 +90,17 @@ static int orte_rml_base_close(void)
 {
     bool active;
 
+     orte_rml_base_active_t *active_module;
+
+    /*close the active modules */
+    OPAL_LIST_FOREACH(active_module, &orte_rml_base.actives, orte_rml_base_active_t)
+    {
+        if (NULL != active_module->module->finalize) {
+            active_module->module->finalize();
+        }
+    }
+    OPAL_LIST_DESTRUCT(&orte_rml_base.actives)
+
     /* because the RML posted recvs list is in a separate
      * async thread for apps, we can't just destruct it here.
      * Instead, we push it into that event thread and destruct
@@ -107,7 +119,6 @@ static int orte_rml_base_close(void)
      }
 
     OPAL_TIMING_REPORT(orte_rml_base.timing, &tm_rml);
-    OBJ_DESTRUCT(&orte_rml_base.open_channels);
 
     return mca_base_framework_components_close(&orte_rml_base_framework, NULL);
 }
@@ -115,13 +126,11 @@ static int orte_rml_base_close(void)
 static int orte_rml_base_open(mca_base_open_flag_t flags)
 {
     /* Initialize globals */
+    /* construct object for holding the active plugin modules */
+    OBJ_CONSTRUCT(&orte_rml_base.actives, opal_list_t);
     OBJ_CONSTRUCT(&orte_rml_base.posted_recvs, opal_list_t);
     OBJ_CONSTRUCT(&orte_rml_base.unmatched_msgs, opal_list_t);
-    OBJ_CONSTRUCT(&orte_rml_base.open_channels, opal_pointer_array_t);
-    if (OPAL_SUCCESS != opal_pointer_array_init(&orte_rml_base.open_channels, 0,
-                                                INT_MAX, 1)) {
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
+
     OPAL_TIMING_INIT(&tm_rml);
     /* Open up all available components */
     return mca_base_framework_components_open(&orte_rml_base_framework, flags);
@@ -131,116 +140,80 @@ MCA_BASE_FRAMEWORK_DECLARE(orte, rml, "ORTE Run-Time Messaging Layer",
                            orte_rml_base_register, orte_rml_base_open, orte_rml_base_close,
                            mca_rml_base_static_components, 0);
 
+OBJ_CLASS_INSTANCE(orte_rml_base_active_t,
+                   opal_list_item_t,
+                   NULL, NULL);
 
+/**
+ * Function for selecting one component(plugin) from all those that are
+ * available.
+ */
 int orte_rml_base_select(void)
 {
-    opal_list_item_t *item, *next;
-    mca_base_component_list_item_t *cli;
+   mca_base_component_list_item_t *cli=NULL;
+   mca_base_component_t *component=NULL;
+   mca_base_module_t *module=NULL;
+   orte_rml_base_module_t *nmodule;
+   orte_rml_base_active_t *newmodule, *mod;
+   int priority;
+   bool inserted;
 
-    int selected_priority = -1;
-    orte_rml_component_t *selected_component = NULL;
-    orte_rml_module_t *selected_module = NULL;
+   if (selected) {
+      return ORTE_SUCCESS;
+   }
+   selected = true;
 
-    orte_rml_component_t *wrapper_component = NULL;
-    bool return_silent=false;
+   OPAL_LIST_FOREACH(cli, &orte_rml_base_framework.framework_components, mca_base_component_list_item_t ) {
+       component = (mca_base_component_t *) cli->cli_component;
 
-    if (selected) {
-        return ORTE_SUCCESS;
-    }
-    selected = true;
+       opal_output_verbose(10, orte_rml_base_framework.framework_output,
+                           "orte_rml_base_select: Initializing %s component %s",
+                            component->mca_type_name,
+                            component->mca_component_name);
 
-    OPAL_LIST_FOREACH(cli, &orte_rml_base_framework.framework_components, mca_base_component_list_item_t ) {
-        orte_rml_component_t* component;
-        component = (orte_rml_component_t *) cli->cli_component;
+       if (NULL == ((orte_rml_component_t *)component)->rml_init) {
+           opal_output_verbose(10, orte_rml_base_framework.framework_output,
+                               "orte_rml_base_select: no init function; ignoring component [%s]",component->mca_component_name);
+       } else {
+           module = (mca_base_module_t *) ((orte_rml_component_t *)component)->rml_init(&priority);
+           if (NULL == module) {
+               opal_output_verbose(10, orte_rml_base_framework.framework_output,
+                                   "orte_rml_base_select: init returned failure [%s]",component->mca_component_name);
+               continue;
+           }
 
-        opal_output_verbose(10, orte_rml_base_framework.framework_output,
-                            "orte_rml_base_select: initializing %s component %s",
-                            component->rml_version.mca_type_name,
-                            component->rml_version.mca_component_name);
+           /* based on priority add it to the actives list */
+           nmodule = (orte_rml_base_module_t*) module;
+           /* add to the list of selected modules */
+           newmodule = OBJ_NEW(orte_rml_base_active_t);
+           newmodule->pri = priority;
+           newmodule->module = nmodule;
+           newmodule->component = component;
 
-        if (NULL == component->rml_init) {
-            opal_output_verbose(10, orte_rml_base_framework.framework_output,
-                                "orte_rml_base_select: no init function; ignoring component");
-        } else {
-            int priority = 0;
-
-            orte_rml_module_t* module = component->rml_init(&priority);
-            if (NULL == module) {
-                opal_output_verbose(10, orte_rml_base_framework.framework_output,
-                                    "orte_rml_base_select: init returned failure");
-                if (priority < 0) {
-                    return_silent = true;
-                }
-                continue;
-            }
-
-            if(NULL != orte_rml_base_wrapper &&
-               /* If this is a wrapper component then save it for later */
-               RML_SELECT_WRAPPER_PRIORITY >= priority) {
-                if( 0 == strncmp(component->rml_version.mca_component_name,
-                                 orte_rml_base_wrapper,
-                                 strlen(orte_rml_base_wrapper) ) ) {
-                    wrapper_component = component;
-                }
-            } else if (priority > selected_priority) {
-                /* Otherwise this is a normal module and subject to normal selection */
-                if (NULL != selected_module && NULL != selected_module->finalize) {
-                    selected_module->finalize();
-                }
-                selected_priority = priority;
-                selected_component = component;
-                selected_module = module;
-            }
+           /* maintain priority order */
+           inserted = false;
+           OPAL_LIST_FOREACH(mod, &orte_rml_base.actives, orte_rml_base_active_t) {
+               if (priority > mod->pri) {
+                   opal_list_insert_pos(&orte_rml_base.actives,
+                                (opal_list_item_t*)mod, &newmodule->super);
+                   inserted = true;
+                   break;
+               }
+           }
+           if (!inserted) {
+               /* must be lowest priority - add to end */
+               opal_list_append(&orte_rml_base.actives, &newmodule->super);
+           }
+       }
+   }
+   if (4 < opal_output_get_verbosity(orte_rml_base_framework.framework_output)) {
+        opal_output(0, "%s: Final rml priorities", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+        /* show the prioritized list */
+        OPAL_LIST_FOREACH(mod, &orte_rml_base.actives, orte_rml_base_active_t) {
+            opal_output(0, "\tComponent: %s Priority: %d", mod->component->mca_component_name, mod->pri);
         }
-    }
+   }
 
-    /*
-     * Unload all components that were not selected
-     */
-    OPAL_LIST_FOREACH_SAFE(item, next, &orte_rml_base_framework.framework_components, opal_list_item_t) {
-        mca_base_component_list_item_t *cli = (mca_base_component_list_item_t *) item;
-        orte_rml_component_t* component = (orte_rml_component_t *) cli->cli_component;
-
-        /* Keep it if it is the wrapper component */
-        if ((component == wrapper_component) || (component == selected_component)) {
-            continue;
-        }
-        /* Not the selected component */
-        opal_output_verbose(10, orte_rml_base_framework.framework_output,
-                            "orte_rml_base_select: module %s unloaded",
-                            component->rml_version.mca_component_name);
-        opal_list_remove_item(&orte_rml_base_framework.framework_components, item);
-        mca_base_component_repository_release((mca_base_component_t *) component);
-        OBJ_RELEASE(item);
-    }
-
-    /* setup reference to selected module */
-    if (NULL != selected_module) {
-        orte_rml = *selected_module;
-        orte_rml_component = selected_component;
-    }
-
-    /* If a wrapper component was requested then
-     * Make sure it can switch out the selected module
-     */
-    if( NULL != wrapper_component) {
-        wrapper_component->rml_init(NULL);
-    }
-
-    if (NULL == selected_component) {
-        if (return_silent) {
-            return ORTE_ERR_SILENT;
-        }
-        return ORTE_ERROR;
-    }
-    /* Post a persistent recieve for open channel request */
-    orte_rml.recv_buffer_nb (ORTE_NAME_WILDCARD, ORTE_RML_TAG_OPEN_CHANNEL_REQ,
-                             ORTE_RML_PERSISTENT, orte_rml_open_channel_recv_callback,
-                             NULL);
-    /* post a persistent recieve for close channel request */
-    orte_rml.recv_buffer_nb (ORTE_NAME_WILDCARD, ORTE_RML_TAG_CLOSE_CHANNEL_REQ,
-                             ORTE_RML_PERSISTENT, orte_rml_close_channel_recv_callback,
-                             NULL);
     return ORTE_SUCCESS;
 }
 
@@ -278,48 +251,16 @@ static void send_cons(orte_rml_send_t *ptr)
     ptr->iov = NULL;
     ptr->buffer = NULL;
     ptr->data = NULL;
-    ptr->channel = NULL;
-    ptr->dst_channel = ORTE_RML_INVALID_CHANNEL_NUM;
     ptr->seq_num = 0xFFFFFFFF;
 }
 OBJ_CLASS_INSTANCE(orte_rml_send_t,
                    opal_list_item_t,
                    send_cons, NULL);
 
-static void channel_cons(orte_rml_channel_t *ptr)
-{
-    ptr->channel_num = ORTE_RML_INVALID_CHANNEL_NUM;
-    ptr->qos = NULL;
-    ptr->qos_channel_ptr = NULL;
-    ptr->recv = false;
-}
-
-OBJ_CLASS_INSTANCE(orte_rml_channel_t,
-                   opal_list_item_t,
-                   channel_cons, NULL);
-
-static void open_channel_cons(orte_rml_open_channel_t *ptr)
-{
-    ptr->cbdata = NULL;
-    ptr->qos_attributes = NULL;
-}
-OBJ_CLASS_INSTANCE(orte_rml_open_channel_t,
-                   opal_list_item_t,
-                   open_channel_cons, NULL);
-
-static void close_channel_cons(orte_rml_close_channel_t *ptr)
-{
-    ptr->cbdata = NULL;
-    ptr->channel = NULL;
-}
-OBJ_CLASS_INSTANCE(orte_rml_close_channel_t,
-                   opal_list_item_t,
-                   close_channel_cons, NULL);
 
 static void send_req_cons(orte_rml_send_request_t *ptr)
 {
-    OBJ_CONSTRUCT(&ptr->post.send, orte_rml_send_t);
-    OBJ_CONSTRUCT(&ptr->post.open_channel, orte_rml_open_channel_t);
+    OBJ_CONSTRUCT(&ptr->send, orte_rml_send_t);
 }
 OBJ_CLASS_INSTANCE(orte_rml_send_request_t,
                    opal_object_t,
@@ -329,7 +270,6 @@ static void recv_cons(orte_rml_recv_t *ptr)
 {
     ptr->iov.iov_base = NULL;
     ptr->iov.iov_len = 0;
-    ptr->channel_num = ORTE_RML_INVALID_CHANNEL_NUM;
 }
 static void recv_des(orte_rml_recv_t *ptr)
 {

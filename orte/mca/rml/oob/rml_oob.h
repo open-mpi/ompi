@@ -14,7 +14,7 @@
  *                         All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2014 -2015 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -37,7 +37,7 @@
 BEGIN_C_DECLS
 
 typedef struct {
-    struct orte_rml_module_t super;
+    struct orte_rml_base_module_t super;
     opal_list_t              exceptions;
     opal_list_t              queued_routing_messages;
     opal_event_t            *timer_event;
@@ -48,7 +48,7 @@ ORTE_MODULE_DECLSPEC extern orte_rml_component_t mca_rml_oob_component;
 extern orte_rml_oob_module_t orte_rml_oob_module;
 
 int orte_rml_oob_init(void);
-int orte_rml_oob_fini(void);
+void orte_rml_oob_fini(void);
 int orte_rml_oob_ft_event(int state);
 
 int orte_rml_oob_send_nb(orte_process_name_t* peer,
@@ -62,43 +62,6 @@ int orte_rml_oob_send_buffer_nb(orte_process_name_t* peer,
                                 opal_buffer_t* buffer,
                                 orte_rml_tag_t tag,
                                 orte_rml_buffer_callback_fn_t cbfunc,
-                                void* cbdata);
-
-void orte_rml_oob_recv_nb(orte_process_name_t* peer,
-                          orte_rml_tag_t tag,
-                          bool persistent,
-                          orte_rml_callback_fn_t cbfunc,
-                          void* cbdata);
-
-void orte_rml_oob_recv_buffer_nb(orte_process_name_t* peer,
-                                 orte_rml_tag_t tag,
-                                 bool persistent,
-                                 orte_rml_buffer_callback_fn_t cbfunc,
-                                 void* cbdata);
-
-void orte_rml_oob_recv_cancel(orte_process_name_t* peer,
-                              orte_rml_tag_t tag);
-
-int orte_rml_oob_open_channel(orte_process_name_t * peer,
-                              opal_list_t * qos_attributes,
-                              orte_rml_channel_callback_fn_t cbfunc,
-                              void *cbdata);
-
-int orte_rml_oob_send_channel_nb (orte_rml_channel_num_t channel,
-                               struct iovec* msg,
-                               int count,
-                               orte_rml_tag_t tag,
-                               orte_rml_send_channel_callback_fn_t cbfunc,
-                               void* cbdata);
-
-int orte_rml_oob_send_buffer_channel_nb (orte_rml_channel_num_t channel,
-                                         opal_buffer_t *buffer,
-                                         orte_rml_tag_t tag,
-                                         orte_rml_send_buffer_channel_callback_fn_t cbfunc,
-                                         void* cbdata);
-
-int orte_rml_oob_close_channel (orte_rml_channel_num_t channel,
-                                orte_rml_channel_callback_fn_t cbfunc,
                                 void* cbdata);
 
 int orte_rml_oob_ping(const char* uri,

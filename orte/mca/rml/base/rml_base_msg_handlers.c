@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2013 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2015 Intel, Inc. All rights reserved.
+ * Copyright (c) 2015-2016 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -46,7 +46,6 @@
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/rml/base/base.h"
 #include "orte/mca/rml/base/rml_contact.h"
-#include "orte/mca/qos/base/base.h"
 
 
 static void msg_match_recv(orte_rml_posted_recv_t *rcv, bool get_all);
@@ -143,11 +142,10 @@ void orte_rml_base_complete_recv_msg (orte_rml_recv_t **recv_msg)
                  * to retain ownership of it, so release whatever remains
                  */
                 OPAL_OUTPUT_VERBOSE((5, orte_rml_base_framework.framework_output,
-                                     "%s message received  bytes from %s for tag %d on channel=%d called callback",
+                                     "%s message received  bytes from %s for tag %d called callback",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                      ORTE_NAME_PRINT(&msg->sender),
-                                     msg->tag,
-                                     msg->channel_num));
+                                     msg->tag));
                 OBJ_DESTRUCT(&buf);
             } else {
                 /* deliver as an iovec */
@@ -180,11 +178,10 @@ void orte_rml_base_complete_recv_msg (orte_rml_recv_t **recv_msg)
      * the message until such a recv is issued
      */
      OPAL_OUTPUT_VERBOSE((5, orte_rml_base_framework.framework_output,
-                            "%s message received  bytes from %s for tag %d on channel=%d Not Matched adding to unmatched msgs",
+                            "%s message received bytes from %s for tag %d Not Matched adding to unmatched msgs",
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                             ORTE_NAME_PRINT(&msg->sender),
-                            msg->tag,
-                            msg->channel_num));
+                            msg->tag));
      opal_list_append(&orte_rml_base.unmatched_msgs, &msg->super);
 }
 
@@ -227,41 +224,24 @@ void orte_rml_base_process_msg(int fd, short flags, void *cbdata)
 {
     orte_rml_recv_t *msg = (orte_rml_recv_t*)cbdata;
     OPAL_OUTPUT_VERBOSE((5, orte_rml_base_framework.framework_output,
-                         "%s message received from %s for tag %d on channel=%d",
+                         "%s message received from %s for tag %d",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(&msg->sender),
-                         msg->tag,
-                         msg->channel_num));
+                         msg->tag));
 
     OPAL_TIMING_EVENT((&tm_rml,"from %s %d bytes",
                        ORTE_NAME_PRINT(&msg->sender), msg->iov.iov_len));
-    if ((ORTE_RML_INVALID_CHANNEL_NUM != msg->channel_num) &&
-            (NULL != orte_rml_base_get_channel(msg->channel_num) )) {
-
-        // call channel for recv post processing
-        if (ORTE_SUCCESS != (orte_rml_base_process_recv_channel (orte_rml_base_get_channel(msg->channel_num), msg)))
-        {
-            /* the qos channel has determined an error so we cannot complete this msg to the caller */
-            OPAL_OUTPUT_VERBOSE((5, orte_rml_base_framework.framework_output,
-                                 "%s QoS channel receive error - cannot complete msg on channel=%d",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 msg->channel_num));
-            return;
-        }
-
-    }
-    orte_rml_base_complete_recv_msg (&msg);
+    orte_rml_base_complete_recv_msg(&msg);
 }
 
 void orte_rml_base_reprocess_msg(int fd, short flags, void *cbdata)
 {
     orte_rml_recv_t *msg = (orte_rml_recv_t*)cbdata;
     OPAL_OUTPUT_VERBOSE((5, orte_rml_base_framework.framework_output,
-                         "%s reprocessing msg received from %s for tag %d on channel=%d",
+                         "%s reprocessing msg received from %s for tag %d",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(&msg->sender),
-                         msg->tag,
-                         msg->channel_num));
+                         msg->tag));
 
     OPAL_TIMING_EVENT((&tm_rml,"from %s %d bytes",
                        ORTE_NAME_PRINT(&msg->sender), msg->iov.iov_len));
