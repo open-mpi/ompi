@@ -3,7 +3,7 @@
 # Copyright (c) 2009      The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
-# Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2009-2016 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2010-2012 IBM Corporation.  All rights reserved.
 # Copyright (c) 2013-2016 Los Alamos National Security, LLC. All rights
 #                         reserved.
@@ -41,7 +41,7 @@ AC_DEFUN([OPAL_CHECK_CMA],[
 
 	OPAL_VAR_SCOPE_POP
 
-	OMPI_SUMMARY_ADD([[Transports]],[[Linux CMA IPC]],[$1],[$ompi_check_cma_happy])
+	OMPI_SUMMARY_ADD([[Transports]],[[Shared memory/Linux CMA]],[$1],[$ompi_check_cma_happy])
     fi
 
     AS_IF([test "$ompi_check_cma_happy" = "yes"], [$2], [$3])

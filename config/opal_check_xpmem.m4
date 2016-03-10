@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2009-2011 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2009-2016 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2011-2016 Los Alamos National Security, LLC. All rights
 #                         reserved.
 # Copyright (c) 2014      Intel, Inc. All rights reserved.
@@ -101,7 +101,7 @@ AC_DEFUN([OPAL_CHECK_XPMEM], [
 	    fi
 	fi
 
-	OMPI_SUMMARY_ADD([[Transports]],[[XPMEM Shared Memory]],[$1],[$opal_check_cray_xpmem_happy])
+	OMPI_SUMMARY_ADD([[Transports]],[[Shared memory/XPMEM]],[$1],[$opal_check_cray_xpmem_happy])
     fi
 
     AS_IF([test "$opal_check_xpmem_happy" = "yes"], [

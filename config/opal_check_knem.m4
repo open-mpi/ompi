@@ -3,7 +3,7 @@ dnl
 dnl Copyright (c) 2009      The University of Tennessee and The University
 dnl                         of Tennessee Research Foundation.  All rights
 dnl                         reserved.
-dnl Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2009-2016 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2010-2012 IBM Corporation.  All rights reserved.
 dnl Copyright (c) 2014-2016 Los Alamos National Security, LLC. All rights
 dnl                         reserved.
@@ -61,7 +61,7 @@ AC_DEFUN([OPAL_CHECK_KNEM],[
 
 	CPPFLAGS="$opal_check_knem_$1_save_CPPFLAGS"
 
-        OMPI_SUMMARY_ADD([[Transports]],[[KNEM Shared Memory]],[$1],[$opal_check_knem_happy])
+        OMPI_SUMMARY_ADD([[Transports]],[[Shared memory/Linux KNEM]],[$1],[$opal_check_knem_happy])
 	OPAL_VAR_SCOPE_POP
     fi
 

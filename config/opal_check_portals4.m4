@@ -11,7 +11,7 @@ dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2006 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2006      QLogic Corp. All rights reserved.
-dnl Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2009-2016 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2015      Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
 dnl Copyright (c) 2016      Los Alamos National Security, LLC. All rights
@@ -94,7 +94,7 @@ AC_DEFUN([OPAL_CHECK_PORTALS4],[
 	AS_IF([test $max_md_size -ne 0 && test $max_va_size -ne 0],
               [AC_MSG_NOTICE([Portals 4 address space size: $max_md_size, $max_va_size])])
 
-	OMPI_SUMMARY_ADD([[Transports]],[[portals4]],[$1],[$ompi_check_portals4_happy])
+	OMPI_SUMMARY_ADD([[Transports]],[[Portals4]],[$1],[$ompi_check_portals4_happy])
     fi
 
     AS_IF([test "$ompi_check_portals4_happy" = "yes"],

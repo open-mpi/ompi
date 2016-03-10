@@ -2,6 +2,7 @@ dnl -*- shell-script -*-
 dnl
 dnl Copyright (c) 2016      Los Alamos National Security, LLC. All rights
 dnl                         reserved.
+dnl Copyright (c) 2016 Cisco Systems, Inc.  All rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -33,53 +34,48 @@ AC_DEFUN([OMPI_SUMMARY_ADD],[
 
 AC_DEFUN([OMPI_SUMMARY_PRINT],[
     OPAL_VAR_SCOPE_PUSH([ompi_summary_section ompi_summary_section_name])
-    echo "\nOpen MPI configuration:"
-    echo "-----------------------"
-    echo "Version: $OMPI_MAJOR_VERSION.$OMPI_MINOR_VERSION.$OMPI_RELEASE_VERSION $OMPI_GREEK_VERSION"
+    cat <<EOF
 
-    dnl Print out which projects will be built
-    echo "Build Open Platform Abstration project: yes"
-    if test "$project_orte_amc" = "true" ; then
-	echo "Build Open Runtime project: yes"
-    else
-	echo "Build Open Runtime project: no"
-    fi
+Open MPI configuration:
+-----------------------
+Version: $OMPI_MAJOR_VERSION.$OMPI_MINOR_VERSION.$OMPI_RELEASE_VERSION$OMPI_GREEK_VERSION
+EOF
 
     if test "$project_ompi_amc" = "true" ; then
-	echo "Build Open MPI project: yes"
+	echo "Build MPI C bindings: yes"
     else
-	echo "Build Open MPI project: no"
-    fi
-
-    if test "$project_shmem_amc" = "true" ; then
-	echo "Build Open SHMEM project: yes"
-    else
-	echo "Build Open SHMEM project: no"
+	echo "Build MPI C bindings: no"
     fi
 
     dnl Print out the bindings if we are building OMPI
     if test "$project_ompi_amc" = "true" ; then
 	if test x$enable_mpi_cxx = xyes ; then
-	    echo "MPI C++ bindings (deprecated): yes"
+	    echo "Build MPI C++ bindings (deprecated): yes"
 	else
-	    echo "MPI C++ bindings (deprecated): no"
+	    echo "Build MPI C++ bindings (deprecated): no"
 	fi
 
 	if test $OMPI_BUILD_FORTRAN_BINDINGS = $OMPI_FORTRAN_MPIFH_BINDINGS ; then
-	    echo "MPI Fortran bindings: mpif.h"
+	    echo "Build MPI Fortran bindings: mpif.h"
 	elif test $OMPI_BUILD_FORTRAN_BINDINGS = $OMPI_FORTRAN_USEMPI_BINDINGS ; then
-	    echo "MPI Fortran bindings: mpif.h, use mpi"
+	    echo "Build MPI Fortran bindings: mpif.h, use mpi"
 	elif test $OMPI_BUILD_FORTRAN_BINDINGS = $OMPI_FORTRAN_USEMPIF08_BINDINGS ; then
-	    echo "MPI Fortran bindings: mpif.h, use mpi, use mpi_f08"
+	    echo "Build MPI Fortran bindings: mpif.h, use mpi, use mpi_f08"
 	else
-	    echo "MPI Fortran bindings: no"
+	    echo "Build MPI Fortran bindings: no"
 	fi
 
         if test x$opal_java_happy = xyes ; then
-            echo "MPI Java bindings (experimental): yes"
+            echo "Build MPI Java bindings (experimental): yes"
         else
-            echo "MPI Java bindings (experimental): no"
+            echo "MPI Build Java bindings (experimental): no"
         fi
+    fi
+
+    if test "$project_shmem_amc" = "true" ; then
+	echo "Build Open SHMEM support: yes"
+    else
+	echo "Build Open SHMEM support: no"
     fi
 
     if test $WANT_DEBUG = 0 ; then
@@ -90,6 +86,8 @@ AC_DEFUN([OMPI_SUMMARY_PRINT],[
 
     if test ! -z $with_platform ; then
 	echo "Platform file: $with_platform"
+    else
+	echo "Platform file: (none)"
     fi
 
     echo
@@ -103,8 +101,13 @@ AC_DEFUN([OMPI_SUMMARY_PRINT],[
     done
 
     if test $WANT_DEBUG = 1 ; then
-	echo "INTERNAL DEBUGGING IS ENABLED. DO NOT USE THIS BUILD FOR PERFORMANCE MEASUREMENTS!\n"
+        cat <<EOF
+*****************************************************************************
+ THIS IS A DEBUG BUILD!  DO NOT USE THIS BUILD FOR PERFORMANCE MEASUREMENTS!
+*****************************************************************************
+EOF
     fi
+    echo " "
 
     OPAL_VAR_SCOPE_POP
 ])
