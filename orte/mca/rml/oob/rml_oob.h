@@ -37,7 +37,7 @@
 BEGIN_C_DECLS
 
 typedef struct {
-    struct orte_rml_module_t super;
+    struct orte_rml_base_module_t super; 
     opal_list_t              exceptions;
     opal_list_t              queued_routing_messages;
     opal_event_t            *timer_event;

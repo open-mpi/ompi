@@ -57,7 +57,8 @@ BEGIN_C_DECLS
 
 
 struct opal_buffer_t;
-struct orte_rml_module_t;
+struct orte_rml_base_module_t;
+struct orte_rml_API_module_t;
 typedef struct {
     opal_object_t super;
     orte_process_name_t name;
@@ -109,8 +110,7 @@ ORTE_DECLSPEC void orte_rml_close_channel_recv_callback(int status,
  * @retval NULL An error occurred and initialization did not occur
  * @retval non-NULL The module was successfully initialized
  */
-typedef struct orte_rml_module_t* (*orte_rml_component_init_fn_t)(int  *priority);
-
+typedef struct orte_rml_base_module_t* (*orte_rml_component_init_fn_t)(int  *priority);
 
 /**
  * RML component interface
@@ -594,13 +594,75 @@ typedef int (*orte_rml_module_close_channel_fn_t)( orte_rml_channel_num_t channe
 
 
 /**
- * RML module interface
+ * RML module interface - internal modules 
+ *
+ * Module interface for the internal plugins. The base_select() will 
+ * put these modules in a global list (actives) based on priority to 
+ * allow for loading multiple plugins.
+ */
+struct orte_rml_base_module_t {
+    /** Enable communication once a process name has been assigned */
+    orte_rml_module_enable_comm_fn_t             base_enable_comm;
+    /** Shutdown the communication system and clean up resources */
+    orte_rml_module_finalize_fn_t                base_finalize;
+
+    /** Get contact information for local process */
+    orte_rml_module_get_contact_info_fn_t        base_get_contact_info;
+    /** Set contact information for remote process */
+    orte_rml_module_set_contact_info_fn_t        base_set_contact_info;
+
+    /** Ping process for connectivity check */
+    orte_rml_module_ping_fn_t                    base_ping;
+
+    /** Send non-blocking iovec message */
+    orte_rml_module_send_nb_fn_t                 base_send_nb;
+    /** Send non-blocking buffer message */
+    orte_rml_module_send_buffer_nb_fn_t          base_send_buffer_nb;
+
+    /** Receive non-blocking iovec message */
+    orte_rml_module_recv_nb_fn_t                 base_recv_nb;
+
+    /** Receive non-blocking buffer message */
+    orte_rml_module_recv_buffer_nb_fn_t          base_recv_buffer_nb;
+
+    /** Cancel posted non-blocking receive */
+    orte_rml_module_recv_cancel_fn_t             base_recv_cancel;
+
+    /** Add callback for communication exception */
+    orte_rml_module_exception_fn_t               base_add_exception_handler;
+    /** Delete callback for communication exception */
+    orte_rml_module_exception_fn_t               base_del_exception_handler;
+
+    /** Fault tolerance handler */
+    orte_rml_module_ft_event_fn_t                base_ft_event;
+
+    /** Purge information */
+    orte_rml_module_purge_fn_t                   base_purge;
+
+    /** Open a qos messaging channel to a peer*/
+    orte_rml_module_open_channel_fn_t            base_open_channel;
+
+    /** send a non blocking iovec message over a channel */
+    orte_rml_module_send_channel_nb_fn_t         base_send_channel_nb;
+
+    /** send a non blocking buffer message over a channel */
+    orte_rml_module_send_buffer_channel_nb_fn_t  base_send_buffer_channel_nb;
+
+    /** close a qos messaging channel */
+    orte_rml_module_close_channel_fn_t           base_close_channel;
+};
+/** Convienence typedef */
+typedef struct orte_rml_base_module_t orte_rml_base_module_t;
+
+
+/**
+ * RML module interface - external API modules 
  *
  * Module interface to the RML communication system.  A global
  * instance of this module, orte_rml, provices an interface into the
  * active RML interface.
  */
-struct orte_rml_module_t {
+struct orte_rml_API_module_t {
     /** Enable communication once a process name has been assigned */
     orte_rml_module_enable_comm_fn_t             enable_comm;
     /** Shutdown the communication system and clean up resources */
@@ -652,10 +714,10 @@ struct orte_rml_module_t {
     orte_rml_module_close_channel_fn_t           close_channel;
 };
 /** Convienence typedef */
-typedef struct orte_rml_module_t orte_rml_module_t;
+typedef struct orte_rml_API_module_t orte_rml_API_module_t;
 
 /** Interface for RML communication */
-ORTE_DECLSPEC extern orte_rml_module_t orte_rml;
+ORTE_DECLSPEC extern orte_rml_API_module_t orte_rml;
 
 
 /* ******************************************************************** */

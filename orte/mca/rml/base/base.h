@@ -82,8 +82,21 @@ ORTE_DECLSPEC void orte_rml_base_comm_start(void);
 ORTE_DECLSPEC void orte_rml_base_comm_stop(void);
 
 
+/*
+ *  globals that might be needed
+ */
+/* adding element to hold the active modules and components */
+typedef struct {
+    opal_list_item_t super;
+    int pri;
+    orte_rml_base_module_t *module;
+    mca_base_component_t *component;
+} orte_rml_base_active_t;
+OBJ_CLASS_DECLARATION(orte_rml_base_active_t);
+
 /* a global struct containing framework-level values */
 typedef struct {
+    opal_list_t actives;  /* list to hold the active plugins */
     opal_list_t posted_recvs;
     opal_list_t unmatched_msgs;
     opal_pointer_array_t open_channels;
@@ -105,17 +118,6 @@ ORTE_DECLSPEC extern orte_rml_base_t orte_rml_base;
  */
 ORTE_DECLSPEC extern opal_list_t orte_rml_base_components;
 
-
-/**
- * Component structure for the selected RML component
- *
- * Component structure pointer for the currently selected RML
- * component.  Useable between calls to orte_rml_base_select() and
- * orte_rml_base_close().
- * @note This pointer should not be used outside the RML base.  It is
- * available outside the RML base only for the F/T component.
- */
-ORTE_DECLSPEC extern orte_rml_component_t *orte_rml_component;
 
 typedef enum  {
     orte_rml_channel_opening = 0,
@@ -407,6 +409,66 @@ ORTE_DECLSPEC void orte_rml_base_close_channel_send_callback ( int status, orte_
 ORTE_DECLSPEC void orte_rml_base_send_close_channel ( orte_rml_close_channel_t *close_chan);
 ORTE_DECLSPEC void orte_rml_base_reprocess_msg(int fd, short flags, void *cbdata);
 ORTE_DECLSPEC void orte_rml_base_complete_recv_msg (orte_rml_recv_t **recv_msg);
+
+
+/* Stub API interfaces to cycle through active plugins and call highest priority */
+ORTE_DECLSPEC int orte_rml_API_enable_comm(void);
+ORTE_DECLSPEC int orte_rml_API_finalize(void);
+ORTE_DECLSPEC char* orte_rml_API_get_contact_info(void);
+ORTE_DECLSPEC void orte_rml_API_set_contact_info(const char *contact_info);
+ORTE_DECLSPEC int orte_rml_API_ping(const char* contact_info, const struct timeval* tv);
+ORTE_DECLSPEC int orte_rml_API_send_nb(orte_process_name_t* peer,struct iovec* msg,
+                int count, orte_rml_tag_t tag,orte_rml_callback_fn_t cbfunc,void* cbdata);
+ORTE_DECLSPEC int orte_rml_API_send_buffer_nb(orte_process_name_t* peer,
+                   struct opal_buffer_t* buffer,
+                   orte_rml_tag_t tag,
+                   orte_rml_buffer_callback_fn_t cbfunc,
+                   void* cbdata);
+ORTE_DECLSPEC void orte_rml_API_recv_nb(orte_process_name_t* peer,
+             orte_rml_tag_t tag,
+             bool persistent,
+             orte_rml_callback_fn_t cbfunc,
+             void* cbdata);
+
+ORTE_DECLSPEC void orte_rml_API_recv_buffer_nb(orte_process_name_t* peer,
+                    orte_rml_tag_t tag,
+                    bool persistent,
+                    orte_rml_buffer_callback_fn_t cbfunc,
+                    void* cbdata);
+
+ORTE_DECLSPEC void orte_rml_API_recv_cancel(orte_process_name_t* peer, orte_rml_tag_t tag);
+
+ORTE_DECLSPEC int orte_rml_API_add_exception_handler(orte_rml_exception_callback_t cbfunc);
+
+ORTE_DECLSPEC int orte_rml_API_del_exception_handler(orte_rml_exception_callback_t cbfunc);
+
+ORTE_DECLSPEC int orte_rml_API_ft_event(int state);
+
+ORTE_DECLSPEC void orte_rml_API_purge(orte_process_name_t *peer);
+
+ORTE_DECLSPEC int orte_rml_API_open_channel(orte_process_name_t* peer,
+                 opal_list_t *qos_attributes,
+                 orte_rml_channel_callback_fn_t cbfunc,
+                 void* cbdata);
+
+ORTE_DECLSPEC int orte_rml_API_send_channel_nb(orte_rml_channel_num_t channel,
+                    struct iovec* msg,
+                    int count,
+                    orte_rml_tag_t tag,
+                    orte_rml_send_channel_callback_fn_t cbfunc,
+                    void* cbdata);
+
+ORTE_DECLSPEC int orte_rml_API_send_buffer_channel_nb(orte_rml_channel_num_t channel,
+                           struct opal_buffer_t * buffer,
+                           orte_rml_tag_t tag,
+                           orte_rml_send_buffer_channel_callback_fn_t cbfunc,
+                           void* cbdata);
+
+ORTE_DECLSPEC int orte_rml_API_close_channel(orte_rml_channel_num_t channel_num,
+                  orte_rml_channel_callback_fn_t cbfunc,
+                  void* cbdata);
+
+
 END_C_DECLS
 
 #endif /* MCA_RML_BASE_H */
