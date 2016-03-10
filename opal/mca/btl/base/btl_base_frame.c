@@ -169,4 +169,4 @@ static int mca_btl_base_close(void)
 
 MCA_BASE_FRAMEWORK_DECLARE(opal, btl, "Byte Transport Layer", mca_btl_base_register,
                            mca_btl_base_open, mca_btl_base_close, mca_btl_base_static_components,
-                           0);
+                           0, "vader:sm");

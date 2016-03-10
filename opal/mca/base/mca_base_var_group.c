@@ -229,6 +229,11 @@ static int group_register (const char *project_name, const char *framework_name,
         group->group_isvalid = true;
         mca_base_var_groups_timestamp++;
 
+        if (NULL == group->group_description && description) {
+            /* add the group description if one didn't already exist */
+            group->group_description = strdup (description);
+        }
+
         /* group already exists. return it's index */
         return group_id;
     }

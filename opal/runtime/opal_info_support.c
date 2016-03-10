@@ -625,7 +625,7 @@ static void opal_info_show_mca_group_params(const mca_base_var_group_t *group, m
 
             mca_base_var_get_value (var_id, &value, NULL, NULL);
             if (NULL != value->stringval && '\0' != value->stringval[0]) {
-                mca_base_component_parse_requested (value->stringval, &include_mode, &requested_components);
+                mca_base_component_parse_requested (value->stringval, NULL, &include_mode, &requested_components);
 
                 for (i = 0, requested = !include_mode ; requested_components[i] ; ++i) {
                     if (0 == strcmp (requested_components[i], group_component)) {
