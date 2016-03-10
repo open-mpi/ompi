@@ -3,7 +3,7 @@
 # Copyright (c) 2009      The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
-# Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2009-2016 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2011-2014 Los Alamos National Security, LLC. All rights
 #                         reserved.
 # Copyright (c) 2015      Research Organization for Information Science
@@ -43,7 +43,9 @@ AC_DEFUN([MCA_opal_btl_vader_CONFIG],[
     # always happy
     [$1]
 
-    # substitute in the things needed to build with XPMEM support
+    OMPI_SUMMARY_ADD([[Transports]],[[Shared memory/copy in+copy out]],[$1],[yes])
+
+# substitute in the things needed to build with XPMEM support
     AC_SUBST([btl_vader_CFLAGS])
     AC_SUBST([btl_vader_CPPFLAGS])
     AC_SUBST([btl_vader_LDFLAGS])

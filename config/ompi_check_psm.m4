@@ -11,7 +11,7 @@ dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2006 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2006      QLogic Corp. All rights reserved.
-dnl Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2009-2016 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2015      Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
 dnl Copyright (c) 2016      Los Alamos National Security, LLC. All rights
@@ -77,7 +77,7 @@ AC_DEFUN([OMPI_CHECK_PSM],[
                     [AC_MSG_WARN([glob.h not found.  Can not build component.])
                     ompi_check_psm_happy="no"])])
 
-	OMPI_SUMMARY_ADD([[Transports]],[[QLogic Infinipath (PSM)]],[$1],[$ompi_check_psm_happy])
+	OMPI_SUMMARY_ADD([[Transports]],[[Intel TrueScale (PSM)]],[$1],[$ompi_check_psm_happy])
     fi
 
     AS_IF([test "$ompi_check_psm_happy" = "yes"],
