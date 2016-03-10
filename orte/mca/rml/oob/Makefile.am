@@ -10,6 +10,7 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2016      Intel, Inc. All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -23,7 +24,6 @@ sources = \
 	rml_oob_contact.c \
 	rml_oob_exception.c \
 	rml_oob_ping.c \
-	rml_oob_recv.c \
 	rml_oob_send.c
 
 # Make the output library in this directory, and name it either

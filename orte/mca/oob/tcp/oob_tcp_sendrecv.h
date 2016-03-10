@@ -12,7 +12,7 @@
  * Copyright (c) 2006-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2010-2013 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2013-2015 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -107,18 +107,16 @@ OBJ_CLASS_DECLARATION(mca_oob_tcp_recv_t);
         mca_oob_tcp_send_t *msg;                                        \
         int i;                                                          \
         opal_output_verbose(5, orte_oob_base_framework.framework_output, \
-                            "%s:[%s:%d] queue send to %s channel =%d",   \
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),         \
-                             __FILE__, __LINE__,                         \
-                            ORTE_NAME_PRINT(&((m)->dst)),                \
-                              (m)->dst_channel);                         \
+                            "%s:[%s:%d] queue send to %s",              \
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),        \
+                             __FILE__, __LINE__,                        \
+                            ORTE_NAME_PRINT(&((m)->dst)));              \
         msg = OBJ_NEW(mca_oob_tcp_send_t);                              \
         /* setup the header */                                          \
         msg->hdr.origin = (m)->origin;                                  \
         msg->hdr.dst = (m)->dst;                                        \
         msg->hdr.type = MCA_OOB_TCP_USER;                               \
         msg->hdr.tag = (m)->tag;                                        \
-        msg->hdr.channel = (m)->dst_channel;                            \
         msg->hdr.seq_num = (m)->seq_num;                                \
         /* point to the actual message */                               \
         msg->msg = (m);                                                 \
@@ -163,7 +161,6 @@ OBJ_CLASS_DECLARATION(mca_oob_tcp_recv_t);
         msg->hdr.dst = (m)->dst;                                        \
         msg->hdr.type = MCA_OOB_TCP_USER;                               \
         msg->hdr.tag = (m)->tag;                                        \
-        msg->hdr.channel = (m)->dst_channel;                            \
         msg->hdr.seq_num = (m)->seq_num;                                \
         /* point to the actual message */                               \
         msg->msg = (m);                                                 \

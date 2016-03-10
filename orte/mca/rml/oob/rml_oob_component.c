@@ -13,7 +13,7 @@
  * Copyright (c) 2007-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2015 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -51,7 +51,7 @@
 #include "orte/mca/oob/base/base.h"
 #include "rml_oob.h"
 
-static orte_rml_base_module_t* rml_oob_init(int* priority); 
+static orte_rml_base_module_t* rml_oob_init(int* priority);
 static int rml_oob_open(void);
 static int rml_oob_close(void);
 
@@ -80,31 +80,20 @@ orte_rml_component_t mca_rml_oob_component = {
 
 orte_rml_oob_module_t orte_rml_oob_module = {
     {
-         orte_rml_oob_init,
-         orte_rml_oob_fini,
+        .finalize = orte_rml_oob_fini,
 
-         orte_rml_oob_get_uri,
-         orte_rml_oob_set_uri,
+        .get_contact_info = orte_rml_oob_get_uri,
+        .set_contact_info = orte_rml_oob_set_uri,
 
-         orte_rml_oob_ping,
+        .ping = orte_rml_oob_ping,
 
-         orte_rml_oob_send_nb,
-         orte_rml_oob_send_buffer_nb,
+        .send_nb = orte_rml_oob_send_nb,
+        .send_buffer_nb = orte_rml_oob_send_buffer_nb,
 
-         orte_rml_oob_recv_nb,
-         orte_rml_oob_recv_buffer_nb,
-
-         orte_rml_oob_recv_cancel,
-
-         orte_rml_oob_add_exception,
-         orte_rml_oob_del_exception,
-         orte_rml_oob_ft_event,
-         orte_rml_oob_purge,
-
-         orte_rml_oob_open_channel,
-         orte_rml_oob_send_channel_nb,
-         orte_rml_oob_send_buffer_channel_nb,
-         orte_rml_oob_close_channel
+        .add_exception_handler = orte_rml_oob_add_exception,
+        .del_exception_handler = orte_rml_oob_del_exception,
+        .ft_event = orte_rml_oob_ft_event,
+        .purge = orte_rml_oob_purge
     }
 };
 
@@ -151,7 +140,7 @@ orte_rml_oob_init(void)
 }
 
 
-int
+void
 orte_rml_oob_fini(void)
 {
     opal_list_item_t *item;
@@ -164,8 +153,6 @@ orte_rml_oob_fini(void)
 
     /* clear the base receive */
     orte_rml_base_comm_stop();
-
-    return ORTE_SUCCESS;
 }
 
 #if OPAL_ENABLE_FT_CR == 1
