@@ -1,6 +1,6 @@
 dnl -*- shell-script -*-
 dnl
-dnl Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2015-2016 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2016      Los Alamos National Security, LLC. All rights
 dnl                         reserved.
 dnl $COPYRIGHT$
@@ -71,7 +71,7 @@ AC_DEFUN([OPAL_CHECK_LIBFABRIC],[
 	LDFLAGS=$opal_check_libfabric_$1_save_LDFLAGS
 	LIBS=$opal_check_libfabric_$1_save_LIBS
 
-	OMPI_SUMMARY_ADD([[Transports]],[[OpenFabrics libfabric]],[$1],[$opal_check_libfabric_happy])
+	OMPI_SUMMARY_ADD([[Transports]],[[OpenFabrics Libfabric]],[$1],[$opal_check_libfabric_happy])
 
 	OPAL_VAR_SCOPE_POP
     fi

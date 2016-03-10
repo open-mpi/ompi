@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2010-2016 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2016      Los Alamos National Security, LLC. All rights
 #                         reserved.
 # $COPYRIGHT$
@@ -36,5 +36,5 @@ AC_DEFUN([MCA_opal_btl_tcp_CONFIG],[
 #include <netinet/in.h>
 #endif
 		   ])
-    OMPI_SUMMARY_ADD([[Transports]],[[tcp]],[[btl_tcp]],[$opal_btl_tcp_happy])
+    OMPI_SUMMARY_ADD([[Transports]],[[TCP]],[[btl_tcp]],[$opal_btl_tcp_happy])
 ])dnl
