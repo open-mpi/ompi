@@ -2424,7 +2424,11 @@ opal_btl_usnic_module_t opal_btl_usnic_module_template = {
         .btl_exclusivity = MCA_BTL_EXCLUSIVITY_DEFAULT,
         .btl_flags =
             MCA_BTL_FLAGS_SEND |
-            MCA_BTL_FLAGS_SEND_INPLACE,
+            MCA_BTL_FLAGS_SEND_INPLACE |
+            /* Need to set FLAGS_SINGLE_ADD_PROCS until
+               btl_recv.h:lookup_sender() can handle an incoming
+               message with an unknown sender. */
+            MCA_BTL_FLAGS_SINGLE_ADD_PROCS,
 
         .btl_add_procs = usnic_add_procs,
         .btl_del_procs = usnic_del_procs,
