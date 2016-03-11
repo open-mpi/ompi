@@ -456,7 +456,8 @@ int ompi_osc_rdma_complete_atomic (ompi_win_t *win)
 
     ompi_osc_rdma_sync_rdma_complete (sync);
 
-    if (MCA_BTL_FLAGS_ATOMIC_OPS & module->selected_btl->btl_flags) {
+    if (!(MCA_BTL_FLAGS_ATOMIC_OPS & module->selected_btl->btl_flags)) {
+        /* need a temporary buffer for performing fetching atomics */
         ret = ompi_osc_rdma_frag_alloc (module, 8, &frag, (char **) &scratch_lock);
         if (OPAL_UNLIKELY(OPAL_SUCCESS != ret)) {
             return ret;
