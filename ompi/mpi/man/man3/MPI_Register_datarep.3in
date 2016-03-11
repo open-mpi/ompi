@@ -3,7 +3,7 @@
 .\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
 .\" Copyright 2006-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
-.\" Copyright 2015      Research Organization for Information Science
+.\" Copyright 2015-2016 Research Organization for Information Science
 .\"                     and Technology (RIST). All rights reserved.
 .\" $COPYRIGHT$
 .TH MPI_Register_datarep 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
@@ -14,6 +14,7 @@
 .ft R
 .nf
 .SH C Syntax
+.nf
 #include <mpi.h>
 int MPI_Register_datarep(const char \fI*datarep\fP,
 	MPI_Datarep_conversion_function \fI*read_conversion_fn\fP,
