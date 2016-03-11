@@ -258,6 +258,7 @@ OBJ_CLASS_DECLARATION(orte_rml_recv_request_t);
         OBJ_RELEASE(m);                                                 \
     }while(0);
 
+#define ORTE_RML_INVALID_CHANNEL_NUM  UINT32_MAX
 /* common implementations */
 ORTE_DECLSPEC void orte_rml_base_post_recv(int sd, short args, void *cbdata);
 ORTE_DECLSPEC void orte_rml_base_process_msg(int fd, short flags, void *cbdata);

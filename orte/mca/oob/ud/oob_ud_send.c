@@ -107,12 +107,6 @@ static int mca_oob_ud_send_self (orte_rml_send_t *msg)
 
     req->rml_msg->status = ORTE_SUCCESS;
 
-    if( NULL == req->rml_msg->channel) {
-        ORTE_RML_SEND_COMPLETE(req->rml_msg);
-    } else {
-        ORTE_QOS_SEND_COMPLETE(req->rml_msg);
-    }
-
     return size;
 }
 
@@ -166,7 +160,6 @@ int mca_oob_ud_process_send_nb(int fd, short args, void *cbdata)
     send_req->req_target = op->msg->dst;
     send_req->req_origin = op->msg->origin;
     send_req->req_tag    = op->msg->tag;
-    send_req->req_channel = op->msg->dst_channel;
     send_req->req_seq_num  = op->msg->seq_num;
 
     if (op->msg->data != NULL) {
@@ -234,7 +227,6 @@ int mca_oob_ud_process_send_nb(int fd, short args, void *cbdata)
 
     req_msg->hdr->msg_origin   = op->msg->origin;
     req_msg->hdr->msg_target   = op->msg->dst;
-    req_msg->hdr->msg_channel  = op->msg->dst_channel;
     req_msg->hdr->msg_seq_num  = op->msg->seq_num;
 
     req_msg->hdr->msg_data.req.data_len = size;
