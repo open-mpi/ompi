@@ -277,15 +277,9 @@ mca_fcoll_two_phase_file_read_all (mca_io_ompio_file_t *fh,
 	    }
 	}
 	flat_buf->count = local_size;
-	i=0;j=0;
-	while(j < local_size){
-	    flat_buf->indices[j] = (OMPI_MPI_OFFSET_TYPE)(intptr_t)decoded_iov[i].iov_base;
-	    flat_buf->blocklens[j] = decoded_iov[i].iov_len;
-
-	    if(i < (int)iov_count)
-		i+=1;
-
-	    j+=1;
+        for (j = 0 ; j < local_size ; ++j) {
+	    flat_buf->indices[j] = (OMPI_MPI_OFFSET_TYPE)(intptr_t)decoded_iov[j].iov_base;
+	    flat_buf->blocklens[j] = decoded_iov[j].iov_len;
 	}
 
 #if DEBUG

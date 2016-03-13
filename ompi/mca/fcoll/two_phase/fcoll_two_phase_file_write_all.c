@@ -13,7 +13,7 @@
  * Copyright (c) 2008-2014 University of Houston. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2015-2016 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -194,6 +194,10 @@ mca_fcoll_two_phase_file_write_all (mca_io_ompio_file_t *fh,
 	if ( 0 < iov_count ) {
 	    decoded_iov = (struct iovec *)malloc
 		(iov_count * sizeof(struct iovec));
+            if (NULL == decoded_iov) {
+                ret = OMPI_ERR_OUT_OF_RESOURCE;
+                goto exit;
+            }
 	}
 	for (ti = 0; ti < iov_count; ti ++){
 	    decoded_iov[ti].iov_base = (IOVBASE_TYPE *)(
@@ -320,19 +324,15 @@ mca_fcoll_two_phase_file_write_all (mca_io_ompio_file_t *fh,
 	    }
 	}
 	flat_buf->count = local_size;
-	i=0;j=0;
-	while(j < local_size){
+        for (j = 0 ; j < local_size ; ++j) {
 	    if ( 0 < max_data  ) {
-		flat_buf->indices[j] = (OMPI_MPI_OFFSET_TYPE)(intptr_t)decoded_iov[i].iov_base;
-		flat_buf->blocklens[j] = decoded_iov[i].iov_len;
+		flat_buf->indices[j] = (OMPI_MPI_OFFSET_TYPE)(intptr_t)decoded_iov[j].iov_base;
+		flat_buf->blocklens[j] = decoded_iov[j].iov_len;
 	    }
 	    else {
 		flat_buf->indices[j] = 0;
 		flat_buf->blocklens[j] = 0;
 	    }
-	    if(i < (int)iov_count)
-		i+=1;
-	    j+=1;
 	}
 
 #if DEBUG_ON
@@ -967,14 +967,14 @@ static int two_phase_exchage_data(mca_io_ompio_file_t *fh,
 
 
     recv_types = (ompi_datatype_t **)
-	malloc (( nprocs_recv + 1 ) * sizeof(ompi_datatype_t *));
+	calloc (( nprocs_recv + 1 ), sizeof(ompi_datatype_t *));
 
     if ( NULL == recv_types ){
 	ret = OMPI_ERR_OUT_OF_RESOURCE;
 	goto exit;
     }
 
-    tmp_len = (int *) malloc(fh->f_size*sizeof(int));
+    tmp_len = (int *) calloc(fh->f_size, sizeof(int));
 
     if ( NULL == tmp_len ) {
         ret = OMPI_ERR_OUT_OF_RESOURCE;
@@ -1005,7 +1005,6 @@ static int two_phase_exchage_data(mca_io_ompio_file_t *fh,
 
     if ( NULL == srt_off ){
 	ret = OMPI_ERR_OUT_OF_RESOURCE;
-        free(tmp_len);
 	goto exit;
     }
 
@@ -1013,7 +1012,6 @@ static int two_phase_exchage_data(mca_io_ompio_file_t *fh,
 
     if ( NULL == srt_len ) {
 	ret = OMPI_ERR_OUT_OF_RESOURCE;
-        free(tmp_len);
         free(srt_off);
 	goto exit;
     }
@@ -1029,6 +1027,7 @@ static int two_phase_exchage_data(mca_io_ompio_file_t *fh,
         }
 
     free(tmp_len);
+    tmp_len = NULL;
 
     *hole = 0;
     if (off != srt_off[0]){
@@ -1059,7 +1058,8 @@ static int two_phase_exchage_data(mca_io_ompio_file_t *fh,
 		    (sizeof(mca_io_ompio_io_array_t));
 		if (NULL == fh->f_io_array) {
 		    opal_output(1, "OUT OF MEMORY\n");
-		    return OMPI_ERR_OUT_OF_RESOURCE;
+                    ret = OMPI_ERR_OUT_OF_RESOURCE;
+                    goto exit;
 		}
 		fh->f_io_array[0].offset  =(IOVBASE_TYPE *)(intptr_t) off;
 		fh->f_num_of_io_entries = 1;
@@ -1182,7 +1182,13 @@ static int two_phase_exchage_data(mca_io_ompio_file_t *fh,
 #endif
 
 exit:
-    for (i=0; i<nprocs_recv; i++) ompi_datatype_destroy(recv_types+i);
+    if (recv_types) {
+        for (i=0; i<nprocs_recv; i++) {
+            if (recv_types[i]) {
+                ompi_datatype_destroy(recv_types+i);
+            }
+        }
+    }
     free (recv_types);
 
     free (requests);
@@ -1193,6 +1199,7 @@ exit:
 
         free (send_buf);
     }
+    free (tmp_len);
 
     return ret;
 }
