@@ -14,7 +14,7 @@
  * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -167,18 +167,18 @@ config_window(void *base, size_t size, int disp_unit,
                                      MPI_WIN_SIZE, size, true);
     if (OMPI_SUCCESS != ret) return ret;
 
-    ret = ompi_attr_set_fortran_mpi2(WIN_ATTR, win,
+    ret = ompi_attr_set_fortran_mpi1(WIN_ATTR, win,
                                      &win->w_keyhash,
                                      MPI_WIN_DISP_UNIT, disp_unit,
                                      true);
     if (OMPI_SUCCESS != ret) return ret;
 
-    ret = ompi_attr_set_fortran_mpi2(WIN_ATTR, win,
+    ret = ompi_attr_set_fortran_mpi1(WIN_ATTR, win,
                                      &win->w_keyhash,
                                      MPI_WIN_CREATE_FLAVOR, flavor, true);
     if (OMPI_SUCCESS != ret) return ret;
 
-    ret = ompi_attr_set_fortran_mpi2(WIN_ATTR, win,
+    ret = ompi_attr_set_fortran_mpi1(WIN_ATTR, win,
                                      &win->w_keyhash,
                                      MPI_WIN_MODEL, model, true);
     if (OMPI_SUCCESS != ret) return ret;
