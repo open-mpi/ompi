@@ -130,6 +130,11 @@ extern int mca_spml_ikrit_get(void* dst_addr,
                               size_t size,
                               void* src_addr,
                               int src);
+extern int mca_spml_ikrit_get_nb(void* src_addr,
+                                 size_t size,
+                                 void* dst_addr,
+                                 int src,
+                                 void **handle);
 /* extension. used 4 fence implementation b4 fence was added to mxm */
 extern int mca_spml_ikrit_get_async(void *src_addr,
                                     size_t size,
