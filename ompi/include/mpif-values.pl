@@ -1,6 +1,8 @@
 #!/usr/bin/env perl
 #
 # Copyright (c) 2011-2014 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2016      Research Organization for Information Science
+#                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -227,6 +229,12 @@ $constants->{MPI_UNIVERSE_SIZE} = 6;
 $constants->{MPI_WIN_BASE} = 7;
 $constants->{MPI_WIN_SIZE} = 8;
 $constants->{MPI_WIN_DISP_UNIT} = 9;
+$constants->{MPI_WIN_CREATE_FLAVOR} = 10;
+$constants->{MPI_WIN_MODEL} = 11;
+$constants->{MPI_WIN_FLAVOR_CREATE} = 1;
+$constants->{MPI_WIN_FLAVOR_ALLOCATE} = 2;
+$constants->{MPI_WIN_FLAVOR_DYNAMIC} = 3;
+$constants->{MPI_WIN_FLAVOR_SHARED} = 4;
 
 $constants->{MPI_BSEND_OVERHEAD} = 128;
 $constants->{MPI_ORDER_C} = 0;
