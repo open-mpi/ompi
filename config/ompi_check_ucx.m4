@@ -62,8 +62,8 @@ AC_DEFUN([OMPI_CHECK_UCX],[
 
 	AC_MSG_CHECKING(for UCX version compatibility)
 	AC_REQUIRE_CPP
-	old_CFLAGS="$CFLAGS"
-	CFLAGS="$CFLAGS -I$ompi_check_ucx_dir/include"
+	old_CPPFLAGS="$CPPFLAGS"
+	CPPFLAGS="$CPPFLAGS -I$ompi_check_ucx_dir/include"
 	AC_COMPILE_IFELSE(
             [AC_LANG_PROGRAM([[#include <uct/api/version.h>]],
 			     [[
@@ -72,7 +72,7 @@ AC_DEFUN([OMPI_CHECK_UCX],[
             [ompi_ucx_version_ok="no"])
 
 	AC_MSG_RESULT([$ompi_ucx_version_ok])
-	CFLAGS=$old_CFLAGS
+	CPPFLAGS=$old_CPPFLAGS
 
 	AS_IF([test "$ompi_ucx_version_ok" = "no"], [ompi_check_ucx_happy="no"])
 
@@ -81,7 +81,7 @@ AC_DEFUN([OMPI_CHECK_UCX],[
 
 
     AS_IF([test "$ompi_check_ucx_happy" = "yes"],
-          [$1_CFLAGS="[$]$1_CFLAGS $ompi_check_ucx_CFLAGS"
+          [$1_CPPFLAGS="[$]$1_CPPFLAGS $ompi_check_ucx_CPPFLAGS"
 	   $1_LDFLAGS="[$]$1_LDFLAGS $ompi_check_ucx_LDFLAGS"
 	   $1_LIBS="[$]$1_LIBS $ompi_check_ucx_LIBS"
 	   $2],
