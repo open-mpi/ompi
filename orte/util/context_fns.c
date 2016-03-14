@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2008-2010 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -139,9 +139,7 @@ int orte_util_check_context_app(orte_app_context_t *context, char **env)
         if (NULL == tmp) {
             return ORTE_ERR_EXE_NOT_FOUND;
         }
-        if (NULL != context->app) {
-            free(context->app);
-        }
+        free(context->app);
         context->app = tmp;
     } else {
         free(tmp);
