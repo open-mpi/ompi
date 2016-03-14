@@ -104,6 +104,11 @@ extern int mca_spml_yoda_get(void* dst_addr,
                              size_t size,
                              void* src_addr,
                              int src);
+extern int mca_spml_yoda_get_nb(void* dst_addr,
+                                size_t size,
+                                void* src_addr,
+                                int dst,
+                                void **handle);
 extern int mca_spml_yoda_put(void* dst_addr,
                              size_t size,
                              void* src_addr,
