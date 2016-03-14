@@ -1,7 +1,7 @@
 # -*- shell-script -*-
 #
 # Copyright (C) 2015      Mellanox Technologies Ltd. ALL RIGHTS RESERVED.
-# Copyright (c) 2015      Research Organization for Information Science
+# Copyright (c) 2015-2016 Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 # $COPYRIGHT$
 #
@@ -59,8 +59,8 @@ AC_DEFUN([OMPI_CHECK_UCX],[
 
     AC_MSG_CHECKING(for UCX version compatibility)
     AC_REQUIRE_CPP
-    old_CFLAGS="$CFLAGS"
-    CFLAGS="$CFLAGS -I$ompi_check_ucx_dir/include"
+    old_CPPFLAGS="$CPPFLAGS"
+    CPPFLAGS="$CPPFLAGS -I$ompi_check_ucx_dir/include"
     AC_COMPILE_IFELSE(
             [AC_LANG_PROGRAM([[#include <uct/api/version.h>]],
                 [[
@@ -69,7 +69,7 @@ AC_DEFUN([OMPI_CHECK_UCX],[
             [ompi_ucx_version_ok="no"])
 
     AC_MSG_RESULT([$ompi_ucx_version_ok])
-    CFLAGS=$old_CFLAGS
+    CPPFLAGS=$old_CPPFLAGS
 
     AS_IF([test "$ompi_ucx_version_ok" = "no"], [ompi_check_ucx_happy="no"])
 
