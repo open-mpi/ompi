@@ -129,6 +129,24 @@ OSHMEM_DECLSPEC void pshmem_iput64(void* target, const void* source, ptrdiff_t t
 OSHMEM_DECLSPEC void pshmem_iput128(void* target, const void* source, ptrdiff_t tst, ptrdiff_t sst,size_t len, int pe);
 
 /*
+ * Nonblocking put routines
+ */
+OSHMEM_DECLSPEC  void pshmem_putmem_nbi(void *target, const void *source, size_t len, int pe);
+OSHMEM_DECLSPEC  void pshmem_char_put_nbi(char *target, const char *source, size_t len, int pe);
+OSHMEM_DECLSPEC  void pshmem_short_put_nbi(short *target, const short *source, size_t len, int pe);
+OSHMEM_DECLSPEC  void pshmem_int_put_nbi(int* target, const int* source, size_t len, int pe);
+OSHMEM_DECLSPEC  void pshmem_long_put_nbi(long *target, const long *source, size_t len, int pe);
+OSHMEM_DECLSPEC  void pshmem_longlong_put_nbi(long long *target, const long long *source, size_t len, int pe);
+OSHMEM_DECLSPEC  void pshmem_float_put_nbi(float *target, const float *source, size_t len, int pe);
+OSHMEM_DECLSPEC  void pshmem_double_put_nbi(double *target, const double *source, size_t len, int pe);
+OSHMEM_DECLSPEC  void pshmem_longdouble_put_nbi(long double *target, const long double *source, size_t len, int pe);
+OSHMEM_DECLSPEC  void pshmem_put8_nbi(void *target, const void *source, size_t len, int pe);
+OSHMEM_DECLSPEC  void pshmem_put16_nbi(void *target, const void *source, size_t len, int pe);
+OSHMEM_DECLSPEC  void pshmem_put32_nbi(void *target, const void *source, size_t len, int pe);
+OSHMEM_DECLSPEC  void pshmem_put64_nbi(void *target, const void *source, size_t len, int pe);
+OSHMEM_DECLSPEC  void pshmem_put128_nbi(void *target, const void *source, size_t len, int pe);
+
+/*
  * Elemental get routines
  */
 OSHMEM_DECLSPEC  char pshmem_char_g(const char* addr, int pe);
@@ -168,6 +186,24 @@ OSHMEM_DECLSPEC void pshmem_long_iget(long* target, const long* source, ptrdiff_
 OSHMEM_DECLSPEC void pshmem_iget32(void* target, const void* source, ptrdiff_t tst, ptrdiff_t sst,size_t len, int pe);
 OSHMEM_DECLSPEC void pshmem_iget64(void* target, const void* source, ptrdiff_t tst, ptrdiff_t sst,size_t len, int pe);
 OSHMEM_DECLSPEC void pshmem_iget128(void* target, const void* source, ptrdiff_t tst, ptrdiff_t sst,size_t len, int pe);
+
+/*
+ * Nonblocking data get routines
+ */
+OSHMEM_DECLSPEC  void pshmem_getmem_nbi(void *target, const void *source, size_t len, int pe);
+OSHMEM_DECLSPEC  void pshmem_char_get_nbi(char *target, const char *source, size_t len, int pe);
+OSHMEM_DECLSPEC  void pshmem_short_get_nbi(short *target, const short *source, size_t len, int pe);
+OSHMEM_DECLSPEC  void pshmem_int_get_nbi(int *target, const int *source, size_t len, int pe);
+OSHMEM_DECLSPEC  void pshmem_long_get_nbi(long *target, const long *source, size_t len, int pe);
+OSHMEM_DECLSPEC  void pshmem_longlong_get_nbi(long long *target, const long long *source, size_t len, int pe);
+OSHMEM_DECLSPEC  void pshmem_float_get_nbi(float *target, const float *source, size_t len, int pe);
+OSHMEM_DECLSPEC  void pshmem_double_get_nbi(double *target, const double *source, size_t len, int pe);
+OSHMEM_DECLSPEC  void pshmem_longdouble_get_nbi(long double *target, const long double *source, size_t len, int pe);
+OSHMEM_DECLSPEC  void pshmem_get8_nbi(void *target, const void *source, size_t len, int pe);
+OSHMEM_DECLSPEC  void pshmem_get16_nbi(void *target, const void *source, size_t len, int pe);
+OSHMEM_DECLSPEC  void pshmem_get32_nbi(void *target, const void *source, size_t len, int pe);
+OSHMEM_DECLSPEC  void pshmem_get64_nbi(void *target, const void *source, size_t len, int pe);
+OSHMEM_DECLSPEC  void pshmem_get128_nbi(void *target, const void *source, size_t len, int pe);
 
 /*
  * Atomic operations
