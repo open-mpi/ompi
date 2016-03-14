@@ -120,6 +120,8 @@ int pmix1_client_init(void)
         /* we were launched by someone else, so make the
          * jobid just be the hash of the nspace */
         OPAL_HASH_STR(my_proc.nspace, pname.jobid);
+        /* keep it from being negative */
+        pname.jobid &= ~(0x8000);
     }
     /* insert this into our list of jobids - it will be the
      * first, and so we'll check it first */
