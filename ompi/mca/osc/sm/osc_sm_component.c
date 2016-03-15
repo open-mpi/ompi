@@ -7,6 +7,7 @@
  * Copyright (c) 2015      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016 IBM Corp.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -21,6 +22,7 @@
 #include "ompi/mca/osc/base/osc_base_obj_convert.h"
 #include "ompi/request/request.h"
 #include "opal/util/sys_limits.h"
+#include "opal/util/info_subscriber.h"
 
 #include "osc_sm.h"
 
@@ -28,11 +30,13 @@ static int component_open(void);
 static int component_init(bool enable_progress_threads, bool enable_mpi_threads);
 static int component_finalize(void);
 static int component_query(struct ompi_win_t *win, void **base, size_t size, int disp_unit,
-                           struct ompi_communicator_t *comm, struct ompi_info_t *info,
+                           struct ompi_communicator_t *comm, struct opal_info_t *info,
                            int flavor);
 static int component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit,
-                            struct ompi_communicator_t *comm, struct ompi_info_t *info,
+                            struct ompi_communicator_t *comm, struct opal_info_t *info,
                             int flavor, int *model);
+static char* component_set_blocking_fence_info(void *obj, char *key, char *val);
+static char* component_set_alloc_shared_noncontig_info(void *obj, char *key, char *val);
 
 
 ompi_osc_sm_component_t mca_osc_sm_component = {
@@ -94,9 +98,6 @@ ompi_osc_sm_module_t ompi_osc_sm_module_template = {
         .osc_flush_all = ompi_osc_sm_flush_all,
         .osc_flush_local = ompi_osc_sm_flush_local,
         .osc_flush_local_all = ompi_osc_sm_flush_local_all,
-
-        .osc_set_info = ompi_osc_sm_set_info,
-        .osc_get_info = ompi_osc_sm_get_info
     }
 };
 
@@ -142,7 +143,7 @@ check_win_ok(ompi_communicator_t *comm, int flavor)
 
 static int
 component_query(struct ompi_win_t *win, void **base, size_t size, int disp_unit,
-                struct ompi_communicator_t *comm, struct ompi_info_t *info,
+                struct ompi_communicator_t *comm, struct opal_info_t *info,
                 int flavor)
 {
     int ret;
@@ -159,7 +160,7 @@ component_query(struct ompi_win_t *win, void **base, size_t size, int disp_unit,
 
 static int
 component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit,
-                 struct ompi_communicator_t *comm, struct ompi_info_t *info,
+                 struct ompi_communicator_t *comm, struct opal_info_t *info,
                  int flavor, int *model)
 {
     ompi_osc_sm_module_t *module = NULL;
@@ -176,6 +177,17 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
     if (NULL == module) return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
 
     OBJ_CONSTRUCT(&module->lock, opal_mutex_t);
+
+    ret = opal_infosubscribe_subscribe(win, "blocking_fence", "false", 
+        component_set_blocking_fence_info);
+
+    module->global_state->use_barrier_for_fence = 1;
+
+    if (OPAL_SUCCESS != ret) goto error;
+
+    ret = opal_infosubscribe_subscribe(win, "alloc_shared_contig", "false", component_set_alloc_shared_noncontig_info);
+
+    if (OPAL_SUCCESS != ret) goto error;
 
     /* fill in the function pointer part */
     memcpy(module, &ompi_osc_sm_module_template,
@@ -223,7 +235,7 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
         if (NULL == rbuf) return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
 
         module->noncontig = false;
-        if (OMPI_SUCCESS != ompi_info_get_bool(info, "alloc_shared_noncontig",
+        if (OMPI_SUCCESS != opal_info_get_bool(info, "alloc_shared_noncontig",
                                                &module->noncontig, &flag)) {
             goto error;
         }
@@ -337,7 +349,7 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
         bool blocking_fence=false;
         int flag;
 
-        if (OMPI_SUCCESS != ompi_info_get_bool(info, "blocking_fence",
+        if (OMPI_SUCCESS != opal_info_get_bool(info, "blocking_fence",
                                                &blocking_fence, &flag)) {
             goto error;
         }
@@ -488,7 +500,7 @@ ompi_osc_sm_free(struct ompi_win_t *win)
 
 
 int
-ompi_osc_sm_set_info(struct ompi_win_t *win, struct ompi_info_t *info)
+ompi_osc_sm_set_info(struct ompi_win_t *win, struct opal_info_t *info)
 {
     ompi_osc_sm_module_t *module =
         (ompi_osc_sm_module_t*) win->w_osc_module;
@@ -499,19 +511,42 @@ ompi_osc_sm_set_info(struct ompi_win_t *win, struct ompi_info_t *info)
 }
 
 
+static char*
+component_set_blocking_fence_info(void *obj, char *key, char *val)
+{
+    ompi_osc_sm_module_t *module = (ompi_osc_sm_module_t*) ((struct ompi_win_t*) obj)->w_osc_module;
+/*
+ * Assuming that you can't change the default.  
+ */
+    return module->global_state->use_barrier_for_fence ? "true" : "false";
+}
+
+
+static char*
+component_set_alloc_shared_noncontig_info(void *obj, char *key, char *val)
+{
+
+    ompi_osc_sm_module_t *module = (ompi_osc_sm_module_t*) ((struct ompi_win_t*) obj)->w_osc_module;
+/*
+ * Assuming that you can't change the default.  
+ */
+    return module->noncontig ? "true" : "false";
+}
+
+
 int
-ompi_osc_sm_get_info(struct ompi_win_t *win, struct ompi_info_t **info_used)
+ompi_osc_sm_get_info(struct ompi_win_t *win, struct opal_info_t **info_used)
 {
     ompi_osc_sm_module_t *module =
         (ompi_osc_sm_module_t*) win->w_osc_module;
 
-    ompi_info_t *info = OBJ_NEW(ompi_info_t);
+    opal_info_t *info = OBJ_NEW(opal_info_t);
     if (NULL == info) return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
 
     if (module->flavor == MPI_WIN_FLAVOR_SHARED) {
-        ompi_info_set(info, "blocking_fence",
+        opal_info_set(info, "blocking_fence",
                       (1 == module->global_state->use_barrier_for_fence) ? "true" : "false");
-        ompi_info_set(info, "alloc_shared_noncontig",
+        opal_info_set(info, "alloc_shared_noncontig",
                       (module->noncontig) ? "true" : "false");
     }
 

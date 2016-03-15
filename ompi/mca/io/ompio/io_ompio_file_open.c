@@ -12,6 +12,7 @@
  * Copyright (c) 2008-2015 University of Houston. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016 IBM Corp.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -43,7 +44,7 @@ int
 mca_io_ompio_file_open (ompi_communicator_t *comm,
                         const char *filename,
                         int amode,
-                        ompi_info_t *info,
+                        opal_info_t *info,
                         ompi_file_t *fh)
 {
     int ret = OMPI_SUCCESS;
@@ -75,7 +76,7 @@ int
 ompio_io_ompio_file_open (ompi_communicator_t *comm,
                         const char *filename,
                         int amode,
-                        ompi_info_t *info,
+                        opal_info_t *info,
                         mca_io_ompio_file_t *ompio_fh, bool use_sharedfp)
 {
     int ret = OMPI_SUCCESS;
@@ -575,42 +576,6 @@ mca_io_ompio_file_get_amode (ompi_file_t *fh,
     return OMPI_SUCCESS;
 }
 
-
-int mca_io_ompio_file_set_info (ompi_file_t *fh,
-				ompi_info_t *info)
-{
-    int ret = OMPI_SUCCESS;
-
-    if ( MPI_INFO_NULL == fh->f_info ) {
-	/* OBJ_RELEASE(MPI_INFO_NULL); */
-    }
-    else {
-	ompi_info_free ( &fh->f_info);
-	fh->f_info = OBJ_NEW(ompi_info_t);
-	ret = ompi_info_dup (info, &fh->f_info);
-    }
-
-    return ret;
-}
-
-
-int mca_io_ompio_file_get_info (ompi_file_t *fh,
-				ompi_info_t ** info_used)
-{
-    int ret = OMPI_SUCCESS;
-    ompi_info_t *info=NULL;
-
-    if ( MPI_INFO_NULL == fh->f_info  ) {
-	*info_used = MPI_INFO_NULL;
-    }
-    else {
-	info = OBJ_NEW(ompi_info_t);
-	ret = ompi_info_dup (fh->f_info, &info);
-	*info_used = info;
-    }
-
-    return ret;
-}
 
 int
 mca_io_ompio_file_get_type_extent (ompi_file_t *fh,

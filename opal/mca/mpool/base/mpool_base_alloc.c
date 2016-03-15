@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
- * Copyright (c) 2010      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2010-2016 IBM Corp.  All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * $COPYRIGHT$
@@ -29,20 +29,7 @@
 #include "mpool_base_tree.h"
 #include "mpool_base_mem_cb.h"
 #include "opal/threads/mutex.h"
-
-struct opal_info_t {
-  opal_list_t super;
-  /**< generic list pointer which is the container for (key,value)
-       pairs */
-  int i_f_to_c_index;
-  /**< fortran handle for info. This is needed for translation from
-       fortran to C and vice versa */
-  opal_mutex_t *i_lock;
-  /**< Mutex for thread safety */
-  bool i_freed;
-  /**< Whether this info has been freed or not */
-};
-typedef struct opal_info_t opal_info_t;
+#include "opal/util/info.h"
 
 /**
  * Memory Pool Registration
@@ -165,15 +152,15 @@ void *mca_mpool_base_alloc(size_t size, opal_info_t *info)
         char key[MPI_MAX_INFO_KEY + 1];
         char value[MPI_MAX_INFO_VAL + 1];
 
-        ompi_info_get_nkeys(info, &num_keys);
+        opal_info_get_nkeys(info, &num_keys);
         for(i = 0; i < num_keys; i++)
         {
-            ompi_info_get_nthkey(info, i, key);
+            opal_info_get_nthkey(info, i, key);
             if ( 0 != strcmp(key, "mpool") ) {
                 continue;
             }
             mpool_requested = true;
-            ompi_info_get(info, key, MPI_MAX_INFO_VAL, value, &flag);
+            opal_info_get(info, key, MPI_MAX_INFO_VAL, value, &flag);
             if ( !flag ) {
                 continue;
             }

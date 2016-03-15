@@ -22,6 +22,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Mellanox Technologies. All rights reserved.
+ * Copyright (c) 2016 IBM Corp.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -86,7 +87,7 @@ static int ompi_comm_copy_topo (ompi_communicator_t *oldcomm,
 
 /* idup with local group and info. the local group support is provided to support ompi_comm_set_nb */
 static int ompi_comm_idup_internal (ompi_communicator_t *comm, ompi_group_t *group, ompi_group_t *remote_group,
-                                    ompi_info_t *info, ompi_communicator_t **newcomm, ompi_request_t **req);
+                                    opal_info_t *info, ompi_communicator_t **newcomm, ompi_request_t **req);
 
 
 /**********************************************************************/
@@ -787,7 +788,7 @@ static int ompi_comm_split_type_get_part (ompi_group_t *group, int *results, int
 int
 ompi_comm_split_type(ompi_communicator_t *comm,
                      int split_type, int key,
-                     ompi_info_t *info,
+                     opal_info_t *info,
                      ompi_communicator_t** newcomm)
 {
     int myinfo[2];
@@ -998,7 +999,7 @@ int ompi_comm_dup ( ompi_communicator_t * comm, ompi_communicator_t **newcomm )
 /**********************************************************************/
 /**********************************************************************/
 /**********************************************************************/
-int ompi_comm_dup_with_info ( ompi_communicator_t * comm, ompi_info_t *info, ompi_communicator_t **newcomm )
+int ompi_comm_dup_with_info ( ompi_communicator_t * comm, opal_info_t *info, ompi_communicator_t **newcomm )
 {
     ompi_communicator_t *newcomp = NULL;
     ompi_group_t *remote_group = NULL;
@@ -1076,14 +1077,14 @@ int ompi_comm_idup (ompi_communicator_t *comm, ompi_communicator_t **newcomm, om
     return ompi_comm_idup_with_info (comm, NULL, newcomm, req);
 }
 
-int ompi_comm_idup_with_info (ompi_communicator_t *comm, ompi_info_t *info, ompi_communicator_t **newcomm, ompi_request_t **req)
+int ompi_comm_idup_with_info (ompi_communicator_t *comm, opal_info_t *info, ompi_communicator_t **newcomm, ompi_request_t **req)
 {
     return ompi_comm_idup_internal (comm, comm->c_local_group, comm->c_remote_group, info, newcomm, req);
 }
 
 /* NTH: we need a way to idup with a smaller local group so this function takes a local group */
 static int ompi_comm_idup_internal (ompi_communicator_t *comm, ompi_group_t *group, ompi_group_t *remote_group,
-                                    ompi_info_t *info, ompi_communicator_t **newcomm, ompi_request_t **req)
+                                    opal_info_t *info, ompi_communicator_t **newcomm, ompi_request_t **req)
 {
     struct ompi_comm_idup_with_info_context *context;
     ompi_comm_request_t *request;

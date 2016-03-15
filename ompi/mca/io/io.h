@@ -16,6 +16,7 @@
  * Copyright (c) 2015      University of Houston. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016 IBM Corp.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -89,14 +90,14 @@ typedef int (*mca_io_base_component_file_unquery_fn_t)
     (struct ompi_file_t *file, struct mca_io_base_file_t *private_data);
 
 typedef int (*mca_io_base_component_file_delete_query_fn_t)
-    (const char *filename, struct ompi_info_t *info,
+    (const char *filename, struct opal_info_t *info,
      struct mca_io_base_delete_t **private_data,
      bool *usable, int *priority);
 typedef int (*mca_io_base_component_file_delete_select_fn_t)
-    (const char *filename, struct ompi_info_t *info,
+    (const char *filename, struct opal_info_t *info,
      struct mca_io_base_delete_t *private_data);
 typedef int (*mca_io_base_component_file_delete_unselect_fn_t)
-    (const char *filename, struct ompi_info_t *info,
+    (const char *filename, struct opal_info_t *info,
      struct mca_io_base_delete_t *private_data);
 
 typedef int (*mca_io_base_component_register_datarep_fn_t)(
@@ -140,7 +141,7 @@ typedef union mca_io_base_components_t mca_io_base_components_t;
 
 typedef int (*mca_io_base_module_file_open_fn_t)
     (struct ompi_communicator_t *comm, const char *filename, int amode,
-     struct ompi_info_t *info, struct ompi_file_t *fh);
+     struct opal_info_t *info, struct ompi_file_t *fh);
 typedef int (*mca_io_base_module_file_close_fn_t)(struct ompi_file_t *fh);
 
 typedef int (*mca_io_base_module_file_set_size_fn_t)
@@ -151,15 +152,11 @@ typedef int (*mca_io_base_module_file_get_size_fn_t)
     (struct ompi_file_t *fh, MPI_Offset *size);
 typedef int (*mca_io_base_module_file_get_amode_fn_t)
     (struct ompi_file_t *fh, int *amode);
-typedef int (*mca_io_base_module_file_set_info_fn_t)
-    (struct ompi_file_t *fh, struct ompi_info_t *info);
-typedef int (*mca_io_base_module_file_get_info_fn_t)
-    (struct ompi_file_t *fh, struct ompi_info_t **info_used);
 
 typedef int (*mca_io_base_module_file_set_view_fn_t)
     (struct ompi_file_t *fh, MPI_Offset disp, struct ompi_datatype_t *etype,
      struct ompi_datatype_t *filetype, const char *datarep,
-     struct ompi_info_t *info);
+     struct opal_info_t *info);
 typedef int (*mca_io_base_module_file_get_view_fn_t)
     (struct ompi_file_t *fh, MPI_Offset *disp,
      struct ompi_datatype_t **etype, struct ompi_datatype_t **filetype,
@@ -309,8 +306,6 @@ struct mca_io_base_module_2_0_0_t {
     mca_io_base_module_file_preallocate_fn_t io_module_file_preallocate;
     mca_io_base_module_file_get_size_fn_t    io_module_file_get_size;
     mca_io_base_module_file_get_amode_fn_t   io_module_file_get_amode;
-    mca_io_base_module_file_set_info_fn_t    io_module_file_set_info;
-    mca_io_base_module_file_get_info_fn_t    io_module_file_get_info;
 
     mca_io_base_module_file_set_view_fn_t    io_module_file_set_view;
     mca_io_base_module_file_get_view_fn_t    io_module_file_get_view;

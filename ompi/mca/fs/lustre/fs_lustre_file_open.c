@@ -12,6 +12,7 @@
  * Copyright (c) 2008-2015 University of Houston. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016 IBM Corp.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -59,7 +60,7 @@ int
 mca_fs_lustre_file_open (struct ompi_communicator_t *comm,
                      const char* filename,
                      int access_mode,
-                     struct ompi_info_t *info,
+                     struct opal_info_t *info,
                      mca_io_ompio_file_t *fh)
 {
     int amode;
@@ -94,12 +95,12 @@ mca_fs_lustre_file_open (struct ompi_communicator_t *comm,
         amode = amode | O_EXCL;
 
 
-    ompi_info_get (info, "stripe_size", MPI_MAX_INFO_VAL, char_stripe, &flag);
+    opal_info_get (info, "stripe_size", MPI_MAX_INFO_VAL, char_stripe, &flag);
     if ( flag ) {
         sscanf ( char_stripe, "%d", &fs_lustre_stripe_size );
     }
 
-    ompi_info_get (info, "stripe_width", MPI_MAX_INFO_VAL, char_stripe, &flag);
+    opal_info_get (info, "stripe_width", MPI_MAX_INFO_VAL, char_stripe, &flag);
     if ( flag ) {
         sscanf ( char_stripe, "%d", &fs_lustre_stripe_width );
     }
