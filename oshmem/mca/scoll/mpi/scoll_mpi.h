@@ -69,6 +69,8 @@ struct mca_scoll_mpi_module_t {
     mca_scoll_base_module_t *previous_barrier_module;
     mca_scoll_base_module_collect_fn_t previous_collect;
     mca_scoll_base_module_t *previous_collect_module;
+    mca_scoll_base_module_alltoall_fn_t previous_alltoall;
+    mca_scoll_base_module_t *previous_alltoall_module;
 };
 typedef struct mca_scoll_mpi_module_t mca_scoll_mpi_module_t;
 
