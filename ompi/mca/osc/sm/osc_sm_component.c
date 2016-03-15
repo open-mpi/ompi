@@ -281,9 +281,10 @@ component_select(struct ompi_win_t *win, void **base, size_t size, int disp_unit
         module->posts = calloc (comm_size, sizeof (module->posts[0]));
         if (NULL == module->posts) return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
 
-        module->global_state = (ompi_osc_sm_global_state_t *) (module->segment_base);
+        /* set module->posts[0] first to ensure 64-bit alignment */
+        module->posts[0] = (uint64_t *) (module->segment_base);
+        module->global_state = (ompi_osc_sm_global_state_t *) (module->posts[0] + comm_size * post_size);
         module->node_states = (ompi_osc_sm_node_state_t *) (module->global_state + 1);
-        module->posts[0] = (uint64_t *) (module->node_states + comm_size);
 
         for (i = 0, total = state_size + posts_size ; i < comm_size ; ++i) {
             if (i > 0) {
