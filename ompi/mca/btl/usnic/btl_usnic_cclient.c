@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2014-2016 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -105,7 +105,23 @@ int opal_btl_usnic_connectivity_client_init(void)
     address.sun_family = AF_UNIX;
     strncpy(address.sun_path, ipc_filename, sizeof(address.sun_path) - 1);
 
-    if (0 != connect(agent_fd, (struct sockaddr*) &address, sizeof(address))) {
+    int count = 0;
+    while (1) {
+        int ret = connect(agent_fd, (struct sockaddr*) &address,
+                          sizeof(address));
+        if (0 == ret) {
+            break;
+        }
+
+        // If we get ECONNREFUSED, delay a little and try again
+        if (ECONNREFUSED == errno) {
+            if (count < mca_btl_usnic_component.connectivity_num_retries) {
+                usleep(100);
+                ++count;
+                continue;
+            }
+        }
+
         OPAL_ERROR_LOG(OPAL_ERR_IN_ERRNO);
         ABORT("connect() failed");
         /* Will not return */
