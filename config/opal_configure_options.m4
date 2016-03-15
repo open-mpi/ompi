@@ -92,7 +92,7 @@ fi
 AC_MSG_CHECKING([if want to debug memory usage])
 AC_ARG_ENABLE(mem-debug,
     AC_HELP_STRING([--enable-mem-debug],
-                   [enable memory debugging (debugging only) (default: disabled)]))
+                   [enable memory debugging (not for general MPI users!) (default: disabled)]))
 if test "$enable_mem_debug" = "yes"; then
     AC_MSG_RESULT([yes])
     WANT_MEM_DEBUG=1
@@ -110,7 +110,7 @@ AC_DEFINE_UNQUOTED(OPAL_ENABLE_MEM_DEBUG, $WANT_MEM_DEBUG,
 AC_MSG_CHECKING([if want to profile memory usage])
 AC_ARG_ENABLE(mem-profile,
     AC_HELP_STRING([--enable-mem-profile],
-                   [enable memory profiling (debugging only) (default: disabled)]))
+                   [enable memory profiling (not for general MPI users!) (default: disabled)]))
 if test "$enable_mem_profile" = "yes"; then
     AC_MSG_RESULT([yes])
     WANT_MEM_PROFILE=1
