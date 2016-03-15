@@ -14,6 +14,7 @@
  * Copyright (c) 2007-2009 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012-2016 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2016      Intel, Inc. All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -29,7 +30,11 @@
 #include "opal/mca/base/mca_base_pvar.h"
 #include "opal/mca/mpool/base/base.h"
 #include "opal/mca/allocator/base/base.h"
+
+#include "opal/util/argv.h"
+
 #include "mpool_hugepage.h"
+
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
@@ -256,7 +261,6 @@ static int mca_mpool_hugepage_query (const char *hints, int *priority_out,
     unsigned long page_size = 0;
     char **hints_array;
     int my_priority = mca_mpool_hugepage_priority;
-    int modifier;
     char *tmp;
     bool found = false;
 
