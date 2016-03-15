@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2013      Mellanox Technologies, Inc.
+# Copyright (c) 2013-2016 Mellanox Technologies, Inc.
 #                         All rights reserved.
 # $COPYRIGHT$
 #
@@ -15,7 +15,8 @@ sources = \
 	scoll_basic_barrier.c \
 	scoll_basic_broadcast.c \
 	scoll_basic_collect.c \
-	scoll_basic_reduce.c
+	scoll_basic_reduce.c \
+	scoll_basic_alltoall.c
 
 
 # Make the output library in this directory, and name it either

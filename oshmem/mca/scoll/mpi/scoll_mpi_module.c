@@ -27,6 +27,7 @@ static void mca_scoll_mpi_module_clear(mca_scoll_mpi_module_t *mpi_module)
     mpi_module->previous_broadcast    = NULL;
     mpi_module->previous_reduce       = NULL;
     mpi_module->previous_collect      = NULL;
+    mpi_module->previous_alltoall     = NULL;
 }
 
 static void mca_scoll_mpi_module_construct(mca_scoll_mpi_module_t *mpi_module)
@@ -41,6 +42,7 @@ static void mca_scoll_mpi_module_destruct(mca_scoll_mpi_module_t *mpi_module)
     OBJ_RELEASE(mpi_module->previous_broadcast_module);
     OBJ_RELEASE(mpi_module->previous_reduce_module);
     OBJ_RELEASE(mpi_module->previous_collect_module);
+    OBJ_RELEASE(mpi_module->previous_alltoall_module);
 
     mca_scoll_mpi_module_clear(mpi_module);
     /* Free ompi_comm */
@@ -66,6 +68,7 @@ static int mca_scoll_mpi_save_coll_handlers(mca_scoll_base_module_t *module, osh
     MPI_SAVE_PREV_SCOLL_API(broadcast);
     MPI_SAVE_PREV_SCOLL_API(reduce);
     MPI_SAVE_PREV_SCOLL_API(collect);
+    MPI_SAVE_PREV_SCOLL_API(alltoall);
     return OSHMEM_SUCCESS;
 }
 
@@ -165,6 +168,7 @@ mca_scoll_mpi_comm_query(oshmem_group_t *osh_group, int *priority)
     mpi_module->super.scoll_broadcast = mca_scoll_mpi_broadcast;
     mpi_module->super.scoll_reduce = mca_scoll_mpi_reduce;
     mpi_module->super.scoll_collect = mca_scoll_mpi_collect;
+    mpi_module->super.scoll_alltoall = NULL;
 
     *priority = cm->mpi_priority;
     module = &mpi_module->super;
