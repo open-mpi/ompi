@@ -105,7 +105,9 @@ int mca_base_component_find (const char *directory, mca_base_framework_t *framew
     int ret;
 
     if (!ignore_requested) {
-        ret = mca_base_component_parse_requested (framework->framework_selection, &include_mode,
+        ret = mca_base_component_parse_requested (framework->framework_selection,
+                                                  framework->framework_alias_array,
+                                                  &include_mode,
                                                   &requested_component_names);
         if (OPAL_SUCCESS != ret) {
             return ret;
@@ -178,7 +180,9 @@ int mca_base_components_filter (mca_base_framework_t *framework, uint32_t filter
         return OPAL_SUCCESS;
     }
 
-    ret = mca_base_component_parse_requested (framework->framework_selection, &include_mode,
+    ret = mca_base_component_parse_requested (framework->framework_selection,
+                                              framework->framework_alias_array,
+                                              &include_mode,
                                               &requested_component_names);
     if (OPAL_SUCCESS != ret) {
         return ret;
@@ -342,8 +346,8 @@ static int component_find_check (mca_base_framework_t *framework, char **request
     return OPAL_SUCCESS;
 }
 
-int mca_base_component_parse_requested (const char *requested, bool *include_mode,
-                                        char ***requested_component_names)
+int mca_base_component_parse_requested (const char *requested, const mca_base_component_alias_t *aliases,
+                                        bool *include_mode, char ***requested_component_names)
 {
     const char *requested_orig = requested;
 
@@ -374,6 +378,17 @@ int mca_base_component_parse_requested (const char *requested, bool *include_mod
 
     /* Split up the value into individual component names */
     *requested_component_names = opal_argv_split(requested, ',');
+
+    if (aliases) {
+        for (int i = 0 ; requested_component_names[0][i] ; ++i) {
+            for (int j = 0 ; aliases[j].original ; ++j) {
+                if (0 == strcmp (requested_component_names[0][i], aliases[j].alias)) {
+                    free (requested_component_names[0][i]);
+                    requested_component_names[0][i] = strdup (aliases[j].original);
+                }
+            }
+        }
+    }
 
     /* All done */
     return OPAL_SUCCESS;

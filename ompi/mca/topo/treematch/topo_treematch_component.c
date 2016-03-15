@@ -4,6 +4,8 @@
  *                         reserved.
  * Copyright (c) 2011-2015 INRIA.  All rights reserved.
  * Copyright (c) 2011-2015 Université Bordeaux 1
+ * Copyright (c) 2016      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -37,14 +39,10 @@ mca_topo_treematch_component_2_2_0_t mca_topo_treematch_component =
             {
                 MCA_TOPO_BASE_VERSION_2_2_0,
 
-                "treematch",
-                OMPI_MAJOR_VERSION,
-                OMPI_MINOR_VERSION,
-                OMPI_RELEASE_VERSION,
-                NULL,  /* component open */
-                NULL,  /* component close */
-                NULL, /* component query */
-                mca_topo_treematch_component_register, /* component register */
+                .mca_component_name = "treematch",
+                MCA_BASE_MAKE_VERSION(component, OMPI_MAJOR_VERSION, OMPI_MINOR_VERSION,
+                                      OMPI_RELEASE_VERSION),
+                .mca_register_component_params = mca_topo_treematch_component_register,
             },
 
             {

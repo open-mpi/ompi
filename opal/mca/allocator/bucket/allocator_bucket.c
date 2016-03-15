@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2014-2016 Los Alamos National Security, LLC. All rights
  *                         reseved.
  * $COPYRIGHT$
  *
@@ -129,14 +129,12 @@ mca_allocator_base_component_t mca_allocator_bucket_component = {
   {
     MCA_ALLOCATOR_BASE_VERSION_2_0_0,
 
-    "bucket", /* MCA module name */
-    OPAL_MAJOR_VERSION,
-    OPAL_MINOR_VERSION,
-    OPAL_RELEASE_VERSION,
-    mca_allocator_bucket_module_open,  /* module open */
-    mca_allocator_bucket_module_close, /* module close */
-    NULL,
-    mca_allocator_bucket_module_register
+    .mca_component_name = "bucket",
+    MCA_BASE_MAKE_VERSION(component, OPAL_MAJOR_VERSION, OPAL_MINOR_VERSION,
+                          OPAL_RELEASE_VERSION),
+    .mca_open_component = mca_allocator_bucket_module_open,
+    .mca_close_component = mca_allocator_bucket_module_close,
+    .mca_register_component_params = mca_allocator_bucket_module_register,
   },
   {
       /* The component is checkpoint ready */

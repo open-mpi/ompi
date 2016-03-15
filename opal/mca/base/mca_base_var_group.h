@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2011 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2012-2013 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2012-2016 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -52,6 +52,12 @@ struct mca_base_var_group_t {
 
     /** Integer array of group performance variables */
     opal_value_array_t group_pvars;
+
+    /** Index of aliased group */
+    int group_alias;
+
+    /** Whether the group is deprecated */
+    bool deprecated;
 };
 
 typedef struct mca_base_var_group_t mca_base_var_group_t;
@@ -102,6 +108,26 @@ OPAL_DECLSPEC int mca_base_var_group_component_register (const mca_base_componen
  * This call deregisters all associated variables and subgroups.
  */
 OPAL_DECLSPEC int mca_base_var_group_deregister (int group_index);
+
+
+/**
+ * Alias an MCA group to another group
+ *
+ * @param[in] group1_id Index of original group
+ * @param[in] group2_id Index of group that will become an alias of
+ *                   group1
+ * @param[in] deprecated Whether variables in group2 should be deprecated
+ *
+ * @retval OPAL_SUCCESS on success
+ * @retcal OPAL_ERR_BAD_PARAM if either group1 or group2 does not exist
+ *
+ * This function makes group2 an alias for group1. This will cause all
+ * parameters created in group1 to also create aliases in group2. This
+ * function should be called after creating group1 and group2 and before
+ * any variables are registered in group1. Variables SHOULD NOT be
+ * registered in group2.
+ */
+OPAL_DECLSPEC int mca_base_var_group_alias (int group1_id, int group2_id, bool deprecated);
 
 /**
  * Find an MCA group

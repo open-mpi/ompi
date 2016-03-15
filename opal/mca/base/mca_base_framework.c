@@ -14,6 +14,7 @@
 
 #include "opal/include/opal/constants.h"
 #include "opal/util/output.h"
+#include "opal/util/argv.h"
 
 #include "mca_base_framework.h"
 #include "mca_base_var.h"
@@ -51,6 +52,54 @@ static void framework_close_output (struct mca_base_framework_t *framework)
     }
 }
 
+static int mca_base_framework_parse_aliases (mca_base_framework_t *framework)
+{
+    char **aliases = opal_argv_split (framework->framework_component_aliases, ',');
+    int alias_count;
+
+    if (NULL == aliases) {
+        /* nothing to do */
+        return OPAL_SUCCESS;
+    }
+
+    alias_count = opal_argv_count (aliases);
+
+    framework->framework_alias_array = calloc (alias_count + 1, sizeof (framework->framework_alias_array[0]));
+    if (NULL == framework->framework_alias_array) {
+        opal_argv_free (aliases);
+        return OPAL_ERR_OUT_OF_RESOURCE;
+    }
+
+    for (int i = 0, j = 0 ; i < alias_count ; ++i) {
+        char *sep = strchr (aliases[i], ':');
+        if (NULL == sep) {
+            free (aliases[i]);
+            continue;
+        }
+
+        *sep = '\0';
+        framework->framework_alias_array[j].original = aliases[i];
+        framework->framework_alias_array[j].alias = sep + 1;
+        ++j;
+    }
+
+    free (aliases);
+    return OPAL_SUCCESS;
+}
+
+static void mca_base_framework_free_aliases (mca_base_framework_t *framework)
+{
+    if (NULL == framework->framework_alias_array) {
+        return;
+    }
+
+    for (int i = 0 ; framework->framework_alias_array[i].original ; ++i) {
+        free ((void *) framework->framework_alias_array[i].original);
+    }
+
+    free (framework->framework_alias_array);
+}
+
 int mca_base_framework_register (struct mca_base_framework_t *framework,
                                  mca_base_register_flag_t flags)
 {
@@ -70,6 +119,23 @@ int mca_base_framework_register (struct mca_base_framework_t *framework,
     if (framework->framework_flags & MCA_BASE_FRAMEWORK_FLAG_NO_DSO) {
         flags |= MCA_BASE_REGISTER_STATIC_ONLY;
     }
+
+    /* create group aliases */
+    if (framework->framework_component_aliases) {
+        mca_base_framework_parse_aliases (framework);
+
+        /* the framework array ends with an alias */
+        for (int i = 0 ; framework->framework_alias_array[i].original ; ++i) {
+            int group_id = mca_base_var_group_register (framework->framework_project,
+                                                        framework->framework_name,
+                                                        framework->framework_alias_array[i].original, NULL);
+            int alias_id = mca_base_var_group_register (framework->framework_project,
+                                                        framework->framework_name,
+                                                        framework->framework_alias_array[i].alias, NULL);
+            mca_base_var_group_alias (group_id, alias_id, false);
+        }
+    }
+
 
     if (!(MCA_BASE_FRAMEWORK_FLAG_NOREGISTER & framework->framework_flags)) {
         /* register this framework with the MCA variable system */
@@ -236,6 +302,7 @@ int mca_base_framework_close (struct mca_base_framework_t *framework) {
     OBJ_DESTRUCT(&framework->framework_components);
 
     framework_close_output (framework);
+    mca_base_framework_free_aliases (framework);
 
     return ret;
 }

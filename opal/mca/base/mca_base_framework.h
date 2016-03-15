@@ -123,6 +123,12 @@ typedef enum {
      */
 } mca_base_framework_flags_t;
 
+struct mca_base_component_alias_t {
+    const char *original;
+    const char *alias;
+};
+typedef struct mca_base_component_alias_t mca_base_component_alias_t;
+
 typedef struct mca_base_framework_t {
     /** Project name for this component (ex "opal") */
     char                                    *framework_project;
@@ -154,6 +160,10 @@ typedef struct mca_base_framework_t {
     /** List of selected components (filled in by mca_base_framework_register()
         or mca_base_framework_open() */
     opal_list_t                              framework_components;
+    /** Comma-delimited list of component aliases (ex, vader:sm,openib:ibverbs) */
+    char                                    *framework_component_aliases;
+    /** Parsed alias array */
+    mca_base_component_alias_t              *framework_alias_array;
 } mca_base_framework_t;
 
 
@@ -224,8 +234,7 @@ OPAL_DECLSPEC bool mca_base_framework_is_open (struct mca_base_framework_t *fram
  * Example:
  *  MCA_BASE_FRAMEWORK_DECLARE(opal, foo, NULL, opal_foo_open, opal_foo_close, MCA_BASE_FRAMEWORK_FLAG_LAZY)
  */
-#define MCA_BASE_FRAMEWORK_DECLARE(project, name, description, registerfn, openfn, closefn, static_components, flags) \
-    mca_base_framework_t project##_##name##_base_framework = {   \
+#define MCA_BASE_FRAMEWORK_MAKE(project, name, description, registerfn, openfn, closefn, static_components, flags, aliases, ...) \
         .framework_project           = #project,                        \
         .framework_name              = #name,                           \
         .framework_description       = description,                     \
@@ -237,6 +246,12 @@ OPAL_DECLSPEC bool mca_base_framework_is_open (struct mca_base_framework_t *fram
         .framework_static_components = static_components,               \
         .framework_selection         = NULL,                            \
         .framework_verbose           = 0,                               \
-        .framework_output            = -1}
+        .framework_output            = -1,                              \
+        .framework_component_aliases = aliases,
+
+#define MCA_BASE_FRAMEWORK_DECLARE(project, name, ...)                  \
+    mca_base_framework_t project##_##name##_base_framework = {          \
+        MCA_BASE_FRAMEWORK_MAKE(project, name, __VA_ARGS__, NULL, NULL) \
+    }
 
 #endif /* OPAL_MCA_BASE_FRAMEWORK_H */
