@@ -585,7 +585,7 @@ static int pretty_print_vpids(orte_job_t *job) {
     orte_proc_t *vpid;
     orte_app_context_t *app;
     char *o_proc_name;
-    char *nodename;
+    char **nodename;
 
     /*
      * Caculate segment lengths
@@ -600,6 +600,7 @@ static int pretty_print_vpids(orte_job_t *job) {
     len_ckpt_r      = -3;
     len_ckpt_l      = -3;
 
+    nodename = (char **) malloc(job->num_procs * sizeof(char *));
     for(v=0; v < job->num_procs; v++) {
         char *rankstr;
         vpid = (orte_proc_t*)job->procs->addr[v];
@@ -635,10 +636,10 @@ static int pretty_print_vpids(orte_job_t *job) {
             len_rank = strlen(rankstr);
         free(rankstr);
 
-        nodename = NULL;
-        if( orte_get_attribute(&vpid->attributes, ORTE_PROC_NODENAME, (void**)&nodename, OPAL_STRING) &&
-            (int)strlen(nodename) > len_node) {
-            len_node = strlen(nodename);
+        nodename[v] = NULL;
+        if( orte_get_attribute(&vpid->attributes, ORTE_PROC_NODENAME, (void**)&nodename[v], OPAL_STRING) &&
+            (int)strlen(nodename[v]) > len_node) {
+            len_node = strlen(nodename[v]);
         } else if ((int)strlen("Unknown") > len_node) {
             len_node = strlen("Unknown");
         }
@@ -702,12 +703,12 @@ static int pretty_print_vpids(orte_job_t *job) {
         printf("%*s | ",  len_o_proc_name, o_proc_name);
         printf("%*u | ",  len_rank       , (uint)vpid->local_rank);
         printf("%*d | ",  len_pid        , vpid->pid);
-        printf("%*s | ",  len_node       , (NULL == nodename) ? "Unknown" : nodename);
-        if (NULL != nodename) {
-            free(nodename);
-        }
+        printf("%*s | ",  len_node       , (NULL == nodename[v]) ? "Unknown" : nodename[v]);
         printf("%*s | ",  len_state      , orte_proc_state_to_str(vpid->state));
 
+        if (NULL != nodename[v]) {
+            free(nodename[v]);
+        }
         printf("\n");
 
     }
