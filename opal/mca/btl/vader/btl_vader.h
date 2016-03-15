@@ -47,8 +47,7 @@
 #include "opal/class/opal_free_list.h"
 #include "opal/sys/atomic.h"
 #include "opal/mca/btl/btl.h"
-#include "opal/mca/mpool/mpool.h"
-#include "opal/mca/mpool/base/base.h"
+#include "opal/mca/rcache/rcache.h"
 #include "opal/mca/btl/base/base.h"
 #include "opal/mca/rcache/rcache.h"
 #include "opal/mca/rcache/base/base.h"
@@ -152,6 +151,9 @@ struct mca_btl_vader_t {
     mca_btl_base_module_error_cb_fn_t error_cb;
 #if OPAL_BTL_VADER_HAVE_KNEM
     int knem_fd;
+
+    /* registration cache */
+    mca_rcache_base_module_t *knem_rcache;
 #endif
 };
 typedef struct mca_btl_vader_t mca_btl_vader_t;

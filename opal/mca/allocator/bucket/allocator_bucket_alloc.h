@@ -1,4 +1,5 @@
-/**
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
+/*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
@@ -9,6 +10,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ *                         reseved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -131,8 +134,7 @@ typedef struct mca_allocator_bucket_t mca_allocator_bucket_t;
    */
     void * mca_allocator_bucket_alloc(
         mca_allocator_base_module_t * mem,
-        size_t size,
-        mca_mpool_base_registration_t** registration);
+        size_t size);
 
 /**
    * Accepts a request for memory in a specific region defined by the
@@ -152,8 +154,7 @@ typedef struct mca_allocator_bucket_t mca_allocator_bucket_t;
     void * mca_allocator_bucket_alloc_align(
         mca_allocator_base_module_t * mem,
         size_t size,
-        size_t alignment,
-        mca_mpool_base_registration_t** registration);
+        size_t alignment);
 
 /**
    * Attempts to resize the passed region of memory into a larger or a smaller
@@ -172,8 +173,7 @@ typedef struct mca_allocator_bucket_t mca_allocator_bucket_t;
     void * mca_allocator_bucket_realloc(
         mca_allocator_base_module_t * mem,
         void * ptr,
-        size_t size,
-        mca_mpool_base_registration_t** registration);
+        size_t size);
 
 /**
    * Frees the passed region of memory

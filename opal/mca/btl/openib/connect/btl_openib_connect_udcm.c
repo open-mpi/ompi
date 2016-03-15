@@ -74,7 +74,6 @@
 #include "btl_openib_async.h"
 #include "connect/connect.h"
 
-#include "opal/mca/mpool/grdma/mpool_grdma.h"
 #include "opal/util/sys_limits.h"
 
 #if (ENABLE_DYNAMIC_SL)
@@ -1367,7 +1366,7 @@ static int udcm_rc_qp_create_one(udcm_module_t *m, mca_btl_base_endpoint_t* lcl_
                                                                     &init_attr))) {
         /* NTH: this process may be out of registered memory. try evicting an item from
            the lru of this btl's mpool */
-        if (false == mca_mpool_grdma_evict (m->btl->super.btl_mpool)) {
+        if (false == m->btl->device->rcache->rcache_evict (m->btl->device->rcache)) {
             break;
         }
     }
@@ -1378,7 +1377,7 @@ static int udcm_rc_qp_create_one(udcm_module_t *m, mca_btl_base_endpoint_t* lcl_
                                                                &init_attr))) {
         /* NTH: this process may be out of registered memory. try evicting an item from
            the lru of this btl's mpool */
-        if (false == mca_mpool_grdma_evict (m->btl->super.btl_mpool)) {
+        if (false == m->btl->device->rcache->rcache_evict (m->btl->device->rcache)) {
             break;
         }
     }

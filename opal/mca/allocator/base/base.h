@@ -45,7 +45,7 @@ struct mca_allocator_base_selected_module_t {
 typedef struct mca_allocator_base_selected_module_t mca_allocator_base_selected_module_t;
 
 /**
- * Declaces mca_mpool_base_selected_module_t as a class.
+ * Declaces mca_allocator_base_selected_module_t as a class.
  */
 OPAL_DECLSPEC OBJ_CLASS_DECLARATION(mca_allocator_base_selected_module_t);
 

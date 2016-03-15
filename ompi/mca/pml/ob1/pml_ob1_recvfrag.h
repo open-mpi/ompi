@@ -81,7 +81,7 @@ do {                                                                    \
         buffers[0].addr = (char*)                                       \
             mca_pml_ob1.allocator->alc_alloc( mca_pml_ob1.allocator,    \
                                               buffers[0].len,           \
-                                              0, NULL);                 \
+                                              0);                       \
         _ptr = (unsigned char*)(buffers[0].addr);                       \
         macro_segments[0].seg_addr.pval = buffers[0].addr;              \
     }                                                                   \

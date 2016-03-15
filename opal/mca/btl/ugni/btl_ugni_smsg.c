@@ -16,8 +16,8 @@
 static void mca_btl_ugni_smsg_mbox_construct (mca_btl_ugni_smsg_mbox_t *mbox) {
     struct mca_btl_ugni_reg_t *ugni_reg =
         (struct mca_btl_ugni_reg_t *) mbox->super.registration;
-    struct mca_mpool_base_registration_t *base_reg =
-        (struct mca_mpool_base_registration_t *) ugni_reg;
+    mca_rcache_base_registration_t *base_reg =
+        (mca_rcache_base_registration_t *) ugni_reg;
 
     /* initialize mailbox attributes */
     mbox->attr.smsg_attr.msg_type       = GNI_SMSG_TYPE_MBOX_AUTO_RETRANSMIT;

@@ -629,13 +629,6 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     /* Select which MPI components to use */
 
     if (OMPI_SUCCESS !=
-        (ret = mca_mpool_base_init(OPAL_ENABLE_PROGRESS_THREADS,
-                                   ompi_mpi_thread_multiple))) {
-        error = "mca_mpool_base_init() failed";
-        goto error;
-    }
-
-    if (OMPI_SUCCESS !=
         (ret = mca_pml_base_select(OPAL_ENABLE_PROGRESS_THREADS,
                                    ompi_mpi_thread_multiple))) {
         error = "mca_pml_base_select() failed";
