@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2015 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2012-2016 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
@@ -1445,30 +1445,6 @@ static int register_variable (const char *project_name, const char *framework_na
             return OPAL_ERROR;
         }
 
-        ret = mca_base_var_group_get_internal (var->mbv_group_index, &group, true);
-        if (OPAL_SUCCESS != ret) {
-            /* Shouldn't ever happen */
-            return OPAL_ERROR;
-        }
-
-        if (!group->group_isvalid) {
-            group->group_isvalid = true;
-        }
-
-        /* Verify the name components match */
-        if (0 != compare_strings(framework_name, group->group_framework) ||
-            0 != compare_strings(component_name, group->group_component) ||
-            0 != compare_strings(variable_name, var->mbv_variable_name)) {
-            opal_show_help("help-mca-var.txt", "var-name-conflict",
-                           true, var->mbv_full_name, framework_name,
-                           component_name, variable_name,
-                           group->group_framework, group->group_component,
-                           var->mbv_variable_name);
-            /* This is developer error. abort! */
-            assert (0);
-            return OPAL_ERROR;
-        }
-
         if (var->mbv_type != type) {
 #if OPAL_ENABLE_DEBUG
             opal_show_help("help-mca-var.txt",
@@ -1477,6 +1453,30 @@ static int register_variable (const char *project_name, const char *framework_na
 #endif
             return OPAL_ERR_VALUE_OUT_OF_BOUNDS;
         }
+    }
+
+    ret = mca_base_var_group_get_internal (var->mbv_group_index, &group, true);
+    if (OPAL_SUCCESS != ret) {
+        /* Shouldn't ever happen */
+        return OPAL_ERROR;
+    }
+
+    if (!group->group_isvalid) {
+        group->group_isvalid = true;
+    }
+
+    /* Verify the name components match */
+    if (0 != compare_strings(framework_name, group->group_framework) ||
+        0 != compare_strings(component_name, group->group_component) ||
+        0 != compare_strings(variable_name, var->mbv_variable_name)) {
+        opal_show_help("help-mca-var.txt", "var-name-conflict",
+                       true, var->mbv_full_name, framework_name,
+                       component_name, variable_name,
+                       group->group_framework, group->group_component,
+                       var->mbv_variable_name);
+        /* This is developer error. abort! */
+        assert (0);
+        return OPAL_ERROR;
     }
 
     if (MCA_BASE_VAR_TYPE_BOOL == var->mbv_type) {
@@ -1507,6 +1507,27 @@ static int register_variable (const char *project_name, const char *framework_na
 
     /* go ahead and mark this variable as valid */
     var->mbv_flags |= MCA_BASE_VAR_FLAG_VALID;
+
+    if (group->group_alias >= 0) {
+        mca_base_var_group_t *group2;
+        int synonym_flags = 0;
+
+        ret = mca_base_var_group_get_internal (group->group_alias, &group2, true);
+        if (OPAL_SUCCESS != ret) {
+            return OPAL_ERROR;
+        }
+
+        if (group2->deprecated) {
+            synonym_flags = MCA_BASE_VAR_SYN_FLAG_DEPRECATED;
+        }
+
+        ret = mca_base_var_register_synonym (var_index, group2->group_project,
+                                             group2->group_framework, group2->group_component,
+                                             variable_name, synonym_flags);
+        if (OPAL_SUCCESS != ret) {
+            return ret;
+        }
+    }
 
     ret = var_set_initial (var, original);
     if (OPAL_SUCCESS != ret) {

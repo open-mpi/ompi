@@ -8,7 +8,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2015-2016 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -35,15 +35,14 @@ static ompi_crcp_base_component_t none_component = {
         OMPI_CRCP_BASE_VERSION_2_0_0,
 
         /* Component name and version */
-        "none",
-        OMPI_MAJOR_VERSION,
-        OMPI_MINOR_VERSION,
-        OMPI_RELEASE_VERSION,
+        .mca_component_name = "none",
+        MCA_BASE_MAKE_VERSION(component, OMPI_MAJOR_VERSION, OMPI_MINOR_VERSION,
+                              OMPI_RELEASE_VERSION),
 
         /* Component open and close functions */
-        ompi_crcp_base_none_open,
-        ompi_crcp_base_none_close,
-        ompi_crcp_base_none_query
+        .mca_open_component = ompi_crcp_base_none_open,
+        .mca_close_component = ompi_crcp_base_none_close,
+        .mca_query_component = ompi_crcp_base_none_query,
     },
     {
         /* Component is checkpointable */

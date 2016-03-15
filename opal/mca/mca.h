@@ -298,13 +298,16 @@ struct mca_base_component_2_1_0_t {
      belongs to. */
 
   char mca_component_name[MCA_BASE_MAX_COMPONENT_NAME_LEN + 1];
-  /**< This comopnent's string name. */
+  /**< This component's string name. */
   int mca_component_major_version;
   /**< This component's major version number. */
   int mca_component_minor_version;
   /**< This component's minor version number. */
   int mca_component_release_version;
   /**< This component's release version number. */
+
+  char mca_component_name_alias[MCA_BASE_MAX_COMPONENT_NAME_LEN + 1];
+  /**< This component's alias string name. */
 
   mca_base_open_component_1_0_0_fn_t mca_open_component;
   /**< Method for opening this component. */

@@ -75,8 +75,10 @@ static int process_repository_item (const char *filename, void *data)
     char name[MCA_BASE_MAX_COMPONENT_NAME_LEN + 1];
     char type[MCA_BASE_MAX_TYPE_NAME_LEN + 1];
     mca_base_component_repository_item_t *ri;
+    const mca_base_component_t *component_struct;
+    char *base, *struct_name, *alias;
     opal_list_t *component_list;
-    char *base;
+    opal_dl_handle_t *dlhandle;
     int ret;
 
     base = opal_basename (filename);
@@ -129,6 +131,35 @@ static int process_repository_item (const char *filename, void *data)
         }
     }
 
+    /* dlopen the component to determine if it has an alias */
+    ret = opal_dl_open(filename, true, false, &dlhandle, NULL);
+    if (OPAL_SUCCESS != ret) {
+        free (base);
+        return OPAL_SUCCESS;
+    }
+
+    ret = asprintf (&struct_name, "mca_%s_%s_component", type, name);
+    if (0 > ret) {
+        opal_dl_close (dlhandle);
+        free (base);
+        return OPAL_ERR_OUT_OF_RESOURCE;
+    }
+
+    ret = opal_dl_lookup(dlhandle, struct_name, (void **) &component_struct, NULL);
+    free (struct_name);
+    if (OPAL_SUCCESS != ret) {
+        opal_dl_close (dlhandle);
+        free (base);
+        return OPAL_SUCCESS;
+    }
+
+    alias = strdup (component_struct->mca_component_name_alias);
+    opal_dl_close (dlhandle);
+    if (NULL == alias) {
+        free (base);
+        return OPAL_ERR_OUT_OF_RESOURCE;
+    }
+
     ri = OBJ_NEW(mca_base_component_repository_item_t);
     if (NULL == ri) {
         free (base);
@@ -140,6 +171,7 @@ static int process_repository_item (const char *filename, void *data)
     ri->ri_path = strdup (filename);
     if (NULL == ri->ri_path) {
         OBJ_RELEASE(ri);
+        free (alias);
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
 
@@ -147,9 +179,13 @@ static int process_repository_item (const char *filename, void *data)
     ri->ri_type[MCA_BASE_MAX_TYPE_NAME_LEN] = '\0';
     strncpy (ri->ri_type, type, MCA_BASE_MAX_TYPE_NAME_LEN);
 
-    ri->ri_name[MCA_BASE_MAX_TYPE_NAME_LEN] = '\0';
+    ri->ri_name[MCA_BASE_MAX_COMPONENT_NAME_LEN] = '\0';
     strncpy (ri->ri_name, name, MCA_BASE_MAX_COMPONENT_NAME_LEN);
 
+    ri->ri_name_alias[MCA_BASE_MAX_COMPONENT_NAME_LEN] = '\0';
+    strncpy (ri->ri_name_alias, alias, MCA_BASE_MAX_COMPONENT_NAME_LEN);
+
+    free (alias);
     opal_list_append (component_list, &ri->super);
 
     return OPAL_SUCCESS;

@@ -1,5 +1,6 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2006-2016 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -20,14 +21,9 @@ const opal_installdirs_base_component_t mca_installdirs_config_component = {
         OPAL_INSTALLDIRS_BASE_VERSION_2_0_0,
 
         /* Component name and version */
-        "config",
-        OPAL_MAJOR_VERSION,
-        OPAL_MINOR_VERSION,
-        OPAL_RELEASE_VERSION,
-
-        /* Component open and close functions */
-        NULL,
-        NULL
+        .mca_component_name = "config",
+        MCA_BASE_MAKE_VERSION(component, OPAL_MAJOR_VERSION, OPAL_MINOR_VERSION,
+                              OPAL_RELEASE_VERSION),
     },
     {
         /* This component is Checkpointable */

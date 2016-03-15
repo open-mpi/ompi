@@ -12,8 +12,8 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Voltaire. All rights reserved.
  * Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2010-2015 Los Alamos National Security, LLC.
- *                         All rights reserved.
+ * Copyright (c) 2010-2016 Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
@@ -81,6 +81,7 @@ mca_btl_vader_component_t mca_btl_vader_component = {
            about the component itself */
         .btl_version = {
             MCA_BTL_DEFAULT_VERSION("vader"),
+            .mca_component_name_alias = "sm",
             .mca_open_component = mca_btl_vader_component_open,
             .mca_close_component = mca_btl_vader_component_close,
             .mca_register_component_params = mca_btl_vader_component_register,
@@ -107,8 +108,8 @@ static int mca_btl_vader_component_register (void)
 {
     mca_base_var_enum_t *new_enum;
 
-    (void) mca_base_var_group_component_register(&mca_btl_vader_component.super.btl_version,
-                                                 "Enhanced shared memory byte transport later");
+    (void) mca_base_var_group_component_register (&mca_btl_vader_component.super.btl_version,
+                                                  "Enhanced shared memory byte transport layer");
 
     /* register VADER component variables */
     mca_btl_vader_component.vader_free_list_num = 8;

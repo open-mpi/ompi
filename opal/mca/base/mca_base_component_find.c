@@ -115,9 +115,16 @@ int mca_base_component_find (const char *directory, mca_base_framework_t *framew
     /* Find all the components that were statically linked in */
     if (static_components) {
         for (int i = 0 ; NULL != static_components[i]; ++i) {
-            if ( use_component(include_mode,
-                               (const char**)requested_component_names,
-                               static_components[i]->mca_component_name) ) {
+            bool can_use = use_component (include_mode,
+                                          (const char**)requested_component_names,
+                                          static_components[i]->mca_component_name);
+            if (!can_use && strlen(static_components[i]->mca_component_name_alias)) {
+                can_use = use_component (include_mode,
+                                         (const char**)requested_component_names,
+                                         static_components[i]->mca_component_name_alias);
+            }
+
+            if (can_use) {
                 cli = OBJ_NEW(mca_base_component_list_item_t);
                 if (NULL == cli) {
                     ret = OPAL_ERR_OUT_OF_RESOURCE;
@@ -132,8 +139,8 @@ int mca_base_component_find (const char *directory, mca_base_framework_t *framew
 #if OPAL_HAVE_DL_SUPPORT
     /* Find any available dynamic components in the specified directory */
     if (open_dso_components && !mca_base_component_disable_dlopen) {
-        find_dyn_components(directory, framework, (const char**)requested_component_names,
-                            include_mode);
+        find_dyn_components (directory, framework, (const char**)requested_component_names,
+                             include_mode);
     } else {
         opal_output_verbose (MCA_BASE_VERBOSE_INFO, 0,
                             "mca: base: component_find: dso loading for %s MCA components disabled",
@@ -191,6 +198,10 @@ int mca_base_components_filter (mca_base_framework_t *framework, uint32_t filter
 
         can_use = use_component (include_mode, (const char **) requested_component_names,
                                  cli->cli_component->mca_component_name);
+        if (!can_use && strlen(cli->cli_component->mca_component_name_alias)) {
+            can_use = use_component (include_mode, (const char **) requested_component_names,
+                                     cli->cli_component->mca_component_name_alias);
+        }
 
         if (!can_use || (filter_flags & dummy->data.param_field) != filter_flags) {
             if (can_use && (filter_flags & MCA_BASE_METADATA_PARAM_CHECKPOINT) &&
@@ -260,7 +271,13 @@ static void find_dyn_components(const char *path, mca_base_framework_t *framewor
 
     /* Iterate through the repository and find components that can be included */
     OPAL_LIST_FOREACH(ri, dy_components, mca_base_component_repository_item_t) {
-        if (use_component(include_mode, names, ri->ri_name)) {
+        bool can_use = use_component(include_mode, names, ri->ri_name);
+
+        if (!can_use && strlen (ri->ri_name_alias)) {
+            can_use = use_component(include_mode, names, ri->ri_name_alias);
+        }
+
+        if (can_use) {
             mca_base_component_repository_open (framework, ri);
         }
     }
@@ -322,9 +339,14 @@ static int component_find_check (mca_base_framework_t *framework, char **request
         bool found = false;
 
         OPAL_LIST_FOREACH(cli, components, mca_base_component_list_item_t) {
-            if (0 == strcmp(requested_component_names[i],
-                            cli->cli_component->mca_component_name)) {
-                found = true;
+            found = (0 == strcmp(requested_component_names[i],
+                                 cli->cli_component->mca_component_name));
+            if (!found && strlen(cli->cli_component->mca_component_name_alias)) {
+                found = (0 == strcmp(requested_component_names[i],
+                                     cli->cli_component->mca_component_name_alias));
+            }
+
+            if (found) {
                 break;
             }
         }
