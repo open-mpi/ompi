@@ -295,6 +295,9 @@ struct mca_btl_openib_component_t {
     char* default_recv_qps;
     /** GID index to use */
     int gid_index;
+    /*  Whether we want to allow connecting processes from different subnets.
+     *  set to 'no' by default */
+    bool allow_different_subnets;
     /** Whether we want a dynamically resizing srq, enabled by default */
     bool enable_srq_resize;
     bool allow_max_memory_registration;
