@@ -72,7 +72,7 @@ EOF
         fi
     fi
 
-    if test "$project_shmem_amc" = "true" ; then
+    if test "$project_oshmem_amc" = "true" ; then
 	echo "Build Open SHMEM support: yes"
     else
 	echo "Build Open SHMEM support: no"
