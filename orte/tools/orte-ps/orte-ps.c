@@ -14,7 +14,7 @@
  * Copyright (c) 2007-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
- * Copyright (c) 2014-2015 Intel, Inc. All rights reserved.
+ * Copyright (c) 2014-2016 Intel, Inc. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
@@ -585,7 +585,11 @@ static int pretty_print_vpids(orte_job_t *job) {
     orte_proc_t *vpid;
     orte_app_context_t *app;
     char *o_proc_name;
-    char **nodename;
+    char **nodename = NULL;
+
+    if (0 == job->num_procs) {
+        return ORTE_SUCCESS;
+    }
 
     /*
      * Caculate segment lengths
@@ -712,7 +716,9 @@ static int pretty_print_vpids(orte_job_t *job) {
         printf("\n");
 
     }
-
+    if (NULL != nodename) {
+        free(nodename);
+    }
     return ORTE_SUCCESS;
 }
 
