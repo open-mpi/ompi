@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2012-2013 Los Alamos National Security, LLC.
  *                         All rights reserved
- * Copyright (c) 2015      Research Organization for Information Science
+ * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -41,7 +41,7 @@
 
 #include "opal/mca/rcache/base/static-components.h"
 
-int mca_rcache_base_used_mem_hooks;
+int mca_rcache_base_used_mem_hooks = 0;
 
 /**
  * Memory Pool Registration
