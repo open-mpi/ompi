@@ -206,7 +206,8 @@ int opal_btl_usnic_component_register(void)
 
 #if RCACHE_VERSION == 30
     CHECK(reg_string("mpool_hints", "Hints to use when selecting mpool",
-                     NULL, &mca_btl_usnic_component.usnic_mpool_hints, 0,
+                     NULL, &mca_btl_usnic_component.usnic_mpool_hints,
+                     REGSTR_EMPTY_OK,
                      OPAL_INFO_LVL_5));
 
     CHECK(reg_string("rcache", "Name of the registration cache to be used",
