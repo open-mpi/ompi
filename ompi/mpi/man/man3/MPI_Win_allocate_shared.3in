@@ -1,5 +1,5 @@
 .\" -*- nroff -*-
-.\" Copyright 2015      Los Alamos National Security, LLC. All rights reserved.
+.\" Copyright 2015-2016 Los Alamos National Security, LLC. All rights reserved.
 .\" Copyright 2010 Cisco Systems, Inc.  All rights reserved.
 .\" Copyright 2007-2008 Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
@@ -107,7 +107,7 @@ modify the data layout (e.g., padding to reduce access latency).
 .sp
 .TP 1i
 blocking_fence
-If set to \fItrue\fP, the osc/sm component will use \fBMPI_Barrier\FP
+If set to \fItrue\fP, the osc/sm component will use \fBMPI_Barrier\fP
 for \fBMPI_Win_fence\fP. If set to \fIfalse\fP a condition variable
 and counter will be used instead. The default value is
 \fIfalse\fP. This info key is Open MPI specific.
@@ -143,3 +143,4 @@ MPI_Alloc_mem
 MPI_Free_mem
 MPI_Win_allocate
 MPI_Win_create
+MPI_Win_shared_query
