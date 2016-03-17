@@ -227,7 +227,7 @@ static void mca_mpool_hugepage_find_hugepages (void) {
             page_size = info.f_bsize;
 #endif
         } else {
-            sscanf (tok, "pagesize=%lu", &page_size);
+            (void) sscanf (tok, "pagesize=%lu", &page_size);
         }
 
         if (0 == page_size) {
@@ -294,20 +294,23 @@ static int mca_mpool_hugepage_query (const char *hints, int *priority_out,
                     my_priority = 0;
                     opal_output_verbose (MCA_BASE_VERBOSE_INFO, opal_mpool_base_framework.framework_output,
                                          "hugepage mpool does not match hint: %s=%s", key, value);
+                    opal_argv_free (hints_array);
                     return OPAL_ERR_NOT_FOUND;
                 }
             }
 
-            if (0 == strcasecmp ("page_size", key)) {
+            if (0 == strcasecmp ("page_size", key) && value) {
                 page_size = strtoul (value, &tmp, 0);
                 if (*tmp) {
                     switch (*tmp) {
                     case 'g':
                     case 'G':
                         page_size *= 1024;
+                        /* fall through */
                     case 'm':
                     case 'M':
                         page_size *= 1024;
+                        /* fall through */
                     case 'k':
                     case 'K':
                         page_size *= 1024;

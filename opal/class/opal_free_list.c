@@ -225,11 +225,7 @@ int opal_free_list_grow_st (opal_free_list_t* flist, size_t num_elements)
                                                     flist->fl_rcache_reg_flags, MCA_RCACHE_ACCESS_ANY, &reg);
             if (OPAL_UNLIKELY(OPAL_SUCCESS != rc)) {
                 free (alloc_ptr);
-                if (flist->fl_mpool) {
-                    flist->fl_mpool->mpool_free (flist->fl_mpool, payload_ptr);
-                } else {
-                    free (payload_ptr);
-                }
+                flist->fl_mpool->mpool_free (flist->fl_mpool, payload_ptr);
 
                 return rc;
             }
