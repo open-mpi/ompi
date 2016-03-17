@@ -120,6 +120,7 @@ liboshmem_fortran_la_SOURCES += \
                     shmem_prod_to_all_f.c \
                     shmem_collect_f.c \
                     shmem_broadcast_f.c \
+                    shmem_alltoall_f.c \
                     shmem_lock_f.c \
                     shmem_cache_f.c \
                     shmem_int4_inc_f.c \
