@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2013      Mellanox Technologies, Inc.
+# Copyright (c) 2013-2016 Mellanox Technologies, Inc.
 #                         All rights reserved
 # Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
@@ -41,6 +41,7 @@ OSHMEM_API_SOURCES = \
 	pshmem_put.c \
 	pshmem_g.c \
 	pshmem_get.c \
+	pshmem_alltoall.c \
 	pshmem_broadcast.c \
 	pshmem_collect.c \
 	pshmem_ptr.c \
