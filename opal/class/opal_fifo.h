@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007      Voltaire All rights reserved.
  * Copyright (c) 2010      IBM Corporation.  All rights reserved.
- * Copyright (c) 2014-2015 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2014-2016 Los Alamos National Security, LLC. All rights
  *                         reseved.
  * $COPYRIGHT$
  *
@@ -101,7 +101,8 @@ static inline opal_list_item_t *opal_fifo_push_atomic (opal_fifo_t *fifo,
 
     if (&fifo->opal_fifo_ghost == tail.data.item) {
         /* update the head */
-        fifo->opal_fifo_head.data.item = item;
+        opal_counted_pointer_t head = {.value = fifo->opal_fifo_head.value};
+        opal_update_counted_pointer (&fifo->opal_fifo_head, head, item);
     } else {
         /* update previous item */
         tail.data.item->opal_list_next = item;
