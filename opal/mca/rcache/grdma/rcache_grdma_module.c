@@ -84,6 +84,9 @@ static void mca_rcache_grdma_cache_destructor (mca_rcache_grdma_cache_t *cache)
 {
     OBJ_DESTRUCT(&cache->lru_list);
     OBJ_DESTRUCT(&cache->gc_list);
+    if (cache->vma_module) {
+        OBJ_RELEASE(cache->vma_module);
+    }
 
     free (cache->cache_name);
 }
@@ -505,8 +508,6 @@ static void mca_rcache_grdma_finalize (mca_rcache_base_module_t *rcache)
 
     OBJ_DESTRUCT(&rcache_grdma->reg_list);
     OPAL_THREAD_UNLOCK(&rcache_grdma->cache->vma_module->vma_lock);
-
-    OBJ_RELEASE(rcache_grdma->cache->vma_module);
 
     /* this rcache was allocated by grdma_init in rcache_grdma_component.c */
     free(rcache);
