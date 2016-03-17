@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2015 Mellanox Technologies, Inc.
+ * Copyright (c) 2013-2016 Mellanox Technologies, Inc.
  *                         All rights reserved.
  * $COPYRIGHT$
  *
@@ -323,6 +323,14 @@
 #define shmemx_int16_prod_to_all     pshmemx_int16_prod_to_all
 #define shmemx_int32_prod_to_all     pshmemx_int32_prod_to_all
 #define shmemx_int64_prod_to_all     pshmemx_int64_prod_to_all
+
+/*
+ * Alltoall routines
+ */
+#define shmem_alltoall32             pshmem_alltoall32
+#define shmem_alltoall64             pshmem_alltoall64
+#define shmem_alltoalls32            pshmem_alltoalls32
+#define shmem_alltoalls64            pshmem_alltoalls64
 
 /*
  * Platform specific cache management routines
