@@ -102,7 +102,7 @@ static mca_rcache_base_module_t *
 grdma_init(struct mca_rcache_base_resources_t *resources)
 {
     mca_rcache_grdma_module_t *rcache_module;
-    mca_rcache_grdma_cache_t *cache = NULL, *item, *next;
+    mca_rcache_grdma_cache_t *cache = NULL, *item;
 
     /* Set this here (vs in component.c) because
        opal_leave_pinned* may have been set after MCA params were
@@ -111,8 +111,8 @@ grdma_init(struct mca_rcache_base_resources_t *resources)
         (1 == opal_leave_pinned || opal_leave_pinned_pipeline);
 
     /* find the specified pool */
-    OPAL_LIST_FOREACH_SAFE(item, next, &mca_rcache_grdma_component.caches, mca_rcache_grdma_cache_t) {
-        if (0 == strcmp (cache->cache_name, resources->cache_name)) {
+    OPAL_LIST_FOREACH(item, &mca_rcache_grdma_component.caches, mca_rcache_grdma_cache_t) {
+        if (0 == strcmp (item->cache_name, resources->cache_name)) {
             cache = item;
             break;
         }
