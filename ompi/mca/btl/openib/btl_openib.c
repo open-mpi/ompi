@@ -854,6 +854,13 @@ int mca_btl_openib_add_procs(
                 btl_rank = lcl_subnet_id_port_cnt;
             }
             lcl_subnet_id_port_cnt++;
+        } else {
+            if (mca_btl_openib_component.allow_different_subnets) {
+                if (openib_btl == mca_btl_openib_component.openib_btls[j]) {
+                    btl_rank = lcl_subnet_id_port_cnt;
+                }
+                lcl_subnet_id_port_cnt++;
+            }
         }
     }
 
@@ -924,6 +931,14 @@ int mca_btl_openib_add_procs(
                     remote_matching_port = j;
                 }
                 rem_subnet_id_port_cnt++;
+            } else {
+                if (mca_btl_openib_component.allow_different_subnets) {
+                    BTL_VERBOSE(("Using different subnets!"));
+                    if (rem_subnet_id_port_cnt == btl_rank) {
+                        remote_matching_port = j;
+                    }
+                    rem_subnet_id_port_cnt++;
+                }
             }
         }
 
@@ -993,7 +1008,14 @@ int mca_btl_openib_add_procs(
                         break;
                     else
                         rem_port_cnt ++;
-                }
+                    } else {
+                        if (mca_btl_openib_component.allow_different_subnets) {
+                            if (rem_port_cnt == btl_rank)
+                                break;
+                            else
+                                rem_port_cnt++;
+                        }
+                    }
             }
 
             assert(rem_port_cnt == btl_rank);
