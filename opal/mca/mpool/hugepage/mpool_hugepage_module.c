@@ -14,7 +14,7 @@
  * Copyright (c) 2006      Voltaire. All rights reserved.
  * Copyright (c) 2007      Mellanox Technologies. All rights reserved.
  * Copyright (c) 2010      IBM Corporation.  All rights reserved.
- * Copyright (c) 2011-2015 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2011-2016 Los Alamos National Security, LLC. All rights
  *                         reserved.
  *
  * $COPYRIGHT$
@@ -159,8 +159,8 @@ void *mca_mpool_hugepage_seg_alloc (void *ctx, size_t *sizep)
     }
 
     base = mmap (NULL, size, PROT_READ | PROT_WRITE, flags | huge_page->mmap_flags, fd, 0);
+    close (fd);
     if (path) {
-        close (fd);
         unlink (path);
         free (path);
     }
