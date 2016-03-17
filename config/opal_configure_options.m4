@@ -10,7 +10,7 @@ dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
-dnl Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2006-2016 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
 dnl Copyright (c) 2009      IBM Corporation.  All rights reserved.
 dnl Copyright (c) 2009      Los Alamos National Security, LLC.  All rights
@@ -92,7 +92,7 @@ fi
 AC_MSG_CHECKING([if want to debug memory usage])
 AC_ARG_ENABLE(mem-debug,
     AC_HELP_STRING([--enable-mem-debug],
-                   [enable memory debugging (debugging only) (default: disabled)]))
+                   [enable memory debugging (not for general MPI users!) (default: disabled)]))
 if test "$enable_mem_debug" = "yes"; then
     AC_MSG_RESULT([yes])
     WANT_MEM_DEBUG=1
@@ -100,12 +100,6 @@ else
     AC_MSG_RESULT([no])
     WANT_MEM_DEBUG=0
 fi
-#################### Early development override ####################
-if test "$WANT_MEM_DEBUG" = "0" && test -z "$enable_mem_debug" && test "$OPAL_DEVEL" = 1; then
-    WANT_MEM_DEBUG=1
-    echo "--> developer override: enable mem profiling by default"
-fi
-#################### Early development override ####################
 AC_DEFINE_UNQUOTED(OPAL_ENABLE_MEM_DEBUG, $WANT_MEM_DEBUG,
     [Whether we want the memory profiling or not])
 
@@ -116,7 +110,7 @@ AC_DEFINE_UNQUOTED(OPAL_ENABLE_MEM_DEBUG, $WANT_MEM_DEBUG,
 AC_MSG_CHECKING([if want to profile memory usage])
 AC_ARG_ENABLE(mem-profile,
     AC_HELP_STRING([--enable-mem-profile],
-                   [enable memory profiling (debugging only) (default: disabled)]))
+                   [enable memory profiling (not for general MPI users!) (default: disabled)]))
 if test "$enable_mem_profile" = "yes"; then
     AC_MSG_RESULT([yes])
     WANT_MEM_PROFILE=1
@@ -124,12 +118,6 @@ else
     AC_MSG_RESULT([no])
     WANT_MEM_PROFILE=0
 fi
-#################### Early development override ####################
-if test "$WANT_MEM_PROFILE" = "0" && test -z "$enable_mem_profile" && test "$OPAL_DEVEL" = 1; then
-    WANT_MEM_PROFILE=1
-    echo "--> developer override: enable mem profiling by default"
-fi
-#################### Early development override ####################
 AC_DEFINE_UNQUOTED(OPAL_ENABLE_MEM_PROFILE, $WANT_MEM_PROFILE,
     [Whether we want the memory profiling or not])
 
@@ -140,7 +128,7 @@ AC_DEFINE_UNQUOTED(OPAL_ENABLE_MEM_PROFILE, $WANT_MEM_PROFILE,
 AC_MSG_CHECKING([if want developer-level compiler pickyness])
 AC_ARG_ENABLE(picky,
     AC_HELP_STRING([--enable-picky],
-                   [enable developer-level compiler pickyness when building Open MPI (default: disabled)]))
+                   [enable developer-level compiler pickyness when building Open MPI (default: disabled, unless a .git directory is found in the build tree)]))
 if test "$enable_picky" = "yes"; then
     AC_MSG_RESULT([yes])
     WANT_PICKY_COMPILER=1
@@ -148,12 +136,12 @@ else
     AC_MSG_RESULT([no])
     WANT_PICKY_COMPILER=0
 fi
-#################### Early development override ####################
+#################### Developer default override ####################
 if test "$WANT_PICKY_COMPILER" = "0" && test -z "$enable_picky" && test "$OPAL_DEVEL" = 1; then
     WANT_PICKY_COMPILER=1
     echo "--> developer override: enable picky compiler by default"
 fi
-#################### Early development override ####################
+#################### Developer default override ####################
 
 #
 # Developer debugging
@@ -190,13 +178,6 @@ AC_DEFINE_UNQUOTED(OPAL_ENABLE_TIMING, $WANT_TIMING,
 AM_CONDITIONAL([OPAL_COMPILE_TIMING], [test "$WANT_TIMING" = "1"])
 AM_CONDITIONAL([OPAL_INSTALL_TIMING_BINARIES], [test "$WANT_TIMING" = "1" && test "$enable_binaries" != "no"])
 
-
-#################### Early development override ####################
-if test "$WANT_DEBUG" = "0" && test -z "$enable_debug" && test "$OPAL_DEVEL" = 1; then
-    WANT_DEBUG=1
-    echo "--> developer override: enable debugging code by default"
-fi
-#################### Early development override ####################
 if test "$WANT_DEBUG" = "0"; then
     CFLAGS="-DNDEBUG $CFLAGS"
     CXXFLAGS="-DNDEBUG $CXXFLAGS"
