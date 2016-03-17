@@ -849,6 +849,14 @@ static int init_ib_proc_nolock(mca_btl_openib_module_t* openib_btl, mca_btl_open
                 matching_port = j;
             }
             rem_port_cnt++;
+        } else {
+            if (mca_btl_openib_component.allow_different_subnets) {
+                BTL_VERBOSE(("Using different subnets!"));
+                if (rem_port_cnt == btl_rank) {
+                    matching_port = j;
+                }
+                rem_port_cnt++;
+            }
         }
     }
 
@@ -915,6 +923,13 @@ static int init_ib_proc_nolock(mca_btl_openib_module_t* openib_btl, mca_btl_open
                     break;
                 else
                     rem_port_cnt ++;
+            } else {
+                if (mca_btl_openib_component.allow_different_subnets) {
+                    if (rem_port_cnt == btl_rank)
+                        break;
+                    else
+                        rem_port_cnt ++;
+                }
             }
         }
 
@@ -981,6 +996,13 @@ static int get_openib_btl_params(mca_btl_openib_module_t* openib_btl, int *port_
                 rank = port_cnt;
             }
             port_cnt++;
+        } else {
+            if (mca_btl_openib_component.allow_different_subnets) {
+                if (openib_btl == mca_btl_openib_component.openib_btls[j]) {
+                    rank = port_cnt;
+                }
+                port_cnt++;
+            }
         }
     }
     *port_cnt_ptr = port_cnt;
