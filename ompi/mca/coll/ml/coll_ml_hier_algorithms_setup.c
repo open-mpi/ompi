@@ -2,7 +2,7 @@
 /*
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
- * Copyright (c) 2014      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2014-2016 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -253,32 +253,19 @@ int ml_coll_up_and_down_hier_setup(mca_coll_ml_module_t *ml_module,
     topo_info->hierarchical_algorithms[collective]->n_buffers = 1;
 
     /* Release temporary memories */
-    if (NULL != scratch_indx) {
-        free(scratch_indx);
-    }
-
-    if (NULL != scratch_num) {
-       free(scratch_num);
-    }
+    free(scratch_indx);
+    free(scratch_num);
 
     return OMPI_SUCCESS;
 
 Error:
-    if (NULL != collective_alg->functions) {
-       free(collective_alg->functions);
-    }
-
     if (NULL != collective_alg) {
-       free(collective_alg);
+        free(collective_alg->functions);
     }
 
-    if (NULL != scratch_indx) {
-        free(scratch_indx);
-    }
-
-    if (NULL != scratch_num) {
-        free(scratch_num);
-    }
+    free(collective_alg);
+    free(scratch_indx);
+    free(scratch_num);
 
     return ret;
 }
@@ -527,13 +514,8 @@ int ml_coll_barrier_constant_group_data_setup(
     return OMPI_SUCCESS;
 
 Const_Data_Setup_Error:
-    if (NULL != scratch_indx) {
-        free(scratch_indx);
-    }
-
-    if (NULL != scratch_num) {
-        free(scratch_num);
-    }
+    free(scratch_indx);
+    free(scratch_num);
 
     return ret;
 }

@@ -2,7 +2,7 @@
 /*
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
- * Copyright (c) 2013-2014 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2013-2016 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -440,6 +440,9 @@ static int parse_line(section_config_t *section)
     if (COLL_ML_CONFIG_PARSE_SINGLE_WORD == val ||
         COLL_ML_CONFIG_PARSE_VALUE == val) {
         value = strdup(coll_ml_config_yytext);
+        if (NULL == value) {
+            return OMPI_ERR_OUT_OF_RESOURCE;
+        }
 
         /* Now we need to see the newline */
         val = coll_ml_config_yylex();
@@ -458,37 +461,21 @@ static int parse_line(section_config_t *section)
              COLL_ML_CONFIG_PARSE_NEWLINE != val) {
         ML_ERROR(("Line %d, expected new line or end of line",
                     coll_ml_config_yynewlines));
-        ret = OMPI_ERROR;
-        goto Error;
+        return OMPI_ERROR;
+    } else {
+        ML_ERROR(("Line %d malformed", coll_ml_config_yynewlines));
+        return OMPI_ERROR;
     }
 
     /* Line parsing is done, read the values */
     if (!strcasecmp(key_buffer, "algorithm")) {
         ret = parse_algorithm_key(section, value);
-        if (OMPI_SUCCESS != ret) {
-            goto Error;
-        }
-    }
-
-    else if (!strcasecmp(key_buffer, "threshold")) {
+    } else if (!strcasecmp(key_buffer, "threshold")) {
         ret = parse_threshold_key(section, value);
-        if (OMPI_SUCCESS != ret) {
-            goto Error;
-        }
-    }
-
-    else if (!strcasecmp(key_buffer, "hierarchy")) {
+    } else if (!strcasecmp(key_buffer, "hierarchy")) {
         ret = parse_hierarchy_key(section, value);
-        if (OMPI_SUCCESS != ret) {
-            goto Error;
-        }
-    }
-
-    else if (!strcasecmp(key_buffer, "fragmentation")) {
+    } else if (!strcasecmp(key_buffer, "fragmentation")) {
         ret = parse_fragmentation_key(section, value);
-        if (OMPI_SUCCESS != ret) {
-            goto Error;
-        }
     /* Failed to parse the key */
     } else {
         ML_ERROR(("Line %d, unknown key %s",
@@ -496,10 +483,7 @@ static int parse_line(section_config_t *section)
     }
 
     /* All done */
-Error:
-    if (NULL != value) {
-        free(value);
-    }
+    free(value);
 
     return ret;
 }

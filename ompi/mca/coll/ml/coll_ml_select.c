@@ -2,7 +2,7 @@
 /*
  * Copyright (c) 2009-2013 Oak Ridge National Laboratory.  All rights reserved.
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
- * Copyright (c) 2012-2014 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2012-2016 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2013-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
@@ -127,8 +127,7 @@ static int add_to_invoke_table(mca_bcol_base_module_t *bcol_module,
     struct mca_bcol_base_coll_fn_invoke_attributes_t *inv_attribs = NULL;
     int bcoll_type, data_src_type, waiting_semantic;
     int range_min,range_max;
-    int i=0,j=0,k=0,mask=1;
-
+    int i=0,j=0,k=0;
 
 
     if((NULL == fn_filtered->inv_attr)||(NULL == fn_filtered->comm_attr)) {
@@ -148,7 +147,7 @@ static int add_to_invoke_table(mca_bcol_base_module_t *bcol_module,
     for (j=0; j<OMPI_OP_NUM_OF_TYPES; j++) {
         for (k=0; k<OMPI_DATATYPE_MAX_PREDEFINED; k++) {
 
-            if ((inv_attribs->datatype_bitmap & (mask << k)) && (inv_attribs->op_types_bitmap & (mask << j))){
+            if ((inv_attribs->datatype_bitmap & (1ul << k)) && (inv_attribs->op_types_bitmap & (1ul << j))){
 
                for (i=range_min; i<=range_max; i++) {
                     bcol_module->filtered_fns_table[data_src_type][waiting_semantic][bcoll_type][i][j][k]
