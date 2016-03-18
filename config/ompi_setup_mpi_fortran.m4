@@ -15,7 +15,7 @@ dnl Copyright (c) 2006-2008 Sun Microsystems, Inc.  All rights reserved.
 dnl Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
 dnl                         reserved.
 dnl Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
-dnl Copyright (c) 2014-2015 Research Organization for Information Science
+dnl Copyright (c) 2014-2016 Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
 dnl $COPYRIGHT$
 dnl
@@ -187,7 +187,7 @@ AC_DEFUN([OMPI_SETUP_MPI_FORTRAN],[
     OMPI_FORTRAN_CHECK([DOUBLE PRECISION], [yes],
                    [float, double, long double], [-1], [yes])
 
-    OMPI_FORTRAN_CHECK([COMPLEX], [yes], [float _Complex], [-1], [no])
+    OMPI_FORTRAN_CHECK([COMPLEX], [yes], [float _Complex, double _Complex], [-1], [no])
 
     # The complex*N tests are a bit different (note: the complex tests are
     # the same as all the rest, because complex is a composite of two
