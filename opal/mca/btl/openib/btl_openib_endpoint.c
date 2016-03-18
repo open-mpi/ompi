@@ -632,8 +632,7 @@ void mca_btl_openib_endpoint_connected(mca_btl_openib_endpoint_t *endpoint)
     /* Process pending packet on the endpoint */
 
     /* While there are frags in the list, process them */
-    while (!opal_list_is_empty(&(endpoint->pending_lazy_frags))) {
-        frag_item = opal_list_remove_first(&(endpoint->pending_lazy_frags));
+    while (NULL != (frag_item = opal_list_remove_first(&(endpoint->pending_lazy_frags)))) {
         frag = to_send_frag(frag_item);
         /* We need to post this one */
 
