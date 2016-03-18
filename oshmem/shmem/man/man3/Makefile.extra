@@ -132,6 +132,10 @@ shmem_api_man_pages = \
         shmem/man/man3/shmem_quiet.3 \
         shmem/man/man3/shmem_broadcast32.3 \
         shmem/man/man3/shmem_broadcast64.3 \
+        shmem/man/man3/shmem_alltoall32.3 \
+        shmem/man/man3/shmem_alltoall64.3 \
+        shmem/man/man3/shmem_alltoalls32.3 \
+        shmem/man/man3/shmem_alltoalls64.3 \
         shmem/man/man3/shmem_collect32.3 \
         shmem/man/man3/shmem_collect64.3 \
         shmem/man/man3/shmem_fcollect32.3 \
