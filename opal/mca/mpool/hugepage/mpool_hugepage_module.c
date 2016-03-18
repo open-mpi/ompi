@@ -159,10 +159,13 @@ void *mca_mpool_hugepage_seg_alloc (void *ctx, size_t *sizep)
     }
 
     base = mmap (NULL, size, PROT_READ | PROT_WRITE, flags | huge_page->mmap_flags, fd, 0);
-    close (fd);
     if (path) {
         unlink (path);
         free (path);
+    }
+
+    if (fd >= 0) {
+        close (fd);
     }
 
     if (MAP_FAILED == base) {
