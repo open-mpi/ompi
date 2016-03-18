@@ -169,8 +169,8 @@ SHMEM_GENERATE_FORTRAN_BINDINGS_SUB (void,
             rc = group->g_scoll.scoll_alltoall( group, \
                 FPTR_2_VOID_PTR(target), \
                 FPTR_2_VOID_PTR(source), \
-                OMPI_FINT_2_INT(*dst), \
-                OMPI_FINT_2_INT(*sst), \
+		        OMPI_FINT_2_INT(*dst), \
+			    OMPI_FINT_2_INT(*sst), \
                 OMPI_FINT_2_INT(*nlong), \
                 op->dt_size, \
                 FPTR_2_VOID_PTR(pSync), SCOLL_DEFAULT_ALG );\

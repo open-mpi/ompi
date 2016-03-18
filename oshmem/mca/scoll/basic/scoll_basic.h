@@ -81,7 +81,8 @@ int mca_scoll_basic_alltoall(struct oshmem_group_t *group,
                              void *target,
                              const void *source,
                              ptrdiff_t dst, ptrdiff_t sst,
-                             size_t nlong,
+                             size_t nelems,
+                             size_t element_size,
                              long *pSync,
                              int alg);
 

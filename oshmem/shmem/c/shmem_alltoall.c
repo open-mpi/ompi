@@ -44,7 +44,7 @@ static void _shmem_alltoall(void *target,
     RUNTIME_CHECK_ADDR(target);                                      \
     RUNTIME_CHECK_ADDR(source);                                      \
                                                                      \
-    _shmem_alltoall(target, source, 1, 1, nelems * element_size,     \
+    _shmem_alltoall(target, source, 1, 1, nelems, element_size,      \
                        PE_start, logPE_stride, PE_size,              \
                        pSync);                                       \
 }
@@ -63,7 +63,7 @@ static void _shmem_alltoall(void *target,
     RUNTIME_CHECK_ADDR(target);                                      \
     RUNTIME_CHECK_ADDR(source);                                      \
                                                                      \
-    _shmem_alltoall(target, source, dst, sst, nelems * element_size, \
+    _shmem_alltoall(target, source, dst, sst, nelems, element_size,  \
                        PE_start, logPE_stride, PE_size,              \
                        pSync);                                       \
 }
