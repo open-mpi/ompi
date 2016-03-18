@@ -1,6 +1,9 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
+ * Copyright (c) 2016      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -72,7 +75,7 @@ int bcol_basesmuma_k_nomial_barrier_init(bcol_function_args_t *input_args,
     int pow_k, tree_order;
     int max_requests = 0; /* important to initialize this */
 
-    int matched = 0;
+    bool matched;
     int64_t sequence_number=input_args->sequence_num;
     int my_rank = bcol_module->super.sbgp_partner_module->my_index;
 
@@ -128,10 +131,8 @@ int bcol_basesmuma_k_nomial_barrier_init(bcol_function_args_t *input_args,
         src = exchange_node->rank_extra_sources_array[0];
         peer_ctl_pointer = data_buffs[src].ctl_struct;
 
-        for( i = 0; i < cm->num_to_probe && (0 == matched); i++ ) {
+        for( i = 0; i < cm->num_to_probe ; i++ ) {
             if(IS_PEER_READY(peer_ctl_pointer, ready_flag, sequence_number, BARRIER_RKING_FLAG, bcol_id)){
-                matched = 1;
-
                 goto FINISHED;
             }
 
@@ -148,20 +149,21 @@ int bcol_basesmuma_k_nomial_barrier_init(bcol_function_args_t *input_args,
         peer_ctl_pointer = data_buffs[src].ctl_struct;
 
         /* probe for extra rank's arrival */
-        for( i = 0; i < cm->num_to_probe && ( 0 == matched); i++) {
+        for( i = 0, matched = false ; i < cm->num_to_probe && !matched  ; i++) {
             if(IS_PEER_READY(peer_ctl_pointer,ready_flag, sequence_number, BARRIER_RKING_FLAG, bcol_id)){
-                matched = 1;
-                /* copy it in */
-                goto MAIN_PHASE;
+              /* copy it in */
+              matched = true;
+              break;
             }
         }
-        *status = ready_flag;
-        *iteration = -1;
-        return BCOL_FN_STARTED;
 
+        if (!matched) {
+          *status = ready_flag;
+          *iteration = -1;
+          return BCOL_FN_STARTED;
+        }
     }
 
-MAIN_PHASE:
     /* bump the ready flag */
     ready_flag++;
 
@@ -189,12 +191,11 @@ MAIN_PHASE:
                 * better temporal locality, this comes at a cost to asynchronicity
                 * but should get better cache performance
                 */
-                matched = 0;
-                for( probe = 0; probe < cm->num_to_probe && (0 == matched); probe++){
+                for( probe = 0; probe < cm->num_to_probe ; probe++){
                     if(IS_PEER_READY(peer_ctl_pointer,ready_flag, sequence_number, BARRIER_RKING_FLAG, bcol_id)){
-                        matched = 1;
                         /* set this request's bit */
                         *active_requests ^= (1<<j);
+                        break;
                     }
                 }
             }
@@ -261,7 +262,7 @@ int bcol_basesmuma_k_nomial_barrier_progress(bcol_function_args_t *input_args,
     int pow_k, tree_order;
     int bcol_id = (int) bcol_module->super.bcol_id;
 
-    int matched = 0;
+    bool matched;
     int64_t sequence_number=input_args->sequence_num;
     int my_rank = bcol_module->super.sbgp_partner_module->my_index;
 
@@ -311,10 +312,8 @@ int bcol_basesmuma_k_nomial_barrier_progress(bcol_function_args_t *input_args,
         src = exchange_node->rank_extra_sources_array[0];
         peer_ctl_pointer = data_buffs[src].ctl_struct;
 
-        for( i = 0; i < cm->num_to_probe && (0 == matched); i++ ) {
+        for( i = 0; i < cm->num_to_probe ; i++ ) {
             if(IS_PEER_READY(peer_ctl_pointer, ready_flag, sequence_number, BARRIER_RKING_FLAG, bcol_id)){
-                matched = 1;
-
                 goto FINISHED;
             }
 
@@ -330,20 +329,20 @@ int bcol_basesmuma_k_nomial_barrier_progress(bcol_function_args_t *input_args,
         peer_ctl_pointer = data_buffs[src].ctl_struct;
 
         /* probe for extra rank's arrival */
-        for( i = 0; i < cm->num_to_probe && ( 0 == matched); i++) {
+        for( i = 0, matched = false ; i < cm->num_to_probe && !matched ; i++) {
             if(IS_PEER_READY(peer_ctl_pointer,ready_flag, sequence_number, BARRIER_RKING_FLAG, bcol_id)){
-                matched = 1;
+                matched = true;
                 /* bump the flag */
                 ready_flag++;
                 *iteration = 0;
-                goto MAIN_PHASE;
+                break;
             }
         }
-        return BCOL_FN_STARTED;
 
+        if (!matched) {
+          return BCOL_FN_STARTED;
+        }
     }
-
-MAIN_PHASE:
 
     /* start the recursive k - ing phase */
     for( *iter=*iteration; *iter < pow_k; (*iter)++) {
@@ -369,12 +368,11 @@ MAIN_PHASE:
                 /* I am putting the probe loop as the inner most loop to achieve
                  * better temporal locality
                  */
-                matched = 0;
-                for( probe = 0; probe < cm->num_to_probe && (0 == matched); probe++){
+                for( probe = 0; probe < cm->num_to_probe ; probe++){
                     if(IS_PEER_READY(peer_ctl_pointer,ready_flag, sequence_number, BARRIER_RKING_FLAG, bcol_id)){
-                        matched = 1;
                         /* flip the request's bit */
                         *active_requests ^= (1<<j);
+                        break;
                     }
                 }
             }

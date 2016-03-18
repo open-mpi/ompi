@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2011-2015 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
@@ -7,6 +8,8 @@
  * Copyright (c) 2015      Intel, Inc. All rights reserved
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -31,7 +34,12 @@
 #include "opal/mca/pmix/pmix.h"
 
 #define ERR_EXIT(ERR)                           \
-    do { free(local_pattern);                   \
+    do {                                        \
+        free (nodes_roots);                     \
+        free (local_procs);                     \
+        free (tracker);                         \
+        free (colors);                          \
+        free(local_pattern);                    \
         return (ERR); }                         \
     while(0);
 
@@ -70,12 +78,20 @@ static int check_oversubscribing(int rank,
         oversub[0] = local_oversub;
         for(i = 1;  i < num_nodes; i++)
             if (OMPI_SUCCESS != ( err = MCA_PML_CALL(irecv(&oversub[i], 1, MPI_INT,
-                                                           nodes_roots[i], 111, comm_old, &reqs[i-1]))))
+                                                           nodes_roots[i], 111, comm_old, &reqs[i-1])))) {
+                /* NTH: more needs to be done to correctly clean up here */
+                free (reqs);
+                free (oversub);
                 return err;
+            }
 
         if (OMPI_SUCCESS != ( err = ompi_request_wait_all(num_nodes-1,
-                                                          reqs, MPI_STATUSES_IGNORE)))
+                                                          reqs, MPI_STATUSES_IGNORE))) {
+            /* NTH: more needs to be done to correctly clean up here */
+            free (reqs);
+            free (oversub);
             return err;
+        }
 
         for(i = 0;  i < num_nodes; i++)
             oversubscribed += oversub[i];

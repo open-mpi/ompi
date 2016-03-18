@@ -2,7 +2,7 @@
 /*
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
- * Copyright (c) 2014-2015 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2014-2016 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -271,12 +271,7 @@ static int basesmuma_close(void)
     mca_bcol_basesmuma_component_t *cs = &mca_bcol_basesmuma_component;
 
     /* gvm Leak FIX */
-    while(!opal_list_is_empty(&(cs->ctl_structures))) {
-        opal_list_item_t *item;
-        item = opal_list_remove_first(&(cs->ctl_structures));
-        OBJ_DESTRUCT(item);
-    }
-    OBJ_DESTRUCT(&(cs->ctl_structures));
+    OPAL_LIST_DESTRUCT (&cs->ctl_structures);
 
     /* deregister the progress function */
     ret=opal_progress_unregister(bcol_basesmuma_progress);
@@ -331,7 +326,7 @@ int mca_bcol_basesmuma_init_query(bool enable_progress_threads,
 int mca_bcol_basesmuma_allocate_sm_ctl_memory(mca_bcol_basesmuma_component_t *cs)
 {
     /* local variables */
-    int name_length, ret;
+    int name_length, ret = OMPI_SUCCESS;
     size_t ctl_length;
     char *name;
     size_t page_size = getpagesize ();
@@ -347,6 +342,7 @@ int mca_bcol_basesmuma_allocate_sm_ctl_memory(mca_bcol_basesmuma_component_t *cs
     }
     /* make sure name is not too long */
     if ( OPAL_PATH_MAX < (name_length-1) ) {
+        free (name);
         return OMPI_ERROR;
     }
 
@@ -371,21 +367,14 @@ int mca_bcol_basesmuma_allocate_sm_ctl_memory(mca_bcol_basesmuma_component_t *cs
     if( !cs->sm_ctl_structs) {
         opal_output (ompi_bcol_base_framework.framework_output,
                      "In mca_bcol_basesmuma_allocate_sm_ctl_memory failed to allocathe backing file %s\n", name);
-        ret=OMPI_ERR_OUT_OF_RESOURCE;
-        goto Error;
+        ret = OMPI_ERR_OUT_OF_RESOURCE;
     }
 
     /* free the memory allocated by asprintf for the file name -
      * in mca_base_smcm_mem_reg this name is copied into a new
      * memory location */
-    free(name);
+    free (name);
 
     /* successful return */
-    return OMPI_SUCCESS;
-
- Error:
-    if(name) {
-        free(name);
-    }
     return ret;
 }

@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2013-2016 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -352,8 +352,11 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_coll_base_comm_t);
  */
 static inline void ompi_coll_base_free_reqs(ompi_request_t **reqs, int count)
 {
-    int i;
-    for (i = 0; i < count; ++i) {
+    if (OPAL_UNLIKELY(NULL == reqs)) {
+        return;
+    }
+
+    for (int i = 0; i < count; ++i) {
         if( MPI_REQUEST_NULL != reqs[i] ) {
             ompi_request_free(&reqs[i]);
         }

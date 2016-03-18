@@ -2,7 +2,7 @@
 /*
  * Copyright (c) 2009-2013 Oak Ridge National Laboratory.  All rights reserved.
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
- * Copyright (c) 2012-2015 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2012-2016 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2013-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
@@ -476,14 +476,13 @@ static int calculate_buffer_header_size(mca_coll_ml_module_t *ml_module)
                             MPI_INT, ompi_comm_rank(ml_module->comm),
                             MPI_MAX, comm_size,
                             ranks_in_comm, ml_module->comm);
-
+    free(ranks_in_comm);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
         ML_ERROR(("comm_allreduce_pml failed."));
         return OMPI_ERROR;
     }
 
     ml_module->data_offset = (uint32_t) data_offset;
-    free(ranks_in_comm);
 
     ML_VERBOSE(10, ("The offset is %d", ml_module->data_offset));
 
@@ -1105,6 +1104,10 @@ static int get_new_subgroup_data (int32_t *all_selected, int size_of_all_selecte
 
         (*sub_group_meta_data)[sg_id].index_of_first_element=offset;
 
+        if ((*sub_group_meta_data)[sg_id].n_ranks && NULL == temp) {
+            return OMPI_ERROR;
+        }
+
         for( array_id=0 ; array_id < (*sub_group_meta_data)[sg_id].n_ranks ;
              array_id++ ) {
             (*list_of_ranks_in_all_subgroups)[offset+array_id]=
@@ -1317,13 +1320,11 @@ static int ml_module_set_small_msg_thresholds(mca_coll_ml_module_t *ml_module)
                             BCOL_NUM_OF_FUNCTIONS, MPI_INT,
                             ompi_comm_rank(ml_module->comm), MPI_MIN,
                             comm_size, ranks_in_comm, ml_module->comm);
-
+    free(ranks_in_comm);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
         ML_ERROR(("comm_allreduce_pml failed."));
         return OMPI_ERROR;
     }
-
-    free(ranks_in_comm);
 
     return OMPI_SUCCESS;
 }
@@ -2319,9 +2320,6 @@ static int mca_coll_ml_fill_in_route_tab(mca_coll_ml_topology_t *topo, ompi_comm
 
     int32_t **route_table = NULL;
     int32_t *all_reachable_ranks = NULL;
-
-    struct ompi_proc_t **sbgp_procs = NULL;
-
     mca_sbgp_base_module_t *sbgp_group = NULL;
     comm_size = ompi_comm_size(comm);
 
@@ -2500,13 +2498,7 @@ static int mca_coll_ml_fill_in_route_tab(mca_coll_ml_topology_t *topo, ompi_comm
         free(route_table);
     }
 
-    if (NULL != sbgp_procs) {
-        free(sbgp_procs);
-    }
-
-    if (NULL != all_reachable_ranks) {
-        free(all_reachable_ranks);
-    }
+    free(all_reachable_ranks);
 
     return rc;
 }
@@ -2668,6 +2660,7 @@ static int check_for_max_supported_ml_modules(struct ompi_communicator_t *comm)
                              1 , MPI_INT, ompi_comm_rank(comm),
                              MPI_MIN, ompi_comm_size(comm), comm_ranks,
                              comm);
+    free(comm_ranks);
     if (OMPI_SUCCESS != ret) {
         ML_ERROR(("comm_allreduce - failed to collect max_comm data"));
         return ret;
@@ -2679,8 +2672,6 @@ static int check_for_max_supported_ml_modules(struct ompi_communicator_t *comm)
     } else {
         --cs->max_comm;
     }
-
-    free(comm_ranks);
 
     return OMPI_SUCCESS;
 }

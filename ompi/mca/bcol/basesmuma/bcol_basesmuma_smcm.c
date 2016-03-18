@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2009-2012 Oak Ridge National Laboratory.  All rights reserved.
  * Copyright (c) 2009-2012 Mellanox Technologies.  All rights reserved.
- * Copyright (c) 2012-2014 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2012-2016 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2014      Intel, Inc.  All rights reserved.
  * Copyright (c) 2014-2015 Research Organization for Information Science
@@ -371,7 +371,10 @@ bcol_basesmuma_smcm_mmap_t *bcol_basesmuma_smcm_mem_reg(void *in_ptr,
     if (fd < 0) {
         opal_output (ompi_bcol_base_framework.framework_output, "basesmuma shared memory allocation open failed with errno: %d",
                     errno);
-    } else if (0 != ftruncate(fd,length)) {
+        return NULL;
+    }
+
+    if (0 != ftruncate(fd,length)) {
         opal_output (ompi_bcol_base_framework.framework_output, "basesmuma shared memory allocation ftruncate failed with errno: %d",
                     errno);
     } else {

@@ -320,7 +320,9 @@ static int ompi_osc_pt2pt_lock_internal (int lock_type, int target, int assert, 
 
     /* check for conflicting lock */
     if (ompi_osc_pt2pt_module_lock_find (module, target, NULL)) {
-        ompi_osc_pt2pt_sync_return (lock);
+        if (&module->all_sync != lock) {
+            ompi_osc_pt2pt_sync_return (lock);
+        }
         OPAL_THREAD_UNLOCK(&module->lock);
         return OMPI_ERR_RMA_CONFLICT;
     }
