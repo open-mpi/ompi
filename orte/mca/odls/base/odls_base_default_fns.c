@@ -15,7 +15,7 @@
  *                         All rights reserved.
  * Copyright (c) 2011-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013-2016 Intel, Inc.  All rights reserved.
- * Copyright (c) 2014-2016 Research Organization for Information Science
+ * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * $COPYRIGHT$
  *
@@ -973,10 +973,8 @@ void orte_odls_base_default_launch_local(int fd, short sd, void *cbdata)
                 app->argv = NULL;
                 /* now create a new one that starts with the fork agent */
                 app->argv = opal_argv_copy(orte_fork_agent);
-                /* app->argv[0] is the basename, but we require the full name that is in app->app */
-                opal_argv_append_nosize(&app->argv, app->app);
-                /* add back the rest of original argv */
-                for (inm=1; NULL != argvsav[inm]; inm++) {
+                /* add back the original argv */
+                for (inm=0; NULL != argvsav[inm]; inm++) {
                     opal_argv_append_nosize(&app->argv, argvsav[inm]);
                 }
                 /* the app exe name itself is in the argvsav array, so
