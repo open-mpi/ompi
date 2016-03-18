@@ -1676,8 +1676,6 @@ static int create_app(int argc, char* argv[],
         rc = ORTE_ERR_NOT_FOUND;
         goto cleanup;
     }
-    free(app->argv[0]);
-    app->argv[0] = opal_basename(app->app);
 
     /* if this is a Java application, we have a bit more work to do. Such
      * applications actually need to be run under the Java virtual machine
