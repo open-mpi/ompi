@@ -12,7 +12,8 @@
 # Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2010      IBM Corporation.  All rights reserved.
 # Copyright (c) 2010-2011 Oak Ridge National Labs.  All rights reserved.
-# Copyright (c) 2013      Los Alamos National Security, Inc.  All rights reserved.
+# Copyright (c) 2013-2016 Los Alamos National Security, Inc.  All rights
+#                         reserved.
 # Copyright (c) 2013      Intel Corporation.  All rights reserved.
 # $COPYRIGHT$
 #
@@ -66,15 +67,15 @@ EXTRA_DIST = \
         platform/lanl/cray_xc_cle5.2/optimized-lustre \
         platform/lanl/cray_xc_cle5.2/optimized-lustre.conf \
         platform/lanl/toss/debug-common \
-        platform/lanl/toss/debug-nopanasas \
-        platform/lanl/toss/debug-nopanasas.conf \
-        platform/lanl/toss/debug-panasas \
-        platform/lanl/toss/debug-panasas.conf \
+        platform/lanl/toss/debug \
+        platform/lanl/toss/debug.conf \
+        platform/lanl/toss/debug-mlx \
+        platform/lanl/toss/debug-mlx.conf \
         platform/lanl/toss/optimized-common \
-        platform/lanl/toss/optimized-nopanasas \
-        platform/lanl/toss/optimized-nopanasas.conf \
-        platform/lanl/toss/optimized-panasas \
-        platform/lanl/toss/optimized-panasas.conf \
+        platform/lanl/toss/optimized \
+        platform/lanl/toss/optimized.conf \
+        platform/lanl/toss/optimized-mlx \
+        platform/lanl/toss/optimized-mlx.conf \
         platform/lanl/toss/toss-common \
         platform/lanl/darwin/darwin-common \
         platform/lanl/darwin/debug-common \
