@@ -693,7 +693,7 @@ void orte_plm_base_post_launch(int fd, short args, void *cbdata)
         return;
     }
 
- cleanup:
+  cleanup:
     /* cleanup */
     OBJ_RELEASE(caddy);
 }

@@ -47,9 +47,14 @@
 #include "opal/runtime/opal.h"
 #include "opal/runtime/opal_cr.h"
 
+#include "orte/mca/rml/base/base.h"
+#include "orte/mca/routed/base/base.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/dfs/base/base.h"
 #include "orte/mca/grpcomm/base/base.h"
+#include "orte/mca/oob/base/base.h"
+#include "orte/mca/rml/rml.h"
+#include "orte/mca/qos/base/base.h"
 #include "orte/mca/odls/odls_types.h"
 #include "orte/mca/filem/base/base.h"
 #include "orte/mca/errmgr/base/base.h"
@@ -169,14 +174,84 @@ int orte_ess_base_app_setup(bool db_restrict_local)
         }
         OBJ_DESTRUCT(&kv);
     }
-
+    /* Setup the communication infrastructure */
+    /*
+     * OOB Layer
+     */
+    if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_oob_base_framework, 0))) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_oob_base_open";
+        goto error;
+    }
+    if (ORTE_SUCCESS != (ret = orte_oob_base_select())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_oob_base_select";
+        goto error;
+    }
+    /* Runtime Messaging Layer */
+    if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_rml_base_framework, 0))) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_rml_base_open";
+        goto error;
+    }
+    if (ORTE_SUCCESS != (ret = orte_rml_base_select())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_rml_base_select";
+        goto error;
+    }
+    /* Messaging QoS Layer */
+    if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_qos_base_framework, 0))) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_qos_base_open";
+        goto error;
+    }
+    if (ORTE_SUCCESS != (ret = orte_qos_base_select())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_qos_base_select";
+        goto error;
+    }
     /* setup the errmgr */
     if (ORTE_SUCCESS != (ret = orte_errmgr_base_select())) {
         ORTE_ERROR_LOG(ret);
         error = "orte_errmgr_base_select";
         goto error;
     }
-
+    /* Routed system */
+    if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_routed_base_framework, 0))) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_routed_base_open";
+        goto error;
+    }
+    if (ORTE_SUCCESS != (ret = orte_routed_base_select())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_routed_base_select";
+        goto error;
+    }
+    /*
+     * Group communications
+     */
+    if (ORTE_SUCCESS != (ret = mca_base_framework_open(&orte_grpcomm_base_framework, 0))) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_grpcomm_base_open";
+        goto error;
+    }
+    if (ORTE_SUCCESS != (ret = orte_grpcomm_base_select())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_grpcomm_base_select";
+        goto error;
+    }
+    /* enable communication via the rml */
+    if (ORTE_SUCCESS != (ret = orte_rml.enable_comm())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_rml.enable_comm";
+        goto error;
+    }
+    /* setup the routed info  */
+    if (ORTE_SUCCESS != (ret = orte_routed.init_routes(ORTE_PROC_MY_NAME->jobid, NULL))) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_routed.init_routes";
+        goto error;
+    }
 #if OPAL_ENABLE_FT_CR == 1
     /*
      * Setup the SnapC
@@ -247,7 +322,13 @@ int orte_ess_base_app_finalize(void)
     (void) mca_base_framework_close(&orte_filem_base_framework);
     (void) mca_base_framework_close(&orte_errmgr_base_framework);
 
+    /* now can close the rml and its friendly group comm */
+    (void) mca_base_framework_close(&orte_grpcomm_base_framework);
     (void) mca_base_framework_close(&orte_dfs_base_framework);
+    (void) mca_base_framework_close(&orte_routed_base_framework);
+
+    (void) mca_base_framework_close(&orte_rml_base_framework);
+    (void) mca_base_framework_close(&orte_oob_base_framework);
     (void) mca_base_framework_close(&orte_state_base_framework);
 
     orte_session_dir_finalize(ORTE_PROC_MY_NAME);
@@ -296,7 +377,7 @@ void orte_ess_base_app_abort(int status, bool report)
      * the message if routing is enabled as this indicates we
      * have someone to send to
      */
-    if (report && orte_create_session_dirs) {
+    if (report && orte_routing_is_enabled && orte_create_session_dirs) {
         myfile = opal_os_path(false, orte_process_info.proc_session_dir, "aborted", NULL);
         fd = open(myfile, O_CREAT, S_IRUSR);
         close(fd);
