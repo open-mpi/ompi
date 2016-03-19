@@ -155,8 +155,17 @@ BEGIN_C_DECLS
 /* confirm spawn by tool */
 #define ORTE_RML_TAG_CONFIRM_SPAWN          53
 
-#define ORTE_RML_TAG_MAX                   100
+/*** QOS specific  RML TAGS ***/
+#define ORTE_RML_TAG_OPEN_CHANNEL_REQ       54
+#define ORTE_RML_TAG_OPEN_CHANNEL_RESP      55
+#define ORTE_RML_TAG_MSG_ACK                56
+#define ORTE_RML_TAG_CLOSE_CHANNEL_REQ      57
+#define ORTE_RML_TAG_CLOSE_CHANNEL_ACCEPT   58
 
+/* error notifications */
+#define ORTE_RML_TAG_NOTIFICATION           59
+
+#define ORTE_RML_TAG_MAX                   100
 
 #define ORTE_RML_TAG_NTOH(t) ntohl(t)
 #define ORTE_RML_TAG_HTON(t) htonl(t)

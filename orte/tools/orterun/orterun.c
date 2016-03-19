@@ -2341,8 +2341,8 @@ static void orte_debugger_init_before_spawn(orte_job_t *jdata)
                 return;
             }
             strncpy(MPIR_attach_fifo, attach_fifo, MPIR_MAX_PATH_LENGTH - 1);
-	    free(attach_fifo);
-	    open_fifo();
+            free(attach_fifo);
+            open_fifo();
         }
         return;
     }
@@ -2487,7 +2487,7 @@ void orte_debugger_init_after_spawn(int fd, short event, void *cbdata)
     orte_app_context_t *appctx;
     orte_vpid_t i, j;
     opal_buffer_t *buf;
-    int rc, k;
+    int rc;
     char **aliases, *aptr;
 
     /* if we couldn't get thru the mapper stage, we might
@@ -2507,30 +2507,18 @@ void orte_debugger_init_after_spawn(int fd, short event, void *cbdata)
             /* trigger the debugger */
             MPIR_Breakpoint();
 
-            /* send a message to rank=0 of any app jobs to release it */
-            for (k=1; k < orte_job_data->size; k++) {
-                if (NULL == (jdata = (orte_job_t*)opal_pointer_array_get_item(orte_job_data, k))) {
-                    continue;
-                }
-                if (ORTE_FLAG_TEST(jdata, ORTE_JOB_FLAG_DEBUGGER_DAEMON)) {
-                    /* ignore debugger jobs */
-                    continue;
-                }
-                if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, 0)) ||
-                    ORTE_PROC_STATE_UNTERMINATED < proc->state ||
-                    NULL == proc->rml_uri) {
-                    /* proc is already dead or never registered with us (so we don't have
-                     * contact info for him)
-                     */
-                    continue;
-                }
-                buf = OBJ_NEW(opal_buffer_t); /* don't need anything in this */
-                if (0 > (rc = orte_rml.send_buffer_nb(&proc->name, buf,
-                                                      ORTE_RML_TAG_DEBUGGER_RELEASE,
-                                                      orte_rml_send_callback, NULL))) {
-                    opal_output(0, "Error: could not send debugger release to MPI procs - error %s", ORTE_ERROR_NAME(rc));
-                    OBJ_RELEASE(buf);
-                }
+            /* send a message to rank=0 to release it */
+            if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, 0)) ||
+                ORTE_PROC_STATE_UNTERMINATED < proc->state ) {
+                /* proc is already dead */
+                return;
+            }
+            buf = OBJ_NEW(opal_buffer_t); /* don't need anything in this */
+            if (0 > (rc = orte_rml.send_buffer_nb(&proc->name, buf,
+                                                  ORTE_RML_TAG_DEBUGGER_RELEASE,
+                                                  orte_rml_send_callback, NULL))) {
+                opal_output(0, "Error: could not send debugger release to MPI procs - error %s", ORTE_ERROR_NAME(rc));
+                OBJ_RELEASE(buf);
             }
         }
         return;
@@ -2612,7 +2600,8 @@ void orte_debugger_init_after_spawn(int fd, short event, void *cbdata)
     /* if we are being launched under a debugger, then we must wait
      * for it to be ready to go and do some things to start the job
      */
-    if (MPIR_being_debugged || NULL != orte_debugger_test_daemon) {
+    if (MPIR_being_debugged || NULL != orte_debugger_test_daemon ||
+        NULL != getenv("ORTE_TEST_DEBUGGER_ATTACH")) {
         /* if we are not launching debugger daemons, then trigger
          * the debugger - otherwise, we need to wait for the debugger
          * daemons to be started
@@ -2624,34 +2613,24 @@ void orte_debugger_init_after_spawn(int fd, short event, void *cbdata)
             /* trigger the debugger */
             MPIR_Breakpoint();
 
-            /* send a message to rank=0 of any app jobs to release it */
-            for (k=1; k < orte_job_data->size; k++) {
-                if (NULL == (jdata = (orte_job_t*)opal_pointer_array_get_item(orte_job_data, k))) {
-                    continue;
-                }
-                if (ORTE_FLAG_TEST(jdata, ORTE_JOB_FLAG_DEBUGGER_DAEMON)) {
-                    /* ignore debugger jobs */
-                    continue;
-                }
-                if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, 0)) ||
-                    ORTE_PROC_STATE_UNTERMINATED < proc->state ||
-                    NULL == proc->rml_uri) {
-                    /* proc is already dead or never registered with us (so we don't have
-                     * contact info for him)
-                     */
-                    continue;
-                }
-                opal_output_verbose(2, orte_debug_output,
-                                    "%s sending debugger release to %s",
-                                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                    ORTE_NAME_PRINT(&proc->name));
-                buf = OBJ_NEW(opal_buffer_t); /* don't need anything in this */
-                if (0 > (rc = orte_rml.send_buffer_nb(&proc->name, buf,
-                                                      ORTE_RML_TAG_DEBUGGER_RELEASE,
-                                                      orte_rml_send_callback, NULL))) {
-                    opal_output(0, "Error: could not send debugger release to MPI procs - error %s", ORTE_ERROR_NAME(rc));
-                    OBJ_RELEASE(buf);
-                }
+            /* send a message to rank=0 to release it */
+            if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, 0)) ||
+                ORTE_PROC_STATE_UNTERMINATED < proc->state) {
+                /* proc is already dead or never registered with us (so we don't have
+                 * contact info for him)
+                 */
+                return;
+            }
+            opal_output_verbose(2, orte_debug_output,
+                                "%s sending debugger release to %s",
+                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                ORTE_NAME_PRINT(&proc->name));
+            buf = OBJ_NEW(opal_buffer_t); /* don't need anything in this */
+            if (0 > (rc = orte_rml.send_buffer_nb(&proc->name, buf,
+                                                  ORTE_RML_TAG_DEBUGGER_RELEASE,
+                                                  orte_rml_send_callback, NULL))) {
+                opal_output(0, "Error: could not send debugger release to MPI procs - error %s", ORTE_ERROR_NAME(rc));
+                OBJ_RELEASE(buf);
             }
         } else {
             /* if I am launching debugger daemons, then I need to do so now

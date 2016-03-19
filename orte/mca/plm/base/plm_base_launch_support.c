@@ -670,10 +670,7 @@ void orte_plm_base_post_launch(int fd, short args, void *cbdata)
         return;
     }
 
- cleanup:
-    /* need to init_after_spawn for debuggers */
-    ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_READY_FOR_DEBUGGERS);
-
+  cleanup:
     /* cleanup */
     OBJ_RELEASE(caddy);
 }

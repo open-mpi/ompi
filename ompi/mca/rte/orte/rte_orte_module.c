@@ -113,7 +113,7 @@ void ompi_rte_wait_for_debugger(void)
         debugger = 1;
     }
 
-    if (!debugger) {
+    if (!debugger && NULL == getenv("ORTE_TEST_DEBUGGER_ATTACH")) {
         /* if not, just return */
         return;
     }
