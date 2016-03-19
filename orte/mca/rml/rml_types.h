@@ -110,8 +110,8 @@ BEGIN_C_DECLS
 /* show help */
 #define ORTE_RML_TAG_SHOW_HELP              36
 
-/* error notifications */
-#define ORTE_RML_TAG_NOTIFICATION           37
+/* debugger release */
+#define ORTE_RML_TAG_DEBUGGER_RELEASE       37
 
 /* bootstrap */
 #define ORTE_RML_TAG_BOOTSTRAP              38
@@ -159,8 +159,11 @@ BEGIN_C_DECLS
 #define ORTE_RML_TAG_MSG_ACK                56
 #define ORTE_RML_TAG_CLOSE_CHANNEL_REQ      57
 #define ORTE_RML_TAG_CLOSE_CHANNEL_ACCEPT   58
-#define ORTE_RML_TAG_MAX                   100
 
+/* error notifications */
+#define ORTE_RML_TAG_NOTIFICATION           59
+
+#define ORTE_RML_TAG_MAX                   100
 
 #define ORTE_RML_TAG_NTOH(t) ntohl(t)
 #define ORTE_RML_TAG_HTON(t) htonl(t)
