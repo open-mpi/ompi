@@ -5,7 +5,7 @@
  * Copyright (c) 2008      Mellanox Technologies. All rights reserved.
  * Copyright (c) 2009      Sandia National Laboratories. All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
- * Copyright (c) 2012-2015 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2012-2016 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2013-2014 Intel, Inc. All rights reserved
  * Copyright (c) 2014      The University of Tennessee and The University
@@ -185,6 +185,7 @@ typedef struct {
 #endif
     uint32_t rem_index;
     uint8_t qpnum;
+    opal_process_name_t rem_name;
 } __opal_attribute_packed__ private_data_t;
 
 #if !BTL_OPENIB_RDMACM_IB_ADDR
@@ -376,68 +377,23 @@ static char *stringify(uint32_t addr)
  * the rdma_cm event id
  */
 static mca_btl_openib_endpoint_t *rdmacm_find_endpoint(rdmacm_contents_t *contents,
-                                                       struct rdma_cm_id *id,
-#if BTL_OPENIB_RDMACM_IB_ADDR
-                                                       uint64_t rem_port)
-#else
-                                                       uint16_t rem_port)
-#endif
+                                                       opal_process_name_t rem_name)
 {
-    int i;
+    mca_btl_openib_module_t *btl = contents->openib_btl;
     mca_btl_openib_endpoint_t *ep = NULL;
-    opal_pointer_array_t *endpoints = contents->openib_btl->device->endpoints;
+    opal_proc_t *opal_proc;
 
-    struct sockaddr *peeraddr = rdma_get_peer_addr(id);
-#if BTL_OPENIB_RDMACM_IB_ADDR
-    union ibv_gid *ep_gid, peer_gid;
-    memcpy(peer_gid.raw, ((struct sockaddr_ib *) peeraddr)->sib_addr.sib_raw, sizeof peer_gid);
-#else
-    uint32_t peeripaddr = ((struct sockaddr_in *) peeraddr)->sin_addr.s_addr;
-
-#if OPAL_ENABLE_DEBUG
-    char *a;
-#endif
-
-    OPAL_OUTPUT((-1, "remote peer requesting connection: %s port %d",
-                 a = stringify(peeripaddr), rem_port));
-#if OPAL_ENABLE_DEBUG
-    free(a);
-#endif
-#endif
-
-    for (i = 0; i < opal_pointer_array_get_size(endpoints); i++) {
-        mca_btl_openib_endpoint_t *endpoint;
-        modex_message_t *message;
-
-        endpoint = (mca_btl_openib_endpoint_t *) opal_pointer_array_get_item(endpoints, i);
-        if (NULL == endpoint) {
-            continue;
-        }
-
-        message = (modex_message_t *) endpoint->endpoint_remote_cpc_data->cbm_modex_message;
-#if !BTL_OPENIB_RDMACM_IB_ADDR
-        OPAL_OUTPUT((-1, "message ipaddr = %s port %d",
-                     a = stringify(message->ipaddr), message->tcp_port));
-#if OPAL_ENABLE_DEBUG
-        free(a);
-#endif
-#endif
-
-#if BTL_OPENIB_RDMACM_IB_ADDR
-        ep_gid = (union ibv_gid *) message->gid;
-        if (ep_gid->global.interface_id == peer_gid.global.interface_id &&
-             ep_gid->global.subnet_prefix == peer_gid.global.subnet_prefix &&
-                     message->service_id == rem_port) {
-#else
-        if (message->ipaddr == peeripaddr && message->tcp_port == rem_port) {
-#endif
-            ep = endpoint;
-            break;
-        }
+    opal_proc = opal_proc_for_name (rem_name);
+    if (NULL == opal_proc) {
+        BTL_ERROR(("could not get proc associated with remote peer %s",
+                   opal_process_name_print (rem_name)));
+        return NULL;
     }
 
+    ep = mca_btl_openib_get_ep (&btl->super, opal_proc);
     if (NULL == ep) {
-        BTL_ERROR(("can't find suitable endpoint for this peer"));
+        BTL_ERROR(("could not find endpoint for peer %s",
+                   opal_process_name_print (rem_name)));
     }
 
     return ep;
@@ -986,6 +942,7 @@ static int handle_connect_request(struct rdma_cm_event *event)
     rdmacm_contents_t *contents = listener_context->contents;
     mca_btl_openib_endpoint_t *endpoint;
     struct rdma_conn_param conn_param;
+    opal_process_name_t rem_name;
     modex_message_t *message;
     private_data_t msg;
     int rc = -1, qpnum;
@@ -999,10 +956,11 @@ static int handle_connect_request(struct rdma_cm_event *event)
     qpnum = ((private_data_t *)event->param.conn.private_data)->qpnum;
     rem_port = ((private_data_t *)event->param.conn.private_data)->rem_port;
     rem_index = ((private_data_t *)event->param.conn.private_data)->rem_index;
+    rem_name = ((private_data_t *)event->param.conn.private_data)->rem_name;
 
     /* Determine which endpoint the remote side is trying to connect
        to; use the listener's context->contents to figure it out */
-    endpoint = rdmacm_find_endpoint(contents, event->id, rem_port);
+    endpoint = rdmacm_find_endpoint(contents, rem_name);
     if (NULL == endpoint) {
 #if !BTL_OPENIB_RDMACM_IB_ADDR
         struct sockaddr *peeraddr = rdma_get_peer_addr(event->id);
@@ -1145,6 +1103,7 @@ static int handle_connect_request(struct rdma_cm_event *event)
     /* Fill the private data being sent to the other side */
     msg.qpnum = qpnum;
     msg.rem_index = endpoint->index;
+    msg.rem_name = OPAL_PROC_MY_NAME;
 
     /* Accepting the connection will result in a
        RDMA_CM_EVENT_ESTABLISHED event on both the client and server
@@ -1617,6 +1576,7 @@ static int finish_connect(id_context_t *context)
 
     msg.qpnum = context->qpnum;
     msg.rem_index = contents->endpoint->index;
+    msg.rem_name = OPAL_PROC_MY_NAME;
 #if BTL_OPENIB_RDMACM_IB_ADDR
     memset(msg.librdmacm_header, 0, sizeof(msg.librdmacm_header));
     msg.rem_port = contents->service_id;
