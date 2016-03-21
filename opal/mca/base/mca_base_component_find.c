@@ -14,7 +14,7 @@
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2014-2015 Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2014-2016 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -115,8 +115,8 @@ int mca_base_component_find (const char *directory, mca_base_framework_t *framew
     /* Find all the components that were statically linked in */
     if (static_components) {
         for (int i = 0 ; NULL != static_components[i]; ++i) {
-            if ( use_component(include_mode,
-                               (const char**)requested_component_names,
+            if ( (static_components[i]->mca_component_flags & MCA_BASE_COMPONENT_FLAG_ALWAYS_CONSIDER) ||
+                 use_component(include_mode, (const char**)requested_component_names,
                                static_components[i]->mca_component_name) ) {
                 cli = OBJ_NEW(mca_base_component_list_item_t);
                 if (NULL == cli) {
@@ -189,8 +189,9 @@ int mca_base_components_filter (mca_base_framework_t *framework, uint32_t filter
         mca_base_open_only_dummy_component_t *dummy =
             (mca_base_open_only_dummy_component_t *) cli->cli_component;
 
-        can_use = use_component (include_mode, (const char **) requested_component_names,
-                                 cli->cli_component->mca_component_name);
+        can_use = (cli->cli_component->mca_component_flags & MCA_BASE_COMPONENT_FLAG_ALWAYS_CONSIDER) ||
+            use_component (include_mode, (const char **) requested_component_names,
+                           cli->cli_component->mca_component_name);
 
         if (!can_use || (filter_flags & dummy->data.param_field) != filter_flags) {
             if (can_use && (filter_flags & MCA_BASE_METADATA_PARAM_CHECKPOINT) &&
