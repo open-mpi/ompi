@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -13,6 +14,8 @@
  * Copyright (c) 2008-2013 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2016      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -29,6 +32,39 @@
 #include "opal/mca/base/base.h"
 #include "opal/mca/btl/btl.h"
 #include "opal/mca/btl/base/base.h"
+
+mca_base_var_enum_flag_t *mca_btl_base_flag_enum = NULL;
+mca_base_var_enum_flag_t *mca_btl_base_atomic_enum = NULL;
+
+mca_base_var_enum_value_flag_t mca_btl_base_flag_enum_flags[] = {
+    {MCA_BTL_FLAGS_SEND, "send", 0},
+    {MCA_BTL_FLAGS_PUT, "put", 0},
+    {MCA_BTL_FLAGS_GET, "get", 0},
+    {MCA_BTL_FLAGS_SEND_INPLACE, "inplace", 0},
+    {MCA_BTL_FLAGS_SIGNALED, "signaled", 0},
+    {MCA_BTL_FLAGS_ATOMIC_OPS, "atomics", 0},
+    {MCA_BTL_FLAGS_ATOMIC_FOPS, "fetching-atomics", 0},
+    {MCA_BTL_FLAGS_SINGLE_ADD_PROCS, "static", 0},
+    {MCA_BTL_FLAGS_CUDA_PUT, "cuda-put", 0},
+    {MCA_BTL_FLAGS_CUDA_GET, "cuda-get", 0},
+    {MCA_BTL_FLAGS_CUDA_COPY_ASYNC_SEND, "cuda-async-send", 0},
+    {MCA_BTL_FLAGS_CUDA_COPY_ASYNC_RECV, "cuda-async-recv", 0},
+    {MCA_BTL_FLAGS_FAILOVER_SUPPORT, "failover", 0},
+    {MCA_BTL_FLAGS_NEED_ACK, "need-ack", 0},
+    {MCA_BTL_FLAGS_NEED_CSUM, "need-csum", 0},
+    {MCA_BTL_FLAGS_HETEROGENEOUS_RDMA, "hetero-rdma", 0},
+    {0, NULL, 0}
+};
+
+mca_base_var_enum_value_flag_t mca_btl_base_atomic_enum_flags[] = {
+  {MCA_BTL_ATOMIC_SUPPORTS_ADD, "add", 0},
+  {MCA_BTL_ATOMIC_SUPPORTS_AND, "and", 0},
+  {MCA_BTL_ATOMIC_SUPPORTS_OR, "or", 0},
+  {MCA_BTL_ATOMIC_SUPPORTS_XOR, "xor", 0},
+  {MCA_BTL_ATOMIC_SUPPORTS_CSWAP, "compare-and-swap", 0},
+  {MCA_BTL_ATOMIC_SUPPORTS_GLOB, "global"},
+  {0, NULL, 0}
+};
 
 mca_btl_active_message_callback_t mca_btl_base_active_message_trigger[MCA_BTL_TAG_MAX] = {{0}};
 
@@ -104,6 +140,9 @@ static int mca_btl_base_register(mca_base_register_flag_t flags)
                                  MCA_BASE_VAR_SCOPE_READONLY,
                                  &mca_btl_base_warn_component_unused);
 
+    (void) mca_base_var_enum_create_flag ("btl_flags", mca_btl_base_flag_enum_flags, &mca_btl_base_flag_enum);
+    (void) mca_base_var_enum_create_flag ("btl_atomic_flags", mca_btl_base_atomic_enum_flags, &mca_btl_base_atomic_enum);
+
     return OPAL_SUCCESS;
 }
 
@@ -158,6 +197,14 @@ static int mca_btl_base_close(void)
     (void) mca_base_framework_components_close(&opal_btl_base_framework, NULL);
 
     OBJ_DESTRUCT(&mca_btl_base_modules_initialized);
+
+    if (mca_btl_base_flag_enum) {
+        OBJ_RELEASE(mca_btl_base_flag_enum);
+    }
+
+    if (mca_btl_base_atomic_enum) {
+        OBJ_RELEASE(mca_btl_base_atomic_enum);
+    }
 
 #if 0
     /* restore event processing */
