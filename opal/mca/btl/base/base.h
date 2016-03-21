@@ -75,6 +75,9 @@ OPAL_DECLSPEC extern bool mca_btl_base_thread_multiple_override;
 
 OPAL_DECLSPEC extern mca_base_framework_t opal_btl_base_framework;
 
+extern mca_base_var_enum_flag_t *mca_btl_base_flag_enum;
+extern mca_base_var_enum_flag_t *mca_btl_base_atomic_enum;
+
 END_C_DECLS
 
 #endif /* MCA_BTL_BASE_H */
