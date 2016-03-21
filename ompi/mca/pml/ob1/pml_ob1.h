@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2013 The University of Tennessee and The University
+ * Copyright (c) 2004-2016 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -267,7 +267,7 @@ do {                                                            \
             opal_mutex_lock(lock);                               \
         }                                                        \
         else { OPAL_THREAD_LOCK(lock); }                         \
-    } while(0)                                                
+    } while(0)
 
 
 #define OB1_MATCHING_UNLOCK(lock)                                \
@@ -276,10 +276,10 @@ do {                                                            \
             opal_mutex_unlock(lock);                             \
         }                                                        \
         else { OPAL_THREAD_UNLOCK(lock); }                       \
-    } while(0)                                                
+    } while(0)
 
 
-                                         
+
 int mca_pml_ob1_send_fin(ompi_proc_t* proc, mca_bml_base_btl_t* bml_btl,
         opal_ptr_t hdr_frag, uint64_t size, uint8_t order, int status);
 

@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2012 The University of Tennessee and The University
+ * Copyright (c) 2004-2016 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -92,23 +92,6 @@ extern int mca_btl_tcp_progress_thread_trigger;
 #define MCA_BTL_TCP_CRITICAL_SECTION_LEAVE(name) \
     opal_mutex_atomic_unlock((name))
 
-#define TODO_MCA_BTL_TCP_COMPLETE_FRAG_SEND(frag)                       \
-    do {                                                                \
-        (frag)->next_step = MCA_BTL_TCP_FRAG_STEP_SEND_COMPLETE;        \
-        MCA_BTL_TCP_CRITICAL_SECTION_ENTER(&mca_btl_tcp_ready_frag_mutex); \
-        opal_list_append(&mca_btl_tcp_ready_frag_pending_queue,         \
-                         (opal_list_item_t*)frag);                      \
-        MCA_BTL_TCP_CRITICAL_SECTION_LEAVE(&mca_btl_tcp_ready_frag_mutex); \
-    } while (0)
-
-#define TODO_MCA_BTL_TCP_RECV_TRIGGER_CB(frag)                          \
-    do {                                                                \
-        (frag)->next_step = MCA_BTL_TCP_FRAG_STEP_RECV_COMPLETE;        \
-        MCA_BTL_TCP_CRITICAL_SECTION_ENTER(&mca_btl_tcp_ready_frag_mutex); \
-        opal_list_append(&mca_btl_tcp_ready_frag_pending_queue,         \
-                         (opal_list_item_t*)frag);                      \
-        MCA_BTL_TCP_CRITICAL_SECTION_LEAVE(&mca_btl_tcp_ready_frag_mutex); \
-    } while (0)
 #define MCA_BTL_TCP_ACTIVATE_EVENT(event, value)                        \
     do {                                                                \
         if(0 < mca_btl_tcp_progress_thread_trigger) {                   \
@@ -123,10 +106,6 @@ extern int mca_btl_tcp_progress_thread_trigger;
 #else
 #define MCA_BTL_TCP_CRITICAL_SECTION_ENTER(name)
 #define MCA_BTL_TCP_CRITICAL_SECTION_LEAVE(name)
-#define TODO_MCA_BTL_TCP_COMPLETE_FRAG_SEND(frag)                       \
-    MCA_BTL_TCP_COMPLETE_FRAG_SEND(frag)
-#define TODO_MCA_BTL_TCP_RECV_TRIGGER_CB(frag)                          \
-    MCA_BTL_TCP_RECV_TRIGGER_CB(frag)
 #define MCA_BTL_TCP_ACTIVATE_EVENT(event, value)                    \
     do {                                                            \
         opal_event_add(event, (value));                             \
@@ -233,13 +212,6 @@ extern mca_btl_base_module_t** mca_btl_tcp_component_init(
     bool allow_multi_user_threads,
     bool have_hidden_threads
 );
-
-
-/**
- * TCP component progress.
- */
-extern int mca_btl_tcp_component_progress(void);
-
 
 
 /**
@@ -381,16 +353,6 @@ mca_btl_base_descriptor_t* mca_btl_tcp_prepare_src(
     size_t* size,
     uint32_t flags
 );
-
-extern mca_btl_base_descriptor_t* mca_btl_tcp_prepare_dst( 
-    struct mca_btl_base_module_t* btl, 
-    struct mca_btl_base_endpoint_t* peer,
-    struct mca_mpool_base_registration_t*,
-    struct opal_convertor_t* convertor,
-    uint8_t order,
-    size_t reserve,
-    size_t* size,
-    uint32_t flags); 
 
 extern void
 mca_btl_tcp_dump(struct mca_btl_base_module_t* btl,

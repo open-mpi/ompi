@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2014 The University of Tennessee and The University
+ * Copyright (c) 2004-2016 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -47,18 +47,9 @@
 #include "btl_tcp_frag.h"
 #include "btl_tcp_endpoint.h"
 
-static void mca_btl_tcp_frag_common_constructor(mca_btl_tcp_frag_t* frag) 
-{ 
-    frag->base.des_src = NULL;
-    frag->base.des_src_cnt = 0;
-    frag->base.des_dst = NULL;
-    frag->base.des_dst_cnt = 0;
-    frag->next_step = MCA_BTL_TCP_FRAG_STEP_UNDEFINED;
-}
-
-static void mca_btl_tcp_frag_eager_constructor(mca_btl_tcp_frag_t* frag) 
-{ 
-    frag->size = mca_btl_tcp_module.super.btl_eager_limit;   
+static void mca_btl_tcp_frag_eager_constructor(mca_btl_tcp_frag_t* frag)
+{
+    frag->size = mca_btl_tcp_module.super.btl_eager_limit;
     frag->my_list = &mca_btl_tcp_component.tcp_frag_eager;
 }
 
@@ -115,7 +106,6 @@ size_t mca_btl_tcp_frag_dump(mca_btl_tcp_frag_t* frag, char* msg, char* buf, siz
     return used;
 }
 
-
 bool mca_btl_tcp_frag_send(mca_btl_tcp_frag_t* frag, int sd)
 {
     int cnt=-1;
@@ -160,11 +150,9 @@ bool mca_btl_tcp_frag_send(mca_btl_tcp_frag_t* frag, int sd)
             frag->iov_ptr->iov_base = (opal_iov_base_ptr_t)
                 (((unsigned char*)frag->iov_ptr->iov_base) + cnt);
             frag->iov_ptr->iov_len -= cnt;
-#define GB_DEFINED 0
-#if GB_DEFINED
-        opal_output(0, "%s:%d write %lu bytes from socket %d\n",
-                    __FILE__, __LINE__, cnt, sd); /* GB */
-#endif  /* GB_DEFINED */
+            OPAL_OUTPUT_VERBOSE((100, opal_btl_base_framework.framework_output,
+                                 "%s:%d write %d bytes on socket %d\n",
+                                 __FILE__, __LINE__, cnt, sd));
             break;
         }
     }
@@ -282,7 +270,7 @@ bool mca_btl_tcp_frag_recv(mca_btl_tcp_frag_t* frag, int sd)
                 frag->iov_cnt++;
 #ifndef __sparc
 #if !MCA_BTL_TCP_SUPPORT_PROGRESS_THREAD
-                /* The following cannot be done for sparc code 
+                /* The following cannot be done for sparc code
                  * because it causes alignment errors when accessing
                  * structures later on in the btl and pml code.
                  */
