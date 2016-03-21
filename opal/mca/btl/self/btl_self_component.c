@@ -48,6 +48,7 @@ mca_btl_self_component_t mca_btl_self_component = {
             .mca_open_component = mca_btl_self_component_open,
             .mca_close_component = mca_btl_self_component_close,
             .mca_register_component_params = mca_btl_self_component_register,
+            .mca_component_flags = MCA_BASE_COMPONENT_FLAG_ALWAYS_CONSIDER,
         },
         .btl_data = {
             /* The component is checkpoint ready */
