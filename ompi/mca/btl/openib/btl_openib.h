@@ -310,11 +310,6 @@ struct mca_btl_openib_component_t {
 #if BTL_OPENIB_FAILOVER_ENABLED
     int verbose_failover;
 #endif
-#if BTL_OPENIB_MALLOC_HOOKS_ENABLED
-    int use_memalign;
-    size_t memalign_threshold;
-    void* (*previous_malloc_hook)(size_t __size, const void*);
-#endif
 #if OPAL_CUDA_SUPPORT
     bool cuda_async_send;
     bool cuda_async_recv;

@@ -103,7 +103,7 @@
    from here, since any MPI code is going to call MPI_Init... */
 OPAL_DECLSPEC void (*__malloc_initialize_hook) (void) = 
     opal_memory_linux_malloc_init_hook;
-#endif
+#endif /* defined(MEMORY_LINUX_PTMALLOC2) && MEMORY_LINUX_PTMALLOC2 */
 
 /* This is required for the boundaries of the hash tables used to store
  * the F90 types returned by the MPI_Type_create_f90_XXX functions.
